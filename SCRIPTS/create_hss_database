@@ -1,0 +1,96 @@
+#!/bin/bash
+################################################################################
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under 
+# the Apache License, Version 2.0  (the "License"); you may not use this file
+# except in compliance with the License.  
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
+################################################################################
+
+# file create_hss_database
+# brief
+# author Lionel Gauthier
+# company Eurecom
+# email: lionel.gauthier@eurecom.fr
+################################
+# include helper functions
+################################
+THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
+. $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+
+
+# arg 1 is mysql user      (ex: root)
+# arg 2 is mysql password  (ex: linux)
+# arg 3 is hss username    (ex: hssadmin)
+# arg 4 is hss password    (ex: admin)
+# arg 5 is database name   (ex: oai_db)
+function main()
+{
+    EXPECTED_ARGS=5
+    E_BADARGS=65
+    MYSQL=`which mysql`
+    rv=0
+    if [ $# -ne $EXPECTED_ARGS ]
+    then
+        echo_fatal "Usage: $0 dbuser dbpass hssuser hsspass databasename"
+        rv=1
+    fi
+
+    set_openair_env
+    
+    # removed %
+    #Q1="GRANT ALL PRIVILEGES ON *.* TO '$3'@'%' IDENTIFIED BY '$4' WITH GRANT OPTION;"
+    Q1="GRANT ALL PRIVILEGES ON *.* TO '$3'@'localhost' IDENTIFIED BY '$4' WITH GRANT OPTION;"
+    Q2="FLUSH PRIVILEGES;"
+    SQL="${Q1}${Q2}"
+    $MYSQL -u $1 --password=$2 -e "$SQL"
+    if [ $? -ne 0 ]; then
+       echo_error "$3 permissions failed"
+       return 1
+    else
+       echo_success "$3 permissions succeeded"
+    fi
+    
+    
+    Q1="CREATE DATABASE IF NOT EXISTS ${BTICK}$5${BTICK};"
+    SQL="${Q1}"
+    $MYSQL -u $3 --password=$4 -e "$SQL"
+    if [ $? -ne 0 ]; then
+       echo_error "$5 creation failed"
+       return 1
+    else
+       echo_success "$5 creation succeeded"
+    fi
+    
+    
+    # test if tables have been created
+    mysql -u $3 --password=$4  -e "desc $5.users" > /dev/null 2>&1
+    
+    if [ $? -eq 1 ]; then 
+        $MYSQL -u $3 --password=$4 $5 < $OPENAIRCN_DIR/OAI_HSS/db/$5.sql
+        if [ $? -ne 0 ]; then
+            echo_error "$5 tables creation failed"
+            return 1
+        else
+            echo_success "$5 tables creation succeeded"
+        fi
+    fi
+    
+    return 0
+}
+
+main "$@" 
+

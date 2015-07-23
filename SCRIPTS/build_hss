@@ -1,0 +1,249 @@
+#!/bin/bash
+################################################################################
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under 
+# the Apache License, Version 2.0  (the "License"); you may not use this file
+# except in compliance with the License.  
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
+################################################################################
+# file build_hss
+# brief
+# author Lionel Gauthier
+# company Eurecom
+# email: lionel.gauthier@eurecom.fr
+#
+################################
+# include helper functions
+################################
+THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
+source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+
+
+
+function help()
+{
+  echo_error " "
+  echo_error "Usage: build_hss [OPTION]..."
+  echo_error "Build the experimental HSS executable. (oai_hss)"
+  echo_error " "
+  echo_error "Options:"
+  echo_error "Mandatory arguments to long options are mandatory for short options too."
+  echo_error "  -b, --s6a-bind-addr-list       addr_list  Optionaly, s6a server bind addresses can be specified here"
+  echo_error "  -c, --clean                               Clean the build generated files (build from scratch)"
+  echo_error "  -d, --debug                               Compile with debug informations."
+  echo_error "  -f, --fqdn                     fqdn       HSS Fully Qualified Domain Name (if not specified default is `hostname --fqdn`)."
+  echo_error "  -h, --help                                Print this help."
+  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run HSS (support Ubuntu 14.04)."
+  echo_error "  -I, --install-hss-files                   Install HSS database if necessary."
+  echo_error "  -k, --operator-key             key        Operator key of the HSS."
+  echo_error "                                            If filled, then OPc key in table users for all subscribers (IMSI) will be computed/updated."
+  echo_error "  -l, --local-mme                           MME run on the same host."
+  echo_error "  -v, --verbose                             Build process verbose."
+  echo_error " "
+  echo_error "  -r, --realm                    realm      Realm of the HSS (optional parameter)."
+  echo_error "  -R, --random                   boolean    If false HSS random function returns always 0 (allowed values: {true, false})."
+  echo_error " "
+  echo_error "Examples:"
+  echo_error " "
+  echo_error "Case 1 - HSS run on same EPC host"
+  echo_error "build_hss --debug --local-mme"
+  echo_error " "
+  echo_error "Case 2 - HSS and EPC do not run on same host"
+  echo_error "build_hss --debug "
+}
+
+
+
+function main()
+{
+  local -i clean=0
+  local -i verbose=0
+  local -i mme_s6a_server=0
+  local    cmake_args=" "
+  local    make_args="-j $NUM_CPU"
+  local    realm=""
+  local    hss_hostname=""
+  local    mme_hostname=""
+  local    mme_ip=""
+  local    mme_fqdn=""
+  
+
+  until [ -z "$1" ]; do
+    case "$1" in
+      -b | --s6a-bind-addr-list)
+        echo "S6A server bind addresses: $2"
+        cmake_args="$cmake_args -DFD_SERVER_IP_BIND_LIST=$2"
+        shift 2;
+        ;;
+      -c | --clean)
+        clean=1
+        echo "Clean the build generated files (build from scratch)"
+        shift;
+        ;;
+      -d | --debug)
+        cmake_args="$cmake_args -DDEBUG=1"
+        echo "Compile with debug informations"
+        shift;
+        ;;
+      -f | --fqdn)
+        echo "FQDN of the HSS: $2"
+        cmake_args="$cmake_args -DHSS_FQDN=$2"
+        shift 2;
+        ;;
+      -h | --help)
+        help
+        exit 0
+        ;;
+      -i | --check-installed-software)
+        echo "Check installed software packages necessary to build and run HSS (support Ubuntu 14.04):"
+        set_openair_env
+        check_install_oai_software
+        exit 0
+        ;;
+      -I | --install-hss-files)
+        echo "Install HSS files: .conf files, database (if you want to reinstall database, drop it by hand before)."
+        cmake_args="$cmake_args -DINSTALL_HSS_FILES=1"
+        shift;
+        ;;
+      -k | --operator-key)
+        echo "Operator key of the HSS: $2"
+        cmake_args="$cmake_args -DOPERATOR_key=$2"
+        shift 2;
+        ;;
+      -l | --local-mme)
+        echo "HSS on same MME HOST -> MME act as a server on s6a"
+        echo "HSS on same MME HOST -> Diameter use TCP (SCTP disabled), this is the default option."
+        mme_s6a_server=1
+        mme_fqdn=`hostname --fqdn`
+        cmake_args="$cmake_args -DTRANSPORT_option=No_SCTP  -DTRANSPORT_PREFER_TCP_option=Prefer_TCP"
+        shift 1;
+        ;;
+      -r | --realm)
+        echo "Realm of the HSS: $2"
+        cmake_args="$cmake_args -DREALM=$2"
+        shift 2;
+        ;;
+      -R | --random)
+        echo "Random function: $2"
+        cmake_args="$cmake_args -DRANDOM_boolean=$2"
+        shift 2;
+        ;;
+      -v | --verbose)
+        echo "Make build process verbose"
+        cmake_args="$cmake_args -DCMAKE_VERBOSE_MAKEFILE=ON"
+        make_args="VERBOSE=1 $make_args"
+        verbose=1
+        shift;
+        ;;
+      *)   
+        echo "Unknown option $1"
+        help
+        exit 1
+        ;;
+    esac
+  done
+
+  # extra arguments processing
+  if [[ z$hss_fqdn = z ]]; then
+    hss_fqdn=`hostname --fqdn`
+    cmake_args="$cmake_args -DHSS_FQDN=$hss_fqdn"
+    if [[ z$realm = z ]]; then
+      realm=$hss_fqdn
+      realm=${realm#*.}
+      cmake_args="$cmake_args -DREALM=$realm"
+    fi
+  fi
+  
+  if [[ z$mme_fqdn != z ]]; then
+    cmake_args="$cmake_args -DMME_FQDN=$mme_fqdn"
+    mme_hostname=${mme_fqdn%%.*}
+    cmake_args="$cmake_args -DMME_HOSTNAME=$mme_hostname"
+  
+    mme_ip=`resolveip --silent $mme_hostname`
+    if [[ z$mme_ip = z ]]; then
+      mme_ip=`resolveip --silent $mme_fqdn`
+    fi
+    if [[ z$mme_ip = z ]]; then
+      echo_fatal "Unable to get MME IP addr of $mme_fqdn"
+    fi
+    cmake_args="$cmake_args -DHSS_CONNECT_TO_MME=1 -DMME_IP=$mme_ip  -DTRANSPORT_option=No_SCTP -DTRANSPORT_PREFER_TCP_option=Prefer_TCP"
+  else
+    cmake_args="$cmake_args -DTRANSPORT_option=No_TCP"
+  fi
+
+  set_openair_env
+  if [[ $verbose -eq 1 ]]; then
+    cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
+  fi
+  
+  if [[ z$OPENAIRCN_DIR = z ]]; then
+    echo_fatal "OPENAIRCN_DIR env variable not set, exiting"
+  fi
+
+
+  local dbin=$OPENAIRCN_DIR/OAI_HSS
+  local dlog=$OPENAIRCN_DIR/BUILD/LOG
+  local dconf=OPENAIRCN_DIR/OAI_HSS
+  
+  mkdir -m 777 -p $dbin $dlog
+
+  # for conf files copy in this bash script
+  if [ -d /usr/lib/freeDiameter ]; then
+    export FREEDIAMETER_PREFIX=/usr
+  else
+    if [ -d /usr/local/lib/freeDiameter ]; then
+      export FREEDIAMETER_PREFIX=/usr/local
+    else
+      echo_fatal "FreeDiameter prefix not found, install freeDiameter if EPC, HSS"
+    fi
+  fi
+  
+ 
+  
+  cmake_args="$cmake_args -DOPENAIRCN_DIR=$OPENAIRCN_DIR"
+
+  rm -f $OPENAIRCN_DIR/OAI_HSS/oai_hss
+  cd $OPENAIRCN_DIR/BUILD/HSS
+  if [ $clean -ne 0 ]; then
+    if [[ $verbose -eq 1 ]]; then
+      echo "Cleaning HSS"
+    fi
+    $SUDO rm -Rf BUILD 2>&1
+    if [[ $verbose -eq 1 ]]; then
+      echo "Cleaning /usr/*/etc/freeDiameter"
+    fi
+    $SUDO rm -f /usr/local/etc/freeDiameter/hss* 2>&1
+    $SUDO rm -f /usr/local/etc/freeDiameter/acl.conf 2>&1
+    $SUDO rm -f /usr/etc/freeDiameter/hss* 2>&1
+    $SUDO rm -f /usr/etc/freeDiameter/acl.conf 2>&1
+    mkdir -m 777 -p -v BUILD
+  fi
+  if [ ! -d ./BUILD ]; then
+    mkdir -m 777 -p -v BUILD
+  fi
+  cd ./BUILD
+  cmake  $cmake_args ..
+  make $make_args
+  make install
+  
+  cp -uv $OPENAIRCN_DIR/BUILD/HSS/BUILD/hss.conf $dbin
+  $SUDO cp -uv $OPENAIRCN_DIR/BUILD/HSS/BUILD/hss_fd.conf $OPENAIRCN_DIR/BUILD/HSS/BUILD/acl.conf $FREEDIAMETER_PREFIX/etc/freeDiameter
+  
+}
+
+
+main "$@"
+

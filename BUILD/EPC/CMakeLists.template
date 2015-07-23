@@ -1,0 +1,60 @@
+################################################################################
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under 
+# the Apache License, Version 2.0  (the "License"); you may not use this file
+# except in compliance with the License.  
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
+################################################################################
+cmake_minimum_required(VERSION 2.8)
+
+set (  CMAKE_BUILD_TYPE "RelWithDebInfo" )
+set (  ADDR_CONF False )
+set (  BYTE_ORDER=LITTLE_ENDIAN )
+set (  DEBUG_CONSOLE True )
+set (  DISABLE_ITTI_DETECT_SUB_TASK_ID True )
+set (  DISABLE_XER_PRINT False )
+set (  ENABLE_ITTI True )
+set (  ENABLE_NAS_UE_LOGGING False )
+set (  ENABLE_SECURITY False )
+set (  ENABLE_STANDALONE_EPC True )
+set (  ENABLE_USE_CPU_EXECUTION_TIME False )
+set (  ENABLE_USE_MME False )
+set (  ENB_MODE False )
+set (  EPC_BUILD True )
+set (  EXMIMO_IOT False )
+set (  FLAG_GTPV1U_KERNEL_THREAD_SOCK_NO_WAIT False)
+set (  HASHTABLE_DEBUG True )
+set (  MESSAGE_CHART_GENERATOR True)
+set (  MSG_PRINT False )
+set (  NAS_ADDRESS_FIX False )
+set (  NAS_BUILT_IN_EPC True )
+set (  NAS_DEBUG True )
+set (  NAS_MME True )
+set (  NAS_NETLINK False )
+set (  NAS_UE False )
+set (  NB_ANTENNAS_RX "2" )
+set (  NB_ANTENNAS_TX "2" )
+set (  NB_ANTENNAS_TXRX "2" )
+set (  NEW_FFT False )
+set (  NO_RRM False )
+set (  OPENAIR_LTE False )
+set (  PACKAGE_NAME "EPC" )
+set (  S1AP_DEBUG_LIST True )
+set (  SECU False )
+set (  UPDATE_RELEASE_9 True)
+set (  UPDATE_RELEASE_10 True)
+set (  USE_MME "R10" )
+set (  XER_PRINT False )
