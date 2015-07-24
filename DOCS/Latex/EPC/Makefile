@@ -1,21 +1,22 @@
 ################################################################################
-#   OpenAirInterface
-#   Copyright(c) 1999 - 2014 Eurecom
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under 
+# the Apache License, Version 2.0  (the "License"); you may not use this file
+# except in compliance with the License.  
+# You may obtain a copy of the License at
 #
-#    (at your option) any later version.
+#      http://www.apache.org/licenses/LICENSE-2.0
 #
-#
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#
-#    along with OpenAirInterface.The full GNU General Public License is
-#
-#  Contact Information
-#  OpenAirInterface Admin: openair_admin@eurecom.fr
-#  OpenAirInterface Tech : openair_tech@eurecom.fr
-#  OpenAirInterface Dev  : openair4g-devel@eurecom.fr
-#
-#  Address      : Eurecom, Compus SophiaTech 450, route des chappes, 06451 Biot, France.
-#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
 ################################################################################
 MYFILE=EPC
 
