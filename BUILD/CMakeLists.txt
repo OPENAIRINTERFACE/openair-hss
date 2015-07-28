@@ -537,6 +537,7 @@ set(libnas_ies_OBJS
   ${NAS_SRC}IES/MobileStationClassmark2.c
   ${NAS_SRC}IES/MobileStationClassmark3.c
   ${NAS_SRC}IES/MsNetworkCapability.c
+  ${NAS_SRC}IES/MsNetworkFeatureSupport.c
   ${NAS_SRC}IES/NasKeySetIdentifier.c
   ${NAS_SRC}IES/NasMessageContainer.c
   ${NAS_SRC}IES/NasRequestType.c

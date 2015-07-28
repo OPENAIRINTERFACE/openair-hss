@@ -219,9 +219,6 @@ function main()
     rm -f /usr/local/etc/freeDiameter/epc*    2>&1
     rm -f /usr/etc/freeDiameter/mme*    2>&1
     rm -f /usr/etc/freeDiameter/epc*    2>&1
-    (cd $OPENAIRCN_DIR/GTPV1-U/GTPU_SP && make clean)
-    rm -f $OPENAIRCN_DIR/GTPV1-U/GTPU_SP/Bin/* 2>&1
-    rm -f /lib/xtables/libxt_GTPU*.so             2>&1
     mkdir -m 777 -p -v BUILD
   fi
   

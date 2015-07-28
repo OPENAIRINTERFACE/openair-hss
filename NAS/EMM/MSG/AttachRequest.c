@@ -260,6 +260,19 @@ decode_attach_request (
       attach_request->presencemask |= ATTACH_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_PRESENT;
       break;
 
+    case ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI: 
+      if ((decoded_result =
+	   decode_ms_network_feature_support(&attach_request->msnetworkfeaturesupport,
+					     ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI,
+					     buffer + decoded, len - decoded)) <= 0) {
+        //         return decoded_result;
+	LOG_FUNC_RETURN(decoded_result);
+      }
+      
+      decoded += decoded_result;
+      /* Set corresponding mask to 1 in presencemask */
+      attach_request->presencemask |= ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_PRESENT;
+      break;
     default:
       errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;
       {
@@ -421,5 +434,18 @@ encode_attach_request (
       encoded += encode_result;
   }
 
+  if ((attach_request->presencemask & ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_PRESENT)
+      == ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_PRESENT) {
+    if ((encode_result =
+	 encode_ms_network_feature_support(&attach_request->msnetworkfeaturesupport,
+					   ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI, 
+					   buffer + encoded, 
+					   len -  encoded)) < 0)
+      // Return in case of error
+      return encode_result;
+    else
+      encoded += encode_result;
+  }
+  
   return encoded;
 }
