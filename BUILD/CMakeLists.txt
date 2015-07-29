@@ -324,6 +324,7 @@ if (MESSAGE_CHART_GENERATOR)
   add_library(MSC  
     ${OPENAIRCN_DIR}/UTILS/MSC/msc.c
   )
+  set(MSC_LIB MSC)
 endif()
 include_directories(${OPENAIRCN_DIR}/UTILS/MSC/msc)
 
@@ -769,23 +770,14 @@ add_executable(mme_gw
   ${OPENAIRCN_DIR}/SCTP/sctp_primitives_server.c
   ${OPENAIRCN_DIR}/NAS/nas_mme_task.c
   )
-if (MESSAGE_CHART_GENERATOR)
 target_link_libraries (mme_gw
 #SECU_OSA
   -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC GTPV1U GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A SGW MME_APP LFDS MSC ${ITTI_LIB} CN_UTILS HASHTABLE
+   LIB_NAS_MME S1AP_LIB S1AP_EPC GTPV1U GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A SGW MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
   -Wl,--end-group
   pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
   )
-else (MESSAGE_CHART_GENERATOR)
-target_link_libraries (mme_gw
-#SECU_OSA
-  -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC GTPV1U GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A SGW MME_APP LFDS ${ITTI_LIB} CN_UTILS HASHTABLE
-  -Wl,--end-group
-  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
-  )
-endif(MESSAGE_CHART_GENERATOR)
+
 
 # Default parameters
 # Does not work on simple install (fqdn in /etc/hosts 127.0.1.1)
@@ -861,27 +853,17 @@ ENDIF( EPC_BUILD )
 
 # oai_sgw is SGW  node implementation
 ################################
-add_executable(oai_sgw
-  ${OPENAIRCN_BIN_DIR}/messages_xml.h
-  ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw_log.c
-  ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw.c
-  )
-if (MESSAGE_CHART_GENERATOR)
-target_link_libraries (oai_sgw
-  -Wl,--start-group
-  GTPV1U SECU_CN S6A SGW CN_UTILS LFDS MSC ${ITTI_LIB}
-  -Wl,--end-group
-  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
-  )
-else (MESSAGE_CHART_GENERATOR)
-target_link_libraries (oai_sgw
-  -Wl,--start-group
-  GTPV1U SECU_CN S6A SGW CN_UTILS LFDS ${ITTI_LIB}
-  -Wl,--end-group
-  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
-  )
-endif(MESSAGE_CHART_GENERATOR)
-
+#add_executable(oai_sgw
+#  ${OPENAIRCN_BIN_DIR}/messages_xml.h
+#  ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw_log.c
+#  ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw.c
+#  )
+#target_link_libraries (oai_sgw
+#  -Wl,--start-group
+#  GTPV1U SECU_CN S6A SGW CN_UTILS LFDS MSC ${ITTI_LIB}
+#  -Wl,--end-group
+#  pthread m sctp  rt crypt ${MSC_LIB} ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
+#  )
 
 
 ###################################"
@@ -890,30 +872,30 @@ endif(MESSAGE_CHART_GENERATOR)
 
 
 
-
-
-
+# TODO
 #unitary tests for Core NEtwork pieces
 #################################
-foreach(myExe s1ap
-    secu_knas_encrypt_eia1
-    secu_kenb
-    aes128_ctr_encrypt
-    aes128_ctr_decrypt
-    secu_knas_encrypt_eea2
-    secu_knas secu_knas_encrypt_eea1
-    kdf
-    aes128_cmac_encrypt
-    secu_knas_encrypt_eia2)
-  add_executable(test_${myExe}
-    ${OPENAIRCN_DIR}/TEST/test_util.c
-    ${OPENAIRCN_DIR}/TEST/test_${myExe}.c
-    )
-  target_link_libraries (test_${myExe}
-    -Wl,--start-group SECU_CN UTIL LFDS -Wl,--end-group m rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
-    )
-endforeach(myExe)
+#foreach(myExe s1ap
+#    secu_knas_encrypt_eia1
+#    secu_kenb
+#    aes128_ctr_encrypt
+#    aes128_ctr_decrypt
+#    secu_knas_encrypt_eea2
+#    secu_knas secu_knas_encrypt_eea1
+#    kdf
+#    aes128_cmac_encrypt
+#    secu_knas_encrypt_eia2)
+#    
+#  add_executable(test_${myExe}
+#    ${OPENAIRCN_DIR}/TEST/test_util.c
+#    ${OPENAIRCN_DIR}/TEST/test_${myExe}.c
+#    )
+#  target_link_libraries (test_${myExe}
+#    -Wl,--start-group SECU_CN UTIL LFDS -Wl,--end-group m rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
+#    )
+#endforeach(myExe)
 
+# TODO
 #add_executable(test_s1c_mme
 #  ${OPENAIRCN_DIR}/TEST/oaisim_mme_test_s1c.c
 #  ${OPENAIRCN_DIR}/TEST/oaisim_mme_test_s1c_scenario.h
@@ -937,7 +919,7 @@ endforeach(myExe)
 
 
 
-#  ???
+#  TODO MME standalone
 ###########################
 #add_executable(oai_mme
 #  ${OPENAIRCN_BIN_DIR}/messages_xml.h
@@ -986,10 +968,12 @@ add_custom_command (
 
 
 # add the install targets
-install (TARGETS oai_sgw RUNTIME DESTINATION /usr/local/bin)
+#install (TARGETS oai_sgw RUNTIME DESTINATION /usr/local/bin)
+install (TARGETS mme_gw  RUNTIME DESTINATION /usr/local/bin)
 FILE(MAKE_DIRECTORY /usr/local/etc/oai)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/epc.local.enb.conf" DESTINATION /usr/local/etc/oai)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/epc.conf"           DESTINATION /usr/local/etc/oai)
+install (FILES "${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf"        DESTINATION ${FREEDIAMETER_PATH}/../etc/freeDiameter)
 
 
 

@@ -280,5 +280,6 @@ ENDIF( ERROR_DB )
                 
 install (TARGETS oai_hss RUNTIME DESTINATION /usr/local/bin)
 FILE(MAKE_DIRECTORY /usr/local/etc/oai)
-install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hss.conf"   DESTINATION /usr/local/etc/oai)
-
+install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hss.conf"    DESTINATION /usr/local/etc/oai)
+install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hss_fd.conf" DESTINATION ${FREEDIAMETER_PATH}/../etc/freeDiameter)
+install (FILES "${CMAKE_CURRENT_BINARY_DIR}/acl.conf"    DESTINATION ${FREEDIAMETER_PATH}/../etc/freeDiameter)
