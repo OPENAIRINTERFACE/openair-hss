@@ -87,6 +87,8 @@ function main()
         else
             echo_success "$5 tables creation succeeded"
         fi
+    else
+      echo_success "Did not modify actual $5 tables"
     fi
     
     return 0
