@@ -89,7 +89,7 @@ function main()
   local -i run_gdb=0
   local    exe_arguments=" "
   local -i epc_local=0
-  local -r epc_default_config_file="$OPENAIRCN_DIR/OAI_EPC/epc.conf"
+  local -r epc_default_config_file="/usr/local/etc/oai/epc.conf"
   local    epc_config_file=$epc_default_config_file
   local    breakpoint_location=""
   local -i set_breakpoint=0
@@ -159,12 +159,12 @@ function main()
   cecho "OPENAIR_DIR    = $OPENAIR_DIR" $green
 
 
-  if [ ! -e $OPENAIRCN_DIR/OAI_EPC/mme_gw ]; then
-    echo_fatal "Cannot find $OPENAIRCN_DIR/OAI_EPC/mme_gw executable, have a look at the output of build_epc executable"
+  if [ ! -e /usr/local/bin/mme_gw ]; then
+    echo_fatal "Cannot find /usr/local/bin/mme_gw executable, have a look at the output of build_epc executable"
   fi
 
   if [ $epc_local -eq 1 ]; then
-    epc_config_file="$OPENAIRCN_DIR/OAI_EPC/epc.local.enb.conf"
+    epc_config_file="/usr/local/etc/oai/epc.local.enb.conf"
   fi
 
   if [ $g_run_msc_gen -eq 1 ]; then 
@@ -176,31 +176,23 @@ function main()
   if [ $run_gdb -eq 0 ]; then 
     # trap keyboard interrupt (control-c)
     trap control_c SIGINT
-    $OPENAIRCN_DIR/OAI_EPC/mme_gw  `echo $exe_arguments` 2>&1 
+    $SUDO mme_gw  `echo $exe_arguments` 2>&1 
   else
     # trap keyboard interrupt (control-c) is done by gdb
-    touch      ~/.gdb_mme_gw
-    chmod 777  ~/.gdb_mme_gw
-    echo "file $OPENAIRCN_DIR/OAI_EPC/mme_gw" > ~/.gdb_mme_gw
-    echo "set args $exe_arguments "        >> ~/.gdb_mme_gw
+    $SUDO touch      ~/.gdb_mme_gw
+    $SUDO chmod 777  ~/.gdb_mme_gw
+    $SUDO echo "file mme_gw" > ~/.gdb_mme_gw
+    $SUDO echo "set args $exe_arguments "        >> ~/.gdb_mme_gw
     if [ $set_breakpoint -eq 1 ]; then 
-      echo "break $breakpoint_location "        >> ~/.gdb_mme_gw
+      $SUDO echo "break $breakpoint_location "        >> ~/.gdb_mme_gw
     fi
-    echo "run"                             >> ~/.gdb_mme_gw
-    cat ~/.gdb_mme_gw
-    gdb -n -x ~/.gdb_mme_gw
+    $SUDO echo "run"                             >> ~/.gdb_mme_gw
+    $SUDO cat ~/.gdb_mme_gw
+    $SUDO gdb -n -x ~/.gdb_mme_gw
     if [ $g_run_msc_gen -eq 1 ]; then 
-      do_msc_gen
+      $SUDO do_msc_gen
     fi
   fi
 }
-
-sudo echo
-is_sudo=$?
-if [[ "$is_sudo" -ne 0 ]]; then
-  echo_error "This script must be run by root or a sudo'er"
-  echo
-  exit 1
-fi
 
 main "$@"

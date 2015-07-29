@@ -221,14 +221,14 @@ function main()
     if [[ $verbose -eq 1 ]]; then
       echo "Cleaning HSS"
     fi
-    $SUDO rm -Rf BUILD 2>&1
+    rm -Rf BUILD 2>&1
     if [[ $verbose -eq 1 ]]; then
       echo "Cleaning /usr/*/etc/freeDiameter"
     fi
-    $SUDO rm -f /usr/local/etc/freeDiameter/hss* 2>&1
+    $SUDO rm -f /usr/local/etc/freeDiameter/hss*     2>&1
     $SUDO rm -f /usr/local/etc/freeDiameter/acl.conf 2>&1
-    $SUDO rm -f /usr/etc/freeDiameter/hss* 2>&1
-    $SUDO rm -f /usr/etc/freeDiameter/acl.conf 2>&1
+    $SUDO rm -f /usr/etc/freeDiameter/hss*           2>&1
+    $SUDO rm -f /usr/etc/freeDiameter/acl.conf       2>&1
     mkdir -m 777 -p -v BUILD
   fi
   if [ ! -d ./BUILD ]; then
@@ -237,11 +237,8 @@ function main()
   cd ./BUILD
   cmake  $cmake_args ..
   make $make_args
-  make install
-  
-  cp -uv $OPENAIRCN_DIR/BUILD/HSS/BUILD/hss.conf $dbin
-  $SUDO cp -uv $OPENAIRCN_DIR/BUILD/HSS/BUILD/hss_fd.conf $OPENAIRCN_DIR/BUILD/HSS/BUILD/acl.conf $FREEDIAMETER_PREFIX/etc/freeDiameter
-  
+  chmod -Rf 777 *
+  $SUDO make install  
 }
 
 
