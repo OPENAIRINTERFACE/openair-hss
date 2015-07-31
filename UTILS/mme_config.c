@@ -665,6 +665,7 @@ config_parse_opt_line (
         mme_config_p->config_file = malloc (sizeof (char) * (config_file_len + 1));
         memcpy (mme_config_p->config_file, optarg, config_file_len);
         mme_config_p->config_file[config_file_len] = '\0';
+        fprintf (stdout, "%s mme_config.config_file %s\n", __FUNCTION__, mme_config_p->config_file);
       }
       break;
 
@@ -682,6 +683,7 @@ config_parse_opt_line (
 
     case 'K':
       mme_config_p->itti_config.log_file = strdup (optarg);
+      fprintf (stdout, "%s mme_config.itti_config.log_file %s\n", __FUNCTION__, mme_config_p->itti_config.log_file);
       break;
 
     case 'h':                  /* Fall through */

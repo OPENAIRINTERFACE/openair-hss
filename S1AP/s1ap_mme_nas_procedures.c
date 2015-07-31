@@ -100,11 +100,11 @@ s1ap_mme_handle_initial_ue_message (
 
     /*
      * Increment the sctp stream for the eNB association.
-     * * * * If the next sctp stream is >= outstream negociated between eNB and MME,
-     * * * * wrap to first stream.
-     * * * * TODO: search for the first available stream instead.
+     * If the next sctp stream is >= instream negociated between eNB and MME, wrap to first stream.
+     * TODO: search for the first available stream instead.
      */
-    if (ue_ref->eNB->next_sctp_stream++ >= ue_ref->eNB->outstreams) {
+    ue_ref->eNB->next_sctp_stream += 1;
+    if (ue_ref->eNB->next_sctp_stream >= ue_ref->eNB->instreams) {
       ue_ref->eNB->next_sctp_stream = 1;
     }
 

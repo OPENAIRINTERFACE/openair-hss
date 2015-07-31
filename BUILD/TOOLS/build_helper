@@ -161,12 +161,12 @@ install_xtables_addon_openaircn() {
     cd /usr/src
     echo "Downloading xtables-addon-openaircn-2.6 archive"
     sudo rm -rf xtables-addon-openaircn-2.6*
-    sudo wget http://www.openairinterface.org/openair-cn/xtables-addon-openaircn-2.6.tar.bz2 
-    sudo tar -xvjf xtables-addon-openaircn-2.6.tar.bz2 
-    cd xtables-addon-openaircn-2.6/
+    sudo wget http://www.openairinterface.org/openair-cn/xtables-addons-oai-2.5.tar.xz 
+    sudo tar -xvJf xtables-addons-oai-2.5.tar.xz 
+    cd xtables-addons-oai-2.5/
     sudo autoreconf -i
     sudo ./configure 
-    sudo echo "Compiling xtables-addon-openaircn-2.6"
+    sudo echo "Compiling xtables-addon-openaircn-2.5"
     sudo make
     sudo make install
     cd /lib/modules/`uname -r`

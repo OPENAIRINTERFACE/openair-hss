@@ -39,7 +39,7 @@ Description Implements the API used by the NAS layer running in the MME
 #ifndef __MME_API_H__
 #define __MME_API_H__
 
-# if defined(NAS_BUILT_IN_EPC)
+# if NAS_BUILT_IN_EPC
 #   include "mme_config.h"
 # endif
 #include "commonDef.h"
@@ -119,13 +119,22 @@ typedef struct mme_api_tft_s {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 int mme_api_get_emm_config(mme_api_emm_config_t *config,
                            mme_config_t *mme_config_p);
 #else
 int mme_api_get_emm_config(mme_api_emm_config_t *config);
 #endif
 int mme_api_get_esm_config(mme_api_esm_config_t *config);
+
+int
+mme_api_notify_new_guti (
+  const unsigned int ueid,
+  GUTI_t * const guti);
+
+int mme_api_notify_ue_id_changed (
+    const unsigned int old_ueid,
+    const unsigned int new_ueid);
 
 int mme_api_identify_guti(const GUTI_t *guti, auth_vector_t *vector);
 int mme_api_identify_imsi(const imsi_t *imsi, auth_vector_t *vector);
