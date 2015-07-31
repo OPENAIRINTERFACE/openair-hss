@@ -47,7 +47,7 @@
 #include <stdlib.h>             // malloc, free
 #include <string.h>             // memcpy
 
-#if ((defined(NAS_BUILT_IN_EPC) && defined(NAS_MME)) || (defined(ENABLE_NAS_UE_LOGGING) && defined(NAS_BUILT_IN_UE) && defined(NAS_UE)))
+#if (NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE)
 #  include "nas_itti_messaging.h"
 #endif
 #include "secu_defs.h"
@@ -316,7 +316,8 @@ nas_message_decrypt (
       LOG_TRACE (DEBUG,
                  "MAC Failure MSG:%08X(%u) <> INT ALGO:%08X(%u) Type of security context %u",
                  header->message_authentication_code, header->message_authentication_code, mac, mac, (emm_security_context != NULL) ? emm_security_context->type : 88);
-      LOG_FUNC_RETURN (TLV_DECODE_MAC_MISMATCH);
+      // LG: Do not return now (out of spec but we need that with only one MME)
+      //LOG_FUNC_RETURN (TLV_DECODE_MAC_MISMATCH);
     } else {
       LOG_TRACE (DEBUG, "Integrity: MAC Success");
     }
@@ -324,7 +325,14 @@ nas_message_decrypt (
     /*
      * Decrypt the security protected NAS message
      */
-    header->protocol_discriminator = _nas_message_decrypt (outbuf, inbuf + size, header->security_header_type, header->message_authentication_code, header->sequence_number, length - size, emm_security_context);
+    header->protocol_discriminator = _nas_message_decrypt (outbuf,
+        inbuf + size,
+        header->security_header_type,
+        header->message_authentication_code,
+        header->sequence_number,
+        length - size,
+        emm_security_context);
+
     bytes = length - size;
   } else {
     LOG_TRACE (DEBUG, "Plain NAS message found");
@@ -408,7 +416,7 @@ nas_message_decode (
         LOG_FUNC_RETURN (TLV_DECODE_MAC_MISMATCH);
       }
     }
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     /*
      * Log message header
      */
@@ -523,7 +531,7 @@ nas_message_encode (
         LOG_TRACE (DEBUG, "Did not increment emm_security_context.dl_count.seq_num because no security context");
       }
     }
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     /*
      * Log message header
      */
@@ -1196,7 +1204,7 @@ _nas_message_get_mac (
 
   if (!emm_security_context) {
     LOG_TRACE (DEBUG, "No security context set for integrity protection algorithm");
-#if defined(NAS_BUILT_IN_EPC) || defined(NAS_BUILT_IN_UE)
+#if NAS_BUILT_IN_EPC || NAS_BUILT_IN_UE
     LOG_FUNC_RETURN (0);
 #else
     LOG_FUNC_RETURN (0xabababab);
@@ -1295,7 +1303,7 @@ _nas_message_get_mac (
     LOG_TRACE (DEBUG,
                "NAS_SECURITY_ALGORITHMS_EIA0 dir %s count.seq_num %u",
                (direction == SECU_DIRECTION_UPLINK) ? "UPLINK" : "DOWNLINK", (direction == SECU_DIRECTION_UPLINK) ? emm_security_context->ul_count.seq_num : emm_security_context->dl_count.seq_num);
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     LOG_FUNC_RETURN (0);
 #else
     LOG_FUNC_RETURN (0xabababab);

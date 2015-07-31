@@ -284,6 +284,7 @@ sctp_send_msg (
     /*
      * The socket is invalid may be closed.
      */
+    SCTP_DEBUG ("The socket is invalid may be closed (assoc id %d)\n", sctp_assoc_id);
     return -1;
   }
 
@@ -677,7 +678,9 @@ sctp_intertask_interface (
 
     case SCTP_DATA_REQ:{
         if (sctp_send_msg (SCTP_DATA_REQ (received_message_p).assocId, SCTP_DATA_REQ (received_message_p).stream, SCTP_DATA_REQ (received_message_p).buffer, SCTP_DATA_REQ (received_message_p).bufLen) < 0) {
-          SCTP_ERROR ("Failed to send message over SCTP\n");
+          SCTP_ERROR ("Failed to send message over SCTP assoc ID %u stream %u\n",
+              SCTP_DATA_REQ (received_message_p).assocId,
+              SCTP_DATA_REQ (received_message_p).stream);
         }
       }
       break;

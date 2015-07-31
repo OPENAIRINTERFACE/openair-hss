@@ -76,7 +76,7 @@
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 void
 nas_proc_initialize (
   mme_config_t * mme_config_p)
@@ -329,7 +329,7 @@ nas_proc_ul_transfer_ind (
   LOG_FUNC_RETURN (rc);
 }
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 int
 nas_proc_auth_param_res (
   emm_cn_auth_res_t * emm_cn_auth_res)
