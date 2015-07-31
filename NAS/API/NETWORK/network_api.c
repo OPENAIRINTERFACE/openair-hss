@@ -162,7 +162,7 @@ network_api_initialize (
   /*
    * Initialize UDP communication channel with the network layer
    */
-#ifdef NAS_MME
+#if NAS_MME
   _network_api_id.endpoint = NETWORK_API_OPEN (SOCKET_SERVER, NULL, port);
 #endif
 

@@ -394,17 +394,17 @@ mme_api_get_esm_config (
 }
 
 /*
-
-   Name:    mme_api_notify_new_guti()
-
-   Description: Notify the MME of a generated GUTI for a UE(not spec).
-
-   Inputs:
-          ueid:      nas_ue id
-          guti:      EPS Globally Unique Temporary UE Identity
-   Return:    RETURNok, RETURNerror
-
-*/
+ *
+ *  Name:    mme_api_notify_new_guti()
+ *
+ *  Description: Notify the MME of a generated GUTI for a UE(not spec).
+ *
+ *  Inputs:
+ *         ueid:      nas_ue id
+ *         guti:      EPS Globally Unique Temporary UE Identity
+ *  Return:    RETURNok, RETURNerror
+ *
+ */
 int
 mme_api_notify_new_guti (
   const unsigned int ueid,
@@ -423,25 +423,53 @@ mme_api_notify_new_guti (
   LOG_FUNC_RETURN (RETURNerror);
 }
 
+/*
+ *
+ *  Name:    mme_api_notify_new_guti()
+ *
+ *  Description: Notify the MME of a change in ue id (reconnection).
+ *
+ *  Inputs:
+ *         old_ueid:      old nas_ue id
+ *         new_ueid:      new nas_ue id
+ *  Return:    RETURNok, RETURNerror
+ *
+ */
+int
+mme_api_notify_ue_id_changed (
+    const unsigned int old_ueid,
+    const unsigned int new_ueid)
+{
+  ue_context_t                           *ue_context = NULL;
+
+  LOG_FUNC_IN;
+  ue_context = mme_ue_context_exists_nas_ue_id (&mme_app_desc.mme_ue_contexts, old_ueid);
+
+  if (NULL != ue_context) {
+    LOG_TRACE (INFO, "mme_api_notify_ue_id_changed old ueid=" NAS_UE_ID_FMT " new ueid=" NAS_UE_ID_FMT "\n", old_ueid, new_ueid);
+    mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context, new_ueid, ue_context->imsi, ue_context->mme_s11_teid, new_ueid, &ue_context->guti);
+    LOG_FUNC_RETURN (RETURNok);
+  }
+
+  LOG_FUNC_RETURN (RETURNerror);
+}
+
 
 /*
-
-   Name:    mme_api_identify_guti()
-
-   Description: Requests the MME to identify the UE using the specified
-        GUTI. If the UE is known by the MME (a Mobility Manage-
-        ment context exists for this  UE  in  the  MME), its se-
-       curity context is returned.
-
-   Inputs:  guti:      EPS Globally Unique Temporary UE Identity
-        Others:    None
-
-   Outputs:     vector:    The EPS authentication vector of the UE if
-               known by the network; NULL otherwise.
-        Return:    RETURNok, RETURNerror
-        Others:    None
-
-*/
+ *
+ *  Name:    mme_api_identify_guti()
+ *
+ *  Description: Requests the MME to identify the UE using the specified
+ *       GUTI. If the UE is known by the MME (a Mobility Management context exists for this  UE  in  the  MME),
+ *       its security context is returned.
+ *
+ * Inputs:  guti:      EPS Globally Unique Temporary UE Identity
+ *      Others:    None
+ *
+ * Outputs:     vector:    The EPS authentication vector of the UE if known by the network; NULL otherwise.
+ *      Return:    RETURNok, RETURNerror
+ *      Others:    None
+ */
 int
 mme_api_identify_guti (
   const GUTI_t * guti,
@@ -465,22 +493,19 @@ mme_api_identify_guti (
 }
 
 /*
-
-   Name:    mme_api_identify_imsi()
-
-   Description: Requests the MME to identify the UE using the specified IMSI.
-        If the UE is known by the MME (a Mobility Management context exists for
-        this  UE  in  the  MME), its security context is returned.
-
-   Inputs:  imsi:      International Mobile Subscriber Identity
-        Others:    None
-
-   Outputs:     vector:    The EPS authentication vector of the UE if
-               known by the network; NULL otherwise.
-        Return:    RETURNok, RETURNerror
-        Others:    None
-
-*/
+ * Name:    mme_api_identify_imsi()
+ *
+ * Description: Requests the MME to identify the UE using the specified IMSI.
+ *      If the UE is known by the MME (a Mobility Management context exists for
+ *      this  UE  in  the  MME), its security context is returned.
+ *
+ * Inputs:  imsi:      International Mobile Subscriber Identity
+ *   Others:    None
+ *
+ * Outputs:     vector:    The EPS authentication vector of the UE if known by the network; NULL otherwise.
+ *   Return:    RETURNok, RETURNerror
+ *   Others:    None
+ */
 int
 mme_api_identify_imsi (
   const imsi_t * imsi,
@@ -505,24 +530,24 @@ mme_api_identify_imsi (
   LOG_FUNC_RETURN (RETURNerror);
 }
 
-/****************************************************************************
- **                                                                        **
- ** Name:    mme_api_identify_imei()                                   **
- **                                                                        **
- ** Description: Requests the MME to identify the UE using the specified   **
- **      IMEI. If the UE is known by the MME (a Mobility Manage-   **
- **      ment context exists for this  UE  in  the  MME), its se-  **
- **      curity context is returned.                               **
- **                                                                        **
- ** Inputs:  imei:      International Mobile Equipment Identity    **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     vector:    The EPS authentication vector of the UE if **
- **             known by the network; NULL otherwise.      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
+/*
+ *
+ * Name:    mme_api_identify_imei()
+ *
+ * Description: Requests the MME to identify the UE using the specified
+ *      IMEI. If the UE is known by the MME (a Mobility Manage-
+ *      ment context exists for this  UE  in  the  MME), its se-
+ *      curity context is returned.
+ *
+ * Inputs:  imei:      International Mobile Equipment Identity
+ *      Others:    None
+ *
+ * Outputs:     vector:    The EPS authentication vector of the UE if
+ *             known by the network; NULL otherwise.
+ *      Return:    RETURNok, RETURNerror
+ *      Others:    None
+ *
+ */
 int
 mme_api_identify_imei (
   const imei_t * imei,

@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 #  include "assertions.h"
 #  include "tree.h"
 #  include "emmData.h"

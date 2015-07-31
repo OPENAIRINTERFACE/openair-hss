@@ -256,7 +256,7 @@ emm_proc_identification_complete (
   /*
    * Get the UE context
    */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
@@ -438,7 +438,7 @@ _identification_request (
   emm_sap.u.emm_as.u.security.ueid = data->ueid;
   emm_sap.u.emm_as.u.security.msgType = EMM_AS_MSG_TYPE_IDENT;
   emm_sap.u.emm_as.u.security.identType = data->type;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (data->ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, data->ueid);
@@ -506,7 +506,7 @@ _identification_abort (
     /*
      * Get the UE context
      */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
     if (ueid > 0) {
       emm_ctx = emm_data_context_get (&_emm_data, ueid);
@@ -522,10 +522,12 @@ _identification_abort (
     /*
      * Stop timer T3470
      */
-    if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
-      LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3470.id);
-      emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " NAS_UE_ID_FMT " ", data->ueid);
+    if (NULL != emm_ctx) {
+      if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
+        LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3470.id);
+        emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " NAS_UE_ID_FMT " ", data->ueid);
+      }
     }
 
     /*

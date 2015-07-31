@@ -56,7 +56,7 @@
 #include <string.h>             // memset
 #include <stdlib.h>             // malloc, free
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 #  include "nas_itti_messaging.h"
 #endif
 #include "msc.h"
@@ -343,10 +343,10 @@ _emm_as_recv (
   memset (&nas_msg, 0, sizeof (nas_message_t));
   emm_security_context_t                 *security = NULL;      /* Current EPS NAS security context     */
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = NULL;
 #endif
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_ctx = emm_data_context_get (&_emm_data, ueid);
 
   if (emm_ctx) {
@@ -476,20 +476,16 @@ _emm_as_data_ind (
          */
         emm_data_context_t                     *emm_ctx = NULL;
 
-#if defined(NAS_BUILT_IN_EPC)
-
+#if NAS_BUILT_IN_EPC
         if (msg->ueid > 0) {
           emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
-
           if (emm_ctx) {
             security = emm_ctx->security;
           }
         }
 #else
-
         if (msg->ueid < EMM_DATA_NB_UE_MAX) {
           emm_ctx = _emm_data.ctx[msg->ueid];
-
           if (emm_ctx) {
             security = emm_ctx->security;
           }
@@ -501,7 +497,8 @@ _emm_as_data_ind (
                                                                              msg->NASmsg.length,
                                                                              security);
 
-        if (bytes < 0) {
+        if ((bytes < 0) &&
+            (bytes != TLV_DECODE_MAC_MISMATCH)) { // not in spec, (case identity response for attach with unknown GUTI)
           /*
            * Failed to decrypt the message
            */
@@ -573,7 +570,7 @@ _emm_as_establish_req (
   nas_message_t                           nas_msg;
 
   memset (&nas_msg, 0, sizeof (nas_message_t));
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
 #else
 
@@ -988,7 +985,7 @@ _emm_as_send (
    * Send the message to the Access Stratum or S1AP in case of MME
    */
   if (as_msg.msgID > 0) {
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     LOG_TRACE (DEBUG, "EMMAS-SAP - " "Sending msg with id 0x%x, primitive %s (%d) to S1AP layer for transmission", as_msg.msgID, _emm_as_primitive_str[msg->primitive - _EMMAS_START - 1], msg->primitive);
 
     switch (as_msg.msgID) {
@@ -1098,7 +1095,7 @@ _emm_as_data_req (
     emm_security_context_t                 *emm_security_context = NULL;
     struct emm_data_context_s              *emm_ctx = NULL;
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
 #else
 
@@ -1191,7 +1188,7 @@ _emm_as_status_ind (
     emm_security_context_t                 *emm_security_context = NULL;
     struct emm_data_context_s              *emm_ctx = NULL;
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
 #else
 
@@ -1357,7 +1354,7 @@ _emm_as_security_req (
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
 #else
 
@@ -1458,7 +1455,7 @@ _emm_as_security_rej (
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
 #else
 
@@ -1561,7 +1558,7 @@ _emm_as_establish_cnf (
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
 #else
 
@@ -1683,7 +1680,7 @@ _emm_as_establish_rej (
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
 #else
 

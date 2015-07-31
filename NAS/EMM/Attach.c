@@ -68,7 +68,7 @@
 
 #include "mme_api.h"
 #include "mme_config.h"
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 #  include "nas_itti_messaging.h"
 #endif
 #include "obj_hashtable.h"
@@ -247,7 +247,7 @@ emm_proc_attach_request (
   memset (&ue_ctx, 0, sizeof (emm_data_context_t));
   ue_ctx.is_dynamic = FALSE;
   ue_ctx.ueid = ueid;
-#if !defined(NAS_BUILT_IN_EPC)
+#if !NAS_BUILT_IN_EPC
 
   /*
    * UE identifier sanity check
@@ -282,7 +282,7 @@ emm_proc_attach_request (
    */
   emm_data_context_t                    **emm_ctx = NULL;
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_data_context_t                     *temp = NULL;
   void                                   *emm_ue_id = NULL;
 
@@ -333,23 +333,22 @@ emm_proc_attach_request (
       LOG_FUNC_RETURN (RETURNok);
     }
   } else {
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
     if (*emm_ctx == NULL) {
       if (NULL != guti) {
         temp = emm_data_context_get_by_guti (&_emm_data, guti);
 
         if (NULL != temp) {
+          mme_api_notify_ue_id_changed(temp->ueid, ueid);
           // ue_id has changed
           emm_data_context_remove (&_emm_data, temp);
           // ue_id changed
           temp->ueid = ueid;
           // put context with right key
           emm_data_context_add (&_emm_data, temp);
-          previous_context_found = TRUE;
+          previous_context_found = FALSE;
         }
-
-        AssertFatal (0, "Should not go here");
       }
     } else {
       previous_context_found = TRUE;
@@ -394,7 +393,7 @@ emm_proc_attach_request (
       (*emm_ctx)->T3470.id = NAS_TIMER_INACTIVE_ID;
       (*emm_ctx)->T3470.sec = T3470_DEFAULT_VALUE;
       emm_fsm_set_status (ueid, *emm_ctx, EMM_DEREGISTERED);
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
       emm_data_context_add (&_emm_data, *(emm_ctx));
 #endif
     }
@@ -468,7 +467,7 @@ emm_proc_attach_reject (
   /*
    * Update the EMM cause code
    */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (ueid > 0)
 #else
@@ -537,7 +536,7 @@ emm_proc_attach_complete (
   /*
    * Get the UE context
    */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
@@ -615,33 +614,33 @@ emm_proc_attach_complete (
 
 
 /*
-   --------------------------------------------------------------------------
-                Timer handlers
-   --------------------------------------------------------------------------
-*/
+ * --------------------------------------------------------------------------
+ * Timer handlers
+ * --------------------------------------------------------------------------
+ */
 
-/****************************************************************************
- **                                                                        **
- ** Name:    _emm_attach_t3450_handler()                               **
- **                                                                        **
- ** Description: T3450 timeout handler                                     **
- **                                                                        **
- **              3GPP TS 24.301, section 5.5.1.2.7, case c                 **
- **      On the first expiry of the timer T3450, the network shall **
- **      retransmit the ATTACH ACCEPT message and shall reset and  **
- **      restart timer T3450. This retransmission is repeated four **
- **      times, i.e. on the fifth expiry of timer T3450, the at-   **
- **      tach procedure shall be aborted and the MME enters state  **
- **      EMM-DEREGISTERED.                                         **
- **                                                                        **
- ** Inputs:  args:      handler parameters                         **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    None                                       **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
+/*
+ *
+ * Name:    _emm_attach_t3450_handler()
+ *
+ * Description: T3450 timeout handler
+ *
+ *              3GPP TS 24.301, section 5.5.1.2.7, case c
+ *      On the first expiry of the timer T3450, the network shall
+ *      retransmit the ATTACH ACCEPT message and shall reset and
+ *      restart timer T3450. This retransmission is repeated four
+ *      times, i.e. on the fifth expiry of timer T3450, the at-
+ *      tach procedure shall be aborted and the MME enters state
+ *      EMM-DEREGISTERED.
+ *
+ * Inputs:  args:      handler parameters
+ *      Others:    None
+ *
+ * Outputs:     None
+ *      Return:    None
+ *      Others:    None
+ *
+ */
 static void                            *
 _emm_attach_t3450_handler (
   void *args)
@@ -660,7 +659,7 @@ _emm_attach_t3450_handler (
    */
   emm_data_context_t                     *emm_ctx = NULL;
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_ctx = emm_data_context_get (&_emm_data, data->ueid);
 #else
   emm_ctx = _emm_data.ctx[data->ueid];
@@ -682,25 +681,25 @@ _emm_attach_t3450_handler (
 }
 
 /*
-   --------------------------------------------------------------------------
-                Abnormal cases in the MME
-   --------------------------------------------------------------------------
-*/
+ * --------------------------------------------------------------------------
+ * Abnormal cases in the MME
+ * --------------------------------------------------------------------------
+ */
 
-/****************************************************************************
- **                                                                        **
- ** Name:    _emm_attach_release()                                     **
- **                                                                        **
- ** Description: Releases the UE context data.                             **
- **                                                                        **
- ** Inputs:  args:      Data to be released                        **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    None                                       **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
+/*
+ *
+ * Name:    _emm_attach_release()
+ *
+ * Description: Releases the UE context data.
+ *
+ * Inputs:  args:      Data to be released
+ *      Others:    None
+ *
+ * Outputs:     None
+ *      Return:    None
+ *      Others:    None
+ *
+ */
 static int
 _emm_attach_release (
   void *args)
@@ -791,7 +790,7 @@ _emm_attach_release (
     /*
      * Release the EMM context
      */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     emm_data_context_remove (&_emm_data, emm_ctx);
 #else
     free (_emm_data.ctx[ueid]);
@@ -811,25 +810,25 @@ _emm_attach_release (
   LOG_FUNC_RETURN (rc);
 }
 
-/****************************************************************************
- **                                                                        **
- ** Name:    _emm_attach_reject()                                      **
- **                                                                        **
- ** Description: Performs the attach procedure not accepted by the network.**
- **                                                                        **
- **              3GPP TS 24.301, section 5.5.1.2.5                         **
- **      If the attach request cannot be accepted by the network,  **
- **      the MME shall send an ATTACH REJECT message to the UE in- **
- **      including an appropriate EMM cause value.                 **
- **                                                                        **
- ** Inputs:  args:      UE context data                            **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    None                                       **
- **                                                                        **
- ***************************************************************************/
+/*
+ *
+ * Name:    _emm_attach_reject()
+ *
+ * Description: Performs the attach procedure not accepted by the network.
+ *
+ *              3GPP TS 24.301, section 5.5.1.2.5
+ *      If the attach request cannot be accepted by the network,
+ *      the MME shall send an ATTACH REJECT message to the UE in-
+ *      including an appropriate EMM cause value.
+ *
+ * Inputs:  args:      UE context data
+ *      Others:    None
+ *
+ * Outputs:     None
+ *      Return:    RETURNok, RETURNerror
+ *      Others:    None
+ *
+ */
 static int
 _emm_attach_reject (
   void *args)
@@ -885,20 +884,20 @@ _emm_attach_reject (
   LOG_FUNC_RETURN (rc);
 }
 
-/****************************************************************************
- **                                                                        **
- ** Name:    _emm_attach_abort()                                       **
- **                                                                        **
- ** Description: Aborts the attach procedure                               **
- **                                                                        **
- ** Inputs:  args:      Attach procedure data to be released       **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    T3450                                      **
- **                                                                        **
- ***************************************************************************/
+/*
+ *
+ * Name:    _emm_attach_abort()
+ *
+ * Description: Aborts the attach procedure
+ *
+ * Inputs:  args:      Attach procedure data to be released
+ *      Others:    None
+ *
+ * Outputs:     None
+ *      Return:    RETURNok, RETURNerror
+ *      Others:    T3450
+ *
+ */
 static int
 _emm_attach_abort (
   void *args)
@@ -915,7 +914,7 @@ _emm_attach_abort (
     esm_sap_t                               esm_sap;
 
     LOG_TRACE (WARNING, "EMM-PROC  - Abort the attach procedure (ueid=" NAS_UE_ID_FMT ")", ueid);
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     ctx = emm_data_context_get (&_emm_data, ueid);
 #else
     ctx = _emm_data.ctx[ueid];
@@ -974,27 +973,24 @@ _emm_attach_abort (
 }
 
 /*
-   --------------------------------------------------------------------------
-        Functions that may initiate EMM common procedures
-   --------------------------------------------------------------------------
-*/
+ * --------------------------------------------------------------------------
+ * Functions that may initiate EMM common procedures
+ * --------------------------------------------------------------------------
+ */
 
-/****************************************************************************
- **                                                                        **
- ** Name:    _emm_attach_identify()                                    **
- **                                                                        **
- ** Description: Performs UE's identification. May initiates identifica-   **
- **      tion, authentication and security mode control EMM common **
- **      procedures.                                               **
- **                                                                        **
- ** Inputs:  args:      Identification argument parameters         **
- **      Others:    None                                       **
- **                                                                        **
- ** Outputs:     None                                                      **
- **      Return:    RETURNok, RETURNerror                      **
- **      Others:    _emm_data                                  **
- **                                                                        **
- ***************************************************************************/
+/*
+ * Name:    _emm_attach_identify()
+ *
+ * Description: Performs UE's identification. May initiates identification, authentication and security mode control EMM common procedures.
+ *
+ * Inputs:  args:      Identification argument parameters
+ *      Others:    None
+ *
+ * Outputs:     None
+ *      Return:    RETURNok, RETURNerror
+ *      Others:    _emm_data
+ *
+ */
 static int
 _emm_attach_identify (
   void *args)
@@ -1014,7 +1010,7 @@ _emm_attach_identify (
     /*
      * The UE identifies itself using an IMSI
      */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     if (!emm_ctx->security) {
       /*
        * Ask upper layer to fetch new security context
@@ -1039,7 +1035,8 @@ _emm_attach_identify (
      */
     rc = mme_api_identify_guti (emm_ctx->guti, &emm_ctx->vector);
 
-    if (rc != RETURNok) {
+#warning "LG Temp. Force identification here"
+    //LG Force identification here if (rc != RETURNok) {
       LOG_TRACE (WARNING, "EMM-PROC  - Failed to identify the UE using provided GUTI (tmsi=%u)", emm_ctx->guti->m_tmsi);
       /*
        * 3GPP TS 24.401, Figure 5.3.2.1-1, point 4
@@ -1066,7 +1063,7 @@ _emm_attach_identify (
        * procedure completes
        */
       LOG_FUNC_RETURN (rc);
-    }
+    //LG Force identification here}
   } else if ((emm_ctx->imei) && (emm_ctx->is_emergency)) {
     /*
      * The UE is attempting to attach to the network for emergency
@@ -1142,7 +1139,7 @@ _emm_attach_identify (
        */
       rc = _emm_attach_security (emm_ctx);
     }
-#if !defined(NAS_BUILT_IN_EPC)
+#if !NAS_BUILT_IN_EPC
     else {
       /*
        * 3GPP TS 24.401, Figure 5.3.2.1-1, point 5a
@@ -1192,7 +1189,7 @@ _emm_attach_identify (
  **                  Others:    _emm_data                                  **
  **                                                                        **
  ***************************************************************************/
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 int
 emm_attach_security (
   void *args)
@@ -1344,7 +1341,7 @@ _emm_attach (
        * Reset the retransmission counter
        */
       data->retransmission_count = 0;
-#if defined(ORIGINAL_CODE)
+#if ORIGINAL_CODE
       /*
        * Setup the ESM message container
        */
