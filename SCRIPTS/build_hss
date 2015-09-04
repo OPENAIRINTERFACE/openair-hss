@@ -200,6 +200,10 @@ function main()
   
   mkdir -m 777 -p $dbin $dlog
 
+  if [ ! -d ./BUILD ]; then
+    $SUDO mkdir -p -m 777 /usr/local/etc/oai  
+  fi
+
   # for conf files copy in this bash script
   if [ -d /usr/lib/freeDiameter ]; then
     export FREEDIAMETER_PREFIX=/usr
@@ -223,12 +227,10 @@ function main()
     fi
     rm -Rf BUILD 2>&1
     if [[ $verbose -eq 1 ]]; then
-      echo "Cleaning /usr/*/etc/freeDiameter"
+      echo "Cleaning $FREEDIAMETER_PREFIX/etc/freeDiameter"
     fi
-    $SUDO rm -f /usr/local/etc/freeDiameter/hss*     2>&1
-    $SUDO rm -f /usr/local/etc/freeDiameter/acl.conf 2>&1
-    $SUDO rm -f /usr/etc/freeDiameter/hss*           2>&1
-    $SUDO rm -f /usr/etc/freeDiameter/acl.conf       2>&1
+    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/hss*     2>&1
+    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/acl.conf 2>&1
     mkdir -m 777 -p -v BUILD
   fi
   if [ ! -d ./BUILD ]; then
@@ -243,4 +245,5 @@ function main()
 
 
 main "$@"
+
 
