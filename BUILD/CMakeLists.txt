@@ -970,7 +970,6 @@ add_custom_command (
 # add the install targets
 #install (TARGETS oai_sgw RUNTIME DESTINATION /usr/local/bin)
 install (TARGETS mme_gw  RUNTIME DESTINATION /usr/local/bin)
-FILE(MAKE_DIRECTORY /usr/local/etc/oai)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/epc.local.enb.conf" DESTINATION /usr/local/etc/oai)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/epc.conf"           DESTINATION /usr/local/etc/oai)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf"        DESTINATION ${FREEDIAMETER_PATH}/../etc/freeDiameter)

@@ -211,6 +211,10 @@ function main()
   
   mkdir -m 777 -p $dbin $dlog
   
+  if [ ! -d ./BUILD ]; then
+    $SUDO mkdir -p -m 777 /usr/local/etc/oai  
+  fi
+  
   ##############################################################################
   # Compile userspace executable
   ##############################################################################
@@ -221,10 +225,8 @@ function main()
     fi
     rm -f $OPENAIRCN_DIR/OAI_EPC/mme_gw
     rm -Rf $OPENAIRCN_DIR/BUILD/EPC/BUILD  2>&1
-    $SUDO rm -f /usr/local/etc/freeDiameter/mme*    2>&1
-    $SUDO rm -f /usr/local/etc/freeDiameter/epc*    2>&1
-    $SUDO rm -f /usr/etc/freeDiameter/mme*    2>&1
-    $SUDO rm -f /usr/etc/freeDiameter/epc*    2>&1
+    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/mme*    2>&1
+    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/epc*    2>&1
     mkdir -m 777 -p -v BUILD
   fi
   
@@ -252,4 +254,5 @@ function main()
 
 
 main "$@"
+
 
