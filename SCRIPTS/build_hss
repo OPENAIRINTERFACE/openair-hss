@@ -200,7 +200,7 @@ function main()
   
   mkdir -m 777 -p $dbin $dlog
 
-  if [ ! -d ./BUILD ]; then
+  if [ ! -d /usr/local/etc/oai ]; then
     $SUDO mkdir -p -m 777 /usr/local/etc/oai  
   fi
 
