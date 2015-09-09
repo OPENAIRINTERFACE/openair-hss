@@ -56,10 +56,10 @@ function help()
   echo_error "Examples:"
   echo_error " "
   echo_error "Case 1 - EPC run on same HSS host"
-  echo_error "build_epc --debug --local-hss"
+  echo_error "build_epc --local-hss"
   echo_error " "
   echo_error "Case 2 - EPC and HSS do not run on same host"
-  echo_error "build_epc --debug --remote-hss my_hss_fqdn"
+  echo_error "build_epc --remote-hss my_hss_fqdn"
 }
 
 
