@@ -27,28 +27,20 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifdef RTAI
-#  include <rtai_shm.h>
-#endif
-
 #include "assertions.h"
 #include "memory_pools.h"
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
 #  include "vcd_signal_dumper.h"
 #endif
 
 /*------------------------------------------------------------------------------*/
 const static int                        mp_debug = 0;
 
-#ifdef RTAI
-#  define MP_DEBUG(x, args...) do { if (mp_debug) rt_printk("[MP][D]"x, ##args); } \
-  while(0)
-#else
-#  define MP_DEBUG(x, args...) do { if (mp_debug) fprintf(stdout, "[MP][D]"x, ##args); fflush (stdout); } \
-  while(0)
-#endif
 
-#if defined(OAI_EMU) || defined(RTAI)
+#define MP_DEBUG(x, args...) do { if (mp_debug) fprintf(stdout, "[MP][D]"x, ##args); fflush (stdout); } \
+  while(0)
+
+#if OAI_EMU
 uint64_t                                vcd_mp_alloc;
 uint64_t                                vcd_mp_free;
 #endif
@@ -474,7 +466,7 @@ memory_pools_allocate (
   pool_id_t                               pool;
   items_group_index_t                     item_index = ITEMS_GROUP_INDEX_INVALID;
 
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_ALLOC, __sync_or_and_fetch (&vcd_mp_alloc, 1L << info_0));
 #endif
   /*
@@ -527,7 +519,7 @@ memory_pools_allocate (
     MP_DEBUG (" Alloc [--][------]{------}, %3u %3u, %6u, failed!\n", info_0, info_1, item_size);
   }
 
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_ALLOC, __sync_and_and_fetch (&vcd_mp_alloc, ~(1L << info_0)));
 #endif
   return memory_pool_item_handle;
@@ -559,7 +551,7 @@ memory_pools_free (
   memory_pool_item = memory_pool_item_from_handler (memory_pool_item_handle);
   AssertError (memory_pool_item != NULL, return (EXIT_FAILURE), "Failed to retrieve memory pool item for handle %p!\n", memory_pool_item_handle);
   info_1 = memory_pool_item->start.info[1];
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_FREE, __sync_or_and_fetch (&vcd_mp_free, 1L << info_1));
 #endif
   /*
@@ -592,7 +584,7 @@ memory_pools_free (
   AssertError (result == EXIT_SUCCESS, {
                }
                , "Failed to free memory pool item (pool %u, item %d)!\n", pool, item_index);
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_FREE, __sync_and_and_fetch (&vcd_mp_free, ~(1L << info_1)));
 #endif
   return (result);

@@ -43,7 +43,7 @@
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
 
-#if ((defined(NAS_BUILT_IN_EPC) && defined(NAS_MME)) || (defined(ENABLE_NAS_UE_LOGGING) && defined(NAS_BUILT_IN_UE) && defined(NAS_UE)))
+#if ((NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE))
 #  include "nas_itti_messaging.h"
 #endif
 
@@ -95,12 +95,12 @@ esm_msg_decode (
   int                                     header_result;
   int                                     decode_result;
 
-#if ((defined(NAS_BUILT_IN_EPC) && defined(NAS_MME)) || (defined(ENABLE_NAS_UE_LOGGING) && defined(NAS_BUILT_IN_UE) && defined(NAS_UE)))
+#if ((NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE))
   uint8_t                                *buffer_log = buffer;
   uint32_t                                len_log = len;
   int                                     down_link;
 
-#  if ((defined(NAS_BUILT_IN_EPC) && defined(NAS_MME)))
+#  if ((NAS_BUILT_IN_EPC && NAS_MME))
   down_link = 0;
 #  else
   down_link = 1;
@@ -219,7 +219,7 @@ esm_msg_decode (
     LOG_TRACE (ERROR, "ESM-MSG   - Failed to decode L3 ESM message 0x%x " "(%u)", msg->header.message_type, decode_result);
     LOG_FUNC_RETURN (decode_result);
   } else {
-#if ((defined(NAS_BUILT_IN_EPC) && defined(NAS_MME)) || (defined(ENABLE_NAS_UE_LOGGING) && defined(NAS_BUILT_IN_UE) && defined(NAS_UE)))
+#if ((NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE))
     /*
      * Message has been decoded and security header removed, handle it has a plain message
      */
@@ -257,11 +257,11 @@ esm_msg_encode (
   int                                     header_result;
   int                                     encode_result;
 
-#if ((defined(NAS_BUILT_IN_EPC) && defined(NAS_MME)) || (defined(ENABLE_NAS_UE_LOGGING) && defined(NAS_BUILT_IN_UE) && defined(NAS_UE)))
+#if ((NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE))
   uint8_t                                *buffer_log = buffer;
   int                                     down_link;
 
-#  if ((defined(NAS_BUILT_IN_EPC) && defined(NAS_MME)))
+#  if ((NAS_BUILT_IN_EPC && NAS_MME))
   down_link = 1;
 #  else
   down_link = 0;
@@ -379,7 +379,7 @@ esm_msg_encode (
   if (encode_result < 0) {
     LOG_TRACE (ERROR, "ESM-MSG   - Failed to encode L3 ESM message 0x%x " "(%d)", msg->header.message_type, encode_result);
   } else {
-#if ((defined(NAS_BUILT_IN_EPC) && defined(NAS_MME)) || (defined(ENABLE_NAS_UE_LOGGING) && defined(NAS_BUILT_IN_UE) && defined(NAS_UE)))
+#if ((NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE))
     nas_itti_plain_msg ((char *)buffer_log, (nas_message_t *) msg, header_result + encode_result, down_link);
 #endif
   }

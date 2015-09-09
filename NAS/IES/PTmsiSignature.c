@@ -49,7 +49,7 @@ decode_p_tmsi_signature (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_p_tmsi_signature_xml (ptmsisignature, iei);
 #endif
   return decoded;
@@ -69,7 +69,7 @@ encode_p_tmsi_signature (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, P_TMSI_SIGNATURE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_p_tmsi_signature_xml (ptmsisignature, iei);
 #endif
 

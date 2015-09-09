@@ -98,7 +98,7 @@ s1ap_message_decoded_callback           messages_callback[][3] = {
   {0, 0, 0},                    /* eNBConfigurationTransfer */
   {0, 0, 0},                    /* MMEConfigurationTransfer */
   {0, 0, 0},                    /* CellTrafficTrace */
-#if defined(UPDATE_RELEASE_9)
+#if UPDATE_RELEASE_9
   {0, 0, 0},                    /* Kill */
   {0, 0, 0},                    /* DownlinkUEAssociatedLPPaTransport  */
   {0, 0, 0},                    /* UplinkUEAssociatedLPPaTransport */

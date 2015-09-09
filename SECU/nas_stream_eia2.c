@@ -38,7 +38,7 @@
 #include "assertions.h"
 #include "conversions.h"
 
-#define SECU_DEBUG
+#define SECU_DEBUG 1
 
 /*!
    @brief Create integrity cmac t for a given message.
@@ -76,7 +76,7 @@ nas_stream_encrypt_eia2 (
   memcpy (&m[0], &local_count, 4);
   m[4] = ((stream_cipher->bearer & 0x1F) << 3) | ((stream_cipher->direction & 0x01) << 2);
   memcpy (&m[8], stream_cipher->message, m_length);
-#if defined(SECU_DEBUG)
+#if SECU_DEBUG
   {
     int                                     i;
 
@@ -103,7 +103,7 @@ nas_stream_encrypt_eia2 (
   ret = CMAC_Update (cmac_ctx, m, m_length + 8);
   CMAC_Final (cmac_ctx, data, &size);
   CMAC_CTX_free (cmac_ctx);
-#if defined(SECU_DEBUG)
+#if SECU_DEBUG
   {
     int                                     i;
 

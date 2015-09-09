@@ -62,7 +62,7 @@ mme_app_send_s11_release_access_bearers_req (
   SgwReleaseAccessBearersRequest         *release_access_bearers_request_p = NULL;
 
   DevAssert (ue_context_pP != NULL);
-#if !defined(ENABLE_STANDALONE_EPC)
+#if ENABLE_STANDALONE_EPC == 0
   to_task = TASK_S11;
 #else
   to_task = TASK_SPGW_APP;
@@ -99,7 +99,7 @@ mme_app_send_s11_create_session_req (
   struct apn_configuration_s             *default_apn_p = NULL;
 
   DevAssert (ue_context_pP != NULL);
-#if !defined(ENABLE_STANDALONE_EPC)
+#if ENABLE_STANDALONE_EPC == 0
   to_task = TASK_S11;
 #else
   to_task = TASK_SPGW_APP;
@@ -674,7 +674,7 @@ mme_app_handle_initial_context_setup_rsp (
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "MME_APP_INITIAL_CONTEXT_SETUP_RSP Unknown ue %u", initial_ctxt_setup_rsp_pP->mme_ue_s1ap_id);
     return;
   }
-#if !defined(ENABLE_STANDALONE_EPC)
+#if ENABLE_STANDALONE_EPC == 0
   to_task = TASK_S11;
 #else
   to_task = TASK_SPGW_APP;

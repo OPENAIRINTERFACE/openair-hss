@@ -77,7 +77,7 @@ decode_quality_of_service (
   qualityofservice->signalingindication = (*(buffer + decoded) >> 4) & 0x1;
   qualityofservice->sourcestatisticsdescriptor = *(buffer + decoded) & 0xf;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_quality_of_service_xml (qualityofservice, iei);
 #endif
   return decoded;
@@ -97,7 +97,7 @@ encode_quality_of_service (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, QUALITY_OF_SERVICE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_quality_of_service_xml (qualityofservice, iei);
 #endif
 

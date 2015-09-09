@@ -46,7 +46,7 @@ decode_eps_update_type (
   epsupdatetype->activeflag = (*(buffer + decoded) >> 3) & 0x1;
   epsupdatetype->epsupdatetypevalue = *(buffer + decoded) & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_update_type_xml (epsupdatetype, iei);
 #endif
   return decoded;
@@ -65,7 +65,7 @@ decode_u8_eps_update_type (
   epsupdatetype->activeflag = (*(buffer + decoded) >> 3) & 0x1;
   epsupdatetype->epsupdatetypevalue = *(buffer + decoded) & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_update_type_xml (epsupdatetype, iei);
 #endif
   return decoded;
@@ -84,7 +84,7 @@ encode_eps_update_type (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EPS_UPDATE_TYPE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_update_type_xml (epsupdatetype, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | ((epsupdatetype->activeflag & 0x1) << 3) | (epsupdatetype->epsupdatetypevalue & 0x7);

@@ -55,7 +55,6 @@
 #include "sctp_itti_messaging.h"
 #include "msc.h"
 
-#define SCTP_DUMP_LIST
 
 #define SCTP_RC_ERROR       -1
 #define SCTP_RC_NORMAL_READ  0
@@ -216,7 +215,7 @@ static void
 sctp_dump_assoc (
   struct sctp_association_s *sctp_assoc_p)
 {
-#if defined(SCTP_DUMP_LIST)
+#if SCTP_DUMP_LIST
   int                                     i;
 
   if (sctp_assoc_p == NULL) {
@@ -248,7 +247,7 @@ static void
 sctp_dump_list (
   void)
 {
-#if defined(SCTP_DUMP_LIST)
+#if SCTP_DUMP_LIST
   struct sctp_association_s              *sctp_assoc_p;
 
   sctp_assoc_p = sctp_desc.available_connections_head;

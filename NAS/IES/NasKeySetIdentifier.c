@@ -46,7 +46,7 @@ decode_nas_key_set_identifier (
   naskeysetidentifier->tsc = (*(buffer + decoded) >> 3) & 0x1;
   naskeysetidentifier->naskeysetidentifier = *(buffer + decoded) & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_nas_key_set_identifier_xml (naskeysetidentifier, iei);
 #endif
   return decoded;
@@ -65,7 +65,7 @@ decode_u8_nas_key_set_identifier (
   naskeysetidentifier->tsc = (*(buffer + decoded) >> 3) & 0x1;
   naskeysetidentifier->naskeysetidentifier = *(buffer + decoded) & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_nas_key_set_identifier_xml (naskeysetidentifier, iei);
 #endif
   return decoded;
@@ -84,7 +84,7 @@ encode_nas_key_set_identifier (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, NAS_KEY_SET_IDENTIFIER_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_nas_key_set_identifier_xml (naskeysetidentifier, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | ((naskeysetidentifier->tsc & 0x1) << 3) | (naskeysetidentifier->naskeysetidentifier & 0x7);
@@ -101,7 +101,7 @@ encode_u8_nas_key_set_identifier (
   uint8_t                                 encoded = 0;
   uint8_t                                 iei = 0;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_nas_key_set_identifier_xml (naskeysetidentifier, 0);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | ((naskeysetidentifier->tsc & 0x1) << 3) | (naskeysetidentifier->naskeysetidentifier & 0x7);

@@ -141,7 +141,7 @@ emm_recv_attach_request (
   /*
    * Message checking
    */
-#if !defined(UPDATE_RELEASE_9)
+#if UPDATE_RELEASE_9 == 0
 
   /*
    * SR: In releases 9 and beyond the mandatory ie (old GUTI) has been removed
@@ -154,7 +154,7 @@ emm_recv_attach_request (
     *emm_cause = EMM_CAUSE_INVALID_MANDATORY_INFO;
     LOG_TRACE (WARNING, "EMMAS-SAP - [%08x] - Received GUTI identity without " "old GUTI IEI", ueid);
   } else
-#endif /* !defined(UPDATE_RELEASE_9) */
+#endif /* UPDATE_RELEASE_9 == 0 */
   if (msg->uenetworkcapability.spare != 0b000) {
     /*
      * Spare bits shall be coded as zero

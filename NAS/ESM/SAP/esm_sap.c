@@ -538,7 +538,7 @@ _esm_sap_recv (
            */
           esm_cause = ESM_CAUSE_SUCCESS;
         } else {
-#if defined(ORIGINAL_CODE)
+#if ORIGINAL_CODE
           /*
            * Setup PDN type
            */

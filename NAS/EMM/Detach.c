@@ -192,8 +192,7 @@ emm_proc_detach_request (
   /*
    * Get the UE context
    */
-#if defined(NAS_BUILT_IN_EPC)
-
+#if NAS_BUILT_IN_EPC
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
   }
@@ -282,7 +281,7 @@ emm_proc_detach_request (
     /*
      * Release the EMM context
      */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     emm_data_context_remove (&_emm_data, emm_ctx);
     free (emm_ctx);
 #else

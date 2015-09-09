@@ -53,7 +53,8 @@ decode_access_point_name (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
+#error "NAS_DEBUG SET"
   dump_access_point_name_xml (accesspointname, iei);
 #endif
   return decoded;
@@ -78,7 +79,7 @@ encode_access_point_name (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, ACCESS_POINT_NAME_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_access_point_name_xml (accesspointname, iei);
 #endif
 

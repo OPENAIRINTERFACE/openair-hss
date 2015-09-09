@@ -142,7 +142,7 @@ s6a_ula_cb (
 
   if (avp_p) {
     CHECK_FCT (s6a_parse_subscription_data (avp_p, &s6a_update_location_ans_p->subscription_data));
-#if defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS
 #else
     // LG COMMENTED THIS (2014/04/01)-> DevParam(0, 0, 0);
 #endif

@@ -39,7 +39,7 @@ decode_additional_update_type (
 
   *additionalupdatetype = *buffer & 0x1;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_additional_update_type_xml (additionalupdatetype, iei);
 #endif
   return decoded;

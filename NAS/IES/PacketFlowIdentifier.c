@@ -48,7 +48,7 @@ decode_packet_flow_identifier (
   CHECK_LENGTH_DECODER (len - decoded, ielen);
   *packetflowidentifier = *buffer & 0x7f;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_packet_flow_identifier_xml (packetflowidentifier, iei);
 #endif
   return decoded;
@@ -68,7 +68,7 @@ encode_packet_flow_identifier (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, PACKET_FLOW_IDENTIFIER_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_packet_flow_identifier_xml (packetflowidentifier, iei);
 #endif
 

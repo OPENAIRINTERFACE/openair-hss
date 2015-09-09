@@ -55,7 +55,7 @@ decode_plmn_list (
   plmnlist->mncdigit2 = (*(buffer + decoded) >> 4) & 0xf;
   plmnlist->mncdigit1 = *(buffer + decoded) & 0xf;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_plmn_list_xml (plmnlist, iei);
 #endif
   return decoded;
@@ -75,7 +75,7 @@ encode_plmn_list (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, PLMN_LIST_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_plmn_list_xml (plmnlist, iei);
 #endif
 

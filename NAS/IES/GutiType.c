@@ -45,7 +45,7 @@ decode_guti_type (
 
   *gutitype = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_guti_type_xml (gutitype, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_guti_type (
 
   *gutitype = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_guti_type_xml (gutitype, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_guti_type (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, GUTI_TYPE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_guti_type_xml (gutitype, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*gutitype & 0x7);
@@ -99,7 +99,7 @@ encode_u8_guti_type (
   uint8_t                                 encoded = 0;
   uint8_t                                 iei = 0;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_guti_type_xml (gutitype, 0);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*gutitype & 0x7);

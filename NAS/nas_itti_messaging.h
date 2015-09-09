@@ -31,7 +31,7 @@
 #ifndef NAS_ITTI_MESSAGING_H_
 #define NAS_ITTI_MESSAGING_H_
 
-# if defined(NAS_BUILT_IN_EPC)
+# if NAS_BUILT_IN_EPC
 int nas_itti_plain_msg(
   const char *buffer,
   const nas_message_t *msg,
@@ -45,7 +45,7 @@ int nas_itti_protected_msg(
   const int instance);
 # endif
 
-# if defined(NAS_BUILT_IN_EPC)
+# if NAS_BUILT_IN_EPC
 #include "conversions.h"
 
 int nas_itti_dl_data_req(

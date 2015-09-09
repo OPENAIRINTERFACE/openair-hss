@@ -40,7 +40,7 @@
 #include "assertions.h"
 #include "msc.h"
 
-#if defined(DISABLE_USE_HSS)
+#if DISABLE_USE_HSS
 #  error "Disabling HSS support is currently not supported   \
 Reconfigure with --enable-hss option to disable this error"
 #endif

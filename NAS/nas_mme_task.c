@@ -30,7 +30,7 @@
 #include "nas_defs.h"
 #include "msc.h"
 
-#if !defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS == 0
 #  include "nas_network.h"
 #  include "nas_proc.h"
 #  include "emm_main.h"
@@ -57,7 +57,7 @@ nas_intertask_interface (
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case NAS_CONNECTION_ESTABLISHMENT_IND:{
-#if defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS
         MessageDef                             *message_p;
         nas_attach_req_t                       *nas_req_p;
         s1ap_initial_ue_message_t              *transparent;
@@ -78,7 +78,7 @@ nas_intertask_interface (
 #endif
       }
       break;
-#if defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS
 
     case NAS_ATTACH_ACCEPT:{
         itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, received_message_p);
@@ -136,7 +136,7 @@ nas_intertask_interface (
       break;
 
     case TIMER_HAS_EXPIRED:{
-#if !defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS == 0
         /*
          * Call the NAS timer api
          */
@@ -146,7 +146,7 @@ nas_intertask_interface (
       break;
 
     case S1AP_ENB_DEREGISTERED_IND:{
-#if !defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS == 0
         int                                     i;
 
         for (i = 0; i < S1AP_ENB_DEREGISTERED_IND (received_message_p).nb_ue_to_deregister; i++) {
@@ -158,7 +158,7 @@ nas_intertask_interface (
       break;
 
     case S1AP_DEREGISTER_UE_REQ:{
-#if !defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS == 0
         nas_proc_deregister_ue (S1AP_DEREGISTER_UE_REQ (received_message_p).mme_ue_s1ap_id);
 #endif
       }
@@ -187,7 +187,7 @@ nas_init (
   mme_config_t * mme_config_p)
 {
   NAS_DEBUG ("Initializing NAS task interface\n");
-#if !defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS == 0
   nas_log_init (0x3F);
   nas_network_initialize (mme_config_p);
 #endif

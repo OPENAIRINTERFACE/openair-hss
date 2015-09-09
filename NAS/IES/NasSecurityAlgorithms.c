@@ -45,7 +45,7 @@ decode_nas_security_algorithms (
   nassecurityalgorithms->typeofcipheringalgorithm = (*(buffer + decoded) >> 4) & 0x7;
   nassecurityalgorithms->typeofintegrityalgorithm = *(buffer + decoded) & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_nas_security_algorithms_xml (nassecurityalgorithms, iei);
 #endif
   return decoded;
@@ -64,7 +64,7 @@ encode_nas_security_algorithms (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, NAS_SECURITY_ALGORITHMS_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_nas_security_algorithms_xml (nassecurityalgorithms, iei);
 #endif
 

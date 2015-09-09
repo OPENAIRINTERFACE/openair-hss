@@ -42,7 +42,7 @@ Description
 #ifndef _EMM_CN_H_
 #define _EMM_CN_H_
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 int emm_cn_send(const emm_cn_t *msg);
 #endif
 

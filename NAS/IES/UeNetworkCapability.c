@@ -89,7 +89,7 @@ decode_ue_network_capability (
     decoded = ielen + 1 + (iei > 0 ? 1 : 0) /* Size of header for this IE */ ;
     LOG_TRACE (INFO, "uenetworkcapability then decoded=%u\n", decoded);
   }
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ue_network_capability_xml (uenetworkcapability, iei);
 #endif
   return decoded;
@@ -109,7 +109,7 @@ encode_ue_network_capability (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, UE_NETWORK_CAPABILITY_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ue_network_capability_xml (uenetworkcapability, iei);
 #endif
 

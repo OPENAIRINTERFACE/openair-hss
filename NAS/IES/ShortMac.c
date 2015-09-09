@@ -43,7 +43,7 @@ decode_short_mac (
   }
   //IES_DECODE_U16(*shortmac, *(buffer + decoded));
   IES_DECODE_U16 (buffer, decoded, *shortmac);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_short_mac_xml (shortmac, iei);
 #endif
   return decoded;
@@ -62,7 +62,7 @@ encode_short_mac (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, SHORT_MAC_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_short_mac_xml (shortmac, iei);
 #endif
 

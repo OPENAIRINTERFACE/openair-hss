@@ -44,7 +44,7 @@ decode_ss_code (
 
   *sscode = *(buffer + decoded);
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ss_code_xml (sscode, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ encode_ss_code (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, SS_CODE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ss_code_xml (sscode, iei);
 #endif
 
