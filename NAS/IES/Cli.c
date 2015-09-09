@@ -53,7 +53,7 @@ decode_cli (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_cli_xml (cli, iei);
 #endif
   return decoded;
@@ -74,7 +74,7 @@ encode_cli (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, CLI_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_cli_xml (cli, iei);
 #endif
 

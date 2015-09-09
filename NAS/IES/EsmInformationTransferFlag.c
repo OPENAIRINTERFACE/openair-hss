@@ -45,7 +45,7 @@ decode_esm_information_transfer_flag (
 
   *esminformationtransferflag = *buffer & 0x1;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_esm_information_transfer_flag_xml (esminformationtransferflag, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_esm_information_transfer_flag (
 
   *esminformationtransferflag = *buffer & 0x1;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_esm_information_transfer_flag_xml (esminformationtransferflag, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_esm_information_transfer_flag (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, ESM_INFORMATION_TRANSFER_FLAG_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_esm_information_transfer_flag_xml (esminformationtransferflag, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*esminformationtransferflag & 0x1);

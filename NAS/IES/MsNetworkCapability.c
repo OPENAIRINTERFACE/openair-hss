@@ -53,7 +53,7 @@ decode_ms_network_capability (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ms_network_capability_xml (msnetworkcapability, iei);
 #endif
   return decoded;
@@ -74,7 +74,7 @@ encode_ms_network_capability (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, MS_NETWORK_CAPABILITY_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ms_network_capability_xml (msnetworkcapability, iei);
 #endif
 

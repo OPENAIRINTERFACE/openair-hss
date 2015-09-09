@@ -60,19 +60,14 @@
 #include "intertask_interface.h"
 #include "intertask_interface_dump.h"
 
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
 #  include "vcd_signal_dumper.h"
 #endif
 
 static const int                        itti_dump_debug = 0;    // 0x8 | 0x4 | 0x2;
 
-#ifdef RTAI
-#  define ITTI_DUMP_DEBUG(m, x, args...) do { if ((m) & itti_dump_debug) rt_printk("[ITTI_DUMP][D]"x, ##args); } \
+#define ITTI_DUMP_DEBUG(m, x, args...) do { if ((m) & itti_dump_debug) fprintf(stdout, "[ITTI_DUMP][D]"x, ##args); } \
   while(0)
-#else
-#  define ITTI_DUMP_DEBUG(m, x, args...) do { if ((m) & itti_dump_debug) fprintf(stdout, "[ITTI_DUMP][D]"x, ##args); } \
-  while(0)
-#endif
 #define ITTI_DUMP_ERROR(x, args...) do { fprintf(stdout, "[ITTI_DUMP][E]"x, ##args); } \
   while(0)
 
@@ -107,14 +102,11 @@ typedef struct itti_desc_s {
 
   int                                     nb_connected;
 
-#ifndef RTAI
   /*
    * Event fd used to notify new messages (semaphore)
    */
   int                                     event_fd;
-#else
-  unsigned long messages_in_queue __attribute__ ((aligned (8)));
-#endif
+
 
   int                                     itti_listen_socket;
 
@@ -211,9 +203,7 @@ itti_dump_fwrite_message (
     fwrite (&new_message_header, sizeof (itti_dump_message_t), 1, dump_file);
     fwrite (message->data, message->data_size, 1, dump_file);
     fwrite (&itti_dump_message_type_end, sizeof (itti_message_types_t), 1, dump_file);
-    // #if !defined(RTAI)
     fflush (dump_file);
-    // #endif
     return (1);
   }
 
@@ -303,7 +293,7 @@ itti_dump_enqueue_message (
   int                                     overwrite_flag;
 
   AssertFatal (new != NULL, "Message to queue is NULL!\n");
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE, VCD_FUNCTION_IN);
 #endif
   new->message_type = message_type;
@@ -324,9 +314,6 @@ itti_dump_enqueue_message (
   lfds611_ringbuffer_put_write_element (itti_dump_queue.itti_message_queue, new_queue_element);
 
   if (overwrite_flag == 0) {
-#ifdef RTAI
-    __sync_fetch_and_add (&itti_dump_queue.messages_in_queue, 1);
-#else
     {
       ssize_t                                 write_ret;
       eventfd_t                               sem_counter = 1;
@@ -337,13 +324,12 @@ itti_dump_enqueue_message (
       write_ret = write (itti_dump_queue.event_fd, &sem_counter, sizeof (sem_counter));
       AssertFatal (write_ret == sizeof (sem_counter), "Write to dump event failed (%d/%d)!\n", (int)write_ret, (int)sizeof (sem_counter));
     }
-#endif
     // add one to pending_messages, atomically
     __sync_fetch_and_add (&pending_messages, 1);
   }
 
   ITTI_DUMP_DEBUG (0x2, " Added element to queue %p %p, pending %u, type %u\n", new_queue_element, new, pending_messages, message_type);
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE, VCD_FUNCTION_OUT);
 #endif
   return 0;
@@ -353,9 +339,7 @@ static void
 itti_dump_socket_exit (
   void)
 {
-#ifndef RTAI
   close (itti_dump_queue.event_fd);
-#endif
   close (itti_dump_queue.itti_listen_socket);
   /*
    * Leave the thread as we detected end signal
@@ -372,9 +356,7 @@ itti_dump_flush_ring_buffer (
   int                                     j;
   int                                     consumer;
 
-#ifdef RTAI
-  unsigned long                           number_of_messages;
-#endif
+
   /*
    * Check if there is a least one consumer
    */
@@ -392,16 +374,6 @@ itti_dump_flush_ring_buffer (
   }
 
   if (consumer > 0) {
-#ifdef RTAI
-    number_of_messages = itti_dump_queue.messages_in_queue;
-    ITTI_DUMP_DEBUG (0x4, "%lu elements in queue\n", number_of_messages);
-
-    if (number_of_messages == 0) {
-      return (consumer);
-    }
-
-    __sync_sub_and_fetch (&itti_dump_queue.messages_in_queue, number_of_messages);
-#endif
 
     do {
       /*
@@ -450,11 +422,7 @@ itti_dump_flush_ring_buffer (
          */
         lfds611_ringbuffer_put_read_element (itti_dump_queue.itti_message_queue, element);
       }
-    } while (flush_all
-#ifdef RTAI
-             && --number_of_messages
-#endif
-      );
+    } while (flush_all);
   }
 
   return (consumer);
@@ -523,9 +491,7 @@ itti_dump_socket (
   struct sockaddr_in                      servaddr;     /* socket address structure */
   struct timeval                         *timeout_p = NULL;
 
-#ifdef RTAI
-  struct timeval                          timeout;
-#endif
+
   ITTI_DUMP_DEBUG (0x2, " Creating TCP dump socket on port %u\n", ITTI_PORT);
   message_definition_xml = (char *)arg_p;
   AssertFatal (message_definition_xml != NULL, "Message definition XML is NULL!\n");
@@ -579,7 +545,6 @@ itti_dump_socket (
    * Add the listener
    */
   FD_SET (itti_listen_socket, &read_set);
-#ifndef RTAI
   /*
    * Add the event fd
    */
@@ -588,9 +553,7 @@ itti_dump_socket (
    * Max of both sd
    */
   max_sd = itti_listen_socket > itti_dump_queue.event_fd ? itti_listen_socket : itti_dump_queue.event_fd;
-#else
-  max_sd = itti_listen_socket;
-#endif
+
   itti_dump_queue.itti_listen_socket = itti_listen_socket;
 
   /*
@@ -603,13 +566,7 @@ itti_dump_socket (
     int                                     i;
 
     memcpy (&working_set, &read_set, sizeof (read_set));
-#ifdef RTAI
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 100000;
-    timeout_p = &timeout;
-#else
     timeout_p = NULL;
-#endif
     /*
      * No timeout: select blocks till a new event has to be handled
      * * * on sd's.
@@ -638,7 +595,6 @@ itti_dump_socket (
     for (i = 0; i <= max_sd && desc_ready > 0; i++) {
       if (FD_ISSET (i, &working_set)) {
         desc_ready -= 1;
-#ifndef RTAI
 
         if (i == itti_dump_queue.event_fd) {
           /*
@@ -663,7 +619,6 @@ itti_dump_socket (
             if (itti_dump_running) {
               ITTI_DUMP_DEBUG (0x4, " No messages consumers, waiting ...\n");
               usleep (100 * 1000);
-#  ifndef RTAI
               {
                 ssize_t                                 write_ret;
 
@@ -674,7 +629,6 @@ itti_dump_socket (
                 write_ret = write (itti_dump_queue.event_fd, &sem_counter, sizeof (sem_counter));
                 AssertFatal (write_ret == sizeof (sem_counter), "Failed to write to dump event FD (%d/%d)!\n", (int)write_ret, (int)sem_counter);
               }
-#  endif
             } else {
               itti_dump_socket_exit ();
             }
@@ -682,7 +636,6 @@ itti_dump_socket (
             ITTI_DUMP_DEBUG (0x1, " Write element to file\n");
           }
         } else
-#endif
         if (i == itti_listen_socket) {
           do {
             client_socket = accept (itti_listen_socket, NULL, NULL);
@@ -780,18 +733,18 @@ itti_dump_queue_message (
 
     AssertFatal (message_name != NULL, "Message name is NULL!\n");
     AssertFatal (message_p != NULL, "Message is NULL!\n");
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
     VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_MALLOC, VCD_FUNCTION_IN);
 #endif
     new = itti_malloc (sender_task, TASK_MAX, sizeof (itti_dump_queue_item_t));
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
     VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_MALLOC, VCD_FUNCTION_OUT);
 #endif
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
     VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_MALLOC, VCD_FUNCTION_IN);
 #endif
     new->data = itti_malloc (sender_task, TASK_MAX, message_size);
-#if defined(OAI_EMU) || defined(RTAI)
+#if OAI_EMU
     VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_MALLOC, VCD_FUNCTION_OUT);
 #endif
     memcpy (new->data, message_p, message_size);
@@ -852,9 +805,7 @@ itti_dump_init (
      */
     AssertFatal (0, " Failed to create ring buffer!\n");
   }
-#ifdef RTAI
-  itti_dump_queue.messages_in_queue = 0;
-#else
+
   itti_dump_queue.event_fd = eventfd (0, EFD_SEMAPHORE);
 
   if (itti_dump_queue.event_fd == -1) {
@@ -863,7 +814,6 @@ itti_dump_init (
      */
     AssertFatal (0, "eventfd failed: %s!\n", strerror (errno));
   }
-#endif
   itti_dump_queue.nb_connected = 0;
 
   for (i = 0; i < ITTI_DUMP_MAX_CON; i++) {

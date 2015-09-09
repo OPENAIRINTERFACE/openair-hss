@@ -84,7 +84,7 @@ decode_protocol_configuration_options (
     protocolconfigurationoptions->num_protocol_id_or_container_id += 1;
   }
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_protocol_configuration_options_xml (protocolconfigurationoptions, iei);
 #endif
   return decoded;
@@ -106,7 +106,7 @@ encode_protocol_configuration_options (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, PROTOCOL_CONFIGURATION_OPTIONS_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_protocol_configuration_options_xml (protocolconfigurationoptions, iei);
 #endif
 

@@ -44,7 +44,7 @@ decode_llc_service_access_point_identifier (
 
   *llcserviceaccesspointidentifier = *buffer & 0xf;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_llc_service_access_point_identifier_xml (llcserviceaccesspointidentifier, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ encode_llc_service_access_point_identifier (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, LLC_SERVICE_ACCESS_POINT_IDENTIFIER_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_llc_service_access_point_identifier_xml (llcserviceaccesspointidentifier, iei);
 #endif
 

@@ -122,7 +122,7 @@ derive_kasme (
    */
   s[12] = 0x00;
   s[13] = 0x06;
-#if defined(DEBUG_AUC_KDF)
+#if DEBUG_AUC_KDF
 
   for (i = 0; i < 32; i++)
     printf ("0x%02x ", key[i]);

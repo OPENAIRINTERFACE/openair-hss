@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#if defined(ENB_MODE)
+#if ENB_MODE
 # define display_backtrace()
 #else
 # include "backtrace.h"

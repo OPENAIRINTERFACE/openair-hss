@@ -31,7 +31,7 @@
 #include "conversions.h"
 #include "snow3g.h"
 
-#define SECU_DEBUG
+#define SECU_DEBUG 1
 
 uint64_t                                MUL64x (
   uint64_t V,

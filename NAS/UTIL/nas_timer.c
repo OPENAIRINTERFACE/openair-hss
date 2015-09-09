@@ -44,7 +44,7 @@
 #include <stdlib.h>             // malloc, free
 #include <sys/time.h>           // setitimer
 
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
 #  include "intertask_interface.h"
 #  include "timer.h"
 #else
@@ -70,7 +70,7 @@
    value when the timer entry was allocated.
 */
 typedef struct {
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
   long                                    timer_id;     /* Timer id returned by the timer API from ITTI */
 #else
   pthread_t                               pid;  /* Thread identifier of the callback    */
@@ -107,7 +107,7 @@ typedef struct {
   timer_queue_t                           tq[TIMER_DATABASE_SIZE];
   timer_queue_t                          *head; /* Pointer to the first timer entry to be fired  */
 
-#if !defined(ENABLE_ITTI)
+#if ENABLE_ITTI == 0
   pthread_mutex_t                         mutex;
 #endif
 } nas_timer_database_t;
@@ -119,12 +119,12 @@ static nas_timer_database_t             _nas_timer_db = {
   0,
   {},
   NULL
-#if !defined(ENABLE_ITTI)
+#if ENABLE_ITTI == 0
     , PTHREAD_MUTEX_INITIALIZER
 #endif
 };
 
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
 #  define nas_timer_lock_db()
 #  define nas_timer_unlock_db()
 #else
@@ -135,7 +135,7 @@ static nas_timer_database_t             _nas_timer_db = {
 /*
    The handler executed whenever the system timer expires
 */
-#if !defined(ENABLE_ITTI)
+#if ENABLE_ITTI == 0
 static void                             _nas_timer_handler (
   int signal);
 #endif
@@ -229,7 +229,7 @@ nas_timer_init (
    * Initialize the timer database
    */
   _nas_timer_db_init ();
-#if !defined(ENABLE_ITTI)
+#if ENABLE_ITTI == 0
   /*
    * Setup the timer database handler
    */
@@ -283,7 +283,7 @@ nas_timer_start (
   int                                     id;
   nas_timer_entry_t                      *te;
 
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
   int                                     ret;
   long                                    timer_id;
 #endif
@@ -320,7 +320,7 @@ nas_timer_start (
    * Insert the new entry into the timer queue
    */
   _nas_timer_db_insert_entry (id, te);
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
   ret = timer_setup (sec, 0, TASK_NAS_MME, INSTANCE_DEFAULT, TIMER_PERIODIC, args, &timer_id);
 
   if (ret == -1) {
@@ -361,7 +361,7 @@ nas_timer_stop (
      * Remove the entry from the timer queue
      */
     entry = _nas_timer_db_remove_entry (id);
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
     timer_remove (entry->timer_id);
 #else
     (void)entry;
@@ -445,7 +445,7 @@ nas_timer_restart (
  **      Others:    _nas_timer_db                              **
  **                                                                        **
  ***************************************************************************/
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
 void
 nas_timer_handle_signal_expiry (
   long timer_id,
@@ -726,7 +726,7 @@ _nas_timer_db_insert_entry (
   nas_timer_lock_db ();
   restart = _nas_timer_db_insert (&_nas_timer_db.tq[id]);
   nas_timer_unlock_db ();
-#if !defined(ENABLE_ITTI)
+#if ENABLE_ITTI == 0
 
   if (restart) {
     /*
@@ -853,7 +853,7 @@ _nas_timer_db_remove_entry (
      * tv = tv - time()
      */
     rc = _nas_timer_sub (&_nas_timer_db.head->entry->tv, &tv, &it.it_value);
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
     timer_remove (_nas_timer_db.head->entry->timer_id);
     (void)(rc);
 #else
@@ -925,7 +925,7 @@ _nas_timer_db_remove (
        */
       return TRUE;
     }
-#if !defined(ENABLE_ITTI)
+#if ENABLE_ITTI == 0
     {
       /*
        * No more timer is scheduled to expire; stop the system timer

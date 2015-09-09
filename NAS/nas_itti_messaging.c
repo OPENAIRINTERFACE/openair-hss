@@ -29,7 +29,7 @@
 #define TASK_ORIGIN  TASK_NAS_MME
 
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 static const uint8_t                    emm_message_ids[] = {
   ATTACH_REQUEST,
   ATTACH_ACCEPT,
@@ -192,7 +192,7 @@ nas_itti_protected_msg (
 }
 #endif
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 int
 nas_itti_dl_data_req (
   const uint32_t ue_id,

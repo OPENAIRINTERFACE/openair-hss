@@ -37,7 +37,7 @@
 #include "s1ap_mme_decoder.h"
 #include "s1ap_mme_handlers.h"
 
-#if !defined(MME_CLIENT_TEST)
+#if MME_CLIENT_TEST == 0
   #include "intertask_interface.h"
 #endif
 

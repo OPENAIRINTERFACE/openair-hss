@@ -33,10 +33,6 @@
 #include <inttypes.h>
 #include "obj_hashtable.h"
 
-#if ! defined(HASHTABLE_DEBUG)
-#  define HASHTABLE_DEBUG 0
-#endif
-
 
 //-------------------------------------------------------------------------------------------------------------------------------
 // Free function selected if we do not want to free the key when removing an entry

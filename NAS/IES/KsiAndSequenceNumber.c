@@ -45,7 +45,7 @@ decode_ksi_and_sequence_number (
   ksiandsequencenumber->ksi = (*(buffer + decoded) >> 5) & 0x7;
   ksiandsequencenumber->sequencenumber = *(buffer + decoded) & 0x1f;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ksi_and_sequence_number_xml (ksiandsequencenumber, iei);
 #endif
   return decoded;
@@ -64,7 +64,7 @@ encode_ksi_and_sequence_number (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, KSI_AND_SEQUENCE_NUMBER_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ksi_and_sequence_number_xml (ksiandsequencenumber, iei);
 #endif
 

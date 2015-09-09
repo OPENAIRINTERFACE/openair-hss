@@ -47,7 +47,7 @@ int decode_ms_network_feature_support(MsNetworkFeatureSupport *msnetworkfeatures
   msnetworkfeaturesupport->extended_periodic_timers= *(buffer + decoded) & 0x1;
   decoded++;
   
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ms_network_feature_support_xml(msnetworkfeaturesupport, iei);
 #endif
   return decoded;
@@ -59,7 +59,7 @@ int encode_ms_network_feature_support(MsNetworkFeatureSupport *msnetworkfeatures
   int encode_result;
   /* Checking IEI and pointer */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER(buffer, MS_NETWORK_FEATURE_SUPPORT_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ms_network_feature_support_xml(msnetworkfeaturesupport, iei);
 #endif
 

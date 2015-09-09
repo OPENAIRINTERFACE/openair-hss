@@ -93,7 +93,7 @@ mme_app_thread (
         mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.sgwReleaseAccessBearersResponse);
       }
       break;
-#if defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS
 
     case NAS_ATTACH_REQ:{
         mme_app_handle_attach_req (&received_message_p->ittiMsg.nas_attach_req);

@@ -50,7 +50,7 @@ typedef struct {
 extern mme_app_desc_t mme_app_desc;
 
 
-#if defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS
 int mme_app_handle_attach_req(nas_attach_req_t *attach_req_p);
 #endif
 

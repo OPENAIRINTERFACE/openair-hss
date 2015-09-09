@@ -80,7 +80,7 @@ decode_eps_mobile_identity (
   if (decoded_rc < 0) {
     return decoded_rc;
   }
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_mobile_identity_xml (epsmobileidentity, iei);
 #endif
   return (decoded + decoded_rc);
@@ -101,7 +101,7 @@ encode_eps_mobile_identity (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EPS_MOBILE_IDENTITY_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_mobile_identity_xml (epsmobileidentity, iei);
 #endif
 

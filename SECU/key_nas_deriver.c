@@ -52,7 +52,7 @@ derive_key_nas (
   uint8_t                                 s[7];
   uint8_t                                 out[32];
 
-#if defined(SECU_DEBUG)
+#if SECU_DEBUG
   int                                     i;
 #endif
   /*
@@ -77,7 +77,7 @@ derive_key_nas (
    */
   s[5] = 0x00;
   s[6] = 0x01;
-#if defined(SECU_DEBUG)
+#if SECU_DEBUG
   printf ("%s FC %d nas_alg_type distinguisher %d nas_enc_alg_identity %d\n", __FUNCTION__, FC_ALG_KEY_DER, nas_alg_type, nas_enc_alg_id);
 
   for (i = 0; i < 7; i++) {

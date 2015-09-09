@@ -45,7 +45,7 @@ decode_radio_priority (
 
   *radiopriority = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_radio_priority_xml (radiopriority, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_radio_priority (
 
   *radiopriority = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_radio_priority_xml (radiopriority, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_radio_priority (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, RADIO_PRIORITY_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_radio_priority_xml (radiopriority, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*radiopriority & 0x7);

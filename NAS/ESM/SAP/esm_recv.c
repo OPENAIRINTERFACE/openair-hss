@@ -267,7 +267,7 @@ esm_recv_pdn_connectivity_request (
     esm_data->pco.lengthofprotocolid[i] = msg->protocolconfigurationoptions.lengthofprotocolid[i];
   }
 
-#if defined(ORIGINAL_CODE)
+#if ORIGINAL_CODE
   /*
    * Execute the PDN connectivity procedure requested by the UE
    */

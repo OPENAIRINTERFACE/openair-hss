@@ -53,7 +53,7 @@ decode_authentication_parameter_autn (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_authentication_parameter_autn_xml (authenticationparameterautn, iei);
 #endif
   return decoded;
@@ -74,7 +74,7 @@ encode_authentication_parameter_autn (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, AUTHENTICATION_PARAMETER_AUTN_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_authentication_parameter_autn_xml (authenticationparameterautn, iei);
 #endif
 

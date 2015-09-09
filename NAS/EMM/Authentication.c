@@ -61,7 +61,7 @@
 #include "emm_sap.h"
 #include "emm_cause.h"
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 #  include "nas_itti_messaging.h"
 #endif
 #include "msc.h"
@@ -314,7 +314,7 @@ emm_proc_authentication_complete (
    */
   emm_data_context_t                     *emm_ctx = NULL;
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
@@ -352,7 +352,7 @@ emm_proc_authentication_complete (
 
   if (emm_cause != EMM_CAUSE_SUCCESS) {
     switch (emm_cause) {
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
     case EMM_CAUSE_SYNCH_FAILURE:
       /*
@@ -523,7 +523,7 @@ _authentication_request (
   /*
    * TODO: check for pointer validity
    */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_ctx = emm_data_context_get (&_emm_data, data->ueid);
 #else
   emm_ctx = _emm_data.ctx[data->ueid];
@@ -589,7 +589,7 @@ _authentication_reject (
   emm_sap.u.emm_as.u.security.guti = NULL;
   emm_sap.u.emm_as.u.security.ueid = ueid;
   emm_sap.u.emm_as.u.security.msgType = EMM_AS_MSG_TYPE_AUTH;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_ctx = emm_data_context_get (&_emm_data, ueid);
 #else
   emm_ctx = _emm_data.ctx[ueid];
@@ -630,7 +630,7 @@ _authentication_abort (
     int                                     notify_failure = data->notify_failure;
 
     LOG_TRACE (WARNING, "EMM-PROC  - Abort authentication procedure " "(ueid=" NAS_UE_ID_FMT ")", ueid);
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
 #else
     emm_ctx = _emm_data.ctx[ueid];

@@ -52,7 +52,7 @@ decode_supported_codec_list (
   decoded++;
   //IES_DECODE_U16(supportedcodeclist->codecbitmap, *(buffer + decoded));
   IES_DECODE_U16 (buffer, decoded, supportedcodeclist->codecbitmap);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_supported_codec_list_xml (supportedcodeclist, iei);
 #endif
   return decoded;
@@ -72,7 +72,7 @@ encode_supported_codec_list (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, SUPPORTED_CODEC_LIST_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_supported_codec_list_xml (supportedcodeclist, iei);
 #endif
 

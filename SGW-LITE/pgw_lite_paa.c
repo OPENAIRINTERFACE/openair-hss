@@ -83,7 +83,7 @@ pgw_lite_load_pool_ip_addresses (
                                  * SPGW_APP_DEBUG("Loaded IPv6 PAA prefix in pool: %s\n",print_buffer);
                                  * } */
   }
-#if defined(PGW_LITE_FREE_ADDR_POOL_CONFIG)
+#if PGW_LITE_FREE_ADDR_POOL_CONFIG
 
   while ((conf_ipv4_p = STAILQ_FIRST (&spgw_config.pgw_config.pgw_lite_ipv4_pool_list))) {
     STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.pgw_lite_ipv4_pool_list, ipv4_entries);

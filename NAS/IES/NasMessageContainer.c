@@ -53,7 +53,7 @@ decode_nas_message_container (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_nas_message_container_xml (nasmessagecontainer, iei);
 #endif
   return decoded;
@@ -74,7 +74,7 @@ encode_nas_message_container (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, NAS_MESSAGE_CONTAINER_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_nas_message_container_xml (nasmessagecontainer, iei);
 #endif
 

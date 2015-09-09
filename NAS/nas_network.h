@@ -36,7 +36,7 @@ Description NAS procedure functions triggered by the network
 
 *****************************************************************************/
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 # include "mme_config.h"
 #endif
 
@@ -59,7 +59,7 @@ Description NAS procedure functions triggered by the network
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 void nas_network_initialize(mme_config_t *mme_config_p);
 #else
 void nas_network_initialize(void);

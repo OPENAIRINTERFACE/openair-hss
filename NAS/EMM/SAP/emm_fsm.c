@@ -45,7 +45,7 @@
 #include "mme_api.h"
 #include "emmData.h"
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 #  include "assertions.h"
 #endif
 #include "msc.h"
@@ -134,7 +134,7 @@ static const emm_fsm_handler_t          _emm_fsm_handlers[EMM_STATE_MAX] = {
    -----------------------------------------------------------------------------
 */
 
-#if !defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC == 0
 emm_fsm_state_t                         _emm_fsm_status[EMM_FSM_NB_UE_MAX];
 #endif
 
@@ -163,7 +163,7 @@ emm_fsm_initialize (
   int                                     ueid;
 
   LOG_FUNC_IN;
-#if !defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC == 0
 
   for (ueid = 0; ueid < EMM_FSM_NB_UE_MAX; ueid++) {
     _emm_fsm_status[ueid] = EMM_DEREGISTERED;
@@ -195,7 +195,7 @@ emm_fsm_set_status (
   emm_fsm_state_t status)
 {
   LOG_FUNC_IN;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
   DevAssert (emm_ctx != NULL);
@@ -243,7 +243,7 @@ emm_fsm_get_status (
   unsigned int ueid,
   void *ctx)
 {
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
   if (emm_ctx == NULL) {
@@ -287,7 +287,7 @@ emm_fsm_process (
 
   LOG_FUNC_IN;
   primitive = evt->primitive;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
 
   DevAssert (emm_ctx != NULL);
@@ -301,7 +301,7 @@ emm_fsm_process (
   status = _emm_fsm_status[evt->ueid];
 #endif
   LOG_TRACE (INFO, "EMM-FSM   - Received event %s (%d) in state %s", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   DevAssert (status != EMM_INVALID);
 #endif
   /*

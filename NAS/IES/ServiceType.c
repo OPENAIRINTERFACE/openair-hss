@@ -45,7 +45,7 @@ decode_service_type (
 
   *servicetype = *buffer & 0xf;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_service_type_xml (servicetype, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_service_type (
 
   *servicetype = *buffer & 0xf;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_service_type_xml (servicetype, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_service_type (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, SERVICE_TYPE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_service_type_xml (servicetype, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*servicetype & 0xf);

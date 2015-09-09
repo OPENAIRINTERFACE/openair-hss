@@ -61,7 +61,7 @@
 
 #include "UeSecurityCapability.h"
 
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
 #  include "assertions.h"
 #endif
 #include "secu_defs.h"
@@ -205,7 +205,7 @@ emm_proc_security_mode_control (
 
   LOG_FUNC_IN;
   LOG_TRACE (INFO, "EMM-PROC  - Initiate security mode control procedure " "KSI = %d EEA = %d EIA = %d", ksi, eea, eia);
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
@@ -397,7 +397,7 @@ emm_proc_security_mode_complete (
   /*
    * Get the UE context
    */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
@@ -487,7 +487,7 @@ emm_proc_security_mode_reject (
   /*
    * Get the UE context
    */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
@@ -662,7 +662,7 @@ _security_request (
   emm_sap.u.emm_as.u.security.gprs_present = data->gprs_present;
   emm_sap.u.emm_as.u.security.selected_eea = data->selected_eea;
   emm_sap.u.emm_as.u.security.selected_eia = data->selected_eia;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (data->ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, data->ueid);
@@ -730,7 +730,7 @@ _security_abort (
     int                                     notify_failure = data->notify_failure;
 
     LOG_TRACE (WARNING, "EMM-PROC  - Abort security mode control procedure " "(ueid=" NAS_UE_ID_FMT ")", ueid);
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
     if (data->ueid > 0) {
       emm_ctx = emm_data_context_get (&_emm_data, data->ueid);

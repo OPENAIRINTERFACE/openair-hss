@@ -64,7 +64,7 @@ decode_apn_aggregate_maximum_bit_rate (
       decoded++;
     }
   }
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_apn_aggregate_maximum_bit_rate_xml (apnaggregatemaximumbitrate, iei);
 #endif
   return decoded;
@@ -84,7 +84,7 @@ encode_apn_aggregate_maximum_bit_rate (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, APN_AGGREGATE_MAXIMUM_BIT_RATE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_apn_aggregate_maximum_bit_rate_xml (apnaggregatemaximumbitrate, iei);
 #endif
 

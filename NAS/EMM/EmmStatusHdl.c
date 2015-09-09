@@ -134,7 +134,7 @@ emm_proc_status (
   emm_sap.u.emm_as.u.status.emm_cause = emm_cause;
   emm_sap.u.emm_as.u.status.ueid = ueid;
   emm_sap.u.emm_as.u.status.guti = NULL;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   ctx = emm_data_context_get (&_emm_data, ueid);
 #else
   ctx = _emm_data.ctx[ueid];

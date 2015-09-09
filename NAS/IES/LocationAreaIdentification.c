@@ -53,7 +53,7 @@ decode_location_area_identification (
   decoded++;
   //IES_DECODE_U16(locationareaidentification->lac, *(buffer + decoded));
   IES_DECODE_U16 (buffer, decoded, locationareaidentification->lac);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_location_area_identification_xml (locationareaidentification, iei);
 #endif
   return decoded;
@@ -72,7 +72,7 @@ encode_location_area_identification (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, LOCATION_AREA_IDENTIFICATION_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_location_area_identification_xml (locationareaidentification, iei);
 #endif
 

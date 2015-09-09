@@ -66,7 +66,7 @@ decode_ue_security_capability (
       decoded++;
     }
   }
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ue_security_capability_xml (uesecuritycapability, iei);
 #endif
   return decoded;
@@ -86,7 +86,7 @@ encode_ue_security_capability (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, UE_SECURITY_CAPABILITY_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ue_security_capability_xml (uesecuritycapability, iei);
 #endif
 

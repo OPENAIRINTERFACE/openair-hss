@@ -51,7 +51,7 @@ decode_voice_domain_preference_and_ue_usage_setting (
   voicedomainpreferenceandueusagesetting->ue_usage_setting = (*(buffer + decoded) >> 2) & 0x1;
   voicedomainpreferenceandueusagesetting->voice_domain_for_eutran = *(buffer + decoded) & 0x3;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_voice_domain_preference_and_ue_usage_setting_xml (voicedomainpreferenceandueusagesetting, iei);
 #endif
   return decoded;
@@ -71,7 +71,7 @@ encode_voice_domain_preference_and_ue_usage_setting (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_voice_domain_preference_and_ue_usage_setting_xml (voicedomainpreferenceandueusagesetting, iei);
 #endif
 

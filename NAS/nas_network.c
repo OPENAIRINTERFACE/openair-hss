@@ -70,7 +70,7 @@
  **          Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 void
 nas_network_initialize (
   mme_config_t * mme_config_p)
@@ -84,7 +84,7 @@ nas_network_initialize (
   /*
    * Initialize the internal NAS processing data
    */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   nas_timer_init ();
   nas_proc_initialize (mme_config_p);
 #else

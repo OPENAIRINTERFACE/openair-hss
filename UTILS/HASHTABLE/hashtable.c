@@ -35,10 +35,6 @@
 #include "assertions.h"
 
 
-#if ! defined(HASHTABLE_DEBUG)
-#  define HASHTABLE_DEBUG 0
-#endif
-
 //-------------------------------------------------------------------------------------------------------------------------------
 char                                   *
 hashtable_rc_code2string (

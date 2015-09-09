@@ -126,7 +126,7 @@ lowerlayer_failure (
 
   emm_sap.primitive = EMMREG_LOWERLAYER_FAILURE;
   emm_sap.u.emm_reg.ueid = ueid;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = NULL;
 
   if (ueid > 0) {
@@ -221,7 +221,7 @@ lowerlayer_data_ind (
   emm_data_context_t                     *emm_ctx = NULL;
 
   LOG_FUNC_IN;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
@@ -266,7 +266,7 @@ lowerlayer_data_req (
   emm_sap.primitive = EMMAS_DATA_REQ;
   emm_sap.u.emm_as.u.data.guti = NULL;
   emm_sap.u.emm_as.u.data.ueid = ueid;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     ctx = emm_data_context_get (&_emm_data, ueid);

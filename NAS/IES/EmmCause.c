@@ -44,7 +44,7 @@ decode_emm_cause (
 
   *emmcause = *(buffer + decoded);
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_emm_cause_xml (emmcause, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ encode_emm_cause (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EMM_CAUSE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_emm_cause_xml (emmcause, iei);
 #endif
 

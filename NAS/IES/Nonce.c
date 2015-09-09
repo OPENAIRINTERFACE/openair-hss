@@ -43,7 +43,7 @@ decode_nonce (
   }
   //IES_DECODE_U32(*nonce, *(buffer + decoded));
   IES_DECODE_U32 (buffer, decoded, *nonce);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_nonce_xml (nonce, iei);
 #endif
   return decoded;
@@ -62,7 +62,7 @@ encode_nonce (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, NONCE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_nonce_xml (nonce, iei);
 #endif
 

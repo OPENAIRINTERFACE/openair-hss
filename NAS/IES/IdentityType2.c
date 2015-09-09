@@ -45,7 +45,7 @@ decode_identity_type_2 (
 
   *identitytype2 = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_identity_type_2_xml (identitytype2, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_identity_type_2 (
 
   *identitytype2 = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_identity_type_2_xml (identitytype2, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_identity_type_2 (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, IDENTITY_TYPE_2_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_identity_type_2_xml (identitytype2, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*identitytype2 & 0x7);
@@ -99,7 +99,7 @@ encode_u8_identity_type_2 (
   uint8_t                                 encoded = 0;
   uint8_t                                 iei = 0;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_identity_type_2_xml (identitytype2, 0);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*identitytype2 & 0x7);

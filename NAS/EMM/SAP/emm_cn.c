@@ -39,7 +39,7 @@
 
 #include <string.h>
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
 #  include "nas_log.h"
 #  include "commonDef.h"
