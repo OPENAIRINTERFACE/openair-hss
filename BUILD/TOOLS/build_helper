@@ -157,20 +157,21 @@ make_certs(){
 }
 
 
-install_xtables_addon_openaircn() {
-    cd /usr/src
-    echo "Downloading xtables-addon-openaircn-2.6 archive"
-    sudo rm -rf xtables-addon-openaircn-2.6*
-    sudo wget http://www.openairinterface.org/openair-cn/xtables-addons-oai-2.5.tar.xz 
-    sudo tar -xvJf xtables-addons-oai-2.5.tar.xz 
-    cd xtables-addons-oai-2.5/
-    sudo autoreconf -i
+install_xtables_addon_oai() {
+    cd ~
+    sudo rm -rI xtables-addons-oai
+    rm -rI xtables-addons-oai
+    echo "Downloading xtables-addons-oai source code"
+    git clone https://gitlab.eurecom.fr/oai/xtables-addons-oai.git
+    #git clone git@gitlab.eurecom.fr:oai/xtables-addons-oai.git
+    chmod -R o+w xtables-addons-oai
+    chmod -R g+w xtables-addons-oai
+    cd xtables-addons-oai/
     sudo ./configure 
-    sudo echo "Compiling xtables-addon-openaircn-2.5"
     sudo make
     sudo make install
     cd /lib/modules/`uname -r`
-    sudo depmod
+    sudo depmod -a
 }
 
 ############################################

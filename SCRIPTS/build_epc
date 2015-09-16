@@ -109,7 +109,7 @@ function main()
         ;;
       -j | --install-gtpu-kernel-module)
         set_openair_env
-        install_xtables_addon_openaircn
+        install_xtables_addon_oai
         exit 0
         ;;
       -l | --local-hss)

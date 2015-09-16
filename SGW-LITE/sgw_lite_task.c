@@ -169,6 +169,8 @@ sgw_lite_init (
   spgw_system ("modprobe nf_conntrack_ipv4", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
   spgw_system ("modprobe nf_nat", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
   spgw_system ("modprobe x_tables", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+  spgw_system ("modprobe udp_tunnel", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+  spgw_system ("modprobe ip6_udp_tunnel", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
   spgw_system ("sysctl -w net.ipv4.ip_forward=1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
   spgw_system ("sysctl -w net.ipv4.conf.all.accept_local=1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
   spgw_system ("sysctl -w net.ipv4.conf.all.log_martians=1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
