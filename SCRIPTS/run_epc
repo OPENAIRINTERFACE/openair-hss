@@ -158,6 +158,7 @@ function main()
   set_openair_env 
   cecho "OPENAIR_DIR    = $OPENAIR_DIR" $green
 
+  check_gtpu_kmodule_installed
 
   if [ ! -e /usr/local/bin/mme_gw ]; then
     echo_fatal "Cannot find /usr/local/bin/mme_gw executable, have a look at the output of build_epc executable"

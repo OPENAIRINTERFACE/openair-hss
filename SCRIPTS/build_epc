@@ -109,7 +109,7 @@ function main()
         ;;
       -j | --install-gtpu-kernel-module)
         set_openair_env
-        install_xtables_addon_oai
+        check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic
         exit 0
         ;;
       -l | --local-hss)
@@ -182,7 +182,6 @@ function main()
       echo_fatal "FreeDiameter prefix not found, install freeDiameter if EPC, HSS"
     fi
   fi
-  
   
   
   local dbin=$OPENAIRCN_DIR/OAI_EPC
