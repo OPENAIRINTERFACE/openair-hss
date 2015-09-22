@@ -172,6 +172,7 @@ install_xtables_addons_oai() {
     chmod -R o+w xtables-addons-oai
     chmod -R g+w xtables-addons-oai
     cd xtables-addons-oai/
+    sudo autoreconf -i 
     sudo ./configure 
     sudo make
     sudo make install
