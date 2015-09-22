@@ -363,7 +363,7 @@ upgrade_kernel() {
       if [[ $prompt =~ [yY](es)* ]]
       then    
         echo_info "Installing new kernel $latest_valid_installed_image"
-        apt-get install linux-image-$latest_valid_installed_image linux-headers-$latest_valid_installed_image && echo_warning "You have to reboot on the new installed kernel"
+        $SUDO apt-get install linux-image-$latest_valid_installed_image linux-headers-$latest_valid_installed_image && echo_warning "You have to reboot on the new installed kernel"
       else    
         echo_info "Not installing new kernel"
       fi
