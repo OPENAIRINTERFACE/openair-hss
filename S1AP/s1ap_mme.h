@@ -20,7 +20,7 @@
  */
 
 
-#if !defined(MME_CLIENT_TEST)
+#if MME_CLIENT_TEST == 0
 # include "intertask_interface.h"
 #endif
 

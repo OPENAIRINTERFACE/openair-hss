@@ -56,7 +56,7 @@ decode_time_zone_and_time (
   decoded++;
   timezoneandtime->timezone = *(buffer + decoded);
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_time_zone_and_time_xml (timezoneandtime, iei);
 #endif
   return decoded;
@@ -75,7 +75,7 @@ encode_time_zone_and_time (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, TIME_ZONE_AND_TIME_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_time_zone_and_time_xml (timezoneandtime, iei);
 #endif
 

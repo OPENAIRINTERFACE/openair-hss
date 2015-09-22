@@ -53,7 +53,7 @@ decode_tracking_area_identity (
   decoded++;
   //IES_DECODE_U16(trackingareaidentity->tac, *(buffer + decoded));
   IES_DECODE_U16 (buffer, decoded, trackingareaidentity->tac);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_tracking_area_identity_xml (trackingareaidentity, iei);
 #endif
   return decoded;
@@ -72,7 +72,7 @@ encode_tracking_area_identity (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, TRACKING_AREA_IDENTITY_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_tracking_area_identity_xml (trackingareaidentity, iei);
 #endif
 

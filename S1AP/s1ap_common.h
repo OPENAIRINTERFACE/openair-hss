@@ -334,7 +334,7 @@ inline void ASN_DEBUG(const char *fmt, ...);
 #include "S1ap-IE.h"
 #include "S1AP-PDU.h"
 
-#if defined (UPDATE_RELEASE_9)
+#if UPDATE_RELEASE_9
 # include "S1ap-BroadcastCancelledAreaList.h"
 # include "S1ap-CancelledCellinEAI.h"
 # include "S1ap-CancelledCellinEAI-Item.h"
@@ -367,7 +367,7 @@ inline void ASN_DEBUG(const char *fmt, ...);
 # include "S1ap-UplinkNonUEAssociatedLPPaTransport.h"
 #endif /* (UPDATE_RELEASE_9) */
 
-#if defined(UPDATE_RELEASE_10)
+#if UPDATE_RELEASE_10
 # include "S1ap-PagingPriority.h"
 # include "S1ap-RelayNode-Indicator.h"
 # include "S1ap-GWContextReleaseIndication.h"
@@ -395,7 +395,7 @@ inline void ASN_DEBUG(const char *fmt, ...);
 extern int asn_debug;
 extern int asn1_xer_print;
 
-#if defined(ENB_MODE)
+#if ENB_MODE
 # include "UTIL/LOG/log.h"
 # include "s1ap_eNB_default_values.h"
 # define S1AP_ERROR(x, args...) LOG_E(S1AP, x, ##args)

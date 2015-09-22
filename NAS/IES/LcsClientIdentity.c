@@ -53,7 +53,7 @@ decode_lcs_client_identity (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_lcs_client_identity_xml (lcsclientidentity, iei);
 #endif
   return decoded;
@@ -74,7 +74,7 @@ encode_lcs_client_identity (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, LCS_CLIENT_IDENTITY_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_lcs_client_identity_xml (lcsclientidentity, iei);
 #endif
 

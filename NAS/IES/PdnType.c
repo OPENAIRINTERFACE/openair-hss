@@ -45,7 +45,7 @@ decode_pdn_type (
 
   *pdntype = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_pdn_type_xml (pdntype, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_pdn_type (
 
   *pdntype = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_pdn_type_xml (pdntype, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_pdn_type (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, PDN_TYPE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_pdn_type_xml (pdntype, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*pdntype & 0x7);
@@ -99,7 +99,7 @@ encode_u8_pdn_type (
   uint8_t                                 encoded = 0;
   uint8_t                                 iei = 0;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_pdn_type_xml (pdntype, 0);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*pdntype & 0x7);

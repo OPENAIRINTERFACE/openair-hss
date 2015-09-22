@@ -135,7 +135,7 @@ decode_traffic_flow_template (
   } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_REPLACE_PACKET) {
     decoded_result = decode_traffic_flow_template_replace_packet (&trafficflowtemplate->packetfilterlist.replacepacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + decoded), len - decoded);
   }
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_traffic_flow_template_xml (trafficflowtemplate, iei);
 #endif
 
@@ -160,7 +160,7 @@ encode_traffic_flow_template (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, TRAFFIC_FLOW_TEMPLATE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_traffic_flow_template_xml (trafficflowtemplate, iei);
 #endif
 

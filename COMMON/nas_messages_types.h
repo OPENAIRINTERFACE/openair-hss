@@ -240,7 +240,7 @@ typedef struct nas_conn_est_ind_s {
 typedef nas_establish_rsp_t nas_conn_est_rej_t;
 
 
-#if defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS
 typedef struct nas_conn_est_cnf_s {
   uint32_t ue_id;
 
@@ -343,7 +343,7 @@ typedef struct nas_auth_param_fail_s {
 } nas_auth_param_fail_t;
 
 
-#if defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS
 typedef struct nas_attach_accept_s {
   s1ap_initial_ctxt_setup_req_t transparent;
 } nas_attach_accept_t;

@@ -44,7 +44,7 @@ decode_paging_identity (
 
   *pagingidentity = *buffer & 0x1;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_paging_identity_xml (pagingidentity, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ encode_paging_identity (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, PAGING_IDENTITY_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_paging_identity_xml (pagingidentity, iei);
 #endif
 

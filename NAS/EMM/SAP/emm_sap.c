@@ -130,7 +130,7 @@ emm_sap_send (
     msg->u.emm_as.primitive = primitive;
     rc = emm_as_send (&msg->u.emm_as);
   }
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   else if ((primitive > (emm_primitive_t) EMMCN_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMCN_PRIMITIVE_MAX)) {
     /*
      * Forward to the EMMCN-SAP

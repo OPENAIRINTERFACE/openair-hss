@@ -49,7 +49,7 @@ decode_authentication_parameter_rand (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_authentication_parameter_rand_xml (authenticationparameterrand, iei);
 #endif
   return decoded;
@@ -69,7 +69,7 @@ encode_authentication_parameter_rand (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, AUTHENTICATION_PARAMETER_RAND_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_authentication_parameter_rand_xml (authenticationparameterrand, iei);
 #endif
 

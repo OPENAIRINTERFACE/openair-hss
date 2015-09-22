@@ -47,7 +47,7 @@ decode_gprs_timer (
   gprstimer->unit = (*(buffer + decoded) >> 5) & 0x7;
   gprstimer->timervalue = *(buffer + decoded) & 0x1f;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_gprs_timer_xml (gprstimer, iei);
 #endif
   return decoded;
@@ -66,7 +66,7 @@ encode_gprs_timer (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, GPRS_TIMER_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_gprs_timer_xml (gprstimer, iei);
 #endif
 

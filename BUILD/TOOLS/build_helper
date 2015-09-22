@@ -119,58 +119,66 @@ compilations() {
 ##########################################
 
 make_one_cert() {
-    fqdn=$1
-    name=$2
-    $SUDO openssl genrsa -out $name.key.pem 1024
-    $SUDO openssl req -new -batch -out $name.csr.pem -key $name.key.pem -subj /CN=$name.$fqdn/C=FR/ST=PACA/L=Aix/O=Eurecom/OU=CM
-    $SUDO openssl ca -cert cacert.pem -keyfile cakey.pem -in $name.csr.pem -out $name.cert.pem -outdir . -batch
+  fqdn=$1
+  name=$2
+  $SUDO openssl genrsa -out $name.key.pem 1024
+  $SUDO openssl req -new -batch -out $name.csr.pem -key $name.key.pem -subj /CN=$name.$fqdn/C=FR/ST=PACA/L=Aix/O=Eurecom/OU=CM
+  $SUDO openssl ca -cert cacert.pem -keyfile cakey.pem -in $name.csr.pem -out $name.cert.pem -outdir . -batch
 }
 
 make_certs(){
     
-    fqdn=$1
+  fqdn=$1
   certs_dir=$FREEDIAMETER_PREFIX/freeDiameter
-    # certificates are stored in diameter config directory
-    if [ ! -d $certs_dir ];  then
-        echo "Creating non existing directory: $certs_dir"
-        $SUDO mkdir -p $certs_dir || echo_error "can't create: $certs_dir"
-    fi
+  # certificates are stored in diameter config directory
+  if [ ! -d $certs_dir ];  then
+    echo "Creating non existing directory: $certs_dir"
+    $SUDO mkdir -p $certs_dir || echo_error "can't create: $certs_dir"
+  fi
 
-    cd $certs_dir
-    echo "creating the CA certificate"
-    echo_warning "erase all existing certificates as long as the CA is regenerated"
-    $SUDO rm -f $certs_dir/*.pem
-    $SUDO mkdir -p  $certs_dir/demoCA/
-    $SUDO touch $certs_dir/demoCA/index.txt
-    $SUDO sh -c "echo 01 > $certs_dir/demoCA/serial"
+  cd $certs_dir
+  echo "creating the CA certificate"
+  echo_warning "erase all existing certificates as long as the CA is regenerated"
+  $SUDO rm -f $certs_dir/*.pem
+  $SUDO mkdir -p  $certs_dir/demoCA/
+  $SUDO touch $certs_dir/demoCA/index.txt
+  $SUDO sh -c "echo 01 > $certs_dir/demoCA/serial"
 
-    # CA self certificate
-    $SUDO openssl req  -new -batch -x509 -days 3650 -nodes -newkey rsa:1024 -out cacert.pem -keyout cakey.pem -subj /CN=$fqdn/C=FR/ST=PACA/L=Aix/O=Eurecom/OU=CM
+  # CA self certificate
+  $SUDO openssl req  -new -batch -x509 -days 3650 -nodes -newkey rsa:1024 -out cacert.pem -keyout cakey.pem -subj /CN=$fqdn/C=FR/ST=PACA/L=Aix/O=Eurecom/OU=CM
     
-    # generate hss certificate and sign it
-    make_one_cert eur hss
-    make_one_cert eur mme
+  # generate hss certificate and sign it
+  make_one_cert eur hss
+  make_one_cert eur mme
 
-    # legacy config is using a certificate named 'user'
-    make_one_cert eur user
-
+  # legacy config is using a certificate named 'user'
+  make_one_cert eur user
 }
 
 
-install_xtables_addon_openaircn() {
-    cd /usr/src
-    echo "Downloading xtables-addon-openaircn-2.6 archive"
-    sudo rm -rf xtables-addon-openaircn-2.6*
-    sudo wget http://www.openairinterface.org/openair-cn/xtables-addons-oai-2.5.tar.xz 
-    sudo tar -xvJf xtables-addons-oai-2.5.tar.xz 
-    cd xtables-addons-oai-2.5/
-    sudo autoreconf -i
+install_xtables_addons_oai() {
+  read -p "Do you want to install xtables_addons_oai ? <y/N> " prompt
+  if [[ $prompt =~ [yY](es)* ]]
+  then    
+    cd ~
+    if [ -d xtables-addons-oai ]; then
+      echo_warning "Will remove $PWD/xtables-addons-oai"
+      sudo rm -rIv xtables-addons-oai
+      rm -rIv xtables-addons-oai
+    fi
+    echo "Downloading xtables-addons-oai source code"
+    git clone https://gitlab.eurecom.fr/oai/xtables-addons-oai.git
+    #git clone git@gitlab.eurecom.fr:oai/xtables-addons-oai.git
+    chmod -R o+w xtables-addons-oai
+    chmod -R g+w xtables-addons-oai
+    cd xtables-addons-oai/
+    sudo autoreconf -i 
     sudo ./configure 
-    sudo echo "Compiling xtables-addon-openaircn-2.5"
     sudo make
     sudo make install
     cd /lib/modules/`uname -r`
-    sudo depmod
+    sudo depmod -a
+  fi
 }
 
 ############################################
@@ -178,6 +186,9 @@ install_xtables_addon_openaircn() {
 ############################################
 
 install_nettle_from_source() {
+  read -p "Do you want to install nettle ? <y/N> " prompt
+  if [[ $prompt =~ [yY](es)* ]]
+  then    
     cd /tmp
     echo "Downloading nettle archive"
     rm -rf /tmp/nettle-2.5.tar.gz* /tmp/nettle-2.5
@@ -190,9 +201,13 @@ install_nettle_from_source() {
     make check 
     $SUDO make install 
     rm -rf /tmp/nettle-2.5.tar.gz /tmp/nettle-2.5
+  fi
 }
 
 install_gnutls_from_source(){
+  read -p "Do you want to install GNU TLS ? <y/N> " prompt
+  if [[ $prompt =~ [yY](es)* ]]
+  then    
     cd /tmp 
     echo "Downloading gnutls archive"
     rm -rf /tmp/gnutls-3.1.23.tar.xz* /tmp/gnutls-3.1.23
@@ -204,9 +219,13 @@ install_gnutls_from_source(){
     make -j4
     $SUDO make install 
     rm -rf /tmp/gnutls-3.1.23.tar.xz /tmp/gnutls-3.1.23
+  fi
 }
 
 install_1.1.5_freediameter_from_source() {
+  read -p "Do you want to install freeDiameter 1.1.5 ? <y/N> " prompt
+  if [[ $prompt =~ [yY](es)* ]]
+  then    
     cd /tmp
     echo "Downloading 1.1.5 freeDiameter archive"
     rm -rf /tmp/1.1.5.tar.gz* /tmp/freeDiameter-1.1.5
@@ -222,45 +241,176 @@ install_1.1.5_freediameter_from_source() {
     #make test 
     $SUDO make install 
     rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5
+  fi
 }
 
 install_freediameter_from_source() {
-  cd /tmp
-  echo "Downloading 1.2.0 freeDiameter archive"
-  rm -rf /tmp/1.2.0.tar.gz* /tmp/freeDiameter-1.2.0
-  wget http://www.freediameter.net/hg/freeDiameter/archive/1.2.0.tar.gz 
-  tar xzf 1.2.0.tar.gz
-  cd freeDiameter-1.2.0
-  patch -p1 < $OPENAIRCN_DIR/S6A/freediameter/freediameter-1.2.0.patch 
-  mkdir build
-  cd build
-  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
-  echo "Compiling freeDiameter"
-  make -j4
-  #make test 
-  $SUDO make install 
-  rm -rf /tmp/1.2.0.tar.gz /tmp/freeDiameter-1.2.0
+  read -p "Do you want to install freeDiameter 1.2.0 ? <y/N> " prompt
+  if [[ $prompt =~ [yY](es)* ]]
+  then    
+    cd /tmp
+    echo "Downloading 1.2.0 freeDiameter archive"
+    rm -rf /tmp/1.2.0.tar.gz* /tmp/freeDiameter-1.2.0
+    wget http://www.freediameter.net/hg/freeDiameter/archive/1.2.0.tar.gz 
+    tar xzf 1.2.0.tar.gz
+    cd freeDiameter-1.2.0
+    patch -p1 < $OPENAIRCN_DIR/S6A/freediameter/freediameter-1.2.0.patch 
+    mkdir build
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
+    echo "Compiling freeDiameter"
+    make -j4
+    #make test 
+    $SUDO make install 
+    rm -rf /tmp/1.2.0.tar.gz /tmp/freeDiameter-1.2.0
+  fi
 }
 
 install_latest_freediameter_from_source() {
-  cd /tmp
-  rm -rf /tmp/freeDiameter
-  echo "Downloading latest freeDiameter trunk (may be unstable)"
-  git clone https://github.com/Metaswitch/freeDiameter.git
-  cd freeDiameter
-  patch -p1 < $OPENAIRCN_DIR/S6A/freediameter/freediameter-1.2.0.patch 
-  mkdir build
-  cd build
-  cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
-  echo "Compiling freeDiameter"
-  make -j4
-  #make test 
-  $SUDO make install 
-  rm -rf /tmp/freeDiameter
+  read -p "Do you want to install latest freeDiameter ? <y/N> " prompt
+  if [[ $prompt =~ [yY](es)* ]]
+  then    
+    cd /tmp
+    rm -rf /tmp/freeDiameter
+    echo "Downloading latest freeDiameter trunk (may be unstable)"
+    git clone https://github.com/Metaswitch/freeDiameter.git
+    cd freeDiameter
+    patch -p1 < $OPENAIRCN_DIR/S6A/freediameter/freediameter-1.2.0.patch 
+    mkdir build
+    cd build
+    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
+    echo "Compiling freeDiameter"
+    make -j4
+    #make test 
+    $SUDO make install 
+    rm -rf /tmp/freeDiameter
+  fi
+}
+
+#arg1 is package name
+test_install_package() {
+  # usage: test_install_package package_name
+ if [ $# -eq 1 ]; then
+   dpkg -s "$1" > /dev/null 2>&1 && {
+          echo "$1 is installed." 
+      } || {
+      echo "$1 is not installed." 
+      $SUDO apt-get install --force-yes $1  
+    }
+  fi
+}
+
+check_gtpu_kmodule_installed() {
+  if [ -e /lib/modules/`uname -r`/extra/xt_GTPUSP.ko ]; then
+    echo_info "GTPU kernel module installed"
+  else
+    echo_fatal "GTPU kernel module not installed"
+  fi  
+}
+
+#arg1 is required ubuntu package name
+upgrade_kernel() {
+      
+  # check if an already suitable kernel image is installed      
+  required_kernel_version=`echo $1 | cut -d '.' -f1`
+  required_major_revision=`echo $1 | cut -d '.' -f2`
+  image_list="`dpkg-query -l linux-image-[$required_kernel_version-9]* | grep image`"
+  while read -r line; do
+    proposed_image=`echo $line | cut -d ' ' -f3`
+    if [ $proposed_image != "<none>" ]; then
+      status=`echo $line | cut -d ' ' -f1`
+      current_kernel_version=`echo $proposed_image | cut -d '.' -f1`
+      current_major_revision=`echo $proposed_image | cut -d '.' -f2`
+      if [ "$current_kernel_version" -gt "$required_kernel_version" ]; then
+        echo "$proposed_image" >> valid_installed_image_list
+      else
+        # test not necessary but depends on search string in dpkg-query
+        if [ "$current_kernel_version" -eq "$required_kernel_version" ]; then
+          if [ "$current_major_revision" -ge "$required_major_revision" ]; then
+            echo "$proposed_image" >> valid_installed_image_list
+          fi
+        fi
+      fi
+    fi
+  done <<< "$image_list"
+  latest_valid_installed_image=`echo $valid_installed_image_list | sort | tail -n1`
+  if [ "z$latest_valid_installed_image" != "z" ]; then
+    echo_error "If you want to compile and run the S-GW software on this computer you have to boot on any following installed kernel"
+  else
+    echo_error "No valid kernel installed on this OS for running the S-GW!"
+    image_list=`apt-cache search linux-image-[$required_kernel_version-9]`
+    valid_uninstalled_image_list=`tempfile`
+    while read -r line; do
+      proposed_image=`echo $line | cut -d ' ' -f1 | cut -d '-' -f3-`
+      current_kernel_version=`echo $proposed_image | cut -d '.' -f1`
+      current_major_revision=`echo $proposed_image | cut -d '.' -f2`
+      if [ "$current_kernel_version" -gt "$required_kernel_version" ]; then
+        echo "$proposed_image" >> $valid_uninstalled_image_list
+      else
+        # test not necessary but depends on search string in dpkg-query
+        if [ "$current_kernel_version" -eq "$required_kernel_version" ]; then
+          if [ "$current_major_revision" -ge "$required_major_revision" ]; then
+            echo "$proposed_image" >> $valid_uninstalled_image_list
+          fi
+        fi
+      fi
+    done <<< "$image_list"
+    latest_valid_installed_image=`cat $valid_uninstalled_image_list | sort | tail -n1`
+    echo_info "For information, here is the list of suitable kernel that can be installed on your OS:" 
+    cat $valid_uninstalled_image_list
+    rm $valid_uninstalled_image_list
+    if [ "z$latest_valid_installed_image" != "z" ]; then
+      read -p "Do you want to install latest kernel $latest_valid_installed_image ? <y/N> " prompt
+      if [[ $prompt =~ [yY](es)* ]]
+      then    
+        echo_info "Installing new kernel $latest_valid_installed_image"
+        $SUDO apt-get install linux-image-$latest_valid_installed_image linux-headers-$latest_valid_installed_image && echo_warning "You have to reboot on the new installed kernel"
+      else    
+        echo_info "Not installing new kernel"
+      fi
+    else
+      echo_error "Error while trying to install new kernel"
+    fi
+  fi
+}
+
+# arg1 is required minimal version of linux-headers and linux-image
+check_kernel_release_and_install_xtables_addons_oai() {
+
+  if [ $# -eq 1 ]; then
+    current_k_release=`uname -r`
+    current_kernel_version=`echo $current_k_release | cut -d '.' -f1`
+    current_major_revision=`echo $current_k_release | cut -d '.' -f2`
+  
+    required_kernel_version=`echo $1 | cut -d '.' -f1`
+    required_major_revision=`echo $1 | cut -d '.' -f2`
+  
+    if [ $current_kernel_version -lt $required_kernel_version ]; then
+      upgrade_kernel $1
+      echo_warning "xtables_addons_oai not installed "
+      return
+    else
+      if [ $current_kernel_version -eq $required_kernel_version ]; then
+        if [ "$current_major_revision" -lt "$required_major_revision" ]; then
+          upgrade_kernel $1
+          echo_warning "xtables_addons_oai not installed "
+          return
+        fi
+      fi
+    fi
+    dpkg -s "linux-headers-$current_k_release" > /dev/null 2>&1 && {
+          echo_info "$current_k_release is installed and suitable for S-GW software." 
+          install_xtables_addons_oai
+      } || {
+          echo_warning "Package linux-headers-$current_k_release is not installed and required for S-GW software." 
+          $SUDO apt-get install linux-headers-$current_k_release && install_xtables_addons_oai
+    }
+  else
+    echo_error "Please provide argument: kernel ubuntu version "
+  fi 
 }
 
 check_install_oai_software() {
-    
   $SUDO apt-get update
   $SUDO apt-get install -y \
     autoconf  \
@@ -314,7 +464,6 @@ check_install_oai_software() {
     fi
     install_freediameter_from_source
     install_asn1c_from_source
-    install_xtables_addon_openaircn
     
   $SUDO apt-get install -y \
     check \
@@ -336,9 +485,14 @@ check_install_oai_software() {
     valgrind  \
     vlan    \
     ctags    
+    
+  check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic
 }
 
 install_asn1c_from_source(){
+  read -p "Do you want to install asn1c rev 1516 patched? <y/N> " prompt
+  if [[ $prompt =~ [yY](es)* ]]
+  then    
     mkdir -p /tmp/asn1c-r1516
     cd /tmp/asn1c-r1516
     rm -rf /tmp/asn1c-r1516/*
@@ -348,6 +502,7 @@ install_asn1c_from_source(){
     ./configure
     make > /tmp/log_compile_asn1c 2>&1
     $SUDO make install
+  fi
 }
 
 

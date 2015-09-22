@@ -50,7 +50,7 @@ decode_emergency_number_list (
   decoded++;
   emergencynumberlist->emergencyservicecategoryvalue = *(buffer + decoded) & 0x1f;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_emergency_number_list_xml (emergencynumberlist, iei);
 #endif
   return decoded;
@@ -70,7 +70,7 @@ encode_emergency_number_list (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EMERGENCY_NUMBER_LIST_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_emergency_number_list_xml (emergencynumberlist, iei);
 #endif
 

@@ -44,7 +44,7 @@ Description Defines internal private data handled by EPS Session
 
 #include "mme_api.h"
 
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 # include "tree.h"
 #endif
 
@@ -212,7 +212,7 @@ typedef struct esm_data_s {
    * ESM contexts
    * ------------
    */
-# if defined(NAS_BUILT_IN_EPC)
+# if NAS_BUILT_IN_EPC
   /* Use a tree for ue data context within MME */
   RB_HEAD(esm_data_context_map, esm_data_context_s) ctx_map;
 # else
@@ -221,7 +221,7 @@ typedef struct esm_data_s {
 # endif
 } esm_data_t;
 
-# if defined(NAS_BUILT_IN_EPC)
+# if NAS_BUILT_IN_EPC
 struct esm_data_context_s *esm_data_context_get(
   esm_data_t *esm_data, unsigned int _ueid);
 

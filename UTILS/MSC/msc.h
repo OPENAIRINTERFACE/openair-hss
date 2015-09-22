@@ -67,7 +67,7 @@ typedef enum {
 #define MSC_AS_TIME_ARGS(CTXT_Pp) \
     (CTXT_Pp)->frame, \
     (CTXT_Pp)->subframe
-#if defined(MESSAGE_CHART_GENERATOR)
+#if MESSAGE_CHART_GENERATOR
 int msc_init(const msc_env_t envP, const int max_threadsP);
 void msc_start_use(void);
 void msc_flush_messages(void);

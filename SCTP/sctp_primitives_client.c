@@ -41,7 +41,7 @@
 
 #include "sctp_primitives_client.h"
 
-#if defined(ENB_MODE)
+#if ENB_MODE
 #  include "eNB_default_values.h"
 #else
 #  include "mme_default_values.h"

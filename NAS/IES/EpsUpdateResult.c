@@ -45,7 +45,7 @@ decode_eps_update_result (
 
   *epsupdateresult = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_update_result_xml (epsupdateresult, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_eps_update_result (
 
   *epsupdateresult = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_update_result_xml (epsupdateresult, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_eps_update_result (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EPS_UPDATE_RESULT_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_update_result_xml (epsupdateresult, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*epsupdateresult & 0x7);

@@ -135,7 +135,7 @@ s1ap_mme_handle_initial_ue_message (
      * We received the first NAS transport message: initial UE message.
      * * * * Send a NAS ESTABLISH IND to NAS layer
      */
-#if defined(ORIGINAL_CODE)
+#if ORIGINAL_CODE
     s1ap_mme_itti_nas_establish_ind (ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf, initialUEMessage_p->nas_pdu.size, initialUEMessage_p->rrC_Establishment_Cause, tai_tac);
 #else
     s1ap_mme_itti_mme_app_establish_ind (ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf, initialUEMessage_p->nas_pdu.size, initialUEMessage_p->rrC_Establishment_Cause, tai_plmn, tai_tac);
@@ -174,7 +174,7 @@ s1ap_mme_handle_uplink_nas_transport (
     return -1;
   }
   //TODO: forward NAS PDU to NAS
-#if defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS
   DevMessage ("Can't go further (TODO)\n");
 #else
   s1ap_mme_itti_nas_uplink_ind (uplinkNASTransport_p->mme_ue_s1ap_id, uplinkNASTransport_p->nas_pdu.buf, uplinkNASTransport_p->nas_pdu.size);
@@ -281,7 +281,7 @@ s1ap_generate_downlink_nas_transport (
   return 0;
 }
 
-#if defined(DISABLE_USE_NAS)
+#if DISABLE_USE_NAS
 int
 s1ap_handle_attach_accepted (
   nas_attach_accept_t * attach_accept_p)
@@ -605,7 +605,7 @@ s1ap_handle_conn_est_cnf (
   nas_pdu.size = conn_est_cnf_pP->nas_conn_est_cnf.nasMsg.length;
   nas_pdu.buf = conn_est_cnf_pP->nas_conn_est_cnf.nasMsg.data;
   e_RABToBeSetup.nAS_PDU = &nas_pdu;
-#  if defined(ORIGINAL_S1AP_CODE)
+#  if ORIGINAL_S1AP_CODE
   e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = S1ap_PriorityLevel_lowest;
   e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability = S1ap_Pre_emptionCapability_shall_not_trigger_pre_emption;
   e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability = S1ap_Pre_emptionVulnerability_not_pre_emptable;

@@ -44,7 +44,7 @@ decode_lcs_indicator (
 
   *lcsindicator = *(buffer + decoded);
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_lcs_indicator_xml (lcsindicator, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ encode_lcs_indicator (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, LCS_INDICATOR_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_lcs_indicator_xml (lcsindicator, iei);
 #endif
 

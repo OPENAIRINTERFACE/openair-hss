@@ -63,7 +63,7 @@
 
 #include "emm_sap.h"
 
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
 #  include "assertions.h"
 #endif
 
@@ -162,7 +162,7 @@ esm_proc_pdn_connectivity_request (
   LOG_TRACE (INFO, "ESM-PROC  - PDN connectivity requested by the UE "
              "(ueid=" NAS_UE_ID_FMT ", pti=%d) PDN type = %s, APN = %s pdn addr = %s", ctx->ueid, pti,
              (pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6", (apn) ? (char *)(apn->value) : "null", (pdn_addr) ? (char *)(pdn_addr->value) : "null");
-#if !defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC == 0
 
   /*
    * UE identifier sanity check
@@ -178,7 +178,7 @@ esm_proc_pdn_connectivity_request (
   *esm_cause = ESM_CAUSE_SUCCESS;
   LOG_TRACE (INFO, "ESM-PROC  - _esm_data.conf.features %08x", _esm_data.conf.features);
 #warning "Uncomment code about _esm_data.conf.features & (MME_API_IPV4 | MME_API_IPV6) later"
-#if defined(ORIGINAL_CODE)
+#if ORIGINAL_CODE
 
   switch (_esm_data.conf.features & (MME_API_IPV4 | MME_API_IPV6)) {
   case (MME_API_IPV4 | MME_API_IPV6):
@@ -231,7 +231,7 @@ esm_proc_pdn_connectivity_request (
   if (rc != RETURNerror) {
     int                                     is_emergency = (request_type == ESM_PDN_REQUEST_EMERGENCY);
 
-#if defined(ORIGINAL_CODE)
+#if ORIGINAL_CODE
     mme_api_ip_version_t                    mme_pdn_index;
     mme_api_qos_t                           qos;
 
@@ -265,7 +265,7 @@ esm_proc_pdn_connectivity_request (
      * Create new PDN connection
      */
     pid = _pdn_connectivity_create (ctx, pti, apn, pdn_type, pdn_addr, is_emergency);
-#if defined(ORIGINAL_CODE)
+#if ORIGINAL_CODE
 
     /*
      * Setup ESM QoS parameters

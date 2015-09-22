@@ -35,7 +35,7 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
-#if defined(ENB_MODE)
+#if ENB_MODE
 # include "UTIL/LOG/log.h"
 # define SCTP_ERROR(x, args...) LOG_E(SCTP, x, ##args)
 # define SCTP_WARN(x, args...)  LOG_W(SCTP, x, ##args)

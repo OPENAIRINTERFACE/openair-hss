@@ -45,7 +45,7 @@ decode_ciphering_key_sequence_number (
 
   *cipheringkeysequencenumber = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ciphering_key_sequence_number_xml (cipheringkeysequencenumber, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_ciphering_key_sequence_number (
 
   *cipheringkeysequencenumber = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ciphering_key_sequence_number_xml (cipheringkeysequencenumber, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_ciphering_key_sequence_number (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, CIPHERING_KEY_SEQUENCE_NUMBER_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ciphering_key_sequence_number_xml (cipheringkeysequencenumber, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*cipheringkeysequencenumber & 0x7);

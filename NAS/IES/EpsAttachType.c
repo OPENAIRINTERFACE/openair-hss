@@ -45,7 +45,7 @@ decode_eps_attach_type (
 
   *epsattachtype = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_attach_type_xml (epsattachtype, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_eps_attach_type (
 
   *epsattachtype = *buffer & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_attach_type_xml (epsattachtype, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_eps_attach_type (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EPS_ATTACH_TYPE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_attach_type_xml (epsattachtype, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*epsattachtype & 0x7);
@@ -99,7 +99,7 @@ encode_u8_eps_attach_type (
   uint8_t                                 encoded = 0;
   uint8_t                                 iei = 0;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_attach_type_xml (epsattachtype, 0);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*epsattachtype & 0x7);

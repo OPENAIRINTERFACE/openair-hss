@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if !defined(MME_CLIENT_TEST)
+#if MME_CLIENT_TEST == 0
 #  include "intertask_interface.h"
 #endif
 
@@ -43,8 +43,8 @@
 #include "s1ap_mme_retransmission.h"
 #include "msc.h"
 
-#define S1AP_DEBUG_LIST
-#ifdef S1AP_DEBUG_LIST
+#define S1AP_DEBUG_LIST 1
+#if S1AP_DEBUG_LIST
 #  define eNB_LIST_OUT(x, args...) S1AP_DEBUG("[eNB]%*s"x"\n", 4*indent, "", ##args)
 #  define UE_LIST_OUT(x, args...)  S1AP_DEBUG("[UE] %*s"x"\n", 4*indent, "", ##args)
 #else
@@ -52,7 +52,7 @@
 #  define UE_LIST_OUT(x, args...)
 #endif
 
-#if !defined(MME_CLIENT_TEST)
+#if MME_CLIENT_TEST == 0
 // static pthread_t s1ap_task_thread;
 
 int                                     hss_associated = 0;
@@ -165,7 +165,7 @@ s1ap_mme_thread (
         s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
       }
       break;
-#  if defined(DISABLE_USE_NAS)
+#  if DISABLE_USE_NAS
 
     case NAS_ATTACH_ACCEPT:{
         s1ap_handle_attach_accepted (&received_message_p->ittiMsg.nas_attach_accept);
@@ -220,10 +220,10 @@ s1ap_mme_init (
     S1AP_DEBUG ("ASN1C version %d\n", get_asn1c_environment_version ());
   }
 
-#  if defined(UPDATE_RELEASE_10)
+#  if UPDATE_RELEASE_10
   S1AP_DEBUG ("S1AP Release v10.5\n");
 #  else
-#    if defined(UPDATE_RELEASE_9)
+#    if UPDATE_RELEASE_9
   S1AP_DEBUG ("S1AP Release v9.8\n");
 #    else
   S1AP_DEBUG ("S1AP Release v8.10\n");

@@ -62,7 +62,7 @@ decode_network_name (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_network_name_xml (networkname, iei);
 #endif
   return decoded;
@@ -83,7 +83,7 @@ encode_network_name (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, NETWORK_NAME_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_network_name_xml (networkname, iei);
 #endif
 

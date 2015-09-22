@@ -48,7 +48,7 @@ decode_eps_network_feature_support (
   CHECK_LENGTH_DECODER (len - decoded, ielen);
   *epsnetworkfeaturesupport = *buffer & 0x1;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_network_feature_support_xml (epsnetworkfeaturesupport, iei);
 #endif
   return decoded;
@@ -68,7 +68,7 @@ encode_eps_network_feature_support (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EPS_NETWORK_FEATURE_SUPPORT_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_network_feature_support_xml (epsnetworkfeaturesupport, iei);
 #endif
 

@@ -54,7 +54,9 @@ macro(add_boolean_option name val helpstr)
   set(${name} ${value} CACHE STRING "${helpstr}")
   set_property(CACHE ${name} PROPERTY TYPE BOOL)
   if (${value})
-    add_definitions("-D${name}")
+    add_definitions("-D${name}=1")
+  else (${value})
+    add_definitions("-D${name}=0")
   endif (${value})
 endmacro(add_boolean_option)
 
@@ -144,11 +146,8 @@ add_definitions("-DPACKAGE_BUGREPORT=\"OpenAirInterface web site\"")
 
 # Debug related options
 #########################################
-add_boolean_option(MSG_PRINT  False "print debug messages")
-add_boolean_option(DISABLE_XER_PRINT False "print XER Format")
-add_boolean_option(XER_PRINT False "print XER Format")
 add_boolean_option(DEBUG_CONSOLE False "makes debugging easier, disables stdout/stderr buffering")
-add_boolean_option(HASHTABLE_DEBUG False "printf operations on hastables")
+add_boolean_option(HASHTABLE_DEBUG False "printf operations on hashtables")
 
 
 add_boolean_option(ENABLE_ITTI True "ITTI is internal messaging, should remain enabled for most targets")
@@ -251,18 +250,15 @@ add_library(S1AP_EPC
 ##############################################################
 #    ???!!! TO BE DOCUMENTED OPTIONS !!!???
 ##############################################################
-add_boolean_option(ENABLE_SECURITY         True  "Enable LTE integrity and ciphering between RRC UE and eNB")
 add_boolean_option(DISABLE_USE_NAS False "???")
 add_boolean_option(ENABLE_STANDALONE_EPC True "Compile MME, SGW and PGW in a single executable")
 add_list_string_option(PACKAGE_NAME "NotDefined" "As per attribute name")
 add_boolean_option(MESSAGE_CHART_GENERATOR False         "For generating sequence diagrams")
 
-
-
 ##########################
 # NAS LAYER OPTIONS
 ##########################
-add_boolean_option(NAS_BUILT_IN_EPC        True "MME NAS layer not present in this executable")
+add_boolean_option(NAS_BUILT_IN_EPC        True "MME NAS layer present in the executable")
 
 
 add_boolean_option(GTPV1U_LINEAR_TEID_ALLOCATION False "Teid allocation id mode versus pseudo random")
@@ -272,6 +268,15 @@ add_boolean_option(GTPV1U_LINEAR_TEID_ALLOCATION False "Teid allocation id mode 
 ##########################
 add_boolean_option(S1AP_DEBUG_LIST False "Traces")
 
+##########################
+# S1AP LAYER OPTIONS
+##########################
+add_boolean_option(S1AP_DEBUG_LIST False "Traces")
+
+##########################
+# SCTP LAYER OPTIONS
+##########################
+add_boolean_option(SCTP_DUMP_LIST False "Traces")
 
  # add the binary tree to the search path for include files
 #######################################################

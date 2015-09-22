@@ -45,7 +45,7 @@ decode_tmsi_status (
 
   *tmsistatus = *buffer & 0x1;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_tmsi_status_xml (tmsistatus, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_tmsi_status (
 
   *tmsistatus = *buffer & 0x1;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_tmsi_status_xml (tmsistatus, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_tmsi_status (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, TMSI_STATUS_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_tmsi_status_xml (tmsistatus, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*tmsistatus & 0x1);

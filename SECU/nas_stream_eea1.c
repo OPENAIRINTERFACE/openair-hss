@@ -33,7 +33,7 @@
 #include "secu_defs.h"
 #include "snow3g.h"
 
-// #define SECU_DEBUG
+// #define SECU_DEBUG 1
 
 
 int

@@ -45,7 +45,7 @@ decode_ue_radio_capability_information_update_needed (
 
   *ueradiocapabilityinformationupdateneeded = *buffer & 0x1;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ue_radio_capability_information_update_needed_xml (ueradiocapabilityinformationupdateneeded, iei);
 #endif
   return decoded;
@@ -63,7 +63,7 @@ decode_u8_ue_radio_capability_information_update_needed (
 
   *ueradiocapabilityinformationupdateneeded = *buffer & 0x1;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ue_radio_capability_information_update_needed_xml (ueradiocapabilityinformationupdateneeded, iei);
 #endif
   return decoded;
@@ -82,7 +82,7 @@ encode_ue_radio_capability_information_update_needed (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_ue_radio_capability_information_update_needed_xml (ueradiocapabilityinformationupdateneeded, iei);
 #endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*ueradiocapabilityinformationupdateneeded & 0x1);

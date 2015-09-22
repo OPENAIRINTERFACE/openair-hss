@@ -108,7 +108,7 @@ emm_proc_tracking_area_update_reject (
   /*
    * Update the EMM cause code
    */
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
 
   if (ueid > 0)
 #else

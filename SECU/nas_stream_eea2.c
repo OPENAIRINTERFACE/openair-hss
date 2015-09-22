@@ -32,7 +32,7 @@
 #include "conversions.h"
 #include "secu_defs.h"
 
-// #define SECU_DEBUG
+// #define SECU_DEBUG 1
 
 int
 nas_stream_encrypt_eea2 (
@@ -63,7 +63,7 @@ nas_stream_encrypt_eea2 (
   /*
    * Other bits are 0
    */
-#if defined(SECU_DEBUG)
+#if SECU_DEBUG
   {
     int                                     i;
 

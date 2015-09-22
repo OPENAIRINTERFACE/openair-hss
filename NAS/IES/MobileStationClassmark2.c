@@ -66,7 +66,7 @@ decode_mobile_station_classmark_2 (
   mobilestationclassmark2->a53 = (*(buffer + decoded) >> 1) & 0x1;
   mobilestationclassmark2->a52 = *(buffer + decoded) & 0x1;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_mobile_station_classmark_2_xml (mobilestationclassmark2, iei);
 #endif
   return decoded;
@@ -86,7 +86,7 @@ encode_mobile_station_classmark_2 (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, MOBILE_STATION_CLASSMARK_2_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_mobile_station_classmark_2_xml (mobilestationclassmark2, iei);
 #endif
 

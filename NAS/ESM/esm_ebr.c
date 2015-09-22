@@ -74,7 +74,7 @@ static const char                      *_esm_ebr_state_str[ESM_EBR_STATE_MAX] = 
    ----------------------------------
 */
 
-#if !defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC == 0
 static esm_ebr_data_t                   _esm_ebr_data[ESM_EBR_NB_UE_MAX];
 #endif
 
@@ -114,7 +114,7 @@ esm_ebr_initialize (
   void
   )
 {
-#if !defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC == 0
   int                                     ueid,
                                           i;
 
@@ -204,7 +204,7 @@ esm_ebr_assign (
   if (ebr_ctx == NULL) {
     LOG_FUNC_RETURN (ESM_EBI_UNASSIGNED);
   }
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   ctx->esm_data_ctx.ebr.context[ebi - ESM_EBI_MIN] = ebr_ctx;
 #else
   _esm_ebr_data[ueid].context[ebi - ESM_EBI_MIN] = ebr_ctx;

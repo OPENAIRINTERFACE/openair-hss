@@ -48,7 +48,7 @@ decode_drx_parameter (
   drxparameter->splitonccch = (*(buffer + decoded) >> 3) & 0x1;
   drxparameter->nondrxtimer = *(buffer + decoded) & 0x7;
   decoded++;
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_drx_parameter_xml (drxparameter, iei);
 #endif
   return decoded;
@@ -67,7 +67,7 @@ encode_drx_parameter (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, DRX_PARAMETER_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_drx_parameter_xml (drxparameter, iei);
 #endif
 

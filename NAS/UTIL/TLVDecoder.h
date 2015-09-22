@@ -25,10 +25,6 @@
 #include <arpa/inet.h>  // ntohl, ntohs
 #include "nas_log.h"
 
-#ifndef NAS_DEBUG
-# define NAS_DEBUG 1
-#endif
-
 #define DECODE_U8(bUFFER, vALUE, sIZE)    \
     vALUE = *(uint8_t*)(bUFFER);    \
     sIZE += sizeof(uint8_t)

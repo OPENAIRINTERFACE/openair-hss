@@ -48,7 +48,7 @@
 
 #include "emm_sap.h"
 
-#if defined(ENABLE_ITTI)
+#if ENABLE_ITTI
 #  include "assertions.h"
 #endif
 
@@ -106,7 +106,7 @@ esm_ebr_context_create (
   unsigned int                            ueid = 0;
 
   LOG_FUNC_IN;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   esm_ctx = &ctx->esm_data_ctx;
 #else
 
@@ -269,7 +269,7 @@ esm_ebr_context_release (
   unsigned int                            ueid = 0;
 
   LOG_FUNC_IN;
-#if defined(NAS_BUILT_IN_EPC)
+#if NAS_BUILT_IN_EPC
   esm_ctx = &ctx->esm_data_ctx;
 #else
 

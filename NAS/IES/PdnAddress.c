@@ -55,7 +55,7 @@ decode_pdn_address (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_pdn_address_xml (pdnaddress, iei);
 #endif
   return decoded;
@@ -76,7 +76,7 @@ encode_pdn_address (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, PDN_ADDRESS_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_pdn_address_xml (pdnaddress, iei);
 #endif
 

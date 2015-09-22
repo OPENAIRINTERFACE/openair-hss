@@ -93,7 +93,7 @@ decode_eps_quality_of_service (
     epsqualityofservice->bitRatesExtPresent = 0;
   }
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_quality_of_service_xml (epsqualityofservice, iei);
 #endif
   return decoded;
@@ -131,7 +131,7 @@ encode_eps_quality_of_service (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EPS_QUALITY_OF_SERVICE_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_eps_quality_of_service_xml (epsqualityofservice, iei);
 #endif
 

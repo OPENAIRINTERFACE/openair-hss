@@ -53,7 +53,7 @@ decode_authentication_failure_parameter (
   else
     decoded += decode_result;
 
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_authentication_failure_parameter_xml (authenticationfailureparameter, iei);
 #endif
   return decoded;
@@ -74,7 +74,7 @@ encode_authentication_failure_parameter (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, AUTHENTICATION_FAILURE_PARAMETER_MINIMUM_LENGTH, len);
-#if defined (NAS_DEBUG)
+#if NAS_DEBUG
   dump_authentication_failure_parameter_xml (authenticationfailureparameter, iei);
 #endif
 
