@@ -452,9 +452,9 @@ spgw_config_init (
                   in_addr_var.s_addr = config_pP->pgw_config.ipv4.pgw_ipv4_address_for_SGI;
 
                   if (snprintf (system_cmd, 256,
-                                //"iptables -t nat -I POSTROUTING -s %s/%s -o %s  ! --protocol sctp -j SNAT --to-source %s",
-                                "iptables -t nat -I POSTROUTING -s %s/%s  ! --protocol sctp -j SNAT --to-source %s", astring, atoken2,
-                                //config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI,
+                                "iptables -t nat -I POSTROUTING -s %s/%s -o %s  ! --protocol sctp -j SNAT --to-source %s", astring, atoken2,
+                                //"iptables -t nat -I POSTROUTING -s %s/%s  ! --protocol sctp -j SNAT --to-source %s", astring, atoken2,
+                                config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI,
                                 inet_ntoa (in_addr_var)) > 0) {
                     SPGW_APP_INFO ("Masquerade SGI: %s\n", system_cmd);
                     spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
