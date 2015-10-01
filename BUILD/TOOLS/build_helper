@@ -93,9 +93,9 @@ clean_all_files() {
 ###################################
 # Compilers
 ###################################
-#arg 1 Build directory OPENAIR_DIR/BUILD/?
-#arg 2 Executable target name
-#arg 3 Executable name (no path)
+# arg 1 Build directory OPENAIR_DIR/BUILD/?
+# arg 2 Executable target name
+# arg 3 Executable name (no path)
 compilations() {
   cd $OPENAIRCN_DIR/BUILD/$1/BUILD
   {
@@ -156,15 +156,23 @@ make_certs(){
 }
 
 
+# arg1 is force (no interactive script)
 install_xtables_addons_oai() {
-  read -p "Do you want to install xtables_addons_oai ? <y/N> " prompt
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install xtables_addons_oai ? <y/N> " prompt
+    rm_option=I
+  else
+    prompt='y'
+    rm_option=f
+    autoreconf_force_option='--force'
+  fi
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd ~
     if [ -d xtables-addons-oai ]; then
       echo_warning "Will remove $PWD/xtables-addons-oai"
-      sudo rm -rIv xtables-addons-oai
-      rm -rIv xtables-addons-oai
+      sudo rm -rv -$rm_option xtables-addons-oai
+      rm -rv -$rm_option xtables-addons-oai
     fi
     echo "Downloading xtables-addons-oai source code"
     git clone https://gitlab.eurecom.fr/oai/xtables-addons-oai.git
@@ -172,7 +180,8 @@ install_xtables_addons_oai() {
     chmod -R o+w xtables-addons-oai
     chmod -R g+w xtables-addons-oai
     cd xtables-addons-oai/
-    sudo autoreconf -i 
+    sync
+    sudo autoreconf -i $autoreconf_force_option
     sudo ./configure 
     sudo make
     sudo make install
@@ -185,8 +194,13 @@ install_xtables_addons_oai() {
 # External packages installers
 ############################################
 
+# arg1 is force (no interactive script)
 install_nettle_from_source() {
-  read -p "Do you want to install nettle ? <y/N> " prompt
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install nettle ? <y/N> " prompt
+  else
+    prompt='y'
+  fi
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp
@@ -204,8 +218,13 @@ install_nettle_from_source() {
   fi
 }
 
+# arg1 is force (no interactive script)
 install_gnutls_from_source(){
-  read -p "Do you want to install GNU TLS ? <y/N> " prompt
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install GNU TLS ? <y/N> " prompt
+  else
+    prompt='y'
+  fi
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp 
@@ -222,8 +241,13 @@ install_gnutls_from_source(){
   fi
 }
 
+# arg1 is force (no interactive script)
 install_1.1.5_freediameter_from_source() {
-  read -p "Do you want to install freeDiameter 1.1.5 ? <y/N> " prompt
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install freeDiameter 1.1.5 ? <y/N> " prompt
+  else
+    prompt='y'
+  fi
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp
@@ -244,8 +268,13 @@ install_1.1.5_freediameter_from_source() {
   fi
 }
 
+# arg1 is force (no interactive script)
 install_freediameter_from_source() {
-  read -p "Do you want to install freeDiameter 1.2.0 ? <y/N> " prompt
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install freeDiameter 1.2.0 ? <y/N> " prompt
+  else
+    prompt='y'
+  fi
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp
@@ -266,8 +295,13 @@ install_freediameter_from_source() {
   fi
 }
 
+# arg1 is force (no interactive script)
 install_latest_freediameter_from_source() {
-  read -p "Do you want to install latest freeDiameter ? <y/N> " prompt
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install latest freeDiameter ? <y/N> " prompt
+  else
+    prompt='y'
+  fi
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp
@@ -287,7 +321,7 @@ install_latest_freediameter_from_source() {
   fi
 }
 
-#arg1 is package name
+# arg1 is package name
 test_install_package() {
   # usage: test_install_package package_name
  if [ $# -eq 1 ]; then
@@ -308,7 +342,8 @@ check_gtpu_kmodule_installed() {
   fi  
 }
 
-#arg1 is required ubuntu package name
+# arg1 is required ubuntu package name
+# arg2 is force (no interactive script)
 upgrade_kernel() {
       
   # check if an already suitable kernel image is installed      
@@ -360,7 +395,11 @@ upgrade_kernel() {
     cat $valid_uninstalled_image_list
     rm $valid_uninstalled_image_list
     if [ "z$latest_valid_installed_image" != "z" ]; then
-      read -p "Do you want to install latest kernel $latest_valid_installed_image ? <y/N> " prompt
+      if [ $2 -eq 0]; then
+        read -p "Do you want to install latest kernel $latest_valid_installed_image ? <y/N> " prompt
+      else
+        prompt='y'
+      fi
       if [[ $prompt =~ [yY](es)* ]]
       then    
         echo_info "Installing new kernel $latest_valid_installed_image"
@@ -375,9 +414,10 @@ upgrade_kernel() {
 }
 
 # arg1 is required minimal version of linux-headers and linux-image
+# arg2 is force (no interactive script)
 check_kernel_release_and_install_xtables_addons_oai() {
 
-  if [ $# -eq 1 ]; then
+  if [ $# -eq 2 ]; then
     current_k_release=`uname -r`
     current_kernel_version=`echo $current_k_release | cut -d '.' -f1`
     current_major_revision=`echo $current_k_release | cut -d '.' -f2`
@@ -392,7 +432,7 @@ check_kernel_release_and_install_xtables_addons_oai() {
     else
       if [ $current_kernel_version -eq $required_kernel_version ]; then
         if [ "$current_major_revision" -lt "$required_major_revision" ]; then
-          upgrade_kernel $1
+          upgrade_kernel $1 $2
           echo_warning "xtables_addons_oai not installed "
           return
         fi
@@ -400,19 +440,26 @@ check_kernel_release_and_install_xtables_addons_oai() {
     fi
     dpkg -s "linux-headers-$current_k_release" > /dev/null 2>&1 && {
           echo_info "$current_k_release is installed and suitable for S-GW software." 
-          install_xtables_addons_oai
+          install_xtables_addons_oai $2
       } || {
           echo_warning "Package linux-headers-$current_k_release is not installed and required for S-GW software." 
-          $SUDO apt-get install linux-headers-$current_k_release && install_xtables_addons_oai
+          $SUDO apt-get install linux-headers-$current_k_release && install_xtables_addons_oai $2
     }
   else
-    echo_error "Please provide argument: kernel ubuntu version "
+    echo_error "Please provide arguments: kernel ubuntu version and force option"
   fi 
 }
 
+#arg1 is force (no interactive script)
 check_install_oai_software() {
+  if [ $1 -gt 0 ]; then 
+    OPTION= "--force-yes"
+  else
+    OPTION= "-y"
+  fi
+  
   $SUDO apt-get update
-  $SUDO apt-get install -y \
+  $SUDO apt-get install $OPTION \
     autoconf  \
     automake  \
     bison     \
@@ -457,15 +504,15 @@ check_install_oai_software() {
     python  \
     subversion
     if [ `lsb_release -rs` = '12.04' ] ; then
-      install_nettle_from_source
-      install_gnutls_from_source
+      install_nettle_from_source $1
+      install_gnutls_from_source $1
     else
-        $SUDO apt-get install -y libgnutls-dev nettle-dev nettle-bin 
+        $SUDO apt-get install $OPTION libgnutls-dev nettle-dev nettle-bin 
     fi
-    install_freediameter_from_source
-    install_asn1c_from_source
+    install_freediameter_from_source $1
+    install_asn1c_from_source $1
     
-  $SUDO apt-get install -y \
+  $SUDO apt-get install $OPTION \
     check \
     dialog \
     dkms \
@@ -486,7 +533,7 @@ check_install_oai_software() {
     vlan    \
     ctags    
     
-  check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic
+  check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $1
 }
 
 install_asn1c_from_source(){
