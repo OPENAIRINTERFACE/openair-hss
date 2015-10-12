@@ -164,7 +164,6 @@ install_xtables_addons_oai() {
   else
     prompt='y'
     rm_option=f
-    autoreconf_force_option='--force'
   fi
   if [[ $prompt =~ [yY](es)* ]]
   then    
@@ -181,7 +180,7 @@ install_xtables_addons_oai() {
     chmod -R g+w xtables-addons-oai
     cd xtables-addons-oai/
     sync
-    sudo autoreconf -i $autoreconf_force_option
+    sudo autoreconf --install --force
     sudo ./configure 
     sudo make
     sudo make install
