@@ -394,7 +394,7 @@ upgrade_kernel() {
     cat $valid_uninstalled_image_list
     rm $valid_uninstalled_image_list
     if [ "z$latest_valid_installed_image" != "z" ]; then
-      if [ $2 -eq 0]; then
+      if [ $2 -eq 0 ]; then
         read -p "Do you want to install latest kernel $latest_valid_installed_image ? <y/N> " prompt
       else
         prompt='y'
@@ -402,7 +402,7 @@ upgrade_kernel() {
       if [[ $prompt =~ [yY](es)* ]]
       then    
         echo_info "Installing new kernel $latest_valid_installed_image"
-        $SUDO apt-get install linux-image-$latest_valid_installed_image linux-headers-$latest_valid_installed_image && echo_warning "You have to reboot on the new installed kernel"
+        $SUDO apt-get install -y linux-image-$latest_valid_installed_image linux-headers-$latest_valid_installed_image && echo_warning "You have to reboot on the new installed kernel"
       else    
         echo_info "Not installing new kernel"
       fi
