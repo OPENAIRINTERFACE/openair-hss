@@ -24,7 +24,7 @@
 # author Laurent Thomas, Lionel GAUTHIER
 #
 #######################################
-SUDO=sudo -S -E
+SUDO='sudo -S -E'
 
 ###############################
 ## echo and  family
