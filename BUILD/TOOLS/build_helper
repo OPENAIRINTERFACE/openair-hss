@@ -630,3 +630,43 @@ set_openair_env(){
     export OPENAIRCN_DIR=$openair_path
 }
 
+
+################################
+# send ctrl-c and finally force terminate the program and all its child processes
+###############################
+
+function handle_ctrl_c(){
+CURPID=$$
+ppid=$$
+arraycounter=1
+echo_info "** Trapped CTRL-C. Killing all subprocesses now..."
+while true
+do
+        FORLOOP=FALSE
+        # Get all the child process id
+        for i in `ps -ef| awk '$3 == '$ppid' { print $2 }'`
+        do
+                if [ $i -ne $CURPID ] ; then
+                        procid[$arraycounter]=$i
+                        arraycounter=`expr $arraycounter + 1`
+                        ppid=$i
+                        FORLOOP=TRUE
+                fi
+        done
+        if [ "$FORLOOP" = "FALSE" ] ; then
+           arraycounter=`expr $arraycounter - 1`
+           ## We want to kill child process id first and then parent id's
+           while [ $arraycounter -ne 0 ]
+           do
+             echo "first we send ctrl-c to program"
+             $SUDO kill -INT "${procid[$arraycounter]}"
+             sleep 5
+             echo "Now we force kill if that didn't work"
+             $SUDO kill -9 "${procid[$arraycounter]}"
+             arraycounter=`expr $arraycounter - 1`
+           done
+         exit
+        fi
+done
+}
+
