@@ -1577,8 +1577,8 @@ _emm_as_establish_cnf (
 
       nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
       LOG_TRACE (DEBUG, "Set nas_msg.header.sequence_number -> %u", nas_msg.header.sequence_number);
-      as_msg->selected_encryption_algorithm = htons (0x8000 >> emm_security_context->selected_algorithms.encryption);
-      as_msg->selected_integrity_algorithm = htons (0x8000 >> emm_security_context->selected_algorithms.integrity);
+      as_msg->selected_encryption_algorithm = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.encryption);
+      as_msg->selected_integrity_algorithm = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.integrity);
       LOG_TRACE (DEBUG, "Set nas_msg.selected_encryption_algorithm -> NBO: 0x%04X (%u)", as_msg->selected_encryption_algorithm, emm_security_context->selected_algorithms.encryption);
       LOG_TRACE (DEBUG, "Set nas_msg.selected_integrity_algorithm -> NBO: 0x%04X (%u)", as_msg->selected_integrity_algorithm, emm_security_context->selected_algorithms.integrity);
     }
