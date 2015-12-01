@@ -312,7 +312,17 @@ nas_message_decrypt (
     /*
      * Check NAS message integrity
      */
-    if (mac != header->message_authentication_code) {
+    /* Quick fix by by Shaun Ying:
+     * The UE remembers its previous context and sends a Identity Response message with a MAC value that is integrity protected.
+     *  However, since OAI EPC is freshly started and it does not remember the previous security context for the same UE,
+     *  it expects messages without integrity protection during the attach procedure.
+     *  Since OAI EPC always compares the MAC values, we see the MAC failure error as quoted above.
+     *  The quick fix is to compare MAC values only when EPC's own MAC is not 0.
+     *  if (mac != header->message_authentication_code) {
+     *  LG@eurecom: we have to work on this topic, this point of the specifications has not been captured: 
+     *  ETSI TS 124 301 V10.15.0 section 4.4.4.2 Integrity checking of NAS signalling messages in the UE
+     */
+    if ((mac != 0) && (mac != header->message_authentication_code)) {
       LOG_TRACE (DEBUG,
                  "MAC Failure MSG:%08X(%u) <> INT ALGO:%08X(%u) Type of security context %u",
                  header->message_authentication_code, header->message_authentication_code, mac, mac, (emm_security_context != NULL) ? emm_security_context->type : 88);
