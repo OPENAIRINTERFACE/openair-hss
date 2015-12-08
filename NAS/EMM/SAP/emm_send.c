@@ -179,7 +179,7 @@ emm_send_attach_accept (
    * Mandatory - EPS attach result
    */
   size += EPS_ATTACH_RESULT_MAXIMUM_LENGTH;
-  emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS;
+  emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS_IMSI;
   /*
    * Mandatory - T3412 value
    */
