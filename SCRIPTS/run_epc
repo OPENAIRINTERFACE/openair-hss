@@ -194,7 +194,6 @@ function main()
 
   if [ $set_network_interfaces -eq 1 ]; then
     set_epc_network_interfaces $epc_config_file
-    exit
   fi
 
 
