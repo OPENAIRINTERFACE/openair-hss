@@ -49,8 +49,8 @@ function help()
   echo_error "  -b, --breakpoint      location      Set breakpoint location for GDB (ex location: Attach.c:272)."
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -h, --help                          Print this help."
+  echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in epc config file."
   echo_error "  -K, --itti-dump-file  file_abs_path ITTI dump file containing all ITTI events occuring during EPC runtime."
-  echo_error "  -l, --local-enb                     EPC run on the same eNB host."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
   echo_error "  -r, --remove-gtpu-kmodule           Remove gtpu kernel module before starting the EPC (EPC will load the gtpu kmodule)"
   echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
@@ -88,8 +88,8 @@ function control_c()
 function main()
 {
   local -i run_gdb=0
+  local -i set_network_interfaces=0
   local    exe_arguments=" "
-  local -i epc_local=0
   local -r epc_default_config_file="/usr/local/etc/oai/epc.conf"
   local    epc_config_file=$epc_default_config_file
   local    breakpoint_location=""
@@ -115,6 +115,11 @@ function main()
         help
         exit 0
         ;;
+      -i | --set-nw-interfaces)
+        set_network_interfaces=1
+        echo "setting network interfaces: $set_network_interfaces"
+        shift;
+        ;;
       -K | --itti-dump-file)
         local itti_dump_file=$2
         # can omit file name if last arg on the line
@@ -127,10 +132,6 @@ function main()
         exe_arguments="$exe_arguments -K $itti_dump_file"
         shift 1;
         ;;     
-      -l | --local-enb)
-        epc_local=1
-        shift;
-        ;;
       -m | --mscgen)
         g_msc_dir=$2
         if [ -d  "$g_msc_dir" ]; then
@@ -186,13 +187,16 @@ function main()
     echo_fatal "Cannot find /usr/local/bin/mme_gw executable, have a look at the output of build_epc executable"
   fi
 
-  if [ $epc_local -eq 1 ]; then
-    epc_config_file="/usr/local/etc/oai/epc.local.enb.conf"
-  fi
 
   if [ $g_run_msc_gen -eq 1 ]; then 
     rm -f /tmp/openair.msc.*
   fi
+
+  if [ $set_network_interfaces -eq 1 ]; then
+    set_epc_network_interfaces $epc_config_file
+    exit
+  fi
+
 
   exe_arguments="-O $epc_config_file $exe_arguments"
 
