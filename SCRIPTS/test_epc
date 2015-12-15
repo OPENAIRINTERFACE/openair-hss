@@ -1,0 +1,230 @@
+#!/bin/bash
+################################################################################
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under 
+# the Apache License, Version 2.0  (the "License"); you may not use this file
+# except in compliance with the License.  
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
+################################################################################
+# file test_epc
+# brief
+# author Lionel Gauthier
+# company Eurecom
+# email: lionel.gauthier@eurecom.fr
+#
+
+SUDO=sudo
+
+###############################
+## echo and  family
+###############################
+black='\E[30m'
+red='\E[31m'
+green='\E[32m'
+yellow='\E[33m'
+blue='\E[1;34m'
+magenta='\E[35m'
+cyan='\E[36m'
+white='\E[37m'
+reset_color='\E[00m'
+COLORIZE=1
+
+cecho()  {  
+    # Color-echo
+    # arg1 = message
+    # arg2 = color
+    local default_msg="No Message."
+    message=${1:-$default_msg}
+    color=${2:-$green}
+    [ "$COLORIZE" = "1" ] && message="$color$message$reset_color"
+    echo -e "$message"
+    return
+}
+
+echo_error()   { cecho "$*" $red          ;}
+echo_fatal()   { cecho "$*" $red; exit -1 ;}
+echo_warning() { cecho "$*" $yellow       ;}
+echo_success() { cecho "$*" $green        ;}
+echo_info()    { cecho "$*" $blue         ;}
+
+
+
+
+function help()
+{
+  echo_error " "
+  echo_error "Usage: test_epc [OPTION]..."
+  echo_error "Utility for running a EPC test case."
+  echo_error " "
+  echo_error "Options:"
+  echo_error "Mandatory arguments to long options are mandatory for short options too."
+  echo_error "  -b, --build-test                   Build XML scenario files (need -t|--test-dir option)."
+  echo_error "  -e, --old-enb-config-file  file    Set eNB(s) old config file, the one used for generating the pcap file "
+  echo_error "                                       (relative path to test dir, see -t option, or absolute path)."
+  echo_error "  -E, --enb-config-file      file    Set eNB(s) config file, the new one, used for playing the scenario"
+  echo_error "                                       (relative path to test dir, see -t option, or absolute path)."
+  echo_error "  -h, --help                         Print this help."
+  echo_error "  -i, --set-nw-interfaces            Force set network interfaces as described in epc config file."
+  echo_error "  -p, --pcap-file            file    Set pcap input file for building a scenario (need -b|--build-test option)."
+  echo_error "  -t, --test-dir             dir     Set test dir."
+  echo_error "  -s, --scenario-file        file    Set scenario input file for running a scenario (need -r|--run option, without -b|--build-test option)."
+  echo_error "  -r, --run                          Run test."
+  echo_error " "
+}
+
+
+
+function main()
+{
+  local    old_enb_config_file=""
+  local    enb_config_file=""
+  local    pcap_file=""
+  local    scenario_file=""
+  local    test_dir="."
+  local -i set_network_interfaces=0
+  local -i run=0
+  local -i build=0
+
+
+  until [ -z "$1" ]
+    do
+    case "$1" in
+      -b | --build-test)
+        build=1
+        shift;
+        ;;
+      -e | --old-enb-config-file)
+        old_enb_config_file=$2
+        shift 2;
+        ;;
+      -E | --enb-config-file)
+        enb_config_file=$2
+        shift 2;
+        if [ ! -f $enb_config_file ]; then 
+          echo_fatal "Please provide -e|--enb-config-file valid argument (\"$enb_config_file\" not a valid file)"
+        fi
+        ;;
+      -h | --help)
+        help
+        shift;
+        exit 0
+        ;;
+      -i | --set-nw-interfaces)
+        set_network_interfaces=1
+        shift;
+        ;;
+      -p | --pcap-file)
+        pcap_file=$2
+        shift 2;
+        ;;
+      -r | --run)
+        run=1
+        shift;
+        ;;
+      -s | --scenario-file)
+        scenario_file=$2
+        shift 2;
+        ;;
+      -t | --test-dir)
+        test_dir=$2
+        shift 2;
+        if [ -d $test_dir ]; then
+          cd $test_dir
+        else
+          echo_fatal "Please provide -t|--test-dir valid argument (\"$test_dir\" not a directory)"
+        fi
+        ;;
+      *)   
+        echo "Unknown option $1"
+        help
+        exit 1
+        ;;
+    esac
+  done
+  
+  if [ $build -eq 1 ]; then
+    if [ "a$old_enb_config_file" == "a" ]; then 
+      echo_fatal "Please provide -e|--old-enb-config-file argument"
+    fi
+    if [ "a$pcap_file" == "a" ]; then 
+      echo_fatal "Please provide -p|--pcap-file argument"
+    fi
+  fi
+  if [ $run -eq 1 ]; then
+    if [ $build -eq 0 ]; then
+      if [ "a$scenario_file" == "a" ]; then 
+        echo_fatal "Please provide -s|--scenario-file argument"
+      fi
+    fi
+    if [ "a$enb_config_file" == "a" ]; then 
+      echo_fatal "Please provide -E |--enb-config-file argument"
+    fi
+  fi
+  
+  ########
+      
+  if [ "a$old_enb_config_file" != "a" ]; then 
+    if [ ! -f $old_enb_config_file ]; then 
+      echo_fatal "Please provide -e|--old-enb-config-file valid argument (\"$old_enb_config_file\" not a valid file)"
+    fi
+  fi
+  if [ "a$enb_config_file" != "a" ]; then 
+    if [ ! -f $enb_config_file ]; then 
+      echo_fatal "Please provide -E|--enb-config-file valid argument (\"$enb_config_file\" not a valid file)"
+    fi
+  fi
+  if [ "a$pcap_file" != "a" ]; then 
+    if [ ! -f $pcap_file ]; then 
+      echo_fatal "Please provide -p|--pcap-file valid argument (\"$pcap_file\" not a valid file)"
+    fi
+  fi
+  if [ "a$scenario_file" != "a" ]; then 
+    if [ ! -f $scenario_file ]; then 
+      echo_fatal "Please provide -s|--scenario-file valid argument (\"$scenario_file\" not a valid file)"
+    fi
+  fi
+  
+  
+  
+  if [ $build -ne 0 ]; then
+    pcap_file_name_abs_path=`readlink -f $pcap_file`
+    mme_test_s1_pcap2pdml --pcap_file $pcap_file_name_abs_path
+    file_no_extension=`echo $pcap_file | rev | cut -d. -f2- | rev`
+    pcap_file_abs_path_no_extension=`echo $pcap_file_name_abs_path | rev | cut -d. -f2- | rev`
+    if [ ! -f $pcap_file_abs_path_no_extension.pdml ]; then 
+      echo_fatal "Generation of $pcap_file_abs_path_no_extension.pdml failed"
+    fi
+    scenario_file=$file_no_extension.xml
+    # needed for test_epc_generate_scenario
+
+    test_epc_generate_scenario --enb-conf-file $old_enb_config_file --test-dir $test_dir --pdml $file_no_extension.pdml
+    if [ ! -f $pcap_file_abs_path_no_extension.xml ]; then 
+      echo_fatal "Generation of scenario file $pcap_file_abs_path_no_extension.xml failed"
+    fi
+  fi
+  
+  if [ $set_network_interfaces -eq 1 ]; then
+    set_epc_network_interfaces $enb_config_file
+  fi
+  
+  if [ $run -eq 1 ]; then
+    test_epc_play_scenario --test-dir $test_dir --enb-conf-file $enb_config_file --scenario $scenario_file
+  fi
+}
+
+
+main "$@"
+

@@ -158,6 +158,18 @@ function main()
     exit 0
   fi
   
+  set_openair_env 
+  $SUDO cp -uv  $OPENAIRCN_DIR/SCRIPTS/mme_test_s1_pcap2pdml /usr/local/bin
+  $SUDO chmod 755 /usr/local/bin/mme_test_s1_pcap2pdml
+   
+  $SUDO cp -uv  $OPENAIRCN_DIR/SCRIPTS/test_epc              /usr/local/bin
+  $SUDO chmod 755 /usr/local/bin/test_epc 
+  
+  $SUDO mkdir -p -m 755 /usr/share/oai/xsl
+  $SUDO cp -upv  $OPENAIRCN_DIR/TEST/SCENARIOS/play_scenario.xsl    /usr/share/oai/xsl
+  $SUDO cp -upv  $OPENAIRCN_DIR/TEST/SCENARIOS/generic_scenario.xsl /usr/share/oai/xsl
+  
+  
   # extra arguments processing
   if [[ z$hss_fqdn = z ]]; then
     hss_fqdn=`hostname --fqdn`
@@ -185,7 +197,6 @@ function main()
   fi
   cmake_args="$cmake_args -DHSS_IP=$hss_ip"
 
-  set_openair_env 
   if [[ $verbose -eq 1 ]]; then
     cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
   fi
