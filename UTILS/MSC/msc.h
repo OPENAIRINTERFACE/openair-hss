@@ -34,7 +34,9 @@
 
 typedef enum {
   MIN_MSC_ENV = 0,
-  MSC_MME_GW = MIN_MSC_ENV,
+  MSC_E_UTRAN = MIN_MSC_ENV,
+  MSC_E_UTRAN_LIPA,
+  MSC_MME_GW,
   MSC_MME,
   MSC_SP_GW,
   MAX_MSC_ENV

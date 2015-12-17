@@ -669,7 +669,7 @@ import_hss_database(){
   local database_name=$3
   local file_name=$4
   
-  mysqladmin  -u $hss_username -p$hss_password drop $database_name 
+  mysqladmin --force -u $hss_username -p$hss_password drop $database_name 
   
   Q1="CREATE DATABASE IF NOT EXISTS $database_name;"
   mysql -u $hss_username --password=$hss_password -e "${Q1}"
@@ -875,6 +875,29 @@ set_epc_network_interfaces(){
   set_network_interface  $SGW_INTERFACE_NAME_FOR_S5_S8_UP       $SGW_IPV4_ADDRESS_FOR_S5_S8_UP 
   set_network_interface  $PGW_INTERFACE_NAME_FOR_S5_S8          $PGW_IPV4_ADDRESS_FOR_S5_S8 
   set_network_interface  $PGW_INTERFACE_NAME_FOR_SGI            $PGW_IPV4_ADDRESS_FOR_SGI
+}
+
+# arg1 is a 'libconfig-like' config file
+set_enb_network_interfaces(){
+  value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
+  eval $value
+  
+  # check all var names are correct
+  list_var_name="\
+        ENB_INTERFACE_NAME_FOR_S1_MME         ENB_IPV4_ADDRESS_FOR_S1_MME \
+        ENB_INTERFACE_NAME_FOR_S1U            ENB_IPV4_ADDRESS_FOR_S1U "
+  for var_name in $list_var_name
+  do
+    if [ -n "$${var_name}" ]; then
+      echo_success "Found ${var_name} = ${!var_name}"
+    else
+      echo_fatal "${var_name} does does not exist in your config file $1"
+    fi
+  done
+
+  # configure interfaces
+  set_network_interface  $ENB_INTERFACE_NAME_FOR_S1_MME         $ENB_IPV4_ADDRESS_FOR_S1_MME 
+  set_network_interface  $ENB_INTERFACE_NAME_FOR_S1U            $ENB_IPV4_ADDRESS_FOR_S1U 
 }
 
 ################################

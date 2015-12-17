@@ -365,7 +365,12 @@ esm_proc_default_eps_bearer_context_failure (
   int                                     pid;
 
   LOG_FUNC_IN;
-  LOG_TRACE (WARNING, "ESM-PROC  - Default EPS bearer context activation " "failure (ueid=" NAS_UE_ID_FMT ")", ctx->ueid);
+  if (ctx) {
+    LOG_TRACE (WARNING, "ESM-PROC  - Default EPS bearer context activation " "failure (ueid=" NAS_UE_ID_FMT ")", ctx->ueid);
+  } else {
+    LOG_TRACE (WARNING, "ESM-PROC  - Default EPS bearer context activation " "failure (context is NULL)");
+    LOG_FUNC_RETURN (RETURNerror);
+  }
   /*
    * Get the EPS bearer identity of the EPS bearer context which is still
    * * * * pending in the active pending state
