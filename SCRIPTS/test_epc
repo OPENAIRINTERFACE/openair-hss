@@ -238,8 +238,9 @@ set_enb_network_interfaces(){
 
 function help()
 {
-  echo_error " "
+  echo_error "\033[1m \033[0m"
   echo_error "Usage: test_epc [OPTION]..."
+  echo_error "Description:"
   echo_error "Utility for running a EPC test case."
   echo_error " "
   echo_error "Options:"
@@ -249,14 +250,19 @@ function help()
   echo_error "                                       (relative path to test dir, see -t option, or absolute path)."
   echo_error "  -E, --enb-config-file      file    Set eNB(s) config file, the new one, used for playing the scenario"
   echo_error "                                       (relative path to test dir, see -t option, or absolute path)."
+  echo_error "  -f, --shift-packet         frame:[+-]sss.mmm"
+  echo_error "                                     Shit packet by seconds and milliseconds (need -r|--run option)"
+  echo_error "  -F, --shift-packets        frame:[+-]sss.mmm"
+  echo_error "                                     Shit packet and following packets by seconds and milliseconds (need -r|--run option)"
   echo_error "  -g, --gdb                          Run with GDB."
   echo_error "  -h, --help                         Print this help."
+  echo_error "  -H, --shift-history                Replay shift packet history."
   echo_error "  -i, --set-nw-interfaces            Force set network interfaces as described in epc config file."
   echo_error "  -m, --max-speed                    Play scenario without simulating inter-packets delays."
   echo_error "  -p, --pcap-file            file    Set pcap input file for building a scenario (need -b|--build-test option)."
-  echo_error "  -t, --test-dir             dir     Set test dir."
   echo_error "  -s, --scenario-file        file    Set scenario input file for running a scenario (need -r|--run option, without -b|--build-test option)."
-  echo_error "  -r, --run                          Run test."
+  echo_error "  -t, --test-dir             dir     Set test dir."
+  echo_error "  -r, --run                          Run test with implicit scenario filename(-b|--build-test option) or explicit scenario filename (-s|--scenario-file)."
   echo_error " "
 }
 
@@ -270,11 +276,14 @@ function main()
   local    scenario_file=""
   local    test_dir="."
   local    play_args=""
+  local    shift_args=""
   local -i set_network_interfaces=0
   local -i run=0
   local -i run_gdb=0
   local -i max_speed=0
   local -i build=0
+  local -i shift_packet_history=0
+  local -i shift_packet_args=0
 
 
   until [ -z "$1" ]
@@ -295,6 +304,16 @@ function main()
           echo_fatal "Please provide -e|--enb-config-file valid argument (\"$enb_config_file\" not a valid file)"
         fi
         ;;
+      -f | --shift-packet)
+        shift_packet_args=1
+        shift_args="$shift_args --shift-packet \"$2\""
+        shift 2;
+        ;;
+      -F | --shift-packets)
+        shift_packet_args=1
+        shift_args="$shift_args --shift-packets \"$2\""
+        shift 2;
+        ;;
       -g | --gdb)
         run_gdb=1
         shift;
@@ -303,6 +322,10 @@ function main()
         help
         shift;
         exit 0
+        ;;
+      -H | --shift-history)
+        shift_packet_history=1
+        shift;
         ;;
       -i | --set-nw-interfaces)
         set_network_interfaces=1
@@ -356,8 +379,14 @@ function main()
       fi
     fi
     if [ "a$enb_config_file" == "a" ]; then 
-      echo_fatal "Please provide -E |--enb-config-file argument"
+      echo_fatal "Please provide -E|--enb-config-file argument"
     fi
+    if [ $shift_packet_history -eq 1 ]; then 
+      args_shift_packet_history=$(cat $test_dir/shift_packet.history | tail -1)
+      shift_args=$args_shift_packet_history" "$shift_args
+      echo $shift_args >> $test_dir/shift_packet.history
+    fi
+    play_args=$play_args" "$shift_args
   fi
   
   ########
@@ -396,6 +425,7 @@ function main()
     scenario_file=$file_no_extension.xml
     # needed for test_epc_generate_scenario
 
+    echo "test_epc_generate_scenario --enb-conf-file $old_enb_config_file --test-dir $test_dir --pdml $file_no_extension.pdml" >> $test_dir/test_epc_generate_scenario.history
     if [ $run_gdb -eq 0 ]; then 
       test_epc_generate_scenario --enb-conf-file $old_enb_config_file --test-dir $test_dir --pdml $file_no_extension.pdml
     else
@@ -404,7 +434,9 @@ function main()
       $SUDO echo "file test_epc_generate_scenario"                                                                      > ~/.gdb_test_epc_generate_scenario
       $SUDO echo "set args --enb-conf-file $old_enb_config_file --test-dir $test_dir --pdml $file_no_extension.pdml "  >> ~/.gdb_test_epc_generate_scenario
       $SUDO echo "run"                                                                                                 >> ~/.gdb_test_epc_generate_scenario
+      $SUDO echo "\033[1m~/.gdb_test_epc_generate_scenario content:\033[0m"
       $SUDO cat ~/.gdb_test_epc_generate_scenario
+      $SUDO echo "EOF"
       $SUDO gdb -n -x ~/.gdb_test_epc_generate_scenario
     fi
     if [ ! -f $pcap_file_abs_path_no_extension.xml ]; then 
@@ -417,6 +449,7 @@ function main()
   fi
   
   if [ $run -eq 1 ]; then
+    echo "test_epc_play_scenario --test-dir $test_dir --enb-conf-file $enb_config_file --scenario $scenario_file $play_args" >> $test_dir/test_epc_play_scenario.history
     if [ $run_gdb -eq 0 ]; then 
       test_epc_play_scenario --test-dir $test_dir --enb-conf-file $enb_config_file --scenario $scenario_file $play_args
     else
@@ -425,7 +458,9 @@ function main()
       $SUDO echo "file test_epc_play_scenario"                                                                          > ~/.gdb_test_epc_play_scenario
       $SUDO echo "set args --test-dir $test_dir --enb-conf-file $enb_config_file --scenario $scenario_file $play_args" >> ~/.gdb_test_epc_play_scenario
       $SUDO echo "run"                                                                                                 >> ~/.gdb_test_epc_play_scenario
+      $SUDO echo "\033[1m~/.gdb_test_epc_play_scenario content:\033[0m"
       $SUDO cat ~/.gdb_test_epc_play_scenario
+      $SUDO echo "EOF"
       $SUDO gdb -n -x ~/.gdb_test_epc_play_scenario
     fi
   fi
