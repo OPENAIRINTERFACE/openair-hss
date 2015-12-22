@@ -43,7 +43,13 @@ args = parser.parse_args()
 # get xml document from pcap
 #####################
 orig_pcap_file_name = args.pcap_file.strip()
-orig_pdml_string = subprocess.check_output(["tshark", '-T', 'pdml', '-r', orig_pcap_file_name])
+
+## NO SCTP_CID_SACK(3), SCTP_CID_HEARTBEAT, SCTP_CID_HEARTBEAT_ACK, SCTP_CID_COOKIE_ECHO, SCTP_CID_COOKIE_ACK
+#orig_pdml_string = subprocess.check_output(["tshark", '-2', '-F', 'pcapng' , '-w', orig_pcap_file_name + ".SCTP_Filtered.pcapng", '-t', 'r', '-r', orig_pcap_file_name, '-R', 'sctp.chunk_type!=3 && sctp.chunk_type!=4 && sctp.chunk_type!=5 && sctp.chunk_type!=10 && sctp.chunk_type!=11'])
+# !!! Bug in tshark: it zeroes all timestamps !!!
+
+
+orig_pdml_string = subprocess.check_output(["tshark", '-2', '-T', 'pdml', '-r', orig_pcap_file_name])
 
 orig_dom = parseString(orig_pdml_string)
 
@@ -68,7 +74,17 @@ for packet in packets:
             frame_node.appendChild(proto)
             ip_node = proto
         elif urlnode.nodeValue == 'sctp':
-            found_sctp = True
+            fields = proto.getElementsByTagName("field")
+            for field in fields:
+                if found_sctp == True:
+                    continue
+                attrs_field = field.attributes
+                attr_field = attrs_field['name']
+                if attr_field.nodeValue == 'sctp.chunk_type':
+                    attr_field = attrs_field['value']
+                    # 00 = DATA CHUNK, 01 = INIT CHUNK, 02 = INIT_ACK_CHUNK
+                    if (attr_field.nodeValue <= '02') or (attr_field.nodeValue == '07') or (attr_field.nodeValue == '08')  or (attr_field.nodeValue == '0e') : 
+                        found_sctp = True
             ip_node.appendChild(proto)
             sctp_node = proto
         elif urlnode.nodeValue == 's1ap':

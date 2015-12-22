@@ -160,8 +160,8 @@ P-GW =
         PGW_INTERFACE_NAME_FOR_S5_S8          = "none";                         # DO NOT CHANGE
         PGW_IPV4_ADDRESS_FOR_S5_S8            = "0.0.0.0/24";                   # DO NOT CHANGE
 
-        PGW_INTERFACE_NAME_FOR_SGI            = "eth0";                         # YOUR NETWORK CONFIG HERE
-        PGW_IPV4_ADDRESS_FOR_SGI              = "192.168.12.213/24";             # YOUR NETWORK CONFIG HERE
+        PGW_INTERFACE_NAME_FOR_SGI            = "eth1";                         # YOUR NETWORK CONFIG HERE
+        PGW_IPV4_ADDRESS_FOR_SGI              = "192.168.14.17/24";             # YOUR NETWORK CONFIG HERE
         PGW_MASQUERADE_SGI                    = "yes";                          # YOUR NETWORK CONFIG HERE
     };
     
