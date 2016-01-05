@@ -380,6 +380,8 @@ s6a_parse_apn_configuration_profile (
 
   CHECK_FCT (fd_msg_browse (avp_apn_conf_prof, MSG_BRW_FIRST_CHILD, &avp, NULL));
 
+  apn_config_profile->nb_apns = 0;
+
   while (avp) {
     CHECK_FCT (fd_msg_avp_hdr (avp, &hdr));
 

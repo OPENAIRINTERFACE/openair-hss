@@ -41,6 +41,7 @@ function help()
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --clean                               Clean the build generated files (build from scratch)"
   echo_error "  -C, --conf-files-only                     Generate only EPC configuration files (no build)"
+  echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
   echo_error "  -H, --remote-hss                hostname  HSS hostname (with FQDN), default is this host (`hostname --fqdn`)."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run EPC (support Ubuntu 14.04)."
@@ -68,8 +69,11 @@ function main()
 {
   local -i clean=0
   local -i conf_files_only=0
+  local -i force=0
   local -i verbose=0
   local -i s6a_server=0
+  local -i install_gtpu_kernel_module=0
+  local -i var_check_install_oai_software=0
   local    cmake_args=" "
   local    make_args="-j $NUM_CPU"
   local    realm=""
@@ -91,6 +95,11 @@ function main()
         echo "Generate only conf files (no build)"
         shift;
         ;;
+      -f | --force)
+        force=1
+        echo "Force set (no interactive)"
+        shift;
+        ;;
       -h | --help)
         help
         shift;
@@ -104,13 +113,13 @@ function main()
       -i | --check-installed-software)
         echo "Check installed software packages necessary to build and run EPC (support Ubuntu 14.04):"
         set_openair_env
-        check_install_oai_software
-        exit 0
+        var_check_install_oai_software=1
+        shift;
         ;;
       -j | --install-gtpu-kernel-module)
         set_openair_env
-        install_xtables_addon_oai
-        exit 0
+        install_gtpu_kernel_module=1
+        shift;
         ;;
       -l | --local-hss)
         echo "EPC on same HSS HOST -> MME act as a server on s6a"
@@ -140,6 +149,27 @@ function main()
     esac
   done
   
+  if [ $install_gtpu_kernel_module -gt 0 ];then
+    check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $force
+    exit 0
+  fi
+  if [ $var_check_install_oai_software -gt 0 ];then
+    check_install_oai_software  $force
+    exit 0
+  fi
+  
+  set_openair_env 
+  $SUDO cp -uv  $OPENAIRCN_DIR/SCRIPTS/mme_test_s1_pcap2pdml /usr/local/bin
+  $SUDO chmod 755 /usr/local/bin/mme_test_s1_pcap2pdml
+   
+  $SUDO cp -uv  $OPENAIRCN_DIR/SCRIPTS/test_epc              /usr/local/bin
+  $SUDO chmod 755 /usr/local/bin/test_epc 
+  
+  $SUDO mkdir -p -m 755 /usr/share/oai/xsl
+  $SUDO cp -upv  $OPENAIRCN_DIR/TEST/SCENARIOS/play_scenario.xsl    /usr/share/oai/xsl
+  $SUDO cp -upv  $OPENAIRCN_DIR/TEST/SCENARIOS/generic_scenario.xsl /usr/share/oai/xsl
+  
+  
   # extra arguments processing
   if [[ z$hss_fqdn = z ]]; then
     hss_fqdn=`hostname --fqdn`
@@ -167,7 +197,6 @@ function main()
   fi
   cmake_args="$cmake_args -DHSS_IP=$hss_ip"
 
-  set_openair_env 
   if [[ $verbose -eq 1 ]]; then
     cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
   fi

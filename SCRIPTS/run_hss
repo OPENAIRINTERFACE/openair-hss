@@ -36,12 +36,15 @@ source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
 
 function help()
 {
+  set_openair_env
   echo_error " "
   echo_error "Usage: run_hss [OPTION]..."
   echo_error "Run the HSS executable (experimental)."
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
+  echo_error "  -e, --export-db  filename  Export current database to a SQL file, file prefix is $OPENAIRCN_DIR/OAI_HSS/db. (useful for replaying scenarios)"
+  echo_error "  -i, --import-db  filename  Import SQL file to current database, file prefix is $OPENAIRCN_DIR/OAI_HSS/db. (useful for replaying scenarios or restoring original database content)"
   echo_error "  -g, --gdb                  Run with GDB."
   echo_error "  -h, --help                 Print this help."
 }
@@ -51,11 +54,25 @@ function help()
 function main() 
 {
   local -i run_gdb=0
+  local -i export_db=0
+  local -i import_db=0
   local exe_arguments=" -c /usr/local/etc/oai/hss.conf"
 
   until [ -z "$1" ]
     do
     case "$1" in
+      -e | --export-db)
+        export_db=1
+        echo "setting export DB flag to: $export_db"
+        dump_file=$2
+        shift 2;
+        ;;
+      -i | --import-db)
+        import_db=1
+        echo "setting import DB flag to: $import_db"
+        dump_file=$2
+        shift 2;
+        ;;
       -g | --gdb)
         run_gdb=1
         echo "setting GDB flag to: $GDB"
@@ -76,7 +93,37 @@ function main()
   set_openair_env 
   cecho "OPENAIRCN_DIR   = $OPENAIRCN_DIR" $green
 
-
+  if [ $export_db -eq 1 -a $import_db -eq 1 ]; then 
+    echo_error "Options -e and -i cannot be set together"
+  fi
+  
+  if [ $export_db -eq 1 ]; then
+    [[ $dump_file != *"/"* ]] && dump_file=$OPENAIRCN_DIR/OAI_HSS/db/$dump_file
+    if [ -e $dump_file ]; then 
+      read -p "Do you want to overwrite $dump_file ? <y/N> " prompt
+      if [[ $prompt =~ [yY](es)* ]]; then
+        rm $dump_file
+      else
+        echo_fatal "$dump_file exist, exiting"
+      fi
+    fi
+    value="`cat /usr/local/etc/oai/hss.conf | tr -d " " | grep "="`"
+    eval $value
+    export_hss_database $MYSQL_user $MYSQL_pass $MYSQL_db $dump_file
+  fi
+  
+  if [ $import_db -eq 1 ]; then
+    [[ $dump_file != *"/"* ]] && dump_file=$OPENAIRCN_DIR/OAI_HSS/db/$dump_file
+    if [ -e $dump_file ]; then 
+      value="`cat /usr/local/etc/oai/hss.conf | tr -d " " | grep "="`"
+      eval $value
+      import_hss_database $MYSQL_user $MYSQL_pass $MYSQL_db $dump_file
+    else
+      echo_fatal "$dump_file does not exist, exiting"
+    fi
+  fi
+  
+  
   if [ $run_gdb -eq 0 ]; then 
     exec oai_hss  `echo $exe_arguments` 2>&1 
   else

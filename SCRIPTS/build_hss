@@ -45,6 +45,7 @@ function help()
   echo_error "  -c, --clean                               Clean the build generated files (build from scratch)"
   echo_error "  -d, --debug                               Compile with debug informations."
   echo_error "  -f, --fqdn                     fqdn       HSS Fully Qualified Domain Name (if not specified default is `hostname --fqdn`)."
+  echo_error "  -F, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run HSS (support Ubuntu 14.04)."
   echo_error "  -I, --install-hss-files                   Install HSS database if necessary."
@@ -72,6 +73,8 @@ function main()
   local -i clean=0
   local -i verbose=0
   local -i mme_s6a_server=0
+  local -i var_check_install_oai_software=0
+  local -i force=0
   local    cmake_args=" "
   local    make_args="-j $NUM_CPU"
   local    realm=""
@@ -103,6 +106,11 @@ function main()
         cmake_args="$cmake_args -DHSS_FQDN=$2"
         shift 2;
         ;;
+      -F | --force)
+        force=1
+        echo "Force set (no interactive)"
+        shift;
+        ;;
       -h | --help)
         help
         exit 0
@@ -110,8 +118,8 @@ function main()
       -i | --check-installed-software)
         echo "Check installed software packages necessary to build and run HSS (support Ubuntu 14.04):"
         set_openair_env
-        check_install_oai_software
-        exit 0
+        var_check_install_oai_software=1
+        shift;
         ;;
       -I | --install-hss-files)
         echo "Install HSS files: .conf files, database (if you want to reinstall database, drop it by hand before)."
@@ -156,6 +164,12 @@ function main()
     esac
   done
 
+
+  if [ $var_check_install_oai_software -gt 0 ];then
+    check_install_oai_software  $force
+    exit 0
+  fi
+  
   # extra arguments processing
   if [[ z$hss_fqdn = z ]]; then
     hss_fqdn=`hostname --fqdn`
