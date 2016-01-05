@@ -418,26 +418,6 @@ config_parse_file (
         address = strtok (cidr, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_S11, "BAD IP ADDRESS FORMAT FOR MME S11 !\n")
           free (cidr);
-
-        if (strncasecmp ("tun", mme_config_p->ipv4.mme_interface_name_for_S1_MME, strlen ("tun")) == 0) {
-          if (snprintf (system_cmd, 256, "ip link set %s down ;openvpn --rmtun --dev %s", mme_config_p->ipv4.mme_interface_name_for_S1_MME, mme_config_p->ipv4.mme_interface_name_for_S1_MME) > 0) {
-            mme_system (system_cmd, 1);
-          } else {
-            fprintf (stderr, "Del %s\n", mme_config_p->ipv4.mme_interface_name_for_S1_MME);
-          }
-
-          if (snprintf (system_cmd, 256, "openvpn --mktun --dev %s;sync;ifconfig  %s up;sync", mme_config_p->ipv4.mme_interface_name_for_S1_MME, mme_config_p->ipv4.mme_interface_name_for_S1_MME) > 0) {
-            mme_system (system_cmd, 1);
-          } else {
-            fprintf (stderr, "Create %s\n", mme_config_p->ipv4.mme_interface_name_for_S1_MME);
-          }
-
-          if (snprintf (system_cmd, 256, "ip -4 addr add %s  dev %s", mme_ip_address_for_S1_MME, mme_config_p->ipv4.mme_interface_name_for_S1_MME) > 0) {
-            mme_system (system_cmd, 1);
-          } else {
-            fprintf (stderr, "Set IPv4 address on %s\n", mme_config_p->ipv4.mme_interface_name_for_S1_MME);
-          }
-        }
       }
     }
     // NAS SETTING
