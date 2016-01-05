@@ -136,11 +136,45 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -g -DMALLOC_CHECK_=3")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -g -DMALLOC_CHECK_=3 -O2") 
 
 
+set(GIT_BRANCH        "UNKNOWN")
+set(GIT_COMMIT_HASH   "UNKNOWN")
+set(GIT_COMMIT_DATE   "UNKNOWN")
+
+
+find_package(Git)
+if(GIT_FOUND)
+  message("git found: ${GIT_EXECUTABLE}")
+  # Get the current working branch
+  execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  # Get the latest abbreviated commit hash of the working branch
+  execute_process(
+    COMMAND git log -1 --format=%h
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  
+  # Get the latest commit date of the working branch
+  execute_process(
+    COMMAND git log -1 --format=%cd
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+endif()
+
+
 # Below is a hard-coded info
 set (FIRMWARE_VERSION "No svn information")
 add_definitions("-DFIRMWARE_VERSION=\"${FIRMWARE_VERSION}\"")
-add_definitions("-DPACKAGE_VERSION=\"${FIRMWARE_VERSION}\"")
-add_definitions("-DPACKAGE_BUGREPORT=\"OpenAirInterface web site\"")
+add_definitions("-DPACKAGE_VERSION=\"Branch: ${GIT_BRANCH} Abrev. Hash: ${GIT_COMMIT_HASH} Date: ${GIT_COMMIT_DATE}\"")
+add_definitions("-DPACKAGE_BUGREPORT=\"openair4g-devel@lists.eurecom.fr\"")
 
 
 
@@ -849,9 +883,6 @@ IF( EPC_BUILD )
     ${BUILD_TOP_DIR}/EPC/s6a.conf.in
     ${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf)
   configure_file(
-    ${BUILD_TOP_DIR}/EPC/epc.local.enb.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/epc.local.enb.conf)
-  configure_file(
     ${BUILD_TOP_DIR}/EPC/epc.conf.in
     ${CMAKE_CURRENT_BINARY_DIR}/epc.conf)
 ENDIF( EPC_BUILD )
@@ -975,7 +1006,6 @@ add_custom_command (
 # add the install targets
 #install (TARGETS oai_sgw RUNTIME DESTINATION /usr/local/bin)
 install (TARGETS mme_gw  RUNTIME DESTINATION /usr/local/bin)
-install (FILES "${CMAKE_CURRENT_BINARY_DIR}/epc.local.enb.conf" DESTINATION /usr/local/etc/oai)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/epc.conf"           DESTINATION /usr/local/etc/oai)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf"        DESTINATION ${FREEDIAMETER_PATH}/../etc/freeDiameter)
 
