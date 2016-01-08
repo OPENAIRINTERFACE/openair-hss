@@ -89,7 +89,8 @@ int
 emm_recv_status (
   unsigned int ueid,
   emm_status_msg * msg,
-  int *emm_cause)
+  int *emm_cause,
+  const nas_message_decode_status_t * const status)
 {
   LOG_FUNC_IN;
   int                                     rc;
@@ -128,9 +129,10 @@ emm_recv_status (
  ***************************************************************************/
 int
 emm_recv_attach_request (
-  unsigned int ueid,
-  const attach_request_msg * msg,
-  int *emm_cause)
+  const unsigned int ueid,
+  const attach_request_msg * const msg,
+  int * const emm_cause,
+  const nas_message_decode_status_t  * const decode_status)
 {
   int                                     rc;
   uint8_t                                 gea = 0;
@@ -141,20 +143,6 @@ emm_recv_attach_request (
   /*
    * Message checking
    */
-#if UPDATE_RELEASE_9 == 0
-
-  /*
-   * SR: In releases 9 and beyond the mandatory ie (old GUTI) has been removed
-   */
-  if ((msg->oldgutiorimsi.guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) && !(msg->presencemask & ATTACH_REQUEST_OLD_GUTI_TYPE_PRESENT)) {
-    /*
-     * The Old GUTI type IE shall be included if the type of identity
-     * * * * in the EPS mobile identity IE is set to "GUTI"
-     */
-    *emm_cause = EMM_CAUSE_INVALID_MANDATORY_INFO;
-    LOG_TRACE (WARNING, "EMMAS-SAP - [%08x] - Received GUTI identity without " "old GUTI IEI", ueid);
-  } else
-#endif /* UPDATE_RELEASE_9 == 0 */
   if (msg->uenetworkcapability.spare != 0b000) {
     /*
      * Spare bits shall be coded as zero
@@ -184,17 +172,23 @@ emm_recv_attach_request (
    */
   if (msg->epsattachtype == EPS_ATTACH_TYPE_EPS) {
     type = EMM_ATTACH_TYPE_EPS;
-  } else if (msg->epsattachtype == EPS_ATTACH_TYPE_IMSI) {
-    type = EMM_ATTACH_TYPE_IMSI;
+    LOG_TRACE (INFO, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EPS");
+  } else if (msg->epsattachtype == EPS_ATTACH_TYPE_COMBINED_EPS_IMSI) {
+    type = EMM_ATTACH_TYPE_COMBINED_EPS_IMSI;
+    LOG_TRACE (INFO, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_COMBINED_EPS_IMSI");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_EMERGENCY) {
     type = EMM_ATTACH_TYPE_EMERGENCY;
+    LOG_TRACE (INFO, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EMERGENCY");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_RESERVED) {
     type = EMM_ATTACH_TYPE_RESERVED;
+    LOG_TRACE (INFO, "EMMAS-SAP - get attach type EMM_ATTACH_TYPE_RESERVED");
   } else {
     /*
+     * Requirement MME24.301R10_9.9.3.11_1
      * All other values shall be interpreted as "EPS attach"
      */
     type = EMM_ATTACH_TYPE_EPS;
+    LOG_TRACE (INFO, "EMMAS-SAP - get attach type forced to EMM_ATTACH_TYPE_EPS");
   }
 
   /*
@@ -309,7 +303,13 @@ emm_recv_attach_request (
                                 msg->uenetworkcapability.eea,
                                 msg->uenetworkcapability.eia,
                                 msg->uenetworkcapability.ucs2,
-                                msg->uenetworkcapability.uea, msg->uenetworkcapability.uia, gea, msg->uenetworkcapability.umts_present, msg->uenetworkcapability.gprs_present, &msg->esmmessagecontainer.esmmessagecontainercontents);
+                                msg->uenetworkcapability.uea,
+                                msg->uenetworkcapability.uia,
+                                gea,
+                                msg->uenetworkcapability.umts_present,
+                                msg->uenetworkcapability.gprs_present,
+                                &msg->esmmessagecontainer.esmmessagecontainercontents
+                                decode_status);
   LOG_FUNC_RETURN (rc);
 }
 
@@ -332,7 +332,8 @@ int
 emm_recv_attach_complete (
   unsigned int ueid,
   const attach_complete_msg * msg,
-  int *emm_cause)
+  int *emm_cause,
+  const nas_message_decode_status_t * const status)
 {
   LOG_FUNC_IN;
   int                                     rc;
@@ -364,7 +365,8 @@ int
 emm_recv_detach_request (
   unsigned int ueid,
   const detach_request_msg * msg,
-  int *emm_cause)
+  int *emm_cause,
+  const nas_message_decode_status_t * const status)
 {
   LOG_FUNC_IN;
   int                                     rc;
@@ -521,7 +523,8 @@ int
 emm_recv_identity_response (
   unsigned int ueid,
   identity_response_msg * msg,
-  int *emm_cause)
+  int *emm_cause,
+  const nas_message_decode_status_t * const status)
 {
   LOG_FUNC_IN;
   int                                     rc = RETURNok;
@@ -632,7 +635,8 @@ int
 emm_recv_authentication_response (
   unsigned int ueid,
   authentication_response_msg * msg,
-  int *emm_cause)
+  int *emm_cause,
+  const nas_message_decode_status_t * const status)
 {
   LOG_FUNC_IN;
   int                                     rc = RETURNok;
@@ -685,7 +689,8 @@ int
 emm_recv_authentication_failure (
   unsigned int ueid,
   authentication_failure_msg * msg,
-  int *emm_cause)
+  int *emm_cause,
+  const nas_message_decode_status_t * const status)
 {
   LOG_FUNC_IN;
   int                                     rc = RETURNok;
@@ -740,7 +745,8 @@ int
 emm_recv_security_mode_complete (
   unsigned int ueid,
   security_mode_complete_msg * msg,
-  int *emm_cause)
+  int *emm_cause,
+  const nas_message_decode_status_t * const status)
 {
   LOG_FUNC_IN;
   int                                     rc = RETURNok;
@@ -775,7 +781,8 @@ int
 emm_recv_security_mode_reject (
   unsigned int ueid,
   security_mode_reject_msg * msg,
-  int *emm_cause)
+  int *emm_cause,
+  const nas_message_decode_status_t * const status)
 {
   LOG_FUNC_IN;
   int                                     rc = RETURNok;

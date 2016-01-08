@@ -220,15 +220,7 @@ s1ap_mme_init (
     S1AP_DEBUG ("ASN1C version %d\n", get_asn1c_environment_version ());
   }
 
-#  if UPDATE_RELEASE_10
   S1AP_DEBUG ("S1AP Release v10.5\n");
-#  else
-#    if UPDATE_RELEASE_9
-  S1AP_DEBUG ("S1AP Release v9.8\n");
-#    else
-  S1AP_DEBUG ("S1AP Release v8.10\n");
-#    endif
-#  endif
   STAILQ_INIT (&eNB_list_head);
 
   if (itti_create_task (TASK_S1AP, &s1ap_mme_thread, NULL) < 0) {

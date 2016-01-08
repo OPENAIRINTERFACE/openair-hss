@@ -60,6 +60,8 @@ Description Defines functions executed at the EMMAS Service Access
 #include "NASSecurityModeComplete.h"
 #include "SecurityModeReject.h"
 #include "UplinkNasTransport.h"
+#include "nas_message.h"
+
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -82,7 +84,7 @@ Description Defines functions executed at the EMMAS Service Access
  * Functions executed by both the UE and the MME upon receiving EMM messages
  * --------------------------------------------------------------------------
  */
-int emm_recv_status(unsigned int ueid, emm_status_msg *msg, int *emm_cause);
+int emm_recv_status(unsigned int ueid, emm_status_msg *msg, int *emm_cause, const nas_message_decode_status_t * const status);
 
 /*
  * --------------------------------------------------------------------------
@@ -96,27 +98,35 @@ int emm_recv_status(unsigned int ueid, emm_status_msg *msg, int *emm_cause);
  * Functions executed by the MME upon receiving EMM message from the UE
  * --------------------------------------------------------------------------
  */
-int emm_recv_attach_request(unsigned int ueid, const attach_request_msg *msg,
-                            int *emm_cause);
+int emm_recv_attach_request (
+    const unsigned int ueid,
+    const attach_request_msg * const msg,
+    int * const emm_cause,
+    const nas_message_decode_status_t  * const decode_status);
+
 int emm_recv_attach_complete(unsigned int ueid, const attach_complete_msg *msg,
-                             int *emm_cause);
+                             int *emm_cause, const nas_message_decode_status_t * const status);
 
 int emm_recv_detach_request(unsigned int ueid, const detach_request_msg *msg,
-                            int *emm_cause);
+                            int *emm_cause, const nas_message_decode_status_t * const status);
 
 int emm_recv_tracking_area_update_request(unsigned int  ueid,
     const tracking_area_update_request_msg *msg,
     int *emm_cause);
 
 int emm_recv_identity_response(unsigned int ueid, identity_response_msg *msg,
-                               int *emm_cause);
+                               int *emm_cause, const nas_message_decode_status_t * const status);
 int emm_recv_authentication_response(unsigned int ueid,
-                                     authentication_response_msg *msg, int *emm_cause);
+                                     authentication_response_msg *msg, int *emm_cause,
+                                     const nas_message_decode_status_t * const status);
 int emm_recv_authentication_failure(unsigned int ueid,
-                                    authentication_failure_msg *msg, int *emm_cause);
+                                    authentication_failure_msg *msg, int *emm_cause,
+                                    const nas_message_decode_status_t * const status);
 int emm_recv_security_mode_complete(unsigned int ueid,
-                                    security_mode_complete_msg *msg, int *emm_cause);
+                                    security_mode_complete_msg *msg, int *emm_cause,
+                                    const nas_message_decode_status_t * const status);
 int emm_recv_security_mode_reject(unsigned int ueid,
-                                  security_mode_reject_msg *msg, int *emm_cause);
+                                  security_mode_reject_msg *msg, int *emm_cause,
+                                  const nas_message_decode_status_t * const status);
 
 #endif /* __EMM_RECV_H__*/

@@ -334,7 +334,7 @@ inline void ASN_DEBUG(const char *fmt, ...);
 #include "S1ap-IE.h"
 #include "S1AP-PDU.h"
 
-#if UPDATE_RELEASE_9
+// UPDATE RELEASE 9
 # include "S1ap-BroadcastCancelledAreaList.h"
 # include "S1ap-CancelledCellinEAI.h"
 # include "S1ap-CancelledCellinEAI-Item.h"
@@ -365,9 +365,8 @@ inline void ASN_DEBUG(const char *fmt, ...);
 # include "S1ap-UplinkUEAssociatedLPPaTransport.h"
 # include "S1ap-DownlinkNonUEAssociatedLPPaTransport.h"
 # include "S1ap-UplinkNonUEAssociatedLPPaTransport.h"
-#endif /* (UPDATE_RELEASE_9) */
 
-#if UPDATE_RELEASE_10
+// UPDATE RELEASE 10
 # include "S1ap-PagingPriority.h"
 # include "S1ap-RelayNode-Indicator.h"
 # include "S1ap-GWContextReleaseIndication.h"
@@ -376,7 +375,6 @@ inline void ASN_DEBUG(const char *fmt, ...);
 # include "S1ap-PrivacyIndicator.h"
 # include "S1ap-TrafficLoadReductionIndication.h"
 # include "S1ap-GUMMEIList.h"
-#endif /* (UPDATE_RELEASE_10) */
 
 /* Checking version of ASN1C compiler */
 #if (ASN1C_ENVIRONMENT_VERSION < ASN1C_MINIMUM_VERSION)

@@ -217,9 +217,9 @@ int
 emm_proc_attach_request (
   unsigned int ueid,
   emm_proc_attach_type_t type,
-  int native_ksi,
-  int ksi,
-  int native_guti,
+  boolean_t is_native_ksi,
+  ksi_t     ksi,
+  boolean_t is_native_guti,
   GUTI_t * guti,
   imsi_t * imsi,
   imei_t * imei,
@@ -232,7 +232,8 @@ emm_proc_attach_request (
   int gea,
   int umts_present,
   int gprs_present,
-  const OctetString * esm_msg_pP)
+  const OctetString * esm_msg_pP,
+  const nas_message_decode_status_t  * const decode_status)
 {
   LOG_FUNC_IN;
   int                                     rc;
@@ -248,7 +249,6 @@ emm_proc_attach_request (
   ue_ctx.is_dynamic = FALSE;
   ue_ctx.ueid = ueid;
 #if !NAS_BUILT_IN_EPC
-
   /*
    * UE identifier sanity check
    */
@@ -263,7 +263,7 @@ emm_proc_attach_request (
 #endif
 
   /*
-   * 3GPP TS 24.301, section 5.5.1.1
+   * Requirement MME24.301R10_5.5.1.1_1
    * MME not configured to support attach for emergency bearer services
    * shall reject any request to attach with an attach type set to "EPS
    * emergency attach".
@@ -321,7 +321,7 @@ emm_proc_attach_request (
          * Process new attach procedure
          */
         LOG_TRACE (WARNING, "EMM-PROC  - Initiate new attach procedure");
-        rc = emm_proc_attach_request (ueid, type, native_ksi, ksi, native_guti, guti, imsi, imei, tai, eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP);
+        rc = emm_proc_attach_request (ueid, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, tai, eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP);
       }
 
       LOG_FUNC_RETURN (rc);

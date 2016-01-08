@@ -334,6 +334,7 @@ _emm_as_recv (
   int *emm_cause)
 {
   LOG_FUNC_IN;
+  nas_message_decode_status_t             decode_status;
   int                                     decoder_rc;
   int                                     rc = RETURNerror;
 
@@ -341,7 +342,7 @@ _emm_as_recv (
   nas_message_t                           nas_msg;
 
   memset (&nas_msg, 0, sizeof (nas_message_t));
-  emm_security_context_t                 *security = NULL;      /* Current EPS NAS security context     */
+  emm_security_context_t                 *emm_security_context = NULL;      /* Current EPS NAS security context     */
 
 #if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = NULL;
@@ -350,7 +351,7 @@ _emm_as_recv (
   emm_ctx = emm_data_context_get (&_emm_data, ueid);
 
   if (emm_ctx) {
-    security = emm_ctx->security;
+    emm_security_context = emm_ctx->security;
   }
 #else
 
@@ -358,14 +359,14 @@ _emm_as_recv (
     emm_ctx = _emm_data.ctx[ueid];
 
     if (emm_ctx) {
-      security = emm_ctx->security;
+      emm_security_context = emm_ctx->security;
     }
   }
 #endif
   /*
    * Decode the received message
    */
-  decoder_rc = nas_message_decode (msg, &nas_msg, len, security);
+  decoder_rc = nas_message_decode (msg, &nas_msg, len, emm_security_context, &decode_status);
 
   if (decoder_rc < 0) {
     LOG_TRACE (WARNING, "EMMAS-SAP - Failed to decode NAS message " "(err=%d)", decoder_rc);
@@ -380,47 +381,100 @@ _emm_as_recv (
 
   switch (emm_msg->header.message_type) {
   case EMM_STATUS:
-    rc = emm_recv_status (ueid, &emm_msg->emm_status, emm_cause);
+    // Requirement MME24.301R10_4.4.4.3_1
+    if ((0 == decode_status.security_context_available) ||
+        (0 == decode_status.integrity_protected_message) ||
+       // Requirement MME24.301R10_4.4.4.3_2
+       ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
+      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      LOG_FUNC_RETURN (decoder_rc);
+    }
+    rc = emm_recv_status (ueid, &emm_msg->emm_status, emm_cause, &decode_status);
     break;
 
   case ATTACH_REQUEST:
-    rc = emm_recv_attach_request (ueid, &emm_msg->attach_request, emm_cause);
+    // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
+    // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
+    rc = emm_recv_attach_request (ueid, &emm_msg->attach_request, emm_cause, &decode_status);
     break;
 
   case IDENTITY_RESPONSE:
-    rc = emm_recv_identity_response (ueid, &emm_msg->identity_response, emm_cause);
+    // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
+    // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
+    rc = emm_recv_identity_response (ueid, &emm_msg->identity_response, emm_cause, &decode_status);
     break;
 
   case AUTHENTICATION_RESPONSE:
-    rc = emm_recv_authentication_response (ueid, &emm_msg->authentication_response, emm_cause);
+    // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
+    // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
+    rc = emm_recv_authentication_response (ueid, &emm_msg->authentication_response, emm_cause, &decode_status);
     break;
 
   case AUTHENTICATION_FAILURE:
-    rc = emm_recv_authentication_failure (ueid, &emm_msg->authentication_failure, emm_cause);
+    // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
+    // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
+    rc = emm_recv_authentication_failure (ueid, &emm_msg->authentication_failure, emm_cause, &decode_status);
     break;
 
   case SECURITY_MODE_COMPLETE:
-    rc = emm_recv_security_mode_complete (ueid, &emm_msg->security_mode_complete, emm_cause);
+    // Requirement MME24.301R10_4.4.4.3_1
+    if ((0 == decode_status.security_context_available) ||
+        (0 == decode_status.integrity_protected_message) ||
+       // Requirement MME24.301R10_4.4.4.3_2
+       ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
+      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      LOG_FUNC_RETURN (decoder_rc);
+    }
+
+    rc = emm_recv_security_mode_complete (ueid, &emm_msg->security_mode_complete, emm_cause, &decode_status);
     break;
 
   case SECURITY_MODE_REJECT:
-    rc = emm_recv_security_mode_reject (ueid, &emm_msg->security_mode_reject, emm_cause);
+    // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
+    // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
+    rc = emm_recv_security_mode_reject (ueid, &emm_msg->security_mode_reject, emm_cause, &decode_status);
     break;
 
   case ATTACH_COMPLETE:
-    rc = emm_recv_attach_complete (ueid, &emm_msg->attach_complete, emm_cause);
+    // Requirement MME24.301R10_4.4.4.3_1
+    if ((0 == decode_status.security_context_available) ||
+        (0 == decode_status.integrity_protected_message) ||
+       // Requirement MME24.301R10_4.4.4.3_2
+       ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
+      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      LOG_FUNC_RETURN (decoder_rc);
+    }
+
+    rc = emm_recv_attach_complete (ueid, &emm_msg->attach_complete, emm_cause, &decode_status);
     break;
 
   case TRACKING_AREA_UPDATE_COMPLETE:
   case GUTI_REALLOCATION_COMPLETE:
   case UPLINK_NAS_TRANSPORT:
+    // Requirement MME24.301R10_4.4.4.3_1
+    if ((0 == decode_status.security_context_available) ||
+        (0 == decode_status.integrity_protected_message) ||
+       // Requirement MME24.301R10_4.4.4.3_2
+       ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
+      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      LOG_FUNC_RETURN (decoder_rc);
+    }
+
     /*
      * TODO
      */
     break;
 
   case DETACH_REQUEST:
-    rc = emm_recv_detach_request (ueid, &emm_msg->detach_request, emm_cause);
+    // Requirements MME24.301R10_4.4.4.3_1 MME24.301R10_4.4.4.3_2
+    if ((1 == decode_status.security_context_available) && (0 < emm_security_context->activated) &&
+        ((0 == decode_status.integrity_protected_message) ||
+       (0 == decode_status.mac_matched))) {
+      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      LOG_FUNC_RETURN (decoder_rc);
+    }
+
+    rc = emm_recv_detach_request (ueid, &emm_msg->detach_request, emm_cause, &decode_status);
     break;
 
   default:
@@ -491,11 +545,11 @@ _emm_as_data_ind (
           }
         }
 #endif
-        int                                     bytes = nas_message_decrypt ((char *)(msg->NASmsg.value),
-                                                                             plain_msg,
-                                                                             &header,
-                                                                             msg->NASmsg.length,
-                                                                             security);
+        int  bytes = nas_message_decrypt ((char *)(msg->NASmsg.value),
+            plain_msg,
+            &header,
+            msg->NASmsg.length,
+            security);
 
         if ((bytes < 0) &&
             (bytes != TLV_DECODE_MAC_MISMATCH)) { // not in spec, (case identity response for attach with unknown GUTI)
@@ -563,6 +617,7 @@ _emm_as_establish_req (
   LOG_FUNC_IN;
   struct emm_data_context_s              *emm_ctx = NULL;
   emm_security_context_t                 *emm_security_context = NULL;
+  nas_message_decode_status_t             decode_status;
   int                                     decoder_rc;
   int                                     rc = RETURNerror;
 
@@ -570,6 +625,7 @@ _emm_as_establish_req (
   nas_message_t                           nas_msg;
 
   memset (&nas_msg, 0, sizeof (nas_message_t));
+  memset (&decode_status, 0, sizeof (decode_status));
 #if NAS_BUILT_IN_EPC
   emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
 #else
@@ -587,7 +643,7 @@ _emm_as_establish_req (
   /*
    * Decode initial NAS message
    */
-  decoder_rc = nas_message_decode ((char *)(msg->NASmsg.value), &nas_msg, msg->NASmsg.length, emm_security_context);
+  decoder_rc = nas_message_decode ((char *)(msg->NASmsg.value), &nas_msg, msg->NASmsg.length, emm_security_context, &decode_status);
 
   if (decoder_rc < TLV_DECODE_FATAL_ERROR) {
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
@@ -605,11 +661,20 @@ _emm_as_establish_req (
 
   switch (emm_msg->header.message_type) {
   case ATTACH_REQUEST:
-    rc = emm_recv_attach_request (msg->ueid, &emm_msg->attach_request, emm_cause);
+    rc = emm_recv_attach_request (msg->ueid, &emm_msg->attach_request, emm_cause, &decode_status);
     break;
 
   case DETACH_REQUEST:
+    // Requirements MME24.301R10_4.4.4.3_1 MME24.301R10_4.4.4.3_2
+    if ((1 == decode_status.security_context_available) && (0 < emm_security_context->activated) &&
+        ((0 == decode_status.integrity_protected_message) ||
+       (0 == decode_status.mac_matched))) {
+      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      LOG_FUNC_RETURN (decoder_rc);
+    }
+
     LOG_TRACE (WARNING, "EMMAS-SAP - Initial NAS message TODO DETACH_REQUEST ");
+    *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
     rc = RETURNok;              /* TODO */
     break;
 
@@ -618,12 +683,32 @@ _emm_as_establish_req (
     break;
 
   case SERVICE_REQUEST:
+    // Requirement MME24.301R10_4.4.4.3_1
+    if ((0 == decode_status.security_context_available) ||
+        (0 == decode_status.integrity_protected_message) ||
+       // Requirement MME24.301R10_4.4.4.3_2
+       ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
+      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      LOG_FUNC_RETURN (decoder_rc);
+    }
+
     LOG_TRACE (WARNING, "EMMAS-SAP - Initial NAS message TODO SERVICE_REQUEST ");
+    *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
     rc = RETURNok;              /* TODO */
     break;
 
   case EXTENDED_SERVICE_REQUEST:
+    // Requirement MME24.301R10_4.4.4.3_1
+    if ((0 == decode_status.security_context_available) ||
+        (0 == decode_status.integrity_protected_message) ||
+       // Requirement MME24.301R10_4.4.4.3_2
+       ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
+      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      LOG_FUNC_RETURN (decoder_rc);
+    }
+
     LOG_TRACE (WARNING, "EMMAS-SAP - Initial NAS message TODO EXTENDED_SERVICE_REQUEST ");
+    *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
     rc = RETURNok;              /* TODO */
     break;
 

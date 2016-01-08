@@ -58,7 +58,7 @@ Description Defines the layer 3 messages supported by the NAS sublayer
 /****************************************************************************/
 
 /* Structure of security protected header */
-typedef struct {
+typedef struct nas_message_security_header_s {
 #ifdef __LITTLE_ENDIAN_BITFIELD
   eps_protocol_discriminator_t    protocol_discriminator:4;
   uint8_t                         security_header_type:4;
@@ -78,7 +78,7 @@ typedef union {
 } nas_message_plain_t;
 
 /* Structure of security protected NAS message */
-typedef struct {
+typedef struct nas_message_security_protected_s {
   nas_message_security_header_t header;
   nas_message_plain_t plain;
 } nas_message_security_protected_t;
@@ -91,6 +91,14 @@ typedef union {
   nas_message_security_protected_t security_protected;
   nas_message_plain_t plain;
 } nas_message_t;
+
+typedef struct nas_message_decode_status_s {
+  uint8_t integrity_protected_message:1;
+  uint8_t ciphered_message:1;
+  uint8_t mac_matched:1;
+  uint8_t security_context_available:1;
+  int     emm_cause;
+} nas_message_decode_status_t;
 
 /****************************************************************************/
 /********************  G L O B A L    V A R I A B L E S  ********************/
@@ -120,7 +128,8 @@ nas_message_decode(
   const char * const  buffer,
   nas_message_t      *msg,
   int                 length,
-  void               *security);
+  void               *security,
+  nas_message_decode_status_t * const status);
 
 int
 nas_message_encode(

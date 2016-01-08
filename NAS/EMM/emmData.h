@@ -120,13 +120,11 @@ typedef struct emm_security_context_s {
     uint8_t encryption:4;   /* algorithm used for ciphering           */
     uint8_t integrity:4;    /* algorithm used for integrity protection */
   } selected_algorithms;       /* MME selected algorithms                */
+
+  // Requirement MME24.301R10_4.4.4.3_2 (DETACH REQUEST (if sent before security has been activated);)
+  uint8_t   activated;
 } emm_security_context_t;
 
-/*
- * --------------------------------------------------------------------------
- *  EMM internal data handled by EPS Mobility Management sublayer in the UE
- * --------------------------------------------------------------------------
- */
 
 /*
  * --------------------------------------------------------------------------
@@ -165,14 +163,18 @@ typedef struct emm_data_context_s {
 
   auth_vector_t vector;/* EPS authentication vector                            */
   emm_security_context_t *security;    /* Current EPS NAS security context     */
+
+  // Requirement MME24.301R10_4.4.2.1_2
+  emm_security_context_t *non_current_security;    /* Non current EPS NAS security context     */
+
   OctetString esm_msg;      /* ESM message contained within the initial request*/
   int         emm_cause;    /* EMM failure cause code                          */
 
   emm_fsm_state_t    _emm_fsm_status;
 
-  struct nas_timer_t T3450;   /* EMM message retransmission timer */
-  struct nas_timer_t T3460;   /* Authentication timer         */
-  struct nas_timer_t T3470;   /* Identification timer         */
+  struct nas_timer_t T3450; /* EMM message retransmission timer */
+  struct nas_timer_t T3460; /* Authentication timer         */
+  struct nas_timer_t T3470; /* Identification timer         */
 
   esm_data_context_t esm_data_ctx;
 } emm_data_context_t;

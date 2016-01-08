@@ -531,7 +531,7 @@ _identification_abort (
     }
 
     /*
-     * Release retransmission timer paramaters
+     * Release retransmission timer parameters
      */
     free (data);
 

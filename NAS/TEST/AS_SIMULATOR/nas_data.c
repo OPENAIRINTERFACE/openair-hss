@@ -420,7 +420,7 @@ attachType (
 {
   if (*type == EPS_ATTACH_TYPE_EPS) {
     return "EPS";
-  } else if (*type == EPS_ATTACH_TYPE_IMSI) {
+  } else if (*type == EPS_ATTACH_TYPE_COMBINED_EPS_IMSI) {
     return "IMSI";
   } else if (*type == EPS_ATTACH_TYPE_EMERGENCY) {
     return "EMERGENCY";

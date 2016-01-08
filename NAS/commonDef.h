@@ -106,7 +106,7 @@ typedef uint8_t     rac_t;      /* Routing Area Code    */
 typedef uint16_t    tac_t;      /* Tracking Area Code   */
 typedef uint32_t    ci_t;       /* Cell Identifier  */
 typedef uint8_t     AcT_t;      /* Access Technology    */
-
+typedef boolean_t   ksi_t;      /* Key set identifier */
 /*
  * International Mobile Subscriber Identity
  */

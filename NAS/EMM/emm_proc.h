@@ -53,7 +53,7 @@ Description Defines the EPS Mobility Management procedures executed at
 /* Type of network attachment */
 typedef enum {
   EMM_ATTACH_TYPE_EPS = 0,
-  EMM_ATTACH_TYPE_IMSI,
+  EMM_ATTACH_TYPE_COMBINED_EPS_IMSI,
   EMM_ATTACH_TYPE_EMERGENCY,
   EMM_ATTACH_TYPE_RESERVED,
 } emm_proc_attach_type_t;
@@ -119,9 +119,10 @@ int emm_proc_status(unsigned int ueid, int emm_cause);
 
 
 int emm_proc_attach_request(unsigned int ueid, emm_proc_attach_type_t type,
-                            int native_ksi, int ksi, int native_guti, GUTI_t *guti, imsi_t *imsi,
+    boolean_t is_native_ksi, ksi_t ksi, boolean_t is_native_guti, GUTI_t *guti, imsi_t *imsi,
                             imei_t *imei, tai_t *tai, int eea, int eia, int ucs2, int uea, int uia, int gea,
-                            int umts_present, int gprs_present, const OctetString *esm_msg);
+                            int umts_present, int gprs_present, const OctetString *esm_msg,
+                            const nas_message_decode_status_t  * const decode_status);
 int emm_proc_attach_reject(unsigned int ueid, int emm_cause);
 int emm_proc_attach_complete(unsigned int ueid, const OctetString *esm_msg);
 int emm_proc_tracking_area_update_reject(unsigned int ueid, int emm_cause);

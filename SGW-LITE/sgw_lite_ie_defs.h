@@ -56,11 +56,11 @@ typedef struct {
 typedef uint32_t indication_flags_t;
 
 /* Bit mask for octet 7 in indication IE */
-#if UPDATE_RELEASE_10
+// UPDATE RELEASE 10
 # define S6AF_FLAG  (1U << 20)
 # define S4AF_FLAG  (1U << 19)
 # define MBMDT_FLAG (1U << 18)
-#endif
+
 #define ISRAU_FLAG  (1U << 17)
 #define CCRSI_FLAG  (1U << 16)
 

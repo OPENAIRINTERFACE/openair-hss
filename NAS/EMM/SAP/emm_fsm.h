@@ -57,7 +57,8 @@ Description Defines the EPS Mobility Management procedures executed at
  * different state machines.
  */
 typedef enum {
-  EMM_INVALID,
+  EMM_STATE_MIN = 0,
+  EMM_INVALID = EMM_STATE_MIN,
   EMM_DEREGISTERED,
   EMM_REGISTERED,
   EMM_DEREGISTERED_INITIATED,
