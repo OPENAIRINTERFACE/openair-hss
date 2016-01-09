@@ -166,7 +166,8 @@ function main()
 
 
   if [ $var_check_install_oai_software -gt 0 ];then
-    check_install_oai_software  $force
+    update_package_db
+    check_install_hss_software  $force
     exit 0
   fi
   

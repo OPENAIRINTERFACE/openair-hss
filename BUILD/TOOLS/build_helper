@@ -355,14 +355,10 @@ upgrade_kernel() {
       status=`echo $line | cut -d ' ' -f1`
       current_kernel_version=`echo $proposed_image | cut -d '.' -f1`
       current_major_revision=`echo $proposed_image | cut -d '.' -f2`
-      if [ "$current_kernel_version" -gt "$required_kernel_version" ]; then
-        echo "$proposed_image" >> valid_installed_image_list
-      else
-        # test not necessary but depends on search string in dpkg-query
-        if [ "$current_kernel_version" -eq "$required_kernel_version" ]; then
-          if [ "$current_major_revision" -ge "$required_major_revision" ]; then
-            echo "$proposed_image" >> valid_installed_image_list
-          fi
+      # test not necessary but depends on search string in dpkg-query
+      if [ "$current_kernel_version" -eq "$required_kernel_version" ]; then
+        if [ "$current_major_revision" -ge "$required_major_revision" ]; then
+          echo "$proposed_image" >> valid_installed_image_list
         fi
       fi
     fi
@@ -371,29 +367,24 @@ upgrade_kernel() {
   if [ "z$latest_valid_installed_image" != "z" ]; then
     echo_error "If you want to compile and run the S-GW software on this computer you have to boot on any following installed kernel"
   else
-    echo_error "No valid kernel installed on this OS for running the S-GW!"
+    echo_error "No suitable kernel installed on this OS for running the S-GW!"
     image_list=`apt-cache search linux-image-[$required_kernel_version-9]`
     valid_uninstalled_image_list=`tempfile`
     while read -r line; do
       proposed_image=`echo $line | cut -d ' ' -f1 | cut -d '-' -f3-`
       current_kernel_version=`echo $proposed_image | cut -d '.' -f1`
       current_major_revision=`echo $proposed_image | cut -d '.' -f2`
-      if [ "$current_kernel_version" -gt "$required_kernel_version" ]; then
-        echo "$proposed_image" >> $valid_uninstalled_image_list
-      else
-        # test not necessary but depends on search string in dpkg-query
-        if [ "$current_kernel_version" -eq "$required_kernel_version" ]; then
-          if [ "$current_major_revision" -ge "$required_major_revision" ]; then
-            echo "$proposed_image" >> $valid_uninstalled_image_list
-          fi
+      if [ "$current_kernel_version" -eq "$required_kernel_version" ]; then
+        if [ "$current_major_revision" -ge "$required_major_revision" ]; then
+          echo "$proposed_image" >> $valid_uninstalled_image_list
         fi
       fi
     done <<< "$image_list"
     latest_valid_installed_image=`cat $valid_uninstalled_image_list | sort | tail -n1`
-    echo_info "For information, here is the list of suitable kernel that can be installed on your OS:" 
-    cat $valid_uninstalled_image_list
-    rm $valid_uninstalled_image_list
     if [ "z$latest_valid_installed_image" != "z" ]; then
+      echo_info "For information, here is the list of suitable kernel that can be installed on your OS:" 
+      cat $valid_uninstalled_image_list
+      rm $valid_uninstalled_image_list
       if [ $2 -eq 0 ]; then
         read -p "Do you want to install latest kernel $latest_valid_installed_image ? <y/N> " prompt
       else
@@ -407,7 +398,9 @@ upgrade_kernel() {
         echo_info "Not installing new kernel"
       fi
     else
-      echo_error "Error while trying to install new kernel"
+      rm $valid_uninstalled_image_list
+      echo_error "For information, no suitable kernel found that can be installed on your OS" 
+      echo_fatal "Error while trying to install required kernel $required_kernel_version.$required_major_revision"
     fi
   fi
 }
@@ -423,13 +416,17 @@ check_kernel_release_and_install_xtables_addons_oai() {
   
     required_kernel_version=`echo $1 | cut -d '.' -f1`
     required_major_revision=`echo $1 | cut -d '.' -f2`
-  
+      
     if [ $current_kernel_version -lt $required_kernel_version ]; then
       upgrade_kernel $1
       echo_warning "xtables_addons_oai not installed "
       return
     else
-      if [ $current_kernel_version -eq $required_kernel_version ]; then
+      if [ $current_kernel_version -gt $required_kernel_version ]; then
+        upgrade_kernel $1 $2
+        echo_warning "xtables_addons_oai not installed "
+        return
+      elif [ $current_kernel_version -eq $required_kernel_version ]; then
         if [ "$current_major_revision" -lt "$required_major_revision" ]; then
           upgrade_kernel $1 $2
           echo_warning "xtables_addons_oai not installed "
@@ -449,15 +446,28 @@ check_kernel_release_and_install_xtables_addons_oai() {
   fi 
 }
 
+update_package_db() {
+  if [ ! -f /tmp/no_more_update_package_db ]; then
+    $SUDO apt-get update
+    touch /tmp/no_more_update_package_db
+  else
+    let elapsed_time=$(expr `date +%s` - `stat -c %Y /tmp/no_more_update_package_db`)
+    if [ $elapsed_time -gt 3600 ]; then
+      $SUDO apt-get update
+      touch /tmp/no_more_update_package_db
+    fi
+  fi
+}
+
 #arg1 is force (no interactive script)
-check_install_oai_software() {
+check_install_hss_software() {
   if [ $1 -gt 0 ]; then 
     OPTION="-y"
   else
     OPTION=""
   fi
   
-  $SUDO apt-get update
+  # Compilers, generators, ...
   $SUDO apt-get install $OPTION \
     autoconf  \
     automake  \
@@ -467,71 +477,152 @@ check_install_oai_software() {
     cmake-curses-gui  \
     doxygen \
     doxygen-gui\
-    texlive-latex-base\
-    ethtool \
+    flex  \
+    gdb \
+    pkg-config 
+    
+  $SUDO apt-get install $OPTION \
+    git \
+    subversion
+    
+  # Libraries
+  $SUDO apt-get install $OPTION \
+    libconfig8-dev \
+    libgcrypt11-dev \
+    libidn2-0-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpthread-stubs0-dev \
+    libsctp1 \
+    libsctp-dev \
+    libssl-dev \
+    libtool \
+    mysql-client \
+    mysql-server \
+    openssl 
+    
+  if [ `lsb_release -rs` = '12.04' ]; then
+    install_nettle_from_source $1
+    install_gnutls_from_source $1
+  else
+    $SUDO apt-get install $OPTION libgnutls-dev nettle-dev nettle-bin 
+  fi
+  install_freediameter_from_source $1
+    
+  $SUDO apt-get install $OPTION \
+    phpmyadmin \
+    python-pexpect 
+}
+
+#arg1 is force (no interactive script)
+check_install_mme_gw_software() {
+  if [ $1 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+    
+  # Compilers, generators, ...
+  PACKAGE_LIST="\
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    doxygen \
+    doxygen-gui\
     flex  \
     gccxml \
     gdb  \
     git \
-    graphviz \
-    guile-2.0-dev  \
-    iperf \
-    iproute \
-    iptables \
-    iptables-dev \
+    pkg-config \
+    subversion"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+  
+  # Libraries
+  PACKAGE_LIST="\
+    guile-2.0-dev \
     libconfig8-dev \
     libgcrypt11-dev \
     libgmp-dev \
     libgtk-3-dev \
-    libidn2-0-dev  \
+    libidn2-0-dev \
     libidn11-dev \
-    libmysqlclient-dev  \
-    libsctp1  \
-    libsctp-dev  \
-    libssl-dev  \
-    libtasn1-3-dev  \
-    libtool  \
-    libxml2 \
-    libxml2-dev  \
-    linux-headers-`uname -r` \
-    mscgen  \
-    mysql-client  \
-    mysql-server \
-    openssh-client \
-    openssh-server \
-    openssl \
-    python  \
-    subversion
-    if [ `lsb_release -rs` = '12.04' ]; then
-      install_nettle_from_source $1
-      install_gnutls_from_source $1
-    else
-        $SUDO apt-get install $OPTION libgnutls-dev nettle-dev nettle-bin 
-    fi
-    install_freediameter_from_source $1
-    install_asn1c_from_source $1
-    
-  $SUDO apt-get install $OPTION \
-    check \
-    dialog \
-    dkms \
-    gawk \
-    libboost-all-dev \
+    libmysqlclient-dev \
     libpthread-stubs0-dev \
-    openvpn \
-    phpmyadmin \
-    pkg-config \
-    python-dev  \
-    python-pexpect \
-    sshfs \
-    swig  \
-    tshark \
-    uml-utilities \
-    unzip  \
-    valgrind  \
-    vlan    \
-    ctags    
+    libsctp1 \
+    libsctp-dev \
+    libssl-dev \
+    libtool \
+    libxml2 \
+    libxml2-dev \
+    mscgen \
+    mysql-client \
+    mysql-server \
+    openssl \
+    python"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi 
+
+  if [ `lsb_release -rs` = '14.04' ]; then
+    PACKAGE_LIST="\
+      libtasn1-3-dev"
+    $SUDO apt-get install $OPTION $PACKAGE_LIST
+    if [ $? -ne 0 ]; then 
+      echo_fatal "Failed to install package list $PACKAGE_LIST"
+    fi 
+  fi
+       
+  if [ `lsb_release -rs` = '12.04' ]; then
+    install_nettle_from_source $1
+    install_gnutls_from_source $1
+  else
+    PACKAGE_LIST="\
+      libgnutls-dev \
+      nettle-dev \
+      nettle-bin" 
+    $SUDO apt-get install $OPTION $PACKAGE_LIST
+    if [ $? -ne 0 ]; then 
+      echo_fatal "Failed to install package list $PACKAGE_LIST"
+    fi 
+  fi
+
+  install_freediameter_from_source $1
+  install_asn1c_from_source $1
+
+  # Networking
+  PACKAGE_LIST="\
+    ethtool \
+    iperf \
+    iproute \
+    iptables \
+    iptables-dev \
+    linux-headers-`uname -r` \
+    vlan \
+    tshark"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi 
     
+  PACKAGE_LIST="\
+    check \
+    dkms \
+    phpmyadmin \
+    python-dev \
+    python-pexpect \
+    unzip"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+
   check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $1
 }
 
