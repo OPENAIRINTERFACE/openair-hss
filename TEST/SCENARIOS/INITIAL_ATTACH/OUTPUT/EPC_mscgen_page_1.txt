@@ -1,0 +1,41 @@
+msc {
+width = "2048";
+   S1AP_ENB, GTPU_SGW, S1AP_MME, MME_APP, NAS_MME, NAS_EMM, NAS_ESM, SP_GW_MME, S6A, HSS;
+  NAS_EMM note NAS_EMM [ label = "T3460 stopped UE 0x4c000d30 ", textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "SQN SYNCH_FAILURE ue id 0x540010d0 ", textcolour="black" ] ;
+  NAS_MME=>MME_APP [ label = "(48|0) NAS_AUTHENTICATION_PARAM_REQ ue id 540010D0 IMSI 208950000000002 ", linecolour="black" , textcolour="black" ] ;
+  MME_APP=>S6A [ label = "(49|0) S6A_AUTH_INFO_REQ IMSI 208950000000002 visited_plmn 208F95 re_sync 1", linecolour="black" , textcolour="black" ] ;
+  S6A=>MME_APP [ label = "(50|0) S6A_AUTH_INFO_ANS imsi 208950000000002 DIAMETER_SUCCESS", linecolour="black" , textcolour="black" ] ;
+  MME_APP=>NAS_MME [ label = "(51|0) NAS_AUTHENTICATION_PARAM_RSP ue_id 540010D0 nb_vectors 1", linecolour="black" , textcolour="black" ] ;
+  NAS_MME=>NAS_EMM [ label = "(52|0) EMMCN_AUTHENTICATION_PARAM_RES", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM=>NAS_EMM [ label = "(53|0) EMMAS_SECURITY_REQ ue id 0x540010d0 ", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "send AUTHENTICATION_REQUEST to ue id 0x540010d0 ", textcolour="black" ] ;
+  NAS_MME=>S1AP_MME [ label = "(55|0) NAS_DOWNLINK_DATA_REQ ue id 0x540010d0 len 36", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>S1AP_ENB [ label = "(56|0) downlinkNASTransport/initiatingMessage ue_id 0x540010D0 mme_ue_s1ap_id 0x540010D0 eNB_ue_s1ap_id0x06692D nas length 36", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "T3460 started UE 0x540010d0 ", textcolour="black" ] ;
+  NAS_EMM=>NAS_EMM [ label = "(58|0) EMMREG_COMMON_PROC_REQ ue id 0x540010d0 (authentication)", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME<=S1AP_ENB [ label = "(59|0) uplinkNASTransport/Originating message mme_ue_s1ap_id 0x540010D0 eNB_ue_s1ap_id 0x06692D nas len 17", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>NAS_MME [ label = "(60|0) NAS_UPLINK_DATA_IND ue_id 0x540010D0 len 17", linecolour="black" , textcolour="black" ] ;
+  NAS_MME=>NAS_EMM [ label = "(61|0) EMMAS_DATA_IND ue id 0x540010d0 len 17", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "T3460 stopped UE 0x4c000e20 ", textcolour="black" ] ;
+  NAS_EMM=>NAS_EMM [ label = "(63|0) EMMREG_COMMON_PROC_CNF ue id 0x540010d0 ", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "EMM state DEREGISTERED ", textcolour="black" ] ;
+  NAS_EMM=>NAS_EMM [ label = "(65|0) EMMAS_SECURITY_REQ ue id 0x540010d0 ", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "send SECURITY_MODE_COMMAND to ue id 0x540010d0 ", textcolour="black" ] ;
+  NAS_MME=>S1AP_MME [ label = "(67|0) NAS_DOWNLINK_DATA_REQ ue id 0x540010d0 len 13", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>S1AP_ENB [ label = "(68|0) downlinkNASTransport/initiatingMessage ue_id 0x540010D0 mme_ue_s1ap_id 0x540010D0 eNB_ue_s1ap_id0x06692D nas length 13", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "T3460 started UE 0x540010d0 ", textcolour="black" ] ;
+  NAS_EMM=>NAS_EMM [ label = "(70|0) EMMREG_COMMON_PROC_REQ ue id 0x540010d0 (security mode control)", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "EMM state COMMON-PROCEDURE-INITIATED ", textcolour="black" ] ;
+  S1AP_MME<=S1AP_ENB [ label = "(72|0) uplinkNASTransport/Originating message mme_ue_s1ap_id 0x540010D0 eNB_ue_s1ap_id 0x06692D nas len 8", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>NAS_MME [ label = "(73|0) NAS_UPLINK_DATA_IND ue_id 0x540010D0 len 8", linecolour="black" , textcolour="black" ] ;
+  NAS_MME=>NAS_EMM [ label = "(74|0) EMMAS_DATA_IND ue id 0x540010d0 len 8", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "T3460 stopped UE 0x540010d0 ", textcolour="black" ] ;
+  NAS_EMM=>NAS_EMM [ label = "(76|0) EMMREG_COMMON_PROC_CNF ue id 0x540010d0 (security mode complete)", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "EMM state DEREGISTERED ", textcolour="black" ] ;
+  NAS_MME=>MME_APP [ label = "(78|0) NAS_PDN_CONNECTIVITY_REQ ue id 540010D0 IMSI 4C0013C0", linecolour="black" , textcolour="black" ] ;
+  MME_APP=>S6A [ label = "(79|0) S6A_UPDATE_LOCATION_REQ imsi 208950000000002", linecolour="black" , textcolour="black" ] ;
+  MME_APP=>SP_GW_MME [ label = "(81|0) SGW_CREATE_SESSION_REQUEST imsi 208950000000002", linecolour="black" , textcolour="black" ] ;
+  SP_GW_MME=>MME_APP [ label = "(82|0) SGW_CREATE_SESSION_RESPONSE S11 MME teid 1476397248 S11 S-GW teid 1 S1U teid 1 S1U@ 0x101aac0 ebi 5 status 16", linecolour="black" , textcolour="black" ] ;
+
+}
