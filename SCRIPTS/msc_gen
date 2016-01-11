@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# The aim of this script is to collect some traces from oai stack and generate a sequence diagram image (png or jpeg).
+# The aim of this script is to collect some traces from oai stack and generate a sequence diagram image ('png', 'eps', 'svg' or 'ismap').
 #
 # It is supposed that a protocol name (MSC_NEW_STR) starts with...its name (RRC, MAC, NAS, S1AP, etc) then is followed by an underscore and whatever (RRC_UE,  RRC_eNB)
-#   Like this it is possible to distinguish between PDUS, SDUs or other messages only by reading source ans destination
+#   Like this it is possible to distinguish between PDUS, SDUs or other messages only by reading source and destination
 
 import sys
 import subprocess
@@ -24,9 +24,9 @@ parser.add_argument("--profile", "-p", type=str,help="E_UTRAN, EPC", default="EP
 parser.add_argument("--no_message", "-M", type=str,help="Trace PDUs, not messages, SDUs", default="no")
 parser.add_argument("--no_pdu", "-P", type=str,help="Trace messages, SDUs, not PDUs", default="no")
 parser.add_argument("--no_event", "-E", type=str,help="Do not trace events", default="no")
+parser.add_argument("--type", "-T", type=str,help="Specifies the output file type, which maybe one of 'png', 'eps', 'svg' or 'ismap'", default="png")
 args = parser.parse_args()
 
-MSCGEN_OUTPUT_TYPE       = "png"
 MAX_MESSAGES_PER_PAGE    = 36
 
 MSC_NEW_STR              = '[PROTO]'
@@ -210,9 +210,9 @@ def msc_chart_write_footer(fileP):
     fileP.write("\n}\n")
 
 def msc_chart_generate(file_nameP):
-    global  MSCGEN_OUTPUT_TYPE
+    global  args
     print "Generating sequence diagram for ",file_nameP
-    command_line = "mscgen -T " + MSCGEN_OUTPUT_TYPE + " -i " + file_nameP
+    command_line = "mscgen -T " + args.type.strip() + " -i " + file_nameP
     fi,fo,fe=os.popen3(command_line)
     for i in fe.readlines():
         print "error:",i
