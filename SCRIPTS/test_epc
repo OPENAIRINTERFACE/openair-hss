@@ -257,7 +257,7 @@ function help()
   echo_error "  -g, --gdb                          Run with GDB."
   echo_error "  -h, --help                         Print this help."
   echo_error "  -H, --run-history          hist_num Replay test with hist_num'th command item in run history."
-  echo_error "  -i, --set-nw-interfaces            Force set network interfaces as described in epc config file."
+  echo_error "  -i, --set-nw-interfaces            Force set network interfaces as described in eNB config file."
   echo_error "  -m, --max-speed                    Play scenario without simulating inter-packets delays (incompatible with -f and -F options)."
   echo_error "  -p, --pcap-file            file    Set pcap input file for building a scenario (need -b|--build-test option)."
   echo_error "  -s, --scenario-file        file    Set scenario input file for running a scenario (need -r|--run option, without -b|--build-test option)."
@@ -443,9 +443,6 @@ function main()
     fi
   fi
   
-  if [ $set_network_interfaces -eq 1 ]; then
-    set_enb_network_interfaces $enb_config_file
-  fi
   
   if [ $show_run_history -eq 1 ]; then
     echo "Run history:"
@@ -462,6 +459,22 @@ function main()
       echo "hist_size=$hist_size"
       echo "run_history=$run_history"
       if [ $run_history -le $hist_size ]; then
+        if [ $set_network_interfaces -eq 1 ]; then
+          command_line=`sed -n "${run_history}p" $test_dir/test_epc_play_scenario.history`
+          next_word_is_enb_config_file=0
+          for word in $command_line; do
+            if [ $next_word_is_enb_config_file -eq 1 ]; then
+              set_enb_network_interfaces $word
+              next_word_is_enb_config_file=0
+            else 
+              if [ $word = "--enb-conf-file" ]; then
+                next_word_is_enb_config_file=1
+              elif [ $word = "-c" ]; then
+                next_word_is_enb_config_file=1
+              fi
+            fi
+          done
+        fi
         $(sed -n "${run_history}p" $test_dir/test_epc_play_scenario.history)
       else
         echo_fatal "History item out of bounds, hist size is $hist_size"
@@ -470,6 +483,9 @@ function main()
       echo_fatal "No run history available (missing file $test_dir/test_epc_play_scenario.history)"
     fi
   else
+    if [ $set_network_interfaces -eq 1 ]; then
+      set_enb_network_interfaces $enb_config_file
+    fi
     if [ $run -eq 1 ]; then
       echo "test_epc_play_scenario --test-dir $test_dir --enb-conf-file $enb_config_file --scenario $scenario_file $play_args" >> $test_dir/test_epc_play_scenario.history
       if [ $run_gdb -eq 0 ]; then 
