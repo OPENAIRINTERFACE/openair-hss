@@ -145,11 +145,11 @@ static inline void nas_itti_pdn_connectivity_req(
 
 
   MSC_LOG_TX_MESSAGE(
-  	  	MSC_NAS_MME,
-  	  	MSC_MMEAPP_MME,
-  	  	NULL,0,
-  	  	"0 NAS_PDN_CONNECTIVITY_REQ ue id %06"PRIX32" IMSI %X",
-  	  	ueidP, NAS_PDN_CONNECTIVITY_REQ(message_p).imsi);
+        MSC_NAS_MME,
+        MSC_MMEAPP_MME,
+        NULL,0,
+        "NAS_PDN_CONNECTIVITY_REQ ue id %06"PRIX32" IMSI %X",
+        ueidP, NAS_PDN_CONNECTIVITY_REQ(message_p).imsi);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
@@ -178,11 +178,11 @@ static inline void nas_itti_establish_cnf(
   NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).selected_integrity_algorithm    = selected_integrity_algorithmP;
 
   MSC_LOG_TX_MESSAGE(
-  	  	MSC_NAS_MME,
-  	  	MSC_MMEAPP_MME,
-  	  	NULL,0,
-  	  	"0 NAS_CONNECTION_ESTABLISHMENT_CNF ue id %06"PRIX32" len %u sea %x sia %x ",
-  	  ue_idP, lengthP, selected_encryption_algorithmP, selected_integrity_algorithmP);
+        MSC_NAS_MME,
+        MSC_MMEAPP_MME,
+        NULL,0,
+        "NAS_CONNECTION_ESTABLISHMENT_CNF ue id %06"PRIX32" len %u sea %x sia %x ",
+        ue_idP, lengthP, selected_encryption_algorithmP, selected_integrity_algorithmP);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
@@ -225,11 +225,11 @@ static inline void nas_itti_auth_info_req(
   }
 
   MSC_LOG_TX_MESSAGE(
-  	  	MSC_NAS_MME,
-  	  	MSC_MMEAPP_MME,
-  	  	NULL,0,
-  	  	"0 NAS_AUTHENTICATION_PARAM_REQ ue id %06"PRIX32" IMSI %s ",
-  	  ue_idP, NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi);
+        MSC_NAS_MME,
+        MSC_MMEAPP_MME,
+        NULL,0,
+        "NAS_AUTHENTICATION_PARAM_REQ ue id %06"PRIX32" IMSI %s ",
+        ue_idP, NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
@@ -262,11 +262,11 @@ static inline void nas_itti_establish_rej(
   NAS_AUTHENTICATION_PARAM_REQ(message_p).ue_id       = ue_idP;
 
   MSC_LOG_TX_MESSAGE(
-  	  	MSC_NAS_MME,
-  	  	MSC_MMEAPP_MME,
-  	  	NULL,0,
-  	  	"0 NAS_AUTHENTICATION_PARAM_REQ ue id %06"PRIX32" IMSI %s (establish reject)",
-  	  ue_idP, NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi);
+        MSC_NAS_MME,
+        MSC_MMEAPP_MME,
+        NULL,0,
+        "NAS_AUTHENTICATION_PARAM_REQ ue id %06"PRIX32" IMSI %s (establish reject)",
+        ue_idP, NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }

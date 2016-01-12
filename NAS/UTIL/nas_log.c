@@ -40,6 +40,7 @@
 #include <stdio.h>            // stderr, sprintf, fprintf, vfprintf
 #include <stdarg.h>           // va_list, va_start, va_end
 #include <string.h>           // strlen
+#include <sys/time.h>
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -107,6 +108,16 @@ static log_context_t                    _log_context = {
 /* Maximum number of bytes into a line of dump logging data */
 #  define LOG_DUMP_LINE_SIZE  16
 
+int                                     g_nas_log_start_time_second = 0;
+
+static void nas_log_get_elapsed_time_since_start(struct timeval * const elapsed_time)
+{
+  // no thread safe but do not matter a lot
+  gettimeofday(elapsed_time, NULL);
+  // no timersub call for fastest operations
+  elapsed_time->tv_sec = elapsed_time->tv_sec - g_nas_log_start_time_second;
+}
+
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
@@ -130,6 +141,15 @@ void
 nas_log_init (
   char filter)
 {
+#if MESSAGE_CHART_GENERATOR
+  extern int                                     g_msc_start_time_second;
+  g_nas_log_start_time_second = g_msc_start_time_second;
+#else
+    struct timeval                          start_time = {.tv_sec=0, .tv_usec=0};
+
+    gettimeofday(&start_time, NULL);
+    g_nas_log_start_time_second = start_time.tv_sec;
+#endif
   _log_context.filter = filter;
 }
 
@@ -153,7 +173,10 @@ log_data (
   const char *filename,
   int line)
 {
-  int                                     len = strlen (filename) + 2 + 1;      //2:[], 1:/0
+  int                                     len = strlen (filename) + 4+1+6+1+2 + 1;      // 4+1+6+1:"%04ld:%06ld|" , 2:[], 1:\0
+  struct timeval                          elapsed_time = {.tv_sec = 0, .tv_usec = 0};
+
+  nas_log_get_elapsed_time_since_start(&elapsed_time);
 
   if (line > 9999)
     len += 5;
@@ -167,9 +190,9 @@ log_data (
     len += 1;
 
   if (len > LOG_PREFIX_SIZE) {
-    snprintf (_log_context.prefix, LOG_PREFIX_SIZE, "%s:%d", &filename[len - LOG_PREFIX_SIZE], line);
+    snprintf (_log_context.prefix, LOG_PREFIX_SIZE , "%04ld:%06ld|%s:%d", elapsed_time.tv_sec, elapsed_time.tv_usec, &filename[len - LOG_PREFIX_SIZE], line);
   } else {
-    snprintf (_log_context.prefix, LOG_PREFIX_SIZE, "%s:%d", filename, line);
+    snprintf (_log_context.prefix, LOG_PREFIX_SIZE , "%04ld:%06ld|%s:%d", elapsed_time.tv_sec, elapsed_time.tv_usec, filename, line);
   }
 }
 

@@ -194,7 +194,7 @@ emm_proc_common_initialize (
 #endif
 
   if (emm_common_data_ctx == NULL) {
-    emm_common_data_ctx = (emm_common_data_t *) malloc (sizeof (emm_common_data_t));
+    emm_common_data_ctx = (emm_common_data_t *) calloc (1, sizeof (emm_common_data_t));
     emm_common_data_ctx->ueid = ueid;
 #if NAS_BUILT_IN_EPC
     RB_INSERT (emm_common_data_map, &emm_common_data_head.emm_common_data_root, emm_common_data_ctx);

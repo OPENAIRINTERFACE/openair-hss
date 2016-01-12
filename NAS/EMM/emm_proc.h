@@ -45,6 +45,7 @@ Description Defines the EPS Mobility Management procedures executed at
 #include "EmmCommon.h"
 #include "emmData.h"
 
+#include "nas_message.h" //nas_message_decode_status_t
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

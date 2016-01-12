@@ -121,7 +121,8 @@ nas_message_decrypt(const char *inbuf,
   char                           *outbuf,
   nas_message_security_header_t  *header,
   int                             length,
-  void                           *security);
+  void                           *security,
+  nas_message_decode_status_t *   status);
 
 int
 nas_message_decode(
@@ -129,7 +130,7 @@ nas_message_decode(
   nas_message_t      *msg,
   int                 length,
   void               *security,
-  nas_message_decode_status_t * const status);
+  nas_message_decode_status_t * status);
 
 int
 nas_message_encode(

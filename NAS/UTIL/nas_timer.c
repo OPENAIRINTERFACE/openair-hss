@@ -321,7 +321,7 @@ nas_timer_start (
    */
   _nas_timer_db_insert_entry (id, te);
 #if ENABLE_ITTI
-  ret = timer_setup (sec, 0, TASK_NAS_MME, INSTANCE_DEFAULT, TIMER_PERIODIC, args, &timer_id);
+  ret = timer_setup (sec, 0, TASK_NAS_MME, INSTANCE_DEFAULT, TIMER_ONE_SHOT, args, &timer_id);
 
   if (ret == -1) {
     return NAS_TIMER_INACTIVE_ID;

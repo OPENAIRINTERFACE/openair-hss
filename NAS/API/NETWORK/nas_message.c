@@ -273,7 +273,8 @@ nas_message_decrypt (
   char *outbuf,
   nas_message_security_header_t * header,
   int length,
-  void *security)
+  void *security,
+  nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN;
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
@@ -328,7 +329,7 @@ nas_message_decrypt (
                  "MAC Failure MSG:%08X(%u) <> INT ALGO:%08X(%u) Type of security context %u",
                  header->message_authentication_code, header->message_authentication_code, mac, mac, (emm_security_context != NULL) ? emm_security_context->type : 88);
       // LG: Do not return now (out of spec but we need that with only one MME)
-      //LOG_FUNC_RETURN (TLV_DECODE_MAC_MISMATCH);
+      LOG_FUNC_RETURN (TLV_DECODE_MAC_MISMATCH);
     } else {
       LOG_TRACE (DEBUG, "Integrity: MAC Success");
     }
@@ -381,17 +382,21 @@ nas_message_decode (
   nas_message_t * msg,
   int length,
   void *security,
-  nas_message_decode_status_t * const status)
+  nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN;
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes = 0;
   uint32_t                                mac   = 0;
-
+  int                                     size  = 0;
   /*
    * Decode the header
    */
-  int                                     size = _nas_message_header_decode (buffer, &msg->header, length, status);
+  if (emm_security_context) {
+    status->security_context_available = 1;
+  }
+  size  = _nas_message_header_decode (buffer, &msg->header, length, status);
+
 
   if (size < 0) {
     LOG_FUNC_RETURN (TLV_DECODE_BUFFER_TOO_SHORT);

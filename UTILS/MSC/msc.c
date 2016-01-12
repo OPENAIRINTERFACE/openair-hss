@@ -59,6 +59,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <sys/time.h>
 
 #include "liblfds611.h"
 #include "intertask_interface.h"
@@ -74,8 +75,10 @@
 
 //-------------------------------
 
-FILE                                   *g_msc_fd;
+FILE                                   *g_msc_fd = NULL;
 char                                    g_msc_proto2str[MAX_MSC_PROTOS][MSC_MAX_PROTO_NAME_LENGTH];
+int                                     g_msc_start_time_second = 0;
+
 
 
 typedef unsigned long                   msc_message_number_t;
@@ -97,7 +100,7 @@ msc_task (
 //------------------------------------------------------------------------------
 {
   MessageDef                             *received_message_p = NULL;
-  long                                    timer_id;
+  long                                    timer_id = 0;
 
   itti_mark_task_ready (TASK_MSC);
   msc_start_use ();
@@ -138,6 +141,15 @@ msc_task (
   return NULL;
 }
 
+
+static void msc_get_elapsed_time_since_start(struct timeval * const elapsed_time)
+{
+  // no thread safe but do not matter a lot
+  gettimeofday(elapsed_time, NULL);
+  // no timersub call for fastest operations
+  elapsed_time->tv_sec = elapsed_time->tv_sec - g_msc_start_time_second;
+}
+
 //------------------------------------------------------------------------------
 int
 msc_init (
@@ -145,10 +157,14 @@ msc_init (
   const int max_threadsP)
 //------------------------------------------------------------------------------
 {
-  int                                     i;
-  int                                     rv;
-  void                                   *pointer_p;
+  int                                     i = 0;
+  int                                     rv = 0;
+  void                                   *pointer_p = NULL;
   char                                    msc_filename[256];
+  struct timeval                          start_time = {.tv_sec=0, .tv_usec=0};
+
+  rv = gettimeofday(&start_time, NULL);
+  g_msc_start_time_second = start_time.tv_sec;
 
   fprintf (stderr, "Initializing MSC logs\n");
   rv = snprintf (msc_filename, 256, "/tmp/openair.msc.%u.log", envP);   // TODO NAME
@@ -497,7 +513,10 @@ msc_log_event (
     }
 
     if (1 == rv) {
-      rv = snprintf (char_message_p, MSC_MAX_MESSAGE_LENGTH, "%" PRIu64 " [EVENT] %d ", __sync_fetch_and_add (&g_message_number, 1), protoP);
+      struct timeval elapsed_time;
+      msc_get_elapsed_time_since_start(&elapsed_time);
+      rv = snprintf (char_message_p, MSC_MAX_MESSAGE_LENGTH, "%" PRIu64 " [EVENT] %d %04ld:%06ld",
+          __sync_fetch_and_add (&g_message_number, 1), protoP, elapsed_time.tv_sec, elapsed_time.tv_usec);
 
       if ((0 > rv) || (MSC_MAX_MESSAGE_LENGTH < rv)) {
         fprintf (stderr, "Error while logging MSC event : %s", &g_msc_proto2str[protoP][0]);
@@ -578,7 +597,10 @@ msc_log_message (
     }
 
     if (1 == rv) {
-      rv = snprintf (char_message_p, MSC_MAX_MESSAGE_LENGTH, "%" PRIu64 " [MESSAGE] %d %s %d %" PRIu64 " ", __sync_fetch_and_add (&g_message_number, 1), proto1P, message_operationP, proto2P, mac);
+      struct timeval elapsed_time;
+      msc_get_elapsed_time_since_start(&elapsed_time);
+      rv = snprintf (char_message_p, MSC_MAX_MESSAGE_LENGTH, "%" PRIu64 " [MESSAGE] %d %s %d %" PRIu64 " %04ld:%06ld",
+          __sync_fetch_and_add (&g_message_number, 1), proto1P, message_operationP, proto2P, mac, elapsed_time.tv_sec, elapsed_time.tv_usec);
 
       if ((0 > rv) || (MSC_MAX_MESSAGE_LENGTH < rv)) {
         fprintf (stderr, "Error while logging MSC message : %s/%s", &g_msc_proto2str[proto1P][0], &g_msc_proto2str[proto2P][0]);

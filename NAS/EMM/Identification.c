@@ -196,7 +196,7 @@ emm_proc_identification (
       /*
        * Notify EMM that common procedure has been initiated
        */
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " NAS_UE_ID_FMT " (identification)", ueid);
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " NAS_UE_ID_FMT " (identification)", ueid);
       emm_sap_t                               emm_sap;
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
@@ -274,7 +274,7 @@ emm_proc_identification_complete (
      */
     LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3470.id);
     emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " NAS_UE_ID_FMT " ", ueid);
+    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " NAS_UE_ID_FMT " ", ueid);
 
     if (imsi) {
       /*
@@ -315,7 +315,7 @@ emm_proc_identification_complete (
     /*
      * Notify EMM that the identification procedure successfully completed
      */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_CNF ue id " NAS_UE_ID_FMT " ", ueid);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF ue id " NAS_UE_ID_FMT " ", ueid);
     emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
     emm_sap.u.emm_reg.ueid = ueid;
     emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -325,7 +325,7 @@ emm_proc_identification_complete (
     /*
      * Notify EMM that the identification procedure failed
      */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " ", ueid);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " ", ueid);
     emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
     emm_sap.u.emm_reg.ueid = ueid;
     emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -432,7 +432,7 @@ _identification_request (
    * Notify EMM-AS SAP that Identity Request message has to be sent
    * to the UE
    */
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_SECURITY_REQ ue id " NAS_UE_ID_FMT " ", data->ueid);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_SECURITY_REQ ue id " NAS_UE_ID_FMT " ", data->ueid);
   emm_sap.primitive = EMMAS_SECURITY_REQ;
   emm_sap.u.emm_as.u.security.guti = NULL;
   emm_sap.u.emm_as.u.security.ueid = data->ueid;
@@ -461,13 +461,13 @@ _identification_request (
        * Re-start T3470 timer
        */
       emm_ctx->T3470.id = nas_timer_restart (emm_ctx->T3470.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 restarted UE " NAS_UE_ID_FMT " ", data->ueid);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 restarted UE " NAS_UE_ID_FMT " ", data->ueid);
     } else {
       /*
        * Start T3470 timer
        */
       emm_ctx->T3470.id = nas_timer_start (emm_ctx->T3470.sec, _identification_t3470_handler, data);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 started UE " NAS_UE_ID_FMT " ", data->ueid);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 started UE " NAS_UE_ID_FMT " ", data->ueid);
     }
 
     LOG_TRACE (INFO, "EMM-PROC  - Timer T3470 (%d) expires in %ld seconds", emm_ctx->T3470.id, emm_ctx->T3470.sec);
@@ -526,7 +526,7 @@ _identification_abort (
       if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
         LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3470.id);
         emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " NAS_UE_ID_FMT " ", data->ueid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " NAS_UE_ID_FMT " ", data->ueid);
       }
     }
 
@@ -539,7 +539,7 @@ _identification_abort (
      * Notify EMM that the identification procedure failed
      */
     if (notify_failure) {
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " ", ueid);
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " ", ueid);
       emm_sap_t                               emm_sap;
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REJ;

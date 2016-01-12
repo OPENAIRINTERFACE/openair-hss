@@ -104,7 +104,8 @@ static int                              _emm_as_recv (
   unsigned int ueid,
   const char *msg,
   int len,
-  int *emm_cause);
+  int *emm_cause,
+  nas_message_decode_status_t   * decode_status);
 
 
 static int                              _emm_as_establish_req (
@@ -331,18 +332,23 @@ _emm_as_recv (
   unsigned int ueid,
   const char *msg,
   int len,
-  int *emm_cause)
+  int *emm_cause,
+  nas_message_decode_status_t   * decode_status)
 {
   LOG_FUNC_IN;
-  nas_message_decode_status_t             decode_status;
+  nas_message_decode_status_t             local_decode_status;
   int                                     decoder_rc;
   int                                     rc = RETURNerror;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received EMM message (length=%d)", len);
   nas_message_t                           nas_msg;
-
-  memset (&nas_msg, 0, sizeof (nas_message_t));
   emm_security_context_t                 *emm_security_context = NULL;      /* Current EPS NAS security context     */
+
+  memset (&nas_msg,       0, sizeof (nas_msg));
+  if (NULL == decode_status) {
+    memset (&local_decode_status, 0, sizeof (local_decode_status));
+    decode_status = &local_decode_status;
+  }
 
 #if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = NULL;
@@ -366,7 +372,7 @@ _emm_as_recv (
   /*
    * Decode the received message
    */
-  decoder_rc = nas_message_decode (msg, &nas_msg, len, emm_security_context, &decode_status);
+  decoder_rc = nas_message_decode (msg, &nas_msg, len, emm_security_context, decode_status);
 
   if (decoder_rc < 0) {
     LOG_TRACE (WARNING, "EMMAS-SAP - Failed to decode NAS message " "(err=%d)", decoder_rc);
@@ -382,80 +388,80 @@ _emm_as_recv (
   switch (emm_msg->header.message_type) {
   case EMM_STATUS:
     // Requirement MME24.301R10_4.4.4.3_1
-    if ((0 == decode_status.security_context_available) ||
-        (0 == decode_status.integrity_protected_message) ||
+    if ((0 == decode_status->security_context_available) ||
+        (0 == decode_status->integrity_protected_message) ||
        // Requirement MME24.301R10_4.4.4.3_2
-       ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
+       ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
       LOG_FUNC_RETURN (decoder_rc);
     }
-    rc = emm_recv_status (ueid, &emm_msg->emm_status, emm_cause, &decode_status);
+    rc = emm_recv_status (ueid, &emm_msg->emm_status, emm_cause, decode_status);
     break;
 
   case ATTACH_REQUEST:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_attach_request (ueid, &emm_msg->attach_request, emm_cause, &decode_status);
+    rc = emm_recv_attach_request (ueid, &emm_msg->attach_request, emm_cause, decode_status);
     break;
 
   case IDENTITY_RESPONSE:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_identity_response (ueid, &emm_msg->identity_response, emm_cause, &decode_status);
+    rc = emm_recv_identity_response (ueid, &emm_msg->identity_response, emm_cause, decode_status);
     break;
 
   case AUTHENTICATION_RESPONSE:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_authentication_response (ueid, &emm_msg->authentication_response, emm_cause, &decode_status);
+    rc = emm_recv_authentication_response (ueid, &emm_msg->authentication_response, emm_cause, decode_status);
     break;
 
   case AUTHENTICATION_FAILURE:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_authentication_failure (ueid, &emm_msg->authentication_failure, emm_cause, &decode_status);
+    rc = emm_recv_authentication_failure (ueid, &emm_msg->authentication_failure, emm_cause, decode_status);
     break;
 
   case SECURITY_MODE_COMPLETE:
     // Requirement MME24.301R10_4.4.4.3_1
-    if ((0 == decode_status.security_context_available) ||
-        (0 == decode_status.integrity_protected_message) ||
+    if ((0 == decode_status->security_context_available) ||
+        (0 == decode_status->integrity_protected_message) ||
        // Requirement MME24.301R10_4.4.4.3_2
-       ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
+       ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
       LOG_FUNC_RETURN (decoder_rc);
     }
 
-    rc = emm_recv_security_mode_complete (ueid, &emm_msg->security_mode_complete, emm_cause, &decode_status);
+    rc = emm_recv_security_mode_complete (ueid, &emm_msg->security_mode_complete, emm_cause, decode_status);
     break;
 
   case SECURITY_MODE_REJECT:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_security_mode_reject (ueid, &emm_msg->security_mode_reject, emm_cause, &decode_status);
+    rc = emm_recv_security_mode_reject (ueid, &emm_msg->security_mode_reject, emm_cause, decode_status);
     break;
 
   case ATTACH_COMPLETE:
     // Requirement MME24.301R10_4.4.4.3_1
-    if ((0 == decode_status.security_context_available) ||
-        (0 == decode_status.integrity_protected_message) ||
+    if ((0 == decode_status->security_context_available) ||
+        (0 == decode_status->integrity_protected_message) ||
        // Requirement MME24.301R10_4.4.4.3_2
-       ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
+       ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
       LOG_FUNC_RETURN (decoder_rc);
     }
 
-    rc = emm_recv_attach_complete (ueid, &emm_msg->attach_complete, emm_cause, &decode_status);
+    rc = emm_recv_attach_complete (ueid, &emm_msg->attach_complete, emm_cause, decode_status);
     break;
 
   case TRACKING_AREA_UPDATE_COMPLETE:
   case GUTI_REALLOCATION_COMPLETE:
   case UPLINK_NAS_TRANSPORT:
     // Requirement MME24.301R10_4.4.4.3_1
-    if ((0 == decode_status.security_context_available) ||
-        (0 == decode_status.integrity_protected_message) ||
+    if ((0 == decode_status->security_context_available) ||
+        (0 == decode_status->integrity_protected_message) ||
        // Requirement MME24.301R10_4.4.4.3_2
-       ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
+       ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
       LOG_FUNC_RETURN (decoder_rc);
     }
@@ -467,14 +473,14 @@ _emm_as_recv (
 
   case DETACH_REQUEST:
     // Requirements MME24.301R10_4.4.4.3_1 MME24.301R10_4.4.4.3_2
-    if ((1 == decode_status.security_context_available) && (0 < emm_security_context->activated) &&
-        ((0 == decode_status.integrity_protected_message) ||
-       (0 == decode_status.mac_matched))) {
+    if ((1 == decode_status->security_context_available) && (0 < emm_security_context->activated) &&
+        ((0 == decode_status->integrity_protected_message) ||
+       (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
       LOG_FUNC_RETURN (decoder_rc);
     }
 
-    rc = emm_recv_detach_request (ueid, &emm_msg->detach_request, emm_cause, &decode_status);
+    rc = emm_recv_detach_request (ueid, &emm_msg->detach_request, emm_cause, decode_status);
     break;
 
   default:
@@ -523,8 +529,10 @@ _emm_as_data_ind (
       if (plain_msg) {
         nas_message_security_header_t           header;
         emm_security_context_t                 *security = NULL;        /* Current EPS NAS security context     */
+        nas_message_decode_status_t             decode_status;
 
         memset (&header, 0, sizeof (header));
+        memset (&decode_status, 0, sizeof (decode_status));
         /*
          * Decrypt the received security protected message
          */
@@ -549,7 +557,8 @@ _emm_as_data_ind (
             plain_msg,
             &header,
             msg->NASmsg.length,
-            security);
+            security,
+            &decode_status);
 
         if ((bytes < 0) &&
             (bytes != TLV_DECODE_MAC_MISMATCH)) { // not in spec, (case identity response for attach with unknown GUTI)
@@ -562,7 +571,7 @@ _emm_as_data_ind (
           /*
            * Process EMM data
            */
-          rc = _emm_as_recv (msg->ueid, plain_msg, bytes, emm_cause);
+          rc = _emm_as_recv (msg->ueid, plain_msg, bytes, emm_cause, &decode_status);
         } else if (header.protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {
           const OctetString                       data = { bytes, (uint8_t *) plain_msg };
           /*
@@ -1403,9 +1412,9 @@ _emm_as_security_req (
     switch (msg->msgType) {
     case EMM_AS_MSG_TYPE_IDENT:
       if (msg->guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send IDENTITY_REQUEST to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send IDENTITY_REQUEST to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send IDENTITY_REQUEST to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send IDENTITY_REQUEST to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
       }
 
       size = emm_send_identity_request (msg, &emm_msg->identity_request);
@@ -1413,9 +1422,9 @@ _emm_as_security_req (
 
     case EMM_AS_MSG_TYPE_AUTH:
       if (msg->guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send AUTHENTICATION_REQUEST to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REQUEST to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send AUTHENTICATION_REQUEST to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REQUEST to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
       }
 
       size = emm_send_authentication_request (msg, &emm_msg->authentication_request);
@@ -1423,9 +1432,9 @@ _emm_as_security_req (
 
     case EMM_AS_MSG_TYPE_SMC:
       if (msg->guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send SECURITY_MODE_COMMAND to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SECURITY_MODE_COMMAND to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send SECURITY_MODE_COMMAND to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SECURITY_MODE_COMMAND to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
       }
 
       size = emm_send_security_mode_command (msg, &emm_msg->security_mode_command);
@@ -1524,9 +1533,9 @@ _emm_as_security_rej (
     switch (msg->msgType) {
     case EMM_AS_MSG_TYPE_AUTH:
       if (msg->guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send AUTHENTICATION_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send AUTHENTICATION_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
       }
 
       size = emm_send_authentication_reject (&emm_msg->authentication_reject);
@@ -1630,7 +1639,7 @@ _emm_as_establish_cnf (
     switch (msg->NASinfo) {
     case EMM_AS_NAS_INFO_ATTACH:
       LOG_TRACE (WARNING, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d", msg->NASmsg.length);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
       size = emm_send_attach_accept (msg, &emm_msg->attach_accept);
       break;
 
@@ -1738,9 +1747,9 @@ _emm_as_establish_rej (
     switch (msg->NASinfo) {
     case EMM_AS_NAS_INFO_ATTACH:
       if (msg->UEid.guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send ATTACH_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send ATTACH_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
       }
 
       size = emm_send_attach_reject (msg, &emm_msg->attach_reject);
@@ -1748,9 +1757,9 @@ _emm_as_establish_rej (
 
     case EMM_AS_NAS_INFO_TAU:
       if (msg->UEid.guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send TRACKING_AREA_UPDATE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 send TRACKING_AREA_UPDATE_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
       }
 
       size = emm_send_tracking_area_update_reject (msg, &emm_msg->tracking_area_update_reject);

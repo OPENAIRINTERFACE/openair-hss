@@ -90,7 +90,7 @@ emm_recv_status (
   unsigned int ueid,
   emm_status_msg * msg,
   int *emm_cause,
-  const nas_message_decode_status_t * const status)
+  const nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN;
   int                                     rc;
@@ -132,7 +132,7 @@ emm_recv_attach_request (
   const unsigned int ueid,
   const attach_request_msg * const msg,
   int * const emm_cause,
-  const nas_message_decode_status_t  * const decode_status)
+  const nas_message_decode_status_t  * decode_status)
 {
   int                                     rc;
   uint8_t                                 gea = 0;
@@ -156,8 +156,7 @@ emm_recv_attach_request (
    */
   if (*emm_cause != EMM_CAUSE_SUCCESS) {
     /*
-     * 3GPP TS 24.301, section 5.5.1.2.7, case b
-     * * * * Perform protocol error abnormal case on the network side
+     * Requirement MME24.301R10_5.5.1.2.7_b Protocol error
      */
     rc = emm_proc_attach_reject (ueid, *emm_cause);
     *emm_cause = EMM_CAUSE_SUCCESS;
@@ -286,7 +285,7 @@ emm_recv_attach_request (
   /*
    * Execute the requested UE attach procedure
    */
-#warning " TODO gea to be review"
+#warning " TODO review gea"
 
   if (msg->msnetworkcapability.msnetworkcapabilityvalue.length > 0) {
     gea = (msg->msnetworkcapability.msnetworkcapabilityvalue.value[0] & 0x80) >> 1;
@@ -308,7 +307,7 @@ emm_recv_attach_request (
                                 gea,
                                 msg->uenetworkcapability.umts_present,
                                 msg->uenetworkcapability.gprs_present,
-                                &msg->esmmessagecontainer.esmmessagecontainercontents
+                                &msg->esmmessagecontainer.esmmessagecontainercontents,
                                 decode_status);
   LOG_FUNC_RETURN (rc);
 }
@@ -333,7 +332,7 @@ emm_recv_attach_complete (
   unsigned int ueid,
   const attach_complete_msg * msg,
   int *emm_cause,
-  const nas_message_decode_status_t * const status)
+  const nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN;
   int                                     rc;
@@ -366,7 +365,7 @@ emm_recv_detach_request (
   unsigned int ueid,
   const detach_request_msg * msg,
   int *emm_cause,
-  const nas_message_decode_status_t * const status)
+  const nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN;
   int                                     rc;
@@ -524,7 +523,7 @@ emm_recv_identity_response (
   unsigned int ueid,
   identity_response_msg * msg,
   int *emm_cause,
-  const nas_message_decode_status_t * const status)
+  const nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN;
   int                                     rc = RETURNok;
@@ -636,7 +635,7 @@ emm_recv_authentication_response (
   unsigned int ueid,
   authentication_response_msg * msg,
   int *emm_cause,
-  const nas_message_decode_status_t * const status)
+  const nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN;
   int                                     rc = RETURNok;
@@ -690,7 +689,7 @@ emm_recv_authentication_failure (
   unsigned int ueid,
   authentication_failure_msg * msg,
   int *emm_cause,
-  const nas_message_decode_status_t * const status)
+  const nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN;
   int                                     rc = RETURNok;
@@ -746,7 +745,7 @@ emm_recv_security_mode_complete (
   unsigned int ueid,
   security_mode_complete_msg * msg,
   int *emm_cause,
-  const nas_message_decode_status_t * const status)
+  const nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN;
   int                                     rc = RETURNok;
@@ -782,7 +781,7 @@ emm_recv_security_mode_reject (
   unsigned int ueid,
   security_mode_reject_msg * msg,
   int *emm_cause,
-  const nas_message_decode_status_t * const status)
+  const nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN;
   int                                     rc = RETURNok;

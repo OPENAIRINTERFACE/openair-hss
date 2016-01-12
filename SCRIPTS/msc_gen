@@ -266,7 +266,7 @@ for event_id_int in sorted(g_messages.iterkeys()):
     elif 'box' in message['type']:
         if "yes" == args.no_event.strip():
             continue  
-        g_file.write("  %s note %s [ label = \"%s\", textcolour=%s ] ;\n" % (g_proto_names[message['tx']], g_proto_names[message['rx']], message['message'], message['text_color']))
+        g_file.write("  %s note %s [ label = \"%s\n %s\", textcolour=%s ] ;\n" % (g_proto_names[message['tx']], g_proto_names[message['rx']], message['time'], message['message'], message['text_color']))
 
     g_message_index = g_message_index + 1
 

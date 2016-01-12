@@ -239,6 +239,7 @@ emm_proc_attach_request (
   int                                     rc;
   emm_data_context_t                      ue_ctx;
   boolean_t                               previous_context_found = FALSE;
+  emm_fsm_state_t                         fsm_state = EMM_DEREGISTERED;
 
   LOG_TRACE (INFO, "EMM-PROC  - EPS attach type = %s (%d) requested (ueid=" NAS_UE_ID_FMT ")", _emm_attach_type_str[type], type, ueid);
   LOG_TRACE (INFO, "EMM-PROC  - umts_present = %u umts_present = %u", umts_present, gprs_present);
@@ -292,19 +293,33 @@ emm_proc_attach_request (
   emm_ctx = &_emm_data.ctx[ueid];
 #endif
 
-  if ((*emm_ctx != NULL)
-      && (emm_fsm_get_status (ueid, *emm_ctx) > EMM_DEREGISTERED)) {
+  fsm_state = emm_fsm_get_status (ueid, *emm_ctx);
+  if ((*emm_ctx != NULL) && (EMM_DEREGISTERED == fsm_state)) {
     /*
-     * An EMM context already exists for the UE in the network
+     * MME24.301R10_5.5.1.2.7_f ATTACH REQUEST received in state EMM-REGISTERED
+     * If an ATTACH REQUEST message is received in state EMM-REGISTERED the network may initiate the
+     * EMM common procedures; if it turned out that the ATTACH REQUEST message was sent by a UE that has
+     * already been attached, the EMM context, EPS bearer contexts, if any, are deleted and the new ATTACH
+     *  REQUEST is progressed.
+     */
+
+    // delete EMM context : what does it mean exactly ?
+    // EMM context: An EMM context is established in the UE and the MME when an attach procedure is successfully completed. /* great */
+
+    LOG_TRACE (WARNING, "EMM-PROC  - Initiate new attach procedure");
+    rc = emm_proc_attach_request (ueid, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, tai,
+        eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP, decode_status);
+  } else if ((*emm_ctx != NULL) && ((EMM_DEREGISTERED < fsm_state ) && (EMM_REGISTERED != fsm_state))) {
+    /*
+     * Requirement MME24.301R10_5.5.1.2.7_e
+     * More than one ATTACH REQUEST received and no ATTACH ACCEPT or ATTACH REJECT message has been sent
+     * - If one or more of the information elements in the ATTACH REQUEST message differs from the ones
+     * received within the previous ATTACH REQUEST message, the previously initiated attach procedure shall
+     * be aborted and the new attach procedure shall be executed;
+     * - if the information elements do not differ, then the network shall continue with the previous attach procedure
+     * and shall ignore the second ATTACH REQUEST message.
      */
     if (_emm_attach_have_changed (*emm_ctx, type, ksi, guti, imsi, imei, eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present)) {
-      /*
-       * 3GPP TS 24.301, section 5.5.1.2.7, abnormal case e
-       * The attach parameters have changed from the one received within
-       * the previous Attach Request message;
-       * the previously initiated attach procedure shall be aborted and
-       * the new attach procedure shall be executed;
-       */
       LOG_TRACE (WARNING, "EMM-PROC  - Attach parameters have changed");
       /*
        * Notify EMM that the attach procedure is aborted
@@ -321,7 +336,8 @@ emm_proc_attach_request (
          * Process new attach procedure
          */
         LOG_TRACE (WARNING, "EMM-PROC  - Initiate new attach procedure");
-        rc = emm_proc_attach_request (ueid, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, tai, eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP);
+        rc = emm_proc_attach_request (ueid, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, tai,
+            eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP, decode_status);
       }
 
       LOG_FUNC_RETURN (rc);
@@ -554,7 +570,7 @@ emm_proc_attach_complete (
      */
     LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3450 (%d)", emm_ctx->T3450.id);
     emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
-    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 stopped UE " NAS_UE_ID_FMT " ", ueid);
+    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " NAS_UE_ID_FMT " ", ueid);
     /*
      * Delete the old GUTI and consider the GUTI sent in the Attach
      * Accept message as valid
@@ -766,7 +782,7 @@ _emm_attach_release (
     if (emm_ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
       LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3450 (%d)", emm_ctx->T3450.id);
       emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
     }
 
     /*
@@ -775,7 +791,7 @@ _emm_attach_release (
     if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
       LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3460 (%d)", emm_ctx->T3460.id);
       emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3460 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
     }
 
     /*
@@ -784,7 +800,7 @@ _emm_attach_release (
     if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
       LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3460.id);
       emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
     }
 
     /*
@@ -927,7 +943,7 @@ _emm_attach_abort (
       if (ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
         LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3450 (%d)", ctx->T3450.id);
         ctx->T3450.id = nas_timer_stop (ctx->T3450.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 stopped UE " NAS_UE_ID_FMT " ", data->ueid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " NAS_UE_ID_FMT " ", data->ueid);
       }
     }
 
@@ -1515,13 +1531,13 @@ _emm_attach_accept (
          * Re-start T3450 timer
          */
         emm_ctx->T3450.id = nas_timer_restart (emm_ctx->T3450.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 restarted UE " NAS_UE_ID_FMT "", data->ueid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 restarted UE " NAS_UE_ID_FMT "", data->ueid);
       } else {
         /*
          * Start T3450 timer
          */
         emm_ctx->T3450.id = nas_timer_start (emm_ctx->T3450.sec, _emm_attach_t3450_handler, data);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 started UE " NAS_UE_ID_FMT " ", data->ueid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 started UE " NAS_UE_ID_FMT " ", data->ueid);
       }
 
       LOG_TRACE (INFO, "EMM-PROC  - Timer T3450 (%d) expires in %ld seconds", emm_ctx->T3450.id, emm_ctx->T3450.sec);

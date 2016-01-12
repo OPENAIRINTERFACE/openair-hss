@@ -259,11 +259,12 @@ function help()
   echo_error "  -H, --run-history          hist_num Replay test with hist_num'th command item in run history."
   echo_error "  -i, --set-nw-interfaces            Force set network interfaces as described in eNB config file."
   echo_error "  -m, --max-speed                    Play scenario without simulating inter-packets delays (incompatible with -f and -F options)."
+  echo_error "  -o, --run-options          file    Run options can be set in a text file (incompatible with -H option)."
   echo_error "  -p, --pcap-file            file    Set pcap input file for building a scenario (need -b|--build-test option)."
+  echo_error "  -r, --run                          Run test with implicit scenario filename(-b|--build-test option) or explicit scenario filename (-s|--scenario-file)."
   echo_error "  -s, --scenario-file        file    Set scenario input file for running a scenario (need -r|--run option, without -b|--build-test option)."
   echo_error "  -S, --show-run-history             Display run history of the test(s) located in test dir."
   echo_error "  -t, --test-dir             dir     Set test dir."
-  echo_error "  -r, --run                          Run test with implicit scenario filename(-b|--build-test option) or explicit scenario filename (-s|--scenario-file)."
   echo_error " "
 }
 
@@ -272,10 +273,12 @@ function main()
   local    old_enb_config_file=""
   local    enb_config_file=""
   local    pcap_file=""
+  local    run_options_file=""
   local    scenario_file=""
   local    test_dir="."
   local    play_args=""
   local    shift_args=""
+  local    run_extra_args=""
   local -i set_network_interfaces=0
   local -i run=0
   local -i run_gdb=0
@@ -284,7 +287,6 @@ function main()
   local -i run_history=0
   local -i show_run_history=0
   local -i shift_packet_args=0
-
 
   until [ -z "$1" ]
     do
@@ -334,6 +336,10 @@ function main()
       -m | --max-speed)
         play_args=$play_args" --max-speed"
         shift;
+        ;;
+      -o | --run-options)
+        run_options_file=$2
+        shift 2;
         ;;
       -p | --pcap-file)
         pcap_file=$2
@@ -403,6 +409,13 @@ function main()
   if [ "a$pcap_file" != "a" ]; then 
     if [ ! -f $pcap_file ]; then 
       echo_fatal "Please provide -p|--pcap-file valid argument (\"$pcap_file\" not a valid file)"
+    fi
+  fi
+  if [ "a$run_options_file" != "a" ]; then 
+    if [ ! -f $run_options_file ]; then 
+      echo_fatal "Please provide -o|--run-options valid argument (\"$run_options_file\" not a valid file)"
+    else
+      run_extra_args=$(<$run_options_file)
     fi
   fi
   if [ "a$scenario_file" != "a" ]; then 
@@ -475,6 +488,9 @@ function main()
             fi
           done
         fi
+        if [ "a$run_options_file" != "a" ]; then
+          echo_warning "Omitting $run_options_file option files since running history command"
+        fi
         $(sed -n "${run_history}p" $test_dir/test_epc_play_scenario.history)
       else
         echo_fatal "History item out of bounds, hist size is $hist_size"
@@ -487,9 +503,9 @@ function main()
       set_enb_network_interfaces $enb_config_file
     fi
     if [ $run -eq 1 ]; then
-      echo "test_epc_play_scenario --test-dir $test_dir --enb-conf-file $enb_config_file --scenario $scenario_file $play_args" >> $test_dir/test_epc_play_scenario.history
+      echo "test_epc_play_scenario --test-dir $test_dir --enb-conf-file $enb_config_file --scenario $scenario_file $play_args $run_extra_args" >> $test_dir/test_epc_play_scenario.history
       if [ $run_gdb -eq 0 ]; then 
-        test_epc_play_scenario --test-dir $test_dir --enb-conf-file $enb_config_file --scenario $scenario_file $play_args
+        test_epc_play_scenario --test-dir $test_dir --enb-conf-file $enb_config_file --scenario $scenario_file $play_args $run_extra_args
       else
         $SUDO touch      ~/.gdb_test_epc_play_scenario
         $SUDO chmod 777  ~/.gdb_test_epc_play_scenario
