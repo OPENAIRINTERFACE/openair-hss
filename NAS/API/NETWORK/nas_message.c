@@ -83,7 +83,8 @@ _nas_message_protected_decode (
   nas_message_security_header_t * header,
   nas_message_plain_t * msg,
   int length,
-  const emm_security_context_t * const emm_security_context);
+  const emm_security_context_t * const emm_security_context,
+  nas_message_decode_status_t * status);
 
 /* Functions used to encode layer 3 NAS messages */
 static int
@@ -115,7 +116,8 @@ _nas_message_decrypt (
   uint32_t code,
   uint8_t seq,
   int length,
-  const emm_security_context_t * const emm_security_context);
+  const emm_security_context_t * const emm_security_context,
+  nas_message_decode_status_t * status);
 
 static int
 _nas_message_encrypt (
@@ -283,13 +285,14 @@ nas_message_decrypt (
   /*
    * Decode the header
    */
-  int                                     size = _nas_message_header_decode (inbuf, header, length, NULL);
+  int                                     size = _nas_message_header_decode (inbuf, header, length, status);
 
   if (size < 0) {
     LOG_TRACE (DEBUG, "MESSAGE TOO SHORT");
     LOG_FUNC_RETURN (TLV_DECODE_BUFFER_TOO_SHORT);
   } else if (size > 1) {
     if (emm_security_context) {
+      status->security_context_available = 1;
 
       if (emm_security_context->ul_count.seq_num > header->sequence_number) {
         emm_security_context->ul_count.overflow += 1;
@@ -314,24 +317,15 @@ nas_message_decrypt (
     /*
      * Check NAS message integrity
      */
-    /* Quick fix by by Shaun Ying:
-     * The UE remembers its previous context and sends a Identity Response message with a MAC value that is integrity protected.
-     *  However, since OAI EPC is freshly started and it does not remember the previous security context for the same UE,
-     *  it expects messages without integrity protection during the attach procedure.
-     *  Since OAI EPC always compares the MAC values, we see the MAC failure error as quoted above.
-     *  The quick fix is to compare MAC values only when EPC's own MAC is not 0.
-     *  if (mac != header->message_authentication_code) {
-     *  LG@eurecom: we have to work on this topic, this point of the specifications has not been captured: 
-     *  ETSI TS 124 301 V10.15.0 section 4.4.4.2 Integrity checking of NAS signalling messages in the UE
-     */
-    if ((mac != 0) && (mac != header->message_authentication_code)) {
+    if (mac == header->message_authentication_code) {
+      status->mac_matched = 1;
+      LOG_TRACE (DEBUG, "Integrity: MAC Success");
+    } else {
       LOG_TRACE (DEBUG,
                  "MAC Failure MSG:%08X(%u) <> INT ALGO:%08X(%u) Type of security context %u",
                  header->message_authentication_code, header->message_authentication_code, mac, mac, (emm_security_context != NULL) ? emm_security_context->type : 88);
       // LG: Do not return now (out of spec but we need that with only one MME)
-      LOG_FUNC_RETURN (TLV_DECODE_MAC_MISMATCH);
-    } else {
-      LOG_TRACE (DEBUG, "Integrity: MAC Success");
+      //LOG_FUNC_RETURN (TLV_DECODE_MAC_MISMATCH);
     }
 
     /*
@@ -343,7 +337,8 @@ nas_message_decrypt (
         header->message_authentication_code,
         header->sequence_number,
         length - size,
-        emm_security_context);
+        emm_security_context,
+        status);
 
     bytes = length - size;
   } else {
@@ -439,14 +434,11 @@ nas_message_decode (
     /*
      * Decode security protected NAS message
      */
-    bytes = _nas_message_protected_decode (buffer + size, &msg->header, &msg->plain, length - size, emm_security_context);
+    bytes = _nas_message_protected_decode (buffer + size, &msg->header, &msg->plain, length - size, emm_security_context, status);
   } else {
     /*
      * Decode plain NAS message
      */
-    status->integrity_protected_message = 0;
-    status->ciphered_message            = 0;
-    status->mac_matched                 = 0;
     bytes = _nas_message_plain_decode (buffer, &msg->header, &msg->plain, length);
   }
 
@@ -732,7 +724,8 @@ _nas_message_protected_decode (
   nas_message_security_header_t * header,
   nas_message_plain_t * msg,
   int length,
-  const emm_security_context_t * const emm_security_context)
+  const emm_security_context_t * const emm_security_context,
+  nas_message_decode_status_t * const status)
 {
   LOG_FUNC_IN;
   int                                     bytes = TLV_DECODE_BUFFER_TOO_SHORT;
@@ -742,7 +735,14 @@ _nas_message_protected_decode (
     /*
      * Decrypt the security protected NAS message
      */
-    header->protocol_discriminator = _nas_message_decrypt (plain_msg, buffer, header->security_header_type, header->message_authentication_code, header->sequence_number, length, emm_security_context);
+    header->protocol_discriminator = _nas_message_decrypt (
+        plain_msg,
+        buffer,
+        header->security_header_type,
+        header->message_authentication_code,
+        header->sequence_number,
+        length, emm_security_context,
+        status);
     /*
      * Decode the decrypted message as plain NAS message
      */
@@ -957,7 +957,8 @@ _nas_message_decrypt (
   uint32_t code,
   uint8_t seq,
   int length,
-  const emm_security_context_t * const emm_security_context)
+  const emm_security_context_t * const emm_security_context,
+  nas_message_decode_status_t * status)
 {
   nas_stream_cipher_t                     stream_cipher;
   uint32_t                                count;
@@ -986,6 +987,10 @@ _nas_message_decrypt (
     if (NULL != emm_security_context) {
       switch (emm_security_context->selected_algorithms.encryption) {
         case NAS_SECURITY_ALGORITHMS_EEA1:{
+          if (0 == status->mac_matched) {
+            LOG_TRACE (ERROR, "MAC integrity failed");
+            LOG_FUNC_RETURN (0);
+          }
           if (direction == SECU_DIRECTION_UPLINK) {
             count = 0x00000000 || ((emm_security_context->ul_count.overflow && 0x0000FFFF) << 8) || (emm_security_context->ul_count.seq_num & 0x000000FF);
           } else {
@@ -1017,6 +1022,10 @@ _nas_message_decrypt (
         break;
 
         case NAS_SECURITY_ALGORITHMS_EEA2:{
+          if (0 == status->mac_matched) {
+            LOG_TRACE (ERROR, "MAC integrity failed");
+            LOG_FUNC_RETURN (0);
+          }
           if (direction == SECU_DIRECTION_UPLINK) {
             count = 0x00000000 || ((emm_security_context->ul_count.overflow && 0x0000FFFF) << 8) || (emm_security_context->ul_count.seq_num & 0x000000FF);
           } else {

@@ -339,10 +339,15 @@ _emm_as_recv (
   nas_message_decode_status_t             local_decode_status;
   int                                     decoder_rc;
   int                                     rc = RETURNerror;
-
-  LOG_TRACE (INFO, "EMMAS-SAP - Received EMM message (length=%d)", len);
   nas_message_t                           nas_msg;
   emm_security_context_t                 *emm_security_context = NULL;      /* Current EPS NAS security context     */
+
+  if (decode_status) {
+    LOG_TRACE (INFO, "EMMAS-SAP - Received EMM message (length=%d) integrity protected %d ciphered %d mac matched %d security context %d",
+        len, decode_status->integrity_protected_message, decode_status->ciphered_message, decode_status->mac_matched, decode_status->security_context_available);
+  } else {
+    LOG_TRACE (INFO, "EMMAS-SAP - Received EMM message (length=%d) ", len);
+  }
 
   memset (&nas_msg,       0, sizeof (nas_msg));
   if (NULL == decode_status) {
