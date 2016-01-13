@@ -147,12 +147,13 @@ nas_intertask_interface (
 
     case S1AP_ENB_DEREGISTERED_IND:{
 #if DISABLE_USE_NAS == 0
+      /*
         int                                     i;
 
         for (i = 0; i < S1AP_ENB_DEREGISTERED_IND (received_message_p).nb_ue_to_deregister; i++) {
           nas_proc_deregister_ue (S1AP_ENB_DEREGISTERED_IND (received_message_p).mme_ue_s1ap_id[i]);
         }
-
+*/
 #endif
       }
       break;
