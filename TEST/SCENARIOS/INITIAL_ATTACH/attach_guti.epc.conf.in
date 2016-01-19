@@ -18,13 +18,46 @@
 # For more information about the OpenAirInterface (OAI) Software Alliance:
 #      contact@openairinterface.org
 ################################################################################
+#                               Internet
+#                                  | 
+#         PGW_IPV4_ADDRESS_FOR_SGI | 
+# +-----------+-------+------------+---------------+--------------------------+
+# |host y     |       | PGW_INTERFACE_NAME_FOR_SGI |                          |
+# +-----------+       +------------+---------------+                          |
+# |                                |                                          |
+# |                           +----+----+   (HSS may run on this host         |
+# |                           | mme_gw  |    or on another one)               |
+# |                           +----+----+                                     |
+# |                                |                                          |
+# |              +-----------------+--------------------+                     |
+# |              | SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP |                     |
+# |              | MME_INTERFACE_NAME_FOR_S1_MME        |                     |
+# +----------------------------+---+--+---------------------------------------+
+#     MME_IPV4_ADDRESS_FOR_S1_MME  |  (S1-C and S1-U addresses/interfaces may be the same)  
+# SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP 
+#                                  |
+#                                  |
+#                          a.b.c.d |
+# +---------------+------------+---+--+---------------------------------------+
+# |eNBx           |            | ethx |                                       |
+# +---------------+            +---+--+                                       |
+# |                                |                                          |
+# |                         +------+---------+                                |
+# |                         | lte-softmodem  |                                |
+# |                         |       or       |                                |
+# |                         | oaisim (1)eNB (x UEs)                           |
+# |                         +-------+--------+                                |
+# +---------------------------------+-----------------------------------------+
+#                                   |
+#                                   O (RF antenna)
+
 MME : 
 {
 
     REALM                          = "@REALM@";                                 # DO NOT CHANGE
     # Define the limits of the system in terms of served eNB and served UE.
     # When the limits will be reached, overload procedure will take place.
-    MAXENB                         = 10;
+    MAXENB                         = 10;                                                             
     MAXUE                          = 100;
     RELATIVE_CAPACITY              = 10;
     # Display statistics about whole system (expressed in seconds)
@@ -82,7 +115,7 @@ MME :
         # max values = 999.999:65535
         # maximum of 32 values, comma separated
         TAI_LIST = ( 
-             {MCC="208" ; MNC="95";  TAC = "1"; }                              # YOUR PLMN CONFIG HERE
+             {MCC="208" ; MNC="95";  TAC = "1"; }                               # YOUR PLMN CONFIG HERE
         );
     };
     
@@ -96,8 +129,8 @@ MME :
     
     NETWORK_INTERFACES : 
     {
-        MME_INTERFACE_NAME_FOR_S1_MME         = "tun2";                         # DO NOT CHANGE
-        MME_IPV4_ADDRESS_FOR_S1_MME           = "192.188.2.2/24";               # DO NOT CHANGE
+        MME_INTERFACE_NAME_FOR_S1_MME         = "eth0";                        # YOUR NETWORK CONFIG HERE
+        MME_IPV4_ADDRESS_FOR_S1_MME           = "192.168.12.17/24";           # YOUR NETWORK CONFIG HERE
 
         MME_INTERFACE_NAME_FOR_S11_MME        = "none";
         MME_IPV4_ADDRESS_FOR_S11_MME          = "0.0.0.0/24";
@@ -111,8 +144,8 @@ S-GW :
         SGW_INTERFACE_NAME_FOR_S11              = "none";
         SGW_IPV4_ADDRESS_FOR_S11                = "0.0.0.0/24";
 
-        SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP    = "lo";                         # DO NOT CHANGE
-        SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP      = "127.0.0.1/24";               # DO NOT CHANGE
+        SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP    = "eth0";                     # YOUR NETWORK CONFIG HERE
+        SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP      = "192.168.12.17/24";             # YOUR NETWORK CONFIG HERE
         SGW_IPV4_PORT_FOR_S1U_S12_S4_UP         = 2152;                         # PREFER NOT CHANGE
 
         SGW_INTERFACE_NAME_FOR_S5_S8_UP         = "none";                       # DO NOT CHANGE
@@ -127,16 +160,16 @@ P-GW =
         PGW_INTERFACE_NAME_FOR_S5_S8          = "none";                         # DO NOT CHANGE
         PGW_IPV4_ADDRESS_FOR_S5_S8            = "0.0.0.0/24";                   # DO NOT CHANGE
 
-        PGW_INTERFACE_NAME_FOR_SGI            = "eth0";                         # YOUR NETWORK CONFIG HERE
-        PGW_IPV4_ADDRESS_FOR_SGI              = "192.168.12.213/24";            # YOUR NETWORK CONFIG HERE
+        PGW_INTERFACE_NAME_FOR_SGI            = "eth1";                         # YOUR NETWORK CONFIG HERE
+        PGW_IPV4_ADDRESS_FOR_SGI              = "192.168.14.17/24";             # YOUR NETWORK CONFIG HERE
         PGW_MASQUERADE_SGI                    = "yes";                          # YOUR NETWORK CONFIG HERE
     };
     
     IP_ADDRESS_POOL :
     {
         IPV4_LIST = (
-                      "192.187.0.0/24",                                         # YOUR NETWORK CONFIG HERE
-                      "192.187.1.0/24"                                          # YOUR NETWORK CONFIG HERE
+                      "192.188.0.0/24",                                         # YOUR NETWORK CONFIG HERE
+                      "192.188.1.0/24"                                          # YOUR NETWORK CONFIG HERE
                     );
         IPV6_LIST = (
                       "2014:02:26::0/120"                                       # YOUR NETWORK CONFIG HERE

@@ -570,7 +570,7 @@ create_hss_database(){
   EXPECTED_ARGS=5
   if [ $# -ne $EXPECTED_ARGS ]
   then
-    echo_error "Usage: $0 dbadmin dbpass hssuser hsspass databasename"
+    echo_error "Usage: create_hss_database dbadmin dbpass hssuser hsspass databasename"
     return 1
   fi
   local mysql_admin=$1
@@ -615,6 +615,289 @@ create_hss_database(){
       echo_success "HSS: $database_name tables already created, nothing done"
   fi 
   return 0
+}
+
+##################################
+# export HSS DB
+################################
+
+# arg 1 is hss username    (ex: hssadmin)
+# arg 2 is hss password    (ex: admin)
+# arg 3 is database name   (ex: oai_db)
+# arg 4 is export file name(ex: oai_db_dump.sql)
+export_hss_database(){
+  EXPECTED_ARGS=4
+  if [ $# -ne $EXPECTED_ARGS ]
+  then
+    echo_error "Usage: export_hss_database hssuser hsspass databasename filename"
+    return 1
+  fi
+  local hss_username=$1
+  local hss_password=$2
+  local database_name=$3
+  local file_name=$4
+  
+  mysqldump -u $hss_username -p$hss_password $database_name > $file_name 2>&1
+  if [ $? -ne 0 ]; then
+    echo_error "HSS: $database_name dump failed:"
+    cat $file_name
+    return 1
+  else
+    echo_success "HSS: $database_name dump succeeded"
+  fi
+
+  return 0
+}
+
+##################################
+# IMPORT HSS DB
+################################
+
+# arg 1 is hss username    (ex: hssadmin)
+# arg 2 is hss password    (ex: admin)
+# arg 3 is database name   (ex: oai_db)
+# arg 4 is import file name(ex: oai_db_dump.sql)
+import_hss_database(){
+  EXPECTED_ARGS=4
+  if [ $# -ne $EXPECTED_ARGS ]
+  then
+    echo_error "Usage: import_hss_database hssuser hsspass databasename filename"
+    return 1
+  fi
+  local hss_username=$1
+  local hss_password=$2
+  local database_name=$3
+  local file_name=$4
+  
+  mysqladmin --force -u $hss_username -p$hss_password drop $database_name 
+  
+  Q1="CREATE DATABASE IF NOT EXISTS $database_name;"
+  mysql -u $hss_username --password=$hss_password -e "${Q1}"
+  if [ $? -ne 0 ]; then
+    echo_error "HSS: $database_name creation failed"
+    return 1
+  else
+    echo_success "HSS: $database_name creation succeeded"
+  fi
+  
+  mysql -u $hss_username -p$hss_password $database_name < $file_name 
+  if [ $? -ne 0 ]; then
+    echo_error "HSS: $database_name import failed:"
+    cat $file_name
+    return 1
+  else
+    echo_success "HSS: $database_name import succeeded"
+  fi
+
+  return 0
+}
+
+
+cidr2mask(){
+  local i mask=""
+  local full_octets=$(($1/8))
+  local partial_octet=$(($1%8))
+
+  for ((i=0;i<4;i+=1)); do
+    if [ $i -lt $full_octets ]; then
+      mask+=255
+    elif [ $i -eq $full_octets ]; then
+      mask+=$((256 - 2**(8-$partial_octet)))
+    else
+      mask+=0
+    fi
+    test $i -lt 3 && mask+=.
+  done
+
+  echo $mask
+}
+
+# example: netcalc 192.168.12.100 255.255.255.0
+netcalc(){
+  local IFS='.' ip i
+  local -a oct msk
+    
+  read -ra oct <<<"$1"
+  read -ra msk <<<"$2"
+
+  for i in ${!oct[@]}; do
+    ip+=( "$(( oct[i] & msk[i] ))" )
+  done
+    
+  echo "${ip[*]}"
+}
+
+# example: 
+bcastcalc(){
+  local IFS='.' ip i
+  local -a oct msk
+    
+  read -ra oct <<<"$1"
+  read -ra msk <<<"$2"
+
+  for i in ${!oct[@]}; do
+    ip+=( "$(( oct[i] + ( 255 - ( oct[i] | msk[i] ) ) ))" )
+  done
+  echo "${ip[*]}"
+}
+
+
+is_real_interface(){
+  my_bool=1
+  for var in "$@"
+  do
+    if [ "a$var" == "a" ]; then
+      return 0
+    fi
+    if [ "a$var" == "anone" ]; then
+      return 0
+    fi
+    IF=`cat /etc/udev/rules.d/70-persistent-net.rules | grep $var | sed 's/^.*NAME=//' | tr -d '"'`
+    if [ "$IF" == "$var" ]; then
+      if [ "a${var:0:3}" != "aeth" ]; then
+        if [ "a${var:0:4}" != "awlan" ]; then
+          if [ "a${var:0:4}" != "awifi" ]; then
+            my_bool=0;
+          fi
+        fi
+      fi
+    fi
+  done
+  return $my_bool
+}
+
+is_virtual_interface(){
+  my_bool=1
+  for var in "$@"
+  do
+    if [ "a$var" == "a" ]; then
+      return 0
+    fi
+    if [ "a$var" == "anone" ]; then
+      return 0
+    fi
+    num=`expr index "$var" :`
+    
+    if [ $num -eq 0 ]; then
+      my_bool=0;
+    fi
+  done
+  return $my_bool
+}
+
+# arg1 = interface name
+# arg2 = ipv4 addr cidr
+set_interface_up(){
+  interface=$1
+  address=${2%/*} #part before '/'
+  cidr_netmask=${2#*/} # part after '/'
+
+  if [ "a${interface:0:4}" == "anone" ]; then
+    return;
+  fi
+  echo "ifconfig  $interface up"
+  $SUDO ifconfig  $interface up
+  sync
+  netmask=`cidr2mask $cidr_netmask`
+  broadcast=`bcastcalc $address $netmask`
+  echo "ip -4 addr add  $address/$cidr_netmask broadcast $broadcast dev $interface"
+  $SUDO ip -4 addr add  $address/$cidr_netmask broadcast $broadcast dev $interface
+  sync
+}
+
+# arg1 = interface name
+# arg2 = ipv4 addr cidr
+set_virtual_interface_up(){
+  interface=$1
+  address=${2%/*} #part before '/'
+  cidr_netmask=${2#*/} # part after '/'
+
+  if [ "a${interface:0:4}" == "anone" ]; then
+    return;
+  fi
+  $SUDO ifconfig  $interface down > /dev/null 2>&1
+  sync
+  echo "ifconfig  $interface $address up"
+  $SUDO ifconfig  $interface $address up
+  sync
+}
+
+#arg1 is interface name
+#arg2 is IP address (CIDR)
+set_network_interface(){
+  local interface_name=$1
+  local ip_cidr=$2
+  
+  is_virtual_interface $interface_name
+  if [ $? -eq 1 ]; then
+    echo "$interface_name is virtual interface"
+    set_virtual_interface_up $interface_name $ip_cidr
+  else 
+    is_real_interface $interface_name
+    if [ $? -eq 1 ]; then
+      echo "$interface_name is real interface"
+      set_interface_up $interface_name $ip_cidr
+    else
+      echo_warning "$interface_name not handled, not configuring it"
+      return
+    fi
+  fi
+}
+
+# arg1 is EPC config file
+set_epc_network_interfaces(){
+  value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
+  eval $value
+  
+  # check all var names are correct
+  list_var_name="\
+        MME_INTERFACE_NAME_FOR_S1_MME         MME_IPV4_ADDRESS_FOR_S1_MME \
+        MME_INTERFACE_NAME_FOR_S11_MME        MME_IPV4_ADDRESS_FOR_S11_MME \
+        SGW_INTERFACE_NAME_FOR_S11            SGW_IPV4_ADDRESS_FOR_S11 \
+        SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP \
+        SGW_INTERFACE_NAME_FOR_S5_S8_UP       SGW_IPV4_ADDRESS_FOR_S5_S8_UP \
+        PGW_INTERFACE_NAME_FOR_S5_S8          PGW_IPV4_ADDRESS_FOR_S5_S8 \
+        PGW_INTERFACE_NAME_FOR_SGI            PGW_IPV4_ADDRESS_FOR_SGI"
+  for var_name in $list_var_name
+  do
+    if [ -n "$${var_name}" ]; then
+      echo_success "Found ${var_name} = ${!var_name}"
+    else
+      echo_fatal "${var_name} does does not exist in your config file $1"
+    fi
+  done
+
+  # configure interfaces
+  set_network_interface  $MME_INTERFACE_NAME_FOR_S1_MME         $MME_IPV4_ADDRESS_FOR_S1_MME 
+  set_network_interface  $MME_INTERFACE_NAME_FOR_S11_MME        $MME_IPV4_ADDRESS_FOR_S11_MME 
+  set_network_interface  $SGW_INTERFACE_NAME_FOR_S11            $SGW_IPV4_ADDRESS_FOR_S11 
+  set_network_interface  $SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  $SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP 
+  set_network_interface  $SGW_INTERFACE_NAME_FOR_S5_S8_UP       $SGW_IPV4_ADDRESS_FOR_S5_S8_UP 
+  set_network_interface  $PGW_INTERFACE_NAME_FOR_S5_S8          $PGW_IPV4_ADDRESS_FOR_S5_S8 
+  set_network_interface  $PGW_INTERFACE_NAME_FOR_SGI            $PGW_IPV4_ADDRESS_FOR_SGI
+}
+
+# arg1 is a 'libconfig-like' config file
+set_enb_network_interfaces(){
+  value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
+  eval $value
+  
+  # check all var names are correct
+  list_var_name="\
+        ENB_INTERFACE_NAME_FOR_S1_MME         ENB_IPV4_ADDRESS_FOR_S1_MME \
+        ENB_INTERFACE_NAME_FOR_S1U            ENB_IPV4_ADDRESS_FOR_S1U "
+  for var_name in $list_var_name
+  do
+    if [ -n "$${var_name}" ]; then
+      echo_success "Found ${var_name} = ${!var_name}"
+    else
+      echo_fatal "${var_name} does does not exist in your config file $1"
+    fi
+  done
+
+  # configure interfaces
+  set_network_interface  $ENB_INTERFACE_NAME_FOR_S1_MME         $ENB_IPV4_ADDRESS_FOR_S1_MME 
+  set_network_interface  $ENB_INTERFACE_NAME_FOR_S1U            $ENB_IPV4_ADDRESS_FOR_S1U 
 }
 
 ################################

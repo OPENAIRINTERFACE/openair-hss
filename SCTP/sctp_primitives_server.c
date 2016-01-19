@@ -292,7 +292,7 @@ sctp_send_msg (
   /*
    * Send message_p on specified stream of the sd association
    */
-  if (sctp_sendmsg (assoc_desc->sd, (const void *)buffer, length, NULL, 0, assoc_desc->ppid, 0, stream, 0, 0) < 0) {
+  if (sctp_sendmsg (assoc_desc->sd, (const void *)buffer, length, NULL, 0, htonl(assoc_desc->ppid), 0, stream, 0, 0) < 0) {
     SCTP_ERROR ("send: %s:%d", strerror (errno), errno);
     return -1;
   }
