@@ -161,8 +161,16 @@ emm_data_context_dump (
     LOG_TRACE (INFO, "         guti:             %s      (The GUTI assigned to the UE)", guti_str);
     GUTI2STR (elm_pP->old_guti, guti_str, GUTI2STR_MAX_LENGTH);
     LOG_TRACE (INFO, "         old_guti:         %s      (The old GUTI)", guti_str);
-    LOG_TRACE (INFO, "         n_tacs:           %u      (Number of consecutive tracking areas the UE is registered to)", elm_pP->n_tacs);
-    LOG_TRACE (INFO, "         tac:              0x%04x  (Code of the first tracking area the UE is registered to)", elm_pP->n_tacs);
+    for (k=0; k < elm_pP->tai_list.n_tais; k++) {
+    LOG_TRACE (INFO, "         tai:              %u%u%u%u%u%u:0x%04x   (Tracking area identity the UE is registered to)",
+        elm_pP->tai_list.tai[k].plmn.MCCdigit1,
+        elm_pP->tai_list.tai[k].plmn.MCCdigit2,
+        elm_pP->tai_list.tai[k].plmn.MCCdigit3,
+        elm_pP->tai_list.tai[k].plmn.MNCdigit1,
+        elm_pP->tai_list.tai[k].plmn.MNCdigit2,
+        elm_pP->tai_list.tai[k].plmn.MNCdigit3,
+        elm_pP->tai_list.tai[k].tac);
+    }
     LOG_TRACE (INFO, "         ksi:              %u      (Security key set identifier provided by the UE)", elm_pP->ksi);
     LOG_TRACE (INFO, "         auth_vector:              (EPS authentication vector)");
     LOG_TRACE (INFO, "             kasme: " KASME_FORMAT "" KASME_FORMAT, KASME_DISPLAY_1 (elm_pP->vector.kasme), KASME_DISPLAY_2 (elm_pP->vector.kasme));

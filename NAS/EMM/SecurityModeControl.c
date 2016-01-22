@@ -583,7 +583,7 @@ _security_t3460_handler (
   void *args)
 {
   LOG_FUNC_IN;
-  int                                     rc;
+  int                                     rc = RETURNerror;
   security_data_t                        *data = (security_data_t *) (args);
 
   /*
@@ -640,7 +640,7 @@ _security_request (
 {
   struct emm_data_context_s              *emm_ctx = NULL;
   emm_sap_t                               emm_sap;
-  int                                     rc;
+  int                                     rc = RETURNerror;
 
   LOG_FUNC_IN;
   /*

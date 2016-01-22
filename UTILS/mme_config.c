@@ -71,11 +71,11 @@ mme_config_find_mnc_length (
   AssertFatal ((mnc_digit2P >= 0) && (mnc_digit2P <= 9)
                && (mnc_digit1P >= 0) && (mnc_digit1P <= 9), "BAD MNC PARAMETER (%d.%d.%d)!\n", mnc_digit1P, mnc_digit2P, mnc_digit3P);
 
-  while (plmn_index < mme_config.gummei.nb_plmns) {
-    if (mme_config.gummei.plmn_mcc[plmn_index] == mcc) {
-      if ((mme_config.gummei.plmn_mnc[plmn_index] == mnc2) && (mme_config.gummei.plmn_mnc_len[plmn_index] == 2)) {
+  while (plmn_index < mme_config.served_tai.nb_tai) {
+    if (mme_config.served_tai.plmn_mcc[plmn_index] == mcc) {
+      if ((mme_config.served_tai.plmn_mnc[plmn_index] == mnc2) && (mme_config.served_tai.plmn_mnc_len[plmn_index] == 2)) {
         return 2;
-      } else if ((mme_config.gummei.plmn_mnc[plmn_index] == mnc3) && (mme_config.gummei.plmn_mnc_len[plmn_index] == 3)) {
+      } else if ((mme_config.served_tai.plmn_mnc[plmn_index] == mnc3) && (mme_config.served_tai.plmn_mnc_len[plmn_index] == 3)) {
         return 3;
       }
     }
@@ -98,8 +98,14 @@ mme_config_init (
   mme_config_p->config_file = NULL;
   mme_config_p->max_eNBs = MAX_NUMBER_OF_ENB;
   mme_config_p->max_ues = MAX_NUMBER_OF_UE;
-  mme_config_p->emergency_attach_supported = 0;
   mme_config_p->unauthenticated_imsi_supported = 0;
+  /*
+   * EPS network feature support
+   */
+  mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode = 0;
+  mme_config_p->eps_network_feature_support.extended_service_request = 0;
+  mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 = 0;
+  mme_config_p->eps_network_feature_support.location_services_via_epc = 0;
   /*
    * Timer configuration
    */
@@ -130,15 +136,15 @@ mme_config_init (
   /*
    * Set the TAI
    */
-  mme_config_p->gummei.nb_plmns = 1;
-  mme_config_p->gummei.plmn_mcc = calloc (1, sizeof (*mme_config_p->gummei.plmn_mcc));
-  mme_config_p->gummei.plmn_mnc = calloc (1, sizeof (*mme_config_p->gummei.plmn_mnc));
-  mme_config_p->gummei.plmn_mnc_len = calloc (1, sizeof (*mme_config_p->gummei.plmn_mnc_len));
-  mme_config_p->gummei.plmn_tac = calloc (1, sizeof (*mme_config_p->gummei.plmn_tac));
-  mme_config_p->gummei.plmn_mcc[0] = PLMN_MCC;
-  mme_config_p->gummei.plmn_mnc[0] = PLMN_MNC;
-  mme_config_p->gummei.plmn_mnc_len[0] = PLMN_MNC_LEN;
-  mme_config_p->gummei.plmn_tac[0] = PLMN_TAC;
+  mme_config_p->served_tai.nb_tai = 1;
+  mme_config_p->served_tai.plmn_mcc = calloc (1, sizeof (*mme_config_p->served_tai.plmn_mcc));
+  mme_config_p->served_tai.plmn_mnc = calloc (1, sizeof (*mme_config_p->served_tai.plmn_mnc));
+  mme_config_p->served_tai.plmn_mnc_len = calloc (1, sizeof (*mme_config_p->served_tai.plmn_mnc_len));
+  mme_config_p->served_tai.tac = calloc (1, sizeof (*mme_config_p->served_tai.tac));
+  mme_config_p->served_tai.plmn_mcc[0] = PLMN_MCC;
+  mme_config_p->served_tai.plmn_mnc[0] = PLMN_MNC;
+  mme_config_p->served_tai.plmn_mnc_len[0] = PLMN_MNC_LEN;
+  mme_config_p->served_tai.tac[0] = PLMN_TAC;
   mme_config_p->s1ap_config.outcome_drop_timer_sec = S1AP_OUTCOME_TIMER_DEFAULT;
 }
 
@@ -176,7 +182,8 @@ config_parse_file (
   config_setting_t                       *subsetting = NULL;
   config_setting_t                       *sub2setting = NULL;
   long int                                alongint;
-  int                                     i,
+  int                                     i,n,
+                                          stop_index,
                                           num;
   char                                   *astring = NULL;
   char                                   *address = NULL;
@@ -191,6 +198,7 @@ config_parse_file (
   char                                   *mme_ip_address_for_S11 = NULL;
   char                                   *sgw_ip_address_for_S11 = NULL;
   char                                    system_cmd[256];
+  boolean_t                               swap = FALSE;
 
   config_init (&cfg);
 
@@ -234,11 +242,29 @@ config_parse_file (
       mme_config_p->mme_statistic_timer = (uint32_t) alongint;
     }
 
-    if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_EMERGENCY_ATTACH_SUPPORTED, (const char **)&astring))) {
+    if ((config_setting_lookup_string (setting_mme, EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE, (const char **)&astring))) {
       if (strcasecmp (astring, "yes") == 0)
-        mme_config_p->emergency_attach_supported = 1;
+        mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode = 1;
       else
-        mme_config_p->emergency_attach_supported = 0;
+        mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode = 0;
+    }
+    if ((config_setting_lookup_string (setting_mme, EPS_NETWORK_FEATURE_SUPPORT_EXTENDED_SERVICE_REQUEST, (const char **)&astring))) {
+      if (strcasecmp (astring, "yes") == 0)
+        mme_config_p->eps_network_feature_support.extended_service_request = 1;
+      else
+        mme_config_p->eps_network_feature_support.extended_service_request = 0;
+    }
+    if ((config_setting_lookup_string (setting_mme, EPS_NETWORK_FEATURE_SUPPORT_IMS_VOICE_OVER_PS_SESSION_IN_S1, (const char **)&astring))) {
+      if (strcasecmp (astring, "yes") == 0)
+        mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 = 1;
+      else
+        mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 = 0;
+    }
+    if ((config_setting_lookup_string (setting_mme, EPS_NETWORK_FEATURE_SUPPORT_LOCATION_SERVICES_VIA_EPC, (const char **)&astring))) {
+      if (strcasecmp (astring, "yes") == 0)
+        mme_config_p->eps_network_feature_support.location_services_via_epc = 1;
+      else
+        mme_config_p->eps_network_feature_support.location_services_via_epc = 0;
     }
 
     if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_UNAUTHENTICATED_IMSI_SUPPORTED, (const char **)&astring))) {
@@ -306,6 +332,109 @@ config_parse_file (
         mme_config_p->s1ap_config.port_number = (uint16_t) alongint;
       }
     }
+    // TAI list setting
+    setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_TAI_LIST);
+    if (setting != NULL) {
+      num = config_setting_length (setting);
+
+      if (mme_config_p->served_tai.nb_tai != num) {
+        if (mme_config_p->served_tai.plmn_mcc != NULL)
+          free (mme_config_p->served_tai.plmn_mcc);
+
+        if (mme_config_p->served_tai.plmn_mnc != NULL)
+          free (mme_config_p->served_tai.plmn_mnc);
+
+        if (mme_config_p->served_tai.plmn_mnc_len != NULL)
+          free (mme_config_p->served_tai.plmn_mnc_len);
+
+        if (mme_config_p->served_tai.tac != NULL)
+          free (mme_config_p->served_tai.tac);
+
+        mme_config_p->served_tai.plmn_mcc = calloc (num, sizeof (*mme_config_p->served_tai.plmn_mcc));
+        mme_config_p->served_tai.plmn_mnc = calloc (num, sizeof (*mme_config_p->served_tai.plmn_mnc));
+        mme_config_p->served_tai.plmn_mnc_len = calloc (num, sizeof (*mme_config_p->served_tai.plmn_mnc_len));
+        mme_config_p->served_tai.tac = calloc (num, sizeof (*mme_config_p->served_tai.tac));
+      }
+
+      mme_config_p->served_tai.nb_tai = num;
+      AssertFatal(16 >= num , "Too many TAIs configured %d", num);
+
+      for (i = 0; i < num; i++) {
+        sub2setting = config_setting_get_elem (setting, i);
+
+        if (sub2setting != NULL) {
+          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MCC, &mcc))) {
+            mme_config_p->served_tai.plmn_mcc[i] = (uint16_t) atoi (mcc);
+          }
+
+          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MNC, &mnc))) {
+            mme_config_p->served_tai.plmn_mnc[i] = (uint16_t) atoi (mnc);
+            mme_config_p->served_tai.plmn_mnc_len[i] = strlen (mnc);
+            AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[i] == 2) || (mme_config_p->served_tai.plmn_mnc_len[i] == 3),
+                "Bad MNC length %u, must be 2 or 3", mme_config_p->served_tai.plmn_mnc_len[i]);
+          }
+
+          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_TAC, &tac))) {
+            mme_config_p->served_tai.tac[i] = (uint16_t) atoi (tac);
+            AssertFatal(0x0000 != mme_config_p->served_tai.tac[i], "Reserved TAC value 0x0000");
+            AssertFatal(0xFFFE != mme_config_p->served_tai.tac[i], "Reserved TAC value 0xFFFE");
+          }
+        }
+      }
+      // sort TAI list
+      n = mme_config_p->served_tai.nb_tai;
+      do {
+        stop_index = 0;
+        for (i = 1; i < n; i++) {
+          swap = FALSE;
+          if (mme_config_p->served_tai.plmn_mcc[i-1] > mme_config_p->served_tai.plmn_mcc[i]) {
+            swap = TRUE;
+          } else if (mme_config_p->served_tai.plmn_mcc[i-1] == mme_config_p->served_tai.plmn_mcc[i]) {
+            if (mme_config_p->served_tai.plmn_mnc[i-1] > mme_config_p->served_tai.plmn_mnc[i]) {
+              swap = TRUE;
+            } else  if (mme_config_p->served_tai.plmn_mnc[i-1] == mme_config_p->served_tai.plmn_mnc[i]) {
+              if (mme_config_p->served_tai.tac[i-1] > mme_config_p->served_tai.tac[i]) {
+                swap = TRUE;
+              }
+            }
+          }
+          if (TRUE == swap) {
+            uint16_t swap;
+            swap = mme_config_p->served_tai.plmn_mcc[i-1];
+            mme_config_p->served_tai.plmn_mcc[i-1] = mme_config_p->served_tai.plmn_mcc[i];
+            mme_config_p->served_tai.plmn_mcc[i]   = swap;
+
+            swap = mme_config_p->served_tai.plmn_mnc[i-1];
+            mme_config_p->served_tai.plmn_mnc[i-1] = mme_config_p->served_tai.plmn_mnc[i];
+            mme_config_p->served_tai.plmn_mnc[i]   = swap;
+
+            swap = mme_config_p->served_tai.tac[i-1];
+            mme_config_p->served_tai.tac[i-1] = mme_config_p->served_tai.tac[i];
+            mme_config_p->served_tai.tac[i]   = swap;
+
+            stop_index = i;
+          }
+        }
+        n = stop_index;
+      } while (0 != n);
+      // helper for determination of list type (global view), we could make sublists with different types, but keep things simple for now
+      mme_config_p->served_tai.list_type = TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS;
+      for (i = 1; i < mme_config_p->served_tai.nb_tai; i++) {
+        if ((mme_config_p->served_tai.plmn_mcc[i] != mme_config_p->served_tai.plmn_mcc[0]) ||
+            (mme_config_p->served_tai.plmn_mnc[i] != mme_config_p->served_tai.plmn_mnc[0])){
+          mme_config_p->served_tai.list_type = TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS;
+          break;
+        } else if ((mme_config_p->served_tai.plmn_mcc[i] != mme_config_p->served_tai.plmn_mcc[i-1]) ||
+                   (mme_config_p->served_tai.plmn_mnc[i] != mme_config_p->served_tai.plmn_mnc[i-1])) {
+          mme_config_p->served_tai.list_type = TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS;
+          break;
+        }
+        if (mme_config_p->served_tai.tac[i] != (mme_config_p->served_tai.tac[i-1] + 1)) {
+          mme_config_p->served_tai.list_type = TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS;
+        }
+      }
+    }
+
     // GUMMEI SETTING
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_GUMMEI_CONFIG);
 
@@ -347,54 +476,6 @@ config_parse_file (
 
         for (i = 0; i < num; i++) {
           mme_config_p->gummei.mme_gid[i] = config_setting_get_int_elem (subsetting, i);
-        }
-      }
-
-      subsetting = config_setting_get_member (setting, MME_CONFIG_STRING_TAI_LIST);
-
-      if (subsetting != NULL) {
-        num = config_setting_length (subsetting);
-
-        if (mme_config_p->gummei.nb_plmns != num) {
-          if (mme_config_p->gummei.plmn_mcc != NULL)
-            free (mme_config_p->gummei.plmn_mcc);
-
-          if (mme_config_p->gummei.plmn_mnc != NULL)
-            free (mme_config_p->gummei.plmn_mnc);
-
-          if (mme_config_p->gummei.plmn_mnc_len != NULL)
-            free (mme_config_p->gummei.plmn_mnc_len);
-
-          if (mme_config_p->gummei.plmn_tac != NULL)
-            free (mme_config_p->gummei.plmn_tac);
-
-          mme_config_p->gummei.plmn_mcc = calloc (num, sizeof (*mme_config_p->gummei.plmn_mcc));
-          mme_config_p->gummei.plmn_mnc = calloc (num, sizeof (*mme_config_p->gummei.plmn_mnc));
-          mme_config_p->gummei.plmn_mnc_len = calloc (num, sizeof (*mme_config_p->gummei.plmn_mnc_len));
-          mme_config_p->gummei.plmn_tac = calloc (num, sizeof (*mme_config_p->gummei.plmn_tac));
-        }
-
-        mme_config_p->gummei.nb_plmns = num;
-
-        for (i = 0; i < num; i++) {
-          sub2setting = config_setting_get_elem (subsetting, i);
-
-          if (sub2setting != NULL) {
-            if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MCC, &mcc))) {
-              mme_config_p->gummei.plmn_mcc[i] = (uint16_t) atoi (mcc);
-            }
-
-            if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MNC, &mnc))) {
-              mme_config_p->gummei.plmn_mnc[i] = (uint16_t) atoi (mnc);
-              mme_config_p->gummei.plmn_mnc_len[i] = strlen (mnc);
-              AssertFatal ((mme_config_p->gummei.plmn_mnc_len[i] == 2) || (mme_config_p->gummei.plmn_mnc_len[i] == 3), "Bad MNC length %u, must be 2 or 3", mme_config_p->gummei.plmn_mnc_len[i]);
-            }
-
-            if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_TAC, &tac))) {
-              mme_config_p->gummei.plmn_tac[i] = (uint16_t) atoi (tac);
-              AssertFatal (mme_config_p->gummei.plmn_tac[i] != 0, "TAC must not be 0");
-            }
-          }
         }
       }
     }
@@ -489,6 +570,24 @@ config_parse_file (
           }
         }
       }
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3402_TIMER, &alongint))) {
+        mme_config_p->nas_config.t3402_min = (uint8_t) alongint;
+      }
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3412_TIMER, &alongint))) {
+        mme_config_p->nas_config.t3412_min = (uint8_t) alongint;
+      }
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3485_TIMER, &alongint))) {
+        mme_config_p->nas_config.t3485_sec = (uint8_t) alongint;
+      }
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3486_TIMER, &alongint))) {
+        mme_config_p->nas_config.t3486_sec = (uint8_t) alongint;
+      }
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3489_TIMER, &alongint))) {
+        mme_config_p->nas_config.t3489_sec = (uint8_t) alongint;
+      }
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3495_TIMER, &alongint))) {
+        mme_config_p->nas_config.t3495_sec = (uint8_t) alongint;
+      }
     }
   }
 
@@ -541,15 +640,18 @@ config_display (
 
   fprintf (stdout, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
   fprintf (stdout, "Configuration:\n");
-  fprintf (stdout, "- File ...............: %s\n", mme_config_p->config_file);
-  fprintf (stdout, "- Verbosity level ....: %d\n", mme_config_p->verbosity_level);
-  fprintf (stdout, "- Realm ..............: %s\n", mme_config_p->realm);
-  fprintf (stdout, "- Max eNBs ...........: %u\n", mme_config_p->max_eNBs);
-  fprintf (stdout, "- Max UEs ............: %u\n", mme_config_p->max_ues);
-  fprintf (stdout, "- Emergency support ..: %s\n", mme_config_p->emergency_attach_supported == 0 ? "FALSE" : "TRUE");
-  fprintf (stdout, "- Unauth IMSI support : %s\n", mme_config_p->unauthenticated_imsi_supported == 0 ? "FALSE" : "TRUE");
-  fprintf (stdout, "- Relative capa ......: %u\n\n", mme_config_p->relative_capacity);
-  fprintf (stdout, "- Statistics timer ...: %u (seconds)\n\n", mme_config_p->mme_statistic_timer);
+  fprintf (stdout, "- File .................................: %s\n", mme_config_p->config_file);
+  fprintf (stdout, "- Verbosity level ......................: %d\n", mme_config_p->verbosity_level);
+  fprintf (stdout, "- Realm ................................: %s\n", mme_config_p->realm);
+  fprintf (stdout, "- Max eNBs .............................: %u\n", mme_config_p->max_eNBs);
+  fprintf (stdout, "- Max UEs ..............................: %u\n", mme_config_p->max_ues);
+  fprintf (stdout, "- IMS voice over PS session in S1 ......: %s\n", mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "FALSE" : "TRUE");
+  fprintf (stdout, "- Emergency bearer services in S1 mode .: %s\n", mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode == 0 ? "FALSE" : "TRUE");
+  fprintf (stdout, "- Location services via epc ............: %s\n", mme_config_p->eps_network_feature_support.location_services_via_epc == 0 ? "FALSE" : "TRUE");
+  fprintf (stdout, "- Extended service request .............: %s\n", mme_config_p->eps_network_feature_support.extended_service_request == 0 ? "FALSE" : "TRUE");
+  fprintf (stdout, "- Unauth IMSI support ..................: %s\n", mme_config_p->unauthenticated_imsi_supported == 0 ? "FALSE" : "TRUE");
+  fprintf (stdout, "- Relative capa ........................: %u\n\n", mme_config_p->relative_capacity);
+  fprintf (stdout, "- Statistics timer .....................: %u (seconds)\n\n", mme_config_p->mme_statistic_timer);
   fprintf (stdout, "- S1-U:\n");
   fprintf (stdout, "    port number ......: %d\n", mme_config_p->gtpv1u_config.port_number);
   fprintf (stdout, "- S1-MME:\n");
@@ -580,13 +682,25 @@ config_display (
   DISPLAY_ARRAY (mme_config_p->gummei.nb_mme_gid, "| %u ", mme_config_p->gummei.mme_gid[i]);
   fprintf (stdout, "    mme codes ........:\n        ");
   DISPLAY_ARRAY (mme_config_p->gummei.nb_mmec, "| %u ", mme_config_p->gummei.mmec[i]);
-  fprintf (stdout, "    plmns ............: (mcc.mnc:tac)\n");
-
-  for (j = 0; j < mme_config_p->gummei.nb_plmns; j++) {
-    if (mme_config_p->gummei.plmn_mnc_len[j] == 2) {
-      fprintf (stdout, "            %3u.%3u:%u\n", mme_config_p->gummei.plmn_mcc[j], mme_config_p->gummei.plmn_mnc[j], mme_config_p->gummei.plmn_tac[j]);
+  fprintf (stdout, "- TAIs : (mcc.mnc:tac)\n");
+  switch (mme_config_p->served_tai.list_type) {
+  case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS:
+    fprintf (stdout, "- TAI list type one PLMN consecutive TACs\n");
+    break;
+  case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS:
+    fprintf (stdout, "- TAI list type one PLMN non consecutive TACs\n");
+    break;
+  case TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS:
+    fprintf (stdout, "- TAI list type multiple PLMNs\n");
+    break;
+  }
+  for (j = 0; j < mme_config_p->served_tai.nb_tai; j++) {
+    if (mme_config_p->served_tai.plmn_mnc_len[j] == 2) {
+      fprintf (stdout, "            %3u.%3u:%u\n",
+          mme_config_p->served_tai.plmn_mcc[j], mme_config_p->served_tai.plmn_mnc[j], mme_config_p->served_tai.tac[j]);
     } else {
-      fprintf (stdout, "            %3u.%03u:%u\n", mme_config_p->gummei.plmn_mcc[j], mme_config_p->gummei.plmn_mnc[j], mme_config_p->gummei.plmn_tac[j]);
+      fprintf (stdout, "            %3u.%03u:%u\n",
+          mme_config_p->served_tai.plmn_mcc[j], mme_config_p->served_tai.plmn_mnc[j], mme_config_p->served_tai.tac[j]);
     }
   }
 

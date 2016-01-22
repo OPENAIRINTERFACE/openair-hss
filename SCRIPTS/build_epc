@@ -39,7 +39,7 @@ function help()
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
-  echo_error "  -c, --clean                               Clean the build generated files (build from scratch)"
+  echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
   echo_error "  -C, --conf-files-only                     Generate only EPC configuration files (no build)"
   echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
@@ -48,6 +48,7 @@ function help()
   echo_error "  -j, --install-gtpu-kernel-module          Install or reinstall specifically the GTPV1-U kernel module (done with -i also) (support Ubuntu 14.04)."
   echo_error "  -l, --local-hss                           HSS run on the same host."
   echo_error "  -v, --verbose                             Build process verbose."
+  echo_error "  -x, --clean-certificates                  Clean the EPC certificates"
   echo_error " "
   echo_error "Other options: (you have to know what you are doing)"
   l_realm=`hostname --fqdn`
@@ -68,6 +69,7 @@ function help()
 function main()
 {
   local -i clean=0
+  local -i clean_certificates=0
   local -i conf_files_only=0
   local -i force=0
   local -i verbose=0
@@ -139,6 +141,11 @@ function main()
         cmake_args="$cmake_args -DCMAKE_VERBOSE_MAKEFILE=ON"
         make_args="VERBOSE=1 $make_args"
         verbose=1
+        shift;
+        ;;
+      -x | --clean-certificates)
+        clean_certificates=1
+        echo "Clean the MME certificates"
         shift;
         ;;
       *)   
@@ -227,21 +234,25 @@ function main()
   fi
   
   ##############################################################################
-  # Compile userspace executable
+  # Clean
   ##############################################################################
   cd $OPENAIRCN_DIR/BUILD/EPC
   if [ $clean -ne 0 ]; then
     if [[ $verbose -eq 1 ]]; then
-      echo "Cleaning EPC: certificates, generated configuration files, obj files, mme_gw executable, GTP kernel module"
+      echo "Cleaning EPC: generated configuration files, obj files, mme_gw executable"
     fi
     rm -f $OPENAIRCN_DIR/OAI_EPC/mme_gw
     rm -Rf $OPENAIRCN_DIR/BUILD/EPC/BUILD  2>&1
-    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/mme*    2>&1
-    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/epc*    2>&1
+    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/mme*.conf    2>&1
+    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/epc*.conf    2>&1
     mkdir -m 777 -p -v BUILD
   fi
-  
-  
+  if [ $clean_certificates -ne 0 ]; then
+    if [[ $verbose -eq 1 ]]; then
+      echo "Cleaning EPC: certificates"
+    fi
+    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/mme*.pem    2>&1
+  fi
   
   ##############################################################################
   # Compile EPC
@@ -253,13 +264,17 @@ function main()
   cmake_file=./CMakeLists.txt
   cp $OPENAIRCN_DIR/BUILD/EPC/CMakeLists.template $cmake_file
   echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
+  
   cd ./BUILD
   cmake  $cmake_args ..
+  
   if [ $conf_files_only -eq 0 ]; then
     compilations \
       EPC mme_gw \
       mme_gw 
     # Only integrated mme+sgw+pgw is operational today
+  else
+    $SUDO cp -upv epc.conf /usr/local/etc/oai
   fi
 }
 

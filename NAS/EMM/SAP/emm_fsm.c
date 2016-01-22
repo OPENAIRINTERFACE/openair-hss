@@ -200,7 +200,7 @@ emm_fsm_set_status (
 
   DevAssert (emm_ctx != NULL);
   // FOR DEBUG, TO BE REMOVED
-  AssertFatal(ueid == emm_ctx->ueid, "Mismatch UE IDs ueid param " NAS_UE_ID_FMT" emm_ctx->ueid " NAS_UE_ID_FMT" ");
+  AssertFatal(ueid == emm_ctx->ueid, "Mismatch UE IDs ueid param " NAS_UE_ID_FMT" emm_ctx->ueid " NAS_UE_ID_FMT" ", ueid, emm_ctx->ueid);
   if ((status < EMM_STATE_MAX) && (ueid > 0)) {
     if (status != emm_ctx->_emm_fsm_status) {
       LOG_TRACE (INFO, "EMM-FSM   - Status changed: %s ===> %s", _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);

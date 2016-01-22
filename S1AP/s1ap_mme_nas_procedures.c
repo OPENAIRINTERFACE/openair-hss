@@ -78,6 +78,10 @@ s1ap_mme_handle_initial_ue_message (
   if (ue_ref == NULL) {
     uint16_t                                tai_tac = 0;
     uint8_t                                 tai_plmn[3] = { 0, 0, 0 };
+    gummei_t                                gummei; // initialized after
+    uint8_t                                 mme_code = 0;
+    uint32_t                                m_tmsi = 0;
+    uint64_t                                s_tmsi = 0;
 
     /*
      * This UE eNB Id has currently no known s1 association.
@@ -131,14 +135,30 @@ s1ap_mme_handle_initial_ue_message (
     OCTET_STRING_TO_TAC (&initialUEMessage_p->tai.tAC, tai_tac);
     DevAssert (initialUEMessage_p->tai.pLMNidentity.size == 3);
     memcpy (tai_plmn, initialUEMessage_p->tai.pLMNidentity.buf, initialUEMessage_p->tai.pLMNidentity.size);
+
+    if (initialUEMessage_p->presenceMask & S1AP_INITIALUEMESSAGEIES_S_TMSI_PRESENT) {
+      OCTET_STRING_TO_MME_CODE(&initialUEMessage_p->s_tmsi.mMEC, mme_code);
+      OCTET_STRING_TO_M_TMSI(&initialUEMessage_p->s_tmsi.m_TMSI, m_tmsi);
+      s_tmsi = (uint64_t)m_tmsi | ((uint64_t)mme_code) << 32;
+    } else {
+      s_tmsi = NOT_A_S_TMSI;
+    }
+    if (initialUEMessage_p->presenceMask & S1AP_INITIALUEMESSAGEIES_GUMMEI_ID_PRESENT) {
+      memset(&gummei, 0, sizeof(gummei));
+      //TODO OCTET_STRING_TO_PLMN(&initialUEMessage_p->gummei_id.pLMN_Identity, gummei.plmn);
+      OCTET_STRING_TO_MME_GID(&initialUEMessage_p->gummei_id.mME_Group_ID, gummei.MMEgid);
+      OCTET_STRING_TO_MME_CODE(&initialUEMessage_p->gummei_id.mME_Code, gummei.MMEcode);
+    }
     /*
      * We received the first NAS transport message: initial UE message.
      * * * * Send a NAS ESTABLISH IND to NAS layer
      */
 #if ORIGINAL_CODE
-    s1ap_mme_itti_nas_establish_ind (ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf, initialUEMessage_p->nas_pdu.size, initialUEMessage_p->rrC_Establishment_Cause, tai_tac);
+    s1ap_mme_itti_nas_establish_ind (ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf, initialUEMessage_p->nas_pdu.size,
+        initialUEMessage_p->rrC_Establishment_Cause, tai_tac);
 #else
-    s1ap_mme_itti_mme_app_establish_ind (ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf, initialUEMessage_p->nas_pdu.size, initialUEMessage_p->rrC_Establishment_Cause, tai_plmn, tai_tac);
+    s1ap_mme_itti_mme_app_establish_ind (ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf, initialUEMessage_p->nas_pdu.size,
+        initialUEMessage_p->rrC_Establishment_Cause, tai_plmn, tai_tac, s_tmsi);
 #endif
   }
 

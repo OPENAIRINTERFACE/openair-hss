@@ -45,6 +45,7 @@
 
 #include "emm_msgDef.h"
 #include "emm_proc.h"
+#include "mme_config.h"
 
 #include <string.h>             // strlen
 
@@ -184,7 +185,14 @@ emm_send_attach_accept (
    * Mandatory - T3412 value
    */
   size += GPRS_TIMER_MAXIMUM_LENGTH;
-  emm_msg->t3412value.unit = GPRS_TIMER_UNIT_0S;
+  if (mme_config.nas_config.t3412_min <= 31) {
+    emm_msg->t3412value.unit = GPRS_TIMER_UNIT_60S;
+    emm_msg->t3412value.timervalue = mme_config.nas_config.t3412_min;
+  } else  {
+    emm_msg->t3412value.unit = GPRS_TIMER_UNIT_360S;
+    emm_msg->t3412value.timervalue = mme_config.nas_config.t3412_min / 6;
+  }
+  //emm_msg->t3412value.unit = GPRS_TIMER_UNIT_0S;
   LOG_TRACE (INFO, "EMMAS-SAP - size += GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)", GPRS_TIMER_MAXIMUM_LENGTH, size);
   /*
    * Mandatory - Tracking area identity list
@@ -192,13 +200,13 @@ emm_send_attach_accept (
   size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH;
   emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
   emm_msg->tailist.numberofelements = msg->n_tacs;
-  emm_msg->tailist.mccdigit1 = msg->UEid.guti->gummei.plmn.MCCdigit1;
-  emm_msg->tailist.mccdigit2 = msg->UEid.guti->gummei.plmn.MCCdigit2;
-  emm_msg->tailist.mccdigit3 = msg->UEid.guti->gummei.plmn.MCCdigit3;
-  emm_msg->tailist.mncdigit1 = msg->UEid.guti->gummei.plmn.MNCdigit1;
-  emm_msg->tailist.mncdigit2 = msg->UEid.guti->gummei.plmn.MNCdigit2;
-  emm_msg->tailist.mncdigit3 = msg->UEid.guti->gummei.plmn.MNCdigit3;
-  emm_msg->tailist.tac = msg->tac;
+  emm_msg->tailist.mccdigit1[0] = msg->UEid.guti->gummei.plmn.MCCdigit1;
+  emm_msg->tailist.mccdigit2[0] = msg->UEid.guti->gummei.plmn.MCCdigit2;
+  emm_msg->tailist.mccdigit3[0] = msg->UEid.guti->gummei.plmn.MCCdigit3;
+  emm_msg->tailist.mncdigit1[0] = msg->UEid.guti->gummei.plmn.MNCdigit1;
+  emm_msg->tailist.mncdigit2[0] = msg->UEid.guti->gummei.plmn.MNCdigit2;
+  emm_msg->tailist.mncdigit3[0] = msg->UEid.guti->gummei.plmn.MNCdigit3;
+  emm_msg->tailist.tac[0] = msg->tac;
   LOG_TRACE (INFO, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d)  (%d)", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
   /*
    * Mandatory - ESM message container
@@ -276,6 +284,215 @@ emm_send_attach_reject (
     emm_msg->esmmessagecontainer.esmmessagecontainercontents = msg->NASmsg;
   }
 
+  LOG_FUNC_RETURN (size);
+}
+
+/****************************************************************************
+ **                                                                        **
+ ** Name:        emm_send_tracking_area_update_reject()                    **
+ **                                                                        **
+ ** Description: Builds Tracking Area Update Reject message                **
+ **                                                                        **
+ **              The Tracking Area Update Reject message is sent by the    **
+ **              network to the UE to indicate that the corresponding      **
+ **              tracking area update has been rejected.                   **
+ **                                                                        **
+ ** Inputs:      msg:           The EMMAS-SAP primitive to process         **
+ **              Others:        None                                       **
+ **                                                                        **
+ ** Outputs:     emm_msg:       The EMM message to be sent                 **
+ **              Return:        The size of the EMM message                **
+ **              Others:        None                                       **
+ **                                                                        **
+ ***************************************************************************/
+int
+emm_send_tracking_area_update_accept (
+  const emm_as_establish_t * msg,
+  tracking_area_update_accept_msg * emm_msg)
+{
+  LOG_FUNC_IN;
+  int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
+  int                                     i = 0;
+
+  LOG_TRACE (INFO, "EMMAS-SAP - Send Tracking Area Update Accept message (cause=%d)", msg->emm_cause);
+  /*
+   * Mandatory - Message type
+   */
+  emm_msg->messagetype = TRACKING_AREA_UPDATE_ACCEPT;
+  /*
+   * Mandatory - EMM cause
+   */
+  size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH;
+  emm_msg->epsupdateresult = msg->eps_update_result;
+  LOG_TRACE (INFO, "EMMAS-SAP - size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH(%d)  (%d)", EPS_UPDATE_RESULT_MAXIMUM_LENGTH, size);
+
+  // Optional - GPRS Timer T3412
+  if (*msg->t3412) {
+    size += GPRS_TIMER_MAXIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_T3412_VALUE_PRESENT;
+    if (*msg->t3412 <= 31) {
+      emm_msg->t3412value.unit = GPRS_TIMER_UNIT_60S;
+      emm_msg->t3412value.timervalue = *msg->t3412;
+    } else  {
+      emm_msg->t3412value.unit = GPRS_TIMER_UNIT_360S;
+      emm_msg->t3412value.timervalue = *msg->t3412 / 6;
+    }
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)", GPRS_TIMER_MAXIMUM_LENGTH, size);
+  }
+  // Optional - GUTI
+  if (msg->guti) {
+    size += EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH;
+    emm_msg->presencemask |= ATTACH_ACCEPT_GUTI_PRESENT;
+    emm_msg->guti.guti.typeofidentity = EPS_MOBILE_IDENTITY_GUTI;
+    emm_msg->guti.guti.oddeven = EPS_MOBILE_IDENTITY_EVEN;
+    emm_msg->guti.guti.mmegroupid = msg->guti->gummei.MMEgid;
+    emm_msg->guti.guti.mmecode = msg->guti->gummei.MMEcode;
+    emm_msg->guti.guti.mtmsi = msg->guti->m_tmsi;
+    emm_msg->guti.guti.mccdigit1 = msg->guti->gummei.plmn.MCCdigit1;
+    emm_msg->guti.guti.mccdigit2 = msg->guti->gummei.plmn.MCCdigit2;
+    emm_msg->guti.guti.mccdigit3 = msg->guti->gummei.plmn.MCCdigit3;
+    emm_msg->guti.guti.mncdigit1 = msg->guti->gummei.plmn.MNCdigit1;
+    emm_msg->guti.guti.mncdigit2 = msg->guti->gummei.plmn.MNCdigit2;
+    emm_msg->guti.guti.mncdigit3 = msg->guti->gummei.plmn.MNCdigit3;
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH(%d)  (%d)", EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH, size);
+  }
+  /* Optional - TAI list
+   * This IE may be included to assign a TAI list to a UE.
+   */
+  if (msg->tai_list.n_tais > 0) {
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_TAI_LIST_PRESENT;
+    emm_msg->tailist.numberofelements = msg->tai_list.n_tais - 1;
+    switch (msg->tai_list.list_type) {
+    case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS:
+      size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH + emm_msg->tailist.numberofelements*2;
+      LOG_TRACE (INFO, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d) + size N extra TACs (%d)  (%d)",
+          TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, emm_msg->tailist.numberofelements*2, size);
+      emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS;
+      emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.MCCdigit1;
+      emm_msg->tailist.mccdigit2[0] = msg->tai_list.tai[0].plmn.MCCdigit2;
+      emm_msg->tailist.mccdigit3[0] = msg->tai_list.tai[0].plmn.MCCdigit3;
+      emm_msg->tailist.mncdigit1[0] = msg->tai_list.tai[0].plmn.MNCdigit1;
+      emm_msg->tailist.mncdigit2[0] = msg->tai_list.tai[0].plmn.MNCdigit2;
+      emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.MNCdigit3;
+      for (i=0; i < msg->tai_list.n_tais; i++) {
+        emm_msg->tailist.tac[i]       = msg->tai_list.tai[i].tac;
+      }
+
+      break;
+    case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS:
+      size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH;
+      LOG_TRACE (INFO, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d)  (%d)", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
+      emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
+      emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.MCCdigit1;
+      emm_msg->tailist.mccdigit2[0] = msg->tai_list.tai[0].plmn.MCCdigit2;
+      emm_msg->tailist.mccdigit3[0] = msg->tai_list.tai[0].plmn.MCCdigit3;
+      emm_msg->tailist.mncdigit1[0] = msg->tai_list.tai[0].plmn.MNCdigit1;
+      emm_msg->tailist.mncdigit2[0] = msg->tai_list.tai[0].plmn.MNCdigit2;
+      emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.MNCdigit3;
+      emm_msg->tailist.tac[0]       = msg->tai_list.tai[0].tac;
+      break;
+    case TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS:
+      size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH + emm_msg->tailist.numberofelements*5;
+      LOG_TRACE (INFO, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d) + size N extra TAIs (%d)  (%d)",
+          TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, emm_msg->tailist.numberofelements*5, size);
+      emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS;
+      for (i=0; i < msg->tai_list.n_tais; i++) {
+        emm_msg->tailist.mccdigit1[i] = msg->tai_list.tai[i].plmn.MCCdigit1;
+        emm_msg->tailist.mccdigit2[i] = msg->tai_list.tai[i].plmn.MCCdigit2;
+        emm_msg->tailist.mccdigit3[i] = msg->tai_list.tai[i].plmn.MCCdigit3;
+        emm_msg->tailist.mncdigit1[i] = msg->tai_list.tai[i].plmn.MNCdigit1;
+        emm_msg->tailist.mncdigit2[i] = msg->tai_list.tai[i].plmn.MNCdigit2;
+        emm_msg->tailist.mncdigit3[i] = msg->tai_list.tai[i].plmn.MNCdigit3;
+        emm_msg->tailist.tac[i]       = msg->tai_list.tai[i].tac;
+      }
+      size += emm_msg->tailist.numberofelements*5;
+      break;
+    default:
+      ;
+    }
+  }
+  // Optional - EPS Bearer context status
+  if (msg->eps_bearer_context_status) {
+    size += EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EPS_BEARER_CONTEXT_STATUS_PRESENT;
+    emm_msg->epsbearercontextstatus = *(msg->eps_bearer_context_status);
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH(%d)  (%d)", EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH, size);
+  }
+  /* Useless actually, Optional - Location Area Identification
+  if (msg->location_area_identification) {
+    size += LOCATION_AREA_IDENTIFICATION_MAXIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_LOCATION_AREA_IDENTIFICATION_PRESENT;
+    emm_msg->locationareaidentification = ;
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "LOCATION_AREA_IDENTIFICATION_MAXIMUM_LENGTH(%d)  (%d)", LOCATION_AREA_IDENTIFICATION_MAXIMUM_LENGTH, size);
+  }*/
+  /* Useless actually, Optional - Mobile Identity
+  if (msg->mobile_identity) {
+    size += MOBILE_IDENTITY_MINIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_MS_IDENTITY_PRESENT;
+    emm_msg->msidentity = ;
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "MOBILE_IDENTITY_MINIMUM_LENGTH(%d)  (%d)", MOBILE_IDENTITY_MINIMUM_LENGTH, size);
+  }*/
+  // Optional - EMM cause
+  if (msg->emm_cause) {
+    size += EMM_CAUSE_MAXIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EMM_CAUSE_PRESENT;
+    emm_msg->emmcause = msg->emm_cause;
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "MOBILE_IDENTITY_MINIMUM_LENGTH(%d)  (%d)", EMM_CAUSE_MAXIMUM_LENGTH, size);
+  }
+  // Optional - GPRS Timer T3402
+  if (msg->t3402) {
+    size += GPRS_TIMER_MAXIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_T3402_VALUE_PRESENT;
+    if (*msg->t3402 <= 31) {
+      emm_msg->t3402value.unit = GPRS_TIMER_UNIT_60S;
+      emm_msg->t3402value.timervalue = *msg->t3402;
+    } else  {
+      emm_msg->t3402value.unit = GPRS_TIMER_UNIT_360S;
+      emm_msg->t3402value.timervalue = *msg->t3402 / 6;
+    }
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)", GPRS_TIMER_MAXIMUM_LENGTH, size);
+  }
+  // Optional - GPRS Timer T3423
+  if (msg->t3423) {
+    size += GPRS_TIMER_MAXIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_T3423_VALUE_PRESENT;
+    if (*msg->t3423 <= 31) {
+      emm_msg->t3423value.unit = GPRS_TIMER_UNIT_60S;
+      emm_msg->t3423value.timervalue = *msg->t3423;
+    } else  {
+      emm_msg->t3423value.unit = GPRS_TIMER_UNIT_360S;
+      emm_msg->t3423value.timervalue = *msg->t3423 / 6;
+    }
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)", GPRS_TIMER_MAXIMUM_LENGTH, size);
+  }
+  // Useless actually, Optional - Equivalent PLMNs
+  /*if (msg->equivalent_plmns) {
+    size += PLMN_LIST_MINIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EQUIVALENT_PLMNS_PRESENT;
+    emm_msg->equivalentplmns.       = msg->;
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "PLMN_LIST_MINIMUM_LENGTH(%d)  (%d)", PLMN_LIST_MINIMUM_LENGTH, size);
+  }*/
+  /* Useless actually, Optional - Emergency number list
+  if (msg->emergency_number_list) {
+    size += EMERGENCY_NUMBER_LIST_MINIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EMERGENCY_NUMBER_LIST_PRESENT;
+    emm_msg->emergencynumberlist.       = msg->;
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "EMERGENCY_NUMBER_LIST_MINIMUM_LENGTH(%d)  (%d)", EMERGENCY_NUMBER_LIST_MINIMUM_LENGTH, size);
+  }*/
+  // Optional - EPS network feature support
+  if (msg->eps_network_feature_support) {
+    size += EPS_NETWORK_FEATURE_SUPPORT_MAXIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EPS_NETWORK_FEATURE_SUPPORT_PRESENT;
+    emm_msg->epsnetworkfeaturesupport       = *msg->eps_network_feature_support;
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "EPS_NETWORK_FEATURE_SUPPORT_MAXIMUM_LENGTH(%d)  (%d)", EPS_NETWORK_FEATURE_SUPPORT_MAXIMUM_LENGTH, size);
+  }
+  /* Useless actually, Optional - Additional update result
+  if (msg->additional_update_result) {
+    size += ADDITIONAL_UPDATE_RESULT_MAXIMUM_LENGTH;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_ADDITIONAL_UPDATE_RESULT_PRESENT;
+    emm_msg->additionalupdateresult.       = msg->;
+    LOG_TRACE (INFO, "EMMAS-SAP - size += " "ADDITIONAL_UPDATE_RESULT_MAXIMUM_LENGTH(%d)  (%d)", ADDITIONAL_UPDATE_RESULT_MAXIMUM_LENGTH, size);
+  }*/
   LOG_FUNC_RETURN (size);
 }
 

@@ -314,34 +314,64 @@ mme_api_get_emm_config (
   int                                     i;
 #endif
   LOG_FUNC_IN;
-  AssertFatal (mme_config_p->gummei.nb_plmns >= 1, "No PLMN configured");
+  AssertFatal (mme_config_p->served_tai.nb_tai >= 1, "No PLMN configured");
   AssertFatal (mme_config_p->gummei.nb_mmec >= 1, "No MME Code configured");
   AssertFatal (mme_config_p->gummei.nb_mme_gid >= 1, "No MME Group ID configured");
-  config->gummei.plmn.MCCdigit1 = (mme_config_p->gummei.plmn_mcc[0] / 100) % 10;
-  config->gummei.plmn.MCCdigit2 = (mme_config_p->gummei.plmn_mcc[0] / 10) % 10;
-  config->gummei.plmn.MCCdigit3 = mme_config_p->gummei.plmn_mcc[0] % 10;
+  config->gummei.plmn.MCCdigit1 = (mme_config_p->served_tai.plmn_mcc[0] / 100) % 10;
+  config->gummei.plmn.MCCdigit2 = (mme_config_p->served_tai.plmn_mcc[0] / 10) % 10;
+  config->gummei.plmn.MCCdigit3 = mme_config_p->served_tai.plmn_mcc[0] % 10;
 
-  if (mme_config_p->gummei.plmn_mnc_len[0] == 2) {
-    config->gummei.plmn.MNCdigit1 = (mme_config_p->gummei.plmn_mnc[0] / 10) % 10;
-    config->gummei.plmn.MNCdigit2 = mme_config_p->gummei.plmn_mnc[0] % 10;
+  if (mme_config_p->served_tai.plmn_mnc_len[0] == 2) {
+    config->gummei.plmn.MNCdigit1 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
+    config->gummei.plmn.MNCdigit2 = mme_config_p->served_tai.plmn_mnc[0] % 10;
     config->gummei.plmn.MNCdigit3 = 0xf;
-  } else if (mme_config_p->gummei.plmn_mnc_len[0] == 3) {
-    config->gummei.plmn.MNCdigit1 = (mme_config_p->gummei.plmn_mnc[0] / 100) % 10;
-    config->gummei.plmn.MNCdigit2 = (mme_config_p->gummei.plmn_mnc[0] / 10) % 10;
-    config->gummei.plmn.MNCdigit3 = mme_config_p->gummei.plmn_mnc[0] % 10;
+  } else if (mme_config_p->served_tai.plmn_mnc_len[0] == 3) {
+    config->gummei.plmn.MNCdigit1 = (mme_config_p->served_tai.plmn_mnc[0] / 100) % 10;
+    config->gummei.plmn.MNCdigit2 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
+    config->gummei.plmn.MNCdigit3 = mme_config_p->served_tai.plmn_mnc[0] % 10;
   } else {
-    AssertFatal ((mme_config_p->gummei.plmn_mnc_len[0] >= 2) && (mme_config_p->gummei.plmn_mnc_len[0] <= 3), "BAD MNC length for GUMMEI");
+    AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[0] >= 2) && (mme_config_p->served_tai.plmn_mnc_len[0] <= 3), "BAD MNC length for GUMMEI");
   }
 
-  config->gummei.MMEgid = mme_config_p->gummei.mme_gid[0];
-  config->gummei.MMEcode = mme_config_p->gummei.mmec[0];
 #if NAS_BUILT_IN_EPC
+  config->tai_list.n_tais = 0;
+  for (i = 0; i < mme_config_p->served_tai.nb_tai; i++) {
+    config->tai_list.tai[i].plmn.MCCdigit1 = (mme_config_p->served_tai.plmn_mcc[i] / 100) % 10;
+    config->tai_list.tai[i].plmn.MCCdigit2 = (mme_config_p->served_tai.plmn_mcc[i] / 10) % 10;
+    config->tai_list.tai[i].plmn.MCCdigit3 = mme_config_p->served_tai.plmn_mcc[i] % 10;
 
+    if (mme_config_p->served_tai.plmn_mnc_len[0] == 2) {
+      config->tai_list.tai[i].plmn.MNCdigit1 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
+      config->tai_list.tai[i].plmn.MNCdigit2 = mme_config_p->served_tai.plmn_mnc[0] % 10;
+      config->tai_list.tai[i].plmn.MNCdigit3 = 0xf;
+    } else if (mme_config_p->served_tai.plmn_mnc_len[0] == 3) {
+      config->tai_list.tai[i].plmn.MNCdigit1 = (mme_config_p->served_tai.plmn_mnc[0] / 100) % 10;
+      config->tai_list.tai[i].plmn.MNCdigit2 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
+      config->tai_list.tai[i].plmn.MNCdigit3 = mme_config_p->served_tai.plmn_mnc[0] % 10;
+    } else {
+      AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[0] >= 2) && (mme_config_p->served_tai.plmn_mnc_len[0] <= 3), "BAD MNC length for GUMMEI");
+    }
+    config->tai_list.tai[i].tac            = mme_config_p->served_tai.tac[i];
+    config->tai_list.n_tais += 1;
+  }
+  config->tai_list.list_type = mme_config_p->served_tai.list_type;
   /*
    * SR: this config param comes from MME global config
    */
-  if (mme_config_p->emergency_attach_supported != 0) {
-    config->features |= MME_API_EMERGENCY_ATTACH;
+  // hardcoded
+  config->eps_network_feature_support = EPS_NETWORK_FEATURE_SUPPORT_CS_LCS_LOCATION_SERVICES_VIA_CS_DOMAIN_NOT_SUPPORTED;
+  //config->eps_network_feature_support = EPS_NETWORK_FEATURE_SUPPORT_CS_LCS_LOCATION_SERVICES_VIA_CS_DOMAIN_NOT_SUPPORTED
+  if (mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode != 0) {
+    config->eps_network_feature_support |= EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE_SUPPORTED;
+  }
+  if (mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 != 0) {
+    config->eps_network_feature_support |= EPS_NETWORK_FEATURE_SUPPORT_IMS_VOICE_OVER_PS_SESSION_IN_S1_SUPPORTED;
+  }
+  if (mme_config_p->eps_network_feature_support.location_services_via_epc != 0) {
+    config->eps_network_feature_support |= EPS_NETWORK_FEATURE_SUPPORT_LOCATION_SERVICES_VIA_EPC_SUPPORTED;
+  }
+  if (mme_config_p->eps_network_feature_support.extended_service_request != 0) {
+    config->eps_network_feature_support |= EPS_NETWORK_FEATURE_SUPPORT_EXTENDED_SERVICE_REQUEST_SUPPORTED;
   }
 
   if (mme_config_p->unauthenticated_imsi_supported != 0) {
@@ -574,9 +604,7 @@ mme_api_identify_imei (
  **      Others:    None                                       **
  **                                                                        **
  ** Outputs:     guti:      The new assigned GUTI                      **
- **      tac:       Code of the first tracking area belonging  **
- **             to the PLMN                                **
- **      n_tacs:    Number of consecutive tracking areas       **
+ **      tai_list:       TAIs belonging to the PLMN                                **
  **      Return:    RETURNok, RETURNerror                      **
  **      Others:    None                                       **
  **                                                                        **
@@ -585,8 +613,7 @@ int
 mme_api_new_guti (
   const imsi_t * imsi,
   GUTI_t * guti,
-  tac_t * tac,
-  int *n_tacs)
+  tai_list_t * tai_list)
 {
   ue_context_t                           *ue_context = NULL;
   mme_app_imsi_t                          mme_imsi = 0;
@@ -597,11 +624,40 @@ mme_api_new_guti (
 
   if (NULL != ue_context) {
     char                                    guti_str[GUTI2STR_MAX_LENGTH];
+    int                                     i,j;
+    plmn_t                                  plmn;
 
     memcpy (guti, &ue_context->guti, sizeof (*guti));
-    *tac = 0x0001;
-    *n_tacs = 1;
+
     GUTI2STR (guti, guti_str, GUTI2STR_MAX_LENGTH);
+
+    plmn.MCCdigit1 = guti->gummei.plmn.MCCdigit1;
+    plmn.MCCdigit2 = guti->gummei.plmn.MCCdigit2;
+    plmn.MCCdigit3 = guti->gummei.plmn.MCCdigit3;
+    plmn.MNCdigit1 = guti->gummei.plmn.MNCdigit1;
+    plmn.MNCdigit2 = guti->gummei.plmn.MNCdigit2;
+    plmn.MNCdigit3 = guti->gummei.plmn.MNCdigit3;
+    j = 0;
+    for (i=0; i < _emm_data.conf.tai_list.n_tais; i++) {
+      if ((_emm_data.conf.tai_list.tai[i].plmn.MCCdigit1 == plmn.MCCdigit1) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.MCCdigit2 == plmn.MCCdigit2) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.MCCdigit3 == plmn.MCCdigit3) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.MNCdigit1 == plmn.MNCdigit1) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.MNCdigit2 == plmn.MNCdigit2) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.MNCdigit3 == plmn.MNCdigit3) ) {
+
+      }
+      tai_list->tai[j].plmn.MCCdigit1 = plmn.MCCdigit1;
+      tai_list->tai[j].plmn.MCCdigit2 = plmn.MCCdigit2;
+      tai_list->tai[j].plmn.MCCdigit3 = plmn.MCCdigit3;
+      tai_list->tai[j].plmn.MNCdigit1 = plmn.MNCdigit1;
+      tai_list->tai[j].plmn.MNCdigit2 = plmn.MNCdigit2;
+      tai_list->tai[j].plmn.MNCdigit3 = plmn.MNCdigit3;
+      tai_list->tai[j].tac            = _emm_data.conf.tai_list.tai[i].tac;
+      j += 1;
+    }
+    tai_list->n_tais = j;
+
     LOG_TRACE (INFO, "mme_api_new_guti - Got GUTI %s\n", guti_str);
     LOG_FUNC_RETURN (RETURNok);
   }

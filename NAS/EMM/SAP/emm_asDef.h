@@ -171,6 +171,22 @@ typedef struct emm_as_establish_s {
   uint8_t NASinfo;    /* Type of initial NAS information to transfer   */
   OctetString NASmsg;     /* NAS message to be transfered within
                  * initial NAS information message   */
+
+  uint8_t      eps_update_result;           /* TAU EPS update result   */
+  uint32_t    *t3412;                       /* GPRS T3412 timer   */
+  GUTI_t      *guti;                        /* TAU GUTI   */
+  TAI_LIST_T(16) tai_list;                  /* Valid field if num tai > 0 */
+  uint16_t    *eps_bearer_context_status;   /* TAU EPS bearer context status   */
+  void        *location_area_identification;/* TAU Location area identification */
+  //void        *ms_identity;               /* TAU 8.2.26.7   MS identity This IE may be included to assign or unassign a new TMSI to a UE during a combined TA/LA update. */
+  int         *combined_tau_emm_cause;      /* TAU EMM failure cause code   */
+  uint32_t    *t3402;                       /* TAU GPRS T3402 timer   */
+  uint32_t    *t3423;                       /* TAU GPRS T3423 timer   */
+  void        *equivalent_plmns;            /* TAU Equivalent PLMNs   */
+  void        *emergency_number_list;       /* TAU Emergency number list   */
+  uint8_t     *eps_network_feature_support;     /* TAU Network feature support   */
+  uint8_t     *additional_update_result;    /* TAU Additional update result   */
+  uint32_t    *t3412_extended;              /* TAU GPRS timer   */
 } emm_as_establish_t;
 
 /*

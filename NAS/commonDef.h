@@ -283,6 +283,13 @@ typedef struct tai_s {
   tac_t tac;      /* Tracking Area Code   */
 } tai_t;
 
+#define TAI_LIST_MAX_SIZE 16
+typedef struct tai_list_s {
+  Byte_t list_type;
+  Byte_t n_tais;
+  tai_t tai[TAI_LIST_MAX_SIZE];
+}tai_list_t;
+
 /*
  * EPS Globally Unique MME Identity
  */
@@ -295,6 +302,15 @@ typedef struct gummei_s {
 /*
  * EPS Globally Unique Temporary UE Identity
  */
+/*
+ * 3GPP TS 23.003 version 10.10.0 Release 10, 2.4 Structure of TMSI
+ * The network shall not allocate a TMSI with all 32 bits equal to 1 (this is because the TMSI must be stored in the SIM,
+and the SIM uses 4 octets with all bits equal to 1 to indicate that no valid TMSI is available).
+*/
+#define NOT_A_S_TMSI (uint64_t)0xFFFFFFFFFFFFFFFF
+#define NOT_A_M_TMSI (uint32_t)0xFFFFFFFF
+#define NOT_A_TMSI   (uint32_t)0xFFFFFFFF
+
 typedef struct guti_s {
   gummei_t gummei;    /* Globally Unique MME Identity         */
   uint32_t m_tmsi;    /* M-Temporary Mobile Subscriber Identity   */
@@ -359,7 +375,7 @@ typedef struct guti_s {
 /*
  * A list of TAIs
  */
-#define TAI_LIST_T(SIZE) struct {Byte_t n_tais; tai_t tai[SIZE];}
+#define TAI_LIST_T(SIZE) struct {Byte_t list_type; Byte_t n_tais; tai_t tai[SIZE];}
 
 /*
  * User notification callback, executed whenever a change of data with

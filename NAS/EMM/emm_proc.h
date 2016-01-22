@@ -121,11 +121,15 @@ int emm_proc_status(unsigned int ueid, int emm_cause);
 
 int emm_proc_attach_request(unsigned int ueid, emm_proc_attach_type_t type,
     boolean_t is_native_ksi, ksi_t ksi, boolean_t is_native_guti, GUTI_t *guti, imsi_t *imsi,
-                            imei_t *imei, tai_t *tai, int eea, int eia, int ucs2, int uea, int uia, int gea,
+                            imei_t *imei, tai_t *last_visited_registered_tai,
+                            const tai_t              * const originating_tai,
+                            int eea, int eia, int ucs2, int uea, int uia, int gea,
                             int umts_present, int gprs_present, const OctetString *esm_msg,
                             const nas_message_decode_status_t  * const decode_status);
 int emm_proc_attach_reject(unsigned int ueid, int emm_cause);
 int emm_proc_attach_complete(unsigned int ueid, const OctetString *esm_msg);
+int emm_proc_tracking_area_update_request(unsigned int ueid, const tracking_area_update_request_msg * msg,
+                            int *emm_cause, const nas_message_decode_status_t  * decode_status);
 int emm_proc_tracking_area_update_reject(unsigned int ueid, int emm_cause);
 
 /*

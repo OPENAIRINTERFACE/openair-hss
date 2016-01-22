@@ -162,7 +162,9 @@ esm_ebr_assign (
   int ebi)
 {
   esm_ebr_context_t                      *ebr_ctx = NULL;
+#if NAS_BUILT_IN_EPC == 0
   unsigned int                            ueid = 0;
+#endif
   int                                     i;
 
   LOG_FUNC_IN;

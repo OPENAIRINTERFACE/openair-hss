@@ -130,6 +130,7 @@ emm_recv_status (
 int
 emm_recv_attach_request (
   const unsigned int ueid,
+  const tai_t              * const originating_tai,
   const attach_request_msg * const msg,
   int * const emm_cause,
   const nas_message_decode_status_t  * decode_status)
@@ -298,7 +299,7 @@ emm_recv_attach_request (
   rc = emm_proc_attach_request (ueid, type,
                                 msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED,
                                 msg->naskeysetidentifier.naskeysetidentifier,
-                                msg->oldgutitype != GUTI_MAPPED, p_guti, p_imsi, p_imei, p_tai,
+                                msg->oldgutitype != GUTI_MAPPED, p_guti, p_imsi, p_imei, p_tai,originating_tai,
                                 msg->uenetworkcapability.eea,
                                 msg->uenetworkcapability.eia,
                                 msg->uenetworkcapability.ucs2,
@@ -490,16 +491,18 @@ int
 emm_recv_tracking_area_update_request (
   unsigned int ueid,
   const tracking_area_update_request_msg * msg,
-  int *emm_cause)
+  int *emm_cause,
+  const nas_message_decode_status_t  * decode_status)
 {
   int                                     rc = RETURNok;
 
   LOG_FUNC_IN;
   LOG_TRACE (INFO, "EMMAS-SAP - Received Tracking Area Update Request message");
+  rc = emm_proc_tracking_area_update_request(ueid, msg, emm_cause, decode_status);
   /*
    * LW: Not completely implemented; send a Received Tracking Area Update Reject to induce a Attach Request from UE!
    */
-  rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
+  //rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
   LOG_FUNC_RETURN (rc);
 }
 

@@ -71,6 +71,7 @@
 #if NAS_BUILT_IN_EPC
 #  include "nas_itti_messaging.h"
 #endif
+#include "msc.h"
 #include "obj_hashtable.h"
 
 #include <string.h>             // memcmp, memcpy
@@ -201,7 +202,7 @@ static int                              _emm_attach_accept (
  **      guti:      The GUTI if provided by the UE             **
  **      imsi:      The IMSI if provided by the UE             **
  **      imei:      The IMEI if provided by the UE             **
- **      tai:       Identifies the last visited tracking area  **
+ **      last_visited_registered_tai:       Identifies the last visited tracking area  **
  **             the UE is registered to                    **
  **      eea:       Supported EPS encryption algorithms        **
  **      eia:       Supported EPS integrity algorithms         **
@@ -223,7 +224,8 @@ emm_proc_attach_request (
   GUTI_t * guti,
   imsi_t * imsi,
   imei_t * imei,
-  tai_t * tai,
+  tai_t * last_visited_registered_tai,
+  const tai_t   * const originating_tai,
   int eea,
   int eia,
   int ucs2,
@@ -236,7 +238,7 @@ emm_proc_attach_request (
   const nas_message_decode_status_t  * const decode_status)
 {
   LOG_FUNC_IN;
-  int                                     rc;
+  int                                     rc = RETURNerror;
   emm_data_context_t                      ue_ctx;
   boolean_t                               previous_context_found = FALSE;
   emm_fsm_state_t                         fsm_state = EMM_DEREGISTERED;
@@ -269,7 +271,8 @@ emm_proc_attach_request (
    * shall reject any request to attach with an attach type set to "EPS
    * emergency attach".
    */
-  if (!(_emm_data.conf.features & MME_API_EMERGENCY_ATTACH) && (type == EMM_ATTACH_TYPE_EMERGENCY)) {
+  if (!(_emm_data.conf.eps_network_feature_support & EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE_SUPPORTED) &&
+      (type == EMM_ATTACH_TYPE_EMERGENCY)) {
     ue_ctx.emm_cause = EMM_CAUSE_IMEI_NOT_ACCEPTED;
     /*
      * Do not accept the UE to attach for emergency services
@@ -307,7 +310,7 @@ emm_proc_attach_request (
     // EMM context: An EMM context is established in the UE and the MME when an attach procedure is successfully completed. /* great */
 
     LOG_TRACE (WARNING, "EMM-PROC  - Initiate new attach procedure");
-    rc = emm_proc_attach_request (ueid, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, tai,
+    rc = emm_proc_attach_request (ueid, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, last_visited_registered_tai, originating_tai,
         eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP, decode_status);
   } else if ((*emm_ctx != NULL) && ((EMM_DEREGISTERED < fsm_state ) && (EMM_REGISTERED != fsm_state))) {
     /*
@@ -325,6 +328,7 @@ emm_proc_attach_request (
        * Notify EMM that the attach procedure is aborted
        */
       emm_sap_t                               emm_sap;
+      memset(&emm_sap, 0, sizeof(emm_sap));
 
       emm_sap.primitive = EMMREG_PROC_ABORT;
       emm_sap.u.emm_reg.ueid = ueid;
@@ -336,7 +340,7 @@ emm_proc_attach_request (
          * Process new attach procedure
          */
         LOG_TRACE (WARNING, "EMM-PROC  - Initiate new attach procedure");
-        rc = emm_proc_attach_request (ueid, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, tai,
+        rc = emm_proc_attach_request (ueid, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, last_visited_registered_tai,originating_tai,
             eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP, decode_status);
       }
 
@@ -415,10 +419,12 @@ emm_proc_attach_request (
     }
 #warning "TRICK TO SET TAC, BUT LOOK AT SPEC"
 
-    if (tai) {
-      LOG_TRACE (WARNING, "EMM-PROC  - Set tac %u in context", tai->tac);
-      (*emm_ctx)->tac = tai->tac;
+    if (last_visited_registered_tai) {
+      LOG_TRACE (WARNING, "EMM-PROC  - Set tac %u in context", last_visited_registered_tai->tac);
+      memcpy(&(*emm_ctx)->last_visited_registered_tai, &last_visited_registered_tai, sizeof(tai_t));
     } else {
+      // set tac to 0
+      memset(&(*emm_ctx)->last_visited_registered_tai, 0, sizeof(tai_t));
       LOG_TRACE (WARNING, "EMM-PROC  - Could not set tac in context, cause tai is NULL ");
     }
   }
@@ -470,7 +476,7 @@ emm_proc_attach_reject (
   int emm_cause)
 {
   LOG_FUNC_IN;
-  int                                     rc;
+  int                                     rc = RETURNerror;
 
   /*
    * Create temporary UE context
@@ -541,6 +547,8 @@ emm_proc_attach_complete (
    */
   attach_data_t                          *data = (attach_data_t *) (emm_proc_common_get_args (ueid));
 
+  memset(&emm_sap, 0, sizeof(emm_sap));
+  memset(&esm_sap, 0, sizeof(esm_sap));
   if (data) {
     if (data->esm_msg.length > 0) {
       free (data->esm_msg.value);
@@ -662,7 +670,7 @@ _emm_attach_t3450_handler (
   void *args)
 {
   LOG_FUNC_IN;
-  int                                     rc;
+  int                                     rc = RETURNerror;
   attach_data_t                          *data = (attach_data_t *) (args);
 
   /*
@@ -817,6 +825,8 @@ _emm_attach_release (
      */
     emm_sap_t                               emm_sap;
 
+    memset(&emm_sap, 0, sizeof(emm_sap));
+
     emm_sap.primitive = EMMREG_PROC_ABORT;
     emm_sap.u.emm_reg.ueid = ueid;
     emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -855,6 +865,8 @@ _emm_attach_reject (
 
   if (emm_ctx) {
     emm_sap_t                               emm_sap;
+
+    memset(&emm_sap, 0, sizeof(emm_sap));
 
     LOG_TRACE (WARNING, "EMM-PROC  - EMM attach procedure not accepted " "by the network (ueid=" NAS_UE_ID_FMT ", cause=%d)", emm_ctx->ueid, emm_ctx->emm_cause);
     /*
@@ -929,6 +941,8 @@ _emm_attach_abort (
     unsigned int                            ueid = data->ueid;
     esm_sap_t                               esm_sap;
 
+    memset(&esm_sap, 0, sizeof(esm_sap));
+
     LOG_TRACE (WARNING, "EMM-PROC  - Abort the attach procedure (ueid=" NAS_UE_ID_FMT ")", ueid);
 #if NAS_BUILT_IN_EPC
     ctx = emm_data_context_get (&_emm_data, ueid);
@@ -970,6 +984,8 @@ _emm_attach_abort (
        * Notify EMM that EPS attach procedure failed
        */
       emm_sap_t                               emm_sap;
+
+      memset(&emm_sap, 0, sizeof(emm_sap));
 
       emm_sap.primitive = EMMREG_ATTACH_REJ;
       emm_sap.u.emm_reg.ueid = ueid;
@@ -1013,7 +1029,7 @@ _emm_attach_identify (
 {
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
-  int                                     guti_reallocation = FALSE;
+  int                                     guti_allocation = FALSE;
 
   LOG_FUNC_IN;
   LOG_TRACE (INFO, "EMM-PROC  - Identify incoming UE (ueid=" NAS_UE_ID_FMT ") using %s", emm_ctx->ueid, (emm_ctx->imsi) ? "IMSI" : (emm_ctx->guti) ? "GUTI" : (emm_ctx->imei) ? "IMEI" : "none");
@@ -1043,7 +1059,7 @@ _emm_attach_identify (
         emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
       }
 
-      guti_reallocation = TRUE;
+      guti_allocation = TRUE;
     }
   } else if (emm_ctx->guti) {
     /*
@@ -1100,7 +1116,7 @@ _emm_attach_identify (
    * GUTI reallocation
    * -----------------
    */
-  if ((rc != RETURNerror) && guti_reallocation) {
+  if ((rc != RETURNerror) && guti_allocation) {
     /*
      * Release the old GUTI
      */
@@ -1119,7 +1135,7 @@ _emm_attach_identify (
     /*
      * Request the MME to assign a GUTI to the UE
      */
-    rc = mme_api_new_guti (emm_ctx->imsi, emm_ctx->guti, &emm_ctx->tac, &emm_ctx->n_tacs);
+    rc = mme_api_new_guti (emm_ctx->imsi, emm_ctx->guti, &emm_ctx->tai_list);
 
     if (rc != RETURNok) {
       LOG_TRACE (WARNING, "EMM-PROC  - Failed to assign new GUTI");
@@ -1219,7 +1235,7 @@ _emm_attach_security (
   void *args)
 {
   LOG_FUNC_IN;
-  int                                     rc;
+  int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
   LOG_TRACE (INFO, "EMM-PROC  - Setup NAS security (ueid=" NAS_UE_ID_FMT ")", emm_ctx->ueid);
@@ -1250,7 +1266,9 @@ _emm_attach_security (
    * Initialize the security mode control procedure
    */
   rc = emm_proc_security_mode_control (emm_ctx->ueid, 0,        // TODO: eksi != 0
-                                       emm_ctx->eea, emm_ctx->eia, emm_ctx->ucs2, emm_ctx->uea, emm_ctx->uia, emm_ctx->gea, emm_ctx->umts_present, emm_ctx->gprs_present, _emm_attach, _emm_attach_release, _emm_attach_release);
+                                       emm_ctx->eea, emm_ctx->eia, emm_ctx->ucs2, emm_ctx->uea,
+                                       emm_ctx->uia, emm_ctx->gea, emm_ctx->umts_present, emm_ctx->gprs_present,
+                                       _emm_attach, _emm_attach_release, _emm_attach_release);
 
   if (rc != RETURNok) {
     /*
@@ -1299,8 +1317,10 @@ _emm_attach (
 {
   LOG_FUNC_IN;
   esm_sap_t                               esm_sap;
-  int                                     rc;
+  int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
+
+  memset(&esm_sap, 0, sizeof(esm_sap));
 
   LOG_TRACE (INFO, "EMM-PROC  - Attach UE (ueid=" NAS_UE_ID_FMT ")", emm_ctx->ueid);
   /*
@@ -1470,7 +1490,10 @@ _emm_attach_accept (
 {
   LOG_FUNC_IN;
   emm_sap_t                               emm_sap;
-  int                                     rc;
+  int                                     i = 0;
+  int                                     rc = RETURNerror;
+
+  memset(&emm_sap, 0, sizeof(emm_sap));
 
   // may be caused by timer not stopped when deleted context
   if (emm_ctx) {
@@ -1504,8 +1527,11 @@ _emm_attach_accept (
     }
 
     mme_api_notify_new_guti (emm_ctx->ueid, emm_ctx->guti);     // LG
-    emm_sap.u.emm_as.u.establish.n_tacs = emm_ctx->n_tacs;
-    emm_sap.u.emm_as.u.establish.tac = emm_ctx->tac;
+    emm_sap.u.emm_as.u.establish.tai_list.list_type = emm_ctx->tai_list.list_type;
+    emm_sap.u.emm_as.u.establish.tai_list.n_tais    = emm_ctx->tai_list.n_tais;
+    for (i=0; i < emm_ctx->tai_list.n_tais; i++) {
+      memcpy(&emm_sap.u.emm_as.u.establish.tai_list.tai[i], &emm_ctx->tai_list.tai[i], sizeof(tai_t));
+    }
     emm_sap.u.emm_as.u.establish.NASinfo = EMM_AS_NAS_INFO_ATTACH;
     /*
      * Setup EPS NAS security data
@@ -1884,7 +1910,7 @@ _emm_attach_update (
 #warning "LG: We should assign the GUTI accordingly to the visited plmn id"
 
     if ((ctx->guti != NULL) && (imsi)) {
-      ctx->tac = mme_config.gummei.plmn_tac[0];
+      //ctx->tac = mme_config.served_tai.tac[0];
       ctx->guti->gummei.MMEcode = mme_config.gummei.mmec[0];
       ctx->guti->gummei.MMEgid = mme_config.gummei.mme_gid[0];
       ctx->guti->m_tmsi = (uint32_t) ctx;

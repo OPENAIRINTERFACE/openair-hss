@@ -298,9 +298,10 @@ s1ap_mme_handle_s1_setup_request (
       return s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_misc, S1ap_CauseMisc_control_processing_overload, S1ap_TimeToWait_v20s);
     }
 
-    /*
-     * If none of the provided PLMNs/TAC match the one configured in MME,
-     * * * * the s1 setup should be rejected with a cause set to Unknown PLMN.
+    /* Requirement MME36.413R10_8.7.3.4 Abnormal Conditions
+     * If the eNB initiates the procedure by sending a S1 SETUP REQUEST message including the PLMN Identity IEs and
+     * none of the PLMNs provided by the eNB is identified by the MME, then the MME shall reject the eNB S1 Setup
+     * Request procedure with the appropriate cause value, e.g, “Unknown PLMN”.
      */
     ta_ret = s1ap_mme_compare_ta_lists (&s1SetupRequest_p->supportedTAs);
 
@@ -379,7 +380,7 @@ s1ap_generate_s1_setup_response (
   eNB_description_t * eNB_association)
 //------------------------------------------------------------------------------
 {
-  int                                     i;
+  int                                     i,j;
   int                                     enc_rval = 0;
   S1ap_S1SetupResponseIEs_t              *s1_setup_response_p;
   S1ap_ServedGUMMEIsItem_t                servedGUMMEI;
@@ -397,16 +398,29 @@ s1ap_generate_s1_setup_response (
 
   /*
    * Use the gummei parameters provided by configuration
+   * that should be sorted
    */
-  for (i = 0; i < mme_config.gummei.nb_plmns; i++) {
-    S1ap_PLMNidentity_t                    *plmn;
-
-    /*
-     * FIXME: free object from list once encoded
-     */
-    plmn = calloc (1, sizeof (*plmn));
-    MCC_MNC_TO_PLMNID (mme_config.gummei.plmn_mcc[i], mme_config.gummei.plmn_mnc[i], mme_config.gummei.plmn_mnc_len[i], plmn);
-    ASN_SEQUENCE_ADD (&servedGUMMEI.servedPLMNs.list, plmn);
+  j = 0;
+  for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
+    boolean_t plmn_added = FALSE;
+    for (j=0; j < i; j++) {
+      if ((mme_config.served_tai.plmn_mcc[j] == mme_config.served_tai.plmn_mcc[i]) &&
+        (mme_config.served_tai.plmn_mnc[j] == mme_config.served_tai.plmn_mnc[i]) &&
+        (mme_config.served_tai.plmn_mnc_len[i] == mme_config.served_tai.plmn_mnc_len[i])
+        ) {
+        plmn_added = TRUE;
+        break;
+      }
+    }
+    if (FALSE == plmn_added) {
+      S1ap_PLMNidentity_t                    *plmn = NULL;
+      /*
+       * FIXME: free object from list once encoded
+       */
+      plmn = calloc (1, sizeof (*plmn));
+      MCC_MNC_TO_PLMNID (mme_config.served_tai.plmn_mcc[i], mme_config.served_tai.plmn_mnc[i], mme_config.served_tai.plmn_mnc_len[i], plmn);
+      ASN_SEQUENCE_ADD (&servedGUMMEI.servedPLMNs.list, plmn);
+    }
   }
 
   for (i = 0; i < mme_config.gummei.nb_mme_gid; i++) {

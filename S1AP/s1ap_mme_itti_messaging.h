@@ -46,7 +46,8 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
   const uint32_t  nas_msg_length,
   const long      cause,
   const uint8_t   tai_plmn[3],
-  const uint16_t  tai_tac)
+  const uint16_t  tai_tac,
+  const uint64_t  s_tmsi)
 {
   MessageDef  *message_p = NULL;
 
@@ -61,6 +62,16 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.plmn[1]              = tai_plmn[1];
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.plmn[2]              = tai_plmn[2];
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tac                  = tai_tac;
+  /*if (NOT_A_S_TMSI == s_tmsi) {
+    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi.MMEcode       = 0;
+    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi.m_tmsi        = 0;
+    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi_present       = FALSE;
+  } else {
+    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi.MMEcode       = (uint8_t)((s_tmsi & 0x000000FF00000000) >> 32);
+    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi.m_tmsi        = (uint32_t)(s_tmsi & 0x00000000FFFFFFFF);
+    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi_present       = TRUE;
+  }*/
+
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.length = nas_msg_length;
 
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.data   = malloc(sizeof(uint8_t) * nas_msg_length);

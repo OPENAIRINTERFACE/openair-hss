@@ -48,17 +48,49 @@ decode_tracking_area_identity_list (
   trackingareaidentitylist->typeoflist = (*(buffer + decoded) >> 5) & 0x3;
   trackingareaidentitylist->numberofelements = *(buffer + decoded) & 0x1f;
   decoded++;
-  trackingareaidentitylist->mccdigit2 = (*(buffer + decoded) >> 4) & 0xf;
-  trackingareaidentitylist->mccdigit1 = *(buffer + decoded) & 0xf;
-  decoded++;
-  trackingareaidentitylist->mncdigit3 = (*(buffer + decoded) >> 4) & 0xf;
-  trackingareaidentitylist->mccdigit3 = *(buffer + decoded) & 0xf;
-  decoded++;
-  trackingareaidentitylist->mncdigit2 = (*(buffer + decoded) >> 4) & 0xf;
-  trackingareaidentitylist->mncdigit1 = *(buffer + decoded) & 0xf;
-  decoded++;
-  //IES_DECODE_U16(trackingareaidentitylist->tac, *(buffer + decoded));
-  IES_DECODE_U16 (buffer, decoded, trackingareaidentitylist->tac);
+  if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS == trackingareaidentitylist->typeoflist) {
+    trackingareaidentitylist->mccdigit2[0] = (*(buffer + decoded) >> 4) & 0xf;
+    trackingareaidentitylist->mccdigit1[0] = *(buffer + decoded) & 0xf;
+    decoded++;
+    trackingareaidentitylist->mncdigit3[0] = (*(buffer + decoded) >> 4) & 0xf;
+    trackingareaidentitylist->mccdigit3[0] = *(buffer + decoded) & 0xf;
+    decoded++;
+    trackingareaidentitylist->mncdigit2[0] = (*(buffer + decoded) >> 4) & 0xf;
+    trackingareaidentitylist->mncdigit1[0] = *(buffer + decoded) & 0xf;
+    decoded++;
+    //IES_DECODE_U16(trackingareaidentitylist->tac, *(buffer + decoded));
+    IES_DECODE_U16 (buffer, decoded, trackingareaidentitylist->tac[0]);
+  } else if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == trackingareaidentitylist->typeoflist) {
+    int i;
+    trackingareaidentitylist->mccdigit2[0] = (*(buffer + decoded) >> 4) & 0xf;
+    trackingareaidentitylist->mccdigit1[0] = *(buffer + decoded) & 0xf;
+    decoded++;
+    trackingareaidentitylist->mncdigit3[0] = (*(buffer + decoded) >> 4) & 0xf;
+    trackingareaidentitylist->mccdigit3[0] = *(buffer + decoded) & 0xf;
+    decoded++;
+    trackingareaidentitylist->mncdigit2[0] = (*(buffer + decoded) >> 4) & 0xf;
+    trackingareaidentitylist->mncdigit1[0] = *(buffer + decoded) & 0xf;
+    decoded++;
+    for (i=0; i <= trackingareaidentitylist->numberofelements; i++) {
+      IES_DECODE_U16 (buffer, decoded, trackingareaidentitylist->tac[i]);
+    }
+  } else if (TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS == trackingareaidentitylist->typeoflist) {
+    int i;
+    for (i=0; i <= trackingareaidentitylist->numberofelements; i++) {
+      trackingareaidentitylist->mccdigit2[i] = (*(buffer + decoded) >> 4) & 0xf;
+      trackingareaidentitylist->mccdigit1[i] = *(buffer + decoded) & 0xf;
+      decoded++;
+      trackingareaidentitylist->mncdigit3[i] = (*(buffer + decoded) >> 4) & 0xf;
+      trackingareaidentitylist->mccdigit3[i] = *(buffer + decoded) & 0xf;
+      decoded++;
+      trackingareaidentitylist->mncdigit2[i] = (*(buffer + decoded) >> 4) & 0xf;
+      trackingareaidentitylist->mncdigit1[i] = *(buffer + decoded) & 0xf;
+      decoded++;
+      IES_DECODE_U16 (buffer, decoded, trackingareaidentitylist->tac[i]);
+    }
+  } else {
+    printf ("Type of TAIL list not handled %d", trackingareaidentitylist->typeoflist);
+  }
 #if NAS_DEBUG
   dump_tracking_area_identity_list_xml (trackingareaidentitylist, iei);
 #endif
@@ -90,15 +122,43 @@ encode_tracking_area_identity_list (
 
   lenPtr = (buffer + encoded);
   encoded++;
+
   *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->typeoflist & 0x3) << 5) | (trackingareaidentitylist->numberofelements & 0x1f);
   encoded++;
-  *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mccdigit2 & 0xf) << 4) | (trackingareaidentitylist->mccdigit1 & 0xf);
-  encoded++;
-  *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mncdigit3 & 0xf) << 4) | (trackingareaidentitylist->mccdigit3 & 0xf);
-  encoded++;
-  *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mncdigit2 & 0xf) << 4) | (trackingareaidentitylist->mncdigit1 & 0xf);
-  encoded++;
-  IES_ENCODE_U16 (buffer, encoded, trackingareaidentitylist->tac);
+
+  if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS == trackingareaidentitylist->typeoflist) {
+    *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mccdigit2[0] & 0xf) << 4) | (trackingareaidentitylist->mccdigit1[0] & 0xf);
+    encoded++;
+    *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mncdigit3[0] & 0xf) << 4) | (trackingareaidentitylist->mccdigit3[0] & 0xf);
+    encoded++;
+    *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mncdigit2[0] & 0xf) << 4) | (trackingareaidentitylist->mncdigit1[0] & 0xf);
+    encoded++;
+    IES_ENCODE_U16 (buffer, encoded, trackingareaidentitylist->tac[0]);
+  } else if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == trackingareaidentitylist->typeoflist) {
+    int i;
+    *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mccdigit2[0] & 0xf) << 4) | (trackingareaidentitylist->mccdigit1[0] & 0xf);
+    encoded++;
+    *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mncdigit3[0] & 0xf) << 4) | (trackingareaidentitylist->mccdigit3[0] & 0xf);
+    encoded++;
+    *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mncdigit2[0] & 0xf) << 4) | (trackingareaidentitylist->mncdigit1[0] & 0xf);
+    encoded++;
+    for (i=0; i <= trackingareaidentitylist->numberofelements; i++) {
+      IES_ENCODE_U16 (buffer, encoded, trackingareaidentitylist->tac[i]);
+    }
+  } else if (TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS == trackingareaidentitylist->typeoflist) {
+    int i;
+    for (i=0; i <= trackingareaidentitylist->numberofelements; i++) {
+      *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mccdigit2[i] & 0xf) << 4) | (trackingareaidentitylist->mccdigit1[i] & 0xf);
+      encoded++;
+      *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mncdigit3[i] & 0xf) << 4) | (trackingareaidentitylist->mccdigit3[i] & 0xf);
+      encoded++;
+      *(buffer + encoded) = 0x00 | ((trackingareaidentitylist->mncdigit2[i] & 0xf) << 4) | (trackingareaidentitylist->mncdigit1[i] & 0xf);
+      encoded++;
+      IES_ENCODE_U16 (buffer, encoded, trackingareaidentitylist->tac[i]);
+    }
+  } else {
+    printf ("Type of TAIL list not handled %d", trackingareaidentitylist->typeoflist);
+  }
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
   return encoded;
 }
@@ -122,12 +182,38 @@ dump_tracking_area_identity_list_xml (
    * * * *  see 3GPP TS 24.301, section 9.9.3.33.1
    */
   printf ("    <Number of elements>%u</Number of elements>\n", trackingareaidentitylist->numberofelements + 1);
-  printf ("    <MCC digit 2>%u</MCC digit 2>\n", trackingareaidentitylist->mccdigit2);
-  printf ("    <MCC digit 1>%u</MCC digit 1>\n", trackingareaidentitylist->mccdigit1);
-  printf ("    <MNC digit 3>%u</MNC digit 3>\n", trackingareaidentitylist->mncdigit3);
-  printf ("    <MCC digit 3>%u</MCC digit 3>\n", trackingareaidentitylist->mccdigit3);
-  printf ("    <MNC digit 2>%u</MNC digit 2>\n", trackingareaidentitylist->mncdigit2);
-  printf ("    <MNC digit 1>%u</MNC digit 1>\n", trackingareaidentitylist->mncdigit1);
-  printf ("    <TAC>0x%.4x</TAC>\n", trackingareaidentitylist->tac);
+  if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS == trackingareaidentitylist->typeoflist) {
+    printf ("    <MCC digit 2>%u</MCC digit 2>\n", trackingareaidentitylist->mccdigit2[0]);
+    printf ("    <MCC digit 1>%u</MCC digit 1>\n", trackingareaidentitylist->mccdigit1[0]);
+    printf ("    <MNC digit 3>%u</MNC digit 3>\n", trackingareaidentitylist->mncdigit3[0]);
+    printf ("    <MCC digit 3>%u</MCC digit 3>\n", trackingareaidentitylist->mccdigit3[0]);
+    printf ("    <MNC digit 2>%u</MNC digit 2>\n", trackingareaidentitylist->mncdigit2[0]);
+    printf ("    <MNC digit 1>%u</MNC digit 1>\n", trackingareaidentitylist->mncdigit1[0]);
+    printf ("    <TAC>0x%.4x</TAC>\n", trackingareaidentitylist->tac[0]);
+  } else  if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == trackingareaidentitylist->typeoflist) {
+    int i;
+    printf ("    <MCC digit 2>%u</MCC digit 2>\n", trackingareaidentitylist->mccdigit2[0]);
+    printf ("    <MCC digit 1>%u</MCC digit 1>\n", trackingareaidentitylist->mccdigit1[0]);
+    printf ("    <MNC digit 3>%u</MNC digit 3>\n", trackingareaidentitylist->mncdigit3[0]);
+    printf ("    <MCC digit 3>%u</MCC digit 3>\n", trackingareaidentitylist->mccdigit3[0]);
+    printf ("    <MNC digit 2>%u</MNC digit 2>\n", trackingareaidentitylist->mncdigit2[0]);
+    printf ("    <MNC digit 1>%u</MNC digit 1>\n", trackingareaidentitylist->mncdigit1[0]);
+    for (i=0; i <= trackingareaidentitylist->numberofelements; i++) {
+      printf ("    <TAC>0x%.4x</TAC>\n", trackingareaidentitylist->tac[i]);
+    }
+  } else if (TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS == trackingareaidentitylist->typeoflist) {
+    int i;
+    for (i=0; i <= trackingareaidentitylist->numberofelements; i++) {
+      printf ("    <MCC digit 2>%u</MCC digit 2>\n", trackingareaidentitylist->mccdigit2[i]);
+      printf ("    <MCC digit 1>%u</MCC digit 1>\n", trackingareaidentitylist->mccdigit1[i]);
+      printf ("    <MNC digit 3>%u</MNC digit 3>\n", trackingareaidentitylist->mncdigit3[i]);
+      printf ("    <MCC digit 3>%u</MCC digit 3>\n", trackingareaidentitylist->mccdigit3[i]);
+      printf ("    <MNC digit 2>%u</MNC digit 2>\n", trackingareaidentitylist->mncdigit2[i]);
+      printf ("    <MNC digit 1>%u</MNC digit 1>\n", trackingareaidentitylist->mncdigit1[i]);
+      printf ("    <TAC>0x%.4x</TAC>\n", trackingareaidentitylist->tac[i]);
+    }
+  } else {
+    printf ("Type of TAIL list not handled %d", trackingareaidentitylist->typeoflist);
+  }
   printf ("</Tracking Area Identity List>\n");
 }

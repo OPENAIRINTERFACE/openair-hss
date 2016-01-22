@@ -41,8 +41,15 @@
 #define MME_CONFIG_STRING_MAXUE                          "MAXUE"
 #define MME_CONFIG_STRING_RELATIVE_CAPACITY              "RELATIVE_CAPACITY"
 #define MME_CONFIG_STRING_STATISTIC_TIMER                "MME_STATISTIC_TIMER"
+
 #define MME_CONFIG_STRING_EMERGENCY_ATTACH_SUPPORTED     "EMERGENCY_ATTACH_SUPPORTED"
 #define MME_CONFIG_STRING_UNAUTHENTICATED_IMSI_SUPPORTED "UNAUTHENTICATED_IMSI_SUPPORTED"
+
+#define EPS_NETWORK_FEATURE_SUPPORT_IMS_VOICE_OVER_PS_SESSION_IN_S1       "EPS_NETWORK_FEATURE_SUPPORT_IMS_VOICE_OVER_PS_SESSION_IN_S1"
+#define EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE  "EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE"
+#define EPS_NETWORK_FEATURE_SUPPORT_LOCATION_SERVICES_VIA_EPC             "EPS_NETWORK_FEATURE_SUPPORT_LOCATION_SERVICES_VIA_EPC"
+#define EPS_NETWORK_FEATURE_SUPPORT_EXTENDED_SERVICE_REQUEST              "EPS_NETWORK_FEATURE_SUPPORT_EXTENDED_SERVICE_REQUEST"
+
 
 #define MME_CONFIG_STRING_INTERTASK_INTERFACE_CONFIG     "INTERTASK_INTERFACE"
 #define MME_CONFIG_STRING_INTERTASK_INTERFACE_QUEUE_SIZE "ITTI_QUEUE_SIZE"
@@ -98,6 +105,12 @@
 #define NAS_CONFIG_SECURITY_ALGORITHMS_EIA5    0b101
 #define NAS_CONFIG_SECURITY_ALGORITHMS_EIA6    0b110
 #define NAS_CONFIG_SECURITY_ALGORITHMS_EIA7    0b111
+#define MME_CONFIG_STRING_NAS_T3402_TIMER                "T3402"
+#define MME_CONFIG_STRING_NAS_T3412_TIMER                "T3412"
+#define MME_CONFIG_STRING_NAS_T3485_TIMER                "T3485"
+#define MME_CONFIG_STRING_NAS_T3486_TIMER                "T3486"
+#define MME_CONFIG_STRING_NAS_T3489_TIMER                "T3489"
+#define MME_CONFIG_STRING_NAS_T3495_TIMER                "T3495"
 
 
 
@@ -118,8 +131,14 @@ typedef struct mme_config_s {
 
   uint32_t mme_statistic_timer;
 
-  uint8_t emergency_attach_supported;
   uint8_t unauthenticated_imsi_supported;
+
+  struct {
+    uint8_t ims_voice_over_ps_session_in_s1;
+    uint8_t emergency_bearer_services_in_s1_mode;
+    uint8_t location_services_via_epc;
+    uint8_t extended_service_request;
+  } eps_network_feature_support;
 
   struct {
     uint16_t  nb_mme_gid;
@@ -128,12 +147,23 @@ typedef struct mme_config_s {
     uint16_t  nb_mmec;
     uint8_t  *mmec;
 
-    uint8_t   nb_plmns;
+//    uint8_t   nb_plmn;
+//    uint16_t *plmn_mcc;
+//    uint16_t *plmn_mnc;
+//    uint16_t *plmn_mnc_len;
+  } gummei;
+
+#define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS 0x00
+#define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS     0x01
+#define TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS                    0x02
+  struct {
+    uint8_t   list_type;
+    uint8_t   nb_tai;
     uint16_t *plmn_mcc;
     uint16_t *plmn_mnc;
     uint16_t *plmn_mnc_len;
-    uint16_t *plmn_tac;
-  } gummei;
+    uint16_t *tac;
+  } served_tai;
 
   struct {
     uint16_t in_streams;
@@ -167,8 +197,16 @@ typedef struct mme_config_s {
   } itti_config;
 
   struct {
-    uint8_t prefered_integrity_algorithm[8];
-    uint8_t prefered_ciphering_algorithm[8];
+    uint8_t  prefered_integrity_algorithm[8];
+    uint8_t  prefered_ciphering_algorithm[8];
+    uint32_t t3402_min;
+    uint32_t t3412_min;
+    uint32_t t3485_sec;
+    uint32_t t3486_sec;
+    uint32_t t3489_sec;
+    uint32_t t3495_sec;
+
+
   } nas_config;
 
 

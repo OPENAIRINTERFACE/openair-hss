@@ -100,6 +100,7 @@ int emm_recv_status(unsigned int ueid, emm_status_msg *msg, int *emm_cause, cons
  */
 int emm_recv_attach_request (
     const unsigned int ueid,
+    const tai_t              * const originating_tai,
     const attach_request_msg * const msg,
     int * const emm_cause,
     const nas_message_decode_status_t  * const decode_status);
@@ -112,7 +113,8 @@ int emm_recv_detach_request(unsigned int ueid, const detach_request_msg *msg,
 
 int emm_recv_tracking_area_update_request(unsigned int  ueid,
     const tracking_area_update_request_msg *msg,
-    int *emm_cause);
+    int *emm_cause,
+    const nas_message_decode_status_t  * decode_status);
 
 int emm_recv_identity_response(unsigned int ueid, identity_response_msg *msg,
                                int *emm_cause, const nas_message_decode_status_t * status);

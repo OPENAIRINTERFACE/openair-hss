@@ -323,8 +323,10 @@ typedef struct nas_establish_req_s {
 typedef struct nas_establish_ind_s {
   uint32_t      UEid;          /* UE lower layer identifier               */
   tac_t         tac;           /* Code of the tracking area the initiating
-                                  * UE belongs to                           */
+                                  * UE belongs to                         */
   as_cause_t    asCause;       /* Establishment cause                     */
+  //boolean_t     s_tmsi_present;
+  //as_stmsi_t    s_tmsi;        /* UE identity optional field              */
   as_nas_info_t initialNasMsg; /* Initial NAS message to transfer         */
 } nas_establish_ind_t;
 

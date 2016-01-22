@@ -309,6 +309,9 @@ do {                                                    \
 #define TAC_TO_ASN1 INT16_TO_OCTET_STRING
 #define GTP_TEID_TO_ASN1 INT32_TO_OCTET_STRING
 #define OCTET_STRING_TO_TAC OCTET_STRING_TO_INT16
+#define OCTET_STRING_TO_MME_CODE OCTET_STRING_TO_INT8
+#define OCTET_STRING_TO_M_TMSI   OCTET_STRING_TO_INT32
+#define OCTET_STRING_TO_MME_GID  OCTET_STRING_TO_INT16
 
 void hexa_to_ascii(uint8_t *from, char *to, size_t length);
 

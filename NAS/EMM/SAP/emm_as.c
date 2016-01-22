@@ -406,7 +406,7 @@ _emm_as_recv (
   case ATTACH_REQUEST:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_attach_request (ueid, &emm_msg->attach_request, emm_cause, decode_status);
+    rc = emm_recv_attach_request (ueid, NULL, &emm_msg->attach_request, emm_cause, decode_status);
     break;
 
   case IDENTITY_RESPONSE:
@@ -632,8 +632,9 @@ _emm_as_establish_req (
   struct emm_data_context_s              *emm_ctx = NULL;
   emm_security_context_t                 *emm_security_context = NULL;
   nas_message_decode_status_t             decode_status;
-  int                                     decoder_rc;
+  int                                     decoder_rc = 0;
   int                                     rc = RETURNerror;
+  tai_t                                   originating_tai; // originating TAI
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received AS connection establish request");
   nas_message_t                           nas_msg;
@@ -675,7 +676,14 @@ _emm_as_establish_req (
 
   switch (emm_msg->header.message_type) {
   case ATTACH_REQUEST:
-    rc = emm_recv_attach_request (msg->ueid, &emm_msg->attach_request, emm_cause, &decode_status);
+    originating_tai.tac = msg->tac;
+    originating_tai.plmn.MCCdigit1 = msg->plmnID->MCCdigit1;
+    originating_tai.plmn.MCCdigit2 = msg->plmnID->MCCdigit2;
+    originating_tai.plmn.MCCdigit3 = msg->plmnID->MCCdigit3;
+    originating_tai.plmn.MNCdigit1 = msg->plmnID->MNCdigit1;
+    originating_tai.plmn.MNCdigit2 = msg->plmnID->MNCdigit2;
+    originating_tai.plmn.MNCdigit3 = msg->plmnID->MNCdigit3;
+    rc = emm_recv_attach_request (msg->ueid, &originating_tai, &emm_msg->attach_request, emm_cause, &decode_status);
     break;
 
   case DETACH_REQUEST:
@@ -693,7 +701,7 @@ _emm_as_establish_req (
     break;
 
   case TRACKING_AREA_UPDATE_REQUEST:
-    rc = emm_recv_tracking_area_update_request (msg->ueid, &emm_msg->tracking_area_update_request, emm_cause);
+    rc = emm_recv_tracking_area_update_request (msg->ueid, &emm_msg->tracking_area_update_request, emm_cause, &decode_status);
     break;
 
   case SERVICE_REQUEST:
@@ -1612,7 +1620,7 @@ _emm_as_establish_cnf (
   const emm_as_establish_t * msg,
   nas_establish_rsp_t * as_msg)
 {
-  EMM_msg                                *emm_msg;
+  EMM_msg                                *emm_msg = NULL;
   int                                     size = 0;
 
   LOG_FUNC_IN;
@@ -1647,7 +1655,11 @@ _emm_as_establish_cnf (
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
       size = emm_send_attach_accept (msg, &emm_msg->attach_accept);
       break;
-
+    case EMM_AS_NAS_INFO_TAU:
+      LOG_TRACE (WARNING, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d", msg->NASmsg.length);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TAU_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+      size = emm_send_tracking_area_update_accept (msg, &emm_msg->tracking_area_update_accept);
+      break;
     default:
       LOG_TRACE (WARNING, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid", msg->NASinfo);
       break;

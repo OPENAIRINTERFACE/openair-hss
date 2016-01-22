@@ -31,6 +31,12 @@
 #define EPS_UPDATE_TYPE_MINIMUM_LENGTH 1
 #define EPS_UPDATE_TYPE_MAXIMUM_LENGTH 1
 
+#define EPS_UPDATE_TYPE_TA_UPDATING                              0
+#define EPS_UPDATE_TYPE_COMBINED_TA_LA_UPDATING                  1
+#define EPS_UPDATE_TYPE_COMBINED_TA_LA_UPDATING_WITH_IMSI_ATTACH 2
+#define EPS_UPDATE_TYPE_PERIODIC_UPDATING                        3
+
+
 typedef struct EpsUpdateType_tag {
   uint8_t  activeflag:1;
   uint8_t  epsupdatetypevalue:3;

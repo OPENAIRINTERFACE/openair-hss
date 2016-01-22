@@ -51,8 +51,14 @@ Description Defines internal private data handled by EPS Mobility
 #include "emm_fsm.h"
 #include "mme_api.h"
 # if NAS_BUILT_IN_EPC
+#   include "obj_hashtable.h"
 #   include "hashtable.h"
 # endif
+
+#include "UeNetworkCapability.h"
+#include "MsNetworkCapability.h"
+#include "DrxParameter.h"
+#include "EpsBearerContextStatus.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -146,10 +152,12 @@ typedef struct emm_data_context_s {
   int          guti_is_new; /* New GUTI indicator                              */
   GUTI_t      *guti;        /* The GUTI assigned to the UE                     */
   GUTI_t      *old_guti;    /* The old GUTI                                    */
-  int          n_tacs;      /* Number of consecutive tracking areas the UE is
-                               * registered to                                   */
-  tac_t       tac;          /* Code of the first tracking area the UE is
-                               * registered to                                   */
+  tai_list_t   tai_list;    /* TACs the the UE is registered to                */
+  tai_t        last_visited_registered_tai;
+  /*int          n_tacs;       * Number of consecutive tracking areas the UE is
+                             * registered to                                   /
+  tac_t       tac;           * Code of the first tracking area the UE is
+                             * registered to                                   */
 
   int         ksi;          /* Security key set identifier provided by the UE  */
   int         eea;          /* EPS encryption algorithms supported by the UE   */
@@ -160,6 +168,11 @@ typedef struct emm_data_context_s {
   int         gea;          /* GPRS encryption algorithms supported by the UE  */
   int         umts_present; /* For encoding ue network capabilities (variable size)*/
   int         gprs_present; /* For encoding ue network capabilities (variable size)*/
+
+  UeNetworkCapability    *ue_network_capability_ie; /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_2*/
+  MsNetworkCapability    *ms_network_capability_ie; /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_2*/
+  DrxParameter           *drx_parameter;            /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
+  EpsBearerContextStatus *eps_bearer_context_status;/* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_5*/
 
   auth_vector_t vector;/* EPS authentication vector                            */
   emm_security_context_t *security;    /* Current EPS NAS security context     */
@@ -195,7 +208,7 @@ typedef struct emm_data_s {
    */
 # if NAS_BUILT_IN_EPC
   hash_table_t    *ctx_coll_ue_id;// key is emm ue id, data is struct emm_data_context_s
-  hash_table_t    *ctx_coll_guti; // key is guti, data is emm ue id (unsigned int)
+  obj_hash_table_t    *ctx_coll_guti; // key is guti, data is emm ue id (unsigned int)
 # else
 #   define EMM_DATA_NB_UE_MAX   (MME_API_NB_UE_MAX + 1)
   emm_data_context_t *ctx [EMM_DATA_NB_UE_MAX];
@@ -234,9 +247,16 @@ emm_data_t _emm_data;
  *      EPS mobility management timers – Network side
  * --------------------------------------------------------------------------
  */
+#define T3413_DEFAULT_VALUE 400 /* Network dependent    */
+#define T3422_DEFAULT_VALUE 6   /* 6 seconds    */
 #define T3450_DEFAULT_VALUE 6   /* 6 seconds    */
 #define T3460_DEFAULT_VALUE 6   /* 6 seconds    */
 #define T3470_DEFAULT_VALUE 6   /* 6 seconds    */
+
+#define T3485_DEFAULT_VALUE 8   /* 8 seconds    */
+#define T3486_DEFAULT_VALUE 8   /* 8 seconds    */
+#define T3489_DEFAULT_VALUE 4   /* 4 seconds    */
+#define T3495_DEFAULT_VALUE 8   /* 8 seconds    */
 
 /*
  * mobile reachable timer

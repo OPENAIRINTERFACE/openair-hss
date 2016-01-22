@@ -44,7 +44,10 @@
 
 #if NAS_BUILT_IN_EPC
 #  include "mme_config.h"
+#  include "obj_hashtable.h"
 #endif
+#include <string.h>
+
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -89,7 +92,7 @@ emm_main_initialize (
    * Retreive MME supported configuration data
    */
 #if NAS_BUILT_IN_EPC
-
+  memset(&_emm_data.conf, 0, sizeof(_emm_data.conf));
   if (mme_api_get_emm_config (&_emm_data.conf, mme_config_p) != RETURNok)
 #else
   if (mme_api_get_emm_config (&_emm_data.conf) != RETURNok)
