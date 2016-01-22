@@ -247,7 +247,7 @@ emm_proc_authentication (
        * Notify EMM that common procedure has been initiated
        */
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " NAS_UE_ID_FMT " (authentication)", ueid);
-      emm_sap_t                               emm_sap;
+      emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
       emm_sap.u.emm_reg.ueid = ueid;
@@ -288,8 +288,8 @@ emm_proc_authentication_complete (
   int emm_cause,
   const OctetString * res)
 {
-  int                                     rc;
-  emm_sap_t                               emm_sap;
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
 
   LOG_FUNC_IN;
   LOG_TRACE (INFO, "EMM-PROC  - Authentication complete (ueid=" NAS_UE_ID_FMT ", cause=%d)", ueid, emm_cause);
@@ -438,7 +438,7 @@ _authentication_t3460_handler (
   void *args)
 {
   LOG_FUNC_IN;
-  int                                     rc;
+  int                                     rc = RETURNerror;
   authentication_data_t                  *data = (authentication_data_t *) (args);
 
   /*
@@ -468,7 +468,7 @@ _authentication_t3460_handler (
      * Release the NAS signalling connection
      */
     if (rc != RETURNerror) {
-      emm_sap_t                               emm_sap;
+      emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMAS_RELEASE_REQ;
       emm_sap.u.emm_as.u.release.guti = NULL;
@@ -506,8 +506,8 @@ _authentication_request (
   authentication_data_t * data)
 {
   LOG_FUNC_IN;
-  emm_sap_t                               emm_sap;
-  int                                     rc;
+  emm_sap_t                               emm_sap = {0};
+  int                                     rc = RETURNerror;
   struct emm_data_context_s              *emm_ctx;
 
   /*
@@ -578,8 +578,8 @@ _authentication_reject (
   unsigned int ueid)
 {
   LOG_FUNC_IN;
-  emm_sap_t                               emm_sap;
-  int                                     rc;
+  emm_sap_t                               emm_sap = {0};
+  int                                     rc = RETURNerror;
   struct emm_data_context_s              *emm_ctx;
 
   /*
@@ -665,7 +665,7 @@ _authentication_abort (
      * Notify EMM that the authentication procedure failed
      */
     if (notify_failure) {
-      emm_sap_t                               emm_sap;
+      emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
       emm_sap.u.emm_reg.ueid = ueid;
