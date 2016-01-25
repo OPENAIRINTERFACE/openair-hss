@@ -211,6 +211,36 @@ emm_proc_tracking_area_update_request (
   emm_ctx = &_emm_data.ctx[ueid];
 #endif
 
+  if (NULL == ue_ctx) {
+    if (EPS_MOBILE_IDENTITY_GUTI == msg->oldguti.guti.typeofidentity) {
+      GUTI_t guti;
+      guti.m_tmsi = msg->oldguti.guti.mtmsi;
+      guti.gummei.MMEgid = msg->oldguti.guti.mmegroupid;
+      guti.gummei.MMEcode = msg->oldguti.guti.mmecode;
+      guti.gummei.plmn.MCCdigit1 = msg->oldguti.guti.mccdigit1;
+      guti.gummei.plmn.MCCdigit2 = msg->oldguti.guti.mccdigit2;
+      guti.gummei.plmn.MCCdigit3 = msg->oldguti.guti.mccdigit3;
+      guti.gummei.plmn.MNCdigit1 = msg->oldguti.guti.mncdigit1;
+      guti.gummei.plmn.MNCdigit2 = msg->oldguti.guti.mncdigit2;
+      guti.gummei.plmn.MNCdigit3 = msg->oldguti.guti.mncdigit3;
+
+      ue_ctx = emm_data_context_get_by_guti (&_emm_data, &guti);
+
+      if (NULL != ue_ctx) {
+        mme_api_notify_ue_id_changed(ue_ctx->ueid, ueid);
+        // ue_id has changed
+        emm_data_context_remove (&_emm_data, ue_ctx);
+        // ue_id changed
+        ue_ctx->ueid = ueid;
+        // put context with right key
+        emm_data_context_add (&_emm_data, ue_ctx);
+      } else {
+        // NO S10
+        rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
+        LOG_FUNC_RETURN (rc);
+      }
+    }
+  }
   /*
    * Requirements MME24.301R10_5.5.3.2.4_2
    */

@@ -268,19 +268,19 @@ emm_recv_attach_request (
   /*
    * Get the Last visited registered TAI
    */
-  tai_t                                   tai,
-                                         *p_tai = NULL;
+  tai_t                                   last_visited_registered_tai,
+                                         *p_last_visited_registered_tai = NULL;
 
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
     LOG_TRACE (INFO, "EMMAS-SAP - get LAST VISITED REGISTERED TAI");
-    p_tai = &tai;
-    tai.plmn.MCCdigit1 = msg->lastvisitedregisteredtai.mccdigit1;
-    tai.plmn.MCCdigit2 = msg->lastvisitedregisteredtai.mccdigit2;
-    tai.plmn.MCCdigit3 = msg->lastvisitedregisteredtai.mccdigit3;
-    tai.plmn.MNCdigit1 = msg->lastvisitedregisteredtai.mncdigit1;
-    tai.plmn.MNCdigit2 = msg->lastvisitedregisteredtai.mncdigit2;
-    tai.plmn.MNCdigit3 = msg->lastvisitedregisteredtai.mncdigit3;
-    tai.tac = msg->lastvisitedregisteredtai.tac;
+    p_last_visited_registered_tai = &last_visited_registered_tai;
+    last_visited_registered_tai.plmn.MCCdigit1 = msg->lastvisitedregisteredtai.mccdigit1;
+    last_visited_registered_tai.plmn.MCCdigit2 = msg->lastvisitedregisteredtai.mccdigit2;
+    last_visited_registered_tai.plmn.MCCdigit3 = msg->lastvisitedregisteredtai.mccdigit3;
+    last_visited_registered_tai.plmn.MNCdigit1 = msg->lastvisitedregisteredtai.mncdigit1;
+    last_visited_registered_tai.plmn.MNCdigit2 = msg->lastvisitedregisteredtai.mncdigit2;
+    last_visited_registered_tai.plmn.MNCdigit3 = msg->lastvisitedregisteredtai.mncdigit3;
+    last_visited_registered_tai.tac = msg->lastvisitedregisteredtai.tac;
   }
 
   /*
@@ -299,7 +299,8 @@ emm_recv_attach_request (
   rc = emm_proc_attach_request (ueid, type,
                                 msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED,
                                 msg->naskeysetidentifier.naskeysetidentifier,
-                                msg->oldgutitype != GUTI_MAPPED, p_guti, p_imsi, p_imei, p_tai,originating_tai,
+                                msg->oldgutitype != GUTI_MAPPED, p_guti, p_imsi, p_imei,
+                                p_last_visited_registered_tai,originating_tai,
                                 msg->uenetworkcapability.eea,
                                 msg->uenetworkcapability.eia,
                                 msg->uenetworkcapability.ucs2,

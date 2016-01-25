@@ -345,7 +345,7 @@ esm_ebr_start_timer (
   long sec,
   nas_timer_callback_t cb)
 {
-  esm_ebr_context_t                      *ebr_ctx;
+  esm_ebr_context_t                      *ebr_ctx = NULL;
 
   LOG_FUNC_IN;
 
@@ -446,7 +446,7 @@ esm_ebr_stop_timer (
   emm_data_context_t * ctx,
   int ebi)
 {
-  esm_ebr_context_t                      *ebr_ctx;
+  esm_ebr_context_t                      *ebr_ctx = NULL;
 
   LOG_FUNC_IN;
 
@@ -569,8 +569,8 @@ esm_ebr_set_status (
   esm_ebr_state status,
   int ue_requested)
 {
-  esm_ebr_context_t                      *ebr_ctx;
-  esm_ebr_state                           old_status;
+  esm_ebr_context_t                      *ebr_ctx = 0;
+  esm_ebr_state                           old_status = ESM_EBR_INACTIVE;
 
   LOG_FUNC_IN;
 

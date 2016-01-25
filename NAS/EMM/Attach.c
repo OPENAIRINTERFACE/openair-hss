@@ -145,6 +145,7 @@ static int                              _emm_attach_update (
   GUTI_t * guti,
   imsi_t * imsi,
   imei_t * imei,
+  const tai_t   * const originating_tai,
   int eea,
   int eia,
   int ucs2,
@@ -327,8 +328,7 @@ emm_proc_attach_request (
       /*
        * Notify EMM that the attach procedure is aborted
        */
-      emm_sap_t                               emm_sap;
-      memset(&emm_sap, 0, sizeof(emm_sap));
+      emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_PROC_ABORT;
       emm_sap.u.emm_reg.ueid = ueid;
@@ -417,9 +417,9 @@ emm_proc_attach_request (
       emm_data_context_add (&_emm_data, *(emm_ctx));
 #endif
     }
-#warning "TRICK TO SET TAC, BUT LOOK AT SPEC"
 
-    if (last_visited_registered_tai) {
+
+    if (NULL != last_visited_registered_tai) {
       LOG_TRACE (WARNING, "EMM-PROC  - Set tac %u in context", last_visited_registered_tai->tac);
       memcpy(&(*emm_ctx)->last_visited_registered_tai, &last_visited_registered_tai, sizeof(tai_t));
     } else {
@@ -432,7 +432,7 @@ emm_proc_attach_request (
   /*
    * Update the EMM context with the current attach procedure parameters
    */
-  rc = _emm_attach_update (*emm_ctx, ueid, type, ksi, guti, imsi, imei, eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP);
+  rc = _emm_attach_update (*emm_ctx, ueid, type, ksi, guti, imsi, imei, originating_tai, eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP);
 
   if (rc != RETURNok) {
     LOG_TRACE (WARNING, "EMM-PROC  - Failed to update EMM context");
@@ -537,8 +537,8 @@ emm_proc_attach_complete (
 {
   emm_data_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap;
-  esm_sap_t                               esm_sap;
+  emm_sap_t                               emm_sap = {0};
+  esm_sap_t                               esm_sap = {0};
 
   LOG_FUNC_IN;
   LOG_TRACE (INFO, "EMM-PROC  - EPS attach complete (ueid=" NAS_UE_ID_FMT ")", ueid);
@@ -547,8 +547,6 @@ emm_proc_attach_complete (
    */
   attach_data_t                          *data = (attach_data_t *) (emm_proc_common_get_args (ueid));
 
-  memset(&emm_sap, 0, sizeof(emm_sap));
-  memset(&esm_sap, 0, sizeof(esm_sap));
   if (data) {
     if (data->esm_msg.length > 0) {
       free (data->esm_msg.value);
@@ -823,9 +821,8 @@ _emm_attach_release (
     /*
      * Notify EMM that the attach procedure is aborted
      */
-    emm_sap_t                               emm_sap;
+    emm_sap_t                               emm_sap = {0};
 
-    memset(&emm_sap, 0, sizeof(emm_sap));
 
     emm_sap.primitive = EMMREG_PROC_ABORT;
     emm_sap.u.emm_reg.ueid = ueid;
@@ -864,9 +861,7 @@ _emm_attach_reject (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
   if (emm_ctx) {
-    emm_sap_t                               emm_sap;
-
-    memset(&emm_sap, 0, sizeof(emm_sap));
+    emm_sap_t                               emm_sap = {0};
 
     LOG_TRACE (WARNING, "EMM-PROC  - EMM attach procedure not accepted " "by the network (ueid=" NAS_UE_ID_FMT ", cause=%d)", emm_ctx->ueid, emm_ctx->emm_cause);
     /*
@@ -983,9 +978,7 @@ _emm_attach_abort (
       /*
        * Notify EMM that EPS attach procedure failed
        */
-      emm_sap_t                               emm_sap;
-
-      memset(&emm_sap, 0, sizeof(emm_sap));
+      emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_ATTACH_REJ;
       emm_sap.u.emm_reg.ueid = ueid;
@@ -1401,7 +1394,7 @@ _emm_attach (
            * Implicit GUTI reallocation;
            * Notify EMM that common procedure has been initiated
            */
-          emm_sap_t                               emm_sap;
+          emm_sap_t                               emm_sap = {0};
 
           emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
           emm_sap.u.emm_reg.ueid = data->ueid;
@@ -1489,11 +1482,10 @@ _emm_attach_accept (
   attach_data_t * data)
 {
   LOG_FUNC_IN;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   int                                     i = 0;
   int                                     rc = RETURNerror;
 
-  memset(&emm_sap, 0, sizeof(emm_sap));
 
   // may be caused by timer not stopped when deleted context
   if (emm_ctx) {
@@ -1816,6 +1808,7 @@ _emm_attach_have_changed (
  **      imsi:      The IMSI provided by the UE                **
  **      imei:      The IMEI provided by the UE                **
  **      eea:       Supported EPS encryption algorithms        **
+ **      originating_tai Originating TAI (from eNB TAI)        **
  **      eia:       Supported EPS integrity algorithms         **
  **      esm_msg_pP:   ESM message contained with the attach re-  **
  **             quest                                      **
@@ -1835,6 +1828,7 @@ _emm_attach_update (
   GUTI_t * guti,
   imsi_t * imsi,
   imei_t * imei,
+  const tai_t   * const originating_tai,
   int eea,
   int eia,
   int ucs2,
@@ -1845,7 +1839,8 @@ _emm_attach_update (
   int gprs_present,
   const OctetString * esm_msg_pP)
 {
-  int                                     mnc_length;
+  int                                     mnc_length = 0;
+  int                                     i, j;
 
   LOG_FUNC_IN;
   /*
@@ -1899,65 +1894,119 @@ _emm_attach_update (
       LOG_FUNC_RETURN (RETURNerror);
     }
   } else {
-    if (ctx->guti == NULL) {
+    if (NULL == ctx->guti ) {
       ctx->guti = (GUTI_t *) calloc (1, sizeof (GUTI_t));
     } else {
-      unsigned int                           *emm_ue_id;
+      unsigned int                           *emm_ue_id = NULL;
 
       obj_hashtable_remove (_emm_data.ctx_coll_guti, (const void *)(ctx->guti), sizeof (*ctx->guti), (void **)&emm_ue_id);
     }
-
-#warning "LG: We should assign the GUTI accordingly to the visited plmn id"
 
     if ((ctx->guti != NULL) && (imsi)) {
       //ctx->tac = mme_config.served_tai.tac[0];
       ctx->guti->gummei.MMEcode = mme_config.gummei.mmec[0];
       ctx->guti->gummei.MMEgid = mme_config.gummei.mme_gid[0];
       ctx->guti->m_tmsi = (uint32_t) ctx;
-      mnc_length = mme_config_find_mnc_length (imsi->u.num.digit1, imsi->u.num.digit2, imsi->u.num.digit3, imsi->u.num.digit4, imsi->u.num.digit5, imsi->u.num.digit6);
 
-      if ((mnc_length == 2) || (mnc_length == 3)) {
-        ctx->guti->gummei.plmn.MCCdigit1 = imsi->u.num.digit1;
-        ctx->guti->gummei.plmn.MCCdigit2 = imsi->u.num.digit2;
-        ctx->guti->gummei.plmn.MCCdigit3 = imsi->u.num.digit3;
-
-        if (mnc_length == 2) {
-          ctx->guti->gummei.plmn.MNCdigit1 = imsi->u.num.digit4;
-          ctx->guti->gummei.plmn.MNCdigit2 = imsi->u.num.digit5;
-          ctx->guti->gummei.plmn.MNCdigit3 = 15;
-          LOG_TRACE (WARNING,
-                     "EMM-PROC  - Assign GUTI from IMSI %01X%01X%01X.%01X%01X.%04X.%02X.%08X to emm_data_context",
-                     ctx->guti->gummei.plmn.MCCdigit1,
-                     ctx->guti->gummei.plmn.MCCdigit2, ctx->guti->gummei.plmn.MCCdigit3, ctx->guti->gummei.plmn.MNCdigit1, ctx->guti->gummei.plmn.MNCdigit2, ctx->guti->gummei.MMEgid, ctx->guti->gummei.MMEcode, ctx->guti->m_tmsi);
-        } else {
-          ctx->guti->gummei.plmn.MNCdigit1 = imsi->u.num.digit5;
-          ctx->guti->gummei.plmn.MNCdigit2 = imsi->u.num.digit6;
-          ctx->guti->gummei.plmn.MNCdigit3 = imsi->u.num.digit4;
-          LOG_TRACE (WARNING,
-                     "EMM-PROC  - Assign GUTI from IMSI %01X%01X%01X.%01X%01X%01X.%04X.%02X.%08X to emm_data_context",
-                     ctx->guti->gummei.plmn.MCCdigit1,
-                     ctx->guti->gummei.plmn.MCCdigit2,
-                     ctx->guti->gummei.plmn.MCCdigit3, ctx->guti->gummei.plmn.MNCdigit1, ctx->guti->gummei.plmn.MNCdigit2, ctx->guti->gummei.plmn.MNCdigit3, ctx->guti->gummei.MMEgid, ctx->guti->gummei.MMEcode, ctx->guti->m_tmsi);
-        }
-
-        obj_hashtable_insert (_emm_data.ctx_coll_guti, (const hash_key_t)(ctx->guti), sizeof (*ctx->guti), (void *)ctx->ueid);
-        LOG_TRACE (INFO,
-                   "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id "
-                   NAS_UE_ID_FMT " PLMN    %x%x%x%x%x%x", ctx->ueid,
-                   ctx->guti->gummei.plmn.MCCdigit1, ctx->guti->gummei.plmn.MCCdigit2, ctx->guti->gummei.plmn.MNCdigit3, ctx->guti->gummei.plmn.MNCdigit1, ctx->guti->gummei.plmn.MNCdigit2, ctx->guti->gummei.plmn.MCCdigit3);
-        LOG_TRACE (INFO, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " NAS_UE_ID_FMT " MMEgid  %04x", ctx->ueid, ctx->guti->gummei.MMEgid);
-        LOG_TRACE (INFO, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " NAS_UE_ID_FMT " MMEcode %01x", ctx->ueid, ctx->guti->gummei.MMEcode);
-        LOG_TRACE (INFO, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " NAS_UE_ID_FMT " m_tmsi  %08x", ctx->ueid, ctx->guti->m_tmsi);
-        LOG_TRACE (WARNING, "EMM-PROC  - Set ctx->guti_is_new to emm_data_context");
+      //
+      if (NULL != originating_tai) {
+        ctx->guti->gummei.plmn.MCCdigit1 = originating_tai->plmn.MCCdigit1;
+        ctx->guti->gummei.plmn.MCCdigit2 = originating_tai->plmn.MCCdigit2;
+        ctx->guti->gummei.plmn.MCCdigit3 = originating_tai->plmn.MCCdigit3;
+        ctx->guti->gummei.plmn.MNCdigit1 = originating_tai->plmn.MNCdigit1;
+        ctx->guti->gummei.plmn.MNCdigit2 = originating_tai->plmn.MNCdigit2;
+        ctx->guti->gummei.plmn.MNCdigit3 = originating_tai->plmn.MNCdigit3;
         ctx->guti_is_new = TRUE;
-      } else {
-        LOG_FUNC_RETURN (RETURNerror);
+        LOG_TRACE (INFO,
+                   "EMM-PROC  - Assign GUTI from originating TAI %01X%01X%01X.%01X%01X.%04X.%02X.%08X to emm_data_context",
+                   ctx->guti->gummei.plmn.MCCdigit1, ctx->guti->gummei.plmn.MCCdigit2, ctx->guti->gummei.plmn.MCCdigit3,
+                   ctx->guti->gummei.plmn.MNCdigit1, ctx->guti->gummei.plmn.MNCdigit2,
+                   ctx->guti->gummei.MMEgid, ctx->guti->gummei.MMEcode, ctx->guti->m_tmsi);
+      } else  {
+        mnc_length = mme_config_find_mnc_length (imsi->u.num.digit1, imsi->u.num.digit2, imsi->u.num.digit3, imsi->u.num.digit4, imsi->u.num.digit5, imsi->u.num.digit6);
+
+        if ((mnc_length == 2) || (mnc_length == 3)) {
+          ctx->guti->gummei.plmn.MCCdigit1 = imsi->u.num.digit1;
+          ctx->guti->gummei.plmn.MCCdigit2 = imsi->u.num.digit2;
+          ctx->guti->gummei.plmn.MCCdigit3 = imsi->u.num.digit3;
+
+          if (mnc_length == 2) {
+            ctx->guti->gummei.plmn.MNCdigit1 = imsi->u.num.digit4;
+            ctx->guti->gummei.plmn.MNCdigit2 = imsi->u.num.digit5;
+            ctx->guti->gummei.plmn.MNCdigit3 = 15;
+           LOG_TRACE (WARNING,
+               "EMM-PROC  - Assign GUTI from IMSI %01X%01X%01X.%01X%01X.%04X.%02X.%08X to emm_data_context",
+               ctx->guti->gummei.plmn.MCCdigit1, ctx->guti->gummei.plmn.MCCdigit2, ctx->guti->gummei.plmn.MCCdigit3,
+               ctx->guti->gummei.plmn.MNCdigit1, ctx->guti->gummei.plmn.MNCdigit2, ctx->guti->gummei.MMEgid,
+               ctx->guti->gummei.MMEcode, ctx->guti->m_tmsi);
+          } else {
+            ctx->guti->gummei.plmn.MNCdigit1 = imsi->u.num.digit5;
+            ctx->guti->gummei.plmn.MNCdigit2 = imsi->u.num.digit6;
+            ctx->guti->gummei.plmn.MNCdigit3 = imsi->u.num.digit4;
+            LOG_TRACE (WARNING,
+                "EMM-PROC  - Assign GUTI from IMSI %01X%01X%01X.%01X%01X%01X.%04X.%02X.%08X to emm_data_context",
+                ctx->guti->gummei.plmn.MCCdigit1, ctx->guti->gummei.plmn.MCCdigit2, ctx->guti->gummei.plmn.MCCdigit3,
+                ctx->guti->gummei.plmn.MNCdigit1, ctx->guti->gummei.plmn.MNCdigit2, ctx->guti->gummei.plmn.MNCdigit3,
+                ctx->guti->gummei.MMEgid, ctx->guti->gummei.MMEcode, ctx->guti->m_tmsi);
+          }
+        } else {
+          // QUICK FIX: PICK THE FIRST PLMN SERVED BY THE MME
+          ctx->guti->gummei.plmn.MCCdigit1 = _emm_data.conf.tai_list.tai[0].plmn.MCCdigit1;
+          ctx->guti->gummei.plmn.MCCdigit2 = _emm_data.conf.tai_list.tai[0].plmn.MCCdigit2;
+          ctx->guti->gummei.plmn.MCCdigit3 = _emm_data.conf.tai_list.tai[0].plmn.MCCdigit3;
+          ctx->guti->gummei.plmn.MNCdigit1 = _emm_data.conf.tai_list.tai[0].plmn.MNCdigit1;
+          ctx->guti->gummei.plmn.MNCdigit2 = _emm_data.conf.tai_list.tai[0].plmn.MNCdigit2;
+          ctx->guti->gummei.plmn.MNCdigit3 = _emm_data.conf.tai_list.tai[0].plmn.MNCdigit3;
+        }
       }
+      obj_hashtable_insert (_emm_data.ctx_coll_guti, (const hash_key_t)(ctx->guti), sizeof (*ctx->guti), (void *)ctx->ueid);
+      LOG_TRACE (INFO,
+          "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id "
+          NAS_UE_ID_FMT " PLMN    %x%x%x%x%x%x", ctx->ueid,
+          ctx->guti->gummei.plmn.MCCdigit1, ctx->guti->gummei.plmn.MCCdigit2, ctx->guti->gummei.plmn.MNCdigit3, ctx->guti->gummei.plmn.MNCdigit1, ctx->guti->gummei.plmn.MNCdigit2, ctx->guti->gummei.plmn.MCCdigit3);
+      LOG_TRACE (INFO, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " NAS_UE_ID_FMT " MMEgid  %04x", ctx->ueid, ctx->guti->gummei.MMEgid);
+      LOG_TRACE (INFO, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " NAS_UE_ID_FMT " MMEcode %01x", ctx->ueid, ctx->guti->gummei.MMEcode);
+      LOG_TRACE (INFO, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " NAS_UE_ID_FMT " m_tmsi  %08x", ctx->ueid, ctx->guti->m_tmsi);
+      LOG_TRACE (WARNING, "EMM-PROC  - Set ctx->guti_is_new to emm_data_context");
+
     } else {
       LOG_FUNC_RETURN (RETURNerror);
     }
   }
 
+  // build TAI list
+  if (0 == ctx->tai_list.n_tais) {
+    j = 0;
+    for (i=0; i < _emm_data.conf.tai_list.n_tais; i++) {
+      if ((_emm_data.conf.tai_list.tai[i].plmn.MCCdigit1 == ctx->guti->gummei.plmn.MCCdigit1) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.MCCdigit2 == ctx->guti->gummei.plmn.MCCdigit2) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.MCCdigit3 == ctx->guti->gummei.plmn.MCCdigit3) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.MNCdigit1 == ctx->guti->gummei.plmn.MNCdigit1) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.MNCdigit2 == ctx->guti->gummei.plmn.MNCdigit2) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.MNCdigit3 == ctx->guti->gummei.plmn.MNCdigit3) ) {
+
+      }
+      ctx->tai_list.tai[j].plmn.MCCdigit1 = ctx->guti->gummei.plmn.MCCdigit1;
+      ctx->tai_list.tai[j].plmn.MCCdigit2 = ctx->guti->gummei.plmn.MCCdigit2;
+      ctx->tai_list.tai[j].plmn.MCCdigit3 = ctx->guti->gummei.plmn.MCCdigit3;
+      ctx->tai_list.tai[j].plmn.MNCdigit1 = ctx->guti->gummei.plmn.MNCdigit1;
+      ctx->tai_list.tai[j].plmn.MNCdigit2 = ctx->guti->gummei.plmn.MNCdigit2;
+      ctx->tai_list.tai[j].plmn.MNCdigit3 = ctx->guti->gummei.plmn.MNCdigit3;
+      ctx->tai_list.tai[j].tac            = _emm_data.conf.tai_list.tai[i].tac;
+      j += 1;
+      if (15 == ctx->guti->gummei.plmn.MNCdigit3) { // mnc length 2
+        LOG_TRACE (INFO, "UE registered to TAC %d%d%d.%d%d:%d\n",
+            ctx->guti->gummei.plmn.MCCdigit1, ctx->guti->gummei.plmn.MCCdigit2, ctx->guti->gummei.plmn.MCCdigit3,
+            ctx->guti->gummei.plmn.MNCdigit1, ctx->guti->gummei.plmn.MNCdigit2, _emm_data.conf.tai_list.tai[i].tac);
+      } else {
+        LOG_TRACE (INFO, "UE registered to TAC %d%d%d.%d%d%d:%d\n",
+            ctx->guti->gummei.plmn.MCCdigit1, ctx->guti->gummei.plmn.MCCdigit2, ctx->guti->gummei.plmn.MCCdigit3,
+            ctx->guti->gummei.plmn.MNCdigit1, ctx->guti->gummei.plmn.MNCdigit2, ctx->guti->gummei.plmn.MNCdigit3,
+            _emm_data.conf.tai_list.tai[i].tac);
+      }
+    }
+    ctx->tai_list.n_tais = j;
+  }
   /*
    * The IMSI if provided by the UE
    */

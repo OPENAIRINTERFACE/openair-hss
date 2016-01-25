@@ -126,11 +126,11 @@ MME :
     # maximum of 16 TAIs, comma separated
     # !!! Actually use only one PLMN
     TAI_LIST = ( 
-         {MCC="208" ; MNC="95";  TAC = "5"; },                                  # YOUR TAI CONFIG HERE
-         {MCC="208" ; MNC="95";  TAC = "3"; },                                  # YOUR TAI CONFIG HERE
-         {MCC="208" ; MNC="95";  TAC = "2"; },                                  # YOUR TAI CONFIG HERE
-         {MCC="208" ; MNC="95";  TAC = "1"; },                                  # YOUR TAI CONFIG HERE
-         {MCC="208" ; MNC="95";  TAC = "4"; }                                   # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="95";  TAC = "15"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="95";  TAC = "14"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="95";  TAC = "12"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="95";  TAC = "11"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="95";  TAC = "10"; }                                   # YOUR TAI CONFIG HERE
     );
     
     

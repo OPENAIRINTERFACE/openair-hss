@@ -655,6 +655,13 @@ mme_api_new_guti (
       tai_list->tai[j].plmn.MNCdigit3 = plmn.MNCdigit3;
       tai_list->tai[j].tac            = _emm_data.conf.tai_list.tai[i].tac;
       j += 1;
+      if (15 == plmn.MNCdigit3) { // mnc length 2
+        LOG_TRACE (INFO, "mme_api_new_guti - UE registered to TAC %d%d%d.%d%d:%d\n",
+            plmn.MCCdigit1, plmn.MCCdigit2, plmn.MCCdigit3, plmn.MNCdigit1, plmn.MNCdigit2, _emm_data.conf.tai_list.tai[i].tac);
+      } else {
+        LOG_TRACE (INFO, "mme_api_new_guti - UE registered to TAC %d%d%d.%d%d%d:%d\n",
+            plmn.MCCdigit1, plmn.MCCdigit2, plmn.MCCdigit3, plmn.MNCdigit1, plmn.MNCdigit2, plmn.MNCdigit3, _emm_data.conf.tai_list.tai[i].tac);
+      }
     }
     tai_list->n_tais = j;
 

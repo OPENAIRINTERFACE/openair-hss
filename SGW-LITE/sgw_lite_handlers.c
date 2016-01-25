@@ -405,6 +405,7 @@ sgw_lite_handle_gtpv1uCreateTunnelResp (
             ipcp_option = in_pco_p->byte[pco_in_index];
             ipcp_option_length = in_pco_p->byte[pco_in_index + 1];
             ipcp_remaining_length = ipcp_remaining_length - ipcp_option_length;
+            ipcp_out_code = IPCP_CODE_CONFIGURE_ACK;
             SPGW_APP_DEBUG ("PCO: Protocol identifier IPCP ipcp_option %u ipcp_option_length %u ipcp_remaining_length %u pco_in_index %u\n", ipcp_option, ipcp_option_length, ipcp_remaining_length, pco_in_index);
 
             switch (ipcp_option) {
@@ -416,7 +417,9 @@ sgw_lite_handle_gtpv1uCreateTunnelResp (
                   (((uint32_t) in_pco_p->byte[pco_in_index + 3]) << 16) | (((uint32_t) in_pco_p->byte[pco_in_index + 4]) << 8) | (((uint32_t) in_pco_p->byte[pco_in_index + 5]));
                 SPGW_APP_DEBUG ("PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_dns_prim_ipv4_addr 0x%x\n", ipcp_dns_prim_ipv4_addr);
 
-                if ((ipcp_dns_prim_ipv4_addr == 0) || (spgw_config.pgw_config.ipv4.default_dns_v4 != ipcp_dns_prim_ipv4_addr)) {
+                if (ipcp_dns_prim_ipv4_addr == 0) {
+                  ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_v4;
+                } else if (spgw_config.pgw_config.ipv4.default_dns_v4 != ipcp_dns_prim_ipv4_addr) {
                   ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
                   ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_v4;
                 } else {
@@ -439,7 +442,9 @@ sgw_lite_handle_gtpv1uCreateTunnelResp (
                   (((uint32_t) in_pco_p->byte[pco_in_index + 3]) << 16) | (((uint32_t) in_pco_p->byte[pco_in_index + 4]) << 8) | (((uint32_t) in_pco_p->byte[pco_in_index + 5]));
                 SPGW_APP_DEBUG ("PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_dns_sec_ipv4_addr 0x%x\n", ipcp_dns_sec_ipv4_addr);
 
-                if ((ipcp_dns_prim_ipv4_addr == 0) || (spgw_config.pgw_config.ipv4.default_dns_sec_v4 != ipcp_dns_sec_ipv4_addr)) {
+                if (ipcp_dns_sec_ipv4_addr == 0) {
+                  ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec_v4;
+                } else if (spgw_config.pgw_config.ipv4.default_dns_sec_v4 != ipcp_dns_sec_ipv4_addr) {
                   ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
                   ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec_v4;
                 } else {

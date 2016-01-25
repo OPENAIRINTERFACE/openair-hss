@@ -46,6 +46,7 @@
 #include "emm_msgDef.h"
 #include "emm_proc.h"
 #include "mme_config.h"
+#include "assertions.h"
 
 #include <string.h>             // strlen
 
@@ -169,6 +170,7 @@ emm_send_attach_accept (
 {
   LOG_FUNC_IN;
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
+  int                                     i = 0;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send Attach Accept message");
   LOG_TRACE (INFO, "EMMAS-SAP - size = EMM_HEADER_MAXIMUM_LENGTH(%d)", size);
@@ -198,16 +200,36 @@ emm_send_attach_accept (
    * Mandatory - Tracking area identity list
    */
   size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH;
-  emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
-  emm_msg->tailist.numberofelements = msg->n_tacs;
-  emm_msg->tailist.mccdigit1[0] = msg->UEid.guti->gummei.plmn.MCCdigit1;
-  emm_msg->tailist.mccdigit2[0] = msg->UEid.guti->gummei.plmn.MCCdigit2;
-  emm_msg->tailist.mccdigit3[0] = msg->UEid.guti->gummei.plmn.MCCdigit3;
-  emm_msg->tailist.mncdigit1[0] = msg->UEid.guti->gummei.plmn.MNCdigit1;
-  emm_msg->tailist.mncdigit2[0] = msg->UEid.guti->gummei.plmn.MNCdigit2;
-  emm_msg->tailist.mncdigit3[0] = msg->UEid.guti->gummei.plmn.MNCdigit3;
-  emm_msg->tailist.tac[0] = msg->tac;
-  LOG_TRACE (INFO, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d)  (%d)", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
+  emm_msg->tailist.typeoflist = msg->tai_list.list_type;
+  emm_msg->tailist.numberofelements = msg->tai_list.n_tais - 1;
+  emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.MCCdigit1;
+  emm_msg->tailist.mccdigit2[0] = msg->tai_list.tai[0].plmn.MCCdigit2;
+  emm_msg->tailist.mccdigit3[0] = msg->tai_list.tai[0].plmn.MCCdigit3;
+  emm_msg->tailist.mncdigit1[0] = msg->tai_list.tai[0].plmn.MNCdigit1;
+  emm_msg->tailist.mncdigit2[0] = msg->tai_list.tai[0].plmn.MNCdigit2;
+  emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.MNCdigit3;
+  emm_msg->tailist.tac[0] = msg->tai_list.tai[0].tac;
+  LOG_TRACE (INFO, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_LENGTH(%d)  (%d)", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
+  AssertFatal(msg->tai_list.n_tais <= 16, "Twoo many TAIs in TAI list");
+  if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == emm_msg->tailist.typeoflist) {
+    for (i = 1; i < msg->tai_list.n_tais; i++) {
+      emm_msg->tailist.tac[i] = msg->tai_list.tai[i].tac;
+      size += 2;
+      LOG_TRACE (INFO, "EMMAS-SAP - size += " "TRACKING AREA CODE LENGTH(%d)  (%d)", 2, size);
+    }
+  } else if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == emm_msg->tailist.typeoflist) {
+    for (i = 1; i < msg->tai_list.n_tais; i++) {
+      emm_msg->tailist.mccdigit1[i] = msg->tai_list.tai[i].plmn.MCCdigit1;
+      emm_msg->tailist.mccdigit2[i] = msg->tai_list.tai[i].plmn.MCCdigit2;
+      emm_msg->tailist.mccdigit3[i] = msg->tai_list.tai[i].plmn.MCCdigit3;
+      emm_msg->tailist.mncdigit1[i] = msg->tai_list.tai[i].plmn.MNCdigit1;
+      emm_msg->tailist.mncdigit2[i] = msg->tai_list.tai[i].plmn.MNCdigit2;
+      emm_msg->tailist.mncdigit3[i] = msg->tai_list.tai[i].plmn.MNCdigit3;
+      emm_msg->tailist.tac[i] = msg->tai_list.tai[i].tac;
+      size += 5;
+      LOG_TRACE (INFO, "EMMAS-SAP - size += " "TRACKING AREA IDENTITY LENGTH(%d)  (%d)", 5, size);
+    }
+  }
   /*
    * Mandatory - ESM message container
    */

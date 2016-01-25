@@ -26,6 +26,7 @@
 #include "assertions.h"
 #include "intertask_interface.h"
 #include "esm_proc.h"
+#include "nas_log.h"
 #include "msc.h"
 
 #ifndef NAS_ITTI_MESSAGING_H_
@@ -60,6 +61,7 @@ static inline void nas_itti_pdn_connectivity_req(
   esm_proc_data_t        *proc_data_pP,
   esm_proc_pdn_request_t  request_typeP)
 {
+  LOG_FUNC_IN;
   MessageDef *message_p = NULL;
   uint8_t     i;
   uint8_t     index;
@@ -152,6 +154,7 @@ static inline void nas_itti_pdn_connectivity_req(
         ueidP, NAS_PDN_CONNECTIVITY_REQ(message_p).imsi);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  LOG_FUNC_OUT;
 }
 
 
@@ -164,6 +167,7 @@ static inline void nas_itti_establish_cnf(
   const uint16_t         selected_encryption_algorithmP,
   const uint16_t         selected_integrity_algorithmP)
 {
+  LOG_FUNC_IN;
   MessageDef *message_p = NULL;
 
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_CONNECTION_ESTABLISHMENT_CNF);
@@ -185,6 +189,7 @@ static inline void nas_itti_establish_cnf(
         ue_idP, lengthP, selected_encryption_algorithmP, selected_integrity_algorithmP);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  LOG_FUNC_OUT;
 }
 
 static inline void nas_itti_auth_info_req(
@@ -193,7 +198,8 @@ static inline void nas_itti_auth_info_req(
   uint8_t             initial_reqP,
   const uint8_t      *auts_pP)
 {
-  MessageDef *message_p;
+  LOG_FUNC_IN;
+  MessageDef *message_p = NULL;
 
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_AUTHENTICATION_PARAM_REQ);
   memset(&message_p->ittiMsg.nas_auth_param_req,
@@ -232,6 +238,7 @@ static inline void nas_itti_auth_info_req(
         ue_idP, NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  LOG_FUNC_OUT;
 }
 
 static inline void nas_itti_establish_rej(
@@ -239,6 +246,7 @@ static inline void nas_itti_establish_rej(
   const imsi_t *const imsi_pP
   , uint8_t           initial_reqP)
 {
+  LOG_FUNC_IN;
   MessageDef *message_p;
 
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_AUTHENTICATION_PARAM_REQ);
@@ -269,6 +277,7 @@ static inline void nas_itti_establish_rej(
         ue_idP, NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  LOG_FUNC_OUT;
 }
 # endif
 
