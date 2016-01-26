@@ -115,6 +115,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "")
    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 add_list_string_option(CMAKE_BUILD_TYPE "RelWithDebInfo" "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." Debug Release RelWithDebInfo MinSizeRel)
+Message("Build type is ${CMAKE_BUILD_TYPE}")
 
 Message("Architecture is ${CMAKE_SYSTEM_PROCESSOR}")
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7l")
@@ -132,8 +133,9 @@ set(CMAKE_C_FLAGS
 # set a flag for changes in the source code
 # these changes are related to hardcoded path to include .h files
 add_definitions(-DCMAKER)
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -g -DMALLOC_CHECK_=3")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -g -DMALLOC_CHECK_=3 -O2") 
+# TODO Debug release link with libraries DSO...
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -g -DMALLOC_CHECK_=3 -O0")
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -g -DMALLOC_CHECK_=3 -O1") 
 
 
 set(GIT_BRANCH        "UNKNOWN")

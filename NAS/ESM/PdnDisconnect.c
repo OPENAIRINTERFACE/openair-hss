@@ -235,7 +235,7 @@ esm_proc_pdn_disconnect_reject (
 {
   LOG_FUNC_IN;
   int                                     rc;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
 
   LOG_TRACE (WARNING, "ESM-PROC  - PDN disconnect not accepted by the network " "(ueid=" NAS_UE_ID_FMT ")", ctx->ueid);
   /*

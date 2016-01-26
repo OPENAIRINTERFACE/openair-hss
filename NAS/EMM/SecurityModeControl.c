@@ -350,7 +350,7 @@ emm_proc_security_mode_control (
        * Notify EMM that common procedure has been initiated
        */
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " NAS_UE_ID_FMT " (security mode control)",ueid);
-      emm_sap_t                               emm_sap;
+      emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
       emm_sap.u.emm_reg.ueid = ueid;
@@ -390,7 +390,7 @@ emm_proc_security_mode_complete (
 {
   emm_data_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
 
   LOG_FUNC_IN;
   LOG_TRACE (INFO, "EMM-PROC  - Security mode complete (ueid=" NAS_UE_ID_FMT ")", ueid);
@@ -537,7 +537,7 @@ emm_proc_security_mode_reject (
    * Notify EMM that the authentication procedure failed
    */
   MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " (security mode reject)", ueid);
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
 
   emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
   emm_sap.u.emm_reg.ueid = ueid;
@@ -639,7 +639,7 @@ _security_request (
   int is_new)
 {
   struct emm_data_context_s              *emm_ctx = NULL;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNerror;
 
   LOG_FUNC_IN;
@@ -764,7 +764,7 @@ _security_abort (
      */
     if (notify_failure) {
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " (security abort)", data->ueid);
-      emm_sap_t                               emm_sap;
+      emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
       emm_sap.u.emm_reg.ueid = ueid;

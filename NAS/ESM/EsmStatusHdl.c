@@ -180,7 +180,7 @@ esm_proc_status (
 {
   LOG_FUNC_IN;
   int                                     rc;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
 
   LOG_TRACE (INFO, "ESM-PROC  - ESM status procedure requested");
   /*

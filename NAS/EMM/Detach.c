@@ -293,7 +293,7 @@ emm_proc_detach_request (
     /*
      * Normal detach without UE switch-off
      */
-    emm_sap_t                               emm_sap;
+    emm_sap_t                               emm_sap = {0};
     emm_as_data_t                          *emm_as = &emm_sap.u.emm_as.u.data;
 
     MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_NAS_INFO_DETACH ue id " NAS_UE_ID_FMT " ", ueid);
@@ -326,7 +326,7 @@ emm_proc_detach_request (
      * to be locally deactivated
      */
     MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ ue id " NAS_UE_ID_FMT " ", ueid);
-    esm_sap_t                               esm_sap;
+    esm_sap_t                               esm_sap = {0};
 
     esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ;
     esm_sap.ueid = ueid;
@@ -335,7 +335,7 @@ emm_proc_detach_request (
     rc = esm_sap_send (&esm_sap);
 
     if (rc != RETURNerror) {
-      emm_sap_t                               emm_sap;
+      emm_sap_t                               emm_sap = {0};
 
       /*
        * Notify EMM that the UE has been implicitly detached

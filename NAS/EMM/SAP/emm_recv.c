@@ -498,7 +498,11 @@ emm_recv_tracking_area_update_request (
   int                                     rc = RETURNok;
 
   LOG_FUNC_IN;
-  LOG_TRACE (INFO, "EMMAS-SAP - Received Tracking Area Update Request message");
+  LOG_TRACE (INFO, "EMMAS-SAP - Received Tracking Area Update Request message, Security context %s Integrity protected %s MAC matched %s Ciphered %s",
+      (0 < decode_status->security_context_available)?"yes":"no",
+      (0 < decode_status->integrity_protected_message)?"yes":"no",
+      (0 < decode_status->mac_matched)?"yes":"no",
+      (0 < decode_status->ciphered_message)?"yes":"no");
   rc = emm_proc_tracking_area_update_request(ueid, msg, emm_cause, decode_status);
   /*
    * LW: Not completely implemented; send a Received Tracking Area Update Reject to induce a Attach Request from UE!

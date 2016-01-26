@@ -448,7 +448,7 @@ _dedicated_eps_bearer_activate (
   const OctetString * msg)
 {
   LOG_FUNC_IN;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
   /*

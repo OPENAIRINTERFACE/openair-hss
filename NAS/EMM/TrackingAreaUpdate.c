@@ -211,6 +211,7 @@ emm_proc_tracking_area_update_request (
   emm_ctx = &_emm_data.ctx[ueid];
 #endif
 
+  // May be the MME APP module did not find the context, but if we have the GUTI, we may find it
   if (NULL == ue_ctx) {
     if (EPS_MOBILE_IDENTITY_GUTI == msg->oldguti.guti.typeofidentity) {
       GUTI_t guti;
@@ -234,6 +235,14 @@ emm_proc_tracking_area_update_request (
         ue_ctx->ueid = ueid;
         // put context with right key
         emm_data_context_add (&_emm_data, ue_ctx);
+
+        // update decode_status
+        //if (NULL != ue_ctx->security) {
+        //  decode_status->security_context_available = 1;
+        //}
+        // ...anyway now for simplicity we reject the TAU (else have to re-do integrity checking on NAS msg)
+        rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
+        LOG_FUNC_RETURN (rc);
       } else {
         // NO S10
         rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
@@ -684,9 +693,7 @@ _emm_tracking_area_update_reject (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
   if (emm_ctx) {
-    emm_sap_t                               emm_sap;
-
-    memset(&emm_sap, 0, sizeof(emm_sap));
+    emm_sap_t                               emm_sap = {0};
 
     LOG_TRACE (WARNING, "EMM-PROC  - EMM tracking area update procedure not accepted " "by the network (ueid=" NAS_UE_ID_FMT ", cause=%d)", emm_ctx->ueid, emm_ctx->emm_cause);
     /*
@@ -727,11 +734,10 @@ _emm_tracking_area_update_accept (
   tau_accept_data_t * data)
 {
   LOG_FUNC_IN;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   int                                     i = 0;
   int                                     rc = RETURNerror;
 
-  memset(&emm_sap, 0, sizeof(emm_sap));
   // may be caused by timer not stopped when deleted context
   if (emm_ctx) {
     /*
@@ -860,9 +866,7 @@ _emm_tracking_area_update_abort (
     /*
      * Notify EMM that EPS attach procedure failed
      */
-    emm_sap_t                               emm_sap;
-
-    memset(&emm_sap, 0, sizeof(emm_sap));
+    emm_sap_t                               emm_sap = {0};
 
     emm_sap.primitive = EMMREG_ATTACH_REJ;
     emm_sap.u.emm_reg.ueid = ueid;

@@ -374,10 +374,11 @@ _emm_cn_pdn_connectivity_res (
        * Implicit GUTI reallocation;
        * * * * Notify EMM that common procedure has been initiated
        */
-      emm_sap_t                               emm_sap;
+      emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
       emm_sap.u.emm_reg.ueid = msg_pP->ue_id;
+      emm_sap.u.emm_reg.ctx  = emm_ctx_p;
       rc = emm_sap_send (&emm_sap);
     }
   }

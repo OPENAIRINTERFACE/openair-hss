@@ -179,7 +179,7 @@ nas_proc_establish_ind (
   int                                     rc = RETURNerror;
 
   if (len > 0) {
-    emm_sap_t                               emm_sap;
+    emm_sap_t                               emm_sap = {0};
 
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_REQ ue id " NAS_UE_ID_FMT " plmn %02x%02x%02x tac %u", ueid, plmn[0], plmn[1], plmn[2], tac);
     /*
@@ -228,7 +228,7 @@ nas_proc_dl_transfer_cnf (
   uint32_t ueid)
 {
   LOG_FUNC_IN;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND dl_transfer_conf ue id " NAS_UE_ID_FMT " ", ueid);
@@ -266,7 +266,7 @@ nas_proc_dl_transfer_rej (
   uint32_t ueid)
 {
   LOG_FUNC_IN;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND dl_transfer_reject ue id " NAS_UE_ID_FMT " ", ueid);
@@ -311,7 +311,7 @@ nas_proc_ul_transfer_ind (
   LOG_FUNC_IN;
 
   if (len > 0) {
-    emm_sap_t                               emm_sap;
+    emm_sap_t                               emm_sap = {0};
 
     /*
      * Notify the EMM procedure call manager that data transfer
@@ -335,7 +335,7 @@ nas_proc_auth_param_res (
   emm_cn_auth_res_t * emm_cn_auth_res)
 {
   int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
 
   LOG_FUNC_IN;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_AUTHENTICATION_PARAM_RES");
@@ -350,7 +350,7 @@ nas_proc_auth_param_fail (
   emm_cn_auth_fail_t * emm_cn_auth_fail)
 {
   int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
 
   LOG_FUNC_IN;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_AUTHENTICATION_PARAM_FAIL");
@@ -365,7 +365,7 @@ nas_proc_deregister_ue (
   uint32_t ue_id)
 {
   int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
 
   LOG_FUNC_IN;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_DEREGISTER_UE ue_id " NAS_UE_ID_FMT " ", ue_id);
@@ -380,7 +380,7 @@ nas_proc_pdn_connectivity_res (
   emm_cn_pdn_res_t * emm_cn_pdn_res)
 {
   int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
 
   LOG_FUNC_IN;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONNECTIVITY_RES");
@@ -395,7 +395,7 @@ nas_proc_pdn_connectivity_fail (
   emm_cn_pdn_fail_t * emm_cn_pdn_fail)
 {
   int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
 
   LOG_FUNC_IN;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONNECTIVITY_FAIL");

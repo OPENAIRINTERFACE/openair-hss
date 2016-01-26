@@ -330,7 +330,7 @@ esm_proc_pdn_connectivity_reject (
   LOG_TRACE (WARNING, "ESM-PROC  - PDN connectivity not accepted by the " "network (ueid=" NAS_UE_ID_FMT ")", ctx->ueid);
 
   if (is_standalone) {
-    emm_sap_t                               emm_sap;
+    emm_sap_t                               emm_sap = {0};
 
     /*
      * Notity EMM that ESM PDU has to be forwarded to lower layers

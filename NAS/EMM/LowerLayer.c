@@ -91,7 +91,7 @@ lowerlayer_success (
   unsigned int ueid)
 {
   LOG_FUNC_IN;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
   emm_sap.primitive = EMMREG_LOWERLAYER_SUCCESS;
@@ -121,7 +121,7 @@ lowerlayer_failure (
   unsigned int ueid)
 {
   LOG_FUNC_IN;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
   emm_sap.primitive = EMMREG_LOWERLAYER_FAILURE;
@@ -185,7 +185,7 @@ lowerlayer_release (
   int cause)
 {
   LOG_FUNC_IN;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
   emm_sap.primitive = EMMREG_LOWERLAYER_RELEASE;
@@ -216,7 +216,7 @@ lowerlayer_data_ind (
   unsigned int ueid,
   const OctetString * data)
 {
-  esm_sap_t                               esm_sap;
+  esm_sap_t                               esm_sap = {0};
   int                                     rc;
   emm_data_context_t                     *emm_ctx = NULL;
 
@@ -259,7 +259,7 @@ lowerlayer_data_req (
 {
   LOG_FUNC_IN;
   int                                     rc;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
   struct emm_data_context_s              *ctx = NULL;
 

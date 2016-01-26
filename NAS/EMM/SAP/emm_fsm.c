@@ -292,7 +292,7 @@ emm_fsm_process (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
 
   DevAssert (emm_ctx != NULL);
-  status = emm_fsm_get_status (0, emm_ctx);
+  status = emm_fsm_get_status (evt->ueid, emm_ctx);
 #else
 
   if (evt->ueid >= EMM_FSM_NB_UE_MAX) {

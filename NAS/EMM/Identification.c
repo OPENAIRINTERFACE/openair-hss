@@ -197,7 +197,7 @@ emm_proc_identification (
        * Notify EMM that common procedure has been initiated
        */
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " NAS_UE_ID_FMT " (identification)", ueid);
-      emm_sap_t                               emm_sap;
+      emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
       emm_sap.u.emm_reg.ueid = ueid;
@@ -239,7 +239,7 @@ emm_proc_identification_complete (
   uint32_t * tmsi)
 {
   int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   emm_data_context_t                     *emm_ctx = NULL;
 
   LOG_FUNC_IN;
@@ -423,7 +423,7 @@ int
 _identification_request (
   identification_data_t * data)
 {
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   int                                     rc;
   struct emm_data_context_s              *emm_ctx = NULL;
 
@@ -540,7 +540,7 @@ _identification_abort (
      */
     if (notify_failure) {
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " ", ueid);
-      emm_sap_t                               emm_sap;
+      emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
       emm_sap.u.emm_reg.ueid = ueid;

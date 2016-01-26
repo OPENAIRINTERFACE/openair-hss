@@ -3,4 +3,5 @@
 # generate XML scenario file
 cd openair-cn/TEST/SCENARIOS/INITIAL_ATTACH
 test_epc --build-test --test-dir . --old-enb-config-file attach_guti.enb.band7.tm1.usrpb210.epc.remote.conf --pcap-file attach_guti.pcapng
+test_epc --build-test --test-dir . --old-enb-config-file attach_unknown_guti.enb.band7.tm1.usrpb210.epc.remote.conf --pcap-file attach_unknown_guti.pcapng
 

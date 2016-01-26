@@ -122,7 +122,7 @@ emm_proc_status (
 {
   LOG_FUNC_IN;
   int                                     rc;
-  emm_sap_t                               emm_sap;
+  emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
   struct emm_data_context_s              *ctx = NULL;
 

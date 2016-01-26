@@ -934,9 +934,7 @@ _emm_attach_abort (
 
   if (data) {
     unsigned int                            ueid = data->ueid;
-    esm_sap_t                               esm_sap;
-
-    memset(&esm_sap, 0, sizeof(esm_sap));
+    esm_sap_t                               esm_sap = {0};
 
     LOG_TRACE (WARNING, "EMM-PROC  - Abort the attach procedure (ueid=" NAS_UE_ID_FMT ")", ueid);
 #if NAS_BUILT_IN_EPC
@@ -1309,11 +1307,9 @@ _emm_attach (
   void *args)
 {
   LOG_FUNC_IN;
-  esm_sap_t                               esm_sap;
+  esm_sap_t                               esm_sap = {0};
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
-
-  memset(&esm_sap, 0, sizeof(esm_sap));
 
   LOG_TRACE (INFO, "EMM-PROC  - Attach UE (ueid=" NAS_UE_ID_FMT ")", emm_ctx->ueid);
   /*
