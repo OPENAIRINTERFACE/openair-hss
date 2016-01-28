@@ -591,8 +591,9 @@ s1ap_handle_conn_est_cnf (
   DevAssert (conn_est_cnf_pP != NULL);
 
   if ((ue_ref = s1ap_is_ue_mme_id_in_list (conn_est_cnf_pP->nas_conn_est_cnf.UEid)) == NULL) {
-    S1AP_DEBUG ("This mme ue s1ap id (" S1AP_UE_ID_FMT ") is not attached to any UE context\n", conn_est_cnf_pP->nas_conn_est_cnf.UEid);
-    DevParam (conn_est_cnf_pP->nas_conn_est_cnf.UEid, 0, 0);
+    S1AP_ERROR ("This mme ue s1ap id (" S1AP_UE_ID_FMT ") is not attached to any UE context\n", conn_est_cnf_pP->nas_conn_est_cnf.UEid);
+    // There are some race conditions were NAS T3450 timer is stopped and removed at same time
+    return;
   }
 
   /*
