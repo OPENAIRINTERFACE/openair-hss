@@ -1,0 +1,18 @@
+msc {
+width = "2048";
+   S1AP_ENB, GTPU_SGW, S1AP_MME, MME_APP, NAS_MME, NAS_EMM, NAS_ESM, SP_GW_MME, S6A, HSS;
+  S1AP_MME<=S1AP_ENB [ label = "(83|0044:7487590) InitialContextSetup/Successfull outcome eNB_ue_s1ap_id 0x06692D mme_ue_s1ap_id 0x88000A50 len 0", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>MME_APP [ label = "(84|0044:7487640) MME_APP_INITIAL_CONTEXT_SETUP_RSP mme_ue_s1ap_id 0x88000A50 ebi 5 s1u enb teid 3396329693", linecolour="black" , textcolour="black" ] ;
+  MME_APP=>SP_GW_MME [ label = "(85|0044:7488110) SGW_MODIFY_BEARER_REQUEST teid 1 ebi 5", linecolour="black" , textcolour="black" ] ;
+  SP_GW_MME=>MME_APP [ label = "(86|0044:7599670) SGW_MODIFY_BEARER_RESPONSE ebi 5  trxn 0", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME note S1AP_MME [ label = "0044:9484100
+ Event SCTP_CLOSE_ASSOCIATION assoc_id: 29", textcolour="black" ] ;
+  S1AP_MME=>NAS_MME [ label = "(88|0044:9484150) S1AP_ENB_DEREGISTERED_IND num ue to deregister 1", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "0050:527026send
+ ATTACH_ACCEPT to s_TMSI 1.1811941664 ", textcolour="black" ] ;
+  NAS_MME=>MME_APP [ label = "(90|0050:527356NAS_CONNECTION_ESTABLISHMENT_CNF) ue id 88000A50 len 91 sea 0 sia 40 ", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "0050:527387T3450
+ restarted UE 0x88000a50", textcolour="black" ] ;
+  MME_APP=>S1AP_MME [ label = "(92|0050:5274780) MME_APP_CONNECTION_ESTABLISHMENT_CNF ebi 5 s1u_sgw teid 1 qci 9 prio level 1 sea 0x0 sia 0x40", linecolour="black" , textcolour="black" ] ;
+
+}

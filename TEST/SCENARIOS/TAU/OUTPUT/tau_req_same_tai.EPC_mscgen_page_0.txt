@@ -1,0 +1,50 @@
+msc {
+width = "2048";
+   S1AP_ENB, GTPU_SGW, S1AP_MME, MME_APP, NAS_MME, NAS_EMM, NAS_ESM, SP_GW_MME, S6A, HSS;
+  S1AP_MME note S1AP_MME [ label = "0021:9052930
+ Event SCTP_NEW_ASSOCIATION assoc_id: 29", textcolour="black" ] ;
+  S1AP_MME<=S1AP_ENB [ label = "(11|0021:9068630) S1Setup/Originating message assoc_id 29 stream 0", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>S1AP_ENB [ label = "(12|0021:9069000) S1Setup/successfulOutcome assoc_id 29", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME<=S1AP_ENB [ label = "(13|0044:2773430) initialUEMessage/Originating message assoc_id 29 stream 1 0x06692D ", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>MME_APP [ label = "(14|0044:2773770) MME_APP_CONNECTION_ESTABLISHMENT_IND ue_id 0x88000A50 as cause 1  tac 11 len 35", linecolour="black" , textcolour="black" ] ;
+  MME_APP=>NAS_MME [ label = "(15|0044:2775210) NAS_CONNECTION_ESTABLISHMENT_IND", linecolour="black" , textcolour="black" ] ;
+  NAS_MME=>NAS_EMM [ label = "(16|0044:2776380) EMMAS_ESTABLISH_REQ ue id 0x88000a50 plmn 02f859 tac 11", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "0044:277992send
+ TRACKING_AREA_UPDATE_REJECT to ue id 0x88000a50 ", textcolour="black" ] ;
+  NAS_MME=>S1AP_MME [ label = "(18|0044:2781290) NAS_DOWNLINK_DATA_REQ ue id 0x88000a50 len 3", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>S1AP_ENB [ label = "(19|0044:2781690) downlinkNASTransport/initiatingMessage ue_id 0x88000A50 mme_ue_s1ap_id 0x88000A50 eNB_ue_s1ap_id0x06692D nas length 3", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME<=S1AP_ENB [ label = "(20|0044:3170130) uplinkNASTransport/Originating message mme_ue_s1ap_id 0x88000A50 eNB_ue_s1ap_id 0x06692D nas len 64", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>NAS_MME [ label = "(21|0044:3170200) NAS_UPLINK_DATA_IND ue_id 0x88000A50 len 64", linecolour="black" , textcolour="black" ] ;
+  NAS_MME=>NAS_EMM [ label = "(22|0044:3170670) EMMAS_DATA_IND ue id 0x88000a50 len 64", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "0044:317455EMM
+ state DEREGISTERED UE 0x88000a50 ", textcolour="black" ] ;
+  NAS_EMM=>NAS_EMM [ label = "(24|0044:317636EMMAS_SECURITY_REQ) ue id 0x88000a50 ", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "0044:317735send
+ IDENTITY_REQUEST to ue id 0x88000a50 ", textcolour="black" ] ;
+  NAS_MME=>S1AP_MME [ label = "(26|0044:3178830) NAS_DOWNLINK_DATA_REQ ue id 0x88000a50 len 3", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>S1AP_ENB [ label = "(27|0044:3179120) downlinkNASTransport/initiatingMessage ue_id 0x88000A50 mme_ue_s1ap_id 0x88000A50 eNB_ue_s1ap_id0x06692D nas length 3", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "0044:317938T3470
+ started UE 0x88000a50 ", textcolour="black" ] ;
+  NAS_EMM=>NAS_EMM [ label = "(29|0044:317958EMMREG_COMMON_PROC_REQ) ue id 0x88000a50 (identification)", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "0044:318018EMM
+ state COMMON-PROCEDURE-INITIATED UE 0x88000a50 ", textcolour="black" ] ;
+  S1AP_MME<=S1AP_ENB [ label = "(31|0044:3293370) uplinkNASTransport/Originating message mme_ue_s1ap_id 0x88000A50 eNB_ue_s1ap_id 0x06692D nas len 17", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>NAS_MME [ label = "(32|0044:3293420) NAS_UPLINK_DATA_IND ue_id 0x88000A50 len 17", linecolour="black" , textcolour="black" ] ;
+  NAS_MME=>NAS_EMM [ label = "(33|0044:3293830) EMMAS_DATA_IND ue id 0x88000a50 len 17", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "0044:330132T3470
+ stopped UE 0x88000a50 ", textcolour="black" ] ;
+  NAS_EMM=>NAS_EMM [ label = "(35|0044:330134EMMREG_COMMON_PROC_CNF) ue id 0x88000a50 ", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "0044:330320EMM
+ state DEREGISTERED UE 0x88000a50 ", textcolour="black" ] ;
+  NAS_MME=>MME_APP [ label = "(37|0044:330505NAS_AUTHENTICATION_PARAM_REQ) ue id 88000A50 IMSI 208950000000002 ", linecolour="black" , textcolour="black" ] ;
+  MME_APP=>S6A [ label = "(38|0044:3306510) S6A_AUTH_INFO_REQ IMSI 208950000000002 visited_plmn 208F95 re_sync 0", linecolour="black" , textcolour="black" ] ;
+  S6A=>MME_APP [ label = "(39|0044:3333780) S6A_AUTH_INFO_ANS imsi 208950000000002 DIAMETER_SUCCESS", linecolour="black" , textcolour="black" ] ;
+  MME_APP=>NAS_MME [ label = "(40|0044:3334840) NAS_AUTHENTICATION_PARAM_RSP ue_id 88000A50 nb_vectors 1", linecolour="black" , textcolour="black" ] ;
+  NAS_MME=>NAS_EMM [ label = "(41|0044:3335090) EMMCN_AUTHENTICATION_PARAM_RES", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM=>NAS_EMM [ label = "(42|0044:333692EMMAS_SECURITY_REQ) ue id 0x88000a50 ", linecolour="black" , textcolour="black" ] ;
+  NAS_EMM note NAS_EMM [ label = "0044:333839send
+ AUTHENTICATION_REQUEST to ue id 0x88000a50 ", textcolour="black" ] ;
+  NAS_MME=>S1AP_MME [ label = "(44|0044:3342870) NAS_DOWNLINK_DATA_REQ ue id 0x88000a50 len 36", linecolour="black" , textcolour="black" ] ;
+  S1AP_MME=>S1AP_ENB [ label = "(45|0044:3343190) downlinkNASTransport/initiatingMessage ue_id 0x88000A50 mme_ue_s1ap_id 0x88000A50 eNB_ue_s1ap_id0x06692D nas length 36", linecolour="black" , textcolour="black" ] ;
+
+}
