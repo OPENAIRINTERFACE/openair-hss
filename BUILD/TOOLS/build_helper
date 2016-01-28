@@ -230,7 +230,7 @@ install_gnutls_from_source(){
     echo "Downloading gnutls archive"
     rm -rf /tmp/gnutls-3.1.23.tar.xz* /tmp/gnutls-3.1.23
     wget ftp://ftp.gnutls.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz 
-    tar -xzf gnutls-3.1.23.tar.xz
+    tar -xJf gnutls-3.1.23.tar.xz
     cd gnutls-3.1.23/
     ./configure --prefix=/usr
     echo "Compiling gnutls"

@@ -173,10 +173,10 @@ endif()
 
 
 # Below is a hard-coded info
-set (FIRMWARE_VERSION "No svn information")
+set (FIRMWARE_VERSION "No information")
 add_definitions("-DFIRMWARE_VERSION=\"${FIRMWARE_VERSION}\"")
 add_definitions("-DPACKAGE_VERSION=\"Branch: ${GIT_BRANCH} Abrev. Hash: ${GIT_COMMIT_HASH} Date: ${GIT_COMMIT_DATE}\"")
-add_definitions("-DPACKAGE_BUGREPORT=\"openair4g-devel@lists.eurecom.fr\"")
+add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 
 
 

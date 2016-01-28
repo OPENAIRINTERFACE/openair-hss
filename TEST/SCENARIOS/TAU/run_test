@@ -1,0 +1,30 @@
+#!/bin/bash
+# The content of this file is a memo for running "TAU" scenarios
+# 
+exit(0)
+
+# Have a look at prepare_test script
+
+
+###############################################
+# MEMO TAU SAME TAI UNKNOWN UE SCENARIO
+###############################################
+# In terminal T1:
+cd openair-cn/TEST/SCENARIOS/TAU
+mv ../../../BUILD/EPC/epc.conf.in ../../../BUILD/EPC/epc.conf.in.save
+cp epc.conf.run_tau_req_same_tai_unknown_ue.in ../../../BUILD/EPC/epc.conf.in
+
+# In terminal T2:
+cd openair-cn/SCRIPTS
+./build_epc --clean --clean-certificates --local-hss 
+./run_epc --set-nw-interfaces --mscgen /tmp
+
+# In terminal T3:
+cd openair-cn/SCRIPTS
+./build_hss --clean --clean-certificates --local-mme --random false
+./run_hss --import-db ../TEST/SCENARIOS/TAU/tau_req_same_tai_unknown_ue.sql
+
+# In terminal T1:
+test_epc --run --set-nw-interfaces --test-dir . --enb-config-file enb_local.run_tau_req_same_tai_unknown_ue.conf --scenario-file tau_req_same_tai_unknown_ue.xml
+
+

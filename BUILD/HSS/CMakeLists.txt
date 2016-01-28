@@ -98,9 +98,44 @@ find_package(Threads REQUIRED)
 pkg_search_module(CONFIG libconfig REQUIRED)
 include_directories(${CONFIG_INCLUDE_DIRS})
 
-set (PACKAGE_VERSION "No svn information")
 
-add_definitions("-DPACKAGE_NAME=\"OAI_HSS\"")
+set(GIT_BRANCH        "UNKNOWN")
+set(GIT_COMMIT_HASH   "UNKNOWN")
+set(GIT_COMMIT_DATE   "UNKNOWN")
+
+
+find_package(Git)
+if(GIT_FOUND)
+  message("git found: ${GIT_EXECUTABLE}")
+  # Get the current working branch
+  execute_process(
+    COMMAND git rev-parse --abbrev-ref HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_BRANCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  # Get the latest abbreviated commit hash of the working branch
+  execute_process(
+    COMMAND git log -1 --format=%h
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  
+  # Get the latest commit date of the working branch
+  execute_process(
+    COMMAND git log -1 --format=%cd
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE GIT_COMMIT_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+endif()
+
+
+# Below is a hard-coded info
+add_definitions("-DPACKAGE_VERSION=\"Branch: ${GIT_BRANCH} Abrev. Hash: ${GIT_COMMIT_HASH} Date: ${GIT_COMMIT_DATE}\"")
+add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 
 
 ################################################################################
