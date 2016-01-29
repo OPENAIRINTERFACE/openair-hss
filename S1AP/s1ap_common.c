@@ -31,6 +31,7 @@
 
 #include "s1ap_common.h"
 #include "S1AP-PDU.h"
+#include "dynamic_memory_check.h"
 
 int                                     asn_debug = 0;
 int                                     asn1_xer_print = 0;
@@ -172,8 +173,8 @@ s1ap_new_ie (
 {
   S1ap_IE_t                              *buff;
 
-  if ((buff = malloc (sizeof (S1ap_IE_t))) == NULL) {
-    // Possible error on malloc
+  if ((buff = MALLOC_CHECK (sizeof (S1ap_IE_t))) == NULL) {
+    // Possible error on MALLOC_CHECK
     return NULL;
   }
 
@@ -183,13 +184,13 @@ s1ap_new_ie (
 
   if (ANY_fromType_aper (&buff->value, type, sptr) < 0) {
     fprintf (stderr, "Encoding of %s failed\n", type->name);
-    free (buff);
+    FREE_CHECK (buff);
     return NULL;
   }
 
   if (asn1_xer_print)
     if (xer_fprint (stdout, &asn_DEF_S1ap_IE, buff) < 0) {
-      free (buff);
+      FREE_CHECK (buff);
       return NULL;
     }
 

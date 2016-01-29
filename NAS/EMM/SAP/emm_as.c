@@ -54,7 +54,7 @@
 #include "LowerLayer.h"
 
 #include <string.h>             // memset
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 
 #if NAS_BUILT_IN_EPC
 #  include "nas_itti_messaging.h"
@@ -460,7 +460,7 @@ _emm_as_recv (
     break;
 
   case TRACKING_AREA_UPDATE_COMPLETE:
-  case GUTI_REALLOCATION_COMPLETE:
+  case GUTI_REALLOC_CHECKATION_COMPLETE:
   case UPLINK_NAS_TRANSPORT:
     // Requirement MME24.301R10_4.4.4.3_1
     if ((0 == decode_status->security_context_available) ||
@@ -529,7 +529,7 @@ _emm_as_data_ind (
       /*
        * Process the received NAS message
        */
-      char                                   *plain_msg = (char *)malloc (msg->NASmsg.length);
+      char                                   *plain_msg = (char *)MALLOC_CHECK (msg->NASmsg.length);
 
       if (plain_msg) {
         nas_message_security_header_t           header;
@@ -585,7 +585,7 @@ _emm_as_data_ind (
           rc = lowerlayer_data_ind (msg->ueid, &data);
         }
 
-        free (plain_msg);
+        FREE_CHECK (plain_msg);
       }
     } else {
       /*
@@ -940,7 +940,7 @@ _emm_as_encode (
   /*
    * Allocate memory to the NAS information container
    */
-  info->data = (Byte_t *) malloc (length * sizeof (Byte_t));
+  info->data = (Byte_t *) MALLOC_CHECK (length * sizeof (Byte_t));
 
   if (info->data != NULL) {
     /*
@@ -951,7 +951,7 @@ _emm_as_encode (
     if (bytes > 0) {
       info->length = bytes;
     } else {
-      free (info->data);
+      FREE_CHECK (info->data);
       info->length = 0;
       info->data = NULL;
     }
@@ -997,7 +997,7 @@ _emm_as_encrypt (
   /*
    * Allocate memory to the NAS information container
    */
-  info->data = (Byte_t *) malloc (length * sizeof (Byte_t));
+  info->data = (Byte_t *) MALLOC_CHECK (length * sizeof (Byte_t));
 
   if (info->data != NULL) {
     /*
@@ -1008,7 +1008,7 @@ _emm_as_encrypt (
     if (bytes > 0) {
       info->length = bytes;
     } else {
-      free (info->data);
+      FREE_CHECK (info->data);
       info->length = 0;
       info->data = NULL;
     }

@@ -64,6 +64,7 @@ main (
   int argc,
   char *argv[])
 {
+  DYN_MEM_CHECK_INIT();
   /*
    * Parse the command line for options and set the mme_config accordingly.
    */

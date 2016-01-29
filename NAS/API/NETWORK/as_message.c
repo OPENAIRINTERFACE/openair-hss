@@ -42,6 +42,7 @@
 #include "as_message.h"
 #include "commonDef.h"
 #include "nas_log.h"
+#include "dynamic_memory_check.h"
 
 #include <string.h>             // memcpy
 #include <stdlib.h>             // free
@@ -429,7 +430,7 @@ as_message_encode (
       /*
        * Release NAS message memory
        */
-      free (nas_msg->data);
+      FREE_CHECK (nas_msg->data);
       nas_msg->length = 0;
       nas_msg->data = NULL;
     }

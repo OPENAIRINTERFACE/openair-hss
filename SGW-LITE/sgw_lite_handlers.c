@@ -48,6 +48,7 @@
 #include "sgw_lite_ie_defs.h"
 #include "pgw_lite_paa.h"
 #include "spgw_config.h"
+#include "dynamic_memory_check.h"
 
 extern sgw_app_t                        sgw_app;
 extern spgw_config_t                    spgw_config;
@@ -111,7 +112,7 @@ sgw_lite_handle_create_session_request (
     /*
      * We try to create endpoint for S11 interface. A NULL endpoint means that
      * * * * either the teid is already in list of known teid or ENOMEM error has been
-     * * * * raised during malloc.
+     * * * * raised during MALLOC_CHECK.
      */
     //--------------------------------------------------
     // copy informations from create session request to bearer context information
@@ -148,7 +149,7 @@ sgw_lite_handle_create_session_request (
     }
 
     if (session_req_pP->apn) {
-      s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.apn_in_use = strdup (session_req_pP->apn);
+      s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.apn_in_use = STRDUP_CHECK (session_req_pP->apn);
     } else {
       s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.apn_in_use = "NO APN";
     }
@@ -164,7 +165,7 @@ sgw_lite_handle_create_session_request (
 
     if (eps_bearer_entry_p == NULL) {
       SPGW_APP_ERROR ("Failed to create new EPS bearer entry\n");
-      // TO DO FREE new_bearer_ctxt_info_p and by cascade...
+      // TO DO FREE_CHECK new_bearer_ctxt_info_p and by cascade...
       return -1;
     }
 
@@ -199,7 +200,7 @@ sgw_lite_handle_create_session_request (
     }
   } else {
     SPGW_APP_WARN ("Could not create new transaction for SESSION_CREATE message\n");
-    free (new_endpoint_p);
+    FREE_CHECK (new_endpoint_p);
     new_endpoint_p = NULL;
     return -1;
   }

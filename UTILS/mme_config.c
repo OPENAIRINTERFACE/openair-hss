@@ -48,6 +48,7 @@
 #include "mme_config.h"
 #include "spgw_config.h"
 #include "intertask_interface_conf.h"
+#include "dynamic_memory_check.h"
 
 mme_config_t                            mme_config;
 
@@ -128,19 +129,19 @@ mme_config_init (
   mme_config_p->relative_capacity = RELATIVE_CAPACITY;
   mme_config_p->mme_statistic_timer = MME_STATISTIC_TIMER_S;
   mme_config_p->gummei.nb_mme_gid = 1;
-  mme_config_p->gummei.mme_gid = calloc (1, sizeof (*mme_config_p->gummei.mme_gid));
+  mme_config_p->gummei.mme_gid = CALLOC_CHECK (1, sizeof (*mme_config_p->gummei.mme_gid));
   mme_config_p->gummei.mme_gid[0] = MMEGID;
   mme_config_p->gummei.nb_mmec = 1;
-  mme_config_p->gummei.mmec = calloc (1, sizeof (*mme_config_p->gummei.mmec));
+  mme_config_p->gummei.mmec = CALLOC_CHECK (1, sizeof (*mme_config_p->gummei.mmec));
   mme_config_p->gummei.mmec[0] = MMEC;
   /*
    * Set the TAI
    */
   mme_config_p->served_tai.nb_tai = 1;
-  mme_config_p->served_tai.plmn_mcc = calloc (1, sizeof (*mme_config_p->served_tai.plmn_mcc));
-  mme_config_p->served_tai.plmn_mnc = calloc (1, sizeof (*mme_config_p->served_tai.plmn_mnc));
-  mme_config_p->served_tai.plmn_mnc_len = calloc (1, sizeof (*mme_config_p->served_tai.plmn_mnc_len));
-  mme_config_p->served_tai.tac = calloc (1, sizeof (*mme_config_p->served_tai.tac));
+  mme_config_p->served_tai.plmn_mcc = CALLOC_CHECK (1, sizeof (*mme_config_p->served_tai.plmn_mcc));
+  mme_config_p->served_tai.plmn_mnc = CALLOC_CHECK (1, sizeof (*mme_config_p->served_tai.plmn_mnc));
+  mme_config_p->served_tai.plmn_mnc_len = CALLOC_CHECK (1, sizeof (*mme_config_p->served_tai.plmn_mnc_len));
+  mme_config_p->served_tai.tac = CALLOC_CHECK (1, sizeof (*mme_config_p->served_tai.tac));
   mme_config_p->served_tai.plmn_mcc[0] = PLMN_MCC;
   mme_config_p->served_tai.plmn_mnc[0] = PLMN_MNC;
   mme_config_p->served_tai.plmn_mnc_len[0] = PLMN_MNC_LEN;
@@ -222,7 +223,7 @@ config_parse_file (
   if (setting_mme != NULL) {
     // GENERAL MME SETTINGS
     if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_REALM, (const char **)&astring))) {
-      mme_config_p->realm = strdup (astring);
+      mme_config_p->realm = STRDUP_CHECK (astring);
       mme_config_p->realm_length = strlen (mme_config_p->realm);
     }
 
@@ -298,12 +299,12 @@ config_parse_file (
     if (setting != NULL) {
       if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_S6A_CONF_FILE_PATH, (const char **)&astring))) {
         if (astring != NULL)
-          mme_config_p->s6a_config.conf_file = strdup (astring);
+          mme_config_p->s6a_config.conf_file = STRDUP_CHECK (astring);
       }
 
       if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_S6A_HSS_HOSTNAME, (const char **)&astring))) {
         if (astring != NULL)
-          mme_config_p->s6a_config.hss_host_name = strdup (astring);
+          mme_config_p->s6a_config.hss_host_name = STRDUP_CHECK (astring);
         else
           AssertFatal (1 == 0, "You have to provide a valid HSS hostname %s=...\n", MME_CONFIG_STRING_S6A_HSS_HOSTNAME);
       }
@@ -339,21 +340,21 @@ config_parse_file (
 
       if (mme_config_p->served_tai.nb_tai != num) {
         if (mme_config_p->served_tai.plmn_mcc != NULL)
-          free (mme_config_p->served_tai.plmn_mcc);
+          FREE_CHECK (mme_config_p->served_tai.plmn_mcc);
 
         if (mme_config_p->served_tai.plmn_mnc != NULL)
-          free (mme_config_p->served_tai.plmn_mnc);
+          FREE_CHECK (mme_config_p->served_tai.plmn_mnc);
 
         if (mme_config_p->served_tai.plmn_mnc_len != NULL)
-          free (mme_config_p->served_tai.plmn_mnc_len);
+          FREE_CHECK (mme_config_p->served_tai.plmn_mnc_len);
 
         if (mme_config_p->served_tai.tac != NULL)
-          free (mme_config_p->served_tai.tac);
+          FREE_CHECK (mme_config_p->served_tai.tac);
 
-        mme_config_p->served_tai.plmn_mcc = calloc (num, sizeof (*mme_config_p->served_tai.plmn_mcc));
-        mme_config_p->served_tai.plmn_mnc = calloc (num, sizeof (*mme_config_p->served_tai.plmn_mnc));
-        mme_config_p->served_tai.plmn_mnc_len = calloc (num, sizeof (*mme_config_p->served_tai.plmn_mnc_len));
-        mme_config_p->served_tai.tac = calloc (num, sizeof (*mme_config_p->served_tai.tac));
+        mme_config_p->served_tai.plmn_mcc = CALLOC_CHECK (num, sizeof (*mme_config_p->served_tai.plmn_mcc));
+        mme_config_p->served_tai.plmn_mnc = CALLOC_CHECK (num, sizeof (*mme_config_p->served_tai.plmn_mnc));
+        mme_config_p->served_tai.plmn_mnc_len = CALLOC_CHECK (num, sizeof (*mme_config_p->served_tai.plmn_mnc_len));
+        mme_config_p->served_tai.tac = CALLOC_CHECK (num, sizeof (*mme_config_p->served_tai.tac));
       }
 
       mme_config_p->served_tai.nb_tai = num;
@@ -446,10 +447,10 @@ config_parse_file (
 
         if (mme_config_p->gummei.nb_mmec != num) {
           if (mme_config_p->gummei.mmec != NULL) {
-            free (mme_config_p->gummei.mmec);
+            FREE_CHECK (mme_config_p->gummei.mmec);
           }
 
-          mme_config_p->gummei.mmec = calloc (num, sizeof (*mme_config_p->gummei.mmec));
+          mme_config_p->gummei.mmec = CALLOC_CHECK (num, sizeof (*mme_config_p->gummei.mmec));
         }
 
         mme_config_p->gummei.nb_mmec = num;
@@ -466,10 +467,10 @@ config_parse_file (
 
         if (mme_config_p->gummei.nb_mme_gid != num) {
           if (mme_config_p->gummei.mme_gid != NULL) {
-            free (mme_config_p->gummei.mme_gid);
+            FREE_CHECK (mme_config_p->gummei.mme_gid);
           }
 
-          mme_config_p->gummei.mme_gid = calloc (num, sizeof (*mme_config_p->gummei.mme_gid));
+          mme_config_p->gummei.mme_gid = CALLOC_CHECK (num, sizeof (*mme_config_p->gummei.mme_gid));
         }
 
         mme_config_p->gummei.nb_mme_gid = num;
@@ -489,16 +490,16 @@ config_parse_file (
            && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11_MME, (const char **)&mme_ip_address_for_S11)
           )
         ) {
-        mme_config_p->ipv4.mme_interface_name_for_S1_MME = strdup (mme_interface_name_for_S1_MME);
-        cidr = strdup (mme_ip_address_for_S1_MME);
+        mme_config_p->ipv4.mme_interface_name_for_S1_MME = STRDUP_CHECK (mme_interface_name_for_S1_MME);
+        cidr = STRDUP_CHECK (mme_ip_address_for_S1_MME);
         address = strtok (cidr, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_S1_MME, "BAD IP ADDRESS FORMAT FOR MME S1_MME !\n")
-          free (cidr);
-        mme_config_p->ipv4.mme_interface_name_for_S11 = strdup (mme_interface_name_for_S11);
-        cidr = strdup (mme_ip_address_for_S11);
+          FREE_CHECK (cidr);
+        mme_config_p->ipv4.mme_interface_name_for_S11 = STRDUP_CHECK (mme_interface_name_for_S11);
+        cidr = STRDUP_CHECK (mme_ip_address_for_S11);
         address = strtok (cidr, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_S11, "BAD IP ADDRESS FORMAT FOR MME S11 !\n")
-          free (cidr);
+          FREE_CHECK (cidr);
       }
     }
     // NAS SETTING
@@ -602,14 +603,14 @@ config_parse_file (
            && config_setting_lookup_int (subsetting, SGW_CONFIG_STRING_SGW_PORT_FOR_S1U_S12_S4_UP, &alongint)
           )
         ) {
-        cidr = strdup (sgw_ip_address_for_S1u_S12_S4_up);
+        cidr = STRDUP_CHECK (sgw_ip_address_for_S1u_S12_S4_up);
         address = strtok (cidr, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.sgw_ip_address_for_S1u_S12_S4_up, "BAD IP ADDRESS FORMAT FOR SGW S1u_S12_S4 !\n")
-          free (cidr);
-        cidr = strdup (sgw_ip_address_for_S11);
+          FREE_CHECK (cidr);
+        cidr = STRDUP_CHECK (sgw_ip_address_for_S11);
         address = strtok (cidr, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.sgw_ip_address_for_S11, "BAD IP ADDRESS FORMAT FOR SGW S11 !\n")
-          free (cidr);
+          FREE_CHECK (cidr);
         mme_config_p->gtpv1u_config.port_number = (uint16_t) alongint;
       }
     }
@@ -756,7 +757,7 @@ config_parse_opt_line (
         int                                     config_file_len = 0;
 
         config_file_len = strlen (optarg);
-        mme_config_p->config_file = malloc (sizeof (char) * (config_file_len + 1));
+        mme_config_p->config_file = MALLOC_CHECK (sizeof (char) * (config_file_len + 1));
         memcpy (mme_config_p->config_file, optarg, config_file_len);
         mme_config_p->config_file[config_file_len] = '\0';
         fprintf (stdout, "%s mme_config.config_file %s\n", __FUNCTION__, mme_config_p->config_file);
@@ -776,7 +777,7 @@ config_parse_opt_line (
       break;
 
     case 'K':
-      mme_config_p->itti_config.log_file = strdup (optarg);
+      mme_config_p->itti_config.log_file = STRDUP_CHECK (optarg);
       fprintf (stdout, "%s mme_config.itti_config.log_file %s\n", __FUNCTION__, mme_config_p->itti_config.log_file);
       break;
 

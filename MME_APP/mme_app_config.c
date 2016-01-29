@@ -33,6 +33,7 @@
 #include <string.h>
 #include <libconfig.h>
 #include "mme_app_config.h"
+#include "dynamic_memory_check.h"
 
 int
 mme_app_config_init (
@@ -114,27 +115,27 @@ mme_app_config_init (
                                             &sgw_ipv4_address_for_S11)
           )
         ) {
-        config_pP->sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up = strdup (sgw_interface_name_for_S1u_S12_S4_up);
-        cidr = strdup (sgw_ipv4_address_for_S1u_S12_S4_up);
+        config_pP->sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up = STRDUP_CHECK (sgw_interface_name_for_S1u_S12_S4_up);
+        cidr = STRDUP_CHECK (sgw_ipv4_address_for_S1u_S12_S4_up);
         address = strtok (cidr, "/");
         mask = strtok (NULL, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S1u_S12_S4_up, "BAD IP ADDRESS FORMAT FOR S1u_S12_S4 !\n")
           config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S1u_S12_S4_up = atoi (mask);
-        free (cidr);
-        config_pP->sgw_config.ipv4.sgw_interface_name_for_S5_S8_up = strdup (sgw_interface_name_for_S5_S8_up);
-        cidr = strdup (sgw_ipv4_address_for_S5_S8_up);
+        FREE_CHECK (cidr);
+        config_pP->sgw_config.ipv4.sgw_interface_name_for_S5_S8_up = STRDUP_CHECK (sgw_interface_name_for_S5_S8_up);
+        cidr = STRDUP_CHECK (sgw_ipv4_address_for_S5_S8_up);
         address = strtok (cidr, "/");
         mask = strtok (NULL, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S5_S8_up, "BAD IP ADDRESS FORMAT FOR S5_S8 !\n")
           config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S5_S8_up = atoi (mask);
-        free (cidr);
-        config_pP->sgw_config.ipv4.sgw_interface_name_for_S11 = strdup (sgw_interface_name_for_S11);
-        cidr = strdup (sgw_ipv4_address_for_S11);
+        FREE_CHECK (cidr);
+        config_pP->sgw_config.ipv4.sgw_interface_name_for_S11 = STRDUP_CHECK (sgw_interface_name_for_S11);
+        cidr = STRDUP_CHECK (sgw_ipv4_address_for_S11);
         address = strtok (cidr, "/");
         mask = strtok (NULL, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S11, "BAD IP ADDRESS FORMAT FOR S11 !\n")
           config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S11 = atoi (mask);
-        free (cidr);
+        FREE_CHECK (cidr);
       }
     }
   }
@@ -154,20 +155,20 @@ mme_app_config_init (
                                             &pgw_ipv4_address_for_SGI)
           )
         ) {
-        config_pP->pgw_config.ipv4.pgw_interface_name_for_S5_S8 = strdup (pgw_interface_name_for_S5_S8);
-        cidr = strdup (pgw_ipv4_address_for_S5_S8);
+        config_pP->pgw_config.ipv4.pgw_interface_name_for_S5_S8 = STRDUP_CHECK (pgw_interface_name_for_S5_S8);
+        cidr = STRDUP_CHECK (pgw_ipv4_address_for_S5_S8);
         address = strtok (cidr, "/");
         mask = strtok (NULL, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, config_pP->pgw_config.ipv4.pgw_ipv4_address_for_S5_S8, "BAD IP ADDRESS FORMAT FOR S5_S8 !\n")
           config_pP->pgw_config.ipv4.pgw_ip_netmask_for_S5_S8 = atoi (mask);
-        free (cidr);
-        config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI = strdup (pgw_interface_name_for_SGI);
-        cidr = strdup (pgw_ipv4_address_for_SGI);
+        FREE_CHECK (cidr);
+        config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI = STRDUP_CHECK (pgw_interface_name_for_SGI);
+        cidr = STRDUP_CHECK (pgw_ipv4_address_for_SGI);
         address = strtok (cidr, "/");
         mask = strtok (NULL, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, config_pP->pgw_config.ipv4.pgw_ipv4_address_for_SGI, "BAD IP ADDRESS FORMAT FOR SGI !\n")
           config_pP->pgw_config.ipv4.pgw_ip_netmask_for_SGI = atoi (mask);
-        free (cidr);
+        FREE_CHECK (cidr);
       }
     }
 

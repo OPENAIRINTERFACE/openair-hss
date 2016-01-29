@@ -63,4 +63,6 @@ int esm_ebr_context_create(emm_data_context_t *ctx, int pid, int ebi, int is_def
 
 int esm_ebr_context_release(emm_data_context_t *ctx, int ebi, int *pid, int *bid);
 
+void free_esm_ebr_context(esm_ebr_context_t * ctx);
+
 #endif /* __ESM_EBR_CONTEXT_H__ */

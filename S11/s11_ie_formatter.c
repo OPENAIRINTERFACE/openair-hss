@@ -36,6 +36,7 @@
 
 #include "s11_common.h"
 #include "s11_ie_formatter.h"
+#include "dynamic_memory_check.h"
 
 NwRcT
 s11_imsi_ie_get (
@@ -91,7 +92,7 @@ s11_imsi_ie_set (
    * In case of odd/even imsi
    */
   imsi_length = imsi->length % 2 == 0 ? imsi->length / 2 : imsi->length / 2 + 1;
-  temp = calloc (imsi_length, sizeof (uint8_t));
+  temp = CALLOC_CHECK (imsi_length, sizeof (uint8_t));
   DevAssert (temp != NULL);
 
   for (i = 0; i < imsi->length; i++) {
@@ -100,7 +101,7 @@ s11_imsi_ie_set (
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IMSI, imsi_length, 0, temp);
   DevAssert (NW_OK == rc);
-  free (temp);
+  FREE_CHECK (temp);
   return 0;
 }
 
@@ -840,7 +841,7 @@ s11_apn_ie_set (
   DevAssert (apn != NULL);
   DevAssert (msg != NULL);
   apn_length = strlen (apn);
-  value = calloc (apn_length + 1, sizeof (uint8_t));
+  value = CALLOC_CHECK (apn_length + 1, sizeof (uint8_t));
   last_size = &value[0];
 
   while (apn[offset]) {
@@ -862,7 +863,7 @@ s11_apn_ie_set (
   *last_size = word_length;
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN, apn_length + 1, 0, value);
   DevAssert (NW_OK == rc);
-  free (value);
+  FREE_CHECK (value);
   return 0;
 }
 

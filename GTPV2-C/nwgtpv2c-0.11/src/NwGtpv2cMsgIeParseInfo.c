@@ -42,6 +42,7 @@
 #include "NwGtpv2cPrivate.h"
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
+#include "dynamic_memory_check.h"
 
 
 #ifdef __cplusplus
@@ -413,7 +414,7 @@ extern                                  "C" {
       if (pMsgIeInfo[i].pGroupedIeInfo) {
         NwGtpv2cGroupedIeParseInfoT            *pMsgIeParseInfo;
 
-        NW_GTPV2C_MALLOC (thiz->hStack, sizeof (NwGtpv2cGroupedIeParseInfoT), pMsgIeParseInfo, NwGtpv2cGroupedIeParseInfoT *);
+        NW_GTPV2C_MALLOC_CHECK (thiz->hStack, sizeof (NwGtpv2cGroupedIeParseInfoT), pMsgIeParseInfo, NwGtpv2cGroupedIeParseInfoT *);
         pMsgIeParseInfo->groupedIeType = pMsgIeInfo[i].ieType;
         pMsgIeParseInfo->hStack = thiz->hStack;
 
@@ -466,7 +467,7 @@ extern                                  "C" {
     NwRcT                                   rc;
     NwGtpv2cMsgIeParseInfoT                *thiz;
 
-    NW_GTPV2C_MALLOC (hStack, sizeof (NwGtpv2cMsgIeParseInfoT), thiz, NwGtpv2cMsgIeParseInfoT *);
+    NW_GTPV2C_MALLOC_CHECK (hStack, sizeof (NwGtpv2cMsgIeParseInfoT), thiz, NwGtpv2cMsgIeParseInfoT *);
 
     if (thiz) {
       memset (thiz, 0, sizeof (NwGtpv2cMsgIeParseInfoT));
@@ -571,7 +572,7 @@ extern                                  "C" {
         break;
 
       default:{
-          free (thiz);
+          FREE_CHECK (thiz);
           thiz = NULL;
         }
         break;
@@ -588,7 +589,7 @@ extern                                  "C" {
 
   NwRcT                                   nwGtpv2cMsgIeParseInfoDelete (
   NwGtpv2cMsgIeParseInfoT * thiz) {
-    NW_GTPV2C_FREE (thiz->hStack, thiz);
+    NW_GTPV2C_FREE_CHECK (thiz->hStack, thiz);
     return NW_OK;
   }
 

@@ -262,7 +262,7 @@ _emm_cn_pdn_connectivity_res (
       length_pi_or_ci = msg_pP->pco.byte[pco_in_index++];
       pco.protocolid[pco.num_protocol_id_or_container_id] = pi_or_ci;
       pco.lengthofprotocolid[pco.num_protocol_id_or_container_id] = length_pi_or_ci;
-      pco.protocolidcontents[pco.num_protocol_id_or_container_id].value = malloc (length_pi_or_ci);
+      pco.protocolidcontents[pco.num_protocol_id_or_container_id].value = MALLOC_CHECK (length_pi_or_ci);
       pco.protocolidcontents[pco.num_protocol_id_or_container_id].length = length_pi_or_ci;
       memcpy (pco.protocolidcontents[pco.num_protocol_id_or_container_id].value, &msg_pP->pco.byte[pco_in_index], length_pi_or_ci);
       LOG_TRACE (WARNING, "PCO: Found pi_or_ci 0x%x length %u content %s\n", pi_or_ci, length_pi_or_ci, dump_octet_string (&pco.protocolidcontents[pco.num_protocol_id_or_container_id]));
@@ -353,7 +353,7 @@ _emm_cn_pdn_connectivity_res (
   /*
    * Setup the ESM message container
    */
-  data_p->esm_msg.value = (uint8_t *) malloc (rsp.length);
+  data_p->esm_msg.value = (uint8_t *) MALLOC_CHECK (rsp.length);
 
   if (data_p->esm_msg.value) {
     data_p->esm_msg.length = rsp.length;

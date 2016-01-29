@@ -31,6 +31,7 @@
 #include "assertions.h"
 #include "conversions.h"
 #include "secu_defs.h"
+#include "dynamic_memory_check.h"
 
 // #define SECU_DEBUG 1
 
@@ -54,8 +55,8 @@ nas_stream_encrypt_eea2 (
   if (zero_bit > 0)
     byte_length += 1;
 
-  ctx = malloc (nettle_aes128.context_size);
-  data = malloc (byte_length);
+  ctx = MALLOC_CHECK (nettle_aes128.context_size);
+  data = MALLOC_CHECK (byte_length);
   local_count = hton_int32 (stream_cipher->count);
   memset (m, 0, sizeof (m));
   memcpy (&m[0], &local_count, 4);
@@ -82,7 +83,7 @@ nas_stream_encrypt_eea2 (
     data[byte_length - 1] = data[byte_length - 1] & (uint8_t) (0xFF << (8 - zero_bit));
 
   memcpy (out, data, byte_length);
-  free (data);
-  free (ctx);
+  FREE_CHECK (data);
+  FREE_CHECK (ctx);
   return 0;
 }

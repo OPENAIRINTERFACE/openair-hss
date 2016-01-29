@@ -91,7 +91,7 @@ encode_access_point_name (
   lenPtr = (buffer + encoded);
   encoded++;
   apn_encoded.length = 0;
-  apn_encoded.value = calloc (1, ACCESS_POINT_NAME_MAXIMUM_LENGTH);
+  apn_encoded.value = CALLOC_CHECK (1, ACCESS_POINT_NAME_MAXIMUM_LENGTH);
   index = 0;                    // index on original APN string
   length_index = 0;             // marker where to write partial length
   index_copy = 1;
@@ -113,13 +113,13 @@ encode_access_point_name (
   apn_encoded.length = index_copy;
 
   if ((encode_result = encode_octet_string (&apn_encoded, buffer + encoded, len - encoded)) < 0) {
-    free (apn_encoded.value);
+    FREE_CHECK (apn_encoded.value);
     return encode_result;
   } else
     encoded += encode_result;
 
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
-  free (apn_encoded.value);
+  FREE_CHECK (apn_encoded.value);
   return encoded;
 }
 

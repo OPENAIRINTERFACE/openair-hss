@@ -44,6 +44,7 @@
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cTrxn.h"
 #include "NwGtpv2cLog.h"
+#include "dynamic_memory_check.h"
 
 #ifdef _NWGTPV2C_HAVE_TIMERADD
 #  define NW_GTPV2C_TIMER_ADD(tvp, uvp, vvp) timeradd((tvp), (uvp), (vvp))
@@ -104,13 +105,13 @@ extern                                  "C" {
 
   NwGtpv2cTmrMinHeapT                    *nwGtpv2cTmrMinHeapNew (
   int maxSize) {
-    NwGtpv2cTmrMinHeapT                    *thiz = (NwGtpv2cTmrMinHeapT *) malloc (sizeof (NwGtpv2cTmrMinHeapT));
+    NwGtpv2cTmrMinHeapT                    *thiz = (NwGtpv2cTmrMinHeapT *) MALLOC_CHECK (sizeof (NwGtpv2cTmrMinHeapT));
 
     if                                      (
   thiz) {
       thiz->currSize = 0;
       thiz->maxSize = maxSize;
-      thiz->pHeap = (NwGtpv2cTimeoutInfoT **) malloc (maxSize * sizeof (NwGtpv2cTimeoutInfoT *));
+      thiz->pHeap = (NwGtpv2cTimeoutInfoT **) MALLOC_CHECK (maxSize * sizeof (NwGtpv2cTimeoutInfoT *));
     }
 
     return                                  thiz;
@@ -119,8 +120,8 @@ extern                                  "C" {
   void
                                           nwGtpv2cTmrMinHeapDelete (
   NwGtpv2cTmrMinHeapT * thiz) {
-    free (thiz->pHeap);
-    free (thiz);
+    FREE_CHECK (thiz->pHeap);
+    FREE_CHECK (thiz);
   }
 
   static NwRcT                            nwGtpv2cTmrMinHeapInsert (
@@ -946,7 +947,7 @@ extern                                  "C" {
     NwRcT                                   rc = NW_OK;
     NwGtpv2cStackT                         *thiz;
 
-    thiz = (NwGtpv2cStackT *) malloc (sizeof (NwGtpv2cStackT));
+    thiz = (NwGtpv2cStackT *) MALLOC_CHECK (sizeof (NwGtpv2cStackT));
     memset (thiz, 0, sizeof (NwGtpv2cStackT));
 
     if (thiz) {
@@ -998,7 +999,7 @@ extern                                  "C" {
     if (!hGtpcStackHandle)
       return NW_FAILURE;
 
-    free ((void *)hGtpcStackHandle);
+    FREE_CHECK ((void *)hGtpcStackHandle);
     return NW_OK;
   }
 
@@ -1389,7 +1390,7 @@ extern                                  "C" {
       timeoutInfo = gpGtpv2cTimeoutInfoPool;
       gpGtpv2cTimeoutInfoPool = gpGtpv2cTimeoutInfoPool->next;
     } else {
-      NW_GTPV2C_MALLOC (thiz, sizeof (NwGtpv2cTimeoutInfoT), timeoutInfo, NwGtpv2cTimeoutInfoT *);
+      NW_GTPV2C_MALLOC_CHECK (thiz, sizeof (NwGtpv2cTimeoutInfoT), timeoutInfo, NwGtpv2cTimeoutInfoT *);
     }
 
     if (timeoutInfo) {
@@ -1466,7 +1467,7 @@ extern                                  "C" {
       timeoutInfo = gpGtpv2cTimeoutInfoPool;
       gpGtpv2cTimeoutInfoPool = gpGtpv2cTimeoutInfoPool->next;
     } else {
-      NW_GTPV2C_MALLOC (thiz, sizeof (NwGtpv2cTimeoutInfoT), timeoutInfo, NwGtpv2cTimeoutInfoT *);
+      NW_GTPV2C_MALLOC_CHECK (thiz, sizeof (NwGtpv2cTimeoutInfoT), timeoutInfo, NwGtpv2cTimeoutInfoT *);
     }
 
     if (timeoutInfo) {

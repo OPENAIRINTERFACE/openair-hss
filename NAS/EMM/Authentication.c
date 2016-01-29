@@ -50,7 +50,7 @@
 
 *****************************************************************************/
 
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 #include <string.h>             // memcpy, memcmp, memset
 #include <arpa/inet.h>          // htons
 
@@ -180,7 +180,7 @@ emm_proc_authentication (
   /*
    * Allocate parameters of the retransmission timer callback
    */
-  data = (authentication_data_t *) malloc (sizeof (authentication_data_t));
+  data = (authentication_data_t *) MALLOC_CHECK (sizeof (authentication_data_t));
 
   if (data != NULL) {
     /*
@@ -211,7 +211,7 @@ emm_proc_authentication (
      * Set the authentication random challenge number
      */
     if (_rand->length > 0) {
-      data->rand.value = (uint8_t *) malloc (_rand->length);
+      data->rand.value = (uint8_t *) MALLOC_CHECK (_rand->length);
       data->rand.length = 0;
 
       if (data->rand.value) {
@@ -224,7 +224,7 @@ emm_proc_authentication (
      * Set the authentication token
      */
     if (autn->length > 0) {
-      data->autn.value = (uint8_t *) malloc (autn->length);
+      data->autn.value = (uint8_t *) MALLOC_CHECK (autn->length);
       data->autn.length = 0;
 
       if (data->autn.value) {
@@ -300,14 +300,14 @@ emm_proc_authentication_complete (
 
   if (data) {
     if (data->rand.length > 0) {
-      free (data->rand.value);
+      FREE_CHECK (data->rand.value);
     }
 
     if (data->autn.length > 0) {
-      free (data->autn.value);
+      FREE_CHECK (data->autn.value);
     }
 
-    free (data);
+    FREE_CHECK (data);
   }
 
   /*
@@ -652,14 +652,14 @@ _authentication_abort (
      * Release retransmission timer paramaters
      */
     if (data->rand.length > 0) {
-      free (data->rand.value);
+      FREE_CHECK (data->rand.value);
     }
 
     if (data->autn.length > 0) {
-      free (data->autn.value);
+      FREE_CHECK (data->autn.value);
     }
 
-    free (data);
+    FREE_CHECK (data);
 
     /*
      * Notify EMM that the authentication procedure failed

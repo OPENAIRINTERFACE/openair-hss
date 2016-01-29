@@ -54,7 +54,7 @@ sctp_itti_send_new_message_ind (
   MessageDef                             *message_p;
 
   message_p = itti_alloc_new_message (TASK_SCTP, SCTP_DATA_IND);
-  SCTP_DATA_IND (message_p).buffer = malloc (sizeof (uint8_t) * n);
+  SCTP_DATA_IND (message_p).buffer = MALLOC_CHECK (sizeof (uint8_t) * n);
   memcpy ((void *)SCTP_DATA_IND (message_p).buffer, (void *)buffer, n);
   SCTP_DATA_IND (message_p).stream = stream;
   SCTP_DATA_IND (message_p).buf_length = n;

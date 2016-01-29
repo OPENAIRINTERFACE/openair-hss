@@ -26,6 +26,7 @@
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "OctetString.h"
+#include "dynamic_memory_check.h"
 
 #define DUMP_OUTPUT_SIZE 1024
 static char                             _dump_output[DUMP_OUTPUT_SIZE];
@@ -37,9 +38,9 @@ dup_octet_string (
   OctetString                            *os_p = NULL;
 
   if (octetstring) {
-    os_p = calloc (1, sizeof (OctetString));
+    os_p = CALLOC_CHECK (1, sizeof (OctetString));
     os_p->length = octetstring->length;
-    os_p->value = malloc (octetstring->length + 1);
+    os_p->value = MALLOC_CHECK (octetstring->length + 1);
     memcpy (os_p->value, octetstring->value, octetstring->length);
     os_p->value[octetstring->length] = '\0';
   }
@@ -54,11 +55,11 @@ free_octet_string (
 {
   if (octetstring) {
     if (octetstring->value)
-      free (octetstring->value);
+      FREE_CHECK (octetstring->value);
 
     octetstring->value = NULL;
     octetstring->length = 0;
-    free (octetstring);
+    FREE_CHECK (octetstring);
   }
 }
 
@@ -94,7 +95,7 @@ decode_octet_string (
 
   if ((octetstring != NULL) && (buffer != NULL)) {
     octetstring->length = pdulen;
-    octetstring->value = malloc (sizeof (uint8_t) * (pdulen + 1));
+    octetstring->value = MALLOC_CHECK (sizeof (uint8_t) * (pdulen + 1));
     memcpy ((void *)octetstring->value, (void *)buffer, pdulen);
     octetstring->value[pdulen] = '\0';
     return octetstring->length;

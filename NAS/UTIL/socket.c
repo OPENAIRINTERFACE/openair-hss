@@ -39,13 +39,14 @@
 #include "socket.h"
 #include "commonDef.h"
 
-#include <stdlib.h>             // malloc, free, atoi
+#include <stdlib.h>             // MALLOC_CHECK, free, atoi
 #include <string.h>             // memset
 #include <unistd.h>             // close
 #include <errno.h>              // EINTR
 #include <sys/types.h>
 #include <sys/socket.h>         // socket, setsockopt, connect, bind, recv, send
 #include <netdb.h>              // getaddrinfo
+#include "dynamic_memory_check.h"
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
@@ -238,7 +239,7 @@ socket_udp_open (
   /*
    * The connection endpoint has been successfully setup
    */
-  socket_id_t                            *sid = (socket_id_t *) malloc (sizeof (struct socket_id_s));
+  socket_id_t                            *sid = (socket_id_t *) MALLOC_CHECK (sizeof (struct socket_id_s));
 
   if (sid != NULL) {
     sid->type = type;

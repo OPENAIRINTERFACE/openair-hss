@@ -63,8 +63,8 @@ extern                                  "C" {
   NW_IN void *ieReadCallbackArg,
   NW_IN NwGtpv2cMsgParserT ** pthiz) {
     NwGtpv2cMsgParserT                     *thiz;
-    //  NW_GTPV2C_MALLOC(hGtpcStackHandle, sizeof(NwGtpv2cMsgParserT), thiz, NwGtpv2cMsgParserT*);
-                                            thiz = (NwGtpv2cMsgParserT *) malloc (sizeof (NwGtpv2cMsgParserT));
+    //  NW_GTPV2C_MALLOC_CHECK(hGtpcStackHandle, sizeof(NwGtpv2cMsgParserT), thiz, NwGtpv2cMsgParserT*);
+                                            thiz = (NwGtpv2cMsgParserT *) MALLOC_CHECK (sizeof (NwGtpv2cMsgParserT));
 
     if                                      (
   thiz) {
@@ -90,7 +90,7 @@ extern                                  "C" {
   NwRcT                                   nwGtpv2cMsgParserDelete (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
   NW_IN NwGtpv2cMsgParserT * thiz) {
-    NW_GTPV2C_FREE (hGtpcStackHandle, thiz);
+    NW_GTPV2C_FREE_CHECK (hGtpcStackHandle, thiz);
     return NW_OK;
   }
 

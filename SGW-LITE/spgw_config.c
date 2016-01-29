@@ -43,6 +43,7 @@
 #include "spgw_config.h"
 #include "sgw_lite_defs.h"
 #include "intertask_interface.h"
+#include "dynamic_memory_check.h"
 
 #ifdef LIBCONFIG_LONG
 #  define libconfig_int long
@@ -298,33 +299,33 @@ spgw_config_init (
            && config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11, (const char **)&sgw_ipv4_address_for_S11)
           )
         ) {
-        config_pP->sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up = strdup (sgw_interface_name_for_S1u_S12_S4_up);
-        cidr = strdup (sgw_ipv4_address_for_S1u_S12_S4_up);
+        config_pP->sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up = STRDUP_CHECK (sgw_interface_name_for_S1u_S12_S4_up);
+        cidr = STRDUP_CHECK (sgw_ipv4_address_for_S1u_S12_S4_up);
         address = strtok (cidr, "/");
         mask = strtok (NULL, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S1u_S12_S4_up, "BAD IP ADDRESS FORMAT FOR S1u_S12_S4 !\n")
           config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S1u_S12_S4_up = atoi (mask);
-        free (cidr);
+        FREE_CHECK (cidr);
         in_addr_var.s_addr = config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S1u_S12_S4_up;
         SPGW_APP_INFO ("Parsing configuration file found sgw_ipv4_address_for_S1u_S12_S4_up: %s/%d on %s\n",
                        inet_ntoa (in_addr_var), config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S1u_S12_S4_up, config_pP->sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up);
-        config_pP->sgw_config.ipv4.sgw_interface_name_for_S5_S8_up = strdup (sgw_interface_name_for_S5_S8_up);
-        cidr = strdup (sgw_ipv4_address_for_S5_S8_up);
+        config_pP->sgw_config.ipv4.sgw_interface_name_for_S5_S8_up = STRDUP_CHECK (sgw_interface_name_for_S5_S8_up);
+        cidr = STRDUP_CHECK (sgw_ipv4_address_for_S5_S8_up);
         address = strtok (cidr, "/");
         mask = strtok (NULL, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S5_S8_up, "BAD IP ADDRESS FORMAT FOR S5_S8 !\n")
           config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S5_S8_up = atoi (mask);
-        free (cidr);
+        FREE_CHECK (cidr);
         in_addr_var.s_addr = config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S5_S8_up;
         SPGW_APP_INFO ("Parsing configuration file found sgw_ipv4_address_for_S5_S8_up: %s/%d on %s\n",
                        inet_ntoa (in_addr_var), config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S5_S8_up, config_pP->sgw_config.ipv4.sgw_interface_name_for_S5_S8_up);
-        config_pP->sgw_config.ipv4.sgw_interface_name_for_S11 = strdup (sgw_interface_name_for_S11);
-        cidr = strdup (sgw_ipv4_address_for_S11);
+        config_pP->sgw_config.ipv4.sgw_interface_name_for_S11 = STRDUP_CHECK (sgw_interface_name_for_S11);
+        cidr = STRDUP_CHECK (sgw_ipv4_address_for_S11);
         address = strtok (cidr, "/");
         mask = strtok (NULL, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S11, "BAD IP ADDRESS FORMAT FOR S11 !\n")
           config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S11 = atoi (mask);
-        free (cidr);
+        FREE_CHECK (cidr);
         in_addr_var.s_addr = config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S11;
         SPGW_APP_INFO ("Parsing configuration file found sgw_ipv4_address_for_S11: %s/%d on %s\n", inet_ntoa (in_addr_var), config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S11, config_pP->sgw_config.ipv4.sgw_interface_name_for_S11);
       }
@@ -351,22 +352,22 @@ spgw_config_init (
            && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_MASQUERADE_SGI, (const char **)&pgw_masquerade_SGI)
           )
         ) {
-        config_pP->pgw_config.ipv4.pgw_interface_name_for_S5_S8 = strdup (pgw_interface_name_for_S5_S8);
-        cidr = strdup (pgw_ipv4_address_for_S5_S8);
+        config_pP->pgw_config.ipv4.pgw_interface_name_for_S5_S8 = STRDUP_CHECK (pgw_interface_name_for_S5_S8);
+        cidr = STRDUP_CHECK (pgw_ipv4_address_for_S5_S8);
         address = strtok (cidr, "/");
         mask = strtok (NULL, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, config_pP->pgw_config.ipv4.pgw_ipv4_address_for_S5_S8, "BAD IP ADDRESS FORMAT FOR S5_S8 !\n")
           config_pP->pgw_config.ipv4.pgw_ip_netmask_for_S5_S8 = atoi (mask);
-        free (cidr);
+        FREE_CHECK (cidr);
         in_addr_var.s_addr = config_pP->pgw_config.ipv4.pgw_ipv4_address_for_S5_S8;
         SPGW_APP_INFO ("Parsing configuration file found pgw_ipv4_address_for_S5_S8: %s/%d on %s\n", inet_ntoa (in_addr_var), config_pP->pgw_config.ipv4.pgw_ip_netmask_for_S5_S8, config_pP->pgw_config.ipv4.pgw_interface_name_for_S5_S8);
-        config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI = strdup (pgw_interface_name_for_SGI);
-        cidr = strdup (pgw_ipv4_address_for_SGI);
+        config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI = STRDUP_CHECK (pgw_interface_name_for_SGI);
+        cidr = STRDUP_CHECK (pgw_ipv4_address_for_SGI);
         address = strtok (cidr, "/");
         mask = strtok (NULL, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, config_pP->pgw_config.ipv4.pgw_ipv4_address_for_SGI, "BAD IP ADDRESS FORMAT FOR SGI !\n")
           config_pP->pgw_config.ipv4.pgw_ip_netmask_for_SGI = atoi (mask);
-        free (cidr);
+        FREE_CHECK (cidr);
         in_addr_var.s_addr = config_pP->pgw_config.ipv4.pgw_ipv4_address_for_SGI;
         SPGW_APP_INFO ("Parsing configuration file found pgw_ipv4_address_for_SGI: %s/%d on %s\n", inet_ntoa (in_addr_var), config_pP->pgw_config.ipv4.pgw_ip_netmask_for_SGI, config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI);
 
@@ -441,7 +442,7 @@ spgw_config_init (
 
                 do {
                   addr_start.s_addr = addr_start.s_addr + htonl (2);
-                  ip4_ref = calloc (1, sizeof (pgw_lite_conf_ipv4_list_elm_t));
+                  ip4_ref = CALLOC_CHECK (1, sizeof (pgw_lite_conf_ipv4_list_elm_t));
                   ip4_ref->addr = addr_start;
                   STAILQ_INSERT_TAIL (&config_pP->pgw_config.pgw_lite_ipv4_pool_list, ip4_ref, ipv4_entries);
                   counter64 = counter64 - 1;
@@ -500,7 +501,7 @@ spgw_config_init (
                   AssertFatal (0, "BAD IPV6 ADDR CONFIG/MASK PAIRING %s/%d\n", astring, prefix_mask);
                 }
 
-                ip6_ref = calloc (1, sizeof (pgw_lite_conf_ipv6_list_elm_t));
+                ip6_ref = CALLOC_CHECK (1, sizeof (pgw_lite_conf_ipv6_list_elm_t));
                 ip6_ref->addr = addr6_start;
                 ip6_ref->prefix_len = prefix_mask;
                 STAILQ_INSERT_TAIL (&config_pP->pgw_config.pgw_lite_ipv6_pool_list, ip6_ref, ipv6_entries);
@@ -514,7 +515,7 @@ spgw_config_init (
 
       if (config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_DEFAULT_DNS_IPV4_ADDRESS, (const char **)&pgw_default_dns_ipv4_address)
           && config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_DEFAULT_DNS_SEC_IPV4_ADDRESS, (const char **)&pgw_default_dns_sec_ipv4_address)) {
-        config_pP->pgw_config.ipv4.pgw_interface_name_for_S5_S8 = strdup (pgw_interface_name_for_S5_S8);
+        config_pP->pgw_config.ipv4.pgw_interface_name_for_S5_S8 = STRDUP_CHECK (pgw_interface_name_for_S5_S8);
         IPV4_STR_ADDR_TO_INT_NWBO (pgw_default_dns_ipv4_address, config_pP->pgw_config.ipv4.default_dns_v4, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS !\n")
           IPV4_STR_ADDR_TO_INT_NWBO (pgw_default_dns_sec_ipv4_address, config_pP->pgw_config.ipv4.default_dns_sec_v4, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS SEC!\n")
           SPGW_APP_INFO ("Parsing configuration file default primary DNS IPv4 address: %x\n", config_pP->pgw_config.ipv4.default_dns_v4);

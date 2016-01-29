@@ -42,6 +42,7 @@
 #include "s1ap_mme_nas_procedures.h"
 #include "s1ap_mme_retransmission.h"
 #include "msc.h"
+#include "dynamic_memory_check.h"
 
 #define S1AP_DEBUG_LIST 1
 #if S1AP_DEBUG_LIST
@@ -135,7 +136,7 @@ s1ap_mme_thread (
         /*
          * Free received PDU array
          */
-        free (SCTP_DATA_IND (received_message_p).buffer);
+        FREE_CHECK (SCTP_DATA_IND (received_message_p).buffer);
       }
       break;
 
@@ -396,9 +397,9 @@ s1ap_new_eNB (
 {
   eNB_description_t                      *eNB_ref = NULL;
 
-  eNB_ref = calloc (1, sizeof (eNB_description_t));
+  eNB_ref = CALLOC_CHECK (1, sizeof (eNB_description_t));
   /*
-   * Something bad happened during malloc...
+   * Something bad happened during MALLOC_CHECK...
    * * * * May be we are running out of memory.
    * * * * TODO: Notify eNB with a cause like Hardware Failure.
    */
@@ -420,9 +421,9 @@ s1ap_new_ue (
 
   eNB_ref = s1ap_is_eNB_assoc_id_in_list (sctp_assoc_id);
   DevAssert (eNB_ref != NULL);
-  ue_ref = calloc (1, sizeof (ue_description_t));
+  ue_ref = CALLOC_CHECK (1, sizeof (ue_description_t));
   /*
-   * Something bad happened during malloc...
+   * Something bad happened during MALLOC_CHECK...
    * * * * May be we are running out of memory.
    * * * * TODO: Notify eNB with a cause like Hardware Failure.
    */
@@ -460,7 +461,7 @@ s1ap_remove_ue (
   /*
    * Freeing memory
    */
-  free (ue_ref);
+  FREE_CHECK (ue_ref);
   ue_ref = NULL;
 }
 
@@ -477,11 +478,11 @@ s1ap_remove_eNB (
     ue_ref = STAILQ_FIRST (&eNB_ref->ue_list_head);
     eNB_ref->nb_ue_associated--;
     STAILQ_REMOVE_HEAD (&eNB_ref->ue_list_head, ue_entries);
-    free (ue_ref);
+    FREE_CHECK (ue_ref);
   }
 
   STAILQ_REMOVE (&eNB_list_head, eNB_ref, eNB_description_s, eNB_entries);
-  free (eNB_ref);
+  FREE_CHECK (eNB_ref);
   eNB_ref = NULL;
   nb_eNB_associated--;
 }

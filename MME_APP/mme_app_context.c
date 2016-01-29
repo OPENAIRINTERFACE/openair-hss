@@ -43,6 +43,7 @@
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "msc.h"
+#include "dynamic_memory_check.h"
 
 //------------------------------------------------------------------------------
 ue_context_t                           *
@@ -50,7 +51,7 @@ mme_create_new_ue_context (
   void)
 //------------------------------------------------------------------------------
 {
-  ue_context_t                           *new_p = calloc (1, sizeof (ue_context_t));
+  ue_context_t                           *new_p = CALLOC_CHECK (1, sizeof (ue_context_t));
 
   return new_p;
 }
@@ -299,7 +300,7 @@ mme_insert_ue_context (
   if ((0 != ue_context_p->guti.gummei.MMEcode) || (0 != ue_context_p->guti.gummei.MMEgid) || (0 != ue_context_p->guti.m_tmsi) || (0 != ue_context_p->guti.gummei.plmn.MCCdigit1) ||     // MCC 000 does not exist in ITU table
       (0 != ue_context_p->guti.gummei.plmn.MCCdigit2)
       || (0 != ue_context_p->guti.gummei.plmn.MCCdigit3)) {
-    GUTI_t                                 *guti_p = malloc (sizeof (GUTI_t));
+    GUTI_t                                 *guti_p = MALLOC_CHECK (sizeof (GUTI_t));
 
     if (NULL != guti_p) {
       memcpy (guti_p, &ue_context_p->guti, sizeof (*guti_p));
@@ -359,7 +360,7 @@ mme_remove_ue_context (
   hashtable_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&ue_context_p);
 #warning "TODO mme_ue_context_free_content"
   //TODO mme_ue_context_free_content(ue_context_p);
-  free (ue_context_p);
+  FREE_CHECK (ue_context_p);
 }
 
 //------------------------------------------------------------------------------

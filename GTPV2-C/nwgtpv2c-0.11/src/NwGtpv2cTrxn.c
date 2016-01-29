@@ -188,7 +188,7 @@ extern                                  "C" {
       pTrxn = gpGtpv2cTrxnPool;
       gpGtpv2cTrxnPool = gpGtpv2cTrxnPool->next;
     } else {
-      NW_GTPV2C_MALLOC (thiz, sizeof (NwGtpv2cTrxnT), pTrxn, NwGtpv2cTrxnT *);
+      NW_GTPV2C_MALLOC_CHECK (thiz, sizeof (NwGtpv2cTrxnT), pTrxn, NwGtpv2cTrxnT *);
     }
 
     if (pTrxn) {
@@ -226,7 +226,7 @@ extern                                  "C" {
       pTrxn = gpGtpv2cTrxnPool;
       gpGtpv2cTrxnPool = gpGtpv2cTrxnPool->next;
     } else {
-      NW_GTPV2C_MALLOC (thiz, sizeof (NwGtpv2cTrxnT), pTrxn, NwGtpv2cTrxnT *);
+      NW_GTPV2C_MALLOC_CHECK (thiz, sizeof (NwGtpv2cTrxnT), pTrxn, NwGtpv2cTrxnT *);
     }
 
     if (pTrxn) {
@@ -268,7 +268,7 @@ extern                                  "C" {
       pTrxn = gpGtpv2cTrxnPool;
       gpGtpv2cTrxnPool = gpGtpv2cTrxnPool->next;
     } else {
-      NW_GTPV2C_MALLOC (thiz, sizeof (NwGtpv2cTrxnT), pTrxn, NwGtpv2cTrxnT *);
+      NW_GTPV2C_MALLOC_CHECK (thiz, sizeof (NwGtpv2cTrxnT), pTrxn, NwGtpv2cTrxnT *);
     }
 
     if (pTrxn) {

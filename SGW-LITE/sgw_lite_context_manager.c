@@ -41,6 +41,7 @@
 #include "sgw_lite_defs.h"
 #include "sgw_lite_context_manager.h"
 #include "sgw_lite.h"
+#include "dynamic_memory_check.h"
 
 extern sgw_app_t                        sgw_app;
 
@@ -182,7 +183,7 @@ sgw_lite_cm_create_s11_tunnel (
 {
   mme_sgw_tunnel_t                       *new_tunnel;
 
-  new_tunnel = malloc (sizeof (mme_sgw_tunnel_t));
+  new_tunnel = MALLOC_CHECK (sizeof (mme_sgw_tunnel_t));
 
   if (new_tunnel == NULL) {
     /*
@@ -222,7 +223,7 @@ sgw_lite_cm_create_eps_bearer_entry (
 {
   sgw_eps_bearer_entry_t                 *eps_bearer_entry;
 
-  eps_bearer_entry = malloc (sizeof (sgw_eps_bearer_entry_t));
+  eps_bearer_entry = MALLOC_CHECK (sizeof (sgw_eps_bearer_entry_t));
 
   if (eps_bearer_entry == NULL) {
     /*
@@ -244,7 +245,7 @@ sgw_lite_cm_create_pdn_connection (
 {
   sgw_pdn_connection_t                   *pdn_connection;
 
-  pdn_connection = malloc (sizeof (sgw_pdn_connection_t));
+  pdn_connection = MALLOC_CHECK (sizeof (sgw_pdn_connection_t));
 
   if (pdn_connection == NULL) {
     /*
@@ -259,7 +260,7 @@ sgw_lite_cm_create_pdn_connection (
 
   if (pdn_connection->sgw_eps_bearers == NULL) {
     SPGW_APP_ERROR ("Failed to create eps bearers collection object\n");
-    free (pdn_connection);
+    FREE_CHECK (pdn_connection);
     pdn_connection = NULL;
     return NULL;
   }
@@ -303,7 +304,7 @@ sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information (
     obj_hashtable_destroy (contextP->pgw_eps_bearer_context_information.apns);
   }
 
-  free (contextP);
+  FREE_CHECK (contextP);
 }
 
 //-----------------------------------------------------------------------------
@@ -314,7 +315,7 @@ sgw_lite_cm_create_bearer_context_information_in_collection (
 {
   s_plus_p_gw_eps_bearer_context_information_t *new_bearer_context_information;
 
-  new_bearer_context_information = malloc (sizeof (s_plus_p_gw_eps_bearer_context_information_t));
+  new_bearer_context_information = MALLOC_CHECK (sizeof (s_plus_p_gw_eps_bearer_context_information_t));
 
   if (new_bearer_context_information == NULL) {
     /*
@@ -379,7 +380,7 @@ sgw_lite_cm_create_eps_bearer_entry_in_collection (
     return NULL;
   }
 
-  new_eps_bearer_entry = malloc (sizeof (sgw_eps_bearer_entry_t));
+  new_eps_bearer_entry = MALLOC_CHECK (sizeof (sgw_eps_bearer_entry_t));
 
   if (new_eps_bearer_entry == NULL) {
     /*
@@ -402,7 +403,7 @@ sgw_lite_cm_create_eps_bearer_entry_in_collection (
   /*
    * CHECK DUPLICATES IN HASH TABLES ? if (temp == 1) {
    * SPGW_APP_WARN("This EPS bearer entry already exists: %u\n", eps_bearer_idP);
-   * free(new_eps_bearer_entry);
+   * FREE_CHECK(new_eps_bearer_entry);
    * new_eps_bearer_entry = collision_p;
    * }
    */

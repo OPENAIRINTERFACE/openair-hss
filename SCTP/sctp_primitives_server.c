@@ -54,6 +54,7 @@
 #include "sctp_common.h"
 #include "sctp_itti_messaging.h"
 #include "msc.h"
+#include "dynamic_memory_check.h"
 
 
 #define SCTP_RC_ERROR       -1
@@ -120,7 +121,7 @@ sctp_add_new_peer (
 {
   struct sctp_association_s              *new_sctp_descriptor = NULL;
 
-  new_sctp_descriptor = calloc (1, sizeof (struct sctp_association_s));
+  new_sctp_descriptor = CALLOC_CHECK (1, sizeof (struct sctp_association_s));
 
   if (new_sctp_descriptor == NULL) {
     SCTP_ERROR ("Failed to allocate memory for new peer (%s:%d)\n", __FILE__, __LINE__);
@@ -205,7 +206,7 @@ sctp_remove_assoc_from_list (
     }
   }
 
-  free (assoc_desc);
+  FREE_CHECK (assoc_desc);
   assoc_desc = NULL;
   sctp_desc.number_of_connections--;
   return 0;
@@ -326,7 +327,7 @@ sctp_create_new_listener (
     return -1;
   }
 
-  addr = calloc (used_addresses, sizeof (struct sockaddr));
+  addr = CALLOC_CHECK (used_addresses, sizeof (struct sockaddr));
   SCTP_DEBUG ("Creating new listen socket on port %u with\n", init_p->port);
 
   if (init_p->ipv4 == 1) {
@@ -389,7 +390,7 @@ sctp_create_new_listener (
     return -1;
   }
 
-  if ((sctp_arg_p = malloc (sizeof (struct sctp_arg_s))) == NULL) {
+  if ((sctp_arg_p = MALLOC_CHECK (sizeof (struct sctp_arg_s))) == NULL) {
     return -1;
   }
 
@@ -583,7 +584,7 @@ sctp_receiver_thread (
 
     if (select (fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
       SCTP_ERROR ("[%d] Select() error: %s", sctp_arg_p->sd, strerror (errno));
-      free (args_p);
+      FREE_CHECK (args_p);
       args_p = NULL;
       pthread_exit (NULL);
     }
@@ -597,7 +598,7 @@ sctp_receiver_thread (
            */
           if ((clientsock = accept (sctp_arg_p->sd, NULL, NULL)) < 0) {
             SCTP_ERROR ("[%d] accept: %s:%d\n", sctp_arg_p->sd, strerror (errno), errno);
-            free (args_p);
+            FREE_CHECK (args_p);
             args_p = NULL;
             pthread_exit (NULL);
           } else {
@@ -638,7 +639,7 @@ sctp_receiver_thread (
     }
   }
 
-  free (args_p);
+  FREE_CHECK (args_p);
   args_p = NULL;
   return NULL;
 }

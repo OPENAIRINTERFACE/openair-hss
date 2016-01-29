@@ -234,7 +234,7 @@ udp_server_create_socket (
     return -1;
   }
 
-  socket_desc_p = calloc (1, sizeof (struct udp_socket_desc_s));
+  socket_desc_p = CALLOC_CHECK (1, sizeof (struct udp_socket_desc_s));
   DevAssert (socket_desc_p != NULL);
   socket_desc_p->sd = sd;
   socket_desc_p->local_address = address;

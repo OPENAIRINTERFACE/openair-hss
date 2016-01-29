@@ -42,6 +42,7 @@
 #endif
 
 #include "assertions.h"
+#include "dynamic_memory_check.h"
 
 static int
 s1ap_mme_decode_initiating (
@@ -53,7 +54,7 @@ s1ap_mme_decode_initiating (
   size_t                                  message_string_size;
   MessagesIds                             message_id;
   DevAssert (initiating_p != NULL);
-  message_string = calloc (10000, sizeof (char));
+  message_string = CALLOC_CHECK (10000, sizeof (char));
   s1ap_string_total_size = 0;
   message->procedureCode = initiating_p->procedureCode;
   message->criticality = initiating_p->criticality;
@@ -113,7 +114,7 @@ s1ap_mme_decode_initiating (
   message_p->ittiMsg.s1ap_uplink_nas_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_uplink_nas_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free (message_string);
+  FREE_CHECK (message_string);
   return ret;
 }
 
@@ -127,7 +128,7 @@ s1ap_mme_decode_successfull_outcome (
   size_t                                  message_string_size = 0;
   MessagesIds                             message_id = MESSAGES_ID_MAX;
   DevAssert (successfullOutcome_p != NULL);
-  message_string = calloc (10000, sizeof (char));
+  message_string = CALLOC_CHECK (10000, sizeof (char));
   s1ap_string_total_size = 0;
   message->procedureCode = successfullOutcome_p->procedureCode;
   message->criticality = successfullOutcome_p->criticality;
@@ -158,7 +159,7 @@ s1ap_mme_decode_successfull_outcome (
   message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free (message_string);
+  FREE_CHECK (message_string);
   return ret;
 }
 
@@ -172,7 +173,7 @@ s1ap_mme_decode_unsuccessfull_outcome (
   size_t                                  message_string_size;
   MessagesIds                             message_id;
   DevAssert (unSuccessfulOutcome_p != NULL);
-  message_string = calloc (10000, sizeof (char));
+  message_string = CALLOC_CHECK (10000, sizeof (char));
   s1ap_string_total_size = 0;
   message->procedureCode = unSuccessfulOutcome_p->procedureCode;
   message->criticality = unSuccessfulOutcome_p->criticality;
@@ -196,7 +197,7 @@ s1ap_mme_decode_unsuccessfull_outcome (
   message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free (message_string);
+  FREE_CHECK (message_string);
   return ret;
 }
 

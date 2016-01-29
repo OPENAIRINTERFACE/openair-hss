@@ -35,7 +35,7 @@
   Description Defines functions used to handle EPS bearer contexts.
 
 *****************************************************************************/
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 #include <string.h>             // memset
 
 #include "commonDef.h"
@@ -51,6 +51,7 @@
 #if ENABLE_ITTI
 #  include "assertions.h"
 #endif
+#include "dynamic_memory_check.h"
 
 
 
@@ -166,7 +167,7 @@ esm_ebr_context_create (
     /*
      * Create new EPS bearer context
      */
-    esm_bearer_t                           *ebr = (esm_bearer_t *) malloc (sizeof (esm_bearer_t));
+    esm_bearer_t                           *ebr = (esm_bearer_t *) MALLOC_CHECK (sizeof (esm_bearer_t));
 
     if (ebr != NULL) {
       memset (ebr, 0, sizeof (esm_bearer_t));
@@ -199,7 +200,7 @@ esm_ebr_context_create (
          * Traffic flow template parameters
          */
         for (i = 0; i < tft->n_pkfs; i++) {
-          ebr->tft.pkf[i] = (network_pkf_t *) malloc (sizeof (network_pkf_t));
+          ebr->tft.pkf[i] = (network_pkf_t *) MALLOC_CHECK (sizeof (network_pkf_t));
 
           if (ebr->tft.pkf[i] != NULL) {
             *(ebr->tft.pkf[i]) = *(tft->pkf[i]);
@@ -369,13 +370,13 @@ esm_ebr_context_release (
      * Delete the TFT
      */
     for (i = 0; i < pdn->bearer[*bid]->tft.n_pkfs; i++) {
-      free (pdn->bearer[*bid]->tft.pkf[i]);
+      FREE_CHECK (pdn->bearer[*bid]->tft.pkf[i]);
     }
 
     /*
      * Release the specified EPS bearer data
      */
-    free (pdn->bearer[*bid]);
+    FREE_CHECK (pdn->bearer[*bid]);
     pdn->bearer[*bid] = NULL;
     /*
      * Decrement the number of EPS bearer context allocated
@@ -402,7 +403,7 @@ esm_ebr_context_release (
            * Delete the TFT
            */
           for (j = 0; j < pdn->bearer[i]->tft.n_pkfs; j++) {
-            free (pdn->bearer[i]->tft.pkf[j]);
+            FREE_CHECK (pdn->bearer[i]->tft.pkf[j]);
           }
 
           /*
@@ -417,7 +418,7 @@ esm_ebr_context_release (
           /*
            * Release dedicated EPS bearer data
            */
-          free (pdn->bearer[i]);
+          FREE_CHECK (pdn->bearer[i]);
           pdn->bearer[i] = NULL;
           /*
            * Decrement the number of EPS bearer context allocated
@@ -457,6 +458,16 @@ esm_ebr_context_release (
   LOG_FUNC_RETURN (ESM_EBI_UNASSIGNED);
 }
 
+
+// free structs only
+void free_esm_ebr_context(esm_ebr_context_t * ctx)
+{
+  if (ctx->args) {
+    FREE_OCTET_STRING(ctx->args->msg);
+    // do not free ctx->args->ctx
+  }
+  FREE_CHECK(ctx);
+}
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

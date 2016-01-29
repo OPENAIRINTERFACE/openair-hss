@@ -52,6 +52,7 @@
 #endif
 #include "secu_defs.h"
 #include "emmData.h"
+#include "dynamic_memory_check.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -729,7 +730,7 @@ _nas_message_protected_decode (
 {
   LOG_FUNC_IN;
   int                                     bytes = TLV_DECODE_BUFFER_TOO_SHORT;
-  char                                   *plain_msg = (char *)calloc (1, length);
+  char                                   *plain_msg = (char *)CALLOC_CHECK (1, length);
 
   if (plain_msg) {
     /*
@@ -747,7 +748,7 @@ _nas_message_protected_decode (
      * Decode the decrypted message as plain NAS message
      */
     bytes = _nas_message_plain_decode (plain_msg, header, msg, length);
-    free (plain_msg);
+    FREE_CHECK (plain_msg);
   }
 
   LOG_FUNC_RETURN (bytes);
@@ -897,7 +898,7 @@ _nas_message_protected_encode (
   LOG_FUNC_IN;
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes = TLV_ENCODE_BUFFER_TOO_SHORT;
-  char                                   *plain_msg = (char *)calloc (1, length);
+  char                                   *plain_msg = (char *)CALLOC_CHECK (1, length);
 
   if (plain_msg) {
     /*
@@ -918,7 +919,7 @@ _nas_message_protected_encode (
       //seq ++;
     }
 
-    free (plain_msg);
+    FREE_CHECK (plain_msg);
   }
 
   LOG_FUNC_RETURN (bytes);

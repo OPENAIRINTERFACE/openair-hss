@@ -51,13 +51,11 @@ mme_app_send_s11_release_access_bearers_req (
   struct ue_context_s *const ue_context_pP)
 //------------------------------------------------------------------------------
 {
-  uint8_t                                 i = 0;
   task_id_t                               to_task = TASK_UNKNOWN;
 
   /*
    * Keep the identifier to the default APN
    */
-  context_identifier_t                    context_identifier;
   MessageDef                             *message_p = NULL;
   SgwReleaseAccessBearersRequest         *release_access_bearers_request_p = NULL;
 
@@ -394,7 +392,7 @@ mme_app_handle_conn_est_ind (
 
     if ((ue_context_p = mme_create_new_ue_context ()) == NULL) {
       /*
-       * Error during ue context malloc
+       * Error during ue context MALLOC_CHECK
        */
       /*
        * TODO
@@ -567,7 +565,7 @@ mme_app_handle_create_sess_resp (
           AssertFatal (ue_context_p->apn_profile.apn_configuration[i].service_selection_length > 0, "Bad APN string (len = 0)");
 
           if (ue_context_p->apn_profile.apn_configuration[i].service_selection_length > 0) {
-            NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value = malloc (ue_context_p->apn_profile.apn_configuration[i].service_selection_length + 1);
+            NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value = MALLOC_CHECK (ue_context_p->apn_profile.apn_configuration[i].service_selection_length + 1);
             NAS_PDN_CONNECTIVITY_RSP (message_p).apn.length = ue_context_p->apn_profile.apn_configuration[i].service_selection_length;
             AssertFatal (ue_context_p->apn_profile.apn_configuration[i].service_selection_length <= APN_MAX_LENGTH, "Bad APN string length %d", ue_context_p->apn_profile.apn_configuration[i].service_selection_length);
             memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value, ue_context_p->apn_profile.apn_configuration[i].service_selection, ue_context_p->apn_profile.apn_configuration[i].service_selection_length);
@@ -585,7 +583,7 @@ mme_app_handle_create_sess_resp (
     switch (create_sess_resp_pP->paa.pdn_type) {
     case IPv4:
       NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length = 4;
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = malloc (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
+      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = MALLOC_CHECK (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
       DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value != NULL);
       memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value, create_sess_resp_pP->paa.ipv4_address, NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length);
       NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value[NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length] = '0';
@@ -594,7 +592,7 @@ mme_app_handle_create_sess_resp (
     case IPv6:
       DevAssert (create_sess_resp_pP->paa.ipv6_prefix_length == 64);    // NAS seems to only support 64 bits
       NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length = create_sess_resp_pP->paa.ipv6_prefix_length / 8;
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = malloc (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
+      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = MALLOC_CHECK (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
       DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value != NULL);
       memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value, create_sess_resp_pP->paa.ipv6_address, NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length);
       NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value[NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length] = '0';
@@ -603,7 +601,7 @@ mme_app_handle_create_sess_resp (
     case IPv4_AND_v6:
       DevAssert (create_sess_resp_pP->paa.ipv6_prefix_length == 64);    // NAS seems to only support 64 bits
       NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length = 4 + create_sess_resp_pP->paa.ipv6_prefix_length / 8;
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = malloc (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
+      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = MALLOC_CHECK (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
       DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value != NULL);
       memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value, create_sess_resp_pP->paa.ipv4_address, 4);
       memcpy (&NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value[4], create_sess_resp_pP->paa.ipv6_address, create_sess_resp_pP->paa.ipv6_prefix_length / 8);
@@ -612,7 +610,7 @@ mme_app_handle_create_sess_resp (
 
     case IPv4_OR_v6:
       NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length = 4;
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = malloc (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
+      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = MALLOC_CHECK (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
       DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value != NULL);
       memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value, create_sess_resp_pP->paa.ipv4_address, NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length);
       NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value[NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length] = '0';

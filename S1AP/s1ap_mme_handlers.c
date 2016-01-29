@@ -417,7 +417,7 @@ s1ap_generate_s1_setup_response (
       /*
        * FIXME: free object from list once encoded
        */
-      plmn = calloc (1, sizeof (*plmn));
+      plmn = CALLOC_CHECK (1, sizeof (*plmn));
       MCC_MNC_TO_PLMNID (mme_config.served_tai.plmn_mcc[i], mme_config.served_tai.plmn_mnc[i], mme_config.served_tai.plmn_mnc_len[i], plmn);
       ASN_SEQUENCE_ADD (&servedGUMMEI.servedPLMNs.list, plmn);
     }
@@ -429,7 +429,7 @@ s1ap_generate_s1_setup_response (
     /*
      * FIXME: free object from list once encoded
      */
-    mme_gid = calloc (1, sizeof (*mme_gid));
+    mme_gid = CALLOC_CHECK (1, sizeof (*mme_gid));
     INT16_TO_OCTET_STRING (mme_config.gummei.mme_gid[i], mme_gid);
     ASN_SEQUENCE_ADD (&servedGUMMEI.servedGroupIDs.list, mme_gid);
   }
@@ -440,7 +440,7 @@ s1ap_generate_s1_setup_response (
     /*
      * FIXME: free object from list once encoded
      */
-    mmec = calloc (1, sizeof (*mmec));
+    mmec = CALLOC_CHECK (1, sizeof (*mmec));
     INT8_TO_OCTET_STRING (mme_config.gummei.mmec[i], mmec);
     ASN_SEQUENCE_ADD (&servedGUMMEI.servedMMECs.list, mmec);
   }
@@ -1015,7 +1015,7 @@ s1ap_handle_create_session_response (
   e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = 15;        //No priority
   e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability = S1ap_Pre_emptionCapability_shall_not_trigger_pre_emption;
   e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability = S1ap_Pre_emptionVulnerability_not_pre_emptable;
-  //     e_RABToBeSetup.gTP_TEID.buf  = calloc(4, sizeof(uint8_t));
+  //     e_RABToBeSetup.gTP_TEID.buf  = CALLOC_CHECK(4, sizeof(uint8_t));
   //     INT32_TO_BUFFER(session_response_p->bearer_context_created.s1u_sgw_fteid.teid,
   //                     e_RABToBeSetup.gTP_TEID.buf);
   //     e_RABToBeSetup.gTP_TEID.size = 4;
@@ -1031,7 +1031,7 @@ s1ap_handle_create_session_response (
     /*
      * Only IPv6 supported
      */
-    e_RABToBeSetup.transportLayerAddress.buf = calloc (16, sizeof (uint8_t));
+    e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK (16, sizeof (uint8_t));
     memcpy (e_RABToBeSetup.transportLayerAddress.buf, (void *)&session_response_p->bearer_context_created.s1u_sgw_fteid.ipv6_address, 16);
     e_RABToBeSetup.transportLayerAddress.size = 16;
     e_RABToBeSetup.transportLayerAddress.bits_unused = 0;
@@ -1039,7 +1039,7 @@ s1ap_handle_create_session_response (
     /*
      * Both IPv4 and IPv6 supported
      */
-    e_RABToBeSetup.transportLayerAddress.buf = calloc (20, sizeof (uint8_t));
+    e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK (20, sizeof (uint8_t));
     e_RABToBeSetup.transportLayerAddress.size = 20;
     e_RABToBeSetup.transportLayerAddress.bits_unused = 0;
     memcpy (e_RABToBeSetup.transportLayerAddress.buf, &session_response_p->bearer_context_created.s1u_sgw_fteid.ipv4_address, 4);

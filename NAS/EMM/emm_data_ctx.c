@@ -30,6 +30,7 @@
 #  include "nas_log.h"
 #  include "security_types.h"
 #  include "obj_hashtable.h"
+#  include "msc.h"
 
 struct emm_data_context_s              *
 emm_data_context_get (
@@ -136,10 +137,110 @@ emm_data_context_add (
   }
 }
 
+void free_emm_data_context(
+    struct emm_data_context_s * const emm_ctx)
+{
+  if (emm_ctx != NULL) {
+    if (emm_ctx->imsi) {
+      FREE_CHECK (emm_ctx->imsi);
+    }
+    if (emm_ctx->guti) {
+      FREE_CHECK (emm_ctx->guti);
+    }
+    if (emm_ctx->old_guti) {
+      FREE_CHECK (emm_ctx->old_guti);
+    }
+    if (emm_ctx->imei) {
+      FREE_CHECK (emm_ctx->imei);
+    }
+    if (emm_ctx->ue_network_capability_ie) {
+      FREE_CHECK (emm_ctx->ue_network_capability_ie);
+    }
+    if (emm_ctx->ms_network_capability_ie) {
+      FREE_CHECK (emm_ctx->ms_network_capability_ie);
+    }
+    if (emm_ctx->drx_parameter) {
+      FREE_CHECK (emm_ctx->drx_parameter);
+    }
+    if (emm_ctx->eps_bearer_context_status) {
+      FREE_CHECK (emm_ctx->eps_bearer_context_status);
+    }
+    /*
+     * Release NAS security context
+     */
+    if (emm_ctx->security) {
+      emm_security_context_t                 *security = emm_ctx->security;
+
+      if (security->kasme.value) {
+        FREE_CHECK (security->kasme.value);
+      }
+
+      if (security->knas_enc.value) {
+        FREE_CHECK (security->knas_enc.value);
+      }
+
+      if (security->knas_int.value) {
+        FREE_CHECK (security->knas_int.value);
+      }
+
+      FREE_CHECK (emm_ctx->security);
+    }
+    if (emm_ctx->non_current_security) {
+      emm_security_context_t                 *security = emm_ctx->non_current_security;
+
+      if (security->kasme.value) {
+        FREE_CHECK (security->kasme.value);
+      }
+
+      if (security->knas_enc.value) {
+        FREE_CHECK (security->knas_enc.value);
+      }
+
+      if (security->knas_int.value) {
+        FREE_CHECK (security->knas_int.value);
+      }
+
+      FREE_CHECK (emm_ctx->non_current_security);
+    }
+
+    if (emm_ctx->esm_msg.length > 0) {
+      FREE_CHECK (emm_ctx->esm_msg.value);
+    }
+
+
+    /*
+     * Stop timer T3450
+     */
+    if (emm_ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
+      LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3450 (%d)", emm_ctx->T3450.id);
+      emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
+    }
+
+    /*
+     * Stop timer T3460
+     */
+    if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
+      LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3460 (%d)", emm_ctx->T3460.id);
+      emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3460 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
+    }
+
+    /*
+     * Stop timer T3470
+     */
+    if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
+      LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3460.id);
+      emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
+    }
+    free_esm_data_context(&emm_ctx->esm_data_ctx);
+  }
+}
 
 void
 emm_data_context_dump (
-  struct emm_data_context_s *elm_pP)
+  const struct emm_data_context_s * const elm_pP)
 {
   if (elm_pP != NULL) {
     char                                    imsi_str[16];
@@ -214,7 +315,7 @@ emm_data_context_dump (
           remaining_size -= size;
         }
       } else {
-        size += snprintf (&key_string[0], remaining_size, "None");
+        size += snprintf (&key_string[0], KASME_LENGTH_OCTETS * 2, "None");
       }
 
       LOG_TRACE (INFO, "             knas_enc: %s     (NAS cyphering key)", key_string);
@@ -228,7 +329,7 @@ emm_data_context_dump (
           remaining_size -= size;
         }
       } else {
-        size += snprintf (&key_string[0], remaining_size, "None");
+        size += snprintf (&key_string[0], KASME_LENGTH_OCTETS * 2, "None");
       }
 
       LOG_TRACE (INFO, "             knas_int: %s     (NAS integrity key)", key_string);

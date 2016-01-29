@@ -59,7 +59,7 @@ extern                                  "C" {
       thiz = gpGtpv2cTunnelPool;
       gpGtpv2cTunnelPool = gpGtpv2cTunnelPool->next;
     } else {
-      NW_GTPV2C_MALLOC (pStack, sizeof (NwGtpv2cTunnelT), thiz, NwGtpv2cTunnelT *);
+      NW_GTPV2C_MALLOC_CHECK (pStack, sizeof (NwGtpv2cTunnelT), thiz, NwGtpv2cTunnelT *);
     }
 
     if (thiz) {

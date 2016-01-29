@@ -379,14 +379,19 @@ add_library(SECU_CN ${SECU_CN_SRC})
 
 # CN libs
 ##########################
-
-add_library(CN_UTILS
+set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/UTILS/conversions.c
   ${OPENAIRCN_DIR}/UTILS/enum_string.c
   ${OPENAIRCN_DIR}/UTILS/log.c
   ${OPENAIRCN_DIR}/UTILS/mme_config.c
   ${OPENAIRCN_DIR}/UTILS/mcc_mnc_itu.c
   )
+if (MEMORY_CHECK)
+  set(CN_UTILS_SRC   ${CN_UTILS_SRC} ${OPENAIRCN_DIR}/UTILS/dynamic_memory_check.c )
+endif(DEBUG_MEMORY_ALLOCATION)
+
+add_library(CN_UTILS ${CN_UTILS_SRC})
+
 
 set(GTPV1U_DIR ${OPENAIRCN_DIR}/GTPV1-U)
 set (GTPV1U_SRC
@@ -679,6 +684,7 @@ set (libnas_mme_esm_OBJS
   ${NAS_SRC}ESM/DedicatedEpsBearerContextActivation.c
   ${NAS_SRC}ESM/DefaultEpsBearerContextActivation.c
   ${NAS_SRC}ESM/EpsBearerContextDeactivation.c
+  ${NAS_SRC}ESM/esm_data_context.c
   ${NAS_SRC}ESM/esm_ebr.c
   ${NAS_SRC}ESM/esm_ebr_context.c
   ${NAS_SRC}ESM/esm_ip.c

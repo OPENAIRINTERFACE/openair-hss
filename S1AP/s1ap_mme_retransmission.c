@@ -32,6 +32,7 @@
 #include "timer.h"
 #include "s1ap_common.h"
 #include "s1ap_mme_retransmission.h"
+#include "dynamic_memory_check.h"
 
 inline int                              s1ap_mme_timer_map_compare_id (
   struct s1ap_timer_map_s *p1,
@@ -84,13 +85,13 @@ s1ap_timer_insert (
 {
   struct s1ap_timer_map_s                *new;
 
-  new = malloc (sizeof (struct s1ap_timer_map_s));
+  new = MALLOC_CHECK (sizeof (struct s1ap_timer_map_s));
   new->timer_id = timer_id;
   new->mme_ue_s1ap_id = mme_ue_s1ap_id;
 
   if (RB_INSERT (s1ap_timer_map, &s1ap_timer_tree, new) != NULL) {
     S1AP_ERROR ("Timer with id 0x%lx already exists\n", timer_id);
-    free (new);
+    FREE_CHECK (new);
     return -1;
   }
 
@@ -120,7 +121,7 @@ s1ap_handle_timer_expiry (
   /*
    * Destroy the element
    */
-  free (find);
+  FREE_CHECK (find);
   /*
    * TODO: notify NAS and remove ue context
    */
@@ -145,7 +146,7 @@ s1ap_timer_remove_ue (
       /*
        * Destroy the element
        */
-      free (find);
+      FREE_CHECK (find);
     }
   }
   return 0;

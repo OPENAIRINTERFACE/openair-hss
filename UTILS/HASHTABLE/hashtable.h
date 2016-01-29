@@ -50,7 +50,7 @@ typedef enum hashtable_return_code_e {
 } hashtable_rc_t;
 
 #define HASH_TABLE_DEFAULT_HASH_FUNC NULL
-#define HASH_TABLE_DEFAULT_FREE_FUNC NULL
+#define HASH_TABLE_DEFAULT_FREE_CHECK_FUNC NULL
 
 
 typedef struct hash_node_s {
@@ -64,9 +64,7 @@ typedef struct hash_table_s {
     hash_size_t         size;
     hash_size_t         num_elements;
     struct hash_node_s **nodes;
-#if HASHTABLE_MUTEX
-    pthread_mutex_t     *lock_nodes; // TODO
-#endif
+    pthread_mutex_t     *lock_nodes;
     hash_size_t       (*hashfunc)(const hash_key_t);
     void              (*freefunc)(void*);
     char               *name;
@@ -84,6 +82,18 @@ hashtable_rc_t  hashtable_free (hash_table_t * const hashtbl, const hash_key_t k
 hashtable_rc_t  hashtable_remove(hash_table_t * const hashtblP, const hash_key_t keyP, void** dataP);
 hashtable_rc_t  hashtable_get    (const hash_table_t * const hashtbl, const hash_key_t key, void **dataP);
 hashtable_rc_t  hashtable_resize (hash_table_t * const hashtbl, const hash_size_t size);
+
+// Thread-safe functions
+hash_table_t   *hashtable_ts_create (const hash_size_t   size, hash_size_t (*hashfunc)(const hash_key_t ), void (*freefunc)(void*), char *name_pP);
+hashtable_rc_t  hashtable_ts_destroy(hash_table_t * const hashtbl);
+hashtable_rc_t  hashtable_ts_is_key_exists (const hash_table_t * const hashtbl, const uint64_t key);
+hashtable_rc_t  hashtable_ts_apply_funct_on_elements (hash_table_t * const hashtblP, void funct(hash_key_t keyP, void* dataP, void* parameterP), void* parameterP);
+hashtable_rc_t  hashtable_ts_dump_content (const hash_table_t * const hashtblP, char * const buffer_pP, int * const remaining_bytes_in_buffer_pP );
+hashtable_rc_t  hashtable_ts_insert (hash_table_t * const hashtbl, const hash_key_t key, void *data);
+hashtable_rc_t  hashtable_ts_free (hash_table_t * const hashtbl, const hash_key_t key);
+hashtable_rc_t  hashtable_ts_remove(hash_table_t * const hashtblP, const hash_key_t keyP, void** dataP);
+hashtable_rc_t  hashtable_ts_get    (const hash_table_t * const hashtbl, const hash_key_t key, void **dataP);
+hashtable_rc_t  hashtable_ts_resize (hash_table_t * const hashtbl, const hash_size_t size);
 
 
 

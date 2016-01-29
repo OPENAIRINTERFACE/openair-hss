@@ -55,7 +55,7 @@
 #include "msc.h"
 
 #include <string.h>             // memcmp, memcpy
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -256,7 +256,7 @@ emm_proc_tracking_area_update_request (
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_UE_NETWORK_CAPABILITY_IEI) {
     if (NULL != ue_ctx) {
       if (NULL == ue_ctx->ue_network_capability_ie) {
-        ue_ctx->ue_network_capability_ie = malloc(sizeof(UeNetworkCapability));
+        ue_ctx->ue_network_capability_ie = MALLOC_CHECK(sizeof(UeNetworkCapability));
       }
       memcpy(ue_ctx->ue_network_capability_ie, &msg->uenetworkcapability, sizeof(UeNetworkCapability));
     }
@@ -264,7 +264,7 @@ emm_proc_tracking_area_update_request (
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_IEI) {
     if (NULL != ue_ctx) {
       if (NULL == ue_ctx->ms_network_capability_ie) {
-        ue_ctx->ms_network_capability_ie = malloc(sizeof(MsNetworkCapability));
+        ue_ctx->ms_network_capability_ie = MALLOC_CHECK(sizeof(MsNetworkCapability));
       } else {
         FREE_OCTET_STRING(ue_ctx->ms_network_capability_ie->msnetworkcapabilityvalue);
       }
@@ -288,7 +288,7 @@ emm_proc_tracking_area_update_request (
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_DRX_PARAMETER_IEI) {
     if (NULL != ue_ctx) {
       if (NULL == ue_ctx->drx_parameter) {
-        ue_ctx->drx_parameter = malloc(sizeof(DrxParameter));
+        ue_ctx->drx_parameter = MALLOC_CHECK(sizeof(DrxParameter));
       }
       memcpy(ue_ctx->drx_parameter, &msg->drxparameter, sizeof(DrxParameter));
     }
@@ -299,7 +299,7 @@ emm_proc_tracking_area_update_request (
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_EPS_BEARER_CONTEXT_STATUS_IEI) {
     if (NULL != ue_ctx) {
       if (NULL == ue_ctx->eps_bearer_context_status) {
-        ue_ctx->eps_bearer_context_status = malloc(sizeof(EpsBearerContextStatus));
+        ue_ctx->eps_bearer_context_status = MALLOC_CHECK(sizeof(EpsBearerContextStatus));
       }
       LOG_TRACE (INFO, "EMM-PROC  - TAU Request (ueid=" NAS_UE_ID_FMT ") IE EPS_BEARER_CONTEXT_STATUS %016b", ueid, msg->epsbearercontextstatus);
       memcpy(ue_ctx->eps_bearer_context_status, &msg->epsbearercontextstatus, sizeof(EpsBearerContextStatus));
@@ -525,7 +525,7 @@ _emm_tracking_area_update (
   LOG_FUNC_IN;
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
-  tau_accept_data_t                      *data = (tau_accept_data_t *) calloc (1, sizeof (tau_accept_data_t));
+  tau_accept_data_t                      *data = (tau_accept_data_t *) CALLOC_CHECK (1, sizeof (tau_accept_data_t));
 
   if (data != NULL) {
     /*
@@ -535,7 +535,7 @@ _emm_tracking_area_update (
 
     if (rc != RETURNok) {
       LOG_TRACE (WARNING, "Failed to initialize EMM callback functions");
-      free (data);
+      FREE_CHECK (data);
       LOG_FUNC_RETURN (RETURNerror);
     }
 
@@ -636,7 +636,7 @@ _emm_tracking_area_update_security (
    * Create new NAS security context
    */
   if (emm_ctx->security == NULL) {
-    emm_ctx->security = (emm_security_context_t *) malloc (sizeof (emm_security_context_t));
+    emm_ctx->security = (emm_security_context_t *) MALLOC_CHECK (sizeof (emm_security_context_t));
   }
 
   if (emm_ctx->security) {
@@ -861,7 +861,7 @@ _emm_tracking_area_update_abort (
     //if (data-> ) {
     //}
 
-    free (data);
+    FREE_CHECK (data);
 
     /*
      * Notify EMM that EPS attach procedure failed

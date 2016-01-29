@@ -36,6 +36,7 @@
 #include "s6a_messages.h"
 
 #include "assertions.h"
+#include "dynamic_memory_check.h"
 
 void
 s6a_peer_connected_cb (
@@ -96,7 +97,7 @@ s6a_fd_new_peer (
   }
 
   if (fd_g_config->cnf_diamid != NULL) {
-    free (fd_g_config->cnf_diamid);
+    FREE_CHECK (fd_g_config->cnf_diamid);
     fd_g_config->cnf_diamid_len = 0;
   }
 
@@ -105,10 +106,10 @@ s6a_fd_new_peer (
   host_name[host_name_len] = '.';
   host_name[host_name_len + 1] = '\0';
   strcat (host_name, mme_config.realm);
-  fd_g_config->cnf_diamid = strdup (host_name);
+  fd_g_config->cnf_diamid = STRDUP_CHECK (host_name);
   fd_g_config->cnf_diamid_len = strlen (fd_g_config->cnf_diamid);
   S6A_DEBUG ("Diameter identity of MME: %s with length: %zd\n", fd_g_config->cnf_diamid, fd_g_config->cnf_diamid_len);
-  hss_name = calloc (1, 100);
+  hss_name = CALLOC_CHECK (1, 100);
   strcat (hss_name, mme_config.s6a_config.hss_host_name);
   strcat (hss_name, ".");
   strcat (hss_name, mme_config.realm);

@@ -87,7 +87,7 @@ MME :
 
     S6A :
     {
-        S6A_CONF                   = "@FREE_CHECKDIAMETER_PATH@/../etc/freeDiameter/mme_fd.conf";# DO NOT CHANGE
+        S6A_CONF                   = "@FREEDIAMETER_PATH@/../etc/freeDiameter/mme_fd.conf";# DO NOT CHANGE
         HSS_HOSTNAME               = "@HSS_HOSTNAME@";                                     # DO NOT CHANGE
     };
 

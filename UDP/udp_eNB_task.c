@@ -188,7 +188,7 @@ udp_eNB_create_socket (
   /*
    * Create a new descriptor for this connection
    */
-  udp_socket_desc_p = calloc (1, sizeof (struct udp_socket_desc_s));
+  udp_socket_desc_p = CALLOC_CHECK (1, sizeof (struct udp_socket_desc_s));
   DevAssert (udp_socket_desc_p != NULL);
   udp_socket_desc_p->sd = sd;
   udp_socket_desc_p->local_address = ip_addr;

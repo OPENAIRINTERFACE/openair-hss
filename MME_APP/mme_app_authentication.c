@@ -167,7 +167,7 @@ mme_app_handle_authentication_info_answer (
     DevCheck (s6a_auth_info_ans_pP->auth_info.nb_of_vectors == 1, s6a_auth_info_ans_pP->auth_info.nb_of_vectors, 1, 0);
 
     if (ue_context->vector_list == NULL) {
-      ue_context->vector_list = malloc (sizeof (eutran_vector_t));
+      ue_context->vector_list = MALLOC_CHECK (sizeof (eutran_vector_t));
       DevAssert (ue_context->vector_list != NULL);
     } else {
       /*
@@ -267,7 +267,7 @@ mme_app_handle_nas_auth_param_req (
 
       if ((ue_context = mme_create_new_ue_context ()) == NULL) {
         /*
-         * Error during ue context malloc
+         * Error during ue context MALLOC_CHECK
          */
         /*
          * TODO

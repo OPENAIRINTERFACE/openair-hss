@@ -47,7 +47,7 @@
 
 *****************************************************************************/
 
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 #include <string.h>             // memset, memcpy, memcmp
 #include <ctype.h>              // isprint
 
@@ -455,7 +455,7 @@ _pdn_connectivity_create (
     /*
      * Create new PDN connection
      */
-    esm_pdn_t                              *pdn = (esm_pdn_t *) malloc (sizeof (esm_pdn_t));
+    esm_pdn_t                              *pdn = (esm_pdn_t *) MALLOC_CHECK (sizeof (esm_pdn_t));
 
     if (pdn != NULL) {
       memset (pdn, 0, sizeof (esm_pdn_t));
@@ -488,7 +488,7 @@ _pdn_connectivity_create (
        * Setup the Access Point Name
        */
       if (apn && (apn->length > 0)) {
-        pdn->apn.value = (uint8_t *) malloc (apn->length + 1);
+        pdn->apn.value = (uint8_t *) MALLOC_CHECK (apn->length + 1);
 
         if (pdn->apn.value) {
           pdn->apn.length = apn->length;
@@ -580,10 +580,10 @@ _pdn_connectivity_delete (
      * Release allocated PDN connection data
      */
     if (ctx->esm_data_ctx.pdn[pid].data->apn.length > 0) {
-      free (ctx->esm_data_ctx.pdn[pid].data->apn.value);
+      FREE_CHECK (ctx->esm_data_ctx.pdn[pid].data->apn.value);
     }
 
-    free (ctx->esm_data_ctx.pdn[pid].data);
+    FREE_CHECK (ctx->esm_data_ctx.pdn[pid].data);
     ctx->esm_data_ctx.pdn[pid].data = NULL;
     LOG_TRACE (WARNING, "ESM-PROC  - PDN connection %d released", pid);
   }

@@ -35,6 +35,7 @@
 #include "intertask_interface.h"
 #include "assertions.h"
 #include "queue.h"
+#include "dynamic_memory_check.h"
 
 #include "pgw_lite_paa.h"
 #include "sgw_lite_defs.h"
@@ -42,7 +43,7 @@
 #include "sgw_lite.h"
 
 
-//#define PGW_LITE_FREE_ADDR_POOL_CONFIG 1
+//#define PGW_LITE_FREE_CHECK_ADDR_POOL_CONFIG 1
 
 extern pgw_app_t                        pgw_app;
 
@@ -63,14 +64,14 @@ pgw_lite_load_pool_ip_addresses (
   STAILQ_INIT (&pgw_app.pgw_lite_ipv6_list_free);
   STAILQ_INIT (&pgw_app.pgw_lite_ipv6_list_allocated);
   STAILQ_FOREACH (conf_ipv4_p, &spgw_config.pgw_config.pgw_lite_ipv4_pool_list, ipv4_entries) {
-    ipv4_p = calloc (1, sizeof (struct pgw_lite_ipv4_list_elm_s));
+    ipv4_p = CALLOC_CHECK (1, sizeof (struct pgw_lite_ipv4_list_elm_s));
     ipv4_p->addr.s_addr = ntohl (conf_ipv4_p->addr.s_addr);
     STAILQ_INSERT_TAIL (&pgw_app.pgw_lite_ipv4_list_free, ipv4_p, ipv4_entries);
     //SPGW_APP_DEBUG("Loaded IPv4 PAA address in pool: %s\n",
     //        inet_ntoa(conf_ipv4_p->addr));
   }
   STAILQ_FOREACH (conf_ipv6_p, &spgw_config.pgw_config.pgw_lite_ipv6_pool_list, ipv6_entries) {
-    ipv6_p = calloc (1, sizeof (struct pgw_lite_ipv6_list_elm_s));
+    ipv6_p = CALLOC_CHECK (1, sizeof (struct pgw_lite_ipv6_list_elm_s));
     ipv6_p->addr = conf_ipv6_p->addr;
     ipv6_p->prefix_len = conf_ipv6_p->prefix_len;
     ipv6_p->num_allocated = 0;
@@ -83,16 +84,16 @@ pgw_lite_load_pool_ip_addresses (
                                  * SPGW_APP_DEBUG("Loaded IPv6 PAA prefix in pool: %s\n",print_buffer);
                                  * } */
   }
-#if PGW_LITE_FREE_ADDR_POOL_CONFIG
+#if PGW_LITE_FREE_CHECK_ADDR_POOL_CONFIG
 
   while ((conf_ipv4_p = STAILQ_FIRST (&spgw_config.pgw_config.pgw_lite_ipv4_pool_list))) {
     STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.pgw_lite_ipv4_pool_list, ipv4_entries);
-    free (conf_ipv4_p);
+    FREE_CHECK (conf_ipv4_p);
   }
 
   while ((conf_ipv6_p = STAILQ_FIRST (&spgw_config.pgw_config.pgw_lite_ipv6_pool_list))) {
     STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.pgw_lite_ipv6_pool_list, ipv6_entries);
-    free (conf_ipv6_p);
+    FREE_CHECK (conf_ipv6_p);
   }
 
 #endif

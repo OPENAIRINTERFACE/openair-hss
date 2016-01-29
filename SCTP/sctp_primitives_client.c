@@ -154,7 +154,7 @@ sctp_run (
       } else {
         struct sctp_queue_item_s               *new_item_p;
 
-        new_item_p = calloc (1, sizeof (struct sctp_queue_item_s));
+        new_item_p = CALLOC_CHECK (1, sizeof (struct sctp_queue_item_s));
         /*
          * Normal data received
          */
@@ -165,7 +165,7 @@ sctp_run (
         new_item_p->ppid = sinfo.sinfo_ppid;
         new_item_p->assoc_id = sinfo.sinfo_assoc_id;
         new_item_p->length = n;
-        new_item_p->buffer = malloc (sizeof (uint8_t) * n);
+        new_item_p->buffer = MALLOC_CHECK (sizeof (uint8_t) * n);
         memcpy (new_item_p->buffer, buffer, n);
         /*
          * Insert the new packet at the tail of queue.
@@ -216,7 +216,7 @@ sctp_connect_to_remote_host (
   /*
    * Bind to provided IP adresses
    */
-  bindx_add_addr = calloc (nb_local_addr, sizeof (struct sockaddr));
+  bindx_add_addr = CALLOC_CHECK (nb_local_addr, sizeof (struct sockaddr));
 
   for (i = 0; i < nb_local_addr; i++) {
     if (inet_pton (AF_INET, local_ip_addr[i], &((struct sockaddr_in *)&bindx_add_addr[i])->sin_addr.s_addr) != 1) {

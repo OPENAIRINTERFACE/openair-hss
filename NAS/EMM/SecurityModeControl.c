@@ -46,7 +46,7 @@
 
 *****************************************************************************/
 
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 #include <string.h>             // memcpy
 #include <inttypes.h>
 
@@ -66,6 +66,7 @@
 #endif
 #include "secu_defs.h"
 #include "msc.h"
+#include "dynamic_memory_check.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -235,7 +236,7 @@ emm_proc_security_mode_control (
       //     information request (S6A)
       // Kasme is located in emm_ctx->vector.kasme
       FREE_OCTET_STRING (emm_ctx->security->kasme);
-      emm_ctx->security->kasme.value = malloc (32);
+      emm_ctx->security->kasme.value = MALLOC_CHECK (32);
       memcpy (emm_ctx->security->kasme.value, emm_ctx->vector.kasme, 32);
       emm_ctx->security->kasme.length = 32;
       rc = _security_select_algorithms (eia, eea, &mme_eia, &mme_eea);
@@ -248,7 +249,7 @@ emm_proc_security_mode_control (
       }
 
       if (!emm_ctx->security->knas_int.value) {
-        emm_ctx->security->knas_int.value = malloc (AUTH_KNAS_INT_SIZE);
+        emm_ctx->security->knas_int.value = MALLOC_CHECK (AUTH_KNAS_INT_SIZE);
       } else {
         LOG_TRACE (ERROR, " TODO realloc emm_ctx->security->knas_int OctetString");
         LOG_FUNC_RETURN (RETURNerror);
@@ -258,7 +259,7 @@ emm_proc_security_mode_control (
       derive_key_nas (NAS_INT_ALG, emm_ctx->security->selected_algorithms.integrity, emm_ctx->vector.kasme, emm_ctx->security->knas_int.value);
 
       if (!emm_ctx->security->knas_enc.value) {
-        emm_ctx->security->knas_enc.value = malloc (AUTH_KNAS_ENC_SIZE);
+        emm_ctx->security->knas_enc.value = MALLOC_CHECK (AUTH_KNAS_ENC_SIZE);
       } else {
         LOG_TRACE (ERROR, " TODO realloc emm_ctx->security->knas_enc OctetString");
         LOG_FUNC_RETURN (RETURNerror);
@@ -279,7 +280,7 @@ emm_proc_security_mode_control (
   /*
    * Allocate parameters of the retransmission timer callback
    */
-  security_data_t                        *data = (security_data_t *) malloc (sizeof (security_data_t));
+  security_data_t                        *data = (security_data_t *) MALLOC_CHECK (sizeof (security_data_t));
 
   if (data != NULL) {
     /*
@@ -289,7 +290,7 @@ emm_proc_security_mode_control (
 
     if (rc != RETURNok) {
       LOG_TRACE (WARNING, "Failed to initialize EMM callback functions");
-      free (data);
+      FREE_CHECK (data);
       LOG_FUNC_RETURN (RETURNerror);
     }
 
@@ -424,7 +425,7 @@ emm_proc_security_mode_complete (
   security_data_t                        *data = (security_data_t *) (emm_proc_common_get_args (ueid));
 
   if (data) {
-    free (data);
+    FREE_CHECK (data);
   }
 
   if (emm_ctx && emm_ctx->security) {
@@ -515,7 +516,7 @@ emm_proc_security_mode_reject (
   security_data_t                        *data = (security_data_t *) (emm_proc_common_get_args (ueid));
 
   if (data) {
-    free (data);
+    FREE_CHECK (data);
   }
 
   /*
@@ -757,7 +758,7 @@ _security_abort (
     /*
      * Release retransmission timer paramaters
      */
-    free (data);
+    FREE_CHECK (data);
 
     /*
      * Notify EMM that the security mode control procedure failed

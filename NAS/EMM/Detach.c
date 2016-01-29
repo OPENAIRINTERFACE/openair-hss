@@ -54,7 +54,7 @@
 #include "esm_sap.h"
 #include "msc.h"
 
-#include <stdlib.h>             // free
+#include <stdlib.h>             // FREE_CHECK
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -215,19 +215,19 @@ emm_proc_detach_request (
      * The UE is switched off
      */
     if (emm_ctx->guti) {
-      free (emm_ctx->guti);
+      FREE_CHECK (emm_ctx->guti);
     }
 
     if (emm_ctx->imsi) {
-      free (emm_ctx->imsi);
+      FREE_CHECK (emm_ctx->imsi);
     }
 
     if (emm_ctx->imei) {
-      free (emm_ctx->imei);
+      FREE_CHECK (emm_ctx->imei);
     }
 
     if (emm_ctx->esm_msg.length > 0) {
-      free (emm_ctx->esm_msg.value);
+      FREE_CHECK (emm_ctx->esm_msg.value);
     }
 
     /*
@@ -237,18 +237,18 @@ emm_proc_detach_request (
       emm_security_context_t                 *security = emm_ctx->security;
 
       if (security->kasme.value) {
-        free (security->kasme.value);
+        FREE_CHECK (security->kasme.value);
       }
 
       if (security->knas_enc.value) {
-        free (security->knas_enc.value);
+        FREE_CHECK (security->knas_enc.value);
       }
 
       if (security->knas_int.value) {
-        free (security->knas_int.value);
+        FREE_CHECK (security->knas_int.value);
       }
 
-      free (emm_ctx->security);
+      FREE_CHECK (emm_ctx->security);
     }
 
     /*
@@ -283,9 +283,9 @@ emm_proc_detach_request (
      */
 #if NAS_BUILT_IN_EPC
     emm_data_context_remove (&_emm_data, emm_ctx);
-    free (emm_ctx);
+    FREE_CHECK (emm_ctx);
 #else
-    free (_emm_data.ctx[ueid]);
+    FREE_CHECK (_emm_data.ctx[ueid]);
     _emm_data.ctx[ueid] = NULL;
 #endif
     rc = RETURNok;

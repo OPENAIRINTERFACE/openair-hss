@@ -32,10 +32,11 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include "obj_hashtable.h"
+#include "dynamic_memory_check.h"
 
 
 //-------------------------------------------------------------------------------------------------------------------------------
-// Free function selected if we do not want to free the key when removing an entry
+// Free function selected if we do not want to FREE_CHECK the key when removing an entry
 void
 obj_hashtable_no_free_key_callback (
   void *param)
@@ -81,11 +82,11 @@ obj_hashtable_create (
 {
   obj_hash_table_t                       *hashtbl;
 
-  if (!(hashtbl = malloc (sizeof (obj_hash_table_t))))
+  if (!(hashtbl = MALLOC_CHECK (sizeof (obj_hash_table_t))))
     return NULL;
 
-  if (!(hashtbl->nodes = calloc (sizeP, sizeof (obj_hash_node_t *)))) {
-    free (hashtbl);
+  if (!(hashtbl->nodes = CALLOC_CHECK (sizeP, sizeof (obj_hash_node_t *)))) {
+    FREE_CHECK (hashtbl);
     return NULL;
   }
 
@@ -99,17 +100,17 @@ obj_hashtable_create (
   if (freekeyfuncP)
     hashtbl->freekeyfunc = freekeyfuncP;
   else
-    hashtbl->freekeyfunc = free;
+    hashtbl->freekeyfunc = FREE_CHECK;
 
   if (freedatafuncP)
     hashtbl->freedatafunc = freedatafuncP;
   else
-    hashtbl->freedatafunc = free;
+    hashtbl->freedatafunc = FREE_CHECK;
 
   if (display_name_pP) {
-    hashtbl->name = display_name_pP;
+    hashtbl->name = STRDUP_CHECK(display_name_pP);
   } else {
-    hashtbl->name = malloc (64);
+    hashtbl->name = MALLOC_CHECK (64);
     snprintf (hashtbl->name, 64, "obj_hashtable@%p", hashtbl);
   }
 
@@ -137,12 +138,12 @@ obj_hashtable_destroy (
       node = node->next;
       hashtblP->freekeyfunc (oldnode->key);
       hashtblP->freedatafunc (oldnode->data);
-      free (oldnode);
+      FREE_CHECK (oldnode);
     }
   }
 
-  free (hashtblP->nodes);
-  free (hashtblP);
+  FREE_CHECK (hashtblP->nodes);
+  FREE_CHECK (hashtblP);
   return HASH_TABLE_OK;
 }
 
@@ -159,7 +160,7 @@ obj_hashtable_is_key_exists (
 
   if (hashtblP == NULL) {
 #if HASHTABLE_DEBUG
-    fprintf (stderr, "obj_hashtable_is_key_exists return BAD_PARAMETER_HASHTABLE\n");
+    fprintf (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
 #endif
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -170,13 +171,13 @@ obj_hashtable_is_key_exists (
   while (node) {
     if (node->key == keyP) {
 #if HASHTABLE_DEBUG
-      fprintf (stderr, "obj_hashtable_is_key_exists(%s,key %p) hash %lx return OK\n", hashtblP->name, keyP, hash);
+      fprintf (stderr, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
       return HASH_TABLE_OK;
     } else if (node->key_size == key_sizeP) {
       if (memcmp (node->key, keyP, key_sizeP) == 0) {
 #if HASHTABLE_DEBUG
-        fprintf (stderr, "obj_hashtable_is_key_exists(%s,key %p) hash %lx return OK\n", hashtblP->name, keyP, hash);
+        fprintf (stderr, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
         return HASH_TABLE_OK;
       }
@@ -186,7 +187,7 @@ obj_hashtable_is_key_exists (
   }
 
 #if HASHTABLE_DEBUG
-  fprintf (stderr, "obj_hashtable_is_key_exists(%s,key %p) hash %lx return KEY_NOT_EXISTS\n", hashtblP->name, keyP, hash);
+  fprintf (stderr, "%s(%s,key %p) hash %lx return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
@@ -205,7 +206,7 @@ obj_hashtable_dump_content (
 
   if (hashtblP == NULL) {
 #if HASHTABLE_DEBUG
-    fprintf (stderr, "obj_hashtable_dump_content return BAD_PARAMETER_HASHTABLE\n");
+    fprintf (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
 #endif
     rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "HASH_TABLE_BAD_PARAMETER_HASHTABLE");
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
@@ -250,7 +251,7 @@ obj_hashtable_insert (
 
   if (hashtblP == NULL) {
 #if HASHTABLE_DEBUG
-    fprintf (stderr, "obj_hashtable_insert return BAD_PARAMETER_HASHTABLE\n");
+    fprintf (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
 #endif
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -266,9 +267,9 @@ obj_hashtable_insert (
 
       node->data = dataP;
       node->key_size = key_sizeP;
-      // waste of memory here (keyP is lost) we should free it now
+      // waste of memory here (keyP is lost) we should FREE_CHECK it now
 #if HASHTABLE_DEBUG
-      fprintf (stderr, "obj_hashtable_insert(%s,key %p) hash %lx return INSERT_OVERWRITTEN_DATA\n", hashtblP->name, keyP, hash);
+      fprintf (stderr, "%s(%s,key %p) hash %lx return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
       return HASH_TABLE_INSERT_OVERWRITTEN_DATA;
     }
@@ -276,18 +277,18 @@ obj_hashtable_insert (
     node = node->next;
   }
 
-  if (!(node = malloc (sizeof (obj_hash_node_t)))) {
+  if (!(node = MALLOC_CHECK (sizeof (obj_hash_node_t)))) {
 #if HASHTABLE_DEBUG
-    fprintf (stderr, "obj_hashtable_insert(%s,key %p) hash %lx return SYSTEM_ERROR\n", hashtblP->name, keyP, hash);
+    fprintf (stderr, "%s(%s,key %p) hash %lx return SYSTEM_ERROR\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
     return HASH_TABLE_SYSTEM_ERROR;
   }
 
-  if (!(node->key = malloc (key_sizeP))) {
+  if (!(node->key = MALLOC_CHECK (key_sizeP))) {
 #if HASHTABLE_DEBUG
-    fprintf (stderr, "obj_hashtable_insert(%s,key %p) hash %lx return SYSTEM_ERROR\n", hashtblP->name, keyP, hash);
+    fprintf (stderr, "%s(%s,key %p) hash %lx return SYSTEM_ERROR\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
-    free (node);
+    FREE_CHECK (node);
     return -1;
   }
 
@@ -303,7 +304,7 @@ obj_hashtable_insert (
 
   hashtblP->nodes[hash] = node;
 #if HASHTABLE_DEBUG
-  fprintf (stdout, "obj_hashtable_insert(%s,key %p) hash %lx return OK\n", hashtblP->name, keyP, hash);
+  fprintf (stdout, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
   return HASH_TABLE_OK;
 }                               //-------------------------------------------------------------------------------------------------------------------------------
@@ -324,7 +325,7 @@ obj_hashtable_free (
 
   if (hashtblP == NULL) {
 #if HASHTABLE_DEBUG
-    fprintf (stderr, "obj_hashtable_free return BAD_PARAMETER_HASHTABLE\n");
+    fprintf (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
 #endif
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -342,9 +343,9 @@ obj_hashtable_free (
 
       hashtblP->freekeyfunc (node->key);
       hashtblP->freedatafunc (node->data);
-      free (node);
+      FREE_CHECK (node);
 #if HASHTABLE_DEBUG
-      fprintf (stdout, "obj_hashtable_free(%s,key %p) hash %lx return OK\n", hashtblP->name, keyP, hash);
+      fprintf (stdout, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
       return HASH_TABLE_OK;
     }
@@ -374,7 +375,7 @@ obj_hashtable_remove (
 
   if (hashtblP == NULL) {
 #if HASHTABLE_DEBUG
-    fprintf (stderr, "obj_hashtable_remove return BAD_PARAMETER_HASHTABLE\n");
+    fprintf (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
 #endif
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -392,9 +393,9 @@ obj_hashtable_remove (
 
       hashtblP->freekeyfunc (node->key);
       *dataP = node->data;
-      free (node);
+      FREE_CHECK (node);
 #if HASHTABLE_DEBUG
-      fprintf (stdout, "obj_hashtable_remove(%s,key %p) hash %lx return OK\n", hashtblP->name, keyP, hash);
+      fprintf (stdout, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
       return HASH_TABLE_OK;
     }
@@ -423,7 +424,7 @@ obj_hashtable_get (
 
   if (hashtblP == NULL) {
 #if HASHTABLE_DEBUG
-    fprintf (stderr, "obj_hashtable_get return BAD_PARAMETER_HASHTABLE\n");
+    fprintf (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
 #endif
     *dataP = NULL;
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
@@ -436,14 +437,14 @@ obj_hashtable_get (
     if (node->key == keyP) {
       *dataP = node->data;
 #if HASHTABLE_DEBUG
-      fprintf (stdout, "obj_hashtable_get(%s,key %p) hash %lx return OK\n", hashtblP->name, keyP, hash);
+      fprintf (stdout, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
       return HASH_TABLE_OK;
     } else if (node->key_size == key_sizeP) {
       if (memcmp (node->key, keyP, key_sizeP) == 0) {
         *dataP = node->data;
 #if HASHTABLE_DEBUG
-        fprintf (stdout, "obj_hashtable_get(%s,key %p) hash %lx return OK\n", hashtblP->name, keyP, hash);
+        fprintf (stdout, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
         return HASH_TABLE_OK;
       }
@@ -454,7 +455,7 @@ obj_hashtable_get (
 
   *dataP = NULL;
 #if HASHTABLE_DEBUG
-  fprintf (stderr, "obj_hashtable_get(%s,key %p) hash %lx return KEY_NOT_EXISTS\n", hashtblP->name, keyP, hash);
+  fprintf (stderr, "%s(%s,key %p) hash %lx return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP, hash);
 #endif
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
@@ -475,14 +476,14 @@ obj_hashtable_get_keys (
 
   if (hashtblP == NULL) {
 #if HASHTABLE_DEBUG
-    fprintf (stderr, "obj_hashtable_get_keys return BAD_PARAMETER_HASHTABLE\n");
+    fprintf (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
 #endif
     keysP = NULL;
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
   *sizeP = 0;
-  keysP = calloc (hashtblP->num_elements, sizeof (void *));
+  keysP = CALLOC_CHECK (hashtblP->num_elements, sizeof (void *));
 
   if (keysP) {
     for (n = 0; n < hashtblP->size; ++n) {
@@ -493,12 +494,12 @@ obj_hashtable_get_keys (
     }
 
 #if HASHTABLE_DEBUG
-    fprintf (stdout, "obj_hashtable_get_keys return OK\n");
+    fprintf (stdout, "%s return OK\n", __FUNCTION__);
 #endif
     return HASH_TABLE_OK;
   }
 #if HASHTABLE_DEBUG
-  fprintf (stderr, "obj_hashtable_get_keys return SYSTEM_ERROR\n");
+  fprintf (stderr, "%s return SYSTEM_ERROR\n", __FUNCTION__);
 #endif
   return HASH_TABLE_SYSTEM_ERROR;
 }
@@ -512,14 +513,14 @@ obj_hashtable_get_keys (
    Resizing a hash table is not as easy as a realloc(). All hash values must be recalculated and each element must be inserted into its new position.
    We create a temporary obj_hash_table_t object (newtbl) to be used while building the new hashes.
    This allows us to reuse hashtable_insert() and hashtable_free(), when moving the elements to the new table.
-   After that, we can just free the old table and copy the elements from newtbl to hashtbl.
+   After that, we can just FREE_CHECK the old table and copy the elements from newtbl to hashtbl.
 */
 hashtable_rc_t
 obj_hashtable_resize (
   obj_hash_table_t * const hashtblP,
   const hash_size_t sizeP)
 {
-  obj_hash_table_t                        newtbl;
+  obj_hash_table_t                        newtbl = {0};
   hash_size_t                             n;
   obj_hash_node_t                        *node,
                                          *next;
@@ -527,7 +528,7 @@ obj_hashtable_resize (
 
   if (hashtblP == NULL) {
 #if HASHTABLE_DEBUG
-    fprintf (stderr, "obj_hashtable_resize return BAD_PARAMETER_HASHTABLE\n");
+    fprintf (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
 #endif
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -535,7 +536,7 @@ obj_hashtable_resize (
   newtbl.size = sizeP;
   newtbl.hashfunc = hashtblP->hashfunc;
 
-  if (!(newtbl.nodes = calloc (sizeP, sizeof (obj_hash_node_t *))))
+  if (!(newtbl.nodes = CALLOC_CHECK (sizeP, sizeof (obj_hash_node_t *))))
     return HASH_TABLE_SYSTEM_ERROR;
 
   for (n = 0; n < hashtblP->size; ++n) {
@@ -547,11 +548,11 @@ obj_hashtable_resize (
     }
   }
 
-  free (hashtblP->nodes);
+  FREE_CHECK (hashtblP->nodes);
   hashtblP->size = newtbl.size;
   hashtblP->nodes = newtbl.nodes;
 #if HASHTABLE_DEBUG
-  fprintf (stdout, "obj_hashtable_resize return OK\n");
+  fprintf (stdout, "%s return OK\n", __FUNCTION__);
 #endif
   return HASH_TABLE_OK;
 }

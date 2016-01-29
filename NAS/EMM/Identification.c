@@ -50,7 +50,7 @@
 #include "emm_sap.h"
 #include "msc.h"
 
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 #include <string.h>             // memcpy
 
 /****************************************************************************/
@@ -157,7 +157,7 @@ emm_proc_identification (
   /*
    * Allocate parameters of the retransmission timer callback
    */
-  identification_data_t                  *data = (identification_data_t *) malloc (sizeof (identification_data_t));
+  identification_data_t                  *data = (identification_data_t *) MALLOC_CHECK (sizeof (identification_data_t));
 
   if (data != NULL) {
     /*
@@ -167,7 +167,7 @@ emm_proc_identification (
 
     if (rc != RETURNok) {
       LOG_TRACE (WARNING, "Failed to initialize EMM callback functions");
-      free (data);
+      FREE_CHECK (data);
       LOG_FUNC_RETURN (RETURNerror);
     }
 
@@ -250,7 +250,7 @@ emm_proc_identification_complete (
   identification_data_t                  *data = (identification_data_t *) (emm_proc_common_get_args (ueid));
 
   if (data) {
-    free (data);
+    FREE_CHECK (data);
   }
 
   /*
@@ -281,7 +281,7 @@ emm_proc_identification_complete (
        * Update the IMSI
        */
       if (emm_ctx->imsi == NULL) {
-        emm_ctx->imsi = (imsi_t *) malloc (sizeof (imsi_t));
+        emm_ctx->imsi = (imsi_t *) MALLOC_CHECK (sizeof (imsi_t));
       }
 
       if (emm_ctx->imsi) {
@@ -292,7 +292,7 @@ emm_proc_identification_complete (
        * Update the IMEI
        */
       if (emm_ctx->imei == NULL) {
-        emm_ctx->imei = (imei_t *) malloc (sizeof (imei_t));
+        emm_ctx->imei = (imei_t *) MALLOC_CHECK (sizeof (imei_t));
       }
 
       if (emm_ctx->imei) {
@@ -303,7 +303,7 @@ emm_proc_identification_complete (
        * Update the GUTI
        */
       if (emm_ctx->guti == NULL) {
-        emm_ctx->guti = (GUTI_t *) malloc (sizeof (GUTI_t));
+        emm_ctx->guti = (GUTI_t *) MALLOC_CHECK (sizeof (GUTI_t));
       }
 
       if (emm_ctx->guti) {
@@ -533,7 +533,7 @@ _identification_abort (
     /*
      * Release retransmission timer parameters
      */
-    free (data);
+    FREE_CHECK (data);
 
     /*
      * Notify EMM that the identification procedure failed

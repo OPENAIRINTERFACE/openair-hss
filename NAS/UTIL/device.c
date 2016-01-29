@@ -40,12 +40,13 @@
 #include "commonDef.h"
 
 #include <stdio.h>              // fflush
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, free
 #include <string.h>             // strncpy
 #include <unistd.h>             // read, write, close
 
 #include <sys/stat.h>
 #include <fcntl.h>              // open
+#include "dynamic_memory_check.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -126,7 +127,7 @@ device_open (
   /*
    * The device has been successfully opened
    */
-  device_id_t                            *devid = (device_id_t *) malloc (sizeof (struct device_id_s));
+  device_id_t                            *devid = (device_id_t *) MALLOC_CHECK (sizeof (struct device_id_s));
 
   if (devid != NULL) {
     strncpy (devid->pathname, devpath, DEVICE_PATHNAME_SIZE);

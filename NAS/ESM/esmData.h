@@ -222,6 +222,9 @@ typedef struct esm_data_s {
 } esm_data_t;
 
 # if NAS_BUILT_IN_EPC
+
+void free_esm_data_context(esm_data_context_t * esm_data_ctx);
+
 struct esm_data_context_s *esm_data_context_get(
   esm_data_t *esm_data, unsigned int _ueid);
 

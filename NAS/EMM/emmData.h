@@ -225,7 +225,8 @@ struct emm_data_context_s *emm_data_context_remove(
   emm_data_t *_emm_data, struct emm_data_context_s *elm);
 
 int  emm_data_context_add(emm_data_t *emm_data, struct emm_data_context_s *elm);
-void emm_data_context_dump(struct emm_data_context_s *elm_pP);
+void free_emm_data_context(struct emm_data_context_s * const emm_ctx);
+void emm_data_context_dump(const struct emm_data_context_s * const elm_pP);
 
 void emm_data_context_dump_all(void);
 

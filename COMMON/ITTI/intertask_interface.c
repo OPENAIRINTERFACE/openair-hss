@@ -64,6 +64,7 @@
 
 #include "signals.h"
 #include "timer.h"
+#include "dynamic_memory_check.h"
 
 /* ITTI DEBUG groups */
 #define ITTI_DEBUG_POLL             (1<<0)
@@ -206,10 +207,10 @@ itti_malloc (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     ITTI_ERROR (" Memory pools statistics:\n%s", statistics);
-    free (statistics);
+    FREE_CHECK (statistics);
   }
 #else
-  ptr = malloc (size);
+  ptr = MALLOC_CHECK (size);
 #endif
   AssertFatal (ptr != NULL, "Memory allocation of %d bytes failed (%d -> %d)!\n", (int)size, origin_task_id, destination_task_id);
   return ptr;
@@ -228,7 +229,7 @@ itti_free (
   AssertError (result == EXIT_SUCCESS, {
                }, "Failed to free memory at %p (%d)!\n", ptr, task_id);
 #else
-  free (ptr);
+  FREE_CHECK (ptr);
 #endif
   return (result);
 }
@@ -818,11 +819,11 @@ itti_init (
   /*
    * Allocates memory for tasks info
    */
-  itti_desc.tasks = calloc (itti_desc.task_max, sizeof (task_desc_t));
+  itti_desc.tasks = CALLOC_CHECK (itti_desc.task_max, sizeof (task_desc_t));
   /*
    * Allocates memory for threads info
    */
-  itti_desc.threads = calloc (itti_desc.thread_max, sizeof (thread_desc_t));
+  itti_desc.threads = CALLOC_CHECK (itti_desc.thread_max, sizeof (thread_desc_t));
 
   /*
    * Initializing each queue and related stuff
@@ -864,7 +865,7 @@ itti_init (
     }
 
     itti_desc.threads[thread_id].nb_events = 1;
-    itti_desc.threads[thread_id].events = calloc (1, sizeof (struct epoll_event));
+    itti_desc.threads[thread_id].events = CALLOC_CHECK (1, sizeof (struct epoll_event));
     itti_desc.threads[thread_id].events->events = EPOLLIN | EPOLLERR;
     itti_desc.threads[thread_id].events->data.fd = itti_desc.threads[thread_id].task_event_fd;
 
@@ -897,7 +898,7 @@ itti_init (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s", statistics);
-    free (statistics);
+    FREE_CHECK (statistics);
   }
 #endif
 #if OAI_EMU
@@ -976,7 +977,7 @@ itti_wait_tasks_end (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s", statistics);
-    free (statistics);
+    FREE_CHECK (statistics);
   }
 #endif
 

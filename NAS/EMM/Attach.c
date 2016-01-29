@@ -75,7 +75,7 @@
 #include "obj_hashtable.h"
 
 #include <string.h>             // memcmp, memcpy
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -298,7 +298,7 @@ emm_proc_attach_request (
 #endif
 
   fsm_state = emm_fsm_get_status (ueid, *emm_ctx);
-  if ((*emm_ctx != NULL) && (EMM_DEREGISTERED == fsm_state)) {
+  if ((*emm_ctx != NULL) && (EMM_REGISTERED == fsm_state)) {
     /*
      * MME24.301R10_5.5.1.2.7_f ATTACH REQUEST received in state EMM-REGISTERED
      * If an ATTACH REQUEST message is received in state EMM-REGISTERED the network may initiate the
@@ -380,7 +380,7 @@ emm_proc_attach_request (
       /*
        * Create UE's EMM context
        */
-      *emm_ctx = (emm_data_context_t *) calloc (1, sizeof (emm_data_context_t));
+      *emm_ctx = (emm_data_context_t *) CALLOC_CHECK (1, sizeof (emm_data_context_t));
 
       if (*emm_ctx == NULL) {
         LOG_TRACE (WARNING, "EMM-PROC  - Failed to create EMM context");
@@ -549,10 +549,10 @@ emm_proc_attach_complete (
 
   if (data) {
     if (data->esm_msg.length > 0) {
-      free (data->esm_msg.value);
+      FREE_CHECK (data->esm_msg.value);
     }
 
-    free (data);
+    FREE_CHECK (data);
   }
 
   /*
@@ -735,22 +735,22 @@ _emm_attach_release (
     unsigned int                            ueid = emm_ctx->ueid;
 
     if (emm_ctx->guti) {
-      free (emm_ctx->guti);
+      FREE_CHECK (emm_ctx->guti);
       emm_ctx->guti = NULL;
     }
 
     if (emm_ctx->imsi) {
-      free (emm_ctx->imsi);
+      FREE_CHECK (emm_ctx->imsi);
       emm_ctx->imsi = NULL;
     }
 
     if (emm_ctx->imei) {
-      free (emm_ctx->imei);
+      FREE_CHECK (emm_ctx->imei);
       emm_ctx->imei = NULL;
     }
 
     if (emm_ctx->esm_msg.length > 0) {
-      free (emm_ctx->esm_msg.value);
+      FREE_CHECK (emm_ctx->esm_msg.value);
       emm_ctx->esm_msg.value = NULL;
     }
 
@@ -761,24 +761,24 @@ _emm_attach_release (
       emm_security_context_t                 *security = emm_ctx->security;
 
       if (security->kasme.value) {
-        free (security->kasme.value);
+        FREE_CHECK (security->kasme.value);
         security->kasme.value = NULL;
         security->kasme.length = 0;
       }
 
       if (security->knas_enc.value) {
-        free (security->knas_enc.value);
+        FREE_CHECK (security->knas_enc.value);
         security->knas_enc.value = NULL;
         security->knas_enc.length = 0;
       }
 
       if (security->knas_int.value) {
-        free (security->knas_int.value);
+        FREE_CHECK (security->knas_int.value);
         security->knas_int.value = NULL;
         security->knas_int.length = 0;
       }
 
-      free (emm_ctx->security);
+      FREE_CHECK (emm_ctx->security);
       emm_ctx->security = NULL;
     }
 
@@ -815,7 +815,7 @@ _emm_attach_release (
 #if NAS_BUILT_IN_EPC
     emm_data_context_remove (&_emm_data, emm_ctx);
 #else
-    free (_emm_data.ctx[ueid]);
+    FREE_CHECK (_emm_data.ctx[ueid]);
     _emm_data.ctx[ueid] = NULL;
 #endif
     /*
@@ -958,10 +958,10 @@ _emm_attach_abort (
      * Release retransmission timer parameters
      */
     if (data->esm_msg.length > 0) {
-      free (data->esm_msg.value);
+      FREE_CHECK (data->esm_msg.value);
     }
 
-    free (data);
+    FREE_CHECK (data);
     /*
      * Notify ESM that the network locally refused PDN connectivity
      * to the UE
@@ -1112,7 +1112,7 @@ _emm_attach_identify (
      * Release the old GUTI
      */
     if (emm_ctx->old_guti) {
-      free (emm_ctx->old_guti);
+      FREE_CHECK (emm_ctx->old_guti);
     }
 
     /*
@@ -1122,7 +1122,7 @@ _emm_attach_identify (
     /*
      * Allocate a new GUTI
      */
-    emm_ctx->guti = (GUTI_t *) malloc (sizeof (GUTI_t));
+    emm_ctx->guti = (GUTI_t *) MALLOC_CHECK (sizeof (GUTI_t));
     /*
      * Request the MME to assign a GUTI to the UE
      */
@@ -1235,7 +1235,7 @@ _emm_attach_security (
    * Create new NAS security context
    */
   if (emm_ctx->security == NULL) {
-    emm_ctx->security = (emm_security_context_t *) malloc (sizeof (emm_security_context_t));
+    emm_ctx->security = (emm_security_context_t *) MALLOC_CHECK (sizeof (emm_security_context_t));
   }
 
   if (emm_ctx->security) {
@@ -1344,7 +1344,7 @@ _emm_attach (
     /*
      * Allocate parameters of the retransmission timer callback
      */
-    attach_data_t                          *data = (attach_data_t *) calloc (1, sizeof (attach_data_t));
+    attach_data_t                          *data = (attach_data_t *) CALLOC_CHECK (1, sizeof (attach_data_t));
 
     if (data != NULL) {
       /*
@@ -1354,7 +1354,7 @@ _emm_attach (
 
       if (rc != RETURNok) {
         LOG_TRACE (WARNING, "Failed to initialize EMM callback functions");
-        free (data);
+        FREE_CHECK (data);
         LOG_FUNC_RETURN (RETURNerror);
       }
 
@@ -1370,7 +1370,7 @@ _emm_attach (
       /*
        * Setup the ESM message container
        */
-      data->esm_msg.value = (uint8_t *) malloc (esm_sap.send.length);
+      data->esm_msg.value = (uint8_t *) MALLOC_CHECK (esm_sap.send.length);
 
       if (data->esm_msg.value) {
         data->esm_msg.length = esm_sap.send.length;
@@ -1412,10 +1412,10 @@ _emm_attach (
      * message within the Attach Reject message
      */
     if (emm_ctx->esm_msg.length > 0) {
-      free (emm_ctx->esm_msg.value);
+      FREE_CHECK (emm_ctx->esm_msg.value);
     }
 
-    emm_ctx->esm_msg.value = (uint8_t *) malloc (esm_sap.send.length);
+    emm_ctx->esm_msg.value = (uint8_t *) MALLOC_CHECK (esm_sap.send.length);
 
     if (emm_ctx->esm_msg.value) {
       emm_ctx->esm_msg.length = esm_sap.send.length;
@@ -1873,7 +1873,7 @@ _emm_attach_update (
     LOG_TRACE (INFO, "EMM-PROC  - GUTI NOT NULL");
 
     if (ctx->guti == NULL) {
-      ctx->guti = (GUTI_t *) malloc (sizeof (GUTI_t));
+      ctx->guti = (GUTI_t *) MALLOC_CHECK (sizeof (GUTI_t));
       obj_hashtable_insert (_emm_data.ctx_coll_guti, (const hash_key_t)guti, sizeof (*guti), (void *)ctx->ueid);
       LOG_TRACE (INFO,
                  "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id "
@@ -1891,7 +1891,7 @@ _emm_attach_update (
     }
   } else {
     if (NULL == ctx->guti ) {
-      ctx->guti = (GUTI_t *) calloc (1, sizeof (GUTI_t));
+      ctx->guti = (GUTI_t *) CALLOC_CHECK (1, sizeof (GUTI_t));
     } else {
       unsigned int                           *emm_ue_id = NULL;
 
@@ -2008,7 +2008,7 @@ _emm_attach_update (
    */
   if (imsi) {
     if (ctx->imsi == NULL) {
-      ctx->imsi = (imsi_t *) malloc (sizeof (imsi_t));
+      ctx->imsi = (imsi_t *) MALLOC_CHECK (sizeof (imsi_t));
     }
 
     if (ctx->imsi != NULL) {
@@ -2023,7 +2023,7 @@ _emm_attach_update (
    */
   if (imei) {
     if (ctx->imei == NULL) {
-      ctx->imei = (imei_t *) malloc (sizeof (imei_t));
+      ctx->imei = (imei_t *) MALLOC_CHECK (sizeof (imei_t));
     }
 
     if (ctx->imei != NULL) {
@@ -2038,12 +2038,12 @@ _emm_attach_update (
    */
   if (esm_msg_pP->length > 0) {
     if (ctx->esm_msg.value != NULL) {
-      free (ctx->esm_msg.value);
+      FREE_CHECK (ctx->esm_msg.value);
       ctx->esm_msg.value = NULL;
       ctx->esm_msg.length = 0;
     }
 
-    ctx->esm_msg.value = (uint8_t *) malloc (esm_msg_pP->length);
+    ctx->esm_msg.value = (uint8_t *) MALLOC_CHECK (esm_msg_pP->length);
 
     if (ctx->esm_msg.value != NULL) {
       memcpy ((char *)ctx->esm_msg.value, (char *)esm_msg_pP->value, esm_msg_pP->length);

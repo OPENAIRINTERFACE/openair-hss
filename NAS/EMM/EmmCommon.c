@@ -53,7 +53,7 @@
 #include "nas_log.h"
 #include "emmData.h"
 
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 #include <string.h>
 #include <assert.h>
 
@@ -194,7 +194,7 @@ emm_proc_common_initialize (
 #endif
 
   if (emm_common_data_ctx == NULL) {
-    emm_common_data_ctx = (emm_common_data_t *) calloc (1, sizeof (emm_common_data_t));
+    emm_common_data_ctx = (emm_common_data_t *) CALLOC_CHECK (1, sizeof (emm_common_data_t));
     emm_common_data_ctx->ueid = ueid;
 #if NAS_BUILT_IN_EPC
     RB_INSERT (emm_common_data_map, &emm_common_data_head.emm_common_data_root, emm_common_data_ctx);
@@ -502,7 +502,7 @@ _emm_common_cleanup (
 #if NAS_BUILT_IN_EPC
       RB_REMOVE (emm_common_data_map, &emm_common_data_head.emm_common_data_root, emm_common_data_ctx);
 #endif
-      free (emm_common_data_ctx);
+      FREE_CHECK (emm_common_data_ctx);
       emm_common_data_ctx = NULL;
     }
   }

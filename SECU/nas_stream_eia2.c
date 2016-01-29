@@ -37,6 +37,7 @@
 
 #include "assertions.h"
 #include "conversions.h"
+#include "dynamic_memory_check.h"
 
 #define SECU_DEBUG 1
 
@@ -72,7 +73,7 @@ nas_stream_encrypt_eia2 (
     m_length += 1;
 
   local_count = hton_int32 (stream_cipher->count);
-  m = calloc (m_length + 8, sizeof (uint8_t));
+  m = CALLOC_CHECK (m_length + 8, sizeof (uint8_t));
   memcpy (&m[0], &local_count, 4);
   m[4] = ((stream_cipher->bearer & 0x1F) << 3) | ((stream_cipher->direction & 0x01) << 2);
   memcpy (&m[8], stream_cipher->message, m_length);
@@ -116,6 +117,6 @@ nas_stream_encrypt_eia2 (
   }
 #endif
   memcpy (out, data, 4);
-  free (m);
+  FREE_CHECK (m);
   return 0;
 }

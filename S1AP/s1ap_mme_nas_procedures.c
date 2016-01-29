@@ -41,6 +41,7 @@
 #include "assertions.h"
 #include "conversions.h"
 #include "msc.h"
+#include "dynamic_memory_check.h"
 
 /* Every time a new UE is associated, increment this variable.
    But care if it wraps to increment also the mme_ue_s1ap_id_has_wrapped
@@ -367,7 +368,7 @@ s1ap_handle_attach_accepted (
    * S-GW IP address(es) for user-plane
    */
   if ((initial_p->s_gw_address.pdn_type == IPv4) || (initial_p->s_gw_address.pdn_type == IPv4_AND_v6)) {
-    e_RABToBeSetup.transportLayerAddress.buf = calloc (4, sizeof (uint8_t));
+    e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK (4, sizeof (uint8_t));
     /*
      * Only IPv4 supported
      */
@@ -385,7 +386,7 @@ s1ap_handle_attach_accepted (
       /*
        * TODO: check memory allocation
        */
-      e_RABToBeSetup.transportLayerAddress.buf = calloc (16, sizeof (uint8_t));
+      e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK (16, sizeof (uint8_t));
     } else {
       /*
        * Only IPv6 supported
@@ -506,7 +507,7 @@ s1ap_handle_attach_accepted (
 ////    if ((initial_p->s_gw_address.pdn_type == IPv4) ||
 ////        (initial_p->s_gw_address.pdn_type == IPv4_AND_v6))
 ////    {
-////        e_RABToBeSetup.transportLayerAddress.buf = calloc(4, sizeof(uint8_t));
+////        e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK(4, sizeof(uint8_t));
 ////        /* Only IPv4 supported */
 ////        memcpy(e_RABToBeSetup.transportLayerAddress.buf,
 ////               initial_p->s_gw_address.address.ipv4_address,
@@ -521,7 +522,7 @@ s1ap_handle_attach_accepted (
 ////        if (offset == 0) {
 ////            /* Both IPv4 and IPv6 provided */
 ////            /* TODO: check memory allocation */
-////            e_RABToBeSetup.transportLayerAddress.buf = calloc(16, sizeof(uint8_t));
+////            e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK(16, sizeof(uint8_t));
 ////        } else {
 ////            /* Only IPv6 supported */
 ////            /* TODO: check memory allocation */
@@ -564,7 +565,7 @@ s1ap_handle_attach_accepted (
 //        DevMessage("Failed to encode initial context setup request message\n");
 //    }
 //
-//    free(nas_conn_est_cnf_p->nasMsg.data);
+//    FREE_CHECK(nas_conn_est_cnf_p->nasMsg.data);
 //
 //    s1ap_mme_itti_send_sctp_request(buffer_p, length, ue_ref->eNB->sctp_assoc_id,
 //                                    ue_ref->sctp_stream_send);
@@ -644,7 +645,7 @@ s1ap_handle_conn_est_cnf (
    * S-GW IP address(es) for user-plane
    */
   if (conn_est_cnf_pP->bearer_s1u_sgw_fteid.ipv4) {
-    e_RABToBeSetup.transportLayerAddress.buf = calloc (4, sizeof (uint8_t));
+    e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK (4, sizeof (uint8_t));
     /*
      * Only IPv4 supported
      */
@@ -662,7 +663,7 @@ s1ap_handle_conn_est_cnf (
       /*
        * TODO: check memory allocation
        */
-      e_RABToBeSetup.transportLayerAddress.buf = calloc (16, sizeof (uint8_t));
+      e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK (16, sizeof (uint8_t));
     } else {
       /*
        * Only IPv6 supported
@@ -689,7 +690,7 @@ s1ap_handle_conn_est_cnf (
   S1AP_DEBUG ("security_capabilities_integrity_algorithms 0x%04X\n", conn_est_cnf_pP->security_capabilities_integrity_algorithms);
 
   if (conn_est_cnf_pP->keNB) {
-    initialContextSetupRequest_p->securityKey.buf = malloc (32);
+    initialContextSetupRequest_p->securityKey.buf = MALLOC_CHECK (32);
     memcpy (initialContextSetupRequest_p->securityKey.buf, conn_est_cnf_pP->keNB, 32);
     initialContextSetupRequest_p->securityKey.size = 32;
   } else {
@@ -705,7 +706,7 @@ s1ap_handle_conn_est_cnf (
     DevMessage ("Failed to encode initial context setup request message\n");
   }
 
-  free (conn_est_cnf_pP->nas_conn_est_cnf.nasMsg.data);
+  FREE_CHECK (conn_est_cnf_pP->nas_conn_est_cnf.nasMsg.data);
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
                       NULL, 0,

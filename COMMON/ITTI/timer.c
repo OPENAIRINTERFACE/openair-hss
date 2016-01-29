@@ -42,6 +42,7 @@
 #include "timer.h"
 #include "log.h"
 #include "queue.h"
+#include "dynamic_memory_check.h"
 
 #if defined (LOG_D) && defined (LOG_E)
 #  define TMR_DEBUG(x, args...)  LOG_D(TMR, x, ##args)
@@ -120,7 +121,7 @@ timer_handle_signal (
     //         pthread_mutex_lock(&timer_desc.timer_list_mutex);
     //         STAILQ_REMOVE(&timer_desc.timer_queue, timer_p, timer_elm_s, entries);
     //         pthread_mutex_unlock(&timer_desc.timer_list_mutex);
-    //         free(timer_p);
+    //         FREE_CHECK(timer_p);
     //         timer_p = NULL;
     if (timer_remove ((long)timer_p->timer) != 0) {
       TMR_DEBUG ("Failed to delete timer 0x%lx\n", (long)timer_p->timer);
@@ -132,7 +133,7 @@ timer_handle_signal (
    */
   if (itti_send_msg_to_task (task_id, instance, message_p) < 0) {
     TMR_DEBUG ("Failed to send msg TIMER_HAS_EXPIRED to task %u\n", task_id);
-    free (message_p);
+    FREE_CHECK (message_p);
     return -1;
   }
 
@@ -162,7 +163,7 @@ timer_setup (
   /*
    * Allocate new timer list element
    */
-  timer_p = malloc (sizeof (struct timer_elm_s));
+  timer_p = MALLOC_CHECK (sizeof (struct timer_elm_s));
 
   if (timer_p == NULL) {
     TMR_ERROR ("Failed to create new timer element\n");
@@ -192,7 +193,7 @@ timer_setup (
    */
   if (timer_create (CLOCK_REALTIME, &se, &timer) < 0) {
     TMR_ERROR ("Failed to create timer: (%s:%d)\n", strerror (errno), errno);
-    free (timer_p);
+    FREE_CHECK (timer_p);
     return -1;
   }
 
@@ -260,7 +261,7 @@ timer_remove (
     rc = -1;
   }
 
-  free (timer_p);
+  FREE_CHECK (timer_p);
   timer_p = NULL;
   return rc;
 }

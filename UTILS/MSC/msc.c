@@ -67,6 +67,7 @@
 
 #include "msc.h"
 #include "assertions.h"
+#include "dynamic_memory_check.h"
 
 //-------------------------------
 #define MSC_MAX_QUEUE_ELEMENTS    1024
@@ -187,8 +188,8 @@ msc_init (
   msc_start_use ();
 
   for (i = 0; i < max_threadsP * 30; i++) {
-    pointer_p = malloc (MSC_MAX_MESSAGE_LENGTH);
-    AssertFatal (pointer_p, "malloc failed!\n");
+    pointer_p = MALLOC_CHECK (MSC_MAX_MESSAGE_LENGTH);
+    AssertFatal (pointer_p, "MALLOC_CHECK failed!\n");
     rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, pointer_p);
     AssertFatal (rv, "lfds611_stack_guaranteed_push failed for item %u\n", i);
   }
@@ -395,8 +396,8 @@ msc_flush_messages (
       // TODO BIN DATA
       rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, item_p->message_str);
     }
-    // TODO FREE BIN DATA
-    free (item_p);
+    // TODO FREE_CHECK BIN DATA
+    FREE_CHECK (item_p);
   }
 
   fflush (g_msc_fd);
@@ -439,7 +440,7 @@ msc_log_declare_proto (
 
   if ((MIN_MSC_PROTOS <= protoP) && (MAX_MSC_PROTOS > protoP)) {
     // may be build a memory pool for that also ?
-    new_item_p = malloc (sizeof (msc_queue_item_t));
+    new_item_p = MALLOC_CHECK (sizeof (msc_queue_item_t));
 
     if (NULL != new_item_p) {
       rv = lfds611_stack_pop (g_msc_memory_stack_p, (void **)&char_message_p);
@@ -468,7 +469,7 @@ msc_log_declare_proto (
           if (0 == rv) {
             fprintf (stderr, "Error while lfds611_queue_guaranteed_enqueue message %s in MSC", char_message_p);
             rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, char_message_p);
-            free (new_item_p);
+            FREE_CHECK (new_item_p);
           }
         }
 
@@ -477,9 +478,9 @@ msc_log_declare_proto (
         fprintf (stderr, "Error while lfds611_stack_pop()\n");
       }
 
-      free (new_item_p);
+      FREE_CHECK (new_item_p);
     } else {
-      fprintf (stderr, "Error while malloc in MSC");
+      fprintf (stderr, "Error while MALLOC_CHECK in MSC");
     }
   }
 }
@@ -502,7 +503,7 @@ msc_log_event (
     return;
   }
 
-  new_item_p = malloc (sizeof (msc_queue_item_t));
+  new_item_p = MALLOC_CHECK (sizeof (msc_queue_item_t));
 
   if (NULL != new_item_p) {
     rv = lfds611_stack_pop (g_msc_memory_stack_p, (void **)&char_message_p);
@@ -550,9 +551,10 @@ msc_log_event (
       if (0 == rv) {
         fprintf (stderr, "Error while lfds611_queue_guaranteed_enqueue message %s in MSC", char_message_p);
         rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, char_message_p);
-        free (new_item_p);
+        FREE_CHECK (new_item_p);
       }
     } else {
+      FREE_CHECK (new_item_p);
       fprintf (stderr, "Error while lfds611_stack_pop()\n");
     }
   }
@@ -560,7 +562,7 @@ msc_log_event (
   return;
 error_event:
   rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, char_message_p);
-  free (new_item_p);
+  FREE_CHECK (new_item_p);
 }
 
 //------------------------------------------------------------------------------
@@ -586,7 +588,7 @@ msc_log_message (
     return;
   }
 
-  new_item_p = malloc (sizeof (msc_queue_item_t));
+  new_item_p = MALLOC_CHECK (sizeof (msc_queue_item_t));
 
   if (NULL != new_item_p) {
     rv = lfds611_stack_pop (g_msc_memory_stack_p, (void **)&char_message_p);
@@ -634,9 +636,10 @@ msc_log_message (
       if (0 == rv) {
         fprintf (stderr, "Error while lfds611_queue_guaranteed_enqueue message %s in MSC", char_message_p);
         rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, char_message_p);
-        free (new_item_p);
+        FREE_CHECK (new_item_p);
       }
     } else {
+      FREE_CHECK (new_item_p);
       fprintf (stderr, "Error while lfds611_stack_pop()\n");
       msc_flush_messages ();
     }
@@ -645,5 +648,5 @@ msc_log_message (
   return;
 error_event:
   rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, char_message_p);
-  free (new_item_p);
+  FREE_CHECK (new_item_p);
 }

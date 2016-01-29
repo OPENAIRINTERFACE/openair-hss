@@ -37,7 +37,7 @@
 
 *****************************************************************************/
 
-#include <stdlib.h>             // malloc, free
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 #include <string.h>             // memcpy
 
 #include "emmData.h"
@@ -201,7 +201,7 @@ esm_ebr_assign (
   /*
    * Assign new EPS bearer context
    */
-  ebr_ctx = (esm_ebr_context_t *) malloc (sizeof (esm_ebr_context_t));
+  ebr_ctx = (esm_ebr_context_t *) MALLOC_CHECK (sizeof (esm_ebr_context_t));
 
   if (ebr_ctx == NULL) {
     LOG_FUNC_RETURN (ESM_EBI_UNASSIGNED);
@@ -300,17 +300,17 @@ esm_ebr_release (
    */
   if (ebr_ctx->args) {
     if (ebr_ctx->args->msg.length > 0) {
-      free (ebr_ctx->args->msg.value);
+      FREE_CHECK (ebr_ctx->args->msg.value);
     }
 
-    free (ebr_ctx->args);
+    FREE_CHECK (ebr_ctx->args);
     ebr_ctx->args = NULL;
   }
 
   /*
    * Release EPS bearer context data
    */
-  free (ebr_ctx);
+  FREE_CHECK (ebr_ctx);
   ebr_ctx = NULL;
   LOG_TRACE (INFO, "ESM-FSM   - EPS bearer context %d released", ebi);
   LOG_FUNC_RETURN (RETURNok);
@@ -379,7 +379,7 @@ esm_ebr_start_timer (
     /*
      * Setup the retransmission timer parameters
      */
-    ebr_ctx->args = (esm_ebr_timer_data_t *) malloc (sizeof (esm_ebr_timer_data_t));
+    ebr_ctx->args = (esm_ebr_timer_data_t *) MALLOC_CHECK (sizeof (esm_ebr_timer_data_t));
 
     if (ebr_ctx->args) {
       /*
@@ -397,7 +397,7 @@ esm_ebr_start_timer (
       /*
        * Set the ESM message to be re-transmited
        */
-      ebr_ctx->args->msg.value = (uint8_t *) malloc (msg->length);
+      ebr_ctx->args->msg.value = (uint8_t *) MALLOC_CHECK (msg->length);
       ebr_ctx->args->msg.length = 0;
 
       if (ebr_ctx->args->msg.value) {
@@ -480,10 +480,10 @@ esm_ebr_stop_timer (
    */
   if (ebr_ctx->args) {
     if (ebr_ctx->args->msg.length > 0) {
-      free (ebr_ctx->args->msg.value);
+      FREE_CHECK (ebr_ctx->args->msg.value);
     }
 
-    free (ebr_ctx->args);
+    FREE_CHECK (ebr_ctx->args);
     ebr_ctx->args = NULL;
   }
 
