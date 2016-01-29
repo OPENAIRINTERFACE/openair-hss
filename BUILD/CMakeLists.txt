@@ -815,7 +815,7 @@ target_link_libraries (mme_gw
   -Wl,--start-group
    LIB_NAS_MME S1AP_LIB S1AP_EPC GTPV1U GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A SGW MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
   -Wl,--end-group
-  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
+  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
   )
 
 
