@@ -161,17 +161,29 @@ install_xtables_addons_oai() {
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install xtables_addons_oai ? <y/N> " prompt
     rm_option=I
+    OPTION="-y"
   else
     prompt='y'
     rm_option=f
+    OPTION=""
   fi
+  PACKAGE_LIST="\
+    autoconf  \
+    automake  \
+    build-essential \
+    dkms \
+    iptables \
+    iptables-dev \
+    linux-headers-`uname -r`"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd ~
     if [ -d xtables-addons-oai ]; then
       echo_warning "Will remove $PWD/xtables-addons-oai"
-      sudo rm -rv -$rm_option xtables-addons-oai
-      rm -rv -$rm_option xtables-addons-oai
+      $SUDO rm -rv -$rm_option xtables-addons-oai
+      $SUDO rm -rv -$rm_option xtables-addons-oai
     fi
     echo "Downloading xtables-addons-oai source code"
     git clone https://gitlab.eurecom.fr/oai/xtables-addons-oai.git
@@ -180,12 +192,12 @@ install_xtables_addons_oai() {
     chmod -R g+w xtables-addons-oai
     cd xtables-addons-oai/
     sync
-    sudo autoreconf --install --force
-    sudo ./configure 
-    sudo make
-    sudo make install
+    $SUDO autoreconf --install --force
+    $SUDO ./configure 
+    $SUDO make
+    $SUDO make install
     cd /lib/modules/`uname -r`
-    sudo depmod -a
+    $SUDO depmod -a
   fi
 }
 
@@ -195,6 +207,18 @@ install_xtables_addons_oai() {
 
 # arg1 is force (no interactive script)
 install_nettle_from_source() {
+  if [ $1 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+  
+  # Compilers, generators, ...
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    build-essential
+
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install nettle ? <y/N> " prompt
   else
@@ -219,6 +243,36 @@ install_nettle_from_source() {
 
 # arg1 is force (no interactive script)
 install_gnutls_from_source(){
+  if [ $1 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+  
+  # Compilers, generators, ...
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    build-essential
+
+  if [ `lsb_release -rs` = '14.04' ]; then
+    # not sure about libidn2-0-dev vs libidn11-dev, check symbols
+    PACKAGE_LIST="\
+      libtasn1-6-dev \
+      libtasn1-6-dbg \
+      libp11-kit-dev \
+      libp11-kit0-dbg \
+      libtspi-dev \
+      libtspi1 \
+      libidn2-0-dev \
+      libidn11-dev"
+    $SUDO apt-get install $OPTION $PACKAGE_LIST
+    if [ $? -ne 0 ]; then 
+      echo_fatal "Failed to install package list $PACKAGE_LIST"
+    fi 
+  fi
+
+    
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install GNU TLS ? <y/N> " prompt
   else
@@ -244,9 +298,38 @@ install_gnutls_from_source(){
 install_1.1.5_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install freeDiameter 1.1.5 ? <y/N> " prompt
+    OPTION=""
   else
     prompt='y'
+    OPTION="-y"
   fi
+
+  # libpq-dev 'may' be not needed
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    debhelper \
+    flex  \
+    g++ \
+    gcc \
+    gdb \
+    libgnutls-dev \
+    libgcrypt-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpq-dev \
+    libsctp1 \
+    libsctp-dev \
+    libxml2-dev \
+    mercurial \
+    python-dev \
+    ssl-cert \
+    swig
+
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp
@@ -271,9 +354,38 @@ install_1.1.5_freediameter_from_source() {
 install_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install freeDiameter 1.2.0 ? <y/N> " prompt
+    OPTION=""
   else
     prompt='y'
+    OPTION="-y"
   fi
+  # libpq-dev 'may' be not needed
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    debhelper \
+    flex  \
+    g++ \
+    gcc \
+    gdb \
+    libgnutls-dev \
+    libgcrypt-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpq-dev \
+    libsctp1 \
+    libsctp-dev \
+    libxml2-dev \
+    mercurial \
+    python-dev \
+    ssl-cert \
+    swig
+
+  
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp
@@ -298,9 +410,38 @@ install_freediameter_from_source() {
 install_latest_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install latest freeDiameter ? <y/N> " prompt
+    OPTION=""
   else
     prompt='y'
+    OPTION="-y"
   fi
+  
+  # libpq-dev 'may' be not needed
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    debhelper \
+    flex  \
+    g++ \
+    gcc \
+    gdb \
+    libgnutls-dev \
+    libgcrypt-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpq-dev \
+    libsctp1 \
+    libsctp-dev \
+    libxml2-dev \
+    mercurial \
+    python-dev \
+    ssl-cert \
+    swig
+  
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp
@@ -566,15 +707,6 @@ check_install_mme_gw_software() {
   if [ $? -ne 0 ]; then 
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi 
-
-  if [ `lsb_release -rs` = '14.04' ]; then
-    PACKAGE_LIST="\
-      libtasn1-3-dev"
-    $SUDO apt-get install $OPTION $PACKAGE_LIST
-    if [ $? -ne 0 ]; then 
-      echo_fatal "Failed to install package list $PACKAGE_LIST"
-    fi 
-  fi
        
   if [ `lsb_release -rs` = '12.04' ]; then
     install_nettle_from_source $1
@@ -598,9 +730,6 @@ check_install_mme_gw_software() {
     ethtool \
     iperf \
     iproute \
-    iptables \
-    iptables-dev \
-    linux-headers-`uname -r` \
     vlan \
     tshark"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
@@ -610,7 +739,6 @@ check_install_mme_gw_software() {
     
   PACKAGE_LIST="\
     check \
-    dkms \
     phpmyadmin \
     python-dev \
     python-pexpect \
@@ -624,11 +752,22 @@ check_install_mme_gw_software() {
 }
 
 install_asn1c_from_source(){
-    if [ $1 -eq 0 ]; then
-      read -p "Do you want to install asn1c rev 1516 patched? <y/N> " prompt
-    else
-      prompt='y'
-    fi
+  if [ $1 -eq 0 ]; then
+    OPTION=""
+    read -p "Do you want to install asn1c rev 1516 patched? <y/N> " prompt
+  else
+    prompt='y'
+    OPTION="-y"
+  fi
+
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    flex  \
+    gcc \
+    libtool
 
   if [[ $prompt =~ [yY](es)* ]]
   then    
