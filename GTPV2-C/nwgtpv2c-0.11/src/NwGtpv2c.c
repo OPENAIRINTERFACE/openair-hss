@@ -1390,7 +1390,7 @@ extern                                  "C" {
       timeoutInfo = gpGtpv2cTimeoutInfoPool;
       gpGtpv2cTimeoutInfoPool = gpGtpv2cTimeoutInfoPool->next;
     } else {
-      NW_GTPV2C_MALLOC_CHECK (thiz, sizeof (NwGtpv2cTimeoutInfoT), timeoutInfo, NwGtpv2cTimeoutInfoT *);
+      NW_GTPV2C_MALLOC (thiz, sizeof (NwGtpv2cTimeoutInfoT), timeoutInfo, NwGtpv2cTimeoutInfoT *);
     }
 
     if (timeoutInfo) {
@@ -1467,7 +1467,7 @@ extern                                  "C" {
       timeoutInfo = gpGtpv2cTimeoutInfoPool;
       gpGtpv2cTimeoutInfoPool = gpGtpv2cTimeoutInfoPool->next;
     } else {
-      NW_GTPV2C_MALLOC_CHECK (thiz, sizeof (NwGtpv2cTimeoutInfoT), timeoutInfo, NwGtpv2cTimeoutInfoT *);
+      NW_GTPV2C_MALLOC (thiz, sizeof (NwGtpv2cTimeoutInfoT), timeoutInfo, NwGtpv2cTimeoutInfoT *);
     }
 
     if (timeoutInfo) {

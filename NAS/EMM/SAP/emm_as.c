@@ -460,7 +460,7 @@ _emm_as_recv (
     break;
 
   case TRACKING_AREA_UPDATE_COMPLETE:
-  case GUTI_REALLOC_CHECKATION_COMPLETE:
+  case GUTI_REALLOCATION_COMPLETE:
   case UPLINK_NAS_TRANSPORT:
     // Requirement MME24.301R10_4.4.4.3_1
     if ((0 == decode_status->security_context_available) ||

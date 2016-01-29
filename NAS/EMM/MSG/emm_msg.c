@@ -171,7 +171,7 @@ emm_msg_decode (
     decode_result = decode_identity_request (&msg->identity_request, buffer, len);
     break;
 
-  case GUTI_REALLOC_CHECKATION_COMMAND:
+  case GUTI_REALLOCATION_COMMAND:
     decode_result = decode_guti_reallocation_command (&msg->guti_reallocation_command, buffer, len);
     break;
 
@@ -215,7 +215,7 @@ emm_msg_decode (
     decode_result = decode_detach_request (&msg->detach_request, buffer, len);
     break;
 
-  case GUTI_REALLOC_CHECKATION_COMPLETE:
+  case GUTI_REALLOCATION_COMPLETE:
     decode_result = decode_guti_reallocation_complete (&msg->guti_reallocation_complete, buffer, len);
     break;
 
@@ -357,7 +357,7 @@ emm_msg_encode (
     encode_result = encode_identity_request (&msg->identity_request, buffer, len);
     break;
 
-  case GUTI_REALLOC_CHECKATION_COMMAND:
+  case GUTI_REALLOCATION_COMMAND:
     encode_result = encode_guti_reallocation_command (&msg->guti_reallocation_command, buffer, len);
     break;
 
@@ -401,7 +401,7 @@ emm_msg_encode (
     encode_result = encode_detach_request (&msg->detach_request, buffer, len);
     break;
 
-  case GUTI_REALLOC_CHECKATION_COMPLETE:
+  case GUTI_REALLOCATION_COMPLETE:
     encode_result = encode_guti_reallocation_complete (&msg->guti_reallocation_complete, buffer, len);
     break;
 

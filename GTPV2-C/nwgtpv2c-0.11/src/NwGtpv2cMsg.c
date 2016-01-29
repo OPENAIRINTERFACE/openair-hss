@@ -77,7 +77,7 @@ extern                                  "C" {
       pMsg = gpGtpv2cMsgPool;
       gpGtpv2cMsgPool = gpGtpv2cMsgPool->next;
     } else {
-      NW_GTPV2C_MALLOC_CHECK (pStack, sizeof (NwGtpv2cMsgT), pMsg, NwGtpv2cMsgT *);
+      NW_GTPV2C_MALLOC (pStack, sizeof (NwGtpv2cMsgT), pMsg, NwGtpv2cMsgT *);
     }
 
     if (pMsg) {
@@ -111,7 +111,7 @@ extern                                  "C" {
       pMsg = gpGtpv2cMsgPool;
       gpGtpv2cMsgPool = gpGtpv2cMsgPool->next;
     } else {
-      NW_GTPV2C_MALLOC_CHECK (pStack, sizeof (NwGtpv2cMsgT), pMsg, NwGtpv2cMsgT *);
+      NW_GTPV2C_MALLOC (pStack, sizeof (NwGtpv2cMsgT), pMsg, NwGtpv2cMsgT *);
     }
 
     if (pMsg) {
