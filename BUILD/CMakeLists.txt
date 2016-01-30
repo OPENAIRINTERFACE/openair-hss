@@ -137,11 +137,9 @@ add_definitions(-DCMAKER)
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -g -DMALLOC_CHECK_=3 -O0")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -g -DMALLOC_CHECK_=3 -O1") 
 
-
 set(GIT_BRANCH        "UNKNOWN")
 set(GIT_COMMIT_HASH   "UNKNOWN")
 set(GIT_COMMIT_DATE   "UNKNOWN")
-
 
 find_package(Git)
 if(GIT_FOUND)
@@ -836,11 +834,27 @@ target_link_libraries (mme
   )
 
 
+# oai_sgw is SGW  node implementation
+################################
+add_executable(spgw
+  ${OPENAIRCN_BIN_DIR}/messages_xml.h
+  ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw_log.c
+  ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw.c
+  ${GTPV1U_DIR}/gtpv1u_task.c
+  )
+target_link_libraries (spgw
+  -Wl,--start-group
+  GTPV1U SECU_CN SGW S11 GTPV1U GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
+  -Wl,--end-group
+  pthread m rt ${CONFIG_LIBRARIES}  
+  )
+
+
 # Default parameters
 # Does not work on simple install (fqdn in /etc/hosts 127.0.1.1)
 #cmake_host_system_information(RESULT HSS_FQDN_STR QUERY FQDN)
 #cmake_host_system_information(RESULT MME_FQDN_STR QUERY FQDN)
-IF( EPC_BUILD )
+IF( EPC_BUILD OR MME_BUILD )
   INCLUDE(FindFreeDiameter)
   # if standalone eNB or UE no need for FreeDiameter
   IF( FREEDIAMETER_FOUND )
@@ -897,31 +911,39 @@ IF( EPC_BUILD )
 
   execute_process(COMMAND sudo ${OPENAIRCN_DIR}/SCRIPTS/check_mme_s6a_certificate ${FREEDIAMETER_PATH}/.. ${MME_FQDN} WORKING_DIRECTORY ${BUILD_TOP_DIR})
 
-  configure_file(
-    ${BUILD_TOP_DIR}/EPC/s6a.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf)
+
+ENDIF( EPC_BUILD OR MME_BUILD )
+
+IF( EPC_BUILD )
   configure_file(
     ${BUILD_TOP_DIR}/EPC/epc.conf.in
     ${CMAKE_CURRENT_BINARY_DIR}/epc.conf)
+
+  configure_file(
+    ${BUILD_TOP_DIR}/EPC/s6a.conf.in
+    ${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf)
 ENDIF( EPC_BUILD )
 
-# oai_sgw is SGW  node implementation
-################################
-#add_executable(oai_sgw
-#  ${OPENAIRCN_BIN_DIR}/messages_xml.h
-#  ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw_log.c
-#  ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw.c
-#  )
-#target_link_libraries (oai_sgw
-#  -Wl,--start-group
-#  GTPV1U SECU_CN S6A SGW CN_UTILS LFDS MSC ${ITTI_LIB}
-#  -Wl,--end-group
-#  pthread m sctp  rt crypt ${MSC_LIB} ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
-#  )
+IF( MME_BUILD )
+  configure_file(
+    ${BUILD_TOP_DIR}/MME/mme.conf.in
+    ${CMAKE_CURRENT_BINARY_DIR}/mme.conf)
+    
+  configure_file(
+    ${BUILD_TOP_DIR}/MME/s6a.conf.in
+    ${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf)
+ENDIF( MME_BUILD )
+
+IF( SPGW_BUILD )
+  configure_file(
+    ${BUILD_TOP_DIR}/SPGW/spgw.conf.in
+    ${CMAKE_CURRENT_BINARY_DIR}/spgw.conf)
+ENDIF( SPGW_BUILD )
+
 
 
 ###################################"
-# Addexecutables for tests
+# Add executables for tests
 ####################################
 
 
@@ -972,23 +994,6 @@ ENDIF( EPC_BUILD )
 #  )
 
 
-
-#  TODO MME standalone
-###########################
-#add_executable(oai_mme
-#  ${OPENAIRCN_BIN_DIR}/messages_xml.h
-#  ${OPENAIRCN_DIR}/OAISIM_MME/oai_mme_log.c
-#  ${OPENAIRCN_DIR}/OAISIM_MME/oai_mme.c
-#  ${OPENAIRCN_DIR}/NAS/nas_main.c
-#)
-#target_link_libraries (oai_mme
-#  -Wl,--start-group
-#   NAS S1AP_LIB S1AP_EPC GTPV1U GTPV2C SCTP_SERVER UDP_SERVER SECU_CN SECU_OSA S6A S11 SGW MME_APP LFDS MSC ${ITTI_LIB} CN_UTILS HASHTABLE
-#  -Wl,--end-group
-#  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
-#)
-
-
 ##################################################
 # Generated specific cases is not regular code
 ###############################################
@@ -1020,13 +1025,6 @@ add_custom_command (
   DEPENDS ${OPENAIRCN_BIN_DIR}/messages.xml 
   )
 
-
-# add the install targets
-#install (TARGETS oai_sgw RUNTIME DESTINATION /usr/local/bin)
-install (TARGETS mme_gw  RUNTIME DESTINATION /usr/local/bin)
-install (TARGETS mme     RUNTIME DESTINATION /usr/local/bin)
-install (FILES "${CMAKE_CURRENT_BINARY_DIR}/epc.conf"           DESTINATION /usr/local/etc/oai)
-install (FILES "${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf"        DESTINATION ${FREEDIAMETER_PATH}/../etc/freeDiameter)
 
 
 

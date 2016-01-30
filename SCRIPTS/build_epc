@@ -76,12 +76,13 @@ function main()
   local -i s6a_server=0
   local -i install_gtpu_kernel_module=0
   local -i var_check_install_oai_software=0
-  local    cmake_args=" "
   local    make_args="-j $NUM_CPU"
   local    realm=""
   local    hss_fqdn=""
   local    hss_hostname=""
   local    hss_ip=""
+  
+  export    cmake_args=" "
 
 
   until [ -z "$1" ]
@@ -269,13 +270,11 @@ function main()
   cmake  $cmake_args ..
   
   if [ $conf_files_only -eq 0 ]; then
-    compilations \
-      EPC mme_gw \
-      mme_gw 
-    # Only integrated mme+sgw+pgw is operational today
-  else
-    $SUDO cp -upv epc.conf /usr/local/etc/oai
+    compilations EPC mme_gw mme_gw 
+    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/EPC/BUILD/mme_gw /usr/local/bin && echo_success "mme_gw installed"
   fi
+  $SUDO cp -upv epc.conf /usr/local/etc/oai
+  $SUDO cp -upv mme_fd.conf $FREEDIAMETER_PREFIX/etc/freeDiameter
 }
 
 

@@ -258,9 +258,10 @@ function main()
   
   if [ $conf_files_only -eq 0 ]; then
     compilations MME mme mme 
-  else
-    $SUDO cp -upv mme.conf /usr/local/etc/oai
+    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/mme /usr/local/bin && echo_success "mme installed" 
   fi
+  $SUDO cp -upv mme.conf /usr/local/etc/oai
+  $SUDO cp -upv mme_fd.conf $FREEDIAMETER_PREFIX/etc/freeDiameter
 }
 
 
