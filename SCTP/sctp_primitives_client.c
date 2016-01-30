@@ -40,12 +40,7 @@
 #include "sctp_common.h"
 
 #include "sctp_primitives_client.h"
-
-#if ENB_MODE
-#  include "eNB_default_values.h"
-#else
-#  include "mme_default_values.h"
-#endif
+#include "mme_default_values.h"
 
 /* Send buffer to SCTP association */
 int

@@ -29,23 +29,11 @@
 #ifndef SGW_LITE_DEFS_H_
 #define SGW_LITE_DEFS_H_
 
-
-
-#if defined(ENB_MODE)
-# include "UTIL/LOG/log.h"
-# define SPGW_APP_ERROR(x, args...) LOG_E(SPGW, x, ##args)
-# define SPGW_APP_WARN(x, args...)  LOG_W(SPGW, x, ##args)
-# define SPGW_APP_TRACE(x, args...)  LOG_T(SPGW, x, ##args)
-# define SPGW_APP_INFO(x, args...) LOG_I(SPGW, x, ##args)
-# define SPGW_APP_DEBUG(x, args...) LOG_I(SPGW, x, ##args)
-#else
 # define SPGW_APP_ERROR(x, args...) do { fprintf(stdout, "[SPGW-APP][E]"x, ##args); } while(0)
 # define SPGW_APP_WARN(x, args...)  do { fprintf(stdout, "[SPGW-APP][W]"x, ##args); } while(0)
 # define SPGW_APP_TRACE(x, args...)  do { fprintf(stdout, "[SPGW-APP][T]"x, ##args); } while(0)
 # define SPGW_APP_INFO(x, args...) do { fprintf(stdout, "[SPGW-APP][I]"x, ##args); } while(0)
 # define SPGW_APP_DEBUG(x, args...) do { fprintf(stdout, "[SPGW-APP][D]"x, ##args); } while(0)
-#endif
-
 
 int sgw_lite_init(char* config_file_name_pP);
 

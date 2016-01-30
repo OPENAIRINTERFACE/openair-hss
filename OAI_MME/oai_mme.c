@@ -50,7 +50,7 @@
 #include <freeDiameter/libfdcore.h>
 #include "s6a_defs.h"
 
-#include "oaisim_mme.h"
+#include "oai_mme.h"
 
 int
 main (

@@ -39,6 +39,7 @@
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
 #include "NwGtpv2cMsgParser.h"
+#include "dynamic_memory_check.h"
 
 #ifdef __cplusplus
 extern                                  "C" {

@@ -388,7 +388,7 @@ set(CN_UTILS_SRC
   )
 if (MEMORY_CHECK)
   set(CN_UTILS_SRC   ${CN_UTILS_SRC} ${OPENAIRCN_DIR}/UTILS/dynamic_memory_check.c )
-endif(DEBUG_MEMORY_ALLOCATION)
+endif(MEMORY_CHECK)
 
 add_library(CN_UTILS ${CN_UTILS_SRC})
 
@@ -800,7 +800,7 @@ add_definitions(-DASN1_MINIMUM_VERSION=924)
 
 
 
-# EPC is ??? nodes implementation in one process
+# MME + S/P-GW implementation in one process
 ################################
 add_executable(mme_gw
   ${OPENAIRCN_BIN_DIR}/messages_xml.h
@@ -814,6 +814,23 @@ target_link_libraries (mme_gw
 #SECU_OSA
   -Wl,--start-group
    LIB_NAS_MME S1AP_LIB S1AP_EPC GTPV1U GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A SGW MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
+  -Wl,--end-group
+  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
+  )
+  
+# MME standalone in one process
+################################
+add_executable(mme
+  ${OPENAIRCN_BIN_DIR}/messages_xml.h
+  ${OPENAIRCN_DIR}/OAI_MME/oai_mme_log.c
+  ${OPENAIRCN_DIR}/OAI_MME/oai_mme.c
+  ${OPENAIRCN_DIR}/SCTP/sctp_primitives_server.c
+  ${OPENAIRCN_DIR}/NAS/nas_mme_task.c
+  )
+target_link_libraries (mme
+#SECU_OSA
+  -Wl,--start-group
+   LIB_NAS_MME S1AP_LIB S1AP_EPC S11 GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
   -Wl,--end-group
   pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
   )
@@ -1007,6 +1024,7 @@ add_custom_command (
 # add the install targets
 #install (TARGETS oai_sgw RUNTIME DESTINATION /usr/local/bin)
 install (TARGETS mme_gw  RUNTIME DESTINATION /usr/local/bin)
+install (TARGETS mme     RUNTIME DESTINATION /usr/local/bin)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/epc.conf"           DESTINATION /usr/local/etc/oai)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf"        DESTINATION ${FREEDIAMETER_PATH}/../etc/freeDiameter)
 

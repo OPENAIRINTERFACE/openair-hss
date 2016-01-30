@@ -20,7 +20,7 @@
  */
 
 
-#include "oaisim_mme.h"
+#include "oai_mme.h"
 #include "log.h"
 
 #include <freeDiameter/freeDiameter-host.h>
