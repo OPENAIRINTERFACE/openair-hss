@@ -49,6 +49,7 @@
 #include "gtpv1u_sgw_defs.h"
 
 #include "oai_sgw.h"
+#include "msc.h"
 
 int
 main (
@@ -64,6 +65,7 @@ main (
    */
   CHECK_INIT_RETURN (log_init (&mme_config, oai_sgw_log_specific));
   CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, messages_definition_xml, NULL));
+  MSC_INIT (MSC_SP_GW, THREAD_MAX + TASK_MAX);
   CHECK_INIT_RETURN (udp_init (&mme_config));
   CHECK_INIT_RETURN (s11_sgw_init (&mme_config));
   CHECK_INIT_RETURN (gtpv1u_init (&mme_config));

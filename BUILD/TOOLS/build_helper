@@ -1144,15 +1144,36 @@ set_network_interface(){
   fi
 }
 
-# arg1 is EPC config file
-set_epc_network_interfaces(){
+# arg1 is MME or EPC config file
+set_mme_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
   eval $value
   
   # check all var names are correct
   list_var_name="\
         MME_INTERFACE_NAME_FOR_S1_MME         MME_IPV4_ADDRESS_FOR_S1_MME \
-        MME_INTERFACE_NAME_FOR_S11_MME        MME_IPV4_ADDRESS_FOR_S11_MME \
+        MME_INTERFACE_NAME_FOR_S11_MME        MME_IPV4_ADDRESS_FOR_S11_MME"
+  for var_name in $list_var_name
+  do
+    if [ -n "$${var_name}" ]; then
+      echo_success "Found ${var_name} = ${!var_name}"
+    else
+      echo_fatal "${var_name} does does not exist in your config file $1"
+    fi
+  done
+
+  # configure interfaces
+  set_network_interface  $MME_INTERFACE_NAME_FOR_S1_MME         $MME_IPV4_ADDRESS_FOR_S1_MME 
+  set_network_interface  $MME_INTERFACE_NAME_FOR_S11_MME        $MME_IPV4_ADDRESS_FOR_S11_MME 
+}
+
+# arg1 is S/P-GW or EPC config file
+set_spgw_network_interfaces(){
+  value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
+  eval $value
+  
+  # check all var names are correct
+  list_var_name="\
         SGW_INTERFACE_NAME_FOR_S11            SGW_IPV4_ADDRESS_FOR_S11 \
         SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP \
         SGW_INTERFACE_NAME_FOR_S5_S8_UP       SGW_IPV4_ADDRESS_FOR_S5_S8_UP \
@@ -1168,13 +1189,17 @@ set_epc_network_interfaces(){
   done
 
   # configure interfaces
-  set_network_interface  $MME_INTERFACE_NAME_FOR_S1_MME         $MME_IPV4_ADDRESS_FOR_S1_MME 
-  set_network_interface  $MME_INTERFACE_NAME_FOR_S11_MME        $MME_IPV4_ADDRESS_FOR_S11_MME 
   set_network_interface  $SGW_INTERFACE_NAME_FOR_S11            $SGW_IPV4_ADDRESS_FOR_S11 
   set_network_interface  $SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  $SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP 
   set_network_interface  $SGW_INTERFACE_NAME_FOR_S5_S8_UP       $SGW_IPV4_ADDRESS_FOR_S5_S8_UP 
   set_network_interface  $PGW_INTERFACE_NAME_FOR_S5_S8          $PGW_IPV4_ADDRESS_FOR_S5_S8 
   set_network_interface  $PGW_INTERFACE_NAME_FOR_SGI            $PGW_IPV4_ADDRESS_FOR_SGI
+}
+
+# arg1 is EPC config file
+set_epc_network_interfaces(){
+  set_mme_network_interfaces $1
+  set_spgw_network_interfaces $1
 }
 
 # arg1 is a 'libconfig-like' config file
