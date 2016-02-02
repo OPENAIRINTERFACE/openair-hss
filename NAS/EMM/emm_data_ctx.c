@@ -41,7 +41,7 @@ emm_data_context_get (
 
   DevCheck (ueid > 0, ueid, 0, 0);
   DevAssert (emm_data != NULL);
-  hashtable_get (emm_data->ctx_coll_ue_id, (const hash_key_t)(ueid), (void **)&emm_data_context_p);
+  hashtable_ts_get (emm_data->ctx_coll_ue_id, (const hash_key_t)(ueid), (void **)&emm_data_context_p);
   LOG_TRACE (INFO, "EMM-CTX - get UE id " NAS_UE_ID_FMT " context %p", ueid, emm_data_context_p);
   return emm_data_context_p;
 }
@@ -61,7 +61,7 @@ emm_data_context_get_by_guti (
     char                                    guti_str[GUTI2STR_MAX_LENGTH];
 
     GUTI2STR (guti, guti_str, GUTI2STR_MAX_LENGTH);
-    h_rc = obj_hashtable_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **)&emm_ue_id);
+    h_rc = obj_hashtable_ts_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **)&emm_ue_id);
 
     if (h_rc == HASH_TABLE_OK) {
       LOG_TRACE (INFO, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " %s", emm_ue_id, guti_str);
@@ -95,11 +95,11 @@ emm_data_context_remove (
     char                                    guti_str[GUTI2STR_MAX_LENGTH];
 
     GUTI2STR (elm->guti, guti_str, GUTI2STR_MAX_LENGTH);
-    obj_hashtable_remove (emm_data->ctx_coll_guti, (const void *)(elm->guti), sizeof (*elm->guti), (void **)&emm_ue_id);
+    obj_hashtable_ts_remove (emm_data->ctx_coll_guti, (const void *)(elm->guti), sizeof (*elm->guti), (void **)&emm_ue_id);
     LOG_TRACE (INFO, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " NAS_UE_ID_FMT " guti %s", elm, emm_ue_id, guti_str);
   }
 
-  hashtable_remove (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ueid), (void **)&emm_data_context_p);
+  hashtable_ts_remove (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ueid), (void **)&emm_data_context_p);
   return emm_data_context_p;
 }
 
@@ -111,7 +111,7 @@ emm_data_context_add (
 {
   hashtable_rc_t                          h_rc;
 
-  h_rc = hashtable_insert (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ueid), elm);
+  h_rc = hashtable_ts_insert (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ueid), elm);
 
   if (h_rc == HASH_TABLE_OK) {
     LOG_TRACE (INFO, "EMM-CTX - Add in context %p UE id " NAS_UE_ID_FMT " ", elm, elm->ueid);
@@ -120,7 +120,7 @@ emm_data_context_add (
       char                                    guti_str[GUTI2STR_MAX_LENGTH];
 
       GUTI2STR (elm->guti, guti_str, GUTI2STR_MAX_LENGTH);
-      h_rc = obj_hashtable_insert (emm_data->ctx_coll_guti, (void *)(elm->guti), sizeof (*elm->guti), (void *)elm->ueid);
+      h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (void *)(elm->guti), sizeof (*elm->guti), (void *)elm->ueid);
 
       if (h_rc == HASH_TABLE_OK) {
         LOG_TRACE (INFO, "EMM-CTX - Add in context UE id " NAS_UE_ID_FMT " with GUTI %s", elm->ueid, guti_str);
@@ -363,6 +363,6 @@ emm_data_context_dump_all (
   void)
 {
   LOG_TRACE (INFO, "EMM-CTX - Dump all contexts:");
-  hashtable_apply_funct_on_elements (_emm_data.ctx_coll_ue_id, emm_data_context_dump_hash_table_wrapper, NULL);
+  hashtable_ts_apply_funct_on_elements (_emm_data.ctx_coll_ue_id, emm_data_context_dump_hash_table_wrapper, NULL);
 }
 #endif

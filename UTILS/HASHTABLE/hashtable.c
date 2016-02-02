@@ -636,7 +636,7 @@ hashtable_ts_insert (
   }
 
   hashtblP->nodes[hash] = node;
-  hashtblP->num_elements += 1;
+  __sync_fetch_and_add (&hashtblP->num_elements, 1);
   pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
 #if HASHTABLE_DEBUG
   fprintf (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
@@ -683,7 +683,7 @@ hashtable_free (
       }
 
       FREE_CHECK (node);
-      hashtblP->num_elements -= 1;
+      __sync_fetch_and_sub (&hashtblP->num_elements, 1);
 #if HASHTABLE_DEBUG
       fprintf (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
 #endif
@@ -739,7 +739,7 @@ hashtable_ts_free (
       }
 
       FREE_CHECK (node);
-      hashtblP->num_elements -= 1;
+      __sync_fetch_and_sub (&hashtblP->num_elements, 1);
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
 #if HASHTABLE_DEBUG
       fprintf (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
@@ -795,7 +795,7 @@ hashtable_remove (
 
       *dataP = node->data;
       FREE_CHECK (node);
-      hashtblP->num_elements -= 1;
+      __sync_fetch_and_sub (&hashtblP->num_elements, 1);
 #if HASHTABLE_DEBUG
       fprintf (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
 #endif
@@ -848,7 +848,7 @@ hashtable_ts_remove (
 
       *dataP = node->data;
       FREE_CHECK (node);
-      hashtblP->num_elements -= 1;
+      __sync_fetch_and_sub (&hashtblP->num_elements, 1);
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
 #if HASHTABLE_DEBUG
       fprintf (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);

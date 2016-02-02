@@ -67,7 +67,7 @@ mme_ue_context_exists_imsi (
   hashtable_rc_t                          h_rc;
   void                                   *id = NULL;
 
-  h_rc = hashtable_get (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void **)&id);
+  h_rc = hashtable_ts_get (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void **)&id);
 
   if (h_rc == HASH_TABLE_OK) {
     return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (uint32_t) id);
@@ -86,7 +86,7 @@ mme_ue_context_exists_s11_teid (
   hashtable_rc_t                          h_rc;
   void                                   *id = NULL;
 
-  h_rc = hashtable_get (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)teid, (void **)&id);
+  h_rc = hashtable_ts_get (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)teid, (void **)&id);
 
   if (h_rc == HASH_TABLE_OK) {
     return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (uint32_t) id);
@@ -105,7 +105,7 @@ mme_ue_context_exists_mme_ue_s1ap_id (
 {
   struct ue_context_s                    *ue_context_p = NULL;
 
-  hashtable_get (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void **)&ue_context_p);
+  hashtable_ts_get (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void **)&ue_context_p);
   return ue_context_p;
 }
 
@@ -120,7 +120,7 @@ mme_ue_context_exists_nas_ue_id (
   hashtable_rc_t                          h_rc;
   void                                   *id = NULL;
 
-  h_rc = hashtable_get (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)nas_ue_id, (void **)&id);
+  h_rc = hashtable_ts_get (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)nas_ue_id, (void **)&id);
 
   if (h_rc == HASH_TABLE_OK) {
     return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (uint32_t) id);
@@ -140,7 +140,7 @@ mme_ue_context_exists_guti (
   hashtable_rc_t                          h_rc;
   void                                   *id = NULL;
 
-  h_rc = obj_hashtable_get (mme_ue_context_p->guti_ue_context_htbl, (const void *)guti_p, sizeof (*guti_p), (void **)&id);
+  h_rc = obj_hashtable_ts_get (mme_ue_context_p->guti_ue_context_htbl, (const void *)guti_p, sizeof (*guti_p), (void **)&id);
 
   if (h_rc == HASH_TABLE_OK) {
     return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, id);
@@ -169,8 +169,8 @@ mme_ue_context_update_coll_keys (
 
     if ((ue_context_p->imsi != imsi)
         || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-      h_rc = hashtable_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
-      h_rc = hashtable_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void *)mme_ue_s1ap_id);
+      h_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
+      h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void *)mme_ue_s1ap_id);
 
       if (h_rc != HASH_TABLE_OK) {
         MME_APP_DEBUG ("mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x imsi %" SCNu64 "\n", ue_context_p, ue_context_p->mme_ue_s1ap_id, imsi);
@@ -181,8 +181,8 @@ mme_ue_context_update_coll_keys (
 
     if ((ue_context_p->mme_s11_teid != mme_s11_teid)
         || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-      h_rc = hashtable_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
-      h_rc = hashtable_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_s11_teid, (void *)mme_ue_s1ap_id);
+      h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
+      h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_s11_teid, (void *)mme_ue_s1ap_id);
 
       if (h_rc != HASH_TABLE_OK) {
         MME_APP_DEBUG ("mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x mme_s11_teid 0x%x\n", ue_context_p, ue_context_p->mme_ue_s1ap_id, mme_s11_teid);
@@ -193,8 +193,8 @@ mme_ue_context_update_coll_keys (
 
     if ((ue_context_p->ue_id != nas_ue_id)
         || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-      h_rc = hashtable_remove (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)ue_context_p->ue_id, (void **)&id);
-      h_rc = hashtable_insert (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)nas_ue_id, (void *)mme_ue_s1ap_id);
+      h_rc = hashtable_ts_remove (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)ue_context_p->ue_id, (void **)&id);
+      h_rc = hashtable_ts_insert (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)nas_ue_id, (void *)mme_ue_s1ap_id);
 
       if (h_rc != HASH_TABLE_OK) {
         MME_APP_DEBUG ("mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x nas_ue_id 0x%x\n", ue_context_p, ue_context_p->mme_ue_s1ap_id, nas_ue_id);
@@ -210,8 +210,8 @@ mme_ue_context_update_coll_keys (
         || (guti_p->gummei.plmn.MCCdigit2 != ue_context_p->guti.gummei.plmn.MCCdigit2)
         || (guti_p->gummei.plmn.MCCdigit3 != ue_context_p->guti.gummei.plmn.MCCdigit3)
         || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-      h_rc = obj_hashtable_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *)guti_p, sizeof (*guti_p), (void **)&id);
-      h_rc = obj_hashtable_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *)guti_p, sizeof (*guti_p), (void *)mme_ue_s1ap_id);
+      h_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *)guti_p, sizeof (*guti_p), (void **)&id);
+      h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *)guti_p, sizeof (*guti_p), (void *)mme_ue_s1ap_id);
 
       if (h_rc != HASH_TABLE_OK) {
         char                                    guti_str[GUTI2STR_MAX_LENGTH];
@@ -224,8 +224,8 @@ mme_ue_context_update_coll_keys (
     }
 
     if (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id) {
-      h_rc = hashtable_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&same_ue_context_p);
-      h_rc = hashtable_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)ue_context_p);
+      h_rc = hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&same_ue_context_p);
+      h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)ue_context_p);
 
       if (h_rc != HASH_TABLE_OK) {
         MME_APP_DEBUG ("mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x\n",
@@ -249,14 +249,14 @@ mme_insert_ue_context (
 
   DevAssert (mme_ue_context_p != NULL);
   DevAssert (ue_context_p != NULL);
-  h_rc = hashtable_is_key_exists (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id);
+  h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id);
 
   if (h_rc == HASH_TABLE_OK) {
     MME_APP_DEBUG ("mme_insert_ue_context: This ue context %p already exists mme_ue_s1ap_id 0x%x\n", ue_context_p, ue_context_p->mme_ue_s1ap_id);
     return -1;
   }
 
-  h_rc = hashtable_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, ue_context_p);
+  h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, ue_context_p);
 
   if (h_rc != HASH_TABLE_OK) {
     MME_APP_DEBUG ("mme_insert_ue_context: Error could not register this ue context %p mme_ue_s1ap_id 0x%x\n", ue_context_p, ue_context_p->mme_ue_s1ap_id);
@@ -271,7 +271,7 @@ mme_insert_ue_context (
 
   // filled IMSI
   if (ue_context_p->imsi > 0) {
-    h_rc = hashtable_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void *)ue_context_p->mme_ue_s1ap_id);
+    h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void *)ue_context_p->mme_ue_s1ap_id);
 
     if (h_rc != HASH_TABLE_OK) {
       MME_APP_DEBUG ("mme_insert_ue_context: Error could not register this ue context %p mme_ue_s1ap_id 0x%x imsi %" SCNu64 "\n", ue_context_p, ue_context_p->mme_ue_s1ap_id, ue_context_p->imsi);
@@ -280,7 +280,7 @@ mme_insert_ue_context (
   }
   // filled NAS UE ID
   if (ue_context_p->ue_id > 0) {
-    h_rc = hashtable_insert (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)ue_context_p->ue_id, (void *)ue_context_p->mme_ue_s1ap_id);
+    h_rc = hashtable_ts_insert (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)ue_context_p->ue_id, (void *)ue_context_p->mme_ue_s1ap_id);
 
     if (h_rc != HASH_TABLE_OK) {
       MME_APP_DEBUG ("mme_insert_ue_context: Error could not register this ue context %p mme_ue_s1ap_id 0x%x ue_id 0x%x\n", ue_context_p, ue_context_p->mme_ue_s1ap_id, ue_context_p->ue_id);
@@ -289,7 +289,7 @@ mme_insert_ue_context (
   }
   // filled S11 tun id
   if (ue_context_p->mme_s11_teid > 0) {
-    h_rc = hashtable_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void *)ue_context_p->mme_ue_s1ap_id);
+    h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void *)ue_context_p->mme_ue_s1ap_id);
 
     if (h_rc != HASH_TABLE_OK) {
       MME_APP_DEBUG ("mme_insert_ue_context: Error could not register this ue context %p mme_ue_s1ap_id 0x%x mme_s11_teid 0x%x\n", ue_context_p, ue_context_p->mme_ue_s1ap_id, ue_context_p->mme_s11_teid);
@@ -304,7 +304,7 @@ mme_insert_ue_context (
 
     if (NULL != guti_p) {
       memcpy (guti_p, &ue_context_p->guti, sizeof (*guti_p));
-      h_rc = obj_hashtable_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void *)ue_context_p->mme_ue_s1ap_id);
+      h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void *)ue_context_p->mme_ue_s1ap_id);
 
       if (h_rc != HASH_TABLE_OK) {
         char                                    guti_str[GUTI2STR_MAX_LENGTH];
@@ -340,24 +340,24 @@ mme_remove_ue_context (
   __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_since_last_stat, 1);
 
   if (ue_context_p->imsi > 0) {
-    hashtable_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
+    hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
   }
   // filled NAS UE ID
   if (ue_context_p->ue_id > 0) {
-    hashtable_remove (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)ue_context_p->ue_id, (void **)&id);
+    hashtable_ts_remove (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)ue_context_p->ue_id, (void **)&id);
   }
   // filled S11 tun id
   if (ue_context_p->mme_s11_teid > 0) {
-    hashtable_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
+    hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
   }
   // filled guti
   if ((0 != ue_context_p->guti.gummei.MMEcode) || (0 != ue_context_p->guti.gummei.MMEgid) || (0 != ue_context_p->guti.m_tmsi) || (0 != ue_context_p->guti.gummei.plmn.MCCdigit1) ||     // MCC 000 does not exist in ITU table
       (0 != ue_context_p->guti.gummei.plmn.MCCdigit2)
       || (0 != ue_context_p->guti.gummei.plmn.MCCdigit3)) {
-    obj_hashtable_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void **)&id);
+    obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void **)&id);
   }
 
-  hashtable_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&ue_context_p);
+  hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&ue_context_p);
 #warning "TODO mme_ue_context_free_content"
   //TODO mme_ue_context_free_content(ue_context_p);
   FREE_CHECK (ue_context_p);
@@ -511,7 +511,7 @@ mme_app_dump_ue_contexts (
   const mme_ue_context_t * const mme_ue_context_p)
 //------------------------------------------------------------------------------
 {
-  hashtable_apply_funct_on_elements (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL);
+  hashtable_ts_apply_funct_on_elements (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL);
 }
 
 

@@ -147,11 +147,11 @@ mme_app_thread (
         /*
          * Termination message received TODO -> release any data allocated
          */
-        hashtable_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
-        hashtable_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
-        hashtable_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
-        hashtable_destroy (mme_app_desc.mme_ue_contexts.nas_ue_id_ue_context_htbl);
-        obj_hashtable_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
+        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
+        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
+        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
+        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.nas_ue_id_ue_context_htbl);
+        obj_hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
         itti_exit_task ();
       }
       break;
@@ -191,11 +191,11 @@ mme_app_init (
 {
   MME_APP_DEBUG ("Initializing MME applicative layer\n");
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
-  mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_create (64, NULL, hash_free_int_func, "mme_app_imsi_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_create (64, NULL, hash_free_int_func, "mme_app_tun11_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_create (64, NULL, NULL, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.nas_ue_id_ue_context_htbl = hashtable_create (64, NULL, hash_free_int_func, "mme_app_nas_ue_id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_create (64, NULL, NULL, hash_free_int_func, "mme_app_guti_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_imsi_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_tun11_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, NULL, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.nas_ue_id_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_nas_ue_id_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (64, NULL, NULL, hash_free_int_func, "mme_app_guti_ue_context_htbl");
 
   /*
    * Create the thread associated with MME applicative layer

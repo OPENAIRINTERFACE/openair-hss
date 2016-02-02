@@ -179,26 +179,26 @@ sgw_lite_init (
   spgw_system ("sync", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
   spgw_config_init (config_file_name_pP, &spgw_config);
   pgw_lite_load_pool_ip_addresses ();
-  sgw_app.s11teid2mme_hashtable = hashtable_create (8192, NULL, NULL, "sgw_s11teid2mme_hashtable");
+  sgw_app.s11teid2mme_hashtable = hashtable_ts_create (8192, NULL, NULL, "sgw_s11teid2mme_hashtable");
 
   if (sgw_app.s11teid2mme_hashtable == NULL) {
-    perror ("hashtable_create");
+    perror ("hashtable_ts_create");
     SPGW_APP_DEBUG ("Initializing SPGW-APP task interface: ERROR\n");
     return -1;
   }
 
-  sgw_app.s1uteid2enb_hashtable = hashtable_create (8192, NULL, NULL, "sgw_s1uteid2enb_hashtable");
+  sgw_app.s1uteid2enb_hashtable = hashtable_ts_create (8192, NULL, NULL, "sgw_s1uteid2enb_hashtable");
 
   if (sgw_app.s1uteid2enb_hashtable == NULL) {
-    perror ("hashtable_create");
+    perror ("hashtable_ts_create");
     SPGW_APP_DEBUG ("Initializing SPGW-APP task interface: ERROR\n");
     return -1;
   }
 
-  sgw_app.s11_bearer_context_information_hashtable = hashtable_create (8192, NULL, sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information, "sgw_s11_bearer_context_information_hashtable");
+  sgw_app.s11_bearer_context_information_hashtable = hashtable_ts_create (8192, NULL, sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information, "sgw_s11_bearer_context_information_hashtable");
 
   if (sgw_app.s11_bearer_context_information_hashtable == NULL) {
-    perror ("hashtable_create");
+    perror ("hashtable_ts_create");
     SPGW_APP_DEBUG ("Initializing SPGW-APP task interface: ERROR\n");
     return -1;
   }

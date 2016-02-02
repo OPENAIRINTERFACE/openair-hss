@@ -101,8 +101,8 @@ emm_main_initialize (
     LOG_TRACE (ERROR, "EMM-MAIN  - Failed to get MME configuration data");
   }
 #if NAS_BUILT_IN_EPC
-  _emm_data.ctx_coll_ue_id = hashtable_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, "emm_data.ctx_coll_ue_id");
-  _emm_data.ctx_coll_guti = obj_hashtable_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, NULL, "emm_data.ctx_coll_guti");
+  _emm_data.ctx_coll_ue_id = hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, "emm_data.ctx_coll_ue_id");
+  _emm_data.ctx_coll_guti = obj_hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, NULL, "emm_data.ctx_coll_guti");
 #endif
   LOG_FUNC_OUT;
 }

@@ -140,7 +140,7 @@ sgw_lite_handle_create_session_request (
      * }
      */
     memset (&s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection, 0, sizeof (sgw_pdn_connection_t));
-    s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers = hashtable_create (12, NULL, NULL, "sgw_eps_bearers");
+    s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers = hashtable_ts_create (12, NULL, NULL, "sgw_eps_bearers");
 
     if (s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers == NULL) {
       SPGW_APP_ERROR ("Failed to create eps bearers collection object\n");
@@ -155,7 +155,7 @@ sgw_lite_handle_create_session_request (
     }
 
     s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.default_bearer = session_req_pP->bearer_to_create.eps_bearer_id;
-    //obj_hashtable_insert(s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connections, pdn_connection->apn_in_use, strlen(pdn_connection->apn_in_use), pdn_connection);
+    //obj_hashtable_ts_insert(s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connections, pdn_connection->apn_in_use, strlen(pdn_connection->apn_in_use), pdn_connection);
     //--------------------------------------
     // EPS bearer entry
     //--------------------------------------
@@ -219,7 +219,7 @@ sgw_lite_handle_sgi_endpoint_created (
   hashtable_rc_t                          hash_rc;
 
   SPGW_APP_DEBUG ("Rx SGI_CREATE_ENDPOINT_RESPONSE,Context: S11 teid %u, SGW S1U teid %u EPS bearer id %u\n", resp_pP->context_teid, resp_pP->sgw_S1u_teid, resp_pP->eps_bearer_id);
-  hash_rc = hashtable_get (sgw_app.s11_bearer_context_information_hashtable, resp_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
+  hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, resp_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
 #if ENABLE_STANDALONE_EPC
   to_task = TASK_MME_APP;
 #else
@@ -256,7 +256,7 @@ sgw_lite_handle_sgi_endpoint_created (
       {
         sgw_eps_bearer_entry_t                 *eps_bearer_entry_p = NULL;
 
-        hash_rc = hashtable_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, resp_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
+        hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, resp_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
 
         if ((hash_rc == HASH_TABLE_KEY_NOT_EXISTS) || (hash_rc == HASH_TABLE_BAD_PARAMETER_HASHTABLE)) {
           SPGW_APP_ERROR ("ERROR UNABLE TO GET EPS BEARER ENTRY\n");
@@ -350,10 +350,10 @@ sgw_lite_handle_gtpv1uCreateTunnelResp (
 #endif
   SPGW_APP_DEBUG ("Rx GTPV1U_CREATE_TUNNEL_RESP, Context S-GW S11 teid %u, S-GW S1U teid %u EPS bearer id %u status %d\n",
                   endpoint_created_pP->context_teid, endpoint_created_pP->S1u_teid, endpoint_created_pP->eps_bearer_id, endpoint_created_pP->status);
-  hash_rc = hashtable_get (sgw_app.s11_bearer_context_information_hashtable, endpoint_created_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
+  hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, endpoint_created_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
 
   if (hash_rc == HASH_TABLE_OK) {
-    hash_rc = hashtable_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, endpoint_created_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
+    hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, endpoint_created_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
     DevAssert (hash_rc == HASH_TABLE_OK);
     SPGW_APP_DEBUG ("Updated eps_bearer_entry_p eps_b_id %u with SGW S1U teid %u\n", endpoint_created_pP->eps_bearer_id, endpoint_created_pP->S1u_teid);
     eps_bearer_entry_p->s_gw_teid_for_S1u_S12_S4_up = endpoint_created_pP->S1u_teid;
@@ -640,10 +640,10 @@ sgw_lite_handle_gtpv1uUpdateTunnelResp (
 #endif
   SPGW_APP_DEBUG ("Rx GTPV1U_UPDATE_TUNNEL_RESP, Context teid %u, SGW S1U teid %u, eNB S1U teid %u, EPS bearer id %u, status %d\n",
                   endpoint_updated_pP->context_teid, endpoint_updated_pP->sgw_S1u_teid, endpoint_updated_pP->enb_S1u_teid, endpoint_updated_pP->eps_bearer_id, endpoint_updated_pP->status);
-  hash_rc = hashtable_get (sgw_app.s11_bearer_context_information_hashtable, endpoint_updated_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
+  hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, endpoint_updated_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
 
   if (hash_rc == HASH_TABLE_OK) {
-    hash_rc = hashtable_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, endpoint_updated_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
+    hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, endpoint_updated_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
 
     if ((hash_rc == HASH_TABLE_KEY_NOT_EXISTS) || (hash_rc == HASH_TABLE_BAD_PARAMETER_HASHTABLE)) {
       SPGW_APP_DEBUG ("Sending SGW_MODIFY_BEARER_RESPONSE trxn %p bearer %u CONTEXT_NOT_FOUND (sgw_eps_bearers)\n", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn, endpoint_updated_pP->eps_bearer_id);
@@ -731,10 +731,10 @@ sgw_lite_handle_sgi_endpoint_updated (
 
   modify_response_p = &message_p->ittiMsg.sgwModifyBearerResponse;
   memset (modify_response_p, 0, sizeof (SgwModifyBearerResponse));
-  hash_rc = hashtable_get (sgw_app.s11_bearer_context_information_hashtable, resp_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
+  hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, resp_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
 
   if (hash_rc == HASH_TABLE_OK) {
-    hash_rc = hashtable_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, resp_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
+    hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, resp_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
 
     if ((hash_rc == HASH_TABLE_KEY_NOT_EXISTS) || (hash_rc == HASH_TABLE_BAD_PARAMETER_HASHTABLE)) {
       SPGW_APP_DEBUG ("Rx SGI_UPDATE_ENDPOINT_RESPONSE: CONTEXT_NOT_FOUND (pdn_connection.sgw_eps_bearers context)\n");
@@ -916,12 +916,12 @@ sgw_lite_handle_modify_bearer_request (
   SPGW_APP_DEBUG ("Rx MODIFY_BEARER_REQUEST, teid %u, EPS bearer id %u\n", modify_bearer_pP->teid, modify_bearer_pP->bearer_context_to_modify.eps_bearer_id);
   sgw_lite_display_s11teid2mme_mappings ();
   sgw_lite_display_s11_bearer_context_information_mapping ();
-  hash_rc = hashtable_get (sgw_app.s11_bearer_context_information_hashtable, modify_bearer_pP->teid, (void **)&new_bearer_ctxt_info_p);
+  hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, modify_bearer_pP->teid, (void **)&new_bearer_ctxt_info_p);
 
   if (hash_rc == HASH_TABLE_OK) {
     new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.default_bearer = modify_bearer_pP->bearer_context_to_modify.eps_bearer_id;
     new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn = modify_bearer_pP->trxn;
-    hash_rc = hashtable_is_key_exists (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, modify_bearer_pP->bearer_context_to_modify.eps_bearer_id);
+    hash_rc = hashtable_ts_is_key_exists (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, modify_bearer_pP->bearer_context_to_modify.eps_bearer_id);
 
     if (hash_rc == HASH_TABLE_KEY_NOT_EXISTS) {
       message_p = itti_alloc_new_message (TASK_SPGW_APP, SGW_MODIFY_BEARER_RESPONSE);
@@ -944,7 +944,7 @@ sgw_lite_handle_modify_bearer_request (
       return itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
     } else if (hash_rc == HASH_TABLE_OK) {
       // TO DO
-      hash_rc = hashtable_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, modify_bearer_pP->bearer_context_to_modify.eps_bearer_id, (void **)&eps_bearer_entry_p);
+      hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, modify_bearer_pP->bearer_context_to_modify.eps_bearer_id, (void **)&eps_bearer_entry_p);
       FTEID_T_2_IP_ADDRESS_T ((&modify_bearer_pP->bearer_context_to_modify.s1_eNB_fteid), (&eps_bearer_entry_p->enb_ip_address_for_S1u));
       eps_bearer_entry_p->enb_teid_for_S1u = modify_bearer_pP->bearer_context_to_modify.s1_eNB_fteid.teid;
       {
@@ -1008,7 +1008,7 @@ sgw_lite_handle_delete_session_request (
     SPGW_APP_DEBUG ("OI flag is set for this message indicating the request" "should be forwarded to P-GW entity\n");
   }
 
-  hash_rc = hashtable_get (sgw_app.s11_bearer_context_information_hashtable, delete_session_req_pP->teid, (void **)&ctx_p);
+  hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, delete_session_req_pP->teid, (void **)&ctx_p);
 
   if (hash_rc == HASH_TABLE_OK) {
     if ((delete_session_req_pP->sender_fteid_for_cp.ipv4 != 0) && (delete_session_req_pP->sender_fteid_for_cp.ipv6 != 0)) {
@@ -1062,7 +1062,7 @@ sgw_lite_handle_delete_session_request (
 }
 
 /*
-   Callback of hashtable_apply_funct_on_elements()
+   Callback of hashtable_ts_apply_funct_on_elements()
 */
 static void
 sgw_lite_release_all_enb_related_information (
@@ -1108,13 +1108,13 @@ sgw_lite_handle_release_access_bearers_request (
   }
 
   release_access_bearers_resp_p = &message_p->ittiMsg.sgwReleaseAccessBearersResponse;
-  hash_rc = hashtable_get (sgw_app.s11_bearer_context_information_hashtable, release_access_bearers_req_pP->teid, (void **)&ctx_p);
+  hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, release_access_bearers_req_pP->teid, (void **)&ctx_p);
 
   if (hash_rc == HASH_TABLE_OK) {
     release_access_bearers_resp_p->cause = REQUEST_ACCEPTED;
     release_access_bearers_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_for_S11;
 #warning "TODO Here the release (sgw_lite_handle_release_access_bearers_request)"
-    hash_rc = hashtable_apply_funct_on_elements (ctx_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, sgw_lite_release_all_enb_related_information, NULL);
+    hash_rc = hashtable_ts_apply_funct_on_elements (ctx_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, sgw_lite_release_all_enb_related_information, NULL);
     // TODO The S-GW starts buffering downlink packets received for the UE
     // (set target on GTPUSP to order the buffering)
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, (to_task == TASK_MME_APP) ? MSC_MMEAPP_MME : MSC_S11_MME, NULL, 0, "0 SGW_RELEASE_ACCESS_BEARERS_RESPONSE S11 MME teid %u cause REQUEST_ACCEPTED", release_access_bearers_resp_p->teid);
