@@ -43,6 +43,7 @@
 #include "spgw_config.h"
 #include "pgw_lite_paa.h"
 #include "msc.h"
+#include "log.h"
 
 spgw_config_t                           spgw_config;
 sgw_app_t                               sgw_app;

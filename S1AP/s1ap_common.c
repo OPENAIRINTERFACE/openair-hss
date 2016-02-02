@@ -32,6 +32,7 @@
 #include "s1ap_common.h"
 #include "S1AP-PDU.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 int                                     asn_debug = 0;
 int                                     asn1_xer_print = 0;

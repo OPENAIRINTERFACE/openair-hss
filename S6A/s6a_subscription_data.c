@@ -24,7 +24,6 @@
 
 #include "common_types.h"
 #include "s6a_defs.h"
-
 #include "assertions.h"
 
 static inline int

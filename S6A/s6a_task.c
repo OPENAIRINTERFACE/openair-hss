@@ -36,14 +36,10 @@
 #include "intertask_interface.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
-
 #include "assertions.h"
 #include "msc.h"
+#include "log.h"
 
-#if DISABLE_USE_HSS
-#  error "Disabling HSS support is currently not supported   \
-Reconfigure with --enable-hss option to disable this error"
-#endif
 
 static int                              gnutls_debug = 0;
 struct session_handler                 *ts_sess_hdl;

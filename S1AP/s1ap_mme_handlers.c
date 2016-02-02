@@ -27,18 +27,16 @@
 #include "mme_config.h"
 #include "assertions.h"
 #include "conversions.h"
-
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
 #include "s1ap_mme_encoder.h"
 #include "s1ap_mme_handlers.h"
 #include "s1ap_mme_nas_procedures.h"
-
 #include "s1ap_mme_itti_messaging.h"
-
 #include "s1ap_mme.h"
 #include "s1ap_mme_ta.h"
 #include "msc.h"
+#include "log.h"
 
 static int                              s1ap_generate_s1_setup_response (
   eNB_description_t * eNB_association);

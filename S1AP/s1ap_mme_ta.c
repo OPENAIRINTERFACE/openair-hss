@@ -26,12 +26,11 @@
 
 #include "assertions.h"
 #include "conversions.h"
-
 #include "mme_config.h"
-
 #include "s1ap_mme.h"
 #include "s1ap_common.h"
 #include "s1ap_mme_ta.h"
+#include "log.h"
 
 static
   int

@@ -68,6 +68,7 @@
 #include "msc.h"
 #include "assertions.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 //-------------------------------
 #define MSC_MAX_QUEUE_ELEMENTS    1024

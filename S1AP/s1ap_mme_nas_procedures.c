@@ -30,18 +30,15 @@
 #include "s1ap_mme_handlers.h"
 #include "s1ap_mme_nas_procedures.h"
 #include "s1ap_mme_retransmission.h"
-
 #include "s1ap_mme_itti_messaging.h"
-
 #include "s1ap_mme.h"
-
 #include "intertask_interface.h"
 #include "timer.h"
-
 #include "assertions.h"
 #include "conversions.h"
 #include "msc.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 /* Every time a new UE is associated, increment this variable.
    But care if it wraps to increment also the mme_ue_s1ap_id_has_wrapped
@@ -194,12 +191,7 @@ s1ap_mme_handle_uplink_nas_transport (
     S1AP_DEBUG ("Received uplink NAS transport while UE in state != S1AP_UE_CONNECTED\n");
     return -1;
   }
-  //TODO: forward NAS PDU to NAS
-#if DISABLE_USE_NAS
-  DevMessage ("Can't go further (TODO)\n");
-#else
   s1ap_mme_itti_nas_uplink_ind (uplinkNASTransport_p->mme_ue_s1ap_id, uplinkNASTransport_p->nas_pdu.buf, uplinkNASTransport_p->nas_pdu.size);
-#endif
   return 0;
 }
 
@@ -301,275 +293,6 @@ s1ap_generate_downlink_nas_transport (
 
   return 0;
 }
-
-#if DISABLE_USE_NAS
-int
-s1ap_handle_attach_accepted (
-  nas_attach_accept_t * attach_accept_p)
-{
-  /*
-   * We received create session response from S-GW on S11 interface abstraction.
-   * * * * At least one bearer has been established. We can now send s1ap initial context setup request
-   * * * * message to eNB.
-   */
-  uint8_t                                 supportedAlgorithms[] = { 0x00, 0x02 };
-  uint8_t                                 offset = 0;
-  uint8_t                                *buffer_p;
-  uint32_t                                length;
-  ue_description_t                       *ue_ref = NULL;
-  s1ap_message                            message;
-  s1ap_initial_ctxt_setup_req_t          *initial_p;
-  S1ap_InitialContextSetupRequestIEs_t   *initialContextSetupRequest_p;
-  S1ap_E_RABToBeSetupItemCtxtSUReq_t      e_RABToBeSetup;
-
-  DevAssert (attach_accept_p != NULL);
-  initial_p = &attach_accept_p->transparent;
-
-  if ((ue_ref = s1ap_is_ue_mme_id_in_list (initial_p->mme_ue_s1ap_id)) == NULL) {
-    S1AP_DEBUG ("This mme ue s1ap id (" S1AP_UE_ID_FMT ") is not attached to any UE context\n", initial_p->mme_ue_s1ap_id);
-    return -1;
-  }
-
-  /*
-   * Start the outcome response timer.
-   * * * * When time is reached, MME consider that procedure outcome has failed.
-   */
-  //     timer_setup(mme_config.s1ap_config.outcome_drop_timer_sec, 0, TASK_S1AP, INSTANCE_DEFAULT,
-  //                 TIMER_ONE_SHOT,
-  //                 NULL,
-  //                 &ue_ref->outcome_response_timer_id);
-  /*
-   * Insert the timer in the MAP of mme_ue_s1ap_id <-> timer_id
-   */
-  //     s1ap_timer_insert(ue_ref->mme_ue_s1ap_id, ue_ref->outcome_response_timer_id);
-  memset (&message, 0, sizeof (s1ap_message));
-  memset (&e_RABToBeSetup, 0, sizeof (S1ap_E_RABToBeSetupItemCtxtSUReq_t));
-  message.procedureCode = S1ap_ProcedureCode_id_InitialContextSetup;
-  message.direction = S1AP_PDU_PR_initiatingMessage;
-  initialContextSetupRequest_p = &message.msg.s1ap_InitialContextSetupRequestIEs;
-  initialContextSetupRequest_p->mme_ue_s1ap_id = (unsigned long)ue_ref->mme_ue_s1ap_id;
-  initialContextSetupRequest_p->eNB_UE_S1AP_ID = (unsigned long)ue_ref->eNB_ue_s1ap_id;
-  /*
-   * uEaggregateMaximumBitrateDL and uEaggregateMaximumBitrateUL expressed in term of bits/sec
-   */
-  initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL = initial_p->ambr.br_dl;
-  initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateUL = initial_p->ambr.br_ul;
-  e_RABToBeSetup.e_RAB_ID = initial_p->ebi;
-  e_RABToBeSetup.e_RABlevelQoSParameters.qCI = initial_p->qci;
-  e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = initial_p->prio_level;     //No priority
-  e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability = initial_p->pre_emp_capability;
-  e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability = initial_p->pre_emp_vulnerability;
-  /*
-   * Set the GTP-TEID. This is the S1-U S-GW TEID
-   */
-  INT32_TO_OCTET_STRING (initial_p->teid, &e_RABToBeSetup.gTP_TEID);
-
-  /*
-   * S-GW IP address(es) for user-plane
-   */
-  if ((initial_p->s_gw_address.pdn_type == IPv4) || (initial_p->s_gw_address.pdn_type == IPv4_AND_v6)) {
-    e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK (4, sizeof (uint8_t));
-    /*
-     * Only IPv4 supported
-     */
-    memcpy (e_RABToBeSetup.transportLayerAddress.buf, initial_p->s_gw_address.address.ipv4_address, 4);
-    offset += 4;
-    e_RABToBeSetup.transportLayerAddress.size = 4;
-    e_RABToBeSetup.transportLayerAddress.bits_unused = 0;
-  }
-
-  if ((initial_p->s_gw_address.pdn_type == IPv6) || (initial_p->s_gw_address.pdn_type == IPv4_AND_v6)) {
-    if (offset == 0) {
-      /*
-       * Both IPv4 and IPv6 provided
-       */
-      /*
-       * TODO: check memory allocation
-       */
-      e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK (16, sizeof (uint8_t));
-    } else {
-      /*
-       * Only IPv6 supported
-       */
-      /*
-       * TODO: check memory allocation
-       */
-      e_RABToBeSetup.transportLayerAddress.buf = realloc (e_RABToBeSetup.transportLayerAddress.buf, (16 + offset) * sizeof (uint8_t));
-    }
-
-    memcpy (&e_RABToBeSetup.transportLayerAddress.buf[offset], initial_p->s_gw_address.address.ipv6_address, 16);
-    e_RABToBeSetup.transportLayerAddress.size = 16 + offset;
-    e_RABToBeSetup.transportLayerAddress.bits_unused = 0;
-  }
-
-  ASN_SEQUENCE_ADD (&initialContextSetupRequest_p->e_RABToBeSetupListCtxtSUReq, &e_RABToBeSetup);
-  initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.buf = (uint8_t *) supportedAlgorithms;
-  initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.size = 2;
-  initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.bits_unused = 0;
-  initialContextSetupRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.buf = (uint8_t *) supportedAlgorithms;
-  initialContextSetupRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.size = 2;
-  initialContextSetupRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.bits_unused = 0;
-  initialContextSetupRequest_p->securityKey.buf = initial_p->keNB;      /* 256 bits length */
-  initialContextSetupRequest_p->securityKey.size = 32;
-  initialContextSetupRequest_p->securityKey.bits_unused = 0;
-
-  if (s1ap_mme_encode_pdu (&message, &buffer_p, &length) < 0) {
-    // TODO: handle something
-    return -1;
-  }
-
-  return s1ap_mme_itti_send_sctp_request (buffer_p, length, ue_ref->eNB->sctp_assoc_id, ue_ref->sctp_stream_send);
-}
-#else
-//void s1ap_handle_conn_est_cnf(nas_conn_est_cnf_t *nas_conn_est_cnf_p)
-//{
-//    /* We received create session response from S-GW on S11 interface abstraction.
-//     * At least one bearer has been established. We can now send s1ap initial context setup request
-//     * message to eNB.
-//     */
-//    uint8_t supportedAlgorithms[] = { 0x00, 0x00 };
-//    uint8_t offset = 0;
-//    uint8_t *buffer_p;
-//    uint32_t length, teid = 12;
-//
-//    ue_description_t *ue_ref = NULL;
-//    s1ap_message message;
-//
-//    S1ap_InitialContextSetupRequestIEs_t *initialContextSetupRequest_p;
-//    S1ap_E_RABToBeSetupItemCtxtSUReq_t    e_RABToBeSetup;
-//    S1ap_NAS_PDU_t                        nas_pdu;
-//
-//    DevAssert(nas_conn_est_cnf_p != NULL);
-//
-//    if ((ue_ref = s1ap_is_ue_mme_id_in_list(nas_conn_est_cnf_p->UEid)) == NULL) {
-//        S1AP_DEBUG("This mme ue s1ap id (%08x) is not attached to any UE context\n",
-//                nas_conn_est_cnf_p->UEid);
-//        DevParam(nas_conn_est_cnf_p->UEid, 0, 0);
-//    }
-//
-//    /* Start the outcome response timer.
-//     * When time is reached, MME consider that procedure outcome has failed.
-//     */
-////     timer_setup(mme_config.s1ap_config.outcome_drop_timer_sec, 0, TASK_S1AP, INSTANCE_DEFAULT,
-////                 TIMER_ONE_SHOT,
-////                 NULL,
-////                 &ue_ref->outcome_response_timer_id);
-//    /* Insert the timer in the MAP of mme_ue_s1ap_id <-> timer_id */
-////     s1ap_timer_insert(ue_ref->mme_ue_s1ap_id, ue_ref->outcome_response_timer_id);
-//
-//    memset(&message, 0, sizeof(s1ap_message));
-//    memset(&e_RABToBeSetup, 0, sizeof(S1ap_E_RABToBeSetupItemCtxtSUReq_t));
-//
-//    message.procedureCode = S1ap_ProcedureCode_id_InitialContextSetup;
-//    message.direction     = S1AP_PDU_PR_initiatingMessage;
-//
-//    initialContextSetupRequest_p = &message.msg.s1ap_InitialContextSetupRequestIEs;
-//
-//    initialContextSetupRequest_p->mme_ue_s1ap_id = (unsigned long)ue_ref->mme_ue_s1ap_id;
-//    initialContextSetupRequest_p->eNB_UE_S1AP_ID = (unsigned long)ue_ref->eNB_ue_s1ap_id;
-//
-//    /* uEaggregateMaximumBitrateDL and uEaggregateMaximumBitrateUL expressed in term of bits/sec */
-////    initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL = initial_p->ambr.br_dl;
-////    initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateUL = initial_p->ambr.br_ul;
-//
-//    initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL = 1024 * 1024;
-//    initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL = 512 * 1024;
-//
-////    e_RABToBeSetup.e_RAB_ID = initial_p->ebi;
-//    e_RABToBeSetup.e_RAB_ID = 5;
-////    e_RABToBeSetup.e_RABlevelQoSParameters.qCI = initial_p->qci;
-//    e_RABToBeSetup.e_RABlevelQoSParameters.qCI = 0;
-//
-//    memset(&nas_pdu, 0, sizeof(nas_pdu));
-//
-//    nas_pdu.size = nas_conn_est_cnf_p->nasMsg.length;
-//    nas_pdu.buf  = nas_conn_est_cnf_p->nasMsg.data;
-//
-//    e_RABToBeSetup.nAS_PDU = &nas_pdu;
-//    e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel =
-//            S1ap_PriorityLevel_lowest;
-//    e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability =
-//            S1ap_Pre_emptionCapability_shall_not_trigger_pre_emption;
-//    e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability =
-//            S1ap_Pre_emptionVulnerability_not_pre_emptable;
-//    INT32_TO_OCTET_STRING(teid, &e_RABToBeSetup.gTP_TEID);
-////    e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel
-////    = initial_p->prio_level; //No priority
-////    e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability
-////    = initial_p->pre_emp_capability;
-////    e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability
-////    = initial_p->pre_emp_vulnerability;
-//
-//    /* Set the GTP-TEID. This is the S1-U S-GW TEID */
-////    INT32_TO_OCTET_STRING(initial_p->teid, &e_RABToBeSetup.gTP_TEID);
-//
-//    /* S-GW IP address(es) for user-plane */
-////    if ((initial_p->s_gw_address.pdn_type == IPv4) ||
-////        (initial_p->s_gw_address.pdn_type == IPv4_AND_v6))
-////    {
-////        e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK(4, sizeof(uint8_t));
-////        /* Only IPv4 supported */
-////        memcpy(e_RABToBeSetup.transportLayerAddress.buf,
-////               initial_p->s_gw_address.address.ipv4_address,
-////               4);
-////        offset += 4;
-////        e_RABToBeSetup.transportLayerAddress.size = 4;
-////        e_RABToBeSetup.transportLayerAddress.bits_unused = 0;
-////    }
-////    if ((initial_p->s_gw_address.pdn_type == IPv6) ||
-////        (initial_p->s_gw_address.pdn_type == IPv4_AND_v6))
-////    {
-////        if (offset == 0) {
-////            /* Both IPv4 and IPv6 provided */
-////            /* TODO: check memory allocation */
-////            e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK(16, sizeof(uint8_t));
-////        } else {
-////            /* Only IPv6 supported */
-////            /* TODO: check memory allocation */
-////            e_RABToBeSetup.transportLayerAddress.buf
-////            = realloc(e_RABToBeSetup.transportLayerAddress.buf, (16 + offset) * sizeof(uint8_t));
-////        }
-////        memcpy(&e_RABToBeSetup.transportLayerAddress.buf[offset],
-////               initial_p->s_gw_address.address.ipv6_address,
-////               16);
-////        e_RABToBeSetup.transportLayerAddress.size = 16 + offset;
-////        e_RABToBeSetup.transportLayerAddress.bits_unused = 0;
-////    }
-//
-//    ASN_SEQUENCE_ADD(&initialContextSetupRequest_p->e_RABToBeSetupListCtxtSUReq,
-//                     &e_RABToBeSetup);
-//
-//    initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.buf =
-//        (uint8_t *)supportedAlgorithms;
-//    initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.size = 2;
-//    initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.bits_unused
-//        = 0;
-//
-//    initialContextSetupRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.buf
-//        = (uint8_t *)supportedAlgorithms;
-//    initialContextSetupRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.size
-//        = 2;
-//    initialContextSetupRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.bits_unused
-//        = 0;
-//
-////    initialContextSetupRequest_p->securityKey.buf  = initial_p->keNB; /* 256 bits length */
-//    uint8_t keNB[32];
-//    memset(keNB, 0, sizeof(keNB));
-//
-//    initialContextSetupRequest_p->securityKey.buf = keNB;
-//    initialContextSetupRequest_p->securityKey.size = 32;
-//    initialContextSetupRequest_p->securityKey.bits_unused = 0;
-//
-//    if (s1ap_mme_encode_pdu(&message, &buffer_p, &length) < 0) {
-//        // TODO: handle something
-//        DevMessage("Failed to encode initial context setup request message\n");
-//    }
-//
-//    FREE_CHECK(nas_conn_est_cnf_p->nasMsg.data);
-//
-//    s1ap_mme_itti_send_sctp_request(buffer_p, length, ue_ref->eNB->sctp_assoc_id,
-//                                    ue_ref->sctp_stream_send);
-//}
 
 void
 s1ap_handle_conn_est_cnf (
@@ -714,5 +437,3 @@ s1ap_handle_conn_est_cnf (
                       initialContextSetupRequest_p->mme_ue_s1ap_id, initialContextSetupRequest_p->eNB_UE_S1AP_ID, nas_pdu.size);
   s1ap_mme_itti_send_sctp_request (buffer_p, length, ue_ref->eNB->sctp_assoc_id, ue_ref->sctp_stream_send);
 }
-
-#endif

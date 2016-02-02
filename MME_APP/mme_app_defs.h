@@ -32,13 +32,6 @@
 #ifndef MME_APP_DEFS_H_
 #define MME_APP_DEFS_H_
 
-#ifndef MME_APP_DEBUG
-# define MME_APP_DEBUG(x, args...) do { fprintf(stdout, "[MMEA][D]"x, ##args); } while(0)
-#endif
-#ifndef MME_APP_ERROR
-# define MME_APP_ERROR(x, args...) do { fprintf(stdout, "[MMEA][E]"x, ##args); } while(0)
-#endif
-
 typedef struct {
   /* UE contexts + some statistics variables */
   mme_ue_context_t mme_ue_contexts;
@@ -48,11 +41,6 @@ typedef struct {
 } mme_app_desc_t;
 
 extern mme_app_desc_t mme_app_desc;
-
-
-#if DISABLE_USE_NAS
-int mme_app_handle_attach_req(nas_attach_req_t *attach_req_p);
-#endif
 
 int mme_app_handle_s1ap_ue_capabilities_ind  (const s1ap_ue_cap_ind_t const * s1ap_ue_cap_ind_pP);
 

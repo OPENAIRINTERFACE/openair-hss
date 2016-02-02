@@ -25,9 +25,7 @@
 #include <string.h>
 #include <assert.h>
 #include <poll.h>
-
 #include <errno.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -38,9 +36,9 @@
 #include "assertions.h"
 #include "sctp_eNB_defs.h"
 #include "sctp_common.h"
-
 #include "sctp_primitives_client.h"
 #include "mme_default_values.h"
+#include "log.h"
 
 /* Send buffer to SCTP association */
 int

@@ -47,7 +47,7 @@
 #include <stdlib.h>             // malloc, free
 #include <string.h>             // memcpy
 
-#if (NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE)
+#if NAS_BUILT_IN_EPC
 #  include "nas_itti_messaging.h"
 #endif
 #include "secu_defs.h"

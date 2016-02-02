@@ -29,32 +29,27 @@
 */
 
 #include <pthread.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-
 #include <sys/types.h>
 #include <sys/socket.h>
-
 #include <netinet/in.h>
 #include <netinet/sctp.h>
-
 #include <arpa/inet.h>
 
 #include "assertions.h"
-
 #include "intertask_interface.h"
 #include "sctp_primitives_server.h"
 #include "mme_config.h"
 #include "conversions.h"
-
 #include "sctp_common.h"
 #include "sctp_itti_messaging.h"
 #include "msc.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 
 #define SCTP_RC_ERROR       -1

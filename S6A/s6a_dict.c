@@ -28,6 +28,7 @@
 #include "s6a_defs.h"
 #include "s6a_messages.h"
 #include "assertions.h"
+#include "log.h"
 
 #define CHECK_FD_FCT(fCT)  DevAssert(fCT == 0);
 

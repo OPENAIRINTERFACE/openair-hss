@@ -36,11 +36,11 @@
 #include "assertions.h"
 #include "queue.h"
 #include "dynamic_memory_check.h"
-
 #include "pgw_lite_paa.h"
 #include "sgw_lite_defs.h"
 #include "spgw_config.h"
 #include "sgw_lite.h"
+#include "log.h"
 
 
 //#define PGW_LITE_FREE_CHECK_ADDR_POOL_CONFIG 1

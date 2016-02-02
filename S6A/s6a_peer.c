@@ -34,9 +34,10 @@
 #include "intertask_interface.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
-
 #include "assertions.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
+
 
 void
 s6a_peer_connected_cb (

@@ -30,13 +30,11 @@
 #include "nas_defs.h"
 #include "msc.h"
 
-#if DISABLE_USE_NAS == 0
-#  include "nas_network.h"
-#  include "nas_proc.h"
-#  include "emm_main.h"
-#  include "nas_log.h"
-#  include "nas_timer.h"
-#endif
+#include "nas_network.h"
+#include "nas_proc.h"
+#include "emm_main.h"
+#include "nas_log.h"
+#include "nas_timer.h"
 
 #define NAS_ERROR(x, args...) do { fprintf(stderr, "[NAS] [E]"x, ##args); } while(0)
 #define NAS_DEBUG(x, args...) do { fprintf(stdout, "[NAS] [D]"x, ##args); } while(0)
@@ -57,47 +55,12 @@ nas_intertask_interface (
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case NAS_CONNECTION_ESTABLISHMENT_IND:{
-#if DISABLE_USE_NAS
-        MessageDef                             *message_p;
-        nas_attach_req_t                       *nas_req_p;
-        s1ap_initial_ue_message_t              *transparent;
-
-        NAS_DEBUG ("NAS abstraction: Generating NAS ATTACH REQ\n");
-        message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_ATTACH_REQ);
-        nas_req_p = &message_p->ittiMsg.nas_attach_req;
-        transparent = &message_p->ittiMsg.nas_attach_req.transparent;
-        nas_req_p->initial = INITIAL_REQUEST;
-        sprintf (nas_req_p->imsi, "%14llu", 20834123456789ULL);
-        memcpy (transparent, &received_message_p->ittiMsg.nas_conn_est_ind.transparent, sizeof (s1ap_initial_ue_message_t));
-        itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-#else
         nas_establish_ind_t                    *nas_est_ind_p;
 
         nas_est_ind_p = &received_message_p->ittiMsg.nas_conn_est_ind.nas;
         nas_proc_establish_ind (nas_est_ind_p->UEid, nas_est_ind_p->plmn, nas_est_ind_p->tac, nas_est_ind_p->initialNasMsg.data, nas_est_ind_p->initialNasMsg.length);
-#endif
       }
       break;
-#if DISABLE_USE_NAS
-
-    case NAS_ATTACH_ACCEPT:{
-        itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, received_message_p);
-        goto next_message;
-      }
-      break;
-
-    case NAS_AUTHENTICATION_REQ:{
-        MessageDef                             *message_p;
-        nas_auth_resp_t                        *nas_resp_p;
-
-        NAS_DEBUG ("NAS abstraction: Generating NAS AUTHENTICATION RESPONSE\n");
-        message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_AUTHENTICATION_RESP);
-        nas_resp_p = &message_p->ittiMsg.nas_auth_resp;
-        memcpy (nas_resp_p->imsi, received_message_p->ittiMsg.nas_auth_req.imsi, 16);
-        itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-      }
-      break;
-#else
 
     case NAS_UPLINK_DATA_IND:{
         nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).UEid, NAS_UL_DATA_IND (received_message_p).nasMsg.data, NAS_UL_DATA_IND (received_message_p).nasMsg.length);
@@ -123,7 +86,6 @@ nas_intertask_interface (
         nas_proc_auth_param_fail (&NAS_AUTHENTICATION_PARAM_FAIL (received_message_p));
       }
       break;
-#endif
 
     case NAS_PDN_CONNECTIVITY_RSP:{
         nas_proc_pdn_connectivity_res (&NAS_PDN_CONNECTIVITY_RSP (received_message_p));
@@ -136,17 +98,14 @@ nas_intertask_interface (
       break;
 
     case TIMER_HAS_EXPIRED:{
-#if DISABLE_USE_NAS == 0
         /*
          * Call the NAS timer api
          */
         nas_timer_handle_signal_expiry (TIMER_HAS_EXPIRED (received_message_p).timer_id, TIMER_HAS_EXPIRED (received_message_p).arg);
-#endif
       }
       break;
 
     case S1AP_ENB_DEREGISTERED_IND:{
-#if DISABLE_USE_NAS == 0
       /*
         int                                     i;
 
@@ -154,14 +113,11 @@ nas_intertask_interface (
           nas_proc_deregister_ue (S1AP_ENB_DEREGISTERED_IND (received_message_p).mme_ue_s1ap_id[i]);
         }
 */
-#endif
       }
       break;
 
     case S1AP_DEREGISTER_UE_REQ:{
-#if DISABLE_USE_NAS == 0
         nas_proc_deregister_ue (S1AP_DEREGISTER_UE_REQ (received_message_p).mme_ue_s1ap_id);
-#endif
       }
       break;
 
@@ -188,10 +144,7 @@ nas_init (
   mme_config_t * mme_config_p)
 {
   NAS_DEBUG ("Initializing NAS task interface\n");
-#if DISABLE_USE_NAS == 0
-  nas_log_init (0x3F);
   nas_network_initialize (mme_config_p);
-#endif
 
   if (itti_create_task (TASK_NAS_MME, &nas_intertask_interface, NULL) < 0) {
     NAS_ERROR ("Create task failed");

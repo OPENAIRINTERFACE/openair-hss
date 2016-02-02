@@ -27,22 +27,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if MME_CLIENT_TEST == 0
-#  include "intertask_interface.h"
-#endif
-
+#include "intertask_interface.h"
 #include "assertions.h"
 #include "queue.h"
-
 #include "s1ap_mme.h"
 #include "s1ap_mme_decoder.h"
 #include "s1ap_mme_handlers.h"
 #include "s1ap_ies_defs.h"
-
 #include "s1ap_mme_nas_procedures.h"
 #include "s1ap_mme_retransmission.h"
 #include "msc.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 #define S1AP_DEBUG_LIST 1
 #if S1AP_DEBUG_LIST
@@ -53,8 +49,6 @@
 #  define UE_LIST_OUT(x, args...)
 #endif
 
-#if MME_CLIENT_TEST == 0
-// static pthread_t s1ap_task_thread;
 
 int                                     hss_associated = 0;
 uint32_t                                nb_eNB_associated = 0;
@@ -166,24 +160,11 @@ s1ap_mme_thread (
         s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
       }
       break;
-#  if DISABLE_USE_NAS
-
-    case NAS_ATTACH_ACCEPT:{
-        s1ap_handle_attach_accepted (&received_message_p->ittiMsg.nas_attach_accept);
-      }
-      break;
-#  else
-
-      // handled by MME_APP know
-      //case NAS_CONNECTION_ESTABLISHMENT_CNF: {
-      //    s1ap_handle_conn_est_cnf(&NAS_CONNECTION_ESTABLISHMENT_CNF(received_message_p));
-      //} break;
 
     case MME_APP_CONNECTION_ESTABLISHMENT_CNF:{
         s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
       }
       break;
-#  endif
 
     case TIMER_HAS_EXPIRED:{
         s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
@@ -487,4 +468,3 @@ s1ap_remove_eNB (
   nb_eNB_associated--;
 }
 
-#endif

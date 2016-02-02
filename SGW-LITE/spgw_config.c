@@ -44,6 +44,7 @@
 #include "sgw_lite_defs.h"
 #include "intertask_interface.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 #ifdef LIBCONFIG_LONG
 #  define libconfig_int long

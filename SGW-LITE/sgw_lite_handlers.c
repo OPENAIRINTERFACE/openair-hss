@@ -49,6 +49,7 @@
 #include "pgw_lite_paa.h"
 #include "spgw_config.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 extern sgw_app_t                        sgw_app;
 extern spgw_config_t                    spgw_config;

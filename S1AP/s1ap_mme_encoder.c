@@ -33,8 +33,8 @@
 #include "s1ap_ies_defs.h"
 #include "s1ap_mme_encoder.h"
 #include "s1ap_mme.h"
-
 #include "assertions.h"
+#include "log.h"
 
 static inline int                       s1ap_mme_encode_initial_context_setup_request (
   s1ap_message * message_p,

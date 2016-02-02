@@ -44,7 +44,7 @@
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
 
-#if ((NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE))
+#if NAS_BUILT_IN_EPC
 #  include "nas_itti_messaging.h"
 #endif
 
@@ -97,16 +97,10 @@ emm_msg_decode (
   int                                     header_result;
   int                                     decode_result;
 
-#if ((NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE))
+#if NAS_BUILT_IN_EPC
   uint8_t                                *buffer_log = buffer;
   uint32_t                                len_log = len;
-  int                                     down_link;
-
-#  if ((NAS_BUILT_IN_EPC && NAS_MME))
-  down_link = 0;
-#  else
-  down_link = 1;
-#  endif
+  int                                     down_link = 0;
 #endif
   /*
    * First decode the EMM message header
@@ -247,7 +241,7 @@ emm_msg_decode (
     LOG_TRACE (ERROR, "EMM-MSG   - Failed to decode L3 EMM message 0x%x " "(%d)", msg->header.message_type, decode_result);
     LOG_FUNC_RETURN (decode_result);
   } else {
-#if ((NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE))
+#if NAS_BUILT_IN_EPC
     /*
      * Message has been decoded and security header removed, handle it has a plain message
      */
@@ -285,15 +279,9 @@ emm_msg_encode (
   int                                     header_result;
   int                                     encode_result;
 
-#if ((NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE))
+#if NAS_BUILT_IN_EPC
   uint8_t                                *buffer_log = buffer;
-  int                                     down_link;
-
-#  if ((NAS_BUILT_IN_EPC && NAS_MME))
-  down_link = 1;
-#  else
-  down_link = 0;
-#  endif
+  int                                     down_link = 1;
 #endif
   /*
    * First encode the EMM message header
@@ -436,7 +424,7 @@ emm_msg_encode (
   if (encode_result < 0) {
     LOG_TRACE (ERROR, "EMM-MSG   - Failed to encode L3 EMM message 0x%x " "(%d)", msg->header.message_type, encode_result);
   } else {
-#if ((NAS_BUILT_IN_EPC && NAS_MME) || (ENABLE_NAS_UE_LOGGING && NAS_BUILT_IN_UE && NAS_UE))
+#if NAS_BUILT_IN_EPC
     nas_itti_plain_msg ((char *)buffer_log, (nas_message_t *) msg, header_result + encode_result, down_link);
 #endif
   }

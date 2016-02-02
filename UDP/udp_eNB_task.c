@@ -45,6 +45,7 @@
 #include "UTIL/LOG/log.h"
 #include "UTIL/LOG/vcd_signal_dumper.h"
 #include "msc.h"
+#include "log.h"
 
 
 #define IPV4_ADDR    "%u.%u.%u.%u"

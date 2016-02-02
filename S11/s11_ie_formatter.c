@@ -37,6 +37,7 @@
 #include "s11_common.h"
 #include "s11_ie_formatter.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 NwRcT
 s11_imsi_ie_get (

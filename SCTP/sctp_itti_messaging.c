@@ -22,7 +22,6 @@
 #include <string.h>
 
 #include "intertask_interface.h"
-
 #include "sctp_itti_messaging.h"
 
 int

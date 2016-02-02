@@ -33,6 +33,7 @@
 #include "s6a_defs.h"
 #include "s6a_messages.h"
 #include "msc.h"
+#include "log.h"
 
 static
   int

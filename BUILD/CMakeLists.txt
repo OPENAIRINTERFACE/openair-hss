@@ -116,6 +116,14 @@ if (CMAKE_BUILD_TYPE STREQUAL "")
 endif()
 add_list_string_option(CMAKE_BUILD_TYPE "RelWithDebInfo" "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." Debug Release RelWithDebInfo MinSizeRel)
 Message("Build type is ${CMAKE_BUILD_TYPE}")
+if (CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+  add_boolean_option(LOG_OAI True         "Thread safe logging API")
+  add_boolean_option(LOG_OAI_MINIMAL True "Thread safe logging API, log only levels above NOTICE")
+endif()
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_boolean_option(LOG_OAI True "Thread safe logging API")
+endif()
+
 
 Message("Architecture is ${CMAKE_SYSTEM_PROCESSOR}")
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7l")
@@ -180,8 +188,6 @@ add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 
 # Debug related options
 #########################################
-add_boolean_option(DEBUG_CONSOLE False "makes debugging easier, disables stdout/stderr buffering")
-add_boolean_option(HASHTABLE_DEBUG False "printf operations on hashtables")
 
 
 add_boolean_option(ENABLE_ITTI True "ITTI is internal messaging, should remain enabled for most targets")
@@ -277,7 +283,6 @@ add_library(S1AP_EPC
 ##############################################################
 #    ???!!! TO BE DOCUMENTED OPTIONS !!!???
 ##############################################################
-add_boolean_option(DISABLE_USE_NAS False "???")
 add_boolean_option(ENABLE_STANDALONE_EPC True "Compile MME, SGW and PGW in a single executable")
 add_list_string_option(PACKAGE_NAME "NotDefined" "As per attribute name")
 add_boolean_option(MESSAGE_CHART_GENERATOR False         "For generating sequence diagrams")
@@ -380,13 +385,16 @@ add_library(SECU_CN ${SECU_CN_SRC})
 set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/UTILS/conversions.c
   ${OPENAIRCN_DIR}/UTILS/enum_string.c
-  ${OPENAIRCN_DIR}/UTILS/log.c
   ${OPENAIRCN_DIR}/UTILS/mme_config.c
   ${OPENAIRCN_DIR}/UTILS/mcc_mnc_itu.c
   )
 if (MEMORY_CHECK)
   set(CN_UTILS_SRC   ${CN_UTILS_SRC} ${OPENAIRCN_DIR}/UTILS/dynamic_memory_check.c )
 endif(MEMORY_CHECK)
+
+if (LOG_OAI)
+  set(CN_UTILS_SRC   ${CN_UTILS_SRC}   ${OPENAIRCN_DIR}/UTILS/log.c )
+endif(LOG_OAI)
 
 add_library(CN_UTILS ${CN_UTILS_SRC})
 

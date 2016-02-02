@@ -26,18 +26,15 @@
 #include <assert.h>
 
 #include "assertions.h"
-
 #include "mme_config.h"
 #include "intertask_interface.h"
-
 #include "timer.h"
-
 #include "NwLog.h"
 #include "NwGtpv2c.h"
 #include "NwGtpv2cMsg.h"
-
 #include "s11_mme.h"
 #include "s11_mme_session_manager.h"
+#include "log.h"
 
 #define S11_DEBUG(x, args...) fprintf(stdout, "[S11] [D]"x, ##args)
 #define S11_INFO(x, args...)  fprintf(stdout, "[S11] [I]"x, ##args)

@@ -35,13 +35,13 @@
 
 #include "tree.h"
 #include "hashtable.h"
-
 #include "intertask_interface.h"
 #include "mme_config.h"
 #include "sgw_lite_defs.h"
 #include "sgw_lite_context_manager.h"
 #include "sgw_lite.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 extern sgw_app_t                        sgw_app;
 

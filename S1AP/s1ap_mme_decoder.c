@@ -36,13 +36,10 @@
 #include "s1ap_ies_defs.h"
 #include "s1ap_mme_decoder.h"
 #include "s1ap_mme_handlers.h"
-
-#if MME_CLIENT_TEST == 0
-  #include "intertask_interface.h"
-#endif
-
+#include "intertask_interface.h"
 #include "assertions.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 static int
 s1ap_mme_decode_initiating (

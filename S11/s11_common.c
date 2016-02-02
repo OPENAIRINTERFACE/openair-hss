@@ -24,8 +24,8 @@
 #include <string.h>
 
 #include "NwGtpv2c.h"
-
 #include "s11_common.h"
+#include "log.h"
 
 NwRcT
 s11_ie_indication_generic (

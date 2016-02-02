@@ -26,13 +26,12 @@
 
 #include "tree.h"
 #include "assertions.h"
-
 #include "intertask_interface.h"
-
 #include "timer.h"
 #include "s1ap_common.h"
 #include "s1ap_mme_retransmission.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 inline int                              s1ap_mme_timer_map_compare_id (
   struct s1ap_timer_map_s *p1,

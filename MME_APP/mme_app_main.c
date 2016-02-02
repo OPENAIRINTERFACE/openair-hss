@@ -93,24 +93,11 @@ mme_app_thread (
         mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.sgwReleaseAccessBearersResponse);
       }
       break;
-#if DISABLE_USE_NAS
-
-    case NAS_ATTACH_REQ:{
-        mme_app_handle_attach_req (&received_message_p->ittiMsg.nas_attach_req);
-      }
-      break;
-
-    case NAS_AUTHENTICATION_RESP:{
-        mme_app_handle_nas_auth_resp (&received_message_p->ittiMsg.nas_auth_resp);
-      }
-      break;
-#else
 
     case NAS_AUTHENTICATION_PARAM_REQ:{
         mme_app_handle_nas_auth_param_req (&received_message_p->ittiMsg.nas_auth_param_req);
       }
       break;
-#endif
 
     case NAS_PDN_CONNECTIVITY_REQ:{
         mme_app_handle_nas_pdn_connectivity_req (&received_message_p->ittiMsg.nas_pdn_connectivity_req);

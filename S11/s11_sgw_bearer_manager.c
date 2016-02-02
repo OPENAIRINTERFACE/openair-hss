@@ -26,18 +26,16 @@
 #include "assertions.h"
 #include "intertask_interface.h"
 #include "queue.h"
-
 #include "NwLog.h"
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
 #include "NwGtpv2cMsgParser.h"
-
 #include "sgw_lite_ie_defs.h"
-
 #include "s11_common.h"
 #include "s11_sgw_bearer_manager.h"
 #include "s11_ie_formatter.h"
+#include "log.h"
 
 int
 s11_sgw_handle_modify_bearer_request (

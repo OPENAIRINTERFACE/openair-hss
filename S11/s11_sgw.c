@@ -28,23 +28,20 @@
 
 #include "assertions.h"
 #include "queue.h"
-
 #include "mme_config.h"
 #include "intertask_interface.h"
-
 #include "timer.h"
-
 #include "NwLog.h"
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
-
 #include "sgw_lite_ie_defs.h"
-
 #include "s11_common.h"
 #include "s11_sgw.h"
 #include "s11_sgw_bearer_manager.h"
 #include "s11_sgw_session_manager.h"
+#include "log.h"
+
 
 static NwGtpv2cStackHandleT             s11_sgw_stack_handle;
 

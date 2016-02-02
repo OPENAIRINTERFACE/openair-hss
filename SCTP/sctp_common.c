@@ -32,14 +32,13 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-
 #include <sys/socket.h>
 #include <arpa/inet.h>
-
 #include <netinet/in.h>
 #include <netinet/sctp.h>
 
 #include "sctp_common.h"
+#include "log.h"
 
 /* Pre-bind socket options configuration.
    See http://linux.die.net/man/7/sctp for more informations on these options.
