@@ -55,7 +55,7 @@
 
 #include "emm_proc.h"
 #include "networkDef.h"
-#include "nas_log.h"
+#include "log.h"
 #include "nas_timer.h"
 
 #include "emmData.h"
@@ -238,7 +238,7 @@ emm_proc_attach_request (
   const OctetString * esm_msg_pP,
   const nas_message_decode_status_t  * const decode_status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   emm_data_context_t                      ue_ctx;
   boolean_t                               previous_context_found = FALSE;
@@ -262,7 +262,7 @@ emm_proc_attach_request (
      * Do not accept UE with invalid identifier
      */
     rc = _emm_attach_reject (&ue_ctx);
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
   }
 #endif
 
@@ -279,7 +279,7 @@ emm_proc_attach_request (
      * Do not accept the UE to attach for emergency services
      */
     rc = _emm_attach_reject (&ue_ctx);
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
   }
 
   /*
@@ -344,13 +344,13 @@ emm_proc_attach_request (
             eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP, decode_status);
       }
 
-      LOG_FUNC_RETURN (rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
     } else {
       /*
        * Continue with the previous attach procedure
        */
       LOG_TRACE (WARNING, "EMM-PROC  - Received duplicated Attach Request");
-      LOG_FUNC_RETURN (RETURNok);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
     }
   } else {
 #if NAS_BUILT_IN_EPC
@@ -389,7 +389,7 @@ emm_proc_attach_request (
          * Do not accept the UE to attach to the network
          */
         rc = _emm_attach_reject (&ue_ctx);
-        LOG_FUNC_RETURN (rc);
+        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
       }
 
       (*emm_ctx)->is_dynamic = TRUE;
@@ -448,7 +448,7 @@ emm_proc_attach_request (
     rc = _emm_attach_identify (*emm_ctx);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -475,7 +475,7 @@ emm_proc_attach_reject (
   unsigned int ueid,
   int emm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
 
   /*
@@ -505,7 +505,7 @@ emm_proc_attach_reject (
    * Do not accept attach request with protocol error
    */
   rc = _emm_attach_reject (&ue_ctx);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -540,7 +540,7 @@ emm_proc_attach_complete (
   emm_sap_t                               emm_sap = {0};
   esm_sap_t                               esm_sap = {0};
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMM-PROC  - EPS attach complete (ueid=" NAS_UE_ID_FMT ")", ueid);
   /*
    * Release retransmission timer parameters
@@ -625,7 +625,7 @@ emm_proc_attach_complete (
     rc = RETURNok;
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 
@@ -667,7 +667,7 @@ static void                            *
 _emm_attach_t3450_handler (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   attach_data_t                          *data = (attach_data_t *) (args);
 
@@ -699,7 +699,7 @@ _emm_attach_t3450_handler (
     rc = _emm_attach_abort (data);
   }
 
-  LOG_FUNC_RETURN (NULL);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, NULL);
 }
 
 /*
@@ -726,7 +726,7 @@ static int
 _emm_attach_release (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
@@ -830,7 +830,7 @@ _emm_attach_release (
     rc = emm_sap_send (&emm_sap);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /*
@@ -856,7 +856,7 @@ static int
 _emm_attach_reject (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
@@ -886,7 +886,7 @@ _emm_attach_reject (
       emm_sap.u.emm_as.u.establish.NASmsg = emm_ctx->esm_msg;
     } else {
       LOG_TRACE (ERROR, "EMM-PROC  - ESM message is missing");
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
 
     /*
@@ -904,7 +904,7 @@ _emm_attach_reject (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /*
@@ -929,7 +929,7 @@ _emm_attach_abort (
   emm_data_context_t                     *ctx = NULL;
   attach_data_t                          *data;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   data = (attach_data_t *) (args);
 
   if (data) {
@@ -992,7 +992,7 @@ _emm_attach_abort (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /*
@@ -1022,7 +1022,7 @@ _emm_attach_identify (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
   int                                     guti_allocation = FALSE;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMM-PROC  - Identify incoming UE (ueid=" NAS_UE_ID_FMT ") using %s", emm_ctx->ueid, (emm_ctx->imsi) ? "IMSI" : (emm_ctx->guti) ? "GUTI" : (emm_ctx->imei) ? "IMEI" : "none");
 
   /*
@@ -1085,7 +1085,7 @@ _emm_attach_identify (
        * Relevant callback will be executed when identification
        * procedure completes
        */
-      LOG_FUNC_RETURN (rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
     //LG Force identification here}
   } else if ((emm_ctx->imei) && (emm_ctx->is_emergency)) {
     /*
@@ -1195,7 +1195,7 @@ _emm_attach_identify (
     rc = _emm_attach_reject (emm_ctx);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -1225,7 +1225,7 @@ static int
 _emm_attach_security (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
@@ -1250,7 +1250,7 @@ _emm_attach_security (
      * Do not accept the UE to attach to the network
      */
     rc = _emm_attach_reject (emm_ctx);
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
   }
 
   /*
@@ -1273,7 +1273,7 @@ _emm_attach_security (
     rc = _emm_attach_reject (emm_ctx);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /*
@@ -1306,7 +1306,7 @@ static int
 _emm_attach (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   esm_sap_t                               esm_sap = {0};
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
@@ -1355,7 +1355,7 @@ _emm_attach (
       if (rc != RETURNok) {
         LOG_TRACE (WARNING, "Failed to initialize EMM callback functions");
         FREE_CHECK (data);
-        LOG_FUNC_RETURN (RETURNerror);
+        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
       }
 
       /*
@@ -1447,7 +1447,7 @@ _emm_attach (
     rc = _emm_attach_reject (emm_ctx);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 int
@@ -1477,7 +1477,7 @@ _emm_attach_accept (
   emm_data_context_t * emm_ctx,
   attach_data_t * data)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   emm_sap_t                               emm_sap = {0};
   int                                     i = 0;
   int                                     rc = RETURNerror;
@@ -1560,7 +1560,7 @@ _emm_attach_accept (
     LOG_TRACE (WARNING, "EMM-PROC  - emm_ctx NULL");
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -1604,14 +1604,14 @@ _emm_attach_have_changed (
   int umts_present,
   int gprs_present)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 
   /*
    * Emergency bearer services indicator
    */
   if ((type == EMM_ATTACH_TYPE_EMERGENCY) != ctx->is_emergency) {
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: EMM_ATTACH_TYPE_EMERGENCY ");
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   /*
@@ -1619,7 +1619,7 @@ _emm_attach_have_changed (
    */
   if (ksi != ctx->ksi) {
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: ksi %u/%u (ctxt)", ksi, ctx->ksi);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   /*
@@ -1627,7 +1627,7 @@ _emm_attach_have_changed (
    */
   if (eea != ctx->eea) {
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: eea 0x%x/0x%x (ctxt)", eea, ctx->eea);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   /*
@@ -1635,18 +1635,18 @@ _emm_attach_have_changed (
    */
   if (eia != ctx->eia) {
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: eia 0x%x/0x%x (ctxt)", eia, ctx->eia);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if (umts_present != ctx->umts_present) {
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: umts_present %u/%u (ctxt)", umts_present, ctx->umts_present);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if ((ctx->umts_present) && (umts_present)) {
     if (ucs2 != ctx->ucs2) {
       LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: ucs2 %u/%u (ctxt)", ucs2, ctx->ucs2);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
 
     /*
@@ -1654,7 +1654,7 @@ _emm_attach_have_changed (
      */
     if (uea != ctx->uea) {
       LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: uea 0x%x/0x%x (ctxt)", uea, ctx->uea);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
 
     /*
@@ -1662,19 +1662,19 @@ _emm_attach_have_changed (
      */
     if (uia != ctx->uia) {
       LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: uia 0x%x/0x%x (ctxt)", uia, ctx->uia);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
   }
 
   if (gprs_present != ctx->gprs_present) {
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: gprs_present %u/%u (ctxt)", gprs_present, ctx->gprs_present);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if ((ctx->gprs_present) && (gprs_present)) {
     if (gea != ctx->gea) {
       LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: gea 0x%x/0x%x (ctxt)", gea, ctx->gea);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
   }
 
@@ -1686,7 +1686,7 @@ _emm_attach_have_changed (
 
     GUTI2STR (guti, guti_str, GUTI2STR_MAX_LENGTH);
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: guti %s/NULL (ctxt)", guti_str);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if ((guti == NULL) && (ctx->guti)) {
@@ -1694,7 +1694,7 @@ _emm_attach_have_changed (
 
     GUTI2STR (guti, guti_str, GUTI2STR_MAX_LENGTH);
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: guti NULL/%s (ctxt)", guti_str);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if ((guti) && (ctx->guti)) {
@@ -1705,7 +1705,7 @@ _emm_attach_have_changed (
       GUTI2STR (guti, guti_str, GUTI2STR_MAX_LENGTH);
       GUTI2STR (ctx->guti, guti2_str, GUTI2STR_MAX_LENGTH);
       LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: guti/m_tmsi %s/%s (ctxt)", guti_str, guti2_str);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
     // prob with memcmp
     //memcmp(&guti->gummei, &ctx->guti->gummei, sizeof(gummei_t)) != 0 ) {
@@ -1721,7 +1721,7 @@ _emm_attach_have_changed (
       GUTI2STR (guti, guti_str, GUTI2STR_MAX_LENGTH);
       GUTI2STR (ctx->guti, guti2_str, GUTI2STR_MAX_LENGTH);
       LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: guti/gummei %s/%s (ctxt)", guti_str, guti2_str);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
   }
 
@@ -1733,7 +1733,7 @@ _emm_attach_have_changed (
 
     NAS_IMSI2STR (imsi, imsi_str, 16);
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: imsi %s/NULL (ctxt)", imsi_str);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if ((imsi == NULL) && (ctx->imsi)) {
@@ -1741,7 +1741,7 @@ _emm_attach_have_changed (
 
     NAS_IMSI2STR (ctx->imsi, imsi_str, 16);
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: imsi NULL/%s (ctxt)", imsi_str);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if ((imsi) && (ctx->imsi)) {
@@ -1752,7 +1752,7 @@ _emm_attach_have_changed (
       NAS_IMSI2STR (imsi, imsi_str, 16);
       NAS_IMSI2STR (ctx->imsi, imsi2_str, 16);
       LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: imsi %s/%s (ctxt)", imsi_str, imsi2_str);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
   }
 
@@ -1764,7 +1764,7 @@ _emm_attach_have_changed (
 
     NAS_IMSI2STR (imei, imei_str, 16);
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: imei %s/NULL (ctxt)", imei_str);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if ((imei == NULL) && (ctx->imei)) {
@@ -1772,7 +1772,7 @@ _emm_attach_have_changed (
 
     NAS_IMSI2STR (ctx->imei, imei_str, 16);
     LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: imei NULL/%s (ctxt)", imei_str);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if ((imei) && (ctx->imei)) {
@@ -1783,11 +1783,11 @@ _emm_attach_have_changed (
       NAS_IMSI2STR (imei, imei_str, 16);
       NAS_IMSI2STR (ctx->imei, imei2_str, 16);
       LOG_TRACE (INFO, "EMM-PROC  _emm_attach_have_changed: imei %s/%s (ctxt)", imei_str, imei2_str);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
   }
 
-  LOG_FUNC_RETURN (FALSE);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, FALSE);
 }
 
 /****************************************************************************
@@ -1838,7 +1838,7 @@ _emm_attach_update (
   int                                     mnc_length = 0;
   int                                     i, j;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * UE identifier
    */
@@ -1887,7 +1887,7 @@ _emm_attach_update (
     if (ctx->guti != NULL) {
       memcpy (ctx->guti, guti, sizeof (GUTI_t));
     } else {
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
   } else {
     if (NULL == ctx->guti ) {
@@ -1966,7 +1966,7 @@ _emm_attach_update (
       LOG_TRACE (WARNING, "EMM-PROC  - Set ctx->guti_is_new to emm_data_context");
 
     } else {
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
   }
 
@@ -2014,7 +2014,7 @@ _emm_attach_update (
     if (ctx->imsi != NULL) {
       memcpy (ctx->imsi, imsi, sizeof (imsi_t));
     } else {
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
   }
 
@@ -2029,7 +2029,7 @@ _emm_attach_update (
     if (ctx->imei != NULL) {
       memcpy (ctx->imei, imei, sizeof (imei_t));
     } else {
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
   }
 
@@ -2048,7 +2048,7 @@ _emm_attach_update (
     if (ctx->esm_msg.value != NULL) {
       memcpy ((char *)ctx->esm_msg.value, (char *)esm_msg_pP->value, esm_msg_pP->length);
     } else {
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
   }
 
@@ -2057,5 +2057,5 @@ _emm_attach_update (
    * Attachment indicator
    */
   ctx->is_attached = FALSE;
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
 }

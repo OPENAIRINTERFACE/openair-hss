@@ -45,10 +45,10 @@
 
 #include "emm_fsm.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "EmmCommon.h"
-
+#include "log.h"
 #include <assert.h>
 
 /****************************************************************************/
@@ -86,7 +86,7 @@ EmmCommonProcedureInitiated (
 {
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   assert (emm_fsm_get_status (evt->ueid, evt->ctx) == EMM_COMMON_PROCEDURE_INITIATED);
 
   switch (evt->primitive) {
@@ -165,11 +165,11 @@ EmmCommonProcedureInitiated (
     break;
 
   default:
-    LOG_TRACE (ERROR, "EMM-FSM   - Primitive is not valid (%d)", evt->primitive);
+    LOG_ERROR (LOG_NAS_EMM_MME, "EMM-FSM   - Primitive is not valid (%d)", evt->primitive);
     break;
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/

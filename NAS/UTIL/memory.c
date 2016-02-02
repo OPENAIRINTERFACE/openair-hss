@@ -38,7 +38,7 @@
 
 #include "memory.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 #include "dynamic_memory_check.h"
 
 #include <stdio.h>              // fopen, fread, fclose

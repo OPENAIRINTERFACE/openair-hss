@@ -40,7 +40,7 @@
 
 #include "esm_recv.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "esm_pt.h"
 #include "esm_ebr.h"
@@ -96,7 +96,7 @@ esm_recv_status (
   int                                     esm_cause;
   int                                     rc;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   LOG_TRACE (INFO, "ESM-SAP   - Received ESM status message (pti=%d, ebi=%d)", pti, ebi);
   /*
    * Message processing
@@ -117,7 +117,7 @@ esm_recv_status (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (esm_cause);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, esm_cause);
 }
 
 
@@ -157,7 +157,7 @@ esm_recv_pdn_connectivity_request (
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
   uint8_t                                 i;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   LOG_TRACE (INFO, "ESM-SAP   - Received PDN Connectivity Request message " "(ueid=%u, pti=%d, ebi=%d)", ctx->ueid, pti, ebi);
 
   /*
@@ -169,7 +169,7 @@ esm_recv_pdn_connectivity_request (
      * * * * Reserved or unassigned PTI value
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid PTI value (pti=%d)", pti);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_PTI_VALUE);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -180,7 +180,7 @@ esm_recv_pdn_connectivity_request (
      * * * * Reserved or assigned EPS bearer identity value
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)", ebi);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -193,7 +193,7 @@ esm_recv_pdn_connectivity_request (
 
   if (data == NULL) {
     LOG_TRACE (ERROR, "ESM-SAP   - Invalid ESM data structure");
-    LOG_FUNC_RETURN (ESM_CAUSE_PROTOCOL_ERROR);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_PROTOCOL_ERROR);
   }
 
   /*
@@ -212,7 +212,7 @@ esm_recv_pdn_connectivity_request (
      * Unkown PDN request type
      */
     LOG_TRACE (ERROR, "ESM-SAP   - Invalid PDN request type");
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_MANDATORY_INFO);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_MANDATORY_INFO);
   }
 
   /*
@@ -229,7 +229,7 @@ esm_recv_pdn_connectivity_request (
      * Unkown PDN type
      */
     LOG_TRACE (ERROR, "ESM-SAP   - Invalid PDN type");
-    LOG_FUNC_RETURN (ESM_CAUSE_UNKNOWN_PDN_TYPE);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_UNKNOWN_PDN_TYPE);
   }
 
   /*
@@ -298,7 +298,7 @@ esm_recv_pdn_connectivity_request (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (esm_cause);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, esm_cause);
 }
 
 /****************************************************************************
@@ -329,7 +329,7 @@ esm_recv_pdn_disconnect_request (
   const pdn_disconnect_request_msg * msg,
   unsigned int *linked_ebi)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
   LOG_TRACE (INFO, "ESM-SAP   - Received PDN Disconnect Request message " "(ueid=%d, pti=%d, ebi=%d)", ctx->ueid, pti, ebi);
@@ -343,7 +343,7 @@ esm_recv_pdn_disconnect_request (
      * * * * Reserved or unassigned PTI value
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid PTI value (pti=%d)", pti);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_PTI_VALUE);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -354,7 +354,7 @@ esm_recv_pdn_disconnect_request (
      * * * * Reserved or assigned EPS bearer identity value
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)", ebi);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -387,7 +387,7 @@ esm_recv_pdn_disconnect_request (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (esm_cause);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, esm_cause);
 }
 
 /****************************************************************************
@@ -416,7 +416,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
   int ebi,
   const activate_default_eps_bearer_context_accept_msg * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
   LOG_TRACE (INFO, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Accept message (ueid=%d, pti=%d, ebi=%d)", ctx->ueid, pti, ebi);
@@ -430,7 +430,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
      * * * * Reserved PTI value
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid PTI value (pti=%d)", pti);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_PTI_VALUE);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -442,7 +442,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
      * * * * bearer context
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)", ebi);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -461,7 +461,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (esm_cause);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, esm_cause);
 }
 
 /****************************************************************************
@@ -490,7 +490,7 @@ esm_recv_activate_default_eps_bearer_context_reject (
   int ebi,
   const activate_default_eps_bearer_context_reject_msg * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
   LOG_TRACE (INFO, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Reject message (ueid=%d, pti=%d, ebi=%d)", ctx->ueid, pti, ebi);
@@ -504,7 +504,7 @@ esm_recv_activate_default_eps_bearer_context_reject (
      * * * * Reserved PTI value
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid PTI value (pti=%d)", pti);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_PTI_VALUE);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -516,7 +516,7 @@ esm_recv_activate_default_eps_bearer_context_reject (
      * * * * bearer context
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)", ebi);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -535,7 +535,7 @@ esm_recv_activate_default_eps_bearer_context_reject (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (esm_cause);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, esm_cause);
 }
 
 /****************************************************************************
@@ -564,7 +564,7 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
   int ebi,
   const activate_dedicated_eps_bearer_context_accept_msg * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
   LOG_TRACE (INFO, "ESM-SAP   - Received Activate Dedicated EPS Bearer " "Context Accept message (ueid=%d, pti=%d, ebi=%d)", ctx->ueid, pti, ebi);
@@ -578,7 +578,7 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
      * * * * Reserved PTI value
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid PTI value (pti=%d)", pti);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_PTI_VALUE);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -590,7 +590,7 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
      * * * * bearer context
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)", ebi);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -610,7 +610,7 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (esm_cause);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, esm_cause);
 }
 
 /****************************************************************************
@@ -639,7 +639,7 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
   int ebi,
   const activate_dedicated_eps_bearer_context_reject_msg * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
   LOG_TRACE (INFO, "ESM-SAP   - Received Activate Dedicated EPS Bearer " "Context Reject message (ueid=%d, pti=%d, ebi=%d)", ctx->ueid, pti, ebi);
@@ -653,7 +653,7 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
      * * * * Reserved PTI value
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid PTI value (pti=%d)", pti);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_PTI_VALUE);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -665,7 +665,7 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
      * * * * bearer context
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)", ebi);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -685,7 +685,7 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (esm_cause);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, esm_cause);
 }
 
 /****************************************************************************
@@ -713,7 +713,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
   int ebi,
   const deactivate_eps_bearer_context_accept_msg * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
   LOG_TRACE (INFO, "ESM-SAP   - Received Deactivate EPS Bearer Context " "Accept message (ueid=%d, pti=%d, ebi=%d)", ctx->ueid, pti, ebi);
@@ -727,7 +727,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
      * * * * Reserved PTI value
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid PTI value (pti=%d)", pti);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_PTI_VALUE);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -739,7 +739,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
      * * * * bearer context
      */
     LOG_TRACE (WARNING, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)", ebi);
-    LOG_FUNC_RETURN (ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -766,7 +766,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (esm_cause);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, esm_cause);
 }
 
 /****************************************************************************/

@@ -47,7 +47,7 @@
 
 #include "esm_proc.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "emmData.h"
 #include "esmData.h"
@@ -143,7 +143,7 @@ esm_proc_eps_bearer_context_deactivate (
 {
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
 
   if (is_local) {
     if (ebi != ESM_SAP_ALL_EBI) {
@@ -168,7 +168,7 @@ esm_proc_eps_bearer_context_deactivate (
       }
     }
 
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
   }
 
   LOG_TRACE (INFO, "ESM-PROC  - EPS bearer context deactivation " "(ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
@@ -202,7 +202,7 @@ esm_proc_eps_bearer_context_deactivate (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************
@@ -238,7 +238,7 @@ esm_proc_eps_bearer_context_deactivate_request (
   OctetString * msg,
   int ue_triggered)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc;
 
   LOG_TRACE (INFO, "ESM-PROC  - Initiate EPS bearer context deactivation " "(ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
@@ -262,7 +262,7 @@ esm_proc_eps_bearer_context_deactivate_request (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************
@@ -295,7 +295,7 @@ esm_proc_eps_bearer_context_deactivate_accept (
   int ebi,
   int *esm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc;
   int                                     pid = RETURNerror;
 
@@ -322,7 +322,7 @@ esm_proc_eps_bearer_context_deactivate_accept (
     }
   }
 
-  LOG_FUNC_RETURN (pid);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, pid);
 }
 
 
@@ -362,7 +362,7 @@ static void                            *
 _eps_bearer_deactivate_t3495_handler (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc;
 
   /*
@@ -403,7 +403,7 @@ _eps_bearer_deactivate_t3495_handler (
     }
   }
 
-  LOG_FUNC_RETURN (NULL);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, NULL);
 }
 
 /*
@@ -435,7 +435,7 @@ _eps_bearer_deactivate (
   int ebi,
   const OctetString * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
@@ -458,7 +458,7 @@ _eps_bearer_deactivate (
     rc = esm_ebr_start_timer (ctx, ebi, msg, T3495_DEFAULT_VALUE, _eps_bearer_deactivate_t3495_handler);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************
@@ -487,7 +487,7 @@ _eps_bearer_release (
   int *pid,
   int *bid)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc = RETURNerror;
 
   /*
@@ -520,5 +520,5 @@ _eps_bearer_release (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }

@@ -33,7 +33,7 @@
 #include "nas_network.h"
 #include "nas_proc.h"
 #include "emm_main.h"
-#include "nas_log.h"
+#include "log.h"
 #include "nas_timer.h"
 
 #define NAS_ERROR(x, args...) do { fprintf(stderr, "[NAS] [E]"x, ##args); } while(0)

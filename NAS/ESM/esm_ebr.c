@@ -43,8 +43,7 @@
 #include "emmData.h"
 #include "esm_ebr.h"
 #include "commonDef.h"
-#include "nas_log.h"
-
+#include "log.h"
 #include "mme_api.h"
 #include "msc.h"
 
@@ -118,7 +117,7 @@ esm_ebr_initialize (
   int                                     ueid,
                                           i;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
 
   for (ueid = 0; ueid < ESM_EBR_NB_UE_MAX; ueid++) {
     _esm_ebr_data[ueid].index = 0;
@@ -131,7 +130,7 @@ esm_ebr_initialize (
     }
   }
 
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS_ESM_MME);
 #endif
 }
 
@@ -167,15 +166,15 @@ esm_ebr_assign (
 #endif
   int                                     i;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   ebr_ctx = ctx->esm_data_ctx.ebr.context[ebi - ESM_EBI_MIN];
 
   if (ebi != ESM_EBI_UNASSIGNED) {
     if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
-      LOG_FUNC_RETURN (ESM_EBI_UNASSIGNED);
+      LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_EBI_UNASSIGNED);
     } else if (ebr_ctx != NULL) {
       LOG_TRACE (WARNING, "ESM-FSM   - EPS bearer context already " "assigned (ebi=%d)", ebi);
-      LOG_FUNC_RETURN (ESM_EBI_UNASSIGNED);
+      LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_EBI_UNASSIGNED);
     }
 
     /*
@@ -189,7 +188,7 @@ esm_ebr_assign (
     i = _esm_ebr_get_available_entry (ctx);
 
     if (i < 0) {
-      LOG_FUNC_RETURN (ESM_EBI_UNASSIGNED);
+      LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_EBI_UNASSIGNED);
     }
 
     /*
@@ -204,7 +203,7 @@ esm_ebr_assign (
   ebr_ctx = (esm_ebr_context_t *) MALLOC_CHECK (sizeof (esm_ebr_context_t));
 
   if (ebr_ctx == NULL) {
-    LOG_FUNC_RETURN (ESM_EBI_UNASSIGNED);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_EBI_UNASSIGNED);
   }
 #if NAS_BUILT_IN_EPC
   ctx->esm_data_ctx.ebr.context[ebi - ESM_EBI_MIN] = ebr_ctx;
@@ -232,7 +231,7 @@ esm_ebr_assign (
    */
   ebr_ctx->args = NULL;
   LOG_TRACE (INFO, "ESM-FSM   - EPS bearer context %d assigned", ebi);
-  LOG_FUNC_RETURN (ebr_ctx->ebi);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ebr_ctx->ebi);
 }
 
 /****************************************************************************
@@ -260,10 +259,10 @@ esm_ebr_release (
 {
   esm_ebr_context_t                      *ebr_ctx;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
 
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 
   /*
@@ -275,7 +274,7 @@ esm_ebr_release (
     /*
      * EPS bearer context not assigned
      */
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 
   /*
@@ -283,7 +282,7 @@ esm_ebr_release (
    */
   if (ebr_ctx->status != ESM_EBR_INACTIVE) {
     LOG_TRACE (ERROR, "ESM-FSM   - EPS bearer context is not INACTIVE");
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 
   /*
@@ -313,7 +312,7 @@ esm_ebr_release (
   FREE_CHECK (ebr_ctx);
   ebr_ctx = NULL;
   LOG_TRACE (INFO, "ESM-FSM   - EPS bearer context %d released", ebi);
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
 }
 
 /****************************************************************************
@@ -347,11 +346,11 @@ esm_ebr_start_timer (
 {
   esm_ebr_context_t                      *ebr_ctx = NULL;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
 
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
     LOG_TRACE (ERROR, "ESM-FSM   - Retransmission timer bad ebi %d", ebi);
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 
   /*
@@ -364,7 +363,7 @@ esm_ebr_start_timer (
      * EPS bearer context not assigned
      */
     LOG_TRACE (ERROR, "ESM-FSM   - EPS bearer context not assigned");
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 
   if (ebr_ctx->timer.id != NAS_TIMER_INACTIVE_ID) {
@@ -417,12 +416,12 @@ esm_ebr_start_timer (
 
   if ((ebr_ctx->args != NULL) && (ebr_ctx->timer.id != NAS_TIMER_INACTIVE_ID)) {
     LOG_TRACE (INFO, "ESM-FSM   - Retransmission timer %d expires in " "%ld seconds", ebr_ctx->timer.id, ebr_ctx->timer.sec);
-    LOG_FUNC_RETURN (RETURNok);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
   } else {
     LOG_TRACE (ERROR, "ESM-FSM   - ebr_ctx->args == NULL(%p) or ebr_ctx->timer.id == NAS_TIMER_INACTIVE_ID == -1 (%d)", ebr_ctx->args, ebr_ctx->timer.id);
   }
 
-  LOG_FUNC_RETURN (RETURNerror);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
 }
 
 /****************************************************************************
@@ -448,10 +447,10 @@ esm_ebr_stop_timer (
 {
   esm_ebr_context_t                      *ebr_ctx = NULL;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
 
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 
   /*
@@ -463,7 +462,7 @@ esm_ebr_stop_timer (
     /*
      * EPS bearer context not assigned
      */
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 
   /*
@@ -487,7 +486,7 @@ esm_ebr_stop_timer (
     ebr_ctx->args = NULL;
   }
 
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
 }
 
 /****************************************************************************
@@ -515,7 +514,7 @@ esm_ebr_get_pending_ebi (
 {
   int                                     i;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
 
   for (i = 0; i < ESM_EBR_DATA_SIZE; i++) {
     if (ctx->esm_data_ctx.ebr.context[i] == NULL) {
@@ -533,13 +532,13 @@ esm_ebr_get_pending_ebi (
   }
 
   if (i < ESM_EBR_DATA_SIZE) {
-    LOG_FUNC_RETURN (ctx->esm_data_ctx.ebr.context[i]->ebi);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ctx->esm_data_ctx.ebr.context[i]->ebi);
   }
 
   /*
    * EPS bearer context entry not found
    */
-  LOG_FUNC_RETURN (ESM_EBI_UNASSIGNED);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, ESM_EBI_UNASSIGNED);
 }
 
 /****************************************************************************
@@ -572,14 +571,14 @@ esm_ebr_set_status (
   esm_ebr_context_t                      *ebr_ctx = 0;
   esm_ebr_state                           old_status = ESM_EBR_INACTIVE;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
 
   if (ctx == NULL) {
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 
   /*
@@ -592,7 +591,7 @@ esm_ebr_set_status (
      * EPS bearer context not assigned
      */
     LOG_TRACE (ERROR, "ESM-FSM   - EPS bearer context not assigned " "(ebi=%d)", ebi);
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 
   old_status = ebr_ctx->status;
@@ -602,13 +601,13 @@ esm_ebr_set_status (
       LOG_TRACE (INFO, "ESM-FSM   - Status of EPS bearer context %d changed:" " %s ===> %s", ebi, _esm_ebr_state_str[old_status], _esm_ebr_state_str[status]);
       MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 ESM state %s => %s " NAS_UE_ID_FMT " ", _esm_ebr_state_str[old_status], _esm_ebr_state_str[status], ctx->ueid);
       ebr_ctx->status = status;
-      LOG_FUNC_RETURN (RETURNok);
+      LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
     } else {
       LOG_TRACE (INFO, "ESM-FSM   - Status of EPS bearer context %d unchanged:" " %s ", ebi, _esm_ebr_state_str[status]);
     }
   }
 
-  LOG_FUNC_RETURN (RETURNerror);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
 }
 
 /****************************************************************************

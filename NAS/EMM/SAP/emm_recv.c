@@ -41,7 +41,7 @@
 
 #include "emm_recv.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "emm_msgDef.h"
 #include "emm_cause.h"
@@ -92,7 +92,7 @@ emm_recv_status (
   int *emm_cause,
   const nas_message_decode_status_t * status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received EMM Status message (cause=%d)", msg->emmcause);
@@ -104,7 +104,7 @@ emm_recv_status (
    * Message processing
    */
   rc = emm_proc_status_ind (ueid, msg->emmcause);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /*
@@ -139,7 +139,7 @@ emm_recv_attach_request (
   uint8_t                                 gea = 0;
   emm_proc_attach_type_t                  type;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMMAS-SAP - Received Attach Request message");
   /*
    * Message checking
@@ -161,7 +161,7 @@ emm_recv_attach_request (
      */
     rc = emm_proc_attach_reject (ueid, *emm_cause);
     *emm_cause = EMM_CAUSE_SUCCESS;
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
   }
 
   /*
@@ -311,7 +311,7 @@ emm_recv_attach_request (
                                 msg->uenetworkcapability.gprs_present,
                                 &msg->esmmessagecontainer.esmmessagecontainercontents,
                                 decode_status);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -336,7 +336,7 @@ emm_recv_attach_complete (
   int *emm_cause,
   const nas_message_decode_status_t * status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received Attach Complete message");
@@ -344,7 +344,7 @@ emm_recv_attach_complete (
    * Execute the attach procedure completion
    */
   rc = emm_proc_attach_complete (ueid, &msg->esmmessagecontainer.esmmessagecontainercontents);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -369,7 +369,7 @@ emm_recv_detach_request (
   int *emm_cause,
   const nas_message_decode_status_t * status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received Detach Request message");
@@ -470,7 +470,7 @@ emm_recv_detach_request (
    * Execute the UE initiated detach procedure completion by the network
    */
   rc = emm_proc_detach_request (ueid, type, msg->detachtype.switchoff != DETACH_TYPE_NORMAL_DETACH, msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED, msg->naskeysetidentifier.naskeysetidentifier, p_guti, p_imsi, p_imei);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -497,7 +497,7 @@ emm_recv_tracking_area_update_request (
 {
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMMAS-SAP - Received Tracking Area Update Request message, Security context %s Integrity protected %s MAC matched %s Ciphered %s",
       (0 < decode_status->security_context_available)?"yes":"no",
       (0 < decode_status->integrity_protected_message)?"yes":"no",
@@ -508,7 +508,7 @@ emm_recv_tracking_area_update_request (
    * LW: Not completely implemented; send a Received Tracking Area Update Reject to induce a Attach Request from UE!
    */
   //rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -533,7 +533,7 @@ emm_recv_identity_response (
   int *emm_cause,
   const nas_message_decode_status_t * status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNok;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received Identity Response message");
@@ -620,7 +620,7 @@ emm_recv_identity_response (
    * Execute the identification completion procedure
    */
   rc = emm_proc_identification_complete (ueid, p_imsi, p_imei, (uint32_t *) (p_tmsi));
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -645,7 +645,7 @@ emm_recv_authentication_response (
   int *emm_cause,
   const nas_message_decode_status_t * status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNok;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received Authentication Response message");
@@ -664,7 +664,7 @@ emm_recv_authentication_response (
    * Handle message checking error
    */
   if (*emm_cause != EMM_CAUSE_SUCCESS) {
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
   }
 
   /*
@@ -674,7 +674,7 @@ emm_recv_authentication_response (
    * Execute the authentication completion procedure
    */
   rc = emm_proc_authentication_complete (ueid, EMM_CAUSE_SUCCESS, &msg->authenticationresponseparameter.res);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -699,7 +699,7 @@ emm_recv_authentication_failure (
   int *emm_cause,
   const nas_message_decode_status_t * status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNok;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received Authentication Failure message");
@@ -720,7 +720,7 @@ emm_recv_authentication_failure (
    * Handle message checking error
    */
   if (*emm_cause != EMM_CAUSE_SUCCESS) {
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
   }
 
   /*
@@ -730,7 +730,7 @@ emm_recv_authentication_failure (
    * Execute the authentication completion procedure
    */
   rc = emm_proc_authentication_complete (ueid, msg->emmcause, &msg->authenticationfailureparameter.auts);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -755,7 +755,7 @@ emm_recv_security_mode_complete (
   int *emm_cause,
   const nas_message_decode_status_t * status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNok;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received Security Mode Complete message");
@@ -766,7 +766,7 @@ emm_recv_security_mode_complete (
    * Execute the NAS security mode control completion procedure
    */
   rc = emm_proc_security_mode_complete (ueid);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -791,7 +791,7 @@ emm_recv_security_mode_reject (
   int *emm_cause,
   const nas_message_decode_status_t * status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNok;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received Security Mode Reject message " "(cause=%d)", msg->emmcause);
@@ -807,7 +807,7 @@ emm_recv_security_mode_reject (
    * Handle message checking error
    */
   if (*emm_cause != EMM_CAUSE_SUCCESS) {
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
   }
 
   /*
@@ -817,5 +817,5 @@ emm_recv_security_mode_reject (
    * Execute the NAS security mode commend not accepted by the UE
    */
   rc = emm_proc_security_mode_reject (ueid);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }

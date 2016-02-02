@@ -28,6 +28,7 @@
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "DownlinkNasTransport.h"
+#include "log.h"
 
 int
 decode_downlink_nas_transport (

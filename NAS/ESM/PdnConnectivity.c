@@ -53,7 +53,7 @@
 
 #include "esm_proc.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "esmData.h"
 #include "esm_cause.h"
@@ -158,7 +158,7 @@ esm_proc_pdn_connectivity_request (
   int                                     rc = RETURNerror;
   int                                     pid = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   LOG_TRACE (INFO, "ESM-PROC  - PDN connectivity requested by the UE "
              "(ueid=" NAS_UE_ID_FMT ", pti=%d) PDN type = %s, APN = %s pdn addr = %s", ctx->ueid, pti,
              (pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6", (apn) ? (char *)(apn->value) : "null", (pdn_addr) ? (char *)(pdn_addr->value) : "null");
@@ -169,7 +169,7 @@ esm_proc_pdn_connectivity_request (
    */
   if (ctx->ueid >= ESM_DATA_NB_UE_MAX) {
     LOG_TRACE (WARNING, "ESM-PROC  - Number of connected UEs exceeded");
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
   }
 #endif
   /*
@@ -258,7 +258,7 @@ esm_proc_pdn_connectivity_request (
     if (rc != RETURNok) {
       LOG_TRACE (WARNING, "ESM-PROC  - Connectivity to the requested PDN " "cannot be established");
       *esm_cause = ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED;
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
     }
 #endif
     /*
@@ -282,11 +282,11 @@ esm_proc_pdn_connectivity_request (
     if (pid < 0) {
       LOG_TRACE (WARNING, "ESM-PROC  - Failed to create PDN connection");
       *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
     }
   }
 
-  LOG_FUNC_RETURN (pid);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, pid);
 }
 
 /****************************************************************************
@@ -324,7 +324,7 @@ esm_proc_pdn_connectivity_reject (
   OctetString * msg,
   int ue_triggered)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc = RETURNerror;
 
   LOG_TRACE (WARNING, "ESM-PROC  - PDN connectivity not accepted by the " "network (ueid=" NAS_UE_ID_FMT ")", ctx->ueid);
@@ -347,7 +347,7 @@ esm_proc_pdn_connectivity_reject (
    * * * * attach procedure has failed, an error is returned to notify EMM that
    * * * * the ESM sublayer did not accept UE requested PDN connectivity
    */
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************
@@ -379,7 +379,7 @@ esm_proc_pdn_connectivity_failure (
 {
   int                                     pti;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   LOG_TRACE (WARNING, "ESM-PROC  - PDN connectivity failure (ueid=" NAS_UE_ID_FMT ", pid=%d)", ctx->ueid, pid);
   /*
    * Delete the PDN connection entry
@@ -387,10 +387,10 @@ esm_proc_pdn_connectivity_failure (
   pti = _pdn_connectivity_delete (ctx, pid);
 
   if (pti != ESM_PT_UNASSIGNED) {
-    LOG_FUNC_RETURN (RETURNok);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
   }
 
-  LOG_FUNC_RETURN (RETURNerror);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
 }
 
 /****************************************************************************/

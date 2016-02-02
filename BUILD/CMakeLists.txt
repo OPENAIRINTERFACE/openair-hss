@@ -178,9 +178,7 @@ if(GIT_FOUND)
 endif()
 
 
-# Below is a hard-coded info
-set (FIRMWARE_VERSION "No information")
-add_definitions("-DFIRMWARE_VERSION=\"${FIRMWARE_VERSION}\"")
+add_list_string_option(PACKAGE_NAME "NotDefined" "As per attribute name")
 add_definitions("-DPACKAGE_VERSION=\"Branch: ${GIT_BRANCH} Abrev. Hash: ${GIT_COMMIT_HASH} Date: ${GIT_COMMIT_DATE}\"")
 add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 
@@ -283,15 +281,12 @@ add_library(S1AP_EPC
 ##############################################################
 #    ???!!! TO BE DOCUMENTED OPTIONS !!!???
 ##############################################################
-add_boolean_option(ENABLE_STANDALONE_EPC True "Compile MME, SGW and PGW in a single executable")
-add_list_string_option(PACKAGE_NAME "NotDefined" "As per attribute name")
 add_boolean_option(MESSAGE_CHART_GENERATOR False         "For generating sequence diagrams")
 
 ##########################
 # NAS LAYER OPTIONS
 ##########################
 add_boolean_option(NAS_BUILT_IN_EPC        True "MME NAS layer present in the executable")
-
 
 add_boolean_option(GTPV1U_LINEAR_TEID_ALLOCATION False "Teid allocation id mode versus pseudo random")
 
@@ -300,10 +295,6 @@ add_boolean_option(GTPV1U_LINEAR_TEID_ALLOCATION False "Teid allocation id mode 
 ##########################
 add_boolean_option(S1AP_DEBUG_LIST False "Traces")
 
-##########################
-# S1AP LAYER OPTIONS
-##########################
-add_boolean_option(S1AP_DEBUG_LIST False "Traces")
 
 ##########################
 # SCTP LAYER OPTIONS
@@ -339,11 +330,9 @@ include_directories("${OPENAIRCN_DIR}/SCTP")
 include_directories("${OPENAIRCN_DIR}/S1AP")
 include_directories("${OPENAIRCN_DIR}/UDP")
 include_directories("${OPENAIRCN_DIR}/GTPV1-U")
-#include_directories("${OPENAIR2_DIR}/UTIL/OSA")
 include_directories("${OPENAIRCN_DIR}/UTILS/HASHTABLE")
 include_directories("${OPENAIRCN_DIR}/UTILS/LFDS/liblfds6.1.1/liblfds611/inc")
 include_directories("${OPENAIRCN_DIR}/UTILS/MSC")
-#include_directories("${OPENAIR2_DIR}/UTIL/LISTS")
 include_directories("${OPENAIRCN_DIR}/SGW-LITE")
 include_directories("${OPENAIRCN_DIR}/MME_APP")
 include_directories("${OPENAIRCN_DIR}/S6A")
@@ -366,28 +355,26 @@ endif()
 include_directories(${OPENAIRCN_DIR}/UTILS/MSC/msc)
 
 
-
 set(SECU_CN_SRC
-  ${OPENAIRCN_DIR}/SECU/kdf.c
-  ${OPENAIRCN_DIR}/SECU/rijndael.c
-  ${OPENAIRCN_DIR}/SECU/snow3g.c
-  ${OPENAIRCN_DIR}/SECU/key_nas_deriver.c
-  ${OPENAIRCN_DIR}/SECU/nas_stream_eea1.c
-  ${OPENAIRCN_DIR}/SECU/nas_stream_eia1.c
-  ${OPENAIRCN_DIR}/SECU/nas_stream_eea2.c
-  ${OPENAIRCN_DIR}/SECU/nas_stream_eia2.c
-  )
+  ${OPENAIRCN_DIR}/SECU/kdf.c)
+#  ${OPENAIRCN_DIR}/SECU/rijndael.c
+#  ${OPENAIRCN_DIR}/SECU/snow3g.c
+#  ${OPENAIRCN_DIR}/SECU/key_nas_deriver.c
+#  ${OPENAIRCN_DIR}/SECU/nas_stream_eea1.c
+#  ${OPENAIRCN_DIR}/SECU/nas_stream_eia1.c
+#  ${OPENAIRCN_DIR}/SECU/nas_stream_eea2.c
+#  ${OPENAIRCN_DIR}/SECU/nas_stream_eia2.c
+#  )
 add_library(SECU_CN ${SECU_CN_SRC})
 
 
-# CN libs
-##########################
 set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/UTILS/conversions.c
   ${OPENAIRCN_DIR}/UTILS/enum_string.c
   ${OPENAIRCN_DIR}/UTILS/mme_config.c
   ${OPENAIRCN_DIR}/UTILS/mcc_mnc_itu.c
   )
+  
 if (MEMORY_CHECK)
   set(CN_UTILS_SRC   ${CN_UTILS_SRC} ${OPENAIRCN_DIR}/UTILS/dynamic_memory_check.c )
 endif(MEMORY_CHECK)
@@ -399,6 +386,8 @@ endif(LOG_OAI)
 add_library(CN_UTILS ${CN_UTILS_SRC})
 
 
+# CN libs
+##########################
 set(GTPV1U_DIR ${OPENAIRCN_DIR}/GTPV1-U)
 set (GTPV1U_SRC
   ${GTPV1U_DIR}/gtpv1u_teid_pool.c
@@ -623,7 +612,6 @@ set(libnas_ies_OBJS
 set (libnas_utils_OBJS
   ${NAS_SRC}UTIL/device.c
   ${NAS_SRC}UTIL/memory.c
-  ${NAS_SRC}UTIL/nas_log.c
   ${NAS_SRC}UTIL/nas_timer.c
   ${NAS_SRC}UTIL/socket.c
   ${NAS_SRC}UTIL/stty.c

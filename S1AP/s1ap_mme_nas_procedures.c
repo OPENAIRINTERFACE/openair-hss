@@ -65,12 +65,12 @@ s1ap_mme_handle_initial_ue_message (
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 initialUEMessage/%s assoc_id %u stream %u " S1AP_UE_ID_FMT " ", s1ap_direction2String[message->direction], assoc_id, stream, initialUEMessage_p->eNB_UE_S1AP_ID);
 
   if ((eNB_ref = s1ap_is_eNB_assoc_id_in_list (assoc_id)) == NULL) {
-    S1AP_DEBUG ("Unkwnon eNB on assoc_id %d\n", assoc_id);
+    LOG_DEBUG (LOG_S1AP_MME, "Unkwnon eNB on assoc_id %d\n", assoc_id);
     return -1;
   }
   // eNB UE S1AP ID is limited to 24 bits
   eNB_ue_s1ap_id = (uint32_t) (initialUEMessage_p->eNB_UE_S1AP_ID & 0x00ffffff);
-  S1AP_DEBUG ("New Initial UE message received with eNB UE S1AP ID: " S1AP_UE_ID_FMT "\n", eNB_ue_s1ap_id);
+  LOG_DEBUG (LOG_S1AP_MME, "New Initial UE message received with eNB UE S1AP ID: " S1AP_UE_ID_FMT "\n", eNB_ue_s1ap_id);
   ue_ref = s1ap_is_ue_eNB_id_in_list (eNB_ref, eNB_ue_s1ap_id);
 
   if (ue_ref == NULL) {
@@ -183,12 +183,12 @@ s1ap_mme_handle_uplink_nas_transport (
 
   if ((ue_ref = s1ap_is_ue_mme_id_in_list (uplinkNASTransport_p->mme_ue_s1ap_id))
       == NULL) {
-    S1AP_DEBUG ("No UE is attached to this mme UE s1ap id: " S1AP_UE_ID_FMT "\n", (int)uplinkNASTransport_p->mme_ue_s1ap_id);
+    LOG_DEBUG (LOG_S1AP_MME, "No UE is attached to this mme UE s1ap id: " S1AP_UE_ID_FMT "\n", (int)uplinkNASTransport_p->mme_ue_s1ap_id);
     return -1;
   }
 
   if (ue_ref->s1_ue_state != S1AP_UE_CONNECTED) {
-    S1AP_DEBUG ("Received uplink NAS transport while UE in state != S1AP_UE_CONNECTED\n");
+    LOG_DEBUG (LOG_S1AP_MME, "Received uplink NAS transport while UE in state != S1AP_UE_CONNECTED\n");
     return -1;
   }
   s1ap_mme_itti_nas_uplink_ind (uplinkNASTransport_p->mme_ue_s1ap_id, uplinkNASTransport_p->nas_pdu.buf, uplinkNASTransport_p->nas_pdu.size);
@@ -210,7 +210,7 @@ s1ap_mme_handle_nas_non_delivery (
    * UE associated signalling on stream == 0 is not valid.
    */
   if (stream == 0) {
-    S1AP_DEBUG ("Received new nas non delivery on stream == 0\n");
+    LOG_DEBUG (LOG_S1AP_MME, "Received new nas non delivery on stream == 0\n");
     return -1;
   }
 
@@ -223,12 +223,12 @@ s1ap_mme_handle_nas_non_delivery (
 
   if ((ue_ref = s1ap_is_ue_mme_id_in_list (nasNonDeliveryIndication_p->mme_ue_s1ap_id))
       == NULL) {
-    S1AP_DEBUG ("No UE is attached to this mme UE s1ap id: " S1AP_UE_ID_FMT "\n", (int)nasNonDeliveryIndication_p->mme_ue_s1ap_id);
+    LOG_DEBUG (LOG_S1AP_MME, "No UE is attached to this mme UE s1ap id: " S1AP_UE_ID_FMT "\n", (int)nasNonDeliveryIndication_p->mme_ue_s1ap_id);
     return -1;
   }
 
   if (ue_ref->s1_ue_state != S1AP_UE_CONNECTED) {
-    S1AP_DEBUG ("Received uplink NASNonDeliveryIndication while UE in state != S1AP_UE_CONNECTED\n");
+    LOG_DEBUG (LOG_S1AP_MME, "Received uplink NASNonDeliveryIndication while UE in state != S1AP_UE_CONNECTED\n");
     return -1;
   }
   //TODO: forward NAS PDU to NAS
@@ -251,7 +251,7 @@ s1ap_generate_downlink_nas_transport (
      * If the UE-associated logical S1-connection is not established,
      * * * * the MME shall allocate a unique MME UE S1AP ID to be used for the UE.
      */
-    S1AP_DEBUG ("Unknown UE MME ID " S1AP_UE_ID_FMT ", This case is not handled right now\n", ue_id);
+    LOG_DEBUG (LOG_S1AP_MME, "Unknown UE MME ID " S1AP_UE_ID_FMT ", This case is not handled right now\n", ue_id);
     return -1;
   } else {
     /*
@@ -281,7 +281,7 @@ s1ap_generate_downlink_nas_transport (
       return -1;
     }
 
-    S1AP_DEBUG ("Send S1ap_ProcedureCode_id_downlinkNASTransport ue_id = " S1AP_UE_ID_FMT " mme_ue_s1ap_id = " S1AP_UE_ID_FMT " eNB_UE_S1AP_ID = " S1AP_UE_ID_FMT "\n",
+    LOG_DEBUG (LOG_S1AP_MME, "Send S1ap_ProcedureCode_id_downlinkNASTransport ue_id = " S1AP_UE_ID_FMT " mme_ue_s1ap_id = " S1AP_UE_ID_FMT " eNB_UE_S1AP_ID = " S1AP_UE_ID_FMT "\n",
                 ue_id, downlinkNasTransport->mme_ue_s1ap_id, downlinkNasTransport->eNB_UE_S1AP_ID);
     MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                         MSC_S1AP_ENB,
@@ -409,15 +409,15 @@ s1ap_handle_conn_est_cnf (
   initialContextSetupRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.buf = (uint8_t *) & conn_est_cnf_pP->security_capabilities_integrity_algorithms;
   initialContextSetupRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.size = 2;
   initialContextSetupRequest_p->ueSecurityCapabilities.integrityProtectionAlgorithms.bits_unused = 0;
-  S1AP_DEBUG ("security_capabilities_encryption_algorithms 0x%04X\n", conn_est_cnf_pP->security_capabilities_encryption_algorithms);
-  S1AP_DEBUG ("security_capabilities_integrity_algorithms 0x%04X\n", conn_est_cnf_pP->security_capabilities_integrity_algorithms);
+  LOG_DEBUG (LOG_S1AP_MME, "security_capabilities_encryption_algorithms 0x%04X\n", conn_est_cnf_pP->security_capabilities_encryption_algorithms);
+  LOG_DEBUG (LOG_S1AP_MME, "security_capabilities_integrity_algorithms 0x%04X\n", conn_est_cnf_pP->security_capabilities_integrity_algorithms);
 
   if (conn_est_cnf_pP->keNB) {
     initialContextSetupRequest_p->securityKey.buf = MALLOC_CHECK (32);
     memcpy (initialContextSetupRequest_p->securityKey.buf, conn_est_cnf_pP->keNB, 32);
     initialContextSetupRequest_p->securityKey.size = 32;
   } else {
-    S1AP_DEBUG ("No keNB\n");
+    LOG_DEBUG (LOG_S1AP_MME, "No keNB\n");
     initialContextSetupRequest_p->securityKey.buf = NULL;
     initialContextSetupRequest_p->securityKey.size = 0;
   }

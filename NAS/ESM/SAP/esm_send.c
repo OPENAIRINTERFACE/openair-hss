@@ -40,7 +40,7 @@
 
 #include "esm_send.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 
 #include "esm_msgDef.h"
@@ -92,7 +92,7 @@ esm_send_status (
   esm_status_msg * msg,
   int esm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   /*
    * Mandatory - ESM message header
    */
@@ -105,7 +105,7 @@ esm_send_status (
    */
   msg->esmcause = esm_cause;
   LOG_TRACE (WARNING, "ESM-SAP   - Send ESM Status message (pti=%d, ebi=%d)", msg->proceduretransactionidentity, msg->epsbeareridentity);
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
 }
 
 
@@ -139,7 +139,7 @@ esm_send_pdn_connectivity_reject (
   pdn_connectivity_reject_msg * msg,
   int esm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   /*
    * Mandatory - ESM message header
    */
@@ -156,7 +156,7 @@ esm_send_pdn_connectivity_reject (
    */
   msg->presencemask = 0;
   LOG_TRACE (INFO, "ESM-SAP   - Send PDN Connectivity Reject message " "(pti=%d, ebi=%d)", msg->proceduretransactionidentity, msg->epsbeareridentity);
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
 }
 
 /****************************************************************************
@@ -183,7 +183,7 @@ esm_send_pdn_disconnect_reject (
   pdn_disconnect_reject_msg * msg,
   int esm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   /*
    * Mandatory - ESM message header
    */
@@ -200,7 +200,7 @@ esm_send_pdn_disconnect_reject (
    */
   msg->presencemask = 0;
   LOG_TRACE (INFO, "ESM-SAP   - Send PDN Disconnect Reject message " "(pti=%d, ebi=%d)", msg->proceduretransactionidentity, msg->epsbeareridentity);
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
 }
 
 /****************************************************************************
@@ -239,7 +239,7 @@ esm_send_activate_default_eps_bearer_context_request (
   const EpsQualityOfService * qos,
   int esm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   /*
    * Mandatory - ESM message header
    */
@@ -312,7 +312,7 @@ esm_send_activate_default_eps_bearer_context_request (
   msg->apnambr.apnambrforuplink_extended2 = 0;
   msg->apnambr.extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
   LOG_TRACE (INFO, "ESM-SAP   - Send Activate Default EPS Bearer Context " "Request message (pti=%d, ebi=%d)", msg->proceduretransactionidentity, msg->epsbeareridentity);
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
 }
 
 /****************************************************************************
@@ -354,7 +354,7 @@ esm_send_activate_dedicated_eps_bearer_context_request (
 {
   int                                     i;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   /*
    * Mandatory - ESM message header
    */
@@ -382,7 +382,7 @@ esm_send_activate_dedicated_eps_bearer_context_request (
    */
   msg->presencemask = 0;
   LOG_TRACE (INFO, "ESM-SAP   - Send Activate Dedicated EPS Bearer Context " "Request message (pti=%d, ebi=%d)", msg->proceduretransactionidentity, msg->epsbeareridentity);
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
 }
 
 /****************************************************************************
@@ -412,7 +412,7 @@ esm_send_deactivate_eps_bearer_context_request (
   deactivate_eps_bearer_context_request_msg * msg,
   int esm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   /*
    * Mandatory - ESM message header
    */
@@ -429,7 +429,7 @@ esm_send_deactivate_eps_bearer_context_request (
    */
   msg->presencemask = 0;
   LOG_TRACE (INFO, "ESM-SAP   - Send Deactivate EPS Bearer Context Request " "message (pti=%d, ebi=%d)", msg->proceduretransactionidentity, msg->epsbeareridentity);
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
 }
 
 /****************************************************************************/

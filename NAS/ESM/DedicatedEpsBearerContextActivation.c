@@ -51,7 +51,7 @@
 
 #include "esm_proc.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "esm_cause.h"
 #include "esm_ebr.h"
@@ -130,7 +130,7 @@ esm_proc_dedicated_eps_bearer_context (
   const esm_proc_tft_t * tft,
   int *esm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   LOG_TRACE (INFO, "ESM-PROC  - Dedicated EPS bearer context activation " "(ueid=" NAS_UE_ID_FMT ", pid=%d)", ctx->ueid, pid);
   /*
    * Assign new EPS bearer context
@@ -149,15 +149,15 @@ esm_proc_dedicated_eps_bearer_context (
        */
       LOG_TRACE (WARNING, "ESM-PROC  - Failed to create dedicated EPS " "bearer context (ebi=%d)", *ebi);
       *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
     }
 
-    LOG_FUNC_RETURN (RETURNok);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
   }
 
   LOG_TRACE (WARNING, "ESM-PROC  - Failed to assign new EPS bearer context");
   *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
-  LOG_FUNC_RETURN (RETURNerror);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
 }
 
 /****************************************************************************
@@ -194,7 +194,7 @@ esm_proc_dedicated_eps_bearer_context_request (
   OctetString * msg,
   int ue_triggered)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc = RETURNok;
 
   LOG_TRACE (INFO, "ESM-PROC  - Initiate dedicated EPS bearer context " "activation (ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
@@ -218,7 +218,7 @@ esm_proc_dedicated_eps_bearer_context_request (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************
@@ -249,7 +249,7 @@ esm_proc_dedicated_eps_bearer_context_accept (
   int ebi,
   int *esm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc;
 
   LOG_TRACE (INFO, "ESM-PROC  - Dedicated EPS bearer context activation " "accepted by the UE (ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
@@ -273,7 +273,7 @@ esm_proc_dedicated_eps_bearer_context_accept (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************
@@ -310,7 +310,7 @@ esm_proc_dedicated_eps_bearer_context_reject (
 {
   int                                     rc;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   LOG_TRACE (WARNING, "ESM-PROC  - Dedicated EPS bearer context activation " "not accepted by the UE (ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
   /*
    * Stop T3485 timer if running
@@ -334,7 +334,7 @@ esm_proc_dedicated_eps_bearer_context_reject (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 
@@ -374,7 +374,7 @@ static void                            *
 _dedicated_eps_bearer_activate_t3485_handler (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc;
 
   /*
@@ -415,7 +415,7 @@ _dedicated_eps_bearer_activate_t3485_handler (
     }
   }
 
-  LOG_FUNC_RETURN (NULL);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, NULL);
 }
 
 /*
@@ -447,7 +447,7 @@ _dedicated_eps_bearer_activate (
   int ebi,
   const OctetString * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
@@ -470,5 +470,5 @@ _dedicated_eps_bearer_activate (
     rc = esm_ebr_start_timer (ctx, ebi, msg, T3485_DEFAULT_VALUE, _dedicated_eps_bearer_activate_t3485_handler);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }

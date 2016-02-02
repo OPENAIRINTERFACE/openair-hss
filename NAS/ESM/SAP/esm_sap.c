@@ -42,7 +42,7 @@
 #include "esm_recv.h"
 #include "esm_send.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "OctetString.h"
 #include "TLVDecoder.h"
@@ -135,12 +135,12 @@ void
 esm_sap_initialize (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   /*
    * Initialize ESM state machine
    */
   //esm_fsm_initialize();
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS_ESM_MME);
 }
 
 /****************************************************************************
@@ -161,7 +161,7 @@ int
 esm_sap_send (
   esm_sap_t * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc = RETURNerror;
   int                                     pid;
 
@@ -171,7 +171,7 @@ esm_sap_send (
   esm_primitive_t                         primitive = msg->primitive;
 
   assert ((primitive > ESM_START) && (primitive < ESM_END));
-  LOG_TRACE (INFO, "ESM-SAP   - Received primitive %s (%d)", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
+  LOG_INFO(LOG_NAS_ESM_MME  "ESM-SAP   - Received primitive %s (%d)", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
 
   switch (primitive) {
   case ESM_PDN_CONNECTIVITY_REQ:
@@ -268,10 +268,10 @@ esm_sap_send (
   }
 
   if (rc != RETURNok) {
-    LOG_TRACE (ERROR, "ESM-SAP   - Failed to process primitive %s (%d)", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
+    LOG_ERROR (LOG_NAS_ESM_MME , "ESM-SAP   - Failed to process primitive %s (%d)", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************/
@@ -323,7 +323,7 @@ _esm_sap_recv (
   int                                     decoder_rc;
   ESM_msg                                 esm_msg;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   memset (&esm_msg, 0, sizeof (ESM_msg));
   /*
    * Decode the received ESM message
@@ -345,7 +345,7 @@ _esm_sap_recv (
        * Return indication that received message has been discarded
        */
       *err = ESM_SAP_DISCARDED;
-      LOG_FUNC_RETURN (RETURNok);
+      LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
     }
     /*
      * 3GPP TS 24.301, section 7.2
@@ -372,7 +372,7 @@ _esm_sap_recv (
       /*
        * Semantically incorrect ESM message
        */
-      LOG_TRACE (ERROR, "ESM-SAP   - Received ESM message 0x%x is not " "of the expected type (0x%x)", esm_msg.header.message_type, msg_type);
+      LOG_ERROR (LOG_NAS_ESM_MME , "ESM-SAP   - Received ESM message 0x%x is not " "of the expected type (0x%x)", esm_msg.header.message_type, msg_type);
       esm_cause = ESM_CAUSE_SEMANTICALLY_INCORRECT;
     }
   }
@@ -400,7 +400,7 @@ _esm_sap_recv (
   int                                     is_discarded = FALSE;
 
   if (esm_cause != ESM_CAUSE_SUCCESS) {
-    LOG_TRACE (ERROR, "ESM-SAP   - Failed to decode expected ESM message " "0x%x", msg_type);
+    LOG_ERROR (LOG_NAS_ESM_MME , "ESM-SAP   - Failed to decode expected ESM message " "0x%x", msg_type);
   }
   /*
    * Process the received ESM message
@@ -517,7 +517,7 @@ _esm_sap_recv (
         esm_proc_data_t                         data;
 
         memset (&data, 0, sizeof (esm_proc_data_t));
-        LOG_TRACE (DEBUG, "ESM-SAP   - PDN_CONNECTIVITY_REQUEST pti %u ebi %u", pti, ebi);
+        LOG_DEBUG (LOG_NAS_ESM_MME, "ESM-SAP   - PDN_CONNECTIVITY_REQUEST pti %u ebi %u", pti, ebi);
         /*
          * Process PDN connectivity request message received from the UE
          */
@@ -745,7 +745,7 @@ _esm_sap_recv (
     rc = RETURNok;
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************
@@ -781,7 +781,7 @@ _esm_sap_send (
   const esm_sap_data_t * data,
   OctetString * rsp)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   esm_proc_procedure_t                    esm_procedure = NULL;
   int                                     rc = RETURNok;
 
@@ -846,5 +846,5 @@ _esm_sap_send (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }

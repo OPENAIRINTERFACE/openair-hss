@@ -50,7 +50,7 @@
 #include "EmmCommon.h"
 
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 #include "emmData.h"
 
 #include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
@@ -185,7 +185,7 @@ emm_proc_common_initialize (
 {
   struct emm_common_data_s               *emm_common_data_ctx = NULL;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 #if NAS_BUILT_IN_EPC
   assert (ueid > 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
@@ -212,10 +212,10 @@ emm_proc_common_initialize (
     emm_common_data_ctx->failure = _failure;
     emm_common_data_ctx->abort = _abort;
     emm_common_data_ctx->args = args;
-    LOG_FUNC_RETURN (RETURNok);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
   }
 
-  LOG_FUNC_RETURN (RETURNerror);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
 }
 
 /****************************************************************************
@@ -243,7 +243,7 @@ emm_proc_common_success (
   emm_common_success_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 #if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
@@ -266,7 +266,7 @@ emm_proc_common_success (
   }
 
   _emm_common_cleanup (ueid);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -294,7 +294,7 @@ emm_proc_common_reject (
   int                                     rc = RETURNerror;
   emm_common_reject_callback_t            emm_callback;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 #if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
@@ -317,7 +317,7 @@ emm_proc_common_reject (
   }
 
   _emm_common_cleanup (ueid);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -346,7 +346,7 @@ emm_proc_common_failure (
   emm_common_failure_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 #if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
@@ -369,7 +369,7 @@ emm_proc_common_failure (
   }
 
   _emm_common_cleanup (ueid);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -397,7 +397,7 @@ emm_proc_common_abort (
   emm_common_failure_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 #if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
@@ -420,7 +420,7 @@ emm_proc_common_abort (
   }
 
   _emm_common_cleanup (ueid);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -445,7 +445,7 @@ emm_proc_common_get_args (
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 #if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
@@ -454,7 +454,7 @@ emm_proc_common_get_args (
   emm_common_data_ctx = _emm_common_data[ueid];
 #endif
   assert (emm_common_data_ctx != NULL);
-  LOG_FUNC_RETURN (emm_common_data_ctx->args);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, emm_common_data_ctx->args);
 }
 
 /****************************************************************************/

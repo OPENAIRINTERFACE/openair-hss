@@ -44,7 +44,7 @@
 *****************************************************************************/
 
 #include "emm_proc.h"
-#include "nas_log.h"
+#include "log.h"
 #include "nas_timer.h"
 
 #include "emmData.h"
@@ -125,14 +125,14 @@ emm_network_capability_have_changed (
   int umts_present,
   int gprs_present)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 
   /*
    * Supported EPS encryption algorithms
    */
   if (eea != ctx->eea) {
     LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: eea 0x%x/0x%x (ctxt)", eea, ctx->eea);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   /*
@@ -140,18 +140,18 @@ emm_network_capability_have_changed (
    */
   if (eia != ctx->eia) {
     LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: eia 0x%x/0x%x (ctxt)", eia, ctx->eia);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if (umts_present != ctx->umts_present) {
     LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: umts_present %u/%u (ctxt)", umts_present, ctx->umts_present);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if ((ctx->umts_present) && (umts_present)) {
     if (ucs2 != ctx->ucs2) {
       LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: ucs2 %u/%u (ctxt)", ucs2, ctx->ucs2);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
 
     /*
@@ -159,7 +159,7 @@ emm_network_capability_have_changed (
      */
     if (uea != ctx->uea) {
       LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: uea 0x%x/0x%x (ctxt)", uea, ctx->uea);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
 
     /*
@@ -167,22 +167,22 @@ emm_network_capability_have_changed (
      */
     if (uia != ctx->uia) {
       LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: uia 0x%x/0x%x (ctxt)", uia, ctx->uia);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
   }
 
   if (gprs_present != ctx->gprs_present) {
     LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: gprs_present %u/%u (ctxt)", gprs_present, ctx->gprs_present);
-    LOG_FUNC_RETURN (TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
   }
 
   if ((ctx->gprs_present) && (gprs_present)) {
     if (gea != ctx->gea) {
       LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: gea 0x%x/0x%x (ctxt)", gea, ctx->gea);
-      LOG_FUNC_RETURN (TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
     }
   }
-  LOG_FUNC_RETURN (FALSE);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, FALSE);
 }
 
 
@@ -193,7 +193,7 @@ emm_proc_tracking_area_update_request (
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *ue_ctx = NULL;
   boolean_t                               previous_context_found = FALSE;
@@ -242,11 +242,11 @@ emm_proc_tracking_area_update_request (
         //}
         // ...anyway now for simplicity we reject the TAU (else have to re-do integrity checking on NAS msg)
         rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
-        LOG_FUNC_RETURN (rc);
+        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
       } else {
         // NO S10
         rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
-        LOG_FUNC_RETURN (rc);
+        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
       }
     }
   }
@@ -372,7 +372,7 @@ emm_proc_tracking_area_update_request (
       _emm_tracking_area_update_accept,
       _emm_tracking_area_update_reject,
       _emm_tracking_area_update_reject);
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
   } /*else {
      *
      * MME24.301R10_5.5.3.2.3_4 TAU procedure: EMM common procedure initiation – no authentication procedure
@@ -407,7 +407,7 @@ emm_proc_tracking_area_update_request (
                                   _emm_tracking_area_update_security,
                                   _emm_tracking_area_update_reject,
                                   _emm_tracking_area_update_reject);
-      LOG_FUNC_RETURN (rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
     } else {
       boolean_t network_capability_have_changed = FALSE;
       if (NULL != ue_ctx->ue_network_capability_ie) {
@@ -449,17 +449,17 @@ emm_proc_tracking_area_update_request (
             _emm_tracking_area_update,
             _emm_tracking_area_update_reject,
             _emm_tracking_area_update_reject);
-        LOG_FUNC_RETURN (rc);
+        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
       } //else {
         // TAU Accept
       //}
 
     }
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
   }
 
   rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_ILLEGAL_UE);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 /****************************************************************************
  **                                                                        **
@@ -481,7 +481,7 @@ emm_proc_tracking_area_update_reject (
   unsigned int ueid,
   int emm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
 
   /*
@@ -511,7 +511,7 @@ emm_proc_tracking_area_update_reject (
    * Do not accept attach request with protocol error
    */
   rc = _emm_tracking_area_update_reject (&ue_ctx);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/
@@ -522,7 +522,7 @@ static int
 _emm_tracking_area_update (
     void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
   tau_accept_data_t                      *data = (tau_accept_data_t *) CALLOC_CHECK (1, sizeof (tau_accept_data_t));
@@ -536,7 +536,7 @@ _emm_tracking_area_update (
     if (rc != RETURNok) {
       LOG_TRACE (WARNING, "Failed to initialize EMM callback functions");
       FREE_CHECK (data);
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
 
     /*
@@ -560,7 +560,7 @@ _emm_tracking_area_update (
     rc = _emm_tracking_area_update_reject (emm_ctx);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 /*
  * --------------------------------------------------------------------------
@@ -581,7 +581,7 @@ static void                            *
 _emm_tau_t3450_handler (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   tau_accept_data_t                      *data = (tau_accept_data_t *) (args);
 
@@ -614,7 +614,7 @@ _emm_tau_t3450_handler (
     rc = _emm_tracking_area_update_abort (data);
   }
 
-  LOG_FUNC_RETURN (NULL);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, NULL);
 }
 
 /** \fn void _emm_tracking_area_update_reject(void *args);
@@ -626,7 +626,7 @@ static int
 _emm_tracking_area_update_security (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
@@ -651,7 +651,7 @@ _emm_tracking_area_update_security (
      * Do not accept the UE to attach to the network
      */
     rc = _emm_tracking_area_update_reject (emm_ctx);
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
   }
 
   /*
@@ -676,7 +676,7 @@ _emm_tracking_area_update_security (
      */
     rc = _emm_tracking_area_update_reject (emm_ctx);
   }
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /** \fn void _emm_tracking_area_update_reject(void *args);
@@ -688,7 +688,7 @@ static int
 _emm_tracking_area_update_reject (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
@@ -719,7 +719,7 @@ _emm_tracking_area_update_reject (
     rc = emm_sap_send (&emm_sap);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /** \fn void _emm_tracking_area_update_accept (emm_data_context_t * emm_ctx,tau_accept_data_t * data);
@@ -733,7 +733,7 @@ _emm_tracking_area_update_accept (
   emm_data_context_t * emm_ctx,
   tau_accept_data_t * data)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   emm_sap_t                               emm_sap = {0};
   int                                     i = 0;
   int                                     rc = RETURNerror;
@@ -820,7 +820,7 @@ _emm_tracking_area_update_accept (
     LOG_TRACE (WARNING, "EMM-PROC  - emm_ctx NULL");
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 static int
@@ -831,7 +831,7 @@ _emm_tracking_area_update_abort (
   emm_data_context_t                     *ctx = NULL;
   tau_accept_data_t                      *data;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   data = (tau_accept_data_t *) (args);
 
   if (data) {
@@ -873,5 +873,5 @@ _emm_tracking_area_update_abort (
     emm_sap.u.emm_reg.ctx = ctx;
     rc = emm_sap_send (&emm_sap);
   }
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }

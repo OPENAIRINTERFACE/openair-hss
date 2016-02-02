@@ -28,6 +28,7 @@
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "AttachAccept.h"
+#include "log.h"
 
 int
 decode_attach_accept (
@@ -206,7 +207,7 @@ encode_attach_accept (
   int                                     encoded = 0;
   int                                     encode_result = 0;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * Checking IEI and pointer
    */
@@ -216,19 +217,19 @@ encode_attach_accept (
 
   if ((encode_result = encode_gprs_timer (&attach_accept->t3412value, 0, buffer + encoded, len - encoded)) < 0) {       //Return in case of error
     LOG_TRACE (WARNING, "Failed encode_gprs_timer");
-    LOG_FUNC_RETURN (encode_result);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
   } else
     encoded += encode_result;
 
   if ((encode_result = encode_tracking_area_identity_list (&attach_accept->tailist, 0, buffer + encoded, len - encoded)) < 0) { //Return in case of error
     LOG_TRACE (WARNING, "Failed encode_tracking_area_identity_list");
-    LOG_FUNC_RETURN (encode_result);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
   } else
     encoded += encode_result;
 
   if ((encode_result = encode_esm_message_container (&attach_accept->esmmessagecontainer, 0, buffer + encoded, len - encoded)) < 0) {   //Return in case of error
     LOG_TRACE (WARNING, "Failed encode_esm_message_container");
-    LOG_FUNC_RETURN (encode_result);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
   } else
     encoded += encode_result;
 
@@ -237,7 +238,7 @@ encode_attach_accept (
     if ((encode_result = encode_eps_mobile_identity (&attach_accept->guti, ATTACH_ACCEPT_GUTI_IEI, buffer + encoded, len - encoded)) < 0) {
       // Return in case of error
       LOG_TRACE (WARNING, "Failed encode_eps_mobile_identity");
-      LOG_FUNC_RETURN (encode_result);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
     } else
       encoded += encode_result;
   }
@@ -247,7 +248,7 @@ encode_attach_accept (
     if ((encode_result = encode_location_area_identification (&attach_accept->locationareaidentification, ATTACH_ACCEPT_LOCATION_AREA_IDENTIFICATION_IEI, buffer + encoded, len - encoded)) < 0) {
       LOG_TRACE (WARNING, "Failed encode_location_area_identification");
       // Return in case of error
-      LOG_FUNC_RETURN (encode_result);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
     } else
       encoded += encode_result;
   }
@@ -257,7 +258,7 @@ encode_attach_accept (
     if ((encode_result = encode_mobile_identity (&attach_accept->msidentity, ATTACH_ACCEPT_MS_IDENTITY_IEI, buffer + encoded, len - encoded)) < 0) {
       LOG_TRACE (WARNING, "Failed encode_mobile_identity");
       // Return in case of error
-      LOG_FUNC_RETURN (encode_result);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
     } else
       encoded += encode_result;
   }
@@ -266,7 +267,7 @@ encode_attach_accept (
       == ATTACH_ACCEPT_EMM_CAUSE_PRESENT) {
     if ((encode_result = encode_emm_cause (&attach_accept->emmcause, ATTACH_ACCEPT_EMM_CAUSE_IEI, buffer + encoded, len - encoded)) < 0) {
       // Return in case of error
-      LOG_FUNC_RETURN (encode_result);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
     } else
       encoded += encode_result;
   }
@@ -280,7 +281,7 @@ encode_attach_accept (
     if ((encode_result = encode_gprs_timer (&attach_accept->t3402value, ATTACH_ACCEPT_T3402_VALUE_IEI, buffer + encoded, len - encoded)) < 0) {
       LOG_TRACE (WARNING, "Failed encode_gprs_timer");
       // Return in case of error
-      LOG_FUNC_RETURN (encode_result);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
     } else
       encoded += encode_result;
   }
@@ -290,7 +291,7 @@ encode_attach_accept (
     if ((encode_result = encode_gprs_timer (&attach_accept->t3423value, ATTACH_ACCEPT_T3423_VALUE_IEI, buffer + encoded, len - encoded)) < 0) {
       LOG_TRACE (WARNING, "Failed encode_gprs_timer");
       // Return in case of error
-      LOG_FUNC_RETURN (encode_result);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
     } else
       encoded += encode_result;
   }
@@ -300,7 +301,7 @@ encode_attach_accept (
     if ((encode_result = encode_plmn_list (&attach_accept->equivalentplmns, ATTACH_ACCEPT_EQUIVALENT_PLMNS_IEI, buffer + encoded, len - encoded)) < 0) {
       LOG_TRACE (WARNING, "Failed encode_plmn_list");
       // Return in case of error
-      LOG_FUNC_RETURN (encode_result);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
     } else
       encoded += encode_result;
   }
@@ -310,7 +311,7 @@ encode_attach_accept (
     if ((encode_result = encode_emergency_number_list (&attach_accept->emergencynumberlist, ATTACH_ACCEPT_EMERGENCY_NUMBER_LIST_IEI, buffer + encoded, len - encoded)) < 0) {
       LOG_TRACE (WARNING, "Failed encode_emergency_number_list");
       // Return in case of error
-      LOG_FUNC_RETURN (encode_result);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
     } else
       encoded += encode_result;
   }
@@ -320,7 +321,7 @@ encode_attach_accept (
     if ((encode_result = encode_eps_network_feature_support (&attach_accept->epsnetworkfeaturesupport, ATTACH_ACCEPT_EPS_NETWORK_FEATURE_SUPPORT_IEI, buffer + encoded, len - encoded)) < 0) {
       LOG_TRACE (WARNING, "Failed encode_eps_network_feature_support");
       // Return in case of error
-      LOG_FUNC_RETURN (encode_result);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
     } else
       encoded += encode_result;
   }
@@ -330,10 +331,10 @@ encode_attach_accept (
     if ((encode_result = encode_additional_update_result (&attach_accept->additionalupdateresult, ATTACH_ACCEPT_ADDITIONAL_UPDATE_RESULT_IEI, buffer + encoded, len - encoded)) < 0) {
       LOG_TRACE (WARNING, "Failed encode_additional_update_result");
       // Return in case of error
-      LOG_FUNC_RETURN (encode_result);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encode_result);
     } else
       encoded += encode_result;
   }
 
-  LOG_FUNC_RETURN (encoded);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, encoded);
 }

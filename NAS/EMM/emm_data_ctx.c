@@ -27,7 +27,7 @@
 #  include "assertions.h"
 #  include "tree.h"
 #  include "emmData.h"
-#  include "nas_log.h"
+#  include "log.h"
 #  include "security_types.h"
 #  include "obj_hashtable.h"
 #  include "msc.h"

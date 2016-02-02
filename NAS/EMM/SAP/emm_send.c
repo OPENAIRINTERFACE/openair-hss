@@ -41,7 +41,7 @@
 
 #include "emm_send.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "emm_msgDef.h"
 #include "emm_proc.h"
@@ -89,7 +89,7 @@ emm_send_status (
   const emm_as_status_t * msg,
   emm_status_msg * emm_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
   LOG_TRACE (WARNING, "EMMAS-SAP - Send EMM Status message (cause=%d)", msg->emm_cause);
@@ -102,7 +102,7 @@ emm_send_status (
    */
   size += EMM_CAUSE_MAXIMUM_LENGTH;
   emm_msg->emmcause = msg->emm_cause;
-  LOG_FUNC_RETURN (size);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, size);
 }
 
 /****************************************************************************
@@ -128,7 +128,7 @@ emm_send_detach_accept (
   const emm_as_data_t * msg,
   detach_accept_msg * emm_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send Detach Accept message");
@@ -136,7 +136,7 @@ emm_send_detach_accept (
    * Mandatory - Message type
    */
   emm_msg->messagetype = DETACH_ACCEPT;
-  LOG_FUNC_RETURN (size);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, size);
 }
 
 
@@ -168,7 +168,7 @@ emm_send_attach_accept (
   const emm_as_establish_t * msg,
   attach_accept_msg * emm_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
   int                                     i = 0;
 
@@ -257,7 +257,7 @@ emm_send_attach_accept (
     LOG_TRACE (INFO, "EMMAS-SAP - size += " "EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH(%d)  (%d)", EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH, size);
   }
 
-  LOG_FUNC_RETURN (size);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, size);
 }
 
 /****************************************************************************
@@ -283,7 +283,7 @@ emm_send_attach_reject (
   const emm_as_establish_t * msg,
   attach_reject_msg * emm_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send Attach Reject message (cause=%d)", msg->emm_cause);
@@ -306,7 +306,7 @@ emm_send_attach_reject (
     emm_msg->esmmessagecontainer.esmmessagecontainercontents = msg->NASmsg;
   }
 
-  LOG_FUNC_RETURN (size);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, size);
 }
 
 /****************************************************************************
@@ -332,7 +332,7 @@ emm_send_tracking_area_update_accept (
   const emm_as_establish_t * msg,
   tracking_area_update_accept_msg * emm_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
   int                                     i = 0;
 
@@ -515,7 +515,7 @@ emm_send_tracking_area_update_accept (
     emm_msg->additionalupdateresult.       = msg->;
     LOG_TRACE (INFO, "EMMAS-SAP - size += " "ADDITIONAL_UPDATE_RESULT_MAXIMUM_LENGTH(%d)  (%d)", ADDITIONAL_UPDATE_RESULT_MAXIMUM_LENGTH, size);
   }*/
-  LOG_FUNC_RETURN (size);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, size);
 }
 
 /****************************************************************************
@@ -541,7 +541,7 @@ emm_send_tracking_area_update_reject (
   const emm_as_establish_t * msg,
   tracking_area_update_reject_msg * emm_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send Tracking Area Update Reject message (cause=%d)", msg->emm_cause);
@@ -554,7 +554,7 @@ emm_send_tracking_area_update_reject (
    */
   size += EMM_CAUSE_MAXIMUM_LENGTH;
   emm_msg->emmcause = msg->emm_cause;
-  LOG_FUNC_RETURN (size);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, size);
 }
 
 /****************************************************************************
@@ -580,7 +580,7 @@ emm_send_identity_request (
   const emm_as_security_t * msg,
   identity_request_msg * emm_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send Identity Request message");
@@ -606,7 +606,7 @@ emm_send_identity_request (
     emm_msg->identitytype = IDENTITY_TYPE_2_IMSI;
   }
 
-  LOG_FUNC_RETURN (size);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, size);
 }
 
 /****************************************************************************
@@ -631,7 +631,7 @@ emm_send_authentication_request (
   const emm_as_security_t * msg,
   authentication_request_msg * emm_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send Authentication Request message");
@@ -655,7 +655,7 @@ emm_send_authentication_request (
    */
   size += AUTHENTICATION_PARAMETER_AUTN_MAXIMUM_LENGTH;
   emm_msg->authenticationparameterautn.autn = *msg->autn;
-  LOG_FUNC_RETURN (size);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, size);
 }
 
 /****************************************************************************
@@ -680,7 +680,7 @@ int
 emm_send_authentication_reject (
   authentication_reject_msg * emm_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send Authentication Reject message");
@@ -688,7 +688,7 @@ emm_send_authentication_reject (
    * Mandatory - Message type
    */
   emm_msg->messagetype = AUTHENTICATION_REJECT;
-  LOG_FUNC_RETURN (size);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, size);
 }
 
 /****************************************************************************
@@ -713,7 +713,7 @@ emm_send_security_mode_command (
   const emm_as_security_t * msg,
   security_mode_command_msg * emm_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send Security Mode Command message");
@@ -744,7 +744,7 @@ emm_send_security_mode_command (
   emm_msg->replayeduesecuritycapabilities.uea = msg->uea;
   emm_msg->replayeduesecuritycapabilities.uia = msg->uia;
   emm_msg->replayeduesecuritycapabilities.gea = msg->gea;
-  LOG_FUNC_RETURN (size);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, size);
 }
 
 

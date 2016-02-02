@@ -45,7 +45,7 @@
 *****************************************************************************/
 
 #include "emm_proc.h"
-#include "nas_log.h"
+#include "log.h"
 #include "nas_timer.h"
 
 #include "emmData.h"
@@ -127,14 +127,14 @@ emm_proc_detach (
   unsigned int ueid,
   emm_proc_detach_type_t type)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
 
   LOG_TRACE (INFO, "EMM-PROC  - Initiate detach type = %s (%d)", _emm_detach_type_str[type], type);
   /*
    * TODO
    */
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -184,7 +184,7 @@ emm_proc_detach_request (
   imsi_t * imsi,
   imei_t * imei)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc;
   emm_data_context_t                     *emm_ctx = NULL;
 
@@ -205,7 +205,7 @@ emm_proc_detach_request (
 
   if (emm_ctx == NULL) {
     LOG_TRACE (WARNING, "No EMM context exists for the UE (ueid=" NAS_UE_ID_FMT ")", ueid);
-    LOG_FUNC_RETURN (RETURNok);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
   }
 
   if (switch_off) {
@@ -348,7 +348,7 @@ emm_proc_detach_request (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/

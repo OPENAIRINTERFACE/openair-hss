@@ -42,7 +42,7 @@
 *****************************************************************************/
 
 #include "emm_proc.h"
-#include "nas_log.h"
+#include "log.h"
 #include "nas_timer.h"
 
 #include "emmData.h"
@@ -150,7 +150,7 @@ emm_proc_identification (
   emm_common_reject_callback_t reject,
   emm_common_failure_callback_t failure)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
 
   LOG_TRACE (INFO, "EMM-PROC  - Initiate identification type = %s (%d), ctx = %p", _emm_identity_type_str[type], type, emm_ctx);
@@ -168,7 +168,7 @@ emm_proc_identification (
     if (rc != RETURNok) {
       LOG_TRACE (WARNING, "Failed to initialize EMM callback functions");
       FREE_CHECK (data);
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
 
     /*
@@ -206,7 +206,7 @@ emm_proc_identification (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -242,7 +242,7 @@ emm_proc_identification_complete (
   emm_sap_t                               emm_sap = {0};
   emm_data_context_t                     *emm_ctx = NULL;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMM-PROC  - Identification complete (ueid=" NAS_UE_ID_FMT ")", ueid);
   /*
    * Release retransmission timer paramaters
@@ -332,7 +332,7 @@ emm_proc_identification_complete (
   }
 
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 
@@ -370,7 +370,7 @@ static void                            *
 _identification_t3470_handler (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc;
   identification_data_t                  *data = (identification_data_t *) (args);
 
@@ -396,7 +396,7 @@ _identification_t3470_handler (
     rc = _identification_abort (data);
   }
 
-  LOG_FUNC_RETURN (NULL);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, NULL);
 }
 
 /*
@@ -427,7 +427,7 @@ _identification_request (
   int                                     rc;
   struct emm_data_context_s              *emm_ctx = NULL;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * Notify EMM-AS SAP that Identity Request message has to be sent
    * to the UE
@@ -473,7 +473,7 @@ _identification_request (
     LOG_TRACE (INFO, "EMM-PROC  - Timer T3470 (%d) expires in %ld seconds", emm_ctx->T3470.id, emm_ctx->T3470.sec);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -494,7 +494,7 @@ static int
 _identification_abort (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   identification_data_t                  *data = (identification_data_t *) (args);
 
@@ -550,5 +550,5 @@ _identification_abort (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }

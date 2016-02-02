@@ -41,7 +41,7 @@
 
 #include "emm_esm.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "LowerLayer.h"
 
@@ -85,7 +85,7 @@ void
 emm_esm_initialize (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * TODO: Initialize the EMMESM-SAP
    */
@@ -110,7 +110,7 @@ int
 emm_esm_send (
   const emm_esm_t * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   emm_esm_primitive_t                     primitive = msg->primitive;
 
@@ -132,7 +132,7 @@ emm_esm_send (
     LOG_TRACE (WARNING, "EMMESM-SAP - Failed to process primitive %s (%d)", _emm_esm_primitive_str[primitive - _EMMESM_START - 1], primitive);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/

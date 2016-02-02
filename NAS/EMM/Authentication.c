@@ -55,7 +55,7 @@
 #include <arpa/inet.h>          // htons
 
 #include "emm_proc.h"
-#include "nas_log.h"
+#include "log.h"
 #include "nas_timer.h"
 #include "emmData.h"
 #include "emm_sap.h"
@@ -175,7 +175,7 @@ emm_proc_authentication (
   int                                     rc = RETURNerror;
   authentication_data_t                  *data;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMM-PROC  - Initiate authentication KSI = %d, ctx = %p", ksi, ctx);
   /*
    * Allocate parameters of the retransmission timer callback
@@ -199,7 +199,7 @@ emm_proc_authentication (
 
     if (rc != RETURNok) {
       LOG_TRACE (WARNING, "Failed to initialize EMM callback functions");
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
 
     /*
@@ -256,7 +256,7 @@ emm_proc_authentication (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -291,7 +291,7 @@ emm_proc_authentication_complete (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMM-PROC  - Authentication complete (ueid=" NAS_UE_ID_FMT ", cause=%d)", ueid, emm_cause);
   /*
    * Release retransmission timer paramaters
@@ -364,7 +364,7 @@ emm_proc_authentication_complete (
       LOG_TRACE (DEBUG, "EMM-PROC  - USIM has detected a mismatch in SQN Ask for a new vector");
       nas_itti_auth_info_req (ueid, emm_ctx->imsi, 0, res->value);
       rc = RETURNok;
-      LOG_FUNC_RETURN (rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
       break;
 #endif
 
@@ -398,7 +398,7 @@ emm_proc_authentication_complete (
   }
 
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/
@@ -437,7 +437,7 @@ static void                            *
 _authentication_t3460_handler (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   authentication_data_t                  *data = (authentication_data_t *) (args);
 
@@ -478,7 +478,7 @@ _authentication_t3460_handler (
     }
   }
 
-  LOG_FUNC_RETURN (NULL);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, NULL);
 }
 
 /*
@@ -505,7 +505,7 @@ int
 _authentication_request (
   authentication_data_t * data)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNerror;
   struct emm_data_context_s              *emm_ctx;
@@ -556,7 +556,7 @@ _authentication_request (
     LOG_TRACE (INFO, "EMM-PROC  - Timer T3460 (%d) expires in %ld seconds", emm_ctx->T3460.id, emm_ctx->T3460.sec);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -577,7 +577,7 @@ static int
 _authentication_reject (
   unsigned int ueid)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNerror;
   struct emm_data_context_s              *emm_ctx;
@@ -600,7 +600,7 @@ _authentication_reject (
    */
   emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, FALSE, TRUE);
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -621,7 +621,7 @@ static int
 _authentication_abort (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   struct emm_data_context_s              *emm_ctx;
   authentication_data_t                  *data = (authentication_data_t *) (args);
@@ -675,5 +675,5 @@ _authentication_abort (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }

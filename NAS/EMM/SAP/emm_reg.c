@@ -41,7 +41,7 @@
 
 #include "emm_reg.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "emm_fsm.h"
 
@@ -77,7 +77,7 @@ void
 emm_reg_initialize (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * Initialize the EMM state machine
    */
@@ -103,7 +103,7 @@ int
 emm_reg_send (
   const emm_reg_t * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc;
 
   /*
@@ -116,7 +116,7 @@ emm_reg_send (
    * Execute the EMM procedure
    */
   rc = emm_fsm_process (msg);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/

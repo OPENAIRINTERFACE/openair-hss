@@ -29,14 +29,12 @@
 #include "msc.h"
 #include "intertask_interface.h"
 #include "mme_app_itti_messaging.h"
-
 #include "mme_config.h"
-
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mcc_mnc_itu.h"
-
 #include "assertions.h"
+#include "log.h"
 
 static
 int                                     mme_app_request_authentication_info (
@@ -65,12 +63,12 @@ mme_app_request_authentication_info (
   auth_info_req->imsi_length = imsi_length;
   //MME_APP_IMSI_TO_STRING(imsi, auth_info_req->imsi);
   memcpy (&auth_info_req->visited_plmn, plmn, sizeof (plmn_t));
-  MME_APP_DEBUG ("%s visited_plmn MCC %X%X%X MNC %X%X%X\n", __FUNCTION__,
+  LOG_DEBUG (LOG_MME_APP, "visited_plmn MCC %X%X%X MNC %X%X%X\n",
                  auth_info_req->visited_plmn.MCCdigit1,
                  auth_info_req->visited_plmn.MCCdigit2, auth_info_req->visited_plmn.MCCdigit3, auth_info_req->visited_plmn.MNCdigit1, auth_info_req->visited_plmn.MNCdigit2, auth_info_req->visited_plmn.MNCdigit3);
   uint8_t                                *ptr = (uint8_t *) & auth_info_req->visited_plmn;
 
-  MME_APP_DEBUG ("%s visited_plmn %02X%02X%02X\n", __FUNCTION__, ptr[0], ptr[1], ptr[2]);
+  LOG_DEBUG (LOG_MME_APP, "visited_plmn %02X%02X%02X\n", ptr[0], ptr[1], ptr[2]);
   auth_info_req->nb_of_vectors = nb_of_vectors;
 
   if (auts != NULL) {
@@ -94,10 +92,10 @@ mme_app_handle_nas_auth_resp (
 
   DevAssert (nas_auth_resp_pP != NULL);
   MME_APP_STRING_TO_IMSI ((char *)nas_auth_resp_pP->imsi, &imsi);
-  MME_APP_DEBUG ("Handling imsi %" IMSI_FORMAT "\n", imsi);
+  LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
 
   if ((ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
-    MME_APP_ERROR ("That's embarrassing as we don't know this IMSI\n");
+	LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 NAS_AUTH_RESP Unknown imsi %" IMSI_FORMAT, imsi);
     AssertFatal (0, "That's embarrassing as we don't know this IMSI\n");
     return -1;
@@ -147,10 +145,10 @@ mme_app_handle_authentication_info_answer (
 
   DevAssert (s6a_auth_info_ans_pP != NULL);
   MME_APP_STRING_TO_IMSI ((char *)s6a_auth_info_ans_pP->imsi, &imsi);
-  MME_APP_DEBUG ("Handling imsi %" IMSI_FORMAT "\n", imsi);
+  LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
 
   if ((ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
-    MME_APP_ERROR ("That's embarrassing as we don't know this IMSI\n");
+	LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS Unknown imsi %" IMSI_FORMAT, imsi);
     return -1;
   }
@@ -180,10 +178,10 @@ mme_app_handle_authentication_info_answer (
     memcpy (&ue_context->vector_list[ue_context->nb_of_vectors], &s6a_auth_info_ans_pP->auth_info.eutran_vector, sizeof (eutran_vector_t));
     ue_context->vector_in_use = &ue_context->vector_list[ue_context->nb_of_vectors];
     ue_context->nb_of_vectors += s6a_auth_info_ans_pP->auth_info.nb_of_vectors;
-    MME_APP_DEBUG ("INFORMING NAS ABOUT AUTH RESP SUCCESS got %u vector(s)\n", s6a_auth_info_ans_pP->auth_info.nb_of_vectors);
+    LOG_DEBUG (LOG_MME_APP, "INFORMING NAS ABOUT AUTH RESP SUCCESS got %u vector(s)\n", s6a_auth_info_ans_pP->auth_info.nb_of_vectors);
     mme_app_itti_auth_rsp (ue_context->ue_id, 1, &s6a_auth_info_ans_pP->auth_info.eutran_vector);
   } else {
-    MME_APP_ERROR ("INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
+	LOG_ERROR (LOG_MME_APP, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi %" IMSI_FORMAT, imsi);
 
     /*
@@ -238,16 +236,18 @@ mme_app_handle_nas_auth_param_req (
   }
 
   if (mnc_length == 3) {
-    MME_APP_DEBUG ("%s visited_plmn_from_req  %1d%1d%1d.%1d%1d%1d\n",
-                   __FUNCTION__, visited_plmn_from_req.MCCdigit1, visited_plmn_from_req.MCCdigit2, visited_plmn_from_req.MCCdigit3, visited_plmn_from_req.MNCdigit1, visited_plmn_from_req.MNCdigit2, visited_plmn_from_req.MNCdigit3);
+	LOG_DEBUG (LOG_MME_APP, "visited_plmn_from_req  %1d%1d%1d.%1d%1d%1d\n",
+                   visited_plmn_from_req.MCCdigit1, visited_plmn_from_req.MCCdigit2, visited_plmn_from_req.MCCdigit3,
+				   visited_plmn_from_req.MNCdigit1, visited_plmn_from_req.MNCdigit2, visited_plmn_from_req.MNCdigit3);
   } else {
-    MME_APP_DEBUG ("%s visited_plmn_from_req  %1d%1d%1d.%1d%1d\n",
-                   __FUNCTION__, visited_plmn_from_req.MCCdigit1, visited_plmn_from_req.MCCdigit2, visited_plmn_from_req.MCCdigit3, visited_plmn_from_req.MNCdigit1, visited_plmn_from_req.MNCdigit2);
+	LOG_DEBUG (LOG_MME_APP, "visited_plmn_from_req  %1d%1d%1d.%1d%1d\n",
+                   visited_plmn_from_req.MCCdigit1, visited_plmn_from_req.MCCdigit2, visited_plmn_from_req.MCCdigit3,
+				   visited_plmn_from_req.MNCdigit1, visited_plmn_from_req.MNCdigit2);
   }
 
   MME_APP_STRING_TO_IMSI (nas_auth_param_req_pP->imsi, &imsi);
-  MME_APP_DEBUG ("%s Handling imsi %" IMSI_FORMAT "\n", __FUNCTION__, imsi);
-  MME_APP_DEBUG ("%s Handling imsi from req  %s (mnc length %d)\n", __FUNCTION__, nas_auth_param_req_pP->imsi, mnc_length);
+  LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
+  LOG_DEBUG (LOG_MME_APP, "Handling imsi from req  %s (mnc length %d)\n", nas_auth_param_req_pP->imsi, mnc_length);
   /*
    * Fetch the context associated with this IMSI
    */
@@ -258,12 +258,12 @@ mme_app_handle_nas_auth_param_req (
      * Currently no context available -> trigger an authentication request
      * to the HSS.
      */
-    MME_APP_DEBUG ("UE context search by IMSI failed, try by ue id\n");
+	LOG_DEBUG (LOG_MME_APP, "UE context search by IMSI failed, try by ue id\n");
     ue_context = mme_ue_context_exists_nas_ue_id (&mme_app_desc.mme_ue_contexts, nas_auth_param_req_pP->ue_id);
 
     if (ue_context == NULL) {
       // should have been created by initial ue message
-      MME_APP_ERROR ("UE context doesn't exist -> create one\n");
+      LOG_ERROR (LOG_MME_APP, "UE context doesn't exist -> create one\n");
 
       if ((ue_context = mme_create_new_ue_context ()) == NULL) {
         /*
@@ -297,7 +297,7 @@ mme_app_handle_nas_auth_param_req (
     // update IMSI
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context, ue_context->mme_ue_s1ap_id, imsi,       // imsi is new
                                      ue_context->mme_s11_teid, ue_context->ue_id, &guti);       // guti is new
-    MME_APP_DEBUG ("and we have no auth. vector for it, request" " authentication information\n");
+    LOG_DEBUG (LOG_MME_APP, "and we have no auth. vector for it, request" " authentication information\n");
     mme_app_request_authentication_info (nas_auth_param_req_pP->imsi, 1, visited_plmn, NULL);
   } else {
     GUTI_t                                  guti;

@@ -47,7 +47,7 @@
 *****************************************************************************/
 
 #include "emm_proc.h"
-#include "nas_log.h"
+#include "log.h"
 #include "nas_timer.h"
 
 #include "emmData.h"

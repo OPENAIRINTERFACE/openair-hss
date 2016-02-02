@@ -109,7 +109,7 @@ s1ap_mme_encode_pdu (
     return s1ap_mme_encode_unsuccessfull_outcome (message_p, buffer, length);
 
   default:
-    S1AP_DEBUG ("Unknown message outcome (%d) or not implemented", (int)message_p->direction);
+    LOG_DEBUG (LOG_S1AP_MME, "Unknown message outcome (%d) or not implemented", (int)message_p->direction);
     break;
   }
 
@@ -133,7 +133,7 @@ s1ap_mme_encode_initiating (
     return s1ap_mme_encode_ue_context_release_command (message_p, buffer, length);
 
   default:
-    S1AP_DEBUG ("Unknown procedure ID (%d) for initiating message_p\n", (int)message_p->procedureCode);
+    LOG_DEBUG (LOG_S1AP_MME, "Unknown procedure ID (%d) for initiating message_p\n", (int)message_p->procedureCode);
     break;
   }
 
@@ -151,7 +151,7 @@ s1ap_mme_encode_successfull_outcome (
     return s1ap_mme_encode_s1setupresponse (message_p, buffer, length);
 
   default:
-    S1AP_DEBUG ("Unknown procedure ID (%d) for successfull outcome message\n", (int)message_p->procedureCode);
+    LOG_DEBUG (LOG_S1AP_MME, "Unknown procedure ID (%d) for successfull outcome message\n", (int)message_p->procedureCode);
     break;
   }
 
@@ -169,7 +169,7 @@ s1ap_mme_encode_unsuccessfull_outcome (
     return s1ap_mme_encode_s1setupfailure (message_p, buffer, length);
 
   default:
-    S1AP_DEBUG ("Unknown procedure ID (%d) for unsuccessfull outcome message\n", (int)message_p->procedureCode);
+    LOG_DEBUG (LOG_S1AP_MME, "Unknown procedure ID (%d) for unsuccessfull outcome message\n", (int)message_p->procedureCode);
     break;
   }
 

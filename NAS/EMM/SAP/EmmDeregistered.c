@@ -51,7 +51,7 @@
 #include "emm_fsm.h"
 #include "commonDef.h"
 #include "networkDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "emm_proc.h"
 
@@ -90,7 +90,7 @@ int
 EmmDeregistered (
   const emm_reg_t * evt)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
 
   assert (emm_fsm_get_status (evt->ueid, evt->ctx) == EMM_DEREGISTERED);
@@ -139,7 +139,7 @@ EmmDeregistered (
     break;
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/

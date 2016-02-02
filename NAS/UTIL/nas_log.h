@@ -94,7 +94,7 @@ typedef enum {
 # define LOG_TRACE log_data(__FILE__, __LINE__); log_trace
 # define LOG_DUMP(a, b) log_dump((a),(b));
 
-# define LOG_FUNC_IN LOG_TRACE(FUNC_IN, "Entering %s()", __FUNCTION__)
+# define LOG_FUNC_IN (LOG_NAS_MME) LOG_TRACE(FUNC_IN, "Entering %s()", __FUNCTION__)
 # define LOG_FUNC_OUT LOG_TRACE(FUNC_OUT, "Leaving %s()", __FUNCTION__)
 # define LOG_FUNC_RETURN(rETURNcODE)                                            \
 do {                                                                           \

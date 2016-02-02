@@ -44,7 +44,7 @@
 
 #include "emm_proc.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "emm_cause.h"
 #include "emmData.h"
@@ -88,7 +88,7 @@ emm_proc_status_ind (
   unsigned int ueid,
   int emm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc;
 
   LOG_TRACE (INFO, "EMM-PROC  - EMM status procedure requested (cause=%d)", emm_cause);
@@ -97,7 +97,7 @@ emm_proc_status_ind (
    * TODO
    */
   rc = RETURNok;
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -120,7 +120,7 @@ emm_proc_status (
   unsigned int ueid,
   int emm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
@@ -149,7 +149,7 @@ emm_proc_status (
    */
   emm_as_set_security_data (&emm_sap.u.emm_as.u.status.sctx, sctx, FALSE, TRUE);
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/

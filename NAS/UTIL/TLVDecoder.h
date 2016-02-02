@@ -23,7 +23,7 @@
 #define TLV_DECODER_H_
 
 #include <arpa/inet.h>  // ntohl, ntohs
-#include "nas_log.h"
+#include "log.h"
 
 #define DECODE_U8(bUFFER, vALUE, sIZE)    \
     vALUE = *(uint8_t*)(bUFFER);    \
@@ -86,26 +86,25 @@ extern int errorCodeDecoder;
 void tlv_decode_perror(void);
 
 #define CHECK_PDU_POINTER_AND_LENGTH_DECODER(bUFFER, mINIMUMlENGTH, lENGTH)    \
-  if (bUFFER == NULL)                                                    \
+  if (bUFFER == NULL)                                                          \
         {                                                                      \
-                printf("(%s:%d) Got NULL pointer for the payload\n",           \
-                __FILE__, __LINE__);                                           \
+	        LOG_WARNING(LOG_NAS_MME, "Got NULL pointer for the payload\n");    \
                 errorCodeDecoder = TLV_DECODE_BUFFER_NULL;                     \
-                LOG_FUNC_RETURN(TLV_DECODE_BUFFER_NULL);                       \
+                return TLV_DECODE_BUFFER_NULL;                                 \
         }                                                                      \
         if (lENGTH < mINIMUMlENGTH)                                            \
         {                                                                      \
-                printf("(%s:%d) Expecting at least %d bytes, got %d\n",        \
-                      __FILE__, __LINE__, mINIMUMlENGTH, lENGTH);              \
+        	LOG_WARNING(LOG_NAS_MME, "Expecting at least %d bytes, got %d\n"   \
+                      , mINIMUMlENGTH, lENGTH);                                \
                 errorCodeDecoder = TLV_DECODE_BUFFER_TOO_SHORT;                \
-                LOG_FUNC_RETURN(TLV_DECODE_BUFFER_TOO_SHORT);                  \
+                return TLV_DECODE_BUFFER_TOO_SHORT;                            \
         }
 
 #define CHECK_LENGTH_DECODER(bUFFERlENGTH, lENGTH)                             \
         if (bUFFERlENGTH < lENGTH)                                             \
         {                                                                      \
                 errorCodeDecoder = TLV_DECODE_BUFFER_TOO_SHORT;                \
-                LOG_FUNC_RETURN(TLV_DECODE_BUFFER_TOO_SHORT);                  \
+                return TLV_DECODE_BUFFER_TOO_SHORT;                            \
         }
 
 #define CHECK_MESSAGE_TYPE(mESSAGE_tYPE, bUFFER)                               \
@@ -113,17 +112,17 @@ void tlv_decode_perror(void);
                 if (mESSAGE_tYPE != bUFFER)                                    \
                 {                                                              \
                         errorCodeDecoder = TLV_DECODE_WRONG_MESSAGE_TYPE;      \
-                        LOG_FUNC_RETURN(errorCodeDecoder);                     \
+                        return errorCodeDecoder;                               \
                 }                                                              \
         }
 
 #define CHECK_IEI_DECODER(iEI, bUFFER)                                  \
         if(iEI != bUFFER)                                               \
         {                                                               \
-                printf("IEI is different than the one expected."        \
+                LOG_WARNING(LOG_NAS_MME, "IEI is different than the one expected."        \
                 "(Got: 0x%x, expecting: 0x%x\n", bUFFER, iEI);          \
                 errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;           \
-                LOG_FUNC_RETURN(TLV_DECODE_UNEXPECTED_IEI);             \
+                return TLV_DECODE_UNEXPECTED_IEI;                       \
         }
 
 #endif /* define (TLV_DECODER_H_) */

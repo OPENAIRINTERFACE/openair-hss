@@ -38,7 +38,7 @@
 
 #include "esm_msg.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
@@ -100,7 +100,7 @@ esm_msg_decode (
   uint32_t                                len_log = len;
   int                                     down_link = 0;
 #endif
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   /*
    * First decode the ESM message header
    */
@@ -108,7 +108,7 @@ esm_msg_decode (
 
   if (header_result < 0) {
     LOG_TRACE (ERROR, "ESM-MSG   - Failed to decode ESM message header " "(%d)", header_result);
-    LOG_FUNC_RETURN (header_result);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, header_result);
   }
 
   buffer += header_result;
@@ -211,7 +211,7 @@ esm_msg_decode (
 
   if (decode_result < 0) {
     LOG_TRACE (ERROR, "ESM-MSG   - Failed to decode L3 ESM message 0x%x " "(%u)", msg->header.message_type, decode_result);
-    LOG_FUNC_RETURN (decode_result);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, decode_result);
   } else {
 #if NAS_BUILT_IN_EPC
     /*
@@ -221,7 +221,7 @@ esm_msg_decode (
 #endif
   }
 
-  LOG_FUNC_RETURN (header_result + decode_result);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, header_result + decode_result);
 }
 
 /****************************************************************************
@@ -247,7 +247,7 @@ esm_msg_encode (
   uint8_t * buffer,
   uint32_t len)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     header_result;
   int                                     encode_result;
 
@@ -262,7 +262,7 @@ esm_msg_encode (
 
   if (header_result < 0) {
     LOG_TRACE (ERROR, "ESM-MSG   - Failed to encode ESM message header " "(%d)", header_result);
-    LOG_FUNC_RETURN (header_result);
+    LOG_FUNC_RETURN (LOG_NAS_ESM_MME, header_result);
   }
 
   LOG_TRACE (INFO, "ESM-MSG   - Encoded ESM message header " "(%d)", header_result);
@@ -372,7 +372,7 @@ esm_msg_encode (
 #endif
   }
 
-  LOG_FUNC_RETURN (header_result + encode_result);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, header_result + encode_result);
 }
 
 /****************************************************************************/

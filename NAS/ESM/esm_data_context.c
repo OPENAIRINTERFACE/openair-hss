@@ -41,7 +41,7 @@
 #include "esmData.h"
 #include "commonDef.h"
 #include "networkDef.h"
-#include "nas_log.h"
+#include "log.h"
 #include "esm_ebr_context.h"
 #include "dynamic_memory_check.h"
 

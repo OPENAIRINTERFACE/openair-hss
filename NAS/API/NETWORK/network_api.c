@@ -40,7 +40,7 @@
 
 #include "network_api.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 #include "socket.h"
 
 #include "as_message.h"
@@ -150,7 +150,7 @@ network_api_initialize (
   const char *host,
   const char *port)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_MME);
   /*
    * Initialize network socket handlers
    */
@@ -169,13 +169,13 @@ network_api_initialize (
   if (_network_api_id.endpoint == NULL) {
     const char                             *error = ((errno < 0) ? gai_strerror (errno) : strerror (errno));
 
-    LOG_TRACE (ERROR, "NET-API   - Failed to open connection endpoint, %s", error);
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_ERROR (LOG_NAS_MME, "NET-API   - Failed to open connection endpoint, %s", error);
+    LOG_FUNC_RETURN (LOG_NAS_MME, RETURNerror);
   }
 
   gethostname (_network_api_send_buffer, NETWORK_API_SEND_BUFFER_SIZE);
-  LOG_TRACE (INFO, "NET-API   - Network's UDP socket %d is BOUND to %s/%s", network_api_get_fd (), _network_api_send_buffer, port);
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_INFO (LOG_NAS_MME,  "NET-API   - Network's UDP socket %d is BOUND to %s/%s", network_api_get_fd (), _network_api_send_buffer, port);
+  LOG_FUNC_RETURN (LOG_NAS_MME, RETURNok);
 }
 
 /****************************************************************************
@@ -197,8 +197,8 @@ int
 network_api_get_fd (
   void)
 {
-  LOG_FUNC_IN;
-  LOG_FUNC_RETURN (NETWORK_API_GETFD ());
+  LOG_FUNC_IN (LOG_NAS_MME);
+  LOG_FUNC_RETURN (LOG_NAS_MME, NETWORK_API_GETFD ());
 }
 
 /****************************************************************************
@@ -220,8 +220,8 @@ const void                             *
 network_api_get_data (
   void)
 {
-  LOG_FUNC_IN;
-  LOG_FUNC_RETURN ((void *)(&_as_data));
+  LOG_FUNC_IN (LOG_NAS_MME);
+  LOG_FUNC_RETURN (LOG_NAS_MME, (void *)(&_as_data));
 }
 
 /****************************************************************************
@@ -243,7 +243,7 @@ int
 network_api_read_data (
   int fd)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_MME);
   int                                     rbytes;
 
   /*
@@ -252,8 +252,8 @@ network_api_read_data (
   int                                     sfd = network_api_get_fd ();
 
   if (fd != sfd) {
-    LOG_TRACE (ERROR, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_ERROR (LOG_NAS_MME, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
+    LOG_FUNC_RETURN (LOG_NAS_MME, RETURNerror);
   }
 
   memset (_network_api_recv_buffer, 0, NETWORK_API_RECV_BUFFER_SIZE);
@@ -263,16 +263,16 @@ network_api_read_data (
   rbytes = NETWORK_API_RECV (_network_api_recv_buffer, NETWORK_API_RECV_BUFFER_SIZE);
 
   if (rbytes == RETURNerror) {
-    LOG_TRACE (ERROR, "NET-API   - recv() failed, %s", strerror (errno));
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_ERROR (LOG_NAS_MME, "NET-API   - recv() failed, %s", strerror (errno));
+    LOG_FUNC_RETURN (LOG_NAS_MME, RETURNerror);
   } else if (rbytes == 0) {
-    LOG_TRACE (WARNING, "NET-API   - A signal was caught");
+    LOG_WARNING (LOG_NAS_MME, "NET-API   - A signal was caught");
   } else {
-    LOG_TRACE (INFO, "NET-API   - %d bytes received from the network " "sublayer", rbytes);
+    LOG_INFO (LOG_NAS_MME,  "NET-API   - %d bytes received from the network " "sublayer", rbytes);
     LOG_DUMP (_network_api_recv_buffer, rbytes);
   }
 
-  LOG_FUNC_RETURN (rbytes);
+  LOG_FUNC_RETURN (LOG_NAS_MME, rbytes);
 }
 
 /****************************************************************************
@@ -296,7 +296,7 @@ network_api_send_data (
   int fd,
   int length)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_MME);
   int                                     sbytes;
 
   /*
@@ -305,8 +305,8 @@ network_api_send_data (
   int                                     sfd = network_api_get_fd ();
 
   if (fd != sfd) {
-    LOG_TRACE (ERROR, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_ERROR (LOG_NAS_MME, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
+    LOG_FUNC_RETURN (LOG_NAS_MME, RETURNerror);
   }
 
   /*
@@ -315,16 +315,16 @@ network_api_send_data (
   sbytes = NETWORK_API_SEND (_network_api_send_buffer, length);
 
   if (sbytes == RETURNerror) {
-    LOG_TRACE (ERROR, "NET-API   - send() failed, %s", strerror (errno));
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_ERROR (LOG_NAS_MME, "NET-API   - send() failed, %s", strerror (errno));
+    LOG_FUNC_RETURN (LOG_NAS_MME, RETURNerror);
   } else if (sbytes == 0) {
-    LOG_TRACE (WARNING, "NET-API   - A signal was caught");
+    LOG_WARNING (LOG_NAS_MME, "NET-API   - A signal was caught");
   } else {
-    LOG_TRACE (INFO, "NET-API   - %d bytes sent to the network sublayer", sbytes);
+    LOG_INFO (LOG_NAS_MME,  "NET-API   - %d bytes sent to the network sublayer", sbytes);
     LOG_DUMP (_network_api_send_buffer, sbytes);
   }
 
-  LOG_FUNC_RETURN (sbytes);
+  LOG_FUNC_RETURN (LOG_NAS_MME, sbytes);
 }
 
 /****************************************************************************
@@ -347,15 +347,15 @@ void
 network_api_close (
   int fd)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_MME);
   /*
    * Sanity check
    */
   int                                     sfd = network_api_get_fd ();
 
   if (fd != sfd) {
-    LOG_TRACE (ERROR, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
-    LOG_FUNC_OUT;
+    LOG_ERROR (LOG_NAS_MME, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
+    LOG_FUNC_OUT (LOG_NAS_MME);
     return;
   }
 
@@ -364,7 +364,7 @@ network_api_close (
    */
   NETWORK_API_CLOSE ();
   _network_api_id.endpoint = NULL;
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS_MME);
 }
 
 /****************************************************************************
@@ -387,17 +387,17 @@ int
 network_api_decode_data (
   int length)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_MME);
   /*
    * Decode the Access Stratum message received from the network
    */
   int                                     as_id = as_message_decode (_network_api_recv_buffer, &_as_data, length);
 
   if (as_id != RETURNerror) {
-    LOG_TRACE (INFO, "NET-API   - AS message id=0x%x successfully decoded", as_id);
+    LOG_INFO (LOG_NAS_MME,  "NET-API   - AS message id=0x%x successfully decoded", as_id);
   }
 
-  LOG_FUNC_RETURN (as_id);
+  LOG_FUNC_RETURN (LOG_NAS_MME, as_id);
 }
 
 /****************************************************************************
@@ -419,7 +419,7 @@ int
 network_api_encode_data (
   void *data)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_MME);
   /*
    * Encode the Access Stratum  message
    */
@@ -428,10 +428,10 @@ network_api_encode_data (
                                                                      NETWORK_API_SEND_BUFFER_SIZE);
 
   if (bytes != RETURNerror) {
-    LOG_TRACE (INFO, "NET-API   - %d bytes encoded", bytes);
+    LOG_INFO (LOG_NAS_MME,  "NET-API   - %d bytes encoded", bytes);
   }
 
-  LOG_FUNC_RETURN (bytes);
+  LOG_FUNC_RETURN (LOG_NAS_MME, bytes);
 }
 
 /****************************************************************************
@@ -456,8 +456,8 @@ as_message_send (
 {
   int                                     bytes;
 
-  LOG_FUNC_IN;
-  LOG_TRACE (INFO, "NET-API   - Send message 0x%.4x to the Access Stratum " "layer", as_msg->msgID);
+  LOG_FUNC_IN (LOG_NAS_MME);
+  LOG_INFO (LOG_NAS_MME,  "NET-API   - Send message 0x%.4x to the Access Stratum " "layer", as_msg->msgID);
   /*
    * Encode the AS message
    */
@@ -477,7 +477,7 @@ as_message_send (
     }
   }
 
-  LOG_FUNC_RETURN (bytes);
+  LOG_FUNC_RETURN (LOG_NAS_MME, bytes);
 }
 
 /****************************************************************************/

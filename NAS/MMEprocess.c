@@ -38,7 +38,7 @@
  *****************************************************************************/
 
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 #include "nas_timer.h"
 
 #include "network_api.h"

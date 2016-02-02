@@ -41,7 +41,7 @@
 
 #include "emm_sap.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "emm_reg.h"
 #include "emm_esm.h"
@@ -78,7 +78,7 @@ void
 emm_sap_initialize (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   emm_reg_initialize ();
   emm_esm_initialize ();
   emm_as_initialize ();
@@ -106,7 +106,7 @@ emm_sap_send (
   int                                     rc = RETURNerror;
   emm_primitive_t                         primitive = msg->primitive;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 
   /*
    * Check the EMM-SAP primitive
@@ -143,7 +143,7 @@ emm_sap_send (
     LOG_TRACE (WARNING, "EMM-SAP -   Out of range primitive (%d)", primitive);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/

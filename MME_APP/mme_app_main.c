@@ -28,14 +28,13 @@
 #include "intertask_interface.h"
 #include "mme_config.h"
 #include "timer.h"
-
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mme_app_statistics.h"
-
 #include "assertions.h"
 #include "msc.h"
+#include "log.h"
 
 mme_app_desc_t                          mme_app_desc;
 
@@ -84,7 +83,7 @@ mme_app_thread (
       break;
 
     case SGW_MODIFY_BEARER_RESPONSE:{
-        MME_APP_DEBUG (" TO DO HANDLE SGW_MODIFY_BEARER_RESPONSE\n");
+    	LOG_DEBUG (LOG_MME_APP, " TO DO HANDLE SGW_MODIFY_BEARER_RESPONSE\n");
         // TO DO
       }
       break;
@@ -159,7 +158,7 @@ mme_app_thread (
       break;
 
     default:{
-        MME_APP_DEBUG ("Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+    	LOG_DEBUG (LOG_MME_APP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
         AssertFatal (0, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
@@ -176,7 +175,7 @@ int
 mme_app_init (
   const mme_config_t * mme_config_p)
 {
-  MME_APP_DEBUG ("Initializing MME applicative layer\n");
+  LOG_DEBUG (LOG_MME_APP, "Initializing MME applicative layer\n");
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
   mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_imsi_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_tun11_ue_context_htbl");
@@ -188,7 +187,7 @@ mme_app_init (
    * Create the thread associated with MME applicative layer
    */
   if (itti_create_task (TASK_MME_APP, &mme_app_thread, NULL) < 0) {
-    MME_APP_ERROR ("MME APP create task failed\n");
+	LOG_ERROR (LOG_MME_APP, "MME APP create task failed\n");
     return -1;
   }
 
@@ -198,10 +197,10 @@ mme_app_init (
    * Request for periodic timer
    */
   if (timer_setup (mme_config_p->mme_statistic_timer, 0, TASK_MME_APP, INSTANCE_DEFAULT, TIMER_PERIODIC, NULL, &mme_app_desc.statistic_timer_id) < 0) {
-    MME_APP_ERROR ("Failed to request new timer for statistics with %ds " "of periocidity\n", mme_config_p->mme_statistic_timer);
+	LOG_ERROR (LOG_MME_APP, "Failed to request new timer for statistics with %ds " "of periocidity\n", mme_config_p->mme_statistic_timer);
     mme_app_desc.statistic_timer_id = 0;
   }
 
-  MME_APP_DEBUG ("Initializing MME applicative layer: DONE\n");
+  LOG_DEBUG (LOG_MME_APP, "Initializing MME applicative layer: DONE\n");
   return 0;
 }

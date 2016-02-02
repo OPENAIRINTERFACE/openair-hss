@@ -40,7 +40,7 @@
 
 #include "emm_fsm.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "mme_api.h"
 #include "emmData.h"
@@ -162,7 +162,7 @@ emm_fsm_initialize (
 {
   int                                     ueid;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 #if NAS_BUILT_IN_EPC == 0
 
   for (ueid = 0; ueid < EMM_FSM_NB_UE_MAX; ueid++) {
@@ -194,7 +194,7 @@ emm_fsm_set_status (
   void *ctx,
   emm_fsm_state_t status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 #if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
@@ -208,7 +208,7 @@ emm_fsm_set_status (
       emm_ctx->_emm_fsm_status = status;
     }
 
-    LOG_FUNC_RETURN (RETURNok);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
   }
 #else
 
@@ -218,10 +218,10 @@ emm_fsm_set_status (
       _emm_fsm_status[ueid] = status;
     }
 
-    LOG_FUNC_RETURN (RETURNok);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
   }
 #endif
-  LOG_FUNC_RETURN (RETURNerror);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
 }
 
 /****************************************************************************
@@ -286,7 +286,7 @@ emm_fsm_process (
   emm_fsm_state_t                         status;
   emm_reg_primitive_t                     primitive;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   primitive = evt->primitive;
 #if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
@@ -296,7 +296,7 @@ emm_fsm_process (
 #else
 
   if (evt->ueid >= EMM_FSM_NB_UE_MAX) {
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
   }
 
   status = _emm_fsm_status[evt->ueid];
@@ -309,7 +309,7 @@ emm_fsm_process (
    * Execute the EMM state machine
    */
   rc = (_emm_fsm_handlers[status]) (evt);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/

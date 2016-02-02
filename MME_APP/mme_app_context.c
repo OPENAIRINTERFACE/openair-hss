@@ -27,23 +27,21 @@
 #include <errno.h>
 #include <stdint.h>
 #include <inttypes.h>
-
 #include <arpa/inet.h>
 
 #include "intertask_interface.h"
 #include "mme_config.h"
-
 #include "assertions.h"
 #include "conversions.h"
 #include "tree.h"
 #include "enum_string.h"
 #include "common_types.h"
-
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "msc.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 //------------------------------------------------------------------------------
 ue_context_t                           *
@@ -173,7 +171,8 @@ mme_ue_context_update_coll_keys (
       h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void *)mme_ue_s1ap_id);
 
       if (h_rc != HASH_TABLE_OK) {
-        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x imsi %" SCNu64 "\n", ue_context_p, ue_context_p->mme_ue_s1ap_id, imsi);
+        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x imsi %" SCNu64 "\n",
+        		ue_context_p, ue_context_p->mme_ue_s1ap_id, imsi);
       }
 
       ue_context_p->imsi = imsi;

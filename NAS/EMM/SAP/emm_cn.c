@@ -41,7 +41,7 @@
 
 #if NAS_BUILT_IN_EPC
 
-#  include "nas_log.h"
+#  include "log.h"
 #  include "commonDef.h"
 
 #  include "emm_cn.h"
@@ -97,12 +97,12 @@ _emm_cn_authentication_res (
   /*
    * We received security vector from HSS. Try to setup security with UE
    */
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
 
   if (emm_ctx == NULL) {
     LOG_TRACE (ERROR, "EMM-PROC  - " "Failed to find UE associated to id " NAS_UE_ID_FMT "...", msg->ue_id);
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
   }
 
   /*
@@ -137,7 +137,7 @@ _emm_cn_authentication_res (
     emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 static int
@@ -146,9 +146,9 @@ _emm_cn_authentication_fail (
 {
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   rc = emm_proc_attach_reject (msg->ue_id, msg->cause);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 static int
@@ -157,12 +157,12 @@ _emm_cn_deregister_ue (
 {
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (WARNING, "EMM-PROC  - " "TODO deregister UE " NAS_UE_ID_FMT ", following procedure is a test", ue_id);
   emm_proc_detach_request (ue_id, EMM_DETACH_TYPE_EPS /* ??? emm_proc_detach_type_t */ ,
                            0 /*switch_off */ , 0 /*native_ksi */ , 0 /*ksi */ ,
                            NULL /*guti */ , NULL /*imsi */ , NULL /*imei */ );
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 static int
@@ -188,12 +188,12 @@ _emm_cn_pdn_connectivity_res (
   int                                     pid = 0;
   unsigned int                            new_ebi = 0;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   emm_ctx_p = emm_data_context_get (&_emm_data, msg_pP->ue_id);
 
   if (emm_ctx_p == NULL) {
     LOG_TRACE (ERROR, "EMMCN-SAP  - " "Failed to find UE associated to id " NAS_UE_ID_FMT "...", msg_pP->ue_id);
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
   }
 
   memset (&esm_msg, 0, sizeof (ESM_msg));
@@ -293,7 +293,7 @@ _emm_cn_pdn_connectivity_res (
       esm_cause = ESM_CAUSE_SUCCESS;
     }
   } else {
-    LOG_FUNC_RETURN (rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
   }
 
   /**************************************************************************/
@@ -337,7 +337,7 @@ _emm_cn_pdn_connectivity_res (
       /*
        * Return indication that ESM procedure failed
        */
-      LOG_FUNC_RETURN (rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
     }
   } else {
     LOG_TRACE (INFO, "ESM send activate_default_eps_bearer_context_request failed");
@@ -384,7 +384,7 @@ _emm_cn_pdn_connectivity_res (
   }
 
   LOG_TRACE (INFO, "EMM  -  APN = %s ", (char *)(msg_pP->apn.value));
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 static int
@@ -393,8 +393,8 @@ _emm_cn_pdn_connectivity_fail (
 {
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN;
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 int
@@ -404,7 +404,7 @@ emm_cn_send (
   int                                     rc = RETURNerror;
   emm_cn_primitive_t                      primitive = msg->primitive;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMMCN-SAP - Received primitive %s (%d)", _emm_cn_primitive_str[primitive - _EMMCN_START - 1], primitive);
 
   switch (primitive) {
@@ -440,6 +440,6 @@ emm_cn_send (
     LOG_TRACE (ERROR, "EMMCN-SAP - Failed to process primitive %s (%d)", _emm_cn_primitive_str[primitive - _EMMCN_START - 1], primitive);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 #endif

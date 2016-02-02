@@ -39,7 +39,7 @@
 
 #include "esm_main.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "emmData.h"
 #include "esmData.h"
@@ -77,7 +77,7 @@ void
 esm_main_initialize (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
 #if NAS_BUILT_IN_EPC == 0
   int                                     i;
 #endif
@@ -121,7 +121,7 @@ void
 esm_main_cleanup (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   LOG_FUNC_OUT;
 }
 

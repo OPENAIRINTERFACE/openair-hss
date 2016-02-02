@@ -51,7 +51,7 @@
 #include <inttypes.h>
 
 #include "emm_proc.h"
-#include "nas_log.h"
+#include "log.h"
 #include "nas_timer.h"
 
 #include "emmData.h"
@@ -204,7 +204,7 @@ emm_proc_security_mode_control (
    */
   emm_data_context_t                     *emm_ctx = NULL;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMM-PROC  - Initiate security mode control procedure " "KSI = %d EEA = %d EIA = %d", ksi, eea, eia);
 #if NAS_BUILT_IN_EPC
 
@@ -245,14 +245,14 @@ emm_proc_security_mode_control (
 
       if (rc == RETURNerror) {
         LOG_TRACE (WARNING, "EMM-PROC  - Failed to select security algorithms");
-        LOG_FUNC_RETURN (RETURNerror);
+        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
       }
 
       if (!emm_ctx->security->knas_int.value) {
         emm_ctx->security->knas_int.value = MALLOC_CHECK (AUTH_KNAS_INT_SIZE);
       } else {
         LOG_TRACE (ERROR, " TODO realloc emm_ctx->security->knas_int OctetString");
-        LOG_FUNC_RETURN (RETURNerror);
+        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
       }
 
       emm_ctx->security->knas_int.length = AUTH_KNAS_INT_SIZE;
@@ -262,7 +262,7 @@ emm_proc_security_mode_control (
         emm_ctx->security->knas_enc.value = MALLOC_CHECK (AUTH_KNAS_ENC_SIZE);
       } else {
         LOG_TRACE (ERROR, " TODO realloc emm_ctx->security->knas_enc OctetString");
-        LOG_FUNC_RETURN (RETURNerror);
+        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
       }
 
       emm_ctx->security->knas_enc.length = AUTH_KNAS_ENC_SIZE;
@@ -274,7 +274,7 @@ emm_proc_security_mode_control (
     }
   } else {
     LOG_TRACE (WARNING, "EMM-PROC  - No EPS security context exists");
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
   }
 
   /*
@@ -291,7 +291,7 @@ emm_proc_security_mode_control (
     if (rc != RETURNok) {
       LOG_TRACE (WARNING, "Failed to initialize EMM callback functions");
       FREE_CHECK (data);
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
 
     /*
@@ -360,7 +360,7 @@ emm_proc_security_mode_control (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -393,7 +393,7 @@ emm_proc_security_mode_complete (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMM-PROC  - Security mode complete (ueid=" NAS_UE_ID_FMT ")", ueid);
   /*
    * Get the UE context
@@ -449,7 +449,7 @@ emm_proc_security_mode_complete (
   }
 
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -483,7 +483,7 @@ emm_proc_security_mode_reject (
   emm_data_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (WARNING, "EMM-PROC  - Security mode command not accepted by the UE" "(ueid=" NAS_UE_ID_FMT ")", ueid);
   /*
    * Get the UE context
@@ -544,7 +544,7 @@ emm_proc_security_mode_reject (
   emm_sap.u.emm_reg.ueid = ueid;
   emm_sap.u.emm_reg.ctx = emm_ctx;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/
@@ -583,7 +583,7 @@ static void                            *
 _security_t3460_handler (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   security_data_t                        *data = (security_data_t *) (args);
 
@@ -609,7 +609,7 @@ _security_t3460_handler (
     rc = _security_abort (data);
   }
 
-  LOG_FUNC_RETURN (NULL);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, NULL);
 }
 
 /*
@@ -643,7 +643,7 @@ _security_request (
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * Notify EMM-AS SAP that Security Mode Command message has to be sent
    * to the UE
@@ -702,7 +702,7 @@ _security_request (
 
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -724,7 +724,7 @@ static int
 _security_abort (
   void *args)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   struct emm_data_context_s              *emm_ctx = NULL;
   int                                     rc = RETURNerror;
   security_data_t                        *data = (security_data_t *) (args);
@@ -775,7 +775,7 @@ _security_abort (
     }
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 
@@ -803,7 +803,7 @@ _security_select_algorithms (
   int *const mme_eiaP,
   int *const mme_eeaP)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
   int                                     preference_index;
 
@@ -826,5 +826,5 @@ _security_select_algorithms (
     }
   }
 
-  LOG_FUNC_RETURN (RETURNok);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
 }

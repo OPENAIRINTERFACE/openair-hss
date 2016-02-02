@@ -89,7 +89,7 @@ s1ap_timer_insert (
   new->mme_ue_s1ap_id = mme_ue_s1ap_id;
 
   if (RB_INSERT (s1ap_timer_map, &s1ap_timer_tree, new) != NULL) {
-    S1AP_ERROR ("Timer with id 0x%lx already exists\n", timer_id);
+    LOG_ERROR (LOG_S1AP_MME, "Timer with id 0x%lx already exists\n", timer_id);
     FREE_CHECK (new);
     return -1;
   }
@@ -133,7 +133,7 @@ s1ap_timer_remove_ue (
 {
   struct s1ap_timer_map_s                *find;
 
-  S1AP_DEBUG ("Removing timer associated with UE " S1AP_UE_ID_FMT "\n", mme_ue_s1ap_id);
+  LOG_DEBUG (LOG_S1AP_MME, "Removing timer associated with UE " S1AP_UE_ID_FMT "\n", mme_ue_s1ap_id);
   DevAssert (mme_ue_s1ap_id != 0);
   RB_FOREACH (find, s1ap_timer_map, &s1ap_timer_tree) {
     if (find->mme_ue_s1ap_id == mme_ue_s1ap_id) {

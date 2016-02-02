@@ -45,7 +45,7 @@
 
 #include "esm_proc.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "esmData.h"
 #include "esm_cause.h"
@@ -121,7 +121,7 @@ esm_proc_pdn_disconnect_request (
 {
   int                                     pid = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   LOG_TRACE (INFO, "ESM-PROC  - PDN disconnect requested by the UE " "(ueid=" NAS_UE_ID_FMT ", pti=%d)", ctx->ueid, pti);
 
   /*
@@ -137,7 +137,7 @@ esm_proc_pdn_disconnect_request (
     if (pid < 0) {
       LOG_TRACE (ERROR, "ESM-PROC  - No PDN connection found (pti=%d)", pti);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
     }
   } else {
     /*
@@ -147,7 +147,7 @@ esm_proc_pdn_disconnect_request (
     *esm_cause = ESM_CAUSE_LAST_PDN_DISCONNECTION_NOT_ALLOWED;
   }
 
-  LOG_FUNC_RETURN (pid);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, pid);
 }
 
 /****************************************************************************
@@ -178,7 +178,7 @@ esm_proc_pdn_disconnect_accept (
   int pid,
   int *esm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   LOG_TRACE (INFO, "ESM-PROC  - PDN disconnect accepted by the UE " "(ueid=" NAS_UE_ID_FMT ", pid=%d)", ctx->ueid, pid);
   /*
    * Release the connectivity with the requested PDN
@@ -192,12 +192,12 @@ esm_proc_pdn_disconnect_accept (
     int                                     pti = _pdn_connectivity_delete (ctx, pid);
 
     if (pti != ESM_PT_UNASSIGNED) {
-      LOG_FUNC_RETURN (RETURNok);
+      LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNok);
     }
   }
 
   *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-  LOG_FUNC_RETURN (RETURNerror);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, RETURNerror);
 }
 
 /****************************************************************************
@@ -233,7 +233,7 @@ esm_proc_pdn_disconnect_reject (
   OctetString * msg,
   int ue_triggered)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
 
@@ -247,7 +247,7 @@ esm_proc_pdn_disconnect_reject (
   emm_sap.u.emm_esm.u.data.msg.length = msg->length;
   emm_sap.u.emm_esm.u.data.msg.value = msg->value;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************/

@@ -26,7 +26,7 @@
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "EsmMessageContainer.h"
-#include "nas_log.h"
+#include "log.h"
 
 #define NAS_DEBUG 1
 

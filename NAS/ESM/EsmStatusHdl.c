@@ -47,7 +47,7 @@
 
 #include "esm_proc.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "esm_cause.h"
 
@@ -96,7 +96,7 @@ esm_proc_status_ind (
   int ebi,
   int *esm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc;
 
   LOG_TRACE (INFO, "ESM-PROC  - ESM status procedure requested (cause=%d)", *esm_cause);
@@ -149,7 +149,7 @@ esm_proc_status_ind (
     break;
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************
@@ -178,7 +178,7 @@ esm_proc_status (
   OctetString * msg,
   int ue_triggered)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM_MME);
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
 
@@ -192,7 +192,7 @@ esm_proc_status (
   emm_sap.u.emm_esm.u.data.msg.length = msg->length;
   emm_sap.u.emm_esm.u.data.msg.value = msg->value;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_ESM_MME, rc);
 }
 
 /****************************************************************************/

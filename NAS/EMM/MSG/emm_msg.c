@@ -39,10 +39,11 @@
 
 #include "emm_msg.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
+#include "log.h"
 
 #if NAS_BUILT_IN_EPC
 #  include "nas_itti_messaging.h"
@@ -93,7 +94,7 @@ emm_msg_decode (
   uint8_t * buffer,
   uint32_t len)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     header_result;
   int                                     decode_result;
 
@@ -109,7 +110,7 @@ emm_msg_decode (
 
   if (header_result < 0) {
     LOG_TRACE (ERROR, "EMM-MSG   - Failed to decode EMM message header " "(%d)", header_result);
-    LOG_FUNC_RETURN (header_result);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, header_result);
   }
 
   buffer += header_result;
@@ -239,7 +240,7 @@ emm_msg_decode (
 
   if (decode_result < 0) {
     LOG_TRACE (ERROR, "EMM-MSG   - Failed to decode L3 EMM message 0x%x " "(%d)", msg->header.message_type, decode_result);
-    LOG_FUNC_RETURN (decode_result);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decode_result);
   } else {
 #if NAS_BUILT_IN_EPC
     /*
@@ -249,7 +250,7 @@ emm_msg_decode (
 #endif
   }
 
-  LOG_FUNC_RETURN (header_result + decode_result);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, header_result + decode_result);
 }
 
 /****************************************************************************
@@ -275,7 +276,7 @@ emm_msg_encode (
   uint8_t * buffer,
   uint32_t len)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     header_result;
   int                                     encode_result;
 
@@ -290,7 +291,7 @@ emm_msg_encode (
 
   if (header_result < 0) {
     LOG_TRACE (ERROR, "EMM-MSG   - Failed to encode EMM message header " "(%d)", header_result);
-    LOG_FUNC_RETURN (header_result);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, header_result);
   }
 
   buffer += header_result;
@@ -429,7 +430,7 @@ emm_msg_encode (
 #endif
   }
 
-  LOG_FUNC_RETURN (header_result + encode_result);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, header_result + encode_result);
 }
 
 /****************************************************************************/

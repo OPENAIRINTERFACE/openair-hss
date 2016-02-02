@@ -37,7 +37,7 @@
 *****************************************************************************/
 
 #include "nas_proc.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "emm_main.h"
 #include "emm_sap.h"
@@ -81,7 +81,7 @@ void
 nas_proc_initialize (
   mme_config_t * mme_config_p)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * Initialize the EMM procedure manager
    */
@@ -90,14 +90,14 @@ nas_proc_initialize (
    * Initialize the ESM procedure manager
    */
   esm_main_initialize ();
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS_EMM_MME);
 }
 #else
 void
 nas_proc_initialize (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * Initialize the EMM procedure manager
    */
@@ -106,7 +106,7 @@ nas_proc_initialize (
    * Initialize the ESM procedure manager
    */
   esm_main_initialize ();
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS_EMM_MME);
 }
 #endif
 
@@ -128,7 +128,7 @@ void
 nas_proc_cleanup (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * Perform the EPS Mobility Manager's clean up procedure
    */
@@ -137,7 +137,7 @@ nas_proc_cleanup (
    * Perform the EPS Session Manager's clean up procedure
    */
   esm_main_cleanup ();
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS_EMM_MME);
 }
 
 /*
@@ -175,7 +175,7 @@ nas_proc_establish_ind (
   const Byte_t * data,
   uint32_t len)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
 
   if (len > 0) {
@@ -204,7 +204,7 @@ nas_proc_establish_ind (
     rc = emm_sap_send (&emm_sap);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -227,7 +227,7 @@ int
 nas_proc_dl_transfer_cnf (
   uint32_t ueid)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
@@ -242,7 +242,7 @@ nas_proc_dl_transfer_cnf (
   emm_sap.u.emm_as.u.data.delivered = TRUE;
   emm_sap.u.emm_as.u.data.NASmsg.length = 0;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -265,7 +265,7 @@ int
 nas_proc_dl_transfer_rej (
   uint32_t ueid)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
@@ -280,7 +280,7 @@ nas_proc_dl_transfer_rej (
   emm_sap.u.emm_as.u.data.delivered = FALSE;
   emm_sap.u.emm_as.u.data.NASmsg.length = 0;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -308,7 +308,7 @@ nas_proc_ul_transfer_ind (
 {
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
 
   if (len > 0) {
     emm_sap_t                               emm_sap = {0};
@@ -326,7 +326,7 @@ nas_proc_ul_transfer_ind (
     rc = emm_sap_send (&emm_sap);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 #if NAS_BUILT_IN_EPC
@@ -337,12 +337,12 @@ nas_proc_auth_param_res (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_AUTHENTICATION_PARAM_RES");
   emm_sap.primitive = EMMCN_AUTHENTICATION_PARAM_RES;
   emm_sap.u.emm_cn.u.auth_res = emm_cn_auth_res;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 int
@@ -352,12 +352,12 @@ nas_proc_auth_param_fail (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_AUTHENTICATION_PARAM_FAIL");
   emm_sap.primitive = EMMCN_AUTHENTICATION_PARAM_FAIL;
   emm_sap.u.emm_cn.u.auth_fail = emm_cn_auth_fail;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 int
@@ -372,7 +372,7 @@ nas_proc_deregister_ue (
   emm_sap.primitive = EMMCN_DEREGISTER_UE;
   emm_sap.u.emm_cn.u.deregister.UEid = ue_id;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 int
@@ -382,12 +382,12 @@ nas_proc_pdn_connectivity_res (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONNECTIVITY_RES");
   emm_sap.primitive = EMMCN_PDN_CONNECTIVITY_RES;
   emm_sap.u.emm_cn.u.emm_cn_pdn_res = emm_cn_pdn_res;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 int
@@ -397,12 +397,12 @@ nas_proc_pdn_connectivity_fail (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONNECTIVITY_FAIL");
   emm_sap.primitive = EMMCN_PDN_CONNECTIVITY_FAIL;
   emm_sap.u.emm_cn.u.emm_cn_pdn_fail = emm_cn_pdn_fail;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 

@@ -123,7 +123,7 @@ s1ap_mme_handle_message (
    * Checking procedure Code and direction of message
    */
   if ((message->procedureCode > (sizeof (messages_callback) / (3 * sizeof (s1ap_message_decoded_callback)))) || (message->direction > S1AP_PDU_PR_unsuccessfulOutcome)) {
-    S1AP_DEBUG ("[SCTP %d] Either procedureCode %d or direction %d exceed expected\n", assoc_id, (int)message->procedureCode, (int)message->direction);
+    LOG_DEBUG (LOG_S1AP_MME, "[SCTP %d] Either procedureCode %d or direction %d exceed expected\n", assoc_id, (int)message->procedureCode, (int)message->direction);
     return -1;
   }
 
@@ -132,7 +132,7 @@ s1ap_mme_handle_message (
    * * * * This can mean not implemented or no procedure for eNB (wrong message).
    */
   if (messages_callback[message->procedureCode][message->direction - 1] == NULL) {
-    S1AP_DEBUG ("[SCTP %d] No handler for procedureCode %d in %s\n", assoc_id, (int)message->procedureCode, s1ap_direction2String[(int)message->direction]);
+    LOG_DEBUG (LOG_S1AP_MME, "[SCTP %d] No handler for procedureCode %d in %s\n", assoc_id, (int)message->procedureCode, s1ap_direction2String[(int)message->direction]);
     return -2;
   }
 
@@ -210,7 +210,7 @@ s1ap_mme_generate_s1_setup_failure (
   }
 
   if (s1ap_mme_encode_pdu (&message, &buffer_p, &length) < 0) {
-    S1AP_ERROR ("Failed to encode s1 setup failure\n");
+    LOG_ERROR (LOG_S1AP_MME, "Failed to encode s1 setup failure\n");
     return -1;
   }
 
@@ -247,17 +247,17 @@ s1ap_mme_handle_s1_setup_request (
     MSC_LOG_RX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 S1Setup/%s assoc_id %u stream %u", s1ap_direction2String[message->direction], assoc_id, stream);
 
     if (stream != 0) {
-      S1AP_ERROR ("Received new s1 setup request on stream != 0\n");
+      LOG_ERROR (LOG_S1AP_MME, "Received new s1 setup request on stream != 0\n");
       /*
        * Send a s1 setup failure with protocol cause unspecified
        */
       return s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_protocol, S1ap_CauseProtocol_unspecified, -1);
     }
 
-    S1AP_DEBUG ("New s1 setup request incoming from ");
+    LOG_DEBUG (LOG_S1AP_MME, "New s1 setup request incoming from ");
 
     if (s1SetupRequest_p->presenceMask & S1AP_S1SETUPREQUESTIES_ENBNAME_PRESENT) {
-      S1AP_DEBUG ("%*s ", s1SetupRequest_p->eNBname.size, s1SetupRequest_p->eNBname.buf);
+      LOG_DEBUG (LOG_S1AP_MME, "%*s ", s1SetupRequest_p->eNBname.size, s1SetupRequest_p->eNBname.buf);
       eNB_name = (char *)s1SetupRequest_p->eNBname.buf;
     }
 
@@ -270,7 +270,7 @@ s1ap_mme_handle_s1_setup_request (
       }
 
       eNB_id = (eNB_id_buf[0] << 20) + (eNB_id_buf[1] << 12) + (eNB_id_buf[2] << 4) + ((eNB_id_buf[3] & 0xf0) >> 4);
-      S1AP_DEBUG ("home eNB id: %07x\n", eNB_id);
+      LOG_DEBUG (LOG_S1AP_MME, "home eNB id: %07x\n", eNB_id);
     } else {
       // Macro eNB = 20 bits
       uint8_t                                *eNB_id_buf = s1SetupRequest_p->global_ENB_ID.eNB_ID.choice.macroENB_ID.buf;
@@ -280,7 +280,7 @@ s1ap_mme_handle_s1_setup_request (
       }
 
       eNB_id = (eNB_id_buf[0] << 12) + (eNB_id_buf[1] << 4) + ((eNB_id_buf[2] & 0xf0) >> 4);
-      S1AP_DEBUG ("macro eNB id: %05x\n", eNB_id);
+      LOG_DEBUG (LOG_S1AP_MME, "macro eNB id: %05x\n", eNB_id);
     }
 
     config_read_lock (&mme_config);
@@ -288,8 +288,8 @@ s1ap_mme_handle_s1_setup_request (
     config_unlock (&mme_config);
 
     if (nb_eNB_associated == max_enb_connected) {
-      S1AP_ERROR ("There is too much eNB connected to MME, rejecting the association\n");
-      S1AP_DEBUG ("Connected = %d, maximum allowed = %d\n", nb_eNB_associated, max_enb_connected);
+      LOG_ERROR (LOG_S1AP_MME, "There is too much eNB connected to MME, rejecting the association\n");
+      LOG_DEBUG (LOG_S1AP_MME, "Connected = %d, maximum allowed = %d\n", nb_eNB_associated, max_enb_connected);
       /*
        * Send an overload cause...
        */
@@ -307,11 +307,11 @@ s1ap_mme_handle_s1_setup_request (
      * eNB and MME have no common PLMN
      */
     if (ta_ret != TA_LIST_RET_OK) {
-      S1AP_ERROR ("No Common PLMN with eNB, generate_s1_setup_failure\n");
+      LOG_ERROR (LOG_S1AP_MME, "No Common PLMN with eNB, generate_s1_setup_failure\n");
       return s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_misc, S1ap_CauseMisc_unknown_PLMN, S1ap_TimeToWait_v20s);
     }
 
-    S1AP_DEBUG ("Adding eNB to the list of served eNBs\n");
+    LOG_DEBUG (LOG_S1AP_MME, "Adding eNB to the list of served eNBs\n");
 
     if ((eNB_association = s1ap_is_eNB_id_in_list (eNB_id)) == NULL) {
       /*
@@ -349,7 +349,7 @@ s1ap_mme_handle_s1_setup_request (
          */
         s1SetupFailure.cause.present = S1ap_Cause_PR_misc;      //TODO: send the right cause
         s1SetupFailure.cause.choice.misc = S1ap_CauseMisc_control_processing_overload;
-        S1AP_ERROR ("Rejeting s1 setup request as eNB id %d is already associated to an active sctp association" "Previous known: %d, new one: %d\n", eNB_id, eNB_association->sctp_assoc_id, assoc_id);
+        LOG_ERROR (LOG_S1AP_MME, "Rejeting s1 setup request as eNB id %d is already associated to an active sctp association" "Previous known: %d, new one: %d\n", eNB_id, eNB_association->sctp_assoc_id, assoc_id);
         //             s1ap_mme_encode_s1setupfailure(&s1SetupFailure,
         //                                            receivedMessage->msg.s1ap_sctp_new_msg_ind.assocId);
         return -1;
@@ -366,7 +366,7 @@ s1ap_mme_handle_s1_setup_request (
     /*
      * Can not process the request, MME is not connected to HSS
      */
-    S1AP_ERROR ("Rejecting s1 setup request Can not process the request, MME is not connected to HSS\n");
+    LOG_ERROR (LOG_S1AP_MME, "Rejecting s1 setup request Can not process the request, MME is not connected to HSS\n");
     return s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_misc, S1ap_CauseMisc_unspecified, -1);
   }
 }
@@ -456,7 +456,7 @@ s1ap_generate_s1_setup_response (
    * Failed to encode s1 setup response...
    */
   if (enc_rval < 0) {
-    S1AP_DEBUG ("Removed eNB %d\n", eNB_association->sctp_assoc_id);
+    LOG_DEBUG (LOG_S1AP_MME, "Removed eNB %d\n", eNB_association->sctp_assoc_id);
     s1ap_remove_eNB (eNB_association);
   } else {
     /*
@@ -490,12 +490,12 @@ s1ap_mme_handle_ue_cap_indication (
                       NULL, 0, "0 UECapabilityInfoIndication/%s eNB_ue_s1ap_id " S1AP_UE_ID_FMT " mme_ue_s1ap_id " S1AP_UE_ID_FMT " ", s1ap_direction2String[message->direction], ue_cap_p->eNB_UE_S1AP_ID, ue_cap_p->mme_ue_s1ap_id);
 
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (ue_cap_p->mme_ue_s1ap_id)) == NULL) {
-    S1AP_DEBUG ("No UE is attached to this mme UE s1ap id: " S1AP_UE_ID_FMT "\n", (uint32_t) ue_cap_p->mme_ue_s1ap_id);
+    LOG_DEBUG (LOG_S1AP_MME, "No UE is attached to this mme UE s1ap id: " S1AP_UE_ID_FMT "\n", (uint32_t) ue_cap_p->mme_ue_s1ap_id);
     return -1;
   }
 
   if (ue_ref_p->eNB_ue_s1ap_id != ue_cap_p->eNB_UE_S1AP_ID) {
-    S1AP_DEBUG ("Mismatch in eNB UE S1AP ID, known: " S1AP_UE_ID_FMT ", received: " S1AP_UE_ID_FMT "\n", ue_ref_p->eNB_ue_s1ap_id, (uint32_t) ue_cap_p->eNB_UE_S1AP_ID);
+    LOG_DEBUG (LOG_S1AP_MME, "Mismatch in eNB UE S1AP ID, known: " S1AP_UE_ID_FMT ", received: " S1AP_UE_ID_FMT "\n", ue_ref_p->eNB_ue_s1ap_id, (uint32_t) ue_cap_p->eNB_UE_S1AP_ID);
     return -1;
   }
 
@@ -503,7 +503,7 @@ s1ap_mme_handle_ue_cap_indication (
    * Just display a warning when message received over wrong stream
    */
   if (ue_ref_p->sctp_stream_recv != stream) {
-    S1AP_ERROR ("Received ue capability indication for "
+    LOG_ERROR (LOG_S1AP_MME, "Received ue capability indication for "
                 "(MME UE S1AP ID/eNB UE S1AP ID) (" S1AP_UE_ID_FMT "/" S1AP_UE_ID_FMT ") over wrong stream "
                 "expecting %u, received on %u\n", (uint32_t) ue_cap_p->mme_ue_s1ap_id, ue_ref_p->eNB_ue_s1ap_id, ue_ref_p->sctp_stream_recv, stream);
   }
@@ -556,18 +556,18 @@ s1ap_mme_handle_initial_context_setup_response (
                       s1ap_direction2String[message->direction], initialContextSetupResponseIEs_p->eNB_UE_S1AP_ID, initialContextSetupResponseIEs_p->mme_ue_s1ap_id);
 
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list ((uint32_t) initialContextSetupResponseIEs_p->mme_ue_s1ap_id)) == NULL) {
-    S1AP_DEBUG ("No UE is attached to this mme UE s1ap id: " S1AP_UE_ID_FMT " %u(10)\n", (uint32_t) initialContextSetupResponseIEs_p->mme_ue_s1ap_id, (uint32_t) initialContextSetupResponseIEs_p->mme_ue_s1ap_id);
+    LOG_DEBUG (LOG_S1AP_MME, "No UE is attached to this mme UE s1ap id: " S1AP_UE_ID_FMT " %u(10)\n", (uint32_t) initialContextSetupResponseIEs_p->mme_ue_s1ap_id, (uint32_t) initialContextSetupResponseIEs_p->mme_ue_s1ap_id);
     return -1;
   }
 
   if (ue_ref_p->eNB_ue_s1ap_id != initialContextSetupResponseIEs_p->eNB_UE_S1AP_ID) {
-    S1AP_DEBUG ("Mismatch in eNB UE S1AP ID, known: " S1AP_UE_ID_FMT " %u(10), received: 0x%06x %u(10)\n",
+    LOG_DEBUG (LOG_S1AP_MME, "Mismatch in eNB UE S1AP ID, known: " S1AP_UE_ID_FMT " %u(10), received: 0x%06x %u(10)\n",
                 ue_ref_p->eNB_ue_s1ap_id, ue_ref_p->eNB_ue_s1ap_id, (uint32_t) initialContextSetupResponseIEs_p->eNB_UE_S1AP_ID, (uint32_t) initialContextSetupResponseIEs_p->eNB_UE_S1AP_ID);
     return -1;
   }
 
   if (initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count != 1) {
-    S1AP_DEBUG ("E-RAB creation has failed\n");
+    LOG_DEBUG (LOG_S1AP_MME, "E-RAB creation has failed\n");
     return -1;
   }
 
@@ -621,7 +621,7 @@ s1ap_mme_handle_ue_context_release_request (
    */
   if (ueContextReleaseRequest_p->cause.present == S1ap_Cause_PR_radioNetwork) {
     if (ueContextReleaseRequest_p->cause.choice.radioNetwork == S1ap_CauseRadioNetwork_user_inactivity) {
-      S1AP_DEBUG ("UE_CONTEXT_RELEASE_REQUEST ignored, cause user inactivity\n");
+      LOG_DEBUG (LOG_S1AP_MME, "UE_CONTEXT_RELEASE_REQUEST ignored, cause user inactivity\n");
       MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_REQUEST ignored, cause user inactivity", ueContextReleaseRequest_p->mme_ue_s1ap_id);
       return -1;
     }
@@ -632,7 +632,7 @@ s1ap_mme_handle_ue_context_release_request (
      * MME doesn't know the MME UE S1AP ID provided.
      * * * * TODO
      */
-    S1AP_DEBUG ("UE_CONTEXT_RELEASE_REQUEST ignored cause could not get context with mme_ue_s1ap_id " S1AP_UE_ID_FMT " %u(10)\n", ueContextReleaseRequest_p->mme_ue_s1ap_id, ueContextReleaseRequest_p->mme_ue_s1ap_id);
+    LOG_DEBUG (LOG_S1AP_MME, "UE_CONTEXT_RELEASE_REQUEST ignored cause could not get context with mme_ue_s1ap_id " S1AP_UE_ID_FMT " %u(10)\n", ueContextReleaseRequest_p->mme_ue_s1ap_id, ueContextReleaseRequest_p->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_REQUEST ignored, no context mme_ue_s1ap_id " S1AP_UE_ID_FMT " ", ueContextReleaseRequest_p->mme_ue_s1ap_id);
     return -1;
   } else {
@@ -652,7 +652,7 @@ s1ap_mme_handle_ue_context_release_request (
       return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
     } else {
       // TODO
-      S1AP_DEBUG ("UE_CONTEXT_RELEASE_REQUEST ignored, cause mismatch eNB_ue_s1ap_id: ctxt " S1AP_UE_ID_FMT " != request " S1AP_UE_ID_FMT " ", ue_ref_p->eNB_ue_s1ap_id, ueContextReleaseRequest_p->eNB_UE_S1AP_ID);
+      LOG_DEBUG (LOG_S1AP_MME, "UE_CONTEXT_RELEASE_REQUEST ignored, cause mismatch eNB_ue_s1ap_id: ctxt " S1AP_UE_ID_FMT " != request " S1AP_UE_ID_FMT " ", ue_ref_p->eNB_ue_s1ap_id, ueContextReleaseRequest_p->eNB_UE_S1AP_ID);
       MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_REQUEST ignored, cause mismatch eNB_ue_s1ap_id: ctxt " S1AP_UE_ID_FMT " != request " S1AP_UE_ID_FMT " ", ue_ref_p->eNB_ue_s1ap_id, ueContextReleaseRequest_p->eNB_UE_S1AP_ID);
       return -1;
     }
@@ -713,7 +713,7 @@ s1ap_handle_ue_context_release_command (
      * MME doesn't know the MME UE S1AP ID provided.
      * * * * TODO
      */
-    S1AP_DEBUG ("UE_CONTEXT_RELEASE_COMMAND ignored cause could not get context with mme_ue_s1ap_id " S1AP_UE_ID_FMT " %u(10)\n", ue_context_release_command_pP->mme_ue_s1ap_id, ue_context_release_command_pP->mme_ue_s1ap_id);
+    LOG_DEBUG (LOG_S1AP_MME, "UE_CONTEXT_RELEASE_COMMAND ignored cause could not get context with mme_ue_s1ap_id " S1AP_UE_ID_FMT " %u(10)\n", ue_context_release_command_pP->mme_ue_s1ap_id, ue_context_release_command_pP->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_COMMAND ignored, no context mme_ue_s1ap_id", ue_context_release_command_pP->mme_ue_s1ap_id);
     return -1;
   } else {
@@ -762,7 +762,7 @@ s1ap_mme_handle_ue_context_release_complete (
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE mme_ue_s1ap_id " S1AP_UE_ID_FMT " ", S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   s1ap_remove_ue (ue_ref_p);
-  S1AP_DEBUG ("Removed UE " S1AP_UE_ID_FMT "\n", (uint32_t) ueContextReleaseComplete_p->mme_ue_s1ap_id);
+  LOG_DEBUG (LOG_S1AP_MME, "Removed UE " S1AP_UE_ID_FMT "\n", (uint32_t) ueContextReleaseComplete_p->mme_ue_s1ap_id);
   return 0;
 }
 
@@ -798,7 +798,7 @@ s1ap_mme_handle_initial_context_setup_failure (
 
   s1ap_remove_ue (ue_ref_p);
   MSC_LOG_EVENT (MSC_S1AP_MME, "0 Removed UE mme_ue_s1ap_id " S1AP_UE_ID_FMT " ", initialContextSetupFailureIEs_p->mme_ue_s1ap_id);
-  S1AP_DEBUG ("Removed UE " S1AP_UE_ID_FMT "\n", (uint32_t) initialContextSetupFailureIEs_p->mme_ue_s1ap_id);
+  LOG_DEBUG (LOG_S1AP_MME, "Removed UE " S1AP_UE_ID_FMT "\n", (uint32_t) initialContextSetupFailureIEs_p->mme_ue_s1ap_id);
   return 0;
 }
 
@@ -821,7 +821,7 @@ s1ap_mme_handle_path_switch_request (
   pathSwitchRequest_p = &message->msg.s1ap_PathSwitchRequestIEs;
   // eNB UE S1AP ID is limited to 24 bits
   eNB_ue_s1ap_id = (uint32_t) (pathSwitchRequest_p->eNB_UE_S1AP_ID & 0x00ffffff);
-  S1AP_DEBUG ("Path Switch Request message received from eNB UE S1AP ID: " S1AP_UE_ID_FMT "\n", (int)eNB_ue_s1ap_id);
+  LOG_DEBUG (LOG_S1AP_MME, "Path Switch Request message received from eNB UE S1AP ID: " S1AP_UE_ID_FMT "\n", (int)eNB_ue_s1ap_id);
 
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (pathSwitchRequest_p->sourceMME_UE_S1AP_ID)) == NULL) {
     /*
@@ -864,7 +864,7 @@ s1ap_handle_sctp_deconnection (
   eNB_association = s1ap_is_eNB_assoc_id_in_list (assoc_id);
 
   if (eNB_association == NULL) {
-    S1AP_ERROR ("No eNB attached to this assoc_id: %d\n", assoc_id);
+    LOG_ERROR (LOG_S1AP_MME, "No eNB attached to this assoc_id: %d\n", assoc_id);
     return -1;
   }
 
@@ -901,7 +901,7 @@ s1ap_handle_sctp_deconnection (
 
   s1ap_remove_eNB (eNB_association);
   s1ap_dump_eNB_list ();
-  S1AP_DEBUG ("Removed eNB attached to assoc_id: %d\n", assoc_id);
+  LOG_DEBUG (LOG_S1AP_MME, "Removed eNB attached to assoc_id: %d\n", assoc_id);
   return 0;
 }
 
@@ -919,7 +919,7 @@ s1ap_handle_new_association (
    * Checking that the assoc id has a valid eNB attached to.
    */
   if ((eNB_association = s1ap_is_eNB_assoc_id_in_list (sctp_new_peer_p->assoc_id)) == NULL) {
-    S1AP_DEBUG ("Create eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
+    LOG_DEBUG (LOG_S1AP_MME, "Create eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
     /*
      * Create new context
      */
@@ -932,10 +932,10 @@ s1ap_handle_new_association (
       /*
        * TODO: send reject there
        */
-      S1AP_ERROR ("Failed to allocate eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
+      LOG_ERROR (LOG_S1AP_MME, "Failed to allocate eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
     }
   } else {
-    S1AP_DEBUG ("eNB context already exists for assoc_id: %d, update it\n", sctp_new_peer_p->assoc_id);
+    LOG_DEBUG (LOG_S1AP_MME, "eNB context already exists for assoc_id: %d, update it\n", sctp_new_peer_p->assoc_id);
   }
 
   eNB_association->sctp_assoc_id = sctp_new_peer_p->assoc_id;
@@ -985,12 +985,12 @@ s1ap_handle_create_session_response (
   DevCheck (session_response_p->bearer_context_created.cause == REQUEST_ACCEPTED, REQUEST_ACCEPTED, session_response_p->bearer_context_created.cause, 0);
 
   if ((session_response_p->bearer_context_created.s1u_sgw_fteid.ipv4 == 0) && (session_response_p->bearer_context_created.s1u_sgw_fteid.ipv6 == 0)) {
-    S1AP_ERROR ("No IP address provided for transport layer address\n" "         -->Sending Intial context setup failure\n");
+    LOG_ERROR (LOG_S1AP_MME, "No IP address provided for transport layer address\n" "         -->Sending Intial context setup failure\n");
     return -1;
   }
 
   if ((ue_ref_p = s1ap_is_s11_sgw_teid_in_list (session_response_p->s11_sgw_teid.teid)) == NULL) {
-    S1AP_DEBUG ("[%d] is not attached to any UE context\n", session_response_p->s11_sgw_teid.teid);
+    LOG_DEBUG (LOG_S1AP_MME, "[%d] is not attached to any UE context\n", session_response_p->s11_sgw_teid.teid);
     return -1;
   }
 

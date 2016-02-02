@@ -221,7 +221,7 @@ sgw_lite_handle_sgi_endpoint_created (
 
   SPGW_APP_DEBUG ("Rx SGI_CREATE_ENDPOINT_RESPONSE,Context: S11 teid %u, SGW S1U teid %u EPS bearer id %u\n", resp_pP->context_teid, resp_pP->sgw_S1u_teid, resp_pP->eps_bearer_id);
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, resp_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
-#if ENABLE_STANDALONE_EPC
+#if EPC_BUILD
   to_task = TASK_MME_APP;
 #else
   to_task = TASK_S11;
@@ -344,7 +344,7 @@ sgw_lite_handle_gtpv1uCreateTunnelResp (
   uint8_t                                 address_allocation_via_nas_signalling = FALSE;
   uint8_t                                 address_allocation_via_dhcpv4 = FALSE;
 
-#if ENABLE_STANDALONE_EPC
+#if EPC_BUILD
   to_task = TASK_MME_APP;
 #else
   to_task = TASK_S11;
@@ -634,7 +634,7 @@ sgw_lite_handle_gtpv1uUpdateTunnelResp (
   hashtable_rc_t                          hash_rc;
   task_id_t                               to_task;
 
-#if ENABLE_STANDALONE_EPC
+#if EPC_BUILD
   to_task = TASK_MME_APP;
 #else
   to_task = TASK_S11;
@@ -717,7 +717,7 @@ sgw_lite_handle_sgi_endpoint_updated (
   char                                    cmd[256];
   int                                     ret;
 
-#if ENABLE_STANDALONE_EPC
+#if EPC_BUILD
   to_task = TASK_MME_APP;
 #else
   to_task = TASK_S11;
@@ -909,7 +909,7 @@ sgw_lite_handle_modify_bearer_request (
   hashtable_rc_t                          hash_rc;
   task_id_t                               to_task;
 
-#if ENABLE_STANDALONE_EPC
+#if EPC_BUILD
   to_task = TASK_MME_APP;
 #else
   to_task = TASK_S11;
@@ -991,7 +991,7 @@ sgw_lite_handle_delete_session_request (
   MessageDef                             *message_p = NULL;
   s_plus_p_gw_eps_bearer_context_information_t *ctx_p = NULL;
 
-#if ENABLE_STANDALONE_EPC
+#if EPC_BUILD
   to_task = TASK_MME_APP;
 #else
   to_task = TASK_S11;
@@ -1097,7 +1097,7 @@ sgw_lite_handle_release_access_bearers_request (
   MessageDef                             *message_p = NULL;
   s_plus_p_gw_eps_bearer_context_information_t *ctx_p = NULL;
 
-#if ENABLE_STANDALONE_EPC
+#if EPC_BUILD
   to_task = TASK_MME_APP;
 #else
   to_task = TASK_S11;

@@ -43,7 +43,7 @@
 #include "assertions.h"
 #include "common_types.h"
 #include "msc.h"
-
+#include "log.h"
 
 //------------------------------------------------------------------------------
 int
@@ -60,10 +60,10 @@ mme_app_send_s11_release_access_bearers_req (
   SgwReleaseAccessBearersRequest         *release_access_bearers_request_p = NULL;
 
   DevAssert (ue_context_pP != NULL);
-#if ENABLE_STANDALONE_EPC == 0
-  to_task = TASK_S11;
-#else
+#if EPC_BUILD == 0
   to_task = TASK_SPGW_APP;
+#else
+  to_task = TASK_S11;
 #endif
   message_p = itti_alloc_new_message (TASK_MME_APP, SGW_RELEASE_ACCESS_BEARERS_REQUEST);
   release_access_bearers_request_p = &message_p->ittiMsg.sgwReleaseAccessBearersRequest;
@@ -97,12 +97,12 @@ mme_app_send_s11_create_session_req (
   struct apn_configuration_s             *default_apn_p = NULL;
 
   DevAssert (ue_context_pP != NULL);
-#if ENABLE_STANDALONE_EPC == 0
-  to_task = TASK_S11;
-#else
+#if EPC_BUILD
   to_task = TASK_SPGW_APP;
+#else
+  to_task = TASK_S11;
 #endif
-  MME_APP_DEBUG ("Handling imsi %" IMSI_FORMAT "\n", ue_context_pP->imsi);
+  LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", ue_context_pP->imsi);
 
   if (ue_context_pP->sub_status != SS_SERVICE_GRANTED) {
     /*
@@ -252,14 +252,14 @@ mme_app_handle_nas_pdn_connectivity_req (
   struct ue_context_s                    *ue_context_p = NULL;
   uint64_t                                imsi = 0;
 
-  MME_APP_DEBUG ("Received NAS_PDN_CONNECTIVITY_REQ from NAS\n");
+  LOG_DEBUG (LOG_MME_APP, "Received NAS_PDN_CONNECTIVITY_REQ from NAS\n");
   DevAssert (nas_pdn_connectivity_req_pP != NULL);
   MME_APP_STRING_TO_IMSI ((char *)nas_pdn_connectivity_req_pP->imsi, &imsi);
-  MME_APP_DEBUG ("Handling imsi %" IMSI_FORMAT "\n", imsi);
+  LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
 
   if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_PDN_CONNECTIVITY_REQ Unknown imsi %" IMSI_FORMAT, imsi);
-    MME_APP_ERROR ("That's embarrassing as we don't know this IMSI\n");
+    LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     return -1;
   }
 
@@ -318,12 +318,12 @@ mme_app_handle_conn_est_cnf (
   ebi_t                                   bearer_id = 0;
   uint8_t                                 keNB[32];
 
-  MME_APP_DEBUG ("Received NAS_CONNECTION_ESTABLISHMENT_CNF from NAS\n");
+  LOG_DEBUG (LOG_MME_APP, "Received NAS_CONNECTION_ESTABLISHMENT_CNF from NAS\n");
   ue_context_p = mme_ue_context_exists_nas_ue_id (&mme_app_desc.mme_ue_contexts, nas_conn_est_cnf_pP->UEid);
 
   if (ue_context_p == NULL) {
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_CONNECTION_ESTABLISHMENT_CNF Unknown ue %u", nas_conn_est_cnf_pP->UEid);
-    MME_APP_ERROR ("UE context doesn't exist for UE %06" PRIX32 "/dec%u\n", nas_conn_est_cnf_pP->UEid, nas_conn_est_cnf_pP->UEid);
+    LOG_ERROR (LOG_MME_APP, "UE context doesn't exist for UE %06" PRIX32 "/dec%u\n", nas_conn_est_cnf_pP->UEid, nas_conn_est_cnf_pP->UEid);
     return;
   }
 
@@ -358,9 +358,9 @@ mme_app_handle_conn_est_cnf (
   establishment_cnf_p->ambr.br_dl = ue_context_p->subscribed_ambr.br_dl;
   establishment_cnf_p->security_capabilities_encryption_algorithms = nas_conn_est_cnf_pP->selected_encryption_algorithm;
   establishment_cnf_p->security_capabilities_integrity_algorithms = nas_conn_est_cnf_pP->selected_integrity_algorithm;
-  MME_APP_DEBUG ("security_capabilities_encryption_algorithms 0x%04X\n", establishment_cnf_p->security_capabilities_encryption_algorithms);
-  MME_APP_DEBUG ("security_capabilities_integrity_algorithms  0x%04X\n", establishment_cnf_p->security_capabilities_integrity_algorithms);
-  MME_APP_DEBUG ("Derive keNB with UL NAS COUNT %x\n", nas_conn_est_cnf_pP->ul_nas_count);
+  LOG_DEBUG (LOG_MME_APP, "security_capabilities_encryption_algorithms 0x%04X\n", establishment_cnf_p->security_capabilities_encryption_algorithms);
+  LOG_DEBUG (LOG_MME_APP, "security_capabilities_integrity_algorithms  0x%04X\n", establishment_cnf_p->security_capabilities_integrity_algorithms);
+  LOG_DEBUG (LOG_MME_APP, "Derive keNB with UL NAS COUNT %x\n", nas_conn_est_cnf_pP->ul_nas_count);
   derive_keNB (ue_context_p->vector_in_use->kasme, nas_conn_est_cnf_pP->ul_nas_count, keNB);    //156
   memcpy (establishment_cnf_p->keNB, keNB, 32);
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0,
@@ -383,12 +383,12 @@ mme_app_handle_conn_est_ind (
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
 
-  MME_APP_DEBUG ("Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP\n");
+  LOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP\n");
   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, conn_est_ind_pP->mme_ue_s1ap_id);
 
   if (ue_context_p == NULL) {
-    MME_APP_DEBUG ("We didn't find this mme_ue_s1ap_id in list of UE: %06" PRIX32 "/dec%u\n", conn_est_ind_pP->mme_ue_s1ap_id, conn_est_ind_pP->mme_ue_s1ap_id);
-    MME_APP_DEBUG ("UE context doesn't exist -> create one\n");
+	LOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %06" PRIX32 "/dec%u\n", conn_est_ind_pP->mme_ue_s1ap_id, conn_est_ind_pP->mme_ue_s1ap_id);
+	LOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one\n");
 
     if ((ue_context_p = mme_create_new_ue_context ()) == NULL) {
       /*
@@ -444,11 +444,11 @@ mme_app_handle_create_sess_resp (
   int16_t                                 bearer_id;
 
   DevAssert (create_sess_resp_pP != NULL);
-  MME_APP_DEBUG ("Received SGW_CREATE_SESSION_RESPONSE from S+P-GW\n");
+  LOG_DEBUG (LOG_MME_APP, "Received SGW_CREATE_SESSION_RESPONSE from S+P-GW\n");
   ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, create_sess_resp_pP->teid);
 
   if (ue_context_p == NULL) {
-    MME_APP_DEBUG ("We didn't find this teid in list of UE: %08x\n", create_sess_resp_pP->teid);
+    LOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", create_sess_resp_pP->teid);
     return -1;
   }
 
@@ -527,7 +527,7 @@ mme_app_handle_create_sess_resp (
     current_bearer_p->prio_level = create_sess_resp_pP->bearer_context_created.bearer_level_qos->pl;
     current_bearer_p->pre_emp_vulnerability = create_sess_resp_pP->bearer_context_created.bearer_level_qos->pvi;
     current_bearer_p->pre_emp_capability = create_sess_resp_pP->bearer_context_created.bearer_level_qos->pci;
-    MME_APP_DEBUG ("%s set qci %u in bearer %u\n", __FUNCTION__, current_bearer_p->qci, ue_context_p->default_bearer_id);
+    LOG_DEBUG (LOG_MME_APP, "%s set qci %u in bearer %u\n", __FUNCTION__, current_bearer_p->qci, ue_context_p->default_bearer_id);
   } else {
     // if null, it is not modified
     //current_bearer_p->qci                    = ue_context_p->pending_pdn_connectivity_req_qos.qci;
@@ -536,7 +536,7 @@ mme_app_handle_create_sess_resp (
     current_bearer_p->prio_level = 1;
     current_bearer_p->pre_emp_vulnerability = 0;
     current_bearer_p->pre_emp_capability = 0;
-    MME_APP_DEBUG ("%s set qci %u in bearer %u (qos not modified by S/P-GW)\n", __FUNCTION__, current_bearer_p->qci, ue_context_p->default_bearer_id);
+    LOG_DEBUG (LOG_MME_APP, "%s set qci %u in bearer %u (qos not modified by S/P-GW)\n", __FUNCTION__, current_bearer_p->qci, ue_context_p->default_bearer_id);
   }
 
   mme_app_dump_ue_contexts (&mme_app_desc.mme_ue_contexts);
@@ -555,7 +555,7 @@ mme_app_handle_create_sess_resp (
     if ((ue_context_p->pending_pdn_connectivity_req_apn.value != NULL)
         && (ue_context_p->pending_pdn_connectivity_req_apn.length != 0)) {
       DUP_OCTET_STRING (ue_context_p->pending_pdn_connectivity_req_apn, NAS_PDN_CONNECTIVITY_RSP (message_p).apn);
-      MME_APP_DEBUG ("SET APN FROM NAS PDN CONNECTIVITY CREATE: %s\n", NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value);
+      LOG_DEBUG (LOG_MME_APP, "SET APN FROM NAS PDN CONNECTIVITY CREATE: %s\n", NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value);
     } else {
       int                                     i;
       context_identifier_t                    context_identifier = ue_context_p->apn_profile.context_identifier;
@@ -571,14 +571,14 @@ mme_app_handle_create_sess_resp (
             memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value, ue_context_p->apn_profile.apn_configuration[i].service_selection, ue_context_p->apn_profile.apn_configuration[i].service_selection_length);
             NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value[ue_context_p->apn_profile.apn_configuration[i].service_selection_length]
               = '\0';
-            MME_APP_DEBUG ("SET APN FROM HSS ULA: %s\n", NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value);
+            LOG_DEBUG (LOG_MME_APP, "SET APN FROM HSS ULA: %s\n", NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value);
             break;
           }
         }
       }
     }
 
-    MME_APP_DEBUG ("APN: %s\n", NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value);
+    LOG_DEBUG (LOG_MME_APP, "APN: %s\n", NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value);
 
     switch (create_sess_resp_pP->paa.pdn_type) {
     case IPv4:
@@ -665,18 +665,18 @@ mme_app_handle_initial_context_setup_rsp (
   MessageDef                             *message_p = NULL;
   task_id_t                               to_task = TASK_UNKNOWN;
 
-  MME_APP_DEBUG ("Received MME_APP_INITIAL_CONTEXT_SETUP_RSP from S1AP\n");
+  LOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_CONTEXT_SETUP_RSP from S1AP\n");
   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_ctxt_setup_rsp_pP->mme_ue_s1ap_id);
 
   if (ue_context_p == NULL) {
-    MME_APP_DEBUG ("We didn't find this mme_ue_s1ap_id in list of UE: %08x %d(dec)\n", initial_ctxt_setup_rsp_pP->mme_ue_s1ap_id, initial_ctxt_setup_rsp_pP->mme_ue_s1ap_id);
+    LOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %08x %d(dec)\n", initial_ctxt_setup_rsp_pP->mme_ue_s1ap_id, initial_ctxt_setup_rsp_pP->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "MME_APP_INITIAL_CONTEXT_SETUP_RSP Unknown ue %u", initial_ctxt_setup_rsp_pP->mme_ue_s1ap_id);
     return;
   }
-#if ENABLE_STANDALONE_EPC == 0
-  to_task = TASK_S11;
-#else
+#if EPC_BUILD == 0
   to_task = TASK_SPGW_APP;
+#else
+  to_task = TASK_S11;
 #endif
   message_p = itti_alloc_new_message (TASK_MME_APP, SGW_MODIFY_BEARER_REQUEST);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
@@ -715,7 +715,7 @@ mme_app_handle_release_access_bearers_resp (
   ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, rel_access_bearers_rsp_pP->teid);
 
   if (ue_context_p == NULL) {
-    MME_APP_DEBUG ("We didn't find this teid in list of UE: %" PRIX32 "\n", rel_access_bearers_rsp_pP->teid);
+    LOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", rel_access_bearers_rsp_pP->teid);
     return;
   }
 

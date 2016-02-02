@@ -38,7 +38,7 @@
 *****************************************************************************/
 
 #include "emm_main.h"
-#include "nas_log.h"
+#include "log.h"
 #include "emmData.h"
 
 
@@ -87,7 +87,7 @@ emm_main_initialize (
   void)
 #endif
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * Retreive MME supported configuration data
    */
@@ -125,7 +125,7 @@ void
 emm_main_cleanup (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_FUNC_OUT;
 }
 

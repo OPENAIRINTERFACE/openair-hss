@@ -44,7 +44,7 @@
 #include "emm_send.h"
 #include "emmData.h"
 #include "commonDef.h"
-#include "nas_log.h"
+#include "log.h"
 
 #include "TLVDecoder.h"
 #include "as_message.h"
@@ -195,7 +195,7 @@ void
 emm_as_initialize (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   /*
    * TODO: Initialize the EMMAS-SAP
    */
@@ -220,7 +220,7 @@ int
 emm_as_send (
   const emm_as_t * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc;
   int                                     emm_cause = EMM_CAUSE_SUCCESS;
   emm_as_primitive_t                      primitive = msg->primitive;
@@ -255,7 +255,7 @@ emm_as_send (
 
     if (rc != RETURNok) {
       LOG_TRACE (ERROR, "EMMAS-SAP - " "Failed to process primitive %s (%d)", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
-      LOG_FUNC_RETURN (RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
     }
 
     break;
@@ -270,14 +270,14 @@ emm_as_send (
      * * * * message type information element
      */
     if (rc == TLV_DECODE_BUFFER_TOO_SHORT) {
-      LOG_FUNC_RETURN (RETURNok);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
     }
     /*
      * Ignore received message that contains not supported protocol
      * * * * discriminator
      */
     else if (rc == TLV_DECODE_PROTOCOL_NOT_SUPPORTED) {
-      LOG_FUNC_RETURN (RETURNok);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
     } else if (rc == TLV_DECODE_WRONG_MESSAGE_TYPE) {
       emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
     }
@@ -296,7 +296,7 @@ emm_as_send (
     LOG_TRACE (ERROR, "EMMAS-SAP - Failed to process primitive %s (%d)", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************/
@@ -335,7 +335,7 @@ _emm_as_recv (
   int *emm_cause,
   nas_message_decode_status_t   * decode_status)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   nas_message_decode_status_t             local_decode_status;
   int                                     decoder_rc;
   int                                     rc = RETURNerror;
@@ -382,7 +382,7 @@ _emm_as_recv (
   if (decoder_rc < 0) {
     LOG_TRACE (WARNING, "EMMAS-SAP - Failed to decode NAS message " "(err=%d)", decoder_rc);
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-    LOG_FUNC_RETURN (decoder_rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoder_rc);
   }
 
   /*
@@ -398,7 +398,7 @@ _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-      LOG_FUNC_RETURN (decoder_rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoder_rc);
     }
     rc = emm_recv_status (ueid, &emm_msg->emm_status, emm_cause, decode_status);
     break;
@@ -434,7 +434,7 @@ _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-      LOG_FUNC_RETURN (decoder_rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoder_rc);
     }
 
     rc = emm_recv_security_mode_complete (ueid, &emm_msg->security_mode_complete, emm_cause, decode_status);
@@ -453,7 +453,7 @@ _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-      LOG_FUNC_RETURN (decoder_rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoder_rc);
     }
 
     rc = emm_recv_attach_complete (ueid, &emm_msg->attach_complete, emm_cause, decode_status);
@@ -468,7 +468,7 @@ _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-      LOG_FUNC_RETURN (decoder_rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoder_rc);
     }
 
     /*
@@ -482,7 +482,7 @@ _emm_as_recv (
         ((0 == decode_status->integrity_protected_message) ||
        (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-      LOG_FUNC_RETURN (decoder_rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoder_rc);
     }
 
     rc = emm_recv_detach_request (ueid, &emm_msg->detach_request, emm_cause, decode_status);
@@ -494,7 +494,7 @@ _emm_as_recv (
     break;
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -519,7 +519,7 @@ _emm_as_data_ind (
   const emm_as_data_t * msg,
   int *emm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNerror;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received AS data transfer indication " "(ueid=" NAS_UE_ID_FMT ", delivered=%s, length=%d)", msg->ueid, (msg->delivered) ? "TRUE" : "FALSE", msg->NASmsg.length);
@@ -571,7 +571,7 @@ _emm_as_data_ind (
            * Failed to decrypt the message
            */
           *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-          LOG_FUNC_RETURN (bytes);
+          LOG_FUNC_RETURN (LOG_NAS_EMM_MME, bytes);
         } else if (header.protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
           /*
            * Process EMM data
@@ -600,7 +600,7 @@ _emm_as_data_ind (
     rc = lowerlayer_failure (msg->ueid);
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -628,7 +628,7 @@ _emm_as_establish_req (
   const emm_as_establish_t * msg,
   int *emm_cause)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   struct emm_data_context_s              *emm_ctx = NULL;
   emm_security_context_t                 *emm_security_context = NULL;
   nas_message_decode_status_t             decode_status;
@@ -662,7 +662,7 @@ _emm_as_establish_req (
 
   if (decoder_rc < TLV_DECODE_FATAL_ERROR) {
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-    LOG_FUNC_RETURN (decoder_rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoder_rc);
   } else if (decoder_rc == TLV_DECODE_UNEXPECTED_IEI) {
     *emm_cause = EMM_CAUSE_IE_NOT_IMPLEMENTED;
   } else if (decoder_rc < 0) {
@@ -692,7 +692,7 @@ _emm_as_establish_req (
         ((0 == decode_status.integrity_protected_message) ||
        (0 == decode_status.mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-      LOG_FUNC_RETURN (decoder_rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoder_rc);
     }
 
     LOG_TRACE (WARNING, "EMMAS-SAP - Initial NAS message TODO DETACH_REQUEST ");
@@ -711,7 +711,7 @@ _emm_as_establish_req (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-      LOG_FUNC_RETURN (decoder_rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoder_rc);
     }
 
     LOG_TRACE (WARNING, "EMMAS-SAP - Initial NAS message TODO SERVICE_REQUEST ");
@@ -726,7 +726,7 @@ _emm_as_establish_req (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-      LOG_FUNC_RETURN (decoder_rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoder_rc);
     }
 
     LOG_TRACE (WARNING, "EMMAS-SAP - Initial NAS message TODO EXTENDED_SERVICE_REQUEST ");
@@ -740,7 +740,7 @@ _emm_as_establish_req (
     break;
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -768,11 +768,11 @@ static int
 _emm_as_cell_info_res (
   const emm_as_cell_info_t * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNok;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received AS cell information response");
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /****************************************************************************
@@ -796,14 +796,14 @@ static int
 _emm_as_cell_info_ind (
   const emm_as_cell_info_t * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     rc = RETURNok;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Received AS cell information indication");
   /*
    * TODO
    */
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
 }
 
 /*
@@ -835,7 +835,7 @@ _emm_as_set_header (
   nas_message_t * msg,
   const emm_as_security_data_t * security)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   msg->header.protocol_discriminator = EPS_MOBILITY_MANAGEMENT_MESSAGE;
 
   if (security && (security->ksi != EMM_AS_NO_KEY_AVAILABLE)) {
@@ -859,7 +859,7 @@ _emm_as_set_header (
           msg->header.security_header_type = SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_NEW;
         }
 
-        LOG_FUNC_RETURN (&msg->security_protected.plain.emm);
+        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, &msg->security_protected.plain.emm);
       }
     } else if (security->k_int) {
       if (security->k_enc) {
@@ -874,27 +874,27 @@ _emm_as_set_header (
         msg->header.security_header_type = SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED;
       }
 
-      LOG_FUNC_RETURN (&msg->security_protected.plain.emm);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, &msg->security_protected.plain.emm);
     } else {
       /*
        * No valid EPS security context exists
        */
       msg->header.security_header_type = SECURITY_HEADER_TYPE_NOT_PROTECTED;
-      LOG_FUNC_RETURN (&msg->plain.emm);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, &msg->plain.emm);
     }
   } else {
     /*
      * No valid EPS security context exists
      */
     msg->header.security_header_type = SECURITY_HEADER_TYPE_NOT_PROTECTED;
-    LOG_FUNC_RETURN (&msg->plain.emm);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, &msg->plain.emm);
   }
 
   /*
    * A valid EPS security context exists but NAS integrity key
    * * * * is not available
    */
-  LOG_FUNC_RETURN (NULL);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, NULL);
 }
 
 /****************************************************************************
@@ -920,7 +920,7 @@ _emm_as_encode (
   int length,
   emm_security_context_t * emm_security_context)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     bytes = 0;
 
   if (msg->header.security_header_type != SECURITY_HEADER_TYPE_NOT_PROTECTED) {
@@ -957,7 +957,7 @@ _emm_as_encode (
     }
   }
 
-  LOG_FUNC_RETURN (bytes);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, bytes);
 }
 
 /****************************************************************************
@@ -984,7 +984,7 @@ _emm_as_encrypt (
   int length,
   emm_security_context_t * emm_security_context)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     bytes = 0;
 
   if (header->security_header_type != SECURITY_HEADER_TYPE_NOT_PROTECTED) {
@@ -1014,7 +1014,7 @@ _emm_as_encrypt (
     }
   }
 
-  LOG_FUNC_RETURN (bytes);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, bytes);
 }
 
 /****************************************************************************
@@ -1037,7 +1037,7 @@ static int
 _emm_as_send (
   const emm_as_t * msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   as_message_t                            as_msg;
 
   memset (&as_msg, 0, sizeof (as_message_t));
@@ -1098,7 +1098,7 @@ _emm_as_send (
     switch (as_msg.msgID) {
     case AS_DL_INFO_TRANSFER_REQ:{
         nas_itti_dl_data_req (as_msg.msg.dl_info_transfer_req.UEid, as_msg.msg.dl_info_transfer_req.nasMsg.data, as_msg.msg.dl_info_transfer_req.nasMsg.length);
-        LOG_FUNC_RETURN (RETURNok);
+        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
       }
       break;
 
@@ -1106,7 +1106,7 @@ _emm_as_send (
     case AS_NAS_ESTABLISH_CNF:{
         if (as_msg.msg.nas_establish_rsp.errCode != AS_SUCCESS) {
           nas_itti_dl_data_req (as_msg.msg.nas_establish_rsp.UEid, as_msg.msg.nas_establish_rsp.nasMsg.data, as_msg.msg.nas_establish_rsp.nasMsg.length);
-          LOG_FUNC_RETURN (RETURNok);
+          LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
         } else {
           LOG_TRACE (DEBUG, "EMMAS-SAP - "
                      "Sending nas_itti_establish_cnf to S1AP UE ID 0x%x"
@@ -1118,7 +1118,7 @@ _emm_as_send (
           nas_itti_establish_cnf (as_msg.msg.nas_establish_rsp.UEid,
                                   as_msg.msg.nas_establish_rsp.errCode,
                                   as_msg.msg.nas_establish_rsp.nasMsg.data, as_msg.msg.nas_establish_rsp.nasMsg.length, as_msg.msg.nas_establish_rsp.selected_encryption_algorithm, as_msg.msg.nas_establish_rsp.selected_integrity_algorithm);
-          LOG_FUNC_RETURN (RETURNok);
+          LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
         }
       }
       break;
@@ -1130,7 +1130,7 @@ _emm_as_send (
 #endif
   }
 
-  LOG_FUNC_RETURN (RETURNerror);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
 }
 
 /****************************************************************************
@@ -1155,7 +1155,7 @@ _emm_as_data_req (
   const emm_as_data_t * msg,
   ul_info_transfer_req_t * as_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = 0;
   int                                     is_encoded = FALSE;
 
@@ -1233,11 +1233,11 @@ _emm_as_data_req (
     }
 
     if (bytes > 0) {
-      LOG_FUNC_RETURN (AS_DL_INFO_TRANSFER_REQ);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, AS_DL_INFO_TRANSFER_REQ);
     }
   }
 
-  LOG_FUNC_RETURN (0);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, 0);
 }
 
 /****************************************************************************
@@ -1261,7 +1261,7 @@ _emm_as_status_ind (
   const emm_as_status_t * msg,
   ul_info_transfer_req_t * as_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = 0;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send AS status indication (cause=%d)", msg->emm_cause);
@@ -1322,11 +1322,11 @@ _emm_as_status_ind (
                                                                     emm_security_context);
 
     if (bytes > 0) {
-      LOG_FUNC_RETURN (AS_DL_INFO_TRANSFER_REQ);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, AS_DL_INFO_TRANSFER_REQ);
     }
   }
 
-  LOG_FUNC_RETURN (0);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, 0);
 }
 
 /****************************************************************************
@@ -1351,7 +1351,7 @@ _emm_as_release_req (
   const emm_as_release_t * msg,
   nas_release_req_t * as_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMMAS-SAP - Send AS release request");
 
   /*
@@ -1370,7 +1370,7 @@ _emm_as_release_req (
     as_msg->cause = AS_DETACH;
   }
 
-  LOG_FUNC_RETURN (AS_NAS_RELEASE_REQ);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, AS_NAS_RELEASE_REQ);
 }
 
 
@@ -1395,7 +1395,7 @@ _emm_as_security_req (
   const emm_as_security_t * msg,
   dl_info_transfer_req_t * as_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = 0;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send AS security request");
@@ -1488,11 +1488,11 @@ _emm_as_security_req (
                                                                     emm_security_context);
 
     if (bytes > 0) {
-      LOG_FUNC_RETURN (AS_DL_INFO_TRANSFER_REQ);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, AS_DL_INFO_TRANSFER_REQ);
     }
   }
 
-  LOG_FUNC_RETURN (0);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, 0);
 }
 
 /****************************************************************************
@@ -1516,7 +1516,7 @@ _emm_as_security_rej (
   const emm_as_security_t * msg,
   dl_info_transfer_req_t * as_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     size = 0;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send AS security reject");
@@ -1591,11 +1591,11 @@ _emm_as_security_rej (
                                                                     emm_security_context);
 
     if (bytes > 0) {
-      LOG_FUNC_RETURN (AS_DL_INFO_TRANSFER_REQ);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, AS_DL_INFO_TRANSFER_REQ);
     }
   }
 
-  LOG_FUNC_RETURN (0);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, 0);
 }
 
 /****************************************************************************
@@ -1623,7 +1623,7 @@ _emm_as_establish_cnf (
   EMM_msg                                *emm_msg = NULL;
   int                                     size = 0;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMMAS-SAP - Send AS connection establish confirmation");
   nas_message_t                           nas_msg;
 
@@ -1635,7 +1635,7 @@ _emm_as_establish_cnf (
 
   if (msg->UEid.guti == NULL) {
     LOG_TRACE (WARNING, "EMMAS-SAP - GUTI is NULL...");
-    LOG_FUNC_RETURN (0);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, 0);
   }
 
   as_msg->s_tmsi.MMEcode = msg->UEid.guti->gummei.MMEcode;
@@ -1704,12 +1704,12 @@ _emm_as_establish_cnf (
 
     if (bytes > 0) {
       as_msg->errCode = AS_SUCCESS;
-      LOG_FUNC_RETURN (AS_NAS_ESTABLISH_CNF);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, AS_NAS_ESTABLISH_CNF);
     }
   }
 
   LOG_TRACE (WARNING, "EMMAS-SAP - Size <= 0");
-  LOG_FUNC_RETURN (0);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, 0);
 }
 
 /****************************************************************************
@@ -1738,7 +1738,7 @@ _emm_as_establish_rej (
   int                                     size = 0;
   nas_message_t                           nas_msg;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMMAS-SAP - Send AS connection establish reject");
   memset (&nas_msg, 0, sizeof (nas_message_t));
 
@@ -1819,11 +1819,11 @@ _emm_as_establish_rej (
 
     if (bytes > 0) {
       as_msg->errCode = AS_TERMINATED_NAS;
-      LOG_FUNC_RETURN (AS_NAS_ESTABLISH_RSP);
+      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, AS_NAS_ESTABLISH_RSP);
     }
   }
 
-  LOG_FUNC_RETURN (0);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, 0);
 }
 
 /****************************************************************************
@@ -1847,7 +1847,7 @@ _emm_as_page_ind (
   const emm_as_page_t * msg,
   paging_req_t * as_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   int                                     bytes = 0;
 
   LOG_TRACE (INFO, "EMMAS-SAP - Send AS data paging indication");
@@ -1857,10 +1857,10 @@ _emm_as_page_ind (
    */
 
   if (bytes > 0) {
-    LOG_FUNC_RETURN (AS_PAGING_IND);
+    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, AS_PAGING_IND);
   }
 
-  LOG_FUNC_RETURN (0);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, 0);
 }
 
 
@@ -1888,9 +1888,9 @@ _emm_as_cell_info_req (
   const emm_as_cell_info_t * msg,
   cell_info_req_t * as_msg)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_EMM_MME);
   LOG_TRACE (INFO, "EMMAS-SAP - Send AS cell information request");
   as_msg->plmnID = msg->plmnIDs.plmn[0];
   as_msg->rat = msg->rat;
-  LOG_FUNC_RETURN (AS_CELL_INFO_REQ);
+  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, AS_CELL_INFO_REQ);
 }
