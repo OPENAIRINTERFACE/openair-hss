@@ -80,7 +80,7 @@ extern                                  "C" {
     thiz = ((NwGtpv2cTrxnT *) arg);
     pStack = thiz->pStack;
     NW_ASSERT (pStack);
-    LOG_WARNING (LOG_GTPV2C,  "T3 Response timer expired for transaction 0x%p", thiz);
+    LOG_WARNING (LOG_GTPV2C,  "T3 Response timer expired for transaction 0x%p\n", thiz);
     thiz->hRspTmr = 0;
 
     if (thiz->maxRetries) {
@@ -94,7 +94,7 @@ extern                                  "C" {
       ulpApi.apiType = NW_GTPV2C_ULP_API_RSP_FAILURE_IND;
       ulpApi.apiInfo.rspFailureInfo.hUlpTrxn = thiz->hUlpTrxn;
       ulpApi.apiInfo.rspFailureInfo.hUlpTunnel = ((thiz->hTunnel) ? ((NwGtpv2cTunnelT *) (thiz->hTunnel))->hUlpTunnel : 0);
-      LOG_ERROR (LOG_GTPV2C, "N3 retries expired for transaction 0x%p", thiz);
+      LOG_ERROR (LOG_GTPV2C, "N3 retries expired for transaction 0x%p\n", thiz);
       RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(pStack->outstandingTxSeqNumMap), thiz);
       rc = nwGtpv2cTrxnDelete (&thiz);
       rc = pStack->ulp.ulpReqCallback (pStack->ulp.hUlp, &ulpApi);
@@ -113,7 +113,7 @@ extern                                  "C" {
     NW_ASSERT (thiz);
     pStack = thiz->pStack;
     NW_ASSERT (pStack);
-    LOG_DEBUG (LOG_GTPV2C,  "Duplicate request hold timer expired for transaction 0x%p", thiz);
+    LOG_DEBUG (LOG_GTPV2C,  "Duplicate request hold timer expired for transaction 0x%p\n", thiz);
     thiz->hRspTmr = 0;
     RB_REMOVE (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(pStack->outstandingRxSeqNumMap), thiz);
     rc = nwGtpv2cTrxnDelete (&thiz);
@@ -206,7 +206,7 @@ extern                                  "C" {
         thiz->seqNum = 0;
     }
 
-    LOG_DEBUG (LOG_GTPV2C,  "Created transaction 0x%p", pTrxn);
+    LOG_DEBUG (LOG_GTPV2C,  "Created transaction 0x%p\n", pTrxn);
     return pTrxn;
   }
 
@@ -238,7 +238,7 @@ extern                                  "C" {
       pTrxn->pMsg = NULL;
     }
 
-    LOG_DEBUG (LOG_GTPV2C,  "Created transaction 0x%p", pTrxn);
+    LOG_DEBUG (LOG_GTPV2C,  "Created transaction 0x%p\n", pTrxn);
     return pTrxn;
   }
 
@@ -283,7 +283,7 @@ extern                                  "C" {
       pCollision = RB_INSERT (NwGtpv2cOutstandingRxSeqNumTrxnMap, &(thiz->outstandingRxSeqNumMap), pTrxn);
 
       if (pCollision) {
-        LOG_WARNING (LOG_GTPV2C,  "Duplicate request message received for seq num 0x%x!", (uint32_t) seqNum);
+        LOG_WARNING (LOG_GTPV2C,  "Duplicate request message received for seq num 0x%x!\n", (uint32_t) seqNum);
 
         /*
          * Case of duplicate request message from peer. Retransmit response.
@@ -299,7 +299,7 @@ extern                                  "C" {
     }
 
     if (pTrxn)
-      LOG_DEBUG (LOG_GTPV2C,  "Created outstanding RX transaction 0x%p", pTrxn);
+      LOG_DEBUG (LOG_GTPV2C,  "Created outstanding RX transaction 0x%p\n", pTrxn);
 
     return (pTrxn);
   }
@@ -328,7 +328,7 @@ extern                                  "C" {
       NW_ASSERT (NW_OK == rc);
     }
 
-    LOG_DEBUG (LOG_GTPV2C,  "Purging  transaction 0x%p", thiz);
+    LOG_DEBUG (LOG_GTPV2C,  "Purging  transaction 0x%p\n", thiz);
     thiz->next = gpGtpv2cTrxnPool;
     gpGtpv2cTrxnPool = thiz;
     *pthiz = NULL;

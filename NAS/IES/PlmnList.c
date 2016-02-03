@@ -101,19 +101,19 @@ dump_plmn_list_xml (
   PlmnList * plmnlist,
   uint8_t iei)
 {
-  printf ("<Plmn List>\n");
+  LOG_DEBUG (LOG_NAS, "<Plmn List>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <MCC digit 2>%u</MCC digit 2>\n", plmnlist->mccdigit2);
-  printf ("    <MCC digit 1>%u</MCC digit 1>\n", plmnlist->mccdigit1);
-  printf ("    <MNC digit 3>%u</MNC digit 3>\n", plmnlist->mncdigit3);
-  printf ("    <MCC digit 3>%u</MCC digit 3>\n", plmnlist->mccdigit3);
-  printf ("    <MNC digit 2>%u</MNC digit 2>\n", plmnlist->mncdigit2);
-  printf ("    <MNC digit 1>%u</MNC digit 1>\n", plmnlist->mncdigit1);
-  printf ("</Plmn List>\n");
+  LOG_DEBUG (LOG_NAS, "    <MCC digit 2>%u</MCC digit 2>\n", plmnlist->mccdigit2);
+  LOG_DEBUG (LOG_NAS, "    <MCC digit 1>%u</MCC digit 1>\n", plmnlist->mccdigit1);
+  LOG_DEBUG (LOG_NAS, "    <MNC digit 3>%u</MNC digit 3>\n", plmnlist->mncdigit3);
+  LOG_DEBUG (LOG_NAS, "    <MCC digit 3>%u</MCC digit 3>\n", plmnlist->mccdigit3);
+  LOG_DEBUG (LOG_NAS, "    <MNC digit 2>%u</MNC digit 2>\n", plmnlist->mncdigit2);
+  LOG_DEBUG (LOG_NAS, "    <MNC digit 1>%u</MNC digit 1>\n", plmnlist->mncdigit1);
+  LOG_DEBUG (LOG_NAS, "</Plmn List>\n");
 }

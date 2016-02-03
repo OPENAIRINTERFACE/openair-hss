@@ -196,17 +196,17 @@ dump_traffic_flow_template_xml (
   TrafficFlowTemplate * trafficflowtemplate,
   uint8_t iei)
 {
-  printf ("<Traffic Flow Template>\n");
+  LOG_DEBUG (LOG_NAS, "<Traffic Flow Template>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <TFT operation code>%u</TFT operation code>\n", trafficflowtemplate->tftoperationcode);
-  printf ("    <E bit>%u</E bit>\n", trafficflowtemplate->ebit);
-  printf ("    <Number of packet filters>%u</Number of packet filters>\n", trafficflowtemplate->numberofpacketfilters);
+  LOG_DEBUG (LOG_NAS, "    <TFT operation code>%u</TFT operation code>\n", trafficflowtemplate->tftoperationcode);
+  LOG_DEBUG (LOG_NAS, "    <E bit>%u</E bit>\n", trafficflowtemplate->ebit);
+  LOG_DEBUG (LOG_NAS, "    <Number of packet filters>%u</Number of packet filters>\n", trafficflowtemplate->numberofpacketfilters);
 
   if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET) {
     dump_traffic_flow_template_packet_filter_identifiers (&trafficflowtemplate->packetfilterlist.deletepacketfilter, trafficflowtemplate->numberofpacketfilters);
@@ -218,7 +218,7 @@ dump_traffic_flow_template_xml (
     dump_traffic_flow_template_packet_filters (&trafficflowtemplate->packetfilterlist.replacepacketfilter, trafficflowtemplate->numberofpacketfilters);
   }
 
-  printf ("</Traffic Flow Template>\n");
+  LOG_DEBUG (LOG_NAS, "</Traffic Flow Template>\n");
 }
 
 static int
@@ -678,13 +678,13 @@ dump_traffic_flow_template_packet_filter_identifiers (
 {
   int                                     i;
 
-  printf ("    <Packet filter list>\n");
+  LOG_DEBUG (LOG_NAS, "    <Packet filter list>\n");
 
   for (i = 0; i < nbpacketfilters; i++) {
-    printf ("        <Identifier>%u</Identifier>\n", (*packetfilteridentifiers)[i].identifier);
+    LOG_DEBUG (LOG_NAS, "        <Identifier>%u</Identifier>\n", (*packetfilteridentifiers)[i].identifier);
   }
 
-  printf ("    </Packet filter list>\n");
+  LOG_DEBUG (LOG_NAS, "    </Packet filter list>\n");
 }
 
 static void
@@ -694,29 +694,29 @@ dump_traffic_flow_template_packet_filters (
 {
   int                                     i;
 
-  printf ("    <Packet filter list>\n");
+  LOG_DEBUG (LOG_NAS, "    <Packet filter list>\n");
 
   for (i = 0; i < nbpacketfilters; i++) {
-    printf ("        <Identifier>%u</Identifier>\n", (*packetfilters)[i].identifier);
-    printf ("        <Direction>%u</Direction>\n", (*packetfilters)[i].direction);
-    printf ("        <Evaluation precedence>%u</Evaluation precedence>\n", (*packetfilters)[i].eval_precedence);
-    printf ("        <Packet filter>\n");
+    LOG_DEBUG (LOG_NAS, "        <Identifier>%u</Identifier>\n", (*packetfilters)[i].identifier);
+    LOG_DEBUG (LOG_NAS, "        <Direction>%u</Direction>\n", (*packetfilters)[i].direction);
+    LOG_DEBUG (LOG_NAS, "        <Evaluation precedence>%u</Evaluation precedence>\n", (*packetfilters)[i].eval_precedence);
+    LOG_DEBUG (LOG_NAS, "        <Packet filter>\n");
 
     if ((*packetfilters)[i].packetfilter.flags & TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG) {
-      printf ("            <IPv4 remote address>%u.%u.%u.%u</IPv4 remote address>\n", (*packetfilters)[i].packetfilter.ipv4remoteaddr[0].addr, (*packetfilters)[i].packetfilter.ipv4remoteaddr[1].addr,
+      LOG_DEBUG (LOG_NAS, "            <IPv4 remote address>%u.%u.%u.%u</IPv4 remote address>\n", (*packetfilters)[i].packetfilter.ipv4remoteaddr[0].addr, (*packetfilters)[i].packetfilter.ipv4remoteaddr[1].addr,
               (*packetfilters)[i].packetfilter.ipv4remoteaddr[2].addr, (*packetfilters)[i].packetfilter.ipv4remoteaddr[3].addr);
-      printf ("            <IPv4 remote address mask>%u.%u.%u.%u</IPv4 remote address mask>\n", (*packetfilters)[i].packetfilter.ipv4remoteaddr[0].mask,
+      LOG_DEBUG (LOG_NAS, "            <IPv4 remote address mask>%u.%u.%u.%u</IPv4 remote address mask>\n", (*packetfilters)[i].packetfilter.ipv4remoteaddr[0].mask,
               (*packetfilters)[i].packetfilter.ipv4remoteaddr[1].mask, (*packetfilters)[i].packetfilter.ipv4remoteaddr[2].mask, (*packetfilters)[i].packetfilter.ipv4remoteaddr[3].mask);
     }
 
     if ((*packetfilters)[i].packetfilter.flags & TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG) {
-      printf ("            <Ipv6 remote address>%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x</Ipv6 remote address>\n", (*packetfilters)[i].packetfilter.ipv6remoteaddr[0].addr,
+      LOG_DEBUG (LOG_NAS, "            <Ipv6 remote address>%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x</Ipv6 remote address>\n", (*packetfilters)[i].packetfilter.ipv6remoteaddr[0].addr,
               (*packetfilters)[i].packetfilter.ipv6remoteaddr[1].addr, (*packetfilters)[i].packetfilter.ipv6remoteaddr[2].addr, (*packetfilters)[i].packetfilter.ipv6remoteaddr[3].addr,
               (*packetfilters)[i].packetfilter.ipv6remoteaddr[4].addr, (*packetfilters)[i].packetfilter.ipv6remoteaddr[5].addr, (*packetfilters)[i].packetfilter.ipv6remoteaddr[6].addr,
               (*packetfilters)[i].packetfilter.ipv6remoteaddr[7].addr, (*packetfilters)[i].packetfilter.ipv6remoteaddr[8].addr, (*packetfilters)[i].packetfilter.ipv6remoteaddr[9].addr,
               (*packetfilters)[i].packetfilter.ipv6remoteaddr[10].addr, (*packetfilters)[i].packetfilter.ipv6remoteaddr[11].addr, (*packetfilters)[i].packetfilter.ipv6remoteaddr[12].addr,
               (*packetfilters)[i].packetfilter.ipv6remoteaddr[13].addr, (*packetfilters)[i].packetfilter.ipv6remoteaddr[14].addr, (*packetfilters)[i].packetfilter.ipv6remoteaddr[15].addr);
-      printf ("            <Ipv6 remote address mask>%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x</Ipv6 remote address mask>\n", (*packetfilters)[i].packetfilter.ipv6remoteaddr[0].mask,
+      LOG_DEBUG (LOG_NAS, "            <Ipv6 remote address mask>%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x</Ipv6 remote address mask>\n", (*packetfilters)[i].packetfilter.ipv6remoteaddr[0].mask,
               (*packetfilters)[i].packetfilter.ipv6remoteaddr[1].mask, (*packetfilters)[i].packetfilter.ipv6remoteaddr[2].mask, (*packetfilters)[i].packetfilter.ipv6remoteaddr[3].mask,
               (*packetfilters)[i].packetfilter.ipv6remoteaddr[4].mask, (*packetfilters)[i].packetfilter.ipv6remoteaddr[5].mask, (*packetfilters)[i].packetfilter.ipv6remoteaddr[6].mask,
               (*packetfilters)[i].packetfilter.ipv6remoteaddr[7].mask, (*packetfilters)[i].packetfilter.ipv6remoteaddr[8].mask, (*packetfilters)[i].packetfilter.ipv6remoteaddr[9].mask,
@@ -725,42 +725,42 @@ dump_traffic_flow_template_packet_filters (
     }
 
     if ((*packetfilters)[i].packetfilter.flags & TRAFFIC_FLOW_TEMPLATE_PROTOCOL_NEXT_HEADER_FLAG) {
-      printf ("            <Protocol identifier - Next header type>%u</Protocol identifier - Next header type>\n", (*packetfilters)[i].packetfilter.protocolidentifier_nextheader);
+      LOG_DEBUG (LOG_NAS, "            <Protocol identifier - Next header type>%u</Protocol identifier - Next header type>\n", (*packetfilters)[i].packetfilter.protocolidentifier_nextheader);
     }
 
     if ((*packetfilters)[i].packetfilter.flags & TRAFFIC_FLOW_TEMPLATE_SINGLE_LOCAL_PORT_FLAG) {
-      printf ("            <Single local port>%u</Single local port>\n", (*packetfilters)[i].packetfilter.singlelocalport);
+      LOG_DEBUG (LOG_NAS, "            <Single local port>%u</Single local port>\n", (*packetfilters)[i].packetfilter.singlelocalport);
     }
 
     if ((*packetfilters)[i].packetfilter.flags & TRAFFIC_FLOW_TEMPLATE_LOCAL_PORT_RANGE_FLAG) {
-      printf ("            <Local port range low limit>%u</Local port range low limit>\n", (*packetfilters)[i].packetfilter.localportrange.lowlimit);
-      printf ("            <Local port range high limit>%u</Local port range high limit>\n", (*packetfilters)[i].packetfilter.localportrange.highlimit);
+      LOG_DEBUG (LOG_NAS, "            <Local port range low limit>%u</Local port range low limit>\n", (*packetfilters)[i].packetfilter.localportrange.lowlimit);
+      LOG_DEBUG (LOG_NAS, "            <Local port range high limit>%u</Local port range high limit>\n", (*packetfilters)[i].packetfilter.localportrange.highlimit);
     }
 
     if ((*packetfilters)[i].packetfilter.flags & TRAFFIC_FLOW_TEMPLATE_SINGLE_REMOTE_PORT_FLAG) {
-      printf ("            <Single remote port>%u</Single remote port>\n", (*packetfilters)[i].packetfilter.singleremoteport);
+      LOG_DEBUG (LOG_NAS, "            <Single remote port>%u</Single remote port>\n", (*packetfilters)[i].packetfilter.singleremoteport);
     }
 
     if ((*packetfilters)[i].packetfilter.flags & TRAFFIC_FLOW_TEMPLATE_REMOTE_PORT_RANGE_FLAG) {
-      printf ("            <Remote port range low limit>%u</Remote port range low limit>\n", (*packetfilters)[i].packetfilter.remoteportrange.lowlimit);
-      printf ("            <Remote port range high limit>%u</Remote port range high limit>\n", (*packetfilters)[i].packetfilter.remoteportrange.highlimit);
+      LOG_DEBUG (LOG_NAS, "            <Remote port range low limit>%u</Remote port range low limit>\n", (*packetfilters)[i].packetfilter.remoteportrange.lowlimit);
+      LOG_DEBUG (LOG_NAS, "            <Remote port range high limit>%u</Remote port range high limit>\n", (*packetfilters)[i].packetfilter.remoteportrange.highlimit);
     }
 
     if ((*packetfilters)[i].packetfilter.flags & TRAFFIC_FLOW_TEMPLATE_SECURITY_PARAMETER_INDEX_FLAG) {
-      printf ("            <Security parameter index>%u</Security parameter index>\n", (*packetfilters)[i].packetfilter.securityparameterindex);
+      LOG_DEBUG (LOG_NAS, "            <Security parameter index>%u</Security parameter index>\n", (*packetfilters)[i].packetfilter.securityparameterindex);
     }
 
     if ((*packetfilters)[i].packetfilter.flags & TRAFFIC_FLOW_TEMPLATE_TYPE_OF_SERVICE_TRAFFIC_CLASS_FLAG) {
-      printf ("            <Type of service - Traffic class>%u</Type of service - Traffic class>\n", (*packetfilters)[i].packetfilter.typdeofservice_trafficclass.value);
-      printf ("            <Type of service - Traffic class mask>%u</Type of service - Traffic class mask>\n", (*packetfilters)[i].packetfilter.typdeofservice_trafficclass.mask);
+      LOG_DEBUG (LOG_NAS, "            <Type of service - Traffic class>%u</Type of service - Traffic class>\n", (*packetfilters)[i].packetfilter.typdeofservice_trafficclass.value);
+      LOG_DEBUG (LOG_NAS, "            <Type of service - Traffic class mask>%u</Type of service - Traffic class mask>\n", (*packetfilters)[i].packetfilter.typdeofservice_trafficclass.mask);
     }
 
     if ((*packetfilters)[i].packetfilter.flags & TRAFFIC_FLOW_TEMPLATE_FLOW_LABEL_FLAG) {
-      printf ("            <Flow label>%u</Flow label>\n", (*packetfilters)[i].packetfilter.flowlabel);
+      LOG_DEBUG (LOG_NAS, "            <Flow label>%u</Flow label>\n", (*packetfilters)[i].packetfilter.flowlabel);
     }
 
-    printf ("        </Packet filter>\n");
+    LOG_DEBUG (LOG_NAS, "        </Packet filter>\n");
   }
 
-  printf ("    </Packet filter list>\n");
+  LOG_DEBUG (LOG_NAS, "    </Packet filter list>\n");
 }

@@ -26,8 +26,9 @@
 
 #include "security_types.h"
 #include "secu_defs.h"
+#include "secu_defs.h"
+#include "log.h"
 
-#define SECU_DEBUG 1
 /*!
    @brief Derive the kNASenc from kasme and perform truncate on the generated key to
    reduce his size to 128 bits. Definition of the derivation function can
@@ -52,9 +53,6 @@ derive_key_nas (
   uint8_t                                 s[7];
   uint8_t                                 out[32];
 
-#if SECU_DEBUG
-  int                                     i;
-#endif
   /*
    * FC
    */
@@ -77,15 +75,8 @@ derive_key_nas (
    */
   s[5] = 0x00;
   s[6] = 0x01;
-#if SECU_DEBUG
-  printf ("%s FC %d nas_alg_type distinguisher %d nas_enc_alg_identity %d\n", __FUNCTION__, FC_ALG_KEY_DER, nas_alg_type, nas_enc_alg_id);
-
-  for (i = 0; i < 7; i++) {
-    printf ("0x%02x ", s[i]);
-  }
-
-  printf ("\n");
-#endif
+  LOG_TRACE (LOG_NAS, "%s FC %d nas_alg_type distinguisher %d nas_enc_alg_identity %d\n", __FUNCTION__, FC_ALG_KEY_DER, nas_alg_type, nas_enc_alg_id);
+  LOG_STREAM_HEX(LOG_NAS, "s:", s, 7);
   kdf (kasme, 32, s, 7, out, 32);
   memcpy (knas, &out[31 - 16 + 1], 16);
   return 0;

@@ -110,14 +110,14 @@ dump_csfb_response_xml (
   CsfbResponse * csfbresponse,
   uint8_t iei)
 {
-  printf ("<Csfb Response>\n");
+  LOG_DEBUG (LOG_NAS, "<Csfb Response>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <CSFB response value>%u</CSFB response value>\n", *csfbresponse);
-  printf ("</Csfb Response>\n");
+  LOG_DEBUG (LOG_NAS, "    <CSFB response value>%u</CSFB response value>\n", *csfbresponse);
+  LOG_DEBUG (LOG_NAS, "</Csfb Response>\n");
 }

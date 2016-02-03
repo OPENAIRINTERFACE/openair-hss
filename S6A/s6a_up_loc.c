@@ -245,7 +245,6 @@ s6a_generate_update_location (
                     plmn,
                     mme_config_find_mnc_length (ulr_pP->visited_plmn.MCCdigit1, ulr_pP->visited_plmn.MCCdigit2, ulr_pP->visited_plmn.MCCdigit3, ulr_pP->visited_plmn.MNCdigit1, ulr_pP->visited_plmn.MNCdigit2, ulr_pP->visited_plmn.MNCdigit3)
       );
-    printf ("PLMN: %3s\n", plmn);
     value.os.data = plmn;
     value.os.len = 3;
     CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));

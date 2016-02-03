@@ -144,23 +144,23 @@ dump_protocol_configuration_options_xml (
 {
   int                                     i;
 
-  printf ("<Protocol Configuration Options>\n");
+  LOG_DEBUG (LOG_NAS, "<Protocol Configuration Options>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Configuration protol>%u</Configuration protol>\n", protocolconfigurationoptions->configurationprotol);
+  LOG_DEBUG (LOG_NAS, "    <Configuration protol>%u</Configuration protol>\n", protocolconfigurationoptions->configurationprotol);
   i = 0;
 
   while (i < protocolconfigurationoptions->num_protocol_id_or_container_id) {
-    printf ("        <Protocol ID>%u</Protocol ID>\n", protocolconfigurationoptions->protocolid[i]);
-    printf ("        <Length of protocol ID>%u</Length of protocol ID>\n", protocolconfigurationoptions->lengthofprotocolid[i]);
-    printf ("        %s", dump_octet_string_xml (&protocolconfigurationoptions->protocolidcontents[i]));
+    LOG_DEBUG (LOG_NAS, "        <Protocol ID>%u</Protocol ID>\n", protocolconfigurationoptions->protocolid[i]);
+    LOG_DEBUG (LOG_NAS, "        <Length of protocol ID>%u</Length of protocol ID>\n", protocolconfigurationoptions->lengthofprotocolid[i]);
+    LOG_DEBUG (LOG_NAS, "        %s", dump_octet_string_xml (&protocolconfigurationoptions->protocolidcontents[i]));
     i++;
   }
 
-  printf ("</Protocol Configuration Options>\n");
+  LOG_DEBUG (LOG_NAS, "</Protocol Configuration Options>\n");
 }

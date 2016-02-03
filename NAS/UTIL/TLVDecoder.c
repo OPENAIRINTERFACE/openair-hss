@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "TLVDecoder.h"
+#include "log.h"
 
 int                                     errorCodeDecoder = 0;
 
@@ -46,5 +47,5 @@ tlv_decode_perror (
     // No error or TLV_DECODE_ERR_OK
     return;
 
-  printf ("TLV decoder error: (%d, %s)\n", errorCodeDecoder, errorCodeStringDecoder[errorCodeDecoder * -1]);
+  LOG_ERROR (LOG_NAS, "TLV decoder : (%d, %s)", errorCodeDecoder, errorCodeStringDecoder[errorCodeDecoder * -1]);
 }

@@ -112,14 +112,14 @@ dump_request_type_xml (
   RequestType * requesttype,
   uint8_t iei)
 {
-  printf ("<Request Type>\n");
+  LOG_DEBUG (LOG_NAS, "<Request Type>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Request type value>%u</Request type value>\n", *requesttype);
-  printf ("</Request Type>\n");
+  LOG_DEBUG (LOG_NAS, "    <Request type value>%u</Request type value>\n", *requesttype);
+  LOG_DEBUG (LOG_NAS, "</Request Type>\n");
 }

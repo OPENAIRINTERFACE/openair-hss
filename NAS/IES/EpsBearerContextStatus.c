@@ -89,7 +89,7 @@ dump_eps_bearer_context_status_xml (
   EpsBearerContextStatus * epsbearercontextstatus,
   uint8_t iei)
 {
-  printf ("<Eps Bearer Context Status>\n");
-  printf ("    <EBI>%u</EBI>\n", *epsbearercontextstatus);
-  printf ("</Eps Bearer Context Status>\n");
+  LOG_DEBUG (LOG_NAS, "<Eps Bearer Context Status>\n");
+  LOG_DEBUG (LOG_NAS, "    <EBI>%u</EBI>\n", *epsbearercontextstatus);
+  LOG_DEBUG (LOG_NAS, "</Eps Bearer Context Status>\n");
 }

@@ -93,15 +93,15 @@ dump_voice_domain_preference_and_ue_usage_setting_xml (
   VoiceDomainPreferenceAndUeUsageSetting * voicedomainpreferenceandueusagesetting,
   uint8_t iei)
 {
-  printf ("<Voice domain preference and UE usage setting>\n");
+  LOG_DEBUG (LOG_NAS, "<Voice domain preference and UE usage setting>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <UE_USAGE_SETTING>%u</UE_USAGE_SETTING>\n", voicedomainpreferenceandueusagesetting->ue_usage_setting);
-  printf ("    <VOICE_DOMAIN_FOR_EUTRAN>%u</VOICE_DOMAIN_FOR_EUTRAN>\n", voicedomainpreferenceandueusagesetting->voice_domain_for_eutran);
-  printf ("</Voice domain preference and UE usage setting>\n");
+  LOG_DEBUG (LOG_NAS, "    <UE_USAGE_SETTING>%u</UE_USAGE_SETTING>\n", voicedomainpreferenceandueusagesetting->ue_usage_setting);
+  LOG_DEBUG (LOG_NAS, "    <VOICE_DOMAIN_FOR_EUTRAN>%u</VOICE_DOMAIN_FOR_EUTRAN>\n", voicedomainpreferenceandueusagesetting->voice_domain_for_eutran);
+  LOG_DEBUG (LOG_NAS, "</Voice domain preference and UE usage setting>\n");
 }

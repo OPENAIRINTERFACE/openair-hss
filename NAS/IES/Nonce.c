@@ -80,14 +80,14 @@ dump_nonce_xml (
   Nonce * nonce,
   uint8_t iei)
 {
-  printf ("<Nonce>\n");
+  LOG_DEBUG (LOG_NAS, "<Nonce>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Nonce value>%u</Nonce value>\n", *nonce);
-  printf ("</Nonce>\n");
+  LOG_DEBUG (LOG_NAS, "    <Nonce value>%u</Nonce value>\n", *nonce);
+  LOG_DEBUG (LOG_NAS, "</Nonce>\n");
 }

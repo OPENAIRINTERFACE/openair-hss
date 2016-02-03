@@ -112,14 +112,14 @@ dump_pdn_type_xml (
   PdnType * pdntype,
   uint8_t iei)
 {
-  printf ("<Pdn Type>\n");
+  LOG_DEBUG (LOG_NAS, "<Pdn Type>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <PDN type value>%u</PDN type value>\n", *pdntype);
-  printf ("</Pdn Type>\n");
+  LOG_DEBUG (LOG_NAS, "    <PDN type value>%u</PDN type value>\n", *pdntype);
+  LOG_DEBUG (LOG_NAS, "</Pdn Type>\n");
 }

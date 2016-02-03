@@ -112,14 +112,14 @@ dump_guti_type_xml (
   GutiType * gutitype,
   uint8_t iei)
 {
-  printf ("<Guti Type>\n");
+  LOG_DEBUG (LOG_NAS, "<Guti Type>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Guti type value>%u</Guti type value>\n", *gutitype);
-  printf ("</Guti Type>\n");
+  LOG_DEBUG (LOG_NAS, "    <Guti type value>%u</Guti type value>\n", *gutitype);
+  LOG_DEBUG (LOG_NAS, "</Guti Type>\n");
 }

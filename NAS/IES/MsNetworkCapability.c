@@ -100,14 +100,14 @@ dump_ms_network_capability_xml (
   MsNetworkCapability * msnetworkcapability,
   uint8_t iei)
 {
-  printf ("<Ms Network Capability>\n");
+  LOG_DEBUG (LOG_NAS, "<Ms Network Capability>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("%s", dump_octet_string_xml (&msnetworkcapability->msnetworkcapabilityvalue));
-  printf ("</Ms Network Capability>\n");
+  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&msnetworkcapability->msnetworkcapabilityvalue));
+  LOG_DEBUG (LOG_NAS, "</Ms Network Capability>\n");
 }

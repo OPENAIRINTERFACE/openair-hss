@@ -110,14 +110,14 @@ dump_additional_update_result_xml (
   AdditionalUpdateResult * additionalupdateresult,
   uint8_t iei)
 {
-  printf ("<Additional Update Result>\n");
+  LOG_DEBUG (LOG_NAS, "<Additional Update Result>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Additional update result value>%u</Additional update result value>\n", *additionalupdateresult);
-  printf ("</Additional Update Result>\n");
+  LOG_DEBUG (LOG_NAS, "    <Additional update result value>%u</Additional update result value>\n", *additionalupdateresult);
+  LOG_DEBUG (LOG_NAS, "</Additional Update Result>\n");
 }

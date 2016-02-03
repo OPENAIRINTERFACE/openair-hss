@@ -50,7 +50,7 @@
 #include "commonDef.h"
 #include "socket.h"
 
-#include "nas_log.h"
+#include "log.h"
 
 #include <stdio.h>              // printf, perror, snprintf
 #include <errno.h>              // errno

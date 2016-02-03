@@ -112,15 +112,15 @@ dump_eps_update_type_xml (
   EpsUpdateType * epsupdatetype,
   uint8_t iei)
 {
-  printf ("<Eps Update Type>\n");
+  LOG_DEBUG (LOG_NAS, "<Eps Update Type>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <active flag>%u</active flag>\n", epsupdatetype->activeflag);
-  printf ("    <EPS update type value>%u</EPS update type value>\n", epsupdatetype->epsupdatetypevalue);
-  printf ("</Eps Update Type>\n");
+  LOG_DEBUG (LOG_NAS, "    <active flag>%u</active flag>\n", epsupdatetype->activeflag);
+  LOG_DEBUG (LOG_NAS, "    <EPS update type value>%u</EPS update type value>\n", epsupdatetype->epsupdatetypevalue);
+  LOG_DEBUG (LOG_NAS, "</Eps Update Type>\n");
 }

@@ -82,14 +82,14 @@ dump_ss_code_xml (
   SsCode * sscode,
   uint8_t iei)
 {
-  printf ("<Ss Code>\n");
+  LOG_DEBUG (LOG_NAS, "<Ss Code>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <SS code value>%u</SS code value>\n", *sscode);
-  printf ("</Ss Code>\n");
+  LOG_DEBUG (LOG_NAS, "    <SS code value>%u</SS code value>\n", *sscode);
+  LOG_DEBUG (LOG_NAS, "</Ss Code>\n");
 }

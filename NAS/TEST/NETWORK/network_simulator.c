@@ -50,7 +50,7 @@
 #include "emm/msg/emm_cause.h"
 #include "esm/msg/esm_cause.h"
 
-#include "util/nas_log.h"
+#include "util/log.h"
 
 #include <stdio.h>              // printf, perror
 #include <errno.h>              // errno

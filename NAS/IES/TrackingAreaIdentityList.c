@@ -89,7 +89,7 @@ decode_tracking_area_identity_list (
       IES_DECODE_U16 (buffer, decoded, trackingareaidentitylist->tac[i]);
     }
   } else {
-    printf ("Type of TAIL list not handled %d", trackingareaidentitylist->typeoflist);
+    LOG_DEBUG (LOG_NAS, "Type of TAIL list not handled %d", trackingareaidentitylist->typeoflist);
   }
 #if NAS_DEBUG
   dump_tracking_area_identity_list_xml (trackingareaidentitylist, iei);
@@ -157,7 +157,7 @@ encode_tracking_area_identity_list (
       IES_ENCODE_U16 (buffer, encoded, trackingareaidentitylist->tac[i]);
     }
   } else {
-    printf ("Type of TAIL list not handled %d", trackingareaidentitylist->typeoflist);
+    LOG_DEBUG (LOG_NAS, "Type of TAIL list not handled %d", trackingareaidentitylist->typeoflist);
   }
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
   return encoded;
@@ -168,52 +168,52 @@ dump_tracking_area_identity_list_xml (
   TrackingAreaIdentityList * trackingareaidentitylist,
   uint8_t iei)
 {
-  printf ("<Tracking Area Identity List>\n");
+  LOG_DEBUG (LOG_NAS, "<Tracking Area Identity List>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Type of list>%u</Type of list>\n", trackingareaidentitylist->typeoflist);
+  LOG_DEBUG (LOG_NAS, "    <Type of list>%u</Type of list>\n", trackingareaidentitylist->typeoflist);
   /*
    * LW: number of elements is coded as N-1 (0 -> 1 element, 1 -> 2 elements...),
    * * * *  see 3GPP TS 24.301, section 9.9.3.33.1
    */
-  printf ("    <Number of elements>%u</Number of elements>\n", trackingareaidentitylist->numberofelements + 1);
+  LOG_DEBUG (LOG_NAS, "    <Number of elements>%u</Number of elements>\n", trackingareaidentitylist->numberofelements + 1);
   if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS == trackingareaidentitylist->typeoflist) {
-    printf ("    <MCC digit 2>%u</MCC digit 2>\n", trackingareaidentitylist->mccdigit2[0]);
-    printf ("    <MCC digit 1>%u</MCC digit 1>\n", trackingareaidentitylist->mccdigit1[0]);
-    printf ("    <MNC digit 3>%u</MNC digit 3>\n", trackingareaidentitylist->mncdigit3[0]);
-    printf ("    <MCC digit 3>%u</MCC digit 3>\n", trackingareaidentitylist->mccdigit3[0]);
-    printf ("    <MNC digit 2>%u</MNC digit 2>\n", trackingareaidentitylist->mncdigit2[0]);
-    printf ("    <MNC digit 1>%u</MNC digit 1>\n", trackingareaidentitylist->mncdigit1[0]);
-    printf ("    <TAC>0x%.4x</TAC>\n", trackingareaidentitylist->tac[0]);
+    LOG_DEBUG (LOG_NAS, "    <MCC digit 2>%u</MCC digit 2>\n", trackingareaidentitylist->mccdigit2[0]);
+    LOG_DEBUG (LOG_NAS, "    <MCC digit 1>%u</MCC digit 1>\n", trackingareaidentitylist->mccdigit1[0]);
+    LOG_DEBUG (LOG_NAS, "    <MNC digit 3>%u</MNC digit 3>\n", trackingareaidentitylist->mncdigit3[0]);
+    LOG_DEBUG (LOG_NAS, "    <MCC digit 3>%u</MCC digit 3>\n", trackingareaidentitylist->mccdigit3[0]);
+    LOG_DEBUG (LOG_NAS, "    <MNC digit 2>%u</MNC digit 2>\n", trackingareaidentitylist->mncdigit2[0]);
+    LOG_DEBUG (LOG_NAS, "    <MNC digit 1>%u</MNC digit 1>\n", trackingareaidentitylist->mncdigit1[0]);
+    LOG_DEBUG (LOG_NAS, "    <TAC>0x%.4x</TAC>\n", trackingareaidentitylist->tac[0]);
   } else  if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == trackingareaidentitylist->typeoflist) {
     int i;
-    printf ("    <MCC digit 2>%u</MCC digit 2>\n", trackingareaidentitylist->mccdigit2[0]);
-    printf ("    <MCC digit 1>%u</MCC digit 1>\n", trackingareaidentitylist->mccdigit1[0]);
-    printf ("    <MNC digit 3>%u</MNC digit 3>\n", trackingareaidentitylist->mncdigit3[0]);
-    printf ("    <MCC digit 3>%u</MCC digit 3>\n", trackingareaidentitylist->mccdigit3[0]);
-    printf ("    <MNC digit 2>%u</MNC digit 2>\n", trackingareaidentitylist->mncdigit2[0]);
-    printf ("    <MNC digit 1>%u</MNC digit 1>\n", trackingareaidentitylist->mncdigit1[0]);
+    LOG_DEBUG (LOG_NAS, "    <MCC digit 2>%u</MCC digit 2>\n", trackingareaidentitylist->mccdigit2[0]);
+    LOG_DEBUG (LOG_NAS, "    <MCC digit 1>%u</MCC digit 1>\n", trackingareaidentitylist->mccdigit1[0]);
+    LOG_DEBUG (LOG_NAS, "    <MNC digit 3>%u</MNC digit 3>\n", trackingareaidentitylist->mncdigit3[0]);
+    LOG_DEBUG (LOG_NAS, "    <MCC digit 3>%u</MCC digit 3>\n", trackingareaidentitylist->mccdigit3[0]);
+    LOG_DEBUG (LOG_NAS, "    <MNC digit 2>%u</MNC digit 2>\n", trackingareaidentitylist->mncdigit2[0]);
+    LOG_DEBUG (LOG_NAS, "    <MNC digit 1>%u</MNC digit 1>\n", trackingareaidentitylist->mncdigit1[0]);
     for (i=0; i <= trackingareaidentitylist->numberofelements; i++) {
-      printf ("    <TAC>0x%.4x</TAC>\n", trackingareaidentitylist->tac[i]);
+      LOG_DEBUG (LOG_NAS, "    <TAC>0x%.4x</TAC>\n", trackingareaidentitylist->tac[i]);
     }
   } else if (TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS == trackingareaidentitylist->typeoflist) {
     int i;
     for (i=0; i <= trackingareaidentitylist->numberofelements; i++) {
-      printf ("    <MCC digit 2>%u</MCC digit 2>\n", trackingareaidentitylist->mccdigit2[i]);
-      printf ("    <MCC digit 1>%u</MCC digit 1>\n", trackingareaidentitylist->mccdigit1[i]);
-      printf ("    <MNC digit 3>%u</MNC digit 3>\n", trackingareaidentitylist->mncdigit3[i]);
-      printf ("    <MCC digit 3>%u</MCC digit 3>\n", trackingareaidentitylist->mccdigit3[i]);
-      printf ("    <MNC digit 2>%u</MNC digit 2>\n", trackingareaidentitylist->mncdigit2[i]);
-      printf ("    <MNC digit 1>%u</MNC digit 1>\n", trackingareaidentitylist->mncdigit1[i]);
-      printf ("    <TAC>0x%.4x</TAC>\n", trackingareaidentitylist->tac[i]);
+      LOG_DEBUG (LOG_NAS, "    <MCC digit 2>%u</MCC digit 2>\n", trackingareaidentitylist->mccdigit2[i]);
+      LOG_DEBUG (LOG_NAS, "    <MCC digit 1>%u</MCC digit 1>\n", trackingareaidentitylist->mccdigit1[i]);
+      LOG_DEBUG (LOG_NAS, "    <MNC digit 3>%u</MNC digit 3>\n", trackingareaidentitylist->mncdigit3[i]);
+      LOG_DEBUG (LOG_NAS, "    <MCC digit 3>%u</MCC digit 3>\n", trackingareaidentitylist->mccdigit3[i]);
+      LOG_DEBUG (LOG_NAS, "    <MNC digit 2>%u</MNC digit 2>\n", trackingareaidentitylist->mncdigit2[i]);
+      LOG_DEBUG (LOG_NAS, "    <MNC digit 1>%u</MNC digit 1>\n", trackingareaidentitylist->mncdigit1[i]);
+      LOG_DEBUG (LOG_NAS, "    <TAC>0x%.4x</TAC>\n", trackingareaidentitylist->tac[i]);
     }
   } else {
-    printf ("Type of TAIL list not handled %d", trackingareaidentitylist->typeoflist);
+    LOG_DEBUG (LOG_NAS, "Type of TAIL list not handled %d", trackingareaidentitylist->typeoflist);
   }
-  printf ("</Tracking Area Identity List>\n");
+  LOG_DEBUG (LOG_NAS, "</Tracking Area Identity List>\n");
 }

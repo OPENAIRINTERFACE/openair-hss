@@ -110,14 +110,14 @@ dump_service_type_xml (
   ServiceType * servicetype,
   uint8_t iei)
 {
-  printf ("<Service Type>\n");
+  LOG_DEBUG (LOG_NAS, "<Service Type>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Service type value>%u</Service type value>\n", *servicetype);
-  printf ("</Service Type>\n");
+  LOG_DEBUG (LOG_NAS, "    <Service type value>%u</Service type value>\n", *servicetype);
+  LOG_DEBUG (LOG_NAS, "</Service Type>\n");
 }

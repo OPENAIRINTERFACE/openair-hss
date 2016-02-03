@@ -117,30 +117,30 @@ dump_mobile_station_classmark_2_xml (
   MobileStationClassmark2 * mobilestationclassmark2,
   uint8_t iei)
 {
-  printf ("<Mobile Station Classmark 2>\n");
+  LOG_DEBUG (LOG_NAS, "<Mobile Station Classmark 2>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Revision level>%u</Revision level>\n", mobilestationclassmark2->revisionlevel);
-  printf ("    <ES IND>%u</ES IND>\n", mobilestationclassmark2->esind);
-  printf ("    <A51>%u</A51>\n", mobilestationclassmark2->a51);
-  printf ("    <RF power capability>%u</RF power capability>\n", mobilestationclassmark2->rfpowercapability);
-  printf ("    <PS capability>%u</PS capability>\n", mobilestationclassmark2->pscapability);
-  printf ("    <SS Screen indicator>%u</SS Screen indicator>\n", mobilestationclassmark2->ssscreenindicator);
-  printf ("    <SM capability>%u</SM capability>\n", mobilestationclassmark2->smcapability);
-  printf ("    <VBS>%u</VBS>\n", mobilestationclassmark2->vbs);
-  printf ("    <VGCS>%u</VGCS>\n", mobilestationclassmark2->vgcs);
-  printf ("    <FC>%u</FC>\n", mobilestationclassmark2->fc);
-  printf ("    <CM3>%u</CM3>\n", mobilestationclassmark2->cm3);
-  printf ("    <LCSVA CAP>%u</LCSVA CAP>\n", mobilestationclassmark2->lcsvacap);
-  printf ("    <UCS2>%u</UCS2>\n", mobilestationclassmark2->ucs2);
-  printf ("    <SoLSA>%u</SoLSA>\n", mobilestationclassmark2->solsa);
-  printf ("    <CMSP>%u</CMSP>\n", mobilestationclassmark2->cmsp);
-  printf ("    <A53>%u</A53>\n", mobilestationclassmark2->a53);
-  printf ("    <A52>%u</A52>\n", mobilestationclassmark2->a52);
-  printf ("</Mobile Station Classmark 2>\n");
+  LOG_DEBUG (LOG_NAS, "    <Revision level>%u</Revision level>\n", mobilestationclassmark2->revisionlevel);
+  LOG_DEBUG (LOG_NAS, "    <ES IND>%u</ES IND>\n", mobilestationclassmark2->esind);
+  LOG_DEBUG (LOG_NAS, "    <A51>%u</A51>\n", mobilestationclassmark2->a51);
+  LOG_DEBUG (LOG_NAS, "    <RF power capability>%u</RF power capability>\n", mobilestationclassmark2->rfpowercapability);
+  LOG_DEBUG (LOG_NAS, "    <PS capability>%u</PS capability>\n", mobilestationclassmark2->pscapability);
+  LOG_DEBUG (LOG_NAS, "    <SS Screen indicator>%u</SS Screen indicator>\n", mobilestationclassmark2->ssscreenindicator);
+  LOG_DEBUG (LOG_NAS, "    <SM capability>%u</SM capability>\n", mobilestationclassmark2->smcapability);
+  LOG_DEBUG (LOG_NAS, "    <VBS>%u</VBS>\n", mobilestationclassmark2->vbs);
+  LOG_DEBUG (LOG_NAS, "    <VGCS>%u</VGCS>\n", mobilestationclassmark2->vgcs);
+  LOG_DEBUG (LOG_NAS, "    <FC>%u</FC>\n", mobilestationclassmark2->fc);
+  LOG_DEBUG (LOG_NAS, "    <CM3>%u</CM3>\n", mobilestationclassmark2->cm3);
+  LOG_DEBUG (LOG_NAS, "    <LCSVA CAP>%u</LCSVA CAP>\n", mobilestationclassmark2->lcsvacap);
+  LOG_DEBUG (LOG_NAS, "    <UCS2>%u</UCS2>\n", mobilestationclassmark2->ucs2);
+  LOG_DEBUG (LOG_NAS, "    <SoLSA>%u</SoLSA>\n", mobilestationclassmark2->solsa);
+  LOG_DEBUG (LOG_NAS, "    <CMSP>%u</CMSP>\n", mobilestationclassmark2->cmsp);
+  LOG_DEBUG (LOG_NAS, "    <A53>%u</A53>\n", mobilestationclassmark2->a53);
+  LOG_DEBUG (LOG_NAS, "    <A52>%u</A52>\n", mobilestationclassmark2->a52);
+  LOG_DEBUG (LOG_NAS, "</Mobile Station Classmark 2>\n");
 }

@@ -82,14 +82,14 @@ dump_lcs_indicator_xml (
   LcsIndicator * lcsindicator,
   uint8_t iei)
 {
-  printf ("<Lcs Indicator>\n");
+  LOG_DEBUG (LOG_NAS, "<Lcs Indicator>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <LCS indicator value>%u</LCS indicator value>\n", *lcsindicator);
-  printf ("</Lcs Indicator>\n");
+  LOG_DEBUG (LOG_NAS, "    <LCS indicator value>%u</LCS indicator value>\n", *lcsindicator);
+  LOG_DEBUG (LOG_NAS, "</Lcs Indicator>\n");
 }

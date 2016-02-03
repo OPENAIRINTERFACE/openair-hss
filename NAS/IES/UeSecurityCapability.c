@@ -138,25 +138,25 @@ dump_ue_security_capability_xml (
   UeSecurityCapability * uesecuritycapability,
   uint8_t iei)
 {
-  printf ("<Ue Security Capability>\n");
+  LOG_DEBUG (LOG_NAS, "<Ue Security Capability>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <EEA>%u</EEA>\n", uesecuritycapability->eea);
-  printf ("    <EIA>%u</EIA>\n", uesecuritycapability->eia);
+  LOG_DEBUG (LOG_NAS, "    <EEA>%u</EEA>\n", uesecuritycapability->eea);
+  LOG_DEBUG (LOG_NAS, "    <EIA>%u</EIA>\n", uesecuritycapability->eia);
 
   if (uesecuritycapability->umts_present == 1) {
-    printf ("    <UEA>%u</UEA>\n", uesecuritycapability->uea);
-    printf ("    <UIA>%u</UIA>\n", uesecuritycapability->uia);
+    LOG_DEBUG (LOG_NAS, "    <UEA>%u</UEA>\n", uesecuritycapability->uea);
+    LOG_DEBUG (LOG_NAS, "    <UIA>%u</UIA>\n", uesecuritycapability->uia);
   }
 
   if (uesecuritycapability->gprs_present == 1) {
-    printf ("    <GEA>%u</GEA>\n", uesecuritycapability->gea);
+    LOG_DEBUG (LOG_NAS, "    <GEA>%u</GEA>\n", uesecuritycapability->gea);
   }
 
-  printf ("</Ue Security Capability>\n");
+  LOG_DEBUG (LOG_NAS, "</Ue Security Capability>\n");
 }

@@ -90,14 +90,14 @@ dump_packet_flow_identifier_xml (
   PacketFlowIdentifier * packetflowidentifier,
   uint8_t iei)
 {
-  printf ("<Packet Flow Identifier>\n");
+  LOG_DEBUG (LOG_NAS, "<Packet Flow Identifier>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Packet flow identifier value>%u</Packet flow identifier value>\n", *packetflowidentifier);
-  printf ("</Packet Flow Identifier>\n");
+  LOG_DEBUG (LOG_NAS, "    <Packet flow identifier value>%u</Packet flow identifier value>\n", *packetflowidentifier);
+  LOG_DEBUG (LOG_NAS, "</Packet Flow Identifier>\n");
 }

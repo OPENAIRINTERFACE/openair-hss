@@ -214,39 +214,39 @@ extern                                  "C" {
   static void
                                           nwGtpv2cDisplayBanner (
   NwGtpv2cStackT * thiz) {
-#ifdef NW_GTPV2C_DISPLAY_LICENCE_INFO
-    printf (" *----------------------------------------------------------------------------*\n");
-    printf (" *                                                                            *\n");
-    printf (" *                             n w - g t p v 2 c                              *\n");
-    printf (" *    G P R S    T u n n e l i n g    P r o t o c o l   v 2 c   S t a c k     *\n");
-    printf (" *                                                                            *\n");
-    printf (" *                                                                            *\n");
-    printf (" * Copyright (c) 2010-2011 Amit Chawre                                        *\n");
-    printf (" * All rights reserved.                                                       *\n");
-    printf (" *                                                                            *\n");
-    printf (" * Redistribution and use in source and binary forms, with or without         *\n");
-    printf (" * modification, are permitted provided that the following conditions         *\n");
-    printf (" * are met:                                                                   *\n");
-    printf (" *                                                                            *\n");
-    printf (" * 1. Redistributions of source code must retain the above copyright          *\n");
-    printf (" *    notice, this list of conditions and the following disclaimer.           *\n");
-    printf (" * 2. Redistributions in binary form must reproduce the above copyright       *\n");
-    printf (" *    notice, this list of conditions and the following disclaimer in the     *\n");
-    printf (" *    documentation and/or other materials provided with the distribution.    *\n");
-    printf (" * 3. The name of the author may not be used to endorse or promote products   *\n");
-    printf (" *    derived from this software without specific prior written permission.   *\n");
-    printf (" *                                                                            *\n");
-    printf (" * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR       *\n");
-    printf (" * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES  *\n");
-    printf (" * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.    *\n");
-    printf (" * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,           *\n");
-    printf (" * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT   *\n");
-    printf (" * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,  *\n");
-    printf (" * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY      *\n");
-    printf (" * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT        *\n");
-    printf (" * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF   *\n");
-    printf (" * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.          *\n");
-    printf (" *----------------------------------------------------------------------------*\n\n");
+#if DISPLAY_LICENCE_INFO
+    LOG_INFO(LOG_GTPV2C, " *----------------------------------------------------------------------------*\n");
+    LOG_INFO(LOG_GTPV2C, " *                                                                            *\n");
+    LOG_INFO(LOG_GTPV2C, " *                             n w - g t p v 2 c                              *\n");
+    LOG_INFO(LOG_GTPV2C, " *    G P R S    T u n n e l i n g    P r o t o c o l   v 2 c   S t a c k     *\n");
+    LOG_INFO(LOG_GTPV2C, " *                                                                            *\n");
+    LOG_INFO(LOG_GTPV2C, " *                                                                            *\n");
+    LOG_INFO(LOG_GTPV2C, " * Copyright (c) 2010-2011 Amit Chawre                                        *\n");
+    LOG_INFO(LOG_GTPV2C, " * All rights reserved.                                                       *\n");
+    LOG_INFO(LOG_GTPV2C, " *                                                                            *\n");
+    LOG_INFO(LOG_GTPV2C, " * Redistribution and use in source and binary forms, with or without         *\n");
+    LOG_INFO(LOG_GTPV2C, " * modification, are permitted provided that the following conditions         *\n");
+    LOG_INFO(LOG_GTPV2C, " * are met:                                                                   *\n");
+    LOG_INFO(LOG_GTPV2C, " *                                                                            *\n");
+    LOG_INFO(LOG_GTPV2C, " * 1. Redistributions of source code must retain the above copyright          *\n");
+    LOG_INFO(LOG_GTPV2C, " *    notice, this list of conditions and the following disclaimer.           *\n");
+    LOG_INFO(LOG_GTPV2C, " * 2. Redistributions in binary form must reproduce the above copyright       *\n");
+    LOG_INFO(LOG_GTPV2C, " *    notice, this list of conditions and the following disclaimer in the     *\n");
+    LOG_INFO(LOG_GTPV2C, " *    documentation and/or other materials provided with the distribution.    *\n");
+    LOG_INFO(LOG_GTPV2C, " * 3. The name of the author may not be used to endorse or promote products   *\n");
+    LOG_INFO(LOG_GTPV2C, " *    derived from this software without specific prior written permission.   *\n");
+    LOG_INFO(LOG_GTPV2C, " *                                                                            *\n");
+    LOG_INFO(LOG_GTPV2C, " * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR       *\n");
+    LOG_INFO(LOG_GTPV2C, " * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES  *\n");
+    LOG_INFO(LOG_GTPV2C, " * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.    *\n");
+    LOG_INFO(LOG_GTPV2C, " * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,           *\n");
+    LOG_INFO(LOG_GTPV2C, " * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT   *\n");
+    LOG_INFO(LOG_GTPV2C, " * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,  *\n");
+    LOG_INFO(LOG_GTPV2C, " * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY      *\n");
+    LOG_INFO(LOG_GTPV2C, " * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT        *\n");
+    LOG_INFO(LOG_GTPV2C, " * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF   *\n");
+    LOG_INFO(LOG_GTPV2C, " * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.          *\n");
+    LOG_INFO(LOG_GTPV2C, " *----------------------------------------------------------------------------*\n\n");
 #endif
   }
 

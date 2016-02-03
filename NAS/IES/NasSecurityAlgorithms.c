@@ -83,15 +83,15 @@ dump_nas_security_algorithms_xml (
   NasSecurityAlgorithms * nassecurityalgorithms,
   uint8_t iei)
 {
-  printf ("<Nas Security Algorithms>\n");
+  LOG_DEBUG (LOG_NAS, "<Nas Security Algorithms>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Type of ciphering algorithm>%u</Type of ciphering algorithm>\n", nassecurityalgorithms->typeofcipheringalgorithm);
-  printf ("    <Type of integrity algorithm>%u</Type of integrity algorithm>\n", nassecurityalgorithms->typeofintegrityalgorithm);
-  printf ("</Nas Security Algorithms>\n");
+  LOG_DEBUG (LOG_NAS, "    <Type of ciphering algorithm>%u</Type of ciphering algorithm>\n", nassecurityalgorithms->typeofcipheringalgorithm);
+  LOG_DEBUG (LOG_NAS, "    <Type of integrity algorithm>%u</Type of integrity algorithm>\n", nassecurityalgorithms->typeofintegrityalgorithm);
+  LOG_DEBUG (LOG_NAS, "</Nas Security Algorithms>\n");
 }

@@ -104,15 +104,15 @@ dump_pdn_address_xml (
   PdnAddress * pdnaddress,
   uint8_t iei)
 {
-  printf ("<Pdn Address>\n");
+  LOG_DEBUG (LOG_NAS, "<Pdn Address>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <PDN type value>%u</PDN type value>\n", pdnaddress->pdntypevalue);
-  printf ("%s", dump_octet_string_xml (&pdnaddress->pdnaddressinformation));
-  printf ("</Pdn Address>\n");
+  LOG_DEBUG (LOG_NAS, "    <PDN type value>%u</PDN type value>\n", pdnaddress->pdntypevalue);
+  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&pdnaddress->pdnaddressinformation));
+  LOG_DEBUG (LOG_NAS, "</Pdn Address>\n");
 }

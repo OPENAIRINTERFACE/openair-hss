@@ -90,14 +90,14 @@ dump_daylight_saving_time_xml (
   DaylightSavingTime * daylightsavingtime,
   uint8_t iei)
 {
-  printf ("<Daylight Saving Time>\n");
+  LOG_DEBUG (LOG_NAS, "<Daylight Saving Time>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Value>%u</Value>\n", *daylightsavingtime);
-  printf ("</Daylight Saving Time>\n");
+  LOG_DEBUG (LOG_NAS, "    <Value>%u</Value>\n", *daylightsavingtime);
+  LOG_DEBUG (LOG_NAS, "</Daylight Saving Time>\n");
 }

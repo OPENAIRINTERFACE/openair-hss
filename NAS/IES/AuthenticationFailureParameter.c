@@ -100,14 +100,14 @@ dump_authentication_failure_parameter_xml (
   AuthenticationFailureParameter * authenticationfailureparameter,
   uint8_t iei)
 {
-  printf ("<Authentication Failure Parameter>\n");
+  LOG_DEBUG (LOG_NAS, "<Authentication Failure Parameter>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("%s", dump_octet_string_xml (&authenticationfailureparameter->auts));
-  printf ("</Authentication Failure Parameter>\n");
+  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&authenticationfailureparameter->auts));
+  LOG_DEBUG (LOG_NAS, "</Authentication Failure Parameter>\n");
 }

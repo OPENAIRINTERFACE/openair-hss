@@ -100,14 +100,14 @@ dump_cli_xml (
   Cli * cli,
   uint8_t iei)
 {
-  printf ("<Cli>\n");
+  LOG_DEBUG (LOG_NAS, "<Cli>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("%s", dump_octet_string_xml (&cli->clivalue));
-  printf ("</Cli>\n");
+  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&cli->clivalue));
+  LOG_DEBUG (LOG_NAS, "</Cli>\n");
 }

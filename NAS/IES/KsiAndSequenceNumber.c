@@ -83,15 +83,15 @@ dump_ksi_and_sequence_number_xml (
   KsiAndSequenceNumber * ksiandsequencenumber,
   uint8_t iei)
 {
-  printf ("<Ksi And Sequence Number>\n");
+  LOG_DEBUG (LOG_NAS, "<Ksi And Sequence Number>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <KSI>%u</KSI>\n", ksiandsequencenumber->ksi);
-  printf ("    <Sequence number>%u</Sequence number>\n", ksiandsequencenumber->sequencenumber);
-  printf ("</Ksi And Sequence Number>\n");
+  LOG_DEBUG (LOG_NAS, "    <KSI>%u</KSI>\n", ksiandsequencenumber->ksi);
+  LOG_DEBUG (LOG_NAS, "    <Sequence number>%u</Sequence number>\n", ksiandsequencenumber->sequencenumber);
+  LOG_DEBUG (LOG_NAS, "</Ksi And Sequence Number>\n");
 }

@@ -110,14 +110,14 @@ dump_ue_radio_capability_information_update_needed_xml (
   UeRadioCapabilityInformationUpdateNeeded * ueradiocapabilityinformationupdateneeded,
   uint8_t iei)
 {
-  printf ("<Ue Radio Capability Information Update Needed>\n");
+  LOG_DEBUG (LOG_NAS, "<Ue Radio Capability Information Update Needed>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <URC upd>%u</URC upd>\n", *ueradiocapabilityinformationupdateneeded);
-  printf ("</Ue Radio Capability Information Update Needed>\n");
+  LOG_DEBUG (LOG_NAS, "    <URC upd>%u</URC upd>\n", *ueradiocapabilityinformationupdateneeded);
+  LOG_DEBUG (LOG_NAS, "</Ue Radio Capability Information Update Needed>\n");
 }

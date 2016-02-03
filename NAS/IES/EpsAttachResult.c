@@ -112,14 +112,14 @@ dump_eps_attach_result_xml (
   EpsAttachResult * epsattachresult,
   uint8_t iei)
 {
-  printf ("<Eps Attach Result>\n");
+  LOG_DEBUG (LOG_NAS, "<Eps Attach Result>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <EPS attach result value>%u</EPS attach result value>\n", *epsattachresult);
-  printf ("</Eps Attach Result>\n");
+  LOG_DEBUG (LOG_NAS, "    <EPS attach result value>%u</EPS attach result value>\n", *epsattachresult);
+  LOG_DEBUG (LOG_NAS, "</Eps Attach Result>\n");
 }

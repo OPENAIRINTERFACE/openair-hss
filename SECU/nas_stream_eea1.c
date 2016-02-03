@@ -34,8 +34,6 @@
 #include "snow3g.h"
 #include "dynamic_memory_check.h"
 
-// #define SECU_DEBUG 1
-
 
 int
 nas_stream_encrypt_eea1 (

@@ -96,20 +96,20 @@ dump_location_area_identification_xml (
   LocationAreaIdentification * locationareaidentification,
   uint8_t iei)
 {
-  printf ("<Location Area Identification>\n");
+  LOG_DEBUG (LOG_NAS, "<Location Area Identification>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <MCC digit 2>%u</MCC digit 2>\n", locationareaidentification->mccdigit2);
-  printf ("    <MCC digit 1>%u</MCC digit 1>\n", locationareaidentification->mccdigit1);
-  printf ("    <MNC digit 3>%u</MNC digit 3>\n", locationareaidentification->mncdigit3);
-  printf ("    <MCC digit 3>%u</MCC digit 3>\n", locationareaidentification->mccdigit3);
-  printf ("    <MNC digit 2>%u</MNC digit 2>\n", locationareaidentification->mncdigit2);
-  printf ("    <MNC digit 1>%u</MNC digit 1>\n", locationareaidentification->mncdigit1);
-  printf ("    <LAC>%u</LAC>\n", locationareaidentification->lac);
-  printf ("</Location Area Identification>\n");
+  LOG_DEBUG (LOG_NAS, "    <MCC digit 2>%u</MCC digit 2>\n", locationareaidentification->mccdigit2);
+  LOG_DEBUG (LOG_NAS, "    <MCC digit 1>%u</MCC digit 1>\n", locationareaidentification->mccdigit1);
+  LOG_DEBUG (LOG_NAS, "    <MNC digit 3>%u</MNC digit 3>\n", locationareaidentification->mncdigit3);
+  LOG_DEBUG (LOG_NAS, "    <MCC digit 3>%u</MCC digit 3>\n", locationareaidentification->mccdigit3);
+  LOG_DEBUG (LOG_NAS, "    <MNC digit 2>%u</MNC digit 2>\n", locationareaidentification->mncdigit2);
+  LOG_DEBUG (LOG_NAS, "    <MNC digit 1>%u</MNC digit 1>\n", locationareaidentification->mncdigit1);
+  LOG_DEBUG (LOG_NAS, "    <LAC>%u</LAC>\n", locationareaidentification->lac);
+  LOG_DEBUG (LOG_NAS, "</Location Area Identification>\n");
 }

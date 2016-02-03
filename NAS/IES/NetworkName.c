@@ -111,17 +111,17 @@ dump_network_name_xml (
   NetworkName * networkname,
   uint8_t iei)
 {
-  printf ("<Network Name>\n");
+  LOG_DEBUG (LOG_NAS, "<Network Name>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Coding scheme>%u</Coding scheme>\n", networkname->codingscheme);
-  printf ("    <Add CI>%u</Add CI>\n", networkname->addci);
-  printf ("    <Number of spare bits in last octet>%u</Number of spare bits in last octet>\n", networkname->numberofsparebitsinlastoctet);
-  printf ("%s", dump_octet_string_xml (&networkname->textstring));
-  printf ("</Network Name>\n");
+  LOG_DEBUG (LOG_NAS, "    <Coding scheme>%u</Coding scheme>\n", networkname->codingscheme);
+  LOG_DEBUG (LOG_NAS, "    <Add CI>%u</Add CI>\n", networkname->addci);
+  LOG_DEBUG (LOG_NAS, "    <Number of spare bits in last octet>%u</Number of spare bits in last octet>\n", networkname->numberofsparebitsinlastoctet);
+  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&networkname->textstring));
+  LOG_DEBUG (LOG_NAS, "</Network Name>\n");
 }

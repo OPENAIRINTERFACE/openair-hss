@@ -68,14 +68,7 @@ char                                    g_log_level2str[MAX_LOG_PROTOS][LOG_MAX_
 int                                     g_log_start_time_second = 0;
 log_level_t                             g_log_level[MAX_LOG_PROTOS];
 
-
 typedef unsigned long                   log_message_number_t;
-typedef struct log_queue_item_s {
-  char                                   *message_str;
-  uint32_t                                message_str_size;
-  uint8_t                                *message_bin;
-  uint32_t                                message_bin_size;
-} log_queue_item_t;
 
 log_message_number_t                    g_log_message_number = 0;
 struct lfds611_queue_state             *g_log_message_queue_p = NULL;
@@ -230,7 +223,8 @@ log_init (
 
 //------------------------------------------------------------------------------
 // listen to ITTI events
-void log_itti_connect(void)
+void log_itti_connect(
+  void)
 {
   int                                     rv = 0;
   rv = itti_create_task (TASK_LOG, log_task, NULL);
@@ -291,6 +285,228 @@ log_end (
 }
 
 //------------------------------------------------------------------------------
+void log_stream_hex(
+  const log_level_t log_levelP,
+  const log_proto_t protoP,
+  const char *const source_fileP,
+  const unsigned int line_numP,
+  const char *const messageP,
+  const char *const streamP,
+  const unsigned int sizeP)
+{
+  log_queue_item_t ** context = NULL;
+  int                 octet_index = 0;
+
+  if (messageP) {
+    log_message_start(log_levelP, protoP, context, source_fileP, line_numP, "%s (hexa)", messageP);
+  } else {
+    log_message_start(log_levelP, protoP, context, source_fileP, line_numP, "(hexa):");
+  }
+  if ((streamP) && (*context)) {
+    for (octet_index = 0; octet_index < sizeP; octet_index++) {
+      log_message_add(*context, " %02x", streamP[octet_index]);
+    }
+    log_message_finish(*context);
+  }
+}
+
+//------------------------------------------------------------------------------
+void log_stream_hex_array(
+  const log_level_t log_levelP,
+  const log_proto_t protoP,
+  const char *const source_fileP,
+  const unsigned int line_numP,
+  const char *const messageP,
+  const char *const streamP,
+  const unsigned int sizeP)
+{
+  log_queue_item_t ** context = NULL;
+  int                 octet_index = 0;
+  int                 index = 0;
+
+  if (messageP) {
+    log_message(log_levelP, protoP, source_fileP, line_numP, "%s", messageP);
+  }
+  log_message(log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|");
+  log_message(log_levelP, protoP, source_fileP, line_numP, "      |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |");
+  log_message(log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|");
+
+  if (streamP) {
+    for (octet_index = 0; octet_index < sizeP; octet_index++) {
+      if ((octet_index % 16) == 0) {
+        if (octet_index != 0) {
+          log_message_add(*context, " |");
+          log_message_finish(*context);
+        }
+        log_message_start(log_levelP, protoP, context, source_fileP, line_numP, " %04d |", octet_index);
+      }
+
+      /*
+       * Print every single octet in hexadecimal form
+       */
+      log_message_add(*context, " %02x", streamP[octet_index]);
+    }
+    /*
+     * Append enough spaces and put final pipe
+     */
+    for (index = octet_index; index < 16; ++index) {
+      log_message_add(*context, "   ");
+    }
+    log_message_add(*context, " |");
+    log_message_finish(*context);
+  }
+}
+
+//------------------------------------------------------------------------------
+void
+log_message_add (
+  log_queue_item_t * contextP,
+  char *format,
+  ...)
+{
+  va_list                                 args;
+  int                                     rv;
+  char                                   *char_message_p = NULL;
+
+  if (contextP) {
+	char_message_p = contextP->message_str;
+    if (char_message_p) {
+      va_start (args, format);
+      rv = vsnprintf (&char_message_p[contextP->message_str_size], LOG_MAX_MESSAGE_LENGTH - contextP->message_str_size, format, args);
+      va_end (args);
+
+      if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - contextP->message_str_size) < rv)) {
+        fprintf (stderr, "Error while logging message");
+      } else {
+        contextP->message_str_size += rv;
+      }
+    }
+  }
+}
+//------------------------------------------------------------------------------
+void
+log_message_finish (
+  log_queue_item_t * contextP)
+{
+  int                                     rv;
+  char                                   *char_message_p = NULL;
+
+  if (contextP) {
+    char_message_p = contextP->message_str;
+    if (char_message_p) {
+      rv = snprintf (&char_message_p[contextP->message_str_size], LOG_MAX_MESSAGE_LENGTH - contextP->message_str_size, "\n");
+
+      if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - contextP->message_str_size) < rv)) {
+        char_message_p[LOG_MAX_MESSAGE_LENGTH-1] = '\0';
+        fprintf (stderr, "Error while logging message");
+      } else {
+        contextP->message_str_size += rv;
+      }
+      // send message
+      rv = lfds611_queue_enqueue (g_log_message_queue_p, contextP);
+
+      if (0 == rv) {
+        fprintf (stderr, "Error while lfds611_queue_guaranteed_enqueue message %s in LOG", char_message_p);
+        rv = lfds611_stack_guaranteed_push (g_log_memory_stack_p, char_message_p);
+        FREE_CHECK (contextP);
+      }
+    } else {
+      FREE_CHECK (contextP);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+void
+log_message_start (
+  const log_level_t log_levelP,
+  const log_proto_t protoP,
+  log_queue_item_t ** contextP, // Out parameter
+  const char *const source_fileP,
+  const unsigned int line_numP,
+  char *format,
+  ...)
+{
+  va_list                                 args;
+  int                                     rv;
+  int                                     rv2;
+  int                                     filename_length = 0;
+  char                                   *char_message_p = NULL;
+
+  if ((MIN_LOG_PROTOS > protoP) || (MAX_LOG_PROTOS <= protoP)) {
+    return;
+  }
+  if ((MIN_LOG_LEVEL > log_levelP) || (MAX_LOG_LEVEL <= log_levelP)) {
+    return;
+  }
+  if (log_levelP > g_log_level[protoP]) {
+    return;
+  }
+  *contextP = MALLOC_CHECK (sizeof (log_queue_item_t));
+
+  if (NULL != *contextP) {
+    rv = lfds611_stack_pop (g_log_memory_stack_p, (void **)&char_message_p);
+
+    if (0 == rv) {
+      log_flush_messages ();
+      rv = lfds611_stack_pop (g_log_memory_stack_p, (void **)&char_message_p);
+    }
+
+    if (1 == rv) {
+      struct timeval elapsed_time;
+      log_get_elapsed_time_since_start(&elapsed_time);
+      filename_length = strlen(source_fileP);
+      if (filename_length > LOG_MAX_FILENAME_LENGTH) {
+        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%5.5s|%6.6s|%s:%u| ",
+            __sync_fetch_and_add (&g_log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
+            &g_log_level2str[log_levelP][0], &g_log_proto2str[protoP][0],
+            &source_fileP[filename_length-LOG_MAX_FILENAME_LENGTH], line_numP);
+      } else {
+        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%5.5s|%6.6s|%s:%u| ",
+            __sync_fetch_and_add (&g_log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
+            &g_log_level2str[log_levelP][0], &g_log_proto2str[protoP][0], source_fileP, line_numP);
+      }
+
+      if ((0 > rv) || (LOG_MAX_MESSAGE_LENGTH < rv)) {
+        fprintf (stderr, "Error while logging message : %s", &g_log_proto2str[protoP][0]);
+        goto error_event_start;
+      }
+
+      va_start (args, format);
+      rv2 = vsnprintf (&char_message_p[rv], LOG_MAX_MESSAGE_LENGTH - rv, format, args);
+      va_end (args);
+
+      if ((0 > rv2) || ((LOG_MAX_MESSAGE_LENGTH - rv) < rv2)) {
+        fprintf (stderr, "Error while logging message : %s", &g_log_proto2str[protoP][0]);
+        goto error_event_start;
+      }
+
+      rv += rv2;
+      rv2 = snprintf (&char_message_p[rv], LOG_MAX_MESSAGE_LENGTH - rv, "\n");
+
+      if ((0 > rv2) || ((LOG_MAX_MESSAGE_LENGTH - rv) < rv2)) {
+        fprintf (stderr, "Error while logging message : %s", &g_log_proto2str[protoP][0]);
+        goto error_event_start;
+      }
+
+      rv += rv2;
+      (*contextP)->message_str = char_message_p;
+      (*contextP)->message_str_size = rv;
+      return;
+    } else {
+      FREE_CHECK (*contextP);
+      fprintf (stderr, "Error while lfds611_stack_pop()\n");
+      log_flush_messages ();
+    }
+  }
+  return;
+error_event_start:
+  rv = lfds611_stack_guaranteed_push (g_log_memory_stack_p, char_message_p);
+  FREE_CHECK (*contextP);
+  return;
+}
+
+//------------------------------------------------------------------------------
 void
 log_message (
   const log_level_t log_levelP,
@@ -331,12 +547,12 @@ log_message (
       log_get_elapsed_time_since_start(&elapsed_time);
       filename_length = strlen(source_fileP);
       if (filename_length > LOG_MAX_FILENAME_LENGTH) {
-        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%.5.5s|%.6.6s|%s:%u| ",
+        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%5.5s|%6.6s|%s:%u| ",
             __sync_fetch_and_add (&g_log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
             &g_log_level2str[log_levelP][0], &g_log_proto2str[protoP][0],
             &source_fileP[filename_length-LOG_MAX_FILENAME_LENGTH], line_numP);
       } else {
-        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%.5.5s|%.6.6s|%s:%u| ",
+        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%5.5s|%6.6s|%s:%u| ",
             __sync_fetch_and_add (&g_log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
             &g_log_level2str[log_levelP][0], &g_log_proto2str[protoP][0], source_fileP, line_numP);
       }
@@ -356,18 +572,9 @@ log_message (
       }
 
       rv += rv2;
-      rv2 = snprintf (&char_message_p[rv], LOG_MAX_MESSAGE_LENGTH - rv, "\n");
 
-      if ((0 > rv2) || ((LOG_MAX_MESSAGE_LENGTH - rv) < rv2)) {
-        fprintf (stderr, "Error while logging LOG message : %s", &g_log_proto2str[protoP][0]);
-        goto error_event;
-      }
-
-      rv += rv2;
       new_item_p->message_str = char_message_p;
       new_item_p->message_str_size = rv;
-      new_item_p->message_bin = NULL;   // TO DO
-      new_item_p->message_bin_size = 0; // TO DO
       rv = lfds611_queue_enqueue (g_log_message_queue_p, new_item_p);
 
       if (0 == rv) {

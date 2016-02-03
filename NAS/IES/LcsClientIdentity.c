@@ -100,14 +100,14 @@ dump_lcs_client_identity_xml (
   LcsClientIdentity * lcsclientidentity,
   uint8_t iei)
 {
-  printf ("<Lcs Client Identity>\n");
+  LOG_DEBUG (LOG_NAS, "<Lcs Client Identity>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("%s", dump_octet_string_xml (&lcsclientidentity->lcsclientidentityvalue));
-  printf ("</Lcs Client Identity>\n");
+  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&lcsclientidentity->lcsclientidentityvalue));
+  LOG_DEBUG (LOG_NAS, "</Lcs Client Identity>\n");
 }

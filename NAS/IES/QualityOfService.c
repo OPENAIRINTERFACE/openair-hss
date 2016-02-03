@@ -141,32 +141,32 @@ dump_quality_of_service_xml (
   QualityOfService * qualityofservice,
   uint8_t iei)
 {
-  printf ("<Quality Of Service>\n");
+  LOG_DEBUG (LOG_NAS, "<Quality Of Service>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Delay class>%u</Delay class>\n", qualityofservice->delayclass);
-  printf ("    <Reliability class>%u</Reliability class>\n", qualityofservice->reliabilityclass);
-  printf ("    <Peak throughput>%u</Peak throughput>\n", qualityofservice->peakthroughput);
-  printf ("    <Precedence class>%u</Precedence class>\n", qualityofservice->precedenceclass);
-  printf ("    <Mean throughput>%u</Mean throughput>\n", qualityofservice->meanthroughput);
-  printf ("    <Traffic class>%u</Traffic class>\n", qualityofservice->trafficclass);
-  printf ("    <Delivery order>%u</Delivery order>\n", qualityofservice->deliveryorder);
-  printf ("    <Delivery of erroneous SDU>%u</Delivery of erroneous SDU>\n", qualityofservice->deliveryoferroneoussdu);
-  printf ("    <Maximum SDU size>%u</Maximum SDU size>\n", qualityofservice->maximumsdusize);
-  printf ("    <Maximum bit rate uplink>%u</Maximum bit rate uplink>\n", qualityofservice->maximumbitrateuplink);
-  printf ("    <Maximum bit rate downlink>%u</Maximum bit rate downlink>\n", qualityofservice->maximumbitratedownlink);
-  printf ("    <Residual BER>%u</Residual BER>\n", qualityofservice->residualber);
-  printf ("    <SDU ratio error>%u</SDU ratio error>\n", qualityofservice->sduratioerror);
-  printf ("    <Transfer delay>%u</Transfer delay>\n", qualityofservice->transferdelay);
-  printf ("    <Traffic handling priority>%u</Traffic handling priority>\n", qualityofservice->traffichandlingpriority);
-  printf ("    <Guaranteed bit rate uplink>%u</Guaranteed bit rate uplink>\n", qualityofservice->guaranteedbitrateuplink);
-  printf ("    <Guaranteed bit rate downlink>%u</Guaranteed bit rate downlink>\n", qualityofservice->guaranteedbitratedownlink);
-  printf ("    <Signaling indication>%u</Signaling indication>\n", qualityofservice->signalingindication);
-  printf ("    <Source statistics descriptor>%u</Source statistics descriptor>\n", qualityofservice->sourcestatisticsdescriptor);
-  printf ("</Quality Of Service>\n");
+  LOG_DEBUG (LOG_NAS, "    <Delay class>%u</Delay class>\n", qualityofservice->delayclass);
+  LOG_DEBUG (LOG_NAS, "    <Reliability class>%u</Reliability class>\n", qualityofservice->reliabilityclass);
+  LOG_DEBUG (LOG_NAS, "    <Peak throughput>%u</Peak throughput>\n", qualityofservice->peakthroughput);
+  LOG_DEBUG (LOG_NAS, "    <Precedence class>%u</Precedence class>\n", qualityofservice->precedenceclass);
+  LOG_DEBUG (LOG_NAS, "    <Mean throughput>%u</Mean throughput>\n", qualityofservice->meanthroughput);
+  LOG_DEBUG (LOG_NAS, "    <Traffic class>%u</Traffic class>\n", qualityofservice->trafficclass);
+  LOG_DEBUG (LOG_NAS, "    <Delivery order>%u</Delivery order>\n", qualityofservice->deliveryorder);
+  LOG_DEBUG (LOG_NAS, "    <Delivery of erroneous SDU>%u</Delivery of erroneous SDU>\n", qualityofservice->deliveryoferroneoussdu);
+  LOG_DEBUG (LOG_NAS, "    <Maximum SDU size>%u</Maximum SDU size>\n", qualityofservice->maximumsdusize);
+  LOG_DEBUG (LOG_NAS, "    <Maximum bit rate uplink>%u</Maximum bit rate uplink>\n", qualityofservice->maximumbitrateuplink);
+  LOG_DEBUG (LOG_NAS, "    <Maximum bit rate downlink>%u</Maximum bit rate downlink>\n", qualityofservice->maximumbitratedownlink);
+  LOG_DEBUG (LOG_NAS, "    <Residual BER>%u</Residual BER>\n", qualityofservice->residualber);
+  LOG_DEBUG (LOG_NAS, "    <SDU ratio error>%u</SDU ratio error>\n", qualityofservice->sduratioerror);
+  LOG_DEBUG (LOG_NAS, "    <Transfer delay>%u</Transfer delay>\n", qualityofservice->transferdelay);
+  LOG_DEBUG (LOG_NAS, "    <Traffic handling priority>%u</Traffic handling priority>\n", qualityofservice->traffichandlingpriority);
+  LOG_DEBUG (LOG_NAS, "    <Guaranteed bit rate uplink>%u</Guaranteed bit rate uplink>\n", qualityofservice->guaranteedbitrateuplink);
+  LOG_DEBUG (LOG_NAS, "    <Guaranteed bit rate downlink>%u</Guaranteed bit rate downlink>\n", qualityofservice->guaranteedbitratedownlink);
+  LOG_DEBUG (LOG_NAS, "    <Signaling indication>%u</Signaling indication>\n", qualityofservice->signalingindication);
+  LOG_DEBUG (LOG_NAS, "    <Source statistics descriptor>%u</Source statistics descriptor>\n", qualityofservice->sourcestatisticsdescriptor);
+  LOG_DEBUG (LOG_NAS, "</Quality Of Service>\n");
 }

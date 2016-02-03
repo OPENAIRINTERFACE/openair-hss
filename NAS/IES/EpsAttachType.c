@@ -112,14 +112,14 @@ dump_eps_attach_type_xml (
   EpsAttachType * epsattachtype,
   uint8_t iei)
 {
-  printf ("<Eps Attach Type>\n");
+  LOG_DEBUG (LOG_NAS, "<Eps Attach Type>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <EPS attach type value>%u</EPS attach type value>\n", *epsattachtype);
-  printf ("</Eps Attach Type>\n");
+  LOG_DEBUG (LOG_NAS, "    <EPS attach type value>%u</EPS attach type value>\n", *epsattachtype);
+  LOG_DEBUG (LOG_NAS, "</Eps Attach Type>\n");
 }

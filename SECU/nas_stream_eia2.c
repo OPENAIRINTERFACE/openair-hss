@@ -38,8 +38,7 @@
 #include "assertions.h"
 #include "conversions.h"
 #include "dynamic_memory_check.h"
-
-#define SECU_DEBUG 1
+#include "log.h"
 
 /*!
    @brief Create integrity cmac t for a given message.
@@ -77,45 +76,18 @@ nas_stream_encrypt_eia2 (
   memcpy (&m[0], &local_count, 4);
   m[4] = ((stream_cipher->bearer & 0x1F) << 3) | ((stream_cipher->direction & 0x01) << 2);
   memcpy (&m[8], stream_cipher->message, m_length);
-#if SECU_DEBUG
-  {
-    int                                     i;
 
-    printf ("Byte length: %u, Zero bits: %u\nm: ", m_length + 8, zero_bit);
+  LOG_TRACE (LOG_NAS, "Byte length: %u, Zero bits: %u\nm: ", m_length + 8, zero_bit);
+  LOG_STREAM_HEX(LOG_NAS, "m:", m, m_length + 8);
+  LOG_STREAM_HEX(LOG_NAS, "Key:", stream_cipher->key, stream_cipher->key_length);
+  LOG_STREAM_HEX(LOG_NAS, "Message:", stream_cipher->message, m_length);
 
-    for (i = 0; i < m_length + 8; i++)
-      printf ("%02x", m[i]);
-
-    printf ("\nKey:");
-
-    for (i = 0; i < stream_cipher->key_length; i++)
-      printf ("%02x", stream_cipher->key[i]);
-
-    printf ("\nMessage:");
-
-    for (i = 0; i < m_length; i++)
-      printf ("%02x", stream_cipher->message[i]);
-
-    printf ("\n");
-  }
-#endif
   cmac_ctx = CMAC_CTX_new ();
   ret = CMAC_Init (cmac_ctx, stream_cipher->key, stream_cipher->key_length, cipher, NULL);
   ret = CMAC_Update (cmac_ctx, m, m_length + 8);
   CMAC_Final (cmac_ctx, data, &size);
   CMAC_CTX_free (cmac_ctx);
-#if SECU_DEBUG
-  {
-    int                                     i;
-
-    printf ("out: ");
-
-    for (i = 0; i < size; i++)
-      printf ("%02x", data[i]);
-
-    printf ("\n");
-  }
-#endif
+  LOG_STREAM_HEX(LOG_NAS, "Out:", data, size);
   memcpy (out, data, 4);
   FREE_CHECK (m);
   return 0;

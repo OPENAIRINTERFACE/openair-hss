@@ -90,14 +90,14 @@ dump_eps_network_feature_support_xml (
   EpsNetworkFeatureSupport * epsnetworkfeaturesupport,
   uint8_t iei)
 {
-  printf ("<Eps Network Feature Support>\n");
+  LOG_DEBUG (LOG_NAS, "<Eps Network Feature Support>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <IMS VoPS>%u</IMS VoPS>\n", *epsnetworkfeaturesupport);
-  printf ("</Eps Network Feature Support>\n");
+  LOG_DEBUG (LOG_NAS, "    <IMS VoPS>%u</IMS VoPS>\n", *epsnetworkfeaturesupport);
+  LOG_DEBUG (LOG_NAS, "</Eps Network Feature Support>\n");
 }

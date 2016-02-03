@@ -94,15 +94,15 @@ dump_emergency_number_list_xml (
   EmergencyNumberList * emergencynumberlist,
   uint8_t iei)
 {
-  printf ("<Emergency Number List>\n");
+  LOG_DEBUG (LOG_NAS, "<Emergency Number List>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Length of emergency>%u</Length of emergency>\n", emergencynumberlist->lengthofemergency);
-  printf ("    <Emergency service category value>%u</Emergency service category value>\n", emergencynumberlist->emergencyservicecategoryvalue);
-  printf ("</Emergency Number List>\n");
+  LOG_DEBUG (LOG_NAS, "    <Length of emergency>%u</Length of emergency>\n", emergencynumberlist->lengthofemergency);
+  LOG_DEBUG (LOG_NAS, "    <Emergency service category value>%u</Emergency service category value>\n", emergencynumberlist->emergencyservicecategoryvalue);
+  LOG_DEBUG (LOG_NAS, "</Emergency Number List>\n");
 }

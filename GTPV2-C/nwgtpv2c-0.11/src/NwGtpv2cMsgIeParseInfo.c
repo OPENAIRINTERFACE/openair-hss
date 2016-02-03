@@ -448,7 +448,7 @@ extern                                  "C" {
   NW_IN uint8_t ieInstance,
   NW_IN uint8_t * pIeValue) {
     NW_ASSERT (thiz);
-    LOG_DEBUG (LOG_GTPV2C,  "Received grouped IE %u with instance %u of length %u in msg-type %u!", ieType, ieInstance, ieLength, thiz->groupedIeType);
+    LOG_DEBUG (LOG_GTPV2C,  "Received grouped IE %u with instance %u of length %u in msg-type %u!\n", ieType, ieInstance, ieLength, thiz->groupedIeType);
     return NW_OK;
   }
 
@@ -624,10 +624,10 @@ extern                                  "C" {
       ieLength = ntohs (pIe->l);
       ieInstance = pIe->i & 0x0F;
       NW_ASSERT (NW_GTPV2C_IE_INSTANCE_MAXIMUM >= ieInstance);
-      LOG_DEBUG (LOG_GTPV2C,  "Received IE %u with instance %u of length %u in msg-type %u!", ieType, ieInstance, ieLength, thiz->msgType);
+      LOG_DEBUG (LOG_GTPV2C,  "Received IE %u with instance %u of length %u in msg-type %u!\n", ieType, ieInstance, ieLength, thiz->msgType);
 
       if (pIeBufStart + 4 + ieLength > pIeBufEnd) {
-        LOG_ERROR (LOG_GTPV2C, "Invalid length for IE of type %u and instance %u!", ieType, ieInstance);
+        LOG_ERROR (LOG_GTPV2C, "Invalid length for IE of type %u and instance %u!\n", ieType, ieInstance);
         pError->cause = NW_GTPV2C_CAUSE_INVALID_LENGTH;
         pError->offendingIe.type = ieType;
         pError->offendingIe.instance = ieInstance;
@@ -646,7 +646,7 @@ extern                                  "C" {
             pError->cause = NW_GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
             pError->offendingIe.type = ieType;
             pError->offendingIe.instance = ieInstance;
-            LOG_ERROR (LOG_GTPV2C, "Mandatory IE of type %u and instance %u incorrect!", ieType, ieInstance);
+            LOG_ERROR (LOG_GTPV2C, "Mandatory IE of type %u and instance %u incorrect!\n", ieType, ieInstance);
             return NW_FAILURE;
           }
         }
@@ -677,7 +677,7 @@ extern                                  "C" {
             pError->cause = NW_GTPV2C_CAUSE_MANDATORY_IE_INCORRECT;
             pError->offendingIe.type = ieType;
             pError->offendingIe.instance = ieInstance;
-            LOG_ERROR (LOG_GTPV2C, "Mandatory IE of type %u and instance %u incorrect!", ieType, ieInstance);
+            LOG_ERROR (LOG_GTPV2C, "Mandatory IE of type %u and instance %u incorrect!\n", ieType, ieInstance);
             return NW_FAILURE;
           }
         }
@@ -686,7 +686,7 @@ extern                                  "C" {
           mandatoryIeCount++;
         }
       } else {
-        LOG_WARNING (LOG_GTPV2C,  "Unexpected IE %u with instance %u of length %u received in msg %u!", ieType, ieInstance, ieLength, thiz->msgType);
+        LOG_WARNING (LOG_GTPV2C,  "Unexpected IE %u with instance %u of length %u received in msg %u!\n", ieType, ieInstance, ieLength, thiz->msgType);
       }
 
       pIeBufStart += (ieLength + 4);
@@ -697,7 +697,7 @@ extern                                  "C" {
         for (ieInstance = 0; ieInstance < NW_GTPV2C_IE_INSTANCE_MAXIMUM; ieInstance++) {
           if (thiz->ieParseInfo[ieType][ieInstance].iePresence == NW_GTPV2C_IE_PRESENCE_MANDATORY) {
             if (pMsg->isIeValid[ieType][ieInstance] == NW_FALSE) {
-              LOG_ERROR (LOG_GTPV2C, "Mandatory IE of type %u and instance %u missing in msg type %u", ieType, ieInstance, pMsg->msgType);
+              LOG_ERROR (LOG_GTPV2C, "Mandatory IE of type %u and instance %u missing in msg type %u\n", ieType, ieInstance, pMsg->msgType);
               pError->cause = NW_GTPV2C_CAUSE_MANDATORY_IE_MISSING;
               pError->offendingIe.type = ieType;
               pError->offendingIe.instance = ieInstance;
@@ -707,7 +707,7 @@ extern                                  "C" {
         }
       }
 
-      LOG_CRITICAL (LOG_GTPV2C, "Unknown mandatory IE missing. Msg parser formed incorrectly!");
+      LOG_CRITICAL (LOG_GTPV2C, "Unknown mandatory IE missing. Msg parser formed incorrectly!\n");
       pError->cause = NW_GTPV2C_CAUSE_MANDATORY_IE_MISSING;
       pError->offendingIe.type = 0;
       pError->offendingIe.instance = 0;

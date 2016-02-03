@@ -109,14 +109,14 @@ dump_esm_message_container_xml (
   EsmMessageContainer * esmmessagecontainer,
   uint8_t iei)
 {
-  printf ("<Esm Message Container>\n");
+  LOG_DEBUG (LOG_NAS, "<Esm Message Container>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("%s", dump_octet_string_xml (&esmmessagecontainer->esmmessagecontainercontents));
-  printf ("</Esm Message Container>\n");
+  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&esmmessagecontainer->esmmessagecontainercontents));
+  LOG_DEBUG (LOG_NAS, "</Esm Message Container>\n");
 }

@@ -90,12 +90,51 @@ typedef enum {
   MAX_LOG_PROTOS,
 } log_proto_t;
 
+typedef struct log_queue_item_s {
+  char                                   *message_str;
+  uint32_t                                message_str_size;
+} log_queue_item_t;
+
 
 #if LOG_OAI
-int log_init(const log_env_t envP, const log_level_t default_log_levelP, const int max_threadsP);
+int log_init(
+  const log_env_t envP,
+  const log_level_t default_log_levelP,
+  const int max_threadsP);
+void log_itti_connect(void);
 void log_start_use(void);
 void log_flush_messages(void);
 void log_end(void);
+void log_stream_hex(
+  const log_level_t log_levelP,
+  const log_proto_t protoP,
+  const char *const source_fileP,
+  const unsigned int line_numP,
+  const char *const messageP,
+  const char *const streamP,
+  const unsigned int sizeP);
+void log_stream_hex_array(
+  const log_level_t log_levelP,
+  const log_proto_t protoP,
+  const char *const source_fileP,
+  const unsigned int line_numP,
+  const char *const messageP,
+  const char *const streamP,
+  const unsigned int sizeP);
+void log_message_add (
+  log_queue_item_t * contextP,
+  char *format,
+  ...);
+void log_message_finish (
+  log_queue_item_t * contextP);
+void log_message_start (
+  const log_level_t log_levelP,
+  const log_proto_t protoP,
+  log_queue_item_t ** contextP, // Out parameter
+  const char *const source_fileP,
+  const unsigned int line_numP,
+  char *format,
+  ...);
 void log_message (
       const log_level_t log_levelP,
       const log_proto_t protoP,
@@ -104,39 +143,48 @@ void log_message (
       char *format,
       ...);
 
-#define LOG_INIT                               log_init
-#define LOG_START_USE                          log_start_use
-#define LOG_ITTI_CONNECT                       log_itti_connect
-#define LOG_END()                              log_end()
-#define LOG_EMERGENCY(pRoTo, aRgS...)          do { log_message(LOG_LEVEL_EMERGENCY,pRoTo, __FILE__, __LINE__, ##aRgS); } while(0)/*!< \brief system is unusable */
-#define LOG_ALERT(pRoTo, aRgS...)              do { log_message(LOG_LEVEL_ALERT,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief action must be taken immediately */
-#define LOG_CRITICAL(pRoTo, aRgS...)           do { log_message(LOG_LEVEL_CRITICAL, pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief critical conditions */
-#define LOG_ERROR(pRoTo, aRgS...)              do { log_message(LOG_LEVEL_ERROR,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief error conditions */
-#define LOG_WARNING(pRoTo, aRgS...)            do { log_message(LOG_LEVEL_WARNING,  pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief warning conditions */
-#define LOG_NOTICE(pRoTo, aRgS...)             do { log_message(LOG_LEVEL_NOTICE,   pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief normal but significant condition */
-#define LOG_INFO(pRoTo, aRgS...)               do { log_message(LOG_LEVEL_INFO,     pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief informational */
-#define LOG_DEBUG(pRoTo, aRgS...)              do { log_message(LOG_LEVEL_DEBUG,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief informational */
-#define LOG_TRACE(pRoTo, aRgS...)              do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief informational */
-#define LOG_FUNC_IN(pRoTo)                     do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Entering %s", __FUNCTION__); } while(0) /*!< \brief informational */
-#define LOG_FUNC_OUT(pRoTo)                    do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s", __FUNCTION__); return;} while(0)
-#define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)     do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s (rc=%ld)", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
+#define LOG_INIT                                                 log_init
+#define LOG_START_USE                                            log_start_use
+#define LOG_ITTI_CONNECT                                         log_itti_connect
+#define LOG_END()                                                log_end()
+#define LOG_EMERGENCY(pRoTo, aRgS...)                            do { log_message(LOG_LEVEL_EMERGENCY,pRoTo, __FILE__, __LINE__, ##aRgS); } while(0)/*!< \brief system is unusable */
+#define LOG_ALERT(pRoTo, aRgS...)                                do { log_message(LOG_LEVEL_ALERT,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief action must be taken immediately */
+#define LOG_CRITICAL(pRoTo, aRgS...)                             do { log_message(LOG_LEVEL_CRITICAL, pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief critical conditions */
+#define LOG_ERROR(pRoTo, aRgS...)                                do { log_message(LOG_LEVEL_ERROR,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief error conditions */
+#define LOG_WARNING(pRoTo, aRgS...)                              do { log_message(LOG_LEVEL_WARNING,  pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief warning conditions */
+#define LOG_NOTICE(pRoTo, aRgS...)                               do { log_message(LOG_LEVEL_NOTICE,   pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief normal but significant condition */
+#define LOG_INFO(pRoTo, aRgS...)                                 do { log_message(LOG_LEVEL_INFO,     pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief informational */
+#define LOG_DEBUG(pRoTo, aRgS...)                                do { log_message(LOG_LEVEL_DEBUG,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief debug informations */
+#define LOG_TRACE(pRoTo, aRgS...)                                do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief most detailled informations, struct dumps */
+#define LOG_FUNC_IN(pRoTo)                                       do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Entering %s", __FUNCTION__); } while(0) /*!< \brief informational */
+#define LOG_FUNC_OUT(pRoTo)                                      do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s", __FUNCTION__); return;} while(0)
+#define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s (rc=%ld)", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
+#define LOG_STREAM_HEX(pRoTo, mEsSaGe, sTrEaM, sIzE)             do { log_stream_hex(LOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content */
+#define LOG_STREAM_HEX_ARRAY(pRoTo, mEsSaGe, sTrEaM, sIzE)       do { log_stream_hex_array(LOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content with indexes */
+#define LOG_MESSAGE_START(lOgLeVeL, pRoTo, cOnTeXt, aRgS...)     do { log_message_start(lOgLeVeL, pRoTo, cOnTeXt, __FILE__, __LINE__, aRgS...); } while(0) /*!< \brief when need to log only 1 message with many char messages, ex formating a dumped struct */
+#define LOG_MESSAGE_ADD(cOnTeXt, aRgS...)                        do { log_message_add(cOnTeXt, aRgS...); } while(0) /*!< \brief can be called as many times as needed after LOG_MESSAGE_START() */
+#define LOG_MESSAGE_FINISH(cOnTeXt)                              do { log_message_finish(cOnTeXt); } while(0) /*!< \brief Send the message built by LOG_MESSAGE_START() n*LOG_MESSAGE_ADD() (n=0..N) */
 #else
 #define LOG_INIT(a,b,c)                                0
 #define LOG_START_USE()
 #define LOG_ITTI_CONNECT()
 #define LOG_END()
-#define LOG_EMERGENCY(pRoTo, aRgS...)          do { fprintf(stderr, "[EMERGE] "##aRgS); } while(0)
-#define LOG_ALERT(pRoTo, aRgS...)              do { fprintf(stderr, "[ALERT] "##aRgS); } while(0)
-#define LOG_CRITICAL(pRoTo, aRgS...)           do { fprintf(stderr, "[CRITIC] "##aRgS); } while(0)
-#define LOG_ERROR(pRoTo, aRgS...)              do { fprintf(stderr, "[ERROR] " ##aRgS); } while(0)
-#define LOG_WARNING(pRoTo, aRgS...)            do { fprintf(stderr, "[WARNIN] " ##aRgS); } while(0)
-#define LOG_NOTICE(pRoTo, aRgS...)             do { fprintf(stdout, "[NOTICE] "##aRgS); } while(0)
-#define LOG_INFO(pRoTo, aRgS...)               do { fprintf(stdout, "[INFO] "##aRgS); } while(0)
-#define LOG_DEBUG(pRoTo, aRgS...)              do { fprintf(stdout, "[DEBUG] "##aRgS); } while(0)
-#define LOG_TRACE(pRoTo, aRgS...)              do { fprintf(stdout, "[TRACE] "##aRgS); } while(0)
-#define LOG_FUNC_IN(pRoTo)                     do { fprintf(stdout, "[TRACE] Entering %s", __FUNCTION__); } while(0)
-#define LOG_FUNC_OUT(pRoTo)                    do { fprintf(stdout, "[TRACE] Leaving %s", __FUNCTION__); } while(0)
-#define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)     do { fprintf(stdout, "[TRACE] Leaving %s (rc=%ld)", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
+#define LOG_EMERGENCY(pRoTo, aRgS...)                            do { fprintf(stderr, "[EMERGE] "##aRgS); } while(0)
+#define LOG_ALERT(pRoTo, aRgS...)                                do { fprintf(stderr, "[ALERT] "##aRgS); } while(0)
+#define LOG_CRITICAL(pRoTo, aRgS...)                             do { fprintf(stderr, "[CRITIC] "##aRgS); } while(0)
+#define LOG_ERROR(pRoTo, aRgS...)                                do { fprintf(stderr, "[ERROR] " ##aRgS); } while(0)
+#define LOG_WARNING(pRoTo, aRgS...)                              do { fprintf(stderr, "[WARNIN] " ##aRgS); } while(0)
+#define LOG_NOTICE(pRoTo, aRgS...)                               do { fprintf(stdout, "[NOTICE] "##aRgS); } while(0)
+#define LOG_INFO(pRoTo, aRgS...)                                 do { fprintf(stdout, "[INFO] "##aRgS); } while(0)
+#define LOG_DEBUG(pRoTo, aRgS...)                                do { fprintf(stdout, "[DEBUG] "##aRgS); } while(0)
+#define LOG_TRACE(pRoTo, aRgS...)                                do { fprintf(stdout, "[TRACE] "##aRgS); } while(0)
+#define LOG_FUNC_IN(pRoTo)                                       do { fprintf(stdout, "[TRACE] Entering %s", __FUNCTION__); } while(0)
+#define LOG_FUNC_OUT(pRoTo)                                      do { fprintf(stdout, "[TRACE] Leaving %s", __FUNCTION__); } while(0)
+#define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do { fprintf(stdout, "[TRACE] Leaving %s (rc=%ld)", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
+#define LOG_STREAM_HEX_ARRAY(pRoTo, mEsSaGe, sTrEaM, sIzE)
+#define LOG_MESSAGE_START(lOgLeVeL, pRoTo, cOnTeXt, aRgS...)
+#define LOG_MESSAGE_ADD(cOnTeXt, aRgS...)
+#define LOG_MESSAGE_FINISH(cOnTeXt)
 #endif
 
 #endif /* LOG_H_ */

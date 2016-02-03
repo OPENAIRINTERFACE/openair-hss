@@ -157,26 +157,26 @@ dump_ue_network_capability_xml (
   UeNetworkCapability * uenetworkcapability,
   uint8_t iei)
 {
-  printf ("<Ue Network Capability>\n");
+  LOG_DEBUG (LOG_NAS, "<Ue Network Capability>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <EEA>%02x</EEA>\n", uenetworkcapability->eea);
-  printf ("    <EIA>%02x</EIA>\n", uenetworkcapability->eia);
-  printf ("    <UEA>%02x</UEA>\n", uenetworkcapability->uea);
-  printf ("    <UCS2>%u</UCS2>\n", uenetworkcapability->ucs2);
-  printf ("    <UIA>%u</UIA>\n", uenetworkcapability->uia);
-  printf ("    <SPARE>%u</SPARE>\n", uenetworkcapability->spare);
-  printf ("    <CSFB>%u</CSFB>\n", uenetworkcapability->csfb);
-  printf ("    <LPP>%u</LPP>\n", uenetworkcapability->lpp);
-  printf ("    <LCS>%u</LCS>\n", uenetworkcapability->lcs);
-  printf ("    <SR VCC>%u</SR VCC>\n", uenetworkcapability->srvcc);
-  printf ("    <NF>%u<NF/>\n", uenetworkcapability->nf);
-  printf ("    <UMTS>%u<UMTS/>\n", uenetworkcapability->umts_present);
-  printf ("    <GPRS>%u<GPRS/>\n", uenetworkcapability->gprs_present);
-  printf ("</Ue Network Capability>\n");
+  LOG_DEBUG (LOG_NAS, "    <EEA>%02x</EEA>\n", uenetworkcapability->eea);
+  LOG_DEBUG (LOG_NAS, "    <EIA>%02x</EIA>\n", uenetworkcapability->eia);
+  LOG_DEBUG (LOG_NAS, "    <UEA>%02x</UEA>\n", uenetworkcapability->uea);
+  LOG_DEBUG (LOG_NAS, "    <UCS2>%u</UCS2>\n", uenetworkcapability->ucs2);
+  LOG_DEBUG (LOG_NAS, "    <UIA>%u</UIA>\n", uenetworkcapability->uia);
+  LOG_DEBUG (LOG_NAS, "    <SPARE>%u</SPARE>\n", uenetworkcapability->spare);
+  LOG_DEBUG (LOG_NAS, "    <CSFB>%u</CSFB>\n", uenetworkcapability->csfb);
+  LOG_DEBUG (LOG_NAS, "    <LPP>%u</LPP>\n", uenetworkcapability->lpp);
+  LOG_DEBUG (LOG_NAS, "    <LCS>%u</LCS>\n", uenetworkcapability->lcs);
+  LOG_DEBUG (LOG_NAS, "    <SR VCC>%u</SR VCC>\n", uenetworkcapability->srvcc);
+  LOG_DEBUG (LOG_NAS, "    <NF>%u<NF/>\n", uenetworkcapability->nf);
+  LOG_DEBUG (LOG_NAS, "    <UMTS>%u<UMTS/>\n", uenetworkcapability->umts_present);
+  LOG_DEBUG (LOG_NAS, "    <GPRS>%u<GPRS/>\n", uenetworkcapability->gprs_present);
+  LOG_DEBUG (LOG_NAS, "</Ue Network Capability>\n");
 }

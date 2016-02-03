@@ -64,8 +64,8 @@ mme_app_request_authentication_info (
   //MME_APP_IMSI_TO_STRING(imsi, auth_info_req->imsi);
   memcpy (&auth_info_req->visited_plmn, plmn, sizeof (plmn_t));
   LOG_DEBUG (LOG_MME_APP, "visited_plmn MCC %X%X%X MNC %X%X%X\n",
-                 auth_info_req->visited_plmn.MCCdigit1,
-                 auth_info_req->visited_plmn.MCCdigit2, auth_info_req->visited_plmn.MCCdigit3, auth_info_req->visited_plmn.MNCdigit1, auth_info_req->visited_plmn.MNCdigit2, auth_info_req->visited_plmn.MNCdigit3);
+                 auth_info_req->visited_plmn.MCCdigit1, auth_info_req->visited_plmn.MCCdigit2, auth_info_req->visited_plmn.MCCdigit3,
+                 auth_info_req->visited_plmn.MNCdigit1, auth_info_req->visited_plmn.MNCdigit2, auth_info_req->visited_plmn.MNCdigit3);
   uint8_t                                *ptr = (uint8_t *) & auth_info_req->visited_plmn;
 
   LOG_DEBUG (LOG_MME_APP, "visited_plmn %02X%02X%02X\n", ptr[0], ptr[1], ptr[2]);
@@ -297,7 +297,7 @@ mme_app_handle_nas_auth_param_req (
     // update IMSI
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context, ue_context->mme_ue_s1ap_id, imsi,       // imsi is new
                                      ue_context->mme_s11_teid, ue_context->ue_id, &guti);       // guti is new
-    LOG_DEBUG (LOG_MME_APP, "and we have no auth. vector for it, request" " authentication information\n");
+    LOG_DEBUG (LOG_MME_APP, "and we have no auth. vector for it, request authentication information\n");
     mme_app_request_authentication_info (nas_auth_param_req_pP->imsi, 1, visited_plmn, NULL);
   } else {
     GUTI_t                                  guti;

@@ -82,14 +82,14 @@ dump_emm_cause_xml (
   EmmCause * emmcause,
   uint8_t iei)
 {
-  printf ("<Emm Cause>\n");
+  LOG_DEBUG (LOG_NAS, "<Emm Cause>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Cause value>%u</Cause value>\n", *emmcause);
-  printf ("</Emm Cause>\n");
+  LOG_DEBUG (LOG_NAS, "    <Cause value>%u</Cause value>\n", *emmcause);
+  LOG_DEBUG (LOG_NAS, "</Emm Cause>\n");
 }

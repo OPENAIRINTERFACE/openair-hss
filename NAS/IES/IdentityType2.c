@@ -112,14 +112,14 @@ dump_identity_type_2_xml (
   IdentityType2 * identitytype2,
   uint8_t iei)
 {
-  printf ("<Identity Type 2>\n");
+  LOG_DEBUG (LOG_NAS, "<Identity Type 2>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Type of identity>%u</Type of identity>\n", *identitytype2);
-  printf ("</Identity Type 2>\n");
+  LOG_DEBUG (LOG_NAS, "    <Type of identity>%u</Type of identity>\n", *identitytype2);
+  LOG_DEBUG (LOG_NAS, "</Identity Type 2>\n");
 }

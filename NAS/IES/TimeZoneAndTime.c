@@ -106,20 +106,20 @@ dump_time_zone_and_time_xml (
   TimeZoneAndTime * timezoneandtime,
   uint8_t iei)
 {
-  printf ("<Time Zone And Time>\n");
+  LOG_DEBUG (LOG_NAS, "<Time Zone And Time>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Year>%u</Year>\n", timezoneandtime->year);
-  printf ("    <Month>%u</Month>\n", timezoneandtime->month);
-  printf ("    <Day>%u</Day>\n", timezoneandtime->day);
-  printf ("    <Hour>%u</Hour>\n", timezoneandtime->hour);
-  printf ("    <Minute>%u</Minute>\n", timezoneandtime->minute);
-  printf ("    <Second>%u</Second>\n", timezoneandtime->second);
-  printf ("    <Time Zone>%u</Time Zone>\n", timezoneandtime->timezone);
-  printf ("</Time Zone And Time>\n");
+  LOG_DEBUG (LOG_NAS, "    <Year>%u</Year>\n", timezoneandtime->year);
+  LOG_DEBUG (LOG_NAS, "    <Month>%u</Month>\n", timezoneandtime->month);
+  LOG_DEBUG (LOG_NAS, "    <Day>%u</Day>\n", timezoneandtime->day);
+  LOG_DEBUG (LOG_NAS, "    <Hour>%u</Hour>\n", timezoneandtime->hour);
+  LOG_DEBUG (LOG_NAS, "    <Minute>%u</Minute>\n", timezoneandtime->minute);
+  LOG_DEBUG (LOG_NAS, "    <Second>%u</Second>\n", timezoneandtime->second);
+  LOG_DEBUG (LOG_NAS, "    <Time Zone>%u</Time Zone>\n", timezoneandtime->timezone);
+  LOG_DEBUG (LOG_NAS, "</Time Zone And Time>\n");
 }

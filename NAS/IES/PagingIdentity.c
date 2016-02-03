@@ -82,14 +82,14 @@ dump_paging_identity_xml (
   PagingIdentity * pagingidentity,
   uint8_t iei)
 {
-  printf ("<Paging Identity>\n");
+  LOG_DEBUG (LOG_NAS, "<Paging Identity>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Paging identity value>%u</Paging identity value>\n", *pagingidentity);
-  printf ("</Paging Identity>\n");
+  LOG_DEBUG (LOG_NAS, "    <Paging identity value>%u</Paging identity value>\n", *pagingidentity);
+  LOG_DEBUG (LOG_NAS, "</Paging Identity>\n");
 }

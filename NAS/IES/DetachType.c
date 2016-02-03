@@ -114,15 +114,15 @@ dump_detach_type_xml (
   DetachType * detachtype,
   uint8_t iei)
 {
-  printf ("<Detach Type>\n");
+  LOG_DEBUG (LOG_NAS, "<Detach Type>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Switch off>%u</Switch off>\n", detachtype->switchoff);
-  printf ("    <Type of detach>%u</Type of detach>\n", detachtype->typeofdetach);
-  printf ("</Detach Type>\n");
+  LOG_DEBUG (LOG_NAS, "    <Switch off>%u</Switch off>\n", detachtype->switchoff);
+  LOG_DEBUG (LOG_NAS, "    <Type of detach>%u</Type of detach>\n", detachtype->typeofdetach);
+  LOG_DEBUG (LOG_NAS, "</Detach Type>\n");
 }

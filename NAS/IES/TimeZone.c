@@ -82,14 +82,14 @@ dump_time_zone_xml (
   TimeZone * timezone,
   uint8_t iei)
 {
-  printf ("<Time Zone>\n");
+  LOG_DEBUG (LOG_NAS, "<Time Zone>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <Time zone>%u</Time zone>\n", *timezone);
-  printf ("</Time Zone>\n");
+  LOG_DEBUG (LOG_NAS, "    <Time zone>%u</Time zone>\n", *timezone);
+  LOG_DEBUG (LOG_NAS, "</Time Zone>\n");
 }

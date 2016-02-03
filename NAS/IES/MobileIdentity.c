@@ -176,114 +176,114 @@ dump_mobile_identity_xml (
   MobileIdentity * mobileidentity,
   uint8_t iei)
 {
-  printf ("<Mobile Identity>\n");
+  LOG_DEBUG (LOG_NAS, "<Mobile Identity>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
   if (mobileidentity->imsi.typeofidentity == MOBILE_IDENTITY_IMSI) {
     ImsiMobileIdentity_t                   *imsi = &mobileidentity->imsi;
 
-    printf ("    <odd even>%u</odd even>\n", imsi->oddeven);
-    printf ("    <Type of identity>IMSI</Type of identity>\n");
-    printf ("    <digit1>%u</digit1>\n", imsi->digit1);
-    printf ("    <digit2>%u</digit2>\n", imsi->digit2);
-    printf ("    <digit3>%u</digit3>\n", imsi->digit3);
-    printf ("    <digit4>%u</digit4>\n", imsi->digit4);
-    printf ("    <digit5>%u</digit5>\n", imsi->digit5);
-    printf ("    <digit6>%u</digit6>\n", imsi->digit6);
-    printf ("    <digit7>%u</digit7>\n", imsi->digit7);
-    printf ("    <digit8>%u</digit8>\n", imsi->digit8);
-    printf ("    <digit9>%u</digit9>\n", imsi->digit9);
-    printf ("    <digit10>%u</digit10>\n", imsi->digit10);
-    printf ("    <digit11>%u</digit11>\n", imsi->digit11);
-    printf ("    <digit12>%u</digit12>\n", imsi->digit12);
-    printf ("    <digit13>%u</digit13>\n", imsi->digit13);
-    printf ("    <digit14>%u</digit14>\n", imsi->digit14);
-    printf ("    <digit15>%u</digit15>\n", imsi->digit15);
+    LOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", imsi->oddeven);
+    LOG_DEBUG (LOG_NAS, "    <Type of identity>IMSI</Type of identity>\n");
+    LOG_DEBUG (LOG_NAS, "    <digit1>%u</digit1>\n", imsi->digit1);
+    LOG_DEBUG (LOG_NAS, "    <digit2>%u</digit2>\n", imsi->digit2);
+    LOG_DEBUG (LOG_NAS, "    <digit3>%u</digit3>\n", imsi->digit3);
+    LOG_DEBUG (LOG_NAS, "    <digit4>%u</digit4>\n", imsi->digit4);
+    LOG_DEBUG (LOG_NAS, "    <digit5>%u</digit5>\n", imsi->digit5);
+    LOG_DEBUG (LOG_NAS, "    <digit6>%u</digit6>\n", imsi->digit6);
+    LOG_DEBUG (LOG_NAS, "    <digit7>%u</digit7>\n", imsi->digit7);
+    LOG_DEBUG (LOG_NAS, "    <digit8>%u</digit8>\n", imsi->digit8);
+    LOG_DEBUG (LOG_NAS, "    <digit9>%u</digit9>\n", imsi->digit9);
+    LOG_DEBUG (LOG_NAS, "    <digit10>%u</digit10>\n", imsi->digit10);
+    LOG_DEBUG (LOG_NAS, "    <digit11>%u</digit11>\n", imsi->digit11);
+    LOG_DEBUG (LOG_NAS, "    <digit12>%u</digit12>\n", imsi->digit12);
+    LOG_DEBUG (LOG_NAS, "    <digit13>%u</digit13>\n", imsi->digit13);
+    LOG_DEBUG (LOG_NAS, "    <digit14>%u</digit14>\n", imsi->digit14);
+    LOG_DEBUG (LOG_NAS, "    <digit15>%u</digit15>\n", imsi->digit15);
   } else if (mobileidentity->imei.typeofidentity == MOBILE_IDENTITY_IMEI) {
     ImeiMobileIdentity_t                   *imei = &mobileidentity->imei;
 
-    printf ("    <odd even>%u</odd even>\n", imei->oddeven);
-    printf ("    <Type of identity>IMEI</Type of identity>\n");
-    printf ("    <digit1>%u</digit1>\n", imei->digit1);
-    printf ("    <digit2>%u</digit2>\n", imei->digit2);
-    printf ("    <digit3>%u</digit3>\n", imei->digit3);
-    printf ("    <digit4>%u</digit4>\n", imei->digit4);
-    printf ("    <digit5>%u</digit5>\n", imei->digit5);
-    printf ("    <digit6>%u</digit6>\n", imei->digit6);
-    printf ("    <digit7>%u</digit7>\n", imei->digit7);
-    printf ("    <digit8>%u</digit8>\n", imei->digit8);
-    printf ("    <digit9>%u</digit9>\n", imei->digit9);
-    printf ("    <digit10>%u</digit10>\n", imei->digit10);
-    printf ("    <digit11>%u</digit11>\n", imei->digit11);
-    printf ("    <digit12>%u</digit12>\n", imei->digit12);
-    printf ("    <digit13>%u</digit13>\n", imei->digit13);
-    printf ("    <digit14>%u</digit14>\n", imei->digit14);
-    printf ("    <digit15>%u</digit15>\n", imei->digit15);
+    LOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", imei->oddeven);
+    LOG_DEBUG (LOG_NAS, "    <Type of identity>IMEI</Type of identity>\n");
+    LOG_DEBUG (LOG_NAS, "    <digit1>%u</digit1>\n", imei->digit1);
+    LOG_DEBUG (LOG_NAS, "    <digit2>%u</digit2>\n", imei->digit2);
+    LOG_DEBUG (LOG_NAS, "    <digit3>%u</digit3>\n", imei->digit3);
+    LOG_DEBUG (LOG_NAS, "    <digit4>%u</digit4>\n", imei->digit4);
+    LOG_DEBUG (LOG_NAS, "    <digit5>%u</digit5>\n", imei->digit5);
+    LOG_DEBUG (LOG_NAS, "    <digit6>%u</digit6>\n", imei->digit6);
+    LOG_DEBUG (LOG_NAS, "    <digit7>%u</digit7>\n", imei->digit7);
+    LOG_DEBUG (LOG_NAS, "    <digit8>%u</digit8>\n", imei->digit8);
+    LOG_DEBUG (LOG_NAS, "    <digit9>%u</digit9>\n", imei->digit9);
+    LOG_DEBUG (LOG_NAS, "    <digit10>%u</digit10>\n", imei->digit10);
+    LOG_DEBUG (LOG_NAS, "    <digit11>%u</digit11>\n", imei->digit11);
+    LOG_DEBUG (LOG_NAS, "    <digit12>%u</digit12>\n", imei->digit12);
+    LOG_DEBUG (LOG_NAS, "    <digit13>%u</digit13>\n", imei->digit13);
+    LOG_DEBUG (LOG_NAS, "    <digit14>%u</digit14>\n", imei->digit14);
+    LOG_DEBUG (LOG_NAS, "    <digit15>%u</digit15>\n", imei->digit15);
   } else if (mobileidentity->imeisv.typeofidentity == MOBILE_IDENTITY_IMEISV) {
     ImeisvMobileIdentity_t                 *imeisv = &mobileidentity->imeisv;
 
-    printf ("    <odd even>%u</odd even>\n", imeisv->oddeven);
-    printf ("    <Type of identity>IMEISV</Type of identity>\n");
-    printf ("    <digit1>%u</digit1>\n", imeisv->digit1);
-    printf ("    <digit2>%u</digit2>\n", imeisv->digit2);
-    printf ("    <digit3>%u</digit3>\n", imeisv->digit3);
-    printf ("    <digit4>%u</digit4>\n", imeisv->digit4);
-    printf ("    <digit5>%u</digit5>\n", imeisv->digit5);
-    printf ("    <digit6>%u</digit6>\n", imeisv->digit6);
-    printf ("    <digit7>%u</digit7>\n", imeisv->digit7);
-    printf ("    <digit8>%u</digit8>\n", imeisv->digit8);
-    printf ("    <digit9>%u</digit9>\n", imeisv->digit9);
-    printf ("    <digit10>%u</digit10>\n", imeisv->digit10);
-    printf ("    <digit11>%u</digit11>\n", imeisv->digit11);
-    printf ("    <digit12>%u</digit12>\n", imeisv->digit12);
-    printf ("    <digit13>%u</digit13>\n", imeisv->digit13);
-    printf ("    <digit14>%u</digit14>\n", imeisv->digit14);
-    printf ("    <digit15>%u</digit15>\n", imeisv->digit15);
+    LOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", imeisv->oddeven);
+    LOG_DEBUG (LOG_NAS, "    <Type of identity>IMEISV</Type of identity>\n");
+    LOG_DEBUG (LOG_NAS, "    <digit1>%u</digit1>\n", imeisv->digit1);
+    LOG_DEBUG (LOG_NAS, "    <digit2>%u</digit2>\n", imeisv->digit2);
+    LOG_DEBUG (LOG_NAS, "    <digit3>%u</digit3>\n", imeisv->digit3);
+    LOG_DEBUG (LOG_NAS, "    <digit4>%u</digit4>\n", imeisv->digit4);
+    LOG_DEBUG (LOG_NAS, "    <digit5>%u</digit5>\n", imeisv->digit5);
+    LOG_DEBUG (LOG_NAS, "    <digit6>%u</digit6>\n", imeisv->digit6);
+    LOG_DEBUG (LOG_NAS, "    <digit7>%u</digit7>\n", imeisv->digit7);
+    LOG_DEBUG (LOG_NAS, "    <digit8>%u</digit8>\n", imeisv->digit8);
+    LOG_DEBUG (LOG_NAS, "    <digit9>%u</digit9>\n", imeisv->digit9);
+    LOG_DEBUG (LOG_NAS, "    <digit10>%u</digit10>\n", imeisv->digit10);
+    LOG_DEBUG (LOG_NAS, "    <digit11>%u</digit11>\n", imeisv->digit11);
+    LOG_DEBUG (LOG_NAS, "    <digit12>%u</digit12>\n", imeisv->digit12);
+    LOG_DEBUG (LOG_NAS, "    <digit13>%u</digit13>\n", imeisv->digit13);
+    LOG_DEBUG (LOG_NAS, "    <digit14>%u</digit14>\n", imeisv->digit14);
+    LOG_DEBUG (LOG_NAS, "    <digit15>%u</digit15>\n", imeisv->digit15);
   } else if (mobileidentity->tmsi.typeofidentity == MOBILE_IDENTITY_TMSI) {
     TmsiMobileIdentity_t                   *tmsi = &mobileidentity->tmsi;
 
-    printf ("    <odd even>%u</odd even>\n", tmsi->oddeven);
-    printf ("    <Type of identity>TMSI</Type of identity>\n");
-    printf ("    <digit1>%u</digit1>\n", tmsi->digit1);
-    printf ("    <digit2>%u</digit2>\n", tmsi->digit2);
-    printf ("    <digit3>%u</digit3>\n", tmsi->digit3);
-    printf ("    <digit4>%u</digit4>\n", tmsi->digit4);
-    printf ("    <digit5>%u</digit5>\n", tmsi->digit5);
-    printf ("    <digit6>%u</digit6>\n", tmsi->digit6);
-    printf ("    <digit7>%u</digit7>\n", tmsi->digit7);
-    printf ("    <digit8>%u</digit8>\n", tmsi->digit8);
-    printf ("    <digit9>%u</digit9>\n", tmsi->digit9);
-    printf ("    <digit10>%u</digit10>\n", tmsi->digit10);
-    printf ("    <digit11>%u</digit11>\n", tmsi->digit11);
-    printf ("    <digit12>%u</digit12>\n", tmsi->digit12);
-    printf ("    <digit13>%u</digit13>\n", tmsi->digit13);
-    printf ("    <digit14>%u</digit14>\n", tmsi->digit14);
-    printf ("    <digit15>%u</digit15>\n", tmsi->digit15);
+    LOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", tmsi->oddeven);
+    LOG_DEBUG (LOG_NAS, "    <Type of identity>TMSI</Type of identity>\n");
+    LOG_DEBUG (LOG_NAS, "    <digit1>%u</digit1>\n", tmsi->digit1);
+    LOG_DEBUG (LOG_NAS, "    <digit2>%u</digit2>\n", tmsi->digit2);
+    LOG_DEBUG (LOG_NAS, "    <digit3>%u</digit3>\n", tmsi->digit3);
+    LOG_DEBUG (LOG_NAS, "    <digit4>%u</digit4>\n", tmsi->digit4);
+    LOG_DEBUG (LOG_NAS, "    <digit5>%u</digit5>\n", tmsi->digit5);
+    LOG_DEBUG (LOG_NAS, "    <digit6>%u</digit6>\n", tmsi->digit6);
+    LOG_DEBUG (LOG_NAS, "    <digit7>%u</digit7>\n", tmsi->digit7);
+    LOG_DEBUG (LOG_NAS, "    <digit8>%u</digit8>\n", tmsi->digit8);
+    LOG_DEBUG (LOG_NAS, "    <digit9>%u</digit9>\n", tmsi->digit9);
+    LOG_DEBUG (LOG_NAS, "    <digit10>%u</digit10>\n", tmsi->digit10);
+    LOG_DEBUG (LOG_NAS, "    <digit11>%u</digit11>\n", tmsi->digit11);
+    LOG_DEBUG (LOG_NAS, "    <digit12>%u</digit12>\n", tmsi->digit12);
+    LOG_DEBUG (LOG_NAS, "    <digit13>%u</digit13>\n", tmsi->digit13);
+    LOG_DEBUG (LOG_NAS, "    <digit14>%u</digit14>\n", tmsi->digit14);
+    LOG_DEBUG (LOG_NAS, "    <digit15>%u</digit15>\n", tmsi->digit15);
   } else if (mobileidentity->tmgi.typeofidentity == MOBILE_IDENTITY_TMGI) {
     TmgiMobileIdentity_t                   *tmgi = &mobileidentity->tmgi;
 
-    printf ("    <MBMS session ID indication>%u</MBMS session ID indication>\n", tmgi->mbmssessionidindication);
-    printf ("    <MCC MNC indication>%u</MCC MNC indication>\n", tmgi->mccmncindication);
-    printf ("    <Odd even>%u</Odd even>\n", tmgi->oddeven);
-    printf ("    <Type of identity>TMGI</Type of identity>\n");
-    printf ("    <MBMS service ID>%u</MBMS service ID>\n", tmgi->mbmsserviceid);
-    printf ("    <MCC digit 2>%u</MCC digit 2>\n", tmgi->mccdigit2);
-    printf ("    <MCC digit 1>%u</MCC digit 1>\n", tmgi->mccdigit1);
-    printf ("    <MNC digit 3>%u</MNC digit 3>\n", tmgi->mncdigit3);
-    printf ("    <MCC digit 3>%u</MCC digit 3>\n", tmgi->mccdigit3);
-    printf ("    <MNC digit 2>%u</MNC digit 2>\n", tmgi->mncdigit2);
-    printf ("    <MNC digit 1>%u</MNC digit 1>\n", tmgi->mncdigit1);
-    printf ("    <MBMS session ID>%u</MBMS session ID>\n", tmgi->mbmssessionid);
+    LOG_DEBUG (LOG_NAS, "    <MBMS session ID indication>%u</MBMS session ID indication>\n", tmgi->mbmssessionidindication);
+    LOG_DEBUG (LOG_NAS, "    <MCC MNC indication>%u</MCC MNC indication>\n", tmgi->mccmncindication);
+    LOG_DEBUG (LOG_NAS, "    <Odd even>%u</Odd even>\n", tmgi->oddeven);
+    LOG_DEBUG (LOG_NAS, "    <Type of identity>TMGI</Type of identity>\n");
+    LOG_DEBUG (LOG_NAS, "    <MBMS service ID>%u</MBMS service ID>\n", tmgi->mbmsserviceid);
+    LOG_DEBUG (LOG_NAS, "    <MCC digit 2>%u</MCC digit 2>\n", tmgi->mccdigit2);
+    LOG_DEBUG (LOG_NAS, "    <MCC digit 1>%u</MCC digit 1>\n", tmgi->mccdigit1);
+    LOG_DEBUG (LOG_NAS, "    <MNC digit 3>%u</MNC digit 3>\n", tmgi->mncdigit3);
+    LOG_DEBUG (LOG_NAS, "    <MCC digit 3>%u</MCC digit 3>\n", tmgi->mccdigit3);
+    LOG_DEBUG (LOG_NAS, "    <MNC digit 2>%u</MNC digit 2>\n", tmgi->mncdigit2);
+    LOG_DEBUG (LOG_NAS, "    <MNC digit 1>%u</MNC digit 1>\n", tmgi->mncdigit1);
+    LOG_DEBUG (LOG_NAS, "    <MBMS session ID>%u</MBMS session ID>\n", tmgi->mbmssessionid);
   } else {
-    printf ("    Wrong type of mobile identity (%u)\n", mobileidentity->imsi.typeofidentity);
+    LOG_DEBUG (LOG_NAS, "    Wrong type of mobile identity (%u)\n", mobileidentity->imsi.typeofidentity);
   }
 
-  printf ("</Mobile Identity>\n");
+  LOG_DEBUG (LOG_NAS, "</Mobile Identity>\n");
 }
 
 static int

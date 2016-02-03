@@ -27,13 +27,10 @@
 #include <nettle/nettle-meta.h>
 #include <nettle/aes.h>
 #include <nettle/ctr.h>
-
 #include "assertions.h"
 #include "conversions.h"
 #include "secu_defs.h"
 #include "dynamic_memory_check.h"
-
-// #define SECU_DEBUG 1
 
 int
 nas_stream_encrypt_eea2 (
@@ -64,18 +61,6 @@ nas_stream_encrypt_eea2 (
   /*
    * Other bits are 0
    */
-#if SECU_DEBUG
-  {
-    int                                     i;
-
-    printf ("Blength: %u, Zero bits: %u\n", stream_cipher->blength, zero_bit);
-
-    for (i = 0; i < sizeof (m); i++)
-      printf ("0x%02x ", m[i]);
-
-    printf ("\n");
-  }
-#endif
   nettle_aes128.set_encrypt_key (ctx, stream_cipher->key_length, stream_cipher->key);
   nettle_ctr_crypt (ctx, nettle_aes128.encrypt, nettle_aes128.block_size, m, byte_length, data, stream_cipher->message);
 

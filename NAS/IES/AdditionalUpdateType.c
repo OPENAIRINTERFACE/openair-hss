@@ -60,14 +60,14 @@ dump_additional_update_type_xml (
   AdditionalUpdateType * additionalupdatetype,
   uint8_t iei)
 {
-  printf ("<Additional Update Type>\n");
+  LOG_DEBUG (LOG_NAS, "<Additional Update Type>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    printf ("    <IEI>0x%X</IEI>\n", iei);
+    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  printf ("    <AUTV>%u</AUTV>\n", *additionalupdatetype);
-  printf ("</Additional Update Type>\n");
+  LOG_DEBUG (LOG_NAS, "    <AUTV>%u</AUTV>\n", *additionalupdatetype);
+  LOG_DEBUG (LOG_NAS, "</Additional Update Type>\n");
 }
