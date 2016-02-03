@@ -72,8 +72,8 @@ s11_imsi_ie_get (
   }
 
   imsi->length = imsi_length;
-  S11_DEBUG ("\t- IMSI length %d\n", imsi->length);
-  S11_DEBUG ("\t-      value  %*s\n", imsi->length, imsi->digit);
+  LOG_DEBUG (LOG_S11, "\t- IMSI length %d\n", imsi->length);
+  LOG_DEBUG (LOG_S11, "\t-      value  %*s\n", imsi->length, imsi->digit);
   return NW_OK;
 }
 
@@ -139,8 +139,8 @@ s11_msisdn_ie_get (
   }
 
   msisdn->length = msisdn_length;
-  S11_DEBUG ("\t- MSISDN length %d\n", msisdn->length);
-  S11_DEBUG ("\t-        value  %*s\n", msisdn->length, (char *)msisdn->digit);
+  LOG_DEBUG (LOG_S11, "\t- MSISDN length %d\n", msisdn->length);
+  LOG_DEBUG (LOG_S11, "\t-        value  %*s\n", msisdn->length, (char *)msisdn->digit);
   return NW_OK;
 }
 
@@ -186,11 +186,11 @@ s11_pdn_type_ie_get (
      */
     *pdn_type = IPv4_AND_v6;
   } else {
-    S11_ERROR ("Received unknown value for PDN Type: %u\n", *ieValue);
+    LOG_ERROR (LOG_S11, "Received unknown value for PDN Type: %u\n", *ieValue);
     return NW_GTPV2C_IE_INCORRECT;
   }
 
-  S11_DEBUG ("\t- PDN type %u\n", *pdn_type);
+  LOG_DEBUG (LOG_S11, "\t- PDN type %u\n", *pdn_type);
   return NW_OK;
 }
 
@@ -220,7 +220,7 @@ s11_pdn_type_ie_set (
     break;
 
   default:
-    S11_ERROR ("Invalid PDN type received: %d\n", *pdn_type);
+    LOG_ERROR (LOG_S11, "Invalid PDN type received: %d\n", *pdn_type);
     return -1;
   }
 
@@ -267,11 +267,11 @@ s11_rat_type_ie_get (
     break;
 
   default:
-    S11_ERROR ("Can't map GTP RAT type %u to EPC definition\n" "\tCheck TS.29.274 #8.17 for possible values\n", *ieValue);
+    LOG_ERROR (LOG_S11, "Can't map GTP RAT type %u to EPC definition\n" "\tCheck TS.29.274 #8.17 for possible values\n", *ieValue);
     return NW_GTPV2C_IE_INCORRECT;
   }
 
-  S11_DEBUG ("\t- RAT type (%d): %d\n", *ieValue, *rat_type);
+  LOG_DEBUG (LOG_S11, "\t- RAT type (%d): %d\n", *ieValue, *rat_type);
   return NW_OK;
 }
 
@@ -312,7 +312,7 @@ s11_rat_type_ie_set (
     break;
 
   default:
-    S11_ERROR ("Can't map RAT type %d to GTP RAT type\n" "\tCheck TS.29.274 #8.17 for possible values\n", *rat_type);
+    LOG_ERROR (LOG_S11, "Can't map RAT type %d to GTP RAT type\n" "\tCheck TS.29.274 #8.17 for possible values\n", *rat_type);
     return -1;
   }
 
@@ -347,7 +347,7 @@ s11_ebi_ie_get (
 
   DevAssert (ebi != NULL);
   *ebi = ieValue[0] & 0x0F;
-  S11_DEBUG ("\t- EBI %u\n", *ebi);
+  LOG_DEBUG (LOG_S11, "\t- EBI %u\n", *ebi);
   return NW_OK;
 }
 
@@ -363,7 +363,7 @@ s11_cause_ie_get (
 
   DevAssert (cause != NULL);
   *cause = ieValue[0];
-  S11_DEBUG ("\t- Cause %u\n", *cause);
+  LOG_DEBUG (LOG_S11, "\t- Cause %u\n", *cause);
   return NW_OK;
 }
 
@@ -423,7 +423,7 @@ s11_bearer_context_ie_get (
       break;
 
     default:
-      S11_ERROR ("Received unexpected IE %u\n", ie_p->t);
+      LOG_ERROR (LOG_S11, "Received unexpected IE %u\n", ie_p->t);
       return NW_GTPV2C_IE_INCORRECT;
     }
 
@@ -486,7 +486,7 @@ s11_bearer_context_to_modifiy_ie_get (
       break;
 
     default:
-      S11_ERROR ("Received unexpected IE %u\n", ie_p->t);
+      LOG_ERROR (LOG_S11, "Received unexpected IE %u\n", ie_p->t);
       return NW_GTPV2C_IE_INCORRECT;
     }
 
@@ -530,7 +530,7 @@ s11_bearer_context_created_ie_get (
       break;
 
     default:
-      S11_ERROR ("Received unexpected IE %u\n", ie_p->t);
+      LOG_ERROR (LOG_S11, "Received unexpected IE %u\n", ie_p->t);
       return NW_GTPV2C_IE_INCORRECT;
     }
 
@@ -616,7 +616,7 @@ s11_serving_network_ie_get (
     serving_net->mnc[1] = (ieValue[2] & 0x0F);
   }
 
-  S11_DEBUG ("\t- Serving network %d.%d\n", serving_net->mcc[0] * 100 + serving_net->mcc[1] * 10 + serving_net->mcc[2], serving_net->mnc[0] * 100 + serving_net->mnc[1] * 10 + serving_net->mnc[2]);
+  LOG_DEBUG (LOG_S11, "\t- Serving network %d.%d\n", serving_net->mcc[0] * 100 + serving_net->mcc[1] * 10 + serving_net->mcc[2], serving_net->mnc[0] * 100 + serving_net->mnc[1] * 10 + serving_net->mnc[2]);
   return NW_OK;
 }
 
@@ -667,12 +667,12 @@ s11_fteid_ie_get (
   fteid->ipv4 = (ieValue[0] & 0x80) >> 7;
   fteid->ipv6 = (ieValue[0] & 0x40) >> 6;
   fteid->interface_type = ieValue[0] & 0x1F;
-  S11_DEBUG ("\t- F-TEID type %d\n", fteid->interface_type);
+  LOG_DEBUG (LOG_S11, "\t- F-TEID type %d\n", fteid->interface_type);
   /*
    * Copy the TEID or GRE key
    */
   fteid->teid = ntoh_int32_buf (&ieValue[1]);
-  S11_DEBUG ("\t- TEID/GRE    %08x\n", fteid->teid);
+  LOG_DEBUG (LOG_S11, "\t- TEID/GRE    %08x\n", fteid->teid);
 
   if (fteid->ipv4 == 1) {
     /*
@@ -680,7 +680,7 @@ s11_fteid_ie_get (
      */
     memcpy (&fteid->ipv4_address, &ieValue[5], 4);
     offset = 4;
-    S11_DEBUG ("\t- IPv4 addr   " IPV4_ADDR "\n", IPV4_ADDR_FORMAT (fteid->ipv4_address));
+    LOG_DEBUG (LOG_S11, "\t- IPv4 addr   " IPV4_ADDR "\n", IPV4_ADDR_FORMAT (fteid->ipv4_address));
   }
 
   if (fteid->ipv6 == 1) {
@@ -692,7 +692,7 @@ s11_fteid_ie_get (
      */
     memcpy (fteid->ipv6_address, &ieValue[5 + offset], 16);
     inet_ntop (AF_INET6, fteid->ipv6_address, ipv6_ascii, 40);
-    S11_DEBUG ("\t- IPv6 addr   %s\n", ipv6_ascii);
+    LOG_DEBUG (LOG_S11, "\t- IPv6 addr   %s\n", ipv6_ascii);
   }
 
   return NW_OK;
@@ -711,7 +711,7 @@ s11_paa_ie_get (
 
   DevAssert (paa != NULL);
   paa->pdn_type = ieValue[0] & 0x07;
-  S11_DEBUG ("\t- PAA type  %d\n", paa->pdn_type);
+  LOG_DEBUG (LOG_S11, "\t- PAA type  %d\n", paa->pdn_type);
 
   if (paa->pdn_type & 0x2) {
     char                                    ipv6_ascii[40];
@@ -726,7 +726,7 @@ s11_paa_ie_get (
     paa->ipv6_prefix_length = ieValue[1];
     memcpy (paa->ipv6_address, &ieValue[2], 16);
     inet_ntop (AF_INET6, paa->ipv6_address, ipv6_ascii, 40);
-    S11_DEBUG ("\t- IPv6 addr %s/%u\n", ipv6_ascii, paa->ipv6_prefix_length);
+    LOG_DEBUG (LOG_S11, "\t- IPv6 addr %s/%u\n", ipv6_ascii, paa->ipv6_prefix_length);
   }
 
   if (paa->pdn_type == 3) {
@@ -735,7 +735,7 @@ s11_paa_ie_get (
 
   if (paa->pdn_type & 0x1) {
     memcpy (paa->ipv4_address, &ieValue[1 + offset], 4);
-    S11_DEBUG ("\t- IPv4 addr " IPV4_ADDR "\n", paa->ipv4_address[0], paa->ipv4_address[1], paa->ipv4_address[2], paa->ipv4_address[3]);
+    LOG_DEBUG (LOG_S11, "\t- IPv4 addr " IPV4_ADDR "\n", paa->ipv4_address[0], paa->ipv4_address[1], paa->ipv4_address[2], paa->ipv4_address[3]);
   }
 
   paa->pdn_type -= 1;
@@ -823,7 +823,7 @@ s11_apn_ie_get (
   }
 
   apn[read - 1] = '\0';
-  S11_DEBUG ("\t- APN %s\n", apn);
+  LOG_DEBUG (LOG_S11, "\t- APN %s\n", apn);
   return NW_OK;
 }
 
@@ -881,8 +881,8 @@ s11_ambr_ie_get (
   DevAssert (ambr != NULL);
   ambr->br_ul = ntoh_int32_buf (&ieValue[0]);
   ambr->br_dl = ntoh_int32_buf (&ieValue[4]);
-  S11_DEBUG ("\t- AMBR UL %" PRIu64 "\n", ambr->br_ul);
-  S11_DEBUG ("\t- AMBR DL %" PRIu64 "\n", ambr->br_dl);
+  LOG_DEBUG (LOG_S11, "\t- AMBR UL %" PRIu64 "\n", ambr->br_ul);
+  LOG_DEBUG (LOG_S11, "\t- AMBR DL %" PRIu64 "\n", ambr->br_dl);
   return NW_OK;
 }
 
@@ -988,7 +988,7 @@ s11_delay_value_ie_get (
   }
 
   *delay_value = ieValue[0];
-  S11_DEBUG ("\t - Delay Value %u\n", *delay_value);
+  LOG_DEBUG (LOG_S11, "\t - Delay Value %u\n", *delay_value);
   return NW_OK;
 }
 
@@ -1026,8 +1026,8 @@ s11_ue_time_zone_ie_get (
 
   ue_time_zone->time_zone = ieValue[0];
   ue_time_zone->daylight_saving_time = ieValue[1] & 0x03;
-  S11_DEBUG ("\t - Time Zone    %u\n", ue_time_zone->time_zone);
-  S11_DEBUG ("\t - Daylight SVT %u\n", ue_time_zone->daylight_saving_time);
+  LOG_DEBUG (LOG_S11, "\t - Time Zone    %u\n", ue_time_zone->time_zone);
+  LOG_DEBUG (LOG_S11, "\t - Daylight SVT %u\n", ue_time_zone->daylight_saving_time);
   return NW_OK;
 }
 
@@ -1083,9 +1083,9 @@ s11_target_identification_ie_get (
         return NW_GTPV2C_IE_INCORRECT;
       }
 
-      S11_DEBUG ("\t\t- LAC 0x%04x\n", target_identification->target_id.rnc_id.lac);
-      S11_DEBUG ("\t\t- RAC 0x%02x\n", target_identification->target_id.rnc_id.rac);
-      S11_DEBUG ("\t\t- RNC 0x%08x\n", target_identification->target_id.rnc_id.rnc_id);
+      LOG_DEBUG (LOG_S11, "\t\t- LAC 0x%04x\n", target_identification->target_id.rnc_id.lac);
+      LOG_DEBUG (LOG_S11, "\t\t- RAC 0x%02x\n", target_identification->target_id.rnc_id.rac);
+      LOG_DEBUG (LOG_S11, "\t\t- RNC 0x%08x\n", target_identification->target_id.rnc_id.rnc_id);
     }
     break;
 
@@ -1096,8 +1096,8 @@ s11_target_identification_ie_get (
 
       target_identification->target_id.macro_enb_id.enb_id = ((ieValue[4] & 0x0F) << 16) | (ieValue[5] << 8) | ieValue[6];
       target_identification->target_id.macro_enb_id.tac = (ieValue[7] << 8) | ieValue[8];
-      S11_DEBUG ("\t\t- ENB Id 0x%06x\n", target_identification->target_id.macro_enb_id.enb_id);
-      S11_DEBUG ("\t\t- TAC    0x%04x\n", target_identification->target_id.macro_enb_id.tac);
+      LOG_DEBUG (LOG_S11, "\t\t- ENB Id 0x%06x\n", target_identification->target_id.macro_enb_id.enb_id);
+      LOG_DEBUG (LOG_S11, "\t\t- TAC    0x%04x\n", target_identification->target_id.macro_enb_id.tac);
     }
     break;
 
@@ -1108,8 +1108,8 @@ s11_target_identification_ie_get (
 
       target_identification->target_id.home_enb_id.enb_id = ((ieValue[4] & 0x0F) << 14) | (ieValue[5] << 16) | (ieValue[6] << 8) | ieValue[7];
       target_identification->target_id.home_enb_id.tac = (ieValue[8] << 8) | ieValue[9];
-      S11_DEBUG ("\t\t- ENB Id 0x%07x\n", target_identification->target_id.home_enb_id.enb_id);
-      S11_DEBUG ("\t\t- TAC    0x%04x\n", target_identification->target_id.home_enb_id.tac);
+      LOG_DEBUG (LOG_S11, "\t\t- ENB Id 0x%07x\n", target_identification->target_id.home_enb_id.enb_id);
+      LOG_DEBUG (LOG_S11, "\t\t- TAC    0x%04x\n", target_identification->target_id.home_enb_id.tac);
     }
     break;
 
@@ -1174,7 +1174,7 @@ s11_indication_flags_ie_get (
   }
 
   *indication_flags = ieValue[0] | (ieValue[1] << 8) | (ieValue[2] << 16);
-  S11_DEBUG ("\t- Indication Flags %06x\n", *indication_flags);
+  LOG_DEBUG (LOG_S11, "\t- Indication Flags %06x\n", *indication_flags);
   return NW_OK;
 }
 
@@ -1190,7 +1190,7 @@ s11_fqcsid_ie_get (
 
   DevAssert (fq_csid != NULL);
   fq_csid->node_id_type = (ieValue[0] & 0xF0) >> 4;
-  S11_DEBUG ("\t- FQ-CSID type %u\n", fq_csid->node_id_type);
+  LOG_DEBUG (LOG_S11, "\t- FQ-CSID type %u\n", fq_csid->node_id_type);
 
   /*
    * NOTE: Values of Number of CSID other than 1 are only employed in the
@@ -1208,7 +1208,7 @@ s11_fqcsid_ie_get (
 
       fq_csid->node_id.unicast_ipv4 = (ieValue[1] << 24) | (ieValue[2] << 16) | (ieValue[3] << 8) | (ieValue[4]);
       fq_csid->csid = (ieValue[5] << 8) | ieValue[6];
-      S11_DEBUG ("\t- v4 address [" IPV4_ADDR "]\n", IPV4_ADDR_FORMAT (fq_csid->node_id.unicast_ipv4));
+      LOG_DEBUG (LOG_S11, "\t- v4 address [" IPV4_ADDR "]\n", IPV4_ADDR_FORMAT (fq_csid->node_id.unicast_ipv4));
     }
     break;
 
@@ -1225,7 +1225,7 @@ s11_fqcsid_ie_get (
        * Convert the ipv6 to printable string
        */
       inet_ntop (AF_INET6, fq_csid->node_id.unicast_ipv6, ipv6, 40);
-      S11_DEBUG ("\t- v6 address [%s]\n", fq_csid->node_id.unicast_ipv6);
+      LOG_DEBUG (LOG_S11, "\t- v6 address [%s]\n", fq_csid->node_id.unicast_ipv6);
     }
     break;
 
@@ -1233,6 +1233,6 @@ s11_fqcsid_ie_get (
     return NW_GTPV2C_IE_INCORRECT;
   }
 
-  S11_DEBUG ("\t- CSID 0x%04x\n", fq_csid->csid);
+  LOG_DEBUG (LOG_S11, "\t- CSID 0x%04x\n", fq_csid->csid);
   return NW_OK;
 }

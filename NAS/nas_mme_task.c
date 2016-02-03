@@ -36,15 +36,13 @@
 #include "log.h"
 #include "nas_timer.h"
 
-#define NAS_ERROR(x, args...) do { fprintf(stderr, "[NAS] [E]"x, ##args); } while(0)
-#define NAS_DEBUG(x, args...) do { fprintf(stdout, "[NAS] [D]"x, ##args); } while(0)
-#define NAS_WARN(x, args...)  do { fprintf(stdout, "[NAS] [W]"x, ##args); } while(0)
 
 static void                            *
 nas_intertask_interface (
   void *args_p)
 {
   itti_mark_task_ready (TASK_NAS_MME);
+  LOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
@@ -127,7 +125,7 @@ nas_intertask_interface (
       break;
 
     default:{
-        NAS_DEBUG ("Unkwnon message ID %d:%s from %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p), ITTI_MSG_ORIGIN_NAME (received_message_p));
+        LOG_DEBUG (LOG_NAS, "Unkwnon message ID %d:%s from %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p), ITTI_MSG_ORIGIN_NAME (received_message_p));
       }
       break;
     }
@@ -143,15 +141,15 @@ int
 nas_init (
   mme_config_t * mme_config_p)
 {
-  NAS_DEBUG ("Initializing NAS task interface\n");
+  LOG_DEBUG (LOG_NAS, "Initializing NAS task interface\n");
   nas_network_initialize (mme_config_p);
 
   if (itti_create_task (TASK_NAS_MME, &nas_intertask_interface, NULL) < 0) {
-    NAS_ERROR ("Create task failed");
-    NAS_DEBUG ("Initializing NAS task interface: FAILED\n");
+    LOG_ERROR (LOG_NAS, "Create task failed");
+    LOG_DEBUG (LOG_NAS, "Initializing NAS task interface: FAILED\n");
     return -1;
   }
 
-  NAS_DEBUG ("Initializing NAS task interface: DONE\n");
+  LOG_DEBUG (LOG_NAS, "Initializing NAS task interface: DONE\n");
   return 0;
 }

@@ -29,10 +29,8 @@
 #if HAVE_CONFIG_H
 #  include "config.h"
 #endif
-
 #include <freeDiameter/freeDiameter-host.h>
 #include <freeDiameter/libfdcore.h>
-
 #include "intertask_interface.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
@@ -57,7 +55,7 @@ fd_gnutls_debug (
   int level,
   const char *str)
 {
-  S6A_DEBUG ("[GTLS] %s", str);
+  LOG_DEBUG (LOG_S6A, "[GTLS] %s", str);
 }
 
 void                                   *
@@ -65,6 +63,7 @@ s6a_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_S6A);
+  LOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
@@ -92,7 +91,7 @@ s6a_thread (
       }
       break;
     default:{
-        S6A_DEBUG ("Unkwnon message ID %d: %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        LOG_DEBUG (LOG_S6A, "Unkwnon message ID %d: %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
@@ -108,7 +107,7 @@ s6a_init (
 {
   int                                     ret;
 
-  S6A_DEBUG ("Initializing S6a interface\n");
+  LOG_DEBUG (LOG_S6A, "Initializing S6a interface\n");
 
   memset (&s6a_fd_cnf, 0, sizeof (s6a_fd_cnf_t));
 
@@ -126,25 +125,25 @@ s6a_init (
   /*
    * Initializing freeDiameter core
    */
-  S6A_DEBUG ("Initializing freeDiameter core...\n");
+  LOG_DEBUG (LOG_S6A, "Initializing freeDiameter core...\n");
   ret = fd_core_initialize ();
   if (ret != 0) {
-    S6A_ERROR ("An error occurred during freeDiameter core library initialization: %d\n", ret);
+    LOG_ERROR (LOG_S6A, "An error occurred during freeDiameter core library initialization: %d\n", ret);
     return ret;
   } else {
-    S6A_DEBUG ("Initializing freeDiameter core done\n");
+    LOG_DEBUG (LOG_S6A, "Initializing freeDiameter core done\n");
   }
 
 
 
-  S6A_DEBUG ("Default ext path: %s\n", DEFAULT_EXTENSIONS_PATH);
+  LOG_DEBUG (LOG_S6A, "Default ext path: %s\n", DEFAULT_EXTENSIONS_PATH);
 
   ret = fd_core_parseconf (mme_config_p->s6a_config.conf_file);
   if (ret != 0) {
-    S6A_ERROR ("An error occurred during fd_core_parseconf file : %s.\n", mme_config_p->s6a_config.conf_file);
+    LOG_ERROR (LOG_S6A, "An error occurred during fd_core_parseconf file : %s.\n", mme_config_p->s6a_config.conf_file);
     return ret;
   } else {
-    S6A_DEBUG ("fd_core_parseconf done\n");
+    LOG_DEBUG (LOG_S6A, "fd_core_parseconf done\n");
   }
 
   /*
@@ -153,7 +152,7 @@ s6a_init (
   if (gnutls_debug) {
     gnutls_global_set_log_function ((gnutls_log_func) fd_gnutls_debug);
     gnutls_global_set_log_level (gnutls_debug);
-    S6A_DEBUG ("Enabled GNUTLS debug at level %d", gnutls_debug);
+    LOG_DEBUG (LOG_S6A, "Enabled GNUTLS debug at level %d", gnutls_debug);
   }
 
   /*
@@ -161,28 +160,28 @@ s6a_init (
    */
   ret = fd_core_start ();
   if (ret != 0) {
-    S6A_ERROR ("An error occurred during freeDiameter core library start\n");
+    LOG_ERROR (LOG_S6A, "An error occurred during freeDiameter core library start\n");
     return ret;
   } else {
-    S6A_DEBUG ("fd_core_start done\n");
+    LOG_DEBUG (LOG_S6A, "fd_core_start done\n");
   }
 
 
 
   ret = fd_core_waitstartcomplete ();
   if (ret != 0) {
-    S6A_ERROR ("An error occurred during fd_core_waitstartcomplete.\n");
+    LOG_ERROR (LOG_S6A, "An error occurred during fd_core_waitstartcomplete.\n");
     return ret;
   } else {
-    S6A_DEBUG ("fd_core_waitstartcomplete done\n");
+    LOG_DEBUG (LOG_S6A, "fd_core_waitstartcomplete done\n");
   }
 
   ret = s6a_fd_init_dict_objs ();
   if (ret != 0) {
-    S6A_ERROR ("An error occurred during s6a_fd_init_dict_objs.\n");
+    LOG_ERROR (LOG_S6A, "An error occurred during s6a_fd_init_dict_objs.\n");
     return ret;
   } else {
-    S6A_DEBUG ("s6a_fd_init_dict_objs done\n");
+    LOG_DEBUG (LOG_S6A, "s6a_fd_init_dict_objs done\n");
   }
 
   /*
@@ -191,10 +190,10 @@ s6a_init (
   CHECK_FCT (s6a_fd_new_peer ());
 
   if (itti_create_task (TASK_S6A, &s6a_thread, NULL) < 0) {
-    S6A_ERROR ("s6a create task\n");
+    LOG_ERROR (LOG_S6A, "s6a create task\n");
     return -1;
   }
-  S6A_DEBUG ("Initializing S6a interface: DONE\n");
+  LOG_DEBUG (LOG_S6A, "Initializing S6a interface: DONE\n");
 
   return 0;
 }

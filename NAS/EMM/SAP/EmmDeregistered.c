@@ -90,7 +90,7 @@ int
 EmmDeregistered (
   const emm_reg_t * evt)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
   assert (emm_fsm_get_status (evt->ueid, evt->ctx) == EMM_DEREGISTERED);
@@ -135,11 +135,11 @@ EmmDeregistered (
     break;
 
   default:
-    LOG_TRACE (ERROR, "EMM-FSM   - Primitive is not valid (%d)", evt->primitive);
+    LOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)", evt->primitive);
     break;
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

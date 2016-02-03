@@ -85,11 +85,11 @@ void
 emm_esm_initialize (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   /*
    * TODO: Initialize the EMMESM-SAP
    */
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
 /****************************************************************************
@@ -110,11 +110,11 @@ int
 emm_esm_send (
   const emm_esm_t * msg)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_esm_primitive_t                     primitive = msg->primitive;
 
-  LOG_TRACE (INFO, "EMMESM-SAP - Received primitive %s (%d)", _emm_esm_primitive_str[primitive - _EMMESM_START - 1], primitive);
+  LOG_INFO (LOG_NAS_EMM, "EMMESM-SAP - Received primitive %s (%d)", _emm_esm_primitive_str[primitive - _EMMESM_START - 1], primitive);
 
   switch (primitive) {
   case _EMMESM_UNITDATA_REQ:
@@ -129,10 +129,10 @@ emm_esm_send (
   }
 
   if (rc != RETURNok) {
-    LOG_TRACE (WARNING, "EMMESM-SAP - Failed to process primitive %s (%d)", _emm_esm_primitive_str[primitive - _EMMESM_START - 1], primitive);
+    LOG_WARNING (LOG_NAS_EMM, "EMMESM-SAP - Failed to process primitive %s (%d)", _emm_esm_primitive_str[primitive - _EMMESM_START - 1], primitive);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

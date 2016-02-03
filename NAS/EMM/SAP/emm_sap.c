@@ -78,11 +78,11 @@ void
 emm_sap_initialize (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   emm_reg_initialize ();
   emm_esm_initialize ();
   emm_as_initialize ();
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
 /****************************************************************************
@@ -106,7 +106,7 @@ emm_sap_send (
   int                                     rc = RETURNerror;
   emm_primitive_t                         primitive = msg->primitive;
 
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
 
   /*
    * Check the EMM-SAP primitive
@@ -140,10 +140,10 @@ emm_sap_send (
   }
 #endif
   else {
-    LOG_TRACE (WARNING, "EMM-SAP -   Out of range primitive (%d)", primitive);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-SAP -   Out of range primitive (%d)", primitive);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

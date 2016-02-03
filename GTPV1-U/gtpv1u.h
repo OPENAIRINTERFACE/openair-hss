@@ -28,15 +28,6 @@
 #ifndef GTPV1_U_H_
 #define GTPV1_U_H_
 
-/* When gtpv1u is compiled for eNB use MACRO from UTILS/log.h,
- * otherwise use standard fprintf as logger.
- */
-
-# define GTPU_DEBUG(x, args...)   fprintf(stdout, "[GTPU][D]"x, ##args)
-# define GTPU_INFO(x, args...)    fprintf(stdout, "[GTPU][I]"x, ##args)
-# define GTPU_WARNING(x, args...) fprintf(stdout, "[GTPU][W]"x, ##args)
-# define GTPU_ERROR(x, args...)   fprintf(stderr, "[GTPU][E]"x, ##args)
-
 #warning "TO BE REFINED"
 # define GTPU_HEADER_OVERHEAD_MAX 64
 

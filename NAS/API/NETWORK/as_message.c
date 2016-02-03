@@ -83,7 +83,7 @@ as_message_decode (
   as_message_t * msg,
   int length)
 {
-  LOG_FUNC_IN (LOG_NAS_MME);
+  LOG_FUNC_IN (LOG_NAS);
   int                                     bytes;
   Byte_t                                **data = NULL;
 
@@ -182,7 +182,7 @@ as_message_decode (
 
   default:
     bytes = 0;
-    LOG_WARNING(LOG_NAS_MME, "NET-API   - AS message 0x%x is not valid", msg->msgID);
+    LOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msgID);
     break;
   }
 
@@ -198,11 +198,11 @@ as_message_decode (
      * Decode the message
      */
     memcpy (msg, (as_message_t *) buffer, bytes);
-    LOG_FUNC_RETURN (LOG_NAS_MME, msg->msgID);
+    LOG_FUNC_RETURN (LOG_NAS, msg->msgID);
   }
 
-  LOG_WARNING(LOG_NAS_MME, "NET-API   - Failed to decode AS message 0x%x", msg->msgID);
-  LOG_FUNC_RETURN (LOG_NAS_MME, RETURNerror);
+  LOG_WARNING(LOG_NAS, "NET-API   - Failed to decode AS message 0x%x", msg->msgID);
+  LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
 /****************************************************************************
@@ -228,7 +228,7 @@ as_message_encode (
   as_message_t * msg,
   int length)
 {
-  LOG_FUNC_IN (LOG_NAS_MME);
+  LOG_FUNC_IN (LOG_NAS);
   int                                     bytes = sizeof (msg->msgID);
   as_nas_info_t                          *nas_msg = NULL;
 
@@ -410,7 +410,7 @@ as_message_encode (
     break;
 
   default:
-    LOG_WARNING(LOG_NAS_MME, "NET-API   - AS message 0x%x is not valid", msg->msgID);
+    LOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msgID);
     bytes = length;
     break;
   }
@@ -435,11 +435,11 @@ as_message_encode (
       nas_msg->data = NULL;
     }
 
-    LOG_FUNC_RETURN (LOG_NAS_MME, bytes);
+    LOG_FUNC_RETURN (LOG_NAS, bytes);
   }
 
-  LOG_WARNING(LOG_NAS_MME, "NET-API   - Failed to encode AS message 0x%x", msg->msgID);
-  LOG_FUNC_RETURN (LOG_NAS_MME, RETURNerror);
+  LOG_WARNING(LOG_NAS, "NET-API   - Failed to encode AS message 0x%x", msg->msgID);
+  LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
 /****************************************************************************/

@@ -88,16 +88,16 @@ emm_proc_status_ind (
   unsigned int ueid,
   int emm_cause)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
 
-  LOG_TRACE (INFO, "EMM-PROC  - EMM status procedure requested (cause=%d)", emm_cause);
-  LOG_TRACE (DEBUG, "EMM-PROC  - To be implemented");
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM status procedure requested (cause=%d)", emm_cause);
+  LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - To be implemented");
   /*
    * TODO
    */
   rc = RETURNok;
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -120,13 +120,13 @@ emm_proc_status (
   unsigned int ueid,
   int emm_cause)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
   struct emm_data_context_s              *ctx = NULL;
 
-  LOG_TRACE (INFO, "EMM-PROC  - EMM status procedure requested");
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM status procedure requested");
   /*
    * Notity EMM that EMM status indication has to be sent to lower layers
    */
@@ -149,7 +149,7 @@ emm_proc_status (
    */
   emm_as_set_security_data (&emm_sap.u.emm_as.u.status.sctx, sctx, FALSE, TRUE);
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

@@ -34,16 +34,14 @@
 
 #include "intertask_interface.h"
 #include "mme_config.h"
-
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-
 #include "secu_defs.h"
-
 #include "assertions.h"
 #include "common_types.h"
 #include "msc.h"
+#include "log.h"
 
 
 int
@@ -57,10 +55,10 @@ mme_app_send_s6a_update_location_req (
 
   MME_APP_STRING_TO_IMSI ((char *)
                           ue_context_pP->pending_pdn_connectivity_req_imsi, &imsi);
-  MME_APP_DEBUG ("Handling imsi %" IMSI_FORMAT "\n", imsi);
+  LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
 
   if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
-    MME_APP_ERROR ("That's embarrassing as we don't know this IMSI\n");
+    LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     return -1;
   }
 
@@ -102,7 +100,7 @@ mme_app_handle_s6a_update_location_ans (
        * The update location procedure has failed. Notify the NAS layer
        * and don't initiate the bearer creation on S-GW side.
        */
-      MME_APP_DEBUG ("ULR/ULA procedure returned non success (ULA.result.choice.base=%d)\n", ula_pP->result.choice.base);
+      LOG_DEBUG (LOG_MME_APP, "ULR/ULA procedure returned non success (ULA.result.choice.base=%d)\n", ula_pP->result.choice.base);
       DevMessage ("ULR/ULA procedure returned non success\n");
     }
   } else {
@@ -110,15 +108,15 @@ mme_app_handle_s6a_update_location_ans (
      * The update location procedure has failed. Notify the NAS layer
      * and don't initiate the bearer creation on S-GW side.
      */
-    MME_APP_DEBUG ("ULR/ULA procedure returned non success (ULA.result.present=%d)\n", ula_pP->result.present);
+    LOG_DEBUG (LOG_MME_APP, "ULR/ULA procedure returned non success (ULA.result.present=%d)\n", ula_pP->result.present);
     DevMessage ("ULR/ULA procedure returned non success\n");
   }
 
   MME_APP_STRING_TO_IMSI ((char *)ula_pP->imsi, &imsi);
-  MME_APP_DEBUG ("%s Handling imsi %" IMSI_FORMAT "\n", __FUNCTION__, imsi);
+  LOG_DEBUG (LOG_MME_APP, "%s Handling imsi %" IMSI_FORMAT "\n", __FUNCTION__, imsi);
 
   if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
-    MME_APP_ERROR ("That's embarrassing as we don't know this IMSI\n");
+    LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_UPDATE_LOCATION unknown imsi %" IMSI_FORMAT, imsi);
     return -1;
   }

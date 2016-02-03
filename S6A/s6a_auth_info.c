@@ -132,7 +132,7 @@ s6a_parse_e_utran_vector (
       /*
        * Unexpected AVP
        */
-      S6A_ERROR ("Unexpected AVP with code %d\n", hdr->avp_code);
+      LOG_ERROR (LOG_S6A, "Unexpected AVP with code %d\n", hdr->avp_code);
       return -1;
     }
 
@@ -143,7 +143,7 @@ s6a_parse_e_utran_vector (
   }
 
   if (ret) {
-    S6A_ERROR ("Missing AVP for E-UTRAN vector: %c%c%c%c\n", ret & 0x01 ? 'R' : '-', ret & 0x02 ? 'X' : '-', ret & 0x04 ? 'A' : '-', ret & 0x08 ? 'K' : '-');
+    LOG_ERROR (LOG_S6A, "Missing AVP for E-UTRAN vector: %c%c%c%c\n", ret & 0x01 ? 'R' : '-', ret & 0x02 ? 'X' : '-', ret & 0x04 ? 'A' : '-', ret & 0x08 ? 'K' : '-');
     return -1;
   }
 
@@ -178,7 +178,7 @@ s6a_parse_authentication_info_avp (
       /*
        * We should only receive E-UTRAN-Vectors
        */
-      S6A_ERROR ("Unexpected AVP with code %d\n", hdr->avp_code);
+      LOG_ERROR (LOG_S6A, "Unexpected AVP with code %d\n", hdr->avp_code);
       return -1;
     }
 
@@ -216,7 +216,7 @@ s6a_aia_cb (
   DevAssert (qry != NULL);
   message_p = itti_alloc_new_message (TASK_S6A, S6A_AUTH_INFO_ANS);
   s6a_auth_info_ans_p = &message_p->ittiMsg.s6a_auth_info_ans;
-  S6A_DEBUG ("Received S6A Authentication Information Answer (AIA)\n");
+  LOG_DEBUG (LOG_S6A, "Received S6A Authentication Information Answer (AIA)\n");
   CHECK_FCT (fd_msg_search_avp (qry, s6a_fd_cnf.dataobj_s6a_user_name, &avp));
 
   if (avp) {
@@ -238,10 +238,10 @@ s6a_aia_cb (
     MSC_LOG_TX_MESSAGE (MSC_S6A_MME, MSC_MMEAPP_MME, NULL, 0, "0 S6A_AUTH_INFO_ANS imsi %s %s", s6a_auth_info_ans_p->imsi, retcode_2_string (s6a_auth_info_ans_p->result.choice.base));
 
     if (hdr->avp_value->u32 != ER_DIAMETER_SUCCESS) {
-      S6A_ERROR ("Got error %u:%s\n", hdr->avp_value->u32, retcode_2_string (hdr->avp_value->u32));
+      LOG_ERROR (LOG_S6A, "Got error %u:%s\n", hdr->avp_value->u32, retcode_2_string (hdr->avp_value->u32));
       goto err;
     } else {
-      S6A_DEBUG ("Received S6A Result code %u:%s\n", s6a_auth_info_ans_p->result.choice.base, retcode_2_string (s6a_auth_info_ans_p->result.choice.base));
+      LOG_DEBUG (LOG_S6A, "Received S6A Result code %u:%s\n", s6a_auth_info_ans_p->result.choice.base, retcode_2_string (s6a_auth_info_ans_p->result.choice.base));
     }
   } else {
     /*
@@ -266,7 +266,7 @@ s6a_aia_cb (
        * * * * totally incorrect behaviour here.
        */
       MSC_LOG_TX_MESSAGE_FAILED (MSC_S6A_MME, MSC_MMEAPP_MME, NULL, 0, "0 S6A_AUTH_INFO_ANS imsi %s", s6a_auth_info_ans_p->imsi);
-      S6A_ERROR ("Experimental-Result and Result-Code are absent: " "This is not a correct behaviour\n");
+      LOG_ERROR (LOG_S6A, "Experimental-Result and Result-Code are absent: " "This is not a correct behaviour\n");
       goto err;
     }
   }
@@ -380,8 +380,8 @@ s6a_generate_authentication_info_req (
     value.os.len = 3;
     CHECK_FCT (fd_msg_avp_setvalue (avp, &value));
     CHECK_FCT (fd_msg_avp_add (msg, MSG_BRW_LAST_CHILD, avp));
-    S6A_DEBUG ("%s plmn: %02X%02X%02X\n", __FUNCTION__, plmn[0], plmn[1], plmn[2]);
-    S6A_DEBUG ("%s visited_plmn: %02X%02X%02X\n", __FUNCTION__, value.os.data[0], value.os.data[1], value.os.data[2]);
+    LOG_DEBUG (LOG_S6A, "%s plmn: %02X%02X%02X\n", __FUNCTION__, plmn[0], plmn[1], plmn[2]);
+    LOG_DEBUG (LOG_S6A, "%s visited_plmn: %02X%02X%02X\n", __FUNCTION__, value.os.data[0], value.os.data[1], value.os.data[2]);
   }
   /*
    * Adding the requested E-UTRAN authentication info AVP

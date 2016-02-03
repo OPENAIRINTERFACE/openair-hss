@@ -77,12 +77,12 @@ void
 emm_reg_initialize (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   /*
    * Initialize the EMM state machine
    */
   emm_fsm_initialize ();
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
 /****************************************************************************
@@ -103,7 +103,7 @@ int
 emm_reg_send (
   const emm_reg_t * msg)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
 
   /*
@@ -116,7 +116,7 @@ emm_reg_send (
    * Execute the EMM procedure
    */
   rc = emm_fsm_process (msg);
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

@@ -162,7 +162,7 @@ emm_fsm_initialize (
 {
   int                                     ueid;
 
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
 #if NAS_BUILT_IN_EPC == 0
 
   for (ueid = 0; ueid < EMM_FSM_NB_UE_MAX; ueid++) {
@@ -170,7 +170,7 @@ emm_fsm_initialize (
   }
 
 #endif
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
 /****************************************************************************
@@ -194,7 +194,7 @@ emm_fsm_set_status (
   void *ctx,
   emm_fsm_state_t status)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
 #if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
@@ -203,25 +203,25 @@ emm_fsm_set_status (
   AssertFatal(ueid == emm_ctx->ueid, "Mismatch UE IDs ueid param " NAS_UE_ID_FMT" emm_ctx->ueid " NAS_UE_ID_FMT" ", ueid, emm_ctx->ueid);
   if ((status < EMM_STATE_MAX) && (ueid > 0)) {
     if (status != emm_ctx->_emm_fsm_status) {
-      LOG_TRACE (INFO, "EMM-FSM   - Status changed: %s ===> %s", _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
+      LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s", _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " NAS_UE_ID_FMT" ", _emm_fsm_status_str[status], ueid);
       emm_ctx->_emm_fsm_status = status;
     }
 
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 #else
 
   if ((status < EMM_STATE_MAX) && (ueid < EMM_FSM_NB_UE_MAX)) {
     if (status != _emm_fsm_status[ueid]) {
-      LOG_TRACE (INFO, "EMM-FSM   - Status changed: %s ===> %s", _emm_fsm_status_str[_emm_fsm_status[ueid]], _emm_fsm_status_str[status]);
+      LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s", _emm_fsm_status_str[_emm_fsm_status[ueid]], _emm_fsm_status_str[status]);
       _emm_fsm_status[ueid] = status;
     }
 
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNok);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 #endif
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
 }
 
 /****************************************************************************
@@ -248,7 +248,7 @@ emm_fsm_get_status (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
   if (emm_ctx == NULL) {
-    LOG_TRACE (INFO, "EMM-FSM   - try again get context ueid " NAS_UE_ID_FMT " ", ueid);
+    LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - try again get context ueid " NAS_UE_ID_FMT " ", ueid);
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
   }
 
@@ -286,7 +286,7 @@ emm_fsm_process (
   emm_fsm_state_t                         status;
   emm_reg_primitive_t                     primitive;
 
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   primitive = evt->primitive;
 #if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
@@ -296,12 +296,12 @@ emm_fsm_process (
 #else
 
   if (evt->ueid >= EMM_FSM_NB_UE_MAX) {
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
 
   status = _emm_fsm_status[evt->ueid];
 #endif
-  LOG_TRACE (INFO, "EMM-FSM   - Received event %s (%d) in state %s", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
+  LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
 #if NAS_BUILT_IN_EPC
   DevAssert (status != EMM_INVALID);
 #endif
@@ -309,7 +309,7 @@ emm_fsm_process (
    * Execute the EMM state machine
    */
   rc = (_emm_fsm_handlers[status]) (evt);
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

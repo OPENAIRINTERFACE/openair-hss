@@ -86,7 +86,7 @@ EmmCommonProcedureInitiated (
 {
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   assert (emm_fsm_get_status (evt->ueid, evt->ctx) == EMM_COMMON_PROCEDURE_INITIATED);
 
   switch (evt->primitive) {
@@ -165,11 +165,11 @@ EmmCommonProcedureInitiated (
     break;
 
   default:
-    LOG_ERROR (LOG_NAS_EMM_MME, "EMM-FSM   - Primitive is not valid (%d)", evt->primitive);
+    LOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)", evt->primitive);
     break;
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

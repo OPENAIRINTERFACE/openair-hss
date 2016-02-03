@@ -41,7 +41,7 @@ decode_esm_message_container (
   int                                     decode_result;
   uint16_t                                ielen;
 
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS_ESM);
 
   if (iei > 0) {
     CHECK_IEI_DECODER (iei, *buffer);
@@ -52,7 +52,7 @@ decode_esm_message_container (
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
   if ((decode_result = decode_octet_string (&esmmessagecontainer->esmmessagecontainercontents, ielen, buffer + decoded, len - decoded)) < 0) {
-    LOG_FUNC_RETURN (decode_result);
+    LOG_FUNC_RETURN (LOG_NAS_ESM, decode_result);
   } else {
     decoded += decode_result;
   }
@@ -60,7 +60,7 @@ decode_esm_message_container (
 #if NAS_DEBUG
   dump_esm_message_container_xml (esmmessagecontainer, iei);
 #endif
-  LOG_FUNC_RETURN (decoded);
+  LOG_FUNC_RETURN (LOG_NAS_ESM, decoded);
 }
 
 int

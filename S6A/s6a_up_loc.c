@@ -64,7 +64,7 @@ s6a_ula_cb (
     memcpy (s6a_update_location_ans_p->imsi, hdr_p->avp_value->os.data, hdr_p->avp_value->os.len);
     s6a_update_location_ans_p->imsi[hdr_p->avp_value->os.len] = '\0';
     s6a_update_location_ans_p->imsi_length = hdr_p->avp_value->os.len;
-    S6A_DEBUG ("Received s6a ula for imsi=%*s\n", (int)hdr_p->avp_value->os.len, hdr_p->avp_value->os.data);
+    LOG_DEBUG (LOG_S6A, "Received s6a ula for imsi=%*s\n", (int)hdr_p->avp_value->os.len, hdr_p->avp_value->os.data);
   } else {
     DevMessage ("Query has been freed before we received the answer\n");
   }
@@ -81,7 +81,7 @@ s6a_ula_cb (
     MSC_LOG_TX_MESSAGE (MSC_S6A_MME, MSC_MMEAPP_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_ANS imsi %SCNu64 %s", s6a_update_location_ans_p->imsi, retcode_2_string (hdr_p->avp_value->u32));
 
     if (hdr_p->avp_value->u32 != ER_DIAMETER_SUCCESS) {
-      S6A_ERROR ("Got error %u:%s\n", hdr_p->avp_value->u32, retcode_2_string (hdr_p->avp_value->u32));
+      LOG_ERROR (LOG_S6A, "Got error %u:%s\n", hdr_p->avp_value->u32, retcode_2_string (hdr_p->avp_value->u32));
       goto err;
     }
   } else {
@@ -105,7 +105,7 @@ s6a_ula_cb (
        * Neither result-code nor experimental-result is present ->
        * * * * totally incorrect behaviour here.
        */
-      S6A_ERROR ("Experimental-Result and Result-Code are absent: " "This is not a correct behaviour\n");
+      LOG_ERROR (LOG_S6A, "Experimental-Result and Result-Code are absent: " "This is not a correct behaviour\n");
       goto err;
     }
   }
@@ -124,7 +124,7 @@ s6a_ula_cb (
      * * * * the bit.
      */
     if (!FLAG_IS_SET (hdr_p->avp_value->u32, ULA_SEPARATION_IND)) {
-      S6A_ERROR ("ULA-Flags does not indicate the HSS is post Rel.8: " "This behaviour is not compliant\n");
+      LOG_ERROR (LOG_S6A, "ULA-Flags does not indicate the HSS is post Rel.8: " "This behaviour is not compliant\n");
       goto err;
     }
   } else {
@@ -133,7 +133,7 @@ s6a_ula_cb (
      * * * * this is not a compliant behaviour...
      * * * * TODO: handle this case.
      */
-    S6A_ERROR ("ULA-Flags AVP is absent while result code indicates " "DIAMETER_SUCCESS\n");
+    LOG_ERROR (LOG_S6A, "ULA-Flags AVP is absent while result code indicates " "DIAMETER_SUCCESS\n");
     goto err;
   }
 
@@ -147,7 +147,7 @@ s6a_ula_cb (
 err:
   ans_p = NULL;
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-  S6A_DEBUG ("Sending S6A_UPDATE_LOCATION_ANS to task MME_APP\n");
+  LOG_DEBUG (LOG_S6A, "Sending S6A_UPDATE_LOCATION_ANS to task MME_APP\n");
   return 0;
 }
 
@@ -283,6 +283,6 @@ s6a_generate_update_location (
   CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
   CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
   CHECK_FCT (fd_msg_send (&msg_p, NULL, NULL));
-  S6A_DEBUG ("Sending s6a ulr for imsi=%s\n", ulr_pP->imsi);
+  LOG_DEBUG (LOG_S6A, "Sending s6a ulr for imsi=%s\n", ulr_pP->imsi);
   return 0;
 }

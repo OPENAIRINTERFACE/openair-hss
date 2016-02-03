@@ -193,19 +193,20 @@ log_init (
     AssertFatal (rv, "lfds611_stack_guaranteed_push failed for item %u\n", i);
   }
 
+  rv = snprintf (&g_log_proto2str[LOG_UDP][0], LOG_MAX_PROTO_NAME_LENGTH, "UDP");
   rv = snprintf (&g_log_proto2str[LOG_GTPV1U][0], LOG_MAX_PROTO_NAME_LENGTH, "GTPv1-U");
-  rv = snprintf (&g_log_proto2str[LOG_S1AP_MME][0], LOG_MAX_PROTO_NAME_LENGTH, "S1AP");
+  rv = snprintf (&g_log_proto2str[LOG_GTPV2C][0], LOG_MAX_PROTO_NAME_LENGTH, "GTPv2-C");
+  rv = snprintf (&g_log_proto2str[LOG_S1AP][0], LOG_MAX_PROTO_NAME_LENGTH, "S1AP");
   rv = snprintf (&g_log_proto2str[LOG_MME_APP][0], LOG_MAX_PROTO_NAME_LENGTH, "MME-APP");
-  rv = snprintf (&g_log_proto2str[LOG_NAS_MME][0], LOG_MAX_PROTO_NAME_LENGTH, "NAS");
-  rv = snprintf (&g_log_proto2str[LOG_NAS_EMM_MME][0], LOG_MAX_PROTO_NAME_LENGTH, "NAS-EMM");
-  rv = snprintf (&g_log_proto2str[LOG_NAS_ESM_MME][0], LOG_MAX_PROTO_NAME_LENGTH, "NAS-ESM");
-  rv = snprintf (&g_log_proto2str[LOG_SPGW_APP_MME][0], LOG_MAX_PROTO_NAME_LENGTH, "SPGW-APP");
-  rv = snprintf (&g_log_proto2str[LOG_S11_MME][0], LOG_MAX_PROTO_NAME_LENGTH, "S11-MME");
-  rv = snprintf (&g_log_proto2str[LOG_S11_SGW][0], LOG_MAX_PROTO_NAME_LENGTH, "S11-SGW");
-  rv = snprintf (&g_log_proto2str[LOG_S6A_MME][0], LOG_MAX_PROTO_NAME_LENGTH, "S6A-MME");
+  rv = snprintf (&g_log_proto2str[LOG_NAS][0], LOG_MAX_PROTO_NAME_LENGTH, "NAS");
+  rv = snprintf (&g_log_proto2str[LOG_NAS_EMM][0], LOG_MAX_PROTO_NAME_LENGTH, "NAS-EMM");
+  rv = snprintf (&g_log_proto2str[LOG_NAS_ESM][0], LOG_MAX_PROTO_NAME_LENGTH, "NAS-ESM");
+  rv = snprintf (&g_log_proto2str[LOG_SPGW_APP][0], LOG_MAX_PROTO_NAME_LENGTH, "SPGW-APP");
+  rv = snprintf (&g_log_proto2str[LOG_S11][0], LOG_MAX_PROTO_NAME_LENGTH, "S11");
+  rv = snprintf (&g_log_proto2str[LOG_S6A][0], LOG_MAX_PROTO_NAME_LENGTH, "S6A");
   rv = snprintf (&g_log_proto2str[LOG_UTIL][0], LOG_MAX_PROTO_NAME_LENGTH, "UTIL");
   rv = snprintf (&g_log_proto2str[LOG_CONFIG][0], LOG_MAX_PROTO_NAME_LENGTH, "CONFIG");
-  rv = snprintf (&g_log_proto2str[LOG_MSC][0], LOG_MAX_PROTO_NAME_LENGTH, "LOG");
+  rv = snprintf (&g_log_proto2str[LOG_MSC][0], LOG_MAX_PROTO_NAME_LENGTH, "MSC");
 
   rv = snprintf (&g_log_level2str[LOG_LEVEL_TRACE][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "TRACE");
   rv = snprintf (&g_log_level2str[LOG_LEVEL_DEBUG][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "DEBUG");
@@ -226,6 +227,7 @@ log_init (
 
   rv = itti_create_task (TASK_LOG, log_task, NULL);
   AssertFatal (rv == 0, "Create task for OAI logging failed!\n");
+  log_start_use(); // yes this thread also
   fprintf (stderr, "Initializing OAI logging Done\n");
   return 0;
 }
@@ -294,8 +296,6 @@ log_message (
   const log_proto_t protoP,
   const char *const source_fileP,
   const unsigned int line_numP,
-  const uint8_t * const bytesP,
-  const unsigned int num_bytes,
   char *format,
   ...)
 //------------------------------------------------------------------------------
@@ -313,7 +313,7 @@ log_message (
   if ((MIN_LOG_LEVEL > log_levelP) || (MAX_LOG_LEVEL <= log_levelP)) {
     return;
   }
-  if (log_levelP < g_log_level[protoP]  ) {
+  if (log_levelP > g_log_level[protoP]) {
     return;
   }
   new_item_p = MALLOC_CHECK (sizeof (log_queue_item_t));
@@ -334,11 +334,11 @@ log_message (
         rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%.6s|%.6s|%s:%u| ",
             __sync_fetch_and_add (&g_log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
             &g_log_level2str[log_levelP][0], &g_log_proto2str[protoP][0],
-            source_fileP[filename_length-LOG_MAX_FILENAME_LENGTH]);
+            &source_fileP[filename_length-LOG_MAX_FILENAME_LENGTH], line_numP);
       } else {
         rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%.6s|%.6s|%s:%u| ",
             __sync_fetch_and_add (&g_log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
-            &g_log_level2str[log_levelP][0], &g_log_proto2str[protoP][0]);
+            &g_log_level2str[log_levelP][0], &g_log_proto2str[protoP][0], source_fileP, line_numP);
       }
 
       if ((0 > rv) || (LOG_MAX_MESSAGE_LENGTH < rv)) {
@@ -351,7 +351,7 @@ log_message (
       va_end (args);
 
       if ((0 > rv2) || ((LOG_MAX_MESSAGE_LENGTH - rv) < rv2)) {
-        fprintf (stderr, "Error while logging LOG message : %s/%s", &g_log_proto2str[protoP][0]);
+        fprintf (stderr, "Error while logging LOG message : %s", &g_log_proto2str[protoP][0]);
         goto error_event;
       }
 
@@ -359,7 +359,7 @@ log_message (
       rv2 = snprintf (&char_message_p[rv], LOG_MAX_MESSAGE_LENGTH - rv, "\n");
 
       if ((0 > rv2) || ((LOG_MAX_MESSAGE_LENGTH - rv) < rv2)) {
-        fprintf (stderr, "Error while logging LOG message : %s/%s", &g_log_proto2str[protoP][0]);
+        fprintf (stderr, "Error while logging LOG message : %s", &g_log_proto2str[protoP][0]);
         goto error_event;
       }
 

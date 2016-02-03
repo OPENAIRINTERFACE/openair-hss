@@ -42,7 +42,7 @@ emm_data_context_get (
   DevCheck (ueid > 0, ueid, 0, 0);
   DevAssert (emm_data != NULL);
   hashtable_ts_get (emm_data->ctx_coll_ue_id, (const hash_key_t)(ueid), (void **)&emm_data_context_p);
-  LOG_TRACE (INFO, "EMM-CTX - get UE id " NAS_UE_ID_FMT " context %p", ueid, emm_data_context_p);
+  LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get UE id " NAS_UE_ID_FMT " context %p", ueid, emm_data_context_p);
   return emm_data_context_p;
 }
 
@@ -64,16 +64,16 @@ emm_data_context_get_by_guti (
     h_rc = obj_hashtable_ts_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **)&emm_ue_id);
 
     if (h_rc == HASH_TABLE_OK) {
-      LOG_TRACE (INFO, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " %s", emm_ue_id, guti_str);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " %s", emm_ue_id, guti_str);
       return emm_data_context_get (emm_data, (const hash_key_t)emm_ue_id);
     }
 
-    LOG_TRACE (INFO, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " %s failed", emm_ue_id, guti_str);
-    LOG_TRACE (INFO, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " PLMN    %01x%01x%01x%01x%01x%01x failed",
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " %s failed", emm_ue_id, guti_str);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " PLMN    %01x%01x%01x%01x%01x%01x failed",
                emm_ue_id, guti->gummei.plmn.MCCdigit1, guti->gummei.plmn.MCCdigit2, guti->gummei.plmn.MNCdigit3, guti->gummei.plmn.MNCdigit1, guti->gummei.plmn.MNCdigit2, guti->gummei.plmn.MCCdigit3);
-    LOG_TRACE (INFO, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " MMEgid  %04x failed", emm_ue_id, guti->gummei.MMEgid);
-    LOG_TRACE (INFO, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " MMEcode %01x failed", emm_ue_id, guti->gummei.MMEcode);
-    LOG_TRACE (INFO, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " m_tmsi  %08x failed", emm_ue_id, guti->m_tmsi);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " MMEgid  %04x failed", emm_ue_id, guti->gummei.MMEgid);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " MMEcode %01x failed", emm_ue_id, guti->gummei.MMEcode);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " m_tmsi  %08x failed", emm_ue_id, guti->m_tmsi);
   }
 
   return NULL;
@@ -89,14 +89,14 @@ emm_data_context_remove (
   struct emm_data_context_s              *emm_data_context_p = NULL;
   unsigned int                           *emm_ue_id = NULL;
 
-  LOG_TRACE (INFO, "EMM-CTX - Remove in context %p UE id " NAS_UE_ID_FMT " ", elm, elm->ueid);
+  LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " NAS_UE_ID_FMT " ", elm, elm->ueid);
 
   if (NULL != elm->guti) {
     char                                    guti_str[GUTI2STR_MAX_LENGTH];
 
     GUTI2STR (elm->guti, guti_str, GUTI2STR_MAX_LENGTH);
     obj_hashtable_ts_remove (emm_data->ctx_coll_guti, (const void *)(elm->guti), sizeof (*elm->guti), (void **)&emm_ue_id);
-    LOG_TRACE (INFO, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " NAS_UE_ID_FMT " guti %s", elm, emm_ue_id, guti_str);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " NAS_UE_ID_FMT " guti %s", elm, emm_ue_id, guti_str);
   }
 
   hashtable_ts_remove (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ueid), (void **)&emm_data_context_p);
@@ -114,7 +114,7 @@ emm_data_context_add (
   h_rc = hashtable_ts_insert (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ueid), elm);
 
   if (h_rc == HASH_TABLE_OK) {
-    LOG_TRACE (INFO, "EMM-CTX - Add in context %p UE id " NAS_UE_ID_FMT " ", elm, elm->ueid);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context %p UE id " NAS_UE_ID_FMT " ", elm, elm->ueid);
 
     if (NULL != elm->guti) {
       char                                    guti_str[GUTI2STR_MAX_LENGTH];
@@ -123,16 +123,16 @@ emm_data_context_add (
       h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (void *)(elm->guti), sizeof (*elm->guti), (void *)elm->ueid);
 
       if (h_rc == HASH_TABLE_OK) {
-        LOG_TRACE (INFO, "EMM-CTX - Add in context UE id " NAS_UE_ID_FMT " with GUTI %s", elm->ueid, guti_str);
+        LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " NAS_UE_ID_FMT " with GUTI %s", elm->ueid, guti_str);
         return RETURNok;
       } else {
-        LOG_TRACE (INFO, "EMM-CTX - Add in context UE id " NAS_UE_ID_FMT " with GUTI %s Failed %s", elm->ueid, guti_str, hashtable_rc_code2string (h_rc));
+        LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " NAS_UE_ID_FMT " with GUTI %s Failed %s", elm->ueid, guti_str, hashtable_rc_code2string (h_rc));
         return RETURNerror;
       }
     } else
       return RETURNok;
   } else {
-    LOG_TRACE (INFO, "EMM-CTX - Add in context %p UE id " NAS_UE_ID_FMT " Failed %s", elm, elm->ueid, hashtable_rc_code2string (h_rc));
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context %p UE id " NAS_UE_ID_FMT " Failed %s", elm, elm->ueid, hashtable_rc_code2string (h_rc));
     return RETURNerror;
   }
 }
@@ -212,7 +212,7 @@ void free_emm_data_context(
      * Stop timer T3450
      */
     if (emm_ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
-      LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3450 (%d)", emm_ctx->T3450.id);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)", emm_ctx->T3450.id);
       emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
     }
@@ -221,7 +221,7 @@ void free_emm_data_context(
      * Stop timer T3460
      */
     if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-      LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3460 (%d)", emm_ctx->T3460.id);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)", emm_ctx->T3460.id);
       emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3460 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
     }
@@ -230,7 +230,7 @@ void free_emm_data_context(
      * Stop timer T3470
      */
     if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
-      LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3460.id);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3460.id);
       emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
     }
@@ -250,20 +250,20 @@ emm_data_context_dump (
                                             remaining_size;
     char                                    key_string[KASME_LENGTH_OCTETS * 2];
 
-    LOG_TRACE (INFO, "EMM-CTX: ue id:           " NAS_UE_ID_FMT " (UE identifier)", elm_pP->ueid);
-    LOG_TRACE (INFO, "         is_dynamic:       %u      (Dynamically allocated context indicator)", elm_pP->is_dynamic);
-    LOG_TRACE (INFO, "         is_attached:      %u      (Attachment indicator)", elm_pP->is_attached);
-    LOG_TRACE (INFO, "         is_emergency:     %u      (Emergency bearer services indicator)", elm_pP->is_emergency);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX: ue id:           " NAS_UE_ID_FMT " (UE identifier)", elm_pP->ueid);
+    LOG_INFO (LOG_NAS_EMM, "         is_dynamic:       %u      (Dynamically allocated context indicator)", elm_pP->is_dynamic);
+    LOG_INFO (LOG_NAS_EMM, "         is_attached:      %u      (Attachment indicator)", elm_pP->is_attached);
+    LOG_INFO (LOG_NAS_EMM, "         is_emergency:     %u      (Emergency bearer services indicator)", elm_pP->is_emergency);
     NAS_IMSI2STR (elm_pP->imsi, imsi_str, 16);
-    LOG_TRACE (INFO, "         imsi:             %s      (The IMSI provided by the UE or the MME)", imsi_str);
-    LOG_TRACE (INFO, "         imei:             TODO    (The IMEI provided by the UE)");
-    LOG_TRACE (INFO, "         guti_is_new:      %u      (New GUTI indicator)", elm_pP->guti_is_new);
+    LOG_INFO (LOG_NAS_EMM, "         imsi:             %s      (The IMSI provided by the UE or the MME)", imsi_str);
+    LOG_INFO (LOG_NAS_EMM, "         imei:             TODO    (The IMEI provided by the UE)");
+    LOG_INFO (LOG_NAS_EMM, "         guti_is_new:      %u      (New GUTI indicator)", elm_pP->guti_is_new);
     GUTI2STR (elm_pP->guti, guti_str, GUTI2STR_MAX_LENGTH);
-    LOG_TRACE (INFO, "         guti:             %s      (The GUTI assigned to the UE)", guti_str);
+    LOG_INFO (LOG_NAS_EMM, "         guti:             %s      (The GUTI assigned to the UE)", guti_str);
     GUTI2STR (elm_pP->old_guti, guti_str, GUTI2STR_MAX_LENGTH);
-    LOG_TRACE (INFO, "         old_guti:         %s      (The old GUTI)", guti_str);
+    LOG_INFO (LOG_NAS_EMM, "         old_guti:         %s      (The old GUTI)", guti_str);
     for (k=0; k < elm_pP->tai_list.n_tais; k++) {
-    LOG_TRACE (INFO, "         tai:              %u%u%u%u%u%u:0x%04x   (Tracking area identity the UE is registered to)",
+    LOG_INFO (LOG_NAS_EMM, "         tai:              %u%u%u%u%u%u:0x%04x   (Tracking area identity the UE is registered to)",
         elm_pP->tai_list.tai[k].plmn.MCCdigit1,
         elm_pP->tai_list.tai[k].plmn.MCCdigit2,
         elm_pP->tai_list.tai[k].plmn.MCCdigit3,
@@ -272,23 +272,23 @@ emm_data_context_dump (
         elm_pP->tai_list.tai[k].plmn.MNCdigit3,
         elm_pP->tai_list.tai[k].tac);
     }
-    LOG_TRACE (INFO, "         ksi:              %u      (Security key set identifier provided by the UE)", elm_pP->ksi);
-    LOG_TRACE (INFO, "         auth_vector:              (EPS authentication vector)");
-    LOG_TRACE (INFO, "             kasme: " KASME_FORMAT "" KASME_FORMAT, KASME_DISPLAY_1 (elm_pP->vector.kasme), KASME_DISPLAY_2 (elm_pP->vector.kasme));
-    LOG_TRACE (INFO, "             rand:  " RAND_FORMAT, RAND_DISPLAY (elm_pP->vector.rand));
-    LOG_TRACE (INFO, "             autn:  " AUTN_FORMAT, AUTN_DISPLAY (elm_pP->vector.autn));
+    LOG_INFO (LOG_NAS_EMM, "         ksi:              %u      (Security key set identifier provided by the UE)", elm_pP->ksi);
+    LOG_INFO (LOG_NAS_EMM, "         auth_vector:              (EPS authentication vector)");
+    LOG_INFO (LOG_NAS_EMM, "             kasme: " KASME_FORMAT "" KASME_FORMAT, KASME_DISPLAY_1 (elm_pP->vector.kasme), KASME_DISPLAY_2 (elm_pP->vector.kasme));
+    LOG_INFO (LOG_NAS_EMM, "             rand:  " RAND_FORMAT, RAND_DISPLAY (elm_pP->vector.rand));
+    LOG_INFO (LOG_NAS_EMM, "             autn:  " AUTN_FORMAT, AUTN_DISPLAY (elm_pP->vector.autn));
 
     for (k = 0; k < XRES_LENGTH_MAX; k++) {
       sprintf (&key_string[k * 3], "%02x,", elm_pP->vector.xres[k]);
     }
 
     key_string[k * 3 - 1] = '\0';
-    LOG_TRACE (INFO, "             xres:  %s\n", key_string);
+    LOG_INFO (LOG_NAS_EMM, "             xres:  %s\n", key_string);
 
     if (elm_pP->security != NULL) {
-      LOG_TRACE (INFO, "         security context:          (Current EPS NAS security context)");
-      LOG_TRACE (INFO, "             type:  %s              (Type of security context)", (elm_pP->security->type == EMM_KSI_NOT_AVAILABLE) ? "KSI_NOT_AVAILABLE" : (elm_pP->security->type == EMM_KSI_NATIVE) ? "KSI_NATIVE" : "KSI_MAPPED");
-      LOG_TRACE (INFO, "             eksi:  %u              (NAS key set identifier for E-UTRAN)", elm_pP->security->eksi);
+      LOG_INFO (LOG_NAS_EMM, "         security context:          (Current EPS NAS security context)");
+      LOG_INFO (LOG_NAS_EMM, "             type:  %s              (Type of security context)", (elm_pP->security->type == EMM_KSI_NOT_AVAILABLE) ? "KSI_NOT_AVAILABLE" : (elm_pP->security->type == EMM_KSI_NATIVE) ? "KSI_NATIVE" : "KSI_MAPPED");
+      LOG_INFO (LOG_NAS_EMM, "             eksi:  %u              (NAS key set identifier for E-UTRAN)", elm_pP->security->eksi);
 
       if (elm_pP->security->kasme.length > 0) {
         size = 0;
@@ -303,7 +303,7 @@ emm_data_context_dump (
         size += snprintf (&key_string[0], remaining_size, "None");
       }
 
-      LOG_TRACE (INFO, "             kasme: %s     (ASME security key (native context))", key_string);
+      LOG_INFO (LOG_NAS_EMM, "             kasme: %s     (ASME security key (native context))", key_string);
 
       if (elm_pP->security->knas_enc.length > 0) {
         size = 0;
@@ -318,7 +318,7 @@ emm_data_context_dump (
         size += snprintf (&key_string[0], KASME_LENGTH_OCTETS * 2, "None");
       }
 
-      LOG_TRACE (INFO, "             knas_enc: %s     (NAS cyphering key)", key_string);
+      LOG_INFO (LOG_NAS_EMM, "             knas_enc: %s     (NAS cyphering key)", key_string);
 
       if (elm_pP->security->knas_int.length > 0) {
         size = 0;
@@ -332,20 +332,20 @@ emm_data_context_dump (
         size += snprintf (&key_string[0], KASME_LENGTH_OCTETS * 2, "None");
       }
 
-      LOG_TRACE (INFO, "             knas_int: %s     (NAS integrity key)", key_string);
-      LOG_TRACE (INFO, "             dl_count.overflow: %u     ", elm_pP->security->dl_count.overflow);
-      LOG_TRACE (INFO, "             dl_count.seq_num:  %u     ", elm_pP->security->dl_count.seq_num);
-      LOG_TRACE (INFO, "             ul_count.overflow: %u     ", elm_pP->security->ul_count.overflow);
-      LOG_TRACE (INFO, "             ul_count.seq_num:  %u     ", elm_pP->security->ul_count.seq_num);
-      LOG_TRACE (INFO, "             TODO  capability");
-      LOG_TRACE (INFO, "             selected_algorithms.encryption:  %x     ", elm_pP->security->selected_algorithms.encryption);
-      LOG_TRACE (INFO, "             selected_algorithms.integrity:   %x     ", elm_pP->security->selected_algorithms.integrity);
+      LOG_INFO (LOG_NAS_EMM, "             knas_int: %s     (NAS integrity key)", key_string);
+      LOG_INFO (LOG_NAS_EMM, "             dl_count.overflow: %u     ", elm_pP->security->dl_count.overflow);
+      LOG_INFO (LOG_NAS_EMM, "             dl_count.seq_num:  %u     ", elm_pP->security->dl_count.seq_num);
+      LOG_INFO (LOG_NAS_EMM, "             ul_count.overflow: %u     ", elm_pP->security->ul_count.overflow);
+      LOG_INFO (LOG_NAS_EMM, "             ul_count.seq_num:  %u     ", elm_pP->security->ul_count.seq_num);
+      LOG_INFO (LOG_NAS_EMM, "             TODO  capability");
+      LOG_INFO (LOG_NAS_EMM, "             selected_algorithms.encryption:  %x     ", elm_pP->security->selected_algorithms.encryption);
+      LOG_INFO (LOG_NAS_EMM, "             selected_algorithms.integrity:   %x     ", elm_pP->security->selected_algorithms.integrity);
     } else {
-      LOG_TRACE (INFO, "         No security context");
+      LOG_INFO (LOG_NAS_EMM, "         No security context");
     }
 
-    LOG_TRACE (INFO, "         _emm_fsm_status     %u   ", elm_pP->_emm_fsm_status);
-    LOG_TRACE (INFO, "         TODO  esm_data_ctx");
+    LOG_INFO (LOG_NAS_EMM, "         _emm_fsm_status     %u   ", elm_pP->_emm_fsm_status);
+    LOG_INFO (LOG_NAS_EMM, "         TODO  esm_data_ctx");
   }
 }
 
@@ -362,7 +362,7 @@ void
 emm_data_context_dump_all (
   void)
 {
-  LOG_TRACE (INFO, "EMM-CTX - Dump all contexts:");
+  LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Dump all contexts:");
   hashtable_ts_apply_funct_on_elements (_emm_data.ctx_coll_ue_id, emm_data_context_dump_hash_table_wrapper, NULL);
 }
 #endif

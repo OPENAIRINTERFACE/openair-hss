@@ -356,15 +356,15 @@ include_directories(${OPENAIRCN_DIR}/UTILS/MSC/msc)
 
 
 set(SECU_CN_SRC
-  ${OPENAIRCN_DIR}/SECU/kdf.c)
-#  ${OPENAIRCN_DIR}/SECU/rijndael.c
-#  ${OPENAIRCN_DIR}/SECU/snow3g.c
-#  ${OPENAIRCN_DIR}/SECU/key_nas_deriver.c
-#  ${OPENAIRCN_DIR}/SECU/nas_stream_eea1.c
-#  ${OPENAIRCN_DIR}/SECU/nas_stream_eia1.c
-#  ${OPENAIRCN_DIR}/SECU/nas_stream_eea2.c
-#  ${OPENAIRCN_DIR}/SECU/nas_stream_eia2.c
-#  )
+  ${OPENAIRCN_DIR}/SECU/kdf.c
+  ${OPENAIRCN_DIR}/SECU/rijndael.c
+  ${OPENAIRCN_DIR}/SECU/snow3g.c
+  ${OPENAIRCN_DIR}/SECU/key_nas_deriver.c
+  ${OPENAIRCN_DIR}/SECU/nas_stream_eea1.c
+  ${OPENAIRCN_DIR}/SECU/nas_stream_eia1.c
+  ${OPENAIRCN_DIR}/SECU/nas_stream_eea2.c
+  ${OPENAIRCN_DIR}/SECU/nas_stream_eia2.c
+  )
 add_library(SECU_CN ${SECU_CN_SRC})
 
 
@@ -611,7 +611,6 @@ set(libnas_ies_OBJS
 
 set (libnas_utils_OBJS
   ${NAS_SRC}UTIL/device.c
-  ${NAS_SRC}UTIL/memory.c
   ${NAS_SRC}UTIL/nas_timer.c
   ${NAS_SRC}UTIL/socket.c
   ${NAS_SRC}UTIL/stty.c

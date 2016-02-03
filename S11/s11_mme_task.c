@@ -34,12 +34,8 @@
 #include "NwGtpv2cMsg.h"
 #include "s11_mme.h"
 #include "s11_mme_session_manager.h"
+#include "msc.h"
 #include "log.h"
-
-#define S11_DEBUG(x, args...) fprintf(stdout, "[S11] [D]"x, ##args)
-#define S11_INFO(x, args...)  fprintf(stdout, "[S11] [I]"x, ##args)
-#define S11_WARN(x, args...)  fprintf(stdout, "[S11] [W]"x, ##args)
-#define S11_ERROR(x, args...) fprintf(stderr, "[S11] [E]"x, ##args)
 
 static NwGtpv2cStackHandleT             s11_mme_stack_handle;
 
@@ -52,7 +48,7 @@ s11_mme_log_wrapper (
   uint32_t line,
   NwCharT * logStr)
 {
-  S11_DEBUG ("%s\n", logStr);
+  LOG_DEBUG (LOG_S11, "%s\n", logStr);
   return NW_OK;
 }
 
@@ -69,7 +65,7 @@ s11_mme_ulp_process_stack_req_cb (
 
   switch (pUlpApi->apiType) {
   case NW_GTPV2C_ULP_API_TRIGGERED_RSP_IND:
-    S11_DEBUG ("Received triggered response indication\n");
+    LOG_DEBUG (LOG_S11, "Received triggered response indication\n");
 
     switch (pUlpApi->apiInfo.triggeredRspIndInfo.msgType) {
     case NW_GTP_CREATE_SESSION_RSP:
@@ -77,7 +73,7 @@ s11_mme_ulp_process_stack_req_cb (
       break;
 
     default:
-      S11_WARN ("Received unhandled message type %d\n", pUlpApi->apiInfo.triggeredRspIndInfo.msgType);
+      LOG_WARNING (LOG_S11, "Received unhandled message type %d\n", pUlpApi->apiInfo.triggeredRspIndInfo.msgType);
       break;
     }
 
@@ -154,6 +150,8 @@ s11_mme_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_S11);
+  LOG_START_USE ();
+  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -186,13 +184,13 @@ s11_mme_thread (
       break;
 
     case TIMER_HAS_EXPIRED:{
-        S11_DEBUG ("Processing timeout for timer_id 0x%lx and arg %p\n", received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
+        LOG_DEBUG (LOG_S11, "Processing timeout for timer_id 0x%lx and arg %p\n", received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
         DevAssert (nwGtpv2cProcessTimeout (received_message_p->ittiMsg.timer_has_expired.arg) == NW_OK);
       }
       break;
 
     default:{
-        S11_ERROR ("Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        LOG_ERROR (LOG_S11, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
@@ -220,7 +218,7 @@ s11_send_init_udp (
   message_p->ittiMsg.udp_init.port = port_number;
   //LG message_p->ittiMsg.udpInit.address = "0.0.0.0"; //ANY address
   message_p->ittiMsg.udp_init.address = address;
-  S11_DEBUG ("Tx UDP_INIT IP addr %s\n", message_p->ittiMsg.udp_init.address);
+  LOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s\n", message_p->ittiMsg.udp_init.address);
   return itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
 }
 
@@ -236,10 +234,10 @@ s11_mme_init (
   struct in_addr                          addr;
   char                                   *s11_address_str = NULL;
 
-  S11_DEBUG ("Initializing S11 interface\n");
+  LOG_DEBUG (LOG_S11, "Initializing S11 interface\n");
 
   if (nwGtpv2cInitialize (&s11_mme_stack_handle) != NW_OK) {
-    S11_ERROR ("Failed to initialize gtpv2-c stack\n");
+    LOG_ERROR (LOG_S11, "Failed to initialize gtpv2-c stack\n");
     goto fail;
   }
 
@@ -267,7 +265,7 @@ s11_mme_init (
   DevAssert (NW_OK == nwGtpv2cSetLogMgrEntity (s11_mme_stack_handle, &logMgr));
 
   if (itti_create_task (TASK_S11, &s11_mme_thread, NULL) < 0) {
-    S11_ERROR ("gtpv1u phtread_create: %s\n", strerror (errno));
+    LOG_ERROR (LOG_S11, "gtpv1u phtread_create: %s\n", strerror (errno));
     goto fail;
   }
 
@@ -278,9 +276,9 @@ s11_mme_init (
   s11_address_str = inet_ntoa (addr);
   DevAssert (s11_address_str != NULL);
   s11_send_init_udp (s11_address_str, 2123);
-  S11_DEBUG ("Initializing S11 interface: DONE\n");
+  LOG_DEBUG (LOG_S11, "Initializing S11 interface: DONE\n");
   return ret;
 fail:
-  S11_DEBUG ("Initializing S11 interface: FAILURE\n");
+  LOG_DEBUG (LOG_S11, "Initializing S11 interface: FAILURE\n");
   return -1;
 }

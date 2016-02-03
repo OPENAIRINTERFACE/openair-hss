@@ -87,7 +87,7 @@ emm_main_initialize (
   void)
 #endif
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   /*
    * Retreive MME supported configuration data
    */
@@ -98,13 +98,13 @@ emm_main_initialize (
   if (mme_api_get_emm_config (&_emm_data.conf) != RETURNok)
 #endif
   {
-    LOG_TRACE (ERROR, "EMM-MAIN  - Failed to get MME configuration data");
+    LOG_ERROR (LOG_NAS_EMM, "EMM-MAIN  - Failed to get MME configuration data");
   }
 #if NAS_BUILT_IN_EPC
   _emm_data.ctx_coll_ue_id = hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, "emm_data.ctx_coll_ue_id");
   _emm_data.ctx_coll_guti = obj_hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, NULL, "emm_data.ctx_coll_guti");
 #endif
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT(LOG_NAS_EMM);
 }
 
 /****************************************************************************
@@ -125,8 +125,8 @@ void
 emm_main_cleanup (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
-  LOG_FUNC_OUT;
+  LOG_FUNC_IN (LOG_NAS_EMM);
+  LOG_FUNC_OUT(LOG_NAS_EMM);
 }
 
 

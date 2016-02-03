@@ -35,6 +35,6 @@ s11_ie_indication_generic (
   uint8_t * ieValue,
   void *arg)
 {
-  S11_DEBUG ("Received IE Parse Indication for of type %u, length %u, " "instance %u!\n", ieType, ieLength, ieInstance);
+  LOG_DEBUG (LOG_S11, "Received IE Parse Indication for of type %u, length %u, " "instance %u!\n", ieType, ieLength, ieInstance);
   return NW_OK;
 }

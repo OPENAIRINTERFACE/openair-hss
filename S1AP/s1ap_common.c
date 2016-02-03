@@ -88,7 +88,7 @@ s1ap_generate_initiating_message (
   ASN_STRUCT_FREE_CONTENTS_ONLY (*td, sptr);
 
   if ((encoded = aper_encode_to_new_buffer (&asn_DEF_S1AP_PDU, 0, &pdu, (void **)buffer)) < 0) {
-	LOG_ERROR (LOG_S1AP_MME, "Encoding of %s failed\n", td->name);
+	LOG_ERROR (LOG_S1AP, "Encoding of %s failed\n", td->name);
     return -1;
   }
 
@@ -124,7 +124,7 @@ s1ap_generate_successfull_outcome (
   ASN_STRUCT_FREE_CONTENTS_ONLY (*td, sptr);
 
   if ((encoded = aper_encode_to_new_buffer (&asn_DEF_S1AP_PDU, 0, &pdu, (void **)buffer)) < 0) {
-    LOG_ERROR (LOG_S1AP_MME, "Encoding of %s failed\n", td->name);
+    LOG_ERROR (LOG_S1AP, "Encoding of %s failed\n", td->name);
     return -1;
   }
 
@@ -160,7 +160,7 @@ s1ap_generate_unsuccessfull_outcome (
   ASN_STRUCT_FREE_CONTENTS_ONLY (*td, sptr);
 
   if ((encoded = aper_encode_to_new_buffer (&asn_DEF_S1AP_PDU, 0, &pdu, (void **)buffer)) < 0) {
-    LOG_ERROR (LOG_S1AP_MME, "Encoding of %s failed\n", td->name);
+    LOG_ERROR (LOG_S1AP, "Encoding of %s failed\n", td->name);
     return -1;
   }
 
@@ -187,7 +187,7 @@ s1ap_new_ie (
   buff->criticality = criticality;
 
   if (ANY_fromType_aper (&buff->value, type, sptr) < 0) {
-    LOG_ERROR (LOG_S1AP_MME, "Encoding of %s failed\n", type->name);
+    LOG_ERROR (LOG_S1AP, "Encoding of %s failed\n", type->name);
     FREE_CHECK (buff);
     return NULL;
   }

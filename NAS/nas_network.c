@@ -40,7 +40,6 @@
 #include "commonDef.h"
 #include "log.h"
 #include "nas_timer.h"
-
 #include "as_message.h"
 #include "nas_proc.h"
 
@@ -80,7 +79,7 @@ nas_network_initialize (
   void)
 #endif
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS);
   /*
    * Initialize the internal NAS processing data
    */
@@ -90,7 +89,7 @@ nas_network_initialize (
 #else
   nas_proc_initialize ();
 #endif
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS);
 }
 
 /****************************************************************************
@@ -111,9 +110,9 @@ void
 nas_network_cleanup (
   void)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS);
   nas_proc_cleanup ();
-  LOG_FUNC_OUT;
+  LOG_FUNC_OUT (LOG_NAS);
 }
 
 /****************************************************************************
@@ -139,7 +138,7 @@ nas_network_process_data (
   int msg_id,
   const void *data)
 {
-  LOG_FUNC_IN;
+  LOG_FUNC_IN (LOG_NAS);
   const as_message_t                     *msg = (as_message_t *) (data);
   int                                     rc = RETURNok;
 
@@ -147,8 +146,8 @@ nas_network_process_data (
    * Sanity check
    */
   if (msg_id != msg->msgID) {
-    LOG_TRACE (ERROR, "NET-MAIN  - Message identifier 0x%x to process " "is different from that of the network data (0x%x)", msg_id, msg->msgID);
-    LOG_FUNC_RETURN (RETURNerror);
+    LOG_ERROR (LOG_NAS, "NET-MAIN  - Message identifier 0x%x to process " "is different from that of the network data (0x%x)", msg_id, msg->msgID);
+    LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
   }
 
   switch (msg_id) {
@@ -169,7 +168,7 @@ nas_network_process_data (
        * Received downlink data transfer confirm
        */
       if (info->errCode != AS_SUCCESS) {
-        LOG_TRACE (WARNING, "NET-MAIN  - " "Downlink NAS message not delivered");
+        LOG_WARNING (LOG_NAS, "NET-MAIN  - " "Downlink NAS message not delivered");
         rc = nas_proc_dl_transfer_rej (info->UEid);
       } else {
         rc = nas_proc_dl_transfer_cnf (info->UEid);
@@ -192,12 +191,12 @@ nas_network_process_data (
     break;
 
   default:
-    LOG_TRACE (ERROR, "NET-MAIN  - Unexpected AS message type: 0x%x", msg_id);
+    LOG_ERROR (LOG_NAS, "NET-MAIN  - Unexpected AS message type: 0x%x", msg_id);
     rc = RETURNerror;
     break;
   }
 
-  LOG_FUNC_RETURN (rc);
+  LOG_FUNC_RETURN ( LOG_NAS, rc);
 }
 
 /****************************************************************************/

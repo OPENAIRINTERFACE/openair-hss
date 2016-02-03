@@ -25,6 +25,7 @@
 #include "common_types.h"
 #include "s6a_defs.h"
 #include "assertions.h"
+#include "log.h"
 
 int
 s6a_parse_experimental_result (
@@ -47,7 +48,7 @@ s6a_parse_experimental_result (
 
     switch (hdr->avp_code) {
     case AVP_CODE_EXPERIMENTAL_RESULT_CODE:
-      S6A_ERROR ("Got experimental error %u:%s\n", hdr->avp_value->u32, experimental_retcode_2_string (hdr->avp_value->u32));
+      LOG_ERROR (LOG_S6A, "Got experimental error %u:%s\n", hdr->avp_value->u32, experimental_retcode_2_string (hdr->avp_value->u32));
 
       if (ptr) {
         *ptr = (s6a_experimental_result_t) hdr->avp_value->u32;

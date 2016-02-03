@@ -28,6 +28,7 @@
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "UeNetworkCapability.h"
+#include "log.h"
 
 int
 decode_ue_network_capability (
@@ -46,7 +47,7 @@ decode_ue_network_capability (
 
   DECODE_U8 (buffer + decoded, ielen, decoded);
   memset (uenetworkcapability, 0, sizeof (UeNetworkCapability));
-  LOG_TRACE (INFO, "decode_ue_network_capability len = %d", ielen);
+  LOG_INFO (LOG_NAS_EMM, "decode_ue_network_capability len = %d", ielen);
   CHECK_LENGTH_DECODER (len - decoded, ielen);
   uenetworkcapability->eea = *(buffer + decoded);
   decoded++;
@@ -65,7 +66,7 @@ decode_ue_network_capability (
       uenetworkcapability->uia = *(buffer + decoded) & 0x7f;
       decoded++;
       uenetworkcapability->umts_present = 1;
-      LOG_TRACE (INFO, "uenetworkcapability decoded UMTS\n");
+      LOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded UMTS\n");
 
       if (ielen > 4) {
         uenetworkcapability->spare = (*(buffer + decoded) >> 5) & 0x7;
@@ -76,18 +77,18 @@ decode_ue_network_capability (
         uenetworkcapability->nf = *(buffer + decoded) & 0x1;
         decoded++;
         uenetworkcapability->gprs_present = 1;
-        LOG_TRACE (INFO, "uenetworkcapability decoded GPRS\n");
+        LOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded GPRS\n");
       }
 #warning "Force GPRS present if UMTS present"
       uenetworkcapability->gprs_present = 1;
     }
   }
 
-  LOG_TRACE (INFO, "uenetworkcapability decoded=%u\n", decoded);
+  LOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded=%u\n", decoded);
 
   if ((ielen + 2) != decoded) {
     decoded = ielen + 1 + (iei > 0 ? 1 : 0) /* Size of header for this IE */ ;
-    LOG_TRACE (INFO, "uenetworkcapability then decoded=%u\n", decoded);
+    LOG_INFO (LOG_NAS_EMM, "uenetworkcapability then decoded=%u\n", decoded);
   }
 #if NAS_DEBUG
   dump_ue_network_capability_xml (uenetworkcapability, iei);
@@ -124,14 +125,14 @@ encode_ue_network_capability (
   encoded++;
   *(buffer + encoded) = uenetworkcapability->eia;
   encoded++;
-  LOG_TRACE (INFO, "uenetworkcapability encoded EPS %u\n", encoded);
+  LOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded EPS %u\n", encoded);
 
   if (uenetworkcapability->umts_present) {
     *(buffer + encoded) = uenetworkcapability->uea;
     encoded++;
     *(buffer + encoded) = 0x00 | ((uenetworkcapability->ucs2 & 0x1) << 7) | (uenetworkcapability->uia & 0x7f);
     encoded++;
-    LOG_TRACE (INFO, "uenetworkcapability encoded UMTS %u\n", encoded);
+    LOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded UMTS %u\n", encoded);
   }
 
   if (uenetworkcapability->gprs_present) {
@@ -144,7 +145,7 @@ encode_ue_network_capability (
     //((uenetworkcapability->srvcc & 0x1) << 1) |
     //(uenetworkcapability->nf     & 0x1);
     encoded++;
-    LOG_TRACE (INFO, "uenetworkcapability encoded GPRS %u\n", encoded);
+    LOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded GPRS %u\n", encoded);
   }
 
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);

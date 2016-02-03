@@ -33,13 +33,6 @@
 #ifndef S6A_DEFS_H_
 #define S6A_DEFS_H_
 
-#ifndef S6A_DEBUG
-# define S6A_DEBUG(x, args...) do { fprintf(stdout, "[S6A] [D]"x, ##args); } while(0)
-#endif
-#ifndef S6A_ERROR
-# define S6A_ERROR(x, args...) do { fprintf(stderr, "[S6A] [E]"x, ##args); } while(0)
-#endif
-
 #define VENDOR_3GPP (10415)
 #define APP_S6A     (16777251)
 

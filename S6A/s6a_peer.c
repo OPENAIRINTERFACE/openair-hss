@@ -45,11 +45,11 @@ s6a_peer_connected_cb (
   void *arg)
 {
   if (info == NULL) {
-    S6A_ERROR ("Failed to connect to HSS entity\n");
+    LOG_ERROR (LOG_S6A, "Failed to connect to HSS entity\n");
   } else {
     MessageDef                             *message_p;
 
-    S6A_DEBUG ("Peer %*s is now connected...\n", (int)info->pi_diamidlen, info->pi_diamid);
+    LOG_DEBUG (LOG_S6A, "Peer %*s is now connected...\n", (int)info->pi_diamidlen, info->pi_diamid);
     /*
      * Inform S1AP that connection to HSS is established
      */
@@ -93,7 +93,7 @@ s6a_fd_new_peer (
   memset (&info, 0, sizeof (struct peer_info));
 
   if (config_read_lock (&mme_config) != 0) {
-    S6A_ERROR ("Failed to lock configuration for reading\n");
+    LOG_ERROR (LOG_S6A, "Failed to lock configuration for reading\n");
     return -1;
   }
 
@@ -109,21 +109,21 @@ s6a_fd_new_peer (
   strcat (host_name, mme_config.realm);
   fd_g_config->cnf_diamid = STRDUP_CHECK (host_name);
   fd_g_config->cnf_diamid_len = strlen (fd_g_config->cnf_diamid);
-  S6A_DEBUG ("Diameter identity of MME: %s with length: %zd\n", fd_g_config->cnf_diamid, fd_g_config->cnf_diamid_len);
+  LOG_DEBUG (LOG_S6A, "Diameter identity of MME: %s with length: %zd\n", fd_g_config->cnf_diamid, fd_g_config->cnf_diamid_len);
   hss_name = CALLOC_CHECK (1, 100);
   strcat (hss_name, mme_config.s6a_config.hss_host_name);
   strcat (hss_name, ".");
   strcat (hss_name, mme_config.realm);
   info.pi_diamid = hss_name;
   info.pi_diamidlen = strlen (info.pi_diamid);
-  S6A_DEBUG ("Diameter identity of HSS: %s with length: %zd\n", info.pi_diamid, info.pi_diamidlen);
+  LOG_DEBUG (LOG_S6A, "Diameter identity of HSS: %s with length: %zd\n", info.pi_diamid, info.pi_diamidlen);
   info.config.pic_flags.sec = PI_SEC_NONE;
   info.config.pic_flags.pro4 = PI_P4_SCTP;
   info.config.pic_flags.persist = PI_PRST_NONE;
   CHECK_FCT (fd_peer_add (&info, "", s6a_peer_connected_cb, NULL));
 
   if (config_unlock (&mme_config) != 0) {
-    S6A_ERROR ("Failed to unlock configuration\n");
+    LOG_ERROR (LOG_S6A, "Failed to unlock configuration\n");
     return -1;
   }
 

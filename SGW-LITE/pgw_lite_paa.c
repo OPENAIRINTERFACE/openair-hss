@@ -78,7 +78,7 @@ pgw_lite_load_pool_ip_addresses (
     STAILQ_INSERT_TAIL (&pgw_app.pgw_lite_ipv6_list_free, ipv6_p, ipv6_entries);
 
     if (inet_ntop (AF_INET6, &ipv6_p->addr, print_buffer, INET6_ADDRSTRLEN) == NULL) {
-      SPGW_APP_ERROR ("Could not Load IPv6 PAA address in pool: %s\n", strerror (errno));
+      LOG_ERROR (LOG_SPGW_APP, "Could not Load IPv6 PAA address in pool: %s\n", strerror (errno));
     }                           /*else {
                                  * 
                                  * SPGW_APP_DEBUG("Loaded IPv6 PAA prefix in pool: %s\n",print_buffer);

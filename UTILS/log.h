@@ -57,30 +57,32 @@ typedef enum {
 
 typedef enum {
   MIN_LOG_LEVEL = 0,
-  LOG_LEVEL_TRACE = MIN_LOG_ENV,
-  LOG_LEVEL_DEBUG,
-  LOG_LEVEL_INFO,
-  LOG_LEVEL_NOTICE,
-  LOG_LEVEL_WARNING,
-  LOG_LEVEL_ERROR,
-  LOG_LEVEL_CRITICAL,
+  LOG_LEVEL_EMERGENCY = MIN_LOG_ENV,
   LOG_LEVEL_ALERT,
-  LOG_LEVEL_EMERGENCY,
+  LOG_LEVEL_CRITICAL,
+  LOG_LEVEL_ERROR,
+  LOG_LEVEL_WARNING,
+  LOG_LEVEL_NOTICE,
+  LOG_LEVEL_INFO,
+  LOG_LEVEL_DEBUG,
+  LOG_LEVEL_TRACE,
   MAX_LOG_LEVEL
 } log_level_t;
 
 typedef enum {
   MIN_LOG_PROTOS = 0,
-  LOG_GTPV1U = MIN_LOG_PROTOS,
-  LOG_S1AP_MME,
+  LOG_UDP = MIN_LOG_PROTOS,
+  LOG_GTPV1U,
+  LOG_GTPV2C,
+  LOG_SCTP,
+  LOG_S1AP,
   LOG_MME_APP,
-  LOG_NAS_MME,
-  LOG_NAS_EMM_MME,
-  LOG_NAS_ESM_MME,
-  LOG_SPGW_APP_MME,
-  LOG_S11_MME,
-  LOG_S11_SGW,
-  LOG_S6A_MME,
+  LOG_NAS,
+  LOG_NAS_EMM,
+  LOG_NAS_ESM,
+  LOG_SPGW_APP,
+  LOG_S11,
+  LOG_S6A,
   LOG_UTIL,
   LOG_CONFIG,
   LOG_MSC,
@@ -98,36 +100,40 @@ void log_message (
       const log_proto_t protoP,
       const char *const source_fileP,
       const unsigned int line_numP,
-      const uint8_t * const bytesP,
-      const unsigned int num_bytes,
       char *format,
       ...);
 
-#define LOG_INIT                                       log_init
-#define LOG_START_USE                                  log_start_use
-#define LOG_END                                        log_end
-#define LOG_EMERGENCY(proto, fORMAT, aRGS...)          do { log_message(LOG_LEVEL_EMERGENCY,proto, __FILE__, __LINE__, fORMAT, ##aRGS); } while(0)/*!< \brief system is unusable */
-#define LOG_ALERT(proto, fORMAT, aRGS...)              do { log_message(LOG_LEVEL_ALERT,    proto, __FILE__, __LINE__, fORMAT, ##aRGS); } while(0) /*!< \brief action must be taken immediately */
-#define LOG_CRITICAL(proto, fORMAT, aRGS...)           do { log_message(LOG_LEVEL_CRITICAL, proto, __FILE__, __LINE__, fORMAT, ##aRGS); } while(0) /*!< \brief critical conditions */
-#define LOG_ERROR(proto, fORMAT, aRGS...)              do { log_message(LOG_LEVEL_ERROR,    proto, __FILE__, __LINE__, fORMAT, ##aRGS); } while(0) /*!< \brief error conditions */
-#define LOG_WARNING(proto, fORMAT, aRGS...)            do { log_message(LOG_LEVEL_WARNING,  proto, __FILE__, __LINE__, fORMAT, ##aRGS); } while(0) /*!< \brief warning conditions */
-#define LOG_NOTICE(proto, fORMAT, aRGS...)             do { log_message(LOG_LEVEL_NOTICE,   proto, __FILE__, __LINE__, fORMAT, ##aRGS); } while(0) /*!< \brief normal but significant condition */
-#define LOG_INFO(proto, fORMAT, aRGS...)               do { log_message(LOG_LEVEL_INFO,     proto, __FILE__, __LINE__, fORMAT, ##aRGS); } while(0) /*!< \brief informational */
-#define LOG_DEBUG(proto, fORMAT, aRGS...)              do { log_message(LOG_LEVEL_DEBUG,    proto, __FILE__, __LINE__, fORMAT, ##aRGS); } while(0) /*!< \brief informational */
-#define LOG_TRACE(proto, fORMAT, aRGS...)              do { log_message(LOG_LEVEL_TRACE,    proto, __FILE__, __LINE__, fORMAT, ##aRGS); } while(0) /*!< \brief informational */
+#define LOG_INIT                               log_init
+#define LOG_START_USE                          log_start_use
+#define LOG_END()                              log_end()
+#define LOG_EMERGENCY(pRoTo, aRgS...)          do { log_message(LOG_LEVEL_EMERGENCY,pRoTo, __FILE__, __LINE__, ##aRgS); } while(0)/*!< \brief system is unusable */
+#define LOG_ALERT(pRoTo, aRgS...)              do { log_message(LOG_LEVEL_ALERT,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief action must be taken immediately */
+#define LOG_CRITICAL(pRoTo, aRgS...)           do { log_message(LOG_LEVEL_CRITICAL, pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief critical conditions */
+#define LOG_ERROR(pRoTo, aRgS...)              do { log_message(LOG_LEVEL_ERROR,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief error conditions */
+#define LOG_WARNING(pRoTo, aRgS...)            do { log_message(LOG_LEVEL_WARNING,  pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief warning conditions */
+#define LOG_NOTICE(pRoTo, aRgS...)             do { log_message(LOG_LEVEL_NOTICE,   pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief normal but significant condition */
+#define LOG_INFO(pRoTo, aRgS...)               do { log_message(LOG_LEVEL_INFO,     pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief informational */
+#define LOG_DEBUG(pRoTo, aRgS...)              do { log_message(LOG_LEVEL_DEBUG,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief informational */
+#define LOG_TRACE(pRoTo, aRgS...)              do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief informational */
+#define LOG_FUNC_IN(pRoTo)                     do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Entering %s", __FUNCTION__); } while(0) /*!< \brief informational */
+#define LOG_FUNC_OUT(pRoTo)                    do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s", __FUNCTION__); return;} while(0)
+#define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)     do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s (rc=%ld)", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
 #else
 #define LOG_INIT(a,b,c)                                0
-#define LOG_START_USE
-#define LOG_END
-#define LOG_EMERGENCY(proto, fORMAT, aRGS...)          do { fprintf(stderr, "[EMERGE] "fORMAT, ##args); } while(0)
-#define LOG_ALERT(proto, fORMAT, aRGS...)              do { fprintf(stderr, "[ALERT] "fORMAT, ##args); } while(0)
-#define LOG_CRITICAL(proto, fORMAT, aRGS...)           do { fprintf(stderr, "[CRITIC] "fORMAT, ##args); } while(0)
-#define LOG_ERROR(proto, fORMAT, aRGS...)              do { fprintf(stderr, "[ERROR] "fORMAT, ##args); } while(0)
-#define LOG_WARNING(proto, fORMAT, aRGS...)            do { fprintf(stderr, "[WARNIN] "fORMAT, ##args); } while(0)
-#define LOG_NOTICE(proto, fORMAT, aRGS...)             do { fprintf(stdout, "[NOTICE] "fORMAT, ##args); } while(0)
-#define LOG_INFO(proto, fORMAT, aRGS...)               do { fprintf(stdout, "[INFO] "fORMAT, ##args); } while(0)
-#define LOG_DEBUG(proto, fORMAT, aRGS...)              do { fprintf(stdout, "[DEBUG] "fORMAT, ##args); } while(0)
-#define LOG_TRACE(proto, fORMAT, aRGS...)              do { fprintf(stdout, "[TRACE] "fORMAT, ##args); } while(0)
+#define LOG_START_USE()
+#define LOG_END()
+#define LOG_EMERGENCY(pRoTo, aRgS...)          do { fprintf(stderr, "[EMERGE] "##aRgS); } while(0)
+#define LOG_ALERT(pRoTo, aRgS...)              do { fprintf(stderr, "[ALERT] "##aRgS); } while(0)
+#define LOG_CRITICAL(pRoTo, aRgS...)           do { fprintf(stderr, "[CRITIC] "##aRgS); } while(0)
+#define LOG_ERROR(pRoTo, aRgS...)              do { fprintf(stderr, "[ERROR] " ##aRgS); } while(0)
+#define LOG_WARNING(pRoTo, aRgS...)            do { fprintf(stderr, "[WARNIN] " ##aRgS); } while(0)
+#define LOG_NOTICE(pRoTo, aRgS...)             do { fprintf(stdout, "[NOTICE] "##aRgS); } while(0)
+#define LOG_INFO(pRoTo, aRgS...)               do { fprintf(stdout, "[INFO] "##aRgS); } while(0)
+#define LOG_DEBUG(pRoTo, aRgS...)              do { fprintf(stdout, "[DEBUG] "##aRgS); } while(0)
+#define LOG_TRACE(pRoTo, aRgS...)              do { fprintf(stdout, "[TRACE] "##aRgS); } while(0)
+#define LOG_FUNC_IN(pRoTo)                     do { fprintf(stdout, "[TRACE] Entering %s", __FUNCTION__); } while(0)
+#define LOG_FUNC_OUT(pRoTo)                    do { fprintf(stdout, "[TRACE] Leaving %s", __FUNCTION__); } while(0)
+#define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)     do { fprintf(stdout, "[TRACE] Leaving %s (rc=%ld)", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
 #endif
 
 #endif /* LOG_H_ */

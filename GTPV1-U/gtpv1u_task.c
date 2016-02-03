@@ -31,13 +31,12 @@
 #include <sys/time.h>
 
 #include "mme_config.h"
-
 #include "assertions.h"
 #include "intertask_interface.h"
-
 #include "gtpv1u.h"
 #include "gtpv1u_sgw_defs.h"
 #include "msc.h"
+#include "log.h"
 
 static gtpv1u_data_t                    gtpv1u_sgw_data;
 
@@ -73,21 +72,21 @@ gtpu_print_hex_octets (
   m = (tv.tv_sec / 60) % 60;
   s = tv.tv_sec % 60;
   snprintf (timeofday, 64, "%02d:%02d:%02d.%06d", h, m, s, tv.tv_usec);
-  GTPU_DEBUG ("%s------+-------------------------------------------------|\n", timeofday);
-  GTPU_DEBUG ("%s      |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n", timeofday);
-  GTPU_DEBUG ("%s------+-------------------------------------------------|\n", timeofday);
+  LOG_DEBUG (LOG_GTPV1U , "%s------+-------------------------------------------------|\n", timeofday);
+  LOG_DEBUG (LOG_GTPV1U , "%s      |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n", timeofday);
+  LOG_DEBUG (LOG_GTPV1U , "%s------+-------------------------------------------------|\n", timeofday);
 
   for (octet_index = 0; octet_index < sizeP; octet_index++) {
     if (GTPU_2_PRINT_BUFFER_LEN < (buffer_marker + 32)) {
       buffer_marker += snprintf (&gtpu_2_print_buffer[buffer_marker], GTPU_2_PRINT_BUFFER_LEN - buffer_marker, "... (print buffer overflow)");
-      GTPU_DEBUG ("%s%s", timeofday, gtpu_2_print_buffer);
+      LOG_DEBUG (LOG_GTPV1U , "%s%s", timeofday, gtpu_2_print_buffer);
       return;
     }
 
     if ((octet_index % 16) == 0) {
       if (octet_index != 0) {
         buffer_marker += snprintf (&gtpu_2_print_buffer[buffer_marker], GTPU_2_PRINT_BUFFER_LEN - buffer_marker, " |\n");
-        GTPU_DEBUG ("%s%s", timeofday, gtpu_2_print_buffer);
+        LOG_DEBUG (LOG_GTPV1U , "%s%s", timeofday, gtpu_2_print_buffer);
         buffer_marker = 0;
       }
 
@@ -111,7 +110,7 @@ gtpu_print_hex_octets (
 
   //GTPU_DEBUG("   ");
   buffer_marker += snprintf (&gtpu_2_print_buffer[buffer_marker], GTPU_2_PRINT_BUFFER_LEN - buffer_marker, " |\n");
-  GTPU_DEBUG ("%s%s", timeofday, gtpu_2_print_buffer);
+  LOG_DEBUG (LOG_GTPV1U , "%s%s", timeofday, gtpu_2_print_buffer);
 }
 
 
@@ -143,6 +142,7 @@ gtpv1u_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_GTPV1_U);
+  LOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
@@ -164,7 +164,7 @@ gtpv1u_thread (
 
 
     default:{
-        GTPU_ERROR ("Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        LOG_ERROR (LOG_GTPV1U , "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
@@ -180,15 +180,15 @@ int
 gtpv1u_init (
   const mme_config_t * mme_config_p)
 {
-  GTPU_DEBUG ("Initializing GTPV1U interface\n");
+  LOG_DEBUG (LOG_GTPV1U , "Initializing GTPV1U interface\n");
   memset (&gtpv1u_sgw_data, 0, sizeof (gtpv1u_sgw_data));
   gtpv1u_sgw_data.sgw_ip_address_for_S1u_S12_S4_up = mme_config_p->ipv4.sgw_ip_address_for_S1u_S12_S4_up;
 
   if (itti_create_task (TASK_GTPV1_U, &gtpv1u_thread, NULL) < 0) {
-    GTPU_ERROR ("gtpv1u phtread_create: %s", strerror (errno));
+    LOG_ERROR (LOG_GTPV1U , "gtpv1u phtread_create: %s", strerror (errno));
     return -1;
   }
 
-  GTPU_DEBUG ("Initializing GTPV1U interface: DONE\n");
+  LOG_DEBUG (LOG_GTPV1U , "Initializing GTPV1U interface: DONE\n");
   return 0;
 }

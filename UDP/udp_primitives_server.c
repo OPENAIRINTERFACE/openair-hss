@@ -32,26 +32,19 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/time.h>
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-
-
 #include <pthread.h>
 
 #include "intertask_interface.h"
 #include "udp_primitives_server.h"
-
 #include "assertions.h"
 #include "conversions.h"
 #include "msc.h"
+#include "log.h"
 
-#define UDP_DEBUG(x, args...) do { fprintf(stdout, "[UDP] [D]"x, ##args); } while(0)
-#define UDP_ERROR(x, args...) do { fprintf(stderr, "[UDP] [E]"x, ##args); } while(0)
-
-//void *udp_receiver_thread(void *args_p);
 
 struct udp_socket_desc_s {
   uint8_t                                 buffer[4096];
@@ -102,21 +95,21 @@ STAILQ_HEAD (
   m = (tv.tv_sec / 60) % 60;
   s = tv.tv_sec % 60;
   snprintf (timeofday, 64, "%02d:%02d:%02d.%06d", h, m, s, tv.tv_usec);
-  UDP_DEBUG ("%s------+-------------------------------------------------|\n", timeofday);
-  UDP_DEBUG ("%s      |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n", timeofday);
-  UDP_DEBUG ("%s------+-------------------------------------------------|\n", timeofday);
+  LOG_DEBUG (LOG_UDP, "%s------+-------------------------------------------------|\n", timeofday);
+  LOG_DEBUG (LOG_UDP, "%s      |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n", timeofday);
+  LOG_DEBUG (LOG_UDP, "%s------+-------------------------------------------------|\n", timeofday);
 
   for (octet_index = 0; octet_index < sizeP; octet_index++) {
     if (UDP_2_PRINT_BUFFER_LEN < (buffer_marker + 32)) {
       buffer_marker += snprintf (&udp_2_print_buffer[buffer_marker], UDP_2_PRINT_BUFFER_LEN - buffer_marker, "... (print buffer overflow)");
-      UDP_DEBUG ("%s%s", timeofday, udp_2_print_buffer);
+      LOG_DEBUG (LOG_UDP, "%s%s", timeofday, udp_2_print_buffer);
       return;
     }
 
     if ((octet_index % 16) == 0) {
       if (octet_index != 0) {
         buffer_marker += snprintf (&udp_2_print_buffer[buffer_marker], UDP_2_PRINT_BUFFER_LEN - buffer_marker, " |\n");
-        UDP_DEBUG ("%s%s", timeofday, udp_2_print_buffer);
+        LOG_DEBUG (LOG_UDP, "%s%s", timeofday, udp_2_print_buffer);
         buffer_marker = 0;
       }
 
@@ -140,7 +133,7 @@ STAILQ_HEAD (
 
   //GTPU_DEBUG("   ");
   buffer_marker += snprintf (&udp_2_print_buffer[buffer_marker], UDP_2_PRINT_BUFFER_LEN - buffer_marker, " |\n");
-  UDP_DEBUG ("%s%s", timeofday, udp_2_print_buffer);
+  LOG_DEBUG (LOG_UDP, "%s%s", timeofday, udp_2_print_buffer);
 }
 
 
@@ -157,10 +150,10 @@ udp_server_get_socket_desc (
 {
   struct udp_socket_desc_s               *udp_sock_p = NULL;
 
-  UDP_DEBUG ("Looking for task %d\n", task_id);
+  LOG_DEBUG (LOG_UDP, "Looking for task %d\n", task_id);
   STAILQ_FOREACH (udp_sock_p, &udp_socket_list, entries) {
     if (udp_sock_p->task_id == task_id) {
-      UDP_DEBUG ("Found matching task desc\n");
+      LOG_DEBUG (LOG_UDP, "Found matching task desc\n");
       break;
     }
   }
@@ -174,10 +167,10 @@ udp_server_get_socket_desc_by_sd (
 {
   struct udp_socket_desc_s               *udp_sock_p = NULL;
 
-  UDP_DEBUG ("Looking for sd %d\n", sdP);
+  LOG_DEBUG (LOG_UDP, "Looking for sd %d\n", sdP);
   STAILQ_FOREACH (udp_sock_p, &udp_socket_list, entries) {
     if (udp_sock_p->sd == sdP) {
-      UDP_DEBUG ("Found matching task desc\n");
+      LOG_DEBUG (LOG_UDP, "Found matching task desc\n");
       break;
     }
   }
@@ -195,7 +188,7 @@ udp_server_create_socket (
   int                                     sd;
   struct udp_socket_desc_s               *socket_desc_p = NULL;
 
-  UDP_DEBUG ("Creating new listen socket on address " IPV4_ADDR " and port %u\n", IPV4_ADDR_FORMAT (inet_addr (address)), port);
+  LOG_DEBUG (LOG_UDP, "Creating new listen socket on address " IPV4_ADDR " and port %u\n", IPV4_ADDR_FORMAT (inet_addr (address)), port);
 
   /*
    * Create UDP socket
@@ -204,7 +197,7 @@ udp_server_create_socket (
     /*
      * Socket creation has failed...
      */
-    UDP_ERROR ("Socket creation failed (%s)\n", strerror (errno));
+    LOG_ERROR (LOG_UDP, "Socket creation failed (%s)\n", strerror (errno));
     return sd;
   }
 
@@ -217,7 +210,7 @@ udp_server_create_socket (
     /*
      * Bind failed
      */
-    UDP_ERROR ("Socket bind failed (%s) for address " IPV4_ADDR " and port %u\n", strerror (errno), IPV4_ADDR_FORMAT (inet_addr (address)), port);
+    LOG_ERROR (LOG_UDP, "Socket bind failed (%s) for address " IPV4_ADDR " and port %u\n", strerror (errno), IPV4_ADDR_FORMAT (inet_addr (address)), port);
     close (sd);
     return -1;
   }
@@ -229,7 +222,7 @@ udp_server_create_socket (
    * Mark the socket as non-blocking
    */
   if (fcntl (sd, F_SETFL, O_NONBLOCK) < 0) {
-    UDP_ERROR ("fcntl F_SETFL O_NONBLOCK failed: %s\n", strerror (errno));
+    LOG_ERROR (LOG_UDP, "fcntl F_SETFL O_NONBLOCK failed: %s\n", strerror (errno));
     close (sd);
     return -1;
   }
@@ -240,7 +233,7 @@ udp_server_create_socket (
   socket_desc_p->local_address = address;
   socket_desc_p->local_port = port;
   socket_desc_p->task_id = task_id;
-  UDP_DEBUG ("Inserting new descriptor for task %d, sd %d\n", socket_desc_p->task_id, socket_desc_p->sd);
+  LOG_DEBUG (LOG_UDP, "Inserting new descriptor for task %d, sd %d\n", socket_desc_p->task_id, socket_desc_p->sd);
   pthread_mutex_lock (&udp_socket_list_mutex);
   STAILQ_INSERT_TAIL (&udp_socket_list, socket_desc_p, entries);
   pthread_mutex_unlock (&udp_socket_list_mutex);
@@ -256,7 +249,7 @@ udp_server_flush_sockets (
   int                                     event;
   struct udp_socket_desc_s               *udp_sock_p = NULL;
 
-  UDP_DEBUG ("Received %d events\n", nb_events);
+  LOG_DEBUG (LOG_UDP, "Received %d events\n", nb_events);
 
   for (event = 0; event < nb_events; event++) {
     if (events[event].events != 0) {
@@ -269,7 +262,7 @@ udp_server_flush_sockets (
       if (udp_sock_p != NULL) {
         udp_server_receive_and_process (udp_sock_p);
       } else {
-        UDP_ERROR ("Failed to retrieve the udp socket descriptor %d", events[event].data.fd);
+        LOG_ERROR (LOG_UDP, "Failed to retrieve the udp socket descriptor %d", events[event].data.fd);
       }
 
       pthread_mutex_unlock (&udp_socket_list_mutex);
@@ -281,7 +274,7 @@ static void
 udp_server_receive_and_process (
   struct udp_socket_desc_s *udp_sock_pP)
 {
-  UDP_DEBUG ("Inserting new descriptor for task %d, sd %d\n", udp_sock_pP->task_id, udp_sock_pP->sd);
+  LOG_DEBUG (LOG_UDP, "Inserting new descriptor for task %d, sd %d\n", udp_sock_pP->task_id, udp_sock_pP->sd);
   {
     int                                     bytes_received = 0;
     socklen_t                               from_len;
@@ -290,7 +283,7 @@ udp_server_receive_and_process (
     from_len = (socklen_t) sizeof (struct sockaddr_in);
 
     if ((bytes_received = recvfrom (udp_sock_pP->sd, udp_sock_pP->buffer, sizeof (udp_sock_pP->buffer), 0, (struct sockaddr *)&addr, &from_len)) <= 0) {
-      UDP_ERROR ("Recvfrom failed %s\n", strerror (errno));
+      LOG_ERROR (LOG_UDP, "Recvfrom failed %s\n", strerror (errno));
       //break;
     } else {
       MessageDef                             *message_p = NULL;
@@ -308,10 +301,10 @@ udp_server_receive_and_process (
       udp_data_ind_p->buffer_length = bytes_received;
       udp_data_ind_p->peer_port = htons (addr.sin_port);
       udp_data_ind_p->peer_address = addr.sin_addr.s_addr;
-      UDP_DEBUG ("Msg of length %d received from %s:%u\n", bytes_received, inet_ntoa (addr.sin_addr), ntohs (addr.sin_port));
+      LOG_DEBUG (LOG_UDP, "Msg of length %d received from %s:%u\n", bytes_received, inet_ntoa (addr.sin_addr), ntohs (addr.sin_port));
 
       if (itti_send_msg_to_task (udp_sock_pP->task_id, INSTANCE_DEFAULT, message_p) < 0) {
-        UDP_DEBUG ("Failed to send message %d to task %d\n", UDP_DATA_IND, udp_sock_pP->task_id);
+        LOG_DEBUG (LOG_UDP, "Failed to send message %d to task %d\n", UDP_DATA_IND, udp_sock_pP->task_id);
         //break;
       }
     }
@@ -334,6 +327,7 @@ udp_intertask_interface (
   struct epoll_event                     *events = NULL;
 
   itti_mark_task_ready (TASK_UDP);
+  LOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
@@ -371,7 +365,7 @@ udp_intertask_interface (
           udp_sock_p = udp_server_get_socket_desc (ITTI_MSG_ORIGIN_ID (received_message_p));
 
           if (udp_sock_p == NULL) {
-            UDP_ERROR ("Failed to retrieve the udp socket descriptor " "associated with task %d\n", ITTI_MSG_ORIGIN_ID (received_message_p));
+            LOG_ERROR (LOG_UDP, "Failed to retrieve the udp socket descriptor " "associated with task %d\n", ITTI_MSG_ORIGIN_ID (received_message_p));
             pthread_mutex_unlock (&udp_socket_list_mutex);
 
             if (udp_data_req_p->buffer) {
@@ -383,12 +377,12 @@ udp_intertask_interface (
 
           udp_sd = udp_sock_p->sd;
           pthread_mutex_unlock (&udp_socket_list_mutex);
-          UDP_DEBUG ("[%d] Sending message of size %u to " IPV4_ADDR " and port %u\n", udp_sd, udp_data_req_p->buffer_length, IPV4_ADDR_FORMAT (udp_data_req_p->peer_address), udp_data_req_p->peer_port);
+          LOG_DEBUG (LOG_UDP, "[%d] Sending message of size %u to " IPV4_ADDR " and port %u\n", udp_sd, udp_data_req_p->buffer_length, IPV4_ADDR_FORMAT (udp_data_req_p->peer_address), udp_data_req_p->peer_port);
           bytes_written = sendto (udp_sd, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset], udp_data_req_p->buffer_length, 0, (struct sockaddr *)&peer_addr, sizeof (struct sockaddr_in));
           itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), udp_data_req_p->buffer);
 
           if (bytes_written != udp_data_req_p->buffer_length) {
-            UDP_ERROR ("There was an error while writing to socket " "(%d:%s)\n", errno, strerror (errno));
+            LOG_ERROR (LOG_UDP, "There was an error while writing to socket " "(%d:%s)\n", errno, strerror (errno));
           }
         }
         break;
@@ -403,7 +397,7 @@ udp_intertask_interface (
         break;
 
       default:{
-          UDP_DEBUG ("Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+          LOG_DEBUG (LOG_UDP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
         }
         break;
       }
@@ -431,14 +425,14 @@ int
 udp_init (
   const mme_config_t * mme_config_p)
 {
-  UDP_DEBUG ("Initializing UDP task interface\n");
+  LOG_DEBUG (LOG_UDP, "Initializing UDP task interface\n");
   STAILQ_INIT (&udp_socket_list);
 
   if (itti_create_task (TASK_UDP, &udp_intertask_interface, NULL) < 0) {
-    UDP_ERROR ("udp pthread_create (%s)\n", strerror (errno));
+    LOG_ERROR (LOG_UDP, "udp pthread_create (%s)\n", strerror (errno));
     return -1;
   }
 
-  UDP_DEBUG ("Initializing UDP task interface: DONE\n");
+  LOG_DEBUG (LOG_UDP, "Initializing UDP task interface: DONE\n");
   return 0;
 }

@@ -38,16 +38,13 @@
 
 #include "assertions.h"
 #include "mme_config.h"
-
 #include "intertask_interface_init.h"
-
 #include "udp_primitives_server.h"
 #include "log.h"
 #include "timer.h"
 #include "s11_sgw.h"
 #include "sgw_lite_defs.h"
 #include "gtpv1u_sgw_defs.h"
-
 #include "oai_sgw.h"
 #include "msc.h"
 
@@ -65,7 +62,7 @@ main (
    */
   //CHECK_INIT_RETURN (log_init (&mme_config, oai_sgw_log_specific));
   CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, messages_definition_xml, NULL));
-  CHECK_INIT_RETURN (LOG_INIT (LOG_SPGW_ENV, LOG_NOTICE, MAX_LOG_PROTOS));
+  CHECK_INIT_RETURN (LOG_INIT (LOG_SPGW_ENV, LOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
   MSC_INIT (MSC_SP_GW, THREAD_MAX + TASK_MAX);
   CHECK_INIT_RETURN (udp_init (&mme_config));
   CHECK_INIT_RETURN (s11_sgw_init (&mme_config));

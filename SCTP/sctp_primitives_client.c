@@ -57,11 +57,11 @@ sctp_send_msg (
    * * * * NOTE: PPID should be defined in network order
    */
   if (sctp_sendmsg (sctp_data_p->sd, (const void *)buffer, length, NULL, 0, htonl (ppid), 0, stream, 0, 0) < 0) {
-    SCTP_ERROR ("Sctp_sendmsg failed: %s\n", strerror (errno));
+    LOG_ERROR (LOG_SCTP, "Sctp_sendmsg failed: %s\n", strerror (errno));
     return -1;
   }
 
-  SCTP_DEBUG ("Successfully sent %d bytes to port %d on stream %d\n", length, sctp_data_p->remote_port, stream);
+  LOG_DEBUG (LOG_SCTP, "Successfully sent %d bytes to port %d on stream %d\n", length, sctp_data_p->remote_port, stream);
   return 0;
 }
 
@@ -74,14 +74,14 @@ sctp_handle_notifications (
     /*
      * Client deconnection
      */
-    SCTP_DEBUG ("Notification received: server deconnected\n");
+    LOG_DEBUG (LOG_SCTP, "Notification received: server deconnected\n");
   } else if (SCTP_ASSOC_CHANGE == snp->sn_header.sn_type) {
     /*
      * Association has changed
      */
-    SCTP_DEBUG ("Notification received: server association changed\n");
+    LOG_DEBUG (LOG_SCTP, "Notification received: server association changed\n");
   } else {
-    SCTP_DEBUG ("Notification received: %d TODO\n", snp->sn_header.sn_type);
+    LOG_DEBUG (LOG_SCTP, "Notification received: %d TODO\n", snp->sn_header.sn_type);
   }
 
   /*
@@ -110,13 +110,13 @@ sctp_run (
     ret = poll (&fds, 1, 0);
 
     if (ret < 0) {
-      SCTP_ERROR ("[SD %d] Poll has failed (%d:%s)\n", sd, errno, strerror (errno));
+      LOG_ERROR (LOG_SCTP, "[SD %d] Poll has failed (%d:%s)\n", sd, errno, strerror (errno));
       return errno;
     } else if (ret == 0) {
       /*
        * No data to read, just leave the loop
        */
-      SCTP_DEBUG ("[SD %d] Poll: no data available\n", sd);
+      LOG_DEBUG (LOG_SCTP, "[SD %d] Poll: no data available\n", sd);
       repeat = 0;
     } else {
       /*
@@ -138,7 +138,7 @@ sctp_run (
         /*
          * Other peer is deconnected
          */
-        SCTP_ERROR ("[SD %d] An error occured during read (%d:%s)\n", sd, errno, strerror (errno));
+        LOG_ERROR (LOG_SCTP, "[SD %d] An error occured during read (%d:%s)\n", sd, errno, strerror (errno));
         return 0;
       }
 
@@ -151,7 +151,7 @@ sctp_run (
         /*
          * Normal data received
          */
-        SCTP_DEBUG ("[SD %d] Msg of length %d received from %s:%u on " "stream %d, PPID %d, assoc_id %d\n", sd, n, inet_ntoa (addr.sin_addr), ntohs (addr.sin_port), sinfo.sinfo_stream, sinfo.sinfo_ppid, sinfo.sinfo_assoc_id);
+        LOG_DEBUG (LOG_SCTP, "[SD %d] Msg of length %d received from %s:%u on " "stream %d, PPID %d, assoc_id %d\n", sd, n, inet_ntoa (addr.sin_addr), ntohs (addr.sin_port), sinfo.sinfo_stream, sinfo.sinfo_ppid, sinfo.sinfo_assoc_id);
         new_item_p->local_stream = sinfo.sinfo_stream;
         new_item_p->remote_port = ntohs (addr.sin_port);
         new_item_p->remote_addr = addr.sin_addr.s_addr;
@@ -196,13 +196,13 @@ sctp_connect_to_remote_host (
   DevAssert (remote_ip_addr != NULL);
   DevAssert (local_ip_addr != NULL);
   DevCheck ((socket_type == SOCK_STREAM), socket_type, 0, 0);
-  SCTP_DEBUG ("Creating socket type %d\n", socket_type);
+  LOG_DEBUG (LOG_SCTP, "Creating socket type %d\n", socket_type);
 
   /*
    * Create new socket
    */
   if ((sd = socket (AF_INET6, SOCK_STREAM, IPPROTO_SCTP)) < 0) {
-    SCTP_ERROR ("Socket creation failed: %s\n", strerror (errno));
+    LOG_ERROR (LOG_SCTP, "Socket creation failed: %s\n", strerror (errno));
     return -1;
   }
 
@@ -226,7 +226,7 @@ sctp_connect_to_remote_host (
   }
 
   if (sctp_bindx (sd, bindx_add_addr, nb_local_addr, SCTP_BINDX_ADD_ADDR) < 0) {
-    SCTP_ERROR ("Socket bind failed: %s\n", strerror (errno));
+    LOG_ERROR (LOG_SCTP, "Socket bind failed: %s\n", strerror (errno));
     return -1;
   }
 
@@ -237,10 +237,10 @@ sctp_connect_to_remote_host (
   init.sinit_num_ostreams = SCTP_OUT_STREAMS;
   init.sinit_max_instreams = SCTP_IN_STREAMS;
   init.sinit_max_attempts = SCTP_MAX_ATTEMPTS;
-  SCTP_DEBUG ("Requesting (%d %d) (in out) streams\n", init.sinit_num_ostreams, init.sinit_max_instreams);
+  LOG_DEBUG (LOG_SCTP, "Requesting (%d %d) (in out) streams\n", init.sinit_num_ostreams, init.sinit_max_instreams);
 
   if (setsockopt (sd, IPPROTO_SCTP, SCTP_INITMSG, &init, (socklen_t) sizeof (struct sctp_initmsg)) < 0) {
-    SCTP_ERROR ("Setsockopt IPPROTO_SCTP_INITMSG failed: %s\n", strerror (errno));
+    LOG_ERROR (LOG_SCTP, "Setsockopt IPPROTO_SCTP_INITMSG failed: %s\n", strerror (errno));
     return -1;
   }
 
@@ -250,7 +250,7 @@ sctp_connect_to_remote_host (
   memset ((void *)&events, 1, sizeof (struct sctp_event_subscribe));
 
   if (setsockopt (sd, IPPROTO_SCTP, SCTP_EVENTS, &events, sizeof (struct sctp_event_subscribe)) < 0) {
-    SCTP_ERROR ("Setsockopt IPPROTO_SCTP_EVENTS failed: %s\n", strerror (errno));
+    LOG_ERROR (LOG_SCTP, "Setsockopt IPPROTO_SCTP_EVENTS failed: %s\n", strerror (errno));
     return -1;
   }
 
@@ -265,19 +265,19 @@ sctp_connect_to_remote_host (
     memset (&addr, 0, sizeof (struct sockaddr_in));
 
     if (inet_pton (AF_INET, remote_ip_addr, &addr.sin_addr.s_addr) != 1) {
-      SCTP_ERROR ("Failed to convert ip address %s to network type\n", remote_ip_addr);
+      LOG_ERROR (LOG_SCTP, "Failed to convert ip address %s to network type\n", remote_ip_addr);
       goto err;
     }
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons (port);
-    SCTP_DEBUG ("[%d] Sending explicit connect to %s:%u\n", sd, remote_ip_addr, port);
+    LOG_DEBUG (LOG_SCTP, "[%d] Sending explicit connect to %s:%u\n", sd, remote_ip_addr, port);
 
     /*
      * Connect to remote host and port
      */
     if (sctp_connectx (sd, (struct sockaddr *)&addr, 1, NULL) < 0) {
-      SCTP_ERROR ("Connect to %s:%u failed: %s\n", remote_ip_addr, port, strerror (errno));
+      LOG_ERROR (LOG_SCTP, "Connect to %s:%u failed: %s\n", remote_ip_addr, port, strerror (errno));
       goto err;
     }
   }

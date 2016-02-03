@@ -47,7 +47,7 @@ s1ap_mme_compare_plmn (
   config_read_lock (&mme_config);
 
   for (i = 0; i < mme_config.gummei.nb_mme_gid; i++) {
-    LOG_DEBUG (LOG_S1AP_MME, "Comparing plmn_mcc %d/%d, plmn_mnc %d/%d plmn_mnc_len %d/%d\n",
+    LOG_DEBUG (LOG_S1AP, "Comparing plmn_mcc %d/%d, plmn_mnc %d/%d plmn_mnc_len %d/%d\n",
         mme_config.served_tai.plmn_mcc[i], mcc, mme_config.served_tai.plmn_mnc[i], mnc, mme_config.served_tai.plmn_mnc_len[i], mnc_len);
 
     if ((mme_config.served_tai.plmn_mcc[i] == mcc) &&
@@ -104,7 +104,7 @@ s1ap_mme_compare_tac (
   config_read_lock (&mme_config);
 
   for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
-    LOG_DEBUG (LOG_S1AP_MME, "Comparing config tac %d, received tac = %d\n", mme_config.served_tai.tac[i], tac_value);
+    LOG_DEBUG (LOG_S1AP, "Comparing config tac %d, received tac = %d\n", mme_config.served_tai.tac[i], tac_value);
 
     if (mme_config.served_tai.tac[i] == tac_value)
       return TA_LIST_AT_LEAST_ONE_MATCH;

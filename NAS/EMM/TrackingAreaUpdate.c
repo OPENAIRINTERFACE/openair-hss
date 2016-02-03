@@ -125,64 +125,64 @@ emm_network_capability_have_changed (
   int umts_present,
   int gprs_present)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
 
   /*
    * Supported EPS encryption algorithms
    */
   if (eea != ctx->eea) {
-    LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: eea 0x%x/0x%x (ctxt)", eea, ctx->eea);
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: eea 0x%x/0x%x (ctxt)", eea, ctx->eea);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
   }
 
   /*
    * Supported EPS integrity algorithms
    */
   if (eia != ctx->eia) {
-    LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: eia 0x%x/0x%x (ctxt)", eia, ctx->eia);
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: eia 0x%x/0x%x (ctxt)", eia, ctx->eia);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
   }
 
   if (umts_present != ctx->umts_present) {
-    LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: umts_present %u/%u (ctxt)", umts_present, ctx->umts_present);
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: umts_present %u/%u (ctxt)", umts_present, ctx->umts_present);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
   }
 
   if ((ctx->umts_present) && (umts_present)) {
     if (ucs2 != ctx->ucs2) {
-      LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: ucs2 %u/%u (ctxt)", ucs2, ctx->ucs2);
-      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: ucs2 %u/%u (ctxt)", ucs2, ctx->ucs2);
+      LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
     }
 
     /*
      * Supported UMTS encryption algorithms
      */
     if (uea != ctx->uea) {
-      LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: uea 0x%x/0x%x (ctxt)", uea, ctx->uea);
-      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: uea 0x%x/0x%x (ctxt)", uea, ctx->uea);
+      LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
     }
 
     /*
      * Supported UMTS integrity algorithms
      */
     if (uia != ctx->uia) {
-      LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: uia 0x%x/0x%x (ctxt)", uia, ctx->uia);
-      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: uia 0x%x/0x%x (ctxt)", uia, ctx->uia);
+      LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
     }
   }
 
   if (gprs_present != ctx->gprs_present) {
-    LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: gprs_present %u/%u (ctxt)", gprs_present, ctx->gprs_present);
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: gprs_present %u/%u (ctxt)", gprs_present, ctx->gprs_present);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
   }
 
   if ((ctx->gprs_present) && (gprs_present)) {
     if (gea != ctx->gea) {
-      LOG_TRACE (INFO, "EMM-PROC  _emm_network_capability_have_changed: gea 0x%x/0x%x (ctxt)", gea, ctx->gea);
-      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TRUE);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: gea 0x%x/0x%x (ctxt)", gea, ctx->gea);
+      LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
     }
   }
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, FALSE);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, FALSE);
 }
 
 
@@ -193,7 +193,7 @@ emm_proc_tracking_area_update_request (
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *ue_ctx = NULL;
   boolean_t                               previous_context_found = FALSE;
@@ -242,11 +242,11 @@ emm_proc_tracking_area_update_request (
         //}
         // ...anyway now for simplicity we reject the TAU (else have to re-do integrity checking on NAS msg)
         rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+        LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       } else {
         // NO S10
         rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+        LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       }
     }
   }
@@ -301,7 +301,7 @@ emm_proc_tracking_area_update_request (
       if (NULL == ue_ctx->eps_bearer_context_status) {
         ue_ctx->eps_bearer_context_status = MALLOC_CHECK(sizeof(EpsBearerContextStatus));
       }
-      LOG_TRACE (INFO, "EMM-PROC  - TAU Request (ueid=" NAS_UE_ID_FMT ") IE EPS_BEARER_CONTEXT_STATUS %016b", ueid, msg->epsbearercontextstatus);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - TAU Request (ueid=" NAS_UE_ID_FMT ") IE EPS_BEARER_CONTEXT_STATUS %016b", ueid, msg->epsbearercontextstatus);
       memcpy(ue_ctx->eps_bearer_context_status, &msg->epsbearercontextstatus, sizeof(EpsBearerContextStatus));
 #warning "TODO Requirement MME24.301R10_5.5.3.2.4_5a: TAU Request: Deactivate EPS bearers if necessary (S11 Modify Bearer Request)"
     }
@@ -372,7 +372,7 @@ emm_proc_tracking_area_update_request (
       _emm_tracking_area_update_accept,
       _emm_tracking_area_update_reject,
       _emm_tracking_area_update_reject);
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   } /*else {
      *
      * MME24.301R10_5.5.3.2.3_4 TAU procedure: EMM common procedure initiation – no authentication procedure
@@ -407,7 +407,7 @@ emm_proc_tracking_area_update_request (
                                   _emm_tracking_area_update_security,
                                   _emm_tracking_area_update_reject,
                                   _emm_tracking_area_update_reject);
-      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+      LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     } else {
       boolean_t network_capability_have_changed = FALSE;
       if (NULL != ue_ctx->ue_network_capability_ie) {
@@ -449,17 +449,17 @@ emm_proc_tracking_area_update_request (
             _emm_tracking_area_update,
             _emm_tracking_area_update_reject,
             _emm_tracking_area_update_reject);
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+        LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       } //else {
         // TAU Accept
       //}
 
     }
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
   rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_ILLEGAL_UE);
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 /****************************************************************************
  **                                                                        **
@@ -481,7 +481,7 @@ emm_proc_tracking_area_update_reject (
   unsigned int ueid,
   int emm_cause)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
   /*
@@ -511,7 +511,7 @@ emm_proc_tracking_area_update_reject (
    * Do not accept attach request with protocol error
    */
   rc = _emm_tracking_area_update_reject (&ue_ctx);
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/
@@ -522,7 +522,7 @@ static int
 _emm_tracking_area_update (
     void *args)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
   tau_accept_data_t                      *data = (tau_accept_data_t *) CALLOC_CHECK (1, sizeof (tau_accept_data_t));
@@ -534,9 +534,9 @@ _emm_tracking_area_update (
     rc = emm_proc_common_initialize (emm_ctx->ueid, NULL, NULL, NULL, _emm_tracking_area_update_abort, data);
 
     if (rc != RETURNok) {
-      LOG_TRACE (WARNING, "Failed to initialize EMM callback functions");
+      LOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions");
       FREE_CHECK (data);
-      LOG_FUNC_RETURN (LOG_NAS_EMM_MME, RETURNerror);
+      LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
     /*
@@ -555,12 +555,12 @@ _emm_tracking_area_update (
     /*
      * The TAU procedure failed
      */
-    LOG_TRACE (WARNING, "EMM-PROC  - Failed to respond to TAU Request");
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to respond to TAU Request");
     emm_ctx->emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
     rc = _emm_tracking_area_update_reject (emm_ctx);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 /*
  * --------------------------------------------------------------------------
@@ -581,7 +581,7 @@ static void                            *
 _emm_tau_t3450_handler (
   void *args)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   tau_accept_data_t                      *data = (tau_accept_data_t *) (args);
 
@@ -590,7 +590,7 @@ _emm_tau_t3450_handler (
    * Increment the retransmission counter
    */
   data->retransmission_count += 1;
-  LOG_TRACE (WARNING, "EMM-PROC  - T3450 timer expired, retransmission counter = %d", data->retransmission_count);
+  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3450 timer expired, retransmission counter = %d", data->retransmission_count);
   /*
    * Get the UE's EMM context
    */
@@ -614,7 +614,7 @@ _emm_tau_t3450_handler (
     rc = _emm_tracking_area_update_abort (data);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, NULL);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
 }
 
 /** \fn void _emm_tracking_area_update_reject(void *args);
@@ -626,11 +626,11 @@ static int
 _emm_tracking_area_update_security (
   void *args)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
-  LOG_TRACE (INFO, "EMM-PROC  - Setup NAS security (ueid=" NAS_UE_ID_FMT ")", emm_ctx->ueid);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Setup NAS security (ueid=" NAS_UE_ID_FMT ")", emm_ctx->ueid);
 
   /*
    * Create new NAS security context
@@ -645,13 +645,13 @@ _emm_tracking_area_update_security (
     emm_ctx->security->selected_algorithms.encryption = NAS_SECURITY_ALGORITHMS_EEA0;
     emm_ctx->security->selected_algorithms.integrity = NAS_SECURITY_ALGORITHMS_EIA0;
   } else {
-    LOG_TRACE (WARNING, "EMM-PROC  - Failed to create security context");
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to create security context");
     emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
     /*
      * Do not accept the UE to attach to the network
      */
     rc = _emm_tracking_area_update_reject (emm_ctx);
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
   /*
@@ -669,14 +669,14 @@ _emm_tracking_area_update_security (
     /*
      * Failed to initiate the security mode control procedure
      */
-    LOG_TRACE (WARNING, "EMM-PROC  - Failed to initiate security mode control procedure");
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to initiate security mode control procedure");
     emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
     /*
      * Do not accept the UE to attach to the network
      */
     rc = _emm_tracking_area_update_reject (emm_ctx);
   }
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /** \fn void _emm_tracking_area_update_reject(void *args);
@@ -688,14 +688,14 @@ static int
 _emm_tracking_area_update_reject (
   void *args)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
   if (emm_ctx) {
     emm_sap_t                               emm_sap = {0};
 
-    LOG_TRACE (WARNING, "EMM-PROC  - EMM tracking area update procedure not accepted " "by the network (ueid=" NAS_UE_ID_FMT ", cause=%d)", emm_ctx->ueid, emm_ctx->emm_cause);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM tracking area update procedure not accepted " "by the network (ueid=" NAS_UE_ID_FMT ", cause=%d)", emm_ctx->ueid, emm_ctx->emm_cause);
     /*
      * Notify EMM-AS SAP that Tracking Area Update Reject message has to be sent
      * onto the network
@@ -719,7 +719,7 @@ _emm_tracking_area_update_reject (
     rc = emm_sap_send (&emm_sap);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /** \fn void _emm_tracking_area_update_accept (emm_data_context_t * emm_ctx,tau_accept_data_t * data);
@@ -733,7 +733,7 @@ _emm_tracking_area_update_accept (
   emm_data_context_t * emm_ctx,
   tau_accept_data_t * data)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
   int                                     i = 0;
   int                                     rc = RETURNerror;
@@ -785,18 +785,18 @@ _emm_tracking_area_update_accept (
      * Setup EPS NAS security data
      */
     emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, FALSE, TRUE);
-    LOG_TRACE (INFO, "EMM-PROC  - encryption = 0x%X ", emm_sap.u.emm_as.u.establish.encryption);
-    LOG_TRACE (INFO, "EMM-PROC  - integrity  = 0x%X ", emm_sap.u.emm_as.u.establish.integrity);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X ", emm_sap.u.emm_as.u.establish.encryption);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X ", emm_sap.u.emm_as.u.establish.integrity);
     emm_sap.u.emm_as.u.establish.encryption = emm_ctx->security->selected_algorithms.encryption;
     emm_sap.u.emm_as.u.establish.integrity = emm_ctx->security->selected_algorithms.integrity;
-    LOG_TRACE (INFO, "EMM-PROC  - encryption = 0x%X (0x%X)", emm_sap.u.emm_as.u.establish.encryption, emm_ctx->security->selected_algorithms.encryption);
-    LOG_TRACE (INFO, "EMM-PROC  - integrity  = 0x%X (0x%X)", emm_sap.u.emm_as.u.establish.integrity, emm_ctx->security->selected_algorithms.integrity);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X (0x%X)", emm_sap.u.emm_as.u.establish.encryption, emm_ctx->security->selected_algorithms.encryption);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X (0x%X)", emm_sap.u.emm_as.u.establish.integrity, emm_ctx->security->selected_algorithms.integrity);
     /*
      * Get the activate default EPS bearer context request message to
      * transfer within the ESM container of the attach accept message
      */
     //emm_sap.u.emm_as.u.establish.NASmsg = ...;
-    //LOG_TRACE (INFO, "EMM-PROC  - NASmsg  src size = %d NASmsg  dst size = %d ", data->esm_msg.length, emm_sap.u.emm_as.u.establish.NASmsg.length);
+    //LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - NASmsg  src size = %d NASmsg  dst size = %d ", data->esm_msg.length, emm_sap.u.emm_as.u.establish.NASmsg.length);
     rc = emm_sap_send (&emm_sap);
 
     if (rc != RETURNerror) {
@@ -814,13 +814,13 @@ _emm_tracking_area_update_accept (
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 started UE " NAS_UE_ID_FMT " (TAU)", data->ueid);
       }
 
-      LOG_TRACE (INFO, "EMM-PROC  - Timer T3450 (%d) expires in %ld seconds (TAU)", emm_ctx->T3450.id, emm_ctx->T3450.sec);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3450 (%d) expires in %ld seconds (TAU)", emm_ctx->T3450.id, emm_ctx->T3450.sec);
     }
   } else {
-    LOG_TRACE (WARNING, "EMM-PROC  - emm_ctx NULL");
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - emm_ctx NULL");
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 static int
@@ -831,13 +831,13 @@ _emm_tracking_area_update_abort (
   emm_data_context_t                     *ctx = NULL;
   tau_accept_data_t                      *data;
 
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
+  LOG_FUNC_IN (LOG_NAS_EMM);
   data = (tau_accept_data_t *) (args);
 
   if (data) {
     unsigned int                            ueid = data->ueid;
 
-    LOG_TRACE (WARNING, "EMM-PROC  - Abort the TAU procedure (ueid=" NAS_UE_ID_FMT ")", ueid);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the TAU procedure (ueid=" NAS_UE_ID_FMT ")", ueid);
 #if NAS_BUILT_IN_EPC
     ctx = emm_data_context_get (&_emm_data, ueid);
 #else
@@ -849,7 +849,7 @@ _emm_tracking_area_update_abort (
        * Stop timer T3450
        */
       if (ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
-        LOG_TRACE (INFO, "EMM-PROC  - Stop timer T3450 (%d)", ctx->T3450.id);
+        LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)", ctx->T3450.id);
         ctx->T3450.id = nas_timer_stop (ctx->T3450.id);
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " NAS_UE_ID_FMT " (TAU)", data->ueid);
       }
@@ -873,5 +873,5 @@ _emm_tracking_area_update_abort (
     emm_sap.u.emm_reg.ctx = ctx;
     rc = emm_sap_send (&emm_sap);
   }
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, rc);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

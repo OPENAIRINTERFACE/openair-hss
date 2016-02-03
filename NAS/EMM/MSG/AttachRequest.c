@@ -24,7 +24,6 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "log.h"
 
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
@@ -39,8 +38,6 @@ decode_attach_request (
   uint32_t                                decoded = 0;
   int                                     decoded_result = 0;
 
-  LOG_FUNC_IN (LOG_NAS_EMM_MME);
-  LOG_TRACE (INFO, "EMM  - attach_request len = %d", len);
   // Check if we got a NULL pointer and if buffer length is >= minimum length expected for the message.
   CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, ATTACH_REQUEST_MINIMUM_LENGTH, len);
 
@@ -49,31 +46,27 @@ decode_attach_request (
    */
   if ((decoded_result = decode_u8_eps_attach_type (&attach_request->epsattachtype, 0, *(buffer + decoded) & 0x0f, len - decoded)) < 0) {
     //         return decoded_result;
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, decoded_result);
   }
 
   if ((decoded_result = decode_u8_nas_key_set_identifier (&attach_request->naskeysetidentifier, 0, *(buffer + decoded) >> 4, len - decoded)) < 0) {
-    //         return decoded_result;
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+    return decoded_result;
   }
 
   decoded++;
 
   if ((decoded_result = decode_eps_mobile_identity (&attach_request->oldgutiorimsi, 0, buffer + decoded, len - decoded)) < 0) {
-    //         return decoded_result;
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+    return decoded_result;
   } else
     decoded += decoded_result;
 
   if ((decoded_result = decode_ue_network_capability (&attach_request->uenetworkcapability, 0, buffer + decoded, len - decoded)) < 0) {
-    //         return decoded_result;
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+    return decoded_result;
   } else
     decoded += decoded_result;
 
   if ((decoded_result = decode_esm_message_container (&attach_request->esmmessagecontainer, 0, buffer + decoded, len - decoded)) < 0) {
-    //         return decoded_result;
-    LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+    return decoded_result;
   } else
     decoded += decoded_result;
 
@@ -92,8 +85,7 @@ decode_attach_request (
     switch (ieiDecoded) {
     case ATTACH_REQUEST_OLD_PTMSI_SIGNATURE_IEI:
       if ((decoded_result = decode_p_tmsi_signature (&attach_request->oldptmsisignature, ATTACH_REQUEST_OLD_PTMSI_SIGNATURE_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -105,8 +97,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_ADDITIONAL_GUTI_IEI:
       if ((decoded_result = decode_eps_mobile_identity (&attach_request->additionalguti, ATTACH_REQUEST_ADDITIONAL_GUTI_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -118,8 +109,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_IEI:
       if ((decoded_result = decode_tracking_area_identity (&attach_request->lastvisitedregisteredtai, ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -131,8 +121,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_DRX_PARAMETER_IEI:
       if ((decoded_result = decode_drx_parameter (&attach_request->drxparameter, ATTACH_REQUEST_DRX_PARAMETER_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -144,8 +133,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_MS_NETWORK_CAPABILITY_IEI:
       if ((decoded_result = decode_ms_network_capability (&attach_request->msnetworkcapability, ATTACH_REQUEST_MS_NETWORK_CAPABILITY_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -157,8 +145,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_OLD_LOCATION_AREA_IDENTIFICATION_IEI:
       if ((decoded_result = decode_location_area_identification (&attach_request->oldlocationareaidentification, ATTACH_REQUEST_OLD_LOCATION_AREA_IDENTIFICATION_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -170,8 +157,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_TMSI_STATUS_IEI:
       if ((decoded_result = decode_tmsi_status (&attach_request->tmsistatus, ATTACH_REQUEST_TMSI_STATUS_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -183,8 +169,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_MOBILE_STATION_CLASSMARK_2_IEI:
       if ((decoded_result = decode_mobile_station_classmark_2 (&attach_request->mobilestationclassmark2, ATTACH_REQUEST_MOBILE_STATION_CLASSMARK_2_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -196,8 +181,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_MOBILE_STATION_CLASSMARK_3_IEI:
       if ((decoded_result = decode_mobile_station_classmark_3 (&attach_request->mobilestationclassmark3, ATTACH_REQUEST_MOBILE_STATION_CLASSMARK_3_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -209,8 +193,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_SUPPORTED_CODECS_IEI:
       if ((decoded_result = decode_supported_codec_list (&attach_request->supportedcodecs, ATTACH_REQUEST_SUPPORTED_CODECS_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -222,8 +205,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_ADDITIONAL_UPDATE_TYPE_IEI:
       if ((decoded_result = decode_additional_update_type (&attach_request->additionalupdatetype, ATTACH_REQUEST_ADDITIONAL_UPDATE_TYPE_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -235,8 +217,7 @@ decode_attach_request (
 
     case ATTACH_REQUEST_OLD_GUTI_TYPE_IEI:
       if ((decoded_result = decode_guti_type (&attach_request->oldgutitype, ATTACH_REQUEST_OLD_GUTI_TYPE_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -249,8 +230,7 @@ decode_attach_request (
     case ATTACH_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI:
       if ((decoded_result =
            decode_voice_domain_preference_and_ue_usage_setting (&attach_request->voicedomainpreferenceandueusagesetting, ATTACH_REQUEST_VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IEI, buffer + decoded, len - decoded)) <= 0) {
-        //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded_result);
+        return decoded_result;
       }
 
       decoded += decoded_result;
@@ -262,11 +242,11 @@ decode_attach_request (
 
     case ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI: 
       if ((decoded_result =
-	   decode_ms_network_feature_support(&attach_request->msnetworkfeaturesupport,
-					     ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI,
-					     buffer + decoded, len - decoded)) <= 0) {
+        decode_ms_network_feature_support(&attach_request->msnetworkfeaturesupport,
+            ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI,
+            buffer + decoded, len - decoded)) <= 0) {
         //         return decoded_result;
-	LOG_FUNC_RETURN(decoded_result);
+        LOG_FUNC_RETURN (LOG_NAS_EMM, decoded_result);
       }
       
       decoded += decoded_result;
@@ -276,13 +256,12 @@ decode_attach_request (
     default:
       errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;
       {
-        //                     return TLV_DECODE_UNEXPECTED_IEI;
-        LOG_FUNC_RETURN (LOG_NAS_EMM_MME, TLV_DECODE_UNEXPECTED_IEI);
+        return TLV_DECODE_UNEXPECTED_IEI;
       }
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM_MME, decoded);
+  return decoded;
 }
 
 int

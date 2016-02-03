@@ -42,8 +42,8 @@
 
 #define S1AP_DEBUG_LIST 1
 #if S1AP_DEBUG_LIST
-#  define eNB_LIST_OUT(x, args...) LOG_DEBUG (LOG_S1AP_MME, "[eNB]%*s"x"\n", 4*indent, "", ##args)
-#  define UE_LIST_OUT(x, args...)  LOG_DEBUG (LOG_S1AP_MME, "[UE] %*s"x"\n", 4*indent, "", ##args)
+#  define eNB_LIST_OUT(x, args...) LOG_DEBUG (LOG_S1AP, "[eNB]%*s"x"\n", 4*indent, "", ##args)
+#  define UE_LIST_OUT(x, args...)  LOG_DEBUG (LOG_S1AP, "[UE] %*s"x"\n", 4*indent, "", ##args)
 #else
 #  define eNB_LIST_OUT(x, args...)
 #  define UE_LIST_OUT(x, args...)
@@ -91,6 +91,7 @@ s1ap_mme_thread (
   MessageDef                             *received_message_p;
 
   itti_mark_task_ready (TASK_S1AP);
+  LOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
@@ -122,7 +123,7 @@ s1ap_mme_thread (
          */
         if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).buffer, SCTP_DATA_IND (received_message_p).buf_length) < 0) {
           // TODO: Notify eNB of failure with right cause
-          LOG_ERROR (LOG_S1AP_MME, "Failed to decode new buffer\n");
+          LOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
         } else {
           s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &message);
         }
@@ -177,7 +178,7 @@ s1ap_mme_thread (
       break;
 
     default:{
-        LOG_DEBUG (LOG_S1AP_MME, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        LOG_DEBUG (LOG_S1AP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
@@ -193,29 +194,29 @@ int
 s1ap_mme_init (
   const mme_config_t * mme_config_p)
 {
-  LOG_DEBUG (LOG_S1AP_MME, "Initializing S1AP interface\n");
+  LOG_DEBUG (LOG_S1AP, "Initializing S1AP interface\n");
 
   if (get_asn1c_environment_version () < ASN1_MINIMUM_VERSION) {
-    LOG_ERROR (LOG_S1AP_MME, "ASN1C version %d fount, expecting at least %d\n", get_asn1c_environment_version (), ASN1_MINIMUM_VERSION);
+    LOG_ERROR (LOG_S1AP, "ASN1C version %d fount, expecting at least %d\n", get_asn1c_environment_version (), ASN1_MINIMUM_VERSION);
     return -1;
   } else {
-    LOG_DEBUG (LOG_S1AP_MME, "ASN1C version %d\n", get_asn1c_environment_version ());
+    LOG_DEBUG (LOG_S1AP, "ASN1C version %d\n", get_asn1c_environment_version ());
   }
 
-  LOG_DEBUG (LOG_S1AP_MME, "S1AP Release v10.5\n");
+  LOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
   STAILQ_INIT (&eNB_list_head);
 
   if (itti_create_task (TASK_S1AP, &s1ap_mme_thread, NULL) < 0) {
-    LOG_ERROR (LOG_S1AP_MME, "Error while creating S1AP task\n");
+    LOG_ERROR (LOG_S1AP, "Error while creating S1AP task\n");
     return -1;
   }
 
   if (s1ap_send_init_sctp () < 0) {
-    LOG_ERROR (LOG_S1AP_MME, "Error while sendind SCTP_INIT_MSG to SCTP \n");
+    LOG_ERROR (LOG_S1AP, "Error while sendind SCTP_INIT_MSG to SCTP \n");
     return -1;
   }
 
-  LOG_DEBUG (LOG_S1AP_MME, "Initializing S1AP interface: DONE\n");
+  LOG_DEBUG (LOG_S1AP, "Initializing S1AP interface: DONE\n");
   return 0;
 }
 

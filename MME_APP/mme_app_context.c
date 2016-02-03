@@ -405,8 +405,8 @@ mme_app_dump_ue_context (
 #define DISPLAY_BIT_MASK_PRESENT(mASK)   \
   ((context_p->access_restriction_data & mASK) ? 'X' : 'O')
     LOG_DEBUG (LOG_MME_APP, "    (O = allowed, X = !O) |UTRAN|GERAN|GAN|HSDPA EVO|E_UTRAN|HO TO NO 3GPP|\n");
-    MME_APP_DEBUG
-      ("    - Access restriction  |  %c  |  %c  | %c |    %c    |   %c   |      %c      |\n",
+    LOG_DEBUG (LOG_MME_APP,
+      "    - Access restriction  |  %c  |  %c  | %c |    %c    |   %c   |      %c      |\n",
        DISPLAY_BIT_MASK_PRESENT (ARD_UTRAN_NOT_ALLOWED),
        DISPLAY_BIT_MASK_PRESENT (ARD_GERAN_NOT_ALLOWED),
        DISPLAY_BIT_MASK_PRESENT (ARD_GAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_I_HSDPA_EVO_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_E_UTRAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_HO_TO_NON_3GPP_NOT_ALLOWED));

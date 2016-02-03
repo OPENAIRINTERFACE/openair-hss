@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include "NwLog.h"
+#include "log.h"
 
 /**
  * @file NwGtpv2cLog.h
@@ -50,25 +51,6 @@ extern "C" {
  * Log Macro Definition
  *--------------------------------------------------------------------------*/
 
-#define NW_LOG(_gtpv2cHandle, _logLevel, ...)                           \
-  do {                                                                  \
-    if(((NwGtpv2cStackT*)(_gtpv2cHandle))->logLevel >= _logLevel)       \
-    {                                                                   \
-      char _logBuf[1024];                                               \
-      snprintf(_logBuf, 1024, __VA_ARGS__);                             \
-      ((NwGtpv2cStackT*)(_gtpv2cHandle))->logMgr.logReqCallback(((NwGtpv2cStackT*)_gtpv2cHandle)->logMgr.logMgrHandle, _logLevel, __FILE__, __LINE__, _logBuf);\
-    }                                                                   \
-  } while(0)
-
-#define NW_ENTER(_gtpv2cHandle)                                       \
-  do {                                                                  \
-    NW_LOG(_gtpv2cHandle, NW_LOG_LEVEL_DEBG, "Entering '%s'", __func__);\
-  } while(0)
-
-#define NW_LEAVE(_gtpv2cHandle)                                       \
-  do {                                                                  \
-    NW_LOG(_gtpv2cHandle, NW_LOG_LEVEL_DEBG, "Leaving '%s'", __func__);\
-  } while(0)
 
 #ifdef __cplusplus
 }

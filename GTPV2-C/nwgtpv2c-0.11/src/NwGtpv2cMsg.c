@@ -90,7 +90,7 @@ extern                                  "C" {
       pMsg->groupedIeEncodeStack.top = 0;
       pMsg->hStack = hGtpcStackHandle;
       *phMsg = (NwGtpv2cMsgHandleT) pMsg;
-      NW_LOG (pStack, NW_LOG_LEVEL_DEBG, "Created message %p!", pMsg);
+      LOG_DEBUG (LOG_GTPV2C, "Created message %p!", pMsg);
       return NW_OK;
     }
 
@@ -132,7 +132,7 @@ extern                                  "C" {
       memcpy (((uint8_t *) & pMsg->seqNum) + 1, pBuf, 3);
       pMsg->seqNum = ntohl (pMsg->seqNum);
       pMsg->hStack = hGtpcStackHandle;
-      NW_LOG (pStack, NW_LOG_LEVEL_DEBG, "Created message %p!", pMsg);
+      LOG_DEBUG (LOG_GTPV2C, "Created message %p!", pMsg);
       return NW_OK;
     }
 
@@ -144,7 +144,7 @@ extern                                  "C" {
   NW_IN NwGtpv2cMsgHandleT hMsg) {
     NwGtpv2cStackT                         *pStack = (NwGtpv2cStackT *) hGtpcStackHandle;
 
-    NW_LOG (pStack, NW_LOG_LEVEL_DEBG, "Purging message %" PRIxPTR "!", hMsg);
+    LOG_DEBUG (LOG_GTPV2C, "Purging message %" PRIxPTR "!", hMsg);
     ((NwGtpv2cMsgT *) hMsg)->next = gpGtpv2cMsgPool;
     gpGtpv2cMsgPool = (NwGtpv2cMsgT *) hMsg;
     return NW_OK;
@@ -525,7 +525,7 @@ extern                                  "C" {
       return NW_OK;
     }
 
-    NW_LOG (thiz->hStack, NW_LOG_LEVEL_ERRO, "Cannot retrieve IE of type %u instance %u !", type, instance);
+    LOG_ERROR (LOG_GTPV2C, "Cannot retrieve IE of type %u instance %u !", type, instance);
     return NW_GTPV2C_IE_MISSING;
   }
 

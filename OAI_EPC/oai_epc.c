@@ -34,14 +34,10 @@
 #if HAVE_CONFIG_H
 #  include "config.h"
 #endif
-
 #include "mme_config.h"
 #include "gtpv1u_sgw_defs.h"
-
 #include "assertions.h"
-
 #include "intertask_interface_init.h"
-
 #include "sctp_primitives_server.h"
 #include "udp_primitives_server.h"
 #include "s1ap_mme.h"
@@ -50,12 +46,10 @@
 #include "sgw_lite_defs.h"
 #include "mme_app_extern.h"
 #include "nas_defs.h"
-
 /* FreeDiameter headers for support of S6A interface */
 #include <freeDiameter/freeDiameter-host.h>
 #include <freeDiameter/libfdcore.h>
 #include "s6a_defs.h"
-
 #include "oai_epc.h"
 #include "msc.h"
 
@@ -70,7 +64,7 @@ main (
    */
   CHECK_INIT_RETURN (config_parse_opt_line (argc, argv, &mme_config) < 0);
   CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, messages_definition_xml, mme_config.itti_config.log_file));
-  CHECK_INIT_RETURN (LOG_INIT (LOG_MME_GW_ENV, LOG_NOTICE, MAX_LOG_PROTOS));
+  CHECK_INIT_RETURN (LOG_INIT (LOG_MME_GW_ENV, LOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
   MSC_INIT (MSC_MME_GW, THREAD_MAX + TASK_MAX);
   /*
    * Calling each layer init function
