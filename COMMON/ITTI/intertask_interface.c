@@ -65,6 +65,7 @@
 #include "signals.h"
 #include "timer.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 /* ITTI DEBUG groups */
 #define ITTI_DEBUG_POLL             (1<<0)
@@ -78,8 +79,7 @@
 const int                               itti_debug = ITTI_DEBUG_ISSUES | ITTI_DEBUG_MP_STATISTICS;
 
 
-#define ITTI_DEBUG(m, x, args...)  do { if ((m) & itti_debug) fprintf(stdout, "[ITTI][D]"x, ##args); fflush (stdout); } while(0);
-#define ITTI_ERROR(x, args...)      do { fprintf(stdout, "[ITTI][E]"x, ##args); fflush (stdout); } while(0);
+#define ITTI_DEBUG(m, x, args...)  do { if ((m) & itti_debug) LOG_DEBUG (LOG_ITTI, x, ##args);} while(0);
 
 /* Global message size */
 #define MESSAGE_SIZE(mESSAGEiD) (sizeof(MessageHeader) + itti_desc.messages_info[mESSAGEiD].size)
@@ -206,7 +206,7 @@ itti_malloc (
   if (ptr == NULL) {
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
-    ITTI_ERROR (" Memory pools statistics:\n%s", statistics);
+    LOG_ERROR (LOG_ITTI, " Memory pools statistics:\n%s", statistics);
     FREE_CHECK (statistics);
   }
 #else
@@ -908,6 +908,7 @@ itti_init (
 #endif
   itti_dump_init (messages_definition_xml, dump_file_name);
   CHECK_INIT_RETURN (timer_init ());
+  LOG_ITTI_CONNECT();
   return 0;
 }
 

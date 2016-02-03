@@ -58,8 +58,8 @@
 #define LOG_MAX_PROTO_NAME_LENGTH 16
 #define LOG_MAX_MESSAGE_LENGTH    512
 
-#define LOG_MAX_FILENAME_LENGTH       50
-#define LOG_MAX_LOG_LEVEL_NAME_LENGTH 8
+#define LOG_MAX_FILENAME_LENGTH       32
+#define LOG_MAX_LOG_LEVEL_NAME_LENGTH 5
 //-------------------------------
 
 FILE                                   *g_log_fd = NULL;
@@ -86,7 +86,6 @@ struct lfds611_stack_state             *g_log_memory_stack_p = NULL;
 void                                   *
 log_task (
   void *args_p)
-//------------------------------------------------------------------------------
 {
   MessageDef                             *received_message_p = NULL;
   long                                    timer_id = 0;
@@ -130,7 +129,7 @@ log_task (
   return NULL;
 }
 
-
+//------------------------------------------------------------------------------
 static void log_get_elapsed_time_since_start(struct timeval * const elapsed_time)
 {
   // no thread safe but do not matter a lot
@@ -139,14 +138,12 @@ static void log_get_elapsed_time_since_start(struct timeval * const elapsed_time
   elapsed_time->tv_sec = elapsed_time->tv_sec - g_log_start_time_second;
 }
 
-
 //------------------------------------------------------------------------------
 int
 log_init (
   const log_env_t envP,
   const log_level_t default_log_levelP,
   const int max_threadsP)
-//------------------------------------------------------------------------------
 {
   int                                     i = 0;
   int                                     rv = 0;
@@ -207,6 +204,7 @@ log_init (
   rv = snprintf (&g_log_proto2str[LOG_UTIL][0], LOG_MAX_PROTO_NAME_LENGTH, "UTIL");
   rv = snprintf (&g_log_proto2str[LOG_CONFIG][0], LOG_MAX_PROTO_NAME_LENGTH, "CONFIG");
   rv = snprintf (&g_log_proto2str[LOG_MSC][0], LOG_MAX_PROTO_NAME_LENGTH, "MSC");
+  rv = snprintf (&g_log_proto2str[LOG_ITTI][0], LOG_MAX_PROTO_NAME_LENGTH, "ITTI");
 
   rv = snprintf (&g_log_level2str[LOG_LEVEL_TRACE][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "TRACE");
   rv = snprintf (&g_log_level2str[LOG_LEVEL_DEBUG][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "DEBUG");
@@ -225,29 +223,33 @@ log_init (
     g_log_level2str[i][LOG_MAX_LOG_LEVEL_NAME_LENGTH-1]     = '\0';
   }
 
+  log_start_use(); // yes this thread also
+  log_message (LOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing OAI logging Done\n");
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+// listen to ITTI events
+void log_itti_connect(void)
+{
+  int                                     rv = 0;
   rv = itti_create_task (TASK_LOG, log_task, NULL);
   AssertFatal (rv == 0, "Create task for OAI logging failed!\n");
-  log_start_use(); // yes this thread also
-  fprintf (stderr, "Initializing OAI logging Done\n");
-  return 0;
 }
 
 //------------------------------------------------------------------------------
 void
 log_start_use (
   void)
-//------------------------------------------------------------------------------
 {
   lfds611_queue_use (g_log_message_queue_p);
   lfds611_stack_use (g_log_memory_stack_p);
 }
 
-
 //------------------------------------------------------------------------------
 void
 log_flush_messages (
   void)
-//------------------------------------------------------------------------------
 {
   int                                     rv;
   log_queue_item_t                       *item_p = NULL;
@@ -269,7 +271,6 @@ log_flush_messages (
 void
 log_end (
   void)
-//------------------------------------------------------------------------------
 {
   int                                     rv;
 
@@ -298,7 +299,6 @@ log_message (
   const unsigned int line_numP,
   char *format,
   ...)
-//------------------------------------------------------------------------------
 {
   va_list                                 args;
   int                                     rv;
@@ -331,12 +331,12 @@ log_message (
       log_get_elapsed_time_since_start(&elapsed_time);
       filename_length = strlen(source_fileP);
       if (filename_length > LOG_MAX_FILENAME_LENGTH) {
-        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%.6s|%.6s|%s:%u| ",
+        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%.5.5s|%.6.6s|%s:%u| ",
             __sync_fetch_and_add (&g_log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
             &g_log_level2str[log_levelP][0], &g_log_proto2str[protoP][0],
             &source_fileP[filename_length-LOG_MAX_FILENAME_LENGTH], line_numP);
       } else {
-        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%.6s|%.6s|%s:%u| ",
+        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 "|%04ld:%06ld|%.5.5s|%.6.6s|%s:%u| ",
             __sync_fetch_and_add (&g_log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
             &g_log_level2str[log_levelP][0], &g_log_proto2str[protoP][0], source_fileP, line_numP);
       }

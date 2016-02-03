@@ -53,6 +53,7 @@ main (
   int argc,
   char *argv[])
 {
+  CHECK_INIT_RETURN (LOG_INIT (LOG_SPGW_ENV, LOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
   /*
    * Parse the command line for options and set the mme_config accordingly.
    */
@@ -62,7 +63,6 @@ main (
    */
   //CHECK_INIT_RETURN (log_init (&mme_config, oai_sgw_log_specific));
   CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, messages_definition_xml, NULL));
-  CHECK_INIT_RETURN (LOG_INIT (LOG_SPGW_ENV, LOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
   MSC_INIT (MSC_SP_GW, THREAD_MAX + TASK_MAX);
   CHECK_INIT_RETURN (udp_init (&mme_config));
   CHECK_INIT_RETURN (s11_sgw_init (&mme_config));

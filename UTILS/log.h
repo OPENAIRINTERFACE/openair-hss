@@ -86,6 +86,7 @@ typedef enum {
   LOG_UTIL,
   LOG_CONFIG,
   LOG_MSC,
+  LOG_ITTI,
   MAX_LOG_PROTOS,
 } log_proto_t;
 
@@ -105,6 +106,7 @@ void log_message (
 
 #define LOG_INIT                               log_init
 #define LOG_START_USE                          log_start_use
+#define LOG_ITTI_CONNECT                       log_itti_connect
 #define LOG_END()                              log_end()
 #define LOG_EMERGENCY(pRoTo, aRgS...)          do { log_message(LOG_LEVEL_EMERGENCY,pRoTo, __FILE__, __LINE__, ##aRgS); } while(0)/*!< \brief system is unusable */
 #define LOG_ALERT(pRoTo, aRgS...)              do { log_message(LOG_LEVEL_ALERT,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief action must be taken immediately */
@@ -121,6 +123,7 @@ void log_message (
 #else
 #define LOG_INIT(a,b,c)                                0
 #define LOG_START_USE()
+#define LOG_ITTI_CONNECT()
 #define LOG_END()
 #define LOG_EMERGENCY(pRoTo, aRgS...)          do { fprintf(stderr, "[EMERGE] "##aRgS); } while(0)
 #define LOG_ALERT(pRoTo, aRgS...)              do { fprintf(stderr, "[ALERT] "##aRgS); } while(0)

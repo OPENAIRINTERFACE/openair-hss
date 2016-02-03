@@ -44,17 +44,6 @@
 #include "queue.h"
 #include "dynamic_memory_check.h"
 
-#if defined (LOG_D) && defined (LOG_E)
-#  define TMR_DEBUG(x, args...)  LOG_D(TMR, x, ##args)
-#  define TMR_ERROR(x, args...)  LOG_E(TMR, x, ##args)
-#endif
-
-#ifndef TMR_DEBUG
-#  define TMR_DEBUG(x, args...)  do { fprintf(stdout, "[TMR][D]"x, ##args); } while(0)
-#endif
-#ifndef TMR_ERROR
-#  define TMR_ERROR(x, args...)  do { fprintf(stdout, "[TMR][E]"x, ##args); } while(0)
-#endif
 
 int                                     timer_handle_signal (
   siginfo_t * info);
@@ -102,7 +91,7 @@ timer_handle_signal (
    */
   timer_p = (struct timer_elm_s *)info->si_ptr;
   // LG: To many traces for msc timer:
-  // TMR_DEBUG("Timer with id 0x%lx has expired\n", (long)timer_p->timer);
+  // TMR_DEBUG("Timer with id 0x%lx has expired", (long)timer_p->timer);
   task_id = timer_p->task_id;
   instance = timer_p->instance;
   message_p = itti_alloc_new_message (TASK_TIMER, TIMER_HAS_EXPIRED);
@@ -115,16 +104,16 @@ timer_handle_signal (
    */
   if (timer_p->type == TIMER_ONE_SHOT) {
     //         if (timer_delete(timer_p->timer) < 0) {
-    //             TMR_DEBUG("Failed to delete timer 0x%lx\n", (long)timer_p->timer);
+    //             TMR_DEBUG("Failed to delete timer 0x%lx", (long)timer_p->timer);
     //         }
-    //         TMR_DEBUG("Removed timer 0x%lx\n", (long)timer_p->timer);
+    //         TMR_DEBUG("Removed timer 0x%lx", (long)timer_p->timer);
     //         pthread_mutex_lock(&timer_desc.timer_list_mutex);
     //         STAILQ_REMOVE(&timer_desc.timer_queue, timer_p, timer_elm_s, entries);
     //         pthread_mutex_unlock(&timer_desc.timer_list_mutex);
     //         FREE_CHECK(timer_p);
     //         timer_p = NULL;
     if (timer_remove ((long)timer_p->timer) != 0) {
-      TMR_DEBUG ("Failed to delete timer 0x%lx\n", (long)timer_p->timer);
+      LOG_DEBUG (LOG_ITTI, "Failed to delete timer 0x%lx", (long)timer_p->timer);
     }
   }
 
@@ -132,7 +121,7 @@ timer_handle_signal (
    * Notify task of timer expiry
    */
   if (itti_send_msg_to_task (task_id, instance, message_p) < 0) {
-    TMR_DEBUG ("Failed to send msg TIMER_HAS_EXPIRED to task %u\n", task_id);
+    LOG_DEBUG (LOG_ITTI, "Failed to send msg TIMER_HAS_EXPIRED to task %u", task_id);
     FREE_CHECK (message_p);
     return -1;
   }
@@ -166,7 +155,7 @@ timer_setup (
   timer_p = MALLOC_CHECK (sizeof (struct timer_elm_s));
 
   if (timer_p == NULL) {
-    TMR_ERROR ("Failed to create new timer element\n");
+    LOG_ERROR (LOG_ITTI, "Failed to create new timer element");
     return -1;
   }
 
@@ -192,7 +181,7 @@ timer_setup (
    * * * value might be used to distinguish timers.
    */
   if (timer_create (CLOCK_REALTIME, &se, &timer) < 0) {
-    TMR_ERROR ("Failed to create timer: (%s:%d)\n", strerror (errno), errno);
+    LOG_ERROR (LOG_ITTI, "Failed to create timer: (%s:%d)", strerror (errno), errno);
     FREE_CHECK (timer_p);
     return -1;
   }
@@ -222,7 +211,7 @@ timer_setup (
    * Simply set the timer_id argument. so it can be used by caller
    */
   *timer_id = (long)timer;
-  TMR_DEBUG ("Requesting new %s timer with id 0x%lx that expires within " "%d sec and %d usec\n", type == TIMER_PERIODIC ? "periodic" : "single shot", *timer_id, interval_sec, interval_us);
+  LOG_DEBUG (LOG_ITTI, "Requesting new %s timer with id 0x%lx that expires within " "%d sec and %d usec", type == TIMER_PERIODIC ? "periodic" : "single shot", *timer_id, interval_sec, interval_us);
   timer_p->timer = timer;
   /*
    * Lock the queue and insert the timer at the tail
@@ -240,7 +229,7 @@ timer_remove (
   int                                     rc = 0;
   struct timer_elm_s                     *timer_p;
 
-  TMR_DEBUG ("Removing timer 0x%lx\n", timer_id);
+  LOG_DEBUG (LOG_ITTI, "Removing timer 0x%lx", timer_id);
   pthread_mutex_lock (&timer_desc.timer_list_mutex);
   TIMER_SEARCH (timer_p, timer, ((timer_t) timer_id), &timer_desc.timer_queue);
 
@@ -249,7 +238,7 @@ timer_remove (
    */
   if (timer_p == NULL) {
     pthread_mutex_unlock (&timer_desc.timer_list_mutex);
-    TMR_ERROR ("Didn't find timer 0x%lx in list\n", timer_id);
+    LOG_ERROR (LOG_ITTI, "Didn't find timer 0x%lx in list", timer_id);
     return -1;
   }
 
@@ -257,7 +246,7 @@ timer_remove (
   pthread_mutex_unlock (&timer_desc.timer_list_mutex);
 
   if (timer_delete (timer_p->timer) < 0) {
-    TMR_ERROR ("Failed to delete timer 0x%lx\n", (long)timer_p->timer);
+    LOG_ERROR (LOG_ITTI, "Failed to delete timer 0x%lx", (long)timer_p->timer);
     rc = -1;
   }
 
@@ -270,10 +259,10 @@ int
 timer_init (
   void)
 {
-  TMR_DEBUG ("Initializing TIMER task interface\n");
+  LOG_DEBUG (LOG_ITTI, "Initializing TIMER task interface");
   memset (&timer_desc, 0, sizeof (timer_desc_t));
   STAILQ_INIT (&timer_desc.timer_queue);
   pthread_mutex_init (&timer_desc.timer_list_mutex, NULL);
-  TMR_DEBUG ("Initializing TIMER task interface: DONE\n");
+  LOG_DEBUG (LOG_ITTI, "Initializing TIMER task interface: DONE");
   return 0;
 }

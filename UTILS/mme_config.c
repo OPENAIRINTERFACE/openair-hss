@@ -49,6 +49,7 @@
 #include "spgw_config.h"
 #include "intertask_interface_conf.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 mme_config_t                            mme_config;
 
@@ -157,11 +158,11 @@ mme_system (
   int                                     ret = -1;
 
   if (command_pP) {
-    fprintf (stdout, "system command: %s\n", command_pP);
+    LOG_DEBUG (LOG_CONFIG, "system command: %s", command_pP);
     ret = system (command_pP);
 
     if (ret < 0) {
-      fprintf (stderr, "ERROR in system command %s: %d\n", command_pP, ret);
+      LOG_ERROR (LOG_CONFIG, "ERROR in system command %s: %d", command_pP, ret);
 
       if (abort_on_errorP) {
         exit (-1);              // may be not exit
@@ -208,12 +209,12 @@ config_parse_file (
      * Read the file. If there is an error, report it and exit.
      */
     if (!config_read_file (&cfg, mme_config_p->config_file)) {
-      fprintf (stdout, "ERROR: %s:%d - %s\n", mme_config_p->config_file, config_error_line (&cfg), config_error_text (&cfg));
+      LOG_ERROR (LOG_CONFIG, ": %s:%d - %s", mme_config_p->config_file, config_error_line (&cfg), config_error_text (&cfg));
       config_destroy (&cfg);
       AssertFatal (1 == 0, "Failed to parse MME configuration file %s!\n", mme_config_p->config_file);
     }
   } else {
-    fprintf (stdout, "ERROR No MME configuration file provided!\n");
+    LOG_ERROR (LOG_CONFIG, " No MME configuration file provided!");
     config_destroy (&cfg);
     AssertFatal (0, "No MME configuration file provided!\n");
   }
@@ -639,94 +640,94 @@ config_display (
 {
   int                                     j;
 
-  fprintf (stdout, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
-  fprintf (stdout, "Configuration:\n");
-  fprintf (stdout, "- File .................................: %s\n", mme_config_p->config_file);
-  fprintf (stdout, "- Verbosity level ......................: %d\n", mme_config_p->verbosity_level);
-  fprintf (stdout, "- Realm ................................: %s\n", mme_config_p->realm);
-  fprintf (stdout, "- Max eNBs .............................: %u\n", mme_config_p->max_eNBs);
-  fprintf (stdout, "- Max UEs ..............................: %u\n", mme_config_p->max_ues);
-  fprintf (stdout, "- IMS voice over PS session in S1 ......: %s\n", mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "FALSE" : "TRUE");
-  fprintf (stdout, "- Emergency bearer services in S1 mode .: %s\n", mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode == 0 ? "FALSE" : "TRUE");
-  fprintf (stdout, "- Location services via epc ............: %s\n", mme_config_p->eps_network_feature_support.location_services_via_epc == 0 ? "FALSE" : "TRUE");
-  fprintf (stdout, "- Extended service request .............: %s\n", mme_config_p->eps_network_feature_support.extended_service_request == 0 ? "FALSE" : "TRUE");
-  fprintf (stdout, "- Unauth IMSI support ..................: %s\n", mme_config_p->unauthenticated_imsi_supported == 0 ? "FALSE" : "TRUE");
-  fprintf (stdout, "- Relative capa ........................: %u\n\n", mme_config_p->relative_capacity);
-  fprintf (stdout, "- Statistics timer .....................: %u (seconds)\n\n", mme_config_p->mme_statistic_timer);
-  fprintf (stdout, "- S1-U:\n");
-  fprintf (stdout, "    port number ......: %d\n", mme_config_p->gtpv1u_config.port_number);
-  fprintf (stdout, "- S1-MME:\n");
-  fprintf (stdout, "    port number ......: %d\n", mme_config_p->s1ap_config.port_number);
-  fprintf (stdout, "- IP:\n");
-  //fprintf(stdout, "    s1-u iface .......: %s\n", mme_config_p->ipv4.sgw_interface_name_for_S1u_S12_S4_up);
-  fprintf (stdout, "    s1-u ip ..........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.sgw_ip_address_for_S1u_S12_S4_up)));
-  //fprintf(stdout, "    sgi iface ........: %s\n", mme_config_p->ipv4.pgw_interface_name_for_SGI);
-  //fprintf(stdout, "    sgi ip ...........: %s/%d\n",
+  LOG_DEBUG (LOG_CONFIG, "==== EURECOM %s v%s ====", PACKAGE_NAME, PACKAGE_VERSION);
+  LOG_INFO (LOG_CONFIG, "Configuration:");
+  LOG_INFO (LOG_CONFIG, "- File .................................: %s", mme_config_p->config_file);
+  LOG_INFO (LOG_CONFIG, "- Verbosity level ......................: %d", mme_config_p->verbosity_level);
+  LOG_INFO (LOG_CONFIG, "- Realm ................................: %s", mme_config_p->realm);
+  LOG_INFO (LOG_CONFIG, "- Max eNBs .............................: %u", mme_config_p->max_eNBs);
+  LOG_INFO (LOG_CONFIG, "- Max UEs ..............................: %u", mme_config_p->max_ues);
+  LOG_INFO (LOG_CONFIG, "- IMS voice over PS session in S1 ......: %s", mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "FALSE" : "TRUE");
+  LOG_INFO (LOG_CONFIG, "- Emergency bearer services in S1 mode .: %s", mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode == 0 ? "FALSE" : "TRUE");
+  LOG_INFO (LOG_CONFIG, "- Location services via epc ............: %s", mme_config_p->eps_network_feature_support.location_services_via_epc == 0 ? "FALSE" : "TRUE");
+  LOG_INFO (LOG_CONFIG, "- Extended service request .............: %s", mme_config_p->eps_network_feature_support.extended_service_request == 0 ? "FALSE" : "TRUE");
+  LOG_INFO (LOG_CONFIG, "- Unauth IMSI support ..................: %s", mme_config_p->unauthenticated_imsi_supported == 0 ? "FALSE" : "TRUE");
+  LOG_INFO (LOG_CONFIG, "- Relative capa ........................: %u\n", mme_config_p->relative_capacity);
+  LOG_INFO (LOG_CONFIG, "- Statistics timer .....................: %u (seconds)\n", mme_config_p->mme_statistic_timer);
+  LOG_INFO (LOG_CONFIG, "- S1-U:");
+  LOG_INFO (LOG_CONFIG, "    port number ......: %d", mme_config_p->gtpv1u_config.port_number);
+  LOG_INFO (LOG_CONFIG, "- S1-MME:");
+  LOG_INFO (LOG_CONFIG, "    port number ......: %d", mme_config_p->s1ap_config.port_number);
+  LOG_INFO (LOG_CONFIG, "- IP:");
+  //fprintf(stdout, "    s1-u iface .......: %s", mme_config_p->ipv4.sgw_interface_name_for_S1u_S12_S4_up);
+  LOG_INFO (LOG_CONFIG, "    s1-u ip ..........: %s", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.sgw_ip_address_for_S1u_S12_S4_up)));
+  //fprintf(stdout, "    sgi iface ........: %s", mme_config_p->ipv4.pgw_interface_name_for_SGI);
+  //fprintf(stdout, "    sgi ip ...........: %s/%d",
   //        inet_ntoa(*((struct in_addr *)&mme_config_p->ipv4.pgw_ip_addr_for_SGI)),
   //        mme_config_p->ipv4.pgw_ip_netmask_for_SGI);
-  fprintf (stdout, "    s1-MME iface .....: %s\n", mme_config_p->ipv4.mme_interface_name_for_S1_MME);
-  fprintf (stdout, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_S1_MME)));
-  //fprintf(stdout, "    s11 S-GW iface ...: %s\n", mme_config_p->ipv4.sgw_interface_name_for_S11);
-  //fprintf(stdout, "    s11 S-GW ip ......: %s/%d\n",
+  LOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s", mme_config_p->ipv4.mme_interface_name_for_S1_MME);
+  LOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_S1_MME)));
+  //fprintf(stdout, "    s11 S-GW iface ...: %s", mme_config_p->ipv4.sgw_interface_name_for_S11);
+  //fprintf(stdout, "    s11 S-GW ip ......: %s/%d",
   //        inet_ntoa(*((struct in_addr *)&mme_config_p->ipv4.sgw_ip_address_for_S11)),
   //        mme_config_p->ipv4.sgw_ip_netmask_for_S11);
-  fprintf (stdout, "    s11 MME iface ....: %s\n", mme_config_p->ipv4.mme_interface_name_for_S11);
-  fprintf (stdout, "    s11 S-GW ip ......: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_S11)));
-  fprintf (stdout, "- ITTI:\n");
-  fprintf (stdout, "    queue size .......: %u (bytes)\n", mme_config_p->itti_config.queue_size);
-  fprintf (stdout, "    log file .........: %s\n", mme_config_p->itti_config.log_file);
-  fprintf (stdout, "- SCTP:\n");
-  fprintf (stdout, "    in streams .......: %u\n", mme_config_p->sctp_config.in_streams);
-  fprintf (stdout, "    out streams ......: %u\n", mme_config_p->sctp_config.out_streams);
-  fprintf (stdout, "- GUMMEI:\n");
-  fprintf (stdout, "    mme group ids ....:\n        ");
+  LOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s", mme_config_p->ipv4.mme_interface_name_for_S11);
+  LOG_INFO (LOG_CONFIG, "    s11 S-GW ip ......: %s", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_S11)));
+  LOG_INFO (LOG_CONFIG, "- ITTI:");
+  LOG_INFO (LOG_CONFIG, "    queue size .......: %u (bytes)", mme_config_p->itti_config.queue_size);
+  LOG_INFO (LOG_CONFIG, "    log file .........: %s", mme_config_p->itti_config.log_file);
+  LOG_INFO (LOG_CONFIG, "- SCTP:");
+  LOG_INFO (LOG_CONFIG, "    in streams .......: %u", mme_config_p->sctp_config.in_streams);
+  LOG_INFO (LOG_CONFIG, "    out streams ......: %u", mme_config_p->sctp_config.out_streams);
+  LOG_INFO (LOG_CONFIG, "- GUMMEI:");
+  LOG_INFO (LOG_CONFIG, "    mme group ids ....:        ");
   DISPLAY_ARRAY (mme_config_p->gummei.nb_mme_gid, "| %u ", mme_config_p->gummei.mme_gid[i]);
-  fprintf (stdout, "    mme codes ........:\n        ");
+  LOG_INFO (LOG_CONFIG, "    mme codes ........:        ");
   DISPLAY_ARRAY (mme_config_p->gummei.nb_mmec, "| %u ", mme_config_p->gummei.mmec[i]);
-  fprintf (stdout, "- TAIs : (mcc.mnc:tac)\n");
+  LOG_INFO (LOG_CONFIG, "- TAIs : (mcc.mnc:tac)");
   switch (mme_config_p->served_tai.list_type) {
   case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS:
-    fprintf (stdout, "- TAI list type one PLMN consecutive TACs\n");
+    LOG_INFO (LOG_CONFIG, "- TAI list type one PLMN consecutive TACs");
     break;
   case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS:
-    fprintf (stdout, "- TAI list type one PLMN non consecutive TACs\n");
+    LOG_INFO (LOG_CONFIG, "- TAI list type one PLMN non consecutive TACs");
     break;
   case TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS:
-    fprintf (stdout, "- TAI list type multiple PLMNs\n");
+    LOG_INFO (LOG_CONFIG, "- TAI list type multiple PLMNs");
     break;
   }
   for (j = 0; j < mme_config_p->served_tai.nb_tai; j++) {
     if (mme_config_p->served_tai.plmn_mnc_len[j] == 2) {
-      fprintf (stdout, "            %3u.%3u:%u\n",
+      LOG_INFO (LOG_CONFIG, "            %3u.%3u:%u",
           mme_config_p->served_tai.plmn_mcc[j], mme_config_p->served_tai.plmn_mnc[j], mme_config_p->served_tai.tac[j]);
     } else {
-      fprintf (stdout, "            %3u.%03u:%u\n",
+      LOG_INFO (LOG_CONFIG, "            %3u.%03u:%u",
           mme_config_p->served_tai.plmn_mcc[j], mme_config_p->served_tai.plmn_mnc[j], mme_config_p->served_tai.tac[j]);
     }
   }
 
-  fprintf (stdout, "- S6A:\n");
-  fprintf (stdout, "    conf file ........: %s\n", mme_config_p->s6a_config.conf_file);
+  LOG_INFO (LOG_CONFIG, "- S6A:");
+  LOG_INFO (LOG_CONFIG, "    conf file ........: %s", mme_config_p->s6a_config.conf_file);
 }
 
 static void
 usage (
   void)
 {
-  fprintf (stdout, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
-  fprintf (stdout, "Please report any bug to: %s\n\n", PACKAGE_BUGREPORT);
-  fprintf (stdout, "Usage: oaisim_mme [options]\n\n");
-  fprintf (stdout, "Available options:\n");
-  fprintf (stdout, "-h      Print this help and return\n");
-  fprintf (stdout, "-c<path>\n");
-  fprintf (stdout, "        Set the configuration file for mme\n");
-  fprintf (stdout, "        See template in UTILS/CONF\n");
-  fprintf (stdout, "-K<file>\n");
-  fprintf (stdout, "        Output intertask messages to provided file\n");
-  fprintf (stdout, "-V      Print %s version and return\n", PACKAGE_NAME);
-  fprintf (stdout, "-v[1-2] Debug level:\n");
-  fprintf (stdout, "            1 -> ASN1 XER printf on and ASN1 debug off\n");
-  fprintf (stdout, "            2 -> ASN1 XER printf on and ASN1 debug on\n");
+  LOG_INFO (LOG_CONFIG, "==== EURECOM %s v%s ====", PACKAGE_NAME, PACKAGE_VERSION);
+  LOG_INFO (LOG_CONFIG, "Please report any bug to: %s\n", PACKAGE_BUGREPORT);
+  LOG_INFO (LOG_CONFIG, "Usage: oaisim_mme [options]\n");
+  LOG_INFO (LOG_CONFIG, "Available options:");
+  LOG_INFO (LOG_CONFIG, "-h      Print this help and return");
+  LOG_INFO (LOG_CONFIG, "-c<path>");
+  LOG_INFO (LOG_CONFIG, "        Set the configuration file for mme");
+  LOG_INFO (LOG_CONFIG, "        See template in UTILS/CONF");
+  LOG_INFO (LOG_CONFIG, "-K<file>");
+  LOG_INFO (LOG_CONFIG, "        Output intertask messages to provided file");
+  LOG_INFO (LOG_CONFIG, "-V      Print %s version and return", PACKAGE_NAME);
+  LOG_INFO (LOG_CONFIG, "-v[1-2] Debug level:");
+  LOG_INFO (LOG_CONFIG, "            1 -> ASN1 XER printf on and ASN1 debug off");
+  LOG_INFO (LOG_CONFIG, "            2 -> ASN1 XER printf on and ASN1 debug on");
 }
 
 extern void
@@ -760,7 +761,7 @@ config_parse_opt_line (
         mme_config_p->config_file = MALLOC_CHECK (sizeof (char) * (config_file_len + 1));
         memcpy (mme_config_p->config_file, optarg, config_file_len);
         mme_config_p->config_file[config_file_len] = '\0';
-        fprintf (stdout, "%s mme_config.config_file %s\n", __FUNCTION__, mme_config_p->config_file);
+        LOG_DEBUG (LOG_CONFIG, "%s mme_config.config_file %s", __FUNCTION__, mme_config_p->config_file);
       }
       break;
 
@@ -770,7 +771,7 @@ config_parse_opt_line (
       break;
 
     case 'V':{
-        fprintf (stdout, "==== EURECOM %s v%s ====\n" "Please report any bug to: %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
+        LOG_DEBUG (LOG_CONFIG, "==== EURECOM %s v%s ====" "Please report any bug to: %s", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
         exit (0);
         nwGtpv1uDisplayBanner ();
       }
@@ -778,7 +779,7 @@ config_parse_opt_line (
 
     case 'K':
       mme_config_p->itti_config.log_file = STRDUP_CHECK (optarg);
-      fprintf (stdout, "%s mme_config.itti_config.log_file %s\n", __FUNCTION__, mme_config_p->itti_config.log_file);
+      LOG_DEBUG (LOG_CONFIG, "%s mme_config.itti_config.log_file %s", __FUNCTION__, mme_config_p->itti_config.log_file);
       break;
 
     case 'h':                  /* Fall through */
