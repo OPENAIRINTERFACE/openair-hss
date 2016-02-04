@@ -244,21 +244,21 @@ emm_recv_attach_request (
      * Get the IMEI
      */
     p_imei = &imei;
-    imei.u.num.digit1 = msg->oldgutiorimsi.imei.digit1;
-    imei.u.num.digit2 = msg->oldgutiorimsi.imei.digit2;
-    imei.u.num.digit3 = msg->oldgutiorimsi.imei.digit3;
-    imei.u.num.digit4 = msg->oldgutiorimsi.imei.digit4;
-    imei.u.num.digit5 = msg->oldgutiorimsi.imei.digit5;
-    imei.u.num.digit6 = msg->oldgutiorimsi.imei.digit6;
-    imei.u.num.digit7 = msg->oldgutiorimsi.imei.digit7;
-    imei.u.num.digit8 = msg->oldgutiorimsi.imei.digit8;
-    imei.u.num.digit9 = msg->oldgutiorimsi.imei.digit9;
-    imei.u.num.digit10 = msg->oldgutiorimsi.imei.digit10;
-    imei.u.num.digit11 = msg->oldgutiorimsi.imei.digit11;
-    imei.u.num.digit12 = msg->oldgutiorimsi.imei.digit12;
-    imei.u.num.digit13 = msg->oldgutiorimsi.imei.digit13;
-    imei.u.num.digit14 = msg->oldgutiorimsi.imei.digit14;
-    imei.u.num.digit15 = msg->oldgutiorimsi.imei.digit15;
+    imei.u.num.tac1 = msg->oldgutiorimsi.imei.digit1;
+    imei.u.num.tac2 = msg->oldgutiorimsi.imei.digit2;
+    imei.u.num.tac3 = msg->oldgutiorimsi.imei.digit3;
+    imei.u.num.tac4 = msg->oldgutiorimsi.imei.digit4;
+    imei.u.num.tac5 = msg->oldgutiorimsi.imei.digit5;
+    imei.u.num.tac6 = msg->oldgutiorimsi.imei.digit6;
+    imei.u.num.tac7 = msg->oldgutiorimsi.imei.digit7;
+    imei.u.num.tac8 = msg->oldgutiorimsi.imei.digit8;
+    imei.u.num.snr1 = msg->oldgutiorimsi.imei.digit9;
+    imei.u.num.snr2 = msg->oldgutiorimsi.imei.digit10;
+    imei.u.num.snr3 = msg->oldgutiorimsi.imei.digit11;
+    imei.u.num.snr4 = msg->oldgutiorimsi.imei.digit12;
+    imei.u.num.snr5 = msg->oldgutiorimsi.imei.digit13;
+    imei.u.num.snr6 = msg->oldgutiorimsi.imei.digit14;
+    imei.u.num.cdsd = msg->oldgutiorimsi.imei.digit15;
     imei.u.num.parity = msg->oldgutiorimsi.imei.oddeven;
   }
 
@@ -448,21 +448,21 @@ emm_recv_detach_request (
      * Get the IMEI
      */
     p_imei = &imei;
-    imei.u.num.digit1 = msg->gutiorimsi.imei.digit1;
-    imei.u.num.digit2 = msg->gutiorimsi.imei.digit2;
-    imei.u.num.digit3 = msg->gutiorimsi.imei.digit3;
-    imei.u.num.digit4 = msg->gutiorimsi.imei.digit4;
-    imei.u.num.digit5 = msg->gutiorimsi.imei.digit5;
-    imei.u.num.digit6 = msg->gutiorimsi.imei.digit6;
-    imei.u.num.digit7 = msg->gutiorimsi.imei.digit7;
-    imei.u.num.digit8 = msg->gutiorimsi.imei.digit8;
-    imei.u.num.digit9 = msg->gutiorimsi.imei.digit9;
-    imei.u.num.digit10 = msg->gutiorimsi.imei.digit10;
-    imei.u.num.digit11 = msg->gutiorimsi.imei.digit11;
-    imei.u.num.digit12 = msg->gutiorimsi.imei.digit12;
-    imei.u.num.digit13 = msg->gutiorimsi.imei.digit13;
-    imei.u.num.digit14 = msg->gutiorimsi.imei.digit14;
-    imei.u.num.digit15 = msg->gutiorimsi.imei.digit15;
+    imei.u.num.tac1 = msg->gutiorimsi.imei.digit1;
+    imei.u.num.tac2 = msg->gutiorimsi.imei.digit2;
+    imei.u.num.tac3 = msg->gutiorimsi.imei.digit3;
+    imei.u.num.tac4 = msg->gutiorimsi.imei.digit4;
+    imei.u.num.tac5 = msg->gutiorimsi.imei.digit5;
+    imei.u.num.tac6 = msg->gutiorimsi.imei.digit6;
+    imei.u.num.tac7 = msg->gutiorimsi.imei.digit7;
+    imei.u.num.tac8 = msg->gutiorimsi.imei.digit8;
+    imei.u.num.snr1 = msg->gutiorimsi.imei.digit9;
+    imei.u.num.snr2 = msg->gutiorimsi.imei.digit10;
+    imei.u.num.snr3 = msg->gutiorimsi.imei.digit11;
+    imei.u.num.snr4 = msg->gutiorimsi.imei.digit12;
+    imei.u.num.snr5 = msg->gutiorimsi.imei.digit13;
+    imei.u.num.snr6 = msg->gutiorimsi.imei.digit14;
+    imei.u.num.cdsd = msg->gutiorimsi.imei.digit15;
     imei.u.num.parity = msg->gutiorimsi.imei.oddeven;
   }
 
@@ -547,6 +547,8 @@ emm_recv_identity_response (
                                          *p_imsi = NULL;
   imei_t                                  imei,
                                          *p_imei = NULL;
+  imeisv_t                                imeisv,
+                                         *p_imeisv = NULL;
   struct tmsi_struct_t {
     uint8_t                                 digit1:4;
     uint8_t                                 digit2:4;
@@ -580,27 +582,49 @@ emm_recv_identity_response (
     imsi.u.num.digit14 = msg->mobileidentity.imsi.digit14;
     imsi.u.num.digit15 = msg->mobileidentity.imsi.digit15;
     imsi.u.num.parity = msg->mobileidentity.imsi.oddeven;
-  } else if ((msg->mobileidentity.imei.typeofidentity == MOBILE_IDENTITY_IMEI) || (msg->mobileidentity.imeisv.typeofidentity == MOBILE_IDENTITY_IMEISV)) {
+  } else if (msg->mobileidentity.imei.typeofidentity == MOBILE_IDENTITY_IMEI) {
     /*
      * Get the IMEI
      */
     p_imei = &imei;
-    imei.u.num.digit1 = msg->mobileidentity.imei.digit1;
-    imei.u.num.digit2 = msg->mobileidentity.imei.digit2;
-    imei.u.num.digit3 = msg->mobileidentity.imei.digit3;
-    imei.u.num.digit4 = msg->mobileidentity.imei.digit4;
-    imei.u.num.digit5 = msg->mobileidentity.imei.digit5;
-    imei.u.num.digit6 = msg->mobileidentity.imei.digit6;
-    imei.u.num.digit7 = msg->mobileidentity.imei.digit7;
-    imei.u.num.digit8 = msg->mobileidentity.imei.digit8;
-    imei.u.num.digit9 = msg->mobileidentity.imei.digit9;
-    imei.u.num.digit10 = msg->mobileidentity.imei.digit10;
-    imei.u.num.digit11 = msg->mobileidentity.imei.digit11;
-    imei.u.num.digit12 = msg->mobileidentity.imei.digit12;
-    imei.u.num.digit13 = msg->mobileidentity.imei.digit13;
-    imei.u.num.digit14 = msg->mobileidentity.imei.digit14;
-    imei.u.num.digit15 = msg->mobileidentity.imei.digit15;
+    imei.u.num.tac1 = msg->mobileidentity.imei.tac1;
+    imei.u.num.tac2 = msg->mobileidentity.imei.tac2;
+    imei.u.num.tac3 = msg->mobileidentity.imei.tac3;
+    imei.u.num.tac4 = msg->mobileidentity.imei.tac4;
+    imei.u.num.tac5 = msg->mobileidentity.imei.tac5;
+    imei.u.num.tac6 = msg->mobileidentity.imei.tac6;
+    imei.u.num.tac7 = msg->mobileidentity.imei.tac7;
+    imei.u.num.tac8 = msg->mobileidentity.imei.tac8;
+    imei.u.num.snr1 = msg->mobileidentity.imei.snr1;
+    imei.u.num.snr2 = msg->mobileidentity.imei.snr2;
+    imei.u.num.snr3 = msg->mobileidentity.imei.snr3;
+    imei.u.num.snr4 = msg->mobileidentity.imei.snr4;
+    imei.u.num.snr5 = msg->mobileidentity.imei.snr5;
+    imei.u.num.snr6 = msg->mobileidentity.imei.snr6;
+    imei.u.num.cdsd = msg->mobileidentity.imei.cdsd;
     imei.u.num.parity = msg->mobileidentity.imei.oddeven;
+  } else if (msg->mobileidentity.imeisv.typeofidentity == MOBILE_IDENTITY_IMEISV) {
+    /*
+     * Get the IMEISV
+     */
+    p_imeisv = &imeisv;
+    imeisv.u.num.tac1 = msg->mobileidentity.imeisv.tac1;
+    imeisv.u.num.tac2 = msg->mobileidentity.imeisv.tac2;
+    imeisv.u.num.tac3 = msg->mobileidentity.imeisv.tac3;
+    imeisv.u.num.tac4 = msg->mobileidentity.imeisv.tac4;
+    imeisv.u.num.tac5 = msg->mobileidentity.imeisv.tac5;
+    imeisv.u.num.tac6 = msg->mobileidentity.imeisv.tac6;
+    imeisv.u.num.tac7 = msg->mobileidentity.imeisv.tac7;
+    imeisv.u.num.tac8 = msg->mobileidentity.imeisv.tac8;
+    imeisv.u.num.snr1 = msg->mobileidentity.imeisv.snr1;
+    imeisv.u.num.snr2 = msg->mobileidentity.imeisv.snr2;
+    imeisv.u.num.snr3 = msg->mobileidentity.imeisv.snr3;
+    imeisv.u.num.snr4 = msg->mobileidentity.imeisv.snr4;
+    imeisv.u.num.snr5 = msg->mobileidentity.imeisv.snr5;
+    imeisv.u.num.snr6 = msg->mobileidentity.imeisv.snr6;
+    imeisv.u.num.svn1 = msg->mobileidentity.imeisv.svn1;
+    imeisv.u.num.svn2 = msg->mobileidentity.imeisv.svn2;
+    imeisv.u.num.parity = msg->mobileidentity.imeisv.oddeven;
   } else if (msg->mobileidentity.tmsi.typeofidentity == MOBILE_IDENTITY_TMSI) {
     /*
      * Get the TMSI
@@ -619,7 +643,7 @@ emm_recv_identity_response (
   /*
    * Execute the identification completion procedure
    */
-  rc = emm_proc_identification_complete (ueid, p_imsi, p_imei, (uint32_t *) (p_tmsi));
+  rc = emm_proc_identification_complete (ueid, p_imsi, p_imei, p_imeisv, (uint32_t *) (p_tmsi));
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

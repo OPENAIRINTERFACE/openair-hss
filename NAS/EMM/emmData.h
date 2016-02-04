@@ -149,6 +149,7 @@ typedef struct emm_data_context_s {
 
   imsi_t      *imsi;        /* The IMSI provided by the UE or the MME          */
   imei_t      *imei;        /* The IMEI provided by the UE                     */
+  imeisv_t    *imeisv;      /* The IMEISV provided by the UE                   */
   int          guti_is_new; /* New GUTI indicator                              */
   GUTI_t      *guti;        /* The GUTI assigned to the UE                     */
   GUTI_t      *old_guti;    /* The old GUTI                                    */

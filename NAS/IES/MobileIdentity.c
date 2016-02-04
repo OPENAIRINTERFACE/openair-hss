@@ -209,41 +209,42 @@ dump_mobile_identity_xml (
 
     LOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", imei->oddeven);
     LOG_DEBUG (LOG_NAS, "    <Type of identity>IMEI</Type of identity>\n");
-    LOG_DEBUG (LOG_NAS, "    <digit1>%u</digit1>\n", imei->digit1);
-    LOG_DEBUG (LOG_NAS, "    <digit2>%u</digit2>\n", imei->digit2);
-    LOG_DEBUG (LOG_NAS, "    <digit3>%u</digit3>\n", imei->digit3);
-    LOG_DEBUG (LOG_NAS, "    <digit4>%u</digit4>\n", imei->digit4);
-    LOG_DEBUG (LOG_NAS, "    <digit5>%u</digit5>\n", imei->digit5);
-    LOG_DEBUG (LOG_NAS, "    <digit6>%u</digit6>\n", imei->digit6);
-    LOG_DEBUG (LOG_NAS, "    <digit7>%u</digit7>\n", imei->digit7);
-    LOG_DEBUG (LOG_NAS, "    <digit8>%u</digit8>\n", imei->digit8);
-    LOG_DEBUG (LOG_NAS, "    <digit9>%u</digit9>\n", imei->digit9);
-    LOG_DEBUG (LOG_NAS, "    <digit10>%u</digit10>\n", imei->digit10);
-    LOG_DEBUG (LOG_NAS, "    <digit11>%u</digit11>\n", imei->digit11);
-    LOG_DEBUG (LOG_NAS, "    <digit12>%u</digit12>\n", imei->digit12);
-    LOG_DEBUG (LOG_NAS, "    <digit13>%u</digit13>\n", imei->digit13);
-    LOG_DEBUG (LOG_NAS, "    <digit14>%u</digit14>\n", imei->digit14);
-    LOG_DEBUG (LOG_NAS, "    <digit15>%u</digit15>\n", imei->digit15);
+    LOG_DEBUG (LOG_NAS, "    <tac1>%u</tac1>\n", imei->tac1);
+    LOG_DEBUG (LOG_NAS, "    <tac2>%u</tac2>\n", imei->tac2);
+    LOG_DEBUG (LOG_NAS, "    <tac3>%u</tac3>\n", imei->tac3);
+    LOG_DEBUG (LOG_NAS, "    <tac4>%u</tac4>\n", imei->tac4);
+    LOG_DEBUG (LOG_NAS, "    <tac5>%u</tac5>\n", imei->tac5);
+    LOG_DEBUG (LOG_NAS, "    <tac6>%u</tac6>\n", imei->tac6);
+    LOG_DEBUG (LOG_NAS, "    <tac7>%u</tac7>\n", imei->tac7);
+    LOG_DEBUG (LOG_NAS, "    <tac8>%u</tac8>\n", imei->tac8);
+    LOG_DEBUG (LOG_NAS, "    <snr1>%u</snr1>\n", imei->snr1);
+    LOG_DEBUG (LOG_NAS, "    <snr2>%u</snr2>\n", imei->snr2);
+    LOG_DEBUG (LOG_NAS, "    <snr3>%u</snr3>\n", imei->snr3);
+    LOG_DEBUG (LOG_NAS, "    <snr4>%u</snr4>\n", imei->snr4);
+    LOG_DEBUG (LOG_NAS, "    <snr5>%u</snr5>\n", imei->snr5);
+    LOG_DEBUG (LOG_NAS, "    <snr6>%u</snr6>\n", imei->snr6);
+    LOG_DEBUG (LOG_NAS, "    <cdsd>%u</cdsd>\n", imei->cdsd);
   } else if (mobileidentity->imeisv.typeofidentity == MOBILE_IDENTITY_IMEISV) {
     ImeisvMobileIdentity_t                 *imeisv = &mobileidentity->imeisv;
 
     LOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", imeisv->oddeven);
     LOG_DEBUG (LOG_NAS, "    <Type of identity>IMEISV</Type of identity>\n");
-    LOG_DEBUG (LOG_NAS, "    <digit1>%u</digit1>\n", imeisv->digit1);
-    LOG_DEBUG (LOG_NAS, "    <digit2>%u</digit2>\n", imeisv->digit2);
-    LOG_DEBUG (LOG_NAS, "    <digit3>%u</digit3>\n", imeisv->digit3);
-    LOG_DEBUG (LOG_NAS, "    <digit4>%u</digit4>\n", imeisv->digit4);
-    LOG_DEBUG (LOG_NAS, "    <digit5>%u</digit5>\n", imeisv->digit5);
-    LOG_DEBUG (LOG_NAS, "    <digit6>%u</digit6>\n", imeisv->digit6);
-    LOG_DEBUG (LOG_NAS, "    <digit7>%u</digit7>\n", imeisv->digit7);
-    LOG_DEBUG (LOG_NAS, "    <digit8>%u</digit8>\n", imeisv->digit8);
-    LOG_DEBUG (LOG_NAS, "    <digit9>%u</digit9>\n", imeisv->digit9);
-    LOG_DEBUG (LOG_NAS, "    <digit10>%u</digit10>\n", imeisv->digit10);
-    LOG_DEBUG (LOG_NAS, "    <digit11>%u</digit11>\n", imeisv->digit11);
-    LOG_DEBUG (LOG_NAS, "    <digit12>%u</digit12>\n", imeisv->digit12);
-    LOG_DEBUG (LOG_NAS, "    <digit13>%u</digit13>\n", imeisv->digit13);
-    LOG_DEBUG (LOG_NAS, "    <digit14>%u</digit14>\n", imeisv->digit14);
-    LOG_DEBUG (LOG_NAS, "    <digit15>%u</digit15>\n", imeisv->digit15);
+    LOG_DEBUG (LOG_NAS, "    <tac1>%u</tac1>\n", imeisv->tac1);
+    LOG_DEBUG (LOG_NAS, "    <tac2>%u</tac2>\n", imeisv->tac2);
+    LOG_DEBUG (LOG_NAS, "    <tac3>%u</tac3>\n", imeisv->tac3);
+    LOG_DEBUG (LOG_NAS, "    <tac4>%u</tac4>\n", imeisv->tac4);
+    LOG_DEBUG (LOG_NAS, "    <tac5>%u</tac5>\n", imeisv->tac5);
+    LOG_DEBUG (LOG_NAS, "    <tac6>%u</tac6>\n", imeisv->tac6);
+    LOG_DEBUG (LOG_NAS, "    <tac7>%u</tac7>\n", imeisv->tac7);
+    LOG_DEBUG (LOG_NAS, "    <tac8>%u</tac8>\n", imeisv->tac8);
+    LOG_DEBUG (LOG_NAS, "    <snr1>%u</snr1>\n", imeisv->snr1);
+    LOG_DEBUG (LOG_NAS, "    <snr2>%u</snr2>\n", imeisv->snr2);
+    LOG_DEBUG (LOG_NAS, "    <snr3>%u</snr3>\n", imeisv->snr3);
+    LOG_DEBUG (LOG_NAS, "    <snr4>%u</snr4>\n", imeisv->snr4);
+    LOG_DEBUG (LOG_NAS, "    <snr5>%u</snr5>\n", imeisv->snr5);
+    LOG_DEBUG (LOG_NAS, "    <snr6>%u</snr6>\n", imeisv->snr6);
+    LOG_DEBUG (LOG_NAS, "    <svn1>%u</svn1>\n", imeisv->svn1);
+    LOG_DEBUG (LOG_NAS, "    <svn2>%u</svn2>\n", imeisv->svn2);
   } else if (mobileidentity->tmsi.typeofidentity == MOBILE_IDENTITY_TMSI) {
     TmsiMobileIdentity_t                   *tmsi = &mobileidentity->tmsi;
 
@@ -350,35 +351,35 @@ decode_imei_mobile_identity (
   }
 
   imei->oddeven = (*(buffer + decoded) >> 3) & 0x1;
-  imei->digit1 = (*(buffer + decoded) >> 4) & 0xf;
+  imei->tac1 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imei->digit2 = *(buffer + decoded) & 0xf;
-  imei->digit3 = (*(buffer + decoded) >> 4) & 0xf;
+  imei->tac2 = *(buffer + decoded) & 0xf;
+  imei->tac3 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imei->digit4 = *(buffer + decoded) & 0xf;
-  imei->digit5 = (*(buffer + decoded) >> 4) & 0xf;
+  imei->tac4 = *(buffer + decoded) & 0xf;
+  imei->tac5 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imei->digit6 = *(buffer + decoded) & 0xf;
-  imei->digit7 = (*(buffer + decoded) >> 4) & 0xf;
+  imei->tac6 = *(buffer + decoded) & 0xf;
+  imei->tac7 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imei->digit8 = *(buffer + decoded) & 0xf;
-  imei->digit9 = (*(buffer + decoded) >> 4) & 0xf;
+  imei->tac8 = *(buffer + decoded) & 0xf;
+  imei->snr1 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imei->digit10 = *(buffer + decoded) & 0xf;
-  imei->digit11 = (*(buffer + decoded) >> 4) & 0xf;
+  imei->snr2 = *(buffer + decoded) & 0xf;
+  imei->snr3 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imei->digit12 = *(buffer + decoded) & 0xf;
-  imei->digit13 = (*(buffer + decoded) >> 4) & 0xf;
+  imei->snr4 = *(buffer + decoded) & 0xf;
+  imei->snr5 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imei->digit14 = *(buffer + decoded) & 0xf;
-  imei->digit15 = (*(buffer + decoded) >> 4) & 0xf;
+  imei->snr6 = *(buffer + decoded) & 0xf;
+  imei->cdsd = (*(buffer + decoded) >> 4) & 0xf;
 
   /*
    * IMEI is coded using BCD coding. If the number of identity digits is
    * even then bits 5 to 8 of the last octet shall be filled with an end
    * mark coded as "1111".
    */
-  if ((imei->oddeven == MOBILE_IDENTITY_EVEN) && (imei->digit15 != 0x0f)) {
+  if ((imei->oddeven == MOBILE_IDENTITY_EVEN) && (imei->cdsd != 0x0f)) {
     return (TLV_ENCODE_VALUE_DOESNT_MATCH);
   }
 
@@ -400,35 +401,38 @@ decode_imeisv_mobile_identity (
   }
 
   imeisv->oddeven = (*(buffer + decoded) >> 3) & 0x1;
-  imeisv->digit1 = (*(buffer + decoded) >> 4) & 0xf;
+  imeisv->tac1 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imeisv->digit2 = *(buffer + decoded) & 0xf;
-  imeisv->digit3 = (*(buffer + decoded) >> 4) & 0xf;
+  imeisv->tac2 = *(buffer + decoded) & 0xf;
+  imeisv->tac3 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imeisv->digit4 = *(buffer + decoded) & 0xf;
-  imeisv->digit5 = (*(buffer + decoded) >> 4) & 0xf;
+  imeisv->tac4 = *(buffer + decoded) & 0xf;
+  imeisv->tac5 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imeisv->digit6 = *(buffer + decoded) & 0xf;
-  imeisv->digit7 = (*(buffer + decoded) >> 4) & 0xf;
+  imeisv->tac6 = *(buffer + decoded) & 0xf;
+  imeisv->tac7 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imeisv->digit8 = *(buffer + decoded) & 0xf;
-  imeisv->digit9 = (*(buffer + decoded) >> 4) & 0xf;
+  imeisv->tac8 = *(buffer + decoded) & 0xf;
+  imeisv->snr1 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imeisv->digit10 = *(buffer + decoded) & 0xf;
-  imeisv->digit11 = (*(buffer + decoded) >> 4) & 0xf;
+  imeisv->snr2 = *(buffer + decoded) & 0xf;
+  imeisv->snr3 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imeisv->digit12 = *(buffer + decoded) & 0xf;
-  imeisv->digit13 = (*(buffer + decoded) >> 4) & 0xf;
+  imeisv->snr4 = *(buffer + decoded) & 0xf;
+  imeisv->snr5 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imeisv->digit14 = *(buffer + decoded) & 0xf;
-  imeisv->digit15 = (*(buffer + decoded) >> 4) & 0xf;
+  imeisv->snr6 = *(buffer + decoded) & 0xf;
+  imeisv->svn1 = (*(buffer + decoded) >> 4) & 0xf;
+  decoded++;
+  imeisv->svn2 = *(buffer + decoded) & 0xf;
+  imeisv->last = (*(buffer + decoded) >> 4) & 0xf;
 
   /*
    * IMEISV is coded using BCD coding. If the number of identity digits is
    * even then bits 5 to 8 of the last octet shall be filled with an end
    * mark coded as "1111".
    */
-  if ((imeisv->oddeven == MOBILE_IDENTITY_EVEN) && (imeisv->digit15 != 0x0f)) {
+  if ((imeisv->oddeven == MOBILE_IDENTITY_EVEN) && (imeisv->last != 0x0f)) {
     return (TLV_ENCODE_VALUE_DOESNT_MATCH);
   }
 
@@ -606,25 +610,25 @@ encode_imei_mobile_identity (
 {
   uint32_t                                encoded = 0;
 
-  *(buffer + encoded) = 0x00 | (imei->digit1 << 4) | (imei->oddeven << 3) | (imei->typeofidentity);
+  *(buffer + encoded) = 0x00 | (imei->tac1 << 4) | (imei->oddeven << 3) | (imei->typeofidentity);
   encoded++;
-  *(buffer + encoded) = 0x00 | (imei->digit3 << 4) | imei->digit2;
+  *(buffer + encoded) = 0x00 | (imei->tac3 << 4) | imei->tac2;
   encoded++;
-  *(buffer + encoded) = 0x00 | (imei->digit5 << 4) | imei->digit4;
+  *(buffer + encoded) = 0x00 | (imei->tac5 << 4) | imei->tac4;
   encoded++;
-  *(buffer + encoded) = 0x00 | (imei->digit7 << 4) | imei->digit6;
+  *(buffer + encoded) = 0x00 | (imei->tac7 << 4) | imei->tac6;
   encoded++;
-  *(buffer + encoded) = 0x00 | (imei->digit9 << 4) | imei->digit8;
+  *(buffer + encoded) = 0x00 | (imei->snr1 << 4) | imei->tac8;
   encoded++;
-  *(buffer + encoded) = 0x00 | (imei->digit11 << 4) | imei->digit10;
+  *(buffer + encoded) = 0x00 | (imei->snr3 << 4) | imei->snr2;
   encoded++;
-  *(buffer + encoded) = 0x00 | (imei->digit13 << 4) | imei->digit12;
+  *(buffer + encoded) = 0x00 | (imei->snr5 << 4) | imei->snr4;
   encoded++;
 
   if (imei->oddeven != MOBILE_IDENTITY_EVEN) {
-    *(buffer + encoded) = 0x00 | (imei->digit15 << 4) | imei->digit14;
+    *(buffer + encoded) = 0x00 | (imei->cdsd << 4) | imei->snr6;
   } else {
-    *(buffer + encoded) = 0xf0 | imei->digit14;
+    *(buffer + encoded) = 0xf0 | imei->snr6;
   }
 
   encoded++;
@@ -638,25 +642,27 @@ encode_imeisv_mobile_identity (
 {
   uint32_t                                encoded = 0;
 
-  *(buffer + encoded) = 0x00 | (imeisv->digit1 << 4) | (imeisv->oddeven << 3) | (imeisv->typeofidentity);
+  *(buffer + encoded) = 0x00 | (imeisv->tac1 << 4) | (imeisv->oddeven << 3) | (imeisv->typeofidentity);
   encoded++;
-  *(buffer + encoded) = 0x00 | (imeisv->digit3 << 4) | imeisv->digit2;
+  *(buffer + encoded) = 0x00 | (imeisv->tac3 << 4) | imeisv->tac2;
   encoded++;
-  *(buffer + encoded) = 0x00 | (imeisv->digit5 << 4) | imeisv->digit4;
+  *(buffer + encoded) = 0x00 | (imeisv->tac5 << 4) | imeisv->tac4;
   encoded++;
-  *(buffer + encoded) = 0x00 | (imeisv->digit7 << 4) | imeisv->digit6;
+  *(buffer + encoded) = 0x00 | (imeisv->tac7 << 4) | imeisv->tac6;
   encoded++;
-  *(buffer + encoded) = 0x00 | (imeisv->digit9 << 4) | imeisv->digit8;
+  *(buffer + encoded) = 0x00 | (imeisv->snr1 << 4) | imeisv->tac8;
   encoded++;
-  *(buffer + encoded) = 0x00 | (imeisv->digit11 << 4) | imeisv->digit10;
+  *(buffer + encoded) = 0x00 | (imeisv->snr3 << 4) | imeisv->snr2;
   encoded++;
-  *(buffer + encoded) = 0x00 | (imeisv->digit13 << 4) | imeisv->digit12;
+  *(buffer + encoded) = 0x00 | (imeisv->snr5 << 4) | imeisv->snr4;
+  encoded++;
+  *(buffer + encoded) = 0x00 | (imeisv->svn1 << 4) | imeisv->snr6;
   encoded++;
 
   if (imeisv->oddeven != MOBILE_IDENTITY_EVEN) {
-    *(buffer + encoded) = 0x00 | (imeisv->digit15 << 4) | imeisv->digit14;
+    *(buffer + encoded) = 0x00 | imeisv->svn2;
   } else {
-    *(buffer + encoded) = 0xf0 | imeisv->digit14;
+    *(buffer + encoded) = 0xf0 | imeisv->svn2;
   }
 
   encoded++;

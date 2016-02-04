@@ -153,6 +153,9 @@ void free_emm_data_context(
     if (emm_ctx->imei) {
       FREE_CHECK (emm_ctx->imei);
     }
+    if (emm_ctx->imeisv) {
+      FREE_CHECK (emm_ctx->imeisv);
+    }
     if (emm_ctx->ue_network_capability_ie) {
       FREE_CHECK (emm_ctx->ue_network_capability_ie);
     }
@@ -257,6 +260,7 @@ emm_data_context_dump (
     NAS_IMSI2STR (elm_pP->imsi, imsi_str, 16);
     LOG_INFO (LOG_NAS_EMM, "         imsi:             %s      (The IMSI provided by the UE or the MME)", imsi_str);
     LOG_INFO (LOG_NAS_EMM, "         imei:             TODO    (The IMEI provided by the UE)");
+    LOG_INFO (LOG_NAS_EMM, "         imeisv:           TODO    (The IMEISV provided by the UE)");
     LOG_INFO (LOG_NAS_EMM, "         guti_is_new:      %u      (New GUTI indicator)", elm_pP->guti_is_new);
     GUTI2STR (elm_pP->guti, guti_str, GUTI2STR_MAX_LENGTH);
     LOG_INFO (LOG_NAS_EMM, "         guti:             %s      (The GUTI assigned to the UE)", guti_str);

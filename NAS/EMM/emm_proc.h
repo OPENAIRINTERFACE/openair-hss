@@ -154,8 +154,11 @@ int emm_proc_identification(unsigned int                   ueid,
                             emm_common_success_callback_t  success,
                             emm_common_reject_callback_t   reject,
                             emm_common_failure_callback_t  failure);
-int emm_proc_identification_complete(unsigned int ueid, const imsi_t *imsi,
-                                     const imei_t *imei, uint32_t *tmsi);
+int emm_proc_identification_complete(unsigned int   ueid,
+                            const imsi_t           *imsi,
+                            const imei_t           *imei,
+                            const imeisv_t         *imeisv,
+                            uint32_t               *tmsi);
 
 /*
  * --------------------------------------------------------------------------

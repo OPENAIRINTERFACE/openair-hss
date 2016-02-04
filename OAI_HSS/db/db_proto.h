@@ -55,6 +55,7 @@ typedef uint8_t  prio_level_t;
 typedef uint32_t rau_tau_t;
 
 #define IMSI_LENGTH_MAX (15)
+#define IMEI_LENGTH_MAX (15)
 
 typedef struct {
   char imsi[IMSI_LENGTH_MAX + 1];
@@ -92,7 +93,7 @@ typedef struct mysql_mme_identity_s{
 } mysql_mme_identity_t;
 
 typedef struct mysql_ul_ans_s{
-  char imsi[16];
+  char imsi[IMSI_LENGTH_MAX + 1];
   /* MSISDN this parameter may be NULL */
   char msisdn[16];
 
@@ -122,12 +123,12 @@ typedef struct mysql_ul_push_s{
   unsigned ue_srvcc_present:1;
 
   /* IMSI */
-  char imsi[16];
+  char imsi[IMSI_LENGTH_MAX + 1];
   /* Origin host and realm */
   mysql_mme_identity_t mme_identity;
   /* IMEISV */
-  char imei[16];
-  char software_version[2];
+  char imei[IMEI_LENGTH_MAX+1];
+  char software_version[2+1];
 
   uint32_t ue_srvcc;
   uint32_t mme_supported_features;
@@ -159,7 +160,7 @@ typedef struct mysql_pdn_s{
 
 typedef struct mysql_pu_req_s{
   /* IMSI */
-  char imsi[16];
+  char imsi[IMSI_LENGTH_MAX + 1];
 } mysql_pu_req_t;
 
 typedef mysql_mme_identity_t mysql_pu_ans_t;

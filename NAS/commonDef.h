@@ -138,31 +138,94 @@ typedef struct imsi_s {
   } u;
 } imsi_t;
 
+/*
+ * International Mobile station Equipment Identity
+ */
+typedef struct imei_s {
+  Byte_t length;
+  union {
+    struct {
+      Byte_t tac2:4;
+      Byte_t tac1:4;
+      Byte_t tac4:4;
+      Byte_t tac3:4;
+      Byte_t tac6:4;
+      Byte_t tac5:4;
+      Byte_t tac8:4;
+      Byte_t tac7:4;
+      Byte_t snr2:4;
+      Byte_t snr1:4;
+      Byte_t snr4:4;
+      Byte_t snr3:4;
+      Byte_t snr6:4;
+      Byte_t snr5:4;
+#define EVEN_PARITY 0
+#define ODD_PARITY  1
+      Byte_t parity:4;
+      Byte_t cdsd:4;
+    } num;
+#define IMEI_SIZE   8
+    Byte_t value[IMEI_SIZE];
+  } u;
+} imei_t;
+
+/*
+ * International Mobile station Equipment Identity
+ */
+typedef struct imeisv_s {
+  Byte_t length;
+  union {
+    struct {
+      Byte_t tac2:4;
+      Byte_t tac1:4;
+      Byte_t tac4:4;
+      Byte_t tac3:4;
+      Byte_t tac6:4;
+      Byte_t tac5:4;
+      Byte_t tac8:4;
+      Byte_t tac7:4;
+      Byte_t snr2:4;
+      Byte_t snr1:4;
+      Byte_t snr4:4;
+      Byte_t snr3:4;
+      Byte_t snr6:4;
+      Byte_t snr5:4;
+      Byte_t svn2:4;
+      Byte_t svn1:4;
+#define EVEN_PARITY 0
+#define ODD_PARITY  1
+      Byte_t parity:4;
+    } num;
+#define IMEISV_SIZE   9
+    Byte_t value[IMEISV_SIZE];
+  } u;
+} imeisv_t;
+
 #define NAS_IMSI2STR(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
         {\
           int l_offset = 0;\
           int l_ret    = 0;\
           l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u",\
-	    		  iMsI_t_PtR->u.num.digit1, iMsI_t_PtR->u.num.digit2,\
-	    		  iMsI_t_PtR->u.num.digit3, iMsI_t_PtR->u.num.digit4,\
-	    		  iMsI_t_PtR->u.num.digit5);\
-	      if ((iMsI_t_PtR->u.num.digit6 != 0xf)  && (l_ret > 0)) {\
-	    	l_offset += l_ret;\
-	    	l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset,  "%u", iMsI_t_PtR->u.num.digit6);\
-	      }\
-	      if (l_ret > 0) {\
-	    	l_offset += l_ret;\
-	    	l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u%u%u%u",\
-	    		  iMsI_t_PtR->u.num.digit7, iMsI_t_PtR->u.num.digit8,\
-	    		  iMsI_t_PtR->u.num.digit9, iMsI_t_PtR->u.num.digit10,\
-	    		  iMsI_t_PtR->u.num.digit11, iMsI_t_PtR->u.num.digit12,\
-	    		  iMsI_t_PtR->u.num.digit13, iMsI_t_PtR->u.num.digit14);\
-	      }\
-	      if ((iMsI_t_PtR->u.num.digit15 != 0xf)   && (l_ret > 0)) {\
-	    	l_offset += l_ret;\
-	    	l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u", iMsI_t_PtR->u.num.digit15);\
-	      }\
-	    }
+                  iMsI_t_PtR->u.num.digit1, iMsI_t_PtR->u.num.digit2,\
+                  iMsI_t_PtR->u.num.digit3, iMsI_t_PtR->u.num.digit4,\
+                  iMsI_t_PtR->u.num.digit5);\
+          if ((iMsI_t_PtR->u.num.digit6 != 0xf)  && (l_ret > 0)) {\
+            l_offset += l_ret;\
+            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset,  "%u", iMsI_t_PtR->u.num.digit6);\
+          }\
+          if (l_ret > 0) {\
+            l_offset += l_ret;\
+            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u%u%u%u",\
+                  iMsI_t_PtR->u.num.digit7, iMsI_t_PtR->u.num.digit8,\
+                  iMsI_t_PtR->u.num.digit9, iMsI_t_PtR->u.num.digit10,\
+                  iMsI_t_PtR->u.num.digit11, iMsI_t_PtR->u.num.digit12,\
+                  iMsI_t_PtR->u.num.digit13, iMsI_t_PtR->u.num.digit14);\
+          }\
+          if ((iMsI_t_PtR->u.num.digit15 != 0x0)   && (l_ret > 0)) {\
+            l_offset += l_ret;\
+            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u", iMsI_t_PtR->u.num.digit15);\
+          }\
+        }
 
 #define NAS_IMSI2U64(iMsI_t_PtR,iMsI_u64) \
         {\
@@ -206,6 +269,28 @@ typedef struct imsi_s {
           } \
         }
 
+#define NAS_IMEI2STR(iMeI_t_PtR,iMeI_sTr, MaXlEn) \
+        {\
+          int l_offset = 0;\
+          int l_ret    = 0;\
+          l_ret = snprintf(iMeI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u%u%u%u",\
+                  iMeI_t_PtR->u.num.tac1, iMeI_t_PtR->u.num.tac2,\
+                  iMeI_t_PtR->u.num.tac3, iMeI_t_PtR->u.num.tac4,\
+                  iMeI_t_PtR->u.num.tac5, iMeI_t_PtR->u.num.tac6,\
+                  iMeI_t_PtR->u.num.tac7, iMeI_t_PtR->u.num.tac8);\
+          if (l_ret > 0) {\
+            l_offset += l_ret;\
+            l_ret = snprintf(iMeI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u%u",\
+                  iMeI_t_PtR->u.num.snr1, iMeI_t_PtR->u.num.snr2,\
+                  iMeI_t_PtR->u.num.snr3, iMeI_t_PtR->u.num.snr4,\
+                  iMeI_t_PtR->u.num.snr5, iMeI_t_PtR->u.num.snr6);\
+          }\
+          if ((iMeI_t_PtR->u.num.parity != 0x0)   && (l_ret > 0)) {\
+            l_offset += l_ret;\
+            l_ret = snprintf(iMeI_sTr + l_offset, MaXlEn - l_offset, "%u", iMeI_t_PtR->u.num.cdsd);\
+          }\
+        }
+
 /*
  * Mobile subscriber dialing number
  */
@@ -240,10 +325,6 @@ typedef struct msisdn_s {
   } digit[MSISDN_DIGIT_SIZE];
 } msisdn_t;
 
-/*
- * International Mobile Equipment Identity
- */
-typedef imsi_t imei_t;
 
 /*
  * Public Land Mobile Network identifier

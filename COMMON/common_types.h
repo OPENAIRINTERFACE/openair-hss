@@ -41,6 +41,8 @@
 
 #define MSISDN_LENGTH      (15)
 #define IMSI_DIGITS_MAX    (15)
+#define IMEI_DIGITS_MAX    (15)
+#define IMEISV_DIGITS_MAX  (16)
 #define APN_MAX_LENGTH     (100)
 #define PRIORITY_LEVEL_MAX (15)
 #define PRIORITY_LEVEL_MIN (1)
@@ -105,11 +107,8 @@ typedef struct {
 } cgi_t;
 
 typedef union {
-  struct {
-    uint8_t imei[13];
-    uint8_t sotfware_version[2];
-  } id;
-  uint8_t imeisv[15];
+  uint8_t imei[IMEI_DIGITS_MAX-1]; // -1 =  remove CD/SD digit
+  uint8_t imeisv[IMEISV_DIGITS_MAX];
 } me_identity_t;
 
 typedef struct {

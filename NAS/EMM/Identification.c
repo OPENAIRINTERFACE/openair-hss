@@ -236,6 +236,7 @@ emm_proc_identification_complete (
   unsigned int ueid,
   const imsi_t * imsi,
   const imei_t * imei,
+  const imeisv_t * imeisv,
   uint32_t * tmsi)
 {
   int                                     rc = RETURNerror;
@@ -297,6 +298,17 @@ emm_proc_identification_complete (
 
       if (emm_ctx->imei) {
         memcpy (emm_ctx->imei, imei, sizeof (imei_t));
+      }
+    } else if (imeisv) {
+      /*
+       * Update the IMEISV
+       */
+      if (emm_ctx->imeisv == NULL) {
+        emm_ctx->imeisv = (imeisv_t *) MALLOC_CHECK (sizeof (imeisv_t));
+      }
+
+      if (emm_ctx->imeisv) {
+        memcpy (emm_ctx->imeisv, imeisv, sizeof (imeisv_t));
       }
     } else if (tmsi) {
       /*

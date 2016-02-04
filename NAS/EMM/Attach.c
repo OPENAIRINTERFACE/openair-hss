@@ -1762,7 +1762,7 @@ _emm_attach_have_changed (
   if ((imei) && (ctx->imei == NULL)) {
     char                                    imei_str[16];
 
-    NAS_IMSI2STR (imei, imei_str, 16);
+    NAS_IMEI2STR (imei, imei_str, 16);
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_attach_have_changed: imei %s/NULL (ctxt)", imei_str);
     LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
   }
@@ -1770,7 +1770,7 @@ _emm_attach_have_changed (
   if ((imei == NULL) && (ctx->imei)) {
     char                                    imei_str[16];
 
-    NAS_IMSI2STR (ctx->imei, imei_str, 16);
+    NAS_IMEI2STR (ctx->imei, imei_str, 16);
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_attach_have_changed: imei NULL/%s (ctxt)", imei_str);
     LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
   }
@@ -1780,8 +1780,8 @@ _emm_attach_have_changed (
       char                                    imei_str[16];
       char                                    imei2_str[16];
 
-      NAS_IMSI2STR (imei, imei_str, 16);
-      NAS_IMSI2STR (ctx->imei, imei2_str, 16);
+      NAS_IMEI2STR (imei, imei_str, 16);
+      NAS_IMEI2STR (ctx->imei, imei2_str, 16);
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_attach_have_changed: imei %s/%s (ctxt)", imei_str, imei2_str);
       LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
     }
