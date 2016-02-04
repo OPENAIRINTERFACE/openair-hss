@@ -341,76 +341,6 @@ check_gtpu_kmodule_installed() {
   fi  
 }
 
-# arg1 is required ubuntu package name
-# arg2 is force (no interactive script)
-upgrade_kernel() {
-      
-  # check if an already suitable kernel image is installed      
-  required_kernel_version=`echo $1 | cut -d '.' -f1`
-  required_major_revision=`echo $1 | cut -d '.' -f2`
-  image_list="`dpkg-query -l linux-image-[$required_kernel_version-9]* | grep image`"
-  while read -r line; do
-    proposed_image=`echo $line | cut -d ' ' -f3`
-    if [ $proposed_image != "<none>" ]; then
-      status=`echo $line | cut -d ' ' -f1`
-      current_kernel_version=`echo $proposed_image | cut -d '.' -f1`
-      current_major_revision=`echo $proposed_image | cut -d '.' -f2`
-      if [ "$current_kernel_version" -gt "$required_kernel_version" ]; then
-        echo "$proposed_image" >> valid_installed_image_list
-      else
-        # test not necessary but depends on search string in dpkg-query
-        if [ "$current_kernel_version" -eq "$required_kernel_version" ]; then
-          if [ "$current_major_revision" -ge "$required_major_revision" ]; then
-            echo "$proposed_image" >> valid_installed_image_list
-          fi
-        fi
-      fi
-    fi
-  done <<< "$image_list"
-  latest_valid_installed_image=`echo $valid_installed_image_list | sort | tail -n1`
-  if [ "z$latest_valid_installed_image" != "z" ]; then
-    echo_error "If you want to compile and run the S-GW software on this computer you have to boot on any following installed kernel"
-  else
-    echo_error "No valid kernel installed on this OS for running the S-GW!"
-    image_list=`apt-cache search linux-image-[$required_kernel_version-9]`
-    valid_uninstalled_image_list=`tempfile`
-    while read -r line; do
-      proposed_image=`echo $line | cut -d ' ' -f1 | cut -d '-' -f3-`
-      current_kernel_version=`echo $proposed_image | cut -d '.' -f1`
-      current_major_revision=`echo $proposed_image | cut -d '.' -f2`
-      if [ "$current_kernel_version" -gt "$required_kernel_version" ]; then
-        echo "$proposed_image" >> $valid_uninstalled_image_list
-      else
-        # test not necessary but depends on search string in dpkg-query
-        if [ "$current_kernel_version" -eq "$required_kernel_version" ]; then
-          if [ "$current_major_revision" -ge "$required_major_revision" ]; then
-            echo "$proposed_image" >> $valid_uninstalled_image_list
-          fi
-        fi
-      fi
-    done <<< "$image_list"
-    latest_valid_installed_image=`cat $valid_uninstalled_image_list | sort | tail -n1`
-    echo_info "For information, here is the list of suitable kernel that can be installed on your OS:" 
-    cat $valid_uninstalled_image_list
-    rm $valid_uninstalled_image_list
-    if [ "z$latest_valid_installed_image" != "z" ]; then
-      if [ $2 -eq 0 ]; then
-        read -p "Do you want to install latest kernel $latest_valid_installed_image ? <y/N> " prompt
-      else
-        prompt='y'
-      fi
-      if [[ $prompt =~ [yY](es)* ]]
-      then    
-        echo_info "Installing new kernel $latest_valid_installed_image"
-        $SUDO apt-get install -y linux-image-$latest_valid_installed_image linux-headers-$latest_valid_installed_image && echo_warning "You have to reboot on the new installed kernel"
-      else    
-        echo_info "Not installing new kernel"
-      fi
-    else
-      echo_error "Error while trying to install new kernel"
-    fi
-  fi
-}
 
 # arg1 is required minimal version of linux-headers and linux-image
 # arg2 is force (no interactive script)
@@ -424,18 +354,10 @@ check_kernel_release_and_install_xtables_addons_oai() {
     required_kernel_version=`echo $1 | cut -d '.' -f1`
     required_major_revision=`echo $1 | cut -d '.' -f2`
   
-    if [ $current_kernel_version -lt $required_kernel_version ]; then
-      upgrade_kernel $1
+    if [ $current_kernel_version -ne $required_kernel_version ] ||  [ "$current_major_revision" -ne "$required_major_revision" ] ; then
       echo_warning "xtables_addons_oai not installed "
+      echo_error "Please (install if necessary and) boot on required kernel: $required_kernel_version.$required_major_revision"
       return
-    else
-      if [ $current_kernel_version -eq $required_kernel_version ]; then
-        if [ "$current_major_revision" -lt "$required_major_revision" ]; then
-          upgrade_kernel $1 $2
-          echo_warning "xtables_addons_oai not installed "
-          return
-        fi
-      fi
     fi
     dpkg -s "linux-headers-$current_k_release" > /dev/null 2>&1 && {
           echo_info "$current_k_release is installed and suitable for S-GW software." 
