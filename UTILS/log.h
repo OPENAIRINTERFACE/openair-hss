@@ -95,8 +95,29 @@ typedef struct log_queue_item_s {
   uint32_t                                message_str_size;
 } log_queue_item_t;
 
+typedef struct log_config_s {
+  char *output;
+  log_level_t   udp_log_level;
+  log_level_t   gtpv1u_log_level;
+  log_level_t   gtpv2c_log_level;
+  log_level_t   sctp_log_level;
+  log_level_t   s1ap_log_level;
+  log_level_t   nas_log_level;
+  log_level_t   mme_app_log_level;
+  log_level_t   spgw_app_log_level;
+  log_level_t   s11_log_level;
+  log_level_t   s6a_log_level;
+  log_level_t   util_log_level;
+  log_level_t   msc_log_level;
+  log_level_t   itti_log_level;
+  uint8_t asn1_verbosity_level;
+} log_config_t;
 
 #if LOG_OAI
+void log_connect_to_server(void);
+void log_set_config(const log_config_t * const config);
+const char * const log_level_int2str(const log_level_t log_level);
+log_level_t log_level_str2int(const char * const log_level_str);
 int log_init(
   const log_env_t envP,
   const log_level_t default_log_levelP,
@@ -142,7 +163,9 @@ void log_message (
       const unsigned int line_numP,
       char *format,
       ...);
-
+#define LOG_SET_CONFIG                                           log_set_config
+#define LOG_LEVEL_STR2INT                                        log_level_str2int
+#define LOG_LEVEL_INT2STR                                        log_level_int2str
 #define LOG_INIT                                                 log_init
 #define LOG_START_USE                                            log_start_use
 #define LOG_ITTI_CONNECT                                         log_itti_connect
@@ -156,16 +179,19 @@ void log_message (
 #define LOG_INFO(pRoTo, aRgS...)                                 do { log_message(LOG_LEVEL_INFO,     pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief informational */
 #define LOG_DEBUG(pRoTo, aRgS...)                                do { log_message(LOG_LEVEL_DEBUG,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief debug informations */
 #define LOG_TRACE(pRoTo, aRgS...)                                do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, ##aRgS); } while(0) /*!< \brief most detailled informations, struct dumps */
-#define LOG_FUNC_IN(pRoTo)                                       do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Entering %s", __FUNCTION__); } while(0) /*!< \brief informational */
-#define LOG_FUNC_OUT(pRoTo)                                      do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s", __FUNCTION__); return;} while(0)
-#define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s (rc=%ld)", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
+#define LOG_FUNC_IN(pRoTo)                                       do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Entering %s\n", __FUNCTION__); } while(0) /*!< \brief informational */
+#define LOG_FUNC_OUT(pRoTo)                                      do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s\n", __FUNCTION__); return;} while(0)
+#define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s (rc=%ld)\n", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
 #define LOG_STREAM_HEX(pRoTo, mEsSaGe, sTrEaM, sIzE)             do { log_stream_hex(LOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content */
 #define LOG_STREAM_HEX_ARRAY(pRoTo, mEsSaGe, sTrEaM, sIzE)       do { log_stream_hex_array(LOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content with indexes */
 #define LOG_MESSAGE_START(lOgLeVeL, pRoTo, cOnTeXt, aRgS...)     do { log_message_start(lOgLeVeL, pRoTo, cOnTeXt, __FILE__, __LINE__, aRgS...); } while(0) /*!< \brief when need to log only 1 message with many char messages, ex formating a dumped struct */
 #define LOG_MESSAGE_ADD(cOnTeXt, aRgS...)                        do { log_message_add(cOnTeXt, aRgS...); } while(0) /*!< \brief can be called as many times as needed after LOG_MESSAGE_START() */
 #define LOG_MESSAGE_FINISH(cOnTeXt)                              do { log_message_finish(cOnTeXt); } while(0) /*!< \brief Send the message built by LOG_MESSAGE_START() n*LOG_MESSAGE_ADD() (n=0..N) */
 #else
-#define LOG_INIT(a,b,c)                                0
+#define LOG_SET_CONFIG(a)
+#define LOG_LEVEL_STR2INT(a)                                     LOG_LEVEL_EMERGENCY
+#define LOG_LEVEL_INT2STR(a)                                     "EMERGENCY"
+#define LOG_INIT(a,b,c)                                          0
 #define LOG_START_USE()
 #define LOG_ITTI_CONNECT()
 #define LOG_END()
@@ -178,9 +204,9 @@ void log_message (
 #define LOG_INFO(pRoTo, aRgS...)                                 do { fprintf(stdout, "[INFO] "##aRgS); } while(0)
 #define LOG_DEBUG(pRoTo, aRgS...)                                do { fprintf(stdout, "[DEBUG] "##aRgS); } while(0)
 #define LOG_TRACE(pRoTo, aRgS...)                                do { fprintf(stdout, "[TRACE] "##aRgS); } while(0)
-#define LOG_FUNC_IN(pRoTo)                                       do { fprintf(stdout, "[TRACE] Entering %s", __FUNCTION__); } while(0)
-#define LOG_FUNC_OUT(pRoTo)                                      do { fprintf(stdout, "[TRACE] Leaving %s", __FUNCTION__); } while(0)
-#define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do { fprintf(stdout, "[TRACE] Leaving %s (rc=%ld)", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
+#define LOG_FUNC_IN(pRoTo)                                       do { fprintf(stdout, "[TRACE] Entering %s\n", __FUNCTION__); } while(0)
+#define LOG_FUNC_OUT(pRoTo)                                      do { fprintf(stdout, "[TRACE] Leaving %s\n", __FUNCTION__); } while(0)
+#define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do { fprintf(stdout, "[TRACE] Leaving %s (rc=%ld)\n", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
 #define LOG_STREAM_HEX_ARRAY(pRoTo, mEsSaGe, sTrEaM, sIzE)
 #define LOG_MESSAGE_START(lOgLeVeL, pRoTo, cOnTeXt, aRgS...)
 #define LOG_MESSAGE_ADD(cOnTeXt, aRgS...)

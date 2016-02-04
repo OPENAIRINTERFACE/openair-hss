@@ -51,7 +51,7 @@
 #include "dynamic_memory_check.h"
 #include "log.h"
 
-mme_config_t                            mme_config;
+mme_config_t                            mme_config={0};
 
 int
 mme_config_find_mnc_length (
@@ -94,9 +94,22 @@ static
 mme_config_init (
   mme_config_t * mme_config_p)
 {
-  memset (mme_config_p, 0, sizeof (mme_config_t));
   pthread_rwlock_init (&mme_config_p->rw_lock, NULL);
-  mme_config_p->verbosity_level = 0;
+  mme_config_p->log_config.output               = NULL;
+  mme_config_p->log_config.udp_log_level        = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.gtpv1u_log_level     = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.gtpv2c_log_level     = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.sctp_log_level       = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.s1ap_log_level       = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.nas_log_level        = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.mme_app_log_level    = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.spgw_app_log_level   = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.s11_log_level        = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.s6a_log_level        = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.util_log_level       = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.msc_log_level        = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.itti_log_level       = LOG_LEVEL_NOTICE;
+  mme_config_p->log_config.asn1_verbosity_level = 0;
   mme_config_p->config_file = NULL;
   mme_config_p->max_eNBs = MAX_NUMBER_OF_ENB;
   mme_config_p->max_ues = MAX_NUMBER_OF_UE;
@@ -222,6 +235,49 @@ config_parse_file (
   setting_mme = config_lookup (&cfg, MME_CONFIG_STRING_MME_CONFIG);
 
   if (setting_mme != NULL) {
+    // LOGGING setting
+    setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_LOGGING);
+
+    if (setting != NULL) {
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_OUTPUT, (const char **)&astring);
+      mme_config_p->log_config.output = STRDUP_CHECK (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_SCTP_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.sctp_log_level = LOG_LEVEL_STR2INT (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_S1AP_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.s1ap_log_level = LOG_LEVEL_STR2INT (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.nas_log_level = LOG_LEVEL_STR2INT (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_MME_APP_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.mme_app_log_level = LOG_LEVEL_STR2INT (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_S6A_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.s6a_log_level = LOG_LEVEL_STR2INT (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_UTIL_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.util_log_level = LOG_LEVEL_STR2INT (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.msc_log_level = LOG_LEVEL_STR2INT (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.itti_log_level = LOG_LEVEL_STR2INT (astring);
+
+      if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_ASN1_VERBOSITY, (const char **)&astring))) {
+        if (strcasecmp (astring, MME_CONFIG_STRING_ASN1_VERBOSITY_NONE) == 0)
+          mme_config_p->log_config.asn1_verbosity_level = 0;
+        else if (strcasecmp (astring, MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING) == 0)
+          mme_config_p->log_config.asn1_verbosity_level = 2;
+        else if (strcasecmp (astring, MME_CONFIG_STRING_ASN1_VERBOSITY_INFO) == 0)
+          mme_config_p->log_config.asn1_verbosity_level = 1;
+        else
+          mme_config_p->log_config.asn1_verbosity_level = 0;
+      }
+    }
+
     // GENERAL MME SETTINGS
     if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_REALM, (const char **)&astring))) {
       mme_config_p->realm = STRDUP_CHECK (astring);
@@ -276,16 +332,6 @@ config_parse_file (
         mme_config_p->unauthenticated_imsi_supported = 0;
     }
 
-    if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_ASN1_VERBOSITY, (const char **)&astring))) {
-      if (strcasecmp (astring, MME_CONFIG_STRING_ASN1_VERBOSITY_NONE) == 0)
-        mme_config_p->verbosity_level = 0;
-      else if (strcasecmp (astring, MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING) == 0)
-        mme_config_p->verbosity_level = 2;
-      else if (strcasecmp (astring, MME_CONFIG_STRING_ASN1_VERBOSITY_INFO) == 0)
-        mme_config_p->verbosity_level = 1;
-      else
-        mme_config_p->verbosity_level = 0;
-    }
     // ITTI SETTING
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_INTERTASK_INTERFACE_CONFIG);
 
@@ -596,6 +642,49 @@ config_parse_file (
   setting = config_lookup (&cfg, SGW_CONFIG_STRING_SGW_CONFIG);
 
   if (setting != NULL) {
+    // LOGGING setting
+    setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_LOGGING);
+
+    if (setting != NULL) {
+      // already filled in MME section ?
+      if (NULL == mme_config_p->log_config.output) {
+        config_setting_lookup_string (setting, MME_CONFIG_STRING_OUTPUT, (const char **)&astring);
+        mme_config_p->log_config.output = STRDUP_CHECK (astring);
+      }
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_UDP_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.udp_log_level = LOG_LEVEL_STR2INT (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_SPGW_APP_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.spgw_app_log_level = LOG_LEVEL_STR2INT (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_GTPV1U_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.gtpv1u_log_level = LOG_LEVEL_STR2INT (astring);
+
+      config_setting_lookup_string (setting, MME_CONFIG_STRING_GTPV2C_LOG_LEVEL, (const char **)&astring);
+      mme_config_p->log_config.gtpv2c_log_level = LOG_LEVEL_STR2INT (astring);
+
+      // may be not present (may be filled in MME section)
+      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_UTIL_LOG_LEVEL, (const char **)&astring)) {
+        mme_config_p->log_config.util_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+
+      // may be not present (may be filled in MME section)
+      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_S11_LOG_LEVEL, (const char **)&astring)) {
+        mme_config_p->log_config.s11_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+
+      // may be not present (may be filled in MME section)
+      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring)) {
+        mme_config_p->log_config.msc_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+
+      // may be not present (may be filled in MME section)
+      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring)) {
+        mme_config_p->log_config.itti_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+    }
+
     subsetting = config_setting_get_member (setting, SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
     if (subsetting != NULL) {
@@ -617,6 +706,7 @@ config_parse_file (
     }
   }
 
+  LOG_SET_CONFIG(&mme_config_p->log_config);
   return 0;
 }
 
@@ -643,7 +733,6 @@ config_display (
   LOG_INFO (LOG_CONFIG, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
   LOG_INFO (LOG_CONFIG, "Configuration:\n");
   LOG_INFO (LOG_CONFIG, "- File .................................: %s\n", mme_config_p->config_file);
-  LOG_INFO (LOG_CONFIG, "- Verbosity level ......................: %d\n", mme_config_p->verbosity_level);
   LOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", mme_config_p->realm);
   LOG_INFO (LOG_CONFIG, "- Max eNBs .............................: %u\n", mme_config_p->max_eNBs);
   LOG_INFO (LOG_CONFIG, "- Max UEs ..............................: %u\n", mme_config_p->max_ues);
@@ -699,13 +788,29 @@ config_display (
 
   LOG_INFO (LOG_CONFIG, "- S6A:\n");
   LOG_INFO (LOG_CONFIG, "    conf file ........: %s\n", mme_config_p->s6a_config.conf_file);
+  LOG_INFO (LOG_CONFIG, "- Logging:\n");
+  LOG_INFO (LOG_CONFIG, "    Output ..............: %s\n", mme_config_p->log_config.output);
+  LOG_INFO (LOG_CONFIG, "    UDP log level........: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.udp_log_level));
+  LOG_INFO (LOG_CONFIG, "    GTPV1-U log level....: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.gtpv1u_log_level));
+  LOG_INFO (LOG_CONFIG, "    GTPV2-C log level....: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.gtpv2c_log_level));
+  LOG_INFO (LOG_CONFIG, "    SCTP log level.......: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.sctp_log_level));
+  LOG_INFO (LOG_CONFIG, "    S1AP log level.......: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.s1ap_log_level));
+  LOG_INFO (LOG_CONFIG, "    ASN1 Verbosity level : %d\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.asn1_verbosity_level));
+  LOG_INFO (LOG_CONFIG, "    NAS log level........: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.nas_log_level));
+  LOG_INFO (LOG_CONFIG, "    MME_APP log level....: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.mme_app_log_level));
+  LOG_INFO (LOG_CONFIG, "    S/P-GW APP log level.: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.spgw_app_log_level));
+  LOG_INFO (LOG_CONFIG, "    S11 log level........: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.s11_log_level));
+  LOG_INFO (LOG_CONFIG, "    S6a log level........: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.s6a_log_level));
+  LOG_INFO (LOG_CONFIG, "    UTIL log level.......: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.util_log_level));
+  LOG_INFO (LOG_CONFIG, "    MSC log level........: %s (MeSsage Chart)\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.msc_log_level));
+  LOG_INFO (LOG_CONFIG, "    ITTI log level.......: %s (InTer-Task Interface)\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.itti_log_level));
 }
 
 static void
 usage (
   void)
 {
-  LOG_INFO (LOG_CONFIG, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
+  LOG_INFO (LOG_CONFIG, "==== EURECOM %s version: %s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
   LOG_INFO (LOG_CONFIG, "Please report any bug to: %s\n", PACKAGE_BUGREPORT);
   LOG_INFO (LOG_CONFIG, "Usage: oaisim_mme [options]\n");
   LOG_INFO (LOG_CONFIG, "Available options:\n");
@@ -757,7 +862,7 @@ config_parse_opt_line (
       break;
 
     case 'v':{
-        mme_config_p->verbosity_level = atoi (optarg);
+        mme_config_p->log_config.asn1_verbosity_level = atoi (optarg);
       }
       break;
 

@@ -429,7 +429,7 @@ itti_send_msg_to_task (
 #endif
 
     if (itti_desc.threads[destination_thread_id].task_state == TASK_STATE_ENDED) {
-      ITTI_DEBUG (ITTI_DEBUG_ISSUES, " Message %s, number %lu with priority %d can not be sent from %s to queue (%u:%s), ended destination task!",
+      ITTI_DEBUG (ITTI_DEBUG_ISSUES, " Message %s, number %lu with priority %d can not be sent from %s to queue (%u:%s), ended destination task!\n",
                   itti_desc.messages_info[message_id].name, message_number, priority, itti_get_task_name (origin_task_id), destination_task_id, itti_get_task_name (destination_task_id));
     } else {
       /*
@@ -471,7 +471,7 @@ itti_send_msg_to_task (
         }
       }
 
-      ITTI_DEBUG (ITTI_DEBUG_SEND, " Message %s, number %lu with priority %d successfully sent from %s to queue (%u:%s)",
+      ITTI_DEBUG (ITTI_DEBUG_SEND, " Message %s, number %lu with priority %d successfully sent from %s to queue (%u:%s)\n",
                   itti_desc.messages_info[message_id].name, message_number, priority, itti_get_task_name (origin_task_id), destination_task_id, itti_get_task_name (destination_task_id));
     }
   } else {
@@ -518,7 +518,7 @@ itti_subscribe_event_fd (
     AssertFatal (0, "epoll_ctl (EPOLL_CTL_ADD) failed for task %s, fd %d: %s!\n", itti_get_task_name (task_id), fd, strerror (errno));
   }
 
-  ITTI_DEBUG (ITTI_DEBUG_EVEN_FD, " Successfully subscribed fd %d for task %s", fd, itti_get_task_name (task_id));
+  ITTI_DEBUG (ITTI_DEBUG_EVEN_FD, " Successfully subscribed fd %d for task %s\n", fd, itti_get_task_name (task_id));
 }
 
 void
@@ -678,7 +678,7 @@ itti_poll_msg (
   }
 
   if (*received_msg == NULL) {
-    ITTI_DEBUG (ITTI_DEBUG_POLL, " No message in queue[(%u:%s)]", task_id, itti_get_task_name (task_id));
+    ITTI_DEBUG (ITTI_DEBUG_POLL, " No message in queue[(%u:%s)]\n", task_id, itti_get_task_name (task_id));
   }
 #if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_POLL_MSG, __sync_and_and_fetch (&itti_desc.vcd_poll_msg, ~(1L << task_id)));
@@ -698,7 +698,7 @@ itti_create_task (
   AssertFatal (thread_id < itti_desc.thread_max, "Thread id (%d) is out of range (%d)!\n", thread_id, itti_desc.thread_max);
   AssertFatal (itti_desc.threads[thread_id].task_state == TASK_STATE_NOT_CONFIGURED, "Task %d, thread %d state is not correct (%d)!\n", task_id, thread_id, itti_desc.threads[thread_id].task_state);
   itti_desc.threads[thread_id].task_state = TASK_STATE_STARTING;
-  ITTI_DEBUG (ITTI_DEBUG_INIT, " Creating thread for task %s ...", itti_get_task_name (task_id));
+  ITTI_DEBUG (ITTI_DEBUG_INIT, " Creating thread for task %s ...\n", itti_get_task_name (task_id));
   result = pthread_create (&itti_desc.threads[thread_id].task_thread, NULL, start_routine, args_p);
   AssertFatal (result >= 0, "Thread creation for task %d, thread %d failed (%d)!\n", task_id, thread_id, result);
   char                                    name[16];
@@ -732,7 +732,7 @@ itti_wait_ready (
   int wait_tasks)
 {
   itti_desc.wait_tasks = wait_tasks;
-  ITTI_DEBUG (ITTI_DEBUG_INIT, " wait for tasks: %s, created tasks %d, ready tasks %d", itti_desc.wait_tasks ? "yes" : "no", itti_desc.created_tasks, itti_desc.ready_tasks);
+  ITTI_DEBUG (ITTI_DEBUG_INIT, " wait for tasks: %s, created tasks %d, ready tasks %d\n", itti_desc.wait_tasks ? "yes" : "no", itti_desc.created_tasks, itti_desc.ready_tasks);
   AssertFatal (itti_desc.created_tasks == itti_desc.ready_tasks, "Number of created tasks (%d) does not match ready tasks (%d), wait task %d!\n", itti_desc.created_tasks, itti_desc.ready_tasks, itti_desc.wait_tasks);
 }
 
@@ -758,7 +758,7 @@ itti_mark_task_ready (
     usleep (10000);
   }
 
-  ITTI_DEBUG (ITTI_DEBUG_INIT, " task %s started", itti_get_task_name (task_id));
+  ITTI_DEBUG (ITTI_DEBUG_INIT, " task %s started\n", itti_get_task_name (task_id));
 }
 
 void
@@ -805,7 +805,7 @@ itti_init (
   int                                     ret;
 
   itti_desc.message_number = 1;
-  ITTI_DEBUG (ITTI_DEBUG_INIT, " Init: %d tasks, %d threads, %d messages", task_max, thread_max, messages_id_max);
+  ITTI_DEBUG (ITTI_DEBUG_INIT, " Init: %d tasks, %d threads, %d messages\n", task_max, thread_max, messages_id_max);
   CHECK_INIT_RETURN (signal_mask ());
   /*
    * Saves threads and messages max values
@@ -829,11 +829,11 @@ itti_init (
    * Initializing each queue and related stuff
    */
   for (task_id = TASK_FIRST; task_id < itti_desc.task_max; task_id++) {
-    ITTI_DEBUG (ITTI_DEBUG_INIT, " Initializing %stask %s%s%s",
+    ITTI_DEBUG (ITTI_DEBUG_INIT, " Initializing %stask %s%s%s\n",
                 itti_desc.tasks_info[task_id].parent_task != TASK_UNKNOWN ? "sub-" : "",
                 itti_desc.tasks_info[task_id].name,
                 itti_desc.tasks_info[task_id].parent_task != TASK_UNKNOWN ? " with parent " : "", itti_desc.tasks_info[task_id].parent_task != TASK_UNKNOWN ? itti_get_task_name (itti_desc.tasks_info[task_id].parent_task) : "");
-    ITTI_DEBUG (ITTI_DEBUG_INIT, " Creating queue of message of size %u", itti_desc.tasks_info[task_id].queue_size);
+    ITTI_DEBUG (ITTI_DEBUG_INIT, " Creating queue of message of size %u\n", itti_desc.tasks_info[task_id].queue_size);
     ret = lfds611_queue_new (&itti_desc.tasks[task_id].message_queue, itti_desc.tasks_info[task_id].queue_size);
 
     if (0 == ret) {
@@ -879,7 +879,7 @@ itti_init (
       AssertFatal (0, " epoll_ctl (EPOLL_CTL_ADD) failed: %s!\n", strerror (errno));
     }
 
-    ITTI_DEBUG (ITTI_DEBUG_EVEN_FD, " Successfully subscribed fd %d for thread %d", itti_desc.threads[thread_id].task_event_fd, thread_id);
+    ITTI_DEBUG (ITTI_DEBUG_EVEN_FD, " Successfully subscribed fd %d for thread %d\n", itti_desc.threads[thread_id].task_event_fd, thread_id);
   }
 
   itti_desc.running = 1;
@@ -950,7 +950,7 @@ itti_wait_tasks_end (
         }
 
         result = pthread_tryjoin_np (itti_desc.threads[thread_id].task_thread, NULL);
-        ITTI_DEBUG (ITTI_DEBUG_EXIT, " Thread %s join status %d", itti_get_task_name (task_id), result);
+        ITTI_DEBUG (ITTI_DEBUG_EXIT, " Thread %s join status %d\n", itti_get_task_name (task_id), result);
 
         if (result == 0) {
           /*
@@ -977,13 +977,13 @@ itti_wait_tasks_end (
   {
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
-    ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s", statistics);
+    ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s\n", statistics);
     FREE_CHECK (statistics);
   }
 #endif
 
   if (ready_tasks > 0) {
-    ITTI_DEBUG (ITTI_DEBUG_ISSUES, " Some threads are still running, force exit");
+    ITTI_DEBUG (ITTI_DEBUG_ISSUES, " Some threads are still running, force exit\n");
     exit (0);
   }
 

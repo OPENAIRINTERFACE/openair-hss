@@ -31,6 +31,7 @@
 #include <stdint.h>
 
 #include "mme_default_values.h"
+#include "log.h"
 
 #ifndef MME_CONFIG_H_
 #define MME_CONFIG_H_
@@ -81,10 +82,6 @@
 #define MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11_MME     "MME_INTERFACE_NAME_FOR_S11_MME"
 #define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11_MME       "MME_IPV4_ADDRESS_FOR_S11_MME"
 
-#define MME_CONFIG_STRING_ASN1_VERBOSITY                      "VERBOSITY"
-#define MME_CONFIG_STRING_ASN1_VERBOSITY_NONE                 "none"
-#define MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING             "annoying"
-#define MME_CONFIG_STRING_ASN1_VERBOSITY_INFO                 "info"
 
 #define MME_CONFIG_STRING_NAS_CONFIG                    "NAS"
 #define MME_CONFIG_STRING_NAS_SUPPORTED_INTEGRITY_ALGORITHM_LIST  "ORDERED_SUPPORTED_INTEGRITY_ALGORITHM_LIST"
@@ -112,13 +109,31 @@
 #define MME_CONFIG_STRING_NAS_T3489_TIMER                "T3489"
 #define MME_CONFIG_STRING_NAS_T3495_TIMER                "T3495"
 
-
+#define MME_CONFIG_STRING_LOGGING                        "LOGGING"
+#define MME_CONFIG_STRING_OUTPUT                         "OUTPUT"
+#define MME_CONFIG_STRING_OUTPUT_CONSOLE                 "CONSOLE"
+#define MME_CONFIG_STRING_UDP_LOG_LEVEL                  "UDP_LOG_LEVEL"
+#define MME_CONFIG_STRING_GTPV1U_LOG_LEVEL               "GTPV1U_LOG_LEVEL"
+#define MME_CONFIG_STRING_GTPV2C_LOG_LEVEL               "GTPV2C_LOG_LEVEL"
+#define MME_CONFIG_STRING_SCTP_LOG_LEVEL                 "SCTP_LOG_LEVEL"
+#define MME_CONFIG_STRING_S1AP_LOG_LEVEL                 "S1AP_LOG_LEVEL"
+#define MME_CONFIG_STRING_NAS_LOG_LEVEL                  "NAS_LOG_LEVEL"
+#define MME_CONFIG_STRING_MME_APP_LOG_LEVEL              "MME_APP_LOG_LEVEL"
+#define MME_CONFIG_STRING_SPGW_APP_LOG_LEVEL             "SPGW_APP_LOG_LEVEL"
+#define MME_CONFIG_STRING_S6A_LOG_LEVEL                  "S6A_LOG_LEVEL"
+#define MME_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
+#define MME_CONFIG_STRING_UTIL_LOG_LEVEL                 "UTIL_LOG_LEVEL"
+#define MME_CONFIG_STRING_MSC_LOG_LEVEL                  "MSC_LOG_LEVEL"
+#define MME_CONFIG_STRING_ITTI_LOG_LEVEL                 "ITTI_LOG_LEVEL"
+#define MME_CONFIG_STRING_ASN1_VERBOSITY                 "ASN1_VERBOSITY"
+#define MME_CONFIG_STRING_ASN1_VERBOSITY_NONE            "none"
+#define MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING        "annoying"
+#define MME_CONFIG_STRING_ASN1_VERBOSITY_INFO            "info"
 
 typedef struct mme_config_s {
   /* Reader/writer lock for this configuration */
   pthread_rwlock_t rw_lock;
 
-  uint8_t verbosity_level;
 
   char *config_file;
   char *realm;
@@ -205,12 +220,9 @@ typedef struct mme_config_s {
     uint32_t t3486_sec;
     uint32_t t3489_sec;
     uint32_t t3495_sec;
-
-
   } nas_config;
 
-
-
+  log_config_t log_config;
 } mme_config_t;
 
 extern mme_config_t mme_config;
