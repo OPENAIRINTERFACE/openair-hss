@@ -111,7 +111,7 @@ EmmRegistered (
     /*
      * TODO: Tracking Area Update has been rejected
      */
-    LOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Tracking Area Update procedure " "is not implemented");
+    LOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Tracking Area Update procedure " "is not implemented\n");
     break;
 
   case _EMMREG_LOWERLAYER_SUCCESS:

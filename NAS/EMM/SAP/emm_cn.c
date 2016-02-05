@@ -101,7 +101,7 @@ _emm_cn_authentication_res (
   emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
 
   if (emm_ctx == NULL) {
-    LOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " NAS_UE_ID_FMT "...", msg->ue_id);
+    LOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " NAS_UE_ID_FMT "...\n", msg->ue_id);
     LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
@@ -133,7 +133,7 @@ _emm_cn_authentication_res (
     /*
      * Failed to initiate the authentication procedure
      */
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - " "Failed to initiate authentication procedure");
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - " "Failed to initiate authentication procedure\n");
     emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
   }
 
@@ -158,7 +158,7 @@ _emm_cn_deregister_ue (
   int                                     rc = RETURNok;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - " "TODO deregister UE " NAS_UE_ID_FMT ", following procedure is a test", ue_id);
+  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - " "TODO deregister UE " NAS_UE_ID_FMT ", following procedure is a test\n", ue_id);
   emm_proc_detach_request (ue_id, EMM_DETACH_TYPE_EPS /* ??? emm_proc_detach_type_t */ ,
                            0 /*switch_off */ , 0 /*native_ksi */ , 0 /*ksi */ ,
                            NULL /*guti */ , NULL /*imsi */ , NULL /*imei */ );
@@ -192,7 +192,7 @@ _emm_cn_pdn_connectivity_res (
   emm_ctx_p = emm_data_context_get (&_emm_data, msg_pP->ue_id);
 
   if (emm_ctx_p == NULL) {
-    LOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " NAS_UE_ID_FMT "...", msg_pP->ue_id);
+    LOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " NAS_UE_ID_FMT "...\n", msg_pP->ue_id);
     LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
@@ -200,31 +200,31 @@ _emm_cn_pdn_connectivity_res (
 
   switch (msg_pP->pdn_type) {
   case IPv4:
-    LOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV4");
+    LOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV4\n");
     esm_pdn_type = ESM_PDN_TYPE_IPV4;
     break;
 
   case IPv6:
-    LOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV6");
+    LOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV6\n");
     esm_pdn_type = ESM_PDN_TYPE_IPV6;
     break;
 
   case IPv4_AND_v6:
-    LOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV4V6");
+    LOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV4V6\n");
     esm_pdn_type = ESM_PDN_TYPE_IPV4V6;
     break;
 
   default:
-    LOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV4 (forced to default)");
+    LOG_INFO (LOG_NAS_EMM, "EMM  -  esm_pdn_type = ESM_PDN_TYPE_IPV4 (forced to default)\n");
     esm_pdn_type = ESM_PDN_TYPE_IPV4;
   }
 
-  LOG_INFO (LOG_NAS_EMM, "EMM  -  qci       = %u ", msg_pP->qci);
-  LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.qci   = %u ", msg_pP->qos.qci);
-  LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.mbrUL = %u ", msg_pP->qos.mbrUL);
-  LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.mbrDL = %u ", msg_pP->qos.mbrDL);
-  LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.gbrUL = %u ", msg_pP->qos.gbrUL);
-  LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.gbrDL = %u ", msg_pP->qos.gbrDL);
+  LOG_INFO (LOG_NAS_EMM, "EMM  -  qci       = %u \n", msg_pP->qci);
+  LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.qci   = %u \n", msg_pP->qos.qci);
+  LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.mbrUL = %u \n", msg_pP->qos.mbrUL);
+  LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.mbrDL = %u \n", msg_pP->qos.mbrDL);
+  LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.gbrUL = %u \n", msg_pP->qos.gbrUL);
+  LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.gbrDL = %u \n", msg_pP->qos.gbrDL);
   qos.bitRatesPresent = 0;
   qos.bitRatesExtPresent = 0;
 #  warning "Some work to do here about qos"
@@ -250,7 +250,7 @@ _emm_cn_pdn_connectivity_res (
   pco.configurationprotol = msg_pP->pco.byte[2] & 0x07;
 
   for (int i = 0; i < msg_pP->pco.length; i++) {
-    LOG_WARNING (LOG_NAS_EMM, "EMMCN_PDN_CONNECTIVITY_RES.pco.byte[%u] = 0x%x", i, msg_pP->pco.byte[i]);
+    LOG_WARNING (LOG_NAS_EMM, "EMMCN_PDN_CONNECTIVITY_RES.pco.byte[%u] = 0x%x\n", i, msg_pP->pco.byte[i]);
   }
 
   if ((length_in_pco > 0) && (msg_pP->pco.byte[2] & 0x80)) {
@@ -281,7 +281,7 @@ _emm_cn_pdn_connectivity_res (
    * Execute the PDN connectivity procedure requested by the UE
    */
   pid = esm_proc_pdn_connectivity_request (emm_ctx_p, msg_pP->pti, msg_pP->request_type, &msg_pP->apn, esm_pdn_type, &msg_pP->pdn_addr, NULL, &esm_cause);
-  LOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s ", (char *)(msg_pP->apn.value));
+  LOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)(msg_pP->apn.value));
 
   if (pid != RETURNerror) {
     /*
@@ -301,7 +301,7 @@ _emm_cn_pdn_connectivity_res (
    * END OF CODE THAT WAS IN esm_recv.c/esm_recv_pdn_connectivity_request()
    */
   /**************************************************************************/
-  LOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s ", (char *)(msg_pP->apn.value));
+  LOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)(msg_pP->apn.value));
   /*************************************************************************/
   /*
    * CODE THAT WAS IN esm_sap.c/_esm_sap_recv()
@@ -320,7 +320,7 @@ _emm_cn_pdn_connectivity_res (
     int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) _emm_cn_sap_buffer,
                                                                    EMM_CN_SAP_BUFFER_SIZE);
 
-    LOG_INFO (LOG_NAS_EMM, "ESM encoded MSG size %d ", size);
+    LOG_INFO (LOG_NAS_EMM, "ESM encoded MSG size %d\n", size);
 
     if (size > 0) {
       rsp.length = size;
@@ -340,7 +340,7 @@ _emm_cn_pdn_connectivity_res (
       LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     }
   } else {
-    LOG_INFO (LOG_NAS_EMM, "ESM send activate_default_eps_bearer_context_request failed");
+    LOG_INFO (LOG_NAS_EMM, "ESM send activate_default_eps_bearer_context_request failed\n");
   }
 
   /*************************************************************************/
@@ -348,7 +348,7 @@ _emm_cn_pdn_connectivity_res (
    * END OF CODE THAT WAS IN esm_sap.c/_esm_sap_recv()
    */
   /*************************************************************************/
-  LOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s ", (char *)(msg_pP->apn.value));
+  LOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)(msg_pP->apn.value));
   data_p = (attach_data_t *) emm_proc_common_get_args (msg_pP->ue_id);
   /*
    * Setup the ESM message container
@@ -357,7 +357,7 @@ _emm_cn_pdn_connectivity_res (
 
   if (data_p->esm_msg.value) {
     data_p->esm_msg.length = rsp.length;
-    LOG_INFO (LOG_NAS_EMM, "EMM  - copy ESM MSG %d bytes", data_p->esm_msg.length);
+    LOG_INFO (LOG_NAS_EMM, "EMM  - copy ESM MSG %d bytes\n", data_p->esm_msg.length);
     memcpy (data_p->esm_msg.value, rsp.value, rsp.length);
   } else {
     data_p->esm_msg.length = 0;
@@ -383,7 +383,7 @@ _emm_cn_pdn_connectivity_res (
     }
   }
 
-  LOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s ", (char *)(msg_pP->apn.value));
+  LOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s \n", (char *)(msg_pP->apn.value));
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -405,7 +405,7 @@ emm_cn_send (
   emm_cn_primitive_t                      primitive = msg->primitive;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMMCN-SAP - Received primitive %s (%d)", _emm_cn_primitive_str[primitive - _EMMCN_START - 1], primitive);
+  LOG_INFO (LOG_NAS_EMM, "EMMCN-SAP - Received primitive %s (%d)\n", _emm_cn_primitive_str[primitive - _EMMCN_START - 1], primitive);
 
   switch (primitive) {
   case _EMMCN_AUTHENTICATION_PARAM_RES:
@@ -437,7 +437,7 @@ emm_cn_send (
   }
 
   if (rc != RETURNok) {
-    LOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP - Failed to process primitive %s (%d)", _emm_cn_primitive_str[primitive - _EMMCN_START - 1], primitive);
+    LOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP - Failed to process primitive %s (%d)\n", _emm_cn_primitive_str[primitive - _EMMCN_START - 1], primitive);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);

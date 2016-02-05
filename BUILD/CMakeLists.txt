@@ -644,33 +644,16 @@ set(libnas_mme_emm_sap_OBJS
   ${NAS_SRC}EMM/SAP/emm_as.c
   ${NAS_SRC}EMM/SAP/emm_cn.c
   ${NAS_SRC}EMM/SAP/EmmCommonProcedureInitiated.c
-  ${NAS_SRC}EMM/SAP/EmmDeregisteredAttachNeeded.c
-  ${NAS_SRC}EMM/SAP/EmmDeregisteredAttemptingToAttach.c
   ${NAS_SRC}EMM/SAP/EmmDeregistered.c
   ${NAS_SRC}EMM/SAP/EmmDeregisteredInitiated.c
-  ${NAS_SRC}EMM/SAP/EmmDeregisteredLimitedService.c
-  ${NAS_SRC}EMM/SAP/EmmDeregisteredNoCellAvailable.c
-  ${NAS_SRC}EMM/SAP/EmmDeregisteredNoImsi.c
-  ${NAS_SRC}EMM/SAP/EmmDeregisteredNormalService.c
-  ${NAS_SRC}EMM/SAP/EmmDeregisteredPlmnSearch.c
   ${NAS_SRC}EMM/SAP/emm_esm.c
   ${NAS_SRC}EMM/SAP/emm_fsm.c
   ${NAS_SRC}EMM/SAP/EmmNull.c
   ${NAS_SRC}EMM/SAP/emm_recv.c
   ${NAS_SRC}EMM/SAP/emm_reg.c
-  ${NAS_SRC}EMM/SAP/EmmRegisteredAttemptingToUpdate.c
   ${NAS_SRC}EMM/SAP/EmmRegistered.c
-  ${NAS_SRC}EMM/SAP/EmmRegisteredImsiDetachInitiated.c
-  ${NAS_SRC}EMM/SAP/EmmRegisteredInitiated.c
-  ${NAS_SRC}EMM/SAP/EmmRegisteredLimitedService.c
-  ${NAS_SRC}EMM/SAP/EmmRegisteredNoCellAvailable.c
-  ${NAS_SRC}EMM/SAP/EmmRegisteredNormalService.c
-  ${NAS_SRC}EMM/SAP/EmmRegisteredPlmnSearch.c
-  ${NAS_SRC}EMM/SAP/EmmRegisteredUpdateNeeded.c
   ${NAS_SRC}EMM/SAP/emm_sap.c
   ${NAS_SRC}EMM/SAP/emm_send.c
-  ${NAS_SRC}EMM/SAP/EmmServiceRequestInitiated.c
-  ${NAS_SRC}EMM/SAP/EmmTrackingAreaUpdatingInitiated.c
   )
 
 set (libnas_mme_esm_OBJS

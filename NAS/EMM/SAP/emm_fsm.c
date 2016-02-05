@@ -200,10 +200,10 @@ emm_fsm_set_status (
 
   DevAssert (emm_ctx != NULL);
   // FOR DEBUG, TO BE REMOVED
-  AssertFatal(ueid == emm_ctx->ueid, "Mismatch UE IDs ueid param " NAS_UE_ID_FMT" emm_ctx->ueid " NAS_UE_ID_FMT" ", ueid, emm_ctx->ueid);
+  AssertFatal(ueid == emm_ctx->ueid, "Mismatch UE IDs ueid param " NAS_UE_ID_FMT" emm_ctx->ueid " NAS_UE_ID_FMT"\n", ueid, emm_ctx->ueid);
   if ((status < EMM_STATE_MAX) && (ueid > 0)) {
     if (status != emm_ctx->_emm_fsm_status) {
-      LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s", _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
+      LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s\n", _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " NAS_UE_ID_FMT" ", _emm_fsm_status_str[status], ueid);
       emm_ctx->_emm_fsm_status = status;
     }
@@ -214,7 +214,7 @@ emm_fsm_set_status (
 
   if ((status < EMM_STATE_MAX) && (ueid < EMM_FSM_NB_UE_MAX)) {
     if (status != _emm_fsm_status[ueid]) {
-      LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s", _emm_fsm_status_str[_emm_fsm_status[ueid]], _emm_fsm_status_str[status]);
+      LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s\n", _emm_fsm_status_str[_emm_fsm_status[ueid]], _emm_fsm_status_str[status]);
       _emm_fsm_status[ueid] = status;
     }
 
@@ -248,7 +248,7 @@ emm_fsm_get_status (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
   if (emm_ctx == NULL) {
-    LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - try again get context ueid " NAS_UE_ID_FMT " ", ueid);
+    LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - try again get context ueid " NAS_UE_ID_FMT "\n", ueid);
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
   }
 
@@ -301,7 +301,7 @@ emm_fsm_process (
 
   status = _emm_fsm_status[evt->ueid];
 #endif
-  LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
+  LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
 #if NAS_BUILT_IN_EPC
   DevAssert (status != EMM_INVALID);
 #endif

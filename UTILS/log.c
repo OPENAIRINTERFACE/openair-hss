@@ -116,7 +116,7 @@ log_task (
   itti_mark_task_ready (TASK_LOG);
   log_start_use ();
   timer_setup (0,               // seconds
-               500000,          // usec
+               100000,          // usec
                TASK_LOG, INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &timer_id);
 
   while (1) {
@@ -126,13 +126,19 @@ log_task (
 
       switch (ITTI_MSG_ID (received_message_p)) {
       case TIMER_HAS_EXPIRED:{
+          LOG_TRACE(LOG_UTIL, "TASK_LOG received TIMER_HAS_EXPIRED\n"); {
+            MessageDef                             *message_p = NULL;
+            message_p = itti_alloc_new_message (TASK_LOG, MESSAGE_TEST);
+            itti_send_msg_to_task (TASK_SPGW_APP, INSTANCE_DEFAULT, message_p);
+          }
+
           if (LOG_TCP_STATE_NOT_CONNECTED == g_oai_log.tcp_state) {
             log_connect_to_server();
           }
           log_flush_messages ();
 
           timer_setup (0,               // seconds
-                       500000,          // usec
+                       90000,          // usec
                        TASK_LOG, INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &timer_id);
         }
         break;
@@ -220,21 +226,23 @@ void log_connect_to_server(void)
 void log_set_config(const log_config_t * const config)
 {
   if (config) {
-    g_oai_log.log_level[LOG_UDP]      = config->udp_log_level;
-    g_oai_log.log_level[LOG_GTPV1U]   = config->gtpv1u_log_level;
-    g_oai_log.log_level[LOG_GTPV2C]   = config->gtpv2c_log_level;
-    g_oai_log.log_level[LOG_SCTP]     = config->sctp_log_level;
-    g_oai_log.log_level[LOG_S1AP]     = config->s1ap_log_level;
-    g_oai_log.log_level[LOG_MME_APP]  = config->mme_app_log_level;
-    g_oai_log.log_level[LOG_NAS]      = config->nas_log_level;
-    g_oai_log.log_level[LOG_NAS_EMM]  = config->nas_log_level;
-    g_oai_log.log_level[LOG_NAS_ESM]  = config->nas_log_level;
-    g_oai_log.log_level[LOG_SPGW_APP] = config->spgw_app_log_level;
-    g_oai_log.log_level[LOG_S11]      = config->s11_log_level;
-    g_oai_log.log_level[LOG_S6A]      = config->s6a_log_level;
-    g_oai_log.log_level[LOG_UTIL]     = config->util_log_level;
-    g_oai_log.log_level[LOG_MSC]      = config->msc_log_level;
-    g_oai_log.log_level[LOG_ITTI]     = config->itti_log_level;
+    if ((MAX_LOG_LEVEL > config->udp_log_level) && (MIN_LOG_LEVEL <= config->udp_log_level))         g_oai_log.log_level[LOG_UDP] = config->udp_log_level;
+    if ((MAX_LOG_LEVEL > config->gtpv1u_log_level) && (MIN_LOG_LEVEL <= config->gtpv1u_log_level))   g_oai_log.log_level[LOG_GTPV1U]   = config->gtpv1u_log_level;
+    if ((MAX_LOG_LEVEL > config->gtpv2c_log_level) && (MIN_LOG_LEVEL <= config->gtpv2c_log_level))   g_oai_log.log_level[LOG_GTPV2C]   = config->gtpv2c_log_level;
+    if ((MAX_LOG_LEVEL > config->sctp_log_level) && (MIN_LOG_LEVEL <= config->sctp_log_level))       g_oai_log.log_level[LOG_SCTP]     = config->sctp_log_level;
+    if ((MAX_LOG_LEVEL > config->s1ap_log_level) && (MIN_LOG_LEVEL <= config->s1ap_log_level))       g_oai_log.log_level[LOG_S1AP]     = config->s1ap_log_level;
+    if ((MAX_LOG_LEVEL > config->mme_app_log_level) && (MIN_LOG_LEVEL <= config->mme_app_log_level)) g_oai_log.log_level[LOG_MME_APP]  = config->mme_app_log_level;
+    if ((MAX_LOG_LEVEL > config->nas_log_level) && (MIN_LOG_LEVEL <= config->nas_log_level)) {
+      g_oai_log.log_level[LOG_NAS]      = config->nas_log_level;
+      g_oai_log.log_level[LOG_NAS_EMM]  = config->nas_log_level;
+      g_oai_log.log_level[LOG_NAS_ESM]  = config->nas_log_level;
+    }
+    if ((MAX_LOG_LEVEL > config->spgw_app_log_level) && (MIN_LOG_LEVEL <= config->spgw_app_log_level)) g_oai_log.log_level[LOG_SPGW_APP] = config->spgw_app_log_level;
+    if ((MAX_LOG_LEVEL > config->s11_log_level) && (MIN_LOG_LEVEL <= config->s11_log_level))           g_oai_log.log_level[LOG_S11]      = config->s11_log_level;
+    if ((MAX_LOG_LEVEL > config->s6a_log_level) && (MIN_LOG_LEVEL <= config->s6a_log_level))           g_oai_log.log_level[LOG_S6A]      = config->s6a_log_level;
+    if ((MAX_LOG_LEVEL > config->util_log_level) && (MIN_LOG_LEVEL <= config->util_log_level))         g_oai_log.log_level[LOG_UTIL]     = config->util_log_level;
+    if ((MAX_LOG_LEVEL > config->msc_log_level) && (MIN_LOG_LEVEL <= config->msc_log_level))           g_oai_log.log_level[LOG_MSC]      = config->msc_log_level;
+    if ((MAX_LOG_LEVEL > config->itti_log_level) && (MIN_LOG_LEVEL <= config->itti_log_level))         g_oai_log.log_level[LOG_ITTI]     = config->itti_log_level;
 
     if (config->output) {
       if (strcasecmp("CONSOLE", config->output)){
@@ -285,7 +293,10 @@ void log_set_config(const log_config_t * const config)
 //------------------------------------------------------------------------------
 const char * const  log_level_int2str(const log_level_t log_level)
 {
-  return g_oai_log.log_level2str[log_level];
+  if ((MAX_LOG_LEVEL > log_level) && (MIN_LOG_LEVEL <= log_level)) {
+    return g_oai_log.log_level2str[log_level];
+  }
+  return "INVALID_LOG_LEVEL";
 }
 
 //------------------------------------------------------------------------------
@@ -301,7 +312,7 @@ log_level_t log_level_str2int(const char * const log_level_str)
     }
   }
   // By default
-  return LOG_LEVEL_INFO;
+  return MAX_LOG_LEVEL; // == invalid
 }
 
 //------------------------------------------------------------------------------
@@ -466,6 +477,7 @@ log_end (
 {
   int                                     rv;
 
+  fprintf(stdout, "[TRACE] Entering %s\n", __FUNCTION__);
   if (NULL != g_oai_log.log_fd) {
     log_flush_messages ();
     rv = fflush (g_oai_log.log_fd);
@@ -480,6 +492,7 @@ log_end (
       fprintf (stderr, "Error while closing Log file: %s", strerror (errno));
     }
   }
+  fprintf(stdout, "[TRACE] Leaving %s\n", __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -492,19 +505,19 @@ void log_stream_hex(
   const char *const streamP,
   const unsigned int sizeP)
 {
-  log_queue_item_t ** context = NULL;
+  log_queue_item_t  * context = NULL;
   int                 octet_index = 0;
 
   if (messageP) {
-    log_message_start(log_levelP, protoP, context, source_fileP, line_numP, "%s (hexa)", messageP);
+    log_message_start(log_levelP, protoP, &context, source_fileP, line_numP, "%s (hexa)", messageP);
   } else {
-    log_message_start(log_levelP, protoP, context, source_fileP, line_numP, "(hexa):");
+    log_message_start(log_levelP, protoP, &context, source_fileP, line_numP, "(hexa):");
   }
-  if ((streamP) && (*context)) {
+  if ((streamP) && (context)) {
     for (octet_index = 0; octet_index < sizeP; octet_index++) {
-      log_message_add(*context, " %02x", streamP[octet_index]);
+      log_message_add(context, " %02x", streamP[octet_index]);
     }
-    log_message_finish(*context);
+    log_message_finish(context);
   }
 }
 
@@ -518,40 +531,40 @@ void log_stream_hex_array(
   const char *const streamP,
   const unsigned int sizeP)
 {
-  log_queue_item_t ** context = NULL;
+  log_queue_item_t *  context = NULL;
   int                 octet_index = 0;
   int                 index = 0;
 
   if (messageP) {
     log_message(log_levelP, protoP, source_fileP, line_numP, "%s", messageP);
   }
-  log_message(log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|");
-  log_message(log_levelP, protoP, source_fileP, line_numP, "      |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |");
-  log_message(log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|");
+  log_message(log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|\n");
+  log_message(log_levelP, protoP, source_fileP, line_numP, "      |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n");
+  log_message(log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|\n");
 
   if (streamP) {
     for (octet_index = 0; octet_index < sizeP; octet_index++) {
       if ((octet_index % 16) == 0) {
         if (octet_index != 0) {
-          log_message_add(*context, " |");
-          log_message_finish(*context);
+          log_message_add(context, " |");
+          log_message_finish(context);
         }
-        log_message_start(log_levelP, protoP, context, source_fileP, line_numP, " %04d |", octet_index);
+        log_message_start(log_levelP, protoP, &context, source_fileP, line_numP, " %04d |", octet_index);
       }
 
       /*
        * Print every single octet in hexadecimal form
        */
-      log_message_add(*context, " %02x", streamP[octet_index]);
+      log_message_add(context, " %02x", streamP[octet_index]);
     }
     /*
      * Append enough spaces and put final pipe
      */
     for (index = octet_index; index < 16; ++index) {
-      log_message_add(*context, "   ");
+      log_message_add(context, "   ");
     }
-    log_message_add(*context, " |");
-    log_message_finish(*context);
+    log_message_add(context, " |");
+    log_message_finish(context);
   }
 }
 
@@ -676,14 +689,6 @@ log_message_start (
       va_start (args, format);
       rv2 = vsnprintf (&char_message_p[rv], LOG_MAX_MESSAGE_LENGTH - rv, format, args);
       va_end (args);
-
-      if ((0 > rv2) || ((LOG_MAX_MESSAGE_LENGTH - rv) < rv2)) {
-        fprintf (stderr, "Error while logging message : %s", &g_oai_log.log_proto2str[protoP][0]);
-        goto error_event_start;
-      }
-
-      rv += rv2;
-      rv2 = snprintf (&char_message_p[rv], LOG_MAX_MESSAGE_LENGTH - rv, "\n");
 
       if ((0 > rv2) || ((LOG_MAX_MESSAGE_LENGTH - rv) < rv2)) {
         fprintf (stderr, "Error while logging message : %s", &g_oai_log.log_proto2str[protoP][0]);

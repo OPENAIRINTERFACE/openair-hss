@@ -99,8 +99,8 @@ esm_proc_status_ind (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested (cause=%d)", *esm_cause);
-  LOG_DEBUG (LOG_NAS_ESM, "ESM-PROC  - To be implemented");
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested (cause=%d)\n", *esm_cause);
+  LOG_DEBUG (LOG_NAS_ESM, "ESM-PROC  - To be implemented\n");
 
   switch (*esm_cause) {
   case ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY:
@@ -182,7 +182,7 @@ esm_proc_status (
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested");
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested\n");
   /*
    * Notity EMM that ESM PDU has to be forwarded to lower layers
    */

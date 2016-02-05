@@ -131,7 +131,7 @@ esm_proc_dedicated_eps_bearer_context (
   int *esm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "(ueid=" NAS_UE_ID_FMT ", pid=%d)", ctx->ueid, pid);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "(ueid=" NAS_UE_ID_FMT ", pid=%d)\n", ctx->ueid, pid);
   /*
    * Assign new EPS bearer context
    */
@@ -147,7 +147,7 @@ esm_proc_dedicated_eps_bearer_context (
       /*
        * No resource available
        */
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create dedicated EPS " "bearer context (ebi=%d)", *ebi);
+      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create dedicated EPS " "bearer context (ebi=%d)\n", *ebi);
       *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
       LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
     }
@@ -155,7 +155,7 @@ esm_proc_dedicated_eps_bearer_context (
     LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
   }
 
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to assign new EPS bearer context");
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to assign new EPS bearer context\n");
   *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
   LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
 }
@@ -197,7 +197,7 @@ esm_proc_dedicated_eps_bearer_context_request (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate dedicated EPS bearer context " "activation (ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate dedicated EPS bearer context " "activation (ueid=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ueid, ebi);
   /*
    * Send activate dedicated EPS bearer context request message and
    * * * * start timer T3485
@@ -214,7 +214,7 @@ esm_proc_dedicated_eps_bearer_context_request (
       /*
        * The EPS bearer context was already in ACTIVE PENDING state
        */
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already ACTIVE PENDING", ebi);
+      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already ACTIVE PENDING\n", ebi);
     }
   }
 
@@ -252,7 +252,7 @@ esm_proc_dedicated_eps_bearer_context_accept (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "accepted by the UE (ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "accepted by the UE (ueid=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ueid, ebi);
   /*
    * Stop T3485 timer
    */
@@ -268,7 +268,7 @@ esm_proc_dedicated_eps_bearer_context_accept (
       /*
        * The EPS bearer context was already in ACTIVE state
        */
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already ACTIVE", ebi);
+      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already ACTIVE\n", ebi);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     }
   }
@@ -311,7 +311,7 @@ esm_proc_dedicated_eps_bearer_context_reject (
   int                                     rc;
 
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "not accepted by the UE (ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "not accepted by the UE (ueid=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ueid, ebi);
   /*
    * Stop T3485 timer if running
    */
@@ -386,7 +386,7 @@ _dedicated_eps_bearer_activate_t3485_handler (
    * Increment the retransmission counter
    */
   data->count += 1;
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3485 timer expired (ueid=" NAS_UE_ID_FMT ", ebi=%d), " "retransmission counter = %d", data->ueid, data->ebi, data->count);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3485 timer expired (ueid=" NAS_UE_ID_FMT ", ebi=%d), " "retransmission counter = %d\n", data->ueid, data->ebi, data->count);
 
   if (data->count < DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
     /*

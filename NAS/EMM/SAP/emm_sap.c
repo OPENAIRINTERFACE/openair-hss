@@ -140,7 +140,7 @@ emm_sap_send (
   }
 #endif
   else {
-    LOG_WARNING (LOG_NAS_EMM, "EMM-SAP -   Out of range primitive (%d)", primitive);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-SAP -   Out of range primitive (%d)\n", primitive);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);

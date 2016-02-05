@@ -184,8 +184,8 @@ void log_message (
 #define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do { log_message(LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s (rc=%ld)\n", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
 #define LOG_STREAM_HEX(pRoTo, mEsSaGe, sTrEaM, sIzE)             do { log_stream_hex(LOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content */
 #define LOG_STREAM_HEX_ARRAY(pRoTo, mEsSaGe, sTrEaM, sIzE)       do { log_stream_hex_array(LOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content with indexes */
-#define LOG_MESSAGE_START(lOgLeVeL, pRoTo, cOnTeXt, aRgS...)     do { log_message_start(lOgLeVeL, pRoTo, cOnTeXt, __FILE__, __LINE__, aRgS...); } while(0) /*!< \brief when need to log only 1 message with many char messages, ex formating a dumped struct */
-#define LOG_MESSAGE_ADD(cOnTeXt, aRgS...)                        do { log_message_add(cOnTeXt, aRgS...); } while(0) /*!< \brief can be called as many times as needed after LOG_MESSAGE_START() */
+#define LOG_MESSAGE_START(lOgLeVeL, pRoTo, cOnTeXt, ...)     do { log_message_start(lOgLeVeL, pRoTo, cOnTeXt, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief when need to log only 1 message with many char messages, ex formating a dumped struct */
+#define LOG_MESSAGE_ADD(cOnTeXt, ...)                        do { log_message_add(cOnTeXt, ##__VA_ARGS__); } while(0) /*!< \brief can be called as many times as needed after LOG_MESSAGE_START() */
 #define LOG_MESSAGE_FINISH(cOnTeXt)                              do { log_message_finish(cOnTeXt); } while(0) /*!< \brief Send the message built by LOG_MESSAGE_START() n*LOG_MESSAGE_ADD() (n=0..N) */
 #else
 #define LOG_SET_CONFIG(a)

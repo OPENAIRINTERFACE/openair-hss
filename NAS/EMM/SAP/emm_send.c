@@ -92,7 +92,7 @@ emm_send_status (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
-  LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Send EMM Status message (cause=%d)", msg->emm_cause);
+  LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Send EMM Status message (cause=%d)\n", msg->emm_cause);
   /*
    * Mandatory - Message type
    */
@@ -131,7 +131,7 @@ emm_send_detach_accept (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Detach Accept message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Detach Accept message\n");
   /*
    * Mandatory - Message type
    */
@@ -172,8 +172,8 @@ emm_send_attach_accept (
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
   int                                     i = 0;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Attach Accept message");
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size = EMM_HEADER_MAXIMUM_LENGTH(%d)", size);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Attach Accept message\n");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size = EMM_HEADER_MAXIMUM_LENGTH(%d)\n", size);
   /*
    * Mandatory - Message type
    */
@@ -195,7 +195,7 @@ emm_send_attach_accept (
     emm_msg->t3412value.timervalue = mme_config.nas_config.t3412_min / 6;
   }
   //emm_msg->t3412value.unit = GPRS_TIMER_UNIT_0S;
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)", GPRS_TIMER_MAXIMUM_LENGTH, size);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)\n", GPRS_TIMER_MAXIMUM_LENGTH, size);
   /*
    * Mandatory - Tracking area identity list
    */
@@ -209,13 +209,13 @@ emm_send_attach_accept (
   emm_msg->tailist.mncdigit2[0] = msg->tai_list.tai[0].plmn.MNCdigit2;
   emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.MNCdigit3;
   emm_msg->tailist.tac[0] = msg->tai_list.tai[0].tac;
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_LENGTH(%d)  (%d)", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_LENGTH(%d)  (%d)\n", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
   AssertFatal(msg->tai_list.n_tais <= 16, "Twoo many TAIs in TAI list");
   if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == emm_msg->tailist.typeoflist) {
     for (i = 1; i < msg->tai_list.n_tais; i++) {
       emm_msg->tailist.tac[i] = msg->tai_list.tai[i].tac;
       size += 2;
-      LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING AREA CODE LENGTH(%d)  (%d)", 2, size);
+      LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING AREA CODE LENGTH(%d)  (%d)\n", 2, size);
     }
   } else if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == emm_msg->tailist.typeoflist) {
     for (i = 1; i < msg->tai_list.n_tais; i++) {
@@ -227,7 +227,7 @@ emm_send_attach_accept (
       emm_msg->tailist.mncdigit3[i] = msg->tai_list.tai[i].plmn.MNCdigit3;
       emm_msg->tailist.tac[i] = msg->tai_list.tai[i].tac;
       size += 5;
-      LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING AREA IDENTITY LENGTH(%d)  (%d)", 5, size);
+      LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING AREA IDENTITY LENGTH(%d)  (%d)\n", 5, size);
     }
   }
   /*
@@ -235,7 +235,7 @@ emm_send_attach_accept (
    */
   size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + msg->NASmsg.length;
   emm_msg->esmmessagecontainer.esmmessagecontainercontents = msg->NASmsg;
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH(%d)  (%d)", ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH, size);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH(%d)  (%d)\n", ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH, size);
 
   /*
    * Optional - GUTI
@@ -254,7 +254,7 @@ emm_send_attach_accept (
     emm_msg->guti.guti.mncdigit1 = msg->new_guti->gummei.plmn.MNCdigit1;
     emm_msg->guti.guti.mncdigit2 = msg->new_guti->gummei.plmn.MNCdigit2;
     emm_msg->guti.guti.mncdigit3 = msg->new_guti->gummei.plmn.MNCdigit3;
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH(%d)  (%d)", EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH, size);
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH, size);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, size);
@@ -286,7 +286,7 @@ emm_send_attach_reject (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Attach Reject message (cause=%d)", msg->emm_cause);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Attach Reject message (cause=%d)\n", msg->emm_cause);
   /*
    * Mandatory - Message type
    */
@@ -336,7 +336,7 @@ emm_send_tracking_area_update_accept (
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
   int                                     i = 0;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Tracking Area Update Accept message (cause=%d)", msg->emm_cause);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Tracking Area Update Accept message (cause=%d)\n", msg->emm_cause);
   /*
    * Mandatory - Message type
    */
@@ -346,7 +346,7 @@ emm_send_tracking_area_update_accept (
    */
   size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH;
   emm_msg->epsupdateresult = msg->eps_update_result;
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH(%d)  (%d)", EPS_UPDATE_RESULT_MAXIMUM_LENGTH, size);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_UPDATE_RESULT_MAXIMUM_LENGTH, size);
 
   // Optional - GPRS Timer T3412
   if (*msg->t3412) {
@@ -359,7 +359,7 @@ emm_send_tracking_area_update_accept (
       emm_msg->t3412value.unit = GPRS_TIMER_UNIT_360S;
       emm_msg->t3412value.timervalue = *msg->t3412 / 6;
     }
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)", GPRS_TIMER_MAXIMUM_LENGTH, size);
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)\n", GPRS_TIMER_MAXIMUM_LENGTH, size);
   }
   // Optional - GUTI
   if (msg->guti) {
@@ -376,7 +376,7 @@ emm_send_tracking_area_update_accept (
     emm_msg->guti.guti.mncdigit1 = msg->guti->gummei.plmn.MNCdigit1;
     emm_msg->guti.guti.mncdigit2 = msg->guti->gummei.plmn.MNCdigit2;
     emm_msg->guti.guti.mncdigit3 = msg->guti->gummei.plmn.MNCdigit3;
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH(%d)  (%d)", EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH, size);
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH, size);
   }
   /* Optional - TAI list
    * This IE may be included to assign a TAI list to a UE.
@@ -387,7 +387,7 @@ emm_send_tracking_area_update_accept (
     switch (msg->tai_list.list_type) {
     case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS:
       size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH + emm_msg->tailist.numberofelements*2;
-      LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d) + size N extra TACs (%d)  (%d)",
+      LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d) + size N extra TACs (%d)  (%d)\n",
           TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, emm_msg->tailist.numberofelements*2, size);
       emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS;
       emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.MCCdigit1;
@@ -403,7 +403,7 @@ emm_send_tracking_area_update_accept (
       break;
     case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS:
       size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH;
-      LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d)  (%d)", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
+      LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d)  (%d)\n", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
       emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
       emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.MCCdigit1;
       emm_msg->tailist.mccdigit2[0] = msg->tai_list.tai[0].plmn.MCCdigit2;
@@ -415,7 +415,7 @@ emm_send_tracking_area_update_accept (
       break;
     case TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS:
       size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH + emm_msg->tailist.numberofelements*5;
-      LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d) + size N extra TAIs (%d)  (%d)",
+      LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d) + size N extra TAIs (%d)  (%d)\n",
           TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, emm_msg->tailist.numberofelements*5, size);
       emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS;
       for (i=0; i < msg->tai_list.n_tais; i++) {
@@ -438,7 +438,7 @@ emm_send_tracking_area_update_accept (
     size += EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH;
     emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EPS_BEARER_CONTEXT_STATUS_PRESENT;
     emm_msg->epsbearercontextstatus = *(msg->eps_bearer_context_status);
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH(%d)  (%d)", EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH, size);
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH, size);
   }
   /* Useless actually, Optional - Location Area Identification
   if (msg->location_area_identification) {
@@ -459,7 +459,7 @@ emm_send_tracking_area_update_accept (
     size += EMM_CAUSE_MAXIMUM_LENGTH;
     emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EMM_CAUSE_PRESENT;
     emm_msg->emmcause = msg->emm_cause;
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "MOBILE_IDENTITY_MINIMUM_LENGTH(%d)  (%d)", EMM_CAUSE_MAXIMUM_LENGTH, size);
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "MOBILE_IDENTITY_MINIMUM_LENGTH(%d)  (%d)\n", EMM_CAUSE_MAXIMUM_LENGTH, size);
   }
   // Optional - GPRS Timer T3402
   if (msg->t3402) {
@@ -472,7 +472,7 @@ emm_send_tracking_area_update_accept (
       emm_msg->t3402value.unit = GPRS_TIMER_UNIT_360S;
       emm_msg->t3402value.timervalue = *msg->t3402 / 6;
     }
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)", GPRS_TIMER_MAXIMUM_LENGTH, size);
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)\n", GPRS_TIMER_MAXIMUM_LENGTH, size);
   }
   // Optional - GPRS Timer T3423
   if (msg->t3423) {
@@ -485,7 +485,7 @@ emm_send_tracking_area_update_accept (
       emm_msg->t3423value.unit = GPRS_TIMER_UNIT_360S;
       emm_msg->t3423value.timervalue = *msg->t3423 / 6;
     }
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)", GPRS_TIMER_MAXIMUM_LENGTH, size);
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)\n", GPRS_TIMER_MAXIMUM_LENGTH, size);
   }
   // Useless actually, Optional - Equivalent PLMNs
   /*if (msg->equivalent_plmns) {
@@ -506,7 +506,7 @@ emm_send_tracking_area_update_accept (
     size += EPS_NETWORK_FEATURE_SUPPORT_MAXIMUM_LENGTH;
     emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EPS_NETWORK_FEATURE_SUPPORT_PRESENT;
     emm_msg->epsnetworkfeaturesupport       = *msg->eps_network_feature_support;
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_NETWORK_FEATURE_SUPPORT_MAXIMUM_LENGTH(%d)  (%d)", EPS_NETWORK_FEATURE_SUPPORT_MAXIMUM_LENGTH, size);
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_NETWORK_FEATURE_SUPPORT_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_NETWORK_FEATURE_SUPPORT_MAXIMUM_LENGTH, size);
   }
   /* Useless actually, Optional - Additional update result
   if (msg->additional_update_result) {
@@ -544,7 +544,7 @@ emm_send_tracking_area_update_reject (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Tracking Area Update Reject message (cause=%d)", msg->emm_cause);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Tracking Area Update Reject message (cause=%d)\n", msg->emm_cause);
   /*
    * Mandatory - Message type
    */
@@ -583,7 +583,7 @@ emm_send_identity_request (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Identity Request message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Identity Request message\n");
   /*
    * Mandatory - Message type
    */
@@ -634,7 +634,7 @@ emm_send_authentication_request (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Authentication Request message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Authentication Request message\n");
   /*
    * Mandatory - Message type
    */
@@ -683,7 +683,7 @@ emm_send_authentication_reject (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Authentication Reject message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Authentication Reject message\n");
   /*
    * Mandatory - Message type
    */
@@ -716,7 +716,7 @@ emm_send_security_mode_command (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Security Mode Command message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Security Mode Command message\n");
   /*
    * Mandatory - Message type
    */

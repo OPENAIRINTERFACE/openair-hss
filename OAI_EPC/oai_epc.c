@@ -76,6 +76,7 @@ main (
   CHECK_INIT_RETURN (s1ap_mme_init (&mme_config));
   CHECK_INIT_RETURN (mme_app_init (&mme_config));
   CHECK_INIT_RETURN (s6a_init (&mme_config));
+  sleep(4);
   CHECK_INIT_RETURN (sgw_lite_init (mme_config.config_file));
   /*
    * Handle signals here

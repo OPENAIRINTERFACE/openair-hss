@@ -44,6 +44,17 @@
 #define SGW_CONFIG_STRING_SGW_INTERFACE_NAME_FOR_S11            "SGW_INTERFACE_NAME_FOR_S11"
 #define SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11              "SGW_IPV4_ADDRESS_FOR_S11"
 
+#define SGW_CONFIG_STRING_LOGGING                               "LOGGING"
+#define SGW_CONFIG_STRING_OUTPUT                                "OUTPUT"
+#define SGW_CONFIG_STRING_UDP_LOG_LEVEL                         "UDP_LOG_LEVEL"
+#define SGW_CONFIG_STRING_GTPV1U_LOG_LEVEL                      "GTPV1U_LOG_LEVEL"
+#define SGW_CONFIG_STRING_GTPV2C_LOG_LEVEL                      "GTPV2C_LOG_LEVEL"
+#define SGW_CONFIG_STRING_SPGW_APP_LOG_LEVEL                    "SPGW_APP_LOG_LEVEL"
+#define SGW_CONFIG_STRING_S11_LOG_LEVEL                         "S11_LOG_LEVEL"
+#define SGW_CONFIG_STRING_UTIL_LOG_LEVEL                        "UTIL_LOG_LEVEL"
+#define SGW_CONFIG_STRING_MSC_LOG_LEVEL                         "MSC_LOG_LEVEL"
+#define SGW_CONFIG_STRING_ITTI_LOG_LEVEL                        "ITTI_LOG_LEVEL"
+
 #define PGW_CONFIG_STRING_PGW_CONFIG                            "P-GW"
 #define PGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG             "NETWORK_INTERFACES"
 #define PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_S5_S8          "PGW_INTERFACE_NAME_FOR_S5_S8"
@@ -131,6 +142,7 @@ typedef struct pgw_config_s {
 typedef struct spgw_config_s {
   sgw_config_t sgw_config;
   pgw_config_t pgw_config;
+  log_config_t log_config;
 } spgw_config_t;
 
 #ifndef SGW_LITE

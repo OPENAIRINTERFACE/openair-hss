@@ -89,7 +89,7 @@ EmmDeregisteredInitiated (
 
   switch (evt->primitive) {
   default:
-    LOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)", evt->primitive);
+    LOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)\n", evt->primitive);
     break;
   }
 

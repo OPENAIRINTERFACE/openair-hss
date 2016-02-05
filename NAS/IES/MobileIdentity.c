@@ -660,7 +660,7 @@ encode_imeisv_mobile_identity (
   encoded++;
 
   if (imeisv->oddeven != MOBILE_IDENTITY_EVEN) {
-    *(buffer + encoded) = 0x00 | imeisv->svn2;
+    *(buffer + encoded) = imeisv->last | imeisv->svn2;
   } else {
     *(buffer + encoded) = 0xf0 | imeisv->svn2;
   }

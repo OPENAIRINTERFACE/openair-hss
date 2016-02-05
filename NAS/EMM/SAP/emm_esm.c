@@ -114,7 +114,7 @@ emm_esm_send (
   int                                     rc = RETURNerror;
   emm_esm_primitive_t                     primitive = msg->primitive;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMESM-SAP - Received primitive %s (%d)", _emm_esm_primitive_str[primitive - _EMMESM_START - 1], primitive);
+  LOG_INFO (LOG_NAS_EMM, "EMMESM-SAP - Received primitive %s (%d)\n", _emm_esm_primitive_str[primitive - _EMMESM_START - 1], primitive);
 
   switch (primitive) {
   case _EMMESM_UNITDATA_REQ:
@@ -129,7 +129,7 @@ emm_esm_send (
   }
 
   if (rc != RETURNok) {
-    LOG_WARNING (LOG_NAS_EMM, "EMMESM-SAP - Failed to process primitive %s (%d)", _emm_esm_primitive_str[primitive - _EMMESM_START - 1], primitive);
+    LOG_WARNING (LOG_NAS_EMM, "EMMESM-SAP - Failed to process primitive %s (%d)\n", _emm_esm_primitive_str[primitive - _EMMESM_START - 1], primitive);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);

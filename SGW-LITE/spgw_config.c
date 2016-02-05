@@ -289,6 +289,58 @@ spgw_config_init (
   setting_sgw = config_lookup (&cfg, SGW_CONFIG_STRING_SGW_CONFIG);
 
   if (setting_sgw != NULL) {
+
+    // LOGGING setting
+    subsetting = config_setting_get_member (setting_sgw, SGW_CONFIG_STRING_LOGGING);
+
+    config_pP->log_config.udp_log_level      = MAX_LOG_LEVEL; // Means invalid
+    config_pP->log_config.gtpv1u_log_level   = MAX_LOG_LEVEL; // will not overwrite existing log levels if MME and S-GW bundled in same executable
+    config_pP->log_config.gtpv2c_log_level   = MAX_LOG_LEVEL;
+    config_pP->log_config.sctp_log_level     = MAX_LOG_LEVEL;
+    config_pP->log_config.s1ap_log_level     = MAX_LOG_LEVEL;
+    config_pP->log_config.nas_log_level      = MAX_LOG_LEVEL;
+    config_pP->log_config.mme_app_log_level  = MAX_LOG_LEVEL;
+    config_pP->log_config.spgw_app_log_level = MAX_LOG_LEVEL;
+    config_pP->log_config.s11_log_level      = MAX_LOG_LEVEL;
+    config_pP->log_config.s6a_log_level      = MAX_LOG_LEVEL;
+    config_pP->log_config.util_log_level     = MAX_LOG_LEVEL;
+    config_pP->log_config.msc_log_level      = MAX_LOG_LEVEL;
+    config_pP->log_config.itti_log_level     = MAX_LOG_LEVEL;
+    if (subsetting != NULL) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_UDP_LOG_LEVEL, (const char **)&astring)) {
+        config_pP->log_config.udp_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_GTPV1U_LOG_LEVEL, (const char **)&astring)) {
+        config_pP->log_config.gtpv1u_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_GTPV2C_LOG_LEVEL, (const char **)&astring)) {
+        config_pP->log_config.gtpv2c_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SPGW_APP_LOG_LEVEL, (const char **)&astring)) {
+        config_pP->log_config.spgw_app_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_S11_LOG_LEVEL, (const char **)&astring)) {
+        config_pP->log_config.s11_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_UTIL_LOG_LEVEL, (const char **)&astring)) {
+        config_pP->log_config.util_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring)) {
+        config_pP->log_config.msc_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring)) {
+        config_pP->log_config.itti_log_level = LOG_LEVEL_STR2INT (astring);
+      }
+    }
+    LOG_SET_CONFIG(&config_pP->log_config);
+
     subsetting = config_setting_get_member (setting_sgw, SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
     if (subsetting != NULL) {

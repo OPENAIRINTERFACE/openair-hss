@@ -51,7 +51,7 @@ mme_app_send_s11_release_access_bearers_req (
   struct ue_context_s *const ue_context_pP)
 //------------------------------------------------------------------------------
 {
-  task_id_t                               to_task = TASK_UNKNOWN;
+  task_id_t                               to_task = TASK_S11;
 
   /*
    * Keep the identifier to the default APN
@@ -60,10 +60,8 @@ mme_app_send_s11_release_access_bearers_req (
   SgwReleaseAccessBearersRequest         *release_access_bearers_request_p = NULL;
 
   DevAssert (ue_context_pP != NULL);
-#if EPC_BUILD == 0
+#if EPC_BUILD
   to_task = TASK_SPGW_APP;
-#else
-  to_task = TASK_S11;
 #endif
   message_p = itti_alloc_new_message (TASK_MME_APP, SGW_RELEASE_ACCESS_BEARERS_REQUEST);
   release_access_bearers_request_p = &message_p->ittiMsg.sgwReleaseAccessBearersRequest;
@@ -86,7 +84,7 @@ mme_app_send_s11_create_session_req (
 //------------------------------------------------------------------------------
 {
   uint8_t                                 i = 0;
-  task_id_t                               to_task = TASK_UNKNOWN;
+  task_id_t                               to_task = TASK_S11;
 
   /*
    * Keep the identifier to the default APN
@@ -99,8 +97,6 @@ mme_app_send_s11_create_session_req (
   DevAssert (ue_context_pP != NULL);
 #if EPC_BUILD
   to_task = TASK_SPGW_APP;
-#else
-  to_task = TASK_S11;
 #endif
   LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", ue_context_pP->imsi);
 
@@ -237,7 +233,8 @@ mme_app_send_s11_create_session_req (
   session_request_p->serving_network.mnc[1] = ue_context_pP->e_utran_cgi.plmn.MNCdigit2;
   session_request_p->serving_network.mnc[2] = ue_context_pP->e_utran_cgi.plmn.MNCdigit3;
   session_request_p->selection_mode = MS_O_N_P_APN_S_V;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, (to_task == TASK_S11) ? MSC_S11_MME : MSC_SP_GWAPP_MME, NULL, 0, "0 SGW_CREATE_SESSION_REQUEST imsi %" IMSI_FORMAT, ue_context_pP->imsi);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, (TASK_S11 == to_task) ? MSC_S11_MME : MSC_SP_GWAPP_MME, NULL, 0,
+      "0 SGW_CREATE_SESSION_REQUEST imsi %" IMSI_FORMAT, ue_context_pP->imsi);
   return itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
 }
 
@@ -663,7 +660,7 @@ mme_app_handle_initial_context_setup_rsp (
 {
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
-  task_id_t                               to_task = TASK_UNKNOWN;
+  task_id_t                               to_task = TASK_S11;
 
   LOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_CONTEXT_SETUP_RSP from S1AP\n");
   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_ctxt_setup_rsp_pP->mme_ue_s1ap_id);
@@ -673,10 +670,8 @@ mme_app_handle_initial_context_setup_rsp (
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "MME_APP_INITIAL_CONTEXT_SETUP_RSP Unknown ue %u", initial_ctxt_setup_rsp_pP->mme_ue_s1ap_id);
     return;
   }
-#if EPC_BUILD == 0
+#if EPC_BUILD
   to_task = TASK_SPGW_APP;
-#else
-  to_task = TASK_S11;
 #endif
   message_p = itti_alloc_new_message (TASK_MME_APP, SGW_MODIFY_BEARER_REQUEST);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");

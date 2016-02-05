@@ -254,10 +254,11 @@ s1ap_mme_handle_s1_setup_request (
       return s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_protocol, S1ap_CauseProtocol_unspecified, -1);
     }
 
-    LOG_DEBUG (LOG_S1AP, "New s1 setup request incoming from ");
+    log_queue_item_t *  context = NULL;
+    LOG_MESSAGE_START (LOG_LEVEL_DEBUG, LOG_S1AP, (&context), "New s1 setup request incoming from ");
 
     if (s1SetupRequest_p->presenceMask & S1AP_S1SETUPREQUESTIES_ENBNAME_PRESENT) {
-      LOG_DEBUG (LOG_S1AP, "%*s ", s1SetupRequest_p->eNBname.size, s1SetupRequest_p->eNBname.buf);
+      LOG_MESSAGE_ADD (context, "%*s ", s1SetupRequest_p->eNBname.size, s1SetupRequest_p->eNBname.buf);
       eNB_name = (char *)s1SetupRequest_p->eNBname.buf;
     }
 
@@ -270,7 +271,7 @@ s1ap_mme_handle_s1_setup_request (
       }
 
       eNB_id = (eNB_id_buf[0] << 20) + (eNB_id_buf[1] << 12) + (eNB_id_buf[2] << 4) + ((eNB_id_buf[3] & 0xf0) >> 4);
-      LOG_DEBUG (LOG_S1AP, "home eNB id: %07x\n", eNB_id);
+      LOG_MESSAGE_ADD (context, "home eNB id: %07x", eNB_id);
     } else {
       // Macro eNB = 20 bits
       uint8_t                                *eNB_id_buf = s1SetupRequest_p->global_ENB_ID.eNB_ID.choice.macroENB_ID.buf;
@@ -280,8 +281,9 @@ s1ap_mme_handle_s1_setup_request (
       }
 
       eNB_id = (eNB_id_buf[0] << 12) + (eNB_id_buf[1] << 4) + ((eNB_id_buf[2] & 0xf0) >> 4);
-      LOG_DEBUG (LOG_S1AP, "macro eNB id: %05x\n", eNB_id);
+      LOG_MESSAGE_ADD (context, "macro eNB id: %05x", eNB_id);
     }
+    LOG_MESSAGE_FINISH(context);
 
     config_read_lock (&mme_config);
     max_enb_connected = mme_config.max_eNBs;

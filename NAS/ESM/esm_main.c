@@ -86,7 +86,7 @@ esm_main_initialize (
    * Retreive MME supported configuration data
    */
   if (mme_api_get_esm_config (&_esm_data.conf) != RETURNok) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MAIN  - Failed to get MME configuration data");
+    LOG_ERROR (LOG_NAS_ESM, "ESM-MAIN  - Failed to get MME configuration data\n");
   }
 #if NAS_BUILT_IN_EPC == 0
   /*

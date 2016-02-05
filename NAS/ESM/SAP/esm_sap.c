@@ -171,7 +171,7 @@ esm_sap_send (
   esm_primitive_t                         primitive = msg->primitive;
 
   assert ((primitive > ESM_START) && (primitive < ESM_END));
-  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received primitive %s (%d)", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
+  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received primitive %s (%d)\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
 
   switch (primitive) {
   case ESM_PDN_CONNECTIVITY_REQ:
@@ -268,7 +268,7 @@ esm_sap_send (
   }
 
   if (rc != RETURNok) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to process primitive %s (%d)", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
+    LOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to process primitive %s (%d)\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -340,7 +340,7 @@ _esm_sap_recv (
      * * * * message type information element
      */
     if (decoder_rc == TLV_DECODE_BUFFER_TOO_SHORT) {
-      LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Discard message too short to " "contain a complete message type IE");
+      LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Discard message too short to " "contain a complete message type IE\n");
       /*
        * Return indication that received message has been discarded
        */
@@ -372,7 +372,7 @@ _esm_sap_recv (
       /*
        * Semantically incorrect ESM message
        */
-      LOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Received ESM message 0x%x is not " "of the expected type (0x%x)", esm_msg.header.message_type, msg_type);
+      LOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Received ESM message 0x%x is not " "of the expected type (0x%x)\n", esm_msg.header.message_type, msg_type);
       esm_cause = ESM_CAUSE_SEMANTICALLY_INCORRECT;
     }
   }
@@ -400,7 +400,7 @@ _esm_sap_recv (
   int                                     is_discarded = FALSE;
 
   if (esm_cause != ESM_CAUSE_SUCCESS) {
-    LOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Failed to decode expected ESM message " "0x%x", msg_type);
+    LOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Failed to decode expected ESM message " "0x%x\n", msg_type);
   }
   /*
    * Process the received ESM message
@@ -517,7 +517,7 @@ _esm_sap_recv (
         esm_proc_data_t                         data;
 
         memset (&data, 0, sizeof (esm_proc_data_t));
-        LOG_DEBUG (LOG_NAS_ESM, "ESM-SAP   - PDN_CONNECTIVITY_REQUEST pti %u ebi %u", pti, ebi);
+        LOG_DEBUG (LOG_NAS_ESM, "ESM-SAP   - PDN_CONNECTIVITY_REQUEST pti %u ebi %u\n", pti, ebi);
         /*
          * Process PDN connectivity request message received from the UE
          */
@@ -671,7 +671,7 @@ _esm_sap_recv (
       break;
 
     default:
-      LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Received unexpected ESM message " "0x%x", esm_msg.header.message_type);
+      LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Received unexpected ESM message " "0x%x\n", esm_msg.header.message_type);
       esm_cause = ESM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
       break;
     }
@@ -685,7 +685,7 @@ _esm_sap_recv (
        * 3GPP TS 24.301, section 7.1
        * * * * Handling of unknown, unforeseen, and erroneous protocol data
        */
-      LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Received ESM message is not valid " "(cause=%d)", esm_cause);
+      LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Received ESM message is not valid " "(cause=%d)\n", esm_cause);
       /*
        * Return an ESM status message
        */
@@ -737,7 +737,7 @@ _esm_sap_recv (
       *err = ESM_SAP_FAILED;
     }
   } else if (is_discarded) {
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Silently discard message type 0x%x", esm_msg.header.message_type);
+    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Silently discard message type 0x%x\n", esm_msg.header.message_type);
     /*
      * Return indication that received message has been discarded
      */
@@ -822,7 +822,7 @@ _esm_sap_send (
     break;
 
   default:
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Send unexpected ESM message 0x%x", msg_type);
+    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Send unexpected ESM message 0x%x\n", msg_type);
     break;
   }
 

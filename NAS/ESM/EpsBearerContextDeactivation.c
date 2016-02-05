@@ -171,17 +171,17 @@ esm_proc_eps_bearer_context_deactivate (
     LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
   }
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ueid=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ueid, ebi);
 
   if ((ctx != NULL) && (*pid < ESM_DATA_PDN_MAX)) {
     if (ctx->esm_data_ctx.pdn[*pid].pid != *pid) {
-      LOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection identifier %d " "is not valid", *pid);
+      LOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection identifier %d " "is not valid\n", *pid);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     } else if (ctx->esm_data_ctx.pdn[*pid].data == NULL) {
-      LOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d has not been " "allocated", *pid);
+      LOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d has not been " "allocated\n", *pid);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     } else if (!ctx->esm_data_ctx.pdn[*pid].is_active) {
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d is not active", *pid);
+      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d is not active\n", *pid);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     } else {
       int                                     i;
@@ -241,7 +241,7 @@ esm_proc_eps_bearer_context_deactivate_request (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate EPS bearer context deactivation " "(ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate EPS bearer context deactivation " "(ueid=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ueid, ebi);
   /*
    * Send deactivate EPS bearer context request message and
    * * * * start timer T3495
@@ -258,7 +258,7 @@ esm_proc_eps_bearer_context_deactivate_request (
       /*
        * The EPS bearer context was already in ACTIVE state
        */
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already INACTIVE PENDING", ebi);
+      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already INACTIVE PENDING\n", ebi);
     }
   }
 
@@ -299,7 +299,7 @@ esm_proc_eps_bearer_context_deactivate_accept (
   int                                     rc;
   int                                     pid = RETURNerror;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "accepted by the UE (ueid=" NAS_UE_ID_FMT ", ebi=%d)", ctx->ueid, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "accepted by the UE (ueid=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ueid, ebi);
   /*
    * Stop T3495 timer if running
    */
@@ -374,7 +374,8 @@ _eps_bearer_deactivate_t3495_handler (
    * Increment the retransmission counter
    */
   data->count += 1;
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3495 timer expired (ueid=" NAS_UE_ID_FMT ", ebi=%d), " "retransmission counter = %d", data->ueid, data->ebi, data->count);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3495 timer expired (ueid=" NAS_UE_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
+      data->ueid, data->ebi, data->count);
 
   if (data->count < EPS_BEARER_DEACTIVATE_COUNTER_MAX) {
     /*
@@ -496,7 +497,7 @@ _eps_bearer_release (
   ebi = esm_ebr_context_release (ctx, ebi, pid, bid);
 
   if (ebi == ESM_EBI_UNASSIGNED) {
-    LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer context");
+    LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer context\n");
   } else {
     /*
      * Set the EPS bearer context state to INACTIVE
@@ -507,7 +508,7 @@ _eps_bearer_release (
       /*
        * The EPS bearer context was already in INACTIVE state
        */
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already INACTIVE", ebi);
+      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already INACTIVE\n", ebi);
     } else {
       /*
        * Release EPS bearer data
@@ -515,7 +516,7 @@ _eps_bearer_release (
       rc = esm_ebr_release (ctx, ebi);
 
       if (rc != RETURNok) {
-        LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer data");
+        LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer data\n");
       }
     }
   }

@@ -176,7 +176,7 @@ emm_proc_authentication (
   authentication_data_t                  *data;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate authentication KSI = %d, ctx = %p", ksi, ctx);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate authentication KSI = %d, ctx = %p\n", ksi, ctx);
   /*
    * Allocate parameters of the retransmission timer callback
    */
@@ -198,7 +198,7 @@ emm_proc_authentication (
     rc = emm_proc_common_initialize (ueid, success, reject, failure, _authentication_abort, data);
 
     if (rc != RETURNok) {
-      LOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions");
+      LOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
       LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
@@ -292,7 +292,7 @@ emm_proc_authentication_complete (
   emm_sap_t                               emm_sap = {0};
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Authentication complete (ueid=" NAS_UE_ID_FMT ", cause=%d)", ueid, emm_cause);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Authentication complete (ueid=" NAS_UE_ID_FMT ", cause=%d)\n", ueid, emm_cause);
   /*
    * Release retransmission timer paramaters
    */
@@ -331,7 +331,7 @@ emm_proc_authentication_complete (
     /*
      * Stop timer T3460
      */
-    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d) UE " NAS_UE_ID_FMT " ", emm_ctx->T3460.id, emm_ctx->ueid);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d) UE " NAS_UE_ID_FMT "\n", emm_ctx->T3460.id, emm_ctx->ueid);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
   }
@@ -344,10 +344,10 @@ emm_proc_authentication_complete (
       /*
        * RES does not match the XRES parameter
        */
-      LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to authentify the UE");
+      LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to authentify the UE\n");
       emm_cause = EMM_CAUSE_ILLEGAL_UE;
     } else {
-      LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Success to authentify the UE  RESP XRES == XRES UE CONTEXT");
+      LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Success to authentify the UE  RESP XRES == XRES UE CONTEXT\n");
     }
   }
 
@@ -361,7 +361,7 @@ emm_proc_authentication_complete (
        * * * * Ask for a new vector.
        */
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "SQN SYNCH_FAILURE ue id " NAS_UE_ID_FMT " ", ueid);
-      LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - USIM has detected a mismatch in SQN Ask for a new vector");
+      LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - USIM has detected a mismatch in SQN Ask for a new vector\n");
       nas_itti_auth_info_req (ueid, emm_ctx->imsi, 0, res->value);
       rc = RETURNok;
       LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -369,7 +369,7 @@ emm_proc_authentication_complete (
 #endif
 
     default:
-      LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - The MME received an authentication failure message or the RES does not match the XRES parameter computed by the network");
+      LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - The MME received an authentication failure message or the RES does not match the XRES parameter computed by the network\n");
       /*
        * The MME received an authentication failure message or the RES
        * * * * contained in the Authentication Response message received from
@@ -390,7 +390,7 @@ emm_proc_authentication_complete (
      * Notify EMM that the authentication procedure successfully completed
      */
     MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF ue id " NAS_UE_ID_FMT " ", ueid);
-    LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Notify EMM that the authentication procedure successfully completed");
+    LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Notify EMM that the authentication procedure successfully completed\n");
     emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
     emm_sap.u.emm_reg.ueid = ueid;
     emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -445,7 +445,7 @@ _authentication_t3460_handler (
    * Increment the retransmission counter
    */
   data->retransmission_count += 1;
-  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired, retransmission " "counter = %d", data->retransmission_count);
+  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
 
   if (data->retransmission_count < AUTHENTICATION_COUNTER_MAX) {
     /*
@@ -553,7 +553,7 @@ _authentication_request (
       }
     }
 
-    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3460 (%d) expires in %ld seconds", emm_ctx->T3460.id, emm_ctx->T3460.sec);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -630,7 +630,7 @@ _authentication_abort (
     unsigned int                            ueid = data->ueid;
     int                                     notify_failure = data->notify_failure;
 
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort authentication procedure " "(ueid=" NAS_UE_ID_FMT ")", ueid);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort authentication procedure " "(ueid=" NAS_UE_ID_FMT ")\n", ueid);
 #if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
 #else
@@ -642,7 +642,7 @@ _authentication_abort (
        * Stop timer T3460
        */
       if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-        LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)", emm_ctx->T3460.id);
+        LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
         emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " NAS_UE_ID_FMT " ", data->ueid);
       }

@@ -115,6 +115,10 @@ sgw_lite_intertask_interface (
       }
       break;
 
+    case MESSAGE_TEST:
+      LOG_DEBUG (LOG_SPGW_APP, "Received MESSAGE_TEST\n");
+      break;
+
     default:{
         LOG_DEBUG (LOG_SPGW_APP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }

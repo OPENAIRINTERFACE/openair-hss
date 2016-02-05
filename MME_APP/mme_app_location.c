@@ -117,7 +117,7 @@ mme_app_handle_s6a_update_location_ans (
 
   if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
     LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_UPDATE_LOCATION unknown imsi %" IMSI_FORMAT, imsi);
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_UPDATE_LOCATION unknown imsi %" IMSI_FORMAT" ", imsi);
     return -1;
   }
 

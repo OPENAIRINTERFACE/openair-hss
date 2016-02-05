@@ -124,6 +124,10 @@ nas_intertask_interface (
       }
       break;
 
+    case MESSAGE_TEST:
+      LOG_DEBUG (LOG_NAS, "Received MESSAGE_TEST\n");
+      break;
+
     default:{
         LOG_DEBUG (LOG_NAS, "Unkwnon message ID %d:%s from %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p), ITTI_MSG_ORIGIN_NAME (received_message_p));
       }

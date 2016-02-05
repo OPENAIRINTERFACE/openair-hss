@@ -1889,7 +1889,7 @@ _emm_as_cell_info_req (
   cell_info_req_t * as_msg)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS cell information request");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS cell information request\n");
   as_msg->plmnID = msg->plmnIDs.plmn[0];
   as_msg->rat = msg->rat;
   LOG_FUNC_RETURN (LOG_NAS_EMM, AS_CELL_INFO_REQ);

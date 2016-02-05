@@ -95,7 +95,7 @@ emm_recv_status (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received EMM Status message (cause=%d)", msg->emmcause);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received EMM Status message (cause=%d)\n", msg->emmcause);
   /*
    * Message checking
    */
@@ -140,7 +140,7 @@ emm_recv_attach_request (
   emm_proc_attach_type_t                  type;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Attach Request message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Attach Request message\n");
   /*
    * Message checking
    */
@@ -149,7 +149,7 @@ emm_recv_attach_request (
      * Spare bits shall be coded as zero
      */
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - [%08x] - Non zero spare bits is suspicious", ueid);
+    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - [%08x] - Non zero spare bits is suspicious\n", ueid);
   }
 
   /*
@@ -172,23 +172,23 @@ emm_recv_attach_request (
    */
   if (msg->epsattachtype == EPS_ATTACH_TYPE_EPS) {
     type = EMM_ATTACH_TYPE_EPS;
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EPS");
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EPS\n");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_COMBINED_EPS_IMSI) {
     type = EMM_ATTACH_TYPE_COMBINED_EPS_IMSI;
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_COMBINED_EPS_IMSI");
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_COMBINED_EPS_IMSI\n");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_EMERGENCY) {
     type = EMM_ATTACH_TYPE_EMERGENCY;
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EMERGENCY");
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EMERGENCY\n");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_RESERVED) {
     type = EMM_ATTACH_TYPE_RESERVED;
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EMM_ATTACH_TYPE_RESERVED");
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EMM_ATTACH_TYPE_RESERVED\n");
   } else {
     /*
      * Requirement MME24.301R10_9.9.3.11_1
      * All other values shall be interpreted as "EPS attach"
      */
     type = EMM_ATTACH_TYPE_EPS;
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type forced to EMM_ATTACH_TYPE_EPS");
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type forced to EMM_ATTACH_TYPE_EPS\n");
   }
 
   /*
@@ -202,7 +202,7 @@ emm_recv_attach_request (
                                          *p_imei = NULL;
 
   if (msg->oldgutiorimsi.guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get GUTI");
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get GUTI\n");
     /*
      * Get the GUTI
      */
@@ -217,7 +217,7 @@ emm_recv_attach_request (
     guti.gummei.MMEcode = msg->oldgutiorimsi.guti.mmecode;
     guti.m_tmsi = msg->oldgutiorimsi.guti.mtmsi;
   } else if (msg->oldgutiorimsi.imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMSI");
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMSI\n");
     /*
      * Get the IMSI
      */
@@ -239,7 +239,7 @@ emm_recv_attach_request (
     imsi.u.num.digit15 = msg->oldgutiorimsi.imsi.digit15;
     imsi.u.num.parity = msg->oldgutiorimsi.imsi.oddeven;
   } else if (msg->oldgutiorimsi.imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMEI");
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMEI\n");
     /*
      * Get the IMEI
      */
@@ -272,7 +272,7 @@ emm_recv_attach_request (
                                          *p_last_visited_registered_tai = NULL;
 
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get LAST VISITED REGISTERED TAI");
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get LAST VISITED REGISTERED TAI\n");
     p_last_visited_registered_tai = &last_visited_registered_tai;
     last_visited_registered_tai.plmn.MCCdigit1 = msg->lastvisitedregisteredtai.mccdigit1;
     last_visited_registered_tai.plmn.MCCdigit2 = msg->lastvisitedregisteredtai.mccdigit2;
@@ -339,7 +339,7 @@ emm_recv_attach_complete (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Attach Complete message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Attach Complete message\n");
   /*
    * Execute the attach procedure completion
    */
@@ -372,7 +372,7 @@ emm_recv_detach_request (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Detach Request message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Detach Request message\n");
   /*
    * Message processing
    */
@@ -498,7 +498,7 @@ emm_recv_tracking_area_update_request (
   int                                     rc = RETURNok;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Tracking Area Update Request message, Security context %s Integrity protected %s MAC matched %s Ciphered %s",
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Tracking Area Update Request message, Security context %s Integrity protected %s MAC matched %s Ciphered %s\n",
       (0 < decode_status->security_context_available)?"yes":"no",
       (0 < decode_status->integrity_protected_message)?"yes":"no",
       (0 < decode_status->mac_matched)?"yes":"no",
@@ -536,7 +536,7 @@ emm_recv_identity_response (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Identity Response message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Identity Response message\n");
   /*
    * Message processing
    */
@@ -672,7 +672,7 @@ emm_recv_authentication_response (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Authentication Response message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Authentication Response message\n");
 
   /*
    * Message checking
@@ -726,7 +726,7 @@ emm_recv_authentication_failure (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Authentication Failure message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Authentication Failure message\n");
 
   /*
    * Message checking
@@ -782,7 +782,7 @@ emm_recv_security_mode_complete (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Security Mode Complete message");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Security Mode Complete message\n");
   /*
    * Message processing
    */
@@ -818,7 +818,7 @@ emm_recv_security_mode_reject (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Security Mode Reject message " "(cause=%d)", msg->emmcause);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Security Mode Reject message " "(cause=%d)\n", msg->emmcause);
 
   /*
    * Message checking
