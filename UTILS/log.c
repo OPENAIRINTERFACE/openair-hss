@@ -168,9 +168,9 @@ void log_connect_to_server(void)
   /* Obtain address(es) matching host/port */
   memset(&hints, 0, sizeof(struct addrinfo));
   hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-  hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
+  hints.ai_socktype = SOCK_STREAM; /* Stream socket */
   hints.ai_flags = 0;
-  hints.ai_protocol = IPPROTO_TCP;          /* Any protocol */
+  hints.ai_protocol = IPPROTO_TCP;          /* TCP protocol */
 
    s = getaddrinfo(g_oai_log.server_address, g_oai_log.server_port, &hints, &result);
    if (s != 0) {
