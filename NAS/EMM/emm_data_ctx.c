@@ -22,8 +22,8 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
-#if NAS_BUILT_IN_EPC
 #  include "assertions.h"
 #  include "tree.h"
 #  include "emmData.h"
@@ -35,12 +35,12 @@
 struct emm_data_context_s              *
 emm_data_context_get (
   emm_data_t * emm_data,
-  const unsigned int ueid)
+  const nas_ue_id_t ueid)
 {
   struct emm_data_context_s              *emm_data_context_p = NULL;
 
   DevCheck (ueid > 0, ueid, 0, 0);
-  DevAssert (emm_data != NULL);
+  DevAssert (emm_data );
   hashtable_ts_get (emm_data->ctx_coll_ue_id, (const hash_key_t)(ueid), (void **)&emm_data_context_p);
   LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get UE id " NAS_UE_ID_FMT " context %p", ueid, emm_data_context_p);
   return emm_data_context_p;
@@ -55,15 +55,15 @@ emm_data_context_get_by_guti (
   hashtable_rc_t                          h_rc;
   unsigned int                            emm_ue_id;
 
-  DevAssert (emm_data != NULL);
+  DevAssert (emm_data );
 
-  if (NULL != guti) {
+  if ( guti) {
     char                                    guti_str[GUTI2STR_MAX_LENGTH];
 
     GUTI2STR (guti, guti_str, GUTI2STR_MAX_LENGTH);
     h_rc = obj_hashtable_ts_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **)&emm_ue_id);
 
-    if (h_rc == HASH_TABLE_OK) {
+    if (HASH_TABLE_OK == h_rc) {
       LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " %s", emm_ue_id, guti_str);
       return emm_data_context_get (emm_data, (const hash_key_t)emm_ue_id);
     }
@@ -87,16 +87,16 @@ emm_data_context_remove (
   struct emm_data_context_s *elm)
 {
   struct emm_data_context_s              *emm_data_context_p = NULL;
-  unsigned int                           *emm_ue_id = NULL;
+  nas_ue_id_t                            *emm_ue_id = NULL;
 
-  LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " NAS_UE_ID_FMT " ", elm, elm->ueid);
+  LOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " NAS_UE_ID_FMT " ", elm, elm->ueid);
 
-  if (NULL != elm->guti) {
+  if ( elm->guti) {
     char                                    guti_str[GUTI2STR_MAX_LENGTH];
 
     GUTI2STR (elm->guti, guti_str, GUTI2STR_MAX_LENGTH);
     obj_hashtable_ts_remove (emm_data->ctx_coll_guti, (const void *)(elm->guti), sizeof (*elm->guti), (void **)&emm_ue_id);
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " NAS_UE_ID_FMT " guti %s", elm, emm_ue_id, guti_str);
+    LOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " NAS_UE_ID_FMT " guti %s", elm, (nas_ue_id_t)((uintptr_t)emm_ue_id), guti_str);
   }
 
   hashtable_ts_remove (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ueid), (void **)&emm_data_context_p);
@@ -113,16 +113,16 @@ emm_data_context_add (
 
   h_rc = hashtable_ts_insert (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ueid), elm);
 
-  if (h_rc == HASH_TABLE_OK) {
+  if (HASH_TABLE_OK == h_rc) {
     LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context %p UE id " NAS_UE_ID_FMT " ", elm, elm->ueid);
 
-    if (NULL != elm->guti) {
+    if ( elm->guti) {
       char                                    guti_str[GUTI2STR_MAX_LENGTH];
 
       GUTI2STR (elm->guti, guti_str, GUTI2STR_MAX_LENGTH);
-      h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (void *)(elm->guti), sizeof (*elm->guti), (void *)elm->ueid);
+      h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(elm->guti), sizeof (*elm->guti), (void*)((uintptr_t )elm->ueid));
 
-      if (h_rc == HASH_TABLE_OK) {
+      if (HASH_TABLE_OK == h_rc) {
         LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " NAS_UE_ID_FMT " with GUTI %s", elm->ueid, guti_str);
         return RETURNok;
       } else {
@@ -140,7 +140,7 @@ emm_data_context_add (
 void free_emm_data_context(
     struct emm_data_context_s * const emm_ctx)
 {
-  if (emm_ctx != NULL) {
+  if (emm_ctx ) {
     if (emm_ctx->imsi) {
       FREE_CHECK (emm_ctx->imsi);
     }
@@ -245,12 +245,12 @@ void
 emm_data_context_dump (
   const struct emm_data_context_s * const elm_pP)
 {
-  if (elm_pP != NULL) {
+  if (elm_pP ) {
     char                                    imsi_str[16];
     char                                    guti_str[GUTI2STR_MAX_LENGTH];
-    int                                     k,
-                                            size,
-                                            remaining_size;
+    int                                     k = 0,
+                                            size = 0,
+                                            remaining_size = 0;
     char                                    key_string[KASME_LENGTH_OCTETS * 2];
 
     LOG_INFO (LOG_NAS_EMM, "EMM-CTX: ue id:           " NAS_UE_ID_FMT " (UE identifier)", elm_pP->ueid);
@@ -289,15 +289,15 @@ emm_data_context_dump (
     key_string[k * 3 - 1] = '\0';
     LOG_INFO (LOG_NAS_EMM, "             xres:  %s\n", key_string);
 
-    if (elm_pP->security != NULL) {
+    if (elm_pP->security ) {
       LOG_INFO (LOG_NAS_EMM, "         security context:          (Current EPS NAS security context)");
       LOG_INFO (LOG_NAS_EMM, "             type:  %s              (Type of security context)", (elm_pP->security->type == EMM_KSI_NOT_AVAILABLE) ? "KSI_NOT_AVAILABLE" : (elm_pP->security->type == EMM_KSI_NATIVE) ? "KSI_NATIVE" : "KSI_MAPPED");
       LOG_INFO (LOG_NAS_EMM, "             eksi:  %u              (NAS key set identifier for E-UTRAN)", elm_pP->security->eksi);
 
+      remaining_size = KASME_LENGTH_OCTETS * 2;
       if (elm_pP->security->kasme.length > 0) {
         size = 0;
         size = 0;
-        remaining_size = KASME_LENGTH_OCTETS * 2;
 
         for (k = 0; k < elm_pP->security->kasme.length; k++) {
           size += snprintf (&key_string[size], remaining_size, "0x%x ", elm_pP->security->kasme.value[k]);
@@ -369,4 +369,3 @@ emm_data_context_dump_all (
   LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Dump all contexts:");
   hashtable_ts_apply_funct_on_elements (_emm_data.ctx_coll_ue_id, emm_data_context_dump_hash_table_wrapper, NULL);
 }
-#endif

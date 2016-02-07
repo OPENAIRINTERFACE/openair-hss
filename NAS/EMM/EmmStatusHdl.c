@@ -85,7 +85,7 @@
  ***************************************************************************/
 int
 emm_proc_status_ind (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   int emm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
@@ -117,7 +117,7 @@ emm_proc_status_ind (
  ***************************************************************************/
 int
 emm_proc_status (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   int emm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
@@ -134,11 +134,7 @@ emm_proc_status (
   emm_sap.u.emm_as.u.status.emm_cause = emm_cause;
   emm_sap.u.emm_as.u.status.ueid = ueid;
   emm_sap.u.emm_as.u.status.guti = NULL;
-#if NAS_BUILT_IN_EPC
   ctx = emm_data_context_get (&_emm_data, ueid);
-#else
-  ctx = _emm_data.ctx[ueid];
-#endif
 
   if (ctx) {
     sctx = ctx->security;
@@ -147,7 +143,7 @@ emm_proc_status (
   /*
    * Setup EPS NAS security data
    */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.status.sctx, sctx, FALSE, TRUE);
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.status.sctx, sctx, false, true);
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

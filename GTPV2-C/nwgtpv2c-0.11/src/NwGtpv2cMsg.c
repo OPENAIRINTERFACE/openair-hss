@@ -142,7 +142,7 @@ extern                                  "C" {
   NwRcT                                   nwGtpv2cMsgDelete (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
   NW_IN NwGtpv2cMsgHandleT hMsg) {
-    NwGtpv2cStackT                         *pStack = (NwGtpv2cStackT *) hGtpcStackHandle;
+    // warning: unused variable ‘pStack’ [-Wunused-variable]: NwGtpv2cStackT                         *pStack = (NwGtpv2cStackT *) hGtpcStackHandle;
 
     LOG_DEBUG (LOG_GTPV2C, "Purging message %" PRIxPTR "!\n", hMsg);
     ((NwGtpv2cMsgT *) hMsg)->next = gpGtpv2cMsgPool;

@@ -179,7 +179,7 @@ socket_udp_open (
   /*
    * Try each address until we successfully connect
    */
-  for (sp = socket_addr; sp != NULL; sp = sp->ai_next) {
+  for (sp = socket_addr; sp ; sp = sp->ai_next) {
     /*
      * Create the socket endpoint for communication
      */
@@ -241,7 +241,7 @@ socket_udp_open (
    */
   socket_id_t                            *sid = (socket_id_t *) MALLOC_CHECK (sizeof (struct socket_id_s));
 
-  if (sid != NULL) {
+  if (sid ) {
     sid->type = type;
     sid->port = atoi (port);
     sid->fd = sfd;
@@ -450,7 +450,7 @@ _socket_set_option (
    * * * * and it will simply open another socket on the same port and
    * * * * continue listening.
    */
-  optval = TRUE;
+  optval = true;
 
   if (setsockopt (sfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof (optval)) < 0) {
     return RETURNerror;
@@ -459,12 +459,12 @@ _socket_set_option (
   /*
    * IPV6_V6ONLY socket option
    * * * * -------------------------
-   * * * * When option is set to TRUE, the socket is restricted to sending and
+   * * * * When option is set to true, the socket is restricted to sending and
    * * * * receiving IPv6 packets only.
-   * * * * When option is set to FALSE, the socket can be used to send and receive
+   * * * * When option is set to false, the socket can be used to send and receive
    * * * * packets to and from an IPv6 address or an IPv4-mapped IPv6 address.
    */
-  optval = FALSE;
+  optval = false;
 
   if (setsockopt (sfd, IPPROTO_IPV6, IPV6_V6ONLY, &optval, sizeof (optval)) < 0) {
     return RETURNerror;

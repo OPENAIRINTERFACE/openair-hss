@@ -54,6 +54,7 @@
 
 #include <string.h>             // memset, strlen
 #include <assert.h>
+#include <stdbool.h>
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -78,7 +79,7 @@ static int                              _esm_sap_send (
   int pti,
   int ebi,
   const esm_sap_data_t * data,
-  OctetString * rsp);
+  OctetString * rsp) __attribute__ ((unused));
 
 /*
    String representation of ESM-SAP primitives
@@ -252,7 +253,7 @@ esm_sap_send (
       /*
        * Locally deactivate EPS bearer context
        */
-      rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, TRUE, msg->data.eps_bearer_context_deactivate.ebi, &pid, &bid, NULL);
+      rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.eps_bearer_context_deactivate.ebi, &pid, &bid, NULL);
     }
     break;
 
@@ -397,7 +398,7 @@ _esm_sap_recv (
   /*
    * Indicate whether the received message shall be ignored
    */
-  int                                     is_discarded = FALSE;
+  int                                     is_discarded = false;
 
   if (esm_cause != ESM_CAUSE_SUCCESS) {
     LOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Failed to decode expected ESM message " "0x%x\n", msg_type);
@@ -422,7 +423,7 @@ _esm_sap_recv (
          * * * * Ignore ESM message received with reserved or assigned
          * * * * value that does not match an existing EPS bearer context
          */
-        is_discarded = TRUE;
+        is_discarded = true;
       }
 
       break;
@@ -442,7 +443,7 @@ _esm_sap_recv (
          * * * * Ignore ESM message received with reserved or assigned
          * * * * value that does not match an existing EPS bearer context
          */
-        is_discarded = TRUE;
+        is_discarded = true;
       }
 
       break;
@@ -462,7 +463,7 @@ _esm_sap_recv (
          * * * * Ignore ESM message received with reserved or assigned
          * * * * value that does not match an existing EPS bearer context
          */
-        is_discarded = TRUE;
+        is_discarded = true;
       }
 
       break;
@@ -482,7 +483,7 @@ _esm_sap_recv (
          * * * * Ignore ESM message received with reserved or assigned
          * * * * value that does not match an existing EPS bearer context
          */
-        is_discarded = TRUE;
+        is_discarded = true;
       }
 
       break;
@@ -502,7 +503,7 @@ _esm_sap_recv (
          * * * * Ignore ESM message received with reserved or assigned
          * * * * value that does not match an existing EPS bearer context
          */
-        is_discarded = TRUE;
+        is_discarded = true;
       }
 
       break;
@@ -698,7 +699,7 @@ _esm_sap_recv (
       /*
        * Discard received ESM message
        */
-      is_discarded = TRUE;
+      is_discarded = true;
     }
   } else {
     /*
@@ -708,7 +709,7 @@ _esm_sap_recv (
     rc = RETURNok;
   }
 
-  if ((rc != RETURNerror) && (esm_procedure != NULL)) {
+  if ((rc != RETURNerror) && (esm_procedure )) {
     /*
      * Encode the returned ESM response message
      */
@@ -788,7 +789,7 @@ _esm_sap_send (
   /*
    * Indicate whether the message is sent by the UE or the MME
    */
-  int                                     sent_by_ue = FALSE;
+  bool                                    sent_by_ue = false;
   ESM_msg                                 esm_msg;
 
   memset (&esm_msg, 0, sizeof (ESM_msg));
@@ -830,8 +831,7 @@ _esm_sap_send (
     /*
      * Encode the returned ESM response message
      */
-    int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) _esm_sap_buffer,
-                                                                   ESM_SAP_BUFFER_SIZE);
+    int size = esm_msg_encode (&esm_msg, (uint8_t *) _esm_sap_buffer, ESM_SAP_BUFFER_SIZE);
 
     if (size > 0) {
       rsp->length = size;

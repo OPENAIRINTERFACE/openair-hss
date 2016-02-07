@@ -392,8 +392,8 @@ hashtable_apply_funct_on_elements (
 hashtable_rc_t
 hashtable_ts_apply_funct_on_elements (
   hash_table_t * const hashtblP,
-  void functP (hash_key_t keyP,
-               void *dataP,
+  void functP (const hash_key_t keyP,
+               void * const dataP,
                void *parameterP),
   void *parameterP)
 //-------------------------------------------------------------------------------------------------------------------------------

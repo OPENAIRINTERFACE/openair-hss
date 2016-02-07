@@ -28,7 +28,7 @@
  */
 
 /*! \file log.c
-   \brief Message chart generator logging utility (generated files to processed by a script to produce a loggen input file for generating a sequence diagram document)
+   \brief Thread safe logging utility, log output can be redirected to stdout, file or remote host through TCP.
    \author  Lionel GAUTHIER
    \date 2015
    \email: lionel.gauthier@eurecom.fr
@@ -38,6 +38,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <inttypes.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -50,6 +51,7 @@
 #include "liblfds611.h"
 #include "intertask_interface.h"
 #include "timer.h"
+#include "hashtable.h"
 
 #include "log.h"
 #include "assertions.h"
@@ -60,16 +62,20 @@
 #endif
 
 //-------------------------------
-#define LOG_MAX_QUEUE_ELEMENTS    1024
-#define LOG_MAX_PROTO_NAME_LENGTH 16
-#define LOG_MAX_MESSAGE_LENGTH    512
+#define LOG_MAX_QUEUE_ELEMENTS                1024
+#define LOG_MAX_PROTO_NAME_LENGTH               16
+#define LOG_MAX_MESSAGE_LENGTH                 512
+#define LOG_FLUSH_PERIOD_SEC                     0
+#define LOG_FLUSH_PERIOD_MICRO_SEC          100000
 
 #define LOG_DISPLAYED_FILENAME_MAX_LENGTH       32
 #define LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH  5
 #define LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH      6
-#define LOG_MAX_LOG_LEVEL_NAME_LENGTH 10
-#define LOG_MAX_SERVER_ADDRESS_LENGTH 96
-#define LOG_MAX_PORT_NUM_LENGTH 6
+#define LOG_FUNC_INDENT_SPACES                   3
+#define LOG_LEVEL_NAME_MAX_LENGTH               10
+#define LOG_ANSI_CODE_MAX_LENGTH                15
+#define LOG_MAX_SERVER_ADDRESS_LENGTH           96
+#define LOG_MAX_PORT_NUM_LENGTH                  6
 //-------------------------------
 
 typedef unsigned long                   log_message_number_t;
@@ -83,26 +89,32 @@ typedef enum {
   MAX_LOG_TCP_STATE
 } log_tcp_state_t;
 
+
+/*! \struct  oai_log_t
+* \brief Structure containing all the logging utility internal variables.
+*/
 typedef struct oai_log_s {
   // may be good to use stream instead of file descriptor when
   // logging somewhere else of the console.
-  FILE                                   *log_fd;
+  FILE                                   *log_fd;                                               /*!< \brief output stream */
 
-  char                                    server_address[LOG_MAX_SERVER_ADDRESS_LENGTH];
-  char                                    server_port[LOG_MAX_PORT_NUM_LENGTH];
-  log_tcp_state_t                         tcp_state;
+  char                                    server_address[LOG_MAX_SERVER_ADDRESS_LENGTH];        /*!< \brief TCP remote (or local) server hostname */
+  char                                    server_port[LOG_MAX_PORT_NUM_LENGTH];                 /*!< \brief TCP remote (or local) server port     */
+  log_tcp_state_t                         tcp_state;                                            /*!< \brief State of the client TCP connection           */
 
-  char                                    log_proto2str[MAX_LOG_PROTOS][LOG_MAX_PROTO_NAME_LENGTH];
-  char                                    log_level2str[MAX_LOG_LEVEL][LOG_MAX_LOG_LEVEL_NAME_LENGTH];
-  int                                     log_start_time_second;
-  log_level_t                             log_level[MAX_LOG_PROTOS];
+  char                                    log_proto2str[MAX_LOG_PROTOS][LOG_MAX_PROTO_NAME_LENGTH];    /*!< \brief Convert log client (protocol/layer) id into human readable log user name */
+  char                                    log_level2str[MAX_LOG_LEVEL][LOG_LEVEL_NAME_MAX_LENGTH]; /*!< \brief Convert log level id into human readable log level string */
+  int                                     log_start_time_second;                                       /*!< \brief Logging utility reference time              */
+  log_level_t                             log_level[MAX_LOG_PROTOS];                                   /*!< \brief Loglevel id of each client (protocol/layer) */
 
-  log_message_number_t                    log_message_number;
-  struct lfds611_queue_state             *log_message_queue_p;
-  struct lfds611_stack_state             *log_memory_stack_p;
+  log_message_number_t                    log_message_number;                                          /*!< \brief Counter of log message        */
+  struct lfds611_queue_state             *log_message_queue_p;                                         /*!< \brief Thread safe log message queue */
+  struct lfds611_stack_state             *log_memory_stack_p;                                          /*!< \brief Thread safe memory pool       */
+
+  hash_table_t                           *thread_context_htbl;                                         /*!< \brief Container for log_thread_ctxt_t */
 } oai_log_t;
 
-oai_log_t g_oai_log={0};
+static oai_log_t g_oai_log={0};    /*!< \brief  logging utility internal variables global var definition*/
 
 
 //------------------------------------------------------------------------------
@@ -115,8 +127,8 @@ log_task (
 
   itti_mark_task_ready (TASK_LOG);
   log_start_use ();
-  timer_setup (0,               // seconds
-               100000,          // usec
+  timer_setup (LOG_FLUSH_PERIOD_SEC,
+               LOG_FLUSH_PERIOD_MICRO_SEC,
                TASK_LOG, INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &timer_id);
 
   while (1) {
@@ -126,19 +138,21 @@ log_task (
 
       switch (ITTI_MSG_ID (received_message_p)) {
       case TIMER_HAS_EXPIRED:{
+          //test
           LOG_TRACE(LOG_UTIL, "TASK_LOG received TIMER_HAS_EXPIRED\n"); {
             MessageDef                             *message_p = NULL;
             message_p = itti_alloc_new_message (TASK_LOG, MESSAGE_TEST);
             itti_send_msg_to_task (TASK_SPGW_APP, INSTANCE_DEFAULT, message_p);
           }
 
+          // if tcp logging is enabled
           if (LOG_TCP_STATE_NOT_CONNECTED == g_oai_log.tcp_state) {
             log_connect_to_server();
           }
           log_flush_messages ();
 
-          timer_setup (0,               // seconds
-                       90000,          // usec
+          timer_setup (LOG_FLUSH_PERIOD_SEC,
+                       LOG_FLUSH_PERIOD_MICRO_SEC,
                        TASK_LOG, INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &timer_id);
         }
         break;
@@ -391,26 +405,38 @@ log_init (
   rv = snprintf (&g_oai_log.log_proto2str[LOG_MSC][0], LOG_MAX_PROTO_NAME_LENGTH, "MSC");
   rv = snprintf (&g_oai_log.log_proto2str[LOG_ITTI][0], LOG_MAX_PROTO_NAME_LENGTH, "ITTI");
 
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_TRACE][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "TRACE");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_DEBUG][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "DEBUG");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_INFO][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "INFO");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_NOTICE][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "NOTICE");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_WARNING][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "WARNING");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_ERROR][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "ERROR");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_CRITICAL][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "CRITICAL");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_ALERT][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "ALERT");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_EMERGENCY][0], LOG_MAX_LOG_LEVEL_NAME_LENGTH, "EMERGENCY");
+  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_TRACE][0], LOG_LEVEL_NAME_MAX_LENGTH, "TRACE");
+  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_DEBUG][0], LOG_LEVEL_NAME_MAX_LENGTH, "DEBUG");
+  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_INFO][0], LOG_LEVEL_NAME_MAX_LENGTH, "INFO");
+  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_NOTICE][0], LOG_LEVEL_NAME_MAX_LENGTH, "NOTICE");
+  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_WARNING][0], LOG_LEVEL_NAME_MAX_LENGTH, "WARNING");
+  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_ERROR][0], LOG_LEVEL_NAME_MAX_LENGTH, "ERROR");
+  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_CRITICAL][0], LOG_LEVEL_NAME_MAX_LENGTH, "CRITICAL");
+  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_ALERT][0], LOG_LEVEL_NAME_MAX_LENGTH, "ALERT");
+  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_EMERGENCY][0], LOG_LEVEL_NAME_MAX_LENGTH, "EMERGENCY");
 
   for (i=MIN_LOG_PROTOS; i < MAX_LOG_PROTOS; i++) {
     g_oai_log.log_level[i] = default_log_levelP;
   }
   // did not check return value of snprintf...
   for (i=MIN_LOG_LEVEL; i < MAX_LOG_LEVEL; i++) {
-    g_oai_log.log_level2str[i][LOG_MAX_LOG_LEVEL_NAME_LENGTH-1]     = '\0';
+    g_oai_log.log_level2str[i][LOG_LEVEL_NAME_MAX_LENGTH-1]     = '\0';
   }
 
-  log_start_use(); // yes this thread also
-  log_message (LOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing OAI logging Done\n");
+  g_oai_log.thread_context_htbl = hashtable_create (64, NULL, FREE_CHECK, "Logging thread context hashtable");
+  AssertFatal (NULL != g_oai_log.thread_context_htbl, "Could not create hashtable for Log!\n");
+
+  log_thread_ctxt_t *thread_ctxt = CALLOC_CHECK(1, sizeof(log_thread_ctxt_t));
+  AssertFatal(NULL != thread_ctxt, "Error Could not create log thread context\n");
+  pthread_t p = pthread_self();
+  thread_ctxt->tid = p;
+  hashtable_rc_t hash_rc = hashtable_ts_insert(g_oai_log.thread_context_htbl, (hash_key_t) p, thread_ctxt);
+  if (HASH_TABLE_OK != hash_rc) {
+    fprintf (stderr, "Error Could not register log thread context\n");
+    FREE_CHECK(thread_ctxt);
+  }
+
+  log_message (thread_ctxt, LOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing OAI logging Done\n");
   return 0;
 }
 
@@ -429,8 +455,23 @@ void
 log_start_use (
   void)
 {
-  lfds611_queue_use (g_oai_log.log_message_queue_p);
-  lfds611_stack_use (g_oai_log.log_memory_stack_p);
+  pthread_t      p       = pthread_self();
+  hashtable_rc_t hash_rc = hashtable_ts_is_key_exists (g_oai_log.thread_context_htbl, (hash_key_t) p);
+  if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
+    lfds611_queue_use (g_oai_log.log_message_queue_p);
+    lfds611_stack_use (g_oai_log.log_memory_stack_p);
+    log_thread_ctxt_t *thread_ctxt = CALLOC_CHECK(1, sizeof(log_thread_ctxt_t));
+    if (thread_ctxt) {
+      thread_ctxt->tid = p;
+      hash_rc = hashtable_ts_insert(g_oai_log.thread_context_htbl, (hash_key_t) p, thread_ctxt);
+      if (HASH_TABLE_OK != hash_rc) {
+        fprintf (stderr, "Error Could not register log thread context\n");
+        FREE_CHECK(thread_ctxt);
+      }
+    } else {
+      fprintf (stderr, "Error Could not create log thread context\n");
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -507,15 +548,33 @@ void log_stream_hex(
 {
   log_queue_item_t  * context = NULL;
   int                 octet_index = 0;
+  int                 rv = 0;
+  log_thread_ctxt_t  *thread_ctxt = NULL;
+  hashtable_rc_t      hash_rc = HASH_TABLE_OK;
 
+  pthread_t             p           = pthread_self();
+  hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+  if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
+    // make the thread safe LFDS collections usable by this thread
+    log_start_use();
+  }
+  hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+  AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
   if (messageP) {
-    log_message_start(log_levelP, protoP, &context, source_fileP, line_numP, "%s (hexa)", messageP);
+    log_message_start(thread_ctxt, log_levelP, protoP, &context, source_fileP, line_numP, "%s (hexa)", messageP);
   } else {
-    log_message_start(log_levelP, protoP, &context, source_fileP, line_numP, "(hexa):");
+    log_message_start(thread_ctxt, log_levelP, protoP, &context, source_fileP, line_numP, "(hexa):");
   }
   if ((streamP) && (context)) {
     for (octet_index = 0; octet_index < sizeP; octet_index++) {
-      log_message_add(context, " %02x", streamP[octet_index]);
+      // do not call log_message_add(), too much overhead for sizeP*3chars
+      rv = snprintf (&context->message_str[context->message_str_size], LOG_MAX_MESSAGE_LENGTH - context->message_str_size, " %02x", streamP[octet_index]);
+
+      if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - context->message_str_size) < rv)) {
+        fprintf (stderr, "Error while logging message");
+      } else {
+    	  context->message_str_size += rv;
+      }
     }
     log_message_finish(context);
   }
@@ -534,13 +593,24 @@ void log_stream_hex_array(
   log_queue_item_t *  context = NULL;
   int                 octet_index = 0;
   int                 index = 0;
+  log_thread_ctxt_t  *thread_ctxt = NULL;
+  hashtable_rc_t     hash_rc = HASH_TABLE_OK;
+
+  pthread_t             p           = pthread_self();
+  hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+  if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
+    // make the thread safe LFDS collections usable by this thread
+    log_start_use();
+  }
+  hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+  AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
 
   if (messageP) {
-    log_message(log_levelP, protoP, source_fileP, line_numP, "%s", messageP);
+    log_message(thread_ctxt, log_levelP, protoP, source_fileP, line_numP, "%s", messageP);
   }
-  log_message(log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|\n");
-  log_message(log_levelP, protoP, source_fileP, line_numP, "      |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n");
-  log_message(log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|\n");
+  log_message(thread_ctxt, log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|\n");
+  log_message(thread_ctxt, log_levelP, protoP, source_fileP, line_numP, "      |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n");
+  log_message(thread_ctxt, log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|\n");
 
   if (streamP) {
     for (octet_index = 0; octet_index < sizeP; octet_index++) {
@@ -549,7 +619,7 @@ void log_stream_hex_array(
           log_message_add(context, " |");
           log_message_finish(context);
         }
-        log_message_start(log_levelP, protoP, &context, source_fileP, line_numP, " %04d |", octet_index);
+        log_message_start(thread_ctxt, log_levelP, protoP, &context, source_fileP, line_numP, " %04d |", octet_index);
       }
 
       /*
@@ -571,7 +641,7 @@ void log_stream_hex_array(
 //------------------------------------------------------------------------------
 void
 log_message_add (
-  log_queue_item_t * contextP,
+  log_queue_item_t * messageP,
   char *format,
   ...)
 {
@@ -579,17 +649,17 @@ log_message_add (
   int                                     rv;
   char                                   *char_message_p = NULL;
 
-  if (contextP) {
-	char_message_p = contextP->message_str;
+  if (messageP) {
+	char_message_p = messageP->message_str;
     if (char_message_p) {
       va_start (args, format);
-      rv = vsnprintf (&char_message_p[contextP->message_str_size], LOG_MAX_MESSAGE_LENGTH - contextP->message_str_size, format, args);
+      rv = vsnprintf (&char_message_p[messageP->message_str_size], LOG_MAX_MESSAGE_LENGTH - messageP->message_str_size, format, args);
       va_end (args);
 
-      if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - contextP->message_str_size) < rv)) {
+      if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - messageP->message_str_size) < rv)) {
         fprintf (stderr, "Error while logging message");
       } else {
-        contextP->message_str_size += rv;
+    	  messageP->message_str_size += rv;
       }
     }
   }
@@ -597,32 +667,33 @@ log_message_add (
 //------------------------------------------------------------------------------
 void
 log_message_finish (
-  log_queue_item_t * contextP)
+  log_queue_item_t * messageP)
 {
   int                                     rv;
   char                                   *char_message_p = NULL;
 
-  if (contextP) {
-    char_message_p = contextP->message_str;
+  if (messageP) {
+    char_message_p = messageP->message_str;
     if (char_message_p) {
-      rv = snprintf (&char_message_p[contextP->message_str_size], LOG_MAX_MESSAGE_LENGTH - contextP->message_str_size, "\n");
+      rv = snprintf (&char_message_p[messageP->message_str_size], LOG_MAX_MESSAGE_LENGTH - messageP->message_str_size, "\n");
 
-      if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - contextP->message_str_size) < rv)) {
+      if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - messageP->message_str_size) < rv)) {
         char_message_p[LOG_MAX_MESSAGE_LENGTH-1] = '\0';
         fprintf (stderr, "Error while logging message");
       } else {
-        contextP->message_str_size += rv;
+    	  messageP->message_str_size += rv;
       }
       // send message
-      rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, contextP);
+      rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, messageP);
 
       if (0 == rv) {
         fprintf (stderr, "Error while lfds611_queue_guaranteed_enqueue message %s in LOG", char_message_p);
+        // put in memory pool the message buffer
         rv = lfds611_stack_guaranteed_push (g_oai_log.log_memory_stack_p, char_message_p);
-        FREE_CHECK (contextP);
+        FREE_CHECK (messageP);
       }
     } else {
-      FREE_CHECK (contextP);
+      FREE_CHECK (messageP);
     }
   }
 }
@@ -630,19 +701,22 @@ log_message_finish (
 //------------------------------------------------------------------------------
 void
 log_message_start (
+  log_thread_ctxt_t *thread_ctxtP,
   const log_level_t log_levelP,
   const log_proto_t protoP,
-  log_queue_item_t ** contextP, // Out parameter
+  log_queue_item_t ** messageP, // Out parameter
   const char *const source_fileP,
   const unsigned int line_numP,
   char *format,
   ...)
 {
   va_list                                 args;
-  int                                     rv;
-  int                                     rv2;
+  int                                     rv              = 0;
+  int                                     rv2             = 0;
   int                                     filename_length = 0;
-  char                                   *char_message_p = NULL;
+  char                                   *char_message_p  = NULL;
+  log_thread_ctxt_t                      *thread_ctxt     = thread_ctxtP;
+  hashtable_rc_t                          hash_rc         = HASH_TABLE_OK;
 
   if ((MIN_LOG_PROTOS > protoP) || (MAX_LOG_PROTOS <= protoP)) {
     return;
@@ -653,9 +727,21 @@ log_message_start (
   if (log_levelP > g_oai_log.log_level[protoP]) {
     return;
   }
-  *contextP = MALLOC_CHECK (sizeof (log_queue_item_t));
 
-  if (NULL != *contextP) {
+  if (NULL == thread_ctxt){
+    pthread_t             p           = pthread_self();
+    hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+    if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
+      // make the thread safe LFDS collections usable by this thread
+      log_start_use();
+    }
+    hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+    AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
+  }
+
+  *messageP = MALLOC_CHECK (sizeof (log_queue_item_t));
+
+  if (NULL != *messageP) {
     rv = lfds611_stack_pop (g_oai_log.log_memory_stack_p, (void **)&char_message_p);
 
     if (0 == rv) {
@@ -668,17 +754,21 @@ log_message_start (
       log_get_elapsed_time_since_start(&elapsed_time);
       filename_length = strlen(source_fileP);
       if (filename_length > LOG_DISPLAYED_FILENAME_MAX_LENGTH) {
-        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 " %05ld:%06ld %-*.*s %-*.*s %-*.*s:%04u   ",
+        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 " %05ld:%06ld %08lX %-*.*s %-*.*s %-*.*s:%04u   %*s",
             __sync_fetch_and_add (&g_oai_log.log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
+            thread_ctxt->tid,
             LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, &g_oai_log.log_level2str[log_levelP][0],
             LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH, LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH, &g_oai_log.log_proto2str[protoP][0],
-            LOG_DISPLAYED_FILENAME_MAX_LENGTH, LOG_DISPLAYED_FILENAME_MAX_LENGTH, &source_fileP[filename_length-LOG_DISPLAYED_FILENAME_MAX_LENGTH], line_numP);
+            LOG_DISPLAYED_FILENAME_MAX_LENGTH, LOG_DISPLAYED_FILENAME_MAX_LENGTH, &source_fileP[filename_length-LOG_DISPLAYED_FILENAME_MAX_LENGTH], line_numP,
+            thread_ctxt->indent, " ");
       } else {
-        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 " %05ld:%06ld %-*.*s %-*.*s %-*.*s:%04u   ",
+        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 " %05ld:%06ld %08lX %-*.*s %-*.*s %-*.*s:%04u   %*s",
             __sync_fetch_and_add (&g_oai_log.log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
+            thread_ctxt->tid,
             LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, &g_oai_log.log_level2str[log_levelP][0],
             LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH, LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH, &g_oai_log.log_proto2str[protoP][0],
-            LOG_DISPLAYED_FILENAME_MAX_LENGTH, LOG_DISPLAYED_FILENAME_MAX_LENGTH, source_fileP, line_numP);
+            LOG_DISPLAYED_FILENAME_MAX_LENGTH, LOG_DISPLAYED_FILENAME_MAX_LENGTH, source_fileP, line_numP,
+            thread_ctxt->indent, " ");
       }
 
       if ((0 > rv) || (LOG_MAX_MESSAGE_LENGTH < rv)) {
@@ -696,25 +786,57 @@ log_message_start (
       }
 
       rv += rv2;
-      (*contextP)->message_str = char_message_p;
-      (*contextP)->message_str_size = rv;
+      (*messageP)->message_str = char_message_p;
+      (*messageP)->message_str_size = rv;
       return;
     } else {
-      FREE_CHECK (*contextP);
+      FREE_CHECK (*messageP);
       fprintf (stderr, "Error while lfds611_stack_pop()\n");
       log_flush_messages ();
     }
   }
   return;
 error_event_start:
+  // put in memory pool the message buffer
   rv = lfds611_stack_guaranteed_push (g_oai_log.log_memory_stack_p, char_message_p);
-  FREE_CHECK (*contextP);
+  FREE_CHECK (*messageP);
   return;
 }
 
 //------------------------------------------------------------------------------
+// hard-coded to use LOG_LEVEL_TRACE
+void
+log_func (
+  bool  is_enteringP,
+  const log_proto_t protoP,
+  const char *const source_fileP,
+  const unsigned int line_numP,
+  const char *const functionP)
+{
+  log_thread_ctxt_t        *thread_ctxt = NULL;
+  hashtable_rc_t            hash_rc     = HASH_TABLE_OK;
+  pthread_t                 p           = pthread_self();
+
+  hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+  if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
+    // make the thread safe LFDS collections usable by this thread
+    log_start_use();
+  }
+  hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+  AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
+  if (true == is_enteringP) {
+    log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Entering %s()\n", functionP);
+    thread_ctxt->indent += LOG_FUNC_INDENT_SPACES;
+  } else {
+    log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Leaving %s()\n", functionP);
+    thread_ctxt->indent -= LOG_FUNC_INDENT_SPACES;
+    if (thread_ctxt->indent < 0) thread_ctxt->indent = 0;
+  }
+}
+//------------------------------------------------------------------------------
 void
 log_message (
+  log_thread_ctxt_t * thread_ctxtP,
   const log_level_t log_levelP,
   const log_proto_t protoP,
   const char *const source_fileP,
@@ -723,11 +845,13 @@ log_message (
   ...)
 {
   va_list                                 args;
-  int                                     rv;
-  int                                     rv2;
+  int                                     rv              = 0;
+  int                                     rv2             = 0;
   int                                     filename_length = 0;
-  log_queue_item_t                       *new_item_p = NULL;
-  char                                   *char_message_p = NULL;
+  log_queue_item_t                       *new_item_p      = NULL;
+  char                                   *char_message_p  = NULL;
+  log_thread_ctxt_t                      *thread_ctxt     = thread_ctxtP;
+  hashtable_rc_t                          hash_rc         = HASH_TABLE_OK;
 
   if ((MIN_LOG_PROTOS > protoP) || (MAX_LOG_PROTOS <= protoP)) {
     return;
@@ -737,6 +861,16 @@ log_message (
   }
   if (log_levelP > g_oai_log.log_level[protoP]) {
     return;
+  }
+  if (NULL == thread_ctxt){
+    pthread_t             p           = pthread_self();
+    hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+    if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
+      // make the thread safe LFDS collections usable by this thread
+      log_start_use();
+    }
+    hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+    AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
   }
   new_item_p = MALLOC_CHECK (sizeof (log_queue_item_t));
 
@@ -753,17 +887,21 @@ log_message (
       log_get_elapsed_time_since_start(&elapsed_time);
       filename_length = strlen(source_fileP);
       if (filename_length > LOG_DISPLAYED_FILENAME_MAX_LENGTH) {
-        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 " %05ld:%06ld %-*.*s %-*.*s %-*.*s:%04u   ",
+        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 " %05ld:%06ld %08lX %-*.*s %-*.*s %-*.*s:%04u   %*s",
             __sync_fetch_and_add (&g_oai_log.log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
+            thread_ctxt->tid,
             LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, &g_oai_log.log_level2str[log_levelP][0],
             LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH, LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH, &g_oai_log.log_proto2str[protoP][0],
-            LOG_DISPLAYED_FILENAME_MAX_LENGTH, LOG_DISPLAYED_FILENAME_MAX_LENGTH, &source_fileP[filename_length-LOG_DISPLAYED_FILENAME_MAX_LENGTH], line_numP);
+            LOG_DISPLAYED_FILENAME_MAX_LENGTH, LOG_DISPLAYED_FILENAME_MAX_LENGTH, &source_fileP[filename_length-LOG_DISPLAYED_FILENAME_MAX_LENGTH], line_numP,
+            thread_ctxt->indent, " ");
       } else {
-        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 " %05ld:%06ld %-*.*s %-*.*s %-*.*s:%04u   ",
+        rv = snprintf (char_message_p, LOG_MAX_MESSAGE_LENGTH, "%06" PRIu64 " %05ld:%06ld %08lX %-*.*s %-*.*s %-*.*s:%04u   %*s",
             __sync_fetch_and_add (&g_oai_log.log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
+            thread_ctxt->tid,
             LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, &g_oai_log.log_level2str[log_levelP][0],
             LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH, LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH, &g_oai_log.log_proto2str[protoP][0],
-            LOG_DISPLAYED_FILENAME_MAX_LENGTH, LOG_DISPLAYED_FILENAME_MAX_LENGTH, source_fileP, line_numP);
+            LOG_DISPLAYED_FILENAME_MAX_LENGTH, LOG_DISPLAYED_FILENAME_MAX_LENGTH, source_fileP, line_numP,
+            thread_ctxt->indent, " ");
       }
 
       if ((0 > rv) || (LOG_MAX_MESSAGE_LENGTH < rv)) {

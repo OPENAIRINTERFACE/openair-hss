@@ -218,7 +218,7 @@ main (
   /*
    * User simulator main loop
    */
-  while (TRUE) {
+  while (true) {
     char                                    c;
     int                                     len;
 
@@ -350,7 +350,7 @@ static void                            *
 _receive_thread (
   void *arg)
 {
-  while (TRUE) {
+  while (true) {
     /*
      * Receive AT response from the NAS sublayer
      */

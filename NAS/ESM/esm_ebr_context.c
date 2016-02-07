@@ -44,9 +44,7 @@
 #include "esm_ebr.h"
 #include "esm_ebr_context.h"
 #include "emm_sap.h"
-#if ENABLE_ITTI
-#  include "assertions.h"
-#endif
+#include "assertions.h"
 #include "dynamic_memory_check.h"
 
 
@@ -74,7 +72,7 @@
  ** Inputs:  ueid:      UE identifier                              **
  **      pid:       PDN connection identifier                  **
  **      ebi:       EPS bearer identity                        **
- **      is_default:    TRUE if the new bearer is a default EPS    **
+ **      is_default:    true if the new bearer is a default EPS    **
  **             bearer context                             **
  **      esm_qos:   EPS bearer level QoS parameters            **
  **      tft:       Traffic flow template parameters           **
@@ -100,20 +98,10 @@ esm_ebr_context_create (
   int                                     bid = 0;
   esm_data_context_t                     *esm_ctx = NULL;
   esm_pdn_t                              *pdn = NULL;
-  unsigned int                            ueid = 0;
 
   LOG_FUNC_IN (LOG_NAS_ESM);
-#if NAS_BUILT_IN_EPC
   esm_ctx = &ctx->esm_data_ctx;
-#else
 
-  if (ueid < ESM_DATA_NB_UE_MAX) {
-    ctx = _esm_data.ctx[ueid];
-  } else {
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
-  }
-
-#endif
   bid = ESM_DATA_EPS_BEARER_MAX;
   LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new %s EPS bearer context (ebi=%d) " "for PDN connection (pid=%d)\n",
       (is_default) ? "default" : "dedicated", ebi, pid);
@@ -141,7 +129,7 @@ esm_ebr_context_create (
          */
         bid = 0;
 
-        if (pdn->bearer[bid] != NULL) {
+        if (pdn->bearer[bid] ) {
           LOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - A default EPS bearer context " "is already allocated\n");
           LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
         }
@@ -150,7 +138,7 @@ esm_ebr_context_create (
          * Search for an available EPS bearer context entry
          */
         for (bid = 1; bid < ESM_DATA_EPS_BEARER_MAX; bid++) {
-          if (pdn->bearer[bid] != NULL) {
+          if (pdn->bearer[bid] ) {
             continue;
           }
 
@@ -166,7 +154,7 @@ esm_ebr_context_create (
      */
     esm_bearer_t                           *ebr = (esm_bearer_t *) MALLOC_CHECK (sizeof (esm_bearer_t));
 
-    if (ebr != NULL) {
+    if (ebr ) {
       memset (ebr, 0, sizeof (esm_bearer_t));
       /*
        * Increment the total number of active EPS bearers
@@ -183,14 +171,14 @@ esm_ebr_context_create (
       ebr->bid = bid;
       ebr->ebi = ebi;
 
-      if (qos != NULL) {
+      if (qos ) {
         /*
          * EPS bearer level QoS parameters
          */
         ebr->qos = *qos;
       }
 
-      if ((tft != NULL) && (tft->n_pkfs < NET_PACKET_FILTER_MAX)) {
+      if ((tft ) && (tft->n_pkfs < NET_PACKET_FILTER_MAX)) {
         int                                     i;
 
         /*
@@ -199,7 +187,7 @@ esm_ebr_context_create (
         for (i = 0; i < tft->n_pkfs; i++) {
           ebr->tft.pkf[i] = (network_pkf_t *) MALLOC_CHECK (sizeof (network_pkf_t));
 
-          if (ebr->tft.pkf[i] != NULL) {
+          if (ebr->tft.pkf[i] ) {
             *(ebr->tft.pkf[i]) = *(tft->pkf[i]);
             ebr->tft.n_pkfs += 1;
           }
@@ -210,13 +198,13 @@ esm_ebr_context_create (
         /*
          * Set the PDN connection activation indicator
          */
-        esm_ctx->pdn[pid].is_active = TRUE;
+        esm_ctx->pdn[pid].is_active = true;
 
         /*
          * Update the emergency bearer services indicator
          */
         if (pdn->is_emergency) {
-          esm_ctx->emergency = TRUE;
+          esm_ctx->emergency = true;
         }
       }
 
@@ -261,23 +249,12 @@ esm_ebr_context_release (
   int *pid,
   int *bid)
 {
-  int                                     found = FALSE;
+  int                                     found = false;
   esm_pdn_t                              *pdn = NULL;
   esm_data_context_t                     *esm_ctx;
-  unsigned int                            ueid = 0;
 
   LOG_FUNC_IN (LOG_NAS_ESM);
-#if NAS_BUILT_IN_EPC
   esm_ctx = &ctx->esm_data_ctx;
-#else
-
-  if (ueid < ESM_DATA_NB_UE_MAX) {
-    ctx = &_esm_data.ctx[ueid];
-  } else {
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
-  }
-
-#endif
 
   if (ebi != ESM_EBI_UNASSIGNED) {
     /*
@@ -297,14 +274,14 @@ esm_ebr_context_release (
       /*
        * An active PDN connection is found
        */
-      if (esm_ctx->pdn[*pid].data != NULL) {
+      if (esm_ctx->pdn[*pid].data ) {
         pdn = esm_ctx->pdn[*pid].data;
 
         /*
          * Search for the specified EPS bearer context entry
          */
         for (*bid = 0; *bid < pdn->n_bearers; (*bid)++) {
-          if (pdn->bearer[*bid] != NULL) {
+          if (pdn->bearer[*bid] ) {
             if (pdn->bearer[*bid]->ebi != ebi) {
               continue;
             }
@@ -312,7 +289,7 @@ esm_ebr_context_release (
             /*
              * The EPS bearer context entry is found
              */
-            found = TRUE;
+            found = true;
             break;
           }
         }
@@ -341,9 +318,9 @@ esm_ebr_context_release (
       } else {
         pdn = esm_ctx->pdn[*pid].data;
 
-        if (pdn->bearer[*bid] != NULL) {
+        if (pdn->bearer[*bid] ) {
           ebi = pdn->bearer[*bid]->ebi;
-          found = TRUE;
+          found = true;
         }
       }
     }
@@ -406,7 +383,7 @@ esm_ebr_context_release (
           /*
            * Set the EPS bearer context state to INACTIVE
            */
-          (void)esm_ebr_set_status (ctx, pdn->bearer[i]->ebi, ESM_EBR_INACTIVE, TRUE);
+          (void)esm_ebr_set_status (ctx, pdn->bearer[i]->ebi, ESM_EBR_INACTIVE, true);
           /*
            * Release EPS bearer data
            */
@@ -432,20 +409,20 @@ esm_ebr_context_release (
       /*
        * Reset the PDN connection activation indicator
        */
-      esm_ctx->pdn[*pid].is_active = FALSE;
+      esm_ctx->pdn[*pid].is_active = false;
 
       /*
        * Update the emergency bearer services indicator
        */
       if (pdn->is_emergency) {
-        esm_ctx->emergency = FALSE;
+        esm_ctx->emergency = false;
       }
     }
 
     if (esm_ctx->n_ebrs == 0) {
       /*
        * TODO: Release the PDN connection and marked the UE as inactive
-       * * * * in the network for EPS services (is_attached = FALSE)
+       * * * * in the network for EPS services (is_attached = false)
        */
     }
 

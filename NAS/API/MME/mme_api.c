@@ -299,20 +299,12 @@ static int                              _mme_api_pdn_id = 0;
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-#if NAS_BUILT_IN_EPC
 int
 mme_api_get_emm_config (
   mme_api_emm_config_t * config,
   mme_config_t * mme_config_p)
-#else
-int
-mme_api_get_emm_config (
-  mme_api_emm_config_t * config)
-#endif
 {
-#if NAS_BUILT_IN_EPC
   int                                     i;
-#endif
   LOG_FUNC_IN (LOG_NAS);
   AssertFatal (mme_config_p->served_tai.nb_tai >= 1, "No PLMN configured");
   AssertFatal (mme_config_p->gummei.nb_mmec >= 1, "No MME Code configured");
@@ -333,7 +325,6 @@ mme_api_get_emm_config (
     AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[0] >= 2) && (mme_config_p->served_tai.plmn_mnc_len[0] <= 3), "BAD MNC length for GUMMEI");
   }
 
-#if NAS_BUILT_IN_EPC
   config->tai_list.n_tais = 0;
   for (i = 0; i < mme_config_p->served_tai.nb_tai; i++) {
     config->tai_list.tai[i].plmn.MCCdigit1 = (mme_config_p->served_tai.plmn_mcc[i] / 100) % 10;
@@ -382,10 +373,6 @@ mme_api_get_emm_config (
     config->prefered_integrity_algorithm[i] = mme_config_p->nas_config.prefered_integrity_algorithm[i];
     config->prefered_ciphering_algorithm[i] = mme_config_p->nas_config.prefered_ciphering_algorithm[i];
   }
-
-#else
-  config->features = MME_API_EMERGENCY_ATTACH | MME_API_UNAUTHENTICATED_IMSI;
-#endif
   LOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
 
@@ -437,7 +424,7 @@ mme_api_get_esm_config (
  */
 int
 mme_api_notify_new_guti (
-  const unsigned int ueid,
+  const nas_ue_id_t ueid,
   GUTI_t * const guti)
 {
   ue_context_t                           *ue_context = NULL;
@@ -445,7 +432,7 @@ mme_api_notify_new_guti (
   LOG_FUNC_IN (LOG_NAS);
   ue_context = mme_ue_context_exists_nas_ue_id (&mme_app_desc.mme_ue_contexts, ueid);
 
-  if (NULL != ue_context) {
+  if ( ue_context) {
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context, ue_context->mme_ue_s1ap_id, ue_context->imsi, ue_context->mme_s11_teid, ue_context->ue_id, guti);
     LOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
@@ -467,15 +454,15 @@ mme_api_notify_new_guti (
  */
 int
 mme_api_notify_ue_id_changed (
-    const unsigned int old_ueid,
-    const unsigned int new_ueid)
+    const nas_ue_id_t old_ueid,
+    const nas_ue_id_t new_ueid)
 {
   ue_context_t                           *ue_context = NULL;
 
   LOG_FUNC_IN (LOG_NAS);
   ue_context = mme_ue_context_exists_nas_ue_id (&mme_app_desc.mme_ue_contexts, old_ueid);
 
-  if (NULL != ue_context) {
+  if ( ue_context) {
     LOG_INFO (LOG_NAS, "mme_api_notify_ue_id_changed old ueid=" NAS_UE_ID_FMT " new ueid=" NAS_UE_ID_FMT "\n", old_ueid, new_ueid);
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context, new_ueid, ue_context->imsi, ue_context->mme_s11_teid, new_ueid, &ue_context->guti);
     LOG_FUNC_RETURN (LOG_NAS, RETURNok);
@@ -510,8 +497,8 @@ mme_api_identify_guti (
   LOG_FUNC_IN (LOG_NAS);
   ue_context = mme_ue_context_exists_guti (&mme_app_desc.mme_ue_contexts, guti);
 
-  if (NULL != ue_context) {
-    if (NULL != ue_context->vector_in_use) {
+  if ( ue_context) {
+    if ( ue_context->vector_in_use) {
       memcpy (vector->rand, ue_context->vector_in_use->rand, AUTH_RAND_SIZE);
       memcpy (vector->autn, ue_context->vector_in_use->autn, AUTH_AUTN_SIZE);
       memcpy (vector->xres, ue_context->vector_in_use->xres.data, ue_context->vector_in_use->xres.size);
@@ -548,8 +535,8 @@ mme_api_identify_imsi (
   NAS_IMSI2U64 (imsi, mme_imsi);
   ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, mme_imsi);
 
-  if (NULL != ue_context) {
-    if (NULL != ue_context->vector_in_use) {
+  if ( ue_context) {
+    if ( ue_context->vector_in_use) {
       memcpy (vector->rand, ue_context->vector_in_use->rand, AUTH_RAND_SIZE);
       memcpy (vector->autn, ue_context->vector_in_use->autn, AUTH_AUTN_SIZE);
       memcpy (vector->xres, ue_context->vector_in_use->xres.data, ue_context->vector_in_use->xres.size);
@@ -622,7 +609,7 @@ mme_api_new_guti (
   NAS_IMSI2U64 (imsi, mme_imsi);
   ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, mme_imsi);
 
-  if (NULL != ue_context) {
+  if ( ue_context) {
     char                                    guti_str[GUTI2STR_MAX_LENGTH];
     int                                     i,j;
     plmn_t                                  plmn;
@@ -684,7 +671,7 @@ mme_api_new_guti (
  **                                                                        **
  ** Inputs:  apn:               If not NULL, Access Point Name of the PDN  **
  **                             to connect to                              **
- **              is_emergency:  TRUE if the PDN connectivity is requested  **
+ **              is_emergency:  true if the PDN connectivity is requested  **
  **                             for emergency bearer services              **
  **                  Others:    None                                       **
  **                                                                        **

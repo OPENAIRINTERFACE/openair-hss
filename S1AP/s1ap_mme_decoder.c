@@ -46,10 +46,10 @@ s1ap_mme_decode_initiating (
   s1ap_message *message,
   S1ap_InitiatingMessage_t *initiating_p) {
   int                                     ret = -1;
-  MessageDef                             *message_p;
+  MessageDef                             *message_p = NULL;
   char                                   *message_string = NULL;
   size_t                                  message_string_size;
-  MessagesIds                             message_id;
+  MessagesIds                             message_id = MESSAGES_ID_MAX;
   DevAssert (initiating_p != NULL);
   message_string = CALLOC_CHECK (10000, sizeof (char));
   s1ap_string_total_size = 0;
@@ -165,10 +165,10 @@ s1ap_mme_decode_unsuccessfull_outcome (
   s1ap_message *message,
   S1ap_UnsuccessfulOutcome_t *unSuccessfulOutcome_p) {
   int                                     ret = -1;
-  MessageDef                             *message_p;
+  MessageDef                             *message_p = NULL;
   char                                   *message_string = NULL;
-  size_t                                  message_string_size;
-  MessagesIds                             message_id;
+  size_t                                  message_string_size = 0;
+  MessagesIds                             message_id = MESSAGES_ID_MAX;
   DevAssert (unSuccessfulOutcome_p != NULL);
   message_string = CALLOC_CHECK (10000, sizeof (char));
   s1ap_string_total_size = 0;
@@ -203,9 +203,9 @@ s1ap_mme_decode_pdu (
   s1ap_message *message,
   uint8_t *buffer,
   uint32_t len) {
-  S1AP_PDU_t                              pdu;
+  S1AP_PDU_t                              pdu = {0};
   S1AP_PDU_t                             *pdu_p = &pdu;
-  asn_dec_rval_t                          dec_ret;
+  asn_dec_rval_t                          dec_ret = {0};
   DevAssert (buffer != NULL);
   memset ((void *)pdu_p, 0, sizeof (S1AP_PDU_t));
   dec_ret = aper_decode (NULL, &asn_DEF_S1AP_PDU, (void **)&pdu_p, buffer, len, 0, 0);

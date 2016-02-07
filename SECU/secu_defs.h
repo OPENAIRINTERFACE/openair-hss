@@ -79,13 +79,13 @@ typedef struct {
   uint32_t  blength;
 } nas_stream_cipher_t;
 
-int nas_stream_encrypt_eea1(nas_stream_cipher_t *stream_cipher, uint8_t *out);
+int nas_stream_encrypt_eea1(nas_stream_cipher_t * const stream_cipher, uint8_t * const out);
 
-int nas_stream_encrypt_eia1(nas_stream_cipher_t *stream_cipher, uint8_t out[4]);
+int nas_stream_encrypt_eia1(nas_stream_cipher_t * const stream_cipher, uint8_t const out[4]);
 
-int nas_stream_encrypt_eea2(nas_stream_cipher_t *stream_cipher, uint8_t *out);
+int nas_stream_encrypt_eea2(nas_stream_cipher_t * const stream_cipher, uint8_t * const out);
 
-int nas_stream_encrypt_eia2(nas_stream_cipher_t *stream_cipher, uint8_t out[4]);
+int nas_stream_encrypt_eia2(nas_stream_cipher_t * const stream_cipher, uint8_t const out[4]);
 
 #undef SECU_DEBUG
 

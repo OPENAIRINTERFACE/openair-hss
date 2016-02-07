@@ -61,12 +61,12 @@ Description Defines EMM procedures executed by the Non-Access Stratum
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int lowerlayer_success(unsigned int ueid);
-int lowerlayer_failure(unsigned int ueid);
+int lowerlayer_success(nas_ue_id_t ueid);
+int lowerlayer_failure(nas_ue_id_t ueid);
 int lowerlayer_establish(void);
 int lowerlayer_release(int cause);
 
-int lowerlayer_data_ind(unsigned int ueid, const OctetString *data);
-int lowerlayer_data_req(unsigned int ueid, const OctetString *data);
+int lowerlayer_data_ind(nas_ue_id_t ueid, const OctetString *data);
+int lowerlayer_data_req(nas_ue_id_t ueid, const OctetString *data);
 
 #endif /* __LOWERLAYER_H__*/

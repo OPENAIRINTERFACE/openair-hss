@@ -46,6 +46,7 @@
 
 #define SGW_CONFIG_STRING_LOGGING                               "LOGGING"
 #define SGW_CONFIG_STRING_OUTPUT                                "OUTPUT"
+#define SGW_CONFIG_STRING_COLOR                                 "COLOR"
 #define SGW_CONFIG_STRING_UDP_LOG_LEVEL                         "UDP_LOG_LEVEL"
 #define SGW_CONFIG_STRING_GTPV1U_LOG_LEVEL                      "GTPV1U_LOG_LEVEL"
 #define SGW_CONFIG_STRING_GTPV2C_LOG_LEVEL                      "GTPV2C_LOG_LEVEL"
@@ -98,9 +99,7 @@ typedef struct sgw_config_s {
   } ipv4;
   int sgw_udp_port_for_S1u_S12_S4_up;
 
-  uint8_t       sgw_drop_uplink_traffic;
-  uint8_t       sgw_drop_downlink_traffic;
-  uint8_t       local_to_eNB;
+  bool       local_to_eNB;
 } sgw_config_t;
 
 // may be more

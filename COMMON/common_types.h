@@ -39,6 +39,19 @@
 #ifndef COMMON_TYPES_H_
 #define COMMON_TYPES_H_
 
+#define ENB_UE_S1AP_ID_MASK      0x00FFFFFF
+typedef uint32_t                 enb_ue_s1ap_id_t;
+#define ENB_UE_S1AP_ID_FMT       "0x%06"PRIX32
+
+typedef uint32_t                 mme_ue_s1ap_id_t;
+#define MME_UE_S1AP_ID_FMT       "0x%08"PRIX32
+
+typedef mme_ue_s1ap_id_t         nas_ue_id_t;
+#define NAS_UE_ID_FMT            "0x%08"PRIX32
+
+typedef uint32_t                 s11_teid_t;
+
+
 #define MSISDN_LENGTH      (15)
 #define IMSI_DIGITS_MAX    (15)
 #define IMEI_DIGITS_MAX    (15)

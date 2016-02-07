@@ -101,7 +101,7 @@ memory_get_path (
   size_t                                  size = strlen (path) + strlen (filename) + 1;
   char                                   *data_filename = (char *)MALLOC_CHECK (size + 1);
 
-  if (data_filename != NULL) {
+  if (data_filename ) {
     if (size != sprintf (data_filename, "%s/%s", path, filename)) {
       FREE_CHECK (data_filename);
       return NULL;
@@ -139,7 +139,7 @@ memory_read (
    */
   FILE                                   *fp = fopen (datafile, "rb");
 
-  if (fp != NULL) {
+  if (fp ) {
     /*
      * Read data
      */
@@ -187,7 +187,7 @@ memory_write (
    */
   FILE                                   *fp = fopen (datafile, "wb");
 
-  if (fp != NULL) {
+  if (fp ) {
     /*
      * Write data
      */

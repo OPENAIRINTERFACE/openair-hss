@@ -85,18 +85,18 @@ typedef int (*emm_common_abort_callback_t)(void *);
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int emm_proc_common_initialize(unsigned int ueid,
+int emm_proc_common_initialize(nas_ue_id_t ueid,
                                emm_common_success_callback_t success,
                                emm_common_reject_callback_t reject,
                                emm_common_failure_callback_t failure,
                                emm_common_abort_callback_t abort,
                                void *args);
 
-int emm_proc_common_success(unsigned int ueid);
-int emm_proc_common_reject(unsigned int ueid);
-int emm_proc_common_failure(unsigned int ueid);
-int emm_proc_common_abort(unsigned int ueid);
+int emm_proc_common_success(nas_ue_id_t ueid);
+int emm_proc_common_reject(nas_ue_id_t ueid);
+int emm_proc_common_failure(nas_ue_id_t ueid);
+int emm_proc_common_abort(nas_ue_id_t ueid);
 
-void *emm_proc_common_get_args(unsigned int ueid);
+void *emm_proc_common_get_args(nas_ue_id_t ueid);
 
 #endif /* __EMM_COMMON_H__*/

@@ -92,7 +92,7 @@ int                                     emm_network_capability_have_changed (
   int gprs_present);
 
 int                                     emm_proc_tracking_area_update_request (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   const tracking_area_update_request_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status);
@@ -132,7 +132,7 @@ emm_network_capability_have_changed (
    */
   if (eea != ctx->eea) {
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: eea 0x%x/0x%x (ctxt)", eea, ctx->eea);
-    LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, true);
   }
 
   /*
@@ -140,18 +140,18 @@ emm_network_capability_have_changed (
    */
   if (eia != ctx->eia) {
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: eia 0x%x/0x%x (ctxt)", eia, ctx->eia);
-    LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, true);
   }
 
   if (umts_present != ctx->umts_present) {
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: umts_present %u/%u (ctxt)", umts_present, ctx->umts_present);
-    LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, true);
   }
 
   if ((ctx->umts_present) && (umts_present)) {
     if (ucs2 != ctx->ucs2) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: ucs2 %u/%u (ctxt)", ucs2, ctx->ucs2);
-      LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM, true);
     }
 
     /*
@@ -159,7 +159,7 @@ emm_network_capability_have_changed (
      */
     if (uea != ctx->uea) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: uea 0x%x/0x%x (ctxt)", uea, ctx->uea);
-      LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM, true);
     }
 
     /*
@@ -167,28 +167,28 @@ emm_network_capability_have_changed (
      */
     if (uia != ctx->uia) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: uia 0x%x/0x%x (ctxt)", uia, ctx->uia);
-      LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM, true);
     }
   }
 
   if (gprs_present != ctx->gprs_present) {
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: gprs_present %u/%u (ctxt)", gprs_present, ctx->gprs_present);
-    LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
+    LOG_FUNC_RETURN (LOG_NAS_EMM, true);
   }
 
   if ((ctx->gprs_present) && (gprs_present)) {
     if (gea != ctx->gea) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_network_capability_have_changed: gea 0x%x/0x%x (ctxt)", gea, ctx->gea);
-      LOG_FUNC_RETURN (LOG_NAS_EMM, TRUE);
+      LOG_FUNC_RETURN (LOG_NAS_EMM, true);
     }
   }
-  LOG_FUNC_RETURN (LOG_NAS_EMM, FALSE);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, false);
 }
 
 
 int
 emm_proc_tracking_area_update_request (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   const tracking_area_update_request_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
@@ -196,23 +196,15 @@ emm_proc_tracking_area_update_request (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *ue_ctx = NULL;
-  boolean_t                               previous_context_found = FALSE;
-  emm_fsm_state_t                         fsm_state = EMM_DEREGISTERED;
 
   /*
    * Get the UE's EMM context if it exists
    */
 
-  emm_data_context_t                    **emm_ctx = NULL;
-#if NAS_BUILT_IN_EPC
   ue_ctx = emm_data_context_get (&_emm_data, ueid);
-  emm_ctx = &ue_ctx;
-#else
-  emm_ctx = &_emm_data.ctx[ueid];
-#endif
 
   // May be the MME APP module did not find the context, but if we have the GUTI, we may find it
-  if (NULL == ue_ctx) {
+  if (! ue_ctx) {
     if (EPS_MOBILE_IDENTITY_GUTI == msg->oldguti.guti.typeofidentity) {
       GUTI_t guti;
       guti.m_tmsi = msg->oldguti.guti.mtmsi;
@@ -227,7 +219,7 @@ emm_proc_tracking_area_update_request (
 
       ue_ctx = emm_data_context_get_by_guti (&_emm_data, &guti);
 
-      if (NULL != ue_ctx) {
+      if ( ue_ctx) {
         mme_api_notify_ue_id_changed(ue_ctx->ueid, ueid);
         // ue_id has changed
         emm_data_context_remove (&_emm_data, ue_ctx);
@@ -237,7 +229,7 @@ emm_proc_tracking_area_update_request (
         emm_data_context_add (&_emm_data, ue_ctx);
 
         // update decode_status
-        //if (NULL != ue_ctx->security) {
+        //if ( ue_ctx->security) {
         //  decode_status->security_context_available = 1;
         //}
         // ...anyway now for simplicity we reject the TAU (else have to re-do integrity checking on NAS msg)
@@ -254,16 +246,16 @@ emm_proc_tracking_area_update_request (
    * Requirements MME24.301R10_5.5.3.2.4_2
    */
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_UE_NETWORK_CAPABILITY_IEI) {
-    if (NULL != ue_ctx) {
-      if (NULL == ue_ctx->ue_network_capability_ie) {
+    if ( ue_ctx) {
+      if (! ue_ctx->ue_network_capability_ie) {
         ue_ctx->ue_network_capability_ie = MALLOC_CHECK(sizeof(UeNetworkCapability));
       }
       memcpy(ue_ctx->ue_network_capability_ie, &msg->uenetworkcapability, sizeof(UeNetworkCapability));
     }
   }
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_IEI) {
-    if (NULL != ue_ctx) {
-      if (NULL == ue_ctx->ms_network_capability_ie) {
+    if ( ue_ctx) {
+      if (! ue_ctx->ms_network_capability_ie) {
         ue_ctx->ms_network_capability_ie = MALLOC_CHECK(sizeof(MsNetworkCapability));
       } else {
         FREE_OCTET_STRING(ue_ctx->ms_network_capability_ie->msnetworkcapabilityvalue);
@@ -275,10 +267,10 @@ emm_proc_tracking_area_update_request (
    * Requirements MME24.301R10_5.5.3.2.4_3
    */
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_IEI) {
-    if (NULL != ue_ctx) {
+    if ( ue_ctx) {
       if (0 != msg->ueradiocapabilityinformationupdateneeded) {
         // delete the stored UE radio capability information if any
-#warning "TODO: Actually UE radio capability information is not stored in EPC"
+//#pragma message  "TODO: Actually UE radio capability information is not stored in EPC"
       }
     }
   }
@@ -286,8 +278,8 @@ emm_proc_tracking_area_update_request (
    * Requirements MME24.301R10_5.5.3.2.4_4
    */
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_DRX_PARAMETER_IEI) {
-    if (NULL != ue_ctx) {
-      if (NULL == ue_ctx->drx_parameter) {
+    if ( ue_ctx) {
+      if (! ue_ctx->drx_parameter) {
         ue_ctx->drx_parameter = MALLOC_CHECK(sizeof(DrxParameter));
       }
       memcpy(ue_ctx->drx_parameter, &msg->drxparameter, sizeof(DrxParameter));
@@ -297,13 +289,13 @@ emm_proc_tracking_area_update_request (
    * Requirement MME24.301R10_5.5.3.2.4_5a
    */
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_EPS_BEARER_CONTEXT_STATUS_IEI) {
-    if (NULL != ue_ctx) {
-      if (NULL == ue_ctx->eps_bearer_context_status) {
+    if ( ue_ctx) {
+      if (! ue_ctx->eps_bearer_context_status) {
         ue_ctx->eps_bearer_context_status = MALLOC_CHECK(sizeof(EpsBearerContextStatus));
       }
-      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - TAU Request (ueid=" NAS_UE_ID_FMT ") IE EPS_BEARER_CONTEXT_STATUS %016b", ueid, msg->epsbearercontextstatus);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - TAU Request (ueid=" NAS_UE_ID_FMT ") IE EPS_BEARER_CONTEXT_STATUS 0x%04X", ueid, msg->epsbearercontextstatus);
       memcpy(ue_ctx->eps_bearer_context_status, &msg->epsbearercontextstatus, sizeof(EpsBearerContextStatus));
-#warning "TODO Requirement MME24.301R10_5.5.3.2.4_5a: TAU Request: Deactivate EPS bearers if necessary (S11 Modify Bearer Request)"
+//#pragma message  "TODO Requirement MME24.301R10_5.5.3.2.4_5a: TAU Request: Deactivate EPS bearers if necessary (S11 Modify Bearer Request)"
     }
   }
   /*
@@ -326,7 +318,7 @@ emm_proc_tracking_area_update_request (
    * the radio and S1 bearers for all active EPS bearer contexts..
    */
   if ( 0 < msg->epsupdatetype.activeflag) {
-#warning "TODO Requirement MME24.301R10_5.5.3.2.4_12: Request: re-establish the radio and S1 bearers for all active EPS bearer contexts (S11 Modify Bearer Request)"
+//#pragma message  "TODO Requirement MME24.301R10_5.5.3.2.4_12: Request: re-establish the radio and S1 bearers for all active EPS bearer contexts (S11 Modify Bearer Request)"
 
   } else {
     /*
@@ -335,7 +327,7 @@ emm_proc_tracking_area_update_request (
      * If the "active" flag is not included in the TRACKING AREA UPDATE REQUEST message, the MME may also re-establish the radio and
      *  S1 bearers for all active EPS bearer contexts due to downlink pending data or downlink pending signalling.
      */
-#warning "TODO Requirement MME24.301R10_5.5.3.2.4_13: Request: re-establish the radio and S1 bearers for all active EPS bearer contexts (S11 Modify Bearer Request)"
+//#pragma message  "TODO Requirement MME24.301R10_5.5.3.2.4_13: Request: re-establish the radio and S1 bearers for all active EPS bearer contexts (S11 Modify Bearer Request)"
   }
 
   /*
@@ -344,17 +336,17 @@ emm_proc_tracking_area_update_request (
    * proceed directly to the execution of the security mode control procedure as specified in subclause 5.4.3, during a
    * tracking area updating procedure for a UE that has only a PDN connection for emergency bearer services.
    */
-  if ((NULL == ue_ctx->security) &&
+  if ((! ue_ctx->security) &&
       (_emm_data.conf.eps_network_feature_support & EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE_SUPPORTED) &&
       (0 < ue_ctx->is_emergency)) {
-    if (NULL != ue_ctx->ue_network_capability_ie) {
+    if ( ue_ctx->ue_network_capability_ie) {
       // overwrite previous values
       ue_ctx->eea = ue_ctx->ue_network_capability_ie->eea;
       ue_ctx->eia = ue_ctx->ue_network_capability_ie->eia;
       ue_ctx->ucs2 = ue_ctx->ue_network_capability_ie->ucs2;
       ue_ctx->uea = ue_ctx->ue_network_capability_ie->uea;
       ue_ctx->uia = ue_ctx->ue_network_capability_ie->uia;
-#warning "TODO (clean gea code)"
+//#pragma message  "TODO (clean gea code)"
       //ue_ctx->gea = ue_ctx->gea;
       ue_ctx->umts_present = ue_ctx->ue_network_capability_ie->umts_present;
       ue_ctx->gprs_present = ue_ctx->ue_network_capability_ie->gprs_present;
@@ -394,7 +386,7 @@ emm_proc_tracking_area_update_request (
      * During the tracking area updating procedure, the MME may initiate EMM common procedures, e.g. the EMM
      * authentication and security mode control procedures.
      */
-    boolean_t authentication_requested = FALSE;
+    bool authentication_requested = false;
     authentication_requested = ((0 < decode_status->integrity_protected_message) && (0 == decode_status->mac_matched)) ||
         (0 == decode_status->integrity_protected_message) || (0 == decode_status->security_context_available);
     if (authentication_requested) {
@@ -409,8 +401,8 @@ emm_proc_tracking_area_update_request (
                                   _emm_tracking_area_update_reject);
       LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     } else {
-      boolean_t network_capability_have_changed = FALSE;
-      if (NULL != ue_ctx->ue_network_capability_ie) {
+      bool network_capability_have_changed = false;
+      if ( ue_ctx->ue_network_capability_ie) {
         network_capability_have_changed = emm_network_capability_have_changed(ue_ctx,
             ue_ctx->ue_network_capability_ie->eea,
             ue_ctx->ue_network_capability_ie->eia,
@@ -427,7 +419,7 @@ emm_proc_tracking_area_update_request (
           ue_ctx->ucs2 = ue_ctx->ue_network_capability_ie->ucs2;
           ue_ctx->uea = ue_ctx->ue_network_capability_ie->uea;
           ue_ctx->uia = ue_ctx->ue_network_capability_ie->uia;
-  #warning "TODO (clean gea code)"
+//#pragma message  "TODO (clean gea code)"
           //ue_ctx->gea = ue_ctx->gea;
           ue_ctx->umts_present = ue_ctx->ue_network_capability_ie->umts_present;
           ue_ctx->gprs_present = ue_ctx->ue_network_capability_ie->gprs_present;
@@ -478,7 +470,7 @@ emm_proc_tracking_area_update_request (
  ***************************************************************************/
 int
 emm_proc_tracking_area_update_reject (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   int emm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
@@ -490,17 +482,12 @@ emm_proc_tracking_area_update_reject (
   emm_data_context_t                      ue_ctx;
 
   memset (&ue_ctx, 0, sizeof (emm_data_context_t));
-  ue_ctx.is_dynamic = FALSE;
+  ue_ctx.is_dynamic = false;
   ue_ctx.ueid = ueid;
   /*
    * Update the EMM cause code
    */
-#if NAS_BUILT_IN_EPC
-
   if (ueid > 0)
-#else
-  if (ueid < EMM_DATA_NB_UE_MAX)
-#endif
   {
     ue_ctx.emm_cause = emm_cause;
   } else {
@@ -527,7 +514,7 @@ _emm_tracking_area_update (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
   tau_accept_data_t                      *data = (tau_accept_data_t *) CALLOC_CHECK (1, sizeof (tau_accept_data_t));
 
-  if (data != NULL) {
+  if (data ) {
     /*
      * Setup ongoing EMM procedure callback functions
      */
@@ -582,7 +569,6 @@ _emm_tau_t3450_handler (
   void *args)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
   tau_accept_data_t                      *data = (tau_accept_data_t *) (args);
 
   // Requirement MME24.301R10_5.5.3.2.7_c Abnormal cases on the network side - T3450 time-out
@@ -594,24 +580,18 @@ _emm_tau_t3450_handler (
   /*
    * Get the UE's EMM context
    */
-  emm_data_context_t                     *emm_ctx = NULL;
-
-#if NAS_BUILT_IN_EPC
-  emm_ctx = emm_data_context_get (&_emm_data, data->ueid);
-#else
-  emm_ctx = _emm_data.ctx[data->ueid];
-#endif
+  emm_data_context_t *emm_ctx = emm_ctx = emm_data_context_get (&_emm_data, data->ueid);
 
   if (data->retransmission_count < TAU_COUNTER_MAX) {
     /*
      * Send attach accept message to the UE
      */
-    rc = _emm_tracking_area_update_accept (emm_ctx, data);
+    _emm_tracking_area_update_accept (emm_ctx, data);
   } else {
     /*
      * Abort the attach procedure
      */
-    rc = _emm_tracking_area_update_abort (data);
+    _emm_tracking_area_update_abort (data);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
@@ -715,7 +695,7 @@ _emm_tracking_area_update_reject (
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, FALSE, TRUE);
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, false, true);
     rc = emm_sap_send (&emm_sap);
   }
 
@@ -784,7 +764,7 @@ _emm_tracking_area_update_accept (
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, FALSE, TRUE);
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, false, true);
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X ", emm_sap.u.emm_as.u.establish.encryption);
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X ", emm_sap.u.emm_as.u.establish.integrity);
     emm_sap.u.emm_as.u.establish.encryption = emm_ctx->security->selected_algorithms.encryption;
@@ -838,11 +818,7 @@ _emm_tracking_area_update_abort (
     unsigned int                            ueid = data->ueid;
 
     LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the TAU procedure (ueid=" NAS_UE_ID_FMT ")", ueid);
-#if NAS_BUILT_IN_EPC
     ctx = emm_data_context_get (&_emm_data, ueid);
-#else
-    ctx = _emm_data.ctx[ueid];
-#endif
 
     if (ctx) {
       /*
@@ -858,9 +834,7 @@ _emm_tracking_area_update_abort (
     /*
      * Release retransmission timer parameters
      */
-    //if (data-> ) {
-    //}
-
+    // no contained struct to free
     FREE_CHECK (data);
 
     /*

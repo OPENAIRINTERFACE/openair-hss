@@ -38,10 +38,8 @@ Description NAS procedure call manager
 #ifndef __NAS_PROC_H__
 #define __NAS_PROC_H__
 
-#if NAS_BUILT_IN_EPC
-# include "mme_config.h"
-# include "emm_cnDef.h"
-#endif
+#include "mme_config.h"
+#include "emm_cnDef.h"
 
 #include "commonDef.h"
 #include "networkDef.h"
@@ -63,11 +61,7 @@ Description NAS procedure call manager
 /****************************************************************************/
 
 
-# if NAS_BUILT_IN_EPC
 void nas_proc_initialize(mme_config_t *mme_config_p);
-# else
-void nas_proc_initialize(void);
-# endif
 
 void nas_proc_cleanup(void);
 
@@ -86,8 +80,7 @@ void nas_proc_cleanup(void);
 
 
 
-int nas_proc_establish_ind(uint32_t ueid, uint8_t plmn[3], tac_t tac, const Byte_t *data,
-                           uint32_t len);
+int nas_proc_establish_ind(const uint32_t ueid, const uint8_t plmn[3], const tac_t tac, const Byte_t *data, const uint32_t len);
 
 int nas_proc_dl_transfer_cnf(uint32_t ueid);
 int nas_proc_dl_transfer_rej(uint32_t ueid);
@@ -98,12 +91,10 @@ int nas_proc_ul_transfer_ind(uint32_t ueid, const Byte_t *data, uint32_t len);
  *      NAS procedures triggered by the mme applicative layer
  * --------------------------------------------------------------------------
  */
-#if NAS_BUILT_IN_EPC
 int nas_proc_auth_param_res(emm_cn_auth_res_t *emm_cn_auth_res);
 int nas_proc_auth_param_fail(emm_cn_auth_fail_t *emm_cn_auth_fail);
 int nas_proc_deregister_ue(uint32_t ue_id);
 int nas_proc_pdn_connectivity_res(nas_pdn_connectivity_rsp_t *nas_pdn_connectivity_rsp);
 int nas_proc_pdn_connectivity_fail(nas_pdn_connectivity_fail_t *nas_pdn_connectivity_fail);
-#endif
 
 #endif /* __NAS_PROC_H__*/

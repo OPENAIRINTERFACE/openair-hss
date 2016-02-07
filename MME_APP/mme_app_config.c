@@ -81,7 +81,7 @@ mme_app_config_init (
   memset ((char *)config_pP, 0, sizeof (mme_app_config_t));
   config_init (&cfg);
 
-  if (lib_config_file_name_pP != NULL) {
+  if (lib_config_file_name_pP ) {
     /*
      * Read the file. If there is an error, report it and exit.
      */
@@ -98,10 +98,10 @@ mme_app_config_init (
 
   setting_sgw = config_lookup (&cfg, SGW_CONFIG_STRING_SGW_CONFIG);
 
-  if (setting_sgw != NULL) {
+  if (setting_sgw ) {
     subsetting = config_setting_get_member (setting_sgw, SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
-    if (subsetting != NULL) {
+    if (subsetting ) {
       if ((config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP, (const char **)&sgw_interface_name_for_S1u_S12_S4_up)
            && config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP, (const char **)
                                             &sgw_ipv4_address_for_S1u_S12_S4_up)
@@ -142,10 +142,10 @@ mme_app_config_init (
 
   setting_pgw = config_lookup (&cfg, PGW_CONFIG_STRING_PGW_CONFIG);
 
-  if (setting_pgw != NULL) {
+  if (setting_pgw ) {
     subsetting = config_setting_get_member (setting_pgw, SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
-    if (subsetting != NULL) {
+    if (subsetting ) {
       if ((config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_S5_S8, (const char **)&pgw_interface_name_for_S5_S8)
            && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_IPV4_ADDRESS_FOR_S5_S8, (const char **)
                                             &pgw_ipv4_address_for_S5_S8)
@@ -174,16 +174,16 @@ mme_app_config_init (
 
     subsetting = config_setting_get_member (setting_pgw, PGW_CONFIG_STRING_IP_ADDRESS_POOL);
 
-    if (subsetting != NULL) {
+    if (subsetting ) {
       sub2setting = config_setting_get_member (subsetting, PGW_CONFIG_STRING_IPV4_ADDRESS_LIST);
 
-      if (sub2setting != NULL) {
+      if (sub2setting ) {
         num = config_setting_length (sub2setting);
 
         for (i = 0; i < num; i++) {
           astring = config_setting_get_string_elem (sub2setting, i);
 
-          if (astring != NULL) {
+          if (astring ) {
             trim (astring, strlen (astring) + 1);
 
             if (inet_pton (AF_INET, astring, buf_in_addr) < 1) {
@@ -232,13 +232,13 @@ mme_app_config_init (
 
       sub2setting = config_setting_get_member (subsetting, PGW_CONFIG_STRING_IPV6_ADDRESS_LIST);
 
-      if (sub2setting != NULL) {
+      if (sub2setting ) {
         num = config_setting_length (sub2setting);
 
         for (i = 0; i < num; i++) {
           astring = config_setting_get_string_elem (sub2setting, i);
 
-          if (astring != NULL) {
+          if (astring ) {
             trim (astring, strlen (astring) + 1);
 
             if (inet_pton (AF_INET6, astring, buf_in6_addr) < 1) {

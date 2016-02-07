@@ -41,15 +41,6 @@ hash_table_t g_dma_htbl = {0};
 hash_table_t g_dma_free_htbl = {0};
 
 static  hash_size_t def_hashfunc (const uint64_t keyP);
-void dyn_mem_check_init(void);
-static void dma_register_pointer(void* ptr);
-static void dma_deregister_pointer(void* ptr);
-void *malloc_wrapper(size_t size);
-void free_wrapper(void *ptr);
-void *calloc_wrapper(size_t nmemb, size_t size);
-void *realloc_wrapper(void *ptr, size_t size);
-char *strdup_wrapper(const char *s);
-char *strndup_wrapper(const char *s, size_t n);
 
 
 static  hash_size_t def_hashfunc (const uint64_t keyP)

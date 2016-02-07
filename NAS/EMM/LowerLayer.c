@@ -40,8 +40,8 @@
 
 *****************************************************************************/
 
-#include "LowerLayer.h"
 #include "commonDef.h"
+#include "LowerLayer.h"
 #include "log.h"
 
 #include "emmData.h"
@@ -88,7 +88,7 @@
  ***************************************************************************/
 int
 lowerlayer_success (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
@@ -118,7 +118,7 @@ lowerlayer_success (
  ***************************************************************************/
 int
 lowerlayer_failure (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
@@ -126,7 +126,6 @@ lowerlayer_failure (
 
   emm_sap.primitive = EMMREG_LOWERLAYER_FAILURE;
   emm_sap.u.emm_reg.ueid = ueid;
-#if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = NULL;
 
   if (ueid > 0) {
@@ -134,9 +133,6 @@ lowerlayer_failure (
   }
 
   emm_sap.u.emm_reg.ctx = emm_ctx;
-#else
-  emm_sap.u.emm_reg.ctx = NULL;
-#endif
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -213,7 +209,7 @@ lowerlayer_release (
  ***************************************************************************/
 int
 lowerlayer_data_ind (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   const OctetString * data)
 {
   esm_sap_t                               esm_sap = {0};
@@ -221,14 +217,12 @@ lowerlayer_data_ind (
   emm_data_context_t                     *emm_ctx = NULL;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
   }
-#endif
   esm_sap.primitive = ESM_UNITDATA_IND;
-  esm_sap.is_standalone = TRUE;
+  esm_sap.is_standalone = true;
   esm_sap.ueid = ueid;
   esm_sap.ctx = emm_ctx;
   esm_sap.recv = data;
@@ -254,7 +248,7 @@ lowerlayer_data_ind (
  ***************************************************************************/
 int
 lowerlayer_data_req (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   const OctetString * data)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
@@ -266,17 +260,10 @@ lowerlayer_data_req (
   emm_sap.primitive = EMMAS_DATA_REQ;
   emm_sap.u.emm_as.u.data.guti = NULL;
   emm_sap.u.emm_as.u.data.ueid = ueid;
-#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     ctx = emm_data_context_get (&_emm_data, ueid);
   }
-#else
-
-  if (ueid < EMM_DATA_NB_UE_MAX) {
-    ctx = _emm_data.ctx[ueid];
-  }
-#endif
 
   if (ctx) {
     sctx = ctx->security;
@@ -288,7 +275,7 @@ lowerlayer_data_req (
   /*
    * Setup EPS NAS security data
    */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx, sctx, FALSE, TRUE);
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx, sctx, false, true);
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

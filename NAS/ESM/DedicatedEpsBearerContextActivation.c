@@ -141,7 +141,7 @@ esm_proc_dedicated_eps_bearer_context (
     /*
      * Create dedicated EPS bearer context
      */
-    *default_ebi = esm_ebr_context_create (ctx, pid, *ebi, FALSE, qos, tft);
+    *default_ebi = esm_ebr_context_create (ctx, pid, *ebi, false, qos, tft);
 
     if (*default_ebi == ESM_EBI_UNASSIGNED) {
       /*
@@ -173,11 +173,11 @@ esm_proc_dedicated_eps_bearer_context (
  **      RER CONTEXT REQUEST message, starting timer T3485 and en- **
  **      tering state BEARER CONTEXT ACTIVE PENDING.               **
  **                                                                        **
- ** Inputs:  is_standalone: Not used (always TRUE)                     **
+ ** Inputs:  is_standalone: Not used (always true)                     **
  **      ueid:      UE lower layer identifier                  **
  **      ebi:       EPS bearer identity                        **
  **      msg:       Encoded ESM message to be sent             **
- **      ue_triggered:  TRUE if the EPS bearer context procedure   **
+ **      ue_triggered:  true if the EPS bearer context procedure   **
  **             was triggered by the UE                    **
  **      Others:    None                                       **
  **                                                                        **
@@ -188,11 +188,11 @@ esm_proc_dedicated_eps_bearer_context (
  ***************************************************************************/
 int
 esm_proc_dedicated_eps_bearer_context_request (
-  int is_standalone,
+  bool is_standalone,
   emm_data_context_t * ctx,
   int ebi,
   OctetString * msg,
-  int ue_triggered)
+  bool ue_triggered)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
@@ -262,7 +262,7 @@ esm_proc_dedicated_eps_bearer_context_accept (
     /*
      * Set the EPS bearer context state to ACTIVE
      */
-    rc = esm_ebr_set_status (ctx, ebi, ESM_EBR_ACTIVE, FALSE);
+    rc = esm_ebr_set_status (ctx, ebi, ESM_EBR_ACTIVE, false);
 
     if (rc != RETURNok) {
       /*
@@ -324,7 +324,7 @@ esm_proc_dedicated_eps_bearer_context_reject (
     /*
      * Release the dedicated EPS bearer context and enter state INACTIVE
      */
-    rc = esm_proc_eps_bearer_context_deactivate (ctx, TRUE, ebi, &pid, &bid, NULL);
+    rc = esm_proc_eps_bearer_context_deactivate (ctx, true, ebi, &pid, &bid, NULL);
 
     if (rc != RETURNok) {
       /*
@@ -405,7 +405,7 @@ _dedicated_eps_bearer_activate_t3485_handler (
     /*
      * Release the dedicated EPS bearer context and enter state INACTIVE
      */
-    rc = esm_proc_eps_bearer_context_deactivate (data->ctx, TRUE, data->ebi, &pid, &bid, NULL);
+    rc = esm_proc_eps_bearer_context_deactivate (data->ctx, true, data->ebi, &pid, &bid, NULL);
 
     if (rc != RETURNerror) {
       /*

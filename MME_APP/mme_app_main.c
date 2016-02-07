@@ -38,11 +38,10 @@
 
 mme_app_desc_t                          mme_app_desc;
 
-void                                   *mme_app_thread (
-  void *args);
+void     *mme_app_thread (void *args);
 
-void                                   *
-mme_app_thread (
+
+void *mme_app_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_MME_APP);
@@ -57,7 +56,7 @@ mme_app_thread (
      * message is sent to the task.
      */
     itti_receive_msg (TASK_MME_APP, &received_message_p);
-    DevAssert (received_message_p != NULL);
+    DevAssert (received_message_p );
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case S6A_AUTH_INFO_ANS:{

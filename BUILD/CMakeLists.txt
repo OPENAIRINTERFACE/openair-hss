@@ -610,10 +610,8 @@ set(libnas_ies_OBJS
 )
 
 set (libnas_utils_OBJS
-  ${NAS_SRC}UTIL/device.c
   ${NAS_SRC}UTIL/nas_timer.c
   ${NAS_SRC}UTIL/socket.c
-  ${NAS_SRC}UTIL/stty.c
   ${NAS_SRC}UTIL/TLVEncoder.c
   ${NAS_SRC}UTIL/TLVDecoder.c
   ${NAS_SRC}UTIL/OctetString.c

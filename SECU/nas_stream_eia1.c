@@ -43,8 +43,8 @@ uint64_t                                MUL64 (
   uint64_t P,
   uint64_t c);
 int                                     nas_stream_encrypt_eia1 (
-  nas_stream_cipher_t * stream_cipher,
-  uint8_t out[4]);
+  nas_stream_cipher_t * const stream_cipher,
+  uint8_t const out[4]);
 
 
 // see spec 3GPP Confidentiality and Integrity Algorithms UEA2&UIA2. Document 1: UEA2 and UIA2 Specification. Version 1.1
@@ -143,8 +143,8 @@ mask32bit (
 */
 int
 nas_stream_encrypt_eia1 (
-  nas_stream_cipher_t * stream_cipher,
-  uint8_t out[4])
+  nas_stream_cipher_t * const stream_cipher,
+  uint8_t const out[4])
 {
   snow_3g_context_t                       snow_3g_context;
   uint32_t                                K[4],
@@ -260,6 +260,6 @@ nas_stream_encrypt_eia1 (
   MAC_I = (uint32_t) (EVAL >> 32) ^ z[4];
   //printf ("MAC_I:%16X\n",MAC_I);
   MAC_I = hton_int32 (MAC_I);
-  memcpy (out, &MAC_I, 4);
+  memcpy ((void *)out, &MAC_I, 4);
   return 0;
 }

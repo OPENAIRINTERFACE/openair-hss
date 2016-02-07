@@ -271,7 +271,7 @@ esm_send_activate_default_eps_bearer_context_request (
     LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - epsqos  no bit rates ext defined\n");
   }
 
-  if ((apn == NULL) || ((apn != NULL) && (apn->value == NULL))) {
+  if ((apn == NULL) || ((apn ) && (apn->value == NULL))) {
     LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - apn is NULL!\n");
   }
 
@@ -285,7 +285,7 @@ esm_send_activate_default_eps_bearer_context_request (
    */
   LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - pdn_type is %u\n", pdn_type);
   msg->pdnaddress.pdntypevalue = pdn_type;
-  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - pdn_addr is %u\n", dump_octet_string (pdn_addr));
+  LOG_STREAM_HEX (LOG_NAS_ESM, "ESM-SAP   - pdn_addr is ", pdn_addr->value, pdn_addr->length);
   msg->pdnaddress.pdnaddressinformation = *pdn_addr;
   /*
    * Optional - ESM cause code
@@ -297,11 +297,11 @@ esm_send_activate_default_eps_bearer_context_request (
     msg->esmcause = esm_cause;
   }
 
-  if (pco != NULL) {
+  if (pco ) {
     msg->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
     msg->protocolconfigurationoptions = *pco;
   }
-#warning "TEST LG FORCE APN-AMBR"
+//#pragma message  "TEST LG FORCE APN-AMBR"
   LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - FORCE APN-AMBR\n");
   msg->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_APNAMBR_PRESENT;
   msg->apnambr.apnambrfordownlink = 0xfe;       // (8640kbps)

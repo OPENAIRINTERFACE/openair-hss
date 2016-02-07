@@ -129,11 +129,11 @@ device_open (
    */
   device_id_t                            *devid = (device_id_t *) MALLOC_CHECK (sizeof (struct device_id_s));
 
-  if (devid != NULL) {
+  if (devid ) {
     strncpy (devid->pathname, devpath, DEVICE_PATHNAME_SIZE);
     devid->fd = fd;
 
-    if (params != NULL) {
+    if (params ) {
       /*
        * Set TTY parameters
        */

@@ -73,7 +73,7 @@
  **      Others:    None                                       **
  **                                                                        **
  ** Outputs:     None                                                      **
- **      Return:    TRUE, FALSE                                **
+ **      Return:    true, false                                **
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/

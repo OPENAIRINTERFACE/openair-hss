@@ -46,7 +46,7 @@ int
 mme_app_handle_s1ap_ue_capabilities_ind (
   const s1ap_ue_cap_ind_t const *s1ap_ue_cap_ind_pP)
 {
-  DevAssert (s1ap_ue_cap_ind_pP != NULL);
+  DevAssert (s1ap_ue_cap_ind_pP );
   //unsigned eNB_ue_s1ap_id:24;
   //uint32_t mme_ue_s1ap_id;
   //uint8_t  radio_capabilities[100];

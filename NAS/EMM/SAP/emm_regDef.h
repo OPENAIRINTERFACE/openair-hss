@@ -84,7 +84,7 @@ typedef enum {
  * -------------------------------------
  */
 typedef struct {
-  int is_emergency;   /* TRUE if the UE was attempting to register to
+  int is_emergency;   /* true if the UE was attempting to register to
              * the network for emergency services only  */
 } emm_reg_attach_t;
 
@@ -93,7 +93,7 @@ typedef struct {
  * -------------------------------------
  */
 typedef struct {
-  int switch_off; /* TRUE if the UE is switched off       */
+  int switch_off; /* true if the UE is switched off       */
   int type;       /* Network detach type              */
 } emm_reg_detach_t;
 
@@ -110,7 +110,7 @@ typedef struct {
  */
 typedef struct {
   emm_reg_primitive_t primitive;
-  unsigned int        ueid;
+  nas_ue_id_t         ueid;
   void               *ctx;
 
   union {

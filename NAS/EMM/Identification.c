@@ -143,7 +143,7 @@ static int                              _identification_request (
  ********************************************************************/
 int
 emm_proc_identification (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   emm_data_context_t * emm_ctx,
   emm_proc_identity_type_t type,
   emm_common_success_callback_t success,
@@ -159,7 +159,7 @@ emm_proc_identification (
    */
   identification_data_t                  *data = (identification_data_t *) MALLOC_CHECK (sizeof (identification_data_t));
 
-  if (data != NULL) {
+  if (data ) {
     /*
      * Setup ongoing EMM procedure callback functions
      */
@@ -186,7 +186,7 @@ emm_proc_identification (
     /*
      * Set the failure notification indicator
      */
-    data->notify_failure = FALSE;
+    data->notify_failure = false;
     /*
      * Send identity request message to the UE
      */
@@ -233,7 +233,7 @@ emm_proc_identification (
  ***************************************************************************/
 int
 emm_proc_identification_complete (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   const imsi_t * imsi,
   const imei_t * imei,
   const imeisv_t * imeisv,
@@ -383,7 +383,6 @@ _identification_t3470_handler (
   void *args)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc;
   identification_data_t                  *data = (identification_data_t *) (args);
 
   /*
@@ -396,16 +395,16 @@ _identification_t3470_handler (
     /*
      * Send identity request message to the UE
      */
-    rc = _identification_request (data);
+    _identification_request (data);
   } else {
     /*
      * Set the failure notification indicator
      */
-    data->notify_failure = TRUE;
+    data->notify_failure = true;
     /*
      * Abort the identification procedure
      */
-    rc = _identification_abort (data);
+    _identification_abort (data);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
@@ -450,21 +449,15 @@ _identification_request (
   emm_sap.u.emm_as.u.security.ueid = data->ueid;
   emm_sap.u.emm_as.u.security.msgType = EMM_AS_MSG_TYPE_IDENT;
   emm_sap.u.emm_as.u.security.identType = data->type;
-#if NAS_BUILT_IN_EPC
 
   if (data->ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, data->ueid);
   }
-#else
 
-  if (data->ueid < EMM_DATA_NB_UE_MAX) {
-    emm_ctx = _emm_data.ctx[data->ueid];
-  }
-#endif
   /*
    * Setup EPS NAS security data
    */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, FALSE, TRUE);
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, false, true);
   rc = emm_sap_send (&emm_sap);
 
   if (rc != RETURNerror) {
@@ -518,23 +511,17 @@ _identification_abort (
     /*
      * Get the UE context
      */
-#if NAS_BUILT_IN_EPC
 
     if (ueid > 0) {
       emm_ctx = emm_data_context_get (&_emm_data, ueid);
     }
-#else
 
-    if (ueid < EMM_DATA_NB_UE_MAX) {
-      emm_ctx = _emm_data.ctx[ueid];
-    }
-#endif
     LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort identification procedure " "(ueid=" NAS_UE_ID_FMT ")", ueid);
 
     /*
      * Stop timer T3470
      */
-    if (NULL != emm_ctx) {
+    if ( emm_ctx) {
       if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
         LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3470.id);
         emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);

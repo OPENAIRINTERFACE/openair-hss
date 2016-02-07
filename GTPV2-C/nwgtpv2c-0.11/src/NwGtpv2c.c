@@ -45,6 +45,7 @@
 #include "NwGtpv2cTrxn.h"
 #include "NwGtpv2cLog.h"
 #include "dynamic_memory_check.h"
+#include "gcc_diag.h"
 
 #ifdef _NWGTPV2C_HAVE_TIMERADD
 #  define NW_GTPV2C_TIMER_ADD(tvp, uvp, vvp) timeradd((tvp), (uvp), (vvp))
@@ -941,8 +942,10 @@ extern                                  "C" {
     memset (thiz, 0, sizeof (NwGtpv2cStackT));
 
     if (thiz) {
+      OAI_GCC_DIAG_OFF(pointer-to-int-cast)
       thiz->id = (uint32_t) thiz;
       thiz->seqNum = ((uint32_t) thiz) & 0x0000FFFF;
+      OAI_GCC_DIAG_ON(pointer-to-int-cast)
       RB_INIT (&(thiz->tunnelMap));
       RB_INIT (&(thiz->outstandingTxSeqNumMap));
       RB_INIT (&(thiz->outstandingRxSeqNumMap));

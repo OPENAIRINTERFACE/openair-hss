@@ -42,10 +42,8 @@
 #include "emmData.h"
 
 
-#if NAS_BUILT_IN_EPC
-#  include "mme_config.h"
-#  include "obj_hashtable.h"
-#endif
+#include "mme_config.h"
+#include "obj_hashtable.h"
 #include <string.h>
 
 
@@ -77,33 +75,20 @@
  **      Others:    _emm_data                                  **
  **                                                                        **
  ***************************************************************************/
-#if NAS_BUILT_IN_EPC
 void
 emm_main_initialize (
   mme_config_t * mme_config_p)
-#else
-void
-emm_main_initialize (
-  void)
-#endif
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   /*
    * Retreive MME supported configuration data
    */
-#if NAS_BUILT_IN_EPC
   memset(&_emm_data.conf, 0, sizeof(_emm_data.conf));
-  if (mme_api_get_emm_config (&_emm_data.conf, mme_config_p) != RETURNok)
-#else
-  if (mme_api_get_emm_config (&_emm_data.conf) != RETURNok)
-#endif
-  {
+  if (mme_api_get_emm_config (&_emm_data.conf, mme_config_p) != RETURNok) {
     LOG_ERROR (LOG_NAS_EMM, "EMM-MAIN  - Failed to get MME configuration data");
   }
-#if NAS_BUILT_IN_EPC
   _emm_data.ctx_coll_ue_id = hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, "emm_data.ctx_coll_ue_id");
   _emm_data.ctx_coll_guti = obj_hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, NULL, "emm_data.ctx_coll_guti");
-#endif
   LOG_FUNC_OUT(LOG_NAS_EMM);
 }
 

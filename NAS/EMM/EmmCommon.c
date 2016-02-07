@@ -47,9 +47,9 @@
 *****************************************************************************/
 
 
+#include "commonDef.h"
 #include "EmmCommon.h"
 
-#include "commonDef.h"
 #include "log.h"
 #include "emmData.h"
 
@@ -57,9 +57,7 @@
 #include <string.h>
 #include <assert.h>
 
-#if NAS_BUILT_IN_EPC
-#  include "assertions.h"
-#endif
+#include "assertions.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -71,7 +69,7 @@
 
 /* EMM procedure callback cleanup function  */
 static void                             _emm_common_cleanup (
-  unsigned int ueid);
+  nas_ue_id_t ueid);
 
 /* Ongoing EMM procedure callback functions */
 typedef struct emm_common_data_s {
@@ -82,14 +80,9 @@ typedef struct emm_common_data_s {
   emm_common_failure_callback_t           failure;
   emm_common_abort_callback_t             abort;
   void                                   *args;
-
-#if NAS_BUILT_IN_EPC
-                                          RB_ENTRY (
-  emm_common_data_s)                      entries;
-#endif
+  RB_ENTRY (emm_common_data_s)            entries;
 } emm_common_data_t;
 
-#if NAS_BUILT_IN_EPC
 typedef struct emm_common_data_head_s {
   RB_HEAD (
   emm_common_data_map,
@@ -136,15 +129,13 @@ emm_common_data_context_get (
 {
   struct emm_common_data_s                reference;
 
-  DevAssert (root != NULL);
+  DevAssert (root );
   DevCheck (_ueid > 0, _ueid, 0, 0);
   memset (&reference, 0, sizeof (struct emm_common_data_s));
   reference.ueid = _ueid;
   return RB_FIND (emm_common_data_map, &root->emm_common_data_root, &reference);
 }
-#else
-static emm_common_data_t               *_emm_common_data[EMM_DATA_NB_UE_MAX];
-#endif
+
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -176,7 +167,7 @@ static emm_common_data_t               *_emm_common_data[EMM_DATA_NB_UE_MAX];
  ***************************************************************************/
 int
 emm_proc_common_initialize (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   emm_common_success_callback_t _success,
   emm_common_reject_callback_t _reject,
   emm_common_failure_callback_t _failure,
@@ -186,19 +177,13 @@ emm_proc_common_initialize (
   struct emm_common_data_s               *emm_common_data_ctx = NULL;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-#if NAS_BUILT_IN_EPC
   assert (ueid > 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
-#else
-  assert (ueid < EMM_DATA_NB_UE_MAX);
-#endif
 
   if (emm_common_data_ctx == NULL) {
     emm_common_data_ctx = (emm_common_data_t *) CALLOC_CHECK (1, sizeof (emm_common_data_t));
     emm_common_data_ctx->ueid = ueid;
-#if NAS_BUILT_IN_EPC
     RB_INSERT (emm_common_data_map, &emm_common_data_head.emm_common_data_root, emm_common_data_ctx);
-#endif
 
     if (emm_common_data_ctx) {
       emm_common_data_ctx->ref_count = 0;
@@ -237,31 +222,20 @@ emm_proc_common_initialize (
  ***************************************************************************/
 int
 emm_proc_common_success (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
   emm_common_success_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-#if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
-#else
-  assert (ueid < EMM_DATA_NB_UE_MAX);
-  emm_common_data_ctx = _emm_common_data[ueid];
-#endif
-  assert (emm_common_data_ctx != NULL);
+  assert (emm_common_data_ctx );
   emm_callback = emm_common_data_ctx->success;
 
   if (emm_callback) {
-    struct emm_data_context_s              *ctx = NULL;
-
-#if NAS_BUILT_IN_EPC
-    ctx = emm_data_context_get (&_emm_data, ueid);
-#else
-    ctx = _emm_data.ctx[ueid];
-#endif
+    struct emm_data_context_s  *ctx = emm_data_context_get (&_emm_data, ueid);
     rc = (*emm_callback) (ctx);
   }
 
@@ -288,31 +262,20 @@ emm_proc_common_success (
  ***************************************************************************/
 int
 emm_proc_common_reject (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
   int                                     rc = RETURNerror;
   emm_common_reject_callback_t            emm_callback;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-#if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
-#else
-  assert (ueid < EMM_DATA_NB_UE_MAX);
-  emm_common_data_ctx = _emm_common_data[ueid];
-#endif
-  assert (emm_common_data_ctx != NULL);
+  assert (emm_common_data_ctx );
   emm_callback = emm_common_data_ctx->reject;
 
   if (emm_callback) {
-    struct emm_data_context_s              *ctx = NULL;
-
-#if NAS_BUILT_IN_EPC
-    ctx = emm_data_context_get (&_emm_data, ueid);
-#else
-    ctx = _emm_data.ctx[ueid];
-#endif
+    struct emm_data_context_s *ctx = emm_data_context_get (&_emm_data, ueid);
     rc = (*emm_callback) (ctx);
   }
 
@@ -340,31 +303,23 @@ emm_proc_common_reject (
  ***************************************************************************/
 int
 emm_proc_common_failure (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
   emm_common_failure_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-#if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
-#else
-  assert (ueid < EMM_DATA_NB_UE_MAX);
-  emm_common_data_ctx = _emm_common_data[ueid];
-#endif
-  assert (emm_common_data_ctx != NULL);
+
+  assert (emm_common_data_ctx );
   emm_callback = emm_common_data_ctx->failure;
 
   if (emm_callback) {
     struct emm_data_context_s              *ctx = NULL;
 
-#if NAS_BUILT_IN_EPC
     ctx = emm_data_context_get (&_emm_data, ueid);
-#else
-    ctx = _emm_data.ctx[ueid];
-#endif
     rc = (*emm_callback) (ctx);
   }
 
@@ -391,31 +346,23 @@ emm_proc_common_failure (
  ***************************************************************************/
 int
 emm_proc_common_abort (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
   emm_common_failure_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-#if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
-#else
-  assert (ueid < EMM_DATA_NB_UE_MAX);
-  emm_common_data_ctx = _emm_common_data[ueid];
-#endif
-  assert (emm_common_data_ctx != NULL);
+
+  assert (emm_common_data_ctx );
   emm_callback = emm_common_data_ctx->abort;
 
   if (emm_callback) {
     struct emm_data_context_s              *ctx = NULL;
 
-#if NAS_BUILT_IN_EPC
     ctx = emm_data_context_get (&_emm_data, ueid);
-#else
-    ctx = _emm_data.ctx[ueid];
-#endif
     rc = (*emm_callback) (ctx);
   }
 
@@ -441,19 +388,14 @@ emm_proc_common_abort (
  ***************************************************************************/
 void                                   *
 emm_proc_common_get_args (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-#if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
-#else
-  assert (ueid < EMM_DATA_NB_UE_MAX);
-  emm_common_data_ctx = _emm_common_data[ueid];
-#endif
-  assert (emm_common_data_ctx != NULL);
+  assert (emm_common_data_ctx );
   LOG_FUNC_RETURN (LOG_NAS_EMM, emm_common_data_ctx->args);
 }
 
@@ -480,17 +422,12 @@ emm_proc_common_get_args (
  ***************************************************************************/
 static void
 _emm_common_cleanup (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
 
-#if NAS_BUILT_IN_EPC
   DevCheck (ueid > 0, ueid, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
-#else
-  assert (ueid < EMM_DATA_NB_UE_MAX);
-  emm_common_data_ctx = _emm_common_data[ueid];
-#endif
 
   if (emm_common_data_ctx) {
     emm_common_data_ctx->ref_count -= 1;
@@ -499,9 +436,7 @@ _emm_common_cleanup (
       /*
        * Release the callback functions
        */
-#if NAS_BUILT_IN_EPC
       RB_REMOVE (emm_common_data_map, &emm_common_data_head.emm_common_data_root, emm_common_data_ctx);
-#endif
       FREE_CHECK (emm_common_data_ctx);
       emm_common_data_ctx = NULL;
     }

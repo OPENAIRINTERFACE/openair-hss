@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <netinet/in.h>
 
@@ -237,7 +238,7 @@ sgw_lite_handle_sgi_endpoint_created (
   create_session_response_p = &message_p->ittiMsg.sgwCreateSessionResponse;
   memset (create_session_response_p, 0, sizeof (SgwCreateSessionResponse));
 
-  if (hash_rc == HASH_TABLE_OK) {
+  if (hasHASH_TABLE_OK == h_rc) {
     create_session_response_p->teid = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_for_S11;
 
     /*
@@ -344,8 +345,8 @@ sgw_lite_handle_gtpv1uCreateTunnelResp (
   uint32_t                                ipcp_out_dns_sec_ipv4_addr = 0xFFFFFFFF;
   pco_flat_t                             *in_pco_p = NULL;
   pco_flat_t                              out_pco;
-  uint8_t                                 address_allocation_via_nas_signalling = FALSE;
-  uint8_t                                 address_allocation_via_dhcpv4 = FALSE;
+  uint8_t                                 address_allocation_via_nas_signalling = false;
+  uint8_t                                 address_allocation_via_dhcpv4 = false;
   int                                     rv = 0;
 
   LOG_FUNC_IN(LOG_SPGW_APP);
@@ -356,9 +357,9 @@ sgw_lite_handle_gtpv1uCreateTunnelResp (
                   endpoint_created_pP->context_teid, endpoint_created_pP->S1u_teid, endpoint_created_pP->eps_bearer_id, endpoint_created_pP->status);
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, endpoint_created_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
 
-  if (hash_rc == HASH_TABLE_OK) {
+  if (hasHASH_TABLE_OK == h_rc) {
     hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, endpoint_created_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
-    DevAssert (hash_rc == HASH_TABLE_OK);
+    DevAssert (hasHASH_TABLE_OK == h_rc);
     LOG_DEBUG (LOG_SPGW_APP, "Updated eps_bearer_entry_p eps_b_id %u with SGW S1U teid %u\n", endpoint_created_pP->eps_bearer_id, endpoint_created_pP->S1u_teid);
     eps_bearer_entry_p->s_gw_teid_for_S1u_S12_S4_up = endpoint_created_pP->S1u_teid;
     sgw_lite_display_s11_bearer_context_information_mapping ();
@@ -516,11 +517,11 @@ sgw_lite_handle_gtpv1uCreateTunnelResp (
           break;
 
         case PCO_CI_IP_ADDRESS_ALLOCATION_VIA_NAS_SIGNALLING:
-          address_allocation_via_nas_signalling = TRUE;
+          address_allocation_via_nas_signalling = true;
           break;
 
         case PCO_CI_IPV4_ADDRESS_ALLOCATION_VIA_DHCPV4:
-          address_allocation_via_dhcpv4 = TRUE;
+          address_allocation_via_dhcpv4 = true;
           break;
 
         case PCO_CI_IPV4_LINK_MTU_REQUEST:
@@ -560,7 +561,7 @@ sgw_lite_handle_gtpv1uCreateTunnelResp (
       break;
 
     case IPv4:
-      if (address_allocation_via_nas_signalling == TRUE) {
+      if (address_allocation_via_nas_signalling == true) {
         if (pgw_lite_get_free_ipv4_paa_address (&inaddr) == 0) {
           IN_ADDR_TO_BUFFER (inaddr, sgi_create_endpoint_resp.paa.ipv4_address);
         } else {
@@ -606,7 +607,7 @@ sgw_lite_handle_gtpv1uCreateTunnelResp (
 
     sgi_create_endpoint_resp.status = SGI_STATUS_OK;
     sgw_lite_handle_sgi_endpoint_created (&sgi_create_endpoint_resp);
-  } else {                      // if (hash_rc == HASH_TABLE_OK) {
+  } else {                      // if (hasHASH_TABLE_OK == h_rc) {
     LOG_DEBUG (LOG_SPGW_APP, "Rx SGW_S1U_ENDPOINT_CREATED, Context: teid %u NOT FOUND\n", endpoint_created_pP->context_teid);
     message_p = itti_alloc_new_message (TASK_SPGW_APP, SGW_CREATE_SESSION_RESPONSE);
 
@@ -647,7 +648,7 @@ sgw_lite_handle_gtpv1uUpdateTunnelResp (
                   endpoint_updated_pP->context_teid, endpoint_updated_pP->sgw_S1u_teid, endpoint_updated_pP->enb_S1u_teid, endpoint_updated_pP->eps_bearer_id, endpoint_updated_pP->status);
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, endpoint_updated_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
 
-  if (hash_rc == HASH_TABLE_OK) {
+  if (hasHASH_TABLE_OK == h_rc) {
     hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, endpoint_updated_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
 
     if ((hash_rc == HASH_TABLE_KEY_NOT_EXISTS) || (hash_rc == HASH_TABLE_BAD_PARAMETER_HASHTABLE)) {
@@ -667,7 +668,7 @@ sgw_lite_handle_gtpv1uUpdateTunnelResp (
       modify_response_p->trxn = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
       rv = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
       LOG_FUNC_RETURN(LOG_SPGW_APP, rv);
-    } else if (hash_rc == HASH_TABLE_OK) {
+    } else if (hasHASH_TABLE_OK == h_rc) {
       message_p = itti_alloc_new_message (TASK_SPGW_APP, SGI_UPDATE_ENDPOINT_REQUEST);
 
       if (message_p == NULL) {
@@ -720,7 +721,7 @@ sgw_lite_handle_sgi_endpoint_updated (
   sgw_eps_bearer_entry_t                 *eps_bearer_entry_p = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
   task_id_t                               to_task = TASK_S11;
-  static uint8_t                          iptable_uplink_remove_gtpu = FALSE;
+  static uint8_t                          iptable_uplink_remove_gtpu = false;
   char                                    cmd[256];
   int                                     rv = 0;
 
@@ -740,7 +741,7 @@ sgw_lite_handle_sgi_endpoint_updated (
   memset (modify_response_p, 0, sizeof (SgwModifyBearerResponse));
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, resp_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
 
-  if (hash_rc == HASH_TABLE_OK) {
+  if (hasHASH_TABLE_OK == h_rc) {
     hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, resp_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
 
     if ((hash_rc == HASH_TABLE_KEY_NOT_EXISTS) || (hash_rc == HASH_TABLE_BAD_PARAMETER_HASHTABLE)) {
@@ -756,7 +757,7 @@ sgw_lite_handle_sgi_endpoint_updated (
                           NULL, 0, "0 SGW_MODIFY_BEARER_RESPONSE ebi %u CONTEXT_NOT_FOUND trxn %u", modify_response_p->bearer_choice.bearer_for_removal.eps_bearer_id, modify_response_p->trxn);
       rv = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
       LOG_FUNC_RETURN(LOG_SPGW_APP, rv);
-    } else if (hash_rc == HASH_TABLE_OK) {
+    } else if (hasHASH_TABLE_OK == h_rc) {
       LOG_DEBUG (LOG_SPGW_APP, "Rx SGI_UPDATE_ENDPOINT_RESPONSE: REQUEST_ACCEPTED\n");
       // accept anyway
       modify_response_p->teid = resp_pP->context_teid;  // TO BE CHECKED IF IT IS THIS TEID
@@ -766,7 +767,7 @@ sgw_lite_handle_sgi_endpoint_updated (
       modify_response_p->cause = REQUEST_ACCEPTED;
       modify_response_p->trxn = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
       // if default bearer
-#warning "TODO define constant for default eps_bearer id"
+#pragma message  "TODO define constant for default eps_bearer id"
 
       //if ((resp_pP->eps_bearer_id == 5) && (spgw_config.pgw_config.pgw_masquerade_SGI == 0)) {
       if (resp_pP->eps_bearer_id == 5) {
@@ -928,7 +929,7 @@ sgw_lite_handle_modify_bearer_request (
   sgw_lite_display_s11_bearer_context_information_mapping ();
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, modify_bearer_pP->teid, (void **)&new_bearer_ctxt_info_p);
 
-  if (hash_rc == HASH_TABLE_OK) {
+  if (hasHASH_TABLE_OK == h_rc) {
     new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.default_bearer = modify_bearer_pP->bearer_context_to_modify.eps_bearer_id;
     new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn = modify_bearer_pP->trxn;
     hash_rc = hashtable_ts_is_key_exists (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, modify_bearer_pP->bearer_context_to_modify.eps_bearer_id);
@@ -953,7 +954,7 @@ sgw_lite_handle_modify_bearer_request (
                           NULL, 0, "0 SGW_MODIFY_BEARER_RESPONSE ebi %u CONTEXT_NOT_FOUND trxn %u", modify_response_p->bearer_choice.bearer_for_removal.eps_bearer_id, modify_response_p->trxn);
       rv = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
       LOG_FUNC_RETURN(LOG_SPGW_APP, rv);
-    } else if (hash_rc == HASH_TABLE_OK) {
+    } else if (hasHASH_TABLE_OK == h_rc) {
       // TO DO
       hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, modify_bearer_pP->bearer_context_to_modify.eps_bearer_id, (void **)&eps_bearer_entry_p);
       FTEID_T_2_IP_ADDRESS_T ((&modify_bearer_pP->bearer_context_to_modify.s1_eNB_fteid), (&eps_bearer_entry_p->enb_ip_address_for_S1u));
@@ -1022,7 +1023,7 @@ sgw_lite_handle_delete_session_request (
 
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, delete_session_req_pP->teid, (void **)&ctx_p);
 
-  if (hash_rc == HASH_TABLE_OK) {
+  if (hasHASH_TABLE_OK == h_rc) {
     if ((delete_session_req_pP->sender_fteid_for_cp.ipv4 != 0) && (delete_session_req_pP->sender_fteid_for_cp.ipv6 != 0)) {
       /*
        * Sender F-TEID IE present
@@ -1127,10 +1128,10 @@ sgw_lite_handle_release_access_bearers_request (
   release_access_bearers_resp_p = &message_p->ittiMsg.sgwReleaseAccessBearersResponse;
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, release_access_bearers_req_pP->teid, (void **)&ctx_p);
 
-  if (hash_rc == HASH_TABLE_OK) {
+  if (hasHASH_TABLE_OK == h_rc) {
     release_access_bearers_resp_p->cause = REQUEST_ACCEPTED;
     release_access_bearers_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_for_S11;
-#warning "TODO Here the release (sgw_lite_handle_release_access_bearers_request)"
+#pragma message  "TODO Here the release (sgw_lite_handle_release_access_bearers_request)"
     hash_rc = hashtable_ts_apply_funct_on_elements (ctx_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, sgw_lite_release_all_enb_related_information, NULL);
     // TODO The S-GW starts buffering downlink packets received for the UE
     // (set target on GTPUSP to order the buffering)

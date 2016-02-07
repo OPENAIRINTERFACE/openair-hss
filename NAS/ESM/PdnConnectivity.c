@@ -54,18 +54,12 @@
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "log.h"
-
 #include "esmData.h"
 #include "esm_cause.h"
 #include "esm_pt.h"
-
 #include "mme_api.h"
-
 #include "emm_sap.h"
-
-#if ENABLE_ITTI
-#  include "assertions.h"
-#endif
+#include "assertions.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -87,11 +81,11 @@
 */
 static int                              _pdn_connectivity_create (
   emm_data_context_t * ctx,
-  int pti,
+  const int pti,
   const OctetString * apn,
   esm_proc_pdn_type_t pdn_type,
-  const OctetString * pdn_addr,
-  int is_emergency);
+  const OctetString * const pdn_addr,
+  const int is_emergency);
 int                                     _pdn_connectivity_delete (
   emm_data_context_t * ctx,
   int pid);
@@ -147,11 +141,11 @@ int                                     _pdn_connectivity_delete (
 int
 esm_proc_pdn_connectivity_request (
   emm_data_context_t * ctx,
-  int pti,
-  esm_proc_pdn_request_t request_type,
-  OctetString * apn,
+  const int pti,
+  const esm_proc_pdn_request_t request_type,
+  const OctetString * const apn,
   esm_proc_pdn_type_t pdn_type,
-  OctetString * pdn_addr,
+  const OctetString * const pdn_addr,
   esm_proc_qos_t * esm_qos,
   int *esm_cause)
 {
@@ -162,22 +156,13 @@ esm_proc_pdn_connectivity_request (
   LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity requested by the UE "
              "(ueid=" NAS_UE_ID_FMT ", pti=%d) PDN type = %s, APN = %s pdn addr = %s\n", ctx->ueid, pti,
              (pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6", (apn) ? (char *)(apn->value) : "null", (pdn_addr) ? (char *)(pdn_addr->value) : "null");
-#if NAS_BUILT_IN_EPC == 0
 
-  /*
-   * UE identifier sanity check
-   */
-  if (ctx->ueid >= ESM_DATA_NB_UE_MAX) {
-    LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Number of connected UEs exceeded\n");
-    LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
-  }
-#endif
   /*
    * Check network IP capabilities
    */
   *esm_cause = ESM_CAUSE_SUCCESS;
   LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - _esm_data.conf.features %08x", _esm_data.conf.features);
-#warning "Uncomment code about _esm_data.conf.features & (MME_API_IPV4 | MME_API_IPV6) later"
+//#pragma message  "Uncomment code about _esm_data.conf.features & (MME_API_IPV4 | MME_API_IPV6) later"
 #if ORIGINAL_CODE
 
   switch (_esm_data.conf.features & (MME_API_IPV4 | MME_API_IPV6)) {
@@ -318,11 +303,11 @@ esm_proc_pdn_connectivity_request (
  ***************************************************************************/
 int
 esm_proc_pdn_connectivity_reject (
-  int is_standalone,
+  bool is_standalone,
   emm_data_context_t * ctx,
   int ebi,
   OctetString * msg,
-  int ue_triggered)
+  bool ue_triggered)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
@@ -415,7 +400,7 @@ esm_proc_pdn_connectivity_failure (
  **                  apn:       Access Point Name of the PDN connection    **
  **                  pdn_type:  PDN type (IPv4, IPv6, IPv4v6)              **
  **                  pdn_addr:  Network allocated PDN IPv4 or IPv6 address **
- **              is_emergency:  TRUE if the PDN connection has to be esta- **
+ **              is_emergency:  true if the PDN connection has to be esta- **
  **                             blished for emergency bearer services      **
  **                  Others:    _esm_data                                  **
  **                                                                        **
@@ -428,11 +413,11 @@ esm_proc_pdn_connectivity_failure (
 static int
 _pdn_connectivity_create (
   emm_data_context_t * ctx,
-  int pti,
+  const int pti,
   const OctetString * apn,
   esm_proc_pdn_type_t pdn_type,
-  const OctetString * pdn_addr,
-  int is_emergency)
+  const OctetString * const pdn_addr,
+  const int is_emergency)
 {
   int                                     pid = ESM_DATA_PDN_MAX;
 
@@ -444,7 +429,7 @@ _pdn_connectivity_create (
    * Search for an available PDN connection entry
    */
   for (pid = 0; pid < ESM_DATA_PDN_MAX; pid++) {
-    if (ctx->esm_data_ctx.pdn[pid].data != NULL) {
+    if (ctx->esm_data_ctx.pdn[pid].data ) {
       continue;
     }
 
@@ -457,7 +442,7 @@ _pdn_connectivity_create (
      */
     esm_pdn_t                              *pdn = (esm_pdn_t *) MALLOC_CHECK (sizeof (esm_pdn_t));
 
-    if (pdn != NULL) {
+    if (pdn ) {
       memset (pdn, 0, sizeof (esm_pdn_t));
       /*
        * Increment the number of PDN connections
@@ -470,7 +455,7 @@ _pdn_connectivity_create (
       /*
        * Reset the PDN connection active indicator
        */
-      ctx->esm_data_ctx.pdn[pid].is_active = FALSE;
+      ctx->esm_data_ctx.pdn[pid].is_active = false;
       /*
        * Setup the PDN connection data
        */

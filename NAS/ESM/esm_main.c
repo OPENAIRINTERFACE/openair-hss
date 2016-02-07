@@ -78,9 +78,6 @@ esm_main_initialize (
   void)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
-#if NAS_BUILT_IN_EPC == 0
-  int                                     i;
-#endif
 
   /*
    * Retreive MME supported configuration data
@@ -88,14 +85,6 @@ esm_main_initialize (
   if (mme_api_get_esm_config (&_esm_data.conf) != RETURNok) {
     LOG_ERROR (LOG_NAS_ESM, "ESM-MAIN  - Failed to get MME configuration data\n");
   }
-#if NAS_BUILT_IN_EPC == 0
-  /*
-   * Initialize ESM contexts
-   */
-  for (i = 0; i < ESM_DATA_NB_UE_MAX; i++) {
-    _esm_data.ctx[i] = NULL;
-  }
-#endif
   /*
    * Initialize the EPS bearer context manager
    */

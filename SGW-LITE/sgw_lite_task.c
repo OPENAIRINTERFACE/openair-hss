@@ -30,6 +30,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
@@ -201,7 +202,9 @@ sgw_lite_init (
     return -1;
   }
 
-  sgw_app.s11_bearer_context_information_hashtable = hashtable_ts_create (8192, NULL, sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information, "sgw_s11_bearer_context_information_hashtable");
+  sgw_app.s11_bearer_context_information_hashtable = hashtable_ts_create (8192, NULL,
+          (void (*freefunc)(void*))sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information,
+          "sgw_s11_bearer_context_information_hashtable");
 
   if (sgw_app.s11_bearer_context_information_hashtable == NULL) {
     perror ("hashtable_ts_create");

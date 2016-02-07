@@ -130,7 +130,7 @@ int mme_api_get_esm_config(mme_api_esm_config_t *config);
 
 int
 mme_api_notify_new_guti (
-  const unsigned int ueid,
+  const nas_ue_id_t ueid,
   GUTI_t * const guti);
 
 int mme_api_notify_ue_id_changed (

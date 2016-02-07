@@ -26,8 +26,8 @@
 #define S1AP_MME_RETRANSMISSION_H_
 
 typedef struct s1ap_timer_map_s {
-  long     timer_id;
-  uint32_t mme_ue_s1ap_id;
+  long             timer_id;
+  mme_ue_s1ap_id_t mme_ue_s1ap_id;
 
   RB_ENTRY(s1ap_timer_map_s) entries;
 } s1ap_timer_map_t;
@@ -37,8 +37,8 @@ int s1ap_mme_timer_map_compare_id(
 
 int s1ap_handle_timer_expiry(timer_has_expired_t *timer_has_expired);
 
-int s1ap_timer_insert(uint32_t mme_ue_s1ap_id, long timer_id);
+int s1ap_timer_insert(const mme_ue_s1ap_id_t mme_ue_s1ap_id, long timer_id);
 
-int s1ap_timer_remove_ue(uint32_t mme_ue_s1ap_id);
+int s1ap_timer_remove_ue(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
 #endif /* S1AP_MME_RETRANSMISSION_H_ */

@@ -40,9 +40,9 @@
 #include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 #include <string.h>             // memcpy
 
+#include "commonDef.h"
 #include "emmData.h"
 #include "esm_ebr.h"
-#include "commonDef.h"
 #include "log.h"
 #include "mme_api.h"
 #include "msc.h"
@@ -67,15 +67,7 @@ static const char                      *_esm_ebr_state_str[ESM_EBR_STATE_MAX] = 
   "BEARER CONTEXT ACTIVE PENDING"
 };
 
-/*
-   ----------------------------------
-   List of EPS bearer contexts per UE
-   ----------------------------------
-*/
 
-#if NAS_BUILT_IN_EPC == 0
-static esm_ebr_data_t                   _esm_ebr_data[ESM_EBR_NB_UE_MAX];
-#endif
 
 /*
    ----------------------
@@ -113,25 +105,8 @@ esm_ebr_initialize (
   void
   )
 {
-#if NAS_BUILT_IN_EPC == 0
-  int                                     ueid,
-                                          i;
-
   LOG_FUNC_IN (LOG_NAS_ESM);
-
-  for (ueid = 0; ueid < ESM_EBR_NB_UE_MAX; ueid++) {
-    _esm_ebr_data[ueid].index = 0;
-
-    /*
-     * Initialize EPS bearer context data
-     */
-    for (i = 0; i < ESM_EBR_DATA_SIZE + 1; i++) {
-      _esm_ebr_data[ueid].context[i] = NULL;
-    }
-  }
-
   LOG_FUNC_OUT (LOG_NAS_ESM);
-#endif
 }
 
 /****************************************************************************
@@ -144,7 +119,7 @@ esm_ebr_initialize (
  **      ebi:       Identity of the new EPS bearer context     **
  **      cid:       Identifier of the PDN context the EPS bea- **
  **             rer context is associated to               **
- **      default_ebr    TRUE if the new bearer context is associa- **
+ **      default_ebr    true if the new bearer context is associa- **
  **             ted to a default EPS bearer                **
  **      Others:    None                                       **
  **                                                                        **
@@ -161,9 +136,6 @@ esm_ebr_assign (
   int ebi)
 {
   esm_ebr_context_t                      *ebr_ctx = NULL;
-#if NAS_BUILT_IN_EPC == 0
-  unsigned int                            ueid = 0;
-#endif
   int                                     i;
 
   LOG_FUNC_IN (LOG_NAS_ESM);
@@ -172,7 +144,7 @@ esm_ebr_assign (
   if (ebi != ESM_EBI_UNASSIGNED) {
     if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
       LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
-    } else if (ebr_ctx != NULL) {
+    } else if (ebr_ctx ) {
       LOG_WARNING (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context already " "assigned (ebi=%d)\n", ebi);
       LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
     }
@@ -205,11 +177,8 @@ esm_ebr_assign (
   if (ebr_ctx == NULL) {
     LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
   }
-#if NAS_BUILT_IN_EPC
   ctx->esm_data_ctx.ebr.context[ebi - ESM_EBI_MIN] = ebr_ctx;
-#else
-  _esm_ebr_data[ueid].context[ebi - ESM_EBI_MIN] = ebr_ctx;
-#endif
+
   /*
    * Store the index of the next available EPS bearer identity
    */
@@ -414,7 +383,7 @@ esm_ebr_start_timer (
     }
   }
 
-  if ((ebr_ctx->args != NULL) && (ebr_ctx->timer.id != NAS_TIMER_INACTIVE_ID)) {
+  if ((ebr_ctx->args ) && (ebr_ctx->timer.id != NAS_TIMER_INACTIVE_ID)) {
     LOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Retransmission timer %d expires in " "%ld seconds\n", ebr_ctx->timer.id, ebr_ctx->timer.sec);
     LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
   } else {
@@ -551,7 +520,7 @@ esm_ebr_get_pending_ebi (
  ** Inputs:  ueid:      Lower layers UE identifier                 **
  **      ebi:       The identity of the EPS bearer             **
  **      status:    The new EPS bearer context status          **
- **      ue_requested:  TRUE/FALSE if the modification of the EPS  **
+ **      ue_requested:  true/false if the modification of the EPS  **
  **             bearer context status was requested by the **
  **             UE/network                                 **
  **      Others:    None                                       **
@@ -668,7 +637,7 @@ esm_ebr_get_status (
  **      Others:    None                                       **
  **                                                                        **
  ** Outputs:     None                                                      **
- **      Return:    TRUE, FALSE                                **
+ **      Return:    true, false                                **
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
@@ -691,7 +660,7 @@ esm_ebr_is_reserved (
  **      Others:    _esm_ebr_data                              **
  **                                                                        **
  ** Outputs:     None                                                      **
- **      Return:    TRUE, FALSE                                **
+ **      Return:    true, false                                **
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
@@ -731,7 +700,7 @@ _esm_ebr_get_available_entry (
   int                                     i;
 
   for (i = ctx->esm_data_ctx.ebr.index; i < ESM_EBR_DATA_SIZE; i++) {
-    if (ctx->esm_data_ctx.ebr.context[i] != NULL) {
+    if (ctx->esm_data_ctx.ebr.context[i] ) {
       continue;
     }
 
@@ -739,7 +708,7 @@ _esm_ebr_get_available_entry (
   }
 
   for (i = 0; i < ctx->esm_data_ctx.ebr.index; i++) {
-    if (ctx->esm_data_ctx.ebr.context[i] != NULL) {
+    if (ctx->esm_data_ctx.ebr.context[i] ) {
       continue;
     }
 

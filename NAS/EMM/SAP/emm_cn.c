@@ -39,7 +39,6 @@
 
 #include <string.h>
 
-#if NAS_BUILT_IN_EPC
 
 #  include "log.h"
 #  include "commonDef.h"
@@ -172,7 +171,6 @@ _emm_cn_pdn_connectivity_res (
   int                                     rc = RETURNok;
   struct emm_data_context_s              *emm_ctx_p = NULL;
   esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
-  esm_proc_data_t                        *esm_proc_data_p = NULL;
   ESM_msg                                 esm_msg;
   EpsQualityOfService                     qos;
   ProtocolConfigurationOptions            pco;
@@ -181,8 +179,8 @@ _emm_cn_pdn_connectivity_res (
   uint16_t                                pi_or_ci = 0; // protocol identifier or container identifier;
   uint8_t                                 length_pi_or_ci = 0;
   OctetString                             rsp = { 0, NULL };
-  int                                     is_standalone = 0;    // warning hardcoded
-  int                                     triggered_by_ue = 1;  // warning hardcoded
+  bool                                    is_standalone = false;    // warning hardcoded
+  bool                                    triggered_by_ue = true;  // warning hardcoded
   attach_data_t                          *data_p = NULL;
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
   int                                     pid = 0;
@@ -227,7 +225,7 @@ _emm_cn_pdn_connectivity_res (
   LOG_INFO (LOG_NAS_EMM, "EMM  -  qos.gbrDL = %u \n", msg_pP->qos.gbrDL);
   qos.bitRatesPresent = 0;
   qos.bitRatesExtPresent = 0;
-#  warning "Some work to do here about qos"
+//#pragma message "Some work to do here about qos"
   qos.qci = msg_pP->qci;
   qos.bitRates.maxBitRateForUL = 0;     //msg_pP->qos.mbrUL;
   qos.bitRates.maxBitRateForDL = 0;     //msg_pP->qos.mbrDL;
@@ -442,4 +440,3 @@ emm_cn_send (
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
-#endif

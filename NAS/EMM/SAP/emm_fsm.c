@@ -41,13 +41,9 @@
 #include "emm_fsm.h"
 #include "commonDef.h"
 #include "log.h"
-
 #include "mme_api.h"
 #include "emmData.h"
-
-#if NAS_BUILT_IN_EPC
-#  include "assertions.h"
-#endif
+#include "assertions.h"
 #include "msc.h"
 
 /****************************************************************************/
@@ -134,10 +130,6 @@ static const emm_fsm_handler_t          _emm_fsm_handlers[EMM_STATE_MAX] = {
    -----------------------------------------------------------------------------
 */
 
-#if NAS_BUILT_IN_EPC == 0
-emm_fsm_state_t                         _emm_fsm_status[EMM_FSM_NB_UE_MAX];
-#endif
-
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
@@ -160,16 +152,7 @@ void
 emm_fsm_initialize (
   void)
 {
-  int                                     ueid;
-
   LOG_FUNC_IN (LOG_NAS_EMM);
-#if NAS_BUILT_IN_EPC == 0
-
-  for (ueid = 0; ueid < EMM_FSM_NB_UE_MAX; ueid++) {
-    _emm_fsm_status[ueid] = EMM_DEREGISTERED;
-  }
-
-#endif
   LOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
@@ -190,15 +173,14 @@ emm_fsm_initialize (
  ***************************************************************************/
 int
 emm_fsm_set_status (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   void *ctx,
   emm_fsm_state_t status)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-#if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
-  DevAssert (emm_ctx != NULL);
+  DevAssert (emm_ctx );
   // FOR DEBUG, TO BE REMOVED
   AssertFatal(ueid == emm_ctx->ueid, "Mismatch UE IDs ueid param " NAS_UE_ID_FMT" emm_ctx->ueid " NAS_UE_ID_FMT"\n", ueid, emm_ctx->ueid);
   if ((status < EMM_STATE_MAX) && (ueid > 0)) {
@@ -210,17 +192,6 @@ emm_fsm_set_status (
 
     LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
-#else
-
-  if ((status < EMM_STATE_MAX) && (ueid < EMM_FSM_NB_UE_MAX)) {
-    if (status != _emm_fsm_status[ueid]) {
-      LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s\n", _emm_fsm_status_str[_emm_fsm_status[ueid]], _emm_fsm_status_str[status]);
-      _emm_fsm_status[ueid] = status;
-    }
-
-    LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-  }
-#endif
   LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
 }
 
@@ -241,10 +212,9 @@ emm_fsm_set_status (
  ***************************************************************************/
 emm_fsm_state_t
 emm_fsm_get_status (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   void *ctx)
 {
-#if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
   if (emm_ctx == NULL) {
@@ -252,15 +222,9 @@ emm_fsm_get_status (
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
   }
 
-  if (emm_ctx != NULL) {
+  if (emm_ctx ) {
     return emm_ctx->_emm_fsm_status;
   }
-#else
-
-  if (ueid < EMM_FSM_NB_UE_MAX) {
-    return (_emm_fsm_status[ueid]);
-  }
-#endif
   return EMM_INVALID;           // LG TEST: changed EMM_STATE_MAX to EMM_INVALID;
 }
 
@@ -288,23 +252,12 @@ emm_fsm_process (
 
   LOG_FUNC_IN (LOG_NAS_EMM);
   primitive = evt->primitive;
-#if NAS_BUILT_IN_EPC
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
 
-  DevAssert (emm_ctx != NULL);
+  DevAssert (emm_ctx );
   status = emm_fsm_get_status (evt->ueid, emm_ctx);
-#else
-
-  if (evt->ueid >= EMM_FSM_NB_UE_MAX) {
-    LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-  }
-
-  status = _emm_fsm_status[evt->ueid];
-#endif
   LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
-#if NAS_BUILT_IN_EPC
   DevAssert (status != EMM_INVALID);
-#endif
   /*
    * Execute the EMM state machine
    */

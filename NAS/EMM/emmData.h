@@ -142,7 +142,7 @@ typedef struct emm_security_context_s {
  * ---------------------------------------------------------------------------
  */
 typedef struct emm_data_context_s {
-  unsigned int ueid;        /* UE identifier                                   */
+  nas_ue_id_t ueid;        /* UE identifier                                   */
   int          is_dynamic;  /* Dynamically allocated context indicator         */
   int          is_attached; /* Attachment indicator                            */
   int          is_emergency;/* Emergency bearer services indicator             */
@@ -217,7 +217,7 @@ typedef struct emm_data_s {
 } emm_data_t;
 
 struct emm_data_context_s *emm_data_context_get(
-  emm_data_t *emm_data, const unsigned int ueid);
+  emm_data_t *emm_data, const nas_ue_id_t ueid);
 
 struct emm_data_context_s *emm_data_context_get_by_guti(
   emm_data_t *emm_data, GUTI_t *guti);

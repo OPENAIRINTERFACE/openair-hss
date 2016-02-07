@@ -92,7 +92,7 @@ typedef struct emm_as_security_data_s {
  * ----------------------------
  */
 typedef struct emm_as_security_s {
-  uint32_t ueid;      /* UE lower layer identifier        */
+  nas_ue_id_t ueid;      /* UE lower layer identifier        */
   const GUTI_t *guti;     /* GUTI temporary mobile identity   */
   emm_as_security_data_t sctx;/* EPS NAS security context     */
   int emm_cause;      /* EMM failure cause code       */
@@ -146,10 +146,10 @@ typedef struct emm_as_EPS_identity_s {
 } emm_as_EPS_identity_t;
 
 typedef struct emm_as_establish_s {
-  uint32_t ueid;      /* UE lower layer identifier         */
+  nas_ue_id_t ueid;      /* UE lower layer identifier         */
   emm_as_EPS_identity_t UEid; /* UE's EPS mobile identity      */
   emm_as_security_data_t sctx;/* EPS NAS security context      */
-  int switch_off;     /* TRUE if the UE is switched off    */
+  int switch_off;     /* true if the UE is switched off    */
   uint8_t type;       /* Network attach/detach type        */
   uint8_t RRCcause;       /* Connection establishment cause    */
   uint8_t RRCtype;        /* Associated call type          */
@@ -194,7 +194,7 @@ typedef struct emm_as_establish_s {
  * --------------------------------------
  */
 typedef struct emm_as_release_s {
-  uint32_t ueid;      /* UE lower layer identifier          */
+  nas_ue_id_t ueid;      /* UE lower layer identifier          */
   const GUTI_t *guti;     /* GUTI temporary mobile identity     */
 #define EMM_AS_CAUSE_AUTHENTICATION 0x01    /* Authentication failure */
 #define EMM_AS_CAUSE_DETACH     0x02    /* Detach requested   */
@@ -206,10 +206,10 @@ typedef struct emm_as_release_s {
  * ---------------------------------
  */
 typedef struct emm_as_data_s {
-  uint32_t ueid;      /* UE lower layer identifier        */
+  nas_ue_id_t ueid;      /* UE lower layer identifier        */
   const GUTI_t *guti;     /* GUTI temporary mobile identity   */
   emm_as_security_data_t sctx;/* EPS NAS security context     */
-  int switch_off;     /* TRUE if the UE is switched off   */
+  int switch_off;     /* true if the UE is switched off   */
   uint8_t type;       /* Network detach type          */
   uint8_t delivered;      /* Data message delivery indicator  */
 #define EMM_AS_NAS_DATA_ATTACH  0x01    /* Attach complete      */
@@ -229,7 +229,7 @@ typedef struct emm_as_page_s {} emm_as_page_t;
  * -------------------------------------
  */
 typedef struct emm_as_status_s {
-  uint32_t ueid;      /* UE lower layer identifier        */
+  nas_ue_id_t ueid;      /* UE lower layer identifier        */
   const GUTI_t *guti;     /* GUTI temporary mobile identity   */
   emm_as_security_data_t sctx;/* EPS NAS security context     */
   int emm_cause;      /* EMM failure cause code       */

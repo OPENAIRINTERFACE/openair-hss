@@ -35,6 +35,7 @@
 
 #include "tree.h"
 #include "hashtable.h"
+#include "obj_hashtable.h"
 #include "intertask_interface.h"
 #include "mme_config.h"
 #include "sgw_lite_defs.h"
@@ -125,7 +126,7 @@ sgw_lite_display_s11_bearer_context_information (
     LOG_DEBUG (LOG_SPGW_APP, "|\t\t\teps_bearers:\n");
     hash_rc = hashtable_ts_apply_funct_on_elements (sp_context_information->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, sgw_lite_display_pdn_connection_sgw_eps_bearers, NULL);
 
-    if (hash_rc != HASH_TABLE_OK) {
+    if (hasHASH_TABLE_OK != h_rc) {
       LOG_DEBUG (LOG_SPGW_APP, "Invalid sgw_eps_bearers hashtable for display\n");
     }
     //void                  *trxn;
@@ -336,7 +337,8 @@ sgw_lite_cm_create_bearer_context_information_in_collection (
    * return NULL;
    * }
    */
-  new_bearer_context_information->pgw_eps_bearer_context_information.apns = obj_hashtable_ts_create (32, NULL, NULL, pgw_lite_cm_free_apn, "pgw_eps_bearer_ctxt_info_apns");
+  new_bearer_context_information->pgw_eps_bearer_context_information.apns =
+      obj_hashtable_ts_create (32, NULL, NULL, pgw_lite_cm_free_apn, "pgw_eps_bearer_ctxt_info_apns");
 
   if (new_bearer_context_information->pgw_eps_bearer_context_information.apns == NULL) {
     LOG_ERROR (LOG_SPGW_APP, "Failed to create APN collection object entry for EPS bearer S11 teid %u \n", teid);
@@ -396,7 +398,7 @@ sgw_lite_cm_create_eps_bearer_entry_in_collection (
   LOG_DEBUG (LOG_SPGW_APP, "Inserted new EPS bearer entry for EPS bearer id %u status %s\n", eps_bearer_idP, hashtable_rc_code2string (hash_rc));
   hash_rc = hashtable_ts_apply_funct_on_elements (eps_bearersP, sgw_lite_display_pdn_connection_sgw_eps_bearers, NULL);
 
-  if (hash_rc != HASH_TABLE_OK) {
+  if (hasHASH_TABLE_OK != h_rc) {
     LOG_DEBUG (LOG_SPGW_APP, "Invalid sgw_eps_bearers hashtable for display\n");
   }
 

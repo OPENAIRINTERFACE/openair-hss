@@ -102,8 +102,8 @@ typedef struct ue_context_s {
   /* Indicator to show the IMSI authentication state */
   unsigned               imsi_auth:1;                 // set by nas_auth_resp_t
 
-  unsigned               eNB_ue_s1ap_id:24;
-  uint32_t               mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t       eNB_ue_s1ap_id:24;
+  mme_ue_s1ap_id_t       mme_ue_s1ap_id;
 
   /* ue_id is equal to mme_ue_s1ap_id */
   uint32_t               ue_id;                       // set by nas_auth_param_req_t
@@ -210,21 +210,21 @@ ue_context_t *mme_ue_context_exists_imsi(mme_ue_context_t * const mme_ue_context
  * @returns an UE context matching the teid or NULL if the context doesn't exists
  **/
 ue_context_t *mme_ue_context_exists_s11_teid(mme_ue_context_t * const mme_ue_context,
-    const uint32_t teid);
+    const s11_teid_t teid);
 
 /** \brief Retrieve an UE context by selecting the provided mme_ue_s1ap_id
  * \param mme_ue_s1ap_id The UE id identifier used in S1AP MME (and NAS)
  * @returns an UE context matching the mme_ue_s1ap_id or NULL if the context doesn't exists
  **/
 ue_context_t *mme_ue_context_exists_mme_ue_s1ap_id(mme_ue_context_t * const mme_ue_context,
-    const uint32_t mme_ue_s1ap_id);
+    const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
 /** \brief Retrieve an UE context by selecting the provided nas_ue_id
  * \param nas_ue_id The UE id identifier used in S1AP MME and NAS
  * @returns an UE context matching the nas_ue_id or NULL if the context doesn't exists
  **/
 ue_context_t *mme_ue_context_exists_nas_ue_id(mme_ue_context_t * const mme_ue_context,
-    const uint32_t nas_ue_id);
+    const nas_ue_id_t nas_ue_id);
 
 /** \brief Retrieve an UE context by selecting the provided guti
  * \param guti The GUTI used by the UE

@@ -76,7 +76,6 @@
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-#if NAS_BUILT_IN_EPC
 void
 nas_proc_initialize (
   mme_config_t * mme_config_p)
@@ -92,23 +91,7 @@ nas_proc_initialize (
   esm_main_initialize ();
   LOG_FUNC_OUT (LOG_NAS_EMM);
 }
-#else
-void
-nas_proc_initialize (
-  void)
-{
-  LOG_FUNC_IN (LOG_NAS_EMM);
-  /*
-   * Initialize the EMM procedure manager
-   */
-  emm_main_initialize ();
-  /*
-   * Initialize the ESM procedure manager
-   */
-  esm_main_initialize ();
-  LOG_FUNC_OUT (LOG_NAS_EMM);
-}
-#endif
+
 
 /****************************************************************************
  **                                                                        **
@@ -169,11 +152,11 @@ nas_proc_cleanup (
  ***************************************************************************/
 int
 nas_proc_establish_ind (
-  uint32_t ueid,
-  uint8_t plmn[3],
-  tac_t tac,
+  const uint32_t ueid,
+  const uint8_t plmn[3],
+  const tac_t tac,
   const Byte_t * data,
-  uint32_t len)
+  const uint32_t len)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
@@ -239,7 +222,7 @@ nas_proc_dl_transfer_cnf (
    */
   emm_sap.primitive = EMMAS_DATA_IND;
   emm_sap.u.emm_as.u.data.ueid = ueid;
-  emm_sap.u.emm_as.u.data.delivered = TRUE;
+  emm_sap.u.emm_as.u.data.delivered = true;
   emm_sap.u.emm_as.u.data.NASmsg.length = 0;
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -277,7 +260,7 @@ nas_proc_dl_transfer_rej (
    */
   emm_sap.primitive = EMMAS_DATA_IND;
   emm_sap.u.emm_as.u.data.ueid = ueid;
-  emm_sap.u.emm_as.u.data.delivered = FALSE;
+  emm_sap.u.emm_as.u.data.delivered = false;
   emm_sap.u.emm_as.u.data.NASmsg.length = 0;
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -320,7 +303,7 @@ nas_proc_ul_transfer_ind (
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND ue id " NAS_UE_ID_FMT " len %u", ueid, len);
     emm_sap.primitive = EMMAS_DATA_IND;
     emm_sap.u.emm_as.u.data.ueid = ueid;
-    emm_sap.u.emm_as.u.data.delivered = TRUE;
+    emm_sap.u.emm_as.u.data.delivered = true;
     emm_sap.u.emm_as.u.data.NASmsg.length = len;
     emm_sap.u.emm_as.u.data.NASmsg.value = (uint8_t *) data;
     rc = emm_sap_send (&emm_sap);
@@ -329,7 +312,6 @@ nas_proc_ul_transfer_ind (
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-#if NAS_BUILT_IN_EPC
 int
 nas_proc_auth_param_res (
   emm_cn_auth_res_t * emm_cn_auth_res)
@@ -404,10 +386,6 @@ nas_proc_pdn_connectivity_fail (
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
-
-
-
-#endif
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

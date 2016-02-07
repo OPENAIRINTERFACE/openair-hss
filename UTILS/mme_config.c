@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -95,7 +96,8 @@ mme_config_init (
   mme_config_t * mme_config_p)
 {
   pthread_rwlock_init (&mme_config_p->rw_lock, NULL);
-  mme_config_p->log_config.output               = NULL;
+  mme_config_p->log_config.output             = NULL;
+  mme_config_p->log_config.color              = false;
   mme_config_p->log_config.udp_log_level      = MAX_LOG_LEVEL; // Means invalid
   mme_config_p->log_config.gtpv1u_log_level   = MAX_LOG_LEVEL; // will not overwrite existing log levels if MME and S-GW bundled in same executable
   mme_config_p->log_config.gtpv2c_log_level   = MAX_LOG_LEVEL;
@@ -197,11 +199,11 @@ config_parse_file (
   config_setting_t                       *setting = NULL;
   config_setting_t                       *subsetting = NULL;
   config_setting_t                       *sub2setting = NULL;
-  long int                                alongint;
+  int                                     aint;
   int                                     i,n,
                                           stop_index,
                                           num;
-  char                                   *astring = NULL;
+  const char                             *astring = NULL;
   char                                   *address = NULL;
   char                                   *cidr = NULL;
   const char                             *tac = NULL;
@@ -213,8 +215,7 @@ config_parse_file (
   char                                   *mme_interface_name_for_S11 = NULL;
   char                                   *mme_ip_address_for_S11 = NULL;
   char                                   *sgw_ip_address_for_S11 = NULL;
-  char                                    system_cmd[256];
-  boolean_t                               swap = FALSE;
+  bool                                    swap = false;
 
   config_init (&cfg);
 
@@ -240,23 +241,14 @@ config_parse_file (
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_LOGGING);
 
 
-    mme_config_p->log_config.udp_log_level      = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.gtpv1u_log_level   = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.gtpv2c_log_level   = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.sctp_log_level     = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.s1ap_log_level     = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.nas_log_level      = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.mme_app_log_level  = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.spgw_app_log_level = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.s11_log_level      = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.s6a_log_level      = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.util_log_level     = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.msc_log_level      = LOG_LEVEL_ERROR;
-    mme_config_p->log_config.itti_log_level     = LOG_LEVEL_ERROR;
-
     if (setting != NULL) {
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_OUTPUT, (const char **)&astring))
         mme_config_p->log_config.output = STRDUP_CHECK (astring);
+
+      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_COLOR, (const char **)&astring)) {
+        if (0 == strcasecmp("true", astring)) mme_config_p->log_config.color = true;
+        else mme_config_p->log_config.color = false;
+      }
 
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_SCTP_LOG_LEVEL, (const char **)&astring))
         mme_config_p->log_config.sctp_log_level = LOG_LEVEL_STR2INT (astring);
@@ -300,20 +292,20 @@ config_parse_file (
       mme_config_p->realm_length = strlen (mme_config_p->realm);
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXENB, &alongint))) {
-      mme_config_p->max_eNBs = (uint32_t) alongint;
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXENB, &aint))) {
+      mme_config_p->max_eNBs = (uint32_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXUE, &alongint))) {
-      mme_config_p->max_ues = (uint32_t) alongint;
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXUE, &aint))) {
+      mme_config_p->max_ues = (uint32_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_RELATIVE_CAPACITY, &alongint))) {
-      mme_config_p->relative_capacity = (uint8_t) alongint;
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_RELATIVE_CAPACITY, &aint))) {
+      mme_config_p->relative_capacity = (uint8_t) aint;
     }
 
-    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_STATISTIC_TIMER, &alongint))) {
-      mme_config_p->mme_statistic_timer = (uint32_t) alongint;
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_STATISTIC_TIMER, &aint))) {
+      mme_config_p->mme_statistic_timer = (uint32_t) aint;
     }
 
     if ((config_setting_lookup_string (setting_mme, EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE, (const char **)&astring))) {
@@ -352,8 +344,8 @@ config_parse_file (
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_INTERTASK_INTERFACE_CONFIG);
 
     if (setting != NULL) {
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_INTERTASK_INTERFACE_QUEUE_SIZE, &alongint))) {
-        mme_config_p->itti_config.queue_size = (uint32_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_INTERTASK_INTERFACE_QUEUE_SIZE, &aint))) {
+        mme_config_p->itti_config.queue_size = (uint32_t) aint;
       }
     }
     // S6A SETTING
@@ -376,24 +368,24 @@ config_parse_file (
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_SCTP_CONFIG);
 
     if (setting != NULL) {
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_SCTP_INSTREAMS, &alongint))) {
-        mme_config_p->sctp_config.in_streams = (uint16_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_SCTP_INSTREAMS, &aint))) {
+        mme_config_p->sctp_config.in_streams = (uint16_t) aint;
       }
 
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_SCTP_OUTSTREAMS, &alongint))) {
-        mme_config_p->sctp_config.out_streams = (uint16_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_SCTP_OUTSTREAMS, &aint))) {
+        mme_config_p->sctp_config.out_streams = (uint16_t) aint;
       }
     }
     // S1AP SETTING
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_S1AP_CONFIG);
 
     if (setting != NULL) {
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_S1AP_OUTCOME_TIMER, &alongint))) {
-        mme_config_p->s1ap_config.outcome_drop_timer_sec = (uint8_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_S1AP_OUTCOME_TIMER, &aint))) {
+        mme_config_p->s1ap_config.outcome_drop_timer_sec = (uint8_t) aint;
       }
 
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_S1AP_PORT, &alongint))) {
-        mme_config_p->s1ap_config.port_number = (uint16_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_S1AP_PORT, &aint))) {
+        mme_config_p->s1ap_config.port_number = (uint16_t) aint;
       }
     }
     // TAI list setting
@@ -450,31 +442,31 @@ config_parse_file (
       do {
         stop_index = 0;
         for (i = 1; i < n; i++) {
-          swap = FALSE;
+          swap = false;
           if (mme_config_p->served_tai.plmn_mcc[i-1] > mme_config_p->served_tai.plmn_mcc[i]) {
-            swap = TRUE;
+            swap = true;
           } else if (mme_config_p->served_tai.plmn_mcc[i-1] == mme_config_p->served_tai.plmn_mcc[i]) {
             if (mme_config_p->served_tai.plmn_mnc[i-1] > mme_config_p->served_tai.plmn_mnc[i]) {
-              swap = TRUE;
+              swap = true;
             } else  if (mme_config_p->served_tai.plmn_mnc[i-1] == mme_config_p->served_tai.plmn_mnc[i]) {
               if (mme_config_p->served_tai.tac[i-1] > mme_config_p->served_tai.tac[i]) {
-                swap = TRUE;
+                swap = true;
               }
             }
           }
-          if (TRUE == swap) {
-            uint16_t swap;
-            swap = mme_config_p->served_tai.plmn_mcc[i-1];
+          if (true == swap) {
+            uint16_t swap16;
+            swap16 = mme_config_p->served_tai.plmn_mcc[i-1];
             mme_config_p->served_tai.plmn_mcc[i-1] = mme_config_p->served_tai.plmn_mcc[i];
-            mme_config_p->served_tai.plmn_mcc[i]   = swap;
+            mme_config_p->served_tai.plmn_mcc[i]   = swap16;
 
-            swap = mme_config_p->served_tai.plmn_mnc[i-1];
+            swap16 = mme_config_p->served_tai.plmn_mnc[i-1];
             mme_config_p->served_tai.plmn_mnc[i-1] = mme_config_p->served_tai.plmn_mnc[i];
-            mme_config_p->served_tai.plmn_mnc[i]   = swap;
+            mme_config_p->served_tai.plmn_mnc[i]   = swap16;
 
-            swap = mme_config_p->served_tai.tac[i-1];
+            swap16 = mme_config_p->served_tai.tac[i-1];
             mme_config_p->served_tai.tac[i-1] = mme_config_p->served_tai.tac[i];
-            mme_config_p->served_tai.tac[i]   = swap;
+            mme_config_p->served_tai.tac[i]   = swap16;
 
             stop_index = i;
           }
@@ -634,23 +626,23 @@ config_parse_file (
           }
         }
       }
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3402_TIMER, &alongint))) {
-        mme_config_p->nas_config.t3402_min = (uint8_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3402_TIMER, &aint))) {
+        mme_config_p->nas_config.t3402_min = (uint8_t) aint;
       }
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3412_TIMER, &alongint))) {
-        mme_config_p->nas_config.t3412_min = (uint8_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3412_TIMER, &aint))) {
+        mme_config_p->nas_config.t3412_min = (uint8_t) aint;
       }
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3485_TIMER, &alongint))) {
-        mme_config_p->nas_config.t3485_sec = (uint8_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3485_TIMER, &aint))) {
+        mme_config_p->nas_config.t3485_sec = (uint8_t) aint;
       }
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3486_TIMER, &alongint))) {
-        mme_config_p->nas_config.t3486_sec = (uint8_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3486_TIMER, &aint))) {
+        mme_config_p->nas_config.t3486_sec = (uint8_t) aint;
       }
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3489_TIMER, &alongint))) {
-        mme_config_p->nas_config.t3489_sec = (uint8_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3489_TIMER, &aint))) {
+        mme_config_p->nas_config.t3489_sec = (uint8_t) aint;
       }
-      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3495_TIMER, &alongint))) {
-        mme_config_p->nas_config.t3495_sec = (uint8_t) alongint;
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3495_TIMER, &aint))) {
+        mme_config_p->nas_config.t3495_sec = (uint8_t) aint;
       }
     }
   }
@@ -710,7 +702,7 @@ config_parse_file (
     if (subsetting != NULL) {
       if ((config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP, (const char **)&sgw_ip_address_for_S1u_S12_S4_up)
            && config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11, (const char **)&sgw_ip_address_for_S11)
-           && config_setting_lookup_int (subsetting, SGW_CONFIG_STRING_SGW_PORT_FOR_S1U_S12_S4_UP, &alongint)
+           && config_setting_lookup_int (subsetting, SGW_CONFIG_STRING_SGW_PORT_FOR_S1U_S12_S4_UP, &aint)
           )
         ) {
         cidr = STRDUP_CHECK (sgw_ip_address_for_S1u_S12_S4_up);
@@ -721,7 +713,7 @@ config_parse_file (
         address = strtok (cidr, "/");
         IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.sgw_ip_address_for_S11, "BAD IP ADDRESS FORMAT FOR SGW S11 !\n")
           FREE_CHECK (cidr);
-        mme_config_p->gtpv1u_config.port_number = (uint16_t) alongint;
+        mme_config_p->gtpv1u_config.port_number = (uint16_t) aint;
       }
     }
   }
@@ -756,11 +748,11 @@ config_display (
   LOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", mme_config_p->realm);
   LOG_INFO (LOG_CONFIG, "- Max eNBs .............................: %u\n", mme_config_p->max_eNBs);
   LOG_INFO (LOG_CONFIG, "- Max UEs ..............................: %u\n", mme_config_p->max_ues);
-  LOG_INFO (LOG_CONFIG, "- IMS voice over PS session in S1 ......: %s\n", mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "FALSE" : "TRUE");
-  LOG_INFO (LOG_CONFIG, "- Emergency bearer services in S1 mode .: %s\n", mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode == 0 ? "FALSE" : "TRUE");
-  LOG_INFO (LOG_CONFIG, "- Location services via epc ............: %s\n", mme_config_p->eps_network_feature_support.location_services_via_epc == 0 ? "FALSE" : "TRUE");
-  LOG_INFO (LOG_CONFIG, "- Extended service request .............: %s\n", mme_config_p->eps_network_feature_support.extended_service_request == 0 ? "FALSE" : "TRUE");
-  LOG_INFO (LOG_CONFIG, "- Unauth IMSI support ..................: %s\n", mme_config_p->unauthenticated_imsi_supported == 0 ? "FALSE" : "TRUE");
+  LOG_INFO (LOG_CONFIG, "- IMS voice over PS session in S1 ......: %s\n", mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "false" : "true");
+  LOG_INFO (LOG_CONFIG, "- Emergency bearer services in S1 mode .: %s\n", mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode == 0 ? "false" : "true");
+  LOG_INFO (LOG_CONFIG, "- Location services via epc ............: %s\n", mme_config_p->eps_network_feature_support.location_services_via_epc == 0 ? "false" : "true");
+  LOG_INFO (LOG_CONFIG, "- Extended service request .............: %s\n", mme_config_p->eps_network_feature_support.extended_service_request == 0 ? "false" : "true");
+  LOG_INFO (LOG_CONFIG, "- Unauth IMSI support ..................: %s\n", mme_config_p->unauthenticated_imsi_supported == 0 ? "false" : "true");
   LOG_INFO (LOG_CONFIG, "- Relative capa ........................: %u\n", mme_config_p->relative_capacity);
   LOG_INFO (LOG_CONFIG, "- Statistics timer .....................: %u (seconds)\n\n", mme_config_p->mme_statistic_timer);
   LOG_INFO (LOG_CONFIG, "- S1-U:\n");
@@ -815,7 +807,7 @@ config_display (
   LOG_INFO (LOG_CONFIG, "    GTPV2-C log level....: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.gtpv2c_log_level));
   LOG_INFO (LOG_CONFIG, "    SCTP log level.......: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.sctp_log_level));
   LOG_INFO (LOG_CONFIG, "    S1AP log level.......: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.s1ap_log_level));
-  LOG_INFO (LOG_CONFIG, "    ASN1 Verbosity level : %d\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.asn1_verbosity_level));
+  LOG_INFO (LOG_CONFIG, "    ASN1 Verbosity level : %d\n", mme_config_p->log_config.asn1_verbosity_level);
   LOG_INFO (LOG_CONFIG, "    NAS log level........: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.nas_log_level));
   LOG_INFO (LOG_CONFIG, "    MME_APP log level....: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.mme_app_log_level));
   LOG_INFO (LOG_CONFIG, "    S/P-GW APP log level.: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.spgw_app_log_level));

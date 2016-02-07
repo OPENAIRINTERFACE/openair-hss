@@ -115,7 +115,7 @@ static int                              _eps_bearer_release (
  **      been activated for the given UE.                          **
  **                                                                        **
  ** Inputs:  ueid:      UE lower layer identifier                  **
- **      is local:  TRUE if the EPS bearer context has to be   **
+ **      is local:  true if the EPS bearer context has to be   **
  **             locally released without peer-to-peer si-  **
  **             gnalling between the UE and the MME        **
  **      ebi:       EPS bearer identity of the EPS bearer con- **
@@ -135,7 +135,7 @@ static int                              _eps_bearer_release (
 int
 esm_proc_eps_bearer_context_deactivate (
   emm_data_context_t * ctx,
-  int is_local,
+  bool is_local,
   int ebi,
   int *pid,
   int *bid,
@@ -151,7 +151,7 @@ esm_proc_eps_bearer_context_deactivate (
        * Locally release the specified EPS bearer context
        */
       rc = _eps_bearer_release (ctx, ebi, pid, bid);
-    } else if (ctx != NULL) {
+    } else if (ctx ) {
       /*
        * Locally release all the EPS bearer contexts
        */
@@ -173,7 +173,7 @@ esm_proc_eps_bearer_context_deactivate (
 
   LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ueid=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ueid, ebi);
 
-  if ((ctx != NULL) && (*pid < ESM_DATA_PDN_MAX)) {
+  if ((ctx ) && (*pid < ESM_DATA_PDN_MAX)) {
     if (ctx->esm_data_ctx.pdn[*pid].pid != *pid) {
       LOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection identifier %d " "is not valid\n", *pid);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
@@ -218,11 +218,11 @@ esm_proc_eps_bearer_context_deactivate (
  **      UE, starting timer T3495 and entering state BEARER CON-   **
  **      TEXT INACTIVE PENDING.                                    **
  **                                                                        **
- ** Inputs:  is_standalone: Not used - Always TRUE                     **
+ ** Inputs:  is_standalone: Not used - Always true                     **
  **      ueid:      UE lower layer identifier                  **
  **      ebi:       EPS bearer identity                        **
  **      msg:       Encoded ESM message to be sent             **
- **      ue_triggered:  TRUE if the EPS bearer context procedure   **
+ **      ue_triggered:  true if the EPS bearer context procedure   **
  **             was triggered by the UE (not used)         **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -232,11 +232,11 @@ esm_proc_eps_bearer_context_deactivate (
  ***************************************************************************/
 int
 esm_proc_eps_bearer_context_deactivate_request (
-  int is_standalone,
+  bool is_standalone,
   emm_data_context_t * ctx,
   int ebi,
   OctetString * msg,
-  int ue_triggered)
+  bool ue_triggered)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
@@ -502,7 +502,7 @@ _eps_bearer_release (
     /*
      * Set the EPS bearer context state to INACTIVE
      */
-    rc = esm_ebr_set_status (ctx, ebi, ESM_EBR_INACTIVE, FALSE);
+    rc = esm_ebr_set_status (ctx, ebi, ESM_EBR_INACTIVE, false);
 
     if (rc != RETURNok) {
       /*

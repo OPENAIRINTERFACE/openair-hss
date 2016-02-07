@@ -290,8 +290,6 @@ esm_recv_pdn_connectivity_request (
     }
   }
 #else
-  int                                     is_emergency = (request_type == ESM_PDN_REQUEST_EMERGENCY);
-
   nas_itti_pdn_connectivity_req (pti, ctx->ueid, ctx->imsi, esm_data, request_type);
   esm_cause = ESM_CAUSE_SUCCESS;
 #endif
@@ -375,7 +373,7 @@ esm_recv_pdn_disconnect_request (
      * Release the associated default EPS bearer context
      */
     int                                     bid = 0;
-    int                                     rc = esm_proc_eps_bearer_context_deactivate (ctx, FALSE,
+    int                                     rc = esm_proc_eps_bearer_context_deactivate (ctx, false,
                                                                                          *linked_ebi,
                                                                                          &pid, &bid, &esm_cause);
 

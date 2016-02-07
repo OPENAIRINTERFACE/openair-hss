@@ -35,6 +35,9 @@
 #include <stdint.h>
 #include <sys/socket.h>
 
+typedef uint32_t sctp_assoc_id_t;
+
+
 int sctp_set_init_opt(int sd, uint16_t instreams, uint16_t outstreams,
                       uint16_t max_attempts, uint16_t init_timeout);
 

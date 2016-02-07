@@ -381,14 +381,6 @@ inline void ASN_DEBUG(const char *fmt, ...);
 # error "You are compiling s1ap with the wrong version of ASN1C"
 #endif
 
-#ifndef FALSE
-# define FALSE (0)
-#endif
-#ifndef TRUE
-# define TRUE  (!FALSE)
-#endif
-
-#define S1AP_UE_ID_FMT  "0x%06"PRIX32
 
 extern int asn_debug;
 extern int asn1_xer_print;
@@ -412,7 +404,7 @@ typedef int (*s1ap_message_decoded_callback)(
  \param procedureCode Procedure code for the message
  \param criticality Criticality of the message
  \param td ASN1C type descriptor of the sptr
- \param sptr Deferenced pointer to the structure to encode
+ \param sptr Dereferenced pointer to the structure to encode
  @returns size in bytes encded on success or 0 on failure
  **/
 ssize_t s1ap_generate_successfull_outcome(
@@ -429,7 +421,7 @@ ssize_t s1ap_generate_successfull_outcome(
  \param procedureCode Procedure code for the message
  \param criticality Criticality of the message
  \param td ASN1C type descriptor of the sptr
- \param sptr Deferenced pointer to the structure to encode
+ \param sptr Dereferenced pointer to the structure to encode
  @returns size in bytes encded on success or 0 on failure
  **/
 ssize_t s1ap_generate_initiating_message(
@@ -446,7 +438,7 @@ ssize_t s1ap_generate_initiating_message(
  \param procedureCode Procedure code for the message
  \param criticality Criticality of the message
  \param td ASN1C type descriptor of the sptr
- \param sptr Deferenced pointer to the structure to encode
+ \param sptr Dereferenced pointer to the structure to encode
  @returns size in bytes encded on success or 0 on failure
  **/
 ssize_t s1ap_generate_unsuccessfull_outcome(

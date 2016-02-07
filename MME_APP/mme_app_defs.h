@@ -44,6 +44,11 @@ extern mme_app_desc_t mme_app_desc;
 
 int mme_app_handle_s1ap_ue_capabilities_ind  (const s1ap_ue_cap_ind_t const * s1ap_ue_cap_ind_pP);
 
+void mme_app_handle_s1ap_ue_context_release_complete (const s1ap_ue_context_release_complete_t const *s1ap_ue_context_release_complete);
+
+
+int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context_pP);
+
 int mme_app_send_s11_create_session_req      (struct ue_context_s * const ue_context_pP);
 
 int mme_app_send_s6a_update_location_req     (struct ue_context_s * const ue_context_pP);
@@ -62,6 +67,8 @@ int mme_app_handle_establish_ind             (const nas_establish_ind_t * const 
 
 int mme_app_handle_authentication_info_answer(const s6a_auth_info_ans_t * const s6a_auth_info_ans_pP);
 
+void  mme_app_handle_release_access_bearers_resp (const SgwReleaseAccessBearersResponse * const rel_access_bearers_rsp_pP);
+
 int mme_app_handle_nas_auth_resp             (const nas_auth_resp_t * const nas_auth_resp_pP);
 
 nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);
@@ -69,5 +76,7 @@ nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const i
 void mme_app_handle_nas_auth_param_req       (const nas_auth_param_req_t * const nas_auth_param_req_pP);
 
 void mme_app_handle_initial_context_setup_rsp(const mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
+
+void mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, void *unused_param_pP);
 
 #endif /* MME_APP_DEFS_H_ */

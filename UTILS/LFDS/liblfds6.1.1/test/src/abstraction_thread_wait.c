@@ -62,7 +62,7 @@ abstraction_thread_wait (
 abstraction_thread_wait (
    thread_state_t thread_state)
 {
-  KeWaitForSingleObject (thread_state, Executive, KernelMode, FALSE, NULL);
+  KeWaitForSingleObject (thread_state, Executive, KernelMode, false, NULL);
   return;
 }
 

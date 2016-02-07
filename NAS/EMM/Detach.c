@@ -124,7 +124,7 @@ static const char                      *_emm_detach_type_str[] = {
  ***************************************************************************/
 int
 emm_proc_detach (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   emm_proc_detach_type_t type)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
@@ -160,7 +160,7 @@ emm_proc_detach (
  **      type:      Type of the requested detach               **
  **      switch_off:    Indicates whether the detach is required   **
  **             because the UE is switched off or not      **
- **      native_ksi:    TRUE if the security context is of type    **
+ **      native_ksi:    true if the security context is of type    **
  **             native                                     **
  **      ksi:       The NAS ket sey identifier                 **
  **      guti:      The GUTI if provided by the UE             **
@@ -175,7 +175,7 @@ emm_proc_detach (
  ***************************************************************************/
 int
 emm_proc_detach_request (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   emm_proc_detach_type_t type,
   int switch_off,
   int native_ksi,
@@ -192,16 +192,7 @@ emm_proc_detach_request (
   /*
    * Get the UE context
    */
-#if NAS_BUILT_IN_EPC
-  if (ueid > 0) {
-    emm_ctx = emm_data_context_get (&_emm_data, ueid);
-  }
-#else
-
-  if (ueid < EMM_DATA_NB_UE_MAX) {
-    emm_ctx = _emm_data.ctx[ueid];
-  }
-#endif
+  emm_ctx = emm_data_context_get (&_emm_data, ueid);
 
   if (emm_ctx == NULL) {
     LOG_WARNING (LOG_NAS_EMM, "No EMM context exists for the UE (ueid=" NAS_UE_ID_FMT ")", ueid);
@@ -281,13 +272,9 @@ emm_proc_detach_request (
     /*
      * Release the EMM context
      */
-#if NAS_BUILT_IN_EPC
     emm_data_context_remove (&_emm_data, emm_ctx);
     FREE_CHECK (emm_ctx);
-#else
-    FREE_CHECK (_emm_data.ctx[ueid]);
-    _emm_data.ctx[ueid] = NULL;
-#endif
+
     rc = RETURNok;
   } else {
     /*
@@ -311,7 +298,7 @@ emm_proc_detach_request (
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_as->sctx, emm_ctx->security, FALSE, TRUE);
+    emm_as_set_security_data (&emm_as->sctx, emm_ctx->security, false, true);
     /*
      * Notify EMM-AS SAP that Detach Accept message has to
      * be sent to the network

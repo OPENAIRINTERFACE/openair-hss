@@ -57,24 +57,24 @@ typedef struct obj_hash_table_s {
 void                obj_hashtable_no_free_key_callback(void* param);
 obj_hash_table_t   *obj_hashtable_create  (const hash_size_t   size, hash_size_t (*hashfunc)(const void*, int ), void (*freekeyfunc)(void*), void (*freedatafunc)(void*), char *display_name_pP);
 hashtable_rc_t      obj_hashtable_destroy (obj_hash_table_t * const hashtblP);
-hashtable_rc_t      obj_hashtable_is_key_exists (const obj_hash_table_t * const hashtblP, const void* const keyP, const int key_sizeP);
+hashtable_rc_t      obj_hashtable_is_key_exists (const obj_hash_table_t * const hashtblP, const void* const keyP, const int key_sizeP) __attribute__ ((hot, warn_unused_result));
 hashtable_rc_t      obj_hashtable_insert  (obj_hash_table_t * const hashtblP,       const void* const keyP, const int key_sizeP, void *dataP);
 hashtable_rc_t      obj_hashtable_dump_content (const obj_hash_table_t * const hashtblP,char * const buffer_pP,int * const remaining_bytes_in_buffer_pP);
 hashtable_rc_t      obj_hashtable_free  (obj_hash_table_t *hashtblP, const void* keyP, const int key_sizeP);
 hashtable_rc_t      obj_hashtable_remove(obj_hash_table_t *hashtblP, const void* keyP, const int key_sizeP, void** dataP);
-hashtable_rc_t      obj_hashtable_get     (const obj_hash_table_t * const hashtblP, const void* const keyP, const int key_sizeP, void ** dataP);
+hashtable_rc_t      obj_hashtable_get     (const obj_hash_table_t * const hashtblP, const void* const keyP, const int key_sizeP, void ** dataP) __attribute__ ((hot));
 hashtable_rc_t      obj_hashtable_get_keys(const obj_hash_table_t * const hashtblP, void ** keysP, unsigned int * sizeP);
 hashtable_rc_t      obj_hashtable_resize  (obj_hash_table_t * const hashtblP, const hash_size_t sizeP);
 
 // Thread-safe functions
 obj_hash_table_t   *obj_hashtable_ts_create  (const hash_size_t   size, hash_size_t (*hashfunc)(const void*, int ), void (*freekeyfunc)(void*), void (*freedatafunc)(void*), char *display_name_pP);
 hashtable_rc_t      obj_hashtable_ts_destroy (obj_hash_table_t * const hashtblP);
-hashtable_rc_t      obj_hashtable_ts_is_key_exists (const obj_hash_table_t * const hashtblP, const void* const keyP, const int key_sizeP);
+hashtable_rc_t      obj_hashtable_ts_is_key_exists (const obj_hash_table_t * const hashtblP, const void* const keyP, const int key_sizeP) __attribute__ ((hot, warn_unused_result));
 hashtable_rc_t      obj_hashtable_ts_insert  (obj_hash_table_t * const hashtblP,       const void* const keyP, const int key_sizeP, void *dataP);
 hashtable_rc_t      obj_hashtable_ts_dump_content (const obj_hash_table_t * const hashtblP,char * const buffer_pP,int * const remaining_bytes_in_buffer_pP);
 hashtable_rc_t      obj_hashtable_ts_free  (obj_hash_table_t *hashtblP, const void* keyP, const int key_sizeP);
 hashtable_rc_t      obj_hashtable_ts_remove(obj_hash_table_t *hashtblP, const void* keyP, const int key_sizeP, void** dataP);
-hashtable_rc_t      obj_hashtable_ts_get     (const obj_hash_table_t * const hashtblP, const void* const keyP, const int key_sizeP, void ** dataP);
+hashtable_rc_t      obj_hashtable_ts_get     (const obj_hash_table_t * const hashtblP, const void* const keyP, const int key_sizeP, void ** dataP) __attribute__ ((hot));
 hashtable_rc_t      obj_hashtable_ts_get_keys(const obj_hash_table_t * const hashtblP, void ** keysP, unsigned int * sizeP);
 hashtable_rc_t      obj_hashtable_ts_resize  (obj_hash_table_t * const hashtblP, const hash_size_t sizeP);
 

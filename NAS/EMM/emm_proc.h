@@ -95,8 +95,8 @@ typedef enum {
  *              EMM status procedure
  *---------------------------------------------------------------------------
  */
-int emm_proc_status_ind(unsigned int ueid, int emm_cause);
-int emm_proc_status(unsigned int ueid, int emm_cause);
+int emm_proc_status_ind(nas_ue_id_t ueid, int emm_cause);
+int emm_proc_status(nas_ue_id_t ueid, int emm_cause);
 
 /*
  *---------------------------------------------------------------------------
@@ -119,18 +119,18 @@ int emm_proc_status(unsigned int ueid, int emm_cause);
  */
 
 
-int emm_proc_attach_request(unsigned int ueid, emm_proc_attach_type_t type,
-    boolean_t is_native_ksi, ksi_t ksi, boolean_t is_native_guti, GUTI_t *guti, imsi_t *imsi,
+int emm_proc_attach_request(nas_ue_id_t ueid, emm_proc_attach_type_t type,
+    bool is_native_ksi, ksi_t ksi, bool is_native_guti, GUTI_t *guti, imsi_t *imsi,
                             imei_t *imei, tai_t *last_visited_registered_tai,
                             const tai_t              * const originating_tai,
                             int eea, int eia, int ucs2, int uea, int uia, int gea,
                             int umts_present, int gprs_present, const OctetString *esm_msg,
                             const nas_message_decode_status_t  * const decode_status);
-int emm_proc_attach_reject(unsigned int ueid, int emm_cause);
-int emm_proc_attach_complete(unsigned int ueid, const OctetString *esm_msg);
-int emm_proc_tracking_area_update_request(unsigned int ueid, const tracking_area_update_request_msg * msg,
+int emm_proc_attach_reject(nas_ue_id_t ueid, int emm_cause);
+int emm_proc_attach_complete(nas_ue_id_t ueid, const OctetString *esm_msg);
+int emm_proc_tracking_area_update_request(nas_ue_id_t ueid, const tracking_area_update_request_msg * msg,
                             int *emm_cause, const nas_message_decode_status_t  * decode_status);
-int emm_proc_tracking_area_update_reject(unsigned int ueid, int emm_cause);
+int emm_proc_tracking_area_update_reject(nas_ue_id_t ueid, int emm_cause);
 
 /*
  * --------------------------------------------------------------------------
@@ -138,8 +138,8 @@ int emm_proc_tracking_area_update_reject(unsigned int ueid, int emm_cause);
  * --------------------------------------------------------------------------
  */
 
-int emm_proc_detach(unsigned int ueid, emm_proc_detach_type_t type);
-int emm_proc_detach_request(unsigned int ueid, emm_proc_detach_type_t type,
+int emm_proc_detach(nas_ue_id_t ueid, emm_proc_detach_type_t type);
+int emm_proc_detach_request(nas_ue_id_t ueid, emm_proc_detach_type_t type,
                             int switch_off, int native_ksi, int ksi, GUTI_t *guti, imsi_t *imsi,
                             imei_t *imei);
 
@@ -148,13 +148,13 @@ int emm_proc_detach_request(unsigned int ueid, emm_proc_detach_type_t type,
  *              Identification procedure
  * --------------------------------------------------------------------------
  */
-int emm_proc_identification(unsigned int                   ueid,
+int emm_proc_identification(nas_ue_id_t                    ueid,
                             emm_data_context_t            *emm_ctx,
                             emm_proc_identity_type_t       type,
                             emm_common_success_callback_t  success,
                             emm_common_reject_callback_t   reject,
                             emm_common_failure_callback_t  failure);
-int emm_proc_identification_complete(unsigned int   ueid,
+int emm_proc_identification_complete(nas_ue_id_t    ueid,
                             const imsi_t           *imsi,
                             const imei_t           *imei,
                             const imeisv_t         *imeisv,
@@ -166,12 +166,12 @@ int emm_proc_identification_complete(unsigned int   ueid,
  * --------------------------------------------------------------------------
  */
 
-int emm_proc_authentication(void *ctx, unsigned int ueid, int ksi,
+int emm_proc_authentication(void *ctx, nas_ue_id_t ueid, int ksi,
                             const OctetString *_rand, const OctetString *autn,
                             emm_common_success_callback_t success,
                             emm_common_reject_callback_t reject,
                             emm_common_failure_callback_t failure);
-int emm_proc_authentication_complete(unsigned int ueid, int emm_cause,
+int emm_proc_authentication_complete(nas_ue_id_t ueid, int emm_cause,
                                      const OctetString *res);
 
 int emm_attach_security(void *args);
@@ -182,14 +182,14 @@ int emm_attach_security(void *args);
  * --------------------------------------------------------------------------
  */
 
-int emm_proc_security_mode_control(unsigned int ueid, int ksi,
+int emm_proc_security_mode_control(nas_ue_id_t ueid, int ksi,
                                    int eea, int eia,int ucs2, int uea, int uia, int gea,
                                    int umts_present, int gprs_present,
                                    emm_common_success_callback_t success,
                                    emm_common_reject_callback_t reject,
                                    emm_common_failure_callback_t failure);
-int emm_proc_security_mode_complete(unsigned int ueid);
-int emm_proc_security_mode_reject(unsigned int ueid);
+int emm_proc_security_mode_complete(nas_ue_id_t ueid);
+int emm_proc_security_mode_reject(nas_ue_id_t ueid);
 
 /*
  *---------------------------------------------------------------------------

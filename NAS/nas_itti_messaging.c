@@ -184,7 +184,7 @@ nas_itti_protected_msg (
     }
   }
 
-  if (message_p != NULL) {
+  if (message_p ) {
     return itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
   }
 

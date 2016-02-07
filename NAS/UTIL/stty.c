@@ -210,7 +210,7 @@ static int                              _stty_set_this (
  **                                                                        **
  ** Inputs:  p:   The TTY parameters                         **
  **    turnon:  Indicate whether the parameter should be   **
- **                             turned on (TRUE) or turned off (FALSE)     **
+ **                             turned on (true) or turned off (false)     **
  **    Others:  None                                       **
  **                                                                        **
  ** Outputs:   term:    The termios structure to fill              **
@@ -284,7 +284,7 @@ stty_set (
  **                                                                        **
  ** Inputs:  p:   The TTY parameters                         **
  **    turnon:  Indicate whether the parameter should be   **
- **                             turned on (TRUE) or turned off (FALSE)     **
+ **                             turned on (true) or turned off (false)     **
  **    Others:  None                                       **
  **                                                                        **
  ** Outputs:   term:    The termios structure to fill              **

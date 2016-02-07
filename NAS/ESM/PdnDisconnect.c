@@ -212,7 +212,7 @@ esm_proc_pdn_disconnect_accept (
  **      is not accepted by the network, the MME shall send a PDN  **
  **      DISCONNECT REJECT message to the UE.                      **
  **                                                                        **
- ** Inputs:  is_standalone: Not used - Always TRUE                     **
+ ** Inputs:  is_standalone: Not used - Always true                     **
  **      ueid:      UE lower layer identifier                  **
  **      ebi:       Not used                                   **
  **      msg:       Encoded PDN disconnect reject message to   **
@@ -227,11 +227,11 @@ esm_proc_pdn_disconnect_accept (
  ***************************************************************************/
 int
 esm_proc_pdn_disconnect_reject (
-  int is_standalone,
+  const bool is_standalone,
   emm_data_context_t * ctx,
   int ebi,
   OctetString * msg,
-  int ue_triggered)
+  const bool ue_triggered)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
@@ -293,9 +293,9 @@ _pdn_disconnect_get_pid (
 {
   int                                     i = ESM_DATA_PDN_MAX;
 
-  if (ctx != NULL) {
+  if (ctx ) {
     for (i = 0; i < ESM_DATA_PDN_MAX; i++) {
-      if ((ctx->pdn[i].pid != -1) && (ctx->pdn[i].data != NULL)) {
+      if ((ctx->pdn[i].pid != -1) && (ctx->pdn[i].data )) {
         if (ctx->pdn[i].data->pti != pti) {
           continue;
         }

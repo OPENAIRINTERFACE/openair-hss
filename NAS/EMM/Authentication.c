@@ -60,10 +60,7 @@
 #include "emmData.h"
 #include "emm_sap.h"
 #include "emm_cause.h"
-
-#if NAS_BUILT_IN_EPC
-#  include "nas_itti_messaging.h"
-#endif
+#include "nas_itti_messaging.h"
 #include "msc.h"
 
 /****************************************************************************/
@@ -117,7 +114,7 @@ typedef struct {
 static int                              _authentication_request (
   authentication_data_t * data);
 static int                              _authentication_reject (
-  unsigned int ueid);
+  nas_ue_id_t ueid);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -164,7 +161,7 @@ static int                              _authentication_reject (
 int
 emm_proc_authentication (
   void *ctx,
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   int ksi,
   const OctetString * _rand,
   const OctetString * autn,
@@ -182,7 +179,7 @@ emm_proc_authentication (
    */
   data = (authentication_data_t *) MALLOC_CHECK (sizeof (authentication_data_t));
 
-  if (data != NULL) {
+  if (data ) {
     /*
      * Set the UE identifier
      */
@@ -236,7 +233,7 @@ emm_proc_authentication (
     /*
      * Set the failure notification indicator
      */
-    data->notify_failure = FALSE;
+    data->notify_failure = false;
     /*
      * Send authentication request message to the UE
      */
@@ -284,7 +281,7 @@ emm_proc_authentication (
  ***************************************************************************/
 int
 emm_proc_authentication_complete (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   int emm_cause,
   const OctetString * res)
 {
@@ -313,19 +310,8 @@ emm_proc_authentication_complete (
   /*
    * Get the UE context
    */
-  emm_data_context_t                     *emm_ctx = NULL;
+  emm_data_context_t *emm_ctx = emm_data_context_get (&_emm_data, ueid);
 
-#if NAS_BUILT_IN_EPC
-
-  if (ueid > 0) {
-    emm_ctx = emm_data_context_get (&_emm_data, ueid);
-  }
-#else
-
-  if (ueid < EMM_DATA_NB_UE_MAX) {
-    emm_ctx = _emm_data.ctx[ueid];
-  }
-#endif
 
   if (emm_ctx) {
     /*
@@ -353,8 +339,6 @@ emm_proc_authentication_complete (
 
   if (emm_cause != EMM_CAUSE_SUCCESS) {
     switch (emm_cause) {
-#if NAS_BUILT_IN_EPC
-
     case EMM_CAUSE_SYNCH_FAILURE:
       /*
        * USIM has detected a mismatch in SQN.
@@ -366,7 +350,6 @@ emm_proc_authentication_complete (
       rc = RETURNok;
       LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       break;
-#endif
 
     default:
       LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - The MME received an authentication failure message or the RES does not match the XRES parameter computed by the network\n");
@@ -458,7 +441,7 @@ _authentication_t3460_handler (
     /*
      * Set the failure notification indicator
      */
-    data->notify_failure = TRUE;
+    data->notify_failure = true;
     /*
      * Abort the authentication procedure
      */
@@ -524,15 +507,11 @@ _authentication_request (
   /*
    * TODO: check for pointer validity
    */
-#if NAS_BUILT_IN_EPC
   emm_ctx = emm_data_context_get (&_emm_data, data->ueid);
-#else
-  emm_ctx = _emm_data.ctx[data->ueid];
-#endif
   /*
    * Setup EPS NAS security data
    */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, FALSE, TRUE);
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, false, true);
   MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_SECURITY_REQ ue id " NAS_UE_ID_FMT " ", data->ueid);
   rc = emm_sap_send (&emm_sap);
 
@@ -575,7 +554,7 @@ _authentication_request (
  ***************************************************************************/
 static int
 _authentication_reject (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
@@ -590,15 +569,12 @@ _authentication_reject (
   emm_sap.u.emm_as.u.security.guti = NULL;
   emm_sap.u.emm_as.u.security.ueid = ueid;
   emm_sap.u.emm_as.u.security.msgType = EMM_AS_MSG_TYPE_AUTH;
-#if NAS_BUILT_IN_EPC
   emm_ctx = emm_data_context_get (&_emm_data, ueid);
-#else
-  emm_ctx = _emm_data.ctx[ueid];
-#endif
+
   /*
    * Setup EPS NAS security data
    */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, FALSE, TRUE);
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, false, true);
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -631,11 +607,7 @@ _authentication_abort (
     int                                     notify_failure = data->notify_failure;
 
     LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort authentication procedure " "(ueid=" NAS_UE_ID_FMT ")\n", ueid);
-#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
-#else
-    emm_ctx = _emm_data.ctx[ueid];
-#endif
 
     if (emm_ctx) {
       /*

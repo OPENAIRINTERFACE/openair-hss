@@ -40,6 +40,7 @@
 
 #include "nas_message.h"
 #include "log.h"
+#include "gcc_diag.h"
 
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
@@ -47,9 +48,7 @@
 #include <stdlib.h>             // malloc, free
 #include <string.h>             // memcpy
 
-#if NAS_BUILT_IN_EPC
-#  include "nas_itti_messaging.h"
-#endif
+#include "nas_itti_messaging.h"
 #include "secu_defs.h"
 #include "emmData.h"
 #include "dynamic_memory_check.h"
@@ -80,7 +79,7 @@ _nas_message_plain_decode (
 
 static int
 _nas_message_protected_decode (
-  const char *buffer,
+  char * const buffer,
   nas_message_security_header_t * header,
   nas_message_plain_t * msg,
   int length,
@@ -111,8 +110,8 @@ _nas_message_protected_encode (
 /* Functions used to decrypt and encrypt layer 3 NAS messages */
 static int
 _nas_message_decrypt (
-  char *dest,
-  const char *src,
+  char * const dest,
+  char * const src,
   uint8_t type,
   uint32_t code,
   uint8_t seq,
@@ -272,8 +271,8 @@ nas_message_encrypt (
  ***************************************************************************/
 int
 nas_message_decrypt (
-  const char *inbuf,
-  char *outbuf,
+  const char * const inbuf,
+  char * const outbuf,
   nas_message_security_header_t * header,
   int length,
   void *security,
@@ -324,7 +323,7 @@ nas_message_decrypt (
     } else {
       LOG_DEBUG (LOG_NAS,
                  "MAC Failure MSG:%08X(%u) <> INT ALGO:%08X(%u) Type of security context %u",
-                 header->message_authentication_code, header->message_authentication_code, mac, mac, (emm_security_context != NULL) ? emm_security_context->type : 88);
+                 header->message_authentication_code, header->message_authentication_code, mac, mac, (emm_security_context ) ? emm_security_context->type : 88);
       // LG: Do not return now (out of spec but we need that with only one MME)
       //LOG_FUNC_RETURN (LOG_NAS, TLV_DECODE_MAC_MISMATCH);
     }
@@ -332,6 +331,7 @@ nas_message_decrypt (
     /*
      * Decrypt the security protected NAS message
      */
+    OAI_GCC_DIAG_OFF(discarded-qualifiers);
     header->protocol_discriminator = _nas_message_decrypt (outbuf,
         inbuf + size,
         header->security_header_type,
@@ -340,6 +340,7 @@ nas_message_decrypt (
         length - size,
         emm_security_context,
         status);
+    OAI_GCC_DIAG_ON(discarded-qualifiers);
 
     bytes = length - size;
   } else {
@@ -435,7 +436,7 @@ nas_message_decode (
     /*
      * Decode security protected NAS message
      */
-    bytes = _nas_message_protected_decode (buffer + size, &msg->header, &msg->plain, length - size, emm_security_context, status);
+    bytes = _nas_message_protected_decode ((char *const)(buffer + size), &msg->header, &msg->plain, length - size, emm_security_context, status);
   } else {
     /*
      * Decode plain NAS message
@@ -507,7 +508,7 @@ nas_message_encode (
       /*
        * Compute the NAS message authentication code
        */
-      LOG_DEBUG (LOG_NAS, "offset %d = %d - %d, hdr encode = %d, length = %d bytes = %d", offset, size, sizeof (uint8_t), size, length, bytes);
+      LOG_DEBUG (LOG_NAS, "offset %d = %d - %ld, hdr encode = %d, length = %d bytes = %d", offset, size, sizeof (uint8_t), size, length, bytes);
       uint32_t                                mac = _nas_message_get_mac (buffer + offset,
                                                                           bytes + size - offset,
                                                                           SECU_DIRECTION_DOWNLINK,
@@ -613,7 +614,7 @@ _nas_message_header_decode (
 
   if (header->protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
     if (header->security_header_type != SECURITY_HEADER_TYPE_NOT_PROTECTED) {
-      if (NULL != status) {
+      if ( status) {
         switch (header->security_header_type) {
           case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED:
           case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_NEW:
@@ -721,7 +722,7 @@ _nas_message_plain_decode (
  ***************************************************************************/
 static int
 _nas_message_protected_decode (
-  const char *buffer,
+  char * const buffer,
   nas_message_security_header_t * header,
   nas_message_plain_t * msg,
   int length,
@@ -730,7 +731,7 @@ _nas_message_protected_decode (
 {
   LOG_FUNC_IN (LOG_NAS);
   int                                     bytes = TLV_DECODE_BUFFER_TOO_SHORT;
-  char                                   *plain_msg = (char *)CALLOC_CHECK (1, length);
+  char                             *const plain_msg = (char *)CALLOC_CHECK (1, length);
 
   if (plain_msg) {
     /*
@@ -952,8 +953,8 @@ _nas_message_protected_encode (
  ***************************************************************************/
 static int
 _nas_message_decrypt (
-  char *dest,
-  const char *src,
+  char * const dest,
+  char * const src,
   uint8_t security_header_type,
   uint32_t code,
   uint8_t seq,
@@ -985,7 +986,7 @@ _nas_message_decrypt (
 
   case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_CYPHERED:
   case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_CYPHERED_NEW:
-    if (NULL != emm_security_context) {
+    if ( emm_security_context) {
       switch (emm_security_context->selected_algorithms.encryption) {
         case NAS_SECURITY_ALGORITHMS_EEA1:{
           if (0 == status->mac_matched) {
@@ -1007,12 +1008,12 @@ _nas_message_decrypt (
           stream_cipher.count = count;
           stream_cipher.bearer = 0x00;    //33.401 section 8.1.1
           stream_cipher.direction = direction;
-          stream_cipher.message = src;
+          stream_cipher.message = (uint8_t*)src;
           /*
            * length in bits
            */
           stream_cipher.blength = length << 3;
-          nas_stream_encrypt_eea1 (&stream_cipher, dest);
+          nas_stream_encrypt_eea1 (&stream_cipher, (uint8_t*)dest);
           /*
            * Decode the first octet (security header type or EPS bearer identity,
            * * * * and protocol discriminator)
@@ -1042,12 +1043,12 @@ _nas_message_decrypt (
           stream_cipher.count = count;
           stream_cipher.bearer = 0x00;    //33.401 section 8.1.1
           stream_cipher.direction = direction;
-          stream_cipher.message = src;
+          stream_cipher.message = (uint8_t*)src;
           /*
            * length in bits
            */
           stream_cipher.blength = length << 3;
-          nas_stream_encrypt_eea1 (&stream_cipher, dest);
+          nas_stream_encrypt_eea2 (&stream_cipher, (uint8_t*)dest);
           /*
            * Decode the first octet (security header type or EPS bearer identity,
            * * * * and protocol discriminator)
@@ -1162,12 +1163,12 @@ _nas_message_encrypt (
         stream_cipher.count = count;
         stream_cipher.bearer = 0x00;    //33.401 section 8.1.1
         stream_cipher.direction = direction;
-        stream_cipher.message = src;
+        stream_cipher.message = (uint8_t*)src;
         /*
          * length in bits
          */
         stream_cipher.blength = length << 3;
-        nas_stream_encrypt_eea1 (&stream_cipher, dest);
+        nas_stream_encrypt_eea1 (&stream_cipher, (uint8_t*)dest);
         LOG_FUNC_RETURN (LOG_NAS, length);
       }
       break;
@@ -1187,12 +1188,12 @@ _nas_message_encrypt (
         stream_cipher.count = count;
         stream_cipher.bearer = 0x00;    //33.401 section 8.1.1
         stream_cipher.direction = direction;
-        stream_cipher.message = src;
+        stream_cipher.message = (uint8_t*)src;
         /*
          * length in bits
          */
         stream_cipher.blength = length << 3;
-        nas_stream_encrypt_eea2 (&stream_cipher, dest);
+        nas_stream_encrypt_eea2 (&stream_cipher, (uint8_t*)dest);
         LOG_FUNC_RETURN (LOG_NAS, length);
       }
       break;
@@ -1255,11 +1256,7 @@ _nas_message_get_mac (
 
   if (!emm_security_context) {
     LOG_DEBUG (LOG_NAS, "No security context set for integrity protection algorithm");
-#if NAS_BUILT_IN_EPC || NAS_BUILT_IN_UE
     LOG_FUNC_RETURN (LOG_NAS, 0);
-#else
-    LOG_FUNC_RETURN (LOG_NAS, 0xabababab);
-#endif
   }
 
   switch (emm_security_context->selected_algorithms.integrity) {
@@ -1306,7 +1303,7 @@ _nas_message_get_mac (
       stream_cipher.count = count;
       stream_cipher.bearer = 0x00;      //33.401 section 8.1.1
       stream_cipher.direction = direction;
-      stream_cipher.message = buffer;
+      stream_cipher.message = (uint8_t*)buffer;
       /*
        * length in bits
        */
@@ -1338,7 +1335,7 @@ _nas_message_get_mac (
       stream_cipher.count = count;
       stream_cipher.bearer = 0x00;      //33.401 section 8.1.1
       stream_cipher.direction = direction;
-      stream_cipher.message = buffer;
+      stream_cipher.message = (uint8_t*)buffer;
       /*
        * length in bits
        */
@@ -1354,11 +1351,7 @@ _nas_message_get_mac (
     LOG_DEBUG (LOG_NAS,
                "NAS_SECURITY_ALGORITHMS_EIA0 dir %s count.seq_num %u",
                (direction == SECU_DIRECTION_UPLINK) ? "UPLINK" : "DOWNLINK", (direction == SECU_DIRECTION_UPLINK) ? emm_security_context->ul_count.seq_num : emm_security_context->dl_count.seq_num);
-#if NAS_BUILT_IN_EPC
     LOG_FUNC_RETURN (LOG_NAS, 0);
-#else
-    LOG_FUNC_RETURN (LOG_NAS, 0xabababab);
-#endif
     break;
 
   default:

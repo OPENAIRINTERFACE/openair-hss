@@ -325,7 +325,7 @@ main (
   /*
    * Network simulator main loop
    */
-  while (TRUE) {
+  while (true) {
     as_message_t                            msg;
 
     /*
@@ -1102,7 +1102,7 @@ _process_pdn_connectivity_request (
 
     apn.value = (uint8_t *) malloc (apn_value->length * sizeof (uint8_t));
 
-    if (apn.value != NULL) {
+    if (apn.value ) {
       apn.length = apn_value->length;
       apn.value = (uint8_t *) strncpy ((char *)apn.value, (char *)apn_value->value, apn.length);
       apn.value[apn.length] = '\0';
@@ -1182,10 +1182,10 @@ _process_pdn_connectivity_request (
      */
     if (apn.length > 0) {
       request->accesspointname.accesspointnamevalue = apn;
-      esm_cause = _assign_pdn_address (requested_pdn_type, FALSE, &pdn_type, &request->pdnaddress.pdnaddressinformation);
+      esm_cause = _assign_pdn_address (requested_pdn_type, false, &pdn_type, &request->pdnaddress.pdnaddressinformation);
     } else {
       request->accesspointname.accesspointnamevalue = EURECOM_APN;
-      esm_cause = _assign_pdn_address (requested_pdn_type, TRUE, &pdn_type, &request->pdnaddress.pdnaddressinformation);
+      esm_cause = _assign_pdn_address (requested_pdn_type, true, &pdn_type, &request->pdnaddress.pdnaddressinformation);
     }
 
     request->pdnaddress.pdntypevalue = pdn_type;

@@ -166,8 +166,6 @@ s11_mme_release_access_bearers_request (
   SgwReleaseAccessBearersRequest * release_access_bearers_p)
 {
   NwGtpv2cUlpApiT                         ulp_req;
-  NwRcT                                   rc;
-  uint8_t                                 restart_counter = 0;
 
   DevAssert (stack_p != NULL);
   DevAssert (release_access_bearers_p != NULL);

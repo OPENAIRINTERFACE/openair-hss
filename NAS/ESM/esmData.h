@@ -86,7 +86,7 @@ typedef enum {
 /* ESM message timer retransmission data */
 typedef struct esm_ebr_timer_data_s {
   void        *ctx;
-  unsigned int ueid;      /* Lower layers UE identifier       */
+  nas_ue_id_t ueid;      /* Lower layers UE identifier       */
   unsigned int ebi;       /* EPS bearer identity          */
   unsigned int count;     /* Retransmission counter       */
   OctetString  msg;        /* Encoded ESM message to re-transmit   */
@@ -182,7 +182,7 @@ typedef struct esm_data_context_s {
 #define ESM_DATA_PDN_MAX    4
   struct {
     int pid;     /* Identifier of the PDN connection        */
-    int is_active;   /* TRUE/FALSE if the PDN connection is active/inactive
+    int is_active;   /* true/false if the PDN connection is active/inactive
               * or the process to activate/deactivate the PDN
               * connection is in progress           */
     esm_pdn_t *data; /* Active PDN connection data          */

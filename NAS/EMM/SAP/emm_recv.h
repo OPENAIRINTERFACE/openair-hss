@@ -84,7 +84,7 @@ Description Defines functions executed at the EMMAS Service Access
  * Functions executed by both the UE and the MME upon receiving EMM messages
  * --------------------------------------------------------------------------
  */
-int emm_recv_status(unsigned int ueid, emm_status_msg *msg, int *emm_cause, const nas_message_decode_status_t * const status);
+int emm_recv_status(nas_ue_id_t ueid, emm_status_msg *msg, int *emm_cause, const nas_message_decode_status_t * const status);
 
 /*
  * --------------------------------------------------------------------------
@@ -99,35 +99,35 @@ int emm_recv_status(unsigned int ueid, emm_status_msg *msg, int *emm_cause, cons
  * --------------------------------------------------------------------------
  */
 int emm_recv_attach_request (
-    const unsigned int ueid,
+    const nas_ue_id_t ueid,
     const tai_t              * const originating_tai,
     const attach_request_msg * const msg,
     int * const emm_cause,
     const nas_message_decode_status_t  * const decode_status);
 
-int emm_recv_attach_complete(unsigned int ueid, const attach_complete_msg *msg,
+int emm_recv_attach_complete(nas_ue_id_t ueid, const attach_complete_msg *msg,
                              int *emm_cause, const nas_message_decode_status_t * status);
 
-int emm_recv_detach_request(unsigned int ueid, const detach_request_msg *msg,
+int emm_recv_detach_request(nas_ue_id_t ueid, const detach_request_msg *msg,
                             int *emm_cause, const nas_message_decode_status_t * status);
 
-int emm_recv_tracking_area_update_request(unsigned int  ueid,
+int emm_recv_tracking_area_update_request(nas_ue_id_t ueid,
     const tracking_area_update_request_msg *msg,
     int *emm_cause,
     const nas_message_decode_status_t  * decode_status);
 
-int emm_recv_identity_response(unsigned int ueid, identity_response_msg *msg,
+int emm_recv_identity_response(nas_ue_id_t ueid, identity_response_msg *msg,
                                int *emm_cause, const nas_message_decode_status_t * status);
-int emm_recv_authentication_response(unsigned int ueid,
+int emm_recv_authentication_response(nas_ue_id_t ueid,
                                      authentication_response_msg *msg, int *emm_cause,
                                      const nas_message_decode_status_t * status);
-int emm_recv_authentication_failure(unsigned int ueid,
+int emm_recv_authentication_failure(nas_ue_id_t ueid,
                                     authentication_failure_msg *msg, int *emm_cause,
                                     const nas_message_decode_status_t * status);
-int emm_recv_security_mode_complete(unsigned int ueid,
+int emm_recv_security_mode_complete(nas_ue_id_t ueid,
                                     security_mode_complete_msg *msg, int *emm_cause,
                                     const nas_message_decode_status_t * status);
-int emm_recv_security_mode_reject(unsigned int ueid,
+int emm_recv_security_mode_reject(nas_ue_id_t ueid,
                                   security_mode_reject_msg *msg, int *emm_cause,
                                   const nas_message_decode_status_t * status);
 

@@ -120,12 +120,12 @@ static socket_id_t                     *_as_simulator_mme_sid = NULL;
 /*
    UE NAS process connection manager's running indicator
 */
-static int                              _as_simulator_ue_is_running = FALSE;
+static int                              _as_simulator_ue_is_running = false;
 
 /*
    MME NAS process connection manager's running indicator
 */
-static int                              _as_simulator_mme_is_running = FALSE;
+static int                              _as_simulator_mme_is_running = false;
 
 static int                              _set_signal_handler (
   int signal,
@@ -315,8 +315,8 @@ _signal_handler (
   int signal_number)
 {
   printf ("\nWARNING\t: %s - Signal %d received\n", __FUNCTION__, signal_number);
-  _as_simulator_ue_is_running = FALSE;
-  _as_simulator_mme_is_running = FALSE;
+  _as_simulator_ue_is_running = false;
+  _as_simulator_mme_is_running = false;
 }
 
 /*
@@ -331,7 +331,7 @@ _as_simulator_ue_mngr (
   int                                     msg_id;
   as_message_t                            msg;
 
-  _as_simulator_ue_is_running = TRUE;
+  _as_simulator_ue_is_running = true;
   printf ("INFO\t: %s - UE connection manager started\n", __FUNCTION__);
   MSCGEN ("[MSC_NEW][%s][NAS-UE=%s]\n", getTime (), _ue_id);
 
@@ -406,7 +406,7 @@ _as_simulator_ue_mngr (
   /*
    * Close the connection to the network sublayer
    */
-  _as_simulator_ue_is_running = FALSE;
+  _as_simulator_ue_is_running = false;
   printf ("ERROR\t: The UE connection manager exited\n");
   return (NULL);
 }
@@ -423,7 +423,7 @@ _as_simulator_mme_mngr (
   int                                     msg_id;
   as_message_t                            msg;
 
-  _as_simulator_mme_is_running = TRUE;
+  _as_simulator_mme_is_running = true;
   printf ("INFO\t: %s - MME connection manager started\n", __FUNCTION__);
   MSCGEN ("[MSC_NEW][%s][NAS-MME=%s]\n", getTime (), _mme_id);
 
@@ -498,7 +498,7 @@ _as_simulator_mme_mngr (
   /*
    * Close the connection to the network sublayer
    */
-  _as_simulator_mme_is_running = FALSE;
+  _as_simulator_mme_is_running = false;
   printf ("ERROR\t: %s - The MME connection manager exited\n", __FUNCTION__);
   return (NULL);
 }

@@ -180,7 +180,7 @@ static int                              _security_request (
  ***************************************************************************/
 int
 emm_proc_security_mode_control (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   int ksi,
   int eea,
   int eia,
@@ -195,7 +195,7 @@ emm_proc_security_mode_control (
   emm_common_failure_callback_t failure)
 {
   int                                     rc = RETURNerror;
-  int                                     security_context_is_new = FALSE;
+  int                                     security_context_is_new = false;
   int                                     mme_eea = NAS_SECURITY_ALGORITHMS_EEA0;
   int                                     mme_eia = NAS_SECURITY_ALGORITHMS_EIA0;
 
@@ -270,7 +270,7 @@ emm_proc_security_mode_control (
       /*
        * Set new security context indicator
        */
-      security_context_is_new = TRUE;
+      security_context_is_new = true;
     }
   } else {
     LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - No EPS security context exists");
@@ -282,7 +282,7 @@ emm_proc_security_mode_control (
    */
   security_data_t                        *data = (security_data_t *) MALLOC_CHECK (sizeof (security_data_t));
 
-  if (data != NULL) {
+  if (data ) {
     /*
      * Setup ongoing EMM procedure callback functions
      */
@@ -340,7 +340,7 @@ emm_proc_security_mode_control (
     /*
      * Set the failure notification indicator
      */
-    data->notify_failure = FALSE;
+    data->notify_failure = false;
     /*
      * Send security mode command message to the UE
      */
@@ -387,7 +387,7 @@ emm_proc_security_mode_control (
  ***************************************************************************/
 int
 emm_proc_security_mode_complete (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   emm_data_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
@@ -398,17 +398,10 @@ emm_proc_security_mode_complete (
   /*
    * Get the UE context
    */
-#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
   }
-#else
-
-  if (ueid < EMM_DATA_NB_UE_MAX) {
-    emm_ctx = _emm_data.ctx[ueid];
-  }
-#endif
 
   if (emm_ctx) {
     /*
@@ -478,7 +471,7 @@ emm_proc_security_mode_complete (
  ***************************************************************************/
 int
 emm_proc_security_mode_reject (
-  unsigned int ueid)
+  nas_ue_id_t ueid)
 {
   emm_data_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
@@ -488,18 +481,11 @@ emm_proc_security_mode_reject (
   /*
    * Get the UE context
    */
-#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
-    DevAssert (emm_ctx != NULL);
+    DevAssert (emm_ctx );
   }
-#else
-
-  if (ueid < EMM_DATA_NB_UE_MAX) {
-    emm_ctx = _emm_data.ctx[ueid];
-  }
-#endif
 
   if (emm_ctx) {
     /*
@@ -584,7 +570,6 @@ _security_t3460_handler (
   void *args)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
   security_data_t                        *data = (security_data_t *) (args);
 
   /*
@@ -597,16 +582,16 @@ _security_t3460_handler (
     /*
      * Send security mode command message to the UE
      */
-    rc = _security_request (data, FALSE);
+    _security_request (data, false);
   } else {
     /*
      * Set the failure notification indicator
      */
-    data->notify_failure = TRUE;
+    data->notify_failure = true;
     /*
      * Abort the security mode control procedure
      */
-    rc = _security_abort (data);
+    _security_abort (data);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
@@ -663,21 +648,15 @@ _security_request (
   emm_sap.u.emm_as.u.security.gprs_present = data->gprs_present;
   emm_sap.u.emm_as.u.security.selected_eea = data->selected_eea;
   emm_sap.u.emm_as.u.security.selected_eia = data->selected_eia;
-#if NAS_BUILT_IN_EPC
 
   if (data->ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, data->ueid);
   }
-#else
 
-  if (data->ueid < EMM_DATA_NB_UE_MAX) {
-    emm_ctx = _emm_data.ctx[data->ueid];
-  }
-#endif
   /*
    * Setup EPS NAS security data
    */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, is_new, FALSE);
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, is_new, false);
   MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_SECURITY_REQ ue id " NAS_UE_ID_FMT " ", data->ueid);
   rc = emm_sap_send (&emm_sap);
 
@@ -734,17 +713,10 @@ _security_abort (
     int                                     notify_failure = data->notify_failure;
 
     LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort security mode control procedure " "(ueid=" NAS_UE_ID_FMT ")", ueid);
-#if NAS_BUILT_IN_EPC
 
     if (data->ueid > 0) {
       emm_ctx = emm_data_context_get (&_emm_data, data->ueid);
     }
-#else
-
-    if (data->ueid < EMM_DATA_NB_UE_MAX) {
-      emm_ctx = _emm_data.ctx[data->ueid];
-    }
-#endif
 
     /*
      * Stop timer T3460
@@ -804,7 +776,6 @@ _security_select_algorithms (
   int *const mme_eeaP)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
   int                                     preference_index;
 
   *mme_eiaP = NAS_SECURITY_ALGORITHMS_EIA0;

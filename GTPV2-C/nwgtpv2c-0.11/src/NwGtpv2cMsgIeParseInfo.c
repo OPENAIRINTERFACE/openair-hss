@@ -388,7 +388,8 @@ extern                                  "C" {
                        P R I V A T E     F U N C T I O N S
   ----------------------------------------------------------------------------*/
 
-  static uint32_t                         nwGtpv2cMsgGroupedIeCount (
+  /*‘nwGtpv2cMsgGroupedIeCount’ defined but not used [-Wunused-function]
+   * static uint32_t                         nwGtpv2cMsgGroupedIeCount (
   NwGtpv2cMsgIeInfoT * pMsgIeInfo) {
     uint32_t                                count = 0;
     NwGtpv2cMsgIeInfoT                     *pGroupedIeInfo = pMsgIeInfo;
@@ -402,7 +403,7 @@ extern                                  "C" {
     }
 
     return count;
-  }
+  }*/
 
   static NwRcT                            nwGtpv2cMsgIeParseInfoUpdate (
   NwGtpv2cMsgIeParseInfoT * thiz,

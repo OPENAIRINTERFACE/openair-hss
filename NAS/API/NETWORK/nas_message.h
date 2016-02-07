@@ -117,8 +117,8 @@ nas_message_encrypt(
   void                                *security);
 
 int
-nas_message_decrypt(const char *inbuf,
-  char                           *outbuf,
+nas_message_decrypt(const char * const inbuf,
+  char                         * const outbuf,
   nas_message_security_header_t  *header,
   int                             length,
   void                           *security,

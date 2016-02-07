@@ -55,7 +55,7 @@ mme_app_request_authentication_info (
   MessageDef                             *message_p = NULL;
   int                                     imsi_length = strlen (imsi);
 
-  DevAssert (plmn != NULL);
+  DevAssert (plmn );
   message_p = itti_alloc_new_message (TASK_MME_APP, S6A_AUTH_INFO_REQ);
   auth_info_req = &message_p->ittiMsg.s6a_auth_info_req;
   memset (auth_info_req, 0, sizeof (*auth_info_req));
@@ -71,7 +71,7 @@ mme_app_request_authentication_info (
   LOG_DEBUG (LOG_MME_APP, "visited_plmn %02X%02X%02X\n", ptr[0], ptr[1], ptr[2]);
   auth_info_req->nb_of_vectors = nb_of_vectors;
 
-  if (auts != NULL) {
+  if (auts ) {
     auth_info_req->re_synchronization = 1;
     memcpy (auth_info_req->auts, auts, sizeof (auth_info_req->auts));
   } else {
@@ -90,7 +90,7 @@ mme_app_handle_nas_auth_resp (
   struct ue_context_s                    *ue_context = NULL;
   uint64_t                                imsi = 0;
 
-  DevAssert (nas_auth_resp_pP != NULL);
+  DevAssert (nas_auth_resp_pP );
   MME_APP_STRING_TO_IMSI ((char *)nas_auth_resp_pP->imsi, &imsi);
   LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
 
@@ -143,7 +143,7 @@ mme_app_handle_authentication_info_answer (
   struct ue_context_s                    *ue_context = NULL;
   uint64_t                                imsi = 0;
 
-  DevAssert (s6a_auth_info_ans_pP != NULL);
+  DevAssert (s6a_auth_info_ans_pP );
   MME_APP_STRING_TO_IMSI ((char *)s6a_auth_info_ans_pP->imsi, &imsi);
   LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
 
@@ -166,13 +166,13 @@ mme_app_handle_authentication_info_answer (
 
     if (ue_context->vector_list == NULL) {
       ue_context->vector_list = MALLOC_CHECK (sizeof (eutran_vector_t));
-      DevAssert (ue_context->vector_list != NULL);
+      DevAssert (ue_context->vector_list );
     } else {
       /*
        * Some vector already exist
        */
       ue_context->vector_list = realloc (ue_context->vector_list, (ue_context->nb_of_vectors + s6a_auth_info_ans_pP->auth_info.nb_of_vectors) * sizeof (eutran_vector_t));
-      DevAssert (ue_context->vector_list != NULL);
+      DevAssert (ue_context->vector_list );
     }
 
     memcpy (&ue_context->vector_list[ue_context->nb_of_vectors], &s6a_auth_info_ans_pP->auth_info.eutran_vector, sizeof (eutran_vector_t));
@@ -215,7 +215,7 @@ mme_app_handle_nas_auth_param_req (
     .MNCdigit2 = 0,
     .MNCdigit3 = 0,
   };
-  DevAssert (nas_auth_param_req_pP != NULL);
+  DevAssert (nas_auth_param_req_pP );
   visited_plmn = &visited_plmn_from_req;
   visited_plmn_from_req.MCCdigit1 = nas_auth_param_req_pP->imsi[0];
   visited_plmn_from_req.MCCdigit2 = nas_auth_param_req_pP->imsi[1];

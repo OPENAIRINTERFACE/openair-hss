@@ -269,7 +269,7 @@ network_api_read_data (
     LOG_WARNING (LOG_NAS, "NET-API   - A signal was caught");
   } else {
     LOG_INFO (LOG_NAS,  "NET-API   - %d bytes received from the network " "sublayer", rbytes);
-    LOG_DUMP (_network_api_recv_buffer, rbytes);
+    LOG_STREAM_HEX (LOG_NAS, "", _network_api_recv_buffer, rbytes);
   }
 
   LOG_FUNC_RETURN (LOG_NAS, rbytes);
@@ -321,7 +321,7 @@ network_api_send_data (
     LOG_WARNING (LOG_NAS, "NET-API   - A signal was caught");
   } else {
     LOG_INFO (LOG_NAS,  "NET-API   - %d bytes sent to the network sublayer", sbytes);
-    LOG_DUMP (_network_api_send_buffer, sbytes);
+    LOG_STREAM_HEX (LOG_NAS, "", _network_api_recv_buffer, sbytes);
   }
 
   LOG_FUNC_RETURN (LOG_NAS, sbytes);

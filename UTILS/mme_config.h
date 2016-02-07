@@ -111,6 +111,7 @@
 
 #define MME_CONFIG_STRING_LOGGING                        "LOGGING"
 #define MME_CONFIG_STRING_OUTPUT                         "OUTPUT"
+#define MME_CONFIG_STRING_COLOR                          "COLOR"
 #define MME_CONFIG_STRING_OUTPUT_CONSOLE                 "CONSOLE"
 #define MME_CONFIG_STRING_UDP_LOG_LEVEL                  "UDP_LOG_LEVEL"
 #define MME_CONFIG_STRING_GTPV1U_LOG_LEVEL               "GTPV1U_LOG_LEVEL"

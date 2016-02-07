@@ -92,7 +92,7 @@ mme_app_handle_s6a_update_location_ans (
   uint64_t                                imsi = 0;
   struct ue_context_s                    *ue_context_p = NULL;
 
-  DevAssert (ula_pP != NULL);
+  DevAssert (ula_pP );
 
   if (ula_pP->result.present == S6A_RESULT_BASE) {
     if (ula_pP->result.choice.base != DIAMETER_SUCCESS) {

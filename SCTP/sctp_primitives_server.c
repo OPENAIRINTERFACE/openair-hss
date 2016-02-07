@@ -31,6 +31,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -626,7 +627,7 @@ sctp_receiver_thread (
             FD_CLR (i, &master);
 
             if (i == fdmax) {
-              while (FD_ISSET (fdmax, &master) == FALSE)
+              while (FD_ISSET (fdmax, &master) == false)
                 fdmax -= 1;
             }
           }

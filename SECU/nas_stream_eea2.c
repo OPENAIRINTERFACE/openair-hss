@@ -34,8 +34,8 @@
 
 int
 nas_stream_encrypt_eea2 (
-  nas_stream_cipher_t * stream_cipher,
-  uint8_t * out)
+  nas_stream_cipher_t * const stream_cipher,
+  uint8_t * const out)
 {
   uint8_t                                 m[16];
   uint32_t                                local_count;

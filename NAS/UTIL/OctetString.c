@@ -70,8 +70,8 @@ encode_octet_string (
   uint8_t * buffer,
   uint32_t buflen)
 {
-  if (octetstring != NULL) {
-    if ((octetstring->value != NULL) && (octetstring->length > 0)) {
+  if (octetstring ) {
+    if ((octetstring->value ) && (octetstring->length > 0)) {
       CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, octetstring->length, buflen);
       memcpy ((void *)buffer, (void *)octetstring->value, octetstring->length);
       return octetstring->length;
@@ -93,7 +93,7 @@ decode_octet_string (
   if (buflen < pdulen)
     return -1;
 
-  if ((octetstring != NULL) && (buffer != NULL)) {
+  if ((octetstring ) && (buffer )) {
     octetstring->length = pdulen;
     octetstring->value = MALLOC_CHECK (sizeof (uint8_t) * (pdulen + 1));
     memcpy ((void *)octetstring->value, (void *)buffer, pdulen);

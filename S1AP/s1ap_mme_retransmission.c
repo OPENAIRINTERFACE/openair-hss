@@ -79,10 +79,10 @@ RB_GENERATE (s1ap_timer_map, s1ap_timer_map_s, entries, s1ap_mme_timer_map_compa
 
 int
 s1ap_timer_insert (
-  uint32_t mme_ue_s1ap_id,
+  const mme_ue_s1ap_id_t mme_ue_s1ap_id,
   long timer_id)
 {
-  struct s1ap_timer_map_s                *new;
+  struct s1ap_timer_map_s                *new = NULL;
 
   new = MALLOC_CHECK (sizeof (struct s1ap_timer_map_s));
   new->timer_id = timer_id;
@@ -101,8 +101,8 @@ int
 s1ap_handle_timer_expiry (
   timer_has_expired_t * timer_has_expired)
 {
-  struct s1ap_timer_map_s                *find;
-  struct s1ap_timer_map_s                 elm;
+  struct s1ap_timer_map_s                *find = NULL;
+  struct s1ap_timer_map_s                 elm = {0};
 
   DevAssert (timer_has_expired != NULL);
   memset (&elm, 0, sizeof (elm));
@@ -129,11 +129,11 @@ s1ap_handle_timer_expiry (
 
 int
 s1ap_timer_remove_ue (
-  uint32_t mme_ue_s1ap_id)
+  const uint32_t mme_ue_s1ap_id)
 {
-  struct s1ap_timer_map_s                *find;
+  struct s1ap_timer_map_s                *find = NULL;
 
-  LOG_DEBUG (LOG_S1AP, "Removing timer associated with UE " S1AP_UE_ID_FMT "\n", mme_ue_s1ap_id);
+  LOG_DEBUG (LOG_S1AP, "Removing timer associated with UE " MME_UE_S1AP_ID_FMT "\n", mme_ue_s1ap_id);
   DevAssert (mme_ue_s1ap_id != 0);
   RB_FOREACH (find, s1ap_timer_map, &s1ap_timer_tree) {
     if (find->mme_ue_s1ap_id == mme_ue_s1ap_id) {

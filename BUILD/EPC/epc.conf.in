@@ -151,15 +151,20 @@ MME :
         # `path to file` must start with '.' or '/'
         # if TCP stream choice, then you can easily dump the traffic on the remote or local host: nc -l `TCP port num` > received.txt
         OUTPUT            = "127.0.0.1:5656";
+        
+        # COLOR choice in { "yes", "no" } means use of ANSI styling codes or no
+        COLOR             = "yes";                                              # TODO
+        
         # Log level choice in { "EMERGENCY", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG", "TRACE"} 
         SCTP_LOG_LEVEL    = "TRACE";
         S1AP_LOG_LEVEL    = "TRACE";
         NAS_LOG_LEVEL     = "TRACE";
         MME_APP_LOG_LEVEL = "TRACE";
-        S6A_LOG_LEVEL     = "TRACE"
-        UTIL_LOG_LEVEL    = "TRACE"
-        MSC_LOG_LEVEL     = "ERROR"
-        ITTI_LOG_LEVEL    = "ERROR"
+        S6A_LOG_LEVEL     = "TRACE";
+        UTIL_LOG_LEVEL    = "TRACE";
+        MSC_LOG_LEVEL     = "ERROR";
+        ITTI_LOG_LEVEL    = "ERROR";
+        
         # ASN1 VERBOSITY: none, info, annoying
         # for S1AP protocol
         ASN1_VERBOSITY    = "none";
@@ -191,7 +196,7 @@ S-GW :
         GTPV1U_LOG_LEVEL   = "TRACE";
         GTPV2C_LOG_LEVEL   = "TRACE";
         SPGW_APP_LOG_LEVEL = "TRACE";
-        S11_LOG_LEVEL      = "TRACE"
+        S11_LOG_LEVEL      = "TRACE";
     };
 };
 

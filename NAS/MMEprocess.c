@@ -191,7 +191,7 @@ _nas_network_mngr (
   /*
    * Network receiving loop
    */
-  while (TRUE) {
+  while (true) {
     /*
      * Read the network data message
      */

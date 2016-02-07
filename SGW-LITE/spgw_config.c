@@ -35,6 +35,7 @@
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <netdb.h>
 
@@ -169,9 +170,9 @@ spgw_config_process (
   inaddr.s_addr = config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S1u_S12_S4_up;
 
   if (strncasecmp ("lo", config_pP->sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up, strlen ("lo")) == 0) {
-    config_pP->sgw_config.local_to_eNB = TRUE;
+    config_pP->sgw_config.local_to_eNB = true;
   } else {
-    config_pP->sgw_config.local_to_eNB = FALSE;
+    config_pP->sgw_config.local_to_eNB = false;
 
     if (snprintf (system_cmd, 256, "modprobe xt_GTPUSP gtpu_enb_port=2152 gtpu_sgw_port=%u sgw_addr=\"%s\" ", config_pP->sgw_config.sgw_udp_port_for_S1u_S12_S4_up, inet_ntoa (inaddr)) > 0) {
       ret += spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
@@ -181,7 +182,7 @@ spgw_config_process (
     }
   }
 
-  if (config_pP->sgw_config.local_to_eNB == TRUE) {
+  if (config_pP->sgw_config.local_to_eNB == true) {
     if (snprintf (system_cmd, 256, "iptables -t filter -I INPUT -i lo -d %s --protocol sctp -j DROP", inet_ntoa (inaddr)) > 0) {
       ret += spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
     } else {
@@ -307,6 +308,10 @@ spgw_config_init (
     config_pP->log_config.msc_log_level      = MAX_LOG_LEVEL;
     config_pP->log_config.itti_log_level     = MAX_LOG_LEVEL;
     if (subsetting != NULL) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_COLOR, (const char **)&astring)) {
+        if (0 == strcasecmp("true", astring)) config_pP->log_config.color = true;
+        else config_pP->log_config.color = false;
+      }
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_UDP_LOG_LEVEL, (const char **)&astring)) {
         config_pP->log_config.udp_log_level = LOG_LEVEL_STR2INT (astring);
       }

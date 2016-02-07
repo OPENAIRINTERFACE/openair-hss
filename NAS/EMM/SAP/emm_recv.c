@@ -87,7 +87,7 @@
  ***************************************************************************/
 int
 emm_recv_status (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   emm_status_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -129,7 +129,7 @@ emm_recv_status (
  ***************************************************************************/
 int
 emm_recv_attach_request (
-  const unsigned int ueid,
+  const nas_ue_id_t ueid,
   const tai_t              * const originating_tai,
   const attach_request_msg * const msg,
   int * const emm_cause,
@@ -286,7 +286,7 @@ emm_recv_attach_request (
   /*
    * Execute the requested UE attach procedure
    */
-#warning " TODO review gea"
+//#pragma message  " TODO review gea"
 
   if (msg->msnetworkcapability.msnetworkcapabilityvalue.length > 0) {
     gea = (msg->msnetworkcapability.msnetworkcapabilityvalue.value[0] & 0x80) >> 1;
@@ -331,7 +331,7 @@ emm_recv_attach_request (
  ***************************************************************************/
 int
 emm_recv_attach_complete (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   const attach_complete_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -364,7 +364,7 @@ emm_recv_attach_complete (
  ***************************************************************************/
 int
 emm_recv_detach_request (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   const detach_request_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -490,7 +490,7 @@ emm_recv_detach_request (
  ***************************************************************************/
 int
 emm_recv_tracking_area_update_request (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   const tracking_area_update_request_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
@@ -528,7 +528,7 @@ emm_recv_tracking_area_update_request (
  ***************************************************************************/
 int
 emm_recv_identity_response (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   identity_response_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -664,7 +664,7 @@ emm_recv_identity_response (
  ***************************************************************************/
 int
 emm_recv_authentication_response (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   authentication_response_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -718,7 +718,7 @@ emm_recv_authentication_response (
  ***************************************************************************/
 int
 emm_recv_authentication_failure (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   authentication_failure_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -774,7 +774,7 @@ emm_recv_authentication_failure (
  ***************************************************************************/
 int
 emm_recv_security_mode_complete (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   security_mode_complete_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -810,7 +810,7 @@ emm_recv_security_mode_complete (
  ***************************************************************************/
 int
 emm_recv_security_mode_reject (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   security_mode_reject_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)

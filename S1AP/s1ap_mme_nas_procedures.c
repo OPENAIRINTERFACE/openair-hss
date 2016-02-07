@@ -39,6 +39,7 @@
 #include "msc.h"
 #include "dynamic_memory_check.h"
 #include "log.h"
+#include "gcc_diag.h"
 
 /* Every time a new UE is associated, increment this variable.
    But care if it wraps to increment also the mme_ue_s1ap_id_has_wrapped
@@ -62,7 +63,8 @@ s1ap_mme_handle_initial_ue_message (
   uint32_t                                eNB_ue_s1ap_id;
 
   initialUEMessage_p = &message->msg.s1ap_InitialUEMessageIEs;
-  MSC_LOG_RX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 initialUEMessage/%s assoc_id %u stream %u " S1AP_UE_ID_FMT " ", s1ap_direction2String[message->direction], assoc_id, stream, initialUEMessage_p->eNB_UE_S1AP_ID);
+  MSC_LOG_RX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 initialUEMessage/%s assoc_id %u stream %u " ENB_UE_S1AP_ID_FMT " ",
+          s1ap_direction2String[message->direction], assoc_id, stream, initialUEMessage_p->eNB_UE_S1AP_ID);
 
   if ((eNB_ref = s1ap_is_eNB_assoc_id_in_list (assoc_id)) == NULL) {
     LOG_DEBUG (LOG_S1AP, "Unkwnon eNB on assoc_id %d\n", assoc_id);
@@ -70,7 +72,7 @@ s1ap_mme_handle_initial_ue_message (
   }
   // eNB UE S1AP ID is limited to 24 bits
   eNB_ue_s1ap_id = (uint32_t) (initialUEMessage_p->eNB_UE_S1AP_ID & 0x00ffffff);
-  LOG_DEBUG (LOG_S1AP, "New Initial UE message received with eNB UE S1AP ID: " S1AP_UE_ID_FMT "\n", eNB_ue_s1ap_id);
+  LOG_DEBUG (LOG_S1AP, "New Initial UE message received with eNB UE S1AP ID: " ENB_UE_S1AP_ID_FMT "\n", eNB_ue_s1ap_id);
   ue_ref = s1ap_is_ue_eNB_id_in_list (eNB_ref, eNB_ue_s1ap_id);
 
   if (ue_ref == NULL) {
@@ -95,7 +97,10 @@ s1ap_mme_handle_initial_ue_message (
 
     ue_ref->s1_ue_state = S1AP_UE_WAITING_CSR;
     ue_ref->eNB_ue_s1ap_id = eNB_ue_s1ap_id;
+
+    OAI_GCC_DIAG_OFF(pointer-to-int-cast);
     ue_ref->mme_ue_s1ap_id = (uint32_t) ue_ref;
+    OAI_GCC_DIAG_ON(pointer-to-int-cast);
     // On which stream we received the message
     ue_ref->sctp_stream_recv = stream;
     ue_ref->sctp_stream_send = ue_ref->eNB->next_sctp_stream;
@@ -178,16 +183,16 @@ s1ap_mme_handle_uplink_nas_transport (
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
                       NULL, 0,
-                      "0 uplinkNASTransport/%s mme_ue_s1ap_id " S1AP_UE_ID_FMT " eNB_ue_s1ap_id " S1AP_UE_ID_FMT " nas len %u",
-                      s1ap_direction2String[message->direction], uplinkNASTransport_p->mme_ue_s1ap_id, uplinkNASTransport_p->eNB_UE_S1AP_ID, uplinkNASTransport_p->nas_pdu.size);
+                      "0 uplinkNASTransport/%s mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " eNB_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " nas len %u",
+                      s1ap_direction2String[message->direction], uplinkNASTransport_p->mme_ue_s1ap_id, uplinkNASTransport_p->eNB_UE_S1AP_ID,
+                      uplinkNASTransport_p->nas_pdu.size);
 
-  if ((ue_ref = s1ap_is_ue_mme_id_in_list (uplinkNASTransport_p->mme_ue_s1ap_id))
-      == NULL) {
-    LOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " S1AP_UE_ID_FMT "\n", (int)uplinkNASTransport_p->mme_ue_s1ap_id);
+  if (!(ue_ref = s1ap_is_ue_mme_id_in_list (uplinkNASTransport_p->mme_ue_s1ap_id))) {
+    LOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n", (int)uplinkNASTransport_p->mme_ue_s1ap_id);
     return -1;
   }
 
-  if (ue_ref->s1_ue_state != S1AP_UE_CONNECTED) {
+  if (S1AP_UE_CONNECTED != ue_ref->s1_ue_state) {
     LOG_DEBUG (LOG_S1AP, "Received uplink NAS transport while UE in state != S1AP_UE_CONNECTED\n");
     return -1;
   }
@@ -218,12 +223,12 @@ s1ap_mme_handle_nas_non_delivery (
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
                       NULL, 0,
-                      "0 NASNonDeliveryIndication/%s mme_ue_s1ap_id " S1AP_UE_ID_FMT " eNB_ue_s1ap_id " S1AP_UE_ID_FMT " cause %u nas len %u",
+                      "0 NASNonDeliveryIndication/%s mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " eNB_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " cause %u nas len %u",
                       s1ap_direction2String[message->direction], nasNonDeliveryIndication_p->mme_ue_s1ap_id, nasNonDeliveryIndication_p->eNB_UE_S1AP_ID, nasNonDeliveryIndication_p->cause, nasNonDeliveryIndication_p->nas_pdu.size);
 
   if ((ue_ref = s1ap_is_ue_mme_id_in_list (nasNonDeliveryIndication_p->mme_ue_s1ap_id))
       == NULL) {
-    LOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " S1AP_UE_ID_FMT "\n", (int)nasNonDeliveryIndication_p->mme_ue_s1ap_id);
+    LOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n", (int)nasNonDeliveryIndication_p->mme_ue_s1ap_id);
     return -1;
   }
 
@@ -242,16 +247,16 @@ s1ap_generate_downlink_nas_transport (
   void *const data,
   const uint32_t size)
 {
-  ue_description_t                       *ue_ref;
-  uint8_t                                *buffer_p;
-  uint32_t                                length;
+  ue_description_t                       *ue_ref = NULL;
+  uint8_t                                *buffer_p = NULL;
+  uint32_t                                length = 0;
 
   if ((ue_ref = s1ap_is_ue_mme_id_in_list (ue_id)) == NULL) {
     /*
      * If the UE-associated logical S1-connection is not established,
      * * * * the MME shall allocate a unique MME UE S1AP ID to be used for the UE.
      */
-    LOG_DEBUG (LOG_S1AP, "Unknown UE MME ID " S1AP_UE_ID_FMT ", This case is not handled right now\n", ue_id);
+    LOG_DEBUG (LOG_S1AP, "Unknown UE MME ID " MME_UE_S1AP_ID_FMT ", This case is not handled right now\n", ue_id);
     return -1;
   } else {
     /*
@@ -259,9 +264,8 @@ s1ap_generate_downlink_nas_transport (
      * * * * Create new IE list message and encode it.
      */
     S1ap_DownlinkNASTransportIEs_t         *downlinkNasTransport = NULL;
-    s1ap_message                            message;
+    s1ap_message                            message = {0};
 
-    memset (&message, 0, sizeof (s1ap_message));
     message.procedureCode = S1ap_ProcedureCode_id_downlinkNASTransport;
     message.direction = S1AP_PDU_PR_initiatingMessage;
     ue_ref->s1_ue_state = S1AP_UE_CONNECTED;
@@ -281,13 +285,13 @@ s1ap_generate_downlink_nas_transport (
       return -1;
     }
 
-    LOG_DEBUG (LOG_S1AP, "Send S1ap_ProcedureCode_id_downlinkNASTransport ue_id = " S1AP_UE_ID_FMT " mme_ue_s1ap_id = " S1AP_UE_ID_FMT " eNB_UE_S1AP_ID = " S1AP_UE_ID_FMT "\n",
-                ue_id, downlinkNasTransport->mme_ue_s1ap_id, downlinkNasTransport->eNB_UE_S1AP_ID);
+    LOG_DEBUG (LOG_S1AP, "Send S1ap_ProcedureCode_id_downlinkNASTransport ue_id = " MME_UE_S1AP_ID_FMT " mme_ue_s1ap_id = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
+                ue_id, (uint32_t)downlinkNasTransport->mme_ue_s1ap_id, (uint32_t)downlinkNasTransport->eNB_UE_S1AP_ID);
     MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                         MSC_S1AP_ENB,
                         NULL, 0,
-                        "0 downlinkNASTransport/initiatingMessage ue_id " S1AP_UE_ID_FMT " mme_ue_s1ap_id " S1AP_UE_ID_FMT " eNB_ue_s1ap_id" S1AP_UE_ID_FMT " nas length %u",
-                        ue_id, downlinkNasTransport->mme_ue_s1ap_id, downlinkNasTransport->eNB_UE_S1AP_ID, size);
+                        "0 downlinkNASTransport/initiatingMessage ue_id " MME_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " eNB_ue_s1ap_id" ENB_UE_S1AP_ID_FMT " nas length %u",
+                        ue_id, (uint32_t)downlinkNasTransport->mme_ue_s1ap_id, (uint32_t)downlinkNasTransport->eNB_UE_S1AP_ID, size);
     s1ap_mme_itti_send_sctp_request (buffer_p, length, ue_ref->eNB->sctp_assoc_id, ue_ref->sctp_stream_send);
   }
 
@@ -315,7 +319,7 @@ s1ap_handle_conn_est_cnf (
   DevAssert (conn_est_cnf_pP != NULL);
 
   if ((ue_ref = s1ap_is_ue_mme_id_in_list (conn_est_cnf_pP->nas_conn_est_cnf.UEid)) == NULL) {
-    LOG_ERROR (LOG_S1AP, "This mme ue s1ap id (" S1AP_UE_ID_FMT ") is not attached to any UE context\n", conn_est_cnf_pP->nas_conn_est_cnf.UEid);
+    LOG_ERROR (LOG_S1AP, "This mme ue s1ap id (" MME_UE_S1AP_ID_FMT ") is not attached to any UE context\n", conn_est_cnf_pP->nas_conn_est_cnf.UEid);
     // There are some race conditions were NAS T3450 timer is stopped and removed at same time
     return;
   }
@@ -433,7 +437,7 @@ s1ap_handle_conn_est_cnf (
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
                       NULL, 0,
-                      "0 InitialContextSetup/initiatingMessage mme_ue_s1ap_id " S1AP_UE_ID_FMT " eNB_ue_s1ap_id " S1AP_UE_ID_FMT " nas length %u",
+                      "0 InitialContextSetup/initiatingMessage mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " eNB_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " nas length %u",
                       initialContextSetupRequest_p->mme_ue_s1ap_id, initialContextSetupRequest_p->eNB_UE_S1AP_ID, nas_pdu.size);
   s1ap_mme_itti_send_sctp_request (buffer_p, length, ue_ref->eNB->sctp_assoc_id, ue_ref->sctp_stream_send);
 }

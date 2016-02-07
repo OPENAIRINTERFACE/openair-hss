@@ -37,14 +37,14 @@
 
 int
 nas_stream_encrypt_eea1 (
-  nas_stream_cipher_t * stream_cipher,
-  uint8_t * out)
+  nas_stream_cipher_t * const stream_cipher,
+  uint8_t * const out)
 {
   snow_3g_context_t                       snow_3g_context;
   int                                     n;
   int                                     i = 0;
   uint32_t                                zero_bit = 0;
-  uint32_t                                byte_length;
+  //uint32_t                                byte_length;
   uint32_t                               *KS;
   uint32_t                                K[4],
                                           IV[4];
@@ -55,7 +55,7 @@ nas_stream_encrypt_eea1 (
   DevAssert (out != NULL);
   n = (stream_cipher->blength + 31) / 32;
   zero_bit = stream_cipher->blength & 0x7;
-  byte_length = stream_cipher->blength >> 3;
+  //byte_length = stream_cipher->blength >> 3;
   memset (&snow_3g_context, 0, sizeof (snow_3g_context));
   /*
    * Initialisation

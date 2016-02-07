@@ -45,20 +45,16 @@
 #include "emmData.h"
 #include "commonDef.h"
 #include "log.h"
-
 #include "TLVDecoder.h"
 #include "as_message.h"
 #include "nas_message.h"
-
 #include "emm_cause.h"
 #include "LowerLayer.h"
 
 #include <string.h>             // memset
 #include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 
-#if NAS_BUILT_IN_EPC
-#  include "nas_itti_messaging.h"
-#endif
+#include "nas_itti_messaging.h"
 #include "msc.h"
 
 /****************************************************************************/
@@ -67,7 +63,7 @@
 
 
 extern int                              emm_proc_status (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   int emm_cause);
 
 /****************************************************************************/
@@ -101,7 +97,7 @@ static const char                      *_emm_as_primitive_str[] = {
    data from the network
 */
 static int                              _emm_as_recv (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   const char *msg,
   int len,
   int *emm_cause,
@@ -329,7 +325,7 @@ emm_as_send (
  ***************************************************************************/
 static int
 _emm_as_recv (
-  unsigned int ueid,
+  nas_ue_id_t ueid,
   const char *msg,
   int len,
   int *emm_cause,
@@ -350,7 +346,7 @@ _emm_as_recv (
   }
 
   memset (&nas_msg,       0, sizeof (nas_msg));
-  if (NULL == decode_status) {
+  if (! decode_status) {
     memset (&local_decode_status, 0, sizeof (local_decode_status));
     decode_status = &local_decode_status;
   }
@@ -522,7 +518,7 @@ _emm_as_data_ind (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS data transfer indication " "(ueid=" NAS_UE_ID_FMT ", delivered=%s, length=%d)", msg->ueid, (msg->delivered) ? "TRUE" : "FALSE", msg->NASmsg.length);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS data transfer indication " "(ueid=" NAS_UE_ID_FMT ", delivered=%s, length=%d)", msg->ueid, (msg->delivered) ? "true" : "false", msg->NASmsg.length);
 
   if (msg->delivered) {
     if (msg->NASmsg.length > 0) {
@@ -942,7 +938,7 @@ _emm_as_encode (
    */
   info->data = (Byte_t *) MALLOC_CHECK (length * sizeof (Byte_t));
 
-  if (info->data != NULL) {
+  if (info->data ) {
     /*
      * Encode the NAS message
      */
@@ -999,7 +995,7 @@ _emm_as_encrypt (
    */
   info->data = (Byte_t *) MALLOC_CHECK (length * sizeof (Byte_t));
 
-  if (info->data != NULL) {
+  if (info->data ) {
     /*
      * Encrypt the NAS information message
      */
@@ -1108,10 +1104,10 @@ _emm_as_send (
           nas_itti_dl_data_req (as_msg.msg.nas_establish_rsp.UEid, as_msg.msg.nas_establish_rsp.nasMsg.data, as_msg.msg.nas_establish_rsp.nasMsg.length);
           LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
         } else {
-          LOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - "
-                     "Sending nas_itti_establish_cnf to S1AP UE ID 0x%x"
-                     " selected_encryption_algorithm 0x%04X",
-                     " selected_integrity_algorithm 0x%04X", as_msg.msg.nas_establish_rsp.UEid, as_msg.msg.nas_establish_rsp.selected_encryption_algorithm, as_msg.msg.nas_establish_rsp.selected_integrity_algorithm);
+          LOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - Sending nas_itti_establish_cnf to S1AP UE ID 0x%x sea 0x%04X sia 0x%04X\n",
+                     as_msg.msg.nas_establish_rsp.UEid,
+                     as_msg.msg.nas_establish_rsp.selected_encryption_algorithm,
+                     as_msg.msg.nas_establish_rsp.selected_integrity_algorithm);
           /*
            * Handle success case
            */
@@ -1157,7 +1153,7 @@ _emm_as_data_req (
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = 0;
-  int                                     is_encoded = FALSE;
+  int                                     is_encoded = false;
 
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS data transfer request");
   nas_message_t                           nas_msg;
@@ -1182,7 +1178,7 @@ _emm_as_data_req (
   /*
    * Setup the NAS information message
    */
-  if (emm_msg != NULL)
+  if (emm_msg )
     switch (msg->NASinfo) {
     case EMM_AS_NAS_DATA_DETACH:
       size = emm_send_detach_accept (msg, &emm_msg->detach_accept);
@@ -1193,7 +1189,7 @@ _emm_as_data_req (
        * Send other NAS messages as already encoded ESM messages
        */
       size = msg->NASmsg.length;
-      is_encoded = TRUE;
+      is_encoded = true;
       break;
     }
 
@@ -1287,7 +1283,7 @@ _emm_as_status_ind (
   /*
    * Setup the NAS information message
    */
-  if (emm_msg != NULL) {
+  if (emm_msg ) {
     size = emm_send_status (msg, &emm_msg->emm_status);
   }
 
@@ -1421,7 +1417,7 @@ _emm_as_security_req (
   /*
    * Setup the NAS security message
    */
-  if (emm_msg != NULL)
+  if (emm_msg )
     switch (msg->msgType) {
     case EMM_AS_MSG_TYPE_IDENT:
       if (msg->guti) {
@@ -1542,7 +1538,7 @@ _emm_as_security_rej (
   /*
    * Setup the NAS security message
    */
-  if (emm_msg != NULL)
+  if (emm_msg )
     switch (msg->msgType) {
     case EMM_AS_MSG_TYPE_AUTH:
       if (msg->guti) {
@@ -1648,7 +1644,7 @@ _emm_as_establish_cnf (
   /*
    * Setup the initial NAS information message
    */
-  if (emm_msg != NULL)
+  if (emm_msg )
     switch (msg->NASinfo) {
     case EMM_AS_NAS_INFO_ATTACH:
       LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d", msg->NASmsg.length);
@@ -1760,7 +1756,7 @@ _emm_as_establish_rej (
   /*
    * Setup the NAS information message
    */
-  if (emm_msg != NULL) {
+  if (emm_msg ) {
     switch (msg->NASinfo) {
     case EMM_AS_NAS_INFO_ATTACH:
       if (msg->UEid.guti) {

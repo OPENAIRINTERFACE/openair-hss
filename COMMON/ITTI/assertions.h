@@ -31,11 +31,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
-#if ENB_MODE
-# define display_backtrace()
-#else
-# include "backtrace.h"
-#endif
+#include "backtrace.h"
 
 #ifndef ASSERTIONS_H_
 #define ASSERTIONS_H_

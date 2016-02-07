@@ -467,7 +467,7 @@ _nas_timer_handler (
   /*
    * At least one timer has been started
    */
-  assert ((_nas_timer_db.head != NULL) && (_nas_timer_db.head->entry != NULL));
+  assert ((_nas_timer_db.head ) && (_nas_timer_db.head->entry ));
   /*
    * Get the timer entry for which the system timer expired
    */
@@ -593,7 +593,7 @@ _nas_timer_db_get_id (
  **      Others:    _nas_timer_db                              **
  **                                                                        **
  ** Outputs:     None                                                      **
- **      Return:    TRUE if the timer entry is active; FALSE   **
+ **      Return:    true if the timer entry is active; false   **
  **             if it is not an active timer entry.        **
  **      Others:    None                                       **
  **                                                                        **
@@ -630,7 +630,7 @@ _nas_timer_db_create_entry (
 {
   nas_timer_entry_t                      *te = (nas_timer_entry_t *) MALLOC_CHECK (sizeof (nas_timer_entry_t));
 
-  if (te != NULL) {
+  if (te ) {
     te->itv.tv_sec = sec;
     te->itv.tv_usec = 0;
     te->tv.tv_sec = te->itv.tv_sec;
@@ -752,7 +752,7 @@ _nas_timer_db_insert (
    * Search the list of timer entries for the first entry with an interval
    * timer value greater than the interval timer value of the new timer entry
    */
-  for (prev = NULL, next = _nas_timer_db.head; next != NULL; next = next->next) {
+  for (prev = NULL, next = _nas_timer_db.head; next ; next = next->next) {
     if (_nas_timer_cmp (&next->entry->tv, &entry->entry->tv) > 0) {
       break;
     }
@@ -772,7 +772,7 @@ _nas_timer_db_insert (
   /*
    * Update the pointer from the previous entry
    */
-  if (entry->next != NULL) {
+  if (entry->next ) {
     /*
      * prev <-- entry <--> next
      */
@@ -782,7 +782,7 @@ _nas_timer_db_insert (
   /*
    * Update the pointer from the next entry
    */
-  if (entry->prev != NULL) {
+  if (entry->prev ) {
     /*
      * prev <--> entry <--> next
      */
@@ -792,13 +792,13 @@ _nas_timer_db_insert (
      * The new entry is the first entry of the list
      */
     _nas_timer_db.head = entry;
-    return TRUE;
+    return true;
   }
 
   /*
    * The new entry is NOT the first entry of the list
    */
-  return FALSE;
+  return false;
 }
 
 /****************************************************************************
@@ -893,7 +893,7 @@ _nas_timer_db_remove (
   /*
    * prev <--- entry <--- next
    */
-  if (entry->next != NULL) {
+  if (entry->next ) {
     /*
      * prev ---> entry ---> next
      */
@@ -906,7 +906,7 @@ _nas_timer_db_remove (
   /*
    * Update the pointer from the next entry
    */
-  if (entry->prev != NULL) {
+  if (entry->prev ) {
     /*
      * prev --------------> next
      */
@@ -920,11 +920,11 @@ _nas_timer_db_remove (
      */
     _nas_timer_db.head = entry->next;
 
-    if (_nas_timer_db.head != NULL) {
+    if (_nas_timer_db.head ) {
       /*
        * Other timers are scheduled to expire
        */
-      return TRUE;
+      return true;
     }
 #if ENABLE_ITTI == 0
     {
@@ -936,7 +936,7 @@ _nas_timer_db_remove (
       it.it_interval.tv_sec = it.it_interval.tv_usec = 0;
       it.it_value.tv_sec = it.it_value.tv_usec = 0;
       setitimer (ITIMER_REAL, &it, 0);
-      return FALSE;
+      return false;
     }
 #endif
   }
@@ -944,7 +944,7 @@ _nas_timer_db_remove (
   /*
    * The entry was NOT the first entry of the list
    */
-  return FALSE;
+  return false;
 }
 
 /*

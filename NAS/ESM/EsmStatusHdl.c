@@ -158,7 +158,7 @@ esm_proc_status_ind (
  **                                                                        **
  ** Description: Initiates ESM status procedure.                           **
  **                                                                        **
- ** Inputs:  is_standalone: Not used - Always TRUE                     **
+ ** Inputs:  is_standalone: Not used - Always true                     **
  **      ueid:      UE lower layer identifier                  **
  **      ebi:       Not used                                   **
  **      msg:       Encoded ESM status message to be sent      **
@@ -172,11 +172,11 @@ esm_proc_status_ind (
  ***************************************************************************/
 int
 esm_proc_status (
-  int is_standalone,
+  bool is_standalone,
   emm_data_context_t * ctx,
   int ebi,
   OctetString * msg,
-  int ue_triggered)
+  bool ue_triggered)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;

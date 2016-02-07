@@ -117,7 +117,7 @@ void tlv_decode_perror(void);
         }
 
 #define CHECK_IEI_DECODER(iEI, bUFFER)                                  \
-        if(iEI != bUFFER)                                               \
+        if (iEI != bUFFER)                                              \
         {                                                               \
                 LOG_WARNING(LOG_NAS, "IEI is different than the one expected."        \
                 "(Got: 0x%x, expecting: 0x%x\n", bUFFER, iEI);          \

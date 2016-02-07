@@ -31,6 +31,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
@@ -40,9 +41,6 @@
 #include <sys/eventfd.h>
 
 
-#if !defined(TRUE)
-#  define TRUE 1
-#endif
 
 #include "liblfds611.h"
 
@@ -167,7 +165,7 @@ typedef struct itti_desc_s {
   task_id_t                               task_max;
   MessagesIds                             messages_id_max;
 
-  char                                    thread_handling_signals;
+  bool                                    thread_handling_signals;
   pthread_t                               thread_ref;
 
   const task_info_t                      *tasks_info;
@@ -723,7 +721,7 @@ itti_set_task_real_time (
   thread_id_t                             thread_id = TASK_GET_THREAD_ID (task_id);
 
   DevCheck (thread_id < itti_desc.thread_max, thread_id, itti_desc.thread_max, 0);
-  itti_desc.threads[thread_id].real_time = TRUE;
+  itti_desc.threads[thread_id].real_time = true;
 }
 
 
@@ -813,7 +811,7 @@ itti_init (
   itti_desc.task_max = task_max;
   itti_desc.thread_max = thread_max;
   itti_desc.messages_id_max = messages_id_max;
-  itti_desc.thread_handling_signals = FALSE;
+  itti_desc.thread_handling_signals = false;
   itti_desc.tasks_info = tasks_info;
   itti_desc.messages_info = messages_info;
   /*
@@ -923,7 +921,7 @@ itti_wait_tasks_end (
   int                                     result;
   int                                     retries = 10;
 
-  itti_desc.thread_handling_signals = TRUE;
+  itti_desc.thread_handling_signals = true;
   itti_desc.thread_ref = pthread_self ();
 
   /*

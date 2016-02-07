@@ -335,12 +335,12 @@
 +  if(present1 > 0 && present1 <= td1->elements_count) {
 +    asn_TYPE_member_t *elm1 = &td1->elements[present1-1];
 +    asn_TYPE_member_t *elm2 = &td2->elements[present2-1];
-+    const void *memb_ptr1;
-+    const void *memb_ptr2;
++    void *memb_ptr1;
++    void *memb_ptr2;
 +
 +    if((elm1->flags & ATF_POINTER) && (elm1->flags & ATF_POINTER)){
-+      memb_ptr1 = *(const void * const *)((const char *)sptr1 + elm1->memb_offset);
-+      memb_ptr2 = *(const void * const *)((const char *)sptr2 + elm2->memb_offset);
++      memb_ptr1 = *(void * const *)((char *)sptr1 + elm1->memb_offset);
++      memb_ptr2 = *(void * const *)((char *)sptr2 + elm2->memb_offset);
 +      if((!memb_ptr1) || (!memb_ptr2)) {
 +        res = calloc(1, sizeof(asn_comp_rval_t));
 +        res->name = td1->name;
@@ -350,8 +350,8 @@
 +        return res;
 +      }
 +    } else if (!(elm1->flags & ATF_POINTER) && !(elm1->flags & ATF_POINTER)){
-+      memb_ptr1 = (const void *)((const char *)sptr1 + elm1->memb_offset);
-+      memb_ptr2 = (const void *)((const char *)sptr2 + elm2->memb_offset);
++      memb_ptr1 = (void *)((char *)sptr1 + elm1->memb_offset);
++      memb_ptr2 = (void *)((char *)sptr2 + elm2->memb_offset);
 +    } else {
 +      res = calloc(1, sizeof(asn_comp_rval_t));
 +      res->name = td1->name;
@@ -392,14 +392,13 @@
  }
 --- skeletons/constr_SEQUENCE.c	2015-12-08 14:39:33.346543533 +0100
 +++ skeletons/constr_SEQUENCE.c	2015-12-08 10:39:52.442558000 +0100
-@@ -1761,3 +1761,66 @@
+@@ -1761,3 +1761,65 @@
  
  	_ASN_ENCODED_OK(er);
  }
 +
 +asn_comp_rval_t * SEQUENCE_compare(asn_TYPE_descriptor_t *td1, void *sptr1, asn_TYPE_descriptor_t *td2, void *sptr2) {
 +  int edx;
-+  int ret;
 +  asn_comp_rval_t *res = NULL;
 +  asn_comp_rval_t *res2 = NULL;
 +
@@ -417,12 +416,12 @@
 +  for(edx = 0; edx < td1->elements_count; edx++) {
 +    asn_TYPE_member_t *elm1 = &td1->elements[edx];
 +    asn_TYPE_member_t *elm2 = &td1->elements[edx];
-+    const void *memb_ptr1;
-+    const void *memb_ptr2;
++    void *memb_ptr1;
++    void *memb_ptr2;
 +
 +    if(elm1->flags & ATF_POINTER) {
-+      memb_ptr1 = *(const void * const *)((const char *)sptr1 + elm1->memb_offset);
-+      memb_ptr2 = *(const void * const *)((const char *)sptr2 + elm2->memb_offset);
++      memb_ptr1 = *(void * const *)((char *)sptr1 + elm1->memb_offset);
++      memb_ptr2 = *(void * const *)((char *)sptr2 + elm2->memb_offset);
 +      if((!memb_ptr1) && (!memb_ptr2)) {
 +        if(elm1->optional) continue;
 +      }
@@ -441,8 +440,8 @@
 +        res2 = NULL;
 +      }
 +    } else {
-+      memb_ptr1 = (const void *)((const char *)sptr1 + elm1->memb_offset);
-+      memb_ptr2 = (const void *)((const char *)sptr2 + elm2->memb_offset);
++      memb_ptr1 = (void *)((char *)sptr1 + elm1->memb_offset);
++      memb_ptr2 = (void *)((char *)sptr2 + elm2->memb_offset);
 +    }
 +
 +    /* Compare the member itself */
@@ -563,7 +562,7 @@
   * Some handy helpers. *
 --- skeletons/constr_SET_OF.c	2015-12-08 14:39:33.338543533 +0100
 +++ skeletons/constr_SET_OF.c	2015-12-08 10:45:54.466557000 +0100
-@@ -1039,3 +1039,55 @@
+@@ -1039,3 +1039,54 @@
  	rv.consumed = 0;
  	return rv;
  }
@@ -575,7 +574,6 @@
 +  asn_TYPE_member_t *elm2 = td2->elements;
 +  const asn_anonymous_set_ *list1 = _A_CSET_FROM_VOID(sptr1);
 +  const asn_anonymous_set_ *list2 = _A_CSET_FROM_VOID(sptr2);
-+  int ret;
 +  int i;
 +  asn_comp_rval_t *res = NULL;
 +  asn_comp_rval_t *res2 = NULL;
@@ -602,8 +600,8 @@
 +  }
 +
 +  for(i = 0; i < list1->count; i++) {
-+    const void *memb_ptr1 = list1->array[i];
-+    const void *memb_ptr2 = list2->array[i];
++    void *memb_ptr1 = list1->array[i];
++    void *memb_ptr2 = list2->array[i];
 +    if ((!memb_ptr1) & (!memb_ptr2)) continue;
 +
 +    res2 = elm1->type->compare(elm1->type, memb_ptr1, elm2->type, memb_ptr2);
