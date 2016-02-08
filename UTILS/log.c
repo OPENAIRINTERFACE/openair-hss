@@ -115,6 +115,24 @@ typedef struct oai_log_s {
 
 static oai_log_t g_oai_log={0};    /*!< \brief  logging utility internal variables global var definition*/
 
+inline static void log_reuse_item(log_queue_item_t * item_p) __attribute__((always_inline));
+
+
+
+static void log_reuse_item(log_queue_item_t * item_p)
+{
+  int         rv = 0;
+#if LOG_OAI_CLEAN_HARD
+  memset((void*)item_p, 0, sizeof(* item_p));
+#else
+  item_p->len = 0;
+#endif
+
+  rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
+  if (0 == rv) {
+    FREE_CHECK (item_p);
+  }
+}
 
 //------------------------------------------------------------------------------
 void                                   *
@@ -369,6 +387,24 @@ log_init (
 
   fprintf (stdout, "Initializing OAI Logging\n");
 
+  fprintf (stdout, "Initializing OAI logging @-3\n");fflush(stdout);fflush(stderr);
+  g_oai_log.thread_context_htbl = hashtable_ts_create (128, NULL, FREE_CHECK, "Logging thread context hashtable");
+  fprintf (stdout, "Initializing OAI logging @-2\n");fflush(stdout);fflush(stderr);
+  AssertFatal (NULL != g_oai_log.thread_context_htbl, "Could not create hashtable for Log!\n");
+  fprintf (stdout, "Initializing OAI logging @-1\n");fflush(stdout);fflush(stderr);
+
+  log_thread_ctxt_t *thread_ctxt = CALLOC_CHECK(1, sizeof(log_thread_ctxt_t));
+  AssertFatal(NULL != thread_ctxt, "Error Could not create log thread context\n");
+  pthread_t p = pthread_self();
+  thread_ctxt->tid = p;
+  hashtable_rc_t hash_rc = hashtable_ts_insert(g_oai_log.thread_context_htbl, (hash_key_t) p, thread_ctxt);
+  if (HASH_TABLE_OK != hash_rc) {
+    fprintf (stderr, "Error Could not register log thread context\n");
+    FREE_CHECK(thread_ctxt);
+  }
+
+  fprintf (stdout, "Initializing OAI logging @0\n");fflush(stdout);fflush(stderr);
+
   rv = lfds611_stack_new (&g_oai_log.log_free_message_queue_p, (lfds611_atom_t) max_threadsP + 2);
 
   if (0 >= rv) {
@@ -378,14 +414,17 @@ log_init (
   rv = lfds611_queue_new (&g_oai_log.log_message_queue_p, (lfds611_atom_t) LOG_MAX_QUEUE_ELEMENTS);
   AssertFatal (rv, "lfds611_queue_new failed!\n");
   AssertFatal (g_oai_log.log_message_queue_p != NULL, "g_oai_log.log_message_queue_p is NULL!\n");
+  fprintf (stdout, "Initializing OAI logging @1\n");fflush(stdout);
   log_start_use ();
 
+  fprintf (stdout, "Initializing OAI logging @2\n");fflush(stdout);
   for (i = 0; i < max_threadsP * 30; i++) {
     item_p = CALLOC_CHECK (1, sizeof(log_queue_item_t));
     AssertFatal (item_p, "MALLOC_CHECK failed!\n");
     rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
     AssertFatal (rv, "lfds611_stack_guaranteed_push failed for item %u\n", i);
   }
+  fprintf (stdout, "Initializing OAI logging @3\n");fflush(stdout);
 
   rv = snprintf (&g_oai_log.log_proto2str[LOG_SCTP][0], LOG_MAX_PROTO_NAME_LENGTH, "SCTP");
   rv = snprintf (&g_oai_log.log_proto2str[LOG_UDP][0], LOG_MAX_PROTO_NAME_LENGTH, "UDP");
@@ -422,20 +461,9 @@ log_init (
     g_oai_log.log_level2str[i][LOG_LEVEL_NAME_MAX_LENGTH-1]     = '\0';
   }
 
-  g_oai_log.thread_context_htbl = hashtable_ts_create (64, NULL, FREE_CHECK, "Logging thread context hashtable");
-  AssertFatal (NULL != g_oai_log.thread_context_htbl, "Could not create hashtable for Log!\n");
-
-  log_thread_ctxt_t *thread_ctxt = CALLOC_CHECK(1, sizeof(log_thread_ctxt_t));
-  AssertFatal(NULL != thread_ctxt, "Error Could not create log thread context\n");
-  pthread_t p = pthread_self();
-  thread_ctxt->tid = p;
-  hashtable_rc_t hash_rc = hashtable_ts_insert(g_oai_log.thread_context_htbl, (hash_key_t) p, thread_ctxt);
-  if (HASH_TABLE_OK != hash_rc) {
-    fprintf (stderr, "Error Could not register log thread context\n");
-    FREE_CHECK(thread_ctxt);
-  }
-
+  fprintf (stderr, "Initializing OAI logging Done\n");fflush(stdout);
   log_message (thread_ctxt, LOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing OAI logging Done\n");
+  fprintf (stderr, "Initializing OAI logging Done2\n");fflush(stdout);
   return 0;
 }
 
@@ -723,9 +751,9 @@ log_message_start (
     if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
       // make the thread safe LFDS collections usable by this thread
       log_start_use();
+      hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+      AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
     }
-    hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
-    AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
   }
 
   if (! *messageP) {
@@ -849,11 +877,13 @@ log_message (
     pthread_t             p           = pthread_self();
     hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
     if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
+      fprintf (stderr, "TEMP Not registered thread %lX\n", p);
+      fflush(stderr);
       // make the thread safe LFDS collections usable by this thread
       log_start_use();
+      hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+      AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
     }
-    hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
-    AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
   }
 
   rv = lfds611_stack_pop (g_oai_log.log_free_message_queue_p, (void **)&new_item_p);

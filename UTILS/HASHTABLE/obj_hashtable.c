@@ -85,7 +85,7 @@ obj_hashtable_create (
   if (!(hashtbl = MALLOC_CHECK (sizeof (obj_hash_table_t))))
     return NULL;
 
-  if (!(hashtbl->nodes = CALLOC_CHECK (sizeP, sizeof (obj_hash_node_t *)))) {
+  if (!(hashtbl->nodes = CALLOC_CHECK (1, sizeP * sizeof (obj_hash_node_t *)))) {
     FREE_CHECK (hashtbl);
     return NULL;
   }
@@ -139,7 +139,7 @@ obj_hashtable_ts_create (
   }
 
 
-  if (!(hashtbl->lock_nodes = CALLOC_CHECK (sizeP, sizeof (pthread_mutex_t)))) {
+  if (!(hashtbl->lock_nodes = CALLOC_CHECK (1, sizeP * sizeof (pthread_mutex_t)))) {
     FREE_CHECK (hashtbl->nodes);
     FREE_CHECK (hashtbl);
     FREE_CHECK (hashtbl->name);
@@ -881,7 +881,7 @@ obj_hashtable_get_keys (
   }
 
   *sizeP = 0;
-  keysP = CALLOC_CHECK (hashtblP->num_elements, sizeof (void *));
+  keysP = CALLOC_CHECK (1, hashtblP->num_elements * sizeof (void *));
 
   if (keysP) {
     for (n = 0; n < hashtblP->size; ++n) {
@@ -924,7 +924,7 @@ obj_hashtable_ts_get_keys (
   }
 
   *sizeP = 0;
-  keysP = CALLOC_CHECK (hashtblP->num_elements, sizeof (void *));
+  keysP = CALLOC_CHECK (1, hashtblP->num_elements * sizeof (void *));
 
   if (keysP) {
     for (n = 0; n < hashtblP->size; ++n) {
@@ -979,7 +979,7 @@ obj_hashtable_resize (
   newtbl.size = sizeP;
   newtbl.hashfunc = hashtblP->hashfunc;
 
-  if (!(newtbl.nodes = CALLOC_CHECK (sizeP, sizeof (obj_hash_node_t *))))
+  if (!(newtbl.nodes = CALLOC_CHECK (1, sizeP * sizeof (obj_hash_node_t *))))
     return HASH_TABLE_SYSTEM_ERROR;
 
   for (n = 0; n < hashtblP->size; ++n) {
@@ -1030,7 +1030,7 @@ obj_hashtable_ts_resize (
   newtbl.size = sizeP;
   newtbl.hashfunc = hashtblP->hashfunc;
 
-  if (!(newtbl.nodes = CALLOC_CHECK (sizeP, sizeof (obj_hash_node_t *))))
+  if (!(newtbl.nodes = CALLOC_CHECK (1, sizeP * sizeof (obj_hash_node_t *))))
     return HASH_TABLE_SYSTEM_ERROR;
 
   for (n = 0; n < hashtblP->size; ++n) {

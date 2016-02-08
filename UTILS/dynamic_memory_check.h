@@ -33,6 +33,7 @@
 #include <stdlib.h>
 
 void dyn_mem_check_init(void);
+void dyn_mem_check_exit(void);
 void *malloc_wrapper(size_t size)                 __attribute__ ((hot, warn_unused_result));
 void free_wrapper(void *ptr)                      __attribute__ ((hot));
 void *calloc_wrapper(size_t nmemb, size_t size)   __attribute__ ((hot, warn_unused_result));
@@ -41,6 +42,7 @@ char *strdup_wrapper(const char *s)               __attribute__ ((warn_unused_re
 char *strndup_wrapper(const char *s, size_t n)    __attribute__ ((warn_unused_result));
 
 #define DYN_MEM_CHECK_INIT    dyn_mem_check_init
+#define DYN_MEM_CHECK_EXIT    dyn_mem_check_exit
 #define MALLOC_CHECK          malloc_wrapper
 #define FREE_CHECK            free_wrapper
 #define CALLOC_CHECK          calloc_wrapper
@@ -50,6 +52,7 @@ char *strndup_wrapper(const char *s, size_t n)    __attribute__ ((warn_unused_re
 #else
 #include <stdlib.h>
 #define DYN_MEM_CHECK_INIT()
+#define DYN_MEM_CHECK_EXIT()
 #define MALLOC_CHECK          malloc
 #define FREE_CHECK            free
 #define CALLOC_CHECK          calloc

@@ -111,15 +111,24 @@ hashtable_create (
 {
   hash_table_t                           *hashtbl = NULL;
 
+#if HASHTABLE_DEBUG
+    fprintf (stdout, "%s will allocate simple hashtable\n", __FUNCTION__); fflush(stdout);
+#endif
   if (!(hashtbl = CALLOC_CHECK (1, sizeof (hash_table_t)))) {
     return NULL;
   }
+#if HASHTABLE_DEBUG
+    fprintf (stdout, "%s allocated simple hashtable\n", __FUNCTION__); fflush(stdout);
+#endif
 
-  if (!(hashtbl->nodes = CALLOC_CHECK (sizeP, sizeof (hash_node_t *)))) {
+  if (!(hashtbl->nodes = CALLOC_CHECK (1, sizeP * sizeof (hash_node_t *)))) {
     FREE_CHECK (hashtbl);
     return NULL;
   }
 
+#if HASHTABLE_DEBUG
+    fprintf (stdout, "%s allocated nodes\n", __FUNCTION__); fflush(stdout);
+#endif
   hashtbl->size = sizeP;
 
   if (hashfuncP)
@@ -157,12 +166,11 @@ hashtable_ts_create (
 {
   hash_table_t                           *hashtbl = NULL;
 
-  if (!(hashtbl = hashtable_create (sizeP,hashfuncP,freefuncP,display_name_pP))) {
+ if (!(hashtbl = hashtable_create (sizeP,hashfuncP,freefuncP,display_name_pP))) {
     return NULL;
   }
 
-
-  if (!(hashtbl->lock_nodes = CALLOC_CHECK (sizeP, sizeof (pthread_mutex_t)))) {
+  if (!(hashtbl->lock_nodes = CALLOC_CHECK (1, sizeP * sizeof (pthread_mutex_t)))) {
     FREE_CHECK (hashtbl->nodes);
     FREE_CHECK (hashtbl);
     FREE_CHECK (hashtbl->name);
@@ -1005,7 +1013,7 @@ hashtable_resize (
   newtbl.size = sizeP;
   newtbl.hashfunc = hashtblP->hashfunc;
 
-  if (!(newtbl.nodes = CALLOC_CHECK (sizeP, sizeof (hash_node_t *))))
+  if (!(newtbl.nodes = CALLOC_CHECK (1, sizeP * sizeof (hash_node_t *))))
     return -1;
 
   for (n = 0; n < hashtblP->size; ++n) {

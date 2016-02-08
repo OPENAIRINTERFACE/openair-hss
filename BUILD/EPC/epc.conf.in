@@ -150,7 +150,7 @@ MME :
         # OUTPUT choice in { "CONSOLE", "`path to file`", "`IPv4@`:`TCP port num`"} 
         # `path to file` must start with '.' or '/'
         # if TCP stream choice, then you can easily dump the traffic on the remote or local host: nc -l `TCP port num` > received.txt
-        OUTPUT            = "CONSOLE";
+        OUTPUT            = "127.0.0.1:5656";
         
         # COLOR choice in { "yes", "no" } means use of ANSI styling codes or no
         COLOR             = "yes";                                              # TODO
@@ -163,7 +163,7 @@ MME :
         S6A_LOG_LEVEL     = "TRACE";
         UTIL_LOG_LEVEL    = "TRACE";
         MSC_LOG_LEVEL     = "ERROR";
-        ITTI_LOG_LEVEL    = "ERROR";
+        ITTI_LOG_LEVEL    = "DEBUG";
         
         # ASN1 VERBOSITY: none, info, annoying
         # for S1AP protocol

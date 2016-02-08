@@ -48,6 +48,7 @@ function help()
   echo_error "  -j, --install-gtpu-kernel-module          Install or reinstall specifically the GTPV1-U kernel module (done with -i also) (support Ubuntu 14.04)."
   echo_error "  -l, --local-hss                           HSS run on the same host."
   echo_error "  -v, --verbose                             Build process verbose."
+  echo_error "  -V, --verbose-make                        Make process verbose."
   echo_error "  -x, --clean-certificates                  Clean the EPC certificates"
   echo_error " "
   echo_error "Other options: (you have to know what you are doing)"
@@ -138,6 +139,11 @@ function main()
         shift 2;
         ;;
       -v | --verbose)
+        echo "Build process verbose"
+        verbose=1
+        shift;
+        ;;
+      -V | --verbose-make)
         echo "Make build process verbose"
         cmake_args="$cmake_args -DCMAKE_VERBOSE_MAKEFILE=ON"
         make_args="VERBOSE=1 $make_args"
@@ -270,7 +276,7 @@ function main()
   cmake  $cmake_args ..
   
   if [ $conf_files_only -eq 0 ]; then
-    compilations EPC mme_gw mme_gw 
+    compilations EPC mme_gw mme_gw $verbose
     $SUDO cp -upv $OPENAIRCN_DIR/BUILD/EPC/BUILD/mme_gw /usr/local/bin && echo_success "mme_gw installed"
   fi
   $SUDO cp -upv epc.conf /usr/local/etc/oai

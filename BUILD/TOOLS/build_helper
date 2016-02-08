@@ -96,12 +96,20 @@ clean_all_files() {
 # arg 1 Build directory OPENAIR_DIR/BUILD/?
 # arg 2 Executable target name
 # arg 3 Executable name (no path)
+# arg 4 Verbose         (1 or 0)
 compilations() {
   cd $OPENAIRCN_DIR/BUILD/$1/BUILD
-  {
-    rm -f $3
-    make $make_args $2
-  } > $dlog/$2.txt 2>&1
+  if [ "a$4" == "a1" ]; then 
+    {
+      rm -f $3
+      make $make_args $2
+    } | tee $dlog/$2.txt 
+  else
+    {
+      rm -f $3
+      make $make_args $2
+    } > $dlog/$2.txt 2>&1
+  fi
   if [ -s $3 ] ; then
      echo_success "$2 compiled"
   else

@@ -50,15 +50,16 @@ static  hash_size_t def_hashfunc (const uint64_t keyP)
   return (hash_size_t) keyP;
 }
 
-void dyn_mem_check_init(void) {
-  g_dma_htbl.nodes = calloc (DYNAMIC_MEMORY_CHECK_HASH_SIZE, sizeof (hash_node_t *));
+void dyn_mem_check_init(void)
+{
+  g_dma_htbl.nodes = calloc (1, DYNAMIC_MEMORY_CHECK_HASH_SIZE * sizeof (hash_node_t *));
   AssertFatal(NULL != g_dma_htbl.nodes , "Could not allocate memory");
-  g_dma_free_htbl.nodes = calloc (DYNAMIC_MEMORY_CHECK_HASH_SIZE, sizeof (hash_node_t *));
+  g_dma_free_htbl.nodes = calloc (1, DYNAMIC_MEMORY_CHECK_HASH_SIZE * sizeof (hash_node_t *));
   AssertFatal(NULL != g_dma_free_htbl.nodes , "Could not allocate memory");
 
-  g_dma_htbl.lock_nodes = calloc (DYNAMIC_MEMORY_CHECK_HASH_SIZE, sizeof (pthread_mutex_t));
+  g_dma_htbl.lock_nodes = calloc (1, DYNAMIC_MEMORY_CHECK_HASH_SIZE * sizeof (pthread_mutex_t));
   AssertFatal(NULL != g_dma_htbl.lock_nodes , "Could not allocate memory");
-  g_dma_free_htbl.lock_nodes = calloc (DYNAMIC_MEMORY_CHECK_HASH_SIZE, sizeof (pthread_mutex_t));
+  g_dma_free_htbl.lock_nodes = calloc (1, DYNAMIC_MEMORY_CHECK_HASH_SIZE * sizeof (pthread_mutex_t));
   AssertFatal(NULL != g_dma_free_htbl.lock_nodes , "Could not allocate memory");
 
   for (int i = 0; i < DYNAMIC_MEMORY_CHECK_HASH_SIZE; i++) {
@@ -74,11 +75,39 @@ void dyn_mem_check_init(void) {
   g_dma_free_htbl.hashfunc = def_hashfunc;
   g_dma_free_htbl.freefunc = free_wrapper;
 
+  g_dma_htbl.name = calloc(1,64);
   snprintf (g_dma_htbl.name, 64, "DYNAMIC_MEMORY_CHECK_HASHTBL@%p", &g_dma_htbl);
-  snprintf (g_dma_htbl.name, 64, "DYNAMIC_MEMORY_CHECK_FREE_HASHTBL@%p", &g_dma_free_htbl);
+  g_dma_free_htbl.name = calloc(1,64);
+  snprintf (g_dma_free_htbl.name, 64, "DYNAMIC_MEMORY_CHECK_FREE_HASHTBL@%p", &g_dma_free_htbl);
 }
 
-void dma_register_pointer(void* ptr) {
+
+void dyn_mem_check_exit(void)
+{
+
+  //TODO display remaining allocated pointers, their source
+
+
+  // free all internal structures
+  free(g_dma_htbl.lock_nodes);
+  free(g_dma_free_htbl.lock_nodes);
+
+  for (int i = 0; i < DYNAMIC_MEMORY_CHECK_HASH_SIZE; i++) {
+    pthread_mutex_destroy (&g_dma_htbl.lock_nodes[i]);
+    pthread_mutex_destroy (&g_dma_free_htbl.lock_nodes[i]);
+  }
+
+  free(g_dma_htbl.name);
+  free(g_dma_free_htbl.name);
+
+  // free all internal structures
+  free(g_dma_htbl.nodes);
+  free(g_dma_free_htbl.nodes);
+}
+
+
+void dma_register_pointer(void* ptr)
+{
   hashtable_rc_t  rc = hashtable_ts_is_key_exists (&g_dma_htbl, (const uint64_t)ptr);
   AssertFatal(HASH_TABLE_KEY_ALREADY_EXISTS != rc , "Memory check error ???");
   rc = hashtable_ts_insert(&g_dma_htbl, (const uint64_t)ptr, NULL);
@@ -92,7 +121,8 @@ void dma_register_pointer(void* ptr) {
 
 }
 
-void dma_deregister_pointer(void* ptr) {
+void dma_deregister_pointer(void* ptr)
+{
   hashtable_rc_t  rc = hashtable_ts_is_key_exists (&g_dma_htbl, (const uint64_t)ptr);
   if (HASH_TABLE_OK != rc) {
     // may be already free
