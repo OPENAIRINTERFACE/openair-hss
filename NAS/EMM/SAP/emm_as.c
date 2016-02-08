@@ -222,7 +222,7 @@ emm_as_send (
   emm_as_primitive_t                      primitive = msg->primitive;
   uint32_t                                ueid = 0;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received primitive %s (%d)", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received primitive %s (%d)\n", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
 
   switch (primitive) {
   case _EMMAS_DATA_IND:
@@ -250,7 +250,7 @@ emm_as_send (
     rc = _emm_as_send (msg);
 
     if (rc != RETURNok) {
-      LOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - " "Failed to process primitive %s (%d)", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
+      LOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - " "Failed to process primitive %s (%d)\n", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
       LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
@@ -281,7 +281,7 @@ emm_as_send (
     /*
      * EMM message processing failed
      */
-    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Received EMM message is not valid " "(cause=%d)", emm_cause);
+    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Received EMM message is not valid " "(cause=%d)\n", emm_cause);
     /*
      * Return an EMM status message
      */
@@ -289,7 +289,7 @@ emm_as_send (
   }
 
   if (rc != RETURNok) {
-    LOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - Failed to process primitive %s (%d)", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
+    LOG_ERROR (LOG_NAS_EMM, "EMMAS-SAP - Failed to process primitive %s (%d)\n", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -339,10 +339,10 @@ _emm_as_recv (
   emm_security_context_t                 *emm_security_context = NULL;      /* Current EPS NAS security context     */
 
   if (decode_status) {
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received EMM message (length=%d) integrity protected %d ciphered %d mac matched %d security context %d",
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received EMM message (length=%d) integrity protected %d ciphered %d mac matched %d security context %d\n",
         len, decode_status->integrity_protected_message, decode_status->ciphered_message, decode_status->mac_matched, decode_status->security_context_available);
   } else {
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received EMM message (length=%d) ", len);
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received EMM message (length=%d)\n", len);
   }
 
   memset (&nas_msg,       0, sizeof (nas_msg));
@@ -376,7 +376,7 @@ _emm_as_recv (
   decoder_rc = nas_message_decode (msg, &nas_msg, len, emm_security_context, decode_status);
 
   if (decoder_rc < 0) {
-    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Failed to decode NAS message " "(err=%d)", decoder_rc);
+    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Failed to decode NAS message " "(err=%d)\n", decoder_rc);
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
     LOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
   }
@@ -518,7 +518,7 @@ _emm_as_data_ind (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS data transfer indication " "(ueid=" NAS_UE_ID_FMT ", delivered=%s, length=%d)", msg->ueid, (msg->delivered) ? "true" : "false", msg->NASmsg.length);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS data transfer indication " "(ueid=" NAS_UE_ID_FMT ", delivered=%s, length=%d)\n", msg->ueid, (msg->delivered) ? "true" : "false", msg->NASmsg.length);
 
   if (msg->delivered) {
     if (msg->NASmsg.length > 0) {
@@ -632,7 +632,7 @@ _emm_as_establish_req (
   int                                     rc = RETURNerror;
   tai_t                                   originating_tai; // originating TAI
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS connection establish request");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS connection establish request\n");
   nas_message_t                           nas_msg;
 
   memset (&nas_msg, 0, sizeof (nas_message_t));
@@ -647,7 +647,7 @@ _emm_as_establish_req (
 #endif
 
   if (emm_ctx) {
-    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - got context %p security %p", emm_ctx, emm_ctx->security);
+    LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - got context %p security %p\n", emm_ctx, emm_ctx->security);
     emm_security_context = emm_ctx->security;
   }
 
@@ -691,7 +691,7 @@ _emm_as_establish_req (
       LOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message TODO DETACH_REQUEST ");
+    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message TODO DETACH_REQUEST\n");
     *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
     rc = RETURNok;              /* TODO */
     break;
@@ -710,7 +710,7 @@ _emm_as_establish_req (
       LOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message TODO SERVICE_REQUEST ");
+    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message TODO SERVICE_REQUEST\n");
     *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
     rc = RETURNok;              /* TODO */
     break;
@@ -725,13 +725,13 @@ _emm_as_establish_req (
       LOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message TODO EXTENDED_SERVICE_REQUEST ");
+    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message TODO EXTENDED_SERVICE_REQUEST\n");
     *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
     rc = RETURNok;              /* TODO */
     break;
 
   default:
-    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message 0x%x is " "not valid", emm_msg->header.message_type);
+    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message 0x%x is " "not valid\n", emm_msg->header.message_type);
     *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_COMPATIBLE;
     break;
   }
@@ -767,7 +767,7 @@ _emm_as_cell_info_res (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS cell information response");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS cell information response\n");
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -795,7 +795,7 @@ _emm_as_cell_info_ind (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS cell information indication");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS cell information indication\n");
   /*
    * TODO
    */
@@ -1089,7 +1089,7 @@ _emm_as_send (
    */
   if (as_msg.msgID > 0) {
 #if NAS_BUILT_IN_EPC
-    LOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - " "Sending msg with id 0x%x, primitive %s (%d) to S1AP layer for transmission", as_msg.msgID, _emm_as_primitive_str[msg->primitive - _EMMAS_START - 1], msg->primitive);
+    LOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - " "Sending msg with id 0x%x, primitive %s (%d) to S1AP layer for transmission\n", as_msg.msgID, _emm_as_primitive_str[msg->primitive - _EMMAS_START - 1], msg->primitive);
 
     switch (as_msg.msgID) {
     case AS_DL_INFO_TRANSFER_REQ:{
@@ -1155,7 +1155,7 @@ _emm_as_data_req (
   int                                     size = 0;
   int                                     is_encoded = false;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS data transfer request");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS data transfer request\n");
   nas_message_t                           nas_msg;
 
   memset (&nas_msg, 0, sizeof (nas_message_t));
@@ -1213,7 +1213,7 @@ _emm_as_data_req (
 
     if (emm_security_context) {
       nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-      LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u", nas_msg.header.sequence_number);
+      LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
     }
 
     if (!is_encoded) {
@@ -1260,7 +1260,7 @@ _emm_as_status_ind (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = 0;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS status indication (cause=%d)", msg->emm_cause);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS status indication (cause=%d)\n", msg->emm_cause);
   nas_message_t                           nas_msg;
 
   memset (&nas_msg, 0, sizeof (nas_message_t));
@@ -1306,7 +1306,7 @@ _emm_as_status_ind (
 
     if (emm_security_context) {
       nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-      LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u", nas_msg.header.sequence_number);
+      LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
     }
 
     /*
@@ -1348,7 +1348,7 @@ _emm_as_release_req (
   nas_release_req_t * as_msg)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS release request");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS release request\n");
 
   /*
    * Setup the AS message
@@ -1394,7 +1394,7 @@ _emm_as_security_req (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = 0;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS security request");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS security request\n");
   nas_message_t                           nas_msg;
 
   memset (&nas_msg, 0, sizeof (nas_message_t));
@@ -1450,7 +1450,7 @@ _emm_as_security_req (
       break;
 
     default:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of NAS security " "message 0x%.2x is not valid", msg->msgType);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of NAS security " "message 0x%.2x is not valid\n", msg->msgType);
     }
 
   if (size > 0) {
@@ -1471,7 +1471,7 @@ _emm_as_security_req (
 
       if (emm_security_context) {
         nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-        LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u", nas_msg.header.sequence_number);
+        LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
       }
     }
 
@@ -1515,7 +1515,7 @@ _emm_as_security_rej (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = 0;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS security reject");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS security reject\n");
   nas_message_t                           nas_msg;
 
   memset (&nas_msg, 0, sizeof (nas_message_t));
@@ -1551,7 +1551,7 @@ _emm_as_security_rej (
       break;
 
     default:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of NAS security " "message 0x%.2x is not valid", msg->msgType);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of NAS security " "message 0x%.2x is not valid\n", msg->msgType);
     }
 
   if (size > 0) {
@@ -1572,9 +1572,9 @@ _emm_as_security_rej (
 
       if (emm_security_context) {
         nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-        LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u", nas_msg.header.sequence_number);
+        LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
       } else {
-        LOG_DEBUG (LOG_NAS_EMM, "No security context, not set nas_msg.header.sequence_number -> %u", nas_msg.header.sequence_number);
+        LOG_DEBUG (LOG_NAS_EMM, "No security context, not set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
       }
     }
 
@@ -1620,7 +1620,7 @@ _emm_as_establish_cnf (
   int                                     size = 0;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS connection establish confirmation");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS connection establish confirmation\n");
   nas_message_t                           nas_msg;
 
   memset (&nas_msg, 0, sizeof (nas_message_t));
@@ -1647,17 +1647,17 @@ _emm_as_establish_cnf (
   if (emm_msg )
     switch (msg->NASinfo) {
     case EMM_AS_NAS_INFO_ATTACH:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d", msg->NASmsg.length);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->NASmsg.length);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
       size = emm_send_attach_accept (msg, &emm_msg->attach_accept);
       break;
     case EMM_AS_NAS_INFO_TAU:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d", msg->NASmsg.length);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->NASmsg.length);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TAU_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
       size = emm_send_tracking_area_update_accept (msg, &emm_msg->tracking_area_update_accept);
       break;
     default:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid", msg->NASinfo);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->NASinfo);
       break;
     }
 
@@ -1679,15 +1679,15 @@ _emm_as_establish_cnf (
 
       if (emm_security_context) {
         as_msg->nas_ul_count = 0x00000000 | (emm_security_context->ul_count.overflow << 8) | emm_security_context->ul_count.seq_num;
-        LOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - NAS UL COUNT %8x", as_msg->nas_ul_count);
+        LOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - NAS UL COUNT %8x\n", as_msg->nas_ul_count);
       }
 
       nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-      LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u", nas_msg.header.sequence_number);
+      LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
       as_msg->selected_encryption_algorithm = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.encryption);
       as_msg->selected_integrity_algorithm = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.integrity);
-      LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_encryption_algorithm -> NBO: 0x%04X (%u)", as_msg->selected_encryption_algorithm, emm_security_context->selected_algorithms.encryption);
-      LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_integrity_algorithm -> NBO: 0x%04X (%u)", as_msg->selected_integrity_algorithm, emm_security_context->selected_algorithms.integrity);
+      LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_encryption_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_encryption_algorithm, emm_security_context->selected_algorithms.encryption);
+      LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_integrity_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_integrity_algorithm, emm_security_context->selected_algorithms.integrity);
     }
 
     /*
@@ -1704,7 +1704,7 @@ _emm_as_establish_cnf (
     }
   }
 
-  LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Size <= 0");
+  LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Size <= 0\n");
   LOG_FUNC_RETURN (LOG_NAS_EMM, 0);
 }
 
@@ -1735,7 +1735,7 @@ _emm_as_establish_rej (
   nas_message_t                           nas_msg;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS connection establish reject");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS connection establish reject\n");
   memset (&nas_msg, 0, sizeof (nas_message_t));
 
   /*
@@ -1779,7 +1779,7 @@ _emm_as_establish_rej (
       break;
 
     default:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid", msg->NASinfo);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->NASinfo);
     }
   }
 
@@ -1801,7 +1801,7 @@ _emm_as_establish_rej (
 
       if (emm_security_context) {
         nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-        LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u", nas_msg.header.sequence_number);
+        LOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
       }
     }
 
@@ -1846,7 +1846,7 @@ _emm_as_page_ind (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     bytes = 0;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS data paging indication");
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS data paging indication\n");
 
   /*
    * TODO

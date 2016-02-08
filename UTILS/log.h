@@ -109,8 +109,9 @@ typedef struct log_thread_ctxt_s {
 * in the opened stream ( file, tcp, stdout)
 */
 typedef struct log_queue_item_s {
-  char                                   *message_str;      /*!< \brief string containing the message. */
-  uint32_t                                message_str_size; /*!< \brief length of string. */
+  int32_t                                 len;                              /*!< \brief length of string. */
+#define LOG_MAX_MESSAGE_LENGTH            512
+  char                                    str[LOG_MAX_MESSAGE_LENGTH];      /*!< \brief string containing the message. */
 } log_queue_item_t;
 
 /*! \struct  log_config_t
@@ -222,6 +223,7 @@ void log_message (
 #define LOG_INFO(pRoTo, ...)                                     do { log_message(NULL, LOG_LEVEL_INFO,     pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief informational */
 #define LOG_DEBUG(pRoTo, ...)                                    do { log_message(NULL, LOG_LEVEL_DEBUG,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief debug informations */
 #define LOG_TRACE(pRoTo, ...)                                    do { log_message(NULL, LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief most detailled informations, struct dumps */
+#define LOG_EXTERNAL(lOgLeVeL, pRoTo, ...)                       do { log_message(NULL, lOgLeVeL       ,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)
 #define LOG_FUNC_IN(pRoTo)                                       do { log_func(true, pRoTo, __FILE__, __LINE__, __FUNCTION__); } while(0) /*!< \brief informational */
 #define LOG_FUNC_OUT(pRoTo)                                      do { log_func(false,pRoTo, __FILE__, __LINE__, __FUNCTION__); } while(0) /*!< \brief informational */
 #define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do { log_message(NULL, LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s (rc=%ld)\n", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
@@ -251,6 +253,7 @@ void log_message (
 #define LOG_INFO(pRoTo, aRgS...)
 #define LOG_DEBUG(pRoTo, aRgS...)
 #define LOG_TRACE(pRoTo, aRgS...)
+#define LOG_EXTERNAL(lOgLeVeL, pRoTo, ...)
 #define LOG_FUNC_IN(pRoTo)
 #define LOG_FUNC_OUT(pRoTo)
 #define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)

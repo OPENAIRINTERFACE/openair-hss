@@ -39,7 +39,7 @@
 #include "log.h"
 
 
-static int                              gnutls_debug = 0;
+static int                              gnutls_log_level = 9;
 struct session_handler                 *ts_sess_hdl;
 
 s6a_fd_cnf_t                            s6a_fd_cnf;
@@ -55,7 +55,7 @@ fd_gnutls_debug (
   int level,
   const char *str)
 {
-  LOG_DEBUG (LOG_S6A, "[GTLS] %s", str);
+  LOG_EXTERNAL (level, LOG_S6A, "[GTLS] %s", str);
 }
 
 void                                   *
@@ -149,10 +149,10 @@ s6a_init (
   /*
    * Set gnutls debug level ?
    */
-  if (gnutls_debug) {
+  if (gnutls_log_level) {
     gnutls_global_set_log_function ((gnutls_log_func) fd_gnutls_debug);
-    gnutls_global_set_log_level (gnutls_debug);
-    LOG_DEBUG (LOG_S6A, "Enabled GNUTLS debug at level %d", gnutls_debug);
+    gnutls_global_set_log_level (gnutls_log_level);
+    LOG_DEBUG (LOG_S6A, "Enabled GNUTLS debug at level %d\n", gnutls_log_level);
   }
 
   /*

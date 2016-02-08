@@ -28,10 +28,10 @@
  */
 
 #include <string.h>
-#include <stdlib.h>
 
 #include "hashtable.h"
 #include "assertions.h"
+#include "dynamic_memory_check.h"
 
 
 #define DYNAMIC_MEMORY_CHECK_HASH_SIZE 1024
@@ -40,7 +40,9 @@
 hash_table_t g_dma_htbl = {0};
 hash_table_t g_dma_free_htbl = {0};
 
-static  hash_size_t def_hashfunc (const uint64_t keyP);
+static hash_size_t def_hashfunc (const uint64_t keyP);
+static void dma_register_pointer(void* ptr);
+static void dma_deregister_pointer(void* ptr);
 
 
 static  hash_size_t def_hashfunc (const uint64_t keyP)

@@ -382,12 +382,14 @@ s1ap_generate_s1_setup_response (
   int                                     i,j;
   int                                     enc_rval = 0;
   S1ap_S1SetupResponseIEs_t              *s1_setup_response_p = NULL;
-  S1ap_ServedGUMMEIsItem_t                servedGUMMEI = { 0 };
+  S1ap_ServedGUMMEIsItem_t                servedGUMMEI;
   s1ap_message                            message = { 0 };
   uint8_t                                *buffer = NULL;
   uint32_t                                length = 0;
 
   DevAssert (eNB_association != NULL);
+  // memset for gcc 4.8.4 instead of {0}, servedGUMMEI.servedPLMNs
+  memset(&servedGUMMEI, 0, sizeof(S1ap_ServedGUMMEIsItem_t));
   // Generating response
   s1_setup_response_p = &message.msg.s1ap_S1SetupResponseIEs;
   config_read_lock (&mme_config);

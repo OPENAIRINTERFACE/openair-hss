@@ -52,7 +52,7 @@
 #include "dynamic_memory_check.h"
 #include "log.h"
 
-mme_config_t                            mme_config={0};
+mme_config_t                            mme_config;
 
 int
 mme_config_find_mnc_length (
@@ -95,6 +95,7 @@ static
 mme_config_init (
   mme_config_t * mme_config_p)
 {
+  memset(&mme_config, 0, sizeof(mme_config));
   pthread_rwlock_init (&mme_config_p->rw_lock, NULL);
   mme_config_p->log_config.output             = NULL;
   mme_config_p->log_config.color              = false;

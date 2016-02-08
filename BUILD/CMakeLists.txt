@@ -184,11 +184,32 @@ add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 
 
 
-# Debug related options
+#########################################
+# Debug and build related options
 #########################################
 
+add_boolean_option( DISABLE_ITTI_DETECT_SUB_TASK_ID False    " ")
+add_boolean_option( DISPLAY_LICENCE_INFO            False    "If a module has a licence banner to show")
+add_boolean_option( ENABLE_ITTI                     True     "ITTI is internal messaging, should remain enabled for most targets")
+add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
+# NAS LAYER OPTIONS
+##########################
+add_boolean_option( EPC_BUILD                       False    "BUILD MME-xGW executable")
+add_boolean_option( GTPV1U_LINEAR_TEID_ALLOCATION   False    "Teid allocation id mode versus pseudo random")
+add_boolean_option( NAS_BUILT_IN_EPC                True     "MME NAS layer present in the executable, should remain enabled for most of the targets")
+# S1AP LAYER OPTIONS
+##########################
+add_boolean_option(S1AP_DEBUG_LIST                  False    "Traces, option to be removed soon")
+# SCTP LAYER OPTIONS
+##########################
+add_boolean_option(SCTP_DUMP_LIST                   False    "Traces, option to be removed soon")
 
-add_boolean_option(ENABLE_ITTI True "ITTI is internal messaging, should remain enabled for most targets")
+add_boolean_option( HASHTABLE_DEBUG                 False    "Traces ")
+add_boolean_option( LOG_OAI                         False    "Thread safe logging utility")
+add_boolean_option( MEMORY_CHECK                    False    "Thread safe malloc checker")
+add_boolean_option( SECU_DEBUG                      False    "Traces, option to be removed soon")
+
+
 set (ITTI_DIR ${OPENAIRCN_DIR}/COMMON/ITTI)
 if (${ENABLE_ITTI})
   add_library(ITTI
@@ -278,28 +299,6 @@ add_library(S1AP_EPC
 
 
 
-##############################################################
-#    ???!!! TO BE DOCUMENTED OPTIONS !!!???
-##############################################################
-add_boolean_option(MESSAGE_CHART_GENERATOR False         "For generating sequence diagrams")
-
-##########################
-# NAS LAYER OPTIONS
-##########################
-add_boolean_option(NAS_BUILT_IN_EPC        True "MME NAS layer present in the executable")
-
-add_boolean_option(GTPV1U_LINEAR_TEID_ALLOCATION False "Teid allocation id mode versus pseudo random")
-
-##########################
-# S1AP LAYER OPTIONS
-##########################
-add_boolean_option(S1AP_DEBUG_LIST False "Traces")
-
-
-##########################
-# SCTP LAYER OPTIONS
-##########################
-add_boolean_option(SCTP_DUMP_LIST False "Traces")
 
  # add the binary tree to the search path for include files
 #######################################################

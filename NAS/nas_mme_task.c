@@ -46,9 +46,8 @@ nas_intertask_interface (
   MSC_START_USE ();
 
   while (1) {
-    MessageDef                             *received_message_p;
+    MessageDef                             *received_message_p = NULL;
 
-  next_message:
     itti_receive_msg (TASK_NAS_MME, &received_message_p);
 
     switch (ITTI_MSG_ID (received_message_p)) {

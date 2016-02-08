@@ -331,16 +331,16 @@ nas_message_decrypt (
     /*
      * Decrypt the security protected NAS message
      */
-    OAI_GCC_DIAG_OFF(discarded-qualifiers);
+    //OAI_GCC_DIAG_OFF(discarded-qualifiers);
     header->protocol_discriminator = _nas_message_decrypt (outbuf,
-        inbuf + size,
+        (char * const)(inbuf + size),
         header->security_header_type,
         header->message_authentication_code,
         header->sequence_number,
         length - size,
         emm_security_context,
         status);
-    OAI_GCC_DIAG_ON(discarded-qualifiers);
+    //OAI_GCC_DIAG_ON(discarded-qualifiers);
 
     bytes = length - size;
   } else {

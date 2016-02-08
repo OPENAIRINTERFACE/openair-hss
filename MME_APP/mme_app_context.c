@@ -257,9 +257,9 @@ mme_insert_ue_context (
   }
 
 
-  OAI_GCC_DIAG_OFF(discarded-qualifiers);
-  h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, ue_context_p);
-  OAI_GCC_DIAG_ON(discarded-qualifiers);
+  //OAI_GCC_DIAG_OFF(discarded-qualifiers);
+  h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void *)ue_context_p);
+  //OAI_GCC_DIAG_ON(discarded-qualifiers);
 
   if (HASH_TABLE_OK != h_rc) {
     LOG_DEBUG (LOG_MME_APP, "mme_insert_ue_context: Error could not register this ue context %p mme_ue_s1ap_id 0x%x\n", ue_context_p, ue_context_p->mme_ue_s1ap_id);

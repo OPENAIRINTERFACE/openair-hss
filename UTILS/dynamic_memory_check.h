@@ -30,10 +30,9 @@
 #ifndef DYNAMIC_MEMORY_CHECK_H_
 #define DYNAMIC_MEMORY_CHECK_H_
 #if MEMORY_CHECK
+#include <stdlib.h>
 
 void dyn_mem_check_init(void);
-static void dma_register_pointer(void* ptr);
-static void dma_deregister_pointer(void* ptr);
 void *malloc_wrapper(size_t size)                 __attribute__ ((hot, warn_unused_result));
 void free_wrapper(void *ptr)                      __attribute__ ((hot));
 void *calloc_wrapper(size_t nmemb, size_t size)   __attribute__ ((hot, warn_unused_result));

@@ -232,8 +232,6 @@ spgw_config_init (
   char                                   *sgw_ipv4_address_for_S5_S8_up = NULL;
   char                                   *sgw_interface_name_for_S11 = NULL;
   char                                   *sgw_ipv4_address_for_S11 = NULL;
-  char                                   *sgw_drop_uplink_s1u_traffic = NULL;
-  char                                   *sgw_drop_downlink_s1u_traffic = NULL;
   libconfig_int                           sgw_udp_port_for_S1u_S12_S4_up = 2152;
   config_setting_t                       *setting_pgw = NULL;
   config_setting_t                       *subsetting = NULL;
@@ -245,7 +243,7 @@ spgw_config_init (
   char                                   *pgw_masquerade_SGI = NULL;
   char                                   *pgw_default_dns_ipv4_address = NULL;
   char                                   *pgw_default_dns_sec_ipv4_address = NULL;
-  char                                   *astring = NULL;
+  const char                             *astring = NULL;
   char                                   *atoken = NULL;
   char                                   *atoken2 = NULL;
   char                                   *address = NULL;
@@ -271,7 +269,7 @@ spgw_config_init (
   STAILQ_INIT (&config_pP->pgw_config.pgw_lite_ipv6_pool_list);
   config_init (&cfg);
 
-  if (lib_config_file_name_pP != NULL) {
+  if (lib_config_file_name_pP) {
     /*
      * Read the file. If there is an error, report it and exit.
      */
@@ -289,7 +287,7 @@ spgw_config_init (
   LOG_INFO (LOG_SPGW_APP, "Parsing configuration file provided %s\n", lib_config_file_name_pP);
   setting_sgw = config_lookup (&cfg, SGW_CONFIG_STRING_SGW_CONFIG);
 
-  if (setting_sgw != NULL) {
+  if (setting_sgw) {
 
     // LOGGING setting
     subsetting = config_setting_get_member (setting_sgw, SGW_CONFIG_STRING_LOGGING);
@@ -307,7 +305,7 @@ spgw_config_init (
     config_pP->log_config.util_log_level     = MAX_LOG_LEVEL;
     config_pP->log_config.msc_log_level      = MAX_LOG_LEVEL;
     config_pP->log_config.itti_log_level     = MAX_LOG_LEVEL;
-    if (subsetting != NULL) {
+    if (subsetting) {
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_COLOR, (const char **)&astring)) {
         if (0 == strcasecmp("true", astring)) config_pP->log_config.color = true;
         else config_pP->log_config.color = false;
@@ -348,7 +346,7 @@ spgw_config_init (
 
     subsetting = config_setting_get_member (setting_sgw, SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
-    if (subsetting != NULL) {
+    if (subsetting) {
       if ((config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP, (const char **)&sgw_interface_name_for_S1u_S12_S4_up)
            && config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP, (const char **)&sgw_ipv4_address_for_S1u_S12_S4_up)
            && config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_INTERFACE_NAME_FOR_S5_S8_UP, (const char **)&sgw_interface_name_for_S5_S8_up)
@@ -399,10 +397,10 @@ spgw_config_init (
 
   setting_pgw = config_lookup (&cfg, PGW_CONFIG_STRING_PGW_CONFIG);
 
-  if (setting_pgw != NULL) {
+  if (setting_pgw) {
     subsetting = config_setting_get_member (setting_pgw, PGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
-    if (subsetting != NULL) {
+    if (subsetting) {
       if ((config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_S5_S8, (const char **)&pgw_interface_name_for_S5_S8)
            && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_IPV4_ADDRESS_FOR_S5_S8, (const char **)&pgw_ipv4_address_for_S5_S8)
            && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_SGI, (const char **)&pgw_interface_name_for_SGI)
@@ -447,19 +445,19 @@ spgw_config_init (
     //!!!------------------------------------!!!
     subsetting = config_setting_get_member (setting_pgw, PGW_CONFIG_STRING_IP_ADDRESS_POOL);
 
-    if (subsetting != NULL) {
+    if (subsetting) {
       sub2setting = config_setting_get_member (subsetting, PGW_CONFIG_STRING_IPV4_ADDRESS_LIST);
 
-      if (sub2setting != NULL) {
+      if (sub2setting) {
         num = config_setting_length (sub2setting);
 
         for (i = 0; i < num; i++) {
           astring = config_setting_get_string_elem (sub2setting, i);
 
-          if (astring != NULL) {
-            trim (astring, strlen (astring) + 1);
+          if (astring) {
+            trim ((char*)astring, strlen (astring) + 1);
             // failure, test if there is a range specified in the string
-            atoken = strtok (astring, PGW_CONFIG_STRING_IPV4_PREFIX_DELIMITER);
+            atoken = strtok ((char*)astring, PGW_CONFIG_STRING_IPV4_PREFIX_DELIMITER);
 
             if (inet_pton (AF_INET, atoken, buf_in_addr) == 1) {
               memcpy (&addr_start, buf_in_addr, sizeof (struct in_addr));
@@ -533,18 +531,18 @@ spgw_config_init (
 
       sub2setting = config_setting_get_member (subsetting, PGW_CONFIG_STRING_IPV6_ADDRESS_LIST);
 
-      if (sub2setting != NULL) {
+      if (sub2setting) {
         num = config_setting_length (sub2setting);
 
         for (i = 0; i < num; i++) {
           astring = config_setting_get_string_elem (sub2setting, i);
 
-          if (astring != NULL) {
-            trim (astring, strlen (astring) + 1);
+          if (astring) {
+            trim ((char*)astring, strlen (astring) + 1);
 
             if (inet_pton (AF_INET6, astring, buf_in6_addr) < 1) {
               // failure, test if there is a range specified in the string
-              atoken = strtok (astring, PGW_CONFIG_STRING_IPV6_PREFIX_DELIMITER);
+              atoken = strtok ((char*)astring, PGW_CONFIG_STRING_IPV6_PREFIX_DELIMITER);
 
               if (inet_pton (AF_INET6, astring, buf_in6_addr) == 1) {
                 atoken2 = strtok (NULL, PGW_CONFIG_STRING_IPV6_PREFIX_DELIMITER);

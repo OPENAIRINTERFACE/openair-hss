@@ -51,9 +51,9 @@ nas_stream_encrypt_eia2 (
   uint8_t const out[4])
 {
   uint8_t                                *m = NULL;
-  uint32_t                                local_count;
+  uint32_t                                local_count = 0;
   size_t                                  size = 4;
-  uint8_t                                 data[16];
+  uint8_t                                 data[16] = {0};
   CMAC_CTX                               *cmac_ctx = NULL;
   const EVP_CIPHER                       *cipher = EVP_aes_128_cbc ();
   uint32_t                                zero_bit = 0;
@@ -63,7 +63,6 @@ nas_stream_encrypt_eia2 (
   DevAssert (stream_cipher->key != NULL);
   DevAssert (stream_cipher->key_length > 0);
   DevAssert (out != NULL);
-  memset (data, 0, 16);
   zero_bit = stream_cipher->blength & 0x7;
   m_length = stream_cipher->blength >> 3;
 
@@ -87,7 +86,7 @@ nas_stream_encrypt_eia2 (
   CMAC_Final (cmac_ctx, data, &size);
   CMAC_CTX_free (cmac_ctx);
   LOG_STREAM_HEX(LOG_NAS, "Out:", data, size);
-  memcpy (out, data, 4);
+  memcpy ((void*)out, data, 4);
   FREE_CHECK (m);
   return 0;
 }
