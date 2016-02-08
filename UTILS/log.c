@@ -135,9 +135,7 @@ static void log_reuse_item(log_queue_item_t * item_p)
 }
 
 //------------------------------------------------------------------------------
-void                                   *
-log_task (
-  void *args_p)
+void* log_task (__attribute__ ((unused)) void *args_p)
 {
   MessageDef                             *received_message_p = NULL;
   long                                    timer_id = 0;
@@ -322,7 +320,7 @@ void log_set_config(const log_config_t * const config)
 }
 
 //------------------------------------------------------------------------------
-const char * const  log_level_int2str(const log_level_t log_level)
+const char * log_level_int2str(const log_level_t log_level)
 {
   if ((MAX_LOG_LEVEL > log_level) && (MIN_LOG_LEVEL <= log_level)) {
     return g_oai_log.log_level2str[log_level];
@@ -368,7 +366,7 @@ void log_signal_callback_handler(int signum){
 //------------------------------------------------------------------------------
 int
 log_init (
-  const log_env_t envP,
+  __attribute__ ((unused))const log_env_t envP,
   const log_level_t default_log_levelP,
   const int max_threadsP)
 {
@@ -570,10 +568,10 @@ void log_stream_hex(
   const unsigned int line_numP,
   const char *const messageP,
   const char *const streamP,
-  const unsigned int sizeP)
+  const size_t sizeP)
 {
   log_queue_item_t  * message = NULL;
-  int                 octet_index = 0;
+  size_t              octet_index = 0;
   int                 rv = 0;
   log_thread_ctxt_t  *thread_ctxt = NULL;
   hashtable_rc_t      hash_rc = HASH_TABLE_OK;
@@ -614,13 +612,13 @@ void log_stream_hex_array(
   const unsigned int line_numP,
   const char *const messageP,
   const char *const streamP,
-  const unsigned int sizeP)
+  const size_t      sizeP)
 {
   log_queue_item_t *  message = NULL;
-  int                 octet_index = 0;
-  int                 index = 0;
+  size_t              octet_index = 0;
+  size_t              index = 0;
   log_thread_ctxt_t  *thread_ctxt = NULL;
-  hashtable_rc_t     hash_rc = HASH_TABLE_OK;
+  hashtable_rc_t      hash_rc = HASH_TABLE_OK;
 
   pthread_t             p           = pthread_self();
   hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
@@ -645,7 +643,7 @@ void log_stream_hex_array(
           log_message_add(message, " |");
           log_message_finish(message);
         }
-        log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, " %04d |", octet_index);
+        log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, " %04ld |", octet_index);
       }
 
       /*

@@ -35,6 +35,7 @@
 #include <inttypes.h>   /* For sscanf formats */
 #include <time.h>       /* to provide time_t */
 
+#include "common_types.h"
 #include "s1ap_messages_types.h"
 #include "nas_messages_types.h"
 #include "s6a_messages_types.h"
@@ -65,7 +66,7 @@ typedef uint64_t mme_app_imsi_t;
  */
 typedef struct bearer_context_s {
   /* S-GW Tunnel Endpoint for User-Plane */
-  Teid_t       s_gw_teid;
+  s1u_teid_t       s_gw_teid;
 
   /* S-GW IP address for User-Plane */
   ip_address_t s_gw_address;

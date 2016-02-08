@@ -256,7 +256,7 @@ extern                                  "C" {
 
   NwGtpv2cTrxnT                          *nwGtpv2cTrxnOutstandingRxNew (
   NW_IN NwGtpv2cStackT * thiz,
-  NW_IN uint32_t teidLocal,
+  __attribute__ ((unused)) NW_IN uint32_t teidLocal,
   NW_IN uint32_t peerIp,
   NW_IN uint32_t peerPort,
   NW_IN uint32_t seqNum) {

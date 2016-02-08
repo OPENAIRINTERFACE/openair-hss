@@ -53,7 +53,7 @@ typedef struct mcc_mnc_list_s {
   char     mnc[4];
 } mcc_mnc_list_t;
 
-int find_mnc_length(const char mcc_digit1P,
+__attribute__ ((pure)) int find_mnc_length(const char mcc_digit1P,
                     const char mcc_digit2P,
                     const char mcc_digit3P,
                     const char mnc_digit1P,

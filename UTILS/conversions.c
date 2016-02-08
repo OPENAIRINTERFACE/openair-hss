@@ -62,7 +62,7 @@ hexa_to_ascii (
   char *to,
   size_t length)
 {
-  int                                     i;
+  size_t                                 i;
 
   for (i = 0; i < length; i++) {
     uint8_t                                 upper = (from[i] & 0xf0) >> 4;

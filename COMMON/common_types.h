@@ -49,7 +49,10 @@ typedef uint32_t                 mme_ue_s1ap_id_t;
 typedef mme_ue_s1ap_id_t         nas_ue_id_t;
 #define NAS_UE_ID_FMT            "0x%08"PRIX32
 
-typedef uint32_t                 s11_teid_t;
+typedef uint32_t                 teid_t;
+typedef teid_t                   s11_teid_t;
+typedef teid_t                   s1u_teid_t;
+
 
 
 #define MSISDN_LENGTH      (15)

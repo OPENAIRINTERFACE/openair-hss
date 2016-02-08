@@ -73,7 +73,7 @@ extern                                  "C" {
   }
 
   NwRcT                                   nwGtpv2cTunnelDelete (
-  struct NwGtpv2cStack * pStack,
+  __attribute__ ((unused)) struct NwGtpv2cStack * pStack,
   NwGtpv2cTunnelT * thiz) {
     thiz->next = gpGtpv2cTunnelPool;
     gpGtpv2cTunnelPool = thiz;

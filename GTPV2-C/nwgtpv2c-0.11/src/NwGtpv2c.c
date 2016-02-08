@@ -836,7 +836,7 @@ extern                                  "C" {
     NwGtpv2cTunnelT                        *pLocalTunnel = NULL,
                                             keyTunnel = {0};
     NwGtpv2cMsgHandleT                      hMsg = 0;
-    NwGtpv2cUlpTunnelHandleT                hUlpTunnel = NULL;
+    NwGtpv2cUlpTunnelHandleT                hUlpTunnel = 0;
     NwGtpv2cErrorT                          error = {0};
 
     teidLocal = *((uint32_t *) (msgBuf + 4));

@@ -141,7 +141,7 @@ typedef struct log_config_s {
 
 void log_connect_to_server(void);
 void log_set_config(const log_config_t * const config);
-const char * const log_level_int2str(const log_level_t log_level);
+const char * log_level_int2str(const log_level_t log_level);
 log_level_t log_level_str2int(const char * const log_level_str);
 
 int log_init(
@@ -161,7 +161,7 @@ void log_stream_hex(
   const unsigned int line_numP,
   const char *const messageP,
   const char *const streamP,
-  const unsigned int sizeP);
+  const size_t sizeP);
 
 void log_stream_hex_array(
   const log_level_t log_levelP,
@@ -170,7 +170,7 @@ void log_stream_hex_array(
   const unsigned int line_numP,
   const char *const messageP,
   const char *const streamP,
-  const unsigned int sizeP);
+  const size_t sizeP);
 
 void log_message_add (
   log_queue_item_t * contextP,

@@ -300,7 +300,7 @@ typedef struct nas_auth_resp_s {
 
 typedef struct nas_auth_param_req_s {
   /* UE identifier */
-  uint32_t ue_id;
+  nas_ue_id_t ue_id;
 
   /* Imsi of the UE (In case of initial request) */
   char     imsi[16];
