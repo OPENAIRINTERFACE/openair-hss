@@ -206,6 +206,7 @@ add_boolean_option(SCTP_DUMP_LIST                   False    "Traces, option to 
 
 add_boolean_option( HASHTABLE_DEBUG                 False    "Traces ")
 add_boolean_option( LOG_OAI                         False    "Thread safe logging utility")
+add_boolean_option( LOG_OAI_CLEAN_HARD              False    "Thread safe logging utility option for cleaning inner structs")
 add_boolean_option( MEMORY_CHECK                    False    "Thread safe malloc checker")
 add_boolean_option( SECU_DEBUG                      False    "Traces, option to be removed soon")
 
