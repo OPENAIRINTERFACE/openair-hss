@@ -98,6 +98,7 @@ hss_mysql_connect (
    */
   if (!mysql_real_connect (db_desc->db_conn, db_desc->server, db_desc->user, db_desc->password, db_desc->database, 0, NULL, 0)) {
     DB_ERROR ("An error occured while connecting to db: %s\n", mysql_error (db_desc->db_conn));
+    mysql_thread_end();
     return -1;
   }
 
@@ -114,6 +115,7 @@ hss_mysql_disconnect (
   void)
 {
   mysql_close (db_desc->db_conn);
+  mysql_thread_end();
 }
 
 int
@@ -142,12 +144,14 @@ hss_mysql_update_loc (
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
     DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
-    mysql_thread_end ();
     return EINVAL;
   }
 
   res = mysql_store_result (db_desc->db_conn);
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
+
+  if ( res == NULL )
+    return EINVAL;
 
   if ((row = mysql_fetch_row (res)) != NULL) {
     int                                     mme_id;
@@ -171,14 +175,10 @@ hss_mysql_update_loc (
     mysql_ul_ans->aggr_ul = atoi (row[3]);
     mysql_ul_ans->aggr_dl = atoi (row[4]);
     mysql_ul_ans->rau_tau = atoi (row[5]);
-    mysql_free_result (res);
-    mysql_thread_end ();
-    return ret;
   }
 
   mysql_free_result (res);
-  mysql_thread_end ();
-  return EINVAL;
+  return ret;
 }
 
 int
@@ -199,19 +199,21 @@ hss_mysql_purge_ue (
     return EINVAL;
   }
 
-  sprintf (query, "UPDATE `users` SET `users`.`ms_ps_status`=\"PURGED\" " "WHERE `users`.`imsi`='%s'; " "SELECT `users`.`mmeidentity_idmmeidentity` FROM `users` " "WHERE `users`.`imsi`=%s ", mysql_pu_req->imsi, mysql_pu_req->imsi);
+  sprintf (query, "UPDATE `users` SET `users`.`ms_ps_status`=\"PURGED\" " "WHERE `users`.`imsi`='%s'; " "SELECT `users`.`mmeidentity_idmmeidentity` FROM `users` " "WHERE `users`.`imsi`='%s' ", mysql_pu_req->imsi, mysql_pu_req->imsi);
   DB_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
     DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
-    mysql_thread_end ();
     return EINVAL;
   }
 
   res = mysql_store_result (db_desc->db_conn);
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
+
+  if ( res == NULL )
+    return EINVAL;
 
   if ((row = mysql_fetch_row (res)) != NULL) {
     int                                     mme_id;
@@ -224,12 +226,10 @@ hss_mysql_purge_ue (
     }
 
     mysql_free_result (res);
-    mysql_thread_end ();
     return ret;
   }
 
   mysql_free_result (res);
-  mysql_thread_end ();
   return EINVAL;
 }
 
@@ -245,28 +245,28 @@ hss_mysql_get_user (
     return EINVAL;
   }
 
-  sprintf (query, "SELECT `imsi` FROM `users` WHERE `users`.`imsi`=%s ", imsi);
+  sprintf (query, "SELECT `imsi` FROM `users` WHERE `users`.`imsi`='%s' ", imsi);
   DB_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
     DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
-    mysql_thread_end ();
     return EINVAL;
   }
 
   res = mysql_store_result (db_desc->db_conn);
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
 
+  if ( res == NULL )
+    return EINVAL;
+
   if ((row = mysql_fetch_row (res)) != NULL) {
     mysql_free_result (res);
-    mysql_thread_end ();
     return 0;
   }
 
   mysql_free_result (res);
-  mysql_thread_end ();
   return EINVAL;
 }
 
@@ -317,7 +317,6 @@ mysql_push_up_loc (
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
     fprintf (stderr, "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
-    mysql_thread_end ();
     return EINVAL;
   }
 
@@ -352,8 +351,6 @@ mysql_push_up_loc (
   } while (status == 0);
 
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
-  mysql_free_result (res);
-  mysql_thread_end ();
   return 0;
 }
 
@@ -393,7 +390,6 @@ hss_mysql_push_rand_sqn (
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
     DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
-    mysql_thread_end ();
     return EINVAL;
   }
 
@@ -428,8 +424,6 @@ hss_mysql_push_rand_sqn (
   } while (status == 0);
 
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
-  mysql_free_result (res);
-  mysql_thread_end ();
   return 0;
 }
 
@@ -452,13 +446,14 @@ hss_mysql_increment_sqn (
   /*
    * + 32 = 2 ^ sizeof(IND) (see 3GPP TS. 33.102)
    */
-  sprintf (query, "UPDATE `users` SET `sqn` = `sqn` + 32 WHERE `users`.`imsi`=%s", imsi);
+  sprintf (query, "UPDATE `users` SET `sqn` = `sqn` + 32 WHERE `users`.`imsi`='%s'", imsi);
   DB_DEBUG ("Query: %s\n", query);
+
+  pthread_mutex_lock(&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
     DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
-    mysql_thread_end ();
     return EINVAL;
   }
 
@@ -493,8 +488,6 @@ hss_mysql_increment_sqn (
   } while (status == 0);
 
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
-  mysql_free_result (res);
-  mysql_thread_end ();
   return 0;
 }
 
@@ -516,19 +509,23 @@ hss_mysql_auth_info (
     return EINVAL;
   }
 
-  sprintf (query, "SELECT `key`,`sqn`,`rand`,`OPc` FROM `users` WHERE `users`.`imsi`=%s ", auth_info_req->imsi);
+  sprintf (query, "SELECT `key`,`sqn`,`rand`,`OPc` FROM `users` WHERE `users`.`imsi`='%s' ", auth_info_req->imsi);
   DB_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
     DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
-    mysql_thread_end ();
     return EINVAL;
   }
 
   res = mysql_store_result (db_desc->db_conn);
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
+
+  if ( res == NULL )
+    return EINVAL;
+
+  ret = 0;
 
   if ((row = mysql_fetch_row (res)) != NULL) {
     if (row[0] == NULL || row[1] == NULL || row[2] == NULL || row[3] == NULL) {
@@ -564,14 +561,10 @@ hss_mysql_auth_info (
       memcpy (auth_info_resp->opc, row[3], KEY_LENGTH);
     }
 
-    mysql_free_result (res);
-    mysql_thread_end ();
-    return ret;
   }
 
   mysql_free_result (res);
-  mysql_thread_end ();
-  return EINVAL;
+  return ret;
 }
 
 int
