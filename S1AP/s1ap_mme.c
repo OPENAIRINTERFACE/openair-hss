@@ -26,6 +26,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include "intertask_interface.h"
 #include "assertions.h"
@@ -50,7 +51,7 @@
 #endif
 
 
-int                                     hss_associated = 0;
+bool                                    hss_associated = false;
 uint32_t                                nb_eNB_associated = 0;
 
 STAILQ_HEAD (eNB_list_s, eNB_description_s)
@@ -105,7 +106,7 @@ s1ap_mme_thread (
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case ACTIVATE_MESSAGE:{
-        hss_associated = 1;
+        hss_associated = true;
       }
       break;
 
@@ -114,9 +115,7 @@ s1ap_mme_thread (
          * New message received from SCTP layer.
          * * * * Decode and handle it.
          */
-        s1ap_message                            message;
-
-        memset ((void *)&message, 0, sizeof (s1ap_message));
+        s1ap_message                            message = {0};
 
         /*
          * Invoke S1AP message decoder
@@ -237,7 +236,7 @@ s1ap_dump_eNB_list (
 
 void
 s1ap_dump_eNB (
-  eNB_description_t * eNB_ref)
+  const eNB_description_t * const eNB_ref)
 {
 #  ifdef S1AP_DEBUG_LIST
   ue_description_t                       *ue_ref = NULL;
@@ -269,7 +268,7 @@ s1ap_dump_eNB (
 
 void
 s1ap_dump_ue (
-  ue_description_t * ue_ref)
+  const ue_description_t * const ue_ref)
 {
 #  ifdef S1AP_DEBUG_LIST
 

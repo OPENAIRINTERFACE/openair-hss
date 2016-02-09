@@ -103,7 +103,7 @@ typedef struct eNB_description_s {
   /*@}*/
 } eNB_description_t;
 
-extern int              hss_associated;
+extern bool             hss_associated;
 extern uint32_t         nb_eNB_associated;
 extern mme_config_t    *global_mme_config_p;
 
@@ -158,12 +158,12 @@ void s1ap_dump_eNB_list(void);
  * Calls dump_ue for each UE in list
  * \param eNB_ref eNB structure reference to dump
  **/
-void s1ap_dump_eNB(eNB_description_t *eNB_ref);
+void s1ap_dump_eNB(const eNB_description_t * const eNB_ref);
 
 /** \brief Dump UE related information.
  * \param ue_ref ue structure reference to dump
  **/
-void s1ap_dump_ue(ue_description_t *ue_ref);
+void s1ap_dump_ue(const ue_description_t * const ue_ref);
 
 /** \brief Remove target UE from the list
  * \param ue_ref UE structure reference to remove

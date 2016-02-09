@@ -33,11 +33,11 @@ typedef struct s1ap_timer_map_s {
 } s1ap_timer_map_t;
 
 int s1ap_mme_timer_map_compare_id(
-  struct s1ap_timer_map_s *p1, struct s1ap_timer_map_s *p2);
+  const struct s1ap_timer_map_s * const p1, const struct s1ap_timer_map_s * const p2);
 
 int s1ap_handle_timer_expiry(timer_has_expired_t *timer_has_expired);
 
-int s1ap_timer_insert(const mme_ue_s1ap_id_t mme_ue_s1ap_id, long timer_id);
+int s1ap_timer_insert(const mme_ue_s1ap_id_t mme_ue_s1ap_id, const long timer_id);
 
 int s1ap_timer_remove_ue(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 

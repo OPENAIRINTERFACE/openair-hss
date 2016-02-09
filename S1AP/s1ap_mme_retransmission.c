@@ -34,8 +34,8 @@
 #include "log.h"
 
 inline int                              s1ap_mme_timer_map_compare_id (
-  struct s1ap_timer_map_s *p1,
-  struct s1ap_timer_map_s *p2);
+  const struct s1ap_timer_map_s * const p1,
+  const struct s1ap_timer_map_s * const p2);
 
 /* Reference to tree root element */
 RB_HEAD (s1ap_timer_map, s1ap_timer_map_s) s1ap_timer_tree = RB_INITIALIZER ();
@@ -47,9 +47,9 @@ RB_PROTOTYPE (s1ap_timer_map, s1ap_timer_map_s, entries, s1ap_mme_timer_map_comp
 
 RB_GENERATE (s1ap_timer_map, s1ap_timer_map_s, entries, s1ap_mme_timer_map_compare_id);
 
-     int                                     s1ap_mme_timer_map_compare_id (
-  struct s1ap_timer_map_s *p1,
-  struct s1ap_timer_map_s *p2)
+int                                     s1ap_mme_timer_map_compare_id (
+  const struct s1ap_timer_map_s * const p1,
+  const struct s1ap_timer_map_s * const p2)
 {
   if (p1->mme_ue_s1ap_id > 0) {
     if (p1->mme_ue_s1ap_id > p2->mme_ue_s1ap_id) {
@@ -80,7 +80,7 @@ RB_GENERATE (s1ap_timer_map, s1ap_timer_map_s, entries, s1ap_mme_timer_map_compa
 int
 s1ap_timer_insert (
   const mme_ue_s1ap_id_t mme_ue_s1ap_id,
-  long timer_id)
+  const long timer_id)
 {
   struct s1ap_timer_map_s                *new = NULL;
 

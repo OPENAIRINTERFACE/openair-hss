@@ -35,12 +35,12 @@
 static
   int
 s1ap_mme_compare_plmn (
-  S1ap_PLMNidentity_t * plmn)
+  const S1ap_PLMNidentity_t * const plmn)
 {
-  int                                     i;
-  uint16_t                                mcc;
-  uint16_t                                mnc;
-  uint16_t                                mnc_len;
+  int                                     i = 0;
+  uint16_t                                mcc = 0;
+  uint16_t                                mnc = 0;
+  uint16_t                                mnc_len = 0;
 
   DevAssert (plmn != NULL);
   TBCD_TO_MCC_MNC (plmn, mcc, mnc, mnc_len);
@@ -70,7 +70,7 @@ static
 s1ap_mme_compare_plmns (
   S1ap_BPLMNs_t * b_plmns)
 {
-  int                                     i;
+  int                                     i =0;
   int                                     matching_occurence = 0;
 
   DevAssert (b_plmns != NULL);
@@ -94,10 +94,10 @@ s1ap_mme_compare_plmns (
 static
   int
 s1ap_mme_compare_tac (
-  S1ap_TAC_t * tac)
+  const S1ap_TAC_t * const tac)
 {
-  int                                     i;
-  uint16_t                                tac_value;
+  int                                     i = 0;
+  uint16_t                                tac_value = 0;
 
   DevAssert (tac != NULL);
   OCTET_STRING_TO_TAC (tac, tac_value);
