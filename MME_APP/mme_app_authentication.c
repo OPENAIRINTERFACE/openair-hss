@@ -83,58 +83,6 @@ mme_app_request_authentication_info (
   return itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
 }
 
-int
-mme_app_handle_nas_auth_resp (
-  const nas_auth_resp_t * const nas_auth_resp_pP)
-{
-  struct ue_context_s                    *ue_context = NULL;
-  uint64_t                                imsi = 0;
-
-  DevAssert (nas_auth_resp_pP );
-  MME_APP_STRING_TO_IMSI ((char *)nas_auth_resp_pP->imsi, &imsi);
-  LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
-
-  if ((ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
-	LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 NAS_AUTH_RESP Unknown imsi %" IMSI_FORMAT, imsi);
-    AssertFatal (0, "That's embarrassing as we don't know this IMSI\n");
-    return -1;
-  }
-
-  /*
-   * Consider the UE authenticated
-   */
-  ue_context->imsi_auth = IMSI_AUTHENTICATED;
-  /*
-   * TODO: Get keys...
-   */
-  /*
-   * Now generate S6A ULR
-   */
-  {
-    MessageDef                             *message_p = NULL;
-    s6a_update_location_req_t              *s6a_ulr = NULL;
-
-    message_p = itti_alloc_new_message (TASK_MME_APP, S6A_UPDATE_LOCATION_REQ);
-
-    if (message_p == NULL) {
-      return -1;
-    }
-
-    s6a_ulr = &message_p->ittiMsg.s6a_update_location_req;
-    memcpy (s6a_ulr->imsi, nas_auth_resp_pP->imsi, 16);
-    s6a_ulr->initial_attach = INITIAL_ATTACH;
-    s6a_ulr->rat_type = RAT_EUTRAN;
-    /*
-     * Check if we already have UE data
-     */
-    s6a_ulr->skip_subscriber_data = 0;
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, " S6A_UPDATE_LOCATION_REQ IMSI %s RAT_EUTRAN", imsi);
-    return itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
-  }
-  return -1;
-}
-
 
 int
 mme_app_handle_authentication_info_answer (

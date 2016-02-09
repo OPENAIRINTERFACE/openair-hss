@@ -46,7 +46,6 @@ int nas_itti_protected_msg(
   const int instance);
 # endif
 
-# if NAS_BUILT_IN_EPC
 #include "conversions.h"
 
 int nas_itti_dl_data_req(
@@ -279,7 +278,6 @@ static inline void nas_itti_establish_rej(
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   LOG_FUNC_OUT(LOG_NAS);
 }
-# endif
 
 
 #endif /* NAS_ITTI_MESSAGING_H_ */

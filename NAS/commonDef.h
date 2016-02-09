@@ -370,9 +370,9 @@ typedef struct gummei_s {
  * The network shall not allocate a TMSI with all 32 bits equal to 1 (this is because the TMSI must be stored in the SIM,
 and the SIM uses 4 octets with all bits equal to 1 to indicate that no valid TMSI is available).
 */
-#define NOT_A_S_TMSI (uint64_t)0xFFFFFFFFFFFFFFFF
-#define NOT_A_M_TMSI (uint32_t)0xFFFFFFFF
-#define NOT_A_TMSI   (uint32_t)0xFFFFFFFF
+#define NOT_A_S_TMSI UINT64_MAX
+#define NOT_A_M_TMSI UINT32_MAX
+#define NOT_A_TMSI   UINT32_MAX
 
 typedef struct guti_s {
   gummei_t gummei;    /* Globally Unique MME Identity         */

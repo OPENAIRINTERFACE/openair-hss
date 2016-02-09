@@ -69,8 +69,6 @@ int mme_app_handle_authentication_info_answer(const s6a_auth_info_ans_t * const 
 
 void  mme_app_handle_release_access_bearers_resp (const SgwReleaseAccessBearersResponse * const rel_access_bearers_rsp_pP);
 
-int mme_app_handle_nas_auth_resp             (const nas_auth_resp_t * const nas_auth_resp_pP);
-
 nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);
 
 void mme_app_handle_nas_auth_param_req       (const nas_auth_param_req_t * const nas_auth_param_req_pP);
