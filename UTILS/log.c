@@ -174,7 +174,7 @@ void* log_task (__attribute__ ((unused)) void *args_p)
 
       case TERMINATE_MESSAGE:{
           timer_remove (timer_id);
-          log_end ();
+          log_exit ();
           itti_exit_task ();
         }
         break;
@@ -537,10 +537,10 @@ log_flush_messages (
 
 //------------------------------------------------------------------------------
 void
-log_end (
+log_exit (
   void)
 {
-  int                                     rv;
+  int                                     rv = 0;
 
   fprintf(stdout, "[TRACE] Entering %s\n", __FUNCTION__);
   if (NULL != g_oai_log.log_fd) {

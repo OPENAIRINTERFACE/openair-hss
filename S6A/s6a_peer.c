@@ -85,8 +85,8 @@ s6a_fd_new_peer (
   void)
 {
   char                                    host_name[100];
-  size_t                                  host_name_len;
-  char                                   *hss_name;
+  size_t                                  host_name_len = 0;
+  char                                   *hss_name = NULL;
   int                                     ret = 0;
   struct peer_info                        info;
 
@@ -98,7 +98,7 @@ s6a_fd_new_peer (
   }
 
   if (fd_g_config->cnf_diamid != NULL) {
-    FREE_CHECK (fd_g_config->cnf_diamid);
+    free (fd_g_config->cnf_diamid);
     fd_g_config->cnf_diamid_len = 0;
   }
 

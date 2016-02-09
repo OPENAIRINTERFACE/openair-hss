@@ -152,7 +152,7 @@ int log_init(
 void log_itti_connect(void);
 void log_start_use(void);
 void log_flush_messages(void) __attribute__ ((hot));
-void log_end(void);
+void log_exit(void);
 
 void log_stream_hex(
   const log_level_t log_levelP,
@@ -213,7 +213,7 @@ void log_message (
 #define LOG_INIT                                                 log_init
 #define LOG_START_USE                                            log_start_use
 #define LOG_ITTI_CONNECT                                         log_itti_connect
-#define LOG_END()                                                log_end()
+#define LOG_EXIT()                                               log_exit()
 #define LOG_EMERGENCY(pRoTo, ...)                                do { log_message(NULL, LOG_LEVEL_EMERGENCY,pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)/*!< \brief system is unusable */
 #define LOG_ALERT(pRoTo, ...)                                    do { log_message(NULL, LOG_LEVEL_ALERT,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief action must be taken immediately */
 #define LOG_CRITICAL(pRoTo, ...)                                 do { log_message(NULL, LOG_LEVEL_CRITICAL, pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief critical conditions */
@@ -243,7 +243,7 @@ void log_message (
 #define LOG_INIT(a,b,c)                                          0
 #define LOG_START_USE()
 #define LOG_ITTI_CONNECT()
-#define LOG_END()
+#define LOG_EXIT()
 #define LOG_EMERGENCY(pRoTo, aRgS...)
 #define LOG_ALERT(pRoTo, aRgS...)
 #define LOG_CRITICAL(pRoTo, aRgS...)
