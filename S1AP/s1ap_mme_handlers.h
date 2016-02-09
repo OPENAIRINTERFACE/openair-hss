@@ -32,10 +32,10 @@
  * \param message_p The message decoded by the ASN1C decoder
  * @returns int
  **/
-int s1ap_mme_handle_message(uint32_t assoc_id, uint32_t stream,
+int s1ap_mme_handle_message(const sctp_assoc_id_t assoc_id, const sctp_stream_id_t stream,
                             struct s1ap_message_s *message_p);
 
-int s1ap_mme_handle_ue_cap_indication(uint32_t assoc_id, uint32_t stream,
+int s1ap_mme_handle_ue_cap_indication(const sctp_assoc_id_t assoc_id, const sctp_stream_id_t stream,
                                       struct s1ap_message_s *message);
 
 /** \brief Handle an S1 Setup request message.
@@ -47,40 +47,40 @@ int s1ap_mme_handle_ue_cap_indication(uint32_t assoc_id, uint32_t stream,
  * \param message_p The message decoded by the ASN1C decoder
  * @returns int
  **/
-int s1ap_mme_handle_s1_setup_request(uint32_t assoc_id, uint32_t stream,
+int s1ap_mme_handle_s1_setup_request(const sctp_assoc_id_t assoc_id, const sctp_stream_id_t stream,
                                      struct s1ap_message_s *message_p);
 
-int s1ap_mme_handle_path_switch_request(uint32_t assoc_id, uint32_t stream,
+int s1ap_mme_handle_path_switch_request(const sctp_assoc_id_t assoc_id, const sctp_stream_id_t stream,
                                         struct s1ap_message_s *message_p);
 
-int s1ap_mme_handle_ue_context_release_request(uint32_t assoc_id,
-    uint32_t stream, struct s1ap_message_s *message_p);
+int s1ap_mme_handle_ue_context_release_request(const sctp_assoc_id_t assoc_id,
+                                               const sctp_stream_id_t stream, struct s1ap_message_s *message_p);
 
 int s1ap_handle_ue_context_release_command(
 		const s1ap_ue_context_release_command_t * const ue_context_release_command_pP);
 
-int s1ap_mme_handle_ue_context_release_complete(uint32_t assoc_id,
-    uint32_t stream, struct s1ap_message_s *message_p);
+int s1ap_mme_handle_ue_context_release_complete(const sctp_assoc_id_t assoc_id,
+                                                const sctp_stream_id_t stream, struct s1ap_message_s *message_p);
 
-int s1ap_mme_handle_initial_context_setup_failure(uint32_t assoc_id,
-    uint32_t stream, struct s1ap_message_s *message_p);
+int s1ap_mme_handle_initial_context_setup_failure(const sctp_assoc_id_t assoc_id,
+                                                  const sctp_stream_id_t stream, struct s1ap_message_s *message_p);
 
 int s1ap_mme_handle_initial_context_setup_response(
-  uint32_t assoc_id,
-  uint32_t stream,
-  struct s1ap_message_s *message_p);
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message_p);
 
-int s1ap_handle_sctp_deconnection(uint32_t assoc_id);
+int s1ap_handle_sctp_deconnection(const sctp_assoc_id_t assoc_id);
 
 int s1ap_handle_new_association(sctp_new_peer_t *sctp_new_peer_p);
 
 int s1ap_handle_create_session_response(SgwCreateSessionResponse
                                         *session_response_p);
 
-int s1ap_mme_set_cause(S1ap_Cause_t *cause_p, S1ap_Cause_PR cause_type, long cause_value);
+int s1ap_mme_set_cause(S1ap_Cause_t *cause_p, const S1ap_Cause_PR cause_type, const long cause_value);
 
 int s1ap_mme_generate_s1_setup_failure(
-  uint32_t assoc_id, S1ap_Cause_PR cause_type, long cause_value,
-  long time_to_wait);
+    const sctp_assoc_id_t assoc_id, const S1ap_Cause_PR cause_type, const long cause_value,
+    const long time_to_wait);
 
 #endif /* S1AP_MME_HANDLERS_H_ */

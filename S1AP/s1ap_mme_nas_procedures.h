@@ -34,7 +34,7 @@
  * \param message The message as decoded by the ASN.1 codec
  * @returns -1 on failure, 0 otherwise
  **/
-int s1ap_mme_handle_initial_ue_message(uint32_t assocId, uint32_t stream,
+int s1ap_mme_handle_initial_ue_message(sctp_assoc_id_t assocId, sctp_stream_id_t stream,
                                        struct s1ap_message_s *message);
 
 /** \brief Handle an Uplink NAS transport message.
@@ -44,7 +44,7 @@ int s1ap_mme_handle_initial_ue_message(uint32_t assocId, uint32_t stream,
  * \param message The message as decoded by the ASN.1 codec
  * @returns -1 on failure, 0 otherwise
  **/
-int s1ap_mme_handle_uplink_nas_transport(uint32_t assocId, uint32_t stream,
+int s1ap_mme_handle_uplink_nas_transport(sctp_assoc_id_t assocId, sctp_stream_id_t stream,
     struct s1ap_message_s *message);
 
 /** \brief Handle a NAS non delivery indication message from eNB
@@ -53,11 +53,11 @@ int s1ap_mme_handle_uplink_nas_transport(uint32_t assocId, uint32_t stream,
  * \param message The message as decoded by the ASN.1 codec
  * @returns -1 on failure, 0 otherwise
  **/
-int s1ap_mme_handle_nas_non_delivery(uint32_t assocId, uint32_t stream,
+int s1ap_mme_handle_nas_non_delivery(sctp_assoc_id_t assocId, sctp_stream_id_t stream,
                                      struct s1ap_message_s *message);
 
 void s1ap_handle_conn_est_cnf(const mme_app_connection_establishment_cnf_t * const conn_est_cnf_p);
 
-int s1ap_generate_downlink_nas_transport(const uint32_t ue_id, void * const data,
+int s1ap_generate_downlink_nas_transport(const mme_ue_s1ap_id_t ue_id, void * const data,
     const uint32_t size);
 #endif /* S1AP_MME_NAS_PROCEDURES_H_ */

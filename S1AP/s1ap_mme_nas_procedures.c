@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 
 #include "s1ap_common.h"
@@ -45,22 +46,22 @@
    But care if it wraps to increment also the mme_ue_s1ap_id_has_wrapped
    variable. Limit: UINT32_MAX (in stdint.h).
 */
-static uint32_t                         mme_ue_s1ap_id = 0;
-static uint8_t                          mme_ue_s1ap_id_has_wrapped = 0;
+static mme_ue_s1ap_id_t                 mme_ue_s1ap_id = 0;
+static bool                             mme_ue_s1ap_id_has_wrapped = false;
 
 extern const char                      *s1ap_direction2String[];
 
 
 int
 s1ap_mme_handle_initial_ue_message (
-  uint32_t assoc_id,
-  uint32_t stream,
+  sctp_assoc_id_t assoc_id,
+  sctp_stream_id_t stream,
   struct s1ap_message_s *message)
 {
-  S1ap_InitialUEMessageIEs_t             *initialUEMessage_p;
-  ue_description_t                       *ue_ref;
-  eNB_description_t                      *eNB_ref;
-  uint32_t                                eNB_ue_s1ap_id;
+  S1ap_InitialUEMessageIEs_t             *initialUEMessage_p = NULL;
+  ue_description_t                       *ue_ref = NULL;
+  eNB_description_t                      *eNB_ref = NULL;
+  enb_ue_s1ap_id_t                        eNB_ue_s1ap_id = 0;
 
   initialUEMessage_p = &message->msg.s1ap_InitialUEMessageIEs;
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 initialUEMessage/%s assoc_id %u stream %u " ENB_UE_S1AP_ID_FMT " ",
@@ -71,7 +72,7 @@ s1ap_mme_handle_initial_ue_message (
     return -1;
   }
   // eNB UE S1AP ID is limited to 24 bits
-  eNB_ue_s1ap_id = (uint32_t) (initialUEMessage_p->eNB_UE_S1AP_ID & 0x00ffffff);
+  eNB_ue_s1ap_id = (enb_ue_s1ap_id_t) (initialUEMessage_p->eNB_UE_S1AP_ID & 0x00ffffff);
   LOG_DEBUG (LOG_S1AP, "New Initial UE message received with eNB UE S1AP ID: " ENB_UE_S1AP_ID_FMT "\n", eNB_ue_s1ap_id);
   ue_ref = s1ap_is_ue_eNB_id_in_list (eNB_ref, eNB_ue_s1ap_id);
 
@@ -99,7 +100,7 @@ s1ap_mme_handle_initial_ue_message (
     ue_ref->eNB_ue_s1ap_id = eNB_ue_s1ap_id;
 
     OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-    ue_ref->mme_ue_s1ap_id = (uint32_t) ue_ref;
+    ue_ref->mme_ue_s1ap_id = (mme_ue_s1ap_id_t)((uintptr_t)ue_ref);
     OAI_GCC_DIAG_ON(pointer-to-int-cast);
     // On which stream we received the message
     ue_ref->sctp_stream_recv = stream;
@@ -119,11 +120,11 @@ s1ap_mme_handle_initial_ue_message (
      * Increment the unique UE mme s1ap id and
      * * * * take care about overflow case.
      */
-    if (mme_ue_s1ap_id_has_wrapped == 0) {
+    if (mme_ue_s1ap_id_has_wrapped == false) {
       mme_ue_s1ap_id++;
 
       if (mme_ue_s1ap_id == 0) {
-        mme_ue_s1ap_id_has_wrapped = 1;
+        mme_ue_s1ap_id_has_wrapped = true;
       }
     } else {
       /*
@@ -172,12 +173,12 @@ s1ap_mme_handle_initial_ue_message (
 
 int
 s1ap_mme_handle_uplink_nas_transport (
-  uint32_t assoc_id,
-  uint32_t stream,
+  sctp_assoc_id_t assoc_id,
+  sctp_stream_id_t stream,
   struct s1ap_message_s *message)
 {
-  S1ap_UplinkNASTransportIEs_t           *uplinkNASTransport_p;
-  ue_description_t                       *ue_ref;
+  S1ap_UplinkNASTransportIEs_t           *uplinkNASTransport_p = NULL;
+  ue_description_t                       *ue_ref = NULL;
 
   uplinkNASTransport_p = &message->msg.s1ap_UplinkNASTransportIEs;
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
@@ -204,8 +205,8 @@ s1ap_mme_handle_uplink_nas_transport (
 
 int
 s1ap_mme_handle_nas_non_delivery (
-  uint32_t assoc_id,
-  uint32_t stream,
+  sctp_assoc_id_t assoc_id,
+  sctp_stream_id_t stream,
   struct s1ap_message_s *message)
 {
   S1ap_NASNonDeliveryIndication_IEs_t    *nasNonDeliveryIndication_p = NULL;
@@ -243,7 +244,7 @@ s1ap_mme_handle_nas_non_delivery (
 
 int
 s1ap_generate_downlink_nas_transport (
-  const uint32_t ue_id,
+  const mme_ue_s1ap_id_t ue_id,
   void *const data,
   const uint32_t size)
 {
@@ -312,9 +313,9 @@ s1ap_handle_conn_est_cnf (
   uint32_t                                length = 0;
   ue_description_t                       *ue_ref = NULL;
   S1ap_InitialContextSetupRequestIEs_t   *initialContextSetupRequest_p = NULL;
-  S1ap_E_RABToBeSetupItemCtxtSUReq_t      e_RABToBeSetup;
-  S1ap_NAS_PDU_t                          nas_pdu;
-  s1ap_message                            message;
+  S1ap_E_RABToBeSetupItemCtxtSUReq_t      e_RABToBeSetup = {0};
+  S1ap_NAS_PDU_t                          nas_pdu = {0};
+  s1ap_message                            message = {0};
 
   DevAssert (conn_est_cnf_pP != NULL);
 
@@ -336,8 +337,6 @@ s1ap_handle_conn_est_cnf (
    * Insert the timer in the MAP of mme_ue_s1ap_id <-> timer_id
    */
   //     s1ap_timer_insert(ue_ref->mme_ue_s1ap_id, ue_ref->outcome_response_timer_id);
-  memset (&message, 0, sizeof (s1ap_message));
-  memset (&e_RABToBeSetup, 0, sizeof (S1ap_E_RABToBeSetupItemCtxtSUReq_t));
   message.procedureCode = S1ap_ProcedureCode_id_InitialContextSetup;
   message.direction = S1AP_PDU_PR_initiatingMessage;
   initialContextSetupRequest_p = &message.msg.s1ap_InitialContextSetupRequestIEs;
@@ -350,7 +349,7 @@ s1ap_handle_conn_est_cnf (
   asn_uint642INTEGER (&initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateUL, conn_est_cnf_pP->ambr.br_ul);
   e_RABToBeSetup.e_RAB_ID = conn_est_cnf_pP->eps_bearer_id;     //5;
   e_RABToBeSetup.e_RABlevelQoSParameters.qCI = conn_est_cnf_pP->bearer_qos_qci;
-  memset (&nas_pdu, 0, sizeof (nas_pdu));
+
   nas_pdu.size = conn_est_cnf_pP->nas_conn_est_cnf.nasMsg.length;
   nas_pdu.buf = conn_est_cnf_pP->nas_conn_est_cnf.nasMsg.data;
   e_RABToBeSetup.nAS_PDU = &nas_pdu;

@@ -133,12 +133,12 @@ mme_config_init (
   /*
    * IP configuration
    */
-  mme_config_p->ipv4.sgw_ip_address_for_S1u_S12_S4_up = inet_addr (DEFAULT_SGW_IP_ADDRESS_FOR_S1U_S12_S4_UP);
-  mme_config_p->ipv4.mme_interface_name_for_S1_MME = DEFAULT_MME_INTERFACE_NAME_FOR_S1_MME;
-  mme_config_p->ipv4.mme_ip_address_for_S1_MME = inet_addr (DEFAULT_MME_IP_ADDRESS_FOR_S1_MME);
-  mme_config_p->ipv4.mme_interface_name_for_S11 = DEFAULT_MME_INTERFACE_NAME_FOR_S11;
-  mme_config_p->ipv4.mme_ip_address_for_S11 = inet_addr (DEFAULT_MME_IP_ADDRESS_FOR_S11);
-  mme_config_p->ipv4.sgw_ip_address_for_S11 = inet_addr (DEFAULT_SGW_IP_ADDRESS_FOR_S11);
+  mme_config_p->ipv4.sgw_ip_address_for_S1u_S12_S4_up = 0;
+  mme_config_p->ipv4.mme_interface_name_for_S1_MME = "none";
+  mme_config_p->ipv4.mme_ip_address_for_S1_MME = 0;
+  mme_config_p->ipv4.mme_interface_name_for_S11 = "none";
+  mme_config_p->ipv4.mme_ip_address_for_S11 = 0;
+  mme_config_p->ipv4.sgw_ip_address_for_S11 = 0;
   mme_config_p->s6a_config.conf_file = S6A_CONF_FILE;
   mme_config_p->itti_config.queue_size = ITTI_QUEUE_MAX_ELEMENTS;
   mme_config_p->itti_config.log_file = NULL;

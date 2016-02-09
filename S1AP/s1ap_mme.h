@@ -53,8 +53,8 @@ typedef struct ue_description_s {
 
   enum s1_ue_state_s        s1_ue_state;       ///< S1AP UE state
 
-  unsigned eNB_ue_s1ap_id:24;    ///< Unique UE id over eNB (24 bits wide)
-  uint32_t mme_ue_s1ap_id;    ///< Unique UE id over MME (32 bits wide)
+  enb_ue_s1ap_id_t eNB_ue_s1ap_id:24;    ///< Unique UE id over eNB (24 bits wide)
+  mme_ue_s1ap_id_t mme_ue_s1ap_id;       ///< Unique UE id over MME (32 bits wide)
 
   /** SCTP stream on which S1 message will be sent/received.
    *  During an UE S1 connection, a pair of streams is
@@ -63,11 +63,11 @@ typedef struct ue_description_s {
    *  @name sctp stream identifier
    **/
   /*@{*/
-  uint16_t sctp_stream_recv; ///< eNB -> MME stream
-  uint16_t sctp_stream_send; ///< MME -> eNB stream
+  sctp_stream_id_t sctp_stream_recv; ///< eNB -> MME stream
+  sctp_stream_id_t sctp_stream_send; ///< MME -> eNB stream
   /*@}*/
 
-  uint32_t s11_sgw_teid;
+  s11_teid_t       s11_sgw_teid;
 
   /* Timer for procedure outcome issued by MME that should be answered */
   long outcome_response_timer_id;
@@ -96,10 +96,10 @@ typedef struct eNB_description_s {
 
   /** SCTP stuff **/
   /*@{*/
-  uint32_t sctp_assoc_id;    ///< SCTP association id on this machine
-  uint16_t next_sctp_stream; ///< Next SCTP stream
-  uint16_t instreams;        ///< Number of streams avalaible on eNB -> MME
-  uint16_t outstreams;       ///< Number of streams avalaible on MME -> eNB
+  sctp_assoc_id_t  sctp_assoc_id;    ///< SCTP association id on this machine
+  sctp_stream_id_t next_sctp_stream; ///< Next SCTP stream
+  sctp_stream_id_t instreams;        ///< Number of streams avalaible on eNB -> MME
+  sctp_stream_id_t outstreams;       ///< Number of streams avalaible on MME -> eNB
   /*@}*/
 } eNB_description_t;
 
@@ -122,7 +122,7 @@ eNB_description_t* s1ap_is_eNB_id_in_list(const uint32_t eNB_id);
  * \param eNB_id The unique sctp assoc id to search in list
  * @returns NULL if no eNB matchs the sctp assoc id, or reference to the eNB element in list if matches
  **/
-eNB_description_t* s1ap_is_eNB_assoc_id_in_list(const uint32_t sctp_assoc_id);
+eNB_description_t* s1ap_is_eNB_assoc_id_in_list(const sctp_assoc_id_t sctp_assoc_id);
 
 /** \brief Look for given ue eNB id in the list
  * \param eNB_id The unique ue_eNB_id to search in list
@@ -135,8 +135,8 @@ ue_description_t* s1ap_is_ue_eNB_id_in_list(eNB_description_t *eNB_ref,
  * \param eNB_id The unique ue_mme_id to search in list
  * @returns NULL if no UE matchs the ue_mme_id, or reference to the ue element in list if matches
  **/
-ue_description_t* s1ap_is_ue_mme_id_in_list(const uint32_t ue_mme_id);
-ue_description_t* s1ap_is_s11_sgw_teid_in_list(const uint32_t teid);
+ue_description_t* s1ap_is_ue_mme_id_in_list(const mme_ue_s1ap_id_t ue_mme_id);
+ue_description_t* s1ap_is_s11_sgw_teid_in_list(const s11_teid_t teid);
 
 /** \brief Allocate and add to the list a new eNB descriptor
  * @returns Reference to the new eNB element in list
@@ -147,7 +147,7 @@ eNB_description_t* s1ap_new_eNB(void);
  * \param sctp_assoc_id association ID over SCTP
  * @returns Reference to the new UE element in list
  **/
-ue_description_t* s1ap_new_ue(const uint32_t sctp_assoc_id);
+ue_description_t* s1ap_new_ue(const sctp_assoc_id_t sctp_assoc_id);
 
 /** \brief Dump the eNB list
  * Calls dump_eNB for each eNB in list

@@ -65,7 +65,7 @@ STAILQ_HEAD (eNB_list_s, eNB_description_s)
   void)
 {
   // Create and alloc new message
-  MessageDef                             *message_p;
+  MessageDef                             *message_p = NULL;
 
   message_p = itti_alloc_new_message (TASK_S1AP, SCTP_INIT_MSG);
   message_p->ittiMsg.sctpInit.port = S1AP_PORT_NUMBER;
@@ -88,7 +88,7 @@ void                                   *
 s1ap_mme_thread (
   void *args)
 {
-  MessageDef                             *received_message_p;
+  MessageDef                             *received_message_p = NULL;
 
   itti_mark_task_ready (TASK_S1AP);
   LOG_START_USE ();
@@ -228,7 +228,7 @@ void
 s1ap_dump_eNB_list (
   void)
 {
-  eNB_description_t                      *eNB_ref;
+  eNB_description_t                      *eNB_ref = NULL;
 
   STAILQ_FOREACH (eNB_ref, &eNB_list_head, eNB_entries) {
     s1ap_dump_eNB (eNB_ref);
@@ -240,7 +240,7 @@ s1ap_dump_eNB (
   eNB_description_t * eNB_ref)
 {
 #  ifdef S1AP_DEBUG_LIST
-  ue_description_t                       *ue_ref;
+  ue_description_t                       *ue_ref = NULL;
 
   //Reset indentation
   indent = 0;
@@ -307,7 +307,7 @@ s1ap_is_eNB_id_in_list (
 
 eNB_description_t                      *
 s1ap_is_eNB_assoc_id_in_list (
-  const uint32_t sctp_assoc_id)
+  const sctp_assoc_id_t sctp_assoc_id)
 {
   eNB_description_t                      *eNB_ref;
 
@@ -328,7 +328,7 @@ s1ap_is_eNB_assoc_id_in_list (
 ue_description_t                       *
 s1ap_is_ue_eNB_id_in_list (
   eNB_description_t * eNB_ref,
-  const uint32_t eNB_ue_s1ap_id)
+  const enb_ue_s1ap_id_t eNB_ue_s1ap_id)
 {
   ue_description_t                       *ue_ref;
 
@@ -343,7 +343,7 @@ s1ap_is_ue_eNB_id_in_list (
 
 ue_description_t                       *
 s1ap_is_ue_mme_id_in_list (
-  const uint32_t mme_ue_s1ap_id)
+  const mme_ue_s1ap_id_t mme_ue_s1ap_id)
 {
   ue_description_t                       *ue_ref;
   eNB_description_t                      *eNB_ref;
@@ -361,7 +361,7 @@ s1ap_is_ue_mme_id_in_list (
 
 ue_description_t                       *
 s1ap_is_s11_sgw_teid_in_list (
-  const uint32_t teid)
+  const s11_teid_t teid)
 {
   ue_description_t                       *ue_ref;
   eNB_description_t                      *eNB_ref;
@@ -400,7 +400,7 @@ s1ap_new_eNB (
 
 ue_description_t                       *
 s1ap_new_ue (
-  const uint32_t sctp_assoc_id)
+  const sctp_assoc_id_t sctp_assoc_id)
 {
   eNB_description_t                      *eNB_ref = NULL;
   ue_description_t                       *ue_ref = NULL;

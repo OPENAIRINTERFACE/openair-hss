@@ -45,7 +45,7 @@ typedef struct dmc_malloc_info_s {
 
 //-------------------------------------------------------------------------------------------------------------------------------
 typedef struct dmc_hash_node_s {
-    uint64_t                key;
+    uintptr_t               key;
     dmc_malloc_info_t      *data;
     struct dmc_hash_node_s *next;
 } dmc_hash_node_t;
@@ -76,15 +76,15 @@ dmc_hash_table_t g_dma_free_htbl = {0};
 
 inline static void dma_register_pointer(void* ptr, size_t size);
 inline static void dma_deregister_pointer(void* ptr);
-static dmc_hashtable_rc_t dmc_hashtable_ts_is_key_exists (const dmc_hash_table_t * const hashtblP, const uint64_t keyP);
-static dmc_hashtable_rc_t dmc_hashtable_ts_insert (dmc_hash_table_t * const hashtblP, const uint64_t keyP, dmc_malloc_info_t *dataP);
-static dmc_hashtable_rc_t dmc_hashtable_ts_free (dmc_hash_table_t * const hashtblP, const uint64_t keyP);
-static dmc_hashtable_rc_t dmc_hashtable_ts_remove (dmc_hash_table_t * const hashtblP, const uint64_t keyP, dmc_malloc_info_t **dataP);
+static dmc_hashtable_rc_t dmc_hashtable_ts_is_key_exists (const dmc_hash_table_t * const hashtblP, const uintptr_t keyP);
+static dmc_hashtable_rc_t dmc_hashtable_ts_insert (dmc_hash_table_t * const hashtblP, const uintptr_t keyP, dmc_malloc_info_t *dataP);
+static dmc_hashtable_rc_t dmc_hashtable_ts_free (dmc_hash_table_t * const hashtblP, const uintptr_t keyP);
+static dmc_hashtable_rc_t dmc_hashtable_ts_remove (dmc_hash_table_t * const hashtblP, const uintptr_t keyP, dmc_malloc_info_t **dataP);
 //------------------------------------------------------------------------------
 dmc_hashtable_rc_t
 dmc_hashtable_ts_is_key_exists (
   const dmc_hash_table_t * const hashtblP,
-  const uint64_t keyP)
+  const uintptr_t keyP)
 {
   dmc_hash_node_t                    *node = NULL;
   size_t                              hash = 0;
@@ -109,7 +109,7 @@ dmc_hashtable_ts_is_key_exists (
 dmc_hashtable_rc_t
 dmc_hashtable_ts_insert (
   dmc_hash_table_t * const hashtblP,
-  const uint64_t keyP,
+  const uintptr_t keyP,
   dmc_malloc_info_t *dataP)
 {
   dmc_hash_node_t                        *node = NULL;
@@ -154,7 +154,7 @@ dmc_hashtable_ts_insert (
 dmc_hashtable_rc_t
 dmc_hashtable_ts_free (
     dmc_hash_table_t * const hashtblP,
-  const uint64_t keyP)
+  const uintptr_t keyP)
 {
   dmc_hash_node_t                        *node,
                                          *prevnode = NULL;
@@ -193,7 +193,7 @@ dmc_hashtable_ts_free (
 dmc_hashtable_rc_t
 dmc_hashtable_ts_remove (
   dmc_hash_table_t * const hashtblP,
-  const uint64_t keyP,
+  const uintptr_t keyP,
   dmc_malloc_info_t **dataP)
 {
   dmc_hash_node_t                        *node,
@@ -280,18 +280,18 @@ void dyn_mem_check_exit(void)
 //------------------------------------------------------------------------------
 void dma_register_pointer(void* ptr, size_t size)
 {
-  dmc_hashtable_rc_t  rc = dmc_hashtable_ts_is_key_exists (&g_dma_htbl, (const uint64_t)ptr);
+  dmc_hashtable_rc_t  rc = dmc_hashtable_ts_is_key_exists (&g_dma_htbl, (const uintptr_t)ptr);
   AssertFatal(DMC_HASH_TABLE_KEY_ALREADY_EXISTS != rc , "Memory check error ???");
   dmc_malloc_info_t *info = malloc(sizeof(dmc_malloc_info_t));
   info->size = size;
   info->tid  = pthread_self();
-  rc = dmc_hashtable_ts_insert(&g_dma_htbl, (const uint64_t)ptr, info);
+  rc = dmc_hashtable_ts_insert(&g_dma_htbl, (const uintptr_t)ptr, info);
   AssertFatal(DMC_HASH_TABLE_OK == rc, "Memory Free Error ???");
 
-  rc = dmc_hashtable_ts_is_key_exists (&g_dma_free_htbl, (const uint64_t)ptr);
+  rc = dmc_hashtable_ts_is_key_exists (&g_dma_free_htbl, (const uintptr_t)ptr);
   if (DMC_HASH_TABLE_OK == rc) {
     // may reuse free memory
-    rc = dmc_hashtable_ts_free(&g_dma_free_htbl, (const uint64_t)ptr);
+    rc = dmc_hashtable_ts_free(&g_dma_free_htbl, (const uintptr_t)ptr);
   }
 
 }
@@ -300,13 +300,13 @@ void dma_register_pointer(void* ptr, size_t size)
 void dma_deregister_pointer(void* ptr)
 {
   dmc_malloc_info_t *info = NULL;
-  dmc_hashtable_rc_t  rc = dmc_hashtable_ts_remove(&g_dma_htbl, (const uint64_t)ptr, &info);
+  dmc_hashtable_rc_t  rc = dmc_hashtable_ts_remove(&g_dma_htbl, (const uintptr_t)ptr, &info);
   if (DMC_HASH_TABLE_OK == rc) {
-    rc = dmc_hashtable_ts_insert(&g_dma_free_htbl, (const uint64_t)ptr, info);
+    rc = dmc_hashtable_ts_insert(&g_dma_free_htbl, (const uintptr_t)ptr, info);
     AssertFatal(DMC_HASH_TABLE_OK == rc, "Memory Free Error ???");
   } else {
     // may be already free
-    rc = dmc_hashtable_ts_is_key_exists (&g_dma_free_htbl, (const uint64_t)ptr);
+    rc = dmc_hashtable_ts_is_key_exists (&g_dma_free_htbl, (const uintptr_t)ptr);
     AssertFatal(DMC_HASH_TABLE_OK != rc, "Pointer %p already free", ptr);
     display_backtrace();
     AssertFatal(0, "Trying to free a non allocated pointer %p tid %lx", ptr, pthread_self());

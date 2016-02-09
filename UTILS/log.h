@@ -207,6 +207,8 @@ void log_message (
       char *format,
       ...) __attribute__ ((format (printf, 6, 7)));
 
+int log_get_start_time_sec (void);
+
 #define LOG_SET_CONFIG                                           log_set_config
 #define LOG_LEVEL_STR2INT                                        log_level_str2int
 #define LOG_LEVEL_INT2STR                                        log_level_int2str

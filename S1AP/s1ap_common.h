@@ -386,6 +386,7 @@ extern int asn_debug;
 extern int asn1_xer_print;
 
 # include "mme_default_values.h"
+# include "common_types.h"
 
 //Forward declaration
 struct s1ap_message_s;
@@ -393,9 +394,9 @@ struct s1ap_message_s;
 /** \brief Function callback prototype.
  **/
 typedef int (*s1ap_message_decoded_callback)(
-  uint32_t               assoc_id,
-  uint32_t               stream,
-  struct s1ap_message_s *message_p
+    const sctp_assoc_id_t             assoc_id,
+    const sctp_stream_id_t            stream,
+    struct s1ap_message_s *message_p
 );
 
 /** \brief Encode a successfull outcome message

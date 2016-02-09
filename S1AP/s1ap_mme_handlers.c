@@ -114,9 +114,9 @@ const char                             *s1ap_direction2String[] = {
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_message (
-  uint32_t assoc_id,
-  uint32_t stream,
-  struct s1ap_message_s *message)
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message)
 //------------------------------------------------------------------------------
 {
   /*
@@ -146,8 +146,8 @@ s1ap_mme_handle_message (
 int
 s1ap_mme_set_cause (
   S1ap_Cause_t * cause_p,
-  S1ap_Cause_PR cause_type,
-  long cause_value)
+  const S1ap_Cause_PR cause_type,
+  const long cause_value)
 //------------------------------------------------------------------------------
 {
   DevAssert (cause_p != NULL);
@@ -184,10 +184,10 @@ s1ap_mme_set_cause (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_generate_s1_setup_failure (
-  uint32_t assoc_id,
-  S1ap_Cause_PR cause_type,
-  long cause_value,
-  long time_to_wait)
+    const sctp_assoc_id_t assoc_id,
+    const S1ap_Cause_PR cause_type,
+    const long cause_value,
+    const long time_to_wait)
 //------------------------------------------------------------------------------
 {
   uint8_t                                *buffer_p = 0;
@@ -224,9 +224,9 @@ s1ap_mme_generate_s1_setup_failure (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_s1_setup_request (
-  uint32_t assoc_id,
-  uint32_t stream,
-  struct s1ap_message_s *message)
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message)
 //------------------------------------------------------------------------------
 {
   if (hss_associated) {
@@ -476,9 +476,9 @@ s1ap_generate_s1_setup_response (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_ue_cap_indication (
-  uint32_t assoc_id,
-  uint32_t stream,
-  struct s1ap_message_s *message)
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message)
 //------------------------------------------------------------------------------
 {
   ue_description_t                       *ue_ref_p = NULL;
@@ -542,9 +542,9 @@ s1ap_mme_handle_ue_cap_indication (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_initial_context_setup_response (
-  uint32_t assoc_id,
-  uint32_t stream,
-  struct s1ap_message_s *message)
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message)
 //------------------------------------------------------------------------------
 {
   S1ap_InitialContextSetupResponseIEs_t  *initialContextSetupResponseIEs_p = NULL;
@@ -606,9 +606,9 @@ s1ap_mme_handle_initial_context_setup_response (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_ue_context_release_request (
-  uint32_t assoc_id,
-  uint32_t stream,
-  struct s1ap_message_s *message)
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message)
 //------------------------------------------------------------------------------
 {
   S1ap_UEContextReleaseRequestIEs_t      *ueContextReleaseRequest_p = NULL;
@@ -738,9 +738,9 @@ s1ap_handle_ue_context_release_command (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_ue_context_release_complete (
-  uint32_t assoc_id,
-  uint32_t stream,
-  struct s1ap_message_s *message)
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message)
 //------------------------------------------------------------------------------
 {
   S1ap_UEContextReleaseCompleteIEs_t     *ueContextReleaseComplete_p = NULL;
@@ -781,9 +781,9 @@ s1ap_mme_handle_ue_context_release_complete (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_initial_context_setup_failure (
-  uint32_t assoc_id,
-  uint32_t stream,
-  struct s1ap_message_s *message)
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message)
 //------------------------------------------------------------------------------
 {
   S1ap_InitialContextSetupFailureIEs_t   *initialContextSetupFailureIEs_p = NULL;
@@ -821,9 +821,9 @@ s1ap_mme_handle_initial_context_setup_failure (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_path_switch_request (
-  uint32_t assoc_id,
-  uint32_t stream,
-  struct s1ap_message_s *message)
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    struct s1ap_message_s *message)
 //------------------------------------------------------------------------------
 {
   S1ap_PathSwitchRequestIEs_t            *pathSwitchRequest_p = NULL;
@@ -860,7 +860,7 @@ s1ap_mme_handle_path_switch_request (
 //------------------------------------------------------------------------------
 int
 s1ap_handle_sctp_deconnection (
-  uint32_t assoc_id)
+    const sctp_assoc_id_t assoc_id)
 //------------------------------------------------------------------------------
 {
   int                                     current_ue_index = 0;

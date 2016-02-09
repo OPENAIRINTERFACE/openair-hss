@@ -163,10 +163,15 @@ msc_init (
   int                                     rv = 0;
   void                                   *pointer_p = NULL;
   char                                    msc_filename[256];
-  struct timeval                          start_time = {.tv_sec=0, .tv_usec=0};
 
+#if LOG_OAI
+  // take same time reference as log
+  g_msc_start_time_second = log_get_start_time_sec();
+#else
+  struct timeval                          start_time = {.tv_sec=0, .tv_usec=0};
   rv = gettimeofday(&start_time, NULL);
   g_msc_start_time_second = start_time.tv_sec;
+#endif
 
   fprintf (stderr, "Initializing MSC logs\n");
   rv = snprintf (msc_filename, 256, "/tmp/openair.msc.%u.log", envP);   // TODO NAME

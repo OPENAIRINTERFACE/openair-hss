@@ -129,7 +129,7 @@ s1ap_handle_timer_expiry (
 
 int
 s1ap_timer_remove_ue (
-  const uint32_t mme_ue_s1ap_id)
+  const mme_ue_s1ap_id_t mme_ue_s1ap_id)
 {
   struct s1ap_timer_map_s                *find = NULL;
 

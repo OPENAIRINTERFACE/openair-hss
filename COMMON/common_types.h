@@ -39,6 +39,11 @@
 #ifndef COMMON_TYPES_H_
 #define COMMON_TYPES_H_
 
+
+typedef uint16_t                 sctp_stream_id_t;
+typedef uint32_t                 sctp_assoc_id_t;
+
+
 #define ENB_UE_S1AP_ID_MASK      0x00FFFFFF
 typedef uint32_t                 enb_ue_s1ap_id_t;
 #define ENB_UE_S1AP_ID_FMT       "0x%06"PRIX32
