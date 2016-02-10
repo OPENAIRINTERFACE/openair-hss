@@ -39,8 +39,9 @@
 
 //-------------------------------------------------------------------------------------------------------------------------------
 typedef struct dmc_malloc_info_s {
-    pthread_t                tid;
-    size_t                   size;
+  pthread_t                alloc_tid;
+  pthread_t                free_tid;
+  size_t                   size;
 } dmc_malloc_info_t;
 
 //-------------------------------------------------------------------------------------------------------------------------------
@@ -61,8 +62,6 @@ typedef enum dmc_hashtable_return_code_e {
     DMC_HASH_TABLE_OK                      = 0,
     DMC_HASH_TABLE_INSERT_OVERWRITTEN_DATA = 1,
     DMC_HASH_TABLE_KEY_NOT_EXISTS          = 2,
-    DMC_HASH_TABLE_KEY_ALREADY_EXISTS      = 3,
-    DMC_HASH_TABLE_BAD_PARAMETER_HASHTABLE = 4,
     DMC_HASH_TABLE_SYSTEM_ERROR            = 5,
     DMC_HASH_TABLE_CODE_MAX
 } dmc_hashtable_rc_t;
@@ -281,19 +280,22 @@ void dyn_mem_check_exit(void)
 void dma_register_pointer(void* ptr, size_t size)
 {
   dmc_hashtable_rc_t  rc = dmc_hashtable_ts_is_key_exists (&g_dma_htbl, (const uintptr_t)ptr);
-  AssertFatal(DMC_HASH_TABLE_KEY_ALREADY_EXISTS != rc , "Memory check error ???");
+  AssertFatal(DMC_HASH_TABLE_KEY_NOT_EXISTS == rc , "Pointer not marked free  %p rc = %d\n", ptr, rc);
+  AssertFatal(DMC_HASH_TABLE_OK != rc , "Pointer not marked free ? %p rc = %d\n", ptr, rc);
   dmc_malloc_info_t *info = malloc(sizeof(dmc_malloc_info_t));
   info->size = size;
-  info->tid  = pthread_self();
+  info->alloc_tid  = pthread_self();
+  info->free_tid   = 0;
+  fprintf (stdout, "Registering  %p alloc tid %08lX free tid %08lX\n", ptr, info->alloc_tid, info->free_tid);
   rc = dmc_hashtable_ts_insert(&g_dma_htbl, (const uintptr_t)ptr, info);
-  AssertFatal(DMC_HASH_TABLE_OK == rc, "Memory Free Error ???");
+  AssertFatal(DMC_HASH_TABLE_OK == rc, "Dynamic Memory Alloc Error, could not register pointer %p", ptr);
 
   rc = dmc_hashtable_ts_is_key_exists (&g_dma_free_htbl, (const uintptr_t)ptr);
   if (DMC_HASH_TABLE_OK == rc) {
     // may reuse free memory
+    fprintf (stdout, "Flushing     %p alloc tid %08lX free tid %08lX\n", ptr, info->alloc_tid, info->free_tid);
     rc = dmc_hashtable_ts_free(&g_dma_free_htbl, (const uintptr_t)ptr);
   }
-
 }
 
 //------------------------------------------------------------------------------
@@ -302,6 +304,8 @@ void dma_deregister_pointer(void* ptr)
   dmc_malloc_info_t *info = NULL;
   dmc_hashtable_rc_t  rc = dmc_hashtable_ts_remove(&g_dma_htbl, (const uintptr_t)ptr, &info);
   if (DMC_HASH_TABLE_OK == rc) {
+    info->free_tid = pthread_self();
+    fprintf (stdout, "Freeing      %p alloc tid %08lX free tid %08lX\n", ptr, info->alloc_tid, info->free_tid);
     rc = dmc_hashtable_ts_insert(&g_dma_free_htbl, (const uintptr_t)ptr, info);
     AssertFatal(DMC_HASH_TABLE_OK == rc, "Memory Free Error ???");
   } else {
@@ -309,7 +313,7 @@ void dma_deregister_pointer(void* ptr)
     rc = dmc_hashtable_ts_is_key_exists (&g_dma_free_htbl, (const uintptr_t)ptr);
     AssertFatal(DMC_HASH_TABLE_OK != rc, "Pointer %p already free", ptr);
     display_backtrace();
-    AssertFatal(0, "Trying to free a non allocated pointer %p tid %lx", ptr, pthread_self());
+    AssertFatal(0, "Trying to free a non allocated pointer %p tid %08lX", ptr, pthread_self());
   }
 }
 

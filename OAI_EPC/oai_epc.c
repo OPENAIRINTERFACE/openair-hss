@@ -82,5 +82,6 @@ main (
    * Handle signals here
    */
   itti_wait_tasks_end ();
+  DYN_MEM_CHECK_EXIT();
   return 0;
 }

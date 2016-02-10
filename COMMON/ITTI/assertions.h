@@ -38,11 +38,21 @@
 
 #define _Assert_Exit_                           \
 {                                               \
-    fprintf(stderr, "\nExiting execution\n");   \
-    display_backtrace();                        \
-    fflush(stdout);                             \
-    fflush(stderr);                             \
-    exit(EXIT_FAILURE);                         \
+  fprintf(stderr, "\nExiting execution\n");   \
+  display_backtrace();                        \
+  fflush(stdout);                             \
+  fflush(stderr);                             \
+  exit(EXIT_FAILURE);                         \
+}
+
+#define _Assert_SegFault_                       \
+{                                               \
+  fprintf(stderr, "\n Will Intentionaly raise SEGFAULT!\n");  \
+  display_backtrace();                        \
+  fflush(stdout);                             \
+  fflush(stderr);                             \
+  *(int*)0=0;                                 \
+  exit(EXIT_FAILURE);                         \
 }
 
 #define _Assert_(cOND, aCTION, fORMAT, aRGS...)             \
@@ -55,25 +65,25 @@ do {                                                        \
     }                                                       \
 } while(0)
 
-#define AssertFatal(cOND, fORMAT, aRGS...)          _Assert_(cOND, _Assert_Exit_, fORMAT, ##aRGS)
+#if DEBUG
+#error "DEBUG IS ON"
+#define _ASSERT_FINAL_ _Assert_SegFault_
+#else
+#define _ASSERT_FINAL_ _Assert_Exit_
+#endif
 
-#define AssertError(cOND, aCTION, fORMAT, aRGS...)  _Assert_(cOND, aCTION, fORMAT, ##aRGS)
-
-
-
+#define AssertFatal(cOND, fORMAT, aRGS...)          _Assert_(cOND, _ASSERT_FINAL_ , fORMAT, ##aRGS)
 #define DevCheck(cOND, vALUE1, vALUE2, vALUE3)                                                          \
-_Assert_(cOND, _Assert_Exit_, #vALUE1 ": %" PRIdMAX "\n" #vALUE2 ": %" PRIdMAX "\n" #vALUE3 ": %" PRIdMAX "\n\n",  \
-         (intmax_t)vALUE1, (intmax_t)vALUE2, (intmax_t)vALUE3)
+                        _Assert_(cOND, _ASSERT_FINAL_, #vALUE1 ": %" PRIdMAX "\n" #vALUE2 ": %" PRIdMAX "\n" #vALUE3 ": %" PRIdMAX "\n\n",  \
+                        (intmax_t)vALUE1, (intmax_t)vALUE2, (intmax_t)vALUE3)
 
 #define DevCheck4(cOND, vALUE1, vALUE2, vALUE3, vALUE4)                                                                         \
-_Assert_(cOND, _Assert_Exit_, #vALUE1": %"PRIdMAX"\n"#vALUE2": %"PRIdMAX"\n"#vALUE3": %"PRIdMAX"\n"#vALUE4": %"PRIdMAX"\n\n",   \
-         (intmax_t)vALUE1, (intmax_t)vALUE2, (intmax_t)vALUE3, (intmax_t)vALUE4)
+                        _Assert_(cOND, _ASSERT_FINAL_, #vALUE1": %"PRIdMAX"\n"#vALUE2": %"PRIdMAX"\n"#vALUE3": %"PRIdMAX"\n"#vALUE4": %"PRIdMAX"\n\n",   \
+                        (intmax_t)vALUE1, (intmax_t)vALUE2, (intmax_t)vALUE3, (intmax_t)vALUE4)
 
-#define DevParam(vALUE1, vALUE2, vALUE3)    DevCheck(0, vALUE1, vALUE2, vALUE3)
+#define DevAssert(cOND)                     _Assert_(cOND, _ASSERT_FINAL_, "")
 
-#define DevAssert(cOND)                     _Assert_(cOND, _Assert_Exit_, "")
-
-#define DevMessage(mESSAGE)                 _Assert_(0, _Assert_Exit_, #mESSAGE)
+#define DevMessage(mESSAGE)                 _Assert_(0, _ASSERT_FINAL_, #mESSAGE)
 
 #define CHECK_INIT_RETURN(fCT)                                  \
 do {                                                            \
@@ -86,5 +96,8 @@ do {                                                            \
         exit(EXIT_FAILURE);                                     \
     }                                                           \
 } while(0)
+
+#define AssertError(cOND, aCTION, fORMAT, aRGS...)  _Assert_(cOND, aCTION, fORMAT, ##aRGS)
+#define DevParam(vALUE1, vALUE2, vALUE3)    DevCheck(0, vALUE1, vALUE2, vALUE3)
 
 #endif /* ASSERTIONS_H_ */

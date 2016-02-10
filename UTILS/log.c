@@ -157,13 +157,6 @@ void* log_task (__attribute__ ((unused)) void *args_p)
 
       switch (ITTI_MSG_ID (received_message_p)) {
       case TIMER_HAS_EXPIRED:{
-          //test
-          LOG_TRACE(LOG_UTIL, "TASK_LOG received TIMER_HAS_EXPIRED\n"); {
-            MessageDef                             *message_p = NULL;
-            message_p = itti_alloc_new_message (TASK_LOG, MESSAGE_TEST);
-            itti_send_msg_to_task (TASK_SPGW_APP, INSTANCE_DEFAULT, message_p);
-          }
-
           // if tcp logging is enabled
           if (LOG_TCP_STATE_NOT_CONNECTED == g_oai_log.tcp_state) {
             log_connect_to_server();
@@ -389,11 +382,8 @@ log_init (
 
   fprintf (stdout, "Initializing OAI Logging\n");
 
-  fprintf (stdout, "Initializing OAI logging @-3\n");fflush(stdout);fflush(stderr);
   g_oai_log.thread_context_htbl = hashtable_ts_create (128, NULL, FREE_CHECK, "Logging thread context hashtable");
-  fprintf (stdout, "Initializing OAI logging @-2\n");fflush(stdout);fflush(stderr);
   AssertFatal (NULL != g_oai_log.thread_context_htbl, "Could not create hashtable for Log!\n");
-  fprintf (stdout, "Initializing OAI logging @-1\n");fflush(stdout);fflush(stderr);
 
   log_thread_ctxt_t *thread_ctxt = CALLOC_CHECK(1, sizeof(log_thread_ctxt_t));
   AssertFatal(NULL != thread_ctxt, "Error Could not create log thread context\n");
@@ -405,8 +395,6 @@ log_init (
     FREE_CHECK(thread_ctxt);
   }
 
-  fprintf (stdout, "Initializing OAI logging @0\n");fflush(stdout);fflush(stderr);
-
   rv = lfds611_stack_new (&g_oai_log.log_free_message_queue_p, (lfds611_atom_t) max_threadsP + 2);
 
   if (0 >= rv) {
@@ -416,17 +404,14 @@ log_init (
   rv = lfds611_queue_new (&g_oai_log.log_message_queue_p, (lfds611_atom_t) LOG_MAX_QUEUE_ELEMENTS);
   AssertFatal (rv, "lfds611_queue_new failed!\n");
   AssertFatal (g_oai_log.log_message_queue_p != NULL, "g_oai_log.log_message_queue_p is NULL!\n");
-  fprintf (stdout, "Initializing OAI logging @1\n");fflush(stdout);
   log_start_use ();
 
-  fprintf (stdout, "Initializing OAI logging @2\n");fflush(stdout);
   for (i = 0; i < max_threadsP * 30; i++) {
     item_p = CALLOC_CHECK (1, sizeof(log_queue_item_t));
     AssertFatal (item_p, "MALLOC_CHECK failed!\n");
     rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
     AssertFatal (rv, "lfds611_stack_guaranteed_push failed for item %u\n", i);
   }
-  fprintf (stdout, "Initializing OAI logging @3\n");fflush(stdout);
 
   rv = snprintf (&g_oai_log.log_proto2str[LOG_SCTP][0], LOG_MAX_PROTO_NAME_LENGTH, "SCTP");
   rv = snprintf (&g_oai_log.log_proto2str[LOG_UDP][0], LOG_MAX_PROTO_NAME_LENGTH, "UDP");
@@ -463,9 +448,7 @@ log_init (
     g_oai_log.log_level2str[i][LOG_LEVEL_NAME_MAX_LENGTH-1]     = '\0';
   }
 
-  fprintf (stderr, "Initializing OAI logging Done\n");fflush(stdout);
   log_message (thread_ctxt, LOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing OAI logging Done\n");
-  fprintf (stderr, "Initializing OAI logging Done2\n");fflush(stdout);
   return 0;
 }
 

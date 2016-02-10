@@ -48,10 +48,7 @@
 #include "intertask_interface.h"
 #include "intertask_interface_dump.h"
 
-#if OAI_EMU
-#  include "memory_pools.h"
-#  include "vcd_signal_dumper.h"
-#endif
+#include "memory_pools.h"
 
 /* Includes "intertask_interface_init.h" to check prototype coherence, but
    disable threads and messages information generation.
@@ -82,6 +79,9 @@ const int                               itti_debug = ITTI_DEBUG_ISSUES | ITTI_DE
 /* Global message size */
 #define MESSAGE_SIZE(mESSAGEiD) (sizeof(MessageHeader) + itti_desc.messages_info[mESSAGEiD].size)
 
+#define VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME(...)
+#define VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(...)
+#define VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_ENQUEUE_MESSAGE(...)
 
 typedef enum task_state_s {
   TASK_STATE_NOT_CONFIGURED, TASK_STATE_STARTING, TASK_STATE_READY, TASK_STATE_ENDED, TASK_STATE_MAX,
@@ -179,13 +179,11 @@ typedef struct itti_desc_s {
   volatile uint32_t                       ready_tasks;
   volatile int                            wait_tasks;
 
-#if OAI_EMU
   memory_pools_handle_t                   memory_pools_handle;
 
   uint64_t                                vcd_poll_msg;
   uint64_t                                vcd_receive_msg;
   uint64_t                                vcd_send_msg;
-#endif
 } itti_desc_t;
 
 static itti_desc_t                      itti_desc;
@@ -198,7 +196,6 @@ itti_malloc (
 {
   void                                   *ptr = NULL;
 
-#if OAI_EMU
   ptr = memory_pools_allocate (itti_desc.memory_pools_handle, size, origin_task_id, destination_task_id);
 
   if (ptr == NULL) {
@@ -207,9 +204,6 @@ itti_malloc (
     LOG_ERROR (LOG_ITTI, " Memory pools statistics:\n%s", statistics);
     FREE_CHECK (statistics);
   }
-#else
-  ptr = MALLOC_CHECK (size);
-#endif
   AssertFatal (ptr != NULL, "Memory allocation of %d bytes failed (%d -> %d)!\n", (int)size, origin_task_id, destination_task_id);
   return ptr;
 }
@@ -222,13 +216,9 @@ itti_free (
   int                                     result = EXIT_SUCCESS;
 
   AssertFatal (ptr != NULL, "Trying to free a NULL pointer (%d)!\n", task_id);
-#if OAI_EMU
   result = memory_pools_free (itti_desc.memory_pools_handle, ptr, task_id);
   AssertError (result == EXIT_SUCCESS, {
                }, "Failed to free memory at %p (%d)!\n", ptr, task_id);
-#else
-  FREE_CHECK (ptr);
-#endif
   return (result);
 }
 
@@ -358,9 +348,7 @@ itti_alloc_new_message_sized (
   MessageDef                             *temp = NULL;
 
   AssertFatal (message_id < itti_desc.messages_id_max, "Message id (%d) is out of range (%d)!\n", message_id, itti_desc.messages_id_max);
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_ALLOC_MSG, size);
-#endif
 
   if (origin_task_id == TASK_UNKNOWN) {
     /*
@@ -373,9 +361,7 @@ itti_alloc_new_message_sized (
   temp->ittiMsgHeader.messageId = message_id;
   temp->ittiMsgHeader.originTaskId = origin_task_id;
   temp->ittiMsgHeader.ittiMsgSize = size;
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_ALLOC_MSG, 0);
-#endif
   return temp;
 }
 
@@ -400,9 +386,7 @@ itti_send_msg_to_task (
   message_number_t                        message_number;
   uint32_t                                message_id;
 
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_SEND_MSG, __sync_or_and_fetch (&itti_desc.vcd_send_msg, 1L << destination_task_id));
-#endif
   AssertFatal (message != NULL, "Message is NULL!\n");
   AssertFatal (destination_task_id < itti_desc.task_max, "Destination task id (%d) is out of range (%d)\n", destination_task_id, itti_desc.task_max);
   destination_thread_id = TASK_GET_THREAD_ID (destination_task_id);
@@ -421,10 +405,8 @@ itti_send_msg_to_task (
   itti_dump_queue_message (origin_task_id, message_number, message, itti_desc.messages_info[message_id].name, sizeof (MessageHeader) + message->ittiMsgHeader.ittiMsgSize);
 
   if (destination_task_id != TASK_UNKNOWN) {
-#if OAI_EMU
     VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_ENQUEUE_MESSAGE, VCD_FUNCTION_IN);
     memory_pools_set_info (itti_desc.memory_pools_handle, message, 1, destination_task_id);
-#endif
 
     if (itti_desc.threads[destination_thread_id].task_state == TASK_STATE_ENDED) {
       ITTI_DEBUG (ITTI_DEBUG_ISSUES, " Message %s, number %lu with priority %d can not be sent from %s to queue (%u:%s), ended destination task!\n",
@@ -450,9 +432,7 @@ itti_send_msg_to_task (
        * Enqueue message in destination task queue
        */
       lfds611_queue_enqueue (itti_desc.tasks[destination_task_id].message_queue, new);
-#if OAI_EMU
       VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_ENQUEUE_MESSAGE, VCD_FUNCTION_OUT);
-#endif
       {
         /*
          * Only use event fd for tasks, subtasks will pool the queue
@@ -481,9 +461,7 @@ itti_send_msg_to_task (
     AssertFatal (result == EXIT_SUCCESS, "Failed to free memory (%d)!\n", result);
   }
 
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_SEND_MSG, __sync_and_and_fetch (&itti_desc.vcd_send_msg, ~(1L << destination_task_id)));
-#endif
   return 0;
 }
 
@@ -644,13 +622,9 @@ itti_receive_msg (
   task_id_t task_id,
   MessageDef ** received_msg)
 {
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_RECV_MSG, __sync_and_and_fetch (&itti_desc.vcd_receive_msg, ~(1L << task_id)));
-#endif
   itti_receive_msg_internal_event_fd (task_id, 0, received_msg);
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_RECV_MSG, __sync_or_and_fetch (&itti_desc.vcd_receive_msg, 1L << task_id));
-#endif
 }
 
 void
@@ -660,9 +634,7 @@ itti_poll_msg (
 {
   AssertFatal (task_id < itti_desc.task_max, "Task id (%d) is out of range (%d)!\n", task_id, itti_desc.task_max);
   *received_msg = NULL;
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_POLL_MSG, __sync_or_and_fetch (&itti_desc.vcd_poll_msg, 1L << task_id));
-#endif
   {
     struct message_list_s                  *message;
 
@@ -678,9 +650,7 @@ itti_poll_msg (
   if (*received_msg == NULL) {
     ITTI_DEBUG (ITTI_DEBUG_POLL, " No message in queue[(%u:%s)]\n", task_id, itti_get_task_name (task_id));
   }
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_POLL_MSG, __sync_and_and_fetch (&itti_desc.vcd_poll_msg, ~(1L << task_id)));
-#endif
 }
 
 int
@@ -763,13 +733,11 @@ void
 itti_exit_task (
   void)
 {
-#if OAI_EMU
   task_id_t                               task_id = itti_get_current_task_id ();
 
   if (task_id > TASK_UNKNOWN) {
     VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_ITTI_RECV_MSG, __sync_and_and_fetch (&itti_desc.vcd_receive_msg, ~(1L << task_id)));
   }
-#endif
   pthread_exit (NULL);
 }
 
@@ -885,7 +853,6 @@ itti_init (
   itti_desc.created_tasks = 0;
   itti_desc.ready_tasks = 0;
 
-#if OAI_EMU
   itti_desc.memory_pools_handle = memory_pools_create (5);
   memory_pools_add_pool (itti_desc.memory_pools_handle, 1000 + ITTI_QUEUE_MAX_ELEMENTS, 50);
   memory_pools_add_pool (itti_desc.memory_pools_handle, 1000 + (2 * ITTI_QUEUE_MAX_ELEMENTS), 100);
@@ -898,12 +865,9 @@ itti_init (
     ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s", statistics);
     FREE_CHECK (statistics);
   }
-#endif
-#if OAI_EMU
   itti_desc.vcd_poll_msg = 0;
   itti_desc.vcd_receive_msg = 0;
   itti_desc.vcd_send_msg = 0;
-#endif
   itti_dump_init (messages_definition_xml, dump_file_name);
   CHECK_INIT_RETURN (timer_init ());
   LOG_ITTI_CONNECT();
@@ -971,14 +935,12 @@ itti_wait_tasks_end (
 
   LOG_INFO (LOG_ITTI,  "ready_tasks %d", ready_tasks);
   itti_desc.running = 0;
-#if OAI_EMU
   {
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s\n", statistics);
     FREE_CHECK (statistics);
   }
-#endif
 
   if (ready_tasks > 0) {
     ITTI_DEBUG (ITTI_DEBUG_ISSUES, " Some threads are still running, force exit\n");

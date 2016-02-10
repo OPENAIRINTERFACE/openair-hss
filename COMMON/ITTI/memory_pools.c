@@ -38,10 +38,12 @@ const static int                        mp_debug = 0;
 #define MP_DEBUG(x, args...) do { if (mp_debug) fprintf(stdout, "[MP][D]"x, ##args); fflush (stdout); } \
   while(0)
 
-#if OAI_EMU
+#define VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME(...)
+#define VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(...)
+#define VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_ENQUEUE_MESSAGE(...)
+
 uint64_t                                vcd_mp_alloc;
 uint64_t                                vcd_mp_free;
-#endif
 
 /*------------------------------------------------------------------------------*/
 #define CHARS_TO_UINT32(c1, c2, c3, c4) (((c1) << 24) | ((c2) << 16) | ((c3) << 8) | (c4))
@@ -464,9 +466,7 @@ memory_pools_allocate (
   pool_id_t                               pool;
   items_group_index_t                     item_index = ITEMS_GROUP_INDEX_INVALID;
 
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_ALLOC, __sync_or_and_fetch (&vcd_mp_alloc, 1L << info_0));
-#endif
   /*
    * Recover memory_pools
    */
@@ -517,9 +517,7 @@ memory_pools_allocate (
     MP_DEBUG (" Alloc [--][------]{------}, %3u %3u, %6u, failed!\n", info_0, info_1, item_size);
   }
 
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_ALLOC, __sync_and_and_fetch (&vcd_mp_alloc, ~(1L << info_0)));
-#endif
   return memory_pool_item_handle;
 }
 
@@ -549,9 +547,7 @@ memory_pools_free (
   memory_pool_item = memory_pool_item_from_handler (memory_pool_item_handle);
   AssertError (memory_pool_item != NULL, return (EXIT_FAILURE), "Failed to retrieve memory pool item for handle %p!\n", memory_pool_item_handle);
   info_1 = memory_pool_item->start.info[1];
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_FREE_CHECK, __sync_or_and_fetch (&vcd_mp_free, 1L << info_1));
-#endif
   /*
    * Recover pool index
    */
@@ -582,9 +578,7 @@ memory_pools_free (
   AssertError (result == EXIT_SUCCESS, {
                }
                , "Failed to free memory pool item (pool %u, item %d)!\n", pool, item_index);
-#if OAI_EMU
   VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_FREE_CHECK, __sync_and_and_fetch (&vcd_mp_free, ~(1L << info_1)));
-#endif
   return (result);
 }
 

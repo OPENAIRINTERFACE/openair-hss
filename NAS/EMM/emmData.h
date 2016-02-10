@@ -191,6 +191,10 @@ typedef struct emm_data_context_s {
   struct nas_timer_t T3470; /* Identification timer         */
 
   esm_data_context_t esm_data_ctx;
+
+#  define EMM_CN_SAP_BUFFER_SIZE 4096
+  char                             emm_cn_sap_buffer[EMM_CN_SAP_BUFFER_SIZE];
+
 } emm_data_context_t;
 
 /*

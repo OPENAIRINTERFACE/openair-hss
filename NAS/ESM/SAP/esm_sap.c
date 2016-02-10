@@ -107,12 +107,6 @@ static const char                      *_esm_sap_primitive_str[] = {
   "ESM_UNITDATA_IND",
 };
 
-/*
-   Buffer used to encode ESM messages before being returned to the EPS
-   Mobility Management sublayer in order to be sent onto the network
-*/
-#define ESM_SAP_BUFFER_SIZE 4096
-static char                             _esm_sap_buffer[ESM_SAP_BUFFER_SIZE];
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -306,7 +300,6 @@ esm_sap_send (
  **             turned upon ESM procedure completion       **
  **      err:       Error code of the ESM procedure            **
  **      Return:    RETURNok, RETURNerror                      **
- **      Others:    _esm_sap_buffer                            **
  **                                                                        **
  ***************************************************************************/
 static int
@@ -713,12 +706,12 @@ _esm_sap_recv (
     /*
      * Encode the returned ESM response message
      */
-    int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) _esm_sap_buffer,
+    int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) ctx->esm_data_ctx.esm_sap_buffer,
                                                                    ESM_SAP_BUFFER_SIZE);
 
     if (size > 0) {
       rsp->length = size;
-      rsp->value = (uint8_t *) (_esm_sap_buffer);
+      rsp->value = (uint8_t *) (ctx->esm_data_ctx.esm_sap_buffer);
     }
 
     /*
@@ -769,7 +762,6 @@ _esm_sap_recv (
  ** Outputs:     rsp:       The encoded ESM response message to be re- **
  **             turned upon ESM procedure completion       **
  **      Return:    RETURNok, RETURNerror                      **
- **      Others:    _esm_sap_buffer                            **
  **                                                                        **
  ***************************************************************************/
 static int
@@ -831,11 +823,11 @@ _esm_sap_send (
     /*
      * Encode the returned ESM response message
      */
-    int size = esm_msg_encode (&esm_msg, (uint8_t *) _esm_sap_buffer, ESM_SAP_BUFFER_SIZE);
+    int size = esm_msg_encode (&esm_msg, (uint8_t *) ctx->esm_data_ctx.esm_sap_buffer, ESM_SAP_BUFFER_SIZE);
 
     if (size > 0) {
       rsp->length = size;
-      rsp->value = (uint8_t *) (_esm_sap_buffer);
+      rsp->value = (uint8_t *) (ctx->esm_data_ctx.esm_sap_buffer);
     }
 
     /*

@@ -189,6 +189,15 @@ typedef struct esm_data_context_s {
   } pdn[ESM_DATA_PDN_MAX+1];
 
   esm_ebr_data_t ebr;
+
+  /*
+     Buffer used to encode ESM messages before being returned to the EPS
+     Mobility Management sublayer in order to be sent onto the network.
+     Used in _esm_sap_send(), _esm_sap_recv().
+     TODO: May be not the best place to put this buffer, but better than global variable as it was before
+  */
+  #define ESM_SAP_BUFFER_SIZE 4096
+  char           esm_sap_buffer[ESM_SAP_BUFFER_SIZE];
 } esm_data_context_t;
 
 

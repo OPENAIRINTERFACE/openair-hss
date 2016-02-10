@@ -81,8 +81,6 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMM_CN_PDN_CONNECTIVITY_FAIL",
 };
 
-#  define EMM_CN_SAP_BUFFER_SIZE 4096
-static char                             _emm_cn_sap_buffer[EMM_CN_SAP_BUFFER_SIZE];
 
 static int
 _emm_cn_authentication_res (
@@ -315,14 +313,14 @@ _emm_cn_pdn_connectivity_res (
     /*
      * Encode the returned ESM response message
      */
-    int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) _emm_cn_sap_buffer,
+    int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) emm_ctx_p->emm_cn_sap_buffer,
                                                                    EMM_CN_SAP_BUFFER_SIZE);
 
     LOG_INFO (LOG_NAS_EMM, "ESM encoded MSG size %d\n", size);
 
     if (size > 0) {
       rsp.length = size;
-      rsp.value = (uint8_t *) (_emm_cn_sap_buffer);
+      rsp.value = (uint8_t *) (emm_ctx_p->emm_cn_sap_buffer);
     }
 
     /*
