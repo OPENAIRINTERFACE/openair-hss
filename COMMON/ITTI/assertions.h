@@ -47,7 +47,7 @@
 
 #define _Assert_SegFault_                       \
 {                                               \
-  fprintf(stderr, "\n Will Intentionaly raise SEGFAULT!\n");  \
+  fprintf(stderr, "\n Will Intentionaly raise SEGFAULT to be catched by GDB!\n");  \
   display_backtrace();                        \
   fflush(stdout);                             \
   fflush(stderr);                             \

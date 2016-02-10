@@ -56,6 +56,7 @@
 #include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 #include <string.h>
 #include <assert.h>
+#include <pthread.h>
 
 #include "assertions.h"
 
@@ -73,7 +74,7 @@ static void                             _emm_common_cleanup (
 
 /* Ongoing EMM procedure callback functions */
 typedef struct emm_common_data_s {
-  unsigned int                            ueid;
+  nas_ue_id_t                             ueid;
   int                                     ref_count;
   emm_common_success_callback_t           success;
   emm_common_reject_callback_t            reject;
@@ -84,12 +85,13 @@ typedef struct emm_common_data_s {
 } emm_common_data_t;
 
 typedef struct emm_common_data_head_s {
+  pthread_mutex_t                         mutex;
   RB_HEAD (
   emm_common_data_map,
   emm_common_data_s) emm_common_data_root;
 } emm_common_data_head_t;
 
-emm_common_data_head_t                  emm_common_data_head = { RB_INITIALIZER () };
+emm_common_data_head_t                  emm_common_data_head = { PTHREAD_MUTEX_INITIALIZER, RB_INITIALIZER () };
 
 static inline int                       emm_common_data_compare_ueid (
   struct emm_common_data_s *p1,
@@ -125,15 +127,19 @@ emm_common_data_compare_ueid (
 struct emm_common_data_s               *
 emm_common_data_context_get (
   struct emm_common_data_head_s *root,
-  unsigned int _ueid)
+  nas_ue_id_t _ueid)
 {
   struct emm_common_data_s                reference;
+  struct emm_common_data_s               *reference_p = NULL;
 
   DevAssert (root );
   DevCheck (_ueid > 0, _ueid, 0, 0);
   memset (&reference, 0, sizeof (struct emm_common_data_s));
   reference.ueid = _ueid;
-  return RB_FIND (emm_common_data_map, &root->emm_common_data_root, &reference);
+  pthread_mutex_lock(&root->mutex);
+  reference_p = RB_FIND (emm_common_data_map, &root->emm_common_data_root, &reference);
+  pthread_mutex_unlock(&root->mutex);
+  return reference_p;
 }
 
 
@@ -183,7 +189,9 @@ emm_proc_common_initialize (
   if (emm_common_data_ctx == NULL) {
     emm_common_data_ctx = (emm_common_data_t *) CALLOC_CHECK (1, sizeof (emm_common_data_t));
     emm_common_data_ctx->ueid = ueid;
+    pthread_mutex_lock(&emm_common_data_head.mutex);
     RB_INSERT (emm_common_data_map, &emm_common_data_head.emm_common_data_root, emm_common_data_ctx);
+    pthread_mutex_unlock(&emm_common_data_head.mutex);
 
     if (emm_common_data_ctx) {
       emm_common_data_ctx->ref_count = 0;
@@ -191,7 +199,7 @@ emm_proc_common_initialize (
   }
 
   if (emm_common_data_ctx) {
-    emm_common_data_ctx->ref_count += 1;
+    __sync_fetch_and_add(&emm_common_data_ctx->ref_count, 1);
     emm_common_data_ctx->success = _success;
     emm_common_data_ctx->reject = _reject;
     emm_common_data_ctx->failure = _failure;
@@ -430,13 +438,15 @@ _emm_common_cleanup (
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
 
   if (emm_common_data_ctx) {
-    emm_common_data_ctx->ref_count -= 1;
+    __sync_fetch_and_sub(&emm_common_data_ctx->ref_count, 1);
 
     if (emm_common_data_ctx->ref_count == 0) {
       /*
        * Release the callback functions
        */
+      pthread_mutex_lock(&emm_common_data_head.mutex);
       RB_REMOVE (emm_common_data_map, &emm_common_data_head.emm_common_data_root, emm_common_data_ctx);
+      pthread_mutex_unlock(&emm_common_data_head.mutex);
       FREE_CHECK (emm_common_data_ctx);
       emm_common_data_ctx = NULL;
     }

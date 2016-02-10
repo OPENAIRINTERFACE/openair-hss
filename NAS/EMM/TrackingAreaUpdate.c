@@ -361,7 +361,7 @@ emm_proc_tracking_area_update_request (
       ue_ctx->gea,
       ue_ctx->umts_present,
       ue_ctx->gprs_present,
-      _emm_tracking_area_update_accept,
+      _emm_tracking_area_update,
       _emm_tracking_area_update_reject,
       _emm_tracking_area_update_reject);
     LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -536,8 +536,8 @@ _emm_tracking_area_update (
     data->retransmission_count = 0;
     rc = RETURNok;
 
+    // Send TAU accept to the UE
     rc = _emm_tracking_area_update_accept (emm_ctx, data);
-
   } else {
     /*
      * The TAU procedure failed
@@ -714,9 +714,9 @@ _emm_tracking_area_update_accept (
   tau_accept_data_t * data)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  emm_sap_t                               emm_sap = {0};
   int                                     i = 0;
   int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
 
   // may be caused by timer not stopped when deleted context
   if (emm_ctx) {

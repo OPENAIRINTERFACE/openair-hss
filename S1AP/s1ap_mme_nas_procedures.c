@@ -64,16 +64,19 @@ s1ap_mme_handle_initial_ue_message (
   enb_ue_s1ap_id_t                        eNB_ue_s1ap_id = 0;
 
   initialUEMessage_p = &message->msg.s1ap_InitialUEMessageIEs;
+
+  LOG_INFO (LOG_S1AP, "Received S1AP INITIAL_UE_MESSAGE eNB_UE_S1AP_ID " ENB_UE_S1AP_ID_FMT "\n", (enb_ue_s1ap_id_t)initialUEMessage_p->eNB_UE_S1AP_ID);
+
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 initialUEMessage/%s assoc_id %u stream %u " ENB_UE_S1AP_ID_FMT " ",
-          s1ap_direction2String[message->direction], assoc_id, stream, initialUEMessage_p->eNB_UE_S1AP_ID);
+          s1ap_direction2String[message->direction], assoc_id, stream, (enb_ue_s1ap_id_t)initialUEMessage_p->eNB_UE_S1AP_ID);
 
   if ((eNB_ref = s1ap_is_eNB_assoc_id_in_list (assoc_id)) == NULL) {
-    LOG_DEBUG (LOG_S1AP, "Unkwnon eNB on assoc_id %d\n", assoc_id);
+    LOG_WARNING (LOG_S1AP, "Unkwnon eNB on assoc_id %d\n", assoc_id);
     return -1;
   }
   // eNB UE S1AP ID is limited to 24 bits
   eNB_ue_s1ap_id = (enb_ue_s1ap_id_t) (initialUEMessage_p->eNB_UE_S1AP_ID & 0x00ffffff);
-  LOG_DEBUG (LOG_S1AP, "New Initial UE message received with eNB UE S1AP ID: " ENB_UE_S1AP_ID_FMT "\n", eNB_ue_s1ap_id);
+  LOG_INFO (LOG_S1AP, "New Initial UE message received with eNB UE S1AP ID: " ENB_UE_S1AP_ID_FMT "\n", eNB_ue_s1ap_id);
   ue_ref = s1ap_is_ue_eNB_id_in_list (eNB_ref, eNB_ue_s1ap_id);
 
   if (ue_ref == NULL) {
@@ -181,20 +184,27 @@ s1ap_mme_handle_uplink_nas_transport (
   ue_description_t                       *ue_ref = NULL;
 
   uplinkNASTransport_p = &message->msg.s1ap_UplinkNASTransportIEs;
+
+  LOG_INFO (LOG_S1AP, "Received S1AP UPLINK_NAS_TRANSPORT message MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT "\n",
+      (mme_ue_s1ap_id_t)uplinkNASTransport_p->mme_ue_s1ap_id);
+
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
                       NULL, 0,
                       "0 uplinkNASTransport/%s mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " eNB_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " nas len %u",
-                      s1ap_direction2String[message->direction], uplinkNASTransport_p->mme_ue_s1ap_id, uplinkNASTransport_p->eNB_UE_S1AP_ID,
+                      s1ap_direction2String[message->direction],
+                      (mme_ue_s1ap_id_t)uplinkNASTransport_p->mme_ue_s1ap_id,
+                      (enb_ue_s1ap_id_t)uplinkNASTransport_p->eNB_UE_S1AP_ID,
                       uplinkNASTransport_p->nas_pdu.size);
 
   if (!(ue_ref = s1ap_is_ue_mme_id_in_list (uplinkNASTransport_p->mme_ue_s1ap_id))) {
-    LOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n", (int)uplinkNASTransport_p->mme_ue_s1ap_id);
+    LOG_WARNING (LOG_S1AP, "Received S1AP UPLINK_NAS_TRANSPORT No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n",
+        (mme_ue_s1ap_id_t)uplinkNASTransport_p->mme_ue_s1ap_id);
     return -1;
   }
 
   if (S1AP_UE_CONNECTED != ue_ref->s1_ue_state) {
-    LOG_DEBUG (LOG_S1AP, "Received uplink NAS transport while UE in state != S1AP_UE_CONNECTED\n");
+    LOG_WARNING (LOG_S1AP, "Received S1AP UPLINK_NAS_TRANSPORT while UE in state != S1AP_UE_CONNECTED\n");
     return -1;
   }
   s1ap_mme_itti_nas_uplink_ind (uplinkNASTransport_p->mme_ue_s1ap_id, uplinkNASTransport_p->nas_pdu.buf, uplinkNASTransport_p->nas_pdu.size);
@@ -216,25 +226,33 @@ s1ap_mme_handle_nas_non_delivery (
    * UE associated signalling on stream == 0 is not valid.
    */
   if (stream == 0) {
-    LOG_DEBUG (LOG_S1AP, "Received new nas non delivery on stream == 0\n");
+    LOG_NOTICE (LOG_S1AP, "Received S1AP NAS_NON_DELIVERY_INDICATION message on invalid sctp stream 0\n");
     return -1;
   }
 
   nasNonDeliveryIndication_p = &message->msg.s1ap_NASNonDeliveryIndication_IEs;
+
+  LOG_NOTICE (LOG_S1AP, "Received S1AP NAS_NON_DELIVERY_INDICATION message MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " eNB_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n",
+      (mme_ue_s1ap_id_t)nasNonDeliveryIndication_p->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)nasNonDeliveryIndication_p->eNB_UE_S1AP_ID);
+
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
                       NULL, 0,
                       "0 NASNonDeliveryIndication/%s mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " eNB_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " cause %u nas len %u",
-                      s1ap_direction2String[message->direction], nasNonDeliveryIndication_p->mme_ue_s1ap_id, nasNonDeliveryIndication_p->eNB_UE_S1AP_ID, nasNonDeliveryIndication_p->cause, nasNonDeliveryIndication_p->nas_pdu.size);
+                      s1ap_direction2String[message->direction],
+                      (mme_ue_s1ap_id_t)nasNonDeliveryIndication_p->mme_ue_s1ap_id,
+                      (enb_ue_s1ap_id_t)nasNonDeliveryIndication_p->eNB_UE_S1AP_ID,
+                      nasNonDeliveryIndication_p->cause,
+                      nasNonDeliveryIndication_p->nas_pdu.size);
 
   if ((ue_ref = s1ap_is_ue_mme_id_in_list (nasNonDeliveryIndication_p->mme_ue_s1ap_id))
       == NULL) {
-    LOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n", (int)nasNonDeliveryIndication_p->mme_ue_s1ap_id);
+    LOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n", (mme_ue_s1ap_id_t)nasNonDeliveryIndication_p->mme_ue_s1ap_id);
     return -1;
   }
 
   if (ue_ref->s1_ue_state != S1AP_UE_CONNECTED) {
-    LOG_DEBUG (LOG_S1AP, "Received uplink NASNonDeliveryIndication while UE in state != S1AP_UE_CONNECTED\n");
+    LOG_DEBUG (LOG_S1AP, "Received S1AP NAS_NON_DELIVERY_INDICATION while UE in state != S1AP_UE_CONNECTED\n");
     return -1;
   }
   //TODO: forward NAS PDU to NAS
@@ -286,13 +304,13 @@ s1ap_generate_downlink_nas_transport (
       return -1;
     }
 
-    LOG_DEBUG (LOG_S1AP, "Send S1ap_ProcedureCode_id_downlinkNASTransport ue_id = " MME_UE_S1AP_ID_FMT " mme_ue_s1ap_id = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
-                ue_id, (uint32_t)downlinkNasTransport->mme_ue_s1ap_id, (uint32_t)downlinkNasTransport->eNB_UE_S1AP_ID);
+    LOG_NOTICE (LOG_S1AP, "Send S1AP DOWNLINK_NAS_TRANSPORT message ue_id = " MME_UE_S1AP_ID_FMT " MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
+                ue_id, (mme_ue_s1ap_id_t)downlinkNasTransport->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)downlinkNasTransport->eNB_UE_S1AP_ID);
     MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                         MSC_S1AP_ENB,
                         NULL, 0,
                         "0 downlinkNASTransport/initiatingMessage ue_id " MME_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " eNB_ue_s1ap_id" ENB_UE_S1AP_ID_FMT " nas length %u",
-                        ue_id, (uint32_t)downlinkNasTransport->mme_ue_s1ap_id, (uint32_t)downlinkNasTransport->eNB_UE_S1AP_ID, size);
+                        ue_id, (mme_ue_s1ap_id_t)downlinkNasTransport->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)downlinkNasTransport->eNB_UE_S1AP_ID, size);
     s1ap_mme_itti_send_sctp_request (buffer_p, length, ue_ref->eNB->sctp_assoc_id, ue_ref->sctp_stream_send);
   }
 
@@ -433,10 +451,13 @@ s1ap_handle_conn_est_cnf (
   }
 
   FREE_CHECK (conn_est_cnf_pP->nas_conn_est_cnf.nasMsg.data);
+  LOG_NOTICE (LOG_S1AP, "Send S1AP_INITIAL_CONTEXT_SETUP_REQUEST message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
+              (mme_ue_s1ap_id_t)initialContextSetupRequest_p->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)initialContextSetupRequest_p->eNB_UE_S1AP_ID);
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
                       NULL, 0,
                       "0 InitialContextSetup/initiatingMessage mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " eNB_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " nas length %u",
-                      initialContextSetupRequest_p->mme_ue_s1ap_id, initialContextSetupRequest_p->eNB_UE_S1AP_ID, nas_pdu.size);
+                      (mme_ue_s1ap_id_t)initialContextSetupRequest_p->mme_ue_s1ap_id,
+                      (enb_ue_s1ap_id_t)initialContextSetupRequest_p->eNB_UE_S1AP_ID, nas_pdu.size);
   s1ap_mme_itti_send_sctp_request (buffer_p, length, ue_ref->eNB->sctp_assoc_id, ue_ref->sctp_stream_send);
 }
