@@ -351,25 +351,12 @@ _emm_as_recv (
     decode_status = &local_decode_status;
   }
 
-#if NAS_BUILT_IN_EPC
-  emm_data_context_t                     *emm_ctx = NULL;
-#endif
-#if NAS_BUILT_IN_EPC
-  emm_ctx = emm_data_context_get (&_emm_data, ueid);
+  emm_data_context_t     *emm_ctx =  emm_data_context_get (&_emm_data, ueid);
 
   if (emm_ctx) {
     emm_security_context = emm_ctx->security;
   }
-#else
 
-  if (ueid < EMM_DATA_NB_UE_MAX) {
-    emm_ctx = _emm_data.ctx[ueid];
-
-    if (emm_ctx) {
-      emm_security_context = emm_ctx->security;
-    }
-  }
-#endif
   /*
    * Decode the received message
    */
@@ -539,21 +526,13 @@ _emm_as_data_ind (
          */
         emm_data_context_t                     *emm_ctx = NULL;
 
-#if NAS_BUILT_IN_EPC
         if (msg->ueid > 0) {
           emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
           if (emm_ctx) {
             security = emm_ctx->security;
           }
         }
-#else
-        if (msg->ueid < EMM_DATA_NB_UE_MAX) {
-          emm_ctx = _emm_data.ctx[msg->ueid];
-          if (emm_ctx) {
-            security = emm_ctx->security;
-          }
-        }
-#endif
+
         int  bytes = nas_message_decrypt ((char *)(msg->NASmsg.value),
             plain_msg,
             &header,
@@ -637,14 +616,7 @@ _emm_as_establish_req (
 
   memset (&nas_msg, 0, sizeof (nas_message_t));
   memset (&decode_status, 0, sizeof (decode_status));
-#if NAS_BUILT_IN_EPC
   emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
-#else
-
-  if (msg->ueid < EMM_DATA_NB_UE_MAX) {
-    emm_ctx = _emm_data.ctx[msg->ueid];
-  }
-#endif
 
   if (emm_ctx) {
     LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - got context %p security %p\n", emm_ctx, emm_ctx->security);
@@ -1088,7 +1060,6 @@ _emm_as_send (
    * Send the message to the Access Stratum or S1AP in case of MME
    */
   if (as_msg.msgID > 0) {
-#if NAS_BUILT_IN_EPC
     LOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - " "Sending msg with id 0x%x, primitive %s (%d) to S1AP layer for transmission\n", as_msg.msgID, _emm_as_primitive_str[msg->primitive - _EMMAS_START - 1], msg->primitive);
 
     switch (as_msg.msgID) {
@@ -1123,7 +1094,6 @@ _emm_as_send (
       break;
     }
 
-#endif
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
@@ -1198,14 +1168,7 @@ _emm_as_data_req (
     emm_security_context_t                 *emm_security_context = NULL;
     struct emm_data_context_s              *emm_ctx = NULL;
 
-#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
-#else
-
-    if (msg->ueid < EMM_DATA_NB_UE_MAX) {
-      emm_ctx = _emm_data.ctx[msg->ueid];
-    }
-#endif
 
     if (emm_ctx) {
       emm_security_context = emm_ctx->security;
@@ -1291,14 +1254,7 @@ _emm_as_status_ind (
     emm_security_context_t                 *emm_security_context = NULL;
     struct emm_data_context_s              *emm_ctx = NULL;
 
-#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
-#else
-
-    if (msg->ueid < EMM_DATA_NB_UE_MAX) {
-      emm_ctx = _emm_data.ctx[msg->ueid];
-    }
-#endif
 
     if (emm_ctx) {
       emm_security_context = emm_ctx->security;
@@ -1457,14 +1413,8 @@ _emm_as_security_req (
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
-#else
 
-    if (msg->ueid < EMM_DATA_NB_UE_MAX) {
-      emm_ctx = _emm_data.ctx[msg->ueid];
-    }
-#endif
 
     if (emm_ctx) {
       emm_security_context = emm_ctx->security;
@@ -1558,14 +1508,8 @@ _emm_as_security_rej (
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
-#else
 
-    if (msg->ueid < EMM_DATA_NB_UE_MAX) {
-      emm_ctx = _emm_data.ctx[msg->ueid];
-    }
-#endif
 
     if (emm_ctx) {
       emm_security_context = emm_ctx->security;
@@ -1665,14 +1609,7 @@ _emm_as_establish_cnf (
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
-#else
-
-    if (msg->ueid < EMM_DATA_NB_UE_MAX) {
-      emm_ctx = _emm_data.ctx[msg->ueid];
-    }
-#endif
 
     if (emm_ctx) {
       emm_security_context = emm_ctx->security;
@@ -1787,14 +1724,7 @@ _emm_as_establish_rej (
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-#if NAS_BUILT_IN_EPC
     emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
-#else
-
-    if (msg->ueid < EMM_DATA_NB_UE_MAX) {
-      emm_ctx = _emm_data.ctx[msg->ueid];
-    }
-#endif
 
     if (emm_ctx) {
       emm_security_context = emm_ctx->security;

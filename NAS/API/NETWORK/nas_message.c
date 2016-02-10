@@ -428,11 +428,9 @@ nas_message_decode (
     }
 
 
-#if NAS_BUILT_IN_EPC
     /*
      * Log message header
      */
-#endif
     /*
      * Decode security protected NAS message
      */
@@ -543,11 +541,10 @@ nas_message_encode (
         LOG_DEBUG (LOG_NAS, "Did not increment emm_security_context.dl_count.seq_num because no security context");
       }
     }
-#if NAS_BUILT_IN_EPC
     /*
      * Log message header
      */
-#endif
+
   } else {
     /*
      * Encode plain NAS message

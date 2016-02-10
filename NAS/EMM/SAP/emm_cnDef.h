@@ -37,26 +37,21 @@ Description
 
 *****************************************************************************/
 
-#if NAS_BUILT_IN_EPC
-#include "intertask_interface.h"
-#endif
 
 #ifndef __EMM_CNDEF_H__
 #define __EMM_CNDEF_H__
+#include "intertask_interface.h"
 
 typedef enum emmcn_primitive_s {
   _EMMCN_START = 400,
-#if NAS_BUILT_IN_EPC
   _EMMCN_AUTHENTICATION_PARAM_RES,
   _EMMCN_AUTHENTICATION_PARAM_FAIL,
   _EMMCN_DEREGISTER_UE,
   _EMMCN_PDN_CONNECTIVITY_RES, // LG
   _EMMCN_PDN_CONNECTIVITY_FAIL,// LG
-#endif
   _EMMCN_END
 } emm_cn_primitive_t;
 
-#if NAS_BUILT_IN_EPC
 typedef nas_auth_param_rsp_t        emm_cn_auth_res_t;
 typedef nas_auth_param_fail_t       emm_cn_auth_fail_t;
 typedef nas_pdn_connectivity_rsp_t  emm_cn_pdn_res_t;
@@ -76,6 +71,5 @@ typedef struct emm_mme_ul_s {
     emm_cn_pdn_fail_t       *emm_cn_pdn_fail;
   } u;
 } emm_cn_t;
-#endif
 
 #endif /* __EMM_CNDEF_H__ */

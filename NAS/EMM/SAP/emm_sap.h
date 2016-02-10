@@ -105,13 +105,11 @@ typedef enum {
   EMMAS_CELL_INFO_RES     = _EMMAS_CELL_INFO_RES,
   EMMAS_CELL_INFO_IND     = _EMMAS_CELL_INFO_IND,
 
-#if NAS_BUILT_IN_EPC
   EMMCN_AUTHENTICATION_PARAM_RES      = _EMMCN_AUTHENTICATION_PARAM_RES,
   EMMCN_AUTHENTICATION_PARAM_FAIL     = _EMMCN_AUTHENTICATION_PARAM_FAIL,
   EMMCN_DEREGISTER_UE                 = _EMMCN_DEREGISTER_UE,
   EMMCN_PDN_CONNECTIVITY_RES          = _EMMCN_PDN_CONNECTIVITY_RES,
   EMMCN_PDN_CONNECTIVITY_FAIL         = _EMMCN_PDN_CONNECTIVITY_FAIL
-#endif
 } emm_primitive_t;
 
 /*
@@ -143,9 +141,7 @@ typedef struct emm_sap_s {
     emm_reg_t emm_reg;  /* EMMREG-SAP primitives    */
     emm_esm_t emm_esm;  /* EMMESM-SAP primitives    */
     emm_as_t  emm_as;   /* EMMAS-SAP primitives     */
-#if NAS_BUILT_IN_EPC
     emm_cn_t  emm_cn;   /* EMMCN-SAP primitives     */
-#endif
   } u;
 } emm_sap_t;
 

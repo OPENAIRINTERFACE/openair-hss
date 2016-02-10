@@ -257,17 +257,10 @@ emm_proc_identification_complete (
   /*
    * Get the UE context
    */
-#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
   }
-#else
-
-  if (ueid < EMM_DATA_NB_UE_MAX) {
-    emm_ctx = _emm_data.ctx[ueid];
-  }
-#endif
 
   if (emm_ctx) {
     /*

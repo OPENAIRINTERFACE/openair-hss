@@ -50,10 +50,8 @@ Description Defines internal private data handled by EPS Mobility
 
 #include "emm_fsm.h"
 #include "mme_api.h"
-# if NAS_BUILT_IN_EPC
-#   include "obj_hashtable.h"
-#   include "hashtable.h"
-# endif
+#include "obj_hashtable.h"
+#include "hashtable.h"
 
 #include "UeNetworkCapability.h"
 #include "MsNetworkCapability.h"
@@ -211,13 +209,8 @@ typedef struct emm_data_s {
    * EMM contexts
    * ------------
    */
-# if NAS_BUILT_IN_EPC
   hash_table_t    *ctx_coll_ue_id;// key is emm ue id, data is struct emm_data_context_s
   obj_hash_table_t    *ctx_coll_guti; // key is guti, data is emm ue id (unsigned int)
-# else
-#   define EMM_DATA_NB_UE_MAX   (MME_API_NB_UE_MAX + 1)
-  emm_data_context_t *ctx [EMM_DATA_NB_UE_MAX];
-# endif
 } emm_data_t;
 
 struct emm_data_context_s *emm_data_context_get(

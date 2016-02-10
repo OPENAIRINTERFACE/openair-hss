@@ -206,17 +206,11 @@ emm_proc_security_mode_control (
 
   LOG_FUNC_IN (LOG_NAS_EMM);
   LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate security mode control procedure " "KSI = %d EEA = %d EIA = %d", ksi, eea, eia);
-#if NAS_BUILT_IN_EPC
 
   if (ueid > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ueid);
   }
-#else
 
-  if (ueid < EMM_DATA_NB_UE_MAX) {
-    emm_ctx = _emm_data.ctx[ueid];
-  }
-#endif
 
   if (emm_ctx && emm_ctx->security) {
     if (emm_ctx->security->type == EMM_KSI_NOT_AVAILABLE) {

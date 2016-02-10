@@ -172,8 +172,8 @@ hashtable_ts_create (
 
   if (!(hashtbl->lock_nodes = CALLOC_CHECK (1, sizeP * sizeof (pthread_mutex_t)))) {
     FREE_CHECK (hashtbl->nodes);
-    FREE_CHECK (hashtbl);
     FREE_CHECK (hashtbl->name);
+    FREE_CHECK (hashtbl);
     return NULL;
   }
 

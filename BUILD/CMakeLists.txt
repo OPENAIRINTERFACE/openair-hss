@@ -197,7 +197,6 @@ add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating seq
 ##########################
 add_boolean_option( EPC_BUILD                       False    "BUILD MME-xGW executable")
 add_boolean_option( GTPV1U_LINEAR_TEID_ALLOCATION   False    "Teid allocation id mode versus pseudo random")
-add_boolean_option( NAS_BUILT_IN_EPC                True     "MME NAS layer present in the executable, should remain enabled for most of the targets")
 # S1AP LAYER OPTIONS
 ##########################
 add_boolean_option(S1AP_DEBUG_LIST                  False    "Traces, option to be removed soon")

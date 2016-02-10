@@ -29,7 +29,6 @@
 #define TASK_ORIGIN  TASK_NAS_MME
 
 
-#if NAS_BUILT_IN_EPC
 static const uint8_t                    emm_message_ids[] = {
   ATTACH_REQUEST,
   ATTACH_ACCEPT,
@@ -111,7 +110,7 @@ nas_itti_plain_msg (
   const int length,
   const int down_link)
 {
-  MessageDef                             *message_p;
+  MessageDef                             *message_p = NULL;
   int                                     data_length = length < NAS_DATA_LENGHT_MAX ? length : NAS_DATA_LENGHT_MAX;
   int                                     message_type = -1;
   MessagesIds                             messageId_raw = -1;
@@ -190,18 +189,14 @@ nas_itti_protected_msg (
 
   return EXIT_FAILURE;
 }
-#endif
 
-#if NAS_BUILT_IN_EPC
 int
 nas_itti_dl_data_req (
   const uint32_t ue_id,
   void *const data,
   const uint32_t length)
 {
-  MessageDef                             *message_p;
-
-  message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_DOWNLINK_DATA_REQ);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_DOWNLINK_DATA_REQ);
   NAS_DL_DATA_REQ (message_p).UEid = ue_id;
   NAS_DL_DATA_REQ (message_p).nasMsg.data = data;
   NAS_DL_DATA_REQ (message_p).nasMsg.length = length;
@@ -209,4 +204,3 @@ nas_itti_dl_data_req (
   return itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
 }
 
-#endif

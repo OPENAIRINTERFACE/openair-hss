@@ -1101,29 +1101,28 @@ _emm_attach_identify (
        */
       rc = _emm_attach_security (emm_ctx);
     }
-#if !NAS_BUILT_IN_EPC
-    else {
-      /*
-       * 3GPP TS 24.401, Figure 5.3.2.1-1, point 5a
-       * No EMM context exists for the UE in the network; authentication
-       * and NAS security setup to activate integrity protection and NAS
-       * ciphering are mandatory.
-       */
-      auth_vector_t                          *auth = &emm_ctx->vector;
-      const OctetString                       loc_rand = { AUTH_RAND_SIZE, (uint8_t *) auth->rand };
-      const OctetString                       autn = { AUTH_AUTN_SIZE, (uint8_t *) auth->autn };
-      rc = emm_proc_authentication (emm_ctx, emm_ctx->ueid, 0,  // TODO: eksi != 0
-                                    &loc_rand, &autn, _emm_attach_security, _emm_attach_release, _emm_attach_release);
-
-      if (rc != RETURNok) {
-        /*
-         * Failed to initiate the authentication procedure
-         */
-        LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to initiate authentication procedure\n");
-        emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
-      }
-    }
-
+#if 0
+//    else {
+//      /*
+//       * 3GPP TS 24.401, Figure 5.3.2.1-1, point 5a
+//       * No EMM context exists for the UE in the network; authentication
+//       * and NAS security setup to activate integrity protection and NAS
+//       * ciphering are mandatory.
+//       */
+//      auth_vector_t                          *auth = &emm_ctx->vector;
+//      const OctetString                       loc_rand = { AUTH_RAND_SIZE, (uint8_t *) auth->rand };
+//      const OctetString                       autn = { AUTH_AUTN_SIZE, (uint8_t *) auth->autn };
+//      rc = emm_proc_authentication (emm_ctx, emm_ctx->ueid, 0,  // TODO: eksi != 0
+//                                    &loc_rand, &autn, _emm_attach_security, _emm_attach_release, _emm_attach_release);
+//
+//      if (rc != RETURNok) {
+//        /*
+//         * Failed to initiate the authentication procedure
+//         */
+//        LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to initiate authentication procedure\n");
+//        emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+//      }
+//    }
 #endif
   }
 

@@ -199,9 +199,9 @@ sctp_get_localaddresses (
   struct sockaddr **local_addr,
   int *nb_local_addresses)
 {
-  int                                     nb,
-                                          j;
-  struct sockaddr                        *temp_addr_p;
+  int                                     nb = 0,
+                                          j = 0;
+  struct sockaddr                        *temp_addr_p = NULL;
 
   if ((nb = sctp_getladdrs (sock, -1, &temp_addr_p)) <= 0) {
     LOG_ERROR (LOG_SCTP, "Failed to retrieve local addresses\n");
@@ -213,21 +213,19 @@ sctp_get_localaddresses (
 
   for (j = 0; j < nb; j++) {
     if (temp_addr_p[j].sa_family == AF_INET) {
-      char                                    address[16];
-      struct sockaddr_in                     *addr;
+      char                                    address[16] = {0};
+      struct sockaddr_in                     *addr = NULL;
 
-      memset (address, 0, sizeof (address));
       addr = (struct sockaddr_in *)&temp_addr_p[j];
 
       if (inet_ntop (AF_INET, &addr->sin_addr, address, sizeof (address)) != NULL) {
         LOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
       }
     } else {
-      struct sockaddr_in6                    *addr;
-      char                                    address[40];
+      struct sockaddr_in6                    *addr = NULL;
+      char                                    address[40] = {0};
 
       addr = (struct sockaddr_in6 *)&temp_addr_p[j];
-      memset (address, 0, sizeof (address));
 
       if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
         LOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);

@@ -53,7 +53,7 @@ emm_data_context_get_by_guti (
   GUTI_t * guti)
 {
   hashtable_rc_t                          h_rc;
-  unsigned int                            emm_ue_id;
+  unsigned int                            emm_ue_id = 0;
 
   DevAssert (emm_data );
 

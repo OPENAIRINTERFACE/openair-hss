@@ -38,18 +38,14 @@ Description Defines internal private data handled by EPS Session
 *****************************************************************************/
 #include <stdio.h>  // sprintf
 
-#include "networkDef.h"
-#include "OctetString.h"
-#include "EpsBearerIdentity.h"
-
-#include "mme_api.h"
-
-#if NAS_BUILT_IN_EPC
-# include "tree.h"
-#endif
 
 #ifndef __ESMDATA_H__
 #define __ESMDATA_H__
+#include "networkDef.h"
+#include "OctetString.h"
+#include "EpsBearerIdentity.h"
+#include "mme_api.h"
+#include "tree.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

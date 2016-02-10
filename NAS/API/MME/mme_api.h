@@ -39,9 +39,7 @@ Description Implements the API used by the NAS layer running in the MME
 #ifndef __MME_API_H__
 #define __MME_API_H__
 
-# if NAS_BUILT_IN_EPC
-#   include "mme_config.h"
-# endif
+#include "mme_config.h"
 #include "commonDef.h"
 #include "securityDef.h"
 #include "OctetString.h"
@@ -120,12 +118,8 @@ typedef struct mme_api_tft_s {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#if NAS_BUILT_IN_EPC
 int mme_api_get_emm_config(mme_api_emm_config_t *config,
                            mme_config_t *mme_config_p);
-#else
-int mme_api_get_emm_config(mme_api_emm_config_t *config);
-#endif
 int mme_api_get_esm_config(mme_api_esm_config_t *config);
 
 int

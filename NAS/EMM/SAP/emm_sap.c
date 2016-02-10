@@ -130,7 +130,6 @@ emm_sap_send (
     msg->u.emm_as.primitive = primitive;
     rc = emm_as_send (&msg->u.emm_as);
   }
-#if NAS_BUILT_IN_EPC
   else if ((primitive > (emm_primitive_t) EMMCN_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMCN_PRIMITIVE_MAX)) {
     /*
      * Forward to the EMMCN-SAP
@@ -138,7 +137,6 @@ emm_sap_send (
     msg->u.emm_cn.primitive = primitive;
     rc = emm_cn_send (&msg->u.emm_cn);
   }
-#endif
   else {
     LOG_WARNING (LOG_NAS_EMM, "EMM-SAP -   Out of range primitive (%d)\n", primitive);
   }
