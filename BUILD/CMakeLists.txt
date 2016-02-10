@@ -191,6 +191,7 @@ add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 add_boolean_option( DISABLE_ITTI_DETECT_SUB_TASK_ID False    " ")
 add_boolean_option( DISPLAY_LICENCE_INFO            False    "If a module has a licence banner to show")
 add_boolean_option( ENABLE_ITTI                     True     "ITTI is internal messaging, should remain enabled for most targets")
+add_boolean_option( ENABLE_ITTI_ANALYZER            False    "ITTI Analyzer is a GUI based on GTK that displays the ITTI messages exchanged between tasks")
 add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
 # NAS LAYER OPTIONS
 ##########################
@@ -217,12 +218,16 @@ if (${ENABLE_ITTI})
     # add .h files if depend on (this one is generated)
     ${ITTI_DIR}/intertask_interface.h
     ${ITTI_DIR}/intertask_interface.c
-    ${ITTI_DIR}/intertask_interface_dump.c
     ${ITTI_DIR}/backtrace.c
     ${ITTI_DIR}/memory_pools.c
     ${ITTI_DIR}/signals.c
     ${ITTI_DIR}/timer.c
     )
+if (${ENABLE_ITTI_ANALYZER})
+add_library(ITTI
+    ${ITTI_DIR}/intertask_interface_dump.c )
+endif (${ENABLE_ITTI_ANALYZER})
+    
   set(ITTI_LIB ITTI)
 endif (${ENABLE_ITTI})
 
@@ -777,13 +782,16 @@ add_definitions(-DASN1_MINIMUM_VERSION=924)
 # MME + S/P-GW implementation in one process
 ################################
 add_executable(mme_gw
-  ${OPENAIRCN_BIN_DIR}/messages_xml.h
   ${OPENAIRCN_DIR}/OAI_EPC/oai_epc_log.c
   ${OPENAIRCN_DIR}/OAI_EPC/oai_epc.c
   ${GTPV1U_DIR}/gtpv1u_task.c
   ${OPENAIRCN_DIR}/SCTP/sctp_primitives_server.c
   ${OPENAIRCN_DIR}/NAS/nas_mme_task.c
   )
+if( ITTI_ANALYZER )
+add_executable(mme_gw
+  ${OPENAIRCN_BIN_DIR}/messages_xml.h )
+endif( ITTI_ANALYZER )
 target_link_libraries (mme_gw
 #SECU_OSA
   -Wl,--start-group
@@ -795,12 +803,15 @@ target_link_libraries (mme_gw
 # MME standalone in one process
 ################################
 add_executable(mme
-  ${OPENAIRCN_BIN_DIR}/messages_xml.h
   ${OPENAIRCN_DIR}/OAI_MME/oai_mme_log.c
   ${OPENAIRCN_DIR}/OAI_MME/oai_mme.c
   ${OPENAIRCN_DIR}/SCTP/sctp_primitives_server.c
   ${OPENAIRCN_DIR}/NAS/nas_mme_task.c
   )
+if( ITTI_ANALYZER )
+add_executable(mme
+  ${OPENAIRCN_BIN_DIR}/messages_xml.h )
+endif( ITTI_ANALYZER )
 target_link_libraries (mme
 #SECU_OSA
   -Wl,--start-group
@@ -813,11 +824,14 @@ target_link_libraries (mme
 # oai_sgw is SGW  node implementation
 ################################
 add_executable(spgw
-  ${OPENAIRCN_BIN_DIR}/messages_xml.h
   ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw_log.c
   ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw.c
   ${GTPV1U_DIR}/gtpv1u_task.c
   )
+if( ITTI_ANALYZER )
+add_executable(spgw
+  ${OPENAIRCN_BIN_DIR}/messages_xml.h )
+endif( ITTI_ANALYZER )
 target_link_libraries (spgw
   -Wl,--start-group
   GTPV1U SECU_CN SGW S11 GTPV1U GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
@@ -989,6 +1003,7 @@ foreach( d ${DirDefs} )
 endforeach()
 
 set (ITTI_H ${ITTI_DIR}/intertask_interface_types.h)
+if( ITTI_ANALYZER )
 add_custom_command (
   OUTPUT ${OPENAIRCN_BIN_DIR}/messages.xml
   COMMAND gccxml ${itti_compiler_options} -fxml=${OPENAIRCN_BIN_DIR}/messages.xml ${ITTI_H}
@@ -1000,7 +1015,7 @@ add_custom_command (
   COMMAND sed -e 's/ *//'   -e 's/\"/\\\\\"/g' -e 's/^/\"/' -e 's/$$/\\\\n\"/' ${OPENAIRCN_BIN_DIR}/messages.xml  > ${OPENAIRCN_BIN_DIR}/messages_xml.h
   DEPENDS ${OPENAIRCN_BIN_DIR}/messages.xml 
   )
-
+endif(ITTI_ANALYZER)
 
 
 

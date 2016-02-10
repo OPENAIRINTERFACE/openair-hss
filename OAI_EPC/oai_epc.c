@@ -64,7 +64,13 @@ main (
    * Parse the command line for options and set the mme_config accordingly.
    */
   CHECK_INIT_RETURN (config_parse_opt_line (argc, argv, &mme_config) < 0);
-  CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, messages_definition_xml, mme_config.itti_config.log_file));
+  CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info,
+#if ENABLE_ITTI_ANALYZER
+          messages_definition_xml,
+#else
+          NULL,
+#endif
+          mme_config.itti_config.log_file));
   MSC_INIT (MSC_MME_GW, THREAD_MAX + TASK_MAX);
   /*
    * Calling each layer init function

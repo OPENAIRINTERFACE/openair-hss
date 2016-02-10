@@ -62,7 +62,13 @@ main (
    * Calling each layer init function
    */
   //CHECK_INIT_RETURN (log_init (&mme_config, oai_sgw_log_specific));
-  CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, messages_definition_xml, NULL));
+  CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info,
+#if ENABLE_ITTI_ANALYZER
+          messages_definition_xml,
+#else
+          NULL,
+#endif
+          NULL));
   MSC_INIT (MSC_SP_GW, THREAD_MAX + TASK_MAX);
   CHECK_INIT_RETURN (udp_init (&mme_config));
   CHECK_INIT_RETURN (s11_sgw_init (&mme_config));
