@@ -65,8 +65,7 @@ do {                                                        \
     }                                                       \
 } while(0)
 
-#if DEBUG
-#error "DEBUG IS ON"
+#if DEBUG_IS_ON
 #define _ASSERT_FINAL_ _Assert_SegFault_
 #else
 #define _ASSERT_FINAL_ _Assert_Exit_

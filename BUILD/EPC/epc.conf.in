@@ -163,7 +163,7 @@ MME :
         S6A_LOG_LEVEL     = "TRACE";
         UTIL_LOG_LEVEL    = "TRACE";
         MSC_LOG_LEVEL     = "ERROR";
-        ITTI_LOG_LEVEL    = "DEBUG";
+        ITTI_LOG_LEVEL    = "ERROR";
         
         # ASN1 VERBOSITY: none, info, annoying
         # for S1AP protocol
