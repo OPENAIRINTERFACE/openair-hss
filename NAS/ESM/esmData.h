@@ -144,7 +144,7 @@ typedef struct esm_bearer_s {
 typedef struct esm_pdn_s {
   unsigned int pti;   /* Identity of the procedure transaction executed
              * to activate the PDN connection entry     */
-  int is_emergency;   /* Emergency bearer services indicator      */
+  bool is_emergency;   /* Emergency bearer services indicator      */
   OctetString apn;    /* Access Point Name currently in used      */
   int ambr;       /* Aggregate Maximum Bit Rate of this APN   */
   int type;       /* Address PDN type (IPv4, IPv6, IPv4v6)    */
@@ -173,16 +173,16 @@ typedef struct esm_pdn_s {
  * a PDN connection.
  */
 typedef struct esm_data_context_s {
-  unsigned int ue_id;
+  nas_ue_id_t ue_id;
 
   int n_ebrs;     /* Total number of active EPS bearer contexts   */
   int n_pdns;     /* Number of active PDN connections     */
-  int emergency;  /* Indicates whether a PDN connection for emergency
+  bool is_emergency;  /* Indicates whether a PDN connection for emergency
              * bearer services is established       */
 #define ESM_DATA_PDN_MAX    4
   struct {
     int pid;     /* Identifier of the PDN connection        */
-    int is_active;   /* true/false if the PDN connection is active/inactive
+    bool is_active;   /* true/false if the PDN connection is active/inactive
               * or the process to activate/deactivate the PDN
               * connection is in progress           */
     esm_pdn_t *data; /* Active PDN connection data          */
@@ -221,16 +221,10 @@ typedef struct esm_data_s {
    * ESM contexts
    * ------------
    */
-# if NAS_BUILT_IN_EPC
   /* Use a tree for ue data context within MME */
   RB_HEAD(esm_data_context_map, esm_data_context_s) ctx_map;
-# else
-#   define ESM_DATA_NB_UE_MAX  (MME_API_NB_UE_MAX + 1)
-  esm_data_context_t *ctx[ESM_DATA_NB_UE_MAX];
-# endif
 } esm_data_t;
 
-# if NAS_BUILT_IN_EPC
 
 void free_esm_data_context(esm_data_context_t * esm_data_ctx);
 
@@ -241,8 +235,6 @@ struct esm_data_context_s *esm_data_context_remove(
   esm_data_t *esm_data, struct esm_data_context_s *elm);
 
 void esm_data_context_add(esm_data_t *esm_data, struct esm_data_context_s *elm);
-
-# endif
 
 
 /****************************************************************************/

@@ -60,6 +60,7 @@ function help()
   echo_error "                                        0 -> ASN1 XER printf off"
   echo_error "                                        1 -> ASN1 XER printf on and ASN1 debug off"
   echo_error "                                        2 -> ASN1 XER printf on and ASN1 debug on"
+  echo_error "  -V, --valgrind                      Run with valgrind."
 }
 
 function do_msc_gen()
@@ -81,6 +82,7 @@ function control_c()
 function main()
 {
   local -i run_gdb=0
+  local -i run_valgrind=0
   local -i set_network_interfaces=0
   local    exe_arguments=" "
   local    epc_config_file=$g_epc_default_config_file
@@ -167,6 +169,11 @@ function main()
         exe_arguments="-v $verbosity_level $exe_arguments"
         shift 2;
         ;;
+      -V | --valgrind)
+        run_valgrind=1
+        echo "setting valgrind flag to: $run_valgrind"
+        shift;
+        ;;
       *)   
         echo "Unknown option $1"
         help
@@ -197,13 +204,22 @@ function main()
     set_epc_network_interfaces $epc_config_file
   fi
 
+  if [ "$run_valgrind" -eq 1 ] && [ "$run_gdb" -eq 1 ]; then 
+    echo_fatal "Cannot run gdb and valgrind at the same time"
+  fi
+
+
 
   exe_arguments="-O $epc_config_file $exe_arguments"
 
   if [ $run_gdb -eq 0 ]; then 
     # trap keyboard interrupt (control-c)
     trap control_c SIGINT
-    $SUDO mme_gw  `echo $exe_arguments` 2>&1 
+    if [ "$run_valgrind" -eq 1 ]; then 
+      $SUDO valgrind --leak-check=yes mme_gw  `echo $exe_arguments` 2>&1
+    else
+      $SUDO mme_gw  `echo $exe_arguments` 2>&1
+    fi 
   else
     # trap keyboard interrupt (control-c) is done by gdb
     $SUDO touch      ~/.gdb_mme_gw

@@ -42,6 +42,7 @@ Description Defines the EMMREG Service Access Point that provides
 #define __EMM_REGDEF_H__
 
 #include "commonDef.h"
+#include <stdbool.h>
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -84,7 +85,7 @@ typedef enum {
  * -------------------------------------
  */
 typedef struct {
-  int is_emergency;   /* true if the UE was attempting to register to
+  bool is_emergency;   /* true if the UE was attempting to register to
              * the network for emergency services only  */
 } emm_reg_attach_t;
 
@@ -93,7 +94,7 @@ typedef struct {
  * -------------------------------------
  */
 typedef struct {
-  int switch_off; /* true if the UE is switched off       */
+  bool switch_off; /* true if the UE is switched off       */
   int type;       /* Network detach type              */
 } emm_reg_detach_t;
 
@@ -102,7 +103,7 @@ typedef struct {
  * ------------------------------------------
  */
 typedef struct {
-  int is_attached;    /* UE context attach indicator          */
+  bool is_attached;    /* UE context attach indicator          */
 } emm_reg_common_t;
 
 /*

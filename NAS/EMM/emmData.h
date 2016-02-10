@@ -143,9 +143,9 @@ typedef struct emm_security_context_s {
  */
 typedef struct emm_data_context_s {
   nas_ue_id_t ueid;        /* UE identifier                                   */
-  int          is_dynamic;  /* Dynamically allocated context indicator         */
-  int          is_attached; /* Attachment indicator                            */
-  int          is_emergency;/* Emergency bearer services indicator             */
+  bool          is_dynamic;  /* Dynamically allocated context indicator         */
+  bool          is_attached; /* Attachment indicator                            */
+  bool          is_emergency;/* Emergency bearer services indicator             */
 
   imsi_t      *imsi;        /* The IMSI provided by the UE or the MME          */
   imei_t      *imei;        /* The IMEI provided by the UE                     */

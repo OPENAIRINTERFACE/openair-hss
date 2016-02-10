@@ -338,7 +338,7 @@ emm_proc_tracking_area_update_request (
    */
   if ((! ue_ctx->security) &&
       (_emm_data.conf.eps_network_feature_support & EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE_SUPPORTED) &&
-      (0 < ue_ctx->is_emergency)) {
+      (ue_ctx->is_emergency)) {
     if ( ue_ctx->ue_network_capability_ie) {
       // overwrite previous values
       ue_ctx->eea = ue_ctx->ue_network_capability_ie->eea;

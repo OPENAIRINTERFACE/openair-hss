@@ -393,7 +393,7 @@ msc_flush_messages (
   void)
 //------------------------------------------------------------------------------
 {
-  int                                     rv;
+  int                                     rv = 0;
   msc_queue_item_t                       *item_p = NULL;
 
   while ((rv = lfds611_queue_dequeue (g_msc_message_queue_p, (void **)&item_p)) == 1) {
@@ -416,7 +416,7 @@ msc_end (
   void)
 //------------------------------------------------------------------------------
 {
-  int                                     rv;
+  int                                     rv = 0;
 
   if (NULL != g_msc_fd) {
     msc_flush_messages ();
@@ -500,8 +500,8 @@ msc_log_event (
 //------------------------------------------------------------------------------
 {
   va_list                                 args;
-  int                                     rv;
-  int                                     rv2;
+  int                                     rv = 0;
+  int                                     rv2 = 0;
   msc_queue_item_t                       *new_item_p = NULL;
   char                                   *char_message_p = NULL;
 
@@ -585,8 +585,8 @@ msc_log_message (
 {
   va_list                                 args;
   uint64_t                                mac = 0;      // TO DO mac on bytesP param
-  int                                     rv;
-  int                                     rv2;
+  int                                     rv = 0;
+  int                                     rv2 = 0;
   msc_queue_item_t                       *new_item_p = NULL;
   char                                   *char_message_p = NULL;
 

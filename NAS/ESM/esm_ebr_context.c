@@ -204,7 +204,7 @@ esm_ebr_context_create (
          * Update the emergency bearer services indicator
          */
         if (pdn->is_emergency) {
-          esm_ctx->emergency = true;
+          esm_ctx->is_emergency = true;
         }
       }
 
@@ -415,7 +415,7 @@ esm_ebr_context_release (
        * Update the emergency bearer services indicator
        */
       if (pdn->is_emergency) {
-        esm_ctx->emergency = false;
+        esm_ctx->is_emergency = false;
       }
     }
 
