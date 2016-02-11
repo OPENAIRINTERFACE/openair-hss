@@ -70,7 +70,7 @@
 #define LOG_DISPLAYED_FILENAME_MAX_LENGTH       32
 #define LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH  5
 #define LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH      6
-#define LOG_FUNC_INDENT_SPACES                   3
+#define LOG_FUNC_INDENT_SPACES                   2
 #define LOG_LEVEL_NAME_MAX_LENGTH               10
 #define LOG_ANSI_CODE_MAX_LENGTH                15
 #define LOG_MAX_SERVER_ADDRESS_LENGTH           96
@@ -829,6 +829,31 @@ log_func (
     thread_ctxt->indent -= LOG_FUNC_INDENT_SPACES;
     if (thread_ctxt->indent < 0) thread_ctxt->indent = 0;
   }
+}
+//------------------------------------------------------------------------------
+// hard-coded to use LOG_LEVEL_TRACE
+void
+log_func_return (
+  const log_proto_t protoP,
+  const char *const source_fileP,
+  const unsigned int line_numP,
+  const char *const functionP,
+  const long return_codeP)
+{
+  log_thread_ctxt_t        *thread_ctxt = NULL;
+  hashtable_rc_t            hash_rc     = HASH_TABLE_OK;
+  pthread_t                 p           = pthread_self();
+
+  hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+  if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
+    // make the thread safe LFDS collections usable by this thread
+    log_start_use();
+  }
+  hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
+  AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
+  log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Leaving %s() (rc=%ld)\n", functionP, return_codeP);
+  thread_ctxt->indent -= LOG_FUNC_INDENT_SPACES;
+  if (thread_ctxt->indent < 0) thread_ctxt->indent = 0;
 }
 //------------------------------------------------------------------------------
 void

@@ -198,6 +198,14 @@ log_func (
   const unsigned int line_numP,
   const char *const function);
 
+void
+log_func_return (
+  const log_proto_t protoP,
+  const char *const source_fileP,
+  const unsigned int line_numP,
+  const char *const functionP,
+  const long return_codeP);
+
 void log_message (
       log_thread_ctxt_t * const thread_ctxtP,
       const log_level_t log_levelP,
@@ -233,7 +241,7 @@ int log_get_start_time_sec (void);
 #        define LOG_TRACE(pRoTo, ...)                                    do { log_message(NULL, LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief most detailled informations, struct dumps */
 #        define LOG_FUNC_IN(pRoTo)                                       do { log_func(true, pRoTo, __FILE__, __LINE__, __FUNCTION__); } while(0) /*!< \brief informational */
 #        define LOG_FUNC_OUT(pRoTo)                                      do { log_func(false,pRoTo, __FILE__, __LINE__, __FUNCTION__); } while(0) /*!< \brief informational */
-#        define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do { log_message(NULL, LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, "Leaving %s (rc=%ld)\n", __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
+#        define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do { log_func_return(pRoTo, __FILE__, __LINE__, __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
 #        define LOG_STREAM_HEX(pRoTo, mEsSaGe, sTrEaM, sIzE)             do { \
                                                                    OAI_GCC_DIAG_OFF(pointer-sign); \
                                                                    log_stream_hex(LOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE);\

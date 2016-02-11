@@ -41,7 +41,6 @@
 #include "dynamic_memory_check.h"
 #include "log.h"
 
-#define S1AP_DEBUG_LIST 1
 #if S1AP_DEBUG_LIST
 #  define eNB_LIST_OUT(x, args...) LOG_DEBUG (LOG_S1AP, "[eNB]%*s"x"\n", 4*indent, "", ##args)
 #  define UE_LIST_OUT(x, args...)  LOG_DEBUG (LOG_S1AP, "[UE] %*s"x"\n", 4*indent, "", ##args)

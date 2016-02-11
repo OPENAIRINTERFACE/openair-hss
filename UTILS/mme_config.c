@@ -652,48 +652,48 @@ config_parse_file (
 
   if (setting != NULL) {
     // LOGGING setting
-    setting = config_setting_get_member (setting, SGW_CONFIG_STRING_LOGGING);
+    subsetting = config_setting_get_member (setting, SGW_CONFIG_STRING_LOGGING);
 
-    if (setting != NULL) {
+    if (subsetting != NULL) {
       // already filled in MME section ?
       if (NULL == mme_config_p->log_config.output) {
-        config_setting_lookup_string (setting, SGW_CONFIG_STRING_OUTPUT, (const char **)&astring);
+        config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_OUTPUT, (const char **)&astring);
         mme_config_p->log_config.output = STRDUP_CHECK (astring);
       }
 
-      if (config_setting_lookup_string (setting, SGW_CONFIG_STRING_UDP_LOG_LEVEL, (const char **)&astring)) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_UDP_LOG_LEVEL, (const char **)&astring)) {
         mme_config_p->log_config.udp_log_level = LOG_LEVEL_STR2INT (astring);
       }
 
-      if (config_setting_lookup_string (setting, SGW_CONFIG_STRING_SPGW_APP_LOG_LEVEL, (const char **)&astring)) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SPGW_APP_LOG_LEVEL, (const char **)&astring)) {
         mme_config_p->log_config.spgw_app_log_level = LOG_LEVEL_STR2INT (astring);
       }
 
-      if (config_setting_lookup_string (setting, SGW_CONFIG_STRING_GTPV1U_LOG_LEVEL, (const char **)&astring)) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_GTPV1U_LOG_LEVEL, (const char **)&astring)) {
         mme_config_p->log_config.gtpv1u_log_level = LOG_LEVEL_STR2INT (astring);
       }
 
-      if (config_setting_lookup_string (setting, SGW_CONFIG_STRING_GTPV2C_LOG_LEVEL, (const char **)&astring)) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_GTPV2C_LOG_LEVEL, (const char **)&astring)) {
         mme_config_p->log_config.gtpv2c_log_level = LOG_LEVEL_STR2INT (astring);
       }
 
       // may be not present (may be filled in MME section)
-      if (config_setting_lookup_string (setting, SGW_CONFIG_STRING_UTIL_LOG_LEVEL, (const char **)&astring)) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_UTIL_LOG_LEVEL, (const char **)&astring)) {
         mme_config_p->log_config.util_log_level = LOG_LEVEL_STR2INT (astring);
       }
 
       // may be not present (may be filled in MME section)
-      if (config_setting_lookup_string (setting, SGW_CONFIG_STRING_S11_LOG_LEVEL, (const char **)&astring)) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_S11_LOG_LEVEL, (const char **)&astring)) {
         mme_config_p->log_config.s11_log_level = LOG_LEVEL_STR2INT (astring);
       }
 
       // may be not present (may be filled in MME section)
-      if (config_setting_lookup_string (setting, SGW_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring)) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring)) {
         mme_config_p->log_config.msc_log_level = LOG_LEVEL_STR2INT (astring);
       }
 
       // may be not present (may be filled in MME section)
-      if (config_setting_lookup_string (setting, SGW_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring)) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring)) {
         mme_config_p->log_config.itti_log_level = LOG_LEVEL_STR2INT (astring);
       }
     }

@@ -91,11 +91,11 @@ MME :
     # maximum of 16 TAIs, comma separated
     # !!! Actually use only one PLMN
     TAI_LIST = ( 
-         {MCC="208" ; MNC="95";  TAC = "15"; },                                  # YOUR TAI CONFIG HERE
-         {MCC="208" ; MNC="95";  TAC = "14"; },                                  # YOUR TAI CONFIG HERE
-         {MCC="208" ; MNC="95";  TAC = "12"; },                                  # YOUR TAI CONFIG HERE
-         {MCC="208" ; MNC="95";  TAC = "11"; },                                  # YOUR TAI CONFIG HERE
-         {MCC="208" ; MNC="95";  TAC = "10"; }                                   # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="93";  TAC = "15"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="93";  TAC = "14"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="93";  TAC = "12"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="93";  TAC = "11"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="93";  TAC = "10"; }                                   # YOUR TAI CONFIG HERE
     );
     
     
@@ -230,5 +230,4 @@ P-GW =
     DEFAULT_DNS_IPV4_ADDRESS     = "192.168.106.12";                            # YOUR NETWORK CONFIG HERE
     DEFAULT_DNS_SEC_IPV4_ADDRESS = "192.168.12.100";                            # YOUR NETWORK CONFIG HERE
 };
-
 
