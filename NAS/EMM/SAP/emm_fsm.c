@@ -181,8 +181,6 @@ emm_fsm_set_status (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
   DevAssert (emm_ctx );
-  // FOR DEBUG, TO BE REMOVED
-  AssertFatal(ueid == emm_ctx->ueid, "Mismatch UE IDs ueid param " NAS_UE_ID_FMT" emm_ctx->ueid " NAS_UE_ID_FMT"\n", ueid, emm_ctx->ueid);
   if ((status < EMM_STATE_MAX) && (ueid > 0)) {
     if (status != emm_ctx->_emm_fsm_status) {
       LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s\n", _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
