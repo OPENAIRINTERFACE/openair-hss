@@ -80,7 +80,7 @@ generate_random (
     }
   } else {
     for (i = 0; i < length; i++) {
-      random_p[i] = 0;
+      random_p[i] = i; // no random value
     }
   }
 }
