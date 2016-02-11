@@ -245,13 +245,13 @@ ue_context_t *mme_ue_context_exists_guti(mme_ue_context_t * const mme_ue_context
  * \param guti_p The GUTI used by the UE
  **/
 void mme_ue_context_update_coll_keys(
-  mme_ue_context_t    * const mme_ue_context_p,
-  ue_context_t        * const ue_context_p,
-  const uint32_t              mme_ue_s1ap_id,
-  const mme_app_imsi_t        imsi,
-  const uint32_t              mme_s11_teid,
-  const uint32_t              nas_ue_id,
-  const GUTI_t        * const guti_p);
+    mme_ue_context_t * const mme_ue_context_p,
+    ue_context_t   * const ue_context_p,
+    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+    const mme_app_imsi_t   imsi,
+    const s11_teid_t       mme_s11_teid,
+    const nas_ue_id_t      nas_ue_id,
+    const GUTI_t   * const guti_p);
 
 /** \brief Insert a new UE context in the tree of known UEs.
  * At least the IMSI should be known to insert the context in the tree.

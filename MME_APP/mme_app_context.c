@@ -151,12 +151,12 @@ mme_ue_context_exists_guti (
 void
 mme_ue_context_update_coll_keys (
   mme_ue_context_t * const mme_ue_context_p,
-  ue_context_t * const ue_context_p,
-  const uint32_t mme_ue_s1ap_id,
-  const mme_app_imsi_t imsi,
-  const uint32_t mme_s11_teid,
-  const uint32_t nas_ue_id,
-  const GUTI_t * const guti_p)  //  never NULL, if none put &ue_context_p->guti
+  ue_context_t   * const ue_context_p,
+  const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+  const mme_app_imsi_t   imsi,
+  const s11_teid_t       mme_s11_teid,
+  const nas_ue_id_t      nas_ue_id,
+  const GUTI_t   * const guti_p)  //  never NULL, if none put &ue_context_p->guti
 //------------------------------------------------------------------------------
 {
   ue_context_t                           *same_ue_context_p = NULL;
@@ -164,15 +164,14 @@ mme_ue_context_update_coll_keys (
   void                                   *id = NULL;
 
   if (mme_ue_s1ap_id) {
-
     if ((ue_context_p->imsi != imsi)
         || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
       h_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
       h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void *)((uintptr_t)mme_ue_s1ap_id));
 
       if (HASH_TABLE_OK != h_rc) {
-        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x imsi %" SCNu64 "\n",
-        		ue_context_p, ue_context_p->mme_ue_s1ap_id, imsi);
+        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x imsi %" SCNu64 ": %s\n",
+            ue_context_p, ue_context_p->mme_ue_s1ap_id, imsi, hashtable_rc_code2string(h_rc));
       }
 
       ue_context_p->imsi = imsi;
@@ -184,7 +183,8 @@ mme_ue_context_update_coll_keys (
       h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_s11_teid, (void *)((uintptr_t)mme_ue_s1ap_id));
 
       if (HASH_TABLE_OK != h_rc) {
-        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x mme_s11_teid 0x%x\n", ue_context_p, ue_context_p->mme_ue_s1ap_id, mme_s11_teid);
+        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x mme_s11_teid 0x%x: %s\n",
+            ue_context_p, ue_context_p->mme_ue_s1ap_id, mme_s11_teid, hashtable_rc_code2string(h_rc));
       }
 
       ue_context_p->mme_s11_teid = mme_s11_teid;
@@ -196,7 +196,8 @@ mme_ue_context_update_coll_keys (
       h_rc = hashtable_ts_insert (mme_ue_context_p->nas_ue_id_ue_context_htbl, (const hash_key_t)nas_ue_id, (void *)((void *)((uintptr_t)mme_ue_s1ap_id)));
 
       if (HASH_TABLE_OK != h_rc) {
-        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x nas_ue_id 0x%x\n", ue_context_p, ue_context_p->mme_ue_s1ap_id, nas_ue_id);
+        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x nas_ue_id 0x%x: %s\n",
+            ue_context_p, ue_context_p->mme_ue_s1ap_id, nas_ue_id, hashtable_rc_code2string(h_rc));
       }
 
       ue_context_p->ue_id = nas_ue_id;
@@ -216,8 +217,8 @@ mme_ue_context_update_coll_keys (
         char                                    guti_str[GUTI2STR_MAX_LENGTH];
 
         GUTI2STR (guti_p, guti_str, GUTI2STR_MAX_LENGTH);
-        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x guti %s\n",
-                  ue_context_p, ue_context_p->mme_ue_s1ap_id, guti_str);
+        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x guti %s: %s\n",
+                  ue_context_p, ue_context_p->mme_ue_s1ap_id, guti_str, hashtable_rc_code2string(h_rc));
       }
 
       ue_context_p->guti = *guti_p;
@@ -228,8 +229,8 @@ mme_ue_context_update_coll_keys (
       h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)ue_context_p);
 
       if (HASH_TABLE_OK != h_rc) {
-        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x\n",
-            ue_context_p, ue_context_p->mme_ue_s1ap_id);
+        LOG_DEBUG (LOG_MME_APP, "mme_ue_context_update_coll_keys: Error could not update this ue context %p mme_ue_s1ap_id 0x%x: %s\n",
+            ue_context_p, ue_context_p->mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
       }
 
       ue_context_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
