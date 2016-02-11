@@ -18,38 +18,6 @@
 # For more information about the OpenAirInterface (OAI) Software Alliance:
 #      contact@openairinterface.org
 ################################################################################
-#                               Internet
-#                                  | 
-#         PGW_IPV4_ADDRESS_FOR_SGI | 
-# +-----------+-------+------------+---------------+--------------------------+
-# |host y     |       | PGW_INTERFACE_NAME_FOR_SGI |                          |
-# +-----------+       +------------+---------------+                          |
-# |                                |                                          |
-# |                           +----+----+   (HSS may run on this host         |
-# |                           | mme_gw  |    or on another one)               |
-# |                           +----+----+                                     |
-# |                                |                                          |
-# |              +-----------------+--------------------+                     |
-# |              | SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP |                     |
-# |              | MME_INTERFACE_NAME_FOR_S1_MME        |                     |
-# +----------------------------+---+--+---------------------------------------+
-#     MME_IPV4_ADDRESS_FOR_S1_MME  |  (S1-C and S1-U addresses/interfaces may be the same)  
-# SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP 
-#                                  |
-#                                  |
-#                          a.b.c.d |
-# +---------------+------------+---+--+---------------------------------------+
-# |eNBx           |            | ethx |                                       |
-# +---------------+            +---+--+                                       |
-# |                                |                                          |
-# |                         +------+---------+                                |
-# |                         | lte-softmodem  |                                |
-# |                         |       or       |                                |
-# |                         | oaisim (1)eNB (x UEs)                           |
-# |                         +-------+--------+                                |
-# +---------------------------------+-----------------------------------------+
-#                                   |
-#                                   O (RF antenna)
 
 MME : 
 {
@@ -72,9 +40,6 @@ MME :
     
     # Display statistics about whole system (expressed in seconds)
     MME_STATISTIC_TIMER                       = 10;
-    # ASN1 VERBOSITY: none, info, annoying
-    VERBOSITY                                 = "none";
-    
     
     IP_CAPABILITY = "IPV4V6";                                                   # UNUSED
     
@@ -172,12 +137,37 @@ MME :
     NETWORK_INTERFACES : 
     {
         # MME binded interface for S1-C or S1-MME  communication (S1AP), can be ethernet interface, virtual ethernet interface, we don't advise wireless interfaces
-        MME_INTERFACE_NAME_FOR_S1_MME         = "eth0";                         # YOUR NETWORK CONFIG HERE
+        MME_INTERFACE_NAME_FOR_S1_MME         = "eth0 ";                        # YOUR NETWORK CONFIG HERE
         MME_IPV4_ADDRESS_FOR_S1_MME           = "192.168.12.17/24";             # YOUR NETWORK CONFIG HERE
 
         # MME binded interface for S11 communication (GTPV2-C)
         MME_INTERFACE_NAME_FOR_S11_MME        = "none";                         # DO NOT CHANGE
         MME_IPV4_ADDRESS_FOR_S11_MME          = "0.0.0.0/24";                   # DO NOT CHANGE
+    };
+    
+    LOGGING :
+    {
+        # OUTPUT choice in { "CONSOLE", "`path to file`", "`IPv4@`:`TCP port num`"} 
+        # `path to file` must start with '.' or '/'
+        # if TCP stream choice, then you can easily dump the traffic on the remote or local host: nc -l `TCP port num` > received.txt
+        OUTPUT            = "127.0.0.1:5656";
+        
+        # COLOR choice in { "yes", "no" } means use of ANSI styling codes or no
+        COLOR             = "yes";                                              # TODO
+        
+        # Log level choice in { "EMERGENCY", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG", "TRACE"} 
+        SCTP_LOG_LEVEL    = "TRACE";
+        S1AP_LOG_LEVEL    = "TRACE";
+        NAS_LOG_LEVEL     = "TRACE";
+        MME_APP_LOG_LEVEL = "TRACE";
+        S6A_LOG_LEVEL     = "TRACE";
+        UTIL_LOG_LEVEL    = "TRACE";
+        MSC_LOG_LEVEL     = "ERROR";
+        ITTI_LOG_LEVEL    = "ERROR";
+        
+        # ASN1 VERBOSITY: none, info, annoying
+        # for S1AP protocol
+        ASN1_VERBOSITY    = "none";
     };
 };
 
@@ -197,6 +187,16 @@ S-GW :
         # S-GW binded interface for S5 or S8 communication, not implemented, so leave it to none
         SGW_INTERFACE_NAME_FOR_S5_S8_UP         = "none";                       # DO NOT CHANGE
         SGW_IPV4_ADDRESS_FOR_S5_S8_UP           = "0.0.0.0/24";                 # DO NOT CHANGE
+    };
+    
+    LOGGING :
+    {
+        # Log level choice in { "EMERGENCY", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG", "TRACE"} 
+        UDP_LOG_LEVEL      = "TRACE";
+        GTPV1U_LOG_LEVEL   = "TRACE";
+        GTPV2C_LOG_LEVEL   = "TRACE";
+        SPGW_APP_LOG_LEVEL = "TRACE";
+        S11_LOG_LEVEL      = "TRACE";
     };
 };
 
