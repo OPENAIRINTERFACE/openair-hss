@@ -682,9 +682,7 @@ _emm_as_establish_req (
       LOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message TODO SERVICE_REQUEST\n");
-    *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
-    rc = RETURNok;              /* TODO */
+    rc = emm_recv_service_request (msg->ueid, &emm_msg->service_request, emm_cause, &decode_status);
     break;
 
   case EXTENDED_SERVICE_REQUEST:
@@ -1713,6 +1711,16 @@ _emm_as_establish_rej (
       }
 
       size = emm_send_tracking_area_update_reject (msg, &emm_msg->tracking_area_update_reject);
+      break;
+
+    case EMM_AS_NAS_INFO_SR:
+      if (msg->UEid.guti) {
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+      } else {
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+      }
+
+      size = emm_send_service_reject (msg, &emm_msg->service_reject);
       break;
 
     default:

@@ -131,7 +131,7 @@ int emm_proc_attach_complete(nas_ue_id_t ueid, const OctetString *esm_msg);
 int emm_proc_tracking_area_update_request(nas_ue_id_t ueid, const tracking_area_update_request_msg * msg,
                             int *emm_cause, const nas_message_decode_status_t  * decode_status);
 int emm_proc_tracking_area_update_reject(nas_ue_id_t ueid, int emm_cause);
-
+int emm_proc_service_reject (nas_ue_id_t ueid, int emm_cause);
 /*
  * --------------------------------------------------------------------------
  *              Detach procedure

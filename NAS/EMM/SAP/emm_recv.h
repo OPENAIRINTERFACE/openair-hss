@@ -81,23 +81,11 @@ Description Defines functions executed at the EMMAS Service Access
 
 /*
  * --------------------------------------------------------------------------
- * Functions executed by both the UE and the MME upon receiving EMM messages
+ * Functions executed by the MME upon receiving EMM message from the UE
  * --------------------------------------------------------------------------
  */
 int emm_recv_status(nas_ue_id_t ueid, emm_status_msg *msg, int *emm_cause, const nas_message_decode_status_t * const status);
 
-/*
- * --------------------------------------------------------------------------
- * Functions executed by the UE upon receiving EMM message from the network
- * --------------------------------------------------------------------------
- */
-
-
-/*
- * --------------------------------------------------------------------------
- * Functions executed by the MME upon receiving EMM message from the UE
- * --------------------------------------------------------------------------
- */
 int emm_recv_attach_request (
     const nas_ue_id_t ueid,
     const tai_t              * const originating_tai,
@@ -113,6 +101,11 @@ int emm_recv_detach_request(nas_ue_id_t ueid, const detach_request_msg *msg,
 
 int emm_recv_tracking_area_update_request(nas_ue_id_t ueid,
     const tracking_area_update_request_msg *msg,
+    int *emm_cause,
+    const nas_message_decode_status_t  * decode_status);
+
+int emm_recv_service_request(nas_ue_id_t ueid,
+    const service_request_msg *msg,
     int *emm_cause,
     const nas_message_decode_status_t  * decode_status);
 

@@ -311,13 +311,13 @@ emm_send_attach_reject (
 
 /****************************************************************************
  **                                                                        **
- ** Name:        emm_send_tracking_area_update_reject()                    **
+ ** Name:        emm_send_tracking_area_update_accept()                    **
  **                                                                        **
- ** Description: Builds Tracking Area Update Reject message                **
+ ** Description: Builds Tracking Area Update Accept message                **
  **                                                                        **
- **              The Tracking Area Update Reject message is sent by the    **
+ **              The Tracking Area Update Accept message is sent by the    **
  **              network to the UE to indicate that the corresponding      **
- **              tracking area update has been rejected.                   **
+ **              tracking area update has been accepted.                   **
  **                                                                        **
  ** Inputs:      msg:           The EMMAS-SAP primitive to process         **
  **              Others:        None                                       **
@@ -549,6 +549,45 @@ emm_send_tracking_area_update_reject (
    * Mandatory - Message type
    */
   emm_msg->messagetype = TRACKING_AREA_UPDATE_REJECT;
+  /*
+   * Mandatory - EMM cause
+   */
+  size += EMM_CAUSE_MAXIMUM_LENGTH;
+  emm_msg->emmcause = msg->emm_cause;
+  LOG_FUNC_RETURN (LOG_NAS_EMM, size);
+}
+
+/****************************************************************************
+ **                                                                        **
+ ** Name:        emm_send_service_reject()                                 **
+ **                                                                        **
+ ** Description: Builds Service Reject message                             **
+ **                                                                        **
+ **              The Tracking Area Update Reject message is sent by the    **
+ **              network to the UE to indicate that the corresponding      **
+ **              tracking area update has been rejected.                   **
+ **                                                                        **
+ ** Inputs:      msg:           The EMMAS-SAP primitive to process         **
+ **              Others:        None                                       **
+ **                                                                        **
+ ** Outputs:     emm_msg:       The EMM message to be sent                 **
+ **              Return:        The size of the EMM message                **
+ **              Others:        None                                       **
+ **                                                                        **
+ ***************************************************************************/
+int
+emm_send_service_reject (
+  const emm_as_establish_t * msg,
+  service_reject_msg * emm_msg)
+{
+  LOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
+
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Service Reject message (cause=%d)\n", msg->emm_cause);
+  /*
+   * Mandatory - Message type
+   */
+  emm_msg->messagetype = SERVICE_REJECT;
   /*
    * Mandatory - EMM cause
    */

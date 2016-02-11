@@ -46,13 +46,16 @@
 
 *****************************************************************************/
 
+#include <string.h>             // memcmp, memcpy
+#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
+
 #include "emm_proc.h"
 #include "log.h"
 #include "nas_timer.h"
-
 #include "emmData.h"
-
 #include "emm_sap.h"
+#include "emm_cause.h"
+#include "msc.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -61,7 +64,7 @@
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-
+static int  _emm_service_reject (void *args);
 /*
    --------------------------------------------------------------------------
     Internal data handled by the service request procedure in the UE
@@ -78,7 +81,93 @@
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
+/****************************************************************************
+ **                                                                        **
+ ** Name:        emm_proc_tracking_area_update_reject()                    **
+ **                                                                        **
+ ** Description:                                                           **
+ **                                                                        **
+ ** Inputs:  ueid:              UE lower layer identifier                  **
+ **                  emm_cause: EMM cause code to be reported              **
+ **                  Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     None                                                      **
+ **                  Return:    RETURNok, RETURNerror                      **
+ **                  Others:    _emm_data                                  **
+ **                                                                        **
+ ***************************************************************************/
+int
+emm_proc_service_reject (
+  nas_ue_id_t ueid,
+  int emm_cause)
+{
+  LOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNerror;
 
+  /*
+   * Create temporary UE context
+   */
+  emm_data_context_t                      ue_ctx = {0};
+
+  ue_ctx.is_dynamic = false;
+  ue_ctx.ueid = ueid;
+  /*
+   * Update the EMM cause code
+   */
+  if (ueid > 0) {
+    ue_ctx.emm_cause = emm_cause;
+  } else {
+    ue_ctx.emm_cause = EMM_CAUSE_IMPLICITLY_DETACHED;
+  }
+
+  /*
+   * Do not accept attach request with protocol error
+   */
+  rc = _emm_service_reject (&ue_ctx);
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
+/** \fn void _emm_tracking_area_update_reject(void *args);
+    \brief Performs the tracking area update procedure not accepted by the network.
+     @param [in]args UE EMM context data
+     @returns status of operation
+*/
+static int
+_emm_service_reject (
+  void *args)
+{
+  LOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNerror;
+  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
+
+  if (emm_ctx) {
+    emm_sap_t                               emm_sap = {0};
+
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM service procedure not accepted " "by the network (ueid=" NAS_UE_ID_FMT ", cause=%d)", emm_ctx->ueid, emm_ctx->emm_cause);
+    /*
+     * Notify EMM-AS SAP that Tracking Area Update Reject message has to be sent
+     * onto the network
+     */
+    emm_sap.primitive = EMMAS_ESTABLISH_REJ;
+    emm_sap.u.emm_as.u.establish.ueid = emm_ctx->ueid;
+    emm_sap.u.emm_as.u.establish.UEid.guti = NULL;
+
+    if (emm_ctx->emm_cause == EMM_CAUSE_SUCCESS) {
+      emm_ctx->emm_cause = EMM_CAUSE_IMPLICITLY_DETACHED;
+    }
+
+    emm_sap.u.emm_as.u.establish.emm_cause = emm_ctx->emm_cause;
+    emm_sap.u.emm_as.u.establish.NASinfo = EMM_AS_NAS_INFO_SR;
+    emm_sap.u.emm_as.u.establish.NASmsg.length = 0;
+    emm_sap.u.emm_as.u.establish.NASmsg.value = NULL;
+    /*
+     * Setup EPS NAS security data
+     */
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, false, true);
+    rc = emm_sap_send (&emm_sap);
+  }
+
+  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}

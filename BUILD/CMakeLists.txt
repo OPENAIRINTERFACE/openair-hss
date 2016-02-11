@@ -210,6 +210,9 @@ add_boolean_option( LOG_OAI_CLEAN_HARD              False    "Thread safe loggin
 add_boolean_option( MEMORY_CHECK                    False    "Thread safe malloc checker")
 add_boolean_option( SECU_DEBUG                      False    "Traces, option to be removed soon")
 
+add_boolean_option( NAS_FORCE_REJECT_SR             True     "TEMP, TO be disabled after devel: Force the EMM NAS layer to respond to any SR by reject")
+add_boolean_option( NAS_FORCE_REJECT_TAU            True     "TEMP, TO be disabled after devel: Force the EMM NAS layer to respond to any TAU Request by reject")
+
 
 set (ITTI_DIR ${OPENAIRCN_DIR}/COMMON/ITTI)
 if (${ENABLE_ITTI})

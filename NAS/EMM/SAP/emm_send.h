@@ -45,7 +45,6 @@ Description Defines functions executed at the EMMAS Service Access
 
 #include "DetachRequest.h"
 #include "DetachAccept.h"
-
 #include "AttachAccept.h"
 #include "AttachReject.h"
 #include "TrackingAreaUpdateAccept.h"
@@ -59,7 +58,6 @@ Description Defines functions executed at the EMMAS Service Access
 #include "EmmInformation.h"
 #include "DownlinkNasTransport.h"
 #include "CsServiceNotification.h"
-
 #include "emm_asDef.h"
 
 /****************************************************************************/
@@ -80,25 +78,13 @@ Description Defines functions executed at the EMMAS Service Access
 
 /*
  * --------------------------------------------------------------------------
- * Functions executed by both the UE and the MME to send EMM messages
+ * Functions executed by the MME to send EMM messages to the UE
  * --------------------------------------------------------------------------
  */
 int emm_send_status(const emm_as_status_t *, emm_status_msg *);
 
 int emm_send_detach_accept(const emm_as_data_t *, detach_accept_msg *);
 
-/*
- * --------------------------------------------------------------------------
- * Functions executed by the UE to send EMM messages to the network
- * --------------------------------------------------------------------------
- */
-
-
-/*
- * --------------------------------------------------------------------------
- * Functions executed by the MME to send EMM messages to the UE
- * --------------------------------------------------------------------------
- */
 int emm_send_attach_accept(const emm_as_establish_t *, attach_accept_msg *);
 int emm_send_attach_reject(const emm_as_establish_t *, attach_reject_msg *);
 
@@ -106,6 +92,10 @@ int emm_send_tracking_area_update_reject(const emm_as_establish_t *msg,
                                    tracking_area_update_reject_msg *emm_msg);
 int emm_send_tracking_area_update_accept (const emm_as_establish_t * msg,
                                    tracking_area_update_accept_msg * emm_msg);
+
+int emm_send_service_reject(const emm_as_establish_t *msg,
+                                   service_reject_msg *emm_msg);
+
 int emm_send_identity_request(const emm_as_security_t *, identity_request_msg *);
 int emm_send_authentication_request(const emm_as_security_t *,
                                    authentication_request_msg *);

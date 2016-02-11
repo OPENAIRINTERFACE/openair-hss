@@ -242,8 +242,8 @@ emmCauseCode (
     return "ILLEGAL_UE";
   } else if (code == EMM_CAUSE_ILLEGAL_ME) {
     return "ILLEGAL_ME";
-  } else if (code == EMM_CAUSE_INVALID_UE) {
-    return "INVALID_UE";
+  } else if (code == EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW) {
+    return "UE_IDENTITY_CANT_BE_DERIVED_BY_NW";
   } else if (code == EMM_CAUSE_IMPLICITLY_DETACHED) {
     return "IMPLICITLY_DETACHED";
   } else if (code == EMM_CAUSE_IMEI_NOT_ACCEPTED) {
