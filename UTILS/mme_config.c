@@ -195,15 +195,15 @@ static int
 config_parse_file (
   mme_config_t * mme_config_p)
 {
-  config_t                                cfg;
+  config_t                                cfg = {0};
   config_setting_t                       *setting_mme = NULL;
   config_setting_t                       *setting = NULL;
   config_setting_t                       *subsetting = NULL;
   config_setting_t                       *sub2setting = NULL;
-  int                                     aint;
-  int                                     i,n,
-                                          stop_index,
-                                          num;
+  int                                     aint = 0;
+  int                                     i = 0,n = 0,
+                                          stop_index = 0,
+                                          num = 0;
   const char                             *astring = NULL;
   char                                   *address = NULL;
   char                                   *cidr = NULL;
