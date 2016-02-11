@@ -229,14 +229,14 @@ dmc_hashtable_ts_remove (
 void dyn_mem_check_init(void)
 {
   fprintf (stdout, "Initializing Dynamic memory check\n");
-  g_dma_htbl.nodes = calloc (1, DYNAMIC_MEMORY_CHECK_HASH_SIZE * sizeof (dmc_hash_node_t *));
+  g_dma_htbl.nodes = calloc (DYNAMIC_MEMORY_CHECK_HASH_SIZE, sizeof (dmc_hash_node_t *));
   AssertFatal(NULL != g_dma_htbl.nodes , "Could not allocate memory");
-  g_dma_free_htbl.nodes = calloc (1, DYNAMIC_MEMORY_CHECK_HASH_SIZE * sizeof (dmc_hash_node_t *));
+  g_dma_free_htbl.nodes = calloc (DYNAMIC_MEMORY_CHECK_HASH_SIZE, sizeof (dmc_hash_node_t *));
   AssertFatal(NULL != g_dma_free_htbl.nodes , "Could not allocate memory");
 
-  g_dma_htbl.lock_nodes = calloc (1, DYNAMIC_MEMORY_CHECK_HASH_SIZE * sizeof (pthread_mutex_t));
+  g_dma_htbl.lock_nodes = calloc (DYNAMIC_MEMORY_CHECK_HASH_SIZE, sizeof (pthread_mutex_t));
   AssertFatal(NULL != g_dma_htbl.lock_nodes , "Could not allocate memory");
-  g_dma_free_htbl.lock_nodes = calloc (1, DYNAMIC_MEMORY_CHECK_HASH_SIZE * sizeof (pthread_mutex_t));
+  g_dma_free_htbl.lock_nodes = calloc (DYNAMIC_MEMORY_CHECK_HASH_SIZE, sizeof (pthread_mutex_t));
   AssertFatal(NULL != g_dma_free_htbl.lock_nodes , "Could not allocate memory");
 
   for (int i = 0; i < DYNAMIC_MEMORY_CHECK_HASH_SIZE; i++) {

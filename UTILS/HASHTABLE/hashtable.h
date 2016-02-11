@@ -61,6 +61,7 @@ typedef struct hash_node_s {
 } hash_node_t;
 
 typedef struct hash_table_s {
+    pthread_mutex_t     mutex;
     hash_size_t         size;
     hash_size_t         num_elements;
     struct hash_node_s **nodes;

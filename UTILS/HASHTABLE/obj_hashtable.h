@@ -44,6 +44,7 @@ typedef struct obj_hash_node_s {
 } obj_hash_node_t;
 
 typedef struct obj_hash_table_s {
+    pthread_mutex_t     mutex;
     hash_size_t         size;
     hash_size_t         num_elements;
     struct obj_hash_node_s **nodes;
