@@ -19,21 +19,25 @@
 # For more information about the OpenAirInterface (OAI) Software Alliance:
 #      contact@openairinterface.org
 ################################################################################
-# file prepare_test_scenario
+# file prepare_test_scenarios
 # brief
 # author Lionel Gauthier
 # company Eurecom
 # email: lionel.gauthier@eurecom.fr
 # 
 
-################################
-# include helper functions
-################################
-THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+export THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
 
-if [ -f "./enb.conf" ] && [ -f "./s1.pcapng" ] && [ -f "./hss_db.sql" ] && [ -f "./epc.conf.in" ]; then 
-  # generate XML scenario file
-  echo_success "Running build test in `pwd`"
-  test_epc --build-test --test-dir . --old-enb-config-file enb.conf --pcap-file s1.pcapng
-fi
+# find in all subdirectories a valid test to play
+# that mean a directory must contain a valid set of files
+
+list_dir_name="`find $THIS_SCRIPT_PATH/../TEST/SCENARIOS -type d | sort | uniq`"
+
+for dirname_name in $list_dir_name
+do
+  cd $dirname_name > /dev/null 2>&1
+  $THIS_SCRIPT_PATH/prepare_test_scenario
+  cd - > /dev/null 2>&1
+done
+
+
