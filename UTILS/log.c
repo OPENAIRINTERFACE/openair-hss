@@ -70,7 +70,7 @@
 #define LOG_DISPLAYED_FILENAME_MAX_LENGTH       32
 #define LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH  5
 #define LOG_DISPLAYED_PROTO_NAME_MAX_LENGTH      6
-#define LOG_FUNC_INDENT_SPACES                   2
+#define LOG_FUNC_INDENT_SPACES                   3
 #define LOG_LEVEL_NAME_MAX_LENGTH               10
 #define LOG_ANSI_CODE_MAX_LENGTH                15
 #define LOG_MAX_SERVER_ADDRESS_LENGTH           96
@@ -572,9 +572,9 @@ void log_stream_hex(
   hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
   AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
   if (messageP) {
-    log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "%s (hexa)", messageP);
+    log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "%s (%ld bytes)", messageP, sizeP);
   } else {
-    log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "(hexa):");
+    log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "%p dumped(%ld bytes):", streamP, sizeP);
   }
   if ((streamP) && (message)) {
     for (octet_index = 0; octet_index < sizeP; octet_index++) {
@@ -804,7 +804,7 @@ error_event_start:
 // hard-coded to use LOG_LEVEL_TRACE
 void
 log_func (
-  bool  is_enteringP,
+  const bool  is_enteringP,
   const log_proto_t protoP,
   const char *const source_fileP,
   const unsigned int line_numP,
@@ -821,13 +821,13 @@ log_func (
   }
   hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
   AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
-  if (true == is_enteringP) {
+  if (is_enteringP) {
     log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Entering %s()\n", functionP);
     thread_ctxt->indent += LOG_FUNC_INDENT_SPACES;
   } else {
-    log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Leaving %s()\n", functionP);
     thread_ctxt->indent -= LOG_FUNC_INDENT_SPACES;
     if (thread_ctxt->indent < 0) thread_ctxt->indent = 0;
+    log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Leaving %s()\n", functionP);
   }
 }
 //------------------------------------------------------------------------------
@@ -851,9 +851,9 @@ log_func_return (
   }
   hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
   AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
-  log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Leaving %s() (rc=%ld)\n", functionP, return_codeP);
   thread_ctxt->indent -= LOG_FUNC_INDENT_SPACES;
   if (thread_ctxt->indent < 0) thread_ctxt->indent = 0;
+  log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Leaving %s() (rc=%ld)\n", functionP, return_codeP);
 }
 //------------------------------------------------------------------------------
 void

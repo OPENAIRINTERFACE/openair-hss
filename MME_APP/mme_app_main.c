@@ -174,7 +174,7 @@ int
 mme_app_init (
   const mme_config_t * mme_config_p)
 {
-  LOG_DEBUG (LOG_MME_APP, "Initializing MME applicative layer\n");
+  LOG_FUNC_IN (LOG_MME_APP);
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
   mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_imsi_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_tun11_ue_context_htbl");
@@ -186,8 +186,8 @@ mme_app_init (
    * Create the thread associated with MME applicative layer
    */
   if (itti_create_task (TASK_MME_APP, &mme_app_thread, NULL) < 0) {
-	LOG_ERROR (LOG_MME_APP, "MME APP create task failed\n");
-    return -1;
+    LOG_ERROR (LOG_MME_APP, "MME APP create task failed\n");
+    LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
   mme_app_desc.statistic_timer_period = mme_config_p->mme_statistic_timer;
@@ -196,10 +196,10 @@ mme_app_init (
    * Request for periodic timer
    */
   if (timer_setup (mme_config_p->mme_statistic_timer, 0, TASK_MME_APP, INSTANCE_DEFAULT, TIMER_PERIODIC, NULL, &mme_app_desc.statistic_timer_id) < 0) {
-	LOG_ERROR (LOG_MME_APP, "Failed to request new timer for statistics with %ds " "of periocidity\n", mme_config_p->mme_statistic_timer);
+    LOG_ERROR (LOG_MME_APP, "Failed to request new timer for statistics with %ds " "of periocidity\n", mme_config_p->mme_statistic_timer);
     mme_app_desc.statistic_timer_id = 0;
   }
 
   LOG_DEBUG (LOG_MME_APP, "Initializing MME applicative layer: DONE\n");
-  return 0;
+  LOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }

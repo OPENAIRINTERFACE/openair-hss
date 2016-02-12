@@ -603,7 +603,6 @@ _emm_as_establish_req (
   const emm_as_establish_t * msg,
   int *emm_cause)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
   struct emm_data_context_s              *emm_ctx = NULL;
   emm_security_context_t                 *emm_security_context = NULL;
   nas_message_decode_status_t             decode_status;
@@ -611,6 +610,7 @@ _emm_as_establish_req (
   int                                     rc = RETURNerror;
   tai_t                                   originating_tai; // originating TAI
 
+  LOG_FUNC_IN (LOG_NAS_EMM);
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS connection establish request\n");
   nas_message_t                           nas_msg;
 

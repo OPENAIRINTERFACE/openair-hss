@@ -54,7 +54,9 @@ mme_app_request_authentication_info (
   s6a_auth_info_req_t                    *auth_info_req = NULL;
   MessageDef                             *message_p = NULL;
   int                                     imsi_length = strlen (imsi);
+  int                                     rc = RETURNok;
 
+  LOG_FUNC_IN (LOG_MME_APP);
   DevAssert (plmn );
   message_p = itti_alloc_new_message (TASK_MME_APP, S6A_AUTH_INFO_REQ);
   auth_info_req = &message_p->ittiMsg.s6a_auth_info_req;
@@ -80,7 +82,8 @@ mme_app_request_authentication_info (
   }
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_AUTH_INFO_REQ IMSI %s visited_plmn %02X%02X%02X re_sync %u", imsi, ptr[0], ptr[1], ptr[2], auth_info_req->re_synchronization);
-  return itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
+  rc = itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
+  LOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
 
@@ -91,6 +94,7 @@ mme_app_handle_authentication_info_answer (
   struct ue_context_s                    *ue_context = NULL;
   uint64_t                                imsi = 0;
 
+  LOG_FUNC_IN (LOG_MME_APP);
   DevAssert (s6a_auth_info_ans_pP );
   MME_APP_STRING_TO_IMSI ((char *)s6a_auth_info_ans_pP->imsi, &imsi);
   LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
@@ -98,7 +102,7 @@ mme_app_handle_authentication_info_answer (
   if ((ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
 	LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS Unknown imsi %" IMSI_FORMAT, imsi);
-    return -1;
+    LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
   if ((s6a_auth_info_ans_pP->result.present == S6A_RESULT_BASE)
@@ -141,8 +145,7 @@ mme_app_handle_authentication_info_answer (
       mme_app_itti_auth_fail (ue_context->ue_id, s6a_error_2_nas_cause (s6a_auth_info_ans_pP->result.choice.experimental, 1));
     }
   }
-
-  return 0;
+  LOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
 
 
@@ -163,6 +166,7 @@ mme_app_handle_nas_auth_param_req (
     .MNCdigit2 = 0,
     .MNCdigit3 = 0,
   };
+  LOG_FUNC_IN (LOG_MME_APP);
   DevAssert (nas_auth_param_req_pP );
   visited_plmn = &visited_plmn_from_req;
   visited_plmn_from_req.MCCdigit1 = nas_auth_param_req_pP->imsi[0];
@@ -221,7 +225,7 @@ mme_app_handle_nas_auth_param_req (
          * TODO
          */
         DevMessage ("mme_create_new_ue_context");
-        return;
+        LOG_FUNC_OUT (LOG_MME_APP);
       }
 
       ue_context->ue_id = nas_auth_param_req_pP->ue_id;
@@ -257,4 +261,5 @@ mme_app_handle_nas_auth_param_req (
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context, ue_context->mme_ue_s1ap_id, ue_context->imsi, ue_context->mme_s11_teid, ue_context->ue_id, &guti);      // guti is new
     mme_app_request_authentication_info (nas_auth_param_req_pP->imsi, 1, visited_plmn, nas_auth_param_req_pP->auts);
   }
+  LOG_FUNC_OUT (LOG_MME_APP);
 }

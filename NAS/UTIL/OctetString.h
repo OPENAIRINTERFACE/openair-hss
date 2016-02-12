@@ -31,14 +31,15 @@ typedef struct OctetString_tag {
   uint32_t  length;
   uint8_t  *value;
 } OctetString;
+
 #define FREE_OCTET_STRING(oCTETsTRING)                     \
     do {                                                   \
         if ((oCTETsTRING).value != NULL) {                 \
-            FREE_CHECK((oCTETsTRING).value);                     \
+            FREE_CHECK((oCTETsTRING).value);               \
             (oCTETsTRING).value = NULL;                    \
         }                                                  \
         (oCTETsTRING).length = 0;                          \
-    } while (0);
+    } while (0)
 
 
 #define DUP_OCTET_STRING(oCTETsTRINGoRIG,oCTETsTRINGcOPY)                   \
@@ -48,13 +49,13 @@ typedef struct OctetString_tag {
             (oCTETsTRINGcOPY).value = NULL;                                 \
             break;                                                          \
         }                                                                   \
-        (oCTETsTRINGcOPY).length = (oCTETsTRINGoRIG).length;                 \
-        (oCTETsTRINGcOPY).value  = MALLOC_CHECK((oCTETsTRINGoRIG).length+1);      \
+        (oCTETsTRINGcOPY).length = (oCTETsTRINGoRIG).length;                \
+        (oCTETsTRINGcOPY).value  = MALLOC_CHECK((oCTETsTRINGoRIG).length+1);\
         (oCTETsTRINGcOPY).value[(oCTETsTRINGoRIG).length] = '\0';           \
         memcpy((oCTETsTRINGcOPY).value,                                     \
             (oCTETsTRINGoRIG).value,                                        \
             (oCTETsTRINGoRIG).length);                                      \
-    } while (0);
+    } while (0)
 
 OctetString* dup_octet_string(OctetString*octetstring);
 

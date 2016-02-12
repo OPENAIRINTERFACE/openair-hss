@@ -216,7 +216,7 @@ function main()
     # trap keyboard interrupt (control-c)
     trap control_c SIGINT
     if [ "$run_valgrind" -eq 1 ]; then 
-      $SUDO valgrind --leak-check=yes mme_gw  `echo $exe_arguments` 2>&1
+      $SUDO valgrind --leak-check=yes --track-origins=yes mme_gw  `echo $exe_arguments` 2>&1
     else
       $SUDO mme_gw  `echo $exe_arguments` 2>&1
     fi 

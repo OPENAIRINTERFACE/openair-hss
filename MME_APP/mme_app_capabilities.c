@@ -32,24 +32,23 @@
 
 #include "intertask_interface.h"
 #include "mme_config.h"
-
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-
 #include "secu_defs.h"
-
 #include "assertions.h"
 #include "common_types.h"
+#include "log.h"
 
 int
 mme_app_handle_s1ap_ue_capabilities_ind (
   const s1ap_ue_cap_ind_t const *s1ap_ue_cap_ind_pP)
 {
+  LOG_FUNC_IN (LOG_MME_APP);
   DevAssert (s1ap_ue_cap_ind_pP );
   //unsigned eNB_ue_s1ap_id:24;
   //uint32_t mme_ue_s1ap_id;
   //uint8_t  radio_capabilities[100];
   //uint32_t radio_capabilities_length;
-  return 0;
+  LOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }

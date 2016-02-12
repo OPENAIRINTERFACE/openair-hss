@@ -107,7 +107,7 @@ typedef struct ue_context_s {
   mme_ue_s1ap_id_t       mme_ue_s1ap_id;
 
   /* ue_id is equal to mme_ue_s1ap_id */
-  uint32_t               ue_id;                       // set by nas_auth_param_req_t
+  nas_ue_id_t            ue_id;                       // set by nas_auth_param_req_t
 
   uint8_t                nb_of_vectors;               // updated by S6A AUTHENTICATION ANSWER
   /* List of authentication vectors for E-UTRAN */
@@ -158,8 +158,8 @@ typedef struct ue_context_s {
   /* Store the radio capabilities as received in S1AP UE capability indication
    * message.
    */
-  char                  *ue_radio_capabilities;       // not set/read
-  int                    ue_radio_cap_length;         // not set/read
+  //char                  *ue_radio_capabilities;       // not set/read
+  //int                    ue_radio_cap_length;         // not set/read
 
   Teid_t                 mme_s11_teid;                // set by mme_app_send_s11_create_session_req
   Teid_t                 sgw_s11_teid;                // set by S11 CREATE_SESSION_RESPONSE

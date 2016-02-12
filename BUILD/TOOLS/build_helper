@@ -1166,7 +1166,7 @@ set_openair_env(){
     openair_path=${fullpath%/BUILD/*}
     openair_path=${openair_path%/DOCS/*}
     openair_path=${openair_path%/NAS/*}
-    openair_path=${openair_path%/S6A/*}    
+    openair_path=${openair_path%/S6A/*}
     export OPENAIRCN_DIR=$openair_path
 }
 
