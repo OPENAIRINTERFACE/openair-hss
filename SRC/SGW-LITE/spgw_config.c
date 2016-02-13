@@ -135,10 +135,87 @@ sgw_ipv6_mask_in6_addr (
 
 
 int
+spgw_system (
+  char *command_pP,
+  spgw_system_abort_control_e abort_on_errorP,
+  const char *const file_nameP,
+  const int line_numberP)
+{
+  int                                     ret = -1;
+
+  if (command_pP) {
+    LOG_INFO (LOG_SPGW_APP, "system command: %s\n", command_pP);
+    ret = system (command_pP);
+
+    if (ret != 0) {
+      LOG_ERROR (LOG_SPGW_APP, "ERROR in system command %s: %d at %s:%u\n", command_pP, ret, file_nameP, line_numberP);
+
+      if (abort_on_errorP) {
+        exit (-1);              // may be not exit
+      }
+    }
+  }
+
+  return ret;
+}
+
+int
 spgw_config_process (
   spgw_config_t * config_pP)
 {
-  return RETURNok;
+  char                                    system_cmd[256];
+  struct in_addr                          inaddr;
+  int                                     ret = 0;
+
+  inaddr.s_addr = config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S1u_S12_S4_up;
+
+  if (strncasecmp ("lo", config_pP->sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up, strlen ("lo")) == 0) {
+    config_pP->sgw_config.local_to_eNB = true;
+  } else {
+    config_pP->sgw_config.local_to_eNB = false;
+
+    if (snprintf (system_cmd, 256, "modprobe xt_GTPUSP gtpu_enb_port=2152 gtpu_sgw_port=%u sgw_addr=\"%s\" ", config_pP->sgw_config.sgw_udp_port_for_S1u_S12_S4_up, inet_ntoa (inaddr)) > 0) {
+      ret += spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
+    } else {
+      LOG_ERROR (LOG_SPGW_APP, "GTPUSP kernel module\n");
+      ret = -1;
+    }
+  }
+
+  if (config_pP->sgw_config.local_to_eNB == true) {
+    if (snprintf (system_cmd, 256, "iptables -t filter -I INPUT -i lo -d %s --protocol sctp -j DROP", inet_ntoa (inaddr)) > 0) {
+      ret += spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+    } else {
+      LOG_ERROR (LOG_SPGW_APP, "Drop SCTP traffic on S1U\n");
+      ret = -1;
+    }
+
+    if (snprintf (system_cmd, 256, "iptables -t filter -I INPUT -i lo -s %s --protocol sctp -j DROP", inet_ntoa (inaddr)) > 0) {
+      ret += spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+    } else {
+      LOG_ERROR (LOG_SPGW_APP, "Drop SCTP traffic on S1U\n");
+      ret = -1;
+    }
+
+    if (snprintf (system_cmd, 256, "modprobe xt_GTPUSP  gtpu_enb_port=2153 gtpu_sgw_port=%u sgw_addr=\"%s\" ", config_pP->sgw_config.sgw_udp_port_for_S1u_S12_S4_up, inet_ntoa (inaddr)) > 0) {
+      ret += spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
+    } else {
+      LOG_ERROR (LOG_SPGW_APP, "GTPUSP kernel module\n");
+      ret = -1;
+    }
+  }
+
+  ret += spgw_system ("echo 0 > /proc/sys/net/ipv4/conf/all/send_redirects", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+
+  if (snprintf (system_cmd, 256, "ethtool -K %s tso off gso off gro off", config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI) > 0) {
+    LOG_INFO (LOG_SPGW_APP, "Disable tcp segmentation offload, generic segmentation offload: %s\n", system_cmd);
+    ret += spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
+  } else {
+    LOG_ERROR (LOG_SPGW_APP, "Disable tcp segmentation offload, generic segmentation offload\n");
+    ret = -1;
+  }
+
+  return ret;
 }
 
 
@@ -185,6 +262,7 @@ spgw_config_init (
   struct in_addr                          addr_mask;
   pgw_lite_conf_ipv4_list_elm_t          *ip4_ref = NULL;
   pgw_lite_conf_ipv6_list_elm_t          *ip6_ref = NULL;
+  char                                    system_cmd[256];
 
   memset ((char *)config_pP, 0, sizeof (spgw_config_t));
   STAILQ_INIT (&config_pP->pgw_config.pgw_lite_ipv4_pool_list);
@@ -388,6 +466,24 @@ spgw_config_init (
               prefix_mask = atoi (atoken2);
               in_addr_var.s_addr = config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S1u_S12_S4_up;
 
+              if (snprintf (system_cmd, 256, "iptables -I PREROUTING -t mangle -i %s -d %s/%s ! --protocol sctp   -j CONNMARK --restore-mark", config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI, astring, atoken2) > 0) {
+                spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+              } else {
+                LOG_ERROR (LOG_SPGW_APP, "Restore mark\n");
+              }
+
+              if (snprintf (system_cmd, 256, "iptables -I OUTPUT -t mangle -s %s/%s -m mark  ! --mark 0 -j CONNMARK --save-mark", astring, atoken2) > 0) {
+                spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+              } else {
+                LOG_ERROR (LOG_SPGW_APP, "Save mark\n");
+              }
+
+              if (snprintf (system_cmd, 256, "ip route add  %s/%s dev %s", astring, atoken2, config_pP->sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up) > 0) {
+                spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
+              } else {
+                LOG_ERROR (LOG_SPGW_APP, "Route for UEs\n");
+              }
+
               if ((prefix_mask >= 2) && (prefix_mask < 32)) {
                 memcpy (&addr_start, buf_in_addr, sizeof (struct in_addr));
                 memcpy (&addr_mask, buf_in_addr, sizeof (struct in_addr));
@@ -407,6 +503,22 @@ spgw_config_init (
                   STAILQ_INSERT_TAIL (&config_pP->pgw_config.pgw_lite_ipv4_pool_list, ip4_ref, ipv4_entries);
                   counter64 = counter64 - 1;
                 } while (counter64 > 0);
+
+                //---------------
+                if (config_pP->pgw_config.pgw_masquerade_SGI) {
+                  in_addr_var.s_addr = config_pP->pgw_config.ipv4.pgw_ipv4_address_for_SGI;
+
+                  if (snprintf (system_cmd, 256,
+                                "iptables -t nat -I POSTROUTING -s %s/%s -o %s  ! --protocol sctp -j SNAT --to-source %s", astring, atoken2,
+                                //"iptables -t nat -I POSTROUTING -s %s/%s  ! --protocol sctp -j SNAT --to-source %s", astring, atoken2,
+                                config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI,
+                                inet_ntoa (in_addr_var)) > 0) {
+                    LOG_INFO (LOG_SPGW_APP, "Masquerade SGI: %s\n", system_cmd);
+                    spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+                  } else {
+                    LOG_ERROR (LOG_SPGW_APP, "Masquerade SGI\n");
+                  }
+                }
               } else {
                 LOG_ERROR (LOG_SPGW_APP, "CONFIG POOL ADDR IPV4: BAD MASQ: %s\n", atoken2);
               }

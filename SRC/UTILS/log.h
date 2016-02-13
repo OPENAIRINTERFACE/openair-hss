@@ -271,28 +271,28 @@ int log_get_start_time_sec (void);
 #  endif
 
 #  if !defined(LOG_DEBUG)
-#    define LOG_DEBUG(...)                                           {void;}
+#    define LOG_DEBUG(...)                                           ((void)0);
 #  endif
 #  if !defined(LOG_TRACE)
-#    define LOG_TRACE(...)                                           {void;}
+#    define LOG_TRACE(...)                                           ((void)0);
 #  endif
 #  if !defined(LOG_EXTERNAL)
-#    define LOG_EXTERNAL(...)                                        {void;}
+#    define LOG_EXTERNAL(...)                                        ((void)0);
 #  endif
 #  if !defined(LOG_FUNC_IN)
-#    define LOG_FUNC_IN(...)                                         {void;}
+#    define LOG_FUNC_IN(...)                                         ((void)0);
 #  endif
 #  if !defined(LOG_FUNC_OUT)
-#    define LOG_FUNC_OUT(pRoTo)                                      do{ return;} while 0
+#    define LOG_FUNC_OUT(pRoTo)                                      do{ return;} while (0)
 #  endif
 #  if !defined(LOG_FUNC_RETURN)
-#    define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do{ return rEtUrNcOdE;} while 0
+#    define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do{ return rEtUrNcOdE;} while (0)
 #  endif
 #  if !defined(LOG_STREAM_HEX)
-#    define LOG_STREAM_HEX(...)                                      {void;}
+#    define LOG_STREAM_HEX(...)                                      ((void)0);
 #  endif
 #  if !defined(LOG_STREAM_HEX_ARRAY)
-#    define LOG_STREAM_HEX_ARRAY(...)                                {void;}
+#    define LOG_STREAM_HEX_ARRAY(...)                                ((void)0);
 #  endif
 
 #endif /* LOG_H_ */

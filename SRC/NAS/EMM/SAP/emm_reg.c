@@ -109,7 +109,9 @@ emm_reg_send (
   /*
    * Check the EMM-SAP primitive
    */
+#ifndef  NDEBUG
   emm_reg_primitive_t                     primitive = msg->primitive;
+#endif
 
   assert ((primitive > _EMMREG_START) && (primitive < _EMMREG_END));
   /*
