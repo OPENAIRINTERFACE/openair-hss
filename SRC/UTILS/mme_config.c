@@ -720,6 +720,7 @@ config_parse_file (
   }
 
   LOG_SET_CONFIG(&mme_config_p->log_config);
+  config_destroy (&cfg);
   return 0;
 }
 

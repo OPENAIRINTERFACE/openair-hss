@@ -101,17 +101,17 @@ s6a_fd_init_dict_objs (
    * Register the callback for Update Location Answer S6A Application
    */
   CHECK_FD_FCT (fd_disp_register (s6a_ula_cb, DISP_HOW_CC, &when, NULL, &s6a_fd_cnf.ula_hdl));
-  DevAssert (s6a_fd_cnf.ula_hdl != NULL);
+  DevAssert (s6a_fd_cnf.ula_hdl );
   when.command = s6a_fd_cnf.dataobj_s6a_aia;
   when.app = s6a_fd_cnf.dataobj_s6a_app;
   /*
    * Register the callback for Authentication Information Answer S6A Application
    */
   CHECK_FD_FCT (fd_disp_register (s6a_aia_cb, DISP_HOW_CC, &when, NULL, &s6a_fd_cnf.aia_hdl));
-  DevAssert (s6a_fd_cnf.aia_hdl != NULL);
+  DevAssert (s6a_fd_cnf.aia_hdl );
   /*
    * Advertise the support for the test application in the peer
    */
   CHECK_FD_FCT (fd_disp_app_support (s6a_fd_cnf.dataobj_s6a_app, s6a_fd_cnf.dataobj_s6a_vendor, 1, 0));
-  return 0;
+  return RETURNok;
 }

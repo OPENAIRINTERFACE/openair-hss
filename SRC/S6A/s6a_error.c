@@ -61,7 +61,7 @@ s6a_parse_experimental_result (
       break;
 
     default:
-      return -1;
+      return RETURNerror;
     }
 
     /*
@@ -70,7 +70,7 @@ s6a_parse_experimental_result (
     CHECK_FCT (fd_msg_browse (child_avp, MSG_BRW_NEXT, &child_avp, NULL));
   }
 
-  return 0;
+  return RETURNok;
 }
 
 char                                   *

@@ -44,7 +44,7 @@ s6a_parse_rand (
   int                                     ret = 0;
 
   DevCheck (hdr->avp_value->os.len == RAND_LENGTH_OCTETS, RAND_LENGTH_OCTETS, hdr->avp_value->os.len, 0);
-  DevAssert (rand_p != NULL);
+  DevAssert (rand_p );
   STRING_TO_RAND (hdr->avp_value->os.data, rand_p, ret);
   return ret;
 }
@@ -58,7 +58,7 @@ s6a_parse_xres (
   int                                     ret = 0;
 
   DevCheck (hdr->avp_value->os.len >= XRES_LENGTH_MIN && hdr->avp_value->os.len <= XRES_LENGTH_MAX, XRES_LENGTH_MIN, XRES_LENGTH_MAX, hdr->avp_value->os.len);
-  DevAssert (xres != NULL);
+  DevAssert (xres );
   STRING_TO_XRES (hdr->avp_value->os.data, hdr->avp_value->os.len, xres, ret);
   return ret;
 }
@@ -72,7 +72,7 @@ s6a_parse_autn (
   int                                     ret = 0;
 
   DevCheck (hdr->avp_value->os.len == AUTN_LENGTH_OCTETS, AUTN_LENGTH_OCTETS, hdr->avp_value->os.len, 0);
-  DevAssert (autn != NULL);
+  DevAssert (autn );
   STRING_TO_AUTN (hdr->avp_value->os.data, autn, ret);
   return ret;
 }
@@ -86,7 +86,7 @@ s6a_parse_kasme (
   int                                     ret = 0;
 
   DevCheck (hdr->avp_value->os.len == KASME_LENGTH_OCTETS, KASME_LENGTH_OCTETS, hdr->avp_value->os.len, 0);
-  DevAssert (kasme != NULL);
+  DevAssert (kasme );
   STRING_TO_KASME (hdr->avp_value->os.data, kasme, ret);
   return ret;
 }
@@ -133,7 +133,7 @@ s6a_parse_e_utran_vector (
        * Unexpected AVP
        */
       LOG_ERROR (LOG_S6A, "Unexpected AVP with code %d\n", hdr->avp_code);
-      return -1;
+      return RETURNerror;
     }
 
     /*
@@ -144,10 +144,10 @@ s6a_parse_e_utran_vector (
 
   if (ret) {
     LOG_ERROR (LOG_S6A, "Missing AVP for E-UTRAN vector: %c%c%c%c\n", ret & 0x01 ? 'R' : '-', ret & 0x02 ? 'X' : '-', ret & 0x04 ? 'A' : '-', ret & 0x08 ? 'K' : '-');
-    return -1;
+    return RETURNerror;
   }
 
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -179,7 +179,7 @@ s6a_parse_authentication_info_avp (
        * We should only receive E-UTRAN-Vectors
        */
       LOG_ERROR (LOG_S6A, "Unexpected AVP with code %d\n", hdr->avp_code);
-      return -1;
+      return RETURNerror;
     }
 
     /*
@@ -188,7 +188,7 @@ s6a_parse_authentication_info_avp (
     CHECK_FCT (fd_msg_browse (avp, MSG_BRW_NEXT, &avp, NULL));
   }
 
-  return 0;
+  return RETURNok;
 }
 
 int
@@ -207,13 +207,13 @@ s6a_aia_cb (
   s6a_auth_info_ans_t                    *s6a_auth_info_ans_p = NULL;
   int                                     skip_auth_res = 0;
 
-  DevAssert (msg != NULL);
+  DevAssert (msg );
   ans = *msg;
   /*
    * Retrieve the original query associated with the asnwer
    */
   CHECK_FCT (fd_msg_answ_getq (ans, &qry));
-  DevAssert (qry != NULL);
+  DevAssert (qry );
   message_p = itti_alloc_new_message (TASK_S6A, S6A_AUTH_INFO_ANS);
   s6a_auth_info_ans_p = &message_p->ittiMsg.s6a_auth_info_ans;
   LOG_DEBUG (LOG_S6A, "Received S6A Authentication Information Answer (AIA)\n");
@@ -283,7 +283,7 @@ s6a_aia_cb (
 
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 err:
-  return 0;
+  return RETURNok;
 }
 
 int
@@ -295,7 +295,7 @@ s6a_generate_authentication_info_req (
   struct session                         *sess;
   union avp_value                         value;
 
-  DevAssert (air_p != NULL);
+  DevAssert (air_p );
   /*
    * Create the new update location request message
    */
@@ -421,5 +421,5 @@ s6a_generate_authentication_info_req (
     CHECK_FCT (fd_msg_avp_add (msg, MSG_BRW_LAST_CHILD, avp));
   }
   CHECK_FCT (fd_msg_send (&msg, NULL, NULL));
-  return 0;
+  return RETURNok;
 }

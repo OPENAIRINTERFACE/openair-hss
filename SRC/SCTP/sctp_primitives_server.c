@@ -40,6 +40,7 @@
 #include <netinet/in.h>
 #include <netinet/sctp.h>
 #include <arpa/inet.h>
+#include <signal.h>
 
 #include "assertions.h"
 #include "intertask_interface.h"
@@ -57,7 +58,7 @@
 #define SCTP_RC_NORMAL_READ  0
 #define SCTP_RC_DISCONNECT   1
 
-struct sctp_association_s {
+typedef struct sctp_association_s {
   struct sctp_association_s              *next_assoc;   ///< Next association in the list
   struct sctp_association_s              *previous_assoc;       ///< Previous association in the list
   int                                     sd;   ///< Socket descriptor
@@ -70,9 +71,9 @@ struct sctp_association_s {
 
   struct sockaddr                        *peer_addresses;       ///< A list of peer addresses
   int                                     nb_peer_addresses;
-};
+} sctp_association_t;
 
-struct sctp_descriptor_s {
+typedef struct sctp_descriptor_s {
   // List of connected peers
   struct sctp_association_s              *available_connections_head;
   struct sctp_association_s              *available_connections_tail;
@@ -80,12 +81,12 @@ struct sctp_descriptor_s {
   uint32_t                                number_of_connections;
   uint16_t                                nb_instreams;
   uint16_t                                nb_outstreams;
-};
+} sctp_descriptor_t;
 
-struct sctp_arg_s {
+typedef struct sctp_arg_s {
   int                                     sd;
   uint32_t                                ppid;
-};
+} sctp_arg_t;
 
 static struct sctp_descriptor_s         sctp_desc;
 
@@ -110,14 +111,14 @@ static int                              sctp_handle_com_down (
   uint32_t assoc_id);
 static void                             sctp_dump_list (
   void);
+static void sctp_exit (void);
 
+//------------------------------------------------------------------------------
 static struct sctp_association_s       *
 sctp_add_new_peer (
   void)
 {
-  struct sctp_association_s              *new_sctp_descriptor = NULL;
-
-  new_sctp_descriptor = CALLOC_CHECK (1, sizeof (struct sctp_association_s));
+  struct sctp_association_s              *new_sctp_descriptor = CALLOC_CHECK (1, sizeof (struct sctp_association_s));
 
   if (new_sctp_descriptor == NULL) {
     LOG_ERROR (LOG_SCTP, "Failed to allocate memory for new peer (%s:%d)\n", __FILE__, __LINE__);
@@ -141,11 +142,12 @@ sctp_add_new_peer (
   return new_sctp_descriptor;
 }
 
+//------------------------------------------------------------------------------
 static struct sctp_association_s       *
 sctp_is_assoc_in_list (
   int32_t assoc_id)
 {
-  struct sctp_association_s              *assoc_desc;
+  struct sctp_association_s              *assoc_desc = NULL;
 
   if (assoc_id < 0) {
     return NULL;
@@ -160,11 +162,12 @@ sctp_is_assoc_in_list (
   return assoc_desc;
 }
 
+//------------------------------------------------------------------------------
 static int
 sctp_remove_assoc_from_list (
   int32_t assoc_id)
 {
-  struct sctp_association_s              *assoc_desc;
+  struct sctp_association_s              *assoc_desc = NULL;
 
   /*
    * Association not in the list
@@ -202,12 +205,16 @@ sctp_remove_assoc_from_list (
     }
   }
 
+  if (assoc_desc->peer_addresses) {
+    int rv = sctp_freepaddrs(assoc_desc->peer_addresses);
+    if (rv) LOG_DEBUG (LOG_SCTP, "sctp_freepaddrs(%p) failed\n", assoc_desc->peer_addresses);
+  }
   FREE_CHECK (assoc_desc);
-  assoc_desc = NULL;
   sctp_desc.number_of_connections--;
   return 0;
 }
 
+//------------------------------------------------------------------------------
 static void
 sctp_dump_assoc (
   struct sctp_association_s *sctp_assoc_p)
@@ -240,14 +247,13 @@ sctp_dump_assoc (
 #endif
 }
 
+//------------------------------------------------------------------------------
 static void
 sctp_dump_list (
   void)
 {
 #if SCTP_DUMP_LIST
-  struct sctp_association_s              *sctp_assoc_p;
-
-  sctp_assoc_p = sctp_desc.available_connections_head;
+  struct sctp_association_s              *sctp_assoc_p = sctp_desc.available_connections_head;
   LOG_DEBUG (LOG_SCTP, "SCTP list contains %d associations\n", sctp_desc.number_of_connections);
 
   while (sctp_assoc_p != NULL) {
@@ -260,6 +266,7 @@ sctp_dump_list (
 #endif
 }
 
+//------------------------------------------------------------------------------
 static int
 sctp_send_msg (
   int32_t sctp_assoc_id,
@@ -299,16 +306,17 @@ sctp_send_msg (
   return 0;
 }
 
+//------------------------------------------------------------------------------
 static int
 sctp_create_new_listener (
   SctpInit * init_p)
 {
-  struct sctp_event_subscribe             event;
-  struct sockaddr                        *addr;
-  struct sctp_arg_s                      *sctp_arg_p;
+  struct sctp_event_subscribe             event = {0};
+  struct sockaddr                        *addr = NULL;
+  struct sctp_arg_s                      *sctp_arg_p = NULL;
   uint16_t                                i = 0,
-    j;
-  int                                     sd;
+                                          j = 0;
+  int                                     sd = 0;
   int                                     used_addresses = 0;
 
   DevAssert (init_p != NULL);
@@ -341,7 +349,7 @@ sctp_create_new_listener (
   }
 
   if (init_p->ipv6 == 1) {
-    struct sockaddr_in6                    *ip6_addr;
+    struct sockaddr_in6                    *ip6_addr = NULL;
 
     LOG_DEBUG (LOG_SCTP, "ipv6 addresses:\n");
 
@@ -409,6 +417,7 @@ err:
   return -1;
 }
 
+//------------------------------------------------------------------------------
 static
   inline int
 sctp_read_from_socket (
@@ -417,9 +426,9 @@ sctp_read_from_socket (
 {
   int                                     flags = 0,
     n;
-  socklen_t                               from_len;
-  struct sctp_sndrcvinfo                  sinfo;
-  struct sockaddr_in                      addr;
+  socklen_t                               from_len = 0;
+  struct sctp_sndrcvinfo                  sinfo = {0};
+  struct sockaddr_in                      addr = {0};
   uint8_t                                 buffer[SCTP_RECV_BUFFER_SIZE];
 
   if (sd < 0) {
@@ -438,9 +447,7 @@ sctp_read_from_socket (
   }
 
   if (flags & MSG_NOTIFICATION) {
-    union sctp_notification                *snp;
-
-    snp = (union sctp_notification *)buffer;
+    union sctp_notification                *snp = (union sctp_notification *)buffer;
 
     /*
      * Client deconnection
@@ -463,7 +470,7 @@ sctp_read_from_socket (
        */
       switch (sctp_assoc_changed->sac_state) {
       case SCTP_COMM_UP:{
-          struct sctp_association_s              *new_association;
+          struct sctp_association_s              *new_association = NULL;
 
           sctp_get_sockinfo (sd, NULL, NULL, NULL);
           LOG_DEBUG (LOG_SCTP, "New connection\n");
@@ -522,6 +529,7 @@ sctp_read_from_socket (
   return SCTP_RC_NORMAL_READ;
 }
 
+//------------------------------------------------------------------------------
 static int
 sctp_handle_com_down (
   uint32_t assoc_id)
@@ -539,11 +547,12 @@ sctp_handle_com_down (
   return SCTP_RC_DISCONNECT;
 }
 
+//------------------------------------------------------------------------------
 void                                   *
 sctp_receiver_thread (
   void *args_p)
 {
-  struct sctp_arg_s                      *sctp_arg_p;
+  struct sctp_arg_s                      *sctp_arg_p = NULL;
 
   /*
    * maximum file descriptor number
@@ -641,6 +650,7 @@ sctp_receiver_thread (
   return NULL;
 }
 
+//------------------------------------------------------------------------------
 static void                            *
 sctp_intertask_interface (
   void *args_p)
@@ -650,7 +660,7 @@ sctp_intertask_interface (
   MSC_START_USE ();
 
   while (1) {
-    MessageDef                             *received_message_p;
+    MessageDef                             *received_message_p = NULL;
 
     itti_receive_msg (TASK_SCTP, &received_message_p);
 
@@ -690,6 +700,7 @@ sctp_intertask_interface (
       break;
 
     case TERMINATE_MESSAGE:{
+        sctp_exit();
         itti_exit_task ();
       }
       break;
@@ -707,6 +718,7 @@ sctp_intertask_interface (
   return NULL;
 }
 
+//------------------------------------------------------------------------------
 int
 sctp_init (
   const mme_config_t * mme_config_p)
@@ -727,4 +739,25 @@ sctp_init (
 
   LOG_DEBUG (LOG_SCTP, "Initializing SCTP task interface: DONE\n");
   return 0;
+}
+
+//------------------------------------------------------------------------------
+static void sctp_exit (void)
+{
+
+  int rv = pthread_cancel(assoc_thread);
+  if (rv) LOG_DEBUG (LOG_SCTP, "pthread_cancel(%08lX) failed: %d:%s\n", assoc_thread, rv, strerror(rv));
+
+  struct sctp_association_s              *sctp_assoc_p = sctp_desc.available_connections_head;
+  struct sctp_association_s              *next_sctp_assoc_p = sctp_desc.available_connections_head;
+
+  while (next_sctp_assoc_p) {
+    next_sctp_assoc_p = sctp_assoc_p->next_assoc;
+    if (sctp_assoc_p->peer_addresses) {
+      rv = sctp_freepaddrs(sctp_assoc_p->peer_addresses);
+      if (rv) LOG_DEBUG (LOG_SCTP, "sctp_freepaddrs(%p) failed\n", sctp_assoc_p->peer_addresses);
+    }
+    FREE_CHECK (sctp_assoc_p);
+    sctp_desc.number_of_connections--;
+  }
 }

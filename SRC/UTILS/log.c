@@ -227,12 +227,13 @@ void log_connect_to_server(void)
      close(sfd);
    }
 
+   freeaddrinfo(result);           /* No longer needed */
+
    if (rp == NULL) {               /* No address succeeded */
      g_oai_log.tcp_state = LOG_TCP_STATE_NOT_CONNECTED;
      fprintf(stderr, "Could not connect to log server %s:%s\n", g_oai_log.server_address, g_oai_log.server_port);
      return;
    }
-   freeaddrinfo(result);           /* No longer needed */
 
    fcntl(sfd, F_SETFL, fcntl(sfd, F_GETFL, 0)|O_NONBLOCK);
 

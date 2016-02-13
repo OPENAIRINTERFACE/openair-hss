@@ -50,7 +50,7 @@ s11_sgw_handle_create_session_request (
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 
-  DevAssert (stack_p != NULL);
+  DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, SGW_CREATE_SESSION_REQUEST);
   create_session_request_p = &message_p->ittiMsg.sgwCreateSessionRequest;
   /*
@@ -186,7 +186,7 @@ s11_sgw_handle_create_session_request (
     DevAssert (NW_OK == rc);
     rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
     DevAssert (NW_OK == rc);
-    return 0;
+    return RETURNok;
   }
 
   rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
@@ -206,10 +206,10 @@ s11_sgw_handle_create_session_response (
   NwGtpv2cTrxnHandleT                     trxn;
   gtp_cause_t                             cause;
 
-  DevAssert (create_session_response_p != NULL);
-  DevAssert (stack_p != NULL);
+  DevAssert (create_session_response_p );
+  DevAssert (stack_p );
   trxn = (NwGtpv2cTrxnHandleT) create_session_response_p->trxn;
-  DevAssert (trxn != 0);
+  DevAssert (trxn );
   /*
    * Create a tunnel for the GTPv2-C stack
    */
@@ -244,7 +244,7 @@ s11_sgw_handle_create_session_response (
   s11_bearer_context_created_ie_set (&(ulp_req.hMsg), &create_session_response_p->bearer_context_created);
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 int
@@ -260,7 +260,7 @@ s11_sgw_handle_delete_session_request (
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 
-  DevAssert (stack_p != NULL);
+  DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, SGW_DELETE_SESSION_REQUEST);
   delete_session_request_p = &message_p->ittiMsg.sgwDeleteSessionRequest;
   /*
@@ -333,7 +333,7 @@ s11_sgw_handle_delete_session_request (
     DevAssert (NW_OK == rc);
     rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
     DevAssert (NW_OK == rc);
-    return 0;
+    return RETURNok;
   }
 
   rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
@@ -353,10 +353,10 @@ s11_sgw_handle_delete_session_response (
   NwGtpv2cTrxnHandleT                     trxn;
   gtp_cause_t                             cause;
 
-  DevAssert (delete_session_response_p != NULL);
-  DevAssert (stack_p != NULL);
+  DevAssert (delete_session_response_p );
+  DevAssert (stack_p );
   trxn = (NwGtpv2cTrxnHandleT) delete_session_response_p->trxn;
-  DevAssert (trxn != 0);
+  DevAssert (trxn );
   /*
    * Prepare a create session response to send to MME.
    */
@@ -375,5 +375,5 @@ s11_sgw_handle_delete_session_response (
   s11_cause_ie_set (&(ulp_req.hMsg), &cause);
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }

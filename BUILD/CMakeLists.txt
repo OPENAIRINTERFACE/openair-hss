@@ -207,11 +207,10 @@ add_boolean_option(SCTP_DUMP_LIST                   False    "Traces, option to 
 add_boolean_option( TRACE_HASHTABLE                 False    "Trace hashtables operations ")
 add_boolean_option( LOG_OAI                         False    "Thread safe logging utility")
 add_boolean_option( LOG_OAI_CLEAN_HARD              False    "Thread safe logging utility option for cleaning inner structs")
-add_boolean_option( MEMORY_CHECK                    False    "Thread safe malloc checker")
 add_boolean_option( SECU_DEBUG                      False    "Traces, option to be removed soon")
 
-add_boolean_option( NAS_FORCE_REJECT_SR             True     "TEMP, TO be disabled after devel: Force the EMM NAS layer to respond to any SR by reject")
-add_boolean_option( NAS_FORCE_REJECT_TAU            True     "TEMP, TO be disabled after devel: Force the EMM NAS layer to respond to any TAU Request by reject")
+add_boolean_option( NAS_FORCE_REJECT_SR             True     "TEMP, TO be disabled for community after development and test: Force the EMM NAS layer to respond to any SR by reject")
+add_boolean_option( NAS_FORCE_REJECT_TAU            True     "TEMP, TO be disabled for community after development and test: Force the EMM NAS layer to respond to any TAU Request by reject")
 
 
 set (ITTI_DIR ${OPENAIRCN_DIR}/SRC/COMMON/ITTI)
@@ -381,10 +380,6 @@ set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/SRC/UTILS/mme_config.c
   ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
   )
-  
-if (MEMORY_CHECK)
-  set(CN_UTILS_SRC   ${CN_UTILS_SRC} ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c )
-endif(MEMORY_CHECK)
 
 if (LOG_OAI)
   set(CN_UTILS_SRC   ${CN_UTILS_SRC}   ${OPENAIRCN_DIR}/SRC/UTILS/log.c )

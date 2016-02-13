@@ -45,7 +45,6 @@ kdf (
   hmac_sha256_digest (&ctx, out_len, out);
 }
 
-#ifndef NAS_UE
 int
 derive_keNB (
   const uint8_t kasme[32],
@@ -67,4 +66,3 @@ derive_keNB (
   kdf (kasme, 32, s, 7, keNB, 32);
   return 0;
 }
-#endif

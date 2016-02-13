@@ -50,7 +50,7 @@ s11_sgw_handle_modify_bearer_request (
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 
-  DevAssert (stack_p != NULL);
+  DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, SGW_MODIFY_BEARER_REQUEST);
   modify_bearer_request_p = &message_p->ittiMsg.sgwModifyBearerRequest;
   modify_bearer_request_p->trxn = (void *)pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
@@ -125,7 +125,7 @@ s11_sgw_handle_modify_bearer_request (
     DevAssert (NW_OK == rc);
     rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
     DevAssert (NW_OK == rc);
-    return 0;
+    return RETURNok;
   }
 
   rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
@@ -145,8 +145,8 @@ s11_sgw_handle_modify_bearer_response (
   NwGtpv2cUlpApiT                         ulp_req;
   NwGtpv2cTrxnHandleT                     trxn;
 
-  DevAssert (stack_p != NULL);
-  DevAssert (modify_bearer_response_p != NULL);
+  DevAssert (stack_p );
+  DevAssert (modify_bearer_response_p );
   trxn = (NwGtpv2cTrxnHandleT) modify_bearer_response_p->trxn;
   /*
    * Prepare a modify bearer response to send to MME.
@@ -166,5 +166,5 @@ s11_sgw_handle_modify_bearer_response (
   s11_cause_ie_set (&(ulp_req.hMsg), &cause);
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }

@@ -61,7 +61,7 @@ s11_mme_ulp_process_stack_req_cb (
   //     NwRcT rc = NW_OK;
   int                                     ret = 0;
 
-  DevAssert (pUlpApi != NULL);
+  DevAssert (pUlpApi );
 
   switch (pUlpApi->apiType) {
   case NW_GTPV2C_ULP_API_TRIGGERED_RSP_IND:
@@ -157,7 +157,7 @@ s11_mme_thread (
     MessageDef                             *received_message_p = NULL;
 
     itti_receive_msg (TASK_S11, &received_message_p);
-    assert (received_message_p != NULL);
+    assert (received_message_p );
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case SGW_CREATE_SESSION_REQUEST:{
@@ -212,7 +212,7 @@ s11_send_init_udp (
   message_p = itti_alloc_new_message (TASK_S11, UDP_INIT);
 
   if (message_p == NULL) {
-    return -1;
+    return RETURNerror;
   }
 
   message_p->ittiMsg.udp_init.port = port_number;
@@ -274,11 +274,11 @@ s11_mme_init (
   addr.s_addr = mme_config.ipv4.mme_ip_address_for_S11;
   config_unlock (&mme_config);
   s11_address_str = inet_ntoa (addr);
-  DevAssert (s11_address_str != NULL);
+  DevAssert (s11_address_str );
   s11_send_init_udp (s11_address_str, 2123);
   LOG_DEBUG (LOG_S11, "Initializing S11 interface: DONE\n");
   return ret;
 fail:
   LOG_DEBUG (LOG_S11, "Initializing S11 interface: FAILURE\n");
-  return -1;
+  return RETURNerror;
 }

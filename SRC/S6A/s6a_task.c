@@ -34,6 +34,7 @@
 #include "intertask_interface.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
+#include "common_types.h"
 #include "assertions.h"
 #include "msc.h"
 #include "log.h"
@@ -44,23 +45,23 @@ struct session_handler                 *ts_sess_hdl;
 
 s6a_fd_cnf_t                            s6a_fd_cnf;
 
-void                                   *s6a_thread (
-  void *args);
+void                                   *s6a_thread (void *args);
 static void                             fd_gnutls_debug (
   int level,
   const char *str);
+static void s6a_exit(void);
 
-static void
-fd_gnutls_debug (
+
+//------------------------------------------------------------------------------
+static void fd_gnutls_debug (
   int level,
   const char *str)
 {
   LOG_EXTERNAL (level, LOG_S6A, "[GTLS] %s", str);
 }
 
-void                                   *
-s6a_thread (
-  void *args)
+//------------------------------------------------------------------------------
+void *s6a_thread (void *args)
 {
   itti_mark_task_ready (TASK_S6A);
   LOG_START_USE ();
@@ -75,7 +76,7 @@ s6a_thread (
      * * message is sent to the task.
      */
     itti_receive_msg (TASK_S6A, &received_message_p);
-    DevAssert (received_message_p != NULL);
+    DevAssert (received_message_p );
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case S6A_UPDATE_LOCATION_REQ:{
@@ -87,6 +88,7 @@ s6a_thread (
       }
       break;
     case TERMINATE_MESSAGE:{
+        s6a_exit();
         itti_exit_task ();
       }
       break;
@@ -101,8 +103,8 @@ s6a_thread (
   return NULL;
 }
 
-int
-s6a_init (
+//------------------------------------------------------------------------------
+int s6a_init (
   const mme_config_t * mme_config_p)
 {
   int                                     ret;
@@ -112,10 +114,10 @@ s6a_init (
   memset (&s6a_fd_cnf, 0, sizeof (s6a_fd_cnf_t));
 
   /*
-   * if (strcmp(fd_core_version(), FREE_CHECK_DIAMETER_MINIMUM_VERSION) != 0) {
+   * if (strcmp(fd_core_version(), FREE_CHECK_DIAMETER_MINIMUM_VERSION) ) {
    * S6A_ERROR("Freediameter version %s found, expecting %s\n", fd_core_version(),
    * FREE_CHECK_DIAMETER_MINIMUM_VERSION);
-   * return -1;
+   * return RETURNerror;
    * } else {
    * S6A_DEBUG("Freediameter version %s\n", fd_core_version());
    * }
@@ -127,7 +129,7 @@ s6a_init (
    */
   LOG_DEBUG (LOG_S6A, "Initializing freeDiameter core...\n");
   ret = fd_core_initialize ();
-  if (ret != 0) {
+  if (ret) {
     LOG_ERROR (LOG_S6A, "An error occurred during freeDiameter core library initialization: %d\n", ret);
     return ret;
   } else {
@@ -139,7 +141,7 @@ s6a_init (
   LOG_DEBUG (LOG_S6A, "Default ext path: %s\n", DEFAULT_EXTENSIONS_PATH);
 
   ret = fd_core_parseconf (mme_config_p->s6a_config.conf_file);
-  if (ret != 0) {
+  if (ret) {
     LOG_ERROR (LOG_S6A, "An error occurred during fd_core_parseconf file : %s.\n", mme_config_p->s6a_config.conf_file);
     return ret;
   } else {
@@ -159,7 +161,7 @@ s6a_init (
    * Starting freeDiameter core
    */
   ret = fd_core_start ();
-  if (ret != 0) {
+  if (ret) {
     LOG_ERROR (LOG_S6A, "An error occurred during freeDiameter core library start\n");
     return ret;
   } else {
@@ -169,7 +171,7 @@ s6a_init (
 
 
   ret = fd_core_waitstartcomplete ();
-  if (ret != 0) {
+  if (ret) {
     LOG_ERROR (LOG_S6A, "An error occurred during fd_core_waitstartcomplete.\n");
     return ret;
   } else {
@@ -177,7 +179,7 @@ s6a_init (
   }
 
   ret = s6a_fd_init_dict_objs ();
-  if (ret != 0) {
+  if (ret) {
     LOG_ERROR (LOG_S6A, "An error occurred during s6a_fd_init_dict_objs.\n");
     return ret;
   } else {
@@ -191,9 +193,26 @@ s6a_init (
 
   if (itti_create_task (TASK_S6A, &s6a_thread, NULL) < 0) {
     LOG_ERROR (LOG_S6A, "s6a create task\n");
-    return -1;
+    return RETURNerror;
   }
   LOG_DEBUG (LOG_S6A, "Initializing S6a interface: DONE\n");
 
-  return 0;
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+static void s6a_exit(void)
+{
+  int    rv = RETURNok;
+  /* Initialize shutdown of the framework */
+  rv = fd_core_shutdown();
+  if (rv) {
+    fprintf (stderr, "An error occurred during fd_core_shutdown().\n");
+  }
+
+  /* Wait for the shutdown to be complete -- this should always be called after fd_core_shutdown */
+  rv = fd_core_wait_shutdown_complete();
+  if (rv) {
+    fprintf (stderr, "An error occurred during fd_core_wait_shutdown_complete().\n");
+  }
 }

@@ -44,8 +44,8 @@ s11_mme_create_session_request (
   NwRcT                                   rc;
   uint8_t                                 restart_counter = 0;
 
-  DevAssert (stack_p != NULL);
-  DevAssert (create_session_p != NULL);
+  DevAssert (stack_p );
+  DevAssert (create_session_p );
   memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
   ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
   /*
@@ -85,7 +85,7 @@ s11_mme_create_session_request (
   s11_bearer_context_to_create_ie_set (&(ulp_req.hMsg), &create_session_p->bearer_to_create);
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 int
@@ -101,7 +101,7 @@ s11_mme_handle_create_session_response (
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 
-  DevAssert (stack_p != NULL);
+  DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, SGW_CREATE_SESSION_RESPONSE);
   create_session_resp_p = &message_p->ittiMsg.sgwCreateSessionResponse;
   /*
@@ -149,7 +149,7 @@ s11_mme_handle_create_session_response (
     DevAssert (NW_OK == rc);
     rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
     DevAssert (NW_OK == rc);
-    return -1;
+    return RETURNerror;
   }
 
   rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
@@ -167,8 +167,8 @@ s11_mme_release_access_bearers_request (
 {
   NwGtpv2cUlpApiT                         ulp_req;
 
-  DevAssert (stack_p != NULL);
-  DevAssert (release_access_bearers_p != NULL);
+  DevAssert (stack_p );
+  DevAssert (release_access_bearers_p );
   memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
-  AssertFatal (0 == 1, "TODO s11_mme_release_access_bearers_request()");
+  AssertFatal (!1, "TODO s11_mme_release_access_bearers_request()");
 }

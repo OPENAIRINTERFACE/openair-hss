@@ -52,7 +52,7 @@ s11_imsi_ie_get (
   uint8_t                                 mask = 0x0F;
   uint8_t                                 imsi_length = 2 * ieLength;
 
-  DevAssert (arg != NULL);
+  DevAssert (arg );
   imsi = (Imsi_t *) arg;
 
   for (i = 0; i < ieLength * 2; i++) {
@@ -87,14 +87,14 @@ s11_imsi_ie_set (
                                           i;
   NwRcT                                   rc;
 
-  DevAssert (msg != NULL);
-  DevAssert (imsi != NULL);
+  DevAssert (msg );
+  DevAssert (imsi );
   /*
    * In case of odd/even imsi
    */
   imsi_length = imsi->length % 2 == 0 ? imsi->length / 2 : imsi->length / 2 + 1;
   temp = CALLOC_CHECK (imsi_length, sizeof (uint8_t));
-  DevAssert (temp != NULL);
+  DevAssert (temp );
 
   for (i = 0; i < imsi->length; i++) {
     temp[i / 2] |= ((imsi->digit[i] - '0') & 0x0F) << (i % 2 ? 4 : 0);
@@ -103,7 +103,7 @@ s11_imsi_ie_set (
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IMSI, imsi_length, 0, temp);
   DevAssert (NW_OK == rc);
   FREE_CHECK (temp);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -119,7 +119,7 @@ s11_msisdn_ie_get (
   uint8_t                                 mask = 0x0F;
   uint8_t                                 msisdn_length = 2 * ieLength;
 
-  DevAssert (arg != NULL);
+  DevAssert (arg );
   msisdn = (Msisdn_t *) arg;
 
   for (i = 0; i < ieLength * 2; i++) {
@@ -154,7 +154,7 @@ s11_mei_ie_get (
 {
   Mei_t                                  *mei = (Mei_t *) arg;
 
-  DevAssert (mei != NULL);
+  DevAssert (mei );
   return NW_OK;
 }
 
@@ -168,7 +168,7 @@ s11_pdn_type_ie_get (
 {
   pdn_type_t                             *pdn_type = (pdn_type_t *) arg;
 
-  DevAssert (pdn_type != NULL);
+  DevAssert (pdn_type );
 
   if (*ieValue == 1) {
     /*
@@ -202,8 +202,8 @@ s11_pdn_type_ie_set (
   NwRcT                                   rc;
   uint8_t                                 value;
 
-  DevAssert (pdn_type != NULL);
-  DevAssert (msg != NULL);
+  DevAssert (pdn_type );
+  DevAssert (msg );
 
   switch (*pdn_type) {
   case IPv4:
@@ -221,12 +221,12 @@ s11_pdn_type_ie_set (
 
   default:
     LOG_ERROR (LOG_S11, "Invalid PDN type received: %d\n", *pdn_type);
-    return -1;
+    return RETURNerror;
   }
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_PDN_TYPE, 1, 0, (uint8_t *) & value);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -239,7 +239,7 @@ s11_rat_type_ie_get (
 {
   rat_type_t                             *rat_type = (rat_type_t *) arg;
 
-  DevAssert (rat_type != NULL);
+  DevAssert (rat_type );
 
   switch (*ieValue) {
   case 1:
@@ -283,8 +283,8 @@ s11_rat_type_ie_set (
   NwRcT                                   rc;
   uint8_t                                 value;
 
-  DevAssert (rat_type != NULL);
-  DevAssert (msg != NULL);
+  DevAssert (rat_type );
+  DevAssert (msg );
 
   switch (*rat_type) {
   case RAT_UTRAN:
@@ -313,12 +313,12 @@ s11_rat_type_ie_set (
 
   default:
     LOG_ERROR (LOG_S11, "Can't map RAT type %d to GTP RAT type\n" "\tCheck TS.29.274 #8.17 for possible values\n", *rat_type);
-    return -1;
+    return RETURNerror;
   }
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_RAT_TYPE, 1, 0, (uint8_t *) & value);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 int
@@ -332,7 +332,7 @@ s11_ebi_ie_set (
   value = ebi & 0x0F;
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_EBI, 1, 0, &value);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -345,7 +345,7 @@ s11_ebi_ie_get (
 {
   uint8_t                                *ebi = (uint8_t *) arg;
 
-  DevAssert (ebi != NULL);
+  DevAssert (ebi );
   *ebi = ieValue[0] & 0x0F;
   LOG_DEBUG (LOG_S11, "\t- EBI %u\n", *ebi);
   return NW_OK;
@@ -361,7 +361,7 @@ s11_cause_ie_get (
 {
   SGWCause_t                             *cause = (SGWCause_t *) arg;
 
-  DevAssert (cause != NULL);
+  DevAssert (cause );
   *cause = ieValue[0];
   LOG_DEBUG (LOG_S11, "\t- Cause %u\n", *cause);
   return NW_OK;
@@ -375,12 +375,12 @@ s11_cause_ie_set (
   NwRcT                                   rc;
   uint8_t                                 value[6];
 
-  DevAssert (msg != NULL);
-  DevAssert (cause != NULL);
+  DevAssert (msg );
+  DevAssert (cause );
   value[0] = cause->cause_value;
   value[1] = ((cause->pce & 0x1) << 2) | ((cause->bce & 0x1) << 1) | (cause->cs & 0x1);
 
-  if (cause->offending_ie_type != 0) {
+  if (cause->offending_ie_type ) {
     value[2] = cause->offending_ie_type;
     value[3] = (cause->offending_ie_length & 0xFF00) >> 8;
     value[4] = cause->offending_ie_length & 0x00FF;
@@ -406,7 +406,7 @@ s11_bearer_context_ie_get (
   uint8_t                                 read = 0;
   NwRcT                                   rc;
 
-  DevAssert (bearer_to_create != NULL);
+  DevAssert (bearer_to_create );
 
   while (ieLength > read) {
     NwGtpv2cIeTlvT                         *ie_p;
@@ -440,8 +440,8 @@ s11_bearer_context_to_create_ie_set (
 {
   NwRcT                                   rc;
 
-  DevAssert (msg != NULL);
-  DevAssert (bearer_to_create != NULL);
+  DevAssert (msg );
+  DevAssert (bearer_to_create );
   /*
    * Start section for grouped IE: bearer context to create
    */
@@ -453,7 +453,7 @@ s11_bearer_context_to_create_ie_set (
    */
   rc = nwGtpv2cMsgGroupedIeEnd (*msg);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -468,7 +468,7 @@ s11_bearer_context_to_modifiy_ie_get (
   uint8_t                                 read = 0;
   NwRcT                                   rc;
 
-  DevAssert (bearer_to_modify != NULL);
+  DevAssert (bearer_to_modify );
 
   while (ieLength > read) {
     NwGtpv2cIeTlvT                         *ie_p;
@@ -508,7 +508,7 @@ s11_bearer_context_created_ie_get (
   uint8_t                                 read = 0;
   NwRcT                                   rc;
 
-  DevAssert (bearer_created != NULL);
+  DevAssert (bearer_created );
 
   while (ieLength > read) {
     NwGtpv2cIeTlvT                         *ie_p;
@@ -547,8 +547,8 @@ s11_bearer_context_created_ie_set (
 {
   NwRcT                                   rc;
 
-  DevAssert (msg != NULL);
-  DevAssert (bearer != NULL);
+  DevAssert (msg );
+  DevAssert (bearer );
   /*
    * Start section for grouped IE: bearer context created
    */
@@ -566,7 +566,7 @@ s11_bearer_context_created_ie_set (
    */
   rc = nwGtpv2cMsgGroupedIeEnd (*msg);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 /* This IE shall be included in the E-UTRAN initial attach,
@@ -582,10 +582,10 @@ s11_apn_restriction_ie_set (
 {
   NwRcT                                   rc;
 
-  DevAssert (msg != NULL);
+  DevAssert (msg );
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN_RESTRICTION, 1, 0, (uint8_t *) & apn_restriction);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -598,7 +598,7 @@ s11_serving_network_ie_get (
 {
   ServingNetwork_t                       *serving_net = (ServingNetwork_t *) arg;
 
-  DevAssert (serving_net != NULL);
+  DevAssert (serving_net );
   serving_net->mcc[1] = (ieValue[0] & 0xF0) >> 4;
   serving_net->mcc[0] = (ieValue[0] & 0x0F);
   serving_net->mcc[2] = (ieValue[1] & 0x0F);
@@ -628,8 +628,8 @@ s11_serving_network_ie_set (
   NwRcT                                   rc;
   uint8_t                                 value[3];
 
-  DevAssert (msg != NULL);
-  DevAssert (serving_network != NULL);
+  DevAssert (msg );
+  DevAssert (serving_network );
   /*
    * MCC Decimal | MCC Hundreds
    */
@@ -649,7 +649,7 @@ s11_serving_network_ie_set (
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_SERVING_NETWORK, 3, 0, value);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -663,7 +663,7 @@ s11_fteid_ie_get (
   uint8_t                                 offset = 0;
   FTeid_t                                *fteid = (FTeid_t *) arg;
 
-  DevAssert (fteid != NULL);
+  DevAssert (fteid );
   fteid->ipv4 = (ieValue[0] & 0x80) >> 7;
   fteid->ipv6 = (ieValue[0] & 0x40) >> 6;
   fteid->interface_type = ieValue[0] & 0x1F;
@@ -709,7 +709,7 @@ s11_paa_ie_get (
   uint8_t                                 offset = 0;
   PAA_t                                  *paa = (PAA_t *) arg;
 
-  DevAssert (paa != NULL);
+  DevAssert (paa );
   paa->pdn_type = ieValue[0] & 0x07;
   LOG_DEBUG (LOG_S11, "\t- PAA type  %d\n", paa->pdn_type);
 
@@ -757,7 +757,7 @@ s11_paa_ie_set (
   uint8_t                                 offset = 0;
   NwRcT                                   rc;
 
-  DevAssert (paa != NULL);
+  DevAssert (paa );
   pdn_type = paa->pdn_type + 1;
   temp[offset] = pdn_type;
   offset++;
@@ -778,7 +778,7 @@ s11_paa_ie_set (
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_PAA, offset, 0, temp);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 /* The encoding of the APN shall follow the Name Syntax defined in RFC 2181,
@@ -800,7 +800,7 @@ s11_apn_ie_get (
   uint8_t                                 word_length;
   char                                   *apn = (char *)arg;
 
-  DevAssert (apn != NULL);
+  DevAssert (apn );
   DevCheck (ieLength <= APN_MAX_LENGTH, ieLength, APN_MAX_LENGTH, 0);
   word_length = ieValue[0];
 
@@ -839,8 +839,8 @@ s11_apn_ie_set (
   uint8_t                                *last_size;
   uint8_t                                 word_length = 0;
 
-  DevAssert (apn != NULL);
-  DevAssert (msg != NULL);
+  DevAssert (apn );
+  DevAssert (msg );
   apn_length = strlen (apn);
   value = CALLOC_CHECK (apn_length + 1, sizeof (uint8_t));
   last_size = &value[0];
@@ -865,7 +865,7 @@ s11_apn_ie_set (
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN, apn_length + 1, 0, value);
   DevAssert (NW_OK == rc);
   FREE_CHECK (value);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -878,7 +878,7 @@ s11_ambr_ie_get (
 {
   ambr_t                                 *ambr = (ambr_t *) arg;
 
-  DevAssert (ambr != NULL);
+  DevAssert (ambr );
   ambr->br_ul = ntoh_int32_buf (&ieValue[0]);
   ambr->br_dl = ntoh_int32_buf (&ieValue[4]);
   LOG_DEBUG (LOG_S11, "\t- AMBR UL %" PRIu64 "\n", ambr->br_ul);
@@ -896,7 +896,7 @@ s11_uli_ie_get (
 {
   Uli_t                                  *uli = (Uli_t *) arg;
 
-  DevAssert (uli != NULL);
+  DevAssert (uli );
   uli->present = ieValue[0];
 
   if (uli->present & ULI_CGI) {
@@ -913,8 +913,8 @@ s11_bearer_qos_ie_set (
   NwRcT                                   rc;
   uint8_t                                 value[18];
 
-  DevAssert (msg != NULL);
-  DevAssert (bearer_qos != NULL);
+  DevAssert (msg );
+  DevAssert (bearer_qos );
   value[0] = (bearer_qos->pci << 6) | (bearer_qos->pl << 2) | (bearer_qos->pvi);
   value[1] = bearer_qos->qci;
   /*
@@ -926,7 +926,7 @@ s11_bearer_qos_ie_set (
   memcpy (&value[14], &bearer_qos->gbr.br_dl, 4);
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_LEVEL_QOS, 18, 0, value);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -939,7 +939,7 @@ s11_ip_address_ie_get (
 {
   gtp_ip_address_t                       *ip_address = (gtp_ip_address_t *) arg;
 
-  DevAssert (ip_address != NULL);
+  DevAssert (ip_address );
 
   if (ieLength == 4) {
     /*
@@ -968,7 +968,7 @@ s11_ip_address_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const gtp_ip_address_t * ip_address)
 {
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -981,7 +981,7 @@ s11_delay_value_ie_get (
 {
   DelayValue_t                           *delay_value = (DelayValue_t *) arg;
 
-  DevAssert (arg != NULL);
+  DevAssert (arg );
 
   if (ieLength != 1) {
     return NW_GTPV2C_IE_INCORRECT;
@@ -1000,12 +1000,12 @@ s11_delay_value_ie_set (
   uint8_t                                 value;
   NwRcT                                   rc;
 
-  DevAssert (msg != NULL);
-  DevAssert (delay_value != NULL);
+  DevAssert (msg );
+  DevAssert (delay_value );
   value = *delay_value;
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_DELAY_VALUE, 1, 0, (uint8_t *) & value);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -1018,7 +1018,7 @@ s11_ue_time_zone_ie_get (
 {
   UETimeZone_t                           *ue_time_zone = (UETimeZone_t *) arg;
 
-  DevAssert (ue_time_zone != NULL);
+  DevAssert (ue_time_zone );
 
   if (ieLength != 2) {
     return NW_GTPV2C_IE_INCORRECT;
@@ -1039,13 +1039,13 @@ s11_ue_time_zone_ie_set (
   uint8_t                                 value[2];
   NwRcT                                   rc;
 
-  DevAssert (msg != NULL);
-  DevAssert (ue_time_zone != NULL);
+  DevAssert (msg );
+  DevAssert (ue_time_zone );
   value[0] = ue_time_zone->time_zone;
   value[1] = ue_time_zone->daylight_saving_time;
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_UE_TIME_ZONE, 2, 0, value);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -1058,7 +1058,7 @@ s11_target_identification_ie_get (
 {
   target_identification_t                *target_identification = (target_identification_t *) arg;
 
-  DevAssert (target_identification != NULL);
+  DevAssert (target_identification );
   target_identification->target_type = ieValue[0];
 
   switch (target_identification->target_type) {
@@ -1130,7 +1130,7 @@ s11_bearer_flags_ie_get (
 {
   bearer_flags_t                         *bearer_flags = (bearer_flags_t *) arg;
 
-  DevAssert (arg != NULL);
+  DevAssert (arg );
 
   if (ieLength != 1) {
     return NW_GTPV2C_IE_INCORRECT;
@@ -1149,12 +1149,12 @@ s11_bearer_flags_ie_set (
   NwRcT                                   rc;
   uint8_t                                 value;
 
-  DevAssert (msg != NULL);
-  DevAssert (bearer_flags != NULL);
+  DevAssert (msg );
+  DevAssert (bearer_flags );
   value = (bearer_flags->vb << 1) | bearer_flags->ppc;
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_FLAGS, 1, 0, (uint8_t *) & value);
   DevAssert (NW_OK == rc);
-  return 0;
+  return RETURNok;
 }
 
 NwRcT
@@ -1167,7 +1167,7 @@ s11_indication_flags_ie_get (
 {
   indication_flags_t                     *indication_flags = (indication_flags_t *) arg;
 
-  DevAssert (indication_flags != NULL);
+  DevAssert (indication_flags );
 
   if (ieLength < 3) {
     return NW_GTPV2C_IE_INCORRECT;
@@ -1188,7 +1188,7 @@ s11_fqcsid_ie_get (
 {
   FQ_CSID_t                              *fq_csid = (FQ_CSID_t *) arg;
 
-  DevAssert (fq_csid != NULL);
+  DevAssert (fq_csid );
   fq_csid->node_id_type = (ieValue[0] & 0xF0) >> 4;
   LOG_DEBUG (LOG_S11, "\t- FQ-CSID type %u\n", fq_csid->node_id_type);
 

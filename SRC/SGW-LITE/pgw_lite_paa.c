@@ -109,14 +109,14 @@ pgw_lite_get_free_ipv4_paa_address (
 
   if (STAILQ_EMPTY (&pgw_app.pgw_lite_ipv4_list_free)) {
     addr_pP->s_addr = INADDR_ANY;
-    return -1;
+    return RETURNerror;
   }
 
   ipv4_p = STAILQ_FIRST (&pgw_app.pgw_lite_ipv4_list_free);
   STAILQ_REMOVE (&pgw_app.pgw_lite_ipv4_list_free, ipv4_p, pgw_lite_ipv4_list_elm_s, ipv4_entries);
   STAILQ_INSERT_TAIL (&pgw_app.pgw_lite_ipv4_list_allocated, ipv4_p, ipv4_entries);
   addr_pP->s_addr = ipv4_p->addr.s_addr;
-  return 0;
+  return RETURNok;
 }
 
 int
@@ -129,10 +129,10 @@ pgw_lite_release_free_ipv4_paa_address (
     if (ipv4_p->addr.s_addr == addr_pP->s_addr) {
       STAILQ_REMOVE (&pgw_app.pgw_lite_ipv4_list_allocated, ipv4_p, pgw_lite_ipv4_list_elm_s, ipv4_entries);
       STAILQ_INSERT_TAIL (&pgw_app.pgw_lite_ipv4_list_free, ipv4_p, ipv4_entries);
-      return 0;
+      return RETURNok;
     }
   }
-  return -1;
+  return RETURNerror;
 }
 
 int
@@ -143,7 +143,7 @@ pgw_lite_get_free_ipv6_paa_prefix (
 
   if (STAILQ_EMPTY (&pgw_app.pgw_lite_ipv6_list_free)) {
     *addr_pP = in6addr_any;
-    return -1;
+    return RETURNerror;
   }
 
   ipv6_p = STAILQ_FIRST (&pgw_app.pgw_lite_ipv6_list_free);
@@ -156,7 +156,7 @@ pgw_lite_get_free_ipv6_paa_prefix (
   }
 
   *addr_pP = ipv6_p->addr;
-  return 0;
+  return RETURNok;
 }
 
 int
@@ -178,8 +178,8 @@ pgw_lite_release_free_ipv6_paa_prefix (
       ipv6_p->num_allocated -= 1;
       ipv6_p->num_free += 1;
       STAILQ_INSERT_TAIL (&pgw_app.pgw_lite_ipv6_list_free, ipv6_p, ipv6_entries);
-      return 0;
+      return RETURNok;
     }
   }
-  return -1;
+  return RETURNerror;
 }

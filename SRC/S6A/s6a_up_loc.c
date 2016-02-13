@@ -48,13 +48,13 @@ s6a_ula_cb (
   MessageDef                             *message_p = NULL;
   s6a_update_location_ans_t              *s6a_update_location_ans_p = NULL;
 
-  DevAssert (msg_pP != NULL);
+  DevAssert (msg_pP );
   ans_p = *msg_pP;
   /*
    * Retrieve the original query associated with the asnwer
    */
   CHECK_FCT (fd_msg_answ_getq (ans_p, &qry_p));
-  DevAssert (qry_p != NULL);
+  DevAssert (qry_p );
   message_p = itti_alloc_new_message (TASK_S6A, S6A_UPDATE_LOCATION_ANS);
   s6a_update_location_ans_p = &message_p->ittiMsg.s6a_update_location_ans;
   CHECK_FCT (fd_msg_search_avp (qry_p, s6a_fd_cnf.dataobj_s6a_user_name, &avp_p));
@@ -148,7 +148,7 @@ err:
   ans_p = NULL;
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   LOG_DEBUG (LOG_S6A, "Sending S6A_UPDATE_LOCATION_ANS to task MME_APP\n");
-  return 0;
+  return RETURNok;
 }
 
 
@@ -162,7 +162,7 @@ s6a_generate_update_location (
   struct session                         *sess_p = NULL;
   union avp_value                         value;
 
-  DevAssert (ulr_pP != NULL);
+  DevAssert (ulr_pP );
   /*
    * Create the new update location request message
    */
@@ -283,5 +283,5 @@ s6a_generate_update_location (
   CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
   CHECK_FCT (fd_msg_send (&msg_p, NULL, NULL));
   LOG_DEBUG (LOG_S6A, "Sending s6a ulr for imsi=%s\n", ulr_pP->imsi);
-  return 0;
+  return RETURNok;
 }

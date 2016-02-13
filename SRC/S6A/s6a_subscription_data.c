@@ -33,7 +33,7 @@ s6a_parse_subscriber_status (
 {
   DevCheck (hdr_sub_status->avp_value->u32 < SS_MAX, hdr_sub_status->avp_value->u32, SS_MAX, 0);
   *sub_status = hdr_sub_status->avp_value->u32;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -47,11 +47,11 @@ s6a_parse_msisdn (
   DevCheck (hdr_msisdn->avp_value->os.len <= MSISDN_LENGTH, hdr_msisdn->avp_value->os.len, MSISDN_LENGTH, 0);
 
   if (hdr_msisdn->avp_value->os.len == 0)
-    return 0;
+    return RETURNok;
 
   ret = sprintf (msisdn, "%*s", (int)hdr_msisdn->avp_value->os.len, hdr_msisdn->avp_value->os.data);
   *length = ret;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -61,7 +61,7 @@ s6a_parse_network_access_mode (
 {
   DevCheck (hdr_network_am->avp_value->u32 < NAM_MAX && hdr_network_am->avp_value->u32 != NAM_RESERVED, hdr_network_am->avp_value->u32, NAM_MAX, NAM_RESERVED);
   *access_mode = hdr_network_am->avp_value->u32;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -71,7 +71,7 @@ s6a_parse_access_restriction_data (
 {
   DevCheck (hdr_access_restriction->avp_value->u32 < ARD_MAX, hdr_access_restriction->avp_value->u32, ARD_MAX, 0);
   *access_restriction = hdr_access_restriction->avp_value->u32;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -80,7 +80,7 @@ s6a_parse_bitrate (
   bitrate_t * bitrate)
 {
   *bitrate = hdr_bitrate->avp_value->u32;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -97,7 +97,7 @@ s6a_parse_ambr (
     /*
      * Child avps for ambr are mandatory
      */
-    return -1;
+    return RETURNerror;
   }
 
   while (avp) {
@@ -113,7 +113,7 @@ s6a_parse_ambr (
       break;
 
     default:
-      return -1;
+      return RETURNerror;
     }
 
     /*
@@ -122,7 +122,7 @@ s6a_parse_ambr (
     CHECK_FCT (fd_msg_browse (avp, MSG_BRW_NEXT, &avp, NULL));
   }
 
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -132,7 +132,7 @@ s6a_parse_all_apn_conf_inc_ind (
 {
   DevCheck (hdr->avp_value->u32 < ALL_APN_MAX, hdr->avp_value->u32, ALL_APN_MAX, 0);
   *ptr = hdr->avp_value->u32;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -142,7 +142,7 @@ s6a_parse_pdn_type (
 {
   DevCheck (hdr->avp_value->u32 < IP_MAX, hdr->avp_value->u32, IP_MAX, 0);
   *pdn_type = hdr->avp_value->u32;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -153,7 +153,7 @@ s6a_parse_service_selection (
 {
   DevCheck (hdr_service_selection->avp_value->os.len <= APN_MAX_LENGTH, hdr_service_selection->avp_value->os.len, APN_MAX_LENGTH, 0);
   *length = sprintf (service_selection, "%*s", (int)hdr_service_selection->avp_value->os.len, hdr_service_selection->avp_value->os.data);
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -163,7 +163,7 @@ s6a_parse_qci (
 {
   DevCheck (hdr->avp_value->u32 < QCI_MAX, hdr->avp_value->u32, QCI_MAX, 0);
   *qci = hdr->avp_value->u32;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -173,7 +173,7 @@ s6a_parse_priority_level (
 {
   DevCheck (hdr->avp_value->u32 <= PRIORITY_LEVEL_MAX && hdr->avp_value->u32 >= PRIORITY_LEVEL_MIN, hdr->avp_value->u32, PRIORITY_LEVEL_MAX, PRIORITY_LEVEL_MIN);
   *priority_level = (priority_level_t) hdr->avp_value->u32;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -183,7 +183,7 @@ s6a_parse_pre_emp_capability (
 {
   DevCheck (hdr->avp_value->u32 < PRE_EMPTION_CAPABILITY_MAX, hdr->avp_value->u32, PRE_EMPTION_CAPABILITY_MAX, 0);
   *pre_emp_capability = hdr->avp_value->u32;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -193,7 +193,7 @@ s6a_parse_pre_emp_vulnerability (
 {
   DevCheck (hdr->avp_value->u32 < PRE_EMPTION_VULNERABILITY_MAX, hdr->avp_value->u32, PRE_EMPTION_VULNERABILITY_MAX, 0);
   *pre_emp_vulnerability = hdr->avp_value->u32;
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -235,7 +235,7 @@ s6a_parse_allocation_retention_priority (
       break;
 
     default:
-      return -1;
+      return RETURNerror;
     }
 
     /*
@@ -244,7 +244,7 @@ s6a_parse_allocation_retention_priority (
     CHECK_FCT (fd_msg_browse (avp, MSG_BRW_NEXT, &avp, NULL));
   }
 
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -270,7 +270,7 @@ s6a_parse_eps_subscribed_qos_profile (
       break;
 
     default:
-      return -1;
+      return RETURNerror;
     }
 
     /*
@@ -279,7 +279,7 @@ s6a_parse_eps_subscribed_qos_profile (
     CHECK_FCT (fd_msg_browse (avp, MSG_BRW_NEXT, &avp, NULL));
   }
 
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -310,10 +310,10 @@ s6a_parse_ip_address (
     /*
      * unhandled case...
      */
-    return -1;
+    return RETURNerror;
   }
 
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -366,7 +366,7 @@ s6a_parse_apn_configuration (
     CHECK_FCT (fd_msg_browse (avp, MSG_BRW_NEXT, &avp, NULL));
   }
 
-  return 0;
+  return RETURNok;
 }
 
 static inline int
@@ -407,7 +407,7 @@ s6a_parse_apn_configuration_profile (
     CHECK_FCT (fd_msg_browse (avp, MSG_BRW_NEXT, &avp, NULL));
   }
 
-  return 0;
+  return RETURNok;
 }
 
 int
@@ -453,7 +453,7 @@ s6a_parse_subscription_data (
       break;
 
     default:
-      return -1;
+      return RETURNerror;
     }
 
     /*
@@ -462,5 +462,5 @@ s6a_parse_subscription_data (
     CHECK_FCT (fd_msg_browse (avp, MSG_BRW_NEXT, &avp, NULL));
   }
 
-  return 0;
+  return RETURNok;
 }

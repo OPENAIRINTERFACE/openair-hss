@@ -57,7 +57,7 @@ sgw_lite_display_s11teid2mme_mapping (
 {
   mme_sgw_tunnel_t                       *mme_sgw_tunnel = NULL;
 
-  if (dataP != NULL) {
+  if (dataP ) {
     mme_sgw_tunnel = (mme_sgw_tunnel_t *) dataP;
     LOG_DEBUG (LOG_SPGW_APP, "| %u\t<------------->\t%u\n", mme_sgw_tunnel->remote_teid, mme_sgw_tunnel->local_teid);
   } else {
@@ -88,7 +88,7 @@ sgw_lite_display_pdn_connection_sgw_eps_bearers (
 {
   sgw_eps_bearer_entry_t                 *eps_bearer_entry = NULL;
 
-  if (dataP != NULL) {
+  if (dataP ) {
     eps_bearer_entry = (sgw_eps_bearer_entry_t *) dataP;
     LOG_DEBUG (LOG_SPGW_APP, "|\t\t\t\t%" PRId64 "\t<-> ebi: %u, enb_teid_for_S1u: %u, s_gw_teid_for_S1u_S12_S4_up: %u (tbc)\n",
                     keyP, eps_bearer_entry->eps_bearer_id, eps_bearer_entry->enb_teid_for_S1u, eps_bearer_entry->s_gw_teid_for_S1u_S12_S4_up);
@@ -108,7 +108,7 @@ sgw_lite_display_s11_bearer_context_information (
   s_plus_p_gw_eps_bearer_context_information_t *sp_context_information = NULL;
   hashtable_rc_t                          hash_rc;
 
-  if (dataP != NULL) {
+  if (dataP ) {
     sp_context_information = (s_plus_p_gw_eps_bearer_context_information_t *) dataP;
     LOG_DEBUG (LOG_SPGW_APP, "| KEY %" PRId64 ":      \n", keyP);
     LOG_DEBUG (LOG_SPGW_APP, "|\tsgw_eps_bearer_context_information:     |\n");
@@ -155,8 +155,8 @@ pgw_lite_cm_free_apn (
   pgw_apn_t * apnP)
 //-----------------------------------------------------------------------------
 {
-  if (apnP != NULL) {
-    if (apnP->pdn_connections != NULL) {
+  if (apnP ) {
+    if (apnP->pdn_connections ) {
       obj_hashtable_ts_destroy (apnP->pdn_connections);
     }
   }
@@ -275,8 +275,8 @@ sgw_lite_cm_free_pdn_connection (
   sgw_pdn_connection_t * pdn_connectionP)
 //-----------------------------------------------------------------------------
 {
-  if (pdn_connectionP != NULL) {
-    if (pdn_connectionP->sgw_eps_bearers != NULL) {
+  if (pdn_connectionP ) {
+    if (pdn_connectionP->sgw_eps_bearers ) {
       hashtable_ts_destroy (pdn_connectionP->sgw_eps_bearers);
     }
   }
@@ -293,15 +293,15 @@ sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information (
   }
 
   /*
-   * if (contextP->sgw_eps_bearer_context_information.pdn_connections != NULL) {
+   * if (contextP->sgw_eps_bearer_context_information.pdn_connections ) {
    * obj_hashtable_ts_destroy(contextP->sgw_eps_bearer_context_information.pdn_connections);
    * }
    */
-  if (contextP->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers != NULL) {
+  if (contextP->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers ) {
     hashtable_ts_destroy (contextP->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers);
   }
 
-  if (contextP->pgw_eps_bearer_context_information.apns != NULL) {
+  if (contextP->pgw_eps_bearer_context_information.apns ) {
     obj_hashtable_ts_destroy (contextP->pgw_eps_bearer_context_information.apns);
   }
 
@@ -422,7 +422,7 @@ sgw_lite_cm_remove_eps_bearer_entry (
   int                                     temp;
 
   if (eps_bearersP == NULL) {
-    return -1;
+    return RETURNerror;
   }
 
   temp = hashtable_ts_free (eps_bearersP, eps_bearer_idP);

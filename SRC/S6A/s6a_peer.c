@@ -92,12 +92,12 @@ s6a_fd_new_peer (
 
   memset (&info, 0, sizeof (struct peer_info));
 
-  if (config_read_lock (&mme_config) != 0) {
+  if (config_read_lock (&mme_config) ) {
     LOG_ERROR (LOG_S6A, "Failed to lock configuration for reading\n");
-    return -1;
+    return RETURNerror;
   }
 
-  if (fd_g_config->cnf_diamid != NULL) {
+  if (fd_g_config->cnf_diamid ) {
     free (fd_g_config->cnf_diamid);
     fd_g_config->cnf_diamid_len = 0;
   }
@@ -122,9 +122,9 @@ s6a_fd_new_peer (
   info.config.pic_flags.persist = PI_PRST_NONE;
   CHECK_FCT (fd_peer_add (&info, "", s6a_peer_connected_cb, NULL));
 
-  if (config_unlock (&mme_config) != 0) {
+  if (config_unlock (&mme_config) ) {
     LOG_ERROR (LOG_S6A, "Failed to unlock configuration\n");
-    return -1;
+    return RETURNerror;
   }
 
   return ret;
