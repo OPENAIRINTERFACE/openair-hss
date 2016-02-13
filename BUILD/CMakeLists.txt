@@ -214,7 +214,7 @@ add_boolean_option( NAS_FORCE_REJECT_SR             True     "TEMP, TO be disabl
 add_boolean_option( NAS_FORCE_REJECT_TAU            True     "TEMP, TO be disabled after devel: Force the EMM NAS layer to respond to any TAU Request by reject")
 
 
-set (ITTI_DIR ${OPENAIRCN_DIR}/COMMON/ITTI)
+set (ITTI_DIR ${OPENAIRCN_DIR}/SRC/COMMON/ITTI)
 if (${ENABLE_ITTI})
   add_library(ITTI
     # add .h files if depend on (this one is generated)
@@ -253,7 +253,7 @@ set(asn1_generated_dir ${OPENAIRCN_BIN_DIR})
 ##############
 add_list1_option(S1AP_VERSION R10 "S1AP Asn.1 grammar version" R8 R9 R10)
 
-set(S1AP_DIR ${OPENAIRCN_DIR}/S1AP)
+set(S1AP_DIR ${OPENAIRCN_DIR}/SRC/S1AP)
 set(ASN1RELDIR R10.5)
 
 set(S1AP_ASN_DIR ${S1AP_DIR}/MESSAGES/ASN1/${ASN1RELDIR})
@@ -316,78 +316,78 @@ include_directories("${OPENAIRCN_BIN_DIR}")
 # the internal rule is to use generic names such as defs.h
 # but to make it uniq name as adding the relative path in the include directtive
 # example: #include "RRC/LITE/defs.h"
-#find_path (include_dirs_all *.h ${OPENAIRCN_DIR})
+#find_path (include_dirs_all *.h ${OPENAIRCN_DIR}/SRC)
 #find_path (include_dirs_all *.h PATHS /usr/include NO_CMAKE_PATH)
 #include_directories("${include_dirs_all}")
 
 
-include_directories("${OPENAIRCN_DIR}/COMMON")
-include_directories("${OPENAIRCN_DIR}/UTILS")
+include_directories("${OPENAIRCN_DIR}/SRC/COMMON")
+include_directories("${OPENAIRCN_DIR}/SRC/UTILS")
 
-include_directories("${OPENAIRCN_DIR}/COMMON/ITTI")
-include_directories("${OPENAIRCN_DIR}/NAS/")
-include_directories("${OPENAIRCN_DIR}/NAS/API/MME")
-include_directories("${OPENAIRCN_DIR}/NAS/API/NETWORK")
-include_directories("${OPENAIRCN_DIR}/NAS/EMM/MSG")
-include_directories("${OPENAIRCN_DIR}/NAS/ESM/MSG")
-include_directories("${OPENAIRCN_DIR}/NAS/IES")
-include_directories("${OPENAIRCN_DIR}/NAS/UTIL")
-include_directories("${OPENAIRCN_DIR}/SECU")
-include_directories("${OPENAIRCN_DIR}/SCTP")
-include_directories("${OPENAIRCN_DIR}/S1AP")
-include_directories("${OPENAIRCN_DIR}/UDP")
-include_directories("${OPENAIRCN_DIR}/GTPV1-U")
-include_directories("${OPENAIRCN_DIR}/UTILS/HASHTABLE")
-include_directories("${OPENAIRCN_DIR}/UTILS/LFDS/liblfds6.1.1/liblfds611/inc")
-include_directories("${OPENAIRCN_DIR}/UTILS/MSC")
-include_directories("${OPENAIRCN_DIR}/SGW-LITE")
-include_directories("${OPENAIRCN_DIR}/MME_APP")
-include_directories("${OPENAIRCN_DIR}/S6A")
-include_directories("${OPENAIRCN_DIR}")
+include_directories("${OPENAIRCN_DIR}/SRC/COMMON/ITTI")
+include_directories("${OPENAIRCN_DIR}/SRC/NAS/")
+include_directories("${OPENAIRCN_DIR}/SRC/NAS/API/MME")
+include_directories("${OPENAIRCN_DIR}/SRC/NAS/API/NETWORK")
+include_directories("${OPENAIRCN_DIR}/SRC/NAS/EMM/MSG")
+include_directories("${OPENAIRCN_DIR}/SRC/NAS/ESM/MSG")
+include_directories("${OPENAIRCN_DIR}/SRC/NAS/IES")
+include_directories("${OPENAIRCN_DIR}/SRC/NAS/UTIL")
+include_directories("${OPENAIRCN_DIR}/SRC/SECU")
+include_directories("${OPENAIRCN_DIR}/SRC/SCTP")
+include_directories("${OPENAIRCN_DIR}/SRC/S1AP")
+include_directories("${OPENAIRCN_DIR}/SRC/UDP")
+include_directories("${OPENAIRCN_DIR}/SRC/GTPV1-U")
+include_directories("${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE")
+include_directories("${OPENAIRCN_DIR}/SRC/UTILS/LFDS/liblfds6.1.1/liblfds611/inc")
+include_directories("${OPENAIRCN_DIR}/SRC/UTILS/MSC")
+include_directories("${OPENAIRCN_DIR}/SRC/SGW-LITE")
+include_directories("${OPENAIRCN_DIR}/SRC/MME_APP")
+include_directories("${OPENAIRCN_DIR}/SRC/S6A")
+include_directories("${OPENAIRCN_DIR}/SRC")
 
 # Utilities Library
 ################
 add_library(HASHTABLE
-  ${OPENAIRCN_DIR}/UTILS/HASHTABLE/hashtable.c
-  ${OPENAIRCN_DIR}/UTILS/HASHTABLE/obj_hashtable.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/hashtable.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/obj_hashtable.c
 )
-include_directories(${OPENAIRCN_DIR}/UTILS/HASHTABLE)
+include_directories(${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE)
 
 if (MESSAGE_CHART_GENERATOR)
   add_library(MSC  
-    ${OPENAIRCN_DIR}/UTILS/MSC/msc.c
+    ${OPENAIRCN_DIR}/SRC/UTILS/MSC/msc.c
   )
   set(MSC_LIB MSC)
 endif()
-include_directories(${OPENAIRCN_DIR}/UTILS/MSC/msc)
+include_directories(${OPENAIRCN_DIR}/SRC/UTILS/MSC/msc)
 
 
 set(SECU_CN_SRC
-  ${OPENAIRCN_DIR}/SECU/kdf.c
-  ${OPENAIRCN_DIR}/SECU/rijndael.c
-  ${OPENAIRCN_DIR}/SECU/snow3g.c
-  ${OPENAIRCN_DIR}/SECU/key_nas_deriver.c
-  ${OPENAIRCN_DIR}/SECU/nas_stream_eea1.c
-  ${OPENAIRCN_DIR}/SECU/nas_stream_eia1.c
-  ${OPENAIRCN_DIR}/SECU/nas_stream_eea2.c
-  ${OPENAIRCN_DIR}/SECU/nas_stream_eia2.c
+  ${OPENAIRCN_DIR}/SRC/SECU/kdf.c
+  ${OPENAIRCN_DIR}/SRC/SECU/rijndael.c
+  ${OPENAIRCN_DIR}/SRC/SECU/snow3g.c
+  ${OPENAIRCN_DIR}/SRC/SECU/key_nas_deriver.c
+  ${OPENAIRCN_DIR}/SRC/SECU/nas_stream_eea1.c
+  ${OPENAIRCN_DIR}/SRC/SECU/nas_stream_eia1.c
+  ${OPENAIRCN_DIR}/SRC/SECU/nas_stream_eea2.c
+  ${OPENAIRCN_DIR}/SRC/SECU/nas_stream_eia2.c
   )
 add_library(SECU_CN ${SECU_CN_SRC})
 
 
 set(CN_UTILS_SRC
-  ${OPENAIRCN_DIR}/UTILS/conversions.c
-  ${OPENAIRCN_DIR}/UTILS/enum_string.c
-  ${OPENAIRCN_DIR}/UTILS/mme_config.c
-  ${OPENAIRCN_DIR}/UTILS/mcc_mnc_itu.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/conversions.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/enum_string.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/mme_config.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
   )
   
 if (MEMORY_CHECK)
-  set(CN_UTILS_SRC   ${CN_UTILS_SRC} ${OPENAIRCN_DIR}/UTILS/dynamic_memory_check.c )
+  set(CN_UTILS_SRC   ${CN_UTILS_SRC} ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c )
 endif(MEMORY_CHECK)
 
 if (LOG_OAI)
-  set(CN_UTILS_SRC   ${CN_UTILS_SRC}   ${OPENAIRCN_DIR}/UTILS/log.c )
+  set(CN_UTILS_SRC   ${CN_UTILS_SRC}   ${OPENAIRCN_DIR}/SRC/UTILS/log.c )
 endif(LOG_OAI)
 
 add_library(CN_UTILS ${CN_UTILS_SRC})
@@ -395,13 +395,13 @@ add_library(CN_UTILS ${CN_UTILS_SRC})
 
 # CN libs
 ##########################
-set(GTPV1U_DIR ${OPENAIRCN_DIR}/GTPV1-U)
+set(GTPV1U_DIR ${OPENAIRCN_DIR}/SRC/GTPV1-U)
 set (GTPV1U_SRC
   ${GTPV1U_DIR}/gtpv1u_teid_pool.c
 )
 add_library(GTPV1U ${GTPV1U_SRC})
 
-set(GTPV2C_DIR  ${OPENAIRCN_DIR}/GTPV2-C/nwgtpv2c-0.11/src)
+set(GTPV2C_DIR  ${OPENAIRCN_DIR}/SRC/GTPV2-C/nwgtpv2c-0.11/src)
 add_library(GTPV2C
   ${GTPV2C_DIR}/NwGtpv2cTrxn.c
   ${GTPV2C_DIR}/NwGtpv2cTunnel.c
@@ -410,20 +410,20 @@ add_library(GTPV2C
   ${GTPV2C_DIR}/NwGtpv2cMsgParser.c
   ${GTPV2C_DIR}/NwGtpv2c.c
   )
-include_directories(${OPENAIRCN_DIR}/GTPV2-C/nwgtpv2c-0.11/include/)
-include_directories(${OPENAIRCN_DIR}/GTPV2-C/nwgtpv2c-0.11/shared/)
+include_directories(${OPENAIRCN_DIR}/SRC/GTPV2-C/nwgtpv2c-0.11/include/)
+include_directories(${OPENAIRCN_DIR}/SRC/GTPV2-C/nwgtpv2c-0.11/shared/)
 
 
 add_library(SCTP_SERVER
-  ${OPENAIRCN_DIR}/SCTP/sctp_common.c
-  ${OPENAIRCN_DIR}/SCTP/sctp_itti_messaging.c
-  ${OPENAIRCN_DIR}/SCTP/sctp_primitives_server.c
+  ${OPENAIRCN_DIR}/SRC/SCTP/sctp_common.c
+  ${OPENAIRCN_DIR}/SRC/SCTP/sctp_itti_messaging.c
+  ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
   )
 
 
-add_library(UDP_SERVER ${OPENAIRCN_DIR}/UDP/udp_primitives_server.c)
+add_library(UDP_SERVER ${OPENAIRCN_DIR}/SRC/UDP/udp_primitives_server.c)
 
-set(S11_DIR ${OPENAIRCN_DIR}/S11)
+set(S11_DIR ${OPENAIRCN_DIR}/SRC/S11)
 add_library(S11
   ${S11_DIR}/s11_common.c
   ${S11_DIR}/s11_ie_formatter.c
@@ -435,7 +435,7 @@ add_library(S11
 )
 include_directories(${S11_DIR})
 
-set(S6A_DIR ${OPENAIRCN_DIR}/S6A)
+set(S6A_DIR ${OPENAIRCN_DIR}/SRC/S6A)
 add_library(S6A
   ${S6A_DIR}/s6a_auth_info.c
   ${S6A_DIR}/s6a_dict.c
@@ -446,7 +446,7 @@ add_library(S6A
   ${S6A_DIR}/s6a_up_loc.c
   )
 
-set(SGW_DIR ${OPENAIRCN_DIR}/SGW-LITE)
+set(SGW_DIR ${OPENAIRCN_DIR}/SRC/SGW-LITE)
 add_library (SGW
   ${SGW_DIR}/spgw_config.c
   ${SGW_DIR}/s11_causes.c
@@ -456,7 +456,7 @@ add_library (SGW
   ${SGW_DIR}/pgw_lite_paa.c
   )
 
-set(MME_DIR ${OPENAIRCN_DIR}/MME_APP)
+set(MME_DIR ${OPENAIRCN_DIR}/SRC/MME_APP)
 add_library(MME_APP
   ${MME_DIR}/mme_app_capabilities.c
   ${MME_DIR}/mme_app_context.c
@@ -469,7 +469,7 @@ add_library(MME_APP
   )
 
 
-set(NAS_SRC ${OPENAIRCN_DIR}/NAS/)
+set(NAS_SRC ${OPENAIRCN_DIR}/SRC/NAS/)
 set(libnas_api_OBJS
   ${NAS_SRC}API/NETWORK/as_message.c
   ${NAS_SRC}API/NETWORK/nas_message.c
@@ -709,7 +709,7 @@ include_directories(${NAS_SRC}/ESM/SAP)
 # Make lfds as a own source code (even if it is a outside library)
 # For better intergration with compilation flags & structure of cmake
 ###################################################################
-set(lfds ${OPENAIRCN_DIR}/UTILS/LFDS/liblfds6.1.1/liblfds611/src/)
+set(lfds ${OPENAIRCN_DIR}/SRC/UTILS/LFDS/liblfds6.1.1/liblfds611/src/)
 file(GLOB lfds_queue ${lfds}/lfds611_queue/*.c)
 file(GLOB lfds_ring ${lfds}/lfds611_ringbuffer/*.c)
 file(GLOB lfds_slist ${lfds}/lfds611_slist/*.c)
@@ -784,11 +784,11 @@ add_definitions(-DASN1_MINIMUM_VERSION=924)
 # MME + S/P-GW implementation in one process
 ################################
 add_executable(mme_gw
-  ${OPENAIRCN_DIR}/OAI_EPC/oai_epc_log.c
-  ${OPENAIRCN_DIR}/OAI_EPC/oai_epc.c
+  ${OPENAIRCN_DIR}/SRC/OAI_EPC/oai_epc_log.c
+  ${OPENAIRCN_DIR}/SRC/OAI_EPC/oai_epc.c
   ${GTPV1U_DIR}/gtpv1u_task.c
-  ${OPENAIRCN_DIR}/SCTP/sctp_primitives_server.c
-  ${OPENAIRCN_DIR}/NAS/nas_mme_task.c
+  ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
+  ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
   )
 if( ITTI_ANALYZER )
 add_executable(mme_gw
@@ -805,10 +805,10 @@ target_link_libraries (mme_gw
 # MME standalone in one process
 ################################
 add_executable(mme
-  ${OPENAIRCN_DIR}/OAI_MME/oai_mme_log.c
-  ${OPENAIRCN_DIR}/OAI_MME/oai_mme.c
-  ${OPENAIRCN_DIR}/SCTP/sctp_primitives_server.c
-  ${OPENAIRCN_DIR}/NAS/nas_mme_task.c
+  ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme_log.c
+  ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme.c
+  ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
+  ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
   )
 if( ITTI_ANALYZER )
 add_executable(mme
@@ -826,8 +826,8 @@ target_link_libraries (mme
 # oai_sgw is SGW  node implementation
 ################################
 add_executable(spgw
-  ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw_log.c
-  ${OPENAIRCN_DIR}/OAI_SGW/oai_sgw.c
+  ${OPENAIRCN_DIR}/SRC/OAI_SGW/oai_sgw_log.c
+  ${OPENAIRCN_DIR}/SRC/OAI_SGW/oai_sgw.c
   ${GTPV1U_DIR}/gtpv1u_task.c
   )
 if( ITTI_ANALYZER )
@@ -955,8 +955,8 @@ ENDIF( SPGW_BUILD )
 #    secu_knas_encrypt_eia2)
 #    
 #  add_executable(test_${myExe}
-#    ${OPENAIRCN_DIR}/TEST/test_util.c
-#    ${OPENAIRCN_DIR}/TEST/test_${myExe}.c
+#    ${OPENAIRCN_DIR}/SRC/TEST/test_util.c
+#    ${OPENAIRCN_DIR}/SRC/TEST/test_${myExe}.c
 #    )
 #  target_link_libraries (test_${myExe}
 #    -Wl,--start-group SECU_CN UTIL LFDS -Wl,--end-group m rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
@@ -965,19 +965,19 @@ ENDIF( SPGW_BUILD )
 
 # TODO
 #add_executable(test_s1c_mme
-#  ${OPENAIRCN_DIR}/TEST/oaisim_mme_test_s1c.c
-#  ${OPENAIRCN_DIR}/TEST/oaisim_mme_test_s1c_scenario.h
-#  ${OPENAIRCN_DIR}/TEST/oaisim_mme_test_s1c_scenario1.c
-#  ${OPENAIRCN_DIR}/TEST/oaisim_mme_test_s1c_scenario.c
-#  ${OPENAIRCN_DIR}/TEST/oaisim_mme_test_s1c_scenario.h
-#  ${OPENAIRCN_DIR}/TEST/oaisim_mme_test_s1c_s1ap.c
-#  ${OPENAIRCN_DIR}/TEST/oaisim_mme_test_s1c_s1ap.h
+#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c.c
+#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_scenario.h
+#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_scenario1.c
+#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_scenario.c
+#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_scenario.h
+#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_s1ap.c
+#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_s1ap.h
 #  ${OPENAIR2_DIR}/ENB_APP/enb_config.c
 #  ${OPENAIR2_DIR}/ENB_APP/enb_config.h
 #  ${OPENAIR2_DIR}/COMMON/commonDef.h
 #  ${OPENAIR2_DIR}/COMMON/messages_def.h
 #  ${OPENAIR2_DIR}/COMMON/messages_types.h
-#  ${OPENAIRCN_DIR}/S1AP/s1ap_eNB_defs.h
+#  ${OPENAIRCN_DIR}/SRC/S1AP/s1ap_eNB_defs.h
 #  ${S1AP_DIR}/s1ap_eNB_management_procedures.c
 #  ${OPENAIRCN_BIN_DIR}/messages_xml.h
 #  )
