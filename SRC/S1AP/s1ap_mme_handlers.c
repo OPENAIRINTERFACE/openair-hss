@@ -900,20 +900,24 @@ static bool s1ap_send_enb_deregistered_ind (
   /*
    * Ask for a release of each UE context associated to the eNB
    */
-  if (arg->current_ue_index == 0) {
-    message_p = itti_alloc_new_message (TASK_S1AP, S1AP_ENB_DEREGISTERED_IND);
+  if (ue_ref_p) {
+    if (arg->current_ue_index == 0) {
+      message_p = itti_alloc_new_message (TASK_S1AP, S1AP_ENB_DEREGISTERED_IND);
+    }
+
+    S1AP_ENB_DEREGISTERED_IND (message_p).mme_ue_s1ap_id[arg->current_ue_index] = ue_ref_p->mme_ue_s1ap_id;
+
+    if (arg->current_ue_index == 0 && arg->handled_ues > 0) {
+      S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister = S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
+      itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    }
+
+    arg->handled_ues++;
+    arg->current_ue_index = arg->handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
+    *resultP = message_p;
+  } else {
+    LOG_TRACE (LOG_S1AP, "No valid UE provided in callback: %p\n", ue_ref_p);
   }
-
-  S1AP_ENB_DEREGISTERED_IND (message_p).mme_ue_s1ap_id[arg->current_ue_index] = ue_ref_p->mme_ue_s1ap_id;
-
-  if (arg->current_ue_index == 0 && arg->handled_ues > 0) {
-    S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister = S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-  }
-
-  arg->handled_ues++;
-  arg->current_ue_index = arg->handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
-  *resultP = message_p;
   return false;
 }
 //------------------------------------------------------------------------------
