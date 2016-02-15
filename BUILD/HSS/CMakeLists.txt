@@ -36,12 +36,27 @@ if( NOT DEFINED OPENAIRCN_DIR)
 endif( NOT DEFINED OPENAIRCN_DIR)
 
 
-set(OPENAIR_CMAKE_SCRIPTS ${OPENAIRCN_DIR}/BUILD/TOOLS)
-set(OAI_HSS_DIR           ${OPENAIRCN_DIR}/OAI_HSS)
-set(OPENAIR_BIN_DIR       ${OPENAIRCN_DIR}/OAI_HSS)
+set ( OPENAIR_CMAKE_SCRIPTS ${OPENAIRCN_DIR}/BUILD/TOOLS )
+set ( OAI_HSS_DIR           ${OPENAIRCN_DIR}/OAI_HSS )
+set ( OPENAIR_BIN_DIR       ${OPENAIRCN_DIR}/OAI_HSS )
 
 
 set(CMAKE_MODULE_PATH "${OPENAIRCN_DIR}/BUILD/MODULES" "${CMAKE_MODULE_PATH}")
+
+macro(add_boolean_option name val helpstr)
+  if(DEFINED ${name})
+    set(value ${${name}})
+  else(DEFINED ${name})
+    set(value ${val})
+  endif()
+  set(${name} ${value} CACHE STRING "${helpstr}")
+  set_property(CACHE ${name} PROPERTY TYPE BOOL)
+  if (${value})
+    add_definitions("-D${name}=1")
+  else (${value})
+    add_definitions("-D${name}=0")
+  endif (${value})
+endmacro(add_boolean_option)
 
 macro(add_option name val helpstr)
   if(DEFINED ${name})
