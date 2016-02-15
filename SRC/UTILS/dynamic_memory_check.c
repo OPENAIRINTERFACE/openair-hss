@@ -27,14 +27,15 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#include <string.h>
+#include "dynamic_memory_check.h"
+#if MEMORY_CHECK
 #include <stdint.h>
+#include <string.h>
 #include <stdbool.h>
 #include <pthread.h>
 
 #include "assertions.h"
 #include "backtrace.h"
-#include "dynamic_memory_check.h"
 
 
 //-------------------------------------------------------------------------------------------------------------------------------
@@ -392,3 +393,11 @@ char *strndup_wrapper(const char *s, size_t n)
   }
   return ptr;
 }
+#else
+//------------------------------------------------------------------------------
+void free_wrapper(void *ptr)
+{
+  free(ptr);
+  ptr = NULL;
+}
+#endif

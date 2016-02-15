@@ -208,41 +208,42 @@ sctp_get_localaddresses (
     return -1;
   }
 
-  LOG_DEBUG (LOG_SCTP, "----------------------\n");
-  LOG_DEBUG (LOG_SCTP, "Local addresses:\n");
+  if (temp_addr_p) {
+    LOG_DEBUG (LOG_SCTP, "----------------------\n");
+    LOG_DEBUG (LOG_SCTP, "Local addresses:\n");
 
-  for (j = 0; j < nb; j++) {
-    if (temp_addr_p[j].sa_family == AF_INET) {
-      char                                    address[16] = {0};
-      struct sockaddr_in                     *addr = NULL;
+    for (j = 0; j < nb; j++) {
+      if (temp_addr_p[j].sa_family == AF_INET) {
+        char                                    address[16] = {0};
+        struct sockaddr_in                     *addr = NULL;
 
-      addr = (struct sockaddr_in *)&temp_addr_p[j];
+        addr = (struct sockaddr_in *)&temp_addr_p[j];
 
-      if (inet_ntop (AF_INET, &addr->sin_addr, address, sizeof (address)) != NULL) {
-        LOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
-      }
-    } else {
-      struct sockaddr_in6                    *addr = NULL;
-      char                                    address[40] = {0};
+        if (inet_ntop (AF_INET, &addr->sin_addr, address, sizeof (address)) != NULL) {
+          LOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
+        }
+      } else {
+        struct sockaddr_in6                    *addr = NULL;
+        char                                    address[40] = {0};
 
-      addr = (struct sockaddr_in6 *)&temp_addr_p[j];
+        addr = (struct sockaddr_in6 *)&temp_addr_p[j];
 
-      if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
-        LOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
+        if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
+          LOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
+        }
       }
     }
-  }
+    LOG_DEBUG (LOG_SCTP, "----------------------\n");
 
-  LOG_DEBUG (LOG_SCTP, "----------------------\n");
-
-  if (local_addr != NULL && nb_local_addresses != NULL) {
-    *nb_local_addresses = nb;
-    *local_addr = temp_addr_p;
-  } else {
-    /*
-     * We can destroy buffer
-     */
-    sctp_freeladdrs ((struct sockaddr *)temp_addr_p);
+    if (local_addr != NULL && nb_local_addresses != NULL) {
+      *nb_local_addresses = nb;
+      *local_addr = temp_addr_p;
+    } else {
+      /*
+       * We can destroy buffer
+       */
+      sctp_freeladdrs ((struct sockaddr *)temp_addr_p);
+    }
   }
 
   return 0;

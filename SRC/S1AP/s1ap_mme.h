@@ -25,6 +25,7 @@
 #endif
 
 #include "mme_config.h"
+#include "hashtable.h"
 
 #ifndef S1AP_MME_H_
 #define S1AP_MME_H_
@@ -47,8 +48,6 @@ enum s1_ue_state_s {
  *  Generated every time a new InitialUEMessage is received
  **/
 typedef struct ue_description_s {
-  STAILQ_ENTRY(ue_description_s) ue_entries;
-
   struct eNB_description_s *eNB;           ///< Which eNB this UE is attached to
 
   enum s1_ue_state_s        s1_ue_state;       ///< S1AP UE state
@@ -77,7 +76,6 @@ typedef struct ue_description_s {
  * Generated (or updated) every time a new S1SetupRequest is received.
  */
 typedef struct eNB_description_s {
-  STAILQ_ENTRY(eNB_description_s) eNB_entries;
 
   enum s1_eNB_state_s s1_state;         ///< State of the eNB S1AP association over MME
 
@@ -91,7 +89,7 @@ typedef struct eNB_description_s {
   /** UE list for this eNB **/
   /*@{*/
   uint32_t nb_ue_associated; ///< Number of NAS associated UE on this eNB
-  STAILQ_HEAD(ue_list_s, ue_description_s) ue_list_head;
+  hash_table_t  ue_coll; // contains ue_description_s, key is ue_description_s.?;
   /*@}*/
 
   /** SCTP stuff **/
@@ -145,9 +143,20 @@ eNB_description_t* s1ap_new_eNB(void);
 
 /** \brief Allocate and add to the right eNB list a new UE descriptor
  * \param sctp_assoc_id association ID over SCTP
+ * \param enb_ue_s1ap_id ue ID over S1AP
  * @returns Reference to the new UE element in list
  **/
-ue_description_t* s1ap_new_ue(const sctp_assoc_id_t sctp_assoc_id);
+ue_description_t* s1ap_new_ue(const sctp_assoc_id_t sctp_assoc_id, enb_ue_s1ap_id_t enb_ue_s1ap_id);
+
+
+/** \brief Dump the eNB related information.
+ * hashtable callback. It is called by hashtable_ts_apply_funct_on_elements()
+ * Calls s1ap_dump_eNB
+ **/
+bool s1ap_dump_eNB_hash_cb (const hash_key_t keyP,
+               void * const eNB_void,
+               void *unused_parameterP,
+               void **unused_resultP);
 
 /** \brief Dump the eNB list
  * Calls dump_eNB for each eNB in list
@@ -160,10 +169,22 @@ void s1ap_dump_eNB_list(void);
  **/
 void s1ap_dump_eNB(const eNB_description_t * const eNB_ref);
 
-/** \brief Dump UE related information.
+
+/** \brief Dump the ue related information.
+ * hashtable callback. It is called by hashtable_ts_apply_funct_on_elements()
+ * Calls s1ap_dump_ue
+ **/
+bool s1ap_dump_ue_hash_cb (const hash_key_t keyP,
+               void * const ue_void,
+               void *unused_parameterP,
+               void **unused_resultP);
+
+ /** \brief Dump UE related information.
  * \param ue_ref ue structure reference to dump
  **/
 void s1ap_dump_ue(const ue_description_t * const ue_ref);
+
+bool s1ap_enb_compare_by_enb_id_cb (const hash_key_t keyP, void * elementP, void * parameterP, void __attribute__((unused)) **unused_resultP);
 
 /** \brief Remove target UE from the list
  * \param ue_ref UE structure reference to remove

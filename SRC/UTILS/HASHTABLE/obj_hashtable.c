@@ -35,12 +35,12 @@
 #include "dynamic_memory_check.h"
 
 #if TRACE_HASHTABLE
-#  define PRINT_HASHTABLE(...)  do { PRINT_HASHTABLE(##__VA_ARGS__);} while (0);
+#  define PRINT_HASHTABLE(...)  do { printf(##__VA_ARGS__);} while (0);
 #else
 #  define PRINT_HASHTABLE(...)
 #endif
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Free function selected if we do not want to FREE_CHECK the key when removing an entry
 void
 obj_hashtable_no_free_key_callback (
@@ -49,7 +49,7 @@ obj_hashtable_no_free_key_callback (
   ;                             // volountary do nothing
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Default hash function
    def_hashfunc() is the default used by hashtable_create() when the user didn't specify one.
@@ -69,10 +69,59 @@ def_hashfunc (
   return hash;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
-   Initialisation
-   obj_hashtable_create() sets up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
+ *    Initialization
+ *    obj_hashtable_init() sets up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
+ *    The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
+ *    If an error occurred, NULL is returned. All other values in the returned obj_hash_table_t pointer should be released with hashtable_destroy().
+ *
+ */
+obj_hash_table_t *obj_hashtable_init (
+  obj_hash_table_t * const hashtblP,
+  const hash_size_t sizeP,
+  hash_size_t (*hashfuncP) (const void *,int),
+  void (*freekeyfuncP) (void *),
+  void (*freedatafuncP) (void *),
+  char *display_name_pP)
+{
+
+  if (!(hashtblP->nodes = CALLOC_CHECK (sizeP, sizeof (obj_hash_node_t *)))) {
+    FREE_CHECK (hashtblP);
+    return NULL;
+  }
+
+  hashtblP->size = sizeP;
+
+  if (hashfuncP)
+    hashtblP->hashfunc = hashfuncP;
+  else
+    hashtblP->hashfunc = def_hashfunc;
+
+  if (freekeyfuncP)
+    hashtblP->freekeyfunc = freekeyfuncP;
+  else
+    hashtblP->freekeyfunc = FREE_CHECK;
+
+  if (freedatafuncP)
+    hashtblP->freedatafunc = freedatafuncP;
+  else
+    hashtblP->freedatafunc = FREE_CHECK;
+
+  if (display_name_pP) {
+    hashtblP->name = STRDUP_CHECK(display_name_pP);
+  } else {
+    hashtblP->name = MALLOC_CHECK (64);
+    snprintf (hashtblP->name, 64, "obj_hashtable@%p", hashtblP);
+  }
+
+  return hashtblP;
+}
+
+//------------------------------------------------------------------------------
+/*
+   Initialization
+   obj_hashtable_create() allocate and set up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
    The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
    If an error occurred, NULL is returned. All other values in the returned obj_hash_table_t pointer should be released with hashtable_destroy().
 */
@@ -90,41 +139,45 @@ obj_hashtable_create (
   if (!(hashtbl = MALLOC_CHECK (sizeof (obj_hash_table_t))))
     return NULL;
 
-  if (!(hashtbl->nodes = CALLOC_CHECK (sizeP, sizeof (obj_hash_node_t *)))) {
-    FREE_CHECK (hashtbl);
+  return obj_hashtable_init(hashtbl, sizeP, hashfuncP, freekeyfuncP, freedatafuncP, display_name_pP);
+}
+
+//------------------------------------------------------------------------------
+/*
+   Initialization
+   obj_hashtable_ts_init() sets up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
+   The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
+   If an error occurred, NULL is returned. All other values in the returned obj_hash_table_t pointer should be released with hashtable_destroy().
+*/
+obj_hash_table_t                       *
+obj_hashtable_ts_init (
+  obj_hash_table_t * const hashtblP,
+  const hash_size_t sizeP,
+  hash_size_t (*hashfuncP) (const void *,
+                            int),
+  void (*freekeyfuncP) (void *),
+  void (*freedatafuncP) (void *),
+  char *display_name_pP)
+{
+  if (!(hashtblP->lock_nodes = CALLOC_CHECK (sizeP, sizeof (pthread_mutex_t)))) {
+    FREE_CHECK (hashtblP->nodes);
+    FREE_CHECK (hashtblP->name);
+    FREE_CHECK (hashtblP);
     return NULL;
   }
 
-  hashtbl->size = sizeP;
-
-  if (hashfuncP)
-    hashtbl->hashfunc = hashfuncP;
-  else
-    hashtbl->hashfunc = def_hashfunc;
-
-  if (freekeyfuncP)
-    hashtbl->freekeyfunc = freekeyfuncP;
-  else
-    hashtbl->freekeyfunc = FREE_CHECK;
-
-  if (freedatafuncP)
-    hashtbl->freedatafunc = freedatafuncP;
-  else
-    hashtbl->freedatafunc = FREE_CHECK;
-
-  if (display_name_pP) {
-    hashtbl->name = STRDUP_CHECK(display_name_pP);
-  } else {
-    hashtbl->name = MALLOC_CHECK (64);
-    snprintf (hashtbl->name, 64, "obj_hashtable@%p", hashtbl);
+  pthread_mutex_init(&hashtblP->mutex, NULL);
+  for (int i = 0; i < sizeP; i++) {
+    pthread_mutex_init(&hashtblP->lock_nodes[i], NULL);
   }
 
-  return hashtbl;
+  return hashtblP;
 }
 
+//------------------------------------------------------------------------------
 /*
    Initialisation
-   obj_hashtable_ts_create() sets up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
+   obj_hashtable_ts_create() allocate and sets up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
    The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
    If an error occurred, NULL is returned. All other values in the returned obj_hash_table_t pointer should be released with hashtable_destroy().
 */
@@ -143,23 +196,10 @@ obj_hashtable_ts_create (
     return NULL;
   }
 
-
-  if (!(hashtbl->lock_nodes = CALLOC_CHECK (sizeP, sizeof (pthread_mutex_t)))) {
-    FREE_CHECK (hashtbl->nodes);
-    FREE_CHECK (hashtbl->name);
-    FREE_CHECK (hashtbl);
-    return NULL;
-  }
-
-  pthread_mutex_init(&hashtbl->mutex, NULL);
-  for (int i = 0; i < sizeP; i++) {
-    pthread_mutex_init(&hashtbl->lock_nodes[i], NULL);
-  }
-
-  return hashtbl;
+  return obj_hashtable_ts_init(hashtbl, sizeP, hashfuncP, freekeyfuncP, freedatafuncP, display_name_pP);
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Cleanup
    The hashtable_destroy() walks through the linked lists for each possible hash value, and releases the elements. It also releases the nodes array and the obj_hash_table_t.
@@ -189,7 +229,7 @@ obj_hashtable_destroy (
   return HASH_TABLE_OK;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Cleanup
    The hashtable_destroy() walks through the linked lists for each possible hash value, and releases the elements. It also releases the nodes array and the obj_hash_table_t.
@@ -222,13 +262,12 @@ obj_hashtable_ts_destroy (
   return HASH_TABLE_OK;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 hashtable_rc_t
 obj_hashtable_is_key_exists (
   const obj_hash_table_t * const hashtblP,
   const void *const keyP,
   const int key_sizeP)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
   obj_hash_node_t                        *node;
   hash_size_t                             hash;
@@ -258,13 +297,12 @@ obj_hashtable_is_key_exists (
   PRINT_HASHTABLE (stderr, "%s(%s,key %p) hash %lx return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP, hash);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 hashtable_rc_t
 obj_hashtable_ts_is_key_exists (
   const obj_hash_table_t * const hashtblP,
   const void *const keyP,
   const int key_sizeP)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
   obj_hash_node_t                        *node;
   hash_size_t                             hash;
@@ -299,13 +337,12 @@ obj_hashtable_ts_is_key_exists (
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 hashtable_rc_t
 obj_hashtable_dump_content (
   const obj_hash_table_t * const hashtblP,
   char *const buffer_pP,
   int *const remaining_bytes_in_buffer_pP)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
   obj_hash_node_t                        *node = NULL;
   unsigned int                            i = 0;
@@ -338,13 +375,12 @@ obj_hashtable_dump_content (
 
   return HASH_TABLE_OK;
 }
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 hashtable_rc_t
 obj_hashtable_ts_dump_content (
   const obj_hash_table_t * const hashtblP,
   char *const buffer_pP,
   int *const remaining_bytes_in_buffer_pP)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
   obj_hash_node_t                        *node = NULL;
   unsigned int                            i = 0;
@@ -379,7 +415,7 @@ obj_hashtable_ts_dump_content (
   return HASH_TABLE_OK;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Adding a new element
    To make sure the hash value is not bigger than size, the result of the user provided hash function is used modulo size.
@@ -445,6 +481,7 @@ obj_hashtable_insert (
   return HASH_TABLE_OK;
 }
 
+//------------------------------------------------------------------------------
 /*
    Adding a new element
    To make sure the hash value is not bigger than size, the result of the user provided hash function is used modulo size.
@@ -514,7 +551,7 @@ obj_hashtable_ts_insert (
   return HASH_TABLE_OK;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    To remove an element from the hash table, we just search for it in the linked list for that hash value,
    and remove it if it is found. If it was not found, it is an error and -1 is returned.
@@ -560,6 +597,7 @@ obj_hashtable_free (
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
+//------------------------------------------------------------------------------
 /*
    To remove an element from the hash table, we just search for it in the linked list for that hash value,
    and remove it if it is found. If it was not found, it is an error and -1 is returned.
@@ -608,7 +646,7 @@ obj_hashtable_ts_free (
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    To remove an element from the hash table, we just search for it in the linked list for that hash value,
    and remove it if it is found. If it was not found, it is an error and -1 is returned.
@@ -654,6 +692,8 @@ obj_hashtable_remove (
 
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
+
+//------------------------------------------------------------------------------
 /*
    To remove an element from the hash table, we just search for it in the linked list for that hash value,
    and remove it if it is found. If it was not found, it is an error and -1 is returned.
@@ -702,7 +742,7 @@ obj_hashtable_ts_remove (
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Searching for an element is easy. We just search through the linked list for the corresponding hash value.
    NULL is returned if we didn't find it.
@@ -746,6 +786,8 @@ obj_hashtable_get (
   PRINT_HASHTABLE (stderr, "%s(%s,key %p) hash %lx return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP, hash);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
+
+//------------------------------------------------------------------------------
 /*
    Searching for an element is easy. We just search through the linked list for the corresponding hash value.
    NULL is returned if we didn't find it.
@@ -792,7 +834,7 @@ obj_hashtable_ts_get (
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Function to return all keys of an object hash table
 */
@@ -829,7 +871,8 @@ obj_hashtable_get_keys (
   PRINT_HASHTABLE (stderr, "%s return SYSTEM_ERROR\n", __FUNCTION__);
   return HASH_TABLE_SYSTEM_ERROR;
 }
-//-------------------------------------------------------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 /*
    Function to return all keys of an object hash table
 */
@@ -869,7 +912,7 @@ obj_hashtable_ts_get_keys (
   return HASH_TABLE_SYSTEM_ERROR;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Resizing
    The number of elements in a hash table is not always known when creating the table.
@@ -917,6 +960,7 @@ obj_hashtable_resize (
   return HASH_TABLE_OK;
 }
 
+//------------------------------------------------------------------------------
 /*
    Resizing
    The number of elements in a hash table is not always known when creating the table.

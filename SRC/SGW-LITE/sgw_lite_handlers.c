@@ -1074,11 +1074,12 @@ sgw_lite_handle_delete_session_request (
 /*
    Callback of hashtable_ts_apply_funct_on_elements()
 */
-static void
+static bool
 sgw_lite_release_all_enb_related_information (
   hash_key_t keyP,
   void *dataP,
-  void *parameterP)
+  void *unused_parameterP,
+  void **unused_resultP)
 {
   sgw_eps_bearer_entry_t                 *eps_bearer_entry_p = (sgw_eps_bearer_entry_t *) dataP;
 
@@ -1087,7 +1088,7 @@ sgw_lite_release_all_enb_related_information (
     memset (&eps_bearer_entry_p->enb_ip_address_for_S1u, 0, sizeof (eps_bearer_entry_p->enb_ip_address_for_S1u));
     eps_bearer_entry_p->enb_teid_for_S1u = 0;
   }
-  LOG_FUNC_OUT(LOG_SPGW_APP);
+  LOG_FUNC_RETURN(LOG_SPGW_APP, false);
 }
 
 
@@ -1126,7 +1127,7 @@ sgw_lite_handle_release_access_bearers_request (
     release_access_bearers_resp_p->cause = REQUEST_ACCEPTED;
     release_access_bearers_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_for_S11;
 //#pragma message  "TODO Here the release (sgw_lite_handle_release_access_bearers_request)"
-    hash_rc = hashtable_ts_apply_funct_on_elements (ctx_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, sgw_lite_release_all_enb_related_information, NULL);
+    hash_rc = hashtable_ts_apply_callback_on_elements (ctx_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, sgw_lite_release_all_enb_related_information, NULL, NULL);
     // TODO The S-GW starts buffering downlink packets received for the UE
     // (set target on GTPUSP to order the buffering)
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, (to_task == TASK_MME_APP) ? MSC_MMEAPP_MME : MSC_S11_MME, NULL, 0, "0 SGW_RELEASE_ACCESS_BEARERS_RESPONSE S11 MME teid %u cause REQUEST_ACCEPTED", release_access_bearers_resp_p->teid);

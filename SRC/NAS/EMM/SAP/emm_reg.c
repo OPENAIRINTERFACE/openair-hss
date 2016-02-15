@@ -104,14 +104,12 @@ emm_reg_send (
   const emm_reg_t * msg)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc;
+  int                                     rc = RETURNok;
 
   /*
    * Check the EMM-SAP primitive
    */
-#ifndef  NDEBUG
   emm_reg_primitive_t                     primitive = msg->primitive;
-#endif
 
   assert ((primitive > _EMMREG_START) && (primitive < _EMMREG_END));
   /*

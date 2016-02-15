@@ -31,6 +31,7 @@
 #include "intertask_interface.h"
 #include "assertions.h"
 #include "queue.h"
+#include "hashtable.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_decoder.h"
 #include "s1ap_mme_handlers.h"
@@ -53,16 +54,13 @@
 bool                                    hss_associated = false;
 uint32_t                                nb_eNB_associated = 0;
 
-STAILQ_HEAD (eNB_list_s, eNB_description_s)
-  eNB_list_head;
+hash_table_t g_s1ap_eNB_coll = {0}; // contains eNB_description_s, key is eNB_description_s.eNB_id (uint32_t);
 
-     static int                              indent = 0;
+static int                              indent = 0;
+ void *s1ap_mme_thread (void *args);
 
-     void                                   *s1ap_mme_thread (
-  void *args);
-
-     static int                              s1ap_send_init_sctp (
-  void)
+//------------------------------------------------------------------------------
+static int s1ap_send_init_sctp (void)
 {
   // Create and alloc new message
   MessageDef                             *message_p = NULL;
@@ -84,17 +82,17 @@ STAILQ_HEAD (eNB_list_s, eNB_description_s)
   return itti_send_msg_to_task (TASK_SCTP, INSTANCE_DEFAULT, message_p);
 }
 
+//------------------------------------------------------------------------------
 void                                   *
 s1ap_mme_thread (
   void *args)
 {
-  MessageDef                             *received_message_p = NULL;
-
   itti_mark_task_ready (TASK_S1AP);
   LOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
+    MessageDef                             *received_message_p = NULL;
     /*
      * Trying to fetch a message from the message queue.
      * * * * If the queue is empty, this function will block till a
@@ -192,6 +190,7 @@ s1ap_mme_thread (
   return NULL;
 }
 
+//------------------------------------------------------------------------------
 int
 s1ap_mme_init (
   const mme_config_t * mme_config_p)
@@ -200,46 +199,58 @@ s1ap_mme_init (
 
   if (get_asn1c_environment_version () < ASN1_MINIMUM_VERSION) {
     LOG_ERROR (LOG_S1AP, "ASN1C version %d fount, expecting at least %d\n", get_asn1c_environment_version (), ASN1_MINIMUM_VERSION);
-    return -1;
+    return RETURNerror;
   } else {
     LOG_DEBUG (LOG_S1AP, "ASN1C version %d\n", get_asn1c_environment_version ());
   }
 
   LOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
-  STAILQ_INIT (&eNB_list_head);
+  // 16 entries for n eNB.
+  hash_table_t* h = hashtable_ts_init (&g_s1ap_eNB_coll, 16, NULL, FREE_CHECK, "s1ap_eNB_coll");
+  if (!h) return RETURNerror;
 
   if (itti_create_task (TASK_S1AP, &s1ap_mme_thread, NULL) < 0) {
     LOG_ERROR (LOG_S1AP, "Error while creating S1AP task\n");
-    return -1;
+    return RETURNerror;
   }
 
   if (s1ap_send_init_sctp () < 0) {
     LOG_ERROR (LOG_S1AP, "Error while sendind SCTP_INIT_MSG to SCTP \n");
-    return -1;
+    return RETURNerror;
   }
 
   LOG_DEBUG (LOG_S1AP, "Initializing S1AP interface: DONE\n");
-  return 0;
+  return RETURNok;
 }
 
+//------------------------------------------------------------------------------
 void
 s1ap_dump_eNB_list (
   void)
 {
-  eNB_description_t                      *eNB_ref = NULL;
-
-  STAILQ_FOREACH (eNB_ref, &eNB_list_head, eNB_entries) {
-    s1ap_dump_eNB (eNB_ref);
-  }
+  hashtable_ts_apply_callback_on_elements(&g_s1ap_eNB_coll, s1ap_dump_eNB_hash_cb, NULL, NULL);
 }
 
+//------------------------------------------------------------------------------
+bool s1ap_dump_eNB_hash_cb (const hash_key_t keyP,
+               void * const eNB_void,
+               void __attribute__((unused)) *unused_parameterP,
+               void __attribute__((unused)) **unused_resultP)
+{
+  const eNB_description_t * const eNB_ref = (const eNB_description_t *)eNB_void;
+  if (eNB_ref == NULL) {
+    return false;
+  }
+  s1ap_dump_eNB(eNB_ref);
+  return false;
+}
+
+//------------------------------------------------------------------------------
 void
 s1ap_dump_eNB (
   const eNB_description_t * const eNB_ref)
 {
 #  ifdef S1AP_DEBUG_LIST
-  ue_description_t                       *ue_ref = NULL;
-
   //Reset indentation
   indent = 0;
 
@@ -255,9 +266,7 @@ s1ap_dump_eNB (
   eNB_LIST_OUT ("SCTP outstreams:   %d", eNB_ref->outstreams);
   eNB_LIST_OUT ("UE attache to eNB: %d", eNB_ref->nb_ue_associated);
   indent++;
-  STAILQ_FOREACH (ue_ref, &eNB_ref->ue_list_head, ue_entries) {
-    s1ap_dump_ue (ue_ref);
-  }
+  hashtable_ts_apply_callback_on_elements((hash_table_t * const)&eNB_ref->ue_coll, s1ap_dump_ue_hash_cb, NULL, NULL);
   indent--;
   eNB_LIST_OUT ("");
 #  else
@@ -265,9 +274,22 @@ s1ap_dump_eNB (
 #  endif
 }
 
+//------------------------------------------------------------------------------
+bool s1ap_dump_ue_hash_cb (const hash_key_t keyP,
+               void * const ue_void,
+               void __attribute__((unused)) *unused_parameterP,
+               void __attribute__((unused)) **unused_resultP)
+{
+  ue_description_t * ue_ref = (ue_description_t *)ue_void;
+  if (ue_ref == NULL) {
+    return false;
+  }
+  s1ap_dump_ue(ue_ref);
+  return false;
+}
+//------------------------------------------------------------------------------
 void
-s1ap_dump_ue (
-  const ue_description_t * const ue_ref)
+s1ap_dump_ue (const ue_description_t * const ue_ref)
 {
 #  ifdef S1AP_DEBUG_LIST
 
@@ -283,98 +305,135 @@ s1ap_dump_ue (
 #  endif
 }
 
+//------------------------------------------------------------------------------
+bool s1ap_enb_compare_by_enb_id_cb (const hash_key_t keyP, void * elementP, void * parameterP, void **resultP)
+{
+  const uint32_t                  * const eNB_id_p = (const uint32_t*const)parameterP;
+  eNB_description_t                      *eNB_ref  = (eNB_description_t*)elementP;
+  if ( *eNB_id_p == eNB_ref->eNB_id ) {
+    *resultP = elementP;
+    return true;
+  }
+  return false;
+}
+//------------------------------------------------------------------------------
 eNB_description_t                      *
 s1ap_is_eNB_id_in_list (
   const uint32_t eNB_id)
 {
-  eNB_description_t                      *eNB_ref;
-
-  STAILQ_FOREACH (eNB_ref, &eNB_list_head, eNB_entries) {
-    if (eNB_ref->eNB_id == eNB_id) {
-      /*
-       * We found a matching reference, return it
-       */
-      return eNB_ref;
-    }
-  }
-  /*
-   * No matching eNB, return NULL
-   */
+  eNB_description_t                      *eNB_ref = NULL;
+  uint32_t                               *eNB_id_p  = (uint32_t*)&eNB_id;
+  hashtable_ts_apply_callback_on_elements((hash_table_t * const)&g_s1ap_eNB_coll, s1ap_enb_compare_by_enb_id_cb, (void *)eNB_id_p, (void**)&eNB_ref);
   return eNB_ref;
 }
 
+//------------------------------------------------------------------------------
 eNB_description_t                      *
 s1ap_is_eNB_assoc_id_in_list (
   const sctp_assoc_id_t sctp_assoc_id)
 {
-  eNB_description_t                      *eNB_ref;
-
-  STAILQ_FOREACH (eNB_ref, &eNB_list_head, eNB_entries) {
-    if (eNB_ref->sctp_assoc_id == sctp_assoc_id) {
-      /*
-       * We found a matching reference, return it
-       */
-      return eNB_ref;
-    }
-  }
-  /*
-   * No matching eNB or no eNB in list, return NULL
-   */
-  return NULL;
+  eNB_description_t                      *eNB_ref = NULL;
+  hashtable_ts_get(&g_s1ap_eNB_coll, (const hash_key_t)sctp_assoc_id, (void**)&eNB_ref);
+  return eNB_ref;
 }
 
+//------------------------------------------------------------------------------
+bool s1ap_ue_compare_by_enb_ue_s1ap_id_cb (const hash_key_t keyP, void * elementP, void * parameterP, void **resultP)
+{
+  enb_ue_s1ap_id_t                       *eNB_ue_s1ap_id = (enb_ue_s1ap_id_t*)parameterP;
+  ue_description_t                       *ue_ref           = (ue_description_t*)elementP;
+  if ( *eNB_ue_s1ap_id == ue_ref->eNB_ue_s1ap_id ) {
+    *resultP = elementP;
+    return true;
+  }
+  return false;
+}
+//------------------------------------------------------------------------------
 ue_description_t                       *
 s1ap_is_ue_eNB_id_in_list (
   eNB_description_t * eNB_ref,
   const enb_ue_s1ap_id_t eNB_ue_s1ap_id)
 {
-  ue_description_t                       *ue_ref;
-
-  DevAssert (eNB_ref != NULL);
-  STAILQ_FOREACH (ue_ref, &eNB_ref->ue_list_head, ue_entries) {
-    if (ue_ref->eNB_ue_s1ap_id == eNB_ue_s1ap_id) {
-      return ue_ref;
-    }
-  }
-  return NULL;
+  ue_description_t                       *ue_ref = NULL;
+  hashtable_ts_get ((hash_table_t * const)&eNB_ref->ue_coll, (const hash_key_t)eNB_ue_s1ap_id, (void **)&ue_ref);
+  return ue_ref;
 }
 
+//------------------------------------------------------------------------------
+bool s1ap_ue_compare_by_mme_ue_id_cb (const hash_key_t keyP, void * elementP, void * parameterP, void **resultP)
+{
+  mme_ue_s1ap_id_t                      * mme_ue_s1ap_id_p = (mme_ue_s1ap_id_t*)parameterP;
+  ue_description_t                       *ue_ref           = (ue_description_t*)elementP;
+  if ( *mme_ue_s1ap_id_p == ue_ref->mme_ue_s1ap_id ) {
+    *resultP = elementP;
+    //LOG_TRACE(LOG_S1AP, "Found ue_ref %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", ue_ref, ue_ref->mme_ue_s1ap_id);
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+bool s1ap_enb_find_ue_by_mme_ue_id_cb (const hash_key_t keyP, void * elementP, void * parameterP, void **resultP)
+{
+  eNB_description_t                      *eNB_ref = (eNB_description_t*)elementP;
+
+  hashtable_ts_apply_callback_on_elements((hash_table_t * const)&eNB_ref->ue_coll, s1ap_ue_compare_by_mme_ue_id_cb, parameterP, resultP);
+  if (*resultP) {
+    //LOG_TRACE(LOG_S1AP, "Found ue_ref %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", *resultP, ((ue_description_t*)(*resultP))->mme_ue_s1ap_id);
+    return true;
+  }
+  return false;
+}
+//------------------------------------------------------------------------------
+bool s1ap_ue_compare_by_s11_sgw_teid_cb (const hash_key_t keyP, void * elementP, void * const parameterP, void **resultP)
+{
+  s11_teid_t                       * s11_sgw_teid_p = (s11_teid_t*)parameterP;
+  ue_description_t                  *ue_ref         = (ue_description_t*)elementP;
+  if ( *s11_sgw_teid_p == ue_ref->s11_sgw_teid ) {
+    *resultP = elementP;
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
+bool s1ap_enb_find_ue_by_s11_sgw_teid_cb (const hash_key_t keyP, void * elementP, void * parameterP, void **resultP)
+{
+  eNB_description_t                      *eNB_ref = (eNB_description_t*)elementP;
+
+  hashtable_ts_apply_callback_on_elements((hash_table_t * const)&eNB_ref->ue_coll, s1ap_ue_compare_by_s11_sgw_teid_cb, parameterP, resultP);
+  if (*resultP) {
+    return true;
+  }
+  return false;
+}
+
+//------------------------------------------------------------------------------
 ue_description_t                       *
 s1ap_is_ue_mme_id_in_list (
   const mme_ue_s1ap_id_t mme_ue_s1ap_id)
 {
-  ue_description_t                       *ue_ref;
-  eNB_description_t                      *eNB_ref;
+  ue_description_t                       *ue_ref = NULL;
+  mme_ue_s1ap_id_t                       *mme_ue_s1ap_id_p = (mme_ue_s1ap_id_t*)&mme_ue_s1ap_id;
 
-  STAILQ_FOREACH (eNB_ref, &eNB_list_head, eNB_entries) {
-    STAILQ_FOREACH (ue_ref, &eNB_ref->ue_list_head, ue_entries) {
-      // We found a matching reference, return it
-      if (ue_ref->mme_ue_s1ap_id == mme_ue_s1ap_id) {
-        return ue_ref;
-      }
-    }
-  }
-  return NULL;
+  hashtable_ts_apply_callback_on_elements(&g_s1ap_eNB_coll, s1ap_enb_find_ue_by_mme_ue_id_cb, (void*)mme_ue_s1ap_id_p, (void**)&ue_ref);
+  //LOG_TRACE(LOG_S1AP, "Return ue_ref %p \n", ue_ref);
+  return ue_ref;
 }
 
+//------------------------------------------------------------------------------
 ue_description_t                       *
 s1ap_is_s11_sgw_teid_in_list (
   const s11_teid_t teid)
 {
-  ue_description_t                       *ue_ref;
-  eNB_description_t                      *eNB_ref;
+  ue_description_t                       *ue_ref = NULL;
+  s11_teid_t                             *teid_id_p = (s11_teid_t*)&teid;
 
-  STAILQ_FOREACH (eNB_ref, &eNB_list_head, eNB_entries) {
-    STAILQ_FOREACH (ue_ref, &eNB_ref->ue_list_head, ue_entries) {
-      // We found a matching reference, return it
-      if (ue_ref->s11_sgw_teid == teid) {
-        return ue_ref;
-      }
-    }
-  }
-  return NULL;
+  hashtable_ts_apply_callback_on_elements(&g_s1ap_eNB_coll, s1ap_enb_find_ue_by_s11_sgw_teid_cb, (void *)teid_id_p, (void**)&ue_ref);
+  return ue_ref;
 }
 
+//------------------------------------------------------------------------------
 eNB_description_t                      *
 s1ap_new_eNB (
   void)
@@ -390,15 +449,15 @@ s1ap_new_eNB (
   DevAssert (eNB_ref != NULL);
   // Update number of eNB associated
   nb_eNB_associated++;
-  STAILQ_INIT (&eNB_ref->ue_list_head);
+  hashtable_ts_init(&eNB_ref->ue_coll, 256, NULL, FREE_CHECK, "s1ap_ue_coll");
   eNB_ref->nb_ue_associated = 0;
-  STAILQ_INSERT_TAIL (&eNB_list_head, eNB_ref, eNB_entries);
   return eNB_ref;
 }
 
+//------------------------------------------------------------------------------
 ue_description_t                       *
 s1ap_new_ue (
-  const sctp_assoc_id_t sctp_assoc_id)
+  const sctp_assoc_id_t sctp_assoc_id, enb_ue_s1ap_id_t enb_ue_s1ap_id)
 {
   eNB_description_t                      *eNB_ref = NULL;
   ue_description_t                       *ue_ref = NULL;
@@ -413,17 +472,25 @@ s1ap_new_ue (
    */
   DevAssert (ue_ref != NULL);
   ue_ref->eNB = eNB_ref;
+  ue_ref->eNB_ue_s1ap_id = enb_ue_s1ap_id;
   // Increment number of UE
   eNB_ref->nb_ue_associated++;
-  STAILQ_INSERT_TAIL (&eNB_ref->ue_list_head, ue_ref, ue_entries);
+
+  hashtable_rc_t  hashrc = hashtable_ts_insert (&eNB_ref->ue_coll, (const hash_key_t) enb_ue_s1ap_id, (void *)ue_ref);
+  if (HASH_TABLE_OK != hashrc) {
+    LOG_ERROR(LOG_S1AP, "Could not insert UE descr in ue_coll: %s\n", hashtable_rc_code2string(hashrc));
+    FREE_CHECK(ue_ref);
+    return NULL;
+  }
   return ue_ref;
 }
 
+//------------------------------------------------------------------------------
 void
 s1ap_remove_ue (
   ue_description_t * ue_ref)
 {
-  eNB_description_t                      *eNB_ref;
+  eNB_description_t                      *eNB_ref = NULL;
 
   /*
    * NULL reference...
@@ -440,34 +507,21 @@ s1ap_remove_ue (
    * Remove any attached timer
    */
   //     s1ap_timer_remove_ue(ue_ref->mme_ue_s1ap_id);
-  STAILQ_REMOVE (&eNB_ref->ue_list_head, ue_ref, ue_description_s, ue_entries);
+  LOG_TRACE(LOG_S1AP, "Removing UE eNB_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id:" MME_UE_S1AP_ID_FMT " in eNB id : %d\n",
+      ue_ref->eNB_ue_s1ap_id, ue_ref->mme_ue_s1ap_id, eNB_ref->eNB_id);
+  hashtable_ts_free (&eNB_ref->ue_coll, ue_ref->eNB_ue_s1ap_id);
   eNB_ref->nb_ue_associated--;
-  /*
-   * Freeing memory
-   */
-  FREE_CHECK (ue_ref);
-  ue_ref = NULL;
 }
 
+//------------------------------------------------------------------------------
 void
 s1ap_remove_eNB (
   eNB_description_t * eNB_ref)
 {
-  ue_description_t                       *ue_ref;
-
   if (eNB_ref == NULL)
     return;
-
-  while (!STAILQ_EMPTY (&eNB_ref->ue_list_head)) {
-    ue_ref = STAILQ_FIRST (&eNB_ref->ue_list_head);
-    eNB_ref->nb_ue_associated--;
-    STAILQ_REMOVE_HEAD (&eNB_ref->ue_list_head, ue_entries);
-    FREE_CHECK (ue_ref);
-  }
-
-  STAILQ_REMOVE (&eNB_list_head, eNB_ref, eNB_description_s, eNB_entries);
-  FREE_CHECK (eNB_ref);
-  eNB_ref = NULL;
+  hashtable_ts_destroy(&eNB_ref->ue_coll);
+  hashtable_ts_free (&g_s1ap_eNB_coll, eNB_ref->sctp_assoc_id);
   nb_eNB_associated--;
 }
 

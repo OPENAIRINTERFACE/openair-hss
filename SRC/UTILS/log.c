@@ -580,7 +580,7 @@ void log_stream_hex(
   if ((streamP) && (message)) {
     for (octet_index = 0; octet_index < sizeP; octet_index++) {
       // do not call log_message_add(), too much overhead for sizeP*3chars
-      rv = snprintf (&message->str[message->len], LOG_MAX_MESSAGE_LENGTH - message->len, " %02x", streamP[octet_index]);
+      rv = snprintf (&message->str[message->len], LOG_MAX_MESSAGE_LENGTH - message->len, " %02x", (streamP[octet_index]) & (uint)0x00ff);
 
       if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - message->len) < rv)) {
         fprintf (stderr, "Error while logging message\n");

@@ -419,11 +419,12 @@ mme_remove_ue_context (
 }
 
 //------------------------------------------------------------------------------
-void
+bool
 mme_app_dump_ue_context (
   const hash_key_t keyP,
   void *const ue_context_pP,
-  void *unused_param_pP)
+  void *unused_param_pP,
+  void** unused_result_pP)
 //------------------------------------------------------------------------------
 {
   struct ue_context_s                    *const context_p = (struct ue_context_s *)ue_context_pP;
@@ -557,6 +558,7 @@ mme_app_dump_ue_context (
   }
 
   LOG_DEBUG (LOG_MME_APP, "---------------------------------------------------------\n");
+  return false;
 }
 
 
@@ -566,7 +568,7 @@ mme_app_dump_ue_contexts (
   const mme_ue_context_t * const mme_ue_context_p)
 //------------------------------------------------------------------------------
 {
-  hashtable_ts_apply_funct_on_elements (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL);
+  hashtable_ts_apply_callback_on_elements (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL, NULL);
 }
 
 

@@ -94,7 +94,7 @@ s1ap_mme_handle_initial_ue_message (
      * * * * Update eNB UE list.
      * * * * Forward message to NAS.
      */
-    if ((ue_ref = s1ap_new_ue (assoc_id)) == NULL)
+    if ((ue_ref = s1ap_new_ue (assoc_id, eNB_ue_s1ap_id)) == NULL)
       // If we failed to allocate a new UE return -1
     {
       LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
@@ -335,14 +335,15 @@ s1ap_handle_conn_est_cnf (
   uint32_t                                length = 0;
   ue_description_t                       *ue_ref = NULL;
   S1ap_InitialContextSetupRequestIEs_t   *initialContextSetupRequest_p = NULL;
-  S1ap_E_RABToBeSetupItemCtxtSUReq_t      e_RABToBeSetup = {0};
-  S1ap_NAS_PDU_t                          nas_pdu = {0};
-  s1ap_message                            message = {0};
+  S1ap_E_RABToBeSetupItemCtxtSUReq_t      e_RABToBeSetup = {0}; // yes, alloc on stack
+  S1ap_NAS_PDU_t                          nas_pdu = {0}; // yes, alloc on stack
+  s1ap_message                            message = {0}; // yes, alloc on stack
 
   LOG_FUNC_IN (LOG_S1AP);
   DevAssert (conn_est_cnf_pP != NULL);
 
-  if ((ue_ref = s1ap_is_ue_mme_id_in_list (conn_est_cnf_pP->nas_conn_est_cnf.UEid)) == NULL) {
+  ue_ref = s1ap_is_ue_mme_id_in_list (conn_est_cnf_pP->nas_conn_est_cnf.UEid);
+  if (!ue_ref) {
     LOG_ERROR (LOG_S1AP, "This mme ue s1ap id (" MME_UE_S1AP_ID_FMT ") is not attached to any UE context\n", conn_est_cnf_pP->nas_conn_est_cnf.UEid);
     // There are some race conditions were NAS T3450 timer is stopped and removed at same time
     LOG_FUNC_OUT (LOG_S1AP);
@@ -439,7 +440,7 @@ s1ap_handle_conn_est_cnf (
   LOG_DEBUG (LOG_S1AP, "security_capabilities_integrity_algorithms 0x%04X\n", conn_est_cnf_pP->security_capabilities_integrity_algorithms);
 
   if (conn_est_cnf_pP->keNB) {
-    initialContextSetupRequest_p->securityKey.buf = MALLOC_CHECK (32);
+    initialContextSetupRequest_p->securityKey.buf = CALLOC_CHECK (32, sizeof(uint8_t));
     memcpy (initialContextSetupRequest_p->securityKey.buf, conn_est_cnf_pP->keNB, 32);
     initialContextSetupRequest_p->securityKey.size = 32;
   } else {

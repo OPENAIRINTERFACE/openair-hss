@@ -27,31 +27,33 @@
 
 #include "security_types.h"
 #include "secu_defs.h"
+#include "dynamic_memory_check.h"
 
 void
 kdf (
   const uint8_t * key,
-  uint16_t key_len,
+  const unsigned key_len,
   uint8_t * s,
-  uint16_t s_len,
+  const unsigned s_len,
   uint8_t * out,
-  uint16_t out_len)
+  const unsigned out_len)
 {
-  struct hmac_sha256_ctx                  ctx;
+  struct hmac_sha256_ctx                  *ctx = CALLOC_CHECK(1, sizeof(struct hmac_sha256_ctx));
 
-  memset (&ctx, 0, sizeof (ctx));
-  hmac_sha256_set_key (&ctx, key_len, key);
-  hmac_sha256_update (&ctx, s_len, s);
-  hmac_sha256_digest (&ctx, out_len, out);
+  //memset (&ctx, 0, sizeof (ctx));
+  hmac_sha256_set_key (ctx, key_len, key);
+  hmac_sha256_update (ctx, s_len, s);
+  hmac_sha256_digest (ctx, out_len, out);
+  FREE_CHECK(ctx);
 }
 
 int
 derive_keNB (
-  const uint8_t kasme[32],
+  const uint8_t *kasme_32,
   const uint32_t nas_count,
   uint8_t * keNB)
 {
-  uint8_t                                 s[7];
+  uint8_t                                 s[7] = {0};
 
   // FC
   s[0] = FC_KENB;
@@ -63,6 +65,6 @@ derive_keNB (
   // Length of NAS count
   s[5] = 0x00;
   s[6] = 0x04;
-  kdf (kasme, 32, s, 7, keNB, 32);
+  kdf (kasme_32, 32, s, 7, keNB, 32);
   return 0;
 }

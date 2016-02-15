@@ -32,6 +32,12 @@
 #  include "obj_hashtable.h"
 #  include "msc.h"
 
+static bool emm_data_context_dump_hash_table_wrapper (
+  hash_key_t keyP,
+  void *dataP,
+  void *parameterP,
+  void**resultP);
+
 struct emm_data_context_s              *
 emm_data_context_get (
   emm_data_t * emm_data,
@@ -353,13 +359,15 @@ emm_data_context_dump (
   }
 }
 
-static void
+static bool
 emm_data_context_dump_hash_table_wrapper (
   hash_key_t keyP,
   void *dataP,
-  void *parameterP)
+  void *parameterP,
+  void**resultP)
 {
   emm_data_context_dump (dataP);
+  return false; // otherwise dump stop
 }
 
 void
@@ -367,5 +375,5 @@ emm_data_context_dump_all (
   void)
 {
   LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Dump all contexts:\n");
-  hashtable_ts_apply_funct_on_elements (_emm_data.ctx_coll_ue_id, emm_data_context_dump_hash_table_wrapper, NULL);
+  hashtable_ts_apply_callback_on_elements (_emm_data.ctx_coll_ue_id, emm_data_context_dump_hash_table_wrapper, NULL, NULL);
 }

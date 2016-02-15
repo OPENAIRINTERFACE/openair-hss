@@ -88,8 +88,8 @@ _emm_cn_authentication_res (
 {
   emm_data_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
-  OctetString                             loc_rand;
-  OctetString                             autn;
+  OctetString                             loc_rand = {0};
+  OctetString                             autn = {0};
 
   /*
    * We received security vector from HSS. Try to setup security with UE
@@ -169,9 +169,9 @@ _emm_cn_pdn_connectivity_res (
   int                                     rc = RETURNok;
   struct emm_data_context_s              *emm_ctx_p = NULL;
   esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
-  ESM_msg                                 esm_msg;
-  EpsQualityOfService                     qos;
-  ProtocolConfigurationOptions            pco;
+  ESM_msg                                 esm_msg = {0};
+  EpsQualityOfService                     qos = {0};
+  ProtocolConfigurationOptions            pco = {0};
   unsigned int                            pco_in_index = 0;
   signed int                              length_in_pco = 0;
   uint16_t                                pi_or_ci = 0; // protocol identifier or container identifier;
@@ -261,7 +261,10 @@ _emm_cn_pdn_connectivity_res (
       pco.protocolidcontents[pco.num_protocol_id_or_container_id].value = MALLOC_CHECK (length_pi_or_ci);
       pco.protocolidcontents[pco.num_protocol_id_or_container_id].length = length_pi_or_ci;
       memcpy (pco.protocolidcontents[pco.num_protocol_id_or_container_id].value, &msg_pP->pco.byte[pco_in_index], length_pi_or_ci);
-      LOG_WARNING (LOG_NAS_EMM, "PCO: Found pi_or_ci 0x%x length %u content %s\n", pi_or_ci, length_pi_or_ci, dump_octet_string (&pco.protocolidcontents[pco.num_protocol_id_or_container_id]));
+      LOG_TRACE (LOG_NAS_EMM, "PCO: Found pi_or_ci 0x%x length %u\n", pi_or_ci, length_pi_or_ci);
+      LOG_STREAM_HEX (LOG_NAS_EMM, "PCO: Found pi_or_ci content:\n",
+          pco.protocolidcontents[pco.num_protocol_id_or_container_id].value,
+          pco.protocolidcontents[pco.num_protocol_id_or_container_id].length);
       pco.num_protocol_id_or_container_id++;
       pco_in_index += length_pi_or_ci;
       length_in_pco = length_in_pco - (length_pi_or_ci + 2 + 1);

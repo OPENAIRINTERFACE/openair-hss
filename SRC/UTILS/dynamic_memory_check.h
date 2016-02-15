@@ -51,10 +51,13 @@ char *strndup_wrapper(const char *s, size_t n)    __attribute__ ((warn_unused_re
 #define STRNDUP_CHECK         strndup_wrapper
 #else
 #include <stdlib.h>
+
+void free_wrapper(void *ptr) __attribute__((hot));
+
 #define DYN_MEM_CHECK_INIT()
 #define DYN_MEM_CHECK_EXIT()
 #define MALLOC_CHECK          malloc
-#define FREE_CHECK            free
+#define FREE_CHECK            free_wrapper
 #define CALLOC_CHECK          calloc
 #define REALLOC_CHECK         realloc
 #define STRDUP_CHECK          strdup

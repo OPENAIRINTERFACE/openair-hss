@@ -1171,11 +1171,12 @@ _emm_attach_security (
    * Create new NAS security context
    */
   if (!emm_ctx->security) {
-    emm_ctx->security = (emm_security_context_t *) MALLOC_CHECK (sizeof (emm_security_context_t));
+    emm_ctx->security = (emm_security_context_t *) CALLOC_CHECK (1, sizeof (emm_security_context_t));
+  } else {
+    memset (emm_ctx->security, 0, sizeof (emm_security_context_t));
   }
 
   if (emm_ctx->security) {
-    memset (emm_ctx->security, 0, sizeof (emm_security_context_t));
     emm_ctx->security->type = EMM_KSI_NOT_AVAILABLE;
     emm_ctx->security->selected_algorithms.encryption = NAS_SECURITY_ALGORITHMS_EEA0;
     emm_ctx->security->selected_algorithms.integrity = NAS_SECURITY_ALGORITHMS_EIA0;
@@ -1809,7 +1810,8 @@ _emm_attach_update (
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - GUTI NOT NULL\n");
 
     if (ctx->guti == NULL) {
-      ctx->guti = (GUTI_t *) MALLOC_CHECK (sizeof (GUTI_t));
+      ctx->guti = (GUTI_t *) CALLOC_CHECK (1, sizeof (GUTI_t));
+      memcpy (ctx->guti, guti, sizeof (GUTI_t));
       OAI_GCC_DIAG_OFF(int-to-pointer-cast);
       obj_hashtable_ts_insert (_emm_data.ctx_coll_guti, (const void *const)guti, sizeof (*guti), (void *)ctx->ueid);
       OAI_GCC_DIAG_ON(int-to-pointer-cast);
@@ -1820,12 +1822,9 @@ _emm_attach_update (
       LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id " NAS_UE_ID_FMT " MMEgid  %04x\n", ctx->ueid, ctx->guti->gummei.MMEgid);
       LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id " NAS_UE_ID_FMT " MMEcode %01x\n", ctx->ueid, ctx->guti->gummei.MMEcode);
       LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id " NAS_UE_ID_FMT " m_tmsi  %08x\n", ctx->ueid, ctx->guti->m_tmsi);
-    }
-
-    if (ctx->guti) {
-      memcpy (ctx->guti, guti, sizeof (GUTI_t));
     } else {
-      LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+      // TODO Think about what is _emm_data.ctx_coll_guti
+      memcpy (ctx->guti, guti, sizeof (GUTI_t));
     }
   } else {
     if (!ctx->guti ) {
@@ -1981,7 +1980,7 @@ _emm_attach_update (
       ctx->esm_msg.length = 0;
     }
 
-    ctx->esm_msg.value = (uint8_t *) MALLOC_CHECK (esm_msg_pP->length);
+    ctx->esm_msg.value = (uint8_t *) CALLOC_CHECK (esm_msg_pP->length, sizeof(uint8_t));
 
     if (ctx->esm_msg.value) {
       memcpy ((char *)ctx->esm_msg.value, (char *)esm_msg_pP->value, esm_msg_pP->length);

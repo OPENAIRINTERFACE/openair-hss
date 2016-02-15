@@ -35,8 +35,12 @@
 #include "s1ap_mme_itti_messaging.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_ta.h"
+#include "hashtable.h"
 #include "msc.h"
 #include "log.h"
+
+
+extern hash_table_t g_s1ap_eNB_coll; // contains eNB_description_s, key is eNB_description_s.assoc_id
 
 static int                              s1ap_generate_s1_setup_response (
   eNB_description_t * eNB_association);
@@ -117,7 +121,6 @@ s1ap_mme_handle_message (
     const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
-//------------------------------------------------------------------------------
 {
   /*
    * Checking procedure Code and direction of message
@@ -148,7 +151,6 @@ s1ap_mme_set_cause (
   S1ap_Cause_t * cause_p,
   const S1ap_Cause_PR cause_type,
   const long cause_value)
-//------------------------------------------------------------------------------
 {
   DevAssert (cause_p != NULL);
   cause_p->present = cause_type;
@@ -188,7 +190,6 @@ s1ap_mme_generate_s1_setup_failure (
     const S1ap_Cause_PR cause_type,
     const long cause_value,
     const long time_to_wait)
-//------------------------------------------------------------------------------
 {
   uint8_t                                *buffer_p = 0;
   uint32_t                                length = 0;
@@ -230,7 +231,6 @@ s1ap_mme_handle_s1_setup_request (
     const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
-//------------------------------------------------------------------------------
 {
 
   int                                     rc = RETURNok;
@@ -389,7 +389,6 @@ static
   int
 s1ap_generate_s1_setup_response (
   eNB_description_t * eNB_association)
-//------------------------------------------------------------------------------
 {
   int                                     i,j;
   int                                     enc_rval = 0;
@@ -494,7 +493,6 @@ s1ap_mme_handle_ue_cap_indication (
     const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
-//------------------------------------------------------------------------------
 {
   ue_description_t                       *ue_ref_p = NULL;
   S1ap_UECapabilityInfoIndicationIEs_t   *ue_cap_p = NULL;
@@ -563,7 +561,6 @@ s1ap_mme_handle_initial_context_setup_response (
     const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
-//------------------------------------------------------------------------------
 {
   S1ap_InitialContextSetupResponseIEs_t  *initialContextSetupResponseIEs_p = NULL;
   S1ap_E_RABSetupItemCtxtSURes_t         *eRABSetupItemCtxtSURes_p = NULL;
@@ -630,7 +627,6 @@ s1ap_mme_handle_ue_context_release_request (
     const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
-//------------------------------------------------------------------------------
 {
   S1ap_UEContextReleaseRequestIEs_t      *ueContextReleaseRequest_p = NULL;
   ue_description_t                       *ue_ref_p = NULL;
@@ -700,7 +696,6 @@ s1ap_mme_handle_ue_context_release_request (
 static int
 s1ap_mme_generate_ue_context_release_command (
   ue_description_t * ue_ref_p)
-//------------------------------------------------------------------------------
 {
   uint8_t                                *buffer = NULL;
   uint32_t                                length = 0;
@@ -743,7 +738,6 @@ s1ap_mme_generate_ue_context_release_command (
 int
 s1ap_handle_ue_context_release_command (
   const s1ap_ue_context_release_command_t * const ue_context_release_command_pP)
-//------------------------------------------------------------------------------
 {
   ue_description_t                       *ue_ref_p = NULL;
   int                                     rc = RETURNok;
@@ -771,7 +765,6 @@ s1ap_mme_handle_ue_context_release_complete (
     const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
-//------------------------------------------------------------------------------
 {
   S1ap_UEContextReleaseCompleteIEs_t     *ueContextReleaseComplete_p = NULL;
   ue_description_t                       *ue_ref_p = NULL;
@@ -815,7 +808,6 @@ s1ap_mme_handle_initial_context_setup_failure (
     const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
-//------------------------------------------------------------------------------
 {
   S1ap_InitialContextSetupFailureIEs_t   *initialContextSetupFailureIEs_p = NULL;
   ue_description_t                       *ue_ref_p = NULL;
@@ -856,7 +848,6 @@ s1ap_mme_handle_path_switch_request (
     const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
-//------------------------------------------------------------------------------
 {
   S1ap_PathSwitchRequestIEs_t            *pathSwitchRequest_p = NULL;
   ue_description_t                       *ue_ref_p = NULL;
@@ -891,16 +882,48 @@ s1ap_mme_handle_path_switch_request (
 }
 
 //------------------------------------------------------------------------------
+typedef struct arg_s1ap_send_enb_dereg_ind_s {
+  int   current_ue_index;
+  int   handled_ues;
+}arg_s1ap_send_enb_dereg_ind_t;
+
+//------------------------------------------------------------------------------
+static bool s1ap_send_enb_deregistered_ind (
+    const hash_key_t keyP,
+    void * const dataP,
+    void *argP,
+    void ** resultP) {
+
+  arg_s1ap_send_enb_dereg_ind_t          *arg = (arg_s1ap_send_enb_dereg_ind_t*) argP;
+  ue_description_t                       *ue_ref_p = (ue_description_t*)dataP;
+  MessageDef                             *message_p = NULL;
+  /*
+   * Ask for a release of each UE context associated to the eNB
+   */
+  if (arg->current_ue_index == 0) {
+    message_p = itti_alloc_new_message (TASK_S1AP, S1AP_ENB_DEREGISTERED_IND);
+  }
+
+  S1AP_ENB_DEREGISTERED_IND (message_p).mme_ue_s1ap_id[arg->current_ue_index] = ue_ref_p->mme_ue_s1ap_id;
+
+  if (arg->current_ue_index == 0 && arg->handled_ues > 0) {
+    S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister = S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
+    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  }
+
+  arg->handled_ues++;
+  arg->current_ue_index = arg->handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
+  *resultP = message_p;
+  return false;
+}
+//------------------------------------------------------------------------------
 int
 s1ap_handle_sctp_deconnection (
     const sctp_assoc_id_t assoc_id)
-//------------------------------------------------------------------------------
 {
-  int                                     current_ue_index = 0;
-  int                                     handled_ues = 0;
+  arg_s1ap_send_enb_dereg_ind_t           arg = {0};
   int                                     i = 0;
   MessageDef                             *message_p = NULL;
-  ue_description_t                       *ue_ref_p = NULL;
   eNB_description_t                      *eNB_association = NULL;
 
   LOG_FUNC_IN (LOG_S1AP);
@@ -915,30 +938,14 @@ s1ap_handle_sctp_deconnection (
   }
 
   MSC_LOG_EVENT (MSC_S1AP_MME, "0 Event SCTP_CLOSE_ASSOCIATION assoc_id: %d", assoc_id);
-  STAILQ_FOREACH (ue_ref_p, &eNB_association->ue_list_head, ue_entries) {
-    /*
-     * Ask for a release of each UE context associated to the eNB
-     */
-    if (current_ue_index == 0) {
-      message_p = itti_alloc_new_message (TASK_S1AP, S1AP_ENB_DEREGISTERED_IND);
-    }
 
-    S1AP_ENB_DEREGISTERED_IND (message_p).mme_ue_s1ap_id[current_ue_index] = ue_ref_p->mme_ue_s1ap_id;
+  hashtable_ts_apply_callback_on_elements(&eNB_association->ue_coll, s1ap_send_enb_deregistered_ind, (void*)&arg, (void**)&message_p);
 
-    if (current_ue_index == 0 && handled_ues > 0) {
-      S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister = S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
-      itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-    }
+  if ((arg.handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE) != 0) {
+    S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister = arg.current_ue_index;
 
-    handled_ues++;
-    current_ue_index = handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
-  }
-
-  if ((handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE) != 0) {
-    S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister = current_ue_index;
-
-    for (i = current_ue_index; i < S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE; i++) {
-      S1AP_ENB_DEREGISTERED_IND (message_p).mme_ue_s1ap_id[current_ue_index] = 0;
+    for (i = arg.current_ue_index; i < S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE; i++) {
+      S1AP_ENB_DEREGISTERED_IND (message_p).mme_ue_s1ap_id[arg.current_ue_index] = 0;
     }
 
     MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 S1AP_ENB_DEREGISTERED_IND num ue to deregister %u", S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister);
@@ -955,7 +962,6 @@ s1ap_handle_sctp_deconnection (
 int
 s1ap_handle_new_association (
   sctp_new_peer_t * sctp_new_peer_p)
-//------------------------------------------------------------------------------
 {
   eNB_description_t                      *eNB_association = NULL;
 
@@ -980,6 +986,11 @@ s1ap_handle_new_association (
        * TODO: send reject there
        */
       LOG_ERROR (LOG_S1AP, "Failed to allocate eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
+    }
+    eNB_association->sctp_assoc_id = sctp_new_peer_p->assoc_id;
+    hashtable_rc_t  hash_rc = hashtable_ts_insert (&g_s1ap_eNB_coll, (const hash_key_t)eNB_association->sctp_assoc_id, (void *)eNB_association);
+    if (HASH_TABLE_OK != hash_rc) {
+      LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
     }
   } else {
     LOG_DEBUG (LOG_S1AP, "eNB context already exists for assoc_id: %d, update it\n", sctp_new_peer_p->assoc_id);

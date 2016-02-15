@@ -47,11 +47,11 @@ int
 derive_key_nas (
   algorithm_type_dist_t nas_alg_type,
   uint8_t nas_enc_alg_id,
-  const uint8_t kasme[32],
+  const uint8_t *kasme_32,
   uint8_t * knas)
 {
-  uint8_t                                 s[7];
-  uint8_t                                 out[32];
+  uint8_t                                 s[7] = {0};
+  uint8_t                                 out[32] = {0};
 
   /*
    * FC
@@ -75,9 +75,9 @@ derive_key_nas (
    */
   s[5] = 0x00;
   s[6] = 0x01;
-  LOG_TRACE (LOG_NAS, "%s FC %d nas_alg_type distinguisher %d nas_enc_alg_identity %d\n", __FUNCTION__, FC_ALG_KEY_DER, nas_alg_type, nas_enc_alg_id);
+  LOG_TRACE (LOG_NAS, "FC %d nas_alg_type distinguisher %d nas_enc_alg_identity %d\n", FC_ALG_KEY_DER, nas_alg_type, nas_enc_alg_id);
   LOG_STREAM_HEX(LOG_NAS, "s:", s, 7);
-  kdf (kasme, 32, s, 7, out, 32);
+  kdf (kasme_32, 32, &s[0], 7, &out[0], 32);
   memcpy (knas, &out[31 - 16 + 1], 16);
   return 0;
 }

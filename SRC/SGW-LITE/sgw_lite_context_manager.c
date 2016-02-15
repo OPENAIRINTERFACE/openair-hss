@@ -48,11 +48,12 @@ extern sgw_app_t                        sgw_app;
 
 
 //-----------------------------------------------------------------------------
-static void
+static bool
 sgw_lite_display_s11teid2mme_mapping (
   uint64_t keyP,
   void *dataP,
-  void *unusedParameterP)
+  void *unused_parameterP,
+  void **unused_resultP)
 //-----------------------------------------------------------------------------
 {
   mme_sgw_tunnel_t                       *mme_sgw_tunnel = NULL;
@@ -63,6 +64,7 @@ sgw_lite_display_s11teid2mme_mapping (
   } else {
     LOG_DEBUG (LOG_SPGW_APP, "INVALID S11 TEID MAPPING FOUND\n");
   }
+  return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -74,16 +76,17 @@ sgw_lite_display_s11teid2mme_mappings (
   LOG_DEBUG (LOG_SPGW_APP, "+--------------------------------------+\n");
   LOG_DEBUG (LOG_SPGW_APP, "| MME <--- S11 TE ID MAPPINGS ---> SGW |\n");
   LOG_DEBUG (LOG_SPGW_APP, "+--------------------------------------+\n");
-  hashtable_ts_apply_funct_on_elements (sgw_app.s11teid2mme_hashtable, sgw_lite_display_s11teid2mme_mapping, NULL);
+  hashtable_ts_apply_callback_on_elements (sgw_app.s11teid2mme_hashtable, sgw_lite_display_s11teid2mme_mapping, NULL, NULL);
   LOG_DEBUG (LOG_SPGW_APP, "+--------------------------------------+\n");
 }
 
 //-----------------------------------------------------------------------------
-static void
+static bool
 sgw_lite_display_pdn_connection_sgw_eps_bearers (
   uint64_t keyP,
   void *dataP,
-  void *unusedParameterP)
+  void *unused_parameterP,
+  void **unused_resultP)
 //-----------------------------------------------------------------------------
 {
   sgw_eps_bearer_entry_t                 *eps_bearer_entry = NULL;
@@ -95,14 +98,16 @@ sgw_lite_display_pdn_connection_sgw_eps_bearers (
   } else {
     LOG_DEBUG (LOG_SPGW_APP, "\t\t\t\tINVALID eps_bearer_entry FOUND\n");
   }
+  return false;
 }
 
 //-----------------------------------------------------------------------------
-static void
+static bool
 sgw_lite_display_s11_bearer_context_information (
   uint64_t keyP,
   void *dataP,
-  void *unusedParameterP)
+  void *unused_parameterP,
+  void **unused_resultP)
 //-----------------------------------------------------------------------------
 {
   s_plus_p_gw_eps_bearer_context_information_t *sp_context_information = NULL;
@@ -124,7 +129,8 @@ sgw_lite_display_s11_bearer_context_information (
     LOG_DEBUG (LOG_SPGW_APP, "|\t\t\tapn_in_use:        %s\n", sp_context_information->sgw_eps_bearer_context_information.pdn_connection.apn_in_use);
     LOG_DEBUG (LOG_SPGW_APP, "|\t\t\tdefault_bearer:    %u\n", sp_context_information->sgw_eps_bearer_context_information.pdn_connection.default_bearer);
     LOG_DEBUG (LOG_SPGW_APP, "|\t\t\teps_bearers:\n");
-    hash_rc = hashtable_ts_apply_funct_on_elements (sp_context_information->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, sgw_lite_display_pdn_connection_sgw_eps_bearers, NULL);
+    hash_rc = hashtable_ts_apply_callback_on_elements (sp_context_information->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers,
+                                                       sgw_lite_display_pdn_connection_sgw_eps_bearers, NULL, NULL);
 
     if (HASH_TABLE_OK != hash_rc) {
       LOG_DEBUG (LOG_SPGW_APP, "Invalid sgw_eps_bearers hashtable for display\n");
@@ -134,6 +140,7 @@ sgw_lite_display_s11_bearer_context_information (
   } else {
     LOG_DEBUG (LOG_SPGW_APP, "INVALID s_plus_p_gw_eps_bearer_context_information FOUND\n");
   }
+  return false;
 }
 
 //-----------------------------------------------------------------------------
@@ -145,7 +152,7 @@ sgw_lite_display_s11_bearer_context_information_mapping (
   LOG_DEBUG (LOG_SPGW_APP, "+-----------------------------------------+\n");
   LOG_DEBUG (LOG_SPGW_APP, "| S11 BEARER CONTEXT INFORMATION MAPPINGS |\n");
   LOG_DEBUG (LOG_SPGW_APP, "+-----------------------------------------+\n");
-  hashtable_ts_apply_funct_on_elements (sgw_app.s11_bearer_context_information_hashtable, sgw_lite_display_s11_bearer_context_information, NULL);
+  hashtable_ts_apply_callback_on_elements (sgw_app.s11_bearer_context_information_hashtable, sgw_lite_display_s11_bearer_context_information, NULL, NULL);
   LOG_DEBUG (LOG_SPGW_APP, "+--------------------------------------+\n");
 }
 
@@ -396,7 +403,7 @@ sgw_lite_cm_create_eps_bearer_entry_in_collection (
   new_eps_bearer_entry->eps_bearer_id = eps_bearer_idP;
   hash_rc = hashtable_ts_insert (eps_bearersP, eps_bearer_idP, new_eps_bearer_entry);
   LOG_DEBUG (LOG_SPGW_APP, "Inserted new EPS bearer entry for EPS bearer id %u status %s\n", eps_bearer_idP, hashtable_rc_code2string (hash_rc));
-  hash_rc = hashtable_ts_apply_funct_on_elements (eps_bearersP, sgw_lite_display_pdn_connection_sgw_eps_bearers, NULL);
+  hash_rc = hashtable_ts_apply_callback_on_elements (eps_bearersP, sgw_lite_display_pdn_connection_sgw_eps_bearers, NULL, NULL);
 
   if (HASH_TABLE_OK != hash_rc) {
     LOG_DEBUG (LOG_SPGW_APP, "Invalid sgw_eps_bearers hashtable for display\n");

@@ -67,7 +67,5 @@ int decode_octet_string(OctetString *octetstring, uint16_t pdulen, uint8_t *buff
 
 char* dump_octet_string_xml(const OctetString * const octetstring);
 
-char* dump_octet_string(const OctetString * const octetstring);
-
 #endif /* OCTET_STRING_H_ */
 

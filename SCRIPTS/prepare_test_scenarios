@@ -31,7 +31,7 @@ export THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
 # find in all subdirectories a valid test to play
 # that mean a directory must contain a valid set of files
 
-list_dir_name="`find $THIS_SCRIPT_PATH/../TEST/SCENARIOS -type d | sort | uniq`"
+list_dir_name="`find $THIS_SCRIPT_PATH/../SRC/TEST/SCENARIOS -type d | sort | uniq`"
 
 for dirname_name in $list_dir_name
 do

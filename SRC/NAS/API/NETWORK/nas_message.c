@@ -236,7 +236,7 @@ nas_message_encrypt (
     emm_security_context->dl_count.overflow += 1;
   }
 
-  LOG_DEBUG (LOG_NAS, "Incremented emm_security_context.dl_count.seq_num -> %u", emm_security_context->dl_count.seq_num);
+  LOG_DEBUG (LOG_NAS, "Incremented emm_security_context.dl_count.seq_num -> %u\n", emm_security_context->dl_count.seq_num);
 
   if (bytes < 0) {
     LOG_FUNC_RETURN (LOG_NAS, bytes);
@@ -288,7 +288,7 @@ nas_message_decrypt (
   int                                     size = _nas_message_header_decode (inbuf, header, length, status);
 
   if (size < 0) {
-    LOG_DEBUG (LOG_NAS, "MESSAGE TOO SHORT");
+    LOG_DEBUG (LOG_NAS, "MESSAGE TOO SHORT\n");
     LOG_FUNC_RETURN (LOG_NAS, TLV_DECODE_BUFFER_TOO_SHORT);
   } else if (size > 1) {
     if (emm_security_context) {
@@ -319,10 +319,10 @@ nas_message_decrypt (
      */
     if (mac == header->message_authentication_code) {
       status->mac_matched = 1;
-      LOG_DEBUG (LOG_NAS, "Integrity: MAC Success");
+      LOG_DEBUG (LOG_NAS, "Integrity: MAC Success\n");
     } else {
       LOG_DEBUG (LOG_NAS,
-                 "MAC Failure MSG:%08X(%u) <> INT ALGO:%08X(%u) Type of security context %u",
+                 "MAC Failure MSG:%08X(%u) <> INT ALGO:%08X(%u) Type of security context %u\n",
                  header->message_authentication_code, header->message_authentication_code, mac, mac, (emm_security_context ) ? emm_security_context->type : 88);
       // LG: Do not return now (out of spec but we need that with only one MME)
       //LOG_FUNC_RETURN (LOG_NAS, TLV_DECODE_MAC_MISMATCH);
@@ -344,7 +344,7 @@ nas_message_decrypt (
 
     bytes = length - size;
   } else {
-    LOG_DEBUG (LOG_NAS, "Plain NAS message found");
+    LOG_DEBUG (LOG_NAS, "Plain NAS message found\n");
     /*
      * The input buffer contains a plain NAS message
      */
@@ -424,7 +424,7 @@ nas_message_decode (
       if (mac == msg->header.message_authentication_code) {
         status->mac_matched = 1;
       } else {
-        LOG_DEBUG (LOG_NAS, "msg->header.message_authentication_code = %04X != computed = %04X", msg->header.message_authentication_code, mac);
+        LOG_DEBUG (LOG_NAS, "msg->header.message_authentication_code = %04X != computed = %04X\n", msg->header.message_authentication_code, mac);
       }
     }
 
@@ -507,7 +507,7 @@ nas_message_encode (
       /*
        * Compute the NAS message authentication code
        */
-      LOG_DEBUG (LOG_NAS, "offset %d = %d - %ld, hdr encode = %d, length = %d bytes = %d", offset, size, sizeof (uint8_t), size, length, bytes);
+      LOG_DEBUG (LOG_NAS, "offset %d = %d - %ld, hdr encode = %d, length = %d bytes = %d\n", offset, size, sizeof (uint8_t), size, length, bytes);
       uint32_t                                mac = _nas_message_get_mac (buffer + offset,
                                                                           bytes + size - offset,
                                                                           SECU_DIRECTION_DOWNLINK,
@@ -537,9 +537,9 @@ nas_message_encode (
           emm_security_context->dl_count.overflow += 1;
         }
 
-        LOG_DEBUG (LOG_NAS, "Incremented emm_security_context.dl_count.seq_num -> %u", emm_security_context->dl_count.seq_num);
+        LOG_DEBUG (LOG_NAS, "Incremented emm_security_context.dl_count.seq_num -> %u\n", emm_security_context->dl_count.seq_num);
       } else {
-        LOG_DEBUG (LOG_NAS, "Did not increment emm_security_context.dl_count.seq_num because no security context");
+        LOG_DEBUG (LOG_NAS, "Did not increment emm_security_context.dl_count.seq_num because no security context\n");
       }
     }
     /*
@@ -692,7 +692,7 @@ _nas_message_plain_decode (
     /*
      * Discard L3 messages with not supported protocol discriminator
      */
-    LOG_WARNING(LOG_NAS, "NET-API   - Protocol discriminator 0x%x is " "not supported", header->protocol_discriminator);
+    LOG_WARNING(LOG_NAS, "NET-API   - Protocol discriminator 0x%x is " "not supported\n", header->protocol_discriminator);
   }
 
   LOG_FUNC_RETURN (LOG_NAS, bytes);
@@ -1129,7 +1129,7 @@ _nas_message_encrypt (
   LOG_FUNC_IN (LOG_NAS);
 
   if (!emm_security_context) {
-    LOG_ERROR(LOG_NAS, "No security context set for encryption protection algorithm");
+    LOG_ERROR(LOG_NAS, "No security context set for encryption protection algorithm\n");
     LOG_FUNC_RETURN (LOG_NAS, 0);
   }
 
@@ -1138,7 +1138,7 @@ _nas_message_encrypt (
   case SECURITY_HEADER_TYPE_SERVICE_REQUEST:
   case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED:
   case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_NEW:
-    LOG_DEBUG (LOG_NAS, "No encryption of message according to security header type 0x%02x", security_header_type);
+    LOG_DEBUG (LOG_NAS, "No encryption of message according to security header type 0x%02x\n", security_header_type);
     memcpy (dest, src, length);
     LOG_FUNC_RETURN (LOG_NAS, length);
     break;
@@ -1154,7 +1154,7 @@ _nas_message_encrypt (
         }
 
         LOG_DEBUG (LOG_NAS,
-                   "NAS_SECURITY_ALGORITHMS_EEA1 dir %s count.seq_num %u count %u",
+                   "NAS_SECURITY_ALGORITHMS_EEA1 dir %s count.seq_num %u count %u\n",
                    (direction == SECU_DIRECTION_UPLINK) ? "UPLINK" : "DOWNLINK", (direction == SECU_DIRECTION_UPLINK) ? emm_security_context->ul_count.seq_num : emm_security_context->dl_count.seq_num, count);
         stream_cipher.key = emm_security_context->knas_enc.value;
         stream_cipher.key_length = AUTH_KNAS_ENC_SIZE;
@@ -1179,7 +1179,7 @@ _nas_message_encrypt (
         }
 
         LOG_DEBUG (LOG_NAS,
-                   "NAS_SECURITY_ALGORITHMS_EEA2 dir %s count.seq_num %u count %u",
+                   "NAS_SECURITY_ALGORITHMS_EEA2 dir %s count.seq_num %u count %u\n",
                    (direction == SECU_DIRECTION_UPLINK) ? "UPLINK" : "DOWNLINK", (direction == SECU_DIRECTION_UPLINK) ? emm_security_context->ul_count.seq_num : emm_security_context->dl_count.seq_num, count);
         stream_cipher.key = emm_security_context->knas_enc.value;
         stream_cipher.key_length = AUTH_KNAS_ENC_SIZE;
@@ -1197,20 +1197,20 @@ _nas_message_encrypt (
       break;
 
     case NAS_SECURITY_ALGORITHMS_EEA0:
-      LOG_DEBUG (LOG_NAS, "NAS_SECURITY_ALGORITHMS_EEA0 dir %d ul_count.seq_num %d dl_count.seq_num %d", direction, emm_security_context->ul_count.seq_num, emm_security_context->dl_count.seq_num);
+      LOG_DEBUG (LOG_NAS, "NAS_SECURITY_ALGORITHMS_EEA0 dir %d ul_count.seq_num %d dl_count.seq_num %d\n", direction, emm_security_context->ul_count.seq_num, emm_security_context->dl_count.seq_num);
       memcpy (dest, src, length);
       LOG_FUNC_RETURN (LOG_NAS, length);
       break;
 
     default:
-      LOG_ERROR(LOG_NAS, "Unknown Cyphering protection algorithm %d", emm_security_context->selected_algorithms.encryption);
+      LOG_ERROR(LOG_NAS, "Unknown Cyphering protection algorithm %d\n", emm_security_context->selected_algorithms.encryption);
       break;
     }
 
     break;
 
   default:
-    LOG_ERROR(LOG_NAS, "Unknown security header type %u", security_header_type);
+    LOG_ERROR(LOG_NAS, "Unknown security header type %u\n", security_header_type);
     LOG_FUNC_RETURN (LOG_NAS, 0);
   }
 
@@ -1253,7 +1253,7 @@ _nas_message_get_mac (
   LOG_FUNC_IN (LOG_NAS);
 
   if (!emm_security_context) {
-    LOG_DEBUG (LOG_NAS, "No security context set for integrity protection algorithm");
+    LOG_DEBUG (LOG_NAS, "No security context set for integrity protection algorithm\n");
     LOG_FUNC_RETURN (LOG_NAS, 0);
   }
 
@@ -1273,7 +1273,7 @@ _nas_message_get_mac (
       }
 
       LOG_DEBUG (LOG_NAS,
-                 "NAS_SECURITY_ALGORITHMS_EIA1 dir %s count.seq_num %u count %u",
+                 "NAS_SECURITY_ALGORITHMS_EIA1 dir %s count.seq_num %u count %u\n",
                  (direction == SECU_DIRECTION_UPLINK) ? "UPLINK" : "DOWNLINK", (direction == SECU_DIRECTION_UPLINK) ? emm_security_context->ul_count.seq_num : emm_security_context->dl_count.seq_num, count);
       fprintf (stderr, "\n[NAS]\t");
 
@@ -1307,7 +1307,7 @@ _nas_message_get_mac (
        */
       stream_cipher.blength = length << 3;
       nas_stream_encrypt_eia1 (&stream_cipher, mac);
-      LOG_DEBUG (LOG_NAS, "NAS_SECURITY_ALGORITHMS_EIA1 returned MAC %x.%x.%x.%x(%u) for length %d direction %d, count %d", mac[0], mac[1], mac[2], mac[3], *((uint32_t *) & mac), length, direction, count);
+      LOG_DEBUG (LOG_NAS, "NAS_SECURITY_ALGORITHMS_EIA1 returned MAC %x.%x.%x.%x(%u) for length %d direction %d, count %d\n", mac[0], mac[1], mac[2], mac[3], *((uint32_t *) & mac), length, direction, count);
       mac32 = (uint32_t *) & mac;
       LOG_FUNC_RETURN (LOG_NAS, ntohl (*mac32));
     }
@@ -1326,7 +1326,7 @@ _nas_message_get_mac (
       }
 
       LOG_DEBUG (LOG_NAS,
-                 "NAS_SECURITY_ALGORITHMS_EIA2 dir %s count.seq_num %u count %u",
+                 "NAS_SECURITY_ALGORITHMS_EIA2 dir %s count.seq_num %u count %u\n",
                  (direction == SECU_DIRECTION_UPLINK) ? "UPLINK" : "DOWNLINK", (direction == SECU_DIRECTION_UPLINK) ? emm_security_context->ul_count.seq_num : emm_security_context->dl_count.seq_num, count);
       stream_cipher.key = emm_security_context->knas_int.value;
       stream_cipher.key_length = AUTH_KNAS_INT_SIZE;
@@ -1339,7 +1339,7 @@ _nas_message_get_mac (
        */
       stream_cipher.blength = length << 3;
       nas_stream_encrypt_eia2 (&stream_cipher, mac);
-      LOG_DEBUG (LOG_NAS, "NAS_SECURITY_ALGORITHMS_EIA2 returned MAC %x.%x.%x.%x(%u) for length %d direction %d, count %d", mac[0], mac[1], mac[2], mac[3], *((uint32_t *) & mac), length, direction, count);
+      LOG_DEBUG (LOG_NAS, "NAS_SECURITY_ALGORITHMS_EIA2 returned MAC %x.%x.%x.%x(%u) for length %d direction %d, count %d\n", mac[0], mac[1], mac[2], mac[3], *((uint32_t *) & mac), length, direction, count);
       mac32 = (uint32_t *) & mac;
       LOG_FUNC_RETURN (LOG_NAS, ntohl (*mac32));
     }
@@ -1347,13 +1347,13 @@ _nas_message_get_mac (
 
   case NAS_SECURITY_ALGORITHMS_EIA0:
     LOG_DEBUG (LOG_NAS,
-               "NAS_SECURITY_ALGORITHMS_EIA0 dir %s count.seq_num %u",
+               "NAS_SECURITY_ALGORITHMS_EIA0 dir %s count.seq_num %u\n",
                (direction == SECU_DIRECTION_UPLINK) ? "UPLINK" : "DOWNLINK", (direction == SECU_DIRECTION_UPLINK) ? emm_security_context->ul_count.seq_num : emm_security_context->dl_count.seq_num);
     LOG_FUNC_RETURN (LOG_NAS, 0);
     break;
 
   default:
-    LOG_ERROR(LOG_NAS, "Unknown integrity protection algorithm %d", emm_security_context->selected_algorithms.integrity);
+    LOG_ERROR(LOG_NAS, "Unknown integrity protection algorithm %d\n", emm_security_context->selected_algorithms.integrity);
     break;
   }
 

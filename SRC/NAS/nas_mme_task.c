@@ -36,7 +36,9 @@
 #include "log.h"
 #include "nas_timer.h"
 
+static void nas_exit(void);
 
+//------------------------------------------------------------------------------
 static void                            *
 nas_intertask_interface (
   void *args_p)
@@ -47,6 +49,7 @@ nas_intertask_interface (
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
+    LOG_DEBUG (LOG_NAS, "Approx ITTI NAS task stack pointer is %p\n", &received_message_p);
 
     itti_receive_msg (TASK_NAS_MME, &received_message_p);
 
@@ -119,6 +122,7 @@ nas_intertask_interface (
       break;
 
     case TERMINATE_MESSAGE:{
+        nas_exit();
         itti_exit_task ();
       }
       break;
@@ -140,6 +144,7 @@ nas_intertask_interface (
   return NULL;
 }
 
+//------------------------------------------------------------------------------
 int
 nas_init (
   mme_config_t * mme_config_p)
@@ -155,4 +160,12 @@ nas_init (
 
   LOG_DEBUG (LOG_NAS, "Initializing NAS task interface: DONE\n");
   return 0;
+}
+
+//------------------------------------------------------------------------------
+static void nas_exit(void)
+{
+  LOG_DEBUG (LOG_NAS, "Cleaning NAS task interface\n");
+  nas_network_cleanup();
+  LOG_DEBUG (LOG_NAS, "Cleaning NAS task interface: DONE\n");
 }

@@ -82,9 +82,9 @@ void nas_proc_cleanup(void);
 
 int nas_proc_establish_ind(const uint32_t ueid, const uint8_t plmn[3], const tac_t tac, const Byte_t *data, const uint32_t len);
 
-int nas_proc_dl_transfer_cnf(uint32_t ueid);
-int nas_proc_dl_transfer_rej(uint32_t ueid);
-int nas_proc_ul_transfer_ind(uint32_t ueid, const Byte_t *data, uint32_t len);
+int nas_proc_dl_transfer_cnf(const uint32_t ueid);
+int nas_proc_dl_transfer_rej(const uint32_t ueid);
+int nas_proc_ul_transfer_ind(const uint32_t ueid, const Byte_t *data, const uint32_t len);
 
 /*
  * --------------------------------------------------------------------------

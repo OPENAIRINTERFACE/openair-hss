@@ -240,7 +240,7 @@ int log_get_start_time_sec (void);
 #        define LOG_EXTERNAL(lOgLeVeL, pRoTo, ...)                   do { log_message(NULL, lOgLeVeL       ,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)
 #        define LOG_TRACE(pRoTo, ...)                                do { log_message(NULL, LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief most detailled informations, struct dumps */
 #        define LOG_FUNC_IN(pRoTo)                                   do { log_func(true, pRoTo, __FILE__, __LINE__, __FUNCTION__); } while(0) /*!< \brief informational */
-#        define LOG_FUNC_OUT(pRoTo)                                  do { log_func(false, pRoTo, __FILE__, __LINE__, __FUNCTION__); } while(0) /*!< \brief informational */
+#        define LOG_FUNC_OUT(pRoTo)                                  do { log_func(false, pRoTo, __FILE__, __LINE__, __FUNCTION__); return;} while(0) /*!< \brief informational */
 #        define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                   do { log_func_return(pRoTo, __FILE__, __LINE__, __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
 #        define LOG_STREAM_HEX(pRoTo, mEsSaGe, sTrEaM, sIzE)         do { \
                                                                    OAI_GCC_DIAG_OFF(pointer-sign); \
@@ -271,28 +271,28 @@ int log_get_start_time_sec (void);
 #  endif
 
 #  if !defined(LOG_DEBUG)
-#    define LOG_DEBUG(...)                                           ((void)0);
+#    define LOG_DEBUG(...)                                           {void;}
 #  endif
 #  if !defined(LOG_TRACE)
-#    define LOG_TRACE(...)                                           ((void)0);
+#    define LOG_TRACE(...)                                           {void;}
 #  endif
 #  if !defined(LOG_EXTERNAL)
-#    define LOG_EXTERNAL(...)                                        ((void)0);
+#    define LOG_EXTERNAL(...)                                        {void;}
 #  endif
 #  if !defined(LOG_FUNC_IN)
-#    define LOG_FUNC_IN(...)                                         ((void)0);
+#    define LOG_FUNC_IN(...)                                         {void;}
 #  endif
 #  if !defined(LOG_FUNC_OUT)
-#    define LOG_FUNC_OUT(pRoTo)                                      do{ return;} while (0)
+#    define LOG_FUNC_OUT(pRoTo)                                      do{ return;} while 0
 #  endif
 #  if !defined(LOG_FUNC_RETURN)
-#    define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do{ return rEtUrNcOdE;} while (0)
+#    define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do{ return rEtUrNcOdE;} while 0
 #  endif
 #  if !defined(LOG_STREAM_HEX)
-#    define LOG_STREAM_HEX(...)                                      ((void)0);
+#    define LOG_STREAM_HEX(...)                                      {void;}
 #  endif
 #  if !defined(LOG_STREAM_HEX_ARRAY)
-#    define LOG_STREAM_HEX_ARRAY(...)                                ((void)0);
+#    define LOG_STREAM_HEX_ARRAY(...)                                {void;}
 #  endif
 
 #endif /* LOG_H_ */

@@ -93,7 +93,7 @@ emm_recv_status (
   const nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc;
+  int                                     rc = RETURNok;
 
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received EMM Status message (cause=%d)\n", msg->emmcause);
   /*
@@ -135,9 +135,9 @@ emm_recv_attach_request (
   int * const emm_cause,
   const nas_message_decode_status_t  * decode_status)
 {
-  int                                     rc;
+  int                                     rc = RETURNok;
   uint8_t                                 gea = 0;
-  emm_proc_attach_type_t                  type;
+  emm_proc_attach_type_t                  type = EMM_ATTACH_TYPE_RESERVED;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Attach Request message\n");
@@ -194,11 +194,11 @@ emm_recv_attach_request (
   /*
    * Get the EPS mobile identity
    */
-  GUTI_t                                  guti,
+  GUTI_t                                  guti = {0},
                                          *p_guti = NULL;
-  imsi_t                                  imsi,
+  imsi_t                                  imsi = {0},
                                          *p_imsi = NULL;
-  imei_t                                  imei,
+  imei_t                                  imei = {0},
                                          *p_imei = NULL;
 
   if (msg->oldgutiorimsi.guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
@@ -268,7 +268,7 @@ emm_recv_attach_request (
   /*
    * Get the Last visited registered TAI
    */
-  tai_t                                   last_visited_registered_tai,
+  tai_t                                   last_visited_registered_tai = {0},
                                          *p_last_visited_registered_tai = NULL;
 
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
@@ -370,7 +370,7 @@ emm_recv_detach_request (
   const nas_message_decode_status_t * status)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc;
+  int                                     rc  = RETURNok;
 
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Detach Request message\n");
   /*
@@ -379,7 +379,7 @@ emm_recv_detach_request (
   /*
    * Get the detach type
    */
-  emm_proc_detach_type_t                  type;
+  emm_proc_detach_type_t                  type = EMM_DETACH_TYPE_RESERVED;
 
   if (msg->detachtype.typeofdetach == DETACH_TYPE_EPS) {
     type = EMM_DETACH_TYPE_EPS;
@@ -401,11 +401,11 @@ emm_recv_detach_request (
   /*
    * Get the EPS mobile identity
    */
-  GUTI_t                                  guti,
+  GUTI_t                                  guti = {0},
                                          *p_guti = NULL;
-  imsi_t                                  imsi,
+  imsi_t                                  imsi = {0},
                                          *p_imsi = NULL;
-  imei_t                                  imei,
+  imei_t                                  imei = {0},
                                          *p_imei = NULL;
 
   if (msg->gutiorimsi.guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
@@ -588,11 +588,11 @@ emm_recv_identity_response (
   /*
    * Get the mobile identity
    */
-  imsi_t                                  imsi,
+  imsi_t                                  imsi = {0},
                                          *p_imsi = NULL;
-  imei_t                                  imei,
+  imei_t                                  imei = {0},
                                          *p_imei = NULL;
-  imeisv_t                                imeisv,
+  imeisv_t                                imeisv = {0},
                                          *p_imeisv = NULL;
   struct tmsi_struct_t {
     uint8_t                                 digit1:4;

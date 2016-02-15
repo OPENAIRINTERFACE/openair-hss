@@ -170,7 +170,7 @@ nas_proc_establish_ind (
      * connection establishment indication message has been received
      * from the Access-Stratum sublayer
      */
-    plmn_t                                  plmnID;
+    plmn_t                                  plmnID = {0};
 
     plmnID.MCCdigit2 = (plmn[0] >> 4) & 0x0f;
     plmnID.MCCdigit1 = plmn[0] & 0x0f;
@@ -208,11 +208,11 @@ nas_proc_establish_ind (
  ***************************************************************************/
 int
 nas_proc_dl_transfer_cnf (
-  uint32_t ueid)
+  const uint32_t ueid)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
-  int                                     rc;
+  int                                     rc = RETURNok;
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND dl_transfer_conf ue id " NAS_UE_ID_FMT " ", ueid);
   /*
@@ -246,11 +246,11 @@ nas_proc_dl_transfer_cnf (
  ***************************************************************************/
 int
 nas_proc_dl_transfer_rej (
-  uint32_t ueid)
+  const uint32_t ueid)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
-  int                                     rc;
+  int                                     rc = RETURNok;
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND dl_transfer_reject ue id " NAS_UE_ID_FMT " ", ueid);
   /*
@@ -285,9 +285,9 @@ nas_proc_dl_transfer_rej (
  ***************************************************************************/
 int
 nas_proc_ul_transfer_ind (
-  uint32_t ueid,
+  const uint32_t ueid,
   const Byte_t * data,
-  uint32_t len)
+  const uint32_t len)
 {
   int                                     rc = RETURNerror;
 

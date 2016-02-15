@@ -41,11 +41,10 @@
 #else
 #  define PRINT_HASHTABLE(...)
 #endif
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 char                                   *
 hashtable_rc_code2string (
   hashtable_rc_t rcP)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
   switch (rcP) {
   case HASH_TABLE_OK:
@@ -73,7 +72,7 @@ hashtable_rc_code2string (
   }
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    FREE_CHECK int function
    hash_free_int_func() is used when this hashtable is used to store int values as data (pointer = value).
@@ -85,7 +84,7 @@ hash_free_int_func (
 {
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Default hash function
    def_hashfunc() is the default used by hashtable_create() when the user didn't specify one.
@@ -99,10 +98,51 @@ def_hashfunc (
   return (hash_size_t) keyP;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
-   Initialisation
-   hashtable_create() sets up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
+   Initialization
+   hashtable_create() set up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
+   The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
+   If an error occurred, NULL is returned. All other values in the returned hash_table_t pointer should be released with hashtable_destroy().
+*/
+hash_table_t * hashtable_init (hash_table_t * const hashtblP,
+    const hash_size_t sizeP,
+    hash_size_t (*hashfuncP) (const hash_key_t),
+    void (*freefuncP) (void *),
+    char *display_name_pP)
+{
+  if (!(hashtblP->nodes = CALLOC_CHECK (sizeP, sizeof (hash_node_t *)))) {
+    FREE_CHECK (hashtblP);
+    return NULL;
+  }
+
+  PRINT_HASHTABLE (stdout, "%s allocated nodes\n", __FUNCTION__); fflush(stdout);
+  hashtblP->size = sizeP;
+
+  if (hashfuncP)
+    hashtblP->hashfunc = hashfuncP;
+  else
+    hashtblP->hashfunc = def_hashfunc;
+
+  if (freefuncP)
+    hashtblP->freefunc = freefuncP;
+  else
+    hashtblP->freefunc = FREE_CHECK;
+
+  if (display_name_pP) {
+    hashtblP->name = STRDUP_CHECK(display_name_pP);
+  } else {
+    hashtblP->name = MALLOC_CHECK(64);
+    snprintf (hashtblP->name, 64, "hastable@%p", hashtblP);
+  }
+  hashtblP->is_allocated_by_malloc = false;
+  return hashtblP;
+}
+
+//------------------------------------------------------------------------------
+/*
+   Initialization
+   hashtable_create() allocate and sets up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
    The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
    If an error occurred, NULL is returned. All other values in the returned hash_table_t pointer should be released with hashtable_destroy().
 */
@@ -120,38 +160,69 @@ hashtable_create (
     return NULL;
   }
   PRINT_HASHTABLE (stdout, "%s allocated simple hashtable\n", __FUNCTION__); fflush(stdout);
+  hashtbl =  hashtable_init(hashtbl, sizeP, hashfuncP, freefuncP, display_name_pP);
+  hashtbl->is_allocated_by_malloc = true;
+  return hashtbl;
+}
 
-  if (!(hashtbl->nodes = CALLOC_CHECK (sizeP, sizeof (hash_node_t *)))) {
-    FREE_CHECK (hashtbl);
+//------------------------------------------------------------------------------
+/*
+   Initialization
+   hashtable_ts_create() sets up the initial structure of the thread safe hash table. The user specified size will be allocated and initialized to NULL.
+   The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
+   If an error occurred, NULL is returned. All other values in the returned hash_table_t pointer should be released with hashtable_destroy().
+*/
+hash_table_t * hashtable_ts_init (hash_table_t * const hashtblP,
+    const hash_size_t sizeP,
+    hash_size_t (*hashfuncP) (const hash_key_t),
+    void (*freefuncP) (void *),
+    char *display_name_pP)
+{
+
+  memset(hashtblP, 0, sizeof(*hashtblP));
+
+  if (!(hashtblP->nodes = CALLOC_CHECK (sizeP, sizeof (hash_node_t *)))) {
+    FREE_CHECK (hashtblP);
     return NULL;
   }
 
-  PRINT_HASHTABLE (stdout, "%s allocated nodes\n", __FUNCTION__); fflush(stdout);
-  hashtbl->size = sizeP;
-
-  if (hashfuncP)
-    hashtbl->hashfunc = hashfuncP;
-  else
-    hashtbl->hashfunc = def_hashfunc;
-
-  if (freefuncP)
-    hashtbl->freefunc = freefuncP;
-  else
-    hashtbl->freefunc = FREE_CHECK;
-
-  if (display_name_pP) {
-    hashtbl->name = STRDUP_CHECK(display_name_pP);
-  } else {
-    hashtbl->name = MALLOC_CHECK(64);
-    snprintf (hashtbl->name, 64, "hastable@%p", hashtbl);
+  if (!(hashtblP->lock_nodes = CALLOC_CHECK (sizeP, sizeof (pthread_mutex_t)))) {
+    FREE_CHECK (hashtblP->nodes);
+    FREE_CHECK (hashtblP->name);
+    FREE_CHECK (hashtblP);
+    return NULL;
   }
 
-  return hashtbl;
+  pthread_mutex_init(&hashtblP->mutex, NULL);
+  for (int i = 0; i < sizeP; i++) {
+    pthread_mutex_init(&hashtblP->lock_nodes[i], NULL);
+  }
+
+  hashtblP->size = sizeP;
+
+  if (hashfuncP)
+    hashtblP->hashfunc = hashfuncP;
+  else
+    hashtblP->hashfunc = def_hashfunc;
+
+  if (freefuncP)
+    hashtblP->freefunc = freefuncP;
+  else
+    hashtblP->freefunc = FREE_CHECK;
+
+  if (display_name_pP) {
+    hashtblP->name = STRDUP_CHECK(display_name_pP);
+  } else {
+    hashtblP->name = MALLOC_CHECK(64);
+    snprintf (hashtblP->name, 64, "hastable@%p", hashtblP);
+  }
+  hashtblP->is_allocated_by_malloc = false;
+  return hashtblP;
 }
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
-   Initialisation
-   hashtable_create() sets up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
+   Initialization
+   hashtable_ts_create() allocate and sets up the initial structure of the thread safe hash table. The user specified size will be allocated and initialized to NULL.
    The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
    If an error occurred, NULL is returned. All other values in the returned hash_table_t pointer should be released with hashtable_destroy().
 */
@@ -164,26 +235,17 @@ hashtable_ts_create (
 {
   hash_table_t                           *hashtbl = NULL;
 
- if (!(hashtbl = hashtable_create (sizeP,hashfuncP,freefuncP,display_name_pP))) {
+  if (!(hashtbl = CALLOC_CHECK (1, sizeof (hash_table_t)))) {
     return NULL;
   }
+  PRINT_HASHTABLE (stdout, "%s allocated ts hashtable\n", __FUNCTION__); fflush(stdout);
 
-  if (!(hashtbl->lock_nodes = CALLOC_CHECK (sizeP, sizeof (pthread_mutex_t)))) {
-    FREE_CHECK (hashtbl->nodes);
-    FREE_CHECK (hashtbl->name);
-    FREE_CHECK (hashtbl);
-    return NULL;
-  }
-
-  pthread_mutex_init(&hashtbl->mutex, NULL);
-  for (int i = 0; i < sizeP; i++) {
-    pthread_mutex_init(&hashtbl->lock_nodes[i], NULL);
-  }
-
+  hashtbl =  hashtable_ts_init(hashtbl, sizeP, hashfuncP, freefuncP, display_name_pP);
+  hashtbl->is_allocated_by_malloc = true;
   return hashtbl;
 }
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Cleanup
    The hashtable_destroy() walks through the linked lists for each possible hash value, and releases the elements. It also releases the nodes array and the hash_table_t.
@@ -219,12 +281,13 @@ hashtable_destroy (
   FREE_CHECK (hashtblP->nodes);
   FREE_CHECK(hashtblP->name);
   AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
-  FREE_CHECK (hashtblP);
+  if (hashtblP->is_allocated_by_malloc) {
+    FREE_CHECK (hashtblP);
+  }
   return HASH_TABLE_OK;
 }
 
-
-
+//------------------------------------------------------------------------------
 /*
    Cleanup
    The hashtable_destroy() walks through the linked lists for each possible hash value, and releases the elements. It also releases the nodes array and the hash_table_t.
@@ -263,18 +326,19 @@ hashtable_ts_destroy (
 
   FREE_CHECK (hashtblP->nodes);
   FREE_CHECK(hashtblP->name);
-  FREE_CHECK (hashtblP);
+  if (hashtblP->is_allocated_by_malloc) {
+    FREE_CHECK (hashtblP);
+  }
   return HASH_TABLE_OK;
 }
 
 
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 hashtable_rc_t
 hashtable_is_key_exists (
   const hash_table_t * const hashtblP,
   const hash_key_t keyP)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
   hash_node_t                            *node = NULL;
   hash_size_t                             hash = 0;
@@ -302,12 +366,11 @@ hashtable_is_key_exists (
 
 
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 hashtable_rc_t
 hashtable_ts_is_key_exists (
   const hash_table_t * const hashtblP,
   const hash_key_t keyP)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
   hash_node_t                            *node = NULL;
   hash_size_t                             hash = 0;
@@ -338,15 +401,19 @@ hashtable_ts_is_key_exists (
 
 
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// may cost a lot CPU...
+// Also useful if we want to find an element in the collection based on compare criteria different than the single key
+// The compare criteria in implemented in the funct_cb function
 hashtable_rc_t
-hashtable_apply_funct_on_elements (
+hashtable_apply_callback_on_elements (
   hash_table_t * const hashtblP,
-  void functP (hash_key_t keyP,
+  bool funct_cb (hash_key_t keyP,
                void *dataP,
-               void *parameterP),
-  void *parameterP)
-//-------------------------------------------------------------------------------------------------------------------------------
+               void *parameterP,
+               void**resultP),
+  void *parameterP,
+  void **resultP)
 {
   hash_node_t                            *node = NULL;
   unsigned int                            i = 0;
@@ -363,29 +430,32 @@ hashtable_apply_funct_on_elements (
       node = hashtblP->nodes[i];
 
       while (node) {
-        num_elements += 1;
-        functP (node->key, node->data, parameterP);
+        num_elements++;
+        if (funct_cb (node->key, node->data, parameterP, resultP)) {
+          return HASH_TABLE_OK;
+        }
         node = node->next;
       }
     }
-
-    i += 1;
+    i++;
   }
 
   return HASH_TABLE_OK;
 }
 
-
-
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// may cost a lot CPU...
+// Also useful if we want to find an element in the collection based on compare criteria different than the single key
+// The compare criteria in implemented in the funct_cb function
 hashtable_rc_t
-hashtable_ts_apply_funct_on_elements (
+hashtable_ts_apply_callback_on_elements (
   hash_table_t * const hashtblP,
-  void functP (const hash_key_t keyP,
+  bool funct_cb (const hash_key_t keyP,
                void * const dataP,
-               void *parameterP),
-  void *parameterP)
-//-------------------------------------------------------------------------------------------------------------------------------
+               void *parameterP,
+               void ** resultP),
+  void *parameterP,
+  void** resultP)
 {
   hash_node_t                            *node = NULL;
   unsigned int                            i = 0;
@@ -403,27 +473,28 @@ hashtable_ts_apply_funct_on_elements (
       node = hashtblP->nodes[i];
 
       while (node) {
-        num_elements += 1;
-        functP (node->key, node->data, parameterP);
+        num_elements++;
+        if (funct_cb (node->key, node->data, parameterP, resultP)) {
+          pthread_mutex_unlock(&hashtblP->lock_nodes[i]);
+          return HASH_TABLE_OK;
+        }
         node = node->next;
       }
     }
     pthread_mutex_unlock(&hashtblP->lock_nodes[i]);
-    i += 1;
+    i++;
   }
 
   return HASH_TABLE_OK;
 }
 
 
-
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 hashtable_rc_t
 hashtable_dump_content (
   const hash_table_t * const hashtblP,
   char *const buffer_pP,
   int *const remaining_bytes_in_buffer_pP)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
   hash_node_t                            *node = NULL;
   unsigned int                            i = 0;
@@ -458,14 +529,12 @@ hashtable_dump_content (
   return HASH_TABLE_OK;
 }
 
-
-
+//------------------------------------------------------------------------------
 hashtable_rc_t
 hashtable_ts_dump_content (
   const hash_table_t * const hashtblP,
   char *const buffer_pP,
   int *const remaining_bytes_in_buffer_pP)
-//-------------------------------------------------------------------------------------------------------------------------------
 {
   hash_node_t                            *node = NULL;
   unsigned int                            i = 0;
@@ -502,7 +571,7 @@ hashtable_ts_dump_content (
 
 
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Adding a new element
    To make sure the hash value is not bigger than size, the result of the user provided hash function is used modulo size.
@@ -559,6 +628,7 @@ hashtable_insert (
 }
 
 
+//------------------------------------------------------------------------------
 /*
    Adding a new element
    To make sure the hash value is not bigger than size, the result of the user provided hash function is used modulo size.
@@ -617,7 +687,7 @@ hashtable_ts_insert (
 
 
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    To FREE_CHECK an element from the hash table, we just search for it in the linked list for that hash value,
    and FREE_CHECK it if it is found. If it was not found, it is an error and -1 is returned.
@@ -635,7 +705,6 @@ hashtable_free (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   hash = hashtblP->hashfunc (keyP) % hashtblP->size;
   node = hashtblP->nodes[hash];
@@ -666,7 +735,7 @@ hashtable_free (
 }
 
 
-
+//------------------------------------------------------------------------------
 /*
    To FREE_CHECK an element from the hash table, we just search for it in the linked list for that hash value,
    and FREE_CHECK it if it is found. If it was not found, it is an error and -1 is returned.
@@ -719,7 +788,7 @@ hashtable_ts_free (
 
 
 
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    To remove an element from the hash table, we just search for it in the linked list for that hash value,
    and remove it if it is found. If it was not found, it is an error and -1 is returned.
@@ -766,6 +835,7 @@ hashtable_remove (
 }
 
 
+//------------------------------------------------------------------------------
 /*
    To remove an element from the hash table, we just search for it in the linked list for that hash value,
    and remove it if it is found. If it was not found, it is an error and -1 is returned.
@@ -815,8 +885,7 @@ hashtable_ts_remove (
 }
 
 
-
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Searching for an element is easy. We just search through the linked list for the corresponding hash value.
    NULL is returned if we didn't find it.
@@ -830,9 +899,9 @@ hashtable_get (
   hash_node_t                            *node = NULL;
   hash_size_t                             hash = 0;
 
+  *dataP = NULL;
   if (hashtblP == NULL) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
-    *dataP = NULL;
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
   AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
@@ -853,13 +922,12 @@ hashtable_get (
     node = node->next;
   }
 
-  *dataP = NULL;
   PRINT_HASHTABLE (stderr, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
 
-
+//------------------------------------------------------------------------------
 /*
    Searching for an element is easy. We just search through the linked list for the corresponding hash value.
    NULL is returned if we didn't find it.
@@ -873,9 +941,9 @@ hashtable_ts_get (
   hash_node_t                            *node = NULL;
   hash_size_t                             hash = 0;
 
+  *dataP = NULL;
   if (hashtblP == NULL) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
-    *dataP = NULL;
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
   AssertFatal(NULL != hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
@@ -898,15 +966,13 @@ hashtable_ts_get (
     node = node->next;
   }
 
-  *dataP = NULL;
   pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
   PRINT_HASHTABLE (stderr, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
 
-
-//-------------------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 /*
    Resizing
    The number of elements in a hash table is not always known when creating the table.
@@ -957,7 +1023,7 @@ hashtable_resize (
 }
 
 
-
+//------------------------------------------------------------------------------
 /*
    Resizing
    The number of elements in a hash table is not always known when creating the table.

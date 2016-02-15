@@ -192,6 +192,7 @@ add_boolean_option( DISABLE_ITTI_DETECT_SUB_TASK_ID False    " ")
 add_boolean_option( DISPLAY_LICENCE_INFO            False    "If a module has a licence banner to show")
 add_boolean_option( ENABLE_ITTI                     True     "ITTI is internal messaging, should remain enabled for most targets")
 add_boolean_option( ENABLE_ITTI_ANALYZER            False    "ITTI Analyzer is a GUI based on GTK that displays the ITTI messages exchanged between tasks")
+add_integer_option( ITTI_TASK_STACK_SIZE            0        "pthread allocated stack size in bytes of an ITTI task, if 0, use default stack size ") 
 add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
 # NAS LAYER OPTIONS
 ##########################
@@ -379,6 +380,7 @@ set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/SRC/UTILS/enum_string.c
   ${OPENAIRCN_DIR}/SRC/UTILS/mme_config.c
   ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
   )
 
 if (LOG_OAI)

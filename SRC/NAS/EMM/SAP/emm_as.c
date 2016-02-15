@@ -217,7 +217,7 @@ emm_as_send (
   const emm_as_t * msg)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc;
+  int                                     rc = RETURNok;
   int                                     emm_cause = EMM_CAUSE_SUCCESS;
   emm_as_primitive_t                      primitive = msg->primitive;
   uint32_t                                ueid = 0;
@@ -332,10 +332,10 @@ _emm_as_recv (
   nas_message_decode_status_t   * decode_status)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  nas_message_decode_status_t             local_decode_status;
-  int                                     decoder_rc;
+  nas_message_decode_status_t             local_decode_status = {0};
+  int                                     decoder_rc = RETURNok;
   int                                     rc = RETURNerror;
-  nas_message_t                           nas_msg;
+  nas_message_t                           nas_msg = {0};
   emm_security_context_t                 *emm_security_context = NULL;      /* Current EPS NAS security context     */
 
   if (decode_status) {
@@ -512,15 +512,13 @@ _emm_as_data_ind (
       /*
        * Process the received NAS message
        */
-      char                                   *plain_msg = (char *)MALLOC_CHECK (msg->NASmsg.length);
+      char                                   *plain_msg = (char *)CALLOC_CHECK (msg->NASmsg.length, sizeof(char));
 
       if (plain_msg) {
-        nas_message_security_header_t           header;
+        nas_message_security_header_t           header = {0};
         emm_security_context_t                 *security = NULL;        /* Current EPS NAS security context     */
-        nas_message_decode_status_t             decode_status;
+        nas_message_decode_status_t             decode_status = {0};
 
-        memset (&header, 0, sizeof (header));
-        memset (&decode_status, 0, sizeof (decode_status));
         /*
          * Decrypt the received security protected message
          */
@@ -605,17 +603,15 @@ _emm_as_establish_req (
 {
   struct emm_data_context_s              *emm_ctx = NULL;
   emm_security_context_t                 *emm_security_context = NULL;
-  nas_message_decode_status_t             decode_status;
+  nas_message_decode_status_t             decode_status = {0};
   int                                     decoder_rc = 0;
   int                                     rc = RETURNerror;
-  tai_t                                   originating_tai; // originating TAI
+  tai_t                                   originating_tai = {0}; // originating TAI
 
   LOG_FUNC_IN (LOG_NAS_EMM);
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS connection establish request\n");
-  nas_message_t                           nas_msg;
+  nas_message_t                           nas_msg = {0};
 
-  memset (&nas_msg, 0, sizeof (nas_message_t));
-  memset (&decode_status, 0, sizeof (decode_status));
   emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
 
   if (emm_ctx) {
@@ -906,7 +902,7 @@ _emm_as_encode (
   /*
    * Allocate memory to the NAS information container
    */
-  info->data = (Byte_t *) MALLOC_CHECK (length * sizeof (Byte_t));
+  info->data = (Byte_t *) CALLOC_CHECK (1, length * sizeof (Byte_t));
 
   if (info->data ) {
     /*
@@ -1004,9 +1000,7 @@ _emm_as_send (
   const emm_as_t * msg)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
-  as_message_t                            as_msg;
-
-  memset (&as_msg, 0, sizeof (as_message_t));
+  as_message_t                            as_msg = {0};
 
   switch (msg->primitive) {
   case _EMMAS_DATA_REQ:
@@ -1124,9 +1118,7 @@ _emm_as_data_req (
   int                                     is_encoded = false;
 
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS data transfer request\n");
-  nas_message_t                           nas_msg;
-
-  memset (&nas_msg, 0, sizeof (nas_message_t));
+  nas_message_t                           nas_msg = {0};
 
   /*
    * Setup the AS message
@@ -1162,7 +1154,7 @@ _emm_as_data_req (
     }
 
   if (size > 0) {
-    int                                     bytes;
+    int                                     bytes = 0;
     emm_security_context_t                 *emm_security_context = NULL;
     struct emm_data_context_s              *emm_ctx = NULL;
 
@@ -1222,9 +1214,7 @@ _emm_as_status_ind (
   int                                     size = 0;
 
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS status indication (cause=%d)\n", msg->emm_cause);
-  nas_message_t                           nas_msg;
-
-  memset (&nas_msg, 0, sizeof (nas_message_t));
+  nas_message_t                           nas_msg = {0};
 
   /*
    * Setup the AS message
@@ -1349,9 +1339,7 @@ _emm_as_security_req (
   int                                     size = 0;
 
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS security request\n");
-  nas_message_t                           nas_msg;
-
-  memset (&nas_msg, 0, sizeof (nas_message_t));
+  nas_message_t                           nas_msg = {0};
 
   /*
    * Setup the AS message
@@ -1464,9 +1452,7 @@ _emm_as_security_rej (
   int                                     size = 0;
 
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS security reject\n");
-  nas_message_t                           nas_msg;
-
-  memset (&nas_msg, 0, sizeof (nas_message_t));
+  nas_message_t                           nas_msg = {0};
 
   /*
    * Setup the AS message
@@ -1563,9 +1549,8 @@ _emm_as_establish_cnf (
 
   LOG_FUNC_IN (LOG_NAS_EMM);
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS connection establish confirmation\n");
-  nas_message_t                           nas_msg;
+  nas_message_t                           nas_msg = {0};
 
-  memset (&nas_msg, 0, sizeof (nas_message_t));
   /*
    * Setup the AS message
    */
@@ -1665,13 +1650,12 @@ _emm_as_establish_rej (
   const emm_as_establish_t * msg,
   nas_establish_rsp_t * as_msg)
 {
-  EMM_msg                                *emm_msg;
+  EMM_msg                                *emm_msg = NULL;
   int                                     size = 0;
-  nas_message_t                           nas_msg;
+  nas_message_t                           nas_msg = {0};
 
   LOG_FUNC_IN (LOG_NAS_EMM);
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS connection establish reject\n");
-  memset (&nas_msg, 0, sizeof (nas_message_t));
 
   /*
    * Setup the AS message

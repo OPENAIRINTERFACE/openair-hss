@@ -75,6 +75,6 @@ void mme_app_handle_nas_auth_param_req       (const nas_auth_param_req_t * const
 
 void mme_app_handle_initial_context_setup_rsp(const mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
 
-void mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, void *unused_param_pP);
+bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, void *unused_param_pP, void **unused_result_pP);
 
 #endif /* MME_APP_DEFS_H_ */

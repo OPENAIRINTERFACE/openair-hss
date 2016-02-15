@@ -233,7 +233,7 @@ emm_proc_common_success (
   nas_ue_id_t ueid)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
-  emm_common_success_callback_t           emm_callback;
+  emm_common_success_callback_t           emm_callback = {0};
   int                                     rc = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
