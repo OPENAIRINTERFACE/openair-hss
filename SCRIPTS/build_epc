@@ -170,7 +170,6 @@ function main()
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     check_install_mme_gw_software  $force
-    check_install_hss_software  $force
     exit 0
   fi
   
@@ -182,8 +181,8 @@ function main()
   $SUDO chmod 755 /usr/local/bin/test_epc 
   
   $SUDO mkdir -p -m 755 /usr/share/oai/xsl
-  $SUDO cp -upv  $OPENAIRCN_DIR/TEST/SCENARIOS/play_scenario.xsl    /usr/share/oai/xsl
-  $SUDO cp -upv  $OPENAIRCN_DIR/TEST/SCENARIOS/generic_scenario.xsl /usr/share/oai/xsl
+  $SUDO cp -upv  $OPENAIRCN_DIR/SRC/TEST/SCENARIOS/play_scenario.xsl    /usr/share/oai/xsl
+  $SUDO cp -upv  $OPENAIRCN_DIR/SRC/TEST/SCENARIOS/generic_scenario.xsl /usr/share/oai/xsl
   
   
   # extra arguments processing

@@ -209,6 +209,53 @@ install_xtables_addons_oai() {
 # External packages installers
 ############################################
 
+# This function is for internal use of EURECOM developers (no support)
+# arg1 is force (no interactive script)
+install_netmap() {
+  if [ $1 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+  
+  # Compilers, generators, ...
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    build-essential \
+    linux-source \
+    qt4-dev-tools
+
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install netmap ? <y/N> " prompt
+  else
+    prompt='y'
+  fi
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    # TODO: check operations
+    current_kernel_release=`uname -r | cut -d '-' -f1`
+    if [ ! -f /usr/src/linux-source-"$current_kernel_release"/"$current_kernel_release"/.config ]; then
+      if [ ! -f /usr/src/linux-source-"$current_kernel_release"/"$current_kernel_release" ]; then
+        echo "Untar kernel source code"
+        cd /usr/src/linux-source-"$current_kernel_release"
+        tar xjf *.tar.bz2
+      fi
+      cd linux-source-"$current_kernel_release"
+      $SUDO make oldconfig
+      $SUDO make
+      $SUDO make install
+      # TODO: check CONFIG_VIRTIO_NET=m for full performance 
+      echo_fatal "Please reboot your computer on the new installed kernel (do your own stuff in grub.cfg): $current_kernel_release"
+    fi
+       
+    echo "Downloading netmap"
+    cd $OPENAIRCN_DIR/..
+    git clone https://github.com/luigirizzo/netmap.git
+    cd netmap
+    ./configure --kernel-sources=/usr/src/linux-source-"$current_kernel_release"/"$current_kernel_release"
+  fi
+}
 # arg1 is force (no interactive script)
 install_nettle_from_source() {
   if [ $1 -gt 0 ]; then 
@@ -321,7 +368,6 @@ install_1.1.5_freediameter_from_source() {
     g++ \
     gcc \
     gdb \
-    libgnutls-dev \
     libgcrypt-dev \
     libidn11-dev \
     libmysqlclient-dev \
@@ -342,7 +388,7 @@ install_1.1.5_freediameter_from_source() {
     wget http://www.freediameter.net/hg/freeDiameter/archive/1.1.5.tar.gz 
     tar xzf 1.1.5.tar.gz
     cd freeDiameter-1.1.5
-    patch -p1 < $OPENAIRCN_DIR/S6A/freediameter/freediameter-1.1.5.patch 
+    patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.1.5.patch 
     mkdir build
     cd build
     cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
@@ -376,7 +422,6 @@ install_freediameter_from_source() {
     g++ \
     gcc \
     gdb \
-    libgnutls-dev \
     libgcrypt-dev \
     libidn11-dev \
     libmysqlclient-dev \
@@ -398,7 +443,7 @@ install_freediameter_from_source() {
     wget http://www.freediameter.net/hg/freeDiameter/archive/1.2.0.tar.gz 
     tar xzf 1.2.0.tar.gz
     cd freeDiameter-1.2.0
-    patch -p1 < $OPENAIRCN_DIR/S6A/freediameter/freediameter-1.2.0.patch 
+    patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.2.0.patch 
     mkdir build
     cd build
     cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
@@ -433,7 +478,6 @@ install_latest_freediameter_from_source() {
     g++ \
     gcc \
     gdb \
-    libgnutls-dev \
     libgcrypt-dev \
     libidn11-dev \
     libmysqlclient-dev \
@@ -453,7 +497,7 @@ install_latest_freediameter_from_source() {
     echo "Downloading latest freeDiameter trunk (may be unstable)"
     git clone https://github.com/Metaswitch/freeDiameter.git
     cd freeDiameter
-    patch -p1 < $OPENAIRCN_DIR/S6A/freediameter/freediameter-1.2.0.patch 
+    patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.2.0.patch 
     mkdir build
     cd build
     cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
@@ -570,12 +614,9 @@ check_install_hss_software() {
     mysql-server \
     openssl 
     
-  if [ `lsb_release -rs` = '12.04' ]; then
-    install_nettle_from_source $1
-    install_gnutls_from_source $1
-  else
-    $SUDO apt-get install $OPTION libgnutls-dev nettle-dev nettle-bin 
-  fi
+  install_nettle_from_source $1
+  install_gnutls_from_source $1
+
   install_freediameter_from_source $1
     
   $SUDO apt-get install $OPTION \
@@ -606,7 +647,8 @@ check_install_mme_gw_software() {
     gdb  \
     git \
     pkg-config \
-    subversion"
+    subversion \
+    valgrind"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
   if [ $? -ne 0 ]; then 
     echo_fatal "Failed to install package list $PACKAGE_LIST"
@@ -635,20 +677,10 @@ check_install_mme_gw_software() {
   if [ $? -ne 0 ]; then 
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi 
-       
-  if [ `lsb_release -rs` = '12.04' ]; then
-    install_nettle_from_source $1
-    install_gnutls_from_source $1
-  else
-    PACKAGE_LIST="\
-      libgnutls-dev \
-      nettle-dev \
-      nettle-bin" 
-    $SUDO apt-get install $OPTION $PACKAGE_LIST
-    if [ $? -ne 0 ]; then 
-      echo_fatal "Failed to install package list $PACKAGE_LIST"
-    fi 
-  fi
+
+
+  install_nettle_from_source $1
+  install_gnutls_from_source $1
 
   install_freediameter_from_source $1
   install_asn1c_from_source $1
@@ -779,9 +811,9 @@ install_asn1c_from_source(){
     cd /tmp/asn1c-r1516
     rm -rf /tmp/asn1c-r1516/*
     svn co https://github.com/vlm/asn1c/trunk  /tmp/asn1c-r1516 -r 1516 > /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/S1AP/MESSAGES/ASN1/asn1cpatch.p0 >> /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/S1AP/MESSAGES/ASN1/asn1cpatch_2.p0 >> /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/S1AP/MESSAGES/ASN1/asn1cpatch_3.p0 >> /tmp/log_compile_asn1c
+    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch.p0 >> /tmp/log_compile_asn1c
+    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch_2.p0 >> /tmp/log_compile_asn1c
+    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch_3.p0 >> /tmp/log_compile_asn1c
     ./configure
     make > /tmp/log_compile_asn1c 2>&1
     $SUDO make install
@@ -836,7 +868,7 @@ create_hss_database(){
   # test if tables have been created
   mysql -u $hss_username --password=$hss_password  -e "desc $database_name.users" > /dev/null 2>&1
   if [ $? -eq 1 ]; then 
-    mysql -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/OPENAIRHSS/db/$database_name.sql
+    mysql -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/SRC/OPENAIRHSS/db/$database_name.sql
     if [ $? -ne 0 ]; then
       echo_error "HSS: $database_name tables creation failed"
       return 1
@@ -1165,8 +1197,8 @@ set_openair_env(){
     [ -f "/.$fullpath" ] || fullpath=`readlink -f $PWD/$fullpath`
     openair_path=${fullpath%/BUILD/*}
     openair_path=${openair_path%/DOCS/*}
-    openair_path=${openair_path%/NAS/*}
-    openair_path=${openair_path%/S6A/*}
+    openair_path=${openair_path%/SRC/NAS/*}
+    openair_path=${openair_path%/SRC/S6A/*}
     export OPENAIRCN_DIR=$openair_path
 }
 
