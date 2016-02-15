@@ -236,13 +236,13 @@ int sgw_lite_init (
 static void sgw_lite_exit(void)
 {
   if (sgw_app.s11teid2mme_hashtable) {
-    hashtable_destroy (sgw_app.s11teid2mme_hashtable);
+    hashtable_ts_destroy (sgw_app.s11teid2mme_hashtable);
   }
   /*if (sgw_app.s1uteid2enb_hashtable) {
     hashtable_destroy (sgw_app.s1uteid2enb_hashtable);
   }*/
   if (sgw_app.s11_bearer_context_information_hashtable) {
-    hashtable_destroy (sgw_app.s11_bearer_context_information_hashtable);
+    hashtable_ts_destroy (sgw_app.s11_bearer_context_information_hashtable);
   }
 
   //P-GW code
