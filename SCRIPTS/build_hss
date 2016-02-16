@@ -216,11 +216,10 @@ function main()
   fi
 
 
-  local dbin=$OPENAIRCN_DIR/OAI_HSS
   local dlog=$OPENAIRCN_DIR/BUILD/LOG
   local dconf=OPENAIRCN_DIR/OAI_HSS
   
-  mkdir -m 777 -p $dbin $dlog
+  mkdir -m 777 -p $dlog $dlog
 
   if [ ! -d /usr/local/etc/oai ]; then
     $SUDO mkdir -p -m 777 /usr/local/etc/oai  
@@ -241,7 +240,6 @@ function main()
   
   cmake_args="$cmake_args -DOPENAIRCN_DIR=$OPENAIRCN_DIR"
 
-  rm -f $OPENAIRCN_DIR/OAI_HSS/oai_hss
   cd $OPENAIRCN_DIR/BUILD/HSS
   if [ $clean -ne 0 ]; then
     if [[ $verbose -eq 1 ]]; then

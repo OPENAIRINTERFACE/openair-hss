@@ -113,11 +113,9 @@ function main()
   
   set_openair_env 
   
-  local dbin=$OPENAIRCN_DIR/OAI_SGW
   local dlog=$OPENAIRCN_DIR/BUILD/LOG
-  local dconf=$OPENAIRCN_DIR/OAI_SGW
   
-  mkdir -m 777 -p $dbin $dlog
+  mkdir -m 777 -p $dlog
   
   if [ ! -d /usr/local/etc/oai ]; then
     $SUDO mkdir -p -m 777 /usr/local/etc/oai  

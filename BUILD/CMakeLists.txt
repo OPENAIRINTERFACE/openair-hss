@@ -960,28 +960,6 @@ ENDIF( SPGW_BUILD )
 #    )
 #endforeach(myExe)
 
-# TODO
-#add_executable(test_s1c_mme
-#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c.c
-#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_scenario.h
-#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_scenario1.c
-#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_scenario.c
-#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_scenario.h
-#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_s1ap.c
-#  ${OPENAIRCN_DIR}/SRC/TEST/oaisim_mme_test_s1c_s1ap.h
-#  ${OPENAIR2_DIR}/ENB_APP/enb_config.c
-#  ${OPENAIR2_DIR}/ENB_APP/enb_config.h
-#  ${OPENAIR2_DIR}/COMMON/commonDef.h
-#  ${OPENAIR2_DIR}/COMMON/messages_def.h
-#  ${OPENAIR2_DIR}/COMMON/messages_types.h
-#  ${OPENAIRCN_DIR}/SRC/S1AP/s1ap_eNB_defs.h
-#  ${S1AP_DIR}/s1ap_eNB_management_procedures.c
-#  ${OPENAIRCN_BIN_DIR}/messages_xml.h
-#  )
-#target_link_libraries (test_s1c_mme
-#  -Wl,--start-group SECU_CN S1AP_LIB  SCTP_CLIENT UTIL LFDS ${ITTI_LIB} -Wl,--end-group pthread m rt crypt sctp ${LIBXML2_LIBRARIES} ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
-#  )
-
 
 ##################################################
 # Generated specific cases is not regular code

@@ -183,7 +183,9 @@ set_virtual_interface_up(){
   if [ "a${interface:0:4}" == "anone" ]; then
     return;
   fi
-  $SUDO ifconfig  $interface down > /dev/null 2>&1
+  #work with unbuntu 15.10, but not with 14.04:
+  # it removes all virtual interfaces belonging to the physical interface
+  #$SUDO ifconfig  $interface down > /dev/null 2>&1
   sync
   echo "ifconfig  $interface $address up"
   $SUDO ifconfig  $interface $address up
