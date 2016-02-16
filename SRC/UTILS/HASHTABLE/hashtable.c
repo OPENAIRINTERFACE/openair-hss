@@ -78,11 +78,7 @@ hashtable_rc_code2string (
    hash_free_int_func() is used when this hashtable is used to store int values as data (pointer = value).
 */
 
-void
-hash_free_int_func (
-  void *memoryP)
-{
-}
+void hash_free_int_func (void *memoryP) {}
 
 //------------------------------------------------------------------------------
 /*
@@ -91,9 +87,7 @@ hash_free_int_func (
    This is a simple/naive hash function which adds the key's ASCII char values. It will probably generate lots of collisions on large hash tables.
 */
 
-static                                  hash_size_t
-def_hashfunc (
-  const uint64_t keyP)
+static inline hash_size_t def_hashfunc (const uint64_t keyP)
 {
   return (hash_size_t) keyP;
 }
@@ -172,7 +166,7 @@ hashtable_create (
    The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
    If an error occurred, NULL is returned. All other values in the returned hash_table_t pointer should be released with hashtable_destroy().
 */
-hash_table_t * hashtable_ts_init (hash_table_t * const hashtblP,
+hash_table_ts_t * hashtable_ts_init (hash_table_ts_t * const hashtblP,
     const hash_size_t sizeP,
     hash_size_t (*hashfuncP) (const hash_key_t),
     void (*freefuncP) (void *),
@@ -214,7 +208,7 @@ hash_table_t * hashtable_ts_init (hash_table_t * const hashtblP,
     hashtblP->name = STRDUP_CHECK(display_name_pP);
   } else {
     hashtblP->name = MALLOC_CHECK(64);
-    snprintf (hashtblP->name, 64, "hastable@%p", hashtblP);
+    snprintf (hashtblP->name, 64, "hastable_ts@%p", hashtblP);
   }
   hashtblP->is_allocated_by_malloc = false;
   return hashtblP;
@@ -226,16 +220,16 @@ hash_table_t * hashtable_ts_init (hash_table_t * const hashtblP,
    The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
    If an error occurred, NULL is returned. All other values in the returned hash_table_t pointer should be released with hashtable_destroy().
 */
-hash_table_t                           *
+hash_table_ts_t                           *
 hashtable_ts_create (
   const hash_size_t sizeP,
   hash_size_t (*hashfuncP) (const hash_key_t),
   void (*freefuncP) (void *),
   char *display_name_pP)
 {
-  hash_table_t                           *hashtbl = NULL;
+  hash_table_ts_t                           *hashtbl = NULL;
 
-  if (!(hashtbl = CALLOC_CHECK (1, sizeof (hash_table_t)))) {
+  if (!(hashtbl = CALLOC_CHECK (1, sizeof (hash_table_ts_t)))) {
     return NULL;
   }
   PRINT_HASHTABLE (stdout, "%s allocated ts hashtable\n", __FUNCTION__); fflush(stdout);
@@ -252,11 +246,11 @@ hashtable_ts_create (
 */
 hashtable_rc_t
 hashtable_destroy (
-  hash_table_t * const hashtblP)
+  hash_table_t * hashtblP)
 {
-  hash_size_t                             n;
-  hash_node_t                            *node,
-                                         *oldnode;
+  hash_size_t                             n = 0;
+  hash_node_t                            *node = NULL,
+                                         *oldnode = NULL;
 
   if (hashtblP == NULL) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
@@ -280,7 +274,6 @@ hashtable_destroy (
 
   FREE_CHECK (hashtblP->nodes);
   FREE_CHECK(hashtblP->name);
-  AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
   if (hashtblP->is_allocated_by_malloc) {
     FREE_CHECK (hashtblP);
   }
@@ -294,11 +287,11 @@ hashtable_destroy (
 */
 hashtable_rc_t
 hashtable_ts_destroy (
-  hash_table_t * const hashtblP)
+  hash_table_ts_t * hashtblP)
 {
-  hash_size_t                             n;
-  hash_node_t                            *node,
-                                         *oldnode;
+  hash_size_t                             n = 0;
+  hash_node_t                            *node = NULL,
+                                         *oldnode = NULL;
 
   if (hashtblP == NULL) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
@@ -347,7 +340,6 @@ hashtable_is_key_exists (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   hash = hashtblP->hashfunc (keyP) % hashtblP->size;
   node = hashtblP->nodes[hash];
@@ -369,7 +361,7 @@ hashtable_is_key_exists (
 //------------------------------------------------------------------------------
 hashtable_rc_t
 hashtable_ts_is_key_exists (
-  const hash_table_t * const hashtblP,
+  const hash_table_ts_t * const hashtblP,
   const hash_key_t keyP)
 {
   hash_node_t                            *node = NULL;
@@ -379,7 +371,6 @@ hashtable_ts_is_key_exists (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL != hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   hash = hashtblP->hashfunc (keyP) % hashtblP->size;
   pthread_mutex_lock (&hashtblP->lock_nodes[hash]);
@@ -423,7 +414,6 @@ hashtable_apply_callback_on_elements (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   while ((num_elements < hashtblP->num_elements) && (i < hashtblP->size)) {
     if (hashtblP->nodes[i] != NULL) {
@@ -449,7 +439,7 @@ hashtable_apply_callback_on_elements (
 // The compare criteria in implemented in the funct_cb function
 hashtable_rc_t
 hashtable_ts_apply_callback_on_elements (
-  hash_table_t * const hashtblP,
+  hash_table_ts_t * const hashtblP,
   bool funct_cb (const hash_key_t keyP,
                void * const dataP,
                void *parameterP,
@@ -465,7 +455,6 @@ hashtable_ts_apply_callback_on_elements (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL != hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   while ((num_elements < hashtblP->num_elements) && (i < hashtblP->size)) {
     pthread_mutex_lock(&hashtblP->lock_nodes[i]);
@@ -505,7 +494,6 @@ hashtable_dump_content (
     rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "HASH_TABLE_BAD_PARAMETER_HASHTABLE");
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   while ((i < hashtblP->size) && (*remaining_bytes_in_buffer_pP > 0)) {
     if (hashtblP->nodes[i] != NULL) {
@@ -532,7 +520,7 @@ hashtable_dump_content (
 //------------------------------------------------------------------------------
 hashtable_rc_t
 hashtable_ts_dump_content (
-  const hash_table_t * const hashtblP,
+  const hash_table_ts_t * const hashtblP,
   char *const buffer_pP,
   int *const remaining_bytes_in_buffer_pP)
 {
@@ -545,7 +533,6 @@ hashtable_ts_dump_content (
     rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "HASH_TABLE_BAD_PARAMETER_HASHTABLE");
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL != hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   while ((i < hashtblP->size) && (*remaining_bytes_in_buffer_pP > 0)) {
     if (hashtblP->nodes[i] != NULL) {
@@ -589,7 +576,6 @@ hashtable_insert (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   hash = hashtblP->hashfunc (keyP) % hashtblP->size;
   node = hashtblP->nodes[hash];
@@ -635,7 +621,7 @@ hashtable_insert (
 */
 hashtable_rc_t
 hashtable_ts_insert (
-  hash_table_t * const hashtblP,
+  hash_table_ts_t * const hashtblP,
   const hash_key_t keyP,
   void *dataP)
 {
@@ -646,7 +632,6 @@ hashtable_ts_insert (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL != hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   hash = hashtblP->hashfunc (keyP) % hashtblP->size;
   pthread_mutex_lock(&hashtblP->lock_nodes[hash]);
@@ -742,7 +727,7 @@ hashtable_free (
 */
 hashtable_rc_t
 hashtable_ts_free (
-  hash_table_t * const hashtblP,
+  hash_table_ts_t * const hashtblP,
   const hash_key_t keyP)
 {
   hash_node_t                            *node,
@@ -753,7 +738,6 @@ hashtable_ts_free (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL != hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   hash = hashtblP->hashfunc (keyP) % hashtblP->size;
   pthread_mutex_lock(&hashtblP->lock_nodes[hash]);
@@ -807,7 +791,6 @@ hashtable_remove (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   hash = hashtblP->hashfunc (keyP) % hashtblP->size;
   node = hashtblP->nodes[hash];
@@ -842,7 +825,7 @@ hashtable_remove (
 */
 hashtable_rc_t
 hashtable_ts_remove (
-  hash_table_t * const hashtblP,
+  hash_table_ts_t * const hashtblP,
   const hash_key_t keyP,
   void **dataP)
 {
@@ -854,7 +837,6 @@ hashtable_ts_remove (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL != hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   hash = hashtblP->hashfunc (keyP) % hashtblP->size;
   pthread_mutex_lock(&hashtblP->lock_nodes[hash]);
@@ -904,12 +886,8 @@ hashtable_get (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   hash = hashtblP->hashfunc (keyP) % hashtblP->size;
-  /*
-   * PRINT_HASHTABLE(stderr, "hashtable_get() key=%s, hash=%d\n", key, hash);
-   */
   node = hashtblP->nodes[hash];
 
   while (node) {
@@ -934,7 +912,7 @@ hashtable_get (
 */
 hashtable_rc_t
 hashtable_ts_get (
-  const hash_table_t * const hashtblP,
+  const hash_table_ts_t * const hashtblP,
   const hash_key_t keyP,
   void **dataP)
 {
@@ -946,12 +924,9 @@ hashtable_ts_get (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL != hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   hash = hashtblP->hashfunc (keyP) % hashtblP->size;
-  /*
-   * PRINT_HASHTABLE(stderr, "hashtable_get() key=%s, hash=%d\n", key, hash);
-   */
+
   pthread_mutex_lock(&hashtblP->lock_nodes[hash]);
   node = hashtblP->nodes[hash];
 
@@ -999,7 +974,6 @@ hashtable_resize (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL == hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   newtbl.size = sizeP;
   newtbl.hashfunc = hashtblP->hashfunc;
@@ -1038,10 +1012,10 @@ hashtable_resize (
 
 hashtable_rc_t
 hashtable_ts_resize (
-  hash_table_t * const hashtblP,
+  hash_table_ts_t * const hashtblP,
   const hash_size_t sizeP)
 {
-  hash_table_t                            newtbl = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0};
+  hash_table_ts_t                         newtbl = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0};
   hash_size_t                             n      = 0;
   hash_node_t                            *node   = NULL,
                                          *next   = NULL;
@@ -1051,7 +1025,6 @@ hashtable_ts_resize (
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
-  AssertFatal(NULL != hashtblP->lock_nodes, "Mismatch Thread-Safe hashtable or memory corruption");
 
   newtbl.size = sizeP;
   newtbl.hashfunc = hashtblP->hashfunc;
@@ -1072,7 +1045,7 @@ hashtable_ts_resize (
     for (node = hashtblP->nodes[n]; node; node = next) {
       next = node->next;
       hashtable_ts_remove (hashtblP, node->key, &dummy);
-      hashtable_insert (&newtbl, node->key, node->data);
+      hashtable_ts_insert (&newtbl, node->key, node->data);
     }
   }
 

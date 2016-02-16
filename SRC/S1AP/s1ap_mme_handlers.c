@@ -40,7 +40,7 @@
 #include "log.h"
 
 
-extern hash_table_t g_s1ap_eNB_coll; // contains eNB_description_s, key is eNB_description_s.assoc_id
+extern hash_table_ts_t g_s1ap_eNB_coll; // contains eNB_description_s, key is eNB_description_s.assoc_id
 
 static int                              s1ap_generate_s1_setup_response (
   eNB_description_t * eNB_association);

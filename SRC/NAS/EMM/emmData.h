@@ -209,7 +209,7 @@ typedef struct emm_data_s {
    * EMM contexts
    * ------------
    */
-  hash_table_t    *ctx_coll_ue_id;// key is emm ue id, data is struct emm_data_context_s
+  hash_table_ts_t    *ctx_coll_ue_id;// key is emm ue id, data is struct emm_data_context_s
   obj_hash_table_t    *ctx_coll_guti; // key is guti, data is emm ue id (unsigned int)
 } emm_data_t;
 

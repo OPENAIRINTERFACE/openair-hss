@@ -89,7 +89,7 @@ typedef struct eNB_description_s {
   /** UE list for this eNB **/
   /*@{*/
   uint32_t nb_ue_associated; ///< Number of NAS associated UE on this eNB
-  hash_table_t  ue_coll; // contains ue_description_s, key is ue_description_s.?;
+  hash_table_ts_t  ue_coll; // contains ue_description_s, key is ue_description_s.?;
   /*@}*/
 
   /** SCTP stuff **/

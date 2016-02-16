@@ -25,6 +25,7 @@
 
 #include "ProtocolDiscriminator.h"
 #include "SecurityHeaderType.h"
+#include "MessageType.h"
 #include "KsiAndSequenceNumber.h"
 #include "ShortMac.h"
 
@@ -53,6 +54,7 @@ typedef struct service_request_msg_tag {
   /* Mandatory fields */
   ProtocolDiscriminator     protocoldiscriminator:4;
   SecurityHeaderType        securityheadertype:4;
+  MessageType               messagetype;
   KsiAndSequenceNumber      ksiandsequencenumber;
   ShortMac                  messageauthenticationcode;
 } service_request_msg;

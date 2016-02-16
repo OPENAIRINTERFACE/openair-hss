@@ -110,7 +110,7 @@ typedef struct oai_log_s {
   struct lfds611_queue_state             *log_message_queue_p;                                         /*!< \brief Thread safe log message queue */
   struct lfds611_stack_state             *log_free_message_queue_p;                                          /*!< \brief Thread safe memory pool       */
 
-  hash_table_t                           *thread_context_htbl;                                         /*!< \brief Container for log_thread_ctxt_t */
+  hash_table_ts_t                           *thread_context_htbl;                                         /*!< \brief Container for log_thread_ctxt_t */
 } oai_log_t;
 
 static oai_log_t g_oai_log={0};    /*!< \brief  logging utility internal variables global var definition*/

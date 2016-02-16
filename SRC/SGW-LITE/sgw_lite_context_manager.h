@@ -154,7 +154,7 @@ typedef struct sgw_pdn_connection_s {
   ebi_t                default_bearer;                 ///< Identifies the default bearer within the PDN connection by its EPS Bearer Id. (For PMIP based S5/S8.)
 
   // eps bearers
-  hash_table_t         *sgw_eps_bearers;
+  hash_table_ts_t     *sgw_eps_bearers;
 
 } sgw_pdn_connection_t;
 
@@ -228,7 +228,7 @@ void                                   sgw_lite_cm_free_pdn_connection(sgw_pdn_c
 s_plus_p_gw_eps_bearer_context_information_t * sgw_lite_cm_create_bearer_context_information_in_collection(Teid_t teid);
 void                                   sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information(s_plus_p_gw_eps_bearer_context_information_t *contextP);
 int                                    sgw_lite_cm_remove_bearer_context_information(Teid_t teid);
-sgw_eps_bearer_entry_t *               sgw_lite_cm_create_eps_bearer_entry_in_collection(hash_table_t *eps_bearersP, ebi_t eps_bearer_idP);
-int                                    sgw_lite_cm_remove_eps_bearer_entry(hash_table_t *eps_bearersP, ebi_t eps_bearer_idP);
+sgw_eps_bearer_entry_t *               sgw_lite_cm_create_eps_bearer_entry_in_collection(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
+int                                    sgw_lite_cm_remove_eps_bearer_entry(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
 
 #endif /* SGW_LITE_CONTEXT_MANAGER_H_ */

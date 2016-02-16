@@ -50,7 +50,7 @@ Description Defines the layer 3 messages supported by the NAS sublayer
 /****************************************************************************/
 
 #define NAS_MESSAGE_SECURITY_HEADER_SIZE    6
-
+#define NAS_MESSAGE_SERVICE_REQUEST_SECURITY_HEADER_SIZE 4
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/

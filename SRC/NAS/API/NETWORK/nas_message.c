@@ -68,7 +68,8 @@ _nas_message_header_decode (
   const char * const buffer,
   nas_message_security_header_t * const header,
   const int length,
-  nas_message_decode_status_t * const status);
+  nas_message_decode_status_t * const status,
+  bool * const is_sr);
 
 static int
 _nas_message_plain_decode (
@@ -281,11 +282,11 @@ nas_message_decrypt (
   LOG_FUNC_IN (LOG_NAS);
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes = length;
-
+  bool                                    is_sr = false; // unused
   /*
    * Decode the header
    */
-  int                                     size = _nas_message_header_decode (inbuf, header, length, status);
+  int                                     size = _nas_message_header_decode (inbuf, header, length, status, &is_sr);
 
   if (size < 0) {
     LOG_DEBUG (LOG_NAS, "MESSAGE TOO SHORT\n");
@@ -384,8 +385,10 @@ nas_message_decode (
   LOG_FUNC_IN (LOG_NAS);
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes = 0;
-  uint32_t                                mac   = 0;
+  uint32_t                                mac   = 0,
+                                          mac2  = 0;
   int                                     size  = 0;
+  bool                                    is_sr = false;
   /*
    * Decode the header
    */
@@ -393,11 +396,78 @@ nas_message_decode (
   if (emm_security_context) {
     status->security_context_available = 1;
   }
-  size  = _nas_message_header_decode (buffer, &msg->header, length, status);
+  size  = _nas_message_header_decode (buffer, &msg->header, length, status, &is_sr);
 
+  LOG_DEBUG (LOG_NAS, "_nas_message_header_decode returned size %d\n", size);
 
   if (size < 0) {
     LOG_FUNC_RETURN (LOG_NAS, TLV_DECODE_BUFFER_TOO_SHORT);
+  } else
+  // SERVICE REQUEST
+  if (is_sr) {
+    if (length < NAS_MESSAGE_SERVICE_REQUEST_SECURITY_HEADER_SIZE) {
+      /*
+       * The buffer is not big enough to contain security header
+       */
+      LOG_WARNING(LOG_NAS, "Message header %d bytes is too short %u bytes\n", length, NAS_MESSAGE_SECURITY_HEADER_SIZE);
+      LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+    }
+    /*
+     * Decode the sequence number + ksi: be careful
+     */
+    DECODE_U8 (buffer + size, msg->header.sequence_number, size);
+    /*
+     * Decode the message authentication code
+     */
+    DECODE_U16 (buffer + size, mac, size);
+
+    // sequence number
+    uint8_t sequence_number = msg->header.sequence_number;
+    // sequence number
+
+    //shortcut
+    msg->plain.emm.service_request.ksiandsequencenumber.ksi  = sequence_number >> 5;
+    msg->plain.emm.service_request.ksiandsequencenumber.sequencenumber  = sequence_number & 0x1F;
+    msg->plain.emm.service_request.messageauthenticationcode = mac;
+    msg->plain.emm.service_request.protocoldiscriminator     = EPS_MOBILITY_MANAGEMENT_MESSAGE;
+    msg->plain.emm.service_request.securityheadertype        = SECURITY_HEADER_TYPE_SERVICE_REQUEST;
+    msg->plain.emm.service_request.messagetype               =  SERVICE_REQUEST;
+
+    /*
+     * Compute offset of the sequence number field
+     */
+    // remove ksi
+    sequence_number = sequence_number & 0x1F;
+
+    if (emm_security_context) {
+      status->security_context_available = 1;
+      if (emm_security_context->ul_count.seq_num > sequence_number) {
+        emm_security_context->ul_count.overflow += 1;
+      }
+
+      emm_security_context->ul_count.seq_num = sequence_number;
+      /*
+       * Compute the NAS message authentication code, return 0 if no security context
+       */
+      mac2 = _nas_message_get_mac (buffer,
+          2, // 2 first bytes of message...only,
+          SECU_DIRECTION_UPLINK,
+          emm_security_context);
+      /*
+       * Check NAS message integrity
+       */
+      if (mac == msg->plain.emm.service_request.messageauthenticationcode) {
+        status->mac_matched = 1;
+        LOG_DEBUG (LOG_NAS, "Service Request: message MAC = %04X == computed = %04X\n", mac, mac2);
+      } else {
+        LOG_DEBUG (LOG_NAS, "Service Request: message MAC = %04X != computed = %04X\n", mac, mac2);
+      }
+    }
+#if NAS_FORCE_REJECT_SR | 1
+    status->integrity_protected_message = 1;
+    status->security_context_available = 1;
+    status->mac_matched = 1;
+#endif
   } else if (size > 1) {
     // found security header
     /*
@@ -599,7 +669,8 @@ _nas_message_header_decode (
   const char * const buffer,
   nas_message_security_header_t * const header,
   const int length,
-  nas_message_decode_status_t * const status)
+  nas_message_decode_status_t * const status,
+  bool * const is_sr)
 {
   LOG_FUNC_IN (LOG_NAS);
   int                                     size = 0;
@@ -610,6 +681,7 @@ _nas_message_header_decode (
    */
   DECODE_U8 (buffer, *(uint8_t *) (header), size);
 
+  *is_sr = false;
   if (header->protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
     if (header->security_header_type != SECURITY_HEADER_TYPE_NOT_PROTECTED) {
       if ( status) {
@@ -622,6 +694,11 @@ _nas_message_header_decode (
           case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_CYPHERED_NEW:
             status->integrity_protected_message = 1;
             status->ciphered_message   = 1;
+            break;
+          case SECURITY_HEADER_TYPE_SERVICE_REQUEST:
+            *is_sr = true;
+            status->integrity_protected_message = 1;
+            LOG_FUNC_RETURN (LOG_NAS, size);
             break;
           default:;
         }

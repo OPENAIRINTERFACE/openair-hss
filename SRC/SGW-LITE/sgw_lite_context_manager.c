@@ -111,7 +111,7 @@ sgw_lite_display_s11_bearer_context_information (
 //-----------------------------------------------------------------------------
 {
   s_plus_p_gw_eps_bearer_context_information_t *sp_context_information = NULL;
-  hashtable_rc_t                          hash_rc;
+  hashtable_rc_t                                hash_rc = HASH_TABLE_OK;
 
   if (dataP ) {
     sp_context_information = (s_plus_p_gw_eps_bearer_context_information_t *) dataP;
@@ -189,9 +189,9 @@ sgw_lite_cm_create_s11_tunnel (
   Teid_t local_teid)
 //-----------------------------------------------------------------------------
 {
-  mme_sgw_tunnel_t                       *new_tunnel;
+  mme_sgw_tunnel_t                       *new_tunnel = NULL;
 
-  new_tunnel = MALLOC_CHECK (sizeof (mme_sgw_tunnel_t));
+  new_tunnel = CALLOC_CHECK (1, sizeof (mme_sgw_tunnel_t));
 
   if (new_tunnel == NULL) {
     /*
@@ -217,7 +217,7 @@ sgw_lite_cm_remove_s11_tunnel (
   Teid_t local_teid)
 //-----------------------------------------------------------------------------
 {
-  int                                     temp;
+  int                                     temp = 0;
 
   temp = hashtable_ts_free (sgw_app.s11teid2mme_hashtable, local_teid);
   return temp;
@@ -229,9 +229,9 @@ sgw_lite_cm_create_eps_bearer_entry (
   void)
 //-----------------------------------------------------------------------------
 {
-  sgw_eps_bearer_entry_t                 *eps_bearer_entry;
+  sgw_eps_bearer_entry_t                 *eps_bearer_entry = NULL;
 
-  eps_bearer_entry = MALLOC_CHECK (sizeof (sgw_eps_bearer_entry_t));
+  eps_bearer_entry = CALLOC_CHECK (1, sizeof (sgw_eps_bearer_entry_t));
 
   if (eps_bearer_entry == NULL) {
     /*
@@ -251,9 +251,9 @@ sgw_lite_cm_create_pdn_connection (
   void)
 //-----------------------------------------------------------------------------
 {
-  sgw_pdn_connection_t                   *pdn_connection;
+  sgw_pdn_connection_t                   *pdn_connection = NULL;
 
-  pdn_connection = MALLOC_CHECK (sizeof (sgw_pdn_connection_t));
+  pdn_connection = CALLOC_CHECK (1, sizeof (sgw_pdn_connection_t));
 
   if (pdn_connection == NULL) {
     /*
@@ -263,7 +263,6 @@ sgw_lite_cm_create_pdn_connection (
     return NULL;
   }
 
-  memset (pdn_connection, 0, sizeof (sgw_pdn_connection_t));
   pdn_connection->sgw_eps_bearers = hashtable_ts_create (12, NULL, NULL, "sgw_eps_bearers");
 
   if (pdn_connection->sgw_eps_bearers == NULL) {
@@ -321,9 +320,9 @@ sgw_lite_cm_create_bearer_context_information_in_collection (
   Teid_t teid)
 //-----------------------------------------------------------------------------
 {
-  s_plus_p_gw_eps_bearer_context_information_t *new_bearer_context_information;
+  s_plus_p_gw_eps_bearer_context_information_t *new_bearer_context_information = NULL;
 
-  new_bearer_context_information = MALLOC_CHECK (sizeof (s_plus_p_gw_eps_bearer_context_information_t));
+  new_bearer_context_information = CALLOC_CHECK (1, sizeof (s_plus_p_gw_eps_bearer_context_information_t));
 
   if (new_bearer_context_information == NULL) {
     /*
@@ -333,7 +332,6 @@ sgw_lite_cm_create_bearer_context_information_in_collection (
     return NULL;
   }
 
-  memset (new_bearer_context_information, 0, sizeof (s_plus_p_gw_eps_bearer_context_information_t));
   LOG_DEBUG (LOG_SPGW_APP, "sgw_lite_cm_create_bearer_context_information_in_collection %d\n", teid);
   /*
    * new_bearer_context_information->sgw_eps_bearer_context_information.pdn_connections = obj_hashtable_ts_create(32, NULL, NULL, sgw_lite_cm_free_pdn_connection);
@@ -366,7 +364,7 @@ int
 sgw_lite_cm_remove_bearer_context_information (
   Teid_t teid)
 {
-  int                                     temp;
+  int                                     temp = 0;
 
   temp = hashtable_ts_free (sgw_app.s11_bearer_context_information_hashtable, teid);
   return temp;
@@ -377,11 +375,11 @@ sgw_lite_cm_remove_bearer_context_information (
 //-----------------------------------------------------------------------------
 sgw_eps_bearer_entry_t                 *
 sgw_lite_cm_create_eps_bearer_entry_in_collection (
-  hash_table_t * eps_bearersP,
+  hash_table_ts_t * eps_bearersP,
   ebi_t eps_bearer_idP)
 //-----------------------------------------------------------------------------
 {
-  sgw_eps_bearer_entry_t                 *new_eps_bearer_entry;
+  sgw_eps_bearer_entry_t                 *new_eps_bearer_entry = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
   if (eps_bearersP == NULL) {
@@ -389,7 +387,7 @@ sgw_lite_cm_create_eps_bearer_entry_in_collection (
     return NULL;
   }
 
-  new_eps_bearer_entry = MALLOC_CHECK (sizeof (sgw_eps_bearer_entry_t));
+  new_eps_bearer_entry = CALLOC_CHECK (1, sizeof (sgw_eps_bearer_entry_t));
 
   if (new_eps_bearer_entry == NULL) {
     /*
@@ -399,7 +397,6 @@ sgw_lite_cm_create_eps_bearer_entry_in_collection (
     return NULL;
   }
 
-  memset (new_eps_bearer_entry, 0, sizeof (sgw_eps_bearer_entry_t));
   new_eps_bearer_entry->eps_bearer_id = eps_bearer_idP;
   hash_rc = hashtable_ts_insert (eps_bearersP, eps_bearer_idP, new_eps_bearer_entry);
   LOG_DEBUG (LOG_SPGW_APP, "Inserted new EPS bearer entry for EPS bearer id %u status %s\n", eps_bearer_idP, hashtable_rc_code2string (hash_rc));
@@ -422,11 +419,11 @@ sgw_lite_cm_create_eps_bearer_entry_in_collection (
 //-----------------------------------------------------------------------------
 int
 sgw_lite_cm_remove_eps_bearer_entry (
-  hash_table_t * eps_bearersP,
+  hash_table_ts_t * eps_bearersP,
   ebi_t eps_bearer_idP)
 //-----------------------------------------------------------------------------
 {
-  int                                     temp;
+  int                                     temp = 0;
 
   if (eps_bearersP == NULL) {
     return RETURNerror;
