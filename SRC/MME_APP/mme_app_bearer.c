@@ -429,7 +429,7 @@ mme_app_handle_conn_est_ind (
   message_p->ittiMsg.nas_conn_est_ind.nas.plmn[2] = conn_est_ind_pP->nas.plmn[2];
   message_p->ittiMsg.nas_conn_est_ind.nas.tac     = conn_est_ind_pP->nas.tac;
   message_p->ittiMsg.nas_conn_est_ind.nas.asCause = conn_est_ind_pP->nas.asCause;
-  //memcpy (&message_p->ittiMsg.nas_conn_est_ind.nas.s_tmsi, &conn_est_ind_pP->nas.s_tmsi, sizeof(conn_est_ind_pP->nas.s_tmsi));
+  message_p->ittiMsg.nas_conn_est_ind.nas.s_tmsi  = conn_est_ind_pP->nas.s_tmsi64;
   memcpy (&message_p->ittiMsg.nas_conn_est_ind.nas.initialNasMsg, &conn_est_ind_pP->nas.initialNasMsg, sizeof (conn_est_ind_pP->nas.initialNasMsg));
   /*
    * memcpy(&NAS_CONN_EST_IND(message_p).nas,

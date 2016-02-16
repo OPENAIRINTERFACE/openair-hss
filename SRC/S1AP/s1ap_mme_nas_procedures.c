@@ -165,8 +165,17 @@ s1ap_mme_handle_initial_ue_message (
     s1ap_mme_itti_nas_establish_ind (ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf, initialUEMessage_p->nas_pdu.size,
         initialUEMessage_p->rrC_Establishment_Cause, tai_tac);
 #else
+#if ITTI_LITE
+    itf_mme_app_ll_initial_ue_message(ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf,
+        initialUEMessage_p->nas_pdu.size,
+        initialUEMessage_p->rrC_Establishment_Cause,
+        tai_plmn,
+        tai_tac,
+        s_tmsi);
+#else
     s1ap_mme_itti_mme_app_establish_ind (ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf, initialUEMessage_p->nas_pdu.size,
         initialUEMessage_p->rrC_Establishment_Cause, tai_plmn, tai_tac, s_tmsi);
+#endif
 #endif
   }
 

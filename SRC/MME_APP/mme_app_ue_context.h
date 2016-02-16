@@ -194,8 +194,8 @@ typedef struct {
   //RB_HEAD(ue_context_map, ue_context_s) ue_context_tree;
   hash_table_ts_t  *imsi_ue_context_htbl;
   hash_table_ts_t  *tun11_ue_context_htbl;
-  hash_table_ts_t  *mme_ue_s1ap_id_ue_context_htbl;
-  hash_table_ts_t  *nas_ue_id_ue_context_htbl;
+  hash_table_ts_t  *mme_ue_s1ap_id_ue_context_htbl; // TODO #1: remove one of this collection
+  hash_table_ts_t  *nas_ue_id_ue_context_htbl;      // TODO #1: remove one of this collection
   obj_hash_table_t  *guti_ue_context_htbl;
 } mme_ue_context_t;
 

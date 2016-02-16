@@ -326,7 +326,7 @@ typedef struct nas_establish_ind_s {
                                   * UE belongs to                         */
   as_cause_t    asCause;       /* Establishment cause                     */
   //bool          s_tmsi_present;
-  //as_stmsi_t    s_tmsi;        /* UE identity optional field              */
+  as_stmsi_t    s_tmsi;        /* UE identity optional field              */
   as_nas_info_t initialNasMsg; /* Initial NAS message to transfer         */
 } nas_establish_ind_t;
 

@@ -70,18 +70,22 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
 
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.length = nas_msg_length;
 
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.data   = MALLOC_CHECK(sizeof(uint8_t) * nas_msg_length);
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.data   = CALLOC_CHECK(nas_msg_length, sizeof(uint8_t));
   memcpy(MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.data, nas_msg, nas_msg_length);
+
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi_64            = s_tmsi;
+
 
 
   MSC_LOG_TX_MESSAGE(
         MSC_S1AP_MME,
         MSC_MMEAPP_MME,
         NULL,0,
-        "0 MME_APP_CONNECTION_ESTABLISHMENT_IND ue_id "MME_UE_S1AP_ID_FMT" as cause %u  tac %u len %u",
+        "0 MME_APP_CONNECTION_ESTABLISHMENT_IND ue_id "MME_UE_S1AP_ID_FMT" as cause %u  tac %u stmsi %" PRIX64" len %u ",
         mme_ue_s1ap_id,
         MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.asCause,
         MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tac,
+        MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi64,
         MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.length);
   // should be sent to MME_APP, but this one would forward it to NAS_MME, so send it directly to NAS_MME
   // but let's see

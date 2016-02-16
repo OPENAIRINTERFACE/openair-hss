@@ -60,6 +60,19 @@ typedef teid_t                   s11_teid_t;
 typedef teid_t                   s1u_teid_t;
 
 
+#define M_TMSI_BIT_MASK          UINT32_MAX
+
+
+typedef uint16_t    tac_t;      /* Tracking Area Code   */
+
+/*
+ * EPS Tracking Area Identification
+ */
+typedef struct tai_s {
+  plmn_t plmn;    /* <MCC> + <MNC>    */
+  tac_t tac;      /* Tracking Area Code   */
+} tai_t;
+
 
 #define MSISDN_LENGTH      (15)
 #define IMSI_DIGITS_MAX    (15)

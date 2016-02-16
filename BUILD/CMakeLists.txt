@@ -193,6 +193,7 @@ add_boolean_option( DISPLAY_LICENCE_INFO            False    "If a module has a 
 add_boolean_option( ENABLE_ITTI                     True     "ITTI is internal messaging, should remain enabled for most targets")
 add_boolean_option( ENABLE_ITTI_ANALYZER            False    "ITTI Analyzer is a GUI based on GTK that displays the ITTI messages exchanged between tasks")
 add_integer_option( ITTI_TASK_STACK_SIZE            0        "pthread allocated stack size in bytes of an ITTI task, if 0, use default stack size ") 
+add_integer_option( ITTI_LITE                       0        "Do not use ITTI systematically for each message exchanged between layer modules") 
 add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
 # NAS LAYER OPTIONS
 ##########################
@@ -457,6 +458,7 @@ set(MME_DIR ${OPENAIRCN_DIR}/SRC/MME_APP)
 add_library(MME_APP
   ${MME_DIR}/mme_app_capabilities.c
   ${MME_DIR}/mme_app_context.c
+  ${MME_DIR}/mme_app_if_nas_transport.c
   ${MME_DIR}/mme_app_main.c
   ${MME_DIR}/mme_app_bearer.c
   ${MME_DIR}/mme_app_authentication.c
@@ -681,6 +683,8 @@ set(libnas_mme_esm_sap_OBJS
   
 add_library(LIB_NAS_MME
   ${NAS_SRC}nas_itti_messaging.c
+  ${NAS_SRC}nas_if_s1.c
+  ${NAS_SRC}nas_if_s6a.c
   ${NAS_SRC}nas_network.c
   ${NAS_SRC}nas_proc.c
   ${libnas_api_OBJS}

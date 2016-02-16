@@ -83,7 +83,6 @@ typedef uint8_t     Byte_t;     /* 8 bit unsigned integer   */
 typedef uint8_t     Stat_t;     /* Registration status  */
 typedef uint16_t    lac_t;      /* Location Area Code   */
 typedef uint8_t     rac_t;      /* Routing Area Code    */
-typedef uint16_t    tac_t;      /* Tracking Area Code   */
 typedef uint32_t    ci_t;       /* Cell Identifier      */
 typedef uint8_t     AcT_t;      /* Access Technology    */
 typedef bool        ksi_t;      /* Key set identifier   */
