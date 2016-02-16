@@ -41,10 +41,15 @@ function main()
     fi
     cd $1
   fi
-  if [ -f "./enb.replay.conf" ] && [ -f "./s1.xml" ] ; then 
-    # generate XML scenario file
+  if [ -f "./enb.replay.conf" ] && [ -f "./s1.xml" ] ; then
+    # may be you want to speed up the run of the scenario if not optimized (capture with real UE)
+    run_option=""
+    if [ -f "./enb.replay.run_options.txt" ]; then
+      run_options=$(< ./enb.replay.run_options.txt)
+    fi
+    # run XML scenario file
     echo_success "Running test `pwd`"
-    test_epc --run --set-nw-interfaces --test-dir . --enb-config-file enb.replay.conf --scenario-file s1.xml
+    test_epc --run --set-nw-interfaces --test-dir . --enb-config-file enb.replay.conf --scenario-file s1.xml $run_options
   else
       echo_fatal "Error: Did not found the required files (enb.replay.conf, s1.xml) for running the scenario in `pwd`" 
   fi

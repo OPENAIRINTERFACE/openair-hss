@@ -580,6 +580,13 @@ check_install_hss_software() {
     OPTION=""
   fi
   
+  # remove incompatible softwares
+  $SUDO apt-get purge $OPTION \
+    libgnutls-dev  \
+    'libgnutlsxx2?'  \
+    nettle-dev  \
+    nettle-bin
+    
   # Compilers, generators, ...
   $SUDO apt-get install $OPTION \
     autoconf  \
@@ -632,6 +639,13 @@ check_install_mme_gw_software() {
     OPTION=""
   fi
     
+  # remove incompatible softwares
+  $SUDO apt-get purge $OPTION \
+    libgnutls-dev  \
+    'libgnutlsxx2?'  \
+    nettle-dev  \
+    nettle-bin
+
   # Compilers, generators, ...
   PACKAGE_LIST="\
     autoconf  \
