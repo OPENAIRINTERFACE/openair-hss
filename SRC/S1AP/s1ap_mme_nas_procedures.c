@@ -52,6 +52,7 @@ static bool                             mme_ue_s1ap_id_has_wrapped = false;
 extern const char                      *s1ap_direction2String[];
 
 
+//------------------------------------------------------------------------------
 int
 s1ap_mme_handle_initial_ue_message (
   sctp_assoc_id_t assoc_id,
@@ -81,12 +82,9 @@ s1ap_mme_handle_initial_ue_message (
   ue_ref = s1ap_is_ue_eNB_id_in_list (eNB_ref, eNB_ue_s1ap_id);
 
   if (ue_ref == NULL) {
-    uint16_t                                tai_tac = 0;
-    uint8_t                                 tai_plmn[3] = { 0, 0, 0 };
+    tai_t                                   tai = {0};
     gummei_t                                gummei; // initialized after
-    uint8_t                                 mme_code = 0;
-    uint32_t                                m_tmsi = 0;
-    uint64_t                                s_tmsi = 0;
+    as_stmsi_t                              s_tmsi = {0};
 
     /*
      * This UE eNB Id has currently no known s1 association.
@@ -140,16 +138,15 @@ s1ap_mme_handle_initial_ue_message (
 
     s1ap_dump_eNB (ue_ref->eNB);
     // TAI mandatory IE
-    OCTET_STRING_TO_TAC (&initialUEMessage_p->tai.tAC, tai_tac);
+    OCTET_STRING_TO_TAC (&initialUEMessage_p->tai.tAC, tai.tac);
     DevAssert (initialUEMessage_p->tai.pLMNidentity.size == 3);
-    memcpy (tai_plmn, initialUEMessage_p->tai.pLMNidentity.buf, initialUEMessage_p->tai.pLMNidentity.size);
+    memcpy (&tai.plmn, initialUEMessage_p->tai.pLMNidentity.buf, initialUEMessage_p->tai.pLMNidentity.size);
 
     if (initialUEMessage_p->presenceMask & S1AP_INITIALUEMESSAGEIES_S_TMSI_PRESENT) {
-      OCTET_STRING_TO_MME_CODE(&initialUEMessage_p->s_tmsi.mMEC, mme_code);
-      OCTET_STRING_TO_M_TMSI(&initialUEMessage_p->s_tmsi.m_TMSI, m_tmsi);
-      s_tmsi = (uint64_t)m_tmsi | ((uint64_t)mme_code) << 32;
+      OCTET_STRING_TO_MME_CODE(&initialUEMessage_p->s_tmsi.mMEC, s_tmsi.MMEcode);
+      OCTET_STRING_TO_M_TMSI(&initialUEMessage_p->s_tmsi.m_TMSI, s_tmsi.m_tmsi);
     } else {
-      s_tmsi = NOT_A_S_TMSI;
+      s_tmsi.m_tmsi = NOT_A_M_TMSI;
     }
     if (initialUEMessage_p->presenceMask & S1AP_INITIALUEMESSAGEIES_GUMMEI_ID_PRESENT) {
       memset(&gummei, 0, sizeof(gummei));
@@ -169,12 +166,11 @@ s1ap_mme_handle_initial_ue_message (
     itf_mme_app_ll_initial_ue_message(ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf,
         initialUEMessage_p->nas_pdu.size,
         initialUEMessage_p->rrC_Establishment_Cause,
-        tai_plmn,
-        tai_tac,
+        tai,
         s_tmsi);
 #else
     s1ap_mme_itti_mme_app_establish_ind (ue_ref->mme_ue_s1ap_id, initialUEMessage_p->nas_pdu.buf, initialUEMessage_p->nas_pdu.size,
-        initialUEMessage_p->rrC_Establishment_Cause, tai_plmn, tai_tac, s_tmsi);
+        initialUEMessage_p->rrC_Establishment_Cause, tai, s_tmsi);
 #endif
 #endif
   }
@@ -183,7 +179,7 @@ s1ap_mme_handle_initial_ue_message (
 }
 
 
-
+//------------------------------------------------------------------------------
 int
 s1ap_mme_handle_uplink_nas_transport (
   sctp_assoc_id_t assoc_id,
@@ -223,7 +219,7 @@ s1ap_mme_handle_uplink_nas_transport (
 }
 
 
-
+//------------------------------------------------------------------------------
 int
 s1ap_mme_handle_nas_non_delivery (
   sctp_assoc_id_t assoc_id,
@@ -272,6 +268,7 @@ s1ap_mme_handle_nas_non_delivery (
   LOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
+//------------------------------------------------------------------------------
 int
 s1ap_generate_downlink_nas_transport (
   const mme_ue_s1ap_id_t ue_id,
@@ -330,9 +327,10 @@ s1ap_generate_downlink_nas_transport (
   LOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
+//------------------------------------------------------------------------------
 void
 s1ap_handle_conn_est_cnf (
-  const mme_app_connection_establishment_cnf_t * const conn_est_cnf_pP)
+  const itti_mme_app_connection_establishment_cnf_t * const conn_est_cnf_pP)
 {
   /*
    * We received create session response from S-GW on S11 interface abstraction.

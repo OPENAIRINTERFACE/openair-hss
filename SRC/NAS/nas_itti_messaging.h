@@ -70,7 +70,7 @@ static inline void nas_itti_pdn_connectivity_req(
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_PDN_CONNECTIVITY_REQ);
   memset(&message_p->ittiMsg.nas_pdn_connectivity_req,
          0,
-         sizeof(nas_pdn_connectivity_req_t));
+         sizeof(itti_nas_pdn_connectivity_req_t));
 
   hexa_to_ascii((uint8_t *)imsi_pP->u.value,
                 NAS_PDN_CONNECTIVITY_REQ(message_p).imsi,
@@ -170,7 +170,7 @@ static inline void nas_itti_establish_cnf(
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_CONNECTION_ESTABLISHMENT_CNF);
   memset(&message_p->ittiMsg.nas_conn_est_cnf,
          0,
-         sizeof(nas_conn_est_cnf_t));
+         sizeof(itti_nas_conn_est_cnf_t));
   NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).UEid            = ue_idP;
   NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).errCode         = error_codeP;
   NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).nasMsg.data     = data_pP;
@@ -201,7 +201,7 @@ static inline void nas_itti_auth_info_req(
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_AUTHENTICATION_PARAM_REQ);
   memset(&message_p->ittiMsg.nas_auth_param_req,
          0,
-         sizeof(nas_auth_param_req_t));
+         sizeof(itti_nas_auth_param_req_t));
 
   hexa_to_ascii((uint8_t *)imsi_pP->u.value,
                 NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi, 8);
@@ -249,7 +249,7 @@ static inline void nas_itti_establish_rej(
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_AUTHENTICATION_PARAM_REQ);
   memset(&message_p->ittiMsg.nas_auth_param_req,
          0,
-         sizeof(nas_auth_param_req_t));
+         sizeof(itti_nas_auth_param_req_t));
 
   hexa_to_ascii((uint8_t *)imsi_pP->u.value,
                 NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi, 8);

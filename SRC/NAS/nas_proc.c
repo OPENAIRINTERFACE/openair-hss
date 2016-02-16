@@ -153,8 +153,7 @@ nas_proc_cleanup (
 int
 nas_proc_establish_ind (
   const uint32_t ueid,
-  const uint8_t plmn[3],
-  const tac_t tac,
+  const tai_t tai,
   const Byte_t * data,
   const uint32_t len)
 {
@@ -170,20 +169,13 @@ nas_proc_establish_ind (
      * connection establishment indication message has been received
      * from the Access-Stratum sublayer
      */
-    plmn_t                                  plmnID = {0};
 
-    plmnID.MCCdigit2 = (plmn[0] >> 4) & 0x0f;
-    plmnID.MCCdigit1 = plmn[0] & 0x0f;
-    plmnID.MNCdigit3 = (plmn[1] >> 4) & 0x0f;
-    plmnID.MCCdigit3 = plmn[1] & 0x0f;
-    plmnID.MNCdigit2 = (plmn[2] >> 4) & 0x0f;
-    plmnID.MNCdigit1 = plmn[2] & 0x0f;
     emm_sap.primitive = EMMAS_ESTABLISH_REQ;
     emm_sap.u.emm_as.u.establish.ueid = ueid;
     emm_sap.u.emm_as.u.establish.NASmsg.length = len;
     emm_sap.u.emm_as.u.establish.NASmsg.value = (uint8_t *) data;
-    emm_sap.u.emm_as.u.establish.plmnID = &plmnID;
-    emm_sap.u.emm_as.u.establish.tac = tac;
+    emm_sap.u.emm_as.u.establish.plmnID = &tai.plmn;
+    emm_sap.u.emm_as.u.establish.tac = tai.tac;
     rc = emm_sap_send (&emm_sap);
   }
 

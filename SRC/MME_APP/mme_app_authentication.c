@@ -151,7 +151,7 @@ mme_app_handle_authentication_info_answer (
 
 void
 mme_app_handle_nas_auth_param_req (
-  const nas_auth_param_req_t * const nas_auth_param_req_pP)
+  const itti_nas_auth_param_req_t * const nas_auth_param_req_pP)
 {
   plmn_t                                 *visited_plmn = NULL;
   struct ue_context_s                    *ue_context = NULL;

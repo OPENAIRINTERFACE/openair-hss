@@ -250,7 +250,7 @@ mme_app_send_s11_create_session_req (
 //------------------------------------------------------------------------------
 int
 mme_app_handle_nas_pdn_connectivity_req (
-  nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)
+  itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)
 //------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
@@ -315,12 +315,12 @@ mme_app_handle_nas_pdn_connectivity_req (
 //------------------------------------------------------------------------------
 void
 mme_app_handle_conn_est_cnf (
-  const nas_conn_est_cnf_t * const nas_conn_est_cnf_pP)
+  const itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP)
 //------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
-  mme_app_connection_establishment_cnf_t *establishment_cnf_p = NULL;
+  itti_mme_app_connection_establishment_cnf_t *establishment_cnf_p = NULL;
   bearer_context_t                       *current_bearer_p = NULL;
   ebi_t                                   bearer_id = 0;
   uint8_t                                 keNB[32];
@@ -337,8 +337,8 @@ mme_app_handle_conn_est_cnf (
 
   message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_CONNECTION_ESTABLISHMENT_CNF);
   establishment_cnf_p = &message_p->ittiMsg.mme_app_connection_establishment_cnf;
-  memset (establishment_cnf_p, 0, sizeof (mme_app_connection_establishment_cnf_t));
-  memcpy (&establishment_cnf_p->nas_conn_est_cnf, nas_conn_est_cnf_pP, sizeof (nas_conn_est_cnf_t));
+  memset (establishment_cnf_p, 0, sizeof (itti_mme_app_connection_establishment_cnf_t));
+  memcpy (&establishment_cnf_p->nas_conn_est_cnf, nas_conn_est_cnf_pP, sizeof (itti_nas_conn_est_cnf_t));
   bearer_id = ue_context_p->default_bearer_id;
   current_bearer_p = &ue_context_p->eps_bearers[bearer_id];
   establishment_cnf_p->eps_bearer_id = bearer_id;
@@ -386,7 +386,7 @@ mme_app_handle_conn_est_cnf (
 //------------------------------------------------------------------------------
 void
 mme_app_handle_conn_est_ind (
-  const mme_app_connection_establishment_ind_t * const conn_est_ind_pP)
+  const itti_mme_app_connection_establishment_ind_t * const conn_est_ind_pP)
 //------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
@@ -424,13 +424,11 @@ mme_app_handle_conn_est_ind (
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_CONNECTION_ESTABLISHMENT_IND);
   // do this because of same message types name but not same struct in different .h
   message_p->ittiMsg.nas_conn_est_ind.nas.UEid    = conn_est_ind_pP->nas.UEid;
-  message_p->ittiMsg.nas_conn_est_ind.nas.plmn[0] = conn_est_ind_pP->nas.plmn[0];
-  message_p->ittiMsg.nas_conn_est_ind.nas.plmn[1] = conn_est_ind_pP->nas.plmn[1];
-  message_p->ittiMsg.nas_conn_est_ind.nas.plmn[2] = conn_est_ind_pP->nas.plmn[2];
-  message_p->ittiMsg.nas_conn_est_ind.nas.tac     = conn_est_ind_pP->nas.tac;
+  message_p->ittiMsg.nas_conn_est_ind.nas.tai     = conn_est_ind_pP->nas.tai;
   message_p->ittiMsg.nas_conn_est_ind.nas.asCause = conn_est_ind_pP->nas.asCause;
-  message_p->ittiMsg.nas_conn_est_ind.nas.s_tmsi  = conn_est_ind_pP->nas.s_tmsi64;
+  message_p->ittiMsg.nas_conn_est_ind.nas.s_tmsi  = conn_est_ind_pP->nas.s_tmsi;
   memcpy (&message_p->ittiMsg.nas_conn_est_ind.nas.initialNasMsg, &conn_est_ind_pP->nas.initialNasMsg, sizeof (conn_est_ind_pP->nas.initialNasMsg));
+
   /*
    * memcpy(&NAS_CONN_EST_IND(message_p).nas,
    * &conn_est_ind_pP->nas,
@@ -556,7 +554,7 @@ mme_app_handle_create_sess_resp (
   {
     //uint8_t *keNB = NULL;
     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONNECTIVITY_RSP);
-    memset ((void *)&message_p->ittiMsg.nas_pdn_connectivity_rsp, 0, sizeof (nas_pdn_connectivity_rsp_t));
+    memset ((void *)&message_p->ittiMsg.nas_pdn_connectivity_rsp, 0, sizeof (itti_nas_pdn_connectivity_rsp_t));
     // moved to NAS_CONNECTION_ESTABLISHMENT_CONF, keNB not handled in NAS MME
     //derive_keNB(ue_context_p->vector_in_use->kasme, 156, &keNB);
     //memcpy(NAS_PDN_CONNECTIVITY_RSP(message_p).keNB, keNB, 32);
@@ -672,7 +670,7 @@ mme_app_handle_create_sess_resp (
 //------------------------------------------------------------------------------
 void
 mme_app_handle_initial_context_setup_rsp (
-  const mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP)
+  const itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP)
 //------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;

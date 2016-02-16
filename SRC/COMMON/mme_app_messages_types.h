@@ -34,7 +34,7 @@
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
 
-typedef struct mme_app_connection_establishment_ind_s {
+typedef struct itti_mme_app_connection_establishment_ind_s {
   uint32_t            mme_ue_s1ap_id;
   nas_establish_ind_t nas;
 
@@ -42,9 +42,9 @@ typedef struct mme_app_connection_establishment_ind_s {
    * to S1AP if connection establishment is rejected by NAS.
    */
   s1ap_initial_ue_message_t transparent;
-} mme_app_connection_establishment_ind_t;
+} itti_mme_app_connection_establishment_ind_t;
 
-typedef struct mme_app_connection_establishment_cnf_s {
+typedef struct itti_mme_app_connection_establishment_cnf_s {
 
   ebi_t                   eps_bearer_id;
   FTeid_t                 bearer_s1u_sgw_fteid;
@@ -59,14 +59,14 @@ typedef struct mme_app_connection_establishment_cnf_s {
   uint16_t                security_capabilities_encryption_algorithms;
   uint16_t                security_capabilities_integrity_algorithms;
 
-  nas_conn_est_cnf_t       nas_conn_est_cnf;
-} mme_app_connection_establishment_cnf_t;
+  itti_nas_conn_est_cnf_t nas_conn_est_cnf;
+} itti_mme_app_connection_establishment_cnf_t;
 
-typedef struct mme_app_initial_context_setup_rsp_s {
+typedef struct itti_mme_app_initial_context_setup_rsp_s {
   uint32_t                mme_ue_s1ap_id;
   ebi_t                   eps_bearer_id;
   FTeid_t                 bearer_s1u_enb_fteid;
-} mme_app_initial_context_setup_rsp_t;
+} itti_mme_app_initial_context_setup_rsp_t;
 
 
 #endif /* MME_APP_MESSAGES_TYPES_H_ */

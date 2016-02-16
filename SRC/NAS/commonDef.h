@@ -44,7 +44,6 @@ Description Contains global common definitions
 #include <stdbool.h>
 #include <inttypes.h>
 
-
 #define NAS_UE_ID_FMT   "0x%08"PRIX32
 
 /****************************************************************************/
@@ -81,6 +80,7 @@ typedef uint8_t     Byte_t;     /* 8 bit unsigned integer   */
 */
 
 typedef uint8_t     Stat_t;     /* Registration status  */
+typedef uint16_t    tac_t;      /* Tracking Area Code   */
 typedef uint16_t    lac_t;      /* Location Area Code   */
 typedef uint8_t     rac_t;      /* Routing Area Code    */
 typedef uint32_t    ci_t;       /* Cell Identifier      */
@@ -319,6 +319,7 @@ typedef struct plmn_s {
   Byte_t MNCdigit2:4;
   Byte_t MNCdigit1:4;
 } plmn_t;
+
 
 /*
  * Location Area Identification

@@ -26,6 +26,7 @@
 #include "log.h"
 #include "mme_app_if.h"
 
+#if ITTI_LITE
 int itf_mme_app_nas_initial_ue_message(
     const mme_ue_s1ap_id_t  mme_ue_s1ap_id,
     const uint8_t * const nas_msg,
@@ -88,5 +89,5 @@ int itf_mme_app_nas_initial_ue_message(
 */
   LOG_FUNC_OUT (LOG_MME_APP);
 }
-
+#endif
 

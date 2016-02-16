@@ -52,10 +52,10 @@ typedef enum emmcn_primitive_s {
   _EMMCN_END
 } emm_cn_primitive_t;
 
-typedef nas_auth_param_rsp_t        emm_cn_auth_res_t;
-typedef nas_auth_param_fail_t       emm_cn_auth_fail_t;
-typedef nas_pdn_connectivity_rsp_t  emm_cn_pdn_res_t;
-typedef nas_pdn_connectivity_fail_t emm_cn_pdn_fail_t;
+typedef itti_nas_auth_param_rsp_t        emm_cn_auth_res_t;
+typedef itti_nas_auth_param_fail_t       emm_cn_auth_fail_t;
+typedef itti_nas_pdn_connectivity_rsp_t  emm_cn_pdn_res_t;
+typedef itti_nas_pdn_connectivity_fail_t emm_cn_pdn_fail_t;
 
 typedef struct emm_cn_deregister_ue_s {
   uint32_t UEid;

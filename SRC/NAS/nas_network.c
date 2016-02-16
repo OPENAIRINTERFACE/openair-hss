@@ -123,71 +123,71 @@ nas_network_cleanup (
  **          Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-nas_network_process_data (
-  int msg_id,
-  const void *data)
-{
-  LOG_FUNC_IN (LOG_NAS);
-  const as_message_t                     *msg = (as_message_t *) (data);
-  int                                     rc = RETURNok;
-
-  /*
-   * Sanity check
-   */
-  if (msg_id != msg->msgID) {
-    LOG_ERROR (LOG_NAS, "NET-MAIN  - Message identifier 0x%x to process " "is different from that of the network data (0x%x)", msg_id, msg->msgID);
-    LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
-  }
-
-  switch (msg_id) {
-  case AS_NAS_ESTABLISH_IND:{
-      /*
-       * Received NAS signalling connection establishment indication
-       */
-      const nas_establish_ind_t              *indication = &msg->msg.nas_establish_ind;
-
-      rc = nas_proc_establish_ind (indication->UEid, indication->plmn, indication->tac, indication->initialNasMsg.data, indication->initialNasMsg.length);
-      break;
-    }
-
-  case AS_DL_INFO_TRANSFER_CNF:{
-      const dl_info_transfer_cnf_t           *info = &msg->msg.dl_info_transfer_cnf;
-
-      /*
-       * Received downlink data transfer confirm
-       */
-      if (info->errCode != AS_SUCCESS) {
-        LOG_WARNING (LOG_NAS, "NET-MAIN  - " "Downlink NAS message not delivered");
-        rc = nas_proc_dl_transfer_rej (info->UEid);
-      } else {
-        rc = nas_proc_dl_transfer_cnf (info->UEid);
-      }
-
-      break;
-    }
-
-  case AS_UL_INFO_TRANSFER_IND:{
-      const ul_info_transfer_ind_t           *info = &msg->msg.ul_info_transfer_ind;
-
-      /*
-       * Received uplink data transfer indication
-       */
-      rc = nas_proc_ul_transfer_ind (info->UEid, info->nasMsg.data, info->nasMsg.length);
-      break;
-    }
-
-  case AS_RAB_ESTABLISH_CNF:
-    break;
-
-  default:
-    LOG_ERROR (LOG_NAS, "NET-MAIN  - Unexpected AS message type: 0x%x", msg_id);
-    rc = RETURNerror;
-    break;
-  }
-
-  LOG_FUNC_RETURN ( LOG_NAS, rc);
-}
+//int
+//nas_network_process_data (
+//  int msg_id,
+//  const void *data)
+//{
+//  LOG_FUNC_IN (LOG_NAS);
+//  const as_message_t                     *msg = (as_message_t *) (data);
+//  int                                     rc = RETURNok;
+//
+//  /*
+//   * Sanity check
+//   */
+//  if (msg_id != msg->msgID) {
+//    LOG_ERROR (LOG_NAS, "NET-MAIN  - Message identifier 0x%x to process " "is different from that of the network data (0x%x)", msg_id, msg->msgID);
+//    LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+//  }
+//
+//  switch (msg_id) {
+//  case AS_NAS_ESTABLISH_IND:{
+//      /*
+//       * Received NAS signalling connection establishment indication
+//       */
+//      const nas_establish_ind_t              *indication = &msg->msg.nas_establish_ind;
+//
+//      rc = nas_proc_establish_ind (indication->UEid, indication->plmn, indication->tac, indication->initialNasMsg.data, indication->initialNasMsg.length);
+//      break;
+//    }
+//
+//  case AS_DL_INFO_TRANSFER_CNF:{
+//      const dl_info_transfer_cnf_t           *info = &msg->msg.dl_info_transfer_cnf;
+//
+//      /*
+//       * Received downlink data transfer confirm
+//       */
+//      if (info->errCode != AS_SUCCESS) {
+//        LOG_WARNING (LOG_NAS, "NET-MAIN  - " "Downlink NAS message not delivered");
+//        rc = nas_proc_dl_transfer_rej (info->UEid);
+//      } else {
+//        rc = nas_proc_dl_transfer_cnf (info->UEid);
+//      }
+//
+//      break;
+//    }
+//
+//  case AS_UL_INFO_TRANSFER_IND:{
+//      const ul_info_transfer_ind_t           *info = &msg->msg.ul_info_transfer_ind;
+//
+//      /*
+//       * Received uplink data transfer indication
+//       */
+//      rc = nas_proc_ul_transfer_ind (info->UEid, info->nasMsg.data, info->nasMsg.length);
+//      break;
+//    }
+//
+//  case AS_RAB_ESTABLISH_CNF:
+//    break;
+//
+//  default:
+//    LOG_ERROR (LOG_NAS, "NET-MAIN  - Unexpected AS message type: 0x%x", msg_id);
+//    rc = RETURNerror;
+//    break;
+//  }
+//
+//  LOG_FUNC_RETURN ( LOG_NAS, rc);
+//}
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

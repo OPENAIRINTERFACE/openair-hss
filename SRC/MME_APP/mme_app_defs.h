@@ -55,11 +55,11 @@ int mme_app_send_s6a_update_location_req     (struct ue_context_s * const ue_con
 
 int mme_app_handle_s6a_update_location_ans   (const s6a_update_location_ans_t * const ula_pP);
 
-int mme_app_handle_nas_pdn_connectivity_req  ( nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_p);
+int mme_app_handle_nas_pdn_connectivity_req  ( itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_p);
 
-void mme_app_handle_conn_est_cnf             (const nas_conn_est_cnf_t * const nas_conn_est_cnf_pP);
+void mme_app_handle_conn_est_cnf             (const itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP);
 
-void mme_app_handle_conn_est_ind             (const mme_app_connection_establishment_ind_t * const conn_est_ind_pP);
+void mme_app_handle_conn_est_ind             (const itti_mme_app_connection_establishment_ind_t * const conn_est_ind_pP);
 
 int mme_app_handle_create_sess_resp          (const SgwCreateSessionResponse * const create_sess_resp_pP);
 
@@ -71,9 +71,9 @@ void  mme_app_handle_release_access_bearers_resp (const SgwReleaseAccessBearersR
 
 nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);
 
-void mme_app_handle_nas_auth_param_req       (const nas_auth_param_req_t * const nas_auth_param_req_pP);
+void mme_app_handle_nas_auth_param_req       (const itti_nas_auth_param_req_t * const nas_auth_param_req_pP);
 
-void mme_app_handle_initial_context_setup_rsp(const mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
+void mme_app_handle_initial_context_setup_rsp(const itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
 
 bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, void *unused_param_pP, void **unused_result_pP);
 

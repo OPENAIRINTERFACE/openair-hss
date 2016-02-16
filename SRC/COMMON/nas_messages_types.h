@@ -98,7 +98,7 @@ typedef enum {
   EMM_MSG_DOWNLINK_NAS_TRANSPORT,
   EMM_MSG_UPLINK_NAS_TRANSPORT,
   EMM_MSG_CS_SERVICE_NOTIFICATION,
-} emm_message_ids_t;
+} itti_emm_message_ids_t;
 
 
 
@@ -126,52 +126,51 @@ typedef enum {
   ESM_MSG_ESM_INFORMATION_REQUEST,
   ESM_MSG_ESM_INFORMATION_RESPONSE,
   ESM_MSG_ESM_STATUS,
-} esm_message_ids_t;
+} itti_esm_message_ids_t;
 
 
 
-typedef struct nas_raw_msg_s {
+typedef struct itti_nas_raw_msg_s {
   uint32_t                        lenght;
   uint8_t                         data[NAS_DATA_LENGHT_MAX];
-} nas_raw_msg_t;
+} itti_nas_raw_msg_t;
 
 
 
-typedef struct nas_emm_plain_msg_s {
-  emm_message_ids_t               present;
+typedef struct itti_nas_emm_plain_msg_s {
+  itti_emm_message_ids_t          present;
   EMM_msg                         choice;
 
-} nas_emm_plain_msg_t;
+} itti_nas_emm_plain_msg_t;
 
 
 
-typedef struct nas_emm_protected_msg_s {
+typedef struct itti_nas_emm_protected_msg_s {
   nas_message_security_header_t   header;
-  emm_message_ids_t               present;
+  itti_emm_message_ids_t          present;
   EMM_msg                         choice;
-} nas_emm_protected_msg_t;
+} itti_nas_emm_protected_msg_t;
 
 
-typedef struct nas_esm_plain_msg_s {
-  esm_message_ids_t               present;
+typedef struct itti_nas_esm_plain_msg_s {
+  itti_esm_message_ids_t          present;
   ESM_msg                         choice;
+} itti_nas_esm_plain_msg_t;
 
-} nas_esm_plain_msg_t;
 
-
-typedef struct nas_esm_protected_msg_s {
+typedef struct itti_nas_esm_protected_msg_s {
   nas_message_security_header_t   header;
-  esm_message_ids_t               present;
+  itti_esm_message_ids_t          present;
   ESM_msg                         choice;
-} nas_esm_protected_msg_t;
+} itti_nas_esm_protected_msg_t;
 
 
-typedef struct nas_paging_ind_s {
+typedef struct itti_nas_paging_ind_s {
 
-} nas_paging_ind_t;
+} itti_nas_paging_ind_t;
 
 
-typedef struct nas_pdn_connectivity_req_s {
+typedef struct itti_nas_pdn_connectivity_req_s {
   int                    pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
   unsigned               ue_id; // nas ref
   char                   imsi[16];
@@ -183,10 +182,10 @@ typedef struct nas_pdn_connectivity_req_s {
   int                    pdn_type;
   void                  *proc_data;
   int                    request_type;
-} nas_pdn_connectivity_req_t;
+} itti_nas_pdn_connectivity_req_t;
 
 
-typedef struct nas_pdn_connectivity_rsp_s {
+typedef struct itti_nas_pdn_connectivity_rsp_s {
   int                     pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
   unsigned                ue_id; // nas ref
   network_qos_t           qos;
@@ -219,71 +218,94 @@ typedef struct nas_pdn_connectivity_rsp_s {
   Teid_t                  sgw_s1u_teid;
   /* S-GW IP address for User-Plane */
   ip_address_t            sgw_s1u_address;
-} nas_pdn_connectivity_rsp_t;
+} itti_nas_pdn_connectivity_rsp_t;
 
 
-typedef struct nas_pdn_connectivity_fail_s {
+typedef struct itti_nas_pdn_connectivity_fail_s {
   unsigned                ue_id; // nas ref
-} nas_pdn_connectivity_fail_t;
+} itti_nas_pdn_connectivity_fail_t;
 
 
-typedef struct nas_conn_est_ind_s {
+typedef struct itti_nas_conn_est_ind_s {
   nas_establish_ind_t nas;
 
   /* Transparent message from s1ap to be forwarded to MME_APP or
    * to S1AP if connection establishment is rejected by NAS.
    */
   s1ap_initial_ue_message_t transparent;
-} nas_conn_est_ind_t;
+} itti_nas_conn_est_ind_t;
 
 
-typedef nas_establish_rsp_t nas_conn_est_rej_t;
+typedef struct itti_nas_conn_est_rej_s {
+  uint32_t         UEid;         /* UE lower layer identifier   */
+  as_stmsi_t       s_tmsi;       /* UE identity                 */
+  nas_error_code_t errCode;      /* Transaction status          */
+  as_nas_info_t    nasMsg;       /* NAS message to transfer     */
+  uint32_t         nas_ul_count; /* UL NAS COUNT                */
+  uint16_t         selected_encryption_algorithm;
+  uint16_t         selected_integrity_algorithm;
+} itti_nas_conn_est_rej_t;
 
 
+typedef struct itti_nas_conn_est_cnf_s {
+  uint32_t         UEid;            /* UE lower layer identifier   */
+  nas_error_code_t errCode;         /* Transaction status          */
+  as_nas_info_t    nasMsg;          /* NAS message to transfer     */
+  uint32_t         ul_nas_count;
+  uint16_t         selected_encryption_algorithm;
+  uint16_t         selected_integrity_algorithm;
+} itti_nas_conn_est_cnf_t;
 
-typedef nas_establish_cnf_t nas_conn_est_cnf_t;
+typedef struct itti_nas_conn_rel_ind_s {
+
+} itti_nas_conn_rel_ind_t;
 
 
-typedef struct nas_conn_rel_ind_s {
+typedef struct itti_nas_info_transfer_s {
+  uint32_t         UEid;      /* UE lower layer identifier        */
+  //nas_error_code_t errCode;   /* Transaction status               */
+  as_nas_info_t nasMsg;   /* Uplink NAS message           */
+} itti_nas_info_transfer_t;
 
-} nas_conn_rel_ind_t;
+typedef itti_nas_info_transfer_t itti_nas_ul_data_ind_t;
+typedef itti_nas_info_transfer_t itti_nas_dl_data_req_t;
 
-typedef ul_info_transfer_ind_t nas_ul_data_ind_t;
-typedef dl_info_transfer_req_t nas_dl_data_req_t;
-typedef dl_info_transfer_cnf_t nas_dl_data_cnf_t;
+typedef struct itti_nas_dl_data_cnf_s {
+  uint32_t         UEid;      /* UE lower layer identifier        */
+  nas_error_code_t errCode;   /* Transaction status               */
+} itti_nas_dl_data_cnf_t;
 
-
-typedef struct nas_dl_data_rej_s {
+typedef struct itti_nas_dl_data_rej_s {
 	uint32_t UEid;          /* UE lower layer identifier        */
 	  as_nas_info_t nasMsg;   /* Uplink NAS message           */
-} nas_dl_data_rej_t;
+} itti_nas_dl_data_rej_t;
 
-typedef struct nas_rab_est_req_s {
+typedef struct itti_nas_rab_est_req_s {
 
-} nas_rab_est_req_t;
-
-
-typedef struct nas_rab_est_rsp_s {
-
-} nas_rab_est_rsp_t;
+} itti_nas_rab_est_req_t;
 
 
-typedef struct nas_rab_rel_req_s {
+typedef struct itti_nas_rab_est_rsp_s {
 
-} nas_rab_rel_req_t;
+} itti_nas_rab_est_rsp_t;
 
 
-typedef struct nas_attach_req_s {
+typedef struct itti_nas_rab_rel_req_s {
+
+} itti_nas_rab_rel_req_t;
+
+
+typedef struct itti_nas_attach_req_s {
   /* TODO: Set the correct size */
   char apn[100];
   char imsi[16];
 #define INITIAL_REQUEST (0x1)
   unsigned initial:1;
   s1ap_initial_ue_message_t transparent;
-} nas_attach_req_t;
+} itti_nas_attach_req_t;
 
 
-typedef struct nas_auth_req_s {
+typedef struct itti_nas_auth_req_s {
   /* UE imsi */
   char imsi[16];
 
@@ -291,14 +313,14 @@ typedef struct nas_auth_req_s {
 #define NAS_FAILURE_IND 0x1
   unsigned failure:1;
   int cause;
-} nas_auth_req_t;
+} itti_nas_auth_req_t;
 
 
-typedef struct nas_auth_resp_s {
+typedef struct itti_nas_auth_resp_s {
   char imsi[16];
-} nas_auth_resp_t;
+} itti_nas_auth_resp_t;
 
-typedef struct nas_auth_param_req_s {
+typedef struct itti_nas_auth_param_req_s {
   /* UE identifier */
   nas_ue_id_t ue_id;
 
@@ -311,10 +333,10 @@ typedef struct nas_auth_param_req_s {
 
   uint8_t  re_synchronization:1;
   uint8_t  auts[14];
-} nas_auth_param_req_t;
+} itti_nas_auth_param_req_t;
 
 
-typedef struct nas_auth_param_rsp_s {
+typedef struct itti_nas_auth_param_rsp_s {
   /* UE identifier */
   uint32_t ue_id;
 
@@ -323,15 +345,15 @@ typedef struct nas_auth_param_rsp_s {
 
   /* Consider only one E-UTRAN vector for the moment... */
   eutran_vector_t vector;
-} nas_auth_param_rsp_t;
+} itti_nas_auth_param_rsp_t;
 
-typedef struct nas_auth_param_fail_s {
+typedef struct itti_nas_auth_param_fail_s {
   /* UE identifier */
   uint32_t    ue_id;
 
   /* S6A mapped to NAS cause */
   nas_cause_t cause;
-} nas_auth_param_fail_t;
+} itti_nas_auth_param_fail_t;
 
 
 #endif /* NAS_MESSAGES_TYPES_H_ */

@@ -56,7 +56,7 @@ int s1ap_mme_handle_uplink_nas_transport(sctp_assoc_id_t assocId, sctp_stream_id
 int s1ap_mme_handle_nas_non_delivery(sctp_assoc_id_t assocId, sctp_stream_id_t stream,
                                      struct s1ap_message_s *message);
 
-void s1ap_handle_conn_est_cnf(const mme_app_connection_establishment_cnf_t * const conn_est_cnf_p);
+void s1ap_handle_conn_est_cnf(const itti_mme_app_connection_establishment_cnf_t * const conn_est_cnf_p);
 
 int s1ap_generate_downlink_nas_transport(const mme_ue_s1ap_id_t ue_id, void * const data,
     const uint32_t size);

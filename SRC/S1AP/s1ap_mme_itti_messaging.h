@@ -48,9 +48,8 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
   const uint8_t * const nas_msg,
   const uint32_t  nas_msg_length,
   const long      cause,
-  const uint8_t   tai_plmn[3],
-  const uint16_t  tai_tac,
-  const uint64_t  s_tmsi)
+  const tai_t     tai,
+  const as_stmsi_t  s_tmsi)
 {
   MessageDef  *message_p = NULL;
 
@@ -63,17 +62,13 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.UEid                 = mme_ue_s1ap_id;
   /* Mapping between asn1 definition and NAS definition */
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.asCause              = cause + 1;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.plmn[0]              = tai_plmn[0];
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.plmn[1]              = tai_plmn[1];
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.plmn[2]              = tai_plmn[2];
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tac                  = tai_tac;
-
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai                  = tai;
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.length = nas_msg_length;
 
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.data   = CALLOC_CHECK(nas_msg_length, sizeof(uint8_t));
   memcpy(MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.data, nas_msg, nas_msg_length);
 
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi_64            = s_tmsi;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi            = s_tmsi;
 
 
 
@@ -81,11 +76,12 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
         MSC_S1AP_MME,
         MSC_MMEAPP_MME,
         NULL,0,
-        "0 MME_APP_CONNECTION_ESTABLISHMENT_IND ue_id "MME_UE_S1AP_ID_FMT" as cause %u  tac %u stmsi %" PRIX64" len %u ",
+        "0 MME_APP_CONNECTION_ESTABLISHMENT_IND ue_id "MME_UE_S1AP_ID_FMT" as cause %u  tac %u stmsi %" PRIX8 ".%" PRIX32" len %u ",
         mme_ue_s1ap_id,
         MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.asCause,
         MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tac,
-        MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi64,
+        MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi.MMEcode,
+        MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi.m_tmsi,
         MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initialNasMsg.length);
   // should be sent to MME_APP, but this one would forward it to NAS_MME, so send it directly to NAS_MME
   // but let's see
@@ -96,8 +92,12 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
 
 
 static inline void s1ap_mme_itti_nas_establish_ind(
-  const uint32_t ue_id, uint8_t * const nas_msg, const uint32_t nas_msg_length,
-  const long cause, const uint16_t tac)
+  const uint32_t ue_id,
+  uint8_t * const nas_msg,
+  const uint32_t nas_msg_length,
+  const long cause,
+  const tai_t tai,
+  const as_stmsi_t  s_tmsi)
 {
   MessageDef     *message_p;
 
@@ -107,7 +107,8 @@ static inline void s1ap_mme_itti_nas_establish_ind(
   NAS_CONN_EST_IND(message_p).nas.UEid                 = ue_id;
   /* Mapping between asn1 definition and NAS definition */
   NAS_CONN_EST_IND(message_p).nas.asCause              = cause + 1;
-  NAS_CONN_EST_IND(message_p).nas.tac                  = tac;
+  NAS_CONN_EST_IND(message_p).nas.tai                  = tai;
+  NAS_CONN_EST_IND(message_p).nas.s_tmsi               = s_tmsi;
   NAS_CONN_EST_IND(message_p).nas.initialNasMsg.length = nas_msg_length;
 
   NAS_CONN_EST_IND(message_p).nas.initialNasMsg.data = MALLOC_CHECK(sizeof(uint8_t) * nas_msg_length);

@@ -26,8 +26,4 @@
 #include "nas_if.h"
 
 
-int nas_if_connection_establishment_ind()
-{
 
-  return RETURNok;
-}
