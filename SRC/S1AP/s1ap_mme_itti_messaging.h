@@ -51,10 +51,10 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
   const uint8_t * const   nas_msg,
   const size_t            nas_msg_length,
   const long              cause,
-  const tai_t             tai,
-  const cgi_t             cgi,
-  const as_stmsi_t        s_tmsi,
-  const gummei_t          gummei)
+  const tai_t      const* tai,
+  const cgi_t      const* cgi,
+  const as_stmsi_t const* s_tmsi,
+  const gummei_t   const* gummei)
 {
   MessageDef  *message_p = NULL;
 
@@ -69,24 +69,32 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.ue_id                  = mme_ue_s1ap_id;
   /* Mapping between asn1 definition and NAS definition */
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.as_cause               = cause + 1;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai                    = tai;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.cgi                    = cgi;
+  // TODO struct = struct, after debugging
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mcc_digit1    = tai->plmn.mcc_digit1;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mcc_digit2    = tai->plmn.mcc_digit2;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mcc_digit3    = tai->plmn.mcc_digit3;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mnc_digit1    = tai->plmn.mnc_digit1;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mnc_digit2    = tai->plmn.mnc_digit2;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mnc_digit3    = tai->plmn.mnc_digit3;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.tac                = tai->tac;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.cgi                    = *cgi;
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initial_nas_msg.length = nas_msg_length;
 
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initial_nas_msg.data   = CALLOC_CHECK(nas_msg_length, sizeof(uint8_t));
   memcpy(MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initial_nas_msg.data, nas_msg, nas_msg_length);
 
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi                 = s_tmsi; // TODO think about putting this field one level up?
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi                 = *s_tmsi; // TODO think about putting this field one level up?
 
-  if (!(gummei.plmn.mcc_digit1) && !(gummei.plmn.mcc_digit1) && !(gummei.plmn.mcc_digit1) ) {
+  if (!(gummei->plmn.mcc_digit1) && !(gummei->plmn.mcc_digit1) && !(gummei->plmn.mcc_digit1) ) {
     MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).is_gummei_valid = false;
+    memset(&MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).gummei, 0, sizeof(MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).gummei));
   } else {
     MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).is_gummei_valid = true;
-    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).gummei                   = gummei;
+    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).gummei                   = *gummei;
   }
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).transparent.mme_ue_s1ap_id = mme_ue_s1ap_id;
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).transparent.enb_ue_s1ap_id = enb_ue_s1ap_id;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).transparent.e_utran_cgi    = cgi;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).transparent.e_utran_cgi    = *cgi;
 
 
   MSC_LOG_TX_MESSAGE(

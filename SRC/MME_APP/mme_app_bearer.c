@@ -406,6 +406,7 @@ mme_app_handle_conn_est_ind (
         // try to build a Guti
         GUTI_t   guti = {0};
         guti.m_tmsi = conn_est_ind_pP->nas.s_tmsi.m_tmsi;
+        guti.gummei.mme_code = conn_est_ind_pP->nas.s_tmsi.mme_code;
 
         if (conn_est_ind_pP->is_gummei_valid) {
           memcpy(&guti.gummei, (const void*)&conn_est_ind_pP->gummei, sizeof(guti.gummei));
@@ -423,8 +424,37 @@ mme_app_handle_conn_est_ind (
             LOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP, no previous context found with provided S_TMSI, GUMMEI\n");
           }
         } else {
-          // TODO: build a GUTI with a built GUMMEI
-          LOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP, no previous context found with provided S_TMSI\n");
+          // TODO: review this code: shortcut default case
+          guti.gummei.mme_gid = mme_config.gummei.mme_gid[0];
+
+          for (int gindex = 0; gindex < mme_config.gummei.nb_mmec; gindex) {
+            if (conn_est_ind_pP->nas.s_tmsi.mme_code == mme_config.gummei.mmec[gindex]) {
+              guti.gummei.mme_gid = mme_config.gummei.mme_gid[gindex];
+              LOG_DEBUG (LOG_MME_APP, "Assigned mme_gid %d\n", guti.gummei.mme_gid);
+              break;
+            }
+          }
+          guti.gummei.plmn.mcc_digit1 = conn_est_ind_pP->nas.tai.plmn.mcc_digit1;
+          guti.gummei.plmn.mcc_digit2 = conn_est_ind_pP->nas.tai.plmn.mcc_digit2;
+          guti.gummei.plmn.mcc_digit3 = conn_est_ind_pP->nas.tai.plmn.mcc_digit3;
+          guti.gummei.plmn.mnc_digit1 = conn_est_ind_pP->nas.tai.plmn.mnc_digit1;
+          guti.gummei.plmn.mnc_digit2 = conn_est_ind_pP->nas.tai.plmn.mnc_digit2;
+          guti.gummei.plmn.mnc_digit3 = conn_est_ind_pP->nas.tai.plmn.mnc_digit3;
+
+          ue_context_p = mme_ue_context_exists_guti (&mme_app_desc.mme_ue_contexts, &guti);
+
+          if (ue_context_p) {
+            // update ue_context, the only parameter to update is enb_ue_s1ap_id
+            mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
+                ue_context_p,
+                conn_est_ind_pP->enb_ue_s1ap_id,
+                ue_context_p->mme_ue_s1ap_id,
+                ue_context_p->imsi,
+                ue_context_p->mme_s11_teid,
+                &guti);
+          } else {
+            LOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP, no previous context found with provided S_TMSI, TAI, configured MME group ID\n");
+          }
         }
       }
     } // no else actually TODO action

@@ -142,11 +142,11 @@ s1ap_mme_handle_initial_ue_message (
     // TAI mandatory IE
     OCTET_STRING_TO_TAC (&initialUEMessage_p->tai.tAC, tai.tac);
     DevAssert (initialUEMessage_p->tai.pLMNidentity.size == 3);
-    memcpy (&tai.plmn, initialUEMessage_p->tai.pLMNidentity.buf, initialUEMessage_p->tai.pLMNidentity.size);
+    TBCD_TO_PLMN_T(&initialUEMessage_p->tai.pLMNidentity, &tai.plmn);
 
     // CGI mandatory IE
     DevAssert (initialUEMessage_p->eutran_cgi.pLMNidentity.size == 3);
-    memcpy (&cgi.plmn, initialUEMessage_p->eutran_cgi.pLMNidentity.buf, initialUEMessage_p->eutran_cgi.pLMNidentity.size);
+    TBCD_TO_PLMN_T(&initialUEMessage_p->eutran_cgi.pLMNidentity, &cgi.plmn);
     BIT_STRING_TO_CELL_IDENTITY (&initialUEMessage_p->eutran_cgi.cell_ID, cgi.cell_identity);
 
     if (initialUEMessage_p->presenceMask & S1AP_INITIALUEMESSAGEIES_S_TMSI_PRESENT) {
@@ -155,8 +155,9 @@ s1ap_mme_handle_initial_ue_message (
     } else {
       s_tmsi.m_tmsi = NOT_A_M_TMSI;
     }
+
+    memset(&gummei, 0, sizeof(gummei));
     if (initialUEMessage_p->presenceMask & S1AP_INITIALUEMESSAGEIES_GUMMEI_ID_PRESENT) {
-      memset(&gummei, 0, sizeof(gummei));
       //TODO OCTET_STRING_TO_PLMN(&initialUEMessage_p->gummei_id.pLMN_Identity, gummei.plmn);
       OCTET_STRING_TO_MME_GID(&initialUEMessage_p->gummei_id.mME_Group_ID, gummei.mme_gid);
       OCTET_STRING_TO_MME_CODE(&initialUEMessage_p->gummei_id.mME_Code, gummei.mme_code);
@@ -176,7 +177,7 @@ s1ap_mme_handle_initial_ue_message (
         initialUEMessage_p->nas_pdu.buf,
         initialUEMessage_p->nas_pdu.size,
         initialUEMessage_p->rrC_Establishment_Cause,
-        tai, cgi, s_tmsi, gummei);
+        &tai, &cgi, &s_tmsi, &gummei);
 #else
     s1ap_mme_itti_mme_app_establish_ind (assoc_id,
         ue_ref->enb_ue_s1ap_id,
@@ -184,7 +185,7 @@ s1ap_mme_handle_initial_ue_message (
         initialUEMessage_p->nas_pdu.buf,
         initialUEMessage_p->nas_pdu.size,
         initialUEMessage_p->rrC_Establishment_Cause,
-        tai, cgi, s_tmsi, gummei);
+        &tai, &cgi, &s_tmsi, &gummei);
 #endif
 #endif
   }

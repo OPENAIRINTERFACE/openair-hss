@@ -273,6 +273,15 @@ void mme_ue_context_update_coll_keys(
 int mme_insert_ue_context(mme_ue_context_t * const mme_ue_context,
                          const struct ue_context_s * const ue_context_p);
 
+
+/** \brief TODO WORK HERE Remove UE context unnecessary information.
+ *  mark it as released. It is necessary to keep track of the association (s_tmsi (guti), mme_ue_s1ap_id)
+ * \param ue_context_p The UE context to remove
+ **/
+void mme_notify_ue_context_released (
+    mme_ue_context_t * const mme_ue_context_p,
+    struct ue_context_s *ue_context_p);
+
 /** \brief Remove a UE context of the tree of known UEs.
  * \param ue_context_p The UE context to remove
  **/

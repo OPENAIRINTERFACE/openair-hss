@@ -245,18 +245,23 @@ mme_ue_context_update_coll_keys (
 
   LOG_FUNC_IN(LOG_MME_APP);
 
+  char                                    guti_str[GUTI2STR_MAX_LENGTH];
+
+  GUTI2STR (&ue_context_p->guti, guti_str, GUTI2STR_MAX_LENGTH);
+  LOG_DEBUG (LOG_MME_APP, "Update ue context.enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue context.mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ue context.IMSI " IMSI_64_FMT " ue context.GUTI %s\n",
+             ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->imsi, guti_str);
+  GUTI2STR (guti_p, guti_str, GUTI2STR_MAX_LENGTH);
+  LOG_DEBUG (LOG_MME_APP, "Update ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " GUTI %s\n",
+            ue_context_p, enb_ue_s1ap_id, mme_ue_s1ap_id, imsi, guti_str);
+
   if (ue_context_p->enb_ue_s1ap_id != enb_ue_s1ap_id) {
-    LOG_ERROR (LOG_MME_APP,"@1\n");
     // warning: end of lock far from here!!!
     //pthread_mutex_lock(&mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl->mutex);
     old_enb_id = ue_context_p->enb_ue_s1ap_id;
     h_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_enb_id,  (void **)&same_ue_context_p);
-    LOG_ERROR (LOG_MME_APP,"@2\n");
     h_rc = hashtable_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_ue_s1ap_id, (void *)same_ue_context_p);
-    LOG_ERROR (LOG_MME_APP,"@3\n");
 
     if (HASH_TABLE_OK != h_rc) {
-      LOG_ERROR (LOG_MME_APP,"@4\n");
       AssertFatal( 0 == 1, "Error could not update this ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " -> " ENB_UE_S1AP_ID_FMT " %s\n",
           ue_context_p, ue_context_p->enb_ue_s1ap_id, enb_ue_s1ap_id, hashtable_rc_code2string(h_rc));
 
@@ -266,31 +271,22 @@ mme_ue_context_update_coll_keys (
     }
     ue_context_p->enb_ue_s1ap_id = enb_ue_s1ap_id;
 
-    LOG_ERROR (LOG_MME_APP,"@5\n");
     // update other tables
     if (INVALID_MME_UE_S1AP_ID != ue_context_p->mme_ue_s1ap_id) {
-      LOG_ERROR (LOG_MME_APP,"@6\n");
       h_rc = hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&id);
     }
-    LOG_ERROR (LOG_MME_APP,"@7\n");
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
-      LOG_ERROR (LOG_MME_APP,"@8\n");
       h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void *)(uintptr_t)enb_ue_s1ap_id);
     }
-    LOG_ERROR (LOG_MME_APP,"@9\n");
     //pthread_mutex_unlock(&mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl->mutex);
   }
 
 
-  LOG_ERROR (LOG_MME_APP,"@10\n");
   if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
     if (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id) {
       // new insertion of mme_ue_s1ap_id, not a change in the id
-      LOG_ERROR (LOG_MME_APP,"@11\n");
       h_rc = hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id,  (void **)&id);
-      LOG_ERROR (LOG_MME_APP,"@12\n");
       h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)(uintptr_t)enb_ue_s1ap_id);
-      LOG_ERROR (LOG_MME_APP,"@13\n");
 
       if (HASH_TABLE_OK != h_rc) {
         LOG_ERROR (LOG_MME_APP,
@@ -300,17 +296,12 @@ mme_ue_context_update_coll_keys (
       ue_context_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
     }
 
-    LOG_ERROR (LOG_MME_APP,"@14\n");
     h_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
-    LOG_ERROR (LOG_MME_APP,"@15\n");
     h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void *)(uintptr_t)mme_ue_s1ap_id);
 
-    LOG_ERROR (LOG_MME_APP,"@16\n");
     h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
-    LOG_ERROR (LOG_MME_APP,"@17\n");
     h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void *)(uintptr_t)mme_ue_s1ap_id);
 
-    LOG_ERROR (LOG_MME_APP,"@18\n");
 
     char tmp[1024];
     int size = 1024;
@@ -319,26 +310,22 @@ mme_ue_context_update_coll_keys (
     LOG_ERROR (LOG_MME_APP,"%s\n", tmp);
 
     h_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void **)&id);
-    LOG_ERROR (LOG_MME_APP,"@19\n");
+    if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
+      h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void *)(uintptr_t)mme_ue_s1ap_id);
+    }
     size = 1024;
-
     obj_hashtable_ts_dump_content (mme_ue_context_p->guti_ue_context_htbl, tmp, &size);
     LOG_ERROR (LOG_MME_APP,"%s\n", tmp);
-    h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void *)(uintptr_t)mme_ue_s1ap_id);
   }
 
-  LOG_ERROR (LOG_MME_APP,"@20\n");
   if ((ue_context_p->imsi != imsi)
       || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-    LOG_ERROR (LOG_MME_APP,"@21\n");
     h_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
-      LOG_ERROR (LOG_MME_APP,"@22\n");
       h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void *)(uintptr_t)mme_ue_s1ap_id);
     } else {
       h_rc = HASH_TABLE_KEY_NOT_EXISTS;
     }
-    LOG_ERROR (LOG_MME_APP,"@23\n");
     if (HASH_TABLE_OK != h_rc) {
       LOG_DEBUG (LOG_MME_APP,
           "Error could not update this ue context %p enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " imsi %" SCNu64 ": %s\n",
@@ -347,13 +334,10 @@ mme_ue_context_update_coll_keys (
     ue_context_p->imsi = imsi;
   }
 
-  LOG_ERROR (LOG_MME_APP,"@24\n");
   if ((ue_context_p->mme_s11_teid != mme_s11_teid)
       || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-    LOG_ERROR (LOG_MME_APP,"@25\n");
     h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
-      LOG_ERROR (LOG_MME_APP,"@26\n");
       h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_s11_teid, (void *)(uintptr_t)mme_ue_s1ap_id);
     } else {
       h_rc = HASH_TABLE_KEY_NOT_EXISTS;
@@ -367,7 +351,6 @@ mme_ue_context_update_coll_keys (
     ue_context_p->mme_s11_teid = mme_s11_teid;
   }
 
-  LOG_ERROR (LOG_MME_APP,"@27\n");
   if ((guti_p->gummei.mme_code != ue_context_p->guti.gummei.mme_code)
       || (guti_p->gummei.mme_gid != ue_context_p->guti.gummei.mme_gid)
       || (guti_p->m_tmsi != ue_context_p->guti.m_tmsi)
@@ -377,23 +360,19 @@ mme_ue_context_update_coll_keys (
       || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
 
     // may check guti_p with a kind of instanceof()?
-    LOG_ERROR (LOG_MME_APP,"@28\n");
     h_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, &ue_context_p->guti, sizeof (*guti_p), (void **)&id);
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
-      LOG_ERROR (LOG_MME_APP,"@29\n");
       h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)guti_p, sizeof (*guti_p), (void *)(uintptr_t)mme_ue_s1ap_id);
     } else {
       h_rc = HASH_TABLE_KEY_NOT_EXISTS;
     }
 
-    LOG_ERROR (LOG_MME_APP,"@30\n");
     if (HASH_TABLE_OK != h_rc) {
       char                                    guti_str[GUTI2STR_MAX_LENGTH];
       GUTI2STR (guti_p, guti_str, GUTI2STR_MAX_LENGTH);
       LOG_DEBUG (LOG_MME_APP, "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " guti %s: %s\n",
           ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, guti_str, hashtable_rc_code2string(h_rc));
     }
-    LOG_ERROR (LOG_MME_APP,"@31\n");
     memcpy(&ue_context_p->guti , guti_p, sizeof(ue_context_p->guti));
   }
   LOG_FUNC_OUT(LOG_MME_APP);
@@ -507,10 +486,26 @@ mme_insert_ue_context (
 }
 
 
-
 //------------------------------------------------------------------------------
-void
-mme_remove_ue_context (
+void mme_notify_ue_context_released (
+    mme_ue_context_t * const mme_ue_context_p,
+    struct ue_context_s *ue_context_p)
+{
+  LOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (mme_ue_context_p );
+  DevAssert (ue_context_p );
+  /*
+   * Updating statistics
+   */
+  __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_managed, 1);
+  __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_since_last_stat, 1);
+
+  // TODO HERE free resources
+
+  LOG_FUNC_OUT (LOG_MME_APP);
+}
+//------------------------------------------------------------------------------
+void mme_remove_ue_context (
   mme_ue_context_t * const mme_ue_context_p,
   struct ue_context_s *ue_context_p)
 {
@@ -790,7 +785,8 @@ mme_app_handle_s1ap_ue_context_release_complete (
     LOG_FUNC_OUT (LOG_MME_APP);
   }
 
-  mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+  mme_notify_ue_context_released(&mme_app_desc.mme_ue_contexts, ue_context_p);
+  //mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
   // TODO remove in context GBR bearers
   LOG_FUNC_OUT (LOG_MME_APP);
 }

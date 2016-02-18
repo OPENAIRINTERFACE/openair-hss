@@ -400,14 +400,13 @@ obj_hashtable_ts_dump_content (
 
       while (node) {
         rc2 = snprintf (&buffer_pP[rc], *remaining_bytes_in_buffer_pP, "Hash %x Key %p Key length %d Element %p\n", i, node->key, node->key_size, node->data);
-        node = node->next;
-
         if ((0 > rc2) || (*remaining_bytes_in_buffer_pP < rc2)) {
           PRINT_HASHTABLE (stderr, "Error while dumping hashtable content");
         } else {
           *remaining_bytes_in_buffer_pP -= rc2;
           rc += rc2;
         }
+        node = node->next;
       }
       pthread_mutex_unlock(&hashtblP->lock_nodes[i]);
     }
@@ -526,14 +525,16 @@ obj_hashtable_ts_insert (
   }
 
   if (!(node = MALLOC_CHECK (sizeof (obj_hash_node_t)))) {
+    pthread_mutex_unlock (&hashtblP->lock_nodes[hash]);
     PRINT_HASHTABLE (stderr, "%s(%s,key %p) hash %lx return SYSTEM_ERROR\n", __FUNCTION__, hashtblP->name, keyP, hash);
     return HASH_TABLE_SYSTEM_ERROR;
   }
 
   if (!(node->key = MALLOC_CHECK (key_sizeP))) {
-    PRINT_HASHTABLE (stderr, "%s(%s,key %p) hash %lx return SYSTEM_ERROR\n", __FUNCTION__, hashtblP->name, keyP, hash);
     FREE_CHECK (node);
-    return -1;
+    pthread_mutex_unlock (&hashtblP->lock_nodes[hash]);
+    PRINT_HASHTABLE (stderr, "%s(%s,key %p) hash %lx return SYSTEM_ERROR\n", __FUNCTION__, hashtblP->name, keyP, hash);
+    return HASH_TABLE_SYSTEM_ERROR;
   }
 
 
@@ -819,11 +820,13 @@ obj_hashtable_ts_get (
   while (node) {
     if (node->key == keyP) {
       *dataP = node->data;
+      pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
       PRINT_HASHTABLE (stdout, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
       return HASH_TABLE_OK;
     } else if (node->key_size == key_sizeP) {
       if (memcmp (node->key, keyP, key_sizeP) == 0) {
         *dataP = node->data;
+        pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
         PRINT_HASHTABLE (stdout, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
         return HASH_TABLE_OK;
       }

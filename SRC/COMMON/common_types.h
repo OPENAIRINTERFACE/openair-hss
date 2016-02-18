@@ -61,6 +61,8 @@ typedef teid_t                   s11_teid_t;
 typedef teid_t                   s1u_teid_t;
 
 
+#define IMSI_64_FMT              "%"SCNu64
+
 #define M_TMSI_BIT_MASK          UINT32_MAX
 
 
