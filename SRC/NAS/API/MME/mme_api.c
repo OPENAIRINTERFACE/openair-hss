@@ -449,40 +449,31 @@ mme_api_notify_new_guti (
 
 /*
  *
- *  Name:    mme_api_notify_new_guti()
+ *  Name:    mme_api_notify_end_ue_s1ap_id_changed()
  *
  *  Description: Notify the MME of a change in ue id (reconnection).
  *
  *  Inputs:
  *         old_ueid:      old nas_ue id
  *         new_ueid:      new nas_ue id
+ *         mme_ue_s1ap_id:   nas ue id
  *  Return:    RETURNok, RETURNerror
  *
  */
 int
-mme_api_notify_end_ue_s1ap_id_changed (
-    const enb_ue_s1ap_id_t old_id,
-    const enb_ue_s1ap_id_t new_id,
+mme_api_notified_new_ue_s1ap_id_association (
+    const enb_ue_s1ap_id_t enb_ue_s1ap_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id)
 {
   ue_context_t                           *ue_context = NULL;
 
   LOG_FUNC_IN (LOG_NAS);
-  ue_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, old_id);
+  ue_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_ue_s1ap_id);
 
   if ( ue_context) {
-    LOG_INFO (LOG_NAS,
-        "mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ": enb_ue_s1ap_id changed old id=" ENB_UE_S1AP_ID_FMT " new id =" ENB_UE_S1AP_ID_FMT "\n",
-        mme_ue_s1ap_id, old_id, new_id);
-
-    mme_ue_context_update_coll_keys (
-        &mme_app_desc.mme_ue_contexts,
-        ue_context,
-        new_id,
-        mme_ue_s1ap_id,
-        ue_context->imsi,
-        ue_context->mme_s11_teid,
-        &ue_context->guti);
+    mme_ue_context_notified_new_ue_s1ap_id_association(&mme_app_desc.mme_ue_contexts, ue_context, enb_ue_s1ap_id, mme_ue_s1ap_id);
+    // optimistic return:
+    // TODO return value from mme_ue_context_notified_new_ue_s1ap_id_association
     LOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 

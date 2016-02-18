@@ -397,35 +397,64 @@ mme_app_handle_conn_est_ind (
   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, conn_est_ind_pP->mme_ue_s1ap_id);
 
   if (ue_context_p == NULL) {
-	LOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %06" PRIX32 "/dec%u\n", conn_est_ind_pP->mme_ue_s1ap_id, conn_est_ind_pP->mme_ue_s1ap_id);
-	LOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one\n");
+    LOG_DEBUG (LOG_MME_APP, "Unknown  mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+        conn_est_ind_pP->mme_ue_s1ap_id);
 
+    // S1AP UE ID AND NAS UE ID ARE THE SAME
+    if (INVALID_MME_UE_S1AP_ID == conn_est_ind_pP->mme_ue_s1ap_id) {
+      if (NOT_A_M_TMSI != conn_est_ind_pP->nas.s_tmsi.m_tmsi) {
+        // try to build a Guti
+        GUTI_t   guti = {0};
+        guti.m_tmsi = conn_est_ind_pP->nas.s_tmsi.m_tmsi;
+
+        if (conn_est_ind_pP->is_gummei_valid) {
+          memcpy(&guti.gummei, (const void*)&conn_est_ind_pP->gummei, sizeof(guti.gummei));
+          ue_context_p = mme_ue_context_exists_guti (&mme_app_desc.mme_ue_contexts, &guti);
+          if (ue_context_p) {
+            // update ue_context, the only parameter to update is enb_ue_s1ap_id
+            mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
+                ue_context_p,
+                conn_est_ind_pP->enb_ue_s1ap_id,
+                ue_context_p->mme_ue_s1ap_id,
+                ue_context_p->imsi,
+                ue_context_p->mme_s11_teid,
+                &guti);
+          } else {
+            LOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP, no previous context found with provided S_TMSI, GUMMEI\n");
+          }
+        } else {
+          // TODO: build a GUTI with a built GUMMEI
+          LOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP, no previous context found with provided S_TMSI\n");
+        }
+      }
+    } // no else actually TODO action
+  }
+  // finally create a new ue context if anything found
+  if (!(ue_context_p)) {
+    LOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one\n");
     if ((ue_context_p = mme_create_new_ue_context ()) == NULL) {
       /*
        * Error during ue context MALLOC_CHECK
        */
-      /*
-       * TODO
-       */
       DevMessage ("mme_create_new_ue_context");
       LOG_FUNC_OUT (LOG_MME_APP);
     }
-    // S1AP UE ID AND NAS UE ID ARE THE SAME
-    ue_context_p->mme_ue_s1ap_id = conn_est_ind_pP->mme_ue_s1ap_id; // invalid id
-    ue_context_p->enb_ue_s1ap_id = conn_est_ind_pP->enb_ue_s1ap_id;
+    ue_context_p->mme_ue_s1ap_id    = conn_est_ind_pP->mme_ue_s1ap_id;
+    ue_context_p->enb_ue_s1ap_id    = conn_est_ind_pP->enb_ue_s1ap_id;
+    ue_context_p->sctp_assoc_id_key = conn_est_ind_pP->sctp_assoc_id;
+
     DevAssert (mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p) == 0);
-    // tests
-    ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, conn_est_ind_pP->mme_ue_s1ap_id);
-    AssertFatal (ue_context_p , "mme_ue_context_exists_nas_ue_id Failed");
   }
 
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_CONNECTION_ESTABLISHMENT_IND);
   // do this because of same message types name but not same struct in different .h
-  message_p->ittiMsg.nas_conn_est_ind.nas.ue_id           = conn_est_ind_pP->nas.ue_id;
+  message_p->ittiMsg.nas_conn_est_ind.nas.ue_id           = ue_context_p->mme_ue_s1ap_id;
   message_p->ittiMsg.nas_conn_est_ind.nas.tai             = conn_est_ind_pP->nas.tai;
+  message_p->ittiMsg.nas_conn_est_ind.nas.cgi             = conn_est_ind_pP->nas.cgi;
   message_p->ittiMsg.nas_conn_est_ind.nas.as_cause        = conn_est_ind_pP->nas.as_cause;
   message_p->ittiMsg.nas_conn_est_ind.nas.s_tmsi          = conn_est_ind_pP->nas.s_tmsi;
   memcpy (&message_p->ittiMsg.nas_conn_est_ind.nas.initial_nas_msg, &conn_est_ind_pP->nas.initial_nas_msg, sizeof (conn_est_ind_pP->nas.initial_nas_msg));
+  memcpy (&message_p->ittiMsg.nas_conn_est_ind.transparent, (const void*)&conn_est_ind_pP->transparent, sizeof (message_p->ittiMsg.nas_conn_est_ind.transparent));
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_CONNECTION_ESTABLISHMENT_IND");
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);

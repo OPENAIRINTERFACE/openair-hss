@@ -44,7 +44,6 @@ Description Contains global common definitions
 #include <stdbool.h>
 #include <inttypes.h>
 
-#define NAS_UE_ID_FMT   "0x%08"PRIX32
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

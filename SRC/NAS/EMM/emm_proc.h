@@ -119,8 +119,12 @@ int emm_proc_status(mme_ue_s1ap_id_t ue_id, int emm_cause);
  */
 
 
-int emm_proc_attach_request(mme_ue_s1ap_id_t ue_id, emm_proc_attach_type_t type,
-    bool is_native_ksi, ksi_t ksi, bool is_native_guti, GUTI_t *guti, imsi_t *imsi,
+int emm_proc_attach_request(enb_ue_s1ap_id_t  enb_ue_s1ap_id_key,
+                            mme_ue_s1ap_id_t ue_id,
+                            emm_proc_attach_type_t type,
+                            bool is_native_ksi, ksi_t ksi,
+                            bool is_native_guti, GUTI_t *guti,
+                            imsi_t *imsi,
                             imei_t *imei, tai_t *last_visited_registered_tai,
                             const tai_t              * const originating_tai,
                             int eea, int eia, int ucs2, int uea, int uia, int gea,

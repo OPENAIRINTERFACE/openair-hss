@@ -569,7 +569,7 @@ esm_ebr_set_status (
     if (status != old_status) {
       LOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Status of EPS bearer context %d changed:" " %s ===> %s\n",
           ebi, _esm_ebr_state_str[old_status], _esm_ebr_state_str[status]);
-      MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 ESM state %s => %s " NAS_UE_ID_FMT " ",
+      MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 ESM state %s => %s " MME_UE_S1AP_ID_FMT " ",
           _esm_ebr_state_str[old_status], _esm_ebr_state_str[status], ctx->ue_id);
       ebr_ctx->status = status;
       LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);

@@ -129,6 +129,7 @@ emm_recv_status (
  ***************************************************************************/
 int
 emm_recv_attach_request (
+  const enb_ue_s1ap_id_t enb_ue_s1ap_id_key,
   const mme_ue_s1ap_id_t ue_id,
   const tai_t              * const originating_tai,
   const attach_request_msg * const msg,
@@ -296,7 +297,7 @@ emm_recv_attach_request (
     }
   }
 
-  rc = emm_proc_attach_request (ue_id, type,
+  rc = emm_proc_attach_request (enb_ue_s1ap_id_key, ue_id, type,
                                 msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED,
                                 msg->naskeysetidentifier.naskeysetidentifier,
                                 msg->oldgutitype != GUTI_MAPPED, p_guti, p_imsi, p_imei,

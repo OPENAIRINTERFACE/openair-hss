@@ -243,7 +243,7 @@ emm_proc_authentication (
       /*
        * Notify EMM that common procedure has been initiated
        */
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " NAS_UE_ID_FMT " (authentication)", ue_id);
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " (authentication)", ue_id);
       emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
@@ -289,7 +289,7 @@ emm_proc_authentication_complete (
   emm_sap_t                               emm_sap = {0};
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Authentication complete (ue_id=" NAS_UE_ID_FMT ", cause=%d)\n", ue_id, emm_cause);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Authentication complete (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n", ue_id, emm_cause);
   /*
    * Release retransmission timer paramaters
    */
@@ -317,9 +317,9 @@ emm_proc_authentication_complete (
     /*
      * Stop timer T3460
      */
-    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d) UE " NAS_UE_ID_FMT "\n", emm_ctx->T3460.id, emm_ctx->ue_id);
+    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d) UE " MME_UE_S1AP_ID_FMT "\n", emm_ctx->T3460.id, emm_ctx->ue_id);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ue_id);
+    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
   }
 
   if (emm_cause == EMM_CAUSE_SUCCESS) {
@@ -344,7 +344,7 @@ emm_proc_authentication_complete (
        * USIM has detected a mismatch in SQN.
        * * * * Ask for a new vector.
        */
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "SQN SYNCH_FAILURE ue id " NAS_UE_ID_FMT " ", ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "SQN SYNCH_FAILURE ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - USIM has detected a mismatch in SQN Ask for a new vector\n");
       nas_itti_auth_info_req (ue_id, emm_ctx->imsi, 0, res->value);
       rc = RETURNok;
@@ -362,7 +362,7 @@ emm_proc_authentication_complete (
       /*
        * Notify EMM that the authentication procedure failed
        */
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " ", ue_id);
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
       emm_sap.u.emm_reg.ue_id = ue_id;
       emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -372,7 +372,7 @@ emm_proc_authentication_complete (
     /*
      * Notify EMM that the authentication procedure successfully completed
      */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF ue id " NAS_UE_ID_FMT " ", ue_id);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     LOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Notify EMM that the authentication procedure successfully completed\n");
     emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
     emm_sap.u.emm_reg.ue_id = ue_id;
@@ -512,7 +512,7 @@ _authentication_request (
    * Setup EPS NAS security data
    */
   emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, false, true);
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_SECURITY_REQ ue id " NAS_UE_ID_FMT " ", data->ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_SECURITY_REQ ue id " MME_UE_S1AP_ID_FMT " ", data->ue_id);
   rc = emm_sap_send (&emm_sap);
 
   if (rc != RETURNerror) {
@@ -522,13 +522,13 @@ _authentication_request (
          * Re-start T3460 timer
          */
         emm_ctx->T3460.id = nas_timer_restart (emm_ctx->T3460.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 restarted UE " NAS_UE_ID_FMT " ", data->ue_id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 restarted UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       } else {
         /*
          * Start T3460 timer
          */
         emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, _authentication_t3460_handler, data);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " NAS_UE_ID_FMT " ", data->ue_id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       }
     }
 
@@ -606,7 +606,7 @@ _authentication_abort (
     unsigned int                            ue_id = data->ue_id;
     int                                     notify_failure = data->notify_failure;
 
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort authentication procedure " "(ue_id=" NAS_UE_ID_FMT ")\n", ue_id);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort authentication procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
     emm_ctx = emm_data_context_get (&_emm_data, ue_id);
 
     if (emm_ctx) {
@@ -616,7 +616,7 @@ _authentication_abort (
       if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
         LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
         emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " NAS_UE_ID_FMT " ", data->ue_id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       }
     }
 

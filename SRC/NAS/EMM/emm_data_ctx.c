@@ -72,16 +72,17 @@ emm_data_context_get_by_guti (
     if (HASH_TABLE_OK == h_rc) {
       LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " %s", emm_ue_id, guti_str);
       return emm_data_context_get (emm_data, (const hash_key_t)emm_ue_id);
+    } else {
+      emm_ue_id = INVALID_MME_UE_S1AP_ID;
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti %s failed\n", guti_str);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti PLMN     %01x%01x%01x%01x%01x%01x failed\n",
+                 guti->gummei.plmn.mcc_digit1, guti->gummei.plmn.mcc_digit2, guti->gummei.plmn.mnc_digit3,
+                 guti->gummei.plmn.mnc_digit1, guti->gummei.plmn.mnc_digit2, guti->gummei.plmn.mcc_digit3);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti mme_gid  %04x failed\n", guti->gummei.mme_gid);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti mme_code %01x failed\n", guti->gummei.mme_code);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti m_tmsi   %08x failed\n", guti->m_tmsi);
     }
-
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " %s failed\n", emm_ue_id, guti_str);
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " PLMN    %01x%01x%01x%01x%01x%01x failed\n",
-               emm_ue_id, guti->gummei.plmn.mcc_digit1, guti->gummei.plmn.mcc_digit2, guti->gummei.plmn.mnc_digit3, guti->gummei.plmn.mnc_digit1, guti->gummei.plmn.mnc_digit2, guti->gummei.plmn.mcc_digit3);
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " mme_gid  %04x failed\n", emm_ue_id, guti->gummei.mme_gid);
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " mme_code %01x failed\n", emm_ue_id, guti->gummei.mme_code);
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " m_tmsi  %08x failed\n", emm_ue_id, guti->m_tmsi);
   }
-
   return NULL;
 }
 

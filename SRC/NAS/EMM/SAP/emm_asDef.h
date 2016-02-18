@@ -147,6 +147,7 @@ typedef struct emm_as_EPS_identity_s {
 } emm_as_EPS_identity_t;
 
 typedef struct emm_as_establish_s {
+  enb_ue_s1ap_id_t       enb_ue_s1ap_id_key;          /* UE lower layer identifier in eNB  */
   mme_ue_s1ap_id_t       ue_id;                       /* UE lower layer identifier         */
   emm_as_EPS_identity_t  eps_id;                      /* UE's EPS mobile identity      */
   emm_as_security_data_t sctx;                        /* EPS NAS security context      */

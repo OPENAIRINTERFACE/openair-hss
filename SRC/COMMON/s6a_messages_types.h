@@ -26,8 +26,8 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-#ifndef S6A_MESSAGES_TYPES_H_
-#define S6A_MESSAGES_TYPES_H_
+#ifndef FILE_S6A_MESSAGES_TYPES_SEEN
+#define FILE_S6A_MESSAGES_TYPES_SEEN
 
 #define AUTS_LENGTH 14
 
@@ -91,4 +91,4 @@ typedef struct s6a_auth_info_ans_s {
   authentication_info_t auth_info;
 } s6a_auth_info_ans_t;
 
-#endif /* S6A_MESSAGES_TYPES_H_ */
+#endif /* FILE_S6A_MESSAGES_TYPES_SEEN */

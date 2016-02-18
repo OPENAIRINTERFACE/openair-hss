@@ -27,8 +27,8 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef ASN1_CONVERSIONS_H_
-#define ASN1_CONVERSIONS_H_
+#ifndef FILE_ASN1_CONVERSIONS_SEEN
+#define FILE_ASN1_CONVERSIONS_SEEN
 
 #include "BIT_STRING.h"
 #include "assertions.h"
@@ -118,4 +118,4 @@ static inline uint64_t BIT_STRING_to_uint64(BIT_STRING_t *asn) {
   return result;
 }
 
-#endif
+#endif /* FILE_ASN1_CONVERSIONS_SEEN */

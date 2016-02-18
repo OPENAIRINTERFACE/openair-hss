@@ -128,10 +128,8 @@ mme_api_notify_new_guti (
   const mme_ue_s1ap_id_t ueid,
   GUTI_t * const guti);
 
-int
-mme_api_notify_end_ue_s1ap_id_changed (
-    const enb_ue_s1ap_id_t old_id,
-    const enb_ue_s1ap_id_t new_id,
+int mme_api_notified_new_ue_s1ap_id_association (
+    const enb_ue_s1ap_id_t enb_ue_s1ap_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
 int mme_api_identify_guti(const GUTI_t *guti, auth_vector_t *vector);

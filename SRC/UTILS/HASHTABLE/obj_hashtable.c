@@ -384,7 +384,8 @@ obj_hashtable_ts_dump_content (
 {
   obj_hash_node_t                        *node = NULL;
   unsigned int                            i = 0;
-  int                                     rc;
+  int                                     rc = 0;
+  int                                     rc2 = 0;
 
   if (hashtblP == NULL) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
@@ -398,19 +399,21 @@ obj_hashtable_ts_dump_content (
       node = hashtblP->nodes[i];
 
       while (node) {
-        rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "Hash %x Key %p Element %p\n", i, node->key, node->data);
+        rc2 = snprintf (&buffer_pP[rc], *remaining_bytes_in_buffer_pP, "Hash %x Key %p Key length %d Element %p\n", i, node->key, node->key_size, node->data);
         node = node->next;
 
-        if ((0 > rc) || (*remaining_bytes_in_buffer_pP < rc)) {
+        if ((0 > rc2) || (*remaining_bytes_in_buffer_pP < rc2)) {
           PRINT_HASHTABLE (stderr, "Error while dumping hashtable content");
         } else {
-          *remaining_bytes_in_buffer_pP -= rc;
+          *remaining_bytes_in_buffer_pP -= rc2;
+          rc += rc2;
         }
       }
       pthread_mutex_unlock(&hashtblP->lock_nodes[i]);
     }
     i += 1;
   }
+  buffer_pP[rc] = '\0';
 
   return HASH_TABLE_OK;
 }
@@ -476,7 +479,7 @@ obj_hashtable_insert (
   }
 
   hashtblP->nodes[hash] = node;
-  hashtblP->num_elements += 1;
+  __sync_fetch_and_add (&hashtblP->num_elements, 1);
   PRINT_HASHTABLE (stdout, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
   return HASH_TABLE_OK;
 }
@@ -730,6 +733,7 @@ obj_hashtable_ts_remove (
       *dataP = node->data;
       FREE_CHECK (node);
       __sync_fetch_and_sub (&hashtblP->num_elements, 1);
+      pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
       PRINT_HASHTABLE (stdout, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, hashtblP->name, keyP, hash);
       return HASH_TABLE_OK;
     }

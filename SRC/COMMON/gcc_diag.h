@@ -28,8 +28,8 @@
  */
 
 
-#ifndef GCC_DIAG_H_
-#define GCC_DIAG_H_
+#ifndef FILE_GCC_DIAG_SEEN
+#define FILE_GCC_DIAG_SEEN
 
 #if ((__GNUC__ * 100) + __GNUC_MINOR__) >= 402
 # define OAI_GCC_DIAG_STR(s) #s
@@ -48,4 +48,4 @@
 # define OAI_GCC_DIAG_OFF(x)
 # define OAI_GCC_DIAG_ON(x)
 #endif
-#endif
+#endif /* FILE_GCC_DIAG_SEEN */

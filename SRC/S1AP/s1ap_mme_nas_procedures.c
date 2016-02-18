@@ -33,6 +33,7 @@
 #include "s1ap_mme_retransmission.h"
 #include "s1ap_mme_itti_messaging.h"
 #include "s1ap_mme.h"
+#include "hashtable.h"
 #include "intertask_interface.h"
 #include "timer.h"
 #include "assertions.h"
@@ -50,6 +51,7 @@
 //static bool                             mme_ue_s1ap_id_has_wrapped = false;
 
 extern const char                      *s1ap_direction2String[];
+extern hash_table_ts_t g_s1ap_mme_id2assoc_id_coll; // contains sctp association id, key is mme_ue_s1ap_id;
 
 
 //------------------------------------------------------------------------------
@@ -83,8 +85,9 @@ s1ap_mme_handle_initial_ue_message (
 
   if (ue_ref == NULL) {
     tai_t                                   tai = {0};
-    gummei_t                                gummei; // initialized after
+    gummei_t                                gummei = {0}; // initialized after
     as_stmsi_t                              s_tmsi = {0};
+    cgi_t                                   cgi = {0};
 
     /*
      * This UE eNB Id has currently no known s1 association.
@@ -141,6 +144,11 @@ s1ap_mme_handle_initial_ue_message (
     DevAssert (initialUEMessage_p->tai.pLMNidentity.size == 3);
     memcpy (&tai.plmn, initialUEMessage_p->tai.pLMNidentity.buf, initialUEMessage_p->tai.pLMNidentity.size);
 
+    // CGI mandatory IE
+    DevAssert (initialUEMessage_p->eutran_cgi.pLMNidentity.size == 3);
+    memcpy (&cgi.plmn, initialUEMessage_p->eutran_cgi.pLMNidentity.buf, initialUEMessage_p->eutran_cgi.pLMNidentity.size);
+    BIT_STRING_TO_CELL_IDENTITY (&initialUEMessage_p->eutran_cgi.cell_ID, cgi.cell_identity);
+
     if (initialUEMessage_p->presenceMask & S1AP_INITIALUEMESSAGEIES_S_TMSI_PRESENT) {
       OCTET_STRING_TO_MME_CODE(&initialUEMessage_p->s_tmsi.mMEC, s_tmsi.mme_code);
       OCTET_STRING_TO_M_TMSI(&initialUEMessage_p->s_tmsi.m_TMSI, s_tmsi.m_tmsi);
@@ -162,17 +170,21 @@ s1ap_mme_handle_initial_ue_message (
         initialUEMessage_p->rrC_Establishment_Cause, tai_tac);
 #else
 #if ITTI_LITE
-    itf_mme_app_ll_initial_ue_message(ue_ref->enb_ue_s1ap_id, ue_ref->mme_ue_s1ap_id,
+    itf_mme_app_ll_initial_ue_message(assoc_id,
+        ue_ref->enb_ue_s1ap_id,
+        ue_ref->mme_ue_s1ap_id,
         initialUEMessage_p->nas_pdu.buf,
         initialUEMessage_p->nas_pdu.size,
         initialUEMessage_p->rrC_Establishment_Cause,
-        tai, s_tmsi);
+        tai, cgi, s_tmsi, gummei);
 #else
-    s1ap_mme_itti_mme_app_establish_ind (ue_ref->enb_ue_s1ap_id, ue_ref->mme_ue_s1ap_id,
+    s1ap_mme_itti_mme_app_establish_ind (assoc_id,
+        ue_ref->enb_ue_s1ap_id,
+        ue_ref->mme_ue_s1ap_id,
         initialUEMessage_p->nas_pdu.buf,
         initialUEMessage_p->nas_pdu.size,
         initialUEMessage_p->rrC_Establishment_Cause,
-        tai, s_tmsi);
+        tai, cgi, s_tmsi, gummei);
 #endif
 #endif
   }
@@ -298,16 +310,31 @@ s1ap_mme_handle_nas_non_delivery (
 //------------------------------------------------------------------------------
 int
 s1ap_generate_downlink_nas_transport (
+  const enb_ue_s1ap_id_t enb_ue_s1ap_id,
   const mme_ue_s1ap_id_t ue_id,
   void *const data,
-  const uint32_t size)
+  const size_t size)
 {
   ue_description_t                       *ue_ref = NULL;
   uint8_t                                *buffer_p = NULL;
   uint32_t                                length = 0;
+  void                                   *id = NULL;
 
   LOG_FUNC_IN (LOG_S1AP);
-  if ((ue_ref = s1ap_is_ue_mme_id_in_list (ue_id)) == NULL) {
+  hashtable_ts_get (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t)ue_id, (void **)&id);
+  if (id) {
+    sctp_assoc_id_t sctp_assoc_id = (sctp_assoc_id_t)(uintptr_t)id;
+    enb_description_t  *enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
+    if (enb_ref) {
+      ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
+    }
+  }
+  // TODO remove soon:
+  if (!ue_ref) {
+    ue_ref = s1ap_is_ue_mme_id_in_list (ue_id);
+  }
+  // finally!
+  if (!ue_ref) {
     /*
      * If the UE-associated logical S1-connection is not established,
      * * * * the MME shall allocate a unique MME UE S1AP ID to be used for the UE.
@@ -364,7 +391,7 @@ s1ap_handle_conn_est_cnf (
    * * * * At least one bearer has been established. We can now send s1ap initial context setup request
    * * * * message to eNB.
    */
-  uint8_t                                 offset = 0;
+  uint                                    offset = 0;
   uint8_t                                *buffer_p = NULL;
   uint32_t                                length = 0;
   ue_description_t                       *ue_ref = NULL;

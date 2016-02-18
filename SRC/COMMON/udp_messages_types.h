@@ -26,8 +26,8 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-#ifndef UDP_MESSAGES_TYPES_H_
-#define UDP_MESSAGES_TYPES_H_
+#ifndef FILE_UDP_MESSAGES_TYPES_SEEN
+#define FILE_UDP_MESSAGES_TYPES_SEEN
 
 #define UDP_INIT(mSGpTR)    (mSGpTR)->ittiMsg.udp_init
 
@@ -51,4 +51,4 @@ typedef struct {
   uint32_t  peer_port;
 } udp_data_ind_t;
 
-#endif /* UDP_MESSAGES_TYPES_H_ */
+#endif /* FILE_UDP_MESSAGES_TYPES_SEEN */

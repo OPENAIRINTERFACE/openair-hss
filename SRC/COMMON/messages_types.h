@@ -27,8 +27,8 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef MESSAGES_TYPES_H_
-#define MESSAGES_TYPES_H_
+#ifndef FILE_MESSAGES_TYPES_SEEN
+#define FILE_MESSAGES_TYPES_SEEN
 
 #include "intertask_messages_types.h"
 #include "timer_messages_types.h"
@@ -46,4 +46,4 @@
 #include "udp_messages_types.h"
 #include "mme_app_messages_types.h"
 
-#endif /* MESSAGES_TYPES_H_ */
+#endif /* FILE_MESSAGES_TYPES_SEEN */

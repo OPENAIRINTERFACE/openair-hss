@@ -156,6 +156,11 @@ void *mme_app_thread (
       }
       break;
 
+    case NAS_DOWNLINK_DATA_REQ: {
+      mme_app_handle_nas_dl_req (&received_message_p->ittiMsg.nas_dl_data_req);
+      }
+      break;
+
     default:{
     	LOG_DEBUG (LOG_MME_APP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
         AssertFatal (0, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
@@ -180,7 +185,7 @@ mme_app_init (
   mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_tun11_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, NULL, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_enb_ue_s1ap-id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (64, NULL, obj_hashtable_no_free_key_callback, hash_free_int_func, "mme_app_guti_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (64, NULL, hash_free_int_func, hash_free_int_func, "mme_app_guti_ue_context_htbl");
 
   /*
    * Create the thread associated with MME applicative layer

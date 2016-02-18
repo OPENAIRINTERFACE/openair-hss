@@ -58,8 +58,10 @@ nas_intertask_interface (
         nas_establish_ind_t                    *nas_est_ind_p = NULL;
 
         nas_est_ind_p = &received_message_p->ittiMsg.nas_conn_est_ind.nas;
-        nas_proc_establish_ind (nas_est_ind_p->ue_id,
+        nas_proc_establish_ind (received_message_p->ittiMsg.nas_conn_est_ind.transparent.enb_ue_s1ap_id,
+            nas_est_ind_p->ue_id,
             nas_est_ind_p->tai,
+            nas_est_ind_p->cgi,
             nas_est_ind_p->initial_nas_msg.data,
             nas_est_ind_p->initial_nas_msg.length);
       }

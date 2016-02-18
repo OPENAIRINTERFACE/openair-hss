@@ -77,4 +77,6 @@ void mme_app_handle_initial_context_setup_rsp(const itti_mme_app_initial_context
 
 bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, void *unused_param_pP, void **unused_result_pP);
 
+int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);
+
 #endif /* MME_APP_DEFS_H_ */

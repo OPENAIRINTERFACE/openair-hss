@@ -136,6 +136,13 @@ ue_description_t* s1ap_is_ue_enb_id_in_list(enb_description_t *enb_ref,
 ue_description_t* s1ap_is_ue_mme_id_in_list(const mme_ue_s1ap_id_t ue_mme_id);
 ue_description_t* s1ap_is_s11_sgw_teid_in_list(const s11_teid_t teid);
 
+/** \brief associate mainly 2(3) identifiers in S1AP layer: {mme_ue_s1ap_id_t, sctp_assoc_id (,enb_ue_s1ap_id)}
+ **/
+void s1ap_notified_new_ue_mme_s1ap_id_association (
+    const sctp_assoc_id_t  sctp_assoc_id,
+    const enb_ue_s1ap_id_t enb_ue_s1ap_id,
+    const mme_ue_s1ap_id_t mme_ue_s1ap_id);
+
 /** \brief Allocate and add to the list a new eNB descriptor
  * @returns Reference to the new eNB element in list
  **/

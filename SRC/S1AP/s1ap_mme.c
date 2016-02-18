@@ -55,6 +55,7 @@ bool                                    hss_associated = false;
 uint32_t                                nb_enb_associated = 0;
 
 hash_table_ts_t g_s1ap_enb_coll = {0}; // contains eNB_description_s, key is eNB_description_s.enb_id (uint32_t);
+hash_table_ts_t g_s1ap_mme_id2assoc_id_coll = {0}; // contains sctp association id, key is mme_ue_s1ap_id;
 
 static int                              indent = 0;
  void *s1ap_mme_thread (void *args);
@@ -149,7 +150,7 @@ s1ap_mme_thread (
          * New message received from NAS task.
          * * * * This corresponds to a S1AP downlink nas transport message.
          */
-        s1ap_generate_downlink_nas_transport (NAS_DL_DATA_REQ (received_message_p).ue_id, NAS_DL_DATA_REQ (received_message_p).nas_msg.data, NAS_DL_DATA_REQ (received_message_p).nas_msg.length);
+        s1ap_generate_downlink_nas_transport (NAS_DL_DATA_REQ (received_message_p).enb_ue_s1ap_id, NAS_DL_DATA_REQ (received_message_p).ue_id, NAS_DL_DATA_REQ (received_message_p).nas_msg.data, NAS_DL_DATA_REQ (received_message_p).nas_msg.length);
       }
       break;
 
@@ -207,6 +208,9 @@ s1ap_mme_init (
   LOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
   // 16 entries for n eNB.
   hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, 16, NULL, FREE_CHECK, "s1ap_eNB_coll");
+  if (!h) return RETURNerror;
+
+  h = hashtable_ts_init (&g_s1ap_mme_id2assoc_id_coll, 128, NULL, hash_free_int_func, "s1ap_mme_id2assoc_id_coll");
   if (!h) return RETURNerror;
 
   if (itti_create_task (TASK_S1AP, &s1ap_mme_thread, NULL) < 0) {
@@ -366,7 +370,7 @@ bool s1ap_ue_compare_by_mme_ue_id_cb (const hash_key_t keyP, void * elementP, vo
   ue_description_t                       *ue_ref           = (ue_description_t*)elementP;
   if ( *mme_ue_s1ap_id_p == ue_ref->mme_ue_s1ap_id ) {
     *resultP = elementP;
-    //LOG_TRACE(LOG_S1AP, "Found ue_ref %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", ue_ref, ue_ref->mme_ue_s1ap_id);
+    LOG_TRACE(LOG_S1AP, "Found ue_ref %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", ue_ref, ue_ref->mme_ue_s1ap_id);
     return true;
   }
   return false;
@@ -379,7 +383,7 @@ bool s1ap_enb_find_ue_by_mme_ue_id_cb (const hash_key_t keyP, void * elementP, v
 
   hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&enb_ref->ue_coll, s1ap_ue_compare_by_mme_ue_id_cb, parameterP, resultP);
   if (*resultP) {
-    //LOG_TRACE(LOG_S1AP, "Found ue_ref %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", *resultP, ((ue_description_t*)(*resultP))->mme_ue_s1ap_id);
+    LOG_TRACE(LOG_S1AP, "Found ue_ref %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", *resultP, ((ue_description_t*)(*resultP))->mme_ue_s1ap_id);
     return true;
   }
   return false;
@@ -417,7 +421,7 @@ s1ap_is_ue_mme_id_in_list (
   mme_ue_s1ap_id_t                       *mme_ue_s1ap_id_p = (mme_ue_s1ap_id_t*)&mme_ue_s1ap_id;
 
   hashtable_ts_apply_callback_on_elements(&g_s1ap_enb_coll, s1ap_enb_find_ue_by_mme_ue_id_cb, (void*)mme_ue_s1ap_id_p, (void**)&ue_ref);
-  //LOG_TRACE(LOG_S1AP, "Return ue_ref %p \n", ue_ref);
+  LOG_TRACE(LOG_S1AP, "Return ue_ref %p \n", ue_ref);
   return ue_ref;
 }
 
@@ -431,6 +435,28 @@ s1ap_is_s11_sgw_teid_in_list (
 
   hashtable_ts_apply_callback_on_elements(&g_s1ap_enb_coll, s1ap_enb_find_ue_by_s11_sgw_teid_cb, (void *)teid_id_p, (void**)&ue_ref);
   return ue_ref;
+}
+
+//------------------------------------------------------------------------------
+void s1ap_notified_new_ue_mme_s1ap_id_association (
+    const sctp_assoc_id_t  sctp_assoc_id,
+    const enb_ue_s1ap_id_t enb_ue_s1ap_id,
+    const mme_ue_s1ap_id_t mme_ue_s1ap_id)
+{
+  enb_description_t   *enb_ref =  s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
+  if (enb_ref) {
+    ue_description_t   *ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
+    if (ue_ref) {
+      ue_ref->mme_ue_s1ap_id = mme_ue_s1ap_id;
+      hashtable_rc_t  h_rc = hashtable_ts_insert (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t) mme_ue_s1ap_id, (void *)(uintptr_t)sctp_assoc_id);
+      LOG_DEBUG(LOG_S1AP, "Associated  ctp_assoc_id %d, enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ":%s \n",
+          sctp_assoc_id, enb_ue_s1ap_id, mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
+      return;
+    }
+    LOG_DEBUG(LOG_S1AP, "Could not find  ue  with enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
+    return;
+  }
+  LOG_DEBUG(LOG_S1AP, "Could not find  eNB with sctp_assoc_id %d \n", sctp_assoc_id);
 }
 
 //------------------------------------------------------------------------------

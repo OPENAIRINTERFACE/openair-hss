@@ -98,7 +98,7 @@ _emm_cn_authentication_res (
   emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
 
   if (emm_ctx == NULL) {
-    LOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " NAS_UE_ID_FMT "...\n", msg->ue_id);
+    LOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
     LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
@@ -155,7 +155,7 @@ _emm_cn_deregister_ue (
   int                                     rc = RETURNok;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - " "TODO deregister UE " NAS_UE_ID_FMT ", following procedure is a test\n", ue_id);
+  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - " "TODO deregister UE " MME_UE_S1AP_ID_FMT ", following procedure is a test\n", ue_id);
   emm_proc_detach_request (ue_id, EMM_DETACH_TYPE_EPS /* ??? emm_proc_detach_type_t */ ,
                            0 /*switch_off */ , 0 /*native_ksi */ , 0 /*ksi */ ,
                            NULL /*guti */ , NULL /*imsi */ , NULL /*imei */ );
@@ -188,7 +188,7 @@ _emm_cn_pdn_connectivity_res (
   emm_ctx_p = emm_data_context_get (&_emm_data, msg_pP->ue_id);
 
   if (emm_ctx_p == NULL) {
-    LOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " NAS_UE_ID_FMT "...\n", msg_pP->ue_id);
+    LOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
     LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 

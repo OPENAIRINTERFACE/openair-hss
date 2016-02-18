@@ -47,6 +47,7 @@ typedef uint32_t                 sctp_assoc_id_t;
 #define ENB_UE_S1AP_ID_MASK      0x00FFFFFF
 typedef uint32_t                 enb_ue_s1ap_id_t;
 #define ENB_UE_S1AP_ID_FMT       "0x%06"PRIX32
+#define INVALID_ENB_UE_S1AP_ID   0xFFFFFFFF
 
 typedef uint32_t                 mme_ue_s1ap_id_t;
 #define MME_UE_S1AP_ID_FMT       "0x%08"PRIX32

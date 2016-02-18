@@ -122,7 +122,7 @@ esm_proc_pdn_disconnect_request (
   int                                     pid = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" NAS_UE_ID_FMT ", pti=%d)\n", ctx->ue_id, pti);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n", ctx->ue_id, pti);
 
   /*
    * Get UE's ESM context
@@ -179,7 +179,7 @@ esm_proc_pdn_disconnect_accept (
   int *esm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ue_id=" NAS_UE_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
   /*
    * Release the connectivity with the requested PDN
    */
@@ -237,7 +237,7 @@ esm_proc_pdn_disconnect_reject (
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect not accepted by the network " "(ue_id=" NAS_UE_ID_FMT ")\n", ctx->ue_id);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect not accepted by the network " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ctx->ue_id);
   /*
    * Notity EMM that ESM PDU has to be forwarded to lower layers
    */

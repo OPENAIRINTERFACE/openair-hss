@@ -171,7 +171,7 @@ esm_proc_eps_bearer_context_deactivate (
     LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
   }
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
 
   if ((ctx ) && (*pid < ESM_DATA_PDN_MAX)) {
     if (ctx->esm_data_ctx.pdn[*pid].pid != *pid) {
@@ -241,7 +241,7 @@ esm_proc_eps_bearer_context_deactivate_request (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate EPS bearer context deactivation " "(ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Send deactivate EPS bearer context request message and
    * * * * start timer T3495
@@ -299,7 +299,7 @@ esm_proc_eps_bearer_context_deactivate_accept (
   int                                     rc;
   int                                     pid = RETURNerror;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "accepted by the UE (ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Stop T3495 timer if running
    */
@@ -374,7 +374,7 @@ _eps_bearer_deactivate_t3495_handler (
    * Increment the retransmission counter
    */
   data->count += 1;
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3495 timer expired (ue_id=" NAS_UE_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3495 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
       data->ue_id, data->ebi, data->count);
 
   if (data->count < EPS_BEARER_DEACTIVATE_COUNTER_MAX) {

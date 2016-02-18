@@ -44,8 +44,8 @@
 #include "hashtable.h"
 #include "obj_hashtable.h"
 
-#ifndef MME_APP_UE_CONTEXT_H_
-#define MME_APP_UE_CONTEXT_H_
+#ifndef FILE_MME_APP_UE_CONTEXT_SEEN
+#define FILE_MME_APP_UE_CONTEXT_SEEN
 
 typedef enum {
   ECM_IDLE,
@@ -105,6 +105,7 @@ typedef struct ue_context_s {
 
   enb_ue_s1ap_id_t       enb_ue_s1ap_id:24;
   mme_ue_s1ap_id_t       mme_ue_s1ap_id;
+  sctp_assoc_id_t        sctp_assoc_id_key;
 
   uint8_t                nb_of_vectors;               // updated by S6A AUTHENTICATION ANSWER
   /* List of authentication vectors for E-UTRAN */
@@ -233,6 +234,19 @@ ue_context_t *mme_ue_context_exists_guti(mme_ue_context_t * const mme_ue_context
     const GUTI_t * const guti);
 
 
+/** \brief Create the association between mme_ue_s1ap_id and an UE context (enb_ue_s1ap_id key)
+ * \param mme_ue_context_p The MME context
+ * \param ue_context_p The UE context
+ * \param enb_ue_s1ap_id The UE id identifier used in S1AP and MME_APP
+ * \param mme_ue_s1ap_id The UE id identifier used in MME_APP and NAS
+ **/
+void
+mme_ue_context_notified_new_ue_s1ap_id_association (
+  mme_ue_context_t * const mme_ue_context_p,
+  ue_context_t   * const ue_context_p,
+  const enb_ue_s1ap_id_t enb_ue_s1ap_id,
+  const mme_ue_s1ap_id_t mme_ue_s1ap_id);
+
 /** \brief Update an UE context by selecting the provided guti
  * \param mme_ue_context_p The MME context
  * \param ue_context_p The UE context
@@ -278,6 +292,6 @@ void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
 
-#endif /* MME_APP_UE_CONTEXT_H_ */
+#endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 
 /* @} */

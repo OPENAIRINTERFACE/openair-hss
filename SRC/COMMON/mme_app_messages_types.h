@@ -26,8 +26,8 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-#ifndef MME_APP_MESSAGES_TYPES_H_
-#define MME_APP_MESSAGES_TYPES_H_
+#ifndef FILE_MME_APP_MESSAGES_TYPES_SEEN
+#define FILE_MME_APP_MESSAGES_TYPES_SEEN
 
 
 #define MME_APP_CONNECTION_ESTABLISHMENT_IND(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_ind
@@ -37,12 +37,15 @@
 typedef struct itti_mme_app_connection_establishment_ind_s {
   mme_ue_s1ap_id_t    mme_ue_s1ap_id;
   enb_ue_s1ap_id_t    enb_ue_s1ap_id;
-  nas_establish_ind_t nas;
+  sctp_assoc_id_t     sctp_assoc_id; // key stored in MME_APP for MME_APP forward NAS response to S1AP
 
+  nas_establish_ind_t nas;
+  gummei_t            gummei;
   /* Transparent message from s1ap to be forwarded to MME_APP or
    * to S1AP if connection establishment is rejected by NAS.
    */
   itti_s1ap_initial_ue_message_t transparent;
+  bool                is_gummei_valid;
 } itti_mme_app_connection_establishment_ind_t;
 
 typedef struct itti_mme_app_connection_establishment_cnf_s {
@@ -69,4 +72,4 @@ typedef struct itti_mme_app_initial_context_setup_rsp_s {
 } itti_mme_app_initial_context_setup_rsp_t;
 
 
-#endif /* MME_APP_MESSAGES_TYPES_H_ */
+#endif /* FILE_MME_APP_MESSAGES_TYPES_SEEN */

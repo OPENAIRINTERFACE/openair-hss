@@ -47,9 +47,9 @@ int nas_itti_protected_msg(
 #include "conversions.h"
 
 int nas_itti_dl_data_req(
-  const uint32_t ue_idP,
-  void *const    data_pP,
-  const size_t   lengthP);
+  const mme_ue_s1ap_id_t ue_idP,
+  void         *const    data_pP,
+  const size_t           lengthP);
 
 static inline void nas_itti_pdn_connectivity_req(
   int                     ptiP,

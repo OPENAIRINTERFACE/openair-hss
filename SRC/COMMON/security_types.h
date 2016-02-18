@@ -42,8 +42,8 @@
 #include "queue.h"
 #endif
 
-#ifndef SECURITY_TYPES_H_
-#define SECURITY_TYPES_H_
+#ifndef FILE_SECURITY_TYPES_SEEN
+#define FILE_SECURITY_TYPES_SEEN
 
 #define RAND_LENGTH_BITS       (128)
 #define RAND_LENGTH_OCTETS     (RAND_LENGTH_BITS/8)
@@ -151,4 +151,4 @@ typedef enum {
   UP_INT_ALG  = 0x06
 } algorithm_type_dist_t;
 
-#endif /* SECURITY_TYPES_H_ */
+#endif /* FILE_SECURITY_TYPES_SEEN */

@@ -217,6 +217,7 @@ static int                              _emm_attach_accept (
  ***************************************************************************/
 int
 emm_proc_attach_request (
+  enb_ue_s1ap_id_t  enb_ue_s1ap_id_key,
   mme_ue_s1ap_id_t ue_id,
   emm_proc_attach_type_t type,
   bool is_native_ksi,
@@ -243,8 +244,8 @@ emm_proc_attach_request (
   emm_data_context_t                      ue_ctx;
   emm_fsm_state_t                         fsm_state = EMM_DEREGISTERED;
 
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EPS attach type = %s (%d) requested (ue_id=" NAS_UE_ID_FMT ")\n", _emm_attach_type_str[type], type, ue_id);
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - umts_present = %u umts_present = %u\n", umts_present, gprs_present);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EPS attach type = %s (%d) requested (ue_id=" MME_UE_S1AP_ID_FMT ")\n", _emm_attach_type_str[type], type, ue_id);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - umts_present = %u gprs_present = %u\n", umts_present, gprs_present);
   /*
    * Initialize the temporary UE context
    */
@@ -257,6 +258,11 @@ emm_proc_attach_request (
   if (!emm_ctx) {
     if (guti) {
       emm_ctx = emm_data_context_get_by_guti (&_emm_data, guti);
+      if (!(emm_ctx) && (INVALID_MME_UE_S1AP_ID != ue_id)) {
+        // action should have been taken by MME_APP or S1AP
+        LOG_NOTICE (LOG_NAS_EMM, "EMM-PROC  - Do not proceed with attach\n");
+        LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+      }
     }
   }
 
@@ -280,10 +286,6 @@ emm_proc_attach_request (
    */
   if (!(_emm_data.conf.eps_network_feature_support & EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE_SUPPORTED) &&
       (type == EMM_ATTACH_TYPE_EMERGENCY)) {
-    memset (&ue_ctx, 0, sizeof (emm_data_context_t));
-    ue_ctx.is_dynamic = false;
-    ue_ctx.ue_id = ue_id;
-
     ue_ctx.emm_cause = EMM_CAUSE_IMEI_NOT_ACCEPTED;
     /*
      * Do not accept the UE to attach for emergency services
@@ -308,7 +310,7 @@ emm_proc_attach_request (
     // EMM context: An EMM context is established in the UE and the MME when an attach procedure is successfully completed. /* great */
 
     LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Initiate new attach procedure\n");
-    rc = emm_proc_attach_request (ue_id, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, last_visited_registered_tai, originating_tai,
+    rc = emm_proc_attach_request (enb_ue_s1ap_id_key, ue_id, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, last_visited_registered_tai, originating_tai,
         eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP, decode_status);
   } else if ((emm_ctx) && ((EMM_DEREGISTERED < fsm_state ) && (EMM_REGISTERED != fsm_state))) {
     /*
@@ -337,7 +339,7 @@ emm_proc_attach_request (
          * Process new attach procedure
          */
         LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Initiate new attach procedure\n");
-        rc = emm_proc_attach_request (ue_id, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, last_visited_registered_tai,originating_tai,
+        rc = emm_proc_attach_request (enb_ue_s1ap_id_key, ue_id, type, is_native_ksi, ksi, is_native_guti, guti, imsi, imei, last_visited_registered_tai,originating_tai,
             eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present, esm_msg_pP, decode_status);
       }
 
@@ -376,7 +378,12 @@ emm_proc_attach_request (
       emm_ctx->esm_msg.value = NULL;
       emm_ctx->emm_cause = EMM_CAUSE_SUCCESS;
       emm_ctx->_emm_fsm_status = EMM_INVALID;
-      emm_ctx->ue_id = (mme_ue_s1ap_id_t)((uintptr_t)emm_ctx);
+
+      // Be carefull if size of emm_data_context_t is reduced: reduce shift >> "
+      emm_ctx->ue_id = (mme_ue_s1ap_id_t)((uint)((uintptr_t)emm_ctx) >> 4);// ^ 0xBABA53AB;
+      ue_id = emm_ctx->ue_id;
+
+      LOG_NOTICE (LOG_NAS_EMM, "EMM-PROC  - Create EMM context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", ue_id);
       /*
        * Initialize EMM timers
        */
@@ -387,7 +394,9 @@ emm_proc_attach_request (
       emm_ctx->T3470.id = NAS_TIMER_INACTIVE_ID;
       emm_ctx->T3470.sec = T3470_DEFAULT_VALUE;
       emm_fsm_set_status (ue_id, emm_ctx, EMM_DEREGISTERED);
-      emm_data_context_add (&_emm_data, emm_ctx);
+      if (RETURNok == emm_data_context_add (&_emm_data, emm_ctx)) {
+        mme_api_notified_new_ue_s1ap_id_association (enb_ue_s1ap_id_key, emm_ctx->ue_id);
+      }
     }
 
 
@@ -507,7 +516,7 @@ emm_proc_attach_complete (
   esm_sap_t                               esm_sap = {0};
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EPS attach complete (ue_id=" NAS_UE_ID_FMT ")\n", ue_id);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EPS attach complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Release retransmission timer parameters
    */
@@ -531,7 +540,7 @@ emm_proc_attach_complete (
      */
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)\n", emm_ctx->T3450.id);
     emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
-    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " NAS_UE_ID_FMT " ", ue_id);
+    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     /*
      * Delete the old GUTI and consider the GUTI sent in the Attach
      * Accept message as valid
@@ -681,7 +690,7 @@ _emm_attach_release (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
   if (emm_ctx) {
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Release UE context data (ue_id=" NAS_UE_ID_FMT ")\n", emm_ctx->ue_id);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Release UE context data (ue_id=" MME_UE_S1AP_ID_FMT ")\n", emm_ctx->ue_id);
     unsigned int                            ue_id = emm_ctx->ue_id;
 
     if (emm_ctx->guti) {
@@ -738,7 +747,7 @@ _emm_attach_release (
     if (emm_ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)\n", emm_ctx->T3450.id);
       emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
     }
 
     /*
@@ -747,7 +756,7 @@ _emm_attach_release (
     if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
       emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
     }
 
     /*
@@ -756,7 +765,7 @@ _emm_attach_release (
     if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3460.id);
       emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
     }
 
     /*
@@ -808,7 +817,7 @@ _emm_attach_reject (
   if (emm_ctx) {
     emm_sap_t                               emm_sap = {0};
 
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM attach procedure not accepted " "by the network (ue_id=" NAS_UE_ID_FMT ", cause=%d)\n", emm_ctx->ue_id, emm_ctx->emm_cause);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM attach procedure not accepted " "by the network (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n", emm_ctx->ue_id, emm_ctx->emm_cause);
     /*
      * Notify EMM-AS SAP that Attach Reject message has to be sent
      * onto the network
@@ -881,7 +890,7 @@ _emm_attach_abort (
     unsigned int                            ue_id = data->ue_id;
     esm_sap_t                               esm_sap = {0};
 
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the attach procedure (ue_id=" NAS_UE_ID_FMT ")\n", ue_id);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the attach procedure (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
     ctx = emm_data_context_get (&_emm_data, ue_id);
 
     if (ctx) {
@@ -891,7 +900,7 @@ _emm_attach_abort (
       if (ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
         LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)\n", ctx->T3450.id);
         ctx->T3450.id = nas_timer_stop (ctx->T3450.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " NAS_UE_ID_FMT " ", data->ue_id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       }
     }
 
@@ -964,7 +973,7 @@ _emm_attach_identify (
   int                                     guti_allocation = false;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Identify incoming UE (ue_id=" NAS_UE_ID_FMT ") using %s\n", emm_ctx->ue_id, (emm_ctx->imsi) ? "IMSI" : (emm_ctx->guti) ? "GUTI" : (emm_ctx->imei) ? "IMEI" : "none");
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Identify incoming UE (ue_id=" MME_UE_S1AP_ID_FMT ") using %s\n", emm_ctx->ue_id, (emm_ctx->imsi) ? "IMSI" : (emm_ctx->guti) ? "GUTI" : (emm_ctx->imei) ? "IMEI" : "none");
 
   /*
    * UE's identification
@@ -1164,7 +1173,7 @@ _emm_attach_security (
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Setup NAS security (ue_id=" NAS_UE_ID_FMT ")\n", emm_ctx->ue_id);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Setup NAS security (ue_id=" MME_UE_S1AP_ID_FMT ")\n", emm_ctx->ue_id);
 
   /*
    * Create new NAS security context
@@ -1247,7 +1256,7 @@ _emm_attach (
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Attach UE (ue_id=" NAS_UE_ID_FMT ")\n", emm_ctx->ue_id);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Attach UE (ue_id=" MME_UE_S1AP_ID_FMT ")\n", emm_ctx->ue_id);
   /*
    * 3GPP TS 24.401, Figure 5.3.2.1-1, point 5a
    * At this point, all NAS messages shall be protected by the NAS security
@@ -1481,13 +1490,13 @@ _emm_attach_accept (
          * Re-start T3450 timer
          */
         emm_ctx->T3450.id = nas_timer_restart (emm_ctx->T3450.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 restarted UE " NAS_UE_ID_FMT "", data->ue_id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 restarted UE " MME_UE_S1AP_ID_FMT "", data->ue_id);
       } else {
         /*
          * Start T3450 timer
          */
         emm_ctx->T3450.id = nas_timer_start (emm_ctx->T3450.sec, _emm_attach_t3450_handler, data);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 started UE " NAS_UE_ID_FMT " ", data->ue_id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       }
 
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3450 (%d) expires in %ld seconds\n", emm_ctx->T3450.id, emm_ctx->T3450.sec);
@@ -1816,11 +1825,11 @@ _emm_attach_update (
       OAI_GCC_DIAG_ON(int-to-pointer-cast);
       LOG_INFO (LOG_NAS_EMM,
                  "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id "
-                 NAS_UE_ID_FMT " PLMN    %x%x%x%x%x%x\n", ctx->ue_id,
+                 MME_UE_S1AP_ID_FMT " PLMN    %x%x%x%x%x%x\n", ctx->ue_id,
                  ctx->guti->gummei.plmn.mcc_digit1, ctx->guti->gummei.plmn.mcc_digit2, ctx->guti->gummei.plmn.mnc_digit3, ctx->guti->gummei.plmn.mnc_digit1, ctx->guti->gummei.plmn.mnc_digit2, ctx->guti->gummei.plmn.mcc_digit3);
-      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id " NAS_UE_ID_FMT " mme_gid  %04x\n", ctx->ue_id, ctx->guti->gummei.mme_gid);
-      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id " NAS_UE_ID_FMT " mme_code %01x\n", ctx->ue_id, ctx->guti->gummei.mme_code);
-      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id " NAS_UE_ID_FMT " m_tmsi  %08x\n", ctx->ue_id, ctx->guti->m_tmsi);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id " MME_UE_S1AP_ID_FMT " mme_gid  %04x\n", ctx->ue_id, ctx->guti->gummei.mme_gid);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id " MME_UE_S1AP_ID_FMT " mme_code %01x\n", ctx->ue_id, ctx->guti->gummei.mme_code);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id " MME_UE_S1AP_ID_FMT " m_tmsi  %08x\n", ctx->ue_id, ctx->guti->m_tmsi);
     } else {
       // TODO Think about what is _emm_data.ctx_coll_guti
       memcpy (ctx->guti, guti, sizeof (GUTI_t));
@@ -1894,11 +1903,11 @@ _emm_attach_update (
       obj_hashtable_ts_insert (_emm_data.ctx_coll_guti, (const void *const)(ctx->guti), sizeof (*ctx->guti), (void *)((uintptr_t)ctx->ue_id));
       LOG_INFO (LOG_NAS_EMM,
           "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id "
-          NAS_UE_ID_FMT " PLMN    %x%x%x%x%x%x\n", ctx->ue_id,
+          MME_UE_S1AP_ID_FMT " PLMN    %x%x%x%x%x%x\n", ctx->ue_id,
           ctx->guti->gummei.plmn.mcc_digit1, ctx->guti->gummei.plmn.mcc_digit2, ctx->guti->gummei.plmn.mnc_digit3, ctx->guti->gummei.plmn.mnc_digit1, ctx->guti->gummei.plmn.mnc_digit2, ctx->guti->gummei.plmn.mcc_digit3);
-      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " NAS_UE_ID_FMT " mme_gid  %04x\n", ctx->ue_id, ctx->guti->gummei.mme_gid);
-      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " NAS_UE_ID_FMT " mme_code %01x\n", ctx->ue_id, ctx->guti->gummei.mme_code);
-      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " NAS_UE_ID_FMT " m_tmsi  %08x\n", ctx->ue_id, ctx->guti->m_tmsi);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " MME_UE_S1AP_ID_FMT " mme_gid  %04x\n", ctx->ue_id, ctx->guti->gummei.mme_gid);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " MME_UE_S1AP_ID_FMT " mme_code %01x\n", ctx->ue_id, ctx->guti->gummei.mme_code);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti guti generated by NAS, UE id " MME_UE_S1AP_ID_FMT " m_tmsi  %08x\n", ctx->ue_id, ctx->guti->m_tmsi);
       LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Set ctx->guti_is_new to emm_data_context\n");
 
     } else {
@@ -1927,11 +1936,11 @@ _emm_attach_update (
       ctx->tai_list.tai[j].tac            = _emm_data.conf.tai_list.tai[i].tac;
       j += 1;
       if (15 == ctx->guti->gummei.plmn.mnc_digit3) { // mnc length 2
-        LOG_INFO (LOG_NAS_EMM, "UE registered to TAC %d%d%d.%d%d:%d\n",
+        LOG_INFO (LOG_NAS_EMM, "UE registered to TAI %d%d%d.%d%d:%d\n",
             ctx->guti->gummei.plmn.mcc_digit1, ctx->guti->gummei.plmn.mcc_digit2, ctx->guti->gummei.plmn.mcc_digit3,
             ctx->guti->gummei.plmn.mnc_digit1, ctx->guti->gummei.plmn.mnc_digit2, _emm_data.conf.tai_list.tai[i].tac);
       } else {
-        LOG_INFO (LOG_NAS_EMM, "UE registered to TAC %d%d%d.%d%d%d:%d\n",
+        LOG_INFO (LOG_NAS_EMM, "UE registered to TAI %d%d%d.%d%d%d:%d\n",
             ctx->guti->gummei.plmn.mcc_digit1, ctx->guti->gummei.plmn.mcc_digit2, ctx->guti->gummei.plmn.mcc_digit3,
             ctx->guti->gummei.plmn.mnc_digit1, ctx->guti->gummei.plmn.mnc_digit2, ctx->guti->gummei.plmn.mnc_digit3,
             _emm_data.conf.tai_list.tai[i].tac);

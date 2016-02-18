@@ -184,7 +184,7 @@ emm_fsm_set_status (
   if ((status < EMM_STATE_MAX) && (ue_id > 0)) {
     if (status != emm_ctx->_emm_fsm_status) {
       LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s\n", _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " NAS_UE_ID_FMT" ", _emm_fsm_status_str[status], ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " MME_UE_S1AP_ID_FMT" ", _emm_fsm_status_str[status], ue_id);
       emm_ctx->_emm_fsm_status = status;
     }
 
@@ -216,7 +216,7 @@ emm_fsm_get_status (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
   if (emm_ctx == NULL) {
-    LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - try again get context ue_id " NAS_UE_ID_FMT "\n", ue_id);
+    LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - try again get context ue_id " MME_UE_S1AP_ID_FMT "\n", ue_id);
     emm_ctx = emm_data_context_get (&_emm_data, ue_id);
   }
 

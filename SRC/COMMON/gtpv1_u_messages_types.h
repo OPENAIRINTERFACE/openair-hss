@@ -26,8 +26,8 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-#ifndef GTPV1_U_MESSAGES_TYPES_H_
-#define GTPV1_U_MESSAGES_TYPES_H_
+#ifndef FILE_GTPV1_U_MESSAGES_TYPES_SEEN
+#define FILE_GTPV1_U_MESSAGES_TYPES_SEEN
 
 #include "../SGW-LITE/sgw_lite_ie_defs.h"
 
@@ -85,4 +85,4 @@ typedef struct {
   Teid_t    S1u_enb_teid;                 ///< Tunnel Endpoint Identifier
 } Gtpv1uTunnelDataReq;
 
-#endif /* GTPV1_U_MESSAGES_TYPES_H_ */
+#endif /* FILE_GTPV1_U_MESSAGES_TYPES_SEEN */

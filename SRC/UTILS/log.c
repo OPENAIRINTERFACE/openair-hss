@@ -64,8 +64,12 @@
 //-------------------------------
 #define LOG_MAX_QUEUE_ELEMENTS                1024
 #define LOG_MAX_PROTO_NAME_LENGTH               16
+
+#define LOG_CONNECT_PERIOD_SEC                   2
+#define LOG_CONNECT_PERIOD_MICRO_SEC             0
+
 #define LOG_FLUSH_PERIOD_SEC                     0
-#define LOG_FLUSH_PERIOD_MICRO_SEC          100000
+#define LOG_FLUSH_PERIOD_MICRO_SEC            5000
 
 #define LOG_DISPLAYED_FILENAME_MAX_LENGTH       32
 #define LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH  5
@@ -160,12 +164,16 @@ void* log_task (__attribute__ ((unused)) void *args_p)
           // if tcp logging is enabled
           if (LOG_TCP_STATE_NOT_CONNECTED == g_oai_log.tcp_state) {
             log_connect_to_server();
-          }
-          log_flush_messages ();
-
-          timer_setup (LOG_FLUSH_PERIOD_SEC,
+            log_flush_messages ();
+            timer_setup (LOG_CONNECT_PERIOD_SEC,
+                         LOG_CONNECT_PERIOD_MICRO_SEC,
+                         TASK_LOG, INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &timer_id);
+          } else {
+            log_flush_messages ();
+            timer_setup (LOG_FLUSH_PERIOD_SEC,
                        LOG_FLUSH_PERIOD_MICRO_SEC,
                        TASK_LOG, INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &timer_id);
+          }
         }
         break;
 

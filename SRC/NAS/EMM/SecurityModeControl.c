@@ -344,7 +344,7 @@ emm_proc_security_mode_control (
       /*
        * Notify EMM that common procedure has been initiated
        */
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " NAS_UE_ID_FMT " (security mode control)",ue_id);
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " (security mode control)",ue_id);
       emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
@@ -388,7 +388,7 @@ emm_proc_security_mode_complete (
   emm_sap_t                               emm_sap = {0};
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Security mode complete (ue_id=" NAS_UE_ID_FMT ")\n", ue_id);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Security mode complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Get the UE context
    */
@@ -403,7 +403,7 @@ emm_proc_security_mode_complete (
      */
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " NAS_UE_ID_FMT " ", ue_id);
+    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
   }
 
   /*
@@ -419,7 +419,7 @@ emm_proc_security_mode_complete (
     /*
      * Notify EMM that the authentication procedure successfully completed
      */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF ue id " NAS_UE_ID_FMT " (security mode complete)", ue_id);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF ue id " MME_UE_S1AP_ID_FMT " (security mode complete)", ue_id);
     emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
     emm_sap.u.emm_reg.ue_id = ue_id;
     emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -429,7 +429,7 @@ emm_proc_security_mode_complete (
     /*
      * Notify EMM that the authentication procedure failed
      */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " (security mode complete)", ue_id);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " (security mode complete)", ue_id);
     emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
     emm_sap.u.emm_reg.ue_id = ue_id;
     emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -471,7 +471,7 @@ emm_proc_security_mode_reject (
   int                                     rc = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Security mode command not accepted by the UE" "(ue_id=" NAS_UE_ID_FMT ")\n", ue_id);
+  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Security mode command not accepted by the UE" "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Get the UE context
    */
@@ -487,7 +487,7 @@ emm_proc_security_mode_reject (
      */
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " NAS_UE_ID_FMT " ", ue_id);
+    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
   }
 
   /*
@@ -517,7 +517,7 @@ emm_proc_security_mode_reject (
   /*
    * Notify EMM that the authentication procedure failed
    */
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " (security mode reject)", ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " (security mode reject)", ue_id);
   emm_sap_t                               emm_sap = {0};
 
   emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
@@ -651,7 +651,7 @@ _security_request (
    * Setup EPS NAS security data
    */
   emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, is_new, false);
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_SECURITY_REQ ue id " NAS_UE_ID_FMT " ", data->ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_SECURITY_REQ ue id " MME_UE_S1AP_ID_FMT " ", data->ue_id);
   rc = emm_sap_send (&emm_sap);
 
   if (rc != RETURNerror) {
@@ -661,7 +661,7 @@ _security_request (
        */
       emm_ctx->T3460.id = nas_timer_restart (emm_ctx->T3460.id);
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Restarted Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 restarted UE " NAS_UE_ID_FMT " ", data->ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 restarted UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to restart T3460");
     } else {
       /*
@@ -669,7 +669,7 @@ _security_request (
        */
       emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, _security_t3460_handler, data);
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Started Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " NAS_UE_ID_FMT " ", data->ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to start T3460");
     }
 
@@ -706,7 +706,7 @@ _security_abort (
     unsigned int                            ue_id = data->ue_id;
     int                                     notify_failure = data->notify_failure;
 
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort security mode control procedure " "(ue_id=" NAS_UE_ID_FMT ")\n", ue_id);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort security mode control procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
     if (data->ue_id > 0) {
       emm_ctx = emm_data_context_get (&_emm_data, data->ue_id);
@@ -718,7 +718,7 @@ _security_abort (
     if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
       emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " NAS_UE_ID_FMT " ", ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     }
 
     /*
@@ -730,7 +730,7 @@ _security_abort (
      * Notify EMM that the security mode control procedure failed
      */
     if (notify_failure) {
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " NAS_UE_ID_FMT " (security abort)", data->ue_id);
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " (security abort)", data->ue_id);
       emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REJ;

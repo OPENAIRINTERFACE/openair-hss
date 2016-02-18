@@ -26,8 +26,8 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-#ifndef S1AP_MESSAGES_TYPES_H_
-#define S1AP_MESSAGES_TYPES_H_
+#ifndef FILE_S1AP_MESSAGES_TYPES_SEEN
+#define FILE_S1AP_MESSAGES_TYPES_SEEN
 
 #define S1AP_ENB_DEREGISTERED_IND(mSGpTR)   (mSGpTR)->ittiMsg.s1ap_eNB_deregistered_ind
 #define S1AP_DEREGISTER_UE_REQ(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_deregister_ue_req
@@ -98,4 +98,4 @@ typedef struct itti_s1ap_ue_context_release_complete_s {
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
 } itti_s1ap_ue_context_release_complete_t;
 
-#endif /* S1AP_MESSAGES_TYPES_H_ */
+#endif /* FILE_S1AP_MESSAGES_TYPES_SEEN */

@@ -26,8 +26,8 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-#ifndef SCTP_MESSAGES_TYPES_H_
-#define SCTP_MESSAGES_TYPES_H_
+#ifndef FILE_SCTP_MESSAGES_TYPES_SEEN
+#define FILE_SCTP_MESSAGES_TYPES_SEEN
 
 #define SCTP_DATA_IND(mSGpTR)           (mSGpTR)->ittiMsg.sctp_data_ind
 #define SCTP_DATA_REQ(mSGpTR)           (mSGpTR)->ittiMsg.sctp_data_req
@@ -73,4 +73,4 @@ typedef struct sctp_new_peer_s {
   sctp_assoc_id_t assoc_id;
 } sctp_new_peer_t;
 
-#endif /* SCTP_MESSAGES_TYPES_H_ */
+#endif /* FILE_SCTP_MESSAGES_TYPES_SEEN */

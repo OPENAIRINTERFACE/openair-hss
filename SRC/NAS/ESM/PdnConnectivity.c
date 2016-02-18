@@ -154,7 +154,7 @@ esm_proc_pdn_connectivity_request (
 
   LOG_FUNC_IN (LOG_NAS_ESM);
   LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity requested by the UE "
-             "(ue_id=" NAS_UE_ID_FMT ", pti=%d) PDN type = %s, APN = %s pdn addr = %s\n", ctx->ue_id, pti,
+             "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) PDN type = %s, APN = %s pdn addr = %s\n", ctx->ue_id, pti,
              (pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6", (apn) ? (char *)(apn->value) : "null", (pdn_addr) ? (char *)(pdn_addr->value) : "null");
 
   /*
@@ -312,7 +312,7 @@ esm_proc_pdn_connectivity_reject (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
 
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity not accepted by the " "network (ue_id=" NAS_UE_ID_FMT ")\n", ctx->ue_id);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity not accepted by the " "network (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ctx->ue_id);
 
   if (is_standalone) {
     emm_sap_t                               emm_sap = {0};
@@ -365,7 +365,7 @@ esm_proc_pdn_connectivity_failure (
   int                                     pti;
 
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity failure (ue_id=" NAS_UE_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity failure (ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
   /*
    * Delete the PDN connection entry
    */
@@ -422,7 +422,7 @@ _pdn_connectivity_create (
   int                                     pid = ESM_DATA_PDN_MAX;
 
   LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new PDN connection "
-             "(pti=%d) APN = %s, IP address = %s (ue_id=" NAS_UE_ID_FMT ")\n", pti, apn->value,
+             "(pti=%d) APN = %s, IP address = %s (ue_id=" MME_UE_S1AP_ID_FMT ")\n", pti, apn->value,
              (pdn_type == ESM_PDN_TYPE_IPV4) ? esm_data_get_ipv4_addr (pdn_addr) : (pdn_type == ESM_PDN_TYPE_IPV6) ? esm_data_get_ipv6_addr (pdn_addr) : esm_data_get_ipv4v6_addr (pdn_addr), ctx->ue_id);
 
   /*

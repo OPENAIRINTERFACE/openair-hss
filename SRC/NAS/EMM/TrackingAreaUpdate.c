@@ -282,7 +282,7 @@ emm_proc_tracking_area_update_request (
       if (! ue_ctx->eps_bearer_context_status) {
         ue_ctx->eps_bearer_context_status = MALLOC_CHECK(sizeof(EpsBearerContextStatus));
       }
-      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - TAU Request (ue_id=" NAS_UE_ID_FMT ") IE EPS_BEARER_CONTEXT_STATUS 0x%04X", ue_id, msg->epsbearercontextstatus);
+      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - TAU Request (ue_id=" MME_UE_S1AP_ID_FMT ") IE EPS_BEARER_CONTEXT_STATUS 0x%04X", ue_id, msg->epsbearercontextstatus);
       memcpy(ue_ctx->eps_bearer_context_status, &msg->epsbearercontextstatus, sizeof(EpsBearerContextStatus));
 //#pragma message  "TODO Requirement MME24.301R10_5.5.3.2.4_5a: TAU Request: Deactivate EPS bearers if necessary (S11 Modify Bearer Request)"
     }
@@ -598,7 +598,7 @@ _emm_tracking_area_update_security (
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
 
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Setup NAS security (ue_id=" NAS_UE_ID_FMT ")", emm_ctx->ue_id);
+  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Setup NAS security (ue_id=" MME_UE_S1AP_ID_FMT ")", emm_ctx->ue_id);
 
   /*
    * Create new NAS security context
@@ -663,7 +663,7 @@ _emm_tracking_area_update_reject (
   if (emm_ctx) {
     emm_sap_t                               emm_sap = {0};
 
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM tracking area update procedure not accepted " "by the network (ue_id=" NAS_UE_ID_FMT ", cause=%d)", emm_ctx->ue_id, emm_ctx->emm_cause);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM tracking area update procedure not accepted " "by the network (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)", emm_ctx->ue_id, emm_ctx->emm_cause);
     /*
      * Notify EMM-AS SAP that Tracking Area Update Reject message has to be sent
      * onto the network
@@ -773,13 +773,13 @@ _emm_tracking_area_update_accept (
          * Re-start T3450 timer
          */
         emm_ctx->T3450.id = nas_timer_restart (emm_ctx->T3450.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 restarted UE " NAS_UE_ID_FMT " (TAU)", data->ue_id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 restarted UE " MME_UE_S1AP_ID_FMT " (TAU)", data->ue_id);
       } else {
         /*
          * Start T3450 timer
          */
         emm_ctx->T3450.id = nas_timer_start (emm_ctx->T3450.sec, _emm_tau_t3450_handler, data);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 started UE " NAS_UE_ID_FMT " (TAU)", data->ue_id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 started UE " MME_UE_S1AP_ID_FMT " (TAU)", data->ue_id);
       }
 
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3450 (%d) expires in %ld seconds (TAU)", emm_ctx->T3450.id, emm_ctx->T3450.sec);
@@ -805,7 +805,7 @@ _emm_tracking_area_update_abort (
   if (data) {
     unsigned int                            ue_id = data->ue_id;
 
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the TAU procedure (ue_id=" NAS_UE_ID_FMT ")", ue_id);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the TAU procedure (ue_id=" MME_UE_S1AP_ID_FMT ")", ue_id);
     ctx = emm_data_context_get (&_emm_data, ue_id);
 
     if (ctx) {
@@ -815,7 +815,7 @@ _emm_tracking_area_update_abort (
       if (ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
         LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)", ctx->T3450.id);
         ctx->T3450.id = nas_timer_stop (ctx->T3450.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " NAS_UE_ID_FMT " (TAU)", data->ue_id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT " (TAU)", data->ue_id);
       }
     }
 

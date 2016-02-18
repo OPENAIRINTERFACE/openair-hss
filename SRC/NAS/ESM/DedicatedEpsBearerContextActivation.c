@@ -131,7 +131,7 @@ esm_proc_dedicated_eps_bearer_context (
   int *esm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "(ue_id=" NAS_UE_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
   /*
    * Assign new EPS bearer context
    */
@@ -197,7 +197,7 @@ esm_proc_dedicated_eps_bearer_context_request (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate dedicated EPS bearer context " "activation (ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate dedicated EPS bearer context " "activation (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Send activate dedicated EPS bearer context request message and
    * * * * start timer T3485
@@ -252,7 +252,7 @@ esm_proc_dedicated_eps_bearer_context_accept (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "accepted by the UE (ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Stop T3485 timer
    */
@@ -311,7 +311,7 @@ esm_proc_dedicated_eps_bearer_context_reject (
   int                                     rc;
 
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "not accepted by the UE (ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "not accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Stop T3485 timer if running
    */
@@ -386,7 +386,7 @@ _dedicated_eps_bearer_activate_t3485_handler (
    * Increment the retransmission counter
    */
   data->count += 1;
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3485 timer expired (ue_id=" NAS_UE_ID_FMT ", ebi=%d), " "retransmission counter = %d\n", data->ue_id, data->ebi, data->count);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3485 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n", data->ue_id, data->ebi, data->count);
 
   if (data->count < DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
     /*

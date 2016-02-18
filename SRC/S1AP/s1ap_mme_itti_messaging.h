@@ -45,13 +45,16 @@ int s1ap_mme_itti_nas_downlink_cnf(const mme_ue_s1ap_id_t ue_id,
 
 
 static inline void s1ap_mme_itti_mme_app_establish_ind(
+  const sctp_assoc_id_t   assoc_id,
   const enb_ue_s1ap_id_t  enb_ue_s1ap_id,
   const mme_ue_s1ap_id_t  mme_ue_s1ap_id,
   const uint8_t * const   nas_msg,
   const size_t            nas_msg_length,
   const long              cause,
   const tai_t             tai,
-  const as_stmsi_t        s_tmsi)
+  const cgi_t             cgi,
+  const as_stmsi_t        s_tmsi,
+  const gummei_t          gummei)
 {
   MessageDef  *message_p = NULL;
 
@@ -59,20 +62,31 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
   AssertFatal((nas_msg_length < 1000), "Bad length for NAS message %lu", nas_msg_length);
   message_p = itti_alloc_new_message(TASK_S1AP, MME_APP_CONNECTION_ESTABLISHMENT_IND);
 
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).mme_ue_s1ap_id           = mme_ue_s1ap_id;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).enb_ue_s1ap_id           = enb_ue_s1ap_id;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).mme_ue_s1ap_id             = mme_ue_s1ap_id;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).enb_ue_s1ap_id             = enb_ue_s1ap_id;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).sctp_assoc_id              = assoc_id;
 
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.ue_id                 = mme_ue_s1ap_id;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.ue_id                  = mme_ue_s1ap_id;
   /* Mapping between asn1 definition and NAS definition */
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.as_cause              = cause + 1;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai                  = tai;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.as_cause               = cause + 1;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai                    = tai;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.cgi                    = cgi;
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initial_nas_msg.length = nas_msg_length;
 
   MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initial_nas_msg.data   = CALLOC_CHECK(nas_msg_length, sizeof(uint8_t));
   memcpy(MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initial_nas_msg.data, nas_msg, nas_msg_length);
 
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi            = s_tmsi;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi                 = s_tmsi; // TODO think about putting this field one level up?
 
+  if (!(gummei.plmn.mcc_digit1) && !(gummei.plmn.mcc_digit1) && !(gummei.plmn.mcc_digit1) ) {
+    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).is_gummei_valid = false;
+  } else {
+    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).is_gummei_valid = true;
+    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).gummei                   = gummei;
+  }
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).transparent.mme_ue_s1ap_id = mme_ue_s1ap_id;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).transparent.enb_ue_s1ap_id = enb_ue_s1ap_id;
+  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).transparent.e_utran_cgi    = cgi;
 
 
   MSC_LOG_TX_MESSAGE(

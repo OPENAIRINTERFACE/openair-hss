@@ -29,8 +29,8 @@
 #include "as_message.h"
 #include "nas_message.h"
 
-#ifndef NAS_MESSAGES_TYPES_H_
-#define NAS_MESSAGES_TYPES_H_
+#ifndef FILE_NAS_MESSAGES_TYPES_SEEN
+#define FILE_NAS_MESSAGES_TYPES_SEEN
 
 #define NAS_DL_EMM_RAW_MSG(mSGpTR)                  (mSGpTR)->ittiMsg.nas_dl_emm_raw_msg
 #define NAS_UL_EMM_RAW_MSG(mSGpTR)                  (mSGpTR)->ittiMsg.nas_ul_emm_raw_msg
@@ -265,7 +265,13 @@ typedef struct itti_nas_info_transfer_s {
 } itti_nas_info_transfer_t;
 
 typedef itti_nas_info_transfer_t itti_nas_ul_data_ind_t;
-typedef itti_nas_info_transfer_t itti_nas_dl_data_req_t;
+
+typedef struct itti_nas_dl_data_req_s {
+  enb_ue_s1ap_id_t  enb_ue_s1ap_id; /* UE lower layer identifier        */
+  mme_ue_s1ap_id_t  ue_id;          /* UE lower layer identifier        */
+  //nas_error_code_t err_code;      /* Transaction status               */
+  as_nas_info_t     nas_msg;        /* Uplink NAS message           */
+} itti_nas_dl_data_req_t;
 
 typedef struct itti_nas_dl_data_cnf_s {
   mme_ue_s1ap_id_t ue_id;      /* UE lower layer identifier        */
@@ -353,4 +359,4 @@ typedef struct itti_nas_auth_param_fail_s {
 } itti_nas_auth_param_fail_t;
 
 
-#endif /* NAS_MESSAGES_TYPES_H_ */
+#endif /* FILE_NAS_MESSAGES_TYPES_SEEN */

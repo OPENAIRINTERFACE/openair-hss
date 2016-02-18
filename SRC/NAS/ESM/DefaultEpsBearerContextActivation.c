@@ -123,7 +123,7 @@ esm_proc_default_eps_bearer_context (
   int *esm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "(ue_id=" NAS_UE_ID_FMT ", pid=%d, GBR UL %u GBR DL %u, MBR UL %u MBR DL %u QCI %u)\n",
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d, GBR UL %u GBR DL %u, MBR UL %u MBR DL %u QCI %u)\n",
       ctx->ue_id, pid, qos->gbrUL, qos->gbrDL, qos->mbrUL, qos->mbrDL, qos->qci);
   /*
    * Assign new EPS bearer context
@@ -199,10 +199,10 @@ esm_proc_default_eps_bearer_context_request (
      * Send activate default EPS bearer context request message and
      * * * * start timer T3485
      */
-    LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate standalone default EPS bearer context activation " "(ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+    LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate standalone default EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
     rc = _default_eps_bearer_activate (ctx, ebi, msg);
   } else {
-    LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate non standalone default EPS bearer context activation " "(ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+    LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate non standalone default EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   }
 
   if (rc != RETURNerror) {
@@ -253,7 +253,7 @@ esm_proc_default_eps_bearer_context_accept (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "accepted by the UE (ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Stop T3485 timer if running
    */
@@ -308,7 +308,7 @@ esm_proc_default_eps_bearer_context_reject (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "not accepted by the UE (ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "not accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Stop T3485 timer if running
    */
@@ -367,7 +367,7 @@ esm_proc_default_eps_bearer_context_failure (
 
   LOG_FUNC_IN (LOG_NAS_ESM);
   if (ctx) {
-    LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "failure (ue_id=" NAS_UE_ID_FMT ")\n", ctx->ue_id);
+    LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "failure (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ctx->ue_id);
   } else {
     LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "failure (context is NULL)\n");
     LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
@@ -443,7 +443,7 @@ _default_eps_bearer_activate_t3485_handler (
    * Increment the retransmission counter
    */
   data->count += 1;
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3485 timer expired (ue_id=" NAS_UE_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3485 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
       data->ue_id, data->ebi, data->count);
 
   if (data->count < DEFAULT_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
