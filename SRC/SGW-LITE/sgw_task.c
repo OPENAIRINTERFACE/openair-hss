@@ -19,7 +19,7 @@
  *      contact@openairinterface.org
  */
 
-/*! \file sgw_lite_task.c
+/*! \file sgw_task.c
   \brief
   \author Lionel Gauthier
   \company Eurecom
@@ -38,9 +38,9 @@
 #include "queue.h"
 #include "intertask_interface.h"
 #include "mme_config.h"
-#include "sgw_lite_defs.h"
-#include "sgw_lite_handlers.h"
-#include "sgw_lite.h"
+#include "sgw_defs.h"
+#include "sgw_handlers.h"
+#include "sgw.h"
 #include "hashtable.h"
 #include "spgw_config.h"
 #include "pgw_lite_paa.h"
@@ -51,11 +51,11 @@ spgw_config_t                           spgw_config;
 sgw_app_t                               sgw_app;
 pgw_app_t                               pgw_app;
 
-static void sgw_lite_exit(void);
+static void sgw_exit(void);
 
 //------------------------------------------------------------------------------
 static void                            *
-sgw_lite_intertask_interface (
+sgw_intertask_interface (
   void *args_p)
 {
   itti_mark_task_ready (TASK_SPGW_APP);
@@ -75,48 +75,48 @@ sgw_lite_intertask_interface (
          * * * *      E-UTRAN Initial Attach
          * * * *      UE requests PDN connectivity
          */
-        sgw_lite_handle_create_session_request (&received_message_p->ittiMsg.sgwCreateSessionRequest);
+        sgw_handle_create_session_request (&received_message_p->ittiMsg.sgw_create_session_request);
       }
       break;
 
     case SGW_MODIFY_BEARER_REQUEST:{
-        sgw_lite_handle_modify_bearer_request (&received_message_p->ittiMsg.sgwModifyBearerRequest);
+        sgw_handle_modify_bearer_request (&received_message_p->ittiMsg.sgw_modify_bearer_request);
       }
       break;
 
     case SGW_RELEASE_ACCESS_BEARERS_REQUEST:{
-        sgw_lite_handle_release_access_bearers_request (&received_message_p->ittiMsg.sgwReleaseAccessBearersRequest);
+        sgw_handle_release_access_bearers_request (&received_message_p->ittiMsg.sgw_release_access_bearers_request);
       }
       break;
 
     case SGW_DELETE_SESSION_REQUEST:{
-        sgw_lite_handle_delete_session_request (&received_message_p->ittiMsg.sgwDeleteSessionRequest);
+        sgw_handle_delete_session_request (&received_message_p->ittiMsg.sgw_delete_session_request);
       }
       break;
 
     case GTPV1U_CREATE_TUNNEL_RESP:{
         LOG_DEBUG (LOG_SPGW_APP, "Received teid for S1-U: %u and status: %s\n", received_message_p->ittiMsg.gtpv1uCreateTunnelResp.S1u_teid, received_message_p->ittiMsg.gtpv1uCreateTunnelResp.status == 0 ? "Success" : "Failure");
-        sgw_lite_handle_gtpv1uCreateTunnelResp (&received_message_p->ittiMsg.gtpv1uCreateTunnelResp);
+        sgw_handle_gtpv1uCreateTunnelResp (&received_message_p->ittiMsg.gtpv1uCreateTunnelResp);
       }
       break;
 
     case GTPV1U_UPDATE_TUNNEL_RESP:{
-        sgw_lite_handle_gtpv1uUpdateTunnelResp (&received_message_p->ittiMsg.gtpv1uUpdateTunnelResp);
+        sgw_handle_gtpv1uUpdateTunnelResp (&received_message_p->ittiMsg.gtpv1uUpdateTunnelResp);
       }
       break;
 
     case SGI_CREATE_ENDPOINT_RESPONSE:{
-        sgw_lite_handle_sgi_endpoint_created (&received_message_p->ittiMsg.sgiCreateEndpointResp);
+        sgw_handle_sgi_endpoint_created (&received_message_p->ittiMsg.sgi_create_end_point_response);
       }
       break;
 
     case SGI_UPDATE_ENDPOINT_RESPONSE:{
-        sgw_lite_handle_sgi_endpoint_updated (&received_message_p->ittiMsg.sgiUpdateEndpointResp);
+        sgw_handle_sgi_endpoint_updated (&received_message_p->ittiMsg.sgi_update_end_point_response);
       }
       break;
 
     case TERMINATE_MESSAGE:{
-        sgw_lite_exit();
+        sgw_exit();
         itti_exit_task ();
       }
       break;
@@ -139,7 +139,7 @@ sgw_lite_intertask_interface (
 }
 
 //------------------------------------------------------------------------------
-int sgw_lite_init (
+int sgw_init (
   char *config_file_name_pP)
 {
   LOG_DEBUG (LOG_SPGW_APP, "Initializing SPGW-APP  task interface\n");
@@ -206,7 +206,7 @@ int sgw_lite_init (
   }*/
 
   sgw_app.s11_bearer_context_information_hashtable = hashtable_ts_create (8192, NULL,
-          (void (*)(void*))sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information,
+          (void (*)(void*))sgw_cm_free_s_plus_p_gw_eps_bearer_context_information,
           "sgw_s11_bearer_context_information_hashtable");
 
   if (sgw_app.s11_bearer_context_information_hashtable == NULL) {
@@ -222,7 +222,7 @@ int sgw_lite_init (
   //sgw_app.sgw_ip_address_for_S5_S8_cp          = spgw_config.sgw_config.ipv4.sgw_ip_address_for_S5_S8_cp;
   sgw_app.sgw_ip_address_for_S5_S8_up = spgw_config.sgw_config.ipv4.sgw_ipv4_address_for_S5_S8_up;
 
-  if (itti_create_task (TASK_SPGW_APP, &sgw_lite_intertask_interface, NULL) < 0) {
+  if (itti_create_task (TASK_SPGW_APP, &sgw_intertask_interface, NULL) < 0) {
     perror ("pthread_create");
     LOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
     return RETURNerror;
@@ -233,7 +233,7 @@ int sgw_lite_init (
 }
 
 //------------------------------------------------------------------------------
-static void sgw_lite_exit(void)
+static void sgw_exit(void)
 {
   if (sgw_app.s11teid2mme_hashtable) {
     hashtable_ts_destroy (sgw_app.s11teid2mme_hashtable);

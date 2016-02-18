@@ -77,7 +77,7 @@ void *mme_app_thread (
       break;
 
     case SGW_CREATE_SESSION_RESPONSE:{
-        mme_app_handle_create_sess_resp (&received_message_p->ittiMsg.sgwCreateSessionResponse);
+        mme_app_handle_create_sess_resp (&received_message_p->ittiMsg.sgw_create_session_response);
       }
       break;
 
@@ -88,7 +88,7 @@ void *mme_app_thread (
       break;
 
     case SGW_RELEASE_ACCESS_BEARERS_RESPONSE:{
-        mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.sgwReleaseAccessBearersResponse);
+        mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.sgw_release_access_bearers_response);
       }
       break;
 

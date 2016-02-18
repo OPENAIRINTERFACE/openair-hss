@@ -35,7 +35,7 @@
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
-#include "sgw_lite_ie_defs.h"
+#include "sgw_ie_defs.h"
 #include "s11_common.h"
 #include "s11_sgw.h"
 #include "s11_sgw_bearer_manager.h"
@@ -191,19 +191,19 @@ s11_sgw_thread (
 
     case SGW_CREATE_SESSION_RESPONSE:{
         LOG_DEBUG (LOG_S11, "Received create session response from S-PGW APP\n");
-        s11_sgw_handle_create_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgwCreateSessionResponse);
+        s11_sgw_handle_create_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_create_session_response);
       }
       break;
 
     case SGW_MODIFY_BEARER_RESPONSE:{
         LOG_DEBUG (LOG_S11, "Received modify bearer response from S-PGW APP\n");
-        s11_sgw_handle_modify_bearer_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgwModifyBearerResponse);
+        s11_sgw_handle_modify_bearer_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_modify_bearer_response);
       }
       break;
 
     case SGW_DELETE_SESSION_RESPONSE:{
         LOG_DEBUG (LOG_S11, "Received delete session response from S-PGW APP\n");
-        s11_sgw_handle_delete_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgwDeleteSessionResponse);
+        s11_sgw_handle_delete_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_delete_session_response);
       }
       break;
 

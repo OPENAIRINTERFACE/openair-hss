@@ -33,7 +33,7 @@
 #include "tree.h"
 #include "commonDef.h"
 #include "common_types.h"
-#include "sgw_lite_context_manager.h"
+#include "sgw_context_manager.h"
 
 typedef struct sgw_app_s {
 

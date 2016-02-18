@@ -43,7 +43,7 @@
 #include "s1ap_mme.h"
 #include "log.h"
 #include "timer.h"
-#include "sgw_lite_defs.h"
+#include "sgw_defs.h"
 #include "mme_app_extern.h"
 #include "nas_defs.h"
 /* FreeDiameter headers for support of S6A interface */
@@ -83,7 +83,7 @@ main (
   CHECK_INIT_RETURN (mme_app_init (&mme_config));
   CHECK_INIT_RETURN (s6a_init (&mme_config));
   sleep(4);
-  CHECK_INIT_RETURN (sgw_lite_init (mme_config.config_file));
+  CHECK_INIT_RETURN (sgw_init (mme_config.config_file));
   /*
    * Handle signals here
    */

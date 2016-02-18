@@ -29,7 +29,7 @@
 #ifndef FILE_GTPV1_U_MESSAGES_TYPES_SEEN
 #define FILE_GTPV1_U_MESSAGES_TYPES_SEEN
 
-#include "../SGW-LITE/sgw_lite_ie_defs.h"
+#include "../SGW-LITE/sgw_ie_defs.h"
 
 typedef struct {
   Teid_t           context_teid;               ///< Tunnel Endpoint Identifier

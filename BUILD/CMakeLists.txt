@@ -448,9 +448,9 @@ set(SGW_DIR ${OPENAIRCN_DIR}/SRC/SGW-LITE)
 add_library (SGW
   ${SGW_DIR}/spgw_config.c
   ${SGW_DIR}/s11_causes.c
-  ${SGW_DIR}/sgw_lite_task.c
-  ${SGW_DIR}/sgw_lite_handlers.c
-  ${SGW_DIR}/sgw_lite_context_manager.c
+  ${SGW_DIR}/sgw_task.c
+  ${SGW_DIR}/sgw_handlers.c
+  ${SGW_DIR}/sgw_context_manager.c
   ${SGW_DIR}/pgw_lite_paa.c
   )
 

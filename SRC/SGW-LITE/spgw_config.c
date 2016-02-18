@@ -42,7 +42,7 @@
 #include "log.h"
 #include "assertions.h"
 #include "spgw_config.h"
-#include "sgw_lite_defs.h"
+#include "sgw_defs.h"
 #include "intertask_interface.h"
 #include "dynamic_memory_check.h"
 #include "log.h"

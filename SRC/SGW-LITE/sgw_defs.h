@@ -19,7 +19,7 @@
  *      contact@openairinterface.org
  */
 
-/*! \file sgw_lite_defs.h
+/*! \file sgw_defs.h
 * \brief
 * \author Lionel Gauthier
 * \company Eurecom
@@ -29,6 +29,6 @@
 #ifndef FILE_SGW_LITE_DEFS_SEEN
 #define FILE_SGW_LITE_DEFS_SEEN
 
-int sgw_lite_init(char* config_file_name_pP);
+int sgw_init(char* config_file_name_pP);
 
 #endif /* FILE_SGW_LITE_DEFS_SEEN */

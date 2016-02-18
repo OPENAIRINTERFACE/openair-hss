@@ -26,9 +26,9 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-MESSAGE_DEF(SGI_CREATE_ENDPOINT_REQUEST,  MESSAGE_PRIORITY_MED,       SGICreateEndpointReq,     sgiCreateEndpointReq)
-MESSAGE_DEF(SGI_CREATE_ENDPOINT_RESPONSE, MESSAGE_PRIORITY_MED,       SGICreateEndpointResp,    sgiCreateEndpointResp)
-MESSAGE_DEF(SGI_UPDATE_ENDPOINT_REQUEST,  MESSAGE_PRIORITY_MED,       SGIUpdateEndpointReq,     sgiUpdateEndpointReq)
-MESSAGE_DEF(SGI_UPDATE_ENDPOINT_RESPONSE, MESSAGE_PRIORITY_MED,       SGIUpdateEndpointResp,    sgiUpdateEndpointResp)
-MESSAGE_DEF(SGI_DELETE_ENDPOINT_REQUEST,  MESSAGE_PRIORITY_MED,       SGIDeleteEndpointReq,     sgiDeleteEndpointReq)
-MESSAGE_DEF(SGI_DELETE_ENDPOINT_RESPONSE, MESSAGE_PRIORITY_MED,       SGIDeleteEndpointResp,    sgiDeleteEndpointResp)
+MESSAGE_DEF(SGI_CREATE_ENDPOINT_REQUEST,  MESSAGE_PRIORITY_MED,       itti_sgi_create_end_point_request_t,     sgi_create_end_point_request)
+MESSAGE_DEF(SGI_CREATE_ENDPOINT_RESPONSE, MESSAGE_PRIORITY_MED,       itti_sgi_create_end_point_response_t,    sgi_create_end_point_response)
+MESSAGE_DEF(SGI_UPDATE_ENDPOINT_REQUEST,  MESSAGE_PRIORITY_MED,       itti_sgi_update_end_point_request_t,     sgi_update_end_point_request)
+MESSAGE_DEF(SGI_UPDATE_ENDPOINT_RESPONSE, MESSAGE_PRIORITY_MED,       itti_sgi_update_end_point_response_t,    sgi_update_end_point_response)
+MESSAGE_DEF(SGI_DELETE_ENDPOINT_REQUEST,  MESSAGE_PRIORITY_MED,       itti_sgi_delete_end_point_request_t,     sgi_delete_end_point_request)
+MESSAGE_DEF(SGI_DELETE_ENDPOINT_RESPONSE, MESSAGE_PRIORITY_MED,       itti_sgi_delete_end_point_response_t,    sgi_delete_end_point_response)

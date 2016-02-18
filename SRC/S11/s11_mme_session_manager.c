@@ -103,7 +103,7 @@ s11_mme_handle_create_session_response (
 
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, SGW_CREATE_SESSION_RESPONSE);
-  create_session_resp_p = &message_p->ittiMsg.sgwCreateSessionResponse;
+  create_session_resp_p = &message_p->ittiMsg.sgw_create_session_response;
   /*
    * Create a new message parser
    */

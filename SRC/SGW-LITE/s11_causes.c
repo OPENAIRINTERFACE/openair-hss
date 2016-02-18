@@ -34,7 +34,7 @@
 
 #include "s11_causes.h"
 #include "common_types.h"
-#include "sgw_lite_ie_defs.h"
+#include "sgw_ie_defs.h"
 
 static const SGWCauseMapping_t          causes[] = {
   {LOCAL_DETACH, "Local detach", 0, 0, 0, 0},

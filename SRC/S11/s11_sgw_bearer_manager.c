@@ -31,7 +31,7 @@
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
 #include "NwGtpv2cMsgParser.h"
-#include "sgw_lite_ie_defs.h"
+#include "sgw_ie_defs.h"
 #include "s11_common.h"
 #include "s11_sgw_bearer_manager.h"
 #include "s11_ie_formatter.h"
@@ -52,7 +52,7 @@ s11_sgw_handle_modify_bearer_request (
 
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, SGW_MODIFY_BEARER_REQUEST);
-  modify_bearer_request_p = &message_p->ittiMsg.sgwModifyBearerRequest;
+  modify_bearer_request_p = &message_p->ittiMsg.sgw_modify_bearer_request;
   modify_bearer_request_p->trxn = (void *)pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
   modify_bearer_request_p->teid = nwGtpv2cMsgGetTeid (pUlpApi->hMsg);
   /*

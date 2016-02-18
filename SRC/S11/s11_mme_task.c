@@ -161,12 +161,12 @@ s11_mme_thread (
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case SGW_CREATE_SESSION_REQUEST:{
-        s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgwCreateSessionRequest);
+        s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgw_create_session_request);
       }
       break;
 
     case SGW_RELEASE_ACCESS_BEARERS_REQUEST:{
-        s11_mme_release_access_bearers_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgwReleaseAccessBearersRequest);
+        s11_mme_release_access_bearers_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgw_release_access_bearers_request);
       }
       break;
 

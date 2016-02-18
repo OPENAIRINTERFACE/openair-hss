@@ -36,7 +36,7 @@
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-#include "sgw_lite_ie_defs.h"
+#include "sgw_ie_defs.h"
 
 #include "secu_defs.h"
 

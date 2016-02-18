@@ -40,7 +40,7 @@
 #include "s1ap_mme.h"
 #include "log.h"
 #include "timer.h"
-#include "sgw_lite_defs.h"
+#include "sgw_defs.h"
 #include "mme_app_extern.h"
 #include "nas_defs.h"
 #include "s11_mme.h"

@@ -19,7 +19,7 @@
  *      contact@openairinterface.org
  */
 
-/*! \file sgw_lite_context_manager.c
+/*! \file sgw_context_manager.c
   \brief
   \author Lionel Gauthier
   \company Eurecom
@@ -38,9 +38,9 @@
 #include "obj_hashtable.h"
 #include "intertask_interface.h"
 #include "mme_config.h"
-#include "sgw_lite_defs.h"
-#include "sgw_lite_context_manager.h"
-#include "sgw_lite.h"
+#include "sgw_defs.h"
+#include "sgw_context_manager.h"
+#include "sgw.h"
 #include "dynamic_memory_check.h"
 #include "log.h"
 
@@ -49,7 +49,7 @@ extern sgw_app_t                        sgw_app;
 
 //-----------------------------------------------------------------------------
 static bool
-sgw_lite_display_s11teid2mme_mapping (
+sgw_display_s11teid2mme_mapping (
   uint64_t keyP,
   void *dataP,
   void *unused_parameterP,
@@ -69,20 +69,20 @@ sgw_lite_display_s11teid2mme_mapping (
 
 //-----------------------------------------------------------------------------
 void
-sgw_lite_display_s11teid2mme_mappings (
+sgw_display_s11teid2mme_mappings (
   void)
 //-----------------------------------------------------------------------------
 {
   LOG_DEBUG (LOG_SPGW_APP, "+--------------------------------------+\n");
   LOG_DEBUG (LOG_SPGW_APP, "| MME <--- S11 TE ID MAPPINGS ---> SGW |\n");
   LOG_DEBUG (LOG_SPGW_APP, "+--------------------------------------+\n");
-  hashtable_ts_apply_callback_on_elements (sgw_app.s11teid2mme_hashtable, sgw_lite_display_s11teid2mme_mapping, NULL, NULL);
+  hashtable_ts_apply_callback_on_elements (sgw_app.s11teid2mme_hashtable, sgw_display_s11teid2mme_mapping, NULL, NULL);
   LOG_DEBUG (LOG_SPGW_APP, "+--------------------------------------+\n");
 }
 
 //-----------------------------------------------------------------------------
 static bool
-sgw_lite_display_pdn_connection_sgw_eps_bearers (
+sgw_display_pdn_connection_sgw_eps_bearers (
   uint64_t keyP,
   void *dataP,
   void *unused_parameterP,
@@ -103,7 +103,7 @@ sgw_lite_display_pdn_connection_sgw_eps_bearers (
 
 //-----------------------------------------------------------------------------
 static bool
-sgw_lite_display_s11_bearer_context_information (
+sgw_display_s11_bearer_context_information (
   uint64_t keyP,
   void *dataP,
   void *unused_parameterP,
@@ -130,7 +130,7 @@ sgw_lite_display_s11_bearer_context_information (
     LOG_DEBUG (LOG_SPGW_APP, "|\t\t\tdefault_bearer:    %u\n", sp_context_information->sgw_eps_bearer_context_information.pdn_connection.default_bearer);
     LOG_DEBUG (LOG_SPGW_APP, "|\t\t\teps_bearers:\n");
     hash_rc = hashtable_ts_apply_callback_on_elements (sp_context_information->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers,
-                                                       sgw_lite_display_pdn_connection_sgw_eps_bearers, NULL, NULL);
+                                                       sgw_display_pdn_connection_sgw_eps_bearers, NULL, NULL);
 
     if (HASH_TABLE_OK != hash_rc) {
       LOG_DEBUG (LOG_SPGW_APP, "Invalid sgw_eps_bearers hashtable for display\n");
@@ -145,14 +145,14 @@ sgw_lite_display_s11_bearer_context_information (
 
 //-----------------------------------------------------------------------------
 void
-sgw_lite_display_s11_bearer_context_information_mapping (
+sgw_display_s11_bearer_context_information_mapping (
   void)
 //-----------------------------------------------------------------------------
 {
   LOG_DEBUG (LOG_SPGW_APP, "+-----------------------------------------+\n");
   LOG_DEBUG (LOG_SPGW_APP, "| S11 BEARER CONTEXT INFORMATION MAPPINGS |\n");
   LOG_DEBUG (LOG_SPGW_APP, "+-----------------------------------------+\n");
-  hashtable_ts_apply_callback_on_elements (sgw_app.s11_bearer_context_information_hashtable, sgw_lite_display_s11_bearer_context_information, NULL, NULL);
+  hashtable_ts_apply_callback_on_elements (sgw_app.s11_bearer_context_information_hashtable, sgw_display_s11_bearer_context_information, NULL, NULL);
   LOG_DEBUG (LOG_SPGW_APP, "+--------------------------------------+\n");
 }
 
@@ -171,7 +171,7 @@ pgw_lite_cm_free_apn (
 
 //-----------------------------------------------------------------------------
 Teid_t
-sgw_lite_get_new_S11_tunnel_id (
+sgw_get_new_S11_tunnel_id (
   void)
 //-----------------------------------------------------------------------------
 {
@@ -184,7 +184,7 @@ sgw_lite_get_new_S11_tunnel_id (
 
 //-----------------------------------------------------------------------------
 mme_sgw_tunnel_t                       *
-sgw_lite_cm_create_s11_tunnel (
+sgw_cm_create_s11_tunnel (
   Teid_t remote_teid,
   Teid_t local_teid)
 //-----------------------------------------------------------------------------
@@ -213,7 +213,7 @@ sgw_lite_cm_create_s11_tunnel (
 
 //-----------------------------------------------------------------------------
 int
-sgw_lite_cm_remove_s11_tunnel (
+sgw_cm_remove_s11_tunnel (
   Teid_t local_teid)
 //-----------------------------------------------------------------------------
 {
@@ -225,7 +225,7 @@ sgw_lite_cm_remove_s11_tunnel (
 
 //-----------------------------------------------------------------------------
 sgw_eps_bearer_entry_t                 *
-sgw_lite_cm_create_eps_bearer_entry (
+sgw_cm_create_eps_bearer_entry (
   void)
 //-----------------------------------------------------------------------------
 {
@@ -247,7 +247,7 @@ sgw_lite_cm_create_eps_bearer_entry (
 
 //-----------------------------------------------------------------------------
 sgw_pdn_connection_t                   *
-sgw_lite_cm_create_pdn_connection (
+sgw_cm_create_pdn_connection (
   void)
 //-----------------------------------------------------------------------------
 {
@@ -277,7 +277,7 @@ sgw_lite_cm_create_pdn_connection (
 
 //-----------------------------------------------------------------------------
 void
-sgw_lite_cm_free_pdn_connection (
+sgw_cm_free_pdn_connection (
   sgw_pdn_connection_t * pdn_connectionP)
 //-----------------------------------------------------------------------------
 {
@@ -290,7 +290,7 @@ sgw_lite_cm_free_pdn_connection (
 
 //-----------------------------------------------------------------------------
 void
-sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information (
+sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (
   s_plus_p_gw_eps_bearer_context_information_t * contextP)
 //-----------------------------------------------------------------------------
 {
@@ -316,7 +316,7 @@ sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information (
 
 //-----------------------------------------------------------------------------
 s_plus_p_gw_eps_bearer_context_information_t *
-sgw_lite_cm_create_bearer_context_information_in_collection (
+sgw_cm_create_bearer_context_information_in_collection (
   Teid_t teid)
 //-----------------------------------------------------------------------------
 {
@@ -332,13 +332,13 @@ sgw_lite_cm_create_bearer_context_information_in_collection (
     return NULL;
   }
 
-  LOG_DEBUG (LOG_SPGW_APP, "sgw_lite_cm_create_bearer_context_information_in_collection %d\n", teid);
+  LOG_DEBUG (LOG_SPGW_APP, "sgw_cm_create_bearer_context_information_in_collection %d\n", teid);
   /*
-   * new_bearer_context_information->sgw_eps_bearer_context_information.pdn_connections = obj_hashtable_ts_create(32, NULL, NULL, sgw_lite_cm_free_pdn_connection);
+   * new_bearer_context_information->sgw_eps_bearer_context_information.pdn_connections = obj_hashtable_ts_create(32, NULL, NULL, sgw_cm_free_pdn_connection);
    * 
    * if ( new_bearer_context_information->sgw_eps_bearer_context_information.pdn_connections == NULL) {
    * SPGW_APP_ERROR("Failed to create PDN connections collection object entry for EPS bearer teid %u \n", teid);
-   * sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information(new_bearer_context_information);
+   * sgw_cm_free_s_plus_p_gw_eps_bearer_context_information(new_bearer_context_information);
    * return NULL;
    * }
    */
@@ -347,7 +347,7 @@ sgw_lite_cm_create_bearer_context_information_in_collection (
 
   if (new_bearer_context_information->pgw_eps_bearer_context_information.apns == NULL) {
     LOG_ERROR (LOG_SPGW_APP, "Failed to create APN collection object entry for EPS bearer S11 teid %u \n", teid);
-    sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information (new_bearer_context_information);
+    sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (new_bearer_context_information);
     return NULL;
   }
 
@@ -361,7 +361,7 @@ sgw_lite_cm_create_bearer_context_information_in_collection (
 }
 
 int
-sgw_lite_cm_remove_bearer_context_information (
+sgw_cm_remove_bearer_context_information (
   Teid_t teid)
 {
   int                                     temp = 0;
@@ -374,7 +374,7 @@ sgw_lite_cm_remove_bearer_context_information (
 
 //-----------------------------------------------------------------------------
 sgw_eps_bearer_entry_t                 *
-sgw_lite_cm_create_eps_bearer_entry_in_collection (
+sgw_cm_create_eps_bearer_entry_in_collection (
   hash_table_ts_t * eps_bearersP,
   ebi_t eps_bearer_idP)
 //-----------------------------------------------------------------------------
@@ -400,7 +400,7 @@ sgw_lite_cm_create_eps_bearer_entry_in_collection (
   new_eps_bearer_entry->eps_bearer_id = eps_bearer_idP;
   hash_rc = hashtable_ts_insert (eps_bearersP, eps_bearer_idP, new_eps_bearer_entry);
   LOG_DEBUG (LOG_SPGW_APP, "Inserted new EPS bearer entry for EPS bearer id %u status %s\n", eps_bearer_idP, hashtable_rc_code2string (hash_rc));
-  hash_rc = hashtable_ts_apply_callback_on_elements (eps_bearersP, sgw_lite_display_pdn_connection_sgw_eps_bearers, NULL, NULL);
+  hash_rc = hashtable_ts_apply_callback_on_elements (eps_bearersP, sgw_display_pdn_connection_sgw_eps_bearers, NULL, NULL);
 
   if (HASH_TABLE_OK != hash_rc) {
     LOG_DEBUG (LOG_SPGW_APP, "Invalid sgw_eps_bearers hashtable for display\n");
@@ -418,7 +418,7 @@ sgw_lite_cm_create_eps_bearer_entry_in_collection (
 
 //-----------------------------------------------------------------------------
 int
-sgw_lite_cm_remove_eps_bearer_entry (
+sgw_cm_remove_eps_bearer_entry (
   hash_table_ts_t * eps_bearersP,
   ebi_t eps_bearer_idP)
 //-----------------------------------------------------------------------------

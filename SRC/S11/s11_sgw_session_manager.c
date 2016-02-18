@@ -31,7 +31,7 @@
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
 #include "NwGtpv2cMsgParser.h"
-#include "sgw_lite_ie_defs.h"
+#include "sgw_ie_defs.h"
 #include "s11_common.h"
 #include "s11_sgw_session_manager.h"
 #include "s11_ie_formatter.h"
@@ -52,7 +52,7 @@ s11_sgw_handle_create_session_request (
 
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, SGW_CREATE_SESSION_REQUEST);
-  create_session_request_p = &message_p->ittiMsg.sgwCreateSessionRequest;
+  create_session_request_p = &message_p->ittiMsg.sgw_create_session_request;
   /*
    * Create a new message parser
    */
@@ -262,7 +262,7 @@ s11_sgw_handle_delete_session_request (
 
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, SGW_DELETE_SESSION_REQUEST);
-  delete_session_request_p = &message_p->ittiMsg.sgwDeleteSessionRequest;
+  delete_session_request_p = &message_p->ittiMsg.sgw_delete_session_request;
   /*
    * Create a new message parser
    */

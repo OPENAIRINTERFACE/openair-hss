@@ -37,9 +37,9 @@
 #include "queue.h"
 #include "dynamic_memory_check.h"
 #include "pgw_lite_paa.h"
-#include "sgw_lite_defs.h"
+#include "sgw_defs.h"
 #include "spgw_config.h"
-#include "sgw_lite.h"
+#include "sgw.h"
 #include "log.h"
 
 

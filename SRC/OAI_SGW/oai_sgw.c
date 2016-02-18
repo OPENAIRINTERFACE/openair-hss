@@ -43,7 +43,7 @@
 #include "log.h"
 #include "timer.h"
 #include "s11_sgw.h"
-#include "sgw_lite_defs.h"
+#include "sgw_defs.h"
 #include "gtpv1u_sgw_defs.h"
 #include "oai_sgw.h"
 #include "msc.h"
@@ -72,7 +72,7 @@ main (
   CHECK_INIT_RETURN (udp_init (&mme_config));
   CHECK_INIT_RETURN (s11_sgw_init (&mme_config));
   CHECK_INIT_RETURN (gtpv1u_init (&mme_config));
-  CHECK_INIT_RETURN (sgw_lite_init (mme_config.config_file));
+  CHECK_INIT_RETURN (sgw_init (mme_config.config_file));
   /*
    * Handle signals here
    */

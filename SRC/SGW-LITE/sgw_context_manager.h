@@ -19,7 +19,7 @@
  *      contact@openairinterface.org
  */
 
-/*! \file sgw_lite_context_manager.h
+/*! \file sgw_context_manager.h
 * \brief
 * \author Lionel Gauthier
 * \company Eurecom
@@ -214,21 +214,21 @@ typedef struct enb_sgw_s1u_tunnel_s {
 } enb_sgw_s1u_tunnel_t;
 
 
-void                                   sgw_lite_display_s11teid2mme_mappings(void);
-void                                   sgw_lite_display_s11_bearer_context_information_mapping(void);
+void                                   sgw_display_s11teid2mme_mappings(void);
+void                                   sgw_display_s11_bearer_context_information_mapping(void);
 void                                   pgw_lite_cm_free_apn(pgw_apn_t *apnP);
 
 
-Teid_t                                 sgw_lite_get_new_S11_tunnel_id(void);
-mme_sgw_tunnel_t *                     sgw_lite_cm_create_s11_tunnel(Teid_t remote_teid, Teid_t local_teid);
-int                                    sgw_lite_cm_remove_s11_tunnel(Teid_t local_teid);
-sgw_eps_bearer_entry_t *               sgw_lite_cm_create_eps_bearer_entry(void);
-sgw_pdn_connection_t *                 sgw_lite_cm_create_pdn_connection(void);
-void                                   sgw_lite_cm_free_pdn_connection(sgw_pdn_connection_t *pdn_connectionP);
-s_plus_p_gw_eps_bearer_context_information_t * sgw_lite_cm_create_bearer_context_information_in_collection(Teid_t teid);
-void                                   sgw_lite_cm_free_s_plus_p_gw_eps_bearer_context_information(s_plus_p_gw_eps_bearer_context_information_t *contextP);
-int                                    sgw_lite_cm_remove_bearer_context_information(Teid_t teid);
-sgw_eps_bearer_entry_t *               sgw_lite_cm_create_eps_bearer_entry_in_collection(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
-int                                    sgw_lite_cm_remove_eps_bearer_entry(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
+Teid_t                                 sgw_get_new_S11_tunnel_id(void);
+mme_sgw_tunnel_t *                     sgw_cm_create_s11_tunnel(Teid_t remote_teid, Teid_t local_teid);
+int                                    sgw_cm_remove_s11_tunnel(Teid_t local_teid);
+sgw_eps_bearer_entry_t *               sgw_cm_create_eps_bearer_entry(void);
+sgw_pdn_connection_t *                 sgw_cm_create_pdn_connection(void);
+void                                   sgw_cm_free_pdn_connection(sgw_pdn_connection_t *pdn_connectionP);
+s_plus_p_gw_eps_bearer_context_information_t * sgw_cm_create_bearer_context_information_in_collection(Teid_t teid);
+void                                   sgw_cm_free_s_plus_p_gw_eps_bearer_context_information(s_plus_p_gw_eps_bearer_context_information_t *contextP);
+int                                    sgw_cm_remove_bearer_context_information(Teid_t teid);
+sgw_eps_bearer_entry_t *               sgw_cm_create_eps_bearer_entry_in_collection(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
+int                                    sgw_cm_remove_eps_bearer_entry(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
 
 #endif /* FILE_SGW_LITE_CONTEXT_MANAGER_SEEN */

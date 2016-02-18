@@ -27,7 +27,7 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-/*! \file sgw_lite_messages_types.h
+/*! \file sgw_messages_types.h
  * \brief S11 definitions for interaction between MME and S11
  * 3GPP TS 29.274.
  * Messages are the same as for GTPv2-C but here we abstract the UDP layer
@@ -36,19 +36,19 @@
  * \version 0.1
  */
 
-#include "../SGW-LITE/sgw_lite_ie_defs.h"
+#include "../SGW-LITE/sgw_ie_defs.h"
 
 #ifndef FILE_SGW_LITE_MESSAGES_TYPES_SEEN
 #define FILE_SGW_LITE_MESSAGES_TYPES_SEEN
 
-#define SGW_CREATE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.sgwCreateSessionRequest
-#define SGW_CREATE_SESSION_RESPONSE(mSGpTR)        (mSGpTR)->ittiMsg.sgwCreateSessionResponse
-#define SGW_MODIFY_BEARER_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.sgwModifyBearerRequest
-#define SGW_MODIFY_BEARER_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.sgwModifyBearerResponse
-#define SGW_DELETE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.sgwDeleteSessionRequest
-#define SGW_DELETE_SESSION_RESPONSE(mSGpTR)        (mSGpTR)->ittiMsg.sgwDeleteSessionResponse
-#define SGW_RELEASE_ACCESS_BEARERS_REQUEST(mSGpTR) (mSGpTR)->ittiMsg.sgwReleaseAccessBearersRequest
-#define SGW_RELEASE_ACCESS_BEARERS_RESPONSE(mSGpTR) (mSGpTR)->ittiMsg.sgwReleaseAccessBearersResponse
+#define SGW_CREATE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.sgw_create_session_request
+#define SGW_CREATE_SESSION_RESPONSE(mSGpTR)        (mSGpTR)->ittiMsg.sgw_create_session_response
+#define SGW_MODIFY_BEARER_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.sgw_modify_bearer_request
+#define SGW_MODIFY_BEARER_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.sgw_modify_bearer_response
+#define SGW_DELETE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.sgw_delete_session_request
+#define SGW_DELETE_SESSION_RESPONSE(mSGpTR)        (mSGpTR)->ittiMsg.sgw_delete_session_response
+#define SGW_RELEASE_ACCESS_BEARERS_REQUEST(mSGpTR) (mSGpTR)->ittiMsg.sgw_release_access_bearers_request
+#define SGW_RELEASE_ACCESS_BEARERS_RESPONSE(mSGpTR) (mSGpTR)->ittiMsg.sgw_release_access_bearers_response
 
 
 //-----------------------------------------------------------------------------

@@ -43,7 +43,7 @@
 #include "assertions.h"
 #include "commonDef.h"
 #include "common_types.h"
-#include "sgw_lite_ie_defs.h"
+#include "sgw_ie_defs.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "log.h"

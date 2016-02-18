@@ -27,7 +27,7 @@
 #include "assertions.h"
 #include "conversions.h"
 
-#include "sgw_lite_messages_types.h"
+#include "sgw_messages_types.h"
 
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"

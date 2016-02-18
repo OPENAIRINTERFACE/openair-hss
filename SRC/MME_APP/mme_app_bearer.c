@@ -36,7 +36,7 @@
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-#include "sgw_lite_ie_defs.h"
+#include "sgw_ie_defs.h"
 
 #include "secu_defs.h"
 
@@ -66,7 +66,7 @@ mme_app_send_s11_release_access_bearers_req (
   to_task = TASK_SPGW_APP;
 #endif
   message_p = itti_alloc_new_message (TASK_MME_APP, SGW_RELEASE_ACCESS_BEARERS_REQUEST);
-  release_access_bearers_request_p = &message_p->ittiMsg.sgwReleaseAccessBearersRequest;
+  release_access_bearers_request_p = &message_p->ittiMsg.sgw_release_access_bearers_request;
   memset (release_access_bearers_request_p, 0, sizeof (itti_sgw_release_access_bearers_request_t));
   release_access_bearers_request_p->teid = ue_context_pP->sgw_s11_teid;
   release_access_bearers_request_p->num_rabs = 1;
@@ -128,7 +128,7 @@ mme_app_send_s11_create_session_req (
    * - selection_mode
    * Set these parameters with random values for now.
    */
-  session_request_p = &message_p->ittiMsg.sgwCreateSessionRequest;
+  session_request_p = &message_p->ittiMsg.sgw_create_session_request;
   memset (session_request_p, 0, sizeof (itti_sgw_create_session_request_t));
   /*
    * As the create session request is the first exchanged message and as
@@ -742,7 +742,7 @@ mme_app_handle_initial_context_setup_rsp (
 #endif
   message_p = itti_alloc_new_message (TASK_MME_APP, SGW_MODIFY_BEARER_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
-  memset ((void *)&message_p->ittiMsg.sgwModifyBearerRequest, 0, sizeof (itti_sgw_modify_bearer_request_t));
+  memset ((void *)&message_p->ittiMsg.sgw_modify_bearer_request, 0, sizeof (itti_sgw_modify_bearer_request_t));
   SGW_MODIFY_BEARER_REQUEST (message_p).teid = ue_context_p->sgw_s11_teid;
   /*
    * Delay Value in integer multiples of 50 millisecs, or zero
