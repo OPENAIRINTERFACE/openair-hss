@@ -66,15 +66,17 @@ encode_service_reject (
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, SERVICE_REJECT_MINIMUM_LENGTH, len);
 
-  if ((encode_result = encode_emm_cause (&service_reject->emmcause, 0, buffer + encoded, len - encoded)) < 0)   //Return in case of error
+  if ((encode_result = encode_emm_cause (&service_reject->emmcause, 0, buffer + encoded, len - encoded)) < 0) {  //Return in case of error
     return encode_result;
-  else
+  } else {
     encoded += encode_result;
-
-  if ((encode_result = encode_gprs_timer (&service_reject->t3442value, 0, buffer + encoded, len - encoded)) < 0)        //Return in case of error
-    return encode_result;
-  else
+  }
+  /* Just wait a litle bit for CS...
+  if ((encode_result = encode_gprs_timer (&service_reject->t3442value, 0, buffer + encoded, len - encoded)) < 0) {       //Return in case of error
+    LOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
+  } else {
     encoded += encode_result;
+  }*/
 
   return encoded;
 }

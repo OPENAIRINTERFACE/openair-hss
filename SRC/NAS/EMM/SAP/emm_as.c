@@ -1667,48 +1667,61 @@ _emm_as_establish_rej (
     as_msg->ue_id = msg->ue_id;
   }
 
-  /*
-   * Setup the NAS security header
-   */
-  emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx);
+  if (EMM_AS_NAS_INFO_SR == msg->nas_info) {
+    nas_msg.header.protocol_discriminator = EPS_MOBILITY_MANAGEMENT_MESSAGE;
+    nas_msg.header.security_header_type  = SECURITY_HEADER_TYPE_NOT_PROTECTED;
+    emm_msg = &nas_msg.plain.emm;
 
-  /*
-   * Setup the NAS information message
-   */
-  if (emm_msg ) {
-    switch (msg->nas_info) {
-    case EMM_AS_NAS_INFO_ATTACH:
-      if (msg->eps_id.guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
-      } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_REJECT to ue id " MME_UE_S1AP_ID_FMT " ", as_msg->ue_id);
+    if (msg->eps_id.guti) {
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
+    } else {
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to ue id " MME_UE_S1AP_ID_FMT " ", as_msg->ue_id);
+    }
+    size = emm_send_service_reject (msg, &emm_msg->service_reject);
+  } else {
+    /*
+     * Setup the NAS security header
+     */
+    emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx);
+
+    /*
+     * Setup the NAS information message
+     */
+    if (emm_msg ) {
+      switch (msg->nas_info) {
+      case EMM_AS_NAS_INFO_ATTACH:
+        if (msg->eps_id.guti) {
+          MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
+        } else {
+          MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_REJECT to ue id " MME_UE_S1AP_ID_FMT " ", as_msg->ue_id);
+        }
+
+        size = emm_send_attach_reject (msg, &emm_msg->attach_reject);
+        break;
+
+      case EMM_AS_NAS_INFO_TAU:
+        if (msg->eps_id.guti) {
+          MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
+        } else {
+          MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to ue id " MME_UE_S1AP_ID_FMT " ", as_msg->ue_id);
+        }
+
+        size = emm_send_tracking_area_update_reject (msg, &emm_msg->tracking_area_update_reject);
+        break;
+
+      case EMM_AS_NAS_INFO_SR:
+        if (msg->eps_id.guti) {
+          MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
+        } else {
+          MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to ue id " MME_UE_S1AP_ID_FMT " ", as_msg->ue_id);
+        }
+
+        size = emm_send_service_reject (msg, &emm_msg->service_reject);
+        break;
+
+      default:
+        LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->nas_info);
       }
-
-      size = emm_send_attach_reject (msg, &emm_msg->attach_reject);
-      break;
-
-    case EMM_AS_NAS_INFO_TAU:
-      if (msg->eps_id.guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
-      } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to ue id " MME_UE_S1AP_ID_FMT " ", as_msg->ue_id);
-      }
-
-      size = emm_send_tracking_area_update_reject (msg, &emm_msg->tracking_area_update_reject);
-      break;
-
-    case EMM_AS_NAS_INFO_SR:
-      if (msg->eps_id.guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
-      } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to ue id " MME_UE_S1AP_ID_FMT " ", as_msg->ue_id);
-      }
-
-      size = emm_send_service_reject (msg, &emm_msg->service_reject);
-      break;
-
-    default:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->nas_info);
     }
   }
 
