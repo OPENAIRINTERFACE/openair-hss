@@ -121,7 +121,7 @@ emm_esm_send (
     /*
      * ESM requests EMM to transfer ESM data unit to lower layer
      */
-    rc = lowerlayer_data_req (msg->ueid, &msg->u.data.msg);
+    rc = lowerlayer_data_req (msg->ue_id, &msg->u.data.msg);
     break;
 
   default:

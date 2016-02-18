@@ -36,6 +36,7 @@
 #ifndef INTERTASK_INTERFACE_TYPES_H_
 #define INTERTASK_INTERFACE_TYPES_H_
 
+#include <time.h>
 #include "itti_types.h"
 
 /* Defines to handle bit fields on unsigned long values */
@@ -117,8 +118,7 @@ typedef union msg_s {
 typedef uint16_t MessageHeaderSize;
 
 typedef struct itti_lte_time_s {
-  uint32_t frame;
-  uint8_t slot;
+  struct timeval time;
 } itti_lte_time_t;
 
 /** @struct MessageHeader

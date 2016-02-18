@@ -115,7 +115,7 @@ mme_config_init (
 
   mme_config_p->log_config.asn1_verbosity_level = 0;
   mme_config_p->config_file = NULL;
-  mme_config_p->max_eNBs = MAX_NUMBER_OF_ENB;
+  mme_config_p->max_enbs = MAX_NUMBER_OF_ENB;
   mme_config_p->max_ues = MAX_NUMBER_OF_UE;
   mme_config_p->unauthenticated_imsi_supported = 0;
   /*
@@ -133,12 +133,12 @@ mme_config_init (
   /*
    * IP configuration
    */
-  mme_config_p->ipv4.sgw_ip_address_for_S1u_S12_S4_up = 0;
-  mme_config_p->ipv4.mme_interface_name_for_S1_MME = "none";
-  mme_config_p->ipv4.mme_ip_address_for_S1_MME = 0;
-  mme_config_p->ipv4.mme_interface_name_for_S11 = "none";
-  mme_config_p->ipv4.mme_ip_address_for_S11 = 0;
-  mme_config_p->ipv4.sgw_ip_address_for_S11 = 0;
+  mme_config_p->ipv4.sgw_ip_address_for_s1u_s12_s4_up = 0;
+  mme_config_p->ipv4.mme_interface_name_for_s1_mme = "none";
+  mme_config_p->ipv4.mme_ip_address_for_s1_mme = 0;
+  mme_config_p->ipv4.mme_interface_name_for_s11 = "none";
+  mme_config_p->ipv4.mme_ip_address_for_s11 = 0;
+  mme_config_p->ipv4.sgw_ip_address_for_s11 = 0;
   mme_config_p->s6a_config.conf_file = S6A_CONF_FILE;
   mme_config_p->itti_config.queue_size = ITTI_QUEUE_MAX_ELEMENTS;
   mme_config_p->itti_config.log_file = NULL;
@@ -210,12 +210,12 @@ config_parse_file (
   const char                             *tac = NULL;
   const char                             *mcc = NULL;
   const char                             *mnc = NULL;
-  char                                   *sgw_ip_address_for_S1u_S12_S4_up = NULL;
-  char                                   *mme_interface_name_for_S1_MME = NULL;
-  char                                   *mme_ip_address_for_S1_MME = NULL;
-  char                                   *mme_interface_name_for_S11 = NULL;
-  char                                   *mme_ip_address_for_S11 = NULL;
-  char                                   *sgw_ip_address_for_S11 = NULL;
+  char                                   *sgw_ip_address_for_s1u_s12_s4_up = NULL;
+  char                                   *mme_interface_name_for_s1_mme = NULL;
+  char                                   *mme_ip_address_for_s1_mme = NULL;
+  char                                   *mme_interface_name_for_s11 = NULL;
+  char                                   *mme_ip_address_for_s11 = NULL;
+  char                                   *sgw_ip_address_for_s11 = NULL;
   bool                                    swap = false;
 
   config_init (&cfg);
@@ -294,7 +294,7 @@ config_parse_file (
     }
 
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXENB, &aint))) {
-      mme_config_p->max_eNBs = (uint32_t) aint;
+      mme_config_p->max_enbs = (uint32_t) aint;
     }
 
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXUE, &aint))) {
@@ -540,21 +540,21 @@ config_parse_file (
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
     if (setting != NULL) {
-      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S1_MME, (const char **)&mme_interface_name_for_S1_MME)
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S1_MME, (const char **)&mme_ip_address_for_S1_MME)
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11_MME, (const char **)&mme_interface_name_for_S11)
-           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11_MME, (const char **)&mme_ip_address_for_S11)
+      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S1_MME, (const char **)&mme_interface_name_for_s1_mme)
+           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S1_MME, (const char **)&mme_ip_address_for_s1_mme)
+           && config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11_MME, (const char **)&mme_interface_name_for_s11)
+           && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11_MME, (const char **)&mme_ip_address_for_s11)
           )
         ) {
-        mme_config_p->ipv4.mme_interface_name_for_S1_MME = STRDUP_CHECK (mme_interface_name_for_S1_MME);
-        cidr = STRDUP_CHECK (mme_ip_address_for_S1_MME);
+        mme_config_p->ipv4.mme_interface_name_for_s1_mme = STRDUP_CHECK (mme_interface_name_for_s1_mme);
+        cidr = STRDUP_CHECK (mme_ip_address_for_s1_mme);
         address = strtok (cidr, "/");
-        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_S1_MME, "BAD IP ADDRESS FORMAT FOR MME S1_MME !\n")
+        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_s1_mme, "BAD IP ADDRESS FORMAT FOR MME S1_MME !\n")
           FREE_CHECK (cidr);
-        mme_config_p->ipv4.mme_interface_name_for_S11 = STRDUP_CHECK (mme_interface_name_for_S11);
-        cidr = STRDUP_CHECK (mme_ip_address_for_S11);
+        mme_config_p->ipv4.mme_interface_name_for_s11 = STRDUP_CHECK (mme_interface_name_for_s11);
+        cidr = STRDUP_CHECK (mme_ip_address_for_s11);
         address = strtok (cidr, "/");
-        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_S11, "BAD IP ADDRESS FORMAT FOR MME S11 !\n")
+        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_s11, "BAD IP ADDRESS FORMAT FOR MME S11 !\n")
           FREE_CHECK (cidr);
       }
     }
@@ -701,18 +701,18 @@ config_parse_file (
     subsetting = config_setting_get_member (setting, SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
     if (subsetting != NULL) {
-      if ((config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP, (const char **)&sgw_ip_address_for_S1u_S12_S4_up)
-           && config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11, (const char **)&sgw_ip_address_for_S11)
+      if ((config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP, (const char **)&sgw_ip_address_for_s1u_s12_s4_up)
+           && config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11, (const char **)&sgw_ip_address_for_s11)
            && config_setting_lookup_int (subsetting, SGW_CONFIG_STRING_SGW_PORT_FOR_S1U_S12_S4_UP, &aint)
           )
         ) {
-        cidr = STRDUP_CHECK (sgw_ip_address_for_S1u_S12_S4_up);
+        cidr = STRDUP_CHECK (sgw_ip_address_for_s1u_s12_s4_up);
         address = strtok (cidr, "/");
-        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.sgw_ip_address_for_S1u_S12_S4_up, "BAD IP ADDRESS FORMAT FOR SGW S1u_S12_S4 !\n")
+        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.sgw_ip_address_for_s1u_s12_s4_up, "BAD IP ADDRESS FORMAT FOR SGW S1u_S12_S4 !\n")
           FREE_CHECK (cidr);
-        cidr = STRDUP_CHECK (sgw_ip_address_for_S11);
+        cidr = STRDUP_CHECK (sgw_ip_address_for_s11);
         address = strtok (cidr, "/");
-        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.sgw_ip_address_for_S11, "BAD IP ADDRESS FORMAT FOR SGW S11 !\n")
+        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.sgw_ip_address_for_s11, "BAD IP ADDRESS FORMAT FOR SGW S11 !\n")
           FREE_CHECK (cidr);
         mme_config_p->gtpv1u_config.port_number = (uint16_t) aint;
       }
@@ -748,7 +748,7 @@ config_display (
   LOG_INFO (LOG_CONFIG, "Configuration:\n");
   LOG_INFO (LOG_CONFIG, "- File .................................: %s\n", mme_config_p->config_file);
   LOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", mme_config_p->realm);
-  LOG_INFO (LOG_CONFIG, "- Max eNBs .............................: %u\n", mme_config_p->max_eNBs);
+  LOG_INFO (LOG_CONFIG, "- Max eNBs .............................: %u\n", mme_config_p->max_enbs);
   LOG_INFO (LOG_CONFIG, "- Max UEs ..............................: %u\n", mme_config_p->max_ues);
   LOG_INFO (LOG_CONFIG, "- IMS voice over PS session in S1 ......: %s\n", mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "false" : "true");
   LOG_INFO (LOG_CONFIG, "- Emergency bearer services in S1 mode .: %s\n", mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode == 0 ? "false" : "true");
@@ -762,11 +762,11 @@ config_display (
   LOG_INFO (LOG_CONFIG, "- S1-MME:\n");
   LOG_INFO (LOG_CONFIG, "    port number ......: %d\n", mme_config_p->s1ap_config.port_number);
   LOG_INFO (LOG_CONFIG, "- IP:\n");
-  LOG_INFO (LOG_CONFIG, "    s1-u ip ..........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.sgw_ip_address_for_S1u_S12_S4_up)));
-  LOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s\n", mme_config_p->ipv4.mme_interface_name_for_S1_MME);
-  LOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_S1_MME)));
-  LOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s\n", mme_config_p->ipv4.mme_interface_name_for_S11);
-  LOG_INFO (LOG_CONFIG, "    s11 S-GW ip ......: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_S11)));
+  LOG_INFO (LOG_CONFIG, "    s1-u ip ..........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.sgw_ip_address_for_s1u_s12_s4_up)));
+  LOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s\n", mme_config_p->ipv4.mme_interface_name_for_s1_mme);
+  LOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_s1_mme)));
+  LOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s\n", mme_config_p->ipv4.mme_interface_name_for_s11);
+  LOG_INFO (LOG_CONFIG, "    s11 S-GW ip ......: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_s11)));
   LOG_INFO (LOG_CONFIG, "- ITTI:\n");
   LOG_INFO (LOG_CONFIG, "    queue size .......: %u (bytes)\n", mme_config_p->itti_config.queue_size);
   LOG_INFO (LOG_CONFIG, "    log file .........: %s\n", mme_config_p->itti_config.log_file);

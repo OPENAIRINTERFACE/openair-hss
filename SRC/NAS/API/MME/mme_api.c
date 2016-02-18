@@ -309,36 +309,36 @@ mme_api_get_emm_config (
   AssertFatal (mme_config_p->served_tai.nb_tai >= 1, "No PLMN configured");
   AssertFatal (mme_config_p->gummei.nb_mmec >= 1, "No MME Code configured");
   AssertFatal (mme_config_p->gummei.nb_mme_gid >= 1, "No MME Group ID configured");
-  config->gummei.plmn.MCCdigit1 = (mme_config_p->served_tai.plmn_mcc[0] / 100) % 10;
-  config->gummei.plmn.MCCdigit2 = (mme_config_p->served_tai.plmn_mcc[0] / 10) % 10;
-  config->gummei.plmn.MCCdigit3 = mme_config_p->served_tai.plmn_mcc[0] % 10;
+  config->gummei.plmn.mcc_digit1 = (mme_config_p->served_tai.plmn_mcc[0] / 100) % 10;
+  config->gummei.plmn.mcc_digit2 = (mme_config_p->served_tai.plmn_mcc[0] / 10) % 10;
+  config->gummei.plmn.mcc_digit3 = mme_config_p->served_tai.plmn_mcc[0] % 10;
 
   if (mme_config_p->served_tai.plmn_mnc_len[0] == 2) {
-    config->gummei.plmn.MNCdigit1 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
-    config->gummei.plmn.MNCdigit2 = mme_config_p->served_tai.plmn_mnc[0] % 10;
-    config->gummei.plmn.MNCdigit3 = 0xf;
+    config->gummei.plmn.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
+    config->gummei.plmn.mnc_digit2 = mme_config_p->served_tai.plmn_mnc[0] % 10;
+    config->gummei.plmn.mnc_digit3 = 0xf;
   } else if (mme_config_p->served_tai.plmn_mnc_len[0] == 3) {
-    config->gummei.plmn.MNCdigit1 = (mme_config_p->served_tai.plmn_mnc[0] / 100) % 10;
-    config->gummei.plmn.MNCdigit2 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
-    config->gummei.plmn.MNCdigit3 = mme_config_p->served_tai.plmn_mnc[0] % 10;
+    config->gummei.plmn.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[0] / 100) % 10;
+    config->gummei.plmn.mnc_digit2 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
+    config->gummei.plmn.mnc_digit3 = mme_config_p->served_tai.plmn_mnc[0] % 10;
   } else {
     AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[0] >= 2) && (mme_config_p->served_tai.plmn_mnc_len[0] <= 3), "BAD MNC length for GUMMEI");
   }
 
   config->tai_list.n_tais = 0;
   for (i = 0; i < mme_config_p->served_tai.nb_tai; i++) {
-    config->tai_list.tai[i].plmn.MCCdigit1 = (mme_config_p->served_tai.plmn_mcc[i] / 100) % 10;
-    config->tai_list.tai[i].plmn.MCCdigit2 = (mme_config_p->served_tai.plmn_mcc[i] / 10) % 10;
-    config->tai_list.tai[i].plmn.MCCdigit3 = mme_config_p->served_tai.plmn_mcc[i] % 10;
+    config->tai_list.tai[i].plmn.mcc_digit1 = (mme_config_p->served_tai.plmn_mcc[i] / 100) % 10;
+    config->tai_list.tai[i].plmn.mcc_digit2 = (mme_config_p->served_tai.plmn_mcc[i] / 10) % 10;
+    config->tai_list.tai[i].plmn.mcc_digit3 = mme_config_p->served_tai.plmn_mcc[i] % 10;
 
     if (mme_config_p->served_tai.plmn_mnc_len[0] == 2) {
-      config->tai_list.tai[i].plmn.MNCdigit1 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
-      config->tai_list.tai[i].plmn.MNCdigit2 = mme_config_p->served_tai.plmn_mnc[0] % 10;
-      config->tai_list.tai[i].plmn.MNCdigit3 = 0xf;
+      config->tai_list.tai[i].plmn.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
+      config->tai_list.tai[i].plmn.mnc_digit2 = mme_config_p->served_tai.plmn_mnc[0] % 10;
+      config->tai_list.tai[i].plmn.mnc_digit3 = 0xf;
     } else if (mme_config_p->served_tai.plmn_mnc_len[0] == 3) {
-      config->tai_list.tai[i].plmn.MNCdigit1 = (mme_config_p->served_tai.plmn_mnc[0] / 100) % 10;
-      config->tai_list.tai[i].plmn.MNCdigit2 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
-      config->tai_list.tai[i].plmn.MNCdigit3 = mme_config_p->served_tai.plmn_mnc[0] % 10;
+      config->tai_list.tai[i].plmn.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[0] / 100) % 10;
+      config->tai_list.tai[i].plmn.mnc_digit2 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
+      config->tai_list.tai[i].plmn.mnc_digit3 = mme_config_p->served_tai.plmn_mnc[0] % 10;
     } else {
       AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[0] >= 2) && (mme_config_p->served_tai.plmn_mnc_len[0] <= 3), "BAD MNC length for GUMMEI");
     }
@@ -424,16 +424,23 @@ mme_api_get_esm_config (
  */
 int
 mme_api_notify_new_guti (
-  const nas_ue_id_t ueid,
+  const mme_ue_s1ap_id_t id,
   GUTI_t * const guti)
 {
   ue_context_t                           *ue_context = NULL;
 
   LOG_FUNC_IN (LOG_NAS);
-  ue_context = mme_ue_context_exists_nas_ue_id (&mme_app_desc.mme_ue_contexts, ueid);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
+
 
   if ( ue_context) {
-    mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context, ue_context->mme_ue_s1ap_id, ue_context->imsi, ue_context->mme_s11_teid, ue_context->ue_id, guti);
+    mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts,
+        ue_context,
+        ue_context->enb_ue_s1ap_id,
+        id,
+        ue_context->imsi,
+        ue_context->mme_s11_teid,
+        guti);
     LOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
@@ -453,18 +460,29 @@ mme_api_notify_new_guti (
  *
  */
 int
-mme_api_notify_ue_id_changed (
-    const nas_ue_id_t old_ueid,
-    const nas_ue_id_t new_ueid)
+mme_api_notify_end_ue_s1ap_id_changed (
+    const enb_ue_s1ap_id_t old_id,
+    const enb_ue_s1ap_id_t new_id,
+    const mme_ue_s1ap_id_t mme_ue_s1ap_id)
 {
   ue_context_t                           *ue_context = NULL;
 
   LOG_FUNC_IN (LOG_NAS);
-  ue_context = mme_ue_context_exists_nas_ue_id (&mme_app_desc.mme_ue_contexts, old_ueid);
+  ue_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, old_id);
 
   if ( ue_context) {
-    LOG_INFO (LOG_NAS, "mme_api_notify_ue_id_changed old ueid=" NAS_UE_ID_FMT " new ueid=" NAS_UE_ID_FMT "\n", old_ueid, new_ueid);
-    mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context, new_ueid, ue_context->imsi, ue_context->mme_s11_teid, new_ueid, &ue_context->guti);
+    LOG_INFO (LOG_NAS,
+        "mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ": enb_ue_s1ap_id changed old id=" ENB_UE_S1AP_ID_FMT " new id =" ENB_UE_S1AP_ID_FMT "\n",
+        mme_ue_s1ap_id, old_id, new_id);
+
+    mme_ue_context_update_coll_keys (
+        &mme_app_desc.mme_ue_contexts,
+        ue_context,
+        new_id,
+        mme_ue_s1ap_id,
+        ue_context->imsi,
+        ue_context->mme_s11_teid,
+        &ue_context->guti);
     LOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
@@ -618,36 +636,36 @@ mme_api_new_guti (
 
     GUTI2STR (guti, guti_str, GUTI2STR_MAX_LENGTH);
 
-    plmn.MCCdigit1 = guti->gummei.plmn.MCCdigit1;
-    plmn.MCCdigit2 = guti->gummei.plmn.MCCdigit2;
-    plmn.MCCdigit3 = guti->gummei.plmn.MCCdigit3;
-    plmn.MNCdigit1 = guti->gummei.plmn.MNCdigit1;
-    plmn.MNCdigit2 = guti->gummei.plmn.MNCdigit2;
-    plmn.MNCdigit3 = guti->gummei.plmn.MNCdigit3;
+    plmn.mcc_digit1 = guti->gummei.plmn.mcc_digit1;
+    plmn.mcc_digit2 = guti->gummei.plmn.mcc_digit2;
+    plmn.mcc_digit3 = guti->gummei.plmn.mcc_digit3;
+    plmn.mnc_digit1 = guti->gummei.plmn.mnc_digit1;
+    plmn.mnc_digit2 = guti->gummei.plmn.mnc_digit2;
+    plmn.mnc_digit3 = guti->gummei.plmn.mnc_digit3;
     j = 0;
     for (i=0; i < _emm_data.conf.tai_list.n_tais; i++) {
-      if ((_emm_data.conf.tai_list.tai[i].plmn.MCCdigit1 == plmn.MCCdigit1) &&
-          (_emm_data.conf.tai_list.tai[i].plmn.MCCdigit2 == plmn.MCCdigit2) &&
-          (_emm_data.conf.tai_list.tai[i].plmn.MCCdigit3 == plmn.MCCdigit3) &&
-          (_emm_data.conf.tai_list.tai[i].plmn.MNCdigit1 == plmn.MNCdigit1) &&
-          (_emm_data.conf.tai_list.tai[i].plmn.MNCdigit2 == plmn.MNCdigit2) &&
-          (_emm_data.conf.tai_list.tai[i].plmn.MNCdigit3 == plmn.MNCdigit3) ) {
+      if ((_emm_data.conf.tai_list.tai[i].plmn.mcc_digit1 == plmn.mcc_digit1) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.mcc_digit2 == plmn.mcc_digit2) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.mcc_digit3 == plmn.mcc_digit3) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.mnc_digit1 == plmn.mnc_digit1) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.mnc_digit2 == plmn.mnc_digit2) &&
+          (_emm_data.conf.tai_list.tai[i].plmn.mnc_digit3 == plmn.mnc_digit3) ) {
 
       }
-      tai_list->tai[j].plmn.MCCdigit1 = plmn.MCCdigit1;
-      tai_list->tai[j].plmn.MCCdigit2 = plmn.MCCdigit2;
-      tai_list->tai[j].plmn.MCCdigit3 = plmn.MCCdigit3;
-      tai_list->tai[j].plmn.MNCdigit1 = plmn.MNCdigit1;
-      tai_list->tai[j].plmn.MNCdigit2 = plmn.MNCdigit2;
-      tai_list->tai[j].plmn.MNCdigit3 = plmn.MNCdigit3;
+      tai_list->tai[j].plmn.mcc_digit1 = plmn.mcc_digit1;
+      tai_list->tai[j].plmn.mcc_digit2 = plmn.mcc_digit2;
+      tai_list->tai[j].plmn.mcc_digit3 = plmn.mcc_digit3;
+      tai_list->tai[j].plmn.mnc_digit1 = plmn.mnc_digit1;
+      tai_list->tai[j].plmn.mnc_digit2 = plmn.mnc_digit2;
+      tai_list->tai[j].plmn.mnc_digit3 = plmn.mnc_digit3;
       tai_list->tai[j].tac            = _emm_data.conf.tai_list.tai[i].tac;
       j += 1;
-      if (15 == plmn.MNCdigit3) { // mnc length 2
+      if (15 == plmn.mnc_digit3) { // mnc length 2
         LOG_INFO (LOG_NAS, "mme_api_new_guti - UE registered to TAC %d%d%d.%d%d:%d\n",
-            plmn.MCCdigit1, plmn.MCCdigit2, plmn.MCCdigit3, plmn.MNCdigit1, plmn.MNCdigit2, _emm_data.conf.tai_list.tai[i].tac);
+            plmn.mcc_digit1, plmn.mcc_digit2, plmn.mcc_digit3, plmn.mnc_digit1, plmn.mnc_digit2, _emm_data.conf.tai_list.tai[i].tac);
       } else {
         LOG_INFO (LOG_NAS, "mme_api_new_guti - UE registered to TAC %d%d%d.%d%d%d:%d\n",
-            plmn.MCCdigit1, plmn.MCCdigit2, plmn.MCCdigit3, plmn.MNCdigit1, plmn.MNCdigit2, plmn.MNCdigit3, _emm_data.conf.tai_list.tai[i].tac);
+            plmn.mcc_digit1, plmn.mcc_digit2, plmn.mcc_digit3, plmn.mnc_digit1, plmn.mnc_digit2, plmn.mnc_digit3, _emm_data.conf.tai_list.tai[i].tac);
       }
     }
     tai_list->n_tais = j;

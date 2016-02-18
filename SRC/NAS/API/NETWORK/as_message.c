@@ -81,7 +81,7 @@ int
 as_message_decode (
   const char *buffer,
   as_message_t * msg,
-  int length)
+  size_t length)
 {
   LOG_FUNC_IN (LOG_NAS);
   int                                     bytes;
@@ -90,16 +90,16 @@ as_message_decode (
   /*
    * Get the message type
    */
-  msg->msgID = *(uint16_t *) (buffer);
+  msg->msg_id = *(uint16_t *) (buffer);
   bytes = sizeof (uint16_t);
 
-  switch (msg->msgID) {
+  switch (msg->msg_id) {
   case AS_NAS_ESTABLISH_REQ:
     /*
      * NAS signalling connection establish request
      */
     bytes += sizeof (nas_establish_req_t) - sizeof (Byte_t *);
-    data = &msg->msg.nas_establish_req.initialNasMsg.data;
+    data = &msg->msg.nas_establish_req.initial_nas_msg.data;
     break;
 
   case AS_NAS_ESTABLISH_IND:
@@ -107,7 +107,7 @@ as_message_decode (
      * NAS signalling connection establishment indication
      */
     bytes += sizeof (nas_establish_ind_t) - sizeof (Byte_t *);
-    data = &msg->msg.nas_establish_ind.initialNasMsg.data;
+    data = &msg->msg.nas_establish_ind.initial_nas_msg.data;
     break;
 
   case AS_NAS_ESTABLISH_RSP:
@@ -115,7 +115,7 @@ as_message_decode (
      * NAS signalling connection establishment response
      */
     bytes += sizeof (nas_establish_rsp_t) - sizeof (Byte_t *);
-    data = &msg->msg.nas_establish_rsp.nasMsg.data;
+    data = &msg->msg.nas_establish_rsp.nas_msg.data;
     break;
 
   case AS_NAS_ESTABLISH_CNF:
@@ -123,7 +123,7 @@ as_message_decode (
      * NAS signalling connection establishment confirm
      */
     bytes += sizeof (nas_establish_cnf_t) - sizeof (Byte_t *);
-    data = &msg->msg.nas_establish_cnf.nasMsg.data;
+    data = &msg->msg.nas_establish_cnf.nas_msg.data;
     break;
 
   case AS_UL_INFO_TRANSFER_REQ:
@@ -131,7 +131,7 @@ as_message_decode (
      * Uplink L3 data transfer request
      */
     bytes += sizeof (ul_info_transfer_req_t) - sizeof (Byte_t *);
-    data = &msg->msg.ul_info_transfer_req.nasMsg.data;
+    data = &msg->msg.ul_info_transfer_req.nas_msg.data;
     break;
 
   case AS_UL_INFO_TRANSFER_IND:
@@ -139,7 +139,7 @@ as_message_decode (
      * Uplink L3 data transfer indication
      */
     bytes += sizeof (ul_info_transfer_ind_t) - sizeof (Byte_t *);
-    data = &msg->msg.ul_info_transfer_ind.nasMsg.data;
+    data = &msg->msg.ul_info_transfer_ind.nas_msg.data;
     break;
 
   case AS_DL_INFO_TRANSFER_REQ:
@@ -147,7 +147,7 @@ as_message_decode (
      * Downlink L3 data transfer request
      */
     bytes += sizeof (dl_info_transfer_req_t) - sizeof (Byte_t *);
-    data = &msg->msg.dl_info_transfer_req.nasMsg.data;
+    data = &msg->msg.dl_info_transfer_req.nas_msg.data;
     break;
 
   case AS_DL_INFO_TRANSFER_IND:
@@ -155,7 +155,7 @@ as_message_decode (
      * Downlink L3 data transfer indication
      */
     bytes += sizeof (dl_info_transfer_ind_t) - sizeof (Byte_t *);
-    data = &msg->msg.dl_info_transfer_ind.nasMsg.data;
+    data = &msg->msg.dl_info_transfer_ind.nas_msg.data;
     break;
 
   case AS_BROADCAST_INFO_IND:
@@ -182,7 +182,7 @@ as_message_decode (
 
   default:
     bytes = 0;
-    LOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msgID);
+    LOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msg_id);
     break;
   }
 
@@ -198,10 +198,10 @@ as_message_decode (
      * Decode the message
      */
     memcpy (msg, (as_message_t *) buffer, bytes);
-    LOG_FUNC_RETURN (LOG_NAS, msg->msgID);
+    LOG_FUNC_RETURN (LOG_NAS, msg->msg_id);
   }
 
-  LOG_WARNING(LOG_NAS, "NET-API   - Failed to decode AS message 0x%x", msg->msgID);
+  LOG_WARNING(LOG_NAS, "NET-API   - Failed to decode AS message 0x%x", msg->msg_id);
   LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
@@ -226,13 +226,13 @@ int
 as_message_encode (
   char *buffer,
   as_message_t * msg,
-  int length)
+  size_t length)
 {
   LOG_FUNC_IN (LOG_NAS);
-  int                                     bytes = sizeof (msg->msgID);
+  int                                     bytes = sizeof (msg->msg_id);
   as_nas_info_t                          *nas_msg = NULL;
 
-  switch (msg->msgID) {
+  switch (msg->msg_id) {
   case AS_BROADCAST_INFO_IND:
     /*
      * Broadcast information
@@ -280,7 +280,7 @@ as_message_encode (
      * NAS signalling connection establish request
      */
     bytes += sizeof (nas_establish_req_t) - sizeof (Byte_t *);
-    nas_msg = &msg->msg.nas_establish_req.initialNasMsg;
+    nas_msg = &msg->msg.nas_establish_req.initial_nas_msg;
     break;
 
   case AS_NAS_ESTABLISH_IND:
@@ -288,7 +288,7 @@ as_message_encode (
      * NAS signalling connection establish indication
      */
     bytes += sizeof (nas_establish_ind_t) - sizeof (Byte_t *);
-    nas_msg = &msg->msg.nas_establish_ind.initialNasMsg;
+    nas_msg = &msg->msg.nas_establish_ind.initial_nas_msg;
     break;
 
   case AS_NAS_ESTABLISH_RSP:
@@ -296,7 +296,7 @@ as_message_encode (
      * NAS signalling connection establish response
      */
     bytes += sizeof (nas_establish_rsp_t) - sizeof (Byte_t *);
-    nas_msg = &msg->msg.nas_establish_rsp.nasMsg;
+    nas_msg = &msg->msg.nas_establish_rsp.nas_msg;
     break;
 
   case AS_NAS_ESTABLISH_CNF:
@@ -304,7 +304,7 @@ as_message_encode (
      * NAS signalling connection establish confirm
      */
     bytes += sizeof (nas_establish_cnf_t) - sizeof (Byte_t *);
-    nas_msg = &msg->msg.nas_establish_cnf.nasMsg;
+    nas_msg = &msg->msg.nas_establish_cnf.nas_msg;
     break;
 
   case AS_NAS_RELEASE_REQ:
@@ -326,7 +326,7 @@ as_message_encode (
      * Uplink L3 data transfer request
      */
     bytes += sizeof (ul_info_transfer_req_t) - sizeof (Byte_t *);
-    nas_msg = &msg->msg.ul_info_transfer_req.nasMsg;
+    nas_msg = &msg->msg.ul_info_transfer_req.nas_msg;
     break;
 
   case AS_UL_INFO_TRANSFER_CNF:
@@ -341,7 +341,7 @@ as_message_encode (
      * Uplink L3 data transfer indication
      */
     bytes += sizeof (ul_info_transfer_ind_t) - sizeof (Byte_t *);
-    nas_msg = &msg->msg.ul_info_transfer_ind.nasMsg;
+    nas_msg = &msg->msg.ul_info_transfer_ind.nas_msg;
     break;
 
   case AS_DL_INFO_TRANSFER_REQ:
@@ -349,7 +349,7 @@ as_message_encode (
      * Downlink L3 data transfer
      */
     bytes += sizeof (dl_info_transfer_req_t) - sizeof (Byte_t *);
-    nas_msg = &msg->msg.dl_info_transfer_req.nasMsg;
+    nas_msg = &msg->msg.dl_info_transfer_req.nas_msg;
     break;
 
   case AS_DL_INFO_TRANSFER_CNF:
@@ -364,7 +364,7 @@ as_message_encode (
      * Downlink L3 data transfer indication
      */
     bytes += sizeof (dl_info_transfer_ind_t) - sizeof (Byte_t *);
-    nas_msg = &msg->msg.dl_info_transfer_ind.nasMsg;
+    nas_msg = &msg->msg.dl_info_transfer_ind.nas_msg;
     break;
 
   case AS_RAB_ESTABLISH_REQ:
@@ -410,7 +410,7 @@ as_message_encode (
     break;
 
   default:
-    LOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msgID);
+    LOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msg_id);
     bytes = length;
     break;
   }
@@ -438,7 +438,7 @@ as_message_encode (
     LOG_FUNC_RETURN (LOG_NAS, bytes);
   }
 
-  LOG_WARNING(LOG_NAS, "NET-API   - Failed to encode AS message 0x%x", msg->msgID);
+  LOG_WARNING(LOG_NAS, "NET-API   - Failed to encode AS message 0x%x", msg->msg_id);
   LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 

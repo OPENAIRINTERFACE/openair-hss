@@ -88,7 +88,7 @@ EmmRegistered (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  assert (emm_fsm_get_status (evt->ueid, evt->ctx) == EMM_REGISTERED);
+  assert (emm_fsm_get_status (evt->ue_id, evt->ctx) == EMM_REGISTERED);
 
   switch (evt->primitive) {
   case _EMMREG_DETACH_REQ:
@@ -96,7 +96,7 @@ EmmRegistered (
      * Network detach has been requested (implicit detach);
      * enter state EMM-DEREGISTERED
      */
-    rc = emm_fsm_set_status (evt->ueid, evt->ctx, EMM_DEREGISTERED);
+    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
     break;
 
   case _EMMREG_COMMON_PROC_REQ:
@@ -104,7 +104,7 @@ EmmRegistered (
      * An EMM common procedure has been initiated;
      * enter state EMM-COMMON-PROCEDURE-INITIATED.
      */
-    rc = emm_fsm_set_status (evt->ueid, evt->ctx, EMM_COMMON_PROCEDURE_INITIATED);
+    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_COMMON_PROCEDURE_INITIATED);
     break;
 
   case _EMMREG_TAU_REJ:

@@ -40,10 +40,10 @@
  * \param length Length of message received
  * @return Execution result
  */
-typedef int (*sctp_recv_callback)(uint32_t  assocId,
-                                  uint32_t  stream,
+typedef int (*sctp_recv_callback)(const sctp_assoc_id_t  assoc_id,
+                                  const sctp_stream_id_t  stream,
                                   uint8_t  *buffer,
-                                  uint32_t  length);
+                                  const size_t  length);
 
 /** \brief SCTP connected callback prototype. Will be called once the
  * association is ready.
@@ -54,9 +54,9 @@ typedef int (*sctp_recv_callback)(uint32_t  assocId,
  * @return Execution result
  */
 typedef int (*sctp_connected_callback)(void     *args,
-                                       uint32_t  assocId,
-                                       uint32_t  instreams,
-                                       uint32_t  outstreams);
+                                       const sctp_assoc_id_t  assocId,
+                                       sctp_stream_id_t  instreams,
+                                       sctp_stream_id_t  outstreams);
 
 /** \brief Perform association to a remote peer
  * \param ip_addr Peer IPv4 address
@@ -69,7 +69,7 @@ typedef int (*sctp_connected_callback)(void     *args,
 int sctp_connect_to_remote_host(char *local_ip_addr[],
                                 int nb_local_addr,
                                 char *remote_ip_addr,
-                                uint16_t port,
+                                const uint16_t port,
                                 int socket_type,
                                 sctp_data_t *sctp_data_p);
 
@@ -81,8 +81,8 @@ int sctp_connect_to_remote_host(char *local_ip_addr[],
  * \param length Buffer length
  * @return < 0 in case of failure
  */
-int sctp_send_msg(sctp_data_t *sctp_data_p, uint16_t ppid, uint16_t stream,
-                  const uint8_t *buffer, const uint32_t length);
+int sctp_send_msg(sctp_data_t *sctp_data_p, const uint16_t ppid, const sctp_stream_id_t stream,
+                  const uint8_t * const buffer, const size_t length);
 
 /** \brief Flush the FIFO of messages from the socket
  * \param sctp_data_p
@@ -94,7 +94,7 @@ int sctp_run(sctp_data_t *sctp_data_p);
  * \param assoc_id The SCTP association ID
  * @return < 0 in case of failure
  */
-void sctp_disconnect(uint32_t assoc_id);
+void sctp_disconnect(const sctp_assoc_id_t assoc_id);
 
 void sctp_terminate(void);
 

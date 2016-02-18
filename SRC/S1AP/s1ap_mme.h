@@ -27,13 +27,13 @@
 #include "mme_config.h"
 #include "hashtable.h"
 
-#ifndef S1AP_MME_H_
-#define S1AP_MME_H_
+#ifndef FILE_S1AP_MME_SEEN
+#define FILE_S1AP_MME_SEEN
 
 // Forward declarations
-struct eNB_description_s;
+struct enb_description_s;
 
-enum s1_eNB_state_s {
+enum s1_enb_state_s {
   S1AP_RESETING,      ///< After a reset request (eNB or MME initiated)
   S1AP_READY          ///< MME and eNB are S1 associated, UE contexts can be added
 };
@@ -48,11 +48,11 @@ enum s1_ue_state_s {
  *  Generated every time a new InitialUEMessage is received
  **/
 typedef struct ue_description_s {
-  struct eNB_description_s *eNB;           ///< Which eNB this UE is attached to
+  struct enb_description_s *enb;           ///< Which eNB this UE is attached to
 
   enum s1_ue_state_s        s1_ue_state;       ///< S1AP UE state
 
-  enb_ue_s1ap_id_t eNB_ue_s1ap_id:24;    ///< Unique UE id over eNB (24 bits wide)
+  enb_ue_s1ap_id_t enb_ue_s1ap_id:24;    ///< Unique UE id over eNB (24 bits wide)
   mme_ue_s1ap_id_t mme_ue_s1ap_id;       ///< Unique UE id over MME (32 bits wide)
 
   /** SCTP stream on which S1 message will be sent/received.
@@ -75,14 +75,14 @@ typedef struct ue_description_s {
 /* Main structure representing eNB association over s1ap
  * Generated (or updated) every time a new S1SetupRequest is received.
  */
-typedef struct eNB_description_s {
+typedef struct enb_description_s {
 
-  enum s1_eNB_state_s s1_state;         ///< State of the eNB S1AP association over MME
+  enum s1_enb_state_s s1_state;         ///< State of the eNB S1AP association over MME
 
   /** eNB related parameters **/
   /*@{*/
-  char     eNB_name[150];      ///< Printable eNB Name
-  uint32_t eNB_id;             ///< Unique eNB ID
+  char     enb_name[150];      ///< Printable eNB Name
+  uint32_t enb_id;             ///< Unique eNB ID
   uint8_t  default_paging_drx; ///< Default paging DRX interval for eNB
   /*@}*/
 
@@ -99,10 +99,10 @@ typedef struct eNB_description_s {
   sctp_stream_id_t instreams;        ///< Number of streams avalaible on eNB -> MME
   sctp_stream_id_t outstreams;       ///< Number of streams avalaible on MME -> eNB
   /*@}*/
-} eNB_description_t;
+} enb_description_t;
 
 extern bool             hss_associated;
-extern uint32_t         nb_eNB_associated;
+extern uint32_t         nb_enb_associated;
 extern mme_config_t    *global_mme_config_p;
 
 /** \brief S1AP layer top init
@@ -111,26 +111,26 @@ extern mme_config_t    *global_mme_config_p;
 int s1ap_mme_init(const mme_config_t *mme_config);
 
 /** \brief Look for given eNB id in the list
- * \param eNB_id The unique eNB id to search in list
+ * \param enb_id The unique eNB id to search in list
  * @returns NULL if no eNB matchs the eNB id, or reference to the eNB element in list if matches
  **/
-eNB_description_t* s1ap_is_eNB_id_in_list(const uint32_t eNB_id);
+enb_description_t* s1ap_is_enb_id_in_list(const uint32_t enb_id);
 
 /** \brief Look for given eNB SCTP assoc id in the list
- * \param eNB_id The unique sctp assoc id to search in list
+ * \param enb_id The unique sctp assoc id to search in list
  * @returns NULL if no eNB matchs the sctp assoc id, or reference to the eNB element in list if matches
  **/
-eNB_description_t* s1ap_is_eNB_assoc_id_in_list(const sctp_assoc_id_t sctp_assoc_id);
+enb_description_t* s1ap_is_enb_assoc_id_in_list(const sctp_assoc_id_t sctp_assoc_id);
 
 /** \brief Look for given ue eNB id in the list
- * \param eNB_id The unique ue_eNB_id to search in list
- * @returns NULL if no UE matchs the ue_eNB_id, or reference to the ue element in list if matches
+ * \param enb_id The unique ue_eNB id to search in list
+ * @returns NULL if no UE matchs the ue_enb_id, or reference to the ue element in list if matches
  **/
-ue_description_t* s1ap_is_ue_eNB_id_in_list(eNB_description_t *eNB_ref,
-    const uint32_t eNB_ue_s1ap_id);
+ue_description_t* s1ap_is_ue_enb_id_in_list(enb_description_t *enb_ref,
+    const enb_ue_s1ap_id_t enb_ue_s1ap_id);
 
 /** \brief Look for given ue mme id in the list
- * \param eNB_id The unique ue_mme_id to search in list
+ * \param enb_id The unique ue_mme_id to search in list
  * @returns NULL if no UE matchs the ue_mme_id, or reference to the ue element in list if matches
  **/
 ue_description_t* s1ap_is_ue_mme_id_in_list(const mme_ue_s1ap_id_t ue_mme_id);
@@ -139,7 +139,7 @@ ue_description_t* s1ap_is_s11_sgw_teid_in_list(const s11_teid_t teid);
 /** \brief Allocate and add to the list a new eNB descriptor
  * @returns Reference to the new eNB element in list
  **/
-eNB_description_t* s1ap_new_eNB(void);
+enb_description_t* s1ap_new_enb(void);
 
 /** \brief Allocate and add to the right eNB list a new UE descriptor
  * \param sctp_assoc_id association ID over SCTP
@@ -151,23 +151,23 @@ ue_description_t* s1ap_new_ue(const sctp_assoc_id_t sctp_assoc_id, enb_ue_s1ap_i
 
 /** \brief Dump the eNB related information.
  * hashtable callback. It is called by hashtable_ts_apply_funct_on_elements()
- * Calls s1ap_dump_eNB
+ * Calls s1ap_dump_enb
  **/
-bool s1ap_dump_eNB_hash_cb (const hash_key_t keyP,
-               void * const eNB_void,
+bool s1ap_dump_enb_hash_cb (const hash_key_t keyP,
+               void * const enb_void,
                void *unused_parameterP,
                void **unused_resultP);
 
 /** \brief Dump the eNB list
- * Calls dump_eNB for each eNB in list
+ * Calls dump_enb for each eNB in list
  **/
-void s1ap_dump_eNB_list(void);
+void s1ap_dump_enb_list(void);
 
 /** \brief Dump eNB related information.
  * Calls dump_ue for each UE in list
- * \param eNB_ref eNB structure reference to dump
+ * \param enb_ref eNB structure reference to dump
  **/
-void s1ap_dump_eNB(const eNB_description_t * const eNB_ref);
+void s1ap_dump_enb(const enb_description_t * const enb_ref);
 
 
 /** \brief Dump the ue related information.
@@ -192,8 +192,8 @@ bool s1ap_enb_compare_by_enb_id_cb (const hash_key_t keyP, void * elementP, void
 void s1ap_remove_ue(ue_description_t *ue_ref);
 
 /** \brief Remove target eNB from the list and remove any UE associated
- * \param eNB_ref eNB structure reference to remove
+ * \param enb_ref eNB structure reference to remove
  **/
-void s1ap_remove_eNB(eNB_description_t *eNB_ref);
+void s1ap_remove_enb(enb_description_t *enb_ref);
 
-#endif /* S1AP_MME_H_ */
+#endif /* FILE_S1AP_MME_SEEN */

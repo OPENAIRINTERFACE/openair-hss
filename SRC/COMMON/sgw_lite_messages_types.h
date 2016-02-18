@@ -65,7 +65,7 @@
  * - Tracking Area Update procedure with Serving GW change
  * - S1/X2-based handover with SGW change
  */
-typedef struct SgwCreateSessionRequest_s {
+typedef struct itti_sgw_create_session_request_s {
   Teid_t             teid;                ///< S11- S-GW Tunnel Endpoint Identifier
 
   Imsi_t             imsi;                ///< The IMSI shall be included in the message on the S4/S11
@@ -333,7 +333,7 @@ typedef struct SgwCreateSessionRequest_s {
   uint16_t           peer_port;           ///< MME port for S-GW or S-GW port for MME
 } SgwCreateSessionRequest;
 
-/** @struct SgwCreateSessionResponse
+/** @struct itti_sgw_create_session_response_t
  *  @brief Create Session Response
  *
  * The Create Session Response will be sent on S11 interface as
@@ -343,7 +343,7 @@ typedef struct SgwCreateSessionRequest_s {
  * - Tracking Area Update procedure with SGW change
  * - S1/X2-based handover with SGW change
  */
-typedef struct SgwCreateSessionResponse_s {
+typedef struct itti_sgw_create_session_response_t_s {
   Teid_t                   teid;                ///< Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
@@ -367,7 +367,7 @@ typedef struct SgwCreateSessionResponse_s {
   ///< PMIP based interface or for GTP based Control Plane
   ///< interface.
 
-  FTeid_t                  s5_s8_pgw_teid;      ///< PGW S5/S8/S2b F-TEID for PMIP based interface or for GTP based Control Planeinterface
+  FTeid_t                  s5_s8_pgw_teid;      ///< PGW S5/S8/S2b F-TEID for PMIP based interface or for GTP based Control Plane interface
   ///< PGW shall include this IE on the S5/S8 interfaces during
   ///< the Initial Attach, UE requested PDN connectivity and PDP
   ///< Context Activation procedures.
@@ -500,9 +500,9 @@ typedef struct SgwCreateSessionResponse_s {
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void                    *trxn;               ///< Transaction identifier
   uint32_t                 peer_ip;            ///< MME ipv4 address
-} SgwCreateSessionResponse;
+} itti_sgw_create_session_response_t;
 
-/** @struct SgwModifyBearerRequest
+/** @struct itti_sgw_modify_bearer_request_t
  *  @brief Modify Bearer Request
  *
  * The Modify Bearer Request will be sent on S11 interface as
@@ -514,7 +514,7 @@ typedef struct SgwCreateSessionResponse_s {
  * - UE requested PDN connectivity
  * - X2-based handover without SGWrelocation
  */
-typedef struct SgwModifyBearerRequest_s {
+typedef struct itti_sgw_modify_bearer_request_s {
   Teid_t                     teid;             ///< S11 SGW Tunnel Endpoint Identifier
 
   // MEI                    ME Identity (MEI)  ///< C:This IE shall be sent on the S5/S8 interfaces for the Gn/Gp
@@ -719,9 +719,9 @@ typedef struct SgwModifyBearerRequest_s {
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void                      *trxn;                        ///< Transaction identifier
-} SgwModifyBearerRequest;
+} itti_sgw_modify_bearer_request_t;
 
-/** @struct SgwModifyBearerResponse
+/** @struct itti_sgw_modify_bearer_response_t
  *  @brief Modify Bearer Response
  *
  * The Modify Bearer Response will be sent on S11 interface as
@@ -733,7 +733,7 @@ typedef struct SgwModifyBearerRequest_s {
  * - UE requested PDN connectivity
  * - X2-based handover without SGWrelocation
  */
-typedef struct SgwModifyBearerResponse_s {
+typedef struct itti_sgw_modify_bearer_response_s {
   Teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
@@ -829,9 +829,9 @@ typedef struct SgwModifyBearerResponse_s {
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void                         *trxn;                      ///< Transaction identifier
-} SgwModifyBearerResponse;
+} itti_sgw_modify_bearer_response_t;
 
-typedef struct SgwDeleteSessionRequest_s {
+typedef struct itti_sgw_delete_session_request_s {
   Teid_t      teid;                   ///< Tunnel Endpoint Identifier
   EBI_t       lbi;                    ///< Linked EPS Bearer ID
   FTeid_t     sender_fteid_for_cp;    ///< Sender F-TEID for control plane
@@ -851,9 +851,9 @@ typedef struct SgwDeleteSessionRequest_s {
   /* GTPv2-C specific parameters */
   void       *trxn;
   uint32_t    peer_ip;
-} SgwDeleteSessionRequest;
+} itti_sgw_delete_session_request_t;
 
-/** @struct SgwDeleteSessionResponse
+/** @struct itti_sgw_delete_session_response_t
  *  @brief Delete Session Response
  *
  * The Delete Session Response will be sent on S11 interface as
@@ -866,16 +866,16 @@ typedef struct SgwDeleteSessionRequest_s {
  * - X2 Based Handover with SGW Relocation
  * - S1 Based handover cancel with SGW change
  */
-typedef struct SgwDeleteSessionResponse_s {
+typedef struct itti_sgw_delete_session_response_s {
   Teid_t      teid;                   ///< Remote Tunnel Endpoint Identifier
   SGWCause_t  cause;
 
   /* GTPv2-C specific parameters */
   void       *trxn;
   uint32_t    peer_ip;
-} SgwDeleteSessionResponse;
+} itti_sgw_delete_session_response_t;
 
-/** @struct SgwReleaseAccessBearersRequest
+/** @struct itti_sgw_release_access_bearers_request_t
  *  @brief Release AccessBearers Request
  *
  * The Release Access Bearers Request message shall sent on the S11 interface by
@@ -886,7 +886,7 @@ typedef struct SgwDeleteSessionResponse_s {
  * -    Iu Release using S4
  * -    READY to STANDBY transition within the network
  */
-typedef struct SgwReleaseAccessBearersRequest_s {
+typedef struct itti_sgw_release_access_bearers_request_s {
 	Teid_t     teid;                     ///< Tunnel Endpoint Identifier
 	uint32_t   num_rabs;
 	EBI_t      list_of_rabs[8]  ;        ///< Shall be present on S4 interface when this message is
@@ -900,9 +900,9 @@ typedef struct SgwReleaseAccessBearersRequest_s {
                                          ///< This IE shall be sent on S4 interface, if ISR is active in the SGSN
 	// Private Extension Private Extension ///< optional
 
-} SgwReleaseAccessBearersRequest;
+} itti_sgw_release_access_bearers_request_t;
 
-/** @struct SgwReleaseAccessBearersResponse
+/** @struct itti_sgw_release_access_bearers_response_t
  *  @brief Release AccessBearers Response
  *
  * The Release Access Bearers Response message is sent on the S11 interface by the SGW to the MME as part of the S1
@@ -916,12 +916,12 @@ typedef struct SgwReleaseAccessBearersRequest_s {
  * - "Request accepted partially".
  * - "Context not found
  */
-typedef struct SgwReleaseAccessBearersResponse_s {
+typedef struct itti_sgw_release_access_bearers_response_s {
 	Teid_t      teid;                   ///< Tunnel Endpoint Identifier
 	SGWCause_t  cause;
 	// Recovery           ///< optional This IE shall be included if contacting the peer for the first time
 	// Private Extension  ///< optional
 
-} SgwReleaseAccessBearersResponse;
+} itti_sgw_release_access_bearers_response_t;
 
 #endif

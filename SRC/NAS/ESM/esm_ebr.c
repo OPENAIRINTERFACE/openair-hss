@@ -115,7 +115,7 @@ esm_ebr_initialize (
  **                                                                        **
  ** Description: Assigns a new EPS bearer context                          **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      ebi:       Identity of the new EPS bearer context     **
  **      cid:       Identifier of the PDN context the EPS bea- **
  **             rer context is associated to               **
@@ -209,7 +209,7 @@ esm_ebr_assign (
  **                                                                        **
  ** Description: Release the given EPS bearer identity                     **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      ebi:       The identity of the EPS bearer context to  **
  **             be released                                **
  **      Others:    None                                       **
@@ -293,7 +293,7 @@ esm_ebr_release (
  **      schedule execution of the callback function where stored  **
  **      ESM message should be re-transmit.                        **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      ebi:       The identity of the EPS bearer             **
  **      msg:       The encoded ESM message to be stored       **
  **      sec:       The value of the time interval in seconds  **
@@ -353,7 +353,7 @@ esm_ebr_start_timer (
       /*
        * Set the UE identifier
        */
-      ebr_ctx->args->ueid = ctx->ueid;
+      ebr_ctx->args->ue_id = ctx->ue_id;
       /*
        * Set the EPS bearer identity
        */
@@ -400,7 +400,7 @@ esm_ebr_start_timer (
  ** Description: Stop the timer previously started for the given EPS bea-  **
  **      rer context                                               **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      ebi:       The identity of the EPS bearer             **
  **      Others:    None                                       **
  **                                                                        **
@@ -465,7 +465,7 @@ esm_ebr_stop_timer (
  ** Description: Returns the EPS bearer identity assigned to the first EPS **
  **      bearer context entry which is pending in the given state  **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      status:    The EPS bearer context status              **
  **      Others:    _esm_ebr_data                              **
  **                                                                        **
@@ -517,7 +517,7 @@ esm_ebr_get_pending_ebi (
  ** Description: Set the status of the specified EPS bearer context to the **
  **      given state                                               **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      ebi:       The identity of the EPS bearer             **
  **      status:    The new EPS bearer context status          **
  **      ue_requested:  true/false if the modification of the EPS  **
@@ -570,7 +570,7 @@ esm_ebr_set_status (
       LOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Status of EPS bearer context %d changed:" " %s ===> %s\n",
           ebi, _esm_ebr_state_str[old_status], _esm_ebr_state_str[status]);
       MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 ESM state %s => %s " NAS_UE_ID_FMT " ",
-          _esm_ebr_state_str[old_status], _esm_ebr_state_str[status], ctx->ueid);
+          _esm_ebr_state_str[old_status], _esm_ebr_state_str[status], ctx->ue_id);
       ebr_ctx->status = status;
       LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
     } else {
@@ -589,7 +589,7 @@ esm_ebr_set_status (
  ** Description: Get the current status value of the specified EPS bearer  **
  **      context                                                   **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      ebi:       The identity of the EPS bearer             **
  **      Others:    _esm_ebr_data                              **
  **                                                                        **
@@ -655,7 +655,7 @@ esm_ebr_is_reserved (
  ** Description: Check whether the given EPS bearer identity does not      **
  **      match an assigned EBI value currently in use              **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      ebi:       The identity of the EPS bearer             **
  **      Others:    _esm_ebr_data                              **
  **                                                                        **
@@ -683,7 +683,7 @@ esm_ebr_is_not_in_use (
  ** Description: Returns the index of the next available entry in the list **
  **      of EPS bearer context data                                **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      Others:    _esm_ebr_data                              **
  **                                                                        **
  ** Outputs:     None                                                      **

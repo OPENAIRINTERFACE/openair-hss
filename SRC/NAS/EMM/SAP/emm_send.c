@@ -202,12 +202,12 @@ emm_send_attach_accept (
   size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH;
   emm_msg->tailist.typeoflist = msg->tai_list.list_type;
   emm_msg->tailist.numberofelements = msg->tai_list.n_tais - 1;
-  emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.MCCdigit1;
-  emm_msg->tailist.mccdigit2[0] = msg->tai_list.tai[0].plmn.MCCdigit2;
-  emm_msg->tailist.mccdigit3[0] = msg->tai_list.tai[0].plmn.MCCdigit3;
-  emm_msg->tailist.mncdigit1[0] = msg->tai_list.tai[0].plmn.MNCdigit1;
-  emm_msg->tailist.mncdigit2[0] = msg->tai_list.tai[0].plmn.MNCdigit2;
-  emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.MNCdigit3;
+  emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.mcc_digit1;
+  emm_msg->tailist.mccdigit2[0] = msg->tai_list.tai[0].plmn.mcc_digit2;
+  emm_msg->tailist.mccdigit3[0] = msg->tai_list.tai[0].plmn.mcc_digit3;
+  emm_msg->tailist.mncdigit1[0] = msg->tai_list.tai[0].plmn.mnc_digit1;
+  emm_msg->tailist.mncdigit2[0] = msg->tai_list.tai[0].plmn.mnc_digit2;
+  emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.mnc_digit3;
   emm_msg->tailist.tac[0] = msg->tai_list.tai[0].tac;
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_LENGTH(%d)  (%d)\n", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
   AssertFatal(msg->tai_list.n_tais <= 16, "Twoo many TAIs in TAI list");
@@ -219,12 +219,12 @@ emm_send_attach_accept (
     }
   } else if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == emm_msg->tailist.typeoflist) {
     for (i = 1; i < msg->tai_list.n_tais; i++) {
-      emm_msg->tailist.mccdigit1[i] = msg->tai_list.tai[i].plmn.MCCdigit1;
-      emm_msg->tailist.mccdigit2[i] = msg->tai_list.tai[i].plmn.MCCdigit2;
-      emm_msg->tailist.mccdigit3[i] = msg->tai_list.tai[i].plmn.MCCdigit3;
-      emm_msg->tailist.mncdigit1[i] = msg->tai_list.tai[i].plmn.MNCdigit1;
-      emm_msg->tailist.mncdigit2[i] = msg->tai_list.tai[i].plmn.MNCdigit2;
-      emm_msg->tailist.mncdigit3[i] = msg->tai_list.tai[i].plmn.MNCdigit3;
+      emm_msg->tailist.mccdigit1[i] = msg->tai_list.tai[i].plmn.mcc_digit1;
+      emm_msg->tailist.mccdigit2[i] = msg->tai_list.tai[i].plmn.mcc_digit2;
+      emm_msg->tailist.mccdigit3[i] = msg->tai_list.tai[i].plmn.mcc_digit3;
+      emm_msg->tailist.mncdigit1[i] = msg->tai_list.tai[i].plmn.mnc_digit1;
+      emm_msg->tailist.mncdigit2[i] = msg->tai_list.tai[i].plmn.mnc_digit2;
+      emm_msg->tailist.mncdigit3[i] = msg->tai_list.tai[i].plmn.mnc_digit3;
       emm_msg->tailist.tac[i] = msg->tai_list.tai[i].tac;
       size += 5;
       LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING AREA IDENTITY LENGTH(%d)  (%d)\n", 5, size);
@@ -233,8 +233,8 @@ emm_send_attach_accept (
   /*
    * Mandatory - ESM message container
    */
-  size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + msg->NASmsg.length;
-  emm_msg->esmmessagecontainer.esmmessagecontainercontents = msg->NASmsg;
+  size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + msg->nas_msg.length;
+  emm_msg->esmmessagecontainer.esmmessagecontainercontents = msg->nas_msg;
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH(%d)  (%d)\n", ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH, size);
 
   /*
@@ -245,15 +245,15 @@ emm_send_attach_accept (
     emm_msg->presencemask |= ATTACH_ACCEPT_GUTI_PRESENT;
     emm_msg->guti.guti.typeofidentity = EPS_MOBILE_IDENTITY_GUTI;
     emm_msg->guti.guti.oddeven = EPS_MOBILE_IDENTITY_EVEN;
-    emm_msg->guti.guti.mmegroupid = msg->new_guti->gummei.MMEgid;
-    emm_msg->guti.guti.mmecode = msg->new_guti->gummei.MMEcode;
+    emm_msg->guti.guti.mmegroupid = msg->new_guti->gummei.mme_gid;
+    emm_msg->guti.guti.mmecode = msg->new_guti->gummei.mme_code;
     emm_msg->guti.guti.mtmsi = msg->new_guti->m_tmsi;
-    emm_msg->guti.guti.mccdigit1 = msg->new_guti->gummei.plmn.MCCdigit1;
-    emm_msg->guti.guti.mccdigit2 = msg->new_guti->gummei.plmn.MCCdigit2;
-    emm_msg->guti.guti.mccdigit3 = msg->new_guti->gummei.plmn.MCCdigit3;
-    emm_msg->guti.guti.mncdigit1 = msg->new_guti->gummei.plmn.MNCdigit1;
-    emm_msg->guti.guti.mncdigit2 = msg->new_guti->gummei.plmn.MNCdigit2;
-    emm_msg->guti.guti.mncdigit3 = msg->new_guti->gummei.plmn.MNCdigit3;
+    emm_msg->guti.guti.mccdigit1 = msg->new_guti->gummei.plmn.mcc_digit1;
+    emm_msg->guti.guti.mccdigit2 = msg->new_guti->gummei.plmn.mcc_digit2;
+    emm_msg->guti.guti.mccdigit3 = msg->new_guti->gummei.plmn.mcc_digit3;
+    emm_msg->guti.guti.mncdigit1 = msg->new_guti->gummei.plmn.mnc_digit1;
+    emm_msg->guti.guti.mncdigit2 = msg->new_guti->gummei.plmn.mnc_digit2;
+    emm_msg->guti.guti.mncdigit3 = msg->new_guti->gummei.plmn.mnc_digit3;
     LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH, size);
   }
 
@@ -300,10 +300,10 @@ emm_send_attach_reject (
   /*
    * Optional - ESM message container
    */
-  if (msg->NASmsg.length > 0) {
-    size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + msg->NASmsg.length;
+  if (msg->nas_msg.length > 0) {
+    size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + msg->nas_msg.length;
     emm_msg->presencemask |= ATTACH_REJECT_ESM_MESSAGE_CONTAINER_PRESENT;
-    emm_msg->esmmessagecontainer.esmmessagecontainercontents = msg->NASmsg;
+    emm_msg->esmmessagecontainer.esmmessagecontainercontents = msg->nas_msg;
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, size);
@@ -367,15 +367,15 @@ emm_send_tracking_area_update_accept (
     emm_msg->presencemask |= ATTACH_ACCEPT_GUTI_PRESENT;
     emm_msg->guti.guti.typeofidentity = EPS_MOBILE_IDENTITY_GUTI;
     emm_msg->guti.guti.oddeven = EPS_MOBILE_IDENTITY_EVEN;
-    emm_msg->guti.guti.mmegroupid = msg->guti->gummei.MMEgid;
-    emm_msg->guti.guti.mmecode = msg->guti->gummei.MMEcode;
+    emm_msg->guti.guti.mmegroupid = msg->guti->gummei.mme_gid;
+    emm_msg->guti.guti.mmecode = msg->guti->gummei.mme_code;
     emm_msg->guti.guti.mtmsi = msg->guti->m_tmsi;
-    emm_msg->guti.guti.mccdigit1 = msg->guti->gummei.plmn.MCCdigit1;
-    emm_msg->guti.guti.mccdigit2 = msg->guti->gummei.plmn.MCCdigit2;
-    emm_msg->guti.guti.mccdigit3 = msg->guti->gummei.plmn.MCCdigit3;
-    emm_msg->guti.guti.mncdigit1 = msg->guti->gummei.plmn.MNCdigit1;
-    emm_msg->guti.guti.mncdigit2 = msg->guti->gummei.plmn.MNCdigit2;
-    emm_msg->guti.guti.mncdigit3 = msg->guti->gummei.plmn.MNCdigit3;
+    emm_msg->guti.guti.mccdigit1 = msg->guti->gummei.plmn.mcc_digit1;
+    emm_msg->guti.guti.mccdigit2 = msg->guti->gummei.plmn.mcc_digit2;
+    emm_msg->guti.guti.mccdigit3 = msg->guti->gummei.plmn.mcc_digit3;
+    emm_msg->guti.guti.mncdigit1 = msg->guti->gummei.plmn.mnc_digit1;
+    emm_msg->guti.guti.mncdigit2 = msg->guti->gummei.plmn.mnc_digit2;
+    emm_msg->guti.guti.mncdigit3 = msg->guti->gummei.plmn.mnc_digit3;
     LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH, size);
   }
   /* Optional - TAI list
@@ -390,12 +390,12 @@ emm_send_tracking_area_update_accept (
       LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d) + size N extra TACs (%d)  (%d)\n",
           TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, emm_msg->tailist.numberofelements*2, size);
       emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS;
-      emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.MCCdigit1;
-      emm_msg->tailist.mccdigit2[0] = msg->tai_list.tai[0].plmn.MCCdigit2;
-      emm_msg->tailist.mccdigit3[0] = msg->tai_list.tai[0].plmn.MCCdigit3;
-      emm_msg->tailist.mncdigit1[0] = msg->tai_list.tai[0].plmn.MNCdigit1;
-      emm_msg->tailist.mncdigit2[0] = msg->tai_list.tai[0].plmn.MNCdigit2;
-      emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.MNCdigit3;
+      emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.mcc_digit1;
+      emm_msg->tailist.mccdigit2[0] = msg->tai_list.tai[0].plmn.mcc_digit2;
+      emm_msg->tailist.mccdigit3[0] = msg->tai_list.tai[0].plmn.mcc_digit3;
+      emm_msg->tailist.mncdigit1[0] = msg->tai_list.tai[0].plmn.mnc_digit1;
+      emm_msg->tailist.mncdigit2[0] = msg->tai_list.tai[0].plmn.mnc_digit2;
+      emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.mnc_digit3;
       for (i=0; i < msg->tai_list.n_tais; i++) {
         emm_msg->tailist.tac[i]       = msg->tai_list.tai[i].tac;
       }
@@ -405,12 +405,12 @@ emm_send_tracking_area_update_accept (
       size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH;
       LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH(%d)  (%d)\n", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
       emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
-      emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.MCCdigit1;
-      emm_msg->tailist.mccdigit2[0] = msg->tai_list.tai[0].plmn.MCCdigit2;
-      emm_msg->tailist.mccdigit3[0] = msg->tai_list.tai[0].plmn.MCCdigit3;
-      emm_msg->tailist.mncdigit1[0] = msg->tai_list.tai[0].plmn.MNCdigit1;
-      emm_msg->tailist.mncdigit2[0] = msg->tai_list.tai[0].plmn.MNCdigit2;
-      emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.MNCdigit3;
+      emm_msg->tailist.mccdigit1[0] = msg->tai_list.tai[0].plmn.mcc_digit1;
+      emm_msg->tailist.mccdigit2[0] = msg->tai_list.tai[0].plmn.mcc_digit2;
+      emm_msg->tailist.mccdigit3[0] = msg->tai_list.tai[0].plmn.mcc_digit3;
+      emm_msg->tailist.mncdigit1[0] = msg->tai_list.tai[0].plmn.mnc_digit1;
+      emm_msg->tailist.mncdigit2[0] = msg->tai_list.tai[0].plmn.mnc_digit2;
+      emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.mnc_digit3;
       emm_msg->tailist.tac[0]       = msg->tai_list.tai[0].tac;
       break;
     case TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS:
@@ -419,12 +419,12 @@ emm_send_tracking_area_update_accept (
           TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, emm_msg->tailist.numberofelements*5, size);
       emm_msg->tailist.typeoflist = TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS;
       for (i=0; i < msg->tai_list.n_tais; i++) {
-        emm_msg->tailist.mccdigit1[i] = msg->tai_list.tai[i].plmn.MCCdigit1;
-        emm_msg->tailist.mccdigit2[i] = msg->tai_list.tai[i].plmn.MCCdigit2;
-        emm_msg->tailist.mccdigit3[i] = msg->tai_list.tai[i].plmn.MCCdigit3;
-        emm_msg->tailist.mncdigit1[i] = msg->tai_list.tai[i].plmn.MNCdigit1;
-        emm_msg->tailist.mncdigit2[i] = msg->tai_list.tai[i].plmn.MNCdigit2;
-        emm_msg->tailist.mncdigit3[i] = msg->tai_list.tai[i].plmn.MNCdigit3;
+        emm_msg->tailist.mccdigit1[i] = msg->tai_list.tai[i].plmn.mcc_digit1;
+        emm_msg->tailist.mccdigit2[i] = msg->tai_list.tai[i].plmn.mcc_digit2;
+        emm_msg->tailist.mccdigit3[i] = msg->tai_list.tai[i].plmn.mcc_digit3;
+        emm_msg->tailist.mncdigit1[i] = msg->tai_list.tai[i].plmn.mnc_digit1;
+        emm_msg->tailist.mncdigit2[i] = msg->tai_list.tai[i].plmn.mnc_digit2;
+        emm_msg->tailist.mncdigit3[i] = msg->tai_list.tai[i].plmn.mnc_digit3;
         emm_msg->tailist.tac[i]       = msg->tai_list.tai[i].tac;
       }
       size += emm_msg->tailist.numberofelements*5;
@@ -632,11 +632,11 @@ emm_send_identity_request (
    */
   size += IDENTITY_TYPE_2_MAXIMUM_LENGTH;
 
-  if (msg->identType == EMM_IDENT_TYPE_IMSI) {
+  if (msg->ident_type == EMM_IDENT_TYPE_IMSI) {
     emm_msg->identitytype = IDENTITY_TYPE_2_IMSI;
-  } else if (msg->identType == EMM_IDENT_TYPE_TMSI) {
+  } else if (msg->ident_type == EMM_IDENT_TYPE_TMSI) {
     emm_msg->identitytype = IDENTITY_TYPE_2_TMSI;
-  } else if (msg->identType == EMM_IDENT_TYPE_IMEI) {
+  } else if (msg->ident_type == EMM_IDENT_TYPE_IMEI) {
     emm_msg->identitytype = IDENTITY_TYPE_2_IMEI;
   } else {
     /*

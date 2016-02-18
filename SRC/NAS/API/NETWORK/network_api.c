@@ -294,7 +294,7 @@ network_api_read_data (
 int
 network_api_send_data (
   int fd,
-  int length)
+  size_t length)
 {
   LOG_FUNC_IN (LOG_NAS);
   int                                     sbytes;
@@ -385,7 +385,7 @@ network_api_close (
  ***************************************************************************/
 int
 network_api_decode_data (
-  int length)
+    size_t length)
 {
   LOG_FUNC_IN (LOG_NAS);
   /*
@@ -457,7 +457,7 @@ as_message_send (
   int                                     bytes;
 
   LOG_FUNC_IN (LOG_NAS);
-  LOG_INFO (LOG_NAS,  "NET-API   - Send message 0x%.4x to the Access Stratum " "layer", as_msg->msgID);
+  LOG_INFO (LOG_NAS,  "NET-API   - Send message 0x%.4x to the Access Stratum " "layer", as_msg->msg_id);
   /*
    * Encode the AS message
    */

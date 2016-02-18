@@ -35,18 +35,18 @@
 #define S1AP_UE_CONTEXT_RELEASE_COMMAND(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_command
 #define S1AP_UE_CONTEXT_RELEASE_COMPLETE(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_complete
 
-typedef struct s1ap_initial_ue_message_s {
-  unsigned     eNB_ue_s1ap_id:24;
-  uint32_t     mme_ue_s1ap_id;
-  cgi_t        e_utran_cgi;
-} s1ap_initial_ue_message_t;
+typedef struct itti_s1ap_initial_ue_message_s {
+  mme_ue_s1ap_id_t     mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t     enb_ue_s1ap_id:24;
+  cgi_t                e_utran_cgi;
+} itti_s1ap_initial_ue_message_t;
 
-typedef struct s1ap_initial_ctxt_setup_req_s {
-  unsigned                eNB_ue_s1ap_id:24;
-  uint32_t                mme_ue_s1ap_id;
+typedef struct itti_s1ap_initial_ctxt_setup_req_s {
+  mme_ue_s1ap_id_t        mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t        enb_ue_s1ap_id:24;
 
   /* Key eNB */
-  uint8_t                 keNB[32];
+  uint8_t                 kenb[32];
 
   ambr_t                  ambr;
   ambr_t                  apn_ambr;
@@ -64,35 +64,38 @@ typedef struct s1ap_initial_ctxt_setup_req_s {
   Teid_t                  teid;
   /* S-GW IP address for User-Plane */
   ip_address_t            s_gw_address;
-} s1ap_initial_ctxt_setup_req_t;
+} itti_s1ap_initial_ctxt_setup_req_t;
 
-typedef struct s1ap_ue_cap_ind_s {
-  unsigned  eNB_ue_s1ap_id:24;
-  uint32_t  mme_ue_s1ap_id;
-  uint8_t   radio_capabilities[100];
-  uint32_t  radio_capabilities_length;
-} s1ap_ue_cap_ind_t;
+typedef struct itti_s1ap_ue_cap_ind_s {
+  mme_ue_s1ap_id_t  mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
+  uint8_t           radio_capabilities[100];
+  size_t            radio_capabilities_length;
+} itti_s1ap_ue_cap_ind_t;
 
 #define S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE 20
-typedef struct s1ap_eNB_deregistered_ind_s {
-  uint8_t  nb_ue_to_deregister;
-  uint32_t mme_ue_s1ap_id[S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE];
-} s1ap_eNB_deregistered_ind_t;
+typedef struct itti_s1ap_eNB_deregistered_ind_s {
+  uint8_t          nb_ue_to_deregister;
+  mme_ue_s1ap_id_t mme_ue_s1ap_id[S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE];
+} itti_s1ap_eNB_deregistered_ind_t;
 
-typedef struct s1ap_deregister_ue_req_s {
-  uint32_t mme_ue_s1ap_id;
-} s1ap_deregister_ue_req_t;
+typedef struct itti_s1ap_deregister_ue_req_s {
+  mme_ue_s1ap_id_t mme_ue_s1ap_id;
+} itti_s1ap_deregister_ue_req_t;
 
-typedef struct s1ap_ue_context_release_req_s {
-  uint32_t mme_ue_s1ap_id;
-} s1ap_ue_context_release_req_t;
+typedef struct itti_s1ap_ue_context_release_req_s {
+  mme_ue_s1ap_id_t  mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
+} itti_s1ap_ue_context_release_req_t;
 
-typedef struct s1ap_ue_context_release_command_s {
-  uint32_t mme_ue_s1ap_id;
-} s1ap_ue_context_release_command_t;
+typedef struct itti_s1ap_ue_context_release_command_s {
+  mme_ue_s1ap_id_t  mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
+} itti_s1ap_ue_context_release_command_t;
 
-typedef struct s1ap_ue_context_release_complete_s {
-  uint32_t mme_ue_s1ap_id;
-} s1ap_ue_context_release_complete_t;
+typedef struct itti_s1ap_ue_context_release_complete_s {
+  mme_ue_s1ap_id_t  mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
+} itti_s1ap_ue_context_release_complete_t;
 
 #endif /* S1AP_MESSAGES_TYPES_H_ */

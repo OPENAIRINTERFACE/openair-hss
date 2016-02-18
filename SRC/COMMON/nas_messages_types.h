@@ -47,7 +47,6 @@
 #define NAS_UL_ESM_PROTECTED_MSG(mSGpTR)            (mSGpTR)->ittiMsg.nas_ul_esm_protected_msg
 #define NAS_DL_ESM_PLAIN_MSG(mSGpTR)                (mSGpTR)->ittiMsg.nas_dl_esm_plain_msg
 #define NAS_UL_ESM_PLAIN_MSG(mSGpTR)                (mSGpTR)->ittiMsg.nas_ul_esm_plain_msg
-
 #define NAS_UL_DATA_IND(mSGpTR)                     (mSGpTR)->ittiMsg.nas_ul_data_ind
 #define NAS_DL_DATA_REQ(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_req
 #define NAS_DL_DATA_CNF(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_cnf
@@ -131,7 +130,7 @@ typedef enum {
 
 
 typedef struct itti_nas_raw_msg_s {
-  uint32_t                        lenght;
+  size_t                          length;
   uint8_t                         data[NAS_DATA_LENGHT_MAX];
 } itti_nas_raw_msg_t;
 
@@ -172,7 +171,7 @@ typedef struct itti_nas_paging_ind_s {
 
 typedef struct itti_nas_pdn_connectivity_req_s {
   int                    pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
-  unsigned               ue_id; // nas ref
+  mme_ue_s1ap_id_t       ue_id; // nas ref
   char                   imsi[16];
   uint8_t                imsi_length;
   network_qos_t          qos;
@@ -187,7 +186,6 @@ typedef struct itti_nas_pdn_connectivity_req_s {
 
 typedef struct itti_nas_pdn_connectivity_rsp_s {
   int                     pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
-  unsigned                ue_id; // nas ref
   network_qos_t           qos;
   pco_flat_t              pco;
   OctetString             apn;
@@ -196,11 +194,10 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
   void                   *proc_data;
   int                     request_type;
 
-  unsigned                eNB_ue_s1ap_id:24;
-  uint32_t                mme_ue_s1ap_id;
+  mme_ue_s1ap_id_t        ue_id;
 
   /* Key eNB */
-  //uint8_t                 keNB[32];
+  //uint8_t                 kenb[32];
 
   ambr_t                  ambr;
   ambr_t                  apn_ambr;
@@ -222,7 +219,7 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
 
 
 typedef struct itti_nas_pdn_connectivity_fail_s {
-  unsigned                ue_id; // nas ref
+  mme_ue_s1ap_id_t        ue_id; // nas ref
 } itti_nas_pdn_connectivity_fail_t;
 
 
@@ -232,25 +229,25 @@ typedef struct itti_nas_conn_est_ind_s {
   /* Transparent message from s1ap to be forwarded to MME_APP or
    * to S1AP if connection establishment is rejected by NAS.
    */
-  s1ap_initial_ue_message_t transparent;
+  itti_s1ap_initial_ue_message_t transparent;
 } itti_nas_conn_est_ind_t;
 
 
 typedef struct itti_nas_conn_est_rej_s {
-  uint32_t         UEid;         /* UE lower layer identifier   */
-  as_stmsi_t       s_tmsi;       /* UE identity                 */
-  nas_error_code_t errCode;      /* Transaction status          */
-  as_nas_info_t    nasMsg;       /* NAS message to transfer     */
-  uint32_t         nas_ul_count; /* UL NAS COUNT                */
+  mme_ue_s1ap_id_t ue_id;         /* UE lower layer identifier   */
+  as_stmsi_t       s_tmsi;        /* UE identity                 */
+  nas_error_code_t err_code;      /* Transaction status          */
+  as_nas_info_t    nas_msg;       /* NAS message to transfer     */
+  uint32_t         nas_ul_count;  /* UL NAS COUNT                */
   uint16_t         selected_encryption_algorithm;
   uint16_t         selected_integrity_algorithm;
 } itti_nas_conn_est_rej_t;
 
 
 typedef struct itti_nas_conn_est_cnf_s {
-  uint32_t         UEid;            /* UE lower layer identifier   */
-  nas_error_code_t errCode;         /* Transaction status          */
-  as_nas_info_t    nasMsg;          /* NAS message to transfer     */
+  mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
+  nas_error_code_t err_code;         /* Transaction status          */
+  as_nas_info_t    nas_msg;          /* NAS message to transfer     */
   uint32_t         ul_nas_count;
   uint16_t         selected_encryption_algorithm;
   uint16_t         selected_integrity_algorithm;
@@ -262,22 +259,22 @@ typedef struct itti_nas_conn_rel_ind_s {
 
 
 typedef struct itti_nas_info_transfer_s {
-  uint32_t         UEid;      /* UE lower layer identifier        */
-  //nas_error_code_t errCode;   /* Transaction status               */
-  as_nas_info_t nasMsg;   /* Uplink NAS message           */
+  mme_ue_s1ap_id_t  ue_id;          /* UE lower layer identifier        */
+  //nas_error_code_t err_code;     /* Transaction status               */
+  as_nas_info_t     nas_msg;        /* Uplink NAS message           */
 } itti_nas_info_transfer_t;
 
 typedef itti_nas_info_transfer_t itti_nas_ul_data_ind_t;
 typedef itti_nas_info_transfer_t itti_nas_dl_data_req_t;
 
 typedef struct itti_nas_dl_data_cnf_s {
-  uint32_t         UEid;      /* UE lower layer identifier        */
-  nas_error_code_t errCode;   /* Transaction status               */
+  mme_ue_s1ap_id_t ue_id;      /* UE lower layer identifier        */
+  nas_error_code_t err_code;   /* Transaction status               */
 } itti_nas_dl_data_cnf_t;
 
 typedef struct itti_nas_dl_data_rej_s {
-	uint32_t UEid;          /* UE lower layer identifier        */
-	  as_nas_info_t nasMsg;   /* Uplink NAS message           */
+  mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
+  as_nas_info_t    nas_msg;          /* Uplink NAS message           */
 } itti_nas_dl_data_rej_t;
 
 typedef struct itti_nas_rab_est_req_s {
@@ -301,7 +298,7 @@ typedef struct itti_nas_attach_req_s {
   char imsi[16];
 #define INITIAL_REQUEST (0x1)
   unsigned initial:1;
-  s1ap_initial_ue_message_t transparent;
+  itti_s1ap_initial_ue_message_t transparent;
 } itti_nas_attach_req_t;
 
 
@@ -322,7 +319,7 @@ typedef struct itti_nas_auth_resp_s {
 
 typedef struct itti_nas_auth_param_req_s {
   /* UE identifier */
-  nas_ue_id_t ue_id;
+  mme_ue_s1ap_id_t ue_id;
 
   /* Imsi of the UE (In case of initial request) */
   char     imsi[16];
@@ -338,7 +335,7 @@ typedef struct itti_nas_auth_param_req_s {
 
 typedef struct itti_nas_auth_param_rsp_s {
   /* UE identifier */
-  uint32_t ue_id;
+  mme_ue_s1ap_id_t ue_id;
 
   /* For future use: nb of vectors provided */
   uint8_t nb_vectors;
@@ -349,7 +346,7 @@ typedef struct itti_nas_auth_param_rsp_s {
 
 typedef struct itti_nas_auth_param_fail_s {
   /* UE identifier */
-  uint32_t    ue_id;
+  mme_ue_s1ap_id_t    ue_id;
 
   /* S6A mapped to NAS cause */
   nas_cause_t cause;

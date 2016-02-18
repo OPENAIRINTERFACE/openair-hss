@@ -76,7 +76,7 @@
  **      different actions depending on the received ESM cause     **
  **      value.                                                    **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      esm_cause: Received ESM cause code                    **
@@ -159,7 +159,7 @@ esm_proc_status_ind (
  ** Description: Initiates ESM status procedure.                           **
  **                                                                        **
  ** Inputs:  is_standalone: Not used - Always true                     **
- **      ueid:      UE lower layer identifier                  **
+ **      ue_id:      UE lower layer identifier                  **
  **      ebi:       Not used                                   **
  **      msg:       Encoded ESM status message to be sent      **
  **      ue_triggered:  Not used                                   **
@@ -187,7 +187,7 @@ esm_proc_status (
    * Notity EMM that ESM PDU has to be forwarded to lower layers
    */
   emm_sap.primitive = EMMESM_UNITDATA_REQ;
-  emm_sap.u.emm_esm.ueid = ctx->ueid;
+  emm_sap.u.emm_esm.ue_id = ctx->ue_id;
   emm_sap.u.emm_esm.ctx = ctx;
   emm_sap.u.emm_esm.u.data.msg.length = msg->length;
   emm_sap.u.emm_esm.u.data.msg.value = msg->value;

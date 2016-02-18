@@ -285,11 +285,11 @@ itti_get_current_task_id (
 
 void
 itti_update_lte_time (
-  uint32_t frame,
-  uint8_t slot)
+    __time_t    seconds,
+  __suseconds_t useconds)
 {
-  itti_desc.lte_time.frame = frame;
-  itti_desc.lte_time.slot = slot;
+  itti_desc.lte_time.time.tv_sec = seconds;
+  itti_desc.lte_time.time.tv_usec = useconds;
 }
 
 int
@@ -392,8 +392,8 @@ itti_send_msg_to_task (
   destination_thread_id = TASK_GET_THREAD_ID (destination_task_id);
   message->ittiMsgHeader.destinationTaskId = destination_task_id;
   message->ittiMsgHeader.instance = instance;
-  message->ittiMsgHeader.lte_time.frame = itti_desc.lte_time.frame;
-  message->ittiMsgHeader.lte_time.slot = itti_desc.lte_time.slot;
+  message->ittiMsgHeader.lte_time.time.tv_sec = itti_desc.lte_time.time.tv_sec;
+  message->ittiMsgHeader.lte_time.time.tv_usec = itti_desc.lte_time.time.tv_usec;
   message_id = message->ittiMsgHeader.messageId;
   AssertFatal (message_id < itti_desc.messages_id_max, "Message id (%d) is out of range (%d)!\n", message_id, itti_desc.messages_id_max);
   origin_task_id = ITTI_MSG_ORIGIN_ID (message);

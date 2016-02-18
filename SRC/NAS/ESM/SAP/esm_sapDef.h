@@ -113,7 +113,7 @@ typedef struct esm_pdn_connectivity_s {
              * for the specified APN            */
   int pdn_type;   /* PDN address type (IPv4, IPv6, IPv4v6)    */
   const char *apn;    /* PDN's Access Point Name          */
-  int is_emergency;   /* Indicates whether the PDN context has been
+  bool is_emergency;   /* Indicates whether the PDN context has been
              * defined to establish connection for emergency
              * bearer services              */
 } esm_pdn_connectivity_t;
@@ -149,12 +149,12 @@ typedef union {
 
 typedef struct esm_sap_s {
   esm_primitive_t primitive;  /* ESM-SAP primitive to process     */
-  int is_standalone;      /* Indicates whether the ESM message handled
+  bool is_standalone;      /* Indicates whether the ESM message handled
                  * within this primitive has to be sent/received
                  * standalone or together within an EMM related
                  * message              */
   emm_data_context_t *ctx;       /* UE context                       */
-  unsigned int        ueid;      /* Local UE identifier              */
+  unsigned int        ue_id;      /* Local UE identifier              */
   esm_sap_error_t     err;       /* ESM-SAP error code               */
   const OctetString  *recv;      /* Encoded ESM message received     */
   OctetString         send;      /* Encoded ESM message to be sent   */

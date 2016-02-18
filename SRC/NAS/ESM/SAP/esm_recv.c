@@ -73,7 +73,7 @@
  **                                                                        **
  ** Description: Processes ESM status message                              **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **      pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      msg:       The received ESM message                   **
@@ -132,7 +132,7 @@ esm_recv_status (
  **                                                                        **
  ** Description: Processes PDN connectivity request message                **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **      pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      msg:       The received ESM message                   **
@@ -158,7 +158,7 @@ esm_recv_pdn_connectivity_request (
   uint8_t                                 i;
 
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ueid=%u, pti=%d, ebi=%d)\n", ctx->ueid, pti, ebi);
+  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ue_id=%u, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -290,7 +290,7 @@ esm_recv_pdn_connectivity_request (
     }
   }
 #else
-  nas_itti_pdn_connectivity_req (pti, ctx->ueid, ctx->imsi, esm_data, request_type);
+  nas_itti_pdn_connectivity_req (pti, ctx->ue_id, ctx->imsi, esm_data, request_type);
   esm_cause = ESM_CAUSE_SUCCESS;
 #endif
   /*
@@ -305,7 +305,7 @@ esm_recv_pdn_connectivity_request (
  **                                                                        **
  ** Description: Processes PDN disconnect request message                  **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **      pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      msg:       The received ESM message                   **
@@ -330,7 +330,7 @@ esm_recv_pdn_disconnect_request (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Disconnect Request message " "(ueid=%d, pti=%d, ebi=%d)\n", ctx->ueid, pti, ebi);
+  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Disconnect Request message " "(ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -395,7 +395,7 @@ esm_recv_pdn_disconnect_request (
  ** Description: Processes Activate Default EPS Bearer Context Accept      **
  **      message                                                   **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **          pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      msg:       The received ESM message                   **
@@ -417,7 +417,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Accept message (ueid=%d, pti=%d, ebi=%d)\n", ctx->ueid, pti, ebi);
+  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -469,7 +469,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
  ** Description: Processes Activate Default EPS Bearer Context Reject      **
  **      message                                                   **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **          pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      msg:       The received ESM message                   **
@@ -491,7 +491,7 @@ esm_recv_activate_default_eps_bearer_context_reject (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Reject message (ueid=%d, pti=%d, ebi=%d)\n", ctx->ueid, pti, ebi);
+  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Reject message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -543,7 +543,7 @@ esm_recv_activate_default_eps_bearer_context_reject (
  ** Description: Processes Activate Dedicated EPS Bearer Context Accept    **
  **      message                                                   **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **          pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      msg:       The received ESM message                   **
@@ -565,7 +565,7 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Activate Dedicated EPS Bearer " "Context Accept message (ueid=%d, pti=%d, ebi=%d)\n", ctx->ueid, pti, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Activate Dedicated EPS Bearer " "Context Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -618,7 +618,7 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
  ** Description: Processes Activate Dedicated EPS Bearer Context Reject    **
  **      message                                                   **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **          pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      msg:       The received ESM message                   **
@@ -640,7 +640,7 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Activate Dedicated EPS Bearer " "Context Reject message (ueid=%d, pti=%d, ebi=%d)\n", ctx->ueid, pti, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Activate Dedicated EPS Bearer " "Context Reject message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -692,7 +692,7 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
  **                                                                        **
  ** Description: Processes Deactivate EPS Bearer Context Accept message    **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **          pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      msg:       The received ESM message                   **
@@ -714,7 +714,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Deactivate EPS Bearer Context " "Accept message (ueid=%d, pti=%d, ebi=%d)\n", ctx->ueid, pti, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Deactivate EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking

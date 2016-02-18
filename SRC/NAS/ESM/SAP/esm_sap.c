@@ -292,7 +292,7 @@ esm_sap_send (
  **      is_standalone: Indicates whether the ESM message has been **
  **             received standalone or together within EMM **
  **             attach related message                     **
- **      ueid:      UE identifier within the MME               **
+ **      ue_id:      UE identifier within the MME               **
  **      req:       The encoded ESM request message to process **
  **      Others:    None                                       **
  **                                                                        **
@@ -753,7 +753,7 @@ _esm_sap_recv (
  **      is_standalone: Indicates whether the ESM message has to   **
  **             be sent standalone or together within EMM  **
  **             attach related message                     **
- **      ueid:      UE identifier within the MME               **
+ **      ue_id:      UE identifier within the MME               **
  **      pti:       Procedure transaction identity             **
  **      ebi:       EPS bearer identity                        **
  **      data:      Data required to build the message         **

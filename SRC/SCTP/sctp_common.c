@@ -46,8 +46,8 @@
 int
 sctp_set_init_opt (
   int sd,
-  uint16_t instreams,
-  uint16_t outstreams,
+  sctp_stream_id_t instreams,
+  sctp_stream_id_t outstreams,
   uint16_t max_attempts,
   uint16_t init_timeout)
 {
@@ -84,9 +84,9 @@ sctp_set_init_opt (
 int
 sctp_get_sockinfo (
   int sock,
-  uint16_t * instream,
-  uint16_t * outstream,
-  int32_t * assoc_id)
+  sctp_stream_id_t * instream,
+  sctp_stream_id_t * outstream,
+  sctp_assoc_id_t * assoc_id)
 {
   socklen_t                               i;
   struct sctp_status                      status;

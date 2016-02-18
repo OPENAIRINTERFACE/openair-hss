@@ -44,10 +44,10 @@
 int
 sctp_send_msg (
   sctp_data_t * sctp_data_p,
-  uint16_t ppid,
-  uint16_t stream,
+  constuint16_t ppid,
+  constsctp_stream_id_t stream,
   const uint8_t * buffer,
-  const uint32_t length)
+  const size_t length)
 {
   DevAssert (buffer != NULL);
   DevAssert (sctp_data_p != NULL);
@@ -182,7 +182,7 @@ sctp_connect_to_remote_host (
   char *local_ip_addr[],
   int nb_local_addr,
   char *remote_ip_addr,
-  uint16_t port,
+  constuint16_t port,
   int socket_type,
   sctp_data_t * sctp_data_p)
 {

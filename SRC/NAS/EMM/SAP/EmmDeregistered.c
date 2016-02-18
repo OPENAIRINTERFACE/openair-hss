@@ -93,7 +93,7 @@ EmmDeregistered (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  assert (emm_fsm_get_status (evt->ueid, evt->ctx) == EMM_DEREGISTERED);
+  assert (emm_fsm_get_status (evt->ue_id, evt->ctx) == EMM_DEREGISTERED);
 
   switch (evt->primitive) {
   case _EMMREG_PROC_ABORT:
@@ -108,7 +108,7 @@ EmmDeregistered (
      * An EMM common procedure has been initiated;
      * enter state EMM-COMMON-PROCEDURE-INITIATED.
      */
-    rc = emm_fsm_set_status (evt->ueid, evt->ctx, EMM_COMMON_PROCEDURE_INITIATED);
+    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_COMMON_PROCEDURE_INITIATED);
     break;
 
   case _EMMREG_ATTACH_CNF:
@@ -117,7 +117,7 @@ EmmDeregistered (
      * context activated;
      * enter state EMM-REGISTERED.
      */
-    rc = emm_fsm_set_status (evt->ueid, evt->ctx, EMM_REGISTERED);
+    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_REGISTERED);
     break;
 
   case _EMMREG_LOWERLAYER_SUCCESS:

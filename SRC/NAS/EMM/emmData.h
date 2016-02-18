@@ -64,14 +64,14 @@ Description Defines internal private data handled by EPS Mobility
 
 
 /* Checks Mobile Country Code equality */
-#define MCCS_ARE_EQUAL(n1, n2)  (((n1).MCCdigit1 == (n2).MCCdigit1) && \
-                                 ((n1).MCCdigit2 == (n2).MCCdigit2) && \
-                                 ((n1).MCCdigit3 == (n2).MCCdigit3))
+#define MCCS_ARE_EQUAL(n1, n2)  (((n1).mcc_digit1 == (n2).mcc_digit1) && \
+                                 ((n1).mcc_digit2 == (n2).mcc_digit2) && \
+                                 ((n1).mcc_digit3 == (n2).mcc_digit3))
 
 /* Checks Mobile Network Code equality */
-#define MNCS_ARE_EQUAL(n1, n2)  (((n1).MNCdigit1 == (n2).MNCdigit1) &&  \
-                                 ((n1).MNCdigit2 == (n2).MNCdigit2) &&  \
-                                 ((n1).MNCdigit3 == (n2).MNCdigit3))
+#define MNCS_ARE_EQUAL(n1, n2)  (((n1).mnc_digit1 == (n2).mnc_digit1) &&  \
+                                 ((n1).mnc_digit2 == (n2).mnc_digit2) &&  \
+                                 ((n1).mnc_digit3 == (n2).mnc_digit3))
 
 /* Checks PLMNs equality */
 #define PLMNS_ARE_EQUAL(p1, p2) ((MCCS_ARE_EQUAL((p1),(p2))) && \
@@ -140,33 +140,33 @@ typedef struct emm_security_context_s {
  * ---------------------------------------------------------------------------
  */
 typedef struct emm_data_context_s {
-  nas_ue_id_t ueid;        /* UE identifier                                   */
-  bool          is_dynamic;  /* Dynamically allocated context indicator         */
-  bool          is_attached; /* Attachment indicator                            */
-  bool          is_emergency;/* Emergency bearer services indicator             */
+  mme_ue_s1ap_id_t ue_id;        /* UE identifier                                   */
+  bool             is_dynamic;  /* Dynamically allocated context indicator         */
+  bool             is_attached; /* Attachment indicator                            */
+  bool             is_emergency;/* Emergency bearer services indicator             */
 
-  imsi_t      *imsi;        /* The IMSI provided by the UE or the MME          */
-  imei_t      *imei;        /* The IMEI provided by the UE                     */
-  imeisv_t    *imeisv;      /* The IMEISV provided by the UE                   */
-  int          guti_is_new; /* New GUTI indicator                              */
-  GUTI_t      *guti;        /* The GUTI assigned to the UE                     */
-  GUTI_t      *old_guti;    /* The old GUTI                                    */
-  tai_list_t   tai_list;    /* TACs the the UE is registered to                */
-  tai_t        last_visited_registered_tai;
-  /*int          n_tacs;       * Number of consecutive tracking areas the UE is
+  imsi_t          *imsi;        /* The IMSI provided by the UE or the MME          */
+  imei_t          *imei;        /* The IMEI provided by the UE                     */
+  imeisv_t        *imeisv;      /* The IMEISV provided by the UE                   */
+  int              guti_is_new; /* New GUTI indicator                              */
+  GUTI_t          *guti;        /* The GUTI assigned to the UE                     */
+  GUTI_t          *old_guti;    /* The old GUTI                                    */
+  tai_list_t       tai_list;    /* TACs the the UE is registered to                */
+  tai_t            last_visited_registered_tai;
+  /*int            n_tacs;       * Number of consecutive tracking areas the UE is
                              * registered to                                   /
-  tac_t       tac;           * Code of the first tracking area the UE is
+  tac_t            tac;           * Code of the first tracking area the UE is
                              * registered to                                   */
 
-  int         ksi;          /* Security key set identifier provided by the UE  */
-  int         eea;          /* EPS encryption algorithms supported by the UE   */
-  int         eia;          /* EPS integrity algorithms supported by the UE    */
-  int         ucs2;         /* UCS2 Alphabet*/
-  int         uea;          /* UMTS encryption algorithms supported by the UE  */
-  int         uia;          /* UMTS integrity algorithms supported by the UE   */
-  int         gea;          /* GPRS encryption algorithms supported by the UE  */
-  int         umts_present; /* For encoding ue network capabilities (variable size)*/
-  int         gprs_present; /* For encoding ue network capabilities (variable size)*/
+  int             ksi;          /* Security key set identifier provided by the UE  */
+  int             eea;          /* EPS encryption algorithms supported by the UE   */
+  int             eia;          /* EPS integrity algorithms supported by the UE    */
+  int             ucs2;         /* UCS2 Alphabet*/
+  int             uea;          /* UMTS encryption algorithms supported by the UE  */
+  int             uia;          /* UMTS integrity algorithms supported by the UE   */
+  int             gea;          /* GPRS encryption algorithms supported by the UE  */
+  int             umts_present; /* For encoding ue network capabilities (variable size)*/
+  int             gprs_present; /* For encoding ue network capabilities (variable size)*/
 
   UeNetworkCapability    *ue_network_capability_ie; /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_2*/
   MsNetworkCapability    *ms_network_capability_ie; /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_2*/
@@ -214,7 +214,7 @@ typedef struct emm_data_s {
 } emm_data_t;
 
 struct emm_data_context_s *emm_data_context_get(
-  emm_data_t *emm_data, const nas_ue_id_t ueid);
+  emm_data_t *emm_data, const mme_ue_s1ap_id_t ueid);
 
 struct emm_data_context_s *emm_data_context_get_by_guti(
   emm_data_t *emm_data, GUTI_t *guti);

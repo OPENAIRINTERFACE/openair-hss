@@ -28,21 +28,20 @@
  *  @ingroup _sctp
  */
 
-#ifndef SCTP_COMMON_H_
-#define SCTP_COMMON_H_
+#ifndef FILE_SCTP_COMMON_SEEN
+#define FILE_SCTP_COMMON_SEEN
 
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/socket.h>
 
-typedef uint32_t sctp_assoc_id_t;
+#include "common_types.h"
 
-
-int sctp_set_init_opt(int sd, uint16_t instreams, uint16_t outstreams,
+int sctp_set_init_opt(int sd, sctp_stream_id_t instreams, sctp_stream_id_t outstreams,
                       uint16_t max_attempts, uint16_t init_timeout);
 
-int sctp_get_sockinfo(int sock, uint16_t *instream, uint16_t *outstream,
-                      int32_t *assoc_id);
+int sctp_get_sockinfo(int sock, sctp_stream_id_t *instream, sctp_stream_id_t *outstream,
+    sctp_assoc_id_t *assoc_id);
 
 int sctp_get_peeraddresses(int sock, struct sockaddr **remote_addr,
                            int *nb_remote_addresses);
@@ -50,4 +49,4 @@ int sctp_get_peeraddresses(int sock, struct sockaddr **remote_addr,
 int sctp_get_localaddresses(int sock, struct sockaddr **local_addr,
                             int *nb_local_addresses);
 
-#endif /* SCTP_COMMON_H_ */
+#endif /* FILE_SCTP_COMMON_SEEN */

@@ -74,7 +74,7 @@
  **      and no specific action shall be taken. Local actions are  **
  **      possible and are implementation dependent.                **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **          emm_cause: Received EMM cause code                    **
  **      Others:    None                                       **
  **                                                                        **
@@ -85,7 +85,7 @@
  ***************************************************************************/
 int
 emm_proc_status_ind (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   int emm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
@@ -106,7 +106,7 @@ emm_proc_status_ind (
  **                                                                        **
  ** Description: Initiates EMM status procedure.                           **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      emm_cause: EMM cause code to be reported              **
  **      Others:    None                                       **
  **                                                                        **
@@ -117,7 +117,7 @@ emm_proc_status_ind (
  ***************************************************************************/
 int
 emm_proc_status (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   int emm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
@@ -132,9 +132,9 @@ emm_proc_status (
    */
   emm_sap.primitive = EMMAS_STATUS_IND;
   emm_sap.u.emm_as.u.status.emm_cause = emm_cause;
-  emm_sap.u.emm_as.u.status.ueid = ueid;
+  emm_sap.u.emm_as.u.status.ue_id = ue_id;
   emm_sap.u.emm_as.u.status.guti = NULL;
-  ctx = emm_data_context_get (&_emm_data, ueid);
+  ctx = emm_data_context_get (&_emm_data, ue_id);
 
   if (ctx) {
     sctx = ctx->security;

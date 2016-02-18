@@ -76,7 +76,7 @@
  **                                                                        **
  ** Description: Processes EMM status message                              **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **          msg:       The received EMM message                   **
  **      Others:    None                                       **
  **                                                                        **
@@ -87,7 +87,7 @@
  ***************************************************************************/
 int
 emm_recv_status (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   emm_status_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -103,7 +103,7 @@ emm_recv_status (
   /*
    * Message processing
    */
-  rc = emm_proc_status_ind (ueid, msg->emmcause);
+  rc = emm_proc_status_ind (ue_id, msg->emmcause);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -118,7 +118,7 @@ emm_recv_status (
  **                                                                        **
  ** Description: Processes Attach Request message                          **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      msg:       The received EMM message                   **
  **      Others:    None                                       **
  **                                                                        **
@@ -129,7 +129,7 @@ emm_recv_status (
  ***************************************************************************/
 int
 emm_recv_attach_request (
-  const nas_ue_id_t ueid,
+  const mme_ue_s1ap_id_t ue_id,
   const tai_t              * const originating_tai,
   const attach_request_msg * const msg,
   int * const emm_cause,
@@ -149,7 +149,7 @@ emm_recv_attach_request (
      * Spare bits shall be coded as zero
      */
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - [%08x] - Non zero spare bits is suspicious\n", ueid);
+    LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - [%08x] - Non zero spare bits is suspicious\n", ue_id);
   }
 
   /*
@@ -159,7 +159,7 @@ emm_recv_attach_request (
     /*
      * Requirement MME24.301R10_5.5.1.2.7_b Protocol error
      */
-    rc = emm_proc_attach_reject (ueid, *emm_cause);
+    rc = emm_proc_attach_reject (ue_id, *emm_cause);
     *emm_cause = EMM_CAUSE_SUCCESS;
     LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
@@ -207,14 +207,14 @@ emm_recv_attach_request (
      * Get the GUTI
      */
     p_guti = &guti;
-    guti.gummei.plmn.MCCdigit1 = msg->oldgutiorimsi.guti.mccdigit1;
-    guti.gummei.plmn.MCCdigit2 = msg->oldgutiorimsi.guti.mccdigit2;
-    guti.gummei.plmn.MCCdigit3 = msg->oldgutiorimsi.guti.mccdigit3;
-    guti.gummei.plmn.MNCdigit1 = msg->oldgutiorimsi.guti.mncdigit1;
-    guti.gummei.plmn.MNCdigit2 = msg->oldgutiorimsi.guti.mncdigit2;
-    guti.gummei.plmn.MNCdigit3 = msg->oldgutiorimsi.guti.mncdigit3;
-    guti.gummei.MMEgid = msg->oldgutiorimsi.guti.mmegroupid;
-    guti.gummei.MMEcode = msg->oldgutiorimsi.guti.mmecode;
+    guti.gummei.plmn.mcc_digit1 = msg->oldgutiorimsi.guti.mccdigit1;
+    guti.gummei.plmn.mcc_digit2 = msg->oldgutiorimsi.guti.mccdigit2;
+    guti.gummei.plmn.mcc_digit3 = msg->oldgutiorimsi.guti.mccdigit3;
+    guti.gummei.plmn.mnc_digit1 = msg->oldgutiorimsi.guti.mncdigit1;
+    guti.gummei.plmn.mnc_digit2 = msg->oldgutiorimsi.guti.mncdigit2;
+    guti.gummei.plmn.mnc_digit3 = msg->oldgutiorimsi.guti.mncdigit3;
+    guti.gummei.mme_gid = msg->oldgutiorimsi.guti.mmegroupid;
+    guti.gummei.mme_code = msg->oldgutiorimsi.guti.mmecode;
     guti.m_tmsi = msg->oldgutiorimsi.guti.mtmsi;
   } else if (msg->oldgutiorimsi.imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
     LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMSI\n");
@@ -274,12 +274,12 @@ emm_recv_attach_request (
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
     LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get LAST VISITED REGISTERED TAI\n");
     p_last_visited_registered_tai = &last_visited_registered_tai;
-    last_visited_registered_tai.plmn.MCCdigit1 = msg->lastvisitedregisteredtai.mccdigit1;
-    last_visited_registered_tai.plmn.MCCdigit2 = msg->lastvisitedregisteredtai.mccdigit2;
-    last_visited_registered_tai.plmn.MCCdigit3 = msg->lastvisitedregisteredtai.mccdigit3;
-    last_visited_registered_tai.plmn.MNCdigit1 = msg->lastvisitedregisteredtai.mncdigit1;
-    last_visited_registered_tai.plmn.MNCdigit2 = msg->lastvisitedregisteredtai.mncdigit2;
-    last_visited_registered_tai.plmn.MNCdigit3 = msg->lastvisitedregisteredtai.mncdigit3;
+    last_visited_registered_tai.plmn.mcc_digit1 = msg->lastvisitedregisteredtai.mccdigit1;
+    last_visited_registered_tai.plmn.mcc_digit2 = msg->lastvisitedregisteredtai.mccdigit2;
+    last_visited_registered_tai.plmn.mcc_digit3 = msg->lastvisitedregisteredtai.mccdigit3;
+    last_visited_registered_tai.plmn.mnc_digit1 = msg->lastvisitedregisteredtai.mncdigit1;
+    last_visited_registered_tai.plmn.mnc_digit2 = msg->lastvisitedregisteredtai.mncdigit2;
+    last_visited_registered_tai.plmn.mnc_digit3 = msg->lastvisitedregisteredtai.mncdigit3;
     last_visited_registered_tai.tac = msg->lastvisitedregisteredtai.tac;
   }
 
@@ -296,7 +296,7 @@ emm_recv_attach_request (
     }
   }
 
-  rc = emm_proc_attach_request (ueid, type,
+  rc = emm_proc_attach_request (ue_id, type,
                                 msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED,
                                 msg->naskeysetidentifier.naskeysetidentifier,
                                 msg->oldgutitype != GUTI_MAPPED, p_guti, p_imsi, p_imei,
@@ -320,7 +320,7 @@ emm_recv_attach_request (
  **                                                                        **
  ** Description: Processes Attach Complete message                         **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      msg:       The received EMM message                   **
  **      Others:    None                                       **
  **                                                                        **
@@ -331,7 +331,7 @@ emm_recv_attach_request (
  ***************************************************************************/
 int
 emm_recv_attach_complete (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   const attach_complete_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -343,7 +343,7 @@ emm_recv_attach_complete (
   /*
    * Execute the attach procedure completion
    */
-  rc = emm_proc_attach_complete (ueid, &msg->esmmessagecontainer.esmmessagecontainercontents);
+  rc = emm_proc_attach_complete (ue_id, &msg->esmmessagecontainer.esmmessagecontainercontents);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -353,7 +353,7 @@ emm_recv_attach_complete (
  **                                                                        **
  ** Description: Processes Detach Request message                          **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      msg:       The received EMM message                   **
  **      Others:    None                                       **
  **                                                                        **
@@ -364,7 +364,7 @@ emm_recv_attach_complete (
  ***************************************************************************/
 int
 emm_recv_detach_request (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   const detach_request_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -413,14 +413,14 @@ emm_recv_detach_request (
      * Get the GUTI
      */
     p_guti = &guti;
-    guti.gummei.plmn.MCCdigit1 = msg->gutiorimsi.guti.mccdigit1;
-    guti.gummei.plmn.MCCdigit2 = msg->gutiorimsi.guti.mccdigit2;
-    guti.gummei.plmn.MCCdigit3 = msg->gutiorimsi.guti.mccdigit3;
-    guti.gummei.plmn.MNCdigit1 = msg->gutiorimsi.guti.mncdigit1;
-    guti.gummei.plmn.MNCdigit2 = msg->gutiorimsi.guti.mncdigit2;
-    guti.gummei.plmn.MNCdigit3 = msg->gutiorimsi.guti.mncdigit3;
-    guti.gummei.MMEgid = msg->gutiorimsi.guti.mmegroupid;
-    guti.gummei.MMEcode = msg->gutiorimsi.guti.mmecode;
+    guti.gummei.plmn.mcc_digit1 = msg->gutiorimsi.guti.mccdigit1;
+    guti.gummei.plmn.mcc_digit2 = msg->gutiorimsi.guti.mccdigit2;
+    guti.gummei.plmn.mcc_digit3 = msg->gutiorimsi.guti.mccdigit3;
+    guti.gummei.plmn.mnc_digit1 = msg->gutiorimsi.guti.mncdigit1;
+    guti.gummei.plmn.mnc_digit2 = msg->gutiorimsi.guti.mncdigit2;
+    guti.gummei.plmn.mnc_digit3 = msg->gutiorimsi.guti.mncdigit3;
+    guti.gummei.mme_gid = msg->gutiorimsi.guti.mmegroupid;
+    guti.gummei.mme_code = msg->gutiorimsi.guti.mmecode;
     guti.m_tmsi = msg->gutiorimsi.guti.mtmsi;
   } else if (msg->gutiorimsi.imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
     /*
@@ -469,7 +469,7 @@ emm_recv_detach_request (
   /*
    * Execute the UE initiated detach procedure completion by the network
    */
-  rc = emm_proc_detach_request (ueid, type, msg->detachtype.switchoff != DETACH_TYPE_NORMAL_DETACH, msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED, msg->naskeysetidentifier.naskeysetidentifier, p_guti, p_imsi, p_imei);
+  rc = emm_proc_detach_request (ue_id, type, msg->detachtype.switchoff != DETACH_TYPE_NORMAL_DETACH, msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED, msg->naskeysetidentifier.naskeysetidentifier, p_guti, p_imsi, p_imei);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -479,7 +479,7 @@ emm_recv_detach_request (
  **                                                                        **
  ** Description: Processes Tracking Area Update Request message            **
  **                                                                        **
- ** Inputs:      ueid:          UE lower layer identifier                  **
+ ** Inputs:      ue_id:          UE lower layer identifier                  **
  **              msg:           The received EMM message                   **
  **              Others:        None                                       **
  **                                                                        **
@@ -490,7 +490,7 @@ emm_recv_detach_request (
  ***************************************************************************/
 int
 emm_recv_tracking_area_update_request (
-  nas_ue_id_t ueid,
+  const mme_ue_s1ap_id_t ue_id,
   const tracking_area_update_request_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
@@ -506,9 +506,9 @@ emm_recv_tracking_area_update_request (
 
 #if NAS_FORCE_REJECT_TAU
   // LW: Not completely implemented; send a Received Tracking Area Update Reject to induce a Attach Request from UE!
-  rc = emm_proc_tracking_area_update_reject (ueid, EMM_CAUSE_IMPLICITLY_DETACHED);
+  rc = emm_proc_tracking_area_update_reject (ue_id, EMM_CAUSE_IMPLICITLY_DETACHED);
 #else
-  rc = emm_proc_tracking_area_update_request(ueid, msg, emm_cause, decode_status);
+  rc = emm_proc_tracking_area_update_request(ue_id, msg, emm_cause, decode_status);
 #endif
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -520,7 +520,7 @@ emm_recv_tracking_area_update_request (
  **                                                                        **
  ** Description: Processes Service Request message                         **
  **                                                                        **
- ** Inputs:      ueid:          UE lower layer identifier                  **
+ ** Inputs:      ue_id:          UE lower layer identifier                  **
  **              msg:           The received EMM message                   **
  **              Others:        None                                       **
  **                                                                        **
@@ -531,7 +531,7 @@ emm_recv_tracking_area_update_request (
  ***************************************************************************/
 int
 emm_recv_service_request (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   const service_request_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
@@ -551,7 +551,7 @@ emm_recv_service_request (
    */
   // EMM causes for triggering an attach in the UE can be "UE identity cannot be derived by the network": EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW,
   // "Implicitly detached": EMM_CAUSE_IMPLICITLY_DETACHED,
-  rc = emm_proc_service_reject (ueid, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
+  rc = emm_proc_service_reject (ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
 #endif
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -562,7 +562,7 @@ emm_recv_service_request (
  **                                                                        **
  ** Description: Processes Identity Response message                       **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      msg:       The received EMM message                   **
  **      Others:    None                                       **
  **                                                                        **
@@ -573,7 +573,7 @@ emm_recv_service_request (
  ***************************************************************************/
 int
 emm_recv_identity_response (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   identity_response_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -688,7 +688,7 @@ emm_recv_identity_response (
   /*
    * Execute the identification completion procedure
    */
-  rc = emm_proc_identification_complete (ueid, p_imsi, p_imei, p_imeisv, (uint32_t *) (p_tmsi));
+  rc = emm_proc_identification_complete (ue_id, p_imsi, p_imei, p_imeisv, (uint32_t *) (p_tmsi));
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -698,7 +698,7 @@ emm_recv_identity_response (
  **                                                                        **
  ** Description: Processes Authentication Response message                 **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      msg:       The received EMM message                   **
  **      Others:    None                                       **
  **                                                                        **
@@ -709,7 +709,7 @@ emm_recv_identity_response (
  ***************************************************************************/
 int
 emm_recv_authentication_response (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   authentication_response_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -742,7 +742,7 @@ emm_recv_authentication_response (
   /*
    * Execute the authentication completion procedure
    */
-  rc = emm_proc_authentication_complete (ueid, EMM_CAUSE_SUCCESS, &msg->authenticationresponseparameter.res);
+  rc = emm_proc_authentication_complete (ue_id, EMM_CAUSE_SUCCESS, &msg->authenticationresponseparameter.res);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -752,7 +752,7 @@ emm_recv_authentication_response (
  **                                                                        **
  ** Description: Processes Authentication Failure message                  **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      msg:       The received EMM message                   **
  **      Others:    None                                       **
  **                                                                        **
@@ -763,7 +763,7 @@ emm_recv_authentication_response (
  ***************************************************************************/
 int
 emm_recv_authentication_failure (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   authentication_failure_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -798,7 +798,7 @@ emm_recv_authentication_failure (
   /*
    * Execute the authentication completion procedure
    */
-  rc = emm_proc_authentication_complete (ueid, msg->emmcause, &msg->authenticationfailureparameter.auts);
+  rc = emm_proc_authentication_complete (ue_id, msg->emmcause, &msg->authenticationfailureparameter.auts);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -808,7 +808,7 @@ emm_recv_authentication_failure (
  **                                                                        **
  ** Description: Processes Security Mode Complete message                  **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      msg:       The received EMM message                   **
  **      Others:    None                                       **
  **                                                                        **
@@ -819,7 +819,7 @@ emm_recv_authentication_failure (
  ***************************************************************************/
 int
 emm_recv_security_mode_complete (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   security_mode_complete_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -834,7 +834,7 @@ emm_recv_security_mode_complete (
   /*
    * Execute the NAS security mode control completion procedure
    */
-  rc = emm_proc_security_mode_complete (ueid);
+  rc = emm_proc_security_mode_complete (ue_id);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -844,7 +844,7 @@ emm_recv_security_mode_complete (
  **                                                                        **
  ** Description: Processes Security Mode Reject message                    **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      msg:       The received EMM message                   **
  **      Others:    None                                       **
  **                                                                        **
@@ -855,7 +855,7 @@ emm_recv_security_mode_complete (
  ***************************************************************************/
 int
 emm_recv_security_mode_reject (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   security_mode_reject_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t * status)
@@ -885,6 +885,6 @@ emm_recv_security_mode_reject (
   /*
    * Execute the NAS security mode commend not accepted by the UE
    */
-  rc = emm_proc_security_mode_reject (ueid);
+  rc = emm_proc_security_mode_reject (ue_id);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

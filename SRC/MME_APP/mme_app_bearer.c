@@ -57,7 +57,7 @@ mme_app_send_s11_release_access_bearers_req (
    * Keep the identifier to the default APN
    */
   MessageDef                             *message_p = NULL;
-  SgwReleaseAccessBearersRequest         *release_access_bearers_request_p = NULL;
+  itti_sgw_release_access_bearers_request_t         *release_access_bearers_request_p = NULL;
   int                                     rc = RETURNok;
 
   LOG_FUNC_IN (LOG_MME_APP);
@@ -67,7 +67,7 @@ mme_app_send_s11_release_access_bearers_req (
 #endif
   message_p = itti_alloc_new_message (TASK_MME_APP, SGW_RELEASE_ACCESS_BEARERS_REQUEST);
   release_access_bearers_request_p = &message_p->ittiMsg.sgwReleaseAccessBearersRequest;
-  memset (release_access_bearers_request_p, 0, sizeof (SgwReleaseAccessBearersRequest));
+  memset (release_access_bearers_request_p, 0, sizeof (itti_sgw_release_access_bearers_request_t));
   release_access_bearers_request_p->teid = ue_context_pP->sgw_s11_teid;
   release_access_bearers_request_p->num_rabs = 1;
   release_access_bearers_request_p->list_of_rabs[0] = ue_context_pP->default_bearer_id;
@@ -191,8 +191,8 @@ mme_app_send_s11_create_session_req (
   session_request_p->bearer_to_create.eps_bearer_id = 5;
   //ue_context_pP->mme_s11_teid = session_request_p->sender_fteid_for_cp.teid;
   ue_context_pP->sgw_s11_teid = 0;
-  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context_pP, ue_context_pP->mme_ue_s1ap_id, ue_context_pP->imsi, session_request_p->sender_fteid_for_cp.teid,       // mme_s11_teid is new
-                                   ue_context_pP->ue_id, &ue_context_pP->guti);
+  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context_pP, ue_context_pP->enb_ue_s1ap_id, ue_context_pP->mme_ue_s1ap_id, ue_context_pP->imsi, session_request_p->sender_fteid_for_cp.teid,       // mme_s11_teid is new
+                                   &ue_context_pP->guti);
   memcpy (session_request_p->apn, default_apn_p->service_selection, default_apn_p->service_selection_length);
   /*
    * Set PDN type for pdn_type and PAA even if this IE is redundant
@@ -230,14 +230,14 @@ mme_app_send_s11_create_session_req (
   }
 
   config_read_lock (&mme_config);
-  session_request_p->peer_ip = mme_config.ipv4.sgw_ip_address_for_S11;
+  session_request_p->peer_ip = mme_config.ipv4.sgw_ip_address_for_s11;
   config_unlock (&mme_config);
-  session_request_p->serving_network.mcc[0] = ue_context_pP->e_utran_cgi.plmn.MCCdigit1;
-  session_request_p->serving_network.mcc[1] = ue_context_pP->e_utran_cgi.plmn.MCCdigit2;
-  session_request_p->serving_network.mcc[2] = ue_context_pP->e_utran_cgi.plmn.MCCdigit3;
-  session_request_p->serving_network.mnc[0] = ue_context_pP->e_utran_cgi.plmn.MNCdigit1;
-  session_request_p->serving_network.mnc[1] = ue_context_pP->e_utran_cgi.plmn.MNCdigit2;
-  session_request_p->serving_network.mnc[2] = ue_context_pP->e_utran_cgi.plmn.MNCdigit3;
+  session_request_p->serving_network.mcc[0] = ue_context_pP->e_utran_cgi.plmn.mcc_digit1;
+  session_request_p->serving_network.mcc[1] = ue_context_pP->e_utran_cgi.plmn.mcc_digit2;
+  session_request_p->serving_network.mcc[2] = ue_context_pP->e_utran_cgi.plmn.mcc_digit3;
+  session_request_p->serving_network.mnc[0] = ue_context_pP->e_utran_cgi.plmn.mnc_digit1;
+  session_request_p->serving_network.mnc[1] = ue_context_pP->e_utran_cgi.plmn.mnc_digit2;
+  session_request_p->serving_network.mnc[2] = ue_context_pP->e_utran_cgi.plmn.mnc_digit3;
   session_request_p->selection_mode = MS_O_N_P_APN_S_V;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, (TASK_S11 == to_task) ? MSC_S11_MME : MSC_SP_GWAPP_MME, NULL, 0,
       "0 SGW_CREATE_SESSION_REQUEST imsi %" IMSI_FORMAT, ue_context_pP->imsi);
@@ -323,15 +323,15 @@ mme_app_handle_conn_est_cnf (
   itti_mme_app_connection_establishment_cnf_t *establishment_cnf_p = NULL;
   bearer_context_t                       *current_bearer_p = NULL;
   ebi_t                                   bearer_id = 0;
-  uint8_t                                 keNB[32];
+  uint8_t                                 kenb[32];
 
   LOG_FUNC_IN (LOG_MME_APP);
   LOG_DEBUG (LOG_MME_APP, "Received NAS_CONNECTION_ESTABLISHMENT_CNF from NAS\n");
-  ue_context_p = mme_ue_context_exists_nas_ue_id (&mme_app_desc.mme_ue_contexts, nas_conn_est_cnf_pP->UEid);
+  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, nas_conn_est_cnf_pP->ue_id);
 
   if (ue_context_p == NULL) {
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_CONNECTION_ESTABLISHMENT_CNF Unknown ue %u", nas_conn_est_cnf_pP->UEid);
-    LOG_ERROR (LOG_MME_APP, "UE context doesn't exist for UE %06" PRIX32 "/dec%u\n", nas_conn_est_cnf_pP->UEid, nas_conn_est_cnf_pP->UEid);
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_CONNECTION_ESTABLISHMENT_CNF Unknown ue %u", nas_conn_est_cnf_pP->ue_id);
+    LOG_ERROR (LOG_MME_APP, "UE context doesn't exist for UE %06" PRIX32 "/dec%u\n", nas_conn_est_cnf_pP->ue_id, nas_conn_est_cnf_pP->ue_id);
     LOG_FUNC_OUT (LOG_MME_APP);
   }
 
@@ -369,8 +369,8 @@ mme_app_handle_conn_est_cnf (
   LOG_DEBUG (LOG_MME_APP, "security_capabilities_encryption_algorithms 0x%04X\n", establishment_cnf_p->security_capabilities_encryption_algorithms);
   LOG_DEBUG (LOG_MME_APP, "security_capabilities_integrity_algorithms  0x%04X\n", establishment_cnf_p->security_capabilities_integrity_algorithms);
   LOG_DEBUG (LOG_MME_APP, "Derive keNB with UL NAS COUNT %x\n", nas_conn_est_cnf_pP->ul_nas_count);
-  derive_keNB (ue_context_p->vector_in_use->kasme, nas_conn_est_cnf_pP->ul_nas_count, keNB);    //156
-  memcpy (establishment_cnf_p->keNB, keNB, 32);
+  derive_keNB (ue_context_p->vector_in_use->kasme, nas_conn_est_cnf_pP->ul_nas_count, kenb);    //156
+  memcpy (establishment_cnf_p->kenb, kenb, 32);
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0,
                       "0 MME_APP_CONNECTION_ESTABLISHMENT_CNF ebi %u s1u_sgw teid %u qci %u prio level %u sea 0x%x sia 0x%x",
                       establishment_cnf_p->eps_bearer_id,
@@ -411,29 +411,22 @@ mme_app_handle_conn_est_ind (
       LOG_FUNC_OUT (LOG_MME_APP);
     }
     // S1AP UE ID AND NAS UE ID ARE THE SAME
-    ue_context_p->mme_ue_s1ap_id = conn_est_ind_pP->mme_ue_s1ap_id;
-    ue_context_p->ue_id = conn_est_ind_pP->mme_ue_s1ap_id;
+    ue_context_p->mme_ue_s1ap_id = conn_est_ind_pP->mme_ue_s1ap_id; // invalid id
+    ue_context_p->enb_ue_s1ap_id = conn_est_ind_pP->enb_ue_s1ap_id;
     DevAssert (mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p) == 0);
     // tests
     ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, conn_est_ind_pP->mme_ue_s1ap_id);
-    AssertFatal (ue_context_p , "mme_ue_context_exists_mme_ue_s1ap_id Failed");
-    ue_context_p = mme_ue_context_exists_nas_ue_id (&mme_app_desc.mme_ue_contexts, conn_est_ind_pP->mme_ue_s1ap_id);
     AssertFatal (ue_context_p , "mme_ue_context_exists_nas_ue_id Failed");
   }
 
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_CONNECTION_ESTABLISHMENT_IND);
   // do this because of same message types name but not same struct in different .h
-  message_p->ittiMsg.nas_conn_est_ind.nas.UEid    = conn_est_ind_pP->nas.UEid;
-  message_p->ittiMsg.nas_conn_est_ind.nas.tai     = conn_est_ind_pP->nas.tai;
-  message_p->ittiMsg.nas_conn_est_ind.nas.asCause = conn_est_ind_pP->nas.asCause;
-  message_p->ittiMsg.nas_conn_est_ind.nas.s_tmsi  = conn_est_ind_pP->nas.s_tmsi;
-  memcpy (&message_p->ittiMsg.nas_conn_est_ind.nas.initialNasMsg, &conn_est_ind_pP->nas.initialNasMsg, sizeof (conn_est_ind_pP->nas.initialNasMsg));
+  message_p->ittiMsg.nas_conn_est_ind.nas.ue_id           = conn_est_ind_pP->nas.ue_id;
+  message_p->ittiMsg.nas_conn_est_ind.nas.tai             = conn_est_ind_pP->nas.tai;
+  message_p->ittiMsg.nas_conn_est_ind.nas.as_cause        = conn_est_ind_pP->nas.as_cause;
+  message_p->ittiMsg.nas_conn_est_ind.nas.s_tmsi          = conn_est_ind_pP->nas.s_tmsi;
+  memcpy (&message_p->ittiMsg.nas_conn_est_ind.nas.initial_nas_msg, &conn_est_ind_pP->nas.initial_nas_msg, sizeof (conn_est_ind_pP->nas.initial_nas_msg));
 
-  /*
-   * memcpy(&NAS_CONN_EST_IND(message_p).nas,
-   * &conn_est_ind_pP->nas,
-   * sizeof (nas_establish_ind_t));
-   */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_CONNECTION_ESTABLISHMENT_IND");
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   LOG_FUNC_OUT (LOG_MME_APP);
@@ -444,7 +437,7 @@ mme_app_handle_conn_est_ind (
 //------------------------------------------------------------------------------
 int
 mme_app_handle_create_sess_resp (
-  const SgwCreateSessionResponse * const create_sess_resp_pP)
+  const itti_sgw_create_session_response_t * const create_sess_resp_pP)
 //------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
@@ -468,7 +461,7 @@ mme_app_handle_create_sess_resp (
    */
   ue_context_p->sgw_s11_teid = create_sess_resp_pP->s11_sgw_teid.teid;
   //---------------------------------------------------------
-  // Process SgwCreateSessionResponse.bearer_context_created
+  // Process itti_sgw_create_session_response_t.bearer_context_created
   //---------------------------------------------------------
   bearer_id = create_sess_resp_pP->bearer_context_created.eps_bearer_id /* - 5 */ ;
   /*
@@ -646,8 +639,7 @@ mme_app_handle_create_sess_resp (
     NAS_PDN_CONNECTIVITY_RSP (message_p).request_type = ue_context_p->pending_pdn_connectivity_req_request_type;        // NAS internal ref
     ue_context_p->pending_pdn_connectivity_req_request_type = 0;
     // here at this point OctetString are saved in resp, no loss of memory (apn, pdn_addr)
-    NAS_PDN_CONNECTIVITY_RSP (message_p).eNB_ue_s1ap_id = ue_context_p->eNB_ue_s1ap_id;
-    NAS_PDN_CONNECTIVITY_RSP (message_p).mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id;
+    NAS_PDN_CONNECTIVITY_RSP (message_p).ue_id = ue_context_p->mme_ue_s1ap_id;
     NAS_PDN_CONNECTIVITY_RSP (message_p).ebi = bearer_id;
     NAS_PDN_CONNECTIVITY_RSP (message_p).qci = current_bearer_p->qci;
     NAS_PDN_CONNECTIVITY_RSP (message_p).prio_level = current_bearer_p->prio_level;
@@ -691,7 +683,7 @@ mme_app_handle_initial_context_setup_rsp (
 #endif
   message_p = itti_alloc_new_message (TASK_MME_APP, SGW_MODIFY_BEARER_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
-  memset ((void *)&message_p->ittiMsg.sgwModifyBearerRequest, 0, sizeof (SgwModifyBearerRequest));
+  memset ((void *)&message_p->ittiMsg.sgwModifyBearerRequest, 0, sizeof (itti_sgw_modify_bearer_request_t));
   SGW_MODIFY_BEARER_REQUEST (message_p).teid = ue_context_p->sgw_s11_teid;
   /*
    * Delay Value in integer multiples of 50 millisecs, or zero
@@ -714,11 +706,10 @@ mme_app_handle_initial_context_setup_rsp (
   LOG_FUNC_OUT (LOG_MME_APP);
 }
 
-
 //------------------------------------------------------------------------------
 void
 mme_app_handle_release_access_bearers_resp (
-  const SgwReleaseAccessBearersResponse * const rel_access_bearers_rsp_pP)
+  const itti_sgw_release_access_bearers_response_t * const rel_access_bearers_rsp_pP)
 //------------------------------------------------------------------------------
 {
   MessageDef                             *message_p = NULL;
@@ -734,9 +725,11 @@ mme_app_handle_release_access_bearers_resp (
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
-  memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_command, 0, sizeof (s1ap_ue_context_release_command_t));
+  memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_command, 0, sizeof (itti_s1ap_ue_context_release_command_t));
   S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ", S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
+  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context_p->enb_ue_s1ap_id;
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",
+      S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
   itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
   LOG_FUNC_OUT (LOG_MME_APP);
 }

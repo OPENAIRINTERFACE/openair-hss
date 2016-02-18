@@ -69,7 +69,7 @@
  ** Description: Creates a new EPS bearer context to the PDN with the spe- **
  **      cified PDN connection identifier                          **
  **                                                                        **
- ** Inputs:  ueid:      UE identifier                              **
+ ** Inputs:  ue_id:      UE identifier                              **
  **      pid:       PDN connection identifier                  **
  **      ebi:       EPS bearer identity                        **
  **      is_default:    true if the new bearer is a default EPS    **
@@ -228,7 +228,7 @@ esm_ebr_context_create (
  ** Description: Releases EPS bearer context entry previously allocated    **
  **      to the EPS bearer with the specified EPS bearer identity  **
  **                                                                        **
- ** Inputs:  ueid:      UE identifier                              **
+ ** Inputs:  ue_id:      UE identifier                              **
  **      ebi:       EPS bearer identity                        **
  **      Others:    _esm_data                                  **
  **                                                                        **

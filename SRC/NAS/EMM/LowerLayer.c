@@ -78,7 +78,7 @@
  ** Description: Notify the EPS Mobility Management entity that data have  **
  **      been successfully delivered to the network                **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      Others:    None                                       **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -88,14 +88,14 @@
  ***************************************************************************/
 int
 lowerlayer_success (
-  nas_ue_id_t ueid)
+  mme_ue_s1ap_id_t ue_id)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNok;
 
   emm_sap.primitive = EMMREG_LOWERLAYER_SUCCESS;
-  emm_sap.u.emm_reg.ueid = ueid;
+  emm_sap.u.emm_reg.ue_id = ue_id;
   emm_sap.u.emm_reg.ctx = NULL;
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -108,7 +108,7 @@ lowerlayer_success (
  ** Description: Notify the EPS Mobility Management entity that lower la-  **
  **      yers failed to deliver data to the network                **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      Others:    None                                       **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -118,18 +118,18 @@ lowerlayer_success (
  ***************************************************************************/
 int
 lowerlayer_failure (
-  nas_ue_id_t ueid)
+  mme_ue_s1ap_id_t ue_id)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNok;
 
   emm_sap.primitive = EMMREG_LOWERLAYER_FAILURE;
-  emm_sap.u.emm_reg.ueid = ueid;
+  emm_sap.u.emm_reg.ue_id = ue_id;
   emm_data_context_t                     *emm_ctx = NULL;
 
-  if (ueid > 0) {
-    emm_ctx = emm_data_context_get (&_emm_data, ueid);
+  if (ue_id > 0) {
+    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
   }
 
   emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -185,7 +185,7 @@ lowerlayer_release (
   int                                     rc = RETURNok;
 
   emm_sap.primitive = EMMREG_LOWERLAYER_RELEASE;
-  emm_sap.u.emm_reg.ueid = 0;
+  emm_sap.u.emm_reg.ue_id = 0;
   emm_sap.u.emm_reg.ctx = NULL;
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -198,7 +198,7 @@ lowerlayer_release (
  ** Description: Notify the EPS Session Management entity that data have   **
  **      been received from lower layers                           **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      data:      Data transfered from lower layers          **
  **      Others:    None                                       **
  **                                                                        **
@@ -209,7 +209,7 @@ lowerlayer_release (
  ***************************************************************************/
 int
 lowerlayer_data_ind (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   const OctetString * data)
 {
   esm_sap_t                               esm_sap = {0};
@@ -218,12 +218,12 @@ lowerlayer_data_ind (
 
   LOG_FUNC_IN (LOG_NAS_EMM);
 
-  if (ueid > 0) {
-    emm_ctx = emm_data_context_get (&_emm_data, ueid);
+  if (ue_id > 0) {
+    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
   }
   esm_sap.primitive = ESM_UNITDATA_IND;
   esm_sap.is_standalone = true;
-  esm_sap.ueid = ueid;
+  esm_sap.ue_id = ue_id;
   esm_sap.ctx = emm_ctx;
   esm_sap.recv = data;
   rc = esm_sap_send (&esm_sap);
@@ -237,7 +237,7 @@ lowerlayer_data_ind (
  ** Description: Notify the EPS Mobility Management entity that data have  **
  **      to be transfered to lower layers                          **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **          data:      Data to be transfered to lower layers      **
  **      Others:    None                                       **
  **                                                                        **
@@ -248,7 +248,7 @@ lowerlayer_data_ind (
  ***************************************************************************/
 int
 lowerlayer_data_req (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   const OctetString * data)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
@@ -259,19 +259,19 @@ lowerlayer_data_req (
 
   emm_sap.primitive = EMMAS_DATA_REQ;
   emm_sap.u.emm_as.u.data.guti = NULL;
-  emm_sap.u.emm_as.u.data.ueid = ueid;
+  emm_sap.u.emm_as.u.data.ue_id = ue_id;
 
-  if (ueid > 0) {
-    ctx = emm_data_context_get (&_emm_data, ueid);
+  if (ue_id > 0) {
+    ctx = emm_data_context_get (&_emm_data, ue_id);
   }
 
   if (ctx) {
     sctx = ctx->security;
   }
 
-  emm_sap.u.emm_as.u.data.NASinfo = 0;
-  emm_sap.u.emm_as.u.data.NASmsg.length = data->length;
-  emm_sap.u.emm_as.u.data.NASmsg.value = data->value;
+  emm_sap.u.emm_as.u.data.nas_info = 0;
+  emm_sap.u.emm_as.u.data.nas_msg.length = data->length;
+  emm_sap.u.emm_as.u.data.nas_msg.value = data->value;
   /*
    * Setup EPS NAS security data
    */
@@ -309,8 +309,8 @@ void
 emm_as_set_security_data (
   emm_as_security_data_t * data,
   const void *args,
-  int is_new,
-  int is_ciphered)
+  bool is_new,
+  bool is_ciphered)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   const emm_security_context_t           *context = (emm_security_context_t *) (args);

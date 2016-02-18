@@ -271,7 +271,7 @@ s11_mme_init (
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (s11_mme_stack_handle, NW_LOG_LEVEL_DEBG));
   config_read_lock (&mme_config);
-  addr.s_addr = mme_config.ipv4.mme_ip_address_for_S11;
+  addr.s_addr = mme_config.ipv4.mme_ip_address_for_s11;
   config_unlock (&mme_config);
   s11_address_str = inet_ntoa (addr);
   DevAssert (s11_address_str );

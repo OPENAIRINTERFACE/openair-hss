@@ -28,6 +28,6 @@ int s11_sgw_handle_modify_bearer_request(
 
 int s11_sgw_handle_modify_bearer_response(
   NwGtpv2cStackHandleT    *stack_p,
-  SgwModifyBearerResponse *modify_bearer_response_p);
+  itti_sgw_modify_bearer_response_t *modify_bearer_response_p);
 
 #endif /* S11_SGW_BEARER_MANAGER_H_ */

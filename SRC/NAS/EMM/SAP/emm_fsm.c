@@ -162,7 +162,7 @@ emm_fsm_initialize (
  **                                                                        **
  ** Description: Set the EPS Mobility Management status to the given state **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      status:    The new EMM status                         **
  **      Others:    None                                       **
  **                                                                        **
@@ -173,7 +173,7 @@ emm_fsm_initialize (
  ***************************************************************************/
 int
 emm_fsm_set_status (
-  nas_ue_id_t ueid,
+    mme_ue_s1ap_id_t ue_id,
   void *ctx,
   emm_fsm_state_t status)
 {
@@ -181,10 +181,10 @@ emm_fsm_set_status (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
   DevAssert (emm_ctx );
-  if ((status < EMM_STATE_MAX) && (ueid > 0)) {
+  if ((status < EMM_STATE_MAX) && (ue_id > 0)) {
     if (status != emm_ctx->_emm_fsm_status) {
       LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s\n", _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " NAS_UE_ID_FMT" ", _emm_fsm_status_str[status], ueid);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " NAS_UE_ID_FMT" ", _emm_fsm_status_str[status], ue_id);
       emm_ctx->_emm_fsm_status = status;
     }
 
@@ -200,7 +200,7 @@ emm_fsm_set_status (
  ** Description: Get the current value of the EPS Mobility Management      **
  **      status                                                    **
  **                                                                        **
- ** Inputs:  ueid:      Lower layers UE identifier                 **
+ ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      Others:    _emm_fsm_status                            **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -210,14 +210,14 @@ emm_fsm_set_status (
  ***************************************************************************/
 emm_fsm_state_t
 emm_fsm_get_status (
-  nas_ue_id_t ueid,
+    mme_ue_s1ap_id_t ue_id,
   void *ctx)
 {
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
   if (emm_ctx == NULL) {
-    LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - try again get context ueid " NAS_UE_ID_FMT "\n", ueid);
-    emm_ctx = emm_data_context_get (&_emm_data, ueid);
+    LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - try again get context ue_id " NAS_UE_ID_FMT "\n", ue_id);
+    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
   }
 
   if (emm_ctx ) {
@@ -253,7 +253,7 @@ emm_fsm_process (
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
 
   DevAssert (emm_ctx );
-  status = emm_fsm_get_status (evt->ueid, emm_ctx);
+  status = emm_fsm_get_status (evt->ue_id, emm_ctx);
   LOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
   DevAssert (status != EMM_INVALID);
   /*

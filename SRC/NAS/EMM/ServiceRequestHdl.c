@@ -87,7 +87,7 @@ static int  _emm_service_reject (void *args);
  **                                                                        **
  ** Description:                                                           **
  **                                                                        **
- ** Inputs:  ueid:              UE lower layer identifier                  **
+ ** Inputs:  ue_id:              UE lower layer identifier                  **
  **                  emm_cause: EMM cause code to be reported              **
  **                  Others:    None                                       **
  **                                                                        **
@@ -98,7 +98,7 @@ static int  _emm_service_reject (void *args);
  ***************************************************************************/
 int
 emm_proc_service_reject (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   int emm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
@@ -110,11 +110,11 @@ emm_proc_service_reject (
   emm_data_context_t                      ue_ctx = {0};
 
   ue_ctx.is_dynamic = false;
-  ue_ctx.ueid = ueid;
+  ue_ctx.ue_id = ue_id;
   /*
    * Update the EMM cause code
    */
-  if (ueid > 0) {
+  if (ue_id > 0) {
     ue_ctx.emm_cause = emm_cause;
   } else {
     ue_ctx.emm_cause = EMM_CAUSE_IMPLICITLY_DETACHED;
@@ -145,27 +145,27 @@ _emm_service_reject (
   if (emm_ctx) {
     emm_sap_t                               emm_sap = {0};
 
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM service procedure not accepted " "by the network (ueid=" NAS_UE_ID_FMT ", cause=%d)\n", emm_ctx->ueid, emm_ctx->emm_cause);
+    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM service procedure not accepted " "by the network (ue_id=" NAS_UE_ID_FMT ", cause=%d)\n", emm_ctx->ue_id, emm_ctx->emm_cause);
     /*
      * Notify EMM-AS SAP that Tracking Area Update Reject message has to be sent
      * onto the network
      */
     emm_sap.primitive = EMMAS_ESTABLISH_REJ;
-    emm_sap.u.emm_as.u.establish.ueid = emm_ctx->ueid;
-    emm_sap.u.emm_as.u.establish.UEid.guti = NULL;
+    emm_sap.u.emm_as.u.establish.ue_id = emm_ctx->ue_id;
+    emm_sap.u.emm_as.u.establish.eps_id.guti = NULL;
 
     if (emm_ctx->emm_cause == EMM_CAUSE_SUCCESS) {
       emm_ctx->emm_cause = EMM_CAUSE_IMPLICITLY_DETACHED;
     }
 
     emm_sap.u.emm_as.u.establish.emm_cause = emm_ctx->emm_cause;
-    emm_sap.u.emm_as.u.establish.NASinfo = EMM_AS_NAS_INFO_SR;
-    emm_sap.u.emm_as.u.establish.NASmsg.length = 0;
-    emm_sap.u.emm_as.u.establish.NASmsg.value = NULL;
+    emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_SR;
+    emm_sap.u.emm_as.u.establish.nas_msg.length = 0;
+    emm_sap.u.emm_as.u.establish.nas_msg.value = NULL;
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, false, true);
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, false, false);
     rc = emm_sap_send (&emm_sap);
   }
 

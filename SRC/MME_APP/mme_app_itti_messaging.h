@@ -26,7 +26,7 @@
 
 static inline void
 mme_app_itti_auth_fail(
-  const uint32_t ue_id,
+  const mme_ue_s1ap_id_t ue_id,
   const nas_cause_t cause)
 {
   MessageDef *message_p = NULL;
@@ -51,7 +51,7 @@ mme_app_itti_auth_fail(
 
 
 static inline void mme_app_itti_auth_rsp(
-  const uint32_t                 ue_id,
+  const mme_ue_s1ap_id_t         ue_id,
   const uint8_t                  nb_vectors,
   const  eutran_vector_t * const vector)
 {

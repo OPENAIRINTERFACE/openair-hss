@@ -35,19 +35,19 @@
 #define SCTP_CLOSE_ASSOCIATION(mSGpTR)  (mSGpTR)->ittiMsg.sctp_close_association
 
 typedef struct sctp_data_req_s {
-  uint8_t  *buffer;
-  uint32_t  bufLen;
-  uint32_t  assocId;
-  uint16_t  stream;
+  uint8_t         *buffer;
+  size_t           buf_len;
+  sctp_assoc_id_t  assoc_id;
+  sctp_stream_id_t stream;
 } sctp_data_req_t;
 
 typedef struct sctp_data_ind_s {
-  uint8_t  *buffer;           ///< SCTP buffer
-  uint32_t  buf_length;       ///< SCTP buffer length
-  int32_t   assoc_id;         ///< SCTP physical association ID
-  uint8_t   stream;           ///< Stream number on which data had been received
-  uint16_t  instreams;        ///< Number of input streams for the SCTP connection between peers
-  uint16_t  outstreams;       ///< Number of output streams for the SCTP connection between peers
+  uint8_t           *buffer;           ///< SCTP buffer
+  size_t             buf_length;       ///< SCTP buffer length
+  sctp_assoc_id_t    assoc_id;         ///< SCTP physical association ID
+  sctp_stream_id_t   stream;           ///< Stream number on which data had been received
+  uint16_t           instreams;        ///< Number of input streams for the SCTP connection between peers
+  uint16_t           outstreams;       ///< Number of output streams for the SCTP connection between peers
 } sctp_data_ind_t;
 
 typedef struct sctp_init_s {
@@ -64,13 +64,13 @@ typedef struct sctp_init_s {
 } SctpInit;
 
 typedef struct sctp_close_association_s {
-  uint32_t  assoc_id;
+  sctp_assoc_id_t  assoc_id;
 } sctp_close_association_t;
 
 typedef struct sctp_new_peer_s {
-  uint32_t instreams;
-  uint32_t outstreams;
-  uint32_t assoc_id;
+  uint32_t        instreams;
+  uint32_t        outstreams;
+  sctp_assoc_id_t assoc_id;
 } sctp_new_peer_t;
 
 #endif /* SCTP_MESSAGES_TYPES_H_ */

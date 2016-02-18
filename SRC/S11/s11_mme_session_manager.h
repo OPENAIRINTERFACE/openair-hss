@@ -32,7 +32,7 @@ int s11_mme_create_session_request(NwGtpv2cStackHandleT    *stack_p,
 /* @brief Create a new Release Access Bearers Request and send it to provided S-GW.
  */
 int s11_mme_release_access_bearers_request(NwGtpv2cStackHandleT    *stack_p,
-		SgwReleaseAccessBearersRequest *release_access_bearers_p);
+		itti_sgw_release_access_bearers_request_t *release_access_bearers_p);
 
 /* @brief Handle a Create Session Response received from S-GW.
  */

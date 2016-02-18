@@ -39,7 +39,7 @@ Description Implements the API used by the NAS layer to send/receive
 *****************************************************************************/
 #ifndef __NETWORK_API_H__
 #define __NETWORK_API_H__
-
+#include <stddef.h>
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
@@ -62,10 +62,10 @@ int network_api_get_fd(void);
 const void* network_api_get_data(void);
 
 int network_api_read_data(int fd);
-int network_api_send_data(int fd, int length);
+int network_api_send_data(int fd, size_t length);
 void network_api_close(int fd);
 
-int network_api_decode_data(int length);
+int network_api_decode_data(size_t length);
 int network_api_encode_data(void* data);
 
 #endif /* __NETWORK_API_H__*/

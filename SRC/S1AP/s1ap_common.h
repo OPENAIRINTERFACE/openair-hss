@@ -29,8 +29,8 @@
 # include "config.h"
 #endif
 
-#ifndef S1AP_COMMON_H_
-#define S1AP_COMMON_H_
+#ifndef FILE_S1AP_COMMON_SEEN
+#define FILE_S1AP_COMMON_SEEN
 
 /* Defined in asn_internal.h */
 // extern int asn_debug_indent;
@@ -468,4 +468,4 @@ S1ap_IE_t *s1ap_new_ie(S1ap_ProtocolIE_ID_t   id,
  **/
 void s1ap_handle_criticality(S1ap_Criticality_t criticality);
 
-#endif /* S1AP_COMMON_H_ */
+#endif /* FILE_S1AP_COMMON_SEEN */

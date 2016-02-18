@@ -20,8 +20,8 @@
  */
 
 
-#ifndef S1AP_MME_TA_H_
-#define S1AP_MME_TA_H_
+#ifndef FILE_S1AP_MME_TA_SEEN
+#define FILE_S1AP_MME_TA_SEEN
 
 enum {
   TA_LIST_UNKNOWN_TAC = -2,
@@ -34,4 +34,4 @@ enum {
 
 int s1ap_mme_compare_ta_lists(S1ap_SupportedTAs_t *ta_list);
 
-#endif /* S1AP_MME_TA_H_ */
+#endif /* FILE_S1AP_MME_TA_SEEN */

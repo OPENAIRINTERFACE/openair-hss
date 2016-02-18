@@ -107,8 +107,8 @@ int
 nas_itti_plain_msg (
   const char *buffer,
   const nas_message_t * msg,
-  const int length,
-  const int down_link)
+  const size_t          length,
+  const bool            is_down_link)
 {
   MessageDef                             *message_p = NULL;
   int                                     data_length = length < NAS_DATA_LENGHT_MAX ? length : NAS_DATA_LENGHT_MAX;
@@ -121,13 +121,13 @@ nas_itti_plain_msg (
    */
   if (msg->header.protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
     message_type = 0;
-    messageId_raw = down_link ? NAS_DL_EMM_RAW_MSG : NAS_UL_EMM_RAW_MSG;
-    messageId_plain = down_link ? NAS_DL_EMM_PLAIN_MSG : NAS_UL_EMM_PLAIN_MSG;
+    messageId_raw = is_down_link ? NAS_DL_EMM_RAW_MSG : NAS_UL_EMM_RAW_MSG;
+    messageId_plain = is_down_link ? NAS_DL_EMM_PLAIN_MSG : NAS_UL_EMM_PLAIN_MSG;
   } else {
     if (msg->header.protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {
       message_type = 1;
-      messageId_raw = down_link ? NAS_DL_ESM_RAW_MSG : NAS_UL_ESM_RAW_MSG;
-      messageId_plain = down_link ? NAS_DL_ESM_PLAIN_MSG : NAS_UL_ESM_PLAIN_MSG;
+      messageId_raw = is_down_link ? NAS_DL_ESM_RAW_MSG : NAS_UL_ESM_RAW_MSG;
+      messageId_plain = is_down_link ? NAS_DL_ESM_PLAIN_MSG : NAS_UL_ESM_PLAIN_MSG;
     }
   }
 
@@ -136,7 +136,7 @@ nas_itti_plain_msg (
      * Create and send the RAW message
      */
     message_p = itti_alloc_new_message (TASK_ORIGIN, messageId_raw);
-    NAS_DL_EMM_RAW_MSG (message_p).lenght = length;
+    NAS_DL_EMM_RAW_MSG (message_p).length = length;
     memset ((void *)&(NAS_DL_EMM_RAW_MSG (message_p).data), 0, NAS_DATA_LENGHT_MAX);
     memcpy ((void *)&(NAS_DL_EMM_RAW_MSG (message_p).data), buffer, data_length);
     itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
@@ -162,21 +162,21 @@ nas_itti_plain_msg (
 
 int
 nas_itti_protected_msg (
-  const char *buffer,
-  const nas_message_t * msg,
-  const int length,
-  const int down_link)
+  const char          *buffer,
+  const nas_message_t *msg,
+  const size_t         length,
+  const bool           is_down_link)
 {
   MessageDef                             *message_p = NULL;
 
   if (msg->header.protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
-    message_p = itti_alloc_new_message (TASK_ORIGIN, down_link ? NAS_DL_EMM_PROTECTED_MSG : NAS_UL_EMM_PROTECTED_MSG);
+    message_p = itti_alloc_new_message (TASK_ORIGIN, is_down_link ? NAS_DL_EMM_PROTECTED_MSG : NAS_UL_EMM_PROTECTED_MSG);
     memcpy ((void *)&(NAS_DL_EMM_PROTECTED_MSG (message_p).header), &msg->header, sizeof (nas_message_security_header_t));
     NAS_DL_EMM_PROTECTED_MSG (message_p).present = _nas_find_message_index (msg->security_protected.plain.emm.header.message_type, emm_message_ids, sizeof (emm_message_ids) / sizeof (emm_message_ids[0]));
     memcpy ((void *)&(NAS_DL_EMM_PROTECTED_MSG (message_p).choice), &msg->security_protected.plain.emm, sizeof (EMM_msg));
   } else {
     if (msg->header.protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {
-      message_p = itti_alloc_new_message (TASK_ORIGIN, down_link ? NAS_DL_ESM_PROTECTED_MSG : NAS_UL_ESM_PROTECTED_MSG);
+      message_p = itti_alloc_new_message (TASK_ORIGIN, is_down_link ? NAS_DL_ESM_PROTECTED_MSG : NAS_UL_ESM_PROTECTED_MSG);
       memcpy ((void *)&(NAS_DL_ESM_PROTECTED_MSG (message_p).header), &msg->header, sizeof (nas_message_security_header_t));
       NAS_DL_ESM_PROTECTED_MSG (message_p).present = _nas_find_message_index (msg->security_protected.plain.esm.header.message_type, esm_message_ids, sizeof (esm_message_ids) / sizeof (esm_message_ids[0]));
       memcpy ((void *)&(NAS_DL_ESM_PROTECTED_MSG (message_p).choice), &msg->security_protected.plain.esm, sizeof (ESM_msg));
@@ -193,13 +193,13 @@ nas_itti_protected_msg (
 int
 nas_itti_dl_data_req (
   const uint32_t ue_id,
-  void *const data,
-  const uint32_t length)
+  void *const    data,
+  const size_t   length)
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_DOWNLINK_DATA_REQ);
-  NAS_DL_DATA_REQ (message_p).UEid = ue_id;
-  NAS_DL_DATA_REQ (message_p).nasMsg.data = data;
-  NAS_DL_DATA_REQ (message_p).nasMsg.length = length;
+  NAS_DL_DATA_REQ (message_p).ue_id = ue_id;
+  NAS_DL_DATA_REQ (message_p).nas_msg.data = data;
+  NAS_DL_DATA_REQ (message_p).nas_msg.length = length;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_REQ ue id " NAS_UE_ID_FMT " len %u", ue_id, length);
   return itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
 }

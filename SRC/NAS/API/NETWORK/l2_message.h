@@ -115,7 +115,7 @@ Description Defines the messages supported by the Access Stratum sublayer
  * PLMN to camp on.
  */
 typedef struct {
-  plmn_t plmnID;  /* PLMN identifier         */
+  plmn_t plmn_id;  /* PLMN identifier         */
   Byte_t rat;   /* Bitmap - set of radio access technologies   */
 } cell_info_req_t;
 
@@ -125,9 +125,9 @@ typedef struct {
  * is selected to camp on.
  */
 typedef struct {
-  plmn_t plmnID;  /* PLMN identifier          */
+  plmn_t plmn_id;  /* PLMN identifier          */
   TAC_t tac;    /* identifies a tracking area the PLMN belongs to */
-  CI_t cellID;  /* identifies a cell within a PLMN      */
+  CI_t cell_id;  /* identifies a cell within a PLMN      */
   AcT_t rat;    /* radio access technology supported by the cell  */
 } cell_info_rsp_t;
 
@@ -138,10 +138,10 @@ typedef struct {
  */
 typedef struct {
 #define PLMN_LIST_MAX_SIZE  6
-  PLMN_LIST_T(PLMN_LIST_MAX_SIZE) plmnIDs; /* List of PLMN identifiers */
+  PLMN_LIST_T(PLMN_LIST_MAX_SIZE) plmn_ids; /* List of PLMN identifiers */
   Byte_t rat[PLMN_LIST_MAX_SIZE]; /* Radio access technologies   */
   TAC_t tac; /* identifies a tracking area within a scope of PLMNs   */
-  CI_t cellID;  /* identifies a cell within a PLMN     */
+  CI_t cell_id;  /* identifies a cell within a PLMN     */
 } cell_info_ind_t;
 
 /*
@@ -197,7 +197,7 @@ typedef struct {} paging_ind_t;
 
 /* Structure of the SAE Temporary Mobile Subscriber Identity */
 typedef struct {
-  uint8_t MMEcode;  /* MME code that allocated the GUTI   */
+  uint8_t  mme_code;  /* MME code that allocated the GUTI   */
   uint32_t m_tmsi;  /* M-Temporary Mobile Subscriber Identity */
 } as_stmsi_t;
 
@@ -215,9 +215,9 @@ typedef struct {
 typedef struct {
   uint8_t cause;    /* Connection establishment cause     */
   uint8_t type;   /* Associated call type         */
-  plmn_t plmnID;    /* Identifier of the selected PLMN      */
+  plmn_t  plmn_id;    /* Identifier of the selected PLMN      */
   as_stmsi_t s_tmsi;    /* SAE Temporary Mobile Subscriber Identity */
-  as_nas_info_t initialNasMsg;/* Initial NAS message to transfer      */
+  as_nas_info_t initial_nas_msg;/* Initial NAS message to transfer      */
 } nas_establish_req_t;
 
 /*
@@ -267,7 +267,7 @@ typedef as_nas_info_t ul_info_transfer_t;
  * --------------------------------------------------------------------------
  */
 typedef struct {
-  uint16_t msgID;
+  uint16_t msg_id;
   union {
     cell_info_req_t cell_info_req;
     cell_info_rsp_t cell_info_rsp;
@@ -292,9 +292,9 @@ typedef struct {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int as_message_decode(const char* buffer, int length, as_message_t* msg);
+int as_message_decode(const char* buffer, size_t length, as_message_t* msg);
 
-int as_message_encode(char* buffer, int length, const as_message_t* msg);
+int as_message_encode(char* buffer, size_t length, const as_message_t* msg);
 
 /* Implemented in the network_api.c body file */
 int as_message_send(as_message_t* as_msg, const void* nas_msg);

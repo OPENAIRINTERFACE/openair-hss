@@ -23,10 +23,10 @@
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
 
-#ifndef S1AP_MME_DECODER_H_
-#define S1AP_MME_DECODER_H_
+#ifndef FILE_S1AP_MME_DECODER_SEEN
+#define FILE_S1AP_MME_DECODER_SEEN
 
 int s1ap_mme_decode_pdu(s1ap_message *message, uint8_t *buffer, uint32_t len)
 __attribute__ ((warn_unused_result));
 
-#endif /* S1AP_MME_DECODER_H_ */
+#endif /* FILE_S1AP_MME_DECODER_SEEN */

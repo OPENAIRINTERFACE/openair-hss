@@ -114,7 +114,7 @@ static int                              _eps_bearer_release (
  **      bearer context with specified EPS bearer identity has     **
  **      been activated for the given UE.                          **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      is local:  true if the EPS bearer context has to be   **
  **             locally released without peer-to-peer si-  **
  **             gnalling between the UE and the MME        **
@@ -171,7 +171,7 @@ esm_proc_eps_bearer_context_deactivate (
     LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
   }
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ueid=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ueid, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
 
   if ((ctx ) && (*pid < ESM_DATA_PDN_MAX)) {
     if (ctx->esm_data_ctx.pdn[*pid].pid != *pid) {
@@ -219,7 +219,7 @@ esm_proc_eps_bearer_context_deactivate (
  **      TEXT INACTIVE PENDING.                                    **
  **                                                                        **
  ** Inputs:  is_standalone: Not used - Always true                     **
- **      ueid:      UE lower layer identifier                  **
+ **      ue_id:      UE lower layer identifier                  **
  **      ebi:       EPS bearer identity                        **
  **      msg:       Encoded ESM message to be sent             **
  **      ue_triggered:  true if the EPS bearer context procedure   **
@@ -241,7 +241,7 @@ esm_proc_eps_bearer_context_deactivate_request (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate EPS bearer context deactivation " "(ueid=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ueid, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate EPS bearer context deactivation " "(ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Send deactivate EPS bearer context request message and
    * * * * start timer T3495
@@ -277,7 +277,7 @@ esm_proc_eps_bearer_context_deactivate_request (
  **      message, the MME shall enter the state BEARER CONTEXT     **
  **      INACTIVE and stop the timer T3495.                        **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **      ebi:       EPS bearer identity                        **
  **      Others:    None                                       **
  **                                                                        **
@@ -299,7 +299,7 @@ esm_proc_eps_bearer_context_deactivate_accept (
   int                                     rc;
   int                                     pid = RETURNerror;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "accepted by the UE (ueid=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ueid, ebi);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "accepted by the UE (ue_id=" NAS_UE_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Stop T3495 timer if running
    */
@@ -374,8 +374,8 @@ _eps_bearer_deactivate_t3495_handler (
    * Increment the retransmission counter
    */
   data->count += 1;
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3495 timer expired (ueid=" NAS_UE_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
-      data->ueid, data->ebi, data->count);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3495 timer expired (ue_id=" NAS_UE_ID_FMT ", ebi=%d), " "retransmission counter = %d\n",
+      data->ue_id, data->ebi, data->count);
 
   if (data->count < EPS_BEARER_DEACTIVATE_COUNTER_MAX) {
     /*
@@ -420,7 +420,7 @@ _eps_bearer_deactivate_t3495_handler (
  ** Description: Sends DEACTIVATE EPS BEREAR CONTEXT REQUEST message and   **
  **      starts timer T3495                                        **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **      ebi:       EPS bearer identity                        **
  **      msg:       Encoded ESM message to be sent             **
  **      Others:    None                                       **
@@ -447,7 +447,7 @@ _eps_bearer_deactivate (
   emm_esm_data_t                         *emm_esm = &emm_sap.u.emm_esm.u.data;
 
   emm_sap.primitive = EMMESM_UNITDATA_REQ;
-  emm_sap.u.emm_esm.ueid = ctx->ueid;
+  emm_sap.u.emm_esm.ue_id = ctx->ue_id;
   emm_sap.u.emm_esm.ctx = ctx;
   emm_esm->msg = *msg;
   rc = emm_sap_send (&emm_sap);
@@ -469,7 +469,7 @@ _eps_bearer_deactivate (
  ** Description: Releases the EPS bearer context identified by the given   **
  **      EPS bearer identity and enters state INACTIVE.            **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **      ebi:       EPS bearer identity                        **
  **      Others:    None                                       **
  **                                                                        **

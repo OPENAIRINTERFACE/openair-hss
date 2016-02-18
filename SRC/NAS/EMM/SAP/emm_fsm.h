@@ -77,8 +77,8 @@ typedef enum {
 void emm_fsm_initialize(void);
 
 //LG 2015-03-13 struct emm_data_context_t;
-int emm_fsm_set_status(nas_ue_id_t ueid, void *ctx, emm_fsm_state_t status);
-emm_fsm_state_t emm_fsm_get_status(nas_ue_id_t ueid, void *ctx);
+int emm_fsm_set_status(mme_ue_s1ap_id_t ueid, void *ctx, emm_fsm_state_t status);
+emm_fsm_state_t emm_fsm_get_status(mme_ue_s1ap_id_t ueid, void *ctx);
 
 int emm_fsm_process(const emm_reg_t *evt);
 

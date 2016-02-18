@@ -87,14 +87,14 @@ EmmCommonProcedureInitiated (
   int                                     rc = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  assert (emm_fsm_get_status (evt->ueid, evt->ctx) == EMM_COMMON_PROCEDURE_INITIATED);
+  assert (emm_fsm_get_status (evt->ue_id, evt->ctx) == EMM_COMMON_PROCEDURE_INITIATED);
 
   switch (evt->primitive) {
   case _EMMREG_PROC_ABORT:
     /*
      * The EMM procedure that initiated EMM common procedure aborted
      */
-    rc = emm_proc_common_abort (evt->ueid);
+    rc = emm_proc_common_abort (evt->ue_id);
     break;
 
   case _EMMREG_COMMON_PROC_CNF:
@@ -103,13 +103,13 @@ EmmCommonProcedureInitiated (
      * An EMM common procedure successfully completed;
      */
     if (evt->u.common.is_attached) {
-      rc = emm_fsm_set_status (evt->ueid, evt->ctx, EMM_REGISTERED);
+      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_REGISTERED);
     } else {
-      rc = emm_fsm_set_status (evt->ueid, evt->ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
     }
 
     if (rc != RETURNerror) {
-      rc = emm_proc_common_success (evt->ueid);
+      rc = emm_proc_common_success (evt->ue_id);
     }
 
     break;
@@ -119,10 +119,10 @@ EmmCommonProcedureInitiated (
      * An EMM common procedure failed;
      * enter state EMM-DEREGISTERED.
      */
-    rc = emm_fsm_set_status (evt->ueid, evt->ctx, EMM_DEREGISTERED);
+    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
 
     if (rc != RETURNerror) {
-      rc = emm_proc_common_reject (evt->ueid);
+      rc = emm_proc_common_reject (evt->ue_id);
     }
 
     break;
@@ -133,7 +133,7 @@ EmmCommonProcedureInitiated (
      * context activated;
      * enter state EMM-REGISTERED.
      */
-    rc = emm_fsm_set_status (evt->ueid, evt->ctx, EMM_REGISTERED);
+    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_REGISTERED);
     break;
 
   case _EMMREG_ATTACH_REJ:
@@ -141,7 +141,7 @@ EmmCommonProcedureInitiated (
      * Attach procedure failed;
      * enter state EMM-DEREGISTERED.
      */
-    rc = emm_fsm_set_status (evt->ueid, evt->ctx, EMM_DEREGISTERED);
+    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
     break;
 
   case _EMMREG_LOWERLAYER_SUCCESS:
@@ -156,10 +156,10 @@ EmmCommonProcedureInitiated (
      * Transmission failure occurred before the EMM common
      * procedure being completed
      */
-    rc = emm_proc_common_failure (evt->ueid);
+    rc = emm_proc_common_failure (evt->ue_id);
 
     if (rc != RETURNerror) {
-      rc = emm_fsm_set_status (evt->ueid, evt->ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
     }
 
     break;

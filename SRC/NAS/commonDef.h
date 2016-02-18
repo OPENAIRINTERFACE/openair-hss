@@ -36,8 +36,8 @@ Author      Frederic Maurel
 Description Contains global common definitions
 
 *****************************************************************************/
-#ifndef __COMMONDEF_H__
-#define __COMMONDEF_H__
+#ifndef FILE_COMMONDEF_SEEN
+#define FILE_COMMONDEF_SEEN
 
 #include <stdint.h>
 #include <stddef.h>
@@ -86,8 +86,6 @@ typedef uint8_t     rac_t;      /* Routing Area Code    */
 typedef uint32_t    ci_t;       /* Cell Identifier      */
 typedef uint8_t     AcT_t;      /* Access Technology    */
 typedef bool        ksi_t;      /* Key set identifier   */
-
-typedef uint32_t    nas_ue_id_t; /* Ue identier in NAS layer */
 /*
  * International Mobile Subscriber Identity
  */
@@ -312,12 +310,12 @@ typedef struct msisdn_s {
  * PLMN = BCD encoding (Mobile Country Code + Mobile Network Code)
  */
 typedef struct plmn_s {
-  Byte_t MCCdigit2:4;
-  Byte_t MCCdigit1:4;
-  Byte_t MNCdigit3:4;
-  Byte_t MCCdigit3:4;
-  Byte_t MNCdigit2:4;
-  Byte_t MNCdigit1:4;
+  Byte_t mcc_digit2:4;
+  Byte_t mcc_digit1:4;
+  Byte_t mnc_digit3:4;
+  Byte_t mcc_digit3:4;
+  Byte_t mnc_digit2:4;
+  Byte_t mnc_digit1:4;
 } plmn_t;
 
 
@@ -350,16 +348,16 @@ typedef struct tai_s {
 typedef struct tai_list_s {
   Byte_t list_type;
   Byte_t n_tais;
-  tai_t tai[TAI_LIST_MAX_SIZE];
+  tai_t  tai[TAI_LIST_MAX_SIZE];
 }tai_list_t;
 
 /*
  * EPS Globally Unique MME Identity
  */
 typedef struct gummei_s {
-  plmn_t plmn;    /* <MCC> + <MNC>    */
-  uint16_t MMEgid;    /* MME group identifier */
-  uint8_t MMEcode;    /* MME code     */
+  plmn_t   plmn;       /* <MCC> + <MNC>    */
+  uint16_t mme_gid;    /* MME group identifier */
+  uint8_t  mme_code;   /* MME code     */
 } gummei_t;
 
 /*
@@ -385,28 +383,28 @@ typedef struct guti_s {
           int l_offset = 0;\
           int l_ret    = 0;\
           l_ret += snprintf((GuTi_StR) + l_offset,MaXlEn-l_offset, "%03u.",\
-                  (GuTi_PtR)->gummei.plmn.MCCdigit3 * 100 +\
-                  (GuTi_PtR)->gummei.plmn.MCCdigit2 * 10 +\
-                  (GuTi_PtR)->gummei.plmn.MCCdigit1);\
+                  (GuTi_PtR)->gummei.plmn.mcc_digit3 * 100 +\
+                  (GuTi_PtR)->gummei.plmn.mcc_digit2 * 10 +\
+                  (GuTi_PtR)->gummei.plmn.mcc_digit1);\
           if (l_ret > 0) {\
             l_offset += l_ret;\
           }  else {\
             l_offset = MaXlEn;\
           }\
-          if ((GuTi_PtR)->gummei.plmn.MNCdigit1 != 0xf) {\
+          if ((GuTi_PtR)->gummei.plmn.mnc_digit1 != 0xf) {\
               l_ret += snprintf((GuTi_StR) + l_offset,MaXlEn-l_offset, "%03u|%04x|%02x|%08x",\
-                      (GuTi_PtR)->gummei.plmn.MNCdigit3 * 100 +\
-                      (GuTi_PtR)->gummei.plmn.MNCdigit2 * 10 +\
-                      (GuTi_PtR)->gummei.plmn.MNCdigit1,\
-                      (GuTi_PtR)->gummei.MMEgid,\
-                      (GuTi_PtR)->gummei.MMEcode,\
+                      (GuTi_PtR)->gummei.plmn.mnc_digit3 * 100 +\
+                      (GuTi_PtR)->gummei.plmn.mnc_digit2 * 10 +\
+                      (GuTi_PtR)->gummei.plmn.mnc_digit1,\
+                      (GuTi_PtR)->gummei.mme_gid,\
+                      (GuTi_PtR)->gummei.mme_code,\
                       (GuTi_PtR)->m_tmsi);\
           } else {\
               l_ret += snprintf((GuTi_StR) + l_offset,MaXlEn-l_offset, "%02u|%04x|%02x|%08x",\
-                      (GuTi_PtR)->gummei.plmn.MNCdigit2 * 10 +\
-                      (GuTi_PtR)->gummei.plmn.MNCdigit1,\
-                      (GuTi_PtR)->gummei.MMEgid,\
-                      (GuTi_PtR)->gummei.MMEcode,\
+                      (GuTi_PtR)->gummei.plmn.mnc_digit2 * 10 +\
+                      (GuTi_PtR)->gummei.plmn.mnc_digit1,\
+                      (GuTi_PtR)->gummei.mme_gid,\
+                      (GuTi_PtR)->gummei.mme_code,\
                       (GuTi_PtR)->m_tmsi);\
           }\
         }
@@ -415,9 +413,9 @@ typedef struct guti_s {
 
 
 /* Checks PLMN validity */
-#define PLMN_IS_VALID(plmn) (((plmn).MCCdigit1 &    \
-                              (plmn).MCCdigit2 &    \
-                              (plmn).MCCdigit3) != 0x0F)
+#define PLMN_IS_VALID(plmn) (((plmn).mcc_digit1 &    \
+                              (plmn).mcc_digit2 &    \
+                              (plmn).mcc_digit3) != 0x0F)
 
 /* Checks TAC validity */
 #define TAC_IS_VALID(tac)   (((tac) != 0x0000) && ((tac) != 0xFFF0))
@@ -465,4 +463,4 @@ typedef enum eps_protocol_discriminator_e {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#endif /* __COMMONDEF_H__*/
+#endif /* FILE_COMMONDEF_SEEN*/

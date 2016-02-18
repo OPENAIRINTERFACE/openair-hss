@@ -90,7 +90,7 @@ typedef struct {
  */
 typedef struct {
   emm_esm_primitive_t primitive;
-  nas_ue_id_t ueid;
+  mme_ue_s1ap_id_t    ue_id;
   emm_data_context_t *ctx;
   union {
     emm_esm_establish_t establish;

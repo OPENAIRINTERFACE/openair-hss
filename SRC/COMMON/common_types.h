@@ -36,8 +36,8 @@
 
 #include "queue.h"
 
-#ifndef COMMON_TYPES_H_
-#define COMMON_TYPES_H_
+#ifndef FILE_COMMON_TYPES_SEEN
+#define FILE_COMMON_TYPES_SEEN
 
 
 typedef uint16_t                 sctp_stream_id_t;
@@ -50,9 +50,9 @@ typedef uint32_t                 enb_ue_s1ap_id_t;
 
 typedef uint32_t                 mme_ue_s1ap_id_t;
 #define MME_UE_S1AP_ID_FMT       "0x%08"PRIX32
+#define INVALID_MME_UE_S1AP_ID   0xFFFFFFFF          // You can pick any value between 0..2^32-1,
+                                                     // all values should be allowed. try to find another way (boolean is_valid for example)
 
-typedef mme_ue_s1ap_id_t         nas_ue_id_t;
-#define NAS_UE_ID_FMT            "0x%08"PRIX32
 
 typedef uint32_t                 teid_t;
 #define TEID_FMT                "0x%"PRIX32
@@ -274,4 +274,4 @@ typedef struct {
   } choice;
 } s6a_result_t;
 
-#endif /* COMMON_TYPES_H_ */
+#endif /* FILE_COMMON_TYPES_SEEN */

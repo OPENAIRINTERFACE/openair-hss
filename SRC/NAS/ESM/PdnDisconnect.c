@@ -100,7 +100,7 @@ static int                              _pdn_disconnect_get_pid (
  **      is accepted by the network, the MME shall initiate the    **
  **      bearer context deactivation procedure.                    **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      pti:       Identifies the PDN disconnect procedure    **
  **             requested by the UE                        **
  **      Others:    _esm_data                                  **
@@ -122,7 +122,7 @@ esm_proc_pdn_disconnect_request (
   int                                     pid = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ueid=" NAS_UE_ID_FMT ", pti=%d)\n", ctx->ueid, pti);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" NAS_UE_ID_FMT ", pti=%d)\n", ctx->ue_id, pti);
 
   /*
    * Get UE's ESM context
@@ -161,7 +161,7 @@ esm_proc_pdn_disconnect_request (
  **      sage from the UE, the MME releases all the resources re-  **
  **      served for the PDN in the network.                        **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      pid:       Identifier of the PDN connection to be     **
  **             released                                   **
  **      Others:    _esm_data                                  **
@@ -179,7 +179,7 @@ esm_proc_pdn_disconnect_accept (
   int *esm_cause)
 {
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ueid=" NAS_UE_ID_FMT ", pid=%d)\n", ctx->ueid, pid);
+  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ue_id=" NAS_UE_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
   /*
    * Release the connectivity with the requested PDN
    */
@@ -213,7 +213,7 @@ esm_proc_pdn_disconnect_accept (
  **      DISCONNECT REJECT message to the UE.                      **
  **                                                                        **
  ** Inputs:  is_standalone: Not used - Always true                     **
- **      ueid:      UE lower layer identifier                  **
+ **      ue_id:      UE lower layer identifier                  **
  **      ebi:       Not used                                   **
  **      msg:       Encoded PDN disconnect reject message to   **
  **             be sent                                    **
@@ -237,12 +237,12 @@ esm_proc_pdn_disconnect_reject (
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect not accepted by the network " "(ueid=" NAS_UE_ID_FMT ")\n", ctx->ueid);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect not accepted by the network " "(ue_id=" NAS_UE_ID_FMT ")\n", ctx->ue_id);
   /*
    * Notity EMM that ESM PDU has to be forwarded to lower layers
    */
   emm_sap.primitive = EMMESM_UNITDATA_REQ;
-  emm_sap.u.emm_esm.ueid = ctx->ueid;
+  emm_sap.u.emm_esm.ue_id = ctx->ue_id;
   emm_sap.u.emm_esm.ctx = ctx;
   emm_sap.u.emm_esm.u.data.msg.length = msg->length;
   emm_sap.u.emm_esm.u.data.msg.value = msg->value;
@@ -276,7 +276,7 @@ esm_proc_pdn_disconnect_reject (
  **      given procedure transaction identity has been assigned    **
  **      to establish connectivity to the specified UE             **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **      pti:       The procedure transaction identity         **
  **      Others:    _esm_data                                  **
  **                                                                        **

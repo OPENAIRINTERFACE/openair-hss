@@ -19,16 +19,20 @@
  *      contact@openairinterface.org
  */
 
-#ifndef SCTP_ITTI_MESSAGING_H_
-#define SCTP_ITTI_MESSAGING_H_
+#ifndef FILE_SCTP_ITTI_MESSAGING_SEEN
+#define FILE_SCTP_ITTI_MESSAGING_SEEN
 
-int sctp_itti_send_new_association(uint32_t assoc_id, uint16_t instreams,
-                                   uint16_t outstreams);
+int sctp_itti_send_new_association(const sctp_assoc_id_t assoc_id,
+        const sctp_stream_id_t instreams,
+        const sctp_stream_id_t outstreams);
 
-int sctp_itti_send_new_message_ind(int n, uint8_t *buffer, uint32_t assoc_id,
-                                   uint16_t stream,
-                                   uint16_t instreams, uint16_t outstreams);
+int sctp_itti_send_new_message_ind(const size_t size,
+        const uint8_t * const buffer,
+        const sctp_assoc_id_t assoc_id,
+        const sctp_stream_id_t stream,
+        const sctp_stream_id_t instreams,
+        const sctp_stream_id_t outstreams);
 
-int sctp_itti_send_com_down_ind(uint32_t assoc_id);
+int sctp_itti_send_com_down_ind(const sctp_assoc_id_t assoc_id);
 
-#endif /* SCTP_ITTI_MESSAGING_H_ */
+#endif /* FILE_SCTP_ITTI_MESSAGING_SEEN */

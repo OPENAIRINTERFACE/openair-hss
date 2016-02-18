@@ -23,8 +23,8 @@
 #include "s1ap_ies_defs.h"
 #include "intertask_interface.h"
 
-#ifndef S1AP_MME_HANDLERS_H_
-#define S1AP_MME_HANDLERS_H_
+#ifndef FILE_S1AP_MME_HANDLERS_SEEN
+#define FILE_S1AP_MME_HANDLERS_SEEN
 
 /** \brief Handle decoded incoming messages from SCTP
  * \param assoc_id SCTP association ID
@@ -57,7 +57,7 @@ int s1ap_mme_handle_ue_context_release_request(const sctp_assoc_id_t assoc_id,
                                                const sctp_stream_id_t stream, struct s1ap_message_s *message_p);
 
 int s1ap_handle_ue_context_release_command(
-		const s1ap_ue_context_release_command_t * const ue_context_release_command_pP);
+		const itti_s1ap_ue_context_release_command_t * const ue_context_release_command_pP);
 
 int s1ap_mme_handle_ue_context_release_complete(const sctp_assoc_id_t assoc_id,
                                                 const sctp_stream_id_t stream, struct s1ap_message_s *message_p);
@@ -80,4 +80,4 @@ int s1ap_mme_generate_s1_setup_failure(
     const sctp_assoc_id_t assoc_id, const S1ap_Cause_PR cause_type, const long cause_value,
     const long time_to_wait);
 
-#endif /* S1AP_MME_HANDLERS_H_ */
+#endif /* FILE_S1AP_MME_HANDLERS_SEEN */

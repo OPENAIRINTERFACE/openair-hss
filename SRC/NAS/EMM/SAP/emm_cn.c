@@ -63,7 +63,7 @@ extern int                              emm_cn_wrapper_attach_accept (
    Internal data used for attach procedure
 */
 typedef struct {
-  unsigned int                            ueid; /* UE identifier        */
+  unsigned int                            ue_id; /* UE identifier        */
 #  define ATTACH_COUNTER_MAX  5
   unsigned int                            retransmission_count; /* Retransmission counter   */
   OctetString                             esm_msg;      /* ESM message to be sent within
@@ -123,7 +123,7 @@ _emm_cn_authentication_res (
    * * * * and NAS security setup to activate integrity protection and NAS
    * * * * ciphering are mandatory.
    */
-  rc = emm_proc_authentication (emm_ctx, emm_ctx->ueid, 0,      // TODO: eksi != 0
+  rc = emm_proc_authentication (emm_ctx, emm_ctx->ue_id, 0,      // TODO: eksi != 0
                                 &loc_rand, &autn, emm_attach_security, NULL, NULL);
 
   if (rc != RETURNok) {
@@ -376,7 +376,7 @@ _emm_cn_pdn_connectivity_res (
       emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
-      emm_sap.u.emm_reg.ueid = msg_pP->ue_id;
+      emm_sap.u.emm_reg.ue_id = msg_pP->ue_id;
       emm_sap.u.emm_reg.ctx  = emm_ctx_p;
       rc = emm_sap_send (&emm_sap);
     }
@@ -416,7 +416,7 @@ emm_cn_send (
     break;
 
   case EMMCN_DEREGISTER_UE:
-    rc = _emm_cn_deregister_ue (msg->u.deregister.UEid);
+    rc = _emm_cn_deregister_ue (msg->u.deregister.ue_id);
     break;
 
   case EMMCN_PDN_CONNECTIVITY_RES:

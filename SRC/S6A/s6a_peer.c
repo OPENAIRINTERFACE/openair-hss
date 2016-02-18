@@ -66,8 +66,8 @@ s6a_peer_connected_cb (
   memset (&s6a_air, 0, sizeof (s6a_auth_info_req_t));
   sprintf (s6a_air.imsi, "%14llu", 20834123456789ULL);
   s6a_air.nb_of_vectors = 1;
-  s6a_air.visited_plmn.MCCdigit2 = 0,
-    s6a_air.visited_plmn.MCCdigit1 = 8, s6a_air.visited_plmn.MCCdigit3 = 2, s6a_air.visited_plmn.MNCdigit1 = 0, s6a_air.visited_plmn.MNCdigit2 = 3, s6a_air.visited_plmn.MNCdigit3 = 4, s6a_generate_authentication_info_req (&s6a_air);
+  s6a_air.visited_plmn.mcc_digit2 = 0,
+    s6a_air.visited_plmn.mcc_digit1 = 8, s6a_air.visited_plmn.mcc_digit3 = 2, s6a_air.visited_plmn.mnc_digit1 = 0, s6a_air.visited_plmn.mnc_digit2 = 3, s6a_air.visited_plmn.mnc_digit3 = 4, s6a_generate_authentication_info_req (&s6a_air);
   // #else
   //     s6a_update_location_req_t s6a_ulr;
   //

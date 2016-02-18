@@ -63,7 +63,7 @@
 
 
 extern int                              emm_proc_status (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   int emm_cause);
 
 /****************************************************************************/
@@ -97,7 +97,7 @@ static const char                      *_emm_as_primitive_str[] = {
    data from the network
 */
 static int                              _emm_as_recv (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   const char *msg,
   int len,
   int *emm_cause,
@@ -220,19 +220,19 @@ emm_as_send (
   int                                     rc = RETURNok;
   int                                     emm_cause = EMM_CAUSE_SUCCESS;
   emm_as_primitive_t                      primitive = msg->primitive;
-  uint32_t                                ueid = 0;
+  uint32_t                                ue_id = 0;
 
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received primitive %s (%d)\n", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
 
   switch (primitive) {
   case _EMMAS_DATA_IND:
     rc = _emm_as_data_ind (&msg->u.data, &emm_cause);
-    ueid = msg->u.data.ueid;
+    ue_id = msg->u.data.ue_id;
     break;
 
   case _EMMAS_ESTABLISH_REQ:
     rc = _emm_as_establish_req (&msg->u.establish, &emm_cause);
-    ueid = msg->u.establish.ueid;
+    ue_id = msg->u.establish.ue_id;
     break;
 
   case _EMMAS_CELL_INFO_RES:
@@ -285,7 +285,7 @@ emm_as_send (
     /*
      * Return an EMM status message
      */
-    rc = emm_proc_status (ueid, emm_cause);
+    rc = emm_proc_status (ue_id, emm_cause);
   }
 
   if (rc != RETURNok) {
@@ -313,7 +313,7 @@ emm_as_send (
  ** Description: Decodes and processes the EPS Mobility Management message **
  **      received from the Access Stratum                          **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      msg:       The EMM message to process                 **
  **      len:       The length of the EMM message              **
  **      Others:    None                                       **
@@ -325,7 +325,7 @@ emm_as_send (
  ***************************************************************************/
 static int
 _emm_as_recv (
-  nas_ue_id_t ueid,
+  mme_ue_s1ap_id_t ue_id,
   const char *msg,
   int len,
   int *emm_cause,
@@ -351,7 +351,7 @@ _emm_as_recv (
     decode_status = &local_decode_status;
   }
 
-  emm_data_context_t     *emm_ctx =  emm_data_context_get (&_emm_data, ueid);
+  emm_data_context_t     *emm_ctx =  emm_data_context_get (&_emm_data, ue_id);
 
   if (emm_ctx) {
     emm_security_context = emm_ctx->security;
@@ -383,31 +383,31 @@ _emm_as_recv (
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
       LOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
-    rc = emm_recv_status (ueid, &emm_msg->emm_status, emm_cause, decode_status);
+    rc = emm_recv_status (ue_id, &emm_msg->emm_status, emm_cause, decode_status);
     break;
 
   case ATTACH_REQUEST:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_attach_request (ueid, NULL, &emm_msg->attach_request, emm_cause, decode_status);
+    rc = emm_recv_attach_request (ue_id, NULL, &emm_msg->attach_request, emm_cause, decode_status);
     break;
 
   case IDENTITY_RESPONSE:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_identity_response (ueid, &emm_msg->identity_response, emm_cause, decode_status);
+    rc = emm_recv_identity_response (ue_id, &emm_msg->identity_response, emm_cause, decode_status);
     break;
 
   case AUTHENTICATION_RESPONSE:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_authentication_response (ueid, &emm_msg->authentication_response, emm_cause, decode_status);
+    rc = emm_recv_authentication_response (ue_id, &emm_msg->authentication_response, emm_cause, decode_status);
     break;
 
   case AUTHENTICATION_FAILURE:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_authentication_failure (ueid, &emm_msg->authentication_failure, emm_cause, decode_status);
+    rc = emm_recv_authentication_failure (ue_id, &emm_msg->authentication_failure, emm_cause, decode_status);
     break;
 
   case SECURITY_MODE_COMPLETE:
@@ -420,13 +420,13 @@ _emm_as_recv (
       LOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    rc = emm_recv_security_mode_complete (ueid, &emm_msg->security_mode_complete, emm_cause, decode_status);
+    rc = emm_recv_security_mode_complete (ue_id, &emm_msg->security_mode_complete, emm_cause, decode_status);
     break;
 
   case SECURITY_MODE_REJECT:
     // Requirement MME24.301R10_4.4.4.3_1 Integrity checking of NAS signalling messages in the MME
     // Requirement MME24.301R10_4.4.4.3_2 Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_security_mode_reject (ueid, &emm_msg->security_mode_reject, emm_cause, decode_status);
+    rc = emm_recv_security_mode_reject (ue_id, &emm_msg->security_mode_reject, emm_cause, decode_status);
     break;
 
   case ATTACH_COMPLETE:
@@ -439,7 +439,7 @@ _emm_as_recv (
       LOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    rc = emm_recv_attach_complete (ueid, &emm_msg->attach_complete, emm_cause, decode_status);
+    rc = emm_recv_attach_complete (ue_id, &emm_msg->attach_complete, emm_cause, decode_status);
     break;
 
   case TRACKING_AREA_UPDATE_COMPLETE:
@@ -468,7 +468,7 @@ _emm_as_recv (
       LOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    rc = emm_recv_detach_request (ueid, &emm_msg->detach_request, emm_cause, decode_status);
+    rc = emm_recv_detach_request (ue_id, &emm_msg->detach_request, emm_cause, decode_status);
     break;
 
   default:
@@ -505,14 +505,14 @@ _emm_as_data_ind (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS data transfer indication " "(ueid=" NAS_UE_ID_FMT ", delivered=%s, length=%d)\n", msg->ueid, (msg->delivered) ? "true" : "false", msg->NASmsg.length);
+  LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS data transfer indication " "(ue_id=" NAS_UE_ID_FMT ", delivered=%s, length=%d)\n", msg->ue_id, (msg->delivered) ? "true" : "false", msg->nas_msg.length);
 
   if (msg->delivered) {
-    if (msg->NASmsg.length > 0) {
+    if (msg->nas_msg.length > 0) {
       /*
        * Process the received NAS message
        */
-      char                                   *plain_msg = (char *)CALLOC_CHECK (msg->NASmsg.length, sizeof(char));
+      char                                   *plain_msg = (char *)CALLOC_CHECK (msg->nas_msg.length, sizeof(char));
 
       if (plain_msg) {
         nas_message_security_header_t           header = {0};
@@ -524,17 +524,17 @@ _emm_as_data_ind (
          */
         emm_data_context_t                     *emm_ctx = NULL;
 
-        if (msg->ueid > 0) {
-          emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
+        if (msg->ue_id > 0) {
+          emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
           if (emm_ctx) {
             security = emm_ctx->security;
           }
         }
 
-        int  bytes = nas_message_decrypt ((char *)(msg->NASmsg.value),
+        int  bytes = nas_message_decrypt ((char *)(msg->nas_msg.value),
             plain_msg,
             &header,
-            msg->NASmsg.length,
+            msg->nas_msg.length,
             security,
             &decode_status);
 
@@ -549,13 +549,13 @@ _emm_as_data_ind (
           /*
            * Process EMM data
            */
-          rc = _emm_as_recv (msg->ueid, plain_msg, bytes, emm_cause, &decode_status);
+          rc = _emm_as_recv (msg->ue_id, plain_msg, bytes, emm_cause, &decode_status);
         } else if (header.protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {
           const OctetString                       data = { bytes, (uint8_t *) plain_msg };
           /*
            * Foward ESM data to EPS session management
            */
-          rc = lowerlayer_data_ind (msg->ueid, &data);
+          rc = lowerlayer_data_ind (msg->ue_id, &data);
         }
 
         FREE_CHECK (plain_msg);
@@ -564,13 +564,13 @@ _emm_as_data_ind (
       /*
        * Process successfull lower layer transfer indication
        */
-      rc = lowerlayer_success (msg->ueid);
+      rc = lowerlayer_success (msg->ue_id);
     }
   } else {
     /*
      * Process lower layer transmission failure of NAS message
      */
-    rc = lowerlayer_failure (msg->ueid);
+    rc = lowerlayer_failure (msg->ue_id);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -612,7 +612,7 @@ _emm_as_establish_req (
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS connection establish request\n");
   nas_message_t                           nas_msg = {0};
 
-  emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
+  emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
 
   if (emm_ctx) {
     LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - got context %p security %p\n", emm_ctx, emm_ctx->security);
@@ -622,7 +622,7 @@ _emm_as_establish_req (
   /*
    * Decode initial NAS message
    */
-  decoder_rc = nas_message_decode ((char *)(msg->NASmsg.value), &nas_msg, msg->NASmsg.length, emm_security_context, &decode_status);
+  decoder_rc = nas_message_decode ((char *)(msg->nas_msg.value), &nas_msg, msg->nas_msg.length, emm_security_context, &decode_status);
 
   if (decoder_rc < TLV_DECODE_FATAL_ERROR) {
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
@@ -641,13 +641,13 @@ _emm_as_establish_req (
   switch (emm_msg->header.message_type) {
   case ATTACH_REQUEST:
     originating_tai.tac = msg->tac;
-    originating_tai.plmn.MCCdigit1 = msg->plmnID->MCCdigit1;
-    originating_tai.plmn.MCCdigit2 = msg->plmnID->MCCdigit2;
-    originating_tai.plmn.MCCdigit3 = msg->plmnID->MCCdigit3;
-    originating_tai.plmn.MNCdigit1 = msg->plmnID->MNCdigit1;
-    originating_tai.plmn.MNCdigit2 = msg->plmnID->MNCdigit2;
-    originating_tai.plmn.MNCdigit3 = msg->plmnID->MNCdigit3;
-    rc = emm_recv_attach_request (msg->ueid, &originating_tai, &emm_msg->attach_request, emm_cause, &decode_status);
+    originating_tai.plmn.mcc_digit1 = msg->plmn_id->mcc_digit1;
+    originating_tai.plmn.mcc_digit2 = msg->plmn_id->mcc_digit2;
+    originating_tai.plmn.mcc_digit3 = msg->plmn_id->mcc_digit3;
+    originating_tai.plmn.mnc_digit1 = msg->plmn_id->mnc_digit1;
+    originating_tai.plmn.mnc_digit2 = msg->plmn_id->mnc_digit2;
+    originating_tai.plmn.mnc_digit3 = msg->plmn_id->mnc_digit3;
+    rc = emm_recv_attach_request (msg->ue_id, &originating_tai, &emm_msg->attach_request, emm_cause, &decode_status);
     break;
 
   case DETACH_REQUEST:
@@ -665,7 +665,7 @@ _emm_as_establish_req (
     break;
 
   case TRACKING_AREA_UPDATE_REQUEST:
-    rc = emm_recv_tracking_area_update_request (msg->ueid, &emm_msg->tracking_area_update_request, emm_cause, &decode_status);
+    rc = emm_recv_tracking_area_update_request (msg->ue_id, &emm_msg->tracking_area_update_request, emm_cause, &decode_status);
     break;
 
   case SERVICE_REQUEST:
@@ -678,7 +678,7 @@ _emm_as_establish_req (
       LOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    rc = emm_recv_service_request (msg->ueid, &emm_msg->service_request, emm_cause, &decode_status);
+    rc = emm_recv_service_request (msg->ue_id, &emm_msg->service_request, emm_cause, &decode_status);
     break;
 
   case EXTENDED_SERVICE_REQUEST:
@@ -1004,39 +1004,39 @@ _emm_as_send (
 
   switch (msg->primitive) {
   case _EMMAS_DATA_REQ:
-    as_msg.msgID = _emm_as_data_req (&msg->u.data, &as_msg.msg.ul_info_transfer_req);
+    as_msg.msg_id = _emm_as_data_req (&msg->u.data, &as_msg.msg.ul_info_transfer_req);
     break;
 
   case _EMMAS_STATUS_IND:
-    as_msg.msgID = _emm_as_status_ind (&msg->u.status, &as_msg.msg.ul_info_transfer_req);
+    as_msg.msg_id = _emm_as_status_ind (&msg->u.status, &as_msg.msg.ul_info_transfer_req);
     break;
 
   case _EMMAS_RELEASE_REQ:
-    as_msg.msgID = _emm_as_release_req (&msg->u.release, &as_msg.msg.nas_release_req);
+    as_msg.msg_id = _emm_as_release_req (&msg->u.release, &as_msg.msg.nas_release_req);
     break;
 
   case _EMMAS_SECURITY_REQ:
-    as_msg.msgID = _emm_as_security_req (&msg->u.security, &as_msg.msg.dl_info_transfer_req);
+    as_msg.msg_id = _emm_as_security_req (&msg->u.security, &as_msg.msg.dl_info_transfer_req);
     break;
 
   case _EMMAS_SECURITY_REJ:
-    as_msg.msgID = _emm_as_security_rej (&msg->u.security, &as_msg.msg.dl_info_transfer_req);
+    as_msg.msg_id = _emm_as_security_rej (&msg->u.security, &as_msg.msg.dl_info_transfer_req);
     break;
 
   case _EMMAS_ESTABLISH_CNF:
-    as_msg.msgID = _emm_as_establish_cnf (&msg->u.establish, &as_msg.msg.nas_establish_rsp);
+    as_msg.msg_id = _emm_as_establish_cnf (&msg->u.establish, &as_msg.msg.nas_establish_rsp);
     break;
 
   case _EMMAS_ESTABLISH_REJ:
-    as_msg.msgID = _emm_as_establish_rej (&msg->u.establish, &as_msg.msg.nas_establish_rsp);
+    as_msg.msg_id = _emm_as_establish_rej (&msg->u.establish, &as_msg.msg.nas_establish_rsp);
     break;
 
   case _EMMAS_PAGE_IND:
-    as_msg.msgID = _emm_as_page_ind (&msg->u.page, &as_msg.msg.paging_req);
+    as_msg.msg_id = _emm_as_page_ind (&msg->u.page, &as_msg.msg.paging_req);
     break;
 
   case _EMMAS_CELL_INFO_REQ:
-    as_msg.msgID = _emm_as_cell_info_req (&msg->u.cell_info, &as_msg.msg.cell_info_req);
+    as_msg.msg_id = _emm_as_cell_info_req (&msg->u.cell_info, &as_msg.msg.cell_info_req);
     /*
      * TODO: NAS may provide a list of equivalent PLMNs, if available,
      * that AS shall use for cell selection and cell reselection.
@@ -1044,39 +1044,39 @@ _emm_as_send (
     break;
 
   default:
-    as_msg.msgID = 0;
+    as_msg.msg_id = 0;
     break;
   }
 
   /*
    * Send the message to the Access Stratum or S1AP in case of MME
    */
-  if (as_msg.msgID > 0) {
-    LOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - " "Sending msg with id 0x%x, primitive %s (%d) to S1AP layer for transmission\n", as_msg.msgID, _emm_as_primitive_str[msg->primitive - _EMMAS_START - 1], msg->primitive);
+  if (as_msg.msg_id > 0) {
+    LOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - " "Sending msg with id 0x%x, primitive %s (%d) to S1AP layer for transmission\n", as_msg.msg_id, _emm_as_primitive_str[msg->primitive - _EMMAS_START - 1], msg->primitive);
 
-    switch (as_msg.msgID) {
+    switch (as_msg.msg_id) {
     case AS_DL_INFO_TRANSFER_REQ:{
-        nas_itti_dl_data_req (as_msg.msg.dl_info_transfer_req.UEid, as_msg.msg.dl_info_transfer_req.nasMsg.data, as_msg.msg.dl_info_transfer_req.nasMsg.length);
+        nas_itti_dl_data_req (as_msg.msg.dl_info_transfer_req.ue_id, as_msg.msg.dl_info_transfer_req.nas_msg.data, as_msg.msg.dl_info_transfer_req.nas_msg.length);
         LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
       }
       break;
 
     case AS_NAS_ESTABLISH_RSP:
     case AS_NAS_ESTABLISH_CNF:{
-        if (as_msg.msg.nas_establish_rsp.errCode != AS_SUCCESS) {
-          nas_itti_dl_data_req (as_msg.msg.nas_establish_rsp.UEid, as_msg.msg.nas_establish_rsp.nasMsg.data, as_msg.msg.nas_establish_rsp.nasMsg.length);
+        if (as_msg.msg.nas_establish_rsp.err_code != AS_SUCCESS) {
+          nas_itti_dl_data_req (as_msg.msg.nas_establish_rsp.ue_id, as_msg.msg.nas_establish_rsp.nas_msg.data, as_msg.msg.nas_establish_rsp.nas_msg.length);
           LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
         } else {
           LOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - Sending nas_itti_establish_cnf to S1AP UE ID 0x%x sea 0x%04X sia 0x%04X\n",
-                     as_msg.msg.nas_establish_rsp.UEid,
+                     as_msg.msg.nas_establish_rsp.ue_id,
                      as_msg.msg.nas_establish_rsp.selected_encryption_algorithm,
                      as_msg.msg.nas_establish_rsp.selected_integrity_algorithm);
           /*
            * Handle success case
            */
-          nas_itti_establish_cnf (as_msg.msg.nas_establish_rsp.UEid,
-                                  as_msg.msg.nas_establish_rsp.errCode,
-                                  as_msg.msg.nas_establish_rsp.nasMsg.data, as_msg.msg.nas_establish_rsp.nasMsg.length, as_msg.msg.nas_establish_rsp.selected_encryption_algorithm, as_msg.msg.nas_establish_rsp.selected_integrity_algorithm);
+          nas_itti_establish_cnf (as_msg.msg.nas_establish_rsp.ue_id,
+                                  as_msg.msg.nas_establish_rsp.err_code,
+                                  as_msg.msg.nas_establish_rsp.nas_msg.data, as_msg.msg.nas_establish_rsp.nas_msg.length, as_msg.msg.nas_establish_rsp.selected_encryption_algorithm, as_msg.msg.nas_establish_rsp.selected_integrity_algorithm);
           LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
         }
       }
@@ -1124,10 +1124,10 @@ _emm_as_data_req (
    * Setup the AS message
    */
   if (msg->guti) {
-    as_msg->s_tmsi.MMEcode = msg->guti->gummei.MMEcode;
+    as_msg->s_tmsi.mme_code = msg->guti->gummei.mme_code;
     as_msg->s_tmsi.m_tmsi = msg->guti->m_tmsi;
   } else {
-    as_msg->UEid = msg->ueid;
+    as_msg->ue_id = msg->ue_id;
   }
 
   /*
@@ -1139,7 +1139,7 @@ _emm_as_data_req (
    * Setup the NAS information message
    */
   if (emm_msg )
-    switch (msg->NASinfo) {
+    switch (msg->nas_info) {
     case EMM_AS_NAS_DATA_DETACH:
       size = emm_send_detach_accept (msg, &emm_msg->detach_accept);
       break;
@@ -1148,7 +1148,7 @@ _emm_as_data_req (
       /*
        * Send other NAS messages as already encoded ESM messages
        */
-      size = msg->NASmsg.length;
+      size = msg->nas_msg.length;
       is_encoded = true;
       break;
     }
@@ -1158,7 +1158,7 @@ _emm_as_data_req (
     emm_security_context_t                 *emm_security_context = NULL;
     struct emm_data_context_s              *emm_ctx = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
+    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
 
     if (emm_ctx) {
       emm_security_context = emm_ctx->security;
@@ -1173,12 +1173,12 @@ _emm_as_data_req (
       /*
        * Encode the NAS information message
        */
-      bytes = _emm_as_encode (&as_msg->nasMsg, &nas_msg, size, emm_security_context);
+      bytes = _emm_as_encode (&as_msg->nas_msg, &nas_msg, size, emm_security_context);
     } else {
       /*
        * Encrypt the NAS information message
        */
-      bytes = _emm_as_encrypt (&as_msg->nasMsg, &nas_msg.header, (char *)(msg->NASmsg.value), size, emm_security_context);
+      bytes = _emm_as_encrypt (&as_msg->nas_msg, &nas_msg.header, (char *)(msg->nas_msg.value), size, emm_security_context);
     }
 
     if (bytes > 0) {
@@ -1220,10 +1220,10 @@ _emm_as_status_ind (
    * Setup the AS message
    */
   if (msg->guti) {
-    as_msg->s_tmsi.MMEcode = msg->guti->gummei.MMEcode;
+    as_msg->s_tmsi.mme_code = msg->guti->gummei.mme_code;
     as_msg->s_tmsi.m_tmsi = msg->guti->m_tmsi;
   } else {
-    as_msg->UEid = msg->ueid;
+    as_msg->ue_id = msg->ue_id;
   }
 
   /*
@@ -1242,7 +1242,7 @@ _emm_as_status_ind (
     emm_security_context_t                 *emm_security_context = NULL;
     struct emm_data_context_s              *emm_ctx = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
+    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
 
     if (emm_ctx) {
       emm_security_context = emm_ctx->security;
@@ -1256,7 +1256,7 @@ _emm_as_status_ind (
     /*
      * Encode the NAS information message
      */
-    int                                     bytes = _emm_as_encode (&as_msg->nasMsg,
+    int                                     bytes = _emm_as_encode (&as_msg->nas_msg,
                                                                     &nas_msg,
                                                                     size,
                                                                     emm_security_context);
@@ -1298,10 +1298,10 @@ _emm_as_release_req (
    * Setup the AS message
    */
   if (msg->guti) {
-    as_msg->s_tmsi.MMEcode = msg->guti->gummei.MMEcode;
+    as_msg->s_tmsi.mme_code = msg->guti->gummei.mme_code;
     as_msg->s_tmsi.m_tmsi = msg->guti->m_tmsi;
   } else {
-    as_msg->UEid = msg->ueid;
+    as_msg->ue_id = msg->ue_id;
   }
 
   if (msg->cause == EMM_AS_CAUSE_AUTHENTICATION) {
@@ -1345,10 +1345,10 @@ _emm_as_security_req (
    * Setup the AS message
    */
   if (msg->guti) {
-    as_msg->s_tmsi.MMEcode = msg->guti->gummei.MMEcode;
+    as_msg->s_tmsi.mme_code = msg->guti->gummei.mme_code;
     as_msg->s_tmsi.m_tmsi = msg->guti->m_tmsi;
   } else {
-    as_msg->UEid = msg->ueid;
+    as_msg->ue_id = msg->ue_id;
   }
 
   /*
@@ -1360,12 +1360,12 @@ _emm_as_security_req (
    * Setup the NAS security message
    */
   if (emm_msg )
-    switch (msg->msgType) {
+    switch (msg->msg_type) {
     case EMM_AS_MSG_TYPE_IDENT:
       if (msg->guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send IDENTITY_REQUEST to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send IDENTITY_REQUEST to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send IDENTITY_REQUEST to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send IDENTITY_REQUEST to ue id " NAS_UE_ID_FMT " ", as_msg->ue_id);
       }
 
       size = emm_send_identity_request (msg, &emm_msg->identity_request);
@@ -1373,9 +1373,9 @@ _emm_as_security_req (
 
     case EMM_AS_MSG_TYPE_AUTH:
       if (msg->guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REQUEST to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REQUEST to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REQUEST to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REQUEST to ue id " NAS_UE_ID_FMT " ", as_msg->ue_id);
       }
 
       size = emm_send_authentication_request (msg, &emm_msg->authentication_request);
@@ -1383,23 +1383,23 @@ _emm_as_security_req (
 
     case EMM_AS_MSG_TYPE_SMC:
       if (msg->guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SECURITY_MODE_COMMAND to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SECURITY_MODE_COMMAND to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SECURITY_MODE_COMMAND to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SECURITY_MODE_COMMAND to ue id " NAS_UE_ID_FMT " ", as_msg->ue_id);
       }
 
       size = emm_send_security_mode_command (msg, &emm_msg->security_mode_command);
       break;
 
     default:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of NAS security " "message 0x%.2x is not valid\n", msg->msgType);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of NAS security " "message 0x%.2x is not valid\n", msg->msg_type);
     }
 
   if (size > 0) {
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
+    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
 
 
     if (emm_ctx) {
@@ -1414,7 +1414,7 @@ _emm_as_security_req (
     /*
      * Encode the NAS security message
      */
-    int                                     bytes = _emm_as_encode (&as_msg->nasMsg,
+    int                                     bytes = _emm_as_encode (&as_msg->nas_msg,
                                                                     &nas_msg,
                                                                     size,
                                                                     emm_security_context);
@@ -1458,10 +1458,10 @@ _emm_as_security_rej (
    * Setup the AS message
    */
   if (msg->guti) {
-    as_msg->s_tmsi.MMEcode = msg->guti->gummei.MMEcode;
+    as_msg->s_tmsi.mme_code = msg->guti->gummei.mme_code;
     as_msg->s_tmsi.m_tmsi = msg->guti->m_tmsi;
   } else {
-    as_msg->UEid = msg->ueid;
+    as_msg->ue_id = msg->ue_id;
   }
 
   /*
@@ -1473,26 +1473,26 @@ _emm_as_security_rej (
    * Setup the NAS security message
    */
   if (emm_msg )
-    switch (msg->msgType) {
+    switch (msg->msg_type) {
     case EMM_AS_MSG_TYPE_AUTH:
       if (msg->guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send AUTHENTICATION_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->ue_id);
       }
 
       size = emm_send_authentication_reject (&emm_msg->authentication_reject);
       break;
 
     default:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of NAS security " "message 0x%.2x is not valid\n", msg->msgType);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of NAS security " "message 0x%.2x is not valid\n", msg->msg_type);
     }
 
   if (size > 0) {
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
+    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
 
 
     if (emm_ctx) {
@@ -1509,7 +1509,7 @@ _emm_as_security_rej (
     /*
      * Encode the NAS security message
      */
-    int                                     bytes = _emm_as_encode (&as_msg->nasMsg,
+    int                                     bytes = _emm_as_encode (&as_msg->nas_msg,
                                                                     &nas_msg,
                                                                     size,
                                                                     emm_security_context);
@@ -1554,15 +1554,15 @@ _emm_as_establish_cnf (
   /*
    * Setup the AS message
    */
-  as_msg->UEid = msg->ueid;
+  as_msg->ue_id = msg->ue_id;
 
-  if (msg->UEid.guti == NULL) {
+  if (msg->eps_id.guti == NULL) {
     LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - GUTI is NULL...");
     LOG_FUNC_RETURN (LOG_NAS_EMM, 0);
   }
 
-  as_msg->s_tmsi.MMEcode = msg->UEid.guti->gummei.MMEcode;
-  as_msg->s_tmsi.m_tmsi = msg->UEid.guti->m_tmsi;
+  as_msg->s_tmsi.mme_code = msg->eps_id.guti->gummei.mme_code;
+  as_msg->s_tmsi.m_tmsi = msg->eps_id.guti->m_tmsi;
   /*
    * Setup the NAS security header
    */
@@ -1572,19 +1572,19 @@ _emm_as_establish_cnf (
    * Setup the initial NAS information message
    */
   if (emm_msg )
-    switch (msg->NASinfo) {
+    switch (msg->nas_info) {
     case EMM_AS_NAS_INFO_ATTACH:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->NASmsg.length);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg.length);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       size = emm_send_attach_accept (msg, &emm_msg->attach_accept);
       break;
     case EMM_AS_NAS_INFO_TAU:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->NASmsg.length);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TAU_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg.length);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TAU_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       size = emm_send_tracking_area_update_accept (msg, &emm_msg->tracking_area_update_accept);
       break;
     default:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->NASinfo);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->nas_info);
       break;
     }
 
@@ -1592,7 +1592,7 @@ _emm_as_establish_cnf (
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
+    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
 
     if (emm_ctx) {
       emm_security_context = emm_ctx->security;
@@ -1613,13 +1613,13 @@ _emm_as_establish_cnf (
     /*
      * Encode the initial NAS information message
      */
-    int                                     bytes = _emm_as_encode (&as_msg->nasMsg,
+    int                                     bytes = _emm_as_encode (&as_msg->nas_msg,
                                                                     &nas_msg,
                                                                     size,
                                                                     emm_security_context);
 
     if (bytes > 0) {
-      as_msg->errCode = AS_SUCCESS;
+      as_msg->err_code = AS_SUCCESS;
       LOG_FUNC_RETURN (LOG_NAS_EMM, AS_NAS_ESTABLISH_CNF);
     }
   }
@@ -1660,11 +1660,11 @@ _emm_as_establish_rej (
   /*
    * Setup the AS message
    */
-  if (msg->UEid.guti) {
-    as_msg->s_tmsi.MMEcode = msg->UEid.guti->gummei.MMEcode;
-    as_msg->s_tmsi.m_tmsi = msg->UEid.guti->m_tmsi;
+  if (msg->eps_id.guti) {
+    as_msg->s_tmsi.mme_code = msg->eps_id.guti->gummei.mme_code;
+    as_msg->s_tmsi.m_tmsi = msg->eps_id.guti->m_tmsi;
   } else {
-    as_msg->UEid = msg->ueid;
+    as_msg->ue_id = msg->ue_id;
   }
 
   /*
@@ -1676,39 +1676,39 @@ _emm_as_establish_rej (
    * Setup the NAS information message
    */
   if (emm_msg ) {
-    switch (msg->NASinfo) {
+    switch (msg->nas_info) {
     case EMM_AS_NAS_INFO_ATTACH:
-      if (msg->UEid.guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+      if (msg->eps_id.guti) {
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->ue_id);
       }
 
       size = emm_send_attach_reject (msg, &emm_msg->attach_reject);
       break;
 
     case EMM_AS_NAS_INFO_TAU:
-      if (msg->UEid.guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+      if (msg->eps_id.guti) {
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TRACKING_AREA_UPDATE_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->ue_id);
       }
 
       size = emm_send_tracking_area_update_reject (msg, &emm_msg->tracking_area_update_reject);
       break;
 
     case EMM_AS_NAS_INFO_SR:
-      if (msg->UEid.guti) {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.MMEcode, as_msg->s_tmsi.m_tmsi);
+      if (msg->eps_id.guti) {
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       } else {
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->UEid);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send SERVICE_REJECT to ue id " NAS_UE_ID_FMT " ", as_msg->ue_id);
       }
 
       size = emm_send_service_reject (msg, &emm_msg->service_reject);
       break;
 
     default:
-      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->NASinfo);
+      LOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->nas_info);
     }
   }
 
@@ -1716,7 +1716,7 @@ _emm_as_establish_rej (
     struct emm_data_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ueid);
+    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
 
     if (emm_ctx) {
       emm_security_context = emm_ctx->security;
@@ -1730,13 +1730,13 @@ _emm_as_establish_rej (
     /*
      * Encode the initial NAS information message
      */
-    int                                     bytes = _emm_as_encode (&as_msg->nasMsg,
+    int                                     bytes = _emm_as_encode (&as_msg->nas_msg,
                                                                     &nas_msg,
                                                                     size,
                                                                     emm_security_context);
 
     if (bytes > 0) {
-      as_msg->errCode = AS_TERMINATED_NAS;
+      as_msg->err_code = AS_TERMINATED_NAS;
       LOG_FUNC_RETURN (LOG_NAS_EMM, AS_NAS_ESTABLISH_RSP);
     }
   }
@@ -1808,7 +1808,7 @@ _emm_as_cell_info_req (
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   LOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS cell information request\n");
-  as_msg->plmnID = msg->plmnIDs.plmn[0];
+  as_msg->plmn_id = msg->plmn_ids.plmn[0];
   as_msg->rat = msg->rat;
   LOG_FUNC_RETURN (LOG_NAS_EMM, AS_CELL_INFO_REQ);
 }

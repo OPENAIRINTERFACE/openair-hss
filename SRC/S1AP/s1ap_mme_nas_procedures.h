@@ -25,8 +25,8 @@
 #include "s1ap_ies_defs.h"
 #include "intertask_interface.h"
 
-#ifndef S1AP_MME_NAS_PROCEDURES_H_
-#define S1AP_MME_NAS_PROCEDURES_H_
+#ifndef FILE_S1AP_MME_NAS_PROCEDURES_SEEN
+#define FILE_S1AP_MME_NAS_PROCEDURES_SEEN
 
 /** \brief Handle an Initial UE message.
  * \param assocId lower layer assoc id (SCTP)
@@ -60,4 +60,4 @@ void s1ap_handle_conn_est_cnf(const itti_mme_app_connection_establishment_cnf_t 
 
 int s1ap_generate_downlink_nas_transport(const mme_ue_s1ap_id_t ue_id, void * const data,
     const uint32_t size);
-#endif /* S1AP_MME_NAS_PROCEDURES_H_ */
+#endif /* FILE_S1AP_MME_NAS_PROCEDURES_SEEN */

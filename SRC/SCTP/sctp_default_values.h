@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#ifndef SCTP_DEFAULT_VALUES_H_
-#define SCTP_DEFAULT_VALUES_H_
+#ifndef FILE_SCTP_DEFAULT_VALUES_SEEN
+#define FILE_SCTP_DEFAULT_VALUES_SEEN
 
 #define SCTP_OUT_STREAMS        (16)
 #define SCTP_IN_STREAMS         (16)
@@ -28,4 +28,4 @@
 #define SCTP_TIMEOUT            (5)
 #define SCTP_RECV_BUFFER_SIZE   (1024)
 
-#endif /* SCTP_DEFAULT_VALUES_H_ */
+#endif /* FILE_SCTP_DEFAULT_VALUES_SEEN */

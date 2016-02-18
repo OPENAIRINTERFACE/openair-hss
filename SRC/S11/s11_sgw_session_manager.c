@@ -199,7 +199,7 @@ s11_sgw_handle_create_session_request (
 int
 s11_sgw_handle_create_session_response (
   NwGtpv2cStackHandleT * stack_p,
-  SgwCreateSessionResponse * create_session_response_p)
+  itti_sgw_create_session_response_t * create_session_response_p)
 {
   NwRcT                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
@@ -256,7 +256,7 @@ s11_sgw_handle_delete_session_request (
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
-  SgwDeleteSessionRequest                *delete_session_request_p;
+  itti_sgw_delete_session_request_t                *delete_session_request_p;
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 
@@ -346,7 +346,7 @@ s11_sgw_handle_delete_session_request (
 int
 s11_sgw_handle_delete_session_response (
   NwGtpv2cStackHandleT * stack_p,
-  SgwDeleteSessionResponse * delete_session_response_p)
+  itti_sgw_delete_session_response_t * delete_session_response_p)
 {
   NwRcT                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;

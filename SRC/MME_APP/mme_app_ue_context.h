@@ -103,11 +103,8 @@ typedef struct ue_context_s {
   /* Indicator to show the IMSI authentication state */
   unsigned               imsi_auth:1;                 // set by nas_auth_resp_t
 
-  enb_ue_s1ap_id_t       eNB_ue_s1ap_id:24;
+  enb_ue_s1ap_id_t       enb_ue_s1ap_id:24;
   mme_ue_s1ap_id_t       mme_ue_s1ap_id;
-
-  /* ue_id is equal to mme_ue_s1ap_id */
-  nas_ue_id_t            ue_id;                       // set by nas_auth_param_req_t
 
   uint8_t                nb_of_vectors;               // updated by S6A AUTHENTICATION ANSWER
   /* List of authentication vectors for E-UTRAN */
@@ -194,8 +191,8 @@ typedef struct {
   //RB_HEAD(ue_context_map, ue_context_s) ue_context_tree;
   hash_table_ts_t  *imsi_ue_context_htbl;
   hash_table_ts_t  *tun11_ue_context_htbl;
-  hash_table_ts_t  *mme_ue_s1ap_id_ue_context_htbl; // TODO #1: remove one of this collection
-  hash_table_ts_t  *nas_ue_id_ue_context_htbl;      // TODO #1: remove one of this collection
+  hash_table_ts_t  *mme_ue_s1ap_id_ue_context_htbl;
+  hash_table_ts_t  *enb_ue_s1ap_id_ue_context_htbl;
   obj_hash_table_t  *guti_ue_context_htbl;
 } mme_ue_context_t;
 
@@ -220,12 +217,13 @@ ue_context_t *mme_ue_context_exists_s11_teid(mme_ue_context_t * const mme_ue_con
 ue_context_t *mme_ue_context_exists_mme_ue_s1ap_id(mme_ue_context_t * const mme_ue_context,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
-/** \brief Retrieve an UE context by selecting the provided nas_ue_id
- * \param nas_ue_id The UE id identifier used in S1AP MME and NAS
- * @returns an UE context matching the nas_ue_id or NULL if the context doesn't exists
+/** \brief Retrieve an UE context by selecting the provided enb_ue_s1ap_id
+ * \param enb_ue_s1ap_id The UE id identifier used in S1AP MME
+ * @returns an UE context matching the enb_ue_s1ap_id or NULL if the context doesn't exists
  **/
-ue_context_t *mme_ue_context_exists_nas_ue_id(mme_ue_context_t * const mme_ue_context,
-    const nas_ue_id_t nas_ue_id);
+ue_context_t *mme_ue_context_exists_enb_ue_s1ap_id (
+  mme_ue_context_t * const mme_ue_context_p,
+  const enb_ue_s1ap_id_t enb_ue_s1ap_id);
 
 /** \brief Retrieve an UE context by selecting the provided guti
  * \param guti The GUTI used by the UE
@@ -246,12 +244,12 @@ ue_context_t *mme_ue_context_exists_guti(mme_ue_context_t * const mme_ue_context
  **/
 void mme_ue_context_update_coll_keys(
     mme_ue_context_t * const mme_ue_context_p,
-    ue_context_t   * const ue_context_p,
-    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
-    const mme_app_imsi_t   imsi,
-    const s11_teid_t       mme_s11_teid,
-    const nas_ue_id_t      nas_ue_id,
-    const GUTI_t   * const guti_p);
+    ue_context_t     * const ue_context_p,
+    const enb_ue_s1ap_id_t   enb_ue_s1ap_id,
+    const mme_ue_s1ap_id_t   mme_ue_s1ap_id,
+    const mme_app_imsi_t     imsi,
+    const s11_teid_t         mme_s11_teid,
+    const GUTI_t     * const guti_p);
 
 /** \brief Insert a new UE context in the tree of known UEs.
  * At least the IMSI should be known to insert the context in the tree.
@@ -278,7 +276,7 @@ ue_context_t *mme_create_new_ue_context(void);
 void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 
 
-void mme_app_handle_s1ap_ue_context_release_req(const s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
+void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
 
 #endif /* MME_APP_UE_CONTEXT_H_ */
 

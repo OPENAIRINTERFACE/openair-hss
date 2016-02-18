@@ -35,17 +35,17 @@
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
 
 typedef struct itti_mme_app_connection_establishment_ind_s {
-  uint32_t            mme_ue_s1ap_id;
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
   nas_establish_ind_t nas;
 
   /* Transparent message from s1ap to be forwarded to MME_APP or
    * to S1AP if connection establishment is rejected by NAS.
    */
-  s1ap_initial_ue_message_t transparent;
+  itti_s1ap_initial_ue_message_t transparent;
 } itti_mme_app_connection_establishment_ind_t;
 
 typedef struct itti_mme_app_connection_establishment_cnf_s {
-
   ebi_t                   eps_bearer_id;
   FTeid_t                 bearer_s1u_sgw_fteid;
   qci_t                   bearer_qos_qci;
@@ -55,7 +55,7 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
   ambr_t                  ambr;
 
   /* Key eNB */
-  uint8_t                 keNB[32];
+  uint8_t                 kenb[32];
   uint16_t                security_capabilities_encryption_algorithms;
   uint16_t                security_capabilities_integrity_algorithms;
 

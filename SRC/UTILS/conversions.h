@@ -230,34 +230,34 @@ do {                                                             \
 #define TBCD_TO_PLMN_T(tBCDsTRING, pLMN)                            \
 do {                                                                \
     DevAssert((tBCDsTRING)->size == 3);                             \
-    (pLMN)->MCCdigit2 = (((tBCDsTRING)->buf[0] & 0xf0) >> 4);       \
-    (pLMN)->MCCdigit3 = ((tBCDsTRING)->buf[0] & 0x0f);              \
-    (pLMN)->MCCdigit1 = (tBCDsTRING)->buf[1] & 0x0f;                \
-    (pLMN)->MNCdigit3 = (((tBCDsTRING)->buf[1] & 0xf0) >> 4) == 0xF \
+    (pLMN)->mcc_digit2 = (((tBCDsTRING)->buf[0] & 0xf0) >> 4);       \
+    (pLMN)->mcc_digit3 = ((tBCDsTRING)->buf[0] & 0x0f);              \
+    (pLMN)->mcc_digit1 = (tBCDsTRING)->buf[1] & 0x0f;                \
+    (pLMN)->mnc_digit3 = (((tBCDsTRING)->buf[1] & 0xf0) >> 4) == 0xF \
     ? 0 : (((tBCDsTRING)->buf[1] & 0xf0) >> 4);       \
-    (pLMN)->MNCdigit2 = (((tBCDsTRING)->buf[2] & 0xf0) >> 4);       \
-    (pLMN)->MNCdigit1 = ((tBCDsTRING)->buf[2] & 0x0f);              \
+    (pLMN)->mnc_digit2 = (((tBCDsTRING)->buf[2] & 0xf0) >> 4);       \
+    (pLMN)->mnc_digit1 = ((tBCDsTRING)->buf[2] & 0x0f);              \
 } while(0)
 
 #define PLMN_T_TO_TBCD(pLMN, tBCDsTRING, mNClENGTH)                 \
 do {                                                                \
-    tBCDsTRING[0] = (pLMN.MCCdigit2 << 4) | pLMN.MCCdigit1;         \
+    tBCDsTRING[0] = (pLMN.mcc_digit2 << 4) | pLMN.mcc_digit1;         \
     /* ambiguous (think about len 2) */                             \
     if (mNClENGTH == 2) {                                      \
-        tBCDsTRING[1] = (0x0F << 4) | pLMN.MCCdigit3;               \
-        tBCDsTRING[2] = (pLMN.MNCdigit2 << 4) | pLMN.MNCdigit1;     \
+        tBCDsTRING[1] = (0x0F << 4) | pLMN.mcc_digit3;               \
+        tBCDsTRING[2] = (pLMN.mnc_digit2 << 4) | pLMN.mnc_digit1;     \
     } else {                                                        \
-        tBCDsTRING[1] = (pLMN.MNCdigit3 << 4) | pLMN.MCCdigit3;     \
-        tBCDsTRING[2] = (pLMN.MNCdigit2 << 4) | pLMN.MNCdigit1;     \
+        tBCDsTRING[1] = (pLMN.mnc_digit3 << 4) | pLMN.mcc_digit3;     \
+        tBCDsTRING[2] = (pLMN.mnc_digit2 << 4) | pLMN.mnc_digit1;     \
     }                                                               \
 } while(0)
 
 #define PLMN_T_TO_MCC_MNC(pLMN, mCC, mNC, mNCdIGITlENGTH)               \
 do {                                                                    \
-    mCC = pLMN.MCCdigit3 * 100 + pLMN.MCCdigit2 * 10 + pLMN.MCCdigit1;  \
-    mNCdIGITlENGTH = (pLMN.MNCdigit3 == 0xF ? 2 : 3);                   \
-    mNC = (mNCdIGITlENGTH == 2 ? 0 : pLMN.MNCdigit3 * 100)              \
-          + pLMN.MNCdigit2 * 10 + pLMN.MNCdigit1;                       \
+    mCC = pLMN.mcc_digit3 * 100 + pLMN.mcc_digit2 * 10 + pLMN.mcc_digit1;  \
+    mNCdIGITlENGTH = (pLMN.mnc_digit3 == 0xF ? 2 : 3);                   \
+    mNC = (mNCdIGITlENGTH == 2 ? 0 : pLMN.mnc_digit3 * 100)              \
+          + pLMN.mnc_digit2 * 10 + pLMN.mnc_digit1;                       \
 } while(0)
 
 /*

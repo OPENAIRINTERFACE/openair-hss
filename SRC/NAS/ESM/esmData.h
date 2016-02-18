@@ -82,7 +82,7 @@ typedef enum {
 /* ESM message timer retransmission data */
 typedef struct esm_ebr_timer_data_s {
   void        *ctx;
-  nas_ue_id_t ueid;      /* Lower layers UE identifier       */
+  mme_ue_s1ap_id_t ue_id;      /* Lower layers UE identifier       */
   unsigned int ebi;       /* EPS bearer identity          */
   unsigned int count;     /* Retransmission counter       */
   OctetString  msg;        /* Encoded ESM message to re-transmit   */
@@ -169,7 +169,7 @@ typedef struct esm_pdn_s {
  * a PDN connection.
  */
 typedef struct esm_data_context_s {
-  nas_ue_id_t ue_id;
+  mme_ue_s1ap_id_t ue_id;
 
   int n_ebrs;     /* Total number of active EPS bearer contexts   */
   int n_pdns;     /* Number of active PDN connections     */

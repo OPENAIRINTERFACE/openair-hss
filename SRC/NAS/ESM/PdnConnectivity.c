@@ -119,7 +119,7 @@ int                                     _pdn_connectivity_delete (
  **      network, the MME shall initiate the default EPS bearer    **
  **      context activation procedure.                             **
  **                                                                        **
- ** Inputs:  ueid:      UE local identifier                        **
+ ** Inputs:  ue_id:      UE local identifier                        **
  **      pti:       Identifies the PDN connectivity procedure  **
  **             requested by the UE                        **
  **      request_type:  Type of the PDN request                    **
@@ -154,7 +154,7 @@ esm_proc_pdn_connectivity_request (
 
   LOG_FUNC_IN (LOG_NAS_ESM);
   LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity requested by the UE "
-             "(ueid=" NAS_UE_ID_FMT ", pti=%d) PDN type = %s, APN = %s pdn addr = %s\n", ctx->ueid, pti,
+             "(ue_id=" NAS_UE_ID_FMT ", pti=%d) PDN type = %s, APN = %s pdn addr = %s\n", ctx->ue_id, pti,
              (pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6", (apn) ? (char *)(apn->value) : "null", (pdn_addr) ? (char *)(pdn_addr->value) : "null");
 
   /*
@@ -289,7 +289,7 @@ esm_proc_pdn_connectivity_request (
  ** Inputs:  is_standalone: Indicates whether the PDN connectivity     **
  **             procedure was initiated as part of the at- **
  **             tach procedure                             **
- **      ueid:      UE lower layer identifier                  **
+ **      ue_id:      UE lower layer identifier                  **
  **      ebi:       Not used                                   **
  **      msg:       Encoded PDN connectivity reject message to **
  **             be sent                                    **
@@ -312,7 +312,7 @@ esm_proc_pdn_connectivity_reject (
   LOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
 
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity not accepted by the " "network (ueid=" NAS_UE_ID_FMT ")\n", ctx->ueid);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity not accepted by the " "network (ue_id=" NAS_UE_ID_FMT ")\n", ctx->ue_id);
 
   if (is_standalone) {
     emm_sap_t                               emm_sap = {0};
@@ -347,7 +347,7 @@ esm_proc_pdn_connectivity_reject (
  **              The MME releases the PDN connection entry allocated when  **
  **              the PDN connectivity procedure was requested by the UE.   **
  **                                                                        **
- **         Inputs:  ueid:      UE local identifier                        **
+ **         Inputs:  ue_id:      UE local identifier                        **
  **                  pid:       Identifier of the PDN connection to be     **
  **                             released                                   **
  **                  Others:    None                                       **
@@ -365,7 +365,7 @@ esm_proc_pdn_connectivity_failure (
   int                                     pti;
 
   LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity failure (ueid=" NAS_UE_ID_FMT ", pid=%d)\n", ctx->ueid, pid);
+  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity failure (ue_id=" NAS_UE_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
   /*
    * Delete the PDN connection entry
    */
@@ -394,7 +394,7 @@ esm_proc_pdn_connectivity_failure (
  **                                                                        **
  ** Description: Creates a new PDN connection entry for the specified UE   **
  **                                                                        **
- ** Inputs:          ueid:      UE local identifier                        **
+ ** Inputs:          ue_id:      UE local identifier                        **
  **                  ctx:       UE context                                 **
  **                  pti:       Procedure transaction identity             **
  **                  apn:       Access Point Name of the PDN connection    **
@@ -422,8 +422,8 @@ _pdn_connectivity_create (
   int                                     pid = ESM_DATA_PDN_MAX;
 
   LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new PDN connection "
-             "(pti=%d) APN = %s, IP address = %s (ueid=" NAS_UE_ID_FMT ")\n", pti, apn->value,
-             (pdn_type == ESM_PDN_TYPE_IPV4) ? esm_data_get_ipv4_addr (pdn_addr) : (pdn_type == ESM_PDN_TYPE_IPV6) ? esm_data_get_ipv6_addr (pdn_addr) : esm_data_get_ipv4v6_addr (pdn_addr), ctx->ueid);
+             "(pti=%d) APN = %s, IP address = %s (ue_id=" NAS_UE_ID_FMT ")\n", pti, apn->value,
+             (pdn_type == ESM_PDN_TYPE_IPV4) ? esm_data_get_ipv4_addr (pdn_addr) : (pdn_type == ESM_PDN_TYPE_IPV6) ? esm_data_get_ipv6_addr (pdn_addr) : esm_data_get_ipv4v6_addr (pdn_addr), ctx->ue_id);
 
   /*
    * Search for an available PDN connection entry
@@ -511,7 +511,7 @@ _pdn_connectivity_create (
  ** Description: Deletes PDN connection to the specified UE associated to  **
  **              PDN connection entry with given identifier                **
  **                                                                        **
- ** Inputs:          ueid:      UE local identifier                        **
+ ** Inputs:          ue_id:      UE local identifier                        **
  **                  pid:       Identifier of the PDN connection to be     **
  **                             released                                   **
  **                  Others:    _esm_data                                  **

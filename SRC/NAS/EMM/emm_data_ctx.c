@@ -41,14 +41,14 @@ static bool emm_data_context_dump_hash_table_wrapper (
 struct emm_data_context_s              *
 emm_data_context_get (
   emm_data_t * emm_data,
-  const nas_ue_id_t ueid)
+  const mme_ue_s1ap_id_t ue_id)
 {
   struct emm_data_context_s              *emm_data_context_p = NULL;
 
-  DevCheck (ueid > 0, ueid, 0, 0);
+  DevCheck (ue_id > 0, ue_id, 0, 0);
   DevAssert (emm_data );
-  hashtable_ts_get (emm_data->ctx_coll_ue_id, (const hash_key_t)(ueid), (void **)&emm_data_context_p);
-  LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get UE id " NAS_UE_ID_FMT " context %p\n", ueid, emm_data_context_p);
+  hashtable_ts_get (emm_data->ctx_coll_ue_id, (const hash_key_t)(ue_id), (void **)&emm_data_context_p);
+  LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get UE id " MME_UE_S1AP_ID_FMT " context %p\n", ue_id, emm_data_context_p);
   return emm_data_context_p;
 }
 
@@ -58,8 +58,8 @@ emm_data_context_get_by_guti (
   emm_data_t * emm_data,
   GUTI_t * guti)
 {
-  hashtable_rc_t                          h_rc;
-  unsigned int                            emm_ue_id = 0;
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+  mme_ue_s1ap_id_t                        emm_ue_id = INVALID_MME_UE_S1AP_ID;
 
   DevAssert (emm_data );
 
@@ -67,19 +67,19 @@ emm_data_context_get_by_guti (
     char                                    guti_str[GUTI2STR_MAX_LENGTH];
 
     GUTI2STR (guti, guti_str, GUTI2STR_MAX_LENGTH);
-    h_rc = obj_hashtable_ts_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **)&emm_ue_id);
+    h_rc = obj_hashtable_ts_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **)(uintptr_t)&emm_ue_id);
 
     if (HASH_TABLE_OK == h_rc) {
-      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " %s", emm_ue_id, guti_str);
+      LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " %s", emm_ue_id, guti_str);
       return emm_data_context_get (emm_data, (const hash_key_t)emm_ue_id);
     }
 
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " %s failed\n", emm_ue_id, guti_str);
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " PLMN    %01x%01x%01x%01x%01x%01x failed\n",
-               emm_ue_id, guti->gummei.plmn.MCCdigit1, guti->gummei.plmn.MCCdigit2, guti->gummei.plmn.MNCdigit3, guti->gummei.plmn.MNCdigit1, guti->gummei.plmn.MNCdigit2, guti->gummei.plmn.MCCdigit3);
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " MMEgid  %04x failed\n", emm_ue_id, guti->gummei.MMEgid);
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " MMEcode %01x failed\n", emm_ue_id, guti->gummei.MMEcode);
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " NAS_UE_ID_FMT " m_tmsi  %08x failed\n", emm_ue_id, guti->m_tmsi);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " %s failed\n", emm_ue_id, guti_str);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " PLMN    %01x%01x%01x%01x%01x%01x failed\n",
+               emm_ue_id, guti->gummei.plmn.mcc_digit1, guti->gummei.plmn.mcc_digit2, guti->gummei.plmn.mnc_digit3, guti->gummei.plmn.mnc_digit1, guti->gummei.plmn.mnc_digit2, guti->gummei.plmn.mcc_digit3);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " mme_gid  %04x failed\n", emm_ue_id, guti->gummei.mme_gid);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " mme_code %01x failed\n", emm_ue_id, guti->gummei.mme_code);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - get_by_guti UE id " MME_UE_S1AP_ID_FMT " m_tmsi  %08x failed\n", emm_ue_id, guti->m_tmsi);
   }
 
   return NULL;
@@ -93,19 +93,21 @@ emm_data_context_remove (
   struct emm_data_context_s *elm)
 {
   struct emm_data_context_s              *emm_data_context_p = NULL;
-  nas_ue_id_t                            *emm_ue_id = NULL;
+  mme_ue_s1ap_id_t                       *emm_ue_id          = NULL;
 
-  LOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " NAS_UE_ID_FMT " ", elm, elm->ueid);
+  LOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " MME_UE_S1AP_ID_FMT " ", elm, elm->ue_id);
 
   if ( elm->guti) {
-    char                                    guti_str[GUTI2STR_MAX_LENGTH];
+    GUTI_t guti = {0};
+    memcpy(&guti, (const void*)elm->guti, sizeof(guti));
+    obj_hashtable_ts_remove (emm_data->ctx_coll_guti, (const void *)&guti, sizeof (guti), (void **)&emm_ue_id);
 
+    char                                    guti_str[GUTI2STR_MAX_LENGTH];
     GUTI2STR (elm->guti, guti_str, GUTI2STR_MAX_LENGTH);
-    obj_hashtable_ts_remove (emm_data->ctx_coll_guti, (const void *)(elm->guti), sizeof (*elm->guti), (void **)&emm_ue_id);
-    LOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " NAS_UE_ID_FMT " guti %s\n", elm, (nas_ue_id_t)((uintptr_t)emm_ue_id), guti_str);
+    LOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " MME_UE_S1AP_ID_FMT " guti %s\n", elm, (mme_ue_s1ap_id_t)((uintptr_t)emm_ue_id), guti_str);
   }
 
-  hashtable_ts_remove (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ueid), (void **)&emm_data_context_p);
+  hashtable_ts_remove (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ue_id), (void **)&emm_data_context_p);
   return emm_data_context_p;
 }
 
@@ -117,28 +119,27 @@ emm_data_context_add (
 {
   hashtable_rc_t                          h_rc;
 
-  h_rc = hashtable_ts_insert (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ueid), elm);
+  h_rc = hashtable_ts_insert (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ue_id), elm);
 
   if (HASH_TABLE_OK == h_rc) {
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context %p UE id " NAS_UE_ID_FMT "\n", elm, elm->ueid);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context %p UE id " MME_UE_S1AP_ID_FMT "\n", elm, elm->ue_id);
 
     if ( elm->guti) {
+      h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(elm->guti), sizeof (*elm->guti), (void*)((uintptr_t )elm->ue_id));
+
       char                                    guti_str[GUTI2STR_MAX_LENGTH];
-
       GUTI2STR (elm->guti, guti_str, GUTI2STR_MAX_LENGTH);
-      h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(elm->guti), sizeof (*elm->guti), (void*)((uintptr_t )elm->ueid));
-
       if (HASH_TABLE_OK == h_rc) {
-        LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " NAS_UE_ID_FMT " with GUTI %s\n", elm->ueid, guti_str);
+        LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with GUTI %s\n", elm->ue_id, guti_str);
         return RETURNok;
       } else {
-        LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " NAS_UE_ID_FMT " with GUTI %s Failed %s\n", elm->ueid, guti_str, hashtable_rc_code2string (h_rc));
+        LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with GUTI %s Failed %s\n", elm->ue_id, guti_str, hashtable_rc_code2string (h_rc));
         return RETURNerror;
       }
     } else
       return RETURNok;
   } else {
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context %p UE id " NAS_UE_ID_FMT " Failed %s\n", elm, elm->ueid, hashtable_rc_code2string (h_rc));
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX - Add in context %p UE id " MME_UE_S1AP_ID_FMT " Failed %s\n", elm, elm->ue_id, hashtable_rc_code2string (h_rc));
     return RETURNerror;
   }
 }
@@ -223,7 +224,7 @@ void free_emm_data_context(
     if (emm_ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)\n", emm_ctx->T3450.id);
       emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
     }
 
     /*
@@ -232,7 +233,7 @@ void free_emm_data_context(
     if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
       emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3460 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
     }
 
     /*
@@ -241,7 +242,7 @@ void free_emm_data_context(
     if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
       LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3460.id);
       emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " NAS_UE_ID_FMT " ", emm_ctx->ueid);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
     }
     free_esm_data_context(&emm_ctx->esm_data_ctx);
   }
@@ -259,7 +260,7 @@ emm_data_context_dump (
                                             remaining_size = 0;
     char                                    key_string[KASME_LENGTH_OCTETS * 2];
 
-    LOG_INFO (LOG_NAS_EMM, "EMM-CTX: ue id:           " NAS_UE_ID_FMT " (UE identifier)\n", elm_pP->ueid);
+    LOG_INFO (LOG_NAS_EMM, "EMM-CTX: ue id:           " MME_UE_S1AP_ID_FMT " (UE identifier)\n", elm_pP->ue_id);
     LOG_INFO (LOG_NAS_EMM, "         is_dynamic:       %u      (Dynamically allocated context indicator)\n", elm_pP->is_dynamic);
     LOG_INFO (LOG_NAS_EMM, "         is_attached:      %u      (Attachment indicator)\n", elm_pP->is_attached);
     LOG_INFO (LOG_NAS_EMM, "         is_emergency:     %u      (Emergency bearer services indicator)\n", elm_pP->is_emergency);
@@ -274,12 +275,12 @@ emm_data_context_dump (
     LOG_INFO (LOG_NAS_EMM, "         old_guti:         %s      (The old GUTI)\n", guti_str);
     for (k=0; k < elm_pP->tai_list.n_tais; k++) {
       LOG_INFO (LOG_NAS_EMM, "         tai:              %u%u%u%u%u%u:0x%04x   (Tracking area identity the UE is registered to)\n",
-        elm_pP->tai_list.tai[k].plmn.MCCdigit1,
-        elm_pP->tai_list.tai[k].plmn.MCCdigit2,
-        elm_pP->tai_list.tai[k].plmn.MCCdigit3,
-        elm_pP->tai_list.tai[k].plmn.MNCdigit1,
-        elm_pP->tai_list.tai[k].plmn.MNCdigit2,
-        elm_pP->tai_list.tai[k].plmn.MNCdigit3,
+        elm_pP->tai_list.tai[k].plmn.mcc_digit1,
+        elm_pP->tai_list.tai[k].plmn.mcc_digit2,
+        elm_pP->tai_list.tai[k].plmn.mcc_digit3,
+        elm_pP->tai_list.tai[k].plmn.mnc_digit1,
+        elm_pP->tai_list.tai[k].plmn.mnc_digit2,
+        elm_pP->tai_list.tai[k].plmn.mnc_digit3,
         elm_pP->tai_list.tai[k].tac);
     }
     LOG_INFO (LOG_NAS_EMM, "         ksi:              %u      (Security key set identifier provided by the UE)\n", elm_pP->ksi);

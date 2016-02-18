@@ -41,6 +41,7 @@ Description Implements the API used by the NAS layer running in the MME
 
 #include "mme_config.h"
 #include "commonDef.h"
+#include "common_types.h"
 #include "securityDef.h"
 #include "OctetString.h"
 
@@ -124,12 +125,14 @@ int mme_api_get_esm_config(mme_api_esm_config_t *config);
 
 int
 mme_api_notify_new_guti (
-  const nas_ue_id_t ueid,
+  const mme_ue_s1ap_id_t ueid,
   GUTI_t * const guti);
 
-int mme_api_notify_ue_id_changed (
-    const unsigned int old_ueid,
-    const unsigned int new_ueid);
+int
+mme_api_notify_end_ue_s1ap_id_changed (
+    const enb_ue_s1ap_id_t old_id,
+    const enb_ue_s1ap_id_t new_id,
+    const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
 int mme_api_identify_guti(const GUTI_t *guti, auth_vector_t *vector);
 int mme_api_identify_imsi(const imsi_t *imsi, auth_vector_t *vector);

@@ -22,8 +22,8 @@
 
 #include "tree.h"
 
-#ifndef S1AP_MME_RETRANSMISSION_H_
-#define S1AP_MME_RETRANSMISSION_H_
+#ifndef FILE_S1AP_MME_RETRANSMISSION_SEEN
+#define FILE_S1AP_MME_RETRANSMISSION_SEEN
 
 typedef struct s1ap_timer_map_s {
   long             timer_id;
@@ -41,4 +41,4 @@ int s1ap_timer_insert(const mme_ue_s1ap_id_t mme_ue_s1ap_id, const long timer_id
 
 int s1ap_timer_remove_ue(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
-#endif /* S1AP_MME_RETRANSMISSION_H_ */
+#endif /* FILE_S1AP_MME_RETRANSMISSION_SEEN */

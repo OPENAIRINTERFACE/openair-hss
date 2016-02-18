@@ -72,14 +72,14 @@ int itf_mme_app_nas_initial_ue_message(
 
 /*  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_CONNECTION_ESTABLISHMENT_IND);
   // do this because of same message types name but not same struct in different .h
-  message_p->ittiMsg.nas_conn_est_ind.nas.UEid    = mme_ue_s1ap_id;
+  message_p->ittiMsg.nas_conn_est_ind.nas.ue_id    = mme_ue_s1ap_id;
   message_p->ittiMsg.nas_conn_est_ind.nas.plmn[0] = tai_plmn[0];
   message_p->ittiMsg.nas_conn_est_ind.nas.plmn[1] = tai_plmn[1];
   message_p->ittiMsg.nas_conn_est_ind.nas.plmn[2] = tai_plmn[2];
   message_p->ittiMsg.nas_conn_est_ind.nas.tac     = tai_tac;
-  message_p->ittiMsg.nas_conn_est_ind.nas.asCause = cause;
+  message_p->ittiMsg.nas_conn_est_ind.nas.as_cause = cause;
   message_p->ittiMsg.nas_conn_est_ind.nas.s_tmsi  = s_tmsi;
-  memcpy (&message_p->ittiMsg.nas_conn_est_ind.nas.initialNasMsg, &nas_msg, nas_msg_length);
+  memcpy (&message_p->ittiMsg.nas_conn_est_ind.nas.initial_nas_msg, &nas_msg, nas_msg_length);
   //memcpy(&NAS_CONN_EST_IND(message_p).nas,
   // &conn_est_ind_pP->nas,
   // sizeof (nas_establish_ind_t));

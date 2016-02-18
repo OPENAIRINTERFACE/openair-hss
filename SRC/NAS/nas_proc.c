@@ -152,10 +152,10 @@ nas_proc_cleanup (
  ***************************************************************************/
 int
 nas_proc_establish_ind (
-  const uint32_t ueid,
+  const mme_ue_s1ap_id_t ue_id,
   const tai_t tai,
   const Byte_t * data,
-  const uint32_t len)
+  const size_t len)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
@@ -171,10 +171,10 @@ nas_proc_establish_ind (
      */
 
     emm_sap.primitive = EMMAS_ESTABLISH_REQ;
-    emm_sap.u.emm_as.u.establish.ueid = ueid;
-    emm_sap.u.emm_as.u.establish.NASmsg.length = len;
-    emm_sap.u.emm_as.u.establish.NASmsg.value = (uint8_t *) data;
-    emm_sap.u.emm_as.u.establish.plmnID = &tai.plmn;
+    emm_sap.u.emm_as.u.establish.ue_id = ue_id;
+    emm_sap.u.emm_as.u.establish.nas_msg.length = len;
+    emm_sap.u.emm_as.u.establish.nas_msg.value = (uint8_t *) data;
+    emm_sap.u.emm_as.u.establish.plmn_id = &tai.plmn;
     emm_sap.u.emm_as.u.establish.tac = tai.tac;
     rc = emm_sap_send (&emm_sap);
   }
@@ -200,7 +200,7 @@ nas_proc_establish_ind (
  ***************************************************************************/
 int
 nas_proc_dl_transfer_cnf (
-  const uint32_t ueid)
+  const uint32_t ue_id)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
@@ -213,9 +213,9 @@ nas_proc_dl_transfer_cnf (
    * receiver side
    */
   emm_sap.primitive = EMMAS_DATA_IND;
-  emm_sap.u.emm_as.u.data.ueid = ueid;
+  emm_sap.u.emm_as.u.data.ue_id = ue_id;
   emm_sap.u.emm_as.u.data.delivered = true;
-  emm_sap.u.emm_as.u.data.NASmsg.length = 0;
+  emm_sap.u.emm_as.u.data.nas_msg.length = 0;
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -238,7 +238,7 @@ nas_proc_dl_transfer_cnf (
  ***************************************************************************/
 int
 nas_proc_dl_transfer_rej (
-  const uint32_t ueid)
+  const uint32_t ue_id)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
@@ -251,9 +251,9 @@ nas_proc_dl_transfer_rej (
    * from lower layers
    */
   emm_sap.primitive = EMMAS_DATA_IND;
-  emm_sap.u.emm_as.u.data.ueid = ueid;
+  emm_sap.u.emm_as.u.data.ue_id = ue_id;
   emm_sap.u.emm_as.u.data.delivered = false;
-  emm_sap.u.emm_as.u.data.NASmsg.length = 0;
+  emm_sap.u.emm_as.u.data.nas_msg.length = 0;
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -277,9 +277,9 @@ nas_proc_dl_transfer_rej (
  ***************************************************************************/
 int
 nas_proc_ul_transfer_ind (
-  const uint32_t ueid,
+  const mme_ue_s1ap_id_t ue_id,
   const Byte_t * data,
-  const uint32_t len)
+  const size_t len)
 {
   int                                     rc = RETURNerror;
 
@@ -294,16 +294,17 @@ nas_proc_ul_transfer_ind (
      */
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND ue id " NAS_UE_ID_FMT " len %u", ueid, len);
     emm_sap.primitive = EMMAS_DATA_IND;
-    emm_sap.u.emm_as.u.data.ueid = ueid;
+    emm_sap.u.emm_as.u.data.ue_id = ue_id;
     emm_sap.u.emm_as.u.data.delivered = true;
-    emm_sap.u.emm_as.u.data.NASmsg.length = len;
-    emm_sap.u.emm_as.u.data.NASmsg.value = (uint8_t *) data;
+    emm_sap.u.emm_as.u.data.nas_msg.length = len;
+    emm_sap.u.emm_as.u.data.nas_msg.value = (uint8_t *) data;
     rc = emm_sap_send (&emm_sap);
   }
 
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
+//------------------------------------------------------------------------------
 int
 nas_proc_auth_param_res (
   emm_cn_auth_res_t * emm_cn_auth_res)
@@ -319,6 +320,7 @@ nas_proc_auth_param_res (
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
+//------------------------------------------------------------------------------
 int
 nas_proc_auth_param_fail (
   emm_cn_auth_fail_t * emm_cn_auth_fail)
@@ -334,9 +336,10 @@ nas_proc_auth_param_fail (
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
+//------------------------------------------------------------------------------
 int
 nas_proc_deregister_ue (
-  uint32_t ue_id)
+    mme_ue_s1ap_id_t ue_id)
 {
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
@@ -344,11 +347,12 @@ nas_proc_deregister_ue (
   LOG_FUNC_IN (LOG_NAS_EMM);
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_DEREGISTER_UE ue_id " NAS_UE_ID_FMT " ", ue_id);
   emm_sap.primitive = EMMCN_DEREGISTER_UE;
-  emm_sap.u.emm_cn.u.deregister.UEid = ue_id;
+  emm_sap.u.emm_cn.u.deregister.ue_id = ue_id;
   rc = emm_sap_send (&emm_sap);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
+//------------------------------------------------------------------------------
 int
 nas_proc_pdn_connectivity_res (
   emm_cn_pdn_res_t * emm_cn_pdn_res)
@@ -364,6 +368,7 @@ nas_proc_pdn_connectivity_res (
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
+//------------------------------------------------------------------------------
 int
 nas_proc_pdn_connectivity_fail (
   emm_cn_pdn_fail_t * emm_cn_pdn_fail)

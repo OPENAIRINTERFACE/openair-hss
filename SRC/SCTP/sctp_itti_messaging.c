@@ -26,9 +26,9 @@
 
 int
 sctp_itti_send_new_association (
-  uint32_t assoc_id,
-  uint16_t instreams,
-  uint16_t outstreams)
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t instreams,
+    const sctp_stream_id_t outstreams)
 {
   MessageDef                             *message_p;
   sctp_new_peer_t                        *sctp_new_peer_p;
@@ -43,20 +43,20 @@ sctp_itti_send_new_association (
 
 int
 sctp_itti_send_new_message_ind (
-  int n,
-  uint8_t * buffer,
-  uint32_t assoc_id,
-  uint16_t stream,
-  uint16_t instreams,
-  uint16_t outstreams)
+    const size_t size,
+    const uint8_t * const buffer,
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    const sctp_stream_id_t instreams,
+    const sctp_stream_id_t outstreams)
 {
   MessageDef                             *message_p;
 
   message_p = itti_alloc_new_message (TASK_SCTP, SCTP_DATA_IND);
-  SCTP_DATA_IND (message_p).buffer = MALLOC_CHECK (sizeof (uint8_t) * n);
-  memcpy ((void *)SCTP_DATA_IND (message_p).buffer, (void *)buffer, n);
+  SCTP_DATA_IND (message_p).buffer = MALLOC_CHECK (sizeof (uint8_t) * size);
+  memcpy ((void *)SCTP_DATA_IND (message_p).buffer, (void *)buffer, size);
   SCTP_DATA_IND (message_p).stream = stream;
-  SCTP_DATA_IND (message_p).buf_length = n;
+  SCTP_DATA_IND (message_p).buf_length = size;
   SCTP_DATA_IND (message_p).assoc_id = assoc_id;
   SCTP_DATA_IND (message_p).instreams = instreams;
   SCTP_DATA_IND (message_p).outstreams = outstreams;
@@ -65,7 +65,7 @@ sctp_itti_send_new_message_ind (
 
 int
 sctp_itti_send_com_down_ind (
-  uint32_t assoc_id)
+    const sctp_assoc_id_t assoc_id)
 {
   MessageDef                             *message_p;
   sctp_close_association_t               *sctp_close_association_p;

@@ -33,27 +33,27 @@
 #define NAS_ITTI_MESSAGING_H_
 
 int nas_itti_plain_msg(
-  const char *buffer,
+  const char          *buffer,
   const nas_message_t *msg,
-  const int lengthP,
-  const int instance);
+  const size_t         lengthP,
+  const bool           is_down_link);
 
 int nas_itti_protected_msg(
-  const char *buffer,
+  const char          *buffer,
   const nas_message_t *msg,
-  const int lengthP,
-  const int instance);
+  const size_t         lengthP,
+  const bool           is_down_link);
 
 #include "conversions.h"
 
 int nas_itti_dl_data_req(
   const uint32_t ue_idP,
   void *const    data_pP,
-  const uint32_t lengthP);
+  const size_t   lengthP);
 
 static inline void nas_itti_pdn_connectivity_req(
   int                     ptiP,
-  unsigned int            ueidP,
+  unsigned int            ue_idP,
   const imsi_t           *const imsi_pP,
   esm_proc_data_t        *proc_data_pP,
   esm_proc_pdn_request_t  request_typeP)
@@ -77,7 +77,7 @@ static inline void nas_itti_pdn_connectivity_req(
                 8);
 
   NAS_PDN_CONNECTIVITY_REQ(message_p).pti             = ptiP;
-  NAS_PDN_CONNECTIVITY_REQ(message_p).ue_id           = ueidP;
+  NAS_PDN_CONNECTIVITY_REQ(message_p).ue_id           = ue_idP;
   NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[15]        = '\0';
 
   if (isdigit(NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14])) {
@@ -171,10 +171,10 @@ static inline void nas_itti_establish_cnf(
   memset(&message_p->ittiMsg.nas_conn_est_cnf,
          0,
          sizeof(itti_nas_conn_est_cnf_t));
-  NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).UEid            = ue_idP;
-  NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).errCode         = error_codeP;
-  NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).nasMsg.data     = data_pP;
-  NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).nasMsg.length   = lengthP;
+  NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).ue_id            = ue_idP;
+  NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).err_code         = error_codeP;
+  NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).nas_msg.data     = data_pP;
+  NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).nas_msg.length   = lengthP;
   NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).selected_encryption_algorithm   = selected_encryption_algorithmP;
   NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).selected_integrity_algorithm    = selected_integrity_algorithmP;
 

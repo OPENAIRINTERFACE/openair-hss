@@ -100,11 +100,11 @@ typedef struct task_info_s {
 } task_info_t;
 
 /** \brief Update the itti LTE time reference for messages
- \param current reference frame
- \param current reference slot
+ \param current seconds
+ \param current micro seconds
  @returns < 0 on failure, 0 otherwise
  **/
-void itti_update_lte_time(uint32_t frame, uint8_t slot);
+void itti_update_lte_time (__time_t    seconds,__suseconds_t useconds);
 
 /** \brief Send a broadcast message to every task
  \param message_p Pointer to the message to send

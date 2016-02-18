@@ -135,8 +135,8 @@ nas_network_cleanup (
 //  /*
 //   * Sanity check
 //   */
-//  if (msg_id != msg->msgID) {
-//    LOG_ERROR (LOG_NAS, "NET-MAIN  - Message identifier 0x%x to process " "is different from that of the network data (0x%x)", msg_id, msg->msgID);
+//  if (msg_id != msg->msg_id) {
+//    LOG_ERROR (LOG_NAS, "NET-MAIN  - Message identifier 0x%x to process " "is different from that of the network data (0x%x)", msg_id, msg->msg_id);
 //    LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 //  }
 //
@@ -147,7 +147,7 @@ nas_network_cleanup (
 //       */
 //      const nas_establish_ind_t              *indication = &msg->msg.nas_establish_ind;
 //
-//      rc = nas_proc_establish_ind (indication->UEid, indication->plmn, indication->tac, indication->initialNasMsg.data, indication->initialNasMsg.length);
+//      rc = nas_proc_establish_ind (indication->ue_id, indication->plmn, indication->tac, indication->initial_nas_msg.data, indication->initial_nas_msg.length);
 //      break;
 //    }
 //
@@ -157,11 +157,11 @@ nas_network_cleanup (
 //      /*
 //       * Received downlink data transfer confirm
 //       */
-//      if (info->errCode != AS_SUCCESS) {
+//      if (info->err_code != AS_SUCCESS) {
 //        LOG_WARNING (LOG_NAS, "NET-MAIN  - " "Downlink NAS message not delivered");
-//        rc = nas_proc_dl_transfer_rej (info->UEid);
+//        rc = nas_proc_dl_transfer_rej (info->ue_id);
 //      } else {
-//        rc = nas_proc_dl_transfer_cnf (info->UEid);
+//        rc = nas_proc_dl_transfer_cnf (info->ue_id);
 //      }
 //
 //      break;
@@ -173,7 +173,7 @@ nas_network_cleanup (
 //      /*
 //       * Received uplink data transfer indication
 //       */
-//      rc = nas_proc_ul_transfer_ind (info->UEid, info->nasMsg.data, info->nasMsg.length);
+//      rc = nas_proc_ul_transfer_ind (info->ue_id, info->nas_msg.data, info->nas_msg.length);
 //      break;
 //    }
 //

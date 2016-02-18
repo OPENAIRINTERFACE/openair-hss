@@ -38,6 +38,7 @@
 
 *****************************************************************************/
 
+#include "commonDef.h"
 #include "nas_message.h"
 #include "log.h"
 #include "gcc_diag.h"
@@ -67,7 +68,7 @@ static int
 _nas_message_header_decode (
   const char * const buffer,
   nas_message_security_header_t * const header,
-  const int length,
+  const size_t length,
   nas_message_decode_status_t * const status,
   bool * const is_sr);
 
@@ -76,14 +77,14 @@ _nas_message_plain_decode (
   const char *buffer,
   const nas_message_security_header_t * header,
   nas_message_plain_t * msg,
-  int length);
+  size_t length);
 
 static int
 _nas_message_protected_decode (
   char * const buffer,
   nas_message_security_header_t * header,
   nas_message_plain_t * msg,
-  int length,
+  size_t length,
   const emm_security_context_t * const emm_security_context,
   nas_message_decode_status_t * status);
 
@@ -92,20 +93,20 @@ static int
 _nas_message_header_encode (
   char *buffer,
   const nas_message_security_header_t * header,
-  int length);
+  size_t length);
 
 static int
 _nas_message_plain_encode (
   char *buffer,
   const nas_message_security_header_t * header,
   const nas_message_plain_t * msg,
-  int length);
+  size_t length);
 
 static int
 _nas_message_protected_encode (
   char *buffer,
   const nas_message_security_protected_t * msg,
-  int length,
+  size_t length,
   void *security);
 
 /* Functions used to decrypt and encrypt layer 3 NAS messages */
@@ -116,7 +117,7 @@ _nas_message_decrypt (
   uint8_t type,
   uint32_t code,
   uint8_t seq,
-  int length,
+  size_t length,
   const emm_security_context_t * const emm_security_context,
   nas_message_decode_status_t * status);
 
@@ -128,14 +129,14 @@ _nas_message_encrypt (
   uint32_t code,
   uint8_t seq,
   int const direction,
-  int length,
+  size_t length,
   const emm_security_context_t * const emm_security_context);
 
 /* Functions used for integrity protection of layer 3 NAS messages */
 static uint32_t
 _nas_message_get_mac (
   const char *const buffer,
-  int const length,
+  size_t const length,
   int const direction,
   const emm_security_context_t * const emm_security_context);
 
@@ -168,7 +169,7 @@ nas_message_encrypt (
   const char *inbuf,
   char *outbuf,
   const nas_message_security_header_t * header,
-  int length,
+  size_t length,
   void *security)
 {
   LOG_FUNC_IN (LOG_NAS);
@@ -275,7 +276,7 @@ nas_message_decrypt (
   const char * const inbuf,
   char * const outbuf,
   nas_message_security_header_t * header,
-  int length,
+  size_t length,
   void *security,
   nas_message_decode_status_t * status)
 {
@@ -378,7 +379,7 @@ int
 nas_message_decode (
   const char *const buffer,
   nas_message_t * msg,
-  int length,
+  size_t length,
   void *security,
   nas_message_decode_status_t * status)
 {
@@ -409,7 +410,7 @@ nas_message_decode (
       /*
        * The buffer is not big enough to contain security header
        */
-      LOG_WARNING(LOG_NAS, "Message header %d bytes is too short %u bytes\n", length, NAS_MESSAGE_SECURITY_HEADER_SIZE);
+      LOG_WARNING(LOG_NAS, "Message header %lu bytes is too short %u bytes\n", length, NAS_MESSAGE_SECURITY_HEADER_SIZE);
       LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
     }
     /*
@@ -545,7 +546,7 @@ int
 nas_message_encode (
   char *buffer,
   const nas_message_t * const msg,
-  int length,
+  size_t length,
   void *security)
 {
   LOG_FUNC_IN (LOG_NAS);
@@ -577,7 +578,7 @@ nas_message_encode (
       /*
        * Compute the NAS message authentication code
        */
-      LOG_DEBUG (LOG_NAS, "offset %d = %d - %ld, hdr encode = %d, length = %d bytes = %d\n", offset, size, sizeof (uint8_t), size, length, bytes);
+      LOG_DEBUG (LOG_NAS, "offset %d = %d - %lu, hdr encode = %d, length = %lu bytes = %d\n", offset, size, sizeof (uint8_t), size, length, bytes);
       uint32_t                                mac = _nas_message_get_mac (buffer + offset,
                                                                           bytes + size - offset,
                                                                           SECU_DIRECTION_DOWNLINK,
@@ -668,7 +669,7 @@ static int
 _nas_message_header_decode (
   const char * const buffer,
   nas_message_security_header_t * const header,
-  const int length,
+  const size_t length,
   nas_message_decode_status_t * const status,
   bool * const is_sr)
 {
@@ -708,7 +709,7 @@ _nas_message_header_decode (
         /*
          * The buffer is not big enough to contain security header
          */
-        LOG_WARNING(LOG_NAS, "NET-API   - The size of the header (%u) " "exceeds the buffer length (%u)\n", NAS_MESSAGE_SECURITY_HEADER_SIZE, length);
+        LOG_WARNING(LOG_NAS, "NET-API   - The size of the header (%u) " "exceeds the buffer length (%lu)\n", NAS_MESSAGE_SECURITY_HEADER_SIZE, length);
         LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
       }
 
@@ -750,7 +751,7 @@ _nas_message_plain_decode (
   const char *buffer,
   const nas_message_security_header_t * header,
   nas_message_plain_t * msg,
-  int length)
+  size_t length)
 {
   LOG_FUNC_IN (LOG_NAS);
   int                                     bytes = TLV_DECODE_PROTOCOL_NOT_SUPPORTED;
@@ -800,7 +801,7 @@ _nas_message_protected_decode (
   char * const buffer,
   nas_message_security_header_t * header,
   nas_message_plain_t * msg,
-  int length,
+  size_t length,
   const emm_security_context_t * const emm_security_context,
   nas_message_decode_status_t * const status)
 {
@@ -859,7 +860,7 @@ static int
 _nas_message_header_encode (
   char *buffer,
   const nas_message_security_header_t * header,
-  int length)
+  size_t length)
 {
   LOG_FUNC_IN (LOG_NAS);
   int                                     size = 0;
@@ -877,7 +878,7 @@ _nas_message_header_encode (
         /*
          * The buffer is not big enough to contain security header
          */
-        LOG_WARNING(LOG_NAS, "NET-API   - The size of the header (%u) " "exceeds the buffer length (%u)\n", NAS_MESSAGE_SECURITY_HEADER_SIZE, length);
+        LOG_WARNING(LOG_NAS, "NET-API   - The size of the header (%u) " "exceeds the buffer length (%lu)\n", NAS_MESSAGE_SECURITY_HEADER_SIZE, length);
         LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
       }
 
@@ -921,7 +922,7 @@ _nas_message_plain_encode (
   char *buffer,
   const nas_message_security_header_t * header,
   const nas_message_plain_t * msg,
-  int length)
+  size_t length)
 {
   LOG_FUNC_IN (LOG_NAS);
   int                                     bytes = TLV_ENCODE_PROTOCOL_NOT_SUPPORTED;
@@ -968,7 +969,7 @@ static int
 _nas_message_protected_encode (
   char *buffer,
   const nas_message_security_protected_t * msg,
-  int length,
+  size_t length,
   void *security)
 {
   LOG_FUNC_IN (LOG_NAS);
@@ -1033,7 +1034,7 @@ _nas_message_decrypt (
   uint8_t security_header_type,
   uint32_t code,
   uint8_t seq,
-  int length,
+  size_t length,
   const emm_security_context_t * const emm_security_context,
   nas_message_decode_status_t * status)
 {
@@ -1052,7 +1053,7 @@ _nas_message_decrypt (
   case SECURITY_HEADER_TYPE_SERVICE_REQUEST:
   case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED:
   case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_NEW:
-    LOG_DEBUG (LOG_NAS, "No decryption of message length %u according to security header type 0x%02x\n", length, security_header_type);
+    LOG_DEBUG (LOG_NAS, "No decryption of message length %lu according to security header type 0x%02x\n", length, security_header_type);
     memcpy (dest, src, length);
     DECODE_U8 (dest, *(uint8_t *) (&header), size);
     LOG_FUNC_RETURN (LOG_NAS, header.protocol_discriminator);
@@ -1197,7 +1198,7 @@ _nas_message_encrypt (
   uint32_t code,
   uint8_t seq,
   int const direction,
-  int length,
+  size_t length,
   const emm_security_context_t * const emm_security_context)
 {
   nas_stream_cipher_t                     stream_cipher;
@@ -1323,7 +1324,7 @@ _nas_message_encrypt (
 static uint32_t
 _nas_message_get_mac (
   const char *const buffer,
-  int const length,
+  size_t const length,
   int const direction,
   const emm_security_context_t * const emm_security_context)
 {
@@ -1384,7 +1385,8 @@ _nas_message_get_mac (
        */
       stream_cipher.blength = length << 3;
       nas_stream_encrypt_eia1 (&stream_cipher, mac);
-      LOG_DEBUG (LOG_NAS, "NAS_SECURITY_ALGORITHMS_EIA1 returned MAC %x.%x.%x.%x(%u) for length %d direction %d, count %d\n", mac[0], mac[1], mac[2], mac[3], *((uint32_t *) & mac), length, direction, count);
+      LOG_DEBUG (LOG_NAS, "NAS_SECURITY_ALGORITHMS_EIA1 returned MAC %x.%x.%x.%x(%u) for length %lu direction %d, count %d\n",
+          mac[0], mac[1], mac[2], mac[3], *((uint32_t *) & mac), length, direction, count);
       mac32 = (uint32_t *) & mac;
       LOG_FUNC_RETURN (LOG_NAS, ntohl (*mac32));
     }
@@ -1416,7 +1418,8 @@ _nas_message_get_mac (
        */
       stream_cipher.blength = length << 3;
       nas_stream_encrypt_eia2 (&stream_cipher, mac);
-      LOG_DEBUG (LOG_NAS, "NAS_SECURITY_ALGORITHMS_EIA2 returned MAC %x.%x.%x.%x(%u) for length %d direction %d, count %d\n", mac[0], mac[1], mac[2], mac[3], *((uint32_t *) & mac), length, direction, count);
+      LOG_DEBUG (LOG_NAS, "NAS_SECURITY_ALGORITHMS_EIA2 returned MAC %x.%x.%x.%x(%u) for length %lu direction %d, count %d\n",
+          mac[0], mac[1], mac[2], mac[3], *((uint32_t *) & mac), length, direction, count);
       mac32 = (uint32_t *) & mac;
       LOG_FUNC_RETURN (LOG_NAS, ntohl (*mac32));
     }

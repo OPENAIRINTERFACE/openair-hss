@@ -47,7 +47,7 @@ Description Defines callback functions executed within EMM common procedures
 *****************************************************************************/
 #ifndef __EMM_COMMON_H__
 #define __EMM_COMMON_H__
-
+#include "common_types.h"
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
@@ -85,18 +85,18 @@ typedef int (*emm_common_abort_callback_t)(void *);
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int emm_proc_common_initialize(nas_ue_id_t ueid,
+int emm_proc_common_initialize(mme_ue_s1ap_id_t ue_id,
                                emm_common_success_callback_t success,
                                emm_common_reject_callback_t reject,
                                emm_common_failure_callback_t failure,
                                emm_common_abort_callback_t abort,
                                void *args);
 
-int emm_proc_common_success(nas_ue_id_t ueid);
-int emm_proc_common_reject(nas_ue_id_t ueid);
-int emm_proc_common_failure(nas_ue_id_t ueid);
-int emm_proc_common_abort(nas_ue_id_t ueid);
+int emm_proc_common_success(mme_ue_s1ap_id_t ue_id);
+int emm_proc_common_reject(mme_ue_s1ap_id_t ue_id);
+int emm_proc_common_failure(mme_ue_s1ap_id_t ue_id);
+int emm_proc_common_abort(mme_ue_s1ap_id_t ue_id);
 
-void *emm_proc_common_get_args(nas_ue_id_t ueid);
+void *emm_proc_common_get_args(mme_ue_s1ap_id_t ue_id);
 
 #endif /* __EMM_COMMON_H__*/

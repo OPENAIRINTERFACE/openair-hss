@@ -46,7 +46,7 @@ s11_sgw_handle_modify_bearer_request (
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
-  SgwModifyBearerRequest                 *modify_bearer_request_p;
+  itti_sgw_modify_bearer_request_t                 *modify_bearer_request_p;
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 
@@ -138,7 +138,7 @@ s11_sgw_handle_modify_bearer_request (
 int
 s11_sgw_handle_modify_bearer_response (
   NwGtpv2cStackHandleT * stack_p,
-  SgwModifyBearerResponse * modify_bearer_response_p)
+  itti_sgw_modify_bearer_response_t * modify_bearer_response_p)
 {
   gtp_cause_t                             cause;
   NwRcT                                   rc;

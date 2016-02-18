@@ -374,7 +374,7 @@ s6a_generate_authentication_info_req (
     uint8_t                                 plmn[3] = { 0x00, 0x00, 0x00 };     //{ 0x02, 0xF8, 0x29 };
     CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_visited_plmn_id, 0, &avp));
     PLMN_T_TO_TBCD (air_p->visited_plmn,
-                    plmn, mme_config_find_mnc_length (air_p->visited_plmn.MCCdigit1, air_p->visited_plmn.MCCdigit2, air_p->visited_plmn.MCCdigit3, air_p->visited_plmn.MNCdigit1, air_p->visited_plmn.MNCdigit2, air_p->visited_plmn.MNCdigit3)
+                    plmn, mme_config_find_mnc_length (air_p->visited_plmn.mcc_digit1, air_p->visited_plmn.mcc_digit2, air_p->visited_plmn.mcc_digit3, air_p->visited_plmn.mnc_digit1, air_p->visited_plmn.mnc_digit2, air_p->visited_plmn.mnc_digit3)
       );
     value.os.data = plmn;
     value.os.len = 3;

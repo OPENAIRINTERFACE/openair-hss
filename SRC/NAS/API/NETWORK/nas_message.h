@@ -111,14 +111,14 @@ nas_message_encrypt(
   const char                          *inbuf,
   char                                *outbuf,
   const nas_message_security_header_t *header,
-  int                                  length,
+  size_t                               length,
   void                                *security);
 
 int
 nas_message_decrypt(const char * const inbuf,
   char                         * const outbuf,
   nas_message_security_header_t  *header,
-  int                             length,
+  size_t                          length,
   void                           *security,
   nas_message_decode_status_t *   status);
 
@@ -126,7 +126,7 @@ int
 nas_message_decode(
   const char * const  buffer,
   nas_message_t      *msg,
-  int                 length,
+  size_t              length,
   void               *security,
   nas_message_decode_status_t * status);
 
@@ -134,7 +134,7 @@ int
 nas_message_encode(
   char                       *buffer,
   const nas_message_t * const msg,
-  int                         length,
+  size_t                      length,
   void                       *security);
 
 #endif /* NAS_MESSAGE_H*/

@@ -70,11 +70,11 @@
 
 /* EMM procedure callback cleanup function  */
 static void                             _emm_common_cleanup (
-  nas_ue_id_t ueid);
+    mme_ue_s1ap_id_t ue_id);
 
 /* Ongoing EMM procedure callback functions */
 typedef struct emm_common_data_s {
-  nas_ue_id_t                             ueid;
+  mme_ue_s1ap_id_t                        ue_id;
   int                                     ref_count;
   emm_common_success_callback_t           success;
   emm_common_reject_callback_t            reject;
@@ -110,11 +110,11 @@ emm_common_data_compare_ueid (
   struct emm_common_data_s *p1,
   struct emm_common_data_s *p2)
 {
-  if (p1->ueid > p2->ueid) {
+  if (p1->ue_id > p2->ue_id) {
     return 1;
   }
 
-  if (p1->ueid < p2->ueid) {
+  if (p1->ue_id < p2->ue_id) {
     return -1;
   }
 
@@ -127,7 +127,7 @@ emm_common_data_compare_ueid (
 struct emm_common_data_s               *
 emm_common_data_context_get (
   struct emm_common_data_head_s *root,
-  nas_ue_id_t _ueid)
+  mme_ue_s1ap_id_t _ueid)
 {
   struct emm_common_data_s                reference;
   struct emm_common_data_s               *reference_p = NULL;
@@ -135,7 +135,7 @@ emm_common_data_context_get (
   DevAssert (root );
   DevCheck (_ueid > 0, _ueid, 0, 0);
   memset (&reference, 0, sizeof (struct emm_common_data_s));
-  reference.ueid = _ueid;
+  reference.ue_id = _ueid;
   pthread_mutex_lock(&root->mutex);
   reference_p = RB_FIND (emm_common_data_map, &root->emm_common_data_root, &reference);
   pthread_mutex_unlock(&root->mutex);
@@ -154,7 +154,7 @@ emm_common_data_context_get (
  ** Description: Initialize EMM procedure callback functions executed for  **
  **      the UE with the given identifier                          **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      success:   EMM procedure executed upon successful EMM **
  **             common procedure completion                **
  **      reject:    EMM procedure executed if the EMM common   **
@@ -173,7 +173,7 @@ emm_common_data_context_get (
  ***************************************************************************/
 int
 emm_proc_common_initialize (
-  nas_ue_id_t ueid,
+    mme_ue_s1ap_id_t ue_id,
   emm_common_success_callback_t _success,
   emm_common_reject_callback_t _reject,
   emm_common_failure_callback_t _failure,
@@ -183,12 +183,12 @@ emm_proc_common_initialize (
   struct emm_common_data_s               *emm_common_data_ctx = NULL;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  assert (ueid > 0);
-  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
+  assert (ue_id > 0);
+  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
 
   if (emm_common_data_ctx == NULL) {
     emm_common_data_ctx = (emm_common_data_t *) CALLOC_CHECK (1, sizeof (emm_common_data_t));
-    emm_common_data_ctx->ueid = ueid;
+    emm_common_data_ctx->ue_id = ue_id;
     pthread_mutex_lock(&emm_common_data_head.mutex);
     RB_INSERT (emm_common_data_map, &emm_common_data_head.emm_common_data_root, emm_common_data_ctx);
     pthread_mutex_unlock(&emm_common_data_head.mutex);
@@ -220,7 +220,7 @@ emm_proc_common_initialize (
  **      fully. The network performs required actions related to   **
  **      the ongoing EMM procedure.                                **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      Others:    _emm_common_data, _emm_data                **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -230,24 +230,24 @@ emm_proc_common_initialize (
  ***************************************************************************/
 int
 emm_proc_common_success (
-  nas_ue_id_t ueid)
+  mme_ue_s1ap_id_t ue_id)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
   emm_common_success_callback_t           emm_callback = {0};
   int                                     rc = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  DevCheck (ueid > 0, ueid, 0, 0);
-  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
+  DevCheck (ue_id > 0, ue_id, 0, 0);
+  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
   assert (emm_common_data_ctx );
   emm_callback = emm_common_data_ctx->success;
 
   if (emm_callback) {
-    struct emm_data_context_s  *ctx = emm_data_context_get (&_emm_data, ueid);
+    struct emm_data_context_s  *ctx = emm_data_context_get (&_emm_data, ue_id);
     rc = (*emm_callback) (ctx);
   }
 
-  _emm_common_cleanup (ueid);
+  _emm_common_cleanup (ue_id);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -260,7 +260,7 @@ emm_proc_common_success (
  **      rejected. The network performs required actions related   **
  **      to the ongoing EMM procedure.                             **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      Others:    _emm_common_data, _emm_data                **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -270,24 +270,24 @@ emm_proc_common_success (
  ***************************************************************************/
 int
 emm_proc_common_reject (
-  nas_ue_id_t ueid)
+  mme_ue_s1ap_id_t ue_id)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
   int                                     rc = RETURNerror;
   emm_common_reject_callback_t            emm_callback;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  DevCheck (ueid > 0, ueid, 0, 0);
-  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
+  DevCheck (ue_id > 0, ue_id, 0, 0);
+  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
   assert (emm_common_data_ctx );
   emm_callback = emm_common_data_ctx->reject;
 
   if (emm_callback) {
-    struct emm_data_context_s *ctx = emm_data_context_get (&_emm_data, ueid);
+    struct emm_data_context_s *ctx = emm_data_context_get (&_emm_data, ue_id);
     rc = (*emm_callback) (ctx);
   }
 
-  _emm_common_cleanup (ueid);
+  _emm_common_cleanup (ue_id);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -301,7 +301,7 @@ emm_proc_common_reject (
  **      being completed. The network performs required actions    **
  **      related to the ongoing EMM procedure.                     **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      Others:    _emm_common_data, _emm_data                **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -311,15 +311,15 @@ emm_proc_common_reject (
  ***************************************************************************/
 int
 emm_proc_common_failure (
-  nas_ue_id_t ueid)
+    mme_ue_s1ap_id_t ue_id)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
   emm_common_failure_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  DevCheck (ueid > 0, ueid, 0, 0);
-  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
+  DevCheck (ue_id > 0, ue_id, 0, 0);
+  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
 
   assert (emm_common_data_ctx );
   emm_callback = emm_common_data_ctx->failure;
@@ -327,11 +327,11 @@ emm_proc_common_failure (
   if (emm_callback) {
     struct emm_data_context_s              *ctx = NULL;
 
-    ctx = emm_data_context_get (&_emm_data, ueid);
+    ctx = emm_data_context_get (&_emm_data, ue_id);
     rc = (*emm_callback) (ctx);
   }
 
-  _emm_common_cleanup (ueid);
+  _emm_common_cleanup (ue_id);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -344,7 +344,7 @@ emm_proc_common_failure (
  **      cedure previously initiated between the UE with the spe-  **
  **      cified identifier and the MME.                            **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      Others:    _emm_common_data                           **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -354,15 +354,15 @@ emm_proc_common_failure (
  ***************************************************************************/
 int
 emm_proc_common_abort (
-  nas_ue_id_t ueid)
+    mme_ue_s1ap_id_t ue_id)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
   emm_common_failure_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  DevCheck (ueid > 0, ueid, 0, 0);
-  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
+  DevCheck (ue_id > 0, ue_id, 0, 0);
+  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
 
   assert (emm_common_data_ctx );
   emm_callback = emm_common_data_ctx->abort;
@@ -370,11 +370,11 @@ emm_proc_common_abort (
   if (emm_callback) {
     struct emm_data_context_s              *ctx = NULL;
 
-    ctx = emm_data_context_get (&_emm_data, ueid);
+    ctx = emm_data_context_get (&_emm_data, ue_id);
     rc = (*emm_callback) (ctx);
   }
 
-  _emm_common_cleanup (ueid);
+  _emm_common_cleanup (ue_id);
   LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -385,7 +385,7 @@ emm_proc_common_abort (
  ** Description: Returns pointer to the EMM common procedure argument pa-  **
  **      rameters allocated for the UE with the given identifier.  **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      Others:    _emm_common_data                           **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -396,13 +396,13 @@ emm_proc_common_abort (
  ***************************************************************************/
 void                                   *
 emm_proc_common_get_args (
-  nas_ue_id_t ueid)
+    mme_ue_s1ap_id_t ue_id)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
 
   LOG_FUNC_IN (LOG_NAS_EMM);
-  DevCheck (ueid > 0, ueid, 0, 0);
-  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
+  DevCheck (ue_id > 0, ue_id, 0, 0);
+  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
   assert (emm_common_data_ctx );
   LOG_FUNC_RETURN (LOG_NAS_EMM, emm_common_data_ctx->args);
 }
@@ -420,7 +420,7 @@ emm_proc_common_get_args (
  **      EMM procedure currently in progress between the network   **
  **      and the UE with the specified identifier.                 **
  **                                                                        **
- ** Inputs:  ueid:      UE lower layer identifier                  **
+ ** Inputs:  ue_id:      UE lower layer identifier                  **
  **      Others:    None                                       **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -430,12 +430,12 @@ emm_proc_common_get_args (
  ***************************************************************************/
 static void
 _emm_common_cleanup (
-  nas_ue_id_t ueid)
+  mme_ue_s1ap_id_t ue_id)
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
 
-  DevCheck (ueid > 0, ueid, 0, 0);
-  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ueid);
+  DevCheck (ue_id > 0, ue_id, 0, 0);
+  emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
 
   if (emm_common_data_ctx) {
     __sync_fetch_and_sub(&emm_common_data_ctx->ref_count, 1);

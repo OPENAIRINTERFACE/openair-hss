@@ -27,9 +27,9 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef UTILS_ASSERTIONS_H_
-#define UTILS_ASSERTIONS_H_
+#ifndef FILE_COMMON_ASSERTIONS_SEEN
+#define FILE_COMMON_ASSERTIONS_SEEN
 
 #include "./ITTI/assertions.h"
 
-#endif /* UTILS_ASSERTIONS_H_ */
+#endif /* FILE_COMMON_ASSERTIONS_SEEN */

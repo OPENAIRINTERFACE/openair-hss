@@ -41,6 +41,7 @@ Description Defines the EMMREG Service Access Point that provides
 #ifndef __EMM_REGDEF_H__
 #define __EMM_REGDEF_H__
 
+#include "common_types.h"
 #include "commonDef.h"
 #include <stdbool.h>
 
@@ -111,7 +112,7 @@ typedef struct {
  */
 typedef struct {
   emm_reg_primitive_t primitive;
-  nas_ue_id_t         ueid;
+  mme_ue_s1ap_id_t    ue_id;
   void               *ctx;
 
   union {

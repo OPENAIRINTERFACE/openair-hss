@@ -97,7 +97,7 @@ s11_mme_handle_create_session_response (
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
-  SgwCreateSessionResponse               *create_session_resp_p;
+  itti_sgw_create_session_response_t               *create_session_resp_p;
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 
@@ -163,7 +163,7 @@ s11_mme_handle_create_session_response (
 int
 s11_mme_release_access_bearers_request (
   NwGtpv2cStackHandleT * stack_p,
-  SgwReleaseAccessBearersRequest * release_access_bearers_p)
+  itti_sgw_release_access_bearers_request_t * release_access_bearers_p)
 {
   NwGtpv2cUlpApiT                         ulp_req;
 

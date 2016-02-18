@@ -42,8 +42,8 @@
 #include <netinet/in.h>
 #include <netinet/sctp.h>
 
-#ifndef SCTP_PRIMITIVES_SERVER_H_
-#define SCTP_PRIMITIVES_SERVER_H_
+#ifndef FILE_SCTP_PRIMITIVES_SERVER_SEEN
+#define FILE_SCTP_PRIMITIVES_SERVER_SEEN
 
 /** \brief SCTP data received callback
  \param buffer pointer to buffer received
@@ -57,6 +57,6 @@ typedef void (*sctp_recv_callback)(uint8_t *buffer, uint32_t length);
  **/
 int sctp_init(const mme_config_t *mme_config_p);
 
-#endif /* SCTP_PRIMITIVES_SERVER_H_ */
+#endif /* FILE_SCTP_PRIMITIVES_SERVER_SEEN */
 
 /* @} */

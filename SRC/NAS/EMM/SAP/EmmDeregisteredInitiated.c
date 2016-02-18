@@ -85,7 +85,7 @@ EmmDeregisteredInitiated (
   LOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  assert (emm_fsm_get_status (evt->ueid, evt->ctx) == EMM_DEREGISTERED_INITIATED);
+  assert (emm_fsm_get_status (evt->ue_id, evt->ctx) == EMM_DEREGISTERED_INITIATED);
 
   switch (evt->primitive) {
   default:

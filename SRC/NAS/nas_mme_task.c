@@ -55,25 +55,28 @@ nas_intertask_interface (
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case NAS_CONNECTION_ESTABLISHMENT_IND:{
-        nas_establish_ind_t                    *nas_est_ind_p;
+        nas_establish_ind_t                    *nas_est_ind_p = NULL;
 
         nas_est_ind_p = &received_message_p->ittiMsg.nas_conn_est_ind.nas;
-        nas_proc_establish_ind (nas_est_ind_p->UEid, nas_est_ind_p->tai, nas_est_ind_p->initialNasMsg.data, nas_est_ind_p->initialNasMsg.length);
+        nas_proc_establish_ind (nas_est_ind_p->ue_id,
+            nas_est_ind_p->tai,
+            nas_est_ind_p->initial_nas_msg.data,
+            nas_est_ind_p->initial_nas_msg.length);
       }
       break;
 
     case NAS_UPLINK_DATA_IND:{
-        nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).UEid, NAS_UL_DATA_IND (received_message_p).nasMsg.data, NAS_UL_DATA_IND (received_message_p).nasMsg.length);
+        nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id, NAS_UL_DATA_IND (received_message_p).nas_msg.data, NAS_UL_DATA_IND (received_message_p).nas_msg.length);
       }
       break;
 
     case NAS_DOWNLINK_DATA_CNF:{
-        nas_proc_dl_transfer_cnf (NAS_DL_DATA_CNF (received_message_p).UEid);
+        nas_proc_dl_transfer_cnf (NAS_DL_DATA_CNF (received_message_p).ue_id);
       }
       break;
 
     case NAS_DOWNLINK_DATA_REJ:{
-        nas_proc_dl_transfer_rej (NAS_DL_DATA_REJ (received_message_p).UEid);
+        nas_proc_dl_transfer_rej (NAS_DL_DATA_REJ (received_message_p).ue_id);
       }
       break;
 

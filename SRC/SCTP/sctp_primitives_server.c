@@ -65,7 +65,7 @@ typedef struct sctp_association_s {
   uint32_t                                ppid; ///< Payload protocol Identifier
   uint16_t                                instreams;    ///< Number of input streams negociated for this connection
   uint16_t                                outstreams;   ///< Number of output strams negotiated for this connection
-  int32_t                                 assoc_id;     ///< SCTP association id for the connection
+  sctp_assoc_id_t                         assoc_id;     ///< SCTP association id for the connection
   uint32_t                                messages_recv;        ///< Number of messages received on this connection
   uint32_t                                messages_sent;        ///< Number of messages sent on this connection
 
@@ -97,18 +97,18 @@ static pthread_t                        assoc_thread;
 void                                   *sctp_receiver_thread (
   void *args_p);
 static int                              sctp_send_msg (
-  int32_t sctp_assoc_id,
-  uint16_t stream,
-  const uint8_t * buffer,
-  const uint32_t length);
+    sctp_assoc_id_t sctp_assoc_id,
+    uint16_t stream,
+    const uint8_t * buffer,
+    const size_t length);
 
 // Association list related local functions prototypes
 static struct sctp_association_s       *sctp_is_assoc_in_list (
-  int32_t assoc_id);
+    sctp_assoc_id_t assoc_id);
 static struct sctp_association_s       *sctp_add_new_peer (
   void);
 static int                              sctp_handle_com_down (
-  uint32_t assoc_id);
+    sctp_assoc_id_t assoc_id);
 static void                             sctp_dump_list (
   void);
 static void sctp_exit (void);
@@ -145,7 +145,7 @@ sctp_add_new_peer (
 //------------------------------------------------------------------------------
 static struct sctp_association_s       *
 sctp_is_assoc_in_list (
-  int32_t assoc_id)
+    sctp_assoc_id_t assoc_id)
 {
   struct sctp_association_s              *assoc_desc = NULL;
 
@@ -165,7 +165,7 @@ sctp_is_assoc_in_list (
 //------------------------------------------------------------------------------
 static int
 sctp_remove_assoc_from_list (
-  int32_t assoc_id)
+    sctp_assoc_id_t assoc_id)
 {
   struct sctp_association_s              *assoc_desc = NULL;
 
@@ -269,10 +269,10 @@ sctp_dump_list (
 //------------------------------------------------------------------------------
 static int
 sctp_send_msg (
-  int32_t sctp_assoc_id,
-  uint16_t stream,
-  const uint8_t * buffer,
-  const uint32_t length)
+    sctp_assoc_id_t sctp_assoc_id,
+    uint16_t stream,
+    const uint8_t * buffer,
+    const size_t length)
 {
   struct sctp_association_s              *assoc_desc = NULL;
 
@@ -291,7 +291,7 @@ sctp_send_msg (
     return -1;
   }
 
-  LOG_DEBUG (LOG_SCTP, "[%d][%d] Sending buffer %p of %d bytes on stream %d with ppid %d\n", assoc_desc->sd, sctp_assoc_id, buffer, length, stream, assoc_desc->ppid);
+  LOG_DEBUG (LOG_SCTP, "[%d][%d] Sending buffer %p of %lu bytes on stream %d with ppid %d\n", assoc_desc->sd, sctp_assoc_id, buffer, length, stream, assoc_desc->ppid);
 
   /*
    * Send message_p on specified stream of the sd association
@@ -302,7 +302,7 @@ sctp_send_msg (
   }
 
   assoc_desc->messages_sent++;
-  LOG_DEBUG (LOG_SCTP, "Successfully sent %d bytes on stream %d\n", length, stream);
+  LOG_DEBUG (LOG_SCTP, "Successfully sent %lu bytes on stream %d\n", length, stream);
   return 0;
 }
 
@@ -532,7 +532,7 @@ sctp_read_from_socket (
 //------------------------------------------------------------------------------
 static int
 sctp_handle_com_down (
-  uint32_t assoc_id)
+    sctp_assoc_id_t assoc_id)
 {
   LOG_DEBUG (LOG_SCTP, "Sending close connection for assoc_id %u\n", assoc_id);
 
@@ -685,9 +685,12 @@ sctp_intertask_interface (
       break;
 
     case SCTP_DATA_REQ:{
-        if (sctp_send_msg (SCTP_DATA_REQ (received_message_p).assocId, SCTP_DATA_REQ (received_message_p).stream, SCTP_DATA_REQ (received_message_p).buffer, SCTP_DATA_REQ (received_message_p).bufLen) < 0) {
+        if (sctp_send_msg (SCTP_DATA_REQ (received_message_p).assoc_id,
+            SCTP_DATA_REQ (received_message_p).stream,
+            SCTP_DATA_REQ (received_message_p).buffer,
+            SCTP_DATA_REQ (received_message_p).buf_len) < 0) {
           LOG_ERROR (LOG_SCTP, "Failed to send message over SCTP assoc ID %u stream %u\n",
-              SCTP_DATA_REQ (received_message_p).assocId,
+              SCTP_DATA_REQ (received_message_p).assoc_id,
               SCTP_DATA_REQ (received_message_p).stream);
         }
       }

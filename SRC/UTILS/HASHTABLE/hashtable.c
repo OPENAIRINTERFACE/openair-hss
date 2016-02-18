@@ -252,7 +252,7 @@ hashtable_destroy (
   hash_node_t                            *node = NULL,
                                          *oldnode = NULL;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -293,7 +293,7 @@ hashtable_ts_destroy (
   hash_node_t                            *node = NULL,
                                          *oldnode = NULL;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -336,7 +336,7 @@ hashtable_is_key_exists (
   hash_node_t                            *node = NULL;
   hash_size_t                             hash = 0;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -367,7 +367,7 @@ hashtable_ts_is_key_exists (
   hash_node_t                            *node = NULL;
   hash_size_t                             hash = 0;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -410,7 +410,7 @@ hashtable_apply_callback_on_elements (
   unsigned int                            i = 0;
   unsigned int                            num_elements = 0;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -451,7 +451,7 @@ hashtable_ts_apply_callback_on_elements (
   unsigned int                            i = 0;
   unsigned int                            num_elements = 0;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -489,7 +489,7 @@ hashtable_dump_content (
   unsigned int                            i = 0;
   int                                     rc;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "HASH_TABLE_BAD_PARAMETER_HASHTABLE");
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
@@ -528,7 +528,7 @@ hashtable_ts_dump_content (
   unsigned int                            i = 0;
   int                                     rc;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "HASH_TABLE_BAD_PARAMETER_HASHTABLE");
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
@@ -572,7 +572,7 @@ hashtable_insert (
   hash_node_t                            *node = NULL;
   hash_size_t                             hash = 0;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -628,7 +628,7 @@ hashtable_ts_insert (
   hash_node_t                            *node = NULL;
   hash_size_t                             hash = 0;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -686,7 +686,7 @@ hashtable_free (
                                          *prevnode = NULL;
   hash_size_t                             hash = 0;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -734,7 +734,7 @@ hashtable_ts_free (
                                          *prevnode = NULL;
   hash_size_t                             hash = 0;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -787,7 +787,7 @@ hashtable_remove (
                                          *prevnode = NULL;
   hash_size_t                             hash = 0;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -833,7 +833,7 @@ hashtable_ts_remove (
                                          *prevnode = NULL;
   hash_size_t                             hash = 0;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -882,7 +882,7 @@ hashtable_get (
   hash_size_t                             hash = 0;
 
   *dataP = NULL;
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -920,7 +920,7 @@ hashtable_ts_get (
   hash_size_t                             hash = 0;
 
   *dataP = NULL;
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -970,7 +970,7 @@ hashtable_resize (
                                          *next;
   void                                   *dummy = NULL;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
@@ -1021,7 +1021,7 @@ hashtable_ts_resize (
                                          *next   = NULL;
   void                                   *dummy  = NULL;
 
-  if (hashtblP == NULL) {
+  if (!hashtblP) {
     PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }

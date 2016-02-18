@@ -140,7 +140,7 @@ typedef struct mme_config_s {
   char *realm;
   int   realm_length;
 
-  uint32_t max_eNBs;
+  uint32_t max_enbs;
   uint32_t max_ues;
 
   uint8_t relative_capacity;
@@ -193,15 +193,15 @@ typedef struct mme_config_s {
     uint8_t  outcome_drop_timer_sec;
   } s1ap_config;
   struct {
-    uint32_t  sgw_ip_address_for_S1u_S12_S4_up;
+    uint32_t  sgw_ip_address_for_s1u_s12_s4_up;
 
-    char     *mme_interface_name_for_S1_MME;
-    uint32_t  mme_ip_address_for_S1_MME;
+    char     *mme_interface_name_for_s1_mme;
+    uint32_t  mme_ip_address_for_s1_mme;
 
-    char     *mme_interface_name_for_S11;
-    uint32_t  mme_ip_address_for_S11;
+    char     *mme_interface_name_for_s11;
+    uint32_t  mme_ip_address_for_s11;
 
-    uint32_t  sgw_ip_address_for_S11;
+    uint32_t  sgw_ip_address_for_s11;
   } ipv4;
   struct {
     char *conf_file;

@@ -58,7 +58,7 @@ typedef itti_nas_pdn_connectivity_rsp_t  emm_cn_pdn_res_t;
 typedef itti_nas_pdn_connectivity_fail_t emm_cn_pdn_fail_t;
 
 typedef struct emm_cn_deregister_ue_s {
-  uint32_t UEid;
+  uint32_t ue_id;
 } emm_cn_deregister_ue_t;
 
 typedef struct emm_mme_ul_s {
