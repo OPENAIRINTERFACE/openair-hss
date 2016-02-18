@@ -28,8 +28,8 @@
 #include "MessageType.h"
 #include "MobileIdentity.h"
 
-#ifndef IDENTITY_RESPONSE_H_
-#define IDENTITY_RESPONSE_H_
+#ifndef FILE_IDENTITY_RESPONSE_SEEN
+#define FILE_IDENTITY_RESPONSE_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define IDENTITY_RESPONSE_MINIMUM_LENGTH ( \
@@ -59,5 +59,5 @@ int decode_identity_response(identity_response_msg *identityresponse, uint8_t *b
 
 int encode_identity_response(identity_response_msg *identityresponse, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(IDENTITY_RESPONSE_H_) */
+#endif /* ! defined(FILE_IDENTITY_RESPONSE_SEEN) */
 

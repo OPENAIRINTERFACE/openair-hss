@@ -25,11 +25,11 @@
 * \email: lionel.gauthier@eurecom.fr
 */
 
-#ifndef GTPV1_U_H_
-#define GTPV1_U_H_
+#ifndef FILE_GTPV1_U_SEEN
+#define FILE_GTPV1_U_SEEN
 
 # define GTPU_HEADER_OVERHEAD_MAX 64
 
 uint32_t gtpv1u_new_teid(void);
 
-#endif /* GTPV1_U_H_ */
+#endif /* FILE_GTPV1_U_SEEN */

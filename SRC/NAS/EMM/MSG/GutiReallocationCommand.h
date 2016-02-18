@@ -29,8 +29,8 @@
 #include "EpsMobileIdentity.h"
 #include "TrackingAreaIdentityList.h"
 
-#ifndef GUTI_REALLOCATION_COMMAND_H_
-#define GUTI_REALLOCATION_COMMAND_H_
+#ifndef FILE_GUTI_REALLOCATION_COMMAND_SEEN
+#define FILE_GUTI_REALLOCATION_COMMAND_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define GUTI_REALLOCATION_COMMAND_MINIMUM_LENGTH ( \
@@ -72,5 +72,5 @@ int decode_guti_reallocation_command(guti_reallocation_command_msg *gutirealloca
 
 int encode_guti_reallocation_command(guti_reallocation_command_msg *gutireallocationcommand, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(GUTI_REALLOCATION_COMMAND_H_) */
+#endif /* ! defined(FILE_GUTI_REALLOCATION_COMMAND_SEEN) */
 

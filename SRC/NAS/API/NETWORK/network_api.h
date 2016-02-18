@@ -37,8 +37,8 @@ Description Implements the API used by the NAS layer to send/receive
     message to/from the network layer
 
 *****************************************************************************/
-#ifndef __NETWORK_API_H__
-#define __NETWORK_API_H__
+#ifndef FILE_NETWORK_API_SEEN
+#define FILE_NETWORK_API_SEEN
 #include <stddef.h>
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -68,4 +68,4 @@ void network_api_close(int fd);
 int network_api_decode_data(size_t length);
 int network_api_encode_data(void* data);
 
-#endif /* __NETWORK_API_H__*/
+#endif /* FILE_NETWORK_API_SEEN*/

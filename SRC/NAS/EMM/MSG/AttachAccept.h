@@ -39,8 +39,8 @@
 #include "EpsNetworkFeatureSupport.h"
 #include "AdditionalUpdateResult.h"
 
-#ifndef ATTACH_ACCEPT_H_
-#define ATTACH_ACCEPT_H_
+#ifndef FILE_ATTACH_ACCEPT_SEEN
+#define FILE_ATTACH_ACCEPT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define ATTACH_ACCEPT_MINIMUM_LENGTH ( \
@@ -127,5 +127,5 @@ int decode_attach_accept(attach_accept_msg *attachaccept, uint8_t *buffer, uint3
 
 int encode_attach_accept(attach_accept_msg *attachaccept, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(ATTACH_ACCEPT_H_) */
+#endif /* ! defined(FILE_ATTACH_ACCEPT_SEEN) */
 

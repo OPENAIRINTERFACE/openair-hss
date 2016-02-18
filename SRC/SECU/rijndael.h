@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#ifndef RIJNDAEL_H_
-#define RIJNDAEL_H_
+#ifndef FILE_RIJNDAEL_SEEN
+#define FILE_RIJNDAEL_SEEN
 /* Rijndael S-box SR */
 
 extern uint8_t SR[256];

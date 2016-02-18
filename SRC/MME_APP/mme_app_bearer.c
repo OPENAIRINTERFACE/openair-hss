@@ -91,9 +91,9 @@ mme_app_send_s11_create_session_req (
   /*
    * Keep the identifier to the default APN
    */
-  context_identifier_t                    context_identifier;
+  context_identifier_t                    context_identifier = 0;
   MessageDef                             *message_p = NULL;
-  SgwCreateSessionRequest                *session_request_p = NULL;
+  itti_sgw_create_session_request_t      *session_request_p = NULL;
   struct apn_configuration_s             *default_apn_p = NULL;
   int                                     rc = RETURNok;
 
@@ -129,7 +129,7 @@ mme_app_send_s11_create_session_req (
    * Set these parameters with random values for now.
    */
   session_request_p = &message_p->ittiMsg.sgwCreateSessionRequest;
-  memset (session_request_p, 0, sizeof (SgwCreateSessionRequest));
+  memset (session_request_p, 0, sizeof (itti_sgw_create_session_request_t));
   /*
    * As the create session request is the first exchanged message and as
    * no tunnel had been previously setup, the distant teid is set to 0.
@@ -427,7 +427,7 @@ mme_app_handle_conn_est_ind (
           // TODO: review this code: shortcut default case
           guti.gummei.mme_gid = mme_config.gummei.mme_gid[0];
 
-          for (int gindex = 0; gindex < mme_config.gummei.nb_mmec; gindex) {
+          for (int gindex = 0; gindex < mme_config.gummei.nb_mmec; gindex++) {
             if (conn_est_ind_pP->nas.s_tmsi.mme_code == mme_config.gummei.mmec[gindex]) {
               guti.gummei.mme_gid = mme_config.gummei.mme_gid[gindex];
               LOG_DEBUG (LOG_MME_APP, "Assigned mme_gid %d\n", guti.gummei.mme_gid);

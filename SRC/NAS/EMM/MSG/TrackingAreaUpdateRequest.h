@@ -46,8 +46,8 @@
 #include "AdditionalUpdateType.h"
 #include "GutiType.h"
 
-#ifndef TRACKING_AREA_UPDATE_REQUEST_H_
-#define TRACKING_AREA_UPDATE_REQUEST_H_
+#ifndef FILE_TRACKING_AREA_UPDATE_REQUEST_SEEN
+#define FILE_TRACKING_AREA_UPDATE_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define TRACKING_AREA_UPDATE_REQUEST_MINIMUM_LENGTH ( \
@@ -162,5 +162,5 @@ int decode_tracking_area_update_request(tracking_area_update_request_msg *tracki
 
 int encode_tracking_area_update_request(tracking_area_update_request_msg *trackingareaupdaterequest, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(TRACKING_AREA_UPDATE_REQUEST_H_) */
+#endif /* ! defined(FILE_TRACKING_AREA_UPDATE_REQUEST_SEEN) */
 

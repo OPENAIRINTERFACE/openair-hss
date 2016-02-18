@@ -44,11 +44,11 @@
 
  */
 
-#ifndef OAI_EPC_H_
-#define OAI_EPC_H_
+#ifndef FILE_OAI_EPC_SEEN
+#define FILE_OAI_EPC_SEEN
 
 int oai_epc_log_specific(int log_level);
 
 int main(int argc, char *argv[]);
 
-#endif /* OAI_EPC_H_ */
+#endif /* FILE_OAI_EPC_SEEN */

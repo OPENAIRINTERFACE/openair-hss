@@ -26,8 +26,8 @@
 * \email: lionel.gauthier@eurecom.fr
 */
 
-#ifndef SPGW_CONFIG_H_
-#define SPGW_CONFIG_H_
+#ifndef FILE_SPGW_CONFIG_SEEN
+#define FILE_SPGW_CONFIG_SEEN
 #include <sys/socket.h> // inet_aton
 #include <netinet/in.h> // inet_aton
 #include <arpa/inet.h>  // inet_aton
@@ -154,4 +154,4 @@ int spgw_system(char *command_pP, spgw_system_abort_control_e abort_on_errorP, c
 int spgw_config_process(spgw_config_t* config_pP);
 int spgw_config_init(char* lib_config_file_name_pP, spgw_config_t* config_pP);
 
-#endif /* ENB_CONFIG_H_ */
+#endif /* FILE_SPGW_CONFIG_SEEN */

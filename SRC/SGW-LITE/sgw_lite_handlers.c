@@ -67,7 +67,7 @@ sgw_get_new_teid (
 
 int
 sgw_lite_handle_create_session_request (
-  const SgwCreateSessionRequest * const session_req_pP)
+  const itti_sgw_create_session_request_t * const session_req_pP)
 {
   mme_sgw_tunnel_t                       *new_endpoint_p = NULL;
   s_plus_p_gw_eps_bearer_context_information_t *s_plus_p_gw_eps_bearer_ctxt_info_p = NULL;
@@ -179,7 +179,7 @@ sgw_lite_handle_create_session_request (
      * * * * If collision_p is not NULL (0), it means tunnel is already present.
      */
     //s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_informations_gw_ip_address_for_S11_S4 =
-    memcpy (&s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.saved_message, session_req_pP, sizeof (SgwCreateSessionRequest));
+    memcpy (&s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.saved_message, session_req_pP, sizeof (itti_sgw_create_session_request_t));
     /*
      * Establishing EPS bearer. Requesting S1-U (GTPV1-U) task to create a
      * * * * tunnel for S1 user plane interface. If status in response is successfull (0),

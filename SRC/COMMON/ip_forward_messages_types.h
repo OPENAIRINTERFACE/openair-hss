@@ -26,8 +26,8 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-#ifndef SGI_FORWARD_MESSAGES_TYPES_H_
-#define SGI_FORWARD_MESSAGES_TYPES_H_
+#ifndef FILE_SGI_FORWARD_MESSAGES_TYPES_SEEN
+#define FILE_SGI_FORWARD_MESSAGES_TYPES_SEEN
 
 typedef enum SGIStatus_e {
   SGI_STATUS_OK               = 0,
@@ -93,4 +93,4 @@ typedef struct {
   PAA_t            paa;                 ///< PDN Address Allocation
 } SGIDeleteEndpointResp;
 
-#endif /* SGI_FORWARD_MESSAGES_TYPES_H_ */
+#endif /* FILE_SGI_FORWARD_MESSAGES_TYPES_SEEN */

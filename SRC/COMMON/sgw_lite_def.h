@@ -26,7 +26,7 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-MESSAGE_DEF(SGW_CREATE_SESSION_REQUEST,  MESSAGE_PRIORITY_MED, SgwCreateSessionRequest,  sgwCreateSessionRequest)
+MESSAGE_DEF(SGW_CREATE_SESSION_REQUEST,  MESSAGE_PRIORITY_MED, itti_sgw_create_session_request_t,  sgwCreateSessionRequest)
 MESSAGE_DEF(SGW_CREATE_SESSION_RESPONSE, MESSAGE_PRIORITY_MED, itti_sgw_create_session_response_t, sgwCreateSessionResponse)
 MESSAGE_DEF(SGW_MODIFY_BEARER_REQUEST,   MESSAGE_PRIORITY_MED, itti_sgw_modify_bearer_request_t,   sgwModifyBearerRequest)
 MESSAGE_DEF(SGW_MODIFY_BEARER_RESPONSE,  MESSAGE_PRIORITY_MED, itti_sgw_modify_bearer_response_t,  sgwModifyBearerResponse)

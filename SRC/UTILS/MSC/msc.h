@@ -27,8 +27,8 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef MSC_H_
-#define MSC_H_
+#ifndef FILE_MSC_SEEN
+#define FILE_MSC_SEEN
 #include <stdarg.h>
 #include <stdint.h>
 

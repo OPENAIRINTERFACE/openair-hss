@@ -39,8 +39,8 @@ Description Defines the messages supported by the Access Stratum sublayer
         to encode and decode
 
 *****************************************************************************/
-#ifndef __AS_MESSAGE_H__
-#define __AS_MESSAGE_H__
+#ifndef FILE_AS_MESSAGE_H_SEEN
+#define FILE_AS_MESSAGE_H_SEEN
 
 #include "common_types.h"
 #include "commonDef.h"
@@ -569,4 +569,4 @@ int as_message_encode(char* buffer, as_message_t* msg, size_t length);
 /* Implemented in the network_api.c body file */
 int as_message_send(as_message_t* as_msg);
 
-#endif /* __AS_MESSAGE_H__*/
+#endif /* FILE_AS_MESSAGE_H_SEEN*/

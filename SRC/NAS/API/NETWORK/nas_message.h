@@ -37,8 +37,8 @@ Description Defines the layer 3 messages supported by the NAS sublayer
         protocol and functions used to encode and decode
 
 *****************************************************************************/
-#ifndef NAS_MESSAGE_H
-#define NAS_MESSAGE_H
+#ifndef FILE_NAS_MESSAGE_SEEN
+#define FILE_NAS_MESSAGE_SEEN
 
 #include "commonDef.h"
 #include "emm_msg.h"
@@ -137,4 +137,4 @@ nas_message_encode(
   size_t                      length,
   void                       *security);
 
-#endif /* NAS_MESSAGE_H*/
+#endif /* FILE_NAS_MESSAGE_SEEN*/

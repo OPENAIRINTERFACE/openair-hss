@@ -27,8 +27,8 @@
 #include "SecurityHeaderType.h"
 #include "MessageType.h"
 
-#ifndef GUTI_REALLOCATION_COMPLETE_H_
-#define GUTI_REALLOCATION_COMPLETE_H_
+#ifndef FILE_GUTI_REALLOCATION_COMPLETE_SEEN
+#define FILE_GUTI_REALLOCATION_COMPLETE_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define GUTI_REALLOCATION_COMPLETE_MINIMUM_LENGTH (0)
@@ -54,5 +54,5 @@ int decode_guti_reallocation_complete(guti_reallocation_complete_msg *gutireallo
 
 int encode_guti_reallocation_complete(guti_reallocation_complete_msg *gutireallocationcomplete, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(GUTI_REALLOCATION_COMPLETE_H_) */
+#endif /* ! defined(FILE_GUTI_REALLOCATION_COMPLETE_SEEN) */
 

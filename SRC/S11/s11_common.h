@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#ifndef S11_COMMON_H_
-#define S11_COMMON_H_
+#ifndef FILE_S11_COMMON_SEEN
+#define FILE_S11_COMMON_SEEN
 
 NwRcT s11_ie_indication_generic(uint8_t  ieType,
                                 uint8_t  ieLength,
@@ -28,4 +28,4 @@ NwRcT s11_ie_indication_generic(uint8_t  ieType,
                                 uint8_t *ieValue,
                                 void  *arg);
 
-#endif /* S11_COMMON_H_ */
+#endif /* FILE_S11_COMMON_SEEN */

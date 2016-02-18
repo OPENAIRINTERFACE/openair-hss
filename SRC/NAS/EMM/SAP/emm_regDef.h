@@ -38,8 +38,8 @@ Description Defines the EMMREG Service Access Point that provides
         procedures.
 
 *****************************************************************************/
-#ifndef __EMM_REGDEF_H__
-#define __EMM_REGDEF_H__
+#ifndef FILE_EMM_REGDEF_SEEN
+#define FILE_EMM_REGDEF_SEEN
 
 #include "common_types.h"
 #include "commonDef.h"
@@ -130,4 +130,4 @@ typedef struct {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#endif /* __EMM_REGDEF_H__*/
+#endif /* FILE_EMM_REGDEF_SEEN*/

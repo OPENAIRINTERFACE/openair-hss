@@ -28,8 +28,8 @@
 #include "MessageType.h"
 #include "AuthenticationResponseParameter.h"
 
-#ifndef AUTHENTICATION_RESPONSE_H_
-#define AUTHENTICATION_RESPONSE_H_
+#ifndef FILE_AUTHENTICATION_RESPONSE_SEEN
+#define FILE_AUTHENTICATION_RESPONSE_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define AUTHENTICATION_RESPONSE_MINIMUM_LENGTH ( \
@@ -59,5 +59,5 @@ int decode_authentication_response(authentication_response_msg *authenticationre
 
 int encode_authentication_response(authentication_response_msg *authenticationresponse, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(AUTHENTICATION_RESPONSE_H_) */
+#endif /* ! defined(FILE_AUTHENTICATION_RESPONSE_SEEN) */
 

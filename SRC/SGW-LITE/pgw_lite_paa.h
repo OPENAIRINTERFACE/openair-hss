@@ -25,8 +25,8 @@
 * \company Eurecom
 * \email: lionel.gauthier@eurecom.fr
 */
-#ifndef PGW_LITE_PAA_H_
-#define PGW_LITE_PAA_H_
+#ifndef FILE_PGW_LITE_PAA_SEEN
+#define FILE_PGW_LITE_PAA_SEEN
 
 void pgw_lite_load_pool_ip_addresses       (void);
 int pgw_lite_get_free_ipv4_paa_address     (struct in_addr * const addr_P);

@@ -25,8 +25,8 @@
 * \company Eurecom
 * \email: lionel.gauthier@eurecom.fr
 */
-#ifndef SGW_LITE_CONTEXT_MANAGER_H_
-#define SGW_LITE_CONTEXT_MANAGER_H_
+#ifndef FILE_SGW_LITE_CONTEXT_MANAGER_SEEN
+#define FILE_SGW_LITE_CONTEXT_MANAGER_SEEN
 
 #include "commonDef.h"
 #include "common_types.h"
@@ -186,7 +186,7 @@ typedef struct sgw_eps_bearer_context_information_s {
   void                  *trxn;
   uint32_t               peer_ip;
 
-  SgwCreateSessionRequest saved_message;
+  itti_sgw_create_session_request_t saved_message;
 } sgw_eps_bearer_context_information_t;
 
 /********************************
@@ -231,4 +231,4 @@ int                                    sgw_lite_cm_remove_bearer_context_informa
 sgw_eps_bearer_entry_t *               sgw_lite_cm_create_eps_bearer_entry_in_collection(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
 int                                    sgw_lite_cm_remove_eps_bearer_entry(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
 
-#endif /* SGW_LITE_CONTEXT_MANAGER_H_ */
+#endif /* FILE_SGW_LITE_CONTEXT_MANAGER_SEEN */

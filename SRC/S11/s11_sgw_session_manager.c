@@ -46,7 +46,7 @@ s11_sgw_handle_create_session_request (
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
-  SgwCreateSessionRequest                *create_session_request_p;
+  itti_sgw_create_session_request_t      *create_session_request_p;
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 

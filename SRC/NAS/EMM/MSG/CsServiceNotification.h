@@ -32,8 +32,8 @@
 #include "LcsIndicator.h"
 #include "LcsClientIdentity.h"
 
-#ifndef CS_SERVICE_NOTIFICATION_H_
-#define CS_SERVICE_NOTIFICATION_H_
+#ifndef FILE_CS_SERVICE_NOTIFICATION_SEEN
+#define FILE_CS_SERVICE_NOTIFICATION_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define CS_SERVICE_NOTIFICATION_MINIMUM_LENGTH ( \
@@ -87,5 +87,5 @@ int decode_cs_service_notification(cs_service_notification_msg *csservicenotific
 
 int encode_cs_service_notification(cs_service_notification_msg *csservicenotification, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(CS_SERVICE_NOTIFICATION_H_) */
+#endif /* ! defined(FILE_CS_SERVICE_NOTIFICATION_SEEN) */
 

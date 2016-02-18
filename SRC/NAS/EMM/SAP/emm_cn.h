@@ -39,9 +39,9 @@ Description
 
 #include "emm_cnDef.h"
 
-#ifndef _EMM_CN_H_
-#define _EMM_CN_H_
+#ifndef FILE_EMM_CN_SEEN
+#define FILE_EMM_CN_SEEN
 
 int emm_cn_send(const emm_cn_t *msg);
 
-#endif /* _EMM_CN_H_ */
+#endif /* FILE_EMM_CN_SEEN */

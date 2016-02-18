@@ -19,9 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#ifndef S11_SGW_H_
-#define S11_SGW_H_
+#ifndef FILE_S11_SGW_SEEN
+#define FILE_S11_SGW_SEEN
 
 int s11_sgw_init(const mme_config_t *mme_config);
 
-#endif /* S11_SGW_H_ */
+#endif /* FILE_S11_SGW_SEEN */

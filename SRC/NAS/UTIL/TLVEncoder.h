@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#ifndef TLV_ENCODER_H_
-#define TLV_ENCODER_H_
+#ifndef FILE_TLV_ENCODER_SEEN
+#define FILE_TLV_ENCODER_SEEN
 
 #include <arpa/inet.h>  // htonl, htons
 
@@ -94,5 +94,5 @@ void tlv_encode_perror(void);
                 return TLV_ENCODE_BUFFER_NULL;                                 \
         }
 
-#endif /* define (TLV_ENCODER_H_) */
+#endif /* define (FILE_TLV_ENCODER_SEEN) */
 

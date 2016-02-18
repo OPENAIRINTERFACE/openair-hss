@@ -38,8 +38,8 @@ Description Defines functions executed at the EMMAS Service Access
         from the Access Stratum sublayer.
 
 *****************************************************************************/
-#ifndef __EMM_RECV_H__
-#define __EMM_RECV_H__
+#ifndef FILE_EMM_RECV_SEEN
+#define FILE_EMM_RECV_SEEN
 
 #include "EmmStatus.h"
 
@@ -126,4 +126,4 @@ int emm_recv_security_mode_reject(mme_ue_s1ap_id_t ueid,
                                   security_mode_reject_msg *msg, int *emm_cause,
                                   const nas_message_decode_status_t * status);
 
-#endif /* __EMM_RECV_H__*/
+#endif /* FILE_EMM_RECV_SEEN*/

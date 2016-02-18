@@ -39,8 +39,8 @@
 #include "EpsNetworkFeatureSupport.h"
 #include "AdditionalUpdateResult.h"
 
-#ifndef TRACKING_AREA_UPDATE_ACCEPT_H_
-#define TRACKING_AREA_UPDATE_ACCEPT_H_
+#ifndef FILE_TRACKING_AREA_UPDATE_ACCEPT_SEEN
+#define FILE_TRACKING_AREA_UPDATE_ACCEPT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define TRACKING_AREA_UPDATE_ACCEPT_MINIMUM_LENGTH ( \
@@ -130,5 +130,5 @@ int decode_tracking_area_update_accept(tracking_area_update_accept_msg *tracking
 
 int encode_tracking_area_update_accept(tracking_area_update_accept_msg *trackingareaupdateaccept, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(TRACKING_AREA_UPDATE_ACCEPT_H_) */
+#endif /* ! defined(FILE_TRACKING_AREA_UPDATE_ACCEPT_SEEN) */
 

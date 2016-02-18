@@ -27,8 +27,8 @@
 #include "SecurityHeaderType.h"
 #include "MessageType.h"
 
-#ifndef AUTHENTICATION_REJECT_H_
-#define AUTHENTICATION_REJECT_H_
+#ifndef FILE_AUTHENTICATION_REJECT_SEEN
+#define FILE_AUTHENTICATION_REJECT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define AUTHENTICATION_REJECT_MINIMUM_LENGTH (0)
@@ -54,5 +54,5 @@ int decode_authentication_reject(authentication_reject_msg *authenticationreject
 
 int encode_authentication_reject(authentication_reject_msg *authenticationreject, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(AUTHENTICATION_REJECT_H_) */
+#endif /* ! defined(FILE_AUTHENTICATION_REJECT_SEEN) */
 

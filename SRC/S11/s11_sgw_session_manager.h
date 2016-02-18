@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#ifndef S11_SGW_SESSION_MANAGER_H_
-#define S11_SGW_SESSION_MANAGER_H_
+#ifndef FILE_S11_SGW_SESSION_MANAGER_SEEN
+#define FILE_S11_SGW_SESSION_MANAGER_SEEN
 
 int s11_sgw_handle_create_session_request(
   NwGtpv2cStackHandleT *stack_p,
@@ -38,4 +38,4 @@ int s11_sgw_handle_delete_session_response(
   NwGtpv2cStackHandleT     *stack_p,
   itti_sgw_delete_session_response_t *delete_session_response_p);
 
-#endif /* S11_SGW_SESSION_MANAGER_H_ */
+#endif /* FILE_S11_SGW_SESSION_MANAGER_SEEN */

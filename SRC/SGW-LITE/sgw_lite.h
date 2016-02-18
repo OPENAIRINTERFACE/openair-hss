@@ -26,8 +26,8 @@
 * \email: lionel.gauthier@eurecom.fr
 */
 
-#ifndef SGW_LITE_H_
-#define SGW_LITE_H_
+#ifndef FILE_SGW_LITE_SEEN
+#define FILE_SGW_LITE_SEEN
 #include <netinet/in.h>
 #include "hashtable.h"
 #include "tree.h"

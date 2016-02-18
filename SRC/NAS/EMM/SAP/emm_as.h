@@ -37,8 +37,8 @@ Description Defines the EMMAS Service Access Point that provides
         transfer to/from the Access Stratum sublayer.
 
 *****************************************************************************/
-#ifndef __EMM_AS_H__
-#define __EMM_AS_H__
+#ifndef FILE_EMM_AS_SEEN
+#define FILE_EMM_AS_SEEN
 
 #include "emm_asDef.h"
 
@@ -62,4 +62,4 @@ void emm_as_initialize(void);
 
 int emm_as_send(const emm_as_t *msg);
 
-#endif /* __EMM_AS_H__*/
+#endif /* FILE_EMM_AS_SEEN*/

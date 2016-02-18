@@ -28,8 +28,8 @@
 #include "MessageType.h"
 #include "EmmCause.h"
 
-#ifndef SECURITY_MODE_REJECT_H_
-#define SECURITY_MODE_REJECT_H_
+#ifndef FILE_SECURITY_MODE_REJECT_SEEN
+#define FILE_SECURITY_MODE_REJECT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define SECURITY_MODE_REJECT_MINIMUM_LENGTH ( \
@@ -59,5 +59,5 @@ int decode_security_mode_reject(security_mode_reject_msg *securitymodereject, ui
 
 int encode_security_mode_reject(security_mode_reject_msg *securitymodereject, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(SECURITY_MODE_REJECT_H_) */
+#endif /* ! defined(FILE_SECURITY_MODE_REJECT_SEEN) */
 

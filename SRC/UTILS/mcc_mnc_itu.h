@@ -29,7 +29,7 @@
 
 /*****************************************************************************
 
-Source      mcc_mnc.h
+Source      mcc_mnc_itu.h
 
 Version     0.1
 
@@ -44,8 +44,8 @@ Author      Lionel GAUTHIER
 Description Defines the MCC/MNC list delivered by the ITU
 
 *****************************************************************************/
-#ifndef __MCC_MNC_H__
-#define __MCC_MNC_H__
+#ifndef FILE_MCC_MNC_SEEN
+#define FILE_MCC_MNC_SEEN
 
 
 typedef struct mcc_mnc_list_s {

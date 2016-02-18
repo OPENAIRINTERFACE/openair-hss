@@ -27,8 +27,8 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef MME_DEFAULT_VALUES_H_
-#define MME_DEFAULT_VALUES_H_
+#ifndef FILE_MME_DEFAULT_VALUES_SEEN
+#define FILE_MME_DEFAULT_VALUES_SEEN
 
 /*******************************************************************************
  * Timer Constants
@@ -81,4 +81,4 @@
 #define RELATIVE_CAPACITY       (15)
 
 
-#endif /* MME_DEFAULT_VALUES_H_ */
+#endif /* FILE_MME_DEFAULT_VALUES_SEEN */

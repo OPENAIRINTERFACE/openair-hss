@@ -30,8 +30,8 @@
 
 #include "assertions.h"
 
-#ifndef CONVERSIONS_H_
-#define CONVERSIONS_H_
+#ifndef FILE_CONVERSIONS_SEEN
+#define FILE_CONVERSIONS_SEEN
 
 /* Endianness conversions for 16 and 32 bits integers from host to network order */
 #if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -316,4 +316,4 @@ void hexa_to_ascii(uint8_t *from, char *to, size_t length);
 
 int ascii_to_hex(uint8_t *dst, const char *h);
 
-#endif /* CONVERSIONS_H_ */
+#endif /* FILE_CONVERSIONS_SEEN */

@@ -638,7 +638,6 @@ set(libnas_mme_emm_OBJS
   ${NAS_SRC}EMM/emm_main.c
   ${NAS_SRC}EMM/EmmStatusHdl.c
   ${NAS_SRC}EMM/Identification.c
-  ${NAS_SRC}EMM/IdleMode.c
   ${NAS_SRC}EMM/LowerLayer.c
   ${NAS_SRC}EMM/SecurityModeControl.c
   ${NAS_SRC}EMM/ServiceRequestHdl.c
@@ -828,7 +827,6 @@ target_link_libraries (mme
 # oai_sgw is SGW  node implementation
 ################################
 add_executable(spgw
-  ${OPENAIRCN_DIR}/SRC/OAI_SGW/oai_sgw_log.c
   ${OPENAIRCN_DIR}/SRC/OAI_SGW/oai_sgw.c
   ${GTPV1U_DIR}/gtpv1u_task.c
   )

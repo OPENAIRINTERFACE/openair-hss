@@ -30,8 +30,8 @@
 * \bug
 * \warning
 */
-#ifndef SNOW3G_H_
-#define SNOW3G_H_
+#ifndef FILE_SNOW3G_SEEN
+#define FILE_SNOW3G_SEEN
 
 typedef struct snow_3g_context_s {
   uint32_t LFSR_S0;

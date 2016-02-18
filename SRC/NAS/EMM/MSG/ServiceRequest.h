@@ -29,8 +29,8 @@
 #include "KsiAndSequenceNumber.h"
 #include "ShortMac.h"
 
-#ifndef SERVICE_REQUEST_H_
-#define SERVICE_REQUEST_H_
+#ifndef FILE_SERVICE_REQUEST_SEEN
+#define FILE_SERVICE_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define SERVICE_REQUEST_MINIMUM_LENGTH ( \
@@ -63,5 +63,5 @@ int decode_service_request(service_request_msg *servicerequest, uint8_t *buffer,
 
 int encode_service_request(service_request_msg *servicerequest, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(SERVICE_REQUEST_H_) */
+#endif /* ! defined(FILE_SERVICE_REQUEST_SEEN) */
 

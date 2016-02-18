@@ -29,8 +29,8 @@
 #include "EmmCause.h"
 #include "EsmMessageContainer.h"
 
-#ifndef ATTACH_REJECT_H_
-#define ATTACH_REJECT_H_
+#ifndef FILE_ATTACH_REJECT_SEEN
+#define FILE_ATTACH_REJECT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define ATTACH_REJECT_MINIMUM_LENGTH ( \
@@ -72,5 +72,5 @@ int decode_attach_reject(attach_reject_msg *attachreject, uint8_t *buffer, uint3
 
 int encode_attach_reject(attach_reject_msg *attachreject, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(ATTACH_REJECT_H_) */
+#endif /* ! defined(FILE_ATTACH_REJECT_SEEN) */
 

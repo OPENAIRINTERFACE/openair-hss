@@ -26,10 +26,10 @@
 * \email: lionel.gauthier@eurecom.fr
 */
 
-#ifndef SGW_LITE_HANDLERS_H_
-#define SGW_LITE_HANDLERS_H_
+#ifndef FILE_SGW_LITE_HANDLERS_SEEN
+#define FILE_SGW_LITE_HANDLERS_SEEN
 
-int sgw_lite_handle_create_session_request(const SgwCreateSessionRequest * const session_req_p);
+int sgw_lite_handle_create_session_request(const itti_sgw_create_session_request_t * const session_req_p);
 int sgw_lite_handle_sgi_endpoint_created  (const SGICreateEndpointResp   * const resp_p);
 int sgw_lite_handle_sgi_endpoint_updated  (const SGIUpdateEndpointResp   * const resp_p);
 int sgw_lite_handle_gtpv1uCreateTunnelResp(const Gtpv1uCreateTunnelResp  * const endpoint_created_p);
@@ -37,4 +37,4 @@ int sgw_lite_handle_gtpv1uUpdateTunnelResp(const Gtpv1uUpdateTunnelResp  * const
 int sgw_lite_handle_modify_bearer_request (const itti_sgw_modify_bearer_request_t  * const modify_bearer_p);
 int sgw_lite_handle_delete_session_request(const itti_sgw_delete_session_request_t * const delete_session_p);
 int sgw_lite_handle_release_access_bearers_request(const itti_sgw_release_access_bearers_request_t * const release_access_bearers_req_pP);
-#endif /* SGW_LITE_HANDLERS_H_ */
+#endif /* FILE_SGW_LITE_HANDLERS_SEEN */

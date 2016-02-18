@@ -38,8 +38,8 @@ Description Defines the EMM primitives available at the EMMAS Service
         Stratum sublayer.
 
 *****************************************************************************/
-#ifndef __EMM_ASDEF_H__
-#define __EMM_ASDEF_H__
+#ifndef FILE_EMM_ASDEF_SEEN
+#define FILE_EMM_ASDEF_SEEN
 
 #include "common_types.h"
 #include "commonDef.h"
@@ -284,4 +284,4 @@ typedef struct emm_as_s {
 void emm_as_set_security_data(emm_as_security_data_t *data, const void *context,
                               bool is_new, bool is_ciphered);
 
-#endif /* __EMM_ASDEF_H__*/
+#endif /* FILE_EMM_ASDEF_SEEN*/

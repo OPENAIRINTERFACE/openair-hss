@@ -51,7 +51,8 @@
 #define SGW_RELEASE_ACCESS_BEARERS_RESPONSE(mSGpTR) (mSGpTR)->ittiMsg.sgwReleaseAccessBearersResponse
 
 
-/** @struct SgwCreateSessionRequest
+//-----------------------------------------------------------------------------
+/** @struct itti_sgw_create_session_request_t
  *  @brief Create Session Request
  *
  * Spec 3GPP TS 29.274, Universal Mobile Telecommunications System (UMTS);
@@ -331,8 +332,10 @@ typedef struct itti_sgw_create_session_request_s {
   void              *trxn;                ///< Transaction identifier
   uint32_t           peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t           peer_port;           ///< MME port for S-GW or S-GW port for MME
-} SgwCreateSessionRequest;
+} itti_sgw_create_session_request_t;
 
+
+//-----------------------------------------------------------------------------
 /** @struct itti_sgw_create_session_response_t
  *  @brief Create Session Response
  *
@@ -343,7 +346,7 @@ typedef struct itti_sgw_create_session_request_s {
  * - Tracking Area Update procedure with SGW change
  * - S1/X2-based handover with SGW change
  */
-typedef struct itti_sgw_create_session_response_t_s {
+typedef struct itti_sgw_create_session_response_s {
   Teid_t                   teid;                ///< Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
@@ -502,6 +505,8 @@ typedef struct itti_sgw_create_session_response_t_s {
   uint32_t                 peer_ip;            ///< MME ipv4 address
 } itti_sgw_create_session_response_t;
 
+
+//-----------------------------------------------------------------------------
 /** @struct itti_sgw_modify_bearer_request_t
  *  @brief Modify Bearer Request
  *
@@ -721,6 +726,7 @@ typedef struct itti_sgw_modify_bearer_request_s {
   void                      *trxn;                        ///< Transaction identifier
 } itti_sgw_modify_bearer_request_t;
 
+//-----------------------------------------------------------------------------
 /** @struct itti_sgw_modify_bearer_response_t
  *  @brief Modify Bearer Response
  *
@@ -831,6 +837,7 @@ typedef struct itti_sgw_modify_bearer_response_s {
   void                         *trxn;                      ///< Transaction identifier
 } itti_sgw_modify_bearer_response_t;
 
+//-----------------------------------------------------------------------------
 typedef struct itti_sgw_delete_session_request_s {
   Teid_t      teid;                   ///< Tunnel Endpoint Identifier
   EBI_t       lbi;                    ///< Linked EPS Bearer ID
@@ -853,6 +860,8 @@ typedef struct itti_sgw_delete_session_request_s {
   uint32_t    peer_ip;
 } itti_sgw_delete_session_request_t;
 
+
+//-----------------------------------------------------------------------------
 /** @struct itti_sgw_delete_session_response_t
  *  @brief Delete Session Response
  *
@@ -875,6 +884,8 @@ typedef struct itti_sgw_delete_session_response_s {
   uint32_t    peer_ip;
 } itti_sgw_delete_session_response_t;
 
+
+//-----------------------------------------------------------------------------
 /** @struct itti_sgw_release_access_bearers_request_t
  *  @brief Release AccessBearers Request
  *
@@ -887,21 +898,22 @@ typedef struct itti_sgw_delete_session_response_s {
  * -    READY to STANDBY transition within the network
  */
 typedef struct itti_sgw_release_access_bearers_request_s {
-	Teid_t     teid;                     ///< Tunnel Endpoint Identifier
-	uint32_t   num_rabs;
-	EBI_t      list_of_rabs[8]  ;        ///< Shall be present on S4 interface when this message is
+  Teid_t     teid;                     ///< Tunnel Endpoint Identifier
+  uint32_t   num_rabs;
+  EBI_t      list_of_rabs[8]  ;        ///< Shall be present on S4 interface when this message is
                                          ///< used to release a subset of all active RABs according to
                                          ///< the RAB release procedure.
                                          ///< Several IEs with this type and instance values shall be
                                          ///< included as necessary to represent a list of RABs to be
                                          ///< released.
 
-	node_type_t originating_node;        ///< This IE shall be sent on S11 interface, if ISR is active in the MME.
+  node_type_t originating_node;        ///< This IE shall be sent on S11 interface, if ISR is active in the MME.
                                          ///< This IE shall be sent on S4 interface, if ISR is active in the SGSN
-	// Private Extension Private Extension ///< optional
-
+  // Private Extension Private Extension ///< optional
 } itti_sgw_release_access_bearers_request_t;
 
+
+//-----------------------------------------------------------------------------
 /** @struct itti_sgw_release_access_bearers_response_t
  *  @brief Release AccessBearers Response
  *
@@ -917,11 +929,10 @@ typedef struct itti_sgw_release_access_bearers_request_s {
  * - "Context not found
  */
 typedef struct itti_sgw_release_access_bearers_response_s {
-	Teid_t      teid;                   ///< Tunnel Endpoint Identifier
-	SGWCause_t  cause;
-	// Recovery           ///< optional This IE shall be included if contacting the peer for the first time
-	// Private Extension  ///< optional
-
+  Teid_t      teid;                   ///< Tunnel Endpoint Identifier
+  SGWCause_t  cause;
+  // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
+  // Private Extension  ///< optional
 } itti_sgw_release_access_bearers_response_t;
 
 #endif /* FILE_SGW_LITE_MESSAGES_TYPES_SEEN */

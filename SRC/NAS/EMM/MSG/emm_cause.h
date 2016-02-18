@@ -37,8 +37,8 @@ Description Defines error cause code returned upon receiving unknown,
     data.
 
 *****************************************************************************/
-#ifndef __EMM_CAUSE_H__
-#define __EMM_CAUSE_H__
+#ifndef FILE_EMM_CAUSE_H_SEEN
+#define FILE_EMM_CAUSE_H_SEEN
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

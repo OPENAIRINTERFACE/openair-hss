@@ -19,9 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#ifndef NAS_DEFS_H_
-#define NAS_DEFS_H_
+#ifndef FILE_NAS_DEFS_SEEN
+#define FILE_NAS_DEFS_SEEN
 
 int nas_init(mme_config_t *mme_config_p);
 
-#endif /* NAS_DEFS_H_ */
+#endif /* FILE_NAS_DEFS_SEEN */

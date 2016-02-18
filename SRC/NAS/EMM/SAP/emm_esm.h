@@ -38,8 +38,8 @@ Description Defines the EMMESM Service Access Point that provides
         for service registration and activate/deactivate PDP context.
 
 *****************************************************************************/
-#ifndef __EMM_ESM_H__
-#define __EMM_ESM_H__
+#ifndef FILE_EMM_ESM_SEEN
+#define FILE_EMM_ESM_SEEN
 
 #include "emm_esmDef.h"
 
@@ -63,4 +63,4 @@ void emm_esm_initialize(void);
 
 int emm_esm_send(const emm_esm_t *msg);
 
-#endif /* __EMM_ESM_H__*/
+#endif /* FILE_EMM_ESM_SEEN*/

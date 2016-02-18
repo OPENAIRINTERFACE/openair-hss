@@ -19,9 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#ifndef S11_MME_H_
-#define S11_MME_H_
+#ifndef FILE_S11_MME_SEEN
+#define FILE_S11_MME_SEEN
 
 int s11_mme_init(const mme_config_t *mme_config);
 
-#endif /* S11_MME_H_ */
+#endif /* FILE_S11_MME_SEEN */

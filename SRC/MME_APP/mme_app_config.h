@@ -27,8 +27,8 @@
  * \company Eurecom
  * \email: lionel.gauthier@eurecom.fr
  */
-#ifndef MME_APP_CONFIG_H_
-#define MME_APP_CONFIG_H_
+#ifndef FILE_MME_APP_CONFIG_SEEN
+#define FILE_MME_APP_CONFIG_SEEN
 
 
-#endif /* MME_APP_CONFIG_H_ */
+#endif /* FILE_MME_APP_CONFIG_SEEN */

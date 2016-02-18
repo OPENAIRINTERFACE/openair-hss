@@ -20,9 +20,9 @@
  */
 
 
-#ifndef MME_APP_STATISTICS_H_
-#define MME_APP_STATISTICS_H_
+#ifndef FILE_MME_APP_STATISTICS_SEEN
+#define FILE_MME_APP_STATISTICS_SEEN
 
 int mme_app_statistics_display(void);
 
-#endif /* MME_APP_STATISTICS_H_ */
+#endif /* FILE_MME_APP_STATISTICS_SEEN */

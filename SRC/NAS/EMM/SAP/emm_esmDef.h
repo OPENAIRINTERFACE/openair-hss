@@ -38,8 +38,8 @@ Description Defines the EMMESM Service Access Point that provides
         connections.
 
 *****************************************************************************/
-#ifndef __EMM_ESMDEF_H__
-#define __EMM_ESMDEF_H__
+#ifndef FILE_EMM_ESMDEF_SEEN
+#define FILE_EMM_ESMDEF_SEEN
 
 #include <stdbool.h>
 #include "OctetString.h"
@@ -107,4 +107,4 @@ typedef struct {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#endif /* __EMM_ESMDEF_H__*/
+#endif /* FILE_EMM_ESMDEF_SEEN*/

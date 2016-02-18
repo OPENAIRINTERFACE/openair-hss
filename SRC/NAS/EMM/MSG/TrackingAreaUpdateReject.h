@@ -28,8 +28,8 @@
 #include "MessageType.h"
 #include "EmmCause.h"
 
-#ifndef TRACKING_AREA_UPDATE_REJECT_H_
-#define TRACKING_AREA_UPDATE_REJECT_H_
+#ifndef FILE_TRACKING_AREA_UPDATE_REJECT_SEEN
+#define FILE_TRACKING_AREA_UPDATE_REJECT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define TRACKING_AREA_UPDATE_REJECT_MINIMUM_LENGTH ( \
@@ -59,5 +59,5 @@ int decode_tracking_area_update_reject(tracking_area_update_reject_msg *tracking
 
 int encode_tracking_area_update_reject(tracking_area_update_reject_msg *trackingareaupdatereject, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(TRACKING_AREA_UPDATE_REJECT_H_) */
+#endif /* ! defined(FILE_TRACKING_AREA_UPDATE_REJECT_SEEN) */
 

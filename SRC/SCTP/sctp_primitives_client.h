@@ -24,8 +24,8 @@
 
 #include "sctp_eNB_defs.h"
 
-#ifndef SCTP_PRIMITIVES_CLIENT_H_
-#define SCTP_PRIMITIVES_CLIENT_H_
+#ifndef FILE_SCTP_PRIMITIVES_CLIENT_SEEN
+#define FILE_SCTP_PRIMITIVES_CLIENT_SEEN
 
 /** @defgroup _sctp_impl_ SCTP Layer Reference Implementation
  * @ingroup _ref_implementation_
@@ -99,4 +99,4 @@ void sctp_disconnect(const sctp_assoc_id_t assoc_id);
 void sctp_terminate(void);
 
 /* @} */
-#endif /* SCTP_PRIMITIVES_CLIENT_H_ */
+#endif /* FILE_SCTP_PRIMITIVES_CLIENT_SEEN */

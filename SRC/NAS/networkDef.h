@@ -37,8 +37,8 @@ Author      Frederic Maurel
 Description Contains network's global definitions
 
 *****************************************************************************/
-#ifndef __NETWORKDEF_H__
-#define __NETWORKDEF_H__
+#ifndef FILE_NETWORKDEF_SEEN
+#define FILE_NETWORKDEF_SEEN
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -268,4 +268,4 @@ typedef int (*esm_indication_callback_t) (int, network_pdn_state_t);
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#endif /* __NETWORKDEF_H__*/
+#endif /* FILE_NETWORKDEF_SEEN*/

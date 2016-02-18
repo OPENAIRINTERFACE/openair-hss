@@ -27,8 +27,8 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef _UTILS_COLLECTION_HASH_TABLE_H_
-#define _UTILS_COLLECTION_HASH_TABLE_H_
+#ifndef FILE_HASH_TABLE_SEEN
+#define FILE_HASH_TABLE_SEEN
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>

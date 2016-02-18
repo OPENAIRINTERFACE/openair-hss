@@ -33,8 +33,8 @@
 #include "mme_default_values.h"
 #include "log.h"
 
-#ifndef MME_CONFIG_H_
-#define MME_CONFIG_H_
+#ifndef FILE_MME_CONFIG_SEEN
+#define FILE_MME_CONFIG_SEEN
 
 #define MME_CONFIG_STRING_MME_CONFIG                     "MME"
 #define MME_CONFIG_STRING_REALM                          "REALM"
@@ -242,4 +242,4 @@ int config_parse_opt_line(int argc, char *argv[], mme_config_t *mme_config);
 
 //int yyparse(struct mme_config_s *mme_config_p);
 
-#endif /* MME_CONFIG_H_ */
+#endif /* FILE_MME_CONFIG_SEEN */

@@ -36,8 +36,8 @@ Description Defines the EPS Mobility Management procedure call manager,
         the main entry point for elementary EMM processing.
 
 *****************************************************************************/
-#ifndef __EMM_MAIN_H__
-#define __EMM_MAIN_H__
+#ifndef FILE_EMM_MAIN_SEEN
+#define FILE_EMM_MAIN_SEEN
 
 #include "mme_config.h"
 #include "commonDef.h"

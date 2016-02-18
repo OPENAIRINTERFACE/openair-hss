@@ -45,8 +45,8 @@ Description Defines callback functions executed within EMM common procedures
         EMM information
 
 *****************************************************************************/
-#ifndef __EMM_COMMON_H__
-#define __EMM_COMMON_H__
+#ifndef FILE_EMM_COMMON_SEEN
+#define FILE_EMM_COMMON_SEEN
 #include "common_types.h"
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -99,4 +99,4 @@ int emm_proc_common_abort(mme_ue_s1ap_id_t ue_id);
 
 void *emm_proc_common_get_args(mme_ue_s1ap_id_t ue_id);
 
-#endif /* __EMM_COMMON_H__*/
+#endif /* FILE_EMM_COMMON_SEEN*/

@@ -28,8 +28,8 @@
 #include "MessageType.h"
 #include "NasMessageContainer.h"
 
-#ifndef UPLINK_NAS_TRANSPORT_H_
-#define UPLINK_NAS_TRANSPORT_H_
+#ifndef FILE_UPLINK_NAS_TRANSPORT_SEEN
+#define FILE_UPLINK_NAS_TRANSPORT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define UPLINK_NAS_TRANSPORT_MINIMUM_LENGTH ( \
@@ -59,5 +59,5 @@ int decode_uplink_nas_transport(uplink_nas_transport_msg *uplinknastransport, ui
 
 int encode_uplink_nas_transport(uplink_nas_transport_msg *uplinknastransport, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(UPLINK_NAS_TRANSPORT_H_) */
+#endif /* ! defined(FILE_UPLINK_NAS_TRANSPORT_SEEN) */
 

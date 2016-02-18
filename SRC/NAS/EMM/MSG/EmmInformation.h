@@ -31,8 +31,8 @@
 #include "TimeZoneAndTime.h"
 #include "DaylightSavingTime.h"
 
-#ifndef EMM_INFORMATION_H_
-#define EMM_INFORMATION_H_
+#ifndef FILE_EMM_INFORMATION_SEEN
+#define FILE_EMM_INFORMATION_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define EMM_INFORMATION_MINIMUM_LENGTH (0)
@@ -87,5 +87,5 @@ int decode_emm_information(emm_information_msg *emminformation, uint8_t *buffer,
 
 int encode_emm_information(emm_information_msg *emminformation, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(EMM_INFORMATION_H_) */
+#endif /* ! defined(FILE_EMM_INFORMATION_SEEN) */
 

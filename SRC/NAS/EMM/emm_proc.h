@@ -36,8 +36,8 @@ Description Defines the EPS Mobility Management procedures executed at
         the EMM Service Access Points.
 
 *****************************************************************************/
-#ifndef __EMM_PROC_H__
-#define __EMM_PROC_H__
+#ifndef FILE_EMM_PROC_SEEN
+#define FILE_EMM_PROC_SEEN
 
 #include "commonDef.h"
 #include "OctetString.h"
@@ -211,4 +211,4 @@ int emm_proc_security_mode_reject(mme_ue_s1ap_id_t ue_id);
  */
 
 
-#endif /* __EMM_PROC_H__*/
+#endif /* FILE_EMM_PROC_SEEN*/

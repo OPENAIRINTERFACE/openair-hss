@@ -36,8 +36,8 @@ Description Defines internal private data handled by EPS Mobility
         Management sublayer.
 
 *****************************************************************************/
-#ifndef __EMMDATA_H__
-#define __EMMDATA_H__
+#ifndef FILE_EMMDATA_SEEN
+#define FILE_EMMDATA_SEEN
 
 #include "commonDef.h"
 #include "networkDef.h"
@@ -295,4 +295,4 @@ emm_data_t _emm_data;
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#endif /* __EMMDATA_H__*/
+#endif /* FILE_EMMDATA_SEEN*/

@@ -38,7 +38,7 @@
 int
 s11_mme_create_session_request (
   NwGtpv2cStackHandleT * stack_p,
-  SgwCreateSessionRequest * create_session_p)
+  itti_sgw_create_session_request_t * create_session_p)
 {
   NwGtpv2cUlpApiT                         ulp_req;
   NwRcT                                   rc;

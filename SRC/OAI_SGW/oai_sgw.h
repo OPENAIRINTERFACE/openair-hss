@@ -26,11 +26,9 @@
 * \email: lionel.gauthier@eurecom.fr
 */
 
-#ifndef OAI_SGW_H_
-#define OAI_SGW_H_
+#ifndef FILE_OAI_SGW_SEEN
+#define FILE_OAI_SGW_SEEN
 
 int main(int argc, char *argv[]);
 
-int oai_sgw_log_specific(int log_level);
-
-#endif /* OAI_SGW_H_ */
+#endif /* FILE_OAI_SGW_SEEN */

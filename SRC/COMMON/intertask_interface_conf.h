@@ -34,8 +34,8 @@
  *      Author: winckel
  */
 
-#ifndef INTERTASK_INTERFACE_CONF_H_
-#define INTERTASK_INTERFACE_CONF_H_
+#ifndef FILE_INTERTASK_INTERFACE_CONF_SEEN
+#define FILE_INTERTASK_INTERFACE_CONF_SEEN
 
 /*******************************************************************************
  * Intertask Interface Constants
@@ -47,4 +47,4 @@
 #define ITTI_QUEUE_MAX_ELEMENTS  (64 * 1024)
 #define ITTI_DUMP_MAX_CON        (5)    /* Max connections in parallel */
 
-#endif /* INTERTASK_INTERFACE_CONF_H_ */
+#endif /* FILE_INTERTASK_INTERFACE_CONF_SEEN */

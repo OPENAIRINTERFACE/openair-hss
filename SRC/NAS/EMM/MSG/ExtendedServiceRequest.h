@@ -31,8 +31,8 @@
 #include "MobileIdentity.h"
 #include "CsfbResponse.h"
 
-#ifndef EXTENDED_SERVICE_REQUEST_H_
-#define EXTENDED_SERVICE_REQUEST_H_
+#ifndef FILE_EXTENDED_SERVICE_REQUEST_SEEN
+#define FILE_EXTENDED_SERVICE_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define EXTENDED_SERVICE_REQUEST_MINIMUM_LENGTH ( \
@@ -72,5 +72,5 @@ int decode_extended_service_request(extended_service_request_msg *extendedservic
 
 int encode_extended_service_request(extended_service_request_msg *extendedservicerequest, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(EXTENDED_SERVICE_REQUEST_H_) */
+#endif /* ! defined(FILE_EXTENDED_SERVICE_REQUEST_SEEN) */
 

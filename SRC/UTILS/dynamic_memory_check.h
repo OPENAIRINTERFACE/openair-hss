@@ -27,8 +27,8 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef DYNAMIC_MEMORY_CHECK_H_
-#define DYNAMIC_MEMORY_CHECK_H_
+#ifndef FILE_DYNAMIC_MEMORY_CHECK_SEEN
+#define FILE_DYNAMIC_MEMORY_CHECK_SEEN
 #if MEMORY_CHECK
 #include <stdlib.h>
 
@@ -63,4 +63,4 @@ void free_wrapper(void *ptr) __attribute__((hot));
 #define STRDUP_CHECK          strdup
 #define STRNDUP_CHECK         strndup
 #endif
-#endif /* DYNAMIC_MEMORY_CHECK_H_ */
+#endif /* FILE_DYNAMIC_MEMORY_CHECK_SEEN */

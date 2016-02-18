@@ -28,8 +28,8 @@
 #include "MessageType.h"
 #include "EmmCause.h"
 
-#ifndef EMM_STATUS_H_
-#define EMM_STATUS_H_
+#ifndef FILE_EMM_STATUS_SEEN
+#define FILE_EMM_STATUS_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define EMM_STATUS_MINIMUM_LENGTH ( \
@@ -59,5 +59,5 @@ int decode_emm_status(emm_status_msg *emmstatus, uint8_t *buffer, uint32_t len);
 
 int encode_emm_status(emm_status_msg *emmstatus, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(EMM_STATUS_H_) */
+#endif /* ! defined(FILE_EMM_STATUS_SEEN) */
 

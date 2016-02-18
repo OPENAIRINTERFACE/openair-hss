@@ -35,8 +35,8 @@ Author      Frederic Maurel
 Description Timer utilities
 
 *****************************************************************************/
-#ifndef __NAS_TIMER_H__
-#define __NAS_TIMER_H__
+#ifndef FILE_NAS_TIMER_SEEN
+#define FILE_NAS_TIMER_SEEN
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -76,4 +76,4 @@ int nas_timer_restart(int id);
 
 void nas_timer_handle_signal_expiry(long timer_id, void *arg_p);
 
-#endif /* __NAS_TIMER_H__ */
+#endif /* FILE_NAS_TIMER_SEEN */

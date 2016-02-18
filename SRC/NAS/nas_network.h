@@ -38,8 +38,8 @@ Description NAS procedure functions triggered by the network
 
 #include "mme_config.h"
 
-#ifndef __NAS_NETWORK_H__
-#define __NAS_NETWORK_H__
+#ifndef FILE_NAS_NETWORK_SEEN
+#define FILE_NAS_NETWORK_SEEN
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -66,4 +66,4 @@ int nas_network_process_data(int command_id, const void *data);
 
 const void *nas_network_get_data(void);
 
-#endif /* __NAS_NETWORK_H__*/
+#endif /* FILE_NAS_NETWORK_SEEN*/

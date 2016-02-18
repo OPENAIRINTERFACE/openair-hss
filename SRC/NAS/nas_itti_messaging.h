@@ -29,8 +29,8 @@
 #include "log.h"
 #include "msc.h"
 
-#ifndef NAS_ITTI_MESSAGING_H_
-#define NAS_ITTI_MESSAGING_H_
+#ifndef FILE_NAS_ITTI_MESSAGING_SEEN
+#define FILE_NAS_ITTI_MESSAGING_SEEN
 
 int nas_itti_plain_msg(
   const char          *buffer,
@@ -278,4 +278,4 @@ static inline void nas_itti_establish_rej(
 }
 
 
-#endif /* NAS_ITTI_MESSAGING_H_ */
+#endif /* FILE_NAS_ITTI_MESSAGING_SEEN */

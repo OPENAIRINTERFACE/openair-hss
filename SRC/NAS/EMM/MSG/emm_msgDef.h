@@ -33,8 +33,8 @@ Author    Frederic Maurel, Sebastien Roux
 Description Defines identifiers of the EPS Mobility Management messages.
 
 *****************************************************************************/
-#ifndef __EMM_MSGDEF_H__
-#define __EMM_MSGDEF_H__
+#ifndef FILE_EMM_MSGDEF_SEEN
+#define FILE_EMM_MSGDEF_SEEN
 
 #include <stdint.h>
 #include <asm/byteorder.h>
@@ -126,5 +126,5 @@ typedef struct {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#endif /* __EMM_MSGDEF_H__ */
+#endif /* FILE_EMM_MSGDEF_SEEN */
 

@@ -28,8 +28,8 @@
  */
 
 
-#ifndef LOG_H_
-#define LOG_H_
+#ifndef FILE_LOG_SEEN
+#define FILE_LOG_SEEN
 
 #include "gcc_diag.h"
 
@@ -295,4 +295,4 @@ int log_get_start_time_sec (void);
 #    define LOG_STREAM_HEX_ARRAY(...)                                {void;}
 #  endif
 
-#endif /* LOG_H_ */
+#endif /* FILE_LOG_SEEN */

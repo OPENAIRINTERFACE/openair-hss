@@ -27,8 +27,8 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef ENUM_STRING_H_
-#define ENUM_STRING_H_
+#ifndef FILE_ENUM_STRING_SEEN
+#define FILE_ENUM_STRING_SEEN
 
 typedef struct {
   int   enum_value;
@@ -47,4 +47,4 @@ char *enum_to_string(int enum_val, enum_to_string_t *string_table, int nb_elemen
     enum_to_string((int)vAL, pdn_type_to_string,            \
     sizeof(pdn_type_to_string) / sizeof(enum_to_string_t))
 
-#endif /* ENUM_STRING_H_ */
+#endif /* FILE_ENUM_STRING_SEEN */

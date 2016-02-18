@@ -32,8 +32,8 @@
 #include "ImeisvRequest.h"
 #include "Nonce.h"
 
-#ifndef NAS_SECURITY_MODE_COMMAND_H_
-#define NAS_SECURITY_MODE_COMMAND_H_
+#ifndef FILE_NAS_SECURITY_MODE_COMMAND_SEEN
+#define FILE_NAS_SECURITY_MODE_COMMAND_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define SECURITY_MODE_COMMAND_MINIMUM_LENGTH ( \
@@ -89,5 +89,5 @@ int decode_security_mode_command(security_mode_command_msg *securitymodecommand,
 
 int encode_security_mode_command(security_mode_command_msg *securitymodecommand, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(NAS_SECURITY_MODE_COMMAND_H_) */
+#endif /* ! defined(FILE_NAS_SECURITY_MODE_COMMAND_SEEN) */
 

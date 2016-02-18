@@ -21,9 +21,9 @@
 
 
 
-#ifndef MME_APP_EXTERN_H_
-#define MME_APP_EXTERN_H_
+#ifndef FILE_MME_APP_EXTERN_SEEN
+#define FILE_MME_APP_EXTERN_SEEN
 
 int mme_app_init(const mme_config_t *mme_config);
 
-#endif /* MME_APP_EXTERN_H_ */
+#endif /* FILE_MME_APP_EXTERN_SEEN */

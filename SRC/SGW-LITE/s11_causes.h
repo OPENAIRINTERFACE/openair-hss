@@ -25,8 +25,8 @@
 * \company Eurecom
 * \email: lionel.gauthier@eurecom.fr
 */
-#ifndef S11_CAUSES_H_
-#define S11_CAUSES_H_
+#ifndef FILE_S11_CAUSES_SEEN
+#define FILE_S11_CAUSES_SEEN
 
 typedef struct SGWCauseMapping_e {
   uint8_t value;
@@ -41,4 +41,4 @@ typedef struct SGWCauseMapping_e {
 
 char *sgw_cause_2_string(uint8_t cause_value);
 
-#endif /* S11_CAUSES_H_ */
+#endif /* FILE_S11_CAUSES_SEEN */

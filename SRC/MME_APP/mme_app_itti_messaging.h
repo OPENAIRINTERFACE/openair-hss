@@ -21,8 +21,8 @@
 
 
 
-#ifndef MME_APP_ITTI_MESSAGING_H_
-#define MME_APP_ITTI_MESSAGING_H_
+#ifndef FILE_MME_APP_ITTI_MESSAGING_SEEN
+#define FILE_MME_APP_ITTI_MESSAGING_SEEN
 
 static inline void
 mme_app_itti_auth_fail(
@@ -74,4 +74,4 @@ static inline void mme_app_itti_auth_rsp(
   LOG_FUNC_OUT (LOG_MME_APP);
 }
 
-#endif /* MME_APP_ITTI_MESSAGING_H_ */
+#endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */

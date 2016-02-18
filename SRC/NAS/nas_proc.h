@@ -35,8 +35,8 @@ Author      Frederic Maurel
 Description NAS procedure call manager
 
 *****************************************************************************/
-#ifndef __NAS_PROC_H__
-#define __NAS_PROC_H__
+#ifndef FILE_NAS_PROC_SEEN
+#define FILE_NAS_PROC_SEEN
 
 #include "mme_config.h"
 #include "emm_cnDef.h"
@@ -102,4 +102,4 @@ int nas_proc_deregister_ue(uint32_t ue_id);
 int nas_proc_pdn_connectivity_res(itti_nas_pdn_connectivity_rsp_t *nas_pdn_connectivity_rsp);
 int nas_proc_pdn_connectivity_fail(itti_nas_pdn_connectivity_fail_t *nas_pdn_connectivity_fail);
 
-#endif /* __NAS_PROC_H__*/
+#endif /* FILE_NAS_PROC_SEEN*/

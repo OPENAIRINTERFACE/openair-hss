@@ -29,8 +29,8 @@
 #include "EmmCause.h"
 #include "AuthenticationFailureParameter.h"
 
-#ifndef AUTHENTICATION_FAILURE_H_
-#define AUTHENTICATION_FAILURE_H_
+#ifndef FILE_AUTHENTICATION_FAILURE_SEEN
+#define FILE_AUTHENTICATION_FAILURE_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define AUTHENTICATION_FAILURE_MINIMUM_LENGTH ( \
@@ -72,5 +72,5 @@ int decode_authentication_failure(authentication_failure_msg *authenticationfail
 
 int encode_authentication_failure(authentication_failure_msg *authenticationfailure, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(AUTHENTICATION_FAILURE_H_) */
+#endif /* ! defined(FILE_AUTHENTICATION_FAILURE_SEEN) */
 

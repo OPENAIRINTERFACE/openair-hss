@@ -28,8 +28,8 @@
 #include "MessageType.h"
 #include "EsmMessageContainer.h"
 
-#ifndef ATTACH_COMPLETE_H_
-#define ATTACH_COMPLETE_H_
+#ifndef FILE_ATTACH_COMPLETE_SEEN
+#define FILE_ATTACH_COMPLETE_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define ATTACH_COMPLETE_MINIMUM_LENGTH ( \
@@ -59,5 +59,5 @@ int decode_attach_complete(attach_complete_msg *attachcomplete, uint8_t *buffer,
 
 int encode_attach_complete(attach_complete_msg *attachcomplete, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(ATTACH_COMPLETE_H_) */
+#endif /* ! defined(FILE_ATTACH_COMPLETE_SEEN) */
 

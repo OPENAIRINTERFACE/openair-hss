@@ -35,8 +35,8 @@ Author      Frederic Maurel
 Description Contains global security definitions
 
 *****************************************************************************/
-#ifndef __SECURITYDEF_H__
-#define __SECURITYDEF_H__
+#ifndef FILE_SECURITYDEF_SEEN
+#define FILE_SECURITYDEF_SEEN
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -101,4 +101,4 @@ typedef struct {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#endif /* __SECURITYDEF_H__*/
+#endif /* FILE_SECURITYDEF_SEEN*/

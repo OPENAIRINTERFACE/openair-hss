@@ -36,8 +36,8 @@ Description Implements the API used by the NAS layer running in the MME
         to interact with a Mobility Management Entity
 
 *****************************************************************************/
-#ifndef __MME_API_H__
-#define __MME_API_H__
+#ifndef FILE_MME_API_SEEN
+#define FILE_MME_API_SEEN
 
 #include "mme_config.h"
 #include "commonDef.h"
@@ -141,4 +141,4 @@ int mme_api_subscribe(OctetString *apn, mme_api_ip_version_t mme_pdn_index, Octe
                       int is_emergency, mme_api_qos_t *qos);
 int mme_api_unsubscribe(OctetString *apn);
 
-#endif /* __MME_API_H__*/
+#endif /* FILE_MME_API_SEEN*/

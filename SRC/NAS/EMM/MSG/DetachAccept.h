@@ -27,8 +27,8 @@
 #include "SecurityHeaderType.h"
 #include "MessageType.h"
 
-#ifndef DETACH_ACCEPT_H_
-#define DETACH_ACCEPT_H_
+#ifndef FILE_DETACH_ACCEPT_SEEN
+#define FILE_DETACH_ACCEPT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define DETACH_ACCEPT_MINIMUM_LENGTH (0)
@@ -54,5 +54,5 @@ int decode_detach_accept(detach_accept_msg *detachaccept, uint8_t *buffer, uint3
 
 int encode_detach_accept(detach_accept_msg *detachaccept, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(DETACH_ACCEPT_H_) */
+#endif /* ! defined(FILE_DETACH_ACCEPT_SEEN) */
 

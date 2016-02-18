@@ -29,8 +29,8 @@
 #include "EmmCause.h"
 #include "GprsTimer.h"
 
-#ifndef SERVICE_REJECT_H_
-#define SERVICE_REJECT_H_
+#ifndef FILE_SERVICE_REJECT_SEEN
+#define FILE_SERVICE_REJECT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define SERVICE_REJECT_MINIMUM_LENGTH ( \
@@ -64,5 +64,5 @@ int decode_service_reject(service_reject_msg *servicereject, uint8_t *buffer, ui
 
 int encode_service_reject(service_reject_msg *servicereject, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(SERVICE_REJECT_H_) */
+#endif /* ! defined(FILE_SERVICE_REJECT_SEEN) */
 

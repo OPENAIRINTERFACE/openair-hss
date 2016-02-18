@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#ifndef SECU_DEFS_H_
-#define SECU_DEFS_H_
+#ifndef FILE_SECU_DEFS_SEEN
+#define FILE_SECU_DEFS_SEEN
 
 #include "security_types.h"
 
@@ -89,4 +89,4 @@ int nas_stream_encrypt_eia2(nas_stream_cipher_t * const stream_cipher, uint8_t c
 
 #undef SECU_DEBUG
 
-#endif /* SECU_DEFS_H_ */
+#endif /* FILE_SECU_DEFS_SEEN */

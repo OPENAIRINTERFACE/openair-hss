@@ -35,8 +35,8 @@ Author    Frederic Maurel
 Description Usefull command line parser
 
 *****************************************************************************/
-#ifndef __PARSER_H__
-#define __PARSER_H__
+#ifndef FILE_PARSER_SEEN
+#define FILE_PARSER_SEEN
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -86,4 +86,4 @@ void parser_print_usage(const parser_command_line_t* commamd_line);
 int  parser_get_options(int argc, const char** argv,
                         parser_command_line_t* commamd_line);
 
-#endif /* __PARSER_H__*/
+#endif /* FILE_PARSER_SEEN*/

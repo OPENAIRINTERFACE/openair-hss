@@ -28,8 +28,8 @@
 #include "MessageType.h"
 #include "IdentityType2.h"
 
-#ifndef IDENTITY_REQUEST_H_
-#define IDENTITY_REQUEST_H_
+#ifndef FILE_IDENTITY_REQUEST_SEEN
+#define FILE_IDENTITY_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define IDENTITY_REQUEST_MINIMUM_LENGTH ( \
@@ -59,5 +59,5 @@ int decode_identity_request(identity_request_msg *identityrequest, uint8_t *buff
 
 int encode_identity_request(identity_request_msg *identityrequest, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(IDENTITY_REQUEST_H_) */
+#endif /* ! defined(FILE_IDENTITY_REQUEST_SEEN) */
 

@@ -38,8 +38,8 @@ Description
 *****************************************************************************/
 
 
-#ifndef __EMM_CNDEF_H__
-#define __EMM_CNDEF_H__
+#ifndef FILE_EMM_CNDEF_SEEN
+#define FILE_EMM_CNDEF_SEEN
 #include "intertask_interface.h"
 
 typedef enum emmcn_primitive_s {
@@ -72,4 +72,4 @@ typedef struct emm_mme_ul_s {
   } u;
 } emm_cn_t;
 
-#endif /* __EMM_CNDEF_H__ */
+#endif /* FILE_EMM_CNDEF_SEEN */

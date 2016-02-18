@@ -44,11 +44,11 @@
 
  */
 
-#ifndef OAISIM_MME_H_
-#define OAISIM_MME_H_
+#ifndef FILE_OAISIM_MME_SEEN
+#define FILE_OAISIM_MME_SEEN
 
 int main(int argc, char *argv[]);
 
 int oai_mme_log_specific(int log_level);
 
-#endif /* OAISIM_MME_H_ */
+#endif /* FILE_OAISIM_MME_SEEN */

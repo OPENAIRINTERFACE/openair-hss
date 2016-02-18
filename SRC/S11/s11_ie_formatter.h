@@ -20,8 +20,8 @@
  */
 
 
-#ifndef S11_IE_FORMATTER_H_
-#define S11_IE_FORMATTER_H_
+#ifndef FILE_S11_IE_FORMATTER_SEEN
+#define FILE_S11_IE_FORMATTER_SEEN
 
 /* Imsi Information Element
  * 3GPP TS.29.274 #8.3
@@ -198,4 +198,4 @@ NwRcT s11_indication_flags_ie_get(
 NwRcT s11_fqcsid_ie_get(
   uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
-#endif /* S11_IE_FORMATTER_H_ */
+#endif /* FILE_S11_IE_FORMATTER_SEEN */

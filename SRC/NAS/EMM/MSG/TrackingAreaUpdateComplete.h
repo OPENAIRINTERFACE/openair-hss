@@ -27,8 +27,8 @@
 #include "SecurityHeaderType.h"
 #include "MessageType.h"
 
-#ifndef TRACKING_AREA_UPDATE_COMPLETE_H_
-#define TRACKING_AREA_UPDATE_COMPLETE_H_
+#ifndef FILE_TRACKING_AREA_UPDATE_COMPLETE_SEEN
+#define FILE_TRACKING_AREA_UPDATE_COMPLETE_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define TRACKING_AREA_UPDATE_COMPLETE_MINIMUM_LENGTH (0)
@@ -54,5 +54,5 @@ int decode_tracking_area_update_complete(tracking_area_update_complete_msg *trac
 
 int encode_tracking_area_update_complete(tracking_area_update_complete_msg *trackingareaupdatecomplete, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(TRACKING_AREA_UPDATE_COMPLETE_H_) */
+#endif /* ! defined(FILE_TRACKING_AREA_UPDATE_COMPLETE_SEEN) */
 

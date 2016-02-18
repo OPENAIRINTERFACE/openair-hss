@@ -45,8 +45,8 @@
 #include "GutiType.h"
 #include "VoiceDomainPreferenceAndUeUsageSetting.h"
 
-#ifndef ATTACH_REQUEST_H_
-#define ATTACH_REQUEST_H_
+#ifndef FILE_ATTACH_REQUEST_SEEN
+#define FILE_ATTACH_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define ATTACH_REQUEST_MINIMUM_LENGTH ( \
@@ -151,5 +151,5 @@ int decode_attach_request(attach_request_msg *attachrequest, uint8_t *buffer, ui
 
 int encode_attach_request(attach_request_msg *attachrequest, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(ATTACH_REQUEST_H_) */
+#endif /* ! defined(FILE_ATTACH_REQUEST_SEEN) */
 

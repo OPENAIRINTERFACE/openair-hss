@@ -30,8 +30,8 @@
 #include "NasKeySetIdentifier.h"
 #include "EpsMobileIdentity.h"
 
-#ifndef DETACH_REQUEST_H_
-#define DETACH_REQUEST_H_
+#ifndef FILE_DETACH_REQUEST_SEEN
+#define FILE_DETACH_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define DETACH_REQUEST_MINIMUM_LENGTH ( \
@@ -67,5 +67,5 @@ int decode_detach_request(detach_request_msg *detachrequest, uint8_t *buffer, ui
 
 int encode_detach_request(detach_request_msg *detachrequest, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(DETACH_REQUEST_H_) */
+#endif /* ! defined(FILE_DETACH_REQUEST_SEEN) */
 

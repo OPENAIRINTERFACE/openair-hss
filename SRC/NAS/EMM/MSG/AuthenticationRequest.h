@@ -30,8 +30,8 @@
 #include "AuthenticationParameterRand.h"
 #include "AuthenticationParameterAutn.h"
 
-#ifndef AUTHENTICATION_REQUEST_H_
-#define AUTHENTICATION_REQUEST_H_
+#ifndef FILE_AUTHENTICATION_REQUEST_SEEN
+#define FILE_AUTHENTICATION_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define AUTHENTICATION_REQUEST_MINIMUM_LENGTH ( \
@@ -67,5 +67,5 @@ int decode_authentication_request(authentication_request_msg *authenticationrequ
 
 int encode_authentication_request(authentication_request_msg *authenticationrequest, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(AUTHENTICATION_REQUEST_H_) */
+#endif /* ! defined(FILE_AUTHENTICATION_REQUEST_SEEN) */
 

@@ -37,8 +37,8 @@ Description Defines the EPS Mobility Management procedures executed at
         the EMMREG Service Access Point.
 
 *****************************************************************************/
-#ifndef __EMM_FSM_H__
-#define __EMM_FSM_H__
+#ifndef FILE_EMM_FSM_SEEN
+#define FILE_EMM_FSM_SEEN
 
 #include "emm_regDef.h"
 
@@ -82,4 +82,4 @@ emm_fsm_state_t emm_fsm_get_status(mme_ue_s1ap_id_t ueid, void *ctx);
 
 int emm_fsm_process(const emm_reg_t *evt);
 
-#endif /* __EMM_FSM_H__*/
+#endif /* FILE_EMM_FSM_SEEN*/

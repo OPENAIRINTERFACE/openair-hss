@@ -38,8 +38,8 @@ Description Defines functions executed at the EMMAS Service Access
         Access Stratum sublayer.
 
 *****************************************************************************/
-#ifndef __EMM_SEND_H__
-#define __EMM_SEND_H__
+#ifndef FILE_EMM_SEND_SEEN
+#define FILE_EMM_SEND_SEEN
 
 #include "EmmStatus.h"
 
@@ -103,4 +103,4 @@ int emm_send_authentication_reject(authentication_reject_msg *);
 int emm_send_security_mode_command(const emm_as_security_t *,
                                    security_mode_command_msg *);
 
-#endif /* __EMM_SEND_H__*/
+#endif /* FILE_EMM_SEND_SEEN*/

@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#ifndef S11_SGW_BEARER_MANAGER_H_
-#define S11_SGW_BEARER_MANAGER_H_
+#ifndef FILE_S11_SGW_BEARER_MANAGER_SEEN
+#define FILE_S11_SGW_BEARER_MANAGER_SEEN
 
 int s11_sgw_handle_modify_bearer_request(
   NwGtpv2cStackHandleT *stack_p,
@@ -30,4 +30,4 @@ int s11_sgw_handle_modify_bearer_response(
   NwGtpv2cStackHandleT    *stack_p,
   itti_sgw_modify_bearer_response_t *modify_bearer_response_p);
 
-#endif /* S11_SGW_BEARER_MANAGER_H_ */
+#endif /* FILE_S11_SGW_BEARER_MANAGER_SEEN */

@@ -20,8 +20,8 @@
  */
 
 
-#ifndef OCTET_STRING_H_
-#define OCTET_STRING_H_
+#ifndef FILE_OCTET_STRING_SEEN
+#define FILE_OCTET_STRING_SEEN
 
 #include <stdint.h>
 #include <assert.h>
@@ -67,5 +67,5 @@ int decode_octet_string(OctetString *octetstring, uint16_t pdulen, uint8_t *buff
 
 char* dump_octet_string_xml(const OctetString * const octetstring);
 
-#endif /* OCTET_STRING_H_ */
+#endif /* FILE_OCTET_STRING_SEEN */
 

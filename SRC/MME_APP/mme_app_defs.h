@@ -29,8 +29,8 @@
 #include "intertask_interface.h"
 #include "mme_app_ue_context.h"
 
-#ifndef MME_APP_DEFS_H_
-#define MME_APP_DEFS_H_
+#ifndef FILE_MME_APP_DEFS_SEEN
+#define FILE_MME_APP_DEFS_SEEN
 
 typedef struct {
   /* UE contexts + some statistics variables */

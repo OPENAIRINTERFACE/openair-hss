@@ -20,13 +20,13 @@
  */
 
 
-#ifndef S11_MME_SESSION_MANAGER_H_
-#define S11_MME_SESSION_MANAGER_H_
+#ifndef FILE_S11_MME_SESSION_MANAGER_SEEN
+#define FILE_S11_MME_SESSION_MANAGER_SEEN
 
 /* @brief Create a new Create Session Request and send it to provided S-GW.
  */
 int s11_mme_create_session_request(NwGtpv2cStackHandleT    *stack_p,
-                                   SgwCreateSessionRequest *create_session_p);
+    itti_sgw_create_session_request_t *create_session_p);
 
 
 /* @brief Create a new Release Access Bearers Request and send it to provided S-GW.
@@ -39,4 +39,4 @@ int s11_mme_release_access_bearers_request(NwGtpv2cStackHandleT    *stack_p,
 int s11_mme_handle_create_session_response(NwGtpv2cStackHandleT *stack_p,
     NwGtpv2cUlpApiT      *pUlpApi);
 
-#endif /* S11_MME_SESSION_MANAGER_H_ */
+#endif /* FILE_S11_MME_SESSION_MANAGER_SEEN */

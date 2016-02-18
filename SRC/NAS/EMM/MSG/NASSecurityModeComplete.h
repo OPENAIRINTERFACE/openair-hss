@@ -28,8 +28,8 @@
 #include "MessageType.h"
 #include "MobileIdentity.h"
 
-#ifndef SECURITY_MODE_COMPLETE_H_
-#define SECURITY_MODE_COMPLETE_H_
+#ifndef FILE_SECURITY_MODE_COMPLETE_SEEN
+#define FILE_SECURITY_MODE_COMPLETE_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define SECURITY_MODE_COMPLETE_MINIMUM_LENGTH (0)
@@ -68,5 +68,5 @@ int decode_security_mode_complete(security_mode_complete_msg *securitymodecomple
 
 int encode_security_mode_complete(security_mode_complete_msg *securitymodecomplete, uint8_t *buffer, uint32_t len);
 
-#endif /* ! defined(SECURITY_MODE_COMPLETE_H_) */
+#endif /* ! defined(FILE_SECURITY_MODE_COMPLETE_SEEN) */
 

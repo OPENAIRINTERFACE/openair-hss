@@ -18,8 +18,8 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-#ifndef GTPV1U_SGW_DEFS_H_
-#define GTPV1U_SGW_DEFS_H_
+#ifndef FILE_GTPV1U_SGW_DEFS_SEEN
+#define FILE_GTPV1U_SGW_DEFS_SEEN
 
 #include "mme_config.h"
 #include "gtpv1u.h"
@@ -75,4 +75,4 @@ typedef struct {
 
 int gtpv1u_init(const mme_config_t *mme_config);
 
-#endif /* GTPV1U_SGW_DEFS_H_ */
+#endif /* FILE_GTPV1U_SGW_DEFS_SEEN */

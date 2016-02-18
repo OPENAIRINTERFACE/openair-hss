@@ -27,8 +27,8 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef _UTILS_COLLECTION_OBJ_HASH_TABLE_H_
-#define _UTILS_COLLECTION_OBJ_HASH_TABLE_H_
+#ifndef FILE_OBJ_HASHTABLE_SEEN
+#define FILE_OBJ_HASHTABLE_SEEN
 #include <stdlib.h>
 #include <stdint.h>
 #include <stddef.h>

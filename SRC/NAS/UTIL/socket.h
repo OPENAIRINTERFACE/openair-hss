@@ -35,8 +35,8 @@ Author    Frederic Maurel
 Description Implements TCP socket handlers
 
 *****************************************************************************/
-#ifndef __SOCKET_H__
-#define __SOCKET_H__
+#ifndef FILE_SOCKET_SEEN
+#define FILE_SOCKET_SEEN
 
 #include <sys/types.h>
 
@@ -71,4 +71,4 @@ ssize_t socket_send(const void* id, const char* buffer, size_t length);
 
 void socket_close(void* id);
 
-#endif /* __SOCKET_H__*/
+#endif /* FILE_SOCKET_SEEN*/

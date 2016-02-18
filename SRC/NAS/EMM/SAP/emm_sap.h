@@ -39,8 +39,8 @@ Description Defines the EMM Service Access Points at which the EPS
         is using the Evolved UTRA Network.
 
 *****************************************************************************/
-#ifndef __EMM_SAP_H__
-#define __EMM_SAP_H__
+#ifndef FILE_EMM_SAP_SEEN
+#define FILE_EMM_SAP_SEEN
 
 #include "emmData.h"
 #include "emm_regDef.h"
@@ -157,4 +157,4 @@ void emm_sap_initialize(void);
 
 int emm_sap_send(emm_sap_t *msg);
 
-#endif /* __EMM_SAP_H__*/
+#endif /* FILE_EMM_SAP_SEEN*/

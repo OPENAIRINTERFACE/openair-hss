@@ -38,8 +38,8 @@ Description Defines the EMMREG Service Access Point that provides
         procedures.
 
 *****************************************************************************/
-#ifndef __EMM_REG_H__
-#define __EMM_REG_H__
+#ifndef FILE_EMM_REG_SEEN
+#define FILE_EMM_REG_SEEN
 
 #include "emm_regDef.h"
 
@@ -63,4 +63,4 @@ void emm_reg_initialize(void);
 
 int emm_reg_send(const emm_reg_t *msg);
 
-#endif /* __EMM_REG_H__*/
+#endif /* FILE_EMM_REG_SEEN*/

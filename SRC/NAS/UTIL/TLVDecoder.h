@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#ifndef TLV_DECODER_H_
-#define TLV_DECODER_H_
+#ifndef FILE_TLV_DECODER_SEEN
+#define FILE_TLV_DECODER_SEEN
 
 #include <arpa/inet.h>  // ntohl, ntohs
 #include "log.h"
@@ -125,5 +125,5 @@ void tlv_decode_perror(void);
                 return TLV_DECODE_UNEXPECTED_IEI;                       \
         }
 
-#endif /* define (TLV_DECODER_H_) */
+#endif /* define (FILE_TLV_DECODER_SEEN) */
 
