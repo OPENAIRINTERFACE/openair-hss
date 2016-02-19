@@ -341,7 +341,7 @@ include_directories("${OPENAIRCN_DIR}/SRC/GTPV1-U")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/LFDS/liblfds6.1.1/liblfds611/inc")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/MSC")
-include_directories("${OPENAIRCN_DIR}/SRC/SGW-LITE")
+include_directories("${OPENAIRCN_DIR}/SRC/SGW")
 include_directories("${OPENAIRCN_DIR}/SRC/MME_APP")
 include_directories("${OPENAIRCN_DIR}/SRC/S6A")
 include_directories("${OPENAIRCN_DIR}/SRC")
@@ -444,7 +444,7 @@ add_library(S6A
   ${S6A_DIR}/s6a_up_loc.c
   )
 
-set(SGW_DIR ${OPENAIRCN_DIR}/SRC/SGW-LITE)
+set(SGW_DIR ${OPENAIRCN_DIR}/SRC/SGW)
 add_library (SGW
   ${SGW_DIR}/spgw_config.c
   ${SGW_DIR}/s11_causes.c

@@ -36,7 +36,7 @@
  * \version 0.1
  */
 
-#include "../SGW-LITE/sgw_ie_defs.h"
+#include "../SGW/sgw_ie_defs.h"
 
 #ifndef FILE_SGW_MESSAGES_TYPES_SEEN
 #define FILE_SGW_MESSAGES_TYPES_SEEN
