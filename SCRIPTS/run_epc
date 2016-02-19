@@ -35,6 +35,8 @@ source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
 declare -i g_run_msc_gen=0
 declare    g_msc_dir="/tmp"
 
+declare    g_epc_default_config_file="/usr/local/etc/oai/epc.conf"
+
 set_openair_env 
 
 
@@ -47,6 +49,7 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -b, --breakpoint      location      Set breakpoint location for GDB (ex location: Attach.c:272)."
+  echo_error "  -c, --config-file     file_abs_path Config file to be used by epc if you don't want to use the default one: $g_epc_default_config_file"
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -h, --help                          Print this help."
   echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in epc config file."
@@ -57,22 +60,13 @@ function help()
   echo_error "                                        0 -> ASN1 XER printf off"
   echo_error "                                        1 -> ASN1 XER printf on and ASN1 debug off"
   echo_error "                                        2 -> ASN1 XER printf on and ASN1 debug on"
+  echo_error "  -V, --valgrind                      Run with valgrind."
 }
 
 function do_msc_gen()
 {
   cd $g_msc_dir
-  last_created_file=`ls -t mscgen* | head -1 | tr -d ':'`
   $THIS_SCRIPT_PATH/msc_gen
-  sync
-  last_created_file2=`ls -t mscgen* | head -1 | tr -d ':'`
-        
-  if [ x"$last_created_file" != x"$last_created_file2" ]; then
-    if [ -f ./$last_created_file2/oai_mscgen_page_0.png ]; then 
-      command -v eog 2>/dev/null &&  eog ./$last_created_file2/oai_mscgen_page_0.png
-    fi
-  fi 
-
 }
 
 function control_c()
@@ -88,10 +82,10 @@ function control_c()
 function main()
 {
   local -i run_gdb=0
+  local -i run_valgrind=0
   local -i set_network_interfaces=0
   local    exe_arguments=" "
-  local -r epc_default_config_file="/usr/local/etc/oai/epc.conf"
-  local    epc_config_file=$epc_default_config_file
+  local    epc_config_file=$g_epc_default_config_file
   local    breakpoint_location=""
   local -i set_breakpoint=0
 
@@ -104,6 +98,11 @@ function main()
         breakpoint_location=$2
         echo "setting breakpoint location to: $breakpoint_location"
         echo "setting GDB flag to: $run_gdb"
+        shift 2;
+        ;;
+      -c | --config-file)
+        epc_config_file=$2
+        echo "setting config file to: $epc_config_file"
         shift 2;
         ;;
       -g | --gdb)
@@ -170,6 +169,11 @@ function main()
         exe_arguments="-v $verbosity_level $exe_arguments"
         shift 2;
         ;;
+      -V | --valgrind)
+        run_valgrind=1
+        echo "setting valgrind flag to: $run_valgrind"
+        shift;
+        ;;
       *)   
         echo "Unknown option $1"
         help
@@ -183,6 +187,10 @@ function main()
 
   check_gtpu_kmodule_installed
 
+  if [ ! -f $epc_config_file ]; then 
+    echo_fatal "Please provide -c|--config-file valid argument (\"$epc_config_file\" not a valid file)"
+  fi
+      
   if [ ! -e /usr/local/bin/mme_gw ]; then
     echo_fatal "Cannot find /usr/local/bin/mme_gw executable, have a look at the output of build_epc executable"
   fi
@@ -196,17 +204,27 @@ function main()
     set_epc_network_interfaces $epc_config_file
   fi
 
+  if [ "$run_valgrind" -eq 1 ] && [ "$run_gdb" -eq 1 ]; then 
+    echo_fatal "Cannot run gdb and valgrind at the same time"
+  fi
+
+
 
   exe_arguments="-O $epc_config_file $exe_arguments"
 
   if [ $run_gdb -eq 0 ]; then 
     # trap keyboard interrupt (control-c)
     trap control_c SIGINT
-    $SUDO mme_gw  `echo $exe_arguments` 2>&1 
+    if [ "$run_valgrind" -eq 1 ]; then 
+      $SUDO valgrind --leak-check=yes --track-origins=yes --leak-check=full --show-leak-kinds=all mme_gw  `echo $exe_arguments` 2>&1
+    else
+      $SUDO mme_gw  `echo $exe_arguments` 2>&1
+    fi 
   else
     # trap keyboard interrupt (control-c) is done by gdb
     $SUDO touch      ~/.gdb_mme_gw
     $SUDO chmod 777  ~/.gdb_mme_gw
+    $SUDO echo "handle SIGPIPE nostop noprint pass"  > ~/.gdb_mme_gw
     $SUDO echo "file mme_gw" > ~/.gdb_mme_gw
     $SUDO echo "set args $exe_arguments "        >> ~/.gdb_mme_gw
     if [ $set_breakpoint -eq 1 ]; then 
@@ -214,9 +232,12 @@ function main()
     fi
     $SUDO echo "run"                             >> ~/.gdb_mme_gw
     $SUDO cat ~/.gdb_mme_gw
+    echo_warning 'Reminder for gdb: info registers, info frame, info locals, x/16wx $esp, etc.'
     $SUDO gdb -n -x ~/.gdb_mme_gw
     if [ $g_run_msc_gen -eq 1 ]; then 
-      $SUDO do_msc_gen
+      #$SUDO do_msc_gen
+      cd $g_msc_dir
+      $SUDO $THIS_SCRIPT_PATH/msc_gen --profile EPC --dir $g_msc_dir --type png
     fi
   fi
 }

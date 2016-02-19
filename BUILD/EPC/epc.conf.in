@@ -18,57 +18,30 @@
 # For more information about the OpenAirInterface (OAI) Software Alliance:
 #      contact@openairinterface.org
 ################################################################################
-#                               Internet
-#                                  | 
-#         PGW_IPV4_ADDRESS_FOR_SGI | 
-# +-----------+-------+------------+---------------+--------------------------+
-# |host y     |       | PGW_INTERFACE_NAME_FOR_SGI |                          |
-# +-----------+       +------------+---------------+                          |
-# |                                |                                          |
-# |                           +----+----+   (HSS may run on this host         |
-# |                           | mme_gw  |    or on another one)               |
-# |                           +----+----+                                     |
-# |                                |                                          |
-# |              +-----------------+--------------------+                     |
-# |              | SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP |                     |
-# |              | MME_INTERFACE_NAME_FOR_S1_MME        |                     |
-# +----------------------------+---+--+---------------------------------------+
-#     MME_IPV4_ADDRESS_FOR_S1_MME  |  (S1-C and S1-U addresses/interfaces may be the same)  
-# SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP 
-#                                  |
-#                                  |
-#                          a.b.c.d |
-# +---------------+------------+---+--+---------------------------------------+
-# |eNBx           |            | ethx |                                       |
-# +---------------+            +---+--+                                       |
-# |                                |                                          |
-# |                         +------+---------+                                |
-# |                         | lte-softmodem  |                                |
-# |                         |       or       |                                |
-# |                         | oaisim (1)eNB (x UEs)                           |
-# |                         +-------+--------+                                |
-# +---------------------------------+-----------------------------------------+
-#                                   |
-#                                   O (RF antenna)
 
 MME : 
 {
 
-    REALM                          = "@REALM@";                                 # DO NOT CHANGE
+    REALM                                     = "@REALM@";                      # DO NOT CHANGE
     # Define the limits of the system in terms of served eNB and served UE.
     # When the limits will be reached, overload procedure will take place.
-    MAXENB                         = 10;                                                             
-    MAXUE                          = 100;
-    RELATIVE_CAPACITY              = 10;
+    MAXENB                                    = 10;
+    MAXUE                                     = 100;
+    RELATIVE_CAPACITY                         = 10;
+    
+    EMERGENCY_ATTACH_SUPPORTED                     = "no";
+    UNAUTHENTICATED_IMSI_SUPPORTED                 = "no";
+    
+    # EPS network feature support
+    EPS_NETWORK_FEATURE_SUPPORT_IMS_VOICE_OVER_PS_SESSION_IN_S1      = "no";    # DO NOT CHANGE
+    EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE = "no";    # DO NOT CHANGE
+    EPS_NETWORK_FEATURE_SUPPORT_LOCATION_SERVICES_VIA_EPC            = "no";    # DO NOT CHANGE
+    EPS_NETWORK_FEATURE_SUPPORT_EXTENDED_SERVICE_REQUEST             = "no";    # DO NOT CHANGE
+    
     # Display statistics about whole system (expressed in seconds)
-    MME_STATISTIC_TIMER            = 10;
-    EMERGENCY_ATTACH_SUPPORTED     = "no";
-    UNAUTHENTICATED_IMSI_SUPPORTED = "no";
-    # ASN1 VERBOSITY: none, info, annoying
-    VERBOSITY                      = "none";
+    MME_STATISTIC_TIMER                       = 10;
     
-    
-    IP_CAPABILITY = "IPV4V6";
+    IP_CAPABILITY = "IPV4V6";                                                   # UNUSED
     
     
     INTERTASK_INTERFACE :
@@ -104,20 +77,27 @@ MME :
         # MME code DEFAULT = 0
         # size = 8 bits
         # maximum of 256 values, comma separated
-        MME_CODE = [ 1, 30 , 31, 32, 33, 34, 35, 36, 56 , 29 , 8 ];
+        MME_CODE = [ 1 ];
 
         # MME GROUP ID DEFAULT = 0
         # size = 16 bits
         # maximum of 65535 values, comma separated
-        MME_GID = [ 32768 , 4 , 5 , 30 , 8 , 9 , 50021 ];
+        MME_GID = [ 4 ];
 
-        # TA (mcc.mnc:tracking area code) DEFAULT = 208.34:0
-        # max values = 999.999:65535
-        # maximum of 32 values, comma separated
-        TAI_LIST = ( 
-             {MCC="208" ; MNC="95";  TAC = "1"; }                               # YOUR PLMN CONFIG HERE
-        );
     };
+    # ------- MME served TAIs
+    # TA (mcc.mnc:tracking area code) DEFAULT = 208.34:1
+    # max values = 999.999:65535
+    # maximum of 16 TAIs, comma separated
+    # !!! Actually use only one PLMN
+    TAI_LIST = ( 
+         {MCC="208" ; MNC="95";  TAC = "15"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="95";  TAC = "14"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="95";  TAC = "12"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="95";  TAC = "11"; },                                  # YOUR TAI CONFIG HERE
+         {MCC="208" ; MNC="95";  TAC = "10"; }                                   # YOUR TAI CONFIG HERE
+    );
+    
     
     NAS :
     {
@@ -125,15 +105,69 @@ MME :
         # decreasing preference goes from left to right
         ORDERED_SUPPORTED_INTEGRITY_ALGORITHM_LIST = [ "EIA2" , "EIA1" , "EIA0" ];
         ORDERED_SUPPORTED_CIPHERING_ALGORITHM_LIST = [ "EEA0" , "EEA1" , "EEA2" ];
+        
+        # EMM TIMERS
+        # T3402 start:
+        # At attach failure and the attempt counter is equal to 5.
+        # At tracking area updating failure and the attempt counter is equal to 5.
+        # T3402 stop:
+        # ATTACH REQUEST sent, TRACKING AREA REQUEST sent.
+        # On expiry:
+        # Initiation of the attach procedure, if still required or TAU procedure
+        # attached for emergency bearer services.
+        T3402                                 =  1                              # in minutes (default is 12 minutes)
+        
+        # T3412 start:
+        # In EMM-REGISTERED, when EMM-CONNECTED mode is left.
+        # T3412 stop:
+        # When entering state EMM-DEREGISTERED or when entering EMM-CONNECTED mode.
+        # On expiry:
+        # Initiation of the periodic TAU procedure if the UE is not attached for
+        # emergency bearer services. Implicit detach from network if the UE is
+        # attached for emergency bearer services.
+        T3412                                 =  54                             # in minutes (default is 54 minutes, network dependent)
+        
+        # ESM TIMERS
+        T3485                                 =  8                              # UNUSED in seconds (default is 8s)
+        T3486                                 =  8                              # UNUSED in seconds (default is 8s)
+        T3489                                 =  4                              # UNUSED in seconds (default is 4s)
+        T3495                                 =  8                              # UNUSED in seconds (default is 8s)
     };
     
     NETWORK_INTERFACES : 
     {
-        MME_INTERFACE_NAME_FOR_S1_MME         = "eth0:1";                        # YOUR NETWORK CONFIG HERE
-        MME_IPV4_ADDRESS_FOR_S1_MME           = "192.170.0.1/24";           # YOUR NETWORK CONFIG HERE
+        # MME binded interface for S1-C or S1-MME  communication (S1AP), can be ethernet interface, virtual ethernet interface, we don't advise wireless interfaces
+        MME_INTERFACE_NAME_FOR_S1_MME         = "eth0:1 ";                      # YOUR NETWORK CONFIG HERE
+        MME_IPV4_ADDRESS_FOR_S1_MME           = "192.170.0.1/24";               # YOUR NETWORK CONFIG HERE
 
-        MME_INTERFACE_NAME_FOR_S11_MME        = "none";
-        MME_IPV4_ADDRESS_FOR_S11_MME          = "0.0.0.0/24";
+        # MME binded interface for S11 communication (GTPV2-C)
+        MME_INTERFACE_NAME_FOR_S11_MME        = "none";                         # DO NOT CHANGE
+        MME_IPV4_ADDRESS_FOR_S11_MME          = "0.0.0.0/24";                   # DO NOT CHANGE
+    };
+    
+    LOGGING :
+    {
+        # OUTPUT choice in { "CONSOLE", "`path to file`", "`IPv4@`:`TCP port num`"} 
+        # `path to file` must start with '.' or '/'
+        # if TCP stream choice, then you can easily dump the traffic on the remote or local host: nc -l `TCP port num` > received.txt
+        OUTPUT            = "127.0.0.1:5656";
+        
+        # COLOR choice in { "yes", "no" } means use of ANSI styling codes or no
+        COLOR             = "yes";                                              # TODO
+        
+        # Log level choice in { "EMERGENCY", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG", "TRACE"} 
+        SCTP_LOG_LEVEL    = "TRACE";
+        S1AP_LOG_LEVEL    = "TRACE";
+        NAS_LOG_LEVEL     = "TRACE";
+        MME_APP_LOG_LEVEL = "TRACE";
+        S6A_LOG_LEVEL     = "TRACE";
+        UTIL_LOG_LEVEL    = "TRACE";
+        MSC_LOG_LEVEL     = "ERROR";
+        ITTI_LOG_LEVEL    = "ERROR";
+        
+        # ASN1 VERBOSITY: none, info, annoying
+        # for S1AP protocol
+        ASN1_VERBOSITY    = "none";
     };
 };
 
@@ -141,15 +175,28 @@ S-GW :
 {
     NETWORK_INTERFACES : 
     {
-        SGW_INTERFACE_NAME_FOR_S11              = "none";
-        SGW_IPV4_ADDRESS_FOR_S11                = "0.0.0.0/24";
+        # S-GW binded interface for S11 communication (GTPV2-C), if none selected the ITTI message interface is used
+        SGW_INTERFACE_NAME_FOR_S11              = "none";                       # DO NOT CHANGE
+        SGW_IPV4_ADDRESS_FOR_S11                = "0.0.0.0/24";                 # DO NOT CHANGE
 
+        # S-GW binded interface for S1-U communication (GTPV1-U) can be ethernet interface, virtual ethernet interface, we don't advise wireless interfaces
         SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP    = "eth0:2";                     # YOUR NETWORK CONFIG HERE
         SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP      = "192.170.1.1/24";             # YOUR NETWORK CONFIG HERE
         SGW_IPV4_PORT_FOR_S1U_S12_S4_UP         = 2152;                         # PREFER NOT CHANGE
 
+        # S-GW binded interface for S5 or S8 communication, not implemented, so leave it to none
         SGW_INTERFACE_NAME_FOR_S5_S8_UP         = "none";                       # DO NOT CHANGE
         SGW_IPV4_ADDRESS_FOR_S5_S8_UP           = "0.0.0.0/24";                 # DO NOT CHANGE
+    };
+    
+    LOGGING :
+    {
+        # Log level choice in { "EMERGENCY", "ALERT", "CRITICAL", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG", "TRACE"} 
+        UDP_LOG_LEVEL      = "TRACE";
+        GTPV1U_LOG_LEVEL   = "TRACE";
+        GTPV2C_LOG_LEVEL   = "TRACE";
+        SPGW_APP_LOG_LEVEL = "TRACE";
+        S11_LOG_LEVEL      = "TRACE";
     };
 };
 
@@ -157,14 +204,17 @@ P-GW =
 {
     NETWORK_INTERFACES : 
     {
+        # P-GW binded interface for S5 or S8 communication, not implemented, so leave it to none
         PGW_INTERFACE_NAME_FOR_S5_S8          = "none";                         # DO NOT CHANGE
         PGW_IPV4_ADDRESS_FOR_S5_S8            = "0.0.0.0/24";                   # DO NOT CHANGE
 
-        PGW_INTERFACE_NAME_FOR_SGI            = "eth1";                         # YOUR NETWORK CONFIG HERE
-        PGW_IPV4_ADDRESS_FOR_SGI              = "192.168.14.17/24";             # YOUR NETWORK CONFIG HERE
+        # P-GW binded interface for SGI (egress/ingress internet traffic)
+        PGW_INTERFACE_NAME_FOR_SGI            = "eth0";                         # YOUR NETWORK CONFIG HERE
+        PGW_IPV4_ADDRESS_FOR_SGI              = "192.168.12.17/24";             # YOUR NETWORK CONFIG HERE
         PGW_MASQUERADE_SGI                    = "yes";                          # YOUR NETWORK CONFIG HERE
     };
     
+    # Pool of UE assigned IP addresses
     IP_ADDRESS_POOL :
     {
         IPV4_LIST = (
@@ -176,8 +226,8 @@ P-GW =
                     );
     };
     
-    DEFAULT_DNS_IPV4_ADDRESS     = "192.168.106.12";                              # YOUR NETWORK CONFIG HERE
-    DEFAULT_DNS_SEC_IPV4_ADDRESS = "192.168.12.100";                              # YOUR NETWORK CONFIG HERE
+    # DNS address communicated to UEs
+    DEFAULT_DNS_IPV4_ADDRESS     = "192.168.106.12";                            # YOUR NETWORK CONFIG HERE
+    DEFAULT_DNS_SEC_IPV4_ADDRESS = "192.168.12.100";                            # YOUR NETWORK CONFIG HERE
 };
-
 

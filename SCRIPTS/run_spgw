@@ -1,0 +1,216 @@
+#!/bin/bash
+################################################################################
+# Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The OpenAirInterface Software Alliance licenses this file to You under 
+# the Apache License, Version 2.0  (the "License"); you may not use this file
+# except in compliance with the License.  
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#-------------------------------------------------------------------------------
+# For more information about the OpenAirInterface (OAI) Software Alliance:
+#      contact@openairinterface.org
+################################################################################
+
+# file run_spgw
+# brief run script for S/P-GW (S-GW + P-GW).
+# author  Lionel GAUTHIER
+# company Eurecom
+# email:  lionel.gauthier@eurecom.fr 
+
+
+################################
+# include helper functions
+################################
+THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
+source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+declare -i g_run_msc_gen=0
+declare    g_msc_dir="/tmp"
+
+set_openair_env 
+
+
+function help()
+{
+  echo_error " "
+  echo_error "Usage: run_spgw [OPTION]..."
+  echo_error "Run the S/G-GW executable (S-GW + P-GW)."
+  echo_error " "
+  echo_error "Options:"
+  echo_error "Mandatory arguments to long options are mandatory for short options too."
+  echo_error "  -b, --breakpoint      location      Set breakpoint location for GDB (ex location: Attach.c:272)."
+  echo_error "  -g, --gdb                           Run with GDB."
+  echo_error "  -h, --help                          Print this help."
+  echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in spgw config file."
+  echo_error "  -K, --itti-dump-file  file_abs_path ITTI dump file containing all ITTI events occuring during S/P-GW runtime."
+  echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
+  echo_error "  -r, --remove-gtpu-kmodule           Remove gtpu kernel module before starting the S/P-GW"
+  echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
+  echo_error "                                        0 -> ASN1 XER printf off"
+  echo_error "                                        1 -> ASN1 XER printf on and ASN1 debug off"
+  echo_error "                                        2 -> ASN1 XER printf on and ASN1 debug on"
+}
+
+function do_msc_gen()
+{
+  cd $g_msc_dir
+  $THIS_SCRIPT_PATH/msc_gen
+}
+
+function control_c()
+# run if user hits control-c
+{
+  echo_warning "\nExiting by ctrl+c\n"
+  if [ $g_run_msc_gen -eq 1 ]; then 
+    do_msc_gen
+  fi
+  exit $?
+}
+
+function main()
+{
+  local -i run_gdb=0
+  local -i set_network_interfaces=0
+  local    exe_arguments=" "
+  local -r spgw_default_config_file="/usr/local/etc/oai/spgw.conf"
+  local    spgw_config_file=$spgw_default_config_file
+  local    breakpoint_location=""
+  local -i set_breakpoint=0
+
+  until [ -z "$1" ]
+    do
+    case "$1" in
+      -b | --breakpoint)
+        run_gdb=1
+        set_breakpoint=1
+        breakpoint_location=$2
+        echo "setting breakpoint location to: $breakpoint_location"
+        echo "setting GDB flag to: $run_gdb"
+        shift 2;
+        ;;
+      -g | --gdb)
+        run_gdb=1
+        echo "setting GDB flag to: $run_gdb"
+        shift;
+        ;;
+      -h | --help)
+        help
+        exit 0
+        ;;
+      -i | --set-nw-interfaces)
+        set_network_interfaces=1
+        echo "setting network interfaces: $set_network_interfaces"
+        shift;
+        ;;
+      -K | --itti-dump-file)
+        local itti_dump_file=$2
+        # can omit file name if last arg on the line
+        if [ "x$itti_dump_file" = "x" ]; then
+          itti_dump_file="/tmp/spgw_itti.log"
+        else
+          shift 1;
+        fi
+        echo "setting ITTI dump file to: $itti_dump_file"
+        exe_arguments="$exe_arguments -K $itti_dump_file"
+        shift 1;
+        ;;     
+      -m | --mscgen)
+        g_msc_dir=$2
+        if [ -d  "$g_msc_dir" ]; then
+          echo "setting mscgen log files to dir: $g_msc_dir"
+          g_run_msc_gen=1
+          shift 2;
+        else
+          echo_error "Mscgen log dir does not exist"
+          exit -1
+        fi
+        ;;      
+      -r | --remove-gtpu-kmodule)
+        $SUDO modprobe ip_tables
+        $SUDO modprobe x_tables
+        $SUDO iptables -P INPUT ACCEPT
+        $SUDO iptables -F INPUT
+        $SUDO iptables -P OUTPUT ACCEPT
+        $SUDO iptables -F OUTPUT
+        $SUDO iptables -P FORWARD ACCEPT
+        $SUDO iptables -F FORWARD
+        $SUDO iptables -t nat    -F
+        $SUDO iptables -t mangle -F
+        $SUDO iptables -t filter -F
+        $SUDO iptables -t raw    -F
+        $SUDO iptables -t nat    -Z
+        $SUDO iptables -t mangle -Z
+        $SUDO iptables -t filter -Z
+        $SUDO iptables -t raw    -Z
+        $SUDO ip route flush cache
+        $SUDO rmmod xt_GTPUSP   
+        shift 1;
+        ;;      
+      -v | --verbosity-level)
+        local verbosity_level=$2
+        echo "setting verbosity level to: $verbosity_level"
+        exe_arguments="-v $verbosity_level $exe_arguments"
+        shift 2;
+        ;;
+      *)   
+        echo "Unknown option $1"
+        help
+        exit 0
+        ;;
+    esac
+  done
+
+  set_openair_env 
+  cecho "OPENAIR_DIR    = $OPENAIR_DIR" $green
+
+  check_gtpu_kmodule_installed
+
+  if [ ! -e /usr/local/bin/spgw ]; then
+    echo_fatal "Cannot find /usr/local/bin/spgw executable, have a look at the output of build_spgw executable"
+  fi
+
+
+  if [ $g_run_msc_gen -eq 1 ]; then 
+    rm -f /tmp/openair.msc.*
+  fi
+
+  if [ $set_network_interfaces -eq 1 ]; then
+    set_spgw_network_interfaces $spgw_config_file
+  fi
+
+
+  exe_arguments="-O $spgw_config_file $exe_arguments"
+
+  if [ $run_gdb -eq 0 ]; then 
+    # trap keyboard interrupt (control-c)
+    trap control_c SIGINT
+    $SUDO spgw  `echo $exe_arguments` 2>&1 
+  else
+    # trap keyboard interrupt (control-c) is done by gdb
+    $SUDO touch      ~/.gdb_spgw
+    $SUDO chmod 777  ~/.gdb_spgw
+    $SUDO echo "file spgw" > ~/.gdb_spgw
+    $SUDO echo "set args $exe_arguments "        >> ~/.gdb_spgw
+    if [ $set_breakpoint -eq 1 ]; then 
+      $SUDO echo "break $breakpoint_location "        >> ~/.gdb_spgw
+    fi
+    $SUDO echo "run"                             >> ~/.gdb_spgw
+    $SUDO cat ~/.gdb_spgw
+    $SUDO gdb -n -x ~/.gdb_spgw
+    if [ $g_run_msc_gen -eq 1 ]; then 
+      #$SUDO do_msc_gen
+      cd $g_msc_dir
+      $SUDO $THIS_SCRIPT_PATH/msc_gen --profile EPC --dir $g_msc_dir --type png
+    fi
+  fi
+}
+
+main "$@"
