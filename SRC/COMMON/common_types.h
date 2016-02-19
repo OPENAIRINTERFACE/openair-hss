@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include "3gpp_23.003.h"
+#include "3gpp_36.401.h"
 #include "security_types.h"
 #include "queue.h"
 
@@ -42,12 +43,11 @@ typedef uint16_t                 sctp_stream_id_t;
 typedef uint32_t                 sctp_assoc_id_t;
 
 
-#define ENB_UE_S1AP_ID_MASK      0x00FFFFFF
-typedef uint32_t                 enb_ue_s1ap_id_t;
-#define ENB_UE_S1AP_ID_FMT       "0x%06"PRIX32
-#define INVALID_ENB_UE_S1AP_ID   0xFFFFFFFF
 
-typedef uint32_t                 mme_ue_s1ap_id_t;
+#define INVALID_ENB_UE_S1AP_ID   UINT32_MAX
+#define ENB_UE_S1AP_ID_MASK      0x00FFFFFF
+#define ENB_UE_S1AP_ID_FMT       "0x%06"PRIX32
+
 #define MME_UE_S1AP_ID_FMT       "0x%08"PRIX32
 #define INVALID_MME_UE_S1AP_ID   0xFFFFFFFF          // You can pick any value between 0..2^32-1,
                                                      // all values should be allowed. try to find another way (boolean is_valid for example)
