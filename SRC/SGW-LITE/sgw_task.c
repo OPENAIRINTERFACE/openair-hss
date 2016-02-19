@@ -25,8 +25,8 @@
   \company Eurecom
   \email: lionel.gauthier@eurecom.fr
 */
-#define SGW_LITE
-#define SGW_LITE_TASK_C
+#define SGW
+#define SGW_TASK_C
 
 #include <stdio.h>
 #include <stdlib.h>

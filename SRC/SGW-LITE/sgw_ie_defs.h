@@ -28,8 +28,8 @@
 
 #include "common_types.h"
 
-#ifndef FILE_SGW_LITE_IE_DEFS_SEEN
-#define FILE_SGW_LITE_IE_DEFS_SEEN
+#ifndef FILE_SGW_IE_DEFS_SEEN
+#define FILE_SGW_IE_DEFS_SEEN
 
 typedef uint8_t  EBI_t;
 typedef uint8_t  APNRestriction_t;
@@ -630,5 +630,5 @@ typedef struct {
   FTeid_t s1_eNB_fteid;       ///< S1 eNodeB F-TEID
 } bearer_context_to_modify_t;
 
-#endif  /* FILE_SGW_LITE_IE_DEFS_SEEN */
+#endif  /* FILE_SGW_IE_DEFS_SEEN */
 

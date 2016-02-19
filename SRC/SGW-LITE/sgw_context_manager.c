@@ -25,8 +25,8 @@
   \company Eurecom
   \email: lionel.gauthier@eurecom.fr
 */
-#define SGW_LITE
-#define SGW_LITE_CONTEXT_MANAGER_C
+#define SGW
+#define SGW_CONTEXT_MANAGER_C
 
 #include <stdio.h>
 #include <stdlib.h>

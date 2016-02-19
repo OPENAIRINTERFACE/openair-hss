@@ -26,9 +26,9 @@
 * \email: lionel.gauthier@eurecom.fr
 */
 
-#ifndef FILE_SGW_LITE_DEFS_SEEN
-#define FILE_SGW_LITE_DEFS_SEEN
+#ifndef FILE_SGW_DEFS_SEEN
+#define FILE_SGW_DEFS_SEEN
 
 int sgw_init(char* config_file_name_pP);
 
-#endif /* FILE_SGW_LITE_DEFS_SEEN */
+#endif /* FILE_SGW_DEFS_SEEN */

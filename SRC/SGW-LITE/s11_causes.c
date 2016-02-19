@@ -25,7 +25,7 @@
   \company Eurecom
   \email: lionel.gauthier@eurecom.fr
 */
-#define SGW_LITE
+#define SGW
 #define S11_CAUSES_C
 
 #include <stdio.h>

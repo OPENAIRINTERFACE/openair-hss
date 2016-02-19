@@ -25,8 +25,8 @@
 * \company Eurecom
 * \email: lionel.gauthier@eurecom.fr
 */
-#ifndef FILE_SGW_LITE_CONTEXT_MANAGER_SEEN
-#define FILE_SGW_LITE_CONTEXT_MANAGER_SEEN
+#ifndef FILE_SGW_CONTEXT_MANAGER_SEEN
+#define FILE_SGW_CONTEXT_MANAGER_SEEN
 
 #include "commonDef.h"
 #include "common_types.h"
@@ -231,4 +231,4 @@ int                                    sgw_cm_remove_bearer_context_information(
 sgw_eps_bearer_entry_t *               sgw_cm_create_eps_bearer_entry_in_collection(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
 int                                    sgw_cm_remove_eps_bearer_entry(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
 
-#endif /* FILE_SGW_LITE_CONTEXT_MANAGER_SEEN */
+#endif /* FILE_SGW_CONTEXT_MANAGER_SEEN */

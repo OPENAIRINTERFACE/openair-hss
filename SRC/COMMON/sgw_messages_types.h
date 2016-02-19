@@ -38,8 +38,8 @@
 
 #include "../SGW-LITE/sgw_ie_defs.h"
 
-#ifndef FILE_SGW_LITE_MESSAGES_TYPES_SEEN
-#define FILE_SGW_LITE_MESSAGES_TYPES_SEEN
+#ifndef FILE_SGW_MESSAGES_TYPES_SEEN
+#define FILE_SGW_MESSAGES_TYPES_SEEN
 
 #define SGW_CREATE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.sgw_create_session_request
 #define SGW_CREATE_SESSION_RESPONSE(mSGpTR)        (mSGpTR)->ittiMsg.sgw_create_session_response
@@ -935,4 +935,4 @@ typedef struct itti_sgw_release_access_bearers_response_s {
   // Private Extension  ///< optional
 } itti_sgw_release_access_bearers_response_t;
 
-#endif /* FILE_SGW_LITE_MESSAGES_TYPES_SEEN */
+#endif /* FILE_SGW_MESSAGES_TYPES_SEEN */

@@ -144,7 +144,7 @@ typedef struct spgw_config_s {
   log_config_t log_config;
 } spgw_config_t;
 
-#ifndef SGW_LITE
+#ifndef SGW
 extern spgw_config_t spgw_config;
 #endif
 
