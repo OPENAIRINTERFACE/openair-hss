@@ -38,7 +38,7 @@
 typedef struct itti_s1ap_initial_ue_message_s {
   mme_ue_s1ap_id_t     mme_ue_s1ap_id;
   enb_ue_s1ap_id_t     enb_ue_s1ap_id:24;
-  cgi_t                e_utran_cgi;
+  ecgi_t                e_utran_cgi;
 } itti_s1ap_initial_ue_message_t;
 
 typedef struct itti_s1ap_initial_ctxt_setup_req_s {

@@ -402,9 +402,9 @@ mme_app_handle_conn_est_ind (
 
     // S1AP UE ID AND NAS UE ID ARE THE SAME
     if (INVALID_MME_UE_S1AP_ID == conn_est_ind_pP->mme_ue_s1ap_id) {
-      if (NOT_A_M_TMSI != conn_est_ind_pP->nas.s_tmsi.m_tmsi) {
+      if (INVALID_M_TMSI != conn_est_ind_pP->nas.s_tmsi.m_tmsi) {
         // try to build a Guti
-        GUTI_t   guti = {0};
+        guti_t   guti = {0};
         guti.m_tmsi = conn_est_ind_pP->nas.s_tmsi.m_tmsi;
         guti.gummei.mme_code = conn_est_ind_pP->nas.s_tmsi.mme_code;
 

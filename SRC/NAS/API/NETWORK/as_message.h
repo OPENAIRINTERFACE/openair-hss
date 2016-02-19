@@ -169,7 +169,7 @@ typedef struct as_stmsi_s {
 /* Dedicated NAS information */
 typedef struct as_nas_info_s {
   size_t  length;    /* Length of the NAS information data       */
-  Byte_t* data;   /* Dedicated NAS information data container */
+  uint8_t* data;   /* Dedicated NAS information data container */
 } as_nas_info_t;
 
 /* Radio Access Bearer identity */
@@ -193,7 +193,7 @@ typedef uint8_t as_rab_id_t;
 typedef struct broadcast_info_ind_s {
 #define PLMN_LIST_MAX_SIZE  6
   PLMN_LIST_T(PLMN_LIST_MAX_SIZE) plmn_ids; /* List of PLMN identifiers */
-  ci_t  cell_id;    /* Identity of the cell serving the listed PLMNs */
+  eci_t  cell_id;    /* Identity of the cell serving the listed PLMNs */
   tac_t tac;      /* Code of the tracking area the cell belongs to */
 } broadcast_info_ind_t;
 
@@ -220,7 +220,7 @@ typedef struct broadcast_info_ind_s {
  */
 typedef struct cell_info_req_s {
   plmn_t plmn_id;  /* Selected PLMN identity           */
-  Byte_t rat;     /* Bitmap - set of radio access technologies    */
+  uint8_t rat;     /* Bitmap - set of radio access technologies    */
 } cell_info_req_t;
 
 /*
@@ -230,7 +230,7 @@ typedef struct cell_info_req_s {
  */
 typedef struct cell_info_cnf_s {
   uint8_t err_code;    /* Error code                     */
-  ci_t    cell_id;    /* Identity of the cell serving the selected PLMN */
+  eci_t    cell_id;    /* Identity of the cell serving the selected PLMN */
   tac_t   tac;      /* Code of the tracking area the cell belongs to  */
   AcT_t   rat;      /* Radio access technology supported by the cell  */
   uint8_t rsrq;   /* Reference signal received quality         */
@@ -242,7 +242,7 @@ typedef struct cell_info_cnf_s {
  * AS may change cell selection if a more suitable cell is found.
  */
 typedef struct cell_info_ind_s {
-  ci_t  cell_id;    /* Identity of the new serving cell      */
+  eci_t  cell_id;    /* Identity of the new serving cell      */
   tac_t tac;      /* Code of the tracking area the cell belongs to */
 } cell_info_ind_t;
 
@@ -324,7 +324,7 @@ typedef struct nas_establish_req_s {
 typedef struct nas_establish_ind_s {
   mme_ue_s1ap_id_t ue_id;             /* UE lower layer identifier               */
   tai_t            tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
-  cgi_t            cgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
+  ecgi_t            cgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
   as_cause_t       as_cause;          /* Establishment cause                     */
   as_stmsi_t       s_tmsi;            /* UE identity optional field, if not present, value is NOT_A_S_TMSI */
   as_nas_info_t    initial_nas_msg;   /* Initial NAS message to transfer         */

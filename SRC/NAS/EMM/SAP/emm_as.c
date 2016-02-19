@@ -902,7 +902,7 @@ _emm_as_encode (
   /*
    * Allocate memory to the NAS information container
    */
-  info->data = (Byte_t *) CALLOC_CHECK (1, length * sizeof (Byte_t));
+  info->data = (uint8_t *) CALLOC_CHECK (1, length * sizeof (uint8_t));
 
   if (info->data ) {
     /*
@@ -959,7 +959,7 @@ _emm_as_encrypt (
   /*
    * Allocate memory to the NAS information container
    */
-  info->data = (Byte_t *) MALLOC_CHECK (length * sizeof (Byte_t));
+  info->data = (uint8_t *) MALLOC_CHECK (length * sizeof (uint8_t));
 
   if (info->data ) {
     /*

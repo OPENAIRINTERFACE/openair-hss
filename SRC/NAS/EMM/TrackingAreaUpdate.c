@@ -206,7 +206,7 @@ emm_proc_tracking_area_update_request (
   // May be the MME APP module did not find the context, but if we have the GUTI, we may find it
   if (! ue_ctx) {
     if (EPS_MOBILE_IDENTITY_GUTI == msg->oldguti.guti.typeofidentity) {
-      GUTI_t guti;
+      guti_t guti;
       guti.m_tmsi = msg->oldguti.guti.mtmsi;
       guti.gummei.mme_gid = msg->oldguti.guti.mmegroupid;
       guti.gummei.mme_code = msg->oldguti.guti.mmecode;

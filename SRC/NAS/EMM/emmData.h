@@ -149,8 +149,8 @@ typedef struct emm_data_context_s {
   imei_t          *imei;        /* The IMEI provided by the UE                     */
   imeisv_t        *imeisv;      /* The IMEISV provided by the UE                   */
   int              guti_is_new; /* New GUTI indicator                              */
-  GUTI_t          *guti;        /* The GUTI assigned to the UE                     */
-  GUTI_t          *old_guti;    /* The old GUTI                                    */
+  guti_t          *guti;        /* The GUTI assigned to the UE                     */
+  guti_t          *old_guti;    /* The old GUTI                                    */
   tai_list_t       tai_list;    /* TACs the the UE is registered to                */
   tai_t            last_visited_registered_tai;
   /*int            n_tacs;       * Number of consecutive tracking areas the UE is
@@ -217,7 +217,7 @@ struct emm_data_context_s *emm_data_context_get(
   emm_data_t *emm_data, const mme_ue_s1ap_id_t ueid);
 
 struct emm_data_context_s *emm_data_context_get_by_guti(
-  emm_data_t *emm_data, GUTI_t *guti);
+  emm_data_t *emm_data, guti_t *guti);
 
 struct emm_data_context_s *emm_data_context_remove(
   emm_data_t *_emm_data, struct emm_data_context_s *elm);

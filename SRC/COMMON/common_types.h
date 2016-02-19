@@ -28,16 +28,14 @@
  */
 
 
-#include <stdint.h>
-
-#include "commonDef.h"
-
-#include "security_types.h"
-
-#include "queue.h"
 
 #ifndef FILE_COMMON_TYPES_SEEN
 #define FILE_COMMON_TYPES_SEEN
+
+#include <stdint.h>
+#include "3gpp_23.003.h"
+#include "security_types.h"
+#include "queue.h"
 
 
 typedef uint16_t                 sctp_stream_id_t;
@@ -67,8 +65,15 @@ typedef teid_t                   s1u_teid_t;
 
 
 
+#define TAI_LIST_MAX_SIZE 16
+typedef struct tai_list_s {
+  uint8_t list_type;
+  uint8_t n_tais;
+  tai_t  tai[TAI_LIST_MAX_SIZE];
+}tai_list_t;
+
+
 #define MSISDN_LENGTH      (15)
-#define IMSI_DIGITS_MAX    (15)
 #define IMEI_DIGITS_MAX    (15)
 #define IMEISV_DIGITS_MAX  (16)
 #define APN_MAX_LENGTH     (100)
@@ -118,6 +123,7 @@ typedef uint32_t SequenceNumber_t;
 typedef uint32_t access_restriction_t;
 typedef uint32_t context_identifier_t;
 typedef uint32_t rau_tau_timer_t;
+
 //typedef uint32_t in_addr_t; is network byte order
 
 typedef uint32_t ard_t;
@@ -129,10 +135,7 @@ typedef uint32_t ard_t;
 #define ARD_HO_TO_NON_3GPP_NOT_ALLOWED      (1U << 5)
 #define ARD_MAX                             (1U << 6)
 
-typedef struct {
-  plmn_t   plmn;
-  unsigned cell_identity:28;
-} cgi_t;
+
 
 typedef union {
   uint8_t imei[IMEI_DIGITS_MAX-1]; // -1 =  remove CD/SD digit
@@ -276,5 +279,7 @@ typedef struct {
     s6a_base_result_t         base;
   } choice;
 } s6a_result_t;
+
+#include "commonDef.h"
 
 #endif /* FILE_COMMON_TYPES_SEEN */

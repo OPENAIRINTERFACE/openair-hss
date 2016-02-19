@@ -155,8 +155,8 @@ nas_proc_establish_ind (
   const enb_ue_s1ap_id_t enb_ue_s1ap_id_key,
   const mme_ue_s1ap_id_t ue_id,
   const tai_t tai,
-  const cgi_t cgi,
-  const Byte_t * data,
+  const ecgi_t cgi,
+  const uint8_t * data,
   const size_t len)
 {
   LOG_FUNC_IN (LOG_NAS_EMM);
@@ -281,7 +281,7 @@ nas_proc_dl_transfer_rej (
 int
 nas_proc_ul_transfer_ind (
   const mme_ue_s1ap_id_t ue_id,
-  const Byte_t * data,
+  const uint8_t * data,
   const size_t len)
 {
   int                                     rc = RETURNerror;

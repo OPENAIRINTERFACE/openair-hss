@@ -39,7 +39,7 @@
 *****************************************************************************/
 
 #include "network_api.h"
-#include "commonDef.h"
+#include "common_types.h"
 #include "log.h"
 #include "socket.h"
 

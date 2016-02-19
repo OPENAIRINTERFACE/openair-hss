@@ -180,7 +180,7 @@ emm_proc_detach_request (
   int switch_off,
   int native_ksi,
   int ksi,
-  GUTI_t * guti,
+  guti_t * guti,
   imsi_t * imsi,
   imei_t * imei)
 {

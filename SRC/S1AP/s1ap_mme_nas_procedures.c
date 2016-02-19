@@ -87,7 +87,7 @@ s1ap_mme_handle_initial_ue_message (
     tai_t                                   tai = {0};
     gummei_t                                gummei = {0}; // initialized after
     as_stmsi_t                              s_tmsi = {0};
-    cgi_t                                   cgi = {0};
+    ecgi_t                                   cgi = {0};
 
     /*
      * This UE eNB Id has currently no known s1 association.
@@ -153,7 +153,7 @@ s1ap_mme_handle_initial_ue_message (
       OCTET_STRING_TO_MME_CODE(&initialUEMessage_p->s_tmsi.mMEC, s_tmsi.mme_code);
       OCTET_STRING_TO_M_TMSI(&initialUEMessage_p->s_tmsi.m_TMSI, s_tmsi.m_tmsi);
     } else {
-      s_tmsi.m_tmsi = NOT_A_M_TMSI;
+      s_tmsi.m_tmsi = INVALID_M_TMSI;
     }
 
     memset(&gummei, 0, sizeof(gummei));

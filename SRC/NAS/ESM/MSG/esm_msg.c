@@ -36,8 +36,8 @@
 
 *****************************************************************************/
 
+#include "common_types.h"
 #include "esm_msg.h"
-#include "commonDef.h"
 #include "log.h"
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"

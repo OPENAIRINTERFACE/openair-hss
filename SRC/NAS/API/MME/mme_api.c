@@ -38,11 +38,9 @@
 *****************************************************************************/
 
 
-#include "mme_api.h"
-#include "log.h"
-#include "assertions.h"
-#include "commonDef.h"
 #include "common_types.h"
+#include "mme_api.h"
+#include "assertions.h"
 #include "sgw_ie_defs.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
@@ -425,7 +423,7 @@ mme_api_get_esm_config (
 int
 mme_api_notify_new_guti (
   const mme_ue_s1ap_id_t id,
-  GUTI_t * const guti)
+  guti_t * const guti)
 {
   ue_context_t                           *ue_context = NULL;
 
@@ -498,7 +496,7 @@ mme_api_notified_new_ue_s1ap_id_association (
  */
 int
 mme_api_identify_guti (
-  const GUTI_t * guti,
+  const guti_t * guti,
   auth_vector_t * vector)
 {
   ue_context_t                           *ue_context = NULL;
@@ -608,7 +606,7 @@ mme_api_identify_imei (
 int
 mme_api_new_guti (
   const imsi_t * imsi,
-  GUTI_t * guti,
+  guti_t * guti,
   tai_list_t * tai_list)
 {
   ue_context_t                           *ue_context = NULL;

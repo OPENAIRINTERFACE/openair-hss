@@ -170,7 +170,7 @@ process_nas_establish_req (
   ind->tac = DEFAULT_TAC;
 
   if (req->initialNasMsg.length > 0) {
-    ind->initialNasMsg.data = (Byte_t *) malloc (req->initialNasMsg.length);
+    ind->initialNasMsg.data = (uint8_t *) malloc (req->initialNasMsg.length);
 
     if (ind->initialNasMsg.data) {
       memcpy (ind->initialNasMsg.data, req->initialNasMsg.data, req->initialNasMsg.length);
@@ -237,7 +237,7 @@ process_ul_info_transfer_req (
   ind->UEid = 1;                // Valid UEid starts at index 1
 
   if (req->nasMsg.length > 0) {
-    ind->nasMsg.data = (Byte_t *) malloc (req->nasMsg.length);
+    ind->nasMsg.data = (uint8_t *) malloc (req->nasMsg.length);
 
     if (ind->nasMsg.data) {
       memcpy (ind->nasMsg.data, req->nasMsg.data, req->nasMsg.length);
@@ -334,7 +334,7 @@ process_nas_establish_rsp (
   cnf->errCode = rsp->errCode;
 
   if (rsp->nasMsg.length > 0) {
-    cnf->nasMsg.data = (Byte_t *) malloc (rsp->nasMsg.length);
+    cnf->nasMsg.data = (uint8_t *) malloc (rsp->nasMsg.length);
 
     if (cnf->nasMsg.data) {
       memcpy (cnf->nasMsg.data, rsp->nasMsg.data, rsp->nasMsg.length);
@@ -392,7 +392,7 @@ process_dl_info_transfer_req (
    * Setup downlink information indication message
    */
   if (req->nasMsg.length > 0) {
-    ind->nasMsg.data = (Byte_t *) malloc (req->nasMsg.length);
+    ind->nasMsg.data = (uint8_t *) malloc (req->nasMsg.length);
 
     if (ind->nasMsg.data) {
       memcpy (ind->nasMsg.data, req->nasMsg.data, req->nasMsg.length);
@@ -503,12 +503,12 @@ _process_dump (
   U8 MMEcode = [0f]
   U32 m_tmsi = [00 00 00 01]
   plmn_t plmnID = [20 8f 10]
-  Byte_t MCCdigit2:4 = [0]
-  Byte_t MCCdigit1:4 = [2]
-  Byte_t MNCdigit3:4 = [f]
-  Byte_t MCCdigit3:4 = [8]
-  Byte_t MNCdigit2:4 = [0]
-  Byte_t MNCdigit1:4 = [1]
+  uint8_t MCCdigit2:4 = [0]
+  uint8_t MCCdigit1:4 = [2]
+  uint8_t MNCdigit3:4 = [f]
+  uint8_t MCCdigit3:4 = [8]
+  uint8_t MNCdigit2:4 = [0]
+  uint8_t MNCdigit1:4 = [1]
 
   U32 Length = [22 00 00 00] (34 octets)
   U8* initialNasMsg = [07 41 71 0b f6 02 f8 01 01 02 0f 00 00 00 01 05]

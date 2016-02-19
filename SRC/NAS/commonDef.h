@@ -68,9 +68,6 @@ Description Contains global common definitions
 
 #define BOOL_NOT(b) (b^true)
 
-typedef int8_t      SByte_t;    /* 8 bit  signed integer     */
-typedef uint8_t     Byte_t;     /* 8 bit unsigned integer   */
-
 
 /*
 -----------------------------------------------------------------------------
@@ -79,105 +76,12 @@ typedef uint8_t     Byte_t;     /* 8 bit unsigned integer   */
 */
 
 typedef uint8_t     Stat_t;     /* Registration status  */
-typedef uint16_t    tac_t;      /* Tracking Area Code   */
-typedef uint16_t    lac_t;      /* Location Area Code   */
-typedef uint8_t     rac_t;      /* Routing Area Code    */
-typedef uint32_t    ci_t;       /* Cell Identifier      */
 typedef uint8_t     AcT_t;      /* Access Technology    */
 typedef bool        ksi_t;      /* Key set identifier   */
-/*
- * International Mobile Subscriber Identity
- */
-typedef struct imsi_s {
-  Byte_t length;
-  union {
-    struct {
-      Byte_t digit2:4;
-      Byte_t digit1:4;
-      Byte_t digit4:4;
-      Byte_t digit3:4;
-      Byte_t digit6:4;
-      Byte_t digit5:4;
-      Byte_t digit8:4;
-      Byte_t digit7:4;
-      Byte_t digit10:4;
-      Byte_t digit9:4;
-      Byte_t digit12:4;
-      Byte_t digit11:4;
-      Byte_t digit14:4;
-      Byte_t digit13:4;
-#define EVEN_PARITY 0
-#define ODD_PARITY  1
-      Byte_t parity:4;
-      Byte_t digit15:4;
-    } num;
-#define IMSI_SIZE   8
-    Byte_t value[IMSI_SIZE];
-  } u;
-} imsi_t;
 
-/*
- * International Mobile station Equipment Identity
- */
-typedef struct imei_s {
-  Byte_t length;
-  union {
-    struct {
-      Byte_t tac2:4;
-      Byte_t tac1:4;
-      Byte_t tac4:4;
-      Byte_t tac3:4;
-      Byte_t tac6:4;
-      Byte_t tac5:4;
-      Byte_t tac8:4;
-      Byte_t tac7:4;
-      Byte_t snr2:4;
-      Byte_t snr1:4;
-      Byte_t snr4:4;
-      Byte_t snr3:4;
-      Byte_t snr6:4;
-      Byte_t snr5:4;
-#define EVEN_PARITY 0
-#define ODD_PARITY  1
-      Byte_t parity:4;
-      Byte_t cdsd:4;
-    } num;
-#define IMEI_SIZE   8
-    Byte_t value[IMEI_SIZE];
-  } u;
-} imei_t;
 
-/*
- * International Mobile station Equipment Identity
- */
-typedef struct imeisv_s {
-  Byte_t length;
-  union {
-    struct {
-      Byte_t tac2:4;
-      Byte_t tac1:4;
-      Byte_t tac4:4;
-      Byte_t tac3:4;
-      Byte_t tac6:4;
-      Byte_t tac5:4;
-      Byte_t tac8:4;
-      Byte_t tac7:4;
-      Byte_t snr2:4;
-      Byte_t snr1:4;
-      Byte_t snr4:4;
-      Byte_t snr3:4;
-      Byte_t snr6:4;
-      Byte_t snr5:4;
-      Byte_t svn2:4;
-      Byte_t svn1:4;
-#define EVEN_PARITY 0
-#define ODD_PARITY  1
-      Byte_t parity:4;
-    } num;
-#define IMEISV_SIZE   9
-    Byte_t value[IMEISV_SIZE];
-  } u;
-} imeisv_t;
+
+
 
 #define NAS_IMSI2STR(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
         {\
@@ -269,112 +173,6 @@ typedef struct imeisv_s {
           }\
         }
 
-/*
- * Mobile subscriber dialing number
- */
-typedef struct msisdn_s {
-  Byte_t ext:1;
-  /* Type Of Number           */
-#define MSISDN_TON_UNKNOWKN     0b000
-#define MSISDN_TON_INTERNATIONAL    0b001
-#define MSISDN_TON_NATIONAL     0b010
-#define MSISDN_TON_NETWORK      0b011
-#define MSISDN_TON_SUBCRIBER        0b100
-#define MSISDN_TON_ABBREVIATED      0b110
-#define MSISDN_TON_RESERVED     0b111
-  Byte_t ton:3;
-  /* Numbering Plan Identification    */
-#define MSISDN_NPI_UNKNOWN      0b0000
-#define MSISDN_NPI_ISDN_TELEPHONY   0b0001
-#define MSISDN_NPI_GENERIC      0b0010
-#define MSISDN_NPI_DATA         0b0011
-#define MSISDN_NPI_TELEX        0b0100
-#define MSISDN_NPI_MARITIME_MOBILE  0b0101
-#define MSISDN_NPI_LAND_MOBILE      0b0110
-#define MSISDN_NPI_ISDN_MOBILE      0b0111
-#define MSISDN_NPI_PRIVATE      0b1110
-#define MSISDN_NPI_RESERVED     0b1111
-  Byte_t npi:4;
-  /* Dialing Number           */
-  struct {
-    Byte_t lsb:4;
-    Byte_t msb:4;
-#define MSISDN_DIGIT_SIZE   10
-  } digit[MSISDN_DIGIT_SIZE];
-} msisdn_t;
-
-
-/*
- * Public Land Mobile Network identifier
- * PLMN = BCD encoding (Mobile Country Code + Mobile Network Code)
- */
-typedef struct plmn_s {
-  Byte_t mcc_digit2:4;
-  Byte_t mcc_digit1:4;
-  Byte_t mnc_digit3:4;
-  Byte_t mcc_digit3:4;
-  Byte_t mnc_digit2:4;
-  Byte_t mnc_digit1:4;
-} plmn_t;
-
-
-/*
- * Location Area Identification
- */
-typedef struct lai_s {
-  plmn_t plmn;    /* <MCC> + <MNC>    */
-  lac_t lac;      /* Location Area Code   */
-} lai_t;
-
-/*
- * GPRS Routing Area Identification
- */
-typedef struct rai_s {
-  plmn_t plmn;    /* <MCC> + <MNC>    */
-  lac_t lac;      /* Location Area Code   */
-  rac_t rac;      /* Routing Area Code    */
-} RAI_t;
-
-/*
- * EPS Tracking Area Identification
- */
-typedef struct tai_s {
-  plmn_t plmn;    /* <MCC> + <MNC>    */
-  tac_t tac;      /* Tracking Area Code   */
-} tai_t;
-
-#define TAI_LIST_MAX_SIZE 16
-typedef struct tai_list_s {
-  Byte_t list_type;
-  Byte_t n_tais;
-  tai_t  tai[TAI_LIST_MAX_SIZE];
-}tai_list_t;
-
-/*
- * EPS Globally Unique MME Identity
- */
-typedef struct gummei_s {
-  plmn_t   plmn;       /* <MCC> + <MNC>    */
-  uint16_t mme_gid;    /* MME group identifier */
-  uint8_t  mme_code;   /* MME code     */
-} gummei_t;
-
-/*
- * EPS Globally Unique Temporary UE Identity
- */
-/*
- * 3GPP TS 23.003 version 10.10.0 Release 10, 2.4 Structure of TMSI
- * The network shall not allocate a TMSI with all 32 bits equal to 1 (this is because the TMSI must be stored in the SIM,
-and the SIM uses 4 octets with all bits equal to 1 to indicate that no valid TMSI is available).
-*/
-#define NOT_A_S_TMSI UINT64_MAX
-#define NOT_A_M_TMSI UINT32_MAX
-#define NOT_A_TMSI   UINT32_MAX
-
-typedef struct guti_s {
-  gummei_t gummei;    /* Globally Unique MME Identity         */
-  uint32_t m_tmsi;    /* M-Temporary Mobile Subscriber Identity   */
-} GUTI_t;
 
 #define GUTI2STR_MAX_LENGTH 25
 #define GUTI2STR(GuTi_PtR, GuTi_StR, MaXlEn) \
@@ -425,17 +223,17 @@ typedef struct guti_s {
 /*
  * A list of PLMNs
  */
-#define PLMN_LIST_T(SIZE) struct {Byte_t n_plmns; plmn_t plmn[SIZE];}
+#define PLMN_LIST_T(SIZE) struct {uint8_t n_plmns; plmn_t plmn[SIZE];}
 
 /*
  * A list of TACs
  */
-#define TAC_LIST_T(SIZE) struct {Byte_t n_tacs; TAC_t tac[SIZE];}
+#define TAC_LIST_T(SIZE) struct {uint8_t n_tacs; TAC_t tac[SIZE];}
 
 /*
  * A list of TAIs
  */
-#define TAI_LIST_T(SIZE) struct {Byte_t list_type; Byte_t n_tais; tai_t tai[SIZE];}
+#define TAI_LIST_T(SIZE) struct {uint8_t list_type; uint8_t n_tais; tai_t tai[SIZE];}
 
 /*
  * User notification callback, executed whenever a change of data with
@@ -443,8 +241,7 @@ typedef struct guti_s {
  * location change, new PLMN becomes available) is notified by the
  * EPS Mobility Management sublayer
  */
-typedef int (*emm_indication_callback_t) (Stat_t, tac_t, ci_t, AcT_t,
-    const char*, size_t);
+//typedef int (*emm_indication_callback_t) (Stat_t, tac_t, eci_t, AcT_t, const char*, size_t);
 
 typedef enum eps_protocol_discriminator_e {
   /* Protocol discriminator identifier for EPS Mobility Management */

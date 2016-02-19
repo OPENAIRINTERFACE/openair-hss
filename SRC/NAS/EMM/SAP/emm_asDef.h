@@ -94,7 +94,7 @@ typedef struct emm_as_security_data_s {
  */
 typedef struct emm_as_security_s {
   mme_ue_s1ap_id_t       ue_id;    /* UE lower layer identifier        */
-  const GUTI_t          *guti;     /* GUTI temporary mobile identity   */
+  const guti_t          *guti;     /* GUTI temporary mobile identity   */
   emm_as_security_data_t sctx;     /* EPS NAS security context     */
   int                    emm_cause;/* EMM failure cause code       */
   /*
@@ -139,7 +139,7 @@ typedef struct emm_as_security_s {
  * --------------------------------------------
  */
 typedef struct emm_as_EPS_identity_s {
-  const GUTI_t *guti; /* The GUTI, if valid               */
+  const guti_t *guti; /* The GUTI, if valid               */
   const tai_t  *last_tai;  /* The last visited registered Tracking
              * Area Identity, if available          */
   const imsi_t *imsi; /* IMSI in case of "AttachWithImsi"     */
@@ -160,7 +160,7 @@ typedef struct emm_as_establish_s {
   uint8_t                encryption:4;                /* Ciphering algorithm           */
   uint8_t                integrity:4;                 /* Integrity protection algorithm    */
   int                    emm_cause;                   /* EMM failure cause code        */
-  const GUTI_t          *new_guti;                    /* New GUTI, if re-allocated         */
+  const guti_t          *new_guti;                    /* New GUTI, if re-allocated         */
   int                    n_tacs;                      /* Number of consecutive tracking areas
                                                        * the UE is registered to       */
   tac_t                  tac;                         /* Code of the first tracking area the UE
@@ -176,7 +176,7 @@ typedef struct emm_as_establish_s {
 
   uint8_t                eps_update_result;           /* TAU EPS update result   */
   uint32_t              *t3412;                       /* GPRS T3412 timer   */
-  GUTI_t                *guti;                        /* TAU GUTI   */
+  guti_t                *guti;                        /* TAU GUTI   */
   TAI_LIST_T(16)         tai_list;                    /* Valid field if num tai > 0 */
   uint16_t              *eps_bearer_context_status;   /* TAU EPS bearer context status   */
   void                  *location_area_identification;/* TAU Location area identification */
@@ -197,7 +197,7 @@ typedef struct emm_as_establish_s {
  */
 typedef struct emm_as_release_s {
   mme_ue_s1ap_id_t ue_id;                   /* UE lower layer identifier          */
-  const GUTI_t    *guti;                   /* GUTI temporary mobile identity     */
+  const guti_t    *guti;                   /* GUTI temporary mobile identity     */
 #define EMM_AS_CAUSE_AUTHENTICATION 0x01   /* Authentication failure */
 #define EMM_AS_CAUSE_DETACH     0x02       /* Detach requested   */
   uint8_t          cause;                  /* Release cause */
@@ -209,7 +209,7 @@ typedef struct emm_as_release_s {
  */
 typedef struct emm_as_data_s {
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
-  const GUTI_t          *guti;        /* GUTI temporary mobile identity   */
+  const guti_t          *guti;        /* GUTI temporary mobile identity   */
   emm_as_security_data_t sctx;        /* EPS NAS security context     */
   bool                   switch_off;  /* true if the UE is switched off   */
   uint8_t                type;        /* Network detach type          */
@@ -232,7 +232,7 @@ typedef struct emm_as_page_s {} emm_as_page_t;
  */
 typedef struct emm_as_status_s {
   mme_ue_s1ap_id_t       ue_id;      /* UE lower layer identifier        */
-  const GUTI_t          *guti;      /* GUTI temporary mobile identity   */
+  const guti_t          *guti;      /* GUTI temporary mobile identity   */
   emm_as_security_data_t sctx;      /* EPS NAS security context     */
   int                    emm_cause; /* EMM failure cause code       */
 } emm_as_status_t;
@@ -246,9 +246,9 @@ typedef struct emm_as_cell_info_s {
 #define EMM_AS_PLMN_LIST_SIZE   6
   PLMN_LIST_T(EMM_AS_PLMN_LIST_SIZE) plmn_ids;
   /* List of identifiers of available PLMNs   */
-  Byte_t                             rat;      /* Bitmap of Radio Access Technologies      */
+  uint8_t                             rat;      /* Bitmap of Radio Access Technologies      */
   tac_t                              tac;      /* Tracking Area Code               */
-  ci_t                               cell_id;  /* cell identity                */
+  eci_t                               cell_id;  /* cell identity                */
 } emm_as_cell_info_t;
 
 /*

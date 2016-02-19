@@ -120,8 +120,8 @@ sgw_handle_create_session_request (
     //--------------------------------------------------
     // copy informations from create session request to bearer context information
     //--------------------------------------------------
-    memcpy (s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.digit, session_req_pP->imsi.digit, IMSI_DIGITS_MAX);
-    memcpy (s_plus_p_gw_eps_bearer_ctxt_info_p->pgw_eps_bearer_context_information.imsi.digit, session_req_pP->imsi.digit, IMSI_DIGITS_MAX);
+    memcpy (s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.digit, session_req_pP->imsi.digit, IMSI_BCD_DIGITS_MAX);
+    memcpy (s_plus_p_gw_eps_bearer_ctxt_info_p->pgw_eps_bearer_context_information.imsi.digit, session_req_pP->imsi.digit, IMSI_BCD_DIGITS_MAX);
     s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi_unauthenticated_indicator = 1;
     s_plus_p_gw_eps_bearer_ctxt_info_p->pgw_eps_bearer_context_information.imsi_unauthenticated_indicator = 1;
     s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_for_S11 = session_req_pP->sender_fteid_for_cp.teid;

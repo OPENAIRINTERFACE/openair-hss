@@ -126,16 +126,16 @@ int mme_api_get_esm_config(mme_api_esm_config_t *config);
 int
 mme_api_notify_new_guti (
   const mme_ue_s1ap_id_t ueid,
-  GUTI_t * const guti);
+  guti_t * const guti);
 
 int mme_api_notified_new_ue_s1ap_id_association (
     const enb_ue_s1ap_id_t enb_ue_s1ap_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
-int mme_api_identify_guti(const GUTI_t *guti, auth_vector_t *vector);
+int mme_api_identify_guti(const guti_t *guti, auth_vector_t *vector);
 int mme_api_identify_imsi(const imsi_t *imsi, auth_vector_t *vector);
 int mme_api_identify_imei(const imei_t *imei, auth_vector_t *vector);
-int mme_api_new_guti(const imsi_t *imsi, GUTI_t *guti, tai_list_t * tai_list);
+int mme_api_new_guti(const imsi_t *imsi, guti_t *guti, tai_list_t * tai_list);
 
 int mme_api_subscribe(OctetString *apn, mme_api_ip_version_t mme_pdn_index, OctetString *pdn_addr,
                       int is_emergency, mme_api_qos_t *qos);

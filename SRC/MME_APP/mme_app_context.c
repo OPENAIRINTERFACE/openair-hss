@@ -69,9 +69,9 @@ void mme_app_ue_context_free_content (ue_context_t * const mme_ue_context_p)
   //  uint8_t                msisdn[MSISDN_LENGTH+1];
   //  uint8_t                msisdn_length;
   //  mm_state_t             mm_state;
-  //  GUTI_t                 guti;
+  //  guti_t                 guti;
   //  me_identity_t          me_identity;
-  //  cgi_t                  e_utran_cgi;
+  //  ecgi_t                  e_utran_cgi;
   //  time_t                 cell_age;
   //  network_access_mode_t  access_mode;
   //  apn_config_profile_t   apn_profile;
@@ -169,7 +169,7 @@ mme_ue_context_exists_s11_teid (
 ue_context_t                           *
 mme_ue_context_exists_guti (
   mme_ue_context_t * const mme_ue_context_p,
-  const GUTI_t * const guti_p)
+  const guti_t * const guti_p)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
   void                                   *id = NULL;
@@ -236,7 +236,7 @@ mme_ue_context_update_coll_keys (
   const mme_ue_s1ap_id_t mme_ue_s1ap_id,
   const mme_app_imsi_t   imsi,
   const s11_teid_t       mme_s11_teid,
-  const GUTI_t   * const guti_p)  //  never NULL, if none put &ue_context_p->guti
+  const guti_t   * const guti_p)  //  never NULL, if none put &ue_context_p->guti
 {
   ue_context_t                           *same_ue_context_p = NULL;
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;

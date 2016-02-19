@@ -52,7 +52,7 @@ static inline void s1ap_mme_itti_mme_app_establish_ind(
   const size_t            nas_msg_length,
   const long              cause,
   const tai_t      const* tai,
-  const cgi_t      const* cgi,
+  const ecgi_t      const* cgi,
   const as_stmsi_t const* s_tmsi,
   const gummei_t   const* gummei)
 {

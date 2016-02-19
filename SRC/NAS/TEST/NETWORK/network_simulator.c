@@ -268,7 +268,7 @@ static int                              _process_deactivate_eps_bearer_context_a
 
 static void
 _dump_buffer (
-  const Byte_t * buffer,
+  const uint8_t * buffer,
   size_t len)
 {
   for (int i = 0; i < len; i++) {
@@ -606,7 +606,7 @@ _process_establish_req (
        * Setup signalling connection establishment confirm message
        */
       rsp->errCode = AS_SUCCESS;
-      rsp->nasMsg.data = (Byte_t *) malloc (bytes * sizeof (Byte_t));
+      rsp->nasMsg.data = (uint8_t *) malloc (bytes * sizeof (uint8_t));
 
       if (rsp->nasMsg.data) {
         rsp->nasMsg.length = bytes;
@@ -696,7 +696,7 @@ _process_ul_info_transfer_req (
     /*
      * Some data has to be sent back to the UE
      */
-    ind->nasMsg.data = (Byte_t *) malloc (bytes * sizeof (Byte_t));
+    ind->nasMsg.data = (uint8_t *) malloc (bytes * sizeof (uint8_t));
 
     if (ind->nasMsg.data) {
       ind->nasMsg.length = bytes;
@@ -1397,12 +1397,12 @@ _assign_pdn_address (
   U8 cause = [04] - NET_ESTABLISH_CAUSE_MO_SIGNAL
   U8 type = [10]  - NET_ESTABLISH_TYPE_ORIGINATING_SIGNAL
   plmn_t plmnID = [20 8f 10]
-  Byte_t MCCdigit2:4 = [0]
-  Byte_t MCCdigit1:4 = [2]
-  Byte_t MNCdigit3:4 = [f]
-  Byte_t MCCdigit3:4 = [8]
-  Byte_t MNCdigit2:4 = [0]
-  Byte_t MNCdigit1:4 = [1]
+  uint8_t MCCdigit2:4 = [0]
+  uint8_t MCCdigit1:4 = [2]
+  uint8_t MNCdigit3:4 = [f]
+  uint8_t MCCdigit3:4 = [8]
+  uint8_t MNCdigit2:4 = [0]
+  uint8_t MNCdigit1:4 = [1]
   as_stmsi_t s_tmsi
   U8 MMEcode = [0f]
   U32 m_tmsi = [00 00 00 01]

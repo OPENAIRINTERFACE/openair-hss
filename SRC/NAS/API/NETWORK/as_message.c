@@ -40,7 +40,7 @@
 *****************************************************************************/
 
 #include "as_message.h"
-#include "commonDef.h"
+#include "common_types.h"
 #include "log.h"
 #include "dynamic_memory_check.h"
 
@@ -85,7 +85,7 @@ as_message_decode (
 {
   LOG_FUNC_IN (LOG_NAS);
   int                                     bytes;
-  Byte_t                                **data = NULL;
+  uint8_t                                **data = NULL;
 
   /*
    * Get the message type
@@ -98,7 +98,7 @@ as_message_decode (
     /*
      * NAS signalling connection establish request
      */
-    bytes += sizeof (nas_establish_req_t) - sizeof (Byte_t *);
+    bytes += sizeof (nas_establish_req_t) - sizeof (uint8_t *);
     data = &msg->msg.nas_establish_req.initial_nas_msg.data;
     break;
 
@@ -106,7 +106,7 @@ as_message_decode (
     /*
      * NAS signalling connection establishment indication
      */
-    bytes += sizeof (nas_establish_ind_t) - sizeof (Byte_t *);
+    bytes += sizeof (nas_establish_ind_t) - sizeof (uint8_t *);
     data = &msg->msg.nas_establish_ind.initial_nas_msg.data;
     break;
 
@@ -114,7 +114,7 @@ as_message_decode (
     /*
      * NAS signalling connection establishment response
      */
-    bytes += sizeof (nas_establish_rsp_t) - sizeof (Byte_t *);
+    bytes += sizeof (nas_establish_rsp_t) - sizeof (uint8_t *);
     data = &msg->msg.nas_establish_rsp.nas_msg.data;
     break;
 
@@ -122,7 +122,7 @@ as_message_decode (
     /*
      * NAS signalling connection establishment confirm
      */
-    bytes += sizeof (nas_establish_cnf_t) - sizeof (Byte_t *);
+    bytes += sizeof (nas_establish_cnf_t) - sizeof (uint8_t *);
     data = &msg->msg.nas_establish_cnf.nas_msg.data;
     break;
 
@@ -130,7 +130,7 @@ as_message_decode (
     /*
      * Uplink L3 data transfer request
      */
-    bytes += sizeof (ul_info_transfer_req_t) - sizeof (Byte_t *);
+    bytes += sizeof (ul_info_transfer_req_t) - sizeof (uint8_t *);
     data = &msg->msg.ul_info_transfer_req.nas_msg.data;
     break;
 
@@ -138,7 +138,7 @@ as_message_decode (
     /*
      * Uplink L3 data transfer indication
      */
-    bytes += sizeof (ul_info_transfer_ind_t) - sizeof (Byte_t *);
+    bytes += sizeof (ul_info_transfer_ind_t) - sizeof (uint8_t *);
     data = &msg->msg.ul_info_transfer_ind.nas_msg.data;
     break;
 
@@ -146,7 +146,7 @@ as_message_decode (
     /*
      * Downlink L3 data transfer request
      */
-    bytes += sizeof (dl_info_transfer_req_t) - sizeof (Byte_t *);
+    bytes += sizeof (dl_info_transfer_req_t) - sizeof (uint8_t *);
     data = &msg->msg.dl_info_transfer_req.nas_msg.data;
     break;
 
@@ -154,7 +154,7 @@ as_message_decode (
     /*
      * Downlink L3 data transfer indication
      */
-    bytes += sizeof (dl_info_transfer_ind_t) - sizeof (Byte_t *);
+    bytes += sizeof (dl_info_transfer_ind_t) - sizeof (uint8_t *);
     data = &msg->msg.dl_info_transfer_ind.nas_msg.data;
     break;
 
@@ -191,7 +191,7 @@ as_message_decode (
       /*
        * Set the pointer to dedicated NAS information
        */
-      *data = (Byte_t *) (buffer + bytes);
+      *data = (uint8_t *) (buffer + bytes);
     }
 
     /*
@@ -279,7 +279,7 @@ as_message_encode (
     /*
      * NAS signalling connection establish request
      */
-    bytes += sizeof (nas_establish_req_t) - sizeof (Byte_t *);
+    bytes += sizeof (nas_establish_req_t) - sizeof (uint8_t *);
     nas_msg = &msg->msg.nas_establish_req.initial_nas_msg;
     break;
 
@@ -287,7 +287,7 @@ as_message_encode (
     /*
      * NAS signalling connection establish indication
      */
-    bytes += sizeof (nas_establish_ind_t) - sizeof (Byte_t *);
+    bytes += sizeof (nas_establish_ind_t) - sizeof (uint8_t *);
     nas_msg = &msg->msg.nas_establish_ind.initial_nas_msg;
     break;
 
@@ -295,7 +295,7 @@ as_message_encode (
     /*
      * NAS signalling connection establish response
      */
-    bytes += sizeof (nas_establish_rsp_t) - sizeof (Byte_t *);
+    bytes += sizeof (nas_establish_rsp_t) - sizeof (uint8_t *);
     nas_msg = &msg->msg.nas_establish_rsp.nas_msg;
     break;
 
@@ -303,7 +303,7 @@ as_message_encode (
     /*
      * NAS signalling connection establish confirm
      */
-    bytes += sizeof (nas_establish_cnf_t) - sizeof (Byte_t *);
+    bytes += sizeof (nas_establish_cnf_t) - sizeof (uint8_t *);
     nas_msg = &msg->msg.nas_establish_cnf.nas_msg;
     break;
 
@@ -325,7 +325,7 @@ as_message_encode (
     /*
      * Uplink L3 data transfer request
      */
-    bytes += sizeof (ul_info_transfer_req_t) - sizeof (Byte_t *);
+    bytes += sizeof (ul_info_transfer_req_t) - sizeof (uint8_t *);
     nas_msg = &msg->msg.ul_info_transfer_req.nas_msg;
     break;
 
@@ -340,7 +340,7 @@ as_message_encode (
     /*
      * Uplink L3 data transfer indication
      */
-    bytes += sizeof (ul_info_transfer_ind_t) - sizeof (Byte_t *);
+    bytes += sizeof (ul_info_transfer_ind_t) - sizeof (uint8_t *);
     nas_msg = &msg->msg.ul_info_transfer_ind.nas_msg;
     break;
 
@@ -348,7 +348,7 @@ as_message_encode (
     /*
      * Downlink L3 data transfer
      */
-    bytes += sizeof (dl_info_transfer_req_t) - sizeof (Byte_t *);
+    bytes += sizeof (dl_info_transfer_req_t) - sizeof (uint8_t *);
     nas_msg = &msg->msg.dl_info_transfer_req.nas_msg;
     break;
 
@@ -363,7 +363,7 @@ as_message_encode (
     /*
      * Downlink L3 data transfer indication
      */
-    bytes += sizeof (dl_info_transfer_ind_t) - sizeof (Byte_t *);
+    bytes += sizeof (dl_info_transfer_ind_t) - sizeof (uint8_t *);
     nas_msg = &msg->msg.dl_info_transfer_ind.nas_msg;
     break;
 

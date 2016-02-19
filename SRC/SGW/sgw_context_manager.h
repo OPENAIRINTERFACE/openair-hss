@@ -30,7 +30,7 @@
 
 #include "commonDef.h"
 #include "common_types.h"
-#include "mme_app_ue_context.h" // for cgi_t
+#include "mme_app_ue_context.h" // for ecgi_t
 #include "hashtable.h"
 #include "obj_hashtable.h"
 
@@ -174,7 +174,7 @@ typedef struct sgw_eps_bearer_context_information_s {
   // NOT NEEDED Trace type                             ///< Indicates the type of trace
   // NOT NEEDED Trigger id                             ///< Identifies the entity that initiated the trace
   // NOT NEEDED OMC identity                           ///< Identifies the OMC that shall receive the trace record(s).
-  cgi_t                last_known_cell_Id;             ///< This is the last location of the UE known by the network
+  ecgi_t                last_known_cell_Id;             ///< This is the last location of the UE known by the network
   // NOT NEEDED NOW Last known Cell Id age             ///< This is the age of the above UE location information
 
   // ONLY ONE PDN CONNECTION

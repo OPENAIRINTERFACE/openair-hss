@@ -195,7 +195,7 @@ emm_recv_attach_request (
   /*
    * Get the EPS mobile identity
    */
-  GUTI_t                                  guti = {0},
+  guti_t                                  guti = {0},
                                          *p_guti = NULL;
   imsi_t                                  imsi = {0},
                                          *p_imsi = NULL;
@@ -402,7 +402,7 @@ emm_recv_detach_request (
   /*
    * Get the EPS mobile identity
    */
-  GUTI_t                                  guti = {0},
+  guti_t                                  guti = {0},
                                          *p_guti = NULL;
   imsi_t                                  imsi = {0},
                                          *p_imsi = NULL;

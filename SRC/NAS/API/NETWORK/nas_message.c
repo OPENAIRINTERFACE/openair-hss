@@ -38,7 +38,7 @@
 
 *****************************************************************************/
 
-#include "commonDef.h"
+#include "common_types.h"
 #include "nas_message.h"
 #include "log.h"
 #include "gcc_diag.h"

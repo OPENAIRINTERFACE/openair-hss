@@ -37,7 +37,7 @@ typedef struct s6a_update_location_req_s {
 #define INITIAL_ATTACH       (0x1)
   unsigned initial_attach:1;
 
-  char       imsi[IMSI_DIGITS_MAX + 1]; // username
+  char       imsi[IMSI_BCD_DIGITS_MAX + 1]; // username
   uint8_t    imsi_length;               // username
 
   plmn_t     visited_plmn;              // visited plmn id
@@ -60,14 +60,14 @@ typedef struct s6a_update_location_ans_s {
 
   network_access_mode_t access_mode;
   rau_tau_timer_t       rau_tau_timer;
-  char    imsi[IMSI_DIGITS_MAX + 1];
+  char    imsi[IMSI_BCD_DIGITS_MAX + 1];
   uint8_t imsi_length;
 
 
 } s6a_update_location_ans_t;
 
 typedef struct s6a_auth_info_req_s {
-  char    imsi[IMSI_DIGITS_MAX + 1];
+  char    imsi[IMSI_BCD_DIGITS_MAX + 1];
   uint8_t imsi_length;
   plmn_t  visited_plmn;
   /* Number of vectors to retrieve from HSS, should be equal to one */
@@ -82,7 +82,7 @@ typedef struct s6a_auth_info_req_s {
 } s6a_auth_info_req_t;
 
 typedef struct s6a_auth_info_ans_s {
-  char       imsi[IMSI_DIGITS_MAX + 1];
+  char       imsi[IMSI_BCD_DIGITS_MAX + 1];
   uint8_t    imsi_length;
 
   /* Result of the authentication information procedure */

@@ -308,7 +308,7 @@ emm_proc_identification_complete (
        * Update the GUTI
        */
       if (emm_ctx->guti == NULL) {
-        emm_ctx->guti = (GUTI_t *) CALLOC_CHECK (1, sizeof (GUTI_t));
+        emm_ctx->guti = (guti_t *) CALLOC_CHECK (1, sizeof (guti_t));
       }
 
       if (emm_ctx->guti) {

@@ -125,7 +125,7 @@ static int                              _emm_attach_have_changed (
   const emm_data_context_t * ctx,
   emm_proc_attach_type_t type,
   int ksi,
-  GUTI_t * guti,
+  guti_t * guti,
   imsi_t * imsi,
   imei_t * imei,
   int eea,
@@ -142,7 +142,7 @@ static int                              _emm_attach_update (
   mme_ue_s1ap_id_t ue_id,
   emm_proc_attach_type_t type,
   int ksi,
-  GUTI_t * guti,
+  guti_t * guti,
   imsi_t * imsi,
   imei_t * imei,
   const tai_t   * const originating_tai,
@@ -223,7 +223,7 @@ emm_proc_attach_request (
   bool is_native_ksi,
   ksi_t     ksi,
   bool is_native_guti,
-  GUTI_t * guti,
+  guti_t * guti,
   imsi_t * imsi,
   imei_t * imei,
   tai_t * last_visited_registered_tai,
@@ -1069,7 +1069,7 @@ _emm_attach_identify (
     /*
      * Allocate a new GUTI
      */
-    emm_ctx->guti = (GUTI_t *) MALLOC_CHECK (sizeof (GUTI_t));
+    emm_ctx->guti = (guti_t *) MALLOC_CHECK (sizeof (guti_t));
     /*
      * Request the MME to assign a GUTI to the UE
      */
@@ -1537,7 +1537,7 @@ _emm_attach_have_changed (
   const emm_data_context_t * ctx,
   emm_proc_attach_type_t type,
   int ksi,
-  GUTI_t * guti,
+  guti_t * guti,
   imsi_t * imsi,
   imei_t * imei,
   int eea,
@@ -1766,7 +1766,7 @@ _emm_attach_update (
   mme_ue_s1ap_id_t ue_id,
   emm_proc_attach_type_t type,
   int ksi,
-  GUTI_t * guti,
+  guti_t * guti,
   imsi_t * imsi,
   imei_t * imei,
   const tai_t   * const originating_tai,
@@ -1818,8 +1818,8 @@ _emm_attach_update (
     LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - GUTI NOT NULL\n");
 
     if (ctx->guti == NULL) {
-      ctx->guti = (GUTI_t *) CALLOC_CHECK (1, sizeof (GUTI_t));
-      memcpy (ctx->guti, guti, sizeof (GUTI_t));
+      ctx->guti = (guti_t *) CALLOC_CHECK (1, sizeof (guti_t));
+      memcpy (ctx->guti, guti, sizeof (guti_t));
       OAI_GCC_DIAG_OFF(int-to-pointer-cast);
       obj_hashtable_ts_insert (_emm_data.ctx_coll_guti, (const void *const)ctx->guti, sizeof (*guti), (void *)ctx->ue_id);
       OAI_GCC_DIAG_ON(int-to-pointer-cast);
@@ -1832,11 +1832,11 @@ _emm_attach_update (
       LOG_INFO (LOG_NAS_EMM, "EMM-CTX - put in ctx_coll_guti  guti provided by UE, UE id " MME_UE_S1AP_ID_FMT " m_tmsi  %08x\n", ctx->ue_id, ctx->guti->m_tmsi);
     } else {
       // TODO Think about what is _emm_data.ctx_coll_guti
-      memcpy (ctx->guti, guti, sizeof (GUTI_t));
+      memcpy (ctx->guti, guti, sizeof (guti_t));
     }
   } else {
     if (!ctx->guti ) {
-      ctx->guti = (GUTI_t *) CALLOC_CHECK (1, sizeof (GUTI_t));
+      ctx->guti = (guti_t *) CALLOC_CHECK (1, sizeof (guti_t));
     } else {
       unsigned int                           *emm_ue_id = NULL;
 

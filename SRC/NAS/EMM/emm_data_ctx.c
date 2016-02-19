@@ -56,7 +56,7 @@ emm_data_context_get (
 struct emm_data_context_s              *
 emm_data_context_get_by_guti (
   emm_data_t * emm_data,
-  GUTI_t * guti)
+  guti_t * guti)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
   mme_ue_s1ap_id_t                        emm_ue_id = INVALID_MME_UE_S1AP_ID;
@@ -99,7 +99,7 @@ emm_data_context_remove (
   LOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " MME_UE_S1AP_ID_FMT " ", elm, elm->ue_id);
 
   if ( elm->guti) {
-    GUTI_t guti = {0};
+    guti_t guti = {0};
     memcpy(&guti, (const void*)elm->guti, sizeof(guti));
     obj_hashtable_ts_remove (emm_data->ctx_coll_guti, (const void *)&guti, sizeof (guti), (void **)&emm_ue_id);
 

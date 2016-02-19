@@ -59,7 +59,7 @@ typedef uint64_t mme_app_imsi_t;
 
 /* Convert the IMSI contained by a char string NULL terminated to uint64_t */
 #define MME_APP_STRING_TO_IMSI(sTRING, iMSI) sscanf(sTRING, "%"IMSI_FORMAT, iMSI)
-#define MME_APP_IMSI_TO_STRING(iMSI, sTRING) snprintf(sTRING, IMSI_DIGITS_MAX+1, "%"IMSI_FORMAT, iMSI)
+#define MME_APP_IMSI_TO_STRING(iMSI, sTRING) snprintf(sTRING, IMSI_BCD_DIGITS_MAX+1, "%"IMSI_FORMAT, iMSI)
 
 /** @struct bearer_context_t
  *  @brief Parameters that should be kept for an eps bearer.
@@ -121,14 +121,14 @@ typedef struct ue_context_s {
 
   mm_state_t             mm_state;                    // not set/read
   /* Globally Unique Temporary Identity */
-  GUTI_t                 guti;                        // guti.gummei.plmn set by nas_auth_param_req_t
+  guti_t                 guti;                        // guti.gummei.plmn set by nas_auth_param_req_t
   // read by S6A UPDATE LOCATION REQUEST
   me_identity_t          me_identity;                 // not set/read except read by display utility
 
   /* TODO: Add TAI list */
 
   /* Last known cell identity */
-  cgi_t                  e_utran_cgi;                 // set by nas_attach_req_t
+  ecgi_t                  e_utran_cgi;                 // set by nas_attach_req_t
   // read for S11 CREATE_SESSION_REQUEST
   /* Time when the cell identity was acquired */
   time_t                 cell_age;                    // set by nas_auth_param_req_t
@@ -231,7 +231,7 @@ ue_context_t *mme_ue_context_exists_enb_ue_s1ap_id (
  * @returns an UE context matching the guti or NULL if the context doesn't exists
  **/
 ue_context_t *mme_ue_context_exists_guti(mme_ue_context_t * const mme_ue_context,
-    const GUTI_t * const guti);
+    const guti_t * const guti);
 
 
 /** \brief Create the association between mme_ue_s1ap_id and an UE context (enb_ue_s1ap_id key)
@@ -263,7 +263,7 @@ void mme_ue_context_update_coll_keys(
     const mme_ue_s1ap_id_t   mme_ue_s1ap_id,
     const mme_app_imsi_t     imsi,
     const s11_teid_t         mme_s11_teid,
-    const GUTI_t     * const guti_p);
+    const guti_t     * const guti_p);
 
 /** \brief Insert a new UE context in the tree of known UEs.
  * At least the IMSI should be known to insert the context in the tree.
