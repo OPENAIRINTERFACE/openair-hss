@@ -38,6 +38,6 @@
 #include "s1ap_messages_def.h"
 #include "s6a_messages_def.h"
 #include "sctp_messages_def.h"
-#include "sgw_def.h"
+#include "sgw_messages_def.h"
 #include "udp_messages_def.h"
 #include "mme_app_messages_def.h"
