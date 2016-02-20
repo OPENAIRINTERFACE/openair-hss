@@ -169,7 +169,7 @@ install_xtables_addons_oai() {
   else
     prompt='y'
     rm_option=f
-    OPTION=""
+    OPTION="-y"
   fi
   PACKAGE_LIST="\
     autoconf  \
