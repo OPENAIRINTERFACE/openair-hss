@@ -46,6 +46,7 @@ function help()
   echo_error "  -H, --remote-hss                hostname  HSS hostname (with FQDN), default is this host (`hostname --fqdn`)."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run EPC (support Ubuntu 14.04)."
   echo_error "  -j, --install-gtpu-kernel-module          Install or reinstall specifically the GTPV1-U kernel module (done with -i also) (support Ubuntu 14.04)."
+  echo_error "  -t, --install-xtables                     Install or reinstall only xtables without the linux headers."
   echo_error "  -l, --local-hss                           HSS run on the same host."
   echo_error "  -v, --verbose                             Build process verbose."
   echo_error "  -V, --verbose-make                        Make process verbose."
@@ -138,6 +139,10 @@ function main()
         cmake_args="$cmake_args -DREALM=$realm"
         shift 2;
         ;;
+      -t | --install-xtables)
+        install_xtables=1
+        shift;
+        ;;
       -v | --verbose)
         echo "Build process verbose"
         verbose=1
@@ -166,7 +171,11 @@ function main()
   if [ $install_gtpu_kernel_module -gt 0 ];then
     check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $force
     exit 0
+  elif [ $install_xtables -gt 0 ]; then 
+    install_xtables_addons_oai $force
+    exit 0   
   fi
+
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     check_install_mme_gw_software  $force
