@@ -553,7 +553,7 @@ check_kernel_release_and_install_xtables_addons_oai() {
           install_xtables_addons_oai $2
       } || {
           echo_warning "Package linux-headers-$current_k_release is not installed and required for S-GW software." 
-          $SUDO apt-get install linux-headers-$current_k_release && install_xtables_addons_oai $2
+          $SUDO apt-get install linux-headers-$current_k_release -y && install_xtables_addons_oai $2
     }
   else
     echo_error "Please provide arguments: kernel ubuntu version and force option"
