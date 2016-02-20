@@ -183,8 +183,8 @@ mme_app_init (
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
   mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_imsi_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_tun11_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, NULL, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_enb_ue_s1ap-id_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, NULL, "mme_app_enb_ue_s1ap-id_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (64, NULL, hash_free_int_func, hash_free_int_func, "mme_app_guti_ue_context_htbl");
 
   /*
