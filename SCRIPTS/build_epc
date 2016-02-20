@@ -180,7 +180,7 @@ function main()
 
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
-    check_install_mme_gw_software  $force
+    check_install_mme_gw_software  $force 
     exit 0
   fi
   
