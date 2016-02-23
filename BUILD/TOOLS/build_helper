@@ -96,18 +96,22 @@ clean_all_files() {
 # arg 1 Build directory OPENAIR_DIR/BUILD/?
 # arg 2 Executable target name
 # arg 3 Executable name (no path)
+# arg 4 Verbose         (1 or 0)
 compilations() {
   cd $OPENAIRCN_DIR/BUILD/$1/BUILD
-  {
-    rm -f $3
-    make -j`nproc` $2
-  } > $dlog/$2.txt 2>&1
+  if [ "a$4" == "a1" ]; then 
+    {
+      rm -f $3
+      make $make_args $2
+    } | tee $dlog/$2.txt 
+  else
+    {
+      rm -f $3
+      make $make_args $2
+    } > $dlog/$2.txt 2>&1
+  fi
   if [ -s $3 ] ; then
      echo_success "$2 compiled"
-     # dest dir for install may be system dir
-     echo_success "Changing permissions for installing..."
-     chmod -Rf 777 $OPENAIRCN_DIR/BUILD/$1/BUILD
-     $SUDO make install  $2 >> $dlog/$2.txt 2>&1
   else
      echo_error "$2 compilation failed"
   fi
@@ -161,17 +165,29 @@ install_xtables_addons_oai() {
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install xtables_addons_oai ? <y/N> " prompt
     rm_option=I
+    OPTION="-y"
   else
     prompt='y'
     rm_option=f
+    OPTION="-y"
   fi
+  PACKAGE_LIST="\
+    autoconf  \
+    automake  \
+    build-essential \
+    dkms \
+    iptables \
+    iptables-dev \
+    linux-headers-`uname -r`"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd ~
     if [ -d xtables-addons-oai ]; then
       echo_warning "Will remove $PWD/xtables-addons-oai"
-      sudo rm -rv -$rm_option xtables-addons-oai
-      rm -rv -$rm_option xtables-addons-oai
+      $SUDO rm -rv -$rm_option xtables-addons-oai
+      $SUDO rm -rv -$rm_option xtables-addons-oai
     fi
     echo "Downloading xtables-addons-oai source code"
     git clone https://gitlab.eurecom.fr/oai/xtables-addons-oai.git
@@ -180,12 +196,12 @@ install_xtables_addons_oai() {
     chmod -R g+w xtables-addons-oai
     cd xtables-addons-oai/
     sync
-    sudo autoreconf --install --force
-    sudo ./configure 
-    sudo make
-    sudo make install
+    $SUDO autoreconf --install --force
+    $SUDO ./configure 
+    $SUDO make
+    $SUDO make install
     cd /lib/modules/`uname -r`
-    sudo depmod -a
+    $SUDO depmod -a
   fi
 }
 
@@ -193,8 +209,67 @@ install_xtables_addons_oai() {
 # External packages installers
 ############################################
 
+# This function is for internal use of EURECOM developers (no support)
+# arg1 is force (no interactive script)
+install_netmap() {
+  if [ $1 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+  
+  # Compilers, generators, ...
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    build-essential \
+    linux-source \
+    qt4-dev-tools
+
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install netmap ? <y/N> " prompt
+  else
+    prompt='y'
+  fi
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    # TODO: check operations
+    current_kernel_release=`uname -r | cut -d '-' -f1`
+    if [ ! -f /usr/src/linux-source-"$current_kernel_release"/"$current_kernel_release"/.config ]; then
+      if [ ! -f /usr/src/linux-source-"$current_kernel_release"/"$current_kernel_release" ]; then
+        echo "Untar kernel source code"
+        cd /usr/src/linux-source-"$current_kernel_release"
+        tar xjf *.tar.bz2
+      fi
+      cd linux-source-"$current_kernel_release"
+      $SUDO make oldconfig
+      $SUDO make
+      $SUDO make install
+      # TODO: check CONFIG_VIRTIO_NET=m for full performance 
+      echo_fatal "Please reboot your computer on the new installed kernel (do your own stuff in grub.cfg): $current_kernel_release"
+    fi
+       
+    echo "Downloading netmap"
+    cd $OPENAIRCN_DIR/..
+    git clone https://github.com/luigirizzo/netmap.git
+    cd netmap
+    ./configure --kernel-sources=/usr/src/linux-source-"$current_kernel_release"/"$current_kernel_release"
+  fi
+}
 # arg1 is force (no interactive script)
 install_nettle_from_source() {
+  if [ $1 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+  
+  # Compilers, generators, ...
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    build-essential
+
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install nettle ? <y/N> " prompt
   else
@@ -219,6 +294,36 @@ install_nettle_from_source() {
 
 # arg1 is force (no interactive script)
 install_gnutls_from_source(){
+  if [ $1 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+  
+  # Compilers, generators, ...
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    build-essential
+
+  if [ `lsb_release -rs` = '14.04' ]; then
+    # not sure about libidn2-0-dev vs libidn11-dev, check symbols
+    PACKAGE_LIST="\
+      libtasn1-6-dev \
+      libtasn1-6-dbg \
+      libp11-kit-dev \
+      libp11-kit0-dbg \
+      libtspi-dev \
+      libtspi1 \
+      libidn2-0-dev \
+      libidn11-dev"
+    $SUDO apt-get install $OPTION $PACKAGE_LIST
+    if [ $? -ne 0 ]; then 
+      echo_fatal "Failed to install package list $PACKAGE_LIST"
+    fi 
+  fi
+
+    
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install GNU TLS ? <y/N> " prompt
   else
@@ -230,7 +335,7 @@ install_gnutls_from_source(){
     echo "Downloading gnutls archive"
     rm -rf /tmp/gnutls-3.1.23.tar.xz* /tmp/gnutls-3.1.23
     wget ftp://ftp.gnutls.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz 
-    tar -xzf gnutls-3.1.23.tar.xz
+    tar -xJf gnutls-3.1.23.tar.xz
     cd gnutls-3.1.23/
     ./configure --prefix=/usr
     echo "Compiling gnutls"
@@ -244,9 +349,37 @@ install_gnutls_from_source(){
 install_1.1.5_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install freeDiameter 1.1.5 ? <y/N> " prompt
+    OPTION=""
   else
     prompt='y'
+    OPTION="-y"
   fi
+
+  # libpq-dev 'may' be not needed
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    debhelper \
+    flex  \
+    g++ \
+    gcc \
+    gdb \
+    libgcrypt-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpq-dev \
+    libsctp1 \
+    libsctp-dev \
+    libxml2-dev \
+    mercurial \
+    python-dev \
+    ssl-cert \
+    swig
+
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp
@@ -255,7 +388,7 @@ install_1.1.5_freediameter_from_source() {
     wget http://www.freediameter.net/hg/freeDiameter/archive/1.1.5.tar.gz 
     tar xzf 1.1.5.tar.gz
     cd freeDiameter-1.1.5
-    patch -p1 < $OPENAIRCN_DIR/S6A/freediameter/freediameter-1.1.5.patch 
+    patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.1.5.patch 
     mkdir build
     cd build
     cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
@@ -271,9 +404,37 @@ install_1.1.5_freediameter_from_source() {
 install_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install freeDiameter 1.2.0 ? <y/N> " prompt
+    OPTION=""
   else
     prompt='y'
+    OPTION="-y"
   fi
+  # libpq-dev 'may' be not needed
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    debhelper \
+    flex  \
+    g++ \
+    gcc \
+    gdb \
+    libgcrypt-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpq-dev \
+    libsctp1 \
+    libsctp-dev \
+    libxml2-dev \
+    mercurial \
+    python-dev \
+    ssl-cert \
+    swig
+
+  
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp
@@ -282,7 +443,7 @@ install_freediameter_from_source() {
     wget http://www.freediameter.net/hg/freeDiameter/archive/1.2.0.tar.gz 
     tar xzf 1.2.0.tar.gz
     cd freeDiameter-1.2.0
-    patch -p1 < $OPENAIRCN_DIR/S6A/freediameter/freediameter-1.2.0.patch 
+    patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.2.0.patch 
     mkdir build
     cd build
     cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
@@ -298,9 +459,37 @@ install_freediameter_from_source() {
 install_latest_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install latest freeDiameter ? <y/N> " prompt
+    OPTION=""
   else
     prompt='y'
+    OPTION="-y"
   fi
+  
+  # libpq-dev 'may' be not needed
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    debhelper \
+    flex  \
+    g++ \
+    gcc \
+    gdb \
+    libgcrypt-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpq-dev \
+    libsctp1 \
+    libsctp-dev \
+    libxml2-dev \
+    mercurial \
+    python-dev \
+    ssl-cert \
+    swig
+  
   if [[ $prompt =~ [yY](es)* ]]
   then    
     cd /tmp
@@ -308,7 +497,7 @@ install_latest_freediameter_from_source() {
     echo "Downloading latest freeDiameter trunk (may be unstable)"
     git clone https://github.com/Metaswitch/freeDiameter.git
     cd freeDiameter
-    patch -p1 < $OPENAIRCN_DIR/S6A/freediameter/freediameter-1.2.0.patch 
+    patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.2.0.patch 
     mkdir build
     cd build
     cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
@@ -345,6 +534,12 @@ check_gtpu_kmodule_installed() {
 # arg1 is required minimal version of linux-headers and linux-image
 # arg2 is force (no interactive script)
 check_kernel_release_and_install_xtables_addons_oai() {
+					      
+  if [ $2 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
 
   if [ $# -eq 2 ]; then
     current_k_release=`uname -r`
@@ -364,22 +559,42 @@ check_kernel_release_and_install_xtables_addons_oai() {
           install_xtables_addons_oai $2
       } || {
           echo_warning "Package linux-headers-$current_k_release is not installed and required for S-GW software." 
-          $SUDO apt-get install linux-headers-$current_k_release && install_xtables_addons_oai $2
+          $SUDO apt-get install $OPTION linux-headers-$current_k_release  && install_xtables_addons_oai $2
     }
   else
     echo_error "Please provide arguments: kernel ubuntu version and force option"
   fi 
 }
 
+update_package_db() {
+  if [ ! -f /tmp/no_more_update_package_db ]; then
+    $SUDO apt-get update
+    touch /tmp/no_more_update_package_db
+  else
+    let elapsed_time=$(expr `date +%s` - `stat -c %Y /tmp/no_more_update_package_db`)
+    if [ $elapsed_time -gt 3600 ]; then
+      $SUDO apt-get update
+      touch /tmp/no_more_update_package_db
+    fi
+  fi
+}
+
 #arg1 is force (no interactive script)
-check_install_oai_software() {
+check_install_hss_software() {
   if [ $1 -gt 0 ]; then 
     OPTION="-y"
   else
     OPTION=""
   fi
   
-  $SUDO apt-get update
+  # remove incompatible softwares
+  $SUDO apt-get purge $OPTION \
+    libgnutls-dev  \
+    'libgnutlsxx2?'  \
+    nettle-dev  \
+    nettle-bin
+    
+  # Compilers, generators, ...
   $SUDO apt-get install $OPTION \
     autoconf  \
     automake  \
@@ -389,80 +604,229 @@ check_install_oai_software() {
     cmake-curses-gui  \
     doxygen \
     doxygen-gui\
-    texlive-latex-base\
-    ethtool \
+    flex  \
+    gdb \
+    pkg-config 
+    
+  $SUDO apt-get install $OPTION \
+    git \
+    subversion
+    
+  # Libraries
+  $SUDO apt-get install $OPTION \
+    libconfig8-dev \
+    libgcrypt11-dev \
+    libidn2-0-dev \
+    libidn11-dev \
+    libmysqlclient-dev \
+    libpthread-stubs0-dev \
+    libsctp1 \
+    libsctp-dev \
+    libssl-dev \
+    libtool \
+    mysql-client \
+    mysql-server \
+    openssl 
+    
+  install_nettle_from_source $1
+  install_gnutls_from_source $1
+
+  install_freediameter_from_source $1
+    
+  $SUDO apt-get install $OPTION \
+    phpmyadmin \
+    python-pexpect 
+}
+
+#arg1 is force (no interactive script)
+check_install_mme_gw_software() {
+  if [ $1 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+    
+  # remove incompatible softwares
+  $SUDO apt-get purge $OPTION \
+    libgnutls-dev  \
+    'libgnutlsxx2?'  \
+    nettle-dev  \
+    nettle-bin
+
+  # Compilers, generators, ...
+  PACKAGE_LIST="\
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    doxygen \
+    doxygen-gui\
     flex  \
     gccxml \
     gdb  \
     git \
-    graphviz \
-    guile-2.0-dev  \
-    iperf \
-    iproute \
-    iptables \
-    iptables-dev \
+    pkg-config \
+    subversion \
+    valgrind"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+  
+  # Libraries
+  PACKAGE_LIST="\
+    guile-2.0-dev \
     libconfig8-dev \
     libgcrypt11-dev \
     libgmp-dev \
+    libhogweed2 \
     libgtk-3-dev \
-    libidn2-0-dev  \
+    libidn2-0-dev \
     libidn11-dev \
-    libmysqlclient-dev  \
-    libsctp1  \
-    libsctp-dev  \
-    libssl-dev  \
-    libtasn1-3-dev  \
-    libtool  \
-    libxml2 \
-    libxml2-dev  \
-    linux-headers-`uname -r` \
-    mscgen  \
-    mysql-client  \
-    mysql-server \
-    openssh-client \
-    openssh-server \
-    openssl \
-    python  \
-    subversion
-    if [ `lsb_release -rs` = '12.04' ]; then
-      install_nettle_from_source $1
-      install_gnutls_from_source $1
-    else
-        $SUDO apt-get install $OPTION libgnutls-dev nettle-dev nettle-bin 
-    fi
-    install_freediameter_from_source $1
-    install_asn1c_from_source $1
-    
-  $SUDO apt-get install $OPTION \
-    check \
-    dialog \
-    dkms \
-    gawk \
-    libboost-all-dev \
     libpthread-stubs0-dev \
-    openvpn \
-    phpmyadmin \
-    pkg-config \
-    python-dev  \
-    python-pexpect \
-    sshfs \
-    swig  \
-    tshark \
-    uml-utilities \
-    unzip  \
-    valgrind  \
-    vlan    \
-    ctags    
+    libsctp1 \
+    libsctp-dev \
+    libssl-dev \
+    libtool \
+    libxml2 \
+    libxml2-dev \
+    mscgen \
+    openssl \
+    python"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi 
+
+
+  install_nettle_from_source $1
+  install_gnutls_from_source $1
+
+  install_freediameter_from_source $1
+  install_asn1c_from_source $1
+
+  # Networking
+  PACKAGE_LIST="\
+    ethtool \
+    iperf \
+    iproute \
+    vlan \
+    tshark"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi 
     
+  PACKAGE_LIST="\
+    check \
+    phpmyadmin \
+    python-dev \
+    python-pexpect \
+    unzip"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+
   check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $1
 }
 
+#arg1 is force (no interactive script)
+check_install_spgw_software() {
+  if [ $1 -gt 0 ]; then 
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+    
+  # Compilers, generators, ...
+  PACKAGE_LIST="\
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    cmake \
+    cmake-curses-gui  \
+    doxygen \
+    doxygen-gui\
+    flex  \
+    gccxml \
+    gdb  \
+    git \
+    pkg-config \
+    subversion"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+  
+  # Libraries
+  PACKAGE_LIST="\
+    guile-2.0-dev \
+    libconfig8-dev \
+    libgcrypt11-dev \
+    libgmp-dev \
+    libhogweed2 \ 
+    libgtk-3-dev \
+    libidn2-0-dev \
+    libidn11-dev \
+    libpthread-stubs0-dev \
+    libtool \
+    libxml2 \
+    libxml2-dev \
+    mscgen \
+    openssl \
+    python"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi 
+
+  # Networking
+  PACKAGE_LIST="\
+    ethtool \
+    iperf \
+    iproute \
+    vlan \
+    tshark"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi 
+    
+  PACKAGE_LIST="\
+    check \
+    python-dev \
+    python-pexpect \
+    unzip"
+  $SUDO apt-get install $OPTION $PACKAGE_LIST
+  if [ $? -ne 0 ]; then 
+    echo_fatal "Failed to install package list $PACKAGE_LIST"
+  fi
+
+  check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $1
+}
+
+
 install_asn1c_from_source(){
-    if [ $1 -eq 0 ]; then
-      read -p "Do you want to install asn1c rev 1516 patched? <y/N> " prompt
-    else
-      prompt='y'
-    fi
+  if [ $1 -eq 0 ]; then
+    OPTION=""
+    read -p "Do you want to install asn1c rev 1516 patched? <y/N> " prompt
+  else
+    prompt='y'
+    OPTION="-y"
+  fi
+
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    bison     \
+    build-essential \
+    flex  \
+    gcc \
+    libtool
 
   if [[ $prompt =~ [yY](es)* ]]
   then    
@@ -470,8 +834,9 @@ install_asn1c_from_source(){
     cd /tmp/asn1c-r1516
     rm -rf /tmp/asn1c-r1516/*
     svn co https://github.com/vlm/asn1c/trunk  /tmp/asn1c-r1516 -r 1516 > /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/S1AP/MESSAGES/ASN1/asn1cpatch.p0 >> /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/S1AP/MESSAGES/ASN1/asn1cpatch_2.p0 >> /tmp/log_compile_asn1c
+    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch.p0 >> /tmp/log_compile_asn1c
+    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch_2.p0 >> /tmp/log_compile_asn1c
+    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch_3.p0 >> /tmp/log_compile_asn1c
     ./configure
     make > /tmp/log_compile_asn1c 2>&1
     $SUDO make install
@@ -526,7 +891,7 @@ create_hss_database(){
   # test if tables have been created
   mysql -u $hss_username --password=$hss_password  -e "desc $database_name.users" > /dev/null 2>&1
   if [ $? -eq 1 ]; then 
-    mysql -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/OPENAIRHSS/db/$database_name.sql
+    mysql -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/SRC/OPENAIRHSS/db/$database_name.sql
     if [ $? -ne 0 ]; then
       echo_error "HSS: $database_name tables creation failed"
       return 1
@@ -766,15 +1131,36 @@ set_network_interface(){
   fi
 }
 
-# arg1 is EPC config file
-set_epc_network_interfaces(){
+# arg1 is MME or EPC config file
+set_mme_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
   eval $value
   
   # check all var names are correct
   list_var_name="\
         MME_INTERFACE_NAME_FOR_S1_MME         MME_IPV4_ADDRESS_FOR_S1_MME \
-        MME_INTERFACE_NAME_FOR_S11_MME        MME_IPV4_ADDRESS_FOR_S11_MME \
+        MME_INTERFACE_NAME_FOR_S11_MME        MME_IPV4_ADDRESS_FOR_S11_MME"
+  for var_name in $list_var_name
+  do
+    if [ -n "$${var_name}" ]; then
+      echo_success "Found ${var_name} = ${!var_name}"
+    else
+      echo_fatal "${var_name} does does not exist in your config file $1"
+    fi
+  done
+
+  # configure interfaces
+  set_network_interface  $MME_INTERFACE_NAME_FOR_S1_MME         $MME_IPV4_ADDRESS_FOR_S1_MME 
+  set_network_interface  $MME_INTERFACE_NAME_FOR_S11_MME        $MME_IPV4_ADDRESS_FOR_S11_MME 
+}
+
+# arg1 is S/P-GW or EPC config file
+set_spgw_network_interfaces(){
+  value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
+  eval $value
+  
+  # check all var names are correct
+  list_var_name="\
         SGW_INTERFACE_NAME_FOR_S11            SGW_IPV4_ADDRESS_FOR_S11 \
         SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP \
         SGW_INTERFACE_NAME_FOR_S5_S8_UP       SGW_IPV4_ADDRESS_FOR_S5_S8_UP \
@@ -790,13 +1176,17 @@ set_epc_network_interfaces(){
   done
 
   # configure interfaces
-  set_network_interface  $MME_INTERFACE_NAME_FOR_S1_MME         $MME_IPV4_ADDRESS_FOR_S1_MME 
-  set_network_interface  $MME_INTERFACE_NAME_FOR_S11_MME        $MME_IPV4_ADDRESS_FOR_S11_MME 
   set_network_interface  $SGW_INTERFACE_NAME_FOR_S11            $SGW_IPV4_ADDRESS_FOR_S11 
   set_network_interface  $SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  $SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP 
   set_network_interface  $SGW_INTERFACE_NAME_FOR_S5_S8_UP       $SGW_IPV4_ADDRESS_FOR_S5_S8_UP 
   set_network_interface  $PGW_INTERFACE_NAME_FOR_S5_S8          $PGW_IPV4_ADDRESS_FOR_S5_S8 
   set_network_interface  $PGW_INTERFACE_NAME_FOR_SGI            $PGW_IPV4_ADDRESS_FOR_SGI
+}
+
+# arg1 is EPC config file
+set_epc_network_interfaces(){
+  set_mme_network_interfaces $1
+  set_spgw_network_interfaces $1
 }
 
 # arg1 is a 'libconfig-like' config file
@@ -830,8 +1220,8 @@ set_openair_env(){
     [ -f "/.$fullpath" ] || fullpath=`readlink -f $PWD/$fullpath`
     openair_path=${fullpath%/BUILD/*}
     openair_path=${openair_path%/DOCS/*}
-    openair_path=${openair_path%/NAS/*}
-    openair_path=${openair_path%/S6A/*}    
+    openair_path=${openair_path%/SRC/NAS/*}
+    openair_path=${openair_path%/SRC/S6A/*}
     export OPENAIRCN_DIR=$openair_path
 }
 

@@ -39,15 +39,18 @@ function help()
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
-  echo_error "  -c, --clean                               Clean the build generated files (build from scratch)"
+  echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
   echo_error "  -C, --conf-files-only                     Generate only EPC configuration files (no build)"
   echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
   echo_error "  -H, --remote-hss                hostname  HSS hostname (with FQDN), default is this host (`hostname --fqdn`)."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run EPC (support Ubuntu 14.04)."
   echo_error "  -j, --install-gtpu-kernel-module          Install or reinstall specifically the GTPV1-U kernel module (done with -i also) (support Ubuntu 14.04)."
+  echo_error "  -t, --install-xtables                     Install or reinstall only xtables without the linux headers."
   echo_error "  -l, --local-hss                           HSS run on the same host."
   echo_error "  -v, --verbose                             Build process verbose."
+  echo_error "  -V, --verbose-make                        Make process verbose."
+  echo_error "  -x, --clean-certificates                  Clean the EPC certificates"
   echo_error " "
   echo_error "Other options: (you have to know what you are doing)"
   l_realm=`hostname --fqdn`
@@ -68,18 +71,20 @@ function help()
 function main()
 {
   local -i clean=0
+  local -i clean_certificates=0
   local -i conf_files_only=0
   local -i force=0
   local -i verbose=0
   local -i s6a_server=0
   local -i install_gtpu_kernel_module=0
   local -i var_check_install_oai_software=0
-  local    cmake_args=" "
   local    make_args="-j $NUM_CPU"
   local    realm=""
   local    hss_fqdn=""
   local    hss_hostname=""
   local    hss_ip=""
+  
+  export    cmake_args=" "
 
 
   until [ -z "$1" ]
@@ -134,11 +139,25 @@ function main()
         cmake_args="$cmake_args -DREALM=$realm"
         shift 2;
         ;;
+      -t | --install-xtables)
+        install_xtables=1
+        shift;
+        ;;
       -v | --verbose)
+        echo "Build process verbose"
+        verbose=1
+        shift;
+        ;;
+      -V | --verbose-make)
         echo "Make build process verbose"
         cmake_args="$cmake_args -DCMAKE_VERBOSE_MAKEFILE=ON"
         make_args="VERBOSE=1 $make_args"
         verbose=1
+        shift;
+        ;;
+      -x | --clean-certificates)
+        clean_certificates=1
+        echo "Clean the MME certificates"
         shift;
         ;;
       *)   
@@ -152,9 +171,16 @@ function main()
   if [ $install_gtpu_kernel_module -gt 0 ];then
     check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $force
     exit 0
+  fi 
+  
+  if [ $install_xtables -gt 0 ]; then 
+    install_xtables_addons_oai $force
+    exit 0   
   fi
+
   if [ $var_check_install_oai_software -gt 0 ];then
-    check_install_oai_software  $force
+    update_package_db
+    check_install_mme_gw_software  $force 
     exit 0
   fi
   
@@ -166,8 +192,8 @@ function main()
   $SUDO chmod 755 /usr/local/bin/test_epc 
   
   $SUDO mkdir -p -m 755 /usr/share/oai/xsl
-  $SUDO cp -upv  $OPENAIRCN_DIR/TEST/SCENARIOS/play_scenario.xsl    /usr/share/oai/xsl
-  $SUDO cp -upv  $OPENAIRCN_DIR/TEST/SCENARIOS/generic_scenario.xsl /usr/share/oai/xsl
+  $SUDO cp -upv  $OPENAIRCN_DIR/SRC/TEST/SCENARIOS/play_scenario.xsl    /usr/share/oai/xsl
+  $SUDO cp -upv  $OPENAIRCN_DIR/SRC/TEST/SCENARIOS/generic_scenario.xsl /usr/share/oai/xsl
   
   
   # extra arguments processing
@@ -214,32 +240,34 @@ function main()
   
   
   
-  local dbin=$OPENAIRCN_DIR/OAI_EPC
   local dlog=$OPENAIRCN_DIR/BUILD/LOG
-  local dconf=$OPENAIRCN_DIR/OAI_EPC
   
-  mkdir -m 777 -p $dbin $dlog
+  mkdir -m 777 -p $dlog
   
   if [ ! -d /usr/local/etc/oai ]; then
     $SUDO mkdir -p -m 777 /usr/local/etc/oai  
   fi
   
   ##############################################################################
-  # Compile userspace executable
+  # Clean
   ##############################################################################
   cd $OPENAIRCN_DIR/BUILD/EPC
   if [ $clean -ne 0 ]; then
     if [[ $verbose -eq 1 ]]; then
-      echo "Cleaning EPC: certificates, generated configuration files, obj files, mme_gw executable, GTP kernel module"
+      echo "Cleaning EPC: generated configuration files, obj files, mme_gw executable"
     fi
     rm -f $OPENAIRCN_DIR/OAI_EPC/mme_gw
     rm -Rf $OPENAIRCN_DIR/BUILD/EPC/BUILD  2>&1
-    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/mme*    2>&1
-    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/epc*    2>&1
+    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/mme*.conf    2>&1
+    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/epc*.conf    2>&1
     mkdir -m 777 -p -v BUILD
   fi
-  
-  
+  if [ $clean_certificates -ne 0 ]; then
+    if [[ $verbose -eq 1 ]]; then
+      echo "Cleaning EPC: certificates"
+    fi
+    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/mme*.pem    2>&1
+  fi
   
   ##############################################################################
   # Compile EPC
@@ -251,14 +279,16 @@ function main()
   cmake_file=./CMakeLists.txt
   cp $OPENAIRCN_DIR/BUILD/EPC/CMakeLists.template $cmake_file
   echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
+  
   cd ./BUILD
   cmake  $cmake_args ..
+  
   if [ $conf_files_only -eq 0 ]; then
-    compilations \
-      EPC mme_gw \
-      mme_gw 
-    # Only integrated mme+sgw+pgw is operational today
+    compilations EPC mme_gw mme_gw $verbose
+    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/EPC/BUILD/mme_gw /usr/local/bin && echo_success "mme_gw installed"
   fi
+  $SUDO cp -upv epc.conf /usr/local/etc/oai
+  $SUDO cp -upv mme_fd.conf $FREEDIAMETER_PREFIX/etc/freeDiameter
 }
 
 
