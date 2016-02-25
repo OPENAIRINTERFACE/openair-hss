@@ -30,9 +30,6 @@
 #ifndef DB_PROTO_H_
 #define DB_PROTO_H_
 
-#define DB_DEBUG(fmt, args...) fprintf(stdout, "%s:%d: "fmt, __FILE__, __LINE__, ##args)
-#define DB_ERROR(fmt, args...) fprintf(stderr, "%s:%d: "fmt, __FILE__, __LINE__, ##args)
-
 typedef struct {
   /* The mysql reference connector object */
   MYSQL *db_conn;

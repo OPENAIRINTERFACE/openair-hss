@@ -163,6 +163,7 @@ set(ar_SRC
 set(ar_HDR
     ${OAI_HSS_DIR}/access_restriction/access_restriction.h
     ${OAI_HSS_DIR}/utils/conversion.h
+    ${OAI_HSS_DIR}/utils/log.h
 )
 
 add_library(hss_access_restriction ${ar_SRC} ${ar_HDR})
@@ -181,6 +182,7 @@ set(auc_SRC
 )
 set(auc_HDR
     ${OAI_HSS_DIR}/auc/auc.h
+    ${OAI_HSS_DIR}/utils/log.h
 )
 
 add_library(hss_auc ${auc_SRC} ${auc_HDR})
@@ -197,6 +199,7 @@ set(db_SRC
 set(db_HDR
     ${OAI_HSS_DIR}/db/db_proto.h
     ${OAI_HSS_DIR}/utils/hss_config.h
+    ${OAI_HSS_DIR}/utils/log.h
 )
 
 add_library(hss_db ${db_SRC} ${db_HDR})
@@ -224,6 +227,7 @@ set(s6a_HDR
     ${OAI_HSS_DIR}/utils/hss_config.h
     ${OAI_HSS_DIR}/auc/auc.h
     ${OAI_HSS_DIR}/access_restriction/access_restriction.h
+    ${OAI_HSS_DIR}/utils/log.h
 )
 
 add_library(hss_s6a ${s6a_SRC} ${s6a_HDR})
@@ -244,11 +248,14 @@ set(UTILS_GENERATED_DIR ${OPENAIR_BIN_DIR})
 set(utils_SRC
     ${OAI_HSS_DIR}/utils/conversion.c
     ${OAI_HSS_DIR}/utils/hss_config.c
+    ${OAI_HSS_DIR}/utils/pid_file.c
 )
 set(utils_HDR
     ${OAI_HSS_DIR}/utils/conversion.h
     ${OAI_HSS_DIR}/utils/hss_config.h
+    ${OAI_HSS_DIR}/utils/log.h
     ${OAI_HSS_DIR}/utils/queue.h
+    ${OAI_HSS_DIR}/utils/pid_file.h
 )
 
 add_library(hss_utils ${utils_SRC} ${utils_HDR})
@@ -274,6 +281,7 @@ target_link_libraries (oai_hss
 
 # Default parameters
 # Does not work on simple install (fqdn in /etc/hosts 127.0.1.1)
+add_boolean_option(DAEMONIZE         false          "If true, HSS execute like a daemon (fork).")  
 cmake_host_system_information(RESULT SITE_HSS_FQDN QUERY FQDN)
 add_option(HSS_FQDN          ${SITE_HSS_FQDN} "HSS Fully qualified domain name")
 IF( NOT DEFINED REALM )
@@ -293,7 +301,7 @@ set(TRANSPORT_option  "#No_TCP"        CACHE STRING  "No_TCP or No_SCTP or comme
 set(TRANSPORT_PREFER_TCP_option  "#Prefer_TCP"   CACHE STRING  "Prefer_TCP or comment string, FreeDiameter config option")
 set(AppServThreads    2                CACHE STRING  "FreeDiameter AppServThreads config option")
 set(OPERATOR_key      ""               CACHE STRING  "LTE operator clear text key (hex bytes) example 11111111111111111111111111111111")
-set(RANDOM_boolean    "true"           CACHE STRING  "If false, random function returns always 0, else random as usual.")  
+set(RANDOM_boolean    "false"          CACHE STRING  "If false, random function returns always same number, else random as usual.")  
 set(REMOTE_PEER_WHITELIST "*.${REALM}" CACHE STRING  "Remote peer whitelist (separated by spaces), for freediameter acl.conf config file")
 IF( FD_SERVER_IP_BIND_LIST )
     set(ListenOn          "ListenOn = \"${FD_SERVER_IP_BIND_LIST}\"" CACHE STRING  "FreeDiameter server IP bind addresses list")
@@ -328,8 +336,7 @@ execute_process(COMMAND ${OPENAIRCN_DIR}/SCRIPTS/create_hss_database
 IF( ERROR_DB )
   MESSAGE( WARNING "Database setup error or warning: ${ERROR_DB}" )
 ENDIF( ERROR_DB )
-                
-install (TARGETS oai_hss RUNTIME DESTINATION /usr/local/bin)
+
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hss.conf"    DESTINATION /usr/local/etc/oai)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/hss_fd.conf" DESTINATION ${FREEDIAMETER_PATH}/../etc/freeDiameter)
 install (FILES "${CMAKE_CURRENT_BINARY_DIR}/acl.conf"    DESTINATION ${FREEDIAMETER_PATH}/../etc/freeDiameter)

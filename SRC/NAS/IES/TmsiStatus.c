@@ -110,14 +110,14 @@ dump_tmsi_status_xml (
   TmsiStatus * tmsistatus,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Tmsi Status>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Tmsi Status>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <TMSI flag>%u</TMSI flag>\n", *tmsistatus);
-  LOG_DEBUG (LOG_NAS, "</Tmsi Status>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <TMSI flag>%u</TMSI flag>\n", *tmsistatus);
+  OAILOG_DEBUG (LOG_NAS, "</Tmsi Status>\n");
 }

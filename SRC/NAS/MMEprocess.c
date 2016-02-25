@@ -98,13 +98,13 @@ main (
   const char                             *nhost = nas_parser_get_network_host ();
   const char                             *nport = nas_parser_get_network_port ();
 
-  LOG_TRACE (INFO, "MME-MAIN  - %s -nhost %s -nport %s -trace 0x%x", argv[0], nhost, nport, nas_parser_get_trace_level ());
+  OAILOG_TRACE (INFO, "MME-MAIN  - %s -nhost %s -nport %s -trace 0x%x", argv[0], nhost, nport, nas_parser_get_trace_level ());
 
   /*
    * Initialize the Network interface
    */
   if (network_api_initialize (nhost, nport) != RETURNok) {
-    LOG_TRACE (ERROR, "MME-MAIN  - network_api_initialize() failed");
+    OAILOG_TRACE (ERROR, "MME-MAIN  - network_api_initialize() failed");
     exit (EXIT_FAILURE);
   }
 
@@ -134,7 +134,7 @@ main (
   pthread_t                               network_mngr;
 
   if (pthread_create (&network_mngr, &attr, _nas_network_mngr, &network_fd) != 0) {
-    LOG_TRACE (ERROR, "MME-MAIN  - " "Failed to create the network management thread");
+    OAILOG_TRACE (ERROR, "MME-MAIN  - " "Failed to create the network management thread");
     network_api_close (network_fd);
     exit (EXIT_FAILURE);
   }
@@ -154,7 +154,7 @@ main (
    * Termination cleanup
    */
   _nas_clean (network_fd);
-  LOG_TRACE (WARNING, "MME-MAIN  - NAS main process exited");
+  OAILOG_TRACE (WARNING, "MME-MAIN  - NAS main process exited");
 }
 
 /****************************************************************************/
@@ -180,13 +180,13 @@ static void                            *
 _nas_network_mngr (
   void *args)
 {
-  LOG_FUNC_IN;
+  OAILOG_FUNC_IN;
   int                                     ret_code;
   int                                     network_message_id;
   int                                     bytes;
   int                                    *fd = (int *)args;
 
-  LOG_TRACE (INFO, "MME-MAIN  - Network connection manager started (%d)", *fd);
+  OAILOG_TRACE (INFO, "MME-MAIN  - Network connection manager started (%d)", *fd);
 
   /*
    * Network receiving loop
@@ -202,7 +202,7 @@ _nas_network_mngr (
        * Failed to read data from the network sublayer;
        * * * * exit from the receiving loop
        */
-      LOG_TRACE (ERROR, "MME-MAIN  - " "Failed to read data from the network sublayer");
+      OAILOG_TRACE (ERROR, "MME-MAIN  - " "Failed to read data from the network sublayer");
       break;
     }
 
@@ -235,15 +235,15 @@ _nas_network_mngr (
        * The network data message has not been successfully
        * * * * processed
        */
-      LOG_TRACE (WARNING, "MME-MAIN  - " "The network procedure call 0x%x failed", network_message_id);
+      OAILOG_TRACE (WARNING, "MME-MAIN  - " "The network procedure call 0x%x failed", network_message_id);
     }
   }
 
   /*
    * Close the connection to the network sublayer
-   */ LOG_TRACE (WARNING,
+   */ OAILOG_TRACE (WARNING,
                  "MME-MAIN  - " "The network connection endpoint manager exited");
-  LOG_FUNC_RETURN (NULL);
+  OAILOG_FUNC_RETURN (NULL);
 }
 
 /****************************************************************************
@@ -265,7 +265,7 @@ _nas_set_signal_handler (
   int signal,
   void                                    (handler) (int))
 {
-  LOG_FUNC_IN;
+  OAILOG_FUNC_IN;
   struct sigaction                        act;
 
   /*
@@ -295,8 +295,8 @@ _nas_set_signal_handler (
     return RETURNerror;
   }
 
-  LOG_TRACE (INFO, "MME-MAIN  - Handler successfully set for signal %d", signal);
-  LOG_FUNC_RETURN (RETURNok);
+  OAILOG_TRACE (INFO, "MME-MAIN  - Handler successfully set for signal %d", signal);
+  OAILOG_FUNC_RETURN (RETURNok);
 }
 
 /****************************************************************************
@@ -316,11 +316,11 @@ static void
 _nas_signal_handler (
   int signal)
 {
-  LOG_FUNC_IN;
-  LOG_TRACE (WARNING, "MME-MAIN  - Signal %d received", signal);
+  OAILOG_FUNC_IN;
+  OAILOG_TRACE (WARNING, "MME-MAIN  - Signal %d received", signal);
   _nas_clean (network_api_get_fd ());
   exit (EXIT_SUCCESS);
-  LOG_FUNC_OUT;
+  OAILOG_FUNC_OUT;
 }
 
 /****************************************************************************
@@ -340,10 +340,10 @@ static void
 _nas_clean (
   int net_fd)
 {
-  LOG_FUNC_IN;
-  LOG_TRACE (INFO, "MME-MAIN  - Perform EMM and ESM cleanup");
+  OAILOG_FUNC_IN;
+  OAILOG_TRACE (INFO, "MME-MAIN  - Perform EMM and ESM cleanup");
   nas_network_cleanup ();
-  LOG_TRACE (INFO, "MME-MAIN  - Closing network connection %d", net_fd);
+  OAILOG_TRACE (INFO, "MME-MAIN  - Closing network connection %d", net_fd);
   network_api_close (net_fd);
-  LOG_FUNC_OUT;
+  OAILOG_FUNC_OUT;
 }

@@ -85,17 +85,17 @@ dump_gprs_timer_xml (
   GprsTimer * gprstimer,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Gprs Timer>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Gprs Timer>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <Unit>%u</Unit>\n", gprstimer->unit);
-  LOG_DEBUG (LOG_NAS, "    <Timer value>%u</Timer value>\n", gprstimer->timervalue);
-  LOG_DEBUG (LOG_NAS, "</Gprs Timer>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <Unit>%u</Unit>\n", gprstimer->unit);
+  OAILOG_DEBUG (LOG_NAS, "    <Timer value>%u</Timer value>\n", gprstimer->timervalue);
+  OAILOG_DEBUG (LOG_NAS, "</Gprs Timer>\n");
 }
 
 long

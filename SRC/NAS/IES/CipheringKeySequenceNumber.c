@@ -110,14 +110,14 @@ dump_ciphering_key_sequence_number_xml (
   CipheringKeySequenceNumber * cipheringkeysequencenumber,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Ciphering Key Sequence Number>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Ciphering Key Sequence Number>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <Key sequence>%u</Key sequence>\n", *cipheringkeysequencenumber);
-  LOG_DEBUG (LOG_NAS, "</Ciphering Key Sequence Number>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <Key sequence>%u</Key sequence>\n", *cipheringkeysequencenumber);
+  OAILOG_DEBUG (LOG_NAS, "</Ciphering Key Sequence Number>\n");
 }

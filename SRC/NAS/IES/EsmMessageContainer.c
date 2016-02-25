@@ -41,7 +41,7 @@ decode_esm_message_container (
   int                                     decode_result;
   uint16_t                                ielen;
 
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   if (iei > 0) {
     CHECK_IEI_DECODER (iei, *buffer);
@@ -52,7 +52,7 @@ decode_esm_message_container (
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
   if ((decode_result = decode_octet_string (&esmmessagecontainer->esmmessagecontainercontents, ielen, buffer + decoded, len - decoded)) < 0) {
-    LOG_FUNC_RETURN (LOG_NAS_ESM, decode_result);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, decode_result);
   } else {
     decoded += decode_result;
   }
@@ -60,7 +60,7 @@ decode_esm_message_container (
 #if NAS_DEBUG
   dump_esm_message_container_xml (esmmessagecontainer, iei);
 #endif
-  LOG_FUNC_RETURN (LOG_NAS_ESM, decoded);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, decoded);
 }
 
 int
@@ -109,14 +109,14 @@ dump_esm_message_container_xml (
   EsmMessageContainer * esmmessagecontainer,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Esm Message Container>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Esm Message Container>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&esmmessagecontainer->esmmessagecontainercontents));
-  LOG_DEBUG (LOG_NAS, "</Esm Message Container>\n");
+  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&esmmessagecontainer->esmmessagecontainercontents));
+  OAILOG_DEBUG (LOG_NAS, "</Esm Message Container>\n");
 }

@@ -74,7 +74,7 @@
 const int                               itti_debug = ITTI_DEBUG_ISSUES | ITTI_DEBUG_MP_STATISTICS;
 
 
-#define ITTI_DEBUG(m, x, args...)  do { if ((m) & itti_debug) LOG_DEBUG (LOG_ITTI, x, ##args);} while(0);
+#define ITTI_DEBUG(m, x, args...)  do { if ((m) & itti_debug) OAILOG_DEBUG (LOG_ITTI, x, ##args);} while(0);
 
 /* Global message size */
 #define MESSAGE_SIZE(mESSAGEiD) (sizeof(MessageHeader) + itti_desc.messages_info[mESSAGEiD].size)
@@ -201,7 +201,7 @@ itti_malloc (
   if (ptr == NULL) {
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
-    LOG_ERROR (LOG_ITTI, " Memory pools statistics:\n%s", statistics);
+    OAILOG_ERROR (LOG_ITTI, " Memory pools statistics:\n%s", statistics);
     FREE_CHECK (statistics);
   }
   AssertFatal (ptr != NULL, "Memory allocation of %d bytes failed (%d -> %d)!\n", (int)size, origin_task_id, destination_task_id);
@@ -889,7 +889,7 @@ itti_init (
 #endif
 
   CHECK_INIT_RETURN (timer_init ());
-  LOG_ITTI_CONNECT();
+  OAILOG_ITTI_CONNECT();
   return 0;
 }
 
@@ -914,7 +914,7 @@ itti_wait_tasks_end (
     signal_handle (&end);
   }
 
-  LOG_INFO (LOG_ITTI,  "Closing all tasks");
+  OAILOG_INFO (LOG_ITTI,  "Closing all tasks");
   sleep (1);
 
   do {
@@ -952,7 +952,7 @@ itti_wait_tasks_end (
     }
   } while ((ready_tasks > 0) && (retries--) && (!end));
 
-  LOG_INFO (LOG_ITTI,  "ready_tasks %d", ready_tasks);
+  OAILOG_INFO (LOG_ITTI,  "ready_tasks %d", ready_tasks);
   itti_desc.running = 0;
   {
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);

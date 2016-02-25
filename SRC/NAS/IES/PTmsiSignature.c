@@ -91,14 +91,14 @@ dump_p_tmsi_signature_xml (
   PTmsiSignature * ptmsisignature,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<P Tmsi Signature>\n");
+  OAILOG_DEBUG (LOG_NAS, "<P Tmsi Signature>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&ptmsisignature->ptmsisignaturevalue));
-  LOG_DEBUG (LOG_NAS, "</P Tmsi Signature>\n");
+  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&ptmsisignature->ptmsisignaturevalue));
+  OAILOG_DEBUG (LOG_NAS, "</P Tmsi Signature>\n");
 }

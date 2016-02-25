@@ -50,8 +50,8 @@
 #include "log.h"
 
 #if defined (LOG_D) && defined (LOG_E)
-#  define SIG_DEBUG(x, args...)  LOG_D(EMU, x, ##args)
-#  define SIG_ERROR(x, args...)  LOG_E(EMU, x, ##args)
+#  define SIG_DEBUG(x, args...)  OAILOG_D(EMU, x, ##args)
+#  define SIG_ERROR(x, args...)  OAILOG_E(EMU, x, ##args)
 #endif
 
 #ifndef SIG_DEBUG

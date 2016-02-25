@@ -37,6 +37,7 @@
 
 *****************************************************************************/
 
+#include "3gpp_24.007.h"
 #include "emm_main.h"
 #include "log.h"
 #include "emmData.h"
@@ -79,17 +80,17 @@ void
 emm_main_initialize (
   mme_config_t * mme_config_p)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   /*
    * Retreive MME supported configuration data
    */
   memset(&_emm_data.conf, 0, sizeof(_emm_data.conf));
   if (mme_api_get_emm_config (&_emm_data.conf, mme_config_p) != RETURNok) {
-    LOG_ERROR (LOG_NAS_EMM, "EMM-MAIN  - Failed to get MME configuration data");
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-MAIN  - Failed to get MME configuration data");
   }
   _emm_data.ctx_coll_ue_id = hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, "emm_data.ctx_coll_ue_id");
   _emm_data.ctx_coll_guti = obj_hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, NULL, "emm_data.ctx_coll_guti");
-  LOG_FUNC_OUT(LOG_NAS_EMM);
+  OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 
 /****************************************************************************
@@ -110,8 +111,8 @@ void
 emm_main_cleanup (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_FUNC_OUT(LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 
 

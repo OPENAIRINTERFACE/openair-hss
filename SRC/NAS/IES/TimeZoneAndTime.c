@@ -106,20 +106,20 @@ dump_time_zone_and_time_xml (
   TimeZoneAndTime * timezoneandtime,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Time Zone And Time>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Time Zone And Time>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <Year>%u</Year>\n", timezoneandtime->year);
-  LOG_DEBUG (LOG_NAS, "    <Month>%u</Month>\n", timezoneandtime->month);
-  LOG_DEBUG (LOG_NAS, "    <Day>%u</Day>\n", timezoneandtime->day);
-  LOG_DEBUG (LOG_NAS, "    <Hour>%u</Hour>\n", timezoneandtime->hour);
-  LOG_DEBUG (LOG_NAS, "    <Minute>%u</Minute>\n", timezoneandtime->minute);
-  LOG_DEBUG (LOG_NAS, "    <Second>%u</Second>\n", timezoneandtime->second);
-  LOG_DEBUG (LOG_NAS, "    <Time Zone>%u</Time Zone>\n", timezoneandtime->timezone);
-  LOG_DEBUG (LOG_NAS, "</Time Zone And Time>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <Year>%u</Year>\n", timezoneandtime->year);
+  OAILOG_DEBUG (LOG_NAS, "    <Month>%u</Month>\n", timezoneandtime->month);
+  OAILOG_DEBUG (LOG_NAS, "    <Day>%u</Day>\n", timezoneandtime->day);
+  OAILOG_DEBUG (LOG_NAS, "    <Hour>%u</Hour>\n", timezoneandtime->hour);
+  OAILOG_DEBUG (LOG_NAS, "    <Minute>%u</Minute>\n", timezoneandtime->minute);
+  OAILOG_DEBUG (LOG_NAS, "    <Second>%u</Second>\n", timezoneandtime->second);
+  OAILOG_DEBUG (LOG_NAS, "    <Time Zone>%u</Time Zone>\n", timezoneandtime->timezone);
+  OAILOG_DEBUG (LOG_NAS, "</Time Zone And Time>\n");
 }

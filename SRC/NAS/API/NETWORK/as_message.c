@@ -83,7 +83,7 @@ as_message_decode (
   as_message_t * msg,
   size_t length)
 {
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   int                                     bytes;
   uint8_t                                **data = NULL;
 
@@ -182,7 +182,7 @@ as_message_decode (
 
   default:
     bytes = 0;
-    LOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msg_id);
+    OAILOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msg_id);
     break;
   }
 
@@ -198,11 +198,11 @@ as_message_decode (
      * Decode the message
      */
     memcpy (msg, (as_message_t *) buffer, bytes);
-    LOG_FUNC_RETURN (LOG_NAS, msg->msg_id);
+    OAILOG_FUNC_RETURN (LOG_NAS, msg->msg_id);
   }
 
-  LOG_WARNING(LOG_NAS, "NET-API   - Failed to decode AS message 0x%x", msg->msg_id);
-  LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  OAILOG_WARNING(LOG_NAS, "NET-API   - Failed to decode AS message 0x%x", msg->msg_id);
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
 /****************************************************************************
@@ -228,7 +228,7 @@ as_message_encode (
   as_message_t * msg,
   size_t length)
 {
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   int                                     bytes = sizeof (msg->msg_id);
   as_nas_info_t                          *nas_msg = NULL;
 
@@ -410,7 +410,7 @@ as_message_encode (
     break;
 
   default:
-    LOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msg_id);
+    OAILOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msg_id);
     bytes = length;
     break;
   }
@@ -435,11 +435,11 @@ as_message_encode (
       nas_msg->data = NULL;
     }
 
-    LOG_FUNC_RETURN (LOG_NAS, bytes);
+    OAILOG_FUNC_RETURN (LOG_NAS, bytes);
   }
 
-  LOG_WARNING(LOG_NAS, "NET-API   - Failed to encode AS message 0x%x", msg->msg_id);
-  LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  OAILOG_WARNING(LOG_NAS, "NET-API   - Failed to encode AS message 0x%x", msg->msg_id);
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
 /****************************************************************************/

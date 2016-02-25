@@ -134,73 +134,73 @@ dump_eps_mobile_identity_xml (
   EpsMobileIdentity * epsmobileidentity,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Eps Mobile Identity>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Eps Mobile Identity>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
   if (epsmobileidentity->imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
     ImsiEpsMobileIdentity_t                *imsi = &epsmobileidentity->imsi;
 
-    LOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", imsi->oddeven);
-    LOG_DEBUG (LOG_NAS, "    <Type of identity>IMSI</Type of identity>\n");
-    LOG_DEBUG (LOG_NAS, "    <digit1>%u</digit1>\n", imsi->digit1);
-    LOG_DEBUG (LOG_NAS, "    <digit2>%u</digit2>\n", imsi->digit2);
-    LOG_DEBUG (LOG_NAS, "    <digit3>%u</digit3>\n", imsi->digit3);
-    LOG_DEBUG (LOG_NAS, "    <digit4>%u</digit4>\n", imsi->digit4);
-    LOG_DEBUG (LOG_NAS, "    <digit5>%u</digit5>\n", imsi->digit5);
-    LOG_DEBUG (LOG_NAS, "    <digit6>%u</digit6>\n", imsi->digit6);
-    LOG_DEBUG (LOG_NAS, "    <digit7>%u</digit7>\n", imsi->digit7);
-    LOG_DEBUG (LOG_NAS, "    <digit8>%u</digit8>\n", imsi->digit8);
-    LOG_DEBUG (LOG_NAS, "    <digit9>%u</digit9>\n", imsi->digit9);
-    LOG_DEBUG (LOG_NAS, "    <digit10>%u</digit10>\n", imsi->digit10);
-    LOG_DEBUG (LOG_NAS, "    <digit11>%u</digit11>\n", imsi->digit11);
-    LOG_DEBUG (LOG_NAS, "    <digit12>%u</digit12>\n", imsi->digit12);
-    LOG_DEBUG (LOG_NAS, "    <digit13>%u</digit13>\n", imsi->digit13);
-    LOG_DEBUG (LOG_NAS, "    <digit14>%u</digit14>\n", imsi->digit14);
-    LOG_DEBUG (LOG_NAS, "    <digit15>%u</digit15>\n", imsi->digit15);
+    OAILOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", imsi->oddeven);
+    OAILOG_DEBUG (LOG_NAS, "    <Type of identity>IMSI</Type of identity>\n");
+    OAILOG_DEBUG (LOG_NAS, "    <digit1>%u</digit1>\n", imsi->digit1);
+    OAILOG_DEBUG (LOG_NAS, "    <digit2>%u</digit2>\n", imsi->digit2);
+    OAILOG_DEBUG (LOG_NAS, "    <digit3>%u</digit3>\n", imsi->digit3);
+    OAILOG_DEBUG (LOG_NAS, "    <digit4>%u</digit4>\n", imsi->digit4);
+    OAILOG_DEBUG (LOG_NAS, "    <digit5>%u</digit5>\n", imsi->digit5);
+    OAILOG_DEBUG (LOG_NAS, "    <digit6>%u</digit6>\n", imsi->digit6);
+    OAILOG_DEBUG (LOG_NAS, "    <digit7>%u</digit7>\n", imsi->digit7);
+    OAILOG_DEBUG (LOG_NAS, "    <digit8>%u</digit8>\n", imsi->digit8);
+    OAILOG_DEBUG (LOG_NAS, "    <digit9>%u</digit9>\n", imsi->digit9);
+    OAILOG_DEBUG (LOG_NAS, "    <digit10>%u</digit10>\n", imsi->digit10);
+    OAILOG_DEBUG (LOG_NAS, "    <digit11>%u</digit11>\n", imsi->digit11);
+    OAILOG_DEBUG (LOG_NAS, "    <digit12>%u</digit12>\n", imsi->digit12);
+    OAILOG_DEBUG (LOG_NAS, "    <digit13>%u</digit13>\n", imsi->digit13);
+    OAILOG_DEBUG (LOG_NAS, "    <digit14>%u</digit14>\n", imsi->digit14);
+    OAILOG_DEBUG (LOG_NAS, "    <digit15>%u</digit15>\n", imsi->digit15);
   } else if (epsmobileidentity->guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
     GutiEpsMobileIdentity_t                *guti = &epsmobileidentity->guti;
 
-    LOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", guti->oddeven);
-    LOG_DEBUG (LOG_NAS, "    <Type of identity>GUTI</Type of identity>\n");
-    LOG_DEBUG (LOG_NAS, "    <MCC digit 1>%u</MCC digit 1>\n", guti->mccdigit1);
-    LOG_DEBUG (LOG_NAS, "    <MCC digit 2>%u</MCC digit 2>\n", guti->mccdigit2);
-    LOG_DEBUG (LOG_NAS, "    <MCC digit 3>%u</MCC digit 3>\n", guti->mccdigit3);
-    LOG_DEBUG (LOG_NAS, "    <MNC digit 1>%u</MNC digit 1>\n", guti->mncdigit1);
-    LOG_DEBUG (LOG_NAS, "    <MNC digit 2>%u</MNC digit 2>\n", guti->mncdigit2);
-    LOG_DEBUG (LOG_NAS, "    <MNC digit 3>%u</MNC digit 3>\n", guti->mncdigit3);
-    LOG_DEBUG (LOG_NAS, "    <MME group id>%u</MME group id>\n", guti->mmegroupid);
-    LOG_DEBUG (LOG_NAS, "    <MME code>%u</MME code>\n", guti->mmecode);
-    LOG_DEBUG (LOG_NAS, "    <M TMSI>%u</M TMSI>\n", guti->mtmsi);
+    OAILOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", guti->oddeven);
+    OAILOG_DEBUG (LOG_NAS, "    <Type of identity>GUTI</Type of identity>\n");
+    OAILOG_DEBUG (LOG_NAS, "    <MCC digit 1>%u</MCC digit 1>\n", guti->mccdigit1);
+    OAILOG_DEBUG (LOG_NAS, "    <MCC digit 2>%u</MCC digit 2>\n", guti->mccdigit2);
+    OAILOG_DEBUG (LOG_NAS, "    <MCC digit 3>%u</MCC digit 3>\n", guti->mccdigit3);
+    OAILOG_DEBUG (LOG_NAS, "    <MNC digit 1>%u</MNC digit 1>\n", guti->mncdigit1);
+    OAILOG_DEBUG (LOG_NAS, "    <MNC digit 2>%u</MNC digit 2>\n", guti->mncdigit2);
+    OAILOG_DEBUG (LOG_NAS, "    <MNC digit 3>%u</MNC digit 3>\n", guti->mncdigit3);
+    OAILOG_DEBUG (LOG_NAS, "    <MME group id>%u</MME group id>\n", guti->mmegroupid);
+    OAILOG_DEBUG (LOG_NAS, "    <MME code>%u</MME code>\n", guti->mmecode);
+    OAILOG_DEBUG (LOG_NAS, "    <M TMSI>%u</M TMSI>\n", guti->mtmsi);
   } else if (epsmobileidentity->imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
     ImeiEpsMobileIdentity_t                *imei = &epsmobileidentity->imei;
 
-    LOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", imei->oddeven);
-    LOG_DEBUG (LOG_NAS, "    <Type of identity>IMEI</Type of identity>\n");
-    LOG_DEBUG (LOG_NAS, "    <digit1>%u</digit1>\n", imei->digit1);
-    LOG_DEBUG (LOG_NAS, "    <digit2>%u</digit2>\n", imei->digit2);
-    LOG_DEBUG (LOG_NAS, "    <digit3>%u</digit3>\n", imei->digit3);
-    LOG_DEBUG (LOG_NAS, "    <digit4>%u</digit4>\n", imei->digit4);
-    LOG_DEBUG (LOG_NAS, "    <digit5>%u</digit5>\n", imei->digit5);
-    LOG_DEBUG (LOG_NAS, "    <digit6>%u</digit6>\n", imei->digit6);
-    LOG_DEBUG (LOG_NAS, "    <digit7>%u</digit7>\n", imei->digit7);
-    LOG_DEBUG (LOG_NAS, "    <digit8>%u</digit8>\n", imei->digit8);
-    LOG_DEBUG (LOG_NAS, "    <digit9>%u</digit9>\n", imei->digit9);
-    LOG_DEBUG (LOG_NAS, "    <digit10>%u</digit10>\n", imei->digit10);
-    LOG_DEBUG (LOG_NAS, "    <digit11>%u</digit11>\n", imei->digit11);
-    LOG_DEBUG (LOG_NAS, "    <digit12>%u</digit12>\n", imei->digit12);
-    LOG_DEBUG (LOG_NAS, "    <digit13>%u</digit13>\n", imei->digit13);
-    LOG_DEBUG (LOG_NAS, "    <digit14>%u</digit14>\n", imei->digit14);
-    LOG_DEBUG (LOG_NAS, "    <digit15>%u</digit15>\n", imei->digit15);
+    OAILOG_DEBUG (LOG_NAS, "    <odd even>%u</odd even>\n", imei->oddeven);
+    OAILOG_DEBUG (LOG_NAS, "    <Type of identity>IMEI</Type of identity>\n");
+    OAILOG_DEBUG (LOG_NAS, "    <digit1>%u</digit1>\n", imei->digit1);
+    OAILOG_DEBUG (LOG_NAS, "    <digit2>%u</digit2>\n", imei->digit2);
+    OAILOG_DEBUG (LOG_NAS, "    <digit3>%u</digit3>\n", imei->digit3);
+    OAILOG_DEBUG (LOG_NAS, "    <digit4>%u</digit4>\n", imei->digit4);
+    OAILOG_DEBUG (LOG_NAS, "    <digit5>%u</digit5>\n", imei->digit5);
+    OAILOG_DEBUG (LOG_NAS, "    <digit6>%u</digit6>\n", imei->digit6);
+    OAILOG_DEBUG (LOG_NAS, "    <digit7>%u</digit7>\n", imei->digit7);
+    OAILOG_DEBUG (LOG_NAS, "    <digit8>%u</digit8>\n", imei->digit8);
+    OAILOG_DEBUG (LOG_NAS, "    <digit9>%u</digit9>\n", imei->digit9);
+    OAILOG_DEBUG (LOG_NAS, "    <digit10>%u</digit10>\n", imei->digit10);
+    OAILOG_DEBUG (LOG_NAS, "    <digit11>%u</digit11>\n", imei->digit11);
+    OAILOG_DEBUG (LOG_NAS, "    <digit12>%u</digit12>\n", imei->digit12);
+    OAILOG_DEBUG (LOG_NAS, "    <digit13>%u</digit13>\n", imei->digit13);
+    OAILOG_DEBUG (LOG_NAS, "    <digit14>%u</digit14>\n", imei->digit14);
+    OAILOG_DEBUG (LOG_NAS, "    <digit15>%u</digit15>\n", imei->digit15);
   } else {
-    LOG_DEBUG (LOG_NAS, "    Wrong type of EPS mobile identity (%u)\n", epsmobileidentity->guti.typeofidentity);
+    OAILOG_DEBUG (LOG_NAS, "    Wrong type of EPS mobile identity (%u)\n", epsmobileidentity->guti.typeofidentity);
   }
 
-  LOG_DEBUG (LOG_NAS, "</Eps Mobile Identity>\n");
+  OAILOG_DEBUG (LOG_NAS, "</Eps Mobile Identity>\n");
 }
 
 static int

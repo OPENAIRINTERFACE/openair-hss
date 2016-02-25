@@ -303,7 +303,7 @@ mme_api_get_emm_config (
   mme_config_t * mme_config_p)
 {
   int                                     i;
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   AssertFatal (mme_config_p->served_tai.nb_tai >= 1, "No PLMN configured");
   AssertFatal (mme_config_p->gummei.nb_mmec >= 1, "No MME Code configured");
   AssertFatal (mme_config_p->gummei.nb_mme_gid >= 1, "No MME Group ID configured");
@@ -371,7 +371,7 @@ mme_api_get_emm_config (
     config->prefered_integrity_algorithm[i] = mme_config_p->nas_config.prefered_integrity_algorithm[i];
     config->prefered_ciphering_algorithm[i] = mme_config_p->nas_config.prefered_ciphering_algorithm[i];
   }
-  LOG_FUNC_RETURN (LOG_NAS, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
 
 /****************************************************************************
@@ -393,7 +393,7 @@ int
 mme_api_get_esm_config (
   mme_api_esm_config_t * config)
 {
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
 
   if (_mme_api_ip_capability == MME_API_IPV4_ADDR) {
     config->features = MME_API_IPV4;
@@ -405,7 +405,7 @@ mme_api_get_esm_config (
     config->features = 0;
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
 
 /*
@@ -427,7 +427,7 @@ mme_api_notify_new_guti (
 {
   ue_context_t                           *ue_context = NULL;
 
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
 
 
@@ -439,10 +439,10 @@ mme_api_notify_new_guti (
         ue_context->imsi,
         ue_context->mme_s11_teid,
         guti);
-    LOG_FUNC_RETURN (LOG_NAS, RETURNok);
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
 /*
@@ -465,17 +465,17 @@ mme_api_notified_new_ue_s1ap_id_association (
 {
   ue_context_t                           *ue_context = NULL;
 
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   ue_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_ue_s1ap_id);
 
   if ( ue_context) {
     mme_ue_context_notified_new_ue_s1ap_id_association(&mme_app_desc.mme_ue_contexts, ue_context, enb_ue_s1ap_id, mme_ue_s1ap_id);
     // optimistic return:
     // TODO return value from mme_ue_context_notified_new_ue_s1ap_id_association
-    LOG_FUNC_RETURN (LOG_NAS, RETURNok);
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
 
@@ -501,7 +501,7 @@ mme_api_identify_guti (
 {
   ue_context_t                           *ue_context = NULL;
 
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   ue_context = mme_ue_context_exists_guti (&mme_app_desc.mme_ue_contexts, guti);
 
   if ( ue_context) {
@@ -509,11 +509,11 @@ mme_api_identify_guti (
       memcpy (vector->rand, ue_context->vector_in_use->rand, AUTH_RAND_SIZE);
       memcpy (vector->autn, ue_context->vector_in_use->autn, AUTH_AUTN_SIZE);
       memcpy (vector->xres, ue_context->vector_in_use->xres.data, ue_context->vector_in_use->xres.size);
-      LOG_FUNC_RETURN (LOG_NAS, RETURNok);
+      OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
 /*
@@ -538,7 +538,7 @@ mme_api_identify_imsi (
   ue_context_t                           *ue_context = NULL;
   mme_app_imsi_t                          mme_imsi = 0;
 
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   NAS_IMSI2U64 (imsi, mme_imsi);
   ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, mme_imsi);
 
@@ -547,11 +547,11 @@ mme_api_identify_imsi (
       memcpy (vector->rand, ue_context->vector_in_use->rand, AUTH_RAND_SIZE);
       memcpy (vector->autn, ue_context->vector_in_use->autn, AUTH_AUTN_SIZE);
       memcpy (vector->xres, ue_context->vector_in_use->xres.data, ue_context->vector_in_use->xres.size);
-      LOG_FUNC_RETURN (LOG_NAS, RETURNok);
+      OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
 /*
@@ -579,8 +579,8 @@ mme_api_identify_imei (
 {
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN (LOG_NAS);
-  LOG_FUNC_RETURN (LOG_NAS, rc);
+  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_RETURN (LOG_NAS, rc);
 }
 
 /****************************************************************************
@@ -612,7 +612,7 @@ mme_api_new_guti (
   ue_context_t                           *ue_context = NULL;
   mme_app_imsi_t                          mme_imsi = 0;
 
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   NAS_IMSI2U64 (imsi, mme_imsi);
   ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, mme_imsi);
 
@@ -650,20 +650,20 @@ mme_api_new_guti (
       tai_list->tai[j].tac            = _emm_data.conf.tai_list.tai[i].tac;
       j += 1;
       if (15 == plmn.mnc_digit3) { // mnc length 2
-        LOG_INFO (LOG_NAS, "mme_api_new_guti - UE registered to TAC %d%d%d.%d%d:%d\n",
+        OAILOG_INFO (LOG_NAS, "mme_api_new_guti - UE registered to TAC %d%d%d.%d%d:%d\n",
             plmn.mcc_digit1, plmn.mcc_digit2, plmn.mcc_digit3, plmn.mnc_digit1, plmn.mnc_digit2, _emm_data.conf.tai_list.tai[i].tac);
       } else {
-        LOG_INFO (LOG_NAS, "mme_api_new_guti - UE registered to TAC %d%d%d.%d%d%d:%d\n",
+        OAILOG_INFO (LOG_NAS, "mme_api_new_guti - UE registered to TAC %d%d%d.%d%d%d:%d\n",
             plmn.mcc_digit1, plmn.mcc_digit2, plmn.mcc_digit3, plmn.mnc_digit1, plmn.mnc_digit2, plmn.mnc_digit3, _emm_data.conf.tai_list.tai[i].tac);
       }
     }
     tai_list->n_tais = j;
 
-    LOG_INFO (LOG_NAS, "mme_api_new_guti - Got GUTI %s\n", guti_str);
-    LOG_FUNC_RETURN (LOG_NAS, RETURNok);
+    OAILOG_INFO (LOG_NAS, "mme_api_new_guti - Got GUTI %s\n", guti_str);
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 }
 
 /****************************************************************************
@@ -702,7 +702,7 @@ mme_api_subscribe (
 {
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
 
   if (apn && (apn->length == 0)) {
     /*
@@ -753,7 +753,7 @@ mme_api_subscribe (
     rc = RETURNerror;
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS, rc);
 }
 
 /****************************************************************************
@@ -776,12 +776,12 @@ int
 mme_api_unsubscribe (
   OctetString * apn)
 {
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   int                                     rc = RETURNok;
 
   /*
    * Decrement the total number of PDN connections
    */
   _mme_api_pdn_id -= 1;
-  LOG_FUNC_RETURN (LOG_NAS, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS, rc);
 }

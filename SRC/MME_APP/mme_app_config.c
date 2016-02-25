@@ -34,6 +34,7 @@
 #include <libconfig.h>
 #include "mme_app_config.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 int
 mme_app_config_init (
@@ -216,7 +217,7 @@ mme_app_config_init (
                         config_pP->pgw_config.pool_pdn_addresses.ipv4_addresses[config_pP->pgw_config.pool_pdn_addresses.num_ipv4_addresses++].s_addr = jn;
                       }
                     } else {
-                      printf ("ERROR ON ADDRESS CLASS %d.%d.%d.%d\n", NIPADDR (jn));
+                      OAI_FPRINTF_ERR("ERROR ON ADDRESS CLASS %d.%d.%d.%d\n", NIPADDR (jn));
                     }
                   }
                 }

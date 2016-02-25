@@ -144,11 +144,11 @@ spgw_system (
   int                                     ret = -1;
 
   if (command_pP) {
-    LOG_INFO (LOG_SPGW_APP, "system command: %s\n", command_pP);
+    OAILOG_INFO (LOG_SPGW_APP, "system command: %s\n", command_pP);
     ret = system (command_pP);
 
     if (ret != 0) {
-      LOG_ERROR (LOG_SPGW_APP, "ERROR in system command %s: %d at %s:%u\n", command_pP, ret, file_nameP, line_numberP);
+      OAILOG_ERROR (LOG_SPGW_APP, "ERROR in system command %s: %d at %s:%u\n", command_pP, ret, file_nameP, line_numberP);
 
       if (abort_on_errorP) {
         exit (-1);              // may be not exit
@@ -177,7 +177,7 @@ spgw_config_process (
     if (snprintf (system_cmd, 256, "modprobe xt_GTPUSP gtpu_enb_port=2152 gtpu_sgw_port=%u sgw_addr=\"%s\" ", config_pP->sgw_config.sgw_udp_port_for_S1u_S12_S4_up, inet_ntoa (inaddr)) > 0) {
       ret += spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
     } else {
-      LOG_ERROR (LOG_SPGW_APP, "GTPUSP kernel module\n");
+      OAILOG_ERROR (LOG_SPGW_APP, "GTPUSP kernel module\n");
       ret = -1;
     }
   }
@@ -186,21 +186,21 @@ spgw_config_process (
     if (snprintf (system_cmd, 256, "iptables -t filter -I INPUT -i lo -d %s --protocol sctp -j DROP", inet_ntoa (inaddr)) > 0) {
       ret += spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
     } else {
-      LOG_ERROR (LOG_SPGW_APP, "Drop SCTP traffic on S1U\n");
+      OAILOG_ERROR (LOG_SPGW_APP, "Drop SCTP traffic on S1U\n");
       ret = -1;
     }
 
     if (snprintf (system_cmd, 256, "iptables -t filter -I INPUT -i lo -s %s --protocol sctp -j DROP", inet_ntoa (inaddr)) > 0) {
       ret += spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
     } else {
-      LOG_ERROR (LOG_SPGW_APP, "Drop SCTP traffic on S1U\n");
+      OAILOG_ERROR (LOG_SPGW_APP, "Drop SCTP traffic on S1U\n");
       ret = -1;
     }
 
     if (snprintf (system_cmd, 256, "modprobe xt_GTPUSP  gtpu_enb_port=2153 gtpu_sgw_port=%u sgw_addr=\"%s\" ", config_pP->sgw_config.sgw_udp_port_for_S1u_S12_S4_up, inet_ntoa (inaddr)) > 0) {
       ret += spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
     } else {
-      LOG_ERROR (LOG_SPGW_APP, "GTPUSP kernel module\n");
+      OAILOG_ERROR (LOG_SPGW_APP, "GTPUSP kernel module\n");
       ret = -1;
     }
   }
@@ -208,10 +208,10 @@ spgw_config_process (
   ret += spgw_system ("echo 0 > /proc/sys/net/ipv4/conf/all/send_redirects", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
 
   if (snprintf (system_cmd, 256, "ethtool -K %s tso off gso off gro off", config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI) > 0) {
-    LOG_INFO (LOG_SPGW_APP, "Disable tcp segmentation offload, generic segmentation offload: %s\n", system_cmd);
+    OAILOG_INFO (LOG_SPGW_APP, "Disable tcp segmentation offload, generic segmentation offload: %s\n", system_cmd);
     ret += spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
   } else {
-    LOG_ERROR (LOG_SPGW_APP, "Disable tcp segmentation offload, generic segmentation offload\n");
+    OAILOG_ERROR (LOG_SPGW_APP, "Disable tcp segmentation offload, generic segmentation offload\n");
     ret = -1;
   }
 
@@ -274,17 +274,17 @@ spgw_config_init (
      * Read the file. If there is an error, report it and exit.
      */
     if (!config_read_file (&cfg, lib_config_file_name_pP)) {
-      LOG_ERROR (LOG_SPGW_APP, "%s:%d - %s\n", lib_config_file_name_pP, config_error_line (&cfg), config_error_text (&cfg));
+      OAILOG_ERROR (LOG_SPGW_APP, "%s:%d - %s\n", lib_config_file_name_pP, config_error_line (&cfg), config_error_text (&cfg));
       config_destroy (&cfg);
       AssertFatal (1 == 0, "Failed to parse SP-GW configuration file %s!\n", lib_config_file_name_pP);
     }
   } else {
-    LOG_ERROR (LOG_SPGW_APP, "No SP-GW configuration file provided!\n");
+    OAILOG_ERROR (LOG_SPGW_APP, "No SP-GW configuration file provided!\n");
     config_destroy (&cfg);
     AssertFatal (0, "No SP-GW configuration file provided!\n");
   }
 
-  LOG_INFO (LOG_SPGW_APP, "Parsing configuration file provided %s\n", lib_config_file_name_pP);
+  OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file provided %s\n", lib_config_file_name_pP);
   setting_sgw = config_lookup (&cfg, SGW_CONFIG_STRING_SGW_CONFIG);
 
   if (setting_sgw) {
@@ -311,38 +311,38 @@ spgw_config_init (
         else config_pP->log_config.color = false;
       }
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_UDP_LOG_LEVEL, (const char **)&astring)) {
-        config_pP->log_config.udp_log_level = LOG_LEVEL_STR2INT (astring);
+        config_pP->log_config.udp_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_GTPV1U_LOG_LEVEL, (const char **)&astring)) {
-        config_pP->log_config.gtpv1u_log_level = LOG_LEVEL_STR2INT (astring);
+        config_pP->log_config.gtpv1u_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_GTPV2C_LOG_LEVEL, (const char **)&astring)) {
-        config_pP->log_config.gtpv2c_log_level = LOG_LEVEL_STR2INT (astring);
+        config_pP->log_config.gtpv2c_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SPGW_APP_LOG_LEVEL, (const char **)&astring)) {
-        config_pP->log_config.spgw_app_log_level = LOG_LEVEL_STR2INT (astring);
+        config_pP->log_config.spgw_app_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_S11_LOG_LEVEL, (const char **)&astring)) {
-        config_pP->log_config.s11_log_level = LOG_LEVEL_STR2INT (astring);
+        config_pP->log_config.s11_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_UTIL_LOG_LEVEL, (const char **)&astring)) {
-        config_pP->log_config.util_log_level = LOG_LEVEL_STR2INT (astring);
+        config_pP->log_config.util_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring)) {
-        config_pP->log_config.msc_log_level = LOG_LEVEL_STR2INT (astring);
+        config_pP->log_config.msc_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring)) {
-        config_pP->log_config.itti_log_level = LOG_LEVEL_STR2INT (astring);
+        config_pP->log_config.itti_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
     }
-    LOG_SET_CONFIG(&config_pP->log_config);
+    OAILOG_SET_CONFIG(&config_pP->log_config);
 
     subsetting = config_setting_get_member (setting_sgw, SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
@@ -363,7 +363,7 @@ spgw_config_init (
           config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S1u_S12_S4_up = atoi (mask);
         FREE_CHECK (cidr);
         in_addr_var.s_addr = config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S1u_S12_S4_up;
-        LOG_INFO (LOG_SPGW_APP, "Parsing configuration file found sgw_ipv4_address_for_S1u_S12_S4_up: %s/%d on %s\n",
+        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found sgw_ipv4_address_for_S1u_S12_S4_up: %s/%d on %s\n",
                        inet_ntoa (in_addr_var), config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S1u_S12_S4_up, config_pP->sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up);
         config_pP->sgw_config.ipv4.sgw_interface_name_for_S5_S8_up = STRDUP_CHECK (sgw_interface_name_for_S5_S8_up);
         cidr = STRDUP_CHECK (sgw_ipv4_address_for_S5_S8_up);
@@ -373,7 +373,7 @@ spgw_config_init (
           config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S5_S8_up = atoi (mask);
         FREE_CHECK (cidr);
         in_addr_var.s_addr = config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S5_S8_up;
-        LOG_INFO (LOG_SPGW_APP, "Parsing configuration file found sgw_ipv4_address_for_S5_S8_up: %s/%d on %s\n",
+        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found sgw_ipv4_address_for_S5_S8_up: %s/%d on %s\n",
                        inet_ntoa (in_addr_var), config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S5_S8_up, config_pP->sgw_config.ipv4.sgw_interface_name_for_S5_S8_up);
         config_pP->sgw_config.ipv4.sgw_interface_name_for_S11 = STRDUP_CHECK (sgw_interface_name_for_S11);
         cidr = STRDUP_CHECK (sgw_ipv4_address_for_S11);
@@ -383,7 +383,7 @@ spgw_config_init (
           config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S11 = atoi (mask);
         FREE_CHECK (cidr);
         in_addr_var.s_addr = config_pP->sgw_config.ipv4.sgw_ipv4_address_for_S11;
-        LOG_INFO (LOG_SPGW_APP, "Parsing configuration file found sgw_ipv4_address_for_S11: %s/%d on %s\n", inet_ntoa (in_addr_var), config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S11, config_pP->sgw_config.ipv4.sgw_interface_name_for_S11);
+        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found sgw_ipv4_address_for_S11: %s/%d on %s\n", inet_ntoa (in_addr_var), config_pP->sgw_config.ipv4.sgw_ip_netmask_for_S11, config_pP->sgw_config.ipv4.sgw_interface_name_for_S11);
       }
 
       if (config_setting_lookup_int (subsetting, SGW_CONFIG_STRING_SGW_PORT_FOR_S1U_S12_S4_UP, &sgw_udp_port_for_S1u_S12_S4_up)
@@ -416,7 +416,7 @@ spgw_config_init (
           config_pP->pgw_config.ipv4.pgw_ip_netmask_for_S5_S8 = atoi (mask);
         FREE_CHECK (cidr);
         in_addr_var.s_addr = config_pP->pgw_config.ipv4.pgw_ipv4_address_for_S5_S8;
-        LOG_INFO (LOG_SPGW_APP, "Parsing configuration file found pgw_ipv4_address_for_S5_S8: %s/%d on %s\n", inet_ntoa (in_addr_var), config_pP->pgw_config.ipv4.pgw_ip_netmask_for_S5_S8, config_pP->pgw_config.ipv4.pgw_interface_name_for_S5_S8);
+        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found pgw_ipv4_address_for_S5_S8: %s/%d on %s\n", inet_ntoa (in_addr_var), config_pP->pgw_config.ipv4.pgw_ip_netmask_for_S5_S8, config_pP->pgw_config.ipv4.pgw_interface_name_for_S5_S8);
         config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI = STRDUP_CHECK (pgw_interface_name_for_SGI);
         cidr = STRDUP_CHECK (pgw_ipv4_address_for_SGI);
         address = strtok (cidr, "/");
@@ -425,19 +425,19 @@ spgw_config_init (
           config_pP->pgw_config.ipv4.pgw_ip_netmask_for_SGI = atoi (mask);
         FREE_CHECK (cidr);
         in_addr_var.s_addr = config_pP->pgw_config.ipv4.pgw_ipv4_address_for_SGI;
-        LOG_INFO (LOG_SPGW_APP, "Parsing configuration file found pgw_ipv4_address_for_SGI: %s/%d on %s\n", inet_ntoa (in_addr_var), config_pP->pgw_config.ipv4.pgw_ip_netmask_for_SGI, config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI);
+        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found pgw_ipv4_address_for_SGI: %s/%d on %s\n", inet_ntoa (in_addr_var), config_pP->pgw_config.ipv4.pgw_ip_netmask_for_SGI, config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI);
 
         if (strcasecmp (pgw_masquerade_SGI, "yes") == 0) {
           config_pP->pgw_config.pgw_masquerade_SGI = 1;
         } else {
           config_pP->pgw_config.pgw_masquerade_SGI = 0;
-          LOG_INFO (LOG_SPGW_APP, "No masquerading for SGI\n");
+          OAILOG_INFO (LOG_SPGW_APP, "No masquerading for SGI\n");
         }
       } else {
-        LOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW / NETWORK INTERFACES parsing failed\n");
+        OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW / NETWORK INTERFACES parsing failed\n");
       }
     } else {
-      LOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW / NETWORK INTERFACES not found\n");
+      OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW / NETWORK INTERFACES not found\n");
     }
 
     //!!!------------------------------------!!!
@@ -469,19 +469,19 @@ spgw_config_init (
               if (snprintf (system_cmd, 256, "iptables -I PREROUTING -t mangle -i %s -d %s/%s ! --protocol sctp   -j CONNMARK --restore-mark", config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI, astring, atoken2) > 0) {
                 spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
               } else {
-                LOG_ERROR (LOG_SPGW_APP, "Restore mark\n");
+                OAILOG_ERROR (LOG_SPGW_APP, "Restore mark\n");
               }
 
               if (snprintf (system_cmd, 256, "iptables -I OUTPUT -t mangle -s %s/%s -m mark  ! --mark 0 -j CONNMARK --save-mark", astring, atoken2) > 0) {
                 spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
               } else {
-                LOG_ERROR (LOG_SPGW_APP, "Save mark\n");
+                OAILOG_ERROR (LOG_SPGW_APP, "Save mark\n");
               }
 
               if (snprintf (system_cmd, 256, "ip route add  %s/%s dev %s", astring, atoken2, config_pP->sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up) > 0) {
                 spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
               } else {
-                LOG_ERROR (LOG_SPGW_APP, "Route for UEs\n");
+                OAILOG_ERROR (LOG_SPGW_APP, "Route for UEs\n");
               }
 
               if ((prefix_mask >= 2) && (prefix_mask < 32)) {
@@ -513,20 +513,20 @@ spgw_config_init (
                                 //"iptables -t nat -I POSTROUTING -s %s/%s  ! --protocol sctp -j SNAT --to-source %s", astring, atoken2,
                                 config_pP->pgw_config.ipv4.pgw_interface_name_for_SGI,
                                 inet_ntoa (in_addr_var)) > 0) {
-                    LOG_INFO (LOG_SPGW_APP, "Masquerade SGI: %s\n", system_cmd);
+                    OAILOG_INFO (LOG_SPGW_APP, "Masquerade SGI: %s\n", system_cmd);
                     spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
                   } else {
-                    LOG_ERROR (LOG_SPGW_APP, "Masquerade SGI\n");
+                    OAILOG_ERROR (LOG_SPGW_APP, "Masquerade SGI\n");
                   }
                 }
               } else {
-                LOG_ERROR (LOG_SPGW_APP, "CONFIG POOL ADDR IPV4: BAD MASQ: %s\n", atoken2);
+                OAILOG_ERROR (LOG_SPGW_APP, "CONFIG POOL ADDR IPV4: BAD MASQ: %s\n", atoken2);
               }
             }
           }
         }
       } else {
-        LOG_WARNING (LOG_SPGW_APP, "CONFIG POOL ADDR IPV4: NO IPV4 ADDRESS FOUND\n");
+        OAILOG_WARNING (LOG_SPGW_APP, "CONFIG POOL ADDR IPV4: NO IPV4 ADDRESS FOUND\n");
       }
 
       sub2setting = config_setting_get_member (subsetting, PGW_CONFIG_STRING_IPV6_ADDRESS_LIST);
@@ -563,7 +563,7 @@ spgw_config_init (
                 STAILQ_INSERT_TAIL (&config_pP->pgw_config.pgw_lite_ipv6_pool_list, ip6_ref, ipv6_entries);
               }
             } else {
-              LOG_WARNING (LOG_SPGW_APP, "CONFIG POOL ADDR IPV6: FAILED WHILE PARSING %s\n", astring);
+              OAILOG_WARNING (LOG_SPGW_APP, "CONFIG POOL ADDR IPV6: FAILED WHILE PARSING %s\n", astring);
             }
           }
         }
@@ -574,14 +574,14 @@ spgw_config_init (
         config_pP->pgw_config.ipv4.pgw_interface_name_for_S5_S8 = STRDUP_CHECK (pgw_interface_name_for_S5_S8);
         IPV4_STR_ADDR_TO_INT_NWBO (pgw_default_dns_ipv4_address, config_pP->pgw_config.ipv4.default_dns_v4, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS !\n")
           IPV4_STR_ADDR_TO_INT_NWBO (pgw_default_dns_sec_ipv4_address, config_pP->pgw_config.ipv4.default_dns_sec_v4, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS SEC!\n")
-          LOG_INFO (LOG_SPGW_APP, "Parsing configuration file default primary DNS IPv4 address: %x\n", config_pP->pgw_config.ipv4.default_dns_v4);
-        LOG_INFO (LOG_SPGW_APP, "Parsing configuration file default secondary DNS IPv4 address: %x\n", config_pP->pgw_config.ipv4.default_dns_sec_v4);
+          OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file default primary DNS IPv4 address: %x\n", config_pP->pgw_config.ipv4.default_dns_v4);
+        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file default secondary DNS IPv4 address: %x\n", config_pP->pgw_config.ipv4.default_dns_sec_v4);
       } else {
-        LOG_WARNING (LOG_SPGW_APP, "NO DNS CONFIGURATION FOUND\n");
+        OAILOG_WARNING (LOG_SPGW_APP, "NO DNS CONFIGURATION FOUND\n");
       }
     }
   } else {
-    LOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW not found\n");
+    OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW not found\n");
   }
 
   config_destroy (&cfg);

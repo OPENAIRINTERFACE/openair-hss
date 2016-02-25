@@ -110,14 +110,14 @@ dump_radio_priority_xml (
   RadioPriority * radiopriority,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Radio Priority>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Radio Priority>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <Radio priority level value>%u</Radio priority level value>\n", *radiopriority);
-  LOG_DEBUG (LOG_NAS, "</Radio Priority>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <Radio priority level value>%u</Radio priority level value>\n", *radiopriority);
+  OAILOG_DEBUG (LOG_NAS, "</Radio Priority>\n");
 }

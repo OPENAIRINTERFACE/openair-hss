@@ -26,6 +26,7 @@
 
 #include "conversion.h"
 #include "access_restriction.h"
+#include "log.h"
 
 /* TODO: identification of MCC and MNC within an IMSI should be done according
    to a table that maps MCC to 2 or 3 digits expected...
@@ -92,7 +93,7 @@ apply_access_restriction (
   uint8_t                                 imsi_hex[15];
 
   if (bcd_to_hex (imsi_hex, imsi, strlen (imsi)) != 0) {
-    fprintf (stderr, "Failed to convert imsi %s to hex representation\n", imsi);
+    FPRINTF_ERROR ( "Failed to convert imsi %s to hex representation\n", imsi);
     return -1;
   }
 
@@ -100,18 +101,18 @@ apply_access_restriction (
    * There is a problem while converting the PLMN...
    */
   if (split_plmn (vplmn, vmcc, vmnc) != 0) {
-    fprintf (stderr, "Fail to convert vplmn %02x%02x%02x to mcc/mnc for imsi %s\n", vplmn[0], vplmn[1], vplmn[2], imsi);
+    FPRINTF_ERROR ( "Fail to convert vplmn %02x%02x%02x to mcc/mnc for imsi %s\n", vplmn[0], vplmn[1], vplmn[2], imsi);
     return -1;
   }
 
-  fprintf (stderr, "Converted %02x%02x%02x to plmn %u.%u\n", vplmn[0], vplmn[1], vplmn[2], FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
+  FPRINTF_ERROR ( "Converted %02x%02x%02x to plmn %u.%u\n", vplmn[0], vplmn[1], vplmn[2], FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
   /*
    * MCC is always 3 digits
    */
   memcpy (hmcc, &imsi_hex[0], 3);
 
   if (memcmp (vmcc, hmcc, 3) != 0) {
-    fprintf (stderr, "Only France MCC is handled for now, got imsi plmn %u.%u for a visited plmn %u.%u\n", FORMAT_MCC (hmcc), FORMAT_MNC (hmnc), FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
+    FPRINTF_ERROR ( "Only France MCC is handled for now, got imsi plmn %u.%u for a visited plmn %u.%u\n", FORMAT_MCC (hmcc), FORMAT_MNC (hmnc), FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
     /*
      * Reject the association
      */
@@ -125,7 +126,7 @@ apply_access_restriction (
   memcpy (&hmnc[1], &imsi_hex[3], 2);
 
   if ((memcmp (vmcc, hmcc, 3) != 0) && (memcmp (vmnc, hmnc, 3) != 0)) {
-    fprintf (stderr, "UE is roaming from %u.%u to %u.%u which is not allowed" " by the ODB\n", FORMAT_MCC (hmcc), FORMAT_MNC (hmnc), FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
+    FPRINTF_ERROR ( "UE is roaming from %u.%u to %u.%u which is not allowed" " by the ODB\n", FORMAT_MCC (hmcc), FORMAT_MNC (hmnc), FORMAT_MCC (vmcc), FORMAT_MNC (vmnc));
     return -1;
   }
 

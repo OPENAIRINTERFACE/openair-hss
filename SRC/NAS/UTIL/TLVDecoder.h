@@ -86,43 +86,38 @@ extern int errorCodeDecoder;
 void tlv_decode_perror(void);
 
 #define CHECK_PDU_POINTER_AND_LENGTH_DECODER(bUFFER, mINIMUMlENGTH, lENGTH)    \
-  if (bUFFER == NULL)                                                          \
-        {                                                                      \
-	        LOG_WARNING(LOG_NAS, "Got NULL pointer for the payload\n");    \
-                errorCodeDecoder = TLV_DECODE_BUFFER_NULL;                     \
-                return TLV_DECODE_BUFFER_NULL;                                 \
-        }                                                                      \
-        if (lENGTH < mINIMUMlENGTH)                                            \
-        {                                                                      \
-        	LOG_WARNING(LOG_NAS, "Expecting at least %d bytes, got %d\n"   \
-                      , mINIMUMlENGTH, lENGTH);                                \
-                errorCodeDecoder = TLV_DECODE_BUFFER_TOO_SHORT;                \
-                return TLV_DECODE_BUFFER_TOO_SHORT;                            \
-        }
+  if (bUFFER == NULL) {                                                        \
+    OAILOG_WARNING(LOG_NAS, "Got NULL pointer for the payload\n");             \
+    errorCodeDecoder = TLV_DECODE_BUFFER_NULL;                                 \
+    return TLV_DECODE_BUFFER_NULL;                                             \
+  }                                                                            \
+  if (lENGTH < mINIMUMlENGTH) {                                                \
+    OAILOG_WARNING(LOG_NAS, "Expecting at least %d bytes, got %d\n"            \
+       , mINIMUMlENGTH, lENGTH);                                               \
+    errorCodeDecoder = TLV_DECODE_BUFFER_TOO_SHORT;                            \
+    return TLV_DECODE_BUFFER_TOO_SHORT;                                        \
+  }
 
 #define CHECK_LENGTH_DECODER(bUFFERlENGTH, lENGTH)                             \
-        if (bUFFERlENGTH < lENGTH)                                             \
-        {                                                                      \
-                errorCodeDecoder = TLV_DECODE_BUFFER_TOO_SHORT;                \
-                return TLV_DECODE_BUFFER_TOO_SHORT;                            \
+        if (bUFFERlENGTH < lENGTH) {                                           \
+          errorCodeDecoder = TLV_DECODE_BUFFER_TOO_SHORT;                      \
+          return TLV_DECODE_BUFFER_TOO_SHORT;                                  \
         }
 
 #define CHECK_MESSAGE_TYPE(mESSAGE_tYPE, bUFFER)                               \
         {                                                                      \
-                if (mESSAGE_tYPE != bUFFER)                                    \
-                {                                                              \
-                        errorCodeDecoder = TLV_DECODE_WRONG_MESSAGE_TYPE;      \
-                        return errorCodeDecoder;                               \
-                }                                                              \
+           if (mESSAGE_tYPE != bUFFER)  {                                      \
+             errorCodeDecoder = TLV_DECODE_WRONG_MESSAGE_TYPE;                 \
+             return errorCodeDecoder;                                          \
+           }                                                                   \
         }
 
-#define CHECK_IEI_DECODER(iEI, bUFFER)                                  \
-        if (iEI != bUFFER)                                              \
-        {                                                               \
-                LOG_WARNING(LOG_NAS, "IEI is different than the one expected."        \
-                "(Got: 0x%x, expecting: 0x%x\n", bUFFER, iEI);          \
-                errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;           \
-                return TLV_DECODE_UNEXPECTED_IEI;                       \
+#define CHECK_IEI_DECODER(iEI, bUFFER)                                         \
+        if (iEI != bUFFER) {                                                   \
+          OAILOG_WARNING(LOG_NAS, "IEI is different than the one expected."    \
+                "(Got: 0x%x, expecting: 0x%x\n", bUFFER, iEI);                 \
+          errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;                        \
+          return TLV_DECODE_UNEXPECTED_IEI;                                    \
         }
 
 #endif /* define (FILE_TLV_DECODER_SEEN) */

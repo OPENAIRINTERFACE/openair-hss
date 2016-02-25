@@ -38,6 +38,7 @@
 
 *****************************************************************************/
 
+#include "3gpp_24.007.h"
 #include "esm_recv.h"
 #include "commonDef.h"
 #include "log.h"
@@ -96,8 +97,8 @@ esm_recv_status (
   int                                     esm_cause;
   int                                     rc;
 
-  LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO(LOG_NAS_ESM,  "ESM-SAP   - Received ESM status message (pti=%d, ebi=%d)\n", pti, ebi);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_INFO(LOG_NAS_ESM,  "ESM-SAP   - Received ESM status message (pti=%d, ebi=%d)\n", pti, ebi);
   /*
    * Message processing
    */
@@ -117,7 +118,7 @@ esm_recv_status (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 
@@ -157,8 +158,8 @@ esm_recv_pdn_connectivity_request (
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
   uint8_t                                 i;
 
-  LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ue_id=%u, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ue_id=%u, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -168,8 +169,8 @@ esm_recv_pdn_connectivity_request (
      * 3GPP TS 24.301, section 7.3.1, case a
      * * * * Reserved or unassigned PTI value
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -179,8 +180,8 @@ esm_recv_pdn_connectivity_request (
      * 3GPP TS 24.301, section 7.3.2, case a
      * * * * Reserved or assigned EPS bearer identity value
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -192,8 +193,8 @@ esm_recv_pdn_connectivity_request (
   esm_proc_data_t                        *esm_data = (esm_proc_data_t *) (data);
 
   if (data == NULL) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Invalid ESM data structure\n");
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PROTOCOL_ERROR);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Invalid ESM data structure\n");
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PROTOCOL_ERROR);
   }
 
   /*
@@ -211,8 +212,8 @@ esm_recv_pdn_connectivity_request (
     /*
      * Unkown PDN request type
      */
-    LOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Invalid PDN request type\n");
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_MANDATORY_INFO);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Invalid PDN request type\n");
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_MANDATORY_INFO);
   }
 
   /*
@@ -228,8 +229,8 @@ esm_recv_pdn_connectivity_request (
     /*
      * Unkown PDN type
      */
-    LOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Invalid PDN type\n");
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_PDN_TYPE);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Invalid PDN type\n");
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_UNKNOWN_PDN_TYPE);
   }
 
   /*
@@ -296,7 +297,7 @@ esm_recv_pdn_connectivity_request (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 /****************************************************************************
@@ -327,10 +328,10 @@ esm_recv_pdn_disconnect_request (
   const pdn_disconnect_request_msg * msg,
   unsigned int *linked_ebi)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Disconnect Request message " "(ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
+  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Disconnect Request message " "(ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -340,8 +341,8 @@ esm_recv_pdn_disconnect_request (
      * 3GPP TS 24.301, section 7.3.1, case b
      * * * * Reserved or unassigned PTI value
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -351,8 +352,8 @@ esm_recv_pdn_disconnect_request (
      * 3GPP TS 24.301, section 7.3.2, case b
      * * * * Reserved or assigned EPS bearer identity value
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -385,7 +386,7 @@ esm_recv_pdn_disconnect_request (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 /****************************************************************************
@@ -414,10 +415,10 @@ esm_recv_activate_default_eps_bearer_context_accept (
   int ebi,
   const activate_default_eps_bearer_context_accept_msg * msg)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
+  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -427,8 +428,8 @@ esm_recv_activate_default_eps_bearer_context_accept (
      * 3GPP TS 24.301, section 7.3.1, case f
      * * * * Reserved PTI value
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -439,8 +440,8 @@ esm_recv_activate_default_eps_bearer_context_accept (
      * * * * Reserved or assigned value that does not match an existing EPS
      * * * * bearer context
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -459,7 +460,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 /****************************************************************************
@@ -488,10 +489,10 @@ esm_recv_activate_default_eps_bearer_context_reject (
   int ebi,
   const activate_default_eps_bearer_context_reject_msg * msg)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Reject message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
+  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received Activate Default EPS Bearer Context " "Reject message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -501,8 +502,8 @@ esm_recv_activate_default_eps_bearer_context_reject (
      * 3GPP TS 24.301, section 7.3.1, case f
      * * * * Reserved PTI value
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -513,8 +514,8 @@ esm_recv_activate_default_eps_bearer_context_reject (
      * * * * Reserved or assigned value that does not match an existing EPS
      * * * * bearer context
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)", ebi);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -533,7 +534,7 @@ esm_recv_activate_default_eps_bearer_context_reject (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 /****************************************************************************
@@ -562,10 +563,10 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
   int ebi,
   const activate_dedicated_eps_bearer_context_accept_msg * msg)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Activate Dedicated EPS Bearer " "Context Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Activate Dedicated EPS Bearer " "Context Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -575,8 +576,8 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
      * 3GPP TS 24.301, section 7.3.1, case f
      * * * * Reserved PTI value
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -587,8 +588,8 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
      * * * * Reserved or assigned value that does not match an existing EPS
      * * * * bearer context
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -608,7 +609,7 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 /****************************************************************************
@@ -637,10 +638,10 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
   int ebi,
   const activate_dedicated_eps_bearer_context_reject_msg * msg)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Activate Dedicated EPS Bearer " "Context Reject message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Activate Dedicated EPS Bearer " "Context Reject message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -650,8 +651,8 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
      * 3GPP TS 24.301, section 7.3.1, case f
      * * * * Reserved PTI value
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -662,8 +663,8 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
      * * * * Reserved or assigned value that does not match an existing EPS
      * * * * bearer context
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -683,7 +684,7 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 /****************************************************************************
@@ -711,10 +712,10 @@ esm_recv_deactivate_eps_bearer_context_accept (
   int ebi,
   const deactivate_eps_bearer_context_accept_msg * msg)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Deactivate EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Deactivate EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
 
   /*
    * Procedure transaction identity checking
@@ -724,8 +725,8 @@ esm_recv_deactivate_eps_bearer_context_accept (
      * 3GPP TS 24.301, section 7.3.1, case f
      * * * * Reserved PTI value
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
   }
   /*
    * EPS bearer identity checking
@@ -736,8 +737,8 @@ esm_recv_deactivate_eps_bearer_context_accept (
      * * * * Reserved or assigned value that does not match an existing EPS
      * * * * bearer context
      */
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
   }
 
   /*
@@ -764,7 +765,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
   /*
    * Return the ESM cause value
    */
-  LOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
 
 /****************************************************************************/

@@ -110,14 +110,14 @@ dump_eps_update_result_xml (
   EpsUpdateResult * epsupdateresult,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Eps Update Result>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Eps Update Result>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <EPS update result value>%u</EPS update result value>\n", *epsupdateresult);
-  LOG_DEBUG (LOG_NAS, "</Eps Update Result>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <EPS update result value>%u</EPS update result value>\n", *epsupdateresult);
+  OAILOG_DEBUG (LOG_NAS, "</Eps Update Result>\n");
 }

@@ -21,6 +21,7 @@
 
 
 #include "common_types.h"
+#include "as_message.h"
 #include "assertions.h"
 #include "msc.h"
 #include "log.h"
@@ -28,24 +29,31 @@
 
 #if ITTI_LITE
 int itf_mme_app_nas_initial_ue_message(
-    const mme_ue_s1ap_id_t  mme_ue_s1ap_id,
-    const uint8_t * const nas_msg,
-    const uint32_t  nas_msg_length,
-    const long      cause,
-    const uint8_t   tai_plmn[3],
-    const uint16_t  tai_tac,
-    const uint64_t  s_tmsi)
+    const sctp_assoc_id_t    assoc_id,
+    const enb_ue_s1ap_id_t   enb_ue_s1ap_id,
+    const mme_ue_s1ap_id_t   mme_ue_s1ap_id,
+    const uint8_t * const    nas_msg,
+    const size_t             nas_msg_length,
+    const tai_t      const * tai,
+    const ecgi_t     const * cgi,
+    const long               rrc_cause,
+    const as_stmsi_t const * opt_s_tmsi,
+    const void       const * opt_csg_id,
+    const gummei_t   const * opt_gummei,
+    const void       const * opt_cell_access_mode,
+    const void       const * opt_cell_gw_transport_address,
+    const void       const * opt_relay_node_indicator)
 {
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
 
-  LOG_FUNC_IN (LOG_MME_APP);
-  LOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP\n");
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP\n");
   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
 
   if (ue_context_p == NULL) {
-  LOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %06" PRIX32 "/dec%u\n", mme_ue_s1ap_id, mme_ue_s1ap_id);
-  LOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one\n");
+  OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %06" PRIX32 "/dec%u\n", mme_ue_s1ap_id, mme_ue_s1ap_id);
+  OAILOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one\n");
 
     if ((ue_context_p = mme_create_new_ue_context ()) == NULL) {
       /*
@@ -55,7 +63,7 @@ int itf_mme_app_nas_initial_ue_message(
        * TODO
        */
       DevMessage ("mme_create_new_ue_context");
-      LOG_FUNC_OUT (LOG_MME_APP);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
     }
     // S1AP UE ID AND NAS UE ID ARE THE SAME
     ue_context_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
@@ -87,7 +95,7 @@ int itf_mme_app_nas_initial_ue_message(
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_CONNECTION_ESTABLISHMENT_IND");
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 */
-  LOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 #endif
 

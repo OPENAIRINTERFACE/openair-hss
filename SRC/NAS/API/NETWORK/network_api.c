@@ -150,7 +150,7 @@ network_api_initialize (
   const char *host,
   const char *port)
 {
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   /*
    * Initialize network socket handlers
    */
@@ -169,13 +169,13 @@ network_api_initialize (
   if (_network_api_id.endpoint == NULL) {
     const char                             *error = ((errno < 0) ? gai_strerror (errno) : strerror (errno));
 
-    LOG_ERROR (LOG_NAS, "NET-API   - Failed to open connection endpoint, %s", error);
-    LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+    OAILOG_ERROR (LOG_NAS, "NET-API   - Failed to open connection endpoint, %s", error);
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
   }
 
   gethostname (_network_api_send_buffer, NETWORK_API_SEND_BUFFER_SIZE);
-  LOG_INFO (LOG_NAS,  "NET-API   - Network's UDP socket %d is BOUND to %s/%s", network_api_get_fd (), _network_api_send_buffer, port);
-  LOG_FUNC_RETURN (LOG_NAS, RETURNok);
+  OAILOG_INFO (LOG_NAS,  "NET-API   - Network's UDP socket %d is BOUND to %s/%s", network_api_get_fd (), _network_api_send_buffer, port);
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
 
 /****************************************************************************
@@ -197,8 +197,8 @@ int
 network_api_get_fd (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS);
-  LOG_FUNC_RETURN (LOG_NAS, NETWORK_API_GETFD ());
+  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_RETURN (LOG_NAS, NETWORK_API_GETFD ());
 }
 
 /****************************************************************************
@@ -220,8 +220,8 @@ const void                             *
 network_api_get_data (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS);
-  LOG_FUNC_RETURN (LOG_NAS, (void *)(&_as_data));
+  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_RETURN (LOG_NAS, (void *)(&_as_data));
 }
 
 /****************************************************************************
@@ -243,7 +243,7 @@ int
 network_api_read_data (
   int fd)
 {
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   int                                     rbytes;
 
   /*
@@ -252,8 +252,8 @@ network_api_read_data (
   int                                     sfd = network_api_get_fd ();
 
   if (fd != sfd) {
-    LOG_ERROR (LOG_NAS, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
-    LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+    OAILOG_ERROR (LOG_NAS, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
   }
 
   memset (_network_api_recv_buffer, 0, NETWORK_API_RECV_BUFFER_SIZE);
@@ -263,16 +263,16 @@ network_api_read_data (
   rbytes = NETWORK_API_RECV (_network_api_recv_buffer, NETWORK_API_RECV_BUFFER_SIZE);
 
   if (rbytes == RETURNerror) {
-    LOG_ERROR (LOG_NAS, "NET-API   - recv() failed, %s", strerror (errno));
-    LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+    OAILOG_ERROR (LOG_NAS, "NET-API   - recv() failed, %s", strerror (errno));
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
   } else if (rbytes == 0) {
-    LOG_WARNING (LOG_NAS, "NET-API   - A signal was caught");
+    OAILOG_WARNING (LOG_NAS, "NET-API   - A signal was caught");
   } else {
-    LOG_INFO (LOG_NAS,  "NET-API   - %d bytes received from the network " "sublayer", rbytes);
-    LOG_STREAM_HEX (LOG_NAS, "", _network_api_recv_buffer, rbytes);
+    OAILOG_INFO (LOG_NAS,  "NET-API   - %d bytes received from the network " "sublayer", rbytes);
+    OAILOG_STREAM_HEX (LOG_NAS, "", _network_api_recv_buffer, rbytes);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, rbytes);
+  OAILOG_FUNC_RETURN (LOG_NAS, rbytes);
 }
 
 /****************************************************************************
@@ -296,7 +296,7 @@ network_api_send_data (
   int fd,
   size_t length)
 {
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   int                                     sbytes;
 
   /*
@@ -305,8 +305,8 @@ network_api_send_data (
   int                                     sfd = network_api_get_fd ();
 
   if (fd != sfd) {
-    LOG_ERROR (LOG_NAS, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
-    LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+    OAILOG_ERROR (LOG_NAS, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
   }
 
   /*
@@ -315,16 +315,16 @@ network_api_send_data (
   sbytes = NETWORK_API_SEND (_network_api_send_buffer, length);
 
   if (sbytes == RETURNerror) {
-    LOG_ERROR (LOG_NAS, "NET-API   - send() failed, %s", strerror (errno));
-    LOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+    OAILOG_ERROR (LOG_NAS, "NET-API   - send() failed, %s", strerror (errno));
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
   } else if (sbytes == 0) {
-    LOG_WARNING (LOG_NAS, "NET-API   - A signal was caught");
+    OAILOG_WARNING (LOG_NAS, "NET-API   - A signal was caught");
   } else {
-    LOG_INFO (LOG_NAS,  "NET-API   - %d bytes sent to the network sublayer", sbytes);
-    LOG_STREAM_HEX (LOG_NAS, "", _network_api_recv_buffer, sbytes);
+    OAILOG_INFO (LOG_NAS,  "NET-API   - %d bytes sent to the network sublayer", sbytes);
+    OAILOG_STREAM_HEX (LOG_NAS, "", _network_api_recv_buffer, sbytes);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, sbytes);
+  OAILOG_FUNC_RETURN (LOG_NAS, sbytes);
 }
 
 /****************************************************************************
@@ -347,15 +347,15 @@ void
 network_api_close (
   int fd)
 {
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   /*
    * Sanity check
    */
   int                                     sfd = network_api_get_fd ();
 
   if (fd != sfd) {
-    LOG_ERROR (LOG_NAS, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
-    LOG_FUNC_OUT (LOG_NAS);
+    OAILOG_ERROR (LOG_NAS, "NET-API   - Endpoint %d is not the one created for communication with the network sublayer (%d)", fd, sfd);
+    OAILOG_FUNC_OUT (LOG_NAS);
     return;
   }
 
@@ -364,7 +364,7 @@ network_api_close (
    */
   NETWORK_API_CLOSE ();
   _network_api_id.endpoint = NULL;
-  LOG_FUNC_OUT (LOG_NAS);
+  OAILOG_FUNC_OUT (LOG_NAS);
 }
 
 /****************************************************************************
@@ -387,17 +387,17 @@ int
 network_api_decode_data (
     size_t length)
 {
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   /*
    * Decode the Access Stratum message received from the network
    */
   int                                     as_id = as_message_decode (_network_api_recv_buffer, &_as_data, length);
 
   if (as_id != RETURNerror) {
-    LOG_INFO (LOG_NAS,  "NET-API   - AS message id=0x%x successfully decoded", as_id);
+    OAILOG_INFO (LOG_NAS,  "NET-API   - AS message id=0x%x successfully decoded", as_id);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, as_id);
+  OAILOG_FUNC_RETURN (LOG_NAS, as_id);
 }
 
 /****************************************************************************
@@ -419,7 +419,7 @@ int
 network_api_encode_data (
   void *data)
 {
-  LOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_NAS);
   /*
    * Encode the Access Stratum  message
    */
@@ -428,10 +428,10 @@ network_api_encode_data (
                                                                      NETWORK_API_SEND_BUFFER_SIZE);
 
   if (bytes != RETURNerror) {
-    LOG_INFO (LOG_NAS,  "NET-API   - %d bytes encoded", bytes);
+    OAILOG_INFO (LOG_NAS,  "NET-API   - %d bytes encoded", bytes);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, bytes);
+  OAILOG_FUNC_RETURN (LOG_NAS, bytes);
 }
 
 /****************************************************************************
@@ -456,8 +456,8 @@ as_message_send (
 {
   int                                     bytes;
 
-  LOG_FUNC_IN (LOG_NAS);
-  LOG_INFO (LOG_NAS,  "NET-API   - Send message 0x%.4x to the Access Stratum " "layer", as_msg->msg_id);
+  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_INFO (LOG_NAS,  "NET-API   - Send message 0x%.4x to the Access Stratum " "layer", as_msg->msg_id);
   /*
    * Encode the AS message
    */
@@ -477,7 +477,7 @@ as_message_send (
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS, bytes);
+  OAILOG_FUNC_RETURN (LOG_NAS, bytes);
 }
 
 /****************************************************************************/

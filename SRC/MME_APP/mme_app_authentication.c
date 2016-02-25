@@ -56,7 +56,7 @@ mme_app_request_authentication_info (
   int                                     imsi_length = strlen (imsi);
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (plmn );
   message_p = itti_alloc_new_message (TASK_MME_APP, S6A_AUTH_INFO_REQ);
   auth_info_req = &message_p->ittiMsg.s6a_auth_info_req;
@@ -65,12 +65,12 @@ mme_app_request_authentication_info (
   auth_info_req->imsi_length = imsi_length;
   //MME_APP_IMSI_TO_STRING(imsi, auth_info_req->imsi);
   memcpy (&auth_info_req->visited_plmn, plmn, sizeof (plmn_t));
-  LOG_DEBUG (LOG_MME_APP, "visited_plmn MCC %X%X%X MNC %X%X%X\n",
+  OAILOG_DEBUG (LOG_MME_APP, "visited_plmn MCC %X%X%X MNC %X%X%X\n",
                  auth_info_req->visited_plmn.mcc_digit1, auth_info_req->visited_plmn.mcc_digit2, auth_info_req->visited_plmn.mcc_digit3,
                  auth_info_req->visited_plmn.mnc_digit1, auth_info_req->visited_plmn.mnc_digit2, auth_info_req->visited_plmn.mnc_digit3);
   uint8_t                                *ptr = (uint8_t *) & auth_info_req->visited_plmn;
 
-  LOG_DEBUG (LOG_MME_APP, "visited_plmn %02X%02X%02X\n", ptr[0], ptr[1], ptr[2]);
+  OAILOG_DEBUG (LOG_MME_APP, "visited_plmn %02X%02X%02X\n", ptr[0], ptr[1], ptr[2]);
   auth_info_req->nb_of_vectors = nb_of_vectors;
 
   if (auts ) {
@@ -83,7 +83,7 @@ mme_app_request_authentication_info (
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_AUTH_INFO_REQ IMSI %s visited_plmn %02X%02X%02X re_sync %u", imsi, ptr[0], ptr[1], ptr[2], auth_info_req->re_synchronization);
   rc = itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
-  LOG_FUNC_RETURN (LOG_MME_APP, rc);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
 
@@ -94,15 +94,15 @@ mme_app_handle_authentication_info_answer (
   struct ue_context_s                    *ue_context = NULL;
   uint64_t                                imsi = 0;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (s6a_auth_info_ans_pP );
   MME_APP_STRING_TO_IMSI ((char *)s6a_auth_info_ans_pP->imsi, &imsi);
-  LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
 
   if ((ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
-    LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
+    OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS Unknown imsi %" IMSI_FORMAT, imsi);
-    LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
   if ((s6a_auth_info_ans_pP->result.present == S6A_RESULT_BASE)
@@ -130,10 +130,10 @@ mme_app_handle_authentication_info_answer (
     memcpy (&ue_context->vector_list[ue_context->nb_of_vectors], &s6a_auth_info_ans_pP->auth_info.eutran_vector, sizeof (eutran_vector_t));
     ue_context->vector_in_use = &ue_context->vector_list[ue_context->nb_of_vectors];
     ue_context->nb_of_vectors += s6a_auth_info_ans_pP->auth_info.nb_of_vectors;
-    LOG_DEBUG (LOG_MME_APP, "INFORMING NAS ABOUT AUTH RESP SUCCESS got %u vector(s)\n", s6a_auth_info_ans_pP->auth_info.nb_of_vectors);
+    OAILOG_DEBUG (LOG_MME_APP, "INFORMING NAS ABOUT AUTH RESP SUCCESS got %u vector(s)\n", s6a_auth_info_ans_pP->auth_info.nb_of_vectors);
     mme_app_itti_auth_rsp (ue_context->mme_ue_s1ap_id, 1, &s6a_auth_info_ans_pP->auth_info.eutran_vector);
   } else {
-    LOG_ERROR (LOG_MME_APP, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
+    OAILOG_ERROR (LOG_MME_APP, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi %" IMSI_FORMAT, imsi);
 
     /*
@@ -145,7 +145,7 @@ mme_app_handle_authentication_info_answer (
       mme_app_itti_auth_fail (ue_context->mme_ue_s1ap_id, s6a_error_2_nas_cause (s6a_auth_info_ans_pP->result.choice.experimental, 1));
     }
   }
-  LOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
 
 
@@ -166,7 +166,7 @@ mme_app_handle_nas_auth_param_req (
     .mnc_digit2 = 0,
     .mnc_digit3 = 0,
   };
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (nas_auth_param_req_pP );
   visited_plmn = &visited_plmn_from_req;
   visited_plmn_from_req.mcc_digit1 = nas_auth_param_req_pP->imsi[0];
@@ -188,18 +188,18 @@ mme_app_handle_nas_auth_param_req (
   }
 
   if (mnc_length == 3) {
-    LOG_DEBUG (LOG_MME_APP, "visited_plmn_from_req  %1d%1d%1d.%1d%1d%1d\n",
+    OAILOG_DEBUG (LOG_MME_APP, "visited_plmn_from_req  %1d%1d%1d.%1d%1d%1d\n",
                    visited_plmn_from_req.mcc_digit1, visited_plmn_from_req.mcc_digit2, visited_plmn_from_req.mcc_digit3,
                    visited_plmn_from_req.mnc_digit1, visited_plmn_from_req.mnc_digit2, visited_plmn_from_req.mnc_digit3);
   } else {
-    LOG_DEBUG (LOG_MME_APP, "visited_plmn_from_req  %1d%1d%1d.%1d%1d\n",
+    OAILOG_DEBUG (LOG_MME_APP, "visited_plmn_from_req  %1d%1d%1d.%1d%1d\n",
                    visited_plmn_from_req.mcc_digit1, visited_plmn_from_req.mcc_digit2, visited_plmn_from_req.mcc_digit3,
                    visited_plmn_from_req.mnc_digit1, visited_plmn_from_req.mnc_digit2);
   }
 
   MME_APP_STRING_TO_IMSI (nas_auth_param_req_pP->imsi, &imsi);
-  LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
-  LOG_DEBUG (LOG_MME_APP, "Handling imsi from req  %s (mnc length %d)\n", nas_auth_param_req_pP->imsi, mnc_length);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi from req  %s (mnc length %d)\n", nas_auth_param_req_pP->imsi, mnc_length);
   /*
    * Fetch the context associated with this IMSI
    */
@@ -210,13 +210,13 @@ mme_app_handle_nas_auth_param_req (
      * Currently no context available -> trigger an authentication request
      * to the HSS.
      */
-    LOG_DEBUG (LOG_MME_APP, "UE context search by IMSI failed, try by mme_ue_s1ap_id\n");
+    OAILOG_DEBUG (LOG_MME_APP, "UE context search by IMSI failed, try by mme_ue_s1ap_id\n");
     ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, nas_auth_param_req_pP->ue_id);
 
     if (ue_context == NULL) {
-      LOG_ERROR (LOG_MME_APP, "UE context doesn't exist no action (should never see this message)\n");
+      OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist no action (should never see this message)\n");
       // should have been created by initial ue message
-      LOG_FUNC_OUT (LOG_MME_APP);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
     }
 
     /*
@@ -239,7 +239,7 @@ mme_app_handle_nas_auth_param_req (
                                      imsi,       // imsi is new
                                      ue_context->mme_s11_teid,
                                      &ue_context->guti);       // guti is new
-    LOG_DEBUG (LOG_MME_APP, "and we have no auth. vector for it, request authentication information\n");
+    OAILOG_DEBUG (LOG_MME_APP, "and we have no auth. vector for it, request authentication information\n");
     mme_app_request_authentication_info (nas_auth_param_req_pP->imsi, 1, visited_plmn, NULL);
   } else {
     // merge GUTI
@@ -255,5 +255,5 @@ mme_app_handle_nas_auth_param_req (
                                      &ue_context->guti);      // guti is new
     mme_app_request_authentication_info (nas_auth_param_req_pP->imsi, 1, visited_plmn, nas_auth_param_req_pP->auts);
   }
-  LOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }

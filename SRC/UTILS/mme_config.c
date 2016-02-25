@@ -175,11 +175,11 @@ mme_system (
   int                                     ret = -1;
 
   if (command_pP) {
-    LOG_DEBUG (LOG_CONFIG, "system command: %s\n", command_pP);
+    OAILOG_DEBUG (LOG_CONFIG, "system command: %s\n", command_pP);
     ret = system (command_pP);
 
     if (ret < 0) {
-      LOG_ERROR (LOG_CONFIG, "ERROR in system command %s: %d\n", command_pP, ret);
+      OAILOG_ERROR (LOG_CONFIG, "ERROR in system command %s: %d\n", command_pP, ret);
 
       if (abort_on_errorP) {
         exit (-1);              // may be not exit
@@ -225,12 +225,12 @@ config_parse_file (
      * Read the file. If there is an error, report it and exit.
      */
     if (!config_read_file (&cfg, mme_config_p->config_file)) {
-      LOG_ERROR (LOG_CONFIG, ": %s:%d - %s\n", mme_config_p->config_file, config_error_line (&cfg), config_error_text (&cfg));
+      OAILOG_ERROR (LOG_CONFIG, ": %s:%d - %s\n", mme_config_p->config_file, config_error_line (&cfg), config_error_text (&cfg));
       config_destroy (&cfg);
       AssertFatal (1 == 0, "Failed to parse MME configuration file %s!\n", mme_config_p->config_file);
     }
   } else {
-    LOG_ERROR (LOG_CONFIG, " No MME configuration file provided!\n");
+    OAILOG_ERROR (LOG_CONFIG, " No MME configuration file provided!\n");
     config_destroy (&cfg);
     AssertFatal (0, "No MME configuration file provided!\n");
   }
@@ -252,28 +252,28 @@ config_parse_file (
       }
 
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_SCTP_LOG_LEVEL, (const char **)&astring))
-        mme_config_p->log_config.sctp_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.sctp_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_S1AP_LOG_LEVEL, (const char **)&astring))
-        mme_config_p->log_config.s1ap_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.s1ap_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_LOG_LEVEL, (const char **)&astring))
-        mme_config_p->log_config.nas_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.nas_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_MME_APP_LOG_LEVEL, (const char **)&astring))
-        mme_config_p->log_config.mme_app_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.mme_app_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_S6A_LOG_LEVEL, (const char **)&astring))
-        mme_config_p->log_config.s6a_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.s6a_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_UTIL_LOG_LEVEL, (const char **)&astring))
-        mme_config_p->log_config.util_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.util_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring))
-        mme_config_p->log_config.msc_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.msc_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring))
-        mme_config_p->log_config.itti_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.itti_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_ASN1_VERBOSITY, (const char **)&astring))) {
         if (strcasecmp (astring, MME_CONFIG_STRING_ASN1_VERBOSITY_NONE) == 0)
@@ -662,39 +662,39 @@ config_parse_file (
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_UDP_LOG_LEVEL, (const char **)&astring)) {
-        mme_config_p->log_config.udp_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.udp_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SPGW_APP_LOG_LEVEL, (const char **)&astring)) {
-        mme_config_p->log_config.spgw_app_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.spgw_app_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_GTPV1U_LOG_LEVEL, (const char **)&astring)) {
-        mme_config_p->log_config.gtpv1u_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.gtpv1u_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_GTPV2C_LOG_LEVEL, (const char **)&astring)) {
-        mme_config_p->log_config.gtpv2c_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.gtpv2c_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       // may be not present (may be filled in MME section)
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_UTIL_LOG_LEVEL, (const char **)&astring)) {
-        mme_config_p->log_config.util_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.util_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       // may be not present (may be filled in MME section)
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_S11_LOG_LEVEL, (const char **)&astring)) {
-        mme_config_p->log_config.s11_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.s11_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       // may be not present (may be filled in MME section)
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring)) {
-        mme_config_p->log_config.msc_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.msc_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
 
       // may be not present (may be filled in MME section)
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring)) {
-        mme_config_p->log_config.itti_log_level = LOG_LEVEL_STR2INT (astring);
+        mme_config_p->log_config.itti_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
     }
 
@@ -719,24 +719,11 @@ config_parse_file (
     }
   }
 
-  LOG_SET_CONFIG(&mme_config_p->log_config);
+  OAILOG_SET_CONFIG(&mme_config_p->log_config);
   config_destroy (&cfg);
   return 0;
 }
 
-#define DISPLAY_ARRAY(size, format, args...)                        \
-  do {                                                                \
-    int i;                                                          \
-    for (i = 0; i < size; i++) {                                    \
-      fprintf(stdout, format, args);                              \
-      if ((i != (size - 1)) && ((i + 1) % 10 == 0))               \
-      {                                                           \
-        fprintf(stdout, "\n        ");                          \
-      }                                                           \
-    }                                                               \
-    if (i > 0)                                                      \
-      fprintf(stdout, "\n");                                      \
-  } while(0)
 
 static void
 config_display (
@@ -744,100 +731,99 @@ config_display (
 {
   int                                     j;
 
-  LOG_INFO (LOG_CONFIG, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
-  LOG_INFO (LOG_CONFIG, "Configuration:\n");
-  LOG_INFO (LOG_CONFIG, "- File .................................: %s\n", mme_config_p->config_file);
-  LOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", mme_config_p->realm);
-  LOG_INFO (LOG_CONFIG, "- Max eNBs .............................: %u\n", mme_config_p->max_enbs);
-  LOG_INFO (LOG_CONFIG, "- Max UEs ..............................: %u\n", mme_config_p->max_ues);
-  LOG_INFO (LOG_CONFIG, "- IMS voice over PS session in S1 ......: %s\n", mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "false" : "true");
-  LOG_INFO (LOG_CONFIG, "- Emergency bearer services in S1 mode .: %s\n", mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode == 0 ? "false" : "true");
-  LOG_INFO (LOG_CONFIG, "- Location services via epc ............: %s\n", mme_config_p->eps_network_feature_support.location_services_via_epc == 0 ? "false" : "true");
-  LOG_INFO (LOG_CONFIG, "- Extended service request .............: %s\n", mme_config_p->eps_network_feature_support.extended_service_request == 0 ? "false" : "true");
-  LOG_INFO (LOG_CONFIG, "- Unauth IMSI support ..................: %s\n", mme_config_p->unauthenticated_imsi_supported == 0 ? "false" : "true");
-  LOG_INFO (LOG_CONFIG, "- Relative capa ........................: %u\n", mme_config_p->relative_capacity);
-  LOG_INFO (LOG_CONFIG, "- Statistics timer .....................: %u (seconds)\n\n", mme_config_p->mme_statistic_timer);
-  LOG_INFO (LOG_CONFIG, "- S1-U:\n");
-  LOG_INFO (LOG_CONFIG, "    port number ......: %d\n", mme_config_p->gtpv1u_config.port_number);
-  LOG_INFO (LOG_CONFIG, "- S1-MME:\n");
-  LOG_INFO (LOG_CONFIG, "    port number ......: %d\n", mme_config_p->s1ap_config.port_number);
-  LOG_INFO (LOG_CONFIG, "- IP:\n");
-  LOG_INFO (LOG_CONFIG, "    s1-u ip ..........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.sgw_ip_address_for_s1u_s12_s4_up)));
-  LOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s\n", mme_config_p->ipv4.mme_interface_name_for_s1_mme);
-  LOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_s1_mme)));
-  LOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s\n", mme_config_p->ipv4.mme_interface_name_for_s11);
-  LOG_INFO (LOG_CONFIG, "    s11 S-GW ip ......: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_s11)));
-  LOG_INFO (LOG_CONFIG, "- ITTI:\n");
-  LOG_INFO (LOG_CONFIG, "    queue size .......: %u (bytes)\n", mme_config_p->itti_config.queue_size);
-  LOG_INFO (LOG_CONFIG, "    log file .........: %s\n", mme_config_p->itti_config.log_file);
-  LOG_INFO (LOG_CONFIG, "- SCTP:\n");
-  LOG_INFO (LOG_CONFIG, "    in streams .......: %u\n", mme_config_p->sctp_config.in_streams);
-  LOG_INFO (LOG_CONFIG, "    out streams ......: %u\n", mme_config_p->sctp_config.out_streams);
-  LOG_INFO (LOG_CONFIG, "- GUMMEI:\n");
-  LOG_INFO (LOG_CONFIG, "    mme group ids ....:        \n");
-  DISPLAY_ARRAY (mme_config_p->gummei.nb_mme_gid, "| %u \n", mme_config_p->gummei.mme_gid[i]);
-  LOG_INFO (LOG_CONFIG, "    mme codes ........:        \n");
-  DISPLAY_ARRAY (mme_config_p->gummei.nb_mmec, "| %u \n", mme_config_p->gummei.mmec[i]);
-  LOG_INFO (LOG_CONFIG, "- TAIs : (mcc.mnc:tac)\n");
+  OAILOG_INFO (LOG_CONFIG, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
+  OAILOG_INFO (LOG_CONFIG, "Configuration:\n");
+  OAILOG_INFO (LOG_CONFIG, "- File .................................: %s\n", mme_config_p->config_file);
+  OAILOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", mme_config_p->realm);
+  OAILOG_INFO (LOG_CONFIG, "- Max eNBs .............................: %u\n", mme_config_p->max_enbs);
+  OAILOG_INFO (LOG_CONFIG, "- Max UEs ..............................: %u\n", mme_config_p->max_ues);
+  OAILOG_INFO (LOG_CONFIG, "- IMS voice over PS session in S1 ......: %s\n", mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "false" : "true");
+  OAILOG_INFO (LOG_CONFIG, "- Emergency bearer services in S1 mode .: %s\n", mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode == 0 ? "false" : "true");
+  OAILOG_INFO (LOG_CONFIG, "- Location services via epc ............: %s\n", mme_config_p->eps_network_feature_support.location_services_via_epc == 0 ? "false" : "true");
+  OAILOG_INFO (LOG_CONFIG, "- Extended service request .............: %s\n", mme_config_p->eps_network_feature_support.extended_service_request == 0 ? "false" : "true");
+  OAILOG_INFO (LOG_CONFIG, "- Unauth IMSI support ..................: %s\n", mme_config_p->unauthenticated_imsi_supported == 0 ? "false" : "true");
+  OAILOG_INFO (LOG_CONFIG, "- Relative capa ........................: %u\n", mme_config_p->relative_capacity);
+  OAILOG_INFO (LOG_CONFIG, "- Statistics timer .....................: %u (seconds)\n\n", mme_config_p->mme_statistic_timer);
+  OAILOG_INFO (LOG_CONFIG, "- S1-U:\n");
+  OAILOG_INFO (LOG_CONFIG, "    port number ......: %d\n", mme_config_p->gtpv1u_config.port_number);
+  OAILOG_INFO (LOG_CONFIG, "- S1-MME:\n");
+  OAILOG_INFO (LOG_CONFIG, "    port number ......: %d\n", mme_config_p->s1ap_config.port_number);
+  OAILOG_INFO (LOG_CONFIG, "- IP:\n");
+  OAILOG_INFO (LOG_CONFIG, "    s1-u ip ..........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.sgw_ip_address_for_s1u_s12_s4_up)));
+  OAILOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s\n", mme_config_p->ipv4.mme_interface_name_for_s1_mme);
+  OAILOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_s1_mme)));
+  OAILOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s\n", mme_config_p->ipv4.mme_interface_name_for_s11);
+  OAILOG_INFO (LOG_CONFIG, "    s11 S-GW ip ......: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_s11)));
+  OAILOG_INFO (LOG_CONFIG, "- ITTI:\n");
+  OAILOG_INFO (LOG_CONFIG, "    queue size .......: %u (bytes)\n", mme_config_p->itti_config.queue_size);
+  OAILOG_INFO (LOG_CONFIG, "    log file .........: %s\n", mme_config_p->itti_config.log_file);
+  OAILOG_INFO (LOG_CONFIG, "- SCTP:\n");
+  OAILOG_INFO (LOG_CONFIG, "    in streams .......: %u\n", mme_config_p->sctp_config.in_streams);
+  OAILOG_INFO (LOG_CONFIG, "    out streams ......: %u\n", mme_config_p->sctp_config.out_streams);
+  OAILOG_INFO (LOG_CONFIG, "- MMEIs (MMEGI|MMEC):\n");
+  for (j = 0; j < mme_config_p->gummei.nb_mme_gid; j++) {
+    OAILOG_INFO (LOG_CONFIG, "            %u|%u \n", mme_config_p->gummei.mme_gid[j], mme_config_p->gummei.mmec[j]);
+  }
+  OAILOG_INFO (LOG_CONFIG, "- TAIs : (mcc.mnc:tac)\n");
   switch (mme_config_p->served_tai.list_type) {
   case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS:
-    LOG_INFO (LOG_CONFIG, "- TAI list type one PLMN consecutive TACs\n");
+    OAILOG_INFO (LOG_CONFIG, "- TAI list type one PLMN consecutive TACs\n");
     break;
   case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS:
-    LOG_INFO (LOG_CONFIG, "- TAI list type one PLMN non consecutive TACs\n");
+    OAILOG_INFO (LOG_CONFIG, "- TAI list type one PLMN non consecutive TACs\n");
     break;
   case TRACKING_AREA_IDENTITY_LIST_TYPE_MANY_PLMNS:
-    LOG_INFO (LOG_CONFIG, "- TAI list type multiple PLMNs\n");
+    OAILOG_INFO (LOG_CONFIG, "- TAI list type multiple PLMNs\n");
     break;
   }
   for (j = 0; j < mme_config_p->served_tai.nb_tai; j++) {
     if (mme_config_p->served_tai.plmn_mnc_len[j] == 2) {
-      LOG_INFO (LOG_CONFIG, "            %3u.%3u:%u\n",
+      OAILOG_INFO (LOG_CONFIG, "            %3u.%3u:%u\n",
           mme_config_p->served_tai.plmn_mcc[j], mme_config_p->served_tai.plmn_mnc[j], mme_config_p->served_tai.tac[j]);
     } else {
-      LOG_INFO (LOG_CONFIG, "            %3u.%03u:%u\n",
+      OAILOG_INFO (LOG_CONFIG, "            %3u.%03u:%u\n",
           mme_config_p->served_tai.plmn_mcc[j], mme_config_p->served_tai.plmn_mnc[j], mme_config_p->served_tai.tac[j]);
     }
   }
 
-  LOG_INFO (LOG_CONFIG, "- S6A:\n");
-  LOG_INFO (LOG_CONFIG, "    conf file ........: %s\n", mme_config_p->s6a_config.conf_file);
-  LOG_INFO (LOG_CONFIG, "- Logging:\n");
-  LOG_INFO (LOG_CONFIG, "    Output ..............: %s\n", mme_config_p->log_config.output);
-  LOG_INFO (LOG_CONFIG, "    UDP log level........: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.udp_log_level));
-  LOG_INFO (LOG_CONFIG, "    GTPV1-U log level....: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.gtpv1u_log_level));
-  LOG_INFO (LOG_CONFIG, "    GTPV2-C log level....: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.gtpv2c_log_level));
-  LOG_INFO (LOG_CONFIG, "    SCTP log level.......: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.sctp_log_level));
-  LOG_INFO (LOG_CONFIG, "    S1AP log level.......: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.s1ap_log_level));
-  LOG_INFO (LOG_CONFIG, "    ASN1 Verbosity level : %d\n", mme_config_p->log_config.asn1_verbosity_level);
-  LOG_INFO (LOG_CONFIG, "    NAS log level........: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.nas_log_level));
-  LOG_INFO (LOG_CONFIG, "    MME_APP log level....: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.mme_app_log_level));
-  LOG_INFO (LOG_CONFIG, "    S/P-GW APP log level.: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.spgw_app_log_level));
-  LOG_INFO (LOG_CONFIG, "    S11 log level........: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.s11_log_level));
-  LOG_INFO (LOG_CONFIG, "    S6a log level........: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.s6a_log_level));
-  LOG_INFO (LOG_CONFIG, "    UTIL log level.......: %s\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.util_log_level));
-  LOG_INFO (LOG_CONFIG, "    MSC log level........: %s (MeSsage Chart)\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.msc_log_level));
-  LOG_INFO (LOG_CONFIG, "    ITTI log level.......: %s (InTer-Task Interface)\n", LOG_LEVEL_INT2STR(mme_config_p->log_config.itti_log_level));
+  OAILOG_INFO (LOG_CONFIG, "- S6A:\n");
+  OAILOG_INFO (LOG_CONFIG, "    conf file ........: %s\n", mme_config_p->s6a_config.conf_file);
+  OAILOG_INFO (LOG_CONFIG, "- Logging:\n");
+  OAILOG_INFO (LOG_CONFIG, "    Output ..............: %s\n", mme_config_p->log_config.output);
+  OAILOG_INFO (LOG_CONFIG, "    UDP log level........: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.udp_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    GTPV1-U log level....: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.gtpv1u_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    GTPV2-C log level....: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.gtpv2c_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    SCTP log level.......: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.sctp_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    S1AP log level.......: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.s1ap_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    ASN1 Verbosity level : %d\n", mme_config_p->log_config.asn1_verbosity_level);
+  OAILOG_INFO (LOG_CONFIG, "    NAS log level........: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.nas_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    MME_APP log level....: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.mme_app_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    S/P-GW APP log level.: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.spgw_app_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    S11 log level........: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.s11_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    S6a log level........: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.s6a_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    UTIL log level.......: %s\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.util_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    MSC log level........: %s (MeSsage Chart)\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.msc_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    ITTI log level.......: %s (InTer-Task Interface)\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.itti_log_level));
 }
 
 static void
 usage (
   void)
 {
-  LOG_INFO (LOG_CONFIG, "==== EURECOM %s version: %s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
-  LOG_INFO (LOG_CONFIG, "Please report any bug to: %s\n", PACKAGE_BUGREPORT);
-  LOG_INFO (LOG_CONFIG, "Usage: oaisim_mme [options]\n");
-  LOG_INFO (LOG_CONFIG, "Available options:\n");
-  LOG_INFO (LOG_CONFIG, "-h      Print this help and return\n");
-  LOG_INFO (LOG_CONFIG, "-c<path>\n");
-  LOG_INFO (LOG_CONFIG, "        Set the configuration file for mme\n");
-  LOG_INFO (LOG_CONFIG, "        See template in UTILS/CONF\n");
-  LOG_INFO (LOG_CONFIG, "-K<file>\n");
-  LOG_INFO (LOG_CONFIG, "        Output intertask messages to provided file\n");
-  LOG_INFO (LOG_CONFIG, "-V      Print %s version and return\n", PACKAGE_NAME);
-  LOG_INFO (LOG_CONFIG, "-v[1-2] Debug level:\n");
-  LOG_INFO (LOG_CONFIG, "            1 -> ASN1 XER printf on and ASN1 debug off\n");
-  LOG_INFO (LOG_CONFIG, "            2 -> ASN1 XER printf on and ASN1 debug on\n");
+  OAILOG_INFO (LOG_CONFIG, "==== EURECOM %s version: %s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
+  OAILOG_INFO (LOG_CONFIG, "Please report any bug to: %s\n", PACKAGE_BUGREPORT);
+  OAILOG_INFO (LOG_CONFIG, "Usage: oaisim_mme [options]\n");
+  OAILOG_INFO (LOG_CONFIG, "Available options:\n");
+  OAILOG_INFO (LOG_CONFIG, "-h      Print this help and return\n");
+  OAILOG_INFO (LOG_CONFIG, "-c<path>\n");
+  OAILOG_INFO (LOG_CONFIG, "        Set the configuration file for mme\n");
+  OAILOG_INFO (LOG_CONFIG, "        See template in UTILS/CONF\n");
+  OAILOG_INFO (LOG_CONFIG, "-K<file>\n");
+  OAILOG_INFO (LOG_CONFIG, "        Output intertask messages to provided file\n");
+  OAILOG_INFO (LOG_CONFIG, "-V      Print %s version and return\n", PACKAGE_NAME);
+  OAILOG_INFO (LOG_CONFIG, "-v[1-2] Debug level:\n");
+  OAILOG_INFO (LOG_CONFIG, "            1 -> ASN1 XER printf on and ASN1 debug off\n");
+  OAILOG_INFO (LOG_CONFIG, "            2 -> ASN1 XER printf on and ASN1 debug on\n");
 }
 
 extern void
@@ -871,7 +857,7 @@ config_parse_opt_line (
         mme_config_p->config_file = MALLOC_CHECK (sizeof (char) * (config_file_len + 1));
         memcpy (mme_config_p->config_file, optarg, config_file_len);
         mme_config_p->config_file[config_file_len] = '\0';
-        LOG_DEBUG (LOG_CONFIG, "%s mme_config.config_file %s\n", __FUNCTION__, mme_config_p->config_file);
+        OAILOG_DEBUG (LOG_CONFIG, "%s mme_config.config_file %s\n", __FUNCTION__, mme_config_p->config_file);
       }
       break;
 
@@ -881,7 +867,7 @@ config_parse_opt_line (
       break;
 
     case 'V':{
-        LOG_DEBUG (LOG_CONFIG, "==== EURECOM %s v%s ====" "Please report any bug to: %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
+        OAILOG_DEBUG (LOG_CONFIG, "==== EURECOM %s v%s ====" "Please report any bug to: %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
         exit (0);
         nwGtpv1uDisplayBanner ();
       }
@@ -889,7 +875,7 @@ config_parse_opt_line (
 
     case 'K':
       mme_config_p->itti_config.log_file = STRDUP_CHECK (optarg);
-      LOG_DEBUG (LOG_CONFIG, "%s mme_config.itti_config.log_file %s\n", __FUNCTION__, mme_config_p->itti_config.log_file);
+      OAILOG_DEBUG (LOG_CONFIG, "%s mme_config.itti_config.log_file %s\n", __FUNCTION__, mme_config_p->itti_config.log_file);
       break;
 
     case 'h':                  /* Fall through */
@@ -902,6 +888,9 @@ config_parse_opt_line (
   /*
    * Parse the configuration file using libconfig
    */
+  if (!mme_config_p->config_file) {
+    mme_config_p->config_file = strdup("/usr/local/etc/oai/epc.conf");
+  }
   if (config_parse_file (mme_config_p) != 0) {
     return -1;
   }

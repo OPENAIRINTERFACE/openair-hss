@@ -71,7 +71,7 @@ gtpv1u_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_GTPV1_U);
-  LOG_START_USE ();
+  OAILOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
@@ -93,7 +93,7 @@ gtpv1u_thread (
 
 
     default:{
-        LOG_ERROR (LOG_GTPV1U , "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        OAILOG_ERROR (LOG_GTPV1U , "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
@@ -109,15 +109,15 @@ int
 gtpv1u_init (
   const mme_config_t * mme_config_p)
 {
-  LOG_DEBUG (LOG_GTPV1U , "Initializing GTPV1U interface\n");
+  OAILOG_DEBUG (LOG_GTPV1U , "Initializing GTPV1U interface\n");
   memset (&gtpv1u_sgw_data, 0, sizeof (gtpv1u_sgw_data));
   gtpv1u_sgw_data.sgw_ip_address_for_S1u_S12_S4_up = mme_config_p->ipv4.sgw_ip_address_for_s1u_s12_s4_up;
 
   if (itti_create_task (TASK_GTPV1_U, &gtpv1u_thread, NULL) < 0) {
-    LOG_ERROR (LOG_GTPV1U , "gtpv1u phtread_create: %s", strerror (errno));
+    OAILOG_ERROR (LOG_GTPV1U , "gtpv1u phtread_create: %s", strerror (errno));
     return -1;
   }
 
-  LOG_DEBUG (LOG_GTPV1U , "Initializing GTPV1U interface: DONE\n");
+  OAILOG_DEBUG (LOG_GTPV1U , "Initializing GTPV1U interface: DONE\n");
   return 0;
 }

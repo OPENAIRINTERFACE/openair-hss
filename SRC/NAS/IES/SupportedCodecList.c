@@ -97,16 +97,16 @@ dump_supported_codec_list_xml (
   SupportedCodecList * supportedcodeclist,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Supported Codec List>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Supported Codec List>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <System identification>%u</System identification>\n", supportedcodeclist->systemidentification);
-  LOG_DEBUG (LOG_NAS, "    <Length of bitmap>%u</Length of bitmap>\n", supportedcodeclist->lengthofbitmap);
-  LOG_DEBUG (LOG_NAS, "    <Codec bitmap>%u</Codec bitmap>\n", supportedcodeclist->codecbitmap);
-  LOG_DEBUG (LOG_NAS, "</Supported Codec List>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <System identification>%u</System identification>\n", supportedcodeclist->systemidentification);
+  OAILOG_DEBUG (LOG_NAS, "    <Length of bitmap>%u</Length of bitmap>\n", supportedcodeclist->lengthofbitmap);
+  OAILOG_DEBUG (LOG_NAS, "    <Codec bitmap>%u</Codec bitmap>\n", supportedcodeclist->codecbitmap);
+  OAILOG_DEBUG (LOG_NAS, "</Supported Codec List>\n");
 }

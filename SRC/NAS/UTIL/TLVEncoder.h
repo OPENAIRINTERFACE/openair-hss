@@ -72,27 +72,24 @@ extern int errorCodeEncoder;
 void tlv_encode_perror(void);
 
 #define CHECK_PDU_POINTER_AND_LENGTH_ENCODER(bUFFER, mINIMUMlENGTH, lENGTH)    \
-  if (bUFFER == NULL)                                                    \
-        {                                                                      \
-                printf("Got NULL pointer for the payload\n");                  \
-                errorCodeEncoder = TLV_ENCODE_BUFFER_NULL;                     \
-                return TLV_ENCODE_BUFFER_NULL;                                 \
-        }                                                                      \
-        if (lENGTH < mINIMUMlENGTH)                                            \
-        {                                                                      \
-                printf("(%s:%d) Expecting at least %d bytes, got %d\n",        \
-           __FILE__, __LINE__, mINIMUMlENGTH, lENGTH);             \
-                errorCodeEncoder = TLV_ENCODE_BUFFER_TOO_SHORT;                \
-                return TLV_ENCODE_BUFFER_TOO_SHORT;                            \
-        }
+  if (bUFFER == NULL)  {                                             \
+    OAI_FPRINTF_ERR("Got NULL pointer for the payload\n");           \
+    errorCodeEncoder = TLV_ENCODE_BUFFER_NULL;                       \
+    return TLV_ENCODE_BUFFER_NULL;                                   \
+  }                                                                  \
+  if (lENGTH < mINIMUMlENGTH) {                                      \
+    OAI_FPRINTF_ERR("(%s:%d) Expecting at least %d bytes, got %d\n", \
+      __FILE__, __LINE__, mINIMUMlENGTH, lENGTH);                    \
+    errorCodeEncoder = TLV_ENCODE_BUFFER_TOO_SHORT;                  \
+    return TLV_ENCODE_BUFFER_TOO_SHORT;                              \
+  }
 
-#define CHECK_PDU_POINTER_ENCODER(bUFFER)                                      \
-  if (bUFFER == NULL)                                                    \
-        {                                                                      \
-                printf("Got NULL pointer for the payload\n");                  \
-                errorCodeEncoder = TLV_ENCODE_BUFFER_NULL;                     \
-                return TLV_ENCODE_BUFFER_NULL;                                 \
-        }
+#define CHECK_PDU_POINTER_ENCODER(bUFFER)                          \
+  if (bUFFER == NULL) {                                            \
+    OAI_FPRINTF_ERR("Got NULL pointer for the payload\n");         \
+    errorCodeEncoder = TLV_ENCODE_BUFFER_NULL;                     \
+    return TLV_ENCODE_BUFFER_NULL;                                 \
+  }
 
 #endif /* define (FILE_TLV_ENCODER_SEEN) */
 

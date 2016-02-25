@@ -91,7 +91,7 @@ memory_get_path (
   }
 
   if (path == NULL) {
-    LOG_TRACE (WARNING, "MEMORY  - %s and %s environment variables are not defined trying local directory", dirname, DEFAULT_NAS_PATH);
+    OAILOG_TRACE (WARNING, "MEMORY  - %s and %s environment variables are not defined trying local directory", dirname, DEFAULT_NAS_PATH);
     path = ".";
   }
 

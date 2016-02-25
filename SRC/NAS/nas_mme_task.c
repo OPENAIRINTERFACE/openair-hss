@@ -44,21 +44,21 @@ nas_intertask_interface (
   void *args_p)
 {
   itti_mark_task_ready (TASK_NAS_MME);
-  LOG_START_USE ();
+  OAILOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
-    LOG_DEBUG (LOG_NAS, "Approx ITTI NAS task stack pointer is %p\n", &received_message_p);
+    OAILOG_DEBUG (LOG_NAS, "Approx ITTI NAS task stack pointer is %p\n", &received_message_p);
 
     itti_receive_msg (TASK_NAS_MME, &received_message_p);
 
     switch (ITTI_MSG_ID (received_message_p)) {
-    case NAS_CONNECTION_ESTABLISHMENT_IND:{
+    case NAS_INITIAL_UE_MESSAGE:{
         nas_establish_ind_t                    *nas_est_ind_p = NULL;
 
-        nas_est_ind_p = &received_message_p->ittiMsg.nas_conn_est_ind.nas;
-        nas_proc_establish_ind (received_message_p->ittiMsg.nas_conn_est_ind.transparent.enb_ue_s1ap_id,
+        nas_est_ind_p = &received_message_p->ittiMsg.nas_initial_ue_message.nas;
+        nas_proc_establish_ind (received_message_p->ittiMsg.nas_initial_ue_message.transparent.enb_ue_s1ap_id,
             nas_est_ind_p->ue_id,
             nas_est_ind_p->tai,
             nas_est_ind_p->cgi,
@@ -133,11 +133,11 @@ nas_intertask_interface (
       break;
 
     case MESSAGE_TEST:
-      LOG_DEBUG (LOG_NAS, "Received MESSAGE_TEST\n");
+      OAILOG_DEBUG (LOG_NAS, "Received MESSAGE_TEST\n");
       break;
 
     default:{
-        LOG_DEBUG (LOG_NAS, "Unkwnon message ID %d:%s from %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p), ITTI_MSG_ORIGIN_NAME (received_message_p));
+        OAILOG_DEBUG (LOG_NAS, "Unkwnon message ID %d:%s from %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p), ITTI_MSG_ORIGIN_NAME (received_message_p));
       }
       break;
     }
@@ -154,23 +154,23 @@ int
 nas_init (
   mme_config_t * mme_config_p)
 {
-  LOG_DEBUG (LOG_NAS, "Initializing NAS task interface\n");
+  OAILOG_DEBUG (LOG_NAS, "Initializing NAS task interface\n");
   nas_network_initialize (mme_config_p);
 
   if (itti_create_task (TASK_NAS_MME, &nas_intertask_interface, NULL) < 0) {
-    LOG_ERROR (LOG_NAS, "Create task failed");
-    LOG_DEBUG (LOG_NAS, "Initializing NAS task interface: FAILED\n");
+    OAILOG_ERROR (LOG_NAS, "Create task failed");
+    OAILOG_DEBUG (LOG_NAS, "Initializing NAS task interface: FAILED\n");
     return -1;
   }
 
-  LOG_DEBUG (LOG_NAS, "Initializing NAS task interface: DONE\n");
+  OAILOG_DEBUG (LOG_NAS, "Initializing NAS task interface: DONE\n");
   return 0;
 }
 
 //------------------------------------------------------------------------------
 static void nas_exit(void)
 {
-  LOG_DEBUG (LOG_NAS, "Cleaning NAS task interface\n");
+  OAILOG_DEBUG (LOG_NAS, "Cleaning NAS task interface\n");
   nas_network_cleanup();
-  LOG_DEBUG (LOG_NAS, "Cleaning NAS task interface: DONE\n");
+  OAILOG_DEBUG (LOG_NAS, "Cleaning NAS task interface: DONE\n");
 }

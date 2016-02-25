@@ -31,7 +31,7 @@ mme_app_itti_auth_fail(
 {
   MessageDef *message_p = NULL;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   message_p = itti_alloc_new_message(TASK_MME_APP, NAS_AUTHENTICATION_PARAM_FAIL);
 
   NAS_AUTHENTICATION_PARAM_FAIL(message_p).ue_id = ue_id;
@@ -45,7 +45,7 @@ mme_app_itti_auth_fail(
   		ue_id, cause);
 
   itti_send_msg_to_task(TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-  LOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 
@@ -57,7 +57,7 @@ static inline void mme_app_itti_auth_rsp(
 {
   MessageDef *message_p = NULL;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   message_p = itti_alloc_new_message(TASK_MME_APP, NAS_AUTHENTICATION_PARAM_RSP);
 
   NAS_AUTHENTICATION_PARAM_RSP(message_p).ue_id       = ue_id;
@@ -71,7 +71,7 @@ static inline void mme_app_itti_auth_rsp(
   		"0 NAS_AUTHENTICATION_PARAM_RSP ue_id %06"PRIX32" nb_vectors %u",
   		ue_id, nb_vectors);
   itti_send_msg_to_task(TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-  LOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 #endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */

@@ -23,6 +23,7 @@
 #include "hss_config.h"
 #include "db_proto.h"
 #include "s6a_proto.h"
+#include "log.h"
 
 /* http://www.iana.org/assignments/address-family-numbers/address-family-numbers.xml*/
 
@@ -90,7 +91,7 @@ s6a_add_ipv6_address (
   ipv6[1] = 0x02;
 
   if (inet_pton (AF_INET6, ipv6_addr, &sin6) == -1) {
-    fprintf (stderr, "INET6 address conversion has failed\n");
+    FPRINTF_ERROR ("INET6 address conversion has failed\n");
     return -1;
   }
 

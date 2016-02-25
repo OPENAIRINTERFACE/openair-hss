@@ -85,7 +85,7 @@ int
 EmmRegistered (
   const emm_reg_t * evt)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
   assert (emm_fsm_get_status (evt->ue_id, evt->ctx) == EMM_REGISTERED);
@@ -111,7 +111,7 @@ EmmRegistered (
     /*
      * TODO: Tracking Area Update has been rejected
      */
-    LOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Tracking Area Update procedure " "is not implemented\n");
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Tracking Area Update procedure " "is not implemented\n");
     break;
 
   case _EMMREG_LOWERLAYER_SUCCESS:
@@ -129,11 +129,11 @@ EmmRegistered (
     break;
 
   default:
-    LOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)", evt->primitive);
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)", evt->primitive);
     break;
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

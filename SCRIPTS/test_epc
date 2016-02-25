@@ -248,6 +248,9 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -b, --build-test                   Build XML scenario files (need -t|--test-dir option)."
+  echo_error "  -D, --delay-on-exit        seconds Sleep at the end of the scenario before exiting."
+  echo_error "                                       (Usefull for debugging with failure scenarios, it prevents shutdown of the "
+  echo_error "                                        SCTP association between simulated eNBs and MME)."
   echo_error "  -e, --old-enb-config-file  file    Set eNB(s) old config file, the one used for generating the pcap file "
   echo_error "                                       (relative path to test dir, see -t option, or absolute path)."
   echo_error "  -E, --enb-config-file      file    Set eNB(s) config file, the new one, used for playing the scenario"
@@ -274,6 +277,7 @@ function main()
 {
   local    old_enb_config_file=""
   local    enb_config_file=""
+  local    delay_args=""
   local    pcap_file=""
   local    run_options_file=""
   local    scenario_file=""
@@ -289,6 +293,7 @@ function main()
   local -i run_history=0
   local -i show_run_history=0
   local -i shift_packet_args=0
+  local -i delay_on_exit_args=0
 
   until [ -z "$1" ]
     do
@@ -296,6 +301,11 @@ function main()
       -b | --build-test)
         build=1
         shift;
+        ;;
+      -D | --delay-on-exit)
+        delay_on_exit_args=1
+        delay_args="$delay_args --delay-on-exit \"$2\""
+        shift 2;
         ;;
       -e | --old-enb-config-file)
         old_enb_config_file=$2
@@ -393,7 +403,7 @@ function main()
     if [ "a$enb_config_file" == "a" ]; then 
       echo_fatal "Please provide -E|--enb-config-file argument"
     fi
-    play_args=$play_args" "$shift_args
+    play_args=$play_args" "$shift_args" "$delay_args
   fi
   
   ########

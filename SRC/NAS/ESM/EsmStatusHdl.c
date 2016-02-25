@@ -45,6 +45,7 @@
 
 *****************************************************************************/
 
+#include "3gpp_24.007.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "log.h"
@@ -96,11 +97,11 @@ esm_proc_status_ind (
   int ebi,
   int *esm_cause)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested (cause=%d)\n", *esm_cause);
-  LOG_DEBUG (LOG_NAS_ESM, "ESM-PROC  - To be implemented\n");
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested (cause=%d)\n", *esm_cause);
+  OAILOG_DEBUG (LOG_NAS_ESM, "ESM-PROC  - To be implemented\n");
 
   switch (*esm_cause) {
   case ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY:
@@ -149,7 +150,7 @@ esm_proc_status_ind (
     break;
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 /****************************************************************************
@@ -178,11 +179,11 @@ esm_proc_status (
   OctetString * msg,
   bool ue_triggered)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested\n");
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested\n");
   /*
    * Notity EMM that ESM PDU has to be forwarded to lower layers
    */
@@ -192,7 +193,7 @@ esm_proc_status (
   emm_sap.u.emm_esm.u.data.msg.length = msg->length;
   emm_sap.u.emm_esm.u.data.msg.value = msg->value;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 /****************************************************************************/

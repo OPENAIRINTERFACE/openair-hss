@@ -51,6 +51,7 @@
 #include <string.h>             // memset, memcpy, memcmp
 #include <ctype.h>              // isprint
 
+#include "3gpp_24.007.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "log.h"
@@ -152,8 +153,8 @@ esm_proc_pdn_connectivity_request (
   int                                     rc = RETURNerror;
   int                                     pid = RETURNerror;
 
-  LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity requested by the UE "
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity requested by the UE "
              "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) PDN type = %s, APN = %s pdn addr = %s\n", ctx->ue_id, pti,
              (pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6", (apn) ? (char *)(apn->value) : "null", (pdn_addr) ? (char *)(pdn_addr->value) : "null");
 
@@ -161,7 +162,7 @@ esm_proc_pdn_connectivity_request (
    * Check network IP capabilities
    */
   *esm_cause = ESM_CAUSE_SUCCESS;
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - _esm_data.conf.features %08x", _esm_data.conf.features);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - _esm_data.conf.features %08x", _esm_data.conf.features);
 //#pragma message  "Uncomment code about _esm_data.conf.features & (MME_API_IPV4 | MME_API_IPV6) later"
 #if ORIGINAL_CODE
 
@@ -206,7 +207,7 @@ esm_proc_pdn_connectivity_request (
     break;
 
   default:
-    LOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - _esm_data.conf.features incorrect value (no IPV4 or IPV6 ) %X\n", _esm_data.conf.features);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - _esm_data.conf.features incorrect value (no IPV4 or IPV6 ) %X\n", _esm_data.conf.features);
   }
 
 #else
@@ -241,9 +242,9 @@ esm_proc_pdn_connectivity_request (
     rc = mme_api_subscribe (apn, mme_pdn_index, pdn_addr, is_emergency, &qos);
 
     if (rc != RETURNok) {
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Connectivity to the requested PDN " "cannot be established\n");
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Connectivity to the requested PDN " "cannot be established\n");
       *esm_cause = ESM_CAUSE_REQUEST_REJECTED_UNSPECIFIED;
-      LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
     }
 #endif
     /*
@@ -265,13 +266,13 @@ esm_proc_pdn_connectivity_request (
 #endif
 
     if (pid < 0) {
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection\n");
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection\n");
       *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
-      LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, pid);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, pid);
 }
 
 /****************************************************************************
@@ -309,10 +310,10 @@ esm_proc_pdn_connectivity_reject (
   OctetString * msg,
   bool ue_triggered)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
 
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity not accepted by the " "network (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ctx->ue_id);
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity not accepted by the " "network (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ctx->ue_id);
 
   if (is_standalone) {
     emm_sap_t                               emm_sap = {0};
@@ -332,7 +333,7 @@ esm_proc_pdn_connectivity_reject (
    * * * * attach procedure has failed, an error is returned to notify EMM that
    * * * * the ESM sublayer did not accept UE requested PDN connectivity
    */
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 /****************************************************************************
@@ -364,18 +365,18 @@ esm_proc_pdn_connectivity_failure (
 {
   int                                     pti;
 
-  LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity failure (ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity failure (ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
   /*
    * Delete the PDN connection entry
    */
   pti = _pdn_connectivity_delete (ctx, pid);
 
   if (pti != ESM_PT_UNASSIGNED) {
-    LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
 }
 
 /****************************************************************************/
@@ -421,7 +422,7 @@ _pdn_connectivity_create (
 {
   int                                     pid = ESM_DATA_PDN_MAX;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new PDN connection "
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new PDN connection "
              "(pti=%d) APN = %s, IP address = %s (ue_id=" MME_UE_S1AP_ID_FMT ")\n", pti, apn->value,
              (pdn_type == ESM_PDN_TYPE_IPV4) ? esm_data_get_ipv4_addr (pdn_addr) : (pdn_type == ESM_PDN_TYPE_IPV6) ? esm_data_get_ipv6_addr (pdn_addr) : esm_data_get_ipv4v6_addr (pdn_addr), ctx->ue_id);
 
@@ -498,7 +499,7 @@ _pdn_connectivity_create (
       return (ctx->esm_data_ctx.pdn[pid].pid);
     }
 
-    LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create new PDN connection " "(pid=%d)\n", pid);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create new PDN connection " "(pid=%d)\n", pid);
   }
 
   return (-1);
@@ -537,11 +538,11 @@ _pdn_connectivity_delete (
 
   if (pid < ESM_DATA_PDN_MAX) {
     if (pid != ctx->esm_data_ctx.pdn[pid].pid) {
-      LOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection identifier is not valid\n");
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection identifier is not valid\n");
     } else if (ctx->esm_data_ctx.pdn[pid].data == NULL) {
-      LOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has not been allocated\n");
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has not been allocated\n");
     } else if (ctx->esm_data_ctx.pdn[pid].is_active) {
-      LOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection is active\n");
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection is active\n");
     } else {
       /*
        * Get the identity of the procedure transaction that created
@@ -570,7 +571,7 @@ _pdn_connectivity_delete (
 
     FREE_CHECK (ctx->esm_data_ctx.pdn[pid].data);
     ctx->esm_data_ctx.pdn[pid].data = NULL;
-    LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d released\n", pid);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d released\n", pid);
   }
 
   /*

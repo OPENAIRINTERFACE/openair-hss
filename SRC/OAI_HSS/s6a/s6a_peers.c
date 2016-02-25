@@ -33,6 +33,7 @@
 #include "hss_config.h"
 #include "db_proto.h"
 #include "s6a_proto.h"
+#include "log.h"
 
 int
 s6a_peer_validate (
@@ -58,7 +59,7 @@ s6a_peer_validate (
      * The MME has not been found in list of known peers -> reject it
      */
     *auth = -1;
-    fprintf (stdout, "Rejecting %s: either db has no knowledge of this peer " "or sql query failed\n", info->pi_diamid);
+    FPRINTF_NOTICE ( "Rejecting %s: either db has no knowledge of this peer " "or sql query failed\n", info->pi_diamid);
   } else {
     *auth = 1;
     /*
@@ -66,7 +67,7 @@ s6a_peer_validate (
      */
     info->config.pic_flags.sec = PI_SEC_NONE;
     info->config.pic_flags.persist = PI_PRST_NONE;
-    fprintf (stdout, "Accepting %s peer\n", info->pi_diamid);
+    FPRINTF_NOTICE ( "Accepting %s peer\n", info->pi_diamid);
   }
 
   return 0;

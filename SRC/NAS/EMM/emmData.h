@@ -241,55 +241,6 @@ void emm_data_context_dump_all(void);
 emm_data_t _emm_data;
 
 
-/*
- * --------------------------------------------------------------------------
- *      EPS mobility management timers – Network side
- * --------------------------------------------------------------------------
- */
-#define T3413_DEFAULT_VALUE 400 /* Network dependent    */
-#define T3422_DEFAULT_VALUE 6   /* 6 seconds    */
-#define T3450_DEFAULT_VALUE 6   /* 6 seconds    */
-#define T3460_DEFAULT_VALUE 6   /* 6 seconds    */
-#define T3470_DEFAULT_VALUE 6   /* 6 seconds    */
-
-#define T3485_DEFAULT_VALUE 8   /* 8 seconds    */
-#define T3486_DEFAULT_VALUE 8   /* 8 seconds    */
-#define T3489_DEFAULT_VALUE 4   /* 4 seconds    */
-#define T3495_DEFAULT_VALUE 8   /* 8 seconds    */
-
-/*
- * mobile reachable timer
- * ----------------------
- * The network supervises the periodic tracking area updating procedure
- * of the UE by means of the mobile reachable timer.
- * If the UE is not attached for emergency bearer services, the mobile
- * reachable timer is 4 minutes greater than T3412.
- * If the UE is attached for emergency bearer services, the MME shall
- * set the mobile reachable timer with a value equal to T3412. When
- * the mobile reachable timer expires, the MME shall locally detach the UE.
- *
- * The mobile reachable timer shall be reset and started, when the MME
- * releases the NAS signalling connection for the UE. The mobile reachable
- * timer shall be stopped when a NAS signalling connection is established
- * for the UE.
- */
-
-/*
- * implicit detach timer
- * ---------------------
- * If ISR is activated, the default value of the implicit detach timer is
- * 4 minutes greater than T3423.
- * If the implicit detach timer expires before the UE contacts the network,
- * the network shall implicitly detach the UE.
- * If the MME includes timer T3346 in the TRACKING AREA UPDATE REJECT message
- * or the SERVICE REJECT message and T3346 is greater than T3412, the MME
- * sets the mobile reachable timer and the implicit detach timer such that
- * the sum of the timer values is greater than T3346.
- *
- * Upon expiry of the mobile reachable timer the network shall start the
- * implicit detach timer. The implicit detach timer shall be stopped when
- * a NAS signalling connection is established for the UE.
- */
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/

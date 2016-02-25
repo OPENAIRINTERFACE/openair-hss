@@ -80,7 +80,7 @@ void
 nas_proc_initialize (
   mme_config_t * mme_config_p)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   /*
    * Initialize the EMM procedure manager
    */
@@ -89,7 +89,7 @@ nas_proc_initialize (
    * Initialize the ESM procedure manager
    */
   esm_main_initialize ();
-  LOG_FUNC_OUT (LOG_NAS_EMM);
+  OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
 
@@ -111,7 +111,7 @@ void
 nas_proc_cleanup (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   /*
    * Perform the EPS Mobility Manager's clean up procedure
    */
@@ -120,7 +120,7 @@ nas_proc_cleanup (
    * Perform the EPS Session Manager's clean up procedure
    */
   esm_main_cleanup ();
-  LOG_FUNC_OUT (LOG_NAS_EMM);
+  OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
 /*
@@ -159,13 +159,18 @@ nas_proc_establish_ind (
   const uint8_t * data,
   const size_t len)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
   if (len > 0) {
     emm_sap_t                               emm_sap = {0};
 
-    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_REQ ue id " NAS_UE_ID_FMT " plmn %02x%02x%02x tac %u", ueid, plmn[0], plmn[1], plmn[2], tac);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_REQ ue id " MME_UE_S1AP_ID_FMT " tai:  plmn %c%c%c.%c%c%c tac %u",
+        ue_id,
+        (char)(tai.plmn.mcc_digit1 + 0x30), (char)(tai.plmn.mcc_digit2 + 0x30), (char)(tai.plmn.mcc_digit3 + 0x30),
+        (char)(tai.plmn.mnc_digit1 + 0x30), (char)(tai.plmn.mnc_digit2 + 0x30),
+        (9 < tai.plmn.mnc_digit3) ? ' ': (char)(tai.plmn.mnc_digit3 + 0x30),
+        tai.tac);
     /*
      * Notify the EMM procedure call manager that NAS signalling
      * connection establishment indication message has been received
@@ -182,7 +187,7 @@ nas_proc_establish_ind (
     rc = emm_sap_send (&emm_sap);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -205,11 +210,11 @@ int
 nas_proc_dl_transfer_cnf (
   const uint32_t ue_id)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNok;
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND dl_transfer_conf ue id " NAS_UE_ID_FMT " ", ueid);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND dl_transfer_conf ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
   /*
    * Notify the EMM procedure call manager that downlink NAS message
    * has been successfully delivered to the NAS sublayer on the
@@ -220,7 +225,7 @@ nas_proc_dl_transfer_cnf (
   emm_sap.u.emm_as.u.data.delivered = true;
   emm_sap.u.emm_as.u.data.nas_msg.length = 0;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -243,11 +248,11 @@ int
 nas_proc_dl_transfer_rej (
   const uint32_t ue_id)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNok;
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND dl_transfer_reject ue id " NAS_UE_ID_FMT " ", ueid);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND dl_transfer_reject ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
   /*
    * Notify the EMM procedure call manager that transmission
    * failure of downlink NAS message indication has been received
@@ -258,7 +263,7 @@ nas_proc_dl_transfer_rej (
   emm_sap.u.emm_as.u.data.delivered = false;
   emm_sap.u.emm_as.u.data.nas_msg.length = 0;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -286,7 +291,7 @@ nas_proc_ul_transfer_ind (
 {
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   if (len > 0) {
     emm_sap_t                               emm_sap = {0};
@@ -295,7 +300,7 @@ nas_proc_ul_transfer_ind (
      * Notify the EMM procedure call manager that data transfer
      * indication has been received from the Access-Stratum sublayer
      */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND ue id " NAS_UE_ID_FMT " len %u", ueid, len);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, len);
     emm_sap.primitive = EMMAS_DATA_IND;
     emm_sap.u.emm_as.u.data.ue_id = ue_id;
     emm_sap.u.emm_as.u.data.delivered = true;
@@ -304,7 +309,7 @@ nas_proc_ul_transfer_ind (
     rc = emm_sap_send (&emm_sap);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 //------------------------------------------------------------------------------
@@ -315,12 +320,12 @@ nas_proc_auth_param_res (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_AUTHENTICATION_PARAM_RES");
   emm_sap.primitive = EMMCN_AUTHENTICATION_PARAM_RES;
   emm_sap.u.emm_cn.u.auth_res = emm_cn_auth_res;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 //------------------------------------------------------------------------------
@@ -331,12 +336,12 @@ nas_proc_auth_param_fail (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_AUTHENTICATION_PARAM_FAIL");
   emm_sap.primitive = EMMCN_AUTHENTICATION_PARAM_FAIL;
   emm_sap.u.emm_cn.u.auth_fail = emm_cn_auth_fail;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 //------------------------------------------------------------------------------
@@ -347,12 +352,12 @@ nas_proc_deregister_ue (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_DEREGISTER_UE ue_id " NAS_UE_ID_FMT " ", ue_id);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_DEREGISTER_UE ue_id " MME_UE_S1AP_ID_FMT " ", ue_id);
   emm_sap.primitive = EMMCN_DEREGISTER_UE;
   emm_sap.u.emm_cn.u.deregister.ue_id = ue_id;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 //------------------------------------------------------------------------------
@@ -363,12 +368,12 @@ nas_proc_pdn_connectivity_res (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONNECTIVITY_RES");
   emm_sap.primitive = EMMCN_PDN_CONNECTIVITY_RES;
   emm_sap.u.emm_cn.u.emm_cn_pdn_res = emm_cn_pdn_res;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 //------------------------------------------------------------------------------
@@ -379,12 +384,12 @@ nas_proc_pdn_connectivity_fail (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONNECTIVITY_FAIL");
   emm_sap.primitive = EMMCN_PDN_CONNECTIVITY_FAIL;
   emm_sap.u.emm_cn.u.emm_cn_pdn_fail = emm_cn_pdn_fail;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

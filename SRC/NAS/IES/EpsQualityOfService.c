@@ -162,35 +162,35 @@ dump_eps_quality_of_service_xml (
   EpsQualityOfService * epsqualityofservice,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Eps Quality Of Service>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Eps Quality Of Service>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <QCI>%u</QCI>\n", epsqualityofservice->qci);
+  OAILOG_DEBUG (LOG_NAS, "    <QCI>%u</QCI>\n", epsqualityofservice->qci);
 
   if (epsqualityofservice->bitRatesPresent) {
-    LOG_DEBUG (LOG_NAS, "    <bitRates>\n");
-    LOG_DEBUG (LOG_NAS, "        <maxBitRateForUL>%u</maxBitRateForUL>\n", epsqualityofservice->bitRates.maxBitRateForUL);
-    LOG_DEBUG (LOG_NAS, "        <maxBitRateForDL>%u</maxBitRateForDL>\n", epsqualityofservice->bitRates.maxBitRateForDL);
-    LOG_DEBUG (LOG_NAS, "        <guarBitRateForUL>%u</guarBitRateForUL>\n", epsqualityofservice->bitRates.guarBitRateForUL);
-    LOG_DEBUG (LOG_NAS, "        <guarBitRateForDL>%u</guarBitRateForDL>\n", epsqualityofservice->bitRates.guarBitRateForDL);
-    LOG_DEBUG (LOG_NAS, "    </bitRates>\n");
+    OAILOG_DEBUG (LOG_NAS, "    <bitRates>\n");
+    OAILOG_DEBUG (LOG_NAS, "        <maxBitRateForUL>%u</maxBitRateForUL>\n", epsqualityofservice->bitRates.maxBitRateForUL);
+    OAILOG_DEBUG (LOG_NAS, "        <maxBitRateForDL>%u</maxBitRateForDL>\n", epsqualityofservice->bitRates.maxBitRateForDL);
+    OAILOG_DEBUG (LOG_NAS, "        <guarBitRateForUL>%u</guarBitRateForUL>\n", epsqualityofservice->bitRates.guarBitRateForUL);
+    OAILOG_DEBUG (LOG_NAS, "        <guarBitRateForDL>%u</guarBitRateForDL>\n", epsqualityofservice->bitRates.guarBitRateForDL);
+    OAILOG_DEBUG (LOG_NAS, "    </bitRates>\n");
   }
 
   if (epsqualityofservice->bitRatesExtPresent) {
-    LOG_DEBUG (LOG_NAS, "    <bitRatesExt>\n");
-    LOG_DEBUG (LOG_NAS, "        <maxBitRateForUL>%u</maxBitRateForUL>\n", epsqualityofservice->bitRatesExt.maxBitRateForUL);
-    LOG_DEBUG (LOG_NAS, "        <maxBitRateForDL>%u</maxBitRateForDL>\n", epsqualityofservice->bitRatesExt.maxBitRateForDL);
-    LOG_DEBUG (LOG_NAS, "        <guarBitRateForUL>%u</guarBitRateForUL>\n", epsqualityofservice->bitRatesExt.guarBitRateForUL);
-    LOG_DEBUG (LOG_NAS, "        <guarBitRateForDL>%u</guarBitRateForDL>\n", epsqualityofservice->bitRatesExt.guarBitRateForDL);
-    LOG_DEBUG (LOG_NAS, "    </bitRatesExt>\n");
+    OAILOG_DEBUG (LOG_NAS, "    <bitRatesExt>\n");
+    OAILOG_DEBUG (LOG_NAS, "        <maxBitRateForUL>%u</maxBitRateForUL>\n", epsqualityofservice->bitRatesExt.maxBitRateForUL);
+    OAILOG_DEBUG (LOG_NAS, "        <maxBitRateForDL>%u</maxBitRateForDL>\n", epsqualityofservice->bitRatesExt.maxBitRateForDL);
+    OAILOG_DEBUG (LOG_NAS, "        <guarBitRateForUL>%u</guarBitRateForUL>\n", epsqualityofservice->bitRatesExt.guarBitRateForUL);
+    OAILOG_DEBUG (LOG_NAS, "        <guarBitRateForDL>%u</guarBitRateForDL>\n", epsqualityofservice->bitRatesExt.guarBitRateForDL);
+    OAILOG_DEBUG (LOG_NAS, "    </bitRatesExt>\n");
   }
 
-  LOG_DEBUG (LOG_NAS, "</Eps Quality Of Service>\n");
+  OAILOG_DEBUG (LOG_NAS, "</Eps Quality Of Service>\n");
 }
 
 #define EPS_QOS_BIT_RATE_MAX  262144    // 256 Mbps

@@ -64,7 +64,7 @@ sctp_set_init_opt (
   init.sinit_max_init_timeo = init_timeout;
 
   if (setsockopt (sd, IPPROTO_SCTP, SCTP_INITMSG, &init, sizeof (struct sctp_initmsg)) < 0) {
-    LOG_ERROR (LOG_SCTP, "setsockopt: %d:%s\n", errno, strerror (errno));
+    OAILOG_ERROR (LOG_SCTP, "setsockopt: %d:%s\n", errno, strerror (errno));
     close (sd);
     return -1;
   }
@@ -73,7 +73,7 @@ sctp_set_init_opt (
    * Allow socket reuse
    */
   if (setsockopt (sd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof (on)) < 0) {
-    LOG_ERROR (LOG_SCTP, "setsockopt SO_REUSEADDR failed (%d:%s)\n", errno, strerror (errno));
+    OAILOG_ERROR (LOG_SCTP, "setsockopt SO_REUSEADDR failed (%d:%s)\n", errno, strerror (errno));
     close (sd);
     return -1;
   }
@@ -99,27 +99,27 @@ sctp_get_sockinfo (
   i = sizeof (struct sctp_status);
 
   if (getsockopt (sock, IPPROTO_SCTP, SCTP_STATUS, &status, &i) < 0) {
-    LOG_ERROR (LOG_SCTP, "Getsockopt SCTP_STATUS failed: %s\n", strerror (errno));
+    OAILOG_ERROR (LOG_SCTP, "Getsockopt SCTP_STATUS failed: %s\n", strerror (errno));
     return -1;
   }
 
-  LOG_DEBUG (LOG_SCTP, "----------------------\n");
-  LOG_DEBUG (LOG_SCTP, "SCTP Status:\n");
-  LOG_DEBUG (LOG_SCTP, "assoc id .....: %u\n", status.sstat_assoc_id);
-  LOG_DEBUG (LOG_SCTP, "state ........: %d\n", status.sstat_state);
-  LOG_DEBUG (LOG_SCTP, "instrms ......: %u\n", status.sstat_instrms);
-  LOG_DEBUG (LOG_SCTP, "outstrms .....: %u\n", status.sstat_outstrms);
-  LOG_DEBUG (LOG_SCTP, "fragmentation : %u\n", status.sstat_fragmentation_point);
-  LOG_DEBUG (LOG_SCTP, "pending data .: %u\n", status.sstat_penddata);
-  LOG_DEBUG (LOG_SCTP, "unack data ...: %u\n", status.sstat_unackdata);
-  LOG_DEBUG (LOG_SCTP, "rwnd .........: %u\n", status.sstat_rwnd);
-  LOG_DEBUG (LOG_SCTP, "peer info     :\n");
-  LOG_DEBUG (LOG_SCTP, "    state ....: %u\n", status.sstat_primary.spinfo_state);
-  LOG_DEBUG (LOG_SCTP, "    cwnd .....: %u\n", status.sstat_primary.spinfo_cwnd);
-  LOG_DEBUG (LOG_SCTP, "    srtt .....: %u\n", status.sstat_primary.spinfo_srtt);
-  LOG_DEBUG (LOG_SCTP, "    rto ......: %u\n", status.sstat_primary.spinfo_rto);
-  LOG_DEBUG (LOG_SCTP, "    mtu ......: %u\n", status.sstat_primary.spinfo_mtu);
-  LOG_DEBUG (LOG_SCTP, "----------------------\n");
+  OAILOG_DEBUG (LOG_SCTP, "----------------------\n");
+  OAILOG_DEBUG (LOG_SCTP, "SCTP Status:\n");
+  OAILOG_DEBUG (LOG_SCTP, "assoc id .....: %u\n", status.sstat_assoc_id);
+  OAILOG_DEBUG (LOG_SCTP, "state ........: %d\n", status.sstat_state);
+  OAILOG_DEBUG (LOG_SCTP, "instrms ......: %u\n", status.sstat_instrms);
+  OAILOG_DEBUG (LOG_SCTP, "outstrms .....: %u\n", status.sstat_outstrms);
+  OAILOG_DEBUG (LOG_SCTP, "fragmentation : %u\n", status.sstat_fragmentation_point);
+  OAILOG_DEBUG (LOG_SCTP, "pending data .: %u\n", status.sstat_penddata);
+  OAILOG_DEBUG (LOG_SCTP, "unack data ...: %u\n", status.sstat_unackdata);
+  OAILOG_DEBUG (LOG_SCTP, "rwnd .........: %u\n", status.sstat_rwnd);
+  OAILOG_DEBUG (LOG_SCTP, "peer info     :\n");
+  OAILOG_DEBUG (LOG_SCTP, "    state ....: %u\n", status.sstat_primary.spinfo_state);
+  OAILOG_DEBUG (LOG_SCTP, "    cwnd .....: %u\n", status.sstat_primary.spinfo_cwnd);
+  OAILOG_DEBUG (LOG_SCTP, "    srtt .....: %u\n", status.sstat_primary.spinfo_srtt);
+  OAILOG_DEBUG (LOG_SCTP, "    rto ......: %u\n", status.sstat_primary.spinfo_rto);
+  OAILOG_DEBUG (LOG_SCTP, "    mtu ......: %u\n", status.sstat_primary.spinfo_mtu);
+  OAILOG_DEBUG (LOG_SCTP, "----------------------\n");
 
   if (instream != NULL) {
     *instream = status.sstat_instrms;
@@ -147,12 +147,12 @@ sctp_get_peeraddresses (
   struct sockaddr                        *temp_addr_p;
 
   if ((nb = sctp_getpaddrs (sock, -1, &temp_addr_p)) <= 0) {
-    LOG_ERROR (LOG_SCTP, "Failed to retrieve peer addresses\n");
+    OAILOG_ERROR (LOG_SCTP, "Failed to retrieve peer addresses\n");
     return -1;
   }
 
-  LOG_DEBUG (LOG_SCTP, "----------------------\n");
-  LOG_DEBUG (LOG_SCTP, "Peer addresses:\n");
+  OAILOG_DEBUG (LOG_SCTP, "----------------------\n");
+  OAILOG_DEBUG (LOG_SCTP, "Peer addresses:\n");
 
   for (j = 0; j < nb; j++) {
     if (temp_addr_p[j].sa_family == AF_INET) {
@@ -163,7 +163,7 @@ sctp_get_peeraddresses (
       addr = (struct sockaddr_in *)&temp_addr_p[j];
 
       if (inet_ntop (AF_INET, &addr->sin_addr, address, sizeof (address)) != NULL) {
-        LOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
+        OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
       }
     } else {
       struct sockaddr_in6                    *addr;
@@ -173,12 +173,12 @@ sctp_get_peeraddresses (
       memset (&address, 0, sizeof (address));
 
       if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
-        LOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
+        OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
       }
     }
   }
 
-  LOG_DEBUG (LOG_SCTP, "----------------------\n");
+  OAILOG_DEBUG (LOG_SCTP, "----------------------\n");
 
   if (remote_addr != NULL && nb_remote_addresses != NULL) {
     *nb_remote_addresses = nb;
@@ -204,13 +204,13 @@ sctp_get_localaddresses (
   struct sockaddr                        *temp_addr_p = NULL;
 
   if ((nb = sctp_getladdrs (sock, -1, &temp_addr_p)) <= 0) {
-    LOG_ERROR (LOG_SCTP, "Failed to retrieve local addresses\n");
+    OAILOG_ERROR (LOG_SCTP, "Failed to retrieve local addresses\n");
     return -1;
   }
 
   if (temp_addr_p) {
-    LOG_DEBUG (LOG_SCTP, "----------------------\n");
-    LOG_DEBUG (LOG_SCTP, "Local addresses:\n");
+    OAILOG_DEBUG (LOG_SCTP, "----------------------\n");
+    OAILOG_DEBUG (LOG_SCTP, "Local addresses:\n");
 
     for (j = 0; j < nb; j++) {
       if (temp_addr_p[j].sa_family == AF_INET) {
@@ -220,7 +220,7 @@ sctp_get_localaddresses (
         addr = (struct sockaddr_in *)&temp_addr_p[j];
 
         if (inet_ntop (AF_INET, &addr->sin_addr, address, sizeof (address)) != NULL) {
-          LOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
+          OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
         }
       } else {
         struct sockaddr_in6                    *addr = NULL;
@@ -229,11 +229,11 @@ sctp_get_localaddresses (
         addr = (struct sockaddr_in6 *)&temp_addr_p[j];
 
         if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
-          LOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
+          OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
         }
       }
     }
-    LOG_DEBUG (LOG_SCTP, "----------------------\n");
+    OAILOG_DEBUG (LOG_SCTP, "----------------------\n");
 
     if (local_addr != NULL && nb_local_addresses != NULL) {
       *nb_local_addresses = nb;

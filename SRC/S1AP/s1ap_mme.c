@@ -43,8 +43,8 @@
 #include "log.h"
 
 #if S1AP_DEBUG_LIST
-#  define eNB_LIST_OUT(x, args...) LOG_DEBUG (LOG_S1AP, "[eNB]%*s"x"\n", 4*indent, "", ##args)
-#  define UE_LIST_OUT(x, args...)  LOG_DEBUG (LOG_S1AP, "[UE] %*s"x"\n", 4*indent, "", ##args)
+#  define eNB_LIST_OUT(x, args...) OAILOG_DEBUG (LOG_S1AP, "[eNB]%*s"x"\n", 4*indent, "", ##args)
+#  define UE_LIST_OUT(x, args...)  OAILOG_DEBUG (LOG_S1AP, "[UE] %*s"x"\n", 4*indent, "", ##args)
 #else
 #  define eNB_LIST_OUT(x, args...)
 #  define UE_LIST_OUT(x, args...)
@@ -89,7 +89,7 @@ s1ap_mme_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_S1AP);
-  LOG_START_USE ();
+  OAILOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
@@ -120,7 +120,7 @@ s1ap_mme_thread (
          */
         if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).buffer, SCTP_DATA_IND (received_message_p).buf_length) < 0) {
           // TODO: Notify eNB of failure with right cause
-          LOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
+          OAILOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
         } else {
           s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &message);
         }
@@ -175,11 +175,11 @@ s1ap_mme_thread (
       break;
 
     case MESSAGE_TEST:
-      LOG_DEBUG (LOG_S1AP, "Received MESSAGE_TEST\n");
+      OAILOG_DEBUG (LOG_S1AP, "Received MESSAGE_TEST\n");
       break;
 
     default:{
-        LOG_ERROR (LOG_S1AP, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        OAILOG_ERROR (LOG_S1AP, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
@@ -196,16 +196,16 @@ int
 s1ap_mme_init (
   const mme_config_t * mme_config_p)
 {
-  LOG_DEBUG (LOG_S1AP, "Initializing S1AP interface\n");
+  OAILOG_DEBUG (LOG_S1AP, "Initializing S1AP interface\n");
 
   if (get_asn1c_environment_version () < ASN1_MINIMUM_VERSION) {
-    LOG_ERROR (LOG_S1AP, "ASN1C version %d fount, expecting at least %d\n", get_asn1c_environment_version (), ASN1_MINIMUM_VERSION);
+    OAILOG_ERROR (LOG_S1AP, "ASN1C version %d fount, expecting at least %d\n", get_asn1c_environment_version (), ASN1_MINIMUM_VERSION);
     return RETURNerror;
   } else {
-    LOG_DEBUG (LOG_S1AP, "ASN1C version %d\n", get_asn1c_environment_version ());
+    OAILOG_DEBUG (LOG_S1AP, "ASN1C version %d\n", get_asn1c_environment_version ());
   }
 
-  LOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
+  OAILOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
   // 16 entries for n eNB.
   hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, 16, NULL, FREE_CHECK, "s1ap_eNB_coll");
   if (!h) return RETURNerror;
@@ -214,16 +214,16 @@ s1ap_mme_init (
   if (!h) return RETURNerror;
 
   if (itti_create_task (TASK_S1AP, &s1ap_mme_thread, NULL) < 0) {
-    LOG_ERROR (LOG_S1AP, "Error while creating S1AP task\n");
+    OAILOG_ERROR (LOG_S1AP, "Error while creating S1AP task\n");
     return RETURNerror;
   }
 
   if (s1ap_send_init_sctp () < 0) {
-    LOG_ERROR (LOG_S1AP, "Error while sendind SCTP_INIT_MSG to SCTP \n");
+    OAILOG_ERROR (LOG_S1AP, "Error while sendind SCTP_INIT_MSG to SCTP \n");
     return RETURNerror;
   }
 
-  LOG_DEBUG (LOG_S1AP, "Initializing S1AP interface: DONE\n");
+  OAILOG_DEBUG (LOG_S1AP, "Initializing S1AP interface: DONE\n");
   return RETURNok;
 }
 
@@ -370,7 +370,7 @@ bool s1ap_ue_compare_by_mme_ue_id_cb (const hash_key_t keyP, void * elementP, vo
   ue_description_t                       *ue_ref           = (ue_description_t*)elementP;
   if ( *mme_ue_s1ap_id_p == ue_ref->mme_ue_s1ap_id ) {
     *resultP = elementP;
-    LOG_TRACE(LOG_S1AP, "Found ue_ref %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", ue_ref, ue_ref->mme_ue_s1ap_id);
+    OAILOG_TRACE(LOG_S1AP, "Found ue_ref %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", ue_ref, ue_ref->mme_ue_s1ap_id);
     return true;
   }
   return false;
@@ -383,7 +383,7 @@ bool s1ap_enb_find_ue_by_mme_ue_id_cb (const hash_key_t keyP, void * elementP, v
 
   hashtable_ts_apply_callback_on_elements((hash_table_ts_t * const)&enb_ref->ue_coll, s1ap_ue_compare_by_mme_ue_id_cb, parameterP, resultP);
   if (*resultP) {
-    LOG_TRACE(LOG_S1AP, "Found ue_ref %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", *resultP, ((ue_description_t*)(*resultP))->mme_ue_s1ap_id);
+    OAILOG_TRACE(LOG_S1AP, "Found ue_ref %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", *resultP, ((ue_description_t*)(*resultP))->mme_ue_s1ap_id);
     return true;
   }
   return false;
@@ -421,7 +421,7 @@ s1ap_is_ue_mme_id_in_list (
   mme_ue_s1ap_id_t                       *mme_ue_s1ap_id_p = (mme_ue_s1ap_id_t*)&mme_ue_s1ap_id;
 
   hashtable_ts_apply_callback_on_elements(&g_s1ap_enb_coll, s1ap_enb_find_ue_by_mme_ue_id_cb, (void*)mme_ue_s1ap_id_p, (void**)&ue_ref);
-  LOG_TRACE(LOG_S1AP, "Return ue_ref %p \n", ue_ref);
+  OAILOG_TRACE(LOG_S1AP, "Return ue_ref %p \n", ue_ref);
   return ue_ref;
 }
 
@@ -449,14 +449,14 @@ void s1ap_notified_new_ue_mme_s1ap_id_association (
     if (ue_ref) {
       ue_ref->mme_ue_s1ap_id = mme_ue_s1ap_id;
       hashtable_rc_t  h_rc = hashtable_ts_insert (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t) mme_ue_s1ap_id, (void *)(uintptr_t)sctp_assoc_id);
-      LOG_DEBUG(LOG_S1AP, "Associated  ctp_assoc_id %d, enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ":%s \n",
+      OAILOG_DEBUG(LOG_S1AP, "Associated  ctp_assoc_id %d, enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ":%s \n",
           sctp_assoc_id, enb_ue_s1ap_id, mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
       return;
     }
-    LOG_DEBUG(LOG_S1AP, "Could not find  ue  with enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
+    OAILOG_DEBUG(LOG_S1AP, "Could not find  ue  with enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
     return;
   }
-  LOG_DEBUG(LOG_S1AP, "Could not find  eNB with sctp_assoc_id %d \n", sctp_assoc_id);
+  OAILOG_DEBUG(LOG_S1AP, "Could not find  eNB with sctp_assoc_id %d \n", sctp_assoc_id);
 }
 
 //------------------------------------------------------------------------------
@@ -504,7 +504,7 @@ s1ap_new_ue (
 
   hashtable_rc_t  hashrc = hashtable_ts_insert (&enb_ref->ue_coll, (const hash_key_t) enb_ue_s1ap_id, (void *)ue_ref);
   if (HASH_TABLE_OK != hashrc) {
-    LOG_ERROR(LOG_S1AP, "Could not insert UE descr in ue_coll: %s\n", hashtable_rc_code2string(hashrc));
+    OAILOG_ERROR(LOG_S1AP, "Could not insert UE descr in ue_coll: %s\n", hashtable_rc_code2string(hashrc));
     FREE_CHECK(ue_ref);
     return NULL;
   }
@@ -533,7 +533,7 @@ s1ap_remove_ue (
    * Remove any attached timer
    */
   //     s1ap_timer_remove_ue(ue_ref->mme_ue_s1ap_id);
-  LOG_TRACE(LOG_S1AP, "Removing UE enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id:" MME_UE_S1AP_ID_FMT " in eNB id : %d\n",
+  OAILOG_TRACE(LOG_S1AP, "Removing UE enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id:" MME_UE_S1AP_ID_FMT " in eNB id : %d\n",
       ue_ref->enb_ue_s1ap_id, ue_ref->mme_ue_s1ap_id, enb_ref->enb_id);
   hashtable_ts_free (&enb_ref->ue_coll, ue_ref->enb_ue_s1ap_id);
   enb_ref->nb_ue_associated--;

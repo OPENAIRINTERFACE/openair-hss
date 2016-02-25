@@ -37,6 +37,7 @@
 
 *****************************************************************************/
 
+#include "3gpp_24.007.h"
 #include "esm_main.h"
 #include "commonDef.h"
 #include "log.h"
@@ -77,19 +78,19 @@ void
 esm_main_initialize (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   /*
    * Retreive MME supported configuration data
    */
   if (mme_api_get_esm_config (&_esm_data.conf) != RETURNok) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MAIN  - Failed to get MME configuration data\n");
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MAIN  - Failed to get MME configuration data\n");
   }
   /*
    * Initialize the EPS bearer context manager
    */
   esm_ebr_initialize ();
-  LOG_FUNC_OUT (LOG_NAS_ESM);
+  OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
 
 /****************************************************************************
@@ -110,8 +111,8 @@ void
 esm_main_cleanup (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_FUNC_OUT (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
 
 

@@ -38,6 +38,7 @@
 #include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 #include <string.h>             // memset
 
+#include "3gpp_24.007.h"
 #include "commonDef.h"
 #include "log.h"
 #include "emmData.h"
@@ -99,24 +100,24 @@ esm_ebr_context_create (
   esm_data_context_t                     *esm_ctx = NULL;
   esm_pdn_t                              *pdn = NULL;
 
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_ctx = &ctx->esm_data_ctx;
 
   bid = ESM_DATA_EPS_BEARER_MAX;
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new %s EPS bearer context (ebi=%d) " "for PDN connection (pid=%d)\n",
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new %s EPS bearer context (ebi=%d) " "for PDN connection (pid=%d)\n",
       (is_default) ? "default" : "dedicated", ebi, pid);
 
   if (pid < ESM_DATA_PDN_MAX) {
     if (pid != esm_ctx->pdn[pid].pid) {
-      LOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection identifier %d is " "not valid\n", pid);
+      OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection identifier %d is " "not valid\n", pid);
     } else if (esm_ctx->pdn[pid].data == NULL) {
-      LOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection %d has not been " "allocated\n", pid);
+      OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection %d has not been " "allocated\n", pid);
     }
     /*
      * Check the total number of active EPS bearers
      */
     else if (esm_ctx->n_ebrs > ESM_DATA_EPS_BEARER_TOTAL) {
-      LOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - The total number of active EPS" "bearers is exceeded\n");
+      OAILOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - The total number of active EPS" "bearers is exceeded\n");
     } else {
       /*
        * Get the PDN connection entry
@@ -130,8 +131,8 @@ esm_ebr_context_create (
         bid = 0;
 
         if (pdn->bearer[bid] ) {
-          LOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - A default EPS bearer context " "is already allocated\n");
-          LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
+          OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - A default EPS bearer context " "is already allocated\n");
+          OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
         }
       } else {
         /*
@@ -212,13 +213,13 @@ esm_ebr_context_create (
        * Return the EPS bearer identity of the default EPS bearer
        * * * * associated to the new EPS bearer context
        */
-      LOG_FUNC_RETURN (LOG_NAS_ESM, pdn->bearer[0]->ebi);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, pdn->bearer[0]->ebi);
     }
 
-    LOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - Failed to create new EPS bearer " "context (ebi=%d)\n", ebi);
+    OAILOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - Failed to create new EPS bearer " "context (ebi=%d)\n", ebi);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
 }
 
 /****************************************************************************
@@ -253,7 +254,7 @@ esm_ebr_context_release (
   esm_pdn_t                              *pdn = NULL;
   esm_data_context_t                     *esm_ctx;
 
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_ctx = &ctx->esm_data_ctx;
 
   if (ebi != ESM_EBI_UNASSIGNED) {
@@ -310,11 +311,11 @@ esm_ebr_context_release (
      */
     if (*pid < ESM_DATA_PDN_MAX) {
       if (*pid != esm_ctx->pdn[*pid].pid) {
-        LOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection identifier %d " "is not valid\n", *pid);
+        OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection identifier %d " "is not valid\n", *pid);
       } else if (!esm_ctx->pdn[*pid].is_active) {
-        LOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - PDN connection %d is not active\n", *pid);
+        OAILOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - PDN connection %d is not active\n", *pid);
       } else if (esm_ctx->pdn[*pid].data == NULL) {
-        LOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection %d has not been " "allocated\n", *pid);
+        OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection %d has not been " "allocated\n", *pid);
       } else {
         pdn = esm_ctx->pdn[*pid].data;
 
@@ -334,11 +335,11 @@ esm_ebr_context_release (
      * Delete the specified EPS bearer context entry
      */
     if (pdn->bearer[*bid]->bid != *bid) {
-      LOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - EPS bearer identifier %d is " "not valid\n", *bid);
-      LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
+      OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - EPS bearer identifier %d is " "not valid\n", *bid);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
     }
 
-    LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Release EPS bearer context " "(ebi=%d)\n", ebi);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Release EPS bearer context " "(ebi=%d)\n", ebi);
 
     /*
      * Delete the TFT
@@ -371,7 +372,7 @@ esm_ebr_context_release (
        */
       for (i = 1; pdn->n_bearers > 0; i++) {
         if (pdn->bearer[i]) {
-          LOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - Release EPS bearer context " "(ebi=%d)\n", pdn->bearer[i]->ebi);
+          OAILOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - Release EPS bearer context " "(ebi=%d)\n", pdn->bearer[i]->ebi);
 
           /*
            * Delete the TFT
@@ -426,10 +427,10 @@ esm_ebr_context_release (
        */
     }
 
-    LOG_FUNC_RETURN (LOG_NAS_ESM, ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ebi);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
 }
 
 

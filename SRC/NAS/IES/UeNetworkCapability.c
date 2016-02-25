@@ -47,7 +47,7 @@ decode_ue_network_capability (
 
   DECODE_U8 (buffer + decoded, ielen, decoded);
   memset (uenetworkcapability, 0, sizeof (UeNetworkCapability));
-  LOG_INFO (LOG_NAS_EMM, "decode_ue_network_capability len = %d", ielen);
+  OAILOG_INFO (LOG_NAS_EMM, "decode_ue_network_capability len = %d", ielen);
   CHECK_LENGTH_DECODER (len - decoded, ielen);
   uenetworkcapability->eea = *(buffer + decoded);
   decoded++;
@@ -66,7 +66,7 @@ decode_ue_network_capability (
       uenetworkcapability->uia = *(buffer + decoded) & 0x7f;
       decoded++;
       uenetworkcapability->umts_present = 1;
-      LOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded UMTS\n");
+      OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded UMTS\n");
 
       if (ielen > 4) {
         uenetworkcapability->spare = (*(buffer + decoded) >> 5) & 0x7;
@@ -77,18 +77,18 @@ decode_ue_network_capability (
         uenetworkcapability->nf = *(buffer + decoded) & 0x1;
         decoded++;
         uenetworkcapability->gprs_present = 1;
-        LOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded GPRS\n");
+        OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded GPRS\n");
       }
 //#pragma message  "Force GPRS present if UMTS present"
       uenetworkcapability->gprs_present = 1;
     }
   }
 
-  LOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded=%u\n", decoded);
+  OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded=%u\n", decoded);
 
   if ((ielen + 2) != decoded) {
     decoded = ielen + 1 + (iei > 0 ? 1 : 0) /* Size of header for this IE */ ;
-    LOG_INFO (LOG_NAS_EMM, "uenetworkcapability then decoded=%u\n", decoded);
+    OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability then decoded=%u\n", decoded);
   }
 #if NAS_DEBUG
   dump_ue_network_capability_xml (uenetworkcapability, iei);
@@ -125,14 +125,14 @@ encode_ue_network_capability (
   encoded++;
   *(buffer + encoded) = uenetworkcapability->eia;
   encoded++;
-  LOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded EPS %u\n", encoded);
+  OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded EPS %u\n", encoded);
 
   if (uenetworkcapability->umts_present) {
     *(buffer + encoded) = uenetworkcapability->uea;
     encoded++;
     *(buffer + encoded) = 0x00 | ((uenetworkcapability->ucs2 & 0x1) << 7) | (uenetworkcapability->uia & 0x7f);
     encoded++;
-    LOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded UMTS %u\n", encoded);
+    OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded UMTS %u\n", encoded);
   }
 
   if (uenetworkcapability->gprs_present) {
@@ -145,7 +145,7 @@ encode_ue_network_capability (
     //((uenetworkcapability->srvcc & 0x1) << 1) |
     //(uenetworkcapability->nf     & 0x1);
     encoded++;
-    LOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded GPRS %u\n", encoded);
+    OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded GPRS %u\n", encoded);
   }
 
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
@@ -157,26 +157,26 @@ dump_ue_network_capability_xml (
   UeNetworkCapability * uenetworkcapability,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Ue Network Capability>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Ue Network Capability>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <EEA>%02x</EEA>\n", uenetworkcapability->eea);
-  LOG_DEBUG (LOG_NAS, "    <EIA>%02x</EIA>\n", uenetworkcapability->eia);
-  LOG_DEBUG (LOG_NAS, "    <UEA>%02x</UEA>\n", uenetworkcapability->uea);
-  LOG_DEBUG (LOG_NAS, "    <UCS2>%u</UCS2>\n", uenetworkcapability->ucs2);
-  LOG_DEBUG (LOG_NAS, "    <UIA>%u</UIA>\n", uenetworkcapability->uia);
-  LOG_DEBUG (LOG_NAS, "    <SPARE>%u</SPARE>\n", uenetworkcapability->spare);
-  LOG_DEBUG (LOG_NAS, "    <CSFB>%u</CSFB>\n", uenetworkcapability->csfb);
-  LOG_DEBUG (LOG_NAS, "    <LPP>%u</LPP>\n", uenetworkcapability->lpp);
-  LOG_DEBUG (LOG_NAS, "    <LCS>%u</LCS>\n", uenetworkcapability->lcs);
-  LOG_DEBUG (LOG_NAS, "    <SR VCC>%u</SR VCC>\n", uenetworkcapability->srvcc);
-  LOG_DEBUG (LOG_NAS, "    <NF>%u<NF/>\n", uenetworkcapability->nf);
-  LOG_DEBUG (LOG_NAS, "    <UMTS>%u<UMTS/>\n", uenetworkcapability->umts_present);
-  LOG_DEBUG (LOG_NAS, "    <GPRS>%u<GPRS/>\n", uenetworkcapability->gprs_present);
-  LOG_DEBUG (LOG_NAS, "</Ue Network Capability>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <EEA>%02x</EEA>\n", uenetworkcapability->eea);
+  OAILOG_DEBUG (LOG_NAS, "    <EIA>%02x</EIA>\n", uenetworkcapability->eia);
+  OAILOG_DEBUG (LOG_NAS, "    <UEA>%02x</UEA>\n", uenetworkcapability->uea);
+  OAILOG_DEBUG (LOG_NAS, "    <UCS2>%u</UCS2>\n", uenetworkcapability->ucs2);
+  OAILOG_DEBUG (LOG_NAS, "    <UIA>%u</UIA>\n", uenetworkcapability->uia);
+  OAILOG_DEBUG (LOG_NAS, "    <SPARE>%u</SPARE>\n", uenetworkcapability->spare);
+  OAILOG_DEBUG (LOG_NAS, "    <CSFB>%u</CSFB>\n", uenetworkcapability->csfb);
+  OAILOG_DEBUG (LOG_NAS, "    <LPP>%u</LPP>\n", uenetworkcapability->lpp);
+  OAILOG_DEBUG (LOG_NAS, "    <LCS>%u</LCS>\n", uenetworkcapability->lcs);
+  OAILOG_DEBUG (LOG_NAS, "    <SR VCC>%u</SR VCC>\n", uenetworkcapability->srvcc);
+  OAILOG_DEBUG (LOG_NAS, "    <NF>%u<NF/>\n", uenetworkcapability->nf);
+  OAILOG_DEBUG (LOG_NAS, "    <UMTS>%u<UMTS/>\n", uenetworkcapability->umts_present);
+  OAILOG_DEBUG (LOG_NAS, "    <GPRS>%u<GPRS/>\n", uenetworkcapability->gprs_present);
+  OAILOG_DEBUG (LOG_NAS, "</Ue Network Capability>\n");
 }

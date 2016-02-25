@@ -26,6 +26,7 @@
 
 #include "auc.h"
 #include "hss_config.h"
+#include "log.h"
 
 extern hss_config_t                     hss_config;
 extern uint8_t                          op[16];
@@ -42,13 +43,13 @@ sqn_ms_derive (
    * * * * Conc(SQN MS ) = SQN MS ^ f5* (RAND)
    * * * * MAC-S = f1* (SQN MS || RAND || AMF)
    */
-  uint8_t                                 ak[6];
-  uint8_t                                *conc_sqn_ms;
-  uint8_t                                *mac_s;
-  uint8_t                                 mac_s_computed[MAC_S_LENGTH];
-  uint8_t                                *sqn_ms;
+  uint8_t                                 ak[6] = {0};
+  uint8_t                                *conc_sqn_ms = NULL;
+  uint8_t                                *mac_s       = NULL;
+  uint8_t                                 mac_s_computed[MAC_S_LENGTH] = {0};
+  uint8_t                                *sqn_ms = NULL;
   uint8_t                                 amf[2] = { 0, 0 };
-  int                                     i;
+  int                                     i = 0;
 
   conc_sqn_ms = auts;
   mac_s = &auts[6];
@@ -77,7 +78,7 @@ sqn_ms_derive (
   print_buffer ("MAC_S +: ", mac_s_computed, 8);
 
   if (memcmp (mac_s_computed, mac_s, 8) != 0) {
-    fprintf (stderr, "Failed to verify computed SQN_MS\n");
+    FPRINTF_ERROR ( "Failed to verify computed SQN_MS\n");
     free (sqn_ms);
     return NULL;
   }

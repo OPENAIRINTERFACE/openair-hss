@@ -30,23 +30,33 @@
 #define FILE_MME_APP_MESSAGES_TYPES_SEEN
 
 
-#define MME_APP_CONNECTION_ESTABLISHMENT_IND(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_ind
+#define MME_APP_INITIAL_UE_MESSAGE(mSGpTR)               (mSGpTR)->ittiMsg.mme_app_initial_ue_message
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
 
-typedef struct itti_mme_app_connection_establishment_ind_s {
+typedef struct itti_mme_app_initial_ue_message_s {
+  sctp_assoc_id_t     sctp_assoc_id; // key stored in MME_APP for MME_APP forward NAS response to S1AP
   mme_ue_s1ap_id_t    mme_ue_s1ap_id;
   enb_ue_s1ap_id_t    enb_ue_s1ap_id;
-  sctp_assoc_id_t     sctp_assoc_id; // key stored in MME_APP for MME_APP forward NAS response to S1AP
+  as_nas_info_t       nas;
+  tai_t               tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
+  ecgi_t              cgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
+  as_cause_t          as_cause;          /* Establishment cause                     */
 
-  nas_establish_ind_t nas;
-  gummei_t            gummei;
+  bool                is_s_tmsi_valid;
+  bool                is_csg_id_valid;
+  bool                is_gummei_valid;
+  as_stmsi_t          opt_s_tmsi;
+  csg_id_t            opt_csg_id;
+  gummei_t            opt_gummei;
+  //void                opt_cell_access_mode;
+  //void                opt_cell_gw_transport_address;
+  //void                opt_relay_node_indicator;
   /* Transparent message from s1ap to be forwarded to MME_APP or
    * to S1AP if connection establishment is rejected by NAS.
    */
   itti_s1ap_initial_ue_message_t transparent;
-  bool                is_gummei_valid;
-} itti_mme_app_connection_establishment_ind_t;
+} itti_mme_app_initial_ue_message_t;
 
 typedef struct itti_mme_app_connection_establishment_cnf_s {
   ebi_t                   eps_bearer_id;

@@ -91,14 +91,14 @@ dump_authentication_parameter_rand_xml (
   AuthenticationParameterRand * authenticationparameterrand,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Authentication Parameter Rand>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Authentication Parameter Rand>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&authenticationparameterrand->rand));
-  LOG_DEBUG (LOG_NAS, "</Authentication Parameter Rand>\n");
+  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&authenticationparameterrand->rand));
+  OAILOG_DEBUG (LOG_NAS, "</Authentication Parameter Rand>\n");
 }

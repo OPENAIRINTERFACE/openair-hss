@@ -39,6 +39,7 @@
 
 *****************************************************************************/
 
+#include "3gpp_24.007.h"
 #include "emm_sap.h"
 #include "commonDef.h"
 #include "log.h"
@@ -78,11 +79,11 @@ void
 emm_sap_initialize (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_reg_initialize ();
   emm_esm_initialize ();
   emm_as_initialize ();
-  LOG_FUNC_OUT (LOG_NAS_EMM);
+  OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
 /****************************************************************************
@@ -106,7 +107,7 @@ emm_sap_send (
   int                                     rc = RETURNerror;
   emm_primitive_t                         primitive = msg->primitive;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   /*
    * Check the EMM-SAP primitive
@@ -138,10 +139,10 @@ emm_sap_send (
     rc = emm_cn_send (&msg->u.emm_cn);
   }
   else {
-    LOG_WARNING (LOG_NAS_EMM, "EMM-SAP -   Out of range primitive (%d)\n", primitive);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-SAP -   Out of range primitive (%d)\n", primitive);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/

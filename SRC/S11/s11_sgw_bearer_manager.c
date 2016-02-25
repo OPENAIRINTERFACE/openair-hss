@@ -99,12 +99,12 @@ s11_sgw_handle_modify_bearer_request (
 
     switch (rc) {
     case NW_GTPV2C_MANDATORY_IE_MISSING:
-      LOG_DEBUG (LOG_S11, "Mandatory IE type '%u' of instance '%u' missing!\n", offendingIeType, offendingIeLength);
+      OAILOG_DEBUG (LOG_S11, "Mandatory IE type '%u' of instance '%u' missing!\n", offendingIeType, offendingIeLength);
       cause.cause_value = NW_GTPV2C_CAUSE_MANDATORY_IE_MISSING;
       break;
 
     default:
-      LOG_DEBUG (LOG_S11, "Unknown message parse error!\n");
+      OAILOG_DEBUG (LOG_S11, "Unknown message parse error!\n");
       cause.cause_value = 0;
       break;
     }
@@ -116,7 +116,7 @@ s11_sgw_handle_modify_bearer_request (
     ulp_req.apiInfo.triggeredRspInfo.hTrxn = pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
     rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_CREATE_SESSION_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
     s11_cause_ie_set (&(ulp_req.hMsg), &cause);
-    LOG_DEBUG (LOG_S11, "Received NW_GTP_CREATE_SESSION_REQ, Sending NW_GTP_CREATE_SESSION_RSP!\n");
+    OAILOG_DEBUG (LOG_S11, "Received NW_GTP_CREATE_SESSION_REQ, Sending NW_GTP_CREATE_SESSION_RSP!\n");
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
     itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);

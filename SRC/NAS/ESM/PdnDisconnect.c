@@ -43,6 +43,7 @@
 
 *****************************************************************************/
 
+#include "3gpp_24.007.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "log.h"
@@ -121,8 +122,8 @@ esm_proc_pdn_disconnect_request (
 {
   int                                     pid = RETURNerror;
 
-  LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n", ctx->ue_id, pti);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n", ctx->ue_id, pti);
 
   /*
    * Get UE's ESM context
@@ -135,9 +136,9 @@ esm_proc_pdn_disconnect_request (
     pid = _pdn_disconnect_get_pid (&ctx->esm_data_ctx, pti);
 
     if (pid < 0) {
-      LOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (pti=%d)\n", pti);
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (pti=%d)\n", pti);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-      LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
     }
   } else {
     /*
@@ -147,7 +148,7 @@ esm_proc_pdn_disconnect_request (
     *esm_cause = ESM_CAUSE_LAST_PDN_DISCONNECTION_NOT_ALLOWED;
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, pid);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, pid);
 }
 
 /****************************************************************************
@@ -178,8 +179,8 @@ esm_proc_pdn_disconnect_accept (
   int pid,
   int *esm_cause)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
   /*
    * Release the connectivity with the requested PDN
    */
@@ -192,12 +193,12 @@ esm_proc_pdn_disconnect_accept (
     int                                     pti = _pdn_connectivity_delete (ctx, pid);
 
     if (pti != ESM_PT_UNASSIGNED) {
-      LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
     }
   }
 
   *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
-  LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
 }
 
 /****************************************************************************
@@ -233,11 +234,11 @@ esm_proc_pdn_disconnect_reject (
   OctetString * msg,
   const bool ue_triggered)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect not accepted by the network " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ctx->ue_id);
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect not accepted by the network " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ctx->ue_id);
   /*
    * Notity EMM that ESM PDU has to be forwarded to lower layers
    */
@@ -247,7 +248,7 @@ esm_proc_pdn_disconnect_reject (
   emm_sap.u.emm_esm.u.data.msg.length = msg->length;
   emm_sap.u.emm_esm.u.data.msg.value = msg->value;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 /****************************************************************************/

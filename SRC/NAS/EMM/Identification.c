@@ -150,10 +150,10 @@ emm_proc_identification (
   emm_common_reject_callback_t reject,
   emm_common_failure_callback_t failure)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate identification type = %s (%d), ctx = %p\n", _emm_identity_type_str[type], type, emm_ctx);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate identification type = %s (%d), ctx = %p\n", _emm_identity_type_str[type], type, emm_ctx);
   /*
    * Allocate parameters of the retransmission timer callback
    */
@@ -166,9 +166,9 @@ emm_proc_identification (
     rc = emm_proc_common_initialize (ue_id, success, reject, failure, _identification_abort, data);
 
     if (rc != RETURNok) {
-      LOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
+      OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
       FREE_CHECK (data);
-      LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
     /*
@@ -206,7 +206,7 @@ emm_proc_identification (
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -243,8 +243,8 @@ emm_proc_identification_complete (
   emm_sap_t                               emm_sap = {0};
   emm_data_context_t                     *emm_ctx = NULL;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Identification complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Identification complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Release retransmission timer paramaters
    */
@@ -266,7 +266,7 @@ emm_proc_identification_complete (
     /*
      * Stop timer T3470
      */
-    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
     emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
@@ -326,7 +326,7 @@ emm_proc_identification_complete (
     emm_sap.u.emm_reg.ctx = emm_ctx;
     emm_sap.u.emm_reg.u.common.is_attached = emm_ctx->is_attached;
   } else {
-    LOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EMM context exists");
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EMM context exists");
     /*
      * Notify EMM that the identification procedure failed
      */
@@ -337,7 +337,7 @@ emm_proc_identification_complete (
   }
 
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 
@@ -375,14 +375,14 @@ static void                            *
 _identification_t3470_handler (
   void *args)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   identification_data_t                  *data = (identification_data_t *) (args);
 
   /*
    * Increment the retransmission counter
    */
   data->retransmission_count += 1;
-  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3470 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
+  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3470 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
 
   if (data->retransmission_count < IDENTIFICATION_COUNTER_MAX) {
     /*
@@ -400,7 +400,7 @@ _identification_t3470_handler (
     _identification_abort (data);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
 }
 
 /*
@@ -431,7 +431,7 @@ _identification_request (
   int                                     rc;
   struct emm_data_context_s              *emm_ctx = NULL;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   /*
    * Notify EMM-AS SAP that Identity Request message has to be sent
    * to the UE
@@ -468,10 +468,10 @@ _identification_request (
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
     }
 
-    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3470 (%d) expires in %ld seconds\n", emm_ctx->T3470.id, emm_ctx->T3470.sec);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3470 (%d) expires in %ld seconds\n", emm_ctx->T3470.id, emm_ctx->T3470.sec);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -492,7 +492,7 @@ static int
 _identification_abort (
   void *args)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   identification_data_t                  *data = (identification_data_t *) (args);
 
@@ -509,14 +509,14 @@ _identification_abort (
       emm_ctx = emm_data_context_get (&_emm_data, ue_id);
     }
 
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort identification procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort identification procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
     /*
      * Stop timer T3470
      */
     if ( emm_ctx) {
       if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
-        LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
+        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
         emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       }
@@ -542,5 +542,5 @@ _identification_abort (
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

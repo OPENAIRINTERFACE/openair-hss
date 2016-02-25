@@ -100,14 +100,14 @@ dump_nas_message_container_xml (
   NasMessageContainer * nasmessagecontainer,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Nas Message Container>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Nas Message Container>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&nasmessagecontainer->nasmessagecontainercontents));
-  LOG_DEBUG (LOG_NAS, "</Nas Message Container>\n");
+  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&nasmessagecontainer->nasmessagecontainercontents));
+  OAILOG_DEBUG (LOG_NAS, "</Nas Message Container>\n");
 }

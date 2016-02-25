@@ -38,6 +38,7 @@
 
 *****************************************************************************/
 
+#include "3gpp_24.007.h"
 #include "esm_sap.h"
 #include "esm_recv.h"
 #include "esm_send.h"
@@ -130,12 +131,12 @@ void
 esm_sap_initialize (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   /*
    * Initialize ESM state machine
    */
   //esm_fsm_initialize();
-  LOG_FUNC_OUT (LOG_NAS_ESM);
+  OAILOG_FUNC_OUT (LOG_NAS_ESM);
 }
 
 /****************************************************************************
@@ -156,7 +157,7 @@ int
 esm_sap_send (
   esm_sap_t * msg)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
   int                                     pid;
 
@@ -166,7 +167,7 @@ esm_sap_send (
   esm_primitive_t                         primitive = msg->primitive;
 
   assert ((primitive > ESM_START) && (primitive < ESM_END));
-  LOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received primitive %s (%d)\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received primitive %s (%d)\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
 
   switch (primitive) {
   case ESM_PDN_CONNECTIVITY_REQ:
@@ -263,10 +264,10 @@ esm_sap_send (
   }
 
   if (rc != RETURNok) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to process primitive %s (%d)\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Failed to process primitive %s (%d)\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 /****************************************************************************/
@@ -317,7 +318,7 @@ _esm_sap_recv (
   int                                     decoder_rc;
   ESM_msg                                 esm_msg;
 
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   memset (&esm_msg, 0, sizeof (ESM_msg));
   /*
    * Decode the received ESM message
@@ -334,12 +335,12 @@ _esm_sap_recv (
      * * * * message type information element
      */
     if (decoder_rc == TLV_DECODE_BUFFER_TOO_SHORT) {
-      LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Discard message too short to " "contain a complete message type IE\n");
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Discard message too short to " "contain a complete message type IE\n");
       /*
        * Return indication that received message has been discarded
        */
       *err = ESM_SAP_DISCARDED;
-      LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
     }
     /*
      * 3GPP TS 24.301, section 7.2
@@ -366,7 +367,7 @@ _esm_sap_recv (
       /*
        * Semantically incorrect ESM message
        */
-      LOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Received ESM message 0x%x is not " "of the expected type (0x%x)\n", esm_msg.header.message_type, msg_type);
+      OAILOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Received ESM message 0x%x is not " "of the expected type (0x%x)\n", esm_msg.header.message_type, msg_type);
       esm_cause = ESM_CAUSE_SEMANTICALLY_INCORRECT;
     }
   }
@@ -394,7 +395,7 @@ _esm_sap_recv (
   int                                     is_discarded = false;
 
   if (esm_cause != ESM_CAUSE_SUCCESS) {
-    LOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Failed to decode expected ESM message " "0x%x\n", msg_type);
+    OAILOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Failed to decode expected ESM message " "0x%x\n", msg_type);
   }
   /*
    * Process the received ESM message
@@ -511,7 +512,7 @@ _esm_sap_recv (
         esm_proc_data_t                         data;
 
         memset (&data, 0, sizeof (esm_proc_data_t));
-        LOG_DEBUG (LOG_NAS_ESM, "ESM-SAP   - PDN_CONNECTIVITY_REQUEST pti %u ebi %u\n", pti, ebi);
+        OAILOG_DEBUG (LOG_NAS_ESM, "ESM-SAP   - PDN_CONNECTIVITY_REQUEST pti %u ebi %u\n", pti, ebi);
         /*
          * Process PDN connectivity request message received from the UE
          */
@@ -665,7 +666,7 @@ _esm_sap_recv (
       break;
 
     default:
-      LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Received unexpected ESM message " "0x%x\n", esm_msg.header.message_type);
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Received unexpected ESM message " "0x%x\n", esm_msg.header.message_type);
       esm_cause = ESM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
       break;
     }
@@ -679,7 +680,7 @@ _esm_sap_recv (
        * 3GPP TS 24.301, section 7.1
        * * * * Handling of unknown, unforeseen, and erroneous protocol data
        */
-      LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Received ESM message is not valid " "(cause=%d)\n", esm_cause);
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Received ESM message is not valid " "(cause=%d)\n", esm_cause);
       /*
        * Return an ESM status message
        */
@@ -731,7 +732,7 @@ _esm_sap_recv (
       *err = ESM_SAP_FAILED;
     }
   } else if (is_discarded) {
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Silently discard message type 0x%x\n", esm_msg.header.message_type);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Silently discard message type 0x%x\n", esm_msg.header.message_type);
     /*
      * Return indication that received message has been discarded
      */
@@ -739,7 +740,7 @@ _esm_sap_recv (
     rc = RETURNok;
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 /****************************************************************************
@@ -774,7 +775,7 @@ _esm_sap_send (
   const esm_sap_data_t * data,
   OctetString * rsp)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_proc_procedure_t                    esm_procedure = NULL;
   int                                     rc = RETURNok;
 
@@ -815,7 +816,7 @@ _esm_sap_send (
     break;
 
   default:
-    LOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Send unexpected ESM message 0x%x\n", msg_type);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Send unexpected ESM message 0x%x\n", msg_type);
     break;
   }
 
@@ -838,5 +839,5 @@ _esm_sap_send (
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

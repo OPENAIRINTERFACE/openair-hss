@@ -89,7 +89,7 @@ s1ap_timer_insert (
   new->mme_ue_s1ap_id = mme_ue_s1ap_id;
 
   if (RB_INSERT (s1ap_timer_map, &s1ap_timer_tree, new) != NULL) {
-    LOG_WARNING (LOG_S1AP, "Timer with id 0x%lx already exists\n", timer_id);
+    OAILOG_WARNING (LOG_S1AP, "Timer with id 0x%lx already exists\n", timer_id);
     FREE_CHECK (new);
     return -1;
   }
@@ -109,7 +109,7 @@ s1ap_handle_timer_expiry (
   elm.timer_id = timer_has_expired->timer_id;
 
   if ((find = RB_FIND (s1ap_timer_map, &s1ap_timer_tree, &elm)) == NULL) {
-    LOG_WARNING (LOG_S1AP, "Timer id 0x%lx has not been found in tree. Maybe the timer " "reference has been removed before receiving timer signal\n", timer_has_expired->timer_id);
+    OAILOG_WARNING (LOG_S1AP, "Timer id 0x%lx has not been found in tree. Maybe the timer " "reference has been removed before receiving timer signal\n", timer_has_expired->timer_id);
     return 0;
   }
 
@@ -133,7 +133,7 @@ s1ap_timer_remove_ue (
 {
   struct s1ap_timer_map_s                *find = NULL;
 
-  LOG_DEBUG (LOG_S1AP, "Removing timer associated with UE " MME_UE_S1AP_ID_FMT "\n", mme_ue_s1ap_id);
+  OAILOG_DEBUG (LOG_S1AP, "Removing timer associated with UE " MME_UE_S1AP_ID_FMT "\n", mme_ue_s1ap_id);
   DevAssert (mme_ue_s1ap_id != 0);
   RB_FOREACH (find, s1ap_timer_map, &s1ap_timer_tree) {
     if (find->mme_ue_s1ap_id == mme_ue_s1ap_id) {
