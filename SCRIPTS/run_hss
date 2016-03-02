@@ -153,7 +153,7 @@ function main()
     exit 0
   fi
   if [ $run_gdb -eq 0 ]; then 
-    $SUDO exec oai_hss  `echo $exe_arguments` 2>&1 
+    $SUDO oai_hss  `echo $exe_arguments` 2>&1 
   else
     $SUDO touch      ~/.gdb_hss
     $SUDO chmod 777  ~/.gdb_hss
