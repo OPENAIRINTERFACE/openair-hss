@@ -269,7 +269,8 @@ install_nettle_from_source() {
   $SUDO apt-get install $OPTION \
     autoconf  \
     automake  \
-    build-essential
+    build-essential \
+    libgmp-dev
 
   if [ $1 -eq 0 ]; then
     read -p "Do you want to install nettle ? <y/N> " prompt
@@ -878,7 +879,7 @@ create_hss_database(){
   else
     echo_success "HSS: $hss_username permissions creation succeeded"
   fi
-    
+
   Q3="CREATE DATABASE IF NOT EXISTS $database_name;"
   mysql -u $hss_username --password=$hss_password -e "${Q3}"
   if [ $? -ne 0 ]; then
@@ -892,7 +893,7 @@ create_hss_database(){
   # test if tables have been created
   mysql -u $hss_username --password=$hss_password  -e "desc $database_name.users" > /dev/null 2>&1
   if [ $? -eq 1 ]; then 
-    mysql -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/SRC/OPENAIRHSS/db/$database_name.sql
+    mysql -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/SRC/OAI_HSS/db/$database_name.sql
     if [ $? -ne 0 ]; then
       echo_error "HSS: $database_name tables creation failed"
       return 1
