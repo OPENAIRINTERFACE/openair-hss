@@ -100,14 +100,14 @@ dump_authentication_parameter_autn_xml (
   AuthenticationParameterAutn * authenticationparameterautn,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Authentication Parameter Autn>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Authentication Parameter Autn>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&authenticationparameterautn->autn));
-  LOG_DEBUG (LOG_NAS, "</Authentication Parameter Autn>\n");
+  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&authenticationparameterautn->autn));
+  OAILOG_DEBUG (LOG_NAS, "</Authentication Parameter Autn>\n");
 }

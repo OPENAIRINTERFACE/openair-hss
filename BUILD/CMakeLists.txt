@@ -187,6 +187,7 @@ add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 #########################################
 # Debug and build related options
 #########################################
+add_boolean_option( DAEMONIZE                       False    "Fork executable if true")
 
 add_boolean_option( DISABLE_ITTI_DETECT_SUB_TASK_ID False    " ")
 add_boolean_option( DISPLAY_LICENCE_INFO            False    "If a module has a licence banner to show")
@@ -382,6 +383,7 @@ set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/SRC/UTILS/mme_config.c
   ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
   ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/pid_file.c
   )
 
 if (LOG_OAI)

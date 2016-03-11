@@ -49,6 +49,7 @@
 
 *****************************************************************************/
 
+#include "3gpp_24.007.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "log.h"
@@ -130,8 +131,8 @@ esm_proc_dedicated_eps_bearer_context (
   const esm_proc_tft_t * tft,
   int *esm_cause)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
   /*
    * Assign new EPS bearer context
    */
@@ -147,17 +148,17 @@ esm_proc_dedicated_eps_bearer_context (
       /*
        * No resource available
        */
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create dedicated EPS " "bearer context (ebi=%d)\n", *ebi);
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create dedicated EPS " "bearer context (ebi=%d)\n", *ebi);
       *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
-      LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
     }
 
-    LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
   }
 
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to assign new EPS bearer context\n");
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to assign new EPS bearer context\n");
   *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
-  LOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
 }
 
 /****************************************************************************
@@ -194,10 +195,10 @@ esm_proc_dedicated_eps_bearer_context_request (
   OctetString * msg,
   bool ue_triggered)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate dedicated EPS bearer context " "activation (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Initiate dedicated EPS bearer context " "activation (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Send activate dedicated EPS bearer context request message and
    * * * * start timer T3485
@@ -214,11 +215,11 @@ esm_proc_dedicated_eps_bearer_context_request (
       /*
        * The EPS bearer context was already in ACTIVE PENDING state
        */
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already ACTIVE PENDING\n", ebi);
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already ACTIVE PENDING\n", ebi);
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 /****************************************************************************
@@ -249,10 +250,10 @@ esm_proc_dedicated_eps_bearer_context_accept (
   int ebi,
   int *esm_cause)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Stop T3485 timer
    */
@@ -268,12 +269,12 @@ esm_proc_dedicated_eps_bearer_context_accept (
       /*
        * The EPS bearer context was already in ACTIVE state
        */
-      LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already ACTIVE\n", ebi);
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already ACTIVE\n", ebi);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 /****************************************************************************
@@ -310,8 +311,8 @@ esm_proc_dedicated_eps_bearer_context_reject (
 {
   int                                     rc;
 
-  LOG_FUNC_IN (LOG_NAS_ESM);
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "not accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "not accepted by the UE (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
   /*
    * Stop T3485 timer if running
    */
@@ -334,7 +335,7 @@ esm_proc_dedicated_eps_bearer_context_reject (
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 
@@ -374,7 +375,7 @@ static void                            *
 _dedicated_eps_bearer_activate_t3485_handler (
   void *args)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
 
   /*
@@ -386,7 +387,7 @@ _dedicated_eps_bearer_activate_t3485_handler (
    * Increment the retransmission counter
    */
   data->count += 1;
-  LOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3485 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n", data->ue_id, data->ebi, data->count);
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - T3485 timer expired (ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d), " "retransmission counter = %d\n", data->ue_id, data->ebi, data->count);
 
   if (data->count < DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX) {
     /*
@@ -415,7 +416,7 @@ _dedicated_eps_bearer_activate_t3485_handler (
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, NULL);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, NULL);
 }
 
 /*
@@ -447,7 +448,7 @@ _dedicated_eps_bearer_activate (
   int ebi,
   const OctetString * msg)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc;
 
@@ -470,5 +471,5 @@ _dedicated_eps_bearer_activate (
     rc = esm_ebr_start_timer (ctx, ebi, msg, T3485_DEFAULT_VALUE, _dedicated_eps_bearer_activate_t3485_handler);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

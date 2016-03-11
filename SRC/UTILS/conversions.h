@@ -311,6 +311,7 @@ do {                                                    \
 #define OCTET_STRING_TO_MME_CODE OCTET_STRING_TO_INT8
 #define OCTET_STRING_TO_M_TMSI   OCTET_STRING_TO_INT32
 #define OCTET_STRING_TO_MME_GID  OCTET_STRING_TO_INT16
+#define OCTET_STRING_TO_CSG_ID   OCTET_STRING_TO_INT27
 
 void hexa_to_ascii(uint8_t *from, char *to, size_t length);
 

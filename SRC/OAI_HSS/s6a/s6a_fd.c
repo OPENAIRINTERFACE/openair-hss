@@ -36,6 +36,7 @@
 #include "hss_config.h"
 #include "db_proto.h"
 #include "s6a_proto.h"
+#include "log.h"
 
 /* session handler for s6a sessions state machine */
 static struct session_handler          *s6a_reg = NULL;
@@ -168,7 +169,7 @@ s6a_init (
   struct disp_when                        when;
   char                                    why[100];
 
-  fprintf (stdout, "Initializing s6a layer\n");
+  FPRINTF_NOTICE ( "Initializing s6a layer\n");
   ret = fd_core_initialize ();
 
   if (ret != 0) {
@@ -261,9 +262,9 @@ s6a_init (
     goto err;
   }
 
-  fprintf (stdout, "Initializing s6a layer: DONE\n");
+  FPRINTF_NOTICE ( "Initializing s6a layer: DONE\n");
   return 0;
 err:
-  fprintf (stdout, "Initializing s6a layer: FAILED (%s)\n", why);
+  FPRINTF_NOTICE ( "Initializing s6a layer: FAILED (%s)\n", why);
   return -1;
 }

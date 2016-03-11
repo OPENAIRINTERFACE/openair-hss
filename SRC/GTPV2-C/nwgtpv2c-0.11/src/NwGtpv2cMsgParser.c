@@ -138,7 +138,7 @@ extern                                  "C" {
         thiz->mandatoryIeCount++;
       }
     } else {
-      LOG_ERROR (LOG_GTPV2C, "Cannot add IE to parser for type %u and instance %u. IE info already exists!\n", ieType, ieInstance);
+      OAILOG_ERROR (LOG_GTPV2C, "Cannot add IE to parser for type %u and instance %u. IE info already exists!\n", ieType, ieInstance);
     }
 
     return NW_OK;
@@ -156,7 +156,7 @@ extern                                  "C" {
       thiz->ieParseInfo[ieType][ieInstance].ieReadCallbackArg = ieReadCallbackArg;
       thiz->ieParseInfo[ieType][ieInstance].iePresence = iePresence;
     } else {
-      LOG_ERROR (LOG_GTPV2C, "Cannot update IE info for type %u and instance %u. IE info does not exist!\n", ieType, ieInstance);
+      OAILOG_ERROR (LOG_GTPV2C, "Cannot update IE info for type %u and instance %u. IE info does not exist!\n", ieType, ieInstance);
     }
 
     return NW_OK;
@@ -200,7 +200,7 @@ extern                                  "C" {
       if ((thiz->ieParseInfo[pIe->t][pIe->i].iePresence)) {
         thiz->pIe[pIe->t][pIe->i] = (uint8_t *) pIeStart;
         pMsg->pIe[pIe->t][pIe->i] = (uint8_t *) pIeStart;
-        LOG_DEBUG (LOG_GTPV2C,  "Received IE %u of length %u!\n", pIe->t, ieLength);
+        OAILOG_DEBUG (LOG_GTPV2C,  "Received IE %u of length %u!\n", pIe->t, ieLength);
 
         if ((thiz->ieParseInfo[pIe->t][pIe->i].ieReadCallback) != NULL) {
           rc = thiz->ieParseInfo[pIe->t][pIe->i].ieReadCallback (pIe->t, ieLength, pIe->i, pIeStart + 4, thiz->ieParseInfo[pIe->t][pIe->i].ieReadCallbackArg);
@@ -209,27 +209,27 @@ extern                                  "C" {
             if (thiz->ieParseInfo[pIe->t][pIe->i].iePresence == NW_GTPV2C_IE_PRESENCE_MANDATORY)
               mandatoryIeCount++;
           } else {
-            LOG_ERROR (LOG_GTPV2C, "Error while parsing IE %u with instance %u and length %u!\n", pIe->t, pIe->i, ieLength);
+            OAILOG_ERROR (LOG_GTPV2C, "Error while parsing IE %u with instance %u and length %u!\n", pIe->t, pIe->i, ieLength);
             break;
           }
         } else {
           if ((thiz->ieReadCallback) != NULL) {
-            LOG_DEBUG (LOG_GTPV2C,  "Received IE %u of length %u!\n", pIe->t, ieLength);
+            OAILOG_DEBUG (LOG_GTPV2C,  "Received IE %u of length %u!\n", pIe->t, ieLength);
             rc = thiz->ieReadCallback (pIe->t, ieLength, pIe->i, pIeStart + 4, thiz->ieReadCallbackArg);
 
             if (NW_OK == rc) {
               if (thiz->ieParseInfo[pIe->t][pIe->i].iePresence == NW_GTPV2C_IE_PRESENCE_MANDATORY)
                 mandatoryIeCount++;
             } else {
-              LOG_ERROR (LOG_GTPV2C, "Error while parsing IE %u of length %u!\n", pIe->t, ieLength);
+              OAILOG_ERROR (LOG_GTPV2C, "Error while parsing IE %u of length %u!\n", pIe->t, ieLength);
               break;
             }
           } else {
-            LOG_WARNING (LOG_GTPV2C,  "No parse method defined for received IE type %u of length %u in message %u!\n", pIe->t, ieLength, thiz->msgType);
+            OAILOG_WARNING (LOG_GTPV2C,  "No parse method defined for received IE type %u of length %u in message %u!\n", pIe->t, ieLength, thiz->msgType);
           }
         }
       } else {
-        LOG_WARNING (LOG_GTPV2C,  "Unexpected IE %u of length %u received in msg %u!\n", pIe->t, ieLength, thiz->msgType);
+        OAILOG_WARNING (LOG_GTPV2C,  "Unexpected IE %u of length %u received in msg %u!\n", pIe->t, ieLength, thiz->msgType);
       }
 
       pIeStart += (ieLength + 4);
@@ -255,7 +255,7 @@ extern                                  "C" {
         }
       }
 
-      LOG_WARNING (LOG_GTPV2C,  "Unknown mandatory IE missing. Parser formed incorrectly! %u:%u\n", mandatoryIeCount, thiz->mandatoryIeCount);
+      OAILOG_WARNING (LOG_GTPV2C,  "Unknown mandatory IE missing. Parser formed incorrectly! %u:%u\n", mandatoryIeCount, thiz->mandatoryIeCount);
       return NW_GTPV2C_MANDATORY_IE_MISSING;
     }
 

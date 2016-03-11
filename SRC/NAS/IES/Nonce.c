@@ -80,14 +80,14 @@ dump_nonce_xml (
   Nonce * nonce,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Nonce>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Nonce>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <Nonce value>%u</Nonce value>\n", *nonce);
-  LOG_DEBUG (LOG_NAS, "</Nonce>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <Nonce value>%u</Nonce value>\n", *nonce);
+  OAILOG_DEBUG (LOG_NAS, "</Nonce>\n");
 }

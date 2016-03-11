@@ -46,7 +46,7 @@ decode_attach_request (
    */
   if ((decoded_result = decode_u8_eps_attach_type (&attach_request->epsattachtype, 0, *(buffer + decoded) & 0x0f, len - decoded)) < 0) {
     //         return decoded_result;
-    LOG_FUNC_RETURN (LOG_NAS_EMM, decoded_result);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoded_result);
   }
 
   if ((decoded_result = decode_u8_nas_key_set_identifier (&attach_request->naskeysetidentifier, 0, *(buffer + decoded) >> 4, len - decoded)) < 0) {
@@ -246,7 +246,7 @@ decode_attach_request (
             ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_IEI,
             buffer + decoded, len - decoded)) <= 0) {
         //         return decoded_result;
-        LOG_FUNC_RETURN (LOG_NAS_EMM, decoded_result);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoded_result);
       }
       
       decoded += decoded_result;

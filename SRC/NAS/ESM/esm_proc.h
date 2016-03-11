@@ -54,9 +54,6 @@ Description Defines the EPS Session Management procedures executed at
  * -------------------------
  */
 
-#define T3485_DEFAULT_VALUE 8   /* Activate EPS bearer request   */
-#define T3495_DEFAULT_VALUE 8   /* Deactivate EPS bearer request */
-
 /* Type of PDN address */
 typedef enum {
   ESM_PDN_TYPE_IPV4 = NET_PDN_TYPE_IPV4,

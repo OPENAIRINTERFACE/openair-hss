@@ -110,14 +110,14 @@ dump_imeisv_request_xml (
   ImeisvRequest * imeisvrequest,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Imeisv Request>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Imeisv Request>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <IMEISV request value>%u</IMEISV request value>\n", *imeisvrequest);
-  LOG_DEBUG (LOG_NAS, "</Imeisv Request>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <IMEISV request value>%u</IMEISV request value>\n", *imeisvrequest);
+  OAILOG_DEBUG (LOG_NAS, "</Imeisv Request>\n");
 }

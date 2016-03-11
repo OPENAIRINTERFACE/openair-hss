@@ -110,14 +110,14 @@ dump_esm_information_transfer_flag_xml (
   EsmInformationTransferFlag * esminformationtransferflag,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Esm Information Transfer Flag>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Esm Information Transfer Flag>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <EIT value>%u</EIT value>\n", *esminformationtransferflag);
-  LOG_DEBUG (LOG_NAS, "</Esm Information Transfer Flag>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <EIT value>%u</EIT value>\n", *esminformationtransferflag);
+  OAILOG_DEBUG (LOG_NAS, "</Esm Information Transfer Flag>\n");
 }

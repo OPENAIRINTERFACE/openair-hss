@@ -25,6 +25,8 @@
 #include <stdint.h>
 
 
+#include "3gpp_24.007.h"
+#include "3gpp_24.301.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "BearerResourceModificationReject.h"

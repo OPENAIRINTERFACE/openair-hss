@@ -44,6 +44,7 @@ function help()
   echo_error "  -b, --s6a-bind-addr-list       addr_list  Optionaly, s6a server bind addresses can be specified here"
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
   echo_error "  -d, --debug                               Compile with debug informations."
+  echo_error "  -D, --daemon                              Build HSS as a daemon."
   echo_error "  -f, --fqdn                     fqdn       HSS Fully Qualified Domain Name (if not specified default is `hostname --fqdn`)."
   echo_error "  -F, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
@@ -55,7 +56,7 @@ function help()
   echo_error "  -v, --verbose                             Build process verbose."
   echo_error " "
   echo_error "  -r, --realm                    realm      Realm of the HSS (optional parameter)."
-  echo_error "  -R, --random                   boolean    If false HSS random function returns always 0 (allowed values: {true, false})."
+  echo_error "  -R, --random                   boolean    If false HSS random function returns always the same value (allowed values: {true, false})."
   echo_error "  -x, --clean-certificates                  Clean the HSS certificates"
   echo_error " "
   echo_error "Examples:"
@@ -67,12 +68,17 @@ function help()
   echo_error "build_hss --debug "
 }
 
+NAME=oai_hssd
+DAEMON=/usr/sbin/$NAME
+DAEMON_ARGS=""
+PIDFILE=/var/run/$NAME.pid
 
 
 function main()
 {
   local -i clean=0
   local -i clean_certificates=0
+  local -i daemon=0
   local -i verbose=0
   local -i mme_s6a_server=0
   local -i var_check_install_oai_software=0
@@ -101,6 +107,12 @@ function main()
       -d | --debug)
         cmake_args="$cmake_args -DDEBUG=1"
         echo "Compile with debug informations"
+        shift;
+        ;;
+      -D | --daemon)
+        daemon=1
+        cmake_args="$cmake_args -DDAEMONIZE=1"
+        echo "Build HSS as a daemon"
         shift;
         ;;
       -f | --fqdn)
@@ -263,10 +275,17 @@ function main()
     mkdir -m 777 -p -v BUILD
   fi
   cd ./BUILD
-  cmake  $cmake_args ..
+  cmake  $cmake_args .. > /dev/null 
   make $make_args
   chmod -Rf 777 *
   $SUDO make install  
+  if [ $daemon -ne 0 ]; then
+    do_stop_daemon
+    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/HSS/BUILD/oai_hss /usr/sbin/oai_hssd && echo_success "oai_hssd installed"
+  else
+    $SUDO killall -q oai_hss
+    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/HSS/BUILD/oai_hss /usr/local/bin/ && echo_success "oai_hss installed"
+  fi
 }
 
 

@@ -48,7 +48,7 @@ MESSAGE_DEF(NAS_UL_ESM_PROTECTED_MSG,           MESSAGE_PRIORITY_MED,   itti_nas
 /* */
 MESSAGE_DEF(NAS_PAGING_IND,                     MESSAGE_PRIORITY_MED,   itti_nas_paging_ind_t,           nas_paging_ind)
 MESSAGE_DEF(NAS_PDN_CONNECTIVITY_REQ,           MESSAGE_PRIORITY_MED,   itti_nas_pdn_connectivity_req_t, nas_pdn_connectivity_req)
-MESSAGE_DEF(NAS_CONNECTION_ESTABLISHMENT_IND,   MESSAGE_PRIORITY_MED,   itti_nas_conn_est_ind_t,         nas_conn_est_ind)
+MESSAGE_DEF(NAS_INITIAL_UE_MESSAGE,             MESSAGE_PRIORITY_MED,   itti_nas_initial_ue_message_t,   nas_initial_ue_message)
 MESSAGE_DEF(NAS_CONNECTION_ESTABLISHMENT_CNF,   MESSAGE_PRIORITY_MED,   itti_nas_conn_est_cnf_t,         nas_conn_est_cnf)
 MESSAGE_DEF(NAS_CONNECTION_RELEASE_IND,         MESSAGE_PRIORITY_MED,   itti_nas_conn_rel_ind_t,         nas_conn_rel_ind)
 MESSAGE_DEF(NAS_UPLINK_DATA_IND,                MESSAGE_PRIORITY_MED,   itti_nas_ul_data_ind_t,          nas_ul_data_ind)

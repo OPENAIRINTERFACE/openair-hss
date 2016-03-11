@@ -58,7 +58,7 @@ s11_sgw_ulp_process_stack_req_cb (
 
   switch (pUlpApi->apiType) {
   case NW_GTPV2C_ULP_API_INITIAL_REQ_IND:
-    LOG_DEBUG (LOG_S11, "Received initial req indication\n");
+    OAILOG_DEBUG (LOG_S11, "Received initial req indication\n");
 
     switch (pUlpApi->apiInfo.initialReqIndInfo.msgType) {
     case NW_GTP_CREATE_SESSION_REQ:
@@ -74,14 +74,14 @@ s11_sgw_ulp_process_stack_req_cb (
       break;
 
     default:
-      LOG_WARNING (LOG_S11,  "Received unhandled message type %d\n", pUlpApi->apiInfo.initialReqIndInfo.msgType);
+      OAILOG_WARNING (LOG_S11,  "Received unhandled message type %d\n", pUlpApi->apiInfo.initialReqIndInfo.msgType);
       break;
     }
 
     break;
 
   default:
-    LOG_ERROR (LOG_S11, "Received unknown stack req message %d\n", pUlpApi->apiType);
+    OAILOG_ERROR (LOG_S11, "Received unknown stack req message %d\n", pUlpApi->apiType);
     break;
   }
 
@@ -121,7 +121,7 @@ s11_sgw_log_wrapper (
   uint32_t line,
   NwCharT * logStr)
 {
-  LOG_DEBUG (LOG_S11, "%s\n", logStr);
+  OAILOG_DEBUG (LOG_S11, "%s\n", logStr);
   return NW_OK;
 }
 
@@ -166,7 +166,7 @@ s11_sgw_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_S11);
-  LOG_START_USE ();
+  OAILOG_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -183,38 +183,38 @@ s11_sgw_thread (
         udp_data_ind_t                         *udp_data_ind;
 
         udp_data_ind = &received_message_p->ittiMsg.udp_data_ind;
-        LOG_DEBUG (LOG_S11, "Processing new data indication from UDP\n");
+        OAILOG_DEBUG (LOG_S11, "Processing new data indication from UDP\n");
         rc = nwGtpv2cProcessUdpReq (s11_sgw_stack_handle, udp_data_ind->buffer, udp_data_ind->buffer_length, udp_data_ind->peer_port, udp_data_ind->peer_address);
         DevAssert (rc == NW_OK);
       }
       break;
 
     case SGW_CREATE_SESSION_RESPONSE:{
-        LOG_DEBUG (LOG_S11, "Received create session response from S-PGW APP\n");
+        OAILOG_DEBUG (LOG_S11, "Received create session response from S-PGW APP\n");
         s11_sgw_handle_create_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_create_session_response);
       }
       break;
 
     case SGW_MODIFY_BEARER_RESPONSE:{
-        LOG_DEBUG (LOG_S11, "Received modify bearer response from S-PGW APP\n");
+        OAILOG_DEBUG (LOG_S11, "Received modify bearer response from S-PGW APP\n");
         s11_sgw_handle_modify_bearer_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_modify_bearer_response);
       }
       break;
 
     case SGW_DELETE_SESSION_RESPONSE:{
-        LOG_DEBUG (LOG_S11, "Received delete session response from S-PGW APP\n");
+        OAILOG_DEBUG (LOG_S11, "Received delete session response from S-PGW APP\n");
         s11_sgw_handle_delete_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_delete_session_response);
       }
       break;
 
     case TIMER_HAS_EXPIRED:{
-        LOG_DEBUG (LOG_S11, "Processing timeout for timer_id 0x%lx and arg %p\n", received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
+        OAILOG_DEBUG (LOG_S11, "Processing timeout for timer_id 0x%lx and arg %p\n", received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
         DevAssert (nwGtpv2cProcessTimeout (received_message_p->ittiMsg.timer_has_expired.arg) == NW_OK);
       }
       break;
 
     default:{
-        LOG_ERROR (LOG_S11, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        OAILOG_ERROR (LOG_S11, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
@@ -242,7 +242,7 @@ s11_send_init_udp (
   message_p->ittiMsg.udp_init.port = port_number;
   //LG message_p->ittiMsg.udpInit.address = "0.0.0.0"; //ANY address
   message_p->ittiMsg.udp_init.address = address;
-  LOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s\n", message_p->ittiMsg.udp_init.address);
+  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s\n", message_p->ittiMsg.udp_init.address);
   return itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
 }
 
@@ -258,10 +258,10 @@ s11_sgw_init (
   struct in_addr                          addr;
   char                                   *s11_address_str = NULL;
 
-  LOG_DEBUG (LOG_S11, "Initializing S11 interface\n");
+  OAILOG_DEBUG (LOG_S11, "Initializing S11 interface\n");
 
   if (nwGtpv2cInitialize (&s11_sgw_stack_handle) != NW_OK) {
-    LOG_ERROR (LOG_S11, "Failed to initialize gtpv2-c stack\n");
+    OAILOG_ERROR (LOG_S11, "Failed to initialize gtpv2-c stack\n");
     goto fail;
   }
 
@@ -289,7 +289,7 @@ s11_sgw_init (
   DevAssert (NW_OK == nwGtpv2cSetLogMgrEntity (s11_sgw_stack_handle, &logMgr));
 
   if (itti_create_task (TASK_S11, &s11_sgw_thread, NULL) < 0) {
-    LOG_ERROR (LOG_S11, "gtpv1u phtread_create: %s\n", strerror (errno));
+    OAILOG_ERROR (LOG_S11, "gtpv1u phtread_create: %s\n", strerror (errno));
     goto fail;
   }
 
@@ -300,9 +300,9 @@ s11_sgw_init (
   s11_address_str = inet_ntoa (addr);
   DevAssert (s11_address_str );
   s11_send_init_udp (s11_address_str, 2123);
-  LOG_DEBUG (LOG_S11, "Initializing S11 interface: DONE\n");
+  OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: DONE\n");
   return ret;
 fail:
-  LOG_DEBUG (LOG_S11, "Initializing S11 interface: FAILURE\n");
+  OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: FAILURE\n");
   return RETURNerror;
 }

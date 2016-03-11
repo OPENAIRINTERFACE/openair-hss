@@ -54,17 +54,32 @@ static void s6a_exit(void);
 
 //------------------------------------------------------------------------------
 static void fd_gnutls_debug (
-  int level,
+  int loglevel,
   const char *str)
 {
-  LOG_EXTERNAL (level, LOG_S6A, "[GTLS] %s", str);
+  OAILOG_EXTERNAL (loglevel, LOG_S6A, "[GTLS] %s", str);
+}
+
+//------------------------------------------------------------------------------
+// callback for freeDiameter logs
+static void oai_fd_logger(int loglevel, const char * format, va_list args)
+{
+#define FD_LOG_MAX_MESSAGE_LENGTH 8192
+  char       buffer[FD_LOG_MAX_MESSAGE_LENGTH];
+  int        rv = 0;
+
+  rv = vsnprintf (buffer, 8192, format, args);
+  if ((0 > rv) || ((FD_LOG_MAX_MESSAGE_LENGTH) < rv)) {
+    return;
+  }
+  OAILOG_EXTERNAL (loglevel, LOG_S6A, "%s\n", buffer);
 }
 
 //------------------------------------------------------------------------------
 void *s6a_thread (void *args)
 {
   itti_mark_task_ready (TASK_S6A);
-  LOG_START_USE ();
+  OAILOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
@@ -93,7 +108,7 @@ void *s6a_thread (void *args)
       }
       break;
     default:{
-        LOG_DEBUG (LOG_S6A, "Unkwnon message ID %d: %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        OAILOG_DEBUG (LOG_S6A, "Unkwnon message ID %d: %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
@@ -109,7 +124,7 @@ int s6a_init (
 {
   int                                     ret;
 
-  LOG_DEBUG (LOG_S6A, "Initializing S6a interface\n");
+  OAILOG_DEBUG (LOG_S6A, "Initializing S6a interface\n");
 
   memset (&s6a_fd_cnf, 0, sizeof (s6a_fd_cnf_t));
 
@@ -125,27 +140,38 @@ int s6a_init (
 
 
   /*
-   * Initializing freeDiameter core
+   * Initializing freeDiameter logger
    */
-  LOG_DEBUG (LOG_S6A, "Initializing freeDiameter core...\n");
-  ret = fd_core_initialize ();
+  ret = fd_log_handler_register(oai_fd_logger);
   if (ret) {
-    LOG_ERROR (LOG_S6A, "An error occurred during freeDiameter core library initialization: %d\n", ret);
+    OAILOG_ERROR (LOG_S6A, "An error occurred during freeDiameter log handler registration: %d\n", ret);
     return ret;
   } else {
-    LOG_DEBUG (LOG_S6A, "Initializing freeDiameter core done\n");
+    OAILOG_DEBUG (LOG_S6A, "Initializing freeDiameter log handler done\n");
+  }
+
+  /*
+   * Initializing freeDiameter core
+   */
+  OAILOG_DEBUG (LOG_S6A, "Initializing freeDiameter core...\n");
+  ret = fd_core_initialize ();
+  if (ret) {
+    OAILOG_ERROR (LOG_S6A, "An error occurred during freeDiameter core library initialization: %d\n", ret);
+    return ret;
+  } else {
+    OAILOG_DEBUG (LOG_S6A, "Initializing freeDiameter core done\n");
   }
 
 
+  OAILOG_DEBUG (LOG_S6A, "Default ext path: %s\n", DEFAULT_EXTENSIONS_PATH);
 
-  LOG_DEBUG (LOG_S6A, "Default ext path: %s\n", DEFAULT_EXTENSIONS_PATH);
 
   ret = fd_core_parseconf (mme_config_p->s6a_config.conf_file);
   if (ret) {
-    LOG_ERROR (LOG_S6A, "An error occurred during fd_core_parseconf file : %s.\n", mme_config_p->s6a_config.conf_file);
+    OAILOG_ERROR (LOG_S6A, "An error occurred during fd_core_parseconf file : %s.\n", mme_config_p->s6a_config.conf_file);
     return ret;
   } else {
-    LOG_DEBUG (LOG_S6A, "fd_core_parseconf done\n");
+    OAILOG_DEBUG (LOG_S6A, "fd_core_parseconf done\n");
   }
 
   /*
@@ -154,7 +180,7 @@ int s6a_init (
   if (gnutls_log_level) {
     gnutls_global_set_log_function ((gnutls_log_func) fd_gnutls_debug);
     gnutls_global_set_log_level (gnutls_log_level);
-    LOG_DEBUG (LOG_S6A, "Enabled GNUTLS debug at level %d\n", gnutls_log_level);
+    OAILOG_DEBUG (LOG_S6A, "Enabled GNUTLS debug at level %d\n", gnutls_log_level);
   }
 
   /*
@@ -162,28 +188,28 @@ int s6a_init (
    */
   ret = fd_core_start ();
   if (ret) {
-    LOG_ERROR (LOG_S6A, "An error occurred during freeDiameter core library start\n");
+    OAILOG_ERROR (LOG_S6A, "An error occurred during freeDiameter core library start\n");
     return ret;
   } else {
-    LOG_DEBUG (LOG_S6A, "fd_core_start done\n");
+    OAILOG_DEBUG (LOG_S6A, "fd_core_start done\n");
   }
 
 
 
   ret = fd_core_waitstartcomplete ();
   if (ret) {
-    LOG_ERROR (LOG_S6A, "An error occurred during fd_core_waitstartcomplete.\n");
+    OAILOG_ERROR (LOG_S6A, "An error occurred during fd_core_waitstartcomplete.\n");
     return ret;
   } else {
-    LOG_DEBUG (LOG_S6A, "fd_core_waitstartcomplete done\n");
+    OAILOG_DEBUG (LOG_S6A, "fd_core_waitstartcomplete done\n");
   }
 
   ret = s6a_fd_init_dict_objs ();
   if (ret) {
-    LOG_ERROR (LOG_S6A, "An error occurred during s6a_fd_init_dict_objs.\n");
+    OAILOG_ERROR (LOG_S6A, "An error occurred during s6a_fd_init_dict_objs.\n");
     return ret;
   } else {
-    LOG_DEBUG (LOG_S6A, "s6a_fd_init_dict_objs done\n");
+    OAILOG_DEBUG (LOG_S6A, "s6a_fd_init_dict_objs done\n");
   }
 
   /*
@@ -192,10 +218,10 @@ int s6a_init (
   CHECK_FCT (s6a_fd_new_peer ());
 
   if (itti_create_task (TASK_S6A, &s6a_thread, NULL) < 0) {
-    LOG_ERROR (LOG_S6A, "s6a create task\n");
+    OAILOG_ERROR (LOG_S6A, "s6a create task\n");
     return RETURNerror;
   }
-  LOG_DEBUG (LOG_S6A, "Initializing S6a interface: DONE\n");
+  OAILOG_DEBUG (LOG_S6A, "Initializing S6a interface: DONE\n");
 
   return RETURNok;
 }
@@ -207,12 +233,12 @@ static void s6a_exit(void)
   /* Initialize shutdown of the framework */
   rv = fd_core_shutdown();
   if (rv) {
-    fprintf (stderr, "An error occurred during fd_core_shutdown().\n");
+    OAI_FPRINTF_ERR ("An error occurred during fd_core_shutdown().\n");
   }
 
   /* Wait for the shutdown to be complete -- this should always be called after fd_core_shutdown */
   rv = fd_core_wait_shutdown_complete();
   if (rv) {
-    fprintf (stderr, "An error occurred during fd_core_wait_shutdown_complete().\n");
+    OAI_FPRINTF_ERR ("An error occurred during fd_core_wait_shutdown_complete().\n");
   }
 }

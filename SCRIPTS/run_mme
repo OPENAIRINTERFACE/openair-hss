@@ -47,6 +47,7 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -b, --breakpoint      location      Set breakpoint location for GDB (ex location: Attach.c:272)."
+  echo_error "  -D, --daemon                        Run the daemon."
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -h, --help                          Print this help."
   echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in mme config file."
@@ -74,9 +75,14 @@ function control_c()
   exit $?
 }
 
+NAME=mmed
+DAEMON=/usr/sbin/$NAME
+DAEMON_ARGS=""
+PIDFILE=/var/run/$NAME.pid
 function main()
 {
   local -i run_gdb=0
+  local -i run_daemon=0
   local -i set_network_interfaces=0
   local    exe_arguments=" "
   local -r mme_default_config_file="/usr/local/etc/oai/mme.conf"
@@ -94,6 +100,11 @@ function main()
         echo "setting breakpoint location to: $breakpoint_location"
         echo "setting GDB flag to: $run_gdb"
         shift 2;
+        ;;
+      -D | --daemon)
+        run_daemon=1
+        echo "Run MME as a daemon"
+        shift;
         ;;
       -g | --gdb)
         run_gdb=1
@@ -151,8 +162,14 @@ function main()
 
   check_gtpu_kmodule_installed
 
-  if [ ! -e /usr/local/bin/mme ]; then
+  if [ "$run_daemon" -eq 1 ]; then
+    if [ ! -e /usr/sbin/mmed ]; then
+      echo_fatal "Cannot find /usr/sbin/mmed executable, have a look at the output of build_mme  -D ... executable"
+    fi
+  else
+    if [ ! -e /usr/local/bin/mme ]; then
     echo_fatal "Cannot find /usr/local/bin/mme executable, have a look at the output of build_mme executable"
+    fi
   fi
 
 
@@ -162,6 +179,23 @@ function main()
 
   if [ $set_network_interfaces -eq 1 ]; then
     set_mme_network_interfaces $mme_config_file
+  fi
+  if [ "$run_daemon" -eq 1 ]; then
+    # TODO options
+    $SUDO killall -q mme
+    do_stop_daemon
+    case "$?" in
+      0) echo_success "MME daemon was running -> stopped";;
+      1) ;;
+      2) echo_fatal "FAILURE: MME daemon was running -> could not stop it";;
+    esac
+    do_start_daemon
+    case "$?" in
+      0) echo_success "MME daemon started";;
+      1) echo_fatal "FAILURE: MME daemon was already running";;
+      2) echo_fatal "FAILURE: Cannot start MME daemon";;
+    esac
+    exit 0
   fi
 
 

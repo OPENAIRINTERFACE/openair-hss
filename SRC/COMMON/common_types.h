@@ -34,6 +34,8 @@
 
 #include <stdint.h>
 #include "3gpp_23.003.h"
+#include "3gpp_24.007.h"
+#include "3gpp_24.301.h"
 #include "3gpp_36.401.h"
 #include "security_types.h"
 #include "queue.h"
@@ -113,7 +115,6 @@ typedef enum {
 
 typedef uint64_t bitrate_t;
 
-typedef uint8_t  ebi_t;
 typedef char*    APN_t;
 typedef uint8_t  APNRestriction_t;
 typedef uint8_t  DelayValue_t;

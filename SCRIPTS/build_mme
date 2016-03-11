@@ -41,6 +41,7 @@ function help()
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
   echo_error "  -C, --conf-files-only                     Generate only MME configuration files (no build)"
+  echo_error "  -D, --daemon                              Build MME as a daemon."
   echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
   echo_error "  -H, --remote-hss                hostname  HSS hostname (with FQDN), default is this host (`hostname --fqdn`)."
@@ -64,12 +65,17 @@ function help()
 }
 
 
+NAME=mmed
+DAEMON=/usr/sbin/$NAME
+DAEMON_ARGS=""
+PIDFILE=/var/run/$NAME.pid
 
 function main()
 {
   local -i clean=0
   local -i clean_certificates=0
   local -i conf_files_only=0
+  local -i daemon=0
   local -i force=0
   local -i verbose=0
   local -i s6a_server=0
@@ -93,6 +99,12 @@ function main()
       -C | --conf-files-only)
         conf_files_only=1
         echo "Generate only conf files (no build)"
+        shift;
+        ;;
+      -D | --daemon)
+        daemon=1
+        cmake_args="$cmake_args -DDAEMONIZE=1"
+        echo "Build MME as a daemon"
         shift;
         ;;
       -f | --force)
@@ -252,11 +264,18 @@ function main()
   echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
   
   cd ./BUILD
-  cmake  $cmake_args ..
+  cmake  $cmake_args .. > /dev/null 
   
   if [ $conf_files_only -eq 0 ]; then
     compilations MME mme mme 
+    if [ $daemon -ne 0 ]; then
+      # TODO /usr/sbin ?
+      do_stop_daemon
+      $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/mme /usr/local/bin/mmed && echo_success "mmed installed"
+    else
+      $SUDO killall -q mme
     $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/mme /usr/local/bin && echo_success "mme installed" 
+    fi 
   fi
   $SUDO cp -upv mme.conf /usr/local/etc/oai
   $SUDO cp -upv mme_fd.conf $FREEDIAMETER_PREFIX/etc/freeDiameter

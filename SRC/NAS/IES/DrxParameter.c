@@ -88,17 +88,17 @@ dump_drx_parameter_xml (
   DrxParameter * drxparameter,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Drx Parameter>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Drx Parameter>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <SPLIT PG CYCLE CODE>%u</SPLIT PG CYCLE CODE>\n", drxparameter->splitpgcyclecode);
-  LOG_DEBUG (LOG_NAS, "    <CN specific DRX cycle length coefficient and DRX value for S1 mode>%u</CN specific DRX cycle length coefficient and DRX value for S1 mode>\n", drxparameter->cnspecificdrxcyclelengthcoefficientanddrxvaluefors1mode);
-  LOG_DEBUG (LOG_NAS, "    <SPLIT on CCCH>%u</SPLIT on CCCH>\n", drxparameter->splitonccch);
-  LOG_DEBUG (LOG_NAS, "    <non DRX timer>%u</non DRX timer>\n", drxparameter->nondrxtimer);
-  LOG_DEBUG (LOG_NAS, "</Drx Parameter>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <SPLIT PG CYCLE CODE>%u</SPLIT PG CYCLE CODE>\n", drxparameter->splitpgcyclecode);
+  OAILOG_DEBUG (LOG_NAS, "    <CN specific DRX cycle length coefficient and DRX value for S1 mode>%u</CN specific DRX cycle length coefficient and DRX value for S1 mode>\n", drxparameter->cnspecificdrxcyclelengthcoefficientanddrxvaluefors1mode);
+  OAILOG_DEBUG (LOG_NAS, "    <SPLIT on CCCH>%u</SPLIT on CCCH>\n", drxparameter->splitonccch);
+  OAILOG_DEBUG (LOG_NAS, "    <non DRX timer>%u</non DRX timer>\n", drxparameter->nondrxtimer);
+  OAILOG_DEBUG (LOG_NAS, "</Drx Parameter>\n");
 }

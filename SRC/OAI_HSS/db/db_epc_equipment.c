@@ -32,6 +32,7 @@
 
 #include "hss_config.h"
 #include "db_proto.h"
+#include "log.h"
 
 int
 hss_mysql_query_mmeidentity (
@@ -48,12 +49,12 @@ hss_mysql_query_mmeidentity (
 
   memset (mme_identity_p, 0, sizeof (mysql_mme_identity_t));
   sprintf (query, "SELECT mmehost,mmerealm FROM mmeidentity WHERE " "mmeidentity.idmmeidentity='%d' ", id_mme_identity);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end ();
     return EINVAL;
   }
@@ -97,12 +98,12 @@ hss_mysql_check_epc_equipment (
   }
 
   sprintf (query, "SELECT idmmeidentity FROM mmeidentity WHERE mmeidentity.mmehost='%s' ", mme_identity_p->mme_host);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end ();
     return EINVAL;
   }

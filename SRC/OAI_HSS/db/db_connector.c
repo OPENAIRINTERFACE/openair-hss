@@ -34,6 +34,7 @@
 
 #include "hss_config.h"
 #include "db_proto.h"
+#include "log.h"
 
 extern void                             ComputeOPc (
   const uint8_t const kP[16],
@@ -67,15 +68,15 @@ hss_mysql_connect (
   const int                               mysql_reconnect_val = 1;
 
   if ((hss_config_p->mysql_server == NULL) || (hss_config_p->mysql_user == NULL) || (hss_config_p->mysql_password == NULL) || (hss_config_p->mysql_database == NULL)) {
-    DB_ERROR ("An empty name is not allowed\n");
+    FPRINTF_ERROR ( "An empty name is not allowed\n");
     return EINVAL;
   }
 
-  DB_DEBUG ("Initializing db layer\n");
+  FPRINTF_DEBUG ("Initializing db layer\n");
   db_desc = malloc (sizeof (database_t));
 
   if (db_desc == NULL) {
-    DB_DEBUG ("An error occured on MALLOC\n");
+    FPRINTF_DEBUG ("An error occured on MALLOC\n");
     return errno;
   }
 
@@ -97,7 +98,7 @@ hss_mysql_connect (
    * Try to connect to database
    */
   if (!mysql_real_connect (db_desc->db_conn, db_desc->server, db_desc->user, db_desc->password, db_desc->database, 0, NULL, 0)) {
-    DB_ERROR ("An error occured while connecting to db: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ( "An error occured while connecting to db: %s\n", mysql_error (db_desc->db_conn));
     return -1;
   }
 
@@ -105,7 +106,7 @@ hss_mysql_connect (
    * Set the multi statement ON
    */
   mysql_set_server_option (db_desc->db_conn, MYSQL_OPTION_MULTI_STATEMENTS_ON);
-  DB_DEBUG ("Initializing db layer: DONE\n");
+  FPRINTF_DEBUG ("Initializing db layer: DONE\n");
   return 0;
 }
 
@@ -136,12 +137,12 @@ hss_mysql_update_loc (
 
   sprintf (query, "SELECT `access_restriction`,`mmeidentity_idmmeidentity`," "`msisdn`,`ue_ambr_ul`,`ue_ambr_dl`,`rau_tau_timer` " "FROM `users` WHERE `users`.`imsi`='%s' ", imsi);
   memcpy (mysql_ul_ans->imsi, imsi, strlen (imsi) + 1);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end ();
     return EINVAL;
   }
@@ -200,12 +201,12 @@ hss_mysql_purge_ue (
   }
 
   sprintf (query, "UPDATE `users` SET `users`.`ms_ps_status`=\"PURGED\" " "WHERE `users`.`imsi`='%s'; " "SELECT `users`.`mmeidentity_idmmeidentity` FROM `users` " "WHERE `users`.`imsi`=%s ", mysql_pu_req->imsi, mysql_pu_req->imsi);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end ();
     return EINVAL;
   }
@@ -246,12 +247,12 @@ hss_mysql_get_user (
   }
 
   sprintf (query, "SELECT `imsi` FROM `users` WHERE `users`.`imsi`=%s ", imsi);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end ();
     return EINVAL;
   }
@@ -311,7 +312,7 @@ mysql_push_up_loc (
     query_length += sprintf (&query[query_length], " AND `mmeidentity`.`mmehost`='%s'" " AND `mmeidentity`.`mmerealm`='%s'", ul_push_p->mme_identity.mme_host, ul_push_p->mme_identity.mme_realm);
   }
 
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
@@ -337,9 +338,9 @@ mysql_push_up_loc (
       mysql_free_result (res);
     } else {                    /* no result set or error */
       if (mysql_field_count (db_desc->db_conn) == 0) {
-        DB_ERROR ("%lld rows affected\n", mysql_affected_rows (db_desc->db_conn));
+        FPRINTF_ERROR ( "%lld rows affected\n", mysql_affected_rows (db_desc->db_conn));
       } else {                  /* some error occurred */
-        DB_ERROR ("Could not retrieve result set\n");
+        FPRINTF_ERROR ( "Could not retrieve result set\n");
         break;
       }
     }
@@ -348,7 +349,7 @@ mysql_push_up_loc (
      * more results? -1 = no, >0 = error, 0 = yes (keep looping)
      */
     if ((status = mysql_next_result (db_desc->db_conn)) > 0)
-      DB_ERROR ("Could not execute statement\n");
+      FPRINTF_ERROR ( "Could not execute statement\n");
   } while (status == 0);
 
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
@@ -387,12 +388,12 @@ hss_mysql_push_rand_sqn (
 
   query_length += sprintf (&query[query_length], "'),`sqn`=%" PRIu64, sqn_decimal);
   query_length += sprintf (&query[query_length], " WHERE `users`.`imsi`='%s'", imsi);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end ();
     return EINVAL;
   }
@@ -413,9 +414,9 @@ hss_mysql_push_rand_sqn (
       mysql_free_result (res);
     } else {                    /* no result set or error */
       if (mysql_field_count (db_desc->db_conn) == 0) {
-        DB_ERROR ("%lld rows affected\n", mysql_affected_rows (db_desc->db_conn));
+        FPRINTF_ERROR ( "%lld rows affected\n", mysql_affected_rows (db_desc->db_conn));
       } else {                  /* some error occurred */
-        DB_ERROR ("Could not retrieve result set\n");
+        FPRINTF_ERROR ( "Could not retrieve result set\n");
         break;
       }
     }
@@ -424,7 +425,7 @@ hss_mysql_push_rand_sqn (
      * more results? -1 = no, >0 = error, 0 = yes (keep looping)
      */
     if ((status = mysql_next_result (db_desc->db_conn)) > 0)
-      DB_ERROR ("Could not execute statement\n");
+      FPRINTF_ERROR ( "Could not execute statement\n");
   } while (status == 0);
 
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
@@ -453,11 +454,11 @@ hss_mysql_increment_sqn (
    * + 32 = 2 ^ sizeof(IND) (see 3GPP TS. 33.102)
    */
   sprintf (query, "UPDATE `users` SET `sqn` = `sqn` + 32 WHERE `users`.`imsi`=%s", imsi);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end ();
     return EINVAL;
   }
@@ -478,9 +479,9 @@ hss_mysql_increment_sqn (
       mysql_free_result (res);
     } else {                    /* no result set or error */
       if (mysql_field_count (db_desc->db_conn) == 0) {
-        DB_ERROR ("%lld rows affected\n", mysql_affected_rows (db_desc->db_conn));
+        FPRINTF_ERROR ( "%lld rows affected\n", mysql_affected_rows (db_desc->db_conn));
       } else {                  /* some error occurred */
-        DB_ERROR ("Could not retrieve result set\n");
+        FPRINTF_ERROR ( "Could not retrieve result set\n");
         break;
       }
     }
@@ -489,7 +490,7 @@ hss_mysql_increment_sqn (
      * more results? -1 = no, >0 = error, 0 = yes (keep looping)
      */
     if ((status = mysql_next_result (db_desc->db_conn)) > 0)
-      DB_ERROR ("Could not execute statement\n");
+      FPRINTF_ERROR ( "Could not execute statement\n");
   } while (status == 0);
 
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
@@ -517,12 +518,12 @@ hss_mysql_auth_info (
   }
 
   sprintf (query, "SELECT `key`,`sqn`,`rand`,`OPc` FROM `users` WHERE `users`.`imsi`=%s ", auth_info_req->imsi);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end ();
     return EINVAL;
   }
@@ -595,12 +596,12 @@ hss_mysql_check_opc_keys (
   }
 
   sprintf (query, "SELECT `imsi`,`key`,`OPc` FROM `users` ");
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end ();
     return EINVAL;
   }
@@ -610,7 +611,7 @@ hss_mysql_check_opc_keys (
 
   while ((row = mysql_fetch_row (res))) {
     if (row[0] == NULL || row[1] == NULL) {
-      DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+      FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
       ret = EINVAL;
     } else {
       if (row[0] != NULL) {
@@ -633,10 +634,10 @@ hss_mysql_check_opc_keys (
         }
 
         update_length += sprintf (&update[update_length], "') WHERE `users`.`imsi`='%s'", (uint8_t *) row[0]);
-        DB_DEBUG ("Query: %s\n", update);
+        FPRINTF_DEBUG ("Query: %s\n", update);
 
         if (mysql_query (db_desc->db_conn, update)) {
-          DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+          FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
         } else {
           printf ("IMSI %s Updated OPc ", (uint8_t *) row[0]);
 
@@ -668,9 +669,9 @@ hss_mysql_check_opc_keys (
               mysql_free_result (res2);
             } else {            /* no result set or error */
               if (mysql_field_count (db_desc->db_conn) == 0) {
-                DB_ERROR ("%lld rows affected\n", mysql_affected_rows (db_desc->db_conn));
+                FPRINTF_ERROR ( "%lld rows affected\n", mysql_affected_rows (db_desc->db_conn));
               } else {          /* some error occurred */
-                DB_ERROR ("Could not retrieve result set\n");
+                FPRINTF_ERROR ( "Could not retrieve result set\n");
                 break;
               }
             }
@@ -679,7 +680,7 @@ hss_mysql_check_opc_keys (
              * more results? -1 = no, >0 = error, 0 = yes (keep looping)
              */
             if ((status = mysql_next_result (db_desc->db_conn)) > 0)
-              DB_ERROR ("Could not execute statement\n");
+              FPRINTF_ERROR ( "Could not execute statement\n");
           } while (status == 0);
         }
       }

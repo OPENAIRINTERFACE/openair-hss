@@ -182,7 +182,7 @@ emm_proc_common_initialize (
 {
   struct emm_common_data_s               *emm_common_data_ctx = NULL;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   assert (ue_id > 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
 
@@ -205,10 +205,10 @@ emm_proc_common_initialize (
     emm_common_data_ctx->failure = _failure;
     emm_common_data_ctx->abort = _abort;
     emm_common_data_ctx->args = args;
-    LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
 }
 
 /****************************************************************************
@@ -236,7 +236,7 @@ emm_proc_common_success (
   emm_common_success_callback_t           emm_callback = {0};
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   DevCheck (ue_id > 0, ue_id, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
   assert (emm_common_data_ctx );
@@ -248,7 +248,7 @@ emm_proc_common_success (
   }
 
   _emm_common_cleanup (ue_id);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -276,7 +276,7 @@ emm_proc_common_reject (
   int                                     rc = RETURNerror;
   emm_common_reject_callback_t            emm_callback;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   DevCheck (ue_id > 0, ue_id, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
   assert (emm_common_data_ctx );
@@ -288,7 +288,7 @@ emm_proc_common_reject (
   }
 
   _emm_common_cleanup (ue_id);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -317,7 +317,7 @@ emm_proc_common_failure (
   emm_common_failure_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   DevCheck (ue_id > 0, ue_id, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
 
@@ -332,7 +332,7 @@ emm_proc_common_failure (
   }
 
   _emm_common_cleanup (ue_id);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -360,7 +360,7 @@ emm_proc_common_abort (
   emm_common_failure_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   DevCheck (ue_id > 0, ue_id, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
 
@@ -375,7 +375,7 @@ emm_proc_common_abort (
   }
 
   _emm_common_cleanup (ue_id);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -400,11 +400,11 @@ emm_proc_common_get_args (
 {
   emm_common_data_t                      *emm_common_data_ctx = NULL;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   DevCheck (ue_id > 0, ue_id, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
   assert (emm_common_data_ctx );
-  LOG_FUNC_RETURN (LOG_NAS_EMM, emm_common_data_ctx->args);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, emm_common_data_ctx->args);
 }
 
 /****************************************************************************/

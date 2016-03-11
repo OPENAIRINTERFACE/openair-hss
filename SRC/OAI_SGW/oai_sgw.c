@@ -26,11 +26,16 @@
   \email: lionel.gauthier@eurecom.fr
 */
 
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <syslog.h>
+#include <string.h>
 
 #if HAVE_CONFIG_H
 #  include "config.h"
@@ -47,13 +52,66 @@
 #include "gtpv1u_sgw_defs.h"
 #include "oai_sgw.h"
 #include "msc.h"
+#include "pid_file.h"
+
 
 int
 main (
   int argc,
   char *argv[])
 {
-  CHECK_INIT_RETURN (LOG_INIT (LOG_SPGW_ENV, LOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
+  char   *pid_file_name = NULL;
+
+  pid_file_name = get_exe_basename();
+
+#if DAEMONIZE
+  pid_t pid, sid; // Our process ID and Session ID
+
+  // Fork off the parent process
+  pid = fork();
+  if (pid < 0) {
+    exit(EXIT_FAILURE);
+  }
+  // If we got a good PID, then we can exit the parent process.
+  if (pid > 0) {
+    exit(EXIT_SUCCESS);
+  }
+  // Change the file mode mask
+  umask(0);
+
+  // Create a new SID for the child process
+  sid = setsid();
+  if (sid < 0) {
+    exit(EXIT_FAILURE); // Log the failure
+  }
+
+  // Change the current working directory
+  if ((chdir("/")) < 0) {
+    // Log the failure
+    exit(EXIT_FAILURE);
+  }
+
+  /* Close out the standard file descriptors */
+  close(STDIN_FILENO);
+  close(STDOUT_FILENO);
+  close(STDERR_FILENO);
+
+  openlog(NULL, 0, LOG_DAEMON);
+
+  if (! is_pid_file_lock_success(pid_file_name)) {
+    closelog();
+    FREE_CHECK(pid_file_name);
+    exit (-EDEADLK);
+  }
+#else
+  if (! is_pid_file_lock_success(pid_file_name)) {
+    FREE_CHECK(pid_file_name);
+    exit (-EDEADLK);
+  }
+#endif
+
+
+  CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
   /*
    * Parse the command line for options and set the mme_config accordingly.
    */
@@ -77,5 +135,7 @@ main (
    * Handle signals here
    */
   itti_wait_tasks_end ();
+  pid_file_unlock();
+  FREE_CHECK(pid_file_name);
   return 0;
 }

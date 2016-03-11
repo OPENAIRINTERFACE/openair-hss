@@ -44,74 +44,81 @@ int s1ap_mme_itti_nas_downlink_cnf(const mme_ue_s1ap_id_t ue_id,
                                    const nas_error_code_t error_code);
 
 
-static inline void s1ap_mme_itti_mme_app_establish_ind(
+static inline void s1ap_mme_itti_mme_app_initial_ue_message(
   const sctp_assoc_id_t   assoc_id,
   const enb_ue_s1ap_id_t  enb_ue_s1ap_id,
   const mme_ue_s1ap_id_t  mme_ue_s1ap_id,
   const uint8_t * const   nas_msg,
   const size_t            nas_msg_length,
-  const long              cause,
   const tai_t      const* tai,
-  const ecgi_t      const* cgi,
-  const as_stmsi_t const* s_tmsi,
-  const gummei_t   const* gummei)
+  const ecgi_t     const* cgi,
+  const long              rrc_cause,
+  const as_stmsi_t const* opt_s_tmsi,
+  const csg_id_t   const* opt_csg_id,
+  const gummei_t   const* opt_gummei,
+  const void       const* opt_cell_access_mode,
+  const void       const* opt_cell_gw_transport_address,
+  const void       const* opt_relay_node_indicator)
 {
   MessageDef  *message_p = NULL;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   AssertFatal((nas_msg_length < 1000), "Bad length for NAS message %lu", nas_msg_length);
-  message_p = itti_alloc_new_message(TASK_S1AP, MME_APP_CONNECTION_ESTABLISHMENT_IND);
+  message_p = itti_alloc_new_message(TASK_S1AP, MME_APP_INITIAL_UE_MESSAGE);
 
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).mme_ue_s1ap_id             = mme_ue_s1ap_id;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).enb_ue_s1ap_id             = enb_ue_s1ap_id;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).sctp_assoc_id              = assoc_id;
+  MME_APP_INITIAL_UE_MESSAGE(message_p).sctp_assoc_id          = assoc_id;
+  MME_APP_INITIAL_UE_MESSAGE(message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
+  MME_APP_INITIAL_UE_MESSAGE(message_p).mme_ue_s1ap_id         = mme_ue_s1ap_id;
 
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.ue_id                  = mme_ue_s1ap_id;
-  /* Mapping between asn1 definition and NAS definition */
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.as_cause               = cause + 1;
-  // TODO struct = struct, after debugging
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mcc_digit1    = tai->plmn.mcc_digit1;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mcc_digit2    = tai->plmn.mcc_digit2;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mcc_digit3    = tai->plmn.mcc_digit3;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mnc_digit1    = tai->plmn.mnc_digit1;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mnc_digit2    = tai->plmn.mnc_digit2;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.plmn.mnc_digit3    = tai->plmn.mnc_digit3;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tai.tac                = tai->tac;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.cgi                    = *cgi;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initial_nas_msg.length = nas_msg_length;
+  MME_APP_INITIAL_UE_MESSAGE(message_p).nas.length             = nas_msg_length;
+  MME_APP_INITIAL_UE_MESSAGE(message_p).nas.data   = CALLOC_CHECK(nas_msg_length, sizeof(uint8_t));
+  memcpy(MME_APP_INITIAL_UE_MESSAGE(message_p).nas.data, nas_msg, nas_msg_length);
 
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initial_nas_msg.data   = CALLOC_CHECK(nas_msg_length, sizeof(uint8_t));
-  memcpy(MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initial_nas_msg.data, nas_msg, nas_msg_length);
+  MME_APP_INITIAL_UE_MESSAGE(message_p).tai                    = *tai;
+  MME_APP_INITIAL_UE_MESSAGE(message_p).cgi                    = *cgi;
+  MME_APP_INITIAL_UE_MESSAGE(message_p).as_cause               = rrc_cause + 1;
 
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi                 = *s_tmsi; // TODO think about putting this field one level up?
-
-  if (!(gummei->plmn.mcc_digit1) && !(gummei->plmn.mcc_digit1) && !(gummei->plmn.mcc_digit1) ) {
-    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).is_gummei_valid = false;
-    memset(&MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).gummei, 0, sizeof(MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).gummei));
+  if (opt_s_tmsi) {
+    MME_APP_INITIAL_UE_MESSAGE(message_p).is_s_tmsi_valid      = true;
+    MME_APP_INITIAL_UE_MESSAGE(message_p).opt_s_tmsi           = *opt_s_tmsi;
   } else {
-    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).is_gummei_valid = true;
-    MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).gummei                   = *gummei;
+    MME_APP_INITIAL_UE_MESSAGE(message_p).is_s_tmsi_valid      = false;
   }
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).transparent.mme_ue_s1ap_id = mme_ue_s1ap_id;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).transparent.enb_ue_s1ap_id = enb_ue_s1ap_id;
-  MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).transparent.e_utran_cgi    = *cgi;
+  if (opt_csg_id) {
+    MME_APP_INITIAL_UE_MESSAGE(message_p).is_csg_id_valid      = true;
+    MME_APP_INITIAL_UE_MESSAGE(message_p).opt_csg_id           = *opt_csg_id;
+  } else {
+    MME_APP_INITIAL_UE_MESSAGE(message_p).is_csg_id_valid      = false;
+  }
+  if (opt_gummei) {
+    MME_APP_INITIAL_UE_MESSAGE(message_p).is_gummei_valid      = true;
+    MME_APP_INITIAL_UE_MESSAGE(message_p).opt_gummei           = *opt_gummei;
+  } else {
+    MME_APP_INITIAL_UE_MESSAGE(message_p).is_gummei_valid      = false;
+  }
+
+  MME_APP_INITIAL_UE_MESSAGE(message_p).transparent.mme_ue_s1ap_id = mme_ue_s1ap_id;
+  MME_APP_INITIAL_UE_MESSAGE(message_p).transparent.enb_ue_s1ap_id = enb_ue_s1ap_id;
+  MME_APP_INITIAL_UE_MESSAGE(message_p).transparent.e_utran_cgi    = *cgi;
 
 
   MSC_LOG_TX_MESSAGE(
         MSC_S1AP_MME,
         MSC_MMEAPP_MME,
         NULL,0,
-        "0 MME_APP_CONNECTION_ESTABLISHMENT_IND ue_id "MME_UE_S1AP_ID_FMT" as cause %u  tac %u stmsi %" PRIX8 ".%" PRIX32" len %u ",
+        "0 MME_APP_INITIAL_UE_MESSAGE ue_id "MME_UE_S1AP_ID_FMT" as cause %u tai:%c%c%c.%c%c%c:%u len %u ",
         mme_ue_s1ap_id,
-        MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.as_cause,
-        MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.tac,
-        MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi.mme_code,
-        MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.s_tmsi.m_tmsi,
-        MME_APP_CONNECTION_ESTABLISHMENT_IND(message_p).nas.initial_nas_msg.length);
-  // should be sent to MME_APP, but this one would forward it to NAS_MME, so send it directly to NAS_MME
-  // but let's see
+        MME_APP_INITIAL_UE_MESSAGE(message_p).as_cause,
+        (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.plmn.mcc_digit1 + 0x30),
+        (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.plmn.mcc_digit2 + 0x30),
+        (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.plmn.mcc_digit3 + 0x30),
+        (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.plmn.mnc_digit1 + 0x30),
+        (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.plmn.mnc_digit2 + 0x30),
+        (9 < MME_APP_INITIAL_UE_MESSAGE(message_p).tai.plmn.mnc_digit3) ? ' ': (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.plmn.mnc_digit3 + 0x30),
+        MME_APP_INITIAL_UE_MESSAGE(message_p).tai.tac,
+        MME_APP_INITIAL_UE_MESSAGE(message_p).nas.length);
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-  LOG_FUNC_OUT (LOG_S1AP);
+  OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
 
@@ -126,7 +133,7 @@ static inline void s1ap_mme_itti_nas_establish_ind(
 {
   MessageDef     *message_p;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   message_p = itti_alloc_new_message(TASK_S1AP, NAS_CONNECTION_ESTABLISHMENT_IND);
 
   NAS_CONN_EST_IND(message_p).nas.ue_id                 = ue_id;
@@ -153,7 +160,7 @@ static inline void s1ap_mme_itti_nas_establish_ind(
   // should be sent to MME_APP, but this one would forward it to NAS_MME, so send it directly to NAS_MME
   // but let's see
   itti_send_msg_to_task(TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-  LOG_FUNC_OUT (LOG_S1AP);
+  OAILOG_FUNC_OUT (LOG_S1AP);
 }
 #endif
 
@@ -162,7 +169,7 @@ static inline void s1ap_mme_itti_nas_non_delivery_ind(
 {
   MessageDef     *message_p;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   message_p = itti_alloc_new_message(TASK_S1AP, NAS_DOWNLINK_DATA_REJ);
 
   NAS_DL_DATA_REJ(message_p).ue_id               = ue_id;
@@ -185,7 +192,7 @@ static inline void s1ap_mme_itti_nas_non_delivery_ind(
   // should be sent to MME_APP, but this one would forward it to NAS_MME, so send it directly to NAS_MME
   // but let's see
   itti_send_msg_to_task(TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-  LOG_FUNC_OUT (LOG_S1AP);
+  OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
 #endif /* FILE_S1AP_MME_ITTI_MESSAGING_SEEN */

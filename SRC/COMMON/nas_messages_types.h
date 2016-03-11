@@ -54,7 +54,7 @@
 #define NAS_PDN_CONNECTIVITY_REQ(mSGpTR)            (mSGpTR)->ittiMsg.nas_pdn_connectivity_req
 #define NAS_PDN_CONNECTIVITY_RSP(mSGpTR)            (mSGpTR)->ittiMsg.nas_pdn_connectivity_rsp
 #define NAS_PDN_CONNECTIVITY_FAIL(mSGpTR)           (mSGpTR)->ittiMsg.nas_pdn_connectivity_fail
-#define NAS_CONN_EST_IND(mSGpTR)                    (mSGpTR)->ittiMsg.nas_conn_est_ind
+#define NAS_INITIAL_UE_MESSAGE(mSGpTR)              (mSGpTR)->ittiMsg.nas_initial_ue_message
 #define NAS_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)    (mSGpTR)->ittiMsg.nas_conn_est_cnf
 #define NAS_BEARER_PARAM(mSGpTR)                    (mSGpTR)->ittiMsg.nas_bearer_param
 #define NAS_AUTHENTICATION_REQ(mSGpTR)              (mSGpTR)->ittiMsg.nas_auth_req
@@ -223,14 +223,14 @@ typedef struct itti_nas_pdn_connectivity_fail_s {
 } itti_nas_pdn_connectivity_fail_t;
 
 
-typedef struct itti_nas_conn_est_ind_s {
+typedef struct itti_nas_initial_ue_message_s {
   nas_establish_ind_t nas;
 
   /* Transparent message from s1ap to be forwarded to MME_APP or
    * to S1AP if connection establishment is rejected by NAS.
    */
   itti_s1ap_initial_ue_message_t transparent;
-} itti_nas_conn_est_ind_t;
+} itti_nas_initial_ue_message_t;
 
 
 typedef struct itti_nas_conn_est_rej_s {

@@ -90,7 +90,7 @@ int
 lowerlayer_success (
   mme_ue_s1ap_id_t ue_id)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNok;
 
@@ -98,7 +98,7 @@ lowerlayer_success (
   emm_sap.u.emm_reg.ue_id = ue_id;
   emm_sap.u.emm_reg.ctx = NULL;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -120,7 +120,7 @@ int
 lowerlayer_failure (
   mme_ue_s1ap_id_t ue_id)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNok;
 
@@ -134,7 +134,7 @@ lowerlayer_failure (
 
   emm_sap.u.emm_reg.ctx = emm_ctx;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -157,8 +157,8 @@ int
 lowerlayer_establish (
   void)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
 
 /****************************************************************************
@@ -180,7 +180,7 @@ int
 lowerlayer_release (
   int cause)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNok;
 
@@ -188,7 +188,7 @@ lowerlayer_release (
   emm_sap.u.emm_reg.ue_id = 0;
   emm_sap.u.emm_reg.ctx = NULL;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -216,7 +216,7 @@ lowerlayer_data_ind (
   int                                     rc = RETURNok;
   emm_data_context_t                     *emm_ctx = NULL;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   if (ue_id > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ue_id);
@@ -227,7 +227,7 @@ lowerlayer_data_ind (
   esm_sap.ctx = emm_ctx;
   esm_sap.recv = data;
   rc = esm_sap_send (&esm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -251,7 +251,7 @@ lowerlayer_data_req (
   mme_ue_s1ap_id_t ue_id,
   const OctetString * data)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
   emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
@@ -277,7 +277,7 @@ lowerlayer_data_req (
    */
   emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx, sctx, false, true);
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /*
@@ -312,7 +312,7 @@ emm_as_set_security_data (
   bool is_new,
   bool is_ciphered)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   const emm_security_context_t           *context = (emm_security_context_t *) (args);
 
   memset (data, 0, sizeof (emm_as_security_data_t));
@@ -325,11 +325,11 @@ emm_as_set_security_data (
      * * * * NAS signalling messages with the selected NAS ciphering and
      * * * * NAS integrity algorithms
      */
-    LOG_INFO (LOG_NAS_EMM, "EPS security context exists is new %u KSI %u SQN %u count %u\n",
+    OAILOG_INFO (LOG_NAS_EMM, "EPS security context exists is new %u KSI %u SQN %u count %u\n",
         is_new, context->eksi, context->ul_count.seq_num, *(uint32_t *) (&context->ul_count));
-    LOG_STREAM_HEX (LOG_NAS_EMM, "knas_int:", context->knas_int.value, context->knas_int.length);
-    LOG_STREAM_HEX (LOG_NAS_EMM, "knas_enc:", context->knas_enc.value, context->knas_enc.length);
-    LOG_STREAM_HEX (LOG_NAS_EMM, "kasme   :", context->kasme.value, context->kasme.length);
+    OAILOG_STREAM_HEX (LOG_NAS_EMM, "knas_int:", context->knas_int.value, context->knas_int.length);
+    OAILOG_STREAM_HEX (LOG_NAS_EMM, "knas_enc:", context->knas_enc.value, context->knas_enc.length);
+    OAILOG_STREAM_HEX (LOG_NAS_EMM, "kasme   :", context->kasme.value, context->kasme.length);
     data->is_new = is_new;
     data->ksi = context->eksi;
     data->sqn = context->dl_count.seq_num;
@@ -354,18 +354,18 @@ emm_as_set_security_data (
        * * * * The MME shall send the SECURITY MODE COMMAND message integrity
        * * * * protected and unciphered
        */
-      LOG_WARNING (LOG_NAS_EMM, "EPS security context exists knas_enc\n");
+      OAILOG_WARNING (LOG_NAS_EMM, "EPS security context exists knas_enc\n");
       data->k_enc = &context->knas_enc;
     }
   } else {
-    LOG_WARNING (LOG_NAS_EMM, "EMM_AS_NO_KEY_AVAILABLE\n");
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM_AS_NO_KEY_AVAILABLE\n");
     /*
      * No valid EPS security context exists
      */
     data->ksi = EMM_AS_NO_KEY_AVAILABLE;
   }
 
-  LOG_FUNC_OUT (LOG_NAS_EMM);
+  OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }
 
 /****************************************************************************/

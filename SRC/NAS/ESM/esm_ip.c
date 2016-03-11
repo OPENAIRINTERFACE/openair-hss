@@ -19,6 +19,7 @@
  *      contact@openairinterface.org
  */
 
+#include "3gpp_24.007.h"
 #include "emmData.h"
 #include "esmData.h"
 

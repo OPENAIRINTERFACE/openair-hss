@@ -100,6 +100,7 @@ typedef struct oai_log_s {
   // may be good to use stream instead of file descriptor when
   // logging somewhere else of the console.
   FILE                                   *log_fd;                                               /*!< \brief output stream */
+  bool                                    is_output_is_fd;                                      /* We may want to not use syslog even if exe is a daemon */
 
   char                                    server_address[LOG_MAX_SERVER_ADDRESS_LENGTH];        /*!< \brief TCP remote (or local) server hostname */
   char                                    server_port[LOG_MAX_PORT_NUM_LENGTH];                 /*!< \brief TCP remote (or local) server port     */
@@ -191,7 +192,7 @@ void* log_task (__attribute__ ((unused)) void *args_p)
     }
   }
 
-  fprintf (stdout, "Task Log exiting\n");
+  OAI_FPRINTF_ERR("Task Log exiting\n");
   return NULL;
 }
 
@@ -215,7 +216,7 @@ void log_connect_to_server(void)
    s = getaddrinfo(g_oai_log.server_address, g_oai_log.server_port, &hints, &result);
    if (s != 0) {
      g_oai_log.tcp_state = LOG_TCP_STATE_NOT_CONNECTED;
-     fprintf(stderr, "Could not connect to log server: getaddrinfo: %s\n", gai_strerror(s));
+     OAI_FPRINTF_ERR("Could not connect to log server: getaddrinfo: %s\n", gai_strerror(s));
      return;
    }
 
@@ -239,7 +240,7 @@ void log_connect_to_server(void)
 
    if (rp == NULL) {               /* No address succeeded */
      g_oai_log.tcp_state = LOG_TCP_STATE_NOT_CONNECTED;
-     fprintf(stderr, "Could not connect to log server %s:%s\n", g_oai_log.server_address, g_oai_log.server_port);
+     OAI_FPRINTF_ERR("Could not connect to log server %s:%s\n", g_oai_log.server_address, g_oai_log.server_port);
      return;
    }
 
@@ -249,11 +250,11 @@ void log_connect_to_server(void)
    if (NULL == g_oai_log.log_fd) {
      g_oai_log.tcp_state = LOG_TCP_STATE_NOT_CONNECTED;
      close(sfd);
-     fprintf(stderr, "ERROR: Could not associate a stream with the TCP socket file descriptor\n");
-     fprintf(stderr, "ERROR: errno %d: %s\n", errno, strerror(errno));
+     OAI_FPRINTF_ERR("ERROR: Could not associate a stream with the TCP socket file descriptor\n");
+     OAI_FPRINTF_ERR("ERROR: errno %d: %s\n", errno, strerror(errno));
      return;
    }
-   fprintf(stdout, "Connected to log server %s:%s\n", g_oai_log.server_address, g_oai_log.server_port);
+   OAI_FPRINTF_INFO("Connected to log server %s:%s\n", g_oai_log.server_address, g_oai_log.server_port);
    g_oai_log.tcp_state = LOG_TCP_STATE_CONNECTED;
 }
 
@@ -281,44 +282,61 @@ void log_set_config(const log_config_t * const config)
 
     if (config->output) {
       if (strcasecmp("CONSOLE", config->output)){
-        // if seems to be a file path
-        if ((config->output[0] == '.') || (config->output[0] == '/')) {
-          g_oai_log.log_fd = fopen (config->output, "w");
-          AssertFatal (NULL != g_oai_log.log_fd, "Could not open log file %s : %s", config->output, strerror (errno));
-        } else {
-          // may be a TCP server address host:portnum
-          int  len       = strlen(config->output);
-          int  i         = 0;
-          int  j         = 0;
-          int  server_port = 0;
-          // extract server address
-          while ((config->output[i] != ':') && (i < len)) {
-            g_oai_log.server_address[i] = config->output[i];
-            i += 1;
-          }
-          AssertFatal(':' == config->output[i], "Bad format");
-          g_oai_log.server_address[i] = '\0';
-          i += 1; // ':'
-          AssertFatal(i<len, "Server address %s bad format", config->output);
-          // extract port number
-          j = 0;
-          while ((i < len) && (j < LOG_MAX_PORT_NUM_LENGTH-1)){
-            AssertFatal(isdigit(config->output[i]), "%c not a digit (TCP port number) server address %s",
-                config->output[i], config->output);
-            g_oai_log.server_port[j++] = config->output[i++];
-          }
-          g_oai_log.server_port[j] = '\0';
-          server_port = atoi(g_oai_log.server_port);
+        if (strcasecmp("SYSLOG", config->output)){
+          // if seems to be a file path
+          if ((config->output[0] == '.') || (config->output[0] == '/')) {
+            g_oai_log.log_fd = fopen (config->output, "w");
+            AssertFatal (NULL != g_oai_log.log_fd, "Could not open log file %s : %s", config->output, strerror (errno));
+            g_oai_log.is_output_is_fd = true;
+          } else {
+            // may be a TCP server address host:portnum
+            int  len       = strlen(config->output);
+            int  i         = 0;
+            int  j         = 0;
+            int  server_port = 0;
+            // extract server address
+            while ((config->output[i] != ':') && (i < len)) {
+              g_oai_log.server_address[i] = config->output[i];
+              i += 1;
+            }
+            AssertFatal(':' == config->output[i], "Bad format");
+            g_oai_log.server_address[i] = '\0';
+            i += 1; // ':'
+            AssertFatal(i<len, "Server address %s bad format", config->output);
+            // extract port number
+            j = 0;
+            while ((i < len) && (j < LOG_MAX_PORT_NUM_LENGTH-1)){
+              AssertFatal(isdigit(config->output[i]), "%c not a digit (TCP port number) server address %s",
+                  config->output[i], config->output);
+              g_oai_log.server_port[j++] = config->output[i++];
+            }
+            g_oai_log.server_port[j] = '\0';
+            server_port = atoi(g_oai_log.server_port);
 
-          AssertFatal(1024 <= server_port, "Invalid Server TCP port %d/%s", server_port, g_oai_log.server_port);
-          AssertFatal(65535 >= server_port, "Invalid Server TCP port %d/%s", server_port, g_oai_log.server_port);
-          g_oai_log.tcp_state = LOG_TCP_STATE_NOT_CONNECTED;
-          log_connect_to_server();
+            AssertFatal(1024 <= server_port, "Invalid Server TCP port %d/%s", server_port, g_oai_log.server_port);
+            AssertFatal(65535 >= server_port, "Invalid Server TCP port %d/%s", server_port, g_oai_log.server_port);
+            g_oai_log.tcp_state = LOG_TCP_STATE_NOT_CONNECTED;
+            g_oai_log.is_output_is_fd = true;
+            log_connect_to_server();
+          }
+        } else {
+#if DAEMONIZE == 0
+          // Otherwize already called in main()
+          openlog(NULL, 0, LOG_USER);
+#endif
+          g_oai_log.log_fd = NULL;
+          g_oai_log.is_output_is_fd = false;
         }
       } else {
         // default case
+#if DAEMONIZE
+        g_oai_log.log_fd = NULL;
+        g_oai_log.is_output_is_fd = false;
+#else
         setvbuf(stdout, NULL, _IONBF, 0);
         g_oai_log.log_fd = stdout;
+        g_oai_log.is_output_is_fd = true;
+#endif
       }
     }
   }
@@ -361,7 +379,7 @@ static void log_get_elapsed_time_since_start(struct timeval * const elapsed_time
 
 //------------------------------------------------------------------------------
 void log_signal_callback_handler(int signum){
-  fprintf(stderr, "Caught signal SIGPIPE %d\n",signum);
+  OAI_FPRINTF_ERR("Caught signal SIGPIPE %d\n",signum);
   if (LOG_TCP_STATE_DISABLED != g_oai_log.tcp_state) {
     // Let ITTI LOG Timer do the reconnection
     g_oai_log.tcp_state = LOG_TCP_STATE_NOT_CONNECTED;
@@ -389,7 +407,7 @@ log_init (
   g_oai_log.log_start_time_second = start_time.tv_sec;
 
 
-  fprintf (stdout, "Initializing OAI Logging\n");
+  OAI_FPRINTF_INFO("Initializing OAI Logging\n");
 
   g_oai_log.thread_context_htbl = hashtable_ts_create (128, NULL, FREE_CHECK, "Logging thread context hashtable");
   AssertFatal (NULL != g_oai_log.thread_context_htbl, "Could not create hashtable for Log!\n");
@@ -400,7 +418,7 @@ log_init (
   thread_ctxt->tid = p;
   hashtable_rc_t hash_rc = hashtable_ts_insert(g_oai_log.thread_context_htbl, (hash_key_t) p, thread_ctxt);
   if (HASH_TABLE_OK != hash_rc) {
-    fprintf (stderr, "Error Could not register log thread context\n");
+    OAI_FPRINTF_ERR("Error Could not register log thread context\n");
     FREE_CHECK(thread_ctxt);
   }
 
@@ -439,15 +457,15 @@ log_init (
   rv = snprintf (&g_oai_log.log_proto2str[LOG_MSC][0], LOG_MAX_PROTO_NAME_LENGTH, "MSC");
   rv = snprintf (&g_oai_log.log_proto2str[LOG_ITTI][0], LOG_MAX_PROTO_NAME_LENGTH, "ITTI");
 
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_TRACE][0], LOG_LEVEL_NAME_MAX_LENGTH, "TRACE");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_DEBUG][0], LOG_LEVEL_NAME_MAX_LENGTH, "DEBUG");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_INFO][0], LOG_LEVEL_NAME_MAX_LENGTH, "INFO");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_NOTICE][0], LOG_LEVEL_NAME_MAX_LENGTH, "NOTICE");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_WARNING][0], LOG_LEVEL_NAME_MAX_LENGTH, "WARNING");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_ERROR][0], LOG_LEVEL_NAME_MAX_LENGTH, "ERROR");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_CRITICAL][0], LOG_LEVEL_NAME_MAX_LENGTH, "CRITICAL");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_ALERT][0], LOG_LEVEL_NAME_MAX_LENGTH, "ALERT");
-  rv = snprintf (&g_oai_log.log_level2str[LOG_LEVEL_EMERGENCY][0], LOG_LEVEL_NAME_MAX_LENGTH, "EMERGENCY");
+  rv = snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_TRACE][0], LOG_LEVEL_NAME_MAX_LENGTH, "TRACE");
+  rv = snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_DEBUG][0], LOG_LEVEL_NAME_MAX_LENGTH, "DEBUG");
+  rv = snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_INFO][0], LOG_LEVEL_NAME_MAX_LENGTH, "INFO");
+  rv = snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_NOTICE][0], LOG_LEVEL_NAME_MAX_LENGTH, "NOTICE");
+  rv = snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_WARNING][0], LOG_LEVEL_NAME_MAX_LENGTH, "WARNING");
+  rv = snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_ERROR][0], LOG_LEVEL_NAME_MAX_LENGTH, "ERROR");
+  rv = snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_CRITICAL][0], LOG_LEVEL_NAME_MAX_LENGTH, "CRITICAL");
+  rv = snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_ALERT][0], LOG_LEVEL_NAME_MAX_LENGTH, "ALERT");
+  rv = snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_EMERGENCY][0], LOG_LEVEL_NAME_MAX_LENGTH, "EMERGENCY");
 
   for (i=MIN_LOG_PROTOS; i < MAX_LOG_PROTOS; i++) {
     g_oai_log.log_level[i] = default_log_levelP;
@@ -457,7 +475,7 @@ log_init (
     g_oai_log.log_level2str[i][LOG_LEVEL_NAME_MAX_LENGTH-1]     = '\0';
   }
 
-  log_message (thread_ctxt, LOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing OAI logging Done\n");
+  log_message (thread_ctxt, OAILOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing OAI logging Done\n");
   return 0;
 }
 
@@ -486,11 +504,11 @@ log_start_use (
       thread_ctxt->tid = p;
       hash_rc = hashtable_ts_insert(g_oai_log.thread_context_htbl, (hash_key_t) p, thread_ctxt);
       if (HASH_TABLE_OK != hash_rc) {
-        fprintf (stderr, "Error Could not register log thread context\n");
+        OAI_FPRINTF_ERR("Error Could not register log thread context\n");
         FREE_CHECK(thread_ctxt);
       }
     } else {
-      fprintf (stderr, "Error Could not create log thread context\n");
+      OAI_FPRINTF_ERR("Error Could not create log thread context\n");
     }
   }
 }
@@ -507,17 +525,21 @@ log_flush_messages (
   if (g_oai_log.log_fd) {
     while ((rv = lfds611_queue_dequeue (g_oai_log.log_message_queue_p, (void **)&item_p)) == 1) {
       if (item_p->len > 0) {
-        rv_put = fputs (item_p->str, g_oai_log.log_fd);
+        if (g_oai_log.is_output_is_fd) {
+          rv_put = fputs (item_p->str, g_oai_log.log_fd);
+        } else {
+          syslog (item_p->log_level ,"%s", item_p->str);
+        }
         // TODO BIN DATA
         item_p->len = 0;
         rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
       }
       if (rv_put < 0) {
         // error occured
-        fprintf (stderr, "Error while writing log %d\n", rv_put);
+        OAI_FPRINTF_ERR("Error while writing log %d\n", rv_put);
         rv = fclose (g_oai_log.log_fd);
         if (rv != 0) {
-          fprintf (stderr, "Error while closing Log file stream: %s\n", strerror (errno));
+          OAI_FPRINTF_ERR("Error while closing Log file stream: %s\n", strerror (errno));
         }
         // do not exit
         if (LOG_TCP_STATE_DISABLED != g_oai_log.tcp_state) {
@@ -538,22 +560,29 @@ log_exit (
 {
   int                                     rv = 0;
 
-  fprintf(stdout, "[TRACE] Entering %s\n", __FUNCTION__);
-  if (NULL != g_oai_log.log_fd) {
+  OAI_FPRINTF_INFO("[TRACE] Entering %s\n", __FUNCTION__);
+  if (g_oai_log.log_fd) {
     log_flush_messages ();
     rv = fflush (g_oai_log.log_fd);
 
     if (rv != 0) {
-      fprintf (stderr, "Error while flushing stream of Log file: %s", strerror (errno));
+      OAI_FPRINTF_ERR("Error while flushing stream of Log file: %s", strerror (errno));
     }
 
     rv = fclose (g_oai_log.log_fd);
 
     if (rv != 0) {
-      fprintf (stderr, "Error while closing Log file: %s", strerror (errno));
+      OAI_FPRINTF_ERR("Error while closing Log file: %s", strerror (errno));
     }
   }
-  fprintf(stdout, "[TRACE] Leaving %s\n", __FUNCTION__);
+#if DAEMONIZE
+  closelog();
+#else
+  if (!g_oai_log.is_output_is_fd) {
+    closelog();
+  }
+#endif
+  OAI_FPRINTF_INFO("[TRACE] Leaving %s\n", __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
@@ -591,7 +620,7 @@ void log_stream_hex(
       rv = snprintf (&message->str[message->len], LOG_MAX_MESSAGE_LENGTH - message->len, " %02x", (streamP[octet_index]) & (uint)0x00ff);
 
       if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - message->len) < rv)) {
-        fprintf (stderr, "Error while logging message\n");
+        OAI_FPRINTF_ERR("Error while logging message\n");
       } else {
         message->len += rv;
       }
@@ -675,7 +704,7 @@ log_message_add (
       va_end (args);
 
       if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - messageP->len) < rv)) {
-        fprintf (stderr, "Error while logging message\n");
+        OAI_FPRINTF_ERR("Error while logging message\n");
       } else {
         messageP->len += rv;
       }
@@ -694,7 +723,7 @@ log_message_finish (
 
     if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - messageP->len) < rv)) {
       messageP->str[LOG_MAX_MESSAGE_LENGTH-1] = '\0';
-      fprintf (stderr, "Error while logging message\n");
+      OAI_FPRINTF_ERR("Error while logging message\n");
     } else {
       messageP->len += rv;
     }
@@ -702,7 +731,7 @@ log_message_finish (
     rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, messageP);
 
     if (0 == rv) {
-      fprintf (stderr, "Error while lfds611_queue_guaranteed_enqueue message %s in LOG\n", messageP->str);
+      OAI_FPRINTF_ERR("Error while lfds611_queue_guaranteed_enqueue message %s in LOG\n", messageP->str);
       messageP->len = 0;
       rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, messageP);
       FREE_CHECK (messageP);
@@ -756,12 +785,16 @@ log_message_start (
     if (0 == rv) {
       *messageP = CALLOC_CHECK(1, sizeof(log_queue_item_t));
       AssertFatal(*messageP, "Out of memory error");
-      fprintf (stderr, "Warning allocating an extra log_queue_item_t in LOG\n");
+      OAI_FPRINTF_ERR("Warning allocating an extra log_queue_item_t in LOG\n");
       rv = 1;
     }
 
     if (1 == rv) {
       struct timeval elapsed_time;
+
+#if DAEMONIZE
+      (*messageP)->log_level = log_levelP;
+#endif
       log_get_elapsed_time_since_start(&elapsed_time);
       filename_length = strlen(source_fileP);
       if (filename_length > LOG_DISPLAYED_FILENAME_MAX_LENGTH) {
@@ -783,7 +816,7 @@ log_message_start (
       }
 
       if ((0 > rv) || (LOG_MAX_MESSAGE_LENGTH < rv)) {
-        fprintf (stderr, "Error while logging message : %s", &g_oai_log.log_proto2str[protoP][0]);
+        OAI_FPRINTF_ERR("Error while logging message : %s", &g_oai_log.log_proto2str[protoP][0]);
         goto error_event_start;
       }
 
@@ -792,7 +825,7 @@ log_message_start (
       va_end (args);
 
       if ((0 > rv2) || ((LOG_MAX_MESSAGE_LENGTH - rv) < rv2)) {
-        fprintf (stderr, "Error while logging message : %s", &g_oai_log.log_proto2str[protoP][0]);
+        OAI_FPRINTF_ERR("Error while logging message : %s", &g_oai_log.log_proto2str[protoP][0]);
         goto error_event_start;
       }
 
@@ -831,12 +864,12 @@ log_func (
   hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
   AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
   if (is_enteringP) {
-    log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Entering %s()\n", functionP);
+    log_message(thread_ctxt, OAILOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Entering %s()\n", functionP);
     thread_ctxt->indent += LOG_FUNC_INDENT_SPACES;
   } else {
     thread_ctxt->indent -= LOG_FUNC_INDENT_SPACES;
     if (thread_ctxt->indent < 0) thread_ctxt->indent = 0;
-    log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Leaving %s()\n", functionP);
+    log_message(thread_ctxt, OAILOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Leaving %s()\n", functionP);
   }
 }
 //------------------------------------------------------------------------------
@@ -862,7 +895,7 @@ log_func_return (
   AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
   thread_ctxt->indent -= LOG_FUNC_INDENT_SPACES;
   if (thread_ctxt->indent < 0) thread_ctxt->indent = 0;
-  log_message(thread_ctxt, LOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Leaving %s() (rc=%ld)\n", functionP, return_codeP);
+  log_message(thread_ctxt, OAILOG_LEVEL_TRACE, protoP, source_fileP, line_numP, "Leaving %s() (rc=%ld)\n", functionP, return_codeP);
 }
 //------------------------------------------------------------------------------
 void
@@ -896,8 +929,8 @@ log_message (
     pthread_t             p           = pthread_self();
     hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
     if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
-      fprintf (stderr, "TEMP Not registered thread %lX\n", p);
-      fflush(stderr);
+      //OAI_FPRINTF_ERR("TEMP Not registered thread %lX\n", p);
+      //fflush(stderr);
       // make the thread safe LFDS collections usable by this thread
       log_start_use();
       hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
@@ -910,7 +943,7 @@ log_message (
   if (0 == rv) {
     new_item_p = CALLOC_CHECK(1, sizeof(log_queue_item_t));
     AssertFatal(new_item_p, "Out of memory error");
-    fprintf (stderr, "Warning allocating an extra log_queue_item_t in LOG\n");
+    OAI_FPRINTF_ERR("Warning allocating an extra log_queue_item_t in LOG\n");
     rv = 1;
   }
 
@@ -938,7 +971,7 @@ log_message (
       }
 
       if ((0 > rv) || (LOG_MAX_MESSAGE_LENGTH < rv)) {
-        fprintf (stderr, "Error while logging LOG message : %s", &g_oai_log.log_proto2str[protoP][0]);
+        OAI_FPRINTF_ERR("Error while logging LOG message : %s", &g_oai_log.log_proto2str[protoP][0]);
         goto error_event;
       }
 
@@ -947,7 +980,7 @@ log_message (
       va_end (args);
 
       if ((0 > rv2) || ((LOG_MAX_MESSAGE_LENGTH - rv) < rv2)) {
-        fprintf (stderr, "Error while logging LOG message : %s", &g_oai_log.log_proto2str[protoP][0]);
+        OAI_FPRINTF_ERR("Error while logging LOG message : %s", &g_oai_log.log_proto2str[protoP][0]);
         goto error_event;
       }
 
@@ -966,7 +999,7 @@ log_message (
       }
     } else {
       FREE_CHECK (new_item_p);
-      fprintf (stderr, "Error while lfds611_stack_pop()\n");
+      OAI_FPRINTF_ERR("Error while lfds611_stack_pop()\n");
       //log_flush_messages ();
     }
   }

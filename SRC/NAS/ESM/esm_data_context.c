@@ -34,8 +34,7 @@
 
 
 *****************************************************************************/
-
-
+#include "3gpp_24.007.h"
 #include "emmData.h"
 #include "nas_timer.h"
 #include "esmData.h"

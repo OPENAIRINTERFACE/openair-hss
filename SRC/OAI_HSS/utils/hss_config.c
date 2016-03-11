@@ -41,6 +41,7 @@
 #include <libconfig.h>
 
 #include "hss_config.h"
+#include "log.h"
 
 
 #ifndef PACKAGE_NAME
@@ -119,13 +120,13 @@ hss_config_init (
     } else if (strcasecmp (hss_config_p->random, "true") == 0) {
       hss_config_p->random_bool = 1;
     } else {
-      fprintf (stderr, "Error in configuration file: random: %s (allowed values {true,false})\n", hss_config_p->random);
+      FPRINTF_ERROR( "Error in configuration file: random: %s (allowed values {true,false})\n", hss_config_p->random);
       abort ();
     }
   } else {
     hss_config_p->random = "true";
     hss_config_p->random_bool = 1;
-    fprintf (stderr, "Default values for random: %s (allowed values {true,false})\n", hss_config_p->random);
+    FPRINTF_ERROR( "Default values for random: %s (allowed values {true,false})\n", hss_config_p->random);
   }
 
   // post processing for op key
@@ -142,7 +143,7 @@ hss_config_init (
                     (unsigned int *)&hss_config_p->operator_key_bin[12], (unsigned int *)&hss_config_p->operator_key_bin[13], (unsigned int *)&hss_config_p->operator_key_bin[14], (unsigned int *)&hss_config_p->operator_key_bin[15]);
 
       if (ret != 16) {
-        fprintf (stderr, "Error in configuration file: operator key: %s\n", hss_config_p->operator_key);
+        FPRINTF_ERROR( "Error in configuration file: operator key: %s\n", hss_config_p->operator_key);
         abort ();
       }
 
@@ -158,8 +159,11 @@ static void
 hss_display_banner (
   void)
 {
-  fprintf (stdout, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
-  fprintf (stdout, "Please report any bug to: %s\n\n", PACKAGE_BUGREPORT);
+  FPRINTF_NOTICE ( "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
+#if RANDOM_boolean
+  FPRINTF_NOTICE ( "Warning no randomization for keys, this HSS executable should be used for testing scenarios only\n");
+#endif
+  FPRINTF_NOTICE ( "Please report any bug to: %s\n\n", PACKAGE_BUGREPORT);
 }
 
 static void
@@ -167,34 +171,34 @@ usage (
   void)
 {
   hss_display_banner ();
-  fprintf (stdout, "Usage: openair_hss [options]\n\n");
-  fprintf (stdout, "Available options:\n");
-  fprintf (stdout, "\t--help\n\t-h\n");
-  fprintf (stdout, "\t\tPrint this help and return\n\n");
-  fprintf (stdout, "\t--config=<path>\n\t-c<path>\n");
-  fprintf (stdout, "\t\tSet the configuration file for hss\n");
-  fprintf (stdout, "\t\tSee template in conf dir\n\n");
-  fprintf (stdout, "\t--version\n\t-v\n");
-  fprintf (stdout, "\t\tPrint %s version and return\n", PACKAGE_NAME);
+  FPRINTF_NOTICE ( "Usage: openair_hss [options]\n\n");
+  FPRINTF_NOTICE ( "Available options:\n");
+  FPRINTF_NOTICE ( "\t--help\n\t-h\n");
+  FPRINTF_NOTICE ( "\t\tPrint this help and return\n\n");
+  FPRINTF_NOTICE ( "\t--config=<path>\n\t-c<path>\n");
+  FPRINTF_NOTICE ( "\t\tSet the configuration file for hss\n");
+  FPRINTF_NOTICE ( "\t\tSee template in conf dir\n\n");
+  FPRINTF_NOTICE ( "\t--version\n\t-v\n");
+  FPRINTF_NOTICE ( "\t\tPrint %s version and return\n", PACKAGE_NAME);
 }
 
 static void
 hss_config_display (
   hss_config_t * hss_config_p)
 {
-  fprintf (stdout, "Configuration\n");
-  fprintf (stdout, "* Global:\n");
-  fprintf (stdout, "\t- File .............: %s\n", hss_config_p->config);
-  fprintf (stdout, "* MYSQL:\n");
-  fprintf (stdout, "\t- Server ...........: %s\n", hss_config_p->mysql_server);
-  fprintf (stdout, "\t- Database .........: %s\n", hss_config_p->mysql_database);
-  fprintf (stdout, "\t- User .............: %s\n", hss_config_p->mysql_user);
-  fprintf (stdout, "\t- Password .........: %s\n", (hss_config_p->mysql_password == NULL) ? "None" : "*****");
-  fprintf (stdout, "* FreeDiameter:\n");
-  fprintf (stdout, "\t- Conf file ........: %s\n", hss_config_p->freediameter_config);
-  fprintf (stdout, "* Security:\n");
-  fprintf (stdout, "\t- Operator key......: %s\n", hss_config_p->operator_key);
-  fprintf (stdout, "\t- Random      ......: %s\n", hss_config_p->random);
+  FPRINTF_NOTICE ( "Configuration\n");
+  FPRINTF_NOTICE ( "* Global:\n");
+  FPRINTF_NOTICE ( "\t- File .............: %s\n", hss_config_p->config);
+  FPRINTF_NOTICE ( "* MYSQL:\n");
+  FPRINTF_NOTICE ( "\t- Server ...........: %s\n", hss_config_p->mysql_server);
+  FPRINTF_NOTICE ( "\t- Database .........: %s\n", hss_config_p->mysql_database);
+  FPRINTF_NOTICE ( "\t- User .............: %s\n", hss_config_p->mysql_user);
+  FPRINTF_NOTICE ( "\t- Password .........: %s\n", (hss_config_p->mysql_password == NULL) ? "None" : "*****");
+  FPRINTF_NOTICE ( "* FreeDiameter:\n");
+  FPRINTF_NOTICE ( "\t- Conf file ........: %s\n", hss_config_p->freediameter_config);
+  FPRINTF_NOTICE ( "* Security:\n");
+  FPRINTF_NOTICE ( "\t- Operator key......: %s\n", hss_config_p->operator_key);
+  FPRINTF_NOTICE ( "\t- Random      ......: %s\n", hss_config_p->random);
 }
 
 static int
@@ -231,6 +235,10 @@ hss_config_parse_command_line (
     }
   }
 
+  // default HSS config file
+  if (! hss_config_p->config) {
+    hss_config_p->config = strdup ("/usr/local/etc/oai/hss.conf");
+  }
   return 0;
 }
 
@@ -254,7 +262,7 @@ hss_config_parse_file (
 
   printf ("Parsing configuration file: %s\n", hss_config_p->config);
   if (! config_read_file(&cfg, hss_config_p->config)) {
-    fprintf (stderr, "Failed to parse HSS configuration file %s!\n", hss_config_p->config);
+    FPRINTF_ERROR( "Failed to parse HSS configuration file %s!\n", hss_config_p->config);
     config_destroy(&cfg);
     return ret;
   }
@@ -264,53 +272,53 @@ hss_config_parse_file (
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_MYSQL_SERVER, (const char **)&astring) )) {
       hss_config_p->mysql_server = strdup(astring);
     } else {
-      fprintf (stderr, "Failed to parse HSS configuration file token %s astring %s!\n", HSS_CONFIG_STRING_MYSQL_SERVER, astring);
+      FPRINTF_ERROR( "Failed to parse HSS configuration file token %s astring %s!\n", HSS_CONFIG_STRING_MYSQL_SERVER, astring);
       return ret;
     }
 
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_MYSQL_USER, (const char **)&astring) )) {
       hss_config_p->mysql_user = strdup(astring);
     } else {
-      fprintf (stderr, "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_MYSQL_USER);
+      FPRINTF_ERROR( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_MYSQL_USER);
       return ret;
     }
 
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_MYSQL_PASS, (const char **)&astring) )) {
       hss_config_p->mysql_password = strdup(astring);
     } else {
-      fprintf (stderr, "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_MYSQL_PASS);
+      FPRINTF_ERROR( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_MYSQL_PASS);
       return ret;
     }
 
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_MYSQL_DB, (const char **)&astring) )) {
       hss_config_p->mysql_database = strdup(astring);
     } else {
-      fprintf (stderr, "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_MYSQL_DB);
+      FPRINTF_ERROR( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_MYSQL_DB);
       return ret;
     }
 
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_OPERATOR_KEY, (const char **)&astring) )) {
       hss_config_p->operator_key = strdup(astring);
     } else {
-      fprintf (stderr, "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_OPERATOR_KEY);
+      FPRINTF_ERROR( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_OPERATOR_KEY);
       return ret;
     }
 
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_RANDOM, (const char **)&astring) )) {
       hss_config_p->random = strdup(astring);
     } else {
-      fprintf (stderr, "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_RANDOM);
+      FPRINTF_ERROR( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_RANDOM);
       return ret;
    }
 
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_FREEDIAMETER_CONF_FILE, (const char **)&astring) )) {
      hss_config_p->freediameter_config = strdup(astring);
     } else {
-      fprintf (stderr, "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_FREEDIAMETER_CONF_FILE);
+      FPRINTF_ERROR( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_FREEDIAMETER_CONF_FILE);
       return ret;
     }
   } else {
-    fprintf (stderr, "Failed to parse HSS configuration file main HSS section not found!\n");
+    FPRINTF_ERROR( "Failed to parse HSS configuration file main HSS section not found!\n");
     return ret;
   }
   return 0;

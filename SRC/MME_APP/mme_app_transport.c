@@ -54,13 +54,13 @@ int mme_app_handle_nas_dl_req (
   int                                     rc = RETURNok;
   enb_ue_s1ap_id_t                        enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_DOWNLINK_DATA_REQ);
 
   ue_context_t   *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, nas_dl_req_pP->ue_id);
   if (ue_context) {
-    LOG_DEBUG (LOG_MME_APP, "DOWNLINK NAS TRANSPORT Found enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", ue_context->enb_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_MME_APP, "DOWNLINK NAS TRANSPORT Found enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", ue_context->enb_ue_s1ap_id);
     enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
   }
 
@@ -74,6 +74,6 @@ int mme_app_handle_nas_dl_req (
       enb_ue_s1ap_id, nas_dl_req_pP->ue_id);
 
   rc = itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
-  LOG_FUNC_RETURN (LOG_MME_APP, rc);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 

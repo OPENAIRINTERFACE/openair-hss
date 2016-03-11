@@ -59,7 +59,7 @@ sgw_intertask_interface (
   void *args_p)
 {
   itti_mark_task_ready (TASK_SPGW_APP);
-  LOG_START_USE ();
+  OAILOG_START_USE ();
   MSC_START_USE ();
 
   while (1) {
@@ -95,7 +95,7 @@ sgw_intertask_interface (
       break;
 
     case GTPV1U_CREATE_TUNNEL_RESP:{
-        LOG_DEBUG (LOG_SPGW_APP, "Received teid for S1-U: %u and status: %s\n", received_message_p->ittiMsg.gtpv1uCreateTunnelResp.S1u_teid, received_message_p->ittiMsg.gtpv1uCreateTunnelResp.status == 0 ? "Success" : "Failure");
+        OAILOG_DEBUG (LOG_SPGW_APP, "Received teid for S1-U: %u and status: %s\n", received_message_p->ittiMsg.gtpv1uCreateTunnelResp.S1u_teid, received_message_p->ittiMsg.gtpv1uCreateTunnelResp.status == 0 ? "Success" : "Failure");
         sgw_handle_gtpv1uCreateTunnelResp (&received_message_p->ittiMsg.gtpv1uCreateTunnelResp);
       }
       break;
@@ -122,11 +122,11 @@ sgw_intertask_interface (
       break;
 
     case MESSAGE_TEST:
-      LOG_DEBUG (LOG_SPGW_APP, "Received MESSAGE_TEST\n");
+      OAILOG_DEBUG (LOG_SPGW_APP, "Received MESSAGE_TEST\n");
       break;
 
     default:{
-        LOG_DEBUG (LOG_SPGW_APP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        OAILOG_DEBUG (LOG_SPGW_APP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
@@ -142,7 +142,7 @@ sgw_intertask_interface (
 int sgw_init (
   char *config_file_name_pP)
 {
-  LOG_DEBUG (LOG_SPGW_APP, "Initializing SPGW-APP  task interface\n");
+  OAILOG_DEBUG (LOG_SPGW_APP, "Initializing SPGW-APP  task interface\n");
   spgw_system ("modprobe ip_tables", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
   spgw_system ("modprobe x_tables", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
   spgw_system ("iptables -P INPUT ACCEPT", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
@@ -193,7 +193,7 @@ int sgw_init (
 
   if (sgw_app.s11teid2mme_hashtable == NULL) {
     perror ("hashtable_ts_create");
-    LOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
+    OAILOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
     return RETURNerror;
   }
 
@@ -201,7 +201,7 @@ int sgw_init (
 
   if (sgw_app.s1uteid2enb_hashtable == NULL) {
     perror ("hashtable_ts_create");
-    LOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
+    OAILOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
     return RETURNerror;
   }*/
 
@@ -211,7 +211,7 @@ int sgw_init (
 
   if (sgw_app.s11_bearer_context_information_hashtable == NULL) {
     perror ("hashtable_ts_create");
-    LOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
+    OAILOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
     return RETURNerror;
   }
 
@@ -224,11 +224,11 @@ int sgw_init (
 
   if (itti_create_task (TASK_SPGW_APP, &sgw_intertask_interface, NULL) < 0) {
     perror ("pthread_create");
-    LOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
+    OAILOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
     return RETURNerror;
   }
 
-  LOG_DEBUG (LOG_SPGW_APP, "Initializing SPGW-APP task interface: DONE\n");
+  OAILOG_DEBUG (LOG_SPGW_APP, "Initializing SPGW-APP task interface: DONE\n");
   return RETURNok;
 }
 

@@ -73,7 +73,7 @@ encode_service_reject (
   }
   /* Just wait a litle bit for CS...
   if ((encode_result = encode_gprs_timer (&service_reject->t3442value, 0, buffer + encoded, len - encoded)) < 0) {       //Return in case of error
-    LOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
   } else {
     encoded += encode_result;
   }*/

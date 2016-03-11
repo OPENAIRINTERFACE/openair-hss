@@ -44,16 +44,22 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -e, --export-db  filename  Export current database to a SQL file, file prefix is $OPENAIRCN_DIR/OAI_HSS/db. (useful for replaying scenarios)"
+  echo_error "  -D, --daemon               Run the daemon."
   echo_error "  -i, --import-db  filename  Import SQL file to current database, file prefix is $OPENAIRCN_DIR/OAI_HSS/db. (useful for replaying scenarios or restoring original database content)"
   echo_error "  -g, --gdb                  Run with GDB."
   echo_error "  -h, --help                 Print this help."
 }
 
+NAME=oai_hssd
+DAEMON=/usr/sbin/$NAME
+DAEMON_ARGS=""
+PIDFILE=/var/run/$NAME.pid
 
 
 function main() 
 {
   local -i run_gdb=0
+  local -i run_daemon=0
   local -i export_db=0
   local -i import_db=0
   local exe_arguments=" -c /usr/local/etc/oai/hss.conf"
@@ -66,6 +72,11 @@ function main()
         echo "setting export DB flag to: $export_db"
         dump_file=$2
         shift 2;
+        ;;
+      -D | --daemon)
+        run_daemon=1
+        echo "Run EPC as a daemon"
+        shift;
         ;;
       -i | --import-db)
         import_db=1
@@ -124,16 +135,33 @@ function main()
   fi
   
   
+  if [ "$run_daemon" -eq 1 ]; then
+    # TODO options
+    $SUDO killall -q oai_hss
+    do_stop_daemon
+    case "$?" in
+      0) echo_success "HSS daemon was running -> stopped";;
+      1) ;;
+      2) echo_fatal "FAILURE: HSS daemon was running -> could not stop it";;
+    esac
+    do_start_daemon
+    case "$?" in
+      0) echo_success "HSS daemon started";;
+      1) echo_fatal "FAILURE: HSS daemon was already running";;
+      2) echo_fatal "FAILURE: Cannot start HSS daemon";;
+    esac
+    exit 0
+  fi
   if [ $run_gdb -eq 0 ]; then 
-    exec oai_hss  `echo $exe_arguments` 2>&1 
+    $SUDO oai_hss  `echo $exe_arguments` 2>&1 
   else
-    touch      ~/.gdb_hss
-    chmod 777  ~/.gdb_hss
-    echo "file oai_hss" > ~/.gdb_hss
-    echo "set args $exe_arguments   " >> ~/.gdb_hss
-    echo "run"                        >> ~/.gdb_hss
-    cat ~/.gdb_hss
-    gdb -n -x ~/.gdb_hss 2>&1
+    $SUDO touch      ~/.gdb_hss
+    $SUDO chmod 777  ~/.gdb_hss
+    $SUDO echo "file oai_hss" > ~/.gdb_hss
+    $SUDO echo "set args $exe_arguments   " >> ~/.gdb_hss
+    $SUDO echo "run"                        >> ~/.gdb_hss
+    $SUDO cat ~/.gdb_hss
+    $SUDO gdb -n -x ~/.gdb_hss 2>&1
   fi
 }
 

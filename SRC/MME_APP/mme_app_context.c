@@ -197,7 +197,7 @@ mme_ue_context_notified_new_ue_s1ap_id_association (
   void                                   *id = NULL;
 
   if (INVALID_MME_UE_S1AP_ID == mme_ue_s1ap_id) {
-    LOG_ERROR (LOG_MME_APP,
+    OAILOG_ERROR (LOG_MME_APP,
         "Error could not associate this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
         ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
     return;
@@ -212,7 +212,7 @@ mme_ue_context_notified_new_ue_s1ap_id_association (
         h_rc = hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id,  (void **)&id);
         h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)(uintptr_t)enb_ue_s1ap_id);
         if (HASH_TABLE_OK == h_rc) {
-          LOG_DEBUG (LOG_MME_APP,
+          OAILOG_DEBUG (LOG_MME_APP,
               "Associated this ue context %p, enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
               ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
           ue_context_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
@@ -223,7 +223,7 @@ mme_ue_context_notified_new_ue_s1ap_id_association (
       }
     }
   }
-  LOG_ERROR (LOG_MME_APP,
+  OAILOG_ERROR (LOG_MME_APP,
       "Error could not associate this ue context %p, enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " %s\n",
       ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
 }
@@ -243,15 +243,15 @@ mme_ue_context_update_coll_keys (
   void                                   *id = NULL;
   enb_ue_s1ap_id_t                        old_enb_id = 0;
 
-  LOG_FUNC_IN(LOG_MME_APP);
+  OAILOG_FUNC_IN(LOG_MME_APP);
 
   char                                    guti_str[GUTI2STR_MAX_LENGTH];
 
   GUTI2STR (&ue_context_p->guti, guti_str, GUTI2STR_MAX_LENGTH);
-  LOG_DEBUG (LOG_MME_APP, "Update ue context.enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue context.mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ue context.IMSI " IMSI_64_FMT " ue context.GUTI %s\n",
+  OAILOG_DEBUG (LOG_MME_APP, "Update ue context.enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue context.mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ue context.IMSI " IMSI_64_FMT " ue context.GUTI %s\n",
              ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->imsi, guti_str);
   GUTI2STR (guti_p, guti_str, GUTI2STR_MAX_LENGTH);
-  LOG_DEBUG (LOG_MME_APP, "Update ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " GUTI %s\n",
+  OAILOG_DEBUG (LOG_MME_APP, "Update ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " GUTI %s\n",
             ue_context_p, enb_ue_s1ap_id, mme_ue_s1ap_id, imsi, guti_str);
 
   if (ue_context_p->enb_ue_s1ap_id != enb_ue_s1ap_id) {
@@ -265,7 +265,7 @@ mme_ue_context_update_coll_keys (
       AssertFatal( 0 == 1, "Error could not update this ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " -> " ENB_UE_S1AP_ID_FMT " %s\n",
           ue_context_p, ue_context_p->enb_ue_s1ap_id, enb_ue_s1ap_id, hashtable_rc_code2string(h_rc));
 
-      LOG_ERROR (LOG_MME_APP,
+      OAILOG_ERROR (LOG_MME_APP,
           "Error could not update this ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " -> " ENB_UE_S1AP_ID_FMT " %s\n",
           ue_context_p, ue_context_p->enb_ue_s1ap_id, enb_ue_s1ap_id, hashtable_rc_code2string(h_rc));
     }
@@ -289,7 +289,7 @@ mme_ue_context_update_coll_keys (
       h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)(uintptr_t)enb_ue_s1ap_id);
 
       if (HASH_TABLE_OK != h_rc) {
-        LOG_ERROR (LOG_MME_APP,
+        OAILOG_ERROR (LOG_MME_APP,
             "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " %s\n",
             ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
       }
@@ -307,7 +307,7 @@ mme_ue_context_update_coll_keys (
     int size = 1024;
 
     obj_hashtable_ts_dump_content (mme_ue_context_p->guti_ue_context_htbl, tmp, &size);
-    LOG_ERROR (LOG_MME_APP,"%s\n", tmp);
+    OAILOG_ERROR (LOG_MME_APP,"%s\n", tmp);
 
     h_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void **)&id);
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
@@ -315,7 +315,7 @@ mme_ue_context_update_coll_keys (
     }
     size = 1024;
     obj_hashtable_ts_dump_content (mme_ue_context_p->guti_ue_context_htbl, tmp, &size);
-    LOG_ERROR (LOG_MME_APP,"%s\n", tmp);
+    OAILOG_ERROR (LOG_MME_APP,"%s\n", tmp);
   }
 
   if ((ue_context_p->imsi != imsi)
@@ -327,7 +327,7 @@ mme_ue_context_update_coll_keys (
       h_rc = HASH_TABLE_KEY_NOT_EXISTS;
     }
     if (HASH_TABLE_OK != h_rc) {
-      LOG_DEBUG (LOG_MME_APP,
+      OAILOG_DEBUG (LOG_MME_APP,
           "Error could not update this ue context %p enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " imsi %" SCNu64 ": %s\n",
           ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, imsi, hashtable_rc_code2string(h_rc));
     }
@@ -344,7 +344,7 @@ mme_ue_context_update_coll_keys (
     }
 
     if (HASH_TABLE_OK != h_rc) {
-      LOG_DEBUG (LOG_MME_APP,
+      OAILOG_DEBUG (LOG_MME_APP,
           "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_s11_teid " TEID_FMT " : %s\n",
           ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, mme_s11_teid, hashtable_rc_code2string(h_rc));
     }
@@ -370,12 +370,12 @@ mme_ue_context_update_coll_keys (
     if (HASH_TABLE_OK != h_rc) {
       char                                    guti_str[GUTI2STR_MAX_LENGTH];
       GUTI2STR (guti_p, guti_str, GUTI2STR_MAX_LENGTH);
-      LOG_DEBUG (LOG_MME_APP, "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " guti %s: %s\n",
+      OAILOG_DEBUG (LOG_MME_APP, "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " guti %s: %s\n",
           ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, guti_str, hashtable_rc_code2string(h_rc));
     }
     memcpy(&ue_context_p->guti , guti_p, sizeof(ue_context_p->guti));
   }
-  LOG_FUNC_OUT(LOG_MME_APP);
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 
@@ -387,7 +387,7 @@ mme_insert_ue_context (
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (mme_ue_context_p );
   DevAssert (ue_context_p );
 
@@ -395,18 +395,18 @@ mme_insert_ue_context (
   // filled ENB UE S1AP ID
   h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_ue_s1ap_id);
   if (HASH_TABLE_OK == h_rc) {
-    LOG_DEBUG (LOG_MME_APP, "This ue context %p already exists enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n",
+    OAILOG_DEBUG (LOG_MME_APP, "This ue context %p already exists enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n",
         ue_context_p, ue_context_p->enb_ue_s1ap_id);
-    LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   h_rc = hashtable_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl,
                              (const hash_key_t)ue_context_p->enb_ue_s1ap_id,
                              (void *)ue_context_p);
 
   if (HASH_TABLE_OK != h_rc) {
-    LOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue_id 0x%x\n",
+    OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue_id 0x%x\n",
         ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
-    LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
 
@@ -414,9 +414,9 @@ mme_insert_ue_context (
     h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id);
 
     if (HASH_TABLE_OK == h_rc) {
-      LOG_DEBUG (LOG_MME_APP, "This ue context %p already exists mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+      OAILOG_DEBUG (LOG_MME_APP, "This ue context %p already exists mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
           ue_context_p, ue_context_p->mme_ue_s1ap_id);
-      LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
     }
     //OAI_GCC_DIAG_OFF(discarded-qualifiers);
     h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl,
@@ -425,9 +425,9 @@ mme_insert_ue_context (
     //OAI_GCC_DIAG_ON(discarded-qualifiers);
 
     if (HASH_TABLE_OK != h_rc) {
-      LOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+      OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
           ue_context_p, ue_context_p->mme_ue_s1ap_id);
-      LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
     }
 
     // filled IMSI
@@ -437,9 +437,9 @@ mme_insert_ue_context (
                                   (void *)((uintptr_t)ue_context_p->mme_ue_s1ap_id));
 
       if (HASH_TABLE_OK != h_rc) {
-        LOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " imsi %" SCNu64 "\n",
+        OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " imsi %" SCNu64 "\n",
             ue_context_p, ue_context_p->mme_ue_s1ap_id, ue_context_p->imsi);
-        LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
       }
     }
 
@@ -450,9 +450,9 @@ mme_insert_ue_context (
                                  (void *)((uintptr_t)ue_context_p->mme_ue_s1ap_id));
 
       if (HASH_TABLE_OK != h_rc) {
-        LOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_s11_teid " TEID_FMT "\n",
+        OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_s11_teid " TEID_FMT "\n",
             ue_context_p, ue_context_p->mme_ue_s1ap_id, ue_context_p->mme_s11_teid);
-        LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
       }
     }
 
@@ -469,9 +469,9 @@ mme_insert_ue_context (
       if (HASH_TABLE_OK != h_rc) {
         char                                    guti_str[GUTI2STR_MAX_LENGTH];
         GUTI2STR (&ue_context_p->guti, guti_str, GUTI2STR_MAX_LENGTH);
-        LOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " guti %s\n",
+        OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " guti %s\n",
                 ue_context_p, ue_context_p->mme_ue_s1ap_id, guti_str);
-        LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+        OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
       }
     }
   }
@@ -482,7 +482,7 @@ mme_insert_ue_context (
   __sync_fetch_and_add (&mme_ue_context_p->nb_ue_managed, 1);
   __sync_fetch_and_add (&mme_ue_context_p->nb_ue_since_last_stat, 1);
 
-  LOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
 
 
@@ -491,7 +491,7 @@ void mme_notify_ue_context_released (
     mme_ue_context_t * const mme_ue_context_p,
     struct ue_context_s *ue_context_p)
 {
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (mme_ue_context_p );
   DevAssert (ue_context_p );
   /*
@@ -502,7 +502,7 @@ void mme_notify_ue_context_released (
 
   // TODO HERE free resources
 
-  LOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 //------------------------------------------------------------------------------
 void mme_remove_ue_context (
@@ -512,7 +512,7 @@ void mme_remove_ue_context (
   unsigned int                           *id = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (mme_ue_context_p );
   DevAssert (ue_context_p );
   /*
@@ -524,21 +524,21 @@ void mme_remove_ue_context (
   if (ue_context_p->imsi) {
     hash_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
     if (HASH_TABLE_OK != hash_rc)
-      LOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", IMSI %" SCNu64 "  not in IMSI collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", IMSI %" SCNu64 "  not in IMSI collection",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->imsi);
   }
   // filled NAS UE ID
   if (INVALID_MME_UE_S1AP_ID != ue_context_p->mme_ue_s1ap_id) {
     hash_rc = hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&id);
     if (HASH_TABLE_OK != hash_rc)
-      LOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not in MME UE S1AP ID collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not in MME UE S1AP ID collection",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
   }
   // filled S11 tun id
   if (ue_context_p->mme_s11_teid) {
     hash_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
     if (HASH_TABLE_OK != hash_rc)
-      LOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME S11 TEID  " TEID_FMT "  not in S11 collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME S11 TEID  " TEID_FMT "  not in S11 collection",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->mme_s11_teid);
   }
   // filled guti
@@ -546,18 +546,18 @@ void mme_remove_ue_context (
       (ue_context_p->guti.gummei.plmn.mcc_digit1) || (ue_context_p->guti.gummei.plmn.mcc_digit2) || (ue_context_p->guti.gummei.plmn.mcc_digit3)) { // MCC 000 does not exist in ITU table
     hash_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void **)&id);
     if (HASH_TABLE_OK != hash_rc)
-      LOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", GUTI  not in GUTI collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", GUTI  not in GUTI collection",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
   }
 
   hash_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_ue_s1ap_id, (void **)&ue_context_p);
   if (HASH_TABLE_OK != hash_rc)
-    LOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection",
+    OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection",
       ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
 
   mme_app_ue_context_free_content(ue_context_p);
   FREE_CHECK (ue_context_p);
-  LOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
@@ -572,24 +572,24 @@ mme_app_dump_ue_context (
   struct ue_context_s                    *const context_p = (struct ue_context_s *)ue_context_pP;
   uint8_t                                 j = 0;
 
-  LOG_DEBUG (LOG_MME_APP, "-----------------------UE context %p --------------------\n", ue_context_pP);
+  OAILOG_DEBUG (LOG_MME_APP, "-----------------------UE context %p --------------------\n", ue_context_pP);
   if (context_p) {
-    LOG_DEBUG (LOG_MME_APP, "    - IMSI ...........: %" SCNu64 "\n", context_p->imsi);
-    LOG_DEBUG (LOG_MME_APP, "                        |  m_tmsi  | mmec | mmegid | mcc | mnc |\n");
-    LOG_DEBUG (LOG_MME_APP, "    - GUTI............: | %08x |  %02x  |  %04x  | %03u | %03u |\n", context_p->guti.m_tmsi, context_p->guti.gummei.mme_code, context_p->guti.gummei.mme_gid,
+    OAILOG_DEBUG (LOG_MME_APP, "    - IMSI ...........: %" SCNu64 "\n", context_p->imsi);
+    OAILOG_DEBUG (LOG_MME_APP, "                        |  m_tmsi  | mmec | mmegid | mcc | mnc |\n");
+    OAILOG_DEBUG (LOG_MME_APP, "    - GUTI............: | %08x |  %02x  |  %04x  | %03u | %03u |\n", context_p->guti.m_tmsi, context_p->guti.gummei.mme_code, context_p->guti.gummei.mme_gid,
                  /*
                   * TODO check if two or three digits MNC...
                   */
         context_p->guti.gummei.plmn.mcc_digit3 * 100 +
         context_p->guti.gummei.plmn.mcc_digit2 * 10 + context_p->guti.gummei.plmn.mcc_digit1,
         context_p->guti.gummei.plmn.mnc_digit3 * 100 + context_p->guti.gummei.plmn.mnc_digit2 * 10 + context_p->guti.gummei.plmn.mnc_digit1);
-    LOG_DEBUG (LOG_MME_APP, "    - Authenticated ..: %s\n", (context_p->imsi_auth == IMSI_UNAUTHENTICATED) ? "FALSE" : "TRUE");
-    LOG_DEBUG (LOG_MME_APP, "    - eNB UE s1ap ID .: %08x\n", context_p->enb_ue_s1ap_id);
-    LOG_DEBUG (LOG_MME_APP, "    - MME UE s1ap ID .: %08x\n", context_p->mme_ue_s1ap_id);
-    LOG_DEBUG (LOG_MME_APP, "    - MME S11 TEID ...: %08x\n", context_p->mme_s11_teid);
-    LOG_DEBUG (LOG_MME_APP, "    - SGW S11 TEID ...: %08x\n", context_p->sgw_s11_teid);
-    LOG_DEBUG (LOG_MME_APP, "                        | mcc | mnc | cell id  |\n");
-    LOG_DEBUG (LOG_MME_APP, "    - E-UTRAN CGI ....: | %03u | %03u | %08x |\n",
+    OAILOG_DEBUG (LOG_MME_APP, "    - Authenticated ..: %s\n", (context_p->imsi_auth == IMSI_UNAUTHENTICATED) ? "FALSE" : "TRUE");
+    OAILOG_DEBUG (LOG_MME_APP, "    - eNB UE s1ap ID .: %08x\n", context_p->enb_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_MME_APP, "    - MME UE s1ap ID .: %08x\n", context_p->mme_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_MME_APP, "    - MME S11 TEID ...: %08x\n", context_p->mme_s11_teid);
+    OAILOG_DEBUG (LOG_MME_APP, "    - SGW S11 TEID ...: %08x\n", context_p->sgw_s11_teid);
+    OAILOG_DEBUG (LOG_MME_APP, "                        | mcc | mnc | cell id  |\n");
+    OAILOG_DEBUG (LOG_MME_APP, "    - E-UTRAN CGI ....: | %03u | %03u | %08x |\n",
                  context_p->e_utran_cgi.plmn.mcc_digit3 * 100 +
                  context_p->e_utran_cgi.plmn.mcc_digit2 * 10 +
                  context_p->e_utran_cgi.plmn.mcc_digit1,
@@ -598,29 +598,29 @@ mme_app_dump_ue_context (
     /*
      * Ctime return a \n in the string
      */
-    LOG_DEBUG (LOG_MME_APP, "    - Last acquired ..: %s", ctime (&context_p->cell_age));
+    OAILOG_DEBUG (LOG_MME_APP, "    - Last acquired ..: %s", ctime (&context_p->cell_age));
 
     /*
      * Display UE info only if we know them
      */
     if (SUBSCRIPTION_KNOWN == context_p->subscription_known) {
-      LOG_DEBUG (LOG_MME_APP, "    - Status .........: %s\n", (context_p->sub_status == SS_SERVICE_GRANTED) ? "Granted" : "Barred");
+      OAILOG_DEBUG (LOG_MME_APP, "    - Status .........: %s\n", (context_p->sub_status == SS_SERVICE_GRANTED) ? "Granted" : "Barred");
 #define DISPLAY_BIT_MASK_PRESENT(mASK)   \
     ((context_p->access_restriction_data & mASK) ? 'X' : 'O')
-      LOG_DEBUG (LOG_MME_APP, "    (O = allowed, X = !O) |UTRAN|GERAN|GAN|HSDPA EVO|E_UTRAN|HO TO NO 3GPP|\n");
-      LOG_DEBUG (LOG_MME_APP,
+      OAILOG_DEBUG (LOG_MME_APP, "    (O = allowed, X = !O) |UTRAN|GERAN|GAN|HSDPA EVO|E_UTRAN|HO TO NO 3GPP|\n");
+      OAILOG_DEBUG (LOG_MME_APP,
           "    - Access restriction  |  %c  |  %c  | %c |    %c    |   %c   |      %c      |\n",
           DISPLAY_BIT_MASK_PRESENT (ARD_UTRAN_NOT_ALLOWED),
           DISPLAY_BIT_MASK_PRESENT (ARD_GERAN_NOT_ALLOWED),
           DISPLAY_BIT_MASK_PRESENT (ARD_GAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_I_HSDPA_EVO_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_E_UTRAN_NOT_ALLOWED), DISPLAY_BIT_MASK_PRESENT (ARD_HO_TO_NON_3GPP_NOT_ALLOWED));
-      LOG_DEBUG (LOG_MME_APP, "    - Access Mode ....: %s\n", ACCESS_MODE_TO_STRING (context_p->access_mode));
-      LOG_DEBUG (LOG_MME_APP, "    - MSISDN .........: %-*s\n", MSISDN_LENGTH, context_p->msisdn);
-      LOG_DEBUG (LOG_MME_APP, "    - RAU/TAU timer ..: %u\n", context_p->rau_tau_timer);
-      LOG_DEBUG (LOG_MME_APP, "    - IMEISV .........: %*s\n", IMEISV_DIGITS_MAX, context_p->me_identity.imeisv);
-      LOG_DEBUG (LOG_MME_APP, "    - AMBR (bits/s)     ( Downlink |  Uplink  )\n");
-      LOG_DEBUG (LOG_MME_APP, "        Subscribed ...: (%010" PRIu64 "|%010" PRIu64 ")\n", context_p->subscribed_ambr.br_dl, context_p->subscribed_ambr.br_ul);
-      LOG_DEBUG (LOG_MME_APP, "        Allocated ....: (%010" PRIu64 "|%010" PRIu64 ")\n", context_p->used_ambr.br_dl, context_p->used_ambr.br_ul);
-      LOG_DEBUG (LOG_MME_APP, "    - Known vectors ..: %u\n", context_p->nb_of_vectors);
+      OAILOG_DEBUG (LOG_MME_APP, "    - Access Mode ....: %s\n", ACCESS_MODE_TO_STRING (context_p->access_mode));
+      OAILOG_DEBUG (LOG_MME_APP, "    - MSISDN .........: %-*s\n", MSISDN_LENGTH, context_p->msisdn);
+      OAILOG_DEBUG (LOG_MME_APP, "    - RAU/TAU timer ..: %u\n", context_p->rau_tau_timer);
+      OAILOG_DEBUG (LOG_MME_APP, "    - IMEISV .........: %*s\n", IMEISV_DIGITS_MAX, context_p->me_identity.imeisv);
+      OAILOG_DEBUG (LOG_MME_APP, "    - AMBR (bits/s)     ( Downlink |  Uplink  )\n");
+      OAILOG_DEBUG (LOG_MME_APP, "        Subscribed ...: (%010" PRIu64 "|%010" PRIu64 ")\n", context_p->subscribed_ambr.br_dl, context_p->subscribed_ambr.br_ul);
+      OAILOG_DEBUG (LOG_MME_APP, "        Allocated ....: (%010" PRIu64 "|%010" PRIu64 ")\n", context_p->used_ambr.br_dl, context_p->used_ambr.br_ul);
+      OAILOG_DEBUG (LOG_MME_APP, "    - Known vectors ..: %u\n", context_p->nb_of_vectors);
 
       for (j = 0; j < context_p->nb_of_vectors; j++) {
         int                                     k;
@@ -628,20 +628,20 @@ mme_app_dump_ue_context (
         eutran_vector_t                        *vector_p;
 
         vector_p = &context_p->vector_list[j];
-        LOG_DEBUG (LOG_MME_APP, "        - RAND ..: " RAND_FORMAT "\n", RAND_DISPLAY (vector_p->rand));
-        LOG_DEBUG (LOG_MME_APP, "        - AUTN ..: " AUTN_FORMAT "\n", AUTN_DISPLAY (vector_p->autn));
-        LOG_DEBUG (LOG_MME_APP, "        - KASME .: " KASME_FORMAT "\n", KASME_DISPLAY_1 (vector_p->kasme));
-        LOG_DEBUG (LOG_MME_APP, "                   " KASME_FORMAT "\n", KASME_DISPLAY_2 (vector_p->kasme));
+        OAILOG_DEBUG (LOG_MME_APP, "        - RAND ..: " RAND_FORMAT "\n", RAND_DISPLAY (vector_p->rand));
+        OAILOG_DEBUG (LOG_MME_APP, "        - AUTN ..: " AUTN_FORMAT "\n", AUTN_DISPLAY (vector_p->autn));
+        OAILOG_DEBUG (LOG_MME_APP, "        - KASME .: " KASME_FORMAT "\n", KASME_DISPLAY_1 (vector_p->kasme));
+        OAILOG_DEBUG (LOG_MME_APP, "                   " KASME_FORMAT "\n", KASME_DISPLAY_2 (vector_p->kasme));
 
         for (k = 0; k < vector_p->xres.size; k++) {
           sprintf (&xres_string[k * 3], "%02x,", vector_p->xres.data[k]);
         }
 
         xres_string[k * 3 - 1] = '\0';
-        LOG_DEBUG (LOG_MME_APP, "        - XRES ..: %s\n", xres_string);
+        OAILOG_DEBUG (LOG_MME_APP, "        - XRES ..: %s\n", xres_string);
       }
 
-      LOG_DEBUG (LOG_MME_APP, "    - PDN List:\n");
+      OAILOG_DEBUG (LOG_MME_APP, "    - PDN List:\n");
 
       for (j = 0; j < context_p->apn_profile.nb_apns; j++) {
         struct apn_configuration_s             *apn_config_p;
@@ -650,39 +650,39 @@ mme_app_dump_ue_context (
         /*
          * Default APN ?
          */
-        LOG_DEBUG (LOG_MME_APP, "        - Default APN ...: %s\n", (apn_config_p->context_identifier == context_p->apn_profile.context_identifier)
+        OAILOG_DEBUG (LOG_MME_APP, "        - Default APN ...: %s\n", (apn_config_p->context_identifier == context_p->apn_profile.context_identifier)
                      ? "TRUE" : "FALSE");
-        LOG_DEBUG (LOG_MME_APP, "        - APN ...........: %s\n", apn_config_p->service_selection);
-        LOG_DEBUG (LOG_MME_APP, "        - AMBR (bits/s) ( Downlink |  Uplink  )\n");
-        LOG_DEBUG (LOG_MME_APP, "                        (%010" PRIu64 "|%010" PRIu64 ")\n", apn_config_p->ambr.br_dl, apn_config_p->ambr.br_ul);
-        LOG_DEBUG (LOG_MME_APP, "        - PDN type ......: %s\n", PDN_TYPE_TO_STRING (apn_config_p->pdn_type));
-        LOG_DEBUG (LOG_MME_APP, "        - QOS\n");
-        LOG_DEBUG (LOG_MME_APP, "            QCI .........: %u\n", apn_config_p->subscribed_qos.qci);
-        LOG_DEBUG (LOG_MME_APP, "            Prio level ..: %u\n", apn_config_p->subscribed_qos.allocation_retention_priority.priority_level);
-        LOG_DEBUG (LOG_MME_APP, "            Pre-emp vul .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-        LOG_DEBUG (LOG_MME_APP, "            Pre-emp cap .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+        OAILOG_DEBUG (LOG_MME_APP, "        - APN ...........: %s\n", apn_config_p->service_selection);
+        OAILOG_DEBUG (LOG_MME_APP, "        - AMBR (bits/s) ( Downlink |  Uplink  )\n");
+        OAILOG_DEBUG (LOG_MME_APP, "                        (%010" PRIu64 "|%010" PRIu64 ")\n", apn_config_p->ambr.br_dl, apn_config_p->ambr.br_ul);
+        OAILOG_DEBUG (LOG_MME_APP, "        - PDN type ......: %s\n", PDN_TYPE_TO_STRING (apn_config_p->pdn_type));
+        OAILOG_DEBUG (LOG_MME_APP, "        - QOS\n");
+        OAILOG_DEBUG (LOG_MME_APP, "            QCI .........: %u\n", apn_config_p->subscribed_qos.qci);
+        OAILOG_DEBUG (LOG_MME_APP, "            Prio level ..: %u\n", apn_config_p->subscribed_qos.allocation_retention_priority.priority_level);
+        OAILOG_DEBUG (LOG_MME_APP, "            Pre-emp vul .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+        OAILOG_DEBUG (LOG_MME_APP, "            Pre-emp cap .: %s\n", (apn_config_p->subscribed_qos.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
 
         if (apn_config_p->nb_ip_address == 0) {
-          LOG_DEBUG (LOG_MME_APP, "            IP addr .....: Dynamic allocation\n");
+          OAILOG_DEBUG (LOG_MME_APP, "            IP addr .....: Dynamic allocation\n");
         } else {
           int                                     i;
 
-          LOG_DEBUG (LOG_MME_APP, "            IP addresses :\n");
+          OAILOG_DEBUG (LOG_MME_APP, "            IP addresses :\n");
 
           for (i = 0; i < apn_config_p->nb_ip_address; i++) {
             if (apn_config_p->ip_address[i].pdn_type == IPv4) {
-              LOG_DEBUG (LOG_MME_APP, "                           [" IPV4_ADDR "]\n", IPV4_ADDR_DISPLAY_8 (apn_config_p->ip_address[i].address.ipv4_address));
+              OAILOG_DEBUG (LOG_MME_APP, "                           [" IPV4_ADDR "]\n", IPV4_ADDR_DISPLAY_8 (apn_config_p->ip_address[i].address.ipv4_address));
             } else {
               char                                    ipv6[40];
 
               inet_ntop (AF_INET6, apn_config_p->ip_address[i].address.ipv6_address, ipv6, 40);
-              LOG_DEBUG (LOG_MME_APP, "                           [%s]\n", ipv6);
+              OAILOG_DEBUG (LOG_MME_APP, "                           [%s]\n", ipv6);
             }
           }
         }
-        LOG_DEBUG (LOG_MME_APP, "\n");
+        OAILOG_DEBUG (LOG_MME_APP, "\n");
       }
-      LOG_DEBUG (LOG_MME_APP, "    - Bearer List:\n");
+      OAILOG_DEBUG (LOG_MME_APP, "    - Bearer List:\n");
 
       for (j = 0; j < BEARERS_PER_UE; j++) {
         bearer_context_t                       *bearer_context_p;
@@ -690,20 +690,20 @@ mme_app_dump_ue_context (
         bearer_context_p = &context_p->eps_bearers[j];
 
         if (bearer_context_p->s_gw_teid != 0) {
-          LOG_DEBUG (LOG_MME_APP, "        Bearer id .......: %02u\n", j);
-          LOG_DEBUG (LOG_MME_APP, "        S-GW TEID (UP)...: %08x\n", bearer_context_p->s_gw_teid);
-          LOG_DEBUG (LOG_MME_APP, "        P-GW TEID (UP)...: %08x\n", bearer_context_p->p_gw_teid);
-          LOG_DEBUG (LOG_MME_APP, "        QCI .............: %u\n", bearer_context_p->qci);
-          LOG_DEBUG (LOG_MME_APP, "        Priority level ..: %u\n", bearer_context_p->prio_level);
-          LOG_DEBUG (LOG_MME_APP, "        Pre-emp vul .....: %s\n", (bearer_context_p->pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-          LOG_DEBUG (LOG_MME_APP, "        Pre-emp cap .....: %s\n", (bearer_context_p->pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+          OAILOG_DEBUG (LOG_MME_APP, "        Bearer id .......: %02u\n", j);
+          OAILOG_DEBUG (LOG_MME_APP, "        S-GW TEID (UP)...: %08x\n", bearer_context_p->s_gw_teid);
+          OAILOG_DEBUG (LOG_MME_APP, "        P-GW TEID (UP)...: %08x\n", bearer_context_p->p_gw_teid);
+          OAILOG_DEBUG (LOG_MME_APP, "        QCI .............: %u\n", bearer_context_p->qci);
+          OAILOG_DEBUG (LOG_MME_APP, "        Priority level ..: %u\n", bearer_context_p->prio_level);
+          OAILOG_DEBUG (LOG_MME_APP, "        Pre-emp vul .....: %s\n", (bearer_context_p->pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+          OAILOG_DEBUG (LOG_MME_APP, "        Pre-emp cap .....: %s\n", (bearer_context_p->pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
         }
       }
     }
-    LOG_DEBUG (LOG_MME_APP, "---------------------------------------------------------\n");
+    OAILOG_DEBUG (LOG_MME_APP, "---------------------------------------------------------\n");
     return false;
   }
-  LOG_DEBUG (LOG_MME_APP, "---------------------------------------------------------\n");
+  OAILOG_DEBUG (LOG_MME_APP, "---------------------------------------------------------\n");
   return true;
 }
 
@@ -727,14 +727,14 @@ mme_app_handle_s1ap_ue_context_release_req (
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, s1ap_ue_context_release_req->enb_ue_s1ap_id);
 
   if (!ue_context_p) {
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ Unknown mme_ue_s1ap_id 0x%06" PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    LOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
         s1ap_ue_context_release_req->enb_ue_s1ap_id, s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    LOG_FUNC_OUT (LOG_MME_APP);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
   if ((ue_context_p->mme_s11_teid == 0) && (ue_context_p->sgw_s11_teid == 0)) {
@@ -750,7 +750,7 @@ mme_app_handle_s1ap_ue_context_release_req (
   } else {
     mme_app_send_s11_release_access_bearers_req (ue_context_p);
   }
-  LOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 
@@ -775,18 +775,18 @@ mme_app_handle_s1ap_ue_context_release_complete (
 {
   struct ue_context_s                    *ue_context_p = NULL;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, s1ap_ue_context_release_complete->enb_ue_s1ap_id);
 
   if (!ue_context_p) {
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE Unknown mme_ue_s1ap_id 0x%06" PRIX32 " ", s1ap_ue_context_release_complete->mme_ue_s1ap_id);
-    LOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
         s1ap_ue_context_release_complete->enb_ue_s1ap_id, s1ap_ue_context_release_complete->mme_ue_s1ap_id);
-    LOG_FUNC_OUT (LOG_MME_APP);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
   mme_notify_ue_context_released(&mme_app_desc.mme_ue_contexts, ue_context_p);
   //mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
   // TODO remove in context GBR bearers
-  LOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }

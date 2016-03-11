@@ -82,7 +82,7 @@ void *mme_app_thread (
       break;
 
     case SGW_MODIFY_BEARER_RESPONSE:{
-    	LOG_DEBUG (LOG_MME_APP, " TO DO HANDLE SGW_MODIFY_BEARER_RESPONSE\n");
+        OAILOG_DEBUG (LOG_MME_APP, " TO DO HANDLE SGW_MODIFY_BEARER_RESPONSE\n");
         // TO DO
       }
       break;
@@ -108,8 +108,8 @@ void *mme_app_thread (
       break;
 
       // From S1AP Initiating Message/EMM Attach Request
-    case MME_APP_CONNECTION_ESTABLISHMENT_IND:{
-        mme_app_handle_conn_est_ind (&MME_APP_CONNECTION_ESTABLISHMENT_IND (received_message_p));
+    case MME_APP_INITIAL_UE_MESSAGE:{
+        mme_app_handle_initial_ue_message (&MME_APP_INITIAL_UE_MESSAGE (received_message_p));
       }
       break;
 
@@ -162,7 +162,7 @@ void *mme_app_thread (
       break;
 
     default:{
-    	LOG_DEBUG (LOG_MME_APP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+      OAILOG_DEBUG (LOG_MME_APP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
         AssertFatal (0, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
@@ -179,7 +179,7 @@ int
 mme_app_init (
   const mme_config_t * mme_config_p)
 {
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
   mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_imsi_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_tun11_ue_context_htbl");
@@ -191,8 +191,8 @@ mme_app_init (
    * Create the thread associated with MME applicative layer
    */
   if (itti_create_task (TASK_MME_APP, &mme_app_thread, NULL) < 0) {
-    LOG_ERROR (LOG_MME_APP, "MME APP create task failed\n");
-    LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_ERROR (LOG_MME_APP, "MME APP create task failed\n");
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
   mme_app_desc.statistic_timer_period = mme_config_p->mme_statistic_timer;
@@ -201,10 +201,10 @@ mme_app_init (
    * Request for periodic timer
    */
   if (timer_setup (mme_config_p->mme_statistic_timer, 0, TASK_MME_APP, INSTANCE_DEFAULT, TIMER_PERIODIC, NULL, &mme_app_desc.statistic_timer_id) < 0) {
-    LOG_ERROR (LOG_MME_APP, "Failed to request new timer for statistics with %ds " "of periocidity\n", mme_config_p->mme_statistic_timer);
+    OAILOG_ERROR (LOG_MME_APP, "Failed to request new timer for statistics with %ds " "of periocidity\n", mme_config_p->mme_statistic_timer);
     mme_app_desc.statistic_timer_id = 0;
   }
 
-  LOG_DEBUG (LOG_MME_APP, "Initializing MME applicative layer: DONE\n");
-  LOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  OAILOG_DEBUG (LOG_MME_APP, "Initializing MME applicative layer: DONE\n");
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }

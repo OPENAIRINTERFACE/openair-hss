@@ -128,13 +128,13 @@ dump_access_point_name_xml (
   AccessPointName * accesspointname,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Access Point Name>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Access Point Name>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "%s</Access Point Name>\n", dump_octet_string_xml (&accesspointname->accesspointnamevalue));
+  OAILOG_DEBUG (LOG_NAS, "%s</Access Point Name>\n", dump_octet_string_xml (&accesspointname->accesspointnamevalue));
 }

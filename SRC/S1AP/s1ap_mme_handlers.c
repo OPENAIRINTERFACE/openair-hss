@@ -126,7 +126,7 @@ s1ap_mme_handle_message (
    * Checking procedure Code and direction of message
    */
   if ((message->procedureCode > (sizeof (messages_callback) / (3 * sizeof (s1ap_message_decoded_callback)))) || (message->direction > S1AP_PDU_PR_unsuccessfulOutcome)) {
-    LOG_DEBUG (LOG_S1AP, "[SCTP %d] Either procedureCode %d or direction %d exceed expected\n", assoc_id, (int)message->procedureCode, (int)message->direction);
+    OAILOG_DEBUG (LOG_S1AP, "[SCTP %d] Either procedureCode %d or direction %d exceed expected\n", assoc_id, (int)message->procedureCode, (int)message->direction);
     return -1;
   }
 
@@ -135,7 +135,7 @@ s1ap_mme_handle_message (
    * * * * This can mean not implemented or no procedure for eNB (wrong message).
    */
   if (messages_callback[message->procedureCode][message->direction - 1] == NULL) {
-    LOG_DEBUG (LOG_S1AP, "[SCTP %d] No handler for procedureCode %d in %s\n", assoc_id, (int)message->procedureCode, s1ap_direction2String[(int)message->direction]);
+    OAILOG_DEBUG (LOG_S1AP, "[SCTP %d] No handler for procedureCode %d in %s\n", assoc_id, (int)message->procedureCode, s1ap_direction2String[(int)message->direction]);
     return -2;
   }
 
@@ -197,7 +197,7 @@ s1ap_mme_generate_s1_setup_failure (
   S1ap_S1SetupFailureIEs_t               *s1_setup_failure_p = NULL;
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   s1_setup_failure_p = &message.msg.s1ap_S1SetupFailureIEs;
   message.procedureCode = S1ap_ProcedureCode_id_S1Setup;
   message.direction = S1AP_PDU_PR_unsuccessfulOutcome;
@@ -212,13 +212,13 @@ s1ap_mme_generate_s1_setup_failure (
   }
 
   if (s1ap_mme_encode_pdu (&message, &buffer_p, &length) < 0) {
-    LOG_ERROR (LOG_S1AP, "Failed to encode s1 setup failure\n");
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_ERROR (LOG_S1AP, "Failed to encode s1 setup failure\n");
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 S1Setup/unsuccessfulOutcome  assoc_id %u cause %u value %u", assoc_id, cause_type, cause_value);
   rc =  s1ap_mme_itti_send_sctp_request (buffer_p, length, assoc_id, 0);
-  LOG_FUNC_RETURN (LOG_S1AP, rc);
+  OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -234,7 +234,7 @@ s1ap_mme_handle_s1_setup_request (
 {
 
   int                                     rc = RETURNok;
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   if (hss_associated) {
     S1ap_S1SetupRequestIEs_t               *s1SetupRequest_p = NULL;
     enb_description_t                      *enb_association = NULL;
@@ -252,19 +252,19 @@ s1ap_mme_handle_s1_setup_request (
     MSC_LOG_RX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 S1Setup/%s assoc_id %u stream %u", s1ap_direction2String[message->direction], assoc_id, stream);
 
     if (stream != 0) {
-      LOG_ERROR (LOG_S1AP, "Received new s1 setup request on stream != 0\n");
+      OAILOG_ERROR (LOG_S1AP, "Received new s1 setup request on stream != 0\n");
       /*
        * Send a s1 setup failure with protocol cause unspecified
        */
       rc =  s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_protocol, S1ap_CauseProtocol_unspecified, -1);
-      LOG_FUNC_RETURN (LOG_S1AP, rc);
+      OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     }
 
     log_queue_item_t *  context = NULL;
-    LOG_MESSAGE_START (LOG_LEVEL_DEBUG, LOG_S1AP, (&context), "New s1 setup request incoming from ");
+    OAILOG_MESSAGE_START (OAILOG_LEVEL_DEBUG, LOG_S1AP, (&context), "New s1 setup request incoming from ");
 
     if (s1SetupRequest_p->presenceMask & S1AP_S1SETUPREQUESTIES_ENBNAME_PRESENT) {
-      LOG_MESSAGE_ADD (context, "%*s ", s1SetupRequest_p->eNBname.size, s1SetupRequest_p->eNBname.buf);
+      OAILOG_MESSAGE_ADD (context, "%*s ", s1SetupRequest_p->eNBname.size, s1SetupRequest_p->eNBname.buf);
       enb_name = (char *)s1SetupRequest_p->eNBname.buf;
     }
 
@@ -277,7 +277,7 @@ s1ap_mme_handle_s1_setup_request (
       }
 
       enb_id = (enb_id_buf[0] << 20) + (enb_id_buf[1] << 12) + (enb_id_buf[2] << 4) + ((enb_id_buf[3] & 0xf0) >> 4);
-      LOG_MESSAGE_ADD (context, "home eNB id: %07x", enb_id);
+      OAILOG_MESSAGE_ADD (context, "home eNB id: %07x", enb_id);
     } else {
       // Macro eNB = 20 bits
       uint8_t                                *enb_id_buf = s1SetupRequest_p->global_ENB_ID.eNB_ID.choice.macroENB_ID.buf;
@@ -287,22 +287,22 @@ s1ap_mme_handle_s1_setup_request (
       }
 
       enb_id = (enb_id_buf[0] << 12) + (enb_id_buf[1] << 4) + ((enb_id_buf[2] & 0xf0) >> 4);
-      LOG_MESSAGE_ADD (context, "macro eNB id: %05x", enb_id);
+      OAILOG_MESSAGE_ADD (context, "macro eNB id: %05x", enb_id);
     }
-    LOG_MESSAGE_FINISH(context);
+    OAILOG_MESSAGE_FINISH(context);
 
     config_read_lock (&mme_config);
     max_enb_connected = mme_config.max_enbs;
     config_unlock (&mme_config);
 
     if (nb_enb_associated == max_enb_connected) {
-      LOG_ERROR (LOG_S1AP, "There is too much eNB connected to MME, rejecting the association\n");
-      LOG_DEBUG (LOG_S1AP, "Connected = %d, maximum allowed = %d\n", nb_enb_associated, max_enb_connected);
+      OAILOG_ERROR (LOG_S1AP, "There is too much eNB connected to MME, rejecting the association\n");
+      OAILOG_DEBUG (LOG_S1AP, "Connected = %d, maximum allowed = %d\n", nb_enb_associated, max_enb_connected);
       /*
        * Send an overload cause...
        */
       rc = s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_misc, S1ap_CauseMisc_control_processing_overload, S1ap_TimeToWait_v20s);
-      LOG_FUNC_RETURN (LOG_S1AP, rc);
+      OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     }
 
     /* Requirement MME36.413R10_8.7.3.4 Abnormal Conditions
@@ -316,12 +316,12 @@ s1ap_mme_handle_s1_setup_request (
      * eNB and MME have no common PLMN
      */
     if (ta_ret != TA_LIST_RET_OK) {
-      LOG_ERROR (LOG_S1AP, "No Common PLMN with eNB, generate_s1_setup_failure\n");
+      OAILOG_ERROR (LOG_S1AP, "No Common PLMN with eNB, generate_s1_setup_failure\n");
       rc =  s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_misc, S1ap_CauseMisc_unknown_PLMN, S1ap_TimeToWait_v20s);
-      LOG_FUNC_RETURN (LOG_S1AP, rc);
+      OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     }
 
-    LOG_DEBUG (LOG_S1AP, "Adding eNB to the list of served eNBs\n");
+    OAILOG_DEBUG (LOG_S1AP, "Adding eNB to the list of served eNBs\n");
 
     if ((enb_association = s1ap_is_enb_id_in_list (enb_id)) == NULL) {
       /*
@@ -332,7 +332,7 @@ s1ap_mme_handle_s1_setup_request (
         /*
          * ??
          */
-        LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+        OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
       } else {
         enb_association->s1_state = S1AP_RESETING;
         enb_association->enb_id = enb_id;
@@ -359,10 +359,10 @@ s1ap_mme_handle_s1_setup_request (
          */
         s1SetupFailure.cause.present = S1ap_Cause_PR_misc;      //TODO: send the right cause
         s1SetupFailure.cause.choice.misc = S1ap_CauseMisc_control_processing_overload;
-        LOG_ERROR (LOG_S1AP, "Rejeting s1 setup request as eNB id %d is already associated to an active sctp association" "Previous known: %d, new one: %d\n", enb_id, enb_association->sctp_assoc_id, assoc_id);
+        OAILOG_ERROR (LOG_S1AP, "Rejeting s1 setup request as eNB id %d is already associated to an active sctp association" "Previous known: %d, new one: %d\n", enb_id, enb_association->sctp_assoc_id, assoc_id);
         //             s1ap_mme_encode_s1setupfailure(&s1SetupFailure,
         //                                            receivedMessage->msg.s1ap_sctp_new_msg_ind.assocId);
-        LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+        OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
       }
 
       /*
@@ -372,16 +372,16 @@ s1ap_mme_handle_s1_setup_request (
 
     s1ap_dump_enb (enb_association);
     rc =  s1ap_generate_s1_setup_response (enb_association);
-    LOG_FUNC_RETURN (LOG_S1AP, rc);
+    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   } else {
     /*
      * Can not process the request, MME is not connected to HSS
      */
-    LOG_ERROR (LOG_S1AP, "Rejecting s1 setup request Can not process the request, MME is not connected to HSS\n");
+    OAILOG_ERROR (LOG_S1AP, "Rejecting s1 setup request Can not process the request, MME is not connected to HSS\n");
     rc = s1ap_mme_generate_s1_setup_failure (assoc_id, S1ap_Cause_PR_misc, S1ap_CauseMisc_unspecified, -1);
-    LOG_FUNC_RETURN (LOG_S1AP, rc);
+    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   }
-  LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
 }
 
 //------------------------------------------------------------------------------
@@ -399,7 +399,7 @@ s1ap_generate_s1_setup_response (
   uint32_t                                length = 0;
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   DevAssert (enb_association != NULL);
   // memset for gcc 4.8.4 instead of {0}, servedGUMMEI.servedPLMNs
   memset(&servedGUMMEI, 0, sizeof(S1ap_ServedGUMMEIsItem_t));
@@ -470,7 +470,7 @@ s1ap_generate_s1_setup_response (
    * Failed to encode s1 setup response...
    */
   if (enc_rval < 0) {
-    LOG_DEBUG (LOG_S1AP, "Removed eNB %d\n", enb_association->sctp_assoc_id);
+    OAILOG_DEBUG (LOG_S1AP, "Removed eNB %d\n", enb_association->sctp_assoc_id);
     s1ap_remove_enb (enb_association);
   } else {
     /*
@@ -484,7 +484,7 @@ s1ap_generate_s1_setup_response (
    * Non-UE signalling -> stream 0
    */
   rc = s1ap_mme_itti_send_sctp_request (buffer, length, enb_association->sctp_assoc_id, 0);
-  LOG_FUNC_RETURN (LOG_S1AP, rc);
+  OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
 //------------------------------------------------------------------------------
@@ -498,7 +498,7 @@ s1ap_mme_handle_ue_cap_indication (
   S1ap_UECapabilityInfoIndicationIEs_t   *ue_cap_p = NULL;
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   DevAssert (message != NULL);
   ue_cap_p = &message->msg.s1ap_UECapabilityInfoIndicationIEs;
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
@@ -507,21 +507,21 @@ s1ap_mme_handle_ue_cap_indication (
                       s1ap_direction2String[message->direction], ue_cap_p->eNB_UE_S1AP_ID, ue_cap_p->mme_ue_s1ap_id);
 
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (ue_cap_p->mme_ue_s1ap_id)) == NULL) {
-    LOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ue_cap_p->mme_ue_s1ap_id);
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ue_cap_p->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   if (ue_ref_p->enb_ue_s1ap_id != ue_cap_p->eNB_UE_S1AP_ID) {
-    LOG_DEBUG (LOG_S1AP, "Mismatch in eNB UE S1AP ID, known: " ENB_UE_S1AP_ID_FMT ", received: " ENB_UE_S1AP_ID_FMT "\n",
+    OAILOG_DEBUG (LOG_S1AP, "Mismatch in eNB UE S1AP ID, known: " ENB_UE_S1AP_ID_FMT ", received: " ENB_UE_S1AP_ID_FMT "\n",
                      ue_ref_p->enb_ue_s1ap_id, (uint32_t)ue_cap_p->eNB_UE_S1AP_ID);
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   /*
    * Just display a warning when message received over wrong stream
    */
   if (ue_ref_p->sctp_stream_recv != stream) {
-    LOG_ERROR (LOG_S1AP, "Received ue capability indication for "
+    OAILOG_ERROR (LOG_S1AP, "Received ue capability indication for "
                 "(MME UE S1AP ID/eNB UE S1AP ID) (" MME_UE_S1AP_ID_FMT "/" ENB_UE_S1AP_ID_FMT ") over wrong stream "
                 "expecting %u, received on %u\n", (uint32_t) ue_cap_p->mme_ue_s1ap_id, ue_ref_p->enb_ue_s1ap_id, ue_ref_p->sctp_stream_recv, stream);
   }
@@ -546,9 +546,9 @@ s1ap_mme_handle_ue_cap_indication (
                         NULL, 0, "0 S1AP_UE_CAPABILITIES_IND enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " len %u",
                         ue_cap_ind_p->enb_ue_s1ap_id, ue_cap_ind_p->mme_ue_s1ap_id, ue_cap_ind_p->radio_capabilities_length);
     rc = itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-    LOG_FUNC_RETURN (LOG_S1AP, rc);
+    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   }
-  LOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -568,7 +568,7 @@ s1ap_mme_handle_initial_context_setup_response (
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   initialContextSetupResponseIEs_p = &message->msg.s1ap_InitialContextSetupResponseIEs;
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
@@ -577,20 +577,20 @@ s1ap_mme_handle_initial_context_setup_response (
                       s1ap_direction2String[message->direction], initialContextSetupResponseIEs_p->eNB_UE_S1AP_ID, initialContextSetupResponseIEs_p->mme_ue_s1ap_id);
 
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list ((uint32_t) initialContextSetupResponseIEs_p->mme_ue_s1ap_id)) == NULL) {
-    LOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT " %u(10)\n",
+    OAILOG_DEBUG (LOG_S1AP, "No UE is attached to this mme UE s1ap id: " MME_UE_S1AP_ID_FMT " %u(10)\n",
                       (uint32_t) initialContextSetupResponseIEs_p->mme_ue_s1ap_id, (uint32_t) initialContextSetupResponseIEs_p->mme_ue_s1ap_id);
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   if (ue_ref_p->enb_ue_s1ap_id != initialContextSetupResponseIEs_p->eNB_UE_S1AP_ID) {
-    LOG_DEBUG (LOG_S1AP, "Mismatch in eNB UE S1AP ID, known: " ENB_UE_S1AP_ID_FMT " %u(10), received: 0x%06x %u(10)\n",
+    OAILOG_DEBUG (LOG_S1AP, "Mismatch in eNB UE S1AP ID, known: " ENB_UE_S1AP_ID_FMT " %u(10), received: 0x%06x %u(10)\n",
                 ue_ref_p->enb_ue_s1ap_id, ue_ref_p->enb_ue_s1ap_id, (uint32_t) initialContextSetupResponseIEs_p->eNB_UE_S1AP_ID, (uint32_t) initialContextSetupResponseIEs_p->eNB_UE_S1AP_ID);
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   if (initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count != 1) {
-    LOG_DEBUG (LOG_S1AP, "E-RAB creation has failed\n");
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_DEBUG (LOG_S1AP, "E-RAB creation has failed\n");
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   ue_ref_p->s1_ue_state = S1AP_UE_CONNECTED;
@@ -617,7 +617,7 @@ s1ap_mme_handle_initial_context_setup_response (
                       MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).eps_bearer_id,
                       MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).bearer_s1u_enb_fteid.teid);
   rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-  LOG_FUNC_RETURN (LOG_S1AP, rc);
+  OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
 
@@ -633,7 +633,7 @@ s1ap_mme_handle_ue_context_release_request (
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   ueContextReleaseRequest_p = &message->msg.s1ap_UEContextReleaseRequestIEs;
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
@@ -647,9 +647,9 @@ s1ap_mme_handle_ue_context_release_request (
    */
   if (ueContextReleaseRequest_p->cause.present == S1ap_Cause_PR_radioNetwork) {
     if (ueContextReleaseRequest_p->cause.choice.radioNetwork == S1ap_CauseRadioNetwork_user_inactivity) {
-      LOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_REQUEST ignored, cause user inactivity\n");
+      OAILOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_REQUEST ignored, cause user inactivity\n");
       MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_REQUEST ignored, cause user inactivity", ueContextReleaseRequest_p->mme_ue_s1ap_id);
-      LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
     }
   }
 
@@ -658,10 +658,10 @@ s1ap_mme_handle_ue_context_release_request (
      * MME doesn't know the MME UE S1AP ID provided.
      * * * * TODO
      */
-    LOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_REQUEST ignored cause could not get context with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " %u(10)\n",
+    OAILOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_REQUEST ignored cause could not get context with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " %u(10)\n",
            (uint32_t)ueContextReleaseRequest_p->mme_ue_s1ap_id, (uint32_t)ueContextReleaseRequest_p->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_REQUEST ignored, no context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ueContextReleaseRequest_p->mme_ue_s1ap_id);
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   } else {
     if (ue_ref_p->enb_ue_s1ap_id == (ueContextReleaseRequest_p->eNB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK)) {
       /*
@@ -679,18 +679,18 @@ s1ap_mme_handle_ue_context_release_request (
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
               S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id);
       rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-      LOG_FUNC_RETURN (LOG_S1AP, rc);
+      OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     } else {
       // TODO
-      LOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_REQUEST ignored, cause mismatch enb_ue_s1ap_id: ctxt " ENB_UE_S1AP_ID_FMT " != request " ENB_UE_S1AP_ID_FMT " ",
+      OAILOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_REQUEST ignored, cause mismatch enb_ue_s1ap_id: ctxt " ENB_UE_S1AP_ID_FMT " != request " ENB_UE_S1AP_ID_FMT " ",
     		  (uint32_t)ue_ref_p->enb_ue_s1ap_id, (uint32_t)ueContextReleaseRequest_p->eNB_UE_S1AP_ID);
       MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_REQUEST ignored, cause mismatch enb_ue_s1ap_id: ctxt " ENB_UE_S1AP_ID_FMT " != request " ENB_UE_S1AP_ID_FMT " ",
               ue_ref_p->enb_ue_s1ap_id, (uint32_t)ueContextReleaseRequest_p->eNB_UE_S1AP_ID);
-      LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
     }
   }
 
-  LOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -704,9 +704,9 @@ s1ap_mme_generate_ue_context_release_command (
   S1ap_UEContextReleaseCommandIEs_t      *ueContextReleaseCommandIEs_p = NULL;
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   if (ue_ref_p == NULL) {
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   message.procedureCode = S1ap_ProcedureCode_id_UEContextRelease;
@@ -725,13 +725,13 @@ s1ap_mme_generate_ue_context_release_command (
   if (s1ap_mme_encode_pdu (&message, &buffer, &length) < 0) {
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UEContextRelease/initiatingMessage enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " encoding failed",
             ue_ref_p->enb_ue_s1ap_id, ue_ref_p->mme_ue_s1ap_id);
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 UEContextRelease/initiatingMessage enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "",
           ue_ref_p->enb_ue_s1ap_id, ue_ref_p->mme_ue_s1ap_id);
   rc = s1ap_mme_itti_send_sctp_request (buffer, length, ue_ref_p->enb->sctp_assoc_id, ue_ref_p->sctp_stream_send);
-  LOG_FUNC_RETURN (LOG_S1AP, rc);
+  OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
 
@@ -743,21 +743,21 @@ s1ap_handle_ue_context_release_command (
   ue_description_t                       *ue_ref_p = NULL;
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (ue_context_release_command_pP->mme_ue_s1ap_id)) == NULL) {
     /*
      * MME doesn't know the MME UE S1AP ID provided.
      * * * * TODO
      */
-    LOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_COMMAND ignored cause could not get context with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " %u(10)\n", ue_context_release_command_pP->mme_ue_s1ap_id, ue_context_release_command_pP->mme_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_COMMAND ignored cause could not get context with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " %u(10)\n", ue_context_release_command_pP->mme_ue_s1ap_id, ue_context_release_command_pP->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_COMMAND ignored, no context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ue_context_release_command_pP->mme_ue_s1ap_id);
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   } else {
     rc = s1ap_mme_generate_ue_context_release_command (ue_ref_p);
-    LOG_FUNC_RETURN (LOG_S1AP, rc);
+    OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   }
 
-  LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
 }
 
 //------------------------------------------------------------------------------
@@ -771,7 +771,7 @@ s1ap_mme_handle_ue_context_release_complete (
   ue_description_t                       *ue_ref_p = NULL;
   MessageDef                             *message_p = NULL;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   ueContextReleaseComplete_p = &message->msg.s1ap_UEContextReleaseCompleteIEs;
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
@@ -785,7 +785,7 @@ s1ap_mme_handle_ue_context_release_complete (
      * * * * TODO
      */
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UEContextReleaseComplete ignored, no context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ueContextReleaseComplete_p->mme_ue_s1ap_id);
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   /*
@@ -799,8 +799,8 @@ s1ap_mme_handle_ue_context_release_complete (
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   s1ap_remove_ue (ue_ref_p);
-  LOG_DEBUG (LOG_S1AP, "Removed UE " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ueContextReleaseComplete_p->mme_ue_s1ap_id);
-  LOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+  OAILOG_DEBUG (LOG_S1AP, "Removed UE " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ueContextReleaseComplete_p->mme_ue_s1ap_id);
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -813,7 +813,7 @@ s1ap_mme_handle_initial_context_setup_failure (
   S1ap_InitialContextSetupFailureIEs_t   *initialContextSetupFailureIEs_p = NULL;
   ue_description_t                       *ue_ref_p = NULL;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   initialContextSetupFailureIEs_p = &message->msg.s1ap_InitialContextSetupFailureIEs;
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
@@ -826,17 +826,17 @@ s1ap_mme_handle_initial_context_setup_failure (
      * MME doesn't know the MME UE S1AP ID provided.
      */
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 InitialContextSetupFailure ignored, no context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", initialContextSetupFailureIEs_p->mme_ue_s1ap_id);
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   if (ue_ref_p->enb_ue_s1ap_id != (initialContextSetupFailureIEs_p->eNB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK)) {
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   s1ap_remove_ue (ue_ref_p);
   MSC_LOG_EVENT (MSC_S1AP_MME, "0 Removed UE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", initialContextSetupFailureIEs_p->mme_ue_s1ap_id);
-  LOG_DEBUG (LOG_S1AP, "Removed UE " MME_UE_S1AP_ID_FMT "\n", (uint32_t) initialContextSetupFailureIEs_p->mme_ue_s1ap_id);
-  LOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+  OAILOG_DEBUG (LOG_S1AP, "Removed UE " MME_UE_S1AP_ID_FMT "\n", (uint32_t) initialContextSetupFailureIEs_p->mme_ue_s1ap_id);
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -854,11 +854,11 @@ s1ap_mme_handle_path_switch_request (
   ue_description_t                       *ue_ref_p = NULL;
   enb_ue_s1ap_id_t                        enb_ue_s1ap_id = 0;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   pathSwitchRequest_p = &message->msg.s1ap_PathSwitchRequestIEs;
   // eNB UE S1AP ID is limited to 24 bits
   enb_ue_s1ap_id = (enb_ue_s1ap_id_t) (pathSwitchRequest_p->eNB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
-  LOG_DEBUG (LOG_S1AP, "Path Switch Request message received from eNB UE S1AP ID: " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
+  OAILOG_DEBUG (LOG_S1AP, "Path Switch Request message received from eNB UE S1AP ID: " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
 
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (pathSwitchRequest_p->sourceMME_UE_S1AP_ID)) == NULL) {
     /*
@@ -879,7 +879,7 @@ s1ap_mme_handle_path_switch_request (
     //TODO: Switch the eRABs provided
   }
 
-  LOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -913,7 +913,8 @@ static bool s1ap_send_enb_deregistered_ind (
     if (arg->current_ue_index == 0 && arg->handled_ues > 0) {
       S1AP_ENB_DEREGISTERED_IND (arg->message_p).nb_ue_to_deregister = S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
       itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, arg->message_p);
-      MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 S1AP_ENB_DEREGISTERED_IND num ue to deregister %u", S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister);
+      MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 S1AP_ENB_DEREGISTERED_IND num ue to deregister %u",
+          S1AP_ENB_DEREGISTERED_IND (arg->message_p).nb_ue_to_deregister);
       arg->message_p = NULL;
     }
 
@@ -921,7 +922,7 @@ static bool s1ap_send_enb_deregistered_ind (
     arg->current_ue_index = arg->handled_ues % S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
     *resultP = arg->message_p;
   } else {
-    LOG_TRACE (LOG_S1AP, "No valid UE provided in callback: %p\n", ue_ref_p);
+    OAILOG_TRACE (LOG_S1AP, "No valid UE provided in callback: %p\n", ue_ref_p);
   }
   return false;
 }
@@ -935,15 +936,15 @@ s1ap_handle_sctp_deconnection (
   MessageDef                             *message_p = NULL;
   enb_description_t                      *enb_association = NULL;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   /*
    * Checking that the assoc id has a valid eNB attached to.
    */
   enb_association = s1ap_is_enb_assoc_id_in_list (assoc_id);
 
   if (enb_association == NULL) {
-    LOG_ERROR (LOG_S1AP, "No eNB attached to this assoc_id: %d\n", assoc_id);
-    LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_ERROR (LOG_S1AP, "No eNB attached to this assoc_id: %d\n", assoc_id);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   MSC_LOG_EVENT (MSC_S1AP_MME, "0 Event SCTP_CLOSE_ASSOCIATION assoc_id: %d", assoc_id);
@@ -963,8 +964,8 @@ s1ap_handle_sctp_deconnection (
 
   s1ap_remove_enb (enb_association);
   s1ap_dump_enb_list ();
-  LOG_DEBUG (LOG_S1AP, "Removed eNB attached to assoc_id: %d\n", assoc_id);
-  LOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+  OAILOG_DEBUG (LOG_S1AP, "Removed eNB attached to assoc_id: %d\n", assoc_id);
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -974,14 +975,14 @@ s1ap_handle_new_association (
 {
   enb_description_t                      *enb_association = NULL;
 
-  LOG_FUNC_IN (LOG_S1AP);
+  OAILOG_FUNC_IN (LOG_S1AP);
   DevAssert (sctp_new_peer_p != NULL);
 
   /*
    * Checking that the assoc id has a valid eNB attached to.
    */
   if ((enb_association = s1ap_is_enb_assoc_id_in_list (sctp_new_peer_p->assoc_id)) == NULL) {
-    LOG_DEBUG (LOG_S1AP, "Create eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
+    OAILOG_DEBUG (LOG_S1AP, "Create eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
     /*
      * Create new context
      */
@@ -994,15 +995,15 @@ s1ap_handle_new_association (
       /*
        * TODO: send reject there
        */
-      LOG_ERROR (LOG_S1AP, "Failed to allocate eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
+      OAILOG_ERROR (LOG_S1AP, "Failed to allocate eNB context for assoc_id: %d\n", sctp_new_peer_p->assoc_id);
     }
     enb_association->sctp_assoc_id = sctp_new_peer_p->assoc_id;
     hashtable_rc_t  hash_rc = hashtable_ts_insert (&g_s1ap_enb_coll, (const hash_key_t)enb_association->sctp_assoc_id, (void *)enb_association);
     if (HASH_TABLE_OK != hash_rc) {
-      LOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
     }
   } else {
-    LOG_DEBUG (LOG_S1AP, "eNB context already exists for assoc_id: %d, update it\n", sctp_new_peer_p->assoc_id);
+    OAILOG_DEBUG (LOG_S1AP, "eNB context already exists for assoc_id: %d, update it\n", sctp_new_peer_p->assoc_id);
   }
 
   enb_association->sctp_assoc_id = sctp_new_peer_p->assoc_id;
@@ -1017,6 +1018,6 @@ s1ap_handle_new_association (
    */
   enb_association->next_sctp_stream = 1;
   MSC_LOG_EVENT (MSC_S1AP_MME, "0 Event SCTP_NEW_ASSOCIATION assoc_id: %d", enb_association->sctp_assoc_id);
-  LOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 

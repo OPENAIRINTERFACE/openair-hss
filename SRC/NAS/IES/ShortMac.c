@@ -80,14 +80,14 @@ dump_short_mac_xml (
   ShortMac * shortmac,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Short Mac>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Short Mac>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <Short MAC value>%u</Short MAC value>\n", *shortmac);
-  LOG_DEBUG (LOG_NAS, "</Short Mac>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <Short MAC value>%u</Short MAC value>\n", *shortmac);
+  OAILOG_DEBUG (LOG_NAS, "</Short Mac>\n");
 }

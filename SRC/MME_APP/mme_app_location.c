@@ -54,20 +54,20 @@ mme_app_send_s6a_update_location_req (
   s6a_update_location_req_t              *s6a_ulr_p = NULL;
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   MME_APP_STRING_TO_IMSI ((char *)
                           ue_context_pP->pending_pdn_connectivity_req_imsi, &imsi);
-  LOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
 
   if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
-    LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
-    LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S6A_UPDATE_LOCATION_REQ);
 
   if (message_p == NULL) {
-    LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
   s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
@@ -83,7 +83,7 @@ mme_app_send_s6a_update_location_req (
   s6a_ulr_p->skip_subscriber_data = 0;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi %" IMSI_FORMAT, imsi);
   rc =  itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
-  LOG_FUNC_RETURN (LOG_MME_APP, rc);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
 
@@ -96,7 +96,7 @@ mme_app_handle_s6a_update_location_ans (
   struct ue_context_s                    *ue_context_p = NULL;
   int                                     rc = RETURNok;
 
-  LOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (ula_pP );
 
   if (ula_pP->result.present == S6A_RESULT_BASE) {
@@ -105,7 +105,7 @@ mme_app_handle_s6a_update_location_ans (
        * The update location procedure has failed. Notify the NAS layer
        * and don't initiate the bearer creation on S-GW side.
        */
-      LOG_DEBUG (LOG_MME_APP, "ULR/ULA procedure returned non success (ULA.result.choice.base=%d)\n", ula_pP->result.choice.base);
+      OAILOG_DEBUG (LOG_MME_APP, "ULR/ULA procedure returned non success (ULA.result.choice.base=%d)\n", ula_pP->result.choice.base);
       DevMessage ("ULR/ULA procedure returned non success\n");
     }
   } else {
@@ -113,17 +113,17 @@ mme_app_handle_s6a_update_location_ans (
      * The update location procedure has failed. Notify the NAS layer
      * and don't initiate the bearer creation on S-GW side.
      */
-    LOG_DEBUG (LOG_MME_APP, "ULR/ULA procedure returned non success (ULA.result.present=%d)\n", ula_pP->result.present);
+    OAILOG_DEBUG (LOG_MME_APP, "ULR/ULA procedure returned non success (ULA.result.present=%d)\n", ula_pP->result.present);
     DevMessage ("ULR/ULA procedure returned non success\n");
   }
 
   MME_APP_STRING_TO_IMSI ((char *)ula_pP->imsi, &imsi);
-  LOG_DEBUG (LOG_MME_APP, "%s Handling imsi %" IMSI_FORMAT "\n", __FUNCTION__, imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "%s Handling imsi %" IMSI_FORMAT "\n", __FUNCTION__, imsi);
 
   if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
-    LOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
+    OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_UPDATE_LOCATION unknown imsi %" IMSI_FORMAT" ", imsi);
-    LOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
   ue_context_p->subscription_known = SUBSCRIPTION_KNOWN;
@@ -142,5 +142,5 @@ mme_app_handle_s6a_update_location_ans (
   ue_context_p->access_mode = ula_pP->subscription_data.access_mode;
   memcpy (&ue_context_p->apn_profile, &ula_pP->subscription_data.apn_config_profile, sizeof (apn_config_profile_t));
   rc =  mme_app_send_s11_create_session_req (ue_context_p);
-  LOG_FUNC_RETURN (LOG_MME_APP, rc);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }

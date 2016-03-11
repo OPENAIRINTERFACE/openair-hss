@@ -32,7 +32,7 @@
 #define FILE_LOG_SEEN
 
 #include "gcc_diag.h"
-
+#include <syslog.h>
 
 /* asn1c debug */
 extern int asn_debug;
@@ -61,15 +61,15 @@ typedef enum {
 
 typedef enum {
   MIN_LOG_LEVEL = 0,
-  LOG_LEVEL_EMERGENCY = MIN_LOG_ENV,
-  LOG_LEVEL_ALERT,
-  LOG_LEVEL_CRITICAL,
-  LOG_LEVEL_ERROR,
-  LOG_LEVEL_WARNING,
-  LOG_LEVEL_NOTICE,
-  LOG_LEVEL_INFO,
-  LOG_LEVEL_DEBUG,
-  LOG_LEVEL_TRACE,
+  OAILOG_LEVEL_EMERGENCY = MIN_LOG_ENV,
+  OAILOG_LEVEL_ALERT,
+  OAILOG_LEVEL_CRITICAL,
+  OAILOG_LEVEL_ERROR,
+  OAILOG_LEVEL_WARNING,
+  OAILOG_LEVEL_NOTICE,
+  OAILOG_LEVEL_INFO,
+  OAILOG_LEVEL_DEBUG,
+  OAILOG_LEVEL_TRACE,
   MAX_LOG_LEVEL
 } log_level_t;
 
@@ -110,6 +110,7 @@ typedef struct log_thread_ctxt_s {
 */
 typedef struct log_queue_item_s {
   int32_t                                 len;                              /*!< \brief length of string. */
+  int32_t                                 log_level;                        /*!< \brief log level for syslog. */
 #define LOG_MAX_MESSAGE_LENGTH            512
   char                                    str[LOG_MAX_MESSAGE_LENGTH];      /*!< \brief string containing the message. */
 } log_queue_item_t;
@@ -120,19 +121,19 @@ typedef struct log_queue_item_s {
 */
 typedef struct log_config_s {
   char         *output;             /*!< \brief Where logs go, choice in { "CONSOLE", "`path to file`", "`IPv4@`:`TCP port num`"} . */
-  log_level_t   udp_log_level;      /*!< \brief UDP ITTI task log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   gtpv1u_log_level;   /*!< \brief GTPv1-U ITTI task log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   gtpv2c_log_level;   /*!< \brief GTPv2-C ITTI task log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   sctp_log_level;     /*!< \brief SCTP ITTI task log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   s1ap_log_level;     /*!< \brief S1AP ITTI task log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   nas_log_level;      /*!< \brief NAS ITTI task log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   mme_app_log_level;  /*!< \brief MME-APP ITTI task log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   spgw_app_log_level; /*!< \brief SP-GW ITTI task log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   s11_log_level;      /*!< \brief S11 ITTI task log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   s6a_log_level;      /*!< \brief S6a layer log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   util_log_level;     /*!< \brief Misc utilities log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   msc_log_level;      /*!< \brief MSC utility log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   itti_log_level;     /*!< \brief ITTI layer log level starting from LOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   udp_log_level;      /*!< \brief UDP ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   gtpv1u_log_level;   /*!< \brief GTPv1-U ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   gtpv2c_log_level;   /*!< \brief GTPv2-C ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   sctp_log_level;     /*!< \brief SCTP ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   s1ap_log_level;     /*!< \brief S1AP ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   nas_log_level;      /*!< \brief NAS ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   mme_app_log_level;  /*!< \brief MME-APP ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   spgw_app_log_level; /*!< \brief SP-GW ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   s11_log_level;      /*!< \brief S11 ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   s6a_log_level;      /*!< \brief S6a layer log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   util_log_level;     /*!< \brief Misc utilities log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   msc_log_level;      /*!< \brief MSC utility log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   itti_log_level;     /*!< \brief ITTI layer log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   uint8_t       asn1_verbosity_level; /*!< \brief related to asn1c generated code for S1AP verbosity level */
   bool          color;              /*!< \brief use of ANSI styling codes or no */
 } log_config_t;
@@ -217,82 +218,99 @@ void log_message (
 
 int log_get_start_time_sec (void);
 
-#    define LOG_SET_CONFIG                                           log_set_config
-#    define LOG_LEVEL_STR2INT                                        log_level_str2int
-#    define LOG_LEVEL_INT2STR                                        log_level_int2str
-#    define LOG_INIT                                                 log_init
-#    define LOG_START_USE                                            log_start_use
-#    define LOG_ITTI_CONNECT                                         log_itti_connect
-#    define LOG_EXIT()                                               log_exit()
-#    define LOG_EMERGENCY(pRoTo, ...)                                do { log_message(NULL, LOG_LEVEL_EMERGENCY,pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)/*!< \brief system is unusable */
-#    define LOG_ALERT(pRoTo, ...)                                    do { log_message(NULL, LOG_LEVEL_ALERT,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief action must be taken immediately */
-#    define LOG_CRITICAL(pRoTo, ...)                                 do { log_message(NULL, LOG_LEVEL_CRITICAL, pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief critical conditions */
-#    define LOG_ERROR(pRoTo, ...)                                    do { log_message(NULL, LOG_LEVEL_ERROR,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief error conditions */
-#    define LOG_WARNING(pRoTo, ...)                                  do { log_message(NULL, LOG_LEVEL_WARNING,  pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief warning conditions */
-#    define LOG_NOTICE(pRoTo, ...)                                   do { log_message(NULL, LOG_LEVEL_NOTICE,   pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief normal but significant condition */
-#    define LOG_INFO(pRoTo, ...)                                     do { log_message(NULL, LOG_LEVEL_INFO,     pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief informational */
-#    define LOG_MESSAGE_START(lOgLeVeL, pRoTo, cOnTeXt, ...)         do { log_message_start(NULL, lOgLeVeL, pRoTo, cOnTeXt, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief when need to log only 1 message with many char messages, ex formating a dumped struct */
-#    define LOG_MESSAGE_ADD(cOnTeXt, ...)                            do { log_message_add(cOnTeXt, ##__VA_ARGS__); } while(0) /*!< \brief can be called as many times as needed after LOG_MESSAGE_START() */
-#    define LOG_MESSAGE_FINISH(cOnTeXt)                              do { log_message_finish(cOnTeXt); } while(0) /*!< \brief Send the message built by LOG_MESSAGE_START() n*LOG_MESSAGE_ADD() (n=0..N) */
+#    define OAILOG_SET_CONFIG                                           log_set_config
+#    define OAILOG_LEVEL_STR2INT                                        log_level_str2int
+#    define OAILOG_LEVEL_INT2STR                                        log_level_int2str
+#    define OAILOG_INIT                                                 log_init
+#    define OAILOG_START_USE                                            log_start_use
+#    define OAILOG_ITTI_CONNECT                                         log_itti_connect
+#    define OAILOG_EXIT()                                               log_exit()
+#    define OAILOG_EMERGENCY(pRoTo, ...)                                do { log_message(NULL, OAILOG_LEVEL_EMERGENCY,pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)/*!< \brief system is unusable */
+#    define OAILOG_ALERT(pRoTo, ...)                                    do { log_message(NULL, OAILOG_LEVEL_ALERT,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief action must be taken immediately */
+#    define OAILOG_CRITICAL(pRoTo, ...)                                 do { log_message(NULL, OAILOG_LEVEL_CRITICAL, pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief critical conditions */
+#    define OAILOG_ERROR(pRoTo, ...)                                    do { log_message(NULL, OAILOG_LEVEL_ERROR,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief error conditions */
+#    define OAILOG_WARNING(pRoTo, ...)                                  do { log_message(NULL, OAILOG_LEVEL_WARNING,  pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief warning conditions */
+#    define OAILOG_NOTICE(pRoTo, ...)                                   do { log_message(NULL, OAILOG_LEVEL_NOTICE,   pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief normal but significant condition */
+#    define OAILOG_INFO(pRoTo, ...)                                     do { log_message(NULL, OAILOG_LEVEL_INFO,     pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief informational */
+#    define OAILOG_MESSAGE_START(lOgLeVeL, pRoTo, cOnTeXt, ...)         do { log_message_start(NULL, lOgLeVeL, pRoTo, cOnTeXt, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief when need to log only 1 message with many char messages, ex formating a dumped struct */
+#    define OAILOG_MESSAGE_ADD(cOnTeXt, ...)                            do { log_message_add(cOnTeXt, ##__VA_ARGS__); } while(0) /*!< \brief can be called as many times as needed after OAILOG_MESSAGE_START() */
+#    define OAILOG_MESSAGE_FINISH(cOnTeXt)                              do { log_message_finish(cOnTeXt); } while(0) /*!< \brief Send the message built by OAILOG_MESSAGE_START() n*LOG_MESSAGE_ADD() (n=0..N) */
 #    if DEBUG_IS_ON
-#      define LOG_DEBUG(pRoTo, ...)                                  do { log_message(NULL, LOG_LEVEL_DEBUG,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief debug informations */
+#      define OAILOG_DEBUG(pRoTo, ...)                                  do { log_message(NULL, OAILOG_LEVEL_DEBUG,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief debug informations */
 #      if TRACE_IS_ON
-#        define LOG_EXTERNAL(lOgLeVeL, pRoTo, ...)                   do { log_message(NULL, lOgLeVeL       ,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)
-#        define LOG_TRACE(pRoTo, ...)                                do { log_message(NULL, LOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief most detailled informations, struct dumps */
-#        define LOG_FUNC_IN(pRoTo)                                   do { log_func(true, pRoTo, __FILE__, __LINE__, __FUNCTION__); } while(0) /*!< \brief informational */
-#        define LOG_FUNC_OUT(pRoTo)                                  do { log_func(false, pRoTo, __FILE__, __LINE__, __FUNCTION__); return;} while(0) /*!< \brief informational */
-#        define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                   do { log_func_return(pRoTo, __FILE__, __LINE__, __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
-#        define LOG_STREAM_HEX(pRoTo, mEsSaGe, sTrEaM, sIzE)         do { \
+#        define OAILOG_EXTERNAL(lOgLeVeL, pRoTo, ...)                   do { log_message(NULL, lOgLeVeL       ,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)
+#        define OAILOG_TRACE(pRoTo, ...)                                do { log_message(NULL, OAILOG_LEVEL_TRACE,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief most detailled informations, struct dumps */
+#        define OAILOG_FUNC_IN(pRoTo)                                   do { log_func(true, pRoTo, __FILE__, __LINE__, __FUNCTION__); } while(0) /*!< \brief informational */
+#        define OAILOG_FUNC_OUT(pRoTo)                                  do { log_func(false, pRoTo, __FILE__, __LINE__, __FUNCTION__); return;} while(0) /*!< \brief informational */
+#        define OAILOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                   do { log_func_return(pRoTo, __FILE__, __LINE__, __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
+#        define OAILOG_STREAM_HEX(pRoTo, mEsSaGe, sTrEaM, sIzE)         do { \
                                                                    OAI_GCC_DIAG_OFF(pointer-sign); \
-                                                                   log_stream_hex(LOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE);\
+                                                                   log_stream_hex(OAILOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE);\
                                                                    OAI_GCC_DIAG_ON(pointer-sign); \
                                                                  } while(0); /*!< \brief trace buffer content */
-#        define LOG_STREAM_HEX_ARRAY(pRoTo, mEsSaGe, sTrEaM, sIzE)       do { log_stream_hex_array(LOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content with indexes */
+#        define OAILOG_STREAM_HEX_ARRAY(pRoTo, mEsSaGe, sTrEaM, sIzE)       do { log_stream_hex_array(OAILOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content with indexes */
 #      endif
 #    endif
 #  else
-#    define LOG_SET_CONFIG(a)
-#    define LOG_LEVEL_STR2INT(a)                                     LOG_LEVEL_EMERGENCY
-#    define LOG_LEVEL_INT2STR(a)                                     "EMERGENCY"
-#    define LOG_INIT(a,b,c)                                          0
-#    define LOG_START_USE()
-#    define LOG_ITTI_CONNECT()
-#    define LOG_EXIT()
-#    define LOG_EMERGENCY(...)
-#    define LOG_ALERT(...)
-#    define LOG_CRITICAL(...)
-#    define LOG_ERROR(...)
-#    define LOG_WARNING(...)
-#    define LOG_NOTICE(...)
-#    define LOG_INFO(...)
-#    define LOG_MESSAGE_START(...)
-#    define LOG_MESSAGE_ADD(...)
-#    define LOG_MESSAGE_FINISH(cOnTeXt)
+#    define OAILOG_SET_CONFIG(a)
+#    define OAILOG_LEVEL_STR2INT(a)                                     OAILOG_LEVEL_EMERGENCY
+#    define OAILOG_LEVEL_INT2STR(a)                                     "EMERGENCY"
+#    define OAILOG_INIT(a,b,c)                                          0
+#    define OAILOG_START_USE()
+#    define OAILOG_ITTI_CONNECT()
+#    define OAILOG_EXIT()
+#    define OAILOG_EMERGENCY(...)
+#    define OAILOG_ALERT(...)
+#    define OAILOG_CRITICAL(...)
+#    define OAILOG_ERROR(...)
+#    define OAILOG_WARNING(...)
+#    define OAILOG_NOTICE(...)
+#    define OAILOG_INFO(...)
+#    define OAILOG_MESSAGE_START(...)
+#    define OAILOG_MESSAGE_ADD(...)
+#    define OAILOG_MESSAGE_FINISH(cOnTeXt)
 #  endif
 
-#  if !defined(LOG_DEBUG)
-#    define LOG_DEBUG(...)                                           {void;}
+#  if !defined(OAILOG_DEBUG)
+#    define OAILOG_DEBUG(...)                                           {void;}
 #  endif
-#  if !defined(LOG_TRACE)
-#    define LOG_TRACE(...)                                           {void;}
+#  if !defined(OAILOG_TRACE)
+#    define OAILOG_TRACE(...)                                           {void;}
 #  endif
-#  if !defined(LOG_EXTERNAL)
-#    define LOG_EXTERNAL(...)                                        {void;}
+#  if !defined(OAILOG_EXTERNAL)
+#    define OAILOG_EXTERNAL(...)                                        {void;}
 #  endif
-#  if !defined(LOG_FUNC_IN)
-#    define LOG_FUNC_IN(...)                                         {void;}
+#  if !defined(OAILOG_FUNC_IN)
+#    define OAILOG_FUNC_IN(...)                                         {void;}
 #  endif
-#  if !defined(LOG_FUNC_OUT)
-#    define LOG_FUNC_OUT(pRoTo)                                      do{ return;} while 0
+#  if !defined(OAILOG_FUNC_OUT)
+#    define OAILOG_FUNC_OUT(pRoTo)                                      do{ return;} while 0
 #  endif
-#  if !defined(LOG_FUNC_RETURN)
-#    define LOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do{ return rEtUrNcOdE;} while 0
+#  if !defined(OAILOG_FUNC_RETURN)
+#    define OAILOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                       do{ return rEtUrNcOdE;} while 0
 #  endif
-#  if !defined(LOG_STREAM_HEX)
-#    define LOG_STREAM_HEX(...)                                      {void;}
+#  if !defined(OAILOG_STREAM_HEX)
+#    define OAILOG_STREAM_HEX(...)                                      {void;}
 #  endif
-#  if !defined(LOG_STREAM_HEX_ARRAY)
-#    define LOG_STREAM_HEX_ARRAY(...)                                {void;}
+#  if !defined(OAILOG_STREAM_HEX_ARRAY)
+#    define OAILOG_STREAM_HEX_ARRAY(...)                                {void;}
 #  endif
 
+#  if DAEMONIZE
+#    define OAI_FPRINTF_ERR(...)                                     do {syslog (LOG_ERR,   ##__VA_ARGS__);} while(0)
+#    define OAI_FPRINTF_INFO(...)                                    do {syslog (LOG_INFO , ##__VA_ARGS__);} while(0)
+#    define OAI_VFPRINTF_ERR(...)                                    do {vsyslog (LOG_ERR , ##__VA_ARGS__);} while(0)
+#    define OAI_VFPRINTF_INFO(...)                                   do {vsyslog (LOG_INFO , ##__VA_ARGS__);} while(0)
+#    if EMIT_ASN_DEBUG_EXTERN
+#      define ASN_DEBUG(...)                                         do {vsyslog (LOG_ERR , ##__VA_ARGS__);} while(0)
+#    endif
+#  else
+#    define OAI_FPRINTF_ERR(...)                                     do {fprintf (stderr,   ##__VA_ARGS__);} while(0)
+#    define OAI_FPRINTF_INFO(...)                                    do {fprintf (stdout,   ##__VA_ARGS__);} while(0)
+#    define OAI_VFPRINTF_ERR(...)                                    do {vfprintf (stderr , ##__VA_ARGS__);} while(0)
+#    define OAI_VFPRINTF_INFO(...)                                   do {vfprintf (stderr , ##__VA_ARGS__);} while(0)
+#    if EMIT_ASN_DEBUG_EXTERN
+#      define ASN_DEBUG(...)                                         do {vfprintf (stderr , ##__VA_ARGS__);} while(0)
+#    endif
+#  endif
 #endif /* FILE_LOG_SEEN */

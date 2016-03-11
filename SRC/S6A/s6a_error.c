@@ -48,7 +48,7 @@ s6a_parse_experimental_result (
 
     switch (hdr->avp_code) {
     case AVP_CODE_EXPERIMENTAL_RESULT_CODE:
-      LOG_ERROR (LOG_S6A, "Got experimental error %u:%s\n", hdr->avp_value->u32, experimental_retcode_2_string (hdr->avp_value->u32));
+      OAILOG_ERROR (LOG_S6A, "Got experimental error %u:%s\n", hdr->avp_value->u32, experimental_retcode_2_string (hdr->avp_value->u32));
 
       if (ptr) {
         *ptr = (s6a_experimental_result_t) hdr->avp_value->u32;

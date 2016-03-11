@@ -59,7 +59,7 @@ int mme_app_handle_nas_pdn_connectivity_req  ( itti_nas_pdn_connectivity_req_t *
 
 void mme_app_handle_conn_est_cnf             (const itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP);
 
-void mme_app_handle_conn_est_ind             (const itti_mme_app_connection_establishment_ind_t * const conn_est_ind_pP);
+void mme_app_handle_initial_ue_message       (const itti_mme_app_initial_ue_message_t * const conn_est_ind_pP);
 
 int mme_app_handle_create_sess_resp          (const itti_sgw_create_session_response_t * const create_sess_resp_pP);
 

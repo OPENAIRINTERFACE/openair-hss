@@ -100,7 +100,7 @@ s1ap_mme_decode_initiating (
       break;
 
     default: {
-        LOG_ERROR (LOG_S1AP, "Unknown procedure ID (%d) for initiating message\n", (int)initiating_p->procedureCode);
+        OAILOG_ERROR (LOG_S1AP, "Unknown procedure ID (%d) for initiating message\n", (int)initiating_p->procedureCode);
         AssertFatal (0, "Unknown procedure ID (%d) for initiating message\n", (int)initiating_p->procedureCode);
       }
       break;
@@ -146,7 +146,7 @@ s1ap_mme_decode_successfull_outcome (
       break;
 
     default: {
-        LOG_ERROR (LOG_S1AP, "Unknown procedure ID (%ld) for successfull outcome message\n", successfullOutcome_p->procedureCode);
+        OAILOG_ERROR (LOG_S1AP, "Unknown procedure ID (%ld) for successfull outcome message\n", successfullOutcome_p->procedureCode);
       }
       break;
   }
@@ -184,7 +184,7 @@ s1ap_mme_decode_unsuccessfull_outcome (
       break;
 
     default: {
-        LOG_ERROR (LOG_S1AP, "Unknown procedure ID (%d) for unsuccessfull outcome message\n", (int)unSuccessfulOutcome_p->procedureCode);
+        OAILOG_ERROR (LOG_S1AP, "Unknown procedure ID (%d) for unsuccessfull outcome message\n", (int)unSuccessfulOutcome_p->procedureCode);
       }
       break;
   }
@@ -211,7 +211,7 @@ s1ap_mme_decode_pdu (
   dec_ret = aper_decode (NULL, &asn_DEF_S1AP_PDU, (void **)&pdu_p, buffer, len, 0, 0);
 
   if (dec_ret.code != RC_OK) {
-    LOG_ERROR (LOG_S1AP, "Failed to decode PDU\n");
+    OAILOG_ERROR (LOG_S1AP, "Failed to decode PDU\n");
     return -1;
   }
 
@@ -228,7 +228,7 @@ s1ap_mme_decode_pdu (
       return s1ap_mme_decode_unsuccessfull_outcome (message, &pdu_p->choice.unsuccessfulOutcome);
 
     default:
-      LOG_ERROR (LOG_S1AP, "Unknown message outcome (%d) or not implemented", (int)pdu_p->present);
+      OAILOG_ERROR (LOG_S1AP, "Unknown message outcome (%d) or not implemented", (int)pdu_p->present);
       break;
   }
 

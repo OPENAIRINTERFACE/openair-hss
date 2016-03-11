@@ -114,15 +114,15 @@ dump_nas_key_set_identifier_xml (
   NasKeySetIdentifier * naskeysetidentifier,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Nas Key Set Identifier>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Nas Key Set Identifier>\n");
 
   if (iei > 0)
     /*
      * Don't display IEI if = 0
      */
-    LOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
+    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  LOG_DEBUG (LOG_NAS, "    <TSC>%u</TSC>\n", naskeysetidentifier->tsc);
-  LOG_DEBUG (LOG_NAS, "    <NAS key set identifier>%u</NAS key set identifier>\n", naskeysetidentifier->naskeysetidentifier);
-  LOG_DEBUG (LOG_NAS, "</Nas Key Set Identifier>\n");
+  OAILOG_DEBUG (LOG_NAS, "    <TSC>%u</TSC>\n", naskeysetidentifier->tsc);
+  OAILOG_DEBUG (LOG_NAS, "    <NAS key set identifier>%u</NAS key set identifier>\n", naskeysetidentifier->naskeysetidentifier);
+  OAILOG_DEBUG (LOG_NAS, "</Nas Key Set Identifier>\n");
 }

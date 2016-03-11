@@ -24,6 +24,7 @@
 #include <stdint.h>
 
 
+#include "3gpp_24.007.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "ProcedureTransactionIdentity.h"

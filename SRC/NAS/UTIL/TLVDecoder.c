@@ -47,5 +47,5 @@ tlv_decode_perror (
     // No error or TLV_DECODE_ERR_OK
     return;
 
-  LOG_ERROR (LOG_NAS, "TLV decoder : (%d, %s)", errorCodeDecoder, errorCodeStringDecoder[errorCodeDecoder * -1]);
+  OAILOG_ERROR (LOG_NAS, "TLV decoder : (%d, %s)", errorCodeDecoder, errorCodeStringDecoder[errorCodeDecoder * -1]);
 }

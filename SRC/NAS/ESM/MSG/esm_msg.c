@@ -94,15 +94,15 @@ esm_msg_decode (
   uint8_t                                *buffer_log = buffer;
   uint32_t                                len_log = len;
   int                                     down_link = 0;
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   /*
    * First decode the ESM message header
    */
   header_result = _esm_msg_decode_header (&msg->header, buffer, len);
 
   if (header_result < 0) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to decode ESM message header " "(%d)\n", header_result);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, header_result);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to decode ESM message header " "(%d)\n", header_result);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result);
   }
 
   buffer += header_result;
@@ -198,14 +198,14 @@ esm_msg_decode (
     break;
 
   default:
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
     decode_result = TLV_DECODE_WRONG_MESSAGE_TYPE;
     break;
   }
 
   if (decode_result < 0) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to decode L3 ESM message 0x%x " "(%u)\n", msg->header.message_type, decode_result);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, decode_result);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to decode L3 ESM message 0x%x " "(%u)\n", msg->header.message_type, decode_result);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, decode_result);
   } else {
     /*
      * Message has been decoded and security header removed, handle it has a plain message
@@ -213,7 +213,7 @@ esm_msg_decode (
     nas_itti_plain_msg ((char *)buffer_log, (nas_message_t *) msg, len_log, down_link);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, header_result + decode_result);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result + decode_result);
 }
 
 /****************************************************************************
@@ -239,7 +239,7 @@ esm_msg_encode (
   uint8_t * buffer,
   uint32_t len)
 {
-  LOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     header_result = 0;
   int                                     encode_result = 0;
   uint8_t                                *buffer_log = buffer;
@@ -250,11 +250,11 @@ esm_msg_encode (
   header_result = _esm_msg_encode_header (&msg->header, buffer, len);
 
   if (header_result < 0) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to encode ESM message header " "(%d)\n", header_result);
-    LOG_FUNC_RETURN (LOG_NAS_ESM, header_result);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to encode ESM message header " "(%d)\n", header_result);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result);
   }
 
-  LOG_INFO (LOG_NAS_ESM, "ESM-MSG   - Encoded ESM message header " "(%d)\n", header_result);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-MSG   - Encoded ESM message header " "(%d)\n", header_result);
   buffer += header_result;
   len -= header_result;
 
@@ -348,18 +348,18 @@ esm_msg_encode (
     break;
 
   default:
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
     encode_result = TLV_ENCODE_WRONG_MESSAGE_TYPE;
     break;
   }
 
   if (encode_result < 0) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to encode L3 ESM message 0x%x " "(%d)\n", msg->header.message_type, encode_result);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to encode L3 ESM message 0x%x " "(%d)\n", msg->header.message_type, encode_result);
   } else {
     nas_itti_plain_msg ((char *)buffer_log, (nas_message_t *) msg, header_result + encode_result, down_link);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_ESM, header_result + encode_result);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result + encode_result);
 }
 
 /****************************************************************************/
@@ -418,7 +418,7 @@ _esm_msg_decode_header (
    * Check the protocol discriminator
    */
   if (header->protocol_discriminator != EPS_SESSION_MANAGEMENT_MESSAGE) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected protocol discriminator: 0x%x\n", header->protocol_discriminator);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected protocol discriminator: 0x%x\n", header->protocol_discriminator);
     return (TLV_DECODE_PROTOCOL_NOT_SUPPORTED);
   }
 
@@ -455,14 +455,14 @@ _esm_msg_encode_header (
    * Check the buffer length
    */
   if (len < sizeof (esm_msg_header_t)) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - buffer too short\n");
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - buffer too short\n");
     return (TLV_ENCODE_BUFFER_TOO_SHORT);
   }
   /*
    * Check the protocol discriminator
    */
   else if (header->protocol_discriminator != EPS_SESSION_MANAGEMENT_MESSAGE) {
-    LOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected protocol discriminator: 0x%x\n", header->protocol_discriminator);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected protocol discriminator: 0x%x\n", header->protocol_discriminator);
     return (TLV_ENCODE_PROTOCOL_NOT_SUPPORTED);
   }
 

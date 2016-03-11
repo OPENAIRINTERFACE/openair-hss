@@ -45,5 +45,5 @@ tlv_encode_perror (
     // No error or TLV_DECODE_ERR_OK
     return;
 
-  LOG_ERROR (LOG_NAS, " (%d, %s)", errorCodeEncoder, errorCodeStringEncoder[errorCodeEncoder * -1]);
+  OAILOG_ERROR (LOG_NAS, " (%d, %s)", errorCodeEncoder, errorCodeStringEncoder[errorCodeEncoder * -1]);
 }

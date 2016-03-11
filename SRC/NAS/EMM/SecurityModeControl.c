@@ -204,8 +204,8 @@ emm_proc_security_mode_control (
    */
   emm_data_context_t                     *emm_ctx = NULL;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate security mode control procedure " "KSI = %d EEA = %d EIA = %d\n", ksi, eea, eia);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate security mode control procedure " "KSI = %d EEA = %d EIA = %d\n", ksi, eea, eia);
 
   if (ue_id > 0) {
     emm_ctx = emm_data_context_get (&_emm_data, ue_id);
@@ -238,15 +238,15 @@ emm_proc_security_mode_control (
       emm_ctx->security->selected_algorithms.integrity = mme_eia;
 
       if (rc == RETURNerror) {
-        LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to select security algorithms\n");
-        LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to select security algorithms\n");
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
       }
 
       if (!emm_ctx->security->knas_int.value) {
         emm_ctx->security->knas_int.value = CALLOC_CHECK (AUTH_KNAS_INT_SIZE, sizeof(uint8_t));
       } else {
-        LOG_ERROR (LOG_NAS_EMM, " TODO realloc emm_ctx->security->knas_int OctetString\n");
-        LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+        OAILOG_ERROR (LOG_NAS_EMM, " TODO realloc emm_ctx->security->knas_int OctetString\n");
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
       }
 
       emm_ctx->security->knas_int.length = AUTH_KNAS_INT_SIZE;
@@ -255,8 +255,8 @@ emm_proc_security_mode_control (
       if (!emm_ctx->security->knas_enc.value) {
         emm_ctx->security->knas_enc.value = CALLOC_CHECK (AUTH_KNAS_ENC_SIZE, sizeof(uint8_t));
       } else {
-        LOG_ERROR (LOG_NAS_EMM, " TODO realloc emm_ctx->security->knas_enc OctetString\n");
-        LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+        OAILOG_ERROR (LOG_NAS_EMM, " TODO realloc emm_ctx->security->knas_enc OctetString\n");
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
       }
 
       emm_ctx->security->knas_enc.length = AUTH_KNAS_ENC_SIZE;
@@ -267,8 +267,8 @@ emm_proc_security_mode_control (
       security_context_is_new = true;
     }
   } else {
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - No EPS security context exists\n");
-    LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - No EPS security context exists\n");
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
 
   /*
@@ -283,9 +283,9 @@ emm_proc_security_mode_control (
     rc = emm_proc_common_initialize (ue_id, success, reject, failure, _security_abort, data);
 
     if (rc != RETURNok) {
-      LOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
+      OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
       FREE_CHECK (data);
-      LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
     /*
@@ -354,7 +354,7 @@ emm_proc_security_mode_control (
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -387,8 +387,8 @@ emm_proc_security_mode_complete (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Security mode complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Security mode complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Get the UE context
    */
@@ -401,7 +401,7 @@ emm_proc_security_mode_complete (
     /*
      * Stop timer T3460
      */
-    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
   }
@@ -425,7 +425,7 @@ emm_proc_security_mode_complete (
     emm_sap.u.emm_reg.ctx = emm_ctx;
     emm_sap.u.emm_reg.u.common.is_attached = emm_ctx->is_attached;
   } else {
-    LOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EPS security context exists\n");
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EPS security context exists\n");
     /*
      * Notify EMM that the authentication procedure failed
      */
@@ -436,7 +436,7 @@ emm_proc_security_mode_complete (
   }
 
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -470,8 +470,8 @@ emm_proc_security_mode_reject (
   emm_data_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
-  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Security mode command not accepted by the UE" "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Security mode command not accepted by the UE" "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Get the UE context
    */
@@ -485,7 +485,7 @@ emm_proc_security_mode_reject (
     /*
      * Stop timer T3460
      */
-    LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
   }
@@ -524,7 +524,7 @@ emm_proc_security_mode_reject (
   emm_sap.u.emm_reg.ue_id = ue_id;
   emm_sap.u.emm_reg.ctx = emm_ctx;
   rc = emm_sap_send (&emm_sap);
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************/
@@ -563,14 +563,14 @@ static void                            *
 _security_t3460_handler (
   void *args)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   security_data_t                        *data = (security_data_t *) (args);
 
   /*
    * Increment the retransmission counter
    */
   data->retransmission_count += 1;
-  LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
+  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
 
   if (data->retransmission_count < SECURITY_COUNTER_MAX) {
     /*
@@ -588,7 +588,7 @@ _security_t3460_handler (
     _security_abort (data);
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
 }
 
 /*
@@ -622,7 +622,7 @@ _security_request (
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNerror;
 
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   /*
    * Notify EMM-AS SAP that Security Mode Command message has to be sent
    * to the UE
@@ -660,7 +660,7 @@ _security_request (
        * Re-start T3460 timer
        */
       emm_ctx->T3460.id = nas_timer_restart (emm_ctx->T3460.id);
-      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Restarted Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Restarted Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 restarted UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to restart T3460");
     } else {
@@ -668,14 +668,14 @@ _security_request (
        * Start T3460 timer
        */
       emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, _security_t3460_handler, data);
-      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Started Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Started Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to start T3460");
     }
 
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 /****************************************************************************
@@ -697,7 +697,7 @@ static int
 _security_abort (
   void *args)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   struct emm_data_context_s              *emm_ctx = NULL;
   int                                     rc = RETURNerror;
   security_data_t                        *data = (security_data_t *) (args);
@@ -706,7 +706,7 @@ _security_abort (
     unsigned int                            ue_id = data->ue_id;
     int                                     notify_failure = data->notify_failure;
 
-    LOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort security mode control procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort security mode control procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
     if (data->ue_id > 0) {
       emm_ctx = emm_data_context_get (&_emm_data, data->ue_id);
@@ -716,7 +716,7 @@ _security_abort (
      * Stop timer T3460
      */
     if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-      LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
       emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     }
@@ -741,7 +741,7 @@ _security_abort (
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 
@@ -769,7 +769,7 @@ _security_select_algorithms (
   int *const mme_eiaP,
   int *const mme_eeaP)
 {
-  LOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     preference_index;
 
   *mme_eiaP = NAS_SECURITY_ALGORITHMS_EIA0;
@@ -777,7 +777,7 @@ _security_select_algorithms (
 
   for (preference_index = 0; preference_index < 8; preference_index++) {
     if (ue_eiaP & (0x80 >> _emm_data.conf.prefered_integrity_algorithm[preference_index])) {
-      LOG_DEBUG (LOG_NAS_EMM, "Selected  NAS_SECURITY_ALGORITHMS_EIA%d (choice num %d)\n", _emm_data.conf.prefered_integrity_algorithm[preference_index], preference_index);
+      OAILOG_DEBUG (LOG_NAS_EMM, "Selected  NAS_SECURITY_ALGORITHMS_EIA%d (choice num %d)\n", _emm_data.conf.prefered_integrity_algorithm[preference_index], preference_index);
       *mme_eiaP = _emm_data.conf.prefered_integrity_algorithm[preference_index];
       break;
     }
@@ -785,11 +785,11 @@ _security_select_algorithms (
 
   for (preference_index = 0; preference_index < 8; preference_index++) {
     if (ue_eeaP & (0x80 >> _emm_data.conf.prefered_ciphering_algorithm[preference_index])) {
-      LOG_DEBUG (LOG_NAS_EMM, "Selected  NAS_SECURITY_ALGORITHMS_EEA%d (choice num %d)\n", _emm_data.conf.prefered_ciphering_algorithm[preference_index], preference_index);
+      OAILOG_DEBUG (LOG_NAS_EMM, "Selected  NAS_SECURITY_ALGORITHMS_EEA%d (choice num %d)\n", _emm_data.conf.prefered_ciphering_algorithm[preference_index], preference_index);
       *mme_eeaP = _emm_data.conf.prefered_ciphering_algorithm[preference_index];
       break;
     }
   }
 
-  LOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }

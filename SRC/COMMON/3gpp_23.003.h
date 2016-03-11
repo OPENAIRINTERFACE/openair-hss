@@ -259,7 +259,12 @@ typedef struct rai_s {
 // 4.4  Regional Subscription Zone Identity (RSZI)
 // 4.5  Location Number
 // 4.6  Composition of the Service Area Identification (SAI)
+
+//------------------------------------------------------------------------------
 // 4.7  Closed Subscriber Group
+//------------------------------------------------------------------------------
+typedef uint32_t     csg_id_t;                             /*!< \brief  The CSG‑ID shall be fix length 27 bit value. */
+
 // 4.8 HNB Name
 // 4.9 CSG Type
 // 4.10  HNB Unique Identity

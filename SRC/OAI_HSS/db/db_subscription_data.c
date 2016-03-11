@@ -31,6 +31,7 @@
 
 #include "hss_config.h"
 #include "db_proto.h"
+#include "log.h"
 
 int
 hss_mysql_query_pdns (
@@ -53,12 +54,12 @@ hss_mysql_query_pdns (
   }
 
   sprintf (query, "SELECT * FROM `pdn` WHERE " "`pdn`.`users_imsi`=%s LIMIT 10; ", imsi);
-  printf ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    fprintf (stderr, "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end ();
     return EINVAL;
   }

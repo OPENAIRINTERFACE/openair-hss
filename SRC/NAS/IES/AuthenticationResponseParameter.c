@@ -100,7 +100,7 @@ dump_authentication_response_parameter_xml (
   AuthenticationResponseParameter * authenticationresponseparameter,
   uint8_t iei)
 {
-  LOG_DEBUG (LOG_NAS, "<Authentication Response Parameter>\n");
+  OAILOG_DEBUG (LOG_NAS, "<Authentication Response Parameter>\n");
   dump_octet_string_xml (&authenticationresponseparameter->res);
-  LOG_DEBUG (LOG_NAS, "</Authentication Response Parameter>\n");
+  OAILOG_DEBUG (LOG_NAS, "</Authentication Response Parameter>\n");
 }
