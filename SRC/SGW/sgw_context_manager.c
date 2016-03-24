@@ -34,15 +34,20 @@
 #include <string.h>
 
 #include "tree.h"
+#include "dynamic_memory_check.h"
+#include "assertions.h"
+#include "conversions.h"
 #include "hashtable.h"
 #include "obj_hashtable.h"
 #include "intertask_interface.h"
+#include "msc.h"
+#include "log.h"
+#include "sgw_ie_defs.h"
+#include "3gpp_23.401.h"
 #include "mme_config.h"
 #include "sgw_defs.h"
 #include "sgw_context_manager.h"
 #include "sgw.h"
-#include "dynamic_memory_check.h"
-#include "log.h"
 
 extern sgw_app_t                        sgw_app;
 
@@ -170,13 +175,13 @@ pgw_lite_cm_free_apn (
 }
 
 //-----------------------------------------------------------------------------
-Teid_t
+teid_t
 sgw_get_new_S11_tunnel_id (
   void)
 //-----------------------------------------------------------------------------
 {
   // TO DO: RANDOM
-  static Teid_t                           tunnel_id = 0;
+  static teid_t                           tunnel_id = 0;
 
   tunnel_id += 1;
   return tunnel_id;
@@ -185,13 +190,13 @@ sgw_get_new_S11_tunnel_id (
 //-----------------------------------------------------------------------------
 mme_sgw_tunnel_t                       *
 sgw_cm_create_s11_tunnel (
-  Teid_t remote_teid,
-  Teid_t local_teid)
+  teid_t remote_teid,
+  teid_t local_teid)
 //-----------------------------------------------------------------------------
 {
   mme_sgw_tunnel_t                       *new_tunnel = NULL;
 
-  new_tunnel = CALLOC_CHECK (1, sizeof (mme_sgw_tunnel_t));
+  new_tunnel = calloc (1, sizeof (mme_sgw_tunnel_t));
 
   if (new_tunnel == NULL) {
     /*
@@ -214,7 +219,7 @@ sgw_cm_create_s11_tunnel (
 //-----------------------------------------------------------------------------
 int
 sgw_cm_remove_s11_tunnel (
-  Teid_t local_teid)
+  teid_t local_teid)
 //-----------------------------------------------------------------------------
 {
   int                                     temp = 0;
@@ -231,7 +236,7 @@ sgw_cm_create_eps_bearer_entry (
 {
   sgw_eps_bearer_entry_t                 *eps_bearer_entry = NULL;
 
-  eps_bearer_entry = CALLOC_CHECK (1, sizeof (sgw_eps_bearer_entry_t));
+  eps_bearer_entry = calloc (1, sizeof (sgw_eps_bearer_entry_t));
 
   if (eps_bearer_entry == NULL) {
     /*
@@ -253,7 +258,7 @@ sgw_cm_create_pdn_connection (
 {
   sgw_pdn_connection_t                   *pdn_connection = NULL;
 
-  pdn_connection = CALLOC_CHECK (1, sizeof (sgw_pdn_connection_t));
+  pdn_connection = calloc (1, sizeof (sgw_pdn_connection_t));
 
   if (pdn_connection == NULL) {
     /*
@@ -267,7 +272,7 @@ sgw_cm_create_pdn_connection (
 
   if (pdn_connection->sgw_eps_bearers == NULL) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create eps bearers collection object\n");
-    FREE_CHECK (pdn_connection);
+    free_wrapper (pdn_connection);
     pdn_connection = NULL;
     return NULL;
   }
@@ -311,18 +316,18 @@ sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (
     obj_hashtable_ts_destroy (contextP->pgw_eps_bearer_context_information.apns);
   }
 
-  FREE_CHECK (contextP);
+  free_wrapper (contextP);
 }
 
 //-----------------------------------------------------------------------------
 s_plus_p_gw_eps_bearer_context_information_t *
 sgw_cm_create_bearer_context_information_in_collection (
-  Teid_t teid)
+  teid_t teid)
 //-----------------------------------------------------------------------------
 {
   s_plus_p_gw_eps_bearer_context_information_t *new_bearer_context_information = NULL;
 
-  new_bearer_context_information = CALLOC_CHECK (1, sizeof (s_plus_p_gw_eps_bearer_context_information_t));
+  new_bearer_context_information = calloc (1, sizeof (s_plus_p_gw_eps_bearer_context_information_t));
 
   if (new_bearer_context_information == NULL) {
     /*
@@ -362,7 +367,7 @@ sgw_cm_create_bearer_context_information_in_collection (
 
 int
 sgw_cm_remove_bearer_context_information (
-  Teid_t teid)
+  teid_t teid)
 {
   int                                     temp = 0;
 
@@ -387,7 +392,7 @@ sgw_cm_create_eps_bearer_entry_in_collection (
     return NULL;
   }
 
-  new_eps_bearer_entry = CALLOC_CHECK (1, sizeof (sgw_eps_bearer_entry_t));
+  new_eps_bearer_entry = calloc (1, sizeof (sgw_eps_bearer_entry_t));
 
   if (new_eps_bearer_entry == NULL) {
     /*
@@ -409,7 +414,7 @@ sgw_cm_create_eps_bearer_entry_in_collection (
   /*
    * CHECK DUPLICATES IN HASH TABLES ? if (temp == 1) {
    * SPGW_APP_WARN("This EPS bearer entry already exists: %u\n", eps_bearer_idP);
-   * FREE_CHECK(new_eps_bearer_entry);
+   * free_wrapper(new_eps_bearer_entry);
    * new_eps_bearer_entry = collision_p;
    * }
    */

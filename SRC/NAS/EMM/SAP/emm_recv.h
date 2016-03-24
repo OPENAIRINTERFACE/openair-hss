@@ -87,9 +87,10 @@ Description Defines functions executed at the EMMAS Service Access
 int emm_recv_status(mme_ue_s1ap_id_t ueid, emm_status_msg *msg, int *emm_cause, const nas_message_decode_status_t * const status);
 
 int emm_recv_attach_request (
-    const enb_ue_s1ap_id_t     enb_ue_s1ap_id_key,
+    const enb_s1ap_id_key_t    enb_ue_s1ap_id_key,
     const mme_ue_s1ap_id_t     ueid,
     const tai_t              * const originating_tai,
+    const ecgi_t             * const originating_ecgi,
     const attach_request_msg * const msg,
     int * const emm_cause,
     const nas_message_decode_status_t  * const decode_status);

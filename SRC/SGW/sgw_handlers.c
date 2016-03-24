@@ -35,28 +35,32 @@
 #include <string.h>
 #include <netinet/in.h>
 
+#include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "conversions.h"
-#include "common_types.h"
+#include "hashtable.h"
+#include "obj_hashtable.h"
 #include "intertask_interface.h"
-#include "mme_config.h"
 #include "msc.h"
+#include "log.h"
+#include "sgw_ie_defs.h"
+#include "3gpp_23.401.h"
+#include "common_types.h"
+#include "mme_config.h"
 
 #include "sgw_defs.h"
 #include "sgw_handlers.h"
 #include "sgw_context_manager.h"
 #include "sgw.h"
-#include "sgw_ie_defs.h"
 #include "pgw_lite_paa.h"
 #include "spgw_config.h"
-#include "dynamic_memory_check.h"
-#include "log.h"
 
 extern sgw_app_t                        sgw_app;
 extern spgw_config_t                    spgw_config;
 
 static uint32_t                         g_gtpv1u_teid = 0;
 
+//------------------------------------------------------------------------------
 uint32_t
 sgw_get_new_teid (
   void)
@@ -65,6 +69,13 @@ sgw_get_new_teid (
   return g_gtpv1u_teid;
 }
 
+//------------------------------------------------------------------------------
+void pgw_force_push_pco(itti_sgi_create_end_point_response_t *resp)
+{
+  AssertFatal(0!=0, "TODO code for pushing PCO to UE");
+}
+
+//------------------------------------------------------------------------------
 int
 sgw_handle_create_session_request (
   const itti_sgw_create_session_request_t * const session_req_pP)
@@ -115,7 +126,7 @@ sgw_handle_create_session_request (
     /*
      * We try to create endpoint for S11 interface. A NULL endpoint means that
      * * * * either the teid is already in list of known teid or ENOMEM error has been
-     * * * * raised during MALLOC_CHECK.
+     * * * * raised during malloc.
      */
     //--------------------------------------------------
     // copy informations from create session request to bearer context information
@@ -152,7 +163,7 @@ sgw_handle_create_session_request (
     }
 
     if (session_req_pP->apn) {
-      s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.apn_in_use = STRDUP_CHECK (session_req_pP->apn);
+      s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.apn_in_use = strdup (session_req_pP->apn);
     } else {
       s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.apn_in_use = "NO APN";
     }
@@ -168,7 +179,7 @@ sgw_handle_create_session_request (
 
     if (eps_bearer_entry_p == NULL) {
       OAILOG_ERROR (LOG_SPGW_APP, "Failed to create new EPS bearer entry\n");
-      // TO DO FREE_CHECK new_bearer_ctxt_info_p and by cascade...
+      // TO DO free_wrapper new_bearer_ctxt_info_p and by cascade...
       OAILOG_FUNC_RETURN(LOG_SPGW_APP, -1);
     }
 
@@ -203,7 +214,7 @@ sgw_handle_create_session_request (
     }
   } else {
     OAILOG_WARNING (LOG_SPGW_APP, "Could not create new transaction for SESSION_CREATE message\n");
-    FREE_CHECK (new_endpoint_p);
+    free_wrapper (new_endpoint_p);
     new_endpoint_p = NULL;
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, -1);
   }
@@ -212,6 +223,7 @@ sgw_handle_create_session_request (
 
 
 
+//------------------------------------------------------------------------------
 int
 sgw_handle_sgi_endpoint_created (
   const itti_sgi_create_end_point_response_t * const resp_pP)
@@ -311,6 +323,7 @@ sgw_handle_sgi_endpoint_created (
 
 
 
+//------------------------------------------------------------------------------
 int
 sgw_handle_gtpv1uCreateTunnelResp (
   const Gtpv1uCreateTunnelResp * const endpoint_created_pP)
@@ -360,177 +373,183 @@ sgw_handle_gtpv1uCreateTunnelResp (
     eps_bearer_entry_p->s_gw_teid_for_S1u_S12_S4_up = endpoint_created_pP->S1u_teid;
     sgw_display_s11_bearer_context_information_mapping ();
     memset (&sgi_create_endpoint_resp, 0, sizeof (itti_sgi_create_end_point_response_t));
-    //--------------------------------------------------------------------------
-    // PCO processing
-    //--------------------------------------------------------------------------
-    in_pco_p = &new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.saved_message.pco;
-    length_in_pco = in_pco_p->byte[1];
 
-    if ((length_in_pco + 1 + 1) != in_pco_p->length) {
-      OAILOG_DEBUG (LOG_SPGW_APP, "PCO: mismatch in lengths length_pco+1+1 %u != in_pco_p->length %u\n", length_in_pco + 1 + 1, in_pco_p->length);
-    }
+    // Non standard feature
+    if (spgw_config.pgw_config.force_push_pco) {
+      pgw_force_push_pco(&sgi_create_endpoint_resp);
+    } else {
+      //--------------------------------------------------------------------------
+      // PCO processing
+      //--------------------------------------------------------------------------
+      in_pco_p = &new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.saved_message.pco;
+      length_in_pco = in_pco_p->byte[1];
 
-    sgi_create_endpoint_resp.pco.byte[0] = in_pco_p->byte[0];
-    pco_out_index = 2;
+      if ((length_in_pco + 1 + 1) != in_pco_p->length) {
+        OAILOG_DEBUG (LOG_SPGW_APP, "PCO: mismatch in lengths length_pco+1+1 %u != in_pco_p->length %u\n", length_in_pco + 1 + 1, in_pco_p->length);
+      }
 
-    if ((length_in_pco > 0) && (in_pco_p->byte[2] & 0x80)) {
-      sgi_create_endpoint_resp.pco.byte[pco_out_index++] = in_pco_p->byte[2];
-      pco_in_index = PCO_MIN_LENGTH;
+      sgi_create_endpoint_resp.pco.byte[0] = in_pco_p->byte[0];
+      pco_out_index = 2;
 
-      while (length_in_pco >= 3) {
-        OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier in length_in_pco %d\n", length_in_pco);
-        pi_or_ci = (((uint16_t) in_pco_p->byte[pco_in_index]) << 8) | (uint16_t) in_pco_p->byte[pco_in_index + 1];
-        pco_in_index += 2;
-        length_pi_or_ci = in_pco_p->byte[pco_in_index++];
+      if ((length_in_pco > 0) && (in_pco_p->byte[2] & 0x80)) {
+        sgi_create_endpoint_resp.pco.byte[pco_out_index++] = in_pco_p->byte[2];
+        pco_in_index = PCO_MIN_LENGTH;
 
-        switch (pi_or_ci) {
-        case PCO_PI_LCP:
-        case PCO_PI_PAP:
-        case PCO_PI_CHAP:
-          pco_in_index += length_pi_or_ci;
-          OAILOG_WARNING (LOG_SPGW_APP, "PCO: Protocol identifier 0x%X not supported now\n", pi_or_ci);
-          break;
-
-        case PCO_PI_IPCP:
-          ipcp_code = in_pco_p->byte[pco_in_index++];
-          ipcp_identifier = in_pco_p->byte[pco_in_index++];
-          ipcp_length = (((uint16_t) in_pco_p->byte[pco_in_index]) << 8) | ((uint16_t) in_pco_p->byte[pco_in_index + 1]);
-          OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP (0x%x) code 0x%x identifier 0x%x length %u\n", pi_or_ci, ipcp_code, ipcp_identifier, ipcp_length);
+        while (length_in_pco >= 3) {
+          OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier in length_in_pco %d\n", length_in_pco);
+          pi_or_ci = (((uint16_t) in_pco_p->byte[pco_in_index]) << 8) | (uint16_t) in_pco_p->byte[pco_in_index + 1];
           pco_in_index += 2;
-          ipcp_remaining_length = ipcp_length - 1 - 1 - 2;
-          ipcp_out_length = 1 + 1 + 2;
-          // Protocol Id: Internet Protocol Control Protocol ...
-          sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (pi_or_ci >> 8);
-          sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (pi_or_ci & 0x00FF);
+          length_pi_or_ci = in_pco_p->byte[pco_in_index++];
 
-          while (ipcp_remaining_length >= 2) {
-            ipcp_option = in_pco_p->byte[pco_in_index];
-            ipcp_option_length = in_pco_p->byte[pco_in_index + 1];
-            ipcp_remaining_length = ipcp_remaining_length - ipcp_option_length;
-            ipcp_out_code = IPCP_CODE_CONFIGURE_ACK;
-            OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP ipcp_option %u ipcp_option_length %u ipcp_remaining_length %u pco_in_index %u\n", ipcp_option, ipcp_option_length, ipcp_remaining_length, pco_in_index);
+          switch (pi_or_ci) {
+          case PCO_PI_LCP:
+          case PCO_PI_PAP:
+          case PCO_PI_CHAP:
+            pco_in_index += length_pi_or_ci;
+            OAILOG_WARNING (LOG_SPGW_APP, "PCO: Protocol identifier 0x%X not supported now\n", pi_or_ci);
+            break;
 
-            switch (ipcp_option) {
-            case IPCP_OPTION_PRIMARY_DNS_SERVER_IP_ADDRESS:
-              OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option PRIMARY_DNS_SERVER_IP_ADDRESS length %u\n", ipcp_option_length);
+          case PCO_PI_IPCP:
+            ipcp_code = in_pco_p->byte[pco_in_index++];
+            ipcp_identifier = in_pco_p->byte[pco_in_index++];
+            ipcp_length = (((uint16_t) in_pco_p->byte[pco_in_index]) << 8) | ((uint16_t) in_pco_p->byte[pco_in_index + 1]);
+            OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP (0x%x) code 0x%x identifier 0x%x length %u\n", pi_or_ci, ipcp_code, ipcp_identifier, ipcp_length);
+            pco_in_index += 2;
+            ipcp_remaining_length = ipcp_length - 1 - 1 - 2;
+            ipcp_out_length = 1 + 1 + 2;
+            // Protocol Id: Internet Protocol Control Protocol ...
+            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (pi_or_ci >> 8);
+            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (pi_or_ci & 0x00FF);
 
-              if (ipcp_option_length >= 6) {
-                ipcp_dns_prim_ipv4_addr = (((uint32_t) in_pco_p->byte[pco_in_index + 2]) << 24) |
-                  (((uint32_t) in_pco_p->byte[pco_in_index + 3]) << 16) | (((uint32_t) in_pco_p->byte[pco_in_index + 4]) << 8) | (((uint32_t) in_pco_p->byte[pco_in_index + 5]));
-                OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_dns_prim_ipv4_addr 0x%x\n", ipcp_dns_prim_ipv4_addr);
+            while (ipcp_remaining_length >= 2) {
+              ipcp_option = in_pco_p->byte[pco_in_index];
+              ipcp_option_length = in_pco_p->byte[pco_in_index + 1];
+              ipcp_remaining_length = ipcp_remaining_length - ipcp_option_length;
+              ipcp_out_code = IPCP_CODE_CONFIGURE_ACK;
+              OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP ipcp_option %u ipcp_option_length %u ipcp_remaining_length %u pco_in_index %u\n", ipcp_option, ipcp_option_length, ipcp_remaining_length, pco_in_index);
 
-                if (ipcp_dns_prim_ipv4_addr == 0) {
-                  ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_v4;
-                } else if (spgw_config.pgw_config.ipv4.default_dns_v4 != ipcp_dns_prim_ipv4_addr) {
-                  ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
-                  ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_v4;
+              switch (ipcp_option) {
+              case IPCP_OPTION_PRIMARY_DNS_SERVER_IP_ADDRESS:
+                OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option PRIMARY_DNS_SERVER_IP_ADDRESS length %u\n", ipcp_option_length);
+
+                if (ipcp_option_length >= 6) {
+                  ipcp_dns_prim_ipv4_addr = (((uint32_t) in_pco_p->byte[pco_in_index + 2]) << 24) |
+                      (((uint32_t) in_pco_p->byte[pco_in_index + 3]) << 16) | (((uint32_t) in_pco_p->byte[pco_in_index + 4]) << 8) | (((uint32_t) in_pco_p->byte[pco_in_index + 5]));
+                  OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_dns_prim_ipv4_addr 0x%x\n", ipcp_dns_prim_ipv4_addr);
+
+                  if (ipcp_dns_prim_ipv4_addr == 0) {
+                    ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_v4;
+                  } else if (spgw_config.pgw_config.ipv4.default_dns_v4 != ipcp_dns_prim_ipv4_addr) {
+                    ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
+                    ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_v4;
+                  } else {
+                    ipcp_out_dns_prim_ipv4_addr = ipcp_dns_prim_ipv4_addr;
+                  }
+
+                  OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_out_dns_prim_ipv4_addr 0x%x\n", ipcp_out_dns_prim_ipv4_addr);
                 } else {
-                  ipcp_out_dns_prim_ipv4_addr = ipcp_dns_prim_ipv4_addr;
+                  ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;       // not sure
                 }
 
-                OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_out_dns_prim_ipv4_addr 0x%x\n", ipcp_out_dns_prim_ipv4_addr);
-              } else {
-                ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;       // not sure
-              }
+                ipcp_out_length += 6;
+                break;
 
-              ipcp_out_length += 6;
-              break;
+              case IPCP_OPTION_SECONDARY_DNS_SERVER_IP_ADDRESS:
+                OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS length %u\n", ipcp_option_length);
 
-            case IPCP_OPTION_SECONDARY_DNS_SERVER_IP_ADDRESS:
-              OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS length %u\n", ipcp_option_length);
+                if (ipcp_option_length >= 6) {
+                  ipcp_dns_sec_ipv4_addr = (((uint32_t) in_pco_p->byte[pco_in_index + 2]) << 24) |
+                      (((uint32_t) in_pco_p->byte[pco_in_index + 3]) << 16) | (((uint32_t) in_pco_p->byte[pco_in_index + 4]) << 8) | (((uint32_t) in_pco_p->byte[pco_in_index + 5]));
+                  OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_dns_sec_ipv4_addr 0x%x\n", ipcp_dns_sec_ipv4_addr);
 
-              if (ipcp_option_length >= 6) {
-                ipcp_dns_sec_ipv4_addr = (((uint32_t) in_pco_p->byte[pco_in_index + 2]) << 24) |
-                  (((uint32_t) in_pco_p->byte[pco_in_index + 3]) << 16) | (((uint32_t) in_pco_p->byte[pco_in_index + 4]) << 8) | (((uint32_t) in_pco_p->byte[pco_in_index + 5]));
-                OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_dns_sec_ipv4_addr 0x%x\n", ipcp_dns_sec_ipv4_addr);
+                  if (ipcp_dns_sec_ipv4_addr == 0) {
+                    ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec_v4;
+                  } else if (spgw_config.pgw_config.ipv4.default_dns_sec_v4 != ipcp_dns_sec_ipv4_addr) {
+                    ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
+                    ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec_v4;
+                  } else {
+                    ipcp_out_dns_sec_ipv4_addr = ipcp_dns_sec_ipv4_addr;
+                  }
 
-                if (ipcp_dns_sec_ipv4_addr == 0) {
-                  ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec_v4;
-                } else if (spgw_config.pgw_config.ipv4.default_dns_sec_v4 != ipcp_dns_sec_ipv4_addr) {
-                  ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
-                  ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec_v4;
+                  OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_out_dns_sec_ipv4_addr 0x%x\n", ipcp_out_dns_sec_ipv4_addr);
                 } else {
-                  ipcp_out_dns_sec_ipv4_addr = ipcp_dns_sec_ipv4_addr;
+                  ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;       // not sure
                 }
 
-                OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_out_dns_sec_ipv4_addr 0x%x\n", ipcp_out_dns_sec_ipv4_addr);
-              } else {
-                ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;       // not sure
+                ipcp_out_length += 6;
+                break;
+
+              default:
+                OAILOG_WARNING (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option 0x%04X unknown\n", ipcp_option);
               }
 
-              ipcp_out_length += 6;
-              break;
-
-            default:
-              OAILOG_WARNING (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option 0x%04X unknown\n", ipcp_option);
+              pco_in_index += ipcp_option_length;
             }
 
-            pco_in_index += ipcp_option_length;
+            // ... continuing Protocol Id: Internet Protocol Control Protocol
+            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = ipcp_out_length; // option length
+            break;
+
+         case PCO_CI_P_CSCF_IPV6_ADDRESS_REQUEST:
+         case PCO_CI_DNS_SERVER_IPV6_ADDRESS_REQUEST:
+         case PCO_CI_MS_SUPPORT_OF_NETWORK_REQUESTED_BEARER_CONTROL_INDICATOR:
+         case PCO_CI_DSMIPV6_HOME_AGENT_ADDRESS_REQUEST:
+         case PCO_CI_DSMIPV6_HOME_NETWORK_PREFIX_REQUEST:
+         case PCO_CI_DSMIPV6_IPV4_HOME_AGENT_ADDRESS_REQUEST:
+         case PCO_CI_P_CSCF_IPV4_ADDRESS_REQUEST:
+         case PCO_CI_MSISDN_REQUEST:
+         case PCO_CI_IFOM_SUPPORT_REQUEST:
+           pco_in_index += length_pi_or_ci;
+           OAILOG_WARNING (LOG_SPGW_APP, "PCO: Container identifier 0x%X not supported now\n", pi_or_ci);
+           break;
+
+         case PCO_CI_DNS_SERVER_IPV4_ADDRESS_REQUEST:
+           // PPP IP Control Protocol
+           sgi_create_endpoint_resp.pco.byte[pco_out_index++] = ipcp_out_code;
+           sgi_create_endpoint_resp.pco.byte[pco_out_index++] = ipcp_identifier;
+           sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (ipcp_out_length >> 8);
+           sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (ipcp_out_length & 0x00FF);
+
+           if (ipcp_out_dns_prim_ipv4_addr != 0xFFFFFFFF) {
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = IPCP_OPTION_PRIMARY_DNS_SERVER_IP_ADDRESS;
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = 6;
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (ipcp_out_dns_prim_ipv4_addr & 0x000000FF);
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_prim_ipv4_addr >> 8) & 0x000000FF);
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_prim_ipv4_addr >> 16) & 0x000000FF);
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_prim_ipv4_addr >> 24) & 0x000000FF);
+           }
+
+           if (ipcp_out_dns_sec_ipv4_addr != 0xFFFFFFFF) {
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = IPCP_OPTION_SECONDARY_DNS_SERVER_IP_ADDRESS;
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = 6;
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (ipcp_out_dns_sec_ipv4_addr & 0x000000FF);
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_sec_ipv4_addr >> 8) & 0x000000FF);
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_sec_ipv4_addr >> 16) & 0x000000FF);
+             sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_sec_ipv4_addr >> 24) & 0x000000FF);
+           }
+
+           break;
+
+         case PCO_CI_IP_ADDRESS_ALLOCATION_VIA_NAS_SIGNALLING:
+           address_allocation_via_nas_signalling = true;
+           break;
+
+         case PCO_CI_IPV4_ADDRESS_ALLOCATION_VIA_DHCPV4:
+           break;
+
+         case PCO_CI_IPV4_LINK_MTU_REQUEST:
+           OAILOG_WARNING (LOG_SPGW_APP, "PCO: Container identifier IPV4_LINK_MTU_REQUEST TODO\n");
+           break;
           }
 
-          // ... continuing Protocol Id: Internet Protocol Control Protocol
-          sgi_create_endpoint_resp.pco.byte[pco_out_index++] = ipcp_out_length; // option length
-          break;
+          length_in_pco = length_in_pco - (length_pi_or_ci + 2 + 1);
+          OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier out length_in_pco %d\n", length_in_pco);
+        }                         // while (length_in_pco >= 3) {
+      }                           // if ((length_in_pco > 0) && (in_pco_p->byte[2] & 0x80)) {
 
-        case PCO_CI_P_CSCF_IPV6_ADDRESS_REQUEST:
-        case PCO_CI_DNS_SERVER_IPV6_ADDRESS_REQUEST:
-        case PCO_CI_MS_SUPPORT_OF_NETWORK_REQUESTED_BEARER_CONTROL_INDICATOR:
-        case PCO_CI_DSMIPV6_HOME_AGENT_ADDRESS_REQUEST:
-        case PCO_CI_DSMIPV6_HOME_NETWORK_PREFIX_REQUEST:
-        case PCO_CI_DSMIPV6_IPV4_HOME_AGENT_ADDRESS_REQUEST:
-        case PCO_CI_P_CSCF_IPV4_ADDRESS_REQUEST:
-        case PCO_CI_MSISDN_REQUEST:
-        case PCO_CI_IFOM_SUPPORT_REQUEST:
-          pco_in_index += length_pi_or_ci;
-          OAILOG_WARNING (LOG_SPGW_APP, "PCO: Container identifier 0x%X not supported now\n", pi_or_ci);
-          break;
-
-        case PCO_CI_DNS_SERVER_IPV4_ADDRESS_REQUEST:
-          // PPP IP Control Protocol
-          sgi_create_endpoint_resp.pco.byte[pco_out_index++] = ipcp_out_code;
-          sgi_create_endpoint_resp.pco.byte[pco_out_index++] = ipcp_identifier;
-          sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (ipcp_out_length >> 8);
-          sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (ipcp_out_length & 0x00FF);
-
-          if (ipcp_out_dns_prim_ipv4_addr != 0xFFFFFFFF) {
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = IPCP_OPTION_PRIMARY_DNS_SERVER_IP_ADDRESS;
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = 6;
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (ipcp_out_dns_prim_ipv4_addr & 0x000000FF);
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_prim_ipv4_addr >> 8) & 0x000000FF);
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_prim_ipv4_addr >> 16) & 0x000000FF);
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_prim_ipv4_addr >> 24) & 0x000000FF);
-          }
-
-          if (ipcp_out_dns_sec_ipv4_addr != 0xFFFFFFFF) {
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = IPCP_OPTION_SECONDARY_DNS_SERVER_IP_ADDRESS;
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = 6;
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) (ipcp_out_dns_sec_ipv4_addr & 0x000000FF);
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_sec_ipv4_addr >> 8) & 0x000000FF);
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_sec_ipv4_addr >> 16) & 0x000000FF);
-            sgi_create_endpoint_resp.pco.byte[pco_out_index++] = (uint8_t) ((ipcp_out_dns_sec_ipv4_addr >> 24) & 0x000000FF);
-          }
-
-          break;
-
-        case PCO_CI_IP_ADDRESS_ALLOCATION_VIA_NAS_SIGNALLING:
-          address_allocation_via_nas_signalling = true;
-          break;
-
-        case PCO_CI_IPV4_ADDRESS_ALLOCATION_VIA_DHCPV4:
-          break;
-
-        case PCO_CI_IPV4_LINK_MTU_REQUEST:
-          OAILOG_WARNING (LOG_SPGW_APP, "PCO: Container identifier IPV4_LINK_MTU_REQUEST TODO\n");
-          break;
-        }
-
-        length_in_pco = length_in_pco - (length_pi_or_ci + 2 + 1);
-        OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier out length_in_pco %d\n", length_in_pco);
-      }                         // while (length_in_pco >= 3) {
-    }                           // if ((length_in_pco > 0) && (in_pco_p->byte[2] & 0x80)) {
-
-    sgi_create_endpoint_resp.pco.length = pco_out_index;
-    sgi_create_endpoint_resp.pco.byte[1] = pco_out_index - 2;
+      sgi_create_endpoint_resp.pco.length = pco_out_index;
+      sgi_create_endpoint_resp.pco.byte[1] = pco_out_index - 2;
+    }
     //--------------------------------------------------------------------------
     // IP forward will forward packets to this teid
     sgi_create_endpoint_resp.context_teid = endpoint_created_pP->context_teid;
@@ -623,6 +642,7 @@ sgw_handle_gtpv1uCreateTunnelResp (
 
 
 
+//------------------------------------------------------------------------------
 int
 sgw_handle_gtpv1uUpdateTunnelResp (
   const Gtpv1uUpdateTunnelResp * const endpoint_updated_pP)
@@ -707,6 +727,7 @@ sgw_handle_gtpv1uUpdateTunnelResp (
 
 
 
+//------------------------------------------------------------------------------
 int
 sgw_handle_sgi_endpoint_updated (
   const itti_sgi_update_end_point_response_t * const resp_pP)
@@ -902,6 +923,7 @@ sgw_handle_sgi_endpoint_updated (
 
 
 
+//------------------------------------------------------------------------------
 int
 sgw_handle_modify_bearer_request (
   const itti_sgw_modify_bearer_request_t * const modify_bearer_pP)
@@ -987,6 +1009,7 @@ sgw_handle_modify_bearer_request (
 
 
 
+//------------------------------------------------------------------------------
 int
 sgw_handle_delete_session_request (
   const itti_sgw_delete_session_request_t * const delete_session_req_pP)
@@ -1074,6 +1097,7 @@ sgw_handle_delete_session_request (
 /*
    Callback of hashtable_ts_apply_funct_on_elements()
 */
+//------------------------------------------------------------------------------
 static bool
 sgw_release_all_enb_related_information (
   hash_key_t keyP,
@@ -1099,6 +1123,7 @@ sgw_release_all_enb_related_information (
    downlink packets received for the UE and initiating the "Network Triggered Service Request" procedure,
    described in clause 5.3.4.3, if downlink packets arrive for the UE.
 */
+//------------------------------------------------------------------------------
 int
 sgw_handle_release_access_bearers_request (
   const itti_sgw_release_access_bearers_request_t * const release_access_bearers_req_pP)

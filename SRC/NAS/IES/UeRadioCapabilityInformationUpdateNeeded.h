@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_H_
 #define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_H_
+#include <stdint.h>
 
 #define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_MINIMUM_LENGTH 1
 #define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_MAXIMUM_LENGTH 1

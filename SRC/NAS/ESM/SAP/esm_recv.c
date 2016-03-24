@@ -38,17 +38,15 @@
 
 *****************************************************************************/
 
-#include "3gpp_24.007.h"
-#include "esm_recv.h"
-#include "commonDef.h"
 #include "log.h"
-
+#include "3gpp_24.007.h"
+#include "commonDef.h"
+#include "nas_itti_messaging.h"
+#include "esm_recv.h"
 #include "esm_pt.h"
 #include "esm_ebr.h"
 #include "esm_proc.h"
-
 #include "esm_cause.h"
-#include "nas_itti_messaging.h"
 
 
 /****************************************************************************/
@@ -237,7 +235,7 @@ esm_recv_pdn_connectivity_request (
    * Get the Access Point Name, if provided
    */
   if (msg->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT) {
-    esm_data->apn = msg->accesspointname.accesspointnamevalue;
+    esm_data->apn = msg->accesspointname;
   }
 
   /*
@@ -263,8 +261,8 @@ esm_recv_pdn_connectivity_request (
   esm_data->pco = msg->protocolconfigurationoptions;
 
   for (i = 0; i < msg->protocolconfigurationoptions.num_protocol_id_or_container_id; i++) {
-    DUP_OCTET_STRING (msg->protocolconfigurationoptions.protocolidcontents[i], esm_data->pco.protocolidcontents[i]);
-    esm_data->pco.protocolid[i] = msg->protocolconfigurationoptions.protocolid[i];
+    esm_data->pco.protocolidcontents[i] = msg->protocolconfigurationoptions.protocolidcontents[i];
+    esm_data->pco.protocolid[i]         = msg->protocolconfigurationoptions.protocolid[i];
     esm_data->pco.lengthofprotocolid[i] = msg->protocolconfigurationoptions.lengthofprotocolid[i];
   }
 
@@ -291,7 +289,7 @@ esm_recv_pdn_connectivity_request (
     }
   }
 #else
-  nas_itti_pdn_connectivity_req (pti, ctx->ue_id, ctx->imsi, esm_data, request_type);
+  nas_itti_pdn_connectivity_req (pti, ctx->ue_id, &ctx->_imsi, esm_data, request_type);
   esm_cause = ESM_CAUSE_SUCCESS;
 #endif
   /*

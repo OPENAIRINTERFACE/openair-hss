@@ -45,6 +45,7 @@
 
 *****************************************************************************/
 
+#include "common_defs.h"
 #include "emm_fsm.h"
 #include "commonDef.h"
 #include "networkDef.h"
@@ -108,10 +109,7 @@ EmmRegistered (
     break;
 
   case _EMMREG_TAU_REJ:
-    /*
-     * TODO: Tracking Area Update has been rejected
-     */
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Tracking Area Update procedure " "is not implemented\n");
+    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
     break;
 
   case _EMMREG_LOWERLAYER_SUCCESS:
@@ -122,6 +120,13 @@ EmmRegistered (
     break;
 
   case _EMMREG_LOWERLAYER_FAILURE:
+    /*
+     * Data failed to be delivered to the network
+     */
+    rc = RETURNok;
+    break;
+
+  case _EMMREG_LOWERLAYER_NON_DELIVERY:
     /*
      * Data failed to be delivered to the network
      */

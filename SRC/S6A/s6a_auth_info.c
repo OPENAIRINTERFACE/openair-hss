@@ -168,9 +168,9 @@ s6a_parse_authentication_info_avp (
 
     switch (hdr->avp_code) {
     case AVP_CODE_E_UTRAN_VECTOR:{
-        DevAssert (authentication_info->nb_of_vectors == 0);
-        CHECK_FCT (s6a_parse_e_utran_vector (avp, &authentication_info->eutran_vector));
-        authentication_info->nb_of_vectors++;
+      DevAssert (MAX_EPS_AUTH_VECTORS > authentication_info->nb_of_vectors);
+      CHECK_FCT (s6a_parse_e_utran_vector (avp, &authentication_info->eutran_vector[authentication_info->nb_of_vectors]));
+      authentication_info->nb_of_vectors++;
       }
       break;
 
@@ -235,7 +235,7 @@ s6a_aia_cb (
     CHECK_FCT (fd_msg_avp_hdr (avp, &hdr));
     s6a_auth_info_ans_p->result.present = S6A_RESULT_BASE;
     s6a_auth_info_ans_p->result.choice.base = hdr->avp_value->u32;
-    MSC_LOG_TX_MESSAGE (MSC_S6A_MME, MSC_MMEAPP_MME, NULL, 0, "0 S6A_AUTH_INFO_ANS imsi %s %s", s6a_auth_info_ans_p->imsi, retcode_2_string (s6a_auth_info_ans_p->result.choice.base));
+    MSC_LOG_TX_MESSAGE (MSC_S6A_MME, MSC_NAS_MME, NULL, 0, "0 S6A_AUTH_INFO_ANS imsi %s %s", s6a_auth_info_ans_p->imsi, retcode_2_string (s6a_auth_info_ans_p->result.choice.base));
 
     if (hdr->avp_value->u32 != ER_DIAMETER_SUCCESS) {
       OAILOG_ERROR (LOG_S6A, "Got error %u:%s\n", hdr->avp_value->u32, retcode_2_string (hdr->avp_value->u32));
@@ -258,14 +258,14 @@ s6a_aia_cb (
        */
       s6a_auth_info_ans_p->result.present = S6A_RESULT_EXPERIMENTAL;
       s6a_parse_experimental_result (avp, &s6a_auth_info_ans_p->result.choice.experimental);
-      MSC_LOG_TX_MESSAGE (MSC_S6A_MME, MSC_MMEAPP_MME, NULL, 0, "0 S6A_AUTH_INFO_ANS imsi %s %s", s6a_auth_info_ans_p->imsi, experimental_retcode_2_string (s6a_auth_info_ans_p->result.choice.experimental));
+      MSC_LOG_TX_MESSAGE (MSC_S6A_MME, MSC_NAS_MME, NULL, 0, "0 S6A_AUTH_INFO_ANS imsi %s %s", s6a_auth_info_ans_p->imsi, experimental_retcode_2_string (s6a_auth_info_ans_p->result.choice.experimental));
       skip_auth_res = 1;
     } else {
       /*
        * Neither result-code nor experimental-result is present ->
        * * * * totally incorrect behaviour here.
        */
-      MSC_LOG_TX_MESSAGE_FAILED (MSC_S6A_MME, MSC_MMEAPP_MME, NULL, 0, "0 S6A_AUTH_INFO_ANS imsi %s", s6a_auth_info_ans_p->imsi);
+      MSC_LOG_TX_MESSAGE_FAILED (MSC_S6A_MME, MSC_NAS_MME, NULL, 0, "0 S6A_AUTH_INFO_ANS imsi %s", s6a_auth_info_ans_p->imsi);
       OAILOG_ERROR (LOG_S6A, "Experimental-Result and Result-Code are absent: " "This is not a correct behaviour\n");
       goto err;
     }
@@ -281,7 +281,7 @@ s6a_aia_cb (
     }
   }
 
-  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 err:
   return RETURNok;
 }

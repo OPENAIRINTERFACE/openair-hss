@@ -40,6 +40,7 @@ white='\E[37m'
 reset_color='\E[00m'
 COLORIZE=1
 
+#-------------------------------------------------------------------------------
 cecho()  {  
     # Color-echo
     # arg1 = message
@@ -64,6 +65,7 @@ echo_info()    { cecho "$*" $blue         ;}
 # Cleaners
 ###########################
 
+#-------------------------------------------------------------------------------
 clean_kernel() {
     $SUDO modprobe ip_tables
     $SUDO modprobe x_tables
@@ -80,6 +82,7 @@ clean_kernel() {
     echo_info "Flushed iptables"
 }
 
+#-------------------------------------------------------------------------------
 clean_all_files() {
  set_openair_env
  dir=$OPENAIRCN_DIR/BUILD
@@ -122,6 +125,7 @@ compilations() {
 # X.509 certificates
 ##########################################
 
+#-------------------------------------------------------------------------------
 make_one_cert() {
   fqdn=$1
   name=$2
@@ -130,6 +134,7 @@ make_one_cert() {
   $SUDO openssl ca -cert cacert.pem -keyfile cakey.pem -in $name.csr.pem -out $name.cert.pem -outdir . -batch
 }
 
+#-------------------------------------------------------------------------------
 make_certs(){
     
   fqdn=$1
@@ -160,6 +165,7 @@ make_certs(){
 }
 
 
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_xtables_addons_oai() {
   if [ $1 -eq 0 ]; then
@@ -209,6 +215,7 @@ install_xtables_addons_oai() {
 # External packages installers
 ############################################
 
+#-------------------------------------------------------------------------------
 # This function is for internal use of EURECOM developers (no support)
 # arg1 is force (no interactive script)
 install_netmap() {
@@ -257,6 +264,7 @@ install_netmap() {
     ./configure --kernel-sources=/usr/src/linux-source-"$current_kernel_release"/"$current_kernel_release"
   fi
 }
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_nettle_from_source() {
   if [ $1 -gt 0 ]; then 
@@ -294,6 +302,7 @@ install_nettle_from_source() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_gnutls_from_source(){
   if [ $1 -gt 0 ]; then 
@@ -347,6 +356,7 @@ install_gnutls_from_source(){
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_1.1.5_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
@@ -402,6 +412,7 @@ install_1.1.5_freediameter_from_source() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
@@ -457,6 +468,7 @@ install_freediameter_from_source() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_latest_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
@@ -511,6 +523,7 @@ install_latest_freediameter_from_source() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is package name
 test_install_package() {
   # usage: test_install_package package_name
@@ -524,6 +537,7 @@ test_install_package() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 check_gtpu_kmodule_installed() {
   if [ -e /lib/modules/`uname -r`/extra/xt_GTPUSP.ko ]; then
     echo_info "GTPU kernel module installed"
@@ -533,6 +547,7 @@ check_gtpu_kmodule_installed() {
 }
 
 
+#-------------------------------------------------------------------------------
 # arg1 is required minimal version of linux-headers and linux-image
 # arg2 is force (no interactive script)
 check_kernel_release_and_install_xtables_addons_oai() {
@@ -568,6 +583,7 @@ check_kernel_release_and_install_xtables_addons_oai() {
   fi 
 }
 
+#-------------------------------------------------------------------------------
 update_package_db() {
   if [ ! -f /tmp/no_more_update_package_db ]; then
     $SUDO apt-get update
@@ -581,6 +597,7 @@ update_package_db() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_hss_software() {
   if [ $1 -gt 0 ]; then 
@@ -640,6 +657,7 @@ check_install_hss_software() {
     python-pexpect 
 }
 
+#-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_mme_gw_software() {
   if [ $1 -gt 0 ]; then 
@@ -671,7 +689,8 @@ check_install_mme_gw_software() {
     git \
     pkg-config \
     subversion \
-    valgrind"
+    valgrind \
+    Kcachegrind"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
   if [ $? -ne 0 ]; then 
     echo_fatal "Failed to install package list $PACKAGE_LIST"
@@ -735,6 +754,7 @@ check_install_mme_gw_software() {
   check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $1
 }
 
+#-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_spgw_software() {
   if [ $1 -gt 0 ]; then 
@@ -812,6 +832,7 @@ check_install_spgw_software() {
 }
 
 
+#-------------------------------------------------------------------------------
 install_asn1c_from_source(){
   if [ $1 -eq 0 ]; then
     OPTION=""
@@ -850,6 +871,7 @@ install_asn1c_from_source(){
 # create HSS DB
 ################################
 
+#-------------------------------------------------------------------------------
 # arg 1 is mysql admin     (ex: root)
 # arg 2 is mysql password  (ex: linux)
 # arg 3 is hss username    (ex: hssadmin)
@@ -910,6 +932,7 @@ create_hss_database(){
 # export HSS DB
 ################################
 
+#-------------------------------------------------------------------------------
 # arg 1 is hss username    (ex: hssadmin)
 # arg 2 is hss password    (ex: admin)
 # arg 3 is database name   (ex: oai_db)
@@ -942,6 +965,7 @@ export_hss_database(){
 # IMPORT HSS DB
 ################################
 
+#-------------------------------------------------------------------------------
 # arg 1 is hss username    (ex: hssadmin)
 # arg 2 is hss password    (ex: admin)
 # arg 3 is database name   (ex: oai_db)
@@ -982,6 +1006,7 @@ import_hss_database(){
 }
 
 
+#-------------------------------------------------------------------------------
 cidr2mask(){
   local i mask=""
   local full_octets=$(($1/8))
@@ -1001,6 +1026,7 @@ cidr2mask(){
   echo $mask
 }
 
+#-------------------------------------------------------------------------------
 # example: netcalc 192.168.12.100 255.255.255.0
 netcalc(){
   local IFS='.' ip i
@@ -1016,6 +1042,7 @@ netcalc(){
   echo "${ip[*]}"
 }
 
+#-------------------------------------------------------------------------------
 # example: 
 bcastcalc(){
   local IFS='.' ip i
@@ -1031,6 +1058,7 @@ bcastcalc(){
 }
 
 
+#-------------------------------------------------------------------------------
 is_real_interface(){
   my_bool=1
   for var in "$@"
@@ -1055,6 +1083,7 @@ is_real_interface(){
   return $my_bool
 }
 
+#-------------------------------------------------------------------------------
 is_virtual_interface(){
   my_bool=1
   for var in "$@"
@@ -1074,6 +1103,7 @@ is_virtual_interface(){
   return $my_bool
 }
 
+#-------------------------------------------------------------------------------
 # arg1 = interface name
 # arg2 = ipv4 addr cidr
 set_interface_up(){
@@ -1094,6 +1124,7 @@ set_interface_up(){
   sync
 }
 
+#-------------------------------------------------------------------------------
 # arg1 = interface name
 # arg2 = ipv4 addr cidr
 set_virtual_interface_up(){
@@ -1111,6 +1142,7 @@ set_virtual_interface_up(){
   sync
 }
 
+#-------------------------------------------------------------------------------
 #arg1 is interface name
 #arg2 is IP address (CIDR)
 set_network_interface(){
@@ -1133,6 +1165,7 @@ set_network_interface(){
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is MME or EPC config file
 set_mme_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
@@ -1156,6 +1189,7 @@ set_mme_network_interfaces(){
   set_network_interface  $MME_INTERFACE_NAME_FOR_S11_MME        $MME_IPV4_ADDRESS_FOR_S11_MME 
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is S/P-GW or EPC config file
 set_spgw_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
@@ -1191,6 +1225,7 @@ set_epc_network_interfaces(){
   set_spgw_network_interfaces $1
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is a 'libconfig-like' config file
 set_enb_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
@@ -1217,11 +1252,12 @@ set_enb_network_interfaces(){
 ################################
 # set_openair_env
 ###############################
+#-------------------------------------------------------------------------------
 set_openair_env(){
     fullpath=`readlink -f $BASH_SOURCE`
     [ -f "/.$fullpath" ] || fullpath=`readlink -f $PWD/$fullpath`
     openair_path=${fullpath%/BUILD/*}
-    openair_path=${openair_path%/DOCS/*}
+    openair_path=${openair_path%/SCRIPTS/*}
     openair_path=${openair_path%/SRC/NAS/*}
     openair_path=${openair_path%/SRC/S6A/*}
     export OPENAIRCN_DIR=$openair_path
@@ -1232,6 +1268,7 @@ set_openair_env(){
 # send ctrl-c and finally force terminate the program and all its child processes
 ###############################
 
+#-------------------------------------------------------------------------------
 function handle_ctrl_c(){
 CURPID=$$
 ppid=$$

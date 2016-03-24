@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef UE_NETWORK_CAPABILITY_H_
 #define UE_NETWORK_CAPABILITY_H_
+#include <stdint.h>
 
 #define UE_NETWORK_CAPABILITY_MINIMUM_LENGTH 4
 #define UE_NETWORK_CAPABILITY_MAXIMUM_LENGTH 7

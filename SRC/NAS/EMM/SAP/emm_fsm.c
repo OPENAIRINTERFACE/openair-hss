@@ -180,10 +180,10 @@ emm_fsm_set_status (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
-  DevAssert (emm_ctx );
-  if ((status < EMM_STATE_MAX) && (ue_id > 0)) {
+  DevAssert (emm_ctx);
+  if (status < EMM_STATE_MAX) {
     if (status != emm_ctx->_emm_fsm_status) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s\n", _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
+      OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status changed: %s ===> %s\n", ue_id, _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " MME_UE_S1AP_ID_FMT" ", _emm_fsm_status_str[status], ue_id);
       emm_ctx->_emm_fsm_status = status;
     }

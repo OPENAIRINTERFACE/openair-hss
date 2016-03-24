@@ -194,7 +194,7 @@ encode_activate_default_eps_bearer_context_request (
   } else
     encoded += encode_result;
 
-  if ((encode_result = encode_access_point_name (&activate_default_eps_bearer_context_request->accesspointname, 0, buffer + encoded, len - encoded)) < 0) {     //Return in case of error
+  if ((encode_result = encode_access_point_name (activate_default_eps_bearer_context_request->accesspointname, 0, buffer + encoded, len - encoded)) < 0) {     //Return in case of error
     OAILOG_ERROR (LOG_NAS_ESM, "ESM  ENCODE accesspointname");
     return encode_result;
   } else

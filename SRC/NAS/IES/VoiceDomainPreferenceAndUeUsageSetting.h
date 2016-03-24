@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_H_
 #define VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_H_
+#include <stdint.h>
 
 #define VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_MINIMUM_LENGTH 1
 #define VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_MAXIMUM_LENGTH 1

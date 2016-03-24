@@ -67,7 +67,7 @@
  * - S1/X2-based handover with SGW change
  */
 typedef struct itti_sgw_create_session_request_s {
-  Teid_t             teid;                ///< S11- S-GW Tunnel Endpoint Identifier
+  teid_t             teid;                ///< S11- S-GW Tunnel Endpoint Identifier
 
   Imsi_t             imsi;                ///< The IMSI shall be included in the message on the S4/S11
   ///< interface, and on S5/S8 interface if provided by the
@@ -347,7 +347,7 @@ typedef struct itti_sgw_create_session_request_s {
  * - S1/X2-based handover with SGW change
  */
 typedef struct itti_sgw_create_session_response_s {
-  Teid_t                   teid;                ///< Tunnel Endpoint Identifier
+  teid_t                   teid;                ///< Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
   SGWCause_t               cause;               ///< If the SGW cannot accept any of the "Bearer Context Created" IEs within Create Session Request
@@ -520,7 +520,7 @@ typedef struct itti_sgw_create_session_response_s {
  * - X2-based handover without SGWrelocation
  */
 typedef struct itti_sgw_modify_bearer_request_s {
-  Teid_t                     teid;             ///< S11 SGW Tunnel Endpoint Identifier
+  teid_t                     teid;             ///< S11 SGW Tunnel Endpoint Identifier
 
   // MEI                    ME Identity (MEI)  ///< C:This IE shall be sent on the S5/S8 interfaces for the Gn/Gp
   ///< SGSN to MME TAU.
@@ -740,7 +740,7 @@ typedef struct itti_sgw_modify_bearer_request_s {
  * - X2-based handover without SGWrelocation
  */
 typedef struct itti_sgw_modify_bearer_response_s {
-  Teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
+  teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
   SGWCause_t               cause;               ///<
@@ -839,7 +839,7 @@ typedef struct itti_sgw_modify_bearer_response_s {
 
 //-----------------------------------------------------------------------------
 typedef struct itti_sgw_delete_session_request_s {
-  Teid_t      teid;                   ///< Tunnel Endpoint Identifier
+  teid_t      teid;                   ///< Tunnel Endpoint Identifier
   EBI_t       lbi;                    ///< Linked EPS Bearer ID
   FTeid_t     sender_fteid_for_cp;    ///< Sender F-TEID for control plane
 
@@ -876,7 +876,7 @@ typedef struct itti_sgw_delete_session_request_s {
  * - S1 Based handover cancel with SGW change
  */
 typedef struct itti_sgw_delete_session_response_s {
-  Teid_t      teid;                   ///< Remote Tunnel Endpoint Identifier
+  teid_t      teid;                   ///< Remote Tunnel Endpoint Identifier
   SGWCause_t  cause;
 
   /* GTPv2-C specific parameters */
@@ -898,7 +898,7 @@ typedef struct itti_sgw_delete_session_response_s {
  * -    READY to STANDBY transition within the network
  */
 typedef struct itti_sgw_release_access_bearers_request_s {
-  Teid_t     teid;                     ///< Tunnel Endpoint Identifier
+  teid_t     teid;                     ///< Tunnel Endpoint Identifier
   uint32_t   num_rabs;
   EBI_t      list_of_rabs[8]  ;        ///< Shall be present on S4 interface when this message is
                                          ///< used to release a subset of all active RABs according to
@@ -929,7 +929,7 @@ typedef struct itti_sgw_release_access_bearers_request_s {
  * - "Context not found
  */
 typedef struct itti_sgw_release_access_bearers_response_s {
-  Teid_t      teid;                   ///< Tunnel Endpoint Identifier
+  teid_t      teid;                   ///< Tunnel Endpoint Identifier
   SGWCause_t  cause;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional

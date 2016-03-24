@@ -31,12 +31,16 @@
 #include <stdint.h>
 
 #include "mme_default_values.h"
+#include "3gpp_23.003.h"
+#include "common_dim.h"
 #include "log.h"
 
 #ifndef FILE_MME_CONFIG_SEEN
 #define FILE_MME_CONFIG_SEEN
 
 #define MME_CONFIG_STRING_MME_CONFIG                     "MME"
+#define MME_CONFIG_STRING_RUN_MODE                       "RUN_MODE"
+#define MME_CONFIG_STRING_RUN_MODE_TEST                  "TEST"
 #define MME_CONFIG_STRING_REALM                          "REALM"
 #define MME_CONFIG_STRING_MAXENB                         "MAXENB"
 #define MME_CONFIG_STRING_MAXUE                          "MAXUE"
@@ -68,7 +72,7 @@
 #define MME_CONFIG_STRING_S1AP_OUTCOME_TIMER             "S1AP_OUTCOME_TIMER"
 #define MME_CONFIG_STRING_S1AP_PORT                      "S1AP_PORT"
 
-#define MME_CONFIG_STRING_GUMMEI_CONFIG                  "GUMMEI"
+#define MME_CONFIG_STRING_GUMMEI_LIST                    "GUMMEI_LIST"
 #define MME_CONFIG_STRING_MME_CODE                       "MME_CODE"
 #define MME_CONFIG_STRING_MME_GID                        "MME_GID"
 #define MME_CONFIG_STRING_TAI_LIST                       "TAI_LIST"
@@ -83,25 +87,10 @@
 #define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11_MME       "MME_IPV4_ADDRESS_FOR_S11_MME"
 
 
-#define MME_CONFIG_STRING_NAS_CONFIG                    "NAS"
+#define MME_CONFIG_STRING_NAS_CONFIG                     "NAS"
 #define MME_CONFIG_STRING_NAS_SUPPORTED_INTEGRITY_ALGORITHM_LIST  "ORDERED_SUPPORTED_INTEGRITY_ALGORITHM_LIST"
 #define MME_CONFIG_STRING_NAS_SUPPORTED_CIPHERING_ALGORITHM_LIST  "ORDERED_SUPPORTED_CIPHERING_ALGORITHM_LIST"
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EEA0    0b000
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EEA1    0b001
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EEA2    0b010
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EEA3    0b011
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EEA4    0b100
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EEA5    0b101
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EEA6    0b110
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EEA7    0b111
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EIA0    0b000
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EIA1    0b001
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EIA2    0b010
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EIA3    0b011
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EIA4    0b100
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EIA5    0b101
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EIA6    0b110
-#define NAS_CONFIG_SECURITY_ALGORITHMS_EIA7    0b111
+
 #define MME_CONFIG_STRING_NAS_T3402_TIMER                "T3402"
 #define MME_CONFIG_STRING_NAS_T3412_TIMER                "T3412"
 #define MME_CONFIG_STRING_NAS_T3485_TIMER                "T3485"
@@ -113,6 +102,7 @@
 #define MME_CONFIG_STRING_OUTPUT                         "OUTPUT"
 #define MME_CONFIG_STRING_COLOR                          "COLOR"
 #define MME_CONFIG_STRING_OUTPUT_CONSOLE                 "CONSOLE"
+#define MME_CONFIG_STRING_OUTPUT_UNBUFFERED_CONSOLE      "UNBUFFERED_CONSOLE"
 #define MME_CONFIG_STRING_UDP_LOG_LEVEL                  "UDP_LOG_LEVEL"
 #define MME_CONFIG_STRING_GTPV1U_LOG_LEVEL               "GTPV1U_LOG_LEVEL"
 #define MME_CONFIG_STRING_GTPV2C_LOG_LEVEL               "GTPV2C_LOG_LEVEL"
@@ -131,6 +121,11 @@
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING        "annoying"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_INFO            "info"
 
+typedef enum {
+  RUN_MODE_TEST = 0,
+  RUN_MODE_OTHER
+} run_mode_t;
+
 typedef struct mme_config_s {
   /* Reader/writer lock for this configuration */
   pthread_rwlock_t rw_lock;
@@ -139,6 +134,8 @@ typedef struct mme_config_s {
   char *config_file;
   char *realm;
   int   realm_length;
+
+  run_mode_t  run_mode;
 
   uint32_t max_enbs;
   uint32_t max_ues;
@@ -157,16 +154,8 @@ typedef struct mme_config_s {
   } eps_network_feature_support;
 
   struct {
-    uint16_t  nb_mme_gid;
-    uint16_t *mme_gid;
-
-    uint16_t  nb_mmec;
-    uint8_t  *mmec;
-
-//    uint8_t   nb_plmn;
-//    uint16_t *plmn_mcc;
-//    uint16_t *plmn_mnc;
-//    uint16_t *plmn_mnc_len;
+    int      nb;
+    gummei_t gummei[MAX_GUMMEI];
   } gummei;
 
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS 0x00

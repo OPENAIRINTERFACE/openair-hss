@@ -48,6 +48,7 @@
 
 *****************************************************************************/
 
+#include "common_defs.h"
 #include "emm_fsm.h"
 #include "commonDef.h"
 #include "networkDef.h"
@@ -133,6 +134,14 @@ EmmDeregistered (
      */
     rc = RETURNok;
     break;
+
+  case _EMMREG_LOWERLAYER_NON_DELIVERY:
+    /*
+     * Data failed to be delivered to the peer
+     */
+    rc = RETURNok;
+    break;
+
 
   default:
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)\n", evt->primitive);

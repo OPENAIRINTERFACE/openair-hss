@@ -19,8 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+
+#ifndef FILE_ATTACH_REJECT_SEEN
+#define FILE_ATTACH_REJECT_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -28,9 +29,6 @@
 #include "MessageType.h"
 #include "EmmCause.h"
 #include "EsmMessageContainer.h"
-
-#ifndef FILE_ATTACH_REJECT_SEEN
-#define FILE_ATTACH_REJECT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define ATTACH_REJECT_MINIMUM_LENGTH ( \

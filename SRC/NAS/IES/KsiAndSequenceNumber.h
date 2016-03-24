@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef KSI_AND_SEQUENCE_NUMBER_H_
 #define KSI_AND_SEQUENCE_NUMBER_H_
+#include <stdint.h>
 
 #define KSI_AND_SEQUENCE_NUMBER_MINIMUM_LENGTH 2
 #define KSI_AND_SEQUENCE_NUMBER_MAXIMUM_LENGTH 2

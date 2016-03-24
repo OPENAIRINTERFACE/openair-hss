@@ -46,9 +46,6 @@ decode_detach_type (
   detachtype->switchoff = (*(buffer + decoded) >> 3) & 0x1;
   detachtype->typeofdetach = *(buffer + decoded) & 0x7;
   decoded++;
-#if NAS_DEBUG
-  dump_detach_type_xml (detachtype, iei);
-#endif
   return decoded;
 }
 
@@ -65,9 +62,6 @@ decode_u8_detach_type (
   detachtype->switchoff = (*(buffer + decoded) >> 3) & 0x1;
   detachtype->typeofdetach = *(buffer + decoded) & 0x7;
   decoded++;
-#if NAS_DEBUG
-  dump_detach_type_xml (detachtype, iei);
-#endif
   return decoded;
 }
 
@@ -84,9 +78,6 @@ encode_detach_type (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, DETACH_TYPE_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_detach_type_xml (detachtype, iei);
-#endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | ((detachtype->switchoff & 0x1) << 3) | (detachtype->typeofdetach & 0x7);
   encoded++;
   return encoded;
@@ -101,9 +92,6 @@ encode_u8_detach_type (
   uint8_t                                 encoded = 0;
   uint8_t                                 iei = 0;
 
-#if NAS_DEBUG
-  dump_detach_type_xml (detachtype, 0);
-#endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | ((detachtype->switchoff & 0x1) << 3) | (detachtype->typeofdetach & 0x7);
   encoded++;
   return bufferReturn;

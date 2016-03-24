@@ -210,7 +210,7 @@ emm_send_attach_accept (
   emm_msg->tailist.mncdigit3[0] = msg->tai_list.tai[0].plmn.mnc_digit3;
   emm_msg->tailist.tac[0] = msg->tai_list.tai[0].tac;
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_LENGTH(%d)  (%d)\n", TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH, size);
-  AssertFatal(msg->tai_list.n_tais <= 16, "Twoo many TAIs in TAI list");
+  AssertFatal(msg->tai_list.n_tais <= 16, "Too many TAIs in TAI list");
   if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == emm_msg->tailist.typeoflist) {
     for (i = 1; i < msg->tai_list.n_tais; i++) {
       emm_msg->tailist.tac[i] = msg->tai_list.tai[i].tac;
@@ -233,8 +233,8 @@ emm_send_attach_accept (
   /*
    * Mandatory - ESM message container
    */
-  size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + msg->nas_msg.length;
-  emm_msg->esmmessagecontainer.esmmessagecontainercontents = msg->nas_msg;
+  size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + blength(msg->nas_msg);
+  emm_msg->esmmessagecontainer = msg->nas_msg;
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH(%d)  (%d)\n", ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH, size);
 
   /*
@@ -300,10 +300,10 @@ emm_send_attach_reject (
   /*
    * Optional - ESM message container
    */
-  if (msg->nas_msg.length > 0) {
-    size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + msg->nas_msg.length;
+  if (msg->nas_msg) {
+    size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + blength(msg->nas_msg);
     emm_msg->presencemask |= ATTACH_REJECT_ESM_MESSAGE_CONTAINER_PRESENT;
-    emm_msg->esmmessagecontainer.esmmessagecontainercontents = msg->nas_msg;
+    emm_msg->esmmessagecontainer = msg->nas_msg;
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
@@ -688,12 +688,18 @@ emm_send_authentication_request (
    * Mandatory - Authentication parameter RAND
    */
   size += AUTHENTICATION_PARAMETER_RAND_MAXIMUM_LENGTH;
-  emm_msg->authenticationparameterrand.rand = *msg->rand;
+  emm_msg->authenticationparameterrand = blk2bstr((const void *)msg->rand, AUTH_RAND_SIZE);
+  if (!emm_msg->authenticationparameterrand) {
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
   /*
    * Mandatory - Authentication parameter AUTN
    */
   size += AUTHENTICATION_PARAMETER_AUTN_MAXIMUM_LENGTH;
-  emm_msg->authenticationparameterautn.autn = *msg->autn;
+  emm_msg->authenticationparameterautn = blk2bstr((const void *)msg->autn, AUTH_AUTN_SIZE);
+  if (!emm_msg->authenticationparameterautn) {
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
 }
 

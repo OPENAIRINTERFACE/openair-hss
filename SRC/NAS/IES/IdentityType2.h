@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef IDENTITY_TYPE_2_H_
 #define IDENTITY_TYPE_2_H_
+#include <stdint.h>
 
 #define IDENTITY_TYPE_2_MINIMUM_LENGTH 1
 #define IDENTITY_TYPE_2_MAXIMUM_LENGTH 1

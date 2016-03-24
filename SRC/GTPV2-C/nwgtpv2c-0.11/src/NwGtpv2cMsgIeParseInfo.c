@@ -573,7 +573,7 @@ extern                                  "C" {
         break;
 
       default:{
-          FREE_CHECK (thiz);
+          free_wrapper (thiz);
           thiz = NULL;
         }
         break;

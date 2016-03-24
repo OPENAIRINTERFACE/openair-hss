@@ -19,12 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
 #ifndef EPS_QUALITY_OF_SERVICE_H_
 #define EPS_QUALITY_OF_SERVICE_H_
+#include <stdint.h>
 
 #define EPS_QUALITY_OF_SERVICE_MINIMUM_LENGTH 2
 #define EPS_QUALITY_OF_SERVICE_MAXIMUM_LENGTH 10

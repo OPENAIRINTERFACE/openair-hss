@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef TRAFFIC_FLOW_AGGREGATE_DESCRIPTION_H_
 #define TRAFFIC_FLOW_AGGREGATE_DESCRIPTION_H_
+#include <stdint.h>
 
 #define TRAFFIC_FLOW_AGGREGATE_DESCRIPTION_MINIMUM_LENGTH 1
 #define TRAFFIC_FLOW_AGGREGATE_DESCRIPTION_MAXIMUM_LENGTH 1

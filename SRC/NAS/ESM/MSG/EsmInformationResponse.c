@@ -106,7 +106,7 @@ encode_esm_information_response (
 
   if ((esm_information_response->presencemask & ESM_INFORMATION_RESPONSE_ACCESS_POINT_NAME_PRESENT)
       == ESM_INFORMATION_RESPONSE_ACCESS_POINT_NAME_PRESENT) {
-    if ((encode_result = encode_access_point_name (&esm_information_response->accesspointname, ESM_INFORMATION_RESPONSE_ACCESS_POINT_NAME_IEI, buffer + encoded, len - encoded)) < 0)
+    if ((encode_result = encode_access_point_name (esm_information_response->accesspointname, ESM_INFORMATION_RESPONSE_ACCESS_POINT_NAME_IEI, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

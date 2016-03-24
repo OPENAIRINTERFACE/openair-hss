@@ -136,7 +136,7 @@ encode_pdn_connectivity_request (
 
   if ((pdn_connectivity_request->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT)
       == PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT) {
-    if ((encode_result = encode_access_point_name (&pdn_connectivity_request->accesspointname, PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_IEI, buffer + encoded, len - encoded)) < 0)
+    if ((encode_result = encode_access_point_name (pdn_connectivity_request->accesspointname, PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_IEI, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

@@ -57,7 +57,7 @@ decode_network_name (
   networkname->addci = (*(buffer + decoded) >> 4) & 0x1;
   networkname->numberofsparebitsinlastoctet = (*(buffer + decoded) >> 1) & 0x7;
 
-  if ((decode_result = decode_octet_string (&networkname->textstring, ielen, buffer + decoded, len - decoded)) < 0)
+  if ((decode_result = decode_bstring (&networkname->textstring, ielen, buffer + decoded, len - decoded)) < 0)
     return decode_result;
   else
     decoded += decode_result;
@@ -97,7 +97,7 @@ encode_network_name (
   *(buffer + encoded) = 0x00 | (1 << 7) | ((networkname->codingscheme & 0x7) << 4) | ((networkname->addci & 0x1) << 3) | (networkname->numberofsparebitsinlastoctet & 0x7);
   encoded++;
 
-  if ((encode_result = encode_octet_string (&networkname->textstring, buffer + encoded, len - encoded)) < 0)
+  if ((encode_result = encode_bstring (networkname->textstring, buffer + encoded, len - encoded)) < 0)
     return encode_result;
   else
     encoded += encode_result;
@@ -122,6 +122,8 @@ dump_network_name_xml (
   OAILOG_DEBUG (LOG_NAS, "    <Coding scheme>%u</Coding scheme>\n", networkname->codingscheme);
   OAILOG_DEBUG (LOG_NAS, "    <Add CI>%u</Add CI>\n", networkname->addci);
   OAILOG_DEBUG (LOG_NAS, "    <Number of spare bits in last octet>%u</Number of spare bits in last octet>\n", networkname->numberofsparebitsinlastoctet);
-  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&networkname->textstring));
+  bstring b = dump_bstring_xml (networkname->textstring);
+  OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
+  bdestroy(b);
   OAILOG_DEBUG (LOG_NAS, "</Network Name>\n");
 }

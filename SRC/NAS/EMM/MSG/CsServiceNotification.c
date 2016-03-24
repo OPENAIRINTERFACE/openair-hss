@@ -136,7 +136,7 @@ encode_cs_service_notification (
 
   if ((cs_service_notification->presencemask & CS_SERVICE_NOTIFICATION_CLI_PRESENT)
       == CS_SERVICE_NOTIFICATION_CLI_PRESENT) {
-    if ((encode_result = encode_cli (&cs_service_notification->cli, CS_SERVICE_NOTIFICATION_CLI_IEI, buffer + encoded, len - encoded))
+    if ((encode_result = encode_cli (cs_service_notification->cli, CS_SERVICE_NOTIFICATION_CLI_IEI, buffer + encoded, len - encoded))
         < 0)
       // Return in case of error
       return encode_result;
@@ -164,7 +164,7 @@ encode_cs_service_notification (
 
   if ((cs_service_notification->presencemask & CS_SERVICE_NOTIFICATION_LCS_CLIENT_IDENTITY_PRESENT)
       == CS_SERVICE_NOTIFICATION_LCS_CLIENT_IDENTITY_PRESENT) {
-    if ((encode_result = encode_lcs_client_identity (&cs_service_notification->lcsclientidentity, CS_SERVICE_NOTIFICATION_LCS_CLIENT_IDENTITY_IEI, buffer + encoded, len - encoded)) < 0)
+    if ((encode_result = encode_lcs_client_identity (cs_service_notification->lcsclientidentity, CS_SERVICE_NOTIFICATION_LCS_CLIENT_IDENTITY_IEI, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

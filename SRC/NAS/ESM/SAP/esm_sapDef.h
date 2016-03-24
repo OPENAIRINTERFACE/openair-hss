@@ -42,7 +42,7 @@ Description Defines the ESM Service Access Point that provides EPS
 #ifndef __ESM_SAPDEF_H__
 #define __ESM_SAPDEF_H__
 
-#include "OctetString.h"
+#include "bstrlib.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -156,8 +156,8 @@ typedef struct esm_sap_s {
   emm_data_context_t *ctx;       /* UE context                       */
   unsigned int        ue_id;      /* Local UE identifier              */
   esm_sap_error_t     err;       /* ESM-SAP error code               */
-  const OctetString  *recv;      /* Encoded ESM message received     */
-  OctetString         send;      /* Encoded ESM message to be sent   */
+  const_bstring       recv;      /* Encoded ESM message received     */
+  bstring             send;      /* Encoded ESM message to be sent   */
   esm_sap_data_t      data;      /* ESM message data parameters      */
 } esm_sap_t;
 

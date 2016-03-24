@@ -38,12 +38,13 @@
 #include <fcntl.h>
 #include <pthread.h>
 
+#include "assertions.h"
+#include "queue.h"
+#include "log.h"
+#include "msc.h"
+#include "conversions.h"
 #include "intertask_interface.h"
 #include "udp_primitives_server.h"
-#include "assertions.h"
-#include "conversions.h"
-#include "msc.h"
-#include "log.h"
 
 
 struct udp_socket_desc_s {
@@ -158,7 +159,7 @@ udp_server_create_socket (
     return -1;
   }
 
-  socket_desc_p = CALLOC_CHECK (1, sizeof (struct udp_socket_desc_s));
+  socket_desc_p = calloc (1, sizeof (struct udp_socket_desc_s));
   DevAssert (socket_desc_p != NULL);
   socket_desc_p->sd = sd;
   socket_desc_p->local_address = address;

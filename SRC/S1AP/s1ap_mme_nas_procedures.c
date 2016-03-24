@@ -24,7 +24,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
+#include "gcc_diag.h"
+#include "dynamic_memory_check.h"
+#include "assertions.h"
+#include "hashtable.h"
+#include "log.h"
+#include "msc.h"
+#include "conversions.h"
+#include "intertask_interface.h"
+#include "asn1_conversions.h"
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
 #include "s1ap_mme_encoder.h"
@@ -33,16 +41,7 @@
 #include "s1ap_mme_retransmission.h"
 #include "s1ap_mme_itti_messaging.h"
 #include "s1ap_mme.h"
-#include "hashtable.h"
-#include "intertask_interface.h"
 #include "timer.h"
-#include "assertions.h"
-#include "conversions.h"
-#include "asn1_conversions.h"
-#include "msc.h"
-#include "dynamic_memory_check.h"
-#include "log.h"
-#include "gcc_diag.h"
 
 /* Every time a new UE is associated, increment this variable.
    But care if it wraps to increment also the mme_ue_s1ap_id_has_wrapped
@@ -85,10 +84,10 @@ s1ap_mme_handle_initial_ue_message (
   ue_ref = s1ap_is_ue_enb_id_in_list (eNB_ref, enb_ue_s1ap_id);
 
   if (ue_ref == NULL) {
-    tai_t                                   tai = {0};
-    gummei_t                                gummei = {0}; // initialized after
-    as_stmsi_t                              s_tmsi = {0};
-    ecgi_t                                  ecgi = {0};
+    tai_t                                   tai = {.plmn = {0}, .tac = INVALID_TAC_0000};
+    gummei_t                                gummei = {.plmn = {0}, .mme_code = 0, .mme_gid = 0}; // initialized after
+    as_stmsi_t                              s_tmsi = {.mme_code = 0, .m_tmsi = INVALID_M_TMSI};
+    ecgi_t                                  ecgi = {.plmn = {0}, .cell_identity = {0}};
     csg_id_t                                csg_id = 0;
 
     /*
@@ -216,6 +215,8 @@ s1ap_mme_handle_uplink_nas_transport (
   S1ap_UplinkNASTransportIEs_t           *uplinkNASTransport_p = NULL;
   ue_description_t                       *ue_ref = NULL;
   enb_description_t                      *enb_ref = NULL;
+  tai_t                                   tai = {.plmn = {0}, .tac = INVALID_TAC_0000};
+  ecgi_t                                  ecgi = {.plmn = {0}, .cell_identity = {0}};
 
   OAILOG_FUNC_IN (LOG_S1AP);
   uplinkNASTransport_p = &message->msg.s1ap_UplinkNASTransportIEs;
@@ -257,6 +258,19 @@ s1ap_mme_handle_uplink_nas_transport (
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
+  // TAI mandatory IE
+  OCTET_STRING_TO_TAC (&uplinkNASTransport_p->tai.tAC, tai.tac);
+  DevAssert (uplinkNASTransport_p->tai.pLMNidentity.size == 3);
+  TBCD_TO_PLMN_T(&uplinkNASTransport_p->tai.pLMNidentity, &tai.plmn);
+
+  // CGI mandatory IE
+  DevAssert (uplinkNASTransport_p->eutran_cgi.pLMNidentity.size == 3);
+  TBCD_TO_PLMN_T(&uplinkNASTransport_p->eutran_cgi.pLMNidentity, &ecgi.plmn);
+  BIT_STRING_TO_CELL_IDENTITY (&uplinkNASTransport_p->eutran_cgi.cell_ID, ecgi.cell_identity);
+
+  // TODO optional GW Transport Layer Address
+
+
   MSC_LOG_RX_MESSAGE (MSC_S1AP_MME,
                       MSC_S1AP_ENB,
                       NULL, 0,
@@ -266,7 +280,11 @@ s1ap_mme_handle_uplink_nas_transport (
                       (enb_ue_s1ap_id_t)uplinkNASTransport_p->eNB_UE_S1AP_ID,
                       uplinkNASTransport_p->nas_pdu.size);
 
-  s1ap_mme_itti_nas_uplink_ind (uplinkNASTransport_p->mme_ue_s1ap_id, uplinkNASTransport_p->nas_pdu.buf, uplinkNASTransport_p->nas_pdu.size);
+  bstring b = blk2bstr(uplinkNASTransport_p->nas_pdu.buf, uplinkNASTransport_p->nas_pdu.size);
+  s1ap_mme_itti_nas_uplink_ind (uplinkNASTransport_p->mme_ue_s1ap_id,
+                                &b,
+                                &tai,
+                                &ecgi);
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
@@ -316,7 +334,10 @@ s1ap_mme_handle_nas_non_delivery (
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
   //TODO: forward NAS PDU to NAS
-  s1ap_mme_itti_nas_non_delivery_ind (nasNonDeliveryIndication_p->mme_ue_s1ap_id, nasNonDeliveryIndication_p->nas_pdu.buf, nasNonDeliveryIndication_p->nas_pdu.size);
+  s1ap_mme_itti_nas_non_delivery_ind (nasNonDeliveryIndication_p->mme_ue_s1ap_id,
+                                      nasNonDeliveryIndication_p->nas_pdu.buf,
+                                      nasNonDeliveryIndication_p->nas_pdu.size,
+                                      &nasNonDeliveryIndication_p->cause);
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
 
@@ -325,8 +346,7 @@ int
 s1ap_generate_downlink_nas_transport (
   const enb_ue_s1ap_id_t enb_ue_s1ap_id,
   const mme_ue_s1ap_id_t ue_id,
-  void *const data,
-  const size_t size)
+  STOLEN_REF bstring *payload)
 {
   ue_description_t                       *ue_ref = NULL;
   uint8_t                                *buffer_p = NULL;
@@ -374,7 +394,9 @@ s1ap_generate_downlink_nas_transport (
     /*eNB
      * Fill in the NAS pdu
      */
-    OCTET_STRING_fromBuf (&downlinkNasTransport->nas_pdu, (char *)data, size);
+    OCTET_STRING_fromBuf (&downlinkNasTransport->nas_pdu, (char *)bdata(*payload), blength(*payload));
+    bdestroy(*payload);
+    *payload = NULL;
 
     if (s1ap_mme_encode_pdu (&message, &buffer_p, &length) < 0) {
       // TODO: handle something
@@ -388,7 +410,8 @@ s1ap_generate_downlink_nas_transport (
                         NULL, 0,
                         "0 downlinkNASTransport/initiatingMessage ue_id " MME_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id" ENB_UE_S1AP_ID_FMT " nas length %u",
                         ue_id, (mme_ue_s1ap_id_t)downlinkNasTransport->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)downlinkNasTransport->eNB_UE_S1AP_ID, size);
-    s1ap_mme_itti_send_sctp_request (buffer_p, length, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send);
+    bstring b = blk2bstr(buffer_p, length);
+    s1ap_mme_itti_send_sctp_request (&b , ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
   }
 
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
@@ -448,8 +471,8 @@ s1ap_handle_conn_est_cnf (
   e_RABToBeSetup.e_RAB_ID = conn_est_cnf_pP->eps_bearer_id;     //5;
   e_RABToBeSetup.e_RABlevelQoSParameters.qCI = conn_est_cnf_pP->bearer_qos_qci;
 
-  nas_pdu.size = conn_est_cnf_pP->nas_conn_est_cnf.nas_msg.length;
-  nas_pdu.buf = conn_est_cnf_pP->nas_conn_est_cnf.nas_msg.data;
+  nas_pdu.size = conn_est_cnf_pP->nas_conn_est_cnf.nas_msg->slen;
+  nas_pdu.buf  = conn_est_cnf_pP->nas_conn_est_cnf.nas_msg->data;
   e_RABToBeSetup.nAS_PDU = &nas_pdu;
 #  if ORIGINAL_S1AP_CODE
   e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = S1ap_PriorityLevel_lowest;
@@ -469,7 +492,7 @@ s1ap_handle_conn_est_cnf (
    * S-GW IP address(es) for user-plane
    */
   if (conn_est_cnf_pP->bearer_s1u_sgw_fteid.ipv4) {
-    e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK (4, sizeof (uint8_t));
+    e_RABToBeSetup.transportLayerAddress.buf = calloc (4, sizeof (uint8_t));
     /*
      * Only IPv4 supported
      */
@@ -487,7 +510,7 @@ s1ap_handle_conn_est_cnf (
       /*
        * TODO: check memory allocation
        */
-      e_RABToBeSetup.transportLayerAddress.buf = CALLOC_CHECK (16, sizeof (uint8_t));
+      e_RABToBeSetup.transportLayerAddress.buf = calloc (16, sizeof (uint8_t));
     } else {
       /*
        * Only IPv6 supported
@@ -514,7 +537,7 @@ s1ap_handle_conn_est_cnf (
   OAILOG_DEBUG (LOG_S1AP, "security_capabilities_integrity_algorithms 0x%04X\n", conn_est_cnf_pP->security_capabilities_integrity_algorithms);
 
   if (conn_est_cnf_pP->kenb) {
-    initialContextSetupRequest_p->securityKey.buf = CALLOC_CHECK (32, sizeof(uint8_t));
+    initialContextSetupRequest_p->securityKey.buf = calloc (32, sizeof(uint8_t));
     memcpy (initialContextSetupRequest_p->securityKey.buf, conn_est_cnf_pP->kenb, 32);
     initialContextSetupRequest_p->securityKey.size = 32;
   } else {
@@ -530,7 +553,7 @@ s1ap_handle_conn_est_cnf (
     DevMessage ("Failed to encode initial context setup request message\n");
   }
 
-  FREE_CHECK (conn_est_cnf_pP->nas_conn_est_cnf.nas_msg.data);
+  bdestroy (conn_est_cnf_pP->nas_conn_est_cnf.nas_msg);
   OAILOG_NOTICE (LOG_S1AP, "Send S1AP_INITIAL_CONTEXT_SETUP_REQUEST message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
               (mme_ue_s1ap_id_t)initialContextSetupRequest_p->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)initialContextSetupRequest_p->eNB_UE_S1AP_ID);
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
@@ -539,6 +562,7 @@ s1ap_handle_conn_est_cnf (
                       "0 InitialContextSetup/initiatingMessage mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " nas length %u",
                       (mme_ue_s1ap_id_t)initialContextSetupRequest_p->mme_ue_s1ap_id,
                       (enb_ue_s1ap_id_t)initialContextSetupRequest_p->eNB_UE_S1AP_ID, nas_pdu.size);
-  s1ap_mme_itti_send_sctp_request (buffer_p, length, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send);
+  bstring b = blk2bstr(buffer_p, length);
+  s1ap_mme_itti_send_sctp_request (&b, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }

@@ -30,7 +30,7 @@
 
 int
 decode_ms_network_capability (
-  MsNetworkCapability * msnetworkcapability,
+  MsNetworkCapability  *msnetworkcapability,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -48,7 +48,7 @@ decode_ms_network_capability (
   decoded++;
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
-  if ((decode_result = decode_octet_string (&msnetworkcapability->msnetworkcapabilityvalue, ielen, buffer + decoded, len - decoded)) < 0)
+  if ((decode_result = decode_bstring (msnetworkcapability, ielen, buffer + decoded, len - decoded)) < 0)
     return decode_result;
   else
     decoded += decode_result;
@@ -61,7 +61,7 @@ decode_ms_network_capability (
 
 int
 encode_ms_network_capability (
-  MsNetworkCapability * msnetworkcapability,
+  MsNetworkCapability  msnetworkcapability,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -86,7 +86,7 @@ encode_ms_network_capability (
   lenPtr = (buffer + encoded);
   encoded++;
 
-  if ((encode_result = encode_octet_string (&msnetworkcapability->msnetworkcapabilityvalue, buffer + encoded, len - encoded)) < 0)
+  if ((encode_result = encode_bstring (msnetworkcapability, buffer + encoded, len - encoded)) < 0)
     return encode_result;
   else
     encoded += encode_result;
@@ -97,7 +97,7 @@ encode_ms_network_capability (
 
 void
 dump_ms_network_capability_xml (
-  MsNetworkCapability * msnetworkcapability,
+  MsNetworkCapability  msnetworkcapability,
   uint8_t iei)
 {
   OAILOG_DEBUG (LOG_NAS, "<Ms Network Capability>\n");
@@ -108,6 +108,8 @@ dump_ms_network_capability_xml (
      */
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&msnetworkcapability->msnetworkcapabilityvalue));
+  bstring b = dump_bstring_xml (msnetworkcapability);
+  OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
+  bdestroy(b);
   OAILOG_DEBUG (LOG_NAS, "</Ms Network Capability>\n");
 }

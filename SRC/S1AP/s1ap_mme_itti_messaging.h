@@ -23,25 +23,29 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "bstrlib.h"
+#include "assertions.h"
+#include "common_defs.h"
+#include "log.h"
+#include "msc.h"
 #include "intertask_interface.h"
 #include "common_types.h"
 #include "s1ap_common.h"
-#include "msc.h"
-#include "assertions.h"
-#include "log.h"
 
 #ifndef FILE_S1AP_MME_ITTI_MESSAGING_SEEN
 #define FILE_S1AP_MME_ITTI_MESSAGING_SEEN
 
-int s1ap_mme_itti_send_sctp_request(uint8_t *buffer, const size_t length,
-                                    const  uint32_t sctp_assoc_id_t, const sctp_stream_id_t stream);
+int s1ap_mme_itti_send_sctp_request(STOLEN_REF bstring *payload,
+                                    const  uint32_t sctp_assoc_id_t,
+                                    const sctp_stream_id_t stream,
+                                    const mme_ue_s1ap_id_t ue_id);
 
 int s1ap_mme_itti_nas_uplink_ind(const mme_ue_s1ap_id_t ue_id,
-                                 uint8_t *const buffer,
-                                 const size_t length);
+                                 STOLEN_REF bstring *payload,
+                                 const tai_t      const* tai,
+                                 const ecgi_t     const* cgi);
 
-int s1ap_mme_itti_nas_downlink_cnf(const mme_ue_s1ap_id_t ue_id,
-                                   const nas_error_code_t error_code);
+int s1ap_mme_itti_nas_downlink_cnf (const mme_ue_s1ap_id_t ue_id, const bool is_success);
 
 
 static inline void s1ap_mme_itti_mme_app_initial_ue_message(
@@ -70,9 +74,7 @@ static inline void s1ap_mme_itti_mme_app_initial_ue_message(
   MME_APP_INITIAL_UE_MESSAGE(message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
   MME_APP_INITIAL_UE_MESSAGE(message_p).mme_ue_s1ap_id         = mme_ue_s1ap_id;
 
-  MME_APP_INITIAL_UE_MESSAGE(message_p).nas.length             = nas_msg_length;
-  MME_APP_INITIAL_UE_MESSAGE(message_p).nas.data   = CALLOC_CHECK(nas_msg_length, sizeof(uint8_t));
-  memcpy(MME_APP_INITIAL_UE_MESSAGE(message_p).nas.data, nas_msg, nas_msg_length);
+  MME_APP_INITIAL_UE_MESSAGE(message_p).nas                    = blk2bstr(nas_msg, nas_msg_length);
 
   MME_APP_INITIAL_UE_MESSAGE(message_p).tai                    = *tai;
   MME_APP_INITIAL_UE_MESSAGE(message_p).cgi                    = *cgi;
@@ -143,7 +145,7 @@ static inline void s1ap_mme_itti_nas_establish_ind(
   NAS_CONN_EST_IND(message_p).nas.s_tmsi               = s_tmsi;
   NAS_CONN_EST_IND(message_p).nas.initial_nas_msg.length = nas_msg_length;
 
-  NAS_CONN_EST_IND(message_p).nas.initial_nas_msg.data = MALLOC_CHECK(sizeof(uint8_t) * nas_msg_length);
+  NAS_CONN_EST_IND(message_p).nas.initial_nas_msg.data = malloc(sizeof(uint8_t) * nas_msg_length);
   memcpy(NAS_CONN_EST_IND(message_p).nas.initial_nas_msg.data, nas_msg, nas_msg_length);
 
 
@@ -165,21 +167,17 @@ static inline void s1ap_mme_itti_nas_establish_ind(
 #endif
 
 static inline void s1ap_mme_itti_nas_non_delivery_ind(
-    const mme_ue_s1ap_id_t ue_id, uint8_t * const nas_msg, const size_t nas_msg_length)
+    const mme_ue_s1ap_id_t ue_id, uint8_t * const nas_msg, const size_t nas_msg_length, const S1ap_Cause_t * const cause)
 {
-  MessageDef     *message_p;
-
+  MessageDef     *message_p = NULL;
+  // TODO translate, insert, cause in message
   OAILOG_FUNC_IN (LOG_S1AP);
   message_p = itti_alloc_new_message(TASK_S1AP, NAS_DOWNLINK_DATA_REJ);
 
   NAS_DL_DATA_REJ(message_p).ue_id               = ue_id;
   /* Mapping between asn1 definition and NAS definition */
   //NAS_NON_DELIVERY_IND(message_p).as_cause              = cause + 1;
-  NAS_DL_DATA_REJ(message_p).nas_msg.length = nas_msg_length;
-
-  NAS_DL_DATA_REJ(message_p).nas_msg.data = malloc(sizeof(uint8_t) * nas_msg_length);
-  memcpy(NAS_DL_DATA_REJ(message_p).nas_msg.data, nas_msg, nas_msg_length);
-
+  NAS_DL_DATA_REJ(message_p).nas_msg  = blk2bstr(nas_msg, nas_msg_length);
 
   MSC_LOG_TX_MESSAGE(
   		MSC_S1AP_MME,

@@ -50,7 +50,7 @@ decode_pdn_address (
   pdnaddress->pdntypevalue = *(buffer + decoded) & 0x7;
   decoded++;
 
-  if ((decode_result = decode_octet_string (&pdnaddress->pdnaddressinformation, ielen - 1, buffer + decoded, len - decoded)) < 0)
+  if ((decode_result = decode_bstring (&pdnaddress->pdnaddressinformation, ielen - 1, buffer + decoded, len - decoded)) < 0)
     return decode_result;
   else
     decoded += decode_result;
@@ -90,7 +90,7 @@ encode_pdn_address (
   *(buffer + encoded) = 0x00 | (pdnaddress->pdntypevalue & 0x7);
   encoded++;
 
-  if ((encode_result = encode_octet_string (&pdnaddress->pdnaddressinformation, buffer + encoded, len - encoded)) < 0)
+  if ((encode_result = encode_bstring (pdnaddress->pdnaddressinformation, buffer + encoded, len - encoded)) < 0)
     return encode_result;
   else
     encoded += encode_result;
@@ -113,6 +113,8 @@ dump_pdn_address_xml (
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
   OAILOG_DEBUG (LOG_NAS, "    <PDN type value>%u</PDN type value>\n", pdnaddress->pdntypevalue);
-  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&pdnaddress->pdnaddressinformation));
+  bstring b = dump_bstring_xml (pdnaddress->pdnaddressinformation);
+  OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
+  bdestroy(b);
   OAILOG_DEBUG (LOG_NAS, "</Pdn Address>\n");
 }

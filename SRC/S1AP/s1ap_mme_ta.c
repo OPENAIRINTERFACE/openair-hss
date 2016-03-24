@@ -46,7 +46,7 @@ s1ap_mme_compare_plmn (
   TBCD_TO_MCC_MNC (plmn, mcc, mnc, mnc_len);
   config_read_lock (&mme_config);
 
-  for (i = 0; i < mme_config.gummei.nb_mme_gid; i++) {
+  for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
     OAILOG_TRACE (LOG_S1AP, "Comparing plmn_mcc %d/%d, plmn_mnc %d/%d plmn_mnc_len %d/%d\n",
         mme_config.served_tai.plmn_mcc[i], mcc, mme_config.served_tai.plmn_mnc[i], mnc, mme_config.served_tai.plmn_mnc_len[i], mnc_len);
 

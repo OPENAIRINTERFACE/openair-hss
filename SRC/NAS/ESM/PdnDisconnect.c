@@ -57,9 +57,7 @@
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
 
-extern int                              _pdn_connectivity_delete (
-  emm_data_context_t * ctx,
-  int pid);
+extern int _pdn_connectivity_delete (emm_data_context_t * ctx, int pid);
 
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
@@ -74,9 +72,7 @@ extern int                              _pdn_connectivity_delete (
 /*
    PDN disconnection handlers
 */
-static int                              _pdn_disconnect_get_pid (
-  esm_data_context_t * ctx,
-  int pti);
+static int _pdn_disconnect_get_pid (esm_data_context_t * ctx, int pti);
 
 
 /****************************************************************************/
@@ -231,7 +227,7 @@ esm_proc_pdn_disconnect_reject (
   const bool is_standalone,
   emm_data_context_t * ctx,
   int ebi,
-  OctetString * msg,
+  bstring msg,
   const bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -245,8 +241,7 @@ esm_proc_pdn_disconnect_reject (
   emm_sap.primitive = EMMESM_UNITDATA_REQ;
   emm_sap.u.emm_esm.ue_id = ctx->ue_id;
   emm_sap.u.emm_esm.ctx = ctx;
-  emm_sap.u.emm_esm.u.data.msg.length = msg->length;
-  emm_sap.u.emm_esm.u.data.msg.value = msg->value;
+  emm_sap.u.emm_esm.u.data.msg = msg;
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

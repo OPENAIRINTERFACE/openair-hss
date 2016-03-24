@@ -129,9 +129,9 @@ int s6a_init (
   memset (&s6a_fd_cnf, 0, sizeof (s6a_fd_cnf_t));
 
   /*
-   * if (strcmp(fd_core_version(), FREE_CHECK_DIAMETER_MINIMUM_VERSION) ) {
+   * if (strcmp(fd_core_version(), free_wrapper_DIAMETER_MINIMUM_VERSION) ) {
    * S6A_ERROR("Freediameter version %s found, expecting %s\n", fd_core_version(),
-   * FREE_CHECK_DIAMETER_MINIMUM_VERSION);
+   * free_wrapper_DIAMETER_MINIMUM_VERSION);
    * return RETURNerror;
    * } else {
    * S6A_DEBUG("Freediameter version %s\n", fd_core_version());
@@ -195,7 +195,6 @@ int s6a_init (
   }
 
 
-
   ret = fd_core_waitstartcomplete ();
   if (ret) {
     OAILOG_ERROR (LOG_S6A, "An error occurred during fd_core_waitstartcomplete.\n");
@@ -215,6 +214,7 @@ int s6a_init (
   /*
    * Trying to connect to peers
    */
+  // No done in freeDiameter config file
   CHECK_FCT (s6a_fd_new_peer ());
 
   if (itti_create_task (TASK_S6A, &s6a_thread, NULL) < 0) {

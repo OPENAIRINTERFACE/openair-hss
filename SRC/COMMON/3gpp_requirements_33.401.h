@@ -27,12 +27,16 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef FILE_REQUIREMENTS_SEEN
-#define FILE_REQUIREMENTS_SEEN
+#ifndef FILE_3GPP_REQUIREMENTS_33_401_SEEN
+#define FILE_3GPP_REQUIREMENTS_33_401_SEEN
 
-#if TRACE_3GPP_SPEC
-#define REQUIREMENT_3GPP_SPEC OAILOG_SPEC
-#else
-#define REQUIREMENT_3GPP_SPEC(...)
-#endif
-#endif /* FILE_REQUIREMENTS_SEEN */
+#include "3gpp_requirements.h"
+#include "log.h"
+
+#define REQUIREMENT_3GPP_33_401(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_NAS, "Hit 3GPP TS 33_401"#rElEaSe_sEcTiOn__OaImark"\n")
+#define NO_REQUIREMENT_3GPP_33_401(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_NAS, "3GPP TS 33_401"#rElEaSe_sEcTiOn__OaImark" NOT IMPLEMENTED\n")
+
+//-----------------------------------------------------------------------------------------------------------------------
+
+
+#endif FILE_3GPP_REQUIREMENTS_33_401_SEEN

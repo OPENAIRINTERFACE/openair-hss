@@ -28,8 +28,6 @@
 #include "EsmMessageContainer.h"
 #include "log.h"
 
-#define NAS_DEBUG 1
-
 int
 decode_esm_message_container (
   EsmMessageContainer * esmmessagecontainer,
@@ -51,21 +49,18 @@ decode_esm_message_container (
   DECODE_LENGTH_U16 (buffer + decoded, ielen, decoded);
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
-  if ((decode_result = decode_octet_string (&esmmessagecontainer->esmmessagecontainercontents, ielen, buffer + decoded, len - decoded)) < 0) {
+  if ((decode_result = decode_bstring (esmmessagecontainer, ielen, buffer + decoded, len - decoded)) < 0) {
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, decode_result);
   } else {
     decoded += decode_result;
   }
 
-#if NAS_DEBUG
-  dump_esm_message_container_xml (esmmessagecontainer, iei);
-#endif
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, decoded);
 }
 
 int
 encode_esm_message_container (
-  EsmMessageContainer * esmmessagecontainer,
+  EsmMessageContainer esmmessagecontainer,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -78,9 +73,6 @@ encode_esm_message_container (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_esm_message_container_xml (esmmessagecontainer, iei);
-#endif
 
   if (iei > 0) {
     *buffer = iei;
@@ -91,7 +83,7 @@ encode_esm_message_container (
 
   //encoded += 2;
   //if ((encode_result = encode_octet_string(&esmmessagecontainer->esmmessagecontainercontents, buffer + sizeof(uint16_t), len - sizeof(uint16_t))) < 0)
-  if ((encode_result = encode_octet_string (&esmmessagecontainer->esmmessagecontainercontents, lenPtr + sizeof (uint16_t), len - sizeof (uint16_t))) < 0)
+  if ((encode_result = encode_bstring (esmmessagecontainer, lenPtr + sizeof (uint16_t), len - sizeof (uint16_t))) < 0)
     return encode_result;
   else
     encoded += encode_result;
@@ -106,7 +98,7 @@ encode_esm_message_container (
 
 void
 dump_esm_message_container_xml (
-  EsmMessageContainer * esmmessagecontainer,
+  EsmMessageContainer esmmessagecontainer,
   uint8_t iei)
 {
   OAILOG_DEBUG (LOG_NAS, "<Esm Message Container>\n");
@@ -117,6 +109,8 @@ dump_esm_message_container_xml (
      */
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&esmmessagecontainer->esmmessagecontainercontents));
+  bstring b = dump_bstring_xml (esmmessagecontainer);
+  OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
+  bdestroy(b);
   OAILOG_DEBUG (LOG_NAS, "</Esm Message Container>\n");
 }

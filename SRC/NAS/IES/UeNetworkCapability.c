@@ -47,7 +47,7 @@ decode_ue_network_capability (
 
   DECODE_U8 (buffer + decoded, ielen, decoded);
   memset (uenetworkcapability, 0, sizeof (UeNetworkCapability));
-  OAILOG_INFO (LOG_NAS_EMM, "decode_ue_network_capability len = %d", ielen);
+  OAILOG_INFO (LOG_NAS_EMM, "decode_ue_network_capability len = %d\n", ielen);
   CHECK_LENGTH_DECODER (len - decoded, ielen);
   uenetworkcapability->eea = *(buffer + decoded);
   decoded++;

@@ -40,7 +40,7 @@
 #include "commonDef.h"
 
 #include <stdio.h>              // fflush
-#include <stdlib.h>             // MALLOC_CHECK, free
+#include <stdlib.h>             // malloc, free
 #include <string.h>             // strncpy
 #include <unistd.h>             // read, write, close
 
@@ -127,7 +127,7 @@ device_open (
   /*
    * The device has been successfully opened
    */
-  device_id_t                            *devid = (device_id_t *) MALLOC_CHECK (sizeof (struct device_id_s));
+  device_id_t                            *devid = (device_id_t *) malloc (sizeof (struct device_id_s));
 
   if (devid ) {
     strncpy (devid->pathname, devpath, DEVICE_PATHNAME_SIZE);

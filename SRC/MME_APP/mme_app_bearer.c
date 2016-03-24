@@ -30,26 +30,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "assertions.h"
+#include "log.h"
+#include "msc.h"
+#include "conversions.h"
+#include "common_types.h"
 #include "intertask_interface.h"
 #include "mme_config.h"
-
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "sgw_ie_defs.h"
-
 #include "secu_defs.h"
 
-#include "assertions.h"
-#include "common_types.h"
-#include "msc.h"
-#include "log.h"
 
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_release_access_bearers_req (
   struct ue_context_s *const ue_context_pP)
-//------------------------------------------------------------------------------
 {
   task_id_t                               to_task = TASK_S11;
 
@@ -83,7 +81,6 @@ mme_app_send_s11_release_access_bearers_req (
 int
 mme_app_send_s11_create_session_req (
   struct ue_context_s *const ue_context_pP)
-//------------------------------------------------------------------------------
 {
   uint8_t                                 i = 0;
   task_id_t                               to_task = TASK_S11;
@@ -102,7 +99,7 @@ mme_app_send_s11_create_session_req (
 #if EPC_BUILD
   to_task = TASK_SPGW_APP;
 #endif
-  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", ue_context_pP->imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi " IMSI_64_FMT "\n", ue_context_pP->imsi);
 
   if (ue_context_pP->sub_status != SS_SERVICE_GRANTED) {
     /*
@@ -136,7 +133,7 @@ mme_app_send_s11_create_session_req (
    * The remote teid will be provided in the response message.
    */
   session_request_p->teid = 0;
-  MME_APP_IMSI_TO_STRING (ue_context_pP->imsi, (char *)session_request_p->imsi.digit);
+  IMSI64_TO_STRING (ue_context_pP->imsi, (char *)session_request_p->imsi.digit);
   // message content was set to 0
   session_request_p->imsi.length = strlen ((const char *)session_request_p->imsi.digit);
   /*
@@ -185,13 +182,17 @@ mme_app_send_s11_create_session_req (
    * and will generate unique id only for 32 bits platforms.
    */
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  session_request_p->sender_fteid_for_cp.teid = (Teid_t) ue_context_pP;
+  session_request_p->sender_fteid_for_cp.teid = (teid_t) ue_context_pP;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   session_request_p->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
   session_request_p->bearer_to_create.eps_bearer_id = 5;
   //ue_context_pP->mme_s11_teid = session_request_p->sender_fteid_for_cp.teid;
   ue_context_pP->sgw_s11_teid = 0;
-  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context_pP, ue_context_pP->enb_ue_s1ap_id, ue_context_pP->mme_ue_s1ap_id, ue_context_pP->imsi, session_request_p->sender_fteid_for_cp.teid,       // mme_s11_teid is new
+  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context_pP,
+                                   ue_context_pP->enb_s1ap_id_key,
+                                   ue_context_pP->mme_ue_s1ap_id,
+                                   ue_context_pP->imsi,
+                                   session_request_p->sender_fteid_for_cp.teid,       // mme_s11_teid is new
                                    &ue_context_pP->guti);
   memcpy (session_request_p->apn, default_apn_p->service_selection, default_apn_p->service_selection_length);
   /*
@@ -240,7 +241,7 @@ mme_app_send_s11_create_session_req (
   session_request_p->serving_network.mnc[2] = ue_context_pP->e_utran_cgi.plmn.mnc_digit3;
   session_request_p->selection_mode = MS_O_N_P_APN_S_V;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, (TASK_S11 == to_task) ? MSC_S11_MME : MSC_SP_GWAPP_MME, NULL, 0,
-      "0 SGW_CREATE_SESSION_REQUEST imsi %" IMSI_FORMAT, ue_context_pP->imsi);
+      "0 SGW_CREATE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_context_pP->imsi);
   rc = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
@@ -251,20 +252,19 @@ mme_app_send_s11_create_session_req (
 int
 mme_app_handle_nas_pdn_connectivity_req (
   itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)
-//------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
-  uint64_t                                imsi = 0;
+  imsi64_t                                imsi64 = INVALID_IMSI64;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   OAILOG_DEBUG (LOG_MME_APP, "Received NAS_PDN_CONNECTIVITY_REQ from NAS\n");
   DevAssert (nas_pdn_connectivity_req_pP );
-  MME_APP_STRING_TO_IMSI ((char *)nas_pdn_connectivity_req_pP->imsi, &imsi);
-  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
+  IMSI_STRING_TO_IMSI64 ((char *)nas_pdn_connectivity_req_pP->imsi, &imsi64);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi " IMSI_64_FMT "\n", imsi64);
 
-  if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_PDN_CONNECTIVITY_REQ Unknown imsi %" IMSI_FORMAT, imsi);
+  if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64)) == NULL) {
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_PDN_CONNECTIVITY_REQ Unknown imsi " IMSI_64_FMT, imsi);
     OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
@@ -281,11 +281,21 @@ mme_app_handle_nas_pdn_connectivity_req (
                && (nas_pdn_connectivity_req_pP->imsi_length < 16), "STOP ON IMSI LENGTH %d", nas_pdn_connectivity_req_pP->imsi_length);
   memcpy (ue_context_p->pending_pdn_connectivity_req_imsi, nas_pdn_connectivity_req_pP->imsi, nas_pdn_connectivity_req_pP->imsi_length);
   ue_context_p->pending_pdn_connectivity_req_imsi_length = nas_pdn_connectivity_req_pP->imsi_length;
-  DUP_OCTET_STRING (nas_pdn_connectivity_req_pP->apn, ue_context_p->pending_pdn_connectivity_req_apn);
-  FREE_OCTET_STRING (nas_pdn_connectivity_req_pP->apn);
-  // dup OctetString
-  DUP_OCTET_STRING (nas_pdn_connectivity_req_pP->pdn_addr, ue_context_p->pending_pdn_connectivity_req_pdn_addr);
-  FREE_OCTET_STRING (nas_pdn_connectivity_req_pP->pdn_addr);
+
+  // copy
+  if (ue_context_p->pending_pdn_connectivity_req_apn) {
+    bdestroy (ue_context_p->pending_pdn_connectivity_req_apn);
+  }
+  ue_context_p->pending_pdn_connectivity_req_apn =  nas_pdn_connectivity_req_pP->apn;
+  nas_pdn_connectivity_req_pP->apn = NULL;
+
+  // copy
+  if (ue_context_p->pending_pdn_connectivity_req_pdn_addr) {
+    bdestroy (ue_context_p->pending_pdn_connectivity_req_pdn_addr);
+  }
+  ue_context_p->pending_pdn_connectivity_req_pdn_addr =  nas_pdn_connectivity_req_pP->pdn_addr;
+  nas_pdn_connectivity_req_pP->pdn_addr = NULL;
+
   ue_context_p->pending_pdn_connectivity_req_pti = nas_pdn_connectivity_req_pP->pti;
   ue_context_p->pending_pdn_connectivity_req_ue_id = nas_pdn_connectivity_req_pP->ue_id;
   memcpy (&ue_context_p->pending_pdn_connectivity_req_pco.byte[0], &nas_pdn_connectivity_req_pP->pco.byte[0], nas_pdn_connectivity_req_pP->pco.length);
@@ -316,14 +326,12 @@ mme_app_handle_nas_pdn_connectivity_req (
 void
 mme_app_handle_conn_est_cnf (
   const itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP)
-//------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
   itti_mme_app_connection_establishment_cnf_t *establishment_cnf_p = NULL;
   bearer_context_t                       *current_bearer_p = NULL;
   ebi_t                                   bearer_id = 0;
-  uint8_t                                 kenb[32];
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   OAILOG_DEBUG (LOG_MME_APP, "Received NAS_CONNECTION_ESTABLISHMENT_CNF from NAS\n");
@@ -339,6 +347,7 @@ mme_app_handle_conn_est_cnf (
   establishment_cnf_p = &message_p->ittiMsg.mme_app_connection_establishment_cnf;
   memset (establishment_cnf_p, 0, sizeof (itti_mme_app_connection_establishment_cnf_t));
   memcpy (&establishment_cnf_p->nas_conn_est_cnf, nas_conn_est_cnf_pP, sizeof (itti_nas_conn_est_cnf_t));
+
   bearer_id = ue_context_p->default_bearer_id;
   current_bearer_p = &ue_context_p->eps_bearers[bearer_id];
   establishment_cnf_p->eps_bearer_id = bearer_id;
@@ -368,9 +377,7 @@ mme_app_handle_conn_est_cnf (
   establishment_cnf_p->security_capabilities_integrity_algorithms = nas_conn_est_cnf_pP->selected_integrity_algorithm;
   OAILOG_DEBUG (LOG_MME_APP, "security_capabilities_encryption_algorithms 0x%04X\n", establishment_cnf_p->security_capabilities_encryption_algorithms);
   OAILOG_DEBUG (LOG_MME_APP, "security_capabilities_integrity_algorithms  0x%04X\n", establishment_cnf_p->security_capabilities_integrity_algorithms);
-  OAILOG_DEBUG (LOG_MME_APP, "Derive keNB with UL NAS COUNT %x\n", nas_conn_est_cnf_pP->ul_nas_count);
-  derive_keNB (ue_context_p->vector_in_use->kasme, nas_conn_est_cnf_pP->ul_nas_count, kenb);    //156
-  memcpy (establishment_cnf_p->kenb, kenb, 32);
+
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0,
                       "0 MME_APP_CONNECTION_ESTABLISHMENT_CNF ebi %u s1u_sgw teid %u qci %u prio level %u sea 0x%x sia 0x%x",
                       establishment_cnf_p->eps_bearer_id,
@@ -387,73 +394,47 @@ mme_app_handle_conn_est_cnf (
 void
 mme_app_handle_initial_ue_message (
   const itti_mme_app_initial_ue_message_t * const initial_pP)
-//------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP\n");
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_pP->mme_ue_s1ap_id);
+  if (INVALID_MME_UE_S1AP_ID != initial_pP->mme_ue_s1ap_id) {
+    ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_pP->mme_ue_s1ap_id);
+  }
 
-  if (ue_context_p == NULL) {
+  if (!(ue_context_p)) {
     OAILOG_DEBUG (LOG_MME_APP, "Unknown  mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
         initial_pP->mme_ue_s1ap_id);
 
-    // S1AP UE ID AND NAS UE ID ARE THE SAME
+    // MME UE S1AP ID AND NAS UE ID ARE THE SAME
     if (INVALID_MME_UE_S1AP_ID == initial_pP->mme_ue_s1ap_id) {
       if (initial_pP->is_s_tmsi_valid) {
         // try to build a Guti
-        guti_t   guti = {0};
+        guti_t guti = {.gummei.plmn = {0}, .gummei.mme_gid = 0, .gummei.mme_code = 0, .m_tmsi = INVALID_M_TMSI};
         guti.m_tmsi = initial_pP->opt_s_tmsi.m_tmsi;
         guti.gummei.mme_code = initial_pP->opt_s_tmsi.mme_code;
 
         if (initial_pP->is_gummei_valid) {
           memcpy(&guti.gummei, (const void*)&initial_pP->opt_gummei, sizeof(guti.gummei));
           ue_context_p = mme_ue_context_exists_guti (&mme_app_desc.mme_ue_contexts, &guti);
+
           if (ue_context_p) {
-            // update ue_context, the only parameter to update is enb_ue_s1ap_id
-            mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
+            if (ue_context_p->enb_ue_s1ap_id == initial_pP->enb_ue_s1ap_id) {
+              // update ue_context, the only parameter to update is guti
+              mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
                 ue_context_p,
-                initial_pP->enb_ue_s1ap_id,
+                ue_context_p->enb_s1ap_id_key,
                 ue_context_p->mme_ue_s1ap_id,
                 ue_context_p->imsi,
                 ue_context_p->mme_s11_teid,
                 &guti);
+            } else {
+              OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP, previous conflicting S_TMSI context found with provided S_TMSI, GUMMEI\n");
+            }
           } else {
             OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP, no previous context found with provided S_TMSI, GUMMEI\n");
-          }
-        } else {
-          // TODO: review this code: shortcut default case
-          guti.gummei.mme_gid = mme_config.gummei.mme_gid[0];
-
-          for (int gindex = 0; gindex < mme_config.gummei.nb_mmec; gindex++) {
-            if (initial_pP->opt_s_tmsi.mme_code == mme_config.gummei.mmec[gindex]) {
-              guti.gummei.mme_gid = mme_config.gummei.mme_gid[gindex];
-              OAILOG_DEBUG (LOG_MME_APP, "Assigned mme_gid %d\n", guti.gummei.mme_gid);
-              break;
-            }
-          }
-          guti.gummei.plmn.mcc_digit1 = initial_pP->tai.plmn.mcc_digit1;
-          guti.gummei.plmn.mcc_digit2 = initial_pP->tai.plmn.mcc_digit2;
-          guti.gummei.plmn.mcc_digit3 = initial_pP->tai.plmn.mcc_digit3;
-          guti.gummei.plmn.mnc_digit1 = initial_pP->tai.plmn.mnc_digit1;
-          guti.gummei.plmn.mnc_digit2 = initial_pP->tai.plmn.mnc_digit2;
-          guti.gummei.plmn.mnc_digit3 = initial_pP->tai.plmn.mnc_digit3;
-
-          ue_context_p = mme_ue_context_exists_guti (&mme_app_desc.mme_ue_contexts, &guti);
-
-          if (ue_context_p) {
-            // update ue_context, the only parameter to update is enb_ue_s1ap_id
-            mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
-                ue_context_p,
-                initial_pP->enb_ue_s1ap_id,
-                ue_context_p->mme_ue_s1ap_id,
-                ue_context_p->imsi,
-                ue_context_p->mme_s11_teid,
-                &guti);
-          } else {
-            OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP, no previous context found with provided S_TMSI, TAI, configured MME group ID\n");
           }
         }
       }
@@ -464,13 +445,14 @@ mme_app_handle_initial_ue_message (
     OAILOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one\n");
     if ((ue_context_p = mme_create_new_ue_context ()) == NULL) {
       /*
-       * Error during ue context MALLOC_CHECK
+       * Error during ue context malloc
        */
       DevMessage ("mme_create_new_ue_context");
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
     ue_context_p->mme_ue_s1ap_id    = initial_pP->mme_ue_s1ap_id;
     ue_context_p->enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
+    MME_APP_ENB_S1AP_ID_KEY(ue_context_p->enb_s1ap_id_key, initial_pP->cgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
     ue_context_p->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
 
     DevAssert (mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p) == 0);
@@ -489,8 +471,7 @@ mme_app_handle_initial_ue_message (
     message_p->ittiMsg.nas_initial_ue_message.nas.s_tmsi.mme_code = 0;
     message_p->ittiMsg.nas_initial_ue_message.nas.s_tmsi.m_tmsi   = INVALID_M_TMSI;
   }
-  message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg.data   =  initial_pP->nas.data;
-  message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg.length =  initial_pP->nas.length;
+  message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg   =  initial_pP->nas;
 
   memcpy (&message_p->ittiMsg.nas_initial_ue_message.transparent, (const void*)&initial_pP->transparent, sizeof (message_p->ittiMsg.nas_initial_ue_message.transparent));
 
@@ -505,7 +486,6 @@ mme_app_handle_initial_ue_message (
 int
 mme_app_handle_create_sess_resp (
   const itti_sgw_create_session_response_t * const create_sess_resp_pP)
-//------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
   bearer_context_t                       *current_bearer_p = NULL;
@@ -623,10 +603,9 @@ mme_app_handle_create_sess_resp (
     NAS_PDN_CONNECTIVITY_RSP (message_p).ue_id = ue_context_p->pending_pdn_connectivity_req_ue_id;      // NAS internal ref
 
     // TO REWORK:
-    if ((ue_context_p->pending_pdn_connectivity_req_apn.value )
-        && (ue_context_p->pending_pdn_connectivity_req_apn.length != 0)) {
-      DUP_OCTET_STRING (ue_context_p->pending_pdn_connectivity_req_apn, NAS_PDN_CONNECTIVITY_RSP (message_p).apn);
-      OAILOG_DEBUG (LOG_MME_APP, "SET APN FROM NAS PDN CONNECTIVITY CREATE: %s\n", NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value);
+    if (ue_context_p->pending_pdn_connectivity_req_apn) {
+      NAS_PDN_CONNECTIVITY_RSP (message_p).apn = bstrcpy (ue_context_p->pending_pdn_connectivity_req_apn);
+      OAILOG_DEBUG (LOG_MME_APP, "SET APN FROM NAS PDN CONNECTIVITY CREATE: %s\n", bdata(NAS_PDN_CONNECTIVITY_RSP (message_p).apn));
     } else {
       int                                     i;
       context_identifier_t                    context_identifier = ue_context_p->apn_profile.context_identifier;
@@ -636,55 +615,42 @@ mme_app_handle_create_sess_resp (
           AssertFatal (ue_context_p->apn_profile.apn_configuration[i].service_selection_length > 0, "Bad APN string (len = 0)");
 
           if (ue_context_p->apn_profile.apn_configuration[i].service_selection_length > 0) {
-            NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value = MALLOC_CHECK (ue_context_p->apn_profile.apn_configuration[i].service_selection_length + 1);
-            NAS_PDN_CONNECTIVITY_RSP (message_p).apn.length = ue_context_p->apn_profile.apn_configuration[i].service_selection_length;
-            AssertFatal (ue_context_p->apn_profile.apn_configuration[i].service_selection_length <= APN_MAX_LENGTH, "Bad APN string length %d", ue_context_p->apn_profile.apn_configuration[i].service_selection_length);
-            memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value, ue_context_p->apn_profile.apn_configuration[i].service_selection, ue_context_p->apn_profile.apn_configuration[i].service_selection_length);
-            NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value[ue_context_p->apn_profile.apn_configuration[i].service_selection_length]
-              = '\0';
-            OAILOG_DEBUG (LOG_MME_APP, "SET APN FROM HSS ULA: %s\n", NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value);
+            NAS_PDN_CONNECTIVITY_RSP (message_p).apn = blk2bstr(ue_context_p->apn_profile.apn_configuration[i].service_selection,
+                ue_context_p->apn_profile.apn_configuration[i].service_selection_length);
+            AssertFatal (ue_context_p->apn_profile.apn_configuration[i].service_selection_length <= APN_MAX_LENGTH, "Bad APN string length %d",
+                ue_context_p->apn_profile.apn_configuration[i].service_selection_length);
+
+            OAILOG_DEBUG (LOG_MME_APP, "SET APN FROM HSS ULA: %s\n", bdata(NAS_PDN_CONNECTIVITY_RSP (message_p).apn));
             break;
           }
         }
       }
     }
 
-    OAILOG_DEBUG (LOG_MME_APP, "APN: %s\n", NAS_PDN_CONNECTIVITY_RSP (message_p).apn.value);
+    OAILOG_DEBUG (LOG_MME_APP, "APN: %s\n", bdata(NAS_PDN_CONNECTIVITY_RSP (message_p).apn));
 
     switch (create_sess_resp_pP->paa.pdn_type) {
     case IPv4:
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length = 4;
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = MALLOC_CHECK (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
-      DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value );
-      memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value, create_sess_resp_pP->paa.ipv4_address, NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length);
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value[NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length] = '0';
+      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr = blk2bstr(create_sess_resp_pP->paa.ipv4_address, 4);
+      DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr);
       break;
 
     case IPv6:
       DevAssert (create_sess_resp_pP->paa.ipv6_prefix_length == 64);    // NAS seems to only support 64 bits
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length = create_sess_resp_pP->paa.ipv6_prefix_length / 8;
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = MALLOC_CHECK (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
-      DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value );
-      memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value, create_sess_resp_pP->paa.ipv6_address, NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length);
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value[NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length] = '0';
+      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr = blk2bstr(create_sess_resp_pP->paa.ipv6_address, create_sess_resp_pP->paa.ipv6_prefix_length / 8);
+      DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr);
       break;
 
     case IPv4_AND_v6:
       DevAssert (create_sess_resp_pP->paa.ipv6_prefix_length == 64);    // NAS seems to only support 64 bits
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length = 4 + create_sess_resp_pP->paa.ipv6_prefix_length / 8;
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = MALLOC_CHECK (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
-      DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value );
-      memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value, create_sess_resp_pP->paa.ipv4_address, 4);
-      memcpy (&NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value[4], create_sess_resp_pP->paa.ipv6_address, create_sess_resp_pP->paa.ipv6_prefix_length / 8);
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value[NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length] = '0';
+      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr = blk2bstr(create_sess_resp_pP->paa.ipv4_address, 4 + create_sess_resp_pP->paa.ipv6_prefix_length / 8);
+      DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr);
+      bcatblk(NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr, create_sess_resp_pP->paa.ipv6_address, create_sess_resp_pP->paa.ipv6_prefix_length / 8);
       break;
 
     case IPv4_OR_v6:
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length = 4;
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value = MALLOC_CHECK (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length + 1);
-      DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value );
-      memcpy (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value, create_sess_resp_pP->paa.ipv4_address, NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length);
-      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.value[NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr.length] = '0';
+      NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr = blk2bstr(create_sess_resp_pP->paa.ipv4_address, 4);
+      DevAssert (NAS_PDN_CONNECTIVITY_RSP (message_p).pdn_addr);
       break;
 
     default:
@@ -730,7 +696,6 @@ mme_app_handle_create_sess_resp (
 void
 mme_app_handle_initial_context_setup_rsp (
   const itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP)
-//------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
@@ -777,7 +742,6 @@ mme_app_handle_initial_context_setup_rsp (
 void
 mme_app_handle_release_access_bearers_resp (
   const itti_sgw_release_access_bearers_response_t * const rel_access_bearers_rsp_pP)
-//------------------------------------------------------------------------------
 {
   MessageDef                             *message_p = NULL;
   struct ue_context_s                    *ue_context_p = NULL;

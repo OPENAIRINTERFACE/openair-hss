@@ -111,7 +111,11 @@ typedef struct log_thread_ctxt_s {
 typedef struct log_queue_item_s {
   int32_t                                 len;                              /*!< \brief length of string. */
   int32_t                                 log_level;                        /*!< \brief log level for syslog. */
-#define LOG_MAX_MESSAGE_LENGTH            512
+#if TRACE_IS_ON
+#define LOG_MAX_MESSAGE_LENGTH            2600        // tuned
+#else
+#define LOG_MAX_MESSAGE_LENGTH            1024
+#endif
   char                                    str[LOG_MAX_MESSAGE_LENGTH];      /*!< \brief string containing the message. */
 } log_queue_item_t;
 
@@ -225,6 +229,7 @@ int log_get_start_time_sec (void);
 #    define OAILOG_START_USE                                            log_start_use
 #    define OAILOG_ITTI_CONNECT                                         log_itti_connect
 #    define OAILOG_EXIT()                                               log_exit()
+#    define OAILOG_SPEC(pRoTo, ...)                                     do { log_message(NULL, OAILOG_LEVEL_NOTICE,   pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)/*!< \brief 3GPP trace on specifications */
 #    define OAILOG_EMERGENCY(pRoTo, ...)                                do { log_message(NULL, OAILOG_LEVEL_EMERGENCY,pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)/*!< \brief system is unusable */
 #    define OAILOG_ALERT(pRoTo, ...)                                    do { log_message(NULL, OAILOG_LEVEL_ALERT,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief action must be taken immediately */
 #    define OAILOG_CRITICAL(pRoTo, ...)                                 do { log_message(NULL, OAILOG_LEVEL_CRITICAL, pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief critical conditions */
@@ -235,6 +240,11 @@ int log_get_start_time_sec (void);
 #    define OAILOG_MESSAGE_START(lOgLeVeL, pRoTo, cOnTeXt, ...)         do { log_message_start(NULL, lOgLeVeL, pRoTo, cOnTeXt, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief when need to log only 1 message with many char messages, ex formating a dumped struct */
 #    define OAILOG_MESSAGE_ADD(cOnTeXt, ...)                            do { log_message_add(cOnTeXt, ##__VA_ARGS__); } while(0) /*!< \brief can be called as many times as needed after OAILOG_MESSAGE_START() */
 #    define OAILOG_MESSAGE_FINISH(cOnTeXt)                              do { log_message_finish(cOnTeXt); } while(0) /*!< \brief Send the message built by OAILOG_MESSAGE_START() n*LOG_MESSAGE_ADD() (n=0..N) */
+#    define OAILOG_STREAM_HEX(lOgLeVeL, pRoTo, mEsSaGe, sTrEaM, sIzE)   do { \
+                                                                   OAI_GCC_DIAG_OFF(pointer-sign); \
+                                                                   log_stream_hex(lOgLeVeL, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE);\
+                                                                   OAI_GCC_DIAG_ON(pointer-sign); \
+                                                                 } while(0); /*!< \brief trace buffer content */
 #    if DEBUG_IS_ON
 #      define OAILOG_DEBUG(pRoTo, ...)                                  do { log_message(NULL, OAILOG_LEVEL_DEBUG,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief debug informations */
 #      if TRACE_IS_ON
@@ -243,15 +253,11 @@ int log_get_start_time_sec (void);
 #        define OAILOG_FUNC_IN(pRoTo)                                   do { log_func(true, pRoTo, __FILE__, __LINE__, __FUNCTION__); } while(0) /*!< \brief informational */
 #        define OAILOG_FUNC_OUT(pRoTo)                                  do { log_func(false, pRoTo, __FILE__, __LINE__, __FUNCTION__); return;} while(0) /*!< \brief informational */
 #        define OAILOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                   do { log_func_return(pRoTo, __FILE__, __LINE__, __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
-#        define OAILOG_STREAM_HEX(pRoTo, mEsSaGe, sTrEaM, sIzE)         do { \
-                                                                   OAI_GCC_DIAG_OFF(pointer-sign); \
-                                                                   log_stream_hex(OAILOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE);\
-                                                                   OAI_GCC_DIAG_ON(pointer-sign); \
-                                                                 } while(0); /*!< \brief trace buffer content */
 #        define OAILOG_STREAM_HEX_ARRAY(pRoTo, mEsSaGe, sTrEaM, sIzE)       do { log_stream_hex_array(OAILOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content with indexes */
 #      endif
 #    endif
 #  else
+#    define OAILOG_SPEC(...)
 #    define OAILOG_SET_CONFIG(a)
 #    define OAILOG_LEVEL_STR2INT(a)                                     OAILOG_LEVEL_EMERGENCY
 #    define OAILOG_LEVEL_INT2STR(a)                                     "EMERGENCY"

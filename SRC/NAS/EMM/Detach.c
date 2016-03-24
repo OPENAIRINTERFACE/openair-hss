@@ -44,17 +44,16 @@
 
 *****************************************************************************/
 
-#include "emm_proc.h"
+#include <stdlib.h>
 #include "log.h"
+#include "msc.h"
+#include "dynamic_memory_check.h"
 #include "nas_timer.h"
-
 #include "emmData.h"
-
+#include "emm_proc.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
-#include "msc.h"
 
-#include <stdlib.h>             // FREE_CHECK
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -205,41 +204,17 @@ emm_proc_detach_request (
     /*
      * The UE is switched off
      */
-    if (emm_ctx->guti) {
-      FREE_CHECK (emm_ctx->guti);
-    }
+    emm_ctx_clear_old_guti(emm_ctx);
+    emm_ctx_clear_guti(emm_ctx);
+    emm_ctx_clear_imsi(emm_ctx);
+    emm_ctx_clear_imei(emm_ctx);
+    emm_ctx_clear_auth_vectors(emm_ctx);
+    emm_ctx_clear_security(emm_ctx);
+    emm_ctx_clear_non_current_security(emm_ctx);
 
-    if (emm_ctx->imsi) {
-      FREE_CHECK (emm_ctx->imsi);
-    }
 
-    if (emm_ctx->imei) {
-      FREE_CHECK (emm_ctx->imei);
-    }
-
-    if (emm_ctx->esm_msg.length > 0) {
-      FREE_CHECK (emm_ctx->esm_msg.value);
-    }
-
-    /*
-     * Release NAS security context
-     */
-    if (emm_ctx->security) {
-      emm_security_context_t                 *security = emm_ctx->security;
-
-      if (security->kasme.value) {
-        FREE_CHECK (security->kasme.value);
-      }
-
-      if (security->knas_enc.value) {
-        FREE_CHECK (security->knas_enc.value);
-      }
-
-      if (security->knas_int.value) {
-        FREE_CHECK (security->knas_int.value);
-      }
-
-      FREE_CHECK (emm_ctx->security);
+    if (emm_ctx->esm_msg) {
+      bdestroy (emm_ctx->esm_msg);
     }
 
     /*
@@ -273,7 +248,7 @@ emm_proc_detach_request (
      * Release the EMM context
      */
     emm_data_context_remove (&_emm_data, emm_ctx);
-    FREE_CHECK (emm_ctx);
+    free_wrapper (emm_ctx);
 
     rc = RETURNok;
   } else {
@@ -288,17 +263,17 @@ emm_proc_detach_request (
      * Setup NAS information message to transfer
      */
     emm_as->nas_info = EMM_AS_NAS_INFO_DETACH;
-    emm_as->nas_msg.length = 0;
-    emm_as->nas_msg.value = NULL;
+    emm_as->nas_msg = NULL;
     /*
      * Set the UE identifier
      */
-    emm_as->guti = NULL;
+    emm_ctx_clear_old_guti(emm_ctx);
+    emm_ctx_clear_guti(emm_ctx);
     emm_as->ue_id = ue_id;
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_as->sctx, emm_ctx->security, false, true);
+    emm_as_set_security_data (&emm_as->sctx, &emm_ctx->_security, false, true);
     /*
      * Notify EMM-AS SAP that Detach Accept message has to
      * be sent to the network

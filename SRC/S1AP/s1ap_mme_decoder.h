@@ -20,13 +20,13 @@
  */
 
 
-#include "s1ap_common.h"
-#include "s1ap_ies_defs.h"
 
 #ifndef FILE_S1AP_MME_DECODER_SEEN
 #define FILE_S1AP_MME_DECODER_SEEN
+#include "bstrlib.h"
+#include "s1ap_common.h"
+#include "s1ap_ies_defs.h"
 
-int s1ap_mme_decode_pdu(s1ap_message *message, uint8_t *buffer, uint32_t len)
-__attribute__ ((warn_unused_result));
+int s1ap_mme_decode_pdu(s1ap_message *message, const_bstring const raw) __attribute__ ((warn_unused_result));
 
 #endif /* FILE_S1AP_MME_DECODER_SEEN */

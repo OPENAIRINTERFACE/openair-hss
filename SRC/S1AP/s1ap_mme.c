@@ -38,6 +38,7 @@
 #include "s1ap_ies_defs.h"
 #include "s1ap_mme_nas_procedures.h"
 #include "s1ap_mme_retransmission.h"
+#include "s1ap_mme_itti_messaging.h"
 #include "msc.h"
 #include "dynamic_memory_check.h"
 #include "log.h"
@@ -54,8 +55,8 @@
 bool                                    hss_associated = false;
 uint32_t                                nb_enb_associated = 0;
 
-hash_table_ts_t g_s1ap_enb_coll = {0}; // contains eNB_description_s, key is eNB_description_s.enb_id (uint32_t);
-hash_table_ts_t g_s1ap_mme_id2assoc_id_coll = {0}; // contains sctp association id, key is mme_ue_s1ap_id;
+hash_table_ts_t g_s1ap_enb_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains eNB_description_s, key is eNB_description_s.enb_id (uint32_t);
+hash_table_ts_t g_s1ap_mme_id2assoc_id_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains sctp association id, key is mme_ue_s1ap_id;
 
 static int                              indent = 0;
  void *s1ap_mme_thread (void *args);
@@ -118,7 +119,7 @@ s1ap_mme_thread (
         /*
          * Invoke S1AP message decoder
          */
-        if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).buffer, SCTP_DATA_IND (received_message_p).buf_length) < 0) {
+        if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).payload) < 0) {
           // TODO: Notify eNB of failure with right cause
           OAILOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
         } else {
@@ -128,10 +129,13 @@ s1ap_mme_thread (
         /*
          * Free received PDU array
          */
-        FREE_CHECK (SCTP_DATA_IND (received_message_p).buffer);
+        bdestroy (SCTP_DATA_IND (received_message_p).payload);
       }
       break;
 
+    case SCTP_DATA_CNF:
+      s1ap_mme_itti_nas_downlink_cnf(SCTP_DATA_CNF (received_message_p).mme_ue_s1ap_id, SCTP_DATA_CNF (received_message_p).is_success);
+      break;
       /*
        * SCTP layer notifies S1AP of disconnection of a peer.
        */
@@ -150,7 +154,9 @@ s1ap_mme_thread (
          * New message received from NAS task.
          * * * * This corresponds to a S1AP downlink nas transport message.
          */
-        s1ap_generate_downlink_nas_transport (NAS_DL_DATA_REQ (received_message_p).enb_ue_s1ap_id, NAS_DL_DATA_REQ (received_message_p).ue_id, NAS_DL_DATA_REQ (received_message_p).nas_msg.data, NAS_DL_DATA_REQ (received_message_p).nas_msg.length);
+        s1ap_generate_downlink_nas_transport (NAS_DL_DATA_REQ (received_message_p).enb_ue_s1ap_id,
+            NAS_DL_DATA_REQ (received_message_p).ue_id,
+            &NAS_DL_DATA_REQ (received_message_p).nas_msg);
       }
       break;
 
@@ -207,7 +213,7 @@ s1ap_mme_init (
 
   OAILOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
   // 16 entries for n eNB.
-  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, 16, NULL, FREE_CHECK, "s1ap_eNB_coll");
+  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, 16, NULL, free_wrapper, "s1ap_eNB_coll");
   if (!h) return RETURNerror;
 
   h = hashtable_ts_init (&g_s1ap_mme_id2assoc_id_coll, 128, NULL, hash_free_int_func, "s1ap_mme_id2assoc_id_coll");
@@ -449,7 +455,7 @@ void s1ap_notified_new_ue_mme_s1ap_id_association (
     if (ue_ref) {
       ue_ref->mme_ue_s1ap_id = mme_ue_s1ap_id;
       hashtable_rc_t  h_rc = hashtable_ts_insert (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t) mme_ue_s1ap_id, (void *)(uintptr_t)sctp_assoc_id);
-      OAILOG_DEBUG(LOG_S1AP, "Associated  ctp_assoc_id %d, enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ":%s \n",
+      OAILOG_DEBUG(LOG_S1AP, "Associated  sctp_assoc_id %d, enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ":%s \n",
           sctp_assoc_id, enb_ue_s1ap_id, mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
       return;
     }
@@ -466,16 +472,16 @@ s1ap_new_enb (
 {
   enb_description_t                      *enb_ref = NULL;
 
-  enb_ref = CALLOC_CHECK (1, sizeof (enb_description_t));
+  enb_ref = calloc (1, sizeof (enb_description_t));
   /*
-   * Something bad happened during MALLOC_CHECK...
+   * Something bad happened during malloc...
    * * * * May be we are running out of memory.
    * * * * TODO: Notify eNB with a cause like Hardware Failure.
    */
   DevAssert (enb_ref != NULL);
   // Update number of eNB associated
   nb_enb_associated++;
-  hashtable_ts_init(&enb_ref->ue_coll, 256, NULL, FREE_CHECK, "s1ap_ue_coll");
+  hashtable_ts_init(&enb_ref->ue_coll, 256, NULL, free_wrapper, "s1ap_ue_coll");
   enb_ref->nb_ue_associated = 0;
   return enb_ref;
 }
@@ -490,9 +496,9 @@ s1ap_new_ue (
 
   enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
   DevAssert (enb_ref != NULL);
-  ue_ref = CALLOC_CHECK (1, sizeof (ue_description_t));
+  ue_ref = calloc (1, sizeof (ue_description_t));
   /*
-   * Something bad happened during MALLOC_CHECK...
+   * Something bad happened during malloc...
    * * * * May be we are running out of memory.
    * * * * TODO: Notify eNB with a cause like Hardware Failure.
    */
@@ -505,7 +511,7 @@ s1ap_new_ue (
   hashtable_rc_t  hashrc = hashtable_ts_insert (&enb_ref->ue_coll, (const hash_key_t) enb_ue_s1ap_id, (void *)ue_ref);
   if (HASH_TABLE_OK != hashrc) {
     OAILOG_ERROR(LOG_S1AP, "Could not insert UE descr in ue_coll: %s\n", hashtable_rc_code2string(hashrc));
-    FREE_CHECK(ue_ref);
+    free_wrapper(ue_ref);
     return NULL;
   }
   return ue_ref;

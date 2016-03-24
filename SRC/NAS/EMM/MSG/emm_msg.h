@@ -39,6 +39,7 @@ Description Defines EPS Mobility Management messages and functions used
 #ifndef FILE_EMM_MSG_SEEN
 #define FILE_EMM_MSG_SEEN
 
+#include <stdint.h>
 #include "emm_msgDef.h"
 
 #include "AttachRequest.h"
@@ -71,7 +72,6 @@ Description Defines EPS Mobility Management messages and functions used
 #include "UplinkNasTransport.h"
 #include "CsServiceNotification.h"
 
-#include <stdint.h>
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/

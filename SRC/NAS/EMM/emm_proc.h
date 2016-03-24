@@ -40,7 +40,7 @@ Description Defines the EPS Mobility Management procedures executed at
 #define FILE_EMM_PROC_SEEN
 
 #include "commonDef.h"
-#include "OctetString.h"
+#include "bstrlib.h"
 
 #include "EmmCommon.h"
 #include "emmData.h"
@@ -119,7 +119,7 @@ int emm_proc_status(mme_ue_s1ap_id_t ue_id, int emm_cause);
  */
 
 
-int emm_proc_attach_request(enb_ue_s1ap_id_t  enb_ue_s1ap_id_key,
+int emm_proc_attach_request(enb_s1ap_id_key_t enb_ue_s1ap_id_key,
                             mme_ue_s1ap_id_t ue_id,
                             emm_proc_attach_type_t type,
                             bool is_native_ksi, ksi_t ksi,
@@ -127,16 +127,17 @@ int emm_proc_attach_request(enb_ue_s1ap_id_t  enb_ue_s1ap_id_key,
                             imsi_t *imsi,
                             imei_t *imei, tai_t *last_visited_registered_tai,
                             const tai_t              * const originating_tai,
+                            const ecgi_t             * const originating_ecgi,
                             int eea, int eia, int ucs2, int uea, int uia, int gea,
-                            int umts_present, int gprs_present, const OctetString *esm_msg,
+                            int umts_present, int gprs_present, const_bstring esm_msg,
                             const nas_message_decode_status_t  * const decode_status);
 
 int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, int emm_cause);
-int emm_proc_attach_complete(mme_ue_s1ap_id_t ue_id, const OctetString *esm_msg);
+int emm_proc_attach_complete(mme_ue_s1ap_id_t ue_id, const_bstring esm_msg);
 
 int  emm_proc_tracking_area_update_request (
         const mme_ue_s1ap_id_t ue_id,
-        const tracking_area_update_request_msg * msg,
+        tracking_area_update_request_msg * const msg,
         int *emm_cause,
         const nas_message_decode_status_t  * decode_status);
 
@@ -167,11 +168,11 @@ int emm_proc_identification(mme_ue_s1ap_id_t                    ue_id,
                             emm_common_success_callback_t  success,
                             emm_common_reject_callback_t   reject,
                             emm_common_failure_callback_t  failure);
-int emm_proc_identification_complete(mme_ue_s1ap_id_t    ue_id,
-                            const imsi_t           *imsi,
-                            const imei_t           *imei,
-                            const imeisv_t         *imeisv,
-                            uint32_t               *tmsi);
+int emm_proc_identification_complete(const mme_ue_s1ap_id_t ue_id,
+                            imsi_t   * const imsi,
+                            imei_t   * const imei,
+                            imeisv_t * const imeisv,
+                            uint32_t * const tmsi);
 
 /*
  * --------------------------------------------------------------------------
@@ -180,12 +181,17 @@ int emm_proc_identification_complete(mme_ue_s1ap_id_t    ue_id,
  */
 
 int emm_proc_authentication(void *ctx, mme_ue_s1ap_id_t ue_id, int ksi,
-                            const OctetString *_rand, const OctetString *autn,
+                            const uint8_t   * const rand,
+                            const uint8_t   * const autn,
                             emm_common_success_callback_t success,
                             emm_common_reject_callback_t reject,
-                            emm_common_failure_callback_t failure);
+                            emm_common_failure_callback_t failure); // warning failure unused
+
+int emm_proc_authentication_failure (mme_ue_s1ap_id_t ue_id, int emm_cause,
+                                     const_bstring auts);
+
 int emm_proc_authentication_complete(mme_ue_s1ap_id_t ue_id, int emm_cause,
-                                     const OctetString *res);
+    const_bstring const res);
 
 int emm_attach_security(void *args);
 
@@ -195,9 +201,9 @@ int emm_attach_security(void *args);
  * --------------------------------------------------------------------------
  */
 
-int emm_proc_security_mode_control(mme_ue_s1ap_id_t ue_id, int ksi,
-                                   int eea, int eia,int ucs2, int uea, int uia, int gea,
-                                   int umts_present, int gprs_present,
+int emm_proc_security_mode_control(const mme_ue_s1ap_id_t ue_id, const int ksi,
+    const int eea, int eia,const int ucs2, const int uea, const int uia, const int gea,
+    const bool umts_present, const bool gprs_present,
                                    emm_common_success_callback_t success,
                                    emm_common_reject_callback_t reject,
                                    emm_common_failure_callback_t failure);

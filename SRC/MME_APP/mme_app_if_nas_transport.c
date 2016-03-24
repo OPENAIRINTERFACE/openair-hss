@@ -57,7 +57,7 @@ int itf_mme_app_nas_initial_ue_message(
 
     if ((ue_context_p = mme_create_new_ue_context ()) == NULL) {
       /*
-       * Error during ue context MALLOC_CHECK
+       * Error during ue context malloc
        */
       /*
        * TODO

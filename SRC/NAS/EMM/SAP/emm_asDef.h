@@ -40,10 +40,13 @@ Description Defines the EMM primitives available at the EMMAS Service
 *****************************************************************************/
 #ifndef FILE_EMM_ASDEF_SEEN
 #define FILE_EMM_ASDEF_SEEN
+#include <stdint.h>
+#include <stdbool.h>
 
 #include "common_types.h"
 #include "commonDef.h"
-#include "OctetString.h"
+#include "securityDef.h"
+#include "bstrlib.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -67,21 +70,20 @@ typedef enum emm_as_primitive_u {
   _EMMAS_DATA_IND,      /* AS->EMM: Data transfer indication      */
   _EMMAS_PAGE_IND,      /* AS->EMM: Paging data indication        */
   _EMMAS_STATUS_IND,    /* AS->EMM: Status indication         */
-  _EMMAS_CELL_INFO_REQ, /* EMM->AS: Cell information request      */
-  _EMMAS_CELL_INFO_RES, /* AS->EMM: Cell information response     */
-  _EMMAS_CELL_INFO_IND, /* AS->EMM: Cell information indication   */
   _EMMAS_END
 } emm_as_primitive_t;
 
 /* Data used to setup EPS NAS security */
 typedef struct emm_as_security_data_s {
-  uint8_t is_new;     /* New security data indicator      */
+  bool      is_new;     /* New security data indicator      */
 #define EMM_AS_NO_KEY_AVAILABLE     0xff
-  uint8_t ksi;        /* NAS key set identifier       */
-  uint8_t sqn;        /* Sequence number          */
-  uint32_t count;     /* NAS counter              */
-  const OctetString *k_enc;   /* NAS cyphering key            */
-  const OctetString *k_int;   /* NAS integrity key            */
+  uint8_t   ksi;        /* NAS key set identifier       */
+  uint8_t   sqn;        /* Sequence number          */
+  uint32_t  count;     /* NAS counter              */
+  uint8_t   knas_enc[AUTH_KNAS_ENC_SIZE];/* NAS cyphering key               */
+  uint8_t   knas_int[AUTH_KNAS_INT_SIZE];/* NAS integrity key               */
+  bool      is_knas_enc_present;
+  bool      is_knas_int_present;
 } emm_as_security_data_t;
 
 /****************************************************************************/
@@ -108,10 +110,10 @@ typedef struct emm_as_security_s {
    * Authentication request/response
    */
   uint8_t ksi;        /* NAS key set identifier       */
-  const OctetString *rand;    /* Random challenge number      */
-  const OctetString *autn;    /* Authentication token         */
-  const OctetString *res; /* Authentication response      */
-  const OctetString *auts;    /* Synchronisation failure      */
+  uint8_t rand[AUTH_RAND_SIZE];    /* Random challenge number      */
+  uint8_t autn[AUTH_AUTN_SIZE];    /* Authentication token         */
+  uint8_t res[AUTH_RES_SIZE];      /* Authentication response      */
+  uint8_t auts[AUTH_AUTS_SIZE];    /* Synchronisation failure      */
   /*
    * Security Mode Command
    */
@@ -121,8 +123,8 @@ typedef struct emm_as_security_s {
   uint8_t ucs2;
   uint8_t uia;        /* Replayed UMTS integrity algorithms   */
   uint8_t gea;        /* Replayed GPRS encryption algorithms   */
-  uint8_t umts_present;
-  uint8_t gprs_present;
+  bool    umts_present;
+  bool    gprs_present;
 
   // Added by LG
   uint8_t selected_eea; /* Selected EPS encryption algorithms   */
@@ -147,7 +149,7 @@ typedef struct emm_as_EPS_identity_s {
 } emm_as_EPS_identity_t;
 
 typedef struct emm_as_establish_s {
-  enb_ue_s1ap_id_t       enb_ue_s1ap_id_key;          /* UE lower layer identifier in eNB  */
+  enb_s1ap_id_key_t      enb_ue_s1ap_id_key;          /* UE lower layer identifier in eNB  */
   mme_ue_s1ap_id_t       ue_id;                       /* UE lower layer identifier         */
   emm_as_EPS_identity_t  eps_id;                      /* UE's EPS mobile identity      */
   emm_as_security_data_t sctx;                        /* EPS NAS security context      */
@@ -165,13 +167,14 @@ typedef struct emm_as_establish_s {
                                                        * the UE is registered to       */
   tac_t                  tac;                         /* Code of the first tracking area the UE
                                                        * is registered to          */
+  ecgi_t                 ecgi;                        /* E-UTRAN CGI This information element is used to globally identify a cell */
 #define EMM_AS_NAS_INFO_ATTACH  0x01                  /* Attach request        */
 #define EMM_AS_NAS_INFO_DETACH  0x02                  /* Detach request        */
 #define EMM_AS_NAS_INFO_TAU     0x03                  /* Tracking Area Update request  */
 #define EMM_AS_NAS_INFO_SR      0x04                  /* Service Request       */
 #define EMM_AS_NAS_INFO_EXTSR   0x05                  /* Extended Service Request  */
   uint8_t                nas_info;                    /* Type of initial NAS information to transfer   */
-  OctetString            nas_msg;                     /* NAS message to be transfered within
+  bstring                nas_msg;                     /* NAS message to be transfered within
                                                        * initial NAS information message   */
 
   uint8_t                eps_update_result;           /* TAU EPS update result   */
@@ -211,13 +214,20 @@ typedef struct emm_as_data_s {
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
   const guti_t          *guti;        /* GUTI temporary mobile identity   */
   emm_as_security_data_t sctx;        /* EPS NAS security context     */
+  const plmn_t          *plmn_id;     /* Identifier of the selected PLMN   */
+  ecgi_t                 ecgi;        /* E-UTRAN CGI This information element is used to globally identify a cell */
+  tac_t                  tac;         /* Code of the first tracking area the UE
+                                       * is registered to          */
   bool                   switch_off;  /* true if the UE is switched off   */
   uint8_t                type;        /* Network detach type          */
+#define EMM_AS_DATA_DELIVERED_LOWER_LAYER_FAILURE                  0
+#define EMM_AS_DATA_DELIVERED_TRUE                                 1
+#define EMM_AS_DATA_DELIVERED_LOWER_LAYER_NON_DELIVERY_INDICATION  2
   uint8_t                delivered;   /* Data message delivery indicator  */
 #define EMM_AS_NAS_DATA_ATTACH  0x01  /* Attach complete      */
 #define EMM_AS_NAS_DATA_DETACH  0x02  /* Detach request       */
   uint8_t                nas_info;    /* Type of NAS information to transfer  */
-  OctetString            nas_msg;     /* NAS message to be transfered     */
+  bstring                nas_msg;     /* NAS message to be transfered     */
 } emm_as_data_t;
 
 /*

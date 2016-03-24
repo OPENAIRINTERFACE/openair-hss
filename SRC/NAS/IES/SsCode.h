@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef SS_CODE_H_
 #define SS_CODE_H_
+#include <stdint.h>
 
 #define SS_CODE_MINIMUM_LENGTH 2
 #define SS_CODE_MAXIMUM_LENGTH 2

@@ -70,15 +70,14 @@ decode_protocol_configuration_options (
     DECODE_U8 (buffer + decoded, protocolconfigurationoptions->lengthofprotocolid[protocolconfigurationoptions->num_protocol_id_or_container_id], decoded);
 
     if (protocolconfigurationoptions->lengthofprotocolid[protocolconfigurationoptions->num_protocol_id_or_container_id] > 0) {
-      if ((decode_result = decode_octet_string (&protocolconfigurationoptions->protocolidcontents[protocolconfigurationoptions->num_protocol_id_or_container_id],
+      if ((decode_result = decode_bstring (&protocolconfigurationoptions->protocolidcontents[protocolconfigurationoptions->num_protocol_id_or_container_id],
                                                 protocolconfigurationoptions->lengthofprotocolid[protocolconfigurationoptions->num_protocol_id_or_container_id], buffer + decoded, len - decoded)) < 0) {
         return decode_result;
       } else {
         decoded += decode_result;
       }
     } else {
-      protocolconfigurationoptions->protocolidcontents[protocolconfigurationoptions->num_protocol_id_or_container_id].length = 0;
-      protocolconfigurationoptions->protocolidcontents[protocolconfigurationoptions->num_protocol_id_or_container_id].value = NULL;
+      protocolconfigurationoptions->protocolidcontents[protocolconfigurationoptions->num_protocol_id_or_container_id] = NULL;
     }
 
     protocolconfigurationoptions->num_protocol_id_or_container_id += 1;
@@ -125,7 +124,7 @@ encode_protocol_configuration_options (
     *(buffer + encoded) = protocolconfigurationoptions->lengthofprotocolid[num_protocol_id_or_container_id];
     encoded++;
 
-    if ((encode_result = encode_octet_string (&protocolconfigurationoptions->protocolidcontents[num_protocol_id_or_container_id], buffer + encoded, len - encoded)) < 0)
+    if ((encode_result = encode_bstring (protocolconfigurationoptions->protocolidcontents[num_protocol_id_or_container_id], buffer + encoded, len - encoded)) < 0)
       return encode_result;
     else
       encoded += encode_result;
@@ -158,7 +157,9 @@ dump_protocol_configuration_options_xml (
   while (i < protocolconfigurationoptions->num_protocol_id_or_container_id) {
     OAILOG_DEBUG (LOG_NAS, "        <Protocol ID>%u</Protocol ID>\n", protocolconfigurationoptions->protocolid[i]);
     OAILOG_DEBUG (LOG_NAS, "        <Length of protocol ID>%u</Length of protocol ID>\n", protocolconfigurationoptions->lengthofprotocolid[i]);
-    OAILOG_DEBUG (LOG_NAS, "        %s", dump_octet_string_xml (&protocolconfigurationoptions->protocolidcontents[i]));
+    bstring b = dump_bstring_xml (protocolconfigurationoptions->protocolidcontents[i]);
+    OAILOG_DEBUG (LOG_NAS, "        %s", bdata(b));
+    bdestroy(b);
     i++;
   }
 

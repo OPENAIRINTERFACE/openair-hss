@@ -22,8 +22,10 @@
 #include <string.h>
 
 #include "intertask_interface.h"
+#include "secu_defs.h"
 #include "nas_itti_messaging.h"
 #include "msc.h"
+#include "log.h"
 
 
 #define TASK_ORIGIN  TASK_NAS_MME
@@ -86,6 +88,7 @@ static const uint8_t                    esm_message_ids[] = {
   ESM_STATUS,
 };
 
+//------------------------------------------------------------------------------
 static int
 _nas_find_message_index (
   const uint8_t message_id,
@@ -160,6 +163,7 @@ nas_itti_plain_msg (
   return EXIT_FAILURE;
 }
 
+//------------------------------------------------------------------------------
 int
 nas_itti_protected_msg (
   const char          *buffer,
@@ -190,19 +194,247 @@ nas_itti_protected_msg (
   return EXIT_FAILURE;
 }
 
+//------------------------------------------------------------------------------
 int
 nas_itti_dl_data_req (
   const mme_ue_s1ap_id_t ue_id,
-  void         *const    data,
-  const size_t           length)
+  bstring                nas_msg)
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_DOWNLINK_DATA_REQ);
   NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
-  NAS_DL_DATA_REQ (message_p).ue_id = ue_id;
-  NAS_DL_DATA_REQ (message_p).nas_msg.data = data;
-  NAS_DL_DATA_REQ (message_p).nas_msg.length = length;
+  NAS_DL_DATA_REQ (message_p).ue_id   = ue_id;
+  NAS_DL_DATA_REQ (message_p).nas_msg = nas_msg;
+  nas_msg = NULL;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_REQ ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, length);
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
 
+//------------------------------------------------------------------------------
+void nas_itti_pdn_connectivity_req(
+  int                     ptiP,
+  unsigned int            ue_idP,
+  const imsi_t           *const imsi_pP,
+  esm_proc_data_t        *proc_data_pP,
+  esm_proc_pdn_request_t  request_typeP)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef *message_p = NULL;
+  uint8_t     i;
+  uint8_t     index;
+
+  AssertFatal(imsi_pP       != NULL, "imsi_pP param is NULL");
+  AssertFatal(proc_data_pP  != NULL, "proc_data_pP param is NULL");
+
+
+  message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_PDN_CONNECTIVITY_REQ);
+  memset(&message_p->ittiMsg.nas_pdn_connectivity_req,
+         0,
+         sizeof(itti_nas_pdn_connectivity_req_t));
+
+  hexa_to_ascii((uint8_t *)imsi_pP->u.value,
+                NAS_PDN_CONNECTIVITY_REQ(message_p).imsi,
+                8);
+
+  NAS_PDN_CONNECTIVITY_REQ(message_p).pti             = ptiP;
+  NAS_PDN_CONNECTIVITY_REQ(message_p).ue_id           = ue_idP;
+  NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[15]        = '\0';
+
+  if (isdigit(NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14])) {
+    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 15;
+  } else {
+    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 14;
+    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14] = '\0';
+  }
+
+  bassign(NAS_PDN_CONNECTIVITY_REQ(message_p).apn, proc_data_pP->apn);
+  bassign(NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_addr, proc_data_pP->pdn_addr);
+
+  switch (proc_data_pP->pdn_type) {
+  case ESM_PDN_TYPE_IPV4:
+    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv4;
+    break;
+
+  case ESM_PDN_TYPE_IPV6:
+    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv6;
+    break;
+
+  case ESM_PDN_TYPE_IPV4V6:
+    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv4_AND_v6;
+    break;
+
+  default:
+    NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_type = IPv4;
+    break;
+  }
+
+  // not efficient but be careful about "typedef network_qos_t esm_proc_qos_t;"
+  NAS_PDN_CONNECTIVITY_REQ(message_p).qos.gbrUL = proc_data_pP->qos.gbrUL;
+  NAS_PDN_CONNECTIVITY_REQ(message_p).qos.gbrDL = proc_data_pP->qos.gbrDL;
+  NAS_PDN_CONNECTIVITY_REQ(message_p).qos.mbrUL = proc_data_pP->qos.mbrUL;
+  NAS_PDN_CONNECTIVITY_REQ(message_p).qos.mbrDL = proc_data_pP->qos.mbrDL;
+  NAS_PDN_CONNECTIVITY_REQ(message_p).qos.qci   = proc_data_pP->qos.qci;
+
+  NAS_PDN_CONNECTIVITY_REQ(message_p).proc_data = proc_data_pP;
+
+  NAS_PDN_CONNECTIVITY_REQ(message_p).request_type  = request_typeP;
+
+  if (proc_data_pP->pco.num_protocol_id_or_container_id <= PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID) {
+    NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[0] = ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_IEI;
+    NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[1] = 1 + 3 * proc_data_pP->pco.num_protocol_id_or_container_id;
+    NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[2] = 0x80; // do it fast
+    i = 0;
+    index = 3;
+    while (( i < proc_data_pP->pco.num_protocol_id_or_container_id) &&
+        (proc_data_pP->pco.protocolidcontents[i]) &&
+        ((index + blength(proc_data_pP->pco.protocolidcontents[i])) <= PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_LENGTH)){
+      NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[1] += proc_data_pP->pco.lengthofprotocolid[i];
+      NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[index++] = (proc_data_pP->pco.protocolid[i] >> 8);
+      NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[index++] = (proc_data_pP->pco.protocolid[i] & 0x00FF);
+      NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[index++] = proc_data_pP->pco.lengthofprotocolid[i];
+      if (proc_data_pP->pco.lengthofprotocolid[i] > 0) {
+        memcpy( &NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[index],
+            proc_data_pP->pco.protocolidcontents[i]->data,
+            proc_data_pP->pco.lengthofprotocolid[i]);
+
+        index += proc_data_pP->pco.lengthofprotocolid[i];
+      }
+      i++;
+    }
+    NAS_PDN_CONNECTIVITY_REQ(message_p).pco.length = index;
+  }
+
+
+  MSC_LOG_TX_MESSAGE(
+        MSC_NAS_MME,
+        MSC_MMEAPP_MME,
+        NULL,0,
+        "NAS_PDN_CONNECTIVITY_REQ ue id %06"PRIX32" IMSI %X",
+        ue_idP, NAS_PDN_CONNECTIVITY_REQ(message_p).imsi);
+
+  itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
+
+//------------------------------------------------------------------------------
+void nas_itti_auth_info_req(
+  const uint32_t        ue_idP,
+  const imsi64_t        imsi64_P,
+  const bool            is_initial_reqP,
+  plmn_t        * const visited_plmnP,
+  const uint8_t         num_vectorsP,
+  const_bstring const auts_pP)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef                             *message_p = NULL;
+  s6a_auth_info_req_t                    *auth_info_req = NULL;
+
+
+  message_p = itti_alloc_new_message (TASK_NAS_MME, S6A_AUTH_INFO_REQ);
+  auth_info_req = &message_p->ittiMsg.s6a_auth_info_req;
+  memset(auth_info_req, 0, sizeof(s6a_auth_info_req_t));
+
+  auth_info_req->imsi_length =
+      snprintf (auth_info_req->imsi, IMSI_BCD_DIGITS_MAX+1, IMSI_64_FMT, imsi64_P);
+
+  AssertFatal((15 == auth_info_req->imsi_length)|| (14 == auth_info_req->imsi_length),
+      "Bad IMSI length %d", auth_info_req->imsi_length);
+
+  auth_info_req->visited_plmn  = *visited_plmnP;
+  auth_info_req->nb_of_vectors = num_vectorsP;
+
+  if (auts_pP ) {
+    auth_info_req->re_synchronization = 1;
+    memcpy (auth_info_req->auts, auts_pP->data, sizeof (auth_info_req->auts));
+  } else {
+    auth_info_req->re_synchronization = 0;
+    memset (auth_info_req->auts, 0, sizeof (auth_info_req->auts));
+  }
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S6A_MME, NULL, 0, "0 S6A_AUTH_INFO_REQ IMSI "IMSI_64_FMT" visited_plmn "PLMN_FMT" re_sync %u",
+      imsi64_P, PLMN_ARG(visited_plmnP), auth_info_req->re_synchronization);
+  itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
+
+//------------------------------------------------------------------------------
+void nas_itti_establish_rej(
+  const uint32_t      ue_idP,
+  const imsi_t *const imsi_pP
+  , uint8_t           initial_reqP)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef *message_p;
+
+  message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_AUTHENTICATION_PARAM_REQ);
+  memset(&message_p->ittiMsg.nas_auth_param_req,
+         0,
+         sizeof(itti_nas_auth_param_req_t));
+
+  hexa_to_ascii((uint8_t *)imsi_pP->u.value,
+                NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi, 8);
+
+  NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi[15] = '\0';
+
+  if (isdigit(NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi[14])) {
+    NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi_length = 15;
+  } else {
+    NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi_length = 14;
+    NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi[14]    = '\0';
+  }
+
+  NAS_AUTHENTICATION_PARAM_REQ(message_p).initial_req = initial_reqP;
+  NAS_AUTHENTICATION_PARAM_REQ(message_p).ue_id       = ue_idP;
+
+  MSC_LOG_TX_MESSAGE(
+        MSC_NAS_MME,
+        MSC_MMEAPP_MME,
+        NULL,0,
+        "NAS_AUTHENTICATION_PARAM_REQ ue id %06"PRIX32" IMSI %s (establish reject)",
+        ue_idP, NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi);
+
+  itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
+
+//------------------------------------------------------------------------------
+void nas_itti_establish_cnf(
+  const uint32_t         ue_idP,
+  const nas_error_code_t error_codeP,
+  bstring                msgP,
+  const uint16_t         selected_encryption_algorithmP,
+  const uint16_t         selected_integrity_algorithmP)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef                             *message_p        = NULL;
+  emm_data_context_t                     *emm_ctx = emm_data_context_get (&_emm_data, ue_idP);
+
+  if (emm_ctx) {
+
+    message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_CONNECTION_ESTABLISHMENT_CNF);
+    memset(&message_p->ittiMsg.nas_conn_est_cnf, 0, sizeof(itti_nas_conn_est_cnf_t));
+    NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).ue_id                           = ue_idP;
+    NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).err_code                        = error_codeP;
+    NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).nas_msg                         = msgP; msgP = NULL;
+    NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).selected_encryption_algorithm   = selected_encryption_algorithmP;
+    NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).selected_integrity_algorithm    = selected_integrity_algorithmP;
+
+
+    AssertFatal((0 <= emm_ctx->_security.vector_index) && (MAX_EPS_AUTH_VECTORS > emm_ctx->_security.vector_index),
+        "Invalid vector index %d", emm_ctx->_security.vector_index);
+
+    derive_keNB (emm_ctx->_vector[emm_ctx->_security.vector_index].kasme,
+        emm_ctx->_security.ul_count.seq_num | (emm_ctx->_security.ul_count.overflow << 8),
+        NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).kenb);
+
+    MSC_LOG_TX_MESSAGE(
+        MSC_NAS_MME,
+        MSC_MMEAPP_MME,
+        NULL,0,
+        "NAS_CONNECTION_ESTABLISHMENT_CNF ue id %06"PRIX32" len %u sea %x sia %x ",
+        ue_idP, lengthP, selected_encryption_algorithmP, selected_integrity_algorithmP);
+
+    itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  }
+  OAILOG_FUNC_OUT(LOG_NAS);
+}

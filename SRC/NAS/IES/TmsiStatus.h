@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef TMSI_STATUS_H_
 #define TMSI_STATUS_H_
+#include <stdint.h>
 
 #define TMSI_STATUS_MINIMUM_LENGTH 1
 #define TMSI_STATUS_MAXIMUM_LENGTH 1

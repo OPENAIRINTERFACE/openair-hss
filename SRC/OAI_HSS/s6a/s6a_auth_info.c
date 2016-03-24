@@ -40,6 +40,9 @@
 #include "auc.h"
 #include "access_restriction.h"
 
+
+#define AUTH_MAX_EUTRAN_VECTORS 6
+
 int
 s6a_auth_info_cb (
   struct msg **msg,
@@ -48,11 +51,11 @@ s6a_auth_info_cb (
   void *opaque,
   enum disp_action *act)
 {
-  struct msg                             *ans,
-                                         *qry;
-  struct avp                             *avp,
+  struct msg                             *ans = NULL,
+                                         *qry = NULL;
+  struct avp                             *avp = NULL,
                                          *failed_avp = NULL;
-  struct avp_hdr                         *hdr;
+  struct avp_hdr                         *hdr = NULL;
   union avp_value                         value;
 
   /*
@@ -64,11 +67,12 @@ s6a_auth_info_cb (
   /*
    * Authentication vector
    */
-  auc_vector_t                            vector;
+  auc_vector_t                            vector[AUTH_MAX_EUTRAN_VECTORS];
   int                                     ret = 0;
   int                                     result_code = ER_DIAMETER_SUCCESS;
   int                                     experimental = 0;
-  uint64_t                                imsi;
+  uint64_t                                imsi = 0;
+  uint32_t                                num_vectors = 0;
   uint8_t                                *sqn = NULL,
     *auts = NULL;
 
@@ -139,11 +143,12 @@ s6a_auth_info_cb (
           /*
            * We allow only one vector request
            */
-          if (hdr->avp_value->u32 != 1) {
+          if (hdr->avp_value->u32 > AUTH_MAX_EUTRAN_VECTORS) {
             result_code = ER_DIAMETER_INVALID_AVP_VALUE;
             failed_avp = child_avp;
             goto out;
           }
+          num_vectors = hdr->avp_value->u32;
         }
         break;
 
@@ -252,8 +257,8 @@ s6a_auth_info_cb (
       /*
        * Pick a new RAND and store SQN_MS + RAND in the HSS
        */
-      generate_random (vector.rand, RAND_LENGTH);
-      hss_mysql_push_rand_sqn (auth_info_req.imsi, auth_info_resp.rand, sqn);
+      generate_random (vector[0].rand, RAND_LENGTH);
+      hss_mysql_push_rand_sqn (auth_info_req.imsi, vector[0].rand, sqn);
       hss_mysql_increment_sqn (auth_info_req.imsi);
       free (sqn);
     }
@@ -271,52 +276,59 @@ s6a_auth_info_cb (
     }
 
     sqn = auth_info_resp.sqn;
-    memcpy (vector.rand, auth_info_resp.rand, RAND_LENGTH);
+    for (int i = 0; i < num_vectors; i++) {
+      generate_random (vector[i].rand, RAND_LENGTH);
+      generate_vector (auth_info_resp.opc, imsi, auth_info_resp.key, hdr->avp_value->os.data, sqn, &vector[i]);
+    }
+    hss_mysql_push_rand_sqn (auth_info_req.imsi, vector[num_vectors-1].rand, sqn);
   } else {
     /*
      * Pick a new RAND and store SQN_MS + RAND in the HSS
      */
-    generate_random (vector.rand, RAND_LENGTH);
-    sqn = auth_info_resp.sqn;
-    hss_mysql_push_rand_sqn (auth_info_req.imsi, vector.rand, sqn);
+    for (int i = 0; i < num_vectors; i++) {
+      generate_random (vector[i].rand, RAND_LENGTH);
+      sqn = auth_info_resp.sqn;
+      /*
+       * Generate authentication vector
+       */
+      generate_vector (auth_info_resp.opc, imsi, auth_info_resp.key, hdr->avp_value->os.data, sqn, &vector[i]);
+    }
+    hss_mysql_push_rand_sqn (auth_info_req.imsi, vector[num_vectors-1].rand, sqn);
   }
 
   hss_mysql_increment_sqn (auth_info_req.imsi);
-  /*
-   * Generate authentication vector
-   */
-  generate_vector (auth_info_resp.opc, imsi, auth_info_resp.key, hdr->avp_value->os.data, sqn, &vector);
   /*
    * We add the vector
    */
   {
     struct avp                             *e_utran_vector,
                                            *child_avp;
-
-    CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_authentication_info, 0, &avp));
-    CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_e_utran_vector, 0, &e_utran_vector));
-    CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_rand, 0, &child_avp));
-    value.os.data = vector.rand;
-    value.os.len = RAND_LENGTH_OCTETS;
-    CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
-    CHECK_FCT (fd_msg_avp_add (e_utran_vector, MSG_BRW_LAST_CHILD, child_avp));
-    CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_xres, 0, &child_avp));
-    value.os.data = vector.xres;
-    value.os.len = XRES_LENGTH_OCTETS;
-    CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
-    CHECK_FCT (fd_msg_avp_add (e_utran_vector, MSG_BRW_LAST_CHILD, child_avp));
-    CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_autn, 0, &child_avp));
-    value.os.data = vector.autn;
-    value.os.len = AUTN_LENGTH_OCTETS;
-    CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
-    CHECK_FCT (fd_msg_avp_add (e_utran_vector, MSG_BRW_LAST_CHILD, child_avp));
-    CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_kasme, 0, &child_avp));
-    value.os.data = vector.kasme;
-    value.os.len = KASME_LENGTH_OCTETS;
-    CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
-    CHECK_FCT (fd_msg_avp_add (e_utran_vector, MSG_BRW_LAST_CHILD, child_avp));
-    CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, e_utran_vector));
-    CHECK_FCT (fd_msg_avp_add (ans, MSG_BRW_LAST_CHILD, avp));
+    for (int i = 0; i < num_vectors; i++) {
+      CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_authentication_info, 0, &avp));
+      CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_e_utran_vector, 0, &e_utran_vector));
+      CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_rand, 0, &child_avp));
+      value.os.data = vector[i].rand;
+      value.os.len = RAND_LENGTH_OCTETS;
+      CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
+      CHECK_FCT (fd_msg_avp_add (e_utran_vector, MSG_BRW_LAST_CHILD, child_avp));
+      CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_xres, 0, &child_avp));
+      value.os.data = vector[i].xres;
+      value.os.len = XRES_LENGTH_OCTETS;
+      CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
+      CHECK_FCT (fd_msg_avp_add (e_utran_vector, MSG_BRW_LAST_CHILD, child_avp));
+      CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_autn, 0, &child_avp));
+      value.os.data = vector[i].autn;
+      value.os.len = AUTN_LENGTH_OCTETS;
+      CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
+      CHECK_FCT (fd_msg_avp_add (e_utran_vector, MSG_BRW_LAST_CHILD, child_avp));
+      CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_kasme, 0, &child_avp));
+      value.os.data = vector[i].kasme;
+      value.os.len = KASME_LENGTH_OCTETS;
+      CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
+      CHECK_FCT (fd_msg_avp_add (e_utran_vector, MSG_BRW_LAST_CHILD, child_avp));
+      CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, e_utran_vector));
+      CHECK_FCT (fd_msg_avp_add (ans, MSG_BRW_LAST_CHILD, avp));
+    }
   }
 out:
   /*

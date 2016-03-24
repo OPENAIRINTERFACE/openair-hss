@@ -20,18 +20,42 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
 
 #include "intertask_interface.h"
 #include "sctp_itti_messaging.h"
 
+//------------------------------------------------------------------------------
+int
+sctp_itti_send_lower_layer_conf (
+    const task_id_t       origin_task_id,
+    const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream,
+    const uint32_t         mme_ue_s1ap_id,
+    const bool             is_success)
+{
+  MessageDef                             *message_p = NULL;
+  sctp_data_cnf_t                        *sctp_p = NULL;
+
+  message_p = itti_alloc_new_message (TASK_SCTP, SCTP_DATA_CNF);
+  sctp_p = &message_p->ittiMsg.sctp_data_cnf;
+  sctp_p->assoc_id = assoc_id;
+  sctp_p->stream = stream;
+  sctp_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
+  sctp_p->is_success = is_success;
+  return itti_send_msg_to_task (origin_task_id, INSTANCE_DEFAULT, message_p);
+}
+
+
+//------------------------------------------------------------------------------
 int
 sctp_itti_send_new_association (
     const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t instreams,
     const sctp_stream_id_t outstreams)
 {
-  MessageDef                             *message_p;
-  sctp_new_peer_t                        *sctp_new_peer_p;
+  MessageDef                             *message_p = NULL;
+  sctp_new_peer_t                        *sctp_new_peer_p = NULL;
 
   message_p = itti_alloc_new_message (TASK_SCTP, SCTP_NEW_ASSOCIATION);
   sctp_new_peer_p = &message_p->ittiMsg.sctp_new_peer;
@@ -41,34 +65,34 @@ sctp_itti_send_new_association (
   return itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
 }
 
-int
-sctp_itti_send_new_message_ind (
-    const size_t size,
-    const uint8_t * const buffer,
-    const sctp_assoc_id_t assoc_id,
+//------------------------------------------------------------------------------
+int sctp_itti_send_new_message_ind(
+    STOLEN_REF bstring    *payload,
+    const sctp_assoc_id_t  assoc_id,
     const sctp_stream_id_t stream,
     const sctp_stream_id_t instreams,
     const sctp_stream_id_t outstreams)
 {
-  MessageDef                             *message_p;
-
-  message_p = itti_alloc_new_message (TASK_SCTP, SCTP_DATA_IND);
-  SCTP_DATA_IND (message_p).buffer = MALLOC_CHECK (sizeof (uint8_t) * size);
-  memcpy ((void *)SCTP_DATA_IND (message_p).buffer, (void *)buffer, size);
-  SCTP_DATA_IND (message_p).stream = stream;
-  SCTP_DATA_IND (message_p).buf_length = size;
-  SCTP_DATA_IND (message_p).assoc_id = assoc_id;
-  SCTP_DATA_IND (message_p).instreams = instreams;
-  SCTP_DATA_IND (message_p).outstreams = outstreams;
-  return itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  MessageDef                             *message_p = itti_alloc_new_message (TASK_SCTP, SCTP_DATA_IND);
+  if (message_p) {
+    SCTP_DATA_IND (message_p).payload    = *payload;
+    STOLEN_REF *payload= NULL;
+    SCTP_DATA_IND (message_p).stream     = stream;
+    SCTP_DATA_IND (message_p).assoc_id   = assoc_id;
+    SCTP_DATA_IND (message_p).instreams  = instreams;
+    SCTP_DATA_IND (message_p).outstreams = outstreams;
+    return itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  }
+  return RETURNerror;
 }
 
+//------------------------------------------------------------------------------
 int
 sctp_itti_send_com_down_ind (
     const sctp_assoc_id_t assoc_id)
 {
-  MessageDef                             *message_p;
-  sctp_close_association_t               *sctp_close_association_p;
+  MessageDef                             *message_p = NULL;
+  sctp_close_association_t               *sctp_close_association_p = NULL;
 
   message_p = itti_alloc_new_message (TASK_SCTP, SCTP_CLOSE_ASSOCIATION);
   sctp_close_association_p = &message_p->ittiMsg.sctp_close_association;

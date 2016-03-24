@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef DAYLIGHT_SAVING_TIME_H_
 #define DAYLIGHT_SAVING_TIME_H_
+#include <stdint.h>
 
 #define DAYLIGHT_SAVING_TIME_MINIMUM_LENGTH 3
 #define DAYLIGHT_SAVING_TIME_MAXIMUM_LENGTH 3

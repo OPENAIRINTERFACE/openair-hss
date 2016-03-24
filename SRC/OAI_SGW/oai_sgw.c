@@ -41,18 +41,19 @@
 #  include "config.h"
 #endif
 
+#include "dynamic_memory_check.h"
 #include "assertions.h"
-#include "mme_config.h"
-#include "intertask_interface_init.h"
-#include "udp_primitives_server.h"
 #include "log.h"
-#include "timer.h"
+#include "msc.h"
+#include "intertask_interface_init.h"
+#include "mme_config.h"
+#include "udp_primitives_server.h"
 #include "s11_sgw.h"
 #include "sgw_defs.h"
 #include "gtpv1u_sgw_defs.h"
 #include "oai_sgw.h"
-#include "msc.h"
 #include "pid_file.h"
+#include "timer.h"
 
 
 int
@@ -100,12 +101,12 @@ main (
 
   if (! is_pid_file_lock_success(pid_file_name)) {
     closelog();
-    FREE_CHECK(pid_file_name);
+    free_wrapper(pid_file_name);
     exit (-EDEADLK);
   }
 #else
   if (! is_pid_file_lock_success(pid_file_name)) {
-    FREE_CHECK(pid_file_name);
+    free_wrapper(pid_file_name);
     exit (-EDEADLK);
   }
 #endif
@@ -136,6 +137,6 @@ main (
    */
   itti_wait_tasks_end ();
   pid_file_unlock();
-  FREE_CHECK(pid_file_name);
+  free_wrapper(pid_file_name);
   return 0;
 }

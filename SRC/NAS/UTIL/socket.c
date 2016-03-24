@@ -39,7 +39,7 @@
 #include "socket.h"
 #include "commonDef.h"
 
-#include <stdlib.h>             // MALLOC_CHECK, free, atoi
+#include <stdlib.h>             // malloc, free, atoi
 #include <string.h>             // memset
 #include <unistd.h>             // close
 #include <errno.h>              // EINTR
@@ -239,7 +239,7 @@ socket_udp_open (
   /*
    * The connection endpoint has been successfully setup
    */
-  socket_id_t                            *sid = (socket_id_t *) MALLOC_CHECK (sizeof (struct socket_id_s));
+  socket_id_t                            *sid = (socket_id_t *) malloc (sizeof (struct socket_id_s));
 
   if (sid ) {
     sid->type = type;

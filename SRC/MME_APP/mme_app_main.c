@@ -59,14 +59,6 @@ void *mme_app_thread (
     DevAssert (received_message_p );
 
     switch (ITTI_MSG_ID (received_message_p)) {
-    case S6A_AUTH_INFO_ANS:{
-        /*
-         * We received the authentication vectors from HSS, trigger a ULR
-         * for now. Normaly should trigger an authentication procedure with UE.
-         */
-        mme_app_handle_authentication_info_answer (&received_message_p->ittiMsg.s6a_auth_info_ans);
-      }
-      break;
 
     case S6A_UPDATE_LOCATION_ANS:{
         /*
@@ -89,11 +81,6 @@ void *mme_app_thread (
 
     case SGW_RELEASE_ACCESS_BEARERS_RESPONSE:{
         mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.sgw_release_access_bearers_response);
-      }
-      break;
-
-    case NAS_AUTHENTICATION_PARAM_REQ:{
-        mme_app_handle_nas_auth_param_req (&received_message_p->ittiMsg.nas_auth_param_req);
       }
       break;
 
@@ -183,6 +170,7 @@ mme_app_init (
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
   mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_imsi_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_tun11_ue_context_htbl");
+  AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mme_ue_s1ap_id_ue_context_htbl in MME_APP");
   mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, NULL, "mme_app_enb_ue_s1ap-id_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (64, NULL, hash_free_int_func, hash_free_int_func, "mme_app_guti_ue_context_htbl");

@@ -38,17 +38,15 @@
 
 *****************************************************************************/
 
+#include <string.h>             // strlen
+#include "log.h"
+#include "commonDef.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.301.h"
 #include "esm_send.h"
-#include "commonDef.h"
-#include "log.h"
-
-
 #include "esm_msgDef.h"
 #include "esm_cause.h"
 
-#include <string.h>             // strlen
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -234,10 +232,10 @@ esm_send_activate_default_eps_bearer_context_request (
   int pti,
   int ebi,
   activate_default_eps_bearer_context_request_msg * msg,
-  const OctetString * apn,
+  bstring apn,
   const ProtocolConfigurationOptions * pco,
   int pdn_type,
-  const OctetString * pdn_addr,
+  bstring pdn_addr,
   const EpsQualityOfService * qos,
   int esm_cause)
 {
@@ -273,22 +271,22 @@ esm_send_activate_default_eps_bearer_context_request (
     OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - epsqos  no bit rates ext defined\n");
   }
 
-  if ((apn == NULL) || ((apn ) && (apn->value == NULL))) {
+  if (apn == NULL) {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - apn is NULL!\n");
+  } else {
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - apn is %s\n", bdata(apn));
   }
-
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - apn is %s\n", apn->value);
   /*
    * Mandatory - Access Point Name
    */
-  msg->accesspointname.accesspointnamevalue = *apn;
+  msg->accesspointname = apn;
   /*
    * Mandatory - PDN address
    */
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - pdn_type is %u\n", pdn_type);
   msg->pdnaddress.pdntypevalue = pdn_type;
-  OAILOG_STREAM_HEX (LOG_NAS_ESM, "ESM-SAP   - pdn_addr is ", pdn_addr->value, pdn_addr->length);
-  msg->pdnaddress.pdnaddressinformation = *pdn_addr;
+  OAILOG_STREAM_HEX (OAILOG_LEVEL_DEBUG, LOG_NAS_ESM, "ESM-SAP   - pdn_addr is ", bdata(pdn_addr), blength(pdn_addr));
+  msg->pdnaddress.pdnaddressinformation = pdn_addr;
   /*
    * Optional - ESM cause code
    */
@@ -299,7 +297,7 @@ esm_send_activate_default_eps_bearer_context_request (
     msg->esmcause = esm_cause;
   }
 
-  if (pco ) {
+  if (pco) {
     msg->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
     msg->protocolconfigurationoptions = *pco;
   }
@@ -313,7 +311,8 @@ esm_send_activate_default_eps_bearer_context_request (
   msg->apnambr.apnambrfordownlink_extended2 = 0;
   msg->apnambr.apnambrforuplink_extended2 = 0;
   msg->apnambr.extensions = 0 | APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT;
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Activate Default EPS Bearer Context " "Request message (pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Activate Default EPS Bearer Context " "Request message (pti=%d, ebi=%d)\n",
+      msg->proceduretransactionidentity, msg->epsbeareridentity);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }
 

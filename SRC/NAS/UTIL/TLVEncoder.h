@@ -23,6 +23,7 @@
 #define FILE_TLV_ENCODER_SEEN
 
 #include <arpa/inet.h>  // htonl, htons
+#include "bstrlib.h"
 
 #define ENCODE_U8(buffer, value, size)    \
     *(uint8_t*)(buffer) = value;    \
@@ -68,6 +69,11 @@ typedef enum {
 #define TLV_ENCODE_FATAL_ERROR  (TLV_ENCODE_VALUE_DOESNT_MATCH)
 
 extern int errorCodeEncoder;
+
+int encode_bstring (
+  const_bstring const str,
+  uint8_t * const buffer,
+  const uint32_t buflen);
 
 void tlv_encode_perror(void);
 

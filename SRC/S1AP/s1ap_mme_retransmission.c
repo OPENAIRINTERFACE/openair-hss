@@ -84,13 +84,13 @@ s1ap_timer_insert (
 {
   struct s1ap_timer_map_s                *new = NULL;
 
-  new = MALLOC_CHECK (sizeof (struct s1ap_timer_map_s));
+  new = malloc (sizeof (struct s1ap_timer_map_s));
   new->timer_id = timer_id;
   new->mme_ue_s1ap_id = mme_ue_s1ap_id;
 
   if (RB_INSERT (s1ap_timer_map, &s1ap_timer_tree, new) != NULL) {
     OAILOG_WARNING (LOG_S1AP, "Timer with id 0x%lx already exists\n", timer_id);
-    FREE_CHECK (new);
+    free_wrapper (new);
     return -1;
   }
 
@@ -120,7 +120,7 @@ s1ap_handle_timer_expiry (
   /*
    * Destroy the element
    */
-  FREE_CHECK (find);
+  free_wrapper (find);
   /*
    * TODO: notify NAS and remove ue context
    */
@@ -145,7 +145,7 @@ s1ap_timer_remove_ue (
       /*
        * Destroy the element
        */
-      FREE_CHECK (find);
+      free_wrapper (find);
     }
   }
   return 0;

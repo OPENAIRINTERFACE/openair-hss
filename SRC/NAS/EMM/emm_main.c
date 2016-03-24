@@ -89,7 +89,8 @@ emm_main_initialize (
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-MAIN  - Failed to get MME configuration data");
   }
   _emm_data.ctx_coll_ue_id = hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, "emm_data.ctx_coll_ue_id");
-  _emm_data.ctx_coll_guti = obj_hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, NULL, "emm_data.ctx_coll_guti");
+  _emm_data.ctx_coll_imsi  = hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, hash_free_int_func, "emm_data.ctx_coll_imsi");
+  _emm_data.ctx_coll_guti  = obj_hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, hash_free_int_func, "emm_data.ctx_coll_guti");
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 
@@ -112,6 +113,9 @@ emm_main_cleanup (
   void)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
+  hashtable_ts_destroy(_emm_data.ctx_coll_ue_id);
+  hashtable_ts_destroy(_emm_data.ctx_coll_imsi);
+  obj_hashtable_ts_destroy(_emm_data.ctx_coll_guti);
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 

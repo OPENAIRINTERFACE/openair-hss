@@ -30,7 +30,7 @@
 
 int
 decode_cli (
-  Cli * cli,
+  Cli *cli,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -48,20 +48,17 @@ decode_cli (
   decoded++;
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
-  if ((decode_result = decode_octet_string (&cli->clivalue, ielen, buffer + decoded, len - decoded)) < 0)
+  if ((decode_result = decode_bstring (cli, ielen, buffer + decoded, len - decoded)) < 0)
     return decode_result;
   else
     decoded += decode_result;
 
-#if NAS_DEBUG
-  dump_cli_xml (cli, iei);
-#endif
   return decoded;
 }
 
 int
 encode_cli (
-  Cli * cli,
+  Cli cli,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -74,9 +71,6 @@ encode_cli (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, CLI_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_cli_xml (cli, iei);
-#endif
 
   if (iei > 0) {
     *buffer = iei;
@@ -86,7 +80,7 @@ encode_cli (
   lenPtr = (buffer + encoded);
   encoded++;
 
-  if ((encode_result = encode_octet_string (&cli->clivalue, buffer + encoded, len - encoded)) < 0)
+  if ((encode_result = encode_bstring (cli, buffer + encoded, len - encoded)) < 0)
     return encode_result;
   else
     encoded += encode_result;
@@ -97,7 +91,7 @@ encode_cli (
 
 void
 dump_cli_xml (
-  Cli * cli,
+  Cli cli,
   uint8_t iei)
 {
   OAILOG_DEBUG (LOG_NAS, "<Cli>\n");
@@ -108,6 +102,8 @@ dump_cli_xml (
      */
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&cli->clivalue));
+  bstring b = dump_bstring_xml (cli);
+  OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
+  bdestroy(b);
   OAILOG_DEBUG (LOG_NAS, "</Cli>\n");
 }

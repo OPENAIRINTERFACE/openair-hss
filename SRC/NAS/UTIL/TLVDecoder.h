@@ -23,6 +23,7 @@
 #define FILE_TLV_DECODER_SEEN
 
 #include <arpa/inet.h>  // ntohl, ntohs
+#include "bstrlib.h"
 #include "log.h"
 
 #define DECODE_U8(bUFFER, vALUE, sIZE)    \
@@ -82,6 +83,14 @@ typedef enum {
 #define TLV_DECODE_FATAL_ERROR  (TLV_DECODE_VALUE_DOESNT_MATCH)
 
 extern int errorCodeDecoder;
+
+int decode_bstring (
+  bstring * octetstring,
+  uint16_t pdulen,
+  uint8_t * buffer,
+  uint32_t buflen);
+
+bstring dump_bstring_xml (const bstring  const bstr);
 
 void tlv_decode_perror(void);
 

@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef SECURITY_HEADER_TYPE_H_
 #define SECURITY_HEADER_TYPE_H_
+#include <stdint.h>
 
 #define SECURITY_HEADER_TYPE_MINIMUM_LENGTH 1
 #define SECURITY_HEADER_TYPE_MAXIMUM_LENGTH 1

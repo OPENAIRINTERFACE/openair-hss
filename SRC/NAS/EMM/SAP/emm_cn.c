@@ -40,24 +40,24 @@
 #include <string.h>
 
 
-#  include "log.h"
-#  include "commonDef.h"
+#include "log.h"
+#include "commonDef.h"
 
-#  include "emm_cn.h"
-#  include "emm_sap.h"
-#  include "emm_proc.h"
-#  include "emm_cause.h"
+#include "emm_cn.h"
+#include "emm_sap.h"
+#include "emm_proc.h"
+#include "emm_cause.h"
 
-#  include "esm_send.h"         // LG
-#  include "esm_proc.h"         // LG
-#  include "esm_cause.h"        // LG
-#  include "assertions.h"       // LG
-#  include "emmData.h"          // LG
-#  include "esm_sap.h"          // LG
-#  include "EmmCommon.h"        // LG
-extern int                              emm_cn_wrapper_attach_accept (
-  emm_data_context_t * emm_ctx,
-  void *data);
+#include "esm_send.h"
+#include "esm_proc.h"
+#include "esm_cause.h"
+#include "assertions.h"
+#include "emmData.h"
+#include "esm_sap.h"
+#include "EmmCommon.h"
+#include "3gpp_requirements_24.301.h"
+
+extern int emm_cn_wrapper_attach_accept (emm_data_context_t * emm_ctx, void *data);
 
 /*
    Internal data used for attach procedure
@@ -66,7 +66,7 @@ typedef struct {
   unsigned int                            ue_id; /* UE identifier        */
 #  define ATTACH_COUNTER_MAX  5
   unsigned int                            retransmission_count; /* Retransmission counter   */
-  OctetString                             esm_msg;      /* ESM message to be sent within
+  bstring                                 esm_msg;      /* ESM message to be sent within
                                                          * the Attach Accept message    */
 } attach_data_t;
 
@@ -82,14 +82,11 @@ static const char                      *_emm_cn_primitive_str[] = {
 };
 
 
-static int
-_emm_cn_authentication_res (
-  const emm_cn_auth_res_t * msg)
+//------------------------------------------------------------------------------
+static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg)
 {
   emm_data_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
-  OctetString                             loc_rand = {0};
-  OctetString                             autn = {0};
 
   /*
    * We received security vector from HSS. Try to setup security with UE
@@ -105,31 +102,54 @@ _emm_cn_authentication_res (
   /*
    * Copy provided vector to user context
    */
-  memcpy (emm_ctx->vector.kasme, msg->vector.kasme, AUTH_KASME_SIZE);
-  memcpy (emm_ctx->vector.autn, msg->vector.autn, AUTH_AUTN_SIZE);
-  memcpy (emm_ctx->vector.rand, msg->vector.rand, AUTH_RAND_SIZE);
-  memcpy (emm_ctx->vector.xres, msg->vector.xres.data, msg->vector.xres.size);
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received RAND ..: " RAND_FORMAT "\n", RAND_DISPLAY (msg->vector.rand));
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received AUTN ..: " AUTN_FORMAT "\n", AUTN_DISPLAY (msg->vector.autn));
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received KASME .: " KASME_FORMAT " " KASME_FORMAT "\n", KASME_DISPLAY_1 (msg->vector.kasme), KASME_DISPLAY_2 (msg->vector.kasme));
-  loc_rand.value = emm_ctx->vector.rand;
-  loc_rand.length = AUTH_RAND_SIZE;
-  autn.value = emm_ctx->vector.autn;
-  autn.length = AUTH_AUTN_SIZE;
-  emm_ctx->vector.xres_size = msg->vector.xres.size;
-  /*
-   * 3GPP TS 24.401, Figure 5.3.2.1-1, point 5a
-   * * * * No EMM context exists for the UE in the network; authentication
-   * * * * and NAS security setup to activate integrity protection and NAS
-   * * * * ciphering are mandatory.
-   */
-  rc = emm_proc_authentication (emm_ctx, emm_ctx->ue_id, 0,      // TODO: eksi != 0
-                                &loc_rand, &autn, emm_attach_security, NULL, NULL);
+  for (int i = 0; i < msg->nb_vectors; i++) {
+    memcpy (emm_ctx->_vector[i].kasme, msg->vector[i]->kasme, AUTH_KASME_SIZE);
+    memcpy (emm_ctx->_vector[i].autn,  msg->vector[i]->autn, AUTH_AUTN_SIZE);
+    memcpy (emm_ctx->_vector[i].rand, msg->vector[i]->rand, AUTH_RAND_SIZE);
+    memcpy (emm_ctx->_vector[i].xres, msg->vector[i]->xres.data, msg->vector[i]->xres.size);
+    emm_ctx->_vector[i].xres_size = msg->vector[i]->xres.size;
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received Vector %u:\n", i);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received RAND ..: " RAND_FORMAT "\n", RAND_DISPLAY (emm_ctx->_vector[i].rand));
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received AUTN ..: " AUTN_FORMAT "\n", AUTN_DISPLAY (emm_ctx->_vector[i].autn));
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received KASME .: " KASME_FORMAT " " KASME_FORMAT "\n",
+        KASME_DISPLAY_1 (emm_ctx->_vector[i].kasme), KASME_DISPLAY_2 (emm_ctx->_vector[i].kasme));
+    emm_ctx_set_attribute_present(emm_ctx, EMM_CTXT_MEMBER_AUTH_VECTOR0+i);
+  }
+  emm_ctx_set_attribute_present(emm_ctx, EMM_CTXT_MEMBER_AUTH_VECTORS);
 
-  if (rc != RETURNok) {
+  int eksi = 0;
+  if (emm_ctx->_security.eksi !=  EKSI_INVALID) {
+    REQUIREMENT_3GPP_24_301(R10_5_4_2_4__2);
+    eksi = (emm_ctx->_security.eksi + 1) % (EKSI_MAX_VALUE + 1);
+  }
+  if (msg->nb_vectors > 0) {
+    int vindex = 0;
+    for (vindex = 0; vindex < MAX_EPS_AUTH_VECTORS; vindex++) {
+      if (IS_EMM_CTXT_PRESENT_AUTH_VECTOR(emm_ctx, vindex)) {
+        break;
+      }
+    }
+    // eksi should always be 0
+    AssertFatal(IS_EMM_CTXT_PRESENT_AUTH_VECTOR(emm_ctx, vindex), "TODO No valid vector, should not happen");
+    emm_ctx_set_security_vector_index(emm_ctx, vindex);
+
     /*
-     * Failed to initiate the authentication procedure
+     * 3GPP TS 24.401, Figure 5.3.2.1-1, point 5a
+     * * * * No EMM context exists for the UE in the network; authentication
+     * * * * and NAS security setup to activate integrity protection and NAS
+     * * * * ciphering are mandatory.
      */
+    rc = emm_proc_authentication (emm_ctx, emm_ctx->ue_id, eksi,
+        emm_ctx->_vector[vindex].rand, emm_ctx->_vector[vindex].autn, emm_attach_security, NULL, NULL);
+
+    if (rc != RETURNok) {
+      /*
+       * Failed to initiate the authentication procedure
+       */
+      OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - " "Failed to initiate authentication procedure\n");
+      emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+    }
+  } else {
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - " "Failed to initiate authentication procedure\n");
     emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
   }
@@ -137,9 +157,8 @@ _emm_cn_authentication_res (
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-static int
-_emm_cn_authentication_fail (
-  const emm_cn_auth_fail_t * msg)
+//------------------------------------------------------------------------------
+static int _emm_cn_authentication_fail (const emm_cn_auth_fail_t * msg)
 {
   int                                     rc = RETURNerror;
 
@@ -148,9 +167,8 @@ _emm_cn_authentication_fail (
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-static int
-_emm_cn_deregister_ue (
-  const uint32_t ue_id)
+//------------------------------------------------------------------------------
+static int _emm_cn_deregister_ue (const uint32_t ue_id)
 {
   int                                     rc = RETURNok;
 
@@ -162,21 +180,20 @@ _emm_cn_deregister_ue (
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-static int
-_emm_cn_pdn_connectivity_res (
-  const emm_cn_pdn_res_t * msg_pP)
+//------------------------------------------------------------------------------
+static int _emm_cn_pdn_connectivity_res (const emm_cn_pdn_res_t * msg_pP)
 {
   int                                     rc = RETURNok;
   struct emm_data_context_s              *emm_ctx_p = NULL;
   esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
-  ESM_msg                                 esm_msg = {0};
+  ESM_msg                                 esm_msg = {.header = {0}};
   EpsQualityOfService                     qos = {0};
   ProtocolConfigurationOptions            pco = {0};
   unsigned int                            pco_in_index = 0;
   signed int                              length_in_pco = 0;
   uint16_t                                pi_or_ci = 0; // protocol identifier or container identifier;
   uint8_t                                 length_pi_or_ci = 0;
-  OctetString                             rsp = { 0, NULL };
+  bstring                                 rsp = NULL;
   bool                                    is_standalone = false;    // warning hardcoded
   bool                                    triggered_by_ue = true;  // warning hardcoded
   attach_data_t                          *data_p = NULL;
@@ -258,13 +275,11 @@ _emm_cn_pdn_connectivity_res (
       length_pi_or_ci = msg_pP->pco.byte[pco_in_index++];
       pco.protocolid[pco.num_protocol_id_or_container_id] = pi_or_ci;
       pco.lengthofprotocolid[pco.num_protocol_id_or_container_id] = length_pi_or_ci;
-      pco.protocolidcontents[pco.num_protocol_id_or_container_id].value = MALLOC_CHECK (length_pi_or_ci);
-      pco.protocolidcontents[pco.num_protocol_id_or_container_id].length = length_pi_or_ci;
-      memcpy (pco.protocolidcontents[pco.num_protocol_id_or_container_id].value, &msg_pP->pco.byte[pco_in_index], length_pi_or_ci);
+      pco.protocolidcontents[pco.num_protocol_id_or_container_id] = blk2bstr (&msg_pP->pco.byte[pco_in_index], length_pi_or_ci);
       OAILOG_TRACE (LOG_NAS_EMM, "PCO: Found pi_or_ci 0x%x length %u\n", pi_or_ci, length_pi_or_ci);
-      OAILOG_STREAM_HEX (LOG_NAS_EMM, "PCO: Found pi_or_ci content:\n",
-          pco.protocolidcontents[pco.num_protocol_id_or_container_id].value,
-          pco.protocolidcontents[pco.num_protocol_id_or_container_id].length);
+      OAILOG_STREAM_HEX (OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "PCO: Found pi_or_ci content:\n",
+          bdata(pco.protocolidcontents[pco.num_protocol_id_or_container_id]),
+          blength(pco.protocolidcontents[pco.num_protocol_id_or_container_id]));
       pco.num_protocol_id_or_container_id++;
       pco_in_index += length_pi_or_ci;
       length_in_pco = length_in_pco - (length_pi_or_ci + 2 + 1);
@@ -279,8 +294,8 @@ _emm_cn_pdn_connectivity_res (
   /*
    * Execute the PDN connectivity procedure requested by the UE
    */
-  pid = esm_proc_pdn_connectivity_request (emm_ctx_p, msg_pP->pti, msg_pP->request_type, &msg_pP->apn, esm_pdn_type, &msg_pP->pdn_addr, NULL, &esm_cause);
-  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)(msg_pP->apn.value));
+  pid = esm_proc_pdn_connectivity_request (emm_ctx_p, msg_pP->pti, msg_pP->request_type, msg_pP->apn, esm_pdn_type, msg_pP->pdn_addr, NULL, &esm_cause);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)bdata(msg_pP->apn));
 
   if (pid != RETURNerror) {
     /*
@@ -300,7 +315,7 @@ _emm_cn_pdn_connectivity_res (
    * END OF CODE THAT WAS IN esm_recv.c/esm_recv_pdn_connectivity_request()
    */
   /**************************************************************************/
-  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)(msg_pP->apn.value));
+  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)bdata(msg_pP->apn));
   /*************************************************************************/
   /*
    * CODE THAT WAS IN esm_sap.c/_esm_sap_recv()
@@ -310,7 +325,7 @@ _emm_cn_pdn_connectivity_res (
    * Return default EPS bearer context request message
    */
   rc = esm_send_activate_default_eps_bearer_context_request (msg_pP->pti, new_ebi,      //msg_pP->ebi,
-                                                             &esm_msg.activate_default_eps_bearer_context_request, &msg_pP->apn, &pco, esm_pdn_type, &msg_pP->pdn_addr, &qos, ESM_CAUSE_SUCCESS);
+                                                             &esm_msg.activate_default_eps_bearer_context_request, msg_pP->apn, &pco, esm_pdn_type, msg_pP->pdn_addr, &qos, ESM_CAUSE_SUCCESS);
 
   if (rc != RETURNerror) {
     /*
@@ -322,8 +337,7 @@ _emm_cn_pdn_connectivity_res (
     OAILOG_INFO (LOG_NAS_EMM, "ESM encoded MSG size %d\n", size);
 
     if (size > 0) {
-      rsp.length = size;
-      rsp.value = (uint8_t *) (emm_ctx_p->emm_cn_sap_buffer);
+      rsp = blk2bstr(emm_ctx_p->emm_cn_sap_buffer, size);
     }
 
     /*
@@ -347,20 +361,12 @@ _emm_cn_pdn_connectivity_res (
    * END OF CODE THAT WAS IN esm_sap.c/_esm_sap_recv()
    */
   /*************************************************************************/
-  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)(msg_pP->apn.value));
+  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)bdata(msg_pP->apn));
   data_p = (attach_data_t *) emm_proc_common_get_args (msg_pP->ue_id);
   /*
    * Setup the ESM message container
    */
-  data_p->esm_msg.value = (uint8_t *) MALLOC_CHECK (rsp.length);
-
-  if (data_p->esm_msg.value) {
-    data_p->esm_msg.length = rsp.length;
-    OAILOG_INFO (LOG_NAS_EMM, "EMM  - copy ESM MSG %d bytes\n", data_p->esm_msg.length);
-    memcpy (data_p->esm_msg.value, rsp.value, rsp.length);
-  } else {
-    data_p->esm_msg.length = 0;
-  }
+  data_p->esm_msg = rsp;
 
   /*
    * Send attach accept message to the UE
@@ -368,7 +374,8 @@ _emm_cn_pdn_connectivity_res (
   rc = emm_cn_wrapper_attach_accept (emm_ctx_p, data_p);
 
   if (rc != RETURNerror) {
-    if (emm_ctx_p->guti_is_new && emm_ctx_p->old_guti) {
+    if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_ctx_p) &&
+        (memcmp(&emm_ctx_p->_old_guti, &emm_ctx_p->_guti, sizeof(emm_ctx_p->_guti)))) {
       /*
        * Implicit GUTI reallocation;
        * * * * Notify EMM that common procedure has been initiated
@@ -382,23 +389,20 @@ _emm_cn_pdn_connectivity_res (
     }
   }
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s \n", (char *)(msg_pP->apn.value));
+  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s \n", (char *)bdata(msg_pP->apn));
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-static int
-_emm_cn_pdn_connectivity_fail (
-  const emm_cn_pdn_fail_t * msg)
+//------------------------------------------------------------------------------
+static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
 {
   int                                     rc = RETURNok;
-
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-int
-emm_cn_send (
-  const emm_cn_t * msg)
+//------------------------------------------------------------------------------
+int emm_cn_send (const emm_cn_t * msg)
 {
   int                                     rc = RETURNerror;
   emm_cn_primitive_t                      primitive = msg->primitive;

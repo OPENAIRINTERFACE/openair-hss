@@ -39,9 +39,39 @@ const char                             *errorCodeStringDecoder[] = {
   "Protocol not supported",
 };
 
-void
-tlv_decode_perror (
-  void)
+
+int decode_bstring (
+  bstring * bstr,
+  uint16_t pdulen,
+  uint8_t * buffer,
+  uint32_t buflen)
+{
+  if (buflen < pdulen)
+    return -1;
+
+  if ((bstr ) && (buffer )) {
+    *bstr = blk2bstr(buffer, pdulen);
+    return blength(*bstr);
+  } else {
+    *bstr = NULL;
+    return -1;
+  }
+}
+
+bstring dump_bstring_xml (const bstring  const bstr)
+{
+  int                                     i;
+
+  bstring b = bformat("<Length>%u</Length>\n\t<values>", bstr->slen);
+  for (i = 0; i < bstr->slen; i++) {
+    bformata (b, "0x%x ", bstr->data[i]);
+  }
+  bformata (b, "</values>\n");
+  return b;
+}
+
+
+void tlv_decode_perror (void)
 {
   if (errorCodeDecoder >= 0)
     // No error or TLV_DECODE_ERR_OK

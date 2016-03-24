@@ -19,12 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
 #ifndef TRAFFIC_FLOW_TEMPLATE_H_
 #define TRAFFIC_FLOW_TEMPLATE_H_
+#include <stdint.h>
 
 #define TRAFFIC_FLOW_TEMPLATE_MINIMUM_LENGTH 2
 #define TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH 256

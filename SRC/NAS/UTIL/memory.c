@@ -42,7 +42,7 @@
 #include "dynamic_memory_check.h"
 
 #include <stdio.h>              // fopen, fread, fclose
-#include <stdlib.h>             // getenv, MALLOC_CHECK, free
+#include <stdlib.h>             // getenv, malloc, free
 #include <string.h>             // strlen
 
 /****************************************************************************/
@@ -99,11 +99,11 @@ memory_get_path (
    * Append non-volatile data file name
    */
   size_t                                  size = strlen (path) + strlen (filename) + 1;
-  char                                   *data_filename = (char *)MALLOC_CHECK (size + 1);
+  char                                   *data_filename = (char *)malloc (size + 1);
 
   if (data_filename ) {
     if (size != sprintf (data_filename, "%s/%s", path, filename)) {
-      FREE_CHECK (data_filename);
+      free_wrapper (data_filename);
       return NULL;
     }
   }

@@ -36,15 +36,29 @@
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.301.h"
+#include "3gpp_33.401.h"
 #include "3gpp_36.401.h"
 #include "security_types.h"
-#include "queue.h"
+#include "common_dim.h"
 
+void clear_guti(guti_t * const guti);
+void clear_imsi(imsi_t * const imsi);
+void clear_imei(imei_t * const imei);
+void clear_imeisv(imeisv_t * const imeisv);
+void clear_tai(tai_t * const tai);
 
 typedef uint16_t                 sctp_stream_id_t;
 typedef uint32_t                 sctp_assoc_id_t;
+typedef uint64_t enb_s1ap_id_key_t ;
+#define MME_APP_ENB_S1AP_ID_KEY(kEy, eNb_Id, eNb_Ue_S1Ap_Id) do { kEy = (((enb_s1ap_id_key_t)eNb_Id) << 24) | eNb_Ue_S1Ap_Id; } while(0);
+#define MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(kEy) (enb_ue_s1ap_id_t)(((enb_s1ap_id_key_t)kEy) & ENB_UE_S1AP_ID_MASK)
+#define MME_APP_ENB_S1AP_ID_KEY_FORMAT "0x%16"PRIX64
+
+#define M_TMSI_BIT_MASK          UINT32_MAX
 
 
+//------------------------------------------------------------------------------
+// UE S1AP IDs
 
 #define INVALID_ENB_UE_S1AP_ID   UINT32_MAX
 #define ENB_UE_S1AP_ID_MASK      0x00FFFFFF
@@ -52,21 +66,59 @@ typedef uint32_t                 sctp_assoc_id_t;
 
 #define MME_UE_S1AP_ID_FMT       "0x%08"PRIX32
 #define INVALID_MME_UE_S1AP_ID   0xFFFFFFFF          // You can pick any value between 0..2^32-1,
-                                                     // all values should be allowed. try to find another way (boolean is_valid for example)
+                                                     // all values are allowed. try to find another way (boolean is_valid for example)
 
+//------------------------------------------------------------------------------
+// TEIDs
 
 typedef uint32_t                 teid_t;
 #define TEID_FMT                "0x%"PRIX32
 typedef teid_t                   s11_teid_t;
 typedef teid_t                   s1u_teid_t;
 
+//------------------------------------------------------------------------------
+// IMSI
 
+typedef uint64_t                 imsi64_t;
 #define IMSI_64_FMT              "%"SCNu64
+#define INVALID_IMSI64           (imsi64_t)0
 
-#define M_TMSI_BIT_MASK          UINT32_MAX
+//------------------------------------------------------------------------------
+// PLMN
 
 
 
+/* Checks Mobile Country Code equality */
+#define MCCS_ARE_EQUAL(n1, n2)  (((n1).mcc_digit1 == (n2).mcc_digit1) && \
+                                 ((n1).mcc_digit2 == (n2).mcc_digit2) && \
+                                 ((n1).mcc_digit3 == (n2).mcc_digit3))
+
+/* Checks Mobile Network Code equality */
+#define MNCS_ARE_EQUAL(n1, n2)  (((n1).mnc_digit1 == (n2).mnc_digit1) &&  \
+                                 ((n1).mnc_digit2 == (n2).mnc_digit2) &&  \
+                                 ((n1).mnc_digit3 == (n2).mnc_digit3))
+
+/* Checks PLMNs equality */
+#define PLMNS_ARE_EQUAL(p1, p2) ((MCCS_ARE_EQUAL((p1),(p2))) && \
+                                 (MNCS_ARE_EQUAL((p1),(p2))))
+// MCC digit 2 MCC digit 1 octet 1
+// MNC digit 3 MCC digit 3 octet 2
+// MNC digit 2 MNC digit 1 octet 3
+// The coding of this field is the responsibility of each administration but BCD coding
+// shall be used. The MNC shall consist of 2 or 3 digits. If a network operator decides
+// to use only two digits in the MNC, bits 5 to 8 of octet 2 shall be coded as "1111".
+#define PLMN_FMT "%c%c%c.%c%c%c"
+#define PLMN_ARG(PlMn_PtR) \
+  (char)((PlMn_PtR)->mcc_digit1+0x30), (char)((PlMn_PtR)->mcc_digit2+0x30), (char)((PlMn_PtR)->mcc_digit3+0x30), \
+  (char)((PlMn_PtR)->mnc_digit1+0x30), (char)((PlMn_PtR)->mnc_digit2+0x30), \
+  (((PlMn_PtR)->mnc_digit3) == 0x0f) ? ' ':(char)((PlMn_PtR)->mnc_digit3+0x30)
+
+/* Checks PLMN validity !?! */
+#define PLMN_IS_VALID(plmn) (((plmn).mcc_digit1 &    \
+                              (plmn).mcc_digit2 &    \
+                              (plmn).mcc_digit3) != 0x0F)
+//------------------------------------------------------------------------------
+// TAI
 #define TAI_LIST_MAX_SIZE 16
 typedef struct tai_list_s {
   uint8_t list_type;
@@ -75,6 +127,31 @@ typedef struct tai_list_s {
 }tai_list_t;
 
 
+/* Checks TAIs equality */
+#define TAIS_ARE_EQUAL(t1, t2)  ((PLMNS_ARE_EQUAL((t1).plmn,(t2).plmn)) && \
+                                 ((t1).tac == (t2).tac))
+#define TAC_FMT "0x%04X"
+#define TAI_FMT PLMN_FMT"-"TAC_FMT
+#define TAI_ARG(tAi_PtR) \
+  PLMN_ARG(&(tAi_PtR)->plmn),\
+  (tAi_PtR)->tac
+
+/* Checks TAC validity */
+#define TAC_IS_VALID(tac)   (((tac) != INVALID_TAC_0000) && ((tac) != INVALID_TAC_FFFE))
+
+/* Checks TAI validity */
+#define TAI_IS_VALID(tai)   (PLMN_IS_VALID((tai).plmn) &&   \
+                             TAC_IS_VALID((tai).tac))
+
+
+//------------------------------------------------------------------------------
+// GUTI
+#define GUTI_FMT PLMN_FMT"|%04x|%02x|%08x"
+#define GUTI_ARG(GuTi_PtR) \
+  PLMN_ARG(&(GuTi_PtR)->gummei.plmn), \
+  (GuTi_PtR)->gummei.mme_gid,\
+  (GuTi_PtR)->gummei.mme_code,\
+  (GuTi_PtR)->m_tmsi
 #define MSISDN_LENGTH      (15)
 #define IMEI_DIGITS_MAX    (15)
 #define IMEISV_DIGITS_MAX  (16)
@@ -119,7 +196,6 @@ typedef char*    APN_t;
 typedef uint8_t  APNRestriction_t;
 typedef uint8_t  DelayValue_t;
 typedef uint8_t  priority_level_t;
-typedef uint32_t Teid_t;
 typedef uint32_t SequenceNumber_t;
 typedef uint32_t access_restriction_t;
 typedef uint32_t context_identifier_t;
@@ -251,7 +327,7 @@ typedef struct {
 
 typedef struct authentication_info_s {
   uint8_t         nb_of_vectors;
-  eutran_vector_t eutran_vector;
+  eutran_vector_t eutran_vector[MAX_EPS_AUTH_VECTORS];
 } authentication_info_t;
 
 typedef enum {

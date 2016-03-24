@@ -88,7 +88,7 @@ nas_stream_encrypt_eea1 (
    * Run SNOW 3G algorithm to generate sequence of key stream bits KS
    */
   snow3g_initialize (K, IV, &snow_3g_context);
-  KS = (uint32_t *) MALLOC_CHECK (4 * n);
+  KS = (uint32_t *) malloc (4 * n);
   snow3g_generate_key_stream (n, (uint32_t *) KS, &snow_3g_context);
 
   if (zero_bit > 0) {
@@ -114,7 +114,7 @@ nas_stream_encrypt_eea1 (
     stream_cipher->message[ceil_index - 1] = stream_cipher->message[ceil_index - 1] & (uint8_t) (0xFF << (8 - zero_bit));
   }
 
-  FREE_CHECK (KS);
+  free_wrapper (KS);
   memcpy (out, stream_cipher->message, n * 4);
 
   if (zero_bit > 0) {

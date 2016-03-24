@@ -63,6 +63,7 @@
 #define PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_SGI            "PGW_INTERFACE_NAME_FOR_SGI"
 #define PGW_CONFIG_STRING_PGW_IPV4_ADDR_FOR_SGI                 "PGW_IPV4_ADDRESS_FOR_SGI"
 #define PGW_CONFIG_STRING_PGW_MASQUERADE_SGI                    "PGW_MASQUERADE_SGI"
+#define PGW_CONFIG_STRING_NAS_FORCE_PUSH_PCO                    "FORCE_PUSH_PROTOCOL_CONFIGURARION_OPTIONS"
 
 #define PGW_CONFIG_STRING_IP_ADDRESS_POOL                       "IP_ADDRESS_POOL"
 #define PGW_CONFIG_STRING_IPV4_ADDRESS_LIST                     "IPV4_LIST"
@@ -133,6 +134,8 @@ typedef struct pgw_config_s {
     uint32_t  default_dns_sec_v4;// NBO
   } ipv4;
   uint8_t   pgw_masquerade_SGI;
+
+  bool      force_push_pco;
 
   STAILQ_HEAD(pgw_lite_ipv4_pool_head_s,      pgw_lite_conf_ipv4_list_elm_s) pgw_lite_ipv4_pool_list;
   STAILQ_HEAD(pgw_lite_ipv6_pool_head_s,      pgw_lite_conf_ipv6_list_elm_s) pgw_lite_ipv6_pool_list;

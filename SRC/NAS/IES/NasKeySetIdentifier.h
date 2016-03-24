@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef NAS_KEY_SET_IDENTIFIER_H_
 #define NAS_KEY_SET_IDENTIFIER_H_
+#include <stdint.h>
 
 #define NAS_KEY_SET_IDENTIFIER_MINIMUM_LENGTH 1
 #define NAS_KEY_SET_IDENTIFIER_MAXIMUM_LENGTH 1

@@ -50,9 +50,9 @@
    if (bearer) {
      unsigned int i;
      for (i=0; i < NET_PACKET_FILTER_MAX; i++) {
-       FREE_CHECK(bearer->tft.pkf[i]);
+       free_wrapper(bearer->tft.pkf[i]);
      }
-     FREE_CHECK(bearer);
+     free_wrapper(bearer);
    }
  }
 
@@ -61,12 +61,12 @@
 void free_esm_pdn(esm_pdn_t * pdn)
 {
   if (pdn) {
-    FREE_OCTET_STRING(pdn->apn);
+    bdestroy(pdn->apn);
     unsigned int i;
     for (i=0; i < ESM_DATA_EPS_BEARER_MAX; i++) {
       free_esm_bearer(pdn->bearer[i]);
     }
-    FREE_CHECK(pdn);
+    free_wrapper(pdn);
   }
 }
 
@@ -83,6 +83,6 @@ void free_esm_data_context(esm_data_context_t * esm_data_ctx)
     for (i=0; i < (ESM_EBR_DATA_SIZE + 1); i++) {
       free_esm_ebr_context(esm_data_ctx->ebr.context[i]);
     }
-    FREE_CHECK(esm_data_ctx);
+    //free_wrapper(esm_data_ctx);
   }
 }

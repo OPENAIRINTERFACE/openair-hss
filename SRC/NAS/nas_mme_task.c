@@ -25,23 +25,20 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "log.h"
+#include "msc.h"
 #include "intertask_interface.h"
 #include "mme_config.h"
 #include "nas_defs.h"
-#include "msc.h"
-
 #include "nas_network.h"
 #include "nas_proc.h"
 #include "emm_main.h"
-#include "log.h"
 #include "nas_timer.h"
 
 static void nas_exit(void);
 
 //------------------------------------------------------------------------------
-static void                            *
-nas_intertask_interface (
-  void *args_p)
+static void *nas_intertask_interface (void *args_p)
 {
   itti_mark_task_ready (TASK_NAS_MME);
   OAILOG_START_USE ();
@@ -58,22 +55,28 @@ nas_intertask_interface (
         nas_establish_ind_t                    *nas_est_ind_p = NULL;
 
         nas_est_ind_p = &received_message_p->ittiMsg.nas_initial_ue_message.nas;
-        nas_proc_establish_ind (received_message_p->ittiMsg.nas_initial_ue_message.transparent.enb_ue_s1ap_id,
+        enb_s1ap_id_key_t enb_s1ap_id_key = 0;
+        MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key,
+            received_message_p->ittiMsg.nas_initial_ue_message.transparent.e_utran_cgi.cell_identity.enb_id,
+            received_message_p->ittiMsg.nas_initial_ue_message.transparent.enb_ue_s1ap_id);
+        nas_proc_establish_ind (enb_s1ap_id_key,
             nas_est_ind_p->ue_id,
             nas_est_ind_p->tai,
             nas_est_ind_p->cgi,
-            nas_est_ind_p->initial_nas_msg.data,
-            nas_est_ind_p->initial_nas_msg.length);
+            &nas_est_ind_p->initial_nas_msg);
       }
       break;
 
     case NAS_UPLINK_DATA_IND:{
-        nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id, NAS_UL_DATA_IND (received_message_p).nas_msg.data, NAS_UL_DATA_IND (received_message_p).nas_msg.length);
+        nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id,
+            NAS_UL_DATA_IND (received_message_p).tai,
+            NAS_UL_DATA_IND (received_message_p).cgi,
+            &NAS_UL_DATA_IND (received_message_p).nas_msg);
       }
       break;
 
     case NAS_DOWNLINK_DATA_CNF:{
-        nas_proc_dl_transfer_cnf (NAS_DL_DATA_CNF (received_message_p).ue_id);
+        nas_proc_dl_transfer_cnf (NAS_DL_DATA_CNF (received_message_p).ue_id, NAS_DL_DATA_CNF (received_message_p).err_code);
       }
       break;
 
@@ -82,15 +85,15 @@ nas_intertask_interface (
       }
       break;
 
-    case NAS_AUTHENTICATION_PARAM_RSP:{
-        nas_proc_auth_param_res (&NAS_AUTHENTICATION_PARAM_RSP (received_message_p));
+    case S6A_AUTH_INFO_ANS:{
+        /*
+         * We received the authentication vectors from HSS, trigger a ULR
+         * for now. Normaly should trigger an authentication procedure with UE.
+         */
+        nas_proc_authentication_info_answer (&S6A_AUTH_INFO_ANS(received_message_p));
       }
       break;
 
-    case NAS_AUTHENTICATION_PARAM_FAIL:{
-        nas_proc_auth_param_fail (&NAS_AUTHENTICATION_PARAM_FAIL (received_message_p));
-      }
-      break;
 
     case NAS_PDN_CONNECTIVITY_RSP:{
         nas_proc_pdn_connectivity_res (&NAS_PDN_CONNECTIVITY_RSP (received_message_p));
@@ -150,9 +153,7 @@ nas_intertask_interface (
 }
 
 //------------------------------------------------------------------------------
-int
-nas_init (
-  mme_config_t * mme_config_p)
+int nas_init (mme_config_t * mme_config_p)
 {
   OAILOG_DEBUG (LOG_NAS, "Initializing NAS task interface\n");
   nas_network_initialize (mme_config_p);

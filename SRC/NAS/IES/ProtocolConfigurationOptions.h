@@ -19,17 +19,14 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef PROTOCOL_CONFIGURATION_OPTIONS_H_
 #define PROTOCOL_CONFIGURATION_OPTIONS_H_
+#include <stdint.h>
+#include "bstrlib.h"
+#include "3gpp_24.008.h"
 
-#define PROTOCOL_CONFIGURATION_OPTIONS_MINIMUM_LENGTH 3
-#define PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_LENGTH 253
+#define PROTOCOL_CONFIGURATION_OPTIONS_MINIMUM_LENGTH PCO_MIN_LENGTH
+#define PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_LENGTH PCO_MAX_LENGTH
 
 // arbitrary value, theoricaly can be greater than defined (250/3)
 #define PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID 16
@@ -59,7 +56,7 @@ typedef struct ProtocolConfigurationOptions_tag {
   uint8_t     num_protocol_id_or_container_id;
   uint16_t    protocolid[PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID];
   uint8_t     lengthofprotocolid[PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID];
-  OctetString protocolidcontents[PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID];
+  bstring     protocolidcontents[PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID];
 } ProtocolConfigurationOptions;
 
 int encode_protocol_configuration_options(ProtocolConfigurationOptions *protocolconfigurationoptions, uint8_t iei, uint8_t *buffer, uint32_t len);

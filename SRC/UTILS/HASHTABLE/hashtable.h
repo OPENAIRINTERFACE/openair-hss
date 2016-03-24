@@ -47,12 +47,13 @@ typedef enum hashtable_return_code_e {
     HASH_TABLE_SEARCH_NO_RESULT       ,
     HASH_TABLE_KEY_ALREADY_EXISTS     ,
     HASH_TABLE_BAD_PARAMETER_HASHTABLE,
+    HASH_TABLE_BAD_PARAMETER_KEY,
     HASH_TABLE_SYSTEM_ERROR           ,
     HASH_TABLE_CODE_MAX
 } hashtable_rc_t;
 
 #define HASH_TABLE_DEFAULT_HASH_FUNC NULL
-#define HASH_TABLE_DEFAULT_FREE_CHECK_FUNC NULL
+#define HASH_TABLE_DEFAULT_free_wrapper_FUNC NULL
 
 
 typedef struct hash_node_s {
@@ -70,6 +71,7 @@ typedef struct hash_table_s {
     void              (*freefunc)(void*);
     char               *name;
     bool                is_allocated_by_malloc;
+    bool                log_enabled;
 } hash_table_t;
 
 typedef struct hash_table_ts_s {
@@ -82,6 +84,7 @@ typedef struct hash_table_ts_s {
     void              (*freefunc)(void*);
     char               *name;
     bool                is_allocated_by_malloc;
+    bool                log_enabled;
 } hash_table_ts_t;
 
 char*           hashtable_rc_code2string(hashtable_rc_t rc);

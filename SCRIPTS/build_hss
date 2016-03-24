@@ -41,31 +41,17 @@ function help()
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
-  echo_error "  -b, --s6a-bind-addr-list       addr_list  Optionaly, s6a server bind addresses can be specified here"
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
   echo_error "  -d, --debug                               Compile with debug informations."
   echo_error "  -D, --daemon                              Build HSS as a daemon."
-  echo_error "  -f, --fqdn                     fqdn       HSS Fully Qualified Domain Name (if not specified default is `hostname --fqdn`)."
   echo_error "  -F, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run HSS (support Ubuntu 14.04)."
-  echo_error "  -I, --install-hss-files                   Install HSS database if necessary."
-  echo_error "  -k, --operator-key             key        Operator key of the HSS."
   echo_error "                                            If filled, then OPc key in table users for all subscribers (IMSI) will be computed/updated."
-  echo_error "  -l, --local-mme                           MME run on the same host."
+
   echo_error "  -v, --verbose                             Build process verbose."
   echo_error " "
-  echo_error "  -r, --realm                    realm      Realm of the HSS (optional parameter)."
   echo_error "  -R, --random                   boolean    If false HSS random function returns always the same value (allowed values: {true, false})."
-  echo_error "  -x, --clean-certificates                  Clean the HSS certificates"
-  echo_error " "
-  echo_error "Examples:"
-  echo_error " "
-  echo_error "Case 1 - HSS run on same EPC host"
-  echo_error "build_hss --debug --local-mme"
-  echo_error " "
-  echo_error "Case 2 - HSS and EPC do not run on same host"
-  echo_error "build_hss --debug "
 }
 
 NAME=oai_hssd
@@ -77,28 +63,16 @@ PIDFILE=/var/run/$NAME.pid
 function main()
 {
   local -i clean=0
-  local -i clean_certificates=0
   local -i daemon=0
   local -i verbose=0
-  local -i mme_s6a_server=0
   local -i var_check_install_oai_software=0
   local -i force=0
   local    cmake_args=" "
   local    make_args="-j $NUM_CPU"
   local    realm=""
-  local    hss_hostname=""
-  local    mme_hostname=""
-  local    mme_ip=""
-  local    mme_fqdn=""
-  
 
   until [ -z "$1" ]; do
     case "$1" in
-      -b | --s6a-bind-addr-list)
-        echo "S6A server bind addresses: $2"
-        cmake_args="$cmake_args -DFD_SERVER_IP_BIND_LIST=$2"
-        shift 2;
-        ;;
       -c | --clean)
         clean=1
         echo "Clean the build generated files (build from scratch)"
@@ -115,11 +89,6 @@ function main()
         echo "Build HSS as a daemon"
         shift;
         ;;
-      -f | --fqdn)
-        echo "FQDN of the HSS: $2"
-        cmake_args="$cmake_args -DHSS_FQDN=$2"
-        shift 2;
-        ;;
       -F | --force)
         force=1
         echo "Force set (no interactive)"
@@ -135,29 +104,6 @@ function main()
         var_check_install_oai_software=1
         shift;
         ;;
-      -I | --install-hss-files)
-        echo "Install HSS files: .conf files, database (if you want to reinstall database, drop it by hand before)."
-        cmake_args="$cmake_args -DINSTALL_HSS_FILES=1"
-        shift;
-        ;;
-      -k | --operator-key)
-        echo "Operator key of the HSS: $2"
-        cmake_args="$cmake_args -DOPERATOR_key=$2"
-        shift 2;
-        ;;
-      -l | --local-mme)
-        echo "HSS on same MME HOST -> MME act as a server on s6a"
-        echo "HSS on same MME HOST -> Diameter use TCP (SCTP disabled), this is the default option."
-        mme_s6a_server=1
-        mme_fqdn=`hostname --fqdn`
-        cmake_args="$cmake_args -DTRANSPORT_option=No_SCTP  -DTRANSPORT_PREFER_TCP_option=Prefer_TCP"
-        shift 1;
-        ;;
-      -r | --realm)
-        echo "Realm of the HSS: $2"
-        cmake_args="$cmake_args -DREALM=$2"
-        shift 2;
-        ;;
       -R | --random)
         echo "Random function: $2"
         cmake_args="$cmake_args -DRANDOM_boolean=$2"
@@ -168,11 +114,6 @@ function main()
         cmake_args="$cmake_args -DCMAKE_VERBOSE_MAKEFILE=ON"
         make_args="VERBOSE=1 $make_args"
         verbose=1
-        shift;
-        ;;
-      -x | --clean-certificates)
-        clean_certificates=1
-        echo "Clean the HSS certificates"
         shift;
         ;;
       *)   
@@ -190,33 +131,6 @@ function main()
     exit 0
   fi
   
-  # extra arguments processing
-  if [[ z$hss_fqdn = z ]]; then
-    hss_fqdn=`hostname --fqdn`
-    cmake_args="$cmake_args -DHSS_FQDN=$hss_fqdn"
-    if [[ z$realm = z ]]; then
-      realm=$hss_fqdn
-      realm=${realm#*.}
-      cmake_args="$cmake_args -DREALM=$realm"
-    fi
-  fi
-  
-  if [[ z$mme_fqdn != z ]]; then
-    cmake_args="$cmake_args -DMME_FQDN=$mme_fqdn"
-    mme_hostname=${mme_fqdn%%.*}
-    cmake_args="$cmake_args -DMME_HOSTNAME=$mme_hostname"
-  
-    mme_ip=`resolveip --silent $mme_hostname`
-    if [[ z$mme_ip = z ]]; then
-      mme_ip=`resolveip --silent $mme_fqdn`
-    fi
-    if [[ z$mme_ip = z ]]; then
-      echo_fatal "Unable to get MME IP addr of $mme_fqdn"
-    fi
-    cmake_args="$cmake_args -DHSS_CONNECT_TO_MME=1 -DMME_IP=$mme_ip  -DTRANSPORT_option=No_SCTP -DTRANSPORT_PREFER_TCP_option=Prefer_TCP"
-  else
-    cmake_args="$cmake_args -DTRANSPORT_option=No_TCP"
-  fi
 
   set_openair_env
   if [[ $verbose -eq 1 ]]; then
@@ -233,23 +147,7 @@ function main()
   
   mkdir -m 777 -p $dlog $dlog
 
-  if [ ! -d /usr/local/etc/oai ]; then
-    $SUDO mkdir -p -m 777 /usr/local/etc/oai  
-  fi
 
-  # for conf files copy in this bash script
-  if [ -d /usr/lib/freeDiameter ]; then
-    export FREEDIAMETER_PREFIX=/usr
-  else
-    if [ -d /usr/local/lib/freeDiameter ]; then
-      export FREEDIAMETER_PREFIX=/usr/local
-    else
-      echo_fatal "FreeDiameter prefix not found, install freeDiameter if EPC, HSS"
-    fi
-  fi
-  
- 
-  
   cmake_args="$cmake_args -DOPENAIRCN_DIR=$OPENAIRCN_DIR"
 
   cd $OPENAIRCN_DIR/BUILD/HSS
@@ -258,18 +156,7 @@ function main()
       echo "Cleaning HSS"
     fi
     rm -Rf BUILD 2>&1
-    if [[ $verbose -eq 1 ]]; then
-      echo "Cleaning $FREEDIAMETER_PREFIX/etc/freeDiameter conf files"
-    fi
-    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/hss*.conf     2>&1
-    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/acl.conf 2>&1
     mkdir -m 777 -p -v BUILD
-  fi
-  if [ $clean_certificates -ne 0 ]; then
-    if [[ $verbose -eq 1 ]]; then
-      echo "Cleaning HSS: certificates"
-    fi
-    $SUDO rm -f $FREEDIAMETER_PREFIX/etc/freeDiameter/hss*.pem    2>&1
   fi
   if [ ! -d ./BUILD ]; then
     mkdir -m 777 -p -v BUILD
@@ -277,8 +164,7 @@ function main()
   cd ./BUILD
   cmake  $cmake_args .. > /dev/null 
   make $make_args
-  chmod -Rf 777 *
-  $SUDO make install  
+  chmod -f 777 *
   if [ $daemon -ne 0 ]; then
     do_stop_daemon
     $SUDO cp -upv $OPENAIRCN_DIR/BUILD/HSS/BUILD/oai_hss /usr/sbin/oai_hssd && echo_success "oai_hssd installed"

@@ -19,17 +19,15 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+
+#ifndef FILE_ATTACH_COMPLETE_SEEN
+#define FILE_ATTACH_COMPLETE_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
 #include "SecurityHeaderType.h"
 #include "MessageType.h"
 #include "EsmMessageContainer.h"
-
-#ifndef FILE_ATTACH_COMPLETE_SEEN
-#define FILE_ATTACH_COMPLETE_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define ATTACH_COMPLETE_MINIMUM_LENGTH ( \

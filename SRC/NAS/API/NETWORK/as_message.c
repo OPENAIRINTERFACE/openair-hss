@@ -99,7 +99,7 @@ as_message_decode (
      * NAS signalling connection establish request
      */
     bytes += sizeof (nas_establish_req_t) - sizeof (uint8_t *);
-    data = &msg->msg.nas_establish_req.initial_nas_msg.data;
+    data = &msg->msg.nas_establish_req.initial_nas_msg->data;
     break;
 
   case AS_NAS_ESTABLISH_IND:
@@ -107,7 +107,7 @@ as_message_decode (
      * NAS signalling connection establishment indication
      */
     bytes += sizeof (nas_establish_ind_t) - sizeof (uint8_t *);
-    data = &msg->msg.nas_establish_ind.initial_nas_msg.data;
+    data = &msg->msg.nas_establish_ind.initial_nas_msg->data;
     break;
 
   case AS_NAS_ESTABLISH_RSP:
@@ -115,7 +115,7 @@ as_message_decode (
      * NAS signalling connection establishment response
      */
     bytes += sizeof (nas_establish_rsp_t) - sizeof (uint8_t *);
-    data = &msg->msg.nas_establish_rsp.nas_msg.data;
+    data = &msg->msg.nas_establish_rsp.nas_msg->data;
     break;
 
   case AS_NAS_ESTABLISH_CNF:
@@ -123,7 +123,7 @@ as_message_decode (
      * NAS signalling connection establishment confirm
      */
     bytes += sizeof (nas_establish_cnf_t) - sizeof (uint8_t *);
-    data = &msg->msg.nas_establish_cnf.nas_msg.data;
+    data = &msg->msg.nas_establish_cnf.nas_msg->data;
     break;
 
   case AS_UL_INFO_TRANSFER_REQ:
@@ -131,7 +131,7 @@ as_message_decode (
      * Uplink L3 data transfer request
      */
     bytes += sizeof (ul_info_transfer_req_t) - sizeof (uint8_t *);
-    data = &msg->msg.ul_info_transfer_req.nas_msg.data;
+    data = &msg->msg.ul_info_transfer_req.nas_msg->data;
     break;
 
   case AS_UL_INFO_TRANSFER_IND:
@@ -139,7 +139,7 @@ as_message_decode (
      * Uplink L3 data transfer indication
      */
     bytes += sizeof (ul_info_transfer_ind_t) - sizeof (uint8_t *);
-    data = &msg->msg.ul_info_transfer_ind.nas_msg.data;
+    data = &msg->msg.ul_info_transfer_ind.nas_msg->data;
     break;
 
   case AS_DL_INFO_TRANSFER_REQ:
@@ -147,7 +147,7 @@ as_message_decode (
      * Downlink L3 data transfer request
      */
     bytes += sizeof (dl_info_transfer_req_t) - sizeof (uint8_t *);
-    data = &msg->msg.dl_info_transfer_req.nas_msg.data;
+    data = &msg->msg.dl_info_transfer_req.nas_msg->data;
     break;
 
   case AS_DL_INFO_TRANSFER_IND:
@@ -155,13 +155,10 @@ as_message_decode (
      * Downlink L3 data transfer indication
      */
     bytes += sizeof (dl_info_transfer_ind_t) - sizeof (uint8_t *);
-    data = &msg->msg.dl_info_transfer_ind.nas_msg.data;
+    data = &msg->msg.dl_info_transfer_ind.nas_msg->data;
     break;
 
   case AS_BROADCAST_INFO_IND:
-  case AS_CELL_INFO_REQ:
-  case AS_CELL_INFO_CNF:
-  case AS_CELL_INFO_IND:
   case AS_PAGING_REQ:
   case AS_PAGING_IND:
   case AS_NAS_RELEASE_REQ:
@@ -222,225 +219,212 @@ as_message_decode (
  **    Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-int
-as_message_encode (
-  char *buffer,
-  as_message_t * msg,
-  size_t length)
-{
-  OAILOG_FUNC_IN (LOG_NAS);
-  int                                     bytes = sizeof (msg->msg_id);
-  as_nas_info_t                          *nas_msg = NULL;
-
-  switch (msg->msg_id) {
-  case AS_BROADCAST_INFO_IND:
-    /*
-     * Broadcast information
-     */
-    bytes += sizeof (broadcast_info_ind_t);
-    break;
-
-  case AS_CELL_INFO_REQ:
-    /*
-     * Cell information request
-     */
-    bytes += sizeof (cell_info_req_t);
-    break;
-
-  case AS_CELL_INFO_CNF:
-    /*
-     * Cell information response
-     */
-    bytes += sizeof (cell_info_cnf_t);
-    break;
-
-  case AS_CELL_INFO_IND:
-    /*
-     * Cell information indication
-     */
-    bytes += sizeof (cell_info_ind_t);
-    break;
-
-  case AS_PAGING_REQ:
-    /*
-     * Paging information request
-     */
-    bytes += sizeof (paging_req_t);
-    break;
-
-  case AS_PAGING_IND:
-    /*
-     * Paging information indication
-     */
-    bytes += sizeof (paging_ind_t);
-    break;
-
-  case AS_NAS_ESTABLISH_REQ:
-    /*
-     * NAS signalling connection establish request
-     */
-    bytes += sizeof (nas_establish_req_t) - sizeof (uint8_t *);
-    nas_msg = &msg->msg.nas_establish_req.initial_nas_msg;
-    break;
-
-  case AS_NAS_ESTABLISH_IND:
-    /*
-     * NAS signalling connection establish indication
-     */
-    bytes += sizeof (nas_establish_ind_t) - sizeof (uint8_t *);
-    nas_msg = &msg->msg.nas_establish_ind.initial_nas_msg;
-    break;
-
-  case AS_NAS_ESTABLISH_RSP:
-    /*
-     * NAS signalling connection establish response
-     */
-    bytes += sizeof (nas_establish_rsp_t) - sizeof (uint8_t *);
-    nas_msg = &msg->msg.nas_establish_rsp.nas_msg;
-    break;
-
-  case AS_NAS_ESTABLISH_CNF:
-    /*
-     * NAS signalling connection establish confirm
-     */
-    bytes += sizeof (nas_establish_cnf_t) - sizeof (uint8_t *);
-    nas_msg = &msg->msg.nas_establish_cnf.nas_msg;
-    break;
-
-  case AS_NAS_RELEASE_REQ:
-    /*
-     * NAS signalling connection release request
-     */
-    bytes += sizeof (nas_release_req_t);
-    break;
-
-  case AS_NAS_RELEASE_IND:
-    /*
-     * NAS signalling connection release indication
-     */
-    bytes += sizeof (nas_release_ind_t);
-    break;
-
-  case AS_UL_INFO_TRANSFER_REQ:
-    /*
-     * Uplink L3 data transfer request
-     */
-    bytes += sizeof (ul_info_transfer_req_t) - sizeof (uint8_t *);
-    nas_msg = &msg->msg.ul_info_transfer_req.nas_msg;
-    break;
-
-  case AS_UL_INFO_TRANSFER_CNF:
-    /*
-     * Uplink L3 data transfer confirm
-     */
-    bytes += sizeof (ul_info_transfer_cnf_t);
-    break;
-
-  case AS_UL_INFO_TRANSFER_IND:
-    /*
-     * Uplink L3 data transfer indication
-     */
-    bytes += sizeof (ul_info_transfer_ind_t) - sizeof (uint8_t *);
-    nas_msg = &msg->msg.ul_info_transfer_ind.nas_msg;
-    break;
-
-  case AS_DL_INFO_TRANSFER_REQ:
-    /*
-     * Downlink L3 data transfer
-     */
-    bytes += sizeof (dl_info_transfer_req_t) - sizeof (uint8_t *);
-    nas_msg = &msg->msg.dl_info_transfer_req.nas_msg;
-    break;
-
-  case AS_DL_INFO_TRANSFER_CNF:
-    /*
-     * Downlink L3 data transfer confirm
-     */
-    bytes += sizeof (dl_info_transfer_cnf_t);
-    break;
-
-  case AS_DL_INFO_TRANSFER_IND:
-    /*
-     * Downlink L3 data transfer indication
-     */
-    bytes += sizeof (dl_info_transfer_ind_t) - sizeof (uint8_t *);
-    nas_msg = &msg->msg.dl_info_transfer_ind.nas_msg;
-    break;
-
-  case AS_RAB_ESTABLISH_REQ:
-    /*
-     * Radio Access Bearer establishment request
-     */
-    bytes += sizeof (rab_establish_req_t);
-    break;
-
-  case AS_RAB_ESTABLISH_IND:
-    /*
-     * Radio Access Bearer establishment indication
-     */
-    bytes += sizeof (rab_establish_ind_t);
-    break;
-
-  case AS_RAB_ESTABLISH_RSP:
-    /*
-     * Radio Access Bearer establishment response
-     */
-    bytes += sizeof (rab_establish_rsp_t);
-    break;
-
-  case AS_RAB_ESTABLISH_CNF:
-    /*
-     * Radio Access Bearer establishment confirm
-     */
-    bytes += sizeof (rab_establish_cnf_t);
-    break;
-
-  case AS_RAB_RELEASE_REQ:
-    /*
-     * Radio Access Bearer release request
-     */
-    bytes += sizeof (rab_release_req_t);
-    break;
-
-  case AS_RAB_RELEASE_IND:
-    /*
-     * Radio Access Bearer release indication
-     */
-    bytes += sizeof (rab_release_ind_t);
-    break;
-
-  default:
-    OAILOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msg_id);
-    bytes = length;
-    break;
-  }
-
-  if (length > bytes) {
-    /*
-     * Encode the AS message
-     */
-    memcpy (buffer, (unsigned char *)msg, bytes);
-
-    if (nas_msg && (nas_msg->length > 0)) {
-      /*
-       * Copy the NAS message
-       */
-      memcpy (buffer + bytes, nas_msg->data, nas_msg->length);
-      bytes += nas_msg->length;
-      /*
-       * Release NAS message memory
-       */
-      FREE_CHECK (nas_msg->data);
-      nas_msg->length = 0;
-      nas_msg->data = NULL;
-    }
-
-    OAILOG_FUNC_RETURN (LOG_NAS, bytes);
-  }
-
-  OAILOG_WARNING(LOG_NAS, "NET-API   - Failed to encode AS message 0x%x", msg->msg_id);
-  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
-}
+//int
+//as_message_encode (
+//  char *buffer,
+//  as_message_t * msg,
+//  size_t length)
+//{
+//  OAILOG_FUNC_IN (LOG_NAS);
+//  int                                     bytes = sizeof (msg->msg_id);
+//  bstring                                 nas_msg = NULL;
+//
+//  switch (msg->msg_id) {
+//  case AS_BROADCAST_INFO_IND:
+//    /*
+//     * Broadcast information
+//     */
+//    bytes += sizeof (broadcast_info_ind_t);
+//    break;
+//
+//  case AS_PAGING_REQ:
+//    /*
+//     * Paging information request
+//     */
+//    bytes += sizeof (paging_req_t);
+//    break;
+//
+//  case AS_PAGING_IND:
+//    /*
+//     * Paging information indication
+//     */
+//    bytes += sizeof (paging_ind_t);
+//    break;
+//
+//  case AS_NAS_ESTABLISH_REQ:
+//    /*
+//     * NAS signalling connection establish request
+//     */
+//    bytes += sizeof (nas_establish_req_t) - sizeof (uint8_t *);
+//    nas_msg = msg->msg.nas_establish_req.initial_nas_msg;
+//    msg->msg.nas_establish_req.initial_nas_msg = NULL;
+//    break;
+//
+//  case AS_NAS_ESTABLISH_IND:
+//    /*
+//     * NAS signalling connection establish indication
+//     */
+//    bytes += sizeof (nas_establish_ind_t) - sizeof (uint8_t *);
+//    nas_msg = msg->msg.nas_establish_ind.initial_nas_msg;
+//    msg->msg.nas_establish_ind.initial_nas_msg = NULL;
+//    break;
+//
+//  case AS_NAS_ESTABLISH_RSP:
+//    /*
+//     * NAS signalling connection establish response
+//     */
+//    bytes += sizeof (nas_establish_rsp_t) - sizeof (uint8_t *);
+//    nas_msg = msg->msg.nas_establish_rsp.nas_msg;
+//    msg->msg.nas_establish_rsp.nas_msg = NULL;
+//    break;
+//
+//  case AS_NAS_ESTABLISH_CNF:
+//    /*
+//     * NAS signalling connection establish confirm
+//     */
+//    bytes += sizeof (nas_establish_cnf_t) - sizeof (uint8_t *);
+//    nas_msg = msg->msg.nas_establish_cnf.nas_msg;
+//    msg->msg.nas_establish_cnf.nas_msg = NULL;
+//    break;
+//
+//  case AS_NAS_RELEASE_REQ:
+//    /*
+//     * NAS signalling connection release request
+//     */
+//    bytes += sizeof (nas_release_req_t);
+//    break;
+//
+//  case AS_NAS_RELEASE_IND:
+//    /*
+//     * NAS signalling connection release indication
+//     */
+//    bytes += sizeof (nas_release_ind_t);
+//    break;
+//
+//  case AS_UL_INFO_TRANSFER_REQ:
+//    /*
+//     * Uplink L3 data transfer request
+//     */
+//    bytes += sizeof (ul_info_transfer_req_t) - sizeof (uint8_t *);
+//    nas_msg = msg->msg.ul_info_transfer_req.nas_msg;
+//    msg->msg.ul_info_transfer_req.nas_msg = NULL;
+//    break;
+//
+//  case AS_UL_INFO_TRANSFER_CNF:
+//    /*
+//     * Uplink L3 data transfer confirm
+//     */
+//    bytes += sizeof (ul_info_transfer_cnf_t);
+//    break;
+//
+//  case AS_UL_INFO_TRANSFER_IND:
+//    /*
+//     * Uplink L3 data transfer indication
+//     */
+//    bytes += sizeof (ul_info_transfer_ind_t) - sizeof (uint8_t *);
+//    nas_msg = msg->msg.ul_info_transfer_ind.nas_msg;
+//    msg->msg.ul_info_transfer_ind.nas_msg = NULL;
+//    break;
+//
+//  case AS_DL_INFO_TRANSFER_REQ:
+//    /*
+//     * Downlink L3 data transfer
+//     */
+//    bytes += sizeof (dl_info_transfer_req_t) - sizeof (uint8_t *);
+//    nas_msg = msg->msg.dl_info_transfer_req.nas_msg;
+//    msg->msg.dl_info_transfer_req.nas_msg = NULL;
+//    break;
+//
+//  case AS_DL_INFO_TRANSFER_CNF:
+//    /*
+//     * Downlink L3 data transfer confirm
+//     */
+//    bytes += sizeof (dl_info_transfer_cnf_t);
+//    break;
+//
+//  case AS_DL_INFO_TRANSFER_IND:
+//    /*
+//     * Downlink L3 data transfer indication
+//     */
+//    bytes += sizeof (dl_info_transfer_ind_t) - sizeof (uint8_t *);
+//    nas_msg = msg->msg.dl_info_transfer_ind.nas_msg;
+//    msg->msg.dl_info_transfer_ind.nas_msg = NULL;
+//    break;
+//
+//  case AS_RAB_ESTABLISH_REQ:
+//    /*
+//     * Radio Access Bearer establishment request
+//     */
+//    bytes += sizeof (rab_establish_req_t);
+//    break;
+//
+//  case AS_RAB_ESTABLISH_IND:
+//    /*
+//     * Radio Access Bearer establishment indication
+//     */
+//    bytes += sizeof (rab_establish_ind_t);
+//    break;
+//
+//  case AS_RAB_ESTABLISH_RSP:
+//    /*
+//     * Radio Access Bearer establishment response
+//     */
+//    bytes += sizeof (rab_establish_rsp_t);
+//    break;
+//
+//  case AS_RAB_ESTABLISH_CNF:
+//    /*
+//     * Radio Access Bearer establishment confirm
+//     */
+//    bytes += sizeof (rab_establish_cnf_t);
+//    break;
+//
+//  case AS_RAB_RELEASE_REQ:
+//    /*
+//     * Radio Access Bearer release request
+//     */
+//    bytes += sizeof (rab_release_req_t);
+//    break;
+//
+//  case AS_RAB_RELEASE_IND:
+//    /*
+//     * Radio Access Bearer release indication
+//     */
+//    bytes += sizeof (rab_release_ind_t);
+//    break;
+//
+//  default:
+//    OAILOG_WARNING(LOG_NAS, "NET-API   - AS message 0x%x is not valid", msg->msg_id);
+//    bytes = length;
+//    break;
+//  }
+//
+//  if (length > bytes) {
+//    /*
+//     * Encode the AS message
+//     */
+//    memcpy (buffer, (unsigned char *)msg, bytes);
+//
+//    if (nas_msg && (nas_msg->length > 0)) {
+//      /*
+//       * Copy the NAS message
+//       */
+//      memcpy (buffer + bytes, nas_msg->data, nas_msg->length);
+//      bytes += nas_msg->length;
+//      /*
+//       * Release NAS message memory
+//       */
+//      free_wrapper (nas_msg->data);
+//      nas_msg->length = 0;
+//      nas_msg->data = NULL;
+//    }
+//
+//    OAILOG_FUNC_RETURN (LOG_NAS, bytes);
+//  }
+//
+//  OAILOG_WARNING(LOG_NAS, "NET-API   - Failed to encode AS message 0x%x", msg->msg_id);
+//  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+//}
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

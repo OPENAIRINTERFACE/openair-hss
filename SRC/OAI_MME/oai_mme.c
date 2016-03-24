@@ -34,7 +34,10 @@
 #  include "config.h"
 #endif
 
+#include "dynamic_memory_check.h"
 #include "assertions.h"
+#include "log.h"
+#include "msc.h"
 #include "mme_config.h"
 #include "gtpv1u_sgw_defs.h"
 
@@ -43,7 +46,6 @@
 #include "sctp_primitives_server.h"
 #include "udp_primitives_server.h"
 #include "s1ap_mme.h"
-#include "log.h"
 #include "timer.h"
 #include "sgw_defs.h"
 #include "mme_app_extern.h"
@@ -56,7 +58,6 @@
 #include "s6a_defs.h"
 
 #include "oai_mme.h"
-#include "msc.h"
 #include "pid_file.h"
 
 
@@ -105,12 +106,12 @@ main (
 
   if (! is_pid_file_lock_success(pid_file_name)) {
     closelog();
-    FREE_CHECK(pid_file_name);
+    free_wrapper(pid_file_name);
     exit (-EDEADLK);
   }
 #else
   if (! is_pid_file_lock_success(pid_file_name)) {
-    FREE_CHECK(pid_file_name);
+    free_wrapper(pid_file_name);
     exit (-EDEADLK);
   }
 #endif
@@ -145,6 +146,6 @@ main (
    */
   itti_wait_tasks_end ();
   pid_file_unlock();
-  FREE_CHECK(pid_file_name);
+  free_wrapper(pid_file_name);
   return 0;
 }

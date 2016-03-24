@@ -106,13 +106,13 @@ extern                                  "C" {
 
   NwGtpv2cTmrMinHeapT                    *nwGtpv2cTmrMinHeapNew (
   int maxSize) {
-    NwGtpv2cTmrMinHeapT                    *thiz = (NwGtpv2cTmrMinHeapT *) MALLOC_CHECK (sizeof (NwGtpv2cTmrMinHeapT));
+    NwGtpv2cTmrMinHeapT                    *thiz = (NwGtpv2cTmrMinHeapT *) malloc (sizeof (NwGtpv2cTmrMinHeapT));
 
     if                                      (
   thiz) {
       thiz->currSize = 0;
       thiz->maxSize = maxSize;
-      thiz->pHeap = (NwGtpv2cTimeoutInfoT **) MALLOC_CHECK (maxSize * sizeof (NwGtpv2cTimeoutInfoT *));
+      thiz->pHeap = (NwGtpv2cTimeoutInfoT **) malloc (maxSize * sizeof (NwGtpv2cTimeoutInfoT *));
     }
 
     return                                  thiz;
@@ -121,8 +121,8 @@ extern                                  "C" {
   void
                                           nwGtpv2cTmrMinHeapDelete (
   NwGtpv2cTmrMinHeapT * thiz) {
-    FREE_CHECK (thiz->pHeap);
-    FREE_CHECK (thiz);
+    free_wrapper (thiz->pHeap);
+    free_wrapper (thiz);
   }
 
   static NwRcT                            nwGtpv2cTmrMinHeapInsert (
@@ -938,7 +938,7 @@ extern                                  "C" {
     NwRcT                                   rc = NW_OK;
     NwGtpv2cStackT                         *thiz = NULL;
 
-    thiz = (NwGtpv2cStackT *) MALLOC_CHECK (sizeof (NwGtpv2cStackT));
+    thiz = (NwGtpv2cStackT *) malloc (sizeof (NwGtpv2cStackT));
     memset (thiz, 0, sizeof (NwGtpv2cStackT));
 
     if (thiz) {
@@ -994,7 +994,7 @@ extern                                  "C" {
     if (!hGtpcStackHandle)
       return NW_FAILURE;
 
-    FREE_CHECK ((void *)hGtpcStackHandle);
+    free_wrapper ((void *)hGtpcStackHandle);
     return NW_OK;
   }
 

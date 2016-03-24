@@ -36,16 +36,20 @@
 #include <assert.h>
 
 #include "queue.h"
+#include "dynamic_memory_check.h"
+#include "hashtable.h"
+#include "obj_hashtable.h"
+#include "log.h"
+#include "msc.h"
 #include "intertask_interface.h"
+#include "sgw_ie_defs.h"
+#include "3gpp_23.401.h"
 #include "mme_config.h"
 #include "sgw_defs.h"
 #include "sgw_handlers.h"
 #include "sgw.h"
-#include "hashtable.h"
 #include "spgw_config.h"
 #include "pgw_lite_paa.h"
-#include "msc.h"
-#include "log.h"
 
 spgw_config_t                           spgw_config;
 sgw_app_t                               sgw_app;
@@ -54,9 +58,7 @@ pgw_app_t                               pgw_app;
 static void sgw_exit(void);
 
 //------------------------------------------------------------------------------
-static void                            *
-sgw_intertask_interface (
-  void *args_p)
+static void *sgw_intertask_interface (void *args_p)
 {
   itti_mark_task_ready (TASK_SPGW_APP);
   OAILOG_START_USE ();
@@ -139,8 +141,7 @@ sgw_intertask_interface (
 }
 
 //------------------------------------------------------------------------------
-int sgw_init (
-  char *config_file_name_pP)
+int sgw_init (char *config_file_name_pP)
 {
   OAILOG_DEBUG (LOG_SPGW_APP, "Initializing SPGW-APP  task interface\n");
   spgw_system ("modprobe ip_tables", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
@@ -250,12 +251,12 @@ static void sgw_exit(void)
 
   while ((conf_ipv4_p = STAILQ_FIRST (&spgw_config.pgw_config.pgw_lite_ipv4_pool_list))) {
     STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.pgw_lite_ipv4_pool_list, ipv4_entries);
-    FREE_CHECK (conf_ipv4_p);
+    free_wrapper (conf_ipv4_p);
   }
 
   struct pgw_lite_conf_ipv6_list_elm_s   *conf_ipv6_p = NULL;
   while ((conf_ipv6_p = STAILQ_FIRST (&spgw_config.pgw_config.pgw_lite_ipv6_pool_list))) {
     STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.pgw_lite_ipv6_pool_list, ipv6_entries);
-    FREE_CHECK (conf_ipv6_p);
+    free_wrapper (conf_ipv6_p);
   }
 }

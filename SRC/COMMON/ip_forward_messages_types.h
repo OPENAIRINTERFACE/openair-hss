@@ -43,8 +43,8 @@ typedef enum SGIStatus_e {
 
 
 typedef struct {
-  Teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
-  Teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
+  teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
+  teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
   ebi_t            eps_bearer_id;       ///< EPS bearer identifier
   pdn_type_t       pdn_type;            ///< PDN Type
   PAA_t            paa;                 ///< PDN Address Allocation
@@ -52,8 +52,8 @@ typedef struct {
 
 typedef struct {
   SGIStatus_t      status;              ///< Status of  endpoint creation (Failed = 0xFF or Success = 0x0)
-  Teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
-  Teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
+  teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
+  teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
   ebi_t            eps_bearer_id;       ///< EPS bearer identifier
   pdn_type_t       pdn_type;            ///< PDN Type
   PAA_t            paa;                 ///< PDN Address Allocation
@@ -61,24 +61,24 @@ typedef struct {
 } itti_sgi_create_end_point_response_t;
 
 typedef struct {
-  Teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
-  Teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
-  Teid_t           enb_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
+  teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
+  teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
+  teid_t           enb_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
   ebi_t            eps_bearer_id;       ///< EPS bearer identifier
 } itti_sgi_update_end_point_request_t;
 
 typedef struct {
   SGIStatus_t      status;              ///< Status of  endpoint creation (Failed = 0xFF or Success = 0x0)
-  Teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
-  Teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
-  Teid_t           enb_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
+  teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
+  teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
+  teid_t           enb_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
   ebi_t            eps_bearer_id;       ///< EPS bearer identifier
 } itti_sgi_update_end_point_response_t;
 
 
 typedef struct {
-  Teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
-  Teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
+  teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
+  teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
   ebi_t            eps_bearer_id;       ///< EPS bearer identifier
   pdn_type_t       pdn_type;            ///< PDN Type
   PAA_t            paa;                 ///< PDN Address Allocation
@@ -86,8 +86,8 @@ typedef struct {
 
 typedef struct {
   SGIStatus_t      status;              ///< Status of  endpoint deletion (Failed = 0xFF or Success = 0x0)
-  Teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
-  Teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
+  teid_t           context_teid;        ///< Tunnel Endpoint Identifier S11
+  teid_t           sgw_S1u_teid;        ///< Tunnel Endpoint Identifier S1-U
   ebi_t            eps_bearer_id;       ///< EPS bearer identifier
   pdn_type_t       pdn_type;            ///< PDN Type
   PAA_t            paa;                 ///< PDN Address Allocation

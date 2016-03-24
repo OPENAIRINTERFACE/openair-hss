@@ -19,17 +19,14 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_IDENTITY_RESPONSE_SEEN
+#define FILE_IDENTITY_RESPONSE_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
 #include "SecurityHeaderType.h"
 #include "MessageType.h"
 #include "MobileIdentity.h"
-
-#ifndef FILE_IDENTITY_RESPONSE_SEEN
-#define FILE_IDENTITY_RESPONSE_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define IDENTITY_RESPONSE_MINIMUM_LENGTH ( \

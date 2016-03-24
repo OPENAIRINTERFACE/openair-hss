@@ -269,7 +269,7 @@ network_api_read_data (
     OAILOG_WARNING (LOG_NAS, "NET-API   - A signal was caught");
   } else {
     OAILOG_INFO (LOG_NAS,  "NET-API   - %d bytes received from the network " "sublayer", rbytes);
-    OAILOG_STREAM_HEX (LOG_NAS, "", _network_api_recv_buffer, rbytes);
+    OAILOG_STREAM_HEX (OAILOG_LEVEL_DEBUG, LOG_NAS, "", _network_api_recv_buffer, rbytes);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS, rbytes);
@@ -321,7 +321,7 @@ network_api_send_data (
     OAILOG_WARNING (LOG_NAS, "NET-API   - A signal was caught");
   } else {
     OAILOG_INFO (LOG_NAS,  "NET-API   - %d bytes sent to the network sublayer", sbytes);
-    OAILOG_STREAM_HEX (LOG_NAS, "", _network_api_recv_buffer, sbytes);
+    OAILOG_STREAM_HEX (OAILOG_LEVEL_DEBUG, LOG_NAS, "", _network_api_recv_buffer, sbytes);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS, sbytes);

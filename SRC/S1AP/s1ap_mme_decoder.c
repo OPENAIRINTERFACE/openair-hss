@@ -51,7 +51,7 @@ s1ap_mme_decode_initiating (
   size_t                                  message_string_size;
   MessagesIds                             message_id = MESSAGES_ID_MAX;
   DevAssert (initiating_p != NULL);
-  message_string = CALLOC_CHECK (10000, sizeof (char));
+  message_string = calloc (10000, sizeof (char));
   s1ap_string_total_size = 0;
   message->procedureCode = initiating_p->procedureCode;
   message->criticality = initiating_p->criticality;
@@ -111,7 +111,7 @@ s1ap_mme_decode_initiating (
   message_p->ittiMsg.s1ap_uplink_nas_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_uplink_nas_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  FREE_CHECK (message_string);
+  free_wrapper (message_string);
   return ret;
 }
 
@@ -125,7 +125,7 @@ s1ap_mme_decode_successfull_outcome (
   size_t                                  message_string_size = 0;
   MessagesIds                             message_id = MESSAGES_ID_MAX;
   DevAssert (successfullOutcome_p != NULL);
-  message_string = CALLOC_CHECK (10000, sizeof (char));
+  message_string = calloc (10000, sizeof (char));
   s1ap_string_total_size = 0;
   message->procedureCode = successfullOutcome_p->procedureCode;
   message->criticality = successfullOutcome_p->criticality;
@@ -156,7 +156,7 @@ s1ap_mme_decode_successfull_outcome (
   message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  FREE_CHECK (message_string);
+  free_wrapper (message_string);
   return ret;
 }
 
@@ -170,7 +170,7 @@ s1ap_mme_decode_unsuccessfull_outcome (
   size_t                                  message_string_size = 0;
   MessagesIds                             message_id = MESSAGES_ID_MAX;
   DevAssert (unSuccessfulOutcome_p != NULL);
-  message_string = CALLOC_CHECK (10000, sizeof (char));
+  message_string = calloc (10000, sizeof (char));
   s1ap_string_total_size = 0;
   message->procedureCode = unSuccessfulOutcome_p->procedureCode;
   message->criticality = unSuccessfulOutcome_p->criticality;
@@ -194,21 +194,20 @@ s1ap_mme_decode_unsuccessfull_outcome (
   message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  FREE_CHECK (message_string);
+  free_wrapper (message_string);
   return ret;
 }
 
 int
 s1ap_mme_decode_pdu (
   s1ap_message *message,
-  uint8_t *buffer,
-  uint32_t len) {
+  const_bstring const raw) {
   S1AP_PDU_t                              pdu = {0};
   S1AP_PDU_t                             *pdu_p = &pdu;
   asn_dec_rval_t                          dec_ret = {0};
-  DevAssert (buffer != NULL);
+  DevAssert (raw != NULL);
   memset ((void *)pdu_p, 0, sizeof (S1AP_PDU_t));
-  dec_ret = aper_decode (NULL, &asn_DEF_S1AP_PDU, (void **)&pdu_p, buffer, len, 0, 0);
+  dec_ret = aper_decode (NULL, &asn_DEF_S1AP_PDU, (void **)&pdu_p, bdata(raw), blength(raw), 0, 0);
 
   if (dec_ret.code != RC_OK) {
     OAILOG_ERROR (LOG_S1AP, "Failed to decode PDU\n");

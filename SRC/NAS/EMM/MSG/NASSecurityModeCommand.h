@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_NAS_SECURITY_MODE_COMMAND_SEEN
+#define FILE_NAS_SECURITY_MODE_COMMAND_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -31,9 +31,6 @@
 #include "UeSecurityCapability.h"
 #include "ImeisvRequest.h"
 #include "Nonce.h"
-
-#ifndef FILE_NAS_SECURITY_MODE_COMMAND_SEEN
-#define FILE_NAS_SECURITY_MODE_COMMAND_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define SECURITY_MODE_COMMAND_MINIMUM_LENGTH ( \

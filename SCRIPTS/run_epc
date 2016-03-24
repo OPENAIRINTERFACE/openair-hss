@@ -54,6 +54,8 @@ function help()
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -h, --help                          Print this help."
   echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in epc config file."
+  echo_error "  -I, --install-epc-files             Install EPC config files."
+  echo_error "  -k, --kill                          Kill the running local EPC."
   echo_error "  -K, --itti-dump-file  file_abs_path ITTI dump file containing all ITTI events occuring during EPC runtime."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
   echo_error "  -r, --remove-gtpu-kmodule           Remove gtpu kernel module before starting the EPC (EPC will load the gtpu kmodule)"
@@ -90,6 +92,7 @@ function main()
   local -i run_daemon=0
   local -i run_valgrind=0
   local -i set_network_interfaces=0
+  local -i var_check_install_epc_files=0
   local    exe_arguments=" "
   local    epc_config_file=$g_epc_default_config_file
   local    breakpoint_location=""
@@ -130,6 +133,17 @@ function main()
         echo "setting network interfaces: $set_network_interfaces"
         shift;
         ;;
+      -I | --install-epc-files)
+        echo "Install EPC files: .conf files."
+        var_check_install_epc_files=1
+        shift;
+        ;;
+      -k | --kill)
+        $SUDO killall -q mme_gw
+        do_stop_daemon
+        shift 1;
+        exit 0
+        ;;     
       -K | --itti-dump-file)
         local itti_dump_file=$2
         # can omit file name if last arg on the line
@@ -194,7 +208,7 @@ function main()
   done
 
   set_openair_env 
-  cecho "OPENAIR_DIR    = $OPENAIR_DIR" $green
+  cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
 
   check_gtpu_kmodule_installed
 
@@ -217,6 +231,32 @@ function main()
     rm -f /tmp/openair.msc.*
   fi
 
+  if [ $var_check_install_epc_files -gt 0 ];then
+    $SUDO mkdir -p -m 755 /usr/local/etc/oai/freeDiameter > /dev/null
+  
+    if [ ! -f $g_epc_default_config_file ]; then
+      $SUDO cp -upv $epc_config_file    $g_epc_default_config_file
+      echo_fatal "Please customize $g_epc_default_config_file"
+    else
+      if [  $epc_config_file -nt  $g_epc_default_config_file ]; then
+        read -p "Do you want to update $g_epc_default_config_file? <y/N> " prompt
+        if [[ $prompt =~ [yY](es)* ]]; then
+          $SUDO cp -upv $epc_config_file    $g_epc_default_config_file
+          echo_fatal "Please customize $g_epc_default_config_file"
+        fi
+      fi
+    fi 
+    
+    # Set the host FQDN to MME diameter Identity
+    $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/mme_fd.conf /usr/local/etc/oai/freeDiameter
+    HOST_FQDN=`hostname --fqdn`
+    DIAM_ID=$(cat /usr/local/etc/oai/freeDiameter/mme_fd.conf | grep Identity | cut -d '=' -f2 | cut -d '"' -f2)
+    DIAM_ID=$DIAM_ID
+    $SUDO  sed -i "s/$DIAM_ID/$HOST_FQDN/g" /usr/local/etc/oai/freeDiameter/mme_fd.conf
+
+    # generate certificates if necessary
+    $SUDO $OPENAIRCN_DIR/SCRIPTS/check_mme_s6a_certificate /usr/local/etc/oai/freeDiameter $HOST_FQDN
+  fi
   if [ $set_network_interfaces -eq 1 ]; then
     set_epc_network_interfaces $epc_config_file
   fi
@@ -224,10 +264,12 @@ function main()
   if [ "$run_valgrind" -eq 1 ] && [ "$run_gdb" -eq 1 ]; then 
     echo_fatal "Cannot run gdb and valgrind at the same time"
   fi
+  exe_arguments="-c $epc_config_file $exe_arguments"
+  DAEMON_ARGS="$exe_arguments"
 
   if [ "$run_daemon" -eq 1 ]; then
-    # TODO options
     $SUDO killall -q mme_gw
+    $SUDO killall --signal KILL -q mme_gw
     do_stop_daemon
     case "$?" in
       0) echo_success "EPC daemon was running -> stopped";;
@@ -244,13 +286,13 @@ function main()
   fi
 
 
-  exe_arguments="-O $epc_config_file $exe_arguments"
 
   if [ $run_gdb -eq 0 ]; then 
     # trap keyboard interrupt (control-c)
     trap control_c SIGINT
     if [ "$run_valgrind" -eq 1 ]; then 
-      $SUDO valgrind --leak-check=yes --track-origins=yes --leak-check=full --show-leak-kinds=all mme_gw  `echo $exe_arguments` 2>&1
+      #$SUDO valgrind --leak-check=yes --track-origins=yes --leak-check=full --show-leak-kinds=all  mme_gw  `echo $exe_arguments` 2>&1
+      $SUDO valgrind --tool=cachegrind  mme_gw  `echo $exe_arguments` 2>&1
     else
       $SUDO mme_gw  `echo $exe_arguments` 2>&1
     fi 

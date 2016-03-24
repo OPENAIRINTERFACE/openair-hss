@@ -215,6 +215,7 @@ add_boolean_option( SECU_DEBUG                      False    "Traces, option to 
 add_boolean_option( NAS_FORCE_REJECT_SR             True     "TEMP, TO be disabled for community after development and test: Force the EMM NAS layer to respond to any SR by reject")
 add_boolean_option( NAS_FORCE_REJECT_TAU            True     "TEMP, TO be disabled for community after development and test: Force the EMM NAS layer to respond to any TAU Request by reject")
 
+add_boolean_option( TRACE_3GPP_SPEC                 True     "Log hits of 3GPP specifications requirements")
 
 set (ITTI_DIR ${OPENAIRCN_DIR}/SRC/COMMON/ITTI)
 if (${ENABLE_ITTI})
@@ -342,6 +343,7 @@ include_directories("${OPENAIRCN_DIR}/SRC/GTPV1-U")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/LFDS/liblfds6.1.1/liblfds611/inc")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/MSC")
+include_directories("${OPENAIRCN_DIR}/SRC/UTILS/BSTR")
 include_directories("${OPENAIRCN_DIR}/SRC/SGW")
 include_directories("${OPENAIRCN_DIR}/SRC/MME_APP")
 include_directories("${OPENAIRCN_DIR}/SRC/S6A")
@@ -349,6 +351,13 @@ include_directories("${OPENAIRCN_DIR}/SRC")
 
 # Utilities Library
 ################
+add_library(BSTR
+  ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/bstraux.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/bstrlib.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/buniutil.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/utf8util.c
+)
+include_directories(${OPENAIRCN_DIR}/SRC/UTILS/BSTR)
 add_library(HASHTABLE
   ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/hashtable.c
   ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/obj_hashtable.c
@@ -475,7 +484,6 @@ set(NAS_SRC ${OPENAIRCN_DIR}/SRC/NAS/)
 set(libnas_api_OBJS
   ${NAS_SRC}API/NETWORK/as_message.c
   ${NAS_SRC}API/NETWORK/nas_message.c
-  ${NAS_SRC}API/NETWORK/network_api.c
   )
   
 set(libnas_emm_msg_OBJS
@@ -620,10 +628,8 @@ set(libnas_ies_OBJS
 
 set (libnas_utils_OBJS
   ${NAS_SRC}UTIL/nas_timer.c
-  ${NAS_SRC}UTIL/socket.c
   ${NAS_SRC}UTIL/TLVEncoder.c
   ${NAS_SRC}UTIL/TLVDecoder.c
-  ${NAS_SRC}UTIL/OctetString.c
 )
 
 
@@ -654,7 +660,6 @@ set(libnas_mme_emm_sap_OBJS
   ${NAS_SRC}EMM/SAP/EmmDeregisteredInitiated.c
   ${NAS_SRC}EMM/SAP/emm_esm.c
   ${NAS_SRC}EMM/SAP/emm_fsm.c
-  ${NAS_SRC}EMM/SAP/EmmNull.c
   ${NAS_SRC}EMM/SAP/emm_recv.c
   ${NAS_SRC}EMM/SAP/emm_reg.c
   ${NAS_SRC}EMM/SAP/EmmRegistered.c
@@ -789,6 +794,7 @@ add_definitions(-DASN1_MINIMUM_VERSION=924)
 add_executable(mme_gw
   ${OPENAIRCN_DIR}/SRC/OAI_EPC/oai_epc_log.c
   ${OPENAIRCN_DIR}/SRC/OAI_EPC/oai_epc.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
   ${GTPV1U_DIR}/gtpv1u_task.c
   ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
@@ -800,7 +806,7 @@ endif( ITTI_ANALYZER )
 target_link_libraries (mme_gw
 #SECU_OSA
   -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC GTPV1U GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A SGW MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
+   LIB_NAS_MME S1AP_LIB S1AP_EPC GTPV1U GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A SGW MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
   pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
   )
@@ -810,6 +816,7 @@ target_link_libraries (mme_gw
 add_executable(mme
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme_log.c
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
   ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
   )
@@ -820,7 +827,7 @@ endif( ITTI_ANALYZER )
 target_link_libraries (mme
 #SECU_OSA
   -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC S11 GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
+   LIB_NAS_MME S1AP_LIB S1AP_EPC S11 GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
   pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
   )
@@ -843,11 +850,21 @@ target_link_libraries (spgw
   pthread m rt ${CONFIG_LIBRARIES}  
   )
 
+# auth_request is a helper for scenario builder
+################################
+add_executable(auth_request
+  ${OPENAIRCN_DIR}/SRC/TEST/auth_request.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/ITTI/backtrace.c
+  ${OPENAIRCN_DIR}/SRC/SECU/key_nas_deriver.c
+  ${OPENAIRCN_DIR}/SRC/SECU/kdf.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
+  )
+target_link_libraries (auth_request
+  pthread m rt crypt ${NETTLE_LIBRARIES} gnutls fdproto fdcore
+  )
 
-# Default parameters
-# Does not work on simple install (fqdn in /etc/hosts 127.0.1.1)
-#cmake_host_system_information(RESULT HSS_FQDN_STR QUERY FQDN)
-#cmake_host_system_information(RESULT MME_FQDN_STR QUERY FQDN)
+
 IF( EPC_BUILD OR MME_BUILD )
   INCLUDE(FindFreeDiameter)
   # if standalone eNB or UE no need for FreeDiameter
@@ -856,84 +873,7 @@ IF( EPC_BUILD OR MME_BUILD )
       MESSAGE( SEND_ERROR "FreeDiameter is not enabled for OPENAIRHSS" )
     ENDIF( NOT FREEDIAMETER_HSS_S6A_ENABLED )
   ENDIF( FREEDIAMETER_FOUND )
-
-
-  execute_process(COMMAND hostname --fqdn OUTPUT_VARIABLE HSS_FQDN_STR TIMEOUT 3)
-  execute_process(COMMAND hostname --fqdn OUTPUT_VARIABLE MME_FQDN_STR TIMEOUT 3)
-  string(STRIP ${HSS_FQDN_STR} HSS_FQDN_STR)
-  string(STRIP ${MME_FQDN_STR} MME_FQDN_STR)
-
-  set(HSS_IP                       127.0.1.1                 CACHE STRING     "HSS IP address, default is local")
-  set(MME_FQDN                     ${MME_FQDN_STR}           CACHE STRING     "MME Fully qualified domain name")
-  set(HSS_FQDN                     ${HSS_FQDN_STR}           CACHE STRING     "HSS Fully qualified domain name")
-  set(TRANSPORT_option             "#No_TCP"                 CACHE STRING     "No_TCP or No_SCTP or comment string, FreeDiameter config option")
-  set(TRANSPORT_PREFER_TCP_option  "#Prefer_TCP"             CACHE STRING     "Prefer_TCP or comment string, FreeDiameter config option")
-  IF( NOT DEFINED REALM )
-    string(FIND ${MME_FQDN} "." pos)
-    math(EXPR pos1 "${pos}+1")
-    string(SUBSTRING ${MME_FQDN} ${pos1} -1 realm_string)
-    message("REALM extracted from MME FQDN is ${realm_string}")
-    set(REALM                      ${realm_string}           CACHE STRING     "EPC realm")
-  ENDIF( NOT DEFINED REALM )
-  message("REALM is ${REALM}")
-  IF( NOT DEFINED MME_HOSTNAME )
-    string(FIND ${MME_FQDN} "." pos)
-    string(SUBSTRING ${MME_FQDN} 0 ${pos} mme_hostname_string)
-    message("MME_HOSTNAME extracted from MME FQDN is ${mme_hostname_string}")
-    set(MME_HOSTNAME         ${mme_hostname_string}           CACHE STRING     "MME hostname")
-  ENDIF( NOT DEFINED MME_HOSTNAME )
-  IF( NOT DEFINED HSS_HOSTNAME )
-    string(FIND ${HSS_FQDN} "." pos)
-    string(SUBSTRING ${HSS_FQDN} 0 ${pos} hss_hostname_string)
-    message("HSS_HOSTNAME extracted from HSS FQDN is ${hss_hostname_string}")
-    set(HSS_HOSTNAME         ${hss_hostname_string}           CACHE STRING     "HSS hostname")
-  ENDIF( NOT DEFINED HSS_HOSTNAME )
-
-  if ( ${MME_HOSTNAME} STREQUAL ${HSS_HOSTNAME} )
-    set(MME_S6A_IS_SERVER      1 )
-  endif( ${MME_HOSTNAME} STREQUAL ${HSS_HOSTNAME} )
-
-  IF( MME_S6A_IS_SERVER )
-    set(ConnectPeer        "#ConnectPeer"     CACHE STRING   "HSS connect to MME")
-    set(DIAMETER_PORT      "Port = 3870"      CACHE STRING   "Diameter bind port, 3868 is always used by default by HSS, even if HSS client")
-    set(DIAMETER_SEC_PORT  "SecPort = 3871"   CACHE STRING   "Diameter bind sec port")
-  ELSE( MME_S6A_IS_SERVER )
-    set(ConnectPeer        "#ConnectPeer"     CACHE STRING   "HSS act as a server")
-    set(DIAMETER_PORT      "#Port = 3870"     CACHE STRING   "Diameter bind port")
-    set(DIAMETER_SEC_PORT  "#SecPort = 3871"  CACHE STRING   "Diameter bind sec port")
-  ENDIF( MME_S6A_IS_SERVER )
-
-  execute_process(COMMAND sudo ${OPENAIRCN_DIR}/SCRIPTS/check_mme_s6a_certificate ${FREEDIAMETER_PATH}/.. ${MME_FQDN} WORKING_DIRECTORY ${BUILD_TOP_DIR})
-
-
 ENDIF( EPC_BUILD OR MME_BUILD )
-
-IF( EPC_BUILD )
-  configure_file(
-    ${BUILD_TOP_DIR}/EPC/epc.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/epc.conf)
-
-  configure_file(
-    ${BUILD_TOP_DIR}/EPC/s6a.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf)
-ENDIF( EPC_BUILD )
-
-IF( MME_BUILD )
-  configure_file(
-    ${BUILD_TOP_DIR}/MME/mme.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mme.conf)
-    
-  configure_file(
-    ${BUILD_TOP_DIR}/MME/s6a.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf)
-ENDIF( MME_BUILD )
-
-IF( SPGW_BUILD )
-  configure_file(
-    ${BUILD_TOP_DIR}/SPGW/spgw.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/spgw.conf)
-ENDIF( SPGW_BUILD )
-
 
 
 ###################################"

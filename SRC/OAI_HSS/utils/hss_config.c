@@ -197,7 +197,7 @@ hss_config_display (
   FPRINTF_NOTICE ( "* FreeDiameter:\n");
   FPRINTF_NOTICE ( "\t- Conf file ........: %s\n", hss_config_p->freediameter_config);
   FPRINTF_NOTICE ( "* Security:\n");
-  FPRINTF_NOTICE ( "\t- Operator key......: %s\n", hss_config_p->operator_key);
+  FPRINTF_NOTICE ( "\t- Operator key......: %s\n", (hss_config_p->operator_key == NULL) ? "None" : "********************************");
   FPRINTF_NOTICE ( "\t- Random      ......: %s\n", hss_config_p->random);
 }
 

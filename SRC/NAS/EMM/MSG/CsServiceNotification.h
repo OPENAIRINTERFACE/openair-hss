@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_CS_SERVICE_NOTIFICATION_SEEN
+#define FILE_CS_SERVICE_NOTIFICATION_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -32,8 +32,6 @@
 #include "LcsIndicator.h"
 #include "LcsClientIdentity.h"
 
-#ifndef FILE_CS_SERVICE_NOTIFICATION_SEEN
-#define FILE_CS_SERVICE_NOTIFICATION_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define CS_SERVICE_NOTIFICATION_MINIMUM_LENGTH ( \

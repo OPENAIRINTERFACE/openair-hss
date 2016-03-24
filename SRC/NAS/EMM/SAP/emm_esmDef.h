@@ -42,7 +42,7 @@ Description Defines the EMMESM Service Access Point that provides
 #define FILE_EMM_ESMDEF_SEEN
 
 #include <stdbool.h>
-#include "OctetString.h"
+#include "bstrlib.h"
 #include "emmData.h"
 
 /****************************************************************************/
@@ -80,7 +80,7 @@ typedef struct {
  * ----------------------------------
  */
 typedef struct {
-  OctetString msg;        /* ESM message to be transfered     */
+  bstring          msg;        /* ESM message to be transfered     */
 } emm_esm_data_t;
 
 /*

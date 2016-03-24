@@ -30,7 +30,7 @@
 #define FILE_SGW_SEEN
 #include <netinet/in.h>
 #include "hashtable.h"
-#include "tree.h"
+#include "queue.h"
 #include "commonDef.h"
 #include "common_types.h"
 #include "sgw_context_manager.h"

@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef QUALITY_OF_SERVICE_H_
 #define QUALITY_OF_SERVICE_H_
+#include <stdint.h>
 
 #define QUALITY_OF_SERVICE_MINIMUM_LENGTH 14
 #define QUALITY_OF_SERVICE_MAXIMUM_LENGTH 14

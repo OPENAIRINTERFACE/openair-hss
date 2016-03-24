@@ -39,8 +39,8 @@
 #include "pid_file.h"
 #include "dynamic_memory_check.h"
 
-int    g_fd_pid_file = -1;
-
+int     g_fd_pid_file = -1;
+__pid_t g_pid         = -1;
 //------------------------------------------------------------------------------
 char* get_exe_basename(void)
 {
@@ -57,7 +57,7 @@ char* get_exe_basename(void)
   pid_file_name[rv] = 0;
   exe_basename = basename(pid_file_name);
   snprintf(pid_file_name, 128, "/var/run/%s.pid", exe_basename);
-  return STRDUP_CHECK(pid_file_name);
+  return strdup(pid_file_name);
 }
 
 //------------------------------------------------------------------------------
@@ -91,7 +91,8 @@ bool is_pid_file_lock_success(char const *pid_file_name)
   // fruncate file content
   ftruncate(g_fd_pid_file, 0);
   // write PID in file
-  sprintf(pid_dec, "%ld", (long)getpid());
+  g_pid = getpid();
+  sprintf(pid_dec, "%ld", (long)g_pid);
   write(g_fd_pid_file, pid_dec, strlen(pid_dec));
   return true;
 }

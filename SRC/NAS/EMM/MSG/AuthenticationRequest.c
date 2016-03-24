@@ -78,12 +78,12 @@ encode_authentication_request (
   *(buffer + encoded) = ((encode_u8_nas_key_set_identifier (&authentication_request->naskeysetidentifierasme) & 0x0f) << 4) | 0x00;
   encoded++;
 
-  if ((encode_result = encode_authentication_parameter_rand (&authentication_request->authenticationparameterrand, 0, buffer + encoded, len - encoded)) < 0)    //Return in case of error
+  if ((encode_result = encode_authentication_parameter_rand (authentication_request->authenticationparameterrand, 0, buffer + encoded, len - encoded)) < 0)    //Return in case of error
     return encode_result;
   else
     encoded += encode_result;
 
-  if ((encode_result = encode_authentication_parameter_autn (&authentication_request->authenticationparameterautn, 0, buffer + encoded, len - encoded)) < 0)    //Return in case of error
+  if ((encode_result = encode_authentication_parameter_autn (authentication_request->authenticationparameterautn, 0, buffer + encoded, len - encoded)) < 0)    //Return in case of error
     return encode_result;
   else
     encoded += encode_result;

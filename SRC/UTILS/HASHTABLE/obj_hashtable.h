@@ -53,6 +53,7 @@ typedef struct obj_hash_table_s {
     void              (*freekeyfunc)(void*);
     void              (*freedatafunc)(void*);
     char               *name;
+    bool                log_enabled;
 } obj_hash_table_t;
 
 void                obj_hashtable_no_free_key_callback(void* param);

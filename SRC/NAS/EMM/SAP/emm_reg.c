@@ -38,14 +38,14 @@
         procedures.
 
 *****************************************************************************/
+#include <assert.h>
 
+#include "common_defs.h"
+#include "log.h"
 #include "emm_reg.h"
 #include "commonDef.h"
-#include "log.h"
-
 #include "emm_fsm.h"
 
-#include <assert.h>
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

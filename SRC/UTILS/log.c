@@ -101,7 +101,7 @@ typedef struct oai_log_s {
   // logging somewhere else of the console.
   FILE                                   *log_fd;                                               /*!< \brief output stream */
   bool                                    is_output_is_fd;                                      /* We may want to not use syslog even if exe is a daemon */
-
+  bool                                    is_output_fd_unbuffered;                              /* We way want no buffering */
   char                                    server_address[LOG_MAX_SERVER_ADDRESS_LENGTH];        /*!< \brief TCP remote (or local) server hostname */
   char                                    server_port[LOG_MAX_PORT_NUM_LENGTH];                 /*!< \brief TCP remote (or local) server port     */
   log_tcp_state_t                         tcp_state;                                            /*!< \brief State of the client TCP connection           */
@@ -139,7 +139,7 @@ static void log_reuse_item(log_queue_item_t * item_p)
 
   rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
   if (0 == rv) {
-    FREE_CHECK (item_p);
+    free_wrapper (item_p);
   }
 }
 
@@ -189,6 +189,8 @@ void* log_task (__attribute__ ((unused)) void *args_p)
         }
         break;
       }
+      itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+      received_message_p = NULL;
     }
   }
 
@@ -280,8 +282,11 @@ void log_set_config(const log_config_t * const config)
     if ((MAX_LOG_LEVEL > config->msc_log_level) && (MIN_LOG_LEVEL <= config->msc_log_level))           g_oai_log.log_level[LOG_MSC]      = config->msc_log_level;
     if ((MAX_LOG_LEVEL > config->itti_log_level) && (MIN_LOG_LEVEL <= config->itti_log_level))         g_oai_log.log_level[LOG_ITTI]     = config->itti_log_level;
 
+    g_oai_log.is_output_fd_unbuffered = false;
+
     if (config->output) {
-      if (strcasecmp("CONSOLE", config->output)){
+      if ((strcasecmp(MME_CONFIG_STRING_OUTPUT_CONSOLE, config->output)) &&
+          (strcasecmp(MME_CONFIG_STRING_OUTPUT_UNBUFFERED_CONSOLE, config->output))) {
         if (strcasecmp("SYSLOG", config->output)){
           // if seems to be a file path
           if ((config->output[0] == '.') || (config->output[0] == '/')) {
@@ -336,6 +341,11 @@ void log_set_config(const log_config_t * const config)
         setvbuf(stdout, NULL, _IONBF, 0);
         g_oai_log.log_fd = stdout;
         g_oai_log.is_output_is_fd = true;
+        if (!strcasecmp("MME_CONFIG_STRING_OUTPUT_UNBUFFERED_CONSOLE", config->output)) {
+          g_oai_log.is_output_fd_unbuffered = true;
+        } else {
+          g_oai_log.is_output_fd_unbuffered = false;
+        }
 #endif
       }
     }
@@ -409,17 +419,19 @@ log_init (
 
   OAI_FPRINTF_INFO("Initializing OAI Logging\n");
 
-  g_oai_log.thread_context_htbl = hashtable_ts_create (128, NULL, FREE_CHECK, "Logging thread context hashtable");
+  g_oai_log.thread_context_htbl = hashtable_ts_create (128, NULL, free_wrapper, "Logging thread context hashtable");
   AssertFatal (NULL != g_oai_log.thread_context_htbl, "Could not create hashtable for Log!\n");
+  g_oai_log.thread_context_htbl->log_enabled = false;
 
-  log_thread_ctxt_t *thread_ctxt = CALLOC_CHECK(1, sizeof(log_thread_ctxt_t));
+
+  log_thread_ctxt_t *thread_ctxt = calloc(1, sizeof(log_thread_ctxt_t));
   AssertFatal(NULL != thread_ctxt, "Error Could not create log thread context\n");
   pthread_t p = pthread_self();
   thread_ctxt->tid = p;
   hashtable_rc_t hash_rc = hashtable_ts_insert(g_oai_log.thread_context_htbl, (hash_key_t) p, thread_ctxt);
   if (HASH_TABLE_OK != hash_rc) {
     OAI_FPRINTF_ERR("Error Could not register log thread context\n");
-    FREE_CHECK(thread_ctxt);
+    free_wrapper(thread_ctxt);
   }
 
   rv = lfds611_stack_new (&g_oai_log.log_free_message_queue_p, (lfds611_atom_t) max_threadsP + 2);
@@ -434,8 +446,8 @@ log_init (
   log_start_use ();
 
   for (i = 0; i < max_threadsP * 30; i++) {
-    item_p = CALLOC_CHECK (1, sizeof(log_queue_item_t));
-    AssertFatal (item_p, "MALLOC_CHECK failed!\n");
+    item_p = calloc (1, sizeof(log_queue_item_t));
+    AssertFatal (item_p, "malloc failed!\n");
     rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
     AssertFatal (rv, "lfds611_stack_guaranteed_push failed for item %u\n", i);
   }
@@ -484,9 +496,11 @@ log_init (
 void log_itti_connect(
   void)
 {
-  int                                     rv = 0;
-  rv = itti_create_task (TASK_LOG, log_task, NULL);
-  AssertFatal (rv == 0, "Create task for OAI logging failed!\n");
+  if (!g_oai_log.is_output_fd_unbuffered) {
+    int                                     rv = 0;
+    rv = itti_create_task (TASK_LOG, log_task, NULL);
+    AssertFatal (rv == 0, "Create task for OAI logging failed!\n");
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -499,13 +513,13 @@ log_start_use (
   if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
     lfds611_queue_use (g_oai_log.log_message_queue_p);
     lfds611_stack_use (g_oai_log.log_free_message_queue_p);
-    log_thread_ctxt_t *thread_ctxt = CALLOC_CHECK(1, sizeof(log_thread_ctxt_t));
+    log_thread_ctxt_t *thread_ctxt = calloc(1, sizeof(log_thread_ctxt_t));
     if (thread_ctxt) {
       thread_ctxt->tid = p;
       hash_rc = hashtable_ts_insert(g_oai_log.thread_context_htbl, (hash_key_t) p, thread_ctxt);
       if (HASH_TABLE_OK != hash_rc) {
         OAI_FPRINTF_ERR("Error Could not register log thread context\n");
-        FREE_CHECK(thread_ctxt);
+        free_wrapper(thread_ctxt);
       }
     } else {
       OAI_FPRINTF_ERR("Error Could not create log thread context\n");
@@ -524,16 +538,16 @@ log_flush_messages (
 
   if (g_oai_log.log_fd) {
     while ((rv = lfds611_queue_dequeue (g_oai_log.log_message_queue_p, (void **)&item_p)) == 1) {
+      rv_put = 0;
       if (item_p->len > 0) {
         if (g_oai_log.is_output_is_fd) {
           rv_put = fputs (item_p->str, g_oai_log.log_fd);
         } else {
           syslog (item_p->log_level ,"%s", item_p->str);
         }
-        // TODO BIN DATA
-        item_p->len = 0;
-        rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
       }
+      item_p->len = 0;
+      rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
       if (rv_put < 0) {
         // error occured
         OAI_FPRINTF_ERR("Error while writing log %d\n", rv_put);
@@ -620,7 +634,7 @@ void log_stream_hex(
       rv = snprintf (&message->str[message->len], LOG_MAX_MESSAGE_LENGTH - message->len, " %02x", (streamP[octet_index]) & (uint)0x00ff);
 
       if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - message->len) < rv)) {
-        OAI_FPRINTF_ERR("Error while logging message\n");
+        OAI_FPRINTF_ERR("Error while logging message, consumed %d remaining %d (rv=%d)\n", message->len, LOG_MAX_MESSAGE_LENGTH - message->len, rv);
       } else {
         message->len += rv;
       }
@@ -704,7 +718,7 @@ log_message_add (
       va_end (args);
 
       if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - messageP->len) < rv)) {
-        OAI_FPRINTF_ERR("Error while logging message\n");
+        OAI_FPRINTF_ERR("Error while logging message, consumed %d remaining %d (rv=%d)\n", messageP->len, LOG_MAX_MESSAGE_LENGTH - messageP->len, rv);
       } else {
         messageP->len += rv;
       }
@@ -723,18 +737,24 @@ log_message_finish (
 
     if ((0 > rv) || ((LOG_MAX_MESSAGE_LENGTH - messageP->len) < rv)) {
       messageP->str[LOG_MAX_MESSAGE_LENGTH-1] = '\0';
-      OAI_FPRINTF_ERR("Error while logging message\n");
+      OAI_FPRINTF_ERR("Error while logging message, consumed %d remaining %d (rv=%d)\n", messageP->len, LOG_MAX_MESSAGE_LENGTH - messageP->len, rv);
     } else {
       messageP->len += rv;
     }
     // send message
-    rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, messageP);
+    if (!g_oai_log.is_output_fd_unbuffered) {
+      rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, messageP);
+    } else {
+      fprintf(g_oai_log.log_fd, "%s", messageP->str);
+      rv = 0;
+    }
 
     if (0 == rv) {
-      OAI_FPRINTF_ERR("Error while lfds611_queue_guaranteed_enqueue message %s in LOG\n", messageP->str);
       messageP->len = 0;
-      rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, messageP);
-      FREE_CHECK (messageP);
+      rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, messageP);
+      if (0 == rv) {
+        free_wrapper (messageP);
+      }
     }
   }
 }
@@ -783,10 +803,12 @@ log_message_start (
     rv = lfds611_stack_pop (g_oai_log.log_free_message_queue_p, (void **)messageP);
 
     if (0 == rv) {
-      *messageP = CALLOC_CHECK(1, sizeof(log_queue_item_t));
+      *messageP = calloc(1, sizeof(log_queue_item_t));
       AssertFatal(*messageP, "Out of memory error");
       OAI_FPRINTF_ERR("Warning allocating an extra log_queue_item_t in LOG\n");
       rv = 1;
+    } else {
+      (*messageP)->len = 0;
     }
 
     if (1 == rv) {
@@ -941,10 +963,12 @@ log_message (
   rv = lfds611_stack_pop (g_oai_log.log_free_message_queue_p, (void **)&new_item_p);
 
   if (0 == rv) {
-    new_item_p = CALLOC_CHECK(1, sizeof(log_queue_item_t));
+    new_item_p = calloc(1, sizeof(log_queue_item_t));
     AssertFatal(new_item_p, "Out of memory error");
     OAI_FPRINTF_ERR("Warning allocating an extra log_queue_item_t in LOG\n");
     rv = 1;
+  } else {
+    new_item_p->len = 0; // you never know
   }
 
   if (new_item_p) {
@@ -988,17 +1012,22 @@ log_message (
 
       new_item_p->len = rv;
       new_item_p->str[rv] = 0;
-      rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, new_item_p);
 
+      if (!g_oai_log.is_output_fd_unbuffered) {
+        rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, new_item_p);
+      } else {
+        fprintf(g_oai_log.log_fd, "%s", new_item_p->str);
+        rv = 0;
+      }
       if (0 == rv) {
         new_item_p->len = 0;
         rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, new_item_p);
         if (0 == rv) {
-          FREE_CHECK (new_item_p);
+          free_wrapper (new_item_p);
         }
       }
     } else {
-      FREE_CHECK (new_item_p);
+      free_wrapper (new_item_p);
       OAI_FPRINTF_ERR("Error while lfds611_stack_pop()\n");
       //log_flush_messages ();
     }
@@ -1009,7 +1038,7 @@ error_event:
   new_item_p->len = 0;
   rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, new_item_p);
   if (0 == rv) {
-    FREE_CHECK (new_item_p);
+    free_wrapper (new_item_p);
   }
 }
 

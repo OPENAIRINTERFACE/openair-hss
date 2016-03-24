@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef TRACKING_AREA_IDENTITY_LIST_H_
 #define TRACKING_AREA_IDENTITY_LIST_H_
+#include <stdint.h>
 
 #define TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH 8
 #define TRACKING_AREA_IDENTITY_LIST_MAXIMUM_LENGTH 98

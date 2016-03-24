@@ -45,9 +45,7 @@ decode_additional_update_result (
 
   *additionalupdateresult = *buffer & 0x3;
   decoded++;
-#if NAS_DEBUG
-  dump_additional_update_result_xml (additionalupdateresult, iei);
-#endif
+
   return decoded;
 }
 
@@ -63,9 +61,6 @@ decode_u8_additional_update_result (
 
   *additionalupdateresult = *buffer & 0x3;
   decoded++;
-#if NAS_DEBUG
-  dump_additional_update_result_xml (additionalupdateresult, iei);
-#endif
   return decoded;
 }
 
@@ -82,9 +77,6 @@ encode_additional_update_result (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, ADDITIONAL_UPDATE_RESULT_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_additional_update_result_xml (additionalupdateresult, iei);
-#endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*additionalupdateresult & 0x3);
   encoded++;
   return encoded;
