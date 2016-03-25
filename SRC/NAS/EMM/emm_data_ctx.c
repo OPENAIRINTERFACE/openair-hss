@@ -61,17 +61,17 @@ mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(emm_data_context_t *ctxt)
 }
 
 //------------------------------------------------------------------------------
-void emm_ctx_mark_common_procedure_running(emm_data_context_t * const ctxt, const int proc_id)
+inline void emm_ctx_mark_common_procedure_running(emm_data_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_or(&ctxt->common_proc_mask, proc_id);
 }
 
-void emm_ctx_unmark_common_procedure_running(emm_data_context_t * const ctxt, const int proc_id)
+inline void emm_ctx_unmark_common_procedure_running(emm_data_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_and(&ctxt->common_proc_mask, ~proc_id);
 }
 
-bool emm_ctx_is_common_procedure_running(emm_data_context_t * const ctxt, const int proc_id)
+inline bool emm_ctx_is_common_procedure_running(emm_data_context_t * const ctxt, const int proc_id)
 {
   if (ctxt->common_proc_mask & proc_id) return true;
   return false;
@@ -79,17 +79,17 @@ bool emm_ctx_is_common_procedure_running(emm_data_context_t * const ctxt, const 
 
 
 
-void emm_ctx_mark_specific_procedure(emm_data_context_t * const ctxt, const int proc_id)
+inline void emm_ctx_mark_specific_procedure(emm_data_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_or(&ctxt->specific_proc_mask, proc_id);
 }
 
-void emm_ctx_unmark_specific_procedure(emm_data_context_t * const ctxt, const int proc_id)
+inline void emm_ctx_unmark_specific_procedure(emm_data_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_and(&ctxt->specific_proc_mask, ~proc_id);
 }
 
-bool emm_ctx_is_specific_procedure(emm_data_context_t * const ctxt, const int proc_id)
+inline bool emm_ctx_is_specific_procedure(emm_data_context_t * const ctxt, const int proc_id)
 {
   if (ctxt->specific_proc_mask & proc_id) return true;
   return false;
@@ -97,31 +97,31 @@ bool emm_ctx_is_specific_procedure(emm_data_context_t * const ctxt, const int pr
 
 
 //------------------------------------------------------------------------------
-void emm_ctx_set_attribute_present(emm_data_context_t * const ctxt, const int attribute_bit_pos)
+inline void emm_ctx_set_attribute_present(emm_data_context_t * const ctxt, const int attribute_bit_pos)
 {
   ctxt->member_present_mask |= attribute_bit_pos;
 }
 
-void emm_ctx_clear_attribute_present(emm_data_context_t * const ctxt, const int attribute_bit_pos)
+inline void emm_ctx_clear_attribute_present(emm_data_context_t * const ctxt, const int attribute_bit_pos)
 {
   ctxt->member_present_mask &= ~attribute_bit_pos;
   ctxt->member_valid_mask &= ~attribute_bit_pos;
 }
 
-void emm_ctx_set_attribute_valid(emm_data_context_t * const ctxt, const int attribute_bit_pos)
+inline void emm_ctx_set_attribute_valid(emm_data_context_t * const ctxt, const int attribute_bit_pos)
 {
   ctxt->member_present_mask |= attribute_bit_pos;
   ctxt->member_valid_mask   |= attribute_bit_pos;
 }
 
-void emm_ctx_clear_attribute_valid(emm_data_context_t * const ctxt, const int attribute_bit_pos)
+inline void emm_ctx_clear_attribute_valid(emm_data_context_t * const ctxt, const int attribute_bit_pos)
 {
   ctxt->member_valid_mask &= ~attribute_bit_pos;
 }
 
 //------------------------------------------------------------------------------
 /* Clear GUTI  */
-void emm_ctx_clear_guti(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_guti(emm_data_context_t * const ctxt)
 {
   clear_guti(&ctxt->_guti);
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_GUTI);
@@ -129,7 +129,7 @@ void emm_ctx_clear_guti(emm_data_context_t * const ctxt)
 }
 
 /* Set GUTI */
-void emm_ctx_set_guti(emm_data_context_t * const ctxt, guti_t *guti)
+inline void emm_ctx_set_guti(emm_data_context_t * const ctxt, guti_t *guti)
 {
   ctxt->_guti = *guti;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_GUTI);
@@ -137,7 +137,7 @@ void emm_ctx_set_guti(emm_data_context_t * const ctxt, guti_t *guti)
 }
 
 /* Set GUTI, mark it as valid */
-void emm_ctx_set_valid_guti(emm_data_context_t * const ctxt, guti_t *guti)
+inline void emm_ctx_set_valid_guti(emm_data_context_t * const ctxt, guti_t *guti)
 {
   ctxt->_guti = *guti;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_GUTI);
@@ -146,7 +146,7 @@ void emm_ctx_set_valid_guti(emm_data_context_t * const ctxt, guti_t *guti)
 
 //------------------------------------------------------------------------------
 /* Clear old GUTI  */
-void emm_ctx_clear_old_guti(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_old_guti(emm_data_context_t * const ctxt)
 {
   clear_guti(&ctxt->_old_guti);
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_OLD_GUTI);
@@ -154,7 +154,7 @@ void emm_ctx_clear_old_guti(emm_data_context_t * const ctxt)
 }
 
 /* Set GUTI */
-void emm_ctx_set_old_guti(emm_data_context_t * const ctxt, guti_t *guti)
+inline void emm_ctx_set_old_guti(emm_data_context_t * const ctxt, guti_t *guti)
 {
   ctxt->_old_guti = *guti;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_OLD_GUTI);
@@ -162,7 +162,7 @@ void emm_ctx_set_old_guti(emm_data_context_t * const ctxt, guti_t *guti)
 }
 
 /* Set GUTI, mark it as valid */
-void emm_ctx_set_valid_old_guti(emm_data_context_t * const ctxt, guti_t *guti)
+inline void emm_ctx_set_valid_old_guti(emm_data_context_t * const ctxt, guti_t *guti)
 {
   ctxt->_old_guti = *guti;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_OLD_GUTI);
@@ -171,7 +171,7 @@ void emm_ctx_set_valid_old_guti(emm_data_context_t * const ctxt, guti_t *guti)
 
 //------------------------------------------------------------------------------
 /* Clear IMSI */
-void emm_ctx_clear_imsi(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_imsi(emm_data_context_t * const ctxt)
 {
   clear_imsi(&ctxt->_imsi);
   ctxt->_imsi64 = INVALID_IMSI64;
@@ -180,7 +180,7 @@ void emm_ctx_clear_imsi(emm_data_context_t * const ctxt)
 }
 
 /* Set IMSI */
-void emm_ctx_set_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64)
+inline void emm_ctx_set_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64)
 {
   ctxt->_imsi   = *imsi;
   ctxt->_imsi64 = imsi64;
@@ -193,7 +193,7 @@ void emm_ctx_set_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, const imsi6
 }
 
 /* Set IMSI, mark it as valid */
-void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64)
+inline void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64)
 {
   ctxt->_imsi   = *imsi;
   ctxt->_imsi64 = imsi64;
@@ -207,7 +207,7 @@ void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, const
 
 //------------------------------------------------------------------------------
 /* Clear IMEI */
-void emm_ctx_clear_imei(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_imei(emm_data_context_t * const ctxt)
 {
   clear_imei(&ctxt->_imei);
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_IMEI);
@@ -215,7 +215,7 @@ void emm_ctx_clear_imei(emm_data_context_t * const ctxt)
 }
 
 /* Set IMEI */
-void emm_ctx_set_imei(emm_data_context_t * const ctxt, imei_t *imei)
+inline void emm_ctx_set_imei(emm_data_context_t * const ctxt, imei_t *imei)
 {
   ctxt->_imei = *imei;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_IMEI);
@@ -227,7 +227,7 @@ void emm_ctx_set_imei(emm_data_context_t * const ctxt, imei_t *imei)
 }
 
 /* Set IMEI, mark it as valid */
-void emm_ctx_set_valid_imei(emm_data_context_t * const ctxt, imei_t *imei)
+inline void emm_ctx_set_valid_imei(emm_data_context_t * const ctxt, imei_t *imei)
 {
   ctxt->_imei = *imei;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_IMEI);
@@ -240,7 +240,7 @@ void emm_ctx_set_valid_imei(emm_data_context_t * const ctxt, imei_t *imei)
 
 //------------------------------------------------------------------------------
 /* Clear IMEI_SV */
-void emm_ctx_clear_imeisv(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_imeisv(emm_data_context_t * const ctxt)
 {
   clear_imeisv(&ctxt->_imeisv);
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_IMEI_SV);
@@ -248,7 +248,7 @@ void emm_ctx_clear_imeisv(emm_data_context_t * const ctxt)
 }
 
 /* Set IMEI_SV */
-void emm_ctx_set_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv)
+inline void emm_ctx_set_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv)
 {
   ctxt->_imeisv = *imeisv;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_IMEI_SV);
@@ -256,7 +256,7 @@ void emm_ctx_set_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv)
 }
 
 /* Set IMEI_SV, mark it as valid */
-void emm_ctx_set_valid_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv)
+inline void emm_ctx_set_valid_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv)
 {
   ctxt->_imeisv = *imeisv;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_IMEI_SV);
@@ -265,7 +265,7 @@ void emm_ctx_set_valid_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv)
 
 //------------------------------------------------------------------------------
 /* Clear last_visited_registered_tai */
-void emm_ctx_clear_lvr_tai(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_lvr_tai(emm_data_context_t * const ctxt)
 {
   clear_tai(&ctxt->_lvr_tai);
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_LVR_TAI);
@@ -273,7 +273,7 @@ void emm_ctx_clear_lvr_tai(emm_data_context_t * const ctxt)
 }
 
 /* Set last_visited_registered_tai */
-void emm_ctx_set_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai)
+inline void emm_ctx_set_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai)
 {
   ctxt->_lvr_tai = *lvr_tai;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_LVR_TAI);
@@ -284,7 +284,7 @@ void emm_ctx_set_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai)
 }
 
 /* Set last_visited_registered_tai, mark it as valid */
-void emm_ctx_set_valid_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai)
+inline void emm_ctx_set_valid_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai)
 {
   ctxt->_lvr_tai = *lvr_tai;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_LVR_TAI);
@@ -293,7 +293,7 @@ void emm_ctx_set_valid_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai)
 
 //------------------------------------------------------------------------------
 /* Clear AUTH vectors  */
-void emm_ctx_clear_auth_vectors(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_auth_vectors(emm_data_context_t * const ctxt)
 {
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_AUTH_VECTORS);
   for (int i = 0; i < MAX_EPS_AUTH_VECTORS; i++) {
@@ -305,9 +305,9 @@ void emm_ctx_clear_auth_vectors(emm_data_context_t * const ctxt)
 }
 //------------------------------------------------------------------------------
 /* Clear AUTH vector  */
-void emm_ctx_clear_auth_vector(emm_data_context_t * const ctxt, int eksi)
+inline void emm_ctx_clear_auth_vector(emm_data_context_t * const ctxt, ksi_t eksi)
 {
-
+  AssertFatal(eksi < MAX_EPS_AUTH_VECTORS, "Out of bounds eksi %d", eksi);
   memset((void *)&ctxt->_vector[eksi], 0, sizeof(ctxt->_vector[eksi]));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_AUTH_VECTOR0+eksi);
   int remaining_vectors = 0;
@@ -326,11 +326,11 @@ void emm_ctx_clear_auth_vector(emm_data_context_t * const ctxt, int eksi)
 }
 //------------------------------------------------------------------------------
 /* Clear security  */
-void emm_ctx_clear_security(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_security(emm_data_context_t * const ctxt)
 {
   memset (&ctxt->_security, 0, sizeof (ctxt->_security));
-  ctxt->_security.sc_type      = SECURITY_CTX_TYPE_NOT_AVAILABLE;
-  ctxt->_security.eksi         = EKSI_INVALID;
+  emm_ctx_set_security_type(ctxt, SECURITY_CTX_TYPE_NOT_AVAILABLE);
+  emm_ctx_set_security_eksi(ctxt, KSI_NO_KEY_AVAILABLE);
   emm_ctx_clear_security_vector_index(ctxt);
   ctxt->_security.selected_algorithms.encryption = NAS_SECURITY_ALGORITHMS_EEA0;
   ctxt->_security.selected_algorithms.integrity  = NAS_SECURITY_ALGORITHMS_EIA0;
@@ -339,27 +339,27 @@ void emm_ctx_clear_security(emm_data_context_t * const ctxt)
 }
 
 //------------------------------------------------------------------------------
-void emm_ctx_set_security_type(emm_data_context_t * const ctxt, emm_sc_type_t sc_type)
+inline void emm_ctx_set_security_type(emm_data_context_t * const ctxt, emm_sc_type_t sc_type)
 {
   ctxt->_security.sc_type = sc_type;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set security context security type %d\n", ctxt->ue_id, sc_type);
 }
 
 //------------------------------------------------------------------------------
-void emm_ctx_set_security_eksi(emm_data_context_t * const ctxt, int eksi)
+inline void emm_ctx_set_security_eksi(emm_data_context_t * const ctxt, ksi_t eksi)
 {
   ctxt->_security.eksi = eksi;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set security context eksi %d\n", ctxt->ue_id, eksi);
 }
 
 //------------------------------------------------------------------------------
-void emm_ctx_clear_security_vector_index(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_security_vector_index(emm_data_context_t * const ctxt)
 {
   ctxt->_security.vector_index = EMM_SECURITY_VECTOR_INDEX_INVALID;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " clear security context vector index\n", ctxt->ue_id);
 }
 //------------------------------------------------------------------------------
-void emm_ctx_set_security_vector_index(emm_data_context_t * const ctxt, int vector_index)
+inline void emm_ctx_set_security_vector_index(emm_data_context_t * const ctxt, int vector_index)
 {
   ctxt->_security.vector_index = vector_index;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set security context vector index %d\n", ctxt->ue_id, vector_index);
@@ -368,11 +368,11 @@ void emm_ctx_set_security_vector_index(emm_data_context_t * const ctxt, int vect
 
 //------------------------------------------------------------------------------
 /* Clear non current security  */
-void emm_ctx_clear_non_current_security(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_non_current_security(emm_data_context_t * const ctxt)
 {
   memset (&ctxt->_non_current_security, 0, sizeof (ctxt->_non_current_security));
   ctxt->_non_current_security.sc_type      = SECURITY_CTX_TYPE_NOT_AVAILABLE;
-  ctxt->_non_current_security.eksi         = EKSI_INVALID;
+  ctxt->_non_current_security.eksi         = KSI_NO_KEY_AVAILABLE;
   emm_ctx_clear_non_current_security_vector_index(ctxt);
   ctxt->_non_current_security.selected_algorithms.encryption = NAS_SECURITY_ALGORITHMS_EEA0;
   ctxt->_non_current_security.selected_algorithms.integrity  = NAS_SECURITY_ALGORITHMS_EIA0;
@@ -380,13 +380,13 @@ void emm_ctx_clear_non_current_security(emm_data_context_t * const ctxt)
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " cleared non current security context \n", ctxt->ue_id);
 }
 //------------------------------------------------------------------------------
-void emm_ctx_clear_non_current_security_vector_index(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_non_current_security_vector_index(emm_data_context_t * const ctxt)
 {
   ctxt->_non_current_security.vector_index = EMM_SECURITY_VECTOR_INDEX_INVALID;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " clear non current security context vector index\n", ctxt->ue_id);
 }
 //------------------------------------------------------------------------------
-void emm_ctx_set_non_current_security_vector_index(emm_data_context_t * const ctxt, int vector_index)
+inline void emm_ctx_set_non_current_security_vector_index(emm_data_context_t * const ctxt, int vector_index)
 {
   ctxt->_non_current_security.vector_index = vector_index;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set non current security context vector index %d\n", ctxt->ue_id, vector_index);
@@ -394,7 +394,7 @@ void emm_ctx_set_non_current_security_vector_index(emm_data_context_t * const ct
 
 //------------------------------------------------------------------------------
 /* Clear UE network capability IE   */
-void emm_ctx_clear_ue_nw_cap_ie(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_ue_nw_cap_ie(emm_data_context_t * const ctxt)
 {
   memset (&ctxt->_ue_network_capability_ie, 0, sizeof (ctxt->_ue_network_capability_ie));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_UE_NETWORK_CAPABILITY_IE);
@@ -402,7 +402,7 @@ void emm_ctx_clear_ue_nw_cap_ie(emm_data_context_t * const ctxt)
 }
 
 /* Set UE network capability IE */
-void emm_ctx_set_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkCapability *ue_nw_cap_ie)
+inline void emm_ctx_set_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkCapability *ue_nw_cap_ie)
 {
   ctxt->_ue_network_capability_ie = *ue_nw_cap_ie;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_UE_NETWORK_CAPABILITY_IE);
@@ -410,7 +410,7 @@ void emm_ctx_set_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkCapabili
 }
 
 /* Set UE network capability IE, mark it as valid */
-void emm_ctx_set_valid_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkCapability *ue_nw_cap_ie)
+inline void emm_ctx_set_valid_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkCapability *ue_nw_cap_ie)
 {
   ctxt->_ue_network_capability_ie = *ue_nw_cap_ie;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_UE_NETWORK_CAPABILITY_IE);
@@ -420,7 +420,7 @@ void emm_ctx_set_valid_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkCa
 
 //------------------------------------------------------------------------------
 /* Clear MS network capability IE   */
-void emm_ctx_clear_ms_nw_cap(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_ms_nw_cap(emm_data_context_t * const ctxt)
 {
   memset (&ctxt->_ms_network_capability_ie, 0, sizeof (ctxt->_ue_network_capability_ie));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_MS_NETWORK_CAPABILITY_IE);
@@ -429,7 +429,7 @@ void emm_ctx_clear_ms_nw_cap(emm_data_context_t * const ctxt)
 
 //------------------------------------------------------------------------------
 /* Clear current DRX parameter   */
-void emm_ctx_clear_current_drx_parameter(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_current_drx_parameter(emm_data_context_t * const ctxt)
 {
   memset (&ctxt->_current_drx_parameter, 0, sizeof (ctxt->_current_drx_parameter));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_CURRENT_DRX_PARAMETER);
@@ -437,7 +437,7 @@ void emm_ctx_clear_current_drx_parameter(emm_data_context_t * const ctxt)
 }
 
 /* Set current DRX parameter */
-void emm_ctx_set_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
+inline void emm_ctx_set_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
 {
   ctxt->_current_drx_parameter = *drx;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_CURRENT_DRX_PARAMETER);
@@ -445,7 +445,7 @@ void emm_ctx_set_current_drx_parameter(emm_data_context_t * const ctxt, DrxParam
 }
 
 /* Set current DRX parameter, mark it as valid */
-void emm_ctx_set_valid_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
+inline void emm_ctx_set_valid_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
 {
   ctxt->_current_drx_parameter = *drx;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_CURRENT_DRX_PARAMETER);
@@ -454,7 +454,7 @@ void emm_ctx_set_valid_current_drx_parameter(emm_data_context_t * const ctxt, Dr
 
 //------------------------------------------------------------------------------
 /* Clear non current DRX parameter   */
-void emm_ctx_clear_pending_current_drx_parameter(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_pending_current_drx_parameter(emm_data_context_t * const ctxt)
 {
   memset (&ctxt->_pending_drx_parameter, 0, sizeof (ctxt->_pending_drx_parameter));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_PENDING_DRX_PARAMETER);
@@ -462,7 +462,7 @@ void emm_ctx_clear_pending_current_drx_parameter(emm_data_context_t * const ctxt
 }
 
 /* Set current DRX parameter */
-void emm_ctx_set_pending_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
+inline void emm_ctx_set_pending_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
 {
   ctxt->_pending_drx_parameter = *drx;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_PENDING_DRX_PARAMETER);
@@ -470,7 +470,7 @@ void emm_ctx_set_pending_current_drx_parameter(emm_data_context_t * const ctxt, 
 }
 
 /* Set current DRX parameter, mark it as valid */
-void emm_ctx_set_valid_pending_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
+inline void emm_ctx_set_valid_pending_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
 {
   ctxt->_pending_drx_parameter = *drx;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_PENDING_DRX_PARAMETER);
@@ -479,7 +479,7 @@ void emm_ctx_set_valid_pending_current_drx_parameter(emm_data_context_t * const 
 
 //------------------------------------------------------------------------------
 /* Clear EPS bearer context status   */
-void emm_ctx_clear_eps_bearer_context_status(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_eps_bearer_context_status(emm_data_context_t * const ctxt)
 {
   memset (&ctxt->_eps_bearer_context_status, 0, sizeof (ctxt->_eps_bearer_context_status));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
@@ -487,7 +487,7 @@ void emm_ctx_clear_eps_bearer_context_status(emm_data_context_t * const ctxt)
 }
 
 /* Set current DRX parameter */
-void emm_ctx_set_eps_bearer_context_status(emm_data_context_t * const ctxt, EpsBearerContextStatus *status)
+inline void emm_ctx_set_eps_bearer_context_status(emm_data_context_t * const ctxt, EpsBearerContextStatus *status)
 {
   ctxt->_eps_bearer_context_status = *status;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
@@ -495,7 +495,7 @@ void emm_ctx_set_eps_bearer_context_status(emm_data_context_t * const ctxt, EpsB
 }
 
 /* Set current DRX parameter, mark it as valid */
-void emm_ctx_set_valid_eps_bearer_context_status(emm_data_context_t * const ctxt, EpsBearerContextStatus *status)
+inline void emm_ctx_set_valid_eps_bearer_context_status(emm_data_context_t * const ctxt, EpsBearerContextStatus *status)
 {
   ctxt->_eps_bearer_context_status = *status;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);

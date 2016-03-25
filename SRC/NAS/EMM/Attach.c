@@ -124,7 +124,7 @@ static int                              _emm_attach_abort (
 static int                              _emm_attach_have_changed (
   const emm_data_context_t * ctx,
   emm_proc_attach_type_t type,
-  int ksi,
+  ksi_t ksi,
   guti_t * guti,
   imsi_t * imsi,
   imei_t * imei,
@@ -141,20 +141,20 @@ static int                              _emm_attach_update (
   emm_data_context_t * ctx,
   mme_ue_s1ap_id_t ue_id,
   emm_proc_attach_type_t type,
-  int ksi,
+  ksi_t ksi,
   bool is_native_guti,
   guti_t * guti,
   imsi_t * imsi,
   imei_t * imei,
   const tai_t   * const originating_tai,
-  int eea,
-  int eia,
-  int ucs2,
-  int uea,
-  int uia,
-  int gea,
-  int umts_present,
-  int gprs_present,
+  const int eea,
+  const int eia,
+  const int ucs2,
+  const int uea,
+  const int uia,
+  const int gea,
+  const bool umts_present,
+  const bool gprs_present,
   const_bstring esm_msg_pP);
 
 /*
@@ -230,14 +230,14 @@ emm_proc_attach_request (
   tai_t * last_visited_registered_tai,
   const tai_t   * const originating_tai,
   const ecgi_t   * const originating_ecgi,
-  int eea,
-  int eia,
-  int ucs2,
-  int uea,
-  int uia,
-  int gea,
-  int umts_present,
-  int gprs_present,
+  const int eea,
+  const int eia,
+  const int ucs2,
+  const int uea,
+  const int uia,
+  const int gea,
+  const bool umts_present,
+  const bool gprs_present,
   const_bstring esm_msg_pP,
   const nas_message_decode_status_t  * const decode_status)
 {
@@ -1048,10 +1048,11 @@ _emm_attach_identify (
       nas_itti_auth_info_req (emm_ctx->ue_id, emm_ctx->_imsi64, true, &emm_ctx->originating_tai.plmn, MAX_EPS_AUTH_VECTORS, NULL);
       rc = RETURNok;
     } else {
-      int                                     eksi = 0;
+      ksi_t                                   eksi = 0;
       int                                     vindex = 0;
 
-      if (emm_ctx->_security.eksi !=  EKSI_INVALID) {
+      AssertFatal(0 !=  0, "emm_ctx->_security.eksi %d", emm_ctx->_security.eksi);
+      if (emm_ctx->_security.eksi != KSI_NO_KEY_AVAILABLE) {
         REQUIREMENT_3GPP_24_301(R10_5_4_2_4__2);
         eksi = (emm_ctx->_security.eksi + 1) % (EKSI_MAX_VALUE + 1);
       }
@@ -1565,7 +1566,7 @@ static int
 _emm_attach_have_changed (
   const emm_data_context_t * ctx,
   emm_proc_attach_type_t type,
-  int ksi,
+  ksi_t ksi,
   guti_t * guti,
   imsi_t * imsi,
   imei_t * imei,
@@ -1778,20 +1779,20 @@ _emm_attach_update (
   emm_data_context_t * ctx,
   mme_ue_s1ap_id_t ue_id,
   emm_proc_attach_type_t type,
-  int ksi,
+  ksi_t ksi,
   bool is_native_guti,
   guti_t * guti,
   imsi_t * imsi,
   imei_t * imei,
   const tai_t   * const originating_tai,
-  int eea,
-  int eia,
-  int ucs2,
-  int uea,
-  int uia,
-  int gea,
-  int umts_present,
-  int gprs_present,
+  const int eea,
+  const int eia,
+  const int ucs2,
+  const int uea,
+  const int uia,
+  const int gea,
+  const bool umts_present,
+  const bool gprs_present,
   const_bstring esm_msg_pP)
 {
 

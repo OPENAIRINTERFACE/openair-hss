@@ -177,8 +177,8 @@ emm_proc_detach_request (
   mme_ue_s1ap_id_t ue_id,
   emm_proc_detach_type_t type,
   int switch_off,
-  int native_ksi,
-  int ksi,
+  ksi_t native_ksi,
+  ksi_t ksi,
   guti_t * guti,
   imsi_t * imsi,
   imei_t * imei)

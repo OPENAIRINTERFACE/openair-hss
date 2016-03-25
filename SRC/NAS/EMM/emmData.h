@@ -95,9 +95,8 @@ typedef enum {
 typedef struct emm_security_context_s {
   emm_sc_type_t sc_type;     /* Type of security context        */
                       /* state of security context is implicit due to its storage location (current/non-current)*/
-#define EKSI_INVALID (-1)
 #define EKSI_MAX_VALUE 6
-  int eksi;           /* NAS key set identifier for E-UTRAN      */
+  ksi_t eksi;           /* NAS key set identifier for E-UTRAN      */
 #define EMM_SECURITY_VECTOR_INDEX_INVALID (-1)
   int vector_index;   /* Pointer on vector */
   uint8_t knas_enc[AUTH_KNAS_ENC_SIZE];/* NAS cyphering key               */
@@ -114,8 +113,8 @@ typedef struct emm_security_context_s {
     uint8_t umts_encryption;  /* algorithm used for ciphering            */
     uint8_t umts_integrity;   /* algorithm used for integrity protection */
     uint8_t gprs_encryption;  /* algorithm used for ciphering            */
-    uint8_t umts_present:1;
-    uint8_t gprs_present:1;
+    bool    umts_present:1;
+    bool    gprs_present:1;
   } capability;       /* UE network capability           */
   struct {
     uint8_t encryption:4;   /* algorithm used for ciphering           */
@@ -205,15 +204,15 @@ typedef struct emm_data_context_s {
   tai_t                    _lvr_tai;
   tai_t                    originating_tai;
 
-  int                      ue_ksi;       /* Security key set identifier provided by the UE  */
+  ksi_t                    ue_ksi;       /* Security key set identifier provided by the UE  */
   int                      eea;          /* EPS encryption algorithms supported by the UE   */
   int                      eia;          /* EPS integrity algorithms supported by the UE    */
   int                      ucs2;         /* UCS2 Alphabet*/
   int                      uea;          /* UMTS encryption algorithms supported by the UE  */
   int                      uia;          /* UMTS integrity algorithms supported by the UE   */
   int                      gea;          /* GPRS encryption algorithms supported by the UE  */
-  int                      umts_present; /* For encoding ue network capabilities (variable size)*/
-  int                      gprs_present; /* For encoding ue network capabilities (variable size)*/
+  bool                     umts_present; /* For encoding ue network capabilities (variable size)*/
+  bool                     gprs_present; /* For encoding ue network capabilities (variable size)*/
 
   int                      remaining_vectors;
   auth_vector_t            _vector[MAX_EPS_AUTH_VECTORS];/* EPS authentication vector                            */
@@ -351,10 +350,10 @@ void emm_ctx_set_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai) __attr
 void emm_ctx_set_valid_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai) __attribute__ ((nonnull)) __attribute__ ((flatten));
 
 void emm_ctx_clear_auth_vectors(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_clear_auth_vector(emm_data_context_t * const ctxt, int eksi) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_clear_auth_vector(emm_data_context_t * const ctxt, ksi_t eksi) __attribute__ ((nonnull)) __attribute__ ((flatten));
 void emm_ctx_clear_security(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
 void emm_ctx_set_security_type(emm_data_context_t * const ctxt, emm_sc_type_t sc_type) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_security_eksi(emm_data_context_t * const ctxt, int eksi) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_security_eksi(emm_data_context_t * const ctxt, ksi_t eksi) __attribute__ ((nonnull)) __attribute__ ((flatten));
 void emm_ctx_clear_security_vector_index(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
 void emm_ctx_set_security_vector_index(emm_data_context_t * const ctxt, int vector_index) __attribute__ ((nonnull)) __attribute__ ((flatten));
 

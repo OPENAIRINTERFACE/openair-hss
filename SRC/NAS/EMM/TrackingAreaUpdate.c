@@ -237,8 +237,9 @@ emm_proc_tracking_area_update_request (
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_IEI) {
     if ( ue_ctx) {
       emm_ctx_set_attribute_present(ue_ctx, EMM_CTXT_MEMBER_MS_NETWORK_CAPABILITY_IE);
-      bdestroy(ue_ctx->_ms_network_capability_ie);
-      ue_ctx->_ms_network_capability_ie = bstrcpy(msg->msnetworkcapability);
+      ue_ctx->_ms_network_capability_ie = msg->msnetworkcapability;
+      ue_ctx->gea = (msg->msnetworkcapability.gea1 << 6)| msg->msnetworkcapability.egea;
+      ue_ctx->gprs_present = true;
     }
   }
   /*
@@ -317,10 +318,7 @@ emm_proc_tracking_area_update_request (
       ue_ctx->ucs2 = ue_ctx->_ue_network_capability_ie.ucs2;
       ue_ctx->uea = ue_ctx->_ue_network_capability_ie.uea;
       ue_ctx->uia = ue_ctx->_ue_network_capability_ie.uia;
-//#pragma message  "TODO (clean gea code)"
-      //ue_ctx->gea = ue_ctx->gea;
       ue_ctx->umts_present = ue_ctx->_ue_network_capability_ie.umts_present;
-      ue_ctx->gprs_present = ue_ctx->_ue_network_capability_ie.gprs_present;
     }
     rc = emm_proc_security_mode_control (ue_ctx->ue_id,
       0,        // TODO: eksi != 0
@@ -364,7 +362,7 @@ emm_proc_tracking_area_update_request (
       int                                     eksi = 0;
       int                                     vindex = 0;
 
-      if (ue_ctx->_security.eksi !=  EKSI_INVALID) {
+      if (ue_ctx->_security.eksi !=  KSI_NO_KEY_AVAILABLE) {
         REQUIREMENT_3GPP_24_301(R10_5_4_2_4__2);
         eksi = (ue_ctx->_security.eksi + 1) % (EKSI_MAX_VALUE + 1);
       }
@@ -394,7 +392,7 @@ emm_proc_tracking_area_update_request (
             ue_ctx->_ue_network_capability_ie.uia,
             ue_ctx->gea, // TODO
             ue_ctx->_ue_network_capability_ie.umts_present,
-            ue_ctx->_ue_network_capability_ie.gprs_present);
+            ue_ctx->gprs_present);
         // overwrite previous values
         if (network_capability_have_changed) {
           ue_ctx->eea = ue_ctx->_ue_network_capability_ie.eea;
@@ -405,7 +403,7 @@ emm_proc_tracking_area_update_request (
 //#pragma message  "TODO (clean gea code)"
           //ue_ctx->gea = ue_ctx->gea;
           ue_ctx->umts_present = ue_ctx->_ue_network_capability_ie.umts_present;
-          ue_ctx->gprs_present = ue_ctx->_ue_network_capability_ie.gprs_present;
+          //ue_ctx->gprs_present = ue_ctx->_ue_network_capability_ie.gprs_present;
         }
       }
       // keep things simple at the beginning

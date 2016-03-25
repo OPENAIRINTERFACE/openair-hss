@@ -292,13 +292,11 @@ emm_recv_attach_request (
   /*
    * Execute the requested UE attach procedure
    */
-//#pragma message  " TODO review gea"
+  if (msg->presencemask & ATTACH_REQUEST_MS_NETWORK_CAPABILITY_PRESENT) {
+    gea = msg->msnetworkcapability.gea1;
 
-  if (msg->msnetworkcapability) {
-    gea = (msg->msnetworkcapability->data[0] & 0x80) >> 1;
-
-    if ((gea) && (blength(msg->msnetworkcapability) >= 2)) {
-      gea |= ((msg->msnetworkcapability->data[1] & 0x60) >> 1);
+    if (gea) {
+      gea = (gea << 6) | msg->msnetworkcapability.egea;
     }
   }
 
@@ -314,7 +312,7 @@ emm_recv_attach_request (
                                 msg->uenetworkcapability.uia,
                                 gea,
                                 msg->uenetworkcapability.umts_present,
-                                msg->uenetworkcapability.gprs_present,
+                                (gea >= (MS_NETWORK_CAPABILITY_GEA1 >> 1)),
                                 msg->esmmessagecontainer,
                                 decode_status);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

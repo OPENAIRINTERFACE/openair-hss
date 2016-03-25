@@ -188,7 +188,7 @@ static int                              _security_request (
 int
 emm_proc_security_mode_control (
   const mme_ue_s1ap_id_t ue_id,
-  const int ksi,
+  ksi_t ksi,
   const int eea,
   const int eia,
   const int ucs2,
@@ -215,6 +215,10 @@ emm_proc_security_mode_control (
 
   emm_ctx = emm_data_context_get (&_emm_data, ue_id);
 
+  //TODO better than that (quick fix)
+  if (KSI_NO_KEY_AVAILABLE == ksi) {
+    ksi = 0;
+  }
 
   /*
    * Allocate parameters of the retransmission timer callback
@@ -238,7 +242,7 @@ emm_proc_security_mode_control (
        * * * * the EPS authentication procedure
        */
       //emm_ctx->_security.sc_type = SECURITY_CTX_TYPE_PARTIAL_NATIVE;
-      emm_ctx->_security.eksi = ksi;
+      emm_ctx_set_security_eksi(emm_ctx, ksi);
       REQUIREMENT_3GPP_24_301(R10_5_4_3_2__2);
       emm_ctx->_security.dl_count.overflow = 0;
       emm_ctx->_security.dl_count.seq_num = 0;
@@ -257,7 +261,7 @@ emm_proc_security_mode_control (
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
       }
 
-      emm_ctx->_security.sc_type = SECURITY_CTX_TYPE_FULL_NATIVE;
+      emm_ctx_set_security_type(emm_ctx, SECURITY_CTX_TYPE_FULL_NATIVE);
       derive_key_nas (NAS_INT_ALG, emm_ctx->_security.selected_algorithms.integrity,  emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_security.knas_int);
       derive_key_nas (NAS_ENC_ALG, emm_ctx->_security.selected_algorithms.encryption, emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_security.knas_enc);
       /*
@@ -498,10 +502,10 @@ emm_proc_security_mode_reject (
     REQUIREMENT_3GPP_24_301(R10_5_4_3_5__3);
     emm_ctx->_security.selected_algorithms.encryption = data->saved_selected_eea;
     emm_ctx->_security.selected_algorithms.integrity  = data->saved_selected_eia;
-    emm_ctx->_security.eksi                           = data->saved_eksi;
+    emm_ctx_set_security_eksi(emm_ctx, data->saved_eksi);
     emm_ctx->_security.dl_count.overflow              = data->saved_overflow;
     emm_ctx->_security.dl_count.seq_num               = data->saved_seq_num;
-    emm_ctx->_security.sc_type                        = data->saved_sc_type;
+    emm_ctx_set_security_type(emm_ctx, data->saved_sc_type);
     /*
      * Release retransmission timer parameters
      */

@@ -31,6 +31,60 @@
 #define FILE_3GPP_24_008_SEEN
 
 //------------------------------------------------------------------------------
+// 10.5.5.12 MS network capability
+//------------------------------------------------------------------------------
+//9.9.3.34 UE network capability
+#define MS_NETWORK_CAPABILITY_MINIMUM_LENGTH 3
+#define MS_NETWORK_CAPABILITY_MAXIMUM_LENGTH 10
+
+typedef struct ms_network_capability_s {
+#define MS_NETWORK_CAPABILITY_GEA1                               0b10000000
+  uint8_t  gea1:1;
+#define MS_NETWORK_CAPABILITY_SM_CAP_VIA_DEDICATED_CHANNELS      0b01000000
+  uint8_t  smdc:1;
+#define MS_NETWORK_CAPABILITY_SM_CAP_VIA_GPRS_CHANNELS           0b00100000
+  uint8_t  smgc:1;
+#define MS_NETWORK_CAPABILITY_UCS2_SUPPORT                       0b00010000
+  uint8_t  ucs2:1;
+#define MS_NETWORK_CAPABILITY_SS_SCREENING_INDICATOR             0b00001100
+  uint8_t  sssi:2;
+#define MS_NETWORK_CAPABILITY_SOLSA                              0b00000010
+  uint8_t  solsa:1;
+#define MS_NETWORK_CAPABILITY_REVISION_LEVEL_INDICATOR           0b00000001
+  uint8_t  revli:1;
+
+#define MS_NETWORK_CAPABILITY_PFC_FEATURE_MODE                   0b10000000
+  uint8_t  pfc:1;
+#define MS_NETWORK_CAPABILITY_GEA2                               0b01000000
+#define MS_NETWORK_CAPABILITY_GEA3                               0b00100000
+#define MS_NETWORK_CAPABILITY_GEA4                               0b00010000
+#define MS_NETWORK_CAPABILITY_GEA5                               0b00001000
+#define MS_NETWORK_CAPABILITY_GEA6                               0b00000100
+#define MS_NETWORK_CAPABILITY_GEA7                               0b00000010
+  uint8_t  egea:6;
+#define MS_NETWORK_CAPABILITY_LCS_VA                             0b00000001
+  uint8_t  lcs:1;
+
+#define MS_NETWORK_CAPABILITY_PS_INTER_RAT_HO_GERAN_TO_UTRAN_IU  0b10000000
+  uint8_t  ps_ho_utran:1;
+#define MS_NETWORK_CAPABILITY_PS_INTER_RAT_HO_GERAN_TO_EUTRAN_S1 0b01000000
+  uint8_t  ps_ho_eutran:1;
+#define MS_NETWORK_CAPABILITY_EMM_COMBINED_PROCEDURE             0b00100000
+  uint8_t  emm_cpc:1;
+#define MS_NETWORK_CAPABILITY_ISR                                0b00010000
+  uint8_t  isr:1;
+#define MS_NETWORK_CAPABILITY_SRVCC                              0b00001000
+  uint8_t  srvcc:1;
+#define MS_NETWORK_CAPABILITY_EPC                                0b00000100
+  uint8_t  epc_cap:1;
+#define MS_NETWORK_CAPABILITY_NOTIFICATION                       0b00000010
+  uint8_t  nf_cap:1;
+#define MS_NETWORK_CAPABILITY_GERAN_NETWORK_SHARING              0b00000001
+  uint8_t  geran_ns:1;
+} ms_network_capability_t;
+
+
+//------------------------------------------------------------------------------
 // 10.5.6.3 Protocol configuration options
 //------------------------------------------------------------------------------
 #define PCO_MIN_LENGTH                                               3

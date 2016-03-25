@@ -107,7 +107,7 @@ typedef struct {
   mme_ue_s1ap_id_t                        ue_id; /* UE identifier        */
 #define AUTHENTICATION_COUNTER_MAX  5
   unsigned int                            retransmission_count; /* Retransmission counter   */
-  int                                     ksi;  /* NAS key set identifier   */
+  ksi_t                                   ksi;  /* NAS key set identifier   */
   uint8_t                                 rand[AUTH_RAND_SIZE]; /* Random challenge number  */
   uint8_t                                 autn[AUTH_AUTN_SIZE]; /* Authentication token     */
   bool                                    notify_failure;       /* Indicates whether the identification
@@ -165,7 +165,7 @@ int
 emm_proc_authentication (
   void *ctx,
   mme_ue_s1ap_id_t ue_id,
-  int ksi,
+  ksi_t ksi,
   const uint8_t   * const rand,
   const uint8_t   * const autn,
   emm_common_success_callback_t success,
@@ -453,7 +453,7 @@ emm_proc_authentication_complete (
 
     } else if (emm_ctx) {
       REQUIREMENT_3GPP_24_301(R10_5_4_2_4__2);
-      emm_ctx->_security.eksi = data->ksi;
+      emm_ctx_set_security_eksi(emm_ctx, data->ksi);
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - Success to authentify the UE  RESP XRES == XRES UE CONTEXT\n");
       /*
        * Notify EMM that the authentication procedure successfully completed

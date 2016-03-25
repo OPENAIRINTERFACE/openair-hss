@@ -161,6 +161,15 @@ typedef struct tai_list_s {
 #define BEARERS_PER_UE     (11)
 #define MAX_APN_PER_UE     (5)
 
+//------------------------------------------------------------------------------
+typedef uint8_t       ksi_t;
+#define KSI_NO_KEY_AVAILABLE     0x07
+
+
+
+typedef uint8_t     AcT_t;      /* Access Technology    */
+
+
 typedef enum {
   RAT_WLAN           = 0,
   RAT_VIRTUAL        = 1,

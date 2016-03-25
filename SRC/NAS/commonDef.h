@@ -40,14 +40,6 @@ Description Contains global common definitions
 #define FILE_COMMONDEF_SEEN
 
 #include <stdint.h>
-#include <stdbool.h>
-
-
-typedef uint8_t     Stat_t;     /* Registration status  */
-typedef uint8_t     AcT_t;      /* Access Technology    */
-typedef bool        ksi_t;      /* Key set identifier   */
-
-
 
 /*
  * A list of PLMNs

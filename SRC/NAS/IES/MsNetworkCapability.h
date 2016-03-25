@@ -24,17 +24,16 @@
 #define MS_NETWORK_CAPABILITY_H_
 #include <stdint.h>
 #include "bstrlib.h"
+#include "3gpp_24.008.h"
 
-#define MS_NETWORK_CAPABILITY_MINIMUM_LENGTH 3
-#define MS_NETWORK_CAPABILITY_MAXIMUM_LENGTH 10
 
-typedef bstring MsNetworkCapability;
+typedef ms_network_capability_t MsNetworkCapability;
 
-int encode_ms_network_capability(MsNetworkCapability msnetworkcapability, uint8_t iei, uint8_t *buffer, uint32_t len);
+int encode_ms_network_capability(MsNetworkCapability *msnetworkcapability, uint8_t iei, uint8_t *buffer, uint32_t len) __attribute__ ((unused));
 
 int decode_ms_network_capability(MsNetworkCapability *msnetworkcapability, uint8_t iei, uint8_t *buffer, uint32_t len);
 
-void dump_ms_network_capability_xml(MsNetworkCapability msnetworkcapability, uint8_t iei);
+void dump_ms_network_capability_xml(MsNetworkCapability *msnetworkcapability, uint8_t iei);
 
 #endif /* MS NETWORK CAPABILITY_H_ */
 

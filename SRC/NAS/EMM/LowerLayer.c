@@ -400,7 +400,7 @@ emm_as_set_security_data (
     /*
      * No valid EPS security context exists
      */
-    data->ksi = EMM_AS_NO_KEY_AVAILABLE;
+    data->ksi = KSI_NO_KEY_AVAILABLE;
   }
 
   OAILOG_FUNC_OUT (LOG_NAS_EMM);

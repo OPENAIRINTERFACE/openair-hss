@@ -76,8 +76,7 @@ typedef enum emm_as_primitive_u {
 /* Data used to setup EPS NAS security */
 typedef struct emm_as_security_data_s {
   bool      is_new;     /* New security data indicator      */
-#define EMM_AS_NO_KEY_AVAILABLE     0xff
-  uint8_t   ksi;        /* NAS key set identifier       */
+  ksi_t     ksi;        /* NAS key set identifier       */
   uint8_t   sqn;        /* Sequence number          */
   uint32_t  count;     /* NAS counter              */
   uint8_t   knas_enc[AUTH_KNAS_ENC_SIZE];/* NAS cyphering key               */
@@ -109,7 +108,7 @@ typedef struct emm_as_security_s {
   /*
    * Authentication request/response
    */
-  uint8_t ksi;        /* NAS key set identifier       */
+  ksi_t   ksi;        /* NAS key set identifier       */
   uint8_t rand[AUTH_RAND_SIZE];    /* Random challenge number      */
   uint8_t autn[AUTH_AUTN_SIZE];    /* Authentication token         */
   uint8_t res[AUTH_RES_SIZE];      /* Authentication response      */
@@ -158,7 +157,7 @@ typedef struct emm_as_establish_s {
   uint8_t                rrc_cause;                   /* Connection establishment cause    */
   uint8_t                rrc_type;                    /* Associated call type          */
   const plmn_t          *plmn_id;                     /* Identifier of the selected PLMN   */
-  uint8_t                ksi;                         /* NAS key set identifier        */
+  ksi_t                  ksi;                         /* NAS key set identifier        */
   uint8_t                encryption:4;                /* Ciphering algorithm           */
   uint8_t                integrity:4;                 /* Integrity protection algorithm    */
   int                    emm_cause;                   /* EMM failure cause code        */

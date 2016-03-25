@@ -702,7 +702,7 @@ static EMM_msg *_emm_as_set_header (nas_message_t * msg, const emm_as_security_d
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   msg->header.protocol_discriminator = EPS_MOBILITY_MANAGEMENT_MESSAGE;
 
-  if (security && (security->ksi != EMM_AS_NO_KEY_AVAILABLE)) {
+  if (security && (security->ksi != KSI_NO_KEY_AVAILABLE)) {
     /*
      * A valid EPS security context exists
      */

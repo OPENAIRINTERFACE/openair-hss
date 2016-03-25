@@ -395,7 +395,7 @@ encode_tracking_area_update_request (
 
   if ((tracking_area_update_request->presencemask & TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_PRESENT)
       == TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_PRESENT) {
-    if ((encode_result = encode_ms_network_capability (tracking_area_update_request->msnetworkcapability, TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_IEI, buffer + encoded, len - encoded)) < 0)
+    if ((encode_result = encode_ms_network_capability (&tracking_area_update_request->msnetworkcapability, TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_IEI, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

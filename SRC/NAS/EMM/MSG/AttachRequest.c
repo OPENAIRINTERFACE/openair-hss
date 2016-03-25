@@ -333,7 +333,7 @@ encode_attach_request (
 
   if ((attach_request->presencemask & ATTACH_REQUEST_MS_NETWORK_CAPABILITY_PRESENT)
       == ATTACH_REQUEST_MS_NETWORK_CAPABILITY_PRESENT) {
-    if ((encode_result = encode_ms_network_capability (attach_request->msnetworkcapability, ATTACH_REQUEST_MS_NETWORK_CAPABILITY_IEI, buffer + encoded, len - encoded)) < 0)
+    if ((encode_result = encode_ms_network_capability (&attach_request->msnetworkcapability, ATTACH_REQUEST_MS_NETWORK_CAPABILITY_IEI, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

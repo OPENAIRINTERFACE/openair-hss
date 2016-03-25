@@ -128,8 +128,8 @@ int emm_proc_attach_request(enb_s1ap_id_key_t enb_ue_s1ap_id_key,
                             imei_t *imei, tai_t *last_visited_registered_tai,
                             const tai_t              * const originating_tai,
                             const ecgi_t             * const originating_ecgi,
-                            int eea, int eia, int ucs2, int uea, int uia, int gea,
-                            int umts_present, int gprs_present, const_bstring esm_msg,
+                            const int eea, const int eia, const int ucs2, const int uea, const int uia, const int gea,
+                            const bool umts_present, const bool gprs_present, const_bstring esm_msg,
                             const nas_message_decode_status_t  * const decode_status);
 
 int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, int emm_cause);
@@ -154,7 +154,7 @@ int emm_proc_service_reject (mme_ue_s1ap_id_t ue_id, int emm_cause);
 
 int emm_proc_detach(mme_ue_s1ap_id_t ue_id, emm_proc_detach_type_t type);
 int emm_proc_detach_request(mme_ue_s1ap_id_t ue_id, emm_proc_detach_type_t type,
-                            int switch_off, int native_ksi, int ksi, guti_t *guti, imsi_t *imsi,
+                            int switch_off, ksi_t native_ksi, ksi_t ksi, guti_t *guti, imsi_t *imsi,
                             imei_t *imei);
 
 /*
@@ -180,7 +180,7 @@ int emm_proc_identification_complete(const mme_ue_s1ap_id_t ue_id,
  * --------------------------------------------------------------------------
  */
 
-int emm_proc_authentication(void *ctx, mme_ue_s1ap_id_t ue_id, int ksi,
+int emm_proc_authentication(void *ctx, mme_ue_s1ap_id_t ue_id, ksi_t ksi,
                             const uint8_t   * const rand,
                             const uint8_t   * const autn,
                             emm_common_success_callback_t success,
@@ -201,7 +201,7 @@ int emm_attach_security(void *args);
  * --------------------------------------------------------------------------
  */
 
-int emm_proc_security_mode_control(const mme_ue_s1ap_id_t ue_id, const int ksi,
+int emm_proc_security_mode_control(const mme_ue_s1ap_id_t ue_id, ksi_t ksi,
     const int eea, int eia,const int ucs2, const int uea, const int uia, const int gea,
     const bool umts_present, const bool gprs_present,
                                    emm_common_success_callback_t success,
