@@ -120,8 +120,7 @@ typedef struct mme_api_tft_s {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int mme_api_get_emm_config(mme_api_emm_config_t *config,
-                           mme_config_t *mme_config_p);
+int mme_api_get_emm_config(mme_api_emm_config_t *config, mme_config_t *mme_config_p);
 
 void mme_api_duplicate_enb_ue_s1ap_id_detected (
     const enb_s1ap_id_key_t enb_ue_s1ap_id,
@@ -130,9 +129,10 @@ void mme_api_duplicate_enb_ue_s1ap_id_detected (
 
 int mme_api_get_esm_config(mme_api_esm_config_t *config);
 
-int mme_api_notify_new_guti (
-  const mme_ue_s1ap_id_t ueid,
-  guti_t * const guti);
+int
+mme_api_notify_imsi ( const mme_ue_s1ap_id_t id, const imsi64_t imsi64);
+
+int mme_api_notify_new_guti (const mme_ue_s1ap_id_t ueid, guti_t * const guti);
 
 int mme_api_notified_new_ue_s1ap_id_association (
     const enb_ue_s1ap_id_t enb_ue_s1ap_id,

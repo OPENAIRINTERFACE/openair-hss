@@ -1844,7 +1844,7 @@ _emm_attach_update (
     imsi64_t new_imsi64 = INVALID_IMSI64;
     IMSI_TO_IMSI64(imsi,new_imsi64);
     if (new_imsi64 != ctx->_imsi64) {
-      emm_ctx_set_imsi(ctx, imsi, new_imsi64);
+      emm_ctx_set_valid_imsi(ctx, imsi, new_imsi64);
       emm_data_context_add_imsi (&_emm_data, ctx);
     }
   }

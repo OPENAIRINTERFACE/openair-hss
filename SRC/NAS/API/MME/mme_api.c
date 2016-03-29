@@ -205,6 +205,44 @@ mme_api_get_esm_config (
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
 
+
+/*
+ *
+ *  Name:    mme_api_notify_imsi()
+ *
+ *  Description: Notify the MME of the IMSI of a UE.
+ *
+ *  Inputs:
+ *         ueid:      nas_ue id
+ *         imsi64:    IMSI
+ *  Return:    RETURNok, RETURNerror
+ *
+ */
+int
+mme_api_notify_imsi (
+  const mme_ue_s1ap_id_t id,
+  const imsi64_t imsi64)
+{
+  ue_context_t                           *ue_context = NULL;
+
+  OAILOG_FUNC_IN (LOG_NAS);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
+
+
+  if ( ue_context) {
+    mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts,
+        ue_context,
+        ue_context->enb_s1ap_id_key,
+        id,
+        imsi64,
+        ue_context->mme_s11_teid,
+        &ue_context->guti);
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
+  }
+
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+}
+
 /*
  *
  *  Name:    mme_api_notify_new_guti()

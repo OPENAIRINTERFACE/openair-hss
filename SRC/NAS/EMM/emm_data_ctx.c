@@ -203,6 +203,7 @@ inline void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi
   IMSI64_TO_STRING (ctxt->_imsi64, imsi_str);
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set IMSI %s (valid)\n", ctxt->ue_id, imsi_str);
 #endif
+  mme_api_notify_imsi(ctxt->ue_id, imsi64);
 }
 
 //------------------------------------------------------------------------------
