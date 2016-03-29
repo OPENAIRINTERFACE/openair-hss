@@ -160,9 +160,6 @@ hss_display_banner (
   void)
 {
   FPRINTF_NOTICE ( "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
-#if RANDOM_boolean
-  FPRINTF_NOTICE ( "Warning no randomization for keys, this HSS executable should be used for testing scenarios only\n");
-#endif
   FPRINTF_NOTICE ( "Please report any bug to: %s\n\n", PACKAGE_BUGREPORT);
 }
 

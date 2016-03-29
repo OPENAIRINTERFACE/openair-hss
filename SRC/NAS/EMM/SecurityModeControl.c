@@ -215,11 +215,13 @@ emm_proc_security_mode_control (
 
   emm_ctx = emm_data_context_get (&_emm_data, ue_id);
 
-  //TODO better than that (quick fix)
+  //TODO better than that (quick fixes)
   if (KSI_NO_KEY_AVAILABLE == ksi) {
     ksi = 0;
   }
-
+  if (EMM_SECURITY_VECTOR_INDEX_INVALID == emm_ctx->_security.vector_index) {
+    emm_ctx_set_security_vector_index(emm_ctx, 0);
+  }
   /*
    * Allocate parameters of the retransmission timer callback
    */
@@ -262,6 +264,8 @@ emm_proc_security_mode_control (
       }
 
       emm_ctx_set_security_type(emm_ctx, SECURITY_CTX_TYPE_FULL_NATIVE);
+      AssertFatal(EMM_SECURITY_VECTOR_INDEX_INVALID != emm_ctx->_security.vector_index, "Vector index not initialized");
+      AssertFatal(MAX_EPS_AUTH_VECTORS >  emm_ctx->_security.vector_index, "Vector index outbound value %d/%d", emm_ctx->_security.vector_index, MAX_EPS_AUTH_VECTORS);
       derive_key_nas (NAS_INT_ALG, emm_ctx->_security.selected_algorithms.integrity,  emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_security.knas_int);
       derive_key_nas (NAS_ENC_ALG, emm_ctx->_security.selected_algorithms.encryption, emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_security.knas_enc);
       /*

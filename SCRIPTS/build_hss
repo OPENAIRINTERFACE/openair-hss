@@ -48,10 +48,7 @@ function help()
   echo_error "  -h, --help                                Print this help."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run HSS (support Ubuntu 14.04)."
   echo_error "                                            If filled, then OPc key in table users for all subscribers (IMSI) will be computed/updated."
-
   echo_error "  -v, --verbose                             Build process verbose."
-  echo_error " "
-  echo_error "  -R, --random                   boolean    If false HSS random function returns always the same value (allowed values: {true, false})."
 }
 
 NAME=oai_hssd
@@ -103,11 +100,6 @@ function main()
         set_openair_env
         var_check_install_oai_software=1
         shift;
-        ;;
-      -R | --random)
-        echo "Random function: $2"
-        cmake_args="$cmake_args -DRANDOM_boolean=$2"
-        shift 2;
         ;;
       -v | --verbose)
         echo "Make build process verbose"

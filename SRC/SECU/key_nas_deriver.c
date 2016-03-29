@@ -77,6 +77,7 @@ derive_key_nas (
   s[6] = 0x01;
   //OAILOG_TRACE (LOG_NAS, "FC %d nas_alg_type distinguisher %d nas_enc_alg_identity %d\n", FC_ALG_KEY_DER, nas_alg_type, nas_enc_alg_id);
   //OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "s:", s, 7);
+  //OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "kasme_32:", kasme_32, 32);
   kdf (kasme_32, 32, &s[0], 7, &out[0], 32);
   memcpy (knas, &out[31 - 16 + 1], 16);
   return 0;
