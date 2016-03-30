@@ -34,6 +34,7 @@ THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
 source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
 declare -i g_run_msc_gen=0
 declare    g_msc_dir="/tmp"
+declare    g_mme_default_config_file="/usr/local/etc/oai/mme.conf"
 
 set_openair_env 
 
@@ -47,6 +48,7 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -b, --breakpoint      location      Set breakpoint location for GDB (ex location: Attach.c:272)."
+  echo_error "  -c, --config-file     file_abs_path Config file to be used by epc if you don't want to use the default one: $g_mme_default_config_file"
   echo_error "  -D, --daemon                        Run the daemon."
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -h, --help                          Print this help."
@@ -99,6 +101,11 @@ function main()
         breakpoint_location=$2
         echo "setting breakpoint location to: $breakpoint_location"
         echo "setting GDB flag to: $run_gdb"
+        shift 2;
+        ;;
+      -c | --config-file)
+        mme_default_config_file=$2
+        echo "setting config file to: $mme_default_config_file"
         shift 2;
         ;;
       -D | --daemon)
@@ -162,6 +169,11 @@ function main()
 
   check_gtpu_kmodule_installed
 
+  if [ ! -f $mme_config_file ]; then 
+    echo_fatal "Please provide -c|--config-file valid argument (\"$mme_config_file\" not a valid file)"
+  fi
+
+
   if [ "$run_daemon" -eq 1 ]; then
     if [ ! -e /usr/sbin/mmed ]; then
       echo_fatal "Cannot find /usr/sbin/mmed executable, have a look at the output of build_mme  -D ... executable"
@@ -180,6 +192,7 @@ function main()
   if [ $set_network_interfaces -eq 1 ]; then
     set_mme_network_interfaces $mme_config_file
   fi
+    
   if [ "$run_daemon" -eq 1 ]; then
     # TODO options
     $SUDO killall -q mme
