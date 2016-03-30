@@ -838,7 +838,7 @@ add_executable(spgw
 endif( ITTI_ANALYZER )
 target_link_libraries (spgw
   -Wl,--start-group
-  GTPV1U SECU_CN SGW S11 GTPV1U GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
+  GTPV1U SGW S11 GTPV1U GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
   -Wl,--end-group
   pthread m rt ${CONFIG_LIBRARIES}  
   )
