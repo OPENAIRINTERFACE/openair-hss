@@ -183,3 +183,15 @@ MME :
     };
 };
 
+S-GW : 
+{
+    NETWORK_INTERFACES : 
+    {
+        # S-GW binded interface for S11 communication (GTPV2-C), if none selected the ITTI message interface is used
+        SGW_IPV4_ADDRESS_FOR_S11                = "192.168.12.175/24";          # YOUR NETWORK CONFIG HERE
+
+        # S-GW binded interface for S1-U communication (GTPV1-U) can be ethernet interface, virtual ethernet interface, we don't advise wireless interfaces
+        SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP      = "192.168.12.175/24";          # YOUR NETWORK CONFIG HERE
+        SGW_IPV4_PORT_FOR_S1U_S12_S4_UP         = 2152;                         # PREFER NOT CHANGE
+    };
+};
