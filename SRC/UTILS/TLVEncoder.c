@@ -28,15 +28,6 @@
 
 int                                     errorCodeEncoder = 0;
 
-const char                             *errorCodeStringEncoder[] = {
-  "No error",
-  "Buffer NULL",
-  "Buffer too short",
-  "Octet string too long for IEI",
-  "Wrong message type",
-  "Protocol not supported",
-};
-
 int encode_bstring (
   const_bstring const str,
   uint8_t * const buffer,
@@ -55,13 +46,3 @@ int encode_bstring (
   }
 }
 
-void
-tlv_encode_perror (
-  void)
-{
-  if (errorCodeEncoder >= 0)
-    // No error or TLV_DECODE_ERR_OK
-    return;
-
-  OAILOG_ERROR (LOG_NAS, " (%d, %s)", errorCodeEncoder, errorCodeStringEncoder[errorCodeEncoder * -1]);
-}

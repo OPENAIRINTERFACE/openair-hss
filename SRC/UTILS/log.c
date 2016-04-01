@@ -123,11 +123,13 @@ static oai_log_t g_oai_log={0};    /*!< \brief  logging utility internal variabl
 inline static void log_reuse_item(log_queue_item_t * item_p) __attribute__((always_inline));
 
 
+//------------------------------------------------------------------------------
 int log_get_start_time_sec (void)
 {
   return g_oai_log.log_start_time_second;
 }
 
+//------------------------------------------------------------------------------
 static void log_reuse_item(log_queue_item_t * item_p)
 {
   int         rv = 0;
@@ -350,7 +352,6 @@ void log_set_config(const log_config_t * const config)
       }
     }
   }
-
 }
 
 //------------------------------------------------------------------------------

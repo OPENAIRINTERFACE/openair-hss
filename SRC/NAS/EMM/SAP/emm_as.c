@@ -211,16 +211,16 @@ int emm_as_send (const emm_as_t * msg)
      * Ignore received message that is too short to contain a complete
      * * * * message type information element
      */
-    if (rc == TLV_DECODE_BUFFER_TOO_SHORT) {
+    if (rc == TLV_BUFFER_TOO_SHORT) {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
     /*
      * Ignore received message that contains not supported protocol
      * * * * discriminator
      */
-    else if (rc == TLV_DECODE_PROTOCOL_NOT_SUPPORTED) {
+    else if (rc == TLV_PROTOCOL_NOT_SUPPORTED) {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-    } else if (rc == TLV_DECODE_WRONG_MESSAGE_TYPE) {
+    } else if (rc == TLV_WRONG_MESSAGE_TYPE) {
       emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
     }
 
@@ -493,7 +493,7 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
             &decode_status);
 
         if ((bytes < 0) &&
-            (bytes != TLV_DECODE_MAC_MISMATCH)) { // not in spec, (case identity response for attach with unknown GUTI)
+            (bytes != TLV_MAC_MISMATCH)) { // not in spec, (case identity response for attach with unknown GUTI)
           /*
            * Failed to decrypt the message
            */
@@ -591,10 +591,10 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
   decoder_rc = nas_message_decode (msg->nas_msg->data, &nas_msg, blength(msg->nas_msg), emm_security_context, &decode_status);
   bdestroy(msg->nas_msg);
 
-  if (decoder_rc < TLV_DECODE_FATAL_ERROR) {
+  if (decoder_rc < TLV_FATAL_ERROR) {
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
-  } else if (decoder_rc == TLV_DECODE_UNEXPECTED_IEI) {
+  } else if (decoder_rc == TLV_UNEXPECTED_IEI) {
     *emm_cause = EMM_CAUSE_IE_NOT_IMPLEMENTED;
   } else if (decoder_rc < 0) {
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;

@@ -49,8 +49,8 @@ decode_network_name (
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
   if (((*buffer >> 7) & 0x1) != 1) {
-    errorCodeDecoder = TLV_DECODE_VALUE_DOESNT_MATCH;
-    return TLV_DECODE_VALUE_DOESNT_MATCH;
+    errorCodeDecoder = TLV_VALUE_DOESNT_MATCH;
+    return TLV_VALUE_DOESNT_MATCH;
   }
 
   networkname->codingscheme = (*(buffer + decoded) >> 5) & 0x7;

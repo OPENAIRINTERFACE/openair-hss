@@ -254,9 +254,9 @@ decode_attach_request (
       attach_request->presencemask |= ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_PRESENT;
       break;
     default:
-      errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;
+      errorCodeDecoder = TLV_UNEXPECTED_IEI;
       {
-        return TLV_DECODE_UNEXPECTED_IEI;
+        return TLV_UNEXPECTED_IEI;
       }
     }
   }

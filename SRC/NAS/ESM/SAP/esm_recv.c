@@ -92,8 +92,8 @@ esm_recv_status (
   int ebi,
   const esm_status_msg * msg)
 {
-  int                                     esm_cause;
-  int                                     rc;
+  int                                     esm_cause = ESM_CAUSE_SUCCESS;
+  int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   OAILOG_INFO(LOG_NAS_ESM,  "ESM-SAP   - Received ESM status message (pti=%d, ebi=%d)\n", pti, ebi);
@@ -154,7 +154,7 @@ esm_recv_pdn_connectivity_request (
   void *data)
 {
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
-  uint8_t                                 i;
+  uint8_t                                 i = 0;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ue_id=%u, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
@@ -260,10 +260,10 @@ esm_recv_pdn_connectivity_request (
 
   esm_data->pco = msg->protocolconfigurationoptions;
 
-  for (i = 0; i < msg->protocolconfigurationoptions.num_protocol_id_or_container_id; i++) {
-    esm_data->pco.protocolidcontents[i] = msg->protocolconfigurationoptions.protocolidcontents[i];
-    esm_data->pco.protocolid[i]         = msg->protocolconfigurationoptions.protocolid[i];
-    esm_data->pco.lengthofprotocolid[i] = msg->protocolconfigurationoptions.lengthofprotocolid[i];
+  for (i = 0; i < msg->protocolconfigurationoptions.num_protocol_or_container_id; i++) {
+    esm_data->pco.protocol_or_container_ids[i].id     = msg->protocolconfigurationoptions.protocol_or_container_ids[i].id;
+    esm_data->pco.protocol_or_container_ids[i].length = msg->protocolconfigurationoptions.protocol_or_container_ids[i].length;
+    esm_data->pco.protocol_or_container_ids[i].contents = bstrcpy(msg->protocolconfigurationoptions.protocol_or_container_ids[i].contents);
   }
 
 #if ORIGINAL_CODE

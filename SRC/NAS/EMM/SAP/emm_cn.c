@@ -184,16 +184,12 @@ static int _emm_cn_deregister_ue (const uint32_t ue_id)
 //------------------------------------------------------------------------------
 static int _emm_cn_pdn_connectivity_res (const emm_cn_pdn_res_t * msg_pP)
 {
-  int                                     rc = RETURNok;
+  int                                     rc = RETURNerror;
   struct emm_data_context_s              *emm_ctx_p = NULL;
   esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
   ESM_msg                                 esm_msg = {.header = {0}};
   EpsQualityOfService                     qos = {0};
   ProtocolConfigurationOptions            pco = {0};
-  unsigned int                            pco_in_index = 0;
-  signed int                              length_in_pco = 0;
-  uint16_t                                pi_or_ci = 0; // protocol identifier or container identifier;
-  uint8_t                                 length_pi_or_ci = 0;
   bstring                                 rsp = NULL;
   bool                                    is_standalone = false;    // warning hardcoded
   bool                                    triggered_by_ue = true;  // warning hardcoded
@@ -255,37 +251,14 @@ static int _emm_cn_pdn_connectivity_res (const emm_cn_pdn_res_t * msg_pP)
   // PCO processing
   //--------------------------------------------------------------------------
   memset (&pco, 0, sizeof (ProtocolConfigurationOptions));
-  length_in_pco = msg_pP->pco.byte[1];
 
-  if ((length_in_pco + 1 + 1) != msg_pP->pco.length) {
-    OAILOG_WARNING (LOG_NAS_EMM, "PCO: mismatch in lengths length_pco+1+1 %u != msg_pP->pco.length %u\n", length_in_pco + 1 + 1, msg_pP->pco.length);
+  if (0 >   decode_ProtocolConfigurationOptions (
+      &pco,
+      ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_IEI,
+      msg_pP->pco.byte,
+      msg_pP->pco.length)) {
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
-
-  pco.configurationprotol = msg_pP->pco.byte[2] & 0x07;
-
-  for (int i = 0; i < msg_pP->pco.length; i++) {
-    OAILOG_WARNING (LOG_NAS_EMM, "EMMCN_PDN_CONNECTIVITY_RES.pco.byte[%u] = 0x%x\n", i, msg_pP->pco.byte[i]);
-  }
-
-  if ((length_in_pco > 0) && (msg_pP->pco.byte[2] & 0x80)) {
-    pco_in_index = PCO_MIN_LENGTH;
-
-    while (length_in_pco >= 3) {
-      pi_or_ci = (((uint16_t) msg_pP->pco.byte[pco_in_index]) << 8) | (uint16_t) msg_pP->pco.byte[pco_in_index + 1];
-      pco_in_index += 2;
-      length_pi_or_ci = msg_pP->pco.byte[pco_in_index++];
-      pco.protocolid[pco.num_protocol_id_or_container_id] = pi_or_ci;
-      pco.lengthofprotocolid[pco.num_protocol_id_or_container_id] = length_pi_or_ci;
-      pco.protocolidcontents[pco.num_protocol_id_or_container_id] = blk2bstr (&msg_pP->pco.byte[pco_in_index], length_pi_or_ci);
-      OAILOG_TRACE (LOG_NAS_EMM, "PCO: Found pi_or_ci 0x%x length %u\n", pi_or_ci, length_pi_or_ci);
-      OAILOG_STREAM_HEX (OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "PCO: Found pi_or_ci content:\n",
-          bdata(pco.protocolidcontents[pco.num_protocol_id_or_container_id]),
-          blength(pco.protocolidcontents[pco.num_protocol_id_or_container_id]));
-      pco.num_protocol_id_or_container_id++;
-      pco_in_index += length_pi_or_ci;
-      length_in_pco = length_in_pco - (length_pi_or_ci + 2 + 1);
-    }                           // while (length_in_pco >= 3) {
-  }                             // if ((length_in_pco > 0) && (msg_pP->pco.byte[2] & 0x80)) {
 
   /*************************************************************************/
   /*

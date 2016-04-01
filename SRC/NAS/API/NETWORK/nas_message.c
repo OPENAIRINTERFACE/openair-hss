@@ -172,7 +172,7 @@ int nas_message_encrypt (
   int                                     size = _nas_message_header_encode (outbuf, header, length);
 
   if (size < 0) {
-    OAILOG_FUNC_RETURN (LOG_NAS, TLV_ENCODE_BUFFER_TOO_SHORT);
+    OAILOG_FUNC_RETURN (LOG_NAS, TLV_BUFFER_TOO_SHORT);
   } else if (size > 1) {
     /*
      * Encrypt the plain NAS message
@@ -280,7 +280,7 @@ int nas_message_decrypt (
 
   if (size < 0) {
     OAILOG_DEBUG (LOG_NAS, "MESSAGE TOO SHORT\n");
-    OAILOG_FUNC_RETURN (LOG_NAS, TLV_DECODE_BUFFER_TOO_SHORT);
+    OAILOG_FUNC_RETURN (LOG_NAS, TLV_BUFFER_TOO_SHORT);
   } else if (size > 1) {
     if (emm_security_context) {
       status->security_context_available = 1;
@@ -316,7 +316,7 @@ int nas_message_decrypt (
                  "MAC Failure MSG:%08X(%u) <> INT ALGO:%08X(%u) Type of security context %u\n",
                  header->message_authentication_code, header->message_authentication_code, mac, mac, (emm_security_context ) ? emm_security_context->sc_type: 0);
       // LG: Do not return now (out of spec but we need that with only one MME)
-      //LOG_FUNC_RETURN (LOG_NAS, TLV_DECODE_MAC_MISMATCH);
+      //LOG_FUNC_RETURN (LOG_NAS, TLV_MAC_MISMATCH);
     }
 
     /*
@@ -390,7 +390,7 @@ int nas_message_decode (
   OAILOG_DEBUG (LOG_NAS, "_nas_message_header_decode returned size %d\n", size);
 
   if (size < 0) {
-    OAILOG_FUNC_RETURN (LOG_NAS, TLV_DECODE_BUFFER_TOO_SHORT);
+    OAILOG_FUNC_RETURN (LOG_NAS, TLV_BUFFER_TOO_SHORT);
   } else
   // SERVICE REQUEST
   if (is_sr) {
@@ -546,7 +546,7 @@ int nas_message_encode (
   int                                     size = _nas_message_header_encode (buffer, &msg->header, length);
 
   if (size < 0) {
-    OAILOG_FUNC_RETURN (LOG_NAS, TLV_ENCODE_BUFFER_TOO_SHORT);
+    OAILOG_FUNC_RETURN (LOG_NAS, TLV_BUFFER_TOO_SHORT);
   } else if (size > 1) {
     /*
      * Encode security protected NAS message
@@ -739,7 +739,7 @@ static int _nas_message_plain_decode (
     size_t length)
 {
   OAILOG_FUNC_IN (LOG_NAS);
-  int                                     bytes = TLV_DECODE_PROTOCOL_NOT_SUPPORTED;
+  int                                     bytes = TLV_PROTOCOL_NOT_SUPPORTED;
 
   if (header->protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
     /*
@@ -790,7 +790,7 @@ static int _nas_message_protected_decode (
     nas_message_decode_status_t * const status)
 {
   OAILOG_FUNC_IN (LOG_NAS);
-  int                                     bytes = TLV_DECODE_BUFFER_TOO_SHORT;
+  int                                     bytes = TLV_BUFFER_TOO_SHORT;
   unsigned char                    *const plain_msg = (unsigned char *)calloc (1, length);
 
   if (plain_msg) {
@@ -907,7 +907,7 @@ static int _nas_message_plain_encode (
     size_t length)
 {
   OAILOG_FUNC_IN (LOG_NAS);
-  int                                     bytes = TLV_ENCODE_PROTOCOL_NOT_SUPPORTED;
+  int                                     bytes = TLV_PROTOCOL_NOT_SUPPORTED;
 
   if (header->protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
     /*
@@ -955,7 +955,7 @@ static int _nas_message_protected_encode (
 {
   OAILOG_FUNC_IN (LOG_NAS);
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
-  int                                     bytes = TLV_ENCODE_BUFFER_TOO_SHORT;
+  int                                     bytes = TLV_BUFFER_TOO_SHORT;
   unsigned char                          *plain_msg = (unsigned char *)calloc (1, length);
 
   if (plain_msg) {

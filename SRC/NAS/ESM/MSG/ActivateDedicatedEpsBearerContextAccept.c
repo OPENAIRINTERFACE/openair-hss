@@ -61,7 +61,7 @@ decode_activate_dedicated_eps_bearer_context_accept (
     switch (ieiDecoded) {
     case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_IEI:
       if ((decoded_result =
-           decode_protocol_configuration_options (&activate_dedicated_eps_bearer_context_accept->protocolconfigurationoptions,
+           decode_ProtocolConfigurationOptions (&activate_dedicated_eps_bearer_context_accept->protocolconfigurationoptions,
                                                   ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_IEI, buffer + decoded, len - decoded)) <= 0)
         return decoded_result;
 
@@ -73,8 +73,8 @@ decode_activate_dedicated_eps_bearer_context_accept (
       break;
 
     default:
-      errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;
-      return TLV_DECODE_UNEXPECTED_IEI;
+      errorCodeDecoder = TLV_UNEXPECTED_IEI;
+      return TLV_UNEXPECTED_IEI;
     }
   }
 
@@ -98,7 +98,7 @@ encode_activate_dedicated_eps_bearer_context_accept (
   if ((activate_dedicated_eps_bearer_context_accept->presencemask & ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT)
       == ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
     if ((encode_result =
-         encode_protocol_configuration_options (&activate_dedicated_eps_bearer_context_accept->protocolconfigurationoptions,
+         encode_ProtocolConfigurationOptions (&activate_dedicated_eps_bearer_context_accept->protocolconfigurationoptions,
                                                 ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_IEI, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;

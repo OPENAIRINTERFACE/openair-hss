@@ -332,7 +332,7 @@ _esm_sap_recv (
      * * * * Ignore received message that is too short to contain a complete
      * * * * message type information element
      */
-    if (decoder_rc == TLV_DECODE_BUFFER_TOO_SHORT) {
+    if (decoder_rc == TLV_BUFFER_TOO_SHORT) {
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Discard message too short to " "contain a complete message type IE\n");
       /*
        * Return indication that received message has been discarded
@@ -344,14 +344,14 @@ _esm_sap_recv (
      * 3GPP TS 24.301, section 7.2
      * * * * Unknown or unforeseen message type
      */
-    else if (decoder_rc == TLV_DECODE_WRONG_MESSAGE_TYPE) {
+    else if (decoder_rc == TLV_WRONG_MESSAGE_TYPE) {
       esm_cause = ESM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
     }
     /*
      * 3GPP TS 24.301, section 7.7.2
      * * * * Conditional IE errors
      */
-    else if (decoder_rc == TLV_DECODE_UNEXPECTED_IEI) {
+    else if (decoder_rc == TLV_UNEXPECTED_IEI) {
       esm_cause = ESM_CAUSE_CONDITIONAL_IE_ERROR;
     } else {
       esm_cause = ESM_CAUSE_PROTOCOL_ERROR;

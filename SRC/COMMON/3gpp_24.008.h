@@ -29,6 +29,8 @@
 
 #ifndef FILE_3GPP_24_008_SEEN
 #define FILE_3GPP_24_008_SEEN
+#include <stdint.h>
+#include "bstrlib.h"
 
 //------------------------------------------------------------------------------
 // 10.5.5.12 MS network capability
@@ -89,7 +91,7 @@ typedef struct ms_network_capability_s {
 //------------------------------------------------------------------------------
 #define PCO_MIN_LENGTH                                               3
 #define PCO_MAX_LENGTH                                               253
-#define PCO_CONFIGURATION_PROTOCOL_PPP_FOR_USE_WITH_IP_PDP_TYPE_OR_IP_PDN_TYPE 000b
+#define PCO_CONFIGURATION_PROTOCOL_PPP_FOR_USE_WITH_IP_PDP_TYPE_OR_IP_PDN_TYPE  0b000
 
 // Protocol identifiers defined in RFC 3232
 #define PCO_PI_LCP                                                      (0xC021)
@@ -135,5 +137,32 @@ typedef struct ms_network_capability_s {
 
 /* Both directions:*/
 #define PCO_CI_IM_CN_SUBSYSTEM_SIGNALING_FLAG                           (0x0002)
+
+typedef struct pco_protocol_or_container_id_s {
+  uint16_t    id;
+  uint8_t     length;
+  bstring     contents;
+} pco_protocol_or_container_id_t;
+
+typedef struct protocol_configuration_options_s {
+  uint8_t     ext:1;
+  uint8_t     spare:4;
+  uint8_t     configuration_protocol:3;
+  uint8_t     num_protocol_or_container_id;
+  // arbitrary value, can be greater than defined (250/3)
+# define PCO_UNSPEC_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID 8
+  pco_protocol_or_container_id_t protocol_or_container_ids[PCO_UNSPEC_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID];
+} protocol_configuration_options_t;
+
+int decode_protocol_configuration_options (
+    protocol_configuration_options_t * protocolconfigurationoptions,
+    const uint8_t * const buffer,
+    const uint32_t len);
+
+int
+encode_protocol_configuration_options (
+    protocol_configuration_options_t * protocolconfigurationoptions,
+    uint8_t * buffer,
+    uint32_t len);
 
 #endif /* FILE_3GPP_24_008_SEEN */

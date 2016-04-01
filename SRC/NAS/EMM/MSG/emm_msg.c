@@ -226,7 +226,7 @@ emm_msg_decode (
 
   default:
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Unexpected message type: 0x%x", msg->header.message_type);
-    decode_result = TLV_DECODE_WRONG_MESSAGE_TYPE;
+    decode_result = TLV_WRONG_MESSAGE_TYPE;
     /*
      * TODO: Handle not standard layer 3 messages: SERVICE_REQUEST
      */
@@ -405,7 +405,7 @@ emm_msg_encode (
 
   default:
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
-    encode_result = TLV_ENCODE_WRONG_MESSAGE_TYPE;
+    encode_result = TLV_WRONG_MESSAGE_TYPE;
     /*
      * TODO: Handle not standard layer 3 messages: SERVICE_REQUEST
      */
@@ -456,7 +456,7 @@ _emm_msg_decode_header (
    * Check the buffer length
    */
   if (len < sizeof (emm_msg_header_t)) {
-    return (TLV_DECODE_BUFFER_TOO_SHORT);
+    return (TLV_BUFFER_TOO_SHORT);
   }
 
   /*
@@ -473,7 +473,7 @@ _emm_msg_decode_header (
    */
   if (header->protocol_discriminator != EPS_MOBILITY_MANAGEMENT_MESSAGE) {
     OAILOG_ERROR (LOG_NAS_EMM, "ESM-MSG   - Unexpected protocol discriminator: 0x%x\n", header->protocol_discriminator);
-    return (TLV_DECODE_PROTOCOL_NOT_SUPPORTED);
+    return (TLV_PROTOCOL_NOT_SUPPORTED);
   }
 
   return (size);
@@ -509,7 +509,7 @@ _emm_msg_encode_header (
    * Check the buffer length
    */
   if (len < sizeof (emm_msg_header_t)) {
-    return (TLV_ENCODE_BUFFER_TOO_SHORT);
+    return (TLV_BUFFER_TOO_SHORT);
   }
 
   /*
@@ -517,7 +517,7 @@ _emm_msg_encode_header (
    */
   if (header->protocol_discriminator != EPS_MOBILITY_MANAGEMENT_MESSAGE) {
     OAILOG_ERROR (LOG_NAS_EMM, "ESM-MSG   - Unexpected protocol discriminator: 0x%x\n", header->protocol_discriminator);
-    return (TLV_ENCODE_PROTOCOL_NOT_SUPPORTED);
+    return (TLV_PROTOCOL_NOT_SUPPORTED);
   }
 
   /*

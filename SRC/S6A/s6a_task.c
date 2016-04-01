@@ -197,7 +197,7 @@ int s6a_init (
 
   ret = fd_core_waitstartcomplete ();
   if (ret) {
-    OAILOG_ERROR (LOG_S6A, "An error occurred during fd_core_waitstartcomplete.\n");
+    OAILOG_ERROR (LOG_S6A, "An error occurred during freeDiameter core library start\n");
     return ret;
   } else {
     OAILOG_DEBUG (LOG_S6A, "fd_core_waitstartcomplete done\n");
@@ -214,8 +214,8 @@ int s6a_init (
   /*
    * Trying to connect to peers
    */
-  // No done in freeDiameter config file
-  CHECK_FCT (s6a_fd_new_peer ());
+  // Now done in freeDiameter config file
+  //CHECK_FCT (s6a_fd_new_peer ());
 
   if (itti_create_task (TASK_S6A, &s6a_thread, NULL) < 0) {
     OAILOG_ERROR (LOG_S6A, "s6a create task\n");

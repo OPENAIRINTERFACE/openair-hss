@@ -393,6 +393,8 @@ set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
   ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
   ${OPENAIRCN_DIR}/SRC/UTILS/pid_file.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/TLVEncoder.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/TLVDecoder.c  
   )
 
 if (LOG_OAI)
@@ -463,6 +465,7 @@ add_library (SGW
   ${SGW_DIR}/sgw_handlers.c
   ${SGW_DIR}/sgw_context_manager.c
   ${SGW_DIR}/pgw_lite_paa.c
+  ${SGW_DIR}/pgw_pco.c
   )
 
 set(MME_DIR ${OPENAIRCN_DIR}/SRC/MME_APP)
@@ -628,8 +631,6 @@ set(libnas_ies_OBJS
 
 set (libnas_utils_OBJS
   ${NAS_SRC}UTIL/nas_timer.c
-  ${NAS_SRC}UTIL/TLVEncoder.c
-  ${NAS_SRC}UTIL/TLVDecoder.c
 )
 
 
@@ -795,6 +796,7 @@ add_executable(mme_gw
   ${OPENAIRCN_DIR}/SRC/OAI_EPC/oai_epc_log.c
   ${OPENAIRCN_DIR}/SRC/OAI_EPC/oai_epc.c
   ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
   ${GTPV1U_DIR}/gtpv1u_task.c
   ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
@@ -817,6 +819,7 @@ add_executable(mme
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme_log.c
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme.c
   ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
   ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
   )
@@ -837,6 +840,7 @@ target_link_libraries (mme
 ################################
 add_executable(spgw
   ${OPENAIRCN_DIR}/SRC/OAI_SGW/oai_sgw.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
   ${GTPV1U_DIR}/gtpv1u_task.c
   )
 if( ITTI_ANALYZER )
@@ -845,7 +849,7 @@ add_executable(spgw
 endif( ITTI_ANALYZER )
 target_link_libraries (spgw
   -Wl,--start-group
-  GTPV1U SECU_CN SGW S11 GTPV1U GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
+  GTPV1U SECU_CN SGW S11 GTPV1U GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
   pthread m rt ${CONFIG_LIBRARIES}  
   )

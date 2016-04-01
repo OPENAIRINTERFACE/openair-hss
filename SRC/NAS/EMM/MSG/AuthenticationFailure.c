@@ -74,8 +74,8 @@ decode_authentication_failure (
       break;
 
     default:
-      errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;
-      return TLV_DECODE_UNEXPECTED_IEI;
+      errorCodeDecoder = TLV_UNEXPECTED_IEI;
+      return TLV_UNEXPECTED_IEI;
     }
   }
 

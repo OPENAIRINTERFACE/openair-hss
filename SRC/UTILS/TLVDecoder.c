@@ -28,33 +28,21 @@
 
 int                                     errorCodeDecoder = 0;
 
-const char                             *errorCodeStringDecoder[] = {
-  "No error",
-  "Buffer NULL",
-  "Buffer too short",
-  "Unexpected IEI",
-  "Mandatory field not present",
-  "Wrong message type",
-  "EXT value doesn't match",
-  "Protocol not supported",
-};
-
-
 int decode_bstring (
   bstring * bstr,
-  uint16_t pdulen,
-  uint8_t * buffer,
-  uint32_t buflen)
+  const uint16_t pdulen,
+  const uint8_t *const  buffer,
+  const uint32_t buflen)
 {
   if (buflen < pdulen)
-    return -1;
+    return TLV_BUFFER_TOO_SHORT;
 
   if ((bstr ) && (buffer )) {
     *bstr = blk2bstr(buffer, pdulen);
     return blength(*bstr);
   } else {
     *bstr = NULL;
-    return -1;
+    return TLV_BUFFER_TOO_SHORT;
   }
 }
 
@@ -71,11 +59,3 @@ bstring dump_bstring_xml (const bstring  const bstr)
 }
 
 
-void tlv_decode_perror (void)
-{
-  if (errorCodeDecoder >= 0)
-    // No error or TLV_DECODE_ERR_OK
-    return;
-
-  OAILOG_ERROR (LOG_NAS, "TLV decoder : (%d, %s)", errorCodeDecoder, errorCodeStringDecoder[errorCodeDecoder * -1]);
-}

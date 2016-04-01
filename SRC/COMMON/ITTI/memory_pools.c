@@ -131,7 +131,7 @@ static const uint32_t                   MAX_POOL_ITEM_SIZE = 100 * 1000;
 static const pool_item_start_mark_t     POOL_ITEM_START_MARK = CHARS_TO_UINT32 ('P', 'I', 's', 't');
 static const pool_item_end_mark_t       POOL_ITEM_END_MARK = CHARS_TO_UINT32 ('p', 'i', 'E', 'N');
 
-static const item_status_t              ITEM_STATUS_free_wrapper = 'F';
+static const item_status_t              ITEM_STATUS_FREE = 'F';
 static const item_status_t              ITEM_STATUS_ALLOCATED = 'a';
 
 static const pool_start_mark_t          POOL_START_MARK = CHARS_TO_UINT32 ('P', '_', 's', 't');
@@ -445,7 +445,7 @@ memory_pools_add_pool (
       memory_pool_item = memory_pool_item_from_index (memory_pool, item_index);
       memory_pool_item->start.start_mark = POOL_ITEM_START_MARK;
       memory_pool_item->start.pool_id = pool;
-      memory_pool_item->start.item_status = ITEM_STATUS_free_wrapper;
+      memory_pool_item->start.item_status = ITEM_STATUS_FREE;
       memory_pool_item->data[memory_pool->item_data_number] = POOL_ITEM_END_MARK;
     }
   }
@@ -506,7 +506,7 @@ memory_pools_allocate (
     /*
      * Sanity check on item status, must be free
      */
-    AssertFatal (memory_pool_item->start.item_status == ITEM_STATUS_free_wrapper, "Item status is not set to free (%d) in pool %u, item %d!\n", memory_pool_item->start.item_status, pool, item_index);
+    AssertFatal (memory_pool_item->start.item_status == ITEM_STATUS_FREE, "Item status is not set to free (%d) in pool %u, item %d!\n", memory_pool_item->start.item_status, pool, item_index);
     memory_pool_item->start.item_status = ITEM_STATUS_ALLOCATED;
     memory_pool_item->start.info[0] = info_0;
     memory_pool_item->start.info[1] = info_1;
@@ -547,7 +547,7 @@ memory_pools_free (
   memory_pool_item = memory_pool_item_from_handler (memory_pool_item_handle);
   AssertError (memory_pool_item != NULL, return (EXIT_FAILURE), "Failed to retrieve memory pool item for handle %p!\n", memory_pool_item_handle);
   info_1 = memory_pool_item->start.info[1];
-  VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_free_wrapper, __sync_or_and_fetch (&vcd_mp_free, 1L << info_1));
+  VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_FREE, __sync_or_and_fetch (&vcd_mp_free, 1L << info_1));
   /*
    * Recover pool index
    */
@@ -573,12 +573,12 @@ memory_pools_free (
    * Sanity check on item status, must be allocated
    */
   AssertFatal (memory_pool_item->start.item_status == ITEM_STATUS_ALLOCATED, "Trying to free a non allocated (%x) memory pool item (pool %u, item %d)!\n", memory_pool_item->start.item_status, pool, item_index);
-  memory_pool_item->start.item_status = ITEM_STATUS_free_wrapper;
+  memory_pool_item->start.item_status = ITEM_STATUS_FREE;
   result = items_group_put_free_item (&memory_pools->pools[pool].items_group_free, item_index);
   AssertError (result == EXIT_SUCCESS, {
                }
                , "Failed to free memory pool item (pool %u, item %d)!\n", pool, item_index);
-  VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_free_wrapper, __sync_and_and_fetch (&vcd_mp_free, ~(1L << info_1)));
+  VCD_SIGNAL_DUMPER_DUMP_VARIABLE_BY_NAME (VCD_SIGNAL_DUMPER_VARIABLE_MP_FREE, __sync_and_and_fetch (&vcd_mp_free, ~(1L << info_1)));
   return (result);
 }
 

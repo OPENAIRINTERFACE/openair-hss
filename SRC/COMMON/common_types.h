@@ -35,6 +35,7 @@
 #include <stdint.h>
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
 #include "3gpp_24.301.h"
 #include "3gpp_33.401.h"
 #include "3gpp_36.401.h"

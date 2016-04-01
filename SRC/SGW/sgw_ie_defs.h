@@ -93,19 +93,8 @@ typedef struct {
   uint8_t ipv6_prefix_length;
 } PAA_t;
 
-/* Protocol configuration options from ts124008*/
 
 
-#define IPCP_CODE_CONFIGURE_REQUEST                                     (0x01)
-#define IPCP_CODE_CONFIGURE_ACK                                         (0x02)
-#define IPCP_CODE_CONFIGURE_NACK                                        (0x03)
-#define IPCP_CODE_CONFIGURE_REJECT                                      (0x04)
-#define IPCP_CODE_TERMINATE_REQUEST                                     (0x05)
-#define IPCP_CODE_TERMINATE_ACK                                         (0x06)
-#define IPCP_CODE_REJECT                                                (0x07)
-
-#define IPCP_OPTION_PRIMARY_DNS_SERVER_IP_ADDRESS                       (0x81)
-#define IPCP_OPTION_SECONDARY_DNS_SERVER_IP_ADDRESS                     (0x83)
 
 
 typedef struct pco_flat_s{

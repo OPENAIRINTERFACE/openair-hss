@@ -220,8 +220,6 @@ void nas_itti_pdn_connectivity_req(
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p = NULL;
-  uint8_t     i;
-  uint8_t     index;
 
   AssertFatal(imsi_pP       != NULL, "imsi_pP param is NULL");
   AssertFatal(proc_data_pP  != NULL, "proc_data_pP param is NULL");
@@ -279,31 +277,11 @@ void nas_itti_pdn_connectivity_req(
 
   NAS_PDN_CONNECTIVITY_REQ(message_p).request_type  = request_typeP;
 
-  if (proc_data_pP->pco.num_protocol_id_or_container_id <= PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID) {
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[0] = ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_IEI;
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[1] = 1 + 3 * proc_data_pP->pco.num_protocol_id_or_container_id;
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[2] = 0x80; // do it fast
-    i = 0;
-    index = 3;
-    while (( i < proc_data_pP->pco.num_protocol_id_or_container_id) &&
-        (proc_data_pP->pco.protocolidcontents[i]) &&
-        ((index + blength(proc_data_pP->pco.protocolidcontents[i])) <= PROTOCOL_CONFIGURATION_OPTIONS_MAXIMUM_LENGTH)){
-      NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[1] += proc_data_pP->pco.lengthofprotocolid[i];
-      NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[index++] = (proc_data_pP->pco.protocolid[i] >> 8);
-      NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[index++] = (proc_data_pP->pco.protocolid[i] & 0x00FF);
-      NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[index++] = proc_data_pP->pco.lengthofprotocolid[i];
-      if (proc_data_pP->pco.lengthofprotocolid[i] > 0) {
-        memcpy( &NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte[index],
-            proc_data_pP->pco.protocolidcontents[i]->data,
-            proc_data_pP->pco.lengthofprotocolid[i]);
-
-        index += proc_data_pP->pco.lengthofprotocolid[i];
-      }
-      i++;
-    }
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pco.length = index;
-  }
-
+  encode_ProtocolConfigurationOptions (
+    &proc_data_pP->pco,
+    ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_IEI,
+    NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte,
+    sizeof(NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte));
 
   MSC_LOG_TX_MESSAGE(
         MSC_NAS_MME,
