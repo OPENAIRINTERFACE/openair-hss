@@ -266,7 +266,6 @@ int emm_proc_authentication_failure (
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d) UE " MME_UE_S1AP_ID_FMT "\n", emm_ctx->T3460.id, emm_ctx->ue_id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
-
   } else {
       OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to authentify the UE\n");
       emm_cause = EMM_CAUSE_ILLEGAL_UE;
@@ -323,6 +322,11 @@ int emm_proc_authentication_failure (
         // Do not accept the UE to attach to the network
         rc = _authentication_reject(data);
       }
+    } else {
+      REQUIREMENT_3GPP_24_301(R10_5_4_2_5__2);
+      emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+      // Do not accept the UE to attach to the network
+      rc = _authentication_reject(data);
     }
     break;
 
@@ -352,6 +356,7 @@ int emm_proc_authentication_failure (
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - The MME received an unknown EMM CAUSE %d\n", emm_cause);
 
   }
+  data = (authentication_data_t *) (emm_proc_common_get_args (ue_id));
   if (data) {
     // Release retransmission timer parameters
     free_wrapper (data);

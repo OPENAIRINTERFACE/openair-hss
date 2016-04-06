@@ -430,10 +430,12 @@ emm_proc_common_get_args (
   emm_common_data_t                      *emm_common_data_ctx = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  DevCheck (ue_id > 0, ue_id, 0, 0);
   emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, ue_id);
-  assert (emm_common_data_ctx );
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, emm_common_data_ctx->args);
+  if (emm_common_data_ctx) {
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, emm_common_data_ctx->args);
+  } else {
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
+  }
 }
 
 /****************************************************************************/
