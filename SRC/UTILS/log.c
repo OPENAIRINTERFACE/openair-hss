@@ -69,7 +69,7 @@
 #define LOG_CONNECT_PERIOD_MICRO_SEC             0
 
 #define LOG_FLUSH_PERIOD_SEC                     0
-#define LOG_FLUSH_PERIOD_MICRO_SEC            5000
+#define LOG_FLUSH_PERIOD_MICRO_SEC           50000
 
 #define LOG_DISPLAYED_FILENAME_MAX_LENGTH       32
 #define LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH  5
