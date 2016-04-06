@@ -24,7 +24,6 @@
 #include <string.h>
 
 #include "TLVDecoder.h"
-#include "log.h"
 
 int                                     errorCodeDecoder = 0;
 
@@ -34,12 +33,13 @@ int decode_bstring (
   const uint8_t *const  buffer,
   const uint32_t buflen)
 {
-  if (buflen < pdulen)
+  if (buflen < pdulen) {
     return TLV_BUFFER_TOO_SHORT;
+  }
 
   if ((bstr ) && (buffer )) {
     *bstr = blk2bstr(buffer, pdulen);
-    return blength(*bstr);
+    return pdulen;
   } else {
     *bstr = NULL;
     return TLV_BUFFER_TOO_SHORT;

@@ -258,7 +258,10 @@ esm_recv_pdn_connectivity_request (
     //TODO: rc = esm_proc_information_request();
   }
 
-  esm_data->pco = msg->protocolconfigurationoptions;
+  esm_data->pco.ext = msg->protocolconfigurationoptions.ext;
+  esm_data->pco.spare = msg->protocolconfigurationoptions.spare;
+  esm_data->pco.configuration_protocol = msg->protocolconfigurationoptions.configuration_protocol;
+  esm_data->pco.num_protocol_or_container_id = msg->protocolconfigurationoptions.num_protocol_or_container_id;
 
   for (i = 0; i < msg->protocolconfigurationoptions.num_protocol_or_container_id; i++) {
     esm_data->pco.protocol_or_container_ids[i].id     = msg->protocolconfigurationoptions.protocol_or_container_ids[i].id;

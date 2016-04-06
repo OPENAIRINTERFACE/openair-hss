@@ -26,11 +26,11 @@
  * Use mme_app_extern.h to expose mme applicative layer procedures/data.
  */
 
-#include "intertask_interface.h"
-#include "mme_app_ue_context.h"
 
 #ifndef FILE_MME_APP_DEFS_SEEN
 #define FILE_MME_APP_DEFS_SEEN
+#include "intertask_interface.h"
+#include "mme_app_ue_context.h"
 
 typedef struct {
   /* UE contexts + some statistics variables */

@@ -36,7 +36,7 @@ decode_ProtocolConfigurationOptions (
 {
   uint32_t                                decoded = 0;
   uint8_t                                 ielen = 0;
-  int                                     decode_result;
+  int                                     rv = 0;
 
   if (iei > 0) {
     CHECK_IEI_DECODER (iei, *buffer);
@@ -47,42 +47,18 @@ decode_ProtocolConfigurationOptions (
   decoded++;
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
-  if (((*(buffer + decoded) >> 7) & 0x1) != 1) {
-    errorCodeDecoder = TLV_VALUE_DOESNT_MATCH;
-    return TLV_VALUE_DOESNT_MATCH;
+
+  rv = decode_protocol_configuration_options (
+      protocolconfigurationoptions,
+      buffer + decoded,
+      len - decoded);
+
+  if (rv < 0) {
+    return rv;
   }
+  decoded += (uint32_t)rv;
 
-  /*
-   * Bits 7 to 4 of octet 3 are spare, read as 0
-   */
-  if (((*(buffer + decoded) & 0x78) >> 3) != 0) {
-    errorCodeDecoder = TLV_VALUE_DOESNT_MATCH;
-    return TLV_VALUE_DOESNT_MATCH;
-  }
 
-  protocolconfigurationoptions->configuration_protocol = (*(buffer + decoded) >> 1) & 0x7;
-  decoded++;
-  //IES_DECODE_U16(protocolconfigurationoptions->protocolid, *(buffer + decoded));
-  protocolconfigurationoptions->num_protocol_or_container_id = 0;
-
-  while ((len - decoded) > 0) {
-    IES_DECODE_U16 (buffer, decoded, protocolconfigurationoptions->protocol_or_container_ids[protocolconfigurationoptions->num_protocol_or_container_id].id);
-    DECODE_U8 (buffer + decoded, protocolconfigurationoptions->protocol_or_container_ids[protocolconfigurationoptions->num_protocol_or_container_id].length, decoded);
-
-    if (0 < protocolconfigurationoptions->protocol_or_container_ids[protocolconfigurationoptions->num_protocol_or_container_id].length) {
-      if ((decode_result = decode_bstring (&protocolconfigurationoptions->protocol_or_container_ids[protocolconfigurationoptions->num_protocol_or_container_id].contents,
-          protocolconfigurationoptions->protocol_or_container_ids[protocolconfigurationoptions->num_protocol_or_container_id].length,
-          buffer + decoded,
-          len - decoded)) < 0) {
-        return decode_result;
-      } else {
-        decoded += decode_result;
-      }
-    } else {
-      protocolconfigurationoptions->protocol_or_container_ids[protocolconfigurationoptions->num_protocol_or_container_id].contents = NULL;
-    }
-    protocolconfigurationoptions->num_protocol_or_container_id += 1;
-  }
 
 #if NAS_DEBUG
   dump_ProtocolConfigurationOptions_xml (protocolconfigurationoptions, iei);
@@ -98,9 +74,7 @@ encode_ProtocolConfigurationOptions (
   uint32_t len)
 {
   uint8_t                                *lenPtr;
-  uint8_t                                 num_protocol_or_container_id = 0;
   uint32_t                                encoded = 0;
-  int                                     encode_result;
 
   /*
    * Checking IEI and pointer
@@ -117,22 +91,11 @@ encode_ProtocolConfigurationOptions (
 
   lenPtr = (buffer + encoded);
   encoded++;
-  *(buffer + encoded) = 0x00 | (1 << 7) | (protocolconfigurationoptions->configuration_protocol & 0x7);
-  encoded++;
 
-  while (num_protocol_or_container_id < protocolconfigurationoptions->num_protocol_or_container_id) {
-    IES_ENCODE_U16 (buffer, encoded, protocolconfigurationoptions->protocol_or_container_ids[num_protocol_or_container_id].id);
-    *(buffer + encoded) = protocolconfigurationoptions->protocol_or_container_ids[num_protocol_or_container_id].length;
-    encoded++;
-
-    if ((encode_result = encode_bstring (protocolconfigurationoptions->protocol_or_container_ids[num_protocol_or_container_id].contents,
-        buffer + encoded, len - encoded)) < 0)
-      return encode_result;
-    else
-      encoded += encode_result;
-
-    num_protocol_or_container_id += 1;
-  }
+  encoded += encode_protocol_configuration_options (
+      protocolconfigurationoptions,
+      buffer + encoded,
+      len - encoded);
 
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
   return encoded;

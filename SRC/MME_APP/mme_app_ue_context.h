@@ -31,22 +31,23 @@
  *  @{
  */
 
+
+#ifndef FILE_MME_APP_UE_CONTEXT_SEEN
+#define FILE_MME_APP_UE_CONTEXT_SEEN
 #include <stdint.h>
 #include <inttypes.h>   /* For sscanf formats */
 #include <time.h>       /* to provide time_t */
 
+#include "tree.h"
+#include "hashtable.h"
+#include "obj_hashtable.h"
 #include "bstrlib.h"
 #include "common_types.h"
 #include "s1ap_messages_types.h"
 #include "nas_messages_types.h"
 #include "s6a_messages_types.h"
 #include "security_types.h"
-#include "tree.h"
-#include "hashtable.h"
-#include "obj_hashtable.h"
-
-#ifndef FILE_MME_APP_UE_CONTEXT_SEEN
-#define FILE_MME_APP_UE_CONTEXT_SEEN
+#include "sgw_ie_defs.h"
 
 typedef enum {
   ECM_IDLE,
@@ -267,6 +268,11 @@ void mme_ue_context_update_coll_keys(
     const imsi64_t     imsi,
     const s11_teid_t         mme_s11_teid,
     const guti_t     * const guti_p);
+
+/** \brief dump MME associative collections
+ **/
+
+void mme_ue_context_dump_coll_keys(void);
 
 /** \brief Insert a new UE context in the tree of known UEs.
  * At least the IMSI should be known to insert the context in the tree.

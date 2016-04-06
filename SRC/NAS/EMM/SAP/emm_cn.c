@@ -251,10 +251,8 @@ static int _emm_cn_pdn_connectivity_res (const emm_cn_pdn_res_t * msg_pP)
   // PCO processing
   //--------------------------------------------------------------------------
   memset (&pco, 0, sizeof (ProtocolConfigurationOptions));
-
-  if (0 >   decode_ProtocolConfigurationOptions (
+  if (0 >   decode_protocol_configuration_options (
       &pco,
-      ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_IEI,
       msg_pP->pco.byte,
       msg_pP->pco.length)) {
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);

@@ -480,7 +480,8 @@ hashtable_dump_content (
 {
   hash_node_t                            *node = NULL;
   unsigned int                            i = 0;
-  int                                     rc;
+  unsigned int                            consumed = 0;
+  int                                     rc = 0;
 
   if (!hashtblP) {
     rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "HASH_TABLE_BAD_PARAMETER_HASHTABLE");
@@ -492,13 +493,14 @@ hashtable_dump_content (
       node = hashtblP->nodes[i];
 
       while (node) {
-        rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "Key 0x%"PRIx64" Element %p\n", node->key, node->data);
+        rc = snprintf (&buffer_pP[consumed], *remaining_bytes_in_buffer_pP, "Key 0x%"PRIx64" Element %p Node %p\n", node->key, node->data, node);
         node = node->next;
 
         if ((0 > rc) || (*remaining_bytes_in_buffer_pP < rc)) {
           PRINT_HASHTABLE (hashtblP, "Error while dumping hashtable content");
         } else {
           *remaining_bytes_in_buffer_pP -= rc;
+          consumed += rc;
         }
       }
     }
@@ -518,6 +520,7 @@ hashtable_ts_dump_content (
 {
   hash_node_t                            *node = NULL;
   unsigned int                            i = 0;
+  unsigned int                            consumed = 0;
   int                                     rc;
 
   if (!hashtblP) {
@@ -531,13 +534,14 @@ hashtable_ts_dump_content (
       node = hashtblP->nodes[i];
 
       while (node) {
-        rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "Key 0x%"PRIx64" Element %p\n", node->key, node->data);
+        rc = snprintf (&buffer_pP[consumed], *remaining_bytes_in_buffer_pP, "Key 0x%"PRIx64" Element %p Node %p\n", node->key, node->data, node);
         node = node->next;
 
         if ((0 > rc) || (*remaining_bytes_in_buffer_pP < rc)) {
           PRINT_HASHTABLE (hashtblP, "Error while dumping hashtable content");
         } else {
           *remaining_bytes_in_buffer_pP -= rc;
+          consumed += rc;
         }
       }
       pthread_mutex_unlock(&hashtblP->lock_nodes[i]);

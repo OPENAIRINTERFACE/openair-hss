@@ -32,8 +32,6 @@
 
 int pgw_pco_push_protocol_or_container_id(protocol_configuration_options_t * const pco, pco_protocol_or_container_id_t * const poc_id);
 
-void pgw__process_pco_request_push_pco(protocol_configuration_options_t * const pco_resp);
-
 int pgw_process_pco_request_ipcp(protocol_configuration_options_t * const pco_resp, const pco_protocol_or_container_id_t * const poc_id);
 
 int pgw_process_pco_dns_server_request(protocol_configuration_options_t * const pco_resp, const pco_protocol_or_container_id_t * const poc_id);

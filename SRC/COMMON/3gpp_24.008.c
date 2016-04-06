@@ -38,9 +38,8 @@ decode_protocol_configuration_options (
     const uint8_t * const buffer,
     const uint32_t len)
 {
-  uint32_t                                decoded = 0;
-  int                                     decode_result;
-
+  int                                     decoded = 0;
+  int                                     decode_result = 0;
 
   if (((*(buffer + decoded) >> 7) & 0x1) != 1) {
     return TLV_VALUE_DOESNT_MATCH;
@@ -57,7 +56,7 @@ decode_protocol_configuration_options (
   decoded++;
   protocolconfigurationoptions->num_protocol_or_container_id = 0;
 
-  while ((len - decoded) > 0) {
+  while (3 <= ((int32_t)len - (int32_t)decoded)) {
     DECODE_U16 (buffer + decoded, protocolconfigurationoptions->protocol_or_container_ids[protocolconfigurationoptions->num_protocol_or_container_id].id, decoded);
     DECODE_U8 (buffer + decoded, protocolconfigurationoptions->protocol_or_container_ids[protocolconfigurationoptions->num_protocol_or_container_id].length, decoded);
 
@@ -87,7 +86,7 @@ encode_protocol_configuration_options (
 {
   uint8_t                                 num_protocol_or_container_id = 0;
   uint32_t                                encoded = 0;
-  int                                     encode_result;
+  int                                     encode_result = 0;
 
   *(buffer + encoded) = 0x00 | (1 << 7) | (protocolconfigurationoptions->configuration_protocol & 0x7);
   encoded++;

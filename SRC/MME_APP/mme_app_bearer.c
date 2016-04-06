@@ -258,10 +258,9 @@ mme_app_handle_nas_pdn_connectivity_req (
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-  OAILOG_DEBUG (LOG_MME_APP, "Received NAS_PDN_CONNECTIVITY_REQ from NAS\n");
   DevAssert (nas_pdn_connectivity_req_pP );
   IMSI_STRING_TO_IMSI64 ((char *)nas_pdn_connectivity_req_pP->imsi, &imsi64);
-  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi " IMSI_64_FMT "\n", imsi64);
+  OAILOG_DEBUG (LOG_MME_APP, "Received NAS_PDN_CONNECTIVITY_REQ from NAS Handling imsi " IMSI_64_FMT "\n", imsi64);
 
   if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64)) == NULL) {
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_PDN_CONNECTIVITY_REQ Unknown imsi " IMSI_64_FMT, imsi);
@@ -300,6 +299,7 @@ mme_app_handle_nas_pdn_connectivity_req (
   ue_context_p->pending_pdn_connectivity_req_ue_id = nas_pdn_connectivity_req_pP->ue_id;
   memcpy (&ue_context_p->pending_pdn_connectivity_req_pco.byte[0], &nas_pdn_connectivity_req_pP->pco.byte[0], nas_pdn_connectivity_req_pP->pco.length);
   ue_context_p->pending_pdn_connectivity_req_pco.length = nas_pdn_connectivity_req_pP->pco.length;
+
   memcpy (&ue_context_p->pending_pdn_connectivity_req_qos, &nas_pdn_connectivity_req_pP->qos, sizeof (network_qos_t));
   ue_context_p->pending_pdn_connectivity_req_proc_data = nas_pdn_connectivity_req_pP->proc_data;
   nas_pdn_connectivity_req_pP->proc_data = NULL;

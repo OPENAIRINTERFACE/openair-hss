@@ -279,7 +279,9 @@ sgw_handle_sgi_endpoint_created (
         }
       }
       memcpy (&create_session_response_p->paa, &resp_pP->paa, sizeof (PAA_t));
-      memcpy (&create_session_response_p->pco, &resp_pP->pco, sizeof (pco_flat_t));
+      memcpy (&create_session_response_p->pco.byte, &resp_pP->pco.byte, resp_pP->pco.length);
+      create_session_response_p->pco.length = resp_pP->pco.length;
+
       /*
        * Set the Cause information from bearer context created.
        * * * * "Request accepted" is returned when the GTPv2 entity has accepted a control plane request.
@@ -360,10 +362,18 @@ sgw_handle_gtpv1uCreateTunnelResp (
     in_pco_p = &new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.saved_message.pco;
     protocol_configuration_options_t pco_req = {0};
     protocol_configuration_options_t pco_resp = {0};
+
+
     AssertFatal (0 < decode_protocol_configuration_options(&pco_req,
         in_pco_p->byte, in_pco_p->length), "Error in decoding PCO");
 
-    AssertFatal (0 < pgw_process_pco_request(&pco_req, &pco_resp, &address_allocation_via_nas_signalling), "Error in processing PCO in request");
+    AssertFatal (0 == pgw_process_pco_request(&pco_req, &pco_resp, &address_allocation_via_nas_signalling), "Error in processing PCO in request");
+    AssertFatal (0 < encode_protocol_configuration_options(&pco_resp,
+        sgi_create_endpoint_resp.pco.byte, sizeof(sgi_create_endpoint_resp.pco.byte)), "Error in encoding PCO");
+    rv = encode_protocol_configuration_options(&pco_resp,
+        sgi_create_endpoint_resp.pco.byte, sizeof(sgi_create_endpoint_resp.pco.byte));
+    AssertFatal (0 < rv, "Error in encoding PCO");
+    sgi_create_endpoint_resp.pco.length = rv;
 
     //--------------------------------------------------------------------------
     // IP forward will forward packets to this teid

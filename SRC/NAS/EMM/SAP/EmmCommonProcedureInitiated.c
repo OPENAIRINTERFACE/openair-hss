@@ -42,7 +42,6 @@
 
 *****************************************************************************/
 
-
 #include "common_defs.h"
 #include "emm_fsm.h"
 #include "commonDef.h"

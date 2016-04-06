@@ -21,11 +21,11 @@
 
 #include <string.h>
 
+#include "log.h"
+#include "msc.h"
 #include "intertask_interface.h"
 #include "secu_defs.h"
 #include "nas_itti_messaging.h"
-#include "msc.h"
-#include "log.h"
 
 
 #define TASK_ORIGIN  TASK_NAS_MME
@@ -277,11 +277,11 @@ void nas_itti_pdn_connectivity_req(
 
   NAS_PDN_CONNECTIVITY_REQ(message_p).request_type  = request_typeP;
 
-  encode_ProtocolConfigurationOptions (
+  int encoded = encode_protocol_configuration_options (
     &proc_data_pP->pco,
-    ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_IEI,
     NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte,
     sizeof(NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte));
+  NAS_PDN_CONNECTIVITY_REQ(message_p).pco.length = encoded;
 
   MSC_LOG_TX_MESSAGE(
         MSC_NAS_MME,
@@ -332,6 +332,7 @@ void nas_itti_auth_info_req(
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S6A_MME, NULL, 0, "0 S6A_AUTH_INFO_REQ IMSI "IMSI_64_FMT" visited_plmn "PLMN_FMT" re_sync %u",
       imsi64_P, PLMN_ARG(visited_plmnP), auth_info_req->re_synchronization);
   itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
+
   OAILOG_FUNC_OUT(LOG_NAS);
 }
 
@@ -414,5 +415,6 @@ void nas_itti_establish_cnf(
 
     itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   }
+
   OAILOG_FUNC_OUT(LOG_NAS);
 }

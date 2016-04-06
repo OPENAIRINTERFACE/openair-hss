@@ -214,8 +214,7 @@ int s6a_init (
   /*
    * Trying to connect to peers
    */
-  // Now done in freeDiameter config file
-  //CHECK_FCT (s6a_fd_new_peer ());
+  CHECK_FCT (s6a_fd_new_peer ());
 
   if (itti_create_task (TASK_S6A, &s6a_thread, NULL) < 0) {
     OAILOG_ERROR (LOG_S6A, "s6a create task\n");

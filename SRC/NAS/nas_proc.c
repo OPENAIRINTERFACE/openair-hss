@@ -49,7 +49,6 @@
 #include "msc.h"
 #include "s6a_defs.h"
 
-
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
@@ -402,7 +401,7 @@ nas_proc_auth_param_res (
   emm_sap.primitive = EMMCN_AUTHENTICATION_PARAM_RES;
   emm_sap.u.emm_cn.u.auth_res = &emm_cn_auth_res;
   rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 //------------------------------------------------------------------------------

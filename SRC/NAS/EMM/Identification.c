@@ -317,6 +317,7 @@ emm_proc_identification_complete (
   }
 
   rc = emm_sap_send (&emm_sap);
+
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

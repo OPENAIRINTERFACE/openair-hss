@@ -204,6 +204,7 @@ inline void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set IMSI %s (valid)\n", ctxt->ue_id, imsi_str);
 #endif
   mme_api_notify_imsi(ctxt->ue_id, imsi64);
+  hashtable_ts_insert (_emm_data.ctx_coll_imsi, imsi64, (void*)((uintptr_t )ctxt->ue_id));
 }
 
 //------------------------------------------------------------------------------
@@ -585,7 +586,7 @@ emm_data_context_remove (
   struct emm_data_context_s              *emm_data_context_p = NULL;
   mme_ue_s1ap_id_t                       *emm_ue_id          = NULL;
 
-  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " MME_UE_S1AP_ID_FMT " ", elm, elm->ue_id);
+  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " MME_UE_S1AP_ID_FMT "\n", elm, elm->ue_id);
 
   if ( IS_EMM_CTXT_PRESENT_GUTI(elm)) {
     obj_hashtable_ts_remove (emm_data->ctx_coll_guti, (const void *)&elm->_guti, sizeof (elm->_guti), (void **)&emm_ue_id);

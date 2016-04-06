@@ -1051,7 +1051,6 @@ _emm_attach_identify (
       ksi_t                                   eksi = 0;
       int                                     vindex = 0;
 
-      AssertFatal(0 !=  0, "emm_ctx->_security.eksi %d", emm_ctx->_security.eksi);
       if (emm_ctx->_security.eksi != KSI_NO_KEY_AVAILABLE) {
         REQUIREMENT_3GPP_24_301(R10_5_4_2_4__2);
         eksi = (emm_ctx->_security.eksi + 1) % (EKSI_MAX_VALUE + 1);
@@ -1062,11 +1061,15 @@ _emm_attach_identify (
         }
       }
       // eksi should always be 0
-      AssertFatal(IS_EMM_CTXT_PRESENT_AUTH_VECTOR(emm_ctx, vindex), "TODO No valid vector, should not happen");
-      emm_ctx_set_security_vector_index(emm_ctx, vindex);
-
-      rc = emm_proc_authentication (emm_ctx, emm_ctx->ue_id, eksi,
+      /*if (!IS_EMM_CTXT_PRESENT_AUTH_VECTORS(emm_ctx)) {
+        // Ask upper layer to fetch new security context
+        nas_itti_auth_info_req (emm_ctx->ue_id, emm_ctx->_imsi64, true, &emm_ctx->originating_tai.plmn, MAX_EPS_AUTH_VECTORS, NULL);
+        rc = RETURNok;
+      } else */{
+        emm_ctx_set_security_vector_index(emm_ctx, vindex);
+        rc = emm_proc_authentication (emm_ctx, emm_ctx->ue_id, eksi,
           emm_ctx->_vector[vindex].rand, emm_ctx->_vector[vindex].autn, emm_attach_security, NULL, NULL);
+      }
     }
   } else if (IS_EMM_CTXT_PRESENT_GUTI(emm_ctx)) {
     // The UE identifies itself using a GUTI
@@ -1160,6 +1163,7 @@ _emm_attach_identify (
     // Do not accept the UE to attach to the network
     rc = _emm_attach_reject (emm_ctx);
   }
+
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

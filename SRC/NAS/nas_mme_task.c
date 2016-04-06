@@ -46,7 +46,6 @@ static void *nas_intertask_interface (void *args_p)
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
-    OAILOG_DEBUG (LOG_NAS, "Approx ITTI NAS task stack pointer is %p\n", &received_message_p);
 
     itti_receive_msg (TASK_NAS_MME, &received_message_p);
 
@@ -147,6 +146,7 @@ static void *nas_intertask_interface (void *args_p)
 
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
+
   }
 
   return NULL;

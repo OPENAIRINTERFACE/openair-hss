@@ -35,7 +35,7 @@
 #include "rfc_1332.h"
 #include "spgw_config.h"
 //------------------------------------------------------------------------------
-int pgw_pco_push_protocol_or_container_id(protocol_configuration_options_t * const pco, pco_protocol_or_container_id_t * const poc_id)
+int pgw_pco_push_protocol_or_container_id(protocol_configuration_options_t * const pco, pco_protocol_or_container_id_t * const poc_id /* STOLEN_REF poc_id->contents*/)
 {
   if (PCO_UNSPEC_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID <= pco->num_protocol_or_container_id) {
     return RETURNerror;
@@ -47,12 +47,7 @@ int pgw_pco_push_protocol_or_container_id(protocol_configuration_options_t * con
   pco->num_protocol_or_container_id += 1;
   return RETURNok;
 }
-//------------------------------------------------------------------------------
-void pgw__process_pco_request_push_pco(protocol_configuration_options_t * const pco_resp)
-{
-  // spgw_config.pgw_config.force_push_pco
-  AssertFatal(0!=0, "TODO code for pushing PCO to UE");
-}
+
 //------------------------------------------------------------------------------
 int pgw_process_pco_request_ipcp(protocol_configuration_options_t * const pco_resp, const pco_protocol_or_container_id_t * const poc_id)
 {
@@ -88,11 +83,12 @@ int pgw_process_pco_request_ipcp(protocol_configuration_options_t * const pco_re
   uint8_t cil[4] = {0}; // code, identifier, length
   poc_id_resp.contents = blk2bstr(cil, 4); // fill values after parsing req
 
+  ipcp_out_code = IPCP_CODE_CONFIGURE_ACK;
+
   while (ipcp_req_remaining_length >= 2) {
     ipcp_req_option = poc_id->contents->data[pco_in_index];
     ipcp_req_option_length = poc_id->contents->data[pco_in_index + 1];
     ipcp_req_remaining_length = ipcp_req_remaining_length - ipcp_req_option_length;
-    ipcp_out_code = IPCP_CODE_CONFIGURE_ACK;
     OAILOG_TRACE (LOG_SPGW_APP, "PCO: Protocol identifier IPCP ipcp_option %u ipcp_option_length %u ipcp_remaining_length %lu pco_in_index %lu\n",
         ipcp_req_option, ipcp_req_option_length, ipcp_req_remaining_length, pco_in_index);
 
@@ -165,6 +161,7 @@ int pgw_process_pco_request_ipcp(protocol_configuration_options_t * const pco_re
 
           if (ipcp_dns_sec_ipv4_addr == 0) {
             ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec_v4;
+            ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
           } else if (spgw_config.pgw_config.ipv4.default_dns_sec_v4 != ipcp_dns_sec_ipv4_addr) {
             ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
             ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec_v4;
@@ -183,8 +180,6 @@ int pgw_process_pco_request_ipcp(protocol_configuration_options_t * const pco_re
         ids[5] = (uint8_t) ((ipcp_out_dns_sec_ipv4_addr >> 24) & 0x000000FF);
         ipcp_out_length += 6;
         bcatblk(poc_id_resp.contents, ids, 6);
-
-        ipcp_out_length += 6;
         break;
 
       default:
@@ -210,7 +205,7 @@ int pgw_process_pco_dns_server_request(protocol_configuration_options_t * const 
   pco_protocol_or_container_id_t          poc_id_resp = {0};
   uint8_t                                 dns_array[4];
 
-  OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option DNS Server Request length %u\n", poc_id->length);
+  OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option DNS Server Request\n");
   poc_id_resp.id = PCO_CI_DNS_SERVER_IPV4_ADDRESS;
   poc_id_resp.length = 4;
   dns_array[0] = (uint8_t) (ipcp_out_dns_prim_ipv4_addr & 0x000000FF);
@@ -225,9 +220,9 @@ int pgw_process_pco_dns_server_request(protocol_configuration_options_t * const 
 int pgw_process_pco_link_mtu_request(protocol_configuration_options_t * const pco_resp, const pco_protocol_or_container_id_t * const poc_id)
 {
   pco_protocol_or_container_id_t          poc_id_resp = {0};
-  uint8_t                                 mtu_array[4];
+  uint8_t                                 mtu_array[2];
 
-  OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option Link MTU Request length %u\n", poc_id->length);
+  OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option Link MTU Request\n");
   poc_id_resp.id = PCO_CI_IPV4_LINK_MTU;
   poc_id_resp.length = 2;
   mtu_array[0] = (uint8_t)(1500 >> 8);
@@ -278,6 +273,7 @@ int pgw_process_pco_request(const protocol_configuration_options_t * const pco_r
       break;
 
     case PCO_CI_IP_ADDRESS_ALLOCATION_VIA_NAS_SIGNALLING:
+      OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Allocation via NAS signalling requested\n");
       *address_allocation_via_nas_signalling = true;
       break;
 

@@ -385,19 +385,10 @@ mme_ue_context_update_coll_keys (
     h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
     h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void *)(uintptr_t)mme_ue_s1ap_id);
 
-
-    char tmp[1024];
-    int size = 1024;
-    obj_hashtable_ts_dump_content (mme_ue_context_p->guti_ue_context_htbl, tmp, &size);
-    OAILOG_ERROR (LOG_MME_APP,"%s\n", tmp);
-
     h_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void **)&id);
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
       h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->guti, sizeof (ue_context_p->guti), (void *)(uintptr_t)mme_ue_s1ap_id);
     }
-    size = 1024;
-    obj_hashtable_ts_dump_content (mme_ue_context_p->guti_ue_context_htbl, tmp, &size);
-    OAILOG_ERROR (LOG_MME_APP,"%s\n", tmp);
   }
 
   if ((ue_context_p->imsi != imsi)
@@ -460,6 +451,31 @@ mme_ue_context_update_coll_keys (
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
+//------------------------------------------------------------------------------
+void mme_ue_context_dump_coll_keys(void)
+{
+  char tmp[1024] = {0};
+  int size = 1024;
+
+  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl, tmp, &size);
+  OAILOG_TRACE (LOG_MME_APP,"imsi_ue_context_htbl %s\n", tmp);
+
+  size = 1024;
+  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl, tmp, &size);
+  OAILOG_TRACE (LOG_MME_APP,"tun11_ue_context_htbl %s\n", tmp);
+
+  size = 1024;
+  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, tmp, &size);
+  OAILOG_TRACE (LOG_MME_APP,"mme_ue_s1ap_id_ue_context_htbl %s\n", tmp);
+
+  size = 1024;
+  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, tmp, &size);
+  OAILOG_TRACE (LOG_MME_APP,"enb_ue_s1ap_id_ue_context_htbl %s\n", tmp);
+
+  size = 1024;
+  obj_hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl, tmp, &size);
+  OAILOG_TRACE (LOG_MME_APP,"guti_ue_context_htbl %s", tmp);
+}
 
 //------------------------------------------------------------------------------
 int

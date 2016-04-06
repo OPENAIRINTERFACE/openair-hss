@@ -217,9 +217,11 @@ add_boolean_option( NAS_FORCE_REJECT_TAU            True     "TEMP, TO be disabl
 
 add_boolean_option( TRACE_3GPP_SPEC                 True     "Log hits of 3GPP specifications requirements")
 
+
 set (ITTI_DIR ${OPENAIRCN_DIR}/SRC/COMMON/ITTI)
 if (${ENABLE_ITTI})
-  add_library(ITTI
+
+  set(ITTI_FILES
     # add .h files if depend on (this one is generated)
     ${ITTI_DIR}/intertask_interface.h
     ${ITTI_DIR}/intertask_interface.c
@@ -228,10 +230,16 @@ if (${ENABLE_ITTI})
     ${ITTI_DIR}/signals.c
     ${ITTI_DIR}/timer.c
     )
-if (${ENABLE_ITTI_ANALYZER})
-add_library(ITTI
-    ${ITTI_DIR}/intertask_interface_dump.c )
-endif (${ENABLE_ITTI_ANALYZER})
+  if (${ENABLE_ITTI_ANALYZER})
+    set(ITTI_FILES
+    ${ITTI_FILES}
+    ${ITTI_DIR}/intertask_interface_dump.c 
+    ${OPENAIRCN_BIN_DIR}/messages_xml.h )
+    
+    include_directories ("${OPENAIRCN_BIN_DIR}")
+  endif (${ENABLE_ITTI_ANALYZER})
+    
+  add_library(ITTI ${ITTI_FILES})
     
   set(ITTI_LIB ITTI)
 endif (${ENABLE_ITTI})
@@ -918,30 +926,30 @@ ENDIF( EPC_BUILD OR MME_BUILD )
 # itti symbolic debug print require to generate a specific include file
 ########################################
 
-# retrieve the compiler options to send it to gccxml
-get_directory_property( DirDefs COMPILE_DEFINITIONS )
-foreach( d ${DirDefs} )
-    list(APPEND itti_compiler_options "-D${d}")
-endforeach()
-get_directory_property( DirDefs INCLUDE_DIRECTORIES )
-foreach( d ${DirDefs} )
-    list(APPEND itti_compiler_options "-I${d}")
-endforeach()
+  if( ENABLE_ITTI_ANALYZER )
+  # retrieve the compiler options to send it to gccxml
+    get_directory_property( DirDefs COMPILE_DEFINITIONS )
+    foreach( d ${DirDefs} )
+      list(APPEND itti_compiler_options "-D${d}")
+    endforeach()
+    get_directory_property( DirDefs INCLUDE_DIRECTORIES )
+    foreach( d ${DirDefs} )
+      list(APPEND itti_compiler_options "-I${d}")
+    endforeach()
 
-set (ITTI_H ${ITTI_DIR}/intertask_interface_types.h)
-if( ITTI_ANALYZER )
-add_custom_command (
-  OUTPUT ${OPENAIRCN_BIN_DIR}/messages.xml
-  COMMAND gccxml ${itti_compiler_options} -fxml=${OPENAIRCN_BIN_DIR}/messages.xml ${ITTI_H}
-  DEPENDS ${S1AP_OAI_generated} 
-  )
+    set (ITTI_H ${ITTI_DIR}/intertask_interface_types.h)
+    add_custom_command (
+    OUTPUT ${OPENAIRCN_BIN_DIR}/messages.xml
+      COMMAND gccxml ${itti_compiler_options} -fxml=${OPENAIRCN_BIN_DIR}/messages.xml ${ITTI_H}
+      DEPENDS ${S1AP_OAI_generated} 
+    )
 
-add_custom_command (
-  OUTPUT ${OPENAIRCN_BIN_DIR}/messages_xml.h
-  COMMAND sed -e 's/ *//'   -e 's/\"/\\\\\"/g' -e 's/^/\"/' -e 's/$$/\\\\n\"/' ${OPENAIRCN_BIN_DIR}/messages.xml  > ${OPENAIRCN_BIN_DIR}/messages_xml.h
-  DEPENDS ${OPENAIRCN_BIN_DIR}/messages.xml 
-  )
-endif(ITTI_ANALYZER)
+    add_custom_command (
+      OUTPUT ${OPENAIRCN_BIN_DIR}/messages_xml.h
+      COMMAND sed -e 's/ *//'   -e 's/\"/\\\\\"/g' -e 's/^/\"/' -e 's/$$/\\\\n\"/' ${OPENAIRCN_BIN_DIR}/messages.xml  > ${OPENAIRCN_BIN_DIR}/messages_xml.h
+      DEPENDS ${OPENAIRCN_BIN_DIR}/messages.xml 
+    )
+  endif(ENABLE_ITTI_ANALYZER)
 
 
 
