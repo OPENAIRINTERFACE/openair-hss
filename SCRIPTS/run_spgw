@@ -34,6 +34,7 @@ THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
 source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
 declare -i g_run_msc_gen=0
 declare    g_msc_dir="/tmp"
+declare    g_spgw_default_config_file="/usr/local/etc/oai/spgw.conf"
 
 set_openair_env 
 
@@ -47,6 +48,7 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -b, --breakpoint      location      Set breakpoint location for GDB (ex location: Attach.c:272)."
+  echo_error "  -c, --config-file     file_abs_path Config file to be used by spgw if you don't want to use the default one: $g_spgw_default_config_file"
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -h, --help                          Print this help."
   echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in spgw config file."
@@ -80,8 +82,7 @@ function main()
   local -i run_gdb=0
   local -i set_network_interfaces=0
   local    exe_arguments=" "
-  local -r spgw_default_config_file="/usr/local/etc/oai/spgw.conf"
-  local    spgw_config_file=$spgw_default_config_file
+  local    spgw_config_file=$g_spgw_default_config_file
   local    breakpoint_location=""
   local -i set_breakpoint=0
 
@@ -187,7 +188,7 @@ function main()
   fi
 
 
-  exe_arguments="-O $spgw_config_file $exe_arguments"
+  exe_arguments="-c $spgw_config_file $exe_arguments"
 
   if [ $run_gdb -eq 0 ]; then 
     # trap keyboard interrupt (control-c)
