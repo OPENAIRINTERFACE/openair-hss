@@ -581,7 +581,12 @@ spgw_config_init (
       }
     }
     if (config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_NAS_FORCE_PUSH_PCO, (const char **)&astring)) {
-      config_pP->pgw_config.force_push_pco = true;
+      if (strcasecmp (astring, "yes") == 0) {
+        config_pP->pgw_config.force_push_pco = true;
+        OAILOG_INFO (LOG_SPGW_APP, "Protocol configuration options: push MTU, push DNS, IP address allocation via NAS signalling\n");
+      } else {
+        config_pP->pgw_config.force_push_pco = false;
+      }
     }
   } else {
     OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW not found\n");

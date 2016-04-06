@@ -285,7 +285,6 @@ int pgw_process_pco_request(const protocol_configuration_options_t * const pco_r
 
   if (spgw_config.pgw_config.force_push_pco) {
     *address_allocation_via_nas_signalling = true;
-    // TODO tweak
     if (!dns_v4_requested) {
       pgw_process_pco_dns_server_request(pco_resp, NULL);
     }
