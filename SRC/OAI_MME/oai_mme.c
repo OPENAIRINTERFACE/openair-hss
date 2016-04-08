@@ -39,7 +39,6 @@
 #include "log.h"
 #include "msc.h"
 #include "mme_config.h"
-#include "gtpv1u_sgw_defs.h"
 
 #include "intertask_interface_init.h"
 
@@ -47,7 +46,6 @@
 #include "udp_primitives_server.h"
 #include "s1ap_mme.h"
 #include "timer.h"
-#include "sgw_defs.h"
 #include "mme_app_extern.h"
 #include "nas_defs.h"
 #include "s11_mme.h"
@@ -121,7 +119,7 @@ main (
   /*
    * Parse the command line for options and set the mme_config accordingly.
    */
-  CHECK_INIT_RETURN (config_parse_opt_line (argc, argv, &mme_config));
+  CHECK_INIT_RETURN (mme_config_parse_opt_line (argc, argv, &mme_config));
   /*
    * Calling each layer init function
    */
@@ -136,7 +134,7 @@ main (
   MSC_INIT (MSC_MME, THREAD_MAX + TASK_MAX);
   CHECK_INIT_RETURN (nas_init (&mme_config));
   CHECK_INIT_RETURN (sctp_init (&mme_config));
-  CHECK_INIT_RETURN (udp_init (&mme_config));
+  CHECK_INIT_RETURN (udp_init ());
   CHECK_INIT_RETURN (s11_mme_init (&mme_config));
   CHECK_INIT_RETURN (s1ap_mme_init (&mme_config));
   CHECK_INIT_RETURN (mme_app_init (&mme_config));

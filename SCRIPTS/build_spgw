@@ -40,7 +40,6 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
-  echo_error "  -C, --conf-files-only                     Generate only S/P-GW configuration files (no build)"
   echo_error "  -D, --daemon                              Build S/P-GW as a daemon."
   echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
@@ -55,7 +54,6 @@ function help()
 function main()
 {
   local -i clean=0
-  local -i conf_files_only=0
   local -i daemon=0
   local -i force=0
   local -i verbose=0
@@ -72,11 +70,6 @@ function main()
       -c | --clean)
         clean=1
         echo "Clean the build generated files (build from scratch)"
-        shift;
-        ;;
-      -C | --conf-files-only)
-        conf_files_only=1
-        echo "Generate only conf files (no build)"
         shift;
         ;;
       -D | --daemon)
@@ -174,16 +167,13 @@ function main()
   cd ./BUILD
   cmake  $cmake_args .. > /dev/null 
   
-  if [ $conf_files_only -eq 0 ]; then
-    compilations SPGW spgw spgw
-    if [ $daemon -ne 0 ]; then
-      # TODO /usr/sbin ?
-      $SUDO cp -upv $OPENAIRCN_DIR/BUILD/SPGW/BUILD/spgw /usr/local/bin/spgwd && echo_success "spgwd installed"
-    else
+  compilations SPGW spgw spgw
+  if [ $daemon -ne 0 ]; then
+    # TODO /usr/sbin ?
+    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/SPGW/BUILD/spgw /usr/local/bin/spgwd && echo_success "spgwd installed"
+  else
     $SUDO cp -upv $OPENAIRCN_DIR/BUILD/SPGW/BUILD/spgw /usr/local/bin && echo_success "spgw installed"
-    fi
   fi
-  $SUDO cp -upv spgw.conf /usr/local/etc/oai  
 }
 
 

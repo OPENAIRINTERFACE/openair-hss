@@ -174,16 +174,13 @@ typedef struct mme_config_s {
     uint16_t in_streams;
     uint16_t out_streams;
   } sctp_config;
-  struct {
-    uint16_t port_number;
-  } gtpv1u_config;
+
   struct {
     uint16_t port_number;
     uint8_t  outcome_drop_timer_sec;
   } s1ap_config;
-  struct {
-    uint32_t  sgw_ip_address_for_s1u_s12_s4_up;
 
+  struct {
     char     *mme_interface_name_for_s1_mme;
     uint32_t  mme_ip_address_for_s1_mme;
 
@@ -192,6 +189,7 @@ typedef struct mme_config_s {
 
     uint32_t  sgw_ip_address_for_s11;
   } ipv4;
+
   struct {
     char *conf_file;
     char *hss_host_name;
@@ -223,12 +221,10 @@ int mme_config_find_mnc_length(const char mcc_digit1P,
                                const char mnc_digit1P,
                                const char mnc_digit2P,
                                const char mnc_digit3P);
-int config_parse_opt_line(int argc, char *argv[], mme_config_t *mme_config);
+int mme_config_parse_opt_line(int argc, char *argv[], mme_config_t *mme_config);
 
-#define config_read_lock(mMEcONFIG)  pthread_rwlock_rdlock(&(mMEcONFIG)->rw_lock)
-#define config_write_lock(mMEcONFIG) pthread_rwlock_wrlock(&(mMEcONFIG)->rw_lock)
-#define config_unlock(mMEcONFIG)     pthread_rwlock_unlock(&(mMEcONFIG)->rw_lock)
-
-//int yyparse(struct mme_config_s *mme_config_p);
+#define mme_config_read_lock(mMEcONFIG)  pthread_rwlock_rdlock(&(mMEcONFIG)->rw_lock)
+#define mme_config_write_lock(mMEcONFIG) pthread_rwlock_wrlock(&(mMEcONFIG)->rw_lock)
+#define mme_config_unlock(mMEcONFIG)     pthread_rwlock_unlock(&(mMEcONFIG)->rw_lock)
 
 #endif /* FILE_MME_CONFIG_SEEN */

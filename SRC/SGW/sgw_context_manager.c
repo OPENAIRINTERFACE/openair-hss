@@ -99,7 +99,7 @@ sgw_display_pdn_connection_sgw_eps_bearers (
   if (dataP ) {
     eps_bearer_entry = (sgw_eps_bearer_entry_t *) dataP;
     OAILOG_DEBUG (LOG_SPGW_APP, "|\t\t\t\t%" PRId64 "\t<-> ebi: %u, enb_teid_for_S1u: %u, s_gw_teid_for_S1u_S12_S4_up: %u (tbc)\n",
-                    keyP, eps_bearer_entry->eps_bearer_id, eps_bearer_entry->enb_teid_for_S1u, eps_bearer_entry->s_gw_teid_for_S1u_S12_S4_up);
+                    keyP, eps_bearer_entry->eps_bearer_id, eps_bearer_entry->enb_teid_S1u, eps_bearer_entry->s_gw_teid_S1u_S12_S4_up);
   } else {
     OAILOG_DEBUG (LOG_SPGW_APP, "\t\t\t\tINVALID eps_bearer_entry FOUND\n");
   }
@@ -125,9 +125,9 @@ sgw_display_s11_bearer_context_information (
     //Imsi_t               imsi;                           ///< IMSI (International Mobile Subscriber Identity) is the subscriber permanent identity.
     OAILOG_DEBUG (LOG_SPGW_APP, "|\t\timsi_unauthenticated_indicator:\t%u\n", sp_context_information->sgw_eps_bearer_context_information.imsi_unauthenticated_indicator);
     //char                 msisdn[MSISDN_LENGTH];          ///< The basic MSISDN of the UE. The presence is dictated by its storage in the HSS.
-    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\tmme_teid_for_S11:              \t%u\n", sp_context_information->sgw_eps_bearer_context_information.mme_teid_for_S11);
+    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\tmme_teid_    S11:              \t%u\n", sp_context_information->sgw_eps_bearer_context_information.mme_teid_S11);
     //ip_address_t         mme_ip_address_for_S11;         ///< MME IP address the S11 interface.
-    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\ts_gw_teid_for_S11_S4:          \t%u\n", sp_context_information->sgw_eps_bearer_context_information.s_gw_teid_for_S11_S4);
+    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\ts_gw_teid_S11_S4:              \t%u\n", sp_context_information->sgw_eps_bearer_context_information.s_gw_teid_S11_S4);
     //ip_address_t         s_gw_ip_address_for_S11_S4;     ///< S-GW IP address for the S11 interface and the S4 Interface (control plane).
     //cgi_t                last_known_cell_Id;             ///< This is the last location of the UE known by the network
     OAILOG_DEBUG (LOG_SPGW_APP, "|\t\tpdn_connection:\n");

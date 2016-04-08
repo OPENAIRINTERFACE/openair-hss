@@ -326,7 +326,7 @@ s6a_generate_authentication_info_req (
    * Add Origin_Host & Origin_Realm
    */
   CHECK_FCT (fd_msg_add_origin (msg, 0));
-  config_read_lock (&mme_config);
+  mme_config_read_lock (&mme_config);
   /*
    * Destination Host
    */
@@ -358,7 +358,7 @@ s6a_generate_authentication_info_req (
     CHECK_FCT (fd_msg_avp_setvalue (avp, &value));
     CHECK_FCT (fd_msg_avp_add (msg, MSG_BRW_LAST_CHILD, avp));
   }
-  config_unlock (&mme_config);
+  mme_config_unlock (&mme_config);
   /*
    * Adding the User-Name (IMSI)
    */

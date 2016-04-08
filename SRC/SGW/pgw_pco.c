@@ -112,7 +112,7 @@ int pgw_process_pco_request_ipcp(protocol_configuration_options_t * const pco_re
           OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_dns_prim_ipv4_addr 0x%x\n", ipcp_dns_prim_ipv4_addr);
 
           if (ipcp_dns_prim_ipv4_addr == 0) {
-            ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_v4;
+            ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns;
             /* RFC 1877:
              * Primary-DNS-Address
              *  The four octet Primary-DNS-Address is the address of the primary
@@ -120,9 +120,9 @@ int pgw_process_pco_request_ipcp(protocol_configuration_options_t * const pco_re
              *  set to zero, it indicates an explicit request that the peer
              *  provide the address information in a Config-Nak packet. */
             ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
-          } else if (spgw_config.pgw_config.ipv4.default_dns_v4 != ipcp_dns_prim_ipv4_addr) {
+          } else if (spgw_config.pgw_config.ipv4.default_dns != ipcp_dns_prim_ipv4_addr) {
             ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
-            ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_v4;
+            ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns;
           } else {
             ipcp_out_dns_prim_ipv4_addr = ipcp_dns_prim_ipv4_addr;
           }
@@ -160,11 +160,11 @@ int pgw_process_pco_request_ipcp(protocol_configuration_options_t * const pco_re
           OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option SECONDARY_DNS_SERVER_IP_ADDRESS ipcp_dns_sec_ipv4_addr 0x%x\n", ipcp_dns_sec_ipv4_addr);
 
           if (ipcp_dns_sec_ipv4_addr == 0) {
-            ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec_v4;
+            ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec;
             ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
-          } else if (spgw_config.pgw_config.ipv4.default_dns_sec_v4 != ipcp_dns_sec_ipv4_addr) {
+          } else if (spgw_config.pgw_config.ipv4.default_dns_sec != ipcp_dns_sec_ipv4_addr) {
             ipcp_out_code = IPCP_CODE_CONFIGURE_NACK;
-            ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec_v4;
+            ipcp_out_dns_sec_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_sec;
           } else {
             ipcp_out_dns_sec_ipv4_addr = ipcp_dns_sec_ipv4_addr;
           }
@@ -201,7 +201,7 @@ int pgw_process_pco_request_ipcp(protocol_configuration_options_t * const pco_re
 //------------------------------------------------------------------------------
 int pgw_process_pco_dns_server_request(protocol_configuration_options_t * const pco_resp, const pco_protocol_or_container_id_t * const poc_id)
 {
-  uint32_t                                ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns_v4;
+  uint32_t                                ipcp_out_dns_prim_ipv4_addr = spgw_config.pgw_config.ipv4.default_dns;
   pco_protocol_or_container_id_t          poc_id_resp = {0};
   uint8_t                                 dns_array[4];
 
@@ -237,7 +237,7 @@ int pgw_process_pco_link_mtu_request(protocol_configuration_options_t * const pc
 int pgw_process_pco_request(const protocol_configuration_options_t * const pco_req, protocol_configuration_options_t * pco_resp, bool * const address_allocation_via_nas_signalling)
 {
   bool mtu_requested = false;
-  bool dns_v4_requested = false;
+  bool dns_requested = false;
 
   *address_allocation_via_nas_signalling = false;
 
@@ -264,7 +264,7 @@ int pgw_process_pco_request(const protocol_configuration_options_t * const pco_r
 
     case PCO_CI_DNS_SERVER_IPV4_ADDRESS_REQUEST:
       pgw_process_pco_dns_server_request(pco_resp, &pco_req->protocol_or_container_ids[id]);
-      dns_v4_requested = true;
+      dns_requested = true;
       break;
 
     case PCO_CI_IPV4_LINK_MTU_REQUEST:
@@ -285,7 +285,7 @@ int pgw_process_pco_request(const protocol_configuration_options_t * const pco_r
 
   if (spgw_config.pgw_config.force_push_pco) {
     *address_allocation_via_nas_signalling = true;
-    if (!dns_v4_requested) {
+    if (!dns_requested) {
       pgw_process_pco_dns_server_request(pco_resp, NULL);
     }
     if (!mtu_requested) {

@@ -141,56 +141,12 @@ static void *sgw_intertask_interface (void *args_p)
 }
 
 //------------------------------------------------------------------------------
-int sgw_init (char *config_file_name_pP)
+int sgw_init (spgw_config_t *spgw_config_pP)
 {
   OAILOG_DEBUG (LOG_SPGW_APP, "Initializing SPGW-APP  task interface\n");
-  spgw_system ("modprobe ip_tables", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe x_tables", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -P INPUT ACCEPT", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -F INPUT", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -P OUTPUT ACCEPT", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -F OUTPUT", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -P FORWARD ACCEPT", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -F FORWARD", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -t nat    -F", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -t mangle -F", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -t filter -F", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -t raw    -F", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -t nat    -Z", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -t mangle -Z", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -t filter -Z", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("iptables -t raw    -Z", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("ip route flush cache", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("rmmod iptable_raw    > /dev/null 2>&1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("rmmod iptable_mangle > /dev/null 2>&1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("rmmod iptable_nat    > /dev/null 2>&1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("rmmod iptable_filter > /dev/null 2>&1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("rmmod ip_tables      > /dev/null 2>&1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("rmmod xt_state xt_mark xt_tcpudp xt_connmark ipt_LOG ipt_MASQUERADE > /dev/null 2>&1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("rmmod x_tables       > /dev/null 2>&1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("rmmod nf_conntrack_netlink nfnetlink nf_nat nf_conntrack_ipv4 nf_conntrack  > /dev/null 2>&1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe ip_tables", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe iptable_filter", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe iptable_mangle", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe iptable_nat", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe iptable_raw", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe ipt_MASQUERADE", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe ipt_LOG", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe nf_conntrack", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe nf_conntrack_ipv4", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe nf_nat", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe x_tables", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe udp_tunnel", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("modprobe ip6_udp_tunnel", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("sysctl -w net.ipv4.ip_forward=1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("sysctl -w net.ipv4.conf.all.accept_local=1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("sysctl -w net.ipv4.conf.all.log_martians=1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("sysctl -w net.ipv4.conf.all.route_localnet=1", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("sysctl -w net.ipv4.conf.all.rp_filter=0", SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  spgw_system ("sync", SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  spgw_config_init (config_file_name_pP, &spgw_config);
-  pgw_lite_load_pool_ip_addresses ();
-  sgw_app.s11teid2mme_hashtable = hashtable_ts_create (8192, NULL, NULL, "sgw_s11teid2mme_hashtable");
+
+  pgw_load_pool_ip_addresses ();
+  sgw_app.s11teid2mme_hashtable = hashtable_ts_create (512, NULL, NULL, "sgw_s11teid2mme_hashtable");
 
   if (sgw_app.s11teid2mme_hashtable == NULL) {
     perror ("hashtable_ts_create");
@@ -198,7 +154,7 @@ int sgw_init (char *config_file_name_pP)
     return RETURNerror;
   }
 
-  /*sgw_app.s1uteid2enb_hashtable = hashtable_ts_create (8192, NULL, NULL, "sgw_s1uteid2enb_hashtable");
+  /*sgw_app.s1uteid2enb_hashtable = hashtable_ts_create (512, NULL, NULL, "sgw_s1uteid2enb_hashtable");
 
   if (sgw_app.s1uteid2enb_hashtable == NULL) {
     perror ("hashtable_ts_create");
@@ -206,7 +162,7 @@ int sgw_init (char *config_file_name_pP)
     return RETURNerror;
   }*/
 
-  sgw_app.s11_bearer_context_information_hashtable = hashtable_ts_create (8192, NULL,
+  sgw_app.s11_bearer_context_information_hashtable = hashtable_ts_create (512, NULL,
           (void (*)(void*))sgw_cm_free_s_plus_p_gw_eps_bearer_context_information,
           "sgw_s11_bearer_context_information_hashtable");
 
@@ -216,12 +172,12 @@ int sgw_init (char *config_file_name_pP)
     return RETURNerror;
   }
 
-  sgw_app.sgw_interface_name_for_S1u_S12_S4_up = spgw_config.sgw_config.ipv4.sgw_interface_name_for_S1u_S12_S4_up;
-  sgw_app.sgw_ip_address_for_S1u_S12_S4_up = spgw_config.sgw_config.ipv4.sgw_ipv4_address_for_S1u_S12_S4_up;
-  sgw_app.sgw_interface_name_for_S11_S4 = spgw_config.sgw_config.ipv4.sgw_interface_name_for_S11;
-  sgw_app.sgw_ip_address_for_S11_S4 = spgw_config.sgw_config.ipv4.sgw_ipv4_address_for_S11;
-  //sgw_app.sgw_ip_address_for_S5_S8_cp          = spgw_config.sgw_config.ipv4.sgw_ip_address_for_S5_S8_cp;
-  sgw_app.sgw_ip_address_for_S5_S8_up = spgw_config.sgw_config.ipv4.sgw_ipv4_address_for_S5_S8_up;
+  sgw_app.sgw_if_name_S1u_S12_S4_up    = bstrcpy(spgw_config_pP->sgw_config.ipv4.if_name_S1u_S12_S4_up);
+  sgw_app.sgw_ip_address_S1u_S12_S4_up = spgw_config_pP->sgw_config.ipv4.S1u_S12_S4_up;
+  sgw_app.sgw_if_name_S11_S4           = bstrcpy(spgw_config_pP->sgw_config.ipv4.if_name_S11);
+  sgw_app.sgw_ip_address_S11_S4        = spgw_config_pP->sgw_config.ipv4.S11;
+
+  sgw_app.sgw_ip_address_S5_S8_up      = spgw_config_pP->sgw_config.ipv4.S5_S8_up;
 
   if (itti_create_task (TASK_SPGW_APP, &sgw_intertask_interface, NULL) < 0) {
     perror ("pthread_create");
@@ -247,16 +203,10 @@ static void sgw_exit(void)
   }
 
   //P-GW code
-  struct pgw_lite_conf_ipv4_list_elm_s   *conf_ipv4_p = NULL;
+  struct conf_ipv4_list_elm_s   *conf_ipv4_p = NULL;
 
-  while ((conf_ipv4_p = STAILQ_FIRST (&spgw_config.pgw_config.pgw_lite_ipv4_pool_list))) {
-    STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.pgw_lite_ipv4_pool_list, ipv4_entries);
+  while ((conf_ipv4_p = STAILQ_FIRST (&spgw_config.pgw_config.ipv4_pool_list))) {
+    STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.ipv4_pool_list, ipv4_entries);
     free_wrapper (conf_ipv4_p);
-  }
-
-  struct pgw_lite_conf_ipv6_list_elm_s   *conf_ipv6_p = NULL;
-  while ((conf_ipv6_p = STAILQ_FIRST (&spgw_config.pgw_config.pgw_lite_ipv6_pool_list))) {
-    STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.pgw_lite_ipv6_pool_list, ipv6_entries);
-    free_wrapper (conf_ipv6_p);
   }
 }

@@ -293,9 +293,9 @@ s1ap_mme_handle_s1_setup_request (
     }
     OAILOG_MESSAGE_FINISH(context);
 
-    config_read_lock (&mme_config);
+    mme_config_read_lock (&mme_config);
     max_enb_connected = mme_config.max_enbs;
-    config_unlock (&mme_config);
+    mme_config_unlock (&mme_config);
 
     if (nb_enb_associated == max_enb_connected) {
       OAILOG_ERROR (LOG_S1AP, "There is too much eNB connected to MME, rejecting the association\n");
@@ -407,7 +407,7 @@ s1ap_generate_s1_setup_response (
   memset(&servedGUMMEI, 0, sizeof(S1ap_ServedGUMMEIsItem_t));
   // Generating response
   s1_setup_response_p = &message.msg.s1ap_S1SetupResponseIEs;
-  config_read_lock (&mme_config);
+  mme_config_read_lock (&mme_config);
   s1_setup_response_p->relativeMMECapacity = mme_config.relative_capacity;
 
   /*
@@ -458,7 +458,7 @@ s1ap_generate_s1_setup_response (
   }
 
 
-  config_unlock (&mme_config);
+  mme_config_unlock (&mme_config);
   /*
    * The MME is only serving E-UTRAN RAT, so the list contains only one element
    */

@@ -28,10 +28,8 @@
 #ifndef FILE_PGW_LITE_PAA_SEEN
 #define FILE_PGW_LITE_PAA_SEEN
 
-void pgw_lite_load_pool_ip_addresses       (void);
-int pgw_lite_get_free_ipv4_paa_address     (struct in_addr * const addr_P);
-int pgw_lite_release_free_ipv4_paa_address (const struct in_addr * const addr_P);
-int pgw_lite_get_free_ipv6_paa_prefix      (struct in6_addr * const addr_pP);
-int pgw_lite_release_free_ipv6_paa_prefix  (const struct in6_addr * const addr_pP);
+void pgw_load_pool_ip_addresses       (void);
+int pgw_get_free_ipv4_paa_address     (struct in_addr * const addr_P);
+int pgw_release_free_ipv4_paa_address (const struct in_addr * const addr_P);
 
 #endif

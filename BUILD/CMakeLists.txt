@@ -468,6 +468,8 @@ add_library(S6A
 set(SGW_DIR ${OPENAIRCN_DIR}/SRC/SGW)
 add_library (SGW
   ${SGW_DIR}/spgw_config.c
+  ${SGW_DIR}/pgw_config.c
+  ${SGW_DIR}/sgw_config.c
   ${SGW_DIR}/s11_causes.c
   ${SGW_DIR}/sgw_task.c
   ${SGW_DIR}/sgw_handlers.c
@@ -796,32 +798,8 @@ add_definitions(-DASN1_MINIMUM_VERSION=924)
 # add executables for operation
 #################################""
 
-
-
-# MME + S/P-GW implementation in one process
-################################
-add_executable(mme_gw
-  ${OPENAIRCN_DIR}/SRC/OAI_EPC/oai_epc_log.c
-  ${OPENAIRCN_DIR}/SRC/OAI_EPC/oai_epc.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
-  ${GTPV1U_DIR}/gtpv1u_task.c
-  ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
-  ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
-  )
-if( ITTI_ANALYZER )
-add_executable(mme_gw
-  ${OPENAIRCN_BIN_DIR}/messages_xml.h )
-endif( ITTI_ANALYZER )
-target_link_libraries (mme_gw
-#SECU_OSA
-  -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC GTPV1U GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A SGW MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
-  -Wl,--end-group
-  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
-  )
   
-# MME standalone in one process
+# MME standalone 
 ################################
 add_executable(mme
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme_log.c
@@ -844,12 +822,11 @@ target_link_libraries (mme
   )
 
 
-# oai_sgw is SGW  node implementation
+# spgw is S+P-GW  node implementation
 ################################
 add_executable(spgw
   ${OPENAIRCN_DIR}/SRC/OAI_SGW/oai_sgw.c
   ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
-  ${GTPV1U_DIR}/gtpv1u_task.c
   )
 if( ITTI_ANALYZER )
 add_executable(spgw
@@ -857,7 +834,7 @@ add_executable(spgw
 endif( ITTI_ANALYZER )
 target_link_libraries (spgw
   -Wl,--start-group
-  GTPV1U SGW S11 GTPV1U GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
+  GTPV1U SGW S11 GTPV1U GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
   pthread m rt ${CONFIG_LIBRARIES}  
   )

@@ -230,9 +230,9 @@ mme_app_send_s11_create_session_req (
     session_request_p->pco.length = ue_context_pP->pending_pdn_connectivity_req_pco.length;
   }
 
-  config_read_lock (&mme_config);
+  mme_config_read_lock (&mme_config);
   session_request_p->peer_ip = mme_config.ipv4.sgw_ip_address_for_s11;
-  config_unlock (&mme_config);
+  mme_config_unlock (&mme_config);
   session_request_p->serving_network.mcc[0] = ue_context_pP->e_utran_cgi.plmn.mcc_digit1;
   session_request_p->serving_network.mcc[1] = ue_context_pP->e_utran_cgi.plmn.mcc_digit2;
   session_request_p->serving_network.mcc[2] = ue_context_pP->e_utran_cgi.plmn.mcc_digit3;

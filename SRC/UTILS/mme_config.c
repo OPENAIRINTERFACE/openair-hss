@@ -56,8 +56,8 @@
 
 mme_config_t                            mme_config;
 
-int
-mme_config_find_mnc_length (
+//------------------------------------------------------------------------------
+int mme_config_find_mnc_length (
   const char mcc_digit1P,
   const char mcc_digit2P,
   const char mcc_digit3P,
@@ -92,10 +92,8 @@ mme_config_find_mnc_length (
 }
 
 
-static
-  void
-mme_config_init (
-  mme_config_t * mme_config_p)
+//------------------------------------------------------------------------------
+static void mme_config_init (mme_config_t * mme_config_p)
 {
   memset(&mme_config, 0, sizeof(mme_config));
   pthread_rwlock_init (&mme_config_p->rw_lock, NULL);
@@ -127,15 +125,11 @@ mme_config_init (
   mme_config_p->eps_network_feature_support.extended_service_request = 0;
   mme_config_p->eps_network_feature_support.ims_voice_over_ps_session_in_s1 = 0;
   mme_config_p->eps_network_feature_support.location_services_via_epc = 0;
-  /*
-   * Timer configuration
-   */
-  mme_config_p->gtpv1u_config.port_number = GTPV1_U_PORT_NUMBER;
+
   mme_config_p->s1ap_config.port_number = S1AP_PORT_NUMBER;
   /*
    * IP configuration
    */
-  mme_config_p->ipv4.sgw_ip_address_for_s1u_s12_s4_up = 0;
   mme_config_p->ipv4.mme_interface_name_for_s1_mme = "none";
   mme_config_p->ipv4.mme_ip_address_for_s1_mme = 0;
   mme_config_p->ipv4.mme_interface_name_for_s11 = "none";
@@ -173,10 +167,8 @@ mme_config_init (
   mme_config_p->s1ap_config.outcome_drop_timer_sec = S1AP_OUTCOME_TIMER_DEFAULT;
 }
 
-int
-mme_system (
-  char *command_pP,
-  int abort_on_errorP)
+//------------------------------------------------------------------------------
+int mme_system (char *command_pP, int abort_on_errorP)
 {
   int                                     ret = -1;
 
@@ -197,9 +189,8 @@ mme_system (
 }
 
 
-static int
-config_parse_file (
-  mme_config_t * mme_config_p)
+//------------------------------------------------------------------------------
+static int mme_config_parse_file (mme_config_t * mme_config_p)
 {
   config_t                                cfg = {0};
   config_setting_t                       *setting_mme = NULL;
@@ -216,7 +207,6 @@ config_parse_file (
   const char                             *tac = NULL;
   const char                             *mcc = NULL;
   const char                             *mnc = NULL;
-  char                                   *sgw_ip_address_for_s1u_s12_s4_up = NULL;
   char                                   *mme_interface_name_for_s1_mme = NULL;
   char                                   *mme_ip_address_for_s1_mme = NULL;
   char                                   *mme_interface_name_for_s11 = NULL;
@@ -556,18 +546,26 @@ config_parse_file (
            && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S1_MME, (const char **)&mme_ip_address_for_s1_mme)
            && config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11_MME, (const char **)&mme_interface_name_for_s11)
            && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11_MME, (const char **)&mme_ip_address_for_s11)
+           && config_setting_lookup_string (setting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11, (const char **)&sgw_ip_address_for_s11)
           )
         ) {
         mme_config_p->ipv4.mme_interface_name_for_s1_mme = strdup (mme_interface_name_for_s1_mme);
         cidr = strdup (mme_ip_address_for_s1_mme);
         address = strtok (cidr, "/");
-        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_s1_mme, "BAD IP ADDRESS FORMAT FOR MME S1_MME !\n")
-          free_wrapper (cidr);
+        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_s1_mme, "BAD IP ADDRESS FORMAT FOR MME S1_MME !\n");
+        free_wrapper (cidr);
+
         mme_config_p->ipv4.mme_interface_name_for_s11 = strdup (mme_interface_name_for_s11);
         cidr = strdup (mme_ip_address_for_s11);
         address = strtok (cidr, "/");
-        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_s11, "BAD IP ADDRESS FORMAT FOR MME S11 !\n")
-          free_wrapper (cidr);
+        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.mme_ip_address_for_s11, "BAD IP ADDRESS FORMAT FOR MME S11 !\n");
+        free_wrapper (cidr);
+
+        cidr = strdup (sgw_ip_address_for_s11);
+        address = strtok (cidr, "/");
+        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.sgw_ip_address_for_s11, "BAD IP ADDRESS FORMAT FOR SGW S11 !\n");
+        free_wrapper (cidr);
+
       }
     }
     // NAS SETTING
@@ -693,26 +691,6 @@ config_parse_file (
         mme_config_p->log_config.itti_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
     }
-
-    subsetting = config_setting_get_member (setting, SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
-
-    if (subsetting != NULL) {
-      if ((config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP, (const char **)&sgw_ip_address_for_s1u_s12_s4_up)
-           && config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11, (const char **)&sgw_ip_address_for_s11)
-           && config_setting_lookup_int (subsetting, SGW_CONFIG_STRING_SGW_PORT_FOR_S1U_S12_S4_UP, &aint)
-          )
-        ) {
-        cidr = strdup (sgw_ip_address_for_s1u_s12_s4_up);
-        address = strtok (cidr, "/");
-        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.sgw_ip_address_for_s1u_s12_s4_up, "BAD IP ADDRESS FORMAT FOR SGW S1u_S12_S4 !\n")
-          free_wrapper (cidr);
-        cidr = strdup (sgw_ip_address_for_s11);
-        address = strtok (cidr, "/");
-        IPV4_STR_ADDR_TO_INT_NWBO (address, mme_config_p->ipv4.sgw_ip_address_for_s11, "BAD IP ADDRESS FORMAT FOR SGW S11 !\n")
-          free_wrapper (cidr);
-        mme_config_p->gtpv1u_config.port_number = (uint16_t) aint;
-      }
-    }
   }
 
   OAILOG_SET_CONFIG(&mme_config_p->log_config);
@@ -721,9 +699,8 @@ config_parse_file (
 }
 
 
-static void
-config_display (
-  mme_config_t * mme_config_p)
+//------------------------------------------------------------------------------
+static void mme_config_display (mme_config_t * mme_config_p)
 {
   int                                     j;
 
@@ -741,12 +718,9 @@ config_display (
   OAILOG_INFO (LOG_CONFIG, "- Unauth IMSI support ..................: %s\n", mme_config_p->unauthenticated_imsi_supported == 0 ? "false" : "true");
   OAILOG_INFO (LOG_CONFIG, "- Relative capa ........................: %u\n", mme_config_p->relative_capacity);
   OAILOG_INFO (LOG_CONFIG, "- Statistics timer .....................: %u (seconds)\n\n", mme_config_p->mme_statistic_timer);
-  OAILOG_INFO (LOG_CONFIG, "- S1-U:\n");
-  OAILOG_INFO (LOG_CONFIG, "    port number ......: %d\n", mme_config_p->gtpv1u_config.port_number);
   OAILOG_INFO (LOG_CONFIG, "- S1-MME:\n");
   OAILOG_INFO (LOG_CONFIG, "    port number ......: %d\n", mme_config_p->s1ap_config.port_number);
   OAILOG_INFO (LOG_CONFIG, "- IP:\n");
-  OAILOG_INFO (LOG_CONFIG, "    s1-u ip ..........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.sgw_ip_address_for_s1u_s12_s4_up)));
   OAILOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s\n", mme_config_p->ipv4.mme_interface_name_for_s1_mme);
   OAILOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_s1_mme)));
   OAILOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s\n", mme_config_p->ipv4.mme_interface_name_for_s11);
@@ -804,13 +778,12 @@ config_display (
   OAILOG_INFO (LOG_CONFIG, "    ITTI log level.......: %s (InTer-Task Interface)\n", OAILOG_LEVEL_INT2STR(mme_config_p->log_config.itti_log_level));
 }
 
-static void
-usage (
-  void)
+//------------------------------------------------------------------------------
+static void usage (char *target)
 {
   OAILOG_INFO (LOG_CONFIG, "==== EURECOM %s version: %s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
   OAILOG_INFO (LOG_CONFIG, "Please report any bug to: %s\n", PACKAGE_BUGREPORT);
-  OAILOG_INFO (LOG_CONFIG, "Usage: oaisim_mme [options]\n");
+  OAILOG_INFO (LOG_CONFIG, "Usage: %s [options]\n", target);
   OAILOG_INFO (LOG_CONFIG, "Available options:\n");
   OAILOG_INFO (LOG_CONFIG, "-h      Print this help and return\n");
   OAILOG_INFO (LOG_CONFIG, "-c<path>\n");
@@ -824,12 +797,9 @@ usage (
   OAILOG_INFO (LOG_CONFIG, "            2 -> ASN1 XER printf on and ASN1 debug on\n");
 }
 
-extern void
-                                        nwGtpv1uDisplayBanner (
-  void);
-
+//------------------------------------------------------------------------------
 int
-config_parse_opt_line (
+mme_config_parse_opt_line (
   int argc,
   char *argv[],
   mme_config_t * mme_config_p)
@@ -865,8 +835,6 @@ config_parse_opt_line (
 
     case 'V':{
         OAILOG_DEBUG (LOG_CONFIG, "==== EURECOM %s v%s ====" "Please report any bug to: %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
-        exit (0);
-        nwGtpv1uDisplayBanner ();
       }
       break;
 
@@ -877,7 +845,7 @@ config_parse_opt_line (
 
     case 'h':                  /* Fall through */
     default:
-      usage ();
+      usage (argv[0]);
       exit (0);
     }
   }
@@ -886,15 +854,15 @@ config_parse_opt_line (
    * Parse the configuration file using libconfig
    */
   if (!mme_config_p->config_file) {
-    mme_config_p->config_file = strdup("/usr/local/etc/oai/epc.conf");
+    mme_config_p->config_file = strdup("/usr/local/etc/oai/mme.conf");
   }
-  if (config_parse_file (mme_config_p) != 0) {
+  if (mme_config_parse_file (mme_config_p) != 0) {
     return -1;
   }
 
   /*
    * Display the configuration
    */
-  config_display (mme_config_p);
+  mme_config_display (mme_config_p);
   return 0;
 }

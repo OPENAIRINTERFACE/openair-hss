@@ -176,9 +176,6 @@ function main()
     cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
   fi
   
-  
-  
-  
   local dlog=$OPENAIRCN_DIR/BUILD/LOG
   
   mkdir -m 777 -p $dlog
@@ -209,18 +206,16 @@ function main()
   cd ./BUILD
   cmake  $cmake_args .. > /dev/null 
   
-  if [ $conf_files_only -eq 0 ]; then
-    compilations EPC mme_gw mme_gw $verbose
-    if [ $daemon -ne 0 ]; then
-      do_stop_daemon
-      $SUDO cp -upv $OPENAIRCN_DIR/BUILD/EPC/BUILD/mme_gw /usr/sbin/mme_gwd && echo_success "mme_gwd installed"
-    else
-      $SUDO killall -q mme_gw
-      $SUDO cp -upv $OPENAIRCN_DIR/BUILD/EPC/BUILD/mme_gw /usr/local/bin/ && echo_success "mme_gw installed"
-    fi
-    compilations EPC auth_request auth_request 
-    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/EPC/BUILD/auth_request /usr/local/bin/ && echo_success "auth_request installed"
+  compilations EPC mme_gw mme_gw $verbose
+  if [ $daemon -ne 0 ]; then
+    do_stop_daemon
+    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/EPC/BUILD/mme_gw /usr/sbin/mme_gwd && echo_success "mme_gwd installed"
+  else
+    $SUDO killall -q mme_gw
+    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/EPC/BUILD/mme_gw /usr/local/bin/ && echo_success "mme_gw installed"
   fi
+  compilations EPC auth_request auth_request 
+  $SUDO cp -upv $OPENAIRCN_DIR/BUILD/EPC/BUILD/auth_request /usr/local/bin/ && echo_success "auth_request installed"
 }
 
 

@@ -28,7 +28,7 @@
 
 #include "assertions.h"
 #include "queue.h"
-#include "mme_config.h"
+#include "sgw_config.h"
 #include "intertask_interface.h"
 #include "timer.h"
 #include "NwLog.h"
@@ -248,7 +248,7 @@ s11_send_init_udp (
 
 int
 s11_sgw_init (
-  const mme_config_t * mme_config_p)
+  sgw_config_t * config_p)
 {
   int                                     ret = 0;
   NwGtpv2cUlpEntityT                      ulp;
@@ -294,9 +294,9 @@ s11_sgw_init (
   }
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (s11_sgw_stack_handle, NW_LOG_LEVEL_DEBG));
-  config_read_lock (&mme_config);
-  addr.s_addr = mme_config.ipv4.sgw_ip_address_for_s11;
-  config_unlock (&mme_config);
+  sgw_config_read_lock (config_p);
+  addr.s_addr = config_p->ipv4.S11;
+  sgw_config_unlock (config_p);
   s11_address_str = inet_ntoa (addr);
   DevAssert (s11_address_str );
   s11_send_init_udp (s11_address_str, 2123);

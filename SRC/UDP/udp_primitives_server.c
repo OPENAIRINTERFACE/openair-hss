@@ -353,9 +353,7 @@ udp_intertask_interface (
   return NULL;
 }
 
-int
-udp_init (
-  const mme_config_t * mme_config_p)
+int udp_init (void)
 {
   OAILOG_DEBUG (LOG_UDP, "Initializing UDP task interface\n");
   STAILQ_INIT (&udp_socket_list);

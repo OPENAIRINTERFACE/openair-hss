@@ -104,8 +104,8 @@ function main()
         shift 2;
         ;;
       -c | --config-file)
-        mme_default_config_file=$2
-        echo "setting config file to: $mme_default_config_file"
+        mme_config_file=$2
+        echo "setting config file to: $mme_config_file"
         shift 2;
         ;;
       -D | --daemon)
@@ -212,7 +212,7 @@ function main()
   fi
 
 
-  exe_arguments="-O $mme_config_file $exe_arguments"
+  exe_arguments="-c $mme_config_file $exe_arguments"
 
   if [ $run_gdb -eq 0 ]; then 
     # trap keyboard interrupt (control-c)

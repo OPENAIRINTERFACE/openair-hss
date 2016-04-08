@@ -46,7 +46,7 @@
 #include "log.h"
 #include "msc.h"
 #include "intertask_interface_init.h"
-#include "mme_config.h"
+#include "spgw_config.h"
 #include "udp_primitives_server.h"
 #include "s11_sgw.h"
 #include "sgw_defs.h"
@@ -116,7 +116,7 @@ main (
   /*
    * Parse the command line for options and set the mme_config accordingly.
    */
-  CHECK_INIT_RETURN (config_parse_opt_line (argc, argv, &mme_config));
+  CHECK_INIT_RETURN (spgw_config_parse_opt_line (argc, argv, &spgw_config));
   /*
    * Calling each layer init function
    */
@@ -128,10 +128,10 @@ main (
 #endif
           NULL));
   MSC_INIT (MSC_SP_GW, THREAD_MAX + TASK_MAX);
-  CHECK_INIT_RETURN (udp_init (&mme_config));
-  CHECK_INIT_RETURN (s11_sgw_init (&mme_config));
-  CHECK_INIT_RETURN (gtpv1u_init (&mme_config));
-  CHECK_INIT_RETURN (sgw_init (mme_config.config_file));
+  CHECK_INIT_RETURN (udp_init ());
+  CHECK_INIT_RETURN (s11_sgw_init (&spgw_config.sgw_config));
+  //CHECK_INIT_RETURN (gtpv1u_init (&spgw_config));
+  CHECK_INIT_RETURN (sgw_init (&spgw_config));
   /*
    * Handle signals here
    */

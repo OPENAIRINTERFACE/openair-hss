@@ -94,7 +94,7 @@ s6a_fd_new_peer (
   struct peer_info                        info = {0};
 #endif
 
-  if (config_read_lock (&mme_config) ) {
+  if (mme_config_read_lock (&mme_config) ) {
     OAILOG_ERROR (LOG_S6A, "Failed to lock configuration for reading\n");
     return RETURNerror;
   }
@@ -132,7 +132,7 @@ s6a_fd_new_peer (
   info.config.pic_twtimer       = 60; // watchdog
   CHECK_FCT (fd_peer_add (&info, "", s6a_peer_connected_cb, NULL));
 
-  if (config_unlock (&mme_config) ) {
+  if (mme_config_unlock (&mme_config) ) {
     OAILOG_ERROR (LOG_S6A, "Failed to unlock configuration\n");
     return RETURNerror;
   }

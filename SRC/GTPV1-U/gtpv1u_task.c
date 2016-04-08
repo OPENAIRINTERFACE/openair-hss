@@ -106,12 +106,11 @@ gtpv1u_thread (
 }
 
 int
-gtpv1u_init (
-  const mme_config_t * mme_config_p)
+gtpv1u_init (void)
 {
   OAILOG_DEBUG (LOG_GTPV1U , "Initializing GTPV1U interface\n");
   memset (&gtpv1u_sgw_data, 0, sizeof (gtpv1u_sgw_data));
-  gtpv1u_sgw_data.sgw_ip_address_for_S1u_S12_S4_up = mme_config_p->ipv4.sgw_ip_address_for_s1u_s12_s4_up;
+  //gtpv1u_sgw_data.sgw_ip_address_for_S1u_S12_S4_up = config_p->ipv4.S1u_S12_S4_up;
 
   if (itti_create_task (TASK_GTPV1_U, &gtpv1u_thread, NULL) < 0) {
     OAILOG_ERROR (LOG_GTPV1U , "gtpv1u phtread_create: %s", strerror (errno));

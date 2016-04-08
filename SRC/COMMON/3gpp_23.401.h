@@ -44,18 +44,16 @@ typedef struct sgw_eps_bearer_entry_s {
   // TODO traffic_flow_template_t tft;                   ///< Traffic Flow Template
 
   ip_address_t         p_gw_address_in_use_up;           ///< The IP address of the P-GW currently used for sending user plane traffic. (For GTP-based S5/S8 only).
-  teid_t               p_gw_teid_for_S5_S8_up;           ///< P-GW Tunnel Endpoint Identifier for the S5/S8 interface for the user plane. (For GTP-based S5/S8 only).
+  teid_t               p_gw_teid_S5_S8_up;               ///< P-GW Tunnel Endpoint Identifier for the S5/S8 interface for the user plane. (For GTP-based S5/S8 only).
 
-  ip_address_t         s_gw_ip_address_for_S5_S8_up;     ///< S-GW IP address for user plane data received from PDN GW. (For GTP-based S5/S8 only).
-  teid_t               s_gw_teid_for_S5_S8_up;           ///< S-GW Tunnel Endpoint Identifier for the S5/S8 interface for the user plane. (For GTP-based S5/S8 only).
+  ip_address_t         s_gw_ip_address_S5_S8_up;         ///< S-GW IP address for user plane data received from PDN GW. (For GTP-based S5/S8 only).
+  teid_t               s_gw_teid_S5_S8_up;               ///< S-GW Tunnel Endpoint Identifier for the S5/S8 interface for the user plane. (For GTP-based S5/S8 only).
 
-  ip_address_t
-  s_gw_ip_address_for_S1u_S12_S4_up;                     ///< S-GW IP address for the S1-u interface (Used by the eNodeB), for the S12 interface (used by the RNC) and for the S4 interface (used by the SGSN).
-  teid_t
-  s_gw_teid_for_S1u_S12_S4_up;                           ///< S-GW Tunnel Endpoint Identifier for the S1-u interface, for the S12 interface (used by the RNC) and for the S4 interface (used by the SGSN).
+  ip_address_t         s_gw_ip_address_S1u_S12_S4_up;    ///< S-GW IP address for the S1-u interface (Used by the eNodeB), for the S12 interface (used by the RNC) and for the S4 interface (used by the SGSN).
+  teid_t               s_gw_teid_S1u_S12_S4_up;          ///< S-GW Tunnel Endpoint Identifier for the S1-u interface, for the S12 interface (used by the RNC) and for the S4 interface (used by the SGSN).
 
-  ip_address_t         enb_ip_address_for_S1u;           ///< eNodeB IP address for the S1-u interface (Used by the S-GW).
-  teid_t               enb_teid_for_S1u;                 ///< eNodeB Tunnel Endpoint Identifier for the S1-u interface.
+  ip_address_t         enb_ip_address_S1u;               ///< eNodeB IP address for the S1-u interface (Used by the S-GW).
+  teid_t               enb_teid_S1u;                     ///< eNodeB Tunnel Endpoint Identifier for the S1-u interface.
 
   // TODO CHECK
   BearerQOS_t          eps_bearer_qos;                   ///< ARP, GBR, MBR, QCI.
@@ -70,12 +68,12 @@ typedef struct sgw_pdn_connection_s {
   // NOT IMPLEMENTED NOW
   ip_address_t         p_gw_address_in_use_cp;         ///< The IP address of the P-GW currently used for sending control plane signalling.
   // NOT IMPLEMENTED NOW
-  teid_t               p_gw_teid_for_S5_S8_cp;         ///< P-GW Tunnel Endpoint Identifier for the S5/S8 interface for the control plane. (For GTP-based S5/S8 only).
+  teid_t               p_gw_teid_S5_S8_cp;             ///< P-GW Tunnel Endpoint Identifier for the S5/S8 interface for the control plane. (For GTP-based S5/S8 only).
   // NOT IMPLEMENTED NOW
   ip_address_t         p_gw_address_in_use_up;         ///< The IP address of the P-GW currently used for sending user plane traffic. (For PMIP-based S5/S8 only)
   // NOT NEEDED p_gw_gre_key_for_uplink_traffic_up     ///< PDN GW assigned GRE Key for the S5/S8 interface for the user plane for uplink traffic. (For PMIP-based S5/S8 only)
-  ip_address_t         s_gw_ip_address_for_S5_S8_cp;   ///< S-GW IP address for the S5/S8 for the control plane signalling.
-  teid_t               s_gw_teid_for_S5_S8_cp;         ///< S-GW Tunnel Endpoint Identifier for the S5/S8 control plane interface. (For GTP-based S5/S8 only).
+  ip_address_t         s_gw_ip_address_S5_S8_cp;       ///< S-GW IP address for the S5/S8 for the control plane signalling.
+  teid_t               s_gw_teid_S5_S8_cp;             ///< S-GW Tunnel Endpoint Identifier for the S5/S8 control plane interface. (For GTP-based S5/S8 only).
   ip_address_t         s_gw_address_in_use_up;         ///< The IP address of the S-GW currently used for sending user plane traffic. (For PMIP-based S5/S8 only)
   // NOT NEEDED s_gw_gre_key_for_dl_traffic_up         ///< user plane for downlink traffic. (For PMIP-based S5/S8 only)
   ebi_t                default_bearer;                 ///< Identifies the default bearer within the PDN connection by its EPS Bearer Id. (For PMIP based S5/S8.)
@@ -98,10 +96,10 @@ typedef struct sgw_eps_bearer_context_information_s {
   // TO BE CHECKED me_identity_t    me_identity;       ///< Mobile Equipment Identity (e.g. IMEI/IMEISV).
   char                 msisdn[MSISDN_LENGTH];          ///< The basic MSISDN of the UE. The presence is dictated by its storage in the HSS.
   // NOT NEEDED selected_cn_operator_id                ///< Selected core network operator identity (to support networksharing as defined in TS 23.251
-  teid_t               mme_teid_for_S11;               ///< MME Tunnel Endpoint Identifier for the S11 interface
-  ip_address_t         mme_ip_address_for_S11;         ///< MME IP address the S11 interface.
-  teid_t               s_gw_teid_for_S11_S4;           ///< S-GW Tunnel Endpoint Identifier for the S11 Interface and the S4 Interface (control plane)
-  ip_address_t         s_gw_ip_address_for_S11_S4;     ///< S-GW IP address for the S11 interface and the S4 Interface (control plane).
+  teid_t               mme_teid_S11;                   ///< MME Tunnel Endpoint Identifier for the S11 interface
+  ip_address_t         mme_ip_address_S11;             ///< MME IP address the S11 interface.
+  teid_t               s_gw_teid_S11_S4;               ///< S-GW Tunnel Endpoint Identifier for the S11 Interface and the S4 Interface (control plane)
+  ip_address_t         s_gw_ip_address_S11_S4;         ///< S-GW IP address for the S11 interface and the S4 Interface (control plane).
   // NOT NEEDED Trace reference                        ///< Identifies a record or a collection of records for a particular trace.
   // NOT NEEDED Trace type                             ///< Indicates the type of trace
   // NOT NEEDED Trigger id                             ///< Identifies the entity that initiated the trace
@@ -156,11 +154,11 @@ typedef struct pgw_pdn_connection_s {
   //ip_addresses;                                       ///< IPv4 address and/or IPv6 prefix
   pdn_type_t           pdn_type;                       ///< IPv4, IPv6, or IPv4v6
   ip_address_t         s_gw_address_in_use_cp;         ///< The IP address of the S-GW currently used for sending control plane signalling.
-  teid_t               s_gw_teid_for_S5_S8_cp;         ///< S-GW Tunnel Endpoint Identifier for the S5/S8 interface for the control plane. (For GTP-based S5/S8 only).
+  teid_t               s_gw_teid_S5_S8_cp;             ///< S-GW Tunnel Endpoint Identifier for the S5/S8 interface for the control plane. (For GTP-based S5/S8 only).
   ip_address_t         s_gw_address_in_use_up;         ///< The IP address of the S-GW currently used for sending user plane traffic. (For PMIP-based S5/S8 only).
   // NOT NEEDED s_gw_gre_key_for_dl_traffic_up         ///< Serving GW assigned GRE Key for the S5/S8 interface for the user plane for downlink traffic. (For PMIP-based S5/S8 only).
-  ip_address_t         p_gw_ip_address_for_S5_S8_cp;   ///< P-GW IP address for the S5/S8 for the control plane signalling.
-  teid_t               p_gw_teid_for_S5_S8_cp;         ///< P-GW Tunnel Endpoint Identifier for the S5/S8 control plane interface. (For GTP-based S5/S8 only).
+  ip_address_t         p_gw_ip_address_S5_S8_cp;       ///< P-GW IP address for the S5/S8 for the control plane signalling.
+  teid_t               p_gw_teid_S5_S8_cp;             ///< P-GW Tunnel Endpoint Identifier for the S5/S8 control plane interface. (For GTP-based S5/S8 only).
   ip_address_t         p_gw_address_in_use_up;         ///< The IP address of the P-GW currently used for sending user plane traffic. (For PMIP-based S5/S8 only).
   // NOT NEEDED p_gw_gre_key_for_uplink_traffic_up     ///< PDN GW assigned GRE Key for the S5/S8 interface for the user plane for uplink traffic. (For PMIP-based S5/S8 only).
   // NOT NEEDED MS Info Change Reporting Action        ///< Denotes whether the MME and/or the SGSN is/are requested to send changes in User Location Information change for this bearer.
@@ -180,10 +178,10 @@ typedef struct pgw_eps_bearer_entry_gtp_based_S5_S8_only_s {
   // TO DO traffic_flow_template_t tft;                   ///< Traffic Flow Template
 
   ip_address_t         s_gw_address_in_use_up;            ///< The IP address of the S-GW currently used for sending user plane traffic.
-  teid_t               s_gw_teid_for_S5_S8_up;            ///< S-GW Tunnel Endpoint Identifier for the S5/S8 interface for the user plane.
+  teid_t               s_gw_teid_S5_S8_up;                ///< S-GW Tunnel Endpoint Identifier for the S5/S8 interface for the user plane.
 
-  ip_address_t         p_gw_ip_address_for_S5_S8_up;      ///< P-GW IP address for user plane data received from PDN GW.
-  teid_t               p_gw_teid_for_S5_S8_up;            ///< P-GW Tunnel Endpoint Identifier for the GTP Based S5/S8 interface for user plane.
+  ip_address_t         p_gw_ip_address_S5_S8_up;          ///< P-GW IP address for user plane data received from PDN GW.
+  teid_t               p_gw_teid_S5_S8_up;                ///< P-GW Tunnel Endpoint Identifier for the GTP Based S5/S8 interface for user plane.
 
   // TO BE CHECKED
   BearerQOS_t          eps_bearer_qos;                    ///< ARP, GBR, MBR, QCI.

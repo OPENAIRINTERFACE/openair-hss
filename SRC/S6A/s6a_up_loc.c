@@ -193,7 +193,7 @@ s6a_generate_update_location (
    * Add Origin_Host & Origin_Realm
    */
   CHECK_FCT (fd_msg_add_origin (msg_p, 0));
-  config_read_lock (&mme_config);
+  mme_config_read_lock (&mme_config);
   /*
    * Destination Host
    */
@@ -225,7 +225,7 @@ s6a_generate_update_location (
     CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
     CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
   }
-  config_unlock (&mme_config);
+  mme_config_unlock (&mme_config);
   /*
    * Adding the User-Name (IMSI)
    */
