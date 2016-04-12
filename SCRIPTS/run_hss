@@ -46,9 +46,9 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --config-file filename      Config file to be used by HSS if you don't want to use the default one: $g_hss_default_config_file"
-  echo_error "  -e, --export-db  filename       Export current database to a SQL file, file prefix is $OPENAIRCN_DIR/OAI_HSS/db. (useful for replaying test scenarios)"
+  echo_error "  -e, --export-db  filename       Export current database to a SQL file, file prefix is $OPENAIRCN_DIR/SRC/OAI_HSS/db. (useful for replaying test scenarios)"
   echo_error "  -D, --daemon                    Run the daemon."
-  echo_error "  -i, --import-db   filename      Import SQL file to current database, file prefix is $OPENAIRCN_DIR/OAI_HSS/db. (useful for replaying test scenarios or restoring original database content)"
+  echo_error "  -i, --import-db   filename      Import SQL file to current database, file prefix is $OPENAIRCN_DIR/SRC/OAI_HSS/db. (useful for replaying test scenarios or restoring original database content)"
   echo_error "  -I, --install-hss-files         Install HSS config files."
   echo_error "  -g, --gdb                       Run with GDB."
   echo_error "  -h, --help                      Print this help."
@@ -172,7 +172,7 @@ function main()
   fi
   
   if [ $export_db -eq 1 ]; then
-    [[ $dump_file != *"/"* ]] && dump_file=$OPENAIRCN_DIR/OAI_HSS/db/$dump_file
+    [[ $dump_file != *"/"* ]] && dump_file=$OPENAIRCN_DIR/SRC/OAI_HSS/db/$dump_file
     if [ -e $dump_file ]; then 
       read -p "Do you want to overwrite $dump_file ? <y/N> " prompt
       if [[ $prompt =~ [yY](es)* ]]; then
@@ -187,7 +187,7 @@ function main()
   fi
   
   if [ $import_db -eq 1 ]; then
-    [[ $dump_file != *"/"* ]] && dump_file=$OPENAIRCN_DIR/OAI_HSS/db/$dump_file
+    [[ $dump_file != *"/"* ]] && dump_file=$OPENAIRCN_DIR/SRC/OAI_HSS/db/$dump_file
     if [ -e $dump_file ]; then 
       value="`cat $hss_config_file | tr -d " " | grep "="`"
       eval $value
