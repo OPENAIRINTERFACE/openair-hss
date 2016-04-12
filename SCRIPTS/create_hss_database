@@ -80,7 +80,7 @@ function main()
     mysql -u $3 --password=$4  -e "desc $5.users" > /dev/null 2>&1
     
     if [ $? -eq 1 ]; then 
-        $MYSQL -u $3 --password=$4 $5 < $OPENAIRCN_DIR/OAI_HSS/db/$5.sql
+        $MYSQL -u $3 --password=$4 $5 < $OPENAIRCN_DIR/SRC/OAI_HSS/db/$5.sql
         if [ $? -ne 0 ]; then
             echo_error "$5 tables creation failed"
             return 1

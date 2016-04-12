@@ -659,7 +659,7 @@ check_install_hss_software() {
 
 #-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
-check_install_mme_gw_software() {
+check_install_mme_software() {
   if [ $1 -gt 0 ]; then 
     OPTION="-y"
   else
@@ -731,7 +731,6 @@ check_install_mme_gw_software() {
   # Networking
   PACKAGE_LIST="\
     ethtool \
-    iperf \
     iproute \
     vlan \
     tshark"
@@ -750,8 +749,6 @@ check_install_mme_gw_software() {
   if [ $? -ne 0 ]; then 
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi
-
-  check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $1
 }
 
 #-------------------------------------------------------------------------------
