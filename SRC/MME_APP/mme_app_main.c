@@ -92,6 +92,11 @@ void *mme_app_thread (
       }
       break;
 
+    case SGW_DELETE_SESSION_RESPONSE: {
+      mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.sgw_delete_session_response);
+      }
+      break;
+
     case NAS_AUTHENTICATION_PARAM_REQ:{
         mme_app_handle_nas_auth_param_req (&received_message_p->ittiMsg.nas_auth_param_req);
       }
@@ -99,6 +104,11 @@ void *mme_app_thread (
 
     case NAS_PDN_CONNECTIVITY_REQ:{
         mme_app_handle_nas_pdn_connectivity_req (&received_message_p->ittiMsg.nas_pdn_connectivity_req);
+      }
+      break;
+
+    case NAS_DETACH_REQ: {
+	    mme_app_handle_detach_req(&received_message_p->ittiMsg.nas_detach_req);
       }
       break;
 
