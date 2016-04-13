@@ -358,7 +358,7 @@ s11_sgw_handle_delete_session_response (
   trxn = (NwGtpv2cTrxnHandleT) delete_session_response_p->trxn;
   DevAssert (trxn );
   /*
-   * Prepare a create session response to send to MME.
+   * Prepare a delete session response to send to MME.
    */
   memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
   memset (&cause, 0, sizeof (gtp_cause_t));

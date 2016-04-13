@@ -34,6 +34,7 @@ int sgw_handle_sgi_endpoint_created  (const itti_sgi_create_end_point_response_t
 int sgw_handle_sgi_endpoint_updated  (const itti_sgi_update_end_point_response_t   * const resp_p);
 int sgw_handle_gtpv1uCreateTunnelResp(const Gtpv1uCreateTunnelResp  * const endpoint_created_p);
 int sgw_handle_gtpv1uUpdateTunnelResp(const Gtpv1uUpdateTunnelResp  * const endpoint_updated_p);
+int sgw_handle_gtpv1uDeleteTunnelResp(const Gtpv1uDeleteTunnelResp  * const endpoint_deleted_p);
 int sgw_handle_modify_bearer_request (const itti_sgw_modify_bearer_request_t  * const modify_bearer_p);
 int sgw_handle_delete_session_request(const itti_sgw_delete_session_request_t * const delete_session_p);
 int sgw_handle_release_access_bearers_request(const itti_sgw_release_access_bearers_request_t * const release_access_bearers_req_pP);
