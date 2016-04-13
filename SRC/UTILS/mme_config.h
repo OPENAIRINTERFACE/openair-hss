@@ -85,6 +85,7 @@
 #define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S1_MME        "MME_IPV4_ADDRESS_FOR_S1_MME"
 #define MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11_MME     "MME_INTERFACE_NAME_FOR_S11_MME"
 #define MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11_MME       "MME_IPV4_ADDRESS_FOR_S11_MME"
+#define MME_CONFIG_STRING_MME_PORT_FOR_S11               "MME_PORT_FOR_S11_MME"
 
 
 #define MME_CONFIG_STRING_NAS_CONFIG                     "NAS"
@@ -186,7 +187,7 @@ typedef struct mme_config_s {
 
     char     *mme_interface_name_for_s11;
     uint32_t  mme_ip_address_for_s11;
-
+    uint16_t  mme_port_for_s11;
     uint32_t  sgw_ip_address_for_s11;
   } ipv4;
 

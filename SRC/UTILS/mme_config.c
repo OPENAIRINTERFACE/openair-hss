@@ -134,6 +134,7 @@ static void mme_config_init (mme_config_t * mme_config_p)
   mme_config_p->ipv4.mme_ip_address_for_s1_mme = 0;
   mme_config_p->ipv4.mme_interface_name_for_s11 = "none";
   mme_config_p->ipv4.mme_ip_address_for_s11 = 0;
+  mme_config_p->ipv4.mme_port_for_s11 = 2123;
   mme_config_p->ipv4.sgw_ip_address_for_s11 = 0;
   mme_config_p->s6a_config.conf_file = S6A_CONF_FILE;
   mme_config_p->itti_config.queue_size = ITTI_QUEUE_MAX_ELEMENTS;
@@ -547,8 +548,11 @@ static int mme_config_parse_file (mme_config_t * mme_config_p)
            && config_setting_lookup_string (setting, MME_CONFIG_STRING_INTERFACE_NAME_FOR_S11_MME, (const char **)&mme_interface_name_for_s11)
            && config_setting_lookup_string (setting, MME_CONFIG_STRING_IPV4_ADDRESS_FOR_S11_MME, (const char **)&mme_ip_address_for_s11)
            && config_setting_lookup_string (setting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11, (const char **)&sgw_ip_address_for_s11)
+           && config_setting_lookup_int (setting, MME_CONFIG_STRING_MME_PORT_FOR_S11, &aint)
           )
         ) {
+        mme_config_p->ipv4.mme_port_for_s11 = (uint16_t)aint;
+
         mme_config_p->ipv4.mme_interface_name_for_s1_mme = strdup (mme_interface_name_for_s1_mme);
         cidr = strdup (mme_ip_address_for_s1_mme);
         address = strtok (cidr, "/");
@@ -724,6 +728,7 @@ static void mme_config_display (mme_config_t * mme_config_p)
   OAILOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s\n", mme_config_p->ipv4.mme_interface_name_for_s1_mme);
   OAILOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_s1_mme)));
   OAILOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s\n", mme_config_p->ipv4.mme_interface_name_for_s11);
+  OAILOG_INFO (LOG_CONFIG, "    s11 MME port  ....: %d\n", mme_config_p->ipv4.mme_port_for_s11);
   OAILOG_INFO (LOG_CONFIG, "    s11 S-GW ip ......: %s\n", inet_ntoa (*((struct in_addr *)&mme_config_p->ipv4.mme_ip_address_for_s11)));
   OAILOG_INFO (LOG_CONFIG, "- ITTI:\n");
   OAILOG_INFO (LOG_CONFIG, "    queue size .......: %u (bytes)\n", mme_config_p->itti_config.queue_size);
