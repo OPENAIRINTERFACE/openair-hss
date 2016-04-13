@@ -61,7 +61,7 @@
 #define NAS_AUTHENTICATION_PARAM_REQ(mSGpTR)        (mSGpTR)->ittiMsg.nas_auth_param_req
 #define NAS_AUTHENTICATION_PARAM_RSP(mSGpTR)        (mSGpTR)->ittiMsg.nas_auth_param_rsp
 #define NAS_AUTHENTICATION_PARAM_FAIL(mSGpTR)       (mSGpTR)->ittiMsg.nas_auth_param_fail
-
+#define NAS_DETACH_REQ(mSGpTR)        		    (mSGpTR)->ittiMsg.nas_detach_req
 #define NAS_DATA_LENGHT_MAX     256
 
 
@@ -338,6 +338,10 @@ typedef struct itti_nas_auth_param_req_s {
   uint8_t  auts[14];
 } itti_nas_auth_param_req_t;
 
+typedef struct itti_nas_detach_req_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t ue_id;
+} itti_nas_detach_req_t;
 
 typedef struct itti_nas_auth_param_rsp_s {
   /* UE identifier */
