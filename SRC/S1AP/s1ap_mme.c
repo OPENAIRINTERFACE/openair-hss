@@ -170,6 +170,11 @@ s1ap_mme_thread (
       }
       break;
 
+    case MME_APP_DELETE_SESSION_RSP:{
+        s1ap_handle_delete_session_rsp (&MME_APP_DELETE_SESSION_RSP (received_message_p));
+      }
+      break;
+
     case TIMER_HAS_EXPIRED:{
         s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
       }
@@ -542,7 +547,7 @@ s1ap_remove_ue (
   OAILOG_TRACE(LOG_S1AP, "Removing UE enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id:" MME_UE_S1AP_ID_FMT " in eNB id : %d\n",
       ue_ref->enb_ue_s1ap_id, ue_ref->mme_ue_s1ap_id, enb_ref->enb_id);
   hashtable_ts_free (&enb_ref->ue_coll, ue_ref->enb_ue_s1ap_id);
-  enb_ref->nb_ue_associated--;
+  // enb_ref->nb_ue_associated--;
 }
 
 //------------------------------------------------------------------------------

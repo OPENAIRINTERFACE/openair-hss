@@ -19,20 +19,18 @@
  *      contact@openairinterface.org
  */
 
-#include <string.h>
-#include <stdint.h>
-#include <ctype.h>
-
-#include "bstrlib.h"
-#include "assertions.h"
-#include "intertask_interface.h"
-#include "3gpp_24.301.h"
-#include "esm_proc.h"
-#include "log.h"
-#include "msc.h"
 
 #ifndef FILE_NAS_ITTI_MESSAGING_SEEN
 #define FILE_NAS_ITTI_MESSAGING_SEEN
+#include <stdint.h>
+
+#include "bstrlib.h"
+#include "assertions.h"
+#include "log.h"
+#include "msc.h"
+#include "intertask_interface.h"
+#include "3gpp_24.301.h"
+#include "esm_proc.h"
 
 int nas_itti_plain_msg(
   const char          *buffer,
@@ -46,7 +44,6 @@ int nas_itti_protected_msg(
   const size_t         lengthP,
   const bool           is_down_link);
 
-#include "conversions.h"
 
 int nas_itti_dl_data_req(
   const mme_ue_s1ap_id_t ue_idP,
@@ -78,6 +75,9 @@ void nas_itti_establish_cnf(
   bstring                msgP,
   const uint16_t         selected_encryption_algorithmP,
   const uint16_t         selected_integrity_algorithmP);
+
+void nas_itti_detach_req(
+  const uint32_t      ue_idP);
 
 
 #endif /* FILE_NAS_ITTI_MESSAGING_SEEN */

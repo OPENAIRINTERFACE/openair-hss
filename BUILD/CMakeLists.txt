@@ -486,6 +486,7 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_main.c
   ${MME_DIR}/mme_app_bearer.c
   ${MME_DIR}/mme_app_authentication.c
+  ${MME_DIR}/mme_app_detach.c
   ${MME_DIR}/mme_app_location.c
   ${MME_DIR}/mme_app_transport.c
   ${MME_DIR}/mme_app_statistics.c

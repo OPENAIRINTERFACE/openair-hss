@@ -41,6 +41,7 @@
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "sgw_ie_defs.h"
+#include "mme_app_itti_messaging.h"
 #include "secu_defs.h"
 
 
@@ -482,6 +483,40 @@ mme_app_handle_initial_ue_message (
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
+
+//------------------------------------------------------------------------------
+void
+mme_app_handle_delete_session_rsp (
+  const itti_sgw_delete_session_response_t * const delete_sess_resp_pP)
+//------------------------------------------------------------------------------
+{
+  struct ue_context_s                    *ue_context_p = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (delete_sess_resp_pP );
+  OAILOG_DEBUG (LOG_MME_APP, "Received SGW_DELETE_SESSION_RESPONSE from S+P-GW with the ID " MME_UE_S1AP_ID_FMT "\n ",delete_sess_resp_pP->teid);
+  ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, delete_sess_resp_pP->teid);
+
+  if (ue_context_p == NULL) {
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", delete_sess_resp_pP->teid);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  if (delete_sess_resp_pP->cause != REQUEST_ACCEPTED) {
+    DevMessage ("Cases where bearer cause != REQUEST_ACCEPTED are not handled\n");
+  }
+  /*
+   * Updating statistics
+   */
+  mme_app_desc.mme_ue_contexts.nb_bearers_managed--;
+  mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat--;
+
+  /*
+   * Remove UE Context
+   */
+  mme_app_itti_delete_session_rsp(ue_context_p->mme_ue_s1ap_id);
+  mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
 
 
 //------------------------------------------------------------------------------

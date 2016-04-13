@@ -24,4 +24,26 @@
 #ifndef FILE_MME_APP_ITTI_MESSAGING_SEEN
 #define FILE_MME_APP_ITTI_MESSAGING_SEEN
 
+#include "msc.h"
+
+
+static inline void mme_app_itti_delete_session_rsp(
+  const mme_ue_s1ap_id_t   ue_idP)
+{
+  MessageDef *message_p;
+
+  message_p = itti_alloc_new_message(TASK_MME_APP, MME_APP_DELETE_SESSION_RSP);
+
+  MME_APP_DELETE_SESSION_RSP(message_p).ue_id = ue_idP;
+
+  MSC_LOG_TX_MESSAGE(
+                MSC_MMEAPP_MME,
+                MSC_S1AP_MME,
+                NULL,0,
+                "0 MME_APP_DELETE_SESSION_RSP ue id %06"PRIX32" ",
+          ue_idP);
+
+  itti_send_msg_to_task(TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
 #endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */

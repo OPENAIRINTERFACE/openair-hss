@@ -739,6 +739,24 @@ s1ap_mme_generate_ue_context_release_command (
 }
 
 
+void
+s1ap_handle_delete_session_rsp (
+  const itti_mme_app_delete_session_rsp_t * const mme_app_delete_session_rsp_p)
+{
+  ue_description_t                       *ue_ref = NULL;
+  OAILOG_FUNC_IN (LOG_S1AP);
+  DevAssert (mme_app_delete_session_rsp_p != NULL);
+  if ((ue_ref = s1ap_is_ue_mme_id_in_list (mme_app_delete_session_rsp_p->ue_id)) == NULL) {
+    OAILOG_DEBUG (LOG_S1AP, "This mme ue s1ap id " MME_UE_S1AP_ID_FMT " is not attached to any UE context\n", mme_app_delete_session_rsp_p->ue_id);
+  }
+  else {
+    s1ap_remove_ue (ue_ref);
+  }
+  OAILOG_FUNC_OUT (LOG_S1AP);
+}
+
+//------------------------------------------------------------------------------
+
 //------------------------------------------------------------------------------
 int
 s1ap_handle_ue_context_release_command (

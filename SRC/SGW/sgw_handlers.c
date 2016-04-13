@@ -747,6 +747,172 @@ sgw_handle_sgi_endpoint_updated (
   }
 }
 
+int
+sgw_handle_sgi_endpoint_deleted (
+  const itti_sgi_delete_end_point_request_t * const resp_pP)
+  {
+  s_plus_p_gw_eps_bearer_context_information_t *new_bearer_ctxt_info_p = NULL;
+  sgw_eps_bearer_entry_t                 *eps_bearer_entry_p = NULL;
+  hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
+  int                                     rv = 0;
+
+  OAILOG_FUNC_IN(LOG_SPGW_APP);
+  #if EPC_BUILD
+  to_task = TASK_MME_APP;
+  #endif
+	OAILOG_DEBUG (LOG_SPGW_APP, "bcom Rx SGI_DELETE_ENDPOINT_REQUEST, Context teid %u, SGW S1U teid %u, EPS bearer id %u\n",
+                resp_pP->context_teid, resp_pP->sgw_S1u_teid, resp_pP->eps_bearer_id);
+
+  hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, resp_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
+
+  if (HASH_TABLE_OK == hash_rc) {
+    hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, resp_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
+
+    if ((hash_rc == HASH_TABLE_KEY_NOT_EXISTS) || (hash_rc == HASH_TABLE_BAD_PARAMETER_HASHTABLE)) {
+      OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_DELETE_ENDPOINT_REQUEST: CONTEXT_NOT_FOUND (pdn_connection.sgw_eps_bearers context)\n");
+    } else if (HASH_TABLE_OK == hash_rc) {
+      OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_DELETE_ENDPOINT_REQUEST: REQUEST_ACCEPTED\n");
+       // if default bearer
+//#pragma message  "TODO define constant for default eps_bearer id"
+
+      bstring system_cmd = bfromcstr("");
+      if (resp_pP->eps_bearer_id == 5) {
+        rv = bassignformat (system_cmd, "iptables -t mangle -D %s -d %u.%u.%u.%u -m mark --mark 0 -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add", (spgw_config.sgw_config.local_to_eNB) ? "FORWARD" : "FORWARD", // test
+                        eps_bearer_entry_p->paa.ipv4_address[0],
+                        eps_bearer_entry_p->paa.ipv4_address[1],
+                        eps_bearer_entry_p->paa.ipv4_address[2],
+                        eps_bearer_entry_p->paa.ipv4_address[3],
+                        sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
+                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
+                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
+                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
+                        eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
+                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
+                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
+                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
+                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
+                        eps_bearer_entry_p->enb_teid_S1u);
+
+        if (BSTR_ERR == rv) {
+          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in removing default downlink tunnel, tune string length\n");
+          exit (-1);
+        }
+        //use API when prototype validated
+        rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+        btrunc(system_cmd, 0);
+
+        if (rv < 0) {
+          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in deleting default downlink TUNNEL\n");
+        }
+
+        rv = bassignformat (system_cmd, "iptables -t mangle -D POSTROUTING -d %u.%u.%u.%u -m mark --mark 0 -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add",
+                        eps_bearer_entry_p->paa.ipv4_address[0],
+                        eps_bearer_entry_p->paa.ipv4_address[1],
+                        eps_bearer_entry_p->paa.ipv4_address[2],
+                        eps_bearer_entry_p->paa.ipv4_address[3],
+                        sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
+                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
+                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
+                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
+                        eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
+                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
+                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
+                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
+                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
+                        eps_bearer_entry_p->enb_teid_S1u);
+
+
+        if (BSTR_ERR == rv) {
+          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing default downlink tunnel, tune string length\n");
+          exit (-1);
+        }
+        //use API when prototype validated
+        rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+        btrunc(system_cmd, 0);
+
+        if (rv < 0) {
+          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in removing default downlink TUNNEL\n");
+        }
+
+      }
+      //-------------------------
+      rv = bassignformat (system_cmd, "iptables -t mangle -D %s -d %u.%u.%u.%u -m mark --mark %u -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add", (spgw_config.sgw_config.local_to_eNB) ? "FORWARD" : "FORWARD",        // test
+                      eps_bearer_entry_p->paa.ipv4_address[0],
+                      eps_bearer_entry_p->paa.ipv4_address[1],
+                      eps_bearer_entry_p->paa.ipv4_address[2],
+                      eps_bearer_entry_p->paa.ipv4_address[3],
+                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
+                      sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
+                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
+                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
+                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
+                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
+                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
+                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
+                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
+                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
+                      eps_bearer_entry_p->enb_teid_S1u);
+
+      if (BSTR_ERR == rv) {
+        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing downlink tunnel, tune string length\n");
+        exit (-1);
+      }
+      //use API when prototype validated
+      rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+      btrunc(system_cmd, 0);
+
+      if (rv < 0) {
+        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up downlink TUNNEL\n");
+      }
+      rv = bassignformat (system_cmd, "iptables -t mangle -D POSTROUTING -d %u.%u.%u.%u -m mark --mark %u -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add",     // test
+                      eps_bearer_entry_p->paa.ipv4_address[0],
+                      eps_bearer_entry_p->paa.ipv4_address[1],
+                      eps_bearer_entry_p->paa.ipv4_address[2],
+                      eps_bearer_entry_p->paa.ipv4_address[3],
+                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
+                      sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
+                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
+                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
+                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
+                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
+                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
+                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
+                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
+                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
+                      eps_bearer_entry_p->enb_teid_S1u);
+
+      if (BSTR_ERR == rv) {
+        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing downlink tunnel, tune string length\n");
+        exit (-1);
+      }
+      //use API when prototype validated
+      rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+      btrunc(system_cmd, 0);
+
+      if (rv < 0) {
+        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up downlink TUNNEL\n");
+      }
+    }
+
+//    MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME,
+//                        (to_task == TASK_MME_APP) ? MSC_MMEAPP_MME : MSC_S11_MME, NULL, 0, "0 SGW_MODIFY_BEARER_RESPONSE ebi %u  trxn %u", modify_response_p->bearer_choice.bearer_contexts_modified.eps_bearer_id, modify_response_p->trxn);
+//    rv = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+    OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
+  } else {
+    OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_DELETE_ENDPOINT_RESPONSE: CONTEXT_NOT_FOUND (S11 context)\n");
+/*    modify_response_p->teid = resp_pP->context_teid;    // TO BE CHECKED IF IT IS THIS TEID
+    modify_response_p->bearer_present = MODIFY_BEARER_RESPONSE_REM;
+    modify_response_p->bearer_choice.bearer_for_removal.eps_bearer_id = resp_pP->eps_bearer_id;
+    modify_response_p->bearer_choice.bearer_for_removal.cause = CONTEXT_NOT_FOUND;
+    modify_response_p->cause = CONTEXT_NOT_FOUND;
+    modify_response_p->trxn = 0;
+    MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME,
+                        (to_task == TASK_MME_APP) ? MSC_MMEAPP_MME : MSC_S11_MME,
+                        NULL, 0, "0 SGW_MODIFY_BEARER_RESPONSE ebi %u CONTEXT_NOT_FOUND trxn %u", modify_response_p->bearer_choice.bearer_contexts_modified.eps_bearer_id, modify_response_p->trxn);
+    rv = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);*/
+    OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
+  }
+}
 
 
 //------------------------------------------------------------------------------
@@ -842,8 +1008,8 @@ sgw_handle_delete_session_request (
 {
   task_id_t                               to_task = TASK_S11;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
-  itti_sgw_delete_session_response_t     *delete_session_resp_p = NULL;
-  MessageDef                             *message_p = NULL;
+  itti_sgw_delete_session_response_t      *delete_session_resp_p = NULL;
+  MessageDef                              *message_p = NULL;
   s_plus_p_gw_eps_bearer_context_information_t *ctx_p = NULL;
   int                                     rv = 0;
 
@@ -871,7 +1037,7 @@ sgw_handle_delete_session_request (
       /*
        * Sender F-TEID IE present
        */
-      if (delete_session_resp_p->teid != ctx_p->sgw_eps_bearer_context_information.mme_teid_S11) {
+      if (delete_session_req_pP->teid != ctx_p->sgw_eps_bearer_context_information.mme_teid_S11) {
         delete_session_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_S11;
         delete_session_resp_p->cause = INVALID_PEER;
         OAILOG_DEBUG (LOG_SPGW_APP, "Mismatch in MME Teid for CP\n");
@@ -881,6 +1047,25 @@ sgw_handle_delete_session_request (
     } else {
       delete_session_resp_p->cause = REQUEST_ACCEPTED;
       delete_session_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_S11;
+
+      itti_sgi_delete_end_point_request_t   	 sgi_delete_end_point_request;
+      sgw_eps_bearer_entry_t                	 *eps_bearer_entry_p = NULL;
+
+      hash_rc = hashtable_ts_get (ctx_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, delete_session_req_pP->lbi, (void **)&eps_bearer_entry_p);
+      sgi_delete_end_point_request.context_teid = delete_session_req_pP->teid ;
+      sgi_delete_end_point_request.sgw_S1u_teid = eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up;
+      sgi_delete_end_point_request.eps_bearer_id = delete_session_req_pP->lbi;
+      sgi_delete_end_point_request.pdn_type = ctx_p->sgw_eps_bearer_context_information.saved_message.pdn_type;
+      memcpy (&sgi_delete_end_point_request.paa, &eps_bearer_entry_p->paa, sizeof (PAA_t));
+
+      sgw_handle_sgi_endpoint_deleted (&sgi_delete_end_point_request);
+      
+      /*
+       * Delete S11 bearer context and remove s11 tunnel
+       */
+      
+      hashtable_ts_free (sgw_app.s11_bearer_context_information_hashtable, delete_session_req_pP->teid);
+      sgw_cm_remove_s11_tunnel( delete_session_req_pP->teid);  
     }
 
     delete_session_resp_p->trxn = delete_session_req_pP->trxn;
@@ -895,13 +1080,6 @@ sgw_handle_delete_session_request (
      * Context not found... set the cause to CONTEXT_NOT_FOUND
      * * * * 3GPP TS 29.274 #7.2.10.1
      */
-    message_p = itti_alloc_new_message (TASK_SPGW_APP, SGW_DELETE_SESSION_RESPONSE);
-
-    if (!message_p) {
-      OAILOG_FUNC_RETURN(LOG_SPGW_APP,  -1);
-    }
-
-    delete_session_resp_p = &message_p->ittiMsg.sgw_delete_session_response;
 
     if ((delete_session_req_pP->sender_fteid_for_cp.ipv4 == 0) && (delete_session_req_pP->sender_fteid_for_cp.ipv6 == 0)) {
       delete_session_resp_p->teid = 0;

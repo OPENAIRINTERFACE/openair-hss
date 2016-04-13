@@ -63,6 +63,7 @@
 #include "obj_hashtable.h"
 #include "nas_timer.h"
 
+#include "conversions.h"
 #include "3gpp_requirements_24.301.h"
 #include "emm_proc.h"
 #include "networkDef.h"

@@ -53,6 +53,7 @@
 #include "emm_proc.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
+#include "nas_itti_messaging.h" 
 
 
 /****************************************************************************/
@@ -308,6 +309,8 @@ emm_proc_detach_request (
       emm_sap.u.emm_reg.ctx = emm_ctx;
       rc = emm_sap_send (&emm_sap);
     }
+	
+    nas_itti_detach_req(ue_id);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
