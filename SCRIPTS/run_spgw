@@ -47,9 +47,10 @@ function help()
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
-  echo_error "  -b, --breakpoint      location      Set breakpoint location for GDB (ex location: Attach.c:272)."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by spgw if you don't want to use the default one: $g_spgw_default_config_file"
   echo_error "  -g, --gdb                           Run with GDB."
+  echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
+  echo_error "                                      All repetitions of this argument are valid."
   echo_error "  -h, --help                          Print this help."
   echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in spgw config file."
   echo_error "  -K, --itti-dump-file  file_abs_path ITTI dump file containing all ITTI events occuring during S/P-GW runtime."
@@ -84,23 +85,23 @@ function main()
   local    exe_arguments=" "
   local    spgw_config_file=$g_spgw_default_config_file
   local    breakpoint_location=""
-  local -i set_breakpoint=0
+  local -a gdb_args
+  local -i gdb_index=0
 
   until [ -z "$1" ]
     do
     case "$1" in
-      -b | --breakpoint)
-        run_gdb=1
-        set_breakpoint=1
-        breakpoint_location=$2
-        echo "setting breakpoint location to: $breakpoint_location"
-        echo "setting GDB flag to: $run_gdb"
-        shift 2;
-        ;;
       -g | --gdb)
         run_gdb=1
         echo "setting GDB flag to: $run_gdb"
         shift;
+        ;;
+      -G | --gdb-arg)
+        run_gdb=1
+        gdb_args[$gdb_index]="$2 $3"
+        echo "Appending gdb args: ${gdb_args[$gdb_index]}"
+        gdb_index=$((gdb_index + 1))
+        shift 3;
         ;;
       -h | --help)
         help
@@ -200,9 +201,9 @@ function main()
     $SUDO chmod 777  ~/.gdb_spgw
     $SUDO echo "file spgw" > ~/.gdb_spgw
     $SUDO echo "set args $exe_arguments "        >> ~/.gdb_spgw
-    if [ $set_breakpoint -eq 1 ]; then 
-      $SUDO echo "break $breakpoint_location "        >> ~/.gdb_spgw
-    fi
+    for i in ${gdb_args[@]}; do
+      $SUDO echo "$i"                            >> ~/.gdb_mme
+    done
     $SUDO echo "run"                             >> ~/.gdb_spgw
     $SUDO cat ~/.gdb_spgw
     $SUDO gdb -n -x ~/.gdb_spgw

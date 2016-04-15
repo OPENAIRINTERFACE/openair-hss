@@ -47,10 +47,11 @@ function help()
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
-  echo_error "  -b, --breakpoint      location      Set breakpoint location for GDB (ex location: Attach.c:272)."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by MME if you don't want to use the default one: $g_mme_default_config_file"
   echo_error "  -D, --daemon                        Run the daemon."
   echo_error "  -g, --gdb                           Run with GDB."
+  echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
+  echo_error "                                      All repetitions of this argument are valid."
   echo_error "  -h, --help                          Print this help."
   echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in MME config file."
   echo_error "  -K, --itti-dump-file  file_abs_path ITTI dump file containing all ITTI events occuring during MME runtime."
@@ -89,20 +90,12 @@ function main()
   local    exe_arguments=" "
   local -r mme_default_config_file="/usr/local/etc/oai/mme.conf"
   local    mme_config_file=$mme_default_config_file
-  local    breakpoint_location=""
-  local -i set_breakpoint=0
+  local -a gdb_args
+  local -i gdb_index=0
 
   until [ -z "$1" ]
     do
     case "$1" in
-      -b | --breakpoint)
-        run_gdb=1
-        set_breakpoint=1
-        breakpoint_location=$2
-        echo "setting breakpoint location to: $breakpoint_location"
-        echo "setting GDB flag to: $run_gdb"
-        shift 2;
-        ;;
       -c | --config-file)
         mme_config_file=$2
         echo "setting config file to: $mme_config_file"
@@ -117,6 +110,13 @@ function main()
         run_gdb=1
         echo "setting GDB flag to: $run_gdb"
         shift;
+        ;;
+      -G | --gdb-arg)
+        run_gdb=1
+        gdb_args[$gdb_index]="$2 $3"
+        echo "Appending gdb args: ${gdb_args[$gdb_index]}"
+        gdb_index=$((gdb_index + 1))
+        shift 3;
         ;;
       -h | --help)
         help
@@ -165,7 +165,7 @@ function main()
   done
 
   set_openair_env 
-  cecho "OPENAIR_DIR    = $OPENAIR_DIR" $green
+  cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
 
   check_gtpu_kmodule_installed
 
@@ -186,7 +186,7 @@ function main()
 
 
   if [ $g_run_msc_gen -eq 1 ]; then 
-    rm -f /tmp/openair.msc.*
+    $SUDO rm -f /tmp/openair.msc.*
   fi
 
   if [ $set_network_interfaces -eq 1 ]; then
@@ -224,9 +224,9 @@ function main()
     $SUDO chmod 777  ~/.gdb_mme
     $SUDO echo "file mme" > ~/.gdb_mme
     $SUDO echo "set args $exe_arguments "        >> ~/.gdb_mme
-    if [ $set_breakpoint -eq 1 ]; then 
-      $SUDO echo "break $breakpoint_location "        >> ~/.gdb_mme
-    fi
+    for i in `seq 0 $gdb_index`; do
+      $SUDO echo "${gdb_args[$i]}"               >> ~/.gdb_mme
+    done
     $SUDO echo "run"                             >> ~/.gdb_mme
     $SUDO cat ~/.gdb_mme
     $SUDO gdb -n -x ~/.gdb_mme
