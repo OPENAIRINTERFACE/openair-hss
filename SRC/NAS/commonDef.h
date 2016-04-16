@@ -84,30 +84,24 @@ typedef bool        ksi_t;      /* Key set identifier   */
 
 
 #define NAS_IMSI2STR(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
-        {\
-          int l_offset = 0;\
-          int l_ret    = 0;\
-          l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u",\
-                  iMsI_t_PtR->u.num.digit1, iMsI_t_PtR->u.num.digit2,\
-                  iMsI_t_PtR->u.num.digit3, iMsI_t_PtR->u.num.digit4,\
-                  iMsI_t_PtR->u.num.digit5);\
-          if ((iMsI_t_PtR->u.num.digit6 != 0xf)  && (l_ret > 0)) {\
-            l_offset += l_ret;\
-            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset,  "%u", iMsI_t_PtR->u.num.digit6);\
-          }\
-          if (l_ret > 0) {\
-            l_offset += l_ret;\
-            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u%u%u%u",\
-                  iMsI_t_PtR->u.num.digit7, iMsI_t_PtR->u.num.digit8,\
-                  iMsI_t_PtR->u.num.digit9, iMsI_t_PtR->u.num.digit10,\
-                  iMsI_t_PtR->u.num.digit11, iMsI_t_PtR->u.num.digit12,\
-                  iMsI_t_PtR->u.num.digit13, iMsI_t_PtR->u.num.digit14);\
-          }\
-          if ((iMsI_t_PtR->u.num.digit15 != 0x0)   && (l_ret > 0)) {\
-            l_offset += l_ret;\
-            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u", iMsI_t_PtR->u.num.digit15);\
-          }\
-        }
+        { \
+          int i = 0; \
+          int j = 0; \
+          while((i < IMSI_BCD8_SIZE) && (j < MaXlEn - 1)){ \
+            if(((iMsI_t_PtR->u.value[i] & 0xf0) >> 4) > 9) \
+              break; \
+            sprintf((iMsI_sTr + j), "%u",((iMsI_t_PtR->u.value[i] & 0xf0) >> 4)); \
+            j++; \
+            if((iMsI_t_PtR->u.value[i] & 0xf) > 9 || (j >= MaXlEn - 1)) \
+              break; \
+            sprintf((iMsI_sTr + j), "%u", (iMsI_t_PtR->u.value[i] & 0xf)); \
+            j++; \
+            i++; \
+          } \
+          for(; j < MaXlEn; j++) \
+              iMsI_sTr[j] = '\0'; \
+        } \
+
 
 #define NAS_IMSI2U64(iMsI_t_PtR,iMsI_u64) \
         {\

@@ -31,11 +31,12 @@
  *  @{
  */
 
-#include <stdint.h>
-#include <inttypes.h>   /* For sscanf formats */
-#include <time.h>       /* to provide time_t */
+#ifndef MME_APP_UE_CONTEXT_H
+#define MME_APP_UE_CONTEXT_H
+
 
 #include "common_types.h"
+#include "sgw_ie_defs.h"
 #include "s1ap_messages_types.h"
 #include "nas_messages_types.h"
 #include "s6a_messages_types.h"
@@ -44,8 +45,10 @@
 #include "hashtable.h"
 #include "obj_hashtable.h"
 
-#ifndef FILE_MME_APP_UE_CONTEXT_SEEN
-#define FILE_MME_APP_UE_CONTEXT_SEEN
+#include <stdint.h>
+#include <inttypes.h>   /* For sscanf formats */
+#include <time.h>       /* to provide time_t */
+
 
 typedef enum {
   ECM_IDLE,
@@ -53,13 +56,28 @@ typedef enum {
   ECM_DEREGISTERED,
 } mm_state_t;
 
-typedef uint64_t mme_app_imsi_t;
+#define IMSI_DIGITS_MAX 15
 
-#define IMSI_FORMAT SCNu64
+typedef struct {
+  uint32_t length;
+  char data[IMSI_DIGITS_MAX + 1];
+} mme_app_imsi_t;
+
+#define IMSI_FORMAT "s"
+#define IMSI_DATA(MME_APP_IMSI) (MME_APP_IMSI.data)
 
 /* Convert the IMSI contained by a char string NULL terminated to uint64_t */
-#define MME_APP_STRING_TO_IMSI(sTRING, iMSI) sscanf(sTRING, "%"IMSI_FORMAT, iMSI)
-#define MME_APP_IMSI_TO_STRING(iMSI, sTRING) snprintf(sTRING, IMSI_BCD_DIGITS_MAX+1, "%"IMSI_FORMAT, iMSI)
+
+bool mme_app_is_imsi_empty(mme_app_imsi_t const * imsi);
+bool mme_app_imsi_compare(mme_app_imsi_t const * imsi_a, mme_app_imsi_t const * imsi_b);
+void mme_app_copy_imsi(mme_app_imsi_t * imsi_dst, mme_app_imsi_t const * imsi_src);
+
+void mme_app_string_to_imsi(mme_app_imsi_t * const imsi_dst, char const * const imsi_string_src);
+void mme_app_imsi_to_string(char * const imsi_dst, mme_app_imsi_t const * const imsi_src);
+
+uint64_t mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src);
+void mme_app_ue_context_uint_to_imsi(uint64_t imsi_src, mme_app_imsi_t *imsi_dst);
+void mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst, const imsi_t *imsi_src);
 
 /** @struct bearer_context_t
  *  @brief Parameters that should be kept for an eps bearer.
@@ -301,6 +319,6 @@ void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
 
-#endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
+#endif /* MME_APP_UE_CONTEXT_H */
 
 /* @} */
