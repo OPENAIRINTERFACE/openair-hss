@@ -297,6 +297,7 @@ function main()
   
   if [ $conf_files_only -eq 0 ]; then
     compilations EPC mme_gw mme_gw $verbose
+    make_test EPC mme_gw mme_gw $verbose
     if [ $daemon -ne 0 ]; then
       do_stop_daemon
       $SUDO cp -upv $OPENAIRCN_DIR/BUILD/EPC/BUILD/mme_gw /usr/sbin/mme_gwd && echo_success "mme_gwd installed"
