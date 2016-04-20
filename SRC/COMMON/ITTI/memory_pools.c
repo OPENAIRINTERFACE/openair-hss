@@ -123,7 +123,7 @@ typedef struct memory_pools_s {
   memory_pool_t                          *pools;
 } memory_pools_t;
 
-/*------------------------------------------------------------------------------*/
+//------------------------------------------------------------------------------
 static const uint32_t                   MAX_POOLS_NUMBER = 20;
 static const uint32_t                   MAX_POOL_ITEMS_NUMBER = 200 * 1000;
 static const uint32_t                   MAX_POOL_ITEM_SIZE = 100 * 1000;
@@ -146,6 +146,7 @@ items_group_number_items (
   return items_group->number_plus_one - 1;
 }
 
+//------------------------------------------------------------------------------
 static inline                           uint32_t
 items_group_free_items (
   items_group_t * items_group)
@@ -159,6 +160,7 @@ items_group_free_items (
   return free_items;
 }
 
+//------------------------------------------------------------------------------
 static inline                           items_group_index_t
 items_group_get_free_item (
   items_group_t * items_group)
@@ -222,6 +224,7 @@ items_group_get_free_item (
   return (index);
 }
 
+//------------------------------------------------------------------------------
 static inline int
 items_group_put_free_item (
   items_group_t * items_group,
@@ -251,7 +254,7 @@ items_group_put_free_item (
   return (EXIT_SUCCESS);
 }
 
-/*------------------------------------------------------------------------------*/
+//------------------------------------------------------------------------------
 static inline memory_pools_t           *
 memory_pools_from_handler (
   memory_pools_handle_t memory_pools_handle)
@@ -269,6 +272,7 @@ memory_pools_from_handler (
   return (memory_pools);
 }
 
+//------------------------------------------------------------------------------
 static inline memory_pool_item_t       *
 memory_pool_item_from_handler (
   memory_pool_item_handle_t memory_pool_item_handle)
@@ -284,10 +288,12 @@ memory_pool_item_from_handler (
   /*
    * Sanity check on passed handle
    */
-  AssertError (memory_pool_item->start.start_mark == POOL_ITEM_START_MARK, memory_pool_item = NULL, "Handle %p is not a valid memory pool item handle, start mark is missing!\n", memory_pool_item);
+  //AssertError (memory_pool_item->start.start_mark == POOL_ITEM_START_MARK, memory_pool_item = NULL, "Handle %p is not a valid memory pool item handle, start mark is missing!\n", memory_pool_item);
+  AssertFatal (memory_pool_item->start.start_mark == POOL_ITEM_START_MARK, "Handle %p is not a valid memory pool item handle, start mark is missing!\n", memory_pool_item);
   return (memory_pool_item);
 }
 
+//------------------------------------------------------------------------------
 static inline memory_pool_item_t       *
 memory_pool_item_from_index (
   memory_pool_t * memory_pool,
@@ -300,10 +306,8 @@ memory_pool_item_from_index (
   return (address);
 }
 
-/*------------------------------------------------------------------------------*/
-memory_pools_handle_t
-memory_pools_create (
-  uint32_t pools_number)
+//------------------------------------------------------------------------------
+memory_pools_handle_t memory_pools_create (uint32_t pools_number)
 {
   memory_pools_t                         *memory_pools;
   pool_id_t                               pool;
@@ -337,6 +341,7 @@ memory_pools_create (
   return ((memory_pools_handle_t) memory_pools);
 }
 
+//------------------------------------------------------------------------------
 char                                   *
 memory_pools_statistics (
   memory_pools_handle_t memory_pools_handle)
@@ -373,6 +378,7 @@ memory_pools_statistics (
   return (statistics);
 }
 
+//------------------------------------------------------------------------------
 int
 memory_pools_add_pool (
   memory_pools_handle_t memory_pools_handle,
@@ -453,6 +459,7 @@ memory_pools_add_pool (
   return (0);
 }
 
+//------------------------------------------------------------------------------
 memory_pool_item_handle_t
 memory_pools_allocate (
   memory_pools_handle_t memory_pools_handle,
@@ -521,6 +528,7 @@ memory_pools_allocate (
   return memory_pool_item_handle;
 }
 
+//------------------------------------------------------------------------------
 int
 memory_pools_free (
   memory_pools_handle_t memory_pools_handle,
@@ -582,6 +590,7 @@ memory_pools_free (
   return (result);
 }
 
+//------------------------------------------------------------------------------
 void
 memory_pools_set_info (
   memory_pools_handle_t memory_pools_handle,

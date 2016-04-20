@@ -742,7 +742,7 @@ static int _authentication_reject (void* args)
     /*
      * Notify EMM that the authentication procedure failed
      */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", data->ue_id);
     emm_sap_rej.primitive = EMMREG_COMMON_PROC_REJ;
     emm_sap_rej.u.emm_reg.ue_id = data->ue_id;
     emm_sap_rej.u.emm_reg.ctx = emm_ctx;

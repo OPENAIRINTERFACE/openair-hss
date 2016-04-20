@@ -167,8 +167,6 @@ function main()
   set_openair_env 
   cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
 
-  check_gtpu_kmodule_installed
-
   if [ ! -f $mme_config_file ]; then 
     echo_fatal "Please provide -c|--config-file valid argument (\"$mme_config_file\" not a valid file)"
   fi

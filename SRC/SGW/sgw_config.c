@@ -179,7 +179,7 @@ int sgw_config_parse_file (sgw_config_t * config_pP)
     subsetting = config_setting_get_member (setting_sgw, SGW_CONFIG_STRING_LOGGING);
 
     config_pP->log_config.udp_log_level      = MAX_LOG_LEVEL; // Means invalid
-    config_pP->log_config.gtpv1u_log_level   = MAX_LOG_LEVEL; // will not overwrite existing log levels if MME and S-GW bundled in same executable
+    config_pP->log_config.gtpv1u_log_level   = MAX_LOG_LEVEL;
     config_pP->log_config.gtpv2c_log_level   = MAX_LOG_LEVEL;
     config_pP->log_config.sctp_log_level     = MAX_LOG_LEVEL;
     config_pP->log_config.s1ap_log_level     = MAX_LOG_LEVEL;
@@ -192,6 +192,17 @@ int sgw_config_parse_file (sgw_config_t * config_pP)
     config_pP->log_config.msc_log_level      = MAX_LOG_LEVEL;
     config_pP->log_config.itti_log_level     = MAX_LOG_LEVEL;
     if (subsetting) {
+      if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_OUTPUT, (const char **)&astring)) {
+        if (astring != NULL) {
+          if (config_pP->log_config.output) {
+            bassigncstr(config_pP->log_config.output , astring);
+          } else {
+            config_pP->log_config.output = bfromcstr(astring);
+          }
+        }
+      }
+
+
       if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_COLOR, (const char **)&astring)) {
         if (!strcasecmp("true", astring)) config_pP->log_config.color = true;
         else config_pP->log_config.color = false;
@@ -318,7 +329,7 @@ void sgw_config_display (sgw_config_t * config_p)
   OAILOG_INFO (LOG_CONFIG, "    log file .........: %s\n", bdata(config_p->itti_config.log_file));
 
   OAILOG_INFO (LOG_CONFIG, "- Logging:\n");
-  OAILOG_INFO (LOG_CONFIG, "    Output ..............: %s\n", config_p->log_config.output);
+  OAILOG_INFO (LOG_CONFIG, "    Output ..............: %s\n", bdata(config_p->log_config.output));
   OAILOG_INFO (LOG_CONFIG, "    UDP log level........: %s\n", OAILOG_LEVEL_INT2STR(config_p->log_config.udp_log_level));
   OAILOG_INFO (LOG_CONFIG, "    GTPV1-U log level....: %s\n", OAILOG_LEVEL_INT2STR(config_p->log_config.gtpv1u_log_level));
   OAILOG_INFO (LOG_CONFIG, "    GTPV2-C log level....: %s\n", OAILOG_LEVEL_INT2STR(config_p->log_config.gtpv2c_log_level));

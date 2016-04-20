@@ -48,14 +48,19 @@ int decode_bstring (
 
 bstring dump_bstring_xml (const bstring  const bstr)
 {
-  int                                     i;
+  if (bstr) {
+    int                                     i;
 
-  bstring b = bformat("<Length>%u</Length>\n\t<values>", bstr->slen);
-  for (i = 0; i < bstr->slen; i++) {
-    bformata (b, "0x%x ", bstr->data[i]);
+    bstring b = bformat("<Length>%u</Length>\n\t<values>", bstr->slen);
+    for (i = 0; i < bstr->slen; i++) {
+      bformata (b, "0x%x ", bstr->data[i]);
+    }
+    bcatcstr (b, "</values>\n");
+    return b;
+  } else {
+    bstring b = bfromcstr("<Length>0</Length>\n");
+    return b;
   }
-  bformata (b, "</values>\n");
-  return b;
 }
 
 

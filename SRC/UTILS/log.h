@@ -39,17 +39,12 @@ extern int asn_debug;
 extern int asn1_xer_print;
 extern int fd_g_debug_lvl;
 
-// #include "mme_config.h"
-
-//typedef int (*log_specific_init_t)(int log_level);
-
-//int log_init(const mme_config_t *mme_config,
-//             log_specific_init_t specific_init);
 
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include "bstrlib.h"
 
 typedef enum {
   MIN_LOG_ENV = 0,
@@ -109,22 +104,16 @@ typedef struct log_thread_ctxt_s {
 * in the opened stream ( file, tcp, stdout)
 */
 typedef struct log_queue_item_s {
-  int32_t                                 len;                              /*!< \brief length of string. */
-  int32_t                                 log_level;                        /*!< \brief log level for syslog. */
-#if TRACE_IS_ON
-#define LOG_MAX_MESSAGE_LENGTH            2600        // tuned
-#else
-#define LOG_MAX_MESSAGE_LENGTH            1024
-#endif
-  char                                    str[LOG_MAX_MESSAGE_LENGTH];      /*!< \brief string containing the message. */
+  int32_t                                 log_level; /*!< \brief log level for syslog. */
+  bstring                                 bstr;      /*!< \brief string containing the message. */
 } log_queue_item_t;
 
 /*! \struct  log_config_t
-* \brief Structure containing the dyamicaly configurable parameters of the Logging facilities.
+* \brief Structure containing the dynamically configurable parameters of the Logging facilities.
 * This structure is filled by configuration facilities when parsing a configuration file.
 */
 typedef struct log_config_s {
-  char         *output;             /*!< \brief Where logs go, choice in { "CONSOLE", "`path to file`", "`IPv4@`:`TCP port num`"} . */
+  bstring       output;             /*!< \brief Where logs go, choice in { "CONSOLE", "`path to file`", "`IPv4@`:`TCP port num`"} . */
   log_level_t   udp_log_level;      /*!< \brief UDP ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   gtpv1u_log_level;   /*!< \brief GTPv1-U ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   gtpv2c_log_level;   /*!< \brief GTPv2-C ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */

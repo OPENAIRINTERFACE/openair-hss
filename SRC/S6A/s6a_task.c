@@ -166,9 +166,9 @@ int s6a_init (
   OAILOG_DEBUG (LOG_S6A, "Default ext path: %s\n", DEFAULT_EXTENSIONS_PATH);
 
 
-  ret = fd_core_parseconf (mme_config_p->s6a_config.conf_file);
+  ret = fd_core_parseconf (bdata(mme_config_p->s6a_config.conf_file));
   if (ret) {
-    OAILOG_ERROR (LOG_S6A, "An error occurred during fd_core_parseconf file : %s.\n", mme_config_p->s6a_config.conf_file);
+    OAILOG_ERROR (LOG_S6A, "An error occurred during fd_core_parseconf file : %s.\n", bdata(mme_config_p->s6a_config.conf_file));
     return ret;
   } else {
     OAILOG_DEBUG (LOG_S6A, "fd_core_parseconf done\n");

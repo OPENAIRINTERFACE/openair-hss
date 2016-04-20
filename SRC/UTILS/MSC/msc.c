@@ -96,10 +96,7 @@ struct lfds611_queue_state             *g_msc_message_queue_p = NULL;
 struct lfds611_stack_state             *g_msc_memory_stack_p = NULL;
 
 //------------------------------------------------------------------------------
-void                                   *
-msc_task (
-  void *args_p)
-//------------------------------------------------------------------------------
+void *msc_task (void *args_p)
 {
   MessageDef                             *received_message_p = NULL;
   long                                    timer_id = 0;
@@ -144,6 +141,7 @@ msc_task (
 }
 
 
+//------------------------------------------------------------------------------
 static void msc_get_elapsed_time_since_start(struct timeval * const elapsed_time)
 {
   // no thread safe but do not matter a lot
@@ -157,7 +155,6 @@ int
 msc_init (
   const msc_env_t envP,
   const int max_threadsP)
-//------------------------------------------------------------------------------
 {
   int                                     i = 0;
   int                                     rv = 0;
@@ -232,6 +229,9 @@ msc_init (
         g_msc_proto2str[i][MSC_MAX_PROTO_NAME_LENGTH - 1] = 0;
       }
 
+      if ((envP == MSC_MME_GW) || (envP == MSC_MME)) {
+        msc_log_declare_proto (i);
+      }
       break;
 
     case MSC_GTPU_SGW:
@@ -241,7 +241,7 @@ msc_init (
         g_msc_proto2str[i][MSC_MAX_PROTO_NAME_LENGTH - 1] = 0;
       }
 
-      if (envP == MSC_MME_GW)  {
+      if ((envP == MSC_MME_GW) || (envP == MSC_SP_GW)) {
         msc_log_declare_proto (i);
       }
 
@@ -280,7 +280,9 @@ msc_init (
         g_msc_proto2str[i][MSC_MAX_PROTO_NAME_LENGTH - 1] = 0;
       }
 
-      msc_log_declare_proto (i);
+      if ((envP == MSC_MME_GW) || (envP == MSC_MME) || (envP == MSC_E_UTRAN)) {
+        msc_log_declare_proto (i);
+      }
       break;
 
     case MSC_NAS_EMM_MME:
@@ -377,10 +379,7 @@ msc_init (
 }
 
 //------------------------------------------------------------------------------
-void
-msc_start_use (
-  void)
-//------------------------------------------------------------------------------
+void msc_start_use (void)
 {
   lfds611_queue_use (g_msc_message_queue_p);
   lfds611_stack_use (g_msc_memory_stack_p);
@@ -388,10 +387,7 @@ msc_start_use (
 
 
 //------------------------------------------------------------------------------
-void
-msc_flush_messages (
-  void)
-//------------------------------------------------------------------------------
+void msc_flush_messages (void)
 {
   int                                     rv = 0;
   msc_queue_item_t                       *item_p = NULL;
@@ -411,10 +407,7 @@ msc_flush_messages (
 
 
 //------------------------------------------------------------------------------
-void
-msc_end (
-  void)
-//------------------------------------------------------------------------------
+void msc_end (void)
 {
   int                                     rv = 0;
 
@@ -435,10 +428,7 @@ msc_end (
 }
 
 //------------------------------------------------------------------------------
-void
-msc_log_declare_proto (
-  const msc_proto_t protoP)
-//------------------------------------------------------------------------------
+void msc_log_declare_proto (const msc_proto_t protoP)
 {
   int                                     rv = 0;
   msc_queue_item_t                       *new_item_p = NULL;
@@ -492,12 +482,7 @@ msc_log_declare_proto (
 }
 
 //------------------------------------------------------------------------------
-void
-msc_log_event (
-  const msc_proto_t protoP,
-  char *format,
-  ...)
-//------------------------------------------------------------------------------
+void msc_log_event (const msc_proto_t protoP, char *format, ...)
 {
   va_list                                 args;
   int                                     rv = 0;
@@ -581,7 +566,6 @@ msc_log_message (
   const unsigned int num_bytes,
   char *format,
   ...)
-//------------------------------------------------------------------------------
 {
   va_list                                 args;
   uint64_t                                mac = 0;      // TO DO mac on bytesP param
@@ -611,7 +595,7 @@ msc_log_message (
           __sync_fetch_and_add (&g_message_number, 1), proto1P, message_operationP, proto2P, mac, elapsed_time.tv_sec, elapsed_time.tv_usec);
 
       if ((0 > rv) || (MSC_MAX_MESSAGE_LENGTH < rv)) {
-        fprintf (stderr, "Error while logging MSC message : %s/%s", &g_msc_proto2str[proto1P][0], &g_msc_proto2str[proto2P][0]);
+        AssertFatal (0, "Error while logging MSC message : %s/%s", &g_msc_proto2str[proto1P][0], &g_msc_proto2str[proto2P][0]);
         goto error_event;
       }
 
@@ -620,7 +604,7 @@ msc_log_message (
       va_end (args);
 
       if ((0 > rv2) || ((MSC_MAX_MESSAGE_LENGTH - rv) < rv2)) {
-        fprintf (stderr, "Error while logging MSC message : %s/%s", &g_msc_proto2str[proto1P][0], &g_msc_proto2str[proto2P][0]);
+        AssertFatal (0, "Error while logging MSC message : %s/%s", &g_msc_proto2str[proto1P][0], &g_msc_proto2str[proto2P][0]);
         goto error_event;
       }
 
@@ -628,7 +612,7 @@ msc_log_message (
       rv2 = snprintf (&char_message_p[rv], MSC_MAX_MESSAGE_LENGTH - rv, "\n");
 
       if ((0 > rv2) || ((MSC_MAX_MESSAGE_LENGTH - rv) < rv2)) {
-        fprintf (stderr, "Error while logging MSC message : %s/%s", &g_msc_proto2str[proto1P][0], &g_msc_proto2str[proto2P][0]);
+        AssertFatal (0, "Error while logging MSC message : %s/%s", &g_msc_proto2str[proto1P][0], &g_msc_proto2str[proto2P][0]);
         goto error_event;
       }
 

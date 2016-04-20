@@ -299,7 +299,7 @@ esm_send_activate_default_eps_bearer_context_request (
 
   if (pco) {
     msg->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
-    msg->protocolconfigurationoptions = *pco;
+    copy_protocol_configuration_options(&msg->protocolconfigurationoptions, pco);
   }
 //#pragma message  "TEST LG FORCE APN-AMBR"
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - FORCE APN-AMBR\n");

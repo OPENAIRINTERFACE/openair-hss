@@ -1070,6 +1070,7 @@ _emm_attach_identify (
         emm_ctx_set_security_vector_index(emm_ctx, vindex);
         rc = emm_proc_authentication (emm_ctx, emm_ctx->ue_id, eksi,
           emm_ctx->_vector[vindex].rand, emm_ctx->_vector[vindex].autn, emm_attach_security, NULL, NULL);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       }
     }
   } else if (IS_EMM_CTXT_PRESENT_GUTI(emm_ctx)) {

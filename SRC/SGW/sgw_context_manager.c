@@ -268,7 +268,9 @@ sgw_cm_create_pdn_connection (
     return NULL;
   }
 
-  pdn_connection->sgw_eps_bearers = hashtable_ts_create (12, NULL, NULL, "sgw_eps_bearers");
+  bstring b = bfromcstr("sgw_eps_bearers");
+  pdn_connection->sgw_eps_bearers = hashtable_ts_create (12, NULL, NULL, b);
+  bdestroy(b);
 
   if (pdn_connection->sgw_eps_bearers == NULL) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create eps bearers collection object\n");
@@ -347,8 +349,10 @@ sgw_cm_create_bearer_context_information_in_collection (
    * return NULL;
    * }
    */
+  bstring b = bfromcstr("pgw_eps_bearer_ctxt_info_apns");
   new_bearer_context_information->pgw_eps_bearer_context_information.apns =
-      obj_hashtable_ts_create (32, NULL, NULL, (void (*) (void *))pgw_lite_cm_free_apn, "pgw_eps_bearer_ctxt_info_apns");
+      obj_hashtable_ts_create (32, NULL, NULL, (void (*) (void *))pgw_lite_cm_free_apn, b);
+  bdestroy(b);
 
   if (new_bearer_context_information->pgw_eps_bearer_context_information.apns == NULL) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create APN collection object entry for EPS bearer S11 teid %u \n", teid);

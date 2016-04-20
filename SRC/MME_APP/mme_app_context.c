@@ -311,7 +311,7 @@ mme_ue_context_notified_new_ue_s1ap_id_association (
   if (INVALID_MME_UE_S1AP_ID == mme_ue_s1ap_id) {
     OAILOG_ERROR (LOG_MME_APP,
         "Error could not associate this enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-        enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
+        enb_ue_s1ap_id, mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
@@ -334,8 +334,8 @@ mme_ue_context_notified_new_ue_s1ap_id_association (
     }
   }
   OAILOG_ERROR (LOG_MME_APP,
-      "Error could not associate this ue context %p, enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " %s\n",
-      ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
+      "Error could not associate this enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+      enb_ue_s1ap_id, mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
 }
 //------------------------------------------------------------------------------
@@ -379,9 +379,10 @@ mme_ue_context_update_coll_keys (
       ue_context_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
     }
 
-    h_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
-    h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void *)(uintptr_t)mme_ue_s1ap_id);
-
+    if (INVALID_IMSI64 != ue_context_p->imsi) {
+      h_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
+      h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void *)(uintptr_t)mme_ue_s1ap_id);
+    }
     h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
     h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void *)(uintptr_t)mme_ue_s1ap_id);
 
@@ -454,27 +455,27 @@ mme_ue_context_update_coll_keys (
 //------------------------------------------------------------------------------
 void mme_ue_context_dump_coll_keys(void)
 {
-  char tmp[1024] = {0};
-  int size = 1024;
+  bstring tmp = bfromcstr(" ");
+  btrunc(tmp, 0);
 
-  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl, tmp, &size);
-  OAILOG_TRACE (LOG_MME_APP,"imsi_ue_context_htbl %s\n", tmp);
+  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl, tmp);
+  OAILOG_TRACE (LOG_MME_APP,"imsi_ue_context_htbl %s\n", bdata(tmp));
 
-  size = 1024;
-  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl, tmp, &size);
-  OAILOG_TRACE (LOG_MME_APP,"tun11_ue_context_htbl %s\n", tmp);
+  btrunc(tmp, 0);
+  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl, tmp);
+  OAILOG_TRACE (LOG_MME_APP,"tun11_ue_context_htbl %s\n", bdata(tmp));
 
-  size = 1024;
-  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, tmp, &size);
-  OAILOG_TRACE (LOG_MME_APP,"mme_ue_s1ap_id_ue_context_htbl %s\n", tmp);
+  btrunc(tmp, 0);
+  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, tmp);
+  OAILOG_TRACE (LOG_MME_APP,"mme_ue_s1ap_id_ue_context_htbl %s\n", bdata(tmp));
 
-  size = 1024;
-  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, tmp, &size);
-  OAILOG_TRACE (LOG_MME_APP,"enb_ue_s1ap_id_ue_context_htbl %s\n", tmp);
+  btrunc(tmp, 0);
+  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, tmp);
+  OAILOG_TRACE (LOG_MME_APP,"enb_ue_s1ap_id_ue_context_htbl %s\n", bdata(tmp));
 
-  size = 1024;
-  obj_hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl, tmp, &size);
-  OAILOG_TRACE (LOG_MME_APP,"guti_ue_context_htbl %s", tmp);
+  btrunc(tmp, 0);
+  obj_hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl, tmp);
+  OAILOG_TRACE (LOG_MME_APP,"guti_ue_context_htbl %s", bdata(tmp));
 }
 
 //------------------------------------------------------------------------------

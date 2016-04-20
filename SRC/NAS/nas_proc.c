@@ -167,10 +167,10 @@ nas_proc_establish_ind (
 
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_REQ ue id " MME_UE_S1AP_ID_FMT " tai:  plmn %c%c%c.%c%c%c tac %u",
         ue_id,
-        (char)(tai.plmn.mcc_digit1 + 0x30), (char)(tai.plmn.mcc_digit2 + 0x30), (char)(tai.plmn.mcc_digit3 + 0x30),
-        (char)(tai.plmn.mnc_digit1 + 0x30), (char)(tai.plmn.mnc_digit2 + 0x30),
-        (9 < tai.plmn.mnc_digit3) ? ' ': (char)(tai.plmn.mnc_digit3 + 0x30),
-        tai.tac);
+        (char)(originating_tai.plmn.mcc_digit1 + 0x30), (char)(originating_tai.plmn.mcc_digit2 + 0x30), (char)(originating_tai.plmn.mcc_digit3 + 0x30),
+        (char)(originating_tai.plmn.mnc_digit1 + 0x30), (char)(originating_tai.plmn.mnc_digit2 + 0x30),
+        (9 < originating_tai.plmn.mnc_digit3) ? ' ': (char)(originating_tai.plmn.mnc_digit3 + 0x30),
+            originating_tai.tac);
     /*
      * Notify the EMM procedure call manager that NAS signalling
      * connection establishment indication message has been received
@@ -309,11 +309,11 @@ nas_proc_ul_transfer_ind (
      * indication has been received from the Access-Stratum sublayer
      */
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND ue id " MME_UE_S1AP_ID_FMT " len %u tai:  plmn %c%c%c.%c%c%c tac %u",
-        ue_id, len,
-        (char)(tai.plmn.mcc_digit1 + 0x30), (char)(tai.plmn.mcc_digit2 + 0x30), (char)(tai.plmn.mcc_digit3 + 0x30),
-        (char)(tai.plmn.mnc_digit1 + 0x30), (char)(tai.plmn.mnc_digit2 + 0x30),
-        (9 < tai.plmn.mnc_digit3) ? ' ': (char)(tai.plmn.mnc_digit3 + 0x30),
-        tai.tac);
+        ue_id, blength(*msg),
+        (char)(originating_tai.plmn.mcc_digit1 + 0x30), (char)(originating_tai.plmn.mcc_digit2 + 0x30), (char)(originating_tai.plmn.mcc_digit3 + 0x30),
+        (char)(originating_tai.plmn.mnc_digit1 + 0x30), (char)(originating_tai.plmn.mnc_digit2 + 0x30),
+        (9 < originating_tai.plmn.mnc_digit3) ? ' ': (char)(originating_tai.plmn.mnc_digit3 + 0x30),
+            originating_tai.tac);
     emm_sap.primitive = EMMAS_DATA_IND;
     emm_sap.u.emm_as.u.data.ue_id     = ue_id;
     emm_sap.u.emm_as.u.data.delivered = true;
@@ -333,7 +333,7 @@ int
 nas_proc_authentication_info_answer (
     s6a_auth_info_ans_t * aia)
 {
-  imsi64_t                                imsi64  = 0;
+  imsi64_t                                imsi64  = INVALID_IMSI64;
   int                                     rc      = RETURNerror;
   emm_data_context_t                     *ctxt    = NULL;
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -363,7 +363,7 @@ nas_proc_authentication_info_answer (
      rc = nas_proc_auth_param_res (ctxt->ue_id, aia->auth_info.nb_of_vectors, aia->auth_info.eutran_vector);
    } else {
      OAILOG_ERROR (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
-     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi " IMSI_64_FMT, imsi);
+     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi " IMSI_64_FMT, imsi64);
 
      /*
       * Inform NAS layer with the right failure

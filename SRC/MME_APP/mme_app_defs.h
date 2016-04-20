@@ -57,11 +57,13 @@ int mme_app_handle_s6a_update_location_ans   (const s6a_update_location_ans_t * 
 
 int mme_app_handle_nas_pdn_connectivity_req  ( itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_p);
 
+void mme_app_handle_detach_req (const itti_nas_detach_req_t * const detach_req_p);
+
 void mme_app_handle_conn_est_cnf             (const itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP);
 
 void mme_app_handle_initial_ue_message       (const itti_mme_app_initial_ue_message_t * const conn_est_ind_pP);
 
-int mme_app_handle_create_sess_resp          (const itti_sgw_create_session_response_t * const create_sess_resp_pP);
+int mme_app_handle_create_sess_resp          (itti_sgw_create_session_response_t * const create_sess_resp_pP); //not const because we need to free internal stucts
 
 void mme_app_handle_delete_session_rsp	     (const itti_sgw_delete_session_response_t * const delete_sess_respP);
 

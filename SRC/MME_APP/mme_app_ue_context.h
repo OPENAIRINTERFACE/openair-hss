@@ -161,7 +161,7 @@ typedef struct ue_context_s {
   int                    pending_pdn_connectivity_req_pti;
   unsigned               pending_pdn_connectivity_req_ue_id;
   network_qos_t          pending_pdn_connectivity_req_qos;
-  pco_flat_t             pending_pdn_connectivity_req_pco;
+  protocol_configuration_options_t   pending_pdn_connectivity_req_pco;
   void                  *pending_pdn_connectivity_req_proc_data;
   int                    pending_pdn_connectivity_req_request_type;
 

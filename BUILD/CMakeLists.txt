@@ -443,12 +443,18 @@ add_library(SCTP_SERVER
 add_library(UDP_SERVER ${OPENAIRCN_DIR}/SRC/UDP/udp_primitives_server.c)
 
 set(S11_DIR ${OPENAIRCN_DIR}/SRC/S11)
-add_library(S11
+add_library(S11_MME
   ${S11_DIR}/s11_common.c
   ${S11_DIR}/s11_ie_formatter.c
   ${S11_DIR}/s11_mme_task.c
-  ${S11_DIR}/s11_sgw.c
+  ${S11_DIR}/s11_mme_bearer_manager.c
   ${S11_DIR}/s11_mme_session_manager.c
+)
+
+add_library(S11_SGW
+  ${S11_DIR}/s11_common.c
+  ${S11_DIR}/s11_ie_formatter.c
+  ${S11_DIR}/s11_sgw.c
   ${S11_DIR}/s11_sgw_session_manager.c
   ${S11_DIR}/s11_sgw_bearer_manager.c
 )
@@ -791,13 +797,12 @@ endif()
 
 
 
-
 # Hack on a test of asn1c version (already dirty)
 add_definitions(-DASN1_MINIMUM_VERSION=924)
 
 #################################
 # add executables for operation
-#################################""
+#################################
 
   
 # MME standalone 
@@ -811,13 +816,11 @@ add_executable(mme
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
   )
 if( ITTI_ANALYZER )
-add_executable(mme
-  ${OPENAIRCN_BIN_DIR}/messages_xml.h )
+  add_executable(mme ${OPENAIRCN_BIN_DIR}/messages_xml.h )
 endif( ITTI_ANALYZER )
 target_link_libraries (mme
-#SECU_OSA
   -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC S11 GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
+   LIB_NAS_MME S1AP_LIB S1AP_EPC S11_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
   pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
   )
@@ -830,12 +833,11 @@ add_executable(spgw
   ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
   )
 if( ITTI_ANALYZER )
-add_executable(spgw
-  ${OPENAIRCN_BIN_DIR}/messages_xml.h )
+  add_executable(spgw ${OPENAIRCN_BIN_DIR}/messages_xml.h )
 endif( ITTI_ANALYZER )
 target_link_libraries (spgw
   -Wl,--start-group
-  GTPV1U SGW S11 GTPV1U GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
+  GTPV1U SGW S11_SGW GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
   pthread m rt ${CONFIG_LIBRARIES}  
   )

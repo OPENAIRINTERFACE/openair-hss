@@ -270,9 +270,7 @@ udp_intertask_interface (
     if (received_message_p != NULL) {
       switch (ITTI_MSG_ID (received_message_p)) {
       case UDP_INIT:{
-          udp_init_t                             *udp_init_p;
-
-          udp_init_p = &received_message_p->ittiMsg.udp_init;
+          udp_init_t                             *udp_init_p = &received_message_p->ittiMsg.udp_init;
           rc = udp_server_create_socket (udp_init_p->port, udp_init_p->address, ITTI_MSG_ORIGIN_ID (received_message_p));
         }
         break;
@@ -299,11 +297,7 @@ udp_intertask_interface (
           if (udp_sock_p == NULL) {
             OAILOG_ERROR (LOG_UDP, "Failed to retrieve the udp socket descriptor " "associated with task %d\n", ITTI_MSG_ORIGIN_ID (received_message_p));
             pthread_mutex_unlock (&udp_socket_list_mutex);
-
-            if (udp_data_req_p->buffer) {
-              itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), udp_data_req_p->buffer);
-            }
-
+            // no free udp_data_req_p->buffer, statically allocated
             goto on_error;
           }
 
@@ -311,7 +305,7 @@ udp_intertask_interface (
           pthread_mutex_unlock (&udp_socket_list_mutex);
           OAILOG_DEBUG (LOG_UDP, "[%d] Sending message of size %u to " IPV4_ADDR " and port %u\n", udp_sd, udp_data_req_p->buffer_length, IPV4_ADDR_FORMAT (udp_data_req_p->peer_address), udp_data_req_p->peer_port);
           bytes_written = sendto (udp_sd, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset], udp_data_req_p->buffer_length, 0, (struct sockaddr *)&peer_addr, sizeof (struct sockaddr_in));
-          itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), udp_data_req_p->buffer);
+          // no free udp_data_req_p->buffer, statically allocated
 
           if (bytes_written != udp_data_req_p->buffer_length) {
             OAILOG_ERROR (LOG_UDP, "There was an error while writing to socket " "(%d:%s)\n", errno, strerror (errno));

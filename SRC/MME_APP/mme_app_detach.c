@@ -33,45 +33,47 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "assertions.h"
 #include "msc.h"
 #include "intertask_interface.h"
 #include "mme_app_itti_messaging.h"
-
 #include "mme_config.h"
-
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mcc_mnc_itu.h"
-
-#include "assertions.h"
-
 
 
 //------------------------------------------------------------------------------
 void
 mme_app_send_delete_session_request (
   struct ue_context_s                    *ue_context_p)
-//------------------------------------------------------------------------------
 {
   MessageDef                             *message_p = NULL;
-  task_id_t                               to_task = TASK_S11;
 
-#if EPC_BUILD
-  to_task = TASK_SPGW_APP;
-#endif
   message_p = itti_alloc_new_message (TASK_MME_APP, SGW_DELETE_SESSION_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   memset ((void *)&message_p->ittiMsg.sgw_delete_session_request, 0, sizeof (itti_sgw_delete_session_request_t));
   SGW_DELETE_SESSION_REQUEST (message_p).teid = ue_context_p->sgw_s11_teid;
   SGW_DELETE_SESSION_REQUEST (message_p).lbi = ue_context_p->default_bearer_id;
+
+  OAI_GCC_DIAG_OFF(pointer-to-int-cast);
+  SGW_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
+  OAI_GCC_DIAG_ON(pointer-to-int-cast);
+  SGW_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
   /*
    * S11 stack specific parameter. Not used in standalone epc mode
    */
   SGW_DELETE_SESSION_REQUEST  (message_p).trxn = NULL;
-/*  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,
-                      (to_task == TASK_S11) ? MSC_S11_MME : MSC_SP_GWAPP_MME,
-                      NULL, 0, "0  SGW_DELETE_SESSION_REQUEST teid %u ebi %u", SGW_DELETE_SESSION_REQUEST  (message_p).teid, SGW_DELETE_SESSION_REQUEST  (message_p).bearer_context_to_modify.eps_bearer_id);*/
-  itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+  mme_config_read_lock (&mme_config);
+  SGW_DELETE_SESSION_REQUEST (message_p).peer_ip = mme_config.ipv4.sgw_s11;
+  mme_config_unlock (&mme_config);
+
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME,
+                      NULL, 0, "0  SGW_DELETE_SESSION_REQUEST teid %u lbi %u",
+                      SGW_DELETE_SESSION_REQUEST  (message_p).teid,
+                      SGW_DELETE_SESSION_REQUEST  (message_p).lbi);
+
+  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -80,7 +82,6 @@ mme_app_send_delete_session_request (
 void
 mme_app_handle_detach_req (
   const itti_nas_detach_req_t * const detach_req_p)
-//------------------------------------------------------------------------------
 {
   struct ue_context_s *ue_context    = NULL;
 

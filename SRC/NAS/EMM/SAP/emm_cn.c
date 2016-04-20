@@ -182,14 +182,13 @@ static int _emm_cn_deregister_ue (const uint32_t ue_id)
 }
 
 //------------------------------------------------------------------------------
-static int _emm_cn_pdn_connectivity_res (const emm_cn_pdn_res_t * msg_pP)
+static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 {
   int                                     rc = RETURNerror;
   struct emm_data_context_s              *emm_ctx_p = NULL;
   esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
   ESM_msg                                 esm_msg = {.header = {0}};
   EpsQualityOfService                     qos = {0};
-  ProtocolConfigurationOptions            pco = {0};
   bstring                                 rsp = NULL;
   bool                                    is_standalone = false;    // warning hardcoded
   bool                                    triggered_by_ue = true;  // warning hardcoded
@@ -247,16 +246,7 @@ static int _emm_cn_pdn_connectivity_res (const emm_cn_pdn_res_t * msg_pP)
   qos.bitRatesExt.maxBitRateForDL = 0;
   qos.bitRatesExt.guarBitRateForUL = 0;
   qos.bitRatesExt.guarBitRateForDL = 0;
-  //--------------------------------------------------------------------------
-  // PCO processing
-  //--------------------------------------------------------------------------
-  memset (&pco, 0, sizeof (ProtocolConfigurationOptions));
-  if (0 >   decode_protocol_configuration_options (
-      &pco,
-      msg_pP->pco.byte,
-      msg_pP->pco.length)) {
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-  }
+
 
   /*************************************************************************/
   /*
@@ -297,8 +287,11 @@ static int _emm_cn_pdn_connectivity_res (const emm_cn_pdn_res_t * msg_pP)
    * Return default EPS bearer context request message
    */
   rc = esm_send_activate_default_eps_bearer_context_request (msg_pP->pti, new_ebi,      //msg_pP->ebi,
-                                                             &esm_msg.activate_default_eps_bearer_context_request, msg_pP->apn, &pco, esm_pdn_type, msg_pP->pdn_addr, &qos, ESM_CAUSE_SUCCESS);
-
+                                                             &esm_msg.activate_default_eps_bearer_context_request,
+                                                             msg_pP->apn, &msg_pP->pco,
+                                                             esm_pdn_type, msg_pP->pdn_addr,
+                                                             &qos, ESM_CAUSE_SUCCESS);
+  clear_protocol_configuration_options(&msg_pP->pco);
   if (rc != RETURNerror) {
     /*
      * Encode the returned ESM response message

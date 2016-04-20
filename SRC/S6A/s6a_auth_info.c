@@ -331,30 +331,24 @@ s6a_generate_authentication_info_req (
    * Destination Host
    */
   {
-    char                                    host[100];
-    size_t                                  hostlen;
+    bstring                                 host = bstrcpy(mme_config.s6a_config.hss_host_name);
 
-    memset (host, 0, 100);
-    strcat (host, mme_config.s6a_config.hss_host_name);
-    strcat (host, ".");
-    strcat (host, mme_config.realm);
-    hostlen = strlen (host);
+    bconchar(host, '.');
+    bconcat (host, mme_config.realm);
     CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_destination_host, 0, &avp));
-    value.os.data = (unsigned char *)host;
-    value.os.len = hostlen;
+    value.os.data = (unsigned char *)bdata(host);
+    value.os.len = blength(host);
     CHECK_FCT (fd_msg_avp_setvalue (avp, &value));
     CHECK_FCT (fd_msg_avp_add (msg, MSG_BRW_LAST_CHILD, avp));
+    bdestroy(host);
   }
   /*
    * Destination_Realm
    */
   {
-    char                                   *realm = mme_config.realm;
-    size_t                                  realmlen = strlen (realm);
-
     CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_destination_realm, 0, &avp));
-    value.os.data = (unsigned char *)realm;
-    value.os.len = realmlen;
+    value.os.data = (unsigned char *)bdata(mme_config.realm);
+    value.os.len = blength(mme_config.realm);
     CHECK_FCT (fd_msg_avp_setvalue (avp, &value));
     CHECK_FCT (fd_msg_avp_add (msg, MSG_BRW_LAST_CHILD, avp));
   }

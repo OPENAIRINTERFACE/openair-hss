@@ -118,7 +118,7 @@ static inline void s1ap_mme_itti_mme_app_initial_ue_message(
         (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.plmn.mnc_digit2 + 0x30),
         (9 < MME_APP_INITIAL_UE_MESSAGE(message_p).tai.plmn.mnc_digit3) ? ' ': (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.plmn.mnc_digit3 + 0x30),
         MME_APP_INITIAL_UE_MESSAGE(message_p).tai.tac,
-        MME_APP_INITIAL_UE_MESSAGE(message_p).nas.length);
+        MME_APP_INITIAL_UE_MESSAGE(message_p).nas->slen);
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
@@ -185,7 +185,7 @@ static inline void s1ap_mme_itti_nas_non_delivery_ind(
   		NULL,0,
   		"0 NAS_DOWNLINK_DATA_REJ ue_id "MME_UE_S1AP_ID_FMT" len %u",
   		ue_id,
-  		NAS_DL_DATA_REJ(message_p).nas_msg.length);
+  		NAS_DL_DATA_REJ(message_p).nas_msg->slen);
 
   // should be sent to MME_APP, but this one would forward it to NAS_MME, so send it directly to NAS_MME
   // but let's see

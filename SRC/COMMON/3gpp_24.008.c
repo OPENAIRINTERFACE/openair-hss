@@ -28,9 +28,40 @@
  */
 
 #include "common_defs.h"
+#include "assertions.h"
 #include "3gpp_24.008.h"
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
+
+void copy_protocol_configuration_options (protocol_configuration_options_t * const pco_dst, const protocol_configuration_options_t * const pco_src)
+{
+  if ((pco_dst) && (pco_src)) {
+    pco_dst->ext = pco_src->ext;
+    pco_dst->spare = pco_src->spare;
+    pco_dst->configuration_protocol = pco_src->configuration_protocol;
+    pco_dst->num_protocol_or_container_id = pco_src->num_protocol_or_container_id;
+    AssertFatal(PCO_UNSPEC_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID >= pco_dst->num_protocol_or_container_id,
+        "Invalid number of protocol_or_container_id %d", pco_dst->num_protocol_or_container_id);
+    for (int i = 0; i < pco_src->num_protocol_or_container_id; i++) {
+      pco_dst->protocol_or_container_ids[i].id     = pco_src->protocol_or_container_ids[i].id;
+      pco_dst->protocol_or_container_ids[i].length = pco_src->protocol_or_container_ids[i].length;
+      pco_dst->protocol_or_container_ids[i].contents = bstrcpy(pco_src->protocol_or_container_ids[i].contents);
+    }
+  }
+}
+
+void clear_protocol_configuration_options (protocol_configuration_options_t * const pco)
+{
+  if (pco) {
+    for (int i = 0; i < PCO_UNSPEC_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID; i++) {
+      if (pco->protocol_or_container_ids[i].contents) {
+        bdestroy(pco->protocol_or_container_ids[i].contents);
+      }
+    }
+    memset(pco, 0, sizeof(protocol_configuration_options_t));
+  }
+}
+
 
 int
 decode_protocol_configuration_options (
@@ -80,7 +111,7 @@ decode_protocol_configuration_options (
 
 int
 encode_protocol_configuration_options (
-    protocol_configuration_options_t * protocolconfigurationoptions,
+    const protocol_configuration_options_t * const protocolconfigurationoptions,
     uint8_t * buffer,
     uint32_t len)
 {
@@ -106,4 +137,26 @@ encode_protocol_configuration_options (
   }
 
   return encoded;
+}
+
+bstring protocol_configuration_options_to_xml (protocol_configuration_options_t * pco)
+{
+  bstring                                 bstr = bfromcstr("<Protocol Configuration Options>");
+  int                                     i = 0;
+
+  if (pco) {
+    bformata(bstr, "    <Configuration protocol>%u</Configuration protocol>\n", pco->configuration_protocol);
+
+    while (i < pco->num_protocol_or_container_id) {
+      bformata(bstr, "        <Protocol ID>%u</Protocol ID>\n", pco->protocol_or_container_ids[i].id);
+      bformata(bstr, "        <Length of protocol ID>%u</Length of protocol ID>\n", pco->protocol_or_container_ids[i].length);
+      bstring b = dump_bstring_xml (pco->protocol_or_container_ids[i].contents);
+      bformata(bstr, "        %s", bdata(b));
+      bdestroy(b);
+      i++;
+    }
+  }
+
+  bcatcstr(bstr, "</Protocol Configuration Options>\n");
+  return bstr;
 }

@@ -244,7 +244,7 @@ int
 emm_fsm_process (
   const emm_reg_t * evt)
 {
-  int                                     rc;
+  int                                     rc = RETURNerror;
   emm_fsm_state_t                         status;
   emm_reg_primitive_t                     primitive;
 
@@ -252,14 +252,17 @@ emm_fsm_process (
   primitive = evt->primitive;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
 
-  DevAssert (emm_ctx );
-  status = emm_fsm_get_status (evt->ue_id, emm_ctx);
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
-  DevAssert (status != EMM_INVALID);
-  /*
-   * Execute the EMM state machine
-   */
-  rc = (_emm_fsm_handlers[status]) (evt);
+  if (emm_ctx) {
+    status = emm_fsm_get_status (evt->ue_id, emm_ctx);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
+    DevAssert (status != EMM_INVALID);
+    /*
+     * Execute the EMM state machine
+     */
+    rc = (_emm_fsm_handlers[status]) (evt);
+  } else {
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) but no EMM data context provided\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive);
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

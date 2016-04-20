@@ -88,9 +88,15 @@ emm_main_initialize (
   if (mme_api_get_emm_config (&_emm_data.conf, mme_config_p) != RETURNok) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-MAIN  - Failed to get MME configuration data");
   }
-  _emm_data.ctx_coll_ue_id = hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, "emm_data.ctx_coll_ue_id");
-  _emm_data.ctx_coll_imsi  = hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, hash_free_int_func, "emm_data.ctx_coll_imsi");
-  _emm_data.ctx_coll_guti  = obj_hashtable_ts_create (MAX_NUMBER_OF_UE * 2, NULL, NULL, hash_free_int_func, "emm_data.ctx_coll_guti");
+  bstring b = bfromcstr("emm_data.ctx_coll_ue_id");
+  _emm_data.ctx_coll_ue_id = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
+  btrunc(b, 0);
+  bassigncstr(b, "emm_data.ctx_coll_imsi");
+  _emm_data.ctx_coll_imsi  = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  btrunc(b, 0);
+  bassigncstr(b, "emm_data.ctx_coll_guti");
+  _emm_data.ctx_coll_guti  = obj_hashtable_ts_create (mme_config.max_ues, NULL, NULL, hash_free_int_func, b);
+  bdestroy(b);
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
 

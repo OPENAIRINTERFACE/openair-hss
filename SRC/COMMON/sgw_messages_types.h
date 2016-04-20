@@ -50,7 +50,6 @@
 #define SGW_RELEASE_ACCESS_BEARERS_REQUEST(mSGpTR) (mSGpTR)->ittiMsg.sgw_release_access_bearers_request
 #define SGW_RELEASE_ACCESS_BEARERS_RESPONSE(mSGpTR) (mSGpTR)->ittiMsg.sgw_release_access_bearers_response
 
-
 //-----------------------------------------------------------------------------
 /** @struct itti_sgw_create_session_request_t
  *  @brief Create Session Request
@@ -254,13 +253,13 @@ typedef struct itti_sgw_create_session_request_s {
   ///< RAU/TAU/HO procedures with SGW change to identify the
   ///< default bearer of the PDN Connection
 
-  pco_flat_t         pco;                 /// PCO protocol_configuration_options
+  protocol_configuration_options_t         pco;                 /// PCO protocol_configuration_options
   ///< This IE is not applicable to TAU/RAU/Handover. If
   ///< MME/SGSN receives PCO from UE (during the attach
   ///< procedures), the MME/SGSN shall forward the PCO IE to
   ///< SGW. The SGW shall also forward it to PGW.
 
-  bearer_to_create_t bearer_to_create;    ///< Bearer Contexts to be created
+  bearer_contexts_to_be_created_t bearer_contexts_to_be_created;    ///< Bearer Contexts to be created
   ///< Several IEs with the same type and instance value shall be
   ///< included on the S4/S11 and S5/S8 interfaces as necessary
   ///< to represent a list of Bearers. One single IE shall be
@@ -274,7 +273,7 @@ typedef struct itti_sgw_create_session_request_s {
   ///< One or more bearers shall be included for a
   ///< Handover/TAU/RAU with an SGW change.
 
-  ///bearer_to_remove_t bearer_to_remove;    ///< This IE shall be included on the S4/S11 interfaces for the
+  bearer_contexts_to_be_removed_t bearer_contexts_to_be_removed;    ///< This IE shall be included on the S4/S11 interfaces for the
   ///< TAU/RAU/Handover cases where any of the bearers
   ///< existing before the TAU/RAU/Handover procedure will be
   ///< deactivated as consequence of the TAU/RAU/Handover
@@ -421,13 +420,13 @@ typedef struct itti_sgw_create_session_response_s {
   ///< identify the default bearer the PGW selects for the PDN
   ///< Connection.
 
-  pco_flat_t         pco;// PCO protocol_configuration_options
+  protocol_configuration_options_t         pco;// PCO protocol_configuration_options
   ///< This IE is not applicable for TAU/RAU/Handover. If PGW
   ///< decides to return PCO to the UE, PGW shall send PCO to
   ///< SGW. If SGW receives the PCO IE, SGW shall forward it
   ///< MME/SGSN.
 
-  bearer_context_created_t bearer_context_created;///< EPS bearers corresponding to Bearer Contexts sent in
+  bearer_contexts_created_t bearer_contexts_created;///< EPS bearers corresponding to Bearer Contexts sent in
   ///< request message. Several IEs with the same type and
   ///< instance value may be included on the S5/S8 and S4/S11
   ///< as necessary to represent a list of Bearers. One single IE
@@ -441,7 +440,7 @@ typedef struct itti_sgw_create_session_response_s {
   ///< One or more created bearers shall be included for a
   ///< Handover/TAU/RAU with an SGW change. See NOTE 2.
 
-  // Bearer_Context bearer_contexts_marked_for_removal ///< EPS bearers corresponding to Bearer Contexts to be
+  bearer_contexts_marked_for_removal_t bearer_contexts_marked_for_removal; ///< EPS bearers corresponding to Bearer Contexts to be
   ///< removed that were sent in the Create Session Request
   ///< message.
   ///< For each of those bearers an IE with the same type and
@@ -637,7 +636,7 @@ typedef struct itti_sgw_modify_bearer_request_s {
   ///< CO: This IE shall be sent on the S4 interface for a UE triggered
   ///< Service Request.
 
-  bearer_context_to_modify_t bearer_context_to_modify;///< C: This IE shall be sent on the S4/S11 interface and S5/S8
+  bearer_contexts_to_be_modified_t bearer_contexts_to_be_modified;///< C: This IE shall be sent on the S4/S11 interface and S5/S8
   ///< interface except on the S5/S8 interface for a UE triggered
   ///< Service Request.
   ///< When Handover Indication flag is set to 1 (i.e., for
@@ -655,7 +654,7 @@ typedef struct itti_sgw_modify_bearer_request_s {
   ///< IEs, which are then sent on the S5/S8 interface to the
   ///< PGW (see NOTE 2).
 
-  // Bearer Context   Bearer Contexts to be removed; ///< C: This IE shall be included on the S4 and S11 interfaces for
+  bearer_contexts_to_be_removed_t bearer_contexts_to_be_removed;    ///< C: This IE shall be included on the S4 and S11 interfaces for
   ///< the TAU/RAU/Handover and Service Request procedures
   ///< where any of the bearers existing before the
   ///< TAU/RAU/Handover procedure and Service Request
@@ -722,8 +721,9 @@ typedef struct itti_sgw_modify_bearer_request_s {
 
   // Private Extension   Private Extension
 
-  /* S11 stack specific parameter. Not used in standalone epc mode */
+  /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
+  uint32_t                   peer_ip;
 } itti_sgw_modify_bearer_request_t;
 
 //-----------------------------------------------------------------------------
@@ -774,22 +774,18 @@ typedef struct itti_sgw_modify_bearer_response_s {
   ///< GERAN to the E-UTRAN. See NOTE 2:
   ///< If MME receives the IE, but no NAS message is sent, MME discards the IE.
 
-#define MODIFY_BEARER_RESPONSE_MOD  0x0
-#define MODIFY_BEARER_RESPONSE_REM  0x1
-  unsigned                 bearer_present:1;    ///< Choice present in union choice
-  union {
-    bearer_context_modified_t bearer_contexts_modified;///< EPS bearers corresponding to Bearer Contexts to be
-    ///< modified that were sent in Modify Bearer Request
-    ///< message. Several IEs with the same type and instance
-    ///< value may be included as necessary to represent a list of
-    ///< the Bearers which are modified.
-    bearer_for_removal_t      bearer_for_removal;///< EPS bearers corresponding to Bearer Contexts to be
-    ///< removed sent in the Modify Bearer Request message.
-    ///< Shall be included if request message contained Bearer
-    ///< Contexts to be removed.
-    ///< For each of those bearers an IE with the same type and
-    ///< instance value shall be included.
-  } bearer_choice;
+  bearer_contexts_modified_t bearer_contexts_modified;///< EPS bearers corresponding to Bearer Contexts to be
+  ///< modified that were sent in Modify Bearer Request
+  ///< message. Several IEs with the same type and instance
+  ///< value may be included as necessary to represent a list of
+  ///< the Bearers which are modified.
+
+  bearer_contexts_marked_for_removal_t bearer_contexts_marked_for_removal; ///< EPS bearers corresponding to Bearer Contexts to be
+  ///< removed sent in the Modify Bearer Request message.
+  ///< Shall be included if request message contained Bearer
+  ///< Contexts to be removed.
+  ///< For each of those bearers an IE with the same type and
+  ///< instance value shall be included.
 
   // change_reporting_action                    ///< This IE shall be included with the appropriate Action field If
   ///< the location Change Reporting mechanism is to be started
@@ -878,6 +874,12 @@ typedef struct itti_sgw_delete_session_request_s {
 typedef struct itti_sgw_delete_session_response_s {
   teid_t      teid;                   ///< Remote Tunnel Endpoint Identifier
   SGWCause_t  cause;
+  //recovery_t recovery;              ///< This IE shall be included on the S5/S8, S4/S11 and S2b
+                                      ///< interfaces if contacting the peer for the first time
+  protocol_configuration_options_t pco;///< PGW shall include Protocol Configuration Options (PCO)
+                                      ///< IE on the S5/S8 interface, if available.
+                                      ///< If SGW receives this IE, SGW shall forward it to
+                                      ///< SGSN/MME on the S4/S11 interface.
 
   /* GTPv2-C specific parameters */
   void       *trxn;
@@ -899,17 +901,18 @@ typedef struct itti_sgw_delete_session_response_s {
  */
 typedef struct itti_sgw_release_access_bearers_request_s {
   teid_t     teid;                     ///< Tunnel Endpoint Identifier
-  uint32_t   num_rabs;
-  EBI_t      list_of_rabs[8]  ;        ///< Shall be present on S4 interface when this message is
-                                         ///< used to release a subset of all active RABs according to
-                                         ///< the RAB release procedure.
-                                         ///< Several IEs with this type and instance values shall be
-                                         ///< included as necessary to represent a list of RABs to be
-                                         ///< released.
-
+  ebi_list_t list_of_rabs;             ///< Shall be present on S4 interface when this message is
+                                       ///< used to release a subset of all active RABs according to
+                                       ///< the RAB release procedure.
+                                       ///< Several IEs with this type and instance values shall be
+                                       ///< included as necessary to represent a list of RABs to be
+                                       ///< released.
   node_type_t originating_node;        ///< This IE shall be sent on S11 interface, if ISR is active in the MME.
                                          ///< This IE shall be sent on S4 interface, if ISR is active in the SGSN
   // Private Extension Private Extension ///< optional
+  /* GTPv2-C specific parameters */
+  void       *trxn;
+  uint32_t    peer_ip;
 } itti_sgw_release_access_bearers_request_t;
 
 
@@ -933,6 +936,9 @@ typedef struct itti_sgw_release_access_bearers_response_s {
   SGWCause_t  cause;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
+  /* GTPv2-C specific parameters */
+  void       *trxn;
+  uint32_t    peer_ip;
 } itti_sgw_release_access_bearers_response_t;
 
 #endif /* FILE_SGW_MESSAGES_TYPES_SEEN */

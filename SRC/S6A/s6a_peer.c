@@ -88,7 +88,6 @@ s6a_fd_new_peer (
 {
   char                                    host_name[100];
   size_t                                  host_name_len = 0;
-  char                                   *hss_name = NULL;
   int                                     ret = 0;
 #if FD_CONF_FILE_NO_CONNECT_PEERS_CONFIGURED
   struct peer_info                        info = {0};
@@ -108,17 +107,17 @@ s6a_fd_new_peer (
   host_name_len = strlen (host_name);
   host_name[host_name_len] = '.';
   host_name[host_name_len + 1] = '\0';
-  strcat (host_name, mme_config.realm);
+  strcat (host_name, (const char *)mme_config.realm->data);
   fd_g_config->cnf_diamid = strdup (host_name);
   fd_g_config->cnf_diamid_len = strlen (fd_g_config->cnf_diamid);
   OAILOG_DEBUG (LOG_S6A, "Diameter identity of MME: %s with length: %zd\n", fd_g_config->cnf_diamid, fd_g_config->cnf_diamid_len);
-  hss_name = calloc (1, 100);
-  strcat (hss_name, mme_config.s6a_config.hss_host_name);
-  strcat (hss_name, ".");
-  strcat (hss_name, mme_config.realm);
+  bstring                                 hss_name = bstrcpy(mme_config.s6a_config.hss_host_name);
+  bconchar(hss_name, '.');
+  bconcat (hss_name, mme_config.realm);
+
 #if FD_CONF_FILE_NO_CONNECT_PEERS_CONFIGURED
-  info.pi_diamid    = hss_name;
-  info.pi_diamidlen = strlen (info.pi_diamid);
+  info.pi_diamid    = bdata(hss_name);
+  info.pi_diamidlen = blength (hss_name);
   OAILOG_DEBUG (LOG_S6A, "Diameter identity of HSS: %s with length: %zd\n", info.pi_diamid, info.pi_diamidlen);
   info.config.pic_flags.sec     = PI_SEC_NONE;
   info.config.pic_flags.pro3    = PI_P3_DEFAULT;
@@ -138,8 +137,8 @@ s6a_fd_new_peer (
   }
   return ret;
 #else
-  DiamId_t          diamid    = hss_name;
-  size_t            diamidlen = strlen (diamid);
+  DiamId_t          diamid    = bdata(hss_name);
+  size_t            diamidlen = blength (hss_name);
   struct peer_hdr  *peer      = NULL;
   int               nb_tries  = 0;
   do {
@@ -159,13 +158,14 @@ s6a_fd_new_peer (
 
           {
             FILE *fp = NULL;
-            char  filename[128];
-            sprintf(filename, "/tmp/mme_%d.status", g_pid);
-            fp = fopen(filename, "w+");
+            bstring  filename = bformat("/tmp/mme_%d.status", g_pid);
+            fp = fopen(bdata(filename), "w+");
+            bdestroy(filename);
             fprintf(fp, "STARTED\n");
             fflush(fp);
             fclose(fp);
           }
+          bdestroy(hss_name);
           return RETURNok;
         } else {
           OAILOG_DEBUG (LOG_S6A, "S6a peer state is %d\n", ret);
@@ -176,6 +176,7 @@ s6a_fd_new_peer (
     }
     sleep(1);
   } while (nb_tries < 8);
+  bdestroy(hss_name);
   return RETURNerror;
 #endif
 }

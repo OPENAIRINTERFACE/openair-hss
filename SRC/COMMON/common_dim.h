@@ -32,9 +32,6 @@
 #ifndef FILE_COMMON_DIM_SEEN
 #define FILE_COMMON_DIM_SEEN
 
-#define MAX_NUMBER_OF_ENB        (2)
-#define MAX_NUMBER_OF_UE        (64)
-
 #define MAX_GUMMEI                2
 
 

@@ -73,8 +73,7 @@ static int s1ap_send_init_sctp (void)
   message_p->ittiMsg.sctpInit.ipv4 = 1;
   message_p->ittiMsg.sctpInit.ipv6 = 0;
   message_p->ittiMsg.sctpInit.nb_ipv4_addr = 1;
-  message_p->ittiMsg.sctpInit.ipv4_address[0]
-    = mme_config.ipv4.mme_ip_address_for_s1_mme;
+  message_p->ittiMsg.sctpInit.ipv4_address[0] = mme_config.ipv4.s1_mme;
   /*
    * SR WARNING: ipv6 multi-homing fails sometimes for localhost.
    * * * * Disable it for now.
@@ -218,10 +217,14 @@ s1ap_mme_init (
 
   OAILOG_DEBUG (LOG_S1AP, "S1AP Release v10.5\n");
   // 16 entries for n eNB.
-  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, 16, NULL, free_wrapper, "s1ap_eNB_coll");
+  bstring bs1 = bfromcstr("s1ap_eNB_coll");
+  hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, free_wrapper, bs1);
+  bdestroy(bs1);
   if (!h) return RETURNerror;
 
-  h = hashtable_ts_init (&g_s1ap_mme_id2assoc_id_coll, 128, NULL, hash_free_int_func, "s1ap_mme_id2assoc_id_coll");
+  bstring bs2 = bfromcstr("s1ap_mme_id2assoc_id_coll");
+  h = hashtable_ts_init (&g_s1ap_mme_id2assoc_id_coll, mme_config.max_ues, NULL, hash_free_int_func, bs2);
+  bdestroy(bs2);
   if (!h) return RETURNerror;
 
   if (itti_create_task (TASK_S1AP, &s1ap_mme_thread, NULL) < 0) {
@@ -486,7 +489,9 @@ s1ap_new_enb (
   DevAssert (enb_ref != NULL);
   // Update number of eNB associated
   nb_enb_associated++;
-  hashtable_ts_init(&enb_ref->ue_coll, 256, NULL, free_wrapper, "s1ap_ue_coll");
+  bstring bs = bfromcstr("s1ap_ue_coll");
+  hashtable_ts_init(&enb_ref->ue_coll, mme_config.max_ues, NULL, free_wrapper, bs);
+  bdestroy(bs);
   enb_ref->nb_ue_associated = 0;
   return enb_ref;
 }

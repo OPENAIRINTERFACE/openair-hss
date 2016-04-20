@@ -173,7 +173,7 @@ typedef struct itti_nas_pdn_connectivity_req_s {
   char                   imsi[16];
   uint8_t                imsi_length;
   network_qos_t          qos;
-  pco_flat_t             pco;
+  protocol_configuration_options_t pco;
   bstring                apn;
   bstring                pdn_addr;
   int                    pdn_type;
@@ -185,7 +185,7 @@ typedef struct itti_nas_pdn_connectivity_req_s {
 typedef struct itti_nas_pdn_connectivity_rsp_s {
   int                     pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
   network_qos_t           qos;
-  pco_flat_t              pco;
+  protocol_configuration_options_t pco;
   bstring                 apn;
   bstring                 pdn_addr;
   int                     pdn_type;

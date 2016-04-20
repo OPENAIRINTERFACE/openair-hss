@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -19,29 +19,18 @@
  *      contact@openairinterface.org
  */
 
-#include "oai_epc.h"
-#include "log.h"
 
-#include <freeDiameter/freeDiameter-host.h>
-#include <freeDiameter/libfdcore.h>
+#ifndef FILE_S11_MME_BEARER_MANAGER_SEEN
+#define FILE_S11_MME_BEARER_MANAGER_SEEN
 
-int
-oai_epc_log_specific (
-  int log_level)
-{
-  if (log_level == 1) {
-    asn_debug = 0;
-    asn1_xer_print = 1;
-    fd_g_debug_lvl = INFO;
-  } else if (log_level == 2) {
-    asn_debug = 1;
-    asn1_xer_print = 1;
-    fd_g_debug_lvl = ANNOYING;
-  } else {
-    asn1_xer_print = 0;
-    asn_debug = 0;
-    fd_g_debug_lvl = NONE;
-  }
 
-  return 0;
-}
+/* @brief Create a new Release Access Bearers Request and send it to provided S-GW. */
+int s11_mme_release_access_bearers_request(NwGtpv2cStackHandleT *stack_p, itti_sgw_release_access_bearers_request_t *release_access_bearers_p);
+
+/* @brief Handle a Release Access Bearer Response received from S-GW. */
+int s11_mme_handle_release_access_bearer_response (NwGtpv2cStackHandleT * stack_p, NwGtpv2cUlpApiT * pUlpApi);
+
+/* @brief Handle a Modify Bearer Response received from S-GW. */
+int s11_mme_handle_modify_bearer_response (NwGtpv2cStackHandleT * stack_p, NwGtpv2cUlpApiT * pUlpApi);
+
+#endif /* FILE_S11_MME_BEARER_MANAGER_SEEN */

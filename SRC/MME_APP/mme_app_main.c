@@ -95,7 +95,7 @@ void *mme_app_thread (
       break;
 
     case NAS_DETACH_REQ: {
-	    mme_app_handle_detach_req(&received_message_p->ittiMsg.nas_detach_req);
+        mme_app_handle_detach_req(&received_message_p->ittiMsg.nas_detach_req);
       }
       break;
 
@@ -178,12 +178,22 @@ mme_app_init (
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
-  mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_imsi_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_tun11_ue_context_htbl");
+  bstring b = bfromcstr("mme_app_imsi_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  btrunc(b, 0);
+  bassigncstr(b, "mme_app_tun11_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
   AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mme_ue_s1ap_id_ue_context_htbl in MME_APP");
-  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, NULL, "mme_app_enb_ue_s1ap-id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (64, NULL, hash_free_int_func, hash_free_int_func, "mme_app_guti_ue_context_htbl");
+  btrunc(b, 0);
+  bassigncstr(b, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  btrunc(b, 0);
+  bassigncstr(b, "mme_app_enb_ue_s1ap_id_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
+  btrunc(b, 0);
+  bassigncstr(b, "mme_app_guti_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, hash_free_int_func, b);
+  bdestroy(b);
 
   /*
    * Create the thread associated with MME applicative layer

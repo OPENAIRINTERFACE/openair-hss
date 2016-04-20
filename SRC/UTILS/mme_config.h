@@ -27,6 +27,9 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+
+#ifndef FILE_MME_CONFIG_SEEN
+#define FILE_MME_CONFIG_SEEN
 #include <pthread.h>
 #include <stdint.h>
 
@@ -34,9 +37,7 @@
 #include "3gpp_23.003.h"
 #include "common_dim.h"
 #include "log.h"
-
-#ifndef FILE_MME_CONFIG_SEEN
-#define FILE_MME_CONFIG_SEEN
+#include "bstrlib.h"
 
 #define MME_CONFIG_STRING_MME_CONFIG                     "MME"
 #define MME_CONFIG_STRING_RUN_MODE                       "RUN_MODE"
@@ -132,9 +133,8 @@ typedef struct mme_config_s {
   pthread_rwlock_t rw_lock;
 
 
-  char *config_file;
-  char *realm;
-  int   realm_length;
+  bstring config_file;
+  bstring realm;
 
   run_mode_t  run_mode;
 
@@ -182,22 +182,25 @@ typedef struct mme_config_s {
   } s1ap_config;
 
   struct {
-    char     *mme_interface_name_for_s1_mme;
-    uint32_t  mme_ip_address_for_s1_mme;
+    bstring  if_name_s1_mme;
+    uint32_t  s1_mme;
+    int       netmask_s1_mme;
 
-    char     *mme_interface_name_for_s11;
-    uint32_t  mme_ip_address_for_s11;
-    uint16_t  mme_port_for_s11;
-    uint32_t  sgw_ip_address_for_s11;
+    bstring   if_name_s11;
+    uint32_t  s11;
+    int       netmask_s11;
+    uint16_t  port_s11;
+
+    uint32_t  sgw_s11;
   } ipv4;
 
   struct {
-    char *conf_file;
-    char *hss_host_name;
+    bstring conf_file;
+    bstring hss_host_name;
   } s6a_config;
   struct {
     uint32_t  queue_size;
-    char     *log_file;
+    bstring   log_file;
   } itti_config;
 
   struct {

@@ -154,6 +154,9 @@ typedef struct protocol_configuration_options_s {
   pco_protocol_or_container_id_t protocol_or_container_ids[PCO_UNSPEC_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID];
 } protocol_configuration_options_t;
 
+void copy_protocol_configuration_options (protocol_configuration_options_t * const pco_dst, const protocol_configuration_options_t * const pco_src);
+void clear_protocol_configuration_options (protocol_configuration_options_t * const pco);
+
 int decode_protocol_configuration_options (
     protocol_configuration_options_t * protocolconfigurationoptions,
     const uint8_t * const buffer,
@@ -161,8 +164,11 @@ int decode_protocol_configuration_options (
 
 int
 encode_protocol_configuration_options (
-    protocol_configuration_options_t * protocolconfigurationoptions,
+    const protocol_configuration_options_t * const protocolconfigurationoptions,
     uint8_t * buffer,
     uint32_t len);
+
+bstring protocol_configuration_options_to_xml (protocol_configuration_options_t * pco);
+
 
 #endif /* FILE_3GPP_24_008_SEEN */

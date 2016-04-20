@@ -207,7 +207,7 @@ nas_itti_dl_data_req (
   NAS_DL_DATA_REQ (message_p).ue_id   = ue_id;
   NAS_DL_DATA_REQ (message_p).nas_msg = nas_msg;
   nas_msg = NULL;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_REQ ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, length);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_REQ ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
@@ -279,11 +279,7 @@ void nas_itti_pdn_connectivity_req(
 
   NAS_PDN_CONNECTIVITY_REQ(message_p).request_type  = request_typeP;
 
-  int encoded = encode_protocol_configuration_options (
-    &proc_data_pP->pco,
-    NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte,
-    sizeof(NAS_PDN_CONNECTIVITY_REQ(message_p).pco.byte));
-  NAS_PDN_CONNECTIVITY_REQ(message_p).pco.length = encoded;
+  copy_protocol_configuration_options (&NAS_PDN_CONNECTIVITY_REQ(message_p).pco, &proc_data_pP->pco);
 
   MSC_LOG_TX_MESSAGE(
         MSC_NAS_MME,
@@ -292,7 +288,16 @@ void nas_itti_pdn_connectivity_req(
         "NAS_PDN_CONNECTIVITY_REQ ue id %06"PRIX32" IMSI %X",
         ue_idP, NAS_PDN_CONNECTIVITY_REQ(message_p).imsi);
 
+#define TEMPORARY_DEBUG 1
+#if TEMPORARY_DEBUG
+  mme_ue_context_dump_coll_keys();
+#endif
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+#define TEMPORARY_DEBUG 1
+#if TEMPORARY_DEBUG
+  mme_ue_context_dump_coll_keys();
+#endif
+
   OAILOG_FUNC_OUT(LOG_NAS);
 }
 
@@ -413,7 +418,7 @@ void nas_itti_establish_cnf(
         MSC_MMEAPP_MME,
         NULL,0,
         "NAS_CONNECTION_ESTABLISHMENT_CNF ue id %06"PRIX32" len %u sea %x sia %x ",
-        ue_idP, lengthP, selected_encryption_algorithmP, selected_integrity_algorithmP);
+        ue_idP, blength(msgP), selected_encryption_algorithmP, selected_integrity_algorithmP);
 
     itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   }

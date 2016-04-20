@@ -30,7 +30,7 @@
 #define FILE_SGW_HANDLERS_SEEN
 
 int sgw_handle_create_session_request(const itti_sgw_create_session_request_t * const session_req_p);
-int sgw_handle_sgi_endpoint_created  (const itti_sgi_create_end_point_response_t   * const resp_p);
+int sgw_handle_sgi_endpoint_created  (itti_sgi_create_end_point_response_t   * const resp_p);
 int sgw_handle_sgi_endpoint_updated  (const itti_sgi_update_end_point_response_t   * const resp_p);
 int sgw_handle_gtpv1uCreateTunnelResp(const Gtpv1uCreateTunnelResp  * const endpoint_created_p);
 int sgw_handle_gtpv1uUpdateTunnelResp(const Gtpv1uUpdateTunnelResp  * const endpoint_updated_p);

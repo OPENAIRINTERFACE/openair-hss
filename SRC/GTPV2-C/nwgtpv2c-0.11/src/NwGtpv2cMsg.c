@@ -72,8 +72,7 @@ extern                                  "C" {
                                             NW_ASSERT (
   pStack);
 
-    if                                      (
-  gpGtpv2cMsgPool) {
+    if (gpGtpv2cMsgPool) {
       pMsg = gpGtpv2cMsgPool;
       gpGtpv2cMsgPool = gpGtpv2cMsgPool->next;
     } else {

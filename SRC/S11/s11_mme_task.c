@@ -34,13 +34,14 @@
 #include "NwGtpv2cMsg.h"
 #include "s11_mme.h"
 #include "s11_mme_session_manager.h"
+#include "s11_mme_bearer_manager.h"
 #include "msc.h"
 #include "log.h"
 
-static NwGtpv2cStackHandleT             s11_mme_stack_handle;
+static NwGtpv2cStackHandleT             s11_mme_stack_handle = NULL;
 
-static
-                                        NwRcT
+//------------------------------------------------------------------------------
+static NwRcT
 s11_mme_log_wrapper (
   NwGtpv2cLogMgrHandleT hLogMgr,
   uint32_t logLevel,
@@ -52,8 +53,8 @@ s11_mme_log_wrapper (
   return NW_OK;
 }
 
-static
-                                        NwRcT
+//------------------------------------------------------------------------------
+static NwRcT
 s11_mme_ulp_process_stack_req_cb (
   NwGtpv2cUlpHandleT hUlp,
   NwGtpv2cUlpApiT * pUlpApi)
@@ -72,6 +73,18 @@ s11_mme_ulp_process_stack_req_cb (
       ret = s11_mme_handle_create_session_response (&s11_mme_stack_handle, pUlpApi);
       break;
 
+    case NW_GTP_DELETE_SESSION_RSP:
+      ret = s11_mme_handle_delete_session_response (&s11_mme_stack_handle, pUlpApi);
+      break;
+
+    case NW_GTP_MODIFY_BEARER_RSP:
+      ret = s11_mme_handle_modify_bearer_response (&s11_mme_stack_handle, pUlpApi);
+      break;
+
+    case NW_GTP_RELEASE_ACCESS_BEARERS_RSP:
+      ret = s11_mme_handle_release_access_bearer_response (&s11_mme_stack_handle, pUlpApi);
+      break;
+
     default:
       OAILOG_WARNING (LOG_S11, "Received unhandled message type %d\n", pUlpApi->apiInfo.triggeredRspIndInfo.msgType);
       break;
@@ -86,8 +99,8 @@ s11_mme_ulp_process_stack_req_cb (
   return ret == 0 ? NW_OK : NW_FAILURE;
 }
 
-static
-                                        NwRcT
+//------------------------------------------------------------------------------
+static NwRcT
 s11_mme_send_udp_msg (
   NwGtpv2cUdpHandleT udpHandle,
   uint8_t * buffer,
@@ -110,8 +123,8 @@ s11_mme_send_udp_msg (
   return ((ret == 0) ? NW_OK : NW_FAILURE);
 }
 
-static
-                                        NwRcT
+//------------------------------------------------------------------------------
+static NwRcT
 s11_mme_start_timer_wrapper (
   NwGtpv2cTimerMgrHandleT tmrMgrHandle,
   uint32_t timeoutSec,
@@ -133,8 +146,8 @@ s11_mme_start_timer_wrapper (
   return ((ret == 0) ? NW_OK : NW_FAILURE);
 }
 
-static
-                                        NwRcT
+//------------------------------------------------------------------------------
+static NwRcT
 s11_mme_stop_timer_wrapper (
   NwGtpv2cTimerMgrHandleT tmrMgrHandle,
   NwGtpv2cTimerHandleT tmrHandle)
@@ -162,6 +175,17 @@ s11_mme_thread (
     switch (ITTI_MSG_ID (received_message_p)) {
     case SGW_CREATE_SESSION_REQUEST:{
         s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgw_create_session_request);
+      }
+      break;
+
+    case SGW_MODIFY_BEARER_REQUEST:{
+        s11_mme_modify_bearer_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgw_modify_bearer_request);
+      }
+      break;
+
+
+    case SGW_DELETE_SESSION_REQUEST:{
+        s11_mme_delete_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgw_delete_session_request);
       }
       break;
 
@@ -202,26 +226,23 @@ s11_mme_thread (
   return NULL;
 }
 
+//------------------------------------------------------------------------------
 static int
 s11_send_init_udp (
   char *address,
   uint16_t port_number)
 {
-  MessageDef                             *message_p;
-
-  message_p = itti_alloc_new_message (TASK_S11, UDP_INIT);
-
+  MessageDef                             *message_p = itti_alloc_new_message (TASK_S11, UDP_INIT);
   if (message_p == NULL) {
     return RETURNerror;
   }
-
   message_p->ittiMsg.udp_init.port = port_number;
-  //LG message_p->ittiMsg.udpInit.address = "0.0.0.0"; //ANY address
   message_p->ittiMsg.udp_init.address = address;
-  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s\n", message_p->ittiMsg.udp_init.address);
+  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s:%d\n", message_p->ittiMsg.udp_init.address, message_p->ittiMsg.udp_init.port);
   return itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
 }
 
+//------------------------------------------------------------------------------
 int
 s11_mme_init (
   const mme_config_t * mme_config_p)
@@ -271,10 +292,10 @@ s11_mme_init (
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (s11_mme_stack_handle, NW_LOG_LEVEL_DEBG));
   mme_config_read_lock (&mme_config);
-  addr.s_addr = mme_config.ipv4.mme_ip_address_for_s11;
+  addr.s_addr = mme_config.ipv4.s11;
   s11_address_str = inet_ntoa (addr);
   DevAssert (s11_address_str );
-  s11_send_init_udp (s11_address_str, mme_config.ipv4.mme_port_for_s11);
+  s11_send_init_udp (s11_address_str, mme_config.ipv4.port_s11);
   mme_config_unlock (&mme_config);
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: DONE\n");
   return ret;
