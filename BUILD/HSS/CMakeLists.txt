@@ -278,7 +278,8 @@ target_link_libraries (oai_hss
                        ${NETTLE_LIBRARIES} 
                        ${FREEDIAMETER_LIBRARIES}
                        ${CONFIG_LIBRARIES}  
-                       ${CMAKE_THREAD_LIBS_INIT} )
+                       ${CMAKE_THREAD_LIBS_INIT} 
+                       gnutls)
 
 # Default parameters
 # Does not work on simple install (fqdn in /etc/hosts 127.0.1.1)
