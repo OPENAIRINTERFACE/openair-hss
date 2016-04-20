@@ -282,7 +282,15 @@ install_nettle_from_source() {
     cd /tmp
     echo "Downloading nettle archive"
     rm -rf /tmp/nettle-2.5.tar.gz* /tmp/nettle-2.5
-    wget ftp://ftp.lysator.liu.se/pub/security/lsh/nettle-2.5.tar.gz 
+    wget https://ftp.gnu.org/gnu/nettle/nettle-2.5.tar.gz
+    if [ $? -ne 0 ]; then
+      wget ftp://ftp.lysator.liu.se/pub/security/lsh/nettle-2.5.tar.gz
+    fi
+    if [ ! -f nettle-2.5.tar.gz ]; then
+      echo_error "Could not download nettle source files"
+      cd -
+      return
+    fi 
     tar -xzf nettle-2.5.tar.gz
     cd nettle-2.5/
     ./configure --disable-openssl --enable-shared --prefix=/usr 
@@ -336,7 +344,15 @@ install_gnutls_from_source(){
     cd /tmp 
     echo "Downloading gnutls archive"
     rm -rf /tmp/gnutls-3.1.23.tar.xz* /tmp/gnutls-3.1.23
-    wget ftp://ftp.gnutls.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz 
+    wget http://mirrors.dotsrc.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz
+    if [ $? -ne 0 ]; then
+      wget ftp://ftp.gnutls.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz 
+    fi
+    if [ ! -f gnutls-3.1.23.tar.xz ]; then
+      echo_error "Could not download gnutls source files"
+      cd -
+      return
+    fi 
     tar -xJf gnutls-3.1.23.tar.xz
     cd gnutls-3.1.23/
     ./configure --prefix=/usr
