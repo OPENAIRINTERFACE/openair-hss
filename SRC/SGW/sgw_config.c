@@ -68,6 +68,10 @@ static int sgw_system (
   int                                     ret = RETURNerror;
 
   if (command_pP) {
+#if DISABLE_EXECUTE_SHELL_COMMAND
+    ret = 0;
+    OAILOG_INFO (LOG_SPGW_APP, "Not executing system command: %s\n", bdata(command_pP));
+#else
     OAILOG_INFO (LOG_SPGW_APP, "system command: %s\n", bdata(command_pP));
     // The value returned is -1 on error (e.g., fork(2) failed), and the return status of the command otherwise.
     // This latter return status is in the format specified in wait(2).  Thus, the exit code
@@ -81,6 +85,7 @@ static int sgw_system (
         exit (-1);              // may be not exit
       }
     }
+#endif
   }
   return ret;
 }

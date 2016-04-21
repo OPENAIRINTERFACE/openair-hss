@@ -196,6 +196,7 @@ add_boolean_option( ENABLE_ITTI_ANALYZER            False    "ITTI Analyzer is a
 add_integer_option( ITTI_TASK_STACK_SIZE            0        "pthread allocated stack size in bytes of an ITTI task, if 0, use default stack size ") 
 add_integer_option( ITTI_LITE                       0        "Do not use ITTI systematically for each message exchanged between layer modules") 
 add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
+add_boolean_option( DISABLE_EXECUTE_SHELL_COMMAND   False    "disable execution of C int system(const char *command);")
 # NAS LAYER OPTIONS
 ##########################
 add_boolean_option( EPC_BUILD                       False    "BUILD MME-xGW executable")

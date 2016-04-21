@@ -558,7 +558,12 @@ check_gtpu_kmodule_installed() {
   if [ -e /lib/modules/`uname -r`/extra/xt_GTPUSP.ko ]; then
     echo_info "GTPU kernel module installed"
   else
-    echo_fatal "GTPU kernel module not installed"
+    echo_error "GTPU kernel module not installed - SPGW might crash"
+    echo_error "You can continue if you know what you are doing"
+    read -p "Do you want continue? <Y/n> " prompt
+    if [[ $prompt =~ [nN](o)* ]]; then
+      exit -1
+    fi
   fi  
 }
 

@@ -61,9 +61,13 @@ static int pgw_system (
   const char *const file_nameP,
   const int line_numberP)
 {
-  int                                     ret = -1;
+  int                                     ret = RETURNerror;
 
   if (command_pP) {
+#if DISABLE_EXECUTE_SHELL_COMMAND
+    ret = 0;
+    OAILOG_INFO (LOG_SPGW_APP, "Not executing system command: %s\n", bdata(command_pP));
+#else
     OAILOG_INFO (LOG_SPGW_APP, "system command: %s\n", bdata(command_pP));
     ret = system (bdata(command_pP));
 
@@ -74,6 +78,7 @@ static int pgw_system (
         exit (-1);              // may be not exit
       }
     }
+#endif
   }
   return ret;
 }
