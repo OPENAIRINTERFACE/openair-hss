@@ -812,7 +812,6 @@ add_executable(mme
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme.c
   ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
   ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
-  ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
   )
 if( ITTI_ANALYZER )
