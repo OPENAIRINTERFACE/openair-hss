@@ -154,7 +154,7 @@ s11_mme_modify_bearer_request (
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
                               S11_MME_GTP_C,
                               req_p->sender_fteid_for_cp.teid,
-                              req_p->sender_fteid_for_cp.ipv4 ? req_p->sender_fteid_for_cp.ipv4_address : 0,
+                              req_p->sender_fteid_for_cp.ipv4 ? ntohl(req_p->sender_fteid_for_cp.ipv4_address) : 0,
                               req_p->sender_fteid_for_cp.ipv6 ? req_p->sender_fteid_for_cp.ipv6_address : NULL);
 
 
