@@ -68,24 +68,24 @@ void *mme_app_thread (
       }
       break;
 
-    case SGW_CREATE_SESSION_RESPONSE:{
-        mme_app_handle_create_sess_resp (&received_message_p->ittiMsg.sgw_create_session_response);
+    case S11_CREATE_SESSION_RESPONSE:{
+        mme_app_handle_create_sess_resp (&received_message_p->ittiMsg.s11_create_session_response);
       }
       break;
 
-    case SGW_MODIFY_BEARER_RESPONSE:{
+    case S11_MODIFY_BEARER_RESPONSE:{
         OAILOG_DEBUG (LOG_MME_APP, " TO DO HANDLE SGW_MODIFY_BEARER_RESPONSE\n");
         // TO DO
       }
       break;
 
-    case SGW_RELEASE_ACCESS_BEARERS_RESPONSE:{
-        mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.sgw_release_access_bearers_response);
+    case S11_RELEASE_ACCESS_BEARERS_RESPONSE:{
+        mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.s11_release_access_bearers_response);
       }
       break;
 
-    case SGW_DELETE_SESSION_RESPONSE: {
-      mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.sgw_delete_session_response);
+    case S11_DELETE_SESSION_RESPONSE: {
+      mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.s11_delete_session_response);
       }
       break;
 

@@ -63,15 +63,15 @@ void mme_app_handle_conn_est_cnf             (const itti_nas_conn_est_cnf_t * co
 
 void mme_app_handle_initial_ue_message       (const itti_mme_app_initial_ue_message_t * const conn_est_ind_pP);
 
-int mme_app_handle_create_sess_resp          (itti_sgw_create_session_response_t * const create_sess_resp_pP); //not const because we need to free internal stucts
+int mme_app_handle_create_sess_resp          (itti_s11_create_session_response_t * const create_sess_resp_pP); //not const because we need to free internal stucts
 
-void mme_app_handle_delete_session_rsp	     (const itti_sgw_delete_session_response_t * const delete_sess_respP);
+void mme_app_handle_delete_session_rsp	     (const itti_s11_delete_session_response_t * const delete_sess_respP);
 
 int mme_app_handle_establish_ind             (const nas_establish_ind_t * const nas_establish_ind_pP);
 
 int mme_app_handle_authentication_info_answer(const s6a_auth_info_ans_t * const s6a_auth_info_ans_pP);
 
-void  mme_app_handle_release_access_bearers_resp (const itti_sgw_release_access_bearers_response_t * const rel_access_bearers_rsp_pP);
+void  mme_app_handle_release_access_bearers_resp (const itti_s11_release_access_bearers_response_t * const rel_access_bearers_rsp_pP);
 
 nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);
 

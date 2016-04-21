@@ -29,7 +29,7 @@
 #include "log.h"
 #include "assertions.h"
 #include "conversions.h"
-#include "sgw_messages_types.h"
+#include "intertask_interface.h"
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"

@@ -50,28 +50,28 @@ mme_app_send_delete_session_request (
 {
   MessageDef                             *message_p = NULL;
 
-  message_p = itti_alloc_new_message (TASK_MME_APP, SGW_DELETE_SESSION_REQUEST);
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_SESSION_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
-  memset ((void *)&message_p->ittiMsg.sgw_delete_session_request, 0, sizeof (itti_sgw_delete_session_request_t));
-  SGW_DELETE_SESSION_REQUEST (message_p).teid = ue_context_p->sgw_s11_teid;
-  SGW_DELETE_SESSION_REQUEST (message_p).lbi = ue_context_p->default_bearer_id;
+  memset ((void *)&message_p->ittiMsg.s11_delete_session_request, 0, sizeof (itti_s11_delete_session_request_t));
+  S11_DELETE_SESSION_REQUEST (message_p).teid = ue_context_p->sgw_s11_teid;
+  S11_DELETE_SESSION_REQUEST (message_p).lbi = ue_context_p->default_bearer_id;
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  SGW_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
+  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
-  SGW_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
+  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
   /*
    * S11 stack specific parameter. Not used in standalone epc mode
    */
-  SGW_DELETE_SESSION_REQUEST  (message_p).trxn = NULL;
+  S11_DELETE_SESSION_REQUEST  (message_p).trxn = NULL;
   mme_config_read_lock (&mme_config);
-  SGW_DELETE_SESSION_REQUEST (message_p).peer_ip = mme_config.ipv4.sgw_s11;
+  S11_DELETE_SESSION_REQUEST (message_p).peer_ip = mme_config.ipv4.sgw_s11;
   mme_config_unlock (&mme_config);
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME,
-                      NULL, 0, "0  SGW_DELETE_SESSION_REQUEST teid %u lbi %u",
-                      SGW_DELETE_SESSION_REQUEST  (message_p).teid,
-                      SGW_DELETE_SESSION_REQUEST  (message_p).lbi);
+                      NULL, 0, "0  S11_DELETE_SESSION_REQUEST teid %u lbi %u",
+                      S11_DELETE_SESSION_REQUEST  (message_p).teid,
+                      S11_DELETE_SESSION_REQUEST  (message_p).lbi);
 
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);

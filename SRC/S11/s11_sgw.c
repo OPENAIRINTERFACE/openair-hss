@@ -42,7 +42,7 @@
 #include "s11_sgw_session_manager.h"
 
 
-static NwGtpv2cStackHandleT             s11_sgw_stack_handle;
+static NwGtpv2cStackHandleT             s11_sgw_stack_handle = 0;
 
 /* ULP callback for the GTPv2-C stack */
 //------------------------------------------------------------------------------
@@ -183,27 +183,27 @@ static void *s11_sgw_thread (void *args)
       }
       break;
 
-    case SGW_CREATE_SESSION_RESPONSE:{
-        OAILOG_DEBUG (LOG_S11, "Received SGW_CREATE_SESSION_RESPONSE from S-PGW APP\n");
-        s11_sgw_handle_create_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_create_session_response);
+    case S11_CREATE_SESSION_RESPONSE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_CREATE_SESSION_RESPONSE from S-PGW APP\n");
+        s11_sgw_handle_create_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_create_session_response);
       }
       break;
 
-    case SGW_MODIFY_BEARER_RESPONSE:{
-        OAILOG_DEBUG (LOG_S11, "Received SGW_MODIFY_BEARER_RESPONSE from S-PGW APP\n");
-        s11_sgw_handle_modify_bearer_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_modify_bearer_response);
+    case S11_MODIFY_BEARER_RESPONSE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_MODIFY_BEARER_RESPONSE from S-PGW APP\n");
+        s11_sgw_handle_modify_bearer_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_response);
       }
       break;
 
-    case SGW_DELETE_SESSION_RESPONSE:{
-        OAILOG_DEBUG (LOG_S11, "Received SGW_DELETE_SESSION_RESPONSE from S-PGW APP\n");
-        s11_sgw_handle_delete_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_delete_session_response);
+    case S11_DELETE_SESSION_RESPONSE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_DELETE_SESSION_RESPONSE from S-PGW APP\n");
+        s11_sgw_handle_delete_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_delete_session_response);
       }
       break;
 
-    case SGW_RELEASE_ACCESS_BEARERS_RESPONSE:{
-        OAILOG_DEBUG (LOG_S11, "Received SGW_RELEASE_ACCESS_BEARERS_RESPONSE from S-PGW APP\n");
-        s11_sgw_handle_release_access_bearers_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_release_access_bearers_response);
+    case S11_RELEASE_ACCESS_BEARERS_RESPONSE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_RELEASE_ACCESS_BEARERS_RESPONSE from S-PGW APP\n");
+        s11_sgw_handle_release_access_bearers_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_release_access_bearers_response);
       }
       break;
 

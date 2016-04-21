@@ -38,7 +38,7 @@
 #include "msc.h"
 #include "log.h"
 
-static NwGtpv2cStackHandleT             s11_mme_stack_handle = NULL;
+static NwGtpv2cStackHandleT             s11_mme_stack_handle = 0;
 
 //------------------------------------------------------------------------------
 static NwRcT
@@ -173,24 +173,24 @@ s11_mme_thread (
     assert (received_message_p );
 
     switch (ITTI_MSG_ID (received_message_p)) {
-    case SGW_CREATE_SESSION_REQUEST:{
-        s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgw_create_session_request);
+    case S11_CREATE_SESSION_REQUEST:{
+        s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_session_request);
       }
       break;
 
-    case SGW_MODIFY_BEARER_REQUEST:{
-        s11_mme_modify_bearer_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgw_modify_bearer_request);
+    case S11_MODIFY_BEARER_REQUEST:{
+        s11_mme_modify_bearer_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_request);
       }
       break;
 
 
-    case SGW_DELETE_SESSION_REQUEST:{
-        s11_mme_delete_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgw_delete_session_request);
+    case S11_DELETE_SESSION_REQUEST:{
+        s11_mme_delete_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_session_request);
       }
       break;
 
-    case SGW_RELEASE_ACCESS_BEARERS_REQUEST:{
-        s11_mme_release_access_bearers_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.sgw_release_access_bearers_request);
+    case S11_RELEASE_ACCESS_BEARERS_REQUEST:{
+        s11_mme_release_access_bearers_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_release_access_bearers_request);
       }
       break;
 

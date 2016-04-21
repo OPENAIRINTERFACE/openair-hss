@@ -114,7 +114,7 @@ typedef struct sgw_eps_bearer_context_information_s {
   void                  *trxn;
   uint32_t               peer_ip;
 
-  itti_sgw_create_session_request_t saved_message;
+  itti_s11_create_session_request_t saved_message;
 } sgw_eps_bearer_context_information_t;
 
 //------------------------------------------------------------------------------

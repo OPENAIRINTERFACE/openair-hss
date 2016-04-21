@@ -25,7 +25,7 @@
 
 
 /* @brief Create a new Release Access Bearers Request and send it to provided S-GW. */
-int s11_mme_release_access_bearers_request(NwGtpv2cStackHandleT *stack_p, itti_sgw_release_access_bearers_request_t *release_access_bearers_p);
+int s11_mme_release_access_bearers_request(NwGtpv2cStackHandleT *stack_p, itti_s11_release_access_bearers_request_t *release_access_bearers_p);
 
 /* @brief Handle a Release Access Bearer Response received from S-GW. */
 int s11_mme_handle_release_access_bearer_response (NwGtpv2cStackHandleT * stack_p, NwGtpv2cUlpApiT * pUlpApi);

@@ -70,29 +70,29 @@ static void *sgw_intertask_interface (void *args_p)
     itti_receive_msg (TASK_SPGW_APP, &received_message_p);
 
     switch (ITTI_MSG_ID (received_message_p)) {
-    case SGW_CREATE_SESSION_REQUEST:{
+    case S11_CREATE_SESSION_REQUEST:{
         /*
          * We received a create session request from MME (with GTP abstraction here)
          * * * * procedures might be:
          * * * *      E-UTRAN Initial Attach
          * * * *      UE requests PDN connectivity
          */
-        sgw_handle_create_session_request (&received_message_p->ittiMsg.sgw_create_session_request);
+        sgw_handle_create_session_request (&received_message_p->ittiMsg.s11_create_session_request);
       }
       break;
 
-    case SGW_MODIFY_BEARER_REQUEST:{
-        sgw_handle_modify_bearer_request (&received_message_p->ittiMsg.sgw_modify_bearer_request);
+    case S11_MODIFY_BEARER_REQUEST:{
+        sgw_handle_modify_bearer_request (&received_message_p->ittiMsg.s11_modify_bearer_request);
       }
       break;
 
-    case SGW_RELEASE_ACCESS_BEARERS_REQUEST:{
-        sgw_handle_release_access_bearers_request (&received_message_p->ittiMsg.sgw_release_access_bearers_request);
+    case S11_RELEASE_ACCESS_BEARERS_REQUEST:{
+        sgw_handle_release_access_bearers_request (&received_message_p->ittiMsg.s11_release_access_bearers_request);
       }
       break;
 
-    case SGW_DELETE_SESSION_REQUEST:{
-        sgw_handle_delete_session_request (&received_message_p->ittiMsg.sgw_delete_session_request);
+    case S11_DELETE_SESSION_REQUEST:{
+        sgw_handle_delete_session_request (&received_message_p->ittiMsg.s11_delete_session_request);
       }
       break;
 

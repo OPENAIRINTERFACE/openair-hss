@@ -47,13 +47,13 @@ s11_sgw_handle_create_session_request (
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
-  itti_sgw_create_session_request_t      *create_session_request_p;
+  itti_s11_create_session_request_t      *create_session_request_p;
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 
   DevAssert (stack_p );
-  message_p = itti_alloc_new_message (TASK_S11, SGW_CREATE_SESSION_REQUEST);
-  create_session_request_p = &message_p->ittiMsg.sgw_create_session_request;
+  message_p = itti_alloc_new_message (TASK_S11, S11_CREATE_SESSION_REQUEST);
+  create_session_request_p = &message_p->ittiMsg.s11_create_session_request;
   /*
    * Create a new message parser
    */
@@ -232,7 +232,7 @@ s11_sgw_handle_create_session_request (
 int
 s11_sgw_handle_create_session_response (
   NwGtpv2cStackHandleT * stack_p,
-  itti_sgw_create_session_response_t * create_session_response_p)
+  itti_s11_create_session_response_t * create_session_response_p)
 {
   NwRcT                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
@@ -299,13 +299,13 @@ s11_sgw_handle_delete_session_request (
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
-  itti_sgw_delete_session_request_t                *delete_session_request_p;
+  itti_s11_delete_session_request_t      *delete_session_request_p;
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 
   DevAssert (stack_p );
-  message_p = itti_alloc_new_message (TASK_S11, SGW_DELETE_SESSION_REQUEST);
-  delete_session_request_p = &message_p->ittiMsg.sgw_delete_session_request;
+  message_p = itti_alloc_new_message (TASK_S11, S11_DELETE_SESSION_REQUEST);
+  delete_session_request_p = &message_p->ittiMsg.s11_delete_session_request;
   memset((void*)delete_session_request_p, 0, sizeof(*delete_session_request_p));
   /*
    * Create a new message parser
@@ -393,7 +393,7 @@ s11_sgw_handle_delete_session_request (
 int
 s11_sgw_handle_delete_session_response (
   NwGtpv2cStackHandleT * stack_p,
-  itti_sgw_delete_session_response_t * delete_session_response_p)
+  itti_s11_delete_session_response_t * delete_session_response_p)
 {
   NwRcT                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;

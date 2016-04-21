@@ -47,13 +47,13 @@ s11_sgw_handle_modify_bearer_request (
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
-  itti_sgw_modify_bearer_request_t       *request_p;
+  itti_s11_modify_bearer_request_t       *request_p;
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
 
   DevAssert (stack_p );
-  message_p = itti_alloc_new_message (TASK_S11, SGW_MODIFY_BEARER_REQUEST);
-  request_p = &message_p->ittiMsg.sgw_modify_bearer_request;
+  message_p = itti_alloc_new_message (TASK_S11, S11_MODIFY_BEARER_REQUEST);
+  request_p = &message_p->ittiMsg.s11_modify_bearer_request;
   memset(request_p, 0, sizeof(*request_p));
   request_p->trxn = (void *)pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
   request_p->teid = nwGtpv2cMsgGetTeid (pUlpApi->hMsg);
@@ -146,7 +146,7 @@ s11_sgw_handle_modify_bearer_request (
 int
 s11_sgw_handle_modify_bearer_response (
   NwGtpv2cStackHandleT * stack_p,
-  itti_sgw_modify_bearer_response_t * response_p)
+  itti_s11_modify_bearer_response_t * response_p)
 {
   gtp_cause_t                             cause;
   NwRcT                                   rc;
@@ -187,13 +187,13 @@ s11_sgw_handle_release_access_bearers_request (
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
-  itti_sgw_release_access_bearers_request_t  *request_p = NULL;
+  itti_s11_release_access_bearers_request_t  *request_p = NULL;
   MessageDef                             *message_p = NULL;
   NwGtpv2cMsgParserT                     *pMsgParser = NULL;
 
   DevAssert (stack_p );
-  message_p = itti_alloc_new_message (TASK_S11, SGW_RELEASE_ACCESS_BEARERS_REQUEST);
-  request_p = &message_p->ittiMsg.sgw_release_access_bearers_request;
+  message_p = itti_alloc_new_message (TASK_S11, S11_RELEASE_ACCESS_BEARERS_REQUEST);
+  request_p = &message_p->ittiMsg.s11_release_access_bearers_request;
   memset((void*)request_p, 0, sizeof(*request_p));
 
   request_p->trxn = (void *)pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
@@ -267,7 +267,7 @@ s11_sgw_handle_release_access_bearers_request (
 int
 s11_sgw_handle_release_access_bearers_response (
   NwGtpv2cStackHandleT * stack_p,
-  itti_sgw_release_access_bearers_response_t * response_p)
+  itti_s11_release_access_bearers_response_t * response_p)
 {
   gtp_cause_t                             cause;
   NwRcT                                   rc;

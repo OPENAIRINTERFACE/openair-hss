@@ -28,7 +28,7 @@ int s11_sgw_handle_modify_bearer_request(
 
 int s11_sgw_handle_modify_bearer_response(
   NwGtpv2cStackHandleT    *stack_p,
-  itti_sgw_modify_bearer_response_t *modify_bearer_response_p);
+  itti_s11_modify_bearer_response_t *modify_bearer_response_p);
 
 int
 s11_sgw_handle_release_access_bearers_request (
@@ -37,6 +37,6 @@ s11_sgw_handle_release_access_bearers_request (
 
 int s11_sgw_handle_release_access_bearers_response (
   NwGtpv2cStackHandleT * stack_p,
-  itti_sgw_release_access_bearers_response_t * response_p);
+  itti_s11_release_access_bearers_response_t * response_p);
 
 #endif /* FILE_S11_SGW_BEARER_MANAGER_SEEN */

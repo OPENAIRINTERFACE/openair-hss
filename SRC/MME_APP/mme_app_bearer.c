@@ -54,21 +54,21 @@ mme_app_send_s11_release_access_bearers_req (
    * Keep the identifier to the default APN
    */
   MessageDef                             *message_p = NULL;
-  itti_sgw_release_access_bearers_request_t         *release_access_bearers_request_p = NULL;
+  itti_s11_release_access_bearers_request_t         *release_access_bearers_request_p = NULL;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (ue_context_pP );
-  message_p = itti_alloc_new_message (TASK_MME_APP, SGW_RELEASE_ACCESS_BEARERS_REQUEST);
-  release_access_bearers_request_p = &message_p->ittiMsg.sgw_release_access_bearers_request;
-  memset ((void*)release_access_bearers_request_p, 0, sizeof (itti_sgw_release_access_bearers_request_t));
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_RELEASE_ACCESS_BEARERS_REQUEST);
+  release_access_bearers_request_p = &message_p->ittiMsg.s11_release_access_bearers_request;
+  memset ((void*)release_access_bearers_request_p, 0, sizeof (itti_s11_release_access_bearers_request_t));
   release_access_bearers_request_p->teid = ue_context_pP->sgw_s11_teid;
   release_access_bearers_request_p->list_of_rabs.num_ebi = 1;
   release_access_bearers_request_p->list_of_rabs.ebis[0] = ue_context_pP->default_bearer_id;
   release_access_bearers_request_p->originating_node = NODE_TYPE_MME;
 
 
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 SGW_RELEASE_ACCESS_BEARERS_REQUEST teid %u ebi %u",
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_RELEASE_ACCESS_BEARERS_REQUEST teid %u ebi %u",
       release_access_bearers_request_p->teid, release_access_bearers_request_p->list_of_rabs.ebis[0]);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
@@ -87,7 +87,7 @@ mme_app_send_s11_create_session_req (
    */
   context_identifier_t                    context_identifier = 0;
   MessageDef                             *message_p = NULL;
-  itti_sgw_create_session_request_t      *session_request_p = NULL;
+  itti_s11_create_session_request_t      *session_request_p = NULL;
   struct apn_configuration_s             *default_apn_p = NULL;
   int                                     rc = RETURNok;
 
@@ -103,7 +103,7 @@ mme_app_send_s11_create_session_req (
     DevMessage ("Not implemented: ACCESS NOT GRANTED, send ESM Failure to NAS\n");
   }
 
-  message_p = itti_alloc_new_message (TASK_MME_APP, SGW_CREATE_SESSION_REQUEST);
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_CREATE_SESSION_REQUEST);
   /*
    * WARNING:
    * Some parameters should be provided by NAS Layer:
@@ -119,8 +119,8 @@ mme_app_send_s11_create_session_req (
    * - selection_mode
    * Set these parameters with random values for now.
    */
-  session_request_p = &message_p->ittiMsg.sgw_create_session_request;
-  memset (session_request_p, 0, sizeof (itti_sgw_create_session_request_t));
+  session_request_p = &message_p->ittiMsg.s11_create_session_request;
+  memset (session_request_p, 0, sizeof (itti_s11_create_session_request_t));
   /*
    * As the create session request is the first exchanged message and as
    * no tunnel had been previously setup, the distant teid is set to 0.
@@ -229,12 +229,6 @@ mme_app_send_s11_create_session_req (
 
   copy_protocol_configuration_options (&session_request_p->pco, &ue_context_pP->pending_pdn_connectivity_req_pco);
   clear_protocol_configuration_options(&ue_context_pP->pending_pdn_connectivity_req_pco);
-#define TEMPORARY_DEBUG 1
-#if TEMPORARY_DEBUG
-  bstring b = protocol_configuration_options_to_xml(&session_request_p->pco);
-  OAILOG_DEBUG (LOG_MME_APP, "PCO %s\n", bdata(b));
-  bdestroy(b);
-#endif
 
   mme_config_read_lock (&mme_config);
   session_request_p->peer_ip = mme_config.ipv4.sgw_s11;
@@ -247,7 +241,7 @@ mme_app_send_s11_create_session_req (
   session_request_p->serving_network.mnc[2] = ue_context_pP->e_utran_cgi.plmn.mnc_digit3;
   session_request_p->selection_mode = MS_O_N_P_APN_S_V;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0,
-      "0 SGW_CREATE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_context_pP->imsi);
+      "0 S11_CREATE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_context_pP->imsi);
   rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
@@ -499,14 +493,14 @@ mme_app_handle_initial_ue_message (
 //------------------------------------------------------------------------------
 void
 mme_app_handle_delete_session_rsp (
-  const itti_sgw_delete_session_response_t * const delete_sess_resp_pP)
+  const itti_s11_delete_session_response_t * const delete_sess_resp_pP)
 //------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (delete_sess_resp_pP );
-  OAILOG_DEBUG (LOG_MME_APP, "Received SGW_DELETE_SESSION_RESPONSE from S+P-GW with the ID " MME_UE_S1AP_ID_FMT "\n ",delete_sess_resp_pP->teid);
+  OAILOG_DEBUG (LOG_MME_APP, "Received S11_DELETE_SESSION_RESPONSE from S+P-GW with the ID " MME_UE_S1AP_ID_FMT "\n ",delete_sess_resp_pP->teid);
   ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, delete_sess_resp_pP->teid);
 
   if (ue_context_p == NULL) {
@@ -534,7 +528,7 @@ mme_app_handle_delete_session_rsp (
 //------------------------------------------------------------------------------
 int
 mme_app_handle_create_sess_resp (
-  itti_sgw_create_session_response_t * const create_sess_resp_pP)
+  itti_s11_create_session_response_t * const create_sess_resp_pP)
 {
   struct ue_context_s                    *ue_context_p = NULL;
   bearer_context_t                       *current_bearer_p = NULL;
@@ -544,7 +538,7 @@ mme_app_handle_create_sess_resp (
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (create_sess_resp_pP );
-  OAILOG_DEBUG (LOG_MME_APP, "Received SGW_CREATE_SESSION_RESPONSE from S+P-GW\n");
+  OAILOG_DEBUG (LOG_MME_APP, "Received S11_CREATE_SESSION_RESPONSE from S+P-GW\n");
   ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, create_sess_resp_pP->teid);
 
   if (ue_context_p == NULL) {
@@ -762,34 +756,34 @@ mme_app_handle_initial_context_setup_rsp (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-  message_p = itti_alloc_new_message (TASK_MME_APP, SGW_MODIFY_BEARER_REQUEST);
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_MODIFY_BEARER_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
-  itti_sgw_modify_bearer_request_t *sgw_modify_bearer_request = &message_p->ittiMsg.sgw_modify_bearer_request;
-  memset ((void *)sgw_modify_bearer_request, 0, sizeof (*sgw_modify_bearer_request));
-  sgw_modify_bearer_request->teid = ue_context_p->sgw_s11_teid;
+  itti_s11_modify_bearer_request_t *s11_modify_bearer_request = &message_p->ittiMsg.s11_modify_bearer_request;
+  memset ((void *)s11_modify_bearer_request, 0, sizeof (*s11_modify_bearer_request));
+  s11_modify_bearer_request->teid = ue_context_p->sgw_s11_teid;
   /*
    * Delay Value in integer multiples of 50 millisecs, or zero
    */
-  sgw_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TO DO
-  sgw_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id = initial_ctxt_setup_rsp_pP->eps_bearer_id;
-  memcpy (&sgw_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid,
+  s11_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TO DO
+  s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id = initial_ctxt_setup_rsp_pP->eps_bearer_id;
+  memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid,
       &initial_ctxt_setup_rsp_pP->bearer_s1u_enb_fteid,
-      sizeof (sgw_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid));
-  sgw_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context = 1;
+      sizeof (s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid));
+  s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context = 1;
 
-  sgw_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context = 0;
+  s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context = 0;
 
-  sgw_modify_bearer_request->mme_fq_csid.node_id_type = GLOBAL_UNICAST_IPv4; // TO DO
-  sgw_modify_bearer_request->mme_fq_csid.csid = 0;   // TO DO ...
-  memset(&sgw_modify_bearer_request->indication_flags, 0, sizeof(sgw_modify_bearer_request->indication_flags));   // TO DO
-  sgw_modify_bearer_request->rat_type = RAT_EUTRAN;
+  s11_modify_bearer_request->mme_fq_csid.node_id_type = GLOBAL_UNICAST_IPv4; // TO DO
+  s11_modify_bearer_request->mme_fq_csid.csid = 0;   // TO DO ...
+  memset(&s11_modify_bearer_request->indication_flags, 0, sizeof(s11_modify_bearer_request->indication_flags));   // TO DO
+  s11_modify_bearer_request->rat_type = RAT_EUTRAN;
   /*
    * S11 stack specific parameter. Not used in standalone epc mode
    */
-  sgw_modify_bearer_request->trxn = NULL;
+  s11_modify_bearer_request->trxn = NULL;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
-                      NULL, 0, "0 SGW_MODIFY_BEARER_REQUEST teid %u ebi %u", sgw_modify_bearer_request->teid,
-                      sgw_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id);
+                      NULL, 0, "0 S11_MODIFY_BEARER_REQUEST teid %u ebi %u", s11_modify_bearer_request->teid,
+                      s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id);
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -797,7 +791,7 @@ mme_app_handle_initial_context_setup_rsp (
 //------------------------------------------------------------------------------
 void
 mme_app_handle_release_access_bearers_resp (
-  const itti_sgw_release_access_bearers_response_t * const rel_access_bearers_rsp_pP)
+  const itti_s11_release_access_bearers_response_t * const rel_access_bearers_rsp_pP)
 {
   MessageDef                             *message_p = NULL;
   struct ue_context_s                    *ue_context_p = NULL;
