@@ -725,7 +725,8 @@ s11_bearer_context_created_ie_set (
   DevAssert (NW_OK == rc);
   rc = nwGtpv2cMsgAddIeFteid (*msg, NW_GTPV2C_IE_INSTANCE_ZERO,
                               bearer->s1u_sgw_fteid.interface_type,
-                              bearer->s1u_sgw_fteid.teid, bearer->s1u_sgw_fteid.ipv4 ? htonl (bearer->s1u_sgw_fteid.ipv4_address) : 0, bearer->s1u_sgw_fteid.ipv6 ? (uint8_t *) bearer->s1u_sgw_fteid.ipv6_address : NULL);
+                              bearer->s1u_sgw_fteid.teid, bearer->s1u_sgw_fteid.ipv4 ? htonl (bearer->s1u_sgw_fteid.ipv4_address) : 0,
+                              bearer->s1u_sgw_fteid.ipv6 ? (uint8_t *) bearer->s1u_sgw_fteid.ipv6_address : NULL);
   DevAssert (NW_OK == rc);
   /*
    * End section for grouped IE: bearer context created

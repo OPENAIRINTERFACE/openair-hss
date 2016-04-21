@@ -150,6 +150,15 @@ s11_sgw_handle_create_session_request (
            s11_bearer_context_to_be_created_ie_get, &create_session_request_p->bearer_contexts_to_be_created);
   DevAssert (NW_OK == rc);
 
+
+  /*
+   * Protocol Configuration Options IE
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PCO, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
+      s11_pco_ie_get, &create_session_request_p->pco);
+  DevAssert (NW_OK == rc);
+
+
   /*TODO rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
            s11_bearer_context_to_be_removed_ie_get, &create_session_request_p->bearer_contexts_to_be_removed);
   DevAssert (NW_OK == rc);*/
@@ -270,6 +279,7 @@ s11_sgw_handle_create_session_response (
    * Put 0 for now i.e. no existing context or restriction
    */
   s11_apn_restriction_ie_set (&(ulp_req.hMsg), 0);
+  s11_pco_ie_set (&(ulp_req.hMsg), &create_session_response_p->pco);
 
   for (int i = 0; i < create_session_response_p->bearer_contexts_created.num_bearer_context; i++) {
     s11_bearer_context_created_ie_set (&(ulp_req.hMsg), &create_session_response_p->bearer_contexts_created.bearer_contexts[i]);
