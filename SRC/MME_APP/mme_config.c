@@ -708,8 +708,8 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "    s1-MME iface .....: %s\n", bdata(config_pP->ipv4.if_name_s1_mme));
   OAILOG_INFO (LOG_CONFIG, "    s1-MME ip ........: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ipv4.s1_mme)));
   OAILOG_INFO (LOG_CONFIG, "    s11 MME iface ....: %s\n", bdata(config_pP->ipv4.if_name_s11));
-  OAILOG_INFO (LOG_CONFIG, "    s11 MME port  ....: %d\n", config_pP->ipv4.port_s11);
-  OAILOG_INFO (LOG_CONFIG, "    s11 S-GW ip ......: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ipv4.s11)));
+  OAILOG_INFO (LOG_CONFIG, "    s11 MME port .....: %d\n", config_pP->ipv4.port_s11);
+  OAILOG_INFO (LOG_CONFIG, "    s11 MME ip .......: %s\n", inet_ntoa (*((struct in_addr *)&config_pP->ipv4.s11)));
   OAILOG_INFO (LOG_CONFIG, "- ITTI:\n");
   OAILOG_INFO (LOG_CONFIG, "    queue size .......: %u (bytes)\n", config_pP->itti_config.queue_size);
   OAILOG_INFO (LOG_CONFIG, "    log file .........: %s\n", bdata(config_pP->itti_config.log_file));
