@@ -259,7 +259,12 @@ s11_sgw_handle_create_session_response (
   DevAssert (NW_OK == rc);
   cause.cause_value = (uint8_t) create_session_response_p->cause;
   s11_cause_ie_set (&(ulp_req.hMsg), &cause);
-  rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO, S1_U_SGW_GTP_U, create_session_response_p->s11_sgw_teid.teid, 0xC0A80EA2, NULL);
+
+  rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO, S1_U_SGW_GTP_U,
+      create_session_response_p->s11_sgw_teid.teid,
+      create_session_response_p->s11_sgw_teid.ipv4 ? ntohl(create_session_response_p->s11_sgw_teid.ipv4_address) : 0,
+      create_session_response_p->s11_sgw_teid.ipv6 ? create_session_response_p->s11_sgw_teid.ipv6_address : NULL);
+
   s11_paa_ie_set (&(ulp_req.hMsg), &create_session_response_p->paa);
   /*
    * Put 0 for now i.e. no existing context or restriction
