@@ -1148,8 +1148,6 @@ set_virtual_interface_up(){
   if [ "a${interface:0:4}" == "anone" ]; then
     return;
   fi
-  $SUDO ifconfig  $interface down > /dev/null 2>&1
-  sync
   echo "ifconfig  $interface $address up"
   $SUDO ifconfig  $interface $address up
   sync
@@ -1230,12 +1228,6 @@ set_spgw_network_interfaces(){
   set_network_interface  $SGW_INTERFACE_NAME_FOR_S5_S8_UP       $SGW_IPV4_ADDRESS_FOR_S5_S8_UP 
   set_network_interface  $PGW_INTERFACE_NAME_FOR_S5_S8          $PGW_IPV4_ADDRESS_FOR_S5_S8 
   set_network_interface  $PGW_INTERFACE_NAME_FOR_SGI            $PGW_IPV4_ADDRESS_FOR_SGI
-}
-
-# arg1 is EPC config file
-set_epc_network_interfaces(){
-  set_mme_network_interfaces $1
-  set_spgw_network_interfaces $1
 }
 
 #-------------------------------------------------------------------------------
