@@ -397,7 +397,6 @@ add_library(SECU_CN ${SECU_CN_SRC})
 set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/SRC/UTILS/conversions.c
   ${OPENAIRCN_DIR}/SRC/UTILS/enum_string.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/mme_config.c
   ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
   ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
   ${OPENAIRCN_DIR}/SRC/UTILS/pid_file.c
@@ -496,6 +495,7 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_location.c
   ${MME_DIR}/mme_app_transport.c
   ${MME_DIR}/mme_app_statistics.c
+  ${MME_DIR}/mme_config.c
   ${MME_DIR}/s6a_2_nas_cause.c
   )
 

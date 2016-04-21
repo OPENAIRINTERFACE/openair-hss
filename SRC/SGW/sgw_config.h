@@ -32,6 +32,8 @@
 #include <stdbool.h>
 #include "log.h"
 #include "bstrlib.h"
+#include "common_types.h"
+
 
 #define SGW_CONFIG_STRING_SGW_CONFIG                            "S-GW"
 #define SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG             "NETWORK_INTERFACES"

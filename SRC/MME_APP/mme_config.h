@@ -36,6 +36,7 @@
 #include "mme_default_values.h"
 #include "3gpp_23.003.h"
 #include "common_dim.h"
+#include "common_types.h"
 #include "log.h"
 #include "bstrlib.h"
 
