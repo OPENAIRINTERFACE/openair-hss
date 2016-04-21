@@ -182,16 +182,16 @@ typedef struct mme_config_s {
   } s1ap_config;
 
   struct {
-    bstring  if_name_s1_mme;
-    uint32_t  s1_mme;
-    int       netmask_s1_mme;
+    bstring    if_name_s1_mme;
+    ipv4_nbo_t s1_mme;
+    int        netmask_s1_mme;
 
-    bstring   if_name_s11;
-    uint32_t  s11;
-    int       netmask_s11;
-    uint16_t  port_s11;
+    bstring    if_name_s11;
+    ipv4_nbo_t s11;
+    int        netmask_s11;
+    uint16_t   port_s11;
 
-    uint32_t  sgw_s11;
+    ipv4_nbo_t sgw_s11;
   } ipv4;
 
   struct {

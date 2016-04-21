@@ -234,6 +234,8 @@ typedef struct {
   bitrate_t br_dl;
 } ambr_t;
 
+typedef uint32_t ipv4_nbo_t;
+
 typedef enum {
   IPv4 = 0,
   IPv6 = 1,

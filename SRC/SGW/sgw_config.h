@@ -68,17 +68,17 @@ typedef struct sgw_config_s {
   } itti_config;
 
   struct {
-    bstring   if_name_S1u_S12_S4_up;
-    uint32_t  S1u_S12_S4_up;
-    int       netmask_S1u_S12_S4_up;
+    bstring    if_name_S1u_S12_S4_up;
+    ipv4_nbo_t S1u_S12_S4_up;
+    int        netmask_S1u_S12_S4_up;
 
-    bstring   if_name_S5_S8_up;
-    uint32_t  S5_S8_up;
-    int       netmask_S5_S8_up;
+    bstring    if_name_S5_S8_up;
+    ipv4_nbo_t S5_S8_up;
+    int        netmask_S5_S8_up;
 
-    bstring   if_name_S11;
-    uint32_t  S11;
-    int       netmask_S11;
+    bstring    if_name_S11;
+    ipv4_nbo_t S11;
+    int        netmask_S11;
   } ipv4;
   uint16_t     udp_port_S1u_S12_S4_up;
 
