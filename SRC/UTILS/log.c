@@ -306,9 +306,9 @@ void log_set_config(const log_config_t * const config)
     g_oai_log.is_output_fd_unbuffered = false;
 
     if (config->output) {
-      if ((0 == biseqcstrcaseless(config->output, MME_CONFIG_STRING_OUTPUT_CONSOLE)) &&
-          (0 == biseqcstrcaseless(config->output, MME_CONFIG_STRING_OUTPUT_UNBUFFERED_CONSOLE))) {
-        if (0 == biseqcstrcaseless(config->output, "SYSLOG")){
+      if ((1 != biseqcstrcaseless(config->output, MME_CONFIG_STRING_OUTPUT_CONSOLE)) &&
+          (1 != biseqcstrcaseless(config->output, MME_CONFIG_STRING_OUTPUT_UNBUFFERED_CONSOLE))) {
+        if (1 != biseqcstrcaseless(config->output, "SYSLOG")){
           // if seems to be a file path
           if (('.' == bchar(config->output,0)) || ('/' == bchar(config->output,0))) {
             g_oai_log.log_fd = fopen (bdata(config->output), "w");
@@ -333,7 +333,7 @@ void log_set_config(const log_config_t * const config)
           }
         } else {
 #if DAEMONIZE == 0
-          // Otherwize already called in main()
+          // Otherwise already called in main()
           openlog(NULL, 0, LOG_USER);
 #endif
           g_oai_log.log_fd = NULL;
@@ -348,7 +348,7 @@ void log_set_config(const log_config_t * const config)
         setvbuf(stdout, NULL, _IONBF, 0);
         g_oai_log.log_fd = stdout;
         g_oai_log.is_output_is_fd = true;
-        if (0 != biseqcstrcaseless(config->output, "MME_CONFIG_STRING_OUTPUT_UNBUFFERED_CONSOLE")) {
+        if (1 == biseqcstrcaseless(config->output, MME_CONFIG_STRING_OUTPUT_UNBUFFERED_CONSOLE)) {
           g_oai_log.is_output_fd_unbuffered = true;
         } else {
           g_oai_log.is_output_fd_unbuffered = false;
