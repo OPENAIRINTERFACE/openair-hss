@@ -174,7 +174,7 @@ function main()
   if [ $daemon -ne 0 ]; then
     # TODO /usr/sbin ?
     do_stop_daemon
-    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/mme /usr/local/bin/mmed && echo_success "mmed installed"
+    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/mme /usr/sbin/mmed && echo_success "mmed installed"
   else
     $SUDO killall -q mme
     $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/mme /usr/local/bin && echo_success "mme installed" 

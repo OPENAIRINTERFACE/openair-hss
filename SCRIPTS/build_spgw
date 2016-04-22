@@ -170,7 +170,7 @@ function main()
   compilations SPGW spgw spgw
   if [ $daemon -ne 0 ]; then
     # TODO /usr/sbin ?
-    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/SPGW/BUILD/spgw /usr/local/bin/spgwd && echo_success "spgwd installed"
+    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/SPGW/BUILD/spgw /usr/sbin/spgwd && echo_success "spgwd installed"
   else
     $SUDO cp -upv $OPENAIRCN_DIR/BUILD/SPGW/BUILD/spgw /usr/local/bin && echo_success "spgw installed"
   fi
