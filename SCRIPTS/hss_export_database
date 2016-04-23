@@ -1,3 +1,4 @@
+#!/bin/bash
 ################################################################################
 # Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
 # contributor license agreements.  See the NOTICE file distributed with
@@ -18,28 +19,50 @@
 # For more information about the OpenAirInterface (OAI) Software Alliance:
 #      contact@openairinterface.org
 ################################################################################
-cmake_minimum_required(VERSION 2.8)
 
-# Options are Debug Release RelWithDebInfo MinSizeRel
-set (  CMAKE_BUILD_TYPE "Debug" )
-set (  BYTE_ORDER=LITTLE_ENDIAN )
-set (  DISABLE_ITTI_DETECT_SUB_TASK_ID True )
-set (  DISPLAY_LICENCE_INFO            False )
-set (  ENABLE_ITTI                     True )
-set (  ENABLE_ITTI_ANALYZER            False )
-set (  ITTI_TASK_STACK_SIZE            2097152 )
-set (  ITTI_LITE                       False )
-set (  LOG_OAI                         True )
-set (  LOG_OAI_CLEAN_HARD              False )
-set (  MESSAGE_CHART_GENERATOR         False )
-set (  MEMORY_CHECK                    False )
-set (  NAS_FORCE_REJECT_SR             True )
-set (  NAS_FORCE_REJECT_TAU            True )
-set (  MME_BUILD                       True )
-set (  PACKAGE_NAME                    "MME" )
-set (  S1AP_DEBUG_LIST                 False )
-set (  SECU_DEBUG                      False )
-set (  SCTP_DUMP_LIST                  False )
-set (  TRACE_HASHTABLE                 False )
-set (  TRACE_3GPP_SPEC                 False )
+# file export_hss_database
+# brief
+# author Lionel Gauthier
+# company Eurecom
+# email: lionel.gauthier@eurecom.fr
+################################
+# include helper functions
+################################
+THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
+. $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+
+
+# arg 1 is mysql hostname  (ex: 127.0.0.1)
+# arg 2 is hss username    (ex: hssadmin)
+# arg 3 is hss password    (ex: admin)
+# arg 4 is database name   (ex: oai_db)
+# arg 5 is export file name(ex: oai_db_dump.sql)
+function main(){
+  EXPECTED_ARGS=5
+  if [ $# -ne $EXPECTED_ARGS ]
+  then
+    echo_error "Usage: export_hss_database mysql_hostname hssuser hsspass databasename filename"
+    return 1
+  fi
+  local mysql_hostname=$1
+  local hss_username=$2
+  local hss_password=$3
+  local database_name=$4
+  local file_name=$5
+  
+  mysqldump -h $mysql_hostname -u $hss_username -p$hss_password $database_name > $file_name 2>&1
+  if [ $? -ne 0 ]; then
+    echo_error "HSS: $database_name dump failed:"
+    cat $file_name
+    return 1
+  else
+    echo_success "HSS: $database_name dump succeeded"
+  fi
+
+  return 0
+}
+
+set_openair_env 
+
+main "$@" 
 
