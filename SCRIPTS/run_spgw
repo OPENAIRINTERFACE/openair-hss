@@ -48,7 +48,8 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by spgw if you don't want to use the default one: $g_spgw_default_config_file"
-  echo_error "  -D, --daemon                        Run the daemon."
+  echo_error "  -d, --daemon                        Run the daemon."
+  echo_error "  -D, --disable-gtpu                  Disable loading GTPU kernel module, useful if working only on signaling aspects with other distributions/kernels than recommended."
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
   echo_error "                                      All repetitions of this argument are valid."
@@ -94,6 +95,7 @@ function main()
   local    breakpoint_location=""
   local -a gdb_args
   local -i gdb_index=0
+  local -i disable_gtpu=0
 
   until [ -z "$1" ]
     do
@@ -106,6 +108,11 @@ function main()
       -g | --gdb)
         run_gdb=1
         echo "setting GDB flag to: $run_gdb"
+        shift;
+        ;;
+      -d | --disable-gtpu)
+        disable_gtpu=1
+        echo "GTPU disabled"
         shift;
         ;;
       -D | --daemon)
@@ -196,8 +203,10 @@ function main()
 
   set_openair_env 
   cecho "OPENAIR_DIR    = $OPENAIR_DIR" $green
-
-  check_gtpu_kmodule_installed
+  
+  if [ $disable_gtpu -eq 0 ]; then
+    check_gtpu_kmodule_installed
+  fi
 
   if [ ! -f $spgw_config_file ]; then 
     echo_fatal "Please provide -c|--config-file valid argument (\"$spgw_config_file\" not a valid file)"
@@ -226,7 +235,7 @@ function main()
   DAEMON_ARGS=$DAEMON_ARGS" -c $spgw_config_file"
   if [ "$run_daemon" -eq 1 ]; then
     # TODO options
-    $SUDO killall -q mme
+    $SUDO killall -q spgw
     do_stop_daemon
     case "$?" in
       0) echo_success "SPGW daemon was running -> stopped";;
