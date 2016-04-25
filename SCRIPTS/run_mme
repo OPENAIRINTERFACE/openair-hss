@@ -198,6 +198,7 @@ function main()
     set_mme_network_interfaces $mme_config_file
   fi
     
+  DAEMON_ARGS=$DAEMON_ARGS" -c $mme_config_file"
   if [ "$run_daemon" -eq 1 ]; then
     # TODO options
     $SUDO killall -q mme
@@ -215,7 +216,6 @@ function main()
     esac
     exit 0
   fi
-
 
   exe_arguments="-c $mme_config_file $exe_arguments"
 

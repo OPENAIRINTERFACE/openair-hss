@@ -19,8 +19,7 @@
 # For more information about the OpenAirInterface (OAI) Software Alliance:
 #      contact@openairinterface.org
 ################################################################################
-
-# file import_hss_database
+# file hss_db_add_mme
 # brief
 # author Lionel Gauthier
 # company Eurecom
@@ -36,44 +35,33 @@ THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
 # arg 2 is hss username    (ex: hssadmin)
 # arg 3 is hss password    (ex: admin)
 # arg 4 is database name   (ex: oai_db)
-# arg 5 is import file name(ex: oai_db_dump.sql)
+# arg 5 is mme hostname    (ex: lionel-Z170X-UD3)
+# arg 6 is mme realm       (ex: openair4G.eur)
 function main(){
-  EXPECTED_ARGS=5
+  EXPECTED_ARGS=6
   if [ $# -ne $EXPECTED_ARGS ]
   then
-    echo_error "Usage: import_hss_database mysql_hostname hssuser hsspass databasename filename"
+    echo_error "Usage: hss_db_add_mme mysql_hostname hssuser hsspass databasename mme_hostname mme_realm"
     return 1
   fi
   local mysql_hostname=$1
   local hss_username=$2
   local hss_password=$3
   local database_name=$4
-  local file_name=$5
-  
-  mysqladmin --force -h $mysql_hostname -u $hss_username -p$hss_password drop $database_name 
-  
-  Q1="CREATE DATABASE IF NOT EXISTS $database_name;"
-  mysql -h $mysql_hostname -u $hss_username --password=$hss_password -e "${Q1}"
+  local mme_hostname=$5
+  local mme_realm=$6
+    
+  Q1="INSERT INTO mmeidentity (mmehost, mmerealm) SELECT '$mme_hostname.$mme_realm', '$mme_realm' FROM DUAL \
+   WHERE NOT EXISTS ( SELECT idmmeidentity FROM mmeidentity WHERE mmehost = '$mme_hostname.$mme_realm' )"
+  mysql -h $mysql_hostname -u $hss_username --password=$hss_password $database_name -e "${Q1}"
   if [ $? -ne 0 ]; then
-    echo_error "HSS: $database_name creation failed"
+    echo_error "HSS: $database_name update table mmeidentity failed"
     return 1
   else
-    echo_success "HSS: $database_name creation succeeded"
+    echo_success "HSS: $database_name update table mmeidentity succeeded"
   fi
-  
-  mysql -h $mysql_hostname -u $hss_username -p$hss_password $database_name < $file_name 
-  if [ $? -ne 0 ]; then
-    echo_error "HSS: $database_name import failed:"
-    cat $file_name
-    return 1
-  else
-    echo_success "HSS: $database_name import succeeded"
-  fi
-
   return 0
 }
-
-set_openair_env 
 
 main "$@" 
 
