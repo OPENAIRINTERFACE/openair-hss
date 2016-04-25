@@ -130,6 +130,7 @@ function main()
         ;;
       -k | --kill)
         $SUDO killall -q mme
+        $SUDO rm /var/run/mme.pid
         do_stop_daemon
         exit 0
         shift;

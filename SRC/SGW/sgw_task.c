@@ -55,6 +55,8 @@ spgw_config_t                           spgw_config;
 sgw_app_t                               sgw_app;
 pgw_app_t                               pgw_app;
 
+extern __pid_t g_pid;
+
 static void sgw_exit(void);
 
 //------------------------------------------------------------------------------
@@ -189,6 +191,14 @@ int sgw_init (spgw_config_t *spgw_config_pP)
     OAILOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
     return RETURNerror;
   }
+
+  FILE *fp = NULL;
+  bstring  filename = bformat("/tmp/spgw_%d.status", g_pid);
+  fp = fopen(bdata(filename), "w+");
+  bdestroy(filename);
+  fprintf(fp, "STARTED\n");
+  fflush(fp);
+  fclose(fp);
 
   OAILOG_DEBUG (LOG_SPGW_APP, "Initializing SPGW-APP task interface: DONE\n");
   return RETURNok;

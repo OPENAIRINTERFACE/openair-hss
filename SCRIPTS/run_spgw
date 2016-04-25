@@ -131,6 +131,7 @@ function main()
         ;;
       -k | --kill)
         $SUDO killall -q spgw
+        $SUDO rm /var/run/spgw.pid
         do_stop_daemon
         exit 0
         shift;
@@ -222,6 +223,7 @@ function main()
     set_spgw_network_interfaces $spgw_config_file
   fi
     
+  DAEMON_ARGS=$DAEMON_ARGS" -c $spgw_config_file"
   if [ "$run_daemon" -eq 1 ]; then
     # TODO options
     $SUDO killall -q mme
