@@ -102,7 +102,7 @@ typedef struct oai_log_s {
   // logging somewhere else of the console.
   FILE                                   *log_fd;                                               /*!< \brief output stream */
   bool                                    is_output_is_fd;                                      /* We may want to not use syslog even if exe is a daemon */
-  bool                                    is_output_fd_unbuffered;                              /* We way want no buffering */
+  bool                                    is_output_fd_buffered;                                /* We way want no buffering */
   bstring                                 bserver_address;                                      /*!< \brief TCP remote (or local) server hostname */
   bstring                                 bserver_port ;                                        /*!< \brief TCP remote (or local) server port     */
   log_tcp_state_t                         tcp_state;                                            /*!< \brief State of the client TCP connection           */
@@ -161,6 +161,7 @@ static log_queue_item_t * new_queue_item(void)
   log_queue_item_t * item_p = calloc(1, sizeof(log_queue_item_t));
   AssertFatal((item_p), "Allocation of log container failed");
   item_p->bstr = bfromcstralloc(LOG_MESSAGE_MIN_ALLOC_SIZE, "");
+  AssertFatal((item_p->bstr), "Allocation of buf in log container failed");
   return item_p;
 }
 
@@ -303,12 +304,11 @@ void log_set_config(const log_config_t * const config)
     if ((MAX_LOG_LEVEL > config->msc_log_level) && (MIN_LOG_LEVEL <= config->msc_log_level))           g_oai_log.log_level[LOG_MSC]      = config->msc_log_level;
     if ((MAX_LOG_LEVEL > config->itti_log_level) && (MIN_LOG_LEVEL <= config->itti_log_level))         g_oai_log.log_level[LOG_ITTI]     = config->itti_log_level;
 
-    g_oai_log.is_output_fd_unbuffered = false;
+    g_oai_log.is_output_fd_buffered = config->is_output_thread_safe;
 
     if (config->output) {
-      if ((1 != biseqcstrcaseless(config->output, MME_CONFIG_STRING_OUTPUT_CONSOLE)) &&
-          (1 != biseqcstrcaseless(config->output, MME_CONFIG_STRING_OUTPUT_UNBUFFERED_CONSOLE))) {
-        if (1 != biseqcstrcaseless(config->output, "SYSLOG")){
+      if (1 != biseqcstrcaseless(config->output, LOG_CONFIG_STRING_OUTPUT_CONSOLE)) {
+        if (1 != biseqcstrcaseless(config->output, LOG_CONFIG_STRING_OUTPUT_SYSLOG)){
           // if seems to be a file path
           if (('.' == bchar(config->output,0)) || ('/' == bchar(config->output,0))) {
             g_oai_log.log_fd = fopen (bdata(config->output), "w");
@@ -348,11 +348,6 @@ void log_set_config(const log_config_t * const config)
         setvbuf(stdout, NULL, _IONBF, 0);
         g_oai_log.log_fd = stdout;
         g_oai_log.is_output_is_fd = true;
-        if (1 == biseqcstrcaseless(config->output, MME_CONFIG_STRING_OUTPUT_UNBUFFERED_CONSOLE)) {
-          g_oai_log.is_output_fd_unbuffered = true;
-        } else {
-          g_oai_log.is_output_fd_unbuffered = false;
-        }
 #endif
       }
     }
@@ -503,7 +498,7 @@ log_init (
 void log_itti_connect(
   void)
 {
-  if (!g_oai_log.is_output_fd_unbuffered) {
+  if (g_oai_log.is_output_fd_buffered) {
     int                                     rv = 0;
     rv = itti_create_task (TASK_LOG, log_task, NULL);
     AssertFatal (rv == 0, "Create task for OAI logging failed!\n");
@@ -740,7 +735,7 @@ log_message_finish (
       OAI_FPRINTF_ERR("Error while logging message\n");
     }
     // send message
-    if (!g_oai_log.is_output_fd_unbuffered) {
+    if (g_oai_log.is_output_fd_buffered) {
       rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, messageP);
     } else {
       fprintf(g_oai_log.log_fd, "%s", bdata(messageP->bstr));
@@ -969,7 +964,7 @@ log_message (
       log_get_elapsed_time_since_start(&elapsed_time);
       filename_length = strlen(source_fileP);
       if (filename_length > LOG_DISPLAYED_FILENAME_MAX_LENGTH) {
-        rv = bformata (new_item_p->bstr, "%06" PRIu64 " %05ld:%06ld %08lX %-*.*s %-*.*s %-*.*s:%04u   %*s",
+        rv = bassignformat (new_item_p->bstr, "%06" PRIu64 " %05ld:%06ld %08lX %-*.*s %-*.*s %-*.*s:%04u   %*s",
             __sync_fetch_and_add (&g_oai_log.log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
             thread_ctxt->tid,
             LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, &g_oai_log.log_level2str[log_levelP][0],
@@ -977,7 +972,7 @@ log_message (
             LOG_DISPLAYED_FILENAME_MAX_LENGTH, LOG_DISPLAYED_FILENAME_MAX_LENGTH, &source_fileP[filename_length-LOG_DISPLAYED_FILENAME_MAX_LENGTH], line_numP,
             thread_ctxt->indent, " ");
       } else {
-        rv = bformata (new_item_p->bstr, "%06" PRIu64 " %05ld:%06ld %08lX %-*.*s %-*.*s %-*.*s:%04u   %*s",
+        rv = bassignformat (new_item_p->bstr, "%06" PRIu64 " %05ld:%06ld %08lX %-*.*s %-*.*s %-*.*s:%04u   %*s",
             __sync_fetch_and_add (&g_oai_log.log_message_number, 1), elapsed_time.tv_sec, elapsed_time.tv_usec,
             thread_ctxt->tid,
             LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, LOG_DISPLAYED_LOG_LEVEL_NAME_MAX_LENGTH, &g_oai_log.log_level2str[log_levelP][0],
@@ -999,21 +994,27 @@ log_message (
         goto error_event;
       }
 
-      if (!g_oai_log.is_output_fd_unbuffered) {
+      if (g_oai_log.is_output_fd_buffered) {
         rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, new_item_p);
       } else {
-        fprintf(g_oai_log.log_fd, "%s", bdata(new_item_p->bstr));
+        if (g_oai_log.is_output_is_fd) {
+          fprintf(g_oai_log.log_fd, "%s", bdata(new_item_p->bstr));
+        } else {
+          syslog (new_item_p->log_level ,"%s", bdata(new_item_p->bstr));
+        }
         rv = 0;
       }
       if (0 == rv) {
         btrunc(new_item_p->bstr, 0);
         rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, new_item_p);
         if (0 == rv) {
+          OAI_FPRINTF_ERR("Error while logging LOG message : lfds611_stack_guaranteed_push %s", &g_oai_log.log_proto2str[protoP][0]);
           bdestroy (new_item_p->bstr);
           free_wrapper (new_item_p);
         }
       }
     } else {
+      AssertFatal(0, "Should not go here");
       bdestroy (new_item_p->bstr);
       free_wrapper (new_item_p);
       OAI_FPRINTF_ERR("Error while lfds611_stack_pop()\n");

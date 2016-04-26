@@ -45,18 +45,6 @@
 #define SGW_CONFIG_STRING_SGW_INTERFACE_NAME_FOR_S11            "SGW_INTERFACE_NAME_FOR_S11"
 #define SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11              "SGW_IPV4_ADDRESS_FOR_S11"
 
-#define SGW_CONFIG_STRING_LOGGING                               "LOGGING"
-#define SGW_CONFIG_STRING_OUTPUT                                "OUTPUT"
-#define SGW_CONFIG_STRING_COLOR                                 "COLOR"
-#define SGW_CONFIG_STRING_UDP_LOG_LEVEL                         "UDP_LOG_LEVEL"
-#define SGW_CONFIG_STRING_GTPV1U_LOG_LEVEL                      "GTPV1U_LOG_LEVEL"
-#define SGW_CONFIG_STRING_GTPV2C_LOG_LEVEL                      "GTPV2C_LOG_LEVEL"
-#define SGW_CONFIG_STRING_SPGW_APP_LOG_LEVEL                    "SPGW_APP_LOG_LEVEL"
-#define SGW_CONFIG_STRING_S11_LOG_LEVEL                         "S11_LOG_LEVEL"
-#define SGW_CONFIG_STRING_UTIL_LOG_LEVEL                        "UTIL_LOG_LEVEL"
-#define SGW_CONFIG_STRING_MSC_LOG_LEVEL                         "MSC_LOG_LEVEL"
-#define SGW_CONFIG_STRING_ITTI_LOG_LEVEL                        "ITTI_LOG_LEVEL"
-
 #define SPGW_ABORT_ON_ERROR true
 #define SPGW_WARN_ON_ERROR false
 

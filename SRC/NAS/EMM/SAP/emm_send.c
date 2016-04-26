@@ -234,7 +234,7 @@ emm_send_attach_accept (
    * Mandatory - ESM message container
    */
   size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + blength(msg->nas_msg);
-  emm_msg->esmmessagecontainer = msg->nas_msg;
+  emm_msg->esmmessagecontainer = bstrcpy(msg->nas_msg);
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH(%d)  (%d)\n", ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH, size);
 
   /*

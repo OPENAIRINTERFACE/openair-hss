@@ -25,6 +25,7 @@
 #include <stdint.h>
 
 
+#include "assertions.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "AttachAccept.h"
@@ -216,19 +217,19 @@ encode_attach_accept (
   encoded++;
 
   if ((encode_result = encode_gprs_timer (&attach_accept->t3412value, 0, buffer + encoded, len - encoded)) < 0) {       //Return in case of error
-    OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_gprs_timer\n");
+    OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_gprs_timer\n");
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
   } else
     encoded += encode_result;
 
   if ((encode_result = encode_tracking_area_identity_list (&attach_accept->tailist, 0, buffer + encoded, len - encoded)) < 0) { //Return in case of error
-    OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_tracking_area_identity_list\n");
+    OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_tracking_area_identity_list\n");
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
   } else
     encoded += encode_result;
 
   if ((encode_result = encode_esm_message_container (attach_accept->esmmessagecontainer, 0, buffer + encoded, len - encoded)) < 0) {   //Return in case of error
-    OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_esm_message_container\n");
+    OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_esm_message_container\n");
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
   } else
     encoded += encode_result;
@@ -237,7 +238,7 @@ encode_attach_accept (
       == ATTACH_ACCEPT_GUTI_PRESENT) {
     if ((encode_result = encode_eps_mobile_identity (&attach_accept->guti, ATTACH_ACCEPT_GUTI_IEI, buffer + encoded, len - encoded)) < 0) {
       // Return in case of error
-      OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_eps_mobile_identity\n");
+      OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_eps_mobile_identity\n");
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
     } else
       encoded += encode_result;
@@ -246,7 +247,7 @@ encode_attach_accept (
   if ((attach_accept->presencemask & ATTACH_ACCEPT_LOCATION_AREA_IDENTIFICATION_PRESENT)
       == ATTACH_ACCEPT_LOCATION_AREA_IDENTIFICATION_PRESENT) {
     if ((encode_result = encode_location_area_identification (&attach_accept->locationareaidentification, ATTACH_ACCEPT_LOCATION_AREA_IDENTIFICATION_IEI, buffer + encoded, len - encoded)) < 0) {
-      OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_location_area_identification\n");
+      OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_location_area_identification\n");
       // Return in case of error
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
     } else
@@ -256,7 +257,7 @@ encode_attach_accept (
   if ((attach_accept->presencemask & ATTACH_ACCEPT_MS_IDENTITY_PRESENT)
       == ATTACH_ACCEPT_MS_IDENTITY_PRESENT) {
     if ((encode_result = encode_mobile_identity (&attach_accept->msidentity, ATTACH_ACCEPT_MS_IDENTITY_IEI, buffer + encoded, len - encoded)) < 0) {
-      OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_mobile_identity\n");
+      OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_mobile_identity\n");
       // Return in case of error
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
     } else
@@ -275,7 +276,7 @@ encode_attach_accept (
   if ((attach_accept->presencemask & ATTACH_ACCEPT_T3402_VALUE_PRESENT)
       == ATTACH_ACCEPT_T3402_VALUE_PRESENT) {
     if ((encode_result = encode_gprs_timer (&attach_accept->t3402value, ATTACH_ACCEPT_T3402_VALUE_IEI, buffer + encoded, len - encoded)) < 0) {
-      OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_gprs_timer\n");
+      OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_gprs_timer\n");
       // Return in case of error
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
     } else
@@ -285,7 +286,7 @@ encode_attach_accept (
   if ((attach_accept->presencemask & ATTACH_ACCEPT_T3423_VALUE_PRESENT)
       == ATTACH_ACCEPT_T3423_VALUE_PRESENT) {
     if ((encode_result = encode_gprs_timer (&attach_accept->t3423value, ATTACH_ACCEPT_T3423_VALUE_IEI, buffer + encoded, len - encoded)) < 0) {
-      OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_gprs_timer\n");
+      OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_gprs_timer\n");
       // Return in case of error
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
     } else
@@ -295,7 +296,7 @@ encode_attach_accept (
   if ((attach_accept->presencemask & ATTACH_ACCEPT_EQUIVALENT_PLMNS_PRESENT)
       == ATTACH_ACCEPT_EQUIVALENT_PLMNS_PRESENT) {
     if ((encode_result = encode_plmn_list (&attach_accept->equivalentplmns, ATTACH_ACCEPT_EQUIVALENT_PLMNS_IEI, buffer + encoded, len - encoded)) < 0) {
-      OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_plmn_list\n");
+      OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_plmn_list\n");
       // Return in case of error
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
     } else
@@ -305,7 +306,7 @@ encode_attach_accept (
   if ((attach_accept->presencemask & ATTACH_ACCEPT_EMERGENCY_NUMBER_LIST_PRESENT)
       == ATTACH_ACCEPT_EMERGENCY_NUMBER_LIST_PRESENT) {
     if ((encode_result = encode_emergency_number_list (&attach_accept->emergencynumberlist, ATTACH_ACCEPT_EMERGENCY_NUMBER_LIST_IEI, buffer + encoded, len - encoded)) < 0) {
-      OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_emergency_number_list\n");
+    	OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_emergency_number_list\n");
       // Return in case of error
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
     } else
@@ -315,7 +316,7 @@ encode_attach_accept (
   if ((attach_accept->presencemask & ATTACH_ACCEPT_EPS_NETWORK_FEATURE_SUPPORT_PRESENT)
       == ATTACH_ACCEPT_EPS_NETWORK_FEATURE_SUPPORT_PRESENT) {
     if ((encode_result = encode_eps_network_feature_support (&attach_accept->epsnetworkfeaturesupport, ATTACH_ACCEPT_EPS_NETWORK_FEATURE_SUPPORT_IEI, buffer + encoded, len - encoded)) < 0) {
-      OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_eps_network_feature_support\n");
+      OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_eps_network_feature_support\n");
       // Return in case of error
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
     } else
@@ -325,7 +326,7 @@ encode_attach_accept (
   if ((attach_accept->presencemask & ATTACH_ACCEPT_ADDITIONAL_UPDATE_RESULT_PRESENT)
       == ATTACH_ACCEPT_ADDITIONAL_UPDATE_RESULT_PRESENT) {
     if ((encode_result = encode_additional_update_result (&attach_accept->additionalupdateresult, ATTACH_ACCEPT_ADDITIONAL_UPDATE_RESULT_IEI, buffer + encoded, len - encoded)) < 0) {
-      OAILOG_WARNING (LOG_NAS_EMM, "Failed encode_additional_update_result\n");
+      OAILOG_ERROR (LOG_NAS_EMM, "Failed encode_additional_update_result\n");
       // Return in case of error
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, encode_result);
     } else

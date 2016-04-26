@@ -565,7 +565,7 @@ hashtable_ts_dump_content (
       node = hashtblP->nodes[i];
 
       while (node) {
-        bstring b0 = bformat ("Key 0x%"PRIx64" Element %p Node %p\n", node->key, node->data, node);
+        bstring b0 = bformat ("Key 0x%"PRIx64" Element %p Node %p Next %p\n", node->key, node->data, node, node->next);
         if (!b0) {
           PRINT_HASHTABLE (hashtblP, "Error while dumping hashtable content");
         } else {
@@ -690,7 +690,7 @@ hashtable_ts_insert (
   hashtblP->nodes[hash] = node;
   __sync_fetch_and_add (&hashtblP->num_elements, 1);
   pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) next %p return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP, node->next);
 #define TEMPORARY_DEBUG 1
 #if TEMPORARY_DEBUG
   bstring b = bfromcstr(" ");

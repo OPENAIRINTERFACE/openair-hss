@@ -98,6 +98,7 @@ static void mme_config_init (mme_config_t * config_pP)
   memset(&mme_config, 0, sizeof(mme_config));
   pthread_rwlock_init (&config_pP->rw_lock, NULL);
   config_pP->log_config.output             = NULL;
+  config_pP->log_config.is_output_thread_safe = false;
   config_pP->log_config.color              = false;
   config_pP->log_config.udp_log_level      = MAX_LOG_LEVEL; // Means invalid
   config_pP->log_config.gtpv1u_log_level   = MAX_LOG_LEVEL; // will not overwrite existing log levels if MME and S-GW bundled in same executable
@@ -217,11 +218,11 @@ static int mme_config_parse_file (mme_config_t * config_pP)
 
   if (setting_mme != NULL) {
     // LOGGING setting
-    setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_LOGGING);
+    setting = config_setting_get_member (setting_mme, LOG_CONFIG_STRING_LOGGING);
 
 
     if (setting != NULL) {
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_OUTPUT, (const char **)&astring)) {
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_OUTPUT, (const char **)&astring)) {
         if (astring != NULL) {
           if (config_pP->log_config.output) {
             bassigncstr(config_pP->log_config.output , astring);
@@ -231,42 +232,52 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         }
       }
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_COLOR, (const char **)&astring)) {
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_OUTPUT_THREAD_SAFE, (const char **)&astring)) {
+        if (astring != NULL) {
+          if (strcasecmp (astring, "yes") == 0) {
+            config_pP->log_config.is_output_thread_safe = true;
+          } else {
+            config_pP->log_config.is_output_thread_safe = false;
+          }
+        }
+      }
+
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_COLOR, (const char **)&astring)) {
         if (0 == strcasecmp("true", astring)) config_pP->log_config.color = true;
         else config_pP->log_config.color = false;
       }
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_SCTP_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_SCTP_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.sctp_log_level = OAILOG_LEVEL_STR2INT (astring);
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_S1AP_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_S1AP_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.s1ap_log_level = OAILOG_LEVEL_STR2INT (astring);
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_NAS_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.nas_log_level = OAILOG_LEVEL_STR2INT (astring);
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_MME_APP_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_MME_APP_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.mme_app_log_level = OAILOG_LEVEL_STR2INT (astring);
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_S6A_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_S6A_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.s6a_log_level = OAILOG_LEVEL_STR2INT (astring);
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_GTPV2C_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_GTPV2C_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.gtpv2c_log_level = OAILOG_LEVEL_STR2INT (astring);
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_UDP_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_UDP_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.udp_log_level = OAILOG_LEVEL_STR2INT (astring);
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_S11_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_S11_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.s11_log_level = OAILOG_LEVEL_STR2INT (astring);
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_UTIL_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_UTIL_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.util_log_level = OAILOG_LEVEL_STR2INT (astring);
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.msc_log_level = OAILOG_LEVEL_STR2INT (astring);
 
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring))
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.itti_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_ASN1_VERBOSITY, (const char **)&astring))) {
@@ -747,6 +758,7 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "    conf file ........: %s\n", bdata(config_pP->s6a_config.conf_file));
   OAILOG_INFO (LOG_CONFIG, "- Logging:\n");
   OAILOG_INFO (LOG_CONFIG, "    Output ..............: %s\n", bdata(config_pP->log_config.output));
+  OAILOG_INFO (LOG_CONFIG, "    Output thread safe ..: %s\n", (config_pP->log_config.is_output_thread_safe) ? "true":"false");
   OAILOG_INFO (LOG_CONFIG, "    UDP log level........: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.udp_log_level));
   OAILOG_INFO (LOG_CONFIG, "    GTPV1-U log level....: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.gtpv1u_log_level));
   OAILOG_INFO (LOG_CONFIG, "    GTPV2-C log level....: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.gtpv2c_log_level));

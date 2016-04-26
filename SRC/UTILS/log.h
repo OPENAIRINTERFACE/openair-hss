@@ -46,6 +46,28 @@ extern int fd_g_debug_lvl;
 #include <pthread.h>
 #include "bstrlib.h"
 
+#define LOG_CONFIG_STRING_LOGGING                        "LOGGING"
+#define LOG_CONFIG_STRING_OUTPUT                         "OUTPUT"
+#define LOG_CONFIG_STRING_OUTPUT_THREAD_SAFE             "THREAD_SAFE"
+#define LOG_CONFIG_STRING_COLOR                          "COLOR"
+#define LOG_CONFIG_STRING_OUTPUT_CONSOLE                 "CONSOLE"
+#define LOG_CONFIG_STRING_OUTPUT_SYSLOG                  "SYSLOG"
+#define LOG_CONFIG_STRING_GTPV1U_LOG_LEVEL               "GTPV1U_LOG_LEVEL"
+#define LOG_CONFIG_STRING_GTPV2C_LOG_LEVEL               "GTPV2C_LOG_LEVEL"
+#define LOG_CONFIG_STRING_ITTI_LOG_LEVEL                 "ITTI_LOG_LEVEL"
+#define LOG_CONFIG_STRING_MME_APP_LOG_LEVEL              "MME_APP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_MSC_LOG_LEVEL                  "MSC_LOG_LEVEL"
+#define LOG_CONFIG_STRING_NAS_LOG_LEVEL                  "NAS_LOG_LEVEL"
+#define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
+#define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
+#define LOG_CONFIG_STRING_S1AP_LOG_LEVEL                 "S1AP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_S6A_LOG_LEVEL                  "S6A_LOG_LEVEL"
+#define LOG_CONFIG_STRING_SCTP_LOG_LEVEL                 "SCTP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_SPGW_APP_LOG_LEVEL             "SPGW_APP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_SPGW_APP_LOG_LEVEL             "SPGW_APP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_UDP_LOG_LEVEL                  "UDP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_UTIL_LOG_LEVEL                 "UTIL_LOG_LEVEL"
+
 typedef enum {
   MIN_LOG_ENV = 0,
   LOG_MME_ENV = MIN_LOG_ENV,
@@ -114,6 +136,7 @@ typedef struct log_queue_item_s {
 */
 typedef struct log_config_s {
   bstring       output;             /*!< \brief Where logs go, choice in { "CONSOLE", "`path to file`", "`IPv4@`:`TCP port num`"} . */
+  bool          is_output_thread_safe; /*!< \brief Is final string goes in a thread safe buffer of is flushed without care . */
   log_level_t   udp_log_level;      /*!< \brief UDP ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   gtpv1u_log_level;   /*!< \brief GTPv1-U ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   gtpv2c_log_level;   /*!< \brief GTPv2-C ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
