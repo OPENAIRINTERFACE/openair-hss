@@ -220,7 +220,7 @@ int sctp_get_localaddresses (
         if (inet_ntop (AF_INET, &addr->sin_addr, address, sizeof (address)) != NULL) {
           OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
         }
-      } else {
+      } else if (temp_addr_p[j].sa_family == AF_INET6) {
         struct sockaddr_in6                    *addr = NULL;
         char                                    address[40] = {0};
 
@@ -229,6 +229,8 @@ int sctp_get_localaddresses (
         if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
           OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
         }
+      } else {
+        OAILOG_DEBUG (LOG_SCTP, "    - unhandled address family %d\n", temp_addr_p[j].sa_family);
       }
     }
     OAILOG_DEBUG (LOG_SCTP, "----------------------\n");
