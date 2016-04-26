@@ -32,6 +32,7 @@
 #define FILE_LOG_SEEN
 
 #include "gcc_diag.h"
+#include "liblfds700.h"
 #include <syslog.h>
 
 /* asn1c debug */
@@ -109,6 +110,7 @@ typedef struct log_thread_ctxt_s {
 * in the opened stream ( file, tcp, stdout)
 */
 typedef struct log_queue_item_s {
+  struct lfds700_queue_element LFDS700_PAL_ALIGN( LFDS700_PAL_ATOMIC_ISOLATION_IN_BYTES ) qe;
   int32_t                                 len;                              /*!< \brief length of string. */
   int32_t                                 log_level;                        /*!< \brief log level for syslog. */
 #define LOG_MAX_MESSAGE_LENGTH            512
