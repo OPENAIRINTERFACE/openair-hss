@@ -112,6 +112,9 @@ s11_mme_handle_create_session_response (
   message_p = itti_alloc_new_message (TASK_S11, S11_CREATE_SESSION_RESPONSE);
   resp_p = &message_p->ittiMsg.s11_create_session_response;
   memset(resp_p, 0, sizeof(*resp_p));
+
+  resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+
   /*
    * Create a new message parser
    */

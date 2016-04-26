@@ -269,7 +269,7 @@ s11_sgw_handle_create_session_response (
   cause.cause_value = (uint8_t) create_session_response_p->cause;
   s11_cause_ie_set (&(ulp_req.hMsg), &cause);
 
-  rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO, S1_U_SGW_GTP_U,
+  rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO, S11_SGW_GTP_C,
       create_session_response_p->s11_sgw_teid.teid,
       create_session_response_p->s11_sgw_teid.ipv4 ? ntohl(create_session_response_p->s11_sgw_teid.ipv4_address) : 0,
       create_session_response_p->s11_sgw_teid.ipv6 ? create_session_response_p->s11_sgw_teid.ipv6_address : NULL);
