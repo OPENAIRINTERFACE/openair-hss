@@ -56,7 +56,6 @@ function help()
   echo_error "  -h, --help                          Print this help."
   echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in spgw config file."
   echo_error "  -k, --kill                          Kill all running SPGW instances, exit script then."
-  echo_error "  -K, --itti-dump-file  file_abs_path ITTI dump file containing all ITTI events occuring during S/P-GW runtime."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
   echo_error "  -r, --remove-gtpu-kmodule           Remove gtpu kernel module before starting the S/P-GW"
   echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
@@ -143,18 +142,6 @@ function main()
         exit 0
         shift;
         ;;
-      -K | --itti-dump-file)
-        local itti_dump_file=$2
-        # can omit file name if last arg on the line
-        if [ "x$itti_dump_file" = "x" ]; then
-          itti_dump_file="/tmp/spgw_itti.log"
-        else
-          shift 1;
-        fi
-        echo "setting ITTI dump file to: $itti_dump_file"
-        exe_arguments="$exe_arguments -K $itti_dump_file"
-        shift 1;
-        ;;     
       -m | --mscgen)
         g_msc_dir=$2
         if [ -d  "$g_msc_dir" ]; then
