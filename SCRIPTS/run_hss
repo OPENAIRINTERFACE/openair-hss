@@ -127,34 +127,41 @@ function main()
   set_openair_env 
   cecho "OPENAIRCN_DIR   = $OPENAIRCN_DIR" $green
 
+  #####################################
+  # Install config files
+  #####################################
   if [ ! -f $hss_config_file ]; then 
-    echo_fatal "Please provide -c|--config-file valid argument (\"$hss_config_file\" not a valid file)"
+    if [ $g_hss_default_config_file != $hss_config_file ]; then
+      echo_fatal "Please provide -c|--config-file valid argument (\"$hss_config_file\" not a valid file)"
+    fi
   fi
   
-  
   if [ $var_check_install_hss_files -gt 0 ];then
-    $SUDO mkdir -p -m 755 /usr/local/etc/oai/freeDiameter > /dev/null
+    $SUDO mkdir -p /usr/local/etc/oai/freeDiameter > /dev/null
   
     if [ ! -f /usr/local/etc/oai/hss.conf ]; then
       $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/hss.conf    /usr/local/etc/oai
-      echo_fatal "Please customize /usr/local/etc/oai/hss.conf"
+      echo_fatal "Please customize /usr/local/etc/oai/hss.conf (login/password/OP key), after, please re-run run_hss -I"
     else
       if [  $THIS_SCRIPT_PATH/../ETC/hss.conf -nt  /usr/local/etc/oai/hss.conf ]; then
-        read -p "Do you want to update /usr/local/etc/oai/hss.conf? <y/N> " prompt
+        read -p "Do you want to update /usr/local/etc/oai/hss.conf with $OPENAIRCN_DIR/ETC/hss.conf ? <y/N> " prompt
         if [[ $prompt =~ [yY](es)* ]]; then
           $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/hss.conf    /usr/local/etc/oai
-          echo_fatal "Please customize /usr/local/etc/oai/hss.conf"
+          echo_fatal "Please customize /usr/local/etc/oai/hss.conf, after, please re-run run_hss -I"
         fi
       fi
     fi 
   
     $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/acl.conf    /usr/local/etc/oai/freeDiameter
+    echo_warning "Be carefull /usr/local/etc/oai/freeDiameter/acl.conf has realm hardcoded, please check it and change it upon your needs"
     $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/hss_fd.conf /usr/local/etc/oai/freeDiameter
+    echo_warning "Be carefull /usr/local/etc/oai/freeDiameter/hss_fd.conf has realm and freeDiameter identity hardcoded, please check them and change them upon your needs"
   
     # hardcoded HSS diameter ID 
     IP_ADDRESS=`getent hosts $g_hss_default_fqdn | cut -d ' ' -f1`
     if [ "a$IP_ADDRESS" == "a" ]; then
-      echo '127.0.1.1        $g_hss_default_fqdn hss' | $SUDO tee -a  /etc/hosts
+      echo "127.0.1.1        $g_hss_default_fqdn hss" | $SUDO tee -a  /etc/hosts
+      echo_warning "Set HSS FQDN "$g_hss_default_fqdn" in /etc/hosts, please check it and change it upon your needs"
     else
       if [ "127.0.1.1"  != "$IP_ADDRESS" ]; then
         echo_warning "FQDN $g_hss_default_fqdn resolution is the following: $IP_ADDRESS (better to use 127.0.1.1)"
@@ -162,6 +169,9 @@ function main()
     fi
 
     # generate certificates if necessary
+    echo_warning "Generating HSS certificates using HSS FQDN $g_hss_default_fqdn, if you want to use an other"
+    echo_warning "FQDN, please modify acl.conf, hss_fd.conf, /etc/hosts consistently and then "
+    echo_warning "re-run $OPENAIRCN_DIR/SCRIPTS/check_hss_s6a_certificate /usr/local/etc/oai/freeDiameter YOUR_HSS_FQDN"
     $SUDO $OPENAIRCN_DIR/SCRIPTS/check_hss_s6a_certificate /usr/local/etc/oai/freeDiameter $g_hss_default_fqdn
   fi
   
@@ -171,6 +181,9 @@ function main()
     echo_error "Options -e and -i cannot be set together"
   fi
   
+  #####################################
+  # Export database
+  #####################################
   if [ $export_db -eq 1 ]; then
     [[ $dump_file != *"/"* ]] && dump_file=$OPENAIRCN_DIR/SRC/OAI_HSS/db/$dump_file
     if [ -e $dump_file ]; then 
@@ -186,6 +199,9 @@ function main()
     $OPENAIRCN_DIR/SCRIPTS/hss_export_database $MYSQL_server $MYSQL_user $MYSQL_pass $MYSQL_db $dump_file
   fi
   
+  #####################################
+  # Import database
+  #####################################
   if [ $import_db -eq 1 ]; then
     [[ $dump_file != *"/"* ]] && dump_file=$OPENAIRCN_DIR/SRC/OAI_HSS/db/$dump_file
     if [ -e $dump_file ]; then 
@@ -198,6 +214,9 @@ function main()
   fi
   
   
+  #####################################
+  # Running daemon?
+  #####################################
   if [ "$run_daemon" -eq 1 ]; then
     # TODO options
     $SUDO killall -q oai_hss
@@ -215,6 +234,10 @@ function main()
     esac
     exit 0
   fi
+  
+  #####################################
+  # Running executable
+  #####################################
   if [ $run_gdb -eq 0 ]; then 
     $SUDO oai_hss  `echo $exe_arguments` 2>&1 
   else

@@ -46,7 +46,7 @@ function help()
   echo_error "  -D, --daemon                              Build HSS as a daemon."
   echo_error "  -F, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
-  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run HSS (support Ubuntu 14.04)."
+  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run HSS (support Ubuntu 14.04, 15.10)."
   echo_error "                                            If filled, then OPc key in table users for all subscribers (IMSI) will be computed/updated."
   echo_error "  -v, --verbose                             Build process verbose."
 }
@@ -96,7 +96,7 @@ function main()
         exit 0
         ;;
       -i | --check-installed-software)
-        echo "Check installed software packages necessary to build and run HSS (support Ubuntu 14.04):"
+        echo "Check installed software packages necessary to build and run HSS (support Ubuntu 14.04, 15.10):"
         set_openair_env
         var_check_install_oai_software=1
         shift;
@@ -116,6 +116,9 @@ function main()
     esac
   done
 
+  if [ ! -d /usr/local/etc/oai ]; then
+    $SUDO mkdir -p /usr/local/etc/oai/freeDiameter
+  fi
 
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
