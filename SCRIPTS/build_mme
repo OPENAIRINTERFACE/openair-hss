@@ -45,7 +45,6 @@ function help()
   echo_error "  -h, --help                                Print this help."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run MME (support Ubuntu 14.04)."
   echo_error "  -v, --verbose                             Build process verbose."
-  echo_error "  -x, --clean-certificates                  Clean the MME certificates"
   echo_error " "
 }
 
