@@ -556,7 +556,9 @@ sgw_handle_sgi_endpoint_updated (
   MessageDef                             *message_p = NULL;
   sgw_eps_bearer_entry_t                 *eps_bearer_entry_p = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
+  hashtable_rc_t                          hash_rc2 = HASH_TABLE_OK;
   int                                     rv = RETURNok;
+  mme_sgw_tunnel_t                       *tun_pair_p = NULL;
 
   OAILOG_FUNC_IN(LOG_SPGW_APP);
 
@@ -571,13 +573,15 @@ sgw_handle_sgi_endpoint_updated (
   modify_response_p = &message_p->ittiMsg.s11_modify_bearer_response;
   memset (modify_response_p, 0, sizeof (itti_s11_modify_bearer_response_t));
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, resp_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
+  hash_rc2 = hashtable_ts_get (sgw_app.s11teid2mme_hashtable, resp_pP->context_teid /*local teid*/, (void **)&tun_pair_p);
 
-  if (HASH_TABLE_OK == hash_rc) {
+  if ((HASH_TABLE_OK == hash_rc) && (HASH_TABLE_OK == hash_rc2)) {
     hash_rc = hashtable_ts_get (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, resp_pP->eps_bearer_id, (void **)&eps_bearer_entry_p);
 
     if ((hash_rc == HASH_TABLE_KEY_NOT_EXISTS) || (hash_rc == HASH_TABLE_BAD_PARAMETER_HASHTABLE)) {
       OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_UPDATE_ENDPOINT_RESPONSE: CONTEXT_NOT_FOUND (pdn_connection.sgw_eps_bearers context)\n");
-      modify_response_p->teid = resp_pP->context_teid;  // TO BE CHECKED IF IT IS THIS TEID
+
+      modify_response_p->teid = tun_pair_p->remote_teid;
       modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id = resp_pP->eps_bearer_id;
       modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
       modify_response_p->bearer_contexts_marked_for_removal.num_bearer_context += 1;
@@ -592,14 +596,14 @@ sgw_handle_sgi_endpoint_updated (
     } else if (HASH_TABLE_OK == hash_rc) {
       OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_UPDATE_ENDPOINT_RESPONSE: REQUEST_ACCEPTED\n");
       // accept anyway
-      modify_response_p->teid = resp_pP->context_teid;  // TO BE CHECKED IF IT IS THIS TEID
+      modify_response_p->teid = tun_pair_p->remote_teid;
       modify_response_p->bearer_contexts_modified.bearer_contexts[0].eps_bearer_id = resp_pP->eps_bearer_id;
       modify_response_p->bearer_contexts_modified.bearer_contexts[0].cause = REQUEST_ACCEPTED;
       modify_response_p->bearer_contexts_modified.num_bearer_context += 1;
       modify_response_p->cause = REQUEST_ACCEPTED;
       modify_response_p->trxn = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
       // if default bearer
-//#pragma message  "TODO define constant for default eps_bearer id"
+      //#pragma message  "TODO define constant for default eps_bearer id"
 
       bstring system_cmd = bfromcstr("");
       //if ((resp_pP->eps_bearer_id == 5) && (spgw_config.pgw_config.pgw_masquerade_SGI == 0)) {
@@ -621,7 +625,7 @@ sgw_handle_sgi_endpoint_updated (
                         eps_bearer_entry_p->enb_teid_S1u);
 
         if (BSTR_ERR == rv) {
-          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing default downlink tunnel, tune string length\n");
+          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing default downlink tunnel\n");
           exit (-1);
         }
         //use API when prototype validated
@@ -649,7 +653,7 @@ sgw_handle_sgi_endpoint_updated (
 
 
         if (BSTR_ERR == rv) {
-          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing default downlink tunnel, tune string length\n");
+          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing default downlink tunnel\n");
           exit (-1);
         }
         //use API when prototype validated
@@ -659,9 +663,8 @@ sgw_handle_sgi_endpoint_updated (
         if (rv < 0) {
           OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up default downlink TUNNEL\n");
         }
-
       }
-      //-------------------------
+        //-------------------------
       rv = bassignformat (system_cmd, "iptables -t mangle -I %s -d %u.%u.%u.%u -m mark --mark %u -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add", (spgw_config.sgw_config.local_to_eNB) ? "FORWARD" : "FORWARD",        // test
                       eps_bearer_entry_p->paa.ipv4_address[0],
                       eps_bearer_entry_p->paa.ipv4_address[1],
@@ -680,7 +683,7 @@ sgw_handle_sgi_endpoint_updated (
                       eps_bearer_entry_p->enb_teid_S1u);
 
       if (BSTR_ERR == rv) {
-        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing downlink tunnel, tune string length\n");
+        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing downlink tunnel\n");
         exit (-1);
       }
       //use API when prototype validated
@@ -720,22 +723,26 @@ sgw_handle_sgi_endpoint_updated (
     }
 
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_MODIFY_BEARER_RESPONSE ebi %u  trxn %u",
-                            modify_response_p->bearer_contexts_modified.bearer_contexts[0].eps_bearer_id, modify_response_p->trxn);
+        modify_response_p->bearer_contexts_modified.bearer_contexts[0].eps_bearer_id, modify_response_p->trxn);
     rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
   } else {
-    OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_UPDATE_ENDPOINT_RESPONSE: CONTEXT_NOT_FOUND (S11 context)\n");
-    modify_response_p->teid = resp_pP->context_teid;    // TO BE CHECKED IF IT IS THIS TEID
-    modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id = resp_pP->eps_bearer_id;
-    modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
-    modify_response_p->bearer_contexts_marked_for_removal.num_bearer_context += 1;
-    modify_response_p->cause = CONTEXT_NOT_FOUND;
-    modify_response_p->trxn = 0;
-    MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME,  MSC_S11_MME,
+    if (HASH_TABLE_OK != hash_rc2) {
+      OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_UPDATE_ENDPOINT_RESPONSE: CONTEXT_NOT_FOUND (S11 context)\n");
+      modify_response_p->teid = resp_pP->context_teid;    // TO BE CHECKED IF IT IS THIS TEID
+      modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id = resp_pP->eps_bearer_id;
+      modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
+      modify_response_p->bearer_contexts_marked_for_removal.num_bearer_context += 1;
+      modify_response_p->cause = CONTEXT_NOT_FOUND;
+      modify_response_p->trxn = 0;
+      MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME,  MSC_S11_MME,
                         NULL, 0, "0 S11_MODIFY_BEARER_RESPONSE ebi %u CONTEXT_NOT_FOUND trxn %u",
                         modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id, modify_response_p->trxn);
-    rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-    OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
+      rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+      OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
+    } else {
+      OAILOG_FUNC_RETURN(LOG_SPGW_APP, RETURNerror);
+    }
   }
 }
 

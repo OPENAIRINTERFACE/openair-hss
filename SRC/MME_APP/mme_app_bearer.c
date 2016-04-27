@@ -760,6 +760,7 @@ mme_app_handle_initial_context_setup_rsp (
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_modify_bearer_request_t *s11_modify_bearer_request = &message_p->ittiMsg.s11_modify_bearer_request;
   memset ((void *)s11_modify_bearer_request, 0, sizeof (*s11_modify_bearer_request));
+  s11_modify_bearer_request->peer_ip = mme_config.ipv4.sgw_s11;
   s11_modify_bearer_request->teid = ue_context_p->sgw_s11_teid;
   /*
    * Delay Value in integer multiples of 50 millisecs, or zero

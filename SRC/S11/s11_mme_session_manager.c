@@ -53,8 +53,10 @@ s11_mme_create_session_request (
    * Prepare a new Create Session Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_CREATE_SESSION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.apiInfo.initialReqInfo.peerIp = req_p->peer_ip;
-  ulp_req.apiInfo.initialReqInfo.teidLocal = req_p->sender_fteid_for_cp.teid;
+  ulp_req.apiInfo.initialReqInfo.peerIp     = req_p->peer_ip;
+  ulp_req.apiInfo.initialReqInfo.teidLocal  = req_p->sender_fteid_for_cp.teid;
+  ulp_req.apiInfo.initialReqInfo.hUlpTunnel = NULL;
+  ulp_req.apiInfo.initialReqInfo.hTunnel    = NULL;
   /*
    * Add recovery if contacting the peer for the first time
    */
@@ -201,6 +203,7 @@ s11_mme_delete_session_request (
   rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_DELETE_SESSION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
   ulp_req.apiInfo.initialReqInfo.peerIp = req_p->peer_ip;
   ulp_req.apiInfo.initialReqInfo.teidLocal = req_p->sender_fteid_for_cp.teid;
+  //TODO ulp_req.apiInfo.initialReqInfo.hTunnel = ;
 
   /*
    * Putting the information Elements
