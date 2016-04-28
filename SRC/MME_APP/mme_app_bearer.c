@@ -62,6 +62,7 @@ mme_app_send_s11_release_access_bearers_req (
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_RELEASE_ACCESS_BEARERS_REQUEST);
   release_access_bearers_request_p = &message_p->ittiMsg.s11_release_access_bearers_request;
   memset ((void*)release_access_bearers_request_p, 0, sizeof (itti_s11_release_access_bearers_request_t));
+  release_access_bearers_request_p->local_teid = ue_context_pP->mme_s11_teid;
   release_access_bearers_request_p->teid = ue_context_pP->sgw_s11_teid;
   release_access_bearers_request_p->list_of_rabs.num_ebi = 1;
   release_access_bearers_request_p->list_of_rabs.ebis[0] = ue_context_pP->default_bearer_id;
@@ -762,6 +763,7 @@ mme_app_handle_initial_context_setup_rsp (
   memset ((void *)s11_modify_bearer_request, 0, sizeof (*s11_modify_bearer_request));
   s11_modify_bearer_request->peer_ip = mme_config.ipv4.sgw_s11;
   s11_modify_bearer_request->teid = ue_context_p->sgw_s11_teid;
+  s11_modify_bearer_request->local_teid = ue_context_p->mme_s11_teid;
   /*
    * Delay Value in integer multiples of 50 millisecs, or zero
    */

@@ -53,6 +53,7 @@ mme_app_send_delete_session_request (
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_SESSION_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   memset ((void *)&message_p->ittiMsg.s11_delete_session_request, 0, sizeof (itti_s11_delete_session_request_t));
+  S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_s11_teid;
   S11_DELETE_SESSION_REQUEST (message_p).teid = ue_context_p->sgw_s11_teid;
   S11_DELETE_SESSION_REQUEST (message_p).lbi = ue_context_p->default_bearer_id;
 

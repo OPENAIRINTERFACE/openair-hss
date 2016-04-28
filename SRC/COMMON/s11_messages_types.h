@@ -509,6 +509,8 @@ typedef struct itti_s11_create_session_response_s {
  * - X2-based handover without SGWrelocation
  */
 typedef struct itti_s11_modify_bearer_request_s {
+  teid_t                     local_teid;       ///< not in specs for inner MME use
+
   teid_t                     teid;             ///< S11 SGW Tunnel Endpoint Identifier
 
   // MEI                    ME Identity (MEI)  ///< C:This IE shall be sent on the S5/S8 interfaces for the Gn/Gp
@@ -825,6 +827,7 @@ typedef struct itti_s11_modify_bearer_response_s {
 
 //-----------------------------------------------------------------------------
 typedef struct itti_s11_delete_session_request_s {
+  teid_t      local_teid;             ///< not in specs for inner MME use
   teid_t      teid;                   ///< Tunnel Endpoint Identifier
   EBI_t       lbi;                    ///< Linked EPS Bearer ID
   FTeid_t     sender_fteid_for_cp;    ///< Sender F-TEID for control plane
@@ -890,6 +893,7 @@ typedef struct itti_s11_delete_session_response_s {
  * -    READY to STANDBY transition within the network
  */
 typedef struct itti_s11_release_access_bearers_request_s {
+  teid_t     local_teid;               ///< not in specs for inner MME use
   teid_t     teid;                     ///< Tunnel Endpoint Identifier
   ebi_list_t list_of_rabs;             ///< Shall be present on S4 interface when this message is
                                        ///< used to release a subset of all active RABs according to

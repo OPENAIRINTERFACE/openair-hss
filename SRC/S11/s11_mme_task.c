@@ -26,6 +26,9 @@
 #include <assert.h>
 
 #include "assertions.h"
+#include "hashtable.h"
+#include "log.h"
+#include "msc.h"
 #include "mme_config.h"
 #include "intertask_interface.h"
 #include "timer.h"
@@ -35,11 +38,10 @@
 #include "s11_mme.h"
 #include "s11_mme_session_manager.h"
 #include "s11_mme_bearer_manager.h"
-#include "msc.h"
-#include "log.h"
 
 static NwGtpv2cStackHandleT             s11_mme_stack_handle = 0;
-
+// Store the GTPv2-C teid handle
+hash_table_ts_t                        *s11_mme_teid_2_gtv2c_teid_handle = NULL;
 //------------------------------------------------------------------------------
 static NwRcT
 s11_mme_log_wrapper (
@@ -297,6 +299,11 @@ s11_mme_init (
   DevAssert (s11_address_str );
   s11_send_init_udp (s11_address_str, mme_config.ipv4.port_s11);
   mme_config_unlock (&mme_config);
+
+  bstring b = bfromcstr("s11_mme_teid_2_gtv2c_teid_handle");
+  s11_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);
+  bdestroy(b);
+
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: DONE\n");
   return ret;
 fail:

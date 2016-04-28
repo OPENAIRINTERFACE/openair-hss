@@ -35,6 +35,8 @@
 #include "s11_mme_bearer_manager.h"
 #include "s11_ie_formatter.h"
 
+extern hash_table_ts_t                        *s11_mme_teid_2_gtv2c_teid_handle;
+
 //------------------------------------------------------------------------------
 int
 s11_mme_release_access_bearers_request (
@@ -54,6 +56,15 @@ s11_mme_release_access_bearers_request (
    */
   rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_RELEASE_ACCESS_BEARERS_REQ, req_p->teid, 0, &(ulp_req.hMsg));
   ulp_req.apiInfo.initialReqInfo.peerIp = req_p->peer_ip;
+  ulp_req.apiInfo.initialReqInfo.teidLocal  = req_p->local_teid;
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) ulp_req.apiInfo.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.apiInfo.initialReqInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.apiInfo.initialReqInfo.teidLocal);
+    return RETURNerror;
+  }
 
   for (int i=0; i < req_p->list_of_rabs.num_ebi; i++) {
     rc = nwGtpv2cMsgAddIe ((ulp_req.hMsg), NW_GTPV2C_IE_EBI, 1, 0, (uint8_t *) & req_p->list_of_rabs.ebis[i]);
@@ -147,6 +158,15 @@ s11_mme_modify_bearer_request (
    */
   rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_MODIFY_BEARER_REQ, req_p->teid, 0, &(ulp_req.hMsg));
   ulp_req.apiInfo.initialReqInfo.peerIp = req_p->peer_ip;
+  ulp_req.apiInfo.initialReqInfo.teidLocal  = req_p->local_teid;
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) ulp_req.apiInfo.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.apiInfo.initialReqInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.apiInfo.initialReqInfo.teidLocal);
+    return RETURNerror;
+  }
 
   /*
    * Sender F-TEID for Control Plane (MME S11)
