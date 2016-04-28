@@ -48,7 +48,6 @@
 #include <ctype.h>
 #include <fcntl.h>
 
-// #include "liblfds611.h"
 #include "liblfds700.h"
 #include "intertask_interface.h"
 #include "timer.h"
@@ -113,8 +112,6 @@ typedef struct oai_log_s {
   log_level_t                             log_level[MAX_LOG_PROTOS];                                   /*!< \brief Loglevel id of each client (protocol/layer) */
 
   log_message_number_t                    log_message_number;                                          /*!< \brief Counter of log message        */
-  // struct lfds611_queue_state             *log_message_queue_p;                                         /*!< \brief Thread safe log message queue */
-  // struct lfds611_stack_state             *log_free_message_queue_p;                                          /*!< \brief Thread safe memory pool      */
   struct lfds700_queue_state              log_message_queue_p;
   struct lfds700_misc_prng_state LFDS700_PAL_ALIGN( LFDS700_PAL_CACHE_LINE_LENGTH_IN_BYTES ) ps;
   hash_table_ts_t                           *thread_context_htbl;                                         /*!< \brief Container for log_thread_ctxt_t */
@@ -139,10 +136,7 @@ static void log_reuse_item(log_queue_item_t * item_p)
 #endif
   FREE_CHECK (item_p);
   // Since there are no memory allocations in liblfds700, all the memory allocation are user allocated and must be handled appropriately
-  // rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
-  // if (0 == rv) {
-  //   FREE_CHECK (item_p);
-  // }
+  // This function may not be needed due to transition from lfds611 to lfds700 and also stack is not used
 }
 
 //------------------------------------------------------------------------------
@@ -432,14 +426,6 @@ log_init (
     FREE_CHECK(thread_ctxt);
   }
 
-  // rv = lfds611_stack_new (&g_oai_log.log_free_message_queue_p, (lfds611_atom_t) max_threadsP + 2);
-  // AssertFatal (g_oai_log.log_free_message_queue_p != NULL, "g_oai_log.log_free_message_queue_p is NULL!\n");
-  // if (0 >= rv) {
-  //   AssertFatal (0, "lfds611_stack_new failed!\n");
-  // }
-
-  // rv = lfds611_queue_new (&g_oai_log.log_message_queue_p, (lfds611_atom_t) LOG_MAX_QUEUE_ELEMENTS);
-  // AssertFatal (rv, "lfds611_queue_new failed!\n");
   log_queue_item_t * item_p_dummy;
   item_p_dummy = CALLOC_CHECK (1, sizeof(log_queue_item_t));
   AssertFatal (item_p_dummy, "MALLOC_CHECK failed!\n");
@@ -447,15 +433,7 @@ log_init (
   item_p_dummy->log_level = OAILOG_LEVEL_TRACE;
   lfds700_queue_init_valid_on_current_logical_core (&g_oai_log.log_message_queue_p, item_p_dummy, &g_oai_log.ps, NULL);
   AssertFatal (&g_oai_log.log_message_queue_p != NULL, "g_oai_log.log_message_queue_p is NULL!\n");
-  rv = 1;
   log_start_use ();
-
-  // for (i = 0; i < max_threadsP * 30; i++) {
-  //   item_p = CALLOC_CHECK (1, sizeof(log_queue_item_t));
-  //   AssertFatal (item_p, "MALLOC_CHECK failed!\n");
-  //   // rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
-  //   // AssertFatal (rv, "lfds611_stack_guaranteed_push failed for item %u\n", i);
-  // }
 
   rv = snprintf (&g_oai_log.log_proto2str[LOG_SCTP][0], LOG_MAX_PROTO_NAME_LENGTH, "SCTP");
   rv = snprintf (&g_oai_log.log_proto2str[LOG_UDP][0], LOG_MAX_PROTO_NAME_LENGTH, "UDP");
@@ -514,8 +492,6 @@ log_start_use (
   pthread_t      p       = pthread_self();
   hashtable_rc_t hash_rc = hashtable_ts_is_key_exists (g_oai_log.thread_context_htbl, (hash_key_t) p);
   if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
-    // lfds611_queue_use (g_oai_log.log_message_queue_p);
-    // lfds611_stack_use (g_oai_log.log_free_message_queue_p);
     log_thread_ctxt_t *thread_ctxt = CALLOC_CHECK(1, sizeof(log_thread_ctxt_t));
     if (thread_ctxt) {
       thread_ctxt->tid = p;
@@ -540,7 +516,6 @@ log_flush_messages (
   log_queue_item_t                       *item_p = NULL;
 
   if (g_oai_log.log_fd) {
-    // while ((rv = lfds611_queue_dequeue (g_oai_log.log_message_queue_p, (void **)&item_p)) == 1) {
     while ((rv = lfds700_queue_dequeue (&g_oai_log.log_message_queue_p, &item_p, &g_oai_log.ps)) == 1) {
       if (item_p){
         if (item_p->len > 0) {
@@ -551,8 +526,6 @@ log_flush_messages (
           }
           // TODO BIN DATA
           FREE_CHECK(item_p);
-          // item_p->len = 0;
-          // rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
         }
         if (rv_put < 0) {
           // error occured
@@ -752,16 +725,7 @@ log_message_finish (
       messageP->len += rv;
     }
     // send message
-    // rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, messageP);
     lfds700_queue_enqueue (&g_oai_log.log_message_queue_p, messageP, &g_oai_log.ps);
-    rv = 1;
-
-    // if (0 == rv) {
-    //   OAI_FPRINTF_ERR("Error while lfds611_queue_guaranteed_enqueue message %s in LOG\n", messageP->str);
-    //   messageP->len = 0;
-    //   rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, messageP);
-    //   FREE_CHECK (messageP);
-    // }
   }
 }
 
@@ -806,18 +770,9 @@ log_message_start (
   }
 
   if (! *messageP) {
-    // rv = lfds611_stack_pop (g_oai_log.log_free_message_queue_p, (void **)messageP);
     *messageP = CALLOC_CHECK(1, sizeof(log_queue_item_t));
-    rv = 1;
 
-    // if (0 == rv) {
-    //   *messageP = CALLOC_CHECK(1, sizeof(log_queue_item_t));
-    //   AssertFatal(*messageP, "Out of memory error");
-    //   OAI_FPRINTF_ERR("Warning allocating an extra log_queue_item_t in LOG\n");
-    //   rv = 1;
-    // }
-
-    if (1 == rv) {
+    if (*messageP) {
       struct timeval elapsed_time;
 
 #if DAEMONIZE
@@ -864,12 +819,6 @@ log_message_start (
   }
   return;
 error_event_start:
-  // put in memory pool the message buffer
-  // (*messageP)->len = 0;
-  // rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, *messageP);
-  // if (0 == rv) {
-  //   FREE_CHECK (*messageP);
-  // }
   FREE_CHECK (*messageP);
   return;
 }
@@ -970,16 +919,8 @@ log_message (
     }
   }
 
-  // rv = lfds611_stack_pop (g_oai_log.log_free_message_queue_p, (void **)&new_item_p);
   new_item_p = CALLOC_CHECK(1, sizeof(log_queue_item_t));
   rv = 1;
-
-  // if (0 == rv) {
-  //   new_item_p = CALLOC_CHECK(1, sizeof(log_queue_item_t));
-  //   AssertFatal(new_item_p, "Out of memory error");
-  //   OAI_FPRINTF_ERR("Warning allocating an extra log_queue_item_t in LOG\n");
-  //   rv = 1;
-  // }
 
   if (new_item_p) {
     if (1 == rv) {
@@ -1023,18 +964,7 @@ log_message (
       new_item_p->len = rv;
       new_item_p->str[rv] = 0;
 
-      // rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, new_item_p);
       lfds700_queue_enqueue (&g_oai_log.log_message_queue_p, new_item_p, &g_oai_log.ps);
-      rv = 1;
-
-      if (0 == rv) {
-        // new_item_p->len = 0;
-        // // rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, new_item_p);
-        // if (0 == rv) {
-        //   FREE_CHECK (new_item_p);
-        // }
-        FREE_CHECK (new_item_p);
-      }
     } else {
       FREE_CHECK (new_item_p);
       OAI_FPRINTF_ERR("Error while lfds611_stack_pop()\n");
@@ -1044,11 +974,6 @@ log_message (
 
   return;
 error_event:
-  // new_item_p->len = 0;
-  // rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, new_item_p);
-  // if (0 == rv) {
-  //   FREE_CHECK (new_item_p);
-  // }
   FREE_CHECK (new_item_p);
 }
 

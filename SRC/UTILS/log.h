@@ -110,7 +110,7 @@ typedef struct log_thread_ctxt_s {
 * in the opened stream ( file, tcp, stdout)
 */
 typedef struct log_queue_item_s {
-  struct lfds700_queue_element LFDS700_PAL_ALIGN( LFDS700_PAL_ATOMIC_ISOLATION_IN_BYTES ) qe;
+  struct lfds700_queue_element LFDS700_PAL_ALIGN( LFDS700_PAL_ATOMIC_ISOLATION_IN_BYTES ) qe; /*!< \brief queue element. */
   int32_t                                 len;                              /*!< \brief length of string. */
   int32_t                                 log_level;                        /*!< \brief log level for syslog. */
 #define LOG_MAX_MESSAGE_LENGTH            512
