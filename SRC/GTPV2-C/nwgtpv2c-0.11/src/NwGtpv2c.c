@@ -1125,7 +1125,7 @@ extern                                  "C" {
 
     if ((ntohs (*((uint16_t *) ((uint8_t *) udpData + 2)))      /* Length */
          +((*((uint8_t *) (udpData)) & 0x08) ? 4 : 0) /* Extra Header length if TEID present */ ) > udpDataLen) {
-      OAILOG_WARNING (LOG_GTPV2C,  "Received message with errneous length of %u against expected length of %u! Discarding\n", udpDataLen, ntohs (*((uint16_t *) ((uint8_t *) udpData + 2))) + ((*((uint8_t *) (udpData)) & 0x08) ? 4 : 0));
+      OAILOG_WARNING (LOG_GTPV2C,  "Received message with erroneous length of %u against expected length of %u! Discarding\n", udpDataLen, ntohs (*((uint16_t *) ((uint8_t *) udpData + 2))) + ((*((uint8_t *) (udpData)) & 0x08) ? 4 : 0));
       OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
     }
 
@@ -1152,7 +1152,9 @@ extern                                  "C" {
     case NW_GTP_CREATE_BEARER_REQ:
     case NW_GTP_UPDATE_BEARER_REQ:
     case NW_GTP_DELETE_BEARER_REQ:
-    case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:{
+    case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:
+    case NW_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:
+    case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:{
         rc = nwGtpv2cHandleInitialReq (thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       }
       break;
@@ -1164,7 +1166,9 @@ extern                                  "C" {
     case NW_GTP_CREATE_BEARER_RSP:
     case NW_GTP_UPDATE_BEARER_RSP:
     case NW_GTP_DELETE_BEARER_RSP:
-    case NW_GTP_RELEASE_ACCESS_BEARERS_RSP:{
+    case NW_GTP_RELEASE_ACCESS_BEARERS_RSP:
+    case NW_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_RSP:
+    case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_RSP: {
         rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       }
       break;
