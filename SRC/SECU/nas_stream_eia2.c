@@ -75,7 +75,7 @@ nas_stream_encrypt_eia2 (
   m[4] = ((stream_cipher->bearer & 0x1F) << 3) | ((stream_cipher->direction & 0x01) << 2);
   memcpy (&m[8], stream_cipher->message, m_length);
 
-  OAILOG_TRACE (LOG_NAS, "Byte length: %u, Zero bits: %u\n: ", m_length + 8, zero_bit);
+  OAILOG_TRACE (LOG_NAS, "Byte length: %u, Zero bits: %u:\n", m_length + 8, zero_bit);
   OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "m:", m, m_length + 8);
   OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "Key:", stream_cipher->key, stream_cipher->key_length);
   OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "Message:", stream_cipher->message, m_length);
