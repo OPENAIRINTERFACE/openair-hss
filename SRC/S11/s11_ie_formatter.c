@@ -800,8 +800,8 @@ s11_serving_network_ie_set (
   /*
    * MCC Decimal | MCC Hundreds
    */
-  value[0] = ((serving_network->mcc[1] & 0x0F) << 4) | (serving_network->mcc[2] & 0x0F);
-  value[1] = serving_network->mcc[0] & 0x0F;
+  value[0] = ((serving_network->mcc[1] & 0x0F) << 4) | (serving_network->mcc[0] & 0x0F);
+  value[1] = serving_network->mcc[2] & 0x0F;
 
   if ((serving_network->mnc[0] & 0xF) == 0xF) {
     /*
