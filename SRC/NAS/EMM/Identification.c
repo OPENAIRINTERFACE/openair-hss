@@ -307,7 +307,7 @@ emm_proc_identification_complete (
     emm_sap.u.emm_reg.u.common.is_attached = emm_ctx->is_attached;
     emm_ctx_unmark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_IDENT);
   } else {
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EMM context exists");
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EMM context exists\n");
     /*
      * Notify EMM that the identification procedure failed
      */
