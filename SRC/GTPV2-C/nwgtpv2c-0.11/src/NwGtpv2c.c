@@ -1149,7 +1149,8 @@ extern                                  "C" {
     case NW_GTP_DELETE_SESSION_REQ:
     case NW_GTP_CREATE_BEARER_REQ:
     case NW_GTP_UPDATE_BEARER_REQ:
-    case NW_GTP_DELETE_BEARER_REQ:{
+    case NW_GTP_DELETE_BEARER_REQ:
+    case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:{
         rc = nwGtpv2cHandleInitialReq (thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       }
       break;
@@ -1160,7 +1161,8 @@ extern                                  "C" {
     case NW_GTP_DELETE_SESSION_RSP:
     case NW_GTP_CREATE_BEARER_RSP:
     case NW_GTP_UPDATE_BEARER_RSP:
-    case NW_GTP_DELETE_BEARER_RSP:{
+    case NW_GTP_DELETE_BEARER_RSP:
+    case NW_GTP_RELEASE_ACCESS_BEARERS_RSP:{
         rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       }
       break;
