@@ -775,12 +775,12 @@ s11_serving_network_ie_get (
      * Two digits MNC
      */
     serving_net->mnc[0] = 0;
-    serving_net->mnc[2] = (ieValue[2] & 0xF0) >> 4;
     serving_net->mnc[1] = (ieValue[2] & 0x0F);
+    serving_net->mnc[2] = (ieValue[2] & 0xF0) >> 4;
   } else {
-    serving_net->mnc[0] = (ieValue[1] & 0xF0) >> 4;
-    serving_net->mnc[2] = (ieValue[2] & 0xF0) >> 4;
-    serving_net->mnc[1] = (ieValue[2] & 0x0F);
+    serving_net->mnc[0] = (ieValue[2] & 0x0F);
+    serving_net->mnc[1] = (ieValue[2] & 0xF0) >> 4;
+    serving_net->mnc[2] = (ieValue[1] & 0xF0) >> 4;
   }
 
   OAILOG_DEBUG (LOG_S11, "\t- Serving network %d.%d\n", serving_net->mcc[0] * 100 + serving_net->mcc[1] * 10 + serving_net->mcc[2], serving_net->mnc[0] * 100 + serving_net->mnc[1] * 10 + serving_net->mnc[2]);
