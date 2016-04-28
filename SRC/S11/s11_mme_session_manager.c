@@ -243,14 +243,6 @@ s11_mme_delete_session_request (
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
 
-  hash_rc = hashtable_ts_free(s11_mme_teid_2_gtv2c_teid_handle,
-      (hash_key_t) req_p->sender_fteid_for_cp.teid);
-
-  if (HASH_TABLE_OK != hash_rc) {
-    OAILOG_WARNING (LOG_S11, "Could not free GTPv2-C hTunnel for local teid %X\n", ulp_req.apiInfo.initialReqInfo.teidLocal);
-    return RETURNerror;
-  }
-
   return RETURNok;
 }
 
@@ -271,6 +263,9 @@ s11_mme_handle_delete_session_response (
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_DELETE_SESSION_RESPONSE);
   resp_p = &message_p->ittiMsg.s11_delete_session_response;
+
+  resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+
   /*
    * Create a new message parser
    */
@@ -317,5 +312,10 @@ s11_mme_handle_delete_session_response (
   DevAssert (NW_OK == rc);
   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
   DevAssert (NW_OK == rc);
+
+  hashtable_rc_t hash_rc = hashtable_ts_free(s11_mme_teid_2_gtv2c_teid_handle, (hash_key_t) resp_p->teid);
+
+  DevAssert (HASH_TABLE_OK == hash_rc);
+
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
