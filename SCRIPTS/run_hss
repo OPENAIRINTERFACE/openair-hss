@@ -196,7 +196,7 @@ function main()
     fi
     value="`cat $hss_config_file | tr -d " " | grep "="`"
     eval $value
-    $OPENAIRCN_DIR/SCRIPTS/hss_export_database $MYSQL_server $MYSQL_user $MYSQL_pass $MYSQL_db $dump_file
+    $OPENAIRCN_DIR/SCRIPTS/hss_db_export $MYSQL_server $MYSQL_user $MYSQL_pass $MYSQL_db $dump_file
   fi
   
   #####################################
@@ -207,7 +207,7 @@ function main()
     if [ -e $dump_file ]; then 
       value="`cat $hss_config_file | tr -d " " | grep "="`"
       eval $value
-      $OPENAIRCN_DIR/SCRIPTS/hss_import_database $MYSQL_server $MYSQL_user $MYSQL_pass $MYSQL_db $dump_file
+      $OPENAIRCN_DIR/SCRIPTS/hss_db_import $MYSQL_server $MYSQL_user $MYSQL_pass $MYSQL_db $dump_file
     else
       echo_fatal "$dump_file does not exist, exiting"
     fi

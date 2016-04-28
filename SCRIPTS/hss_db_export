@@ -20,7 +20,7 @@
 #      contact@openairinterface.org
 ################################################################################
 
-# file export_hss_database
+# file hss_db_export
 # brief
 # author Lionel Gauthier
 # company Eurecom
@@ -41,7 +41,7 @@ function main(){
   EXPECTED_ARGS=5
   if [ $# -ne $EXPECTED_ARGS ]
   then
-    echo_error "Usage: export_hss_database mysql_hostname hssuser hsspass databasename filename"
+    echo_error "Usage: hss_db_export mysql_hostname hssuser hsspass databasename filename"
     return 1
   fi
   local mysql_hostname=$1

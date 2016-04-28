@@ -20,7 +20,7 @@
 #      contact@openairinterface.org
 ################################################################################
 
-# file hss_create_database
+# file hss_db_create
 # brief
 # author Lionel Gauthier
 # company Eurecom
@@ -42,7 +42,7 @@ function main(){
   EXPECTED_ARGS=6
   if [ $# -ne $EXPECTED_ARGS ]
   then
-    echo_error "Usage: hss_create_database dbhostname dbadmin dbpass hssuser hsspass databasename"
+    echo_error "Usage: hss_db_create dbhostname dbadmin dbpass hssuser hsspass databasename"
     return 1
   fi
   local mysql_hostname=$1
