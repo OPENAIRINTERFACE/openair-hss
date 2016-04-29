@@ -1190,7 +1190,7 @@ s11_bearer_qos_ie_set (
   const BearerQOS_t * bearer_qos)
 {
   NwRcT                                   rc;
-  uint8_t                                 value[18];
+  uint8_t                                 value[22];
 
   DevAssert (msg );
   DevAssert (bearer_qos );
@@ -1199,11 +1199,11 @@ s11_bearer_qos_ie_set (
   /*
    * TODO: check endianness
    */
-  memcpy (&value[2], &bearer_qos->mbr.br_ul, 4);
-  memcpy (&value[6], &bearer_qos->mbr.br_dl, 4);
-  memcpy (&value[10], &bearer_qos->gbr.br_ul, 4);
-  memcpy (&value[14], &bearer_qos->gbr.br_dl, 4);
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_LEVEL_QOS, 18, 0, value);
+  memcpy (&value[2], &bearer_qos->mbr.br_ul, 5);
+  memcpy (&value[7], &bearer_qos->mbr.br_dl, 5);
+  memcpy (&value[12], &bearer_qos->gbr.br_ul, 5);
+  memcpy (&value[17], &bearer_qos->gbr.br_dl, 5);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_LEVEL_QOS, 22, 0, value);
   DevAssert (NW_OK == rc);
   return RETURNok;
 }
