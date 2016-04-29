@@ -96,6 +96,9 @@ s11_mme_handle_release_access_bearer_response (
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_RELEASE_ACCESS_BEARERS_RESPONSE);
   resp_p = &message_p->ittiMsg.s11_release_access_bearers_response;
+
+  resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+
   /*
    * Create a new message parser
    */
@@ -209,6 +212,9 @@ s11_mme_handle_modify_bearer_response (
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_MODIFY_BEARER_RESPONSE);
   resp_p = &message_p->ittiMsg.s11_modify_bearer_response;
+
+  resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+
   /*
    * Create a new message parser
    */

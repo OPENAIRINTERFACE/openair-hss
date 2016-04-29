@@ -1141,11 +1141,14 @@ sgw_handle_release_access_bearers_request (
   }
 
   release_access_bearers_resp_p = &message_p->ittiMsg.s11_release_access_bearers_response;
+  memset((void*)release_access_bearers_resp_p, 0, sizeof(*release_access_bearers_resp_p));
+
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, release_access_bearers_req_pP->teid, (void **)&ctx_p);
 
   if (HASH_TABLE_OK == hash_rc) {
     release_access_bearers_resp_p->cause = REQUEST_ACCEPTED;
     release_access_bearers_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_S11;
+    release_access_bearers_resp_p->trxn = ctx_p->sgw_eps_bearer_context_information.trxn;
 //#pragma message  "TODO Here the release (sgw_handle_release_access_bearers_request)"
     hash_rc = hashtable_ts_apply_callback_on_elements (ctx_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, sgw_release_all_enb_related_information, NULL, NULL);
     // TODO The S-GW starts buffering downlink packets received for the UE
