@@ -128,7 +128,7 @@ compilations() {
 make_test() {
   echo_success "unit tests start"
   cd $OPENAIRCN_DIR/BUILD/$1/BUILD
-  if [ "a1" == "a1" ]; then 
+  if [ "a$4" == "a1" ]; then 
     {
       make test
     } | tee $dlog/$2_test.txt 
