@@ -92,16 +92,16 @@ mme_app_handle_authentication_info_answer (
   const s6a_auth_info_ans_t * const s6a_auth_info_ans_pP)
 {
   struct ue_context_s                    *ue_context = NULL;
-  uint64_t                                imsi = 0;
+  mme_app_imsi_t                         imsi = {.length = 0};
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (s6a_auth_info_ans_pP );
-  MME_APP_STRING_TO_IMSI ((char *)s6a_auth_info_ans_pP->imsi, &imsi);
-  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
+  mme_app_string_to_imsi(&imsi, (char *)s6a_auth_info_ans_pP->imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", IMSI_DATA(imsi));
 
   if ((ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
     OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS Unknown imsi %" IMSI_FORMAT, imsi);
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS Unknown imsi %" IMSI_FORMAT, IMSI_DATA(imsi));
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
@@ -134,7 +134,7 @@ mme_app_handle_authentication_info_answer (
     mme_app_itti_auth_rsp (ue_context->mme_ue_s1ap_id, 1, &s6a_auth_info_ans_pP->auth_info.eutran_vector);
   } else {
     OAILOG_ERROR (LOG_MME_APP, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi %" IMSI_FORMAT, imsi);
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi %" IMSI_FORMAT, IMSIimsi);
 
     /*
      * Inform NAS layer with the right failure
@@ -155,7 +155,7 @@ mme_app_handle_nas_auth_param_req (
 {
   plmn_t                                 *visited_plmn = NULL;
   struct ue_context_s                    *ue_context = NULL;
-  uint64_t                                imsi = 0;
+  mme_app_imsi_t                          imsi = {.length = 0};
   int                                     mnc_length = 0;
 
   plmn_t                                  visited_plmn_from_req = {
@@ -197,8 +197,8 @@ mme_app_handle_nas_auth_param_req (
                    visited_plmn_from_req.mnc_digit1, visited_plmn_from_req.mnc_digit2);
   }
 
-  MME_APP_STRING_TO_IMSI (nas_auth_param_req_pP->imsi, &imsi);
-  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
+  mme_app_string_to_imsi(&imsi, &(nas_auth_param_req_pP->imsi));
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", IMSI_DATA(imsi));
   OAILOG_DEBUG (LOG_MME_APP, "Handling imsi from req  %s (mnc length %d)\n", nas_auth_param_req_pP->imsi, mnc_length);
   /*
    * Fetch the context associated with this IMSI

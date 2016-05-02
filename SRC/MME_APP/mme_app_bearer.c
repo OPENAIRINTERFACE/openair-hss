@@ -102,7 +102,7 @@ mme_app_send_s11_create_session_req (
 #if EPC_BUILD
   to_task = TASK_SPGW_APP;
 #endif
-  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", ue_context_pP->imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", IMSI_DATA(ue_context_pP->imsi));
 
   if (ue_context_pP->sub_status != SS_SERVICE_GRANTED) {
     /*
@@ -136,7 +136,7 @@ mme_app_send_s11_create_session_req (
    * The remote teid will be provided in the response message.
    */
   session_request_p->teid = 0;
-  MME_APP_IMSI_TO_STRING (ue_context_pP->imsi, (char *)session_request_p->imsi.digit);
+  mme_app_imsi_to_string((char *) session_request_p->imsi.digit, &(ue_context_pP->imsi));
   // message content was set to 0
   session_request_p->imsi.length = strlen ((const char *)session_request_p->imsi.digit);
   /*
@@ -240,7 +240,7 @@ mme_app_send_s11_create_session_req (
   session_request_p->serving_network.mnc[2] = ue_context_pP->e_utran_cgi.plmn.mnc_digit3;
   session_request_p->selection_mode = MS_O_N_P_APN_S_V;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, (TASK_S11 == to_task) ? MSC_S11_MME : MSC_SP_GWAPP_MME, NULL, 0,
-      "0 SGW_CREATE_SESSION_REQUEST imsi %" IMSI_FORMAT, ue_context_pP->imsi);
+      "0 SGW_CREATE_SESSION_REQUEST imsi %" IMSI_FORMAT, IMSI_DATA(ue_context_pP->imsi));
   rc = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
@@ -254,17 +254,17 @@ mme_app_handle_nas_pdn_connectivity_req (
 //------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
-  uint64_t                                imsi = 0;
+  mme_app_imsi_t                          imsi = {.length = 0};
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   OAILOG_DEBUG (LOG_MME_APP, "Received NAS_PDN_CONNECTIVITY_REQ from NAS\n");
   DevAssert (nas_pdn_connectivity_req_pP );
-  MME_APP_STRING_TO_IMSI ((char *)nas_pdn_connectivity_req_pP->imsi, &imsi);
-  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
+  mme_app_string_to_imsi (&imsi, (char *)nas_pdn_connectivity_req_pP->imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", IMSI_DATA(imsi));
 
   if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_PDN_CONNECTIVITY_REQ Unknown imsi %" IMSI_FORMAT, imsi);
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_PDN_CONNECTIVITY_REQ Unknown imsi %" IMSI_FORMAT, IMSI_DATA(imsi));
     OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }

@@ -49,15 +49,14 @@ mme_app_send_s6a_update_location_req (
   struct ue_context_s *const ue_context_pP)
 {
   struct ue_context_s                    *ue_context_p = NULL;
-  uint64_t                                imsi = 0;
+  mme_app_imsi_t                          imsi = {.length = 0};
   MessageDef                             *message_p = NULL;
   s6a_update_location_req_t              *s6a_ulr_p = NULL;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-  MME_APP_STRING_TO_IMSI ((char *)
-                          ue_context_pP->pending_pdn_connectivity_req_imsi, &imsi);
-  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", imsi);
+  mme_app_string_to_imsi (&imsi, (char *) ue_context_pP->pending_pdn_connectivity_req_imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling imsi %" IMSI_FORMAT "\n", IMSI_DATA(imsi));
 
   if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
     OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
@@ -72,8 +71,10 @@ mme_app_send_s6a_update_location_req (
 
   s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
   memset ((void *)s6a_ulr_p, 0, sizeof (s6a_update_location_req_t));
-  MME_APP_IMSI_TO_STRING (imsi, s6a_ulr_p->imsi);
+
+  mme_app_imsi_to_string (s6a_ulr_p->imsi, &imsi);
   s6a_ulr_p->imsi_length = strlen (s6a_ulr_p->imsi);
+
   s6a_ulr_p->initial_attach = INITIAL_ATTACH;
   memcpy (&s6a_ulr_p->visited_plmn, &ue_context_p->guti.gummei.plmn, sizeof (plmn_t));
   s6a_ulr_p->rat_type = RAT_EUTRAN;
@@ -81,7 +82,7 @@ mme_app_send_s6a_update_location_req (
    * Check if we already have UE data
    */
   s6a_ulr_p->skip_subscriber_data = 0;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi %" IMSI_FORMAT, imsi);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi %" IMSI_FORMAT, IMSI_DATA(imsi));
   rc =  itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
@@ -92,8 +93,8 @@ int
 mme_app_handle_s6a_update_location_ans (
   const s6a_update_location_ans_t * const ula_pP)
 {
-  uint64_t                                imsi = 0;
-  struct ue_context_s                    *ue_context_p = NULL;
+  mme_app_imsi_t                          imsi = {.length = 0};
+  struct ue_context_s                     *ue_context_p = NULL;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -117,12 +118,12 @@ mme_app_handle_s6a_update_location_ans (
     DevMessage ("ULR/ULA procedure returned non success\n");
   }
 
-  MME_APP_STRING_TO_IMSI ((char *)ula_pP->imsi, &imsi);
-  OAILOG_DEBUG (LOG_MME_APP, "%s Handling imsi %" IMSI_FORMAT "\n", __FUNCTION__, imsi);
+  mme_app_string_to_imsi( &imsi, (char *)ula_pP->imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "%s Handling imsi %" IMSI_FORMAT "\n", __FUNCTION__, IMSI_DATA(imsi));
 
   if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
     OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_UPDATE_LOCATION unknown imsi %" IMSI_FORMAT" ", imsi);
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_UPDATE_LOCATION unknown imsi %" IMSI_FORMAT" ", IMSI_DATA(imsi));
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 

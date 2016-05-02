@@ -536,10 +536,12 @@ mme_api_identify_imsi (
   auth_vector_t * vector)
 {
   ue_context_t                           *ue_context = NULL;
-  mme_app_imsi_t                          mme_imsi = 0;
+  mme_app_imsi_t                          mme_imsi = {.length = 0};
 
   OAILOG_FUNC_IN (LOG_NAS);
-  NAS_IMSI2U64 (imsi, mme_imsi);
+
+  mme_app_convert_imsi_to_imsi_mme (&mme_imsi, imsi);
+
   ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, mme_imsi);
 
   if ( ue_context) {
@@ -610,10 +612,12 @@ mme_api_new_guti (
   tai_list_t * tai_list)
 {
   ue_context_t                           *ue_context = NULL;
-  mme_app_imsi_t                          mme_imsi = 0;
+  mme_app_imsi_t                          mme_imsi = {.length = 0};
 
   OAILOG_FUNC_IN (LOG_NAS);
-  NAS_IMSI2U64 (imsi, mme_imsi);
+
+  mme_app_convert_imsi_to_imsi_mme (&mme_imsi, imsi);
+
   ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, mme_imsi);
 
   if ( ue_context) {
