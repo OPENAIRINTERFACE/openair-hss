@@ -273,12 +273,10 @@ udp_intertask_interface (
 
           udp_init_p = &received_message_p->ittiMsg.udp_init;
           rc = udp_server_create_socket (udp_init_p->port, udp_init_p->address, ITTI_MSG_ORIGIN_ID (received_message_p));
-          goto to_free;
         }
         break;
 
       case UDP_DATA_REQ:{
-          // There are some memory leaks happening here as well, but need to take a closer look
           int                                     udp_sd = -1;
           ssize_t                                 bytes_written;
           struct udp_socket_desc_s               *udp_sock_p = NULL;
@@ -322,27 +320,18 @@ udp_intertask_interface (
 
       case TERMINATE_MESSAGE:{
           itti_exit_task ();
-          goto to_free;
         }
         break;
 
       case MESSAGE_TEST:{
-          goto to_free;
         }
         break;
 
       default:{
           OAILOG_DEBUG (LOG_UDP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
-          goto to_free;
         }
         break;
       }
-
-    // Freeing the memory allocated from the memory pool
-    to_free:
-      rc = itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-      AssertFatal (rc == EXIT_SUCCESS, "Failed to free memory (%d)!\n", rc);
-      received_message_p = NULL;
 
     on_error:
       rc = itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
