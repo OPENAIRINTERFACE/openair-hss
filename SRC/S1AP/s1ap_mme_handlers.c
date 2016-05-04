@@ -538,7 +538,7 @@ s1ap_mme_handle_ue_cap_indication (
     ue_cap_ind_p = &message_p->ittiMsg.s1ap_ue_cap_ind;
     ue_cap_ind_p->enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
     ue_cap_ind_p->mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
-    DevCheck (ue_cap_p->ueRadioCapability.size < 300, 300, ue_cap_p->ueRadioCapability.size, 0);
+    DevCheck (ue_cap_p->ueRadioCapability.size < S1AP_UE_RADIOCAPABILITY_MAX_SIZE, S1AP_UE_RADIOCAPABILITY_MAX_SIZE, ue_cap_p->ueRadioCapability.size, 0);
     memcpy (ue_cap_ind_p->radio_capabilities, ue_cap_p->ueRadioCapability.buf, ue_cap_p->ueRadioCapability.size);
     ue_cap_ind_p->radio_capabilities_length = ue_cap_p->ueRadioCapability.size;
     MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
