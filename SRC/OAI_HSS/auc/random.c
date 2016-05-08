@@ -27,6 +27,7 @@
 #include <gmp.h>
 #include <sys/time.h>
 
+#include "log.h"
 #include "auc.h"
 #include "hss_config.h"
 
@@ -50,8 +51,10 @@ random_init (
     struct timeval     t1;
     gettimeofday (&t1, NULL);
     srand (t1.tv_usec * t1.tv_sec);
+    FPRINTF_DEBUG ("Initialized random\n");
   } else {
     srand (1);
+    FPRINTF_DEBUG ("Initialized pseudo-random\n");
   }
 }
 
@@ -78,11 +81,13 @@ generate_random (
       mask = 0xFF << shift;
       random_p[i] = (r & mask) >> shift;
     }
+    FPRINTF_DEBUG ("Generated random\n");
   } else {
     pthread_mutex_lock(&random_state.lock);
     for (int i = 0; i < length; i++) {
       random_p[i] = rand ();
     }
     pthread_mutex_unlock(&random_state.lock);
+    FPRINTF_DEBUG ("Generated pseudo-random\n");
   }
 }

@@ -738,7 +738,11 @@ log_message_finish (
     if (g_oai_log.is_output_fd_buffered) {
       rv = lfds611_queue_enqueue (g_oai_log.log_message_queue_p, messageP);
     } else {
-      fprintf(g_oai_log.log_fd, "%s", bdata(messageP->bstr));
+      if (g_oai_log.is_output_is_fd) {
+        fprintf(g_oai_log.log_fd, "%s", bdata(messageP->bstr));
+      } else {
+        syslog (messageP->log_level ,"%s", bdata(messageP->bstr));
+      }
       rv = 0;
     }
 

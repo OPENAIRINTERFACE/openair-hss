@@ -257,7 +257,7 @@ hss_config_parse_file (
   }
   config_init(&cfg);
 
-  printf ("Parsing configuration file: %s\n", hss_config_p->config);
+  FPRINTF_DEBUG ("Parsing configuration file: %s\n", hss_config_p->config);
   if (! config_read_file(&cfg, hss_config_p->config)) {
     FPRINTF_ERROR( "Failed to parse HSS configuration file %s!\n", hss_config_p->config);
     config_destroy(&cfg);
