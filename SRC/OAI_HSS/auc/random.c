@@ -38,6 +38,7 @@ typedef struct random_state_s {
 
 random_state_t                          random_state;
 extern hss_config_t                     hss_config;
+static uint8_t                          no_random_delta = 0;
 
 void
 random_init (
@@ -85,8 +86,9 @@ generate_random (
   } else {
     pthread_mutex_lock(&random_state.lock);
     for (int i = 0; i < length; i++) {
-      random_p[i] = rand ();
+      random_p[i] = i + no_random_delta;
     }
+    no_random_delta += 1;
     pthread_mutex_unlock(&random_state.lock);
     FPRINTF_DEBUG ("Generated pseudo-random\n");
   }

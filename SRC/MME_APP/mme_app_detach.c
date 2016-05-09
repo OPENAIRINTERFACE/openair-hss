@@ -61,6 +61,11 @@ mme_app_send_delete_session_request (
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
+  mme_config_read_lock (&mme_config);
+  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+  mme_config_unlock (&mme_config);
+  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4 = 1;
+
   /*
    * S11 stack specific parameter. Not used in standalone epc mode
    */

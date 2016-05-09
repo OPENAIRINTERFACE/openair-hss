@@ -192,6 +192,7 @@ s11_mme_handle_create_session_response (
   DevAssert (NW_OK == rc);
   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
   DevAssert (NW_OK == rc);
+
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
 
@@ -259,6 +260,7 @@ s11_mme_handle_delete_session_response (
   itti_s11_delete_session_response_t     *resp_p;
   MessageDef                             *message_p;
   NwGtpv2cMsgParserT                     *pMsgParser;
+  hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_DELETE_SESSION_RESPONSE);
@@ -313,7 +315,22 @@ s11_mme_handle_delete_session_response (
   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
   DevAssert (NW_OK == rc);
 
-  hashtable_rc_t hash_rc = hashtable_ts_free(s11_mme_teid_2_gtv2c_teid_handle, (hash_key_t) resp_p->teid);
+
+  // delete local tunnel
+  NwGtpv2cUlpApiT                         ulp_req;
+  memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+  ulp_req.apiType = NW_GTPV2C_ULP_DELETE_LOCAL_TUNNEL;
+  hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) resp_p->teid,
+      (void **)(uintptr_t)&ulp_req.apiInfo.deleteLocalTunnelInfo.hTunnel);
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_ERROR (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", resp_p->teid);
+  } else {
+    rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+    DevAssert (NW_OK == rc);
+  }
+
+  hash_rc = hashtable_ts_free(s11_mme_teid_2_gtv2c_teid_handle, (hash_key_t) resp_p->teid);
 
   DevAssert (HASH_TABLE_OK == hash_rc);
 
