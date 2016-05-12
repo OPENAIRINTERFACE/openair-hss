@@ -25,6 +25,7 @@
 
 #include "assertions.h"
 #include "intertask_interface.h"
+#include "msc.h"
 
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
@@ -76,6 +77,8 @@ s11_mme_release_access_bearers_request (
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
+  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 RELEASE_ACCESS_BEARERS_REQUEST local S11 teid " TEID_FMT " num ebi %u",
+    req_p->local_teid, req_p->list_of_rabs.num_ebi);
   return RETURNok;
 }
 
@@ -123,6 +126,7 @@ s11_mme_handle_release_access_bearer_response (
   rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
   if (rc != NW_OK) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 RELEASE_ACCESS_BEARERS_RESPONSE local S11 teid " TEID_FMT " ", resp_p->teid);
     /*
      * TODO: handle this case
      */
@@ -134,6 +138,9 @@ s11_mme_handle_release_access_bearer_response (
     DevAssert (NW_OK == rc);
     return RETURNerror;
   }
+
+  MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 RELEASE_ACCESS_BEARERS_RESPONSE local S11 teid " TEID_FMT " cause %u",
+    resp_p->teid, resp_p->cause);
 
   rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
   DevAssert (NW_OK == rc);
@@ -189,7 +196,10 @@ s11_mme_modify_bearer_request (
 
 
 
-   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 MODIFY_BEARER_REQUEST local S11 teid " TEID_FMT " num bearers ctx %u",
+    req_p->local_teid, req_p->bearer_contexts_to_be_modified.num_bearer_context);
+
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
    DevAssert (NW_OK == rc);
    return RETURNok;
 
@@ -239,6 +249,7 @@ s11_mme_handle_modify_bearer_response (
   rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
   if (rc != NW_OK) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " ", resp_p->teid);
     /*
      * TODO: handle this case
      */
@@ -251,6 +262,8 @@ s11_mme_handle_modify_bearer_response (
     return RETURNerror;
   }
 
+  MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " cause %u",
+    resp_p->teid, resp_p->cause);
   rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
   DevAssert (NW_OK == rc);
   rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
