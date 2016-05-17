@@ -117,6 +117,7 @@ function main()
         ;;
       -f | --fqdn)
         echo "FQDN of the HSS: $2"
+        hss_fqdn=$2
         cmake_args="$cmake_args -DHSS_FQDN=$2"
         shift 2;
         ;;
