@@ -20,7 +20,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dir", "-d", type=str,help="Directory where msc logs can be found", default="/tmp")
-parser.add_argument("--profile", "-p", type=str,help="E_UTRAN, EPC", default="EPC")
+parser.add_argument("--profile", "-p", type=str,help="E_UTRAN, EPC, MME", default="MME")
 parser.add_argument("--no_message", "-M", type=str,help="Trace PDUs, not messages, SDUs", default="no")
 parser.add_argument("--no_pdu", "-P", type=str,help="Trace messages, SDUs, not PDUs", default="no")
 parser.add_argument("--no_event", "-E", type=str,help="Do not trace events", default="no")
@@ -55,6 +55,7 @@ g_display_color  = ['\"teal\"',   # To check in msc.h: MSC_NAS_UE
                     '\"black\"',  # To check in msc.h: MSC_NAS_MME
                     '\"black\"',  # To check in msc.h: MSC_NAS_EMM_MME
                     '\"black\"',  # To check in msc.h: MSC_NAS_ESM_MME
+                    '\"black\"',  
                     '\"black\"',  
                     '\"black\"',  
                     '\"black\"',  

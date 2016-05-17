@@ -350,6 +350,19 @@ msc_init (
 
       break;
 
+    case MSC_SGW:
+      rv = snprintf (&g_msc_proto2str[i][0], MSC_MAX_PROTO_NAME_LENGTH, "SGW");
+
+      if (rv >= MSC_MAX_PROTO_NAME_LENGTH) {
+        g_msc_proto2str[i][MSC_MAX_PROTO_NAME_LENGTH - 1] = 0;
+      }
+
+      if (envP == MSC_MME) {
+        msc_log_declare_proto (i);
+      }
+
+      break;
+
     case MSC_HSS:
       rv = snprintf (&g_msc_proto2str[i][0], MSC_MAX_PROTO_NAME_LENGTH, "HSS");
 
