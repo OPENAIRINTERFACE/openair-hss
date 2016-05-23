@@ -247,13 +247,14 @@ install_netmap() {
       if [ ! -f /usr/src/linux-source-"$current_kernel_release"/"$current_kernel_release" ]; then
         echo "Untar kernel source code"
         cd /usr/src/linux-source-"$current_kernel_release"
-        tar xjf *.tar.bz2
+        $SUDO tar xjf *.tar.bz2
       fi
       cd linux-source-"$current_kernel_release"
       $SUDO make oldconfig
       $SUDO make
+      $SUDO make modules_install
       $SUDO make install
-      # TODO: check CONFIG_VIRTIO_NET=m for full performance 
+      echo_warning "check CONFIG_VIRTIO_NET=m for full performance" 
       echo_fatal "Please reboot your computer on the new installed kernel (do your own stuff in grub.cfg): $current_kernel_release"
     fi
        
