@@ -119,6 +119,7 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
   struct in_addr                          addr_mask;
   conf_ipv4_list_elm_t                   *ip4_ref = NULL;
   bstring                                 system_cmd = NULL;
+  libconfig_int                           mtu = 0;
 
 
   config_init (&cfg);
@@ -309,6 +310,12 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
         config_pP->force_push_pco = false;
       }
     }
+    if (config_setting_lookup_int (setting_pgw, PGW_CONFIG_STRING_UE_MTU, (const char **)&mtu)) {
+      config_pP->ue_mtu = mtu;
+    } else {
+      config_pP->ue_mtu = 1463;
+    }
+    OAILOG_INFO (LOG_SPGW_APP, "UE MTU : %u\n", config_pP->ue_mtu);
   } else {
     OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW not found\n");
   }

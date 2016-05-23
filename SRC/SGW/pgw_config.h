@@ -48,6 +48,7 @@
 #define PGW_CONFIG_STRING_IPV4_PREFIX_DELIMITER                 '/'
 #define PGW_CONFIG_STRING_DEFAULT_DNS_IPV4_ADDRESS              "DEFAULT_DNS_IPV4_ADDRESS"
 #define PGW_CONFIG_STRING_DEFAULT_DNS_SEC_IPV4_ADDRESS          "DEFAULT_DNS_SEC_IPV4_ADDRESS"
+#define PGW_CONFIG_STRING_UE_MTU                                "UE_MTU"
 
 #define PGW_CONFIG_STRING_INTERFACE_DISABLED                    "none"
 
@@ -87,6 +88,8 @@ typedef struct pgw_config_s {
   bool      masquerade_SGI;
 
   bool      force_push_pco;
+  uint16_t  ue_mtu;
+
 
   STAILQ_HEAD(ipv4_pool_head_s, conf_ipv4_list_elm_s) ipv4_pool_list;
 } pgw_config_t;

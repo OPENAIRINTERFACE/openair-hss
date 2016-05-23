@@ -225,8 +225,8 @@ int pgw_process_pco_link_mtu_request(protocol_configuration_options_t * const pc
   OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Protocol identifier IPCP option Link MTU Request\n");
   poc_id_resp.id = PCO_CI_IPV4_LINK_MTU;
   poc_id_resp.length = 2;
-  mtu_array[0] = (uint8_t)(1500 >> 8);
-  mtu_array[1] = (uint8_t)(1500 &0xFF);
+  mtu_array[0] = (uint8_t)(1463 >> 8);
+  mtu_array[1] = (uint8_t)(1463 & 0xFF);
   poc_id_resp.contents = blk2bstr(mtu_array, sizeof(mtu_array));
 
   return pgw_pco_push_protocol_or_container_id(pco_resp, &poc_id_resp);
