@@ -221,6 +221,8 @@ emm_fsm_get_status (
   }
 
   if (emm_ctx ) {
+    AssertFatal((emm_ctx->_emm_fsm_status < EMM_STATE_MAX) && (emm_ctx->_emm_fsm_status > EMM_STATE_MIN),
+        "ue_id " MME_UE_S1AP_ID_FMT " BAD EMM state %d", ue_id, emm_ctx->_emm_fsm_status);
     return emm_ctx->_emm_fsm_status;
   }
   return EMM_INVALID;           // LG TEST: changed EMM_STATE_MAX to EMM_INVALID;
@@ -254,8 +256,8 @@ emm_fsm_process (
 
   if (emm_ctx) {
     status = emm_fsm_get_status (evt->ue_id, emm_ctx);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
     DevAssert (status != EMM_INVALID);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
     /*
      * Execute the EMM state machine
      */
