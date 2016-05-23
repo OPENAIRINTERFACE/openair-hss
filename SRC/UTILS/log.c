@@ -148,6 +148,7 @@ void* log_task (__attribute__ ((unused)) void *args_p)
 {
   MessageDef                             *received_message_p = NULL;
   long                                    timer_id = 0;
+  int                                     rc;
 
   itti_mark_task_ready (TASK_LOG);
   log_start_use ();
@@ -189,6 +190,10 @@ void* log_task (__attribute__ ((unused)) void *args_p)
         }
         break;
       }
+      // Freeing the memory allocated from the memory pool
+      rc = itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+      AssertFatal (rc == EXIT_SUCCESS, "Failed to free memory (%d)!\n", rc);
+      received_message_p = NULL;
     }
   }
 
@@ -524,28 +529,30 @@ log_flush_messages (
 
   if (g_oai_log.log_fd) {
     while ((rv = lfds611_queue_dequeue (g_oai_log.log_message_queue_p, (void **)&item_p)) == 1) {
-      if (item_p->len > 0) {
-        if (g_oai_log.is_output_is_fd) {
-          rv_put = fputs (item_p->str, g_oai_log.log_fd);
-        } else {
-          syslog (item_p->log_level ,"%s", item_p->str);
+      if (item_p){
+        if (item_p->len > 0) {
+          if (g_oai_log.is_output_is_fd) {
+            rv_put = fputs (item_p->str, g_oai_log.log_fd);
+          } else {
+            syslog (item_p->log_level ,"%s", item_p->str);
+          }
+          // TODO BIN DATA
+          item_p->len = 0;
+          rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
         }
-        // TODO BIN DATA
-        item_p->len = 0;
-        rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
-      }
-      if (rv_put < 0) {
-        // error occured
-        OAI_FPRINTF_ERR("Error while writing log %d\n", rv_put);
-        rv = fclose (g_oai_log.log_fd);
-        if (rv != 0) {
-          OAI_FPRINTF_ERR("Error while closing Log file stream: %s\n", strerror (errno));
-        }
-        // do not exit
-        if (LOG_TCP_STATE_DISABLED != g_oai_log.tcp_state) {
-          // Let ITTI LOG Timer do the reconnection
-          g_oai_log.tcp_state = LOG_TCP_STATE_NOT_CONNECTED;
-          return;
+        if (rv_put < 0) {
+          // error occured
+          OAI_FPRINTF_ERR("Error while writing log %d\n", rv_put);
+          rv = fclose (g_oai_log.log_fd);
+          if (rv != 0) {
+            OAI_FPRINTF_ERR("Error while closing Log file stream: %s\n", strerror (errno));
+          }
+          // do not exit
+          if (LOG_TCP_STATE_DISABLED != g_oai_log.tcp_state) {
+            // Let ITTI LOG Timer do the reconnection
+            g_oai_log.tcp_state = LOG_TCP_STATE_NOT_CONNECTED;
+            return;
+          }
         }
       }
     }
