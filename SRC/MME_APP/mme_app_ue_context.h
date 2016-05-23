@@ -55,6 +55,28 @@ typedef enum {
   ECM_DEREGISTERED,
 } mm_state_t;
 
+#define IMSI_DIGITS_MAX 15
+
+typedef struct {
+  uint32_t length;
+  char data[IMSI_DIGITS_MAX + 1];
+} mme_app_imsi_t;
+
+#define IMSI_FORMAT "s"
+#define IMSI_DATA(MME_APP_IMSI) (MME_APP_IMSI.data)
+
+/* Convert the IMSI contained by a char string NULL terminated to uint64_t */
+
+bool mme_app_is_imsi_empty(mme_app_imsi_t const * imsi);
+bool mme_app_imsi_compare(mme_app_imsi_t const * imsi_a, mme_app_imsi_t const * imsi_b);
+void mme_app_copy_imsi(mme_app_imsi_t * imsi_dst, mme_app_imsi_t const * imsi_src);
+
+void mme_app_string_to_imsi(mme_app_imsi_t * const imsi_dst, char const * const imsi_string_src);
+void mme_app_imsi_to_string(char * const imsi_dst, mme_app_imsi_t const * const imsi_src);
+
+uint64_t mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src);
+void mme_app_ue_context_uint_to_imsi(uint64_t imsi_src, mme_app_imsi_t *imsi_dst);
+void mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst, const imsi_t *imsi_src);
 
 /** @struct bearer_context_t
  *  @brief Parameters that should be kept for an eps bearer.

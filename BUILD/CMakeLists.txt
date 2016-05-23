@@ -108,9 +108,11 @@ macro(add_list_string_option name val helpstr)
     add_definitions("-D${name}=\"${value}\"")
   endif()
 endmacro(add_list_string_option)
-####################################################
-# compilation flags
-#############################################
+################################################################
+# Compilation flags
+################################################################
+# Build type
+################################################################
 if (CMAKE_BUILD_TYPE STREQUAL "")
    set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
@@ -124,6 +126,9 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   add_boolean_option(LOG_OAI True "Thread safe logging API")
 endif()
 
+################################################################
+# Processor architecture
+################################################################
 
 Message("Architecture is ${CMAKE_SYSTEM_PROCESSOR}")
 if (CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7l")
@@ -145,6 +150,9 @@ add_definitions(-DCMAKER)
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -fstack-protector-all -g -DMALLOC_CHECK_=3 -DDEBUG_IS_ON=1 -DTRACE_IS_ON=1 -O0")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS} -g -DMALLOC_CHECK_=3  -DDEBUG_IS_ON -O1") 
 
+################################################################
+# Git Version 
+################################################################
 set(GIT_BRANCH        "UNKNOWN")
 set(GIT_COMMIT_HASH   "UNKNOWN")
 set(GIT_COMMIT_DATE   "UNKNOWN")
@@ -182,11 +190,29 @@ add_list_string_option(PACKAGE_NAME "NotDefined" "As per attribute name")
 add_definitions("-DPACKAGE_VERSION=\"Branch: ${GIT_BRANCH} Abrev. Hash: ${GIT_COMMIT_HASH} Date: ${GIT_COMMIT_DATE}\"")
 add_definitions("-DPACKAGE_BUGREPORT=\"openaircn-user@lists.eurecom.fr\"")
 
+###############################################################################
+# Include CMake modules to find other library
+###############################################################################
+
+set(CMAKE_MODULE_PATH "${BUILD_TOP_DIR}/MODULES/")
+
+###############################################################################
+# Include Check library for unit tests
+###############################################################################
+
+include(CheckCSourceCompiles)
+include(CheckCSourceRuns)
+include(CheckFunctionExists)
+include(CheckIncludeFile)
+include(CheckIncludeFiles)
+include(CheckLibraryExists)
+include(CheckSymbolExists)
+include(CheckTypeSize)
 
 
-#########################################
+###############################################################################
 # Debug and build related options
-#########################################
+###############################################################################
 add_boolean_option( DAEMONIZE                       False    "Fork executable if true")
 
 add_boolean_option( DISABLE_ITTI_DETECT_SUB_TASK_ID False    " ")
@@ -246,23 +272,25 @@ if (${ENABLE_ITTI})
 endif (${ENABLE_ITTI})
 
 
-#############################
+###############################################################################
 # ASN.1 grammar C code generation & dependancies
-################################
+###############################################################################
 # A difficulty: asn1c generates C code of a un-predictable list of files
 # so, generate the c from asn1c once at cmake run time
 # So, if someone modify the asn.1 source file in such as way that it will create
 # (so creating new asn.1 objects instead of modifying the object attributes)
 # New C code source file, cmake must be re-run (instead of re-running make only)
-#############
+###############################################################################
+
 set(asn1c_call "${BUILD_TOP_DIR}/TOOLS/generate_asn1")
 set(asn1_generated_dir ${OPENAIRCN_BIN_DIR})
 
-
+###############################################################################
 # S1AP
 # Same limitation as described in RRC: unknown generated file list
 # so we generate it at cmake time
-##############
+###############################################################################
+
 add_list1_option(S1AP_VERSION R10 "S1AP Asn.1 grammar version" R8 R9 R10)
 
 set(S1AP_DIR ${OPENAIRCN_DIR}/SRC/S1AP)
@@ -319,11 +347,15 @@ add_library(S1AP_EPC
 
 
 
-
- # add the binary tree to the search path for include files
-#######################################################
+###############################################################################
+# add the binary tree to the search path for include files
+###############################################################################
 # We will find ConfigOAI.h after generation in target directory
+###############################################################################
+
 include_directories("${OPENAIRCN_BIN_DIR}")
+
+###############################################################################
 # add directories to find all include files
 # the internal rule is to use generic names such as defs.h
 # but to make it uniq name as adding the relative path in the include directtive
@@ -331,7 +363,7 @@ include_directories("${OPENAIRCN_BIN_DIR}")
 #find_path (include_dirs_all *.h ${OPENAIRCN_DIR}/SRC)
 #find_path (include_dirs_all *.h PATHS /usr/include NO_CMAKE_PATH)
 #include_directories("${include_dirs_all}")
-
+###############################################################################
 
 include_directories("${OPENAIRCN_DIR}/SRC/COMMON")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS")
@@ -358,8 +390,10 @@ include_directories("${OPENAIRCN_DIR}/SRC/MME_APP")
 include_directories("${OPENAIRCN_DIR}/SRC/S6A")
 include_directories("${OPENAIRCN_DIR}/SRC")
 
+
+###############################################################################
 # Utilities Library
-################
+###############################################################################
 add_library(BSTR
   ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/bstraux.c
   ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/bstrlib.c
@@ -367,6 +401,7 @@ add_library(BSTR
   ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/utf8util.c
 )
 include_directories(${OPENAIRCN_DIR}/SRC/UTILS/BSTR)
+
 add_library(HASHTABLE
   ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/hashtable.c
   ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/obj_hashtable.c
@@ -382,6 +417,10 @@ endif()
 include_directories(${OPENAIRCN_DIR}/SRC/UTILS/MSC/msc)
 
 
+###############################################################################
+# Security library
+###############################################################################
+
 set(SECU_CN_SRC
   ${OPENAIRCN_DIR}/SRC/SECU/kdf.c
   ${OPENAIRCN_DIR}/SRC/SECU/rijndael.c
@@ -394,6 +433,10 @@ set(SECU_CN_SRC
   )
 add_library(SECU_CN ${SECU_CN_SRC})
 
+
+###############################################################################
+# Core Network Utils
+###############################################################################
 
 set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/SRC/UTILS/conversions.c
@@ -411,8 +454,8 @@ endif(LOG_OAI)
 
 add_library(CN_UTILS ${CN_UTILS_SRC})
 
-
-# CN libs
+##########################
+# Core network libs
 ##########################
 set(GTPV1U_DIR ${OPENAIRCN_DIR}/SRC/GTPV1-U)
 set (GTPV1U_SRC
@@ -495,6 +538,7 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_detach.c
   ${MME_DIR}/mme_app_location.c
   ${MME_DIR}/mme_app_transport.c
+  ${MME_DIR}/mme_app_ue_context.c
   ${MME_DIR}/mme_app_statistics.c
   ${MME_DIR}/mme_config.c
   ${MME_DIR}/s6a_2_nas_cause.c
@@ -872,6 +916,11 @@ ENDIF( EPC_BUILD OR MME_BUILD )
 # Add executables for tests
 ####################################
 
+enable_testing()
+
+add_subdirectory(${OPENAIRCN_DIR}/SRC/TEST/ ${CMAKE_CURRENT_BINARY_DIR}/TESTS/)
+
+add_test(NAME test_imsi_convert COMMAND test_mme_app_ue_context_imsi)
 
 
 # TODO
@@ -900,11 +949,11 @@ ENDIF( EPC_BUILD OR MME_BUILD )
 
 ##################################################
 # Generated specific cases is not regular code
-###############################################
+##################################################
 
-##################""
+#######################################################################
 # itti symbolic debug print require to generate a specific include file
-########################################
+#######################################################################
 
   if( ENABLE_ITTI_ANALYZER )
   # retrieve the compiler options to send it to gccxml

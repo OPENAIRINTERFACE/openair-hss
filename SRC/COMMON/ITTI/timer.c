@@ -122,7 +122,7 @@ timer_handle_signal (
    */
   if (itti_send_msg_to_task (task_id, instance, message_p) < 0) {
     OAILOG_DEBUG (LOG_ITTI, "Failed to send msg TIMER_HAS_EXPIRED to task %u\n", task_id);
-    free_wrapper (message_p);
+    itti_free (TASK_TIMER, message_p);
     return -1;
   }
 

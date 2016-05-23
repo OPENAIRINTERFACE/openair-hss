@@ -413,6 +413,7 @@ itti_send_msg_to_task (
     if (itti_desc.threads[destination_thread_id].task_state == TASK_STATE_ENDED) {
       ITTI_DEBUG (ITTI_DEBUG_ISSUES, " Message %s, number %lu with priority %d can not be sent from %s to queue (%u:%s), ended destination task!\n",
                   itti_desc.messages_info[message_id].name, message_number, priority, itti_get_task_name (origin_task_id), destination_task_id, itti_get_task_name (destination_task_id));
+      itti_free (origin_task_id, message); // In case of issues free the memory allocated for message
     } else {
       /*
        * We cannot send a message if the task is not running
@@ -608,7 +609,7 @@ itti_receive_msg_internal_event_fd (
 
       AssertFatal (message != NULL, "Message from message queue is NULL!\n");
       *received_msg = message->msg;
-      result = itti_free (ITTI_MSG_ORIGIN_ID (*received_msg), message);
+      result = itti_free (ITTI_MSG_ORIGIN_ID (message->msg), message);
       AssertFatal (result == EXIT_SUCCESS, "Failed to free memory (%d)!\n", result);
       /*
        * Mark that the event has been processed

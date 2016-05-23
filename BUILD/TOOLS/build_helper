@@ -105,12 +105,12 @@ compilations() {
   if [ "a$4" == "a1" ]; then 
     {
       rm -f $3
-      make $make_args $2
+      make $make_args
     } | tee $dlog/$2.txt 
   else
     {
       rm -f $3
-      make $make_args $2
+      make $make_args
     } > $dlog/$2.txt 2>&1
   fi
   if [ -s $3 ] ; then
@@ -120,6 +120,28 @@ compilations() {
   fi
 }
 
+###################################
+# make test
+###################################
+
+# arg 1 Build directory OPENAIR_DIR/BUILD/?
+# arg 2 Executable target name
+# arg 3 Executable name (no path)
+# arg 4 Verbose         (1 or 0)
+make_test() {
+  echo_success "unit tests start"
+  cd $OPENAIRCN_DIR/BUILD/$1/BUILD
+  if [ "a$4" == "a1" ]; then 
+    {
+      make test
+    } | tee $dlog/$2_test.txt 
+  else
+    {
+      make test
+    } > $dlog/$2_test.txt 2>&1
+  fi
+  echo_success "unit tests end"
+}
 
 ##########################################
 # X.509 certificates
@@ -737,6 +759,7 @@ check_install_mme_software() {
     libxml2-dev \
     mscgen \
     openssl \
+    check \
     python"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
   if [ $? -ne 0 ]; then 

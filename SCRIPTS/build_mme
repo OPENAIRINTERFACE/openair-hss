@@ -44,6 +44,7 @@ function help()
   echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
   echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run MME (support Ubuntu 14.04, 15.10)."
+  echo_error "  -u, --unit-tests                          Trigger unit tests."
   echo_error "  -v, --verbose                             Build process verbose."
   echo_error " "
 }
@@ -59,6 +60,7 @@ function main()
   local -i clean=0
   local -i daemon=0
   local -i force=0
+  local -i unit_tests=0
   local -i verbose=0
   local -i var_check_install_oai_software=0
   local    cmake_args=" "
@@ -93,6 +95,11 @@ function main()
         echo "Check installed software packages necessary to build and run EPC (support Ubuntu 14.04, 15.10):"
         set_openair_env
         var_check_install_oai_software=1
+        shift;
+        ;;
+      -u | --unit-tests)
+        echo "Unit tests triggered"
+        unit_tests=1
         shift;
         ;;
       -v | --verbose)
@@ -169,7 +176,12 @@ function main()
   cd ./BUILD
   cmake  $cmake_args .. > /dev/null 
   
-  compilations MME mme mme 
+  compilations MME mme mme
+
+  if [ $unit_tests -ne 0 ]; then
+    make_test MME mme mme $verbose
+  fi 
+
   if [ $daemon -ne 0 ]; then
     # TODO /usr/sbin ?
     do_stop_daemon

@@ -100,6 +100,7 @@ void *msc_task (void *args_p)
 {
   MessageDef                             *received_message_p = NULL;
   long                                    timer_id = 0;
+  int                                     rc = 0;
 
   itti_mark_task_ready (TASK_MSC);
   msc_start_use ();
@@ -133,6 +134,10 @@ void *msc_task (void *args_p)
         }
         break;
       }
+      // Freeing the memory allocated from the memory pool
+      rc = itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+      AssertFatal (rc == EXIT_SUCCESS, "Failed to free memory (%d)!\n", rc);
+      received_message_p = NULL;
     }
   }
 
