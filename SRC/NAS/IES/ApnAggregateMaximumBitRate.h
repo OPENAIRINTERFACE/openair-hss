@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef APN_AGGREGATE_MAXIMUM_BIT_RATE_H_
 #define APN_AGGREGATE_MAXIMUM_BIT_RATE_H_
+#include <stdint.h>
 
 #define APN_AGGREGATE_MAXIMUM_BIT_RATE_MINIMUM_LENGTH 4
 #define APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_LENGTH 8

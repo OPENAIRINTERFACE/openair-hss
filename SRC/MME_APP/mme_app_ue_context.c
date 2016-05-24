@@ -23,6 +23,7 @@
 #include "common_types.h"
 #include "mme_app_ue_context.h"
 #include "commonDef.h"
+#include "conversions.h"
 
 #include <string.h>
 #include <stdbool.h>
@@ -38,7 +39,7 @@ mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst,
                                   const imsi_t *imsi_src)
 {
   memset(imsi_dst->data,  (uint8_t) '\0', sizeof(imsi_dst->data));
-  NAS_IMSI2STR(imsi_src, imsi_dst->data, IMSI_BCD_DIGITS_MAX + 1);
+  IMSI_TO_STRING(imsi_src, imsi_dst->data, IMSI_BCD_DIGITS_MAX + 1);
   imsi_dst->length = strlen(imsi_dst->data);
 }
 

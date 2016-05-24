@@ -68,9 +68,6 @@
  * MME global definitions
  ******************************************************************************/
 
-#define MAX_NUMBER_OF_ENB       (2)
-#define MAX_NUMBER_OF_UE        (64)
-
 #define MMEC                    (0)
 #define MMEGID                  (0)
 #define PLMN_MCC                (208)

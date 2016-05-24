@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef ESM_INFORMATION_TRANSFER_FLAG_H_
 #define ESM_INFORMATION_TRANSFER_FLAG_H_
+#include <stdint.h>
 
 #define ESM_INFORMATION_TRANSFER_FLAG_MINIMUM_LENGTH 1
 #define ESM_INFORMATION_TRANSFER_FLAG_MAXIMUM_LENGTH 1

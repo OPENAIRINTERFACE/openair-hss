@@ -48,20 +48,17 @@ decode_authentication_failure_parameter (
   decoded++;
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
-  if ((decode_result = decode_octet_string (&authenticationfailureparameter->auts, ielen, buffer + decoded, len - decoded)) < 0)
+  if ((decode_result = decode_bstring (authenticationfailureparameter, ielen, buffer + decoded, len - decoded)) < 0)
     return decode_result;
   else
     decoded += decode_result;
 
-#if NAS_DEBUG
-  dump_authentication_failure_parameter_xml (authenticationfailureparameter, iei);
-#endif
   return decoded;
 }
 
 int
 encode_authentication_failure_parameter (
-  AuthenticationFailureParameter * authenticationfailureparameter,
+  AuthenticationFailureParameter authenticationfailureparameter,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -74,9 +71,6 @@ encode_authentication_failure_parameter (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, AUTHENTICATION_FAILURE_PARAMETER_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_authentication_failure_parameter_xml (authenticationfailureparameter, iei);
-#endif
 
   if (iei > 0) {
     *buffer = iei;
@@ -86,7 +80,7 @@ encode_authentication_failure_parameter (
   lenPtr = (buffer + encoded);
   encoded++;
 
-  if ((encode_result = encode_octet_string (&authenticationfailureparameter->auts, buffer + encoded, len - encoded)) < 0)
+  if ((encode_result = encode_bstring (authenticationfailureparameter, buffer + encoded, len - encoded)) < 0)
     return encode_result;
   else
     encoded += encode_result;
@@ -97,7 +91,7 @@ encode_authentication_failure_parameter (
 
 void
 dump_authentication_failure_parameter_xml (
-  AuthenticationFailureParameter * authenticationfailureparameter,
+  AuthenticationFailureParameter authenticationfailureparameter,
   uint8_t iei)
 {
   OAILOG_DEBUG (LOG_NAS, "<Authentication Failure Parameter>\n");
@@ -108,6 +102,8 @@ dump_authentication_failure_parameter_xml (
      */
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&authenticationfailureparameter->auts));
+  bstring b = dump_bstring_xml (authenticationfailureparameter);
+  OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
+  bdestroy(b);
   OAILOG_DEBUG (LOG_NAS, "</Authentication Failure Parameter>\n");
 }

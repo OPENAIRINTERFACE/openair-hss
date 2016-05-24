@@ -19,14 +19,10 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
 
 #ifndef CSFB_RESPONSE_H_
 #define CSFB_RESPONSE_H_
+#include <stdint.h>
 
 #define CSFB_RESPONSE_MINIMUM_LENGTH 1
 #define CSFB_RESPONSE_MAXIMUM_LENGTH 1

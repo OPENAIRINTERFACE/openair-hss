@@ -298,7 +298,7 @@ decode_traffic_flow_template_packet_filters (
        * Mismatch between the number of packet filters subfield,
        * * * * and the number of packet filters in the packet filter list
        */
-      return (TLV_DECODE_VALUE_DOESNT_MATCH);
+      return (TLV_VALUE_DOESNT_MATCH);
     }
 
     /*
@@ -439,7 +439,7 @@ decode_traffic_flow_template_packet_filters (
         /*
          * Packet filter component type identifier is not valid
          */
-        return (TLV_DECODE_UNEXPECTED_IEI);
+        return (TLV_UNEXPECTED_IEI);
         break;
       }
     }
@@ -450,7 +450,7 @@ decode_traffic_flow_template_packet_filters (
      * Mismatch between the number of packet filters subfield,
      * * * * and the number of packet filters in the packet filter list
      */
-    return (TLV_DECODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   return decoded;
@@ -533,7 +533,7 @@ encode_traffic_flow_template_packet_filters (
        * Mismatch between the number of packet filters subfield,
        * * * * and the number of packet filters in the packet filter list
        */
-      return (TLV_DECODE_VALUE_DOESNT_MATCH);
+      return (TLV_VALUE_DOESNT_MATCH);
     }
 
     /*

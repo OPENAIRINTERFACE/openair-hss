@@ -60,19 +60,16 @@ extern                                  "C" {
    Send msg retransmission to peer via data request to UDP Entity
   --------------------------------------------------------------------------*/
 
-  static NwRcT                            nwGtpv2cTrxnSendMsgRetransmission (
-  NwGtpv2cTrxnT * thiz) {
+  static NwRcT                            nwGtpv2cTrxnSendMsgRetransmission (NwGtpv2cTrxnT * thiz) {
     NwRcT                                   rc;
-                                            NW_ASSERT (
-  thiz);
-                                            NW_ASSERT (
-  thiz->pMsg);
-                                            rc = thiz->pStack->udp.udpDataReqCallback (thiz->pStack->udp.hUdp, thiz->pMsg->msgBuf, thiz->pMsg->msgLen, thiz->peerIp, thiz->peerPort);
-                                            thiz->maxRetries--;
-                                            return rc;
+    NW_ASSERT (thiz);
+    NW_ASSERT (thiz->pMsg);
+    rc = thiz->pStack->udp.udpDataReqCallback (thiz->pStack->udp.hUdp, thiz->pMsg->msgBuf, thiz->pMsg->msgLen, thiz->peerIp, thiz->peerPort);
+    thiz->maxRetries--;
+    return rc;
   }
-  static NwRcT                            nwGtpv2cTrxnPeerRspWaitTimeout (
-  void *arg) {
+
+  static NwRcT                            nwGtpv2cTrxnPeerRspWaitTimeout (void *arg) {
     NwRcT                                   rc = NW_OK;
     NwGtpv2cTrxnT                          *thiz;
     NwGtpv2cStackT                         *pStack;

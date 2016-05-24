@@ -49,6 +49,8 @@ typedef enum {
   MSC_S1AP_ENB,
   MSC_GTPU_ENB,
   MSC_GTPU_SGW,
+  MSC_GTPC_SGW,
+  MSC_GTPC_MME,
   MSC_S1AP_MME,
   MSC_MMEAPP_MME,
   MSC_NAS_MME,
@@ -57,6 +59,7 @@ typedef enum {
   MSC_SP_GWAPP_MME,
   MSC_S11_MME,
   MSC_S6A_MME,
+  MSC_SGW,
   MSC_HSS,
   MAX_MSC_PROTOS,
 } msc_proto_t;

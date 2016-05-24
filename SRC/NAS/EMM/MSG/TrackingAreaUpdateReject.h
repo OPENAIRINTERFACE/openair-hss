@@ -19,17 +19,13 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_TRACKING_AREA_UPDATE_REJECT_SEEN
+#define FILE_TRACKING_AREA_UPDATE_REJECT_SEEN
 #include <stdint.h>
-
 #include "ProtocolDiscriminator.h"
 #include "SecurityHeaderType.h"
 #include "MessageType.h"
 #include "EmmCause.h"
-
-#ifndef FILE_TRACKING_AREA_UPDATE_REJECT_SEEN
-#define FILE_TRACKING_AREA_UPDATE_REJECT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define TRACKING_AREA_UPDATE_REJECT_MINIMUM_LENGTH ( \

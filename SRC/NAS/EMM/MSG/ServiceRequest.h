@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_SERVICE_REQUEST_SEEN
+#define FILE_SERVICE_REQUEST_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -28,9 +28,6 @@
 #include "MessageType.h"
 #include "KsiAndSequenceNumber.h"
 #include "ShortMac.h"
-
-#ifndef FILE_SERVICE_REQUEST_SEEN
-#define FILE_SERVICE_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define SERVICE_REQUEST_MINIMUM_LENGTH ( \

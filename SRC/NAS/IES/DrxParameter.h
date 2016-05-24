@@ -19,14 +19,11 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 
-#include "OctetString.h"
 
 #ifndef DRX_PARAMETER_H_
 #define DRX_PARAMETER_H_
+#include <stdint.h>
 
 #define DRX_PARAMETER_MINIMUM_LENGTH 3
 #define DRX_PARAMETER_MAXIMUM_LENGTH 3

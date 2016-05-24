@@ -139,6 +139,42 @@ lowerlayer_failure (
 
 /****************************************************************************
  **                                                                        **
+ ** Name:    lowerlayer_non_delivery_indication()                          **
+ **                                                                        **
+ ** Description: Notify the EPS Mobility Management entity that lower la-  **
+ **      yers failed to deliver data to the network                        **
+ **                                                                        **
+ ** Inputs:  ue_id:      UE lower layer identifier                         **
+ **      Others:    None                                                   **
+ **                                                                        **
+ ** Outputs:     None                                                      **
+ **      Return:    RETURNok, RETURNerror                                  **
+ **      Others:    None                                                   **
+ **                                                                        **
+ ***************************************************************************/
+int
+lowerlayer_non_delivery_indication (
+  mme_ue_s1ap_id_t ue_id)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_sap_t                               emm_sap = {0};
+  int                                     rc = RETURNok;
+
+  emm_sap.primitive = EMMREG_LOWERLAYER_NON_DELIVERY;
+  emm_sap.u.emm_reg.ue_id = ue_id;
+  emm_data_context_t                     *emm_ctx = NULL;
+
+  if (ue_id > 0) {
+    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+  }
+
+  emm_sap.u.emm_reg.ctx = emm_ctx;
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+/****************************************************************************
+ **                                                                        **
  ** Name:    lowerlayer_establish()                                    **
  **                                                                        **
  ** Description: Update the EPS connection management status upon recei-   **
@@ -210,7 +246,7 @@ lowerlayer_release (
 int
 lowerlayer_data_ind (
   mme_ue_s1ap_id_t ue_id,
-  const OctetString * data)
+  const_bstring    data)
 {
   esm_sap_t                               esm_sap = {0};
   int                                     rc = RETURNok;
@@ -226,6 +262,7 @@ lowerlayer_data_ind (
   esm_sap.ue_id = ue_id;
   esm_sap.ctx = emm_ctx;
   esm_sap.recv = data;
+  data = NULL;
   rc = esm_sap_send (&esm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -249,7 +286,7 @@ lowerlayer_data_ind (
 int
 lowerlayer_data_req (
   mme_ue_s1ap_id_t ue_id,
-  const OctetString * data)
+  bstring data)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
@@ -266,12 +303,12 @@ lowerlayer_data_req (
   }
 
   if (ctx) {
-    sctx = ctx->security;
+    sctx = &ctx->_security;
   }
 
   emm_sap.u.emm_as.u.data.nas_info = 0;
-  emm_sap.u.emm_as.u.data.nas_msg.length = data->length;
-  emm_sap.u.emm_as.u.data.nas_msg.value = data->value;
+  emm_sap.u.emm_as.u.data.nas_msg = data;
+  data = NULL;
   /*
    * Setup EPS NAS security data
    */
@@ -317,7 +354,7 @@ emm_as_set_security_data (
 
   memset (data, 0, sizeof (emm_as_security_data_t));
 
-  if (context && (context->type != EMM_KSI_NOT_AVAILABLE)) {
+  if (context && ((context->sc_type == SECURITY_CTX_TYPE_FULL_NATIVE) || (context->sc_type == SECURITY_CTX_TYPE_MAPPED))) {
     /*
      * 3GPP TS 24.301, sections 5.4.3.3 and 5.4.3.4
      * * * * Once a valid EPS security context exists and has been taken
@@ -327,9 +364,8 @@ emm_as_set_security_data (
      */
     OAILOG_INFO (LOG_NAS_EMM, "EPS security context exists is new %u KSI %u SQN %u count %u\n",
         is_new, context->eksi, context->ul_count.seq_num, *(uint32_t *) (&context->ul_count));
-    OAILOG_STREAM_HEX (LOG_NAS_EMM, "knas_int:", context->knas_int.value, context->knas_int.length);
-    OAILOG_STREAM_HEX (LOG_NAS_EMM, "knas_enc:", context->knas_enc.value, context->knas_enc.length);
-    OAILOG_STREAM_HEX (LOG_NAS_EMM, "kasme   :", context->kasme.value, context->kasme.length);
+    OAILOG_STREAM_HEX (OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "knas_int:", context->knas_int, AUTH_KNAS_INT_SIZE);
+    OAILOG_STREAM_HEX (OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "knas_enc:", context->knas_enc, AUTH_KNAS_ENC_SIZE);
     data->is_new = is_new;
     data->ksi = context->eksi;
     data->sqn = context->dl_count.seq_num;
@@ -340,7 +376,8 @@ emm_as_set_security_data (
      * * * * current security context is a partial EPS security context
      * * * * and not a full native EPS security context
      */
-    data->k_int = &context->knas_int;
+    data->is_knas_int_present = true;
+    memcpy(data->knas_int, context->knas_int, sizeof(data->knas_int));
 
     if (is_ciphered) {
       /*
@@ -355,14 +392,15 @@ emm_as_set_security_data (
        * * * * protected and unciphered
        */
       OAILOG_WARNING (LOG_NAS_EMM, "EPS security context exists knas_enc\n");
-      data->k_enc = &context->knas_enc;
+      data->is_knas_enc_present = true;
+      memcpy(data->knas_enc, context->knas_enc, sizeof(data->knas_enc));
     }
   } else {
     OAILOG_WARNING (LOG_NAS_EMM, "EMM_AS_NO_KEY_AVAILABLE\n");
     /*
      * No valid EPS security context exists
      */
-    data->ksi = EMM_AS_NO_KEY_AVAILABLE;
+    data->ksi = KSI_NO_KEY_AVAILABLE;
   }
 
   OAILOG_FUNC_OUT (LOG_NAS_EMM);

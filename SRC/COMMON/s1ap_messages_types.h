@@ -61,7 +61,7 @@ typedef struct itti_s1ap_initial_ctxt_setup_req_s {
   pre_emp_capability_t    pre_emp_capability;
 
   /* S-GW TEID for user-plane */
-  Teid_t                  teid;
+  teid_t                  teid;
   /* S-GW IP address for User-Plane */
   ip_address_t            s_gw_address;
 } itti_s1ap_initial_ctxt_setup_req_t;
@@ -69,7 +69,7 @@ typedef struct itti_s1ap_initial_ctxt_setup_req_s {
 typedef struct itti_s1ap_ue_cap_ind_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
-  uint8_t           radio_capabilities[100];
+  uint8_t           radio_capabilities[512];
   size_t            radio_capabilities_length;
 } itti_s1ap_ue_cap_ind_t;
 

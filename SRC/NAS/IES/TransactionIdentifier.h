@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef TRANSACTION_IDENTIFIER_H_
 #define TRANSACTION_IDENTIFIER_H_
+#include <stdint.h>
 
 #define TRANSACTION_IDENTIFIER_MINIMUM_LENGTH 1
 #define TRANSACTION_IDENTIFIER_MAXIMUM_LENGTH 1

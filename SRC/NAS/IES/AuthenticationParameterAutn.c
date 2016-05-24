@@ -48,20 +48,17 @@ decode_authentication_parameter_autn (
   decoded++;
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
-  if ((decode_result = decode_octet_string (&authenticationparameterautn->autn, ielen, buffer + decoded, len - decoded)) < 0)
+  if ((decode_result = decode_bstring (authenticationparameterautn, ielen, buffer + decoded, len - decoded)) < 0)
     return decode_result;
   else
     decoded += decode_result;
 
-#if NAS_DEBUG
-  dump_authentication_parameter_autn_xml (authenticationparameterautn, iei);
-#endif
   return decoded;
 }
 
 int
 encode_authentication_parameter_autn (
-  AuthenticationParameterAutn * authenticationparameterautn,
+  AuthenticationParameterAutn authenticationparameterautn,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -74,9 +71,6 @@ encode_authentication_parameter_autn (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, AUTHENTICATION_PARAMETER_AUTN_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_authentication_parameter_autn_xml (authenticationparameterautn, iei);
-#endif
 
   if (iei > 0) {
     *buffer = iei;
@@ -86,7 +80,7 @@ encode_authentication_parameter_autn (
   lenPtr = (buffer + encoded);
   encoded++;
 
-  if ((encode_result = encode_octet_string (&authenticationparameterautn->autn, buffer + encoded, len - encoded)) < 0)
+  if ((encode_result = encode_bstring (authenticationparameterautn, buffer + encoded, len - encoded)) < 0)
     return encode_result;
   else
     encoded += encode_result;
@@ -97,7 +91,7 @@ encode_authentication_parameter_autn (
 
 void
 dump_authentication_parameter_autn_xml (
-  AuthenticationParameterAutn * authenticationparameterautn,
+  AuthenticationParameterAutn authenticationparameterautn,
   uint8_t iei)
 {
   OAILOG_DEBUG (LOG_NAS, "<Authentication Parameter Autn>\n");
@@ -107,7 +101,8 @@ dump_authentication_parameter_autn_xml (
      * Don't display IEI if = 0
      */
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
-
-  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&authenticationparameterautn->autn));
+  bstring b = dump_bstring_xml (authenticationparameterautn);
+  OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
+  bdestroy(b);
   OAILOG_DEBUG (LOG_NAS, "</Authentication Parameter Autn>\n");
 }

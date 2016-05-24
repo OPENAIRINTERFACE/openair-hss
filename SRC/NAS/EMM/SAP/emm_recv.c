@@ -130,9 +130,10 @@ emm_recv_status (
  ***************************************************************************/
 int
 emm_recv_attach_request (
-  const enb_ue_s1ap_id_t enb_ue_s1ap_id_key,
+  const enb_s1ap_id_key_t enb_ue_s1ap_id_key,
   const mme_ue_s1ap_id_t ue_id,
   const tai_t              * const originating_tai,
+  const ecgi_t             * const originating_ecgi,
   const attach_request_msg * const msg,
   int * const emm_cause,
   const nas_message_decode_status_t  * decode_status)
@@ -196,8 +197,11 @@ emm_recv_attach_request (
   /*
    * Get the EPS mobile identity
    */
-  guti_t                                  guti = {0},
-                                         *p_guti = NULL;
+  guti_t                                  guti     = {.gummei.plmn = {0},
+                                                      .gummei.mme_gid = 0,
+                                                      .gummei.mme_code = 0,
+                                                      .m_tmsi = INVALID_M_TMSI};
+  guti_t                                 *p_guti = NULL;
   imsi_t                                  imsi = {0},
                                          *p_imsi = NULL;
   imei_t                                  imei = {0},
@@ -270,7 +274,7 @@ emm_recv_attach_request (
   /*
    * Get the Last visited registered TAI
    */
-  tai_t                                   last_visited_registered_tai = {0},
+  tai_t                                   last_visited_registered_tai = {.plmn = {0}, .tac = INVALID_TAC_0000},
                                          *p_last_visited_registered_tai = NULL;
 
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
@@ -288,13 +292,11 @@ emm_recv_attach_request (
   /*
    * Execute the requested UE attach procedure
    */
-//#pragma message  " TODO review gea"
+  if (msg->presencemask & ATTACH_REQUEST_MS_NETWORK_CAPABILITY_PRESENT) {
+    gea = msg->msnetworkcapability.gea1;
 
-  if (msg->msnetworkcapability.msnetworkcapabilityvalue.length > 0) {
-    gea = (msg->msnetworkcapability.msnetworkcapabilityvalue.value[0] & 0x80) >> 1;
-
-    if ((gea) && (msg->msnetworkcapability.msnetworkcapabilityvalue.length >= 2)) {
-      gea |= ((msg->msnetworkcapability.msnetworkcapabilityvalue.value[1] & 0x60) >> 1);
+    if (gea) {
+      gea = (gea << 6) | msg->msnetworkcapability.egea;
     }
   }
 
@@ -302,7 +304,7 @@ emm_recv_attach_request (
                                 msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED,
                                 msg->naskeysetidentifier.naskeysetidentifier,
                                 msg->oldgutitype != GUTI_MAPPED, p_guti, p_imsi, p_imei,
-                                p_last_visited_registered_tai,originating_tai,
+                                p_last_visited_registered_tai,originating_tai,originating_ecgi,
                                 msg->uenetworkcapability.eea,
                                 msg->uenetworkcapability.eia,
                                 msg->uenetworkcapability.ucs2,
@@ -310,8 +312,8 @@ emm_recv_attach_request (
                                 msg->uenetworkcapability.uia,
                                 gea,
                                 msg->uenetworkcapability.umts_present,
-                                msg->uenetworkcapability.gprs_present,
-                                &msg->esmmessagecontainer.esmmessagecontainercontents,
+                                (gea >= (MS_NETWORK_CAPABILITY_GEA1 >> 1)),
+                                msg->esmmessagecontainer,
                                 decode_status);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -345,7 +347,7 @@ emm_recv_attach_complete (
   /*
    * Execute the attach procedure completion
    */
-  rc = emm_proc_attach_complete (ue_id, &msg->esmmessagecontainer.esmmessagecontainercontents);
+  rc = emm_proc_attach_complete (ue_id, msg->esmmessagecontainer);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -403,8 +405,11 @@ emm_recv_detach_request (
   /*
    * Get the EPS mobile identity
    */
-  guti_t                                  guti = {0},
-                                         *p_guti = NULL;
+  guti_t                                  guti     = {.gummei.plmn = {0},
+                                                      .gummei.mme_gid = 0,
+                                                      .gummei.mme_code = 0,
+                                                      .m_tmsi = INVALID_M_TMSI};
+  guti_t                                 *p_guti = NULL;
   imsi_t                                  imsi = {0},
                                          *p_imsi = NULL;
   imei_t                                  imei = {0},
@@ -471,7 +476,9 @@ emm_recv_detach_request (
   /*
    * Execute the UE initiated detach procedure completion by the network
    */
-  rc = emm_proc_detach_request (ue_id, type, msg->detachtype.switchoff != DETACH_TYPE_NORMAL_DETACH, msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED, msg->naskeysetidentifier.naskeysetidentifier, p_guti, p_imsi, p_imei);
+  rc = emm_proc_detach_request (ue_id, type, msg->detachtype.switchoff != DETACH_TYPE_NORMAL_DETACH,
+      msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED,
+      msg->naskeysetidentifier.naskeysetidentifier, p_guti, p_imsi, p_imei);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -724,7 +731,7 @@ emm_recv_authentication_response (
   /*
    * Message checking
    */
-  if (msg->authenticationresponseparameter.res.length == 0) {
+  if ((NULL == msg->authenticationresponseparameter) || (!blength(msg->authenticationresponseparameter))) {
     /*
      * RES parameter shall not be null
      */
@@ -744,7 +751,7 @@ emm_recv_authentication_response (
   /*
    * Execute the authentication completion procedure
    */
-  rc = emm_proc_authentication_complete (ue_id, EMM_CAUSE_SUCCESS, &msg->authenticationresponseparameter.res);
+  rc = emm_proc_authentication_complete (ue_id, EMM_CAUSE_SUCCESS, msg->authenticationresponseparameter);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -800,7 +807,7 @@ emm_recv_authentication_failure (
   /*
    * Execute the authentication completion procedure
    */
-  rc = emm_proc_authentication_complete (ue_id, msg->emmcause, &msg->authenticationfailureparameter.auts);
+  rc = emm_proc_authentication_failure (ue_id, msg->emmcause, msg->authenticationfailureparameter);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

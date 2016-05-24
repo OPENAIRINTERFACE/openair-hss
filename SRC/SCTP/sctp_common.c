@@ -43,16 +43,16 @@
 /* Pre-bind socket options configuration.
    See http://linux.die.net/man/7/sctp for more informations on these options.
 */
-int
-sctp_set_init_opt (
-  int sd,
-  sctp_stream_id_t instreams,
-  sctp_stream_id_t outstreams,
-  uint16_t max_attempts,
-  uint16_t init_timeout)
+//------------------------------------------------------------------------------
+int sctp_set_init_opt (
+  const int sd,
+  const sctp_stream_id_t instreams,
+  const sctp_stream_id_t outstreams,
+  const uint16_t max_attempts,
+  const uint16_t init_timeout)
 {
   int                                     on = 1;
-  struct sctp_initmsg                     init;
+  struct sctp_initmsg                     init = {0};
 
   memset ((void *)&init, 0, sizeof (struct sctp_initmsg));
   /*
@@ -81,15 +81,15 @@ sctp_set_init_opt (
   return 0;
 }
 
-int
-sctp_get_sockinfo (
+//------------------------------------------------------------------------------
+int sctp_get_sockinfo (
   int sock,
   sctp_stream_id_t * instream,
   sctp_stream_id_t * outstream,
   sctp_assoc_id_t * assoc_id)
 {
-  socklen_t                               i;
-  struct sctp_status                      status;
+  socklen_t                               i = 0;
+  struct sctp_status                      status = {0};
 
   if (socket <= 0) {
     return -1;
@@ -136,15 +136,15 @@ sctp_get_sockinfo (
   return 0;
 }
 
-int
-sctp_get_peeraddresses (
+//------------------------------------------------------------------------------
+int sctp_get_peeraddresses (
   int sock,
   struct sockaddr **remote_addr,
   int *nb_remote_addresses)
 {
-  int                                     nb,
-                                          j;
-  struct sockaddr                        *temp_addr_p;
+  int                                     nb = 0,
+                                          j = 0;
+  struct sockaddr                        *temp_addr_p = NULL;
 
   if ((nb = sctp_getpaddrs (sock, -1, &temp_addr_p)) <= 0) {
     OAILOG_ERROR (LOG_SCTP, "Failed to retrieve peer addresses\n");
@@ -156,21 +156,19 @@ sctp_get_peeraddresses (
 
   for (j = 0; j < nb; j++) {
     if (temp_addr_p[j].sa_family == AF_INET) {
-      char                                    address[16];
-      struct sockaddr_in                     *addr;
+      char                                    address[16] = {0};
+      struct sockaddr_in                     *addr = NULL;
 
-      memset (&address, 0, sizeof (address));
       addr = (struct sockaddr_in *)&temp_addr_p[j];
 
       if (inet_ntop (AF_INET, &addr->sin_addr, address, sizeof (address)) != NULL) {
         OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
       }
     } else {
-      struct sockaddr_in6                    *addr;
-      char                                    address[40];
+      struct sockaddr_in6                    *addr = NULL;
+      char                                    address[40] = {0};
 
       addr = (struct sockaddr_in6 *)&temp_addr_p[j];
-      memset (&address, 0, sizeof (address));
 
       if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
         OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
@@ -193,8 +191,8 @@ sctp_get_peeraddresses (
   return 0;
 }
 
-int
-sctp_get_localaddresses (
+//------------------------------------------------------------------------------
+int sctp_get_localaddresses (
   int sock,
   struct sockaddr **local_addr,
   int *nb_local_addresses)
@@ -222,7 +220,7 @@ sctp_get_localaddresses (
         if (inet_ntop (AF_INET, &addr->sin_addr, address, sizeof (address)) != NULL) {
           OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
         }
-      } else {
+      } else if (temp_addr_p[j].sa_family == AF_INET6) {
         struct sockaddr_in6                    *addr = NULL;
         char                                    address[40] = {0};
 
@@ -231,6 +229,8 @@ sctp_get_localaddresses (
         if (inet_ntop (AF_INET6, &addr->sin6_addr.s6_addr, address, sizeof (address)) != NULL) {
           OAILOG_DEBUG (LOG_SCTP, "    - [%s]\n", address);
         }
+      } else {
+        OAILOG_DEBUG (LOG_SCTP, "    - unhandled address family %d\n", temp_addr_p[j].sa_family);
       }
     }
     OAILOG_DEBUG (LOG_SCTP, "----------------------\n");

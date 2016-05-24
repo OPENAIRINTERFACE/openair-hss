@@ -41,18 +41,19 @@
 #  include "config.h"
 #endif
 
+#include "dynamic_memory_check.h"
 #include "assertions.h"
-#include "mme_config.h"
-#include "intertask_interface_init.h"
-#include "udp_primitives_server.h"
 #include "log.h"
-#include "timer.h"
+#include "msc.h"
+#include "intertask_interface_init.h"
+#include "spgw_config.h"
+#include "udp_primitives_server.h"
 #include "s11_sgw.h"
 #include "sgw_defs.h"
 #include "gtpv1u_sgw_defs.h"
 #include "oai_sgw.h"
-#include "msc.h"
 #include "pid_file.h"
+#include "timer.h"
 
 
 int
@@ -100,12 +101,12 @@ main (
 
   if (! is_pid_file_lock_success(pid_file_name)) {
     closelog();
-    FREE_CHECK(pid_file_name);
+    free_wrapper(pid_file_name);
     exit (-EDEADLK);
   }
 #else
   if (! is_pid_file_lock_success(pid_file_name)) {
-    FREE_CHECK(pid_file_name);
+    free_wrapper(pid_file_name);
     exit (-EDEADLK);
   }
 #endif
@@ -115,7 +116,7 @@ main (
   /*
    * Parse the command line for options and set the mme_config accordingly.
    */
-  CHECK_INIT_RETURN (config_parse_opt_line (argc, argv, &mme_config));
+  CHECK_INIT_RETURN (spgw_config_parse_opt_line (argc, argv, &spgw_config));
   /*
    * Calling each layer init function
    */
@@ -127,15 +128,15 @@ main (
 #endif
           NULL));
   MSC_INIT (MSC_SP_GW, THREAD_MAX + TASK_MAX);
-  CHECK_INIT_RETURN (udp_init (&mme_config));
-  CHECK_INIT_RETURN (s11_sgw_init (&mme_config));
-  CHECK_INIT_RETURN (gtpv1u_init (&mme_config));
-  CHECK_INIT_RETURN (sgw_init (mme_config.config_file));
+  CHECK_INIT_RETURN (udp_init ());
+  CHECK_INIT_RETURN (s11_sgw_init (&spgw_config.sgw_config));
+  //CHECK_INIT_RETURN (gtpv1u_init (&spgw_config));
+  CHECK_INIT_RETURN (sgw_init (&spgw_config));
   /*
    * Handle signals here
    */
   itti_wait_tasks_end ();
   pid_file_unlock();
-  FREE_CHECK(pid_file_name);
+  free_wrapper(pid_file_name);
   return 0;
 }

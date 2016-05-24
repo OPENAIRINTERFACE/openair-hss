@@ -43,6 +43,7 @@
 
 *****************************************************************************/
 
+#include "common_defs.h"
 #include "emm_fsm.h"
 #include "commonDef.h"
 #include "log.h"
@@ -88,6 +89,23 @@ EmmDeregisteredInitiated (
   assert (emm_fsm_get_status (evt->ue_id, evt->ctx) == EMM_DEREGISTERED_INITIATED);
 
   switch (evt->primitive) {
+
+    case _EMMREG_DETACH_CNF:
+      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      break;
+
+    case _EMMREG_LOWERLAYER_FAILURE:
+      /*
+       * Transmission failure occurred before the EMM common
+       * procedure being completed
+       */
+      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      break;
+
+    case _EMMREG_LOWERLAYER_NON_DELIVERY:
+      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      break;
+
   default:
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)\n", evt->primitive);
     break;

@@ -38,6 +38,8 @@
 #include "dynamic_memory_check.h"
 #include "log.h"
 
+extern __pid_t g_pid;
+
 
 void
 s6a_peer_connected_cb (
@@ -86,13 +88,12 @@ s6a_fd_new_peer (
 {
   char                                    host_name[100];
   size_t                                  host_name_len = 0;
-  char                                   *hss_name = NULL;
   int                                     ret = 0;
-  struct peer_info                        info;
+#if FD_CONF_FILE_NO_CONNECT_PEERS_CONFIGURED
+  struct peer_info                        info = {0};
+#endif
 
-  memset (&info, 0, sizeof (struct peer_info));
-
-  if (config_read_lock (&mme_config) ) {
+  if (mme_config_read_lock (&mme_config) ) {
     OAILOG_ERROR (LOG_S6A, "Failed to lock configuration for reading\n");
     return RETURNerror;
   }
@@ -106,26 +107,76 @@ s6a_fd_new_peer (
   host_name_len = strlen (host_name);
   host_name[host_name_len] = '.';
   host_name[host_name_len + 1] = '\0';
-  strcat (host_name, mme_config.realm);
-  fd_g_config->cnf_diamid = STRDUP_CHECK (host_name);
+  strcat (host_name, (const char *)mme_config.realm->data);
+  fd_g_config->cnf_diamid = strdup (host_name);
   fd_g_config->cnf_diamid_len = strlen (fd_g_config->cnf_diamid);
   OAILOG_DEBUG (LOG_S6A, "Diameter identity of MME: %s with length: %zd\n", fd_g_config->cnf_diamid, fd_g_config->cnf_diamid_len);
-  hss_name = CALLOC_CHECK (1, 100);
-  strcat (hss_name, mme_config.s6a_config.hss_host_name);
-  strcat (hss_name, ".");
-  strcat (hss_name, mme_config.realm);
-  info.pi_diamid = hss_name;
-  info.pi_diamidlen = strlen (info.pi_diamid);
+  bstring                                 hss_name = bstrcpy(mme_config.s6a_config.hss_host_name);
+  bconchar(hss_name, '.');
+  bconcat (hss_name, mme_config.realm);
+
+#if FD_CONF_FILE_NO_CONNECT_PEERS_CONFIGURED
+  info.pi_diamid    = bdata(hss_name);
+  info.pi_diamidlen = blength (hss_name);
   OAILOG_DEBUG (LOG_S6A, "Diameter identity of HSS: %s with length: %zd\n", info.pi_diamid, info.pi_diamidlen);
-  info.config.pic_flags.sec = PI_SEC_NONE;
-  info.config.pic_flags.pro4 = PI_P4_SCTP;
+  info.config.pic_flags.sec     = PI_SEC_NONE;
+  info.config.pic_flags.pro3    = PI_P3_DEFAULT;
+  info.config.pic_flags.pro4    = PI_P4_TCP;
+  info.config.pic_flags.alg     = PI_ALGPREF_TCP;
+  info.config.pic_flags.exp     = PI_EXP_INACTIVE;
   info.config.pic_flags.persist = PI_PRST_NONE;
+  info.config.pic_port          = 3868;
+  info.config.pic_lft           = 3600;
+  info.config.pic_tctimer       = 7; // retry time-out connection
+  info.config.pic_twtimer       = 60; // watchdog
   CHECK_FCT (fd_peer_add (&info, "", s6a_peer_connected_cb, NULL));
 
-  if (config_unlock (&mme_config) ) {
+  if (mme_config_unlock (&mme_config) ) {
     OAILOG_ERROR (LOG_S6A, "Failed to unlock configuration\n");
     return RETURNerror;
   }
-
   return ret;
+#else
+  DiamId_t          diamid    = bdata(hss_name);
+  size_t            diamidlen = blength (hss_name);
+  struct peer_hdr  *peer      = NULL;
+  int               nb_tries  = 0;
+  do {
+    ret = fd_peer_getbyid( diamid, diamidlen, 0, &peer );
+    if (!ret) {
+      if (peer) {
+        ret = fd_peer_get_state(peer);
+        if (STATE_OPEN == ret) {
+          MessageDef                             *message_p;
+
+          OAILOG_DEBUG (LOG_S6A, "Peer %*s is now connected...\n", (int)diamidlen, diamid);
+          /*
+           * Inform S1AP that connection to HSS is established
+           */
+          message_p = itti_alloc_new_message (TASK_S6A, ACTIVATE_MESSAGE);
+          itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+
+          {
+            FILE *fp = NULL;
+            bstring  filename = bformat("/tmp/mme_%d.status", g_pid);
+            fp = fopen(bdata(filename), "w+");
+            bdestroy(filename);
+            fprintf(fp, "STARTED\n");
+            fflush(fp);
+            fclose(fp);
+          }
+          bdestroy(hss_name);
+          return RETURNok;
+        } else {
+          OAILOG_DEBUG (LOG_S6A, "S6a peer state is %d\n", ret);
+        }
+      }
+    } else {
+      OAILOG_DEBUG (LOG_S6A, "Could not get S6a peer\n");
+    }
+    sleep(1);
+  } while (nb_tries < 8);
+  bdestroy(hss_name);
+  return RETURNerror;
+#endif
 }

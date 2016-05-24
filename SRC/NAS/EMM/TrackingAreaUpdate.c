@@ -42,20 +42,21 @@
         date certain UE specific parameters in the network.
 
 *****************************************************************************/
+#include <string.h>             // memcmp, memcpy
+#include <stdlib.h>             // malloc, free_wrapper
 
-#include "emm_proc.h"
+#include "dynamic_memory_check.h"
+#include "assertions.h"
 #include "log.h"
+#include "msc.h"
 #include "nas_timer.h"
-
+#include "3gpp_requirements_24.301.h"
+#include "emm_proc.h"
 #include "emmData.h"
-
 #include "emm_sap.h"
 #include "emm_cause.h"
 #include "EpsUpdateResult.h"
-#include "msc.h"
 
-#include <string.h>             // memcmp, memcpy
-#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -80,7 +81,7 @@ typedef struct tau_accept_data_s {
 
 } tau_accept_data_t;
 
-int                                     emm_network_capability_have_changed (
+int emm_network_capability_have_changed (
   const emm_data_context_t * ctx,
   int eea,
   int eia,
@@ -93,21 +94,15 @@ int                                     emm_network_capability_have_changed (
 
 int                                     emm_proc_tracking_area_update_request (
   const mme_ue_s1ap_id_t ue_id,
-  const tracking_area_update_request_msg * msg,
+  tracking_area_update_request_msg * const msg,
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status);
 
-static int                              _emm_tracking_area_update (
-    void *args);
-static int                              _emm_tracking_area_update_security (
-  void *args);
-static int                              _emm_tracking_area_update_reject (
-  void *args);
-static int                              _emm_tracking_area_update_accept (
-  emm_data_context_t * emm_ctx,
-  tau_accept_data_t * data);
-static int                              _emm_tracking_area_update_abort (
-  void *args);
+static int _emm_tracking_area_update (void *args);
+static int _emm_tracking_area_update_security (void *args);
+static int _emm_tracking_area_update_reject (void *args);
+static int _emm_tracking_area_update_accept (emm_data_context_t * emm_ctx,tau_accept_data_t * data);
+static int _emm_tracking_area_update_abort (void *args);
 
 
 /****************************************************************************/
@@ -189,7 +184,7 @@ emm_network_capability_have_changed (
 int
 emm_proc_tracking_area_update_request (
   const mme_ue_s1ap_id_t ue_id,
-  const tracking_area_update_request_msg * msg,
+  tracking_area_update_request_msg *const msg,
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
 {
@@ -236,20 +231,15 @@ emm_proc_tracking_area_update_request (
    */
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_UE_NETWORK_CAPABILITY_IEI) {
     if ( ue_ctx) {
-      if (! ue_ctx->ue_network_capability_ie) {
-        ue_ctx->ue_network_capability_ie = MALLOC_CHECK(sizeof(UeNetworkCapability));
-      }
-      memcpy(ue_ctx->ue_network_capability_ie, &msg->uenetworkcapability, sizeof(UeNetworkCapability));
+      emm_ctx_set_ue_nw_cap_ie(ue_ctx, &msg->uenetworkcapability);
     }
   }
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_MS_NETWORK_CAPABILITY_IEI) {
     if ( ue_ctx) {
-      if (! ue_ctx->ms_network_capability_ie) {
-        ue_ctx->ms_network_capability_ie = MALLOC_CHECK(sizeof(MsNetworkCapability));
-      } else {
-        FREE_OCTET_STRING(ue_ctx->ms_network_capability_ie->msnetworkcapabilityvalue);
-      }
-      DUP_OCTET_STRING(msg->msnetworkcapability.msnetworkcapabilityvalue, ue_ctx->ms_network_capability_ie->msnetworkcapabilityvalue);
+      emm_ctx_set_attribute_present(ue_ctx, EMM_CTXT_MEMBER_MS_NETWORK_CAPABILITY_IE);
+      ue_ctx->_ms_network_capability_ie = msg->msnetworkcapability;
+      ue_ctx->gea = (msg->msnetworkcapability.gea1 << 6)| msg->msnetworkcapability.egea;
+      ue_ctx->gprs_present = true;
     }
   }
   /*
@@ -268,10 +258,7 @@ emm_proc_tracking_area_update_request (
    */
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_DRX_PARAMETER_IEI) {
     if ( ue_ctx) {
-      if (! ue_ctx->drx_parameter) {
-        ue_ctx->drx_parameter = MALLOC_CHECK(sizeof(DrxParameter));
-      }
-      memcpy(ue_ctx->drx_parameter, &msg->drxparameter, sizeof(DrxParameter));
+      emm_ctx_set_current_drx_parameter(ue_ctx, &msg->drxparameter);
     }
   }
   /*
@@ -279,11 +266,7 @@ emm_proc_tracking_area_update_request (
    */
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_EPS_BEARER_CONTEXT_STATUS_IEI) {
     if ( ue_ctx) {
-      if (! ue_ctx->eps_bearer_context_status) {
-        ue_ctx->eps_bearer_context_status = MALLOC_CHECK(sizeof(EpsBearerContextStatus));
-      }
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - TAU Request (ue_id=" MME_UE_S1AP_ID_FMT ") IE EPS_BEARER_CONTEXT_STATUS 0x%04X", ue_id, msg->epsbearercontextstatus);
-      memcpy(ue_ctx->eps_bearer_context_status, &msg->epsbearercontextstatus, sizeof(EpsBearerContextStatus));
+      emm_ctx_set_eps_bearer_context_status(ue_ctx, &msg->epsbearercontextstatus);
 //#pragma message  "TODO Requirement MME24.301R10_5.5.3.2.4_5a: TAU Request: Deactivate EPS bearers if necessary (S11 Modify Bearer Request)"
     }
   }
@@ -325,20 +308,17 @@ emm_proc_tracking_area_update_request (
    * proceed directly to the execution of the security mode control procedure as specified in subclause 5.4.3, during a
    * tracking area updating procedure for a UE that has only a PDN connection for emergency bearer services.
    */
-  if ((! ue_ctx->security) &&
+  if ((! IS_EMM_CTXT_VALID_SECURITY(ue_ctx)) &&
       (_emm_data.conf.eps_network_feature_support & EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE_SUPPORTED) &&
       (ue_ctx->is_emergency)) {
-    if ( ue_ctx->ue_network_capability_ie) {
+    if ( IS_EMM_CTXT_PRESENT_UE_NETWORK_CAPABILITY(ue_ctx)) {
       // overwrite previous values
-      ue_ctx->eea = ue_ctx->ue_network_capability_ie->eea;
-      ue_ctx->eia = ue_ctx->ue_network_capability_ie->eia;
-      ue_ctx->ucs2 = ue_ctx->ue_network_capability_ie->ucs2;
-      ue_ctx->uea = ue_ctx->ue_network_capability_ie->uea;
-      ue_ctx->uia = ue_ctx->ue_network_capability_ie->uia;
-//#pragma message  "TODO (clean gea code)"
-      //ue_ctx->gea = ue_ctx->gea;
-      ue_ctx->umts_present = ue_ctx->ue_network_capability_ie->umts_present;
-      ue_ctx->gprs_present = ue_ctx->ue_network_capability_ie->gprs_present;
+      ue_ctx->eea = ue_ctx->_ue_network_capability_ie.eea;
+      ue_ctx->eia = ue_ctx->_ue_network_capability_ie.eia;
+      ue_ctx->ucs2 = ue_ctx->_ue_network_capability_ie.ucs2;
+      ue_ctx->uea = ue_ctx->_ue_network_capability_ie.uea;
+      ue_ctx->uia = ue_ctx->_ue_network_capability_ie.uia;
+      ue_ctx->umts_present = ue_ctx->_ue_network_capability_ie.umts_present;
     }
     rc = emm_proc_security_mode_control (ue_ctx->ue_id,
       0,        // TODO: eksi != 0
@@ -379,39 +359,51 @@ emm_proc_tracking_area_update_request (
     authentication_requested = ((0 < decode_status->integrity_protected_message) && (0 == decode_status->mac_matched)) ||
         (0 == decode_status->integrity_protected_message) || (0 == decode_status->security_context_available);
     if (authentication_requested) {
-      auth_vector_t                          *auth = &ue_ctx->vector;
-      const OctetString                       loc_rand = { AUTH_RAND_SIZE, (uint8_t *) auth->rand };
-      const OctetString                       autn = { AUTH_AUTN_SIZE, (uint8_t *) auth->autn };
-      rc = emm_proc_authentication (ue_ctx, ue_ctx->ue_id, 0,  // TODO: eksi != 0
-                                  &loc_rand,
-                                  &autn,
-                                  _emm_tracking_area_update_security,
-                                  _emm_tracking_area_update_reject,
-                                  _emm_tracking_area_update_reject);
+      int                                     eksi = 0;
+      int                                     vindex = 0;
+
+      if (ue_ctx->_security.eksi !=  KSI_NO_KEY_AVAILABLE) {
+        REQUIREMENT_3GPP_24_301(R10_5_4_2_4__2);
+        eksi = (ue_ctx->_security.eksi + 1) % (EKSI_MAX_VALUE + 1);
+      }
+      for (vindex = 0; vindex < MAX_EPS_AUTH_VECTORS; vindex++) {
+        if (IS_EMM_CTXT_PRESENT_AUTH_VECTOR(ue_ctx, vindex)) {
+          break;
+        }
+      }
+      AssertFatal(IS_EMM_CTXT_PRESENT_AUTH_VECTOR(ue_ctx, vindex), "TODO No valid vector, should not happen");
+      emm_ctx_set_security_vector_index(ue_ctx, vindex);
+
+      rc = emm_proc_authentication (ue_ctx, ue_ctx->ue_id, eksi,
+          ue_ctx->_vector[vindex].rand,
+          ue_ctx->_vector[vindex].autn,
+          _emm_tracking_area_update_security,
+          _emm_tracking_area_update_reject,
+          _emm_tracking_area_update_reject);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     } else {
       bool network_capability_have_changed = false;
-      if ( ue_ctx->ue_network_capability_ie) {
+      if ( IS_EMM_CTXT_PRESENT_UE_NETWORK_CAPABILITY(ue_ctx)) {
         network_capability_have_changed = emm_network_capability_have_changed(ue_ctx,
-            ue_ctx->ue_network_capability_ie->eea,
-            ue_ctx->ue_network_capability_ie->eia,
-            ue_ctx->ue_network_capability_ie->ucs2,
-            ue_ctx->ue_network_capability_ie->uea,
-            ue_ctx->ue_network_capability_ie->uia,
+            ue_ctx->_ue_network_capability_ie.eea,
+            ue_ctx->_ue_network_capability_ie.eia,
+            ue_ctx->_ue_network_capability_ie.ucs2,
+            ue_ctx->_ue_network_capability_ie.uea,
+            ue_ctx->_ue_network_capability_ie.uia,
             ue_ctx->gea, // TODO
-            ue_ctx->ue_network_capability_ie->umts_present,
-            ue_ctx->ue_network_capability_ie->gprs_present);
+            ue_ctx->_ue_network_capability_ie.umts_present,
+            ue_ctx->gprs_present);
         // overwrite previous values
         if (network_capability_have_changed) {
-          ue_ctx->eea = ue_ctx->ue_network_capability_ie->eea;
-          ue_ctx->eia = ue_ctx->ue_network_capability_ie->eia;
-          ue_ctx->ucs2 = ue_ctx->ue_network_capability_ie->ucs2;
-          ue_ctx->uea = ue_ctx->ue_network_capability_ie->uea;
-          ue_ctx->uia = ue_ctx->ue_network_capability_ie->uia;
+          ue_ctx->eea = ue_ctx->_ue_network_capability_ie.eea;
+          ue_ctx->eia = ue_ctx->_ue_network_capability_ie.eia;
+          ue_ctx->ucs2 = ue_ctx->_ue_network_capability_ie.ucs2;
+          ue_ctx->uea = ue_ctx->_ue_network_capability_ie.uea;
+          ue_ctx->uia = ue_ctx->_ue_network_capability_ie.uia;
 //#pragma message  "TODO (clean gea code)"
           //ue_ctx->gea = ue_ctx->gea;
-          ue_ctx->umts_present = ue_ctx->ue_network_capability_ie->umts_present;
-          ue_ctx->gprs_present = ue_ctx->ue_network_capability_ie->gprs_present;
+          ue_ctx->umts_present = ue_ctx->_ue_network_capability_ie.umts_present;
+          //ue_ctx->gprs_present = ue_ctx->_ue_network_capability_ie.gprs_present;
         }
       }
       // keep things simple at the beginning
@@ -500,17 +492,17 @@ _emm_tracking_area_update (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
-  tau_accept_data_t                      *data = (tau_accept_data_t *) CALLOC_CHECK (1, sizeof (tau_accept_data_t));
+  tau_accept_data_t                      *data = (tau_accept_data_t *) calloc (1, sizeof (tau_accept_data_t));
 
   if (data ) {
     /*
      * Setup ongoing EMM procedure callback functions
      */
-    rc = emm_proc_common_initialize (emm_ctx->ue_id, NULL, NULL, NULL, _emm_tracking_area_update_abort, data);
+    rc = emm_proc_common_initialize (emm_ctx->ue_id, NULL, NULL, NULL, NULL, NULL, _emm_tracking_area_update_abort, data);
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions");
-      FREE_CHECK (data);
+      free_wrapper (data);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
@@ -552,6 +544,7 @@ considered as valid until the old GUTI can be considered as invalid by the netwo
 During this period the network acts as described for case a above.
 @param [in]args TAU accept data
 */
+//------------------------------------------------------------------------------
 static void                            *
 _emm_tau_t3450_handler (
   void *args)
@@ -590,6 +583,7 @@ _emm_tau_t3450_handler (
      @param [in]args UE EMM context data
      @returns status of operation
 */
+//------------------------------------------------------------------------------
 static int
 _emm_tracking_area_update_security (
   void *args)
@@ -603,24 +597,8 @@ _emm_tracking_area_update_security (
   /*
    * Create new NAS security context
    */
-  if (emm_ctx->security == NULL) {
-    emm_ctx->security = (emm_security_context_t *) MALLOC_CHECK (sizeof (emm_security_context_t));
-  }
 
-  if (emm_ctx->security) {
-    memset (emm_ctx->security, 0, sizeof (emm_security_context_t));
-    emm_ctx->security->type = EMM_KSI_NOT_AVAILABLE;
-    emm_ctx->security->selected_algorithms.encryption = NAS_SECURITY_ALGORITHMS_EEA0;
-    emm_ctx->security->selected_algorithms.integrity = NAS_SECURITY_ALGORITHMS_EIA0;
-  } else {
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to create security context");
-    emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
-    /*
-     * Do not accept the UE to attach to the network
-     */
-    rc = _emm_tracking_area_update_reject (emm_ctx);
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-  }
+  emm_ctx_clear_security(emm_ctx);
 
   /*
    * Initialize the security mode control procedure
@@ -652,6 +630,7 @@ _emm_tracking_area_update_security (
      @param [in]args UE EMM context data
      @returns status of operation
 */
+//------------------------------------------------------------------------------
 static int
 _emm_tracking_area_update_reject (
   void *args)
@@ -678,12 +657,11 @@ _emm_tracking_area_update_reject (
 
     emm_sap.u.emm_as.u.establish.emm_cause = emm_ctx->emm_cause;
     emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_TAU;
-    emm_sap.u.emm_as.u.establish.nas_msg.length = 0;
-    emm_sap.u.emm_as.u.establish.nas_msg.value = NULL;
+    emm_sap.u.emm_as.u.establish.nas_msg = NULL;
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, false, true);
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_ctx->_security, false, true);
     rc = emm_sap_send (&emm_sap);
   }
 
@@ -696,6 +674,7 @@ _emm_tracking_area_update_reject (
      @param [in]data    UE TAU accept data
      @returns status of operation (RETURNok, RETURNerror)
 */
+//------------------------------------------------------------------------------
 static int
 _emm_tracking_area_update_accept (
   emm_data_context_t * emm_ctx,
@@ -723,10 +702,10 @@ _emm_tracking_area_update_accept (
     // TODO Reminder
     emm_sap.u.emm_as.u.establish.guti = NULL;
 
-    emm_sap.u.emm_as.u.establish.tai_list.list_type = emm_ctx->tai_list.list_type;
-    emm_sap.u.emm_as.u.establish.tai_list.n_tais    = emm_ctx->tai_list.n_tais;
-    for (i=0; i < emm_ctx->tai_list.n_tais; i++) {
-      memcpy(&emm_sap.u.emm_as.u.establish.tai_list.tai[i], &emm_ctx->tai_list.tai[i], sizeof(tai_t));
+    emm_sap.u.emm_as.u.establish.tai_list.list_type = emm_ctx->_tai_list.list_type;
+    emm_sap.u.emm_as.u.establish.tai_list.n_tais    = emm_ctx->_tai_list.n_tais;
+    for (i=0; i < emm_ctx->_tai_list.n_tais; i++) {
+      memcpy(&emm_sap.u.emm_as.u.establish.tai_list.tai[i], &emm_ctx->_tai_list.tai[i], sizeof(tai_t));
     }
     emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_TAU;
 
@@ -752,13 +731,13 @@ _emm_tracking_area_update_accept (
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, false, true);
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_ctx->_security, false, true);
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X ", emm_sap.u.emm_as.u.establish.encryption);
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X ", emm_sap.u.emm_as.u.establish.integrity);
-    emm_sap.u.emm_as.u.establish.encryption = emm_ctx->security->selected_algorithms.encryption;
-    emm_sap.u.emm_as.u.establish.integrity = emm_ctx->security->selected_algorithms.integrity;
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X (0x%X)", emm_sap.u.emm_as.u.establish.encryption, emm_ctx->security->selected_algorithms.encryption);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X (0x%X)", emm_sap.u.emm_as.u.establish.integrity, emm_ctx->security->selected_algorithms.integrity);
+    emm_sap.u.emm_as.u.establish.encryption = emm_ctx->_security.selected_algorithms.encryption;
+    emm_sap.u.emm_as.u.establish.integrity = emm_ctx->_security.selected_algorithms.integrity;
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X (0x%X)", emm_sap.u.emm_as.u.establish.encryption, emm_ctx->_security.selected_algorithms.encryption);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X (0x%X)", emm_sap.u.emm_as.u.establish.integrity, emm_ctx->_security.selected_algorithms.integrity);
     /*
      * Get the activate default EPS bearer context request message to
      * transfer within the ESM container of the attach accept message
@@ -791,6 +770,7 @@ _emm_tracking_area_update_accept (
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
+//------------------------------------------------------------------------------
 static int
 _emm_tracking_area_update_abort (
   void *args)
@@ -823,7 +803,7 @@ _emm_tracking_area_update_abort (
      * Release retransmission timer parameters
      */
     // no contained struct to free
-    FREE_CHECK (data);
+    free_wrapper (data);
 
     /*
      * Notify EMM that EPS attach procedure failed

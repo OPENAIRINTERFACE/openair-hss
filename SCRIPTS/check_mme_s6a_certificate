@@ -34,7 +34,7 @@ THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
 
 function _create_mme_certs()
 {
-  local    freediameter_path=$1
+  local    output_path=$1
   local    fqdn=$2
 
   cd /tmp
@@ -56,43 +56,43 @@ function _create_mme_certs()
   # Certification authority
   openssl ca -cert mme.cacert.pem -keyfile mme.cakey.pem -in mme.csr.pem -out mme.cert.pem -outdir . -batch
 
-  if [ ! -d $freediameter_path/etc/freeDiameter ]; then
-    echo "Creating non existing directory: $freediameter_path/etc/freeDiameter/"
-    sudo mkdir -p $freediameter_path/etc/freeDiameter/
+  if [ ! -d $output_path ]; then
+    echo "Creating non existing directory: $output_path/"
+    sudo mkdir -p $output_path/
   fi
 
-  sudo mv mme.cakey.pem mme.cert.pem mme.cacert.pem mme.key.pem $freediameter_path/etc/freeDiameter/
+  sudo mv mme.cakey.pem mme.cert.pem mme.cacert.pem mme.key.pem $output_path/
   cd -
 }
 
-#$1 if freediameter path
+#$1 if output path
 #$2 is fqdn
 function main() {
-  local freediameter_path=$1
+  local output_path=$1
   local fqdn=$2
-  if [ -d $freediameter_path/etc/freeDiameter ]; then
-    if [ -f $freediameter_path/etc/freeDiameter/mme.cert.pem ];  then
-      full_hostname=`cat $freediameter_path/etc/freeDiameter/mme.cert.pem | grep "Subject" | grep "CN" | cut -d '=' -f6`
+  if [ -d $output_path ]; then
+    if [ -f $output_path/mme.cert.pem ];  then
+      full_hostname=`cat $output_path/mme.cert.pem | grep "Subject" | grep "CN" | cut -d '=' -f6`
       if [ a$full_hostname == a$fqdn ]; then
-        echo_success "MME S6A: Found valid certificate in $freediameter_path/etc/freeDiameter"
+        echo_success "MME S6A: Found valid certificate in $output_path"
         return 0
       else 
         echo_error "Bad mme fqdn found in cert file: $full_hostname  fqdn is $fqdn"
       fi
     else
-      echo_error "File $freediameter_path/etc/freeDiameter/mme.cert.pem not found"
+      echo_error "File $output_path/mme.cert.pem not found"
     fi
   else
-    echo_error "Directory $freediameter_path/etc/freeDiameter not found"
+    echo_error "Directory $output_path not found"
   fi
-  echo_error "MME S6A: Did not find valid certificate in $freediameter_path/etc/freeDiameter"
-  echo_warning "MME S6A: generating new certificate in $freediameter_path/etc/freeDiameter..."
-  _create_mme_certs $freediameter_path $fqdn
+  echo_error "MME S6A: Did not find valid certificate in $output_path"
+  echo_warning "MME S6A: generating new certificate in $output_path..."
+  _create_mme_certs $output_path $fqdn
   if [ $# -lt 3 ] ; then
-    main $freediameter_path $fqdn 2
+    main $output_path $fqdn 2
     return $?
   else
-    echo_error "Could not access to freeDiameter path: $freediameter_path/etc/freeDiameter"
+    echo_error "Could not access to output path: $output_path"
     exit 1
   fi
 }

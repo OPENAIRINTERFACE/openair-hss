@@ -47,12 +47,15 @@ function help()
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
-  echo_error "  -b, --breakpoint      location      Set breakpoint location for GDB (ex location: Attach.c:272)."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by spgw if you don't want to use the default one: $g_spgw_default_config_file"
+  echo_error "  -d, --daemon                        Run the daemon."
+  echo_error "  -D, --disable-gtpu                  Disable loading GTPU kernel module, useful if working only on signaling aspects with other distributions/kernels than recommended."
   echo_error "  -g, --gdb                           Run with GDB."
+  echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
+  echo_error "                                      All repetitions of this argument are valid."
   echo_error "  -h, --help                          Print this help."
   echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in spgw config file."
-  echo_error "  -K, --itti-dump-file  file_abs_path ITTI dump file containing all ITTI events occuring during S/P-GW runtime."
+  echo_error "  -k, --kill                          Kill all running SPGW instances, exit script then."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
   echo_error "  -r, --remove-gtpu-kmodule           Remove gtpu kernel module before starting the S/P-GW"
   echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
@@ -77,30 +80,51 @@ function control_c()
   exit $?
 }
 
+NAME=spgwd
+DAEMON=/usr/sbin/$NAME
+DAEMON_ARGS=""
+PIDFILE=/var/run/$NAME.pid
 function main()
 {
   local -i run_gdb=0
+  local -i run_daemon=0
   local -i set_network_interfaces=0
   local    exe_arguments=" "
   local    spgw_config_file=$g_spgw_default_config_file
   local    breakpoint_location=""
-  local -i set_breakpoint=0
+  local -a gdb_args
+  local -i gdb_index=0
+  local -i disable_gtpu=0
 
   until [ -z "$1" ]
     do
     case "$1" in
-      -b | --breakpoint)
-        run_gdb=1
-        set_breakpoint=1
-        breakpoint_location=$2
-        echo "setting breakpoint location to: $breakpoint_location"
-        echo "setting GDB flag to: $run_gdb"
+      -c | --config-file)
+        spgw_config_file=$2
+        echo "setting config file to: $spgw_config_file"
         shift 2;
         ;;
       -g | --gdb)
         run_gdb=1
         echo "setting GDB flag to: $run_gdb"
         shift;
+        ;;
+      -d | --disable-gtpu)
+        disable_gtpu=1
+        echo "GTPU disabled"
+        shift;
+        ;;
+      -D | --daemon)
+        run_daemon=1
+        echo "Run SPGW as a daemon"
+        shift;
+        ;;
+      -G | --gdb-arg)
+        run_gdb=1
+        gdb_args[$gdb_index]="$2 $3"
+        echo "Appending gdb args: ${gdb_args[$gdb_index]}"
+        gdb_index=$((gdb_index + 1))
+        shift 3;
         ;;
       -h | --help)
         help
@@ -111,18 +135,13 @@ function main()
         echo "setting network interfaces: $set_network_interfaces"
         shift;
         ;;
-      -K | --itti-dump-file)
-        local itti_dump_file=$2
-        # can omit file name if last arg on the line
-        if [ "x$itti_dump_file" = "x" ]; then
-          itti_dump_file="/tmp/spgw_itti.log"
-        else
-          shift 1;
-        fi
-        echo "setting ITTI dump file to: $itti_dump_file"
-        exe_arguments="$exe_arguments -K $itti_dump_file"
-        shift 1;
-        ;;     
+      -k | --kill)
+        $SUDO killall -q spgw
+        $SUDO rm /var/run/spgw.pid
+        do_stop_daemon
+        exit 0
+        shift;
+        ;;
       -m | --mscgen)
         g_msc_dir=$2
         if [ -d  "$g_msc_dir" ]; then
@@ -171,11 +190,24 @@ function main()
 
   set_openair_env 
   cecho "OPENAIR_DIR    = $OPENAIR_DIR" $green
+  
+  if [ $disable_gtpu -eq 0 ]; then
+    check_gtpu_kmodule_installed
+  fi
 
-  check_gtpu_kmodule_installed
+  if [ ! -f $spgw_config_file ]; then 
+    echo_fatal "Please provide -c|--config-file valid argument (\"$spgw_config_file\" not a valid file)"
+  fi
 
-  if [ ! -e /usr/local/bin/spgw ]; then
-    echo_fatal "Cannot find /usr/local/bin/spgw executable, have a look at the output of build_spgw executable"
+
+  if [ "$run_daemon" -eq 1 ]; then
+    if [ ! -e /usr/sbin/spgwd ]; then
+      echo_fatal "Cannot find /usr/sbin/spgwd executable, have a look at the output of build_spgw  -D ... executable"
+    fi
+  else
+    if [ ! -e /usr/local/bin/spgw ]; then
+    echo_fatal "Cannot find /usr/local/bin/mme executable, have a look at the output of build_spgw executable"
+    fi
   fi
 
 
@@ -185,6 +217,25 @@ function main()
 
   if [ $set_network_interfaces -eq 1 ]; then
     set_spgw_network_interfaces $spgw_config_file
+  fi
+    
+  DAEMON_ARGS=$DAEMON_ARGS" -c $spgw_config_file"
+  if [ "$run_daemon" -eq 1 ]; then
+    # TODO options
+    $SUDO killall -q spgw
+    do_stop_daemon
+    case "$?" in
+      0) echo_success "SPGW daemon was running -> stopped";;
+      1) ;;
+      2) echo_fatal "FAILURE: SPGW daemon was running -> could not stop it";;
+    esac
+    do_start_daemon
+    case "$?" in
+      0) echo_success "SPGW daemon started";;
+      1) echo_fatal "FAILURE: SPGW daemon was already running";;
+      2) echo_fatal "FAILURE: Cannot start SPGW daemon";;
+    esac
+    exit 0
   fi
 
 
@@ -200,9 +251,9 @@ function main()
     $SUDO chmod 777  ~/.gdb_spgw
     $SUDO echo "file spgw" > ~/.gdb_spgw
     $SUDO echo "set args $exe_arguments "        >> ~/.gdb_spgw
-    if [ $set_breakpoint -eq 1 ]; then 
-      $SUDO echo "break $breakpoint_location "        >> ~/.gdb_spgw
-    fi
+    for i in ${gdb_args[@]}; do
+      $SUDO echo "$i"                            >> ~/.gdb_mme
+    done
     $SUDO echo "run"                             >> ~/.gdb_spgw
     $SUDO cat ~/.gdb_spgw
     $SUDO gdb -n -x ~/.gdb_spgw

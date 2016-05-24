@@ -202,7 +202,7 @@ itti_malloc (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     OAILOG_ERROR (LOG_ITTI, " Memory pools statistics:\n%s", statistics);
-    FREE_CHECK (statistics);
+    free_wrapper (statistics);
   }
   AssertFatal (ptr != NULL, "Memory allocation of %d bytes failed (%d -> %d)!\n", (int)size, origin_task_id, destination_task_id);
   return ptr;
@@ -671,7 +671,7 @@ itti_create_task (
   itti_desc.threads[thread_id].task_state = TASK_STATE_STARTING;
   ITTI_DEBUG (ITTI_DEBUG_INIT, " Creating thread for task %s ...\n", itti_get_task_name (task_id));
 #if ITTI_TASK_STACK_SIZE
-  pthread_attr_t                          attr = {0};
+  pthread_attr_t                          attr = {.__align = 0};
   result = pthread_attr_init(&attr);
   AssertFatal (result == 0, "Thread attributes for task %d, thread %d init failed (%d)!\n", task_id, thread_id, result);
   result = pthread_attr_setstacksize(&attr, ITTI_TASK_STACK_SIZE);
@@ -801,11 +801,11 @@ itti_init (
   /*
    * Allocates memory for tasks info
    */
-  itti_desc.tasks = CALLOC_CHECK (itti_desc.task_max, sizeof (task_desc_t));
+  itti_desc.tasks = calloc (itti_desc.task_max, sizeof (task_desc_t));
   /*
    * Allocates memory for threads info
    */
-  itti_desc.threads = CALLOC_CHECK (itti_desc.thread_max, sizeof (thread_desc_t));
+  itti_desc.threads = calloc (itti_desc.thread_max, sizeof (thread_desc_t));
 
   /*
    * Initializing each queue and related stuff
@@ -847,7 +847,7 @@ itti_init (
     }
 
     itti_desc.threads[thread_id].nb_events = 1;
-    itti_desc.threads[thread_id].events = CALLOC_CHECK (1, sizeof (struct epoll_event));
+    itti_desc.threads[thread_id].events = calloc (1, sizeof (struct epoll_event));
     itti_desc.threads[thread_id].events->events = EPOLLIN | EPOLLERR;
     itti_desc.threads[thread_id].events->data.fd = itti_desc.threads[thread_id].task_event_fd;
 
@@ -879,7 +879,7 @@ itti_init (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s", statistics);
-    FREE_CHECK (statistics);
+    free_wrapper (statistics);
   }
   itti_desc.vcd_poll_msg = 0;
   itti_desc.vcd_receive_msg = 0;
@@ -959,7 +959,7 @@ itti_wait_tasks_end (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s\n", statistics);
-    FREE_CHECK (statistics);
+    free_wrapper (statistics);
   }
 
   if (ready_tasks > 0) {

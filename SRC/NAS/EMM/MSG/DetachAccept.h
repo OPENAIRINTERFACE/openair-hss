@@ -19,16 +19,14 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_DETACH_ACCEPT_SEEN
+#define FILE_DETACH_ACCEPT_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
 #include "SecurityHeaderType.h"
 #include "MessageType.h"
 
-#ifndef FILE_DETACH_ACCEPT_SEEN
-#define FILE_DETACH_ACCEPT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define DETACH_ACCEPT_MINIMUM_LENGTH (0)

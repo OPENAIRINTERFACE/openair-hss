@@ -28,15 +28,15 @@
 #include "ProtocolConfigurationOptions.h"
 
 int
-decode_protocol_configuration_options (
+decode_ProtocolConfigurationOptions (
   ProtocolConfigurationOptions * protocolconfigurationoptions,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
+  const uint8_t iei,
+  const uint8_t * const buffer,
+  const uint32_t len)
 {
   uint32_t                                decoded = 0;
   uint8_t                                 ielen = 0;
-  int                                     decode_result;
+  int                                     rv = 0;
 
   if (iei > 0) {
     CHECK_IEI_DECODER (iei, *buffer);
@@ -47,67 +47,41 @@ decode_protocol_configuration_options (
   decoded++;
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
-  if (((*(buffer + decoded) >> 7) & 0x1) != 1) {
-    errorCodeDecoder = TLV_DECODE_VALUE_DOESNT_MATCH;
-    return TLV_DECODE_VALUE_DOESNT_MATCH;
+
+  rv = decode_protocol_configuration_options (
+      protocolconfigurationoptions,
+      buffer + decoded,
+      len - decoded);
+
+  if (rv < 0) {
+    return rv;
   }
+  decoded += (uint32_t)rv;
 
-  /*
-   * Bits 7 to 4 of octet 3 are spare, read as 0
-   */
-  if (((*(buffer + decoded) & 0x78) >> 3) != 0) {
-    errorCodeDecoder = TLV_DECODE_VALUE_DOESNT_MATCH;
-    return TLV_DECODE_VALUE_DOESNT_MATCH;
-  }
 
-  protocolconfigurationoptions->configurationprotol = (*(buffer + decoded) >> 1) & 0x7;
-  decoded++;
-  //IES_DECODE_U16(protocolconfigurationoptions->protocolid, *(buffer + decoded));
-  protocolconfigurationoptions->num_protocol_id_or_container_id = 0;
-
-  while ((len - decoded) > 0) {
-    IES_DECODE_U16 (buffer, decoded, protocolconfigurationoptions->protocolid[protocolconfigurationoptions->num_protocol_id_or_container_id]);
-    DECODE_U8 (buffer + decoded, protocolconfigurationoptions->lengthofprotocolid[protocolconfigurationoptions->num_protocol_id_or_container_id], decoded);
-
-    if (protocolconfigurationoptions->lengthofprotocolid[protocolconfigurationoptions->num_protocol_id_or_container_id] > 0) {
-      if ((decode_result = decode_octet_string (&protocolconfigurationoptions->protocolidcontents[protocolconfigurationoptions->num_protocol_id_or_container_id],
-                                                protocolconfigurationoptions->lengthofprotocolid[protocolconfigurationoptions->num_protocol_id_or_container_id], buffer + decoded, len - decoded)) < 0) {
-        return decode_result;
-      } else {
-        decoded += decode_result;
-      }
-    } else {
-      protocolconfigurationoptions->protocolidcontents[protocolconfigurationoptions->num_protocol_id_or_container_id].length = 0;
-      protocolconfigurationoptions->protocolidcontents[protocolconfigurationoptions->num_protocol_id_or_container_id].value = NULL;
-    }
-
-    protocolconfigurationoptions->num_protocol_id_or_container_id += 1;
-  }
 
 #if NAS_DEBUG
-  dump_protocol_configuration_options_xml (protocolconfigurationoptions, iei);
+  dump_ProtocolConfigurationOptions_xml (protocolconfigurationoptions, iei);
 #endif
   return decoded;
 }
 
 int
-encode_protocol_configuration_options (
+encode_ProtocolConfigurationOptions (
   ProtocolConfigurationOptions * protocolconfigurationoptions,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
 {
   uint8_t                                *lenPtr;
-  uint8_t                                 num_protocol_id_or_container_id = 0;
   uint32_t                                encoded = 0;
-  int                                     encode_result;
 
   /*
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, PROTOCOL_CONFIGURATION_OPTIONS_MINIMUM_LENGTH, len);
 #if NAS_DEBUG
-  dump_protocol_configuration_options_xml (protocolconfigurationoptions, iei);
+  dump_ProtocolConfigurationOptions_xml (protocolconfigurationoptions, iei);
 #endif
 
   if (iei > 0) {
@@ -117,28 +91,18 @@ encode_protocol_configuration_options (
 
   lenPtr = (buffer + encoded);
   encoded++;
-  *(buffer + encoded) = 0x00 | (1 << 7) | (protocolconfigurationoptions->configurationprotol & 0x7);
-  encoded++;
 
-  while (num_protocol_id_or_container_id < protocolconfigurationoptions->num_protocol_id_or_container_id) {
-    IES_ENCODE_U16 (buffer, encoded, protocolconfigurationoptions->protocolid[num_protocol_id_or_container_id]);
-    *(buffer + encoded) = protocolconfigurationoptions->lengthofprotocolid[num_protocol_id_or_container_id];
-    encoded++;
-
-    if ((encode_result = encode_octet_string (&protocolconfigurationoptions->protocolidcontents[num_protocol_id_or_container_id], buffer + encoded, len - encoded)) < 0)
-      return encode_result;
-    else
-      encoded += encode_result;
-
-    num_protocol_id_or_container_id += 1;
-  }
+  encoded += encode_protocol_configuration_options (
+      protocolconfigurationoptions,
+      buffer + encoded,
+      len - encoded);
 
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
   return encoded;
 }
 
 void
-dump_protocol_configuration_options_xml (
+dump_ProtocolConfigurationOptions_xml (
   ProtocolConfigurationOptions * protocolconfigurationoptions,
   uint8_t iei)
 {
@@ -152,13 +116,15 @@ dump_protocol_configuration_options_xml (
      */
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  OAILOG_DEBUG (LOG_NAS, "    <Configuration protol>%u</Configuration protol>\n", protocolconfigurationoptions->configurationprotol);
+  OAILOG_DEBUG (LOG_NAS, "    <Configuration protol>%u</Configuration protol>\n", protocolconfigurationoptions->configuration_protocol);
   i = 0;
 
-  while (i < protocolconfigurationoptions->num_protocol_id_or_container_id) {
-    OAILOG_DEBUG (LOG_NAS, "        <Protocol ID>%u</Protocol ID>\n", protocolconfigurationoptions->protocolid[i]);
-    OAILOG_DEBUG (LOG_NAS, "        <Length of protocol ID>%u</Length of protocol ID>\n", protocolconfigurationoptions->lengthofprotocolid[i]);
-    OAILOG_DEBUG (LOG_NAS, "        %s", dump_octet_string_xml (&protocolconfigurationoptions->protocolidcontents[i]));
+  while (i < protocolconfigurationoptions->num_protocol_or_container_id) {
+    OAILOG_DEBUG (LOG_NAS, "        <Protocol ID>%u</Protocol ID>\n", protocolconfigurationoptions->protocol_or_container_ids[i].id);
+    OAILOG_DEBUG (LOG_NAS, "        <Length of protocol ID>%u</Length of protocol ID>\n", protocolconfigurationoptions->protocol_or_container_ids[i].length);
+    bstring b = dump_bstring_xml (protocolconfigurationoptions->protocol_or_container_ids[i].contents);
+    OAILOG_DEBUG (LOG_NAS, "        %s", bdata(b));
+    bdestroy(b);
     i++;
   }
 

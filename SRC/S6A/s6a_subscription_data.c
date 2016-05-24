@@ -22,9 +22,10 @@
 
 #include <stdint.h>
 
+#include "assertions.h"
+#include "common_defs.h"
 #include "common_types.h"
 #include "s6a_defs.h"
-#include "assertions.h"
 
 static inline int
 s6a_parse_subscriber_status (

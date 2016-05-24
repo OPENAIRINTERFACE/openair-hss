@@ -24,9 +24,13 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "mme_config.h"
+#include "bstrlib.h"
+#include "hashtable.h"
+#include "log.h"
+#include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
+#include "mme_config.h"
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
 #include "s1ap_mme_encoder.h"
@@ -35,9 +39,6 @@
 #include "s1ap_mme_itti_messaging.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_ta.h"
-#include "hashtable.h"
-#include "msc.h"
-#include "log.h"
 
 
 extern hash_table_ts_t g_s1ap_enb_coll; // contains eNB_description_s, key is eNB_description_s.assoc_id
@@ -217,7 +218,8 @@ s1ap_mme_generate_s1_setup_failure (
   }
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 S1Setup/unsuccessfulOutcome  assoc_id %u cause %u value %u", assoc_id, cause_type, cause_value);
-  rc =  s1ap_mme_itti_send_sctp_request (buffer_p, length, assoc_id, 0);
+  bstring b = blk2bstr(buffer_p, length);
+  rc =  s1ap_mme_itti_send_sctp_request (&b, assoc_id, 0, INVALID_MME_UE_S1AP_ID);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
@@ -291,9 +293,9 @@ s1ap_mme_handle_s1_setup_request (
     }
     OAILOG_MESSAGE_FINISH(context);
 
-    config_read_lock (&mme_config);
+    mme_config_read_lock (&mme_config);
     max_enb_connected = mme_config.max_enbs;
-    config_unlock (&mme_config);
+    mme_config_unlock (&mme_config);
 
     if (nb_enb_associated == max_enb_connected) {
       OAILOG_ERROR (LOG_S1AP, "There is too much eNB connected to MME, rejecting the association\n");
@@ -405,7 +407,7 @@ s1ap_generate_s1_setup_response (
   memset(&servedGUMMEI, 0, sizeof(S1ap_ServedGUMMEIsItem_t));
   // Generating response
   s1_setup_response_p = &message.msg.s1ap_S1SetupResponseIEs;
-  config_read_lock (&mme_config);
+  mme_config_read_lock (&mme_config);
   s1_setup_response_p->relativeMMECapacity = mme_config.relative_capacity;
 
   /*
@@ -429,35 +431,34 @@ s1ap_generate_s1_setup_response (
       /*
        * FIXME: free object from list once encoded
        */
-      plmn = CALLOC_CHECK (1, sizeof (*plmn));
+      plmn = calloc (1, sizeof (*plmn));
       MCC_MNC_TO_PLMNID (mme_config.served_tai.plmn_mcc[i], mme_config.served_tai.plmn_mnc[i], mme_config.served_tai.plmn_mnc_len[i], plmn);
       ASN_SEQUENCE_ADD (&servedGUMMEI.servedPLMNs.list, plmn);
     }
   }
 
-  for (i = 0; i < mme_config.gummei.nb_mme_gid; i++) {
-    S1ap_MME_Group_ID_t                    *mme_gid;
+  for (i = 0; i < mme_config.gummei.nb; i++) {
+    S1ap_MME_Group_ID_t                    *mme_gid = NULL;
+    S1ap_MME_Code_t                        *mmec = NULL;
 
     /*
      * FIXME: free object from list once encoded
      */
-    mme_gid = CALLOC_CHECK (1, sizeof (*mme_gid));
-    INT16_TO_OCTET_STRING (mme_config.gummei.mme_gid[i], mme_gid);
+    mme_gid = calloc (1, sizeof (*mme_gid));
+    INT16_TO_OCTET_STRING (mme_config.gummei.gummei[i].mme_gid, mme_gid);
     ASN_SEQUENCE_ADD (&servedGUMMEI.servedGroupIDs.list, mme_gid);
-  }
-
-  for (i = 0; i < mme_config.gummei.nb_mmec; i++) {
-    S1ap_MME_Code_t                        *mmec;
 
     /*
      * FIXME: free object from list once encoded
      */
-    mmec = CALLOC_CHECK (1, sizeof (*mmec));
-    INT8_TO_OCTET_STRING (mme_config.gummei.mmec[i], mmec);
+    mmec = calloc (1, sizeof (*mmec));
+    INT8_TO_OCTET_STRING (mme_config.gummei.gummei[i].mme_code, mmec);
     ASN_SEQUENCE_ADD (&servedGUMMEI.servedMMECs.list, mmec);
+
   }
 
-  config_unlock (&mme_config);
+
+  mme_config_unlock (&mme_config);
   /*
    * The MME is only serving E-UTRAN RAT, so the list contains only one element
    */
@@ -483,7 +484,8 @@ s1ap_generate_s1_setup_response (
   /*
    * Non-UE signalling -> stream 0
    */
-  rc = s1ap_mme_itti_send_sctp_request (buffer, length, enb_association->sctp_assoc_id, 0);
+  bstring b = blk2bstr(buffer, length);
+  rc = s1ap_mme_itti_send_sctp_request (&b, enb_association->sctp_assoc_id, 0, INVALID_MME_UE_S1AP_ID);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
@@ -730,7 +732,9 @@ s1ap_mme_generate_ue_context_release_command (
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_S1AP_ENB, NULL, 0, "0 UEContextRelease/initiatingMessage enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "",
           ue_ref_p->enb_ue_s1ap_id, ue_ref_p->mme_ue_s1ap_id);
-  rc = s1ap_mme_itti_send_sctp_request (buffer, length, ue_ref_p->enb->sctp_assoc_id, ue_ref_p->sctp_stream_send);
+
+  bstring b = blk2bstr(buffer, length);
+  rc = s1ap_mme_itti_send_sctp_request (&b, ue_ref_p->enb->sctp_assoc_id, ue_ref_p->sctp_stream_send, ue_ref_p->mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 

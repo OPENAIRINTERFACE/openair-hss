@@ -35,9 +35,10 @@
 #include "hashtable.h"
 #include "assertions.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 #if TRACE_HASHTABLE
-#  define PRINT_HASHTABLE(...)  do { PRINT_HASHTABLE(##__VA_ARGS__);} while (0);
+#  define PRINT_HASHTABLE(hTbLe, ...)  do {if (hTbLe->log_enabled) OAILOG_TRACE(LOG_UTIL, ##__VA_ARGS__);} while (0)
 #else
 #  define PRINT_HASHTABLE(...)
 #endif
@@ -74,7 +75,7 @@ hashtable_rc_code2string (
 
 //------------------------------------------------------------------------------
 /*
-   FREE_CHECK int function
+   free_wrapper int function
    hash_free_int_func() is used when this hashtable is used to store int values as data (pointer = value).
 */
 
@@ -103,15 +104,35 @@ hash_table_t * hashtable_init (hash_table_t * const hashtblP,
     const hash_size_t sizeP,
     hash_size_t (*hashfuncP) (const hash_key_t),
     void (*freefuncP) (void *),
-    char *display_name_pP)
+    bstring display_name_pP)
 {
-  if (!(hashtblP->nodes = CALLOC_CHECK (sizeP, sizeof (hash_node_t *)))) {
-    FREE_CHECK (hashtblP);
+  hash_size_t size = sizeP;
+  // upper power of two: http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2Float
+  //  By Sean Eron Anderson
+  // seander@cs.stanford.edu
+  // Individually, the code snippets here are in the public domain (unless otherwise noted) — feel free to use them however you please.
+  // The aggregate collection and descriptions are © 1997-2005 Sean Eron Anderson. The code and descriptions are distributed in the hope
+  // that they will be useful, but WITHOUT ANY WARRANTY and without even the implied warranty of merchantability or fitness for a particular
+  // purpose. As of May 5, 2005, all the code has been tested thoroughly. Thousands of people have read it. Moreover, Professor Randal Bryant,
+  // the Dean of Computer Science at Carnegie Mellon University, has personally tested almost everything with his Uclid code verification system.
+  // What he hasn't tested, I have checked against all possible inputs on a 32-bit machine. To the first person to inform me of a legitimate bug
+  // in the code, I'll pay a bounty of US$10 (by check or Paypal). If directed to a charity, I'll pay US$20.
+  size--;
+  size |= size >> 1;
+  size |= size >> 2;
+  size |= size >> 4;
+  size |= size >> 8;
+  size |= size >> 16;
+  size++;
+
+  if (!(hashtblP->nodes = calloc (size, sizeof (hash_node_t *)))) {
+    free_wrapper (hashtblP);
     return NULL;
   }
+  hashtblP->log_enabled = true;
 
-  PRINT_HASHTABLE (stdout, "%s allocated nodes\n", __FUNCTION__); fflush(stdout);
-  hashtblP->size = sizeP;
+  PRINT_HASHTABLE (hashtblP, "allocated nodes\n");
+  hashtblP->size = size;
 
   if (hashfuncP)
     hashtblP->hashfunc = hashfuncP;
@@ -121,13 +142,14 @@ hash_table_t * hashtable_init (hash_table_t * const hashtblP,
   if (freefuncP)
     hashtblP->freefunc = freefuncP;
   else
-    hashtblP->freefunc = FREE_CHECK;
+    hashtblP->freefunc = free_wrapper;
 
   if (display_name_pP) {
-    hashtblP->name = STRDUP_CHECK(display_name_pP);
+    bassign(hashtblP->name, display_name_pP);
   } else {
-    hashtblP->name = MALLOC_CHECK(64);
-    snprintf (hashtblP->name, 64, "hastable@%p", hashtblP);
+    hashtblP->name = bfromcstr ("");
+    btrunc(hashtblP->name, 0);
+    bassignformat(hashtblP->name,"hashtable%u@%p", size, hashtblP);
   }
   hashtblP->is_allocated_by_malloc = false;
   return hashtblP;
@@ -145,15 +167,13 @@ hashtable_create (
   const hash_size_t sizeP,
   hash_size_t (*hashfuncP) (const hash_key_t),
   void (*freefuncP) (void *),
-  char *display_name_pP)
+  bstring display_name_pP)
 {
   hash_table_t                           *hashtbl = NULL;
 
-  PRINT_HASHTABLE (stdout, "%s will allocate simple hashtable\n", __FUNCTION__); fflush(stdout);
-  if (!(hashtbl = CALLOC_CHECK (1, sizeof (hash_table_t)))) {
+  if (!(hashtbl = calloc (1, sizeof (hash_table_t)))) {
     return NULL;
   }
-  PRINT_HASHTABLE (stdout, "%s allocated simple hashtable\n", __FUNCTION__); fflush(stdout);
   hashtbl =  hashtable_init(hashtbl, sizeP, hashfuncP, freefuncP, display_name_pP);
   hashtbl->is_allocated_by_malloc = true;
   return hashtbl;
@@ -170,29 +190,47 @@ hash_table_ts_t * hashtable_ts_init (hash_table_ts_t * const hashtblP,
     const hash_size_t sizeP,
     hash_size_t (*hashfuncP) (const hash_key_t),
     void (*freefuncP) (void *),
-    char *display_name_pP)
+    bstring display_name_pP)
 {
+  hash_size_t size = sizeP;
+  // upper power of two: http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2Float
+  //  By Sean Eron Anderson
+  // seander@cs.stanford.edu
+  // Individually, the code snippets here are in the public domain (unless otherwise noted) — feel free to use them however you please.
+  // The aggregate collection and descriptions are © 1997-2005 Sean Eron Anderson. The code and descriptions are distributed in the hope
+  // that they will be useful, but WITHOUT ANY WARRANTY and without even the implied warranty of merchantability or fitness for a particular
+  // purpose. As of May 5, 2005, all the code has been tested thoroughly. Thousands of people have read it. Moreover, Professor Randal Bryant,
+  // the Dean of Computer Science at Carnegie Mellon University, has personally tested almost everything with his Uclid code verification system.
+  // What he hasn't tested, I have checked against all possible inputs on a 32-bit machine. To the first person to inform me of a legitimate bug
+  // in the code, I'll pay a bounty of US$10 (by check or Paypal). If directed to a charity, I'll pay US$20.
+  size--;
+  size |= size >> 1;
+  size |= size >> 2;
+  size |= size >> 4;
+  size |= size >> 8;
+  size |= size >> 16;
+  size++;
 
   memset(hashtblP, 0, sizeof(*hashtblP));
 
-  if (!(hashtblP->nodes = CALLOC_CHECK (sizeP, sizeof (hash_node_t *)))) {
-    FREE_CHECK (hashtblP);
+  if (!(hashtblP->nodes = calloc (size, sizeof (hash_node_t *)))) {
+    free_wrapper (hashtblP);
     return NULL;
   }
 
-  if (!(hashtblP->lock_nodes = CALLOC_CHECK (sizeP, sizeof (pthread_mutex_t)))) {
-    FREE_CHECK (hashtblP->nodes);
-    FREE_CHECK (hashtblP->name);
-    FREE_CHECK (hashtblP);
+  if (!(hashtblP->lock_nodes = calloc (size, sizeof (pthread_mutex_t)))) {
+    free_wrapper (hashtblP->nodes);
+    free_wrapper (hashtblP->name);
+    free_wrapper (hashtblP);
     return NULL;
   }
 
   pthread_mutex_init(&hashtblP->mutex, NULL);
-  for (int i = 0; i < sizeP; i++) {
+  for (int i = 0; i < size; i++) {
     pthread_mutex_init(&hashtblP->lock_nodes[i], NULL);
   }
 
-  hashtblP->size = sizeP;
+  hashtblP->size = size;
 
   if (hashfuncP)
     hashtblP->hashfunc = hashfuncP;
@@ -202,15 +240,17 @@ hash_table_ts_t * hashtable_ts_init (hash_table_ts_t * const hashtblP,
   if (freefuncP)
     hashtblP->freefunc = freefuncP;
   else
-    hashtblP->freefunc = FREE_CHECK;
+    hashtblP->freefunc = free_wrapper;
 
   if (display_name_pP) {
-    hashtblP->name = STRDUP_CHECK(display_name_pP);
+    hashtblP->name = bstrcpy(display_name_pP);
   } else {
-    hashtblP->name = MALLOC_CHECK(64);
-    snprintf (hashtblP->name, 64, "hastable_ts@%p", hashtblP);
+    hashtblP->name = bfromcstr ("hashtable@0123456789ABCDEF");
+    btrunc(hashtblP->name, 0);
+    bassignformat(hashtblP->name,"hashtable@%p", hashtblP);
   }
   hashtblP->is_allocated_by_malloc = false;
+  hashtblP->log_enabled = true;
   return hashtblP;
 }
 //------------------------------------------------------------------------------
@@ -225,15 +265,13 @@ hashtable_ts_create (
   const hash_size_t sizeP,
   hash_size_t (*hashfuncP) (const hash_key_t),
   void (*freefuncP) (void *),
-  char *display_name_pP)
+  bstring display_name_pP)
 {
   hash_table_ts_t                           *hashtbl = NULL;
 
-  if (!(hashtbl = CALLOC_CHECK (1, sizeof (hash_table_ts_t)))) {
+  if (!(hashtbl = calloc (1, sizeof (hash_table_ts_t)))) {
     return NULL;
   }
-  PRINT_HASHTABLE (stdout, "%s allocated ts hashtable\n", __FUNCTION__); fflush(stdout);
-
   hashtbl =  hashtable_ts_init(hashtbl, sizeP, hashfuncP, freefuncP, display_name_pP);
   hashtbl->is_allocated_by_malloc = true;
   return hashtbl;
@@ -253,7 +291,6 @@ hashtable_destroy (
                                          *oldnode = NULL;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -268,14 +305,14 @@ hashtable_destroy (
         hashtblP->freefunc (oldnode->data);
       }
 
-      FREE_CHECK (oldnode);
+      free_wrapper (oldnode);
     }
   }
 
-  FREE_CHECK (hashtblP->nodes);
-  FREE_CHECK(hashtblP->name);
+  free_wrapper (hashtblP->nodes);
+  free_wrapper(hashtblP->name);
   if (hashtblP->is_allocated_by_malloc) {
-    FREE_CHECK (hashtblP);
+    free_wrapper (hashtblP);
   }
   return HASH_TABLE_OK;
 }
@@ -294,7 +331,6 @@ hashtable_ts_destroy (
                                          *oldnode = NULL;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -310,17 +346,17 @@ hashtable_ts_destroy (
         hashtblP->freefunc (oldnode->data);
       }
 
-      FREE_CHECK (oldnode);
+      free_wrapper (oldnode);
     }
 
     pthread_mutex_unlock (&hashtblP->lock_nodes[n]);
     pthread_mutex_destroy (&hashtblP->lock_nodes[n]);
   }
 
-  FREE_CHECK (hashtblP->nodes);
-  FREE_CHECK(hashtblP->name);
+  free_wrapper (hashtblP->nodes);
+  free_wrapper(hashtblP->name);
   if (hashtblP->is_allocated_by_malloc) {
-    FREE_CHECK (hashtblP);
+    free_wrapper (hashtblP);
   }
   return HASH_TABLE_OK;
 }
@@ -337,7 +373,6 @@ hashtable_is_key_exists (
   hash_size_t                             hash = 0;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -346,13 +381,13 @@ hashtable_is_key_exists (
 
   while (node) {
     if (node->key == keyP) {
-      PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP);
       return HASH_TABLE_OK;
     }
 
     node = node->next;
   }
-  PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
@@ -368,7 +403,6 @@ hashtable_ts_is_key_exists (
   hash_size_t                             hash = 0;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -379,14 +413,14 @@ hashtable_ts_is_key_exists (
   while (node) {
     if (node->key == keyP) {
       pthread_mutex_unlock (&hashtblP->lock_nodes[hash]);
-      PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP);
       return HASH_TABLE_OK;
     }
 
     node = node->next;
   }
   pthread_mutex_unlock (&hashtblP->lock_nodes[hash]);
-  PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
@@ -411,7 +445,6 @@ hashtable_apply_callback_on_elements (
   unsigned int                            num_elements = 0;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -452,7 +485,6 @@ hashtable_ts_apply_callback_on_elements (
   unsigned int                            num_elements = 0;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -482,38 +514,34 @@ hashtable_ts_apply_callback_on_elements (
 hashtable_rc_t
 hashtable_dump_content (
   const hash_table_t * const hashtblP,
-  char *const buffer_pP,
-  int *const remaining_bytes_in_buffer_pP)
+  bstring str)
 {
   hash_node_t                            *node = NULL;
   unsigned int                            i = 0;
-  int                                     rc;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
-    rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "HASH_TABLE_BAD_PARAMETER_HASHTABLE");
+    bcatcstr(str, "HASH_TABLE_BAD_PARAMETER_HASHTABLE");
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
-  while ((i < hashtblP->size) && (*remaining_bytes_in_buffer_pP > 0)) {
+  while (i < hashtblP->size) {
     if (hashtblP->nodes[i] != NULL) {
       node = hashtblP->nodes[i];
 
       while (node) {
-        rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "Key 0x%"PRIx64" Element %p\n", node->key, node->data);
+        bstring b0 = bformat("Key 0x%"PRIx64" Element %p Node %p\n", node->key, node->data, node);
+        if (!b0) {
+          PRINT_HASHTABLE (hashtblP, "Error while dumping hashtable content");
+        } else {
+          bconcat(str, b0);
+          bdestroy(b0);
+        }
         node = node->next;
 
-        if ((0 > rc) || (*remaining_bytes_in_buffer_pP < rc)) {
-          PRINT_HASHTABLE (stderr, "Error while dumping hashtable content");
-        } else {
-          *remaining_bytes_in_buffer_pP -= rc;
-        }
       }
     }
-
     i += 1;
   }
-
   return HASH_TABLE_OK;
 }
 
@@ -521,33 +549,31 @@ hashtable_dump_content (
 hashtable_rc_t
 hashtable_ts_dump_content (
   const hash_table_ts_t * const hashtblP,
-  char *const buffer_pP,
-  int *const remaining_bytes_in_buffer_pP)
+  bstring str)
 {
   hash_node_t                            *node = NULL;
   unsigned int                            i = 0;
-  int                                     rc;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
-    rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "HASH_TABLE_BAD_PARAMETER_HASHTABLE");
+    bcatcstr(str, "HASH_TABLE_BAD_PARAMETER_HASHTABLE");
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
-  while ((i < hashtblP->size) && (*remaining_bytes_in_buffer_pP > 0)) {
+  while (i < hashtblP->size) {
     if (hashtblP->nodes[i] != NULL) {
       pthread_mutex_lock(&hashtblP->lock_nodes[i]);
       node = hashtblP->nodes[i];
 
       while (node) {
-        rc = snprintf (buffer_pP, *remaining_bytes_in_buffer_pP, "Key 0x%"PRIx64" Element %p\n", node->key, node->data);
+        bstring b0 = bformat ("Key 0x%"PRIx64" Element %p Node %p Next %p\n", node->key, node->data, node, node->next);
+        if (!b0) {
+          PRINT_HASHTABLE (hashtblP, "Error while dumping hashtable content");
+        } else {
+          bconcat(str, b0);
+          bdestroy(b0);
+        }
         node = node->next;
 
-        if ((0 > rc) || (*remaining_bytes_in_buffer_pP < rc)) {
-          PRINT_HASHTABLE (stderr, "Error while dumping hashtable content");
-        } else {
-          *remaining_bytes_in_buffer_pP -= rc;
-        }
       }
       pthread_mutex_unlock(&hashtblP->lock_nodes[i]);
     }
@@ -573,7 +599,6 @@ hashtable_insert (
   hash_size_t                             hash = 0;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -587,14 +612,14 @@ hashtable_insert (
       }
 
       node->data = dataP;
-      PRINT_HASHTABLE (stderr, "%s(%s,key 0x%"PRIx64") return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, hashtblP->name, keyP);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
       return HASH_TABLE_INSERT_OVERWRITTEN_DATA;
     }
 
     node = node->next;
   }
 
-  if (!(node = MALLOC_CHECK (sizeof (hash_node_t))))
+  if (!(node = malloc (sizeof (hash_node_t))))
     return -1;
 
   node->key = keyP;
@@ -609,7 +634,7 @@ hashtable_insert (
   hashtblP->nodes[hash] = node;
   hashtblP->num_elements += 1;
 
-  PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
   return HASH_TABLE_OK;
 }
 
@@ -629,7 +654,6 @@ hashtable_ts_insert (
   hash_size_t                             hash = 0;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -644,14 +668,14 @@ hashtable_ts_insert (
       }
       node->data = dataP;
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-      PRINT_HASHTABLE (stderr, "%s(%s,key 0x%"PRIx64") return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, hashtblP->name, keyP);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
       return HASH_TABLE_INSERT_OVERWRITTEN_DATA;
     }
 
     node = node->next;
   }
 
-  if (!(node = MALLOC_CHECK (sizeof (hash_node_t))))
+  if (!(node = malloc (sizeof (hash_node_t))))
     return -1;
 
   node->key = keyP;
@@ -666,7 +690,13 @@ hashtable_ts_insert (
   hashtblP->nodes[hash] = node;
   __sync_fetch_and_add (&hashtblP->num_elements, 1);
   pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-  PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) next %p return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP, node->next);
+#define TEMPORARY_DEBUG 1
+#if TEMPORARY_DEBUG
+  bstring b = bfromcstr(" ");
+  hashtable_ts_dump_content(hashtblP, b);
+  PRINT_HASHTABLE (hashtblP, "%s:%s\n", bdata(hashtblP->name), bdata(b));
+#endif
   return HASH_TABLE_OK;
 }
 
@@ -674,8 +704,8 @@ hashtable_ts_insert (
 
 //------------------------------------------------------------------------------
 /*
-   To FREE_CHECK an element from the hash table, we just search for it in the linked list for that hash value,
-   and FREE_CHECK it if it is found. If it was not found, it is an error and -1 is returned.
+   To free_wrapper an element from the hash table, we just search for it in the linked list for that hash value,
+   and free_wrapper it if it is found. If it was not found, it is an error and -1 is returned.
 */
 hashtable_rc_t
 hashtable_free (
@@ -687,7 +717,6 @@ hashtable_free (
   hash_size_t                             hash = 0;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -705,9 +734,9 @@ hashtable_free (
         hashtblP->freefunc (node->data);
       }
 
-      FREE_CHECK (node);
+      free_wrapper (node);
       __sync_fetch_and_sub (&hashtblP->num_elements, 1);
-      PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP);
       return HASH_TABLE_OK;
     }
 
@@ -715,15 +744,15 @@ hashtable_free (
     node = node->next;
   }
 
-  PRINT_HASHTABLE (stderr, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
 
 //------------------------------------------------------------------------------
 /*
-   To FREE_CHECK an element from the hash table, we just search for it in the linked list for that hash value,
-   and FREE_CHECK it if it is found. If it was not found, it is an error and -1 is returned.
+   To free_wrapper an element from the hash table, we just search for it in the linked list for that hash value,
+   and free_wrapper it if it is found. If it was not found, it is an error and -1 is returned.
 */
 hashtable_rc_t
 hashtable_ts_free (
@@ -735,7 +764,6 @@ hashtable_ts_free (
   hash_size_t                             hash = 0;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -754,10 +782,10 @@ hashtable_ts_free (
         hashtblP->freefunc (node->data);
       }
 
-      FREE_CHECK (node);
+      free_wrapper (node);
       __sync_fetch_and_sub (&hashtblP->num_elements, 1);
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-      PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP);
       return HASH_TABLE_OK;
     }
 
@@ -766,7 +794,7 @@ hashtable_ts_free (
   }
 
    pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-   PRINT_HASHTABLE (stderr, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP);
+   PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
@@ -788,7 +816,6 @@ hashtable_remove (
   hash_size_t                             hash = 0;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -803,9 +830,9 @@ hashtable_remove (
         hashtblP->nodes[hash] = node->next;
 
       *dataP = node->data;
-      FREE_CHECK (node);
+      free_wrapper (node);
       __sync_fetch_and_sub (&hashtblP->num_elements, 1);
-      PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP);
       return HASH_TABLE_OK;
     }
 
@@ -813,7 +840,7 @@ hashtable_remove (
     node = node->next;
   }
 
-  PRINT_HASHTABLE (stderr, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
@@ -834,7 +861,6 @@ hashtable_ts_remove (
   hash_size_t                             hash = 0;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -850,10 +876,10 @@ hashtable_ts_remove (
         hashtblP->nodes[hash] = node->next;
 
       *dataP = node->data;
-      FREE_CHECK (node);
+      free_wrapper (node);
       __sync_fetch_and_sub (&hashtblP->num_elements, 1);
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-      PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP);
       return HASH_TABLE_OK;
     }
 
@@ -862,7 +888,7 @@ hashtable_ts_remove (
   }
   pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
 
-  PRINT_HASHTABLE (stderr, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
@@ -883,7 +909,6 @@ hashtable_get (
 
   *dataP = NULL;
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -893,14 +918,14 @@ hashtable_get (
   while (node) {
     if (node->key == keyP) {
       *dataP = node->data;
-      PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, *dataP);
       return HASH_TABLE_OK;
     }
 
     node = node->next;
   }
 
-  PRINT_HASHTABLE (stderr, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
@@ -921,7 +946,6 @@ hashtable_ts_get (
 
   *dataP = NULL;
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
 
@@ -934,18 +958,23 @@ hashtable_ts_get (
     if (node->key == keyP) {
       *dataP = node->data;
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-      PRINT_HASHTABLE (stdout, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, hashtblP->name, keyP);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, *dataP);
       return HASH_TABLE_OK;
     }
 
     node = node->next;
   }
-
   pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-  PRINT_HASHTABLE (stderr, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, hashtblP->name, keyP);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP);
+
+#define TEMPORARY_DEBUG 1
+#if TEMPORARY_DEBUG
+  bstring b = bfromcstr(" ");
+  hashtable_ts_dump_content(hashtblP, b);
+  PRINT_HASHTABLE (hashtblP, "%s:%s\n", bdata(hashtblP->name), bdata(b));
+#endif
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
-
 
 //------------------------------------------------------------------------------
 /*
@@ -956,7 +985,7 @@ hashtable_ts_get (
    Resizing a hash table is not as easy as a realloc(). All hash values must be recalculated and each element must be inserted into its new position.
    We create a temporary hash_table_t object (newtbl) to be used while building the new hashes.
    This allows us to reuse hashtable_insert() and hashtable_free(), when moving the elements to the new table.
-   After that, we can just FREE_CHECK the old table and copy the elements from newtbl to hashtbl.
+   After that, we can just free_wrapper the old table and copy the elements from newtbl to hashtbl.
 */
 
 hashtable_rc_t
@@ -971,14 +1000,31 @@ hashtable_resize (
   void                                   *dummy = NULL;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
+  hash_size_t size = sizeP;
+  // upper power of two: http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2Float
+  //  By Sean Eron Anderson
+  // seander@cs.stanford.edu
+  // Individually, the code snippets here are in the public domain (unless otherwise noted) — feel free to use them however you please.
+  // The aggregate collection and descriptions are © 1997-2005 Sean Eron Anderson. The code and descriptions are distributed in the hope
+  // that they will be useful, but WITHOUT ANY WARRANTY and without even the implied warranty of merchantability or fitness for a particular
+  // purpose. As of May 5, 2005, all the code has been tested thoroughly. Thousands of people have read it. Moreover, Professor Randal Bryant,
+  // the Dean of Computer Science at Carnegie Mellon University, has personally tested almost everything with his Uclid code verification system.
+  // What he hasn't tested, I have checked against all possible inputs on a 32-bit machine. To the first person to inform me of a legitimate bug
+  // in the code, I'll pay a bounty of US$10 (by check or Paypal). If directed to a charity, I'll pay US$20.
+  size--;
+  size |= size >> 1;
+  size |= size >> 2;
+  size |= size >> 4;
+  size |= size >> 8;
+  size |= size >> 16;
+  size++;
 
-  newtbl.size = sizeP;
+  newtbl.size = size;
   newtbl.hashfunc = hashtblP->hashfunc;
 
-  if (!(newtbl.nodes = CALLOC_CHECK (sizeP, sizeof (hash_node_t *))))
+  if (!(newtbl.nodes = calloc (size, sizeof (hash_node_t *))))
     return -1;
 
 
@@ -990,7 +1036,7 @@ hashtable_resize (
     }
   }
 
-  FREE_CHECK (hashtblP->nodes);
+  free_wrapper (hashtblP->nodes);
   hashtblP->nodes = newtbl.nodes;
   hashtblP->size = newtbl.size;
   return HASH_TABLE_OK;
@@ -1006,7 +1052,7 @@ hashtable_resize (
    Resizing a hash table is not as easy as a realloc(). All hash values must be recalculated and each element must be inserted into its new position.
    We create a temporary hash_table_t object (newtbl) to be used while building the new hashes.
    This allows us to reuse hashtable_insert() and hashtable_free(), when moving the elements to the new table.
-   After that, we can just FREE_CHECK the old table and copy the elements from newtbl to hashtbl.
+   After that, we can just free_wrapper the old table and copy the elements from newtbl to hashtbl.
    Dangerous not really thread safe.
 */
 
@@ -1022,18 +1068,35 @@ hashtable_ts_resize (
   void                                   *dummy  = NULL;
 
   if (!hashtblP) {
-    PRINT_HASHTABLE (stderr, "%s return BAD_PARAMETER_HASHTABLE\n", __FUNCTION__);
     return HASH_TABLE_BAD_PARAMETER_HASHTABLE;
   }
+  hash_size_t size = sizeP;
+  // upper power of two: http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2Float
+  //  By Sean Eron Anderson
+  // seander@cs.stanford.edu
+  // Individually, the code snippets here are in the public domain (unless otherwise noted) — feel free to use them however you please.
+  // The aggregate collection and descriptions are © 1997-2005 Sean Eron Anderson. The code and descriptions are distributed in the hope
+  // that they will be useful, but WITHOUT ANY WARRANTY and without even the implied warranty of merchantability or fitness for a particular
+  // purpose. As of May 5, 2005, all the code has been tested thoroughly. Thousands of people have read it. Moreover, Professor Randal Bryant,
+  // the Dean of Computer Science at Carnegie Mellon University, has personally tested almost everything with his Uclid code verification system.
+  // What he hasn't tested, I have checked against all possible inputs on a 32-bit machine. To the first person to inform me of a legitimate bug
+  // in the code, I'll pay a bounty of US$10 (by check or Paypal). If directed to a charity, I'll pay US$20.
+  size--;
+  size |= size >> 1;
+  size |= size >> 2;
+  size |= size >> 4;
+  size |= size >> 8;
+  size |= size >> 16;
+  size++;
 
-  newtbl.size = sizeP;
+  newtbl.size = size;
   newtbl.hashfunc = hashtblP->hashfunc;
 
-  if (!(newtbl.nodes = CALLOC_CHECK (sizeP, sizeof (hash_node_t *))))
+  if (!(newtbl.nodes = calloc (size, sizeof (hash_node_t *))))
     return HASH_TABLE_SYSTEM_ERROR;
 
-  if (!(newtbl.lock_nodes = CALLOC_CHECK (sizeP, sizeof (pthread_mutex_t)))) {
-    FREE_CHECK (newtbl.nodes);
+  if (!(newtbl.lock_nodes = calloc (size, sizeof (pthread_mutex_t)))) {
+    free_wrapper (newtbl.nodes);
     return HASH_TABLE_SYSTEM_ERROR;
   }
   for (n = 0; n < hashtblP->size; ++n) {
@@ -1049,8 +1112,8 @@ hashtable_ts_resize (
     }
   }
 
-  FREE_CHECK (hashtblP->nodes);
-  FREE_CHECK (hashtblP->lock_nodes);
+  free_wrapper (hashtblP->nodes);
+  free_wrapper (hashtblP->lock_nodes);
   hashtblP->size = newtbl.size;
   hashtblP->nodes = newtbl.nodes;
   hashtblP->lock_nodes = newtbl.lock_nodes;

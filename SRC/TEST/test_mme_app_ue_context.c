@@ -69,30 +69,40 @@ START_TEST(imsi_convert_common_struct_test)
     int i;
     mme_app_imsi_t imsi_mme;
     imsi_t imsi_structs[TEST_CASE_COMMON_CONVERT_MAX] = {
+        //001011234567890
         {.u.num.digit1 = 0, .u.num.digit2 = 0, .u.num.digit3 = 1, .u.num.digit4 = 0, .u.num.digit5 = 1, .u.num.digit6 = 1, .u.num.digit7 = 2, .u.num.digit8 = 3,
          .u.num.digit9 = 4, .u.num.digit10 = 5, .u.num.digit11 = 6, .u.num.digit12 = 7, .u.num.digit13 = 8, .u.num.digit14 = 9, .u.num.digit15 = 0},
+        //262011234567890
         {.u.num.digit1 = 2, .u.num.digit2 = 6, .u.num.digit3 = 2, .u.num.digit4 = 0, .u.num.digit5 = 1, .u.num.digit6 = 1, .u.num.digit7 = 2, .u.num.digit8 = 3,
          .u.num.digit9 = 4, .u.num.digit10 = 5, .u.num.digit11 = 6, .u.num.digit12 = 7, .u.num.digit13 = 8, .u.num.digit14 = 9, .u.num.digit15 = 0},
+        //310150123456789
         {.u.num.digit1 = 3, .u.num.digit2 = 1, .u.num.digit3 = 0, .u.num.digit4 = 1, .u.num.digit5 = 5, .u.num.digit6 = 0, .u.num.digit7 = 1, .u.num.digit8 = 2,
          .u.num.digit9 = 3, .u.num.digit10 = 4, .u.num.digit11 = 5, .u.num.digit12 = 6, .u.num.digit13 = 7, .u.num.digit14 = 8, .u.num.digit15 = 9},
+        //460001357924680
         {.u.num.digit1 = 4, .u.num.digit2 = 6, .u.num.digit3 = 0, .u.num.digit4 = 0, .u.num.digit5 = 0, .u.num.digit6 = 1, .u.num.digit7 = 3, .u.num.digit8 = 5,
          .u.num.digit9 = 7, .u.num.digit10 = 9, .u.num.digit11 = 2, .u.num.digit12 = 4, .u.num.digit13 = 6, .u.num.digit14 = 8, .u.num.digit15 = 0},
+        //520031234567890
         {.u.num.digit1 = 5, .u.num.digit2 = 2, .u.num.digit3 = 0, .u.num.digit4 = 0, .u.num.digit5 = 3, .u.num.digit6 = 1, .u.num.digit7 = 2, .u.num.digit8 = 3,
          .u.num.digit9 = 4, .u.num.digit10 = 5, .u.num.digit11 = 6, .u.num.digit12 = 7, .u.num.digit13 = 8, .u.num.digit14 = 9, .u.num.digit15 = 0},
+        //470010171566423
         {.u.num.digit1 = 4, .u.num.digit2 = 7, .u.num.digit3 = 0, .u.num.digit4 = 0, .u.num.digit5 = 1, .u.num.digit6 = 0, .u.num.digit7 = 1, .u.num.digit8 = 7,
          .u.num.digit9 = 1, .u.num.digit10 = 5, .u.num.digit11 = 6, .u.num.digit12 =6, .u.num.digit13 = 4, .u.num.digit14 = 2, .u.num.digit15 = 3},
+        //41004123456789
         {.u.num.digit1 = 4, .u.num.digit2 = 1, .u.num.digit3 = 0, .u.num.digit4 = 0, .u.num.digit5 = 4, .u.num.digit6 = 1, .u.num.digit7 = 2, .u.num.digit8 = 3,
          .u.num.digit9 = 4, .u.num.digit10 = 5, .u.num.digit11 = 6, .u.num.digit12 =7, .u.num.digit13 = 8, .u.num.digit14 = 9, .u.num.digit15 = 0xf},
+        //4100412345678
         {.u.num.digit1 = 4, .u.num.digit2 = 1, .u.num.digit3 = 0, .u.num.digit4 = 0, .u.num.digit5 = 4, .u.num.digit6 = 1, .u.num.digit7 = 2, .u.num.digit8 = 3,
          .u.num.digit9 = 4, .u.num.digit10 = 5, .u.num.digit11 = 6, .u.num.digit12 =7, .u.num.digit13 = 8, .u.num.digit14 = 0xf, .u.num.digit15 = 0xf},
+        // 410041234567
         {.u.num.digit1 = 4, .u.num.digit2 = 1, .u.num.digit3 = 0, .u.num.digit4 = 0, .u.num.digit5 = 4, .u.num.digit6 = 1, .u.num.digit7 = 2, .u.num.digit8 = 3,
          .u.num.digit9 = 4, .u.num.digit10 = 5, .u.num.digit11 = 6, .u.num.digit12 =7, .u.num.digit13 = 0xf, .u.num.digit14 = 0xf, .u.num.digit15 = 0xf},
+        // 4100412
         {.u.num.digit1 = 4, .u.num.digit2 = 1, .u.num.digit3 = 0, .u.num.digit4 = 0, .u.num.digit5 = 4, .u.num.digit6 = 1, .u.num.digit7 = 2, .u.num.digit8 = 0xf,
          .u.num.digit9 = 0xf, .u.num.digit10 = 0xf, .u.num.digit11 = 0xf, .u.num.digit12 = 0xf, .u.num.digit13 = 0xf, .u.num.digit14 = 0xf, .u.num.digit15 = 0xf},
     };
 
 
-    char imsi_compare[TEST_CASE_COMMON_CONVERT_MAX][IMSI_BCD_DIGITS_MAX + 1] = {
+    /*char imsi_compare[TEST_CASE_COMMON_CONVERT_MAX][IMSI_BCD_DIGITS_MAX + 1] = {
         "001011234567890",
         "262011234567890",
         "310150123456789",
@@ -103,7 +113,19 @@ START_TEST(imsi_convert_common_struct_test)
         "4100412345678",
         "410041234567",
         "4100412",
-    };
+    };*/
+    char* imsi_compare[TEST_CASE_COMMON_CONVERT_MAX];
+    imsi_compare[0] = "001011234567890";
+    imsi_compare[1] = "262011234567890";
+    imsi_compare[2] = "310150123456789";
+    imsi_compare[3] = "460001357924680";
+    imsi_compare[4] = "520031234567890";
+    imsi_compare[5] = "470010171566423";
+    imsi_compare[6] = "41004123456789";
+    imsi_compare[7] = "4100412345678";
+    imsi_compare[8] = "410041234567";
+    imsi_compare[9] = "4100412";
+
 
     for(i = 0; i < TEST_CASE_COMMON_CONVERT_MAX; i++){
         mme_app_convert_imsi_to_imsi_mme(&imsi_mme, &imsi_structs[i]);

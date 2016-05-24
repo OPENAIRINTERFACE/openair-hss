@@ -43,7 +43,7 @@ Description Defines EMM procedures executed by the Non-Access Stratum
 #define __LOWERLAYER_H__
 
 #include "common_types.h"
-#include "OctetString.h"
+#include "bstrlib.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -64,10 +64,11 @@ Description Defines EMM procedures executed by the Non-Access Stratum
 
 int lowerlayer_success(mme_ue_s1ap_id_t ueid);
 int lowerlayer_failure(mme_ue_s1ap_id_t ueid);
+int lowerlayer_non_delivery_indication (mme_ue_s1ap_id_t ue_id);
 int lowerlayer_establish(void);
 int lowerlayer_release(int cause);
 
-int lowerlayer_data_ind(mme_ue_s1ap_id_t ueid, const OctetString *data);
-int lowerlayer_data_req(mme_ue_s1ap_id_t ueid, const OctetString *data);
+int lowerlayer_data_ind(mme_ue_s1ap_id_t ueid, const_bstring data);
+int lowerlayer_data_req(mme_ue_s1ap_id_t ueid, bstring data);
 
 #endif /* __LOWERLAYER_H__*/

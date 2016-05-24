@@ -73,6 +73,6 @@ typedef struct {
 } gtpv1u_data_t;
 
 
-int gtpv1u_init(const mme_config_t *mme_config);
+int gtpv1u_init(void);
 
 #endif /* FILE_GTPV1U_SGW_DEFS_SEEN */

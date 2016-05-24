@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef NONCE_H_
 #define NONCE_H_
+#include <stdint.h>
 
 #define NONCE_MINIMUM_LENGTH 5
 #define NONCE_MAXIMUM_LENGTH 5

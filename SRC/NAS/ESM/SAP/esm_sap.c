@@ -37,25 +37,22 @@
         EPS bearer context handling and resources allocation.
 
 *****************************************************************************/
+#include <string.h>             // memset, strlen
+#include <assert.h>
+#include <stdbool.h>
 
+#include "log.h"
 #include "3gpp_24.007.h"
 #include "esm_sap.h"
 #include "esm_recv.h"
 #include "esm_send.h"
 #include "commonDef.h"
-#include "log.h"
-
-#include "OctetString.h"
 #include "TLVDecoder.h"
 #include "esm_msgDef.h"
 #include "esm_msg.h"
-
 #include "esm_cause.h"
 #include "esm_proc.h"
 
-#include <string.h>             // memset, strlen
-#include <assert.h>
-#include <stdbool.h>
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -66,21 +63,22 @@
 /****************************************************************************/
 
 
-static int                              _esm_sap_recv (
+static int _esm_sap_recv (
   int msg_type,
   int is_standalone,
   emm_data_context_t * ctx,
-  const OctetString * req,
-  OctetString * rsp,
+  const_bstring req,
+  bstring rsp,
   esm_sap_error_t * err);
-static int                              _esm_sap_send (
+
+static int _esm_sap_send (
   int msg_type,
   int is_standalone,
   emm_data_context_t * ctx,
   int pti,
   int ebi,
   const esm_sap_data_t * data,
-  OctetString * rsp) __attribute__ ((unused));
+  bstring rsp) __attribute__ ((unused));
 
 /*
    String representation of ESM-SAP primitives
@@ -174,7 +172,7 @@ esm_sap_send (
     /*
      * The MME received a PDN connectivity request message
      */
-    rc = _esm_sap_recv (PDN_CONNECTIVITY_REQUEST, msg->is_standalone, msg->ctx, msg->recv, &msg->send, &msg->err);
+    rc = _esm_sap_recv (PDN_CONNECTIVITY_REQUEST, msg->is_standalone, msg->ctx, msg->recv, msg->send, &msg->err);
     break;
 
   case ESM_PDN_CONNECTIVITY_REJ:
@@ -214,14 +212,14 @@ esm_sap_send (
     /*
      * The MME received activate default ESP bearer context accept
      */
-    rc = _esm_sap_recv (ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT, msg->is_standalone, msg->ctx, msg->recv, &msg->send, &msg->err);
+    rc = _esm_sap_recv (ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT, msg->is_standalone, msg->ctx, msg->recv, msg->send, &msg->err);
     break;
 
   case ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_REJ:
     /*
      * The MME received activate default ESP bearer context reject
      */
-    rc = _esm_sap_recv (ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REJECT, msg->is_standalone, msg->ctx, msg->recv, &msg->send, &msg->err);
+    rc = _esm_sap_recv (ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REJECT, msg->is_standalone, msg->ctx, msg->recv, msg->send, &msg->err);
     break;
 
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ:
@@ -256,7 +254,7 @@ esm_sap_send (
     break;
 
   case ESM_UNITDATA_IND:
-    rc = _esm_sap_recv (-1, msg->is_standalone, msg->ctx, msg->recv, &msg->send, &msg->err);
+    rc = _esm_sap_recv (-1, msg->is_standalone, msg->ctx, msg->recv, msg->send, &msg->err);
     break;
 
   default:
@@ -308,8 +306,8 @@ _esm_sap_recv (
   int msg_type,
   int is_standalone,
   emm_data_context_t * ctx,
-  const OctetString * req,
-  OctetString * rsp,
+  const_bstring req,
+  bstring rsp,
   esm_sap_error_t * err)
 {
   esm_proc_procedure_t                    esm_procedure = NULL;
@@ -323,7 +321,7 @@ _esm_sap_recv (
   /*
    * Decode the received ESM message
    */
-  decoder_rc = esm_msg_decode (&esm_msg, req->value, req->length);
+  decoder_rc = esm_msg_decode (&esm_msg, (uint8_t *)bdata(req), blength(req));
 
   /*
    * Process decoding errors
@@ -334,7 +332,7 @@ _esm_sap_recv (
      * * * * Ignore received message that is too short to contain a complete
      * * * * message type information element
      */
-    if (decoder_rc == TLV_DECODE_BUFFER_TOO_SHORT) {
+    if (decoder_rc == TLV_BUFFER_TOO_SHORT) {
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Discard message too short to " "contain a complete message type IE\n");
       /*
        * Return indication that received message has been discarded
@@ -346,14 +344,14 @@ _esm_sap_recv (
      * 3GPP TS 24.301, section 7.2
      * * * * Unknown or unforeseen message type
      */
-    else if (decoder_rc == TLV_DECODE_WRONG_MESSAGE_TYPE) {
+    else if (decoder_rc == TLV_WRONG_MESSAGE_TYPE) {
       esm_cause = ESM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
     }
     /*
      * 3GPP TS 24.301, section 7.7.2
      * * * * Conditional IE errors
      */
-    else if (decoder_rc == TLV_DECODE_UNEXPECTED_IEI) {
+    else if (decoder_rc == TLV_UNEXPECTED_IEI) {
       esm_cause = ESM_CAUSE_CONDITIONAL_IE_ERROR;
     } else {
       esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
@@ -711,8 +709,7 @@ _esm_sap_recv (
                                                                    ESM_SAP_BUFFER_SIZE);
 
     if (size > 0) {
-      rsp->length = size;
-      rsp->value = (uint8_t *) (ctx->esm_data_ctx.esm_sap_buffer);
+      rsp = blk2bstr(ctx->esm_data_ctx.esm_sap_buffer, size);
     }
 
     /*
@@ -773,7 +770,7 @@ _esm_sap_send (
   int pti,
   int ebi,
   const esm_sap_data_t * data,
-  OctetString * rsp)
+  bstring rsp)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_proc_procedure_t                    esm_procedure = NULL;
@@ -827,8 +824,7 @@ _esm_sap_send (
     int size = esm_msg_encode (&esm_msg, (uint8_t *) ctx->esm_data_ctx.esm_sap_buffer, ESM_SAP_BUFFER_SIZE);
 
     if (size > 0) {
-      rsp->length = size;
-      rsp->value = (uint8_t *) (ctx->esm_data_ctx.esm_sap_buffer);
+      rsp = blk2bstr(ctx->esm_data_ctx.esm_sap_buffer, size);
     }
 
     /*

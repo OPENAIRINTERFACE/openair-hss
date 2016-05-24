@@ -29,38 +29,6 @@
 
 #ifndef FILE_DYNAMIC_MEMORY_CHECK_SEEN
 #define FILE_DYNAMIC_MEMORY_CHECK_SEEN
-#if MEMORY_CHECK
-#include <stdlib.h>
 
-void dyn_mem_check_init(void);
-void dyn_mem_check_exit(void);
-void *malloc_wrapper(size_t size)                 __attribute__ ((hot, warn_unused_result));
 void free_wrapper(void *ptr)                      __attribute__ ((hot));
-void *calloc_wrapper(size_t nmemb, size_t size)   __attribute__ ((hot, warn_unused_result));
-void *realloc_wrapper(void *ptr, size_t size)     __attribute__ ((warn_unused_result));
-char *strdup_wrapper(const char *s)               __attribute__ ((warn_unused_result));
-char *strndup_wrapper(const char *s, size_t n)    __attribute__ ((warn_unused_result));
-
-#define DYN_MEM_CHECK_INIT    dyn_mem_check_init
-#define DYN_MEM_CHECK_EXIT    dyn_mem_check_exit
-#define MALLOC_CHECK          malloc_wrapper
-#define FREE_CHECK            free_wrapper
-#define CALLOC_CHECK          calloc_wrapper
-#define REALLOC_CHECK         realloc_wrapper
-#define STRDUP_CHECK          strdup_wrapper
-#define STRNDUP_CHECK         strndup_wrapper
-#else
-#include <stdlib.h>
-
-void free_wrapper(void *ptr) __attribute__((hot));
-
-#define DYN_MEM_CHECK_INIT()
-#define DYN_MEM_CHECK_EXIT()
-#define MALLOC_CHECK          malloc
-#define FREE_CHECK            free_wrapper
-#define CALLOC_CHECK          calloc
-#define REALLOC_CHECK         realloc
-#define STRDUP_CHECK          strdup
-#define STRNDUP_CHECK         strndup
-#endif
 #endif /* FILE_DYNAMIC_MEMORY_CHECK_SEEN */

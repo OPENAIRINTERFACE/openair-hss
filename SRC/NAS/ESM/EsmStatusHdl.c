@@ -176,7 +176,7 @@ esm_proc_status (
   bool is_standalone,
   emm_data_context_t * ctx,
   int ebi,
-  OctetString * msg,
+  bstring msg,
   bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -190,8 +190,7 @@ esm_proc_status (
   emm_sap.primitive = EMMESM_UNITDATA_REQ;
   emm_sap.u.emm_esm.ue_id = ctx->ue_id;
   emm_sap.u.emm_esm.ctx = ctx;
-  emm_sap.u.emm_esm.u.data.msg.length = msg->length;
-  emm_sap.u.emm_esm.u.data.msg.value = msg->value;
+  emm_sap.u.emm_esm.u.data.msg = msg;
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

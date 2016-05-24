@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_TRACKING_AREA_UPDATE_ACCEPT_SEEN
+#define FILE_TRACKING_AREA_UPDATE_ACCEPT_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -38,9 +38,6 @@
 #include "EmergencyNumberList.h"
 #include "EpsNetworkFeatureSupport.h"
 #include "AdditionalUpdateResult.h"
-
-#ifndef FILE_TRACKING_AREA_UPDATE_ACCEPT_SEEN
-#define FILE_TRACKING_AREA_UPDATE_ACCEPT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define TRACKING_AREA_UPDATE_ACCEPT_MINIMUM_LENGTH ( \

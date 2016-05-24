@@ -43,7 +43,7 @@ Description Implements the API used by the NAS layer running in the MME
 #include "commonDef.h"
 #include "common_types.h"
 #include "securityDef.h"
-#include "OctetString.h"
+#include "bstrlib.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -80,6 +80,7 @@ typedef struct mme_api_emm_config_s {
   uint8_t           prefered_integrity_algorithm[8];// choice in NAS_SECURITY_ALGORITHMS_EIA0, etc
   uint8_t           prefered_ciphering_algorithm[8];// choice in NAS_SECURITY_ALGORITHMS_EEA0, etc
   uint8_t           eps_network_feature_support;
+  bool              force_push_pco;
   TAI_LIST_T(16)    tai_list;
 } mme_api_emm_config_t;
 
@@ -119,26 +120,33 @@ typedef struct mme_api_tft_s {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int mme_api_get_emm_config(mme_api_emm_config_t *config,
-                           mme_config_t *mme_config_p);
+int mme_api_get_emm_config(mme_api_emm_config_t *config, mme_config_t *mme_config_p);
+
+void mme_api_duplicate_enb_ue_s1ap_id_detected (
+    const enb_s1ap_id_key_t enb_ue_s1ap_id,
+    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+    const bool             is_remove_old);
+
 int mme_api_get_esm_config(mme_api_esm_config_t *config);
 
 int
-mme_api_notify_new_guti (
-  const mme_ue_s1ap_id_t ueid,
-  guti_t * const guti);
+mme_api_notify_imsi ( const mme_ue_s1ap_id_t id, const imsi64_t imsi64);
+
+int mme_api_notify_new_guti (const mme_ue_s1ap_id_t ueid, guti_t * const guti);
 
 int mme_api_notified_new_ue_s1ap_id_association (
     const enb_ue_s1ap_id_t enb_ue_s1ap_id,
+    const uint32_t         enb_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
-int mme_api_identify_guti(const guti_t *guti, auth_vector_t *vector);
-int mme_api_identify_imsi(const imsi_t *imsi, auth_vector_t *vector);
-int mme_api_identify_imei(const imei_t *imei, auth_vector_t *vector);
-int mme_api_new_guti(const imsi_t *imsi, guti_t *guti, tai_list_t * tai_list);
+int mme_api_new_guti(const imsi_t * const imsi,
+                     const guti_t * const old_guti,
+                     guti_t       * const guti,
+                     const tai_t  * const originating_tai,
+                     tai_list_t   * const tai_list);
 
-int mme_api_subscribe(OctetString *apn, mme_api_ip_version_t mme_pdn_index, OctetString *pdn_addr,
+int mme_api_subscribe(bstring *apn, mme_api_ip_version_t mme_pdn_index, bstring *pdn_addr,
                       int is_emergency, mme_api_qos_t *qos);
-int mme_api_unsubscribe(OctetString *apn);
+int mme_api_unsubscribe(bstring apn);
 
 #endif /* FILE_MME_API_SEEN*/

@@ -34,7 +34,7 @@ source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
 
 function _create_hss_certs()
 {
-  local    freediameter_path=$1
+  local    output_path=$1
   local    fqdn=$2
 
   cd /tmp
@@ -56,40 +56,40 @@ function _create_hss_certs()
   # Certification authority
   openssl ca -cert hss.cacert.pem -keyfile hss.cakey.pem -in hss.csr.pem -out hss.cert.pem -outdir . -batch
 
-  if [ ! -d $freediameter_path/etc/freeDiameter ]; then
-    echo "Creating non existing directory: $freediameter_path/etc/freeDiameter/"
-    sudo mkdir -p $freediameter_path/etc/freeDiameter/
+  if [ ! -d $output_path ]; then
+    echo "Creating non existing directory: $output_path/"
+    sudo mkdir -p $output_path/
   fi
 
-  sudo mv hss.cakey.pem hss.cert.pem hss.cacert.pem hss.key.pem $freediameter_path/etc/freeDiameter/
+  sudo mv hss.cakey.pem hss.cert.pem hss.cacert.pem hss.key.pem $output_path/
   cd -
 }
 
 
-#$1 if freediameter path
+#$1 is output path
 #$2 is fqdn
 function main() {
-  local freediameter_path=$1
+  local output_path=$1
   local fqdn=$2
-  if [ -d $freediameter_path/etc/freeDiameter ]; then
-    if [ -f $freediameter_path/etc/freeDiameter/hss.cert.pem ];  then
-      full_hostname=`cat $freediameter_path/etc/freeDiameter/hss.cert.pem | grep "Subject" | grep "CN" | cut -d '=' -f6`
+  if [ -d $output_path ]; then
+    if [ -f $output_path/hss.cert.pem ];  then
+      full_hostname=`cat $output_path/hss.cert.pem | grep "Subject" | grep "CN" | cut -d '=' -f6`
       if [ a$full_hostname == a$fqdn ]; then
-        echo_success "HSS S6A: Found valid certificate in $freediameter_path/etc/freeDiameter"
+        echo_success "HSS S6A: Found valid certificate in $output_path"
         return 0
       else 
         echo_error "Bad hss fqdn found in cert file: $full_hostname  fqdn is $fqdn"
       fi
     fi
   fi
-  echo_error "HSS S6A: Did not find valid certificate in $freediameter_path/etc/freeDiameter"
-  echo_warning "HSS S6A: generating new certificate in $freediameter_path/etc/freeDiameter..."
-  _create_hss_certs $freediameter_path $fqdn
+  echo_error "HSS S6A: Did not find valid certificate in $output_path"
+  echo_warning "HSS S6A: generating new certificate in $output_path..."
+  _create_hss_certs $output_path $fqdn
   if [ $# -lt 3 ] ; then
-    main $freediameter_path $fqdn 2
+    main $output_path $fqdn 2
     return $?
   else
-    echo_error "Could not access to freeDiameter path: $freediameter_path/etc/freeDiameter"
+    echo_error "Could not access to path: $output_path"
     exit 1
   fi
 }

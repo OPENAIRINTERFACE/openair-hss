@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef NAS_REQUEST_TYPE_H_
 #define NAS_REQUEST_TYPE_H_
+#include <stdint.h>
 
 #define REQUEST_TYPE_MINIMUM_LENGTH 1
 #define REQUEST_TYPE_MAXIMUM_LENGTH 1

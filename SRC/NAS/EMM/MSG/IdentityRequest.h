@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_IDENTITY_REQUEST_SEEN
+#define FILE_IDENTITY_REQUEST_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -28,8 +28,6 @@
 #include "MessageType.h"
 #include "IdentityType2.h"
 
-#ifndef FILE_IDENTITY_REQUEST_SEEN
-#define FILE_IDENTITY_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define IDENTITY_REQUEST_MINIMUM_LENGTH ( \

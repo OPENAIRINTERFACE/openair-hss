@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef MOBILE_STATION_CLASSMARK_2_H_
 #define MOBILE_STATION_CLASSMARK_2_H_
+#include <stdint.h>
 
 #define MOBILE_STATION_CLASSMARK_2_MINIMUM_LENGTH 5
 #define MOBILE_STATION_CLASSMARK_2_MAXIMUM_LENGTH 5

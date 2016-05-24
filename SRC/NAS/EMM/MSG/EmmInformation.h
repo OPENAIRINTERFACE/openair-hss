@@ -19,8 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+
+#ifndef FILE_EMM_INFORMATION_SEEN
+#define FILE_EMM_INFORMATION_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -30,9 +31,6 @@
 #include "TimeZone.h"
 #include "TimeZoneAndTime.h"
 #include "DaylightSavingTime.h"
-
-#ifndef FILE_EMM_INFORMATION_SEEN
-#define FILE_EMM_INFORMATION_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define EMM_INFORMATION_MINIMUM_LENGTH (0)

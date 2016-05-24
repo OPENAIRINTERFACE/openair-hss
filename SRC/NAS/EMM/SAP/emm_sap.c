@@ -130,15 +130,13 @@ emm_sap_send (
      */
     msg->u.emm_as.primitive = primitive;
     rc = emm_as_send (&msg->u.emm_as);
-  }
-  else if ((primitive > (emm_primitive_t) EMMCN_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMCN_PRIMITIVE_MAX)) {
+  } else if ((primitive > (emm_primitive_t) EMMCN_PRIMITIVE_MIN) && (primitive < (emm_primitive_t) EMMCN_PRIMITIVE_MAX)) {
     /*
      * Forward to the EMMCN-SAP
      */
     msg->u.emm_cn.primitive = primitive;
     rc = emm_cn_send (&msg->u.emm_cn);
-  }
-  else {
+  } else {
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-SAP -   Out of range primitive (%d)\n", primitive);
   }
 

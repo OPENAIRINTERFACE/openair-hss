@@ -66,7 +66,7 @@ decode_deactivate_eps_bearer_context_request (
     switch (ieiDecoded) {
     case DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI:
       if ((decoded_result =
-           decode_protocol_configuration_options (&deactivate_eps_bearer_context_request->protocolconfigurationoptions, DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI, buffer + decoded, len - decoded)) <= 0)
+           decode_ProtocolConfigurationOptions (&deactivate_eps_bearer_context_request->protocolconfigurationoptions, DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI, buffer + decoded, len - decoded)) <= 0)
         return decoded_result;
 
       decoded += decoded_result;
@@ -77,8 +77,8 @@ decode_deactivate_eps_bearer_context_request (
       break;
 
     default:
-      errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;
-      return TLV_DECODE_UNEXPECTED_IEI;
+      errorCodeDecoder = TLV_UNEXPECTED_IEI;
+      return TLV_UNEXPECTED_IEI;
     }
   }
 
@@ -107,7 +107,7 @@ encode_deactivate_eps_bearer_context_request (
   if ((deactivate_eps_bearer_context_request->presencemask & DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT)
       == DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
     if ((encode_result =
-         encode_protocol_configuration_options (&deactivate_eps_bearer_context_request->protocolconfigurationoptions, DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI, buffer + encoded, len - encoded)) < 0)
+         encode_ProtocolConfigurationOptions (&deactivate_eps_bearer_context_request->protocolconfigurationoptions, DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

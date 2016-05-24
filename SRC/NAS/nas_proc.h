@@ -38,6 +38,7 @@ Description NAS procedure call manager
 #ifndef FILE_NAS_PROC_SEEN
 #define FILE_NAS_PROC_SEEN
 
+#include "common_defs.h"
 #include "mme_config.h"
 #include "emm_cnDef.h"
 
@@ -80,24 +81,27 @@ void nas_proc_cleanup(void);
 
 
 
-int nas_proc_establish_ind( const enb_ue_s1ap_id_t enb_ue_s1ap_id_key,
+int nas_proc_establish_ind( const enb_s1ap_id_key_t enb_ue_s1ap_id_key,
                             const mme_ue_s1ap_id_t ue_id,
-                            const tai_t tai,
+                            const tai_t originating_tai,
                             const ecgi_t cgi,
-                            const uint8_t *data,
-                            const size_t len);
+                            STOLEN_REF bstring *msg);
 
-int nas_proc_dl_transfer_cnf(const mme_ue_s1ap_id_t ueid);
+int nas_proc_dl_transfer_cnf(const mme_ue_s1ap_id_t ueid, const nas_error_code_t status);
 int nas_proc_dl_transfer_rej(const mme_ue_s1ap_id_t ueid);
-int nas_proc_ul_transfer_ind(const mme_ue_s1ap_id_t ueid, const uint8_t *data, const size_t len);
+int nas_proc_ul_transfer_ind(const mme_ue_s1ap_id_t ueid,
+                             const tai_t originating_tai,
+                             const ecgi_t cgi,
+                             STOLEN_REF bstring *msg);
 
 /*
  * --------------------------------------------------------------------------
  *      NAS procedures triggered by the mme applicative layer
  * --------------------------------------------------------------------------
  */
-int nas_proc_auth_param_res(emm_cn_auth_res_t *emm_cn_auth_res);
-int nas_proc_auth_param_fail(emm_cn_auth_fail_t *emm_cn_auth_fail);
+int nas_proc_authentication_info_answer (s6a_auth_info_ans_t * ans);
+int nas_proc_auth_param_res (mme_ue_s1ap_id_t ue_id, uint8_t nb_vectors, eutran_vector_t *vectors);
+int nas_proc_auth_param_fail(mme_ue_s1ap_id_t ue_id, nas_cause_t cause);
 int nas_proc_deregister_ue(uint32_t ue_id);
 int nas_proc_pdn_connectivity_res(itti_nas_pdn_connectivity_rsp_t *nas_pdn_connectivity_rsp);
 int nas_proc_pdn_connectivity_fail(itti_nas_pdn_connectivity_fail_t *nas_pdn_connectivity_fail);

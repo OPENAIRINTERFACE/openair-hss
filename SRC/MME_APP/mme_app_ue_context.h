@@ -31,24 +31,23 @@
  *  @{
  */
 
-#ifndef MME_APP_UE_CONTEXT_H
-#define MME_APP_UE_CONTEXT_H
 
-
-#include "common_types.h"
-#include "sgw_ie_defs.h"
-#include "s1ap_messages_types.h"
-#include "nas_messages_types.h"
-#include "s6a_messages_types.h"
-#include "security_types.h"
-#include "tree.h"
-#include "hashtable.h"
-#include "obj_hashtable.h"
-
+#ifndef FILE_MME_APP_UE_CONTEXT_SEEN
+#define FILE_MME_APP_UE_CONTEXT_SEEN
 #include <stdint.h>
 #include <inttypes.h>   /* For sscanf formats */
 #include <time.h>       /* to provide time_t */
 
+#include "tree.h"
+#include "hashtable.h"
+#include "obj_hashtable.h"
+#include "bstrlib.h"
+#include "common_types.h"
+#include "s1ap_messages_types.h"
+#include "nas_messages_types.h"
+#include "s6a_messages_types.h"
+#include "security_types.h"
+#include "sgw_ie_defs.h"
 
 typedef enum {
   ECM_IDLE,
@@ -84,16 +83,16 @@ void mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst, const imsi_t *
  */
 typedef struct bearer_context_s {
   /* S-GW Tunnel Endpoint for User-Plane */
-  s1u_teid_t       s_gw_teid;
+  s1u_teid_t              s_gw_teid;
 
   /* S-GW IP address for User-Plane */
-  ip_address_t s_gw_address;
+  ip_address_t            s_gw_address;
 
   /* P-GW Tunnel Endpoint for User-Plane */
-  Teid_t       p_gw_teid;
+  teid_t                  p_gw_teid;
 
   /* P-GW IP address for User-Plane */
-  ip_address_t p_gw_address;
+  ip_address_t            p_gw_address;
 
   /* QoS for this bearer */
   qci_t                   qci;
@@ -104,32 +103,26 @@ typedef struct bearer_context_s {
   /* TODO: add TFT */
 } bearer_context_t;
 
+
 /** @struct ue_context_t
  *  @brief Useful parameters to know in MME application layer. They are set
  * according to 3GPP TS.23.401 #5.7.2
  */
 typedef struct ue_context_s {
-  /* Tree entry */
-  //RB_ENTRY(ue_context_s) rb_entry;
-
   /* Basic identifier for ue. IMSI is encoded on maximum of 15 digits of 4 bits,
    * so usage of an unsigned integer on 64 bits is necessary.
    */
-  mme_app_imsi_t         imsi;                        // set by nas_auth_param_req_t
+  imsi64_t         imsi;                        // set by nas_auth_param_req_t
 #define IMSI_UNAUTHENTICATED  (0x0)
 #define IMSI_AUTHENTICATED    (0x1)
   /* Indicator to show the IMSI authentication state */
   unsigned               imsi_auth:1;                 // set by nas_auth_resp_t
 
+  enb_s1ap_id_key_t      enb_s1ap_id_key; // key uniq among all connected eNBs
   enb_ue_s1ap_id_t       enb_ue_s1ap_id:24;
   mme_ue_s1ap_id_t       mme_ue_s1ap_id;
   sctp_assoc_id_t        sctp_assoc_id_key;
 
-  uint8_t                nb_of_vectors;               // updated by S6A AUTHENTICATION ANSWER
-  /* List of authentication vectors for E-UTRAN */
-  eutran_vector_t       *vector_list;                 // updated by S6A AUTHENTICATION ANSWER
-  // pointer in vector_list
-  eutran_vector_t       *vector_in_use;               // updated by S6A AUTHENTICATION ANSWER
 
 #define SUBSCRIPTION_UNKNOWN    0x0
 #define SUBSCRIPTION_KNOWN      0x1
@@ -139,6 +132,7 @@ typedef struct ue_context_s {
 
   mm_state_t             mm_state;                    // not set/read
   /* Globally Unique Temporary Identity */
+  bool                   is_guti_set;                 // is guti has been set
   guti_t                 guti;                        // guti.gummei.plmn set by nas_auth_param_req_t
   // read by S6A UPDATE LOCATION REQUEST
   me_identity_t          me_identity;                 // not set/read except read by display utility
@@ -177,19 +171,19 @@ typedef struct ue_context_s {
   //char                  *ue_radio_capabilities;       // not set/read
   //int                    ue_radio_cap_length;         // not set/read
 
-  Teid_t                 mme_s11_teid;                // set by mme_app_send_s11_create_session_req
-  Teid_t                 sgw_s11_teid;                // set by S11 CREATE_SESSION_RESPONSE
+  teid_t                 mme_s11_teid;                // set by mme_app_send_s11_create_session_req
+  teid_t                 sgw_s11_teid;                // set by S11 CREATE_SESSION_RESPONSE
   PAA_t                  paa;                         // set by S11 CREATE_SESSION_RESPONSE
 
   // temp
   char                   pending_pdn_connectivity_req_imsi[16];
   uint8_t                pending_pdn_connectivity_req_imsi_length;
-  OctetString            pending_pdn_connectivity_req_apn;
-  OctetString            pending_pdn_connectivity_req_pdn_addr;
+  bstring                pending_pdn_connectivity_req_apn;
+  bstring                pending_pdn_connectivity_req_pdn_addr;
   int                    pending_pdn_connectivity_req_pti;
   unsigned               pending_pdn_connectivity_req_ue_id;
   network_qos_t          pending_pdn_connectivity_req_qos;
-  pco_flat_t             pending_pdn_connectivity_req_pco;
+  protocol_configuration_options_t   pending_pdn_connectivity_req_pco;
   void                  *pending_pdn_connectivity_req_proc_data;
   int                    pending_pdn_connectivity_req_request_type;
 
@@ -197,30 +191,30 @@ typedef struct ue_context_s {
   bearer_context_t       eps_bearers[BEARERS_PER_UE];
 } ue_context_t;
 
-typedef struct {
-  uint32_t nb_ue_managed;
-  uint32_t nb_ue_idle;
 
-  uint32_t nb_bearers_managed;
+typedef struct mme_ue_context_s {
+  uint32_t               nb_ue_managed;
+  uint32_t               nb_ue_idle;
 
-  uint32_t nb_ue_since_last_stat;
-  uint32_t nb_bearers_since_last_stat;
+  uint32_t               nb_bearers_managed;
 
-  ///* Entry to the root */
-  //RB_HEAD(ue_context_map, ue_context_s) ue_context_tree;
-  hash_table_ts_t  *imsi_ue_context_htbl;
-  hash_table_ts_t  *tun11_ue_context_htbl;
-  hash_table_ts_t  *mme_ue_s1ap_id_ue_context_htbl;
-  hash_table_ts_t  *enb_ue_s1ap_id_ue_context_htbl;
-  obj_hash_table_t  *guti_ue_context_htbl;
+  uint32_t               nb_ue_since_last_stat;
+  uint32_t               nb_bearers_since_last_stat;
+
+  hash_table_ts_t       *imsi_ue_context_htbl;
+  hash_table_ts_t       *tun11_ue_context_htbl;
+  hash_table_ts_t       *mme_ue_s1ap_id_ue_context_htbl;
+  hash_table_ts_t       *enb_ue_s1ap_id_ue_context_htbl;
+  obj_hash_table_t      *guti_ue_context_htbl;
 } mme_ue_context_t;
+
 
 /** \brief Retrieve an UE context by selecting the provided IMSI
  * \param imsi Imsi to find in UE map
  * @returns an UE context matching the IMSI or NULL if the context doesn't exists
  **/
 ue_context_t *mme_ue_context_exists_imsi(mme_ue_context_t * const mme_ue_context,
-    const mme_app_imsi_t imsi);
+    const imsi64_t imsi);
 
 /** \brief Retrieve an UE context by selecting the provided S11 teid
  * \param teid The tunnel endpoint identifier used between MME and S-GW
@@ -242,7 +236,7 @@ ue_context_t *mme_ue_context_exists_mme_ue_s1ap_id(mme_ue_context_t * const mme_
  **/
 ue_context_t *mme_ue_context_exists_enb_ue_s1ap_id (
   mme_ue_context_t * const mme_ue_context_p,
-  const enb_ue_s1ap_id_t enb_ue_s1ap_id);
+  const enb_s1ap_id_key_t enb_key);
 
 /** \brief Retrieve an UE context by selecting the provided guti
  * \param guti The GUTI used by the UE
@@ -251,23 +245,37 @@ ue_context_t *mme_ue_context_exists_enb_ue_s1ap_id (
 ue_context_t *mme_ue_context_exists_guti(mme_ue_context_t * const mme_ue_context,
     const guti_t * const guti);
 
+/** \brief Move the content of a context to another context
+ * \param dst            The destination context
+ * \param src            The source context
+ **/
+void mme_app_move_context (ue_context_t *dst, ue_context_t *src);
 
-/** \brief Create the association between mme_ue_s1ap_id and an UE context (enb_ue_s1ap_id key)
- * \param mme_ue_context_p The MME context
- * \param ue_context_p The UE context
- * \param enb_ue_s1ap_id The UE id identifier used in S1AP and MME_APP
+/** \brief Notify the MME_APP that a duplicated ue_context_t exist (both share the same mme_ue_s1ap_id)
+ * \param enb_key        The UE id identifier used in S1AP and MME_APP (agregated with a enb_id)
  * \param mme_ue_s1ap_id The UE id identifier used in MME_APP and NAS
+ * \param is_remove_old  Remove old UE context or new UE context ?
  **/
 void
+mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
+  const enb_s1ap_id_key_t enb_key,
+  const mme_ue_s1ap_id_t  mme_ue_s1ap_id,
+  const bool              is_remove_old);
+
+/** \brief Create the association between mme_ue_s1ap_id and an UE context (enb_ue_s1ap_id key)
+ * \param enb_key        The UE id identifier used in S1AP and MME_APP (agregated with a enb_id)
+ * \param mme_ue_s1ap_id The UE id identifier used in MME_APP and NAS
+ * @returns RETURNerror or RETURNok
+ **/
+int
 mme_ue_context_notified_new_ue_s1ap_id_association (
-  mme_ue_context_t * const mme_ue_context_p,
-  ue_context_t   * const ue_context_p,
-  const enb_ue_s1ap_id_t enb_ue_s1ap_id,
-  const mme_ue_s1ap_id_t mme_ue_s1ap_id);
+    const enb_s1ap_id_key_t  enb_key,
+    const mme_ue_s1ap_id_t   mme_ue_s1ap_id);
 
 /** \brief Update an UE context by selecting the provided guti
  * \param mme_ue_context_p The MME context
  * \param ue_context_p The UE context
+ * \param enb_s1ap_id_key The eNB UE id identifier
  * \param mme_ue_s1ap_id The UE id identifier used in S1AP MME (and NAS)
  * \param imsi
  * \param mme_s11_teid The tunnel endpoint identifier used between MME and S-GW
@@ -277,11 +285,16 @@ mme_ue_context_notified_new_ue_s1ap_id_association (
 void mme_ue_context_update_coll_keys(
     mme_ue_context_t * const mme_ue_context_p,
     ue_context_t     * const ue_context_p,
-    const enb_ue_s1ap_id_t   enb_ue_s1ap_id,
+    const enb_s1ap_id_key_t  enb_s1ap_id_key,
     const mme_ue_s1ap_id_t   mme_ue_s1ap_id,
-    const mme_app_imsi_t     imsi,
+    const imsi64_t     imsi,
     const s11_teid_t         mme_s11_teid,
     const guti_t     * const guti_p);
+
+/** \brief dump MME associative collections
+ **/
+
+void mme_ue_context_dump_coll_keys(void);
 
 /** \brief Insert a new UE context in the tree of known UEs.
  * At least the IMSI should be known to insert the context in the tree.
@@ -319,6 +332,6 @@ void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
 
-#endif /* MME_APP_UE_CONTEXT_H */
+#endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 
 /* @} */

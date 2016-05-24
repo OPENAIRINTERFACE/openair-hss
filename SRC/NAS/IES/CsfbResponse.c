@@ -45,9 +45,6 @@ decode_csfb_response (
 
   *csfbresponse = *buffer & 0x7;
   decoded++;
-#if NAS_DEBUG
-  dump_csfb_response_xml (csfbresponse, iei);
-#endif
   return decoded;
 }
 
@@ -63,9 +60,6 @@ decode_u8_csfb_response (
 
   *csfbresponse = *buffer & 0x7;
   decoded++;
-#if NAS_DEBUG
-  dump_csfb_response_xml (csfbresponse, iei);
-#endif
   return decoded;
 }
 
@@ -82,9 +76,6 @@ encode_csfb_response (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, CSFB_RESPONSE_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_csfb_response_xml (csfbresponse, iei);
-#endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*csfbresponse & 0x7);
   encoded++;
   return encoded;

@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef EPS_BEARER_CONTEXT_STATUS_H_
 #define EPS_BEARER_CONTEXT_STATUS_H_
+#include <stdint.h>
 
 #define EPS_BEARER_CONTEXT_STATUS_MINIMUM_LENGTH 4
 #define EPS_BEARER_CONTEXT_STATUS_MAXIMUM_LENGTH 4

@@ -55,7 +55,7 @@ decode_eps_mobile_identity (
   uint8_t * buffer,
   uint32_t len)
 {
-  int                                     decoded_rc = TLV_DECODE_VALUE_DOESNT_MATCH;
+  int                                     decoded_rc = TLV_VALUE_DOESNT_MATCH;
   int                                     decoded = 0;
   uint8_t                                 ielen = 0;
 
@@ -94,7 +94,7 @@ encode_eps_mobile_identity (
   uint32_t len)
 {
   uint8_t                                *lenPtr;
-  int                                     encoded_rc = TLV_ENCODE_VALUE_DOESNT_MATCH;
+  int                                     encoded_rc = TLV_VALUE_DOESNT_MATCH;
   uint32_t                                encoded = 0;
 
   /*
@@ -216,14 +216,14 @@ decode_guti_eps_mobile_identity (
    * For the GUTI, bits 5 to 8 of octet 3 are coded as "1111"
    */
   if (guti->spare != 0xf) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   guti->oddeven = (*(buffer + decoded) >> 3) & 0x1;
   guti->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (guti->typeofidentity != EPS_MOBILE_IDENTITY_GUTI) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   decoded++;
@@ -255,7 +255,7 @@ decode_imsi_eps_mobile_identity (
   imsi->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (imsi->typeofidentity != EPS_MOBILE_IDENTITY_IMSI) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   imsi->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -288,7 +288,7 @@ decode_imsi_eps_mobile_identity (
    * mark coded as "1111".
    */
   if ((imsi->oddeven == EPS_MOBILE_IDENTITY_EVEN) && (imsi->digit15 != 0x0f)) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   decoded++;
@@ -305,7 +305,7 @@ decode_imei_eps_mobile_identity (
   imei->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (imei->typeofidentity != EPS_MOBILE_IDENTITY_IMEI) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   imei->oddeven = (*(buffer + decoded) >> 3) & 0x1;

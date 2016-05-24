@@ -66,7 +66,7 @@ encode_attach_complete (
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, ATTACH_COMPLETE_MINIMUM_LENGTH, len);
 
-  if ((encode_result = encode_esm_message_container (&attach_complete->esmmessagecontainer, 0, buffer + encoded, len - encoded)) < 0)   //Return in case of error
+  if ((encode_result = encode_esm_message_container (attach_complete->esmmessagecontainer, 0, buffer + encoded, len - encoded)) < 0)   //Return in case of error
     return encode_result;
   else
     encoded += encode_result;

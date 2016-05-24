@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef PROTOCOL_DISCRIMINATOR_H_
 #define PROTOCOL_DISCRIMINATOR_H_
+#include <stdint.h>
 
 #define PROTOCOL_DISCRIMINATOR_MINIMUM_LENGTH 1
 #define PROTOCOL_DISCRIMINATOR_MAXIMUM_LENGTH 1

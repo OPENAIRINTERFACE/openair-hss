@@ -40,18 +40,20 @@
         (IMSI, IMEI).
 
 *****************************************************************************/
-
-#include "emm_proc.h"
-#include "log.h"
-#include "nas_timer.h"
-
-#include "emmData.h"
-
-#include "emm_sap.h"
-#include "msc.h"
-
-#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
+#include <stdlib.h>             // malloc, free_wrapper
 #include <string.h>             // memcpy
+
+#include "dynamic_memory_check.h"
+#include "assertions.h"
+#include "log.h"
+#include "msc.h"
+#include "nas_timer.h"
+#include "3gpp_requirements_24.301.h"
+#include "emm_proc.h"
+#include "emmData.h"
+#include "emm_sap.h"
+#include "conversions.h"
+
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -78,13 +80,16 @@ static const char                      *_emm_identity_type_str[] = {
 static void                            *_identification_t3470_handler (
   void *);
 
+
+static int _identification_ll_failure (void *args);
+static int _identification_non_delivered (void *args);
+
 /*
    Function executed whenever the ongoing EMM procedure that initiated
    the identification procedure is aborted or the maximum value of the
    retransmission timer counter is exceed
 */
-static int                              _identification_abort (
-  void *);
+static int _identification_abort (void *);
 
 /*
    Internal data used for identification procedure
@@ -94,7 +99,7 @@ typedef struct {
 #define IDENTIFICATION_COUNTER_MAX  5
   unsigned int                            retransmission_count; /* Retransmission counter   */
   emm_proc_identity_type_t                type; /* Type of UE identity      */
-  int                                     notify_failure;       /* Indicates whether the identification
+  bool                                    notify_failure;       /* Indicates whether the identification
                                                                  * procedure failure shall be notified
                                                                  * to the ongoing EMM procedure */
 } identification_data_t;
@@ -153,21 +158,23 @@ emm_proc_identification (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
+  REQUIREMENT_3GPP_24_301(R10_5_4_4_1);
+
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate identification type = %s (%d), ctx = %p\n", _emm_identity_type_str[type], type, emm_ctx);
   /*
    * Allocate parameters of the retransmission timer callback
    */
-  identification_data_t                  *data = (identification_data_t *) MALLOC_CHECK (sizeof (identification_data_t));
+  identification_data_t                  *data = (identification_data_t *) malloc (sizeof (identification_data_t));
 
-  if (data ) {
+  if (data) {
     /*
      * Setup ongoing EMM procedure callback functions
      */
-    rc = emm_proc_common_initialize (ue_id, success, reject, failure, _identification_abort, data);
+    rc = emm_proc_common_initialize (ue_id, success, reject, failure, _identification_ll_failure, _identification_non_delivered, _identification_abort, data);
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
-      FREE_CHECK (data);
+      free_wrapper (data);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
@@ -233,11 +240,11 @@ emm_proc_identification (
  ***************************************************************************/
 int
 emm_proc_identification_complete (
-  mme_ue_s1ap_id_t ue_id,
-  const imsi_t * imsi,
-  const imei_t * imei,
-  const imeisv_t * imeisv,
-  uint32_t * tmsi)
+  const mme_ue_s1ap_id_t ue_id,
+  imsi_t   * const imsi,
+  imei_t   * const imei,
+  imeisv_t * const imeisv,
+  uint32_t * const tmsi)
 {
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
@@ -246,75 +253,48 @@ emm_proc_identification_complete (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Identification complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
-   * Release retransmission timer paramaters
+   * Release retransmission timer parameters
    */
   identification_data_t                  *data = (identification_data_t *) (emm_proc_common_get_args (ue_id));
 
-  if (data) {
-    FREE_CHECK (data);
-  }
-
-  /*
-   * Get the UE context
-   */
-
-  if (ue_id > 0) {
-    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
-  }
+  // Get the UE context
+  emm_ctx = emm_data_context_get (&_emm_data, ue_id);
 
   if (emm_ctx) {
+    REQUIREMENT_3GPP_24_301(R10_5_4_4_4);
     /*
      * Stop timer T3470
      */
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
     emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
+    /* For memo: double free
+    if (data) {
+      free_wrapper (data);
+    }*/
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
     if (imsi) {
       /*
        * Update the IMSI
        */
-      if (emm_ctx->imsi == NULL) {
-        emm_ctx->imsi = (imsi_t *) CALLOC_CHECK (1, sizeof (imsi_t));
-      }
-
-      if (emm_ctx->imsi) {
-        memcpy (emm_ctx->imsi, imsi, sizeof (imsi_t));
-      }
+      imsi64_t imsi64 = INVALID_IMSI64;
+      IMSI_TO_IMSI64(imsi,imsi64);
+      emm_ctx_set_valid_imsi(emm_ctx, imsi, imsi64);
     } else if (imei) {
       /*
        * Update the IMEI
        */
-      if (emm_ctx->imei == NULL) {
-        emm_ctx->imei = (imei_t *) CALLOC_CHECK (1, sizeof (imei_t));
-      }
-
-      if (emm_ctx->imei) {
-        memcpy (emm_ctx->imei, imei, sizeof (imei_t));
-      }
+      emm_ctx_set_valid_imei(emm_ctx, imei);
     } else if (imeisv) {
       /*
        * Update the IMEISV
        */
-      if (emm_ctx->imeisv == NULL) {
-        emm_ctx->imeisv = (imeisv_t *) CALLOC_CHECK (1,sizeof (imeisv_t));
-      }
-
-      if (emm_ctx->imeisv) {
-        memcpy (emm_ctx->imeisv, imeisv, sizeof (imeisv_t));
-      }
+      emm_ctx_set_valid_imeisv(emm_ctx, imeisv);
     } else if (tmsi) {
       /*
        * Update the GUTI
        */
-      if (emm_ctx->guti == NULL) {
-        emm_ctx->guti = (guti_t *) CALLOC_CHECK (1, sizeof (guti_t));
-      }
-
-      if (emm_ctx->guti) {
-        memcpy (&emm_ctx->guti->gummei, &_emm_data.conf.gummei, sizeof (gummei_t));
-        emm_ctx->guti->m_tmsi = *tmsi;
-      }
+      AssertFatal(false, "TODO, should not happen because this type of identity is not requested by MME");
     }
 
     /*
@@ -325,8 +305,9 @@ emm_proc_identification_complete (
     emm_sap.u.emm_reg.ue_id = ue_id;
     emm_sap.u.emm_reg.ctx = emm_ctx;
     emm_sap.u.emm_reg.u.common.is_attached = emm_ctx->is_attached;
+    emm_ctx_unmark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_IDENT);
   } else {
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EMM context exists");
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EMM context exists\n");
     /*
      * Notify EMM that the identification procedure failed
      */
@@ -337,6 +318,7 @@ emm_proc_identification_complete (
   }
 
   rc = emm_sap_send (&emm_sap);
+
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -385,19 +367,24 @@ _identification_t3470_handler (
   OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3470 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
 
   if (data->retransmission_count < IDENTIFICATION_COUNTER_MAX) {
+    REQUIREMENT_3GPP_24_301(R10_5_4_4_6_b__1);
     /*
      * Send identity request message to the UE
      */
     _identification_request (data);
   } else {
-    /*
-     * Set the failure notification indicator
-     */
-    data->notify_failure = true;
+
     /*
      * Abort the identification procedure
      */
-    _identification_abort (data);
+    if (data) {
+      REQUIREMENT_3GPP_24_301(R10_5_4_4_6_b__2);
+      emm_sap_t                               emm_sap = {0};
+      emm_sap.primitive = EMMREG_PROC_ABORT;
+      emm_sap.u.emm_reg.ue_id = data->ue_id;
+      data->notify_failure = true;
+      emm_sap_send (&emm_sap);
+    }
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
@@ -428,7 +415,7 @@ _identification_request (
   identification_data_t * data)
 {
   emm_sap_t                               emm_sap = {0};
-  int                                     rc;
+  int                                     rc = RETURNok;
   struct emm_data_context_s              *emm_ctx = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -436,24 +423,26 @@ _identification_request (
    * Notify EMM-AS SAP that Identity Request message has to be sent
    * to the UE
    */
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_SECURITY_REQ ue id " MME_UE_S1AP_ID_FMT " ", data->ue_id);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_SECURITY_REQ ue id " MME_UE_S1AP_ID_FMT " IDENTIFICATION", data->ue_id);
   emm_sap.primitive = EMMAS_SECURITY_REQ;
   emm_sap.u.emm_as.u.security.guti = NULL;
   emm_sap.u.emm_as.u.security.ue_id = data->ue_id;
   emm_sap.u.emm_as.u.security.msg_type = EMM_AS_MSG_TYPE_IDENT;
   emm_sap.u.emm_as.u.security.ident_type = data->type;
 
-  if (data->ue_id > 0) {
-    emm_ctx = emm_data_context_get (&_emm_data, data->ue_id);
-  }
+  emm_ctx = emm_data_context_get (&_emm_data, data->ue_id);
 
   /*
    * Setup EPS NAS security data
    */
-  emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, emm_ctx->security, false, true);
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, &emm_ctx->_security, false, true);
   rc = emm_sap_send (&emm_sap);
 
   if (rc != RETURNerror) {
+    emm_ctx_mark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_IDENT);
+
+    REQUIREMENT_3GPP_24_301(R10_5_4_4_2);
+
     if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
       /*
        * Re-start T3470 timer
@@ -473,6 +462,38 @@ _identification_request (
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
+
+
+static int _identification_ll_failure (void *args)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNerror;
+  if (args) {
+    identification_data_t                  *data = (identification_data_t *) (args);
+    REQUIREMENT_3GPP_24_301(R10_5_4_4_6_a);
+    emm_sap_t                               emm_sap = {0};
+
+    emm_sap.primitive = EMMREG_PROC_ABORT;
+    emm_sap.u.emm_reg.ue_id = data->ue_id;
+    data->notify_failure = true;
+    rc = emm_sap_send (&emm_sap);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+
+static int _identification_non_delivered (void *args)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNerror;
+  if (args) {
+    identification_data_t                *data = (identification_data_t *) (args);
+    REQUIREMENT_3GPP_24_301(R10_5_4_2_7_j);
+    rc = _identification_request(data);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
 
 /****************************************************************************
  **                                                                        **
@@ -505,9 +526,7 @@ _identification_abort (
      * Get the UE context
      */
 
-    if (ue_id > 0) {
-      emm_ctx = emm_data_context_get (&_emm_data, ue_id);
-    }
+    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort identification procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
@@ -515,6 +534,8 @@ _identification_abort (
      * Stop timer T3470
      */
     if ( emm_ctx) {
+      emm_ctx_unmark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_IDENT);
+
       if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
         OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
         emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
@@ -522,10 +543,6 @@ _identification_abort (
       }
     }
 
-    /*
-     * Release retransmission timer parameters
-     */
-    FREE_CHECK (data);
 
     /*
      * Notify EMM that the identification procedure failed
@@ -540,6 +557,10 @@ _identification_abort (
     } else {
       rc = RETURNok;
     }
+    /*
+     * Release retransmission timer parameters
+     */
+    free_wrapper (data);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

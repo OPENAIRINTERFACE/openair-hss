@@ -22,49 +22,63 @@
 
 #include "s1ap_mme_itti_messaging.h"
 
+//------------------------------------------------------------------------------
 int
 s1ap_mme_itti_send_sctp_request (
-  uint8_t * buffer,
-  const size_t length,
+  STOLEN_REF bstring *payload,
   const sctp_assoc_id_t assoc_id,
-  const sctp_stream_id_t stream)
+  const sctp_stream_id_t stream,
+  const mme_ue_s1ap_id_t ue_id)
 {
-  MessageDef                             *message_p;
+  MessageDef                             *message_p = NULL;
 
   message_p = itti_alloc_new_message (TASK_S1AP, SCTP_DATA_REQ);
-  SCTP_DATA_REQ (message_p).buffer = buffer;
-  SCTP_DATA_REQ (message_p).buf_len = length;
+  SCTP_DATA_REQ (message_p).payload = *payload;
+  *payload = NULL;
   SCTP_DATA_REQ (message_p).assoc_id = assoc_id;
   SCTP_DATA_REQ (message_p).stream = stream;
+  SCTP_DATA_REQ (message_p).mme_ue_s1ap_id = ue_id;
   return itti_send_msg_to_task (TASK_SCTP, INSTANCE_DEFAULT, message_p);
 }
 
+//------------------------------------------------------------------------------
 int
 s1ap_mme_itti_nas_uplink_ind (
-  const mme_ue_s1ap_id_t ue_id,
-  uint8_t * const buffer,
-  const size_t length)
+  const mme_ue_s1ap_id_t  ue_id,
+  STOLEN_REF bstring *payload,
+  const tai_t      const* tai,
+  const ecgi_t     const* cgi)
 {
-  MessageDef                             *message_p;
+  MessageDef                             *message_p = NULL;
 
   message_p = itti_alloc_new_message (TASK_S1AP, NAS_UPLINK_DATA_IND);
   NAS_UL_DATA_IND (message_p).ue_id          = ue_id;
-  NAS_UL_DATA_IND (message_p).nas_msg.data   = buffer;
-  NAS_UL_DATA_IND (message_p).nas_msg.length = length;
-  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_UPLINK_DATA_IND ue_id " MME_UE_S1AP_ID_FMT " len %u", NAS_UL_DATA_IND (message_p).ue_id, NAS_UL_DATA_IND (message_p).nas_msg.length);
+  NAS_UL_DATA_IND (message_p).nas_msg        = *payload;
+  *payload = NULL;
+  NAS_UL_DATA_IND (message_p).tai            = *tai;
+  NAS_UL_DATA_IND (message_p).cgi            = *cgi;
+
+  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_UPLINK_DATA_IND ue_id " MME_UE_S1AP_ID_FMT " len %u",
+      NAS_UL_DATA_IND (message_p).ue_id, blength(NAS_UL_DATA_IND (message_p).nas_msg));
   return itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 }
 
+//------------------------------------------------------------------------------
 int
 s1ap_mme_itti_nas_downlink_cnf (
   const mme_ue_s1ap_id_t ue_id,
-  const nas_error_code_t error_code)
+  const bool             is_success)
 {
-  MessageDef                             *message_p;
+  MessageDef                             *message_p = NULL;
 
   message_p = itti_alloc_new_message (TASK_S1AP, NAS_DOWNLINK_DATA_CNF);
   NAS_DL_DATA_CNF (message_p).ue_id = ue_id;
-  NAS_DL_DATA_CNF (message_p).err_code = error_code;
-  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_CNF ue_id " MME_UE_S1AP_ID_FMT " err_code %u", NAS_DL_DATA_CNF (message_p).ue_id, NAS_DL_DATA_CNF (message_p).err_code);
+  if (is_success) {
+    NAS_DL_DATA_CNF (message_p).err_code = AS_SUCCESS;
+  } else {
+    NAS_DL_DATA_CNF (message_p).err_code = AS_FAILURE;
+  }
+  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_CNF ue_id " MME_UE_S1AP_ID_FMT " err_code %u",
+      NAS_DL_DATA_CNF (message_p).ue_id, NAS_DL_DATA_CNF (message_p).err_code);
   return itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 }

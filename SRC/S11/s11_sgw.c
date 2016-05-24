@@ -24,11 +24,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <assert.h>
 
+#include "log.h"
 #include "assertions.h"
 #include "queue.h"
-#include "mme_config.h"
+#include "sgw_config.h"
 #include "intertask_interface.h"
 #include "timer.h"
 #include "NwLog.h"
@@ -40,17 +40,13 @@
 #include "s11_sgw.h"
 #include "s11_sgw_bearer_manager.h"
 #include "s11_sgw_session_manager.h"
-#include "log.h"
 
 
-static NwGtpv2cStackHandleT             s11_sgw_stack_handle;
+static NwGtpv2cStackHandleT             s11_sgw_stack_handle = 0;
 
 /* ULP callback for the GTPv2-C stack */
-static
-                                        NwRcT
-s11_sgw_ulp_process_stack_req_cb (
-  NwGtpv2cUlpHandleT hUlp,
-  NwGtpv2cUlpApiT * pUlpApi)
+//------------------------------------------------------------------------------
+static NwRcT s11_sgw_ulp_process_stack_req_cb (NwGtpv2cUlpHandleT hUlp, NwGtpv2cUlpApiT * pUlpApi)
 {
   int                                     ret = 0;
 
@@ -73,6 +69,10 @@ s11_sgw_ulp_process_stack_req_cb (
       ret = s11_sgw_handle_delete_session_request (&s11_sgw_stack_handle, pUlpApi);
       break;
 
+    case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:
+      ret = s11_sgw_handle_release_access_bearers_request (&s11_sgw_stack_handle, pUlpApi);
+      break;
+
     default:
       OAILOG_WARNING (LOG_S11,  "Received unhandled message type %d\n", pUlpApi->apiInfo.initialReqIndInfo.msgType);
       break;
@@ -88,9 +88,8 @@ s11_sgw_ulp_process_stack_req_cb (
   return ret == -1 ? NW_FAILURE : NW_OK;
 }
 
-static
-                                        NwRcT
-s11_sgw_send_udp_msg (
+//------------------------------------------------------------------------------
+static NwRcT s11_sgw_send_udp_msg (
   NwGtpv2cUdpHandleT udpHandle,
   uint8_t * buffer,
   uint32_t buffer_len,
@@ -112,9 +111,8 @@ s11_sgw_send_udp_msg (
   return ret == 0 ? NW_OK : NW_FAILURE;
 }
 
-static
-                                        NwRcT
-s11_sgw_log_wrapper (
+//------------------------------------------------------------------------------
+static NwRcT s11_sgw_log_wrapper (
   NwGtpv2cLogMgrHandleT hLogMgr,
   uint32_t logLevel,
   NwCharT * file,
@@ -125,9 +123,8 @@ s11_sgw_log_wrapper (
   return NW_OK;
 }
 
-static
-                                        NwRcT
-s11_sgw_start_timer_wrapper (
+//------------------------------------------------------------------------------
+static NwRcT s11_sgw_start_timer_wrapper (
   NwGtpv2cTimerMgrHandleT tmrMgrHandle,
   uint32_t timeoutSec,
   uint32_t timeoutUsec,
@@ -147,9 +144,8 @@ s11_sgw_start_timer_wrapper (
   return ret == 0 ? NW_OK : NW_FAILURE;
 }
 
-static
-                                        NwRcT
-s11_sgw_stop_timer_wrapper (
+//------------------------------------------------------------------------------
+static NwRcT s11_sgw_stop_timer_wrapper (
   NwGtpv2cTimerMgrHandleT tmrMgrHandle,
   NwGtpv2cTimerHandleT tmrHandle)
 {
@@ -161,9 +157,8 @@ s11_sgw_stop_timer_wrapper (
   return ret == 0 ? NW_OK : NW_FAILURE;
 }
 
-static void                            *
-s11_sgw_thread (
-  void *args)
+//------------------------------------------------------------------------------
+static void *s11_sgw_thread (void *args)
 {
   itti_mark_task_ready (TASK_S11);
   OAILOG_START_USE ();
@@ -172,7 +167,6 @@ s11_sgw_thread (
     MessageDef                             *received_message_p = NULL;
 
     itti_receive_msg (TASK_S11, &received_message_p);
-    assert (received_message_p );
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case UDP_DATA_IND:{
@@ -189,26 +183,33 @@ s11_sgw_thread (
       }
       break;
 
-    case SGW_CREATE_SESSION_RESPONSE:{
-        OAILOG_DEBUG (LOG_S11, "Received create session response from S-PGW APP\n");
-        s11_sgw_handle_create_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_create_session_response);
+    case S11_CREATE_SESSION_RESPONSE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_CREATE_SESSION_RESPONSE from S-PGW APP\n");
+        s11_sgw_handle_create_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_create_session_response);
       }
       break;
 
-    case SGW_MODIFY_BEARER_RESPONSE:{
-        OAILOG_DEBUG (LOG_S11, "Received modify bearer response from S-PGW APP\n");
-        s11_sgw_handle_modify_bearer_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_modify_bearer_response);
+    case S11_MODIFY_BEARER_RESPONSE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_MODIFY_BEARER_RESPONSE from S-PGW APP\n");
+        s11_sgw_handle_modify_bearer_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_response);
       }
       break;
 
-    case SGW_DELETE_SESSION_RESPONSE:{
-        OAILOG_DEBUG (LOG_S11, "Received delete session response from S-PGW APP\n");
-        s11_sgw_handle_delete_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.sgw_delete_session_response);
+    case S11_DELETE_SESSION_RESPONSE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_DELETE_SESSION_RESPONSE from S-PGW APP\n");
+        s11_sgw_handle_delete_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_delete_session_response);
+      }
+      break;
+
+    case S11_RELEASE_ACCESS_BEARERS_RESPONSE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_RELEASE_ACCESS_BEARERS_RESPONSE from S-PGW APP\n");
+        s11_sgw_handle_release_access_bearers_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_release_access_bearers_response);
       }
       break;
 
     case TIMER_HAS_EXPIRED:{
-        OAILOG_DEBUG (LOG_S11, "Processing timeout for timer_id 0x%lx and arg %p\n", received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
+        OAILOG_DEBUG (LOG_S11, "Received event TIMER_HAS_EXPIRED for timer_id 0x%lx and arg %p\n",
+            received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
         DevAssert (nwGtpv2cProcessTimeout (received_message_p->ittiMsg.timer_has_expired.arg) == NW_OK);
       }
       break;
@@ -226,10 +227,8 @@ s11_sgw_thread (
   return NULL;
 }
 
-static int
-s11_send_init_udp (
-  char *address,
-  uint16_t port_number)
+//------------------------------------------------------------------------------
+static int s11_send_init_udp (char *address, uint16_t port_number)
 {
   MessageDef                             *message_p;
 
@@ -246,9 +245,8 @@ s11_send_init_udp (
   return itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
 }
 
-int
-s11_sgw_init (
-  const mme_config_t * mme_config_p)
+//------------------------------------------------------------------------------
+int s11_sgw_init (sgw_config_t * config_p)
 {
   int                                     ret = 0;
   NwGtpv2cUlpEntityT                      ulp;
@@ -289,14 +287,14 @@ s11_sgw_init (
   DevAssert (NW_OK == nwGtpv2cSetLogMgrEntity (s11_sgw_stack_handle, &logMgr));
 
   if (itti_create_task (TASK_S11, &s11_sgw_thread, NULL) < 0) {
-    OAILOG_ERROR (LOG_S11, "gtpv1u phtread_create: %s\n", strerror (errno));
+    OAILOG_ERROR (LOG_S11, "S11 pthread_create: %s\n", strerror (errno));
     goto fail;
   }
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (s11_sgw_stack_handle, NW_LOG_LEVEL_DEBG));
-  config_read_lock (&mme_config);
-  addr.s_addr = mme_config.ipv4.sgw_ip_address_for_s11;
-  config_unlock (&mme_config);
+  sgw_config_read_lock (config_p);
+  addr.s_addr = config_p->ipv4.S11;
+  sgw_config_unlock (config_p);
   s11_address_str = inet_ntoa (addr);
   DevAssert (s11_address_str );
   s11_send_init_udp (s11_address_str, 2123);

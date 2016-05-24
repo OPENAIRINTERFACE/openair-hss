@@ -48,9 +48,6 @@ decode_eps_bearer_context_status (
   CHECK_LENGTH_DECODER (len - decoded, ielen);
   //IES_DECODE_U16(*epsbearercontextstatus, *(buffer + decoded));
   IES_DECODE_U16 (buffer, decoded, *epsbearercontextstatus);
-#if NAS_DEBUG
-  dump_eps_bearer_context_status_xml (epsbearercontextstatus, iei);
-#endif
   return decoded;
 }
 
@@ -68,9 +65,6 @@ encode_eps_bearer_context_status (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EPS_BEARER_CONTEXT_STATUS_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_eps_bearer_context_status_xml (epsbearercontextstatus, iei);
-#endif
 
   if (iei > 0) {
     *buffer = iei;

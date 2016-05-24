@@ -44,9 +44,9 @@ s1ap_mme_compare_plmn (
 
   DevAssert (plmn != NULL);
   TBCD_TO_MCC_MNC (plmn, mcc, mnc, mnc_len);
-  config_read_lock (&mme_config);
+  mme_config_read_lock (&mme_config);
 
-  for (i = 0; i < mme_config.gummei.nb_mme_gid; i++) {
+  for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
     OAILOG_TRACE (LOG_S1AP, "Comparing plmn_mcc %d/%d, plmn_mnc %d/%d plmn_mnc_len %d/%d\n",
         mme_config.served_tai.plmn_mcc[i], mcc, mme_config.served_tai.plmn_mnc[i], mnc, mme_config.served_tai.plmn_mnc_len[i], mnc_len);
 
@@ -59,7 +59,7 @@ s1ap_mme_compare_plmn (
       return TA_LIST_AT_LEAST_ONE_MATCH;
   }
 
-  config_unlock (&mme_config);
+  mme_config_unlock (&mme_config);
   return TA_LIST_NO_MATCH;
 }
 
@@ -101,7 +101,7 @@ s1ap_mme_compare_tac (
 
   DevAssert (tac != NULL);
   OCTET_STRING_TO_TAC (tac, tac_value);
-  config_read_lock (&mme_config);
+  mme_config_read_lock (&mme_config);
 
   for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
     OAILOG_TRACE (LOG_S1AP, "Comparing config tac %d, received tac = %d\n", mme_config.served_tai.tac[i], tac_value);
@@ -110,7 +110,7 @@ s1ap_mme_compare_tac (
       return TA_LIST_AT_LEAST_ONE_MATCH;
   }
 
-  config_unlock (&mme_config);
+  mme_config_unlock (&mme_config);
   return TA_LIST_NO_MATCH;
 }
 

@@ -19,17 +19,14 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_DOWNLINK_NAS_TRANSPORT_SEEN
+#define FILE_DOWNLINK_NAS_TRANSPORT_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
 #include "SecurityHeaderType.h"
 #include "MessageType.h"
 #include "NasMessageContainer.h"
-
-#ifndef FILE_DOWNLINK_NAS_TRANSPORT_SEEN
-#define FILE_DOWNLINK_NAS_TRANSPORT_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define DOWNLINK_NAS_TRANSPORT_MINIMUM_LENGTH ( \

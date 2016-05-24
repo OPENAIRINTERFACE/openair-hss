@@ -167,8 +167,9 @@ do {                                    \
 #define BIT_STRING_TO_CELL_IDENTITY(aSN, vALUE)                     \
 do {                                                                \
     DevCheck((aSN)->bits_unused == 4, (aSN)->bits_unused, 4, 0);    \
-    vALUE = ((aSN)->buf[0] << 20) | ((aSN)->buf[1] << 12) |         \
-        ((aSN)->buf[2] << 4) | (aSN)->buf[3];                       \
+    vALUE.enb_id = ((aSN)->buf[0] << 12) | ((aSN)->buf[1] << 4) |   \
+        ((aSN)->buf[2] >> 4);                                       \
+    vALUE.cell_id = ((aSN)->buf[2] << 4) | ((aSN)->buf[3] >> 4);    \
 } while(0)
 
 #define MCC_HUNDREDS(vALUE) \
@@ -312,6 +313,118 @@ do {                                                    \
 #define OCTET_STRING_TO_M_TMSI   OCTET_STRING_TO_INT32
 #define OCTET_STRING_TO_MME_GID  OCTET_STRING_TO_INT16
 #define OCTET_STRING_TO_CSG_ID   OCTET_STRING_TO_INT27
+
+/* Convert the IMSI contained by a char string NULL terminated to uint64_t */
+#define IMSI_STRING_TO_IMSI64(sTRING, iMSI64_pTr) sscanf(sTRING, IMSI_64_FMT, iMSI64_pTr)
+#define IMSI64_TO_STRING(iMSI64, sTRING) snprintf(sTRING, IMSI_BCD_DIGITS_MAX+1, IMSI_64_FMT, iMSI64)
+#define IMSI_TO_IMSI64(iMsI_t_PtR,iMsI_u64) \
+        {\
+          uint64_t mUlT = 1; \
+          iMsI_u64 = (iMsI_t_PtR)->u.num.digit1; \
+          if ((iMsI_t_PtR)->u.num.digit15 != 0xf) { \
+            iMsI_u64 = (iMsI_t_PtR)->u.num.digit15 + \
+                       (iMsI_t_PtR)->u.num.digit14 *10 + \
+                       (iMsI_t_PtR)->u.num.digit13 *100 + \
+                       (iMsI_t_PtR)->u.num.digit12 *1000 + \
+                       (iMsI_t_PtR)->u.num.digit11 *10000 + \
+                       (iMsI_t_PtR)->u.num.digit10 *100000 + \
+                       (iMsI_t_PtR)->u.num.digit9  *1000000 + \
+                       (iMsI_t_PtR)->u.num.digit8  *10000000 + \
+                       (iMsI_t_PtR)->u.num.digit7  *100000000;  \
+            mUlT = 1000000000; \
+          } else { \
+            iMsI_u64 = (iMsI_t_PtR)->u.num.digit14  + \
+                       (iMsI_t_PtR)->u.num.digit13 *10 + \
+                       (iMsI_t_PtR)->u.num.digit12 *100 + \
+                       (iMsI_t_PtR)->u.num.digit11 *1000 + \
+                       (iMsI_t_PtR)->u.num.digit10 *10000 + \
+                       (iMsI_t_PtR)->u.num.digit9  *100000 + \
+                       (iMsI_t_PtR)->u.num.digit8  *1000000 + \
+                       (iMsI_t_PtR)->u.num.digit7  *10000000;  \
+            mUlT = 100000000; \
+          } \
+          if ((iMsI_t_PtR)->u.num.digit6 != 0xf) {\
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit6 *mUlT;   \
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit5 *mUlT*10; \
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit4 *mUlT*100; \
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit3 *mUlT*1000; \
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit2 *mUlT*10000; \
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit1 *mUlT*100000; \
+          } else { \
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit5 *mUlT;    \
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit4 *mUlT*10;  \
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit3 *mUlT*100;  \
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit2 *mUlT*1000;  \
+              iMsI_u64 += (iMsI_t_PtR)->u.num.digit1 *mUlT*10000;  \
+          } \
+        }
+/*#define IMSI_TO_STRING(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
+        {\
+          int l_offset = 0;\
+          int l_ret    = 0;\
+          l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u",\
+              (iMsI_t_PtR)->u.num.digit1, (iMsI_t_PtR)->u.num.digit2,\
+                  (iMsI_t_PtR)->u.num.digit3, (iMsI_t_PtR)->u.num.digit4,\
+                  (iMsI_t_PtR)->u.num.digit5);\
+          if (((iMsI_t_PtR)->u.num.digit6 != 0xf)  && (l_ret > 0)) {\
+            l_offset += l_ret;\
+            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset,  "%u", (iMsI_t_PtR)->u.num.digit6);\
+          }\
+          if (l_ret > 0) {\
+            l_offset += l_ret;\
+            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u%u%u%u",\
+                (iMsI_t_PtR)->u.num.digit7, (iMsI_t_PtR)->u.num.digit8,\
+                (iMsI_t_PtR)->u.num.digit9, (iMsI_t_PtR)->u.num.digit10,\
+                (iMsI_t_PtR)->u.num.digit11, (iMsI_t_PtR)->u.num.digit12,\
+                (iMsI_t_PtR)->u.num.digit13, (iMsI_t_PtR)->u.num.digit14);\
+          }\
+          if (((iMsI_t_PtR)->u.num.digit15 != 0x0)   && (l_ret > 0)) {\
+            l_offset += l_ret;\
+            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u", (iMsI_t_PtR)->u.num.digit15);\
+          }\
+        }*/
+
+#define IMSI_TO_STRING(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
+        do { \
+          int l_i = 0; \
+          int l_j = 0; \
+          while((l_i < IMSI_BCD8_SIZE) && (l_j < MaXlEn - 1)){ \
+            if((((iMsI_t_PtR)->u.value[l_i] & 0xf0) >> 4) > 9) \
+              break; \
+            sprintf(((iMsI_sTr) + l_j), "%u",(((iMsI_t_PtR)->u.value[l_i] & 0xf0) >> 4)); \
+            l_j++; \
+            if(((iMsI_t_PtR)->u.value[l_i] & 0xf) > 9 || (l_j >= MaXlEn - 1)) \
+              break; \
+            sprintf(((iMsI_sTr) + l_j), "%u", ((iMsI_t_PtR)->u.value[l_i] & 0xf)); \
+            l_j++; \
+            l_i++; \
+          } \
+          for(; l_j < MaXlEn; l_j++) \
+              iMsI_sTr[l_j] = '\0'; \
+        } while (0);\
+
+#define IMEI_TO_STRING(iMeI_t_PtR,iMeI_sTr, MaXlEn) \
+        {\
+          int l_offset = 0;\
+          int l_ret    = 0;\
+          l_ret = snprintf(iMeI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u%u%u%u",\
+                  (iMeI_t_PtR)->u.num.tac1, (iMeI_t_PtR)->u.num.tac2,\
+                  (iMeI_t_PtR)->u.num.tac3, (iMeI_t_PtR)->u.num.tac4,\
+                  (iMeI_t_PtR)->u.num.tac5, (iMeI_t_PtR)->u.num.tac6,\
+                  (iMeI_t_PtR)->u.num.tac7, (iMeI_t_PtR)->u.num.tac8);\
+          if (l_ret > 0) {\
+            l_offset += l_ret;\
+            l_ret = snprintf(iMeI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u%u",\
+                (iMeI_t_PtR)->u.num.snr1, (iMeI_t_PtR)->u.num.snr2,\
+                (iMeI_t_PtR)->u.num.snr3, (iMeI_t_PtR)->u.num.snr4,\
+                (iMeI_t_PtR)->u.num.snr5, (iMeI_t_PtR)->u.num.snr6);\
+          }\
+          if (((iMeI_t_PtR)->u.num.parity != 0x0)   && (l_ret > 0)) {\
+            l_offset += l_ret;\
+            l_ret = snprintf(iMeI_sTr + l_offset, MaXlEn - l_offset, "%u", (iMeI_t_PtR)->u.num.cdsd);\
+          }\
+        }
+
 
 void hexa_to_ascii(uint8_t *from, char *to, size_t length);
 

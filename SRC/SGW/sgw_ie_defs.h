@@ -26,15 +26,16 @@
 * \email: lionel.gauthier@eurecom.fr
 */
 
-#include "common_types.h"
-
 #ifndef FILE_SGW_IE_DEFS_SEEN
 #define FILE_SGW_IE_DEFS_SEEN
+#include "common_types.h"
+#include "3gpp_24.008.h"
+
 
 typedef uint8_t  EBI_t;
 typedef uint8_t  APNRestriction_t;
 typedef uint8_t  DelayValue_t;
-typedef uint32_t Teid_t;
+typedef uint32_t teid_t;
 typedef uint32_t SequenceNumber_t;
 
 /* Only one type of address can be present at the same time
@@ -53,36 +54,62 @@ typedef struct {
 
 /* 3GPP TS 29.274 Figure 8.12 */
 
-typedef uint32_t indication_flags_t;
+typedef struct indication_flags_s {
+  uint8_t daf:1;
+  uint8_t dtf:1;
+  uint8_t hi:1;
+  uint8_t dfi:1;
+  uint8_t oi:1;
+  uint8_t isrsi:1;
+  uint8_t israi:1;
+  uint8_t sgwci:1;
+
+  uint8_t sqci:1;
+  uint8_t uimsi:1;
+  uint8_t cfsi:1;
+  uint8_t crsi:1;
+  uint8_t p:1;
+  uint8_t pt:1;
+  uint8_t si:1;
+  uint8_t msv:1;
+
+  uint8_t spare1:1;
+  uint8_t spare2:1;
+  uint8_t spare3:1;
+  uint8_t s6af:1;
+  uint8_t s4af:1;
+  uint8_t mbmdt:1;
+  uint8_t israu:1;
+  uint8_t ccrsi:1;
+} indication_flags_t;
 
 /* Bit mask for octet 7 in indication IE */
 // UPDATE RELEASE 10
-# define S6AF_FLAG  (1U << 20)
-# define S4AF_FLAG  (1U << 19)
-# define MBMDT_FLAG (1U << 18)
-
-#define ISRAU_FLAG  (1U << 17)
-#define CCRSI_FLAG  (1U << 16)
+#define S6AF_FLAG_BIT_POS  4
+#define S4AF_FLAG_BIT_POS  3
+#define MBMDT_FLAG_BIT_POS 2
+#define ISRAU_FLAG_BIT_POS 1
+#define CCRSI_FLAG_BIT_POS 0
 
 /* Bit mask for octet 6 in indication IE */
-#define SQSI_FLAG   (1U << 15)
-#define UIMSI_FLAG  (1U << 14)
-#define CFSI_FLAG   (1U << 13)
-#define CRSI_FLAG   (1U << 12)
-#define P_FLAG      (1U << 11)
-#define PT_FLAG     (1U << 10)
-#define SI_FLAG     (1U << 9)
-#define MSV_FLAG    (1U << 8)
+#define SQSI_FLAG_BIT_POS   7
+#define UIMSI_FLAG_BIT_POS  6
+#define CFSI_FLAG_BIT_POS   5
+#define CRSI_FLAG_BIT_POS   4
+#define P_FLAG_BIT_POS      3
+#define PT_FLAG_BIT_POS     2
+#define SI_FLAG_BIT_POS     1
+#define MSV_FLAG_BIT_POS    0
 
 /* Bit mask for octet 5 in indication IE */
-#define DAF_FLAG    (1U << 7)
-#define DTF_FLAG    (1U << 6)
-#define HI_FLAG     (1U << 5)
-#define DFI_FLAG    (1U << 4)
-#define OI_FLAG     (1U << 3)
-#define ISRSI_FLAG  (1U << 2)
-#define ISRAI_FLAG  (1U << 1)
-#define SGW_CI_FLAG (1U << 0)
+#define DAF_FLAG_BIT_POS      7
+#define DTF_FLAG_BIT_POS      6
+#define HI_FLAG_BIT_POS       5
+#define DFI_FLAG_BIT_POS      4
+#define OI_FLAG_BIT_POS       3
+#define ISRSI_FLAG_BIT_POS    2
+#define ISRAI_FLAG_BIT_POS    1
+#define SGWCI_FLAG_BIT_POS    0
 
 typedef struct {
   pdn_type_t pdn_type;
@@ -91,65 +118,6 @@ typedef struct {
   /* Note in rel.8 the ipv6 prefix length has a fixed value of /64 */
   uint8_t ipv6_prefix_length;
 } PAA_t;
-
-/* Protocol configuration options from ts124008*/
-#define PCO_MIN_LENGTH                                               3
-#define PCO_MAX_LENGTH                                               253
-#define PCO_CONFIGURATION_PROTOCOL_PPP_FOR_USE_WITH_IP_PDP_TYPE_OR_IP_PDN_TYPE 000b
-
-#define PCO_PI_LCP                                                      (0xC021)
-#define PCO_PI_PAP                                                      (0xC023)
-#define PCO_PI_CHAP                                                     (0xC223)
-#define PCO_PI_IPCP                                                     (0x8021)
-
-#define IPCP_CODE_CONFIGURE_REQUEST                                     (0x01)
-#define IPCP_CODE_CONFIGURE_ACK                                         (0x02)
-#define IPCP_CODE_CONFIGURE_NACK                                        (0x03)
-#define IPCP_CODE_CONFIGURE_REJECT                                      (0x04)
-#define IPCP_CODE_TERMINATE_REQUEST                                     (0x05)
-#define IPCP_CODE_TERMINATE_ACK                                         (0x06)
-#define IPCP_CODE_REJECT                                                (0x07)
-
-#define IPCP_OPTION_PRIMARY_DNS_SERVER_IP_ADDRESS                       (0x81)
-#define IPCP_OPTION_SECONDARY_DNS_SERVER_IP_ADDRESS                     (0x83)
-
-/* CONTAINER IDENTIFIER MS to network direction:*/
-#define PCO_CI_P_CSCF_IPV6_ADDRESS_REQUEST                              (0x0001)
-#define PCO_CI_DNS_SERVER_IPV6_ADDRESS_REQUEST                          (0x0003)
-#define PCO_CI_MS_SUPPORT_OF_NETWORK_REQUESTED_BEARER_CONTROL_INDICATOR (0x0005)
-#define PCO_CI_DSMIPV6_HOME_AGENT_ADDRESS_REQUEST                       (0x0007)
-#define PCO_CI_DSMIPV6_HOME_NETWORK_PREFIX_REQUEST                      (0x0008)
-#define PCO_CI_DSMIPV6_IPV4_HOME_AGENT_ADDRESS_REQUEST                  (0x0009)
-#define PCO_CI_IP_ADDRESS_ALLOCATION_VIA_NAS_SIGNALLING                 (0x000A)
-#define PCO_CI_IPV4_ADDRESS_ALLOCATION_VIA_DHCPV4                       (0x000B)
-#define PCO_CI_P_CSCF_IPV4_ADDRESS_REQUEST                              (0x000C)
-#define PCO_CI_DNS_SERVER_IPV4_ADDRESS_REQUEST                          (0x000D)
-#define PCO_CI_MSISDN_REQUEST                                           (0x000E)
-#define PCO_CI_IFOM_SUPPORT_REQUEST                                     (0x000F)
-#define PCO_CI_IPV4_LINK_MTU_REQUEST                                    (0x0010)
-
-/* CONTAINER IDENTIFIER Network to MS direction:*/
-#define PCO_CI_P_CSCF_IPV6_ADDRESS                                      (0x0001)
-#define PCO_CI_IM_CN_SUBSYSTEM_SIGNALING_FLAG                           (0x0002)
-#define PCO_CI_DNS_SERVER_IPV6_ADDRESS                                  (0x0003)
-#define PCO_CI_POLICY_CONTROL_REJECTION_CODE                            (0x0004)
-#define PCO_CI_SELECTED_BEARER_CONTROL_MODE                             (0x0005)
-#define PCO_CI_DSMIPV6_HOME_AGENT_ADDRESS                               (0x0007)
-#define PCO_CI_DSMIPV6_HOME_NETWORK_PREFIX                              (0x0008)
-#define PCO_CI_DSMIPV6_IPV4_HOME_AGENT_ADDRESS                          (0x0009)
-#define PCO_CI_P_CSCF_IPV4_ADDRESS                                      (0x000C)
-#define PCO_CI_DNS_SERVER_IPV4_ADDRESS                                  (0x000D)
-#define PCO_CI_MSISDN                                                   (0x000E)
-#define PCO_CI_IFOM_SUPPORT                                             (0x000F)
-#define PCO_CI_IPV4_LINK_MTU                                            (0x0010)
-
-/* Both directions:*/
-#define PCO_CI_IM_CN_SUBSYSTEM_SIGNALING_FLAG                           (0x0002)
-
-typedef struct pco_flat_s{
-  uint8_t byte[PCO_MAX_LENGTH];
-  uint8_t length;
-} pco_flat_t;
 
 
 #define IMSI(imsi) \
@@ -280,7 +248,7 @@ typedef struct {
   unsigned        ipv4:1;
   unsigned        ipv6:1;
   InterfaceType_t interface_type;
-  Teid_t          teid; ///< TEID or GRE Key
+  teid_t          teid; ///< TEID or GRE Key
   uint32_t        ipv4_address;
   uint8_t         ipv6_address[16];
 } FTeid_t;
@@ -582,12 +550,50 @@ typedef struct {
 } gtp_cause_t;
 
 typedef struct {
-  uint8_t     eps_bearer_id;    ///< EPS Bearer ID
+  uint8_t     eps_bearer_id;    ///< EBI,  Mandatory CSR
   BearerQOS_t bearer_level_qos;
-  tft_t       tft;              ///< Bearer TFT
+  tft_t       tft;              ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
 } bearer_to_create_t;
 
-typedef struct {
+//-----------------
+typedef struct bearer_context_to_be_created_s {
+  uint8_t      eps_bearer_id;       ///< EBI,  Mandatory CSR
+  tft_t        tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  FTeid_t      s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
+  FTeid_t      s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
+  FTeid_t      s5_s8_u_sgw_fteid;   ///< S5/S8-U SGW F-TEID, Conditional CSR, This IE shall be included on the S5/S8 interface for an "eUTRAN Initial Attach",
+                                    ///  a "PDP Context Activation" or a "UE Requested PDN Connectivity".
+  FTeid_t      s5_s8_u_pgw_fteid;   ///< S5/S8-U PGW F-TEID, Conditional CSR, This IE shall be included on the S4 and S11 interfaces for the TAU/RAU/Handover
+                                    /// cases when the GTP-based S5/S8 is used.
+  FTeid_t      s12_rnc_fteid;       ///< S12 RNC F-TEID, Conditional Optional CSR, This IE shall be included on the S4 interface if the S12
+                                    /// interface is used in the Enhanced serving RNS relocation with SGW relocation procedure.
+  FTeid_t      s2b_u_epdg_fteid;    ///< S2b-U ePDG F-TEID, Conditional CSR, This IE shall be included on the S2b interface for an Attach
+                                    /// with GTP on S2b, a UE initiated Connectivity to Additional PDN with GTP on S2b and a Handover to Untrusted Non-
+                                    /// 3GPP IP Access with GTP on S2b.
+  /* This parameter is received only if the QoS parameters have been modified */
+  BearerQOS_t  bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
+} bearer_context_to_be_created_t;
+
+typedef struct bearer_contexts_to_be_created_s {
+#define MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS   11
+uint8_t num_bearer_context;
+bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];    ///< Bearer Contexts to be created
+///< Several IEs with the same type and instance value shall be
+///< included on the S4/S11 and S5/S8 interfaces as necessary
+///< to represent a list of Bearers. One single IE shall be
+///< included on the S2b interface.
+///< One bearer shall be included for an E-UTRAN Initial
+///< Attach, a PDP Context Activation, a UE requested PDN
+///< Connectivity, an Attach with GTP on S2b, a UE initiated
+///< Connectivity to Additional PDN with GTP on S2b and a
+///< Handover to Untrusted Non-3GPP IP Access with GTP on
+///< S2b.
+///< One or more bearers shall be included for a
+///< Handover/TAU/RAU with an SGW change.
+} bearer_contexts_to_be_created_t;
+
+//-----------------
+typedef struct bearer_context_created_s {
   uint8_t      eps_bearer_id;       ///< EPS Bearer ID
   SGWCause_t   cause;
 
@@ -614,21 +620,66 @@ typedef struct {
   tft_t        tft;                 ///< Bearer TFT
 } bearer_context_created_t;
 
-typedef struct {
+typedef struct bearer_contexts_created_s {
+  uint8_t num_bearer_context;
+  bearer_context_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];
+} bearer_contexts_created_t;
+
+//-----------------
+typedef struct bearer_context_modified_s {
   uint8_t    eps_bearer_id;   ///< EPS Bearer ID
   SGWCause_t cause;
   FTeid_t    s1u_sgw_fteid;   ///< Sender F-TEID for user plane
 } bearer_context_modified_t;
 
-typedef struct {
+typedef struct bearer_contexts_modified_s {
+#define MSG_MODIFY_BEARER_RESPONSE_MAX_BEARER_CONTEXTS   11
+  uint8_t num_bearer_context;
+  bearer_context_modified_t bearer_contexts[MSG_MODIFY_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
+} bearer_contexts_modified_t;
+
+//-----------------
+typedef struct bearer_context_marked_for_removal_s {
   uint8_t    eps_bearer_id;   ///< EPS bearer ID
   SGWCause_t cause;
-} bearer_for_removal_t;
+} bearer_context_marked_for_removal_t;
 
-typedef struct {
+typedef struct bearer_contexts_marked_for_removal_s {
+  uint8_t num_bearer_context;
+  bearer_context_marked_for_removal_t bearer_contexts[MSG_MODIFY_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
+} bearer_contexts_marked_for_removal_t;
+
+//-----------------
+typedef struct bearer_context_to_be_modified_s {
   uint8_t eps_bearer_id;      ///< EPS Bearer ID
   FTeid_t s1_eNB_fteid;       ///< S1 eNodeB F-TEID
-} bearer_context_to_modify_t;
+} bearer_context_to_be_modified_t;
+
+typedef struct bearer_contexts_to_be_modified_s {
+#define MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS   11
+  uint8_t num_bearer_context;
+  bearer_context_to_be_modified_t bearer_contexts[MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS];
+} bearer_contexts_to_be_modified_t;
+//-----------------
+
+typedef struct bearer_context_to_be_removed_s {
+  uint8_t eps_bearer_id;      ///< EPS Bearer ID, Mandatory
+  FTeid_t s4u_sgsn_fteid;     ///< S4-U SGSN F-TEID, Conditional , redundant
+} bearer_context_to_be_removed_t; // Within Create Session Request, Modify Bearer Request, Modify Access Bearers Request
+
+
+typedef struct bearer_contexts_to_be_removed_s {
+  uint8_t num_bearer_context;
+  bearer_context_to_be_removed_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];
+} bearer_contexts_to_be_removed_t;
+
+typedef struct ebi_list_s {
+  uint32_t   num_ebi;
+  #define RELEASE_ACCESS_BEARER_MAX_BEARERS   8
+  EBI_t      ebis[RELEASE_ACCESS_BEARER_MAX_BEARERS]  ;
+} ebi_list_t;
+
+
 
 #endif  /* FILE_SGW_IE_DEFS_SEEN */
 

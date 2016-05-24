@@ -155,7 +155,7 @@ itti_dump_send_message (
 
   AssertFatal (sd > 0, "Socket descriptor (%d) is invalid!\n", sd);
   AssertFatal (message != NULL, "Message is NULL!\n");
-  new_message = MALLOC_CHECK (size);
+  new_message = malloc (size);
   AssertFatal (new_message != NULL, "New message allocation failed!\n");
   /*
    * Preparing the header
@@ -179,14 +179,14 @@ itti_dump_send_message (
 
     if (bytes_sent < 0) {
       ITTI_DUMP_ERROR ("[%d] Failed to send %zu bytes to socket (%d:%s)\n", sd, size, errno, strerror (errno));
-      FREE_CHECK (new_message);
+      free_wrapper (new_message);
       return -1;
     }
 
     total_sent += bytes_sent;
   } while (total_sent != size);
 
-  FREE_CHECK (new_message);
+  free_wrapper (new_message);
   return total_sent;
 }
 
@@ -230,7 +230,7 @@ itti_dump_send_xml_definition (
   AssertFatal (sd > 0, "Socket descriptor (%d) is invalid!\n", sd);
   AssertFatal (message_definition_xml != NULL, "Message definition XML is NULL!\n");
   itti_dump_message_size = sizeof (itti_socket_header_t) + message_definition_xml_length + sizeof (itti_message_types_t);
-  itti_dump_message = CALLOC_CHECK (1, itti_dump_message_size);
+  itti_dump_message = calloc (1, itti_dump_message_size);
   ITTI_DUMP_DEBUG (0x2, "[%d] Sending XML definition message of size %zu to observer peer\n", sd, itti_dump_message_size);
   itti_dump_message->message_size = itti_dump_message_size;
   itti_dump_message->message_type = ITTI_DUMP_XML_DEFINITION;
@@ -246,14 +246,14 @@ itti_dump_send_xml_definition (
 
     if (bytes_sent < 0) {
       ITTI_DUMP_ERROR ("[%d] Failed to send %zu bytes to socket (%d:%s)\n", sd, itti_dump_message_size, errno, strerror (errno));
-      FREE_CHECK (itti_dump_message);
+      free_wrapper (itti_dump_message);
       return -1;
     }
 
     total_sent += bytes_sent;
   } while (total_sent != itti_dump_message_size);
 
-  FREE_CHECK (itti_dump_message);
+  free_wrapper (itti_dump_message);
   return 0;
 }
 
@@ -735,18 +735,18 @@ itti_dump_queue_message (
     AssertFatal (message_name != NULL, "Message name is NULL!\n");
     AssertFatal (message_p != NULL, "Message is NULL!\n");
 #if OAI_EMU
-    VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_MALLOC_CHECK, VCD_FUNCTION_IN);
+    VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_malloc, VCD_FUNCTION_IN);
 #endif
     new = itti_malloc (sender_task, TASK_MAX, sizeof (itti_dump_queue_item_t));
 #if OAI_EMU
-    VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_MALLOC_CHECK, VCD_FUNCTION_OUT);
+    VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_malloc, VCD_FUNCTION_OUT);
 #endif
 #if OAI_EMU
-    VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_MALLOC_CHECK, VCD_FUNCTION_IN);
+    VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_malloc, VCD_FUNCTION_IN);
 #endif
     new->data = itti_malloc (sender_task, TASK_MAX, message_size);
 #if OAI_EMU
-    VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_MALLOC_CHECK, VCD_FUNCTION_OUT);
+    VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_DUMP_ENQUEUE_MESSAGE_malloc, VCD_FUNCTION_OUT);
 #endif
     memcpy (new->data, message_p, message_size);
     new->data_size = message_size;

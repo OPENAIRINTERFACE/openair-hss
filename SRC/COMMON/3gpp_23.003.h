@@ -424,16 +424,22 @@ typedef struct tai_s {
 //------------------------------------------------------------------------------
 // 19.6  E-UTRAN Cell Identity (ECI) and E-UTRAN Cell Global Identification (ECGI)
 //------------------------------------------------------------------------------
-typedef uint32_t    eci_t;                                 /*!< \brief  The ECI shall be of fixed length of 28 bits and shall be coded using
-                                                                 full hexadecimal representation. The exact coding of the ECI is the responsibility
-                                                                 of each PLMN operator. */
+/*! \struct  eci_t
+ * \brief The ECI shall be of fixed length of 28 bits and shall be coded using
+ *        full hexadecimal representation. The exact coding of the ECI is the responsibility
+ *        of each PLMN operator. */
+typedef struct eci_s {
+  uint32_t enb_id:20;
+  uint32_t cell_id:8;
+  uint32_t empty:4;
+} eci_t;
 
 /*! \struct  ecgi_t
  * \brief The E-UTRAN Cell Global Identification (ECGI) shall be composed of the concatenation of the PLMN Identifier (PLMN-Id) and the E-UTRAN Cell Identity (ECI) .
  */
 typedef struct ecgi_s {
   plmn_t   plmn;
-  eci_t cell_identity:28;                                  /*!< \brief  The ECI shall be of fixed length of 28 bits */
+  eci_t    cell_identity;                                  /*!< \brief  The ECI shall be of fixed length of 28 bits */
 } ecgi_t;
 
 

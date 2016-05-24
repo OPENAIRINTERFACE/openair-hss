@@ -42,6 +42,8 @@ Description Defines the messages supported by the Access Stratum sublayer
 #ifndef FILE_AS_MESSAGE_H_SEEN
 #define FILE_AS_MESSAGE_H_SEEN
 
+#include "bstrlib.h"
+#include "common_defs.h"
 #include "common_types.h"
 #include "commonDef.h"
 #include "networkDef.h"
@@ -70,11 +72,6 @@ Description Defines the messages supported by the Access Stratum sublayer
 #define AS_BROADCAST_INFO       0x01
 #define AS_BROADCAST_INFO_IND       (AS_BROADCAST_INFO | AS_INDICATION)
 
-/* Cell information relevant for cell selection processing */
-#define AS_CELL_INFO            0x02
-#define AS_CELL_INFO_REQ        (AS_CELL_INFO | AS_REQUEST)
-#define AS_CELL_INFO_CNF        (AS_CELL_INFO | AS_CONFIRM)
-#define AS_CELL_INFO_IND        (AS_CELL_INFO | AS_INDICATION)
 
 /* Paging information */
 #define AS_PAGING           0x03
@@ -118,26 +115,34 @@ Description Defines the messages supported by the Access Stratum sublayer
 #define AS_RAB_RELEASE_IND      (AS_RAB_RELEASE | AS_INDICATION)
 
 /* NAS Cause */
-#define EPS_SERVICES_AND_NON_EPS_SERVICES_NOT_ALLOWED (8)
-#define EPS_SERVICES_NOT_ALLOWED                      (7)
-#define PLMN_NOT_ALLOWED                              (11)
-#define TRACKING_AREA_NOT_ALLOWED                     (12)
-#define ROAMING_NOT_ALLOWED_IN_THIS_TRACKING_AREA     (13)
-#define EPS_SERVICES_NOT_ALLOWED_IN_THIS_PLMN         (14)
-#define NO_SUITABLE_CELLS_IN_TRACKING_AREA            (15)
-#define NETWORK_FAILURE                               (17)
-#define ESM_FAILURE                                   (19)
-
 typedef enum nas_cause_s {
-  NAS_CAUSE_EPS_SERVICES_AND_NON_EPS_SERVICES_NOT_ALLOWED = EPS_SERVICES_AND_NON_EPS_SERVICES_NOT_ALLOWED,
-  NAS_CAUSE_EPS_SERVICES_NOT_ALLOWED                  = EPS_SERVICES_NOT_ALLOWED,
-  NAS_CAUSE_PLMN_NOT_ALLOWED                          = PLMN_NOT_ALLOWED,
-  NAS_CAUSE_TRACKING_AREA_NOT_ALLOWED                 = TRACKING_AREA_NOT_ALLOWED,
-  NAS_CAUSE_ROAMING_NOT_ALLOWED_IN_THIS_TRACKING_AREA = ROAMING_NOT_ALLOWED_IN_THIS_TRACKING_AREA,
-  NAS_CAUSE_EPS_SERVICES_NOT_ALLOWED_IN_THIS_PLMN     = EPS_SERVICES_NOT_ALLOWED_IN_THIS_PLMN,
-  NAS_CAUSE_NO_SUITABLE_CELLS_IN_TRACKING_AREA        = NO_SUITABLE_CELLS_IN_TRACKING_AREA,
-  NAS_CAUSE_NETWORK_FAILURE                           = NETWORK_FAILURE,
-  NAS_CAUSE_ESM_FAILURE                               = ESM_FAILURE
+  NAS_CAUSE_IMSI_UNKNOWN_IN_HSS                           = EMM_CAUSE_IMSI_UNKNOWN_IN_HSS,
+  NAS_CAUSE_ILLEGAL_UE                                    = EMM_CAUSE_ILLEGAL_UE,
+  NAS_CAUSE_ILLEGAL_ME                                    = EMM_CAUSE_ILLEGAL_ME,
+  NAS_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW             = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW,
+  NAS_CAUSE_IMPLICITLY_DETACHED                           = EMM_CAUSE_IMPLICITLY_DETACHED,
+  NAS_CAUSE_IMEI_NOT_ACCEPTED                             = EMM_CAUSE_IMEI_NOT_ACCEPTED,
+  NAS_CAUSE_EPS_SERVICES_NOT_ALLOWED                      = EMM_CAUSE_EPS_NOT_ALLOWED,
+  NAS_CAUSE_EPS_SERVICES_AND_NON_EPS_SERVICES_NOT_ALLOWED = EMM_CAUSE_BOTH_NOT_ALLOWED,
+  NAS_CAUSE_PLMN_NOT_ALLOWED                              = EMM_CAUSE_PLMN_NOT_ALLOWED,
+  NAS_CAUSE_TRACKING_AREA_NOT_ALLOWED                     = EMM_CAUSE_TA_NOT_ALLOWED,
+  NAS_CAUSE_ROAMING_NOT_ALLOWED_IN_THIS_TRACKING_AREA     = EMM_CAUSE_ROAMING_NOT_ALLOWED,
+  NAS_CAUSE_EPS_NOT_ALLOWED_IN_PLMN                       = EMM_CAUSE_EPS_NOT_ALLOWED_IN_PLMN,
+  NAS_CAUSE_NO_SUITABLE_CELLS_IN_TRACKING_AREA            = EMM_CAUSE_NO_SUITABLE_CELLS,
+  NAS_CAUSE_CSG_NOT_AUTHORIZED                            = EMM_CAUSE_CSG_NOT_AUTHORIZED,
+  NAS_CAUSE_NOT_AUTHORIZED_IN_PLMN                        = EMM_CAUSE_NOT_AUTHORIZED_IN_PLMN,
+  NAS_CAUSE_NO_EPS_BEARER_CTX_ACTIVE                      = EMM_CAUSE_NO_EPS_BEARER_CTX_ACTIVE,
+  NAS_CAUSE_MSC_NOT_REACHABLE                             = EMM_CAUSE_MSC_NOT_REACHABLE,
+  NAS_CAUSE_NETWORK_FAILURE                               = EMM_CAUSE_NETWORK_FAILURE,
+  NAS_CAUSE_CS_DOMAIN_NOT_AVAILABLE                       = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE,
+  NAS_CAUSE_ESM_FAILURE                                   = EMM_CAUSE_ESM_FAILURE,
+  NAS_CAUSE__MAC_FAILURE                                  = EMM_CAUSE_MAC_FAILURE,
+  NAS_CAUSE_SYNCH_FAILURE                                 = EMM_CAUSE_SYNCH_FAILURE,
+  NAS_CAUSE_CONGESTION                                    = EMM_CAUSE_CONGESTION,
+  NAS_CAUSE_SECURITY_MISMATCH                             = EMM_CAUSE_UE_SECURITY_MISMATCH,
+  NAS_CAUSE_SECURITY_MODE_REJECTED                        = EMM_CAUSE_SECURITY_MODE_REJECTED,
+  NAS_CAUSE_NON_EPS_AUTH_UNACCEPTABLE                     = EMM_CAUSE_NON_EPS_AUTH_UNACCEPTABLE,
+  NAS_CAUSE_CS_SERVICE_NOT_AVAILABLE                      = EMM_CAUSE_CS_SERVICE_NOT_AVAILABLE
 } nas_cause_t;
 
 /*
@@ -166,11 +171,6 @@ typedef struct as_stmsi_s {
   uint32_t m_tmsi;    /* M-Temporary Mobile Subscriber Identity   */
 } as_stmsi_t;
 
-/* Dedicated NAS information */
-typedef struct as_nas_info_s {
-  size_t  length;    /* Length of the NAS information data       */
-  uint8_t* data;   /* Dedicated NAS information data container */
-} as_nas_info_t;
 
 /* Radio Access Bearer identity */
 typedef uint8_t as_rab_id_t;
@@ -314,7 +314,7 @@ typedef struct nas_establish_req_s {
   as_call_type_t  type;            /* RRC associated call type             */
   as_stmsi_t      s_tmsi;          /* UE identity                          */
   plmn_t          plmn_id;         /* Selected PLMN identity               */
-  as_nas_info_t   initial_nas_msg; /* Initial NAS message to transfer      */
+  bstring         initial_nas_msg; /* Initial NAS message to transfer      */
 } nas_establish_req_t;
 
 /*
@@ -327,7 +327,7 @@ typedef struct nas_establish_ind_s {
   ecgi_t            cgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
   as_cause_t       as_cause;          /* Establishment cause                     */
   as_stmsi_t       s_tmsi;            /* UE identity optional field, if not present, value is NOT_A_S_TMSI */
-  as_nas_info_t    initial_nas_msg;   /* Initial NAS message to transfer         */
+  bstring          initial_nas_msg;   /* Initial NAS message to transfer         */
 } nas_establish_ind_t;
 
 /*
@@ -339,7 +339,7 @@ typedef struct nas_establish_rsp_s {
   mme_ue_s1ap_id_t ue_id;         /* UE lower layer identifier   */
   as_stmsi_t       s_tmsi;        /* UE identity                 */
   nas_error_code_t err_code;      /* Transaction status          */
-  as_nas_info_t    nas_msg;       /* NAS message to transfer     */
+  bstring          nas_msg;       /* NAS message to transfer     */
   uint32_t         nas_ul_count;  /* UL NAS COUNT                */
   uint16_t         selected_encryption_algorithm;
   uint16_t         selected_integrity_algorithm;
@@ -352,7 +352,7 @@ typedef struct nas_establish_rsp_s {
 typedef struct nas_establish_cnf_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
   nas_error_code_t err_code;         /* Transaction status          */
-  as_nas_info_t    nas_msg;          /* NAS message to transfer     */
+  bstring          nas_msg;          /* NAS message to transfer     */
   uint32_t         ul_nas_count;
   uint16_t         selected_encryption_algorithm;
   uint16_t         selected_integrity_algorithm;
@@ -402,7 +402,7 @@ typedef struct nas_release_ind_s {
 typedef struct ul_info_transfer_req_s {
   mme_ue_s1ap_id_t ue_id;       /* UE lower layer identifier        */
   as_stmsi_t       s_tmsi;      /* UE identity              */
-  as_nas_info_t    nas_msg;     /* Uplink NAS message           */
+  bstring          nas_msg;     /* Uplink NAS message           */
 } ul_info_transfer_req_t;
 
 /*
@@ -422,7 +422,7 @@ typedef struct ul_info_transfer_cnf_s {
  */
 typedef struct ul_info_transfer_ind_s {
   mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
-  as_nas_info_t    nas_msg;   /* Uplink NAS message           */
+  bstring          nas_msg;   /* Uplink NAS message           */
 } ul_info_transfer_ind_t;
 
 /*

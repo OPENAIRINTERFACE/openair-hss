@@ -40,6 +40,7 @@ white='\E[37m'
 reset_color='\E[00m'
 COLORIZE=1
 
+#-------------------------------------------------------------------------------
 cecho()  {  
     # Color-echo
     # arg1 = message
@@ -64,6 +65,7 @@ echo_info()    { cecho "$*" $blue         ;}
 # Cleaners
 ###########################
 
+#-------------------------------------------------------------------------------
 clean_kernel() {
     $SUDO modprobe ip_tables
     $SUDO modprobe x_tables
@@ -80,6 +82,7 @@ clean_kernel() {
     echo_info "Flushed iptables"
 }
 
+#-------------------------------------------------------------------------------
 clean_all_files() {
  set_openair_env
  dir=$OPENAIRCN_DIR/BUILD
@@ -130,7 +133,7 @@ make_test() {
   cd $OPENAIRCN_DIR/BUILD/$1/BUILD
   if [ "a$4" == "a1" ]; then 
     {
-      make test
+      make test ARGS="-V"
     } | tee $dlog/$2_test.txt 
   else
     {
@@ -144,6 +147,7 @@ make_test() {
 # X.509 certificates
 ##########################################
 
+#-------------------------------------------------------------------------------
 make_one_cert() {
   fqdn=$1
   name=$2
@@ -152,6 +156,7 @@ make_one_cert() {
   $SUDO openssl ca -cert cacert.pem -keyfile cakey.pem -in $name.csr.pem -out $name.cert.pem -outdir . -batch
 }
 
+#-------------------------------------------------------------------------------
 make_certs(){
     
   fqdn=$1
@@ -182,6 +187,7 @@ make_certs(){
 }
 
 
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_xtables_addons_oai() {
   if [ $1 -eq 0 ]; then
@@ -231,6 +237,7 @@ install_xtables_addons_oai() {
 # External packages installers
 ############################################
 
+#-------------------------------------------------------------------------------
 # This function is for internal use of EURECOM developers (no support)
 # arg1 is force (no interactive script)
 install_netmap() {
@@ -262,13 +269,14 @@ install_netmap() {
       if [ ! -f /usr/src/linux-source-"$current_kernel_release"/"$current_kernel_release" ]; then
         echo "Untar kernel source code"
         cd /usr/src/linux-source-"$current_kernel_release"
-        tar xjf *.tar.bz2
+        $SUDO tar xjf *.tar.bz2
       fi
       cd linux-source-"$current_kernel_release"
       $SUDO make oldconfig
       $SUDO make
+      $SUDO make modules_install
       $SUDO make install
-      # TODO: check CONFIG_VIRTIO_NET=m for full performance 
+      echo_warning "check CONFIG_VIRTIO_NET=m for full performance" 
       echo_fatal "Please reboot your computer on the new installed kernel (do your own stuff in grub.cfg): $current_kernel_release"
     fi
        
@@ -279,6 +287,7 @@ install_netmap() {
     ./configure --kernel-sources=/usr/src/linux-source-"$current_kernel_release"/"$current_kernel_release"
   fi
 }
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_nettle_from_source() {
   if [ $1 -gt 0 ]; then 
@@ -324,6 +333,7 @@ install_nettle_from_source() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_gnutls_from_source(){
   if [ $1 -gt 0 ]; then 
@@ -385,6 +395,7 @@ install_gnutls_from_source(){
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_1.1.5_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
@@ -440,6 +451,7 @@ install_1.1.5_freediameter_from_source() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
@@ -495,6 +507,7 @@ install_freediameter_from_source() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_latest_freediameter_from_source() {
   if [ $1 -eq 0 ]; then
@@ -549,6 +562,7 @@ install_latest_freediameter_from_source() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is package name
 test_install_package() {
   # usage: test_install_package package_name
@@ -562,15 +576,22 @@ test_install_package() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 check_gtpu_kmodule_installed() {
   if [ -e /lib/modules/`uname -r`/extra/xt_GTPUSP.ko ]; then
     echo_info "GTPU kernel module installed"
   else
-    echo_fatal "GTPU kernel module not installed"
+    echo_error "GTPU kernel module not installed - SPGW might crash"
+    echo_error "You can continue if you know what you are doing"
+    read -p "Do you want continue? <Y/n> " prompt
+    if [[ $prompt =~ [nN](o)* ]]; then
+      exit -1
+    fi
   fi  
 }
 
 
+#-------------------------------------------------------------------------------
 # arg1 is required minimal version of linux-headers and linux-image
 # arg2 is force (no interactive script)
 check_kernel_release_and_install_xtables_addons_oai() {
@@ -606,6 +627,7 @@ check_kernel_release_and_install_xtables_addons_oai() {
   fi 
 }
 
+#-------------------------------------------------------------------------------
 update_package_db() {
   if [ ! -f /tmp/no_more_update_package_db ]; then
     $SUDO apt-get update
@@ -619,6 +641,7 @@ update_package_db() {
   fi
 }
 
+#-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_hss_software() {
   if [ $1 -gt 0 ]; then 
@@ -678,8 +701,9 @@ check_install_hss_software() {
     python-pexpect 
 }
 
+#-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
-check_install_mme_gw_software() {
+check_install_mme_software() {
   if [ $1 -gt 0 ]; then 
     OPTION="-y"
   else
@@ -709,7 +733,8 @@ check_install_mme_gw_software() {
     git \
     pkg-config \
     subversion \
-    valgrind"
+    valgrind \
+    Kcachegrind"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
   if [ $? -ne 0 ]; then 
     echo_fatal "Failed to install package list $PACKAGE_LIST"
@@ -721,7 +746,7 @@ check_install_mme_gw_software() {
     libconfig8-dev \
     libgcrypt11-dev \
     libgmp-dev \
-    libhogweed2 \
+    libhogweed? \
     libgtk-3-dev \
     libidn2-0-dev \
     libidn11-dev \
@@ -751,7 +776,6 @@ check_install_mme_gw_software() {
   # Networking
   PACKAGE_LIST="\
     ethtool \
-    iperf \
     iproute \
     vlan \
     tshark"
@@ -770,10 +794,9 @@ check_install_mme_gw_software() {
   if [ $? -ne 0 ]; then 
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi
-
-  check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $1
 }
 
+#-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_spgw_software() {
   if [ $1 -gt 0 ]; then 
@@ -809,7 +832,7 @@ check_install_spgw_software() {
     libconfig8-dev \
     libgcrypt11-dev \
     libgmp-dev \
-    libhogweed2 \ 
+    libhogweed? \
     libgtk-3-dev \
     libidn2-0-dev \
     libidn11-dev \
@@ -851,6 +874,7 @@ check_install_spgw_software() {
 }
 
 
+#-------------------------------------------------------------------------------
 install_asn1c_from_source(){
   if [ $1 -eq 0 ]; then
     OPTION=""
@@ -884,143 +908,7 @@ install_asn1c_from_source(){
   fi
 }
 
-
-##################################
-# create HSS DB
-################################
-
-# arg 1 is mysql admin     (ex: root)
-# arg 2 is mysql password  (ex: linux)
-# arg 3 is hss username    (ex: hssadmin)
-# arg 4 is hss password    (ex: admin)
-# arg 5 is database name   (ex: oai_db)
-create_hss_database(){
-  EXPECTED_ARGS=5
-  if [ $# -ne $EXPECTED_ARGS ]
-  then
-    echo_error "Usage: create_hss_database dbadmin dbpass hssuser hsspass databasename"
-    return 1
-  fi
-  local mysql_admin=$1
-  local mysql_password=$2
-  local hss_username=$3
-  local hss_password=$4
-  local database_name=$5
-    
-  Q1="GRANT ALL PRIVILEGES ON *.* TO '$hss_username'@'localhost' IDENTIFIED BY '$hss_password' WITH GRANT OPTION;"
-  Q2="FLUSH PRIVILEGES;"
-  mysql -u $mysql_admin --password=$mysql_password -e "${Q1}${Q2}"
-  if [ $? -ne 0 ]; then
-    echo_error "HSS: $hss_username permissions creation failed"
-    echo_error "verify root password for mysql is linux: mysql -u root --password=linux"
-    echo_error "if not, reset it to "linux" with sudo dpkg-reconfigure mysql-server-5.5"
-    return 1
-  else
-    echo_success "HSS: $hss_username permissions creation succeeded"
-  fi
-
-  Q3="CREATE DATABASE IF NOT EXISTS $database_name;"
-  mysql -u $hss_username --password=$hss_password -e "${Q3}"
-  if [ $? -ne 0 ]; then
-    echo_error "HSS: $database_name creation failed"
-    return 1
-  else
-    echo_success "HSS: $database_name creation succeeded"
-  fi
-
-    
-  # test if tables have been created
-  mysql -u $hss_username --password=$hss_password  -e "desc $database_name.users" > /dev/null 2>&1
-  if [ $? -eq 1 ]; then 
-    mysql -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/SRC/OAI_HSS/db/$database_name.sql
-    if [ $? -ne 0 ]; then
-      echo_error "HSS: $database_name tables creation failed"
-      return 1
-    else
-      echo_success "HSS: $database_name tables creation succeeded"
-    fi
-  else
-      echo_success "HSS: $database_name tables already created, nothing done"
-  fi 
-  return 0
-}
-
-##################################
-# export HSS DB
-################################
-
-# arg 1 is hss username    (ex: hssadmin)
-# arg 2 is hss password    (ex: admin)
-# arg 3 is database name   (ex: oai_db)
-# arg 4 is export file name(ex: oai_db_dump.sql)
-export_hss_database(){
-  EXPECTED_ARGS=4
-  if [ $# -ne $EXPECTED_ARGS ]
-  then
-    echo_error "Usage: export_hss_database hssuser hsspass databasename filename"
-    return 1
-  fi
-  local hss_username=$1
-  local hss_password=$2
-  local database_name=$3
-  local file_name=$4
-  
-  mysqldump -u $hss_username -p$hss_password $database_name > $file_name 2>&1
-  if [ $? -ne 0 ]; then
-    echo_error "HSS: $database_name dump failed:"
-    cat $file_name
-    return 1
-  else
-    echo_success "HSS: $database_name dump succeeded"
-  fi
-
-  return 0
-}
-
-##################################
-# IMPORT HSS DB
-################################
-
-# arg 1 is hss username    (ex: hssadmin)
-# arg 2 is hss password    (ex: admin)
-# arg 3 is database name   (ex: oai_db)
-# arg 4 is import file name(ex: oai_db_dump.sql)
-import_hss_database(){
-  EXPECTED_ARGS=4
-  if [ $# -ne $EXPECTED_ARGS ]
-  then
-    echo_error "Usage: import_hss_database hssuser hsspass databasename filename"
-    return 1
-  fi
-  local hss_username=$1
-  local hss_password=$2
-  local database_name=$3
-  local file_name=$4
-  
-  mysqladmin --force -u $hss_username -p$hss_password drop $database_name 
-  
-  Q1="CREATE DATABASE IF NOT EXISTS $database_name;"
-  mysql -u $hss_username --password=$hss_password -e "${Q1}"
-  if [ $? -ne 0 ]; then
-    echo_error "HSS: $database_name creation failed"
-    return 1
-  else
-    echo_success "HSS: $database_name creation succeeded"
-  fi
-  
-  mysql -u $hss_username -p$hss_password $database_name < $file_name 
-  if [ $? -ne 0 ]; then
-    echo_error "HSS: $database_name import failed:"
-    cat $file_name
-    return 1
-  else
-    echo_success "HSS: $database_name import succeeded"
-  fi
-
-  return 0
-}
-
-
+#-------------------------------------------------------------------------------
 cidr2mask(){
   local i mask=""
   local full_octets=$(($1/8))
@@ -1040,6 +928,7 @@ cidr2mask(){
   echo $mask
 }
 
+#-------------------------------------------------------------------------------
 # example: netcalc 192.168.12.100 255.255.255.0
 netcalc(){
   local IFS='.' ip i
@@ -1055,6 +944,7 @@ netcalc(){
   echo "${ip[*]}"
 }
 
+#-------------------------------------------------------------------------------
 # example: 
 bcastcalc(){
   local IFS='.' ip i
@@ -1070,6 +960,7 @@ bcastcalc(){
 }
 
 
+#-------------------------------------------------------------------------------
 is_real_interface(){
   my_bool=1
   for var in "$@"
@@ -1094,6 +985,7 @@ is_real_interface(){
   return $my_bool
 }
 
+#-------------------------------------------------------------------------------
 is_virtual_interface(){
   my_bool=1
   for var in "$@"
@@ -1113,6 +1005,7 @@ is_virtual_interface(){
   return $my_bool
 }
 
+#-------------------------------------------------------------------------------
 # arg1 = interface name
 # arg2 = ipv4 addr cidr
 set_interface_up(){
@@ -1133,6 +1026,7 @@ set_interface_up(){
   sync
 }
 
+#-------------------------------------------------------------------------------
 # arg1 = interface name
 # arg2 = ipv4 addr cidr
 set_virtual_interface_up(){
@@ -1143,13 +1037,12 @@ set_virtual_interface_up(){
   if [ "a${interface:0:4}" == "anone" ]; then
     return;
   fi
-  $SUDO ifconfig  $interface down > /dev/null 2>&1
-  sync
   echo "ifconfig  $interface $address up"
   $SUDO ifconfig  $interface $address up
   sync
 }
 
+#-------------------------------------------------------------------------------
 #arg1 is interface name
 #arg2 is IP address (CIDR)
 set_network_interface(){
@@ -1172,6 +1065,7 @@ set_network_interface(){
   fi
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is MME or EPC config file
 set_mme_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
@@ -1195,6 +1089,7 @@ set_mme_network_interfaces(){
   set_network_interface  $MME_INTERFACE_NAME_FOR_S11_MME        $MME_IPV4_ADDRESS_FOR_S11_MME 
 }
 
+#-------------------------------------------------------------------------------
 # arg1 is S/P-GW or EPC config file
 set_spgw_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
@@ -1224,12 +1119,7 @@ set_spgw_network_interfaces(){
   set_network_interface  $PGW_INTERFACE_NAME_FOR_SGI            $PGW_IPV4_ADDRESS_FOR_SGI
 }
 
-# arg1 is EPC config file
-set_epc_network_interfaces(){
-  set_mme_network_interfaces $1
-  set_spgw_network_interfaces $1
-}
-
+#-------------------------------------------------------------------------------
 # arg1 is a 'libconfig-like' config file
 set_enb_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
@@ -1256,11 +1146,12 @@ set_enb_network_interfaces(){
 ################################
 # set_openair_env
 ###############################
+#-------------------------------------------------------------------------------
 set_openair_env(){
     fullpath=`readlink -f $BASH_SOURCE`
     [ -f "/.$fullpath" ] || fullpath=`readlink -f $PWD/$fullpath`
     openair_path=${fullpath%/BUILD/*}
-    openair_path=${openair_path%/DOCS/*}
+    openair_path=${openair_path%/SCRIPTS/*}
     openair_path=${openair_path%/SRC/NAS/*}
     openair_path=${openair_path%/SRC/S6A/*}
     export OPENAIRCN_DIR=$openair_path
@@ -1271,6 +1162,7 @@ set_openair_env(){
 # send ctrl-c and finally force terminate the program and all its child processes
 ###############################
 
+#-------------------------------------------------------------------------------
 function handle_ctrl_c(){
 CURPID=$$
 ppid=$$

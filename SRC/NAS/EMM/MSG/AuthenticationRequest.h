@@ -19,10 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_AUTHENTICATION_REQUEST_SEEN
+#define FILE_AUTHENTICATION_REQUEST_SEEN
 #include <stdint.h>
-
 #include "ProtocolDiscriminator.h"
 #include "SecurityHeaderType.h"
 #include "MessageType.h"
@@ -30,8 +29,6 @@
 #include "AuthenticationParameterRand.h"
 #include "AuthenticationParameterAutn.h"
 
-#ifndef FILE_AUTHENTICATION_REQUEST_SEEN
-#define FILE_AUTHENTICATION_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define AUTHENTICATION_REQUEST_MINIMUM_LENGTH ( \

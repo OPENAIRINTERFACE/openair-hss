@@ -47,7 +47,7 @@
 *****************************************************************************/
 
 #include <string.h>             // memcmp, memcpy
-#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
+#include <stdlib.h>             // malloc, free_wrapper
 
 #include "emm_proc.h"
 #include "log.h"
@@ -145,7 +145,8 @@ _emm_service_reject (
   if (emm_ctx) {
     emm_sap_t                               emm_sap = {0};
 
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM service procedure not accepted " "by the network (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n", emm_ctx->ue_id, emm_ctx->emm_cause);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM service procedure not accepted " "by the network (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n",
+        emm_ctx->ue_id, emm_ctx->emm_cause);
     /*
      * Notify EMM-AS SAP that Tracking Area Update Reject message has to be sent
      * onto the network
@@ -160,12 +161,11 @@ _emm_service_reject (
 
     emm_sap.u.emm_as.u.establish.emm_cause = emm_ctx->emm_cause;
     emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_SR;
-    emm_sap.u.emm_as.u.establish.nas_msg.length = 0;
-    emm_sap.u.emm_as.u.establish.nas_msg.value = NULL;
+    emm_sap.u.emm_as.u.establish.nas_msg = NULL;
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, emm_ctx->security, false, false);
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_ctx->_security, false, false);
     rc = emm_sap_send (&emm_sap);
   }
 

@@ -106,35 +106,32 @@ typedef struct nas_message_decode_status_s {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int
-nas_message_encrypt(
-  const char                          *inbuf,
-  char                                *outbuf,
-  const nas_message_security_header_t *header,
-  size_t                               length,
-  void                                *security);
+int nas_message_encrypt(
+    const unsigned char                 *inbuf,
+    unsigned char                       *outbuf,
+    const nas_message_security_header_t *header,
+    size_t                               length,
+    void                                *security);
 
-int
-nas_message_decrypt(const char * const inbuf,
-  char                         * const outbuf,
-  nas_message_security_header_t  *header,
-  size_t                          length,
-  void                           *security,
-  nas_message_decode_status_t *   status);
+int nas_message_decrypt(
+    const unsigned char     * const inbuf,
+    unsigned char           * const outbuf,
+    nas_message_security_header_t  *header,
+    size_t                          length,
+    void                           *security,
+    nas_message_decode_status_t *   status);
 
-int
-nas_message_decode(
-  const char * const  buffer,
-  nas_message_t      *msg,
-  size_t              length,
-  void               *security,
-  nas_message_decode_status_t * status);
+int nas_message_decode(
+    const unsigned char * const  buffer,
+    nas_message_t      *msg,
+    size_t              length,
+    void               *security,
+    nas_message_decode_status_t * status);
 
-int
-nas_message_encode(
-  char                       *buffer,
-  const nas_message_t * const msg,
-  size_t                      length,
-  void                       *security);
+int nas_message_encode(
+    unsigned char              *buffer,
+    const nas_message_t * const msg,
+    size_t                      length,
+    void                       *security);
 
 #endif /* FILE_NAS_MESSAGE_SEEN*/

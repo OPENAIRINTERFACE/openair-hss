@@ -37,16 +37,17 @@
 
 *****************************************************************************/
 
-#include "3gpp_24.007.h"
-#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
+#include <stdlib.h>             // malloc, free_wrapper
 #include <string.h>             // memcpy
 
+#include "dynamic_memory_check.h"
+#include "log.h"
+#include "msc.h"
+#include "3gpp_24.007.h"
 #include "commonDef.h"
 #include "emmData.h"
 #include "esm_ebr.h"
-#include "log.h"
 #include "mme_api.h"
-#include "msc.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -173,7 +174,7 @@ esm_ebr_assign (
   /*
    * Assign new EPS bearer context
    */
-  ebr_ctx = (esm_ebr_context_t *) MALLOC_CHECK (sizeof (esm_ebr_context_t));
+  ebr_ctx = (esm_ebr_context_t *) malloc (sizeof (esm_ebr_context_t));
 
   if (ebr_ctx == NULL) {
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
@@ -268,18 +269,18 @@ esm_ebr_release (
    * Release the retransmisison timer parameters
    */
   if (ebr_ctx->args) {
-    if (ebr_ctx->args->msg.length > 0) {
-      FREE_CHECK (ebr_ctx->args->msg.value);
+    if (ebr_ctx->args->msg) {
+      bdestroy (ebr_ctx->args->msg);
     }
 
-    FREE_CHECK (ebr_ctx->args);
+    free_wrapper (ebr_ctx->args);
     ebr_ctx->args = NULL;
   }
 
   /*
    * Release EPS bearer context data
    */
-  FREE_CHECK (ebr_ctx);
+  free_wrapper (ebr_ctx);
   ebr_ctx = NULL;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context %d released\n", ebi);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
@@ -310,7 +311,7 @@ int
 esm_ebr_start_timer (
   emm_data_context_t * ctx,
   int ebi,
-  const OctetString * msg,
+  CLONE_REF const_bstring msg,
   long sec,
   nas_timer_callback_t cb)
 {
@@ -348,7 +349,7 @@ esm_ebr_start_timer (
     /*
      * Setup the retransmission timer parameters
      */
-    ebr_ctx->args = (esm_ebr_timer_data_t *) MALLOC_CHECK (sizeof (esm_ebr_timer_data_t));
+    ebr_ctx->args = (esm_ebr_timer_data_t *) malloc (sizeof (esm_ebr_timer_data_t));
 
     if (ebr_ctx->args) {
       /*
@@ -366,13 +367,7 @@ esm_ebr_start_timer (
       /*
        * Set the ESM message to be re-transmited
        */
-      ebr_ctx->args->msg.value = (uint8_t *) MALLOC_CHECK (msg->length);
-      ebr_ctx->args->msg.length = 0;
-
-      if (ebr_ctx->args->msg.value) {
-        memcpy (ebr_ctx->args->msg.value, msg->value, msg->length);
-        ebr_ctx->args->msg.length = msg->length;
-      }
+      ebr_ctx->args->msg = bstrcpy (msg);
 
       /*
        * Setup the retransmission timer to expire at the given
@@ -448,12 +443,11 @@ esm_ebr_stop_timer (
    * Release the retransmisison timer parameters
    */
   if (ebr_ctx->args) {
-    if (ebr_ctx->args->msg.length > 0) {
-      FREE_CHECK (ebr_ctx->args->msg.value);
+    if (ebr_ctx->args->msg) {
+      bdestroy (ebr_ctx->args->msg);
     }
 
-    FREE_CHECK (ebr_ctx->args);
-    ebr_ctx->args = NULL;
+    free_wrapper (ebr_ctx->args);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);

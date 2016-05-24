@@ -52,8 +52,25 @@ typedef enum emmcn_primitive_s {
   _EMMCN_END
 } emm_cn_primitive_t;
 
-typedef itti_nas_auth_param_rsp_t        emm_cn_auth_res_t;
-typedef itti_nas_auth_param_fail_t       emm_cn_auth_fail_t;
+typedef struct emm_cn_auth_res_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t ue_id;
+
+  /* For future use: nb of vectors provided */
+  uint8_t nb_vectors;
+
+  /* Consider only one E-UTRAN vector for the moment... */
+  eutran_vector_t *vector[MAX_EPS_AUTH_VECTORS];
+} emm_cn_auth_res_t;
+
+typedef struct emm_cn_auth_fail_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t    ue_id;
+
+  /* S6A mapped to NAS cause */
+  nas_cause_t cause;
+} emm_cn_auth_fail_t;
+
 typedef itti_nas_pdn_connectivity_rsp_t  emm_cn_pdn_res_t;
 typedef itti_nas_pdn_connectivity_fail_t emm_cn_pdn_fail_t;
 

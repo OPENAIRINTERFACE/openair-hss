@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef PACKET_FLOW_IDENTIFIER_H_
 #define PACKET_FLOW_IDENTIFIER_H_
+#include <stdint.h>
 
 #define PACKET_FLOW_IDENTIFIER_MINIMUM_LENGTH 3
 #define PACKET_FLOW_IDENTIFIER_MAXIMUM_LENGTH 3

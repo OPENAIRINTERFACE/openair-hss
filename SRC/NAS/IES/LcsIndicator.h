@@ -19,14 +19,10 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
 
 #ifndef LCS_INDICATOR_H_
 #define LCS_INDICATOR_H_
+#include <stdint.h>
 
 #define LCS_INDICATOR_MINIMUM_LENGTH 2
 #define LCS_INDICATOR_MAXIMUM_LENGTH 2

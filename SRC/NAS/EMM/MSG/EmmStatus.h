@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_EMM_STATUS_SEEN
+#define FILE_EMM_STATUS_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -28,8 +28,6 @@
 #include "MessageType.h"
 #include "EmmCause.h"
 
-#ifndef FILE_EMM_STATUS_SEEN
-#define FILE_EMM_STATUS_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define EMM_STATUS_MINIMUM_LENGTH ( \

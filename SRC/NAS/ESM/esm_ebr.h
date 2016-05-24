@@ -39,7 +39,7 @@ Description Defines functions used to handle state of EPS bearer contexts
 #ifndef __ESM_EBR_H__
 #define __ESM_EBR_H__
 
-#include "OctetString.h"
+#include "bstrlib.h"
 #include "nas_timer.h"
 
 /****************************************************************************/
@@ -67,7 +67,7 @@ void esm_ebr_initialize(void);
 int esm_ebr_assign(emm_data_context_t *ctx, int ebi);
 int esm_ebr_release(emm_data_context_t *ctx, int ebi);
 
-int esm_ebr_start_timer(emm_data_context_t *ctx, int ebi, const OctetString *msg,
+int esm_ebr_start_timer(emm_data_context_t *ctx, int ebi, CLONE_REF const_bstring msg,
                         long sec, nas_timer_callback_t cb);
 int esm_ebr_stop_timer(emm_data_context_t *ctx, int ebi);
 

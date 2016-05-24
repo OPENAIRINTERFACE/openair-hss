@@ -29,21 +29,20 @@
  *  @{
  */
 
-#if HAVE_CONFIG_H
-# include "config.h"
-#endif
-
-#include "mme_config.h"
 
 #if !defined(HAVE_LIBSCTP)
 # error "You must install libsctp-dev"
 #endif
 
-#include <netinet/in.h>
-#include <netinet/sctp.h>
 
 #ifndef FILE_SCTP_PRIMITIVES_SERVER_SEEN
 #define FILE_SCTP_PRIMITIVES_SERVER_SEEN
+#if HAVE_CONFIG_H
+# include "config.h"
+#endif
+#include <netinet/in.h>
+#include <netinet/sctp.h>
+#include "mme_config.h"
 
 /** \brief SCTP data received callback
  \param buffer pointer to buffer received

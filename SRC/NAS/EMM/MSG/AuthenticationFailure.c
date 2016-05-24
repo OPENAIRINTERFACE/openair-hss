@@ -74,8 +74,8 @@ decode_authentication_failure (
       break;
 
     default:
-      errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;
-      return TLV_DECODE_UNEXPECTED_IEI;
+      errorCodeDecoder = TLV_UNEXPECTED_IEI;
+      return TLV_UNEXPECTED_IEI;
     }
   }
 
@@ -103,7 +103,7 @@ encode_authentication_failure (
 
   if ((authentication_failure->presencemask & AUTHENTICATION_FAILURE_AUTHENTICATION_FAILURE_PARAMETER_PRESENT)
       == AUTHENTICATION_FAILURE_AUTHENTICATION_FAILURE_PARAMETER_PRESENT) {
-    if ((encode_result = encode_authentication_failure_parameter (&authentication_failure->authenticationfailureparameter, AUTHENTICATION_FAILURE_AUTHENTICATION_FAILURE_PARAMETER_IEI, buffer + encoded, len - encoded)) < 0)
+    if ((encode_result = encode_authentication_failure_parameter (authentication_failure->authenticationfailureparameter, AUTHENTICATION_FAILURE_AUTHENTICATION_FAILURE_PARAMETER_IEI, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

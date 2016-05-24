@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef LLC_SERVICE_ACCESS_POINT_IDENTIFIER_H_
 #define LLC_SERVICE_ACCESS_POINT_IDENTIFIER_H_
+#include <stdint.h>
 
 #define LLC_SERVICE_ACCESS_POINT_IDENTIFIER_MINIMUM_LENGTH 2
 #define LLC_SERVICE_ACCESS_POINT_IDENTIFIER_MAXIMUM_LENGTH 2
