@@ -18,14 +18,10 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
 
 #ifndef MS_NETWORK_FEATURE_SUPPORT_H_
 #define MS_NETWORK_FEATURE_SUPPORT_H_
+#include <stdint.h>
 
 #define MS_NETWORK_FEATURE_SUPPORT_MINIMUM_LENGTH 3
 #define MS_NETWORK_FEATURE_SUPPORT_MAXIMUM_LENGTH 10

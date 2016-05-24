@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <inttypes.h>
 
 #include "backtrace.h"
@@ -71,7 +72,7 @@ do {                                                        \
 #define _ASSERT_FINAL_ _Assert_Exit_
 #endif
 
-#define AssertFatal(cOND, fORMAT, aRGS...)          _Assert_(cOND, _ASSERT_FINAL_ , fORMAT, ##aRGS)
+#define AssertFatal(cOND, ...)          _Assert_(cOND, _ASSERT_FINAL_ , ##__VA_ARGS__)
 #define DevCheck(cOND, vALUE1, vALUE2, vALUE3)                                                          \
                         _Assert_(cOND, _ASSERT_FINAL_, #vALUE1 ": %" PRIdMAX "\n" #vALUE2 ": %" PRIdMAX "\n" #vALUE3 ": %" PRIdMAX "\n\n",  \
                         (intmax_t)vALUE1, (intmax_t)vALUE2, (intmax_t)vALUE3)

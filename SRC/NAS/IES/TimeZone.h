@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef TIME_ZONE_H_
 #define TIME_ZONE_H_
+#include <stdint.h>
 
 #define TIME_ZONE_MINIMUM_LENGTH 2
 #define TIME_ZONE_MAXIMUM_LENGTH 2

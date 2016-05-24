@@ -66,7 +66,7 @@ encode_uplink_nas_transport (
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, UPLINK_NAS_TRANSPORT_MINIMUM_LENGTH, len);
 
-  if ((encode_result = encode_nas_message_container (&uplink_nas_transport->nasmessagecontainer, 0, buffer + encoded, len - encoded)) < 0)      //Return in case of error
+  if ((encode_result = encode_nas_message_container (uplink_nas_transport->nasmessagecontainer, 0, buffer + encoded, len - encoded)) < 0)      //Return in case of error
     return encode_result;
   else
     encoded += encode_result;

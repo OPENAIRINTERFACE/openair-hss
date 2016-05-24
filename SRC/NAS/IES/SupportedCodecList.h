@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef SUPPORTED_CODEC_LIST_H_
 #define SUPPORTED_CODEC_LIST_H_
+#include <stdint.h>
 
 #define SUPPORTED_CODEC_LIST_MINIMUM_LENGTH 5
 #define SUPPORTED_CODEC_LIST_MAXIMUM_LENGTH 5

@@ -41,7 +41,7 @@
 #include <stdint.h>
 
 #include <string.h>             // memset
-#include <stdlib.h>             // MALLOC_CHECK, free
+#include <stdlib.h>             // malloc, free
 #include <sys/time.h>           // setitimer
 
 #if ENABLE_ITTI
@@ -497,7 +497,7 @@ _nas_timer_handler (
      * TODO: Check returned result ???
      */
     if (result) {
-      FREE_CHECK (result);
+      free_wrapper (result);
     }
   }
 }
@@ -628,7 +628,7 @@ _nas_timer_db_create_entry (
   nas_timer_callback_t cb,
   void *args)
 {
-  nas_timer_entry_t                      *te = (nas_timer_entry_t *) MALLOC_CHECK (sizeof (nas_timer_entry_t));
+  nas_timer_entry_t                      *te = (nas_timer_entry_t *) malloc (sizeof (nas_timer_entry_t));
 
   if (te ) {
     te->itv.tv_sec = sec;
@@ -669,7 +669,7 @@ _nas_timer_db_delete_entry (
    * Delete the timer entry from the queue
    */
   _nas_timer_db.tq[id].id = NAS_TIMER_INACTIVE_ID;
-  FREE_CHECK (_nas_timer_db.tq[id].entry);
+  free_wrapper (_nas_timer_db.tq[id].entry);
   _nas_timer_db.tq[id].entry = NULL;
 }
 

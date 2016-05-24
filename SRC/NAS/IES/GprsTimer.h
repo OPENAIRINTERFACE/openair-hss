@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef GPRS_TIMER_H_
 #define GPRS_TIMER_H_
+#include <stdint.h>
 
 #define GPRS_TIMER_MINIMUM_LENGTH 2
 #define GPRS_TIMER_MAXIMUM_LENGTH 2

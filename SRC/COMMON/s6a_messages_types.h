@@ -29,6 +29,14 @@
 #ifndef FILE_S6A_MESSAGES_TYPES_SEEN
 #define FILE_S6A_MESSAGES_TYPES_SEEN
 
+
+
+#define S6A_UPDATE_LOCATION_REQ(mSGpTR)  (mSGpTR)->ittiMsg.s6a_update_location_req
+#define S6A_UPDATE_LOCATION_ANS(mSGpTR)  (mSGpTR)->ittiMsg.s6a_update_location_ans
+#define S6A_AUTH_INFO_REQ(mSGpTR)        (mSGpTR)->ittiMsg.s6a_auth_info_req
+#define S6A_AUTH_INFO_ANS(mSGpTR)        (mSGpTR)->ittiMsg.s6a_auth_info_ans
+
+
 #define AUTS_LENGTH 14
 
 typedef struct s6a_update_location_req_s {

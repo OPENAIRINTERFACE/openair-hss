@@ -85,7 +85,7 @@ encode_ue_security_capability (
   /*
    * Checking IEI and pointer
    */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, UE_SECURITY_CAPABILITY_MINIMUM_LENGTH, len);
+  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, UE_SECURITY_CAPABILITY_MAXIMUM_LENGTH, len);
 #if NAS_DEBUG
   dump_ue_security_capability_xml (uesecuritycapability, iei);
 #endif
@@ -146,16 +146,16 @@ dump_ue_security_capability_xml (
      */
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  OAILOG_DEBUG (LOG_NAS, "    <EEA>%u</EEA>\n", uesecuritycapability->eea);
-  OAILOG_DEBUG (LOG_NAS, "    <EIA>%u</EIA>\n", uesecuritycapability->eia);
+  OAILOG_DEBUG (LOG_NAS, "    <EEA>%08X</EEA>\n", uesecuritycapability->eea);
+  OAILOG_DEBUG (LOG_NAS, "    <EIA>%08X</EIA>\n", uesecuritycapability->eia);
 
   if (uesecuritycapability->umts_present == 1) {
-    OAILOG_DEBUG (LOG_NAS, "    <UEA>%u</UEA>\n", uesecuritycapability->uea);
-    OAILOG_DEBUG (LOG_NAS, "    <UIA>%u</UIA>\n", uesecuritycapability->uia);
+    OAILOG_DEBUG (LOG_NAS, "    <UEA>%08X</UEA>\n", uesecuritycapability->uea);
+    OAILOG_DEBUG (LOG_NAS, "    <UIA>%08X</UIA>\n", uesecuritycapability->uia);
   }
 
   if (uesecuritycapability->gprs_present == 1) {
-    OAILOG_DEBUG (LOG_NAS, "    <GEA>%u</GEA>\n", uesecuritycapability->gea);
+    OAILOG_DEBUG (LOG_NAS, "    <GEA>%08X</GEA>\n", uesecuritycapability->gea);
   }
 
   OAILOG_DEBUG (LOG_NAS, "</Ue Security Capability>\n");

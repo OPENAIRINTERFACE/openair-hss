@@ -47,7 +47,7 @@ decode_ue_network_capability (
 
   DECODE_U8 (buffer + decoded, ielen, decoded);
   memset (uenetworkcapability, 0, sizeof (UeNetworkCapability));
-  OAILOG_INFO (LOG_NAS_EMM, "decode_ue_network_capability len = %d", ielen);
+  OAILOG_INFO (LOG_NAS_EMM, "decode_ue_network_capability len = %d\n", ielen);
   CHECK_LENGTH_DECODER (len - decoded, ielen);
   uenetworkcapability->eea = *(buffer + decoded);
   decoded++;
@@ -76,11 +76,9 @@ decode_ue_network_capability (
         uenetworkcapability->srvcc = (*(buffer + decoded) >> 1) & 0x1;
         uenetworkcapability->nf = *(buffer + decoded) & 0x1;
         decoded++;
-        uenetworkcapability->gprs_present = 1;
-        OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded GPRS\n");
+        uenetworkcapability->misc_present = 1;
+        OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability decoded misc flags\n");
       }
-//#pragma message  "Force GPRS present if UMTS present"
-      uenetworkcapability->gprs_present = 1;
     }
   }
 
@@ -135,17 +133,15 @@ encode_ue_network_capability (
     OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded UMTS %u\n", encoded);
   }
 
-  if (uenetworkcapability->gprs_present) {
-//#pragma message  "Force gea to 0x60"
-    *(buffer + encoded) = 0x00 | 0x60;
-    ////((uenetworkcapability->spare & 0x7) << 5) | // spare coded as zero
-    //((uenetworkcapability->csfb  & 0x1) << 4) |
-    //((uenetworkcapability->lpp   & 0x1) << 3) |
-    //((uenetworkcapability->lcs   & 0x1) << 2) |
-    //((uenetworkcapability->srvcc & 0x1) << 1) |
-    //(uenetworkcapability->nf     & 0x1);
+  if (uenetworkcapability->misc_present) {
+    *(buffer + encoded) =  ((uenetworkcapability->spare & 0x7) << 5) | // spare coded as zero
+        ((uenetworkcapability->csfb  & 0x1) << 4) |
+        ((uenetworkcapability->lpp   & 0x1) << 3) |
+        ((uenetworkcapability->lcs   & 0x1) << 2) |
+        ((uenetworkcapability->srvcc & 0x1) << 1) |
+        (uenetworkcapability->nf     & 0x1);
     encoded++;
-    OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded GPRS %u\n", encoded);
+    OAILOG_INFO (LOG_NAS_EMM, "uenetworkcapability encoded misc flags %u\n", encoded);
   }
 
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
@@ -168,15 +164,17 @@ dump_ue_network_capability_xml (
   OAILOG_DEBUG (LOG_NAS, "    <EEA>%02x</EEA>\n", uenetworkcapability->eea);
   OAILOG_DEBUG (LOG_NAS, "    <EIA>%02x</EIA>\n", uenetworkcapability->eia);
   OAILOG_DEBUG (LOG_NAS, "    <UEA>%02x</UEA>\n", uenetworkcapability->uea);
-  OAILOG_DEBUG (LOG_NAS, "    <UCS2>%u</UCS2>\n", uenetworkcapability->ucs2);
-  OAILOG_DEBUG (LOG_NAS, "    <UIA>%u</UIA>\n", uenetworkcapability->uia);
-  OAILOG_DEBUG (LOG_NAS, "    <SPARE>%u</SPARE>\n", uenetworkcapability->spare);
-  OAILOG_DEBUG (LOG_NAS, "    <CSFB>%u</CSFB>\n", uenetworkcapability->csfb);
-  OAILOG_DEBUG (LOG_NAS, "    <LPP>%u</LPP>\n", uenetworkcapability->lpp);
-  OAILOG_DEBUG (LOG_NAS, "    <LCS>%u</LCS>\n", uenetworkcapability->lcs);
-  OAILOG_DEBUG (LOG_NAS, "    <SR VCC>%u</SR VCC>\n", uenetworkcapability->srvcc);
-  OAILOG_DEBUG (LOG_NAS, "    <NF>%u<NF/>\n", uenetworkcapability->nf);
-  OAILOG_DEBUG (LOG_NAS, "    <UMTS>%u<UMTS/>\n", uenetworkcapability->umts_present);
-  OAILOG_DEBUG (LOG_NAS, "    <GPRS>%u<GPRS/>\n", uenetworkcapability->gprs_present);
+  if (uenetworkcapability->umts_present) {
+    OAILOG_DEBUG (LOG_NAS, "    <UCS2>%u</UCS2>\n", uenetworkcapability->ucs2);
+    OAILOG_DEBUG (LOG_NAS, "    <UIA>%u</UIA>\n", uenetworkcapability->uia);
+  }
+  if (uenetworkcapability->misc_present) {
+    OAILOG_DEBUG (LOG_NAS, "    <SPARE>%u</SPARE>\n", uenetworkcapability->spare);
+    OAILOG_DEBUG (LOG_NAS, "    <CSFB>%u</CSFB>\n", uenetworkcapability->csfb);
+    OAILOG_DEBUG (LOG_NAS, "    <LPP>%u</LPP>\n", uenetworkcapability->lpp);
+    OAILOG_DEBUG (LOG_NAS, "    <LCS>%u</LCS>\n", uenetworkcapability->lcs);
+    OAILOG_DEBUG (LOG_NAS, "    <SRVCC>%u</SRVCC>\n", uenetworkcapability->srvcc);
+    OAILOG_DEBUG (LOG_NAS, "    <NF>%u<NF/>\n", uenetworkcapability->nf);
+  }
   OAILOG_DEBUG (LOG_NAS, "</Ue Network Capability>\n");
 }

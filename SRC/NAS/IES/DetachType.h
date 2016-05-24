@@ -19,14 +19,11 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 
-#include "OctetString.h"
 
 #ifndef DETACH_TYPE_H_
 #define DETACH_TYPE_H_
+#include <stdint.h>
 
 #define DETACH_TYPE_MINIMUM_LENGTH 1
 #define DETACH_TYPE_MAXIMUM_LENGTH 1

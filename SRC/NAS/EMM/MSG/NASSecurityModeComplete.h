@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_SECURITY_MODE_COMPLETE_SEEN
+#define FILE_SECURITY_MODE_COMPLETE_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -28,8 +28,6 @@
 #include "MessageType.h"
 #include "MobileIdentity.h"
 
-#ifndef FILE_SECURITY_MODE_COMPLETE_SEEN
-#define FILE_SECURITY_MODE_COMPLETE_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define SECURITY_MODE_COMPLETE_MINIMUM_LENGTH (0)

@@ -20,6 +20,9 @@
  */
 
 
+#ifndef S6A_DEFS_H_
+#define S6A_DEFS_H_
+
 #if HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -30,8 +33,6 @@
 #include "mme_config.h"
 #include "queue.h"
 
-#ifndef S6A_DEFS_H_
-#define S6A_DEFS_H_
 
 #define VENDOR_3GPP (10415)
 #define APP_S6A     (16777251)

@@ -38,17 +38,15 @@
 
 *****************************************************************************/
 
-#include "3gpp_24.007.h"
-#include "esm_recv.h"
-#include "commonDef.h"
 #include "log.h"
-
+#include "3gpp_24.007.h"
+#include "commonDef.h"
+#include "nas_itti_messaging.h"
+#include "esm_recv.h"
 #include "esm_pt.h"
 #include "esm_ebr.h"
 #include "esm_proc.h"
-
 #include "esm_cause.h"
-#include "nas_itti_messaging.h"
 
 
 /****************************************************************************/
@@ -94,8 +92,8 @@ esm_recv_status (
   int ebi,
   const esm_status_msg * msg)
 {
-  int                                     esm_cause;
-  int                                     rc;
+  int                                     esm_cause = ESM_CAUSE_SUCCESS;
+  int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   OAILOG_INFO(LOG_NAS_ESM,  "ESM-SAP   - Received ESM status message (pti=%d, ebi=%d)\n", pti, ebi);
@@ -156,7 +154,7 @@ esm_recv_pdn_connectivity_request (
   void *data)
 {
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
-  uint8_t                                 i;
+  uint8_t                                 i = 0;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ue_id=%u, pti=%d, ebi=%d)\n", ctx->ue_id, pti, ebi);
@@ -237,7 +235,7 @@ esm_recv_pdn_connectivity_request (
    * Get the Access Point Name, if provided
    */
   if (msg->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT) {
-    esm_data->apn = msg->accesspointname.accesspointnamevalue;
+    esm_data->apn = msg->accesspointname;
   }
 
   /*
@@ -260,12 +258,15 @@ esm_recv_pdn_connectivity_request (
     //TODO: rc = esm_proc_information_request();
   }
 
-  esm_data->pco = msg->protocolconfigurationoptions;
+  esm_data->pco.ext = msg->protocolconfigurationoptions.ext;
+  esm_data->pco.spare = msg->protocolconfigurationoptions.spare;
+  esm_data->pco.configuration_protocol = msg->protocolconfigurationoptions.configuration_protocol;
+  esm_data->pco.num_protocol_or_container_id = msg->protocolconfigurationoptions.num_protocol_or_container_id;
 
-  for (i = 0; i < msg->protocolconfigurationoptions.num_protocol_id_or_container_id; i++) {
-    DUP_OCTET_STRING (msg->protocolconfigurationoptions.protocolidcontents[i], esm_data->pco.protocolidcontents[i]);
-    esm_data->pco.protocolid[i] = msg->protocolconfigurationoptions.protocolid[i];
-    esm_data->pco.lengthofprotocolid[i] = msg->protocolconfigurationoptions.lengthofprotocolid[i];
+  for (i = 0; i < msg->protocolconfigurationoptions.num_protocol_or_container_id; i++) {
+    esm_data->pco.protocol_or_container_ids[i].id     = msg->protocolconfigurationoptions.protocol_or_container_ids[i].id;
+    esm_data->pco.protocol_or_container_ids[i].length = msg->protocolconfigurationoptions.protocol_or_container_ids[i].length;
+    esm_data->pco.protocol_or_container_ids[i].contents = bstrcpy(msg->protocolconfigurationoptions.protocol_or_container_ids[i].contents);
   }
 
 #if ORIGINAL_CODE
@@ -291,7 +292,7 @@ esm_recv_pdn_connectivity_request (
     }
   }
 #else
-  nas_itti_pdn_connectivity_req (pti, ctx->ue_id, ctx->imsi, esm_data, request_type);
+  nas_itti_pdn_connectivity_req (pti, ctx->ue_id, &ctx->_imsi, esm_data, request_type);
   esm_cause = ESM_CAUSE_SUCCESS;
 #endif
   /*

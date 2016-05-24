@@ -31,19 +31,33 @@
 
 #define SCTP_DATA_IND(mSGpTR)           (mSGpTR)->ittiMsg.sctp_data_ind
 #define SCTP_DATA_REQ(mSGpTR)           (mSGpTR)->ittiMsg.sctp_data_req
+#define SCTP_DATA_CNF(mSGpTR)           (mSGpTR)->ittiMsg.sctp_data_cnf
 #define SCTP_INIT_MSG(mSGpTR)           (mSGpTR)->ittiMsg.sctpInit
 #define SCTP_CLOSE_ASSOCIATION(mSGpTR)  (mSGpTR)->ittiMsg.sctp_close_association
 
-typedef struct sctp_data_req_s {
-  uint8_t         *buffer;
-  size_t           buf_len;
+
+//typedef struct sctp_data_rej_s {
+//  sctp_assoc_id_t  assoc_id;
+//  sctp_stream_id_t stream;
+//  uint32_t         mme_ue_s1ap_id;
+//} sctp_data_rej_t;
+
+typedef struct sctp_data_cnf_s {
   sctp_assoc_id_t  assoc_id;
   sctp_stream_id_t stream;
+  uint32_t         mme_ue_s1ap_id;
+  bool             is_success;
+} sctp_data_cnf_t;
+
+typedef struct sctp_data_req_s {
+  bstring          payload;
+  sctp_assoc_id_t  assoc_id;
+  sctp_stream_id_t stream;
+  uint32_t         mme_ue_s1ap_id; // for helping data_rej
 } sctp_data_req_t;
 
 typedef struct sctp_data_ind_s {
-  uint8_t           *buffer;           ///< SCTP buffer
-  size_t             buf_length;       ///< SCTP buffer length
+  bstring            payload;          ///< SCTP buffer
   sctp_assoc_id_t    assoc_id;         ///< SCTP physical association ID
   sctp_stream_id_t   stream;           ///< Stream number on which data had been received
   uint16_t           instreams;        ///< Number of input streams for the SCTP connection between peers

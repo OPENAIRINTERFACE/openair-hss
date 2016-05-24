@@ -22,10 +22,11 @@
 
 #include <stdint.h>
 
-#include "common_types.h"
-#include "s6a_defs.h"
 #include "assertions.h"
 #include "log.h"
+#include "common_defs.h"
+#include "common_types.h"
+#include "s6a_defs.h"
 
 int
 s6a_parse_experimental_result (

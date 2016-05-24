@@ -35,6 +35,7 @@ source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
 declare -i g_run_msc_gen=0
 declare    g_msc_dir="/tmp"
 declare    g_mme_default_config_file="/usr/local/etc/oai/mme.conf"
+declare    g_mme_default_fqdn=`hostname`".openair4G.eur"
 
 set_openair_env 
 
@@ -47,13 +48,15 @@ function help()
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
-  echo_error "  -b, --breakpoint      location      Set breakpoint location for GDB (ex location: Attach.c:272)."
-  echo_error "  -c, --config-file     file_abs_path Config file to be used by epc if you don't want to use the default one: $g_mme_default_config_file"
+  echo_error "  -c, --config-file     file_abs_path Config file to be used by MME if you don't want to use the default one: $g_mme_default_config_file"
   echo_error "  -D, --daemon                        Run the daemon."
   echo_error "  -g, --gdb                           Run with GDB."
+  echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
+  echo_error "                                      All repetitions of this argument are valid."
   echo_error "  -h, --help                          Print this help."
-  echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in mme config file."
-  echo_error "  -K, --itti-dump-file  file_abs_path ITTI dump file containing all ITTI events occuring during MME runtime."
+  echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in MME config file."
+  echo_error "  -I, --install-mme-files             Install MME config files."
+  echo_error "  -k, --kill                          Kill all running MME instances, exit script then."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
   echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
   echo_error "                                        0 -> ASN1 XER printf off"
@@ -86,26 +89,18 @@ function main()
   local -i run_gdb=0
   local -i run_daemon=0
   local -i set_network_interfaces=0
+  local -i var_check_install_mme_files=0
   local    exe_arguments=" "
-  local -r mme_default_config_file="/usr/local/etc/oai/mme.conf"
-  local    mme_config_file=$mme_default_config_file
-  local    breakpoint_location=""
-  local -i set_breakpoint=0
+  local    mme_config_file=$g_mme_default_config_file
+  local -a gdb_args
+  local -i gdb_index=0
 
   until [ -z "$1" ]
     do
     case "$1" in
-      -b | --breakpoint)
-        run_gdb=1
-        set_breakpoint=1
-        breakpoint_location=$2
-        echo "setting breakpoint location to: $breakpoint_location"
-        echo "setting GDB flag to: $run_gdb"
-        shift 2;
-        ;;
       -c | --config-file)
-        mme_default_config_file=$2
-        echo "setting config file to: $mme_default_config_file"
+        mme_config_file=$2
+        echo "setting config file to: $mme_config_file"
         shift 2;
         ;;
       -D | --daemon)
@@ -118,6 +113,13 @@ function main()
         echo "setting GDB flag to: $run_gdb"
         shift;
         ;;
+      -G | --gdb-arg)
+        run_gdb=1
+        gdb_args[$gdb_index]="$2 $3"
+        echo "Appending gdb args: ${gdb_args[$gdb_index]}"
+        gdb_index=$((gdb_index + 1))
+        shift 3;
+        ;;
       -h | --help)
         help
         exit 0
@@ -127,18 +129,18 @@ function main()
         echo "setting network interfaces: $set_network_interfaces"
         shift;
         ;;
-      -K | --itti-dump-file)
-        local itti_dump_file=$2
-        # can omit file name if last arg on the line
-        if [ "x$itti_dump_file" = "x" ]; then
-          itti_dump_file="/tmp/mme_itti.log"
-        else
-          shift 1;
-        fi
-        echo "setting ITTI dump file to: $itti_dump_file"
-        exe_arguments="$exe_arguments -K $itti_dump_file"
-        shift 1;
-        ;;     
+      -I | --install-mme-files)
+        echo "Install MME files: .conf files."
+        var_check_install_mme_files=1
+        shift;
+        ;;
+      -k | --kill)
+        $SUDO killall -q mme
+        $SUDO rm /var/run/mme.pid
+        do_stop_daemon
+        exit 0
+        shift;
+        ;;
       -m | --mscgen)
         g_msc_dir=$2
         if [ -d  "$g_msc_dir" ]; then
@@ -165,15 +167,54 @@ function main()
   done
 
   set_openair_env 
-  cecho "OPENAIR_DIR    = $OPENAIR_DIR" $green
+  cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
 
-  check_gtpu_kmodule_installed
-
+  #####################################
+  # Install config files
+  #####################################
   if [ ! -f $mme_config_file ]; then 
-    echo_fatal "Please provide -c|--config-file valid argument (\"$mme_config_file\" not a valid file)"
+    if [ $g_mme_default_config_file != $mme_config_file ]; then
+      echo_fatal "Please provide -c|--config-file valid argument (\"$mme_config_file\" not a valid file)"
+    fi
+  fi
+  
+  if [ $var_check_install_mme_files -gt 0 ];then
+    $SUDO mkdir -p /usr/local/etc/oai/freeDiameter > /dev/null
+  
+    if [ ! -f /usr/local/etc/oai/mme.conf ]; then
+      $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/mme.conf    /usr/local/etc/oai
+      echo_fatal "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
+    else
+      if [  $THIS_SCRIPT_PATH/../ETC/mme.conf -nt  /usr/local/etc/oai/mme.conf ]; then
+        read -p "Do you want to update /usr/local/etc/oai/mme.conf with $OPENAIRCN_DIR/ETC/mme.conf ? <y/N> " prompt
+        if [[ $prompt =~ [yY](es)* ]]; then
+          $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/mme.conf    /usr/local/etc/oai
+          echo_fatal "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
+        fi
+      fi
+    fi 
+  
+    $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/mme_fd.conf /usr/local/etc/oai/freeDiameter
+    echo_warning "Be carefull /usr/local/etc/oai/freeDiameter/mme_fd.conf has realm, freeDiameter identity, HSS "
+    echo_warning "IPv4 address, HSS realm, HSS FQDN, all hardcoded, please check them and change them upon your needs."
+  
+    # hardcoded MME diameter ID 
+    fqdn=`hostname --fqdn`
+    if [ "a$fqdn" == "a" ]; then
+      echo_error "Please allow the IP resolution of MME FQDN (in /etc/hosts, example: 127.0.1.1 myhostname.openair4G.eur myhostname)."
+      echo_fatal "Please allow the IP resolution of HSS FQDN (in /etc/hosts, example: 127.0.1.1 hss.openair4G.eur hss if HSS run on MME host)."
+    fi
+
+    # generate certificates if necessary
+    echo_warning "Generating MME certificates using MME FQDN $fqdn, if you want to use an other"
+    echo_warning "FQDN, please modify mme_fd.conf, /etc/hosts consistently and then "
+    echo_warning "re-run $OPENAIRCN_DIR/SCRIPTS/check_mme_s6a_certificate /usr/local/etc/oai/freeDiameter $fqdn consistently"
+    $SUDO $OPENAIRCN_DIR/SCRIPTS/check_mme_s6a_certificate /usr/local/etc/oai/freeDiameter $fqdn
   fi
 
-
+  #####################################
+  # Check executables
+  #####################################
   if [ "$run_daemon" -eq 1 ]; then
     if [ ! -e /usr/sbin/mmed ]; then
       echo_fatal "Cannot find /usr/sbin/mmed executable, have a look at the output of build_mme  -D ... executable"
@@ -185,14 +226,21 @@ function main()
   fi
 
 
+  #####################################
+  # Clean old MSC generated files
+  #####################################
   if [ $g_run_msc_gen -eq 1 ]; then 
-    rm -f /tmp/openair.msc.*
+    $SUDO rm -f /tmp/openair.msc.*
   fi
 
   if [ $set_network_interfaces -eq 1 ]; then
     set_mme_network_interfaces $mme_config_file
   fi
     
+  #####################################
+  # Running daemon?
+  #####################################
+  DAEMON_ARGS=$DAEMON_ARGS" -c $mme_config_file"
   if [ "$run_daemon" -eq 1 ]; then
     # TODO options
     $SUDO killall -q mme
@@ -211,8 +259,10 @@ function main()
     exit 0
   fi
 
-
-  exe_arguments="-O $mme_config_file $exe_arguments"
+  #####################################
+  # Running executable
+  #####################################
+  exe_arguments="-c $mme_config_file $exe_arguments"
 
   if [ $run_gdb -eq 0 ]; then 
     # trap keyboard interrupt (control-c)
@@ -224,16 +274,16 @@ function main()
     $SUDO chmod 777  ~/.gdb_mme
     $SUDO echo "file mme" > ~/.gdb_mme
     $SUDO echo "set args $exe_arguments "        >> ~/.gdb_mme
-    if [ $set_breakpoint -eq 1 ]; then 
-      $SUDO echo "break $breakpoint_location "        >> ~/.gdb_mme
-    fi
+    for i in `seq 0 $gdb_index`; do
+      $SUDO echo "${gdb_args[$i]}"               >> ~/.gdb_mme
+    done
     $SUDO echo "run"                             >> ~/.gdb_mme
     $SUDO cat ~/.gdb_mme
     $SUDO gdb -n -x ~/.gdb_mme
     if [ $g_run_msc_gen -eq 1 ]; then 
       #$SUDO do_msc_gen
       cd $g_msc_dir
-      $SUDO $THIS_SCRIPT_PATH/msc_gen --profile EPC --dir $g_msc_dir --type png
+      $SUDO $THIS_SCRIPT_PATH/msc_gen --profile MME --dir $g_msc_dir --type png
     fi
   fi
 }

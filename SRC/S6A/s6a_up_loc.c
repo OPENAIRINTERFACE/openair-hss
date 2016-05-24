@@ -78,7 +78,7 @@ s6a_ula_cb (
     CHECK_FCT (fd_msg_avp_hdr (avp_p, &hdr_p));
     s6a_update_location_ans_p->result.present = S6A_RESULT_BASE;
     s6a_update_location_ans_p->result.choice.base = hdr_p->avp_value->u32;
-    MSC_LOG_TX_MESSAGE (MSC_S6A_MME, MSC_MMEAPP_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_ANS imsi %SCNu64 %s", s6a_update_location_ans_p->imsi, retcode_2_string (hdr_p->avp_value->u32));
+    MSC_LOG_TX_MESSAGE (MSC_S6A_MME, MSC_MMEAPP_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_ANS imsi %s %s", s6a_update_location_ans_p->imsi, retcode_2_string (hdr_p->avp_value->u32));
 
     if (hdr_p->avp_value->u32 != ER_DIAMETER_SUCCESS) {
       OAILOG_ERROR (LOG_S6A, "Got error %u:%s\n", hdr_p->avp_value->u32, retcode_2_string (hdr_p->avp_value->u32));
@@ -193,39 +193,34 @@ s6a_generate_update_location (
    * Add Origin_Host & Origin_Realm
    */
   CHECK_FCT (fd_msg_add_origin (msg_p, 0));
-  config_read_lock (&mme_config);
+  mme_config_read_lock (&mme_config);
   /*
    * Destination Host
    */
   {
-    char                                    host[100];
-    size_t                                  hostlen;
+    bstring                                 host = bstrcpy(mme_config.s6a_config.hss_host_name);
 
-    memset (host, 0, 100);
-    strcat (host, mme_config.s6a_config.hss_host_name);
-    strcat (host, ".");
-    strcat (host, mme_config.realm);
-    hostlen = strlen (host);
+    bconchar(host, '.');
+    bconcat (host, mme_config.realm);
+
     CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_destination_host, 0, &avp_p));
-    value.os.data = (unsigned char *)host;
-    value.os.len = hostlen;
+    value.os.data = (unsigned char *)bdata(host);
+    value.os.len = blength(host);
     CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
     CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
+    bdestroy(host);
   }
   /*
    * Destination_Realm
    */
   {
-    char                                   *realm = mme_config.realm;
-    size_t                                  realmlen = strlen (realm);
-
     CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_destination_realm, 0, &avp_p));
-    value.os.data = (unsigned char *)realm;
-    value.os.len = realmlen;
+    value.os.data = (unsigned char *)bdata(mme_config.realm);
+    value.os.len = blength(mme_config.realm);
     CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
     CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
   }
-  config_unlock (&mme_config);
+  mme_config_unlock (&mme_config);
   /*
    * Adding the User-Name (IMSI)
    */

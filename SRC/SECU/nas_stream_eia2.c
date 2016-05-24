@@ -70,23 +70,23 @@ nas_stream_encrypt_eia2 (
     m_length += 1;
 
   local_count = hton_int32 (stream_cipher->count);
-  m = CALLOC_CHECK (m_length + 8, sizeof (uint8_t));
+  m = calloc (m_length + 8, sizeof (uint8_t));
   memcpy (&m[0], &local_count, 4);
   m[4] = ((stream_cipher->bearer & 0x1F) << 3) | ((stream_cipher->direction & 0x01) << 2);
   memcpy (&m[8], stream_cipher->message, m_length);
 
-  OAILOG_TRACE (LOG_NAS, "Byte length: %u, Zero bits: %u\n: ", m_length + 8, zero_bit);
-  OAILOG_STREAM_HEX(LOG_NAS, "m:", m, m_length + 8);
-  OAILOG_STREAM_HEX(LOG_NAS, "Key:", stream_cipher->key, stream_cipher->key_length);
-  OAILOG_STREAM_HEX(LOG_NAS, "Message:", stream_cipher->message, m_length);
+  OAILOG_TRACE (LOG_NAS, "Byte length: %u, Zero bits: %u:\n", m_length + 8, zero_bit);
+  OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "m:", m, m_length + 8);
+  OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "Key:", stream_cipher->key, stream_cipher->key_length);
+  OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "Message:", stream_cipher->message, m_length);
 
   cmac_ctx = CMAC_CTX_new ();
   CMAC_Init (cmac_ctx, stream_cipher->key, stream_cipher->key_length, cipher, NULL);
   CMAC_Update (cmac_ctx, m, m_length + 8);
   CMAC_Final (cmac_ctx, data, &size);
   CMAC_CTX_free (cmac_ctx);
-  OAILOG_STREAM_HEX(LOG_NAS, "Out:", data, size);
+  OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "Out:", data, size);
   memcpy ((void*)out, data, 4);
-  FREE_CHECK (m);
+  free_wrapper (m);
   return 0;
 }

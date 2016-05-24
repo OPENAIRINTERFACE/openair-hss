@@ -160,9 +160,6 @@ hss_display_banner (
   void)
 {
   FPRINTF_NOTICE ( "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
-#if RANDOM_boolean
-  FPRINTF_NOTICE ( "Warning no randomization for keys, this HSS executable should be used for testing scenarios only\n");
-#endif
   FPRINTF_NOTICE ( "Please report any bug to: %s\n\n", PACKAGE_BUGREPORT);
 }
 
@@ -197,7 +194,7 @@ hss_config_display (
   FPRINTF_NOTICE ( "* FreeDiameter:\n");
   FPRINTF_NOTICE ( "\t- Conf file ........: %s\n", hss_config_p->freediameter_config);
   FPRINTF_NOTICE ( "* Security:\n");
-  FPRINTF_NOTICE ( "\t- Operator key......: %s\n", hss_config_p->operator_key);
+  FPRINTF_NOTICE ( "\t- Operator key......: %s\n", (hss_config_p->operator_key == NULL) ? "None" : "********************************");
   FPRINTF_NOTICE ( "\t- Random      ......: %s\n", hss_config_p->random);
 }
 
@@ -260,7 +257,7 @@ hss_config_parse_file (
   }
   config_init(&cfg);
 
-  printf ("Parsing configuration file: %s\n", hss_config_p->config);
+  FPRINTF_DEBUG ("Parsing configuration file: %s\n", hss_config_p->config);
   if (! config_read_file(&cfg, hss_config_p->config)) {
     FPRINTF_ERROR( "Failed to parse HSS configuration file %s!\n", hss_config_p->config);
     config_destroy(&cfg);

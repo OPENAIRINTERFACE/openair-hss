@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_DETACH_REQUEST_SEEN
+#define FILE_DETACH_REQUEST_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -29,9 +29,6 @@
 #include "DetachType.h"
 #include "NasKeySetIdentifier.h"
 #include "EpsMobileIdentity.h"
-
-#ifndef FILE_DETACH_REQUEST_SEEN
-#define FILE_DETACH_REQUEST_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define DETACH_REQUEST_MINIMUM_LENGTH ( \

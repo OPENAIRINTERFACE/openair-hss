@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef CIPHERING_KEY_SEQUENCE_NUMBER_H_
 #define CIPHERING_KEY_SEQUENCE_NUMBER_H_
+#include <stdint.h>
 
 #define CIPHERING_KEY_SEQUENCE_NUMBER_MINIMUM_LENGTH 1
 #define CIPHERING_KEY_SEQUENCE_NUMBER_MAXIMUM_LENGTH 1

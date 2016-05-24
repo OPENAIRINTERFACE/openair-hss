@@ -42,7 +42,7 @@
 
 *****************************************************************************/
 
-
+#include "common_defs.h"
 #include "emm_fsm.h"
 #include "commonDef.h"
 #include "log.h"
@@ -85,6 +85,7 @@ EmmCommonProcedureInitiated (
   const emm_reg_t * evt)
 {
   int                                     rc = RETURNerror;
+  emm_common_data_t                      *emm_common_data_ctx = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   assert (emm_fsm_get_status (evt->ue_id, evt->ctx) == EMM_COMMON_PROCEDURE_INITIATED);
@@ -94,7 +95,10 @@ EmmCommonProcedureInitiated (
     /*
      * The EMM procedure that initiated EMM common procedure aborted
      */
-    rc = emm_proc_common_abort (evt->ue_id);
+    emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, evt->ue_id);
+    if (emm_common_data_ctx) {
+      rc = emm_proc_common_abort (emm_common_data_ctx);
+    }
     break;
 
   case _EMMREG_COMMON_PROC_CNF:
@@ -109,7 +113,10 @@ EmmCommonProcedureInitiated (
     }
 
     if (rc != RETURNerror) {
-      rc = emm_proc_common_success (evt->ue_id);
+      emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, evt->ue_id);
+      if (emm_common_data_ctx) {
+        rc = emm_proc_common_success (emm_common_data_ctx);
+      }
     }
 
     break;
@@ -122,7 +129,10 @@ EmmCommonProcedureInitiated (
     rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
 
     if (rc != RETURNerror) {
-      rc = emm_proc_common_reject (evt->ue_id);
+      emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, evt->ue_id);
+      if (emm_common_data_ctx) {
+        rc = emm_proc_common_reject (emm_common_data_ctx);
+      }
     }
 
     break;
@@ -156,12 +166,25 @@ EmmCommonProcedureInitiated (
      * Transmission failure occurred before the EMM common
      * procedure being completed
      */
-    rc = emm_proc_common_failure (evt->ue_id);
-
     if (rc != RETURNerror) {
       rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
     }
 
+    emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, evt->ue_id);
+    if (emm_common_data_ctx) {
+      rc = emm_proc_common_ll_failure (emm_common_data_ctx);
+    }
+
+    break;
+
+  case _EMMREG_LOWERLAYER_NON_DELIVERY:
+    emm_common_data_ctx = emm_common_data_context_get (&emm_common_data_head, evt->ue_id);
+    if (emm_common_data_ctx) {
+      rc = emm_proc_common_non_delivered (emm_common_data_ctx);
+    }
+    if (rc != RETURNerror) {
+      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+    }
     break;
 
   default:

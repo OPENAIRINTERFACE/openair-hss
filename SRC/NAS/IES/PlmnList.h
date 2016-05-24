@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef PLMN_LIST_H_
 #define PLMN_LIST_H_
+#include <stdint.h>
 
 #define PLMN_LIST_MINIMUM_LENGTH 5
 #define PLMN_LIST_MAXIMUM_LENGTH 47

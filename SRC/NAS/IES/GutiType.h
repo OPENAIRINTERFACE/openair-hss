@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef GUTI_TYPE_H_
 #define GUTI_TYPE_H_
+#include <stdint.h>
 
 #define GUTI_TYPE_MINIMUM_LENGTH 1
 #define GUTI_TYPE_MAXIMUM_LENGTH 1

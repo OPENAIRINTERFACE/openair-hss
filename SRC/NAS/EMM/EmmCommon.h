@@ -48,6 +48,7 @@ Description Defines callback functions executed within EMM common procedures
 #ifndef FILE_EMM_COMMON_SEEN
 #define FILE_EMM_COMMON_SEEN
 #include "common_types.h"
+#include "tree.h"
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
@@ -55,6 +56,7 @@ Description Defines callback functions executed within EMM common procedures
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
+
 
 /*
  * Type of EMM procedure callback functions
@@ -67,16 +69,41 @@ Description Defines callback functions executed within EMM common procedures
  */
 typedef int (*emm_common_success_callback_t)(void *);
 typedef int (*emm_common_reject_callback_t) (void *);
-typedef int (*emm_common_failure_callback_t)(void *);
-
-/*
- * Type of EMM common procedure callback function
- * ----------------------------------------------
- * EMM common procedure to be executed when the ongoing EMM procedure is
+typedef int (*emm_common_failure_callback_t) (void *);
+typedef int (*emm_common_ll_failure_callback_t)(void *);
+typedef int (*emm_common_non_delivered_callback_t)(void *);
+/* EMM common procedure to be executed when the ongoing EMM procedure is
  * aborted.
  */
 typedef int (*emm_common_abort_callback_t)(void *);
 
+
+/* Ongoing EMM procedure callback functions */
+typedef struct emm_common_data_s {
+  mme_ue_s1ap_id_t                        ue_id;
+  int                                     ref_count;
+
+  emm_common_success_callback_t           success;
+  emm_common_reject_callback_t            reject;
+  emm_common_failure_callback_t           failure;
+
+  emm_common_ll_failure_callback_t        ll_failure;
+  emm_common_non_delivered_callback_t     non_delivered;
+  emm_common_abort_callback_t             abort;
+
+  void                                   *args;
+  RB_ENTRY (emm_common_data_s)            entries;
+} emm_common_data_t;
+
+typedef struct emm_common_data_head_s {
+  pthread_mutex_t                         mutex;
+  RB_HEAD (
+  emm_common_data_map,
+  emm_common_data_s) emm_common_data_root;
+} emm_common_data_head_t;
+
+
+extern emm_common_data_head_t                  emm_common_data_head;
 /****************************************************************************/
 /********************  G L O B A L    V A R I A B L E S  ********************/
 /****************************************************************************/
@@ -89,14 +116,22 @@ int emm_proc_common_initialize(mme_ue_s1ap_id_t ue_id,
                                emm_common_success_callback_t success,
                                emm_common_reject_callback_t reject,
                                emm_common_failure_callback_t failure,
+                               emm_common_ll_failure_callback_t ll_failure,
+                               emm_common_non_delivered_callback_t non_delivered,
                                emm_common_abort_callback_t abort,
                                void *args);
 
-int emm_proc_common_success(mme_ue_s1ap_id_t ue_id);
-int emm_proc_common_reject(mme_ue_s1ap_id_t ue_id);
-int emm_proc_common_failure(mme_ue_s1ap_id_t ue_id);
-int emm_proc_common_abort(mme_ue_s1ap_id_t ue_id);
+int emm_proc_common_success(emm_common_data_t *emm_common_data_ctx);
+int emm_proc_common_reject(emm_common_data_t *emm_common_data_ctx);
+int emm_proc_common_failure(emm_common_data_t *emm_common_data_ctx);
+int emm_proc_common_ll_failure(emm_common_data_t *emm_common_data_ctx);
+int emm_proc_common_non_delivered(emm_common_data_t *emm_common_data_ctx);
+int emm_proc_common_abort(emm_common_data_t *emm_common_data_ctx);
 
 void *emm_proc_common_get_args(mme_ue_s1ap_id_t ue_id);
+void emm_common_cleanup (emm_common_data_t *emm_common_data_ctx);
+void emm_common_cleanup_by_ueid (mme_ue_s1ap_id_t ue_id);
+
+struct emm_common_data_s *emm_common_data_context_get (struct emm_common_data_head_s *root, mme_ue_s1ap_id_t _ueid);
 
 #endif /* FILE_EMM_COMMON_SEEN*/

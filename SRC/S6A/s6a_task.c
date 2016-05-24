@@ -129,9 +129,9 @@ int s6a_init (
   memset (&s6a_fd_cnf, 0, sizeof (s6a_fd_cnf_t));
 
   /*
-   * if (strcmp(fd_core_version(), FREE_CHECK_DIAMETER_MINIMUM_VERSION) ) {
+   * if (strcmp(fd_core_version(), free_wrapper_DIAMETER_MINIMUM_VERSION) ) {
    * S6A_ERROR("Freediameter version %s found, expecting %s\n", fd_core_version(),
-   * FREE_CHECK_DIAMETER_MINIMUM_VERSION);
+   * free_wrapper_DIAMETER_MINIMUM_VERSION);
    * return RETURNerror;
    * } else {
    * S6A_DEBUG("Freediameter version %s\n", fd_core_version());
@@ -166,9 +166,9 @@ int s6a_init (
   OAILOG_DEBUG (LOG_S6A, "Default ext path: %s\n", DEFAULT_EXTENSIONS_PATH);
 
 
-  ret = fd_core_parseconf (mme_config_p->s6a_config.conf_file);
+  ret = fd_core_parseconf (bdata(mme_config_p->s6a_config.conf_file));
   if (ret) {
-    OAILOG_ERROR (LOG_S6A, "An error occurred during fd_core_parseconf file : %s.\n", mme_config_p->s6a_config.conf_file);
+    OAILOG_ERROR (LOG_S6A, "An error occurred during fd_core_parseconf file : %s.\n", bdata(mme_config_p->s6a_config.conf_file));
     return ret;
   } else {
     OAILOG_DEBUG (LOG_S6A, "fd_core_parseconf done\n");
@@ -195,10 +195,9 @@ int s6a_init (
   }
 
 
-
   ret = fd_core_waitstartcomplete ();
   if (ret) {
-    OAILOG_ERROR (LOG_S6A, "An error occurred during fd_core_waitstartcomplete.\n");
+    OAILOG_ERROR (LOG_S6A, "An error occurred during freeDiameter core library start\n");
     return ret;
   } else {
     OAILOG_DEBUG (LOG_S6A, "fd_core_waitstartcomplete done\n");

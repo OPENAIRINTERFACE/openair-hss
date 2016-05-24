@@ -19,8 +19,8 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef FILE_GUTI_REALLOCATION_COMMAND_SEEN
+#define FILE_GUTI_REALLOCATION_COMMAND_SEEN
 #include <stdint.h>
 
 #include "ProtocolDiscriminator.h"
@@ -29,8 +29,6 @@
 #include "EpsMobileIdentity.h"
 #include "TrackingAreaIdentityList.h"
 
-#ifndef FILE_GUTI_REALLOCATION_COMMAND_SEEN
-#define FILE_GUTI_REALLOCATION_COMMAND_SEEN
 
 /* Minimum length macro. Formed by minimum length of each mandatory field */
 #define GUTI_REALLOCATION_COMMAND_MINIMUM_LENGTH ( \

@@ -59,14 +59,6 @@ void *mme_app_thread (
     DevAssert (received_message_p );
 
     switch (ITTI_MSG_ID (received_message_p)) {
-    case S6A_AUTH_INFO_ANS:{
-        /*
-         * We received the authentication vectors from HSS, trigger a ULR
-         * for now. Normaly should trigger an authentication procedure with UE.
-         */
-        mme_app_handle_authentication_info_answer (&received_message_p->ittiMsg.s6a_auth_info_ans);
-      }
-      break;
 
     case S6A_UPDATE_LOCATION_ANS:{
         /*
@@ -76,29 +68,34 @@ void *mme_app_thread (
       }
       break;
 
-    case SGW_CREATE_SESSION_RESPONSE:{
-        mme_app_handle_create_sess_resp (&received_message_p->ittiMsg.sgw_create_session_response);
+    case S11_CREATE_SESSION_RESPONSE:{
+        mme_app_handle_create_sess_resp (&received_message_p->ittiMsg.s11_create_session_response);
       }
       break;
 
-    case SGW_MODIFY_BEARER_RESPONSE:{
-        OAILOG_DEBUG (LOG_MME_APP, " TO DO HANDLE SGW_MODIFY_BEARER_RESPONSE\n");
-        // TO DO
+    case S11_MODIFY_BEARER_RESPONSE:{
+        struct ue_context_s                    *ue_context_p = NULL;
+        ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.s11_modify_bearer_response.teid);
+
+        if (ue_context_p == NULL) {
+          MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " ",
+            received_message_p->ittiMsg.s11_modify_bearer_response.teid);
+          OAILOG_WARNING (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", received_message_p->ittiMsg.s11_modify_bearer_response.teid);
+        } else {
+          MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
+            received_message_p->ittiMsg.s11_modify_bearer_response.teid, ue_context_p->imsi);
+        }
+         // TO DO
       }
       break;
 
-    case SGW_RELEASE_ACCESS_BEARERS_RESPONSE:{
-        mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.sgw_release_access_bearers_response);
+    case S11_RELEASE_ACCESS_BEARERS_RESPONSE:{
+        mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.s11_release_access_bearers_response);
       }
       break;
 
-    case SGW_DELETE_SESSION_RESPONSE: {
-      mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.sgw_delete_session_response);
-      }
-      break;
-
-    case NAS_AUTHENTICATION_PARAM_REQ:{
-        mme_app_handle_nas_auth_param_req (&received_message_p->ittiMsg.nas_auth_param_req);
+    case S11_DELETE_SESSION_RESPONSE: {
+      mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.s11_delete_session_response);
       }
       break;
 
@@ -108,7 +105,7 @@ void *mme_app_thread (
       break;
 
     case NAS_DETACH_REQ: {
-	    mme_app_handle_detach_req(&received_message_p->ittiMsg.nas_detach_req);
+        mme_app_handle_detach_req(&received_message_p->ittiMsg.nas_detach_req);
       }
       break;
 
@@ -191,11 +188,22 @@ mme_app_init (
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
-  mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_imsi_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_tun11_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, hash_free_int_func, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (64, NULL, NULL, "mme_app_enb_ue_s1ap-id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (64, NULL, hash_free_int_func, hash_free_int_func, "mme_app_guti_ue_context_htbl");
+  bstring b = bfromcstr("mme_app_imsi_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  btrunc(b, 0);
+  bassigncstr(b, "mme_app_tun11_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mme_ue_s1ap_id_ue_context_htbl in MME_APP");
+  btrunc(b, 0);
+  bassigncstr(b, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  btrunc(b, 0);
+  bassigncstr(b, "mme_app_enb_ue_s1ap_id_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
+  btrunc(b, 0);
+  bassigncstr(b, "mme_app_guti_ue_context_htbl");
+  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, hash_free_int_func, b);
+  bdestroy(b);
 
   /*
    * Create the thread associated with MME applicative layer

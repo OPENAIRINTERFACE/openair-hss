@@ -29,7 +29,6 @@
 #ifndef FILE_MME_APP_MESSAGES_TYPES_SEEN
 #define FILE_MME_APP_MESSAGES_TYPES_SEEN
 
-
 #define MME_APP_INITIAL_UE_MESSAGE(mSGpTR)               (mSGpTR)->ittiMsg.mme_app_initial_ue_message
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
@@ -39,7 +38,7 @@ typedef struct itti_mme_app_initial_ue_message_s {
   sctp_assoc_id_t     sctp_assoc_id; // key stored in MME_APP for MME_APP forward NAS response to S1AP
   mme_ue_s1ap_id_t    mme_ue_s1ap_id;
   enb_ue_s1ap_id_t    enb_ue_s1ap_id;
-  as_nas_info_t       nas;
+  bstring             nas;
   tai_t               tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
   ecgi_t              cgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
   as_cause_t          as_cause;          /* Establishment cause                     */
@@ -69,7 +68,7 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
   ambr_t                  ambr;
 
   /* Key eNB */
-  uint8_t                 kenb[32];
+  uint8_t                 kenb[AUTH_KASME_SIZE];
   uint16_t                security_capabilities_encryption_algorithms;
   uint16_t                security_capabilities_integrity_algorithms;
 

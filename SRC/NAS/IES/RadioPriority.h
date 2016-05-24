@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef RADIO_PRIORITY_H_
 #define RADIO_PRIORITY_H_
+#include <stdint.h>
 
 #define RADIO_PRIORITY_MINIMUM_LENGTH 1
 #define RADIO_PRIORITY_MAXIMUM_LENGTH 1

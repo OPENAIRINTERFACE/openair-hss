@@ -48,9 +48,6 @@ decode_daylight_saving_time (
   CHECK_LENGTH_DECODER (len - decoded, ielen);
   *daylightsavingtime = *buffer & 0x3;
   decoded++;
-#if NAS_DEBUG
-  dump_daylight_saving_time_xml (daylightsavingtime, iei);
-#endif
   return decoded;
 }
 
@@ -68,9 +65,6 @@ encode_daylight_saving_time (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, DAYLIGHT_SAVING_TIME_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_daylight_saving_time_xml (daylightsavingtime, iei);
-#endif
 
   if (iei > 0) {
     *buffer = iei;

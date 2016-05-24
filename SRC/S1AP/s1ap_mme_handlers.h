@@ -20,11 +20,11 @@
  */
 
 
-#include "s1ap_ies_defs.h"
-#include "intertask_interface.h"
 
 #ifndef FILE_S1AP_MME_HANDLERS_SEEN
 #define FILE_S1AP_MME_HANDLERS_SEEN
+#include "s1ap_ies_defs.h"
+#include "intertask_interface.h"
 
 
 #define S1AP_UE_RADIOCAPABILITY_MAX_SIZE 400

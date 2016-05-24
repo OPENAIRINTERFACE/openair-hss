@@ -22,6 +22,6 @@
 #ifndef FILE_S11_SGW_SEEN
 #define FILE_S11_SGW_SEEN
 
-int s11_sgw_init(const mme_config_t *mme_config);
+int s11_sgw_init(sgw_config_t *mme_config);
 
 #endif /* FILE_S11_SGW_SEEN */

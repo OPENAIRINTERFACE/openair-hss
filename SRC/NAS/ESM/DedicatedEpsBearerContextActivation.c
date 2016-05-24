@@ -49,10 +49,10 @@
 
 *****************************************************************************/
 
+#include "log.h"
 #include "3gpp_24.007.h"
 #include "esm_proc.h"
 #include "commonDef.h"
-#include "log.h"
 
 #include "esm_cause.h"
 #include "esm_ebr.h"
@@ -77,17 +77,13 @@
 /*
    Timer handlers
 */
-static void                            *_dedicated_eps_bearer_activate_t3485_handler (
-  void *);
+static void *_dedicated_eps_bearer_activate_t3485_handler (void *);
 
 /* Maximum value of the activate dedicated EPS bearer context request
    retransmission counter */
 #define DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX   5
 
-static int                              _dedicated_eps_bearer_activate (
-  emm_data_context_t * ctx,
-  int ebi,
-  const OctetString * msg);
+static int _dedicated_eps_bearer_activate (emm_data_context_t * ctx, int ebi, STOLEN_REF bstring *msg);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -192,7 +188,7 @@ esm_proc_dedicated_eps_bearer_context_request (
   bool is_standalone,
   emm_data_context_t * ctx,
   int ebi,
-  OctetString * msg,
+  STOLEN_REF bstring *msg,
   bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -394,7 +390,8 @@ _dedicated_eps_bearer_activate_t3485_handler (
      * Re-send activate dedicated EPS bearer context request message
      * * * * to the UE
      */
-    rc = _dedicated_eps_bearer_activate (data->ctx, data->ebi, &data->msg);
+    bstring b = bstrcpy(data->msg);
+    rc = _dedicated_eps_bearer_activate (data->ctx, data->ebi, &b);
   } else {
     /*
      * The maximum number of activate dedicated EPS bearer context request
@@ -442,11 +439,10 @@ _dedicated_eps_bearer_activate_t3485_handler (
  **      Others:    T3485                                      **
  **                                                                        **
  ***************************************************************************/
-static int
-_dedicated_eps_bearer_activate (
+static int _dedicated_eps_bearer_activate (
   emm_data_context_t * ctx,
   int ebi,
-  const OctetString * msg)
+  STOLEN_REF bstring *msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   emm_sap_t                               emm_sap = {0};
@@ -468,8 +464,9 @@ _dedicated_eps_bearer_activate (
     /*
      * Start T3485 retransmission timer
      */
-    rc = esm_ebr_start_timer (ctx, ebi, msg, T3485_DEFAULT_VALUE, _dedicated_eps_bearer_activate_t3485_handler);
+    rc = esm_ebr_start_timer (ctx, ebi, *msg, T3485_DEFAULT_VALUE, _dedicated_eps_bearer_activate_t3485_handler);
   }
+  *msg = NULL;
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

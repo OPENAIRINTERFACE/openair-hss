@@ -65,7 +65,7 @@ decode_pdn_disconnect_request (
 
     switch (ieiDecoded) {
     case PDN_DISCONNECT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI:
-      if ((decoded_result = decode_protocol_configuration_options (&pdn_disconnect_request->protocolconfigurationoptions, PDN_DISCONNECT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI, buffer + decoded, len - decoded)) <= 0)
+      if ((decoded_result = decode_ProtocolConfigurationOptions (&pdn_disconnect_request->protocolconfigurationoptions, PDN_DISCONNECT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI, buffer + decoded, len - decoded)) <= 0)
         return decoded_result;
 
       decoded += decoded_result;
@@ -76,8 +76,8 @@ decode_pdn_disconnect_request (
       break;
 
     default:
-      errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;
-      return TLV_DECODE_UNEXPECTED_IEI;
+      errorCodeDecoder = TLV_UNEXPECTED_IEI;
+      return TLV_UNEXPECTED_IEI;
     }
   }
 
@@ -102,7 +102,7 @@ encode_pdn_disconnect_request (
 
   if ((pdn_disconnect_request->presencemask & PDN_DISCONNECT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT)
       == PDN_DISCONNECT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
-    if ((encode_result = encode_protocol_configuration_options (&pdn_disconnect_request->protocolconfigurationoptions, PDN_DISCONNECT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI, buffer + encoded, len - encoded)) < 0)
+    if ((encode_result = encode_ProtocolConfigurationOptions (&pdn_disconnect_request->protocolconfigurationoptions, PDN_DISCONNECT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

@@ -44,20 +44,17 @@ decode_authentication_parameter_rand (
     decoded++;
   }
 
-  if ((decode_result = decode_octet_string (&authenticationparameterrand->rand, ielen, buffer + decoded, len - decoded)) < 0)
+  if ((decode_result = decode_bstring (authenticationparameterrand, ielen, buffer + decoded, len - decoded)) < 0)
     return decode_result;
   else
     decoded += decode_result;
 
-#if NAS_DEBUG
-  dump_authentication_parameter_rand_xml (authenticationparameterrand, iei);
-#endif
   return decoded;
 }
 
 int
 encode_authentication_parameter_rand (
-  AuthenticationParameterRand * authenticationparameterrand,
+  AuthenticationParameterRand authenticationparameterrand,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -69,26 +66,24 @@ encode_authentication_parameter_rand (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, AUTHENTICATION_PARAMETER_RAND_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_authentication_parameter_rand_xml (authenticationparameterrand, iei);
-#endif
 
   if (iei > 0) {
     *buffer = iei;
     encoded++;
   }
 
-  if ((encode_result = encode_octet_string (&authenticationparameterrand->rand, buffer + encoded, len - encoded)) < 0)
-    return encode_result;
-  else
+  if ((encode_result = encode_bstring (authenticationparameterrand, buffer + encoded, len - encoded)) < 0) {
+       return encode_result;
+  } else {
     encoded += encode_result;
+  }
 
   return encoded;
 }
 
 void
 dump_authentication_parameter_rand_xml (
-  AuthenticationParameterRand * authenticationparameterrand,
+  AuthenticationParameterRand authenticationparameterrand,
   uint8_t iei)
 {
   OAILOG_DEBUG (LOG_NAS, "<Authentication Parameter Rand>\n");
@@ -99,6 +94,8 @@ dump_authentication_parameter_rand_xml (
      */
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&authenticationparameterrand->rand));
+  bstring b = dump_bstring_xml (authenticationparameterrand);
+  OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
+  bdestroy(b);
   OAILOG_DEBUG (LOG_NAS, "</Authentication Parameter Rand>\n");
 }

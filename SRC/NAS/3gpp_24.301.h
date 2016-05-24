@@ -31,6 +31,7 @@
 #define FILE_3GPP_24_301_SEEN
 
 #include <stdint.h>
+#include <stdbool.h>
 
 
 //==============================================================================
@@ -115,6 +116,144 @@
 # define ESM_INFORMATION_REQUEST                              0b11011001 /* 217 = 0xd9 */
 # define ESM_INFORMATION_RESPONSE                             0b11011010 /* 218 = 0xda */
 # define ESM_STATUS                                           0b11101000 /* 232 = 0xe8 */
+
+//------------------------------------------------------------------------------
+// 9.9 OTHER INFORMATION ELEMENTS
+//------------------------------------------------------------------------------
+
+//..............................................................................
+//9.9.3 EPS Mobility Management (EMM) information elements
+//..............................................................................
+
+//9.9.3.34 UE network capability
+#define UE_NETWORK_CAPABILITY_MINIMUM_LENGTH 4
+#define UE_NETWORK_CAPABILITY_MAXIMUM_LENGTH 15
+
+typedef struct ue_network_capability_s {
+  /* EPS encryption algorithms supported (octet 3) */
+#define UE_NETWORK_CAPABILITY_EEA0  0b10000000
+#define UE_NETWORK_CAPABILITY_EEA1  0b01000000
+#define UE_NETWORK_CAPABILITY_EEA2  0b00100000
+#define UE_NETWORK_CAPABILITY_EEA3  0b00010000
+#define UE_NETWORK_CAPABILITY_EEA4  0b00001000
+#define UE_NETWORK_CAPABILITY_EEA5  0b00000100
+#define UE_NETWORK_CAPABILITY_EEA6  0b00000010
+#define UE_NETWORK_CAPABILITY_EEA7  0b00000001
+  uint8_t  eea;
+  /* EPS integrity algorithms supported (octet 4) */
+#define UE_NETWORK_CAPABILITY_EIA0  0b10000000
+#define UE_NETWORK_CAPABILITY_EIA1  0b01000000
+#define UE_NETWORK_CAPABILITY_EIA2  0b00100000
+#define UE_NETWORK_CAPABILITY_EIA3  0b00010000
+#define UE_NETWORK_CAPABILITY_EIA4  0b00001000
+#define UE_NETWORK_CAPABILITY_EIA5  0b00000100
+#define UE_NETWORK_CAPABILITY_EIA6  0b00000010
+#define UE_NETWORK_CAPABILITY_EIA7  0b00000001
+  uint8_t  eia;
+  /* UMTS encryption algorithms supported (octet 5) */
+#define UE_NETWORK_CAPABILITY_UEA0  0b10000000
+#define UE_NETWORK_CAPABILITY_UEA1  0b01000000
+#define UE_NETWORK_CAPABILITY_UEA2  0b00100000
+#define UE_NETWORK_CAPABILITY_UEA3  0b00010000
+#define UE_NETWORK_CAPABILITY_UEA4  0b00001000
+#define UE_NETWORK_CAPABILITY_UEA5  0b00000100
+#define UE_NETWORK_CAPABILITY_UEA6  0b00000010
+#define UE_NETWORK_CAPABILITY_UEA7  0b00000001
+  uint8_t  uea;
+  /* UCS2 support (octet 6, bit 8) */
+#define UE_NETWORK_CAPABILITY_DEFAULT_ALPHABET  0
+#define UE_NETWORK_CAPABILITY_UCS2_ALPHABET 1
+  uint8_t  ucs2:1;
+  /* UMTS integrity algorithms supported (octet 6) */
+#define UE_NETWORK_CAPABILITY_UIA1  0b01000000
+#define UE_NETWORK_CAPABILITY_UIA2  0b00100000
+#define UE_NETWORK_CAPABILITY_UIA3  0b00010000
+#define UE_NETWORK_CAPABILITY_UIA4  0b00001000
+#define UE_NETWORK_CAPABILITY_UIA5  0b00000100
+#define UE_NETWORK_CAPABILITY_UIA6  0b00000010
+#define UE_NETWORK_CAPABILITY_UIA7  0b00000001
+  uint8_t  uia:7;
+  /* Bits 8 to 6 of octet 7 are spare and shall be coded as zero */
+  uint8_t  spare:3;
+  /* eNodeB-based access class control for CSFB capability */
+#define UE_NETWORK_CAPABILITY_CSFB  1
+  uint8_t  csfb:1;
+  /* LTE Positioning Protocol capability */
+#define UE_NETWORK_CAPABILITY_LPP 1
+  uint8_t  lpp:1;
+  /* Location services notification mechanisms capability */
+#define UE_NETWORK_CAPABILITY_LCS 1
+  uint8_t  lcs:1;
+  /* 1xSRVCC capability */
+#define UE_NETWORK_CAPABILITY_SRVCC 1
+  uint8_t  srvcc:1;
+  /* NF notification procedure capability */
+#define UE_NETWORK_CAPABILITY_NF  1
+  uint8_t  nf:1;
+  //uint8_t spare[0..8]
+
+  bool     umts_present;
+  bool     misc_present;
+} ue_network_capability_t;
+
+
+//9.9.3.36 UE security capability
+#define UE_SECURITY_CAPABILITY_MINIMUM_LENGTH 4
+#define UE_SECURITY_CAPABILITY_MAXIMUM_LENGTH 7
+
+typedef struct ue_security_capability_s {
+  /* EPS encryption algorithms supported (octet 3) */
+#define UE_SECURITY_CAPABILITY_EEA0 0b10000000
+#define UE_SECURITY_CAPABILITY_EEA1 0b01000000
+#define UE_SECURITY_CAPABILITY_EEA2 0b00100000
+#define UE_SECURITY_CAPABILITY_EEA3 0b00010000
+#define UE_SECURITY_CAPABILITY_EEA4 0b00001000
+#define UE_SECURITY_CAPABILITY_EEA5 0b00000100
+#define UE_SECURITY_CAPABILITY_EEA6 0b00000010
+#define UE_SECURITY_CAPABILITY_EEA7 0b00000001
+  uint8_t  eea;
+  /* EPS integrity algorithms supported (octet 4) */
+#define UE_SECURITY_CAPABILITY_EIA0 0b10000000
+#define UE_SECURITY_CAPABILITY_EIA1 0b01000000
+#define UE_SECURITY_CAPABILITY_EIA2 0b00100000
+#define UE_SECURITY_CAPABILITY_EIA3 0b00010000
+#define UE_SECURITY_CAPABILITY_EIA4 0b00001000
+#define UE_SECURITY_CAPABILITY_EIA5 0b00000100
+#define UE_SECURITY_CAPABILITY_EIA6 0b00000010
+#define UE_SECURITY_CAPABILITY_EIA7 0b00000001
+  uint8_t  eia;
+  bool     umts_present;
+  bool     gprs_present;
+  /* UMTS encryption algorithms supported (octet 5) */
+#define UE_SECURITY_CAPABILITY_UEA0 0b10000000
+#define UE_SECURITY_CAPABILITY_UEA1 0b01000000
+#define UE_SECURITY_CAPABILITY_UEA2 0b00100000
+#define UE_SECURITY_CAPABILITY_UEA3 0b00010000
+#define UE_SECURITY_CAPABILITY_UEA4 0b00001000
+#define UE_SECURITY_CAPABILITY_UEA5 0b00000100
+#define UE_SECURITY_CAPABILITY_UEA6 0b00000010
+#define UE_SECURITY_CAPABILITY_UEA7 0b00000001
+  uint8_t  uea;
+  /* UMTS integrity algorithms supported (octet 6) */
+#define UE_SECURITY_CAPABILITY_UIA1 0b01000000
+#define UE_SECURITY_CAPABILITY_UIA2 0b00100000
+#define UE_SECURITY_CAPABILITY_UIA3 0b00010000
+#define UE_SECURITY_CAPABILITY_UIA4 0b00001000
+#define UE_SECURITY_CAPABILITY_UIA5 0b00000100
+#define UE_SECURITY_CAPABILITY_UIA6 0b00000010
+#define UE_SECURITY_CAPABILITY_UIA7 0b00000001
+  uint8_t  uia:7;
+  /* GPRS encryption algorithms supported (octet 7) */
+#define UE_SECURITY_CAPABILITY_GEA1 0b01000000
+#define UE_SECURITY_CAPABILITY_GEA2 0b00100000
+#define UE_SECURITY_CAPABILITY_GEA3 0b00010000
+#define UE_SECURITY_CAPABILITY_GEA4 0b00001000
+#define UE_SECURITY_CAPABILITY_GEA5 0b00000100
+#define UE_SECURITY_CAPABILITY_GEA6 0b00000010
+#define UE_SECURITY_CAPABILITY_GEA7 0b00000001
+  uint8_t  gea:7;
+} ue_security_capability_t;
+
 //------------------------------------------------------------------------------
 // 10.2 Timers of EPS mobility management
 //------------------------------------------------------------------------------

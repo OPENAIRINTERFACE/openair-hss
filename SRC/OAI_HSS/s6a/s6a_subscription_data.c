@@ -79,8 +79,16 @@ s6a_add_subscription_data_avp (
      */
     if (msisdn_len > 0) {
       CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_msisdn, 0, &child_avp));
-      value.os.data = (uint8_t *) mysql_ans->msisdn;
-      value.os.len = msisdn_len;
+      uint8_t msisdn_tbcd[16] = {0};
+      for (int i = 0; i < msisdn_len; i++) {
+        if (i & 0x01) {
+          msisdn_tbcd[i>>1] = msisdn_tbcd[i>>1] & ((mysql_ans->msisdn[i] - 0x30) | 0xF0);
+        } else {
+          msisdn_tbcd[i>>1] = ((mysql_ans->msisdn[i] - 0x30) << 4) | 0x0F;
+        }
+      }
+      value.os.data = (uint8_t *) msisdn_tbcd;
+      value.os.len = (msisdn_len + 1) /2;
       CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
       CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, child_avp));
     }

@@ -19,14 +19,11 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 
-#include "OctetString.h"
 
 #ifndef EMERGENCY_NUMBER_LIST_H_
 #define EMERGENCY_NUMBER_LIST_H_
+#include <stdint.h>
 
 #define EMERGENCY_NUMBER_LIST_MINIMUM_LENGTH 5
 #define EMERGENCY_NUMBER_LIST_MAXIMUM_LENGTH 50

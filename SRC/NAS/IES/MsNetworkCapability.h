@@ -19,23 +19,17 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
 
 #ifndef MS_NETWORK_CAPABILITY_H_
 #define MS_NETWORK_CAPABILITY_H_
+#include <stdint.h>
+#include "bstrlib.h"
+#include "3gpp_24.008.h"
 
-#define MS_NETWORK_CAPABILITY_MINIMUM_LENGTH 3
-#define MS_NETWORK_CAPABILITY_MAXIMUM_LENGTH 10
 
-typedef struct MsNetworkCapability_tag {
-  OctetString msnetworkcapabilityvalue;
-} MsNetworkCapability;
+typedef ms_network_capability_t MsNetworkCapability;
 
-int encode_ms_network_capability(MsNetworkCapability *msnetworkcapability, uint8_t iei, uint8_t *buffer, uint32_t len);
+int encode_ms_network_capability(MsNetworkCapability *msnetworkcapability, uint8_t iei, uint8_t *buffer, uint32_t len) __attribute__ ((unused));
 
 int decode_ms_network_capability(MsNetworkCapability *msnetworkcapability, uint8_t iei, uint8_t *buffer, uint32_t len);
 

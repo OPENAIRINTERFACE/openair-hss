@@ -43,10 +43,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "common_defs.h"
 typedef enum {
 
-  NW_OK                 = 0x00000000,
+  NW_OK                 = RETURNok,
   NW_GTPV2C_IE_MISSING,
   NW_GTPV2C_IE_INCORRECT,
   NW_GTPV2C_MANDATORY_IE_DUPLICATE,

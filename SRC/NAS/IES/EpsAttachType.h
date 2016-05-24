@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef EPS_ATTACH_TYPE_H_
 #define EPS_ATTACH_TYPE_H_
+#include <stdint.h>
 
 #define EPS_ATTACH_TYPE_MINIMUM_LENGTH 1
 #define EPS_ATTACH_TYPE_MAXIMUM_LENGTH 1

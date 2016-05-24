@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef ESM_CAUSE_H_
 #define ESM_CAUSE_H_
+#include <stdint.h>
 
 #define ESM_CAUSE_MINIMUM_LENGTH 1
 #define ESM_CAUSE_MAXIMUM_LENGTH 1

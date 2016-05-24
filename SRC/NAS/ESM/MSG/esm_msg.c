@@ -199,7 +199,7 @@ esm_msg_decode (
 
   default:
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
-    decode_result = TLV_DECODE_WRONG_MESSAGE_TYPE;
+    decode_result = TLV_WRONG_MESSAGE_TYPE;
     break;
   }
 
@@ -349,7 +349,7 @@ esm_msg_encode (
 
   default:
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
-    encode_result = TLV_ENCODE_WRONG_MESSAGE_TYPE;
+    encode_result = TLV_WRONG_MESSAGE_TYPE;
     break;
   }
 
@@ -398,7 +398,7 @@ _esm_msg_decode_header (
    * Check the buffer length
    */
   if (len < sizeof (esm_msg_header_t)) {
-    return (TLV_DECODE_BUFFER_TOO_SHORT);
+    return (TLV_BUFFER_TOO_SHORT);
   }
 
   /*
@@ -419,7 +419,7 @@ _esm_msg_decode_header (
    */
   if (header->protocol_discriminator != EPS_SESSION_MANAGEMENT_MESSAGE) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected protocol discriminator: 0x%x\n", header->protocol_discriminator);
-    return (TLV_DECODE_PROTOCOL_NOT_SUPPORTED);
+    return (TLV_PROTOCOL_NOT_SUPPORTED);
   }
 
   return (size);
@@ -456,14 +456,14 @@ _esm_msg_encode_header (
    */
   if (len < sizeof (esm_msg_header_t)) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - buffer too short\n");
-    return (TLV_ENCODE_BUFFER_TOO_SHORT);
+    return (TLV_BUFFER_TOO_SHORT);
   }
   /*
    * Check the protocol discriminator
    */
   else if (header->protocol_discriminator != EPS_SESSION_MANAGEMENT_MESSAGE) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected protocol discriminator: 0x%x\n", header->protocol_discriminator);
-    return (TLV_ENCODE_PROTOCOL_NOT_SUPPORTED);
+    return (TLV_PROTOCOL_NOT_SUPPORTED);
   }
 
   /*

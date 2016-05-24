@@ -36,6 +36,7 @@
 
 #include <sys/time.h>
 
+#include "assertions.h"
 #include "tree.h"
 #include "queue.h"
 
@@ -62,6 +63,7 @@ extern "C" {
     if(((NwGtpv2cStackT*)(_stack))->memMgr.memAlloc && ((NwGtpv2cStackT*)(_stack))->memMgr.memFree )\
     {                                                                   \
       _mem = (_type) ((NwGtpv2cStackT*) (_stack))->memMgr.memAlloc(((NwGtpv2cStackT*) (_stack))->memMgr.hMemMgr, _size, __FILE__, __LINE__);\
+      AssertFatal(0, "Do not use this Mem manager");                    \
     }                                                                   \
     else                                                                \
     {                                                                   \
@@ -74,6 +76,7 @@ extern "C" {
     if(((NwGtpv2cStackT*)(_stack))->memMgr.memAlloc && ((NwGtpv2cStackT*)(_stack))->memMgr.memFree )\
     {                                                                   \
       ((NwGtpv2cStackT*)(_stack))->memMgr.memFree(((NwGtpv2cStackT*) (_stack))->memMgr.hMemMgr, _mem, __FILE__, __LINE__);\
+      AssertFatal(0, "Do not use this Mem manager");                    \
     }                                                                   \
     else                                                                \
     {                                                                   \

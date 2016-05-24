@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef LINKED_EPS_BEARER_IDENTITY_H_
 #define LINKED_EPS_BEARER_IDENTITY_H_
+#include <stdint.h>
 
 #define LINKED_EPS_BEARER_IDENTITY_MINIMUM_LENGTH 1
 #define LINKED_EPS_BEARER_IDENTITY_MAXIMUM_LENGTH 1

@@ -180,10 +180,10 @@ emm_fsm_set_status (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
 
-  DevAssert (emm_ctx );
-  if ((status < EMM_STATE_MAX) && (ue_id > 0)) {
+  DevAssert (emm_ctx);
+  if (status < EMM_STATE_MAX) {
     if (status != emm_ctx->_emm_fsm_status) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Status changed: %s ===> %s\n", _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
+      OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status changed: %s ===> %s\n", ue_id, _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " MME_UE_S1AP_ID_FMT" ", _emm_fsm_status_str[status], ue_id);
       emm_ctx->_emm_fsm_status = status;
     }
@@ -221,6 +221,8 @@ emm_fsm_get_status (
   }
 
   if (emm_ctx ) {
+    AssertFatal((emm_ctx->_emm_fsm_status < EMM_STATE_MAX) && (emm_ctx->_emm_fsm_status > EMM_STATE_MIN),
+        "ue_id " MME_UE_S1AP_ID_FMT " BAD EMM state %d", ue_id, emm_ctx->_emm_fsm_status);
     return emm_ctx->_emm_fsm_status;
   }
   return EMM_INVALID;           // LG TEST: changed EMM_STATE_MAX to EMM_INVALID;
@@ -244,7 +246,7 @@ int
 emm_fsm_process (
   const emm_reg_t * evt)
 {
-  int                                     rc;
+  int                                     rc = RETURNerror;
   emm_fsm_state_t                         status;
   emm_reg_primitive_t                     primitive;
 
@@ -252,14 +254,17 @@ emm_fsm_process (
   primitive = evt->primitive;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
 
-  DevAssert (emm_ctx );
-  status = emm_fsm_get_status (evt->ue_id, emm_ctx);
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
-  DevAssert (status != EMM_INVALID);
-  /*
-   * Execute the EMM state machine
-   */
-  rc = (_emm_fsm_handlers[status]) (evt);
+  if (emm_ctx) {
+    status = emm_fsm_get_status (evt->ue_id, emm_ctx);
+    DevAssert (status != EMM_INVALID);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
+    /*
+     * Execute the EMM state machine
+     */
+    rc = (_emm_fsm_handlers[status]) (evt);
+  } else {
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) but no EMM data context provided\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive);
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

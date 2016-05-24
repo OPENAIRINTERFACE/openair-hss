@@ -37,8 +37,8 @@
 
 #include "common_types.h"
 
-int sctp_set_init_opt(int sd, sctp_stream_id_t instreams, sctp_stream_id_t outstreams,
-                      uint16_t max_attempts, uint16_t init_timeout);
+int sctp_set_init_opt(const int sd, const sctp_stream_id_t instreams, const sctp_stream_id_t outstreams,
+    const uint16_t max_attempts, const uint16_t init_timeout);
 
 int sctp_get_sockinfo(int sock, sctp_stream_id_t *instream, sctp_stream_id_t *outstream,
     sctp_assoc_id_t *assoc_id);

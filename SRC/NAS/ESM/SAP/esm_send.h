@@ -40,6 +40,7 @@ Description Defines functions executed at the ESM Service Access
 #ifndef __ESM_SEND_H__
 #define __ESM_SEND_H__
 
+#include "common_defs.h"
 #include "EsmStatus.h"
 
 #include "PdnConnectivityReject.h"
@@ -98,8 +99,8 @@ int esm_send_pdn_disconnect_reject(int pti, pdn_disconnect_reject_msg *msg,
  * ---------------------------------------
  */
 int esm_send_activate_default_eps_bearer_context_request(int pti, int ebi,
-    activate_default_eps_bearer_context_request_msg *msg, const OctetString *apn,
-    const ProtocolConfigurationOptions *pco, int pdn_type, const OctetString *pdn_addr,
+    activate_default_eps_bearer_context_request_msg *msg, bstring apn,
+    const ProtocolConfigurationOptions *pco, int pdn_type, bstring pdn_addr,
     const EpsQualityOfService *qos, int esm_cause);
 
 int esm_send_activate_dedicated_eps_bearer_context_request(int pti, int ebi,

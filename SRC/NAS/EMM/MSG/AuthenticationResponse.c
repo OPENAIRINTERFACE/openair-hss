@@ -66,7 +66,7 @@ encode_authentication_response (
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, AUTHENTICATION_RESPONSE_MINIMUM_LENGTH, len);
 
-  if ((encode_result = encode_authentication_response_parameter (&authentication_response->authenticationresponseparameter, 0, buffer + encoded, len - encoded)) < 0)   //Return in case of error
+  if ((encode_result = encode_authentication_response_parameter (authentication_response->authenticationresponseparameter, 0, buffer + encoded, len - encoded)) < 0)   //Return in case of error
     return encode_result;
   else
     encoded += encode_result;

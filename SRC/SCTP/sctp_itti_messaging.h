@@ -21,17 +21,25 @@
 
 #ifndef FILE_SCTP_ITTI_MESSAGING_SEEN
 #define FILE_SCTP_ITTI_MESSAGING_SEEN
+#include "common_defs.h"
+
+int sctp_itti_send_lower_layer_conf (
+    const task_id_t        origin_task_id,
+    const sctp_assoc_id_t  assoc_id,
+    const sctp_stream_id_t stream,
+    const uint32_t         mme_ue_s1ap_id,
+    const bool             is_success);
 
 int sctp_itti_send_new_association(const sctp_assoc_id_t assoc_id,
         const sctp_stream_id_t instreams,
         const sctp_stream_id_t outstreams);
 
-int sctp_itti_send_new_message_ind(const size_t size,
-        const uint8_t * const buffer,
-        const sctp_assoc_id_t assoc_id,
-        const sctp_stream_id_t stream,
-        const sctp_stream_id_t instreams,
-        const sctp_stream_id_t outstreams);
+int sctp_itti_send_new_message_ind(
+    STOLEN_REF bstring    *payload,
+    const sctp_assoc_id_t  assoc_id,
+    const sctp_stream_id_t stream,
+    const sctp_stream_id_t instreams,
+    const sctp_stream_id_t outstreams);
 
 int sctp_itti_send_com_down_ind(const sctp_assoc_id_t assoc_id);
 

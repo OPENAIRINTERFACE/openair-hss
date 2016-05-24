@@ -19,14 +19,10 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
 
 #ifndef EPS_ATTACH_RESULT_H_
 #define EPS_ATTACH_RESULT_H_
+#include <stdint.h>
 
 #define EPS_ATTACH_RESULT_MINIMUM_LENGTH 1
 #define EPS_ATTACH_RESULT_MAXIMUM_LENGTH 1

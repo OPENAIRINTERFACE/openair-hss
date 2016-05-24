@@ -66,5 +66,4 @@ MESSAGE_DEF(NAS_DETACH_REQ,       		MESSAGE_PRIORITY_MED,   itti_nas_detach_req_
 /* MME app -> NAS layer messages */
 MESSAGE_DEF(NAS_PDN_CONNECTIVITY_RSP,           MESSAGE_PRIORITY_MED,   itti_nas_pdn_connectivity_rsp_t,  nas_pdn_connectivity_rsp)
 MESSAGE_DEF(NAS_PDN_CONNECTIVITY_FAIL,          MESSAGE_PRIORITY_MED,   itti_nas_pdn_connectivity_fail_t, nas_pdn_connectivity_fail)
-MESSAGE_DEF(NAS_AUTHENTICATION_PARAM_RSP,       MESSAGE_PRIORITY_MED,   itti_nas_auth_param_rsp_t,        nas_auth_param_rsp)
-MESSAGE_DEF(NAS_AUTHENTICATION_PARAM_FAIL,      MESSAGE_PRIORITY_MED,   itti_nas_auth_param_fail_t,       nas_auth_param_fail)
+

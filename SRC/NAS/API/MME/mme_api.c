@@ -39,12 +39,14 @@
 
 
 #include "common_types.h"
+#include "log.h"
 #include "mme_api.h"
 #include "assertions.h"
+#include "conversions.h"
 #include "sgw_ie_defs.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-#include "log.h"
+#include "mme_config.h"
 
 #include <string.h>             // memcpy
 
@@ -60,207 +62,8 @@ extern mme_app_desc_t                   mme_app_desc;
 /* Maximum number of PDN connections the MME may simultaneously support */
 #define MME_API_PDN_MAX         10
 
-/* MME group identifier */
-#define MME_API_MME_GID         0x0102
-
-/* MME code */
-#define MME_API_MME_CODE        0x12
-
-/* Default APN */
-static const OctetString                mme_api_default_apn = {
-  /*
-   * LW: apn seems to be coded using a one byte size field before each part of the name
-   */
-#if 1
-  15, (uint8_t *) ("\x0e" "www.eurecom.fr")
-#else
-  35, (uint8_t *) ("\x08" "internet" "\x02" "v4" "\x03" "pft" "\x06" "mnc092" "\x06" "mcc208" "\x04" "gprs")
-#endif
-};
-
-/* APN configured for emergency bearer services */
-static const OctetString                mme_api_emergency_apn = {
-  19, (uint8_t *) ("\x12" "www.eurecom_sos.fr")
-};
-
-/* Public Land Mobile Network identifier */
-static const plmn_t                     mme_api_plmn = { 0, 2, 0xf, 8, 0, 1 };  // 20810
-
-/* Number of concecutive tracking areas */
-#define MME_API_NB_TACS     4
-/* Code of the first tracking area belonging to the PLMN */
-#define MME_API_FIRST_TAC   0x0001
-
-
-/* Authentication parameter RAND */
-static const uint8_t                    _mme_api_rand[AUTH_RAND_SIZE] = {
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x01, 0x02, 0x03, 0x04
-};
-
-/* Authentication parameter AUTN */
-static const uint8_t                    _mme_api_autn[AUTH_AUTN_SIZE] = {
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x05, 0x04, 0x03, 0x02, 0x00,
-  0x00, 0x00, 0x00, 0x00
-};
-
-/* Authentication response parameter */
-static const uint8_t                    _mme_api_xres[AUTH_XRES_SIZE] = {
-  0x67, 0x70, 0x3a, 0x31, 0xf2, 0x2a, 0x2d, 0x51, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00
-};
-
 static mme_api_ip_version_t             _mme_api_ip_capability = MME_API_IPV4V6_ADDR;
 
-/* Pool of IPv4 addresses */
-static uint8_t                          _mme_api_ipv4_addr[MME_API_PDN_MAX][4] = {
-  {0xC0, 0xA8, 0x02, 0x3C},     /* 192.168.02.60    */
-  {0xC0, 0xA8, 0x0C, 0xBB},     /* 192.168.12.187   */
-  {0xC0, 0xA8, 0x0C, 0xBC},     /* 192.168.12.188   */
-  {0xC0, 0xA8, 0x0C, 0xBD},     /* 192.168.12.189   */
-  {0xC0, 0xA8, 0x0C, 0xBE},     /* 192.168.12.190   */
-  {0xC0, 0xA8, 0x0C, 0xBF},     /* 192.168.12.191   */
-  {0xC0, 0xA8, 0x0C, 0xC0},     /* 192.168.12.192   */
-  {0xC0, 0xA8, 0x0C, 0xC1},     /* 192.168.12.193   */
-  {0xC0, 0xA8, 0x0C, 0xC2},     /* 192.168.12.194   */
-  {0xC0, 0xA8, 0x0C, 0xC3},     /* 192.168.12.195   */
-};
-
-/* Pool of IPv6 addresses */
-static uint8_t                          _mme_api_ipv6_addr[MME_API_PDN_MAX][8] = {
-  /*
-   * FE80::221:70FF:C0A8:023C/64
-   */
-  {0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x02, 0x3C},
-  /*
-   * FE80::221:70FF:C0A8:0CBB/64
-   */
-  {0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xBB},
-  /*
-   * FE80::221:70FF:C0A8:0CBC/64
-   */
-  {0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xBC},
-  /*
-   * FE80::221:70FF:C0A8:0CBD/64
-   */
-  {0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xBD},
-  /*
-   * FE80::221:70FF:C0A8:0CBE/64
-   */
-  {0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xBE},
-  /*
-   * FE80::221:70FF:C0A8:0CBF/64
-   */
-  {0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xBF},
-  /*
-   * FE80::221:70FF:C0A8:0CC0/64
-   */
-  {0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xC0},
-  /*
-   * FE80::221:70FF:C0A8:0CC1/64
-   */
-  {0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xC1},
-  /*
-   * FE80::221:70FF:C0A8:0CC2/64
-   */
-  {0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xC2},
-  /*
-   * FE80::221:70FF:C0A8:0CC3/64
-   */
-  {0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xC3},
-};
-
-/* Pool of IPv4v6 addresses */
-static uint8_t                          _mme_api_ipv4v6_addr[MME_API_PDN_MAX][12] = {
-  /*
-   * 192.168.02.60, FE80::221:70FF:C0A8:023C/64
-   */
-  {0xC0, 0xA8, 0x02, 0x3C, 0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x02, 0x3C},
-  /*
-   * 192.168.12.187, FE80::221:70FF:C0A8:0CBB/64
-   */
-  {0xC0, 0xA8, 0x0C, 0xBB, 0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xBB},
-  /*
-   * 192.168.12.188, FE80::221:70FF:C0A8:0CBC/64
-   */
-  {0xC0, 0xA8, 0x0C, 0xBC, 0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xBC},
-  /*
-   * 192.168.12.189, FE80::221:70FF:C0A8:0CBD/64
-   */
-  {0xC0, 0xA8, 0x0C, 0xBD, 0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xBD},
-  /*
-   * 192.168.12.189, FE80::221:70FF:C0A8:0CBE/64
-   */
-  {0xC0, 0xA8, 0x0C, 0xBD, 0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xBE},
-  /*
-   * 192.168.12.189, FE80::221:70FF:C0A8:0CBF/64
-   */
-  {0xC0, 0xA8, 0x0C, 0xBD, 0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xBF},
-  /*
-   * 192.168.12.189, FE80::221:70FF:C0A8:0CC0/64
-   */
-  {0xC0, 0xA8, 0x0C, 0xBD, 0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xC0},
-  /*
-   * 192.168.12.189, FE80::221:70FF:C0A8:0CC1/64
-   */
-  {0xC0, 0xA8, 0x0C, 0xBD, 0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xC1},
-  /*
-   * 192.168.12.189, FE80::221:70FF:C0A8:0CC2/64
-   */
-  {0xC0, 0xA8, 0x0C, 0xBD, 0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xC2},
-  /*
-   * 192.168.12.189, FE80::221:70FF:C0A8:0CC3/64
-   */
-  {0xC0, 0xA8, 0x0C, 0xBD, 0x02, 0x21, 0x70, 0xFF, 0xC0, 0xA8, 0x0C, 0xC3},
-};
-
-static const OctetString                _mme_api_pdn_addr[MME_API_ADDR_MAX][MME_API_PDN_MAX] = {
-  {
-   /*
-    * IPv4 network capability
-    */
-   {4, _mme_api_ipv4_addr[0]},
-   {4, _mme_api_ipv4_addr[1]},
-   {4, _mme_api_ipv4_addr[2]},
-   {4, _mme_api_ipv4_addr[3]},
-   {4, _mme_api_ipv4_addr[4]},
-   {4, _mme_api_ipv4_addr[5]},
-   {4, _mme_api_ipv4_addr[6]},
-   {4, _mme_api_ipv4_addr[7]},
-   {4, _mme_api_ipv4_addr[8]},
-   {4, _mme_api_ipv4_addr[9]},
-   },
-  {
-   /*
-    * IPv6 network capability
-    */
-   {8, _mme_api_ipv6_addr[0]},
-   {8, _mme_api_ipv6_addr[1]},
-   {8, _mme_api_ipv6_addr[2]},
-   {8, _mme_api_ipv6_addr[3]},
-   {8, _mme_api_ipv6_addr[4]},
-   {8, _mme_api_ipv6_addr[5]},
-   {8, _mme_api_ipv6_addr[6]},
-   {8, _mme_api_ipv6_addr[7]},
-   {8, _mme_api_ipv6_addr[8]},
-   {8, _mme_api_ipv6_addr[9]},
-   },
-  {
-   /*
-    * IPv4v6 network capability
-    */
-   {12, _mme_api_ipv4v6_addr[0]},
-   {12, _mme_api_ipv4v6_addr[1]},
-   {12, _mme_api_ipv4v6_addr[2]},
-   {12, _mme_api_ipv4v6_addr[3]},
-   {12, _mme_api_ipv4v6_addr[4]},
-   {12, _mme_api_ipv4v6_addr[5]},
-   {12, _mme_api_ipv4v6_addr[6]},
-   {12, _mme_api_ipv4v6_addr[7]},
-   {12, _mme_api_ipv4v6_addr[8]},
-   {12, _mme_api_ipv4v6_addr[9]},
-   },
-};
 
 /* Subscribed QCI */
 #define MME_API_QCI     3
@@ -273,6 +76,8 @@ static const OctetString                _mme_api_pdn_addr[MME_API_ADDR_MAX][MME_
 
 /* Total number of PDN connections (should not exceed MME_API_PDN_MAX) */
 static int                              _mme_api_pdn_id = 0;
+
+static tmsi_t                           mme_m_tmsi_generator = 0x608ACD01;
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -304,24 +109,8 @@ mme_api_get_emm_config (
 {
   int                                     i;
   OAILOG_FUNC_IN (LOG_NAS);
-  AssertFatal (mme_config_p->served_tai.nb_tai >= 1, "No PLMN configured");
-  AssertFatal (mme_config_p->gummei.nb_mmec >= 1, "No MME Code configured");
-  AssertFatal (mme_config_p->gummei.nb_mme_gid >= 1, "No MME Group ID configured");
-  config->gummei.plmn.mcc_digit1 = (mme_config_p->served_tai.plmn_mcc[0] / 100) % 10;
-  config->gummei.plmn.mcc_digit2 = (mme_config_p->served_tai.plmn_mcc[0] / 10) % 10;
-  config->gummei.plmn.mcc_digit3 = mme_config_p->served_tai.plmn_mcc[0] % 10;
-
-  if (mme_config_p->served_tai.plmn_mnc_len[0] == 2) {
-    config->gummei.plmn.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
-    config->gummei.plmn.mnc_digit2 = mme_config_p->served_tai.plmn_mnc[0] % 10;
-    config->gummei.plmn.mnc_digit3 = 0xf;
-  } else if (mme_config_p->served_tai.plmn_mnc_len[0] == 3) {
-    config->gummei.plmn.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[0] / 100) % 10;
-    config->gummei.plmn.mnc_digit2 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
-    config->gummei.plmn.mnc_digit3 = mme_config_p->served_tai.plmn_mnc[0] % 10;
-  } else {
-    AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[0] >= 2) && (mme_config_p->served_tai.plmn_mnc_len[0] <= 3), "BAD MNC length for GUMMEI");
-  }
+  AssertFatal (mme_config_p->served_tai.nb_tai >= 1, "No TAI configured");
+  AssertFatal (mme_config_p->gummei.nb >= 1, "No GUMMEI configured");
 
   config->tai_list.n_tais = 0;
   for (i = 0; i < mme_config_p->served_tai.nb_tai; i++) {
@@ -344,12 +133,12 @@ mme_api_get_emm_config (
     config->tai_list.n_tais += 1;
   }
   config->tai_list.list_type = mme_config_p->served_tai.list_type;
-  /*
-   * SR: this config param comes from MME global config
-   */
+
+  config->gummei = mme_config_p->gummei.gummei[0];
+
+
   // hardcoded
   config->eps_network_feature_support = EPS_NETWORK_FEATURE_SUPPORT_CS_LCS_LOCATION_SERVICES_VIA_CS_DOMAIN_NOT_SUPPORTED;
-  //config->eps_network_feature_support = EPS_NETWORK_FEATURE_SUPPORT_CS_LCS_LOCATION_SERVICES_VIA_CS_DOMAIN_NOT_SUPPORTED
   if (mme_config_p->eps_network_feature_support.emergency_bearer_services_in_s1_mode != 0) {
     config->eps_network_feature_support |= EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE_SUPPORTED;
   }
@@ -373,6 +162,17 @@ mme_api_get_emm_config (
   }
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
+
+// TODO
+void mme_api_duplicate_enb_ue_s1ap_id_detected (
+    const enb_s1ap_id_key_t enb_s1ap_id_key,
+    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+    const bool             is_remove_old)
+{
+  mme_ue_context_duplicate_enb_ue_s1ap_id_detected(enb_s1ap_id_key, mme_ue_s1ap_id, is_remove_old);
+}
+
+
 
 /****************************************************************************
  **                                                                        **
@@ -408,6 +208,44 @@ mme_api_get_esm_config (
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
 
+
+/*
+ *
+ *  Name:    mme_api_notify_imsi()
+ *
+ *  Description: Notify the MME of the IMSI of a UE.
+ *
+ *  Inputs:
+ *         ueid:      nas_ue id
+ *         imsi64:    IMSI
+ *  Return:    RETURNok, RETURNerror
+ *
+ */
+int
+mme_api_notify_imsi (
+  const mme_ue_s1ap_id_t id,
+  const imsi64_t imsi64)
+{
+  ue_context_t                           *ue_context = NULL;
+
+  OAILOG_FUNC_IN (LOG_NAS);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
+
+
+  if ( ue_context) {
+    mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts,
+        ue_context,
+        ue_context->enb_s1ap_id_key,
+        id,
+        imsi64,
+        ue_context->mme_s11_teid,
+        &ue_context->guti);
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
+  }
+
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+}
+
 /*
  *
  *  Name:    mme_api_notify_new_guti()
@@ -432,9 +270,10 @@ mme_api_notify_new_guti (
 
 
   if ( ue_context) {
+    ue_context->is_guti_set = true;
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts,
         ue_context,
-        ue_context->enb_ue_s1ap_id,
+        ue_context->enb_s1ap_id_key,
         id,
         ue_context->imsi,
         ue_context->mme_s11_teid,
@@ -461,129 +300,17 @@ mme_api_notify_new_guti (
 int
 mme_api_notified_new_ue_s1ap_id_association (
     const enb_ue_s1ap_id_t enb_ue_s1ap_id,
+    const uint32_t         enb_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id)
 {
-  ue_context_t                           *ue_context = NULL;
-
+  int                                     ret = RETURNok;
   OAILOG_FUNC_IN (LOG_NAS);
-  ue_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_ue_s1ap_id);
-
-  if ( ue_context) {
-    mme_ue_context_notified_new_ue_s1ap_id_association(&mme_app_desc.mme_ue_contexts, ue_context, enb_ue_s1ap_id, mme_ue_s1ap_id);
-    // optimistic return:
-    // TODO return value from mme_ue_context_notified_new_ue_s1ap_id_association
-    OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
-  }
-
-  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  enb_s1ap_id_key_t                       enb_key = 0;
+  MME_APP_ENB_S1AP_ID_KEY(enb_key, enb_id, enb_ue_s1ap_id);
+  ret = mme_ue_context_notified_new_ue_s1ap_id_association(enb_key, mme_ue_s1ap_id);
+  OAILOG_FUNC_RETURN (LOG_NAS, ret);
 }
 
-
-/*
- *
- *  Name:    mme_api_identify_guti()
- *
- *  Description: Requests the MME to identify the UE using the specified
- *       GUTI. If the UE is known by the MME (a Mobility Management context exists for this  UE  in  the  MME),
- *       its security context is returned.
- *
- * Inputs:  guti:      EPS Globally Unique Temporary UE Identity
- *      Others:    None
- *
- * Outputs:     vector:    The EPS authentication vector of the UE if known by the network; NULL otherwise.
- *      Return:    RETURNok, RETURNerror
- *      Others:    None
- */
-int
-mme_api_identify_guti (
-  const guti_t * guti,
-  auth_vector_t * vector)
-{
-  ue_context_t                           *ue_context = NULL;
-
-  OAILOG_FUNC_IN (LOG_NAS);
-  ue_context = mme_ue_context_exists_guti (&mme_app_desc.mme_ue_contexts, guti);
-
-  if ( ue_context) {
-    if ( ue_context->vector_in_use) {
-      memcpy (vector->rand, ue_context->vector_in_use->rand, AUTH_RAND_SIZE);
-      memcpy (vector->autn, ue_context->vector_in_use->autn, AUTH_AUTN_SIZE);
-      memcpy (vector->xres, ue_context->vector_in_use->xres.data, ue_context->vector_in_use->xres.size);
-      OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
-    }
-  }
-
-  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
-}
-
-/*
- * Name:    mme_api_identify_imsi()
- *
- * Description: Requests the MME to identify the UE using the specified IMSI.
- *      If the UE is known by the MME (a Mobility Management context exists for
- *      this  UE  in  the  MME), its security context is returned.
- *
- * Inputs:  imsi:      International Mobile Subscriber Identity
- *   Others:    None
- *
- * Outputs:     vector:    The EPS authentication vector of the UE if known by the network; NULL otherwise.
- *   Return:    RETURNok, RETURNerror
- *   Others:    None
- */
-int
-mme_api_identify_imsi (
-  const imsi_t * imsi,
-  auth_vector_t * vector)
-{
-  ue_context_t                           *ue_context = NULL;
-  mme_app_imsi_t                          mme_imsi = {.length = 0};
-
-  OAILOG_FUNC_IN (LOG_NAS);
-
-  mme_app_convert_imsi_to_imsi_mme (&mme_imsi, imsi);
-
-  ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, mme_imsi);
-
-  if ( ue_context) {
-    if ( ue_context->vector_in_use) {
-      memcpy (vector->rand, ue_context->vector_in_use->rand, AUTH_RAND_SIZE);
-      memcpy (vector->autn, ue_context->vector_in_use->autn, AUTH_AUTN_SIZE);
-      memcpy (vector->xres, ue_context->vector_in_use->xres.data, ue_context->vector_in_use->xres.size);
-      OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
-    }
-  }
-
-  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
-}
-
-/*
- *
- * Name:    mme_api_identify_imei()
- *
- * Description: Requests the MME to identify the UE using the specified
- *      IMEI. If the UE is known by the MME (a Mobility Manage-
- *      ment context exists for this  UE  in  the  MME), its se-
- *      curity context is returned.
- *
- * Inputs:  imei:      International Mobile Equipment Identity
- *      Others:    None
- *
- * Outputs:     vector:    The EPS authentication vector of the UE if
- *             known by the network; NULL otherwise.
- *      Return:    RETURNok, RETURNerror
- *      Others:    None
- *
- */
-int
-mme_api_identify_imei (
-  const imei_t * imei,
-  auth_vector_t * vector)
-{
-  int                                     rc = RETURNerror;
-
-  OAILOG_FUNC_IN (LOG_NAS);
-  OAILOG_FUNC_RETURN (LOG_NAS, rc);
-}
 
 /****************************************************************************
  **                                                                        **
@@ -607,67 +334,89 @@ mme_api_identify_imei (
  ***************************************************************************/
 int
 mme_api_new_guti (
-  const imsi_t * imsi,
-  guti_t * guti,
-  tai_list_t * tai_list)
+  const imsi_t * const imsi,
+  const guti_t * const old_guti,
+  guti_t * const guti,
+  const tai_t      * const originating_tai,
+  tai_list_t * const tai_list)
 {
   ue_context_t                           *ue_context = NULL;
-  mme_app_imsi_t                          mme_imsi = {.length = 0};
+  imsi64_t                                mme_imsi = 0;
 
   OAILOG_FUNC_IN (LOG_NAS);
-
-  mme_app_convert_imsi_to_imsi_mme (&mme_imsi, imsi);
-
+  IMSI_TO_IMSI64 (imsi, mme_imsi);
   ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, mme_imsi);
 
   if ( ue_context) {
-    char                                    guti_str[GUTI2STR_MAX_LENGTH];
-    int                                     i,j;
-    plmn_t                                  plmn;
+    if ((INVALID_M_TMSI                   !=  old_guti->m_tmsi ) &&
+        (old_guti->gummei.mme_gid         == _emm_data.conf.gummei.mme_gid) &&
+        (old_guti->gummei.mme_code        == _emm_data.conf.gummei.mme_code) &&
+        (old_guti->gummei.plmn.mcc_digit1 == _emm_data.conf.gummei.plmn.mcc_digit1) &&
+        (old_guti->gummei.plmn.mcc_digit2 == _emm_data.conf.gummei.plmn.mcc_digit2) &&
+        (old_guti->gummei.plmn.mcc_digit3 == _emm_data.conf.gummei.plmn.mcc_digit3) &&
+        (old_guti->gummei.plmn.mnc_digit1 == _emm_data.conf.gummei.plmn.mnc_digit1) &&
+        (old_guti->gummei.plmn.mnc_digit2 == _emm_data.conf.gummei.plmn.mnc_digit2) &&
+        (old_guti->gummei.plmn.mnc_digit3 == _emm_data.conf.gummei.plmn.mnc_digit3))  {
 
-    memcpy (guti, &ue_context->guti, sizeof (*guti));
-
-    GUTI2STR (guti, guti_str, GUTI2STR_MAX_LENGTH);
-
-    plmn.mcc_digit1 = guti->gummei.plmn.mcc_digit1;
-    plmn.mcc_digit2 = guti->gummei.plmn.mcc_digit2;
-    plmn.mcc_digit3 = guti->gummei.plmn.mcc_digit3;
-    plmn.mnc_digit1 = guti->gummei.plmn.mnc_digit1;
-    plmn.mnc_digit2 = guti->gummei.plmn.mnc_digit2;
-    plmn.mnc_digit3 = guti->gummei.plmn.mnc_digit3;
-    j = 0;
-    for (i=0; i < _emm_data.conf.tai_list.n_tais; i++) {
-      if ((_emm_data.conf.tai_list.tai[i].plmn.mcc_digit1 == plmn.mcc_digit1) &&
-          (_emm_data.conf.tai_list.tai[i].plmn.mcc_digit2 == plmn.mcc_digit2) &&
-          (_emm_data.conf.tai_list.tai[i].plmn.mcc_digit3 == plmn.mcc_digit3) &&
-          (_emm_data.conf.tai_list.tai[i].plmn.mnc_digit1 == plmn.mnc_digit1) &&
-          (_emm_data.conf.tai_list.tai[i].plmn.mnc_digit2 == plmn.mnc_digit2) &&
-          (_emm_data.conf.tai_list.tai[i].plmn.mnc_digit3 == plmn.mnc_digit3) ) {
-
-      }
-      tai_list->tai[j].plmn.mcc_digit1 = plmn.mcc_digit1;
-      tai_list->tai[j].plmn.mcc_digit2 = plmn.mcc_digit2;
-      tai_list->tai[j].plmn.mcc_digit3 = plmn.mcc_digit3;
-      tai_list->tai[j].plmn.mnc_digit1 = plmn.mnc_digit1;
-      tai_list->tai[j].plmn.mnc_digit2 = plmn.mnc_digit2;
-      tai_list->tai[j].plmn.mnc_digit3 = plmn.mnc_digit3;
-      tai_list->tai[j].tac            = _emm_data.conf.tai_list.tai[i].tac;
-      j += 1;
-      if (15 == plmn.mnc_digit3) { // mnc length 2
-        OAILOG_INFO (LOG_NAS, "mme_api_new_guti - UE registered to TAC %d%d%d.%d%d:%d\n",
-            plmn.mcc_digit1, plmn.mcc_digit2, plmn.mcc_digit3, plmn.mnc_digit1, plmn.mnc_digit2, _emm_data.conf.tai_list.tai[i].tac);
+      *guti = *old_guti;
+    } else {
+      guti->gummei.mme_gid         = _emm_data.conf.gummei.mme_gid;
+      guti->gummei.mme_code        = _emm_data.conf.gummei.mme_code;
+      guti->gummei.plmn.mcc_digit1 = _emm_data.conf.gummei.plmn.mcc_digit1;
+      guti->gummei.plmn.mcc_digit2 = _emm_data.conf.gummei.plmn.mcc_digit2;
+      guti->gummei.plmn.mcc_digit3 = _emm_data.conf.gummei.plmn.mcc_digit3;
+      guti->gummei.plmn.mnc_digit1 = _emm_data.conf.gummei.plmn.mnc_digit1;
+      guti->gummei.plmn.mnc_digit2 = _emm_data.conf.gummei.plmn.mnc_digit2;
+      guti->gummei.plmn.mnc_digit3 = _emm_data.conf.gummei.plmn.mnc_digit3;
+      if (RUN_MODE_TEST == mme_config.run_mode) {
+        guti->m_tmsi = __sync_fetch_and_add (&mme_m_tmsi_generator, 0x00010101);
       } else {
-        OAILOG_INFO (LOG_NAS, "mme_api_new_guti - UE registered to TAC %d%d%d.%d%d%d:%d\n",
-            plmn.mcc_digit1, plmn.mcc_digit2, plmn.mcc_digit3, plmn.mnc_digit1, plmn.mnc_digit2, plmn.mnc_digit3, _emm_data.conf.tai_list.tai[i].tac);
+        guti->m_tmsi                 = (tmsi_t)(uintptr_t)ue_context;
       }
     }
-    tai_list->n_tais = j;
-
-    OAILOG_INFO (LOG_NAS, "mme_api_new_guti - Got GUTI %s\n", guti_str);
-    OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
+    mme_api_notify_new_guti(ue_context->mme_ue_s1ap_id, guti);
+  } else {
+    OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
   }
 
-  OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+  int            i,j;
+  tac_t   tac  = INVALID_TAC_FFFE;
+  bool    consecutive_tacs = true;
+  j = 0;
+  for (i=0; i < _emm_data.conf.tai_list.n_tais; i++) {
+    if ((_emm_data.conf.tai_list.tai[i].plmn.mcc_digit1 == guti->gummei.plmn.mcc_digit1) &&
+        (_emm_data.conf.tai_list.tai[i].plmn.mcc_digit2 == guti->gummei.plmn.mcc_digit2) &&
+        (_emm_data.conf.tai_list.tai[i].plmn.mcc_digit3 == guti->gummei.plmn.mcc_digit3) &&
+        (_emm_data.conf.tai_list.tai[i].plmn.mnc_digit1 == guti->gummei.plmn.mnc_digit1) &&
+        (_emm_data.conf.tai_list.tai[i].plmn.mnc_digit2 == guti->gummei.plmn.mnc_digit2) &&
+        (_emm_data.conf.tai_list.tai[i].plmn.mnc_digit3 == guti->gummei.plmn.mnc_digit3) ) {
+
+      tai_list->tai[j].plmn = guti->gummei.plmn;
+      // _emm_data.conf.tai_list is sorted
+      tai_list->tai[j].tac            = _emm_data.conf.tai_list.tai[i].tac;
+      if (INVALID_TAC_FFFE == tac)  {
+        tac = _emm_data.conf.tai_list.tai[i].tac;
+      } else {
+        if ((tac+1) == _emm_data.conf.tai_list.tai[i].tac) {
+          tac = tac + 1;
+        } else {
+          consecutive_tacs = false;
+        }
+      }
+
+      j += 1;
+    }
+  }
+  tai_list->n_tais = j;
+
+  if (consecutive_tacs) {
+    tai_list->list_type = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS;
+  } else {
+    tai_list->list_type = TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS;
+  }
+  OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT "  Got GUTI " GUTI_FMT "\n", ue_context->mme_ue_s1ap_id, GUTI_ARG(guti));
+  OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
+
 }
 
 /****************************************************************************
@@ -698,65 +447,15 @@ mme_api_new_guti (
  ***************************************************************************/
 int
 mme_api_subscribe (
-  OctetString * apn,
+  bstring * apn,
   mme_api_ip_version_t mme_pdn_index,
-  OctetString * pdn_addr,
+  bstring * pdn_addr,
   int is_emergency,
   mme_api_qos_t * qos)
 {
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_NAS);
-
-  if (apn && (apn->length == 0)) {
-    /*
-     * PDN connectivity to default APN
-     */
-    if (is_emergency) {
-      apn->length = mme_api_emergency_apn.length;
-      apn->value = mme_api_emergency_apn.value;
-    } else {
-      apn->length = mme_api_default_apn.length;
-      apn->value = mme_api_default_apn.value;
-    }
-  }
-
-  /*
-   * Assign PDN address
-   */
-  if (pdn_addr && (_mme_api_pdn_id < MME_API_PDN_MAX)) {
-    pdn_addr->length = _mme_api_pdn_addr[mme_pdn_index][_mme_api_pdn_id].length;
-    pdn_addr->value = _mme_api_pdn_addr[mme_pdn_index][_mme_api_pdn_id].value;
-    /*
-     * Increment the total number of PDN connections
-     */
-    _mme_api_pdn_id += 1;
-  } else {
-    /*
-     * Maximum number of PDN connections exceeded
-     */
-    rc = RETURNerror;
-  }
-
-  /*
-   * Setup EPS subscribed QoS profile
-   */
-  if (qos) {
-    qos->qci = MME_API_QCI;
-    /*
-     * Uplink bit rate
-     */
-    qos->gbr[MME_API_UPLINK] = MME_API_BIT_RATE_64K;
-    qos->mbr[MME_API_UPLINK] = MME_API_BIT_RATE_128K;
-    /*
-     * Downlink bit rate
-     */
-    qos->gbr[MME_API_DOWNLINK] = MME_API_BIT_RATE_512K;
-    qos->mbr[MME_API_DOWNLINK] = MME_API_BIT_RATE_1024K;
-  } else {
-    rc = RETURNerror;
-  }
-
   OAILOG_FUNC_RETURN (LOG_NAS, rc);
 }
 
@@ -777,8 +476,7 @@ mme_api_subscribe (
  **                                                                        **
  ***************************************************************************/
 int
-mme_api_unsubscribe (
-  OctetString * apn)
+mme_api_unsubscribe ( bstring apn)
 {
   OAILOG_FUNC_IN (LOG_NAS);
   int                                     rc = RETURNok;

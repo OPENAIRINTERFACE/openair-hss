@@ -78,22 +78,14 @@
 /*
    Timer handlers
 */
-static void                            *_eps_bearer_deactivate_t3495_handler (
-  void *);
+static void *_eps_bearer_deactivate_t3495_handler (void *);
 
 /* Maximum value of the deactivate EPS bearer context request
    retransmission counter */
 #define EPS_BEARER_DEACTIVATE_COUNTER_MAX   5
 
-static int                              _eps_bearer_deactivate (
-  emm_data_context_t * ctx,
-  int ebi,
-  const OctetString * msg);
-static int                              _eps_bearer_release (
-  emm_data_context_t * ctx,
-  int ebi,
-  int *pid,
-  int *bid);
+static int _eps_bearer_deactivate (emm_data_context_t * ctx, int ebi, STOLEN_REF bstring *msg);
+static int _eps_bearer_release (emm_data_context_t * ctx, int ebi, int *pid, int *bid);
 
 
 /****************************************************************************/
@@ -236,7 +228,7 @@ esm_proc_eps_bearer_context_deactivate_request (
   bool is_standalone,
   emm_data_context_t * ctx,
   int ebi,
-  OctetString * msg,
+  bstring msg,
   bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -247,7 +239,7 @@ esm_proc_eps_bearer_context_deactivate_request (
    * Send deactivate EPS bearer context request message and
    * * * * start timer T3495
    */
-  rc = _eps_bearer_deactivate (ctx, ebi, msg);
+  rc = _eps_bearer_deactivate (ctx, ebi, &msg);
 
   if (rc != RETURNerror) {
     /*
@@ -382,7 +374,8 @@ _eps_bearer_deactivate_t3495_handler (
     /*
      * Re-send deactivate EPS bearer context request message to the UE
      */
-    rc = _eps_bearer_deactivate (data->ctx, data->ebi, &data->msg);
+    bstring b = bstrcpy(data->msg);
+    rc = _eps_bearer_deactivate (data->ctx, data->ebi, &b);
   } else {
     /*
      * The maximum number of deactivate EPS bearer context request
@@ -435,7 +428,7 @@ static int
 _eps_bearer_deactivate (
   emm_data_context_t * ctx,
   int ebi,
-  const OctetString * msg)
+  STOLEN_REF bstring *msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   emm_sap_t                               emm_sap = {0};
@@ -457,9 +450,9 @@ _eps_bearer_deactivate (
     /*
      * Start T3495 retransmission timer
      */
-    rc = esm_ebr_start_timer (ctx, ebi, msg, T3495_DEFAULT_VALUE, _eps_bearer_deactivate_t3495_handler);
+    rc = esm_ebr_start_timer (ctx, ebi, *msg, T3495_DEFAULT_VALUE, _eps_bearer_deactivate_t3495_handler);
   }
-
+  *msg = NULL;
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 

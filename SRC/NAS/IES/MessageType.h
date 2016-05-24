@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef MESSAGE_TYPE_H_
 #define MESSAGE_TYPE_H_
+#include <stdint.h>
 
 #define MESSAGE_TYPE_MINIMUM_LENGTH 1
 #define MESSAGE_TYPE_MAXIMUM_LENGTH 1

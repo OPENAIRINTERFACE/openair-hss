@@ -47,20 +47,21 @@
 
 *****************************************************************************/
 
-#include <stdlib.h>             // MALLOC_CHECK, FREE_CHECK
+#include <stdlib.h>             // malloc, free_wrapper
 #include <string.h>             // memset, memcpy, memcmp
 #include <ctype.h>              // isprint
 
-#include "3gpp_24.007.h"
-#include "esm_proc.h"
-#include "commonDef.h"
+#include "dynamic_memory_check.h"
+#include "assertions.h"
 #include "log.h"
+#include "3gpp_24.007.h"
+#include "commonDef.h"
+#include "esm_proc.h"
 #include "esmData.h"
 #include "esm_cause.h"
 #include "esm_pt.h"
 #include "mme_api.h"
 #include "emm_sap.h"
-#include "assertions.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -80,16 +81,15 @@
 /*
    PDN connection handlers
 */
-static int                              _pdn_connectivity_create (
+static int _pdn_connectivity_create (
   emm_data_context_t * ctx,
   const int pti,
-  const OctetString * apn,
+  const_bstring const apn,
   esm_proc_pdn_type_t pdn_type,
-  const OctetString * const pdn_addr,
+  const_bstring const pdn_addr,
   const int is_emergency);
-int                                     _pdn_connectivity_delete (
-  emm_data_context_t * ctx,
-  int pid);
+
+int _pdn_connectivity_delete (emm_data_context_t * ctx, int pid);
 
 
 /****************************************************************************/
@@ -144,9 +144,9 @@ esm_proc_pdn_connectivity_request (
   emm_data_context_t * ctx,
   const int pti,
   const esm_proc_pdn_request_t request_type,
-  const OctetString * const apn,
+  const_bstring const apn,
   esm_proc_pdn_type_t pdn_type,
-  const OctetString * const pdn_addr,
+  const_bstring const pdn_addr,
   esm_proc_qos_t * esm_qos,
   int *esm_cause)
 {
@@ -156,13 +156,15 @@ esm_proc_pdn_connectivity_request (
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN connectivity requested by the UE "
              "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d) PDN type = %s, APN = %s pdn addr = %s\n", ctx->ue_id, pti,
-             (pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6", (apn) ? (char *)(apn->value) : "null", (pdn_addr) ? (char *)(pdn_addr->value) : "null");
+             (pdn_type == ESM_PDN_TYPE_IPV4) ? "IPv4" : (pdn_type == ESM_PDN_TYPE_IPV6) ? "IPv6" : "IPv4v6",
+             (apn) ? (char *)bdata(apn) : "null",
+             (pdn_addr) ? (char *)bdata(pdn_addr) : "null");
 
   /*
    * Check network IP capabilities
    */
   *esm_cause = ESM_CAUSE_SUCCESS;
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - _esm_data.conf.features %08x", _esm_data.conf.features);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - _esm_data.conf.features %08x\n", _esm_data.conf.features);
 //#pragma message  "Uncomment code about _esm_data.conf.features & (MME_API_IPV4 | MME_API_IPV6) later"
 #if ORIGINAL_CODE
 
@@ -307,7 +309,7 @@ esm_proc_pdn_connectivity_reject (
   bool is_standalone,
   emm_data_context_t * ctx,
   int ebi,
-  OctetString * msg,
+  bstring msg,
   bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -323,8 +325,7 @@ esm_proc_pdn_connectivity_reject (
      */
     emm_sap.primitive = EMMESM_UNITDATA_REQ;
     emm_sap.u.emm_esm.ctx = ctx;
-    emm_sap.u.emm_esm.u.data.msg.length = msg->length;
-    emm_sap.u.emm_esm.u.data.msg.value = msg->value;
+    emm_sap.u.emm_esm.u.data.msg = msg;
     rc = emm_sap_send (&emm_sap);
   }
 
@@ -415,15 +416,15 @@ static int
 _pdn_connectivity_create (
   emm_data_context_t * ctx,
   const int pti,
-  const OctetString * apn,
+  const_bstring const apn,
   esm_proc_pdn_type_t pdn_type,
-  const OctetString * const pdn_addr,
+  const_bstring const pdn_addr,
   const int is_emergency)
 {
   int                                     pid = ESM_DATA_PDN_MAX;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new PDN connection "
-             "(pti=%d) APN = %s, IP address = %s (ue_id=" MME_UE_S1AP_ID_FMT ")\n", pti, apn->value,
+             "(pti=%d) APN = %s, IP address = %s (ue_id=" MME_UE_S1AP_ID_FMT ")\n", pti, bdata(apn),
              (pdn_type == ESM_PDN_TYPE_IPV4) ? esm_data_get_ipv4_addr (pdn_addr) : (pdn_type == ESM_PDN_TYPE_IPV6) ? esm_data_get_ipv6_addr (pdn_addr) : esm_data_get_ipv4v6_addr (pdn_addr), ctx->ue_id);
 
   /*
@@ -441,7 +442,7 @@ _pdn_connectivity_create (
     /*
      * Create new PDN connection
      */
-    esm_pdn_t                              *pdn = (esm_pdn_t *) MALLOC_CHECK (sizeof (esm_pdn_t));
+    esm_pdn_t                              *pdn = (esm_pdn_t *) malloc (sizeof (esm_pdn_t));
 
     if (pdn ) {
       memset (pdn, 0, sizeof (esm_pdn_t));
@@ -473,23 +474,17 @@ _pdn_connectivity_create (
       /*
        * Setup the Access Point Name
        */
-      if (apn && (apn->length > 0)) {
-        pdn->apn.value = (uint8_t *) MALLOC_CHECK (apn->length + 1);
-
-        if (pdn->apn.value) {
-          pdn->apn.length = apn->length;
-          memcpy (pdn->apn.value, apn->value, apn->length);
-          pdn->apn.value[pdn->apn.length] = '\0';
-        }
+      if (apn) {
+        pdn->apn = bstrcpy(apn);
       }
 
       /*
        * Setup the IP address allocated by the network
        */
-      if (pdn_addr && (pdn_addr->length > 0)) {
-        int                                     length = ((pdn_addr->length < ESM_DATA_IP_ADDRESS_SIZE) ? pdn_addr->length : ESM_DATA_IP_ADDRESS_SIZE);
+      if (pdn_addr) {
+        int length = ((blength(pdn_addr) < ESM_DATA_IP_ADDRESS_SIZE) ? blength(pdn_addr) : ESM_DATA_IP_ADDRESS_SIZE);
 
-        memcpy (pdn->ip_addr, pdn_addr->value, length);
+        memcpy (pdn->ip_addr, pdn_addr->data, length);
         pdn->type = pdn_type;
       }
 
@@ -565,11 +560,11 @@ _pdn_connectivity_delete (
     /*
      * Release allocated PDN connection data
      */
-    if (ctx->esm_data_ctx.pdn[pid].data->apn.length > 0) {
-      FREE_CHECK (ctx->esm_data_ctx.pdn[pid].data->apn.value);
+    if (ctx->esm_data_ctx.pdn[pid].data->apn) {
+      bdestroy (ctx->esm_data_ctx.pdn[pid].data->apn);
     }
 
-    FREE_CHECK (ctx->esm_data_ctx.pdn[pid].data);
+    free_wrapper (ctx->esm_data_ctx.pdn[pid].data);
     ctx->esm_data_ctx.pdn[pid].data = NULL;
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d released\n", pid);
   }

@@ -89,14 +89,13 @@ emm_proc_status_ind (
   int emm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc;
+  int                                     rc = RETURNok;
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM status procedure requested (cause=%d)", emm_cause);
   OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - To be implemented");
   /*
    * TODO
    */
-  rc = RETURNok;
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -137,7 +136,7 @@ emm_proc_status (
   ctx = emm_data_context_get (&_emm_data, ue_id);
 
   if (ctx) {
-    sctx = ctx->security;
+    sctx = &ctx->_security;
   }
 
   /*

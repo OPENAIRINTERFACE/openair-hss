@@ -150,6 +150,18 @@ extern                                  "C" {
   };
 
   static
+  NwGtpv2cMsgIeInfoT                      releaseAccessBearersReqIeInfoTbl[] = {
+    {NW_GTPV2C_IE_EBI, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_NODE_TYPE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_PRIVATE_EXTENSION, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+
+    /*
+     * Do not add below this
+     */
+    {0, 0, 0}
+  };
+
+  static
   NwGtpv2cMsgIeInfoT                      deleteSessionReqIeInfoTbl[] = {
     {NW_GTPV2C_IE_CAUSE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_EBI, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
@@ -172,6 +184,7 @@ extern                                  "C" {
     {NW_GTPV2C_IE_APN_RESTRICTION, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_FTEID, 9, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_FTEID, 9, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_PCO, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_BEARER_CONTEXT, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
     {NW_GTPV2C_IE_BEARER_CONTEXT, 0, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_RECOVERY, 1, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
@@ -190,6 +203,18 @@ extern                                  "C" {
     {NW_GTPV2C_IE_APN_RESTRICTION, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_FTEID, 9, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_BEARER_CONTEXT, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_RECOVERY, 1, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
+    {NW_GTPV2C_IE_PRIVATE_EXTENSION, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
+
+    /*
+     * Do not add below this
+     */
+    {0, 0, 0}
+  };
+
+  static
+  NwGtpv2cMsgIeInfoT                      releaseAccessBearersRspIeInfoTbl[] = {
+    {NW_GTPV2C_IE_CAUSE, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, NULL},
     {NW_GTPV2C_IE_RECOVERY, 1, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL, NULL},
     {NW_GTPV2C_IE_PRIVATE_EXTENSION, 0, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, NULL},
 
@@ -518,6 +543,18 @@ extern                                  "C" {
         }
         break;
 
+      case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:{
+          rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, releaseAccessBearersReqIeInfoTbl);
+          NW_ASSERT (NW_OK == rc);
+        }
+        break;
+
+      case NW_GTP_RELEASE_ACCESS_BEARERS_RSP:{
+          rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, releaseAccessBearersRspIeInfoTbl);
+          NW_ASSERT (NW_OK == rc);
+        }
+        break;
+
       case NW_GTP_FORWARD_RELOCATION_REQ:{
           rc = nwGtpv2cMsgIeParseInfoUpdate (thiz, forwardRelocationReqIeInfoTbl);
           NW_ASSERT (NW_OK == rc);
@@ -573,7 +610,7 @@ extern                                  "C" {
         break;
 
       default:{
-          FREE_CHECK (thiz);
+          free_wrapper (thiz);
           thiz = NULL;
         }
         break;

@@ -41,11 +41,11 @@ Description Defines internal private data handled by EPS Session
 
 #ifndef __ESMDATA_H__
 #define __ESMDATA_H__
+#include "tree.h"
+#include "bstrlib.h"
 #include "networkDef.h"
-#include "OctetString.h"
 #include "EpsBearerIdentity.h"
 #include "mme_api.h"
-#include "tree.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -85,7 +85,7 @@ typedef struct esm_ebr_timer_data_s {
   mme_ue_s1ap_id_t ue_id;      /* Lower layers UE identifier       */
   unsigned int ebi;       /* EPS bearer identity          */
   unsigned int count;     /* Retransmission counter       */
-  OctetString  msg;        /* Encoded ESM message to re-transmit   */
+  bstring      msg;        /* Encoded ESM message to re-transmit   */
 } esm_ebr_timer_data_t;
 
 /*
@@ -141,7 +141,7 @@ typedef struct esm_pdn_s {
   unsigned int pti;   /* Identity of the procedure transaction executed
              * to activate the PDN connection entry     */
   bool is_emergency;   /* Emergency bearer services indicator      */
-  OctetString apn;    /* Access Point Name currently in used      */
+  bstring apn;    /* Access Point Name currently in used      */
   int ambr;       /* Aggregate Maximum Bit Rate of this APN   */
   int type;       /* Address PDN type (IPv4, IPv6, IPv4v6)    */
 #define ESM_DATA_IPV4_ADDRESS_SIZE  4
@@ -249,10 +249,10 @@ esm_data_t _esm_data;
 
 extern char ip_addr_str[100];
 
-extern char *esm_data_get_ipv4_addr(const OctetString *ip_addr);
+extern char *esm_data_get_ipv4_addr(const_bstring ip_addr);
 
-extern char *esm_data_get_ipv6_addr(const OctetString *ip_addr);
+extern char *esm_data_get_ipv6_addr(const_bstring ip_addr);
 
-extern char *esm_data_get_ipv4v6_addr(const OctetString *ip_addr);
+extern char *esm_data_get_ipv4v6_addr(const_bstring ip_addr);
 
 #endif /* __ESMDATA_H__*/

@@ -222,6 +222,7 @@ add_boolean_option( ENABLE_ITTI_ANALYZER            False    "ITTI Analyzer is a
 add_integer_option( ITTI_TASK_STACK_SIZE            0        "pthread allocated stack size in bytes of an ITTI task, if 0, use default stack size ") 
 add_integer_option( ITTI_LITE                       0        "Do not use ITTI systematically for each message exchanged between layer modules") 
 add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
+add_boolean_option( DISABLE_EXECUTE_SHELL_COMMAND   False    "disable execution of C int system(const char *command);")
 # NAS LAYER OPTIONS
 ##########################
 add_boolean_option( EPC_BUILD                       False    "BUILD MME-xGW executable")
@@ -241,10 +242,13 @@ add_boolean_option( SECU_DEBUG                      False    "Traces, option to 
 add_boolean_option( NAS_FORCE_REJECT_SR             True     "TEMP, TO be disabled for community after development and test: Force the EMM NAS layer to respond to any SR by reject")
 add_boolean_option( NAS_FORCE_REJECT_TAU            True     "TEMP, TO be disabled for community after development and test: Force the EMM NAS layer to respond to any TAU Request by reject")
 
+add_boolean_option( TRACE_3GPP_SPEC                 True     "Log hits of 3GPP specifications requirements")
+
 
 set (ITTI_DIR ${OPENAIRCN_DIR}/SRC/COMMON/ITTI)
 if (${ENABLE_ITTI})
-  add_library(ITTI
+
+  set(ITTI_FILES
     # add .h files if depend on (this one is generated)
     ${ITTI_DIR}/intertask_interface.h
     ${ITTI_DIR}/intertask_interface.c
@@ -253,10 +257,16 @@ if (${ENABLE_ITTI})
     ${ITTI_DIR}/signals.c
     ${ITTI_DIR}/timer.c
     )
-if (${ENABLE_ITTI_ANALYZER})
-add_library(ITTI
-    ${ITTI_DIR}/intertask_interface_dump.c )
-endif (${ENABLE_ITTI_ANALYZER})
+  if (${ENABLE_ITTI_ANALYZER})
+    set(ITTI_FILES
+    ${ITTI_FILES}
+    ${ITTI_DIR}/intertask_interface_dump.c 
+    ${OPENAIRCN_BIN_DIR}/messages_xml.h )
+    
+    include_directories ("${OPENAIRCN_BIN_DIR}")
+  endif (${ENABLE_ITTI_ANALYZER})
+    
+  add_library(ITTI ${ITTI_FILES})
     
   set(ITTI_LIB ITTI)
 endif (${ENABLE_ITTI})
@@ -374,6 +384,7 @@ include_directories("${OPENAIRCN_DIR}/SRC/GTPV1-U")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/LFDS/liblfds6.1.1/liblfds611/inc")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/MSC")
+include_directories("${OPENAIRCN_DIR}/SRC/UTILS/BSTR")
 include_directories("${OPENAIRCN_DIR}/SRC/SGW")
 include_directories("${OPENAIRCN_DIR}/SRC/MME_APP")
 include_directories("${OPENAIRCN_DIR}/SRC/S6A")
@@ -383,6 +394,13 @@ include_directories("${OPENAIRCN_DIR}/SRC")
 ###############################################################################
 # Utilities Library
 ###############################################################################
+add_library(BSTR
+  ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/bstraux.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/bstrlib.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/buniutil.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/BSTR/utf8util.c
+)
+include_directories(${OPENAIRCN_DIR}/SRC/UTILS/BSTR)
 
 add_library(HASHTABLE
   ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/hashtable.c
@@ -423,10 +441,11 @@ add_library(SECU_CN ${SECU_CN_SRC})
 set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/SRC/UTILS/conversions.c
   ${OPENAIRCN_DIR}/SRC/UTILS/enum_string.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/mme_config.c
   ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
   ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
   ${OPENAIRCN_DIR}/SRC/UTILS/pid_file.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/TLVEncoder.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/TLVDecoder.c  
   )
 
 if (LOG_OAI)
@@ -467,12 +486,18 @@ add_library(SCTP_SERVER
 add_library(UDP_SERVER ${OPENAIRCN_DIR}/SRC/UDP/udp_primitives_server.c)
 
 set(S11_DIR ${OPENAIRCN_DIR}/SRC/S11)
-add_library(S11
+add_library(S11_MME
   ${S11_DIR}/s11_common.c
   ${S11_DIR}/s11_ie_formatter.c
   ${S11_DIR}/s11_mme_task.c
-  ${S11_DIR}/s11_sgw.c
+  ${S11_DIR}/s11_mme_bearer_manager.c
   ${S11_DIR}/s11_mme_session_manager.c
+)
+
+add_library(S11_SGW
+  ${S11_DIR}/s11_common.c
+  ${S11_DIR}/s11_ie_formatter.c
+  ${S11_DIR}/s11_sgw.c
   ${S11_DIR}/s11_sgw_session_manager.c
   ${S11_DIR}/s11_sgw_bearer_manager.c
 )
@@ -492,11 +517,14 @@ add_library(S6A
 set(SGW_DIR ${OPENAIRCN_DIR}/SRC/SGW)
 add_library (SGW
   ${SGW_DIR}/spgw_config.c
+  ${SGW_DIR}/pgw_config.c
+  ${SGW_DIR}/sgw_config.c
   ${SGW_DIR}/s11_causes.c
   ${SGW_DIR}/sgw_task.c
   ${SGW_DIR}/sgw_handlers.c
   ${SGW_DIR}/sgw_context_manager.c
   ${SGW_DIR}/pgw_lite_paa.c
+  ${SGW_DIR}/pgw_pco.c
   )
 
 set(MME_DIR ${OPENAIRCN_DIR}/SRC/MME_APP)
@@ -512,6 +540,7 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_transport.c
   ${MME_DIR}/mme_app_ue_context.c
   ${MME_DIR}/mme_app_statistics.c
+  ${MME_DIR}/mme_config.c
   ${MME_DIR}/s6a_2_nas_cause.c
   )
 
@@ -520,7 +549,6 @@ set(NAS_SRC ${OPENAIRCN_DIR}/SRC/NAS/)
 set(libnas_api_OBJS
   ${NAS_SRC}API/NETWORK/as_message.c
   ${NAS_SRC}API/NETWORK/nas_message.c
-  ${NAS_SRC}API/NETWORK/network_api.c
   )
   
 set(libnas_emm_msg_OBJS
@@ -665,10 +693,6 @@ set(libnas_ies_OBJS
 
 set (libnas_utils_OBJS
   ${NAS_SRC}UTIL/nas_timer.c
-  ${NAS_SRC}UTIL/socket.c
-  ${NAS_SRC}UTIL/TLVEncoder.c
-  ${NAS_SRC}UTIL/TLVDecoder.c
-  ${NAS_SRC}UTIL/OctetString.c
 )
 
 
@@ -699,7 +723,6 @@ set(libnas_mme_emm_sap_OBJS
   ${NAS_SRC}EMM/SAP/EmmDeregisteredInitiated.c
   ${NAS_SRC}EMM/SAP/emm_esm.c
   ${NAS_SRC}EMM/SAP/emm_fsm.c
-  ${NAS_SRC}EMM/SAP/EmmNull.c
   ${NAS_SRC}EMM/SAP/emm_recv.c
   ${NAS_SRC}EMM/SAP/emm_reg.c
   ${NAS_SRC}EMM/SAP/EmmRegistered.c
@@ -826,72 +849,58 @@ add_definitions(-DASN1_MINIMUM_VERSION=924)
 # add executables for operation
 #################################
 
-
-
-# MME + S/P-GW implementation in one process
-################################
-add_executable(mme_gw
-  ${OPENAIRCN_DIR}/SRC/OAI_EPC/oai_epc_log.c
-  ${OPENAIRCN_DIR}/SRC/OAI_EPC/oai_epc.c
-  ${GTPV1U_DIR}/gtpv1u_task.c
-  ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
-  ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
-  )
-if( ITTI_ANALYZER )
-add_executable(mme_gw
-  ${OPENAIRCN_BIN_DIR}/messages_xml.h )
-endif( ITTI_ANALYZER )
-target_link_libraries (mme_gw
-#SECU_OSA
-  -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC GTPV1U GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A SGW MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
-  -Wl,--end-group
-  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
-  )
   
-# MME standalone in one process
+# MME standalone 
 ################################
 add_executable(mme
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme_log.c
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme.c
-  ${OPENAIRCN_DIR}/SRC/SCTP/sctp_primitives_server.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
   )
 if( ITTI_ANALYZER )
-add_executable(mme
-  ${OPENAIRCN_BIN_DIR}/messages_xml.h )
+  add_executable(mme ${OPENAIRCN_BIN_DIR}/messages_xml.h )
 endif( ITTI_ANALYZER )
 target_link_libraries (mme
-#SECU_OSA
   -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC S11 GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
+   LIB_NAS_MME S1AP_LIB S1AP_EPC S11_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
   pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
   )
 
 
-# oai_sgw is SGW  node implementation
+# spgw is S+P-GW  node implementation
 ################################
 add_executable(spgw
   ${OPENAIRCN_DIR}/SRC/OAI_SGW/oai_sgw.c
-  ${GTPV1U_DIR}/gtpv1u_task.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
   )
 if( ITTI_ANALYZER )
-add_executable(spgw
-  ${OPENAIRCN_BIN_DIR}/messages_xml.h )
+  add_executable(spgw ${OPENAIRCN_BIN_DIR}/messages_xml.h )
 endif( ITTI_ANALYZER )
 target_link_libraries (spgw
   -Wl,--start-group
-  GTPV1U SGW S11 GTPV1U GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE
+  GTPV1U SGW S11_SGW GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
   pthread m rt ${CONFIG_LIBRARIES}  
   )
 
+# auth_request is a helper for scenario builder
+################################
+add_executable(auth_request
+  ${OPENAIRCN_DIR}/SRC/TEST/auth_request.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/ITTI/backtrace.c
+  ${OPENAIRCN_DIR}/SRC/SECU/key_nas_deriver.c
+  ${OPENAIRCN_DIR}/SRC/SECU/kdf.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
+  )
+target_link_libraries (auth_request
+  pthread m rt crypt ${NETTLE_LIBRARIES} gnutls fdproto fdcore
+  )
 
-# Default parameters
-# Does not work on simple install (fqdn in /etc/hosts 127.0.1.1)
-#cmake_host_system_information(RESULT HSS_FQDN_STR QUERY FQDN)
-#cmake_host_system_information(RESULT MME_FQDN_STR QUERY FQDN)
+
 IF( EPC_BUILD OR MME_BUILD )
   INCLUDE(FindFreeDiameter)
   # if standalone eNB or UE no need for FreeDiameter
@@ -900,84 +909,7 @@ IF( EPC_BUILD OR MME_BUILD )
       MESSAGE( SEND_ERROR "FreeDiameter is not enabled for OPENAIRHSS" )
     ENDIF( NOT FREEDIAMETER_HSS_S6A_ENABLED )
   ENDIF( FREEDIAMETER_FOUND )
-
-
-  execute_process(COMMAND hostname --fqdn OUTPUT_VARIABLE HSS_FQDN_STR TIMEOUT 3)
-  execute_process(COMMAND hostname --fqdn OUTPUT_VARIABLE MME_FQDN_STR TIMEOUT 3)
-  string(STRIP ${HSS_FQDN_STR} HSS_FQDN_STR)
-  string(STRIP ${MME_FQDN_STR} MME_FQDN_STR)
-
-  set(HSS_IP                       127.0.1.1                 CACHE STRING     "HSS IP address, default is local")
-  set(MME_FQDN                     ${MME_FQDN_STR}           CACHE STRING     "MME Fully qualified domain name")
-  set(HSS_FQDN                     ${HSS_FQDN_STR}           CACHE STRING     "HSS Fully qualified domain name")
-  set(TRANSPORT_option             "#No_TCP"                 CACHE STRING     "No_TCP or No_SCTP or comment string, FreeDiameter config option")
-  set(TRANSPORT_PREFER_TCP_option  "#Prefer_TCP"             CACHE STRING     "Prefer_TCP or comment string, FreeDiameter config option")
-  IF( NOT DEFINED REALM )
-    string(FIND ${MME_FQDN} "." pos)
-    math(EXPR pos1 "${pos}+1")
-    string(SUBSTRING ${MME_FQDN} ${pos1} -1 realm_string)
-    message("REALM extracted from MME FQDN is ${realm_string}")
-    set(REALM                      ${realm_string}           CACHE STRING     "EPC realm")
-  ENDIF( NOT DEFINED REALM )
-  message("REALM is ${REALM}")
-  IF( NOT DEFINED MME_HOSTNAME )
-    string(FIND ${MME_FQDN} "." pos)
-    string(SUBSTRING ${MME_FQDN} 0 ${pos} mme_hostname_string)
-    message("MME_HOSTNAME extracted from MME FQDN is ${mme_hostname_string}")
-    set(MME_HOSTNAME         ${mme_hostname_string}           CACHE STRING     "MME hostname")
-  ENDIF( NOT DEFINED MME_HOSTNAME )
-  IF( NOT DEFINED HSS_HOSTNAME )
-    string(FIND ${HSS_FQDN} "." pos)
-    string(SUBSTRING ${HSS_FQDN} 0 ${pos} hss_hostname_string)
-    message("HSS_HOSTNAME extracted from HSS FQDN is ${hss_hostname_string}")
-    set(HSS_HOSTNAME         ${hss_hostname_string}           CACHE STRING     "HSS hostname")
-  ENDIF( NOT DEFINED HSS_HOSTNAME )
-
-  if ( ${MME_HOSTNAME} STREQUAL ${HSS_HOSTNAME} )
-    set(MME_S6A_IS_SERVER      1 )
-  endif( ${MME_HOSTNAME} STREQUAL ${HSS_HOSTNAME} )
-
-  IF( MME_S6A_IS_SERVER )
-    set(ConnectPeer        "#ConnectPeer"     CACHE STRING   "HSS connect to MME")
-    set(DIAMETER_PORT      "Port = 3870"      CACHE STRING   "Diameter bind port, 3868 is always used by default by HSS, even if HSS client")
-    set(DIAMETER_SEC_PORT  "SecPort = 3871"   CACHE STRING   "Diameter bind sec port")
-  ELSE( MME_S6A_IS_SERVER )
-    set(ConnectPeer        "#ConnectPeer"     CACHE STRING   "HSS act as a server")
-    set(DIAMETER_PORT      "#Port = 3870"     CACHE STRING   "Diameter bind port")
-    set(DIAMETER_SEC_PORT  "#SecPort = 3871"  CACHE STRING   "Diameter bind sec port")
-  ENDIF( MME_S6A_IS_SERVER )
-
-  execute_process(COMMAND sudo ${OPENAIRCN_DIR}/SCRIPTS/check_mme_s6a_certificate ${FREEDIAMETER_PATH}/.. ${MME_FQDN} WORKING_DIRECTORY ${BUILD_TOP_DIR})
-
-
 ENDIF( EPC_BUILD OR MME_BUILD )
-
-IF( EPC_BUILD )
-  configure_file(
-    ${BUILD_TOP_DIR}/EPC/epc.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/epc.conf)
-
-  configure_file(
-    ${BUILD_TOP_DIR}/EPC/s6a.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf)
-ENDIF( EPC_BUILD )
-
-IF( MME_BUILD )
-  configure_file(
-    ${BUILD_TOP_DIR}/MME/mme.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mme.conf)
-    
-  configure_file(
-    ${BUILD_TOP_DIR}/MME/s6a.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/mme_fd.conf)
-ENDIF( MME_BUILD )
-
-IF( SPGW_BUILD )
-  configure_file(
-    ${BUILD_TOP_DIR}/SPGW/spgw.conf.in
-    ${CMAKE_CURRENT_BINARY_DIR}/spgw.conf)
-ENDIF( SPGW_BUILD )
-
 
 
 ###################################"
@@ -1023,30 +955,30 @@ add_test(NAME test_imsi_convert COMMAND test_mme_app_ue_context_imsi)
 # itti symbolic debug print require to generate a specific include file
 #######################################################################
 
-# retrieve the compiler options to send it to gccxml
-get_directory_property( DirDefs COMPILE_DEFINITIONS )
-foreach( d ${DirDefs} )
-    list(APPEND itti_compiler_options "-D${d}")
-endforeach()
-get_directory_property( DirDefs INCLUDE_DIRECTORIES )
-foreach( d ${DirDefs} )
-    list(APPEND itti_compiler_options "-I${d}")
-endforeach()
+  if( ENABLE_ITTI_ANALYZER )
+  # retrieve the compiler options to send it to gccxml
+    get_directory_property( DirDefs COMPILE_DEFINITIONS )
+    foreach( d ${DirDefs} )
+      list(APPEND itti_compiler_options "-D${d}")
+    endforeach()
+    get_directory_property( DirDefs INCLUDE_DIRECTORIES )
+    foreach( d ${DirDefs} )
+      list(APPEND itti_compiler_options "-I${d}")
+    endforeach()
 
-set (ITTI_H ${ITTI_DIR}/intertask_interface_types.h)
-if( ITTI_ANALYZER )
-add_custom_command (
-  OUTPUT ${OPENAIRCN_BIN_DIR}/messages.xml
-  COMMAND gccxml ${itti_compiler_options} -fxml=${OPENAIRCN_BIN_DIR}/messages.xml ${ITTI_H}
-  DEPENDS ${S1AP_OAI_generated} 
-  )
+    set (ITTI_H ${ITTI_DIR}/intertask_interface_types.h)
+    add_custom_command (
+    OUTPUT ${OPENAIRCN_BIN_DIR}/messages.xml
+      COMMAND gccxml ${itti_compiler_options} -fxml=${OPENAIRCN_BIN_DIR}/messages.xml ${ITTI_H}
+      DEPENDS ${S1AP_OAI_generated} 
+    )
 
-add_custom_command (
-  OUTPUT ${OPENAIRCN_BIN_DIR}/messages_xml.h
-  COMMAND sed -e 's/ *//'   -e 's/\"/\\\\\"/g' -e 's/^/\"/' -e 's/$$/\\\\n\"/' ${OPENAIRCN_BIN_DIR}/messages.xml  > ${OPENAIRCN_BIN_DIR}/messages_xml.h
-  DEPENDS ${OPENAIRCN_BIN_DIR}/messages.xml 
-  )
-endif(ITTI_ANALYZER)
+    add_custom_command (
+      OUTPUT ${OPENAIRCN_BIN_DIR}/messages_xml.h
+      COMMAND sed -e 's/ *//'   -e 's/\"/\\\\\"/g' -e 's/^/\"/' -e 's/$$/\\\\n\"/' ${OPENAIRCN_BIN_DIR}/messages.xml  > ${OPENAIRCN_BIN_DIR}/messages_xml.h
+      DEPENDS ${OPENAIRCN_BIN_DIR}/messages.xml 
+    )
+  endif(ENABLE_ITTI_ANALYZER)
 
 
 

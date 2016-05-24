@@ -65,7 +65,7 @@ extern                                  "C" {
   NW_IN NwGtpv2cMsgParserT ** pthiz) {
     NwGtpv2cMsgParserT                     *thiz;
     //  NW_GTPV2C_MALLOC(hGtpcStackHandle, sizeof(NwGtpv2cMsgParserT), thiz, NwGtpv2cMsgParserT*);
-                                            thiz = (NwGtpv2cMsgParserT *) MALLOC_CHECK (sizeof (NwGtpv2cMsgParserT));
+                                            thiz = (NwGtpv2cMsgParserT *) malloc (sizeof (NwGtpv2cMsgParserT));
 
     if                                      (
   thiz) {

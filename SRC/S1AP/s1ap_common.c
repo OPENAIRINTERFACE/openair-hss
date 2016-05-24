@@ -155,8 +155,8 @@ s1ap_new_ie (
 {
   S1ap_IE_t                              *buff;
 
-  if ((buff = MALLOC_CHECK (sizeof (S1ap_IE_t))) == NULL) {
-    // Possible error on MALLOC_CHECK
+  if ((buff = malloc (sizeof (S1ap_IE_t))) == NULL) {
+    // Possible error on malloc
     return NULL;
   }
 
@@ -166,13 +166,13 @@ s1ap_new_ie (
 
   if (ANY_fromType_aper (&buff->value, type, sptr) < 0) {
     OAILOG_ERROR (LOG_S1AP, "Encoding of %s failed\n", type->name);
-    FREE_CHECK (buff);
+    free_wrapper (buff);
     return NULL;
   }
 
   if (asn1_xer_print)
     if (xer_fprint (stdout, &asn_DEF_S1ap_IE, buff) < 0) {
-      FREE_CHECK (buff);
+      free_wrapper (buff);
       return NULL;
     }
 

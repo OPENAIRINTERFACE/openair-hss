@@ -44,7 +44,7 @@ decode_p_tmsi_signature (
     decoded++;
   }
 
-  if ((decode_result = decode_octet_string (&ptmsisignature->ptmsisignaturevalue, ielen, buffer + decoded, len - decoded)) < 0)
+  if ((decode_result = decode_bstring (ptmsisignature, ielen, buffer + decoded, len - decoded)) < 0)
     return decode_result;
   else
     decoded += decode_result;
@@ -57,7 +57,7 @@ decode_p_tmsi_signature (
 
 int
 encode_p_tmsi_signature (
-  PTmsiSignature * ptmsisignature,
+  PTmsiSignature ptmsisignature,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -78,7 +78,7 @@ encode_p_tmsi_signature (
     encoded++;
   }
 
-  if ((encode_result = encode_octet_string (&ptmsisignature->ptmsisignaturevalue, buffer + encoded, len - encoded)) < 0)
+  if ((encode_result = encode_bstring (ptmsisignature, buffer + encoded, len - encoded)) < 0)
     return encode_result;
   else
     encoded += encode_result;
@@ -88,7 +88,7 @@ encode_p_tmsi_signature (
 
 void
 dump_p_tmsi_signature_xml (
-  PTmsiSignature * ptmsisignature,
+  PTmsiSignature ptmsisignature,
   uint8_t iei)
 {
   OAILOG_DEBUG (LOG_NAS, "<P Tmsi Signature>\n");
@@ -99,6 +99,8 @@ dump_p_tmsi_signature_xml (
      */
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
 
-  OAILOG_DEBUG (LOG_NAS, "%s", dump_octet_string_xml (&ptmsisignature->ptmsisignaturevalue));
+  bstring b = dump_bstring_xml (ptmsisignature);
+  OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
+  bdestroy(b);
   OAILOG_DEBUG (LOG_NAS, "</P Tmsi Signature>\n");
 }

@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef LOCATION_AREA_IDENTIFICATION_H_
 #define LOCATION_AREA_IDENTIFICATION_H_
+#include <stdint.h>
 
 #define LOCATION_AREA_IDENTIFICATION_MINIMUM_LENGTH 6
 #define LOCATION_AREA_IDENTIFICATION_MAXIMUM_LENGTH 6

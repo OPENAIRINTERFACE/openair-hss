@@ -254,9 +254,9 @@ decode_attach_request (
       attach_request->presencemask |= ATTACH_REQUEST_MS_NETWORK_FEATURE_SUPPORT_PRESENT;
       break;
     default:
-      errorCodeDecoder = TLV_DECODE_UNEXPECTED_IEI;
+      errorCodeDecoder = TLV_UNEXPECTED_IEI;
       {
-        return TLV_DECODE_UNEXPECTED_IEI;
+        return TLV_UNEXPECTED_IEI;
       }
     }
   }
@@ -290,14 +290,14 @@ encode_attach_request (
   else
     encoded += encode_result;
 
-  if ((encode_result = encode_esm_message_container (&attach_request->esmmessagecontainer, 0, buffer + encoded, len - encoded)) < 0)    //Return in case of error
+  if ((encode_result = encode_esm_message_container (attach_request->esmmessagecontainer, 0, buffer + encoded, len - encoded)) < 0)    //Return in case of error
     return encode_result;
   else
     encoded += encode_result;
 
   if ((attach_request->presencemask & ATTACH_REQUEST_OLD_PTMSI_SIGNATURE_PRESENT)
       == ATTACH_REQUEST_OLD_PTMSI_SIGNATURE_PRESENT) {
-    if ((encode_result = encode_p_tmsi_signature (&attach_request->oldptmsisignature, ATTACH_REQUEST_OLD_PTMSI_SIGNATURE_IEI, buffer + encoded, len - encoded)) < 0)
+    if ((encode_result = encode_p_tmsi_signature (attach_request->oldptmsisignature, ATTACH_REQUEST_OLD_PTMSI_SIGNATURE_IEI, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

@@ -45,9 +45,6 @@ decode_eps_attach_result (
 
   *epsattachresult = *buffer & 0x7;
   decoded++;
-#if NAS_DEBUG
-  dump_eps_attach_result_xml (epsattachresult, iei);
-#endif
   return decoded;
 }
 
@@ -63,9 +60,6 @@ decode_u8_eps_attach_result (
 
   *epsattachresult = *buffer & 0x7;
   decoded++;
-#if NAS_DEBUG
-  dump_eps_attach_result_xml (epsattachresult, iei);
-#endif
   return decoded;
 }
 
@@ -82,9 +76,6 @@ encode_eps_attach_result (
    * Checking length and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EPS_ATTACH_RESULT_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_eps_attach_result_xml (epsattachresult, iei);
-#endif
   *(buffer + encoded) = 0x00 | (iei & 0xf0) | (*epsattachresult & 0x7);
   encoded++;
   return encoded;

@@ -19,14 +19,9 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef SHORT_MAC_H_
 #define SHORT_MAC_H_
+#include <stdint.h>
 
 #define SHORT_MAC_MINIMUM_LENGTH 3
 #define SHORT_MAC_MAXIMUM_LENGTH 3

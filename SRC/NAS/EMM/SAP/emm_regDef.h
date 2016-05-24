@@ -57,13 +57,13 @@ typedef enum {
   _EMMREG_COMMON_PROC_REQ,    /* EMM common procedure requested   */
   _EMMREG_COMMON_PROC_CNF,    /* EMM common procedure successful  */
   _EMMREG_COMMON_PROC_REJ,    /* EMM common procedure failed      */
-  _EMMREG_PROC_ABORT,     /* EMM procedure aborted        */
-  _EMMREG_ATTACH_CNF,     /* EPS network attach accepted      */
-  _EMMREG_ATTACH_REJ,     /* EPS network attach rejected      */
-  _EMMREG_DETACH_INIT,    /* Network detach initiated     */
-  _EMMREG_DETACH_REQ,     /* Network detach requested     */
-  _EMMREG_DETACH_FAILED,  /* Network detach attempt failed    */
-  _EMMREG_DETACH_CNF,     /* Network detach accepted      */
+  _EMMREG_PROC_ABORT,         /* EMM procedure aborted            */
+  _EMMREG_ATTACH_CNF,         /* EPS network attach accepted      */
+  _EMMREG_ATTACH_REJ,         /* EPS network attach rejected      */
+  _EMMREG_DETACH_INIT,        /* Network detach initiated         */
+  _EMMREG_DETACH_REQ,         /* Network detach requested         */
+  _EMMREG_DETACH_FAILED,      /* Network detach attempt failed    */
+  _EMMREG_DETACH_CNF,         /* Network detach accepted          */
   _EMMREG_TAU_REQ,
   _EMMREG_TAU_CNF,
   _EMMREG_TAU_REJ,
@@ -73,6 +73,7 @@ typedef enum {
   _EMMREG_LOWERLAYER_SUCCESS, /* Data successfully delivered      */
   _EMMREG_LOWERLAYER_FAILURE, /* Lower layer failure indication   */
   _EMMREG_LOWERLAYER_RELEASE, /* NAS signalling connection released   */
+  _EMMREG_LOWERLAYER_NON_DELIVERY, /*  remote Lower layer failure indication  */
   _EMMREG_END
 } emm_reg_primitive_t;
 

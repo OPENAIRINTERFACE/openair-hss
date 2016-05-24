@@ -39,17 +39,34 @@ extern int asn_debug;
 extern int asn1_xer_print;
 extern int fd_g_debug_lvl;
 
-// #include "mme_config.h"
-
-//typedef int (*log_specific_init_t)(int log_level);
-
-//int log_init(const mme_config_t *mme_config,
-//             log_specific_init_t specific_init);
 
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include "bstrlib.h"
+
+#define LOG_CONFIG_STRING_LOGGING                        "LOGGING"
+#define LOG_CONFIG_STRING_OUTPUT                         "OUTPUT"
+#define LOG_CONFIG_STRING_OUTPUT_THREAD_SAFE             "THREAD_SAFE"
+#define LOG_CONFIG_STRING_COLOR                          "COLOR"
+#define LOG_CONFIG_STRING_OUTPUT_CONSOLE                 "CONSOLE"
+#define LOG_CONFIG_STRING_OUTPUT_SYSLOG                  "SYSLOG"
+#define LOG_CONFIG_STRING_GTPV1U_LOG_LEVEL               "GTPV1U_LOG_LEVEL"
+#define LOG_CONFIG_STRING_GTPV2C_LOG_LEVEL               "GTPV2C_LOG_LEVEL"
+#define LOG_CONFIG_STRING_ITTI_LOG_LEVEL                 "ITTI_LOG_LEVEL"
+#define LOG_CONFIG_STRING_MME_APP_LOG_LEVEL              "MME_APP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_MSC_LOG_LEVEL                  "MSC_LOG_LEVEL"
+#define LOG_CONFIG_STRING_NAS_LOG_LEVEL                  "NAS_LOG_LEVEL"
+#define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
+#define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
+#define LOG_CONFIG_STRING_S1AP_LOG_LEVEL                 "S1AP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_S6A_LOG_LEVEL                  "S6A_LOG_LEVEL"
+#define LOG_CONFIG_STRING_SCTP_LOG_LEVEL                 "SCTP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_SPGW_APP_LOG_LEVEL             "SPGW_APP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_SPGW_APP_LOG_LEVEL             "SPGW_APP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_UDP_LOG_LEVEL                  "UDP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_UTIL_LOG_LEVEL                 "UTIL_LOG_LEVEL"
 
 typedef enum {
   MIN_LOG_ENV = 0,
@@ -109,18 +126,17 @@ typedef struct log_thread_ctxt_s {
 * in the opened stream ( file, tcp, stdout)
 */
 typedef struct log_queue_item_s {
-  int32_t                                 len;                              /*!< \brief length of string. */
-  int32_t                                 log_level;                        /*!< \brief log level for syslog. */
-#define LOG_MAX_MESSAGE_LENGTH            512
-  char                                    str[LOG_MAX_MESSAGE_LENGTH];      /*!< \brief string containing the message. */
+  int32_t                                 log_level; /*!< \brief log level for syslog. */
+  bstring                                 bstr;      /*!< \brief string containing the message. */
 } log_queue_item_t;
 
 /*! \struct  log_config_t
-* \brief Structure containing the dyamicaly configurable parameters of the Logging facilities.
+* \brief Structure containing the dynamically configurable parameters of the Logging facilities.
 * This structure is filled by configuration facilities when parsing a configuration file.
 */
 typedef struct log_config_s {
-  char         *output;             /*!< \brief Where logs go, choice in { "CONSOLE", "`path to file`", "`IPv4@`:`TCP port num`"} . */
+  bstring       output;             /*!< \brief Where logs go, choice in { "CONSOLE", "`path to file`", "`IPv4@`:`TCP port num`"} . */
+  bool          is_output_thread_safe; /*!< \brief Is final string goes in a thread safe buffer of is flushed without care . */
   log_level_t   udp_log_level;      /*!< \brief UDP ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   gtpv1u_log_level;   /*!< \brief GTPv1-U ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   gtpv2c_log_level;   /*!< \brief GTPv2-C ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
@@ -225,6 +241,7 @@ int log_get_start_time_sec (void);
 #    define OAILOG_START_USE                                            log_start_use
 #    define OAILOG_ITTI_CONNECT                                         log_itti_connect
 #    define OAILOG_EXIT()                                               log_exit()
+#    define OAILOG_SPEC(pRoTo, ...)                                     do { log_message(NULL, OAILOG_LEVEL_NOTICE,   pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)/*!< \brief 3GPP trace on specifications */
 #    define OAILOG_EMERGENCY(pRoTo, ...)                                do { log_message(NULL, OAILOG_LEVEL_EMERGENCY,pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)/*!< \brief system is unusable */
 #    define OAILOG_ALERT(pRoTo, ...)                                    do { log_message(NULL, OAILOG_LEVEL_ALERT,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief action must be taken immediately */
 #    define OAILOG_CRITICAL(pRoTo, ...)                                 do { log_message(NULL, OAILOG_LEVEL_CRITICAL, pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief critical conditions */
@@ -235,6 +252,11 @@ int log_get_start_time_sec (void);
 #    define OAILOG_MESSAGE_START(lOgLeVeL, pRoTo, cOnTeXt, ...)         do { log_message_start(NULL, lOgLeVeL, pRoTo, cOnTeXt, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief when need to log only 1 message with many char messages, ex formating a dumped struct */
 #    define OAILOG_MESSAGE_ADD(cOnTeXt, ...)                            do { log_message_add(cOnTeXt, ##__VA_ARGS__); } while(0) /*!< \brief can be called as many times as needed after OAILOG_MESSAGE_START() */
 #    define OAILOG_MESSAGE_FINISH(cOnTeXt)                              do { log_message_finish(cOnTeXt); } while(0) /*!< \brief Send the message built by OAILOG_MESSAGE_START() n*LOG_MESSAGE_ADD() (n=0..N) */
+#    define OAILOG_STREAM_HEX(lOgLeVeL, pRoTo, mEsSaGe, sTrEaM, sIzE)   do { \
+                                                                   OAI_GCC_DIAG_OFF(pointer-sign); \
+                                                                   log_stream_hex(lOgLeVeL, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE);\
+                                                                   OAI_GCC_DIAG_ON(pointer-sign); \
+                                                                 } while(0); /*!< \brief trace buffer content */
 #    if DEBUG_IS_ON
 #      define OAILOG_DEBUG(pRoTo, ...)                                  do { log_message(NULL, OAILOG_LEVEL_DEBUG,    pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0) /*!< \brief debug informations */
 #      if TRACE_IS_ON
@@ -243,15 +265,11 @@ int log_get_start_time_sec (void);
 #        define OAILOG_FUNC_IN(pRoTo)                                   do { log_func(true, pRoTo, __FILE__, __LINE__, __FUNCTION__); } while(0) /*!< \brief informational */
 #        define OAILOG_FUNC_OUT(pRoTo)                                  do { log_func(false, pRoTo, __FILE__, __LINE__, __FUNCTION__); return;} while(0) /*!< \brief informational */
 #        define OAILOG_FUNC_RETURN(pRoTo, rEtUrNcOdE)                   do { log_func_return(pRoTo, __FILE__, __LINE__, __FUNCTION__, (long)rEtUrNcOdE); return rEtUrNcOdE;} while(0) /*!< \brief informational */
-#        define OAILOG_STREAM_HEX(pRoTo, mEsSaGe, sTrEaM, sIzE)         do { \
-                                                                   OAI_GCC_DIAG_OFF(pointer-sign); \
-                                                                   log_stream_hex(OAILOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE);\
-                                                                   OAI_GCC_DIAG_ON(pointer-sign); \
-                                                                 } while(0); /*!< \brief trace buffer content */
 #        define OAILOG_STREAM_HEX_ARRAY(pRoTo, mEsSaGe, sTrEaM, sIzE)       do { log_stream_hex_array(OAILOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content with indexes */
 #      endif
 #    endif
 #  else
+#    define OAILOG_SPEC(...)
 #    define OAILOG_SET_CONFIG(a)
 #    define OAILOG_LEVEL_STR2INT(a)                                     OAILOG_LEVEL_EMERGENCY
 #    define OAILOG_LEVEL_INT2STR(a)                                     "EMERGENCY"

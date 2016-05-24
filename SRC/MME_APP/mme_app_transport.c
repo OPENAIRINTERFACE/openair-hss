@@ -66,8 +66,8 @@ int mme_app_handle_nas_dl_req (
 
   NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
   NAS_DL_DATA_REQ (message_p).ue_id                  = nas_dl_req_pP->ue_id;
-  NAS_DL_DATA_REQ (message_p).nas_msg.length         = nas_dl_req_pP->nas_msg.length;
-  NAS_DL_DATA_REQ (message_p).nas_msg.data           = nas_dl_req_pP->nas_msg.data;
+  NAS_DL_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
+  NAS_DL_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,TASK_S1AP,NULL, 0,
       "0 DOWNLINK NAS TRANSPORT enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue id " MME_UE_S1AP_ID_FMT " ",

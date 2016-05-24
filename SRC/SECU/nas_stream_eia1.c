@@ -53,7 +53,7 @@ int                                     nas_stream_encrypt_eia1 (
    Input V: a 64-bit input.
    Input c: a 64-bit input.
    Output : a 64-bit output.
-   A 64-bit memory is allocated which is to be FREE_CHECKd by the calling
+   A 64-bit memory is allocated which is to be free_wrapperd by the calling
    function.
    See section 4.3.2 for details.
 */
@@ -73,7 +73,7 @@ MUL64x (
    Input i: a positive integer.
    Input c: a 64-bit input.
    Output : a 64-bit output.
-   A 64-bit memory is allocated which is to be FREE_CHECKd by the calling
+   A 64-bit memory is allocated which is to be free_wrapperd by the calling
   function.
    See section 4.3.3 for details.
 */
@@ -94,7 +94,7 @@ MUL64xPOW (
    Input P: a 64-bit input.
    Input c: a 64-bit input.
    Output : a 64-bit output.
-   A 64-bit memory is allocated which is to be FREE_CHECKd by the calling
+   A 64-bit memory is allocated which is to be free_wrapperd by the calling
    function.
    See section 4.3.4 for details.
 */

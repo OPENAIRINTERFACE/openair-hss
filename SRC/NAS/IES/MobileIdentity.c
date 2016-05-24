@@ -73,7 +73,7 @@ decode_mobile_identity (
   uint8_t * buffer,
   uint32_t len)
 {
-  int                                     decoded_rc = TLV_DECODE_VALUE_DOESNT_MATCH;
+  int                                     decoded_rc = TLV_VALUE_DOESNT_MATCH;
   int                                     decoded = 0;
   uint8_t                                 ielen = 0;
 
@@ -121,7 +121,7 @@ encode_mobile_identity (
   uint32_t len)
 {
   uint8_t                                *lenPtr;
-  int                                     encoded_rc = TLV_ENCODE_VALUE_DOESNT_MATCH;
+  int                                     encoded_rc = TLV_VALUE_DOESNT_MATCH;
   uint32_t                                encoded = 0;
 
   /*
@@ -297,7 +297,7 @@ decode_imsi_mobile_identity (
   imsi->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (imsi->typeofidentity != MOBILE_IDENTITY_IMSI) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   imsi->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -330,7 +330,7 @@ decode_imsi_mobile_identity (
    * mark coded as "1111".
    */
   if ((imsi->oddeven == MOBILE_IDENTITY_EVEN) && (imsi->digit15 != 0x0f)) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   decoded++;
@@ -347,7 +347,7 @@ decode_imei_mobile_identity (
   imei->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (imei->typeofidentity != MOBILE_IDENTITY_IMEI) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   imei->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -380,7 +380,7 @@ decode_imei_mobile_identity (
    * mark coded as "1111".
    */
   if ((imei->oddeven == MOBILE_IDENTITY_EVEN) && (imei->cdsd != 0x0f)) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   decoded++;
@@ -397,7 +397,7 @@ decode_imeisv_mobile_identity (
   imeisv->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (imeisv->typeofidentity != MOBILE_IDENTITY_IMEISV) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   imeisv->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -433,7 +433,7 @@ decode_imeisv_mobile_identity (
    * mark coded as "1111".
    */
   if ((imeisv->oddeven == MOBILE_IDENTITY_EVEN) && (imeisv->last != 0x0f)) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   decoded++;
@@ -450,7 +450,7 @@ decode_tmsi_mobile_identity (
   tmsi->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (tmsi->typeofidentity != MOBILE_IDENTITY_TMSI) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   tmsi->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -461,7 +461,7 @@ decode_tmsi_mobile_identity (
    * of octet 3 are coded as "1111".
    */
   if (tmsi->digit1 != 0xf) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   decoded++;
@@ -502,7 +502,7 @@ decode_tmgi_mobile_identity (
    * Spare bits are coded with 0s
    */
   if (tmgi->spare != 0) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   tmgi->mbmssessionidindication = (*(buffer + decoded) >> 5) & 0x1;
@@ -511,7 +511,7 @@ decode_tmgi_mobile_identity (
   tmgi->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (tmgi->typeofidentity != MOBILE_IDENTITY_TMGI) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   decoded++;
@@ -541,7 +541,7 @@ decode_no_mobile_identity (
   no_id->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (no_id->typeofidentity != MOBILE_IDENTITY_NOT_AVAILABLE) {
-    return (TLV_ENCODE_VALUE_DOESNT_MATCH);
+    return (TLV_VALUE_DOESNT_MATCH);
   }
 
   no_id->oddeven = (*(buffer + decoded) >> 3) & 0x1;

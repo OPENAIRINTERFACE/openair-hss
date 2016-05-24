@@ -19,14 +19,10 @@
  *      contact@openairinterface.org
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-
-#include "OctetString.h"
-
 #ifndef NETWORK_NAME_H_
 #define NETWORK_NAME_H_
+#include <stdint.h>
+#include "bstrlib.h"
 
 #define NETWORK_NAME_MINIMUM_LENGTH 3
 #define NETWORK_NAME_MAXIMUM_LENGTH 255
@@ -35,7 +31,7 @@ typedef struct NetworkName_tag {
   uint8_t  codingscheme:3;
   uint8_t  addci:1;
   uint8_t  numberofsparebitsinlastoctet:3;
-  OctetString textstring;
+  bstring  textstring;
 } NetworkName;
 
 int encode_network_name(NetworkName *networkname, uint8_t iei, uint8_t *buffer, uint32_t len);
