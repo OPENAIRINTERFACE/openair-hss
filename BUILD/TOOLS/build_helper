@@ -133,7 +133,7 @@ make_test() {
   cd $OPENAIRCN_DIR/BUILD/$1/BUILD
   if [ "a$4" == "a1" ]; then 
     {
-      make test
+      make test ARGS="-V"
     } | tee $dlog/$2_test.txt 
   else
     {

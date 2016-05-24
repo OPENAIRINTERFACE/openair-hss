@@ -358,7 +358,7 @@ do {                                                    \
               iMsI_u64 += (iMsI_t_PtR)->u.num.digit1 *mUlT*10000;  \
           } \
         }
-#define IMSI_TO_STRING(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
+/*#define IMSI_TO_STRING(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
         {\
           int l_offset = 0;\
           int l_ret    = 0;\
@@ -382,7 +382,26 @@ do {                                                    \
             l_offset += l_ret;\
             l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u", (iMsI_t_PtR)->u.num.digit15);\
           }\
-        }
+        }*/
+
+#define IMSI_TO_STRING(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
+        do { \
+          int l_i = 0; \
+          int l_j = 0; \
+          while((l_i < IMSI_BCD8_SIZE) && (l_j < MaXlEn - 1)){ \
+            if((((iMsI_t_PtR)->u.value[l_i] & 0xf0) >> 4) > 9) \
+              break; \
+            sprintf(((iMsI_sTr) + l_j), "%u",(((iMsI_t_PtR)->u.value[l_i] & 0xf0) >> 4)); \
+            l_j++; \
+            if(((iMsI_t_PtR)->u.value[l_i] & 0xf) > 9 || (l_j >= MaXlEn - 1)) \
+              break; \
+            sprintf(((iMsI_sTr) + l_j), "%u", ((iMsI_t_PtR)->u.value[l_i] & 0xf)); \
+            l_j++; \
+            l_i++; \
+          } \
+          for(; l_j < MaXlEn; l_j++) \
+              iMsI_sTr[l_j] = '\0'; \
+        } while (0);\
 
 #define IMEI_TO_STRING(iMeI_t_PtR,iMeI_sTr, MaXlEn) \
         {\
