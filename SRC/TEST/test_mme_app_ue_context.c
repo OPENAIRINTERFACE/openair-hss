@@ -128,7 +128,6 @@ START_TEST(imsi_convert_common_struct_test)
 
 
     for(i = 0; i < TEST_CASE_COMMON_CONVERT_MAX; i++){
-        memset(&imsi_mme, 0, sizeof(imsi_mme));
         mme_app_convert_imsi_to_imsi_mme(&imsi_mme, &imsi_structs[i]);
         printf("IMSI mme %"IMSI_FORMAT" %d compare %s \n", IMSI_DATA(imsi_mme), imsi_mme.length, imsi_compare[i]);
         ck_assert_str_eq(IMSI_DATA(imsi_mme), imsi_compare[i]);
