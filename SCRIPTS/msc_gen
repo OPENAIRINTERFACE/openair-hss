@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# The aim of this script is to collect some traces from oai stack and generate a sequence diagram image (png or jpeg).
+# The aim of this script is to collect some traces from oai stack and generate a sequence diagram image ('png', 'eps', 'svg' or 'ismap').
 #
 # It is supposed that a protocol name (MSC_NEW_STR) starts with...its name (RRC, MAC, NAS, S1AP, etc) then is followed by an underscore and whatever (RRC_UE,  RRC_eNB)
-#   Like this it is possible to distinguish between PDUS, SDUs or other messages only by reading source ans destination
+#   Like this it is possible to distinguish between PDUS, SDUs or other messages only by reading source and destination
 
 import sys
 import subprocess
@@ -20,13 +20,13 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dir", "-d", type=str,help="Directory where msc logs can be found", default="/tmp")
-parser.add_argument("--profile", "-p", type=str,help="E_UTRAN, EPC", default="EPC")
+parser.add_argument("--profile", "-p", type=str,help="E_UTRAN, EPC, MME", default="MME")
 parser.add_argument("--no_message", "-M", type=str,help="Trace PDUs, not messages, SDUs", default="no")
 parser.add_argument("--no_pdu", "-P", type=str,help="Trace messages, SDUs, not PDUs", default="no")
 parser.add_argument("--no_event", "-E", type=str,help="Do not trace events", default="no")
+parser.add_argument("--type", "-T", type=str,help="Specifies the output file type, which maybe one of 'png', 'eps', 'svg' or 'ismap'", default="png")
 args = parser.parse_args()
 
-MSCGEN_OUTPUT_TYPE       = "png"
 MAX_MESSAGES_PER_PAGE    = 36
 
 MSC_NEW_STR              = '[PROTO]'
@@ -55,6 +55,7 @@ g_display_color  = ['\"teal\"',   # To check in msc.h: MSC_NAS_UE
                     '\"black\"',  # To check in msc.h: MSC_NAS_MME
                     '\"black\"',  # To check in msc.h: MSC_NAS_EMM_MME
                     '\"black\"',  # To check in msc.h: MSC_NAS_ESM_MME
+                    '\"black\"',  
                     '\"black\"',  
                     '\"black\"',  
                     '\"black\"',  
@@ -210,9 +211,9 @@ def msc_chart_write_footer(fileP):
     fileP.write("\n}\n")
 
 def msc_chart_generate(file_nameP):
-    global  MSCGEN_OUTPUT_TYPE
+    global  args
     print "Generating sequence diagram for ",file_nameP
-    command_line = "mscgen -T " + MSCGEN_OUTPUT_TYPE + " -i " + file_nameP
+    command_line = "mscgen -T " + args.type.strip() + " -i " + file_nameP
     fi,fo,fe=os.popen3(command_line)
     for i in fe.readlines():
         print "error:",i
@@ -232,7 +233,7 @@ parse_oai_log_files()
 g_page_index    = 0
 g_message_index = 0
 g_now = datetime.datetime.now()
-g_now_formated = 'mscgen_' + args.profile.strip() + '_'+ g_now.strftime("%Y-%m-%d_%H.%M.%S")
+g_now_formated = 'mscgen_' + args.profile.strip() + '_'+ g_now.strftime("%Y-%m-%d_%H.%M.%S.%f")
 #g_currentdir = os.curdir
 g_resultdir = os.path.join(args.dir, g_now_formated)
 os.mkdir(g_resultdir)
@@ -266,7 +267,7 @@ for event_id_int in sorted(g_messages.iterkeys()):
     elif 'box' in message['type']:
         if "yes" == args.no_event.strip():
             continue  
-        g_file.write("  %s note %s [ label = \"%s\", textcolour=%s ] ;\n" % (g_proto_names[message['tx']], g_proto_names[message['rx']], message['message'], message['text_color']))
+        g_file.write("  %s note %s [ label = \"%s\n %s\", textcolour=%s ] ;\n" % (g_proto_names[message['tx']], g_proto_names[message['rx']], message['time'], message['message'], message['text_color']))
 
     g_message_index = g_message_index + 1
 
