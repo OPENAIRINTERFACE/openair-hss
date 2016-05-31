@@ -424,19 +424,19 @@ install_1.1.5_freediameter_from_source() {
   then    
     cd /tmp
     echo "Downloading 1.1.5 freeDiameter archive"
-    rm -rf /tmp/1.1.5.tar.gz* /tmp/freeDiameter-1.1.5
-    wget http://www.freediameter.net/hg/freeDiameter/archive/1.1.5.tar.gz 
-    tar xzf 1.1.5.tar.gz
-    cd freeDiameter-1.1.5
-    patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.1.5.patch 
+    $SUDO rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5 /tmp/freediameter
+    git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.1.5
+    cd /tmp/freediameter
+    #patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.1.5.patch 
     mkdir build
     cd build
     cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
     echo "Compiling freeDiameter"
-    make -j4
+    make -j`nproc`
     #make test 
-    $SUDO make install 
-    rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5
+    $SUDO make install
+    cd /tmp
+    rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5 /tmp/freediameter
   fi
 }
 
@@ -479,19 +479,21 @@ install_freediameter_from_source() {
   then    
     cd /tmp
     echo "Downloading 1.2.0 freeDiameter archive"
-    rm -rf /tmp/1.2.0.tar.gz* /tmp/freeDiameter-1.2.0
-    wget http://www.freediameter.net/hg/freeDiameter/archive/1.2.0.tar.gz 
-    tar xzf 1.2.0.tar.gz
-    cd freeDiameter-1.2.0
-    patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.2.0.patch 
+    $SUDO rm -rf /tmp/1.2.0.tar.gz* /tmp/freeDiameter-1.2.0 /tmp/freediameter
+    git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.2.0  
+    #wget http://www.freediameter.net/hg/freeDiameter/archive/1.2.0.tar.gz 
+    #tar xzf 1.2.0.tar.gz
+    cd freediameter
+    #patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.2.0.patch 
     mkdir build
     cd build
     cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
     echo "Compiling freeDiameter"
-    make -j4
+    make -j`nproc`
     #make test 
-    $SUDO make install 
-    rm -rf /tmp/1.2.0.tar.gz /tmp/freeDiameter-1.2.0
+    $SUDO make install
+    cd /tmp
+    rm -rf /tmp/1.2.0.tar.gz /tmp/freeDiameter-1.2.0 /tmp/freediameter
   fi
 }
 
@@ -542,10 +544,11 @@ install_latest_freediameter_from_source() {
     cd build
     cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
     echo "Compiling freeDiameter"
-    make -j4
+    make -j`nproc`
     #make test 
     $SUDO make install 
-    rm -rf /tmp/freeDiameter
+    cd /tmp
+    rm -rf /tmp/freediameter
   fi
 }
 
