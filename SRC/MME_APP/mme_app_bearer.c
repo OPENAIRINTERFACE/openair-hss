@@ -415,6 +415,9 @@ mme_app_handle_initial_ue_message (
   }
 
   if (!(ue_context_p)) {
+    ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_pP->enb_ue_s1ap_id);
+  }
+  if (!(ue_context_p)) {
     OAILOG_DEBUG (LOG_MME_APP, "Unknown  mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
         initial_pP->mme_ue_s1ap_id);
 
@@ -441,10 +444,10 @@ mme_app_handle_initial_ue_message (
                 ue_context_p->mme_s11_teid,
                 &guti);
             } else {
-              OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP, previous conflicting S_TMSI context found with provided S_TMSI, GUMMEI\n");
+              OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP, previous conflicting S_TMSI context found with provided S_TMSI, GUMMEI\n");
             }
           } else {
-            OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_CONNECTION_ESTABLISHMENT_IND from S1AP, no previous context found with provided S_TMSI, GUMMEI\n");
+            OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP, no previous context found with provided S_TMSI, GUMMEI\n");
           }
         }
       }
