@@ -49,7 +49,7 @@ function help()
   echo_error "  -e, --export-db    filename     Export current database to a SQL file, file prefix is $OPENAIRCN_DIR/SRC/OAI_HSS/db. (useful for replaying test scenarios)"
   echo_error "  -D, --daemon                    Run the daemon."
   echo_error "  -i, --import-db    filename     Import SQL file to current database, file prefix is $OPENAIRCN_DIR/SRC/OAI_HSS/db. (useful for replaying test scenarios or restoring original database content)"
-  echo_error "  -I, --install-hss-files         Install HSS config files."
+  echo_error "  -I, --install-hss-files         Install HSS config files (NOT RECOMMENDED. See gitlab tutorial, https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or DOCS/EPC_User_Guide.pdf )"
   echo_error "  -g, --gdb                       Run with GDB."
   echo_error "  -h, --help                      Print this help."
   echo_error "  -k, --kill                      Kill the running local HSS."
