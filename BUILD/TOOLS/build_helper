@@ -703,7 +703,9 @@ check_install_hss_software() {
     
   $SUDO apt-get install $OPTION \
     phpmyadmin \
-    python-pexpect 
+    python-pexpect \
+    php5 \
+    libapache2-mod-php5 
 }
 
 #-------------------------------------------------------------------------------

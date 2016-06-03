@@ -125,7 +125,7 @@ int sgw_config_process (sgw_config_t * config_pP)
     bassignformat (system_cmd, "iptables -t filter -I INPUT -i lo -s %s --protocol sctp -j DROP", inet_ntoa (inaddr));
     sgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
 
-    bassignformat (system_cmd, "modprobe xt_GTPUSP  gtpu_enb_port=2153 gtpu_sgw_port=%u sgw_addr=\"%s\" ",
+    bassignformat (system_cmd, "modprobe xt_GTPUSP  gtpu_enb_port=2152 gtpu_sgw_port=%u sgw_addr=\"%s\" ",
         config_pP->udp_port_S1u_S12_S4_up, inet_ntoa (inaddr));
     sgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
     bdestroy(system_cmd);
