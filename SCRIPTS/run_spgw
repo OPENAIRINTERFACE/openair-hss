@@ -54,7 +54,7 @@ function help()
   echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
   echo_error "                                      All repetitions of this argument are valid."
   echo_error "  -h, --help                          Print this help."
-  echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in spgw config file."
+  echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in spgw config file. (NOT RECOMMENDED. ONLY FOR DEBUGGING)"
   echo_error "  -k, --kill                          Kill all running SPGW instances, exit script then."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
   echo_error "  -r, --remove-gtpu-kmodule           Remove gtpu kernel module before starting the S/P-GW"
