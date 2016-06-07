@@ -199,7 +199,13 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
     }
 
     //!!!------------------------------------!!!
-    bassignformat (system_cmd, "ethtool -K %s tso off gso off gro off", config_pP->ipv4.if_name_SGI);
+    bassignformat (system_cmd, "ethtool -K %s tso off ", config_pP->ipv4.if_name_SGI);
+    pgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
+    btrunc(system_cmd, 0);
+    bassignformat (system_cmd, "ethtool -K %s gso off", config_pP->ipv4.if_name_SGI);
+    pgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
+    btrunc(system_cmd, 0);
+    bassignformat (system_cmd, "ethtool -K %s gro off", config_pP->ipv4.if_name_SGI);
     pgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
     btrunc(system_cmd, 0);
 
