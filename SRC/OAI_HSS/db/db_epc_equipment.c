@@ -54,7 +54,7 @@ hss_mysql_query_mmeidentity (
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 
@@ -103,7 +103,7 @@ hss_mysql_check_epc_equipment (
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 

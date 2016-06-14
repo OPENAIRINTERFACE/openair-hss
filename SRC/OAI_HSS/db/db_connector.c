@@ -98,7 +98,7 @@ hss_mysql_connect (
    * Try to connect to database
    */
   if (!mysql_real_connect (db_desc->db_conn, db_desc->server, db_desc->user, db_desc->password, db_desc->database, 0, NULL, 0)) {
-    DB_ERROR ("An error occured while connecting to db: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("An error occured while connecting to db: %s\n", mysql_error (db_desc->db_conn));
     mysql_thread_end();
     return -1;
   }
@@ -144,7 +144,7 @@ hss_mysql_update_loc (
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 
@@ -202,12 +202,12 @@ hss_mysql_purge_ue (
 
 
   sprintf (query, "UPDATE `users` SET `users`.`ms_ps_status`=\"PURGED\" " "WHERE `users`.`imsi`='%s'; " "SELECT `users`.`mmeidentity_idmmeidentity` FROM `users` " "WHERE `users`.`imsi`='%s' ", mysql_pu_req->imsi, mysql_pu_req->imsi);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 
@@ -249,12 +249,12 @@ hss_mysql_get_user (
 
 
   sprintf (query, "SELECT `imsi` FROM `users` WHERE `users`.`imsi`='%s' ", imsi);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 
@@ -392,7 +392,7 @@ hss_mysql_push_rand_sqn (
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 
@@ -450,13 +450,13 @@ hss_mysql_increment_sqn (
    * + 32 = 2 ^ sizeof(IND) (see 3GPP TS. 33.102)
    */
   sprintf (query, "UPDATE `users` SET `sqn` = `sqn` + 32 WHERE `users`.`imsi`='%s'", imsi);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
 
   pthread_mutex_lock(&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 
@@ -513,12 +513,12 @@ hss_mysql_auth_info (
   }
 
   sprintf (query, "SELECT `key`,`sqn`,`rand`,`OPc` FROM `users` WHERE `users`.`imsi`='%s' ", auth_info_req->imsi);
-  DB_DEBUG ("Query: %s\n", query);
+  FPRINTF_DEBUG ("Query: %s\n", query);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
+    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 
