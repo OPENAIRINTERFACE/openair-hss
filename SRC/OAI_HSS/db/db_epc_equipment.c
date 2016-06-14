@@ -54,13 +54,15 @@ hss_mysql_query_mmeidentity (
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
-    mysql_thread_end ();
+    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 
   res = mysql_store_result (db_desc->db_conn);
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
+
+  if ( res == NULL )
+    return EINVAL;
 
   if ((row = mysql_fetch_row (res)) != NULL) {
     if (row[0] != NULL) {
@@ -76,12 +78,10 @@ hss_mysql_query_mmeidentity (
     }
 
     mysql_free_result (res);
-    mysql_thread_end ();
     return 0;
   }
 
   mysql_free_result (res);
-  mysql_thread_end ();
   return EINVAL;
 }
 
@@ -103,21 +103,21 @@ hss_mysql_check_epc_equipment (
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    FPRINTF_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
-    mysql_thread_end ();
+    DB_ERROR ("Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 
   res = mysql_store_result (db_desc->db_conn);
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
 
+  if ( res == NULL )
+    return EINVAL;
+
   if ((row = mysql_fetch_row (res)) != NULL) {
     mysql_free_result (res);
-    mysql_thread_end ();
     return 0;
   }
 
   mysql_free_result (res);
-  mysql_thread_end ();
   return EINVAL;
 }
