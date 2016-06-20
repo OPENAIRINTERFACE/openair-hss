@@ -206,7 +206,7 @@ function main()
     [[ $dump_file != *"/"* ]] && dump_file=$OPENAIRCN_DIR/SRC/OAI_HSS/db/$dump_file
     if [ -e $dump_file ]; then 
       value="`cat $hss_config_file | tr -d " " | grep "="`"
-      eval $value
+      eval "$value"
       $OPENAIRCN_DIR/SCRIPTS/hss_db_import $MYSQL_server $MYSQL_user $MYSQL_pass $MYSQL_db $dump_file
     else
       echo_fatal "$dump_file does not exist, exiting"
