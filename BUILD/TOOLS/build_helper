@@ -218,7 +218,7 @@ install_xtables_addons_oai() {
       $SUDO rm -rv -$rm_option xtables-addons-oai
     fi
     echo "Downloading xtables-addons-oai source code"
-    git clone https://gitlab.eurecom.fr/oai/xtables-addons-oai.git
+    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/xtables-addons-oai.git
     #git clone git@gitlab.eurecom.fr:oai/xtables-addons-oai.git
     chmod -R o+w xtables-addons-oai
     chmod -R g+w xtables-addons-oai
@@ -438,7 +438,7 @@ install_1.1.5_freediameter_from_source() {
     cd /tmp
     echo "Downloading 1.1.5 freeDiameter archive"
     $SUDO rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5 /tmp/freediameter
-    git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.1.5
+    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.1.5
     cd /tmp/freediameter
     #patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.1.5.patch 
     mkdir build
@@ -494,7 +494,7 @@ install_freediameter_from_source() {
     cd /tmp
     echo "Downloading 1.2.0 freeDiameter archive"
     $SUDO rm -rf /tmp/1.2.0.tar.gz* /tmp/freeDiameter-1.2.0 /tmp/freediameter
-    git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.2.0  
+    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.2.0  
     #wget http://www.freediameter.net/hg/freeDiameter/archive/1.2.0.tar.gz 
     #tar xzf 1.2.0.tar.gz
     cd freediameter
