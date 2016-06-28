@@ -199,7 +199,17 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
     }
 
     //!!!------------------------------------!!!
-    bassignformat (system_cmd, "ethtool -K %s tso off gso off gro off", config_pP->ipv4.if_name_SGI);
+    // considering thaat we want to avoid as much as possible the fragmentation of IP packets
+    // on the S1-U link, we force the router on the SGI link to fragment IP packets to the MTU size
+    // configured on the link, the idea is to disable the segmentation offload on SGI link
+    // and allow it on the S1-U link, the best is to increase the MTU on S1U link (>=1540 (1500+IP20+UDP8+GTP8))
+    bassignformat (system_cmd, "ethtool -K %s tso off ", bdata(config_pP->ipv4.if_name_SGI));
+    pgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
+    btrunc(system_cmd, 0);
+    bassignformat (system_cmd, "ethtool -K %s gso off", bdata(config_pP->ipv4.if_name_SGI));
+    pgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
+    btrunc(system_cmd, 0);
+    bassignformat (system_cmd, "ethtool -K %s gro off", bdata(config_pP->ipv4.if_name_SGI));
     pgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
     btrunc(system_cmd, 0);
 
