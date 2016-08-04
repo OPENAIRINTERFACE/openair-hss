@@ -1175,6 +1175,7 @@ CURPID=$$
 ppid=$$
 arraycounter=1
 echo_info "** Trapped CTRL-C. Killing all subprocesses now..."
+sync
 while true
 do
         FORLOOP=FALSE
