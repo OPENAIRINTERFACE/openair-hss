@@ -36,6 +36,7 @@
 #include "commonDef.h"
 #include "common_types.h"
 #include "sgw_context_manager.h"
+#include "gtpv1u_sgw_defs.h"
 
 typedef struct sgw_app_s {
 
@@ -56,7 +57,7 @@ typedef struct sgw_app_s {
   // the key of this hashtable is the S11 s-gw local teid.
   hash_table_ts_t *s11_bearer_context_information_hashtable;
 
-
+  gtpv1u_data_t    gtpv1u_data;
 } sgw_app_t;
 
 

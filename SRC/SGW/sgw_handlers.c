@@ -57,6 +57,8 @@
 #include "spgw_config.h"
 #include "ProtocolConfigurationOptions.h"
 
+#include "gtp_mod_kernel.h"
+
 extern sgw_app_t                        sgw_app;
 extern spgw_config_t                    spgw_config;
 
@@ -605,121 +607,25 @@ sgw_handle_sgi_endpoint_updated (
       // if default bearer
       //#pragma message  "TODO define constant for default eps_bearer id"
 
-      bstring system_cmd = bfromcstr("");
-      //if ((resp_pP->eps_bearer_id == 5) && (spgw_config.pgw_config.pgw_masquerade_SGI == 0)) {
-      if (5 == resp_pP->eps_bearer_id) {
-        rv = bassignformat (system_cmd, "iptables -t mangle -A %s -d %u.%u.%u.%u -m mark --mark 0 -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add", (spgw_config.sgw_config.local_to_eNB) ? "FORWARD" : "FORWARD", // test
-                        eps_bearer_entry_p->paa.ipv4_address[0],
-                        eps_bearer_entry_p->paa.ipv4_address[1],
-                        eps_bearer_entry_p->paa.ipv4_address[2],
-                        eps_bearer_entry_p->paa.ipv4_address[3],
-                        sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
-                        eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
-                        eps_bearer_entry_p->enb_teid_S1u);
+      //-------------------------
+      struct in_addr enb = {.s_addr = 0};
+      enb.s_addr = ((in_addr_t)eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0]) |
+           ((in_addr_t)eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1] << 8) |
+           ((in_addr_t)eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2] << 16) |
+           ((in_addr_t)eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3] << 24);
 
-        if (BSTR_ERR == rv) {
-          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing default downlink tunnel\n");
-          exit (-1);
-        }
-        //use API when prototype validated
-        rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-        btrunc(system_cmd, 0);
+      struct in_addr ue = {.s_addr = 0};
+      ue.s_addr = ((in_addr_t)eps_bearer_entry_p->paa.ipv4_address[0]) |
+           ((in_addr_t)eps_bearer_entry_p->paa.ipv4_address[1] << 8) |
+           ((in_addr_t)eps_bearer_entry_p->paa.ipv4_address[2] << 16) |
+           ((in_addr_t)eps_bearer_entry_p->paa.ipv4_address[3] << 24);
 
-        if (rv < 0) {
-          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up default downlink TUNNEL\n");
-        }
-        rv = bassignformat (system_cmd, "iptables -t mangle -A POSTROUTING -d %u.%u.%u.%u -m mark --mark 0 -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add",
-                        eps_bearer_entry_p->paa.ipv4_address[0],
-                        eps_bearer_entry_p->paa.ipv4_address[1],
-                        eps_bearer_entry_p->paa.ipv4_address[2],
-                        eps_bearer_entry_p->paa.ipv4_address[3],
-                        sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
-                        eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
-                        eps_bearer_entry_p->enb_teid_S1u);
-
-
-        if (BSTR_ERR == rv) {
-          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing default downlink tunnel\n");
-          exit (-1);
-        }
-        //use API when prototype validated
-        rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-        btrunc(system_cmd, 0);
-
-        if (rv < 0) {
-          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up default downlink TUNNEL\n");
-        }
-      }
-        //-------------------------
-      rv = bassignformat (system_cmd, "iptables -t mangle -I %s -d %u.%u.%u.%u -m mark --mark %u -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add", (spgw_config.sgw_config.local_to_eNB) ? "FORWARD" : "FORWARD",        // test
-                      eps_bearer_entry_p->paa.ipv4_address[0],
-                      eps_bearer_entry_p->paa.ipv4_address[1],
-                      eps_bearer_entry_p->paa.ipv4_address[2],
-                      eps_bearer_entry_p->paa.ipv4_address[3],
-                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                      sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
-                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
-                      eps_bearer_entry_p->enb_teid_S1u);
-
-      if (BSTR_ERR == rv) {
-        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing downlink tunnel\n");
-        exit (-1);
-      }
-      //use API when prototype validated
-      rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-      btrunc(system_cmd, 0);
+      rv = gtp_mod_kernel_tunnel_add(ue, enb, eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_entry_p->enb_teid_S1u);
 
       if (rv < 0) {
-        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up downlink TUNNEL\n");
+        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up TUNNEL err=%d\n", rv);
       }
-      rv = bassignformat (system_cmd, "iptables -t mangle -I POSTROUTING -d %u.%u.%u.%u -m mark --mark %u -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add",     // test
-                      eps_bearer_entry_p->paa.ipv4_address[0],
-                      eps_bearer_entry_p->paa.ipv4_address[1],
-                      eps_bearer_entry_p->paa.ipv4_address[2],
-                      eps_bearer_entry_p->paa.ipv4_address[3],
-                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                      sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
-                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
-                      eps_bearer_entry_p->enb_teid_S1u);
 
-      if (BSTR_ERR == rv) {
-        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing downlink tunnel, tune string length\n");
-        exit (-1);
-      }
-      //use API when prototype validated
-      rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-
-      if (rv < 0) {
-        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up downlink TUNNEL\n");
-      }
     }
 
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_MODIFY_BEARER_RESPONSE ebi %u  trxn %u",
@@ -773,122 +679,10 @@ sgw_handle_sgi_endpoint_deleted (
        // if default bearer
 //#pragma message  "TODO define constant for default eps_bearer id"
 
-      bstring system_cmd = bfromcstr("");
-      if (resp_pP->eps_bearer_id == 5) {
-        rv = bassignformat (system_cmd, "iptables -t mangle -D %s -d %u.%u.%u.%u -m mark --mark 0 -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add", (spgw_config.sgw_config.local_to_eNB) ? "FORWARD" : "FORWARD", // test
-                        eps_bearer_entry_p->paa.ipv4_address[0],
-                        eps_bearer_entry_p->paa.ipv4_address[1],
-                        eps_bearer_entry_p->paa.ipv4_address[2],
-                        eps_bearer_entry_p->paa.ipv4_address[3],
-                        sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
-                        eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
-                        eps_bearer_entry_p->enb_teid_S1u);
-
-        if (BSTR_ERR == rv) {
-          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in removing default downlink tunnel\n");
-          AssertFatal (0, "ERROR in removing default downlink tunnel\n");
-        }
-        //use API when prototype validated
-        rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-        btrunc(system_cmd, 0);
-
-        if (rv < 0) {
-          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in deleting default downlink TUNNEL\n");
-        }
-
-        rv = bassignformat (system_cmd, "iptables -t mangle -D POSTROUTING -d %u.%u.%u.%u -m mark --mark 0 -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add",
-                        eps_bearer_entry_p->paa.ipv4_address[0],
-                        eps_bearer_entry_p->paa.ipv4_address[1],
-                        eps_bearer_entry_p->paa.ipv4_address[2],
-                        eps_bearer_entry_p->paa.ipv4_address[3],
-                        sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
-                        (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
-                        eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
-                        eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
-                        eps_bearer_entry_p->enb_teid_S1u);
-
-
-        if (BSTR_ERR == rv) {
-          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing default downlink tunnel\n");
-          AssertFatal (0, "ERROR in preparing downlink tunnel\n");
-        }
-        //use API when prototype validated
-        rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-        btrunc(system_cmd, 0);
-
-        if (rv < 0) {
-          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in removing default downlink TUNNEL\n");
-        }
-
-      }
-      //-------------------------
-      rv = bassignformat (system_cmd, "iptables -t mangle -D %s -d %u.%u.%u.%u -m mark --mark %u -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add", (spgw_config.sgw_config.local_to_eNB) ? "FORWARD" : "FORWARD",        // test
-                      eps_bearer_entry_p->paa.ipv4_address[0],
-                      eps_bearer_entry_p->paa.ipv4_address[1],
-                      eps_bearer_entry_p->paa.ipv4_address[2],
-                      eps_bearer_entry_p->paa.ipv4_address[3],
-                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                      sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
-                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
-                      eps_bearer_entry_p->enb_teid_S1u);
-
-      if (BSTR_ERR == rv) {
-        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing downlink tunnel\n");
-        AssertFatal (0, "ERROR in preparing downlink tunnel\n");
-      }
-      //use API when prototype validated
-      rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-      btrunc(system_cmd, 0);
+      rv = gtp_mod_kernel_tunnel_del(eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_entry_p->enb_teid_S1u);
 
       if (rv < 0) {
-        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up downlink TUNNEL\n");
-      }
-      rv = bassignformat (system_cmd, "iptables -t mangle -D POSTROUTING -d %u.%u.%u.%u -m mark --mark %u -j GTPUSP --own-ip %u.%u.%u.%u --own-tun %u --peer-ip %u.%u.%u.%u --peer-tun %u --action add",     // test
-                      eps_bearer_entry_p->paa.ipv4_address[0],
-                      eps_bearer_entry_p->paa.ipv4_address[1],
-                      eps_bearer_entry_p->paa.ipv4_address[2],
-                      eps_bearer_entry_p->paa.ipv4_address[3],
-                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                      sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x000000FF,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x0000FF00) >> 8,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0x00FF0000) >> 16,
-                      (sgw_app.sgw_ip_address_S1u_S12_S4_up & 0xFF000000) >> 24,
-                      eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up,
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2],
-                      eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3],
-                      eps_bearer_entry_p->enb_teid_S1u);
-
-      if (BSTR_ERR == rv) {
-        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in preparing downlink tunnel\n");
-        AssertFatal (0, "ERROR in preparing downlink tunnel\n");
-      }
-      //use API when prototype validated
-      rv = spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-      btrunc(system_cmd, 0);
-
-      if (rv < 0) {
-        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up downlink TUNNEL\n");
+        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in deleting TUNNEL\n");
       }
     }
 
