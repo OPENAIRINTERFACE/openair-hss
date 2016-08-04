@@ -358,7 +358,7 @@ include_directories("${OPENAIRCN_BIN_DIR}")
 ###############################################################################
 # add directories to find all include files
 # the internal rule is to use generic names such as defs.h
-# but to make it uniq name as adding the relative path in the include directtive
+# but to make it uniq name as adding the relative path in the include directive
 # example: #include "RRC/LITE/defs.h"
 #find_path (include_dirs_all *.h ${OPENAIRCN_DIR}/SRC)
 #find_path (include_dirs_all *.h PATHS /usr/include NO_CMAKE_PATH)
@@ -459,7 +459,9 @@ add_library(CN_UTILS ${CN_UTILS_SRC})
 ##########################
 set(GTPV1U_DIR ${OPENAIRCN_DIR}/SRC/GTPV1-U)
 set (GTPV1U_SRC
+  ${GTPV1U_DIR}/gtpv1u_task.c
   ${GTPV1U_DIR}/gtpv1u_teid_pool.c
+  ${GTPV1U_DIR}/gtp_mod_kernel.c
 )
 add_library(GTPV1U ${GTPV1U_SRC})
 
@@ -883,7 +885,7 @@ target_link_libraries (spgw
   -Wl,--start-group
   GTPV1U SGW S11_SGW GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
-  pthread m rt ${CONFIG_LIBRARIES}  
+  pthread m rt gtpnl ${CONFIG_LIBRARIES}  
   )
 
 # auth_request is a helper for scenario builder

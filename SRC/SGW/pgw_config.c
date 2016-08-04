@@ -38,6 +38,9 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+
 
 #include "assertions.h"
 #include "dynamic_memory_check.h"
@@ -66,9 +69,9 @@ static int pgw_system (
   if (command_pP) {
 #if DISABLE_EXECUTE_SHELL_COMMAND
     ret = 0;
-    OAILOG_INFO (LOG_SPGW_APP, "Not executing system command: %s\n", bdata(command_pP));
+    OAILOG_WARNING (LOG_SPGW_APP, "Not executing system command: %s\n", bdata(command_pP));
 #else
-    OAILOG_INFO (LOG_SPGW_APP, "system command: %s\n", bdata(command_pP));
+    OAILOG_DEBUG (LOG_SPGW_APP, "system command: %s\n", bdata(command_pP));
     ret = system (bdata(command_pP));
 
     if (ret != 0) {
@@ -92,7 +95,124 @@ void pgw_config_init (pgw_config_t * config_pP)
 }
 
 //------------------------------------------------------------------------------
-int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_pP)
+int pgw_config_process (pgw_config_t * config_pP)
+{
+  bstring                                 system_cmd = NULL;
+  struct in_addr                          addr_start, addr_mask;
+  uint64_t                                counter64 = 0;
+  conf_ipv4_list_elm_t                   *ip4_ref = NULL;
+
+  system_cmd = bformat ("iptables -t mangle -F FORWARD");
+  pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+  bdestroy(system_cmd);
+
+  if (config_pP->masquerade_SGI) {
+    system_cmd = bformat ("iptables -t nat -F POSTROUTING");
+    pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+    bdestroy(system_cmd);
+  }
+
+  // Get ipv4 address
+  char str[INET_ADDRSTRLEN];
+
+  // GET SGi informations
+  {
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_SGI->data, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
+    if (inet_ntop(AF_INET, (const void *)&ipaddr->sin_addr, str, INET_ADDRSTRLEN) == NULL) {
+      OAILOG_ERROR (LOG_SPGW_APP, "inet_ntop");
+      return RETURNerror;
+    }
+    config_pP->ipv4.SGI = ipaddr->sin_addr.s_addr;
+
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_SGI->data, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFMTU, &ifr);
+    config_pP->ipv4.mtu_SGI = ifr.ifr_mtu;
+    OAILOG_DEBUG (LOG_SPGW_APP, "Foung SGI interface MTU=%d\n", config_pP->ipv4.mtu_SGI);
+    close(fd);
+  }
+  // GET S5_S8 informations
+  {
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_S5_S8->data, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFADDR, &ifr);
+    struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
+    if (inet_ntop(AF_INET, (const void *)&ipaddr->sin_addr, str, INET_ADDRSTRLEN) == NULL) {
+      OAILOG_ERROR (LOG_SPGW_APP, "inet_ntop");
+      return RETURNerror;
+    }
+    config_pP->ipv4.S5_S8 = ipaddr->sin_addr.s_addr;
+
+    ifr.ifr_addr.sa_family = AF_INET;
+    strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_S5_S8->data, IFNAMSIZ-1);
+    ioctl(fd, SIOCGIFMTU, &ifr);
+    config_pP->ipv4.mtu_S5_S8 = ifr.ifr_mtu;
+    OAILOG_DEBUG (LOG_SPGW_APP, "Foung S5_S8 interface MTU=%d\n", config_pP->ipv4.mtu_S5_S8);
+    close(fd);
+  }
+
+  for (int i = 0; i < config_pP->num_ue_pool; i++) {
+
+    memcpy (&addr_start, &config_pP->ue_pool_addr[i], sizeof (struct in_addr));
+    memcpy (&addr_mask, &config_pP->ue_pool_addr[i], sizeof (struct in_addr));
+    addr_mask.s_addr = addr_mask.s_addr & htonl (0xFFFFFFFF << (32 - config_pP->ue_pool_mask[i]));
+
+    if (memcmp (&addr_start, &addr_mask, sizeof (struct in_addr)) ) {
+      AssertFatal (0, "BAD IPV4 ADDR CONFIG/MASK PAIRING %s/%d addr %X mask %X\n",
+          inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i], addr_start.s_addr, addr_mask.s_addr);
+    }
+
+    counter64 = 0x00000000FFFFFFFF >> config_pP->ue_pool_mask[i];  // address Prefix_mask/0..0 not valid
+    counter64 = counter64 - 2;
+
+    do {
+      addr_start.s_addr = addr_start.s_addr + htonl (2);
+      ip4_ref = calloc (1, sizeof (conf_ipv4_list_elm_t));
+      ip4_ref->addr = addr_start;
+      STAILQ_INSERT_TAIL (&config_pP->ipv4_pool_list, ip4_ref, ipv4_entries);
+      counter64 = counter64 - 1;
+    } while (counter64 > 0);
+
+    //---------------
+    if (config_pP->masquerade_SGI) {
+      system_cmd = bformat ("iptables -t nat -I POSTROUTING -s %s/%d -o %s  ! --protocol sctp -j SNAT --to-source %s",
+          inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i],
+          bdata(config_pP->ipv4.if_name_SGI), str);
+      pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+      bdestroy(system_cmd);
+    }
+
+    uint32_t min_mtu = config_pP->ipv4.mtu_SGI;
+    // 36 = GTPv1-U min header size
+    if ((config_pP->ipv4.mtu_S5_S8 - 36) < min_mtu) {
+      min_mtu = config_pP->ipv4.mtu_S5_S8 - 36;
+    }
+    if (config_pP->ue_tcp_mss_clamp) {
+      system_cmd = bformat ("iptables -t mangle -I FORWARD -s %s/%d   -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %u",
+          inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i], min_mtu - 40);
+      pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+      btrunc(system_cmd, 0);
+
+      bassignformat (system_cmd, "iptables -t mangle -I FORWARD -d %s/%d -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %u",
+          inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i], min_mtu - 40);
+      pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
+      bdestroy(system_cmd);
+    }
+  }
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+int pgw_config_parse_file (pgw_config_t * config_pP)
 {
   config_t                                cfg = {0};
   config_setting_t                       *setting_pgw = NULL;
@@ -101,8 +221,8 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
   char                                   *if_S5_S8 = NULL;
   char                                   *S5_S8 = NULL;
   char                                   *if_SGI = NULL;
-  char                                   *SGI = NULL;
   char                                   *masquerade_SGI = NULL;
+  char                                   *ue_tcp_mss_clamping = NULL;
   char                                   *default_dns = NULL;
   char                                   *default_dns_sec = NULL;
   const char                             *astring = NULL;
@@ -111,15 +231,11 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
   bstring                                 mask = NULL;
   int                                     num = 0;
   int                                     i = 0;
-  int                                     prefix_mask = 0;
-  uint64_t                                counter64 = 0;
   unsigned char                           buf_in_addr[sizeof (struct in_addr)];
-  struct in_addr                          addr_start,
-                                          in_addr_var;
-  struct in_addr                          addr_mask;
-  conf_ipv4_list_elm_t                   *ip4_ref = NULL;
+  struct in_addr                          addr_start;
   bstring                                 system_cmd = NULL;
   libconfig_int                           mtu = 0;
+  int                                     prefix_mask = 0;
 
 
   config_init (&cfg);
@@ -150,46 +266,28 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
 
     if (subsetting) {
       if ((config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_S5_S8, (const char **)&if_S5_S8)
-           && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_IPV4_ADDRESS_FOR_S5_S8, (const char **)&S5_S8)
            && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_INTERFACE_NAME_FOR_SGI, (const char **)&if_SGI)
-           && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_IPV4_ADDR_FOR_SGI, (const char **)&SGI)
            && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PGW_MASQUERADE_SGI, (const char **)&masquerade_SGI)
+           && config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_UE_TCP_MSS_CLAMPING, (const char **)&ue_tcp_mss_clamping)
           )
         ) {
         config_pP->ipv4.if_name_S5_S8 = bfromcstr(if_S5_S8);
-        cidr = bfromcstr (S5_S8);
-        struct bstrList *list = bsplit (cidr, '/');
-        AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-        address = list->entry[0];
-        mask    = list->entry[1];
-        IPV4_STR_ADDR_TO_INT_NWBO (bdata(address), config_pP->ipv4.S5_S8, "BAD IP ADDRESS FORMAT FOR S5_S8 !\n");
-        config_pP->ipv4.netmask_S5_S8 = atoi ((const char *)mask->data);
-        bstrListDestroy(list);
-        bdestroy(cidr);
-        in_addr_var.s_addr = config_pP->ipv4.S5_S8;
-        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found S5_S8: %s/%d on %s\n",
-            inet_ntoa (in_addr_var), config_pP->ipv4.netmask_S5_S8, bdata(config_pP->ipv4.if_name_S5_S8));
-
-
         config_pP->ipv4.if_name_SGI = bfromcstr (if_SGI);
-        cidr = bfromcstr (SGI);
-        list = bsplit (cidr, '/');
-        AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-        address = list->entry[0];
-        mask    = list->entry[1];
-        IPV4_STR_ADDR_TO_INT_NWBO (bdata(address), config_pP->ipv4.SGI, "BAD IP ADDRESS FORMAT FOR SGI !\n");
-        config_pP->ipv4.netmask_SGI = atoi ((const char *)mask->data);
-        bstrListDestroy(list);
-        bdestroy(cidr);
-        in_addr_var.s_addr = config_pP->ipv4.SGI;
-        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found SGI: %s/%d on %s\n",
-            inet_ntoa (in_addr_var), config_pP->ipv4.netmask_SGI, bdata(config_pP->ipv4.if_name_SGI));
+        OAILOG_DEBUG (LOG_SPGW_APP, "Parsing configuration file found SGI: on %s\n", bdata(config_pP->ipv4.if_name_SGI));
 
         if (strcasecmp (masquerade_SGI, "yes") == 0) {
           config_pP->masquerade_SGI = true;
+          OAILOG_DEBUG (LOG_SPGW_APP, "Masquerade SGI\n");
         } else {
           config_pP->masquerade_SGI = false;
-          OAILOG_INFO (LOG_SPGW_APP, "No masquerading for SGI\n");
+          OAILOG_DEBUG (LOG_SPGW_APP, "No masquerading for SGI\n");
+        }
+        if (strcasecmp (ue_tcp_mss_clamping, "yes") == 0) {
+          config_pP->ue_tcp_mss_clamp = true;
+          OAILOG_DEBUG (LOG_SPGW_APP, "CLAMP TCP MSS\n");
+        } else {
+          config_pP->ue_tcp_mss_clamp = false;
+          OAILOG_DEBUG (LOG_SPGW_APP, "NO CLAMP TCP MSS\n");
         }
       } else {
         OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW / NETWORK INTERFACES parsing failed\n");
@@ -197,21 +295,6 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
     } else {
       OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW / NETWORK INTERFACES not found\n");
     }
-
-    //!!!------------------------------------!!!
-    // considering thaat we want to avoid as much as possible the fragmentation of IP packets
-    // on the S1-U link, we force the router on the SGI link to fragment IP packets to the MTU size
-    // configured on the link, the idea is to disable the segmentation offload on SGI link
-    // and allow it on the S1-U link, the best is to increase the MTU on S1U link (>=1540 (1500+IP20+UDP8+GTP8))
-    bassignformat (system_cmd, "ethtool -K %s tso off ", bdata(config_pP->ipv4.if_name_SGI));
-    pgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-    btrunc(system_cmd, 0);
-    bassignformat (system_cmd, "ethtool -K %s gso off", bdata(config_pP->ipv4.if_name_SGI));
-    pgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-    btrunc(system_cmd, 0);
-    bassignformat (system_cmd, "ethtool -K %s gro off", bdata(config_pP->ipv4.if_name_SGI));
-    pgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-    btrunc(system_cmd, 0);
 
     //!!!------------------------------------!!!
     subsetting = config_setting_get_member (setting_pgw, PGW_CONFIG_STRING_IP_ADDRESS_POOL);
@@ -239,62 +322,15 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
               // valid address
               prefix_mask = atoi ((const char *)mask->data);
 
-              bassignformat (system_cmd,
-                  "iptables -I PREROUTING -t mangle -i %s -d %s/%s ! --protocol sctp   -j CONNMARK --restore-mark",
-                  bdata(config_pP->ipv4.if_name_SGI), bdata(address), bdata(mask));
-              pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-              btrunc(system_cmd, 0);
-
-
-              bassignformat (system_cmd,
-                  "iptables -I OUTPUT -t mangle -s %s/%s -m mark  ! --mark 0 -j CONNMARK --save-mark",
-                  bdata(address), bdata(mask));
-              pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-              btrunc(system_cmd, 0);
-
-              bassignformat (system_cmd,
-                  "ip route add  %s/%s dev %s",
-                  bdata(address), bdata(mask), bdata(sgw_config_pP->ipv4.if_name_S1u_S12_S4_up));
-              pgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-
-              if ((prefix_mask >= 2) && (prefix_mask < 32)) {
-                memcpy (&addr_start, buf_in_addr, sizeof (struct in_addr));
-                memcpy (&addr_mask, buf_in_addr, sizeof (struct in_addr));
-                addr_mask.s_addr = addr_mask.s_addr & htonl (0xFFFFFFFF << (32 - prefix_mask));
-
-                if (memcmp (&addr_start, &addr_mask, sizeof (struct in_addr)) ) {
-                  AssertFatal (0, "BAD IPV4 ADDR CONFIG/MASK PAIRING %s/%d addr %X mask %X\n",
-                      bdata(address), prefix_mask, addr_start.s_addr, addr_mask.s_addr);
-                }
-
-                counter64 = 0x00000000FFFFFFFF >> prefix_mask;  // address Prefix_mask/0..0 not valid
-                counter64 = counter64 - 2;
-
-                do {
-                  addr_start.s_addr = addr_start.s_addr + htonl (2);
-                  ip4_ref = calloc (1, sizeof (conf_ipv4_list_elm_t));
-                  ip4_ref->addr = addr_start;
-                  STAILQ_INSERT_TAIL (&config_pP->ipv4_pool_list, ip4_ref, ipv4_entries);
-                  counter64 = counter64 - 1;
-                } while (counter64 > 0);
-
-                //---------------
-                if (config_pP->masquerade_SGI) {
-                  in_addr_var.s_addr = config_pP->ipv4.SGI;
-
-                  bassignformat (system_cmd,
-                                "iptables -t nat -I POSTROUTING -s %s/%s -o %s  ! --protocol sctp -j SNAT --to-source %s",
-                                bdata(address), bdata(mask),
-                                bdata(config_pP->ipv4.if_name_SGI),
-                                inet_ntoa (in_addr_var));
-                    pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-                    btrunc(system_cmd, 0);
-
-                }
+              if ((prefix_mask >= 2) && (prefix_mask < 32) && (config_pP->num_ue_pool < PGW_NUM_UE_POOL_MAX)) {
+                memcpy (&config_pP->ue_pool_addr[config_pP->num_ue_pool], buf_in_addr, sizeof (struct in_addr));
+                config_pP->ue_pool_mask[config_pP->num_ue_pool] = prefix_mask;
+                config_pP->num_ue_pool += 1;
               } else {
                 OAILOG_ERROR (LOG_SPGW_APP, "CONFIG POOL ADDR IPV4: BAD MASQ: %d\n", prefix_mask);
               }
             }
+            bstrListDestroy(list);
           }
         }
       } else {
@@ -306,8 +342,8 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
         config_pP->ipv4.if_name_S5_S8 = bfromcstr (if_S5_S8);
         IPV4_STR_ADDR_TO_INT_NWBO (default_dns, config_pP->ipv4.default_dns, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS !\n");
         IPV4_STR_ADDR_TO_INT_NWBO (default_dns_sec, config_pP->ipv4.default_dns_sec, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS SEC!\n");
-        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file default primary DNS IPv4 address: %x\n", config_pP->ipv4.default_dns);
-        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file default secondary DNS IPv4 address: %x\n", config_pP->ipv4.default_dns_sec);
+        OAILOG_DEBUG (LOG_SPGW_APP, "Parsing configuration file default primary DNS IPv4 address: %x\n", config_pP->ipv4.default_dns);
+        OAILOG_DEBUG (LOG_SPGW_APP, "Parsing configuration file default secondary DNS IPv4 address: %x\n", config_pP->ipv4.default_dns_sec);
       } else {
         OAILOG_WARNING (LOG_SPGW_APP, "NO DNS CONFIGURATION FOUND\n");
       }
@@ -315,17 +351,17 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
     if (config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_NAS_FORCE_PUSH_PCO, (const char **)&astring)) {
       if (strcasecmp (astring, "yes") == 0) {
         config_pP->force_push_pco = true;
-        OAILOG_INFO (LOG_SPGW_APP, "Protocol configuration options: push MTU, push DNS, IP address allocation via NAS signalling\n");
+        OAILOG_DEBUG (LOG_SPGW_APP, "Protocol configuration options: push MTU, push DNS, IP address allocation via NAS signalling\n");
       } else {
         config_pP->force_push_pco = false;
       }
     }
-    if (config_setting_lookup_int (setting_pgw, PGW_CONFIG_STRING_UE_MTU, (const char **)&mtu)) {
+    if (config_setting_lookup_int (setting_pgw, PGW_CONFIG_STRING_UE_MTU, &mtu)) {
       config_pP->ue_mtu = mtu;
     } else {
       config_pP->ue_mtu = 1463;
     }
-    OAILOG_INFO (LOG_SPGW_APP, "UE MTU : %u\n", config_pP->ue_mtu);
+    OAILOG_DEBUG (LOG_SPGW_APP, "UE MTU : %u\n", config_pP->ue_mtu);
   } else {
     OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW not found\n");
   }
@@ -337,17 +373,20 @@ int pgw_config_parse_file (pgw_config_t * config_pP, sgw_config_t * sgw_config_p
 //------------------------------------------------------------------------------
 void pgw_config_display (pgw_config_t * config_p)
 {
-  OAILOG_INFO (LOG_CONFIG, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
-  OAILOG_INFO (LOG_CONFIG, "Configuration:\n");
-  OAILOG_INFO (LOG_CONFIG, "- File .................................: %s\n", bdata(config_p->config_file));
+  OAILOG_INFO (LOG_SPGW_APP, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
+  OAILOG_INFO (LOG_SPGW_APP, "Configuration:\n");
+  OAILOG_INFO (LOG_SPGW_APP, "- File .................................: %s\n", bdata(config_p->config_file));
 
-  OAILOG_INFO (LOG_CONFIG, "- S5-S8:\n");
-  OAILOG_INFO (LOG_CONFIG, "    S5_S8 iface ..........: %s\n", bdata(config_p->ipv4.if_name_S5_S8));
-  OAILOG_INFO (LOG_CONFIG, "    S5_S8 ip .............: %s/%u\n", inet_ntoa (*((struct in_addr *)&config_p->ipv4.S5_S8)), config_p->ipv4.netmask_S5_S8);
-  OAILOG_INFO (LOG_CONFIG, "- SGi:\n");
-  OAILOG_INFO (LOG_CONFIG, "    SGi iface ............: %s\n", bdata(config_p->ipv4.if_name_SGI));
-  OAILOG_INFO (LOG_CONFIG, "    SGi ip ...............: %s/%u\n", inet_ntoa (*((struct in_addr *)&config_p->ipv4.SGI)), config_p->ipv4.netmask_SGI);
+  OAILOG_INFO (LOG_SPGW_APP, "- S5-S8:\n");
+  OAILOG_INFO (LOG_SPGW_APP, "    S5_S8 iface ..........: %s\n", bdata(config_p->ipv4.if_name_S5_S8));
+  OAILOG_INFO (LOG_SPGW_APP, "    S5_S8 ip  (read)......: %s\n", inet_ntoa (*((struct in_addr *)&config_p->ipv4.S5_S8)));
+  OAILOG_INFO (LOG_SPGW_APP, "    S5_S8 MTU (read)......: %u\n", config_p->ipv4.mtu_S5_S8);
+  OAILOG_INFO (LOG_SPGW_APP, "- SGi:\n");
+  OAILOG_INFO (LOG_SPGW_APP, "    SGi iface ............: %s\n", bdata(config_p->ipv4.if_name_SGI));
+  OAILOG_INFO (LOG_SPGW_APP, "    SGi ip  (read)........: %s\n", inet_ntoa (*((struct in_addr *)&config_p->ipv4.SGI)));
+  OAILOG_INFO (LOG_SPGW_APP, "    SGi MTU (read)........: %u\n", config_p->ipv4.mtu_SGI);
 
-  OAILOG_INFO (LOG_CONFIG, "- Masquerading: ..........: %d\n", config_p->masquerade_SGI);
-  OAILOG_INFO (LOG_CONFIG, "- Push PCO: ..............: %d\n", config_p->force_push_pco);
+  OAILOG_INFO (LOG_SPGW_APP, "- MSS clamping: ..........: %d\n", config_p->ue_tcp_mss_clamp);
+  OAILOG_INFO (LOG_SPGW_APP, "- Masquerading: ..........: %d\n", config_p->masquerade_SGI);
+  OAILOG_INFO (LOG_SPGW_APP, "- Push PCO: ..............: %d\n", config_p->force_push_pco);
 }

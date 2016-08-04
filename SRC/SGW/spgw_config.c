@@ -46,6 +46,8 @@
 #include "intertask_interface.h"
 #include "dynamic_memory_check.h"
 
+static void spgw_config_display (spgw_config_t * config_p);
+
 //------------------------------------------------------------------------------
 int spgw_system (
   bstring command_pP,
@@ -58,9 +60,9 @@ int spgw_system (
   if (command_pP) {
 #if DISABLE_EXECUTE_SHELL_COMMAND
     ret = 0;
-    OAILOG_INFO (LOG_SPGW_APP, "Not executing system command: %s\n", bdata(command_pP));
+    OAILOG_WARNING (LOG_SPGW_APP, "Not executing system command: %s\n", bdata(command_pP));
 #else
-    OAILOG_INFO (LOG_SPGW_APP, "system command: %s\n", bdata(command_pP));
+    OAILOG_DEBUG (LOG_SPGW_APP, "system command: %s\n", bdata(command_pP));
     // The value returned is -1 on error (e.g., fork(2) failed), and the return status of the command otherwise.
     // This latter return status is in the format specified in wait(2).  Thus, the exit code
     // of the command will be WEXITSTATUS(status).
@@ -91,187 +93,28 @@ static int spgw_config_process (spgw_config_t * config_pP)
   bstring                                 system_cmd = NULL;
 
   system_cmd = bfromcstr("");
-  bassignformat (system_cmd, "modprobe ip_tables");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe x_tables");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -P INPUT ACCEPT");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -F INPUT");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -P OUTPUT ACCEPT");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -F OUTPUT");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -P FORWARD ACCEPT");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -F FORWARD");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -t nat    -F");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -t mangle -F");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -t filter -F");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -t raw    -F");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -t nat    -Z");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -t mangle -Z");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -t filter -Z");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "iptables -t raw    -Z");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "ip route flush cache");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "rmmod iptable_raw    > /dev/null 2>&1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "rmmod iptable_mangle > /dev/null 2>&1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "rmmod iptable_nat    > /dev/null 2>&1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "rmmod iptable_filter > /dev/null 2>&1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "rmmod ip_tables      > /dev/null 2>&1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "rmmod xt_state xt_mark xt_tcpudp xt_connmark ipt_LOG ipt_MASQUERADE > /dev/null 2>&1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "rmmod x_tables       > /dev/null 2>&1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "rmmod nf_conntrack_netlink nfnetlink nf_nat nf_conntrack_ipv4 nf_conntrack  > /dev/null 2>&1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe ip_tables");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe iptable_filter");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe iptable_mangle");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe iptable_nat");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe iptable_raw");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe ipt_MASQUERADE");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe ipt_LOG");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe nf_conntrack");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe nf_conntrack_ipv4");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe nf_nat");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe x_tables");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe udp_tunnel");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "modprobe ip6_udp_tunnel");
-  spgw_system (system_cmd, SPGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
 
   bassignformat (system_cmd, "sysctl -w net.ipv4.ip_forward=1");
   spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
   btrunc(system_cmd, 0);
 
-  bassignformat (system_cmd, "sysctl -w net.ipv4.conf.all.accept_local=1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "sysctl -w net.ipv4.conf.all.log_martians=1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "sysctl -w net.ipv4.conf.all.route_localnet=1");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
-  bassignformat (system_cmd, "sysctl -w net.ipv4.conf.all.rp_filter=0");
-  spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
-
   bassignformat (system_cmd, "sync");
   spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  btrunc(system_cmd, 0);
+  bdestroy(system_cmd);
 
   if (RETURNok != sgw_config_process (&config_pP->sgw_config)) {
-    bdestroy(system_cmd);
     return RETURNerror;
   }
 
+#define SPGW_NOT_SPLITTED 1
+#if SPGW_NOT_SPLITTED
+  // fake split
+  config_pP->pgw_config.ipv4.if_name_S5_S8 = bstrcpy(config_pP->sgw_config.ipv4.if_name_S1u_S12_S4_up);
+#endif
+
+  if (RETURNok != pgw_config_process (&config_pP->pgw_config)) {
+    return RETURNerror;
+  }
   return RETURNok;
 }
 
@@ -303,14 +146,16 @@ static int spgw_config_parse_file (spgw_config_t * config_pP)
     return RETURNerror;
   }
 
+  if (pgw_config_parse_file (&config_pP->pgw_config) != 0) {
+    config_destroy (&cfg);
+    return RETURNerror;
+  }
+
   if (spgw_config_process (config_pP) != 0) {
     return RETURNerror;
   }
 
-  if (pgw_config_parse_file (&config_pP->pgw_config, &config_pP->sgw_config) != 0) {
-    config_destroy (&cfg);
-    return RETURNerror;
-  }
+  spgw_config_display(config_pP);
 
   config_destroy (&cfg);
   return RETURNok;
