@@ -718,6 +718,8 @@ check_install_mme_software() {
   install_freediameter_from_source $1
   install_asn1c_from_source $1
 
+  install_libgtpnl_from_source $1
+
   # Networking
   PACKAGE_LIST="\
     ethtool \
