@@ -289,6 +289,41 @@ install_nettle_from_source() {
   fi
 }
 
+install_libgtpnl_from_source() {
+  if [ $1 -gt 0 ]; then
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+
+  # Compilers, generators, ...
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    build-essential \
+    libmnl-dev
+
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install libgtpnl ? <y/N> " prompt
+  else
+    prompt='y'
+  fi
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    cd /tmp
+    echo "Downloading libgtpnl archive"
+    $SUDO rm -rf /tmp/libgtpnl*
+    git clone git://git.osmocom.org/libgtpnl
+    cd libgtpnl
+    autoreconf -fi
+    ./configure
+    echo "Compiling nettle"
+    make -j`nproc`
+    $SUDO make install
+    $SUDO ldconfig
+    $SUDO rm -rf /tmp/libgtpnl*
+  fi
+}
 #-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_gnutls_from_source(){
@@ -682,6 +717,8 @@ check_install_mme_software() {
 
   install_freediameter_from_source $1
   install_asn1c_from_source $1
+
+  install_libgtpnl_from_source $1
 
   # Networking
   PACKAGE_LIST="\
