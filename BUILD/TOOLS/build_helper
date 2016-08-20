@@ -718,8 +718,6 @@ check_install_mme_software() {
   install_freediameter_from_source $1
   install_asn1c_from_source $1
 
-  install_libgtpnl_from_source $1
-
   # Networking
   PACKAGE_LIST="\
     ethtool \
@@ -816,7 +814,8 @@ check_install_spgw_software() {
   if [ $? -ne 0 ]; then 
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi
-
+  
+  install_libgtpnl_from_source $1
 }
 
 
