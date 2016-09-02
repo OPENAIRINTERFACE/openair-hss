@@ -114,6 +114,7 @@ int pgw_config_process (pgw_config_t * config_pP)
 
   // Get ipv4 address
   char str[INET_ADDRSTRLEN];
+  char str_sgi[INET_ADDRSTRLEN];
 
   // GET SGi informations
   {
@@ -124,7 +125,7 @@ int pgw_config_process (pgw_config_t * config_pP)
     strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_SGI->data, IFNAMSIZ-1);
     ioctl(fd, SIOCGIFADDR, &ifr);
     struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-    if (inet_ntop(AF_INET, (const void *)&ipaddr->sin_addr, str, INET_ADDRSTRLEN) == NULL) {
+    if (inet_ntop(AF_INET, (const void *)&ipaddr->sin_addr, str_sgi, INET_ADDRSTRLEN) == NULL) {
       OAILOG_ERROR (LOG_SPGW_APP, "inet_ntop");
       return RETURNerror;
     }
@@ -186,7 +187,7 @@ int pgw_config_process (pgw_config_t * config_pP)
     if (config_pP->masquerade_SGI) {
       system_cmd = bformat ("iptables -t nat -I POSTROUTING -s %s/%d -o %s  ! --protocol sctp -j SNAT --to-source %s",
           inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i],
-          bdata(config_pP->ipv4.if_name_SGI), str);
+          bdata(config_pP->ipv4.if_name_SGI), str_sgi);
       pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
       bdestroy(system_cmd);
     }
