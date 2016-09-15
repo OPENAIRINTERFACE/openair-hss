@@ -27,6 +27,7 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <libxml/encoding.h>
 #include "bstrlib.h"
