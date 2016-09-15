@@ -127,7 +127,7 @@ emm_msg_decode (
 
   buffer += header_result;
   len -= header_result;
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-MSG   - Message Type 0x%02x\n", msg->header.message_type);
+  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-MSG   - Message Type 0x%02x\n", msg->header.message_type);
 
   switch (msg->header.message_type) {
   case EMM_INFORMATION:

@@ -495,7 +495,7 @@ int esm_msg_to_xml (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result);
   }
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-MSG   - Encoded ESM message header " "(%d)\n", header_result);
+  OAILOG_TRACE (LOG_NAS_ESM, "ESM-MSG   - Encoded ESM message header " "(%d)\n", header_result);
   buffer += header_result;
   len -= header_result;
 

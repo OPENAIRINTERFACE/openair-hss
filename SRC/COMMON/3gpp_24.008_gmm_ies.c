@@ -284,7 +284,7 @@ int decode_ms_network_capability_ie (
   DECODE_U8 (buffer + decoded, ielen, decoded);
   CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, ielen, len- decoded);
   memset (msnetworkcapability, 0, sizeof (ms_network_capability_t));
-  OAILOG_INFO (LOG_NAS_EMM, "decode_ms_network_capability_ie len = %d\n", ielen);
+  OAILOG_TRACE (LOG_NAS_EMM, "decode_ms_network_capability_ie len = %d\n", ielen);
   CHECK_LENGTH_DECODER (len - decoded, ielen);
 
   b = *(buffer + decoded);
