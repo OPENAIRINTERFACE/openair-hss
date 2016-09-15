@@ -497,9 +497,6 @@ scenario_player_item_t* msp_load_exit (scenario_t * const scenario, xmlDocPtr co
     }
     xmlFree(attr);
   }
-
-  hashtable_rc_t rc = obj_hashtable_ts_insert (scenario->label_items, bdata(spi->u.label), blength(spi->u.label), (void*)(uintptr_t)spi->uid);
-  AssertFatal(HASH_TABLE_OK == rc, "Error in putting label %s in hashtable %d", bdata(spi->u.label), rc);
   return spi;
 }
 //------------------------------------------------------------------------------
