@@ -31,14 +31,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
+#include <netinet/in.h>
 
-#include "tree.h"
+#include "bstrlib.h"
+
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "conversions.h"
 #include "hashtable.h"
 #include "obj_hashtable.h"
+#include "common_defs.h"
 #include "intertask_interface.h"
 #include "msc.h"
 #include "log.h"
@@ -164,12 +168,12 @@ sgw_display_s11_bearer_context_information_mapping (
 //-----------------------------------------------------------------------------
 void
 pgw_lite_cm_free_apn (
-  pgw_apn_t * apnP)
+  pgw_apn_t ** apnP)
 //-----------------------------------------------------------------------------
 {
-  if (apnP ) {
-    if (apnP->pdn_connections ) {
-      obj_hashtable_ts_destroy (apnP->pdn_connections);
+  if (*apnP ) {
+    if ((*apnP)->pdn_connections ) {
+      obj_hashtable_ts_destroy ((*apnP)->pdn_connections);
     }
   }
 }
@@ -274,7 +278,7 @@ sgw_cm_create_pdn_connection (
 
   if (pdn_connection->sgw_eps_bearers == NULL) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create eps bearers collection object\n");
-    free_wrapper (&pdn_connection);
+    free_wrapper ((void**)&pdn_connection);
     pdn_connection = NULL;
     return NULL;
   }
@@ -318,7 +322,7 @@ sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (
     obj_hashtable_ts_destroy (contextP->pgw_eps_bearer_context_information.apns);
   }
 
-  free_wrapper (&contextP);
+  free_wrapper ((void**)&contextP);
 }
 
 //-----------------------------------------------------------------------------
@@ -351,7 +355,7 @@ sgw_cm_create_bearer_context_information_in_collection (
    */
   bstring b = bfromcstr("pgw_eps_bearer_ctxt_info_apns");
   new_bearer_context_information->pgw_eps_bearer_context_information.apns =
-      obj_hashtable_ts_create (32, NULL, NULL, (void (*) (void *))pgw_lite_cm_free_apn, b);
+      obj_hashtable_ts_create (32, NULL, NULL, (void (*) (void **))pgw_lite_cm_free_apn, b);
   bdestroy_wrapper (&b);
 
   if (new_bearer_context_information->pgw_eps_bearer_context_information.apns == NULL) {

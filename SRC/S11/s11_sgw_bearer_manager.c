@@ -22,6 +22,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "bstrlib.h"
 
 #include "assertions.h"
 #include "intertask_interface.h"
@@ -54,7 +58,6 @@ s11_sgw_handle_modify_bearer_request (
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_MODIFY_BEARER_REQUEST);
   request_p = &message_p->ittiMsg.s11_modify_bearer_request;
-  memset(request_p, 0, sizeof(*request_p));
   request_p->trxn = (void *)pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
   request_p->teid = nwGtpv2cMsgGetTeid (pUlpApi->hMsg);
   /*
@@ -194,7 +197,6 @@ s11_sgw_handle_release_access_bearers_request (
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_RELEASE_ACCESS_BEARERS_REQUEST);
   request_p = &message_p->ittiMsg.s11_release_access_bearers_request;
-  memset((void*)request_p, 0, sizeof(*request_p));
 
   request_p->trxn = (void *)pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
   request_p->teid = nwGtpv2cMsgGetTeid (pUlpApi->hMsg);

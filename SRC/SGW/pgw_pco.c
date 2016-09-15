@@ -26,11 +26,17 @@
   \email: lionel.gauthier@eurecom.fr
 */
 #include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+
 #include "bstrlib.h"
+
 #include "assertions.h"
 #include "log.h"
-#include "pgw_pco.h"
 #include "common_defs.h"
+#include "3gpp_24.008.h"
+#include "pgw_pco.h"
 #include "rfc_1877.h"
 #include "rfc_1332.h"
 #include "spgw_config.h"

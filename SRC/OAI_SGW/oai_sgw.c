@@ -122,7 +122,7 @@ main (
   }
 #else
   if (! is_pid_file_lock_success(pid_file_name)) {
-    free_wrapper(&pid_file_name);
+    free_wrapper((void**)&pid_file_name);
     exit (-EDEADLK);
   }
 #endif
@@ -154,6 +154,6 @@ main (
    */
   itti_wait_tasks_end ();
   pid_file_unlock();
-  free_wrapper(pid_file_name);
+  free_wrapper((void**)pid_file_name);
   return 0;
 }

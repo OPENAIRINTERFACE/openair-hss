@@ -28,19 +28,27 @@
 #define SGW
 #define SPGW_CONFIG_C
 
-#include <string.h>
-#include <libconfig.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
 
+#include <libconfig.h>
+#include "bstrlib.h"
+#include "queue.h"
+
+#include "hashtable.h"
+#include "obj_hashtable.h"
 #include "log.h"
 #include "assertions.h"
+#include "common_defs.h"
 #include "spgw_config.h"
 #include "sgw_defs.h"
 #include "intertask_interface.h"

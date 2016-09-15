@@ -18,10 +18,13 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "bstrlib.h"
 
 #include "assertions.h"
 #include "intertask_interface.h"

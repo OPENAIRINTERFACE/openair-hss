@@ -29,7 +29,6 @@
 #define PGW_CONFIG_C
 
 #include <string.h>
-#include <libconfig.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -40,12 +39,16 @@
 #include <netdb.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+#include <pthread.h>
 
+#include "bstrlib.h"
+#include <libconfig.h>
 
 #include "assertions.h"
 #include "dynamic_memory_check.h"
 #include "log.h"
 #include "intertask_interface.h"
+#include "common_defs.h"
 #include "sgw_config.h"
 #include "pgw_config.h"
 

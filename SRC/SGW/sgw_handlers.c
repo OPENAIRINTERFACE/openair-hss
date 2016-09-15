@@ -35,11 +35,14 @@
 #include <string.h>
 #include <netinet/in.h>
 
+#include "bstrlib.h"
+
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "conversions.h"
 #include "hashtable.h"
 #include "obj_hashtable.h"
+#include "common_defs.h"
 #include "intertask_interface.h"
 #include "msc.h"
 #include "log.h"
@@ -47,7 +50,6 @@
 #include "3gpp_23.401.h"
 #include "common_types.h"
 #include "mme_config.h"
-
 #include "sgw_defs.h"
 #include "sgw_handlers.h"
 #include "sgw_context_manager.h"
@@ -55,8 +57,6 @@
 #include "pgw_lite_paa.h"
 #include "pgw_pco.h"
 #include "spgw_config.h"
-#include "ProtocolConfigurationOptions.h"
-
 #include "gtp_mod_kernel.h"
 
 extern sgw_app_t                        sgw_app;
@@ -219,7 +219,7 @@ sgw_handle_create_session_request (
     }
   } else {
     OAILOG_WARNING (LOG_SPGW_APP, "Could not create new transaction for SESSION_CREATE message\n");
-    free_wrapper (&new_endpoint_p);
+    free_wrapper ((void**)&new_endpoint_p);
     new_endpoint_p = NULL;
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, RETURNerror);
   }

@@ -18,18 +18,22 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-
-
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <inttypes.h>
+#include <pthread.h>
+#include <assert.h>
 #include <errno.h>
+
+#include "bstrlib.h"
 
 #include "log.h"
 #include "assertions.h"
 #include "queue.h"
 #include "sgw_config.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "timer.h"
 #include "NwLog.h"
 #include "NwGtpv2c.h"
@@ -161,7 +165,6 @@ static NwRcT s11_sgw_stop_timer_wrapper (
 static void *s11_sgw_thread (void *args)
 {
   itti_mark_task_ready (TASK_S11);
-  OAILOG_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -220,6 +223,7 @@ static void *s11_sgw_thread (void *args)
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }

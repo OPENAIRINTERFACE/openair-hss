@@ -57,7 +57,7 @@ typedef struct enb_sgw_s1u_tunnel_s {
 
 void                                   sgw_display_s11teid2mme_mappings(void);
 void                                   sgw_display_s11_bearer_context_information_mapping(void);
-void                                   pgw_lite_cm_free_apn(pgw_apn_t *apnP);
+void                                   pgw_lite_cm_free_apn(pgw_apn_t **apnP);
 
 
 teid_t                                 sgw_get_new_S11_tunnel_id(void);

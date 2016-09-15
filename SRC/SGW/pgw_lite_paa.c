@@ -26,11 +26,14 @@
   \email: lionel.gauthier@eurecom.fr
 */
 #include <stdint.h>
+#include <stdbool.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include "bstrlib.h"
 
 #include "queue.h"
 #include "dynamic_memory_check.h"
@@ -38,6 +41,7 @@
 #include "conversions.h"
 #include "hashtable.h"
 #include "obj_hashtable.h"
+#include "common_defs.h"
 #include "intertask_interface.h"
 #include "msc.h"
 #include "log.h"
