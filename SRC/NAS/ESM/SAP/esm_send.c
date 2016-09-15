@@ -37,12 +37,22 @@
         EPS Mobility Management sublayer.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
 
-#include <string.h>             // strlen
+#include "bstrlib.h"
+
 #include "log.h"
+#include "gcc_diag.h"
 #include "commonDef.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.301.h"
+#include "nas_message.h"
 #include "esm_send.h"
 #include "esm_msgDef.h"
 #include "esm_cause.h"
@@ -233,7 +243,7 @@ esm_send_activate_default_eps_bearer_context_request (
   int ebi,
   activate_default_eps_bearer_context_request_msg * msg,
   bstring apn,
-  const ProtocolConfigurationOptions * pco,
+  const protocol_configuration_options_t * pco,
   int pdn_type,
   bstring pdn_addr,
   const EpsQualityOfService * qos,
@@ -350,7 +360,7 @@ esm_send_activate_dedicated_eps_bearer_context_request (
   activate_dedicated_eps_bearer_context_request_msg * msg,
   int linked_ebi,
   const EpsQualityOfService * qos,
-  PacketFilters * pkfs,
+  packet_filter_t * pkf,
   int n_pkfs)
 {
   int                                     i;
@@ -370,12 +380,12 @@ esm_send_activate_dedicated_eps_bearer_context_request (
   /*
    * Mandatory - traffic flow template
    */
-  msg->tft.tftoperationcode = TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE;
+  msg->tft.tftoperationcode = TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE_NEW_TFT;
   msg->tft.ebit = TRAFFIC_FLOW_TEMPLATE_PARAMETER_LIST_IS_NOT_INCLUDED;
   msg->tft.numberofpacketfilters = n_pkfs;
 
   for (i = 0; i < msg->tft.numberofpacketfilters; i++) {
-    msg->tft.packetfilterlist.createtft[i] = (*pkfs)[i];
+    msg->tft.packetfilterlist.createnewtft[i] = pkf[i];
   }
 
   /*

@@ -111,15 +111,6 @@ typedef struct indication_flags_s {
 #define ISRAI_FLAG_BIT_POS    1
 #define SGWCI_FLAG_BIT_POS    0
 
-typedef struct {
-  pdn_type_t pdn_type;
-  uint8_t ipv4_address[4];
-  uint8_t ipv6_address[16];
-  /* Note in rel.8 the ipv6 prefix length has a fixed value of /64 */
-  uint8_t ipv6_prefix_length;
-} PAA_t;
-
-
 #define IMSI(imsi) \
         (imsi)->digit[0], \
         (imsi)->digit[1], \
@@ -252,32 +243,24 @@ typedef struct {
   uint32_t        ipv4_address;
   uint8_t         ipv6_address[16];
 } FTeid_t;
-/*
- *              typedef struct {
-                  pdn_type_t pdn_type;
-                  union {
-                      uint8_t ipv4_address[4];
-                      uint8_t ipv6_address[16];
-                  } address;
-              } ip_address_t;
 
- */
+
 #define FTEID_T_2_IP_ADDRESS_T(fte_p,ip_p) \
 do { \
-    if (fte_p->ipv4) { \
-        ip_p->pdn_type = IPv4; \
-        ip_p->address.ipv4_address[0] = (uint8_t)(fte_p->ipv4_address & 0x000000FF);         \
-        ip_p->address.ipv4_address[1] = (uint8_t)((fte_p->ipv4_address & 0x0000FF00) >> 8);  \
-        ip_p->address.ipv4_address[2] = (uint8_t)((fte_p->ipv4_address & 0x00FF0000) >> 16); \
-        ip_p->address.ipv4_address[3] = (uint8_t)((fte_p->ipv4_address & 0xFF000000) >> 24); \
+    if ((fte_p)->ipv4) { \
+      (ip_p)->pdn_type = IPv4; \
+      (ip_p)->address.ipv4_address[0] = (uint8_t)((fte_p)->ipv4_address & 0x000000FF);         \
+      (ip_p)->address.ipv4_address[1] = (uint8_t)(((fte_p)->ipv4_address & 0x0000FF00) >> 8);  \
+      (ip_p)->address.ipv4_address[2] = (uint8_t)(((fte_p)->ipv4_address & 0x00FF0000) >> 16); \
+      (ip_p)->address.ipv4_address[3] = (uint8_t)(((fte_p)->ipv4_address & 0xFF000000) >> 24); \
     } \
-    if (fte_p->ipv6) { \
-        if (fte_p->ipv4) { \
-            ip_p->pdn_type = IPv4_AND_v6; \
+    if ((fte_p)->ipv6) { \
+        if ((fte_p)->ipv4) { \
+          (ip_p)->pdn_type = IPv4_AND_v6; \
         } else { \
-            ip_p->pdn_type = IPv6; \
+          (ip_p)->pdn_type = IPv6; \
         } \
-        memcpy(ip_p->address.ipv6_address, fte_p->ipv6_address, 16); \
+        memcpy((ip_p)->address.ipv6_address, (fte_p)->ipv6_address, 16); \
     } \
 } while (0)
 

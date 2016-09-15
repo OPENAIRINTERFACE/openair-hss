@@ -35,6 +35,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <inttypes.h>
+#include <stdbool.h>
+
+#include "bstrlib.h"
 
 #include "NwTypes.h"
 #include "NwLog.h"
@@ -44,6 +47,7 @@
 #include "NwGtpv2cPrivate.h"
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
+#include "log.h"
 
 #ifdef __cplusplus
 extern                                  "C" {

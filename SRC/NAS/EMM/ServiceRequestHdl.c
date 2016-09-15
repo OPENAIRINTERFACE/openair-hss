@@ -45,17 +45,24 @@
         network has user data pending and the UE is in EMM-IDLE mode.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include <string.h>             // memcmp, memcpy
-#include <stdlib.h>             // malloc, free_wrapper
+#include "bstrlib.h"
 
-#include "emm_proc.h"
 #include "log.h"
+#include "msc.h"
+#include "dynamic_memory_check.h"
+#include "common_defs.h"
+#include "emm_proc.h"
 #include "nas_timer.h"
-#include "emmData.h"
+#include "emm_data.h"
 #include "emm_sap.h"
 #include "emm_cause.h"
-#include "msc.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -107,7 +114,7 @@ emm_proc_service_reject (
   /*
    * Create temporary UE context
    */
-  emm_data_context_t                      ue_ctx = {0};
+  emm_context_t                      ue_ctx = {0};
 
   ue_ctx.is_dynamic = false;
   ue_ctx.ue_id = ue_id;
@@ -140,7 +147,7 @@ _emm_service_reject (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
+  emm_context_t                     *emm_ctx = (emm_context_t *) (args);
 
   if (emm_ctx) {
     emm_sap_t                               emm_sap = {0};

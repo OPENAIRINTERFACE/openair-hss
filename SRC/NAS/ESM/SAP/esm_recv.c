@@ -37,6 +37,15 @@
         from the EPS Mobility Management sublayer.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+
+#include "bstrlib.h"
 
 #include "log.h"
 #include "3gpp_24.007.h"
@@ -87,7 +96,7 @@
 
 int
 esm_recv_status (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pti,
   int ebi,
   const esm_status_msg * msg)
@@ -146,7 +155,7 @@ esm_recv_status (
  ***************************************************************************/
 int
 esm_recv_pdn_connectivity_request (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pti,
   int ebi,
   const pdn_connectivity_request_msg * msg,
@@ -323,7 +332,7 @@ esm_recv_pdn_connectivity_request (
  ***************************************************************************/
 int
 esm_recv_pdn_disconnect_request (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pti,
   int ebi,
   const pdn_disconnect_request_msg * msg,
@@ -411,7 +420,7 @@ esm_recv_pdn_disconnect_request (
  ***************************************************************************/
 int
 esm_recv_activate_default_eps_bearer_context_accept (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pti,
   int ebi,
   const activate_default_eps_bearer_context_accept_msg * msg)
@@ -485,7 +494,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
  ***************************************************************************/
 int
 esm_recv_activate_default_eps_bearer_context_reject (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pti,
   int ebi,
   const activate_default_eps_bearer_context_reject_msg * msg)
@@ -559,7 +568,7 @@ esm_recv_activate_default_eps_bearer_context_reject (
  ***************************************************************************/
 int
 esm_recv_activate_dedicated_eps_bearer_context_accept (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pti,
   int ebi,
   const activate_dedicated_eps_bearer_context_accept_msg * msg)
@@ -634,7 +643,7 @@ esm_recv_activate_dedicated_eps_bearer_context_accept (
  ***************************************************************************/
 int
 esm_recv_activate_dedicated_eps_bearer_context_reject (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pti,
   int ebi,
   const activate_dedicated_eps_bearer_context_reject_msg * msg)
@@ -708,7 +717,7 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
  ***************************************************************************/
 int
 esm_recv_deactivate_eps_bearer_context_accept (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pti,
   int ebi,
   const deactivate_eps_bearer_context_accept_msg * msg)

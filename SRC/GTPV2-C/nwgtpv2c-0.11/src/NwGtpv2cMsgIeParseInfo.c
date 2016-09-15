@@ -33,6 +33,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+
+#include "bstrlib.h"
 
 #include "NwTypes.h"
 #include "NwLog.h"
@@ -43,6 +46,7 @@
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 
 #ifdef __cplusplus
@@ -610,7 +614,7 @@ extern                                  "C" {
         break;
 
       default:{
-          free_wrapper (thiz);
+          free_wrapper ((void**)&thiz);
           thiz = NULL;
         }
         break;

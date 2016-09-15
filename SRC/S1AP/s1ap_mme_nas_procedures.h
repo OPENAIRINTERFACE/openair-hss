@@ -23,12 +23,8 @@
 
 #ifndef FILE_S1AP_MME_NAS_PROCEDURES_SEEN
 #define FILE_S1AP_MME_NAS_PROCEDURES_SEEN
-#include <stdint.h>
 
 #include "common_defs.h"
-#include "bstrlib.h"
-#include "s1ap_ies_defs.h"
-#include "intertask_interface.h"
 
 /** \brief Handle an Initial UE message.
  * \param assocId lower layer assoc id (SCTP)

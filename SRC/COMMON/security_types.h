@@ -34,13 +34,6 @@
 # include <gmp.h>
 #endif
 
-#include <stdlib.h>
-#include <stdint.h>
-#include <inttypes.h>
-
-#if 0
-#include "queue.h"
-#endif
 
 #ifndef FILE_SECURITY_TYPES_SEEN
 #define FILE_SECURITY_TYPES_SEEN

@@ -29,24 +29,30 @@
 */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
 
+#include "bstrlib.h"
+
+#include "log.h"
+#include "msc.h"
 #include "assertions.h"
 #include "common_types.h"
 #include "conversions.h"
-#include "msc.h"
-#include "log.h"
 #include "intertask_interface.h"
+#include "gcc_diag.h"
+#include "common_defs.h"
 #include "mme_config.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "secu_defs.h"
 
-
-int
-mme_app_send_s6a_update_location_req (
+//------------------------------------------------------------------------------
+int mme_app_send_s6a_update_location_req (
   struct ue_context_s *const ue_context_pP)
 {
   struct ue_context_s                    *ue_context_p = NULL;
@@ -72,7 +78,6 @@ mme_app_send_s6a_update_location_req (
   }
 
   s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
-  memset ((void *)s6a_ulr_p, 0, sizeof (s6a_update_location_req_t));
   IMSI64_TO_STRING (imsi, s6a_ulr_p->imsi);
   s6a_ulr_p->imsi_length = strlen (s6a_ulr_p->imsi);
   s6a_ulr_p->initial_attach = INITIAL_ATTACH;
@@ -88,9 +93,8 @@ mme_app_send_s6a_update_location_req (
 }
 
 
-
-int
-mme_app_handle_s6a_update_location_ans (
+//------------------------------------------------------------------------------
+int mme_app_handle_s6a_update_location_ans (
   const s6a_update_location_ans_t * const ula_pP)
 {
   uint64_t                                imsi = 0;

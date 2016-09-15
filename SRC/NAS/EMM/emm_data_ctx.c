@@ -18,15 +18,17 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-
-
-#include <stdlib.h>
-#include <string.h>
+#include <pthread.h>
+#include <inttypes.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "bstrlib.h"
 
 #include "dynamic_memory_check.h"
 #include "assertions.h"
-#include "obj_hashtable.h"
 #include "log.h"
 #include "msc.h"
 #include "tree.h"
@@ -34,22 +36,24 @@
 #include "3gpp_24.301.h"
 #include "common_types.h"
 #include "commonDef.h"
+#include "common_defs.h"
 #include "NasSecurityAlgorithms.h"
 #include "conversions.h"
-#include "emmData.h"
-#include "EmmCommon.h"
+#include "emm_data.h"
+#include "emm_proc.h"
 #include "security_types.h"
+#include "mme_config.h"
 
 static mme_ue_s1ap_id_t mme_ue_s1ap_id_generator = 1;
 
 //------------------------------------------------------------------------------
-static bool emm_data_context_dump_hash_table_wrapper (
+static bool emm_context_dump_hash_table_wrapper (
   hash_key_t keyP,
   void *dataP,
   void *parameterP,
   void**resultP);
 
-mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(emm_data_context_t *ctxt)
+mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(emm_context_t *ctxt)
 {
   mme_ue_s1ap_id_t tmp = 0;
   if (RUN_MODE_TEST == mme_config.run_mode) {
@@ -61,17 +65,17 @@ mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(emm_data_context_t *ctxt)
 }
 
 //------------------------------------------------------------------------------
-inline void emm_ctx_mark_common_procedure_running(emm_data_context_t * const ctxt, const int proc_id)
+inline void emm_ctx_mark_common_procedure_running(emm_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_or(&ctxt->common_proc_mask, proc_id);
 }
 
-inline void emm_ctx_unmark_common_procedure_running(emm_data_context_t * const ctxt, const int proc_id)
+inline void emm_ctx_unmark_common_procedure_running(emm_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_and(&ctxt->common_proc_mask, ~proc_id);
 }
 
-inline bool emm_ctx_is_common_procedure_running(emm_data_context_t * const ctxt, const int proc_id)
+inline bool emm_ctx_is_common_procedure_running(emm_context_t * const ctxt, const int proc_id)
 {
   if (ctxt->common_proc_mask & proc_id) return true;
   return false;
@@ -79,17 +83,17 @@ inline bool emm_ctx_is_common_procedure_running(emm_data_context_t * const ctxt,
 
 
 
-inline void emm_ctx_mark_specific_procedure(emm_data_context_t * const ctxt, const int proc_id)
+inline void emm_ctx_mark_specific_procedure(emm_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_or(&ctxt->specific_proc_mask, proc_id);
 }
 
-inline void emm_ctx_unmark_specific_procedure(emm_data_context_t * const ctxt, const int proc_id)
+inline void emm_ctx_unmark_specific_procedure(emm_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_and(&ctxt->specific_proc_mask, ~proc_id);
 }
 
-inline bool emm_ctx_is_specific_procedure(emm_data_context_t * const ctxt, const int proc_id)
+inline bool emm_ctx_is_specific_procedure(emm_context_t * const ctxt, const int proc_id)
 {
   if (ctxt->specific_proc_mask & proc_id) return true;
   return false;
@@ -97,31 +101,31 @@ inline bool emm_ctx_is_specific_procedure(emm_data_context_t * const ctxt, const
 
 
 //------------------------------------------------------------------------------
-inline void emm_ctx_set_attribute_present(emm_data_context_t * const ctxt, const int attribute_bit_pos)
+inline void emm_ctx_set_attribute_present(emm_context_t * const ctxt, const int attribute_bit_pos)
 {
   ctxt->member_present_mask |= attribute_bit_pos;
 }
 
-inline void emm_ctx_clear_attribute_present(emm_data_context_t * const ctxt, const int attribute_bit_pos)
+inline void emm_ctx_clear_attribute_present(emm_context_t * const ctxt, const int attribute_bit_pos)
 {
   ctxt->member_present_mask &= ~attribute_bit_pos;
   ctxt->member_valid_mask &= ~attribute_bit_pos;
 }
 
-inline void emm_ctx_set_attribute_valid(emm_data_context_t * const ctxt, const int attribute_bit_pos)
+inline void emm_ctx_set_attribute_valid(emm_context_t * const ctxt, const int attribute_bit_pos)
 {
   ctxt->member_present_mask |= attribute_bit_pos;
   ctxt->member_valid_mask   |= attribute_bit_pos;
 }
 
-inline void emm_ctx_clear_attribute_valid(emm_data_context_t * const ctxt, const int attribute_bit_pos)
+inline void emm_ctx_clear_attribute_valid(emm_context_t * const ctxt, const int attribute_bit_pos)
 {
   ctxt->member_valid_mask &= ~attribute_bit_pos;
 }
 
 //------------------------------------------------------------------------------
 /* Clear GUTI  */
-inline void emm_ctx_clear_guti(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_guti(emm_context_t * const ctxt)
 {
   clear_guti(&ctxt->_guti);
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_GUTI);
@@ -129,7 +133,7 @@ inline void emm_ctx_clear_guti(emm_data_context_t * const ctxt)
 }
 
 /* Set GUTI */
-inline void emm_ctx_set_guti(emm_data_context_t * const ctxt, guti_t *guti)
+inline void emm_ctx_set_guti(emm_context_t * const ctxt, guti_t *guti)
 {
   ctxt->_guti = *guti;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_GUTI);
@@ -137,7 +141,7 @@ inline void emm_ctx_set_guti(emm_data_context_t * const ctxt, guti_t *guti)
 }
 
 /* Set GUTI, mark it as valid */
-inline void emm_ctx_set_valid_guti(emm_data_context_t * const ctxt, guti_t *guti)
+inline void emm_ctx_set_valid_guti(emm_context_t * const ctxt, guti_t *guti)
 {
   ctxt->_guti = *guti;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_GUTI);
@@ -146,7 +150,7 @@ inline void emm_ctx_set_valid_guti(emm_data_context_t * const ctxt, guti_t *guti
 
 //------------------------------------------------------------------------------
 /* Clear old GUTI  */
-inline void emm_ctx_clear_old_guti(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_old_guti(emm_context_t * const ctxt)
 {
   clear_guti(&ctxt->_old_guti);
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_OLD_GUTI);
@@ -154,7 +158,7 @@ inline void emm_ctx_clear_old_guti(emm_data_context_t * const ctxt)
 }
 
 /* Set GUTI */
-inline void emm_ctx_set_old_guti(emm_data_context_t * const ctxt, guti_t *guti)
+inline void emm_ctx_set_old_guti(emm_context_t * const ctxt, guti_t *guti)
 {
   ctxt->_old_guti = *guti;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_OLD_GUTI);
@@ -162,7 +166,7 @@ inline void emm_ctx_set_old_guti(emm_data_context_t * const ctxt, guti_t *guti)
 }
 
 /* Set GUTI, mark it as valid */
-inline void emm_ctx_set_valid_old_guti(emm_data_context_t * const ctxt, guti_t *guti)
+inline void emm_ctx_set_valid_old_guti(emm_context_t * const ctxt, guti_t *guti)
 {
   ctxt->_old_guti = *guti;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_OLD_GUTI);
@@ -171,7 +175,7 @@ inline void emm_ctx_set_valid_old_guti(emm_data_context_t * const ctxt, guti_t *
 
 //------------------------------------------------------------------------------
 /* Clear IMSI */
-inline void emm_ctx_clear_imsi(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_imsi(emm_context_t * const ctxt)
 {
   clear_imsi(&ctxt->_imsi);
   ctxt->_imsi64 = INVALID_IMSI64;
@@ -180,7 +184,7 @@ inline void emm_ctx_clear_imsi(emm_data_context_t * const ctxt)
 }
 
 /* Set IMSI */
-inline void emm_ctx_set_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64)
+inline void emm_ctx_set_imsi(emm_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64)
 {
   ctxt->_imsi   = *imsi;
   ctxt->_imsi64 = imsi64;
@@ -193,7 +197,7 @@ inline void emm_ctx_set_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, cons
 }
 
 /* Set IMSI, mark it as valid */
-inline void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64)
+inline void emm_ctx_set_valid_imsi(emm_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64)
 {
   ctxt->_imsi   = *imsi;
   ctxt->_imsi64 = imsi64;
@@ -209,7 +213,7 @@ inline void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi
 
 //------------------------------------------------------------------------------
 /* Clear IMEI */
-inline void emm_ctx_clear_imei(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_imei(emm_context_t * const ctxt)
 {
   clear_imei(&ctxt->_imei);
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_IMEI);
@@ -217,7 +221,7 @@ inline void emm_ctx_clear_imei(emm_data_context_t * const ctxt)
 }
 
 /* Set IMEI */
-inline void emm_ctx_set_imei(emm_data_context_t * const ctxt, imei_t *imei)
+inline void emm_ctx_set_imei(emm_context_t * const ctxt, imei_t *imei)
 {
   ctxt->_imei = *imei;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_IMEI);
@@ -229,7 +233,7 @@ inline void emm_ctx_set_imei(emm_data_context_t * const ctxt, imei_t *imei)
 }
 
 /* Set IMEI, mark it as valid */
-inline void emm_ctx_set_valid_imei(emm_data_context_t * const ctxt, imei_t *imei)
+inline void emm_ctx_set_valid_imei(emm_context_t * const ctxt, imei_t *imei)
 {
   ctxt->_imei = *imei;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_IMEI);
@@ -242,7 +246,7 @@ inline void emm_ctx_set_valid_imei(emm_data_context_t * const ctxt, imei_t *imei
 
 //------------------------------------------------------------------------------
 /* Clear IMEI_SV */
-inline void emm_ctx_clear_imeisv(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_imeisv(emm_context_t * const ctxt)
 {
   clear_imeisv(&ctxt->_imeisv);
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_IMEI_SV);
@@ -250,7 +254,7 @@ inline void emm_ctx_clear_imeisv(emm_data_context_t * const ctxt)
 }
 
 /* Set IMEI_SV */
-inline void emm_ctx_set_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv)
+inline void emm_ctx_set_imeisv(emm_context_t * const ctxt, imeisv_t *imeisv)
 {
   ctxt->_imeisv = *imeisv;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_IMEI_SV);
@@ -258,7 +262,7 @@ inline void emm_ctx_set_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv
 }
 
 /* Set IMEI_SV, mark it as valid */
-inline void emm_ctx_set_valid_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv)
+inline void emm_ctx_set_valid_imeisv(emm_context_t * const ctxt, imeisv_t *imeisv)
 {
   ctxt->_imeisv = *imeisv;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_IMEI_SV);
@@ -267,7 +271,7 @@ inline void emm_ctx_set_valid_imeisv(emm_data_context_t * const ctxt, imeisv_t *
 
 //------------------------------------------------------------------------------
 /* Clear last_visited_registered_tai */
-inline void emm_ctx_clear_lvr_tai(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_lvr_tai(emm_context_t * const ctxt)
 {
   clear_tai(&ctxt->_lvr_tai);
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_LVR_TAI);
@@ -275,7 +279,7 @@ inline void emm_ctx_clear_lvr_tai(emm_data_context_t * const ctxt)
 }
 
 /* Set last_visited_registered_tai */
-inline void emm_ctx_set_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai)
+inline void emm_ctx_set_lvr_tai(emm_context_t * const ctxt, tai_t *lvr_tai)
 {
   ctxt->_lvr_tai = *lvr_tai;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_LVR_TAI);
@@ -286,7 +290,7 @@ inline void emm_ctx_set_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai)
 }
 
 /* Set last_visited_registered_tai, mark it as valid */
-inline void emm_ctx_set_valid_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai)
+inline void emm_ctx_set_valid_lvr_tai(emm_context_t * const ctxt, tai_t *lvr_tai)
 {
   ctxt->_lvr_tai = *lvr_tai;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_LVR_TAI);
@@ -295,7 +299,7 @@ inline void emm_ctx_set_valid_lvr_tai(emm_data_context_t * const ctxt, tai_t *lv
 
 //------------------------------------------------------------------------------
 /* Clear AUTH vectors  */
-inline void emm_ctx_clear_auth_vectors(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_auth_vectors(emm_context_t * const ctxt)
 {
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_AUTH_VECTORS);
   for (int i = 0; i < MAX_EPS_AUTH_VECTORS; i++) {
@@ -307,7 +311,7 @@ inline void emm_ctx_clear_auth_vectors(emm_data_context_t * const ctxt)
 }
 //------------------------------------------------------------------------------
 /* Clear AUTH vector  */
-inline void emm_ctx_clear_auth_vector(emm_data_context_t * const ctxt, ksi_t eksi)
+inline void emm_ctx_clear_auth_vector(emm_context_t * const ctxt, ksi_t eksi)
 {
   AssertFatal(eksi < MAX_EPS_AUTH_VECTORS, "Out of bounds eksi %d", eksi);
   memset((void *)&ctxt->_vector[eksi], 0, sizeof(ctxt->_vector[eksi]));
@@ -328,7 +332,7 @@ inline void emm_ctx_clear_auth_vector(emm_data_context_t * const ctxt, ksi_t eks
 }
 //------------------------------------------------------------------------------
 /* Clear security  */
-inline void emm_ctx_clear_security(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_security(emm_context_t * const ctxt)
 {
   memset (&ctxt->_security, 0, sizeof (ctxt->_security));
   emm_ctx_set_security_type(ctxt, SECURITY_CTX_TYPE_NOT_AVAILABLE);
@@ -341,27 +345,27 @@ inline void emm_ctx_clear_security(emm_data_context_t * const ctxt)
 }
 
 //------------------------------------------------------------------------------
-inline void emm_ctx_set_security_type(emm_data_context_t * const ctxt, emm_sc_type_t sc_type)
+inline void emm_ctx_set_security_type(emm_context_t * const ctxt, emm_sc_type_t sc_type)
 {
   ctxt->_security.sc_type = sc_type;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set security context security type %d\n", ctxt->ue_id, sc_type);
 }
 
 //------------------------------------------------------------------------------
-inline void emm_ctx_set_security_eksi(emm_data_context_t * const ctxt, ksi_t eksi)
+inline void emm_ctx_set_security_eksi(emm_context_t * const ctxt, ksi_t eksi)
 {
   ctxt->_security.eksi = eksi;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set security context eksi %d\n", ctxt->ue_id, eksi);
 }
 
 //------------------------------------------------------------------------------
-inline void emm_ctx_clear_security_vector_index(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_security_vector_index(emm_context_t * const ctxt)
 {
   ctxt->_security.vector_index = EMM_SECURITY_VECTOR_INDEX_INVALID;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " clear security context vector index\n", ctxt->ue_id);
 }
 //------------------------------------------------------------------------------
-inline void emm_ctx_set_security_vector_index(emm_data_context_t * const ctxt, int vector_index)
+inline void emm_ctx_set_security_vector_index(emm_context_t * const ctxt, int vector_index)
 {
   ctxt->_security.vector_index = vector_index;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set security context vector index %d\n", ctxt->ue_id, vector_index);
@@ -370,7 +374,7 @@ inline void emm_ctx_set_security_vector_index(emm_data_context_t * const ctxt, i
 
 //------------------------------------------------------------------------------
 /* Clear non current security  */
-inline void emm_ctx_clear_non_current_security(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_non_current_security(emm_context_t * const ctxt)
 {
   memset (&ctxt->_non_current_security, 0, sizeof (ctxt->_non_current_security));
   ctxt->_non_current_security.sc_type      = SECURITY_CTX_TYPE_NOT_AVAILABLE;
@@ -382,13 +386,13 @@ inline void emm_ctx_clear_non_current_security(emm_data_context_t * const ctxt)
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " cleared non current security context \n", ctxt->ue_id);
 }
 //------------------------------------------------------------------------------
-inline void emm_ctx_clear_non_current_security_vector_index(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_non_current_security_vector_index(emm_context_t * const ctxt)
 {
   ctxt->_non_current_security.vector_index = EMM_SECURITY_VECTOR_INDEX_INVALID;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " clear non current security context vector index\n", ctxt->ue_id);
 }
 //------------------------------------------------------------------------------
-inline void emm_ctx_set_non_current_security_vector_index(emm_data_context_t * const ctxt, int vector_index)
+inline void emm_ctx_set_non_current_security_vector_index(emm_context_t * const ctxt, int vector_index)
 {
   ctxt->_non_current_security.vector_index = vector_index;
   OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set non current security context vector index %d\n", ctxt->ue_id, vector_index);
@@ -396,7 +400,7 @@ inline void emm_ctx_set_non_current_security_vector_index(emm_data_context_t * c
 
 //------------------------------------------------------------------------------
 /* Clear UE network capability IE   */
-inline void emm_ctx_clear_ue_nw_cap_ie(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_ue_nw_cap_ie(emm_context_t * const ctxt)
 {
   memset (&ctxt->_ue_network_capability_ie, 0, sizeof (ctxt->_ue_network_capability_ie));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_UE_NETWORK_CAPABILITY_IE);
@@ -404,7 +408,7 @@ inline void emm_ctx_clear_ue_nw_cap_ie(emm_data_context_t * const ctxt)
 }
 
 /* Set UE network capability IE */
-inline void emm_ctx_set_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkCapability *ue_nw_cap_ie)
+inline void emm_ctx_set_ue_nw_cap_ie(emm_context_t * const ctxt, ue_network_capability_t *ue_nw_cap_ie)
 {
   ctxt->_ue_network_capability_ie = *ue_nw_cap_ie;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_UE_NETWORK_CAPABILITY_IE);
@@ -412,7 +416,7 @@ inline void emm_ctx_set_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkC
 }
 
 /* Set UE network capability IE, mark it as valid */
-inline void emm_ctx_set_valid_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkCapability *ue_nw_cap_ie)
+inline void emm_ctx_set_valid_ue_nw_cap_ie(emm_context_t * const ctxt, ue_network_capability_t *ue_nw_cap_ie)
 {
   ctxt->_ue_network_capability_ie = *ue_nw_cap_ie;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_UE_NETWORK_CAPABILITY_IE);
@@ -422,7 +426,7 @@ inline void emm_ctx_set_valid_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNe
 
 //------------------------------------------------------------------------------
 /* Clear MS network capability IE   */
-inline void emm_ctx_clear_ms_nw_cap(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_ms_nw_cap(emm_context_t * const ctxt)
 {
   memset (&ctxt->_ms_network_capability_ie, 0, sizeof (ctxt->_ue_network_capability_ie));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_MS_NETWORK_CAPABILITY_IE);
@@ -431,7 +435,7 @@ inline void emm_ctx_clear_ms_nw_cap(emm_data_context_t * const ctxt)
 
 //------------------------------------------------------------------------------
 /* Clear current DRX parameter   */
-inline void emm_ctx_clear_current_drx_parameter(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_current_drx_parameter(emm_context_t * const ctxt)
 {
   memset (&ctxt->_current_drx_parameter, 0, sizeof (ctxt->_current_drx_parameter));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_CURRENT_DRX_PARAMETER);
@@ -439,7 +443,7 @@ inline void emm_ctx_clear_current_drx_parameter(emm_data_context_t * const ctxt)
 }
 
 /* Set current DRX parameter */
-inline void emm_ctx_set_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
+inline void emm_ctx_set_current_drx_parameter(emm_context_t * const ctxt, drx_parameter_t *drx)
 {
   ctxt->_current_drx_parameter = *drx;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_CURRENT_DRX_PARAMETER);
@@ -447,7 +451,7 @@ inline void emm_ctx_set_current_drx_parameter(emm_data_context_t * const ctxt, D
 }
 
 /* Set current DRX parameter, mark it as valid */
-inline void emm_ctx_set_valid_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
+inline void emm_ctx_set_valid_current_drx_parameter(emm_context_t * const ctxt, drx_parameter_t *drx)
 {
   ctxt->_current_drx_parameter = *drx;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_CURRENT_DRX_PARAMETER);
@@ -456,7 +460,7 @@ inline void emm_ctx_set_valid_current_drx_parameter(emm_data_context_t * const c
 
 //------------------------------------------------------------------------------
 /* Clear non current DRX parameter   */
-inline void emm_ctx_clear_pending_current_drx_parameter(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_pending_current_drx_parameter(emm_context_t * const ctxt)
 {
   memset (&ctxt->_pending_drx_parameter, 0, sizeof (ctxt->_pending_drx_parameter));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_PENDING_DRX_PARAMETER);
@@ -464,7 +468,7 @@ inline void emm_ctx_clear_pending_current_drx_parameter(emm_data_context_t * con
 }
 
 /* Set current DRX parameter */
-inline void emm_ctx_set_pending_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
+inline void emm_ctx_set_pending_current_drx_parameter(emm_context_t * const ctxt, drx_parameter_t *drx)
 {
   ctxt->_pending_drx_parameter = *drx;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_PENDING_DRX_PARAMETER);
@@ -472,7 +476,7 @@ inline void emm_ctx_set_pending_current_drx_parameter(emm_data_context_t * const
 }
 
 /* Set current DRX parameter, mark it as valid */
-inline void emm_ctx_set_valid_pending_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx)
+inline void emm_ctx_set_valid_pending_current_drx_parameter(emm_context_t * const ctxt, drx_parameter_t *drx)
 {
   ctxt->_pending_drx_parameter = *drx;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_PENDING_DRX_PARAMETER);
@@ -481,7 +485,7 @@ inline void emm_ctx_set_valid_pending_current_drx_parameter(emm_data_context_t *
 
 //------------------------------------------------------------------------------
 /* Clear EPS bearer context status   */
-inline void emm_ctx_clear_eps_bearer_context_status(emm_data_context_t * const ctxt)
+inline void emm_ctx_clear_eps_bearer_context_status(emm_context_t * const ctxt)
 {
   memset (&ctxt->_eps_bearer_context_status, 0, sizeof (ctxt->_eps_bearer_context_status));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
@@ -489,7 +493,7 @@ inline void emm_ctx_clear_eps_bearer_context_status(emm_data_context_t * const c
 }
 
 /* Set current DRX parameter */
-inline void emm_ctx_set_eps_bearer_context_status(emm_data_context_t * const ctxt, EpsBearerContextStatus *status)
+inline void emm_ctx_set_eps_bearer_context_status(emm_context_t * const ctxt, eps_bearer_context_status_t *status)
 {
   ctxt->_eps_bearer_context_status = *status;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
@@ -497,7 +501,7 @@ inline void emm_ctx_set_eps_bearer_context_status(emm_data_context_t * const ctx
 }
 
 /* Set current DRX parameter, mark it as valid */
-inline void emm_ctx_set_valid_eps_bearer_context_status(emm_data_context_t * const ctxt, EpsBearerContextStatus *status)
+inline void emm_ctx_set_valid_eps_bearer_context_status(emm_context_t * const ctxt, eps_bearer_context_status_t *status)
 {
   ctxt->_eps_bearer_context_status = *status;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_EPS_BEARER_CONTEXT_STATUS);
@@ -507,24 +511,24 @@ inline void emm_ctx_set_valid_eps_bearer_context_status(emm_data_context_t * con
 
 
 //------------------------------------------------------------------------------
-struct emm_data_context_s              *
-emm_data_context_get (
+struct emm_context_s              *
+emm_context_get (
   emm_data_t * emm_data,
   const mme_ue_s1ap_id_t ue_id)
 {
-  struct emm_data_context_s              *emm_data_context_p = NULL;
+  struct emm_context_s              *emm_context_p = NULL;
 
   DevAssert (emm_data );
   if (INVALID_MME_UE_S1AP_ID != ue_id) {
-    hashtable_ts_get (emm_data->ctx_coll_ue_id, (const hash_key_t)(ue_id), (void **)&emm_data_context_p);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-CTX - get UE id " MME_UE_S1AP_ID_FMT " context %p\n", ue_id, emm_data_context_p);
+    hashtable_ts_get (emm_data->ctx_coll_ue_id, (const hash_key_t)(ue_id), (void **)&emm_context_p);
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - get UE id " MME_UE_S1AP_ID_FMT " context %p\n", ue_id, emm_context_p);
   }
-  return emm_data_context_p;
+  return emm_context_p;
 }
 
 //------------------------------------------------------------------------------
-struct emm_data_context_s              *
-emm_data_context_get_by_imsi (
+struct emm_context_s              *
+emm_context_get_by_imsi (
   emm_data_t * emm_data,
   imsi64_t     imsi64)
 {
@@ -536,7 +540,7 @@ emm_data_context_get_by_imsi (
   h_rc = hashtable_ts_get (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64, (void **)(uintptr_t)&emm_ue_id);
 
   if (HASH_TABLE_OK == h_rc) {
-    struct emm_data_context_s * tmp = emm_data_context_get (emm_data, (const hash_key_t)emm_ue_id);
+    struct emm_context_s * tmp = emm_context_get (emm_data, (const hash_key_t)emm_ue_id);
 #if DEBUG_IS_ON
     if ((tmp)) {
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - get UE id " MME_UE_S1AP_ID_FMT " context %p by imsi " IMSI_64_FMT "\n", tmp->ue_id, tmp, imsi64);
@@ -549,8 +553,8 @@ emm_data_context_get_by_imsi (
 
 
 //------------------------------------------------------------------------------
-struct emm_data_context_s              *
-emm_data_context_get_by_guti (
+struct emm_context_s              *
+emm_context_get_by_guti (
   emm_data_t * emm_data,
   guti_t * guti)
 {
@@ -564,7 +568,7 @@ emm_data_context_get_by_guti (
     h_rc = obj_hashtable_ts_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **)(uintptr_t)&emm_ue_id);
 
     if (HASH_TABLE_OK == h_rc) {
-      struct emm_data_context_s * tmp = emm_data_context_get (emm_data, (const hash_key_t)emm_ue_id);
+      struct emm_context_s * tmp = emm_context_get (emm_data, (const hash_key_t)emm_ue_id);
 #if DEBUG_IS_ON
       if ((tmp)) {
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - get UE id " MME_UE_S1AP_ID_FMT " context %p by guti " GUTI_FMT "\n", tmp->ue_id, tmp, GUTI_ARG(guti));
@@ -578,12 +582,12 @@ emm_data_context_get_by_guti (
 
 
 //------------------------------------------------------------------------------
-struct emm_data_context_s              *
-emm_data_context_remove (
+struct emm_context_s              *
+emm_context_remove (
   emm_data_t * emm_data,
-  struct emm_data_context_s *elm)
+  struct emm_context_s *elm)
 {
-  struct emm_data_context_s              *emm_data_context_p = NULL;
+  struct emm_context_s              *emm_context_p = NULL;
   mme_ue_s1ap_id_t                       *emm_ue_id          = NULL;
 
   OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " MME_UE_S1AP_ID_FMT "\n", elm, elm->ue_id);
@@ -604,16 +608,16 @@ emm_data_context_remove (
         elm, (mme_ue_s1ap_id_t)((uintptr_t)emm_ue_id), imsi64);
   }
 
-  hashtable_ts_remove (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ue_id), (void **)&emm_data_context_p);
-  return emm_data_context_p;
+  hashtable_ts_remove (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ue_id), (void **)&emm_context_p);
+  return emm_context_p;
 }
 
 
 //------------------------------------------------------------------------------
 int
-emm_data_context_add (
+emm_context_add (
   emm_data_t * emm_data,
-  struct emm_data_context_s *elm)
+  struct emm_context_s *elm)
 {
   hashtable_rc_t                          h_rc;
 
@@ -652,9 +656,9 @@ emm_data_context_add (
 }
 //------------------------------------------------------------------------------
 int
-emm_data_context_add_guti (
+emm_context_add_guti (
   emm_data_t * emm_data,
-  struct emm_data_context_s *elm)
+  struct emm_context_s *elm)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
 
@@ -672,9 +676,9 @@ emm_data_context_add_guti (
 }
 //------------------------------------------------------------------------------
 int
-emm_data_context_add_old_guti (
+emm_context_add_old_guti (
   emm_data_t * emm_data,
-  struct emm_data_context_s *elm)
+  struct emm_context_s *elm)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
 
@@ -693,9 +697,9 @@ emm_data_context_add_old_guti (
 
 //------------------------------------------------------------------------------
 int
-emm_data_context_add_imsi (
+emm_context_add_imsi (
   emm_data_t * emm_data,
-  struct emm_data_context_s *elm)
+  struct emm_context_s *elm)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
 
@@ -714,7 +718,7 @@ emm_data_context_add_imsi (
 }
 
 //------------------------------------------------------------------------------
-void emm_data_context_stop_all_timers (struct emm_data_context_s *emm_ctx)
+void emm_context_stop_all_timers (struct emm_context_s *emm_ctx)
 {
   if (emm_ctx ) {
     /*
@@ -747,36 +751,37 @@ void emm_data_context_stop_all_timers (struct emm_data_context_s *emm_ctx)
 }
 
 //------------------------------------------------------------------------------
-void emm_data_context_silently_reset_procedures(
-    struct emm_data_context_s * const emm_ctx)
+void emm_context_silently_reset_procedures(
+    struct emm_context_s * const emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   if (emm_ctx) {
-    emm_data_context_stop_all_timers(emm_ctx);
-    emm_common_cleanup_by_ueid(emm_ctx->ue_id);
+    emm_context_stop_all_timers(emm_ctx);
+    emm_common_cleanup(emm_ctx->common_proc);
   }
   OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }
 //------------------------------------------------------------------------------
-void free_emm_data_context(
-    struct emm_data_context_s * const emm_ctx)
+void free_emm_context(
+    struct emm_context_s * const emm_ctx)
 {
   if (emm_ctx ) {
     if (emm_ctx->esm_msg) {
-      bdestroy (emm_ctx->esm_msg);
+      bdestroy_wrapper (&emm_ctx->esm_msg);
+      emm_ctx->esm_msg = NULL;
     }
 
-    emm_data_context_stop_all_timers(emm_ctx);
+    emm_context_stop_all_timers(emm_ctx);
 
     free_esm_data_context(&emm_ctx->esm_data_ctx);
-    free_wrapper(emm_ctx);
+    free_wrapper((void**)&emm_ctx);
   }
 }
 
 //------------------------------------------------------------------------------
 void
-emm_data_context_dump (
-  const struct emm_data_context_s * const elm_pP)
+emm_context_dump (
+  const struct emm_context_s * const elm_pP)
 {
   if (elm_pP ) {
     char                                    imsi_str[16];
@@ -795,9 +800,36 @@ emm_data_context_dump (
     OAILOG_INFO (LOG_NAS_EMM, "         imeisv:           TODO    (The IMEISV provided by the UE)\n");
     OAILOG_INFO (LOG_NAS_EMM, "         guti:             "GUTI_FMT"      (The GUTI assigned to the UE)\n", GUTI_ARG(&elm_pP->_guti));
     OAILOG_INFO (LOG_NAS_EMM, "         old_guti:         "GUTI_FMT"      (The old GUTI)\n", GUTI_ARG(&elm_pP->_old_guti));
-    for (k=0; k < elm_pP->_tai_list.n_tais; k++) {
-      OAILOG_INFO (LOG_NAS_EMM, "         tai:              "TAI_FMT"   (Tracking area identity the UE is registered to)\n",
-        TAI_ARG(&elm_pP->_tai_list.tai[k]));
+    for (k=0; k < elm_pP->_tai_list.numberoflists; k++) {
+      switch (elm_pP->_tai_list.partial_tai_list[k].typeoflist) {
+      case TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS: {
+          tai_t tai = {0};
+          tai.mcc_digit1 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit1;
+          tai.mcc_digit2 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit2;
+          tai.mcc_digit3 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit3;
+          tai.mnc_digit1 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit1;
+          tai.mnc_digit2 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit2;
+          tai.mnc_digit3 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit3;
+          for (int p = 0; p < (elm_pP->_tai_list.partial_tai_list[k].numberofelements+1); p++) {
+            tai.tac        = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.tac[p];
+
+            OAILOG_INFO (LOG_NAS_EMM, "         tai:              "TAI_FMT" (Tracking area identity the UE is registered to)\n",
+              TAI_ARG(&tai));
+          }
+        }
+        break;
+      case TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS:
+        OAILOG_INFO (LOG_NAS_EMM, "         tai:              "TAI_FMT"+%u consecutive tacs   (Tracking area identity the UE is registered to)\n",
+          TAI_ARG(&elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_consecutive_tacs), elm_pP->_tai_list.partial_tai_list[k].numberofelements);
+        break;
+      case TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS:
+        for (int p = 0; p < (elm_pP->_tai_list.partial_tai_list[k].numberofelements+1); p++) {
+          OAILOG_INFO (LOG_NAS_EMM, "         tai:              "TAI_FMT" (Tracking area identity the UE is registered to)\n",
+            TAI_ARG(&elm_pP->_tai_list.partial_tai_list[k].u.tai_many_plmn[p]));
+        }
+        break;
+      default: ;
+      }
     }
     OAILOG_INFO (LOG_NAS_EMM, "         eksi:             %u      (Security key set identifier)\n", elm_pP->_security.eksi);
     OAILOG_INFO (LOG_NAS_EMM, "         auth_vector:              (EPS authentication vector)\n");
@@ -865,21 +897,21 @@ emm_data_context_dump (
 
 //------------------------------------------------------------------------------
 static bool
-emm_data_context_dump_hash_table_wrapper (
+emm_context_dump_hash_table_wrapper (
   hash_key_t keyP,
   void *dataP,
   void *parameterP,
   void**resultP)
 {
-  emm_data_context_dump (dataP);
+  emm_context_dump (dataP);
   return false; // otherwise dump stop
 }
 
 //------------------------------------------------------------------------------
 void
-emm_data_context_dump_all (
+emm_context_dump_all (
   void)
 {
   OAILOG_INFO (LOG_NAS_EMM, "EMM-CTX - Dump all contexts:\n");
-  hashtable_ts_apply_callback_on_elements (_emm_data.ctx_coll_ue_id, emm_data_context_dump_hash_table_wrapper, NULL, NULL);
+  hashtable_ts_apply_callback_on_elements (_emm_data.ctx_coll_ue_id, emm_context_dump_hash_table_wrapper, NULL, NULL);
 }

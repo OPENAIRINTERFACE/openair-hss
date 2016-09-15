@@ -39,18 +39,25 @@
         and to request ESM unit data transfer to under layer.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include "commonDef.h"
-#include "LowerLayer.h"
+#include "bstrlib.h"
+
 #include "log.h"
-
-#include "emmData.h"
-
+#include "msc.h"
+#include "gcc_diag.h"
+#include "commonDef.h"
+#include "common_defs.h"
+#include "emm_data.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
 #include "log.h"
-
-#include <string.h>             // memset
+#include "LowerLayer.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -126,10 +133,10 @@ lowerlayer_failure (
 
   emm_sap.primitive = EMMREG_LOWERLAYER_FAILURE;
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_data_context_t                     *emm_ctx = NULL;
+  emm_context_t                     *emm_ctx = NULL;
 
   if (ue_id > 0) {
-    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+    emm_ctx = emm_context_get (&_emm_data, ue_id);
   }
 
   emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -162,10 +169,10 @@ lowerlayer_non_delivery_indication (
 
   emm_sap.primitive = EMMREG_LOWERLAYER_NON_DELIVERY;
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_data_context_t                     *emm_ctx = NULL;
+  emm_context_t                     *emm_ctx = NULL;
 
   if (ue_id > 0) {
-    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+    emm_ctx = emm_context_get (&_emm_data, ue_id);
   }
 
   emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -250,12 +257,12 @@ lowerlayer_data_ind (
 {
   esm_sap_t                               esm_sap = {0};
   int                                     rc = RETURNok;
-  emm_data_context_t                     *emm_ctx = NULL;
+  emm_context_t                     *emm_ctx = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   if (ue_id > 0) {
-    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+    emm_ctx = emm_context_get (&_emm_data, ue_id);
   }
   esm_sap.primitive = ESM_UNITDATA_IND;
   esm_sap.is_standalone = true;
@@ -292,14 +299,14 @@ lowerlayer_data_req (
   int                                     rc = RETURNok;
   emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
-  struct emm_data_context_s              *ctx = NULL;
+  struct emm_context_s              *ctx = NULL;
 
   emm_sap.primitive = EMMAS_DATA_REQ;
   emm_sap.u.emm_as.u.data.guti = NULL;
   emm_sap.u.emm_as.u.data.ue_id = ue_id;
 
   if (ue_id > 0) {
-    ctx = emm_data_context_get (&_emm_data, ue_id);
+    ctx = emm_context_get (&_emm_data, ue_id);
   }
 
   if (ctx) {

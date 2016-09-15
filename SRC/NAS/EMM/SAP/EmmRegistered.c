@@ -44,16 +44,22 @@
         performed.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+#include <assert.h>
 
 #include "common_defs.h"
 #include "emm_fsm.h"
 #include "commonDef.h"
 #include "networkDef.h"
 #include "log.h"
-
 #include "emm_proc.h"
 
-#include <assert.h>
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

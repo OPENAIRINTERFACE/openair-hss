@@ -45,29 +45,28 @@
         rent EPS security context already in use.
 
 *****************************************************************************/
-
-#include <stdlib.h>             // malloc, free_wrapper
-#include <string.h>             // memcpy
+#include <pthread.h>
 #include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
+#include "bstrlib.h"
+
+#include "log.h"
+#include "msc.h"
+#include "gcc_diag.h"
+#include "dynamic_memory_check.h"
+#include "assertions.h"
 #include "3gpp_requirements_24.301.h"
 #include "emm_proc.h"
-#include "log.h"
+#include "common_defs.h"
 #include "nas_timer.h"
-
-#include "emmData.h"
-
+#include "emm_data.h"
 #include "emm_sap.h"
 #include "emm_cause.h"
-
-#include "UeSecurityCapability.h"
-
-#if ENABLE_ITTI
-#  include "assertions.h"
-#endif
 #include "secu_defs.h"
-#include "msc.h"
-#include "dynamic_memory_check.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -107,34 +106,7 @@ static int                              _security_select_algorithms (
   int *const mme_eiaP,
   int *const mme_eeaP);
 
-/*
-   Internal data used for security mode control procedure
-*/
-typedef struct {
-  unsigned int                            ue_id; /* UE identifier                         */
-#define SECURITY_COUNTER_MAX    5
-  unsigned int                            retransmission_count; /* Retransmission counter    */
-  int                                     ksi;  /* NAS key set identifier                */
-  int                                     eea;  /* Replayed EPS encryption algorithms    */
-  int                                     eia;  /* Replayed EPS integrity algorithms     */
-  int                                     ucs2; /* Replayed Alphabet                     */
-  int                                     uea;  /* Replayed UMTS encryption algorithms   */
-  int                                     uia;  /* Replayed UMTS integrity algorithms    */
-  int                                     gea;  /* Replayed G encryption algorithms      */
-  bool                                    umts_present;
-  bool                                    gprs_present;
-  int                                     selected_eea; /* Selected EPS encryption algorithms    */
-  int                                     selected_eia; /* Selected EPS integrity algorithms     */
-  int                                     saved_selected_eea; /* Previous selected EPS encryption algorithms    */
-  int                                     saved_selected_eia; /* Previous selected EPS integrity algorithms     */
-  int                                     saved_eksi; /* Previous ksi     */
-  uint16_t                                saved_overflow; /* Previous dl_count overflow     */
-  uint8_t                                 saved_seq_num; /* Previous dl_count seq_num     */
-  emm_sc_type_t                           saved_sc_type;
-  bool                                    notify_failure;       /* Indicates whether the identification
-                                                                 * procedure failure shall be notified
-                                                                 * to the ongoing EMM procedure */
-} security_data_t;
+
 
 static int                              _security_request (
   security_data_t * data,
@@ -208,12 +180,12 @@ emm_proc_security_mode_control (
   /*
    * Get the UE context
    */
-  emm_data_context_t                     *emm_ctx = NULL;
+  emm_context_t                     *emm_ctx = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate security mode control procedure " "KSI = %d EEA = %d EIA = %d\n", ksi, eea, eia);
 
-  emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+  emm_ctx = emm_context_get (&_emm_data, ue_id);
 
   //TODO better than that (quick fixes)
   if (KSI_NO_KEY_AVAILABLE == ksi) {
@@ -225,19 +197,22 @@ emm_proc_security_mode_control (
   /*
    * Allocate parameters of the retransmission timer callback
    */
-  security_data_t                        *data = (security_data_t *) calloc (1, sizeof (security_data_t));
+  if (emm_ctx->common_proc) {
+    emm_common_cleanup(emm_ctx->common_proc);
+  }
+  emm_ctx->common_proc = (emm_common_data_t *) calloc (1, sizeof (*emm_ctx->common_proc));
 
-  if ((emm_ctx) &&(data)) {
+  if ((emm_ctx) &&(emm_ctx->common_proc)) {
     // TODO check for removing test (emm_ctx->_security.sc_type == SECURITY_CTX_TYPE_NOT_AVAILABLE)
     if ((emm_ctx->_security.sc_type == SECURITY_CTX_TYPE_NOT_AVAILABLE) &&
        !(emm_ctx->common_proc_mask & EMM_CTXT_COMMON_PROC_SMC)) {
 
-      data->saved_selected_eea = emm_ctx->_security.selected_algorithms.encryption;
-      data->saved_selected_eia = emm_ctx->_security.selected_algorithms.integrity;
-      data->saved_eksi         = emm_ctx->_security.eksi;
-      data->saved_overflow     = emm_ctx->_security.dl_count.overflow;
-      data->saved_seq_num      = emm_ctx->_security.dl_count.seq_num;
-      data->saved_sc_type      = emm_ctx->_security.sc_type;
+      emm_ctx->common_proc->common_arg.u.security_data.saved_selected_eea = emm_ctx->_security.selected_algorithms.encryption;
+      emm_ctx->common_proc->common_arg.u.security_data.saved_selected_eia = emm_ctx->_security.selected_algorithms.integrity;
+      emm_ctx->common_proc->common_arg.u.security_data.saved_eksi         = emm_ctx->_security.eksi;
+      emm_ctx->common_proc->common_arg.u.security_data.saved_overflow     = emm_ctx->_security.dl_count.overflow;
+      emm_ctx->common_proc->common_arg.u.security_data.saved_seq_num      = emm_ctx->_security.dl_count.seq_num;
+      emm_ctx->common_proc->common_arg.u.security_data.saved_sc_type      = emm_ctx->_security.sc_type;
       /*
        * The security mode control procedure is initiated to take into use
        * * * * the EPS security context created after a successful execution of
@@ -280,66 +255,67 @@ emm_proc_security_mode_control (
   }
 
 
-  if (data ) {
+  if (emm_ctx->common_proc ) {
     /*
      * Setup ongoing EMM procedure callback functions
      */
-    rc = emm_proc_common_initialize (ue_id, success, reject, failure, _security_ll_failure, _security_non_delivered, _security_abort, data);
+    rc = emm_proc_common_initialize (emm_ctx, EMM_COMMON_PROC_TYPE_SECURITY_MODE_CONTROL, emm_ctx->common_proc,
+        success, reject, failure, _security_ll_failure, _security_non_delivered, _security_abort);
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
-      free_wrapper (data);
+      emm_common_cleanup (emm_ctx->common_proc);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
     /*
      * Set the UE identifier
      */
-    data->ue_id = ue_id;
+    emm_ctx->common_proc->common_arg.u.security_data.ue_id = ue_id;
     /*
      * Reset the retransmission counter
      */
-    data->retransmission_count = 0;
+    emm_ctx->common_proc->common_arg.u.security_data.retransmission_count = 0;
     /*
      * Set the key set identifier
      */
-    data->ksi = ksi;
+    emm_ctx->common_proc->common_arg.u.security_data.ksi = ksi;
     /*
      * Set the EPS encryption algorithms to be replayed to the UE
      */
-    data->eea = eea;
+    emm_ctx->common_proc->common_arg.u.security_data.eea = eea;
     /*
      * Set the EPS integrity algorithms to be replayed to the UE
      */
-    data->eia = eia;
-    data->ucs2 = ucs2;
+    emm_ctx->common_proc->common_arg.u.security_data.eia = eia;
+    emm_ctx->common_proc->common_arg.u.security_data.ucs2 = ucs2;
     /*
      * Set the UMTS encryption algorithms to be replayed to the UE
      */
-    data->uea = uea;
+    emm_ctx->common_proc->common_arg.u.security_data.uea = uea;
     /*
      * Set the UMTS integrity algorithms to be replayed to the UE
      */
-    data->uia = uia;
+    emm_ctx->common_proc->common_arg.u.security_data.uia = uia;
     /*
      * Set the GPRS integrity algorithms to be replayed to the UE
      */
-    data->gea = gea;
-    data->umts_present = umts_present;
-    data->gprs_present = gprs_present;
+    emm_ctx->common_proc->common_arg.u.security_data.gea = gea;
+    emm_ctx->common_proc->common_arg.u.security_data.umts_present = umts_present;
+    emm_ctx->common_proc->common_arg.u.security_data.gprs_present = gprs_present;
     /*
      * Set the EPS encryption algorithms selected to the UE
      */
-    data->selected_eea = emm_ctx->_security.selected_algorithms.encryption;
+    emm_ctx->common_proc->common_arg.u.security_data.selected_eea = emm_ctx->_security.selected_algorithms.encryption;
     /*
      * Set the EPS integrity algorithms selected to the UE
      */
-    data->selected_eia = emm_ctx->_security.selected_algorithms.integrity;
+    emm_ctx->common_proc->common_arg.u.security_data.selected_eia = emm_ctx->_security.selected_algorithms.integrity;
 
     /*
      * Send security mode command message to the UE
      */
-    rc = _security_request (data, security_context_is_new);
+    rc = _security_request (&emm_ctx->common_proc->common_arg.u.security_data, security_context_is_new);
 
     if (rc != RETURNerror) {
       emm_ctx_mark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC);
@@ -385,7 +361,7 @@ int
 emm_proc_security_mode_complete (
   mme_ue_s1ap_id_t ue_id)
 {
-  emm_data_context_t                     *emm_ctx = NULL;
+  emm_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
@@ -396,7 +372,7 @@ emm_proc_security_mode_complete (
    */
 
   if (ue_id > 0) {
-    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+    emm_ctx = emm_context_get (&_emm_data, ue_id);
   }
 
   if (emm_ctx) {
@@ -412,11 +388,6 @@ emm_proc_security_mode_complete (
   /*
    * Release retransmission timer parameters
    */
-  /*security_data_t                        *data = (security_data_t *) (emm_proc_common_get_args (ue_id));
-
-  if (data) {
-    free_wrapper (data);
-  }*/
 
   if (emm_ctx && IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
     /*
@@ -474,7 +445,7 @@ int
 emm_proc_security_mode_reject (
   mme_ue_s1ap_id_t ue_id)
 {
-  emm_data_context_t                     *emm_ctx = NULL;
+  emm_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -483,11 +454,8 @@ emm_proc_security_mode_reject (
    * Get the UE context
    */
 
-  emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+  emm_ctx = emm_context_get (&_emm_data, ue_id);
   DevAssert (emm_ctx );
-
-  security_data_t                        *data = (security_data_t *) (emm_proc_common_get_args (ue_id));
-
 
   if (emm_ctx) {
     /*
@@ -498,21 +466,19 @@ emm_proc_security_mode_reject (
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
-  }
-
-
-  if (data) {
-    // restore previous values
-    REQUIREMENT_3GPP_24_301(R10_5_4_3_5__3);
-    emm_ctx->_security.selected_algorithms.encryption = data->saved_selected_eea;
-    emm_ctx->_security.selected_algorithms.integrity  = data->saved_selected_eia;
-    emm_ctx_set_security_eksi(emm_ctx, data->saved_eksi);
-    emm_ctx->_security.dl_count.overflow              = data->saved_overflow;
-    emm_ctx->_security.dl_count.seq_num               = data->saved_seq_num;
-    emm_ctx_set_security_type(emm_ctx, data->saved_sc_type);
-    /*
-     * Release retransmission timer parameters
-     */
+    if ((emm_ctx->common_proc) && (EMM_COMMON_PROC_TYPE_SECURITY_MODE_CONTROL == emm_ctx->common_proc->type)) {
+      // restore previous values
+      REQUIREMENT_3GPP_24_301(R10_5_4_3_5__3);
+      emm_ctx->_security.selected_algorithms.encryption = emm_ctx->common_proc->common_arg.u.security_data.saved_selected_eea;
+      emm_ctx->_security.selected_algorithms.integrity  = emm_ctx->common_proc->common_arg.u.security_data.saved_selected_eia;
+      emm_ctx_set_security_eksi(emm_ctx, emm_ctx->common_proc->common_arg.u.security_data.saved_eksi);
+      emm_ctx->_security.dl_count.overflow              = emm_ctx->common_proc->common_arg.u.security_data.saved_overflow;
+      emm_ctx->_security.dl_count.seq_num               = emm_ctx->common_proc->common_arg.u.security_data.saved_seq_num;
+      emm_ctx_set_security_type(emm_ctx, emm_ctx->common_proc->common_arg.u.security_data.saved_sc_type);
+      /*
+       * Release retransmission timer parameters
+       */
+    }
   }
 
 
@@ -619,7 +585,7 @@ _security_request (
   security_data_t * data,
   bool is_new)
 {
-  struct emm_data_context_s              *emm_ctx = NULL;
+  struct emm_context_s              *emm_ctx = NULL;
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNerror;
 
@@ -647,7 +613,7 @@ _security_request (
     emm_sap.u.emm_as.u.security.selected_eia = data->selected_eia;
 
     if (data->ue_id > 0) {
-      emm_ctx = emm_data_context_get (&_emm_data, data->ue_id);
+      emm_ctx = emm_context_get (&_emm_data, data->ue_id);
     }
 
       /*
@@ -733,7 +699,7 @@ _security_abort (
   void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  struct emm_data_context_s              *emm_ctx = NULL;
+  struct emm_context_s              *emm_ctx = NULL;
   int                                     rc = RETURNerror;
   security_data_t                        *data = (security_data_t *) (args);
 
@@ -742,7 +708,7 @@ _security_abort (
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort security mode control procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
-    emm_ctx = emm_data_context_get (&_emm_data, data->ue_id);
+    emm_ctx = emm_context_get (&_emm_data, data->ue_id);
     if (emm_ctx) {
       emm_ctx_unmark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC);
 
@@ -767,10 +733,6 @@ _security_abort (
       emm_sap.u.emm_reg.ue_id = ue_id;
       rc = emm_sap_send (&emm_sap);
     }
-    /*
-     * Release retransmission timer parameters
-     */
-    free_wrapper (data);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

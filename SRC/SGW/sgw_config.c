@@ -150,7 +150,7 @@ int sgw_config_parse_file (sgw_config_t * config_pP)
       }
 
       if (config_setting_lookup_string (subsetting, LOG_CONFIG_STRING_COLOR, (const char **)&astring)) {
-        if (!strcasecmp("true", astring)) config_pP->log_config.color = true;
+        if (!strcasecmp("yes", astring)) config_pP->log_config.color = true;
         else config_pP->log_config.color = false;
       }
       if (config_setting_lookup_string (subsetting, LOG_CONFIG_STRING_UDP_LOG_LEVEL, (const char **)&astring)) {

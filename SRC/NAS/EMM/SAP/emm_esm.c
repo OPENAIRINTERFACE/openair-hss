@@ -38,12 +38,19 @@
         connections.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
 
 #include "3gpp_24.007.h"
 #include "emm_esm.h"
 #include "commonDef.h"
+#include "common_defs.h"
 #include "log.h"
-
 #include "LowerLayer.h"
 
 

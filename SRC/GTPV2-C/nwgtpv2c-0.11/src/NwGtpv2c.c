@@ -35,6 +35,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <stdbool.h>
+
+#include "bstrlib.h"
 
 #include "NwTypes.h"
 #include "NwUtils.h"
@@ -46,6 +49,7 @@
 #include "NwGtpv2cLog.h"
 #include "dynamic_memory_check.h"
 #include "gcc_diag.h"
+#include "log.h"
 
 #ifdef _NWGTPV2C_HAVE_TIMERADD
 #  define NW_GTPV2C_TIMER_ADD(tvp, uvp, vvp) timeradd((tvp), (uvp), (vvp))
@@ -120,8 +124,8 @@ extern                                  "C" {
   void
                                           nwGtpv2cTmrMinHeapDelete (
   NwGtpv2cTmrMinHeapT * thiz) {
-    free_wrapper (thiz->pHeap);
-    free_wrapper (thiz);
+    free_wrapper ((void**)&thiz->pHeap);
+    free_wrapper ((void**)&thiz);
   }
 
   static NwRcT                            nwGtpv2cTmrMinHeapInsert (
@@ -995,7 +999,7 @@ extern                                  "C" {
     if (!hGtpcStackHandle)
       return NW_FAILURE;
 
-    free_wrapper ((void *)hGtpcStackHandle);
+    free_wrapper ((void**)&hGtpcStackHandle);
     return NW_OK;
   }
 

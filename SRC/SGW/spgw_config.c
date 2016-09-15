@@ -100,7 +100,7 @@ static int spgw_config_process (spgw_config_t * config_pP)
 
   bassignformat (system_cmd, "sync");
   spgw_system (system_cmd, SPGW_WARN_ON_ERROR, __FILE__, __LINE__);
-  bdestroy(system_cmd);
+  bdestroy_wrapper (&system_cmd);
 
   if (RETURNok != sgw_config_process (&config_pP->sgw_config)) {
     return RETURNerror;

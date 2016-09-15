@@ -20,24 +20,29 @@
  */
 
 
-#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
 
+#include "bstrlib.h"
 #if HAVE_CONFIG_H
 #  include "config.h"
 #endif
 #include <freeDiameter/freeDiameter-host.h>
 #include <freeDiameter/libfdcore.h>
+
+#include "log.h"
+#include "assertions.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
+#include "common_defs.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
-#include "common_types.h"
-#include "assertions.h"
-#include "msc.h"
-#include "log.h"
+#include "mme_config.h"
 
 
 static int                              gnutls_log_level = 9;
@@ -50,7 +55,6 @@ static void                             fd_gnutls_debug (
   int level,
   const char *str);
 static void s6a_exit(void);
-
 
 //------------------------------------------------------------------------------
 static void fd_gnutls_debug (
@@ -72,15 +76,13 @@ static void oai_fd_logger(int loglevel, const char * format, va_list args)
   if ((0 > rv) || ((FD_LOG_MAX_MESSAGE_LENGTH) < rv)) {
     return;
   }
-  OAILOG_EXTERNAL (loglevel, LOG_S6A, "%s\n", buffer);
+  OAILOG_EXTERNAL (OAILOG_LEVEL_TRACE - loglevel, LOG_S6A, "%s\n", buffer);
 }
 
 //------------------------------------------------------------------------------
 void *s6a_thread (void *args)
 {
   itti_mark_task_ready (TASK_S6A);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -112,6 +114,7 @@ void *s6a_thread (void *args)
       }
       break;
     }
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
@@ -240,4 +243,5 @@ static void s6a_exit(void)
   if (rv) {
     OAI_FPRINTF_ERR ("An error occurred during fd_core_wait_shutdown_complete().\n");
   }
+  OAI_FPRINTF_INFO("TASK_S6A terminated");
 }

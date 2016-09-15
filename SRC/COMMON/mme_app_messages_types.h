@@ -41,12 +41,12 @@ typedef struct itti_mme_app_initial_ue_message_s {
   bstring             nas;
   tai_t               tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
   ecgi_t              cgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
-  as_cause_t          as_cause;          /* Establishment cause                     */
+  rrc_establishment_cause_t      rrc_establishment_cause;          /* Establishment cause                     */
 
   bool                is_s_tmsi_valid;
   bool                is_csg_id_valid;
   bool                is_gummei_valid;
-  as_stmsi_t          opt_s_tmsi;
+  s_tmsi_t            opt_s_tmsi;
   csg_id_t            opt_csg_id;
   gummei_t            opt_gummei;
   //void                opt_cell_access_mode;
@@ -59,26 +59,59 @@ typedef struct itti_mme_app_initial_ue_message_s {
 } itti_mme_app_initial_ue_message_t;
 
 typedef struct itti_mme_app_connection_establishment_cnf_s {
-  ebi_t                   eps_bearer_id;
-  FTeid_t                 bearer_s1u_sgw_fteid;
-  qci_t                   bearer_qos_qci;
-  priority_level_t        bearer_qos_prio_level;
-  pre_emp_vulnerability_t bearer_qos_pre_emp_vulnerability;
-  pre_emp_capability_t    bearer_qos_pre_emp_capability;
-  ambr_t                  ambr;
+  mme_ue_s1ap_id_t        ue_id;
 
-  /* Key eNB */
-  uint8_t                 kenb[AUTH_KASME_SIZE];
-  uint16_t                security_capabilities_encryption_algorithms;
-  uint16_t                security_capabilities_integrity_algorithms;
 
-  itti_nas_conn_est_cnf_t nas_conn_est_cnf;
+  ambr_t                  ue_ambr;
+
+  // E-RAB to Be Setup List
+  uint16_t                no_of_e_rabs; // spec says max 256, actually stay with BEARERS_PER_UE
+  //     >>E-RAB ID
+  ebi_t                   e_rab_id[BEARERS_PER_UE];
+  //     >>E-RAB Level QoS Parameters
+  qci_t                   e_rab_level_qos_qci[BEARERS_PER_UE];
+  //       >>>Allocation and Retention Priority
+  priority_level_t        e_rab_level_qos_priority_level[BEARERS_PER_UE];
+  //       >>>Pre-emption Capability
+  pre_emp_capability_t    e_rab_level_qos_preemption_capability[BEARERS_PER_UE];
+  //       >>>Pre-emption Vulnerability
+  pre_emp_vulnerability_t e_rab_level_qos_preemption_vulnerability[BEARERS_PER_UE];
+  //     >>Transport Layer Address
+  bstring                 transport_layer_address[BEARERS_PER_UE];
+  //     >>GTP-TEID
+  teid_t                  gtp_teid[BEARERS_PER_UE];
+  //     >>NAS-PDU (optional)
+  bstring                 nas_pdu[BEARERS_PER_UE];
+  //     >>Correlation ID TODO? later...
+
+  // UE Security Capabilities
+  uint16_t                ue_security_capabilities_encryption_algorithms;
+  uint16_t                ue_security_capabilities_integrity_algorithms;
+
+  // Security key
+  uint8_t                 kenb[AUTH_KENB_SIZE];
+
+  // Trace Activation (optional)
+  // Handover Restriction List (optional)
+  // UE Radio Capability (optional)
+  // Subscriber Profile ID for RAT/Frequency priority (optional)
+  // CS Fallback Indicator (optional)
+  // SRVCC Operation Possible (optional)
+  // CSG Membership Status (optional)
+  // Registered LAI (optional)
+  // GUMMEI ID (optional)
+  // MME UE S1AP ID 2  (optional)
+  // Management Based MDT Allowed (optional)
+
+  //itti_nas_conn_est_cnf_t nas_conn_est_cnf;
 } itti_mme_app_connection_establishment_cnf_t;
 
 typedef struct itti_mme_app_initial_context_setup_rsp_s {
   uint32_t                mme_ue_s1ap_id;
-  ebi_t                   eps_bearer_id;
-  FTeid_t                 bearer_s1u_enb_fteid;
+  uint16_t                no_of_e_rabs;
+  ebi_t                   e_rab_id[BEARERS_PER_UE];
+  bstring                 transport_layer_address[BEARERS_PER_UE];
+  s1u_teid_t              gtp_teid[BEARERS_PER_UE];
 } itti_mme_app_initial_context_setup_rsp_t;
 
 typedef struct itti_mme_app_delete_session_rsp_s {

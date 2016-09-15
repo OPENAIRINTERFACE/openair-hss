@@ -55,7 +55,7 @@ void clear_protocol_configuration_options (protocol_configuration_options_t * co
   if (pco) {
     for (int i = 0; i < PCO_UNSPEC_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID; i++) {
       if (pco->protocol_or_container_ids[i].contents) {
-        bdestroy(pco->protocol_or_container_ids[i].contents);
+        bdestroy_wrapper (&pco->protocol_or_container_ids[i].contents);
       }
     }
     memset(pco, 0, sizeof(protocol_configuration_options_t));
@@ -152,7 +152,7 @@ bstring protocol_configuration_options_to_xml (protocol_configuration_options_t 
       bformata(bstr, "        <Length of protocol ID>%u</Length of protocol ID>\n", pco->protocol_or_container_ids[i].length);
       bstring b = dump_bstring_xml (pco->protocol_or_container_ids[i].contents);
       bformata(bstr, "        %s", bdata(b));
-      bdestroy(b);
+      bdestroy_wrapper (&b);
       i++;
     }
   }

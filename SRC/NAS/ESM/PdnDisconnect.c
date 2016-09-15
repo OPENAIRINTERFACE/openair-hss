@@ -42,13 +42,24 @@
         ding the default EPS bearer context, are released.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "bstrlib.h"
 
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_36.401.h"
+#include "common_defs.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "log.h"
 
-#include "esmData.h"
+#include "esm_data.h"
 #include "esm_cause.h"
 #include "esm_pt.h"
 #include "emm_sap.h"
@@ -57,7 +68,7 @@
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
 
-extern int _pdn_connectivity_delete (emm_data_context_t * ctx, int pid);
+extern int _pdn_connectivity_delete (struct emm_context_s * ctx, int pid);
 
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
@@ -112,7 +123,7 @@ static int _pdn_disconnect_get_pid (esm_data_context_t * ctx, int pti);
  ***************************************************************************/
 int
 esm_proc_pdn_disconnect_request (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int pti,
   int *esm_cause)
 {
@@ -171,7 +182,7 @@ esm_proc_pdn_disconnect_request (
  ***************************************************************************/
 int
 esm_proc_pdn_disconnect_accept (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int pid,
   int *esm_cause)
 {
@@ -225,7 +236,7 @@ esm_proc_pdn_disconnect_accept (
 int
 esm_proc_pdn_disconnect_reject (
   const bool is_standalone,
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   bstring msg,
   const bool ue_triggered)

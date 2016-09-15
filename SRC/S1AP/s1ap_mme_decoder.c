@@ -26,20 +26,21 @@
    \date 2012
    \version 0.1
 */
-
+#include <stdbool.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
 
+#include "bstrlib.h"
+
+#include "log.h"
 #include "assertions.h"
+#include "intertask_interface.h"
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
 #include "s1ap_mme_decoder.h"
 #include "s1ap_mme_handlers.h"
-#include "intertask_interface.h"
-#include "assertions.h"
 #include "dynamic_memory_check.h"
-#include "log.h"
 
 static int
 s1ap_mme_decode_initiating (
@@ -111,7 +112,7 @@ s1ap_mme_decode_initiating (
   message_p->ittiMsg.s1ap_uplink_nas_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_uplink_nas_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free_wrapper (message_string);
+  free_wrapper ((void**)&message_string);
   return ret;
 }
 
@@ -156,7 +157,7 @@ s1ap_mme_decode_successfull_outcome (
   message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free_wrapper (message_string);
+  free_wrapper ((void**)&message_string);
   return ret;
 }
 
@@ -194,7 +195,7 @@ s1ap_mme_decode_unsuccessfull_outcome (
   message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free_wrapper (message_string);
+  free_wrapper ((void**)&message_string);
   return ret;
 }
 

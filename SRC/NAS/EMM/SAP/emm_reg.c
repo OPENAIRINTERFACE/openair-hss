@@ -38,7 +38,15 @@
         procedures.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 #include <assert.h>
+
+#include "bstrlib.h"
 
 #include "common_defs.h"
 #include "log.h"

@@ -39,6 +39,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <arpa/inet.h>          /* To provide inet_addr */
+#include <pthread.h>
+
 #include <libconfig.h>
 
 #include <arpa/inet.h>          /* To provide inet_addr */
@@ -49,12 +52,13 @@
 #include "msc.h"
 #include "intertask_interface.h"
 #include "common_types.h"
+#include "common_defs.h"
 #include "mme_config.h"
 #include "spgw_config.h"
 #include "3gpp_33.401.h"
 #include "intertask_interface_conf.h"
 
-mme_config_t                            mme_config = {.rw_lock = PTHREAD_RWLOCK_INITIALIZER, 0};
+struct mme_config_s                       mme_config = {.rw_lock = PTHREAD_RWLOCK_INITIALIZER, 0};
 
 //------------------------------------------------------------------------------
 int mme_config_find_mnc_length (
@@ -112,13 +116,16 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->log_config.s6a_log_level      = MAX_LOG_LEVEL;
   config_pP->log_config.util_log_level     = MAX_LOG_LEVEL;
   config_pP->log_config.msc_log_level      = MAX_LOG_LEVEL;
+  config_pP->log_config.mme_scenario_player_log_level = MAX_LOG_LEVEL;
   config_pP->log_config.itti_log_level     = MAX_LOG_LEVEL;
 
   config_pP->log_config.asn1_verbosity_level = 0;
   config_pP->config_file = NULL;
-  config_pP->max_enbs = 2;
-  config_pP->max_ues = 2;
+  config_pP->max_enbs    = 2;
+  config_pP->max_ues     = 2;
   config_pP->unauthenticated_imsi_supported = 0;
+  config_pP->run_mode    = RUN_MODE_TEST; // RUN_MODE_BASIC;
+
   /*
    * EPS network feature support
    */
@@ -153,6 +160,19 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->gummei.gummei[0].plmn.mcc_digit1 = 0;
   config_pP->gummei.gummei[0].plmn.mcc_digit2 = 1;
   config_pP->gummei.gummei[0].plmn.mcc_digit3 = 0x0F;
+
+
+  config_pP->nas_config.t3402_min = T3402_DEFAULT_VALUE;
+  config_pP->nas_config.t3412_min = T3412_DEFAULT_VALUE;
+  config_pP->nas_config.t3422_sec = T3422_DEFAULT_VALUE;
+  config_pP->nas_config.t3450_sec = T3450_DEFAULT_VALUE;
+  config_pP->nas_config.t3460_sec = T3460_DEFAULT_VALUE;
+  config_pP->nas_config.t3470_sec = T3470_DEFAULT_VALUE;
+  config_pP->nas_config.t3485_sec = T3485_DEFAULT_VALUE;
+  config_pP->nas_config.t3486_sec = T3486_DEFAULT_VALUE;
+  config_pP->nas_config.t3489_sec = T3489_DEFAULT_VALUE;
+  config_pP->nas_config.t3495_sec = T3495_DEFAULT_VALUE;
+
 
   /*
    * Set the TAI
@@ -217,10 +237,23 @@ static int mme_config_parse_file (mme_config_t * config_pP)
   setting_mme = config_lookup (&cfg, MME_CONFIG_STRING_MME_CONFIG);
 
   if (setting_mme != NULL) {
+
+    // TESTING setting
+    setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_SCENARIO_PLAYER_TESTING);
+    if (setting != NULL) {
+      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_SCENARIO_PLAYER_SCENARIO_FILE, (const char **)&astring)) {
+        if (astring != NULL) {
+          if (config_pP->scenario_player_config.scenario_list_file) {
+            bassigncstr(config_pP->scenario_player_config.scenario_list_file , astring);
+          } else {
+            config_pP->scenario_player_config.scenario_list_file = bfromcstr(astring);
+          }
+        }
+      }
+    }
+
     // LOGGING setting
     setting = config_setting_get_member (setting_mme, LOG_CONFIG_STRING_LOGGING);
-
-
     if (setting != NULL) {
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_OUTPUT, (const char **)&astring)) {
         if (astring != NULL) {
@@ -243,7 +276,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       }
 
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_COLOR, (const char **)&astring)) {
-        if (0 == strcasecmp("true", astring)) config_pP->log_config.color = true;
+        if (0 == strcasecmp("yes", astring)) config_pP->log_config.color = true;
         else config_pP->log_config.color = false;
       }
 
@@ -277,6 +310,9 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.msc_log_level = OAILOG_LEVEL_STR2INT (astring);
 
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_MME_SCENARIO_PLAYER_LOG_LEVEL, (const char **)&astring))
+        config_pP->log_config.mme_scenario_player_log_level = OAILOG_LEVEL_STR2INT (astring);
+
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.itti_log_level = OAILOG_LEVEL_STR2INT (astring);
 
@@ -293,13 +329,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
     }
 
     // GENERAL MME SETTINGS
-    if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_RUN_MODE, (const char **)&astring))) {
-      if (strcasecmp (astring, MME_CONFIG_STRING_RUN_MODE_TEST) == 0)
-        config_pP->run_mode = RUN_MODE_TEST;
-      else
-        config_pP->run_mode = RUN_MODE_OTHER;
-    }
-
     if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_REALM, (const char **)&astring))) {
       config_pP->realm = bfromcstr (astring);
     }
@@ -416,16 +445,16 @@ static int mme_config_parse_file (mme_config_t * config_pP)
 
       if (config_pP->served_tai.nb_tai != num) {
         if (config_pP->served_tai.plmn_mcc != NULL)
-          free_wrapper (config_pP->served_tai.plmn_mcc);
+          free_wrapper ((void**)&config_pP->served_tai.plmn_mcc);
 
         if (config_pP->served_tai.plmn_mnc != NULL)
-          free_wrapper (config_pP->served_tai.plmn_mnc);
+          free_wrapper ((void**)&config_pP->served_tai.plmn_mnc);
 
         if (config_pP->served_tai.plmn_mnc_len != NULL)
-          free_wrapper (config_pP->served_tai.plmn_mnc_len);
+          free_wrapper ((void**)&config_pP->served_tai.plmn_mnc_len);
 
         if (config_pP->served_tai.tac != NULL)
-          free_wrapper (config_pP->served_tai.tac);
+          free_wrapper ((void**)&config_pP->served_tai.tac);
 
         config_pP->served_tai.plmn_mcc = calloc (num, sizeof (*config_pP->served_tai.plmn_mcc));
         config_pP->served_tai.plmn_mnc = calloc (num, sizeof (*config_pP->served_tai.plmn_mnc));
@@ -654,6 +683,18 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3412_TIMER, &aint))) {
         config_pP->nas_config.t3412_min = (uint8_t) aint;
       }
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3422_TIMER, &aint))) {
+        config_pP->nas_config.t3422_sec = (uint8_t) aint;
+      }
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3450_TIMER, &aint))) {
+        config_pP->nas_config.t3450_sec = (uint8_t) aint;
+      }
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3460_TIMER, &aint))) {
+        config_pP->nas_config.t3460_sec = (uint8_t) aint;
+      }
+      if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3470_TIMER, &aint))) {
+        config_pP->nas_config.t3470_sec = (uint8_t) aint;
+      }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3485_TIMER, &aint))) {
         config_pP->nas_config.t3485_sec = (uint8_t) aint;
       }
@@ -703,7 +744,7 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "Configuration:\n");
   OAILOG_INFO (LOG_CONFIG, "- File .................................: %s\n", bdata(config_pP->config_file));
   OAILOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", bdata(config_pP->realm));
-  OAILOG_INFO (LOG_CONFIG, "- Run mode .............................: %s\n", (RUN_MODE_TEST == config_pP->run_mode) ? "TEST":"NORMAL");
+  OAILOG_INFO (LOG_CONFIG, "- Run mode .............................: %s\n", (RUN_MODE_TEST == config_pP->run_mode) ? "TEST":(RUN_MODE_SCENARIO_PLAYER == config_pP->run_mode) ? "SCENARIO_PLAYER":"BASIC");
   OAILOG_INFO (LOG_CONFIG, "- Max eNBs .............................: %u\n", config_pP->max_enbs);
   OAILOG_INFO (LOG_CONFIG, "- Max UEs ..............................: %u\n", config_pP->max_ues);
   OAILOG_INFO (LOG_CONFIG, "- IMS voice over PS session in S1 ......: %s\n", config_pP->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "false" : "true");
@@ -759,6 +800,7 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "- Logging:\n");
   OAILOG_INFO (LOG_CONFIG, "    Output ..............: %s\n", bdata(config_pP->log_config.output));
   OAILOG_INFO (LOG_CONFIG, "    Output thread safe ..: %s\n", (config_pP->log_config.is_output_thread_safe) ? "true":"false");
+  OAILOG_INFO (LOG_CONFIG, "    Output with color ...: %s\n", (config_pP->log_config.color) ? "true":"false");
   OAILOG_INFO (LOG_CONFIG, "    UDP log level........: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.udp_log_level));
   OAILOG_INFO (LOG_CONFIG, "    GTPV1-U log level....: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.gtpv1u_log_level));
   OAILOG_INFO (LOG_CONFIG, "    GTPV2-C log level....: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.gtpv2c_log_level));
@@ -778,20 +820,20 @@ static void mme_config_display (mme_config_t * config_pP)
 //------------------------------------------------------------------------------
 static void usage (char *target)
 {
-  OAILOG_INFO (LOG_CONFIG, "==== EURECOM %s version: %s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
-  OAILOG_INFO (LOG_CONFIG, "Please report any bug to: %s\n", PACKAGE_BUGREPORT);
-  OAILOG_INFO (LOG_CONFIG, "Usage: %s [options]\n", target);
-  OAILOG_INFO (LOG_CONFIG, "Available options:\n");
-  OAILOG_INFO (LOG_CONFIG, "-h      Print this help and return\n");
-  OAILOG_INFO (LOG_CONFIG, "-c<path>\n");
-  OAILOG_INFO (LOG_CONFIG, "        Set the configuration file for mme\n");
-  OAILOG_INFO (LOG_CONFIG, "        See template in UTILS/CONF\n");
-  OAILOG_INFO (LOG_CONFIG, "-K<file>\n");
-  OAILOG_INFO (LOG_CONFIG, "        Output intertask messages to provided file\n");
-  OAILOG_INFO (LOG_CONFIG, "-V      Print %s version and return\n", PACKAGE_NAME);
-  OAILOG_INFO (LOG_CONFIG, "-v[1-2] Debug level:\n");
-  OAILOG_INFO (LOG_CONFIG, "            1 -> ASN1 XER printf on and ASN1 debug off\n");
-  OAILOG_INFO (LOG_CONFIG, "            2 -> ASN1 XER printf on and ASN1 debug on\n");
+  OAI_FPRINTF_INFO( "==== EURECOM %s version: %s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
+  OAI_FPRINTF_INFO( "Please report any bug to: %s\n", PACKAGE_BUGREPORT);
+  OAI_FPRINTF_INFO( "Usage: %s [options]\n", target);
+  OAI_FPRINTF_INFO( "Available options:\n");
+  OAI_FPRINTF_INFO( "-h      Print this help and return\n");
+  OAI_FPRINTF_INFO( "-c<path>\n");
+  OAI_FPRINTF_INFO( "        Set the configuration file for mme\n");
+  OAI_FPRINTF_INFO( "        See template in UTILS/CONF\n");
+  OAI_FPRINTF_INFO( "-K<file>\n");
+  OAI_FPRINTF_INFO( "        Output intertask messages to provided file\n");
+  OAI_FPRINTF_INFO( "-V      Print %s version and return\n", PACKAGE_NAME);
+  OAI_FPRINTF_INFO( "-v[1-2] Debug level:\n");
+  OAI_FPRINTF_INFO( "            1 -> ASN1 XER printf on and ASN1 debug off\n");
+  OAI_FPRINTF_INFO( "            2 -> ASN1 XER printf on and ASN1 debug on\n");
 }
 
 //------------------------------------------------------------------------------
@@ -808,7 +850,7 @@ mme_config_parse_opt_line (
   /*
    * Parsing command line
    */
-  while ((c = getopt (argc, argv, "c:hi:K:v:V")) != -1) {
+  while ((c = getopt (argc, argv, "c:hsi:K:v:V")) != -1) {
     switch (c) {
     case 'c':{
         /*
@@ -816,7 +858,7 @@ mme_config_parse_opt_line (
          * * * * then the default values will be used.
          */
         config_pP->config_file = blk2bstr(optarg, strlen(optarg));
-        OAILOG_DEBUG (LOG_CONFIG, "%s mme_config.config_file %s\n", __FUNCTION__, bdata(config_pP->config_file));
+        OAI_FPRINTF_INFO ("%s mme_config.config_file %s\n", __FUNCTION__, bdata(config_pP->config_file));
       }
       break;
 
@@ -826,13 +868,18 @@ mme_config_parse_opt_line (
       break;
 
     case 'V':{
-        OAILOG_DEBUG (LOG_CONFIG, "==== EURECOM %s v%s ====" "Please report any bug to: %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
+      OAI_FPRINTF_INFO ("==== EURECOM %s v%s ====" "Please report any bug to: %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
       }
       break;
 
     case 'K':
       config_pP->itti_config.log_file = blk2bstr (optarg, strlen(optarg));;
-      OAILOG_DEBUG (LOG_CONFIG, "%s mme_config.itti_config.log_file %s\n", __FUNCTION__, bdata(config_pP->itti_config.log_file));
+      OAI_FPRINTF_INFO ("%s mme_config.itti_config.log_file %s\n", __FUNCTION__, bdata(config_pP->itti_config.log_file));
+      break;
+
+    case 's':
+      config_pP->run_mode = RUN_MODE_SCENARIO_PLAYER;
+      OAI_FPRINTF_INFO ("%s mme_config.itti_config.log_file %s\n", __FUNCTION__, bdata(config_pP->itti_config.log_file));
       break;
 
     case 'h':                  /* Fall through */

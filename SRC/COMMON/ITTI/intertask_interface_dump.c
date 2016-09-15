@@ -179,7 +179,7 @@ itti_dump_send_message (
 
     if (bytes_sent < 0) {
       ITTI_DUMP_ERROR ("[%d] Failed to send %zu bytes to socket (%d:%s)\n", sd, size, errno, strerror (errno));
-      free_wrapper (new_message);
+      free_wrapper (&new_message);
       return -1;
     }
 
@@ -246,14 +246,14 @@ itti_dump_send_xml_definition (
 
     if (bytes_sent < 0) {
       ITTI_DUMP_ERROR ("[%d] Failed to send %zu bytes to socket (%d:%s)\n", sd, itti_dump_message_size, errno, strerror (errno));
-      free_wrapper (itti_dump_message);
+      free_wrapper (&itti_dump_message);
       return -1;
     }
 
     total_sent += bytes_sent;
   } while (total_sent != itti_dump_message_size);
 
-  free_wrapper (itti_dump_message);
+  free_wrapper (&itti_dump_message);
   return 0;
 }
 

@@ -30,16 +30,22 @@
 #ifndef FILE_3GPP_24_007_SEEN
 #define FILE_3GPP_24_007_SEEN
 
-#include <stdint.h>
-
 //..............................................................................
 // 11.2.3.1.1  Protocol discriminator
 //..............................................................................
 typedef enum eps_protocol_discriminator_e {
-  /* Protocol discriminator identifier for EPS Session Management */
-  EPS_SESSION_MANAGEMENT_MESSAGE =    0x2,
-  /* Protocol discriminator identifier for EPS Mobility Management */
-  EPS_MOBILITY_MANAGEMENT_MESSAGE =   0x7,
+  GROUP_CALL_CONTROL                  =    0x0,
+  BROADCAST_CALL_CONTROL              =    0x1,
+  EPS_SESSION_MANAGEMENT_MESSAGE      =    0x2, /* Protocol discriminator identifier for EPS Session Management */
+  CALL_CONTROL_CC_RELATED_SS_MESSAGE  =    0x3,
+  GPRS_TRANSPARENT_TRANSPORT_PROTOCOL =    0x4,
+  MOBILITY_MANAGEMENT_MESSAGE         =    0x5,
+  RADIO_RESOURCES_MANAGEMENT_MESSAGE  =    0x6,
+  EPS_MOBILITY_MANAGEMENT_MESSAGE     =    0x7, /* Protocol discriminator identifier for EPS Mobility Management */
+  GPRS_MOBILITY_MANAGEMENT_MESSAGE    =    0x8,
+  SMS_MESSAGE                         =    0x9,
+  GPRS_SESSION_MANAGEMENT_MESSAGE     =    0xA,
+  NON_CALL_RELATED_SS_MESSAGE         =    0xB,
 
 } eps_protocol_discriminator_t;
 

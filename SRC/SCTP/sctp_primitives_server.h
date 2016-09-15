@@ -40,8 +40,7 @@
 #if HAVE_CONFIG_H
 # include "config.h"
 #endif
-#include <netinet/in.h>
-#include <netinet/sctp.h>
+
 #include "mme_config.h"
 
 /** \brief SCTP data received callback
@@ -54,7 +53,8 @@ typedef void (*sctp_recv_callback)(uint8_t *buffer, uint32_t length);
  \param mme_config The global MME configuration structure
  @returns -1 on error, 0 otherwise.
  **/
-int sctp_init(const mme_config_t *mme_config_p);
+struct mme_config_s;
+int sctp_init(const struct mme_config_s *mme_config_p);
 
 #endif /* FILE_SCTP_PRIMITIVES_SERVER_SEEN */
 

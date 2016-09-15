@@ -36,21 +36,40 @@
 #include <errno.h>
 #include <syslog.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <netinet/in.h>
 
 #if HAVE_CONFIG_H
 #  include "config.h"
 #endif
 
+#include "bstrlib.h"
+#include "queue.h"
+
+
+#include "log.h"
 #include "dynamic_memory_check.h"
 #include "assertions.h"
-#include "log.h"
 #include "msc.h"
+#include "3gpp_23.003.h"
+#include "3gpp_24.008.h"
+#include "3gpp_33.401.h"
+#include "3gpp_24.007.h"
+#include "3gpp_36.401.h"
+#include "3gpp_36.331.h"
+#include "security_types.h"
+#include "common_types.h"
+#include "common_defs.h"
+
 #include "intertask_interface_init.h"
-#include "spgw_config.h"
 #include "udp_primitives_server.h"
-#include "s11_sgw.h"
-#include "sgw_defs.h"
+#include "sgw_config.h"
+#include "pgw_config.h"
+#include "spgw_config.h"
 #include "gtpv1u_sgw_defs.h"
+#include "sgw_defs.h"
+#include "s11_sgw.h"
 #include "oai_sgw.h"
 #include "pid_file.h"
 #include "timer.h"
@@ -97,21 +116,19 @@ main (
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
 
-  openlog(NULL, 0, LOG_DAEMON);
-
   if (! is_pid_file_lock_success(pid_file_name)) {
-    closelog();
     free_wrapper(pid_file_name);
     exit (-EDEADLK);
   }
 #else
   if (! is_pid_file_lock_success(pid_file_name)) {
-    free_wrapper(pid_file_name);
+    free_wrapper(&pid_file_name);
     exit (-EDEADLK);
   }
 #endif
 
 
+  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
   CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
   /*
    * Parse the command line for options and set the mme_config accordingly.

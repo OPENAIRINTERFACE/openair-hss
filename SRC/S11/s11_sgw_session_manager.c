@@ -306,7 +306,6 @@ s11_sgw_handle_delete_session_request (
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_DELETE_SESSION_REQUEST);
   delete_session_request_p = &message_p->ittiMsg.s11_delete_session_request;
-  memset((void*)delete_session_request_p, 0, sizeof(*delete_session_request_p));
   /*
    * Create a new message parser
    */

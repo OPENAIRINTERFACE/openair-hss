@@ -33,6 +33,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+
+#include "bstrlib.h"
 
 #include "NwTypes.h"
 #include "NwLog.h"
@@ -41,6 +44,7 @@
 #include "NwGtpv2c.h"
 #include "NwGtpv2cPrivate.h"
 #include "NwGtpv2cTrxn.h"
+#include "log.h"
 
 /*--------------------------------------------------------------------------*
                    P R I V A T E  D E C L A R A T I O N S

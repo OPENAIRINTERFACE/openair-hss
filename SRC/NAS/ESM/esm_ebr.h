@@ -39,9 +39,6 @@ Description Defines functions used to handle state of EPS bearer contexts
 #ifndef __ESM_EBR_H__
 #define __ESM_EBR_H__
 
-#include "bstrlib.h"
-#include "nas_timer.h"
-
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
@@ -64,19 +61,19 @@ Description Defines functions used to handle state of EPS bearer contexts
 int esm_ebr_is_reserved(int ebi);
 
 void esm_ebr_initialize(void);
-int esm_ebr_assign(emm_data_context_t *ctx, int ebi);
-int esm_ebr_release(emm_data_context_t *ctx, int ebi);
+int esm_ebr_assign(emm_context_t *ctx, int ebi);
+int esm_ebr_release(emm_context_t *ctx, int ebi);
 
-int esm_ebr_start_timer(emm_data_context_t *ctx, int ebi, CLONE_REF const_bstring msg,
+int esm_ebr_start_timer(emm_context_t *ctx, int ebi, CLONE_REF const_bstring msg,
                         long sec, nas_timer_callback_t cb);
-int esm_ebr_stop_timer(emm_data_context_t *ctx, int ebi);
+int esm_ebr_stop_timer(emm_context_t *ctx, int ebi);
 
-int esm_ebr_get_pending_ebi(emm_data_context_t *ctx, esm_ebr_state status);
+int esm_ebr_get_pending_ebi(emm_context_t *ctx, esm_ebr_state status);
 
-int esm_ebr_set_status(emm_data_context_t *ctx, int ebi, esm_ebr_state status,
+int esm_ebr_set_status(emm_context_t *ctx, int ebi, esm_ebr_state status,
                        int ue_requested);
-esm_ebr_state esm_ebr_get_status(emm_data_context_t *ctx, int ebi);
+esm_ebr_state esm_ebr_get_status(emm_context_t *ctx, int ebi);
 
-int esm_ebr_is_not_in_use(emm_data_context_t *ctx, int ebi);
+int esm_ebr_is_not_in_use(emm_context_t *ctx, int ebi);
 
 #endif /* __ESM_EBR_H__*/

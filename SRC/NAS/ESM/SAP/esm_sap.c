@@ -37,12 +37,19 @@
         EPS bearer context handling and resources allocation.
 
 *****************************************************************************/
-#include <string.h>             // memset, strlen
-#include <assert.h>
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
+
+#include "bstrlib.h"
 
 #include "log.h"
 #include "3gpp_24.007.h"
+#include "nas_message.h"
 #include "esm_sap.h"
 #include "esm_recv.h"
 #include "esm_send.h"
@@ -66,7 +73,7 @@
 static int _esm_sap_recv (
   int msg_type,
   int is_standalone,
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   const_bstring req,
   bstring rsp,
   esm_sap_error_t * err);
@@ -74,7 +81,7 @@ static int _esm_sap_recv (
 static int _esm_sap_send (
   int msg_type,
   int is_standalone,
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pti,
   int ebi,
   const esm_sap_data_t * data,
@@ -305,7 +312,7 @@ static int
 _esm_sap_recv (
   int msg_type,
   int is_standalone,
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   const_bstring req,
   bstring rsp,
   esm_sap_error_t * err)
@@ -766,7 +773,7 @@ static int
 _esm_sap_send (
   int msg_type,
   int is_standalone,
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pti,
   int ebi,
   const esm_sap_data_t * data,

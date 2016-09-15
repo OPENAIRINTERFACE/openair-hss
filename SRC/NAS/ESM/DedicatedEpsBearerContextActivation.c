@@ -48,17 +48,26 @@
         the UE initiated stand-alone PDN connectivity procedure.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "bstrlib.h"
 
 #include "log.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "emm_data.h"
 #include "esm_proc.h"
 #include "commonDef.h"
-
 #include "esm_cause.h"
 #include "esm_ebr.h"
 #include "esm_ebr_context.h"
-
 #include "emm_sap.h"
+#include "mme_config.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -83,7 +92,7 @@ static void *_dedicated_eps_bearer_activate_t3485_handler (void *);
    retransmission counter */
 #define DEDICATED_EPS_BEARER_ACTIVATE_COUNTER_MAX   5
 
-static int _dedicated_eps_bearer_activate (emm_data_context_t * ctx, int ebi, STOLEN_REF bstring *msg);
+static int _dedicated_eps_bearer_activate (struct emm_context_s * ctx, int ebi, STOLEN_REF bstring *msg);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -119,7 +128,7 @@ static int _dedicated_eps_bearer_activate (emm_data_context_t * ctx, int ebi, ST
  ***************************************************************************/
 int
 esm_proc_dedicated_eps_bearer_context (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int pid,
   unsigned int *ebi,
   unsigned int *default_ebi,
@@ -186,7 +195,7 @@ esm_proc_dedicated_eps_bearer_context (
 int
 esm_proc_dedicated_eps_bearer_context_request (
   bool is_standalone,
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   STOLEN_REF bstring *msg,
   bool ue_triggered)
@@ -242,7 +251,7 @@ esm_proc_dedicated_eps_bearer_context_request (
  ***************************************************************************/
 int
 esm_proc_dedicated_eps_bearer_context_accept (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   int *esm_cause)
 {
@@ -301,7 +310,7 @@ esm_proc_dedicated_eps_bearer_context_accept (
  ***************************************************************************/
 int
 esm_proc_dedicated_eps_bearer_context_reject (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   int *esm_cause)
 {
@@ -440,7 +449,7 @@ _dedicated_eps_bearer_activate_t3485_handler (
  **                                                                        **
  ***************************************************************************/
 static int _dedicated_eps_bearer_activate (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   STOLEN_REF bstring *msg)
 {
@@ -464,7 +473,7 @@ static int _dedicated_eps_bearer_activate (
     /*
      * Start T3485 retransmission timer
      */
-    rc = esm_ebr_start_timer (ctx, ebi, *msg, T3485_DEFAULT_VALUE, _dedicated_eps_bearer_activate_t3485_handler);
+    rc = esm_ebr_start_timer (ctx, ebi, *msg, mme_config.nas_config.t3485_sec, _dedicated_eps_bearer_activate_t3485_handler);
   }
   *msg = NULL;
 

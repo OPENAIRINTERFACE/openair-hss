@@ -270,11 +270,11 @@ sgw_cm_create_pdn_connection (
 
   bstring b = bfromcstr("sgw_eps_bearers");
   pdn_connection->sgw_eps_bearers = hashtable_ts_create (12, NULL, NULL, b);
-  bdestroy(b);
+  bdestroy_wrapper (&b);
 
   if (pdn_connection->sgw_eps_bearers == NULL) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create eps bearers collection object\n");
-    free_wrapper (pdn_connection);
+    free_wrapper (&pdn_connection);
     pdn_connection = NULL;
     return NULL;
   }
@@ -318,7 +318,7 @@ sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (
     obj_hashtable_ts_destroy (contextP->pgw_eps_bearer_context_information.apns);
   }
 
-  free_wrapper (contextP);
+  free_wrapper (&contextP);
 }
 
 //-----------------------------------------------------------------------------
@@ -352,7 +352,7 @@ sgw_cm_create_bearer_context_information_in_collection (
   bstring b = bfromcstr("pgw_eps_bearer_ctxt_info_apns");
   new_bearer_context_information->pgw_eps_bearer_context_information.apns =
       obj_hashtable_ts_create (32, NULL, NULL, (void (*) (void *))pgw_lite_cm_free_apn, b);
-  bdestroy(b);
+  bdestroy_wrapper (&b);
 
   if (new_bearer_context_information->pgw_eps_bearer_context_information.apns == NULL) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create APN collection object entry for EPS bearer S11 teid %u \n", teid);

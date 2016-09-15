@@ -35,14 +35,46 @@
   Description Defines EPS Session Management messages
 
 *****************************************************************************/
+#include <stdint.h>
+#include <stdbool.h>
+#include <pthread.h>
 
-#include "common_types.h"
-#include "esm_msg.h"
+#include "bstrlib.h"
+
+#include "hashtable.h"
+#include "obj_hashtable.h"
 #include "log.h"
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
-#include "nas_itti_messaging.h"
+#include "3gpp_36.331.h"
+#include "3gpp_36.401.h"
 
+#include "ActivateDedicatedEpsBearerContextRequest.h"
+#include "ActivateDedicatedEpsBearerContextAccept.h"
+#include "ActivateDedicatedEpsBearerContextReject.h"
+#include "ActivateDefaultEpsBearerContextRequest.h"
+#include "ActivateDefaultEpsBearerContextAccept.h"
+#include "ActivateDefaultEpsBearerContextReject.h"
+#include "ModifyEpsBearerContextRequest.h"
+#include "ModifyEpsBearerContextAccept.h"
+#include "ModifyEpsBearerContextReject.h"
+#include "DeactivateEpsBearerContextRequest.h"
+#include "DeactivateEpsBearerContextAccept.h"
+#include "PdnDisconnectRequest.h"
+#include "PdnDisconnectReject.h"
+#include "PdnConnectivityRequest.h"
+#include "PdnConnectivityReject.h"
+#include "BearerResourceAllocationRequest.h"
+#include "BearerResourceAllocationReject.h"
+#include "BearerResourceModificationRequest.h"
+#include "BearerResourceModificationReject.h"
+#include "EsmInformationRequest.h"
+#include "EsmInformationResponse.h"
+#include "EsmStatus.h"
+
+#include "esm_msg.h"
+#include "esm_proc.h"
+#include "nas_itti_messaging.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -52,10 +84,7 @@
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
-static int                              _esm_msg_decode_header (
-  esm_msg_header_t * header,
-  const uint8_t * buffer,
-  uint32_t len);
+
 static int                              _esm_msg_encode_header (
   const esm_msg_header_t * header,
   uint8_t * buffer,
@@ -98,7 +127,7 @@ esm_msg_decode (
   /*
    * First decode the ESM message header
    */
-  header_result = _esm_msg_decode_header (&msg->header, buffer, len);
+  header_result = esm_msg_decode_header (&msg->header, buffer, len);
 
   if (header_result < 0) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to decode ESM message header " "(%d)\n", header_result);
@@ -368,7 +397,7 @@ esm_msg_encode (
 
 /****************************************************************************
  **                                                                        **
- ** Name:  _esm_msg_decode_header()                                  **
+ ** Name:  esm_msg_decode_header()                                  **
  **                                                                        **
  ** Description: Decode header of EPS Mobility Management message.         **
  **    The protocol discriminator and the security header type   **
@@ -386,8 +415,7 @@ esm_msg_encode (
  **    Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-static int
-_esm_msg_decode_header (
+int esm_msg_decode_header (
   esm_msg_header_t * header,
   const uint8_t * buffer,
   uint32_t len)

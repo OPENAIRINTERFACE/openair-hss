@@ -44,14 +44,22 @@
         sent by both the MME and the UE.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "bstrlib.h"
 
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
 #include "esm_proc.h"
 #include "commonDef.h"
+#include "common_defs.h"
 #include "log.h"
-
 #include "esm_cause.h"
-
 #include "emm_sap.h"
 
 /****************************************************************************/
@@ -92,7 +100,7 @@
  ***************************************************************************/
 int
 esm_proc_status_ind (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int pti,
   int ebi,
   int *esm_cause)
@@ -174,7 +182,7 @@ esm_proc_status_ind (
 int
 esm_proc_status (
   bool is_standalone,
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   bstring msg,
   bool ue_triggered)

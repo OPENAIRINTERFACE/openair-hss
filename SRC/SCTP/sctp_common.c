@@ -36,6 +36,10 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/sctp.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "bstrlib.h"
 
 #include "sctp_common.h"
 #include "log.h"

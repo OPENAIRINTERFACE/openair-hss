@@ -78,10 +78,21 @@ uint64_t mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src);
 void mme_app_ue_context_uint_to_imsi(uint64_t imsi_src, mme_app_imsi_t *imsi_dst);
 void mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst, const imsi_t *imsi_src);
 
+// TODO
+typedef enum {
+  BEARER_STATE_MIN = 0,
+  BEARER_STATE_NULL = BEARER_STATE_MIN,
+  BEARER_STATE_SGW_CREATE_REQUESTED,
+  BEARER_STATE_SGW_CREATED,
+  BEARER_STATE_ACTIVE,
+  BEARER_STATE_MAX
+}bearer_state_t;
 /** @struct bearer_context_t
  *  @brief Parameters that should be kept for an eps bearer.
  */
 typedef struct bearer_context_s {
+  // TODO add bearer state
+  bearer_state_t          bearer_state;
   /* S-GW Tunnel Endpoint for User-Plane */
   s1u_teid_t              s_gw_teid;
 
@@ -96,9 +107,9 @@ typedef struct bearer_context_s {
 
   /* QoS for this bearer */
   qci_t                   qci;
-  priority_level_t        prio_level;
-  pre_emp_vulnerability_t pre_emp_vulnerability;
-  pre_emp_capability_t    pre_emp_capability;
+  priority_level_t        priority_level;
+  pre_emp_vulnerability_t preemption_vulnerability;
+  pre_emp_capability_t    preemption_capability;
 
   /* TODO: add TFT */
 } bearer_context_t;
@@ -173,7 +184,7 @@ typedef struct ue_context_s {
 
   teid_t                 mme_s11_teid;                // set by mme_app_send_s11_create_session_req
   teid_t                 sgw_s11_teid;                // set by S11 CREATE_SESSION_RESPONSE
-  PAA_t                  paa;                         // set by S11 CREATE_SESSION_RESPONSE
+  paa_t                  paa;                         // set by S11 CREATE_SESSION_RESPONSE
 
   // temp
   char                   pending_pdn_connectivity_req_imsi[16];
@@ -187,7 +198,7 @@ typedef struct ue_context_s {
   void                  *pending_pdn_connectivity_req_proc_data;
   int                    pending_pdn_connectivity_req_request_type;
 
-  ebi_t                  default_bearer_id;
+  //ebi_t                  default_bearer_id;
   bearer_context_t       eps_bearers[BEARERS_PER_UE];
 } ue_context_t;
 

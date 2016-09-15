@@ -31,10 +31,6 @@
 #ifndef FILE_SCTP_COMMON_SEEN
 #define FILE_SCTP_COMMON_SEEN
 
-#include <stdio.h>
-#include <stdint.h>
-#include <sys/socket.h>
-
 #include "common_types.h"
 
 int sctp_set_init_opt(const int sd, const sctp_stream_id_t instreams, const sctp_stream_id_t outstreams,

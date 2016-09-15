@@ -159,7 +159,7 @@ typedef struct itti_s11_create_session_request_s {
   ///< PDP Context Activation and the UE requested PDN
   ///< connectivity procedures.
 
-  char               apn[APN_MAX_LENGTH + 1]; ///< Access Point Name
+  char               apn[ACCESS_POINT_NAME_MAX_LENGTH + 1]; ///< Access Point Name
 
   SelectionMode_t    selection_mode;      ///< Selection Mode
   ///< This IE shall be included on the S4/S11 and S5/S8
@@ -185,7 +185,7 @@ typedef struct itti_s11_create_session_request_s {
   ///< 5.3.1.1, and for SGSN see 3GPP TS 23.060 [35], clause
   ///< 9.2.1). See NOTE 1.
 
-  PAA_t              paa;                 ///< PDN Address Allocation
+  paa_t              paa;                 ///< PDN Address Allocation
   ///< This IE shall be included the S4/S11, S5/S8 and S2b
   ///< interfaces for an E-UTRAN initial attach, a PDP Context
   ///< Activation, a UE requested PDN connectivity, an Attach
@@ -377,7 +377,7 @@ typedef struct itti_s11_create_session_response_s {
   ///< procedures.
 
 
-  PAA_t                    paa;                 ///< PDN Address Allocation
+  paa_t                    paa;                 ///< PDN Address Allocation
   ///< This IE shall be included on the S5/S8, S4/S11 and S2b
   ///< interfaces for the E-UTRAN initial attach, PDP Context
   ///< Activation, UE requested PDN connectivity, Attach with

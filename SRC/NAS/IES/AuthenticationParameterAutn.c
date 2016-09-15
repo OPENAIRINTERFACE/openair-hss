@@ -103,6 +103,6 @@ dump_authentication_parameter_autn_xml (
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
   bstring b = dump_bstring_xml (authenticationparameterautn);
   OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
-  bdestroy(b);
+  bdestroy_wrapper(&b);
   OAILOG_DEBUG (LOG_NAS, "</Authentication Parameter Autn>\n");
 }

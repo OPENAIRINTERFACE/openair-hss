@@ -27,9 +27,6 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-
-#include "assertions.h"
-
 #ifndef FILE_CONVERSIONS_SEEN
 #define FILE_CONVERSIONS_SEEN
 
@@ -429,5 +426,16 @@ do {                                                    \
 void hexa_to_ascii(uint8_t *from, char *to, size_t length);
 
 int ascii_to_hex(uint8_t *dst, const char *h);
+
+#define UINT8_TO_BINARY_FMT "%c%c%c%c%c%c%c%c"
+#define UINT8_TO_BINARY_ARG(bYtE) \
+    ((bYtE) & 0x80 ? '1':'0'),\
+    ((bYtE) & 0x40 ? '1':'0'),\
+    ((bYtE) & 0x20 ? '1':'0'),\
+    ((bYtE) & 0x10 ? '1':'0'),\
+    ((bYtE) & 0x08 ? '1':'0'),\
+    ((bYtE) & 0x04 ? '1':'0'),\
+    ((bYtE) & 0x02 ? '1':'0'),\
+    ((bYtE) & 0x01 ? '1':'0')
 
 #endif /* FILE_CONVERSIONS_SEEN */

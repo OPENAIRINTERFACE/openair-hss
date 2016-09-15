@@ -43,6 +43,7 @@ Description Defines the EMMREG Service Access Point that provides
 
 #include "common_types.h"
 #include "commonDef.h"
+#include "3gpp_36.401.h"
 #include <stdbool.h>
 
 /****************************************************************************/

@@ -22,19 +22,29 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <inttypes.h>
+#include <pthread.h>
+
+#include "bstrlib.h"
 
 #include "dynamic_memory_check.h"
 #include "common_defs.h"
 #include "log.h"
 #include "assertions.h"
 #include "conversions.h"
-#include "intertask_interface.h"
+#include "3gpp_33.401.h"
+#include "3gpp_23.003.h"
+#include "3gpp_24.008.h"
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
 #include "NwGtpv2cMsgParser.h"
 #include "s11_common.h"
+#include "security_types.h"
+#include "common_types.h"
+#include "sgw_ie_defs.h"
+#include "PdnType.h"
 #include "s11_ie_formatter.h"
 
 NwRcT
@@ -100,7 +110,7 @@ s11_imsi_ie_set (
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IMSI, imsi_length, 0, temp);
   DevAssert (NW_OK == rc);
-  free_wrapper (temp);
+  free_wrapper ((void**)&temp);
   return RETURNok;
 }
 
@@ -916,7 +926,7 @@ s11_pco_ie_get (
 
   DevAssert (pco );
   offset = decode_protocol_configuration_options (pco, ieValue, ieLength);
-  if ((0 < offset) && (PCO_MAX_LENGTH >= offset))
+  if ((0 < offset) && (PROTOCOL_CONFIGURATION_OPTIONS_IE_MAX_LENGTH >= offset))
     return NW_OK;
   else
     return NW_GTPV2C_IE_INCORRECT;
@@ -927,12 +937,12 @@ s11_pco_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const protocol_configuration_options_t * pco)
 {
-  uint8_t                                 temp[PCO_MAX_LENGTH];
+  uint8_t                                 temp[PROTOCOL_CONFIGURATION_OPTIONS_IE_MAX_LENGTH];
   uint8_t                                 offset = 0;
   NwRcT                                   rc = NW_OK;
 
   DevAssert (pco );
-  offset = encode_protocol_configuration_options(pco, temp, PCO_MAX_LENGTH);
+  offset = encode_protocol_configuration_options(pco, temp, PROTOCOL_CONFIGURATION_OPTIONS_IE_MAX_LENGTH);
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_PCO, offset, 0, temp);
   DevAssert (NW_OK == rc);
   return RETURNok;
@@ -947,7 +957,7 @@ s11_paa_ie_get (
   void *arg)
 {
   uint8_t                                 offset = 0;
-  PAA_t                                  *paa = (PAA_t *) arg;
+  paa_t                                  *paa = (paa_t *) arg;
 
   DevAssert (paa );
   paa->pdn_type = ieValue[0] & 0x07;
@@ -985,7 +995,7 @@ s11_paa_ie_get (
 int
 s11_paa_ie_set (
   NwGtpv2cMsgHandleT * msg,
-  const PAA_t * paa)
+  const paa_t * paa)
 {
   /*
    * ipv4 address = 4 + ipv6 address = 16 + ipv6 prefix length = 1
@@ -1041,7 +1051,7 @@ s11_apn_ie_get (
   char                                   *apn = (char *)arg;
 
   DevAssert (apn );
-  DevCheck (ieLength <= APN_MAX_LENGTH, ieLength, APN_MAX_LENGTH, 0);
+  DevCheck (ieLength <= ACCESS_POINT_NAME_MAX_LENGTH, ieLength, ACCESS_POINT_NAME_MAX_LENGTH, 0);
   word_length = ieValue[0];
 
   while (read < ieLength) {
@@ -1104,7 +1114,7 @@ s11_apn_ie_set (
   *last_size = word_length;
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN, apn_length + 1, 0, value);
   DevAssert (NW_OK == rc);
-  free_wrapper (value);
+  free_wrapper ((void**)&value);
   return RETURNok;
 }
 

@@ -29,8 +29,6 @@
 
 #ifndef FILE_RFC_1332_SEEN
 #define FILE_RFC_1332_SEEN
-#include <stdint.h>
-#include "bstrlib.h"
 
 // 2 A PPP Network Control Protocol (NCP) for IP
 

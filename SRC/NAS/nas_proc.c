@@ -35,9 +35,15 @@
   Description NAS procedure call manager
 
 *****************************************************************************/
-#include <stdio.h>
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
+
 #include "bstrlib.h"
+
 #include "log.h"
+#include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
 
@@ -167,9 +173,9 @@ nas_proc_establish_ind (
 
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_REQ ue id " MME_UE_S1AP_ID_FMT " tai:  plmn %c%c%c.%c%c%c tac %u",
         ue_id,
-        (char)(originating_tai.plmn.mcc_digit1 + 0x30), (char)(originating_tai.plmn.mcc_digit2 + 0x30), (char)(originating_tai.plmn.mcc_digit3 + 0x30),
-        (char)(originating_tai.plmn.mnc_digit1 + 0x30), (char)(originating_tai.plmn.mnc_digit2 + 0x30),
-        (9 < originating_tai.plmn.mnc_digit3) ? ' ': (char)(originating_tai.plmn.mnc_digit3 + 0x30),
+        (char)(originating_tai.mcc_digit1 + 0x30), (char)(originating_tai.mcc_digit2 + 0x30), (char)(originating_tai.mcc_digit3 + 0x30),
+        (char)(originating_tai.mnc_digit1 + 0x30), (char)(originating_tai.mnc_digit2 + 0x30),
+        (9 < originating_tai.mnc_digit3) ? ' ': (char)(originating_tai.mnc_digit3 + 0x30),
             originating_tai.tac);
     /*
      * Notify the EMM procedure call manager that NAS signalling
@@ -183,8 +189,9 @@ nas_proc_establish_ind (
 
     emm_sap.u.emm_as.u.establish.nas_msg            = *msg;
     *msg = NULL;
-    emm_sap.u.emm_as.u.establish.plmn_id            = &originating_tai.plmn;
-    emm_sap.u.emm_as.u.establish.tac                = originating_tai.tac;
+    emm_sap.u.emm_as.u.establish.tai                = &originating_tai;
+    //emm_sap.u.emm_as.u.establish.plmn_id            = &originating_tai.plmn;
+    //emm_sap.u.emm_as.u.establish.tac                = originating_tai.tac;
     emm_sap.u.emm_as.u.establish.ecgi               = cgi;
     rc = emm_sap_send (&emm_sap);
   }
@@ -310,17 +317,18 @@ nas_proc_ul_transfer_ind (
      */
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND ue id " MME_UE_S1AP_ID_FMT " len %u tai:  plmn %c%c%c.%c%c%c tac %u",
         ue_id, blength(*msg),
-        (char)(originating_tai.plmn.mcc_digit1 + 0x30), (char)(originating_tai.plmn.mcc_digit2 + 0x30), (char)(originating_tai.plmn.mcc_digit3 + 0x30),
-        (char)(originating_tai.plmn.mnc_digit1 + 0x30), (char)(originating_tai.plmn.mnc_digit2 + 0x30),
-        (9 < originating_tai.plmn.mnc_digit3) ? ' ': (char)(originating_tai.plmn.mnc_digit3 + 0x30),
+        (char)(originating_tai.mcc_digit1 + 0x30), (char)(originating_tai.mcc_digit2 + 0x30), (char)(originating_tai.mcc_digit3 + 0x30),
+        (char)(originating_tai.mnc_digit1 + 0x30), (char)(originating_tai.mnc_digit2 + 0x30),
+        (9 < originating_tai.mnc_digit3) ? ' ': (char)(originating_tai.mnc_digit3 + 0x30),
             originating_tai.tac);
     emm_sap.primitive = EMMAS_DATA_IND;
     emm_sap.u.emm_as.u.data.ue_id     = ue_id;
     emm_sap.u.emm_as.u.data.delivered = true;
     emm_sap.u.emm_as.u.data.nas_msg   = *msg;
     *msg = NULL;
-    emm_sap.u.emm_as.u.data.plmn_id   = &originating_tai.plmn;
-    emm_sap.u.emm_as.u.data.tac       = originating_tai.tac;
+    emm_sap.u.emm_as.u.data.tai       = &originating_tai;
+    //emm_sap.u.emm_as.u.data.plmn_id   = &originating_tai.plmn;
+    //emm_sap.u.emm_as.u.data.tac       = originating_tai.tac;
     emm_sap.u.emm_as.u.data.ecgi      = cgi;
     rc = emm_sap_send (&emm_sap);
   }
@@ -335,7 +343,7 @@ nas_proc_authentication_info_answer (
 {
   imsi64_t                                imsi64  = INVALID_IMSI64;
   int                                     rc      = RETURNerror;
-  emm_data_context_t                     *ctxt    = NULL;
+  emm_context_t                          *ctxt    = NULL;
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
    DevAssert (aia);
@@ -343,7 +351,7 @@ nas_proc_authentication_info_answer (
 
    OAILOG_DEBUG (LOG_NAS_EMM, "Handling imsi " IMSI_64_FMT "\n", imsi64);
 
-   ctxt = emm_data_context_get_by_imsi (&_emm_data, imsi64);
+   ctxt = emm_context_get_by_imsi (&_emm_data, imsi64);
 
    if (!(ctxt)) {
      OAILOG_ERROR (LOG_NAS_EMM, "That's embarrassing as we don't know this IMSI\n");

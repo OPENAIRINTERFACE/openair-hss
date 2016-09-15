@@ -42,12 +42,11 @@ Description Defines the EMM Service Access Points at which the EPS
 #ifndef FILE_EMM_SAP_SEEN
 #define FILE_EMM_SAP_SEEN
 
-#include "emmData.h"
+#include "emm_data.h"
 #include "emm_regDef.h"
 #include "emm_esmDef.h"
 #include "emm_asDef.h"
 #include "emm_cnDef.h"
-
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/

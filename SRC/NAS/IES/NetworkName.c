@@ -124,6 +124,6 @@ dump_network_name_xml (
   OAILOG_DEBUG (LOG_NAS, "    <Number of spare bits in last octet>%u</Number of spare bits in last octet>\n", networkname->numberofsparebitsinlastoctet);
   bstring b = dump_bstring_xml (networkname->textstring);
   OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
-  bdestroy(b);
+  bdestroy_wrapper (&b);
   OAILOG_DEBUG (LOG_NAS, "</Network Name>\n");
 }

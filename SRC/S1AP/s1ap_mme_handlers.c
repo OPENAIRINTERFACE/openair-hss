@@ -22,24 +22,30 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <pthread.h>
 
+#include <libxml/xmlwriter.h>
+#include <libxml/xpath.h>
 #include "bstrlib.h"
+
 #include "hashtable.h"
 #include "log.h"
 #include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
+#include "intertask_interface.h"
 #include "mme_config.h"
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
 #include "s1ap_mme_encoder.h"
-#include "s1ap_mme_handlers.h"
 #include "s1ap_mme_nas_procedures.h"
 #include "s1ap_mme_itti_messaging.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_ta.h"
-
+#include "xml_msg_dump_itti.h"
+#include "s1ap_mme_handlers.h"
 
 extern hash_table_ts_t g_s1ap_enb_coll; // contains eNB_description_s, key is eNB_description_s.assoc_id
 
@@ -262,7 +268,7 @@ s1ap_mme_handle_s1_setup_request (
       OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     }
 
-    log_queue_item_t *  context = NULL;
+    shared_log_queue_item_t *  context = NULL;
     OAILOG_MESSAGE_START (OAILOG_LEVEL_DEBUG, LOG_S1AP, (&context), "New s1 setup request incoming from ");
 
     if (s1SetupRequest_p->presenceMask & S1AP_S1SETUPREQUESTIES_ENBNAME_PRESENT) {
@@ -598,26 +604,28 @@ s1ap_mme_handle_initial_context_setup_response (
   ue_ref_p->s1_ue_state = S1AP_UE_CONNECTED;
   message_p = itti_alloc_new_message (TASK_S1AP, MME_APP_INITIAL_CONTEXT_SETUP_RSP);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-  memset ((void *)&message_p->ittiMsg.mme_app_initial_context_setup_rsp, 0, sizeof (itti_mme_app_initial_context_setup_rsp_t));
-  /*
-   * Bad, very bad cast...
-   */
-  eRABSetupItemCtxtSURes_p = (S1ap_E_RABSetupItemCtxtSURes_t *)
-    initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.array[0];
   MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
-  MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).eps_bearer_id = eRABSetupItemCtxtSURes_p->e_RAB_ID;
-  MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).bearer_s1u_enb_fteid.ipv4 = 1;  // TO DO
-  MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).bearer_s1u_enb_fteid.ipv6 = 0;  // TO DO
-  MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).bearer_s1u_enb_fteid.interface_type = S1_U_ENODEB_GTP_U;
-  MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).bearer_s1u_enb_fteid.teid = htonl (*((uint32_t *) eRABSetupItemCtxtSURes_p->gTP_TEID.buf));
-  memcpy (&MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).bearer_s1u_enb_fteid.ipv4_address, eRABSetupItemCtxtSURes_p->transportLayerAddress.buf, 4);
+  MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).no_of_e_rabs = initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count;
+  for (int item = 0; item < initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count; item++) {
+    /*
+     * Bad, very bad cast...
+     */
+    eRABSetupItemCtxtSURes_p = (S1ap_E_RABSetupItemCtxtSURes_t *)
+        initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.array[item];
+    MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).e_rab_id[item] = eRABSetupItemCtxtSURes_p->e_RAB_ID;
+    MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).gtp_teid[item] = htonl (*((uint32_t *) eRABSetupItemCtxtSURes_p->gTP_TEID.buf));
+    MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).transport_layer_address[item] =
+        blk2bstr(eRABSetupItemCtxtSURes_p->transportLayerAddress.buf, eRABSetupItemCtxtSURes_p->transportLayerAddress.size);
+  }
+  // TODO num items
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                       MSC_MMEAPP_MME,
                       NULL, 0,
                       "0 MME_APP_INITIAL_CONTEXT_SETUP_RSP mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ebi %u s1u enb teid %u",
                       MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).mme_ue_s1ap_id,
-                      MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).eps_bearer_id,
-                      MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).bearer_s1u_enb_fteid.teid);
+                      MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).e_rab_id[0],
+                      MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).gtp_teid[0]);
+  XML_MSG_DUMP_ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP(&MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p), TASK_S1AP, TASK_MME_APP, NULL);
   rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
@@ -675,11 +683,11 @@ s1ap_mme_handle_ue_context_release_request (
       // UE context will be removed when receiving UE_CONTEXT_RELEASE_COMPLETE
       message_p = itti_alloc_new_message (TASK_S1AP, S1AP_UE_CONTEXT_RELEASE_REQ);
       AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-      memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_req, 0, sizeof (itti_s1ap_ue_context_release_req_t));
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
               S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id);
+      XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_REQ(&S1AP_UE_CONTEXT_RELEASE_REQ (message_p), TASK_S1AP, TASK_MME_APP, NULL);
       rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
       OAILOG_FUNC_RETURN (LOG_S1AP, rc);
     } else {
@@ -738,9 +746,8 @@ s1ap_mme_generate_ue_context_release_command (
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
-
-void
-s1ap_handle_delete_session_rsp (
+//------------------------------------------------------------------------------
+void s1ap_handle_delete_session_rsp (
   const itti_mme_app_delete_session_rsp_t * const mme_app_delete_session_rsp_p)
 {
   ue_description_t                       *ue_ref = NULL;
@@ -748,8 +755,7 @@ s1ap_handle_delete_session_rsp (
   DevAssert (mme_app_delete_session_rsp_p != NULL);
   if ((ue_ref = s1ap_is_ue_mme_id_in_list (mme_app_delete_session_rsp_p->ue_id)) == NULL) {
     OAILOG_DEBUG (LOG_S1AP, "This mme ue s1ap id " MME_UE_S1AP_ID_FMT " is not attached to any UE context\n", mme_app_delete_session_rsp_p->ue_id);
-  }
-  else {
+  } else {
     s1ap_remove_ue (ue_ref);
   }
   OAILOG_FUNC_OUT (LOG_S1AP);
@@ -816,9 +822,11 @@ s1ap_mme_handle_ue_context_release_complete (
    */
   message_p = itti_alloc_new_message (TASK_S1AP, S1AP_UE_CONTEXT_RELEASE_COMPLETE);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-  memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_complete, 0, sizeof (itti_s1ap_ue_context_release_complete_t));
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
+
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id);
+  XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_COMPLETE(&S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p), TASK_S1AP, TASK_MME_APP, NULL);
+
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   s1ap_remove_ue (ue_ref_p);
   OAILOG_DEBUG (LOG_S1AP, "Removed UE " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ueContextReleaseComplete_p->mme_ue_s1ap_id);

@@ -21,7 +21,7 @@
 
 /*****************************************************************************
 
-  Source    nas_message.h
+  Source    nas_message.c
 
   Version   0.1
 
@@ -37,21 +37,28 @@
     protocol and functions used to encode and decode
 
 *****************************************************************************/
+#include <arpa/inet.h>          // htonl
+#include <string.h>             // memcpy
+#include <stdlib.h>             // free
+#include <stdint.h>
+#include <stdbool.h>
 
+#include "bstrlib.h"
+
+#include "log.h"
+#include "3gpp_36.401.h"
 #include "common_types.h"
 #include "nas_message.h"
-#include "log.h"
 #include "gcc_diag.h"
-
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
-
-#include <stdlib.h>             // malloc, free
-#include <string.h>             // memcpy
-
-#include "nas_itti_messaging.h"
+#include "mme_api.h"
+#include "mme_config.h"
+#include "emm_main.h"
+#include "esm_main.h"
+#include "emm_sap.h"
+#include "emm_data.h"
 #include "secu_defs.h"
-#include "emmData.h"
 #include "dynamic_memory_check.h"
 
 /****************************************************************************/
@@ -64,12 +71,6 @@
 
 
 /* Functions used to decode layer 3 NAS messages */
-static int _nas_message_header_decode (
-    const unsigned char * const buffer,
-    nas_message_security_header_t * const header,
-    const size_t length,
-    nas_message_decode_status_t * const status,
-    bool * const is_sr);
 
 static int _nas_message_plain_decode (
     const unsigned char *buffer,
@@ -276,7 +277,7 @@ int nas_message_decrypt (
   /*
    * Decode the header
    */
-  int                                     size = _nas_message_header_decode (inbuf, header, length, status, &is_sr);
+  int                                     size = nas_message_header_decode (inbuf, header, length, status, &is_sr);
 
   if (size < 0) {
     OAILOG_DEBUG (LOG_NAS, "MESSAGE TOO SHORT\n");
@@ -385,9 +386,9 @@ int nas_message_decode (
   if (emm_security_context) {
     status->security_context_available = 1;
   }
-  size  = _nas_message_header_decode (buffer, &msg->header, length, status, &is_sr);
+  size  = nas_message_header_decode (buffer, &msg->header, length, status, &is_sr);
 
-  OAILOG_DEBUG (LOG_NAS, "_nas_message_header_decode returned size %d\n", size);
+  OAILOG_DEBUG (LOG_NAS, "nas_message_header_decode returned size %d\n", size);
 
   if (size < 0) {
     OAILOG_FUNC_RETURN (LOG_NAS, TLV_BUFFER_TOO_SHORT);
@@ -634,7 +635,7 @@ int nas_message_encode (
 
 /****************************************************************************
  **                                                                        **
- ** Name:  _nas_message_header_decode()                              **
+ ** Name:  nas_message_header_decode()                              **
  **                                                                        **
  ** Description: Decode header of a security protected NAS message         **
  **                                                                        **
@@ -652,7 +653,7 @@ int nas_message_encode (
  **    Others:  None                                       **
  **                                                                        **
  ***************************************************************************/
-static int _nas_message_header_decode (
+int nas_message_header_decode (
     const unsigned char * const buffer,
     nas_message_security_header_t * const header,
     const size_t length,
@@ -809,7 +810,7 @@ static int _nas_message_protected_decode (
      * Decode the decrypted message as plain NAS message
      */
     bytes = _nas_message_plain_decode (plain_msg, header, msg, length);
-    free_wrapper (plain_msg);
+    free_wrapper ((void**)&plain_msg);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS, bytes);
@@ -977,7 +978,7 @@ static int _nas_message_protected_encode (
       //seq ++;
     }
 
-    free_wrapper (plain_msg);
+    free_wrapper ((void**)&plain_msg);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS, bytes);
@@ -1395,3 +1396,4 @@ static uint32_t _nas_message_get_mac (
 
   OAILOG_FUNC_RETURN (LOG_NAS, 0);
 }
+

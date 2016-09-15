@@ -18,18 +18,21 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
+#include "bstrlib.h"
 
+#include "log.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "EpsQualityOfService.h"
 
-static int
-decode_eps_qos_bit_rates (
+
+//------------------------------------------------------------------------------
+static int decode_eps_qos_bit_rates (
   EpsQoSBitRates * epsqosbitrates,
   const uint8_t * buffer)
 {
@@ -46,8 +49,8 @@ decode_eps_qos_bit_rates (
   return decoded;
 }
 
-int
-decode_eps_quality_of_service (
+//------------------------------------------------------------------------------
+int decode_eps_quality_of_service (
   EpsQualityOfService * epsqualityofservice,
   uint8_t iei,
   uint8_t * buffer,
@@ -93,14 +96,11 @@ decode_eps_quality_of_service (
     epsqualityofservice->bitRatesExtPresent = 0;
   }
 
-#if NAS_DEBUG
-  dump_eps_quality_of_service_xml (epsqualityofservice, iei);
-#endif
   return decoded;
 }
 
-static int
-encode_eps_qos_bit_rates (
+//------------------------------------------------------------------------------
+static int encode_eps_qos_bit_rates (
   const EpsQoSBitRates * epsqosbitrates,
   uint8_t * buffer)
 {
@@ -117,8 +117,8 @@ encode_eps_qos_bit_rates (
   return encoded;
 }
 
-int
-encode_eps_quality_of_service (
+//------------------------------------------------------------------------------
+int encode_eps_quality_of_service (
   EpsQualityOfService * epsqualityofservice,
   uint8_t iei,
   uint8_t * buffer,
@@ -131,9 +131,6 @@ encode_eps_quality_of_service (
    * Checking IEI and pointer
    */
   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, EPS_QUALITY_OF_SERVICE_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_eps_quality_of_service_xml (epsqualityofservice, iei);
-#endif
 
   if (iei > 0) {
     *buffer = iei;
@@ -157,46 +154,10 @@ encode_eps_quality_of_service (
   return encoded;
 }
 
-void
-dump_eps_quality_of_service_xml (
-  EpsQualityOfService * epsqualityofservice,
-  uint8_t iei)
-{
-  OAILOG_DEBUG (LOG_NAS, "<Eps Quality Of Service>\n");
-
-  if (iei > 0)
-    /*
-     * Don't display IEI if = 0
-     */
-    OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
-
-  OAILOG_DEBUG (LOG_NAS, "    <QCI>%u</QCI>\n", epsqualityofservice->qci);
-
-  if (epsqualityofservice->bitRatesPresent) {
-    OAILOG_DEBUG (LOG_NAS, "    <bitRates>\n");
-    OAILOG_DEBUG (LOG_NAS, "        <maxBitRateForUL>%u</maxBitRateForUL>\n", epsqualityofservice->bitRates.maxBitRateForUL);
-    OAILOG_DEBUG (LOG_NAS, "        <maxBitRateForDL>%u</maxBitRateForDL>\n", epsqualityofservice->bitRates.maxBitRateForDL);
-    OAILOG_DEBUG (LOG_NAS, "        <guarBitRateForUL>%u</guarBitRateForUL>\n", epsqualityofservice->bitRates.guarBitRateForUL);
-    OAILOG_DEBUG (LOG_NAS, "        <guarBitRateForDL>%u</guarBitRateForDL>\n", epsqualityofservice->bitRates.guarBitRateForDL);
-    OAILOG_DEBUG (LOG_NAS, "    </bitRates>\n");
-  }
-
-  if (epsqualityofservice->bitRatesExtPresent) {
-    OAILOG_DEBUG (LOG_NAS, "    <bitRatesExt>\n");
-    OAILOG_DEBUG (LOG_NAS, "        <maxBitRateForUL>%u</maxBitRateForUL>\n", epsqualityofservice->bitRatesExt.maxBitRateForUL);
-    OAILOG_DEBUG (LOG_NAS, "        <maxBitRateForDL>%u</maxBitRateForDL>\n", epsqualityofservice->bitRatesExt.maxBitRateForDL);
-    OAILOG_DEBUG (LOG_NAS, "        <guarBitRateForUL>%u</guarBitRateForUL>\n", epsqualityofservice->bitRatesExt.guarBitRateForUL);
-    OAILOG_DEBUG (LOG_NAS, "        <guarBitRateForDL>%u</guarBitRateForDL>\n", epsqualityofservice->bitRatesExt.guarBitRateForDL);
-    OAILOG_DEBUG (LOG_NAS, "    </bitRatesExt>\n");
-  }
-
-  OAILOG_DEBUG (LOG_NAS, "</Eps Quality Of Service>\n");
-}
 
 #define EPS_QOS_BIT_RATE_MAX  262144    // 256 Mbps
-int
-eps_qos_bit_rate_value (
-  uint8_t br)
+//------------------------------------------------------------------------------
+int eps_qos_bit_rate_value (uint8_t br)
 {
   if (br < 0b00000001) {
     return (EPS_QOS_BIT_RATE_MAX);
@@ -211,9 +172,8 @@ eps_qos_bit_rate_value (
   }
 }
 
-int
-eps_qos_bit_rate_ext_value (
-  uint8_t br)
+//------------------------------------------------------------------------------
+int eps_qos_bit_rate_ext_value (uint8_t br)
 {
   if ((br > 0b00000000) && (br < 0b01001011)) {
     return (8600 + br * 100);

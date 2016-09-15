@@ -23,15 +23,26 @@
 #  include "config.h"
 #endif
 
-#include <pthread.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
 
-#include "intertask_interface.h"
-#include "assertions.h"
+#include <libxml/xmlwriter.h>
+#include <libxml/xpath.h>
+#include "bstrlib.h"
 #include "queue.h"
+#include "tree.h"
+
 #include "hashtable.h"
+#include "log.h"
+#include "msc.h"
+#include "assertions.h"
+#include "conversions.h"
+#include "mme_scenario_player.h"
+#include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_decoder.h"
 #include "s1ap_mme_handlers.h"
@@ -39,9 +50,9 @@
 #include "s1ap_mme_nas_procedures.h"
 #include "s1ap_mme_retransmission.h"
 #include "s1ap_mme_itti_messaging.h"
-#include "msc.h"
 #include "dynamic_memory_check.h"
-#include "log.h"
+#include "mme_config.h"
+#include "xml_msg_dump_itti.h"
 
 #if S1AP_DEBUG_LIST
 #  define eNB_LIST_OUT(x, args...) OAILOG_DEBUG (LOG_S1AP, "[eNB]%*s"x"\n", 4*indent, "", ##args)
@@ -59,7 +70,8 @@ hash_table_ts_t g_s1ap_enb_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // co
 hash_table_ts_t g_s1ap_mme_id2assoc_id_coll = {.mutex = PTHREAD_MUTEX_INITIALIZER, 0}; // contains sctp association id, key is mme_ue_s1ap_id;
 
 static int                              indent = 0;
- void *s1ap_mme_thread (void *args);
+extern struct mme_config_s              mme_config;
+void *s1ap_mme_thread (void *args);
 
 //------------------------------------------------------------------------------
 static int s1ap_send_init_sctp (void)
@@ -89,8 +101,6 @@ s1ap_mme_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_S1AP);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -128,7 +138,7 @@ s1ap_mme_thread (
         /*
          * Free received PDU array
          */
-        bdestroy (SCTP_DATA_IND (received_message_p).payload);
+        bdestroy_wrapper (&SCTP_DATA_IND (received_message_p).payload);
       }
       break;
 
@@ -139,11 +149,13 @@ s1ap_mme_thread (
        * SCTP layer notifies S1AP of disconnection of a peer.
        */
     case SCTP_CLOSE_ASSOCIATION:{
+        XML_MSG_DUMP_ITTI_SCTP_CLOSE_ASSOCIATION(&SCTP_CLOSE_ASSOCIATION(received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_handle_sctp_deconnection (SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id);
       }
       break;
 
     case SCTP_NEW_ASSOCIATION:{
+        XML_MSG_DUMP_ITTI_SCTP_NEW_ASSOCIATION(&SCTP_NEW_ASSOCIATION(received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_handle_new_association (&received_message_p->ittiMsg.sctp_new_peer);
       }
       break;
@@ -153,6 +165,7 @@ s1ap_mme_thread (
          * New message received from NAS task.
          * * * * This corresponds to a S1AP downlink nas transport message.
          */
+        XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_REQ(&NAS_DL_DATA_REQ (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_generate_downlink_nas_transport (NAS_DL_DATA_REQ (received_message_p).enb_ue_s1ap_id,
             NAS_DL_DATA_REQ (received_message_p).ue_id,
             &NAS_DL_DATA_REQ (received_message_p).nas_msg);
@@ -165,6 +178,7 @@ s1ap_mme_thread (
       break;
 
     case MME_APP_CONNECTION_ESTABLISHMENT_CNF:{
+        XML_MSG_DUMP_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF(&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
       }
       break;
@@ -180,6 +194,7 @@ s1ap_mme_thread (
       break;
 
     case TERMINATE_MESSAGE:{
+        OAI_FPRINTF_INFO("TASK_S1AP terminated\n");
         itti_exit_task ();
       }
       break;
@@ -194,6 +209,7 @@ s1ap_mme_thread (
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
@@ -204,7 +220,7 @@ s1ap_mme_thread (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_init (
-  const mme_config_t * mme_config_p)
+  const struct mme_config_s * mme_config_p)
 {
   OAILOG_DEBUG (LOG_S1AP, "Initializing S1AP interface\n");
 
@@ -219,12 +235,12 @@ s1ap_mme_init (
   // 16 entries for n eNB.
   bstring bs1 = bfromcstr("s1ap_eNB_coll");
   hash_table_ts_t* h = hashtable_ts_init (&g_s1ap_enb_coll, mme_config.max_enbs, NULL, free_wrapper, bs1);
-  bdestroy(bs1);
+  bdestroy_wrapper (&bs1);
   if (!h) return RETURNerror;
 
   bstring bs2 = bfromcstr("s1ap_mme_id2assoc_id_coll");
   h = hashtable_ts_init (&g_s1ap_mme_id2assoc_id_coll, mme_config.max_ues, NULL, hash_free_int_func, bs2);
-  bdestroy(bs2);
+  bdestroy_wrapper (&bs2);
   if (!h) return RETURNerror;
 
   if (itti_create_task (TASK_S1AP, &s1ap_mme_thread, NULL) < 0) {
@@ -491,7 +507,7 @@ s1ap_new_enb (
   nb_enb_associated++;
   bstring bs = bfromcstr("s1ap_ue_coll");
   hashtable_ts_init(&enb_ref->ue_coll, mme_config.max_ues, NULL, free_wrapper, bs);
-  bdestroy(bs);
+  bdestroy_wrapper (&bs);
   enb_ref->nb_ue_associated = 0;
   return enb_ref;
 }
@@ -521,7 +537,7 @@ s1ap_new_ue (
   hashtable_rc_t  hashrc = hashtable_ts_insert (&enb_ref->ue_coll, (const hash_key_t) enb_ue_s1ap_id, (void *)ue_ref);
   if (HASH_TABLE_OK != hashrc) {
     OAILOG_ERROR(LOG_S1AP, "Could not insert UE descr in ue_coll: %s\n", hashtable_rc_code2string(hashrc));
-    free_wrapper(ue_ref);
+    free_wrapper((void**)&ue_ref);
     return NULL;
   }
   return ue_ref;

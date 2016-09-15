@@ -31,20 +31,12 @@
 #ifndef FILE_LOG_SEEN
 #define FILE_LOG_SEEN
 
-#include "gcc_diag.h"
-#include <syslog.h>
-
 /* asn1c debug */
 extern int asn_debug;
 extern int asn1_xer_print;
 extern int fd_g_debug_lvl;
 
 
-#include <stdarg.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <pthread.h>
-#include "bstrlib.h"
 
 #define LOG_CONFIG_STRING_LOGGING                        "LOGGING"
 #define LOG_CONFIG_STRING_OUTPUT                         "OUTPUT"
@@ -56,6 +48,7 @@ extern int fd_g_debug_lvl;
 #define LOG_CONFIG_STRING_GTPV2C_LOG_LEVEL               "GTPV2C_LOG_LEVEL"
 #define LOG_CONFIG_STRING_ITTI_LOG_LEVEL                 "ITTI_LOG_LEVEL"
 #define LOG_CONFIG_STRING_MME_APP_LOG_LEVEL              "MME_APP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_MME_SCENARIO_PLAYER_LOG_LEVEL  "MME_SCENARIO_PLAYER_LOG_LEVEL"
 #define LOG_CONFIG_STRING_MSC_LOG_LEVEL                  "MSC_LOG_LEVEL"
 #define LOG_CONFIG_STRING_NAS_LOG_LEVEL                  "NAS_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
@@ -107,6 +100,7 @@ typedef enum {
   LOG_UTIL,
   LOG_CONFIG,
   LOG_MSC,
+  LOG_MME_SCENARIO_PLAYER,
   LOG_ITTI,
   MAX_LOG_PROTOS,
 } log_proto_t;
@@ -119,16 +113,15 @@ typedef struct log_thread_ctxt_s {
   pthread_t tid;
 } log_thread_ctxt_t;
 
-/*! \struct  log_queue_item_t
+/*! \struct  log_private_t
 * \brief Structure containing a string to be logged.
 * This structure is pushed in thread safe queues by thread producers of logs.
 * This structure is then popped by a dedicated thread that will write the string
 * in the opened stream ( file, tcp, stdout)
 */
-typedef struct log_queue_item_s {
-  int32_t                                 log_level; /*!< \brief log level for syslog. */
-  bstring                                 bstr;      /*!< \brief string containing the message. */
-} log_queue_item_t;
+typedef struct log_private_s {
+  int32_t                                 log_level; /*!< \brief log level. */
+} log_private_t;
 
 /*! \struct  log_config_t
 * \brief Structure containing the dynamically configurable parameters of the Logging facilities.
@@ -149,6 +142,7 @@ typedef struct log_config_s {
   log_level_t   s6a_log_level;      /*!< \brief S6a layer log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   util_log_level;     /*!< \brief Misc utilities log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   msc_log_level;      /*!< \brief MSC utility log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   mme_scenario_player_log_level; /*!< \brief scenario player log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   itti_log_level;     /*!< \brief ITTI layer log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   uint8_t       asn1_verbosity_level; /*!< \brief related to asn1c generated code for S1AP verbosity level */
   bool          color;              /*!< \brief use of ANSI styling codes or no */
@@ -168,7 +162,10 @@ int log_init(
 
 void log_itti_connect(void);
 void log_start_use(void);
-void log_flush_messages(void) __attribute__ ((hot));
+
+struct shared_log_queue_item_s;
+
+void log_flush_message (struct shared_log_queue_item_s *item_p) __attribute__ ((hot));
 void log_exit(void);
 
 void log_stream_hex(
@@ -190,18 +187,17 @@ void log_stream_hex_array(
   const size_t sizeP);
 
 void log_message_add (
-  log_queue_item_t * contextP,
+  struct shared_log_queue_item_s * contextP,
   char *format,
   ...) __attribute__ ((format (printf, 2, 3)));
 
-void log_message_finish (
-  log_queue_item_t * contextP);
+void log_message_finish (struct shared_log_queue_item_s * contextP);
 
 void log_message_start (
   log_thread_ctxt_t * const thread_ctxtP,
   const log_level_t log_levelP,
   const log_proto_t protoP,
-  log_queue_item_t ** contextP, // Out parameter
+  struct shared_log_queue_item_s ** contextP, // Out parameter
   const char *const source_fileP,
   const unsigned int line_numP,
   char *format,
@@ -238,7 +234,6 @@ int log_get_start_time_sec (void);
 #    define OAILOG_LEVEL_STR2INT                                        log_level_str2int
 #    define OAILOG_LEVEL_INT2STR                                        log_level_int2str
 #    define OAILOG_INIT                                                 log_init
-#    define OAILOG_START_USE                                            log_start_use
 #    define OAILOG_ITTI_CONNECT                                         log_itti_connect
 #    define OAILOG_EXIT()                                               log_exit()
 #    define OAILOG_SPEC(pRoTo, ...)                                     do { log_message(NULL, OAILOG_LEVEL_NOTICE,   pRoTo, __FILE__, __LINE__, ##__VA_ARGS__); } while(0)/*!< \brief 3GPP trace on specifications */
@@ -268,13 +263,13 @@ int log_get_start_time_sec (void);
 #        define OAILOG_STREAM_HEX_ARRAY(pRoTo, mEsSaGe, sTrEaM, sIzE)       do { log_stream_hex_array(OAILOG_LEVEL_TRACE, pRoTo, __FILE__, __LINE__, mEsSaGe, sTrEaM, sIzE); } while(0) /*!< \brief trace buffer content with indexes */
 #      endif
 #    endif
+#    include "shared_ts_log.h"
 #  else
 #    define OAILOG_SPEC(...)
 #    define OAILOG_SET_CONFIG(a)
 #    define OAILOG_LEVEL_STR2INT(a)                                     OAILOG_LEVEL_EMERGENCY
 #    define OAILOG_LEVEL_INT2STR(a)                                     "EMERGENCY"
 #    define OAILOG_INIT(a,b,c)                                          0
-#    define OAILOG_START_USE()
 #    define OAILOG_ITTI_CONNECT()
 #    define OAILOG_EXIT()
 #    define OAILOG_EMERGENCY(...)

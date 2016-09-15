@@ -39,7 +39,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include <stdint.h>
-
+#include <stdbool.h>
 #include <string.h>             // memset
 #include <stdlib.h>             // malloc, free
 #include <sys/time.h>           // setitimer
@@ -53,6 +53,7 @@
 #endif
 #include "nas_timer.h"
 #include "commonDef.h"
+#include "common_defs.h"
 #include "msc.h"
 #include "dynamic_memory_check.h"
 
@@ -497,7 +498,7 @@ _nas_timer_handler (
      * TODO: Check returned result ???
      */
     if (result) {
-      free_wrapper (result);
+      free_wrapper ((void**)&result);
     }
   }
 }
@@ -669,7 +670,7 @@ _nas_timer_db_delete_entry (
    * Delete the timer entry from the queue
    */
   _nas_timer_db.tq[id].id = NAS_TIMER_INACTIVE_ID;
-  free_wrapper (_nas_timer_db.tq[id].entry);
+  free_wrapper ((void**)&_nas_timer_db.tq[id].entry);
   _nas_timer_db.tq[id].entry = NULL;
 }
 

@@ -37,12 +37,20 @@
         the EMMREG Service Access Point.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
 
 #include "emm_fsm.h"
 #include "commonDef.h"
 #include "log.h"
+#include "common_defs.h"
 #include "mme_api.h"
-#include "emmData.h"
+#include "emm_data.h"
 #include "assertions.h"
 #include "msc.h"
 
@@ -178,7 +186,7 @@ emm_fsm_set_status (
   emm_fsm_state_t status)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
+  emm_context_t                     *emm_ctx = (emm_context_t *) ctx;
 
   DevAssert (emm_ctx);
   if (status < EMM_STATE_MAX) {
@@ -213,11 +221,11 @@ emm_fsm_get_status (
     mme_ue_s1ap_id_t ue_id,
   void *ctx)
 {
-  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
+  emm_context_t                     *emm_ctx = (emm_context_t *) ctx;
 
   if (emm_ctx == NULL) {
     OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - try again get context ue_id " MME_UE_S1AP_ID_FMT "\n", ue_id);
-    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+    emm_ctx = emm_context_get (&_emm_data, ue_id);
   }
 
   if (emm_ctx ) {
@@ -252,7 +260,7 @@ emm_fsm_process (
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   primitive = evt->primitive;
-  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) evt->ctx;
+  emm_context_t                     *emm_ctx = (emm_context_t *) evt->ctx;
 
   if (emm_ctx) {
     status = emm_fsm_get_status (evt->ue_id, emm_ctx);

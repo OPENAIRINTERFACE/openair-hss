@@ -37,6 +37,9 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <stdbool.h>
+
+#include "bstrlib.h"
 
 #include "assertions.h"
 #include "queue.h"
@@ -259,8 +262,6 @@ udp_intertask_interface (
   struct epoll_event                     *events = NULL;
 
   itti_mark_task_ready (TASK_UDP);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;

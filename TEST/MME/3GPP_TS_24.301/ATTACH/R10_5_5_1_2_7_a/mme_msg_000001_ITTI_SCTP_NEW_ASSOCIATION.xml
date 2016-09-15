@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_SCTP_NEW_ASSOCIATION>
+  <ACTION>SEND</ACTION>
+  <ITTI_SENDER_TASK>9</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>7</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>32.610522</TIMESTAMP>
+  <number_inbound_streams>2</number_inbound_streams>
+  <number_outbound_streams>2</number_outbound_streams>
+  <sctp_assoc_id>56</sctp_assoc_id>
+</ITTI_SCTP_NEW_ASSOCIATION>

@@ -40,17 +40,24 @@
         (IMSI, IMEI).
 
 *****************************************************************************/
-#include <stdlib.h>             // malloc, free_wrapper
-#include <string.h>             // memcpy
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "bstrlib.h"
 
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "log.h"
 #include "msc.h"
+#include "common_defs.h"
 #include "nas_timer.h"
 #include "3gpp_requirements_24.301.h"
 #include "emm_proc.h"
-#include "emmData.h"
+#include "emm_data.h"
 #include "emm_sap.h"
 #include "conversions.h"
 
@@ -91,18 +98,6 @@ static int _identification_non_delivered (void *args);
 */
 static int _identification_abort (void *);
 
-/*
-   Internal data used for identification procedure
-*/
-typedef struct {
-  unsigned int                            ue_id; /* UE identifier        */
-#define IDENTIFICATION_COUNTER_MAX  5
-  unsigned int                            retransmission_count; /* Retransmission counter   */
-  emm_proc_identity_type_t                type; /* Type of UE identity      */
-  bool                                    notify_failure;       /* Indicates whether the identification
-                                                                 * procedure failure shall be notified
-                                                                 * to the ongoing EMM procedure */
-} identification_data_t;
 
 static int                              _identification_request (
   identification_data_t * data);
@@ -148,8 +143,7 @@ static int                              _identification_request (
  ********************************************************************/
 int
 emm_proc_identification (
-  mme_ue_s1ap_id_t ue_id,
-  emm_data_context_t * emm_ctx,
+  emm_context_t * emm_ctx,
   emm_proc_identity_type_t type,
   emm_common_success_callback_t success,
   emm_common_reject_callback_t reject,
@@ -158,58 +152,64 @@ emm_proc_identification (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  REQUIREMENT_3GPP_24_301(R10_5_4_4_1);
+  if (emm_ctx) {
+    REQUIREMENT_3GPP_24_301(R10_5_4_4_1);
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate identification type = %s (%d), ctx = %p\n", _emm_identity_type_str[type], type, emm_ctx);
-  /*
-   * Allocate parameters of the retransmission timer callback
-   */
-  identification_data_t                  *data = (identification_data_t *) malloc (sizeof (identification_data_t));
-
-  if (data) {
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate identification type = %s (%d), ctx = %p\n", _emm_identity_type_str[type], type, emm_ctx);
     /*
-     * Setup ongoing EMM procedure callback functions
+     * Allocate parameters of the retransmission timer callback
      */
-    rc = emm_proc_common_initialize (ue_id, success, reject, failure, _identification_ll_failure, _identification_non_delivered, _identification_abort, data);
-
-    if (rc != RETURNok) {
-      OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
-      free_wrapper (data);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+    if (emm_ctx->common_proc) {
+      emm_common_cleanup(emm_ctx->common_proc);
     }
+    emm_ctx->common_proc = (emm_common_data_t *) calloc (1, sizeof (*emm_ctx->common_proc));
 
-    /*
-     * Set the UE identifier
-     */
-    data->ue_id = ue_id;
-    /*
-     * Reset the retransmission counter
-     */
-    data->retransmission_count = 0;
-    /*
-     * Set the type of the requested identity
-     */
-    data->type = type;
-    /*
-     * Set the failure notification indicator
-     */
-    data->notify_failure = false;
-    /*
-     * Send identity request message to the UE
-     */
-    rc = _identification_request (data);
-
-    if (rc != RETURNerror) {
+    if (emm_ctx->common_proc) {
       /*
-       * Notify EMM that common procedure has been initiated
+       * Setup ongoing EMM procedure callback functions
        */
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " (identification)", ue_id);
-      emm_sap_t                               emm_sap = {0};
+      rc = emm_proc_common_initialize (emm_ctx, EMM_COMMON_PROC_TYPE_IDENTIFICATION, emm_ctx->common_proc,
+          success, reject, failure, _identification_ll_failure, _identification_non_delivered, _identification_abort);
 
-      emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
-      emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx = emm_ctx;
-      rc = emm_sap_send (&emm_sap);
+      if (rc != RETURNok) {
+        OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
+        free_wrapper ((void**)&emm_ctx->common_proc);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+      }
+
+      /*
+       * Set the UE identifier
+       */
+      emm_ctx->common_proc->common_arg.u.identification_data.ue_id = emm_ctx->ue_id;
+      /*
+       * Reset the retransmission counter
+       */
+      emm_ctx->common_proc->common_arg.u.identification_data.retransmission_count = 0;
+      /*
+       * Set the type of the requested identity
+       */
+      emm_ctx->common_proc->common_arg.u.identification_data.type = type;
+      /*
+       * Set the failure notification indicator
+       */
+      emm_ctx->common_proc->common_arg.u.identification_data.notify_failure = false;
+      /*
+       * Send identity request message to the UE
+       */
+      rc = _identification_request (&emm_ctx->common_proc->common_arg.u.identification_data);
+
+      if (rc != RETURNerror) {
+        /*
+         * Notify EMM that common procedure has been initiated
+         */
+        MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " (identification)", emm_ctx->ue_id);
+        emm_sap_t                               emm_sap = {0};
+
+        emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
+        emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
+        emm_sap.u.emm_reg.ctx = emm_ctx;
+        rc = emm_sap_send (&emm_sap);
+      }
     }
   }
 
@@ -248,17 +248,17 @@ emm_proc_identification_complete (
 {
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
-  emm_data_context_t                     *emm_ctx = NULL;
+  emm_context_t                     *emm_ctx = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Identification complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Release retransmission timer parameters
    */
-  identification_data_t                  *data = (identification_data_t *) (emm_proc_common_get_args (ue_id));
+  //identification_data_t                  *data = (identification_data_t *) (emm_proc_common_get_args (ue_id));
 
   // Get the UE context
-  emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+  emm_ctx = emm_context_get (&_emm_data, ue_id);
 
   if (emm_ctx) {
     REQUIREMENT_3GPP_24_301(R10_5_4_4_4);
@@ -267,10 +267,7 @@ emm_proc_identification_complete (
      */
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
     emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-    /* For memo: double free
-    if (data) {
-      free_wrapper (data);
-    }*/
+
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
     if (imsi) {
@@ -416,7 +413,7 @@ _identification_request (
 {
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNok;
-  struct emm_data_context_s              *emm_ctx = NULL;
+  struct emm_context_s              *emm_ctx = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   /*
@@ -430,7 +427,7 @@ _identification_request (
   emm_sap.u.emm_as.u.security.msg_type = EMM_AS_MSG_TYPE_IDENT;
   emm_sap.u.emm_as.u.security.ident_type = data->type;
 
-  emm_ctx = emm_data_context_get (&_emm_data, data->ue_id);
+  emm_ctx = emm_context_get (&_emm_data, data->ue_id);
 
   /*
    * Setup EPS NAS security data
@@ -520,13 +517,13 @@ _identification_abort (
   if (data) {
     unsigned int                            ue_id = data->ue_id;
     int                                     notify_failure = data->notify_failure;
-    struct emm_data_context_s              *emm_ctx = NULL;
+    struct emm_context_s              *emm_ctx = NULL;
 
     /*
      * Get the UE context
      */
 
-    emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+    emm_ctx = emm_context_get (&_emm_data, ue_id);
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort identification procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
@@ -560,7 +557,6 @@ _identification_abort (
     /*
      * Release retransmission timer parameters
      */
-    free_wrapper (data);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

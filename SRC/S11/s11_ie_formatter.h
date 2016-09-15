@@ -135,7 +135,7 @@ int s11_pco_ie_set (NwGtpv2cMsgHandleT * msg,
 NwRcT s11_paa_ie_get(
   uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
-int s11_paa_ie_set(NwGtpv2cMsgHandleT *msg, const PAA_t *paa);
+int s11_paa_ie_set(NwGtpv2cMsgHandleT *msg, const paa_t *paa);
 
 /* Access Point Name Information Element
  * 3GPP TS 29.274 #8.6

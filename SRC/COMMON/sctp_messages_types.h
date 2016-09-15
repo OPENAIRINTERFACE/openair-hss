@@ -33,6 +33,7 @@
 #define SCTP_DATA_REQ(mSGpTR)           (mSGpTR)->ittiMsg.sctp_data_req
 #define SCTP_DATA_CNF(mSGpTR)           (mSGpTR)->ittiMsg.sctp_data_cnf
 #define SCTP_INIT_MSG(mSGpTR)           (mSGpTR)->ittiMsg.sctpInit
+#define SCTP_NEW_ASSOCIATION(mSGpTR)    (mSGpTR)->ittiMsg.sctp_new_peer
 #define SCTP_CLOSE_ASSOCIATION(mSGpTR)  (mSGpTR)->ittiMsg.sctp_close_association
 
 

@@ -29,42 +29,21 @@
 #ifndef FILE_S1AP_MESSAGES_TYPES_SEEN
 #define FILE_S1AP_MESSAGES_TYPES_SEEN
 
+#include "3gpp_36.401.h"
+#include "3gpp_23.003.h"
+
 #define S1AP_ENB_DEREGISTERED_IND(mSGpTR)   (mSGpTR)->ittiMsg.s1ap_eNB_deregistered_ind
 #define S1AP_DEREGISTER_UE_REQ(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_deregister_ue_req
 #define S1AP_UE_CONTEXT_RELEASE_REQ(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_req
 #define S1AP_UE_CONTEXT_RELEASE_COMMAND(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_command
 #define S1AP_UE_CONTEXT_RELEASE_COMPLETE(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_complete
 
+// NOT a ITTI message
 typedef struct itti_s1ap_initial_ue_message_s {
   mme_ue_s1ap_id_t     mme_ue_s1ap_id;
   enb_ue_s1ap_id_t     enb_ue_s1ap_id:24;
   ecgi_t                e_utran_cgi;
 } itti_s1ap_initial_ue_message_t;
-
-typedef struct itti_s1ap_initial_ctxt_setup_req_s {
-  mme_ue_s1ap_id_t        mme_ue_s1ap_id;
-  enb_ue_s1ap_id_t        enb_ue_s1ap_id:24;
-
-  /* Key eNB */
-  uint8_t                 kenb[32];
-
-  ambr_t                  ambr;
-  ambr_t                  apn_ambr;
-
-  /* EPS bearer ID */
-  unsigned                ebi:4;
-
-  /* QoS */
-  qci_t                   qci;
-  priority_level_t        prio_level;
-  pre_emp_vulnerability_t pre_emp_vulnerability;
-  pre_emp_capability_t    pre_emp_capability;
-
-  /* S-GW TEID for user-plane */
-  teid_t                  teid;
-  /* S-GW IP address for User-Plane */
-  ip_address_t            s_gw_address;
-} itti_s1ap_initial_ctxt_setup_req_t;
 
 typedef struct itti_s1ap_ue_cap_ind_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;

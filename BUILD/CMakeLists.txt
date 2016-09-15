@@ -222,7 +222,7 @@ add_boolean_option( ENABLE_ITTI_ANALYZER            False    "ITTI Analyzer is a
 add_integer_option( ITTI_TASK_STACK_SIZE            0        "pthread allocated stack size in bytes of an ITTI task, if 0, use default stack size ") 
 add_integer_option( ITTI_LITE                       0        "Do not use ITTI systematically for each message exchanged between layer modules") 
 add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
-add_boolean_option( DISABLE_EXECUTE_SHELL_COMMAND   False    "disable execution of C int system(const char *command);")
+add_boolean_option( GTP_KERNEL_MODULE_UNAVAILABLE   False    "disable calls to GTP kernel API")
 # NAS LAYER OPTIONS
 ##########################
 add_boolean_option( EPC_BUILD                       False    "BUILD MME-xGW executable")
@@ -243,6 +243,7 @@ add_boolean_option( NAS_FORCE_REJECT_SR             True     "TEMP, TO be disabl
 add_boolean_option( NAS_FORCE_REJECT_TAU            True     "TEMP, TO be disabled for community after development and test: Force the EMM NAS layer to respond to any TAU Request by reject")
 
 add_boolean_option( TRACE_3GPP_SPEC                 True     "Log hits of 3GPP specifications requirements")
+add_boolean_option( TRACE_XML                       False     "Log NAS,...(to be continued) messages in XML")
 
 
 set (ITTI_DIR ${OPENAIRCN_DIR}/SRC/COMMON/ITTI)
@@ -270,6 +271,34 @@ if (${ENABLE_ITTI})
     
   set(ITTI_LIB ITTI)
 endif (${ENABLE_ITTI})
+
+add_library(3GPP_TYPES
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_cc_ies.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_common_ies.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_mm_ies.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_gmm_ies.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_gprs_common_ies.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_sm_ies.c)
+set(3GPP_TYPES_LIB 3GPP_TYPES)
+
+add_library(3GPP_TYPES_XML
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_23.003_xml.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.007_xml.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_cc_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_common_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_mm_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_gmm_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_gprs_common_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_sm_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_common_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_emm_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_esm_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_emm_msg_xml.c
+  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_esm_msg_xml.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_36.331_xml.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_36.401_xml.c)
+set(3GPP_TYPES_XML_LIB 3GPP_TYPES_XML)
 
 
 ###############################################################################
@@ -417,6 +446,36 @@ endif()
 include_directories(${OPENAIRCN_DIR}/SRC/UTILS/MSC/msc)
 
 
+if (TRACE_XML)
+  add_library(XML_MSG_DUMP  
+    ${OPENAIRCN_DIR}/SRC/UTILS/xml_msg_dump.c
+    ${OPENAIRCN_DIR}/SRC/UTILS/xml_msg_dump_itti.c
+  )
+  set(XML_MSG_DUMP_LIB XML_MSG_DUMP)
+endif()
+
+add_library(SCENARIO_PLAYER
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_play.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_rx_itti.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_load.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_task.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/xml_msg_load_itti.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/xml_load.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_23.003_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.007_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.008_common_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_emm_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_emm_msg_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_esm_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_esm_msg_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_36.401_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_nas_message_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_xml_load.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_common_xml.c
+)
+include_directories(${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/)
+
 ###############################################################################
 # Security library
 ###############################################################################
@@ -444,8 +503,10 @@ set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
   ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
   ${OPENAIRCN_DIR}/SRC/UTILS/pid_file.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/shared_ts_log.c
   ${OPENAIRCN_DIR}/SRC/UTILS/TLVEncoder.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/TLVDecoder.c  
+  ${OPENAIRCN_DIR}/SRC/UTILS/TLVDecoder.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/xml2_wrapper.c
   )
 
 if (LOG_OAI)
@@ -533,7 +594,6 @@ set(MME_DIR ${OPENAIRCN_DIR}/SRC/MME_APP)
 add_library(MME_APP
   ${MME_DIR}/mme_app_capabilities.c
   ${MME_DIR}/mme_app_context.c
-  ${MME_DIR}/mme_app_if_nas_transport.c
   ${MME_DIR}/mme_app_main.c
   ${MME_DIR}/mme_app_bearer.c
   ${MME_DIR}/mme_app_authentication.c
@@ -613,26 +673,16 @@ set(libnas_esm_msg_OBJS
 )
 
 set(libnas_ies_OBJS
-  ${NAS_SRC}IES/AccessPointName.c
   ${NAS_SRC}IES/AdditionalUpdateResult.c
   ${NAS_SRC}IES/AdditionalUpdateType.c
   ${NAS_SRC}IES/ApnAggregateMaximumBitRate.c
-  ${NAS_SRC}IES/AuthenticationFailureParameter.c
-  ${NAS_SRC}IES/AuthenticationParameterAutn.c
-  ${NAS_SRC}IES/AuthenticationParameterRand.c
-  ${NAS_SRC}IES/AuthenticationResponseParameter.c
-  ${NAS_SRC}IES/CipheringKeySequenceNumber.c
   ${NAS_SRC}IES/Cli.c
   ${NAS_SRC}IES/CsfbResponse.c
-  ${NAS_SRC}IES/DaylightSavingTime.c
   ${NAS_SRC}IES/DetachType.c
-  ${NAS_SRC}IES/DrxParameter.c
-  ${NAS_SRC}IES/EmergencyNumberList.c
   ${NAS_SRC}IES/EmmCause.c
   ${NAS_SRC}IES/EpsAttachResult.c
   ${NAS_SRC}IES/EpsAttachType.c
   ${NAS_SRC}IES/EpsBearerContextStatus.c
-  ${NAS_SRC}IES/EpsBearerIdentity.c
   ${NAS_SRC}IES/EpsMobileIdentity.c
   ${NAS_SRC}IES/EpsNetworkFeatureSupport.c
   ${NAS_SRC}IES/EpsQualityOfService.c
@@ -641,56 +691,31 @@ set(libnas_ies_OBJS
   ${NAS_SRC}IES/EsmCause.c
   ${NAS_SRC}IES/EsmInformationTransferFlag.c
   ${NAS_SRC}IES/EsmMessageContainer.c
-  ${NAS_SRC}IES/GprsTimer.c
   ${NAS_SRC}IES/GutiType.c
-  ${NAS_SRC}IES/IdentityType2.c
-  ${NAS_SRC}IES/ImeisvRequest.c
   ${NAS_SRC}IES/KsiAndSequenceNumber.c
   ${NAS_SRC}IES/LcsClientIdentity.c
   ${NAS_SRC}IES/LcsIndicator.c
   ${NAS_SRC}IES/LinkedEpsBearerIdentity.c
-  ${NAS_SRC}IES/LlcServiceAccessPointIdentifier.c
-  ${NAS_SRC}IES/LocationAreaIdentification.c
   ${NAS_SRC}IES/MessageType.c
-  ${NAS_SRC}IES/MobileIdentity.c
-  ${NAS_SRC}IES/MobileStationClassmark2.c
-  ${NAS_SRC}IES/MobileStationClassmark3.c
-  ${NAS_SRC}IES/MsNetworkCapability.c
-  ${NAS_SRC}IES/MsNetworkFeatureSupport.c
   ${NAS_SRC}IES/NasKeySetIdentifier.c
   ${NAS_SRC}IES/NasMessageContainer.c
   ${NAS_SRC}IES/NasRequestType.c
   ${NAS_SRC}IES/NasSecurityAlgorithms.c
-  ${NAS_SRC}IES/NetworkName.c
   ${NAS_SRC}IES/Nonce.c
-  ${NAS_SRC}IES/PacketFlowIdentifier.c
   ${NAS_SRC}IES/PagingIdentity.c
   ${NAS_SRC}IES/PdnAddress.c
   ${NAS_SRC}IES/PdnType.c
-  ${NAS_SRC}IES/PlmnList.c
-  ${NAS_SRC}IES/ProcedureTransactionIdentity.c
-  ${NAS_SRC}IES/ProtocolConfigurationOptions.c
-  ${NAS_SRC}IES/ProtocolDiscriminator.c
-  ${NAS_SRC}IES/PTmsiSignature.c
-  ${NAS_SRC}IES/QualityOfService.c
   ${NAS_SRC}IES/RadioPriority.c
   ${NAS_SRC}IES/SecurityHeaderType.c
   ${NAS_SRC}IES/ServiceType.c
   ${NAS_SRC}IES/ShortMac.c
   ${NAS_SRC}IES/SsCode.c
-  ${NAS_SRC}IES/SupportedCodecList.c
-  ${NAS_SRC}IES/TimeZoneAndTime.c
-  ${NAS_SRC}IES/TimeZone.c
-  ${NAS_SRC}IES/TmsiStatus.c
   ${NAS_SRC}IES/TrackingAreaIdentity.c
   ${NAS_SRC}IES/TrackingAreaIdentityList.c
   ${NAS_SRC}IES/TrafficFlowAggregateDescription.c
-  ${NAS_SRC}IES/TrafficFlowTemplate.c
-  ${NAS_SRC}IES/TransactionIdentifier.c
   ${NAS_SRC}IES/UeNetworkCapability.c
   ${NAS_SRC}IES/UeRadioCapabilityInformationUpdateNeeded.c
   ${NAS_SRC}IES/UeSecurityCapability.c
-  ${NAS_SRC}IES/VoiceDomainPreferenceAndUeUsageSetting.c
 )
 
 set (libnas_utils_OBJS
@@ -709,6 +734,7 @@ set(libnas_mme_emm_OBJS
   ${NAS_SRC}EMM/EmmCommon.c
   ${NAS_SRC}EMM/emm_data_ctx.c
   ${NAS_SRC}EMM/emm_main.c
+  ${NAS_SRC}EMM/emm_specific.c
   ${NAS_SRC}EMM/EmmStatusHdl.c
   ${NAS_SRC}EMM/Identification.c
   ${NAS_SRC}EMM/LowerLayer.c
@@ -755,8 +781,6 @@ set(libnas_mme_esm_sap_OBJS
   
 add_library(LIB_NAS_MME
   ${NAS_SRC}nas_itti_messaging.c
-  ${NAS_SRC}nas_if_s1.c
-  ${NAS_SRC}nas_if_s6a.c
   ${NAS_SRC}nas_network.c
   ${NAS_SRC}nas_proc.c
   ${libnas_api_OBJS}
@@ -858,34 +882,41 @@ add_executable(mme
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme_log.c
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme.c
   ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/itti_free_defined_msg.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/itti_getters.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/itti_comp.c
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
+  ${OPENAIRCN_DIR}/SRC/NAS/API/NETWORK/nas_message_xml.c
   )
+  
 if( ITTI_ANALYZER )
   add_executable(mme ${OPENAIRCN_BIN_DIR}/messages_xml.h )
 endif( ITTI_ANALYZER )
 target_link_libraries (mme
   -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC S11_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
+   LIB_NAS_MME S1AP_LIB S1AP_EPC S11_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN 
+   S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB} 
+   ${3GPP_TYPES_XML_LIB} CN_UTILS SCENARIO_PLAYER HASHTABLE BSTR 
   -Wl,--end-group
-  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
+  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} ${LIBXML2_LIBRARIES} gnutls fdproto fdcore
   )
 
 
-# spgw is S+P-GW  node implementation
+# spgw is S-GW +P-GW  nodes all in one implementation
 ################################
 add_executable(spgw
   ${OPENAIRCN_DIR}/SRC/OAI_SGW/oai_sgw.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/itti_free_defined_msg.c
   )
 if( ITTI_ANALYZER )
   add_executable(spgw ${OPENAIRCN_BIN_DIR}/messages_xml.h )
 endif( ITTI_ANALYZER )
 target_link_libraries (spgw
   -Wl,--start-group
-  GTPV1U SGW S11_SGW GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
+  GTPV1U SGW S11_SGW GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB} 
+   ${3GPP_TYPES_XML_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
-  pthread m rt gtpnl ${CONFIG_LIBRARIES}  
+  pthread m rt gtpnl ${CONFIG_LIBRARIES}  ${LIBXML2_LIBRARIES}  
   )
 
 # auth_request is a helper for scenario builder
@@ -922,7 +953,10 @@ enable_testing()
 
 add_subdirectory(${OPENAIRCN_DIR}/SRC/TEST/ ${CMAKE_CURRENT_BINARY_DIR}/TESTS/)
 
-add_test(NAME test_imsi_convert COMMAND test_mme_app_ue_context_imsi)
+add_test(NAME test_imsi_convert   COMMAND test_mme_app_ue_context_imsi)
+#add_test(NAME Test_aes128_cmac        COMMAND test_aes128_cmac)
+#add_test(NAME Test_aes128_ctr_decrypt COMMAND test_aes128_ctr_decrypt)
+#add_test(NAME Test_aes128_ctr_encrypt COMMAND test_aes128_ctr_encrypt)
 
 
 # TODO

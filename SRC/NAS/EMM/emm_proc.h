@@ -42,8 +42,7 @@ Description Defines the EPS Mobility Management procedures executed at
 #include "commonDef.h"
 #include "bstrlib.h"
 
-#include "EmmCommon.h"
-#include "emmData.h"
+#include "emm_data.h"
 
 #include "nas_message.h" //nas_message_decode_status_t
 
@@ -77,6 +76,8 @@ typedef enum {
   EMM_IDENT_TYPE_IMEISV,
   EMM_IDENT_TYPE_TMSI
 } emm_proc_identity_type_t;
+
+#include "EmmCommon.h"
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -162,8 +163,9 @@ int emm_proc_detach_request(mme_ue_s1ap_id_t ue_id, emm_proc_detach_type_t type,
  *              Identification procedure
  * --------------------------------------------------------------------------
  */
-int emm_proc_identification(mme_ue_s1ap_id_t                    ue_id,
-                            emm_data_context_t            *emm_ctx,
+struct emm_context_s;
+
+int emm_proc_identification(struct emm_context_s          *emm_ctx,
                             emm_proc_identity_type_t       type,
                             emm_common_success_callback_t  success,
                             emm_common_reject_callback_t   reject,
@@ -180,7 +182,7 @@ int emm_proc_identification_complete(const mme_ue_s1ap_id_t ue_id,
  * --------------------------------------------------------------------------
  */
 
-int emm_proc_authentication(void *ctx, mme_ue_s1ap_id_t ue_id, ksi_t ksi,
+int emm_proc_authentication(struct emm_context_s *ctx, mme_ue_s1ap_id_t ue_id, ksi_t ksi,
                             const uint8_t   * const rand,
                             const uint8_t   * const autn,
                             emm_common_success_callback_t success,

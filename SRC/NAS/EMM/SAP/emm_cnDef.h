@@ -71,8 +71,10 @@ typedef struct emm_cn_auth_fail_s {
   nas_cause_t cause;
 } emm_cn_auth_fail_t;
 
-typedef itti_nas_pdn_connectivity_rsp_t  emm_cn_pdn_res_t;
-typedef itti_nas_pdn_connectivity_fail_t emm_cn_pdn_fail_t;
+struct itti_nas_pdn_connectivity_rsp_s;
+struct itti_nas_pdn_connectivity_fail_s;
+typedef struct itti_nas_pdn_connectivity_rsp_s  emm_cn_pdn_res_t;
+typedef struct itti_nas_pdn_connectivity_fail_s emm_cn_pdn_fail_t;
 
 typedef struct emm_cn_deregister_ue_s {
   uint32_t ue_id;

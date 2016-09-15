@@ -42,8 +42,12 @@
         date certain UE specific parameters in the network.
 
 *****************************************************************************/
-#include <string.h>             // memcmp, memcpy
-#include <stdlib.h>             // malloc, free_wrapper
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
 #include "dynamic_memory_check.h"
 #include "assertions.h"
@@ -52,10 +56,12 @@
 #include "nas_timer.h"
 #include "3gpp_requirements_24.301.h"
 #include "emm_proc.h"
-#include "emmData.h"
+#include "common_defs.h"
+#include "emm_data.h"
 #include "emm_sap.h"
 #include "emm_cause.h"
-#include "EpsUpdateResult.h"
+#include "mme_config.h"
+
 
 
 /****************************************************************************/
@@ -71,18 +77,10 @@
      Internal data handled by the tracking area update procedure in the MME
    --------------------------------------------------------------------------
 */
-/*
-   Internal data used for attach procedure
-*/
-typedef struct tau_accept_data_s {
-  unsigned int                            ue_id; /* UE identifier        */
-#define TAU_COUNTER_MAX  5
-  unsigned int                            retransmission_count; /* Retransmission counter   */
 
-} tau_accept_data_t;
 
 int emm_network_capability_have_changed (
-  const emm_data_context_t * ctx,
+  const emm_context_t * ctx,
   int eea,
   int eia,
   int ucs2,
@@ -92,7 +90,7 @@ int emm_network_capability_have_changed (
   int umts_present,
   int gprs_present);
 
-int                                     emm_proc_tracking_area_update_request (
+int emm_proc_tracking_area_update_request (
   const mme_ue_s1ap_id_t ue_id,
   tracking_area_update_request_msg * const msg,
   int *emm_cause,
@@ -101,7 +99,7 @@ int                                     emm_proc_tracking_area_update_request (
 static int _emm_tracking_area_update (void *args);
 static int _emm_tracking_area_update_security (void *args);
 static int _emm_tracking_area_update_reject (void *args);
-static int _emm_tracking_area_update_accept (emm_data_context_t * emm_ctx,tau_accept_data_t * data);
+static int _emm_tracking_area_update_accept (emm_context_t * emm_ctx, tau_data_t * data);
 static int _emm_tracking_area_update_abort (void *args);
 
 
@@ -110,7 +108,7 @@ static int _emm_tracking_area_update_abort (void *args);
 /****************************************************************************/
 int
 emm_network_capability_have_changed (
-  const emm_data_context_t * ctx,
+  const emm_context_t * ctx,
   int eea,
   int eia,
   int ucs2,
@@ -180,9 +178,8 @@ emm_network_capability_have_changed (
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, false);
 }
 
-
-int
-emm_proc_tracking_area_update_request (
+//------------------------------------------------------------------------------
+int emm_proc_tracking_area_update_request (
   const mme_ue_s1ap_id_t ue_id,
   tracking_area_update_request_msg *const msg,
   int *emm_cause,
@@ -190,29 +187,29 @@ emm_proc_tracking_area_update_request (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                     *ue_ctx = NULL;
+  emm_context_t                     *ue_ctx = NULL;
 
   /*
    * Get the UE's EMM context if it exists
    */
 
-  ue_ctx = emm_data_context_get (&_emm_data, ue_id);
+  ue_ctx = emm_context_get (&_emm_data, ue_id);
 
   // May be the MME APP module did not find the context, but if we have the GUTI, we may find it
   if (! ue_ctx) {
     if (EPS_MOBILE_IDENTITY_GUTI == msg->oldguti.guti.typeofidentity) {
       guti_t guti;
-      guti.m_tmsi = msg->oldguti.guti.mtmsi;
-      guti.gummei.mme_gid = msg->oldguti.guti.mmegroupid;
-      guti.gummei.mme_code = msg->oldguti.guti.mmecode;
-      guti.gummei.plmn.mcc_digit1 = msg->oldguti.guti.mccdigit1;
-      guti.gummei.plmn.mcc_digit2 = msg->oldguti.guti.mccdigit2;
-      guti.gummei.plmn.mcc_digit3 = msg->oldguti.guti.mccdigit3;
-      guti.gummei.plmn.mnc_digit1 = msg->oldguti.guti.mncdigit1;
-      guti.gummei.plmn.mnc_digit2 = msg->oldguti.guti.mncdigit2;
-      guti.gummei.plmn.mnc_digit3 = msg->oldguti.guti.mncdigit3;
+      guti.m_tmsi = msg->oldguti.guti.m_tmsi;
+      guti.gummei.mme_gid = msg->oldguti.guti.mme_group_id;
+      guti.gummei.mme_code = msg->oldguti.guti.mme_code;
+      guti.gummei.plmn.mcc_digit1 = msg->oldguti.guti.mcc_digit1;
+      guti.gummei.plmn.mcc_digit2 = msg->oldguti.guti.mcc_digit2;
+      guti.gummei.plmn.mcc_digit3 = msg->oldguti.guti.mcc_digit3;
+      guti.gummei.plmn.mnc_digit1 = msg->oldguti.guti.mnc_digit1;
+      guti.gummei.plmn.mnc_digit2 = msg->oldguti.guti.mnc_digit2;
+      guti.gummei.plmn.mnc_digit3 = msg->oldguti.guti.mnc_digit3;
 
-      ue_ctx = emm_data_context_get_by_guti (&_emm_data, &guti);
+      ue_ctx = emm_context_get_by_guti (&_emm_data, &guti);
 
       if ( ue_ctx) {
         //TODO
@@ -273,7 +270,7 @@ emm_proc_tracking_area_update_request (
   /*
    * Requirement MME24.301R10_5.5.3.2.4_6
    */
-  if ( EPS_UPDATE_TYPE_PERIODIC_UPDATING == msg->epsupdatetype.epsupdatetypevalue) {
+  if ( EPS_UPDATE_TYPE_PERIODIC_UPDATING == msg->epsupdatetype.eps_update_type_value) {
 /*
  * MME24.301R10_5.5.3.2.4_6 Normal and periodic tracking area updating procedure accepted by the network UE - EPS update type
  * If the EPS update type IE included in the TRACKING AREA UPDATE REQUEST message indicates "periodic updating", and the UE was
@@ -289,7 +286,7 @@ emm_proc_tracking_area_update_request (
    * If the "active" flag is included in the TRACKING AREA UPDATE REQUEST message, the MME shall re-establish
    * the radio and S1 bearers for all active EPS bearer contexts..
    */
-  if ( 0 < msg->epsupdatetype.activeflag) {
+  if ( 0 < msg->epsupdatetype.active_flag) {
 //#pragma message  "TODO Requirement MME24.301R10_5.5.3.2.4_12: Request: re-establish the radio and S1 bearers for all active EPS bearer contexts (S11 Modify Bearer Request)"
 
   } else {
@@ -459,9 +456,9 @@ int emm_proc_tracking_area_update_reject (
   /*
    * Create temporary UE context
    */
-  emm_data_context_t                      ue_ctx;
+  emm_context_t                      ue_ctx;
 
-  memset (&ue_ctx, 0, sizeof (emm_data_context_t));
+  memset (&ue_ctx, 0, sizeof (emm_context_t));
   ue_ctx.is_dynamic = false;
   ue_ctx.ue_id = ue_id;
   /*
@@ -485,24 +482,27 @@ int emm_proc_tracking_area_update_reject (
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
 
-static int
-_emm_tracking_area_update (
-    void *args)
+static int _emm_tracking_area_update (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
-  tau_accept_data_t                      *data = (tau_accept_data_t *) calloc (1, sizeof (tau_accept_data_t));
+  emm_context_t                          *emm_ctx = (emm_context_t *) (args);
+  tau_data_t                             *data = (tau_data_t *) calloc (1, sizeof (tau_data_t));
 
-  if (data ) {
+  if (emm_ctx->emm_specific_proc_data) {
+    emm_proc_specific_cleanup(emm_ctx->emm_specific_proc_data);
+  }
+  emm_ctx->emm_specific_proc_data = (emm_specific_procedure_data_t *) calloc (1, sizeof (*emm_ctx->emm_specific_proc_data));
+
+  if (emm_ctx->emm_specific_proc_data ) {
     /*
      * Setup ongoing EMM procedure callback functions
      */
-    rc = emm_proc_common_initialize (emm_ctx->ue_id, NULL, NULL, NULL, NULL, NULL, _emm_tracking_area_update_abort, data);
+    AssertFatal(0, "TODO Code commented");
+    rc = emm_proc_specific_initialize (emm_ctx, EMM_SPECIFIC_PROC_TYPE_TAU, emm_ctx->emm_specific_proc_data, NULL, NULL, NULL, NULL, NULL, _emm_tracking_area_update_abort);
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions");
-      free_wrapper (data);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
@@ -545,12 +545,10 @@ During this period the network acts as described for case a above.
 @param [in]args TAU accept data
 */
 //------------------------------------------------------------------------------
-static void                            *
-_emm_tau_t3450_handler (
-  void *args)
+static void *_emm_tau_t3450_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  tau_accept_data_t                      *data = (tau_accept_data_t *) (args);
+  tau_data_t                      *data = (tau_data_t *) (args);
 
   // Requirement MME24.301R10_5.5.3.2.7_c Abnormal cases on the network side - T3450 time-out
   /*
@@ -561,7 +559,7 @@ _emm_tau_t3450_handler (
   /*
    * Get the UE's EMM context
    */
-  emm_data_context_t *emm_ctx = emm_ctx = emm_data_context_get (&_emm_data, data->ue_id);
+  emm_context_t *emm_ctx = emm_ctx = emm_context_get (&_emm_data, data->ue_id);
 
   if (data->retransmission_count < TAU_COUNTER_MAX) {
     /*
@@ -584,13 +582,12 @@ _emm_tau_t3450_handler (
      @returns status of operation
 */
 //------------------------------------------------------------------------------
-static int
-_emm_tracking_area_update_security (
+static int _emm_tracking_area_update_security (
   void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
+  emm_context_t                          *emm_ctx = (emm_context_t *) (args);
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Setup NAS security (ue_id=" MME_UE_S1AP_ID_FMT ")", emm_ctx->ue_id);
 
@@ -631,13 +628,12 @@ _emm_tracking_area_update_security (
      @returns status of operation
 */
 //------------------------------------------------------------------------------
-static int
-_emm_tracking_area_update_reject (
+static int _emm_tracking_area_update_reject (
   void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
+  emm_context_t                          *emm_ctx = (emm_context_t *) (args);
 
   if (emm_ctx) {
     emm_sap_t                               emm_sap = {0};
@@ -668,20 +664,18 @@ _emm_tracking_area_update_reject (
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-/** \fn void _emm_tracking_area_update_accept (emm_data_context_t * emm_ctx,tau_accept_data_t * data);
+/** \fn void _emm_tracking_area_update_accept (emm_context_t * emm_ctx,tau_accept_data_t * data);
     \brief Sends ATTACH ACCEPT message and start timer T3450.
      @param [in]emm_ctx UE EMM context data
      @param [in]data    UE TAU accept data
      @returns status of operation (RETURNok, RETURNerror)
 */
 //------------------------------------------------------------------------------
-static int
-_emm_tracking_area_update_accept (
-  emm_data_context_t * emm_ctx,
-  tau_accept_data_t * data)
+static int _emm_tracking_area_update_accept (
+  emm_context_t * emm_ctx,
+  tau_data_t * data)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     i = 0;
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
@@ -702,11 +696,7 @@ _emm_tracking_area_update_accept (
     // TODO Reminder
     emm_sap.u.emm_as.u.establish.guti = NULL;
 
-    emm_sap.u.emm_as.u.establish.tai_list.list_type = emm_ctx->_tai_list.list_type;
-    emm_sap.u.emm_as.u.establish.tai_list.n_tais    = emm_ctx->_tai_list.n_tais;
-    for (i=0; i < emm_ctx->_tai_list.n_tais; i++) {
-      memcpy(&emm_sap.u.emm_as.u.establish.tai_list.tai[i], &emm_ctx->_tai_list.tai[i], sizeof(tai_t));
-    }
+    memcpy(&emm_sap.u.emm_as.u.establish.tai_list, &emm_ctx->_tai_list, sizeof(tai_list_t));
     emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_TAU;
 
     // TODO Reminder
@@ -771,22 +761,20 @@ _emm_tracking_area_update_accept (
 }
 
 //------------------------------------------------------------------------------
-static int
-_emm_tracking_area_update_abort (
-  void *args)
+static int _emm_tracking_area_update_abort (void *args)
 {
   int                                     rc = RETURNerror;
-  emm_data_context_t                     *ctx = NULL;
-  tau_accept_data_t                      *data;
+  emm_context_t                          *ctx = NULL;
+  tau_data_t                             *data;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  data = (tau_accept_data_t *) (args);
+  data = (tau_data_t *) (args);
 
   if (data) {
     unsigned int                            ue_id = data->ue_id;
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the TAU procedure (ue_id=" MME_UE_S1AP_ID_FMT ")", ue_id);
-    ctx = emm_data_context_get (&_emm_data, ue_id);
+    ctx = emm_context_get (&_emm_data, ue_id);
 
     if (ctx) {
       /*
@@ -803,7 +791,6 @@ _emm_tracking_area_update_abort (
      * Release retransmission timer parameters
      */
     // no contained struct to free
-    free_wrapper (data);
 
     /*
      * Notify EMM that EPS attach procedure failed

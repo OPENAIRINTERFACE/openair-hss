@@ -19,9 +19,10 @@
  *      contact@openairinterface.org
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "bstrlib.h"
 
 #include "NwGtpv2c.h"
 #include "s11_common.h"

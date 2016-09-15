@@ -38,8 +38,6 @@ Description Defines functions used to handle EPS bearer contexts.
 #ifndef __ESM_EBR_CONTEXT_H__
 #define __ESM_EBR_CONTEXT_H__
 
-#include "networkDef.h"
-
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
@@ -58,10 +56,10 @@ Description Defines functions used to handle EPS bearer contexts.
 /****************************************************************************/
 
 
-int esm_ebr_context_create(emm_data_context_t *ctx, int pid, int ebi, int is_default,
+int esm_ebr_context_create(emm_context_t *ctx, int pid, int ebi, int is_default,
                            const network_qos_t *qos, const network_tft_t *tft);
 
-int esm_ebr_context_release(emm_data_context_t *ctx, int ebi, int *pid, int *bid);
+int esm_ebr_context_release(emm_context_t *ctx, int ebi, int *pid, int *bid);
 
 void free_esm_ebr_context(esm_ebr_context_t * ctx);
 

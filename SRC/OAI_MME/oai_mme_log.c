@@ -18,10 +18,16 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
+#include <stdint.h>
+#include <stdbool.h>
+#include <stdlib.h>
 
+#include "bstrlib.h"
+
+#include "obj_hashtable.h"
+#include "log.h"
 
 #include "oai_mme.h"
-#include "log.h"
 
 #include <freeDiameter/freeDiameter-host.h>
 #include <freeDiameter/libfdcore.h>

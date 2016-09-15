@@ -32,17 +32,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-
+#include <stdbool.h>
+#include <stdint.h>
 #include <signal.h>
 #include <time.h>
 #include <errno.h>
 
-#include "assertions.h"
+#include "bstrlib.h"
+
 #include "intertask_interface.h"
 #include "timer.h"
 #include "log.h"
 #include "queue.h"
 #include "dynamic_memory_check.h"
+#include "assertions.h"
 
 
 int                                     timer_handle_signal (
@@ -182,7 +185,7 @@ timer_setup (
    */
   if (timer_create (CLOCK_REALTIME, &se, &timer) < 0) {
     OAILOG_ERROR (LOG_ITTI, "Failed to create timer: (%s:%d)\n", strerror (errno), errno);
-    free_wrapper (timer_p);
+    free_wrapper ((void**)&timer_p);
     return -1;
   }
 
@@ -250,7 +253,7 @@ timer_remove (
     rc = -1;
   }
 
-  free_wrapper (timer_p);
+  free_wrapper ((void**)&timer_p);
   timer_p = NULL;
   return rc;
 }

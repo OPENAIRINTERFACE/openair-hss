@@ -37,12 +37,13 @@ Description Defines the ESM Service Access Point that provides EPS
 
 *****************************************************************************/
 
-#include "emmData.h"
+
 
 #ifndef __ESM_SAPDEF_H__
 #define __ESM_SAPDEF_H__
 
 #include "bstrlib.h"
+#include "emm_data.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -153,8 +154,8 @@ typedef struct esm_sap_s {
                  * within this primitive has to be sent/received
                  * standalone or together within an EMM related
                  * message              */
-  emm_data_context_t *ctx;       /* UE context                       */
-  unsigned int        ue_id;      /* Local UE identifier              */
+  emm_context_t      *ctx;       /* UE EMM context                   */
+  unsigned int        ue_id;      /* Local UE identifier             */
   esm_sap_error_t     err;       /* ESM-SAP error code               */
   const_bstring       recv;      /* Encoded ESM message received     */
   bstring             send;      /* Encoded ESM message to be sent   */

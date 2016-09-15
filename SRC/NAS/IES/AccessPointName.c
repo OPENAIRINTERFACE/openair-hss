@@ -104,12 +104,12 @@ encode_access_point_name (
   bstring bapn = blk2bstr(apn_encoded, index_copy);
 
   if ((encode_result = encode_bstring (bapn, buffer + encoded, len - encoded)) < 0) {
-    bdestroy(bapn);
+    bdestroy_wrapper (&bapn);
     return encode_result;
   } else {
     encoded += encode_result;
   }
-  bdestroy(bapn);
+  bdestroy_wrapper (&bapn);
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
   return encoded;
 }
@@ -128,5 +128,5 @@ dump_access_point_name_xml (
     OAILOG_DEBUG (LOG_NAS, "    <IEI>0x%X</IEI>\n", iei);
   bstring b = dump_bstring_xml (accesspointname);
   OAILOG_DEBUG (LOG_NAS, "%s</Access Point Name>\n", bdata(b));
-  bdestroy(b);
+  bdestroy_wrapper (&b);
 }

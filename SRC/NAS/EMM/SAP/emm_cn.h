@@ -37,10 +37,10 @@ Description
 
 *****************************************************************************/
 
-#include "emm_cnDef.h"
-
 #ifndef FILE_EMM_CN_SEEN
 #define FILE_EMM_CN_SEEN
+
+#include "emm_cnDef.h"
 
 int emm_cn_send(const emm_cn_t *msg);
 

@@ -41,14 +41,21 @@
         sent by both the MME and the UE.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
+#include "bstrlib.h"
+
+#include "log.h"
 #include "emm_proc.h"
 #include "commonDef.h"
-#include "log.h"
-
+#include "common_defs.h"
 #include "emm_cause.h"
-#include "emmData.h"
-
+#include "emm_data.h"
 #include "emm_sap.h"
 
 /****************************************************************************/
@@ -123,7 +130,7 @@ emm_proc_status (
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
-  struct emm_data_context_s              *ctx = NULL;
+  struct emm_context_s              *ctx = NULL;
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM status procedure requested");
   /*
@@ -133,7 +140,7 @@ emm_proc_status (
   emm_sap.u.emm_as.u.status.emm_cause = emm_cause;
   emm_sap.u.emm_as.u.status.ue_id = ue_id;
   emm_sap.u.emm_as.u.status.guti = NULL;
-  ctx = emm_data_context_get (&_emm_data, ue_id);
+  ctx = emm_context_get (&_emm_data, ue_id);
 
   if (ctx) {
     sctx = &ctx->_security;

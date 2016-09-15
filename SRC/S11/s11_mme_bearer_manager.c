@@ -22,7 +22,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
 
+#include "bstrlib.h"
+
+#include "hashtable.h"
+#include "obj_hashtable.h"
+#include "log.h"
+#include "msc.h"
 #include "assertions.h"
 #include "intertask_interface.h"
 #include "msc.h"

@@ -36,15 +36,14 @@ Description Defines internal private data handled by EPS Session
         Management sublayer.
 
 *****************************************************************************/
-#include <stdio.h>  // sprintf
-
 
 #ifndef __ESMDATA_H__
 #define __ESMDATA_H__
-#include "tree.h"
-#include "bstrlib.h"
+
+#include "nas_timer.h"
 #include "networkDef.h"
-#include "EpsBearerIdentity.h"
+#include "tree.h"
+#include "3gpp_24.007.h"
 #include "mme_api.h"
 
 /****************************************************************************/
@@ -207,12 +206,14 @@ typedef struct esm_data_context_s {
  * Structure of the ESM data
  * -------------------------
  */
+struct mme_api_esm_config_s;
+
 typedef struct esm_data_s {
   /*
    * MME configuration
    * -----------------
    */
-  mme_api_esm_config_t conf;
+  struct mme_api_esm_config_s conf;
   /*
    * ESM contexts
    * ------------

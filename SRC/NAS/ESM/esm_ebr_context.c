@@ -35,15 +35,25 @@
   Description Defines functions used to handle EPS bearer contexts.
 
 *****************************************************************************/
-#include <stdlib.h>             // malloc, free_wrapper
-#include <string.h>             // memset
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
+#include "bstrlib.h"
+
+#include "obj_hashtable.h"
+#include "log.h"
+#include "msc.h"
+#include "gcc_diag.h"
 #include "dynamic_memory_check.h"
 #include "assertions.h"
-#include "log.h"
 #include "3gpp_24.007.h"
+#include "common_defs.h"
 #include "commonDef.h"
-#include "emmData.h"
+#include "emm_data.h"
 #include "esm_ebr.h"
 #include "esm_ebr_context.h"
 #include "emm_sap.h"
@@ -88,7 +98,7 @@
  ***************************************************************************/
 int
 esm_ebr_context_create (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int pid,
   int ebi,
   int is_default,
@@ -244,7 +254,7 @@ esm_ebr_context_create (
  ***************************************************************************/
 int
 esm_ebr_context_release (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int ebi,
   int *pid,
   int *bid)
@@ -344,14 +354,13 @@ esm_ebr_context_release (
      * Delete the TFT
      */
     for (i = 0; i < pdn->bearer[*bid]->tft.n_pkfs; i++) {
-      free_wrapper (pdn->bearer[*bid]->tft.pkf[i]);
+      free_wrapper ((void**)&pdn->bearer[*bid]->tft.pkf[i]);
     }
 
     /*
      * Release the specified EPS bearer data
      */
-    free_wrapper (pdn->bearer[*bid]);
-    pdn->bearer[*bid] = NULL;
+    free_wrapper ((void**)&pdn->bearer[*bid]);
     /*
      * Decrement the number of EPS bearer context allocated
      * * * * to the PDN connection
@@ -377,7 +386,7 @@ esm_ebr_context_release (
            * Delete the TFT
            */
           for (j = 0; j < pdn->bearer[i]->tft.n_pkfs; j++) {
-            free_wrapper (pdn->bearer[i]->tft.pkf[j]);
+            free_wrapper ((void**)&pdn->bearer[i]->tft.pkf[j]);
           }
 
           /*
@@ -392,7 +401,7 @@ esm_ebr_context_release (
           /*
            * Release dedicated EPS bearer data
            */
-          free_wrapper (pdn->bearer[i]);
+          free_wrapper ((void**)&pdn->bearer[i]);
           pdn->bearer[i] = NULL;
           /*
            * Decrement the number of EPS bearer context allocated
@@ -438,10 +447,10 @@ void free_esm_ebr_context(esm_ebr_context_t * ctx)
 {
   if (ctx) {
     if (ctx->args) {
-      bdestroy(ctx->args->msg);
+      bdestroy_wrapper (&ctx->args->msg);
       // do not free ctx->args->ctx
     }
-    free_wrapper(ctx);
+    free_wrapper((void**)&ctx);
   }
 }
 

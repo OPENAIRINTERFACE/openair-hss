@@ -40,13 +40,13 @@ Description Defines the EMM primitives available at the EMMAS Service
 *****************************************************************************/
 #ifndef FILE_EMM_ASDEF_SEEN
 #define FILE_EMM_ASDEF_SEEN
-#include <stdint.h>
-#include <stdbool.h>
 
 #include "common_types.h"
 #include "commonDef.h"
 #include "securityDef.h"
-#include "bstrlib.h"
+#include "TrackingAreaIdentityList.h"
+#include "3gpp_36.401.h"
+#include "3gpp_23.003.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -156,7 +156,7 @@ typedef struct emm_as_establish_s {
   uint8_t                type;                        /* Network attach/detach type        */
   uint8_t                rrc_cause;                   /* Connection establishment cause    */
   uint8_t                rrc_type;                    /* Associated call type          */
-  const plmn_t          *plmn_id;                     /* Identifier of the selected PLMN   */
+  //const plmn_t          *plmn_id;                     /* Identifier of the selected PLMN   */
   ksi_t                  ksi;                         /* NAS key set identifier        */
   uint8_t                encryption:4;                /* Ciphering algorithm           */
   uint8_t                integrity:4;                 /* Integrity protection algorithm    */
@@ -164,8 +164,9 @@ typedef struct emm_as_establish_s {
   const guti_t          *new_guti;                    /* New GUTI, if re-allocated         */
   int                    n_tacs;                      /* Number of consecutive tracking areas
                                                        * the UE is registered to       */
-  tac_t                  tac;                         /* Code of the first tracking area the UE
-                                                       * is registered to          */
+  const tai_t           *tai;                         /* The first tracking area the UE is registered to */
+  //tac_t                  tac;                         /* Code of the first tracking area the UE
+  //                                                     * is registered to          */
   ecgi_t                 ecgi;                        /* E-UTRAN CGI This information element is used to globally identify a cell */
 #define EMM_AS_NAS_INFO_ATTACH  0x01                  /* Attach request        */
 #define EMM_AS_NAS_INFO_DETACH  0x02                  /* Detach request        */
@@ -179,7 +180,7 @@ typedef struct emm_as_establish_s {
   uint8_t                eps_update_result;           /* TAU EPS update result   */
   uint32_t              *t3412;                       /* GPRS T3412 timer   */
   guti_t                *guti;                        /* TAU GUTI   */
-  TAI_LIST_T(16)         tai_list;                    /* Valid field if num tai > 0 */
+  tai_list_t             tai_list;                    /* Valid field if num tai > 0 */
   uint16_t              *eps_bearer_context_status;   /* TAU EPS bearer context status   */
   void                  *location_area_identification;/* TAU Location area identification */
   //void                *ms_identity;                 /* TAU 8.2.26.7   MS identity This IE may be included to assign or unassign a new TMSI to a UE during a combined TA/LA update. */
@@ -213,10 +214,11 @@ typedef struct emm_as_data_s {
   mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
   const guti_t          *guti;        /* GUTI temporary mobile identity   */
   emm_as_security_data_t sctx;        /* EPS NAS security context     */
-  const plmn_t          *plmn_id;     /* Identifier of the selected PLMN   */
+  //const plmn_t          *plmn_id;     /* Identifier of the selected PLMN   */
   ecgi_t                 ecgi;        /* E-UTRAN CGI This information element is used to globally identify a cell */
-  tac_t                  tac;         /* Code of the first tracking area the UE
-                                       * is registered to          */
+  const tai_t           *tai;         /* Code of the first tracking area identity the UE is registered to          */
+  //tac_t                  tac;         /* Code of the first tracking area the UE
+  //                                     * is registered to          */
   bool                   switch_off;  /* true if the UE is switched off   */
   uint8_t                type;        /* Network detach type          */
 #define EMM_AS_DATA_DELIVERED_LOWER_LAYER_FAILURE                  0

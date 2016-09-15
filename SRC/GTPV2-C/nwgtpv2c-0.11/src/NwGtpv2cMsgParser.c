@@ -30,6 +30,9 @@
    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
    THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   ----------------------------------------------------------------------------*/
+#include <stdbool.h>
+
+#include "bstrlib.h"
 
 #include "NwTypes.h"
 #include "NwUtils.h"
@@ -40,6 +43,7 @@
 #include "NwGtpv2cMsg.h"
 #include "NwGtpv2cMsgParser.h"
 #include "dynamic_memory_check.h"
+#include "log.h"
 
 #ifdef __cplusplus
 extern                                  "C" {

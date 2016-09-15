@@ -39,11 +39,9 @@ Description Implements the API used by the NAS layer running in the MME
 #ifndef FILE_MME_API_SEEN
 #define FILE_MME_API_SEEN
 
-#include "mme_config.h"
-#include "commonDef.h"
+#include "TrackingAreaIdentityList.h"
+#include "3gpp_23.003.h"
 #include "common_types.h"
-#include "securityDef.h"
-#include "bstrlib.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -81,7 +79,7 @@ typedef struct mme_api_emm_config_s {
   uint8_t           prefered_ciphering_algorithm[8];// choice in NAS_SECURITY_ALGORITHMS_EEA0, etc
   uint8_t           eps_network_feature_support;
   bool              force_push_pco;
-  TAI_LIST_T(16)    tai_list;
+  tai_list_t        tai_list;
 } mme_api_emm_config_t;
 
 /*
@@ -119,8 +117,9 @@ typedef struct mme_api_tft_s {
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
+struct mme_config_s;
 
-int mme_api_get_emm_config(mme_api_emm_config_t *config, mme_config_t *mme_config_p);
+int mme_api_get_emm_config(mme_api_emm_config_t *config, struct mme_config_s *mme_config_p);
 
 void mme_api_duplicate_enb_ue_s1ap_id_detected (
     const enb_s1ap_id_key_t enb_ue_s1ap_id,

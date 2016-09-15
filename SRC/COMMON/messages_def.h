@@ -41,3 +41,4 @@
 #include "sgw_messages_def.h"
 #include "udp_messages_def.h"
 #include "mme_app_messages_def.h"
+#include "scenario_player_messages_def.h"

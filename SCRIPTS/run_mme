@@ -57,6 +57,7 @@ function help()
   echo_error "  -I, --install-mme-files             Install MME config files. (NOT RECOMMENDED. See tutorials on https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or DOCS/EPC_User_Guide.pdf"
   echo_error "  -k, --kill                          Kill all running MME instances, exit script then."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
+  echo_error "  -s, --scenario-player               Run scenario player with scenarios set in mme config file"
   echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
   echo_error "                                        0 -> ASN1 XER printf off"
   echo_error "                                        1 -> ASN1 XER printf on and ASN1 debug off"
@@ -69,6 +70,17 @@ function do_msc_gen()
   $THIS_SCRIPT_PATH/msc_gen
 }
 
+function do_xml_dump()
+{
+  for file in `ls /tmp/mme_msg*`; 
+  do 
+    tmpfile=`mktemp`
+    xmllint --format $file > $tmpfile
+    cat $tmpfile | $SUDO tee $file > /dev/null
+    rm  $tmpfile
+  done;
+}
+
 function control_c()
 # run if user hits control-c
 {
@@ -76,6 +88,7 @@ function control_c()
   if [ $g_run_msc_gen -eq 1 ]; then 
     do_msc_gen
   fi
+  do_xml_dump
   exit $?
 }
 
@@ -87,6 +100,7 @@ function main()
 {
   local -i run_gdb=0
   local -i run_daemon=0
+  local -i run_scenario_player=0
   local -i set_network_interfaces=0
   local -i var_check_install_mme_files=0
   local    exe_arguments=" "
@@ -151,6 +165,13 @@ function main()
           exit -1
         fi
         ;;          
+      -s | --scenario-player)
+        run_scenario_player=1
+        echo "setting scenario player flag to: $run_scenario_player"
+        exe_arguments="-s $exe_arguments"
+        DAEMON_ARGS=$DAEMON_ARGS" -s "
+        shift;
+        ;;
       -v | --verbosity-level)
         local verbosity_level=$2
         echo "setting verbosity level to: $verbosity_level"
@@ -178,6 +199,9 @@ function main()
   fi
   
   if [ $var_check_install_mme_files -gt 0 ];then
+    $SUDO mkdir -p /usr/local/share/oai/test > /dev/null
+    $SUDO cp -rupv $OPENAIRCN_DIR/TEST/MME    /usr/local/share/oai/test
+    
     $SUDO mkdir -p /usr/local/etc/oai/freeDiameter > /dev/null
   
     if [ ! -f /usr/local/etc/oai/mme.conf ]; then
@@ -235,7 +259,14 @@ function main()
   if [ $set_network_interfaces -eq 1 ]; then
     set_mme_network_interfaces $mme_config_file
   fi
-    
+
+
+  #####################################
+  # Clean old XML generated files
+  #####################################
+  $SUDO rm -f /var/log/mme_msg_*
+
+
   #####################################
   # Running daemon?
   #####################################

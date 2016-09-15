@@ -20,14 +20,16 @@
  */
 
 
-#include <stdbool.h>
-#include <pthread.h>
 #include <unistd.h>
-#include <string.h>
 #include <errno.h>
-#include <stdint.h>
 #include <inttypes.h>
 #include <arpa/inet.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
 
 #include "tree.h"
 #include "gcc_diag.h"
@@ -44,6 +46,7 @@
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "s1ap_mme.h"
+#include "common_defs.h"
 
 //------------------------------------------------------------------------------
 ue_context_t *mme_create_new_ue_context (void)
@@ -85,8 +88,8 @@ void mme_app_ue_context_free_content (ue_context_t * const mme_ue_context_p)
   // PAA_t                  paa;
   // char                   pending_pdn_connectivity_req_imsi[16];
   // uint8_t                pending_pdn_connectivity_req_imsi_length;
-  bdestroy(mme_ue_context_p->pending_pdn_connectivity_req_apn);
-  bdestroy(mme_ue_context_p->pending_pdn_connectivity_req_pdn_addr);
+  bdestroy_wrapper (&mme_ue_context_p->pending_pdn_connectivity_req_apn);
+  bdestroy_wrapper (&mme_ue_context_p->pending_pdn_connectivity_req_pdn_addr);
   // int                    pending_pdn_connectivity_req_pti;
   // unsigned               pending_pdn_connectivity_req_ue_id;
   // network_qos_t          pending_pdn_connectivity_req_qos;
@@ -224,7 +227,6 @@ void mme_app_move_context (ue_context_t *dst, ue_context_t *src)
     dst->pending_pdn_connectivity_req_proc_data   = src->pending_pdn_connectivity_req_proc_data;
     src->pending_pdn_connectivity_req_proc_data   = NULL;
     dst->pending_pdn_connectivity_req_request_type= src->pending_pdn_connectivity_req_request_type;
-    dst->default_bearer_id       = src->default_bearer_id;
     memcpy((void *)dst->eps_bearers, (const void *)src->eps_bearers, sizeof(bearer_context_t)*BEARERS_PER_UE);
     OAILOG_DEBUG (LOG_MME_APP,
            "mme_app_move_context("ENB_UE_S1AP_ID_FMT " <- " ENB_UE_S1AP_ID_FMT ") done\n",
@@ -509,6 +511,9 @@ mme_insert_ue_context (
   }
 
 
+  OAILOG_DEBUG (LOG_MME_APP, "Registered this ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+      ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
+
   if ( INVALID_MME_UE_S1AP_ID != ue_context_p->mme_ue_s1ap_id) {
     h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id);
 
@@ -653,7 +658,7 @@ void mme_remove_ue_context (
       ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
 
   mme_app_ue_context_free_content(ue_context_p);
-  free_wrapper (ue_context_p);
+  free_wrapper ((void**)&ue_context_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -671,7 +676,7 @@ mme_app_dump_ue_context (
 
   OAILOG_DEBUG (LOG_MME_APP, "-----------------------UE context %p --------------------\n", ue_context_pP);
   if (context_p) {
-    OAILOG_DEBUG (LOG_MME_APP, "    - IMSI ...........: %" IMSI_64_FMT "\n", context_p->imsi);
+    OAILOG_DEBUG (LOG_MME_APP, "    - IMSI ...........: " IMSI_64_FMT "\n", context_p->imsi);
     OAILOG_DEBUG (LOG_MME_APP, "                        |  m_tmsi  | mmec | mmegid | mcc | mnc |\n");
     OAILOG_DEBUG (LOG_MME_APP, "    - GUTI............: | %08x |  %02x  |  %04x  | %03u | %03u |\n", context_p->guti.m_tmsi, context_p->guti.gummei.mme_code, context_p->guti.gummei.mme_gid,
                  /*
@@ -771,9 +776,9 @@ mme_app_dump_ue_context (
           OAILOG_DEBUG (LOG_MME_APP, "        S-GW TEID (UP)...: %08x\n", bearer_context_p->s_gw_teid);
           OAILOG_DEBUG (LOG_MME_APP, "        P-GW TEID (UP)...: %08x\n", bearer_context_p->p_gw_teid);
           OAILOG_DEBUG (LOG_MME_APP, "        QCI .............: %u\n", bearer_context_p->qci);
-          OAILOG_DEBUG (LOG_MME_APP, "        Priority level ..: %u\n", bearer_context_p->prio_level);
-          OAILOG_DEBUG (LOG_MME_APP, "        Pre-emp vul .....: %s\n", (bearer_context_p->pre_emp_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
-          OAILOG_DEBUG (LOG_MME_APP, "        Pre-emp cap .....: %s\n", (bearer_context_p->pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+          OAILOG_DEBUG (LOG_MME_APP, "        Priority level ..: %u\n", bearer_context_p->priority_level);
+          OAILOG_DEBUG (LOG_MME_APP, "        Pre-emp vul .....: %s\n", (bearer_context_p->preemption_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
+          OAILOG_DEBUG (LOG_MME_APP, "        Pre-emp cap .....: %s\n", (bearer_context_p->preemption_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
         }
       }
     }
@@ -817,7 +822,6 @@ mme_app_handle_s1ap_ue_context_release_req (
     // no session was created, no need for releasing bearers in SGW
     message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
     AssertFatal (message_p , "itti_alloc_new_message Failed");
-    memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_command, 0, sizeof (itti_s1ap_ue_context_release_command_t));
     S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id;
     S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context_p->enb_ue_s1ap_id;
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",

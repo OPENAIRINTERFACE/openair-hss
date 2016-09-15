@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include <nettle/hmac.h>
+#include "bstrlib.h"
 
 #include "security_types.h"
 #include "secu_defs.h"
@@ -44,7 +45,7 @@ kdf (
   hmac_sha256_set_key (ctx, key_len, key);
   hmac_sha256_update (ctx, s_len, s);
   hmac_sha256_digest (ctx, out_len, out);
-  free_wrapper(ctx);
+  free_wrapper((void**)&ctx);
 }
 
 int

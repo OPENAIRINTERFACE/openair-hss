@@ -38,14 +38,19 @@
     to encode and decode
 
 *****************************************************************************/
-
-#include "as_message.h"
-#include "common_types.h"
-#include "log.h"
-#include "dynamic_memory_check.h"
-
 #include <string.h>             // memcpy
 #include <stdlib.h>             // free
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "bstrlib.h"
+
+#include "log.h"
+#include "as_message.h"
+#include "common_types.h"
+#include "dynamic_memory_check.h"
+#include "common_defs.h"
+
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/

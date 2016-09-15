@@ -36,39 +36,37 @@
   Description
 
 *****************************************************************************/
-
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
 
+#include "bstrlib.h"
 
 #include "log.h"
+#include "msc.h"
+#include "gcc_diag.h"
+#include "dynamic_memory_check.h"
+#include "assertions.h"
 #include "commonDef.h"
-
 #include "emm_cn.h"
 #include "emm_sap.h"
 #include "emm_proc.h"
 #include "emm_cause.h"
-
 #include "esm_send.h"
 #include "esm_proc.h"
 #include "esm_cause.h"
 #include "assertions.h"
-#include "emmData.h"
+#include "emm_data.h"
 #include "esm_sap.h"
 #include "EmmCommon.h"
 #include "3gpp_requirements_24.301.h"
 
-extern int emm_cn_wrapper_attach_accept (emm_data_context_t * emm_ctx, void *data);
+extern int emm_cn_wrapper_attach_accept (emm_context_t * emm_ctx, void *data);
 
-/*
-   Internal data used for attach procedure
-*/
-typedef struct {
-  unsigned int                            ue_id; /* UE identifier        */
-#  define ATTACH_COUNTER_MAX  5
-  unsigned int                            retransmission_count; /* Retransmission counter   */
-  bstring                                 esm_msg;      /* ESM message to be sent within
-                                                         * the Attach Accept message    */
-} attach_data_t;
 
 /*
    String representation of EMMCN-SAP primitives
@@ -85,14 +83,14 @@ static const char                      *_emm_cn_primitive_str[] = {
 //------------------------------------------------------------------------------
 static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg)
 {
-  emm_data_context_t                     *emm_ctx = NULL;
+  emm_context_t                          *emm_ctx = NULL;
   int                                     rc = RETURNerror;
 
   /*
    * We received security vector from HSS. Try to setup security with UE
    */
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+  emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
 
   if (emm_ctx == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
@@ -185,7 +183,7 @@ static int _emm_cn_deregister_ue (const uint32_t ue_id)
 static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 {
   int                                     rc = RETURNerror;
-  struct emm_data_context_s              *emm_ctx_p = NULL;
+  struct emm_context_s                   *emm_ctx_p = NULL;
   esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
   ESM_msg                                 esm_msg = {.header = {0}};
   EpsQualityOfService                     qos = {0};
@@ -198,7 +196,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   unsigned int                            new_ebi = 0;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_ctx_p = emm_data_context_get (&_emm_data, msg_pP->ue_id);
+  emm_ctx_p = emm_context_get (&_emm_data, msg_pP->ue_id);
 
   if (emm_ctx_p == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
@@ -327,30 +325,34 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
    */
   /*************************************************************************/
   OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)bdata(msg_pP->apn));
-  data_p = (attach_data_t *) emm_proc_common_get_args (msg_pP->ue_id);
-  /*
-   * Setup the ESM message container
-   */
-  data_p->esm_msg = rsp;
+  AssertFatal(0, "TODO Code commented here");
+  //data_p = (attach_data_t *) emm_ctx_p->common_proc.common_arg->u.args;
 
-  /*
-   * Send attach accept message to the UE
-   */
-  rc = emm_cn_wrapper_attach_accept (emm_ctx_p, data_p);
+  if (data_p) {
+    /*
+     * Setup the ESM message container
+     */
+    data_p->esm_msg = rsp;
 
-  if (rc != RETURNerror) {
-    if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_ctx_p) &&
-        (memcmp(&emm_ctx_p->_old_guti, &emm_ctx_p->_guti, sizeof(emm_ctx_p->_guti)))) {
-      /*
-       * Implicit GUTI reallocation;
-       * * * * Notify EMM that common procedure has been initiated
-       */
-      emm_sap_t                               emm_sap = {0};
+    /*
+     * Send attach accept message to the UE
+     */
+    rc = emm_cn_wrapper_attach_accept (emm_ctx_p, data_p);
 
-      emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
-      emm_sap.u.emm_reg.ue_id = msg_pP->ue_id;
-      emm_sap.u.emm_reg.ctx  = emm_ctx_p;
-      rc = emm_sap_send (&emm_sap);
+    if (rc != RETURNerror) {
+      if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_ctx_p) &&
+          (memcmp(&emm_ctx_p->_old_guti, &emm_ctx_p->_guti, sizeof(emm_ctx_p->_guti)))) {
+        /*
+         * Implicit GUTI reallocation;
+         * * * * Notify EMM that common procedure has been initiated
+         */
+        emm_sap_t                               emm_sap = {0};
+
+        emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
+        emm_sap.u.emm_reg.ue_id = msg_pP->ue_id;
+        emm_sap.u.emm_reg.ctx  = emm_ctx_p;
+        rc = emm_sap_send (&emm_sap);
+      }
     }
   }
 

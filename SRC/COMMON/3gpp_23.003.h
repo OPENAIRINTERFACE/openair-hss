@@ -30,9 +30,6 @@
 #ifndef FILE_3GPP_23_003_SEEN
 #define FILE_3GPP_23_003_SEEN
 
-#include <stdint.h>
-
-
 //==============================================================================
 // 12  Identification of PLMN, RNC, Service Area, CN domain and Shared Network Area
 //==============================================================================
@@ -113,6 +110,7 @@ typedef struct imsi_s {
 // 2.4 Structure of TMSI
 //------------------------------------------------------------------------------
 
+#define TMSI_SIZE              4
 typedef uint32_t  tmsi_t;                                  /*!< \brief  Since the TMSI has only local significance (i.e. within a VLR and the area controlled by a VLR,
                                                                         or within an SGSN and the area controlled by an SGSN, or within an MME and the area controlled by an MME),
                                                                         the structure and coding of it can be chosen by agreement between operator and manufacturer in order to meet local needs.
@@ -158,8 +156,14 @@ typedef struct guti_s {
 } guti_t;
 
 // 2.9 Structure of the S-Temporary Mobile Subscriber Identity (S-TMSI)
-#define NOT_A_S_TMSI                     UINT64_MAX
 
+/*! \struct  s_tmsi_t
+ * \brief Structure of the S-Temporary Mobile Subscriber Identity (S-TMSI).
+ */
+typedef struct s_tmsi_s {
+  mme_code_t  mme_code;    /* MME code that allocated the GUTI     */
+  tmsi_t      m_tmsi;      /* M-Temporary Mobile Subscriber Identity   */
+} s_tmsi_t;
 
 //==============================================================================
 // 3 Numbering plan for mobile stations
@@ -219,38 +223,12 @@ typedef struct msisdn_s {
 // 4.1 Composition of the Location Area Identification (LAI)
 //------------------------------------------------------------------------------
 
-typedef uint16_t    lac_t;                                 /*!< \brief  Location Area Code (LAC) is a fixed length code (of 2 octets) identifying a location area within a PLMN */
-
-#define INVALID_LAC_0000                  (uint16_t)0x0000 /*!< \brief  This LAC can be coded using a full hexadecimal representation
-                                                                        except for the following reserved hexadecimal values: 0000, and FFFE.   */
-
-#define INVALID_LAC_FFFE                  (uint16_t)0xFFFE /*!< \brief  This LAC can be coded using a full hexadecimal representation
-                                                                        except for the following reserved hexadecimal values: 0000, and FFFE.   */
-
-/*! \struct  lai_t
- * \brief Location Area Code (LAC).
- */
-typedef struct lai_s {
-  plmn_t plmn;                                             /*!< \brief  <MCC> + <MNC>    */
-  lac_t  lac;                                              /*!< \brief  Location Area Code   */
-} lai_t;
 
 
 //------------------------------------------------------------------------------
 // 4.2 Composition of the Routing Area Identification (RAI)
 //------------------------------------------------------------------------------
 
-
-typedef uint8_t     rac_t;                                 /*!< \brief  Routing Area Code    */
-
-/*! \struct  rai_t
- * \brief Routing Area Identification (RAI).
- */
-typedef struct rai_s {
-  plmn_t plmn;                                             /*!< \brief  <MCC> + <MNC>    */
-  lac_t  lac;                                              /*!< \brief  Location Area Code   */
-  rac_t  rac;                                              /*!< \brief  Routing Area Code    */
-} rai_t;
 
 
 // 4.3 Base station identification
@@ -396,27 +374,7 @@ typedef struct imeisv_s {
 // 19.4.2  Fully Qualified Domain Names (FQDNs)
 //..............................................................................
 // 19.4.2.2 Access Point Name FQDN (APN-FQDN)
-
 // 19.4.2.3  Tracking Area Identity (TAI)
-
-#define INVALID_TAC_0000                  (uint16_t)0x0000 /*!< \brief  The following are reserved hexadecimal values of the TAC: 0000, and FFFE.   */
-#define INVALID_TAC_FFFE                  (uint16_t)0xFFFE /*!< \brief  The following are reserved hexadecimal values of the TAC: 0000, and FFFE.   */
-
-typedef uint16_t    tac_t;                                 /*!< \brief  Tracking Area Code (TAC) is a fixed length code (of 2 octets) identifying
-                                                                        a Tracking Area within a PLMN. This part of the tracking area identification
-                                                                        shall be coded using a full hexadecimal representation. The following are
-                                                                        reserved hexadecimal values of the TAC: 0000, and FFFE.   */
-
-/*! \struct  tai_t
- * \brief The Tracking Area Identity (TAI) consists of a Mobile Country Code (MCC),
- *        Mobile Network Code (MNC), and Tracking Area Code (TAC).
- */
-typedef struct tai_s {
-  plmn_t plmn;                                             /*!< \brief  <MCC> + <MNC>        */
-  tac_t  tac;                                              /*!< \brief  Tracking Area Code   */
-} tai_t;
-
-
 // 19.4.2.4  Mobility Management Entity (MME)
 // 19.4.2.5  Routing Area Identity (RAI) - EPC
 
@@ -449,7 +407,13 @@ typedef struct ecgi_s {
 // 23 Numbering, addressing and identification for the Relay Node OAM System
 
 
-
-
+/* Clear GUTI without free it */
+void clear_guti(guti_t * const guti);
+/* Clear IMSI without free it */
+void clear_imsi(imsi_t * const imsi);
+/* Clear IMEI without free it */
+void clear_imei(imei_t * const imei);
+/* Clear IMEISV without free it */
+void clear_imeisv(imeisv_t * const imeisv);
 
 #endif /* FILE_3GPP_23_003_SEEN */

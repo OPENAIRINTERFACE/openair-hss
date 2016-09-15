@@ -36,13 +36,13 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
-
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
 
-
-
+#include <libxml/xpath.h>
+#include <libxml/xmlwriter.h>
 #include "liblfds611.h"
+#include "bstrlib.h"
 
 #include "assertions.h"
 #include "intertask_interface.h"
@@ -60,6 +60,7 @@
 #include "signals.h"
 #include "timer.h"
 #include "dynamic_memory_check.h"
+#include "shared_ts_log.h"
 #include "log.h"
 
 /* ITTI DEBUG groups */
@@ -202,7 +203,7 @@ itti_malloc (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     OAILOG_ERROR (LOG_ITTI, " Memory pools statistics:\n%s", statistics);
-    free_wrapper (statistics);
+    free_wrapper ((void**)&statistics);
   }
   AssertFatal (ptr != NULL, "Memory allocation of %d bytes failed (%d -> %d)!\n", (int)size, origin_task_id, destination_task_id);
   return ptr;
@@ -358,6 +359,10 @@ itti_alloc_new_message_sized (
   }
 
   temp = itti_malloc (origin_task_id, TASK_UNKNOWN, sizeof (MessageHeader) + size);
+
+  // better to do it here than in client code
+  memset(&temp->ittiMsg, 0, size);
+
   temp->ittiMsgHeader.messageId = message_id;
   temp->ittiMsgHeader.originTaskId = origin_task_id;
   temp->ittiMsgHeader.ittiMsgSize = size;
@@ -879,7 +884,7 @@ itti_init (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s", statistics);
-    free_wrapper (statistics);
+    free_wrapper ((void**)&statistics);
   }
   itti_desc.vcd_poll_msg = 0;
   itti_desc.vcd_receive_msg = 0;
@@ -890,6 +895,8 @@ itti_init (
 #endif
 
   CHECK_INIT_RETURN (timer_init ());
+  // Could not be launched before ITTI initialization
+  shared_log_itti_connect();
   OAILOG_ITTI_CONNECT();
   return 0;
 }
@@ -959,7 +966,7 @@ itti_wait_tasks_end (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s\n", statistics);
-    free_wrapper (statistics);
+    free_wrapper ((void**)&statistics);
   }
 
   if (ready_tasks > 0) {

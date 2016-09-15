@@ -30,12 +30,17 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
 
+#include "bstrlib.h"
+
+#include "log.h"
 #include "assertions.h"
 #include "msc.h"
 #include "intertask_interface.h"
+#include "gcc_diag.h"
 #include "mme_app_itti_messaging.h"
 #include "mme_config.h"
 #include "mme_app_ue_context.h"
@@ -52,10 +57,9 @@ mme_app_send_delete_session_request (
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_SESSION_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
-  memset ((void *)&message_p->ittiMsg.s11_delete_session_request, 0, sizeof (itti_s11_delete_session_request_t));
   S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_s11_teid;
-  S11_DELETE_SESSION_REQUEST (message_p).teid = ue_context_p->sgw_s11_teid;
-  S11_DELETE_SESSION_REQUEST (message_p).lbi = ue_context_p->default_bearer_id;
+  S11_DELETE_SESSION_REQUEST (message_p).teid       = ue_context_p->sgw_s11_teid;
+  S11_DELETE_SESSION_REQUEST (message_p).lbi        = 0; //default bearer
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;

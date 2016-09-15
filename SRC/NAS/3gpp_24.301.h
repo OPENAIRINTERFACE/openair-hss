@@ -30,10 +30,6 @@
 #ifndef FILE_3GPP_24_301_SEEN
 #define FILE_3GPP_24_301_SEEN
 
-#include <stdint.h>
-#include <stdbool.h>
-
-
 //==============================================================================
 // 9 General message format and information elements coding
 //==============================================================================

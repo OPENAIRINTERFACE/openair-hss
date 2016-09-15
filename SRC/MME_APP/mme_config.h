@@ -30,19 +30,17 @@
 
 #ifndef FILE_MME_CONFIG_SEEN
 #define FILE_MME_CONFIG_SEEN
-#include <pthread.h>
-#include <stdint.h>
 
 #include "mme_default_values.h"
 #include "3gpp_23.003.h"
 #include "common_dim.h"
 #include "common_types.h"
-#include "log.h"
 #include "bstrlib.h"
+#include "log.h"
+
+#define MAX_GUMMEI                2
 
 #define MME_CONFIG_STRING_MME_CONFIG                     "MME"
-#define MME_CONFIG_STRING_RUN_MODE                       "RUN_MODE"
-#define MME_CONFIG_STRING_RUN_MODE_TEST                  "TEST"
 #define MME_CONFIG_STRING_REALM                          "REALM"
 #define MME_CONFIG_STRING_MAXENB                         "MAXENB"
 #define MME_CONFIG_STRING_MAXUE                          "MAXUE"
@@ -96,6 +94,10 @@
 
 #define MME_CONFIG_STRING_NAS_T3402_TIMER                "T3402"
 #define MME_CONFIG_STRING_NAS_T3412_TIMER                "T3412"
+#define MME_CONFIG_STRING_NAS_T3422_TIMER                "T3422"
+#define MME_CONFIG_STRING_NAS_T3450_TIMER                "T3450"
+#define MME_CONFIG_STRING_NAS_T3460_TIMER                "T3460"
+#define MME_CONFIG_STRING_NAS_T3470_TIMER                "T3470"
 #define MME_CONFIG_STRING_NAS_T3485_TIMER                "T3485"
 #define MME_CONFIG_STRING_NAS_T3486_TIMER                "T3486"
 #define MME_CONFIG_STRING_NAS_T3489_TIMER                "T3489"
@@ -106,9 +108,14 @@
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING        "annoying"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_INFO            "info"
 
+#define MME_CONFIG_STRING_SCENARIO_PLAYER_TESTING        "TESTING"
+#define MME_CONFIG_STRING_SCENARIO_PLAYER_SCENARIO_FILE  "SCENARIO_FILE"
+
+
 typedef enum {
-  RUN_MODE_TEST = 0,
-  RUN_MODE_OTHER
+   RUN_MODE_TEST = 0,
+   RUN_MODE_SCENARIO_PLAYER,
+   RUN_MODE_BASIC
 } run_mode_t;
 
 typedef struct mme_config_s {
@@ -191,11 +198,19 @@ typedef struct mme_config_s {
     uint8_t  prefered_ciphering_algorithm[8];
     uint32_t t3402_min;
     uint32_t t3412_min;
+    uint32_t t3422_sec;
+    uint32_t t3450_sec;
+    uint32_t t3460_sec;
+    uint32_t t3470_sec;
     uint32_t t3485_sec;
     uint32_t t3486_sec;
     uint32_t t3489_sec;
     uint32_t t3495_sec;
   } nas_config;
+
+  struct {
+    bstring scenario_list_file;
+  } scenario_player_config;
 
   log_config_t log_config;
 } mme_config_t;

@@ -26,20 +26,39 @@
 */
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/time.h>
 #include <netinet/in.h>
 
+#include <libxml/xmlwriter.h>
+#include <libxml/xpath.h>
+#include "bstrlib.h"
+#include "queue.h"
+
+#include "dynamic_memory_check.h"
 #include "log.h"
-#include "assertions.h"
 #include "msc.h"
+#include "assertions.h"
+#include "conversions.h"
+#include "mme_scenario_player.h"
+#include "3gpp_23.003.h"
+#include "3gpp_24.008.h"
+#include "3gpp_33.401.h"
+#include "3gpp_24.007.h"
+#include "3gpp_36.401.h"
+#include "3gpp_36.331.h"
+#include "3gpp_24.301.h"
+#include "security_types.h"
 #include "common_types.h"
-#include "hashtable.h"
-#include "spgw_config.h"
-#include "gtpv1u.h"
+#include "common_defs.h"
 #include "intertask_interface.h"
+#include "gtpv1u.h"
+#include "sgw_config.h"
+#include "pgw_config.h"
+#include "spgw_config.h"
 #include "gtpv1u_sgw_defs.h"
 #include "gtp_mod_kernel.h"
 #include "sgw.h"
@@ -53,8 +72,6 @@ static void *gtpv1u_thread (void *args);
 static void  *gtpv1u_thread (void *args)
 {
   itti_mark_task_ready (TASK_GTPV1_U);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   gtpv1u_data_t * gtpv1u_data = (gtpv1u_data_t*)args;
 
@@ -99,12 +116,14 @@ int gtpv1u_init (spgw_config_t *spgw_config)
 
   // START-GTP quick integration only for evaluation purpose
   // Clean hard previous mappings.
+#if ! GTP_KERNEL_MODULE_UNAVAILABLE
   int rv = system ("rmmod gtp");
   rv = system ("modprobe gtp");
   if (rv != 0) {
     OAILOG_CRITICAL (TASK_GTPV1_U, "ERROR in loading gtp kernel module (check if built in kernel)\n");
     return -1;
   }
+#endif
   AssertFatal(spgw_config->pgw_config.num_ue_pool == 1, "No more than 1 UE pool allowed actually");
   for (int i = 0; i < spgw_config->pgw_config.num_ue_pool; i++) {
     // GTP device same MTU as SGi.

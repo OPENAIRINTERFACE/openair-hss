@@ -67,10 +67,7 @@ static int pgw_system (
   int                                     ret = RETURNerror;
 
   if (command_pP) {
-#if DISABLE_EXECUTE_SHELL_COMMAND
     ret = 0;
-    OAILOG_WARNING (LOG_SPGW_APP, "Not executing system command: %s\n", bdata(command_pP));
-#else
     OAILOG_DEBUG (LOG_SPGW_APP, "system command: %s\n", bdata(command_pP));
     ret = system (bdata(command_pP));
 
@@ -81,7 +78,6 @@ static int pgw_system (
         exit (-1);              // may be not exit
       }
     }
-#endif
   }
   return ret;
 }
@@ -104,12 +100,12 @@ int pgw_config_process (pgw_config_t * config_pP)
 
   system_cmd = bformat ("iptables -t mangle -F FORWARD");
   pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  bdestroy(system_cmd);
+  bdestroy_wrapper (&system_cmd);
 
   if (config_pP->masquerade_SGI) {
     system_cmd = bformat ("iptables -t nat -F POSTROUTING");
     pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-    bdestroy(system_cmd);
+    bdestroy_wrapper (&system_cmd);
   }
 
   // Get ipv4 address
@@ -189,7 +185,7 @@ int pgw_config_process (pgw_config_t * config_pP)
           inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i],
           bdata(config_pP->ipv4.if_name_SGI), str_sgi);
       pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-      bdestroy(system_cmd);
+      bdestroy_wrapper (&system_cmd);
     }
 
     uint32_t min_mtu = config_pP->ipv4.mtu_SGI;
@@ -206,7 +202,7 @@ int pgw_config_process (pgw_config_t * config_pP)
       bassignformat (system_cmd, "iptables -t mangle -I FORWARD -d %s/%d -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %u",
           inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i], min_mtu - 40);
       pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-      bdestroy(system_cmd);
+      bdestroy_wrapper (&system_cmd);
     }
   }
   return 0;
@@ -220,7 +216,6 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
   config_setting_t                       *subsetting = NULL;
   config_setting_t                       *sub2setting = NULL;
   char                                   *if_S5_S8 = NULL;
-  char                                   *S5_S8 = NULL;
   char                                   *if_SGI = NULL;
   char                                   *masquerade_SGI = NULL;
   char                                   *ue_tcp_mss_clamping = NULL;
@@ -366,7 +361,7 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
   } else {
     OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW not found\n");
   }
-  bdestroy(system_cmd);
+  bdestroy_wrapper (&system_cmd);
   config_destroy (&cfg);
   return RETURNok;
 }

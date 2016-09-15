@@ -101,6 +101,6 @@ dump_p_tmsi_signature_xml (
 
   bstring b = dump_bstring_xml (ptmsisignature);
   OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
-  bdestroy(b);
+  bdestroy_wrapper (&b);
   OAILOG_DEBUG (LOG_NAS, "</P Tmsi Signature>\n");
 }

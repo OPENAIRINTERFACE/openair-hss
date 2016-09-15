@@ -46,18 +46,24 @@
         stand-alone.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include <stdlib.h>             // malloc, free_wrapper
-#include <string.h>             // memset, memcpy, memcmp
-#include <ctype.h>              // isprint
+#include "bstrlib.h"
 
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "log.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_36.401.h"
 #include "commonDef.h"
 #include "esm_proc.h"
-#include "esmData.h"
+#include "esm_data.h"
 #include "esm_cause.h"
 #include "esm_pt.h"
 #include "mme_api.h"
@@ -82,14 +88,14 @@
    PDN connection handlers
 */
 static int _pdn_connectivity_create (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   const int pti,
   const_bstring const apn,
   esm_proc_pdn_type_t pdn_type,
   const_bstring const pdn_addr,
   const int is_emergency);
 
-int _pdn_connectivity_delete (emm_data_context_t * ctx, int pid);
+int _pdn_connectivity_delete (struct emm_context_s * ctx, int pid);
 
 
 /****************************************************************************/
@@ -141,7 +147,7 @@ int _pdn_connectivity_delete (emm_data_context_t * ctx, int pid);
  ***************************************************************************/
 int
 esm_proc_pdn_connectivity_request (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   const int pti,
   const esm_proc_pdn_request_t request_type,
   const_bstring const apn,
@@ -307,7 +313,7 @@ esm_proc_pdn_connectivity_request (
 int
 esm_proc_pdn_connectivity_reject (
   bool is_standalone,
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   bstring msg,
   bool ue_triggered)
@@ -361,7 +367,7 @@ esm_proc_pdn_connectivity_reject (
  ***************************************************************************/
 int
 esm_proc_pdn_connectivity_failure (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int pid)
 {
   int                                     pti;
@@ -414,7 +420,7 @@ esm_proc_pdn_connectivity_failure (
  ***************************************************************************/
 static int
 _pdn_connectivity_create (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   const int pti,
   const_bstring const apn,
   esm_proc_pdn_type_t pdn_type,
@@ -522,7 +528,7 @@ _pdn_connectivity_create (
  ***************************************************************************/
 int
 _pdn_connectivity_delete (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int pid)
 {
   int                                     pti = ESM_PT_UNASSIGNED;
@@ -561,10 +567,10 @@ _pdn_connectivity_delete (
      * Release allocated PDN connection data
      */
     if (ctx->esm_data_ctx.pdn[pid].data->apn) {
-      bdestroy (ctx->esm_data_ctx.pdn[pid].data->apn);
+      bdestroy_wrapper (&ctx->esm_data_ctx.pdn[pid].data->apn);
     }
 
-    free_wrapper (ctx->esm_data_ctx.pdn[pid].data);
+    free_wrapper ((void**)&ctx->esm_data_ctx.pdn[pid].data);
     ctx->esm_data_ctx.pdn[pid].data = NULL;
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d released\n", pid);
   }

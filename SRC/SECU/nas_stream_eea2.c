@@ -27,6 +27,8 @@
 #include <nettle/nettle-meta.h>
 #include <nettle/aes.h>
 #include <nettle/ctr.h>
+#include "bstrlib.h"
+
 #include "assertions.h"
 #include "conversions.h"
 #include "secu_defs.h"
@@ -68,7 +70,7 @@ nas_stream_encrypt_eea2 (
     data[byte_length - 1] = data[byte_length - 1] & (uint8_t) (0xFF << (8 - zero_bit));
 
   memcpy (out, data, byte_length);
-  free_wrapper (data);
-  free_wrapper (ctx);
+  free_wrapper ((void**)&data);
+  free_wrapper ((void**)&ctx);
   return 0;
 }

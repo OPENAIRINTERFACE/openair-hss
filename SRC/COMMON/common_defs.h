@@ -31,12 +31,29 @@
 
 #ifndef FILE_COMMON_DEFS_SEEN
 #define FILE_COMMON_DEFS_SEEN
-#include <arpa/inet.h>  // htonl, htons
-#include <stdint.h>
 
 //------------------------------------------------------------------------------
 #define STOLEN_REF
 #define CLONE_REF
+
+#define OFFSET_OF(TyPe, MeMBeR) ((size_t) &((TyPe *)0)->MeMBeR)
+
+
+#define PARENT_STRUCT(cOnTaiNeD, TyPe, MeMBeR) ({                      \
+        const typeof( ((TyPe *)0)->MeMBeR ) *__MemBeR_ptr = (cOnTaiNeD);    \
+        (TyPe *)( (char *)__MemBeR_ptr - OFFSET_OF(TyPe,MeMBeR) );})
+
+
+ #define max(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+
+ #define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
 
 //------------------------------------------------------------------------------
 

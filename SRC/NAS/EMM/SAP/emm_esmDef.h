@@ -41,9 +41,8 @@ Description Defines the EMMESM Service Access Point that provides
 #ifndef FILE_EMM_ESMDEF_SEEN
 #define FILE_EMM_ESMDEF_SEEN
 
-#include <stdbool.h>
 #include "bstrlib.h"
-#include "emmData.h"
+#include "emm_data.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -88,10 +87,12 @@ typedef struct {
  * Structure of EMMESM-SAP primitive
  * ---------------------------------
  */
+struct emm_context_s;
+
 typedef struct {
-  emm_esm_primitive_t primitive;
-  mme_ue_s1ap_id_t    ue_id;
-  emm_data_context_t *ctx;
+  emm_esm_primitive_t     primitive;
+  mme_ue_s1ap_id_t        ue_id;
+  struct emm_context_s   *ctx;
   union {
     emm_esm_establish_t establish;
     emm_esm_data_t data;

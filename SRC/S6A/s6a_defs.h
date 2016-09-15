@@ -30,7 +30,6 @@
 #include <freeDiameter/freeDiameter-host.h>
 #include <freeDiameter/libfdcore.h>
 
-#include "mme_config.h"
 #include "queue.h"
 
 
@@ -171,7 +170,8 @@ extern s6a_fd_cnf_t s6a_fd_cnf;
 #define AVP_CODE_PDN_TYPE                          (1456)
 #define AVP_CODE_SUBSCRIBED_PERIODIC_RAU_TAU_TIMER (1619)
 
-int s6a_init(const mme_config_t *mme_config);
+struct mme_config_s;
+int s6a_init(const struct mme_config_s *mme_config);
 
 int s6a_fd_new_peer(void);
 

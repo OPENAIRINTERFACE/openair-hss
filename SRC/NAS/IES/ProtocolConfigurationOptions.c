@@ -124,7 +124,7 @@ dump_ProtocolConfigurationOptions_xml (
     OAILOG_DEBUG (LOG_NAS, "        <Length of protocol ID>%u</Length of protocol ID>\n", protocolconfigurationoptions->protocol_or_container_ids[i].length);
     bstring b = dump_bstring_xml (protocolconfigurationoptions->protocol_or_container_ids[i].contents);
     OAILOG_DEBUG (LOG_NAS, "        %s", bdata(b));
-    bdestroy(b);
+    bdestroy_wrapper (&b);
     i++;
   }
 

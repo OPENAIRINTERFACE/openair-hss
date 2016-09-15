@@ -30,7 +30,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <stdbool.h>
 
+#include "bstrlib.h"
+
+#include "3gpp_33.401.h"
+#include "3gpp_23.003.h"
+#include "3gpp_24.008.h"
+#include "security_types.h"
 #include "common_types.h"
 
 #include "enum_string.h"

@@ -36,6 +36,8 @@
 #include <sys/types.h>
 #include <libgen.h>
 
+#include "bstrlib.h"
+
 #include "pid_file.h"
 #include "dynamic_memory_check.h"
 

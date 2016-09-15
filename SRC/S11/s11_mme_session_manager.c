@@ -22,7 +22,15 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
 
+#include "bstrlib.h"
+
+#include "hashtable.h"
+#include "obj_hashtable.h"
+#include "log.h"
+#include "msc.h"
 #include "assertions.h"
 #include "intertask_interface.h"
 #include "hashtable.h"
@@ -128,7 +136,6 @@ s11_mme_handle_create_session_response (
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_CREATE_SESSION_RESPONSE);
   resp_p = &message_p->ittiMsg.s11_create_session_response;
-  memset(resp_p, 0, sizeof(*resp_p));
 
   resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
 

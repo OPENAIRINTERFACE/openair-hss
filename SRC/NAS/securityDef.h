@@ -73,6 +73,21 @@ Description Contains global security definitions
 /* "Separation bit" of AMF field */
 #define AUTH_AMF_SEPARATION_BIT(a)  ((a) & 0x80)
 
+
+/*
+ * --------------------------------------------------------------------------
+ * EPS NAS security context handled by EPS Mobility Management sublayer in
+ * the UE and in the MME
+ * --------------------------------------------------------------------------
+ */
+/* Type of security context */
+typedef enum {
+  SECURITY_CTX_TYPE_NOT_AVAILABLE = 0,
+  SECURITY_CTX_TYPE_PARTIAL_NATIVE,
+  SECURITY_CTX_TYPE_FULL_NATIVE,
+  SECURITY_CTX_TYPE_MAPPED             // UNUSED
+} emm_sc_type_t;
+
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/

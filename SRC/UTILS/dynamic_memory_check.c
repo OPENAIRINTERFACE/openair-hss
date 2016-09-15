@@ -28,11 +28,21 @@
  */
 
 #include <stdlib.h>
+
+#include "bstrlib.h"
+
 #include "dynamic_memory_check.h"
 
 //------------------------------------------------------------------------------
-void free_wrapper(void *ptr)
+void free_wrapper(void **ptr)
 {
-  free(ptr);
-  ptr = NULL;
+  free(*ptr);
+  *ptr = NULL;
+}
+
+//------------------------------------------------------------------------------
+void bdestroy_wrapper(bstring *b)
+{
+  bdestroy(*b);
+  *b = NULL;
 }

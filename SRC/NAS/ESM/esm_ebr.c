@@ -36,16 +36,22 @@
         and manage ESM messages re-transmission.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
 
-#include <stdlib.h>             // malloc, free_wrapper
-#include <string.h>             // memcpy
+#include "bstrlib.h"
 
 #include "dynamic_memory_check.h"
 #include "log.h"
 #include "msc.h"
 #include "3gpp_24.007.h"
+#include "common_defs.h"
 #include "commonDef.h"
-#include "emmData.h"
+#include "emm_data.h"
 #include "esm_ebr.h"
 #include "mme_api.h"
 
@@ -81,7 +87,7 @@ static const char                      *_esm_ebr_state_str[ESM_EBR_STATE_MAX] = 
 /* Returns the index of the next available entry in the list of EPS bearer
    context data */
 static int                              _esm_ebr_get_available_entry (
-  emm_data_context_t * ctx);
+  emm_context_t * ctx);
 
 
 /****************************************************************************/
@@ -134,7 +140,7 @@ esm_ebr_initialize (
  ***************************************************************************/
 int
 esm_ebr_assign (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int ebi)
 {
   esm_ebr_context_t                      *ebr_ctx = NULL;
@@ -225,7 +231,7 @@ esm_ebr_assign (
  ***************************************************************************/
 int
 esm_ebr_release (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int ebi)
 {
   esm_ebr_context_t                      *ebr_ctx;
@@ -270,17 +276,16 @@ esm_ebr_release (
    */
   if (ebr_ctx->args) {
     if (ebr_ctx->args->msg) {
-      bdestroy (ebr_ctx->args->msg);
+      bdestroy_wrapper (&ebr_ctx->args->msg);
     }
 
-    free_wrapper (ebr_ctx->args);
-    ebr_ctx->args = NULL;
+    free_wrapper ((void**)&ebr_ctx->args);
   }
 
   /*
    * Release EPS bearer context data
    */
-  free_wrapper (ebr_ctx);
+  free_wrapper ((void**)&ebr_ctx);
   ebr_ctx = NULL;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context %d released\n", ebi);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
@@ -309,7 +314,7 @@ esm_ebr_release (
  ***************************************************************************/
 int
 esm_ebr_start_timer (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int ebi,
   CLONE_REF const_bstring msg,
   long sec,
@@ -407,7 +412,7 @@ esm_ebr_start_timer (
  ***************************************************************************/
 int
 esm_ebr_stop_timer (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int ebi)
 {
   esm_ebr_context_t                      *ebr_ctx = NULL;
@@ -444,10 +449,10 @@ esm_ebr_stop_timer (
    */
   if (ebr_ctx->args) {
     if (ebr_ctx->args->msg) {
-      bdestroy (ebr_ctx->args->msg);
+      bdestroy_wrapper (&ebr_ctx->args->msg);
     }
 
-    free_wrapper (ebr_ctx->args);
+    free_wrapper ((void**)&ebr_ctx->args);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
@@ -473,7 +478,7 @@ esm_ebr_stop_timer (
  ***************************************************************************/
 int
 esm_ebr_get_pending_ebi (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   esm_ebr_state status)
 {
   int                                     i;
@@ -527,7 +532,7 @@ esm_ebr_get_pending_ebi (
  ***************************************************************************/
 int
 esm_ebr_set_status (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int ebi,
   esm_ebr_state status,
   int ue_requested)
@@ -596,7 +601,7 @@ esm_ebr_set_status (
  ***************************************************************************/
 esm_ebr_state
 esm_ebr_get_status (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int ebi)
 {
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
@@ -661,7 +666,7 @@ esm_ebr_is_reserved (
  ***************************************************************************/
 int
 esm_ebr_is_not_in_use (
-  emm_data_context_t * ctx,
+  emm_context_t * ctx,
   int ebi)
 {
   return ((ebi == ESM_EBI_UNASSIGNED) || (ctx->esm_data_ctx.ebr.context[ebi - ESM_EBI_MIN] == NULL) || (ctx->esm_data_ctx.ebr.context[ebi - ESM_EBI_MIN]->ebi) != ebi);
@@ -690,7 +695,7 @@ esm_ebr_is_not_in_use (
  ***************************************************************************/
 static int
 _esm_ebr_get_available_entry (
-  emm_data_context_t * ctx)
+  emm_context_t * ctx)
 {
   int                                     i;
 

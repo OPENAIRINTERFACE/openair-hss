@@ -26,17 +26,24 @@
    \date 2013
    \version 0.1
 */
-
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include <stdint.h>
-#include <unistd.h>
+#include <pthread.h>
 
+#include "bstrlib.h"
+
+#include "log.h"
 #include "common_types.h"
 #include "intertask_interface.h"
+#include "common_defs.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
 #include "assertions.h"
 #include "dynamic_memory_check.h"
-#include "log.h"
+#include "mme_config.h"
 
 extern __pid_t g_pid;
 
@@ -156,16 +163,20 @@ s6a_fd_new_peer (
           message_p = itti_alloc_new_message (TASK_S6A, ACTIVATE_MESSAGE);
           itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
 
+          if (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) {
+            message_p = itti_alloc_new_message (TASK_S6A, ACTIVATE_MESSAGE);
+            itti_send_msg_to_task (TASK_MME_SCENARIO_PLAYER, INSTANCE_DEFAULT, message_p);
+          }
           {
             FILE *fp = NULL;
             bstring  filename = bformat("/tmp/mme_%d.status", g_pid);
             fp = fopen(bdata(filename), "w+");
-            bdestroy(filename);
+            bdestroy_wrapper (&filename);
             fprintf(fp, "STARTED\n");
             fflush(fp);
             fclose(fp);
           }
-          bdestroy(hss_name);
+          bdestroy_wrapper (&hss_name);
           return RETURNok;
         } else {
           OAILOG_DEBUG (LOG_S6A, "S6a peer state is %d\n", ret);
@@ -176,7 +187,7 @@ s6a_fd_new_peer (
     }
     sleep(1);
   } while (nb_tries < 8);
-  bdestroy(hss_name);
+  bdestroy_wrapper (&hss_name);
   return RETURNerror;
 #endif
 }

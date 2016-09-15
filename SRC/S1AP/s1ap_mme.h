@@ -20,15 +20,14 @@
  */
 
 
+#ifndef FILE_S1AP_MME_SEEN
+#define FILE_S1AP_MME_SEEN
+
 #if MME_CLIENT_TEST == 0
 # include "intertask_interface.h"
 #endif
 
-#include "mme_config.h"
 #include "hashtable.h"
-
-#ifndef FILE_S1AP_MME_SEEN
-#define FILE_S1AP_MME_SEEN
 
 // Forward declarations
 struct enb_description_s;
@@ -103,12 +102,12 @@ typedef struct enb_description_s {
 
 extern bool             hss_associated;
 extern uint32_t         nb_enb_associated;
-extern mme_config_t    *global_mme_config_p;
+extern struct mme_config_s    *global_mme_config_p;
 
 /** \brief S1AP layer top init
  * @returns -1 in case of failure
  **/
-int s1ap_mme_init(const mme_config_t *mme_config);
+int s1ap_mme_init(const struct mme_config_s *mme_config);
 
 /** \brief Look for given eNB id in the list
  * \param enb_id The unique eNB id to search in list

@@ -18,8 +18,17 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <sys/time.h>
+#include <pthread.h>
 
+#include "bstrlib.h"
 
+#include "log.h"
+#include "conversions.h"
 #include "common_types.h"
 #include "mme_app_ue_context.h"
 #include "commonDef.h"

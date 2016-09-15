@@ -24,19 +24,34 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
 
+#include <libxml/xmlwriter.h>
+#include <libxml/xpath.h>
+#include "bstrlib.h"
+
+#include "dynamic_memory_check.h"
+#include "log.h"
+#include "msc.h"
+#include "assertions.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "mme_config.h"
 #include "timer.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mme_app_statistics.h"
-#include "assertions.h"
-#include "msc.h"
-#include "log.h"
+#include "xml_msg_dump.h"
+#include "common_defs.h"
+
 
 mme_app_desc_t                          mme_app_desc;
+
+extern xmlTextWriterPtr g_xml_text_writer;
+
 
 void     *mme_app_thread (void *args);
 
@@ -45,7 +60,6 @@ void *mme_app_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_MME_APP);
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -139,11 +153,14 @@ void *mme_app_thread (
         /*
          * Termination message received TODO -> release any data allocated
          */
+
+        XML_MSG_DUMP_EXIT();
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
         obj_hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
+        OAI_FPRINTF_INFO("TASK_MME_APP terminated\n");
         itti_exit_task ();
       }
       break;
@@ -175,6 +192,7 @@ void *mme_app_thread (
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
@@ -203,7 +221,7 @@ mme_app_init (
   btrunc(b, 0);
   bassigncstr(b, "mme_app_guti_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, hash_free_int_func, b);
-  bdestroy(b);
+  bdestroy_wrapper (&b);
 
   /*
    * Create the thread associated with MME applicative layer

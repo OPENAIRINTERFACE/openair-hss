@@ -43,13 +43,21 @@
         to the network and re-establish all PDN connections.
 
 *****************************************************************************/
-
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
+
+#include "bstrlib.h"
+
 #include "log.h"
 #include "msc.h"
 #include "dynamic_memory_check.h"
+#include "assertions.h"
 #include "nas_timer.h"
-#include "emmData.h"
+#include "emm_data.h"
 #include "emm_proc.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
@@ -186,13 +194,13 @@ emm_proc_detach_request (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
-  emm_data_context_t                     *emm_ctx = NULL;
+  emm_context_t                     *emm_ctx = NULL;
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Detach type = %s (%d) requested (ue_id=" MME_UE_S1AP_ID_FMT ")", _emm_detach_type_str[type], type, ue_id);
   /*
    * Get the UE context
    */
-  emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+  emm_ctx = emm_context_get (&_emm_data, ue_id);
 
   if (emm_ctx == NULL) {
     OAILOG_WARNING (LOG_NAS_EMM, "No EMM context exists for the UE (ue_id=" MME_UE_S1AP_ID_FMT ")", ue_id);
@@ -215,7 +223,7 @@ emm_proc_detach_request (
 
 
     if (emm_ctx->esm_msg) {
-      bdestroy (emm_ctx->esm_msg);
+      bdestroy_wrapper (&emm_ctx->esm_msg);
     }
 
     /*
@@ -248,8 +256,8 @@ emm_proc_detach_request (
     /*
      * Release the EMM context
      */
-    emm_data_context_remove (&_emm_data, emm_ctx);
-    free_wrapper (emm_ctx);
+    emm_context_remove (&_emm_data, emm_ctx);
+    free_wrapper ((void**)&emm_ctx);
 
     rc = RETURNok;
   } else {

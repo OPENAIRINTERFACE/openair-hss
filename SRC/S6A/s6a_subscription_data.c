@@ -21,10 +21,18 @@
 
 
 #include <stdint.h>
+#include <stdbool.h>
+
+#include "bstrlib.h"
 
 #include "assertions.h"
+#include "3gpp_23.003.h"
+#include "3gpp_24.008.h"
+#include "3gpp_33.401.h"
+#include "security_types.h"
 #include "common_defs.h"
 #include "common_types.h"
+#include "PdnType.h"
 #include "s6a_defs.h"
 
 static inline int
@@ -152,7 +160,7 @@ s6a_parse_service_selection (
   char *service_selection,
   int *length)
 {
-  DevCheck (hdr_service_selection->avp_value->os.len <= APN_MAX_LENGTH, hdr_service_selection->avp_value->os.len, APN_MAX_LENGTH, 0);
+  DevCheck (hdr_service_selection->avp_value->os.len <= SERVICE_SELECTION_MAX_LENGTH, hdr_service_selection->avp_value->os.len, ACCESS_POINT_NAME_MAX_LENGTH, 0);
   *length = sprintf (service_selection, "%*s", (int)hdr_service_selection->avp_value->os.len, hdr_service_selection->avp_value->os.data);
   return RETURNok;
 }

@@ -27,9 +27,18 @@
   \email: lionel.gauthier@eurecom.fr
 */
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
 
+#include "bstrlib.h"
+
+#include "log.h"
+#include "msc.h"
+#include "assertions.h"
+#include "conversions.h"
 #include "intertask_interface.h"
 #include "mme_config.h"
 
@@ -39,11 +48,7 @@
 #include "sgw_ie_defs.h"
 
 #include "secu_defs.h"
-
-#include "assertions.h"
-#include "common_types.h"
-#include "msc.h"
-#include "log.h"
+#include "common_defs.h"
 
 //------------------------------------------------------------------------------
 int mme_app_handle_nas_dl_req (
@@ -67,13 +72,14 @@ int mme_app_handle_nas_dl_req (
   NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
   NAS_DL_DATA_REQ (message_p).ue_id                  = nas_dl_req_pP->ue_id;
   NAS_DL_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
-  NAS_DL_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
+  nas_dl_req_pP->nas_msg                             = NULL;
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,TASK_S1AP,NULL, 0,
       "0 DOWNLINK NAS TRANSPORT enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue id " MME_UE_S1AP_ID_FMT " ",
       enb_ue_s1ap_id, nas_dl_req_pP->ue_id);
 
-  rc = itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
+  rc = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 

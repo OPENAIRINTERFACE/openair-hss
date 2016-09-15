@@ -26,11 +26,13 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-#include "as_message.h"
-#include "nas_message.h"
 
 #ifndef FILE_NAS_MESSAGES_TYPES_SEEN
 #define FILE_NAS_MESSAGES_TYPES_SEEN
+
+#include "nas_message.h"
+#include "as_message.h"
+#include "networkDef.h"
 
 #define NAS_DL_EMM_RAW_MSG(mSGpTR)                  (mSGpTR)->ittiMsg.nas_dl_emm_raw_msg
 #define NAS_UL_EMM_RAW_MSG(mSGpTR)                  (mSGpTR)->ittiMsg.nas_ul_emm_raw_msg
@@ -177,7 +179,6 @@ typedef struct itti_nas_pdn_connectivity_req_s {
   bstring                apn;
   bstring                pdn_addr;
   int                    pdn_type;
-  void                  *proc_data;
   int                    request_type;
 } itti_nas_pdn_connectivity_req_t;
 
@@ -189,7 +190,6 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
   bstring                 apn;
   bstring                 pdn_addr;
   int                     pdn_type;
-  void                   *proc_data;
   int                     request_type;
 
   mme_ue_s1ap_id_t        ue_id;
@@ -233,7 +233,7 @@ typedef struct itti_nas_initial_ue_message_s {
 
 typedef struct itti_nas_conn_est_rej_s {
   mme_ue_s1ap_id_t ue_id;         /* UE lower layer identifier   */
-  as_stmsi_t       s_tmsi;        /* UE identity                 */
+  s_tmsi_t         s_tmsi;        /* UE identity                 */
   nas_error_code_t err_code;      /* Transaction status          */
   bstring          nas_msg;       /* NAS message to transfer     */
   uint32_t         nas_ul_count;  /* UL NAS COUNT                */

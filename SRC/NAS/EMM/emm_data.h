@@ -36,55 +36,33 @@ Description Defines internal private data handled by EPS Mobility
         Management sublayer.
 
 *****************************************************************************/
-#ifndef FILE_EMMDATA_SEEN
-#define FILE_EMMDATA_SEEN
+#ifndef FILE_EMM_DATA_SEEN
+#define FILE_EMM_DATA_SEEN
 
-#include "bstrlib.h"
-#include "common_defs.h"
-#include "obj_hashtable.h"
+#include <sys/types.h>
 #include "hashtable.h"
-#include "commonDef.h"
-#include "networkDef.h"
+#include "obj_hashtable.h"
 #include "securityDef.h"
-
-#include "nas_timer.h"
-
-#include "esmData.h"
-
+#include "TrackingAreaIdentityList.h"
 #include "emm_fsm.h"
-#include "mme_api.h"
-#include "3gpp_33.401.h"
-
+#include "nas_timer.h"
+#include "3gpp_24.301.h"
+#include "3gpp_24.008.h"
 #include "UeNetworkCapability.h"
-#include "MsNetworkCapability.h"
-#include "DrxParameter.h"
 #include "EpsBearerContextStatus.h"
 #include "EpsNetworkFeatureSupport.h"
-
+#include "emm_specific.h"
+#include "esm_data.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
 
 
-
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
 
-/*
- * --------------------------------------------------------------------------
- * EPS NAS security context handled by EPS Mobility Management sublayer in
- * the UE and in the MME
- * --------------------------------------------------------------------------
- */
-/* Type of security context */
-typedef enum {
-  SECURITY_CTX_TYPE_NOT_AVAILABLE = 0,
-  SECURITY_CTX_TYPE_PARTIAL_NATIVE,
-  SECURITY_CTX_TYPE_FULL_NATIVE,
-  SECURITY_CTX_TYPE_MAPPED             // UNUSED
-} emm_sc_type_t;
 
 /* EPS NAS security context structure
  * EPS NAS security context: This context consists of K ASME with the associated key set identifier, the UE security
@@ -131,11 +109,13 @@ typedef struct emm_security_context_s {
  *  EMM internal data handled by EPS Mobility Management sublayer in the MME
  * --------------------------------------------------------------------------
  */
+struct emm_common_data_s;
+
 /*
  * Structure of the EMM context established by the network for a particular UE
  * ---------------------------------------------------------------------------
  */
-typedef struct emm_data_context_s {
+typedef struct emm_context_s {
   mme_ue_s1ap_id_t ue_id;        /* UE identifier                                  */
   bool             is_dynamic;  /* Dynamically allocated context indicator         */
   bool             is_attached; /* Attachment indicator                            */
@@ -147,14 +127,15 @@ typedef struct emm_data_context_s {
   //bool             is_attach_reject_sent ;/* Do we have sent attach reject         */
   //bool             is_attach_complete_received ;/* Do we have received attach complete */
 
-  // this bitmask is here because we wanted to avoid modifying the EmmcCommon interface
+  // this bitmask is here because we wanted to avoid modifying the EmmCommon interface
   uint32_t         common_proc_mask;  /* bitmask, see significance of bits below */
 #define           EMM_CTXT_COMMON_PROC_GUTI                      ((uint32_t)1 << 0)
 #define           EMM_CTXT_COMMON_PROC_AUTH                      ((uint32_t)1 << 1)
 #define           EMM_CTXT_COMMON_PROC_SMC                       ((uint32_t)1 << 2)
 #define           EMM_CTXT_COMMON_PROC_IDENT                     ((uint32_t)1 << 3)
 #define           EMM_CTXT_COMMON_PROC_INFO                      ((uint32_t)1 << 4)
-
+  // May have more than 1 common procedure running, but we will see when it will be needed.
+  struct emm_common_data_s *common_proc;
   uint32_t         specific_proc_mask;  /* bitmask, see significance of bits below */
 #define           EMM_CTXT_SPEC_PROC_ATTACH                      ((uint32_t)1 << 0)
 #define           EMM_CTXT_SPEC_PROC_ATTACH_ACCEPT_SENT          ((uint32_t)1 << 1)
@@ -236,15 +217,15 @@ typedef struct emm_data_context_s {
   struct nas_timer_t       T3460; /* Authentication timer         */
   struct nas_timer_t       T3470; /* Identification timer         */
 
-  esm_data_context_t       esm_data_ctx;
+  struct esm_data_context_s  esm_data_ctx;
 
 
-  UeNetworkCapability      _ue_network_capability_ie; /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_2*/
-  MsNetworkCapability      _ms_network_capability_ie; /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_2*/
-  DrxParameter             _current_drx_parameter;            /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
-  DrxParameter             _pending_drx_parameter;            /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
-  EpsBearerContextStatus   _eps_bearer_context_status;/* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_5*/
-  EpsNetworkFeatureSupport _eps_network_feature_support;
+  ue_network_capability_t  _ue_network_capability_ie; /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_2*/
+  ms_network_capability_t  _ms_network_capability_ie; /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_2*/
+  drx_parameter_t          _current_drx_parameter;            /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
+  drx_parameter_t          _pending_drx_parameter;            /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
+  eps_bearer_context_status_t   _eps_bearer_context_status;/* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_5*/
+  eps_network_feature_support_t _eps_network_feature_support;
 
 
   // TODO: DO BETTER  WITH BELOW
@@ -283,8 +264,9 @@ typedef struct emm_data_context_s {
 
 #define           IS_EMM_CTXT_VALID_AUTH_VECTOR( eMmCtXtPtR, KsI )        (!!((eMmCtXtPtR)->member_valid_mask & ((EMM_CTXT_MEMBER_AUTH_VECTOR0) << KsI)))
 
-  void *          specific_proc_data;
-} emm_data_context_t;
+  // only one specific procedure running at a given time
+  emm_specific_procedure_data_t         *emm_specific_proc_data;
+} emm_context_t;
 
 
 
@@ -302,108 +284,108 @@ typedef struct emm_data_s {
    * EMM contexts
    * ------------
    */
-  hash_table_ts_t    *ctx_coll_ue_id; // key is emm ue id, data is struct emm_data_context_s
+  hash_table_ts_t    *ctx_coll_ue_id; // key is emm ue id, data is struct emm_context_s
   hash_table_ts_t    *ctx_coll_imsi;  // key is imsi_t, data is emm ue id (unsigned int)
   obj_hash_table_t   *ctx_coll_guti;  // key is guti, data is emm ue id (unsigned int)
 } emm_data_t;
 
-mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(emm_data_context_t *ctxt) __attribute__((nonnull));
+mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(emm_context_t *ctxt) __attribute__((nonnull));
 
-void emm_ctx_mark_common_procedure_running(emm_data_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_unmark_common_procedure_running(emm_data_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
-bool emm_ctx_is_common_procedure_running(emm_data_context_t * const ctxt, const int proc_id) __attribute__ ((nonnull)) __attribute__ ((flatten));
-
-
-void emm_ctx_mark_specific_procedure(emm_data_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_unmark_specific_procedure(emm_data_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
-bool emm_ctx_is_specific_procedure(emm_data_context_t * const ctxt, const int proc_id) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_mark_common_procedure_running(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_unmark_common_procedure_running(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
+bool emm_ctx_is_common_procedure_running(emm_context_t * const ctxt, const int proc_id) __attribute__ ((nonnull)) __attribute__ ((flatten));
 
 
-void emm_ctx_set_attribute_present(emm_data_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_clear_attribute_present(emm_data_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
-
-void emm_ctx_set_attribute_valid(emm_data_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_clear_attribute_valid(emm_data_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
-
-void emm_ctx_clear_guti(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_guti(emm_data_context_t * const ctxt, guti_t *guti) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_valid_guti(emm_data_context_t * const ctxt, guti_t *guti) __attribute__ ((nonnull)) __attribute__ ((flatten));
-
-void emm_ctx_clear_old_guti(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_old_guti(emm_data_context_t * const ctxt, guti_t *guti) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_valid_old_guti(emm_data_context_t * const ctxt, guti_t *guti) __attribute__ ((nonnull)) __attribute__ ((flatten));
-
-void emm_ctx_clear_imsi(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64) __attribute__ ((nonnull)) __attribute__ ((flatten));
-
-void emm_ctx_clear_imei(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_imei(emm_data_context_t * const ctxt, imei_t *imei) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_valid_imei(emm_data_context_t * const ctxt, imei_t *imei) __attribute__ ((nonnull)) __attribute__ ((flatten));
-
-void emm_ctx_clear_imeisv(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_valid_imeisv(emm_data_context_t * const ctxt, imeisv_t *imeisv) __attribute__ ((nonnull)) __attribute__ ((flatten));
-
-void emm_ctx_clear_lvr_tai(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_valid_lvr_tai(emm_data_context_t * const ctxt, tai_t *lvr_tai) __attribute__ ((nonnull)) __attribute__ ((flatten));
-
-void emm_ctx_clear_auth_vectors(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_clear_auth_vector(emm_data_context_t * const ctxt, ksi_t eksi) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_clear_security(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_security_type(emm_data_context_t * const ctxt, emm_sc_type_t sc_type) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_security_eksi(emm_data_context_t * const ctxt, ksi_t eksi) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_clear_security_vector_index(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_set_security_vector_index(emm_data_context_t * const ctxt, int vector_index) __attribute__ ((nonnull)) __attribute__ ((flatten));
-
-void emm_ctx_clear_non_current_security(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_clear_non_current_security_vector_index(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) ;
-void emm_ctx_set_non_current_security_vector_index(emm_data_context_t * const ctxt, int vector_index)__attribute__ ((nonnull)) ;
-
-void emm_ctx_clear_ue_nw_cap_ie(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) ;
-void emm_ctx_set_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkCapability *ue_nw_cap_ie) __attribute__ ((nonnull)) ;
-void emm_ctx_set_valid_ue_nw_cap_ie(emm_data_context_t * const ctxt, UeNetworkCapability *ue_nw_cap_ie) __attribute__ ((nonnull)) ;
-
-void emm_ctx_clear_ms_nw_cap(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) ;
-
-void emm_ctx_clear_current_drx_parameter(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) ;
-void emm_ctx_set_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx) __attribute__ ((nonnull)) ;
-void emm_ctx_set_valid_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx) __attribute__ ((nonnull)) ;
-
-void emm_ctx_clear_pending_current_drx_parameter(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) ;
-void emm_ctx_set_pending_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx) __attribute__ ((nonnull)) ;
-void emm_ctx_set_valid_pending_current_drx_parameter(emm_data_context_t * const ctxt, DrxParameter *drx) __attribute__ ((nonnull)) ;
-
-void emm_ctx_clear_eps_bearer_context_status(emm_data_context_t * const ctxt) __attribute__ ((nonnull)) ;
-void emm_ctx_set_eps_bearer_context_status(emm_data_context_t * const ctxt, EpsBearerContextStatus *status) __attribute__ ((nonnull)) ;
-void emm_ctx_set_valid_eps_bearer_context_status(emm_data_context_t * const ctxt, EpsBearerContextStatus *status) __attribute__ ((nonnull)) ;
+void emm_ctx_mark_specific_procedure(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_unmark_specific_procedure(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
+bool emm_ctx_is_specific_procedure(emm_context_t * const ctxt, const int proc_id) __attribute__ ((nonnull)) __attribute__ ((flatten));
 
 
+void emm_ctx_set_attribute_present(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_clear_attribute_present(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
 
-struct emm_data_context_s *emm_data_context_get(
+void emm_ctx_set_attribute_valid(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_clear_attribute_valid(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
+
+void emm_ctx_clear_guti(emm_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_guti(emm_context_t * const ctxt, guti_t *guti) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_valid_guti(emm_context_t * const ctxt, guti_t *guti) __attribute__ ((nonnull)) __attribute__ ((flatten));
+
+void emm_ctx_clear_old_guti(emm_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_old_guti(emm_context_t * const ctxt, guti_t *guti) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_valid_old_guti(emm_context_t * const ctxt, guti_t *guti) __attribute__ ((nonnull)) __attribute__ ((flatten));
+
+void emm_ctx_clear_imsi(emm_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_imsi(emm_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_valid_imsi(emm_context_t * const ctxt, imsi_t *imsi, const imsi64_t imsi64) __attribute__ ((nonnull)) __attribute__ ((flatten));
+
+void emm_ctx_clear_imei(emm_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_imei(emm_context_t * const ctxt, imei_t *imei) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_valid_imei(emm_context_t * const ctxt, imei_t *imei) __attribute__ ((nonnull)) __attribute__ ((flatten));
+
+void emm_ctx_clear_imeisv(emm_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_imeisv(emm_context_t * const ctxt, imeisv_t *imeisv) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_valid_imeisv(emm_context_t * const ctxt, imeisv_t *imeisv) __attribute__ ((nonnull)) __attribute__ ((flatten));
+
+void emm_ctx_clear_lvr_tai(emm_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_lvr_tai(emm_context_t * const ctxt, tai_t *lvr_tai) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_valid_lvr_tai(emm_context_t * const ctxt, tai_t *lvr_tai) __attribute__ ((nonnull)) __attribute__ ((flatten));
+
+void emm_ctx_clear_auth_vectors(emm_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_clear_auth_vector(emm_context_t * const ctxt, ksi_t eksi) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_clear_security(emm_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_security_type(emm_context_t * const ctxt, emm_sc_type_t sc_type) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_security_eksi(emm_context_t * const ctxt, ksi_t eksi) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_clear_security_vector_index(emm_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_set_security_vector_index(emm_context_t * const ctxt, int vector_index) __attribute__ ((nonnull)) __attribute__ ((flatten));
+
+void emm_ctx_clear_non_current_security(emm_context_t * const ctxt) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_clear_non_current_security_vector_index(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
+void emm_ctx_set_non_current_security_vector_index(emm_context_t * const ctxt, int vector_index)__attribute__ ((nonnull)) ;
+
+void emm_ctx_clear_ue_nw_cap_ie(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
+void emm_ctx_set_ue_nw_cap_ie(emm_context_t * const ctxt, ue_network_capability_t *ue_nw_cap_ie) __attribute__ ((nonnull)) ;
+void emm_ctx_set_valid_ue_nw_cap_ie(emm_context_t * const ctxt, ue_network_capability_t *ue_nw_cap_ie) __attribute__ ((nonnull)) ;
+
+void emm_ctx_clear_ms_nw_cap(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
+
+void emm_ctx_clear_current_drx_parameter(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
+void emm_ctx_set_current_drx_parameter(emm_context_t * const ctxt, drx_parameter_t *drx) __attribute__ ((nonnull)) ;
+void emm_ctx_set_valid_current_drx_parameter(emm_context_t * const ctxt, drx_parameter_t *drx) __attribute__ ((nonnull)) ;
+
+void emm_ctx_clear_pending_current_drx_parameter(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
+void emm_ctx_set_pending_current_drx_parameter(emm_context_t * const ctxt, drx_parameter_t *drx) __attribute__ ((nonnull)) ;
+void emm_ctx_set_valid_pending_current_drx_parameter(emm_context_t * const ctxt, drx_parameter_t *drx) __attribute__ ((nonnull)) ;
+
+void emm_ctx_clear_eps_bearer_context_status(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
+void emm_ctx_set_eps_bearer_context_status(emm_context_t * const ctxt, eps_bearer_context_status_t *status) __attribute__ ((nonnull)) ;
+void emm_ctx_set_valid_eps_bearer_context_status(emm_context_t * const ctxt, eps_bearer_context_status_t *status) __attribute__ ((nonnull)) ;
+
+
+
+struct emm_context_s *emm_context_get(
   emm_data_t *emm_data, const mme_ue_s1ap_id_t ueid) __attribute__ ((nonnull)) ;
 
-struct emm_data_context_s *emm_data_context_get_by_imsi (
+struct emm_context_s *emm_context_get_by_imsi (
   emm_data_t * emm_data, imsi64_t imsi64) __attribute__ ((nonnull)) ;
 
-struct emm_data_context_s *emm_data_context_get_by_guti(
+struct emm_context_s *emm_context_get_by_guti(
   emm_data_t *emm_data, guti_t *guti) __attribute__ ((nonnull)) ;
 
-struct emm_data_context_s *emm_data_context_remove(
-  emm_data_t *_emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
+struct emm_context_s *emm_context_remove(
+  emm_data_t *_emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
 
-int  emm_data_context_add(emm_data_t *emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
-int  emm_data_context_add_guti (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
-int  emm_data_context_add_old_guti (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
-int  emm_data_context_add_imsi (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
+int  emm_context_add(emm_data_t *emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
+int  emm_context_add_guti (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
+int  emm_context_add_old_guti (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
+int  emm_context_add_imsi (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
 
-void emm_data_context_silently_reset_procedures (struct emm_data_context_s *emm_ctx) __attribute__ ((nonnull)) ;
-void emm_data_context_stop_all_timers (struct emm_data_context_s *emm_ctx) __attribute__ ((nonnull)) ;
-void free_emm_data_context(struct emm_data_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
-void emm_data_context_dump(const struct emm_data_context_s * const elm_pP) __attribute__ ((nonnull)) ;
+void emm_context_silently_reset_procedures (struct emm_context_s *emm_ctx) __attribute__ ((nonnull)) ;
+void emm_context_stop_all_timers (struct emm_context_s *emm_ctx) __attribute__ ((nonnull)) ;
+void free_emm_context(struct emm_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
+void emm_context_dump(const struct emm_context_s * const elm_pP) __attribute__ ((nonnull)) ;
 
-void emm_data_context_dump_all(void);
+void emm_context_dump_all(void);
 
 
 /****************************************************************************/
@@ -423,4 +405,4 @@ emm_data_t _emm_data;
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-#endif /* FILE_EMMDATA_SEEN*/
+#endif /* FILE_EMM_DATA_SEEN*/

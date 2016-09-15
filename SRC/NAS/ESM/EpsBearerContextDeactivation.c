@@ -44,21 +44,28 @@
         or UE requested PDN disconnect procedure.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "bstrlib.h"
 
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "log.h"
-
-#include "emmData.h"
-#include "esmData.h"
+#include "emm_data.h"
+#include "esm_data.h"
 #include "esm_cause.h"
 #include "esm_ebr.h"
 #include "esm_ebr_context.h"
-
 #include "emm_sap.h"
 #include "esm_sap.h"
-
+#include "mme_config.h"
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
@@ -84,8 +91,8 @@ static void *_eps_bearer_deactivate_t3495_handler (void *);
    retransmission counter */
 #define EPS_BEARER_DEACTIVATE_COUNTER_MAX   5
 
-static int _eps_bearer_deactivate (emm_data_context_t * ctx, int ebi, STOLEN_REF bstring *msg);
-static int _eps_bearer_release (emm_data_context_t * ctx, int ebi, int *pid, int *bid);
+static int _eps_bearer_deactivate (struct emm_context_s * ctx, int ebi, STOLEN_REF bstring *msg);
+static int _eps_bearer_release (struct emm_context_s * ctx, int ebi, int *pid, int *bid);
 
 
 /****************************************************************************/
@@ -127,7 +134,7 @@ static int _eps_bearer_release (emm_data_context_t * ctx, int ebi, int *pid, int
  ***************************************************************************/
 int
 esm_proc_eps_bearer_context_deactivate (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   bool is_local,
   int ebi,
   int *pid,
@@ -226,7 +233,7 @@ esm_proc_eps_bearer_context_deactivate (
 int
 esm_proc_eps_bearer_context_deactivate_request (
   bool is_standalone,
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   bstring msg,
   bool ue_triggered)
@@ -284,7 +291,7 @@ esm_proc_eps_bearer_context_deactivate_request (
  ***************************************************************************/
 int
 esm_proc_eps_bearer_context_deactivate_accept (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   int *esm_cause)
 {
@@ -426,7 +433,7 @@ _eps_bearer_deactivate_t3495_handler (
  ***************************************************************************/
 static int
 _eps_bearer_deactivate (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   STOLEN_REF bstring *msg)
 {
@@ -450,7 +457,7 @@ _eps_bearer_deactivate (
     /*
      * Start T3495 retransmission timer
      */
-    rc = esm_ebr_start_timer (ctx, ebi, *msg, T3495_DEFAULT_VALUE, _eps_bearer_deactivate_t3495_handler);
+    rc = esm_ebr_start_timer (ctx, ebi, *msg, mme_config.nas_config.t3495_sec, _eps_bearer_deactivate_t3495_handler);
   }
   *msg = NULL;
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -477,7 +484,7 @@ _eps_bearer_deactivate (
  ***************************************************************************/
 static int
 _eps_bearer_release (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   int *pid,
   int *bid)

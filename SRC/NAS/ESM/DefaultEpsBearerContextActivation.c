@@ -44,15 +44,26 @@
         It can be part of the attach procedure.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+
+#include "bstrlib.h"
 
 #include "log.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "emm_data.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "esm_cause.h"
 #include "esm_ebr.h"
 #include "esm_ebr_context.h"
 #include "emm_sap.h"
+#include "mme_config.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -79,7 +90,7 @@ static void *_default_eps_bearer_activate_t3485_handler (void *);
 #define DEFAULT_EPS_BEARER_ACTIVATE_COUNTER_MAX 5
 
 static int _default_eps_bearer_activate (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   STOLEN_REF bstring *msg);
 
@@ -114,7 +125,7 @@ static int _default_eps_bearer_activate (
  ***************************************************************************/
 int
 esm_proc_default_eps_bearer_context (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int pid,
   unsigned int *ebi,
   const esm_proc_qos_t * qos,
@@ -183,7 +194,7 @@ esm_proc_default_eps_bearer_context (
 int
 esm_proc_default_eps_bearer_context_request (
   bool is_standalone,
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   STOLEN_REF bstring *msg,
   bool ue_triggered)
@@ -244,7 +255,7 @@ esm_proc_default_eps_bearer_context_request (
  ***************************************************************************/
 int
 esm_proc_default_eps_bearer_context_accept (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   int *esm_cause)
 {
@@ -299,7 +310,7 @@ esm_proc_default_eps_bearer_context_accept (
  ***************************************************************************/
 int
 esm_proc_default_eps_bearer_context_reject (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   int *esm_cause)
 {
@@ -358,7 +369,7 @@ esm_proc_default_eps_bearer_context_reject (
  ***************************************************************************/
 int
 esm_proc_default_eps_bearer_context_failure (
-  emm_data_context_t * ctx)
+  struct emm_context_s * ctx)
 {
   int                                     rc = RETURNerror;
   int                                     pid;
@@ -498,7 +509,7 @@ static void *_default_eps_bearer_activate_t3485_handler (void *args)
  ***************************************************************************/
 static int
 _default_eps_bearer_activate (
-  emm_data_context_t * ctx,
+  struct emm_context_s * ctx,
   int ebi,
   STOLEN_REF bstring *msg)
 {
@@ -522,7 +533,7 @@ _default_eps_bearer_activate (
     /*
      * Start T3485 retransmission timer
      */
-    rc = esm_ebr_start_timer (ctx, ebi, *msg, T3485_DEFAULT_VALUE, _default_eps_bearer_activate_t3485_handler);
+    rc = esm_ebr_start_timer (ctx, ebi, *msg, mme_config.nas_config.t3485_sec, _default_eps_bearer_activate_t3485_handler);
   }
   *msg = NULL;
 

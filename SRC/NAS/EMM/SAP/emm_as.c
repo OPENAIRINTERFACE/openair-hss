@@ -38,24 +38,30 @@
         transfer to/from the Access Stratum sublayer.
 
 *****************************************************************************/
-#include <string.h>             // memset
-#include <stdlib.h>             // malloc, free_wrapper
+
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+
+#include "bstrlib.h"
 
 #include "dynamic_memory_check.h"
 #include "log.h"
 #include "msc.h"
+#include "common_defs.h"
 #include "3gpp_requirements_24.301.h"
+#include "as_message.h"
+#include "emm_cause.h"
+#include "nas_itti_messaging.h"
 #include "emm_as.h"
 #include "emm_recv.h"
-#include "emm_send.h"
-#include "emmData.h"
-#include "commonDef.h"
-#include "TLVDecoder.h"
-#include "as_message.h"
-#include "nas_message.h"
-#include "emm_cause.h"
 #include "LowerLayer.h"
-#include "nas_itti_messaging.h"
+#include "emm_send.h"
+
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -300,7 +306,7 @@ static int _emm_as_recv (
     decode_status = &local_decode_status;
   }
 
-  emm_data_context_t     *emm_ctx =  emm_data_context_get (&_emm_data, ue_id);
+  emm_context_t     *emm_ctx =  emm_context_get (&_emm_data, ue_id);
 
   if (emm_ctx) {
     if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
@@ -474,10 +480,10 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
         /*
          * Decrypt the received security protected message
          */
-        emm_data_context_t                     *emm_ctx = NULL;
+        emm_context_t                     *emm_ctx = NULL;
 
         if (msg->ue_id > 0) {
-          emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+          emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
           if (emm_ctx) {
             if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
               security = &emm_ctx->_security;
@@ -503,14 +509,8 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
           /*
            * Process EMM data
            */
-          tai_t                                   originating_tai = {.plmn = {0}, .tac = INVALID_TAC_0000}; // originating TAI
-          originating_tai.tac = msg->tac;
-          originating_tai.plmn.mcc_digit1 = msg->plmn_id->mcc_digit1;
-          originating_tai.plmn.mcc_digit2 = msg->plmn_id->mcc_digit2;
-          originating_tai.plmn.mcc_digit3 = msg->plmn_id->mcc_digit3;
-          originating_tai.plmn.mnc_digit1 = msg->plmn_id->mnc_digit1;
-          originating_tai.plmn.mnc_digit2 = msg->plmn_id->mnc_digit2;
-          originating_tai.plmn.mnc_digit3 = msg->plmn_id->mnc_digit3;
+          tai_t                                   originating_tai = {0}; // originating TAI
+          memcpy(&originating_tai, msg->tai, sizeof(originating_tai));
 
           rc = _emm_as_recv (msg->ue_id, &originating_tai, &msg->ecgi, plain_msg, bytes, emm_cause, &decode_status);
         } else if (header.protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {
@@ -520,7 +520,7 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
           rc = lowerlayer_data_ind (msg->ue_id, plain_msg);
         }
 
-        bdestroy (plain_msg);
+        bdestroy_wrapper (&plain_msg);
       }
     } else {
       /*
@@ -537,7 +537,7 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
   } else {
     rc = lowerlayer_non_delivery_indication (msg->ue_id);
   }
-  bdestroy(msg->nas_msg);
+  bdestroy (msg->nas_msg); // msg->nas_msg = NULL;
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -563,12 +563,12 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
  ***************************************************************************/
 static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause)
 {
-  struct emm_data_context_s              *emm_ctx = NULL;
+  struct emm_context_s                   *emm_ctx = NULL;
   emm_security_context_t                 *emm_security_context = NULL;
   nas_message_decode_status_t             decode_status = {0};
   int                                     decoder_rc = 0;
   int                                     rc = RETURNerror;
-  tai_t                                   originating_tai = {.plmn = {0}, .tac = INVALID_TAC_0000};
+  tai_t                                   originating_tai = {0};
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS connection establish request\n");
@@ -576,7 +576,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
                                                      .security_protected.plain.emm.header = {0},
                                                      .security_protected.plain.esm.header = {0}};
 
-  emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+  emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
 
   if (emm_ctx) {
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - got context %p\n", emm_ctx);
@@ -589,7 +589,8 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
    * Decode initial NAS message
    */
   decoder_rc = nas_message_decode (msg->nas_msg->data, &nas_msg, blength(msg->nas_msg), emm_security_context, &decode_status);
-  bdestroy(msg->nas_msg);
+  bdestroy(msg->nas_msg); //msg->nas_msg = NULL;
+
 
   if (decoder_rc < TLV_FATAL_ERROR) {
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
@@ -607,13 +608,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
 
   switch (emm_msg->header.message_type) {
   case ATTACH_REQUEST:
-    originating_tai.tac = msg->tac;
-    originating_tai.plmn.mcc_digit1 = msg->plmn_id->mcc_digit1;
-    originating_tai.plmn.mcc_digit2 = msg->plmn_id->mcc_digit2;
-    originating_tai.plmn.mcc_digit3 = msg->plmn_id->mcc_digit3;
-    originating_tai.plmn.mnc_digit1 = msg->plmn_id->mnc_digit1;
-    originating_tai.plmn.mnc_digit2 = msg->plmn_id->mnc_digit2;
-    originating_tai.plmn.mnc_digit3 = msg->plmn_id->mnc_digit3;
+    memcpy(&originating_tai, msg->tai, sizeof(originating_tai));
     rc = emm_recv_attach_request (msg->enb_ue_s1ap_id_key, msg->ue_id, &originating_tai, &msg->ecgi, &emm_msg->attach_request, emm_cause, &decode_status);
     break;
 
@@ -811,8 +806,7 @@ static int _emm_as_encode (bstring *info, nas_message_t * msg,
     if (bytes > 0) {
       (*info)->slen = bytes;
     } else {
-      bdestroy (*info);
-      *info = NULL;
+      bdestroy_wrapper (info);
     }
   }
 
@@ -862,8 +856,7 @@ static int _emm_as_encrypt (bstring *info, const nas_message_security_header_t *
     if (bytes > 0) {
       (*info)->slen = bytes;
     } else {
-      bdestroy(*info);
-      *info = NULL;
+      bdestroy_wrapper (info);
     }
   }
 
@@ -1041,9 +1034,9 @@ static int _emm_as_data_req (const emm_as_data_t * msg, ul_info_transfer_req_t *
   if (size > 0) {
     int                                     bytes = 0;
     emm_security_context_t                 *emm_security_context = NULL;
-    struct emm_data_context_s              *emm_ctx = NULL;
+    struct emm_context_s                   *emm_ctx = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
 
     if (emm_ctx) {
       if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
@@ -1126,9 +1119,9 @@ static int _emm_as_status_ind (const emm_as_status_t * msg, ul_info_transfer_req
 
   if (size > 0) {
     emm_security_context_t                 *emm_security_context = NULL;
-    struct emm_data_context_s              *emm_ctx = NULL;
+    struct emm_context_s              *emm_ctx = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
 
     if (emm_ctx) {
       if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
@@ -1280,10 +1273,10 @@ static int _emm_as_security_req (const emm_as_security_t * msg, dl_info_transfer
     }
 
   if (size > 0) {
-    struct emm_data_context_s              *emm_ctx = NULL;
+    struct emm_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
 
     if (emm_ctx) {
 
@@ -1371,10 +1364,10 @@ static int _emm_as_security_rej (const emm_as_security_t * msg, dl_info_transfer
     }
 
   if (size > 0) {
-    struct emm_data_context_s              *emm_ctx = NULL;
+    struct emm_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
 
 
     if (emm_ctx) {
@@ -1469,10 +1462,10 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
     }
 
   if (size > 0) {
-    struct emm_data_context_s              *emm_ctx = NULL;
+    struct emm_context_s                   *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
 
     if (emm_ctx) {
       if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
@@ -1604,10 +1597,10 @@ static int _emm_as_establish_rej (const emm_as_establish_t * msg, nas_establish_
   }
 
   if (size > 0) {
-    struct emm_data_context_s              *emm_ctx = NULL;
+    struct emm_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
 
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
 
     if (emm_ctx) {
       if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {

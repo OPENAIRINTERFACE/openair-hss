@@ -26,9 +26,15 @@
    \date 2012
    \version 0.1
 */
+#include <stdbool.h>
+#include <stdint.h>
+#include <inttypes.h>
+#include <pthread.h>
+
+#include "bstrlib.h"
 
 #include "intertask_interface.h"
-
+#include "mme_api.h"
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
 #include "s1ap_mme_encoder.h"

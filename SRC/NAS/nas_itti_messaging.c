@@ -19,14 +19,25 @@
  *      contact@openairinterface.org
  */
 
-#include <string.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <pthread.h>
+
+#include "bstrlib.h"
+#include "tree.h"
 
 #include "log.h"
 #include "msc.h"
+#include "assertions.h"
 #include "conversions.h"
 #include "intertask_interface.h"
+#include "common_defs.h"
 #include "secu_defs.h"
+#include "esm_proc.h"
 #include "nas_itti_messaging.h"
 
 
@@ -142,7 +153,6 @@ nas_itti_plain_msg (
      */
     message_p = itti_alloc_new_message (TASK_ORIGIN, messageId_raw);
     NAS_DL_EMM_RAW_MSG (message_p).length = length;
-    memset ((void *)&(NAS_DL_EMM_RAW_MSG (message_p).data), 0, NAS_DATA_LENGHT_MAX);
     memcpy ((void *)&(NAS_DL_EMM_RAW_MSG (message_p).data), buffer, data_length);
     itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
 
@@ -228,9 +238,6 @@ void nas_itti_pdn_connectivity_req(
 
 
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_PDN_CONNECTIVITY_REQ);
-  memset(&message_p->ittiMsg.nas_pdn_connectivity_req,
-         0,
-         sizeof(itti_nas_pdn_connectivity_req_t));
 
   hexa_to_ascii((uint8_t *)imsi_pP->u.value,
                 NAS_PDN_CONNECTIVITY_REQ(message_p).imsi,
@@ -275,8 +282,6 @@ void nas_itti_pdn_connectivity_req(
   NAS_PDN_CONNECTIVITY_REQ(message_p).qos.mbrDL = proc_data_pP->qos.mbrDL;
   NAS_PDN_CONNECTIVITY_REQ(message_p).qos.qci   = proc_data_pP->qos.qci;
 
-  NAS_PDN_CONNECTIVITY_REQ(message_p).proc_data = proc_data_pP;
-
   NAS_PDN_CONNECTIVITY_REQ(message_p).request_type  = request_typeP;
 
   copy_protocol_configuration_options (&NAS_PDN_CONNECTIVITY_REQ(message_p).pco, &proc_data_pP->pco);
@@ -288,16 +293,7 @@ void nas_itti_pdn_connectivity_req(
         "NAS_PDN_CONNECTIVITY_REQ ue id %06"PRIX32" IMSI %X",
         ue_idP, NAS_PDN_CONNECTIVITY_REQ(message_p).imsi);
 
-#define TEMPORARY_DEBUG 1
-#if TEMPORARY_DEBUG
-  mme_ue_context_dump_coll_keys();
-#endif
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-#define TEMPORARY_DEBUG 1
-#if TEMPORARY_DEBUG
-  mme_ue_context_dump_coll_keys();
-#endif
-
   OAILOG_FUNC_OUT(LOG_NAS);
 }
 
@@ -317,7 +313,6 @@ void nas_itti_auth_info_req(
 
   message_p = itti_alloc_new_message (TASK_NAS_MME, S6A_AUTH_INFO_REQ);
   auth_info_req = &message_p->ittiMsg.s6a_auth_info_req;
-  memset(auth_info_req, 0, sizeof(s6a_auth_info_req_t));
 
   auth_info_req->imsi_length =
       snprintf (auth_info_req->imsi, IMSI_BCD_DIGITS_MAX+1, IMSI_64_FMT, imsi64_P);
@@ -353,9 +348,6 @@ void nas_itti_establish_rej(
   MessageDef *message_p;
 
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_AUTHENTICATION_PARAM_REQ);
-  memset(&message_p->ittiMsg.nas_auth_param_req,
-         0,
-         sizeof(itti_nas_auth_param_req_t));
 
   hexa_to_ascii((uint8_t *)imsi_pP->u.value,
                 NAS_AUTHENTICATION_PARAM_REQ(message_p).imsi, 8);
@@ -393,12 +385,11 @@ void nas_itti_establish_cnf(
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef                             *message_p        = NULL;
-  emm_data_context_t                     *emm_ctx = emm_data_context_get (&_emm_data, ue_idP);
+  emm_context_t                     *emm_ctx = emm_context_get (&_emm_data, ue_idP);
 
   if (emm_ctx) {
 
     message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_CONNECTION_ESTABLISHMENT_CNF);
-    memset(&message_p->ittiMsg.nas_conn_est_cnf, 0, sizeof(itti_nas_conn_est_cnf_t));
     NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).ue_id                           = ue_idP;
     NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).err_code                        = error_codeP;
     NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).nas_msg                         = msgP; msgP = NULL;
@@ -434,9 +425,6 @@ void nas_itti_detach_req(
   MessageDef *message_p;
 
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_DETACH_REQ);
-  memset(&message_p->ittiMsg.nas_detach_req,
-         0,
-         sizeof(itti_nas_detach_req_t));
 
   NAS_DETACH_REQ(message_p).ue_id = ue_idP;
 

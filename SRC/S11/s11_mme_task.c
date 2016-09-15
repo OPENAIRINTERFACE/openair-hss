@@ -20,17 +20,23 @@
  */
 
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <inttypes.h>
+#include <pthread.h>
 #include <assert.h>
+#include <errno.h>
 
+#include "bstrlib.h"
+
+#include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "hashtable.h"
 #include "log.h"
 #include "msc.h"
 #include "mme_config.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "timer.h"
 #include "NwLog.h"
 #include "NwGtpv2c.h"
@@ -165,8 +171,6 @@ s11_mme_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_S11);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -215,12 +219,19 @@ s11_mme_thread (
       }
       break;
 
+    case TERMINATE_MESSAGE:{
+        OAI_FPRINTF_INFO("TASK_S11 terminated\n");
+        itti_exit_task ();
+      }
+      break;
+
     default:{
         OAILOG_ERROR (LOG_S11, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
@@ -245,9 +256,7 @@ s11_send_init_udp (
 }
 
 //------------------------------------------------------------------------------
-int
-s11_mme_init (
-  const mme_config_t * mme_config_p)
+int s11_mme_init (const mme_config_t * const mme_config_p)
 {
   int                                     ret = 0;
   NwGtpv2cUlpEntityT                      ulp;
@@ -302,7 +311,7 @@ s11_mme_init (
 
   bstring b = bfromcstr("s11_mme_teid_2_gtv2c_teid_handle");
   s11_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);
-  bdestroy(b);
+  bdestroy_wrapper (&b);
 
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: DONE\n");
   return ret;

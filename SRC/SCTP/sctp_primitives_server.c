@@ -42,12 +42,15 @@
 #include <arpa/inet.h>
 #include <signal.h>
 
+#include "bstrlib.h"
+
 #include "dynamic_memory_check.h"
 #include "common_defs.h"
 #include "assertions.h"
 #include "log.h"
 #include "msc.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "sctp_primitives_server.h"
 #include "mme_config.h"
 #include "conversions.h"
@@ -198,7 +201,7 @@ static int sctp_remove_assoc_from_list (sctp_assoc_id_t assoc_id)
     int rv = sctp_freepaddrs(assoc_desc->peer_addresses);
     if (rv) OAILOG_DEBUG (LOG_SCTP, "sctp_freepaddrs(%p) failed\n", assoc_desc->peer_addresses);
   }
-  free_wrapper (assoc_desc);
+  free_wrapper ((void**)&assoc_desc);
   sctp_desc.number_of_connections--;
   return 0;
 }
@@ -559,16 +562,13 @@ void *sctp_receiver_thread (void *args_p)
   FD_ZERO (&read_fds);
   FD_SET (sctp_arg_p->sd, &master);
   fdmax = sctp_arg_p->sd;       /* so far, it's this one */
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     memcpy (&read_fds, &master, sizeof (master));
 
     if (select (fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
       OAILOG_ERROR (LOG_SCTP, "[%d] Select() error: %s", sctp_arg_p->sd, strerror (errno));
-      free_wrapper (args_p);
-      args_p = NULL;
+      free_wrapper ((void**)&args_p);
       pthread_exit (NULL);
     }
 
@@ -581,8 +581,7 @@ void *sctp_receiver_thread (void *args_p)
            */
           if ((clientsock = accept (sctp_arg_p->sd, NULL, NULL)) < 0) {
             OAILOG_ERROR (LOG_SCTP, "[%d] accept: %s:%d\n", sctp_arg_p->sd, strerror (errno), errno);
-            free_wrapper (args_p);
-            args_p = NULL;
+            free_wrapper ((void**)&args_p);
             pthread_exit (NULL);
           } else {
             FD_SET (clientsock, &master);       /* add to master set */
@@ -622,8 +621,7 @@ void *sctp_receiver_thread (void *args_p)
     }
   }
 
-  free_wrapper (args_p);
-  args_p = NULL;
+  free_wrapper ((void**)&args_p);
   return NULL;
 }
 
@@ -631,8 +629,6 @@ void *sctp_receiver_thread (void *args_p)
 static void * sctp_intertask_interface (void *args_p)
 {
   itti_mark_task_ready (TASK_SCTP);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -699,6 +695,7 @@ static void * sctp_intertask_interface (void *args_p)
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
@@ -743,7 +740,8 @@ static void sctp_exit (void)
       rv = sctp_freepaddrs(sctp_assoc_p->peer_addresses);
       if (rv) OAILOG_DEBUG (LOG_SCTP, "sctp_freepaddrs(%p) failed\n", sctp_assoc_p->peer_addresses);
     }
-    free_wrapper (sctp_assoc_p);
+    free_wrapper ((void**)&sctp_assoc_p);
     sctp_desc.number_of_connections--;
   }
+  OAI_FPRINTF_INFO("TASK_SCTP terminated\n");
 }

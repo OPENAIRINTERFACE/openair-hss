@@ -18,18 +18,20 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
+#include "bstrlib.h"
 
+#include "log.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "TrafficFlowAggregateDescription.h"
 
-int
-decode_traffic_flow_aggregate_description (
+//------------------------------------------------------------------------------
+int decode_traffic_flow_aggregate_description (
   TrafficFlowAggregateDescription * trafficflowaggregatedescription,
   uint8_t iei,
   uint8_t * buffer,
@@ -38,8 +40,8 @@ decode_traffic_flow_aggregate_description (
   return 0;
 }
 
-int
-encode_traffic_flow_aggregate_description (
+//------------------------------------------------------------------------------
+int encode_traffic_flow_aggregate_description (
   TrafficFlowAggregateDescription * trafficflowaggregatedescription,
   uint8_t iei,
   uint8_t * buffer,

@@ -38,17 +38,25 @@
         from the Access Stratum sublayer.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+
+#include "bstrlib.h"
 
 #include "3gpp_24.007.h"
 #include "emm_recv.h"
 #include "commonDef.h"
+#include "common_defs.h"
 #include "log.h"
-
 #include "emm_msgDef.h"
 #include "emm_cause.h"
 #include "emm_proc.h"
 
-#include <string.h>             // memcpy
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -213,36 +221,36 @@ emm_recv_attach_request (
      * Get the GUTI
      */
     p_guti = &guti;
-    guti.gummei.plmn.mcc_digit1 = msg->oldgutiorimsi.guti.mccdigit1;
-    guti.gummei.plmn.mcc_digit2 = msg->oldgutiorimsi.guti.mccdigit2;
-    guti.gummei.plmn.mcc_digit3 = msg->oldgutiorimsi.guti.mccdigit3;
-    guti.gummei.plmn.mnc_digit1 = msg->oldgutiorimsi.guti.mncdigit1;
-    guti.gummei.plmn.mnc_digit2 = msg->oldgutiorimsi.guti.mncdigit2;
-    guti.gummei.plmn.mnc_digit3 = msg->oldgutiorimsi.guti.mncdigit3;
-    guti.gummei.mme_gid = msg->oldgutiorimsi.guti.mmegroupid;
-    guti.gummei.mme_code = msg->oldgutiorimsi.guti.mmecode;
-    guti.m_tmsi = msg->oldgutiorimsi.guti.mtmsi;
+    guti.gummei.plmn.mcc_digit1 = msg->oldgutiorimsi.guti.mcc_digit1;
+    guti.gummei.plmn.mcc_digit2 = msg->oldgutiorimsi.guti.mcc_digit2;
+    guti.gummei.plmn.mcc_digit3 = msg->oldgutiorimsi.guti.mcc_digit3;
+    guti.gummei.plmn.mnc_digit1 = msg->oldgutiorimsi.guti.mnc_digit1;
+    guti.gummei.plmn.mnc_digit2 = msg->oldgutiorimsi.guti.mnc_digit2;
+    guti.gummei.plmn.mnc_digit3 = msg->oldgutiorimsi.guti.mnc_digit3;
+    guti.gummei.mme_gid = msg->oldgutiorimsi.guti.mme_group_id;
+    guti.gummei.mme_code = msg->oldgutiorimsi.guti.mme_code;
+    guti.m_tmsi = msg->oldgutiorimsi.guti.m_tmsi;
   } else if (msg->oldgutiorimsi.imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMSI\n");
     /*
      * Get the IMSI
      */
     p_imsi = &imsi;
-    imsi.u.num.digit1 = msg->oldgutiorimsi.imsi.digit1;
-    imsi.u.num.digit2 = msg->oldgutiorimsi.imsi.digit2;
-    imsi.u.num.digit3 = msg->oldgutiorimsi.imsi.digit3;
-    imsi.u.num.digit4 = msg->oldgutiorimsi.imsi.digit4;
-    imsi.u.num.digit5 = msg->oldgutiorimsi.imsi.digit5;
-    imsi.u.num.digit6 = msg->oldgutiorimsi.imsi.digit6;
-    imsi.u.num.digit7 = msg->oldgutiorimsi.imsi.digit7;
-    imsi.u.num.digit8 = msg->oldgutiorimsi.imsi.digit8;
-    imsi.u.num.digit9 = msg->oldgutiorimsi.imsi.digit9;
-    imsi.u.num.digit10 = msg->oldgutiorimsi.imsi.digit10;
-    imsi.u.num.digit11 = msg->oldgutiorimsi.imsi.digit11;
-    imsi.u.num.digit12 = msg->oldgutiorimsi.imsi.digit12;
-    imsi.u.num.digit13 = msg->oldgutiorimsi.imsi.digit13;
-    imsi.u.num.digit14 = msg->oldgutiorimsi.imsi.digit14;
-    imsi.u.num.digit15 = msg->oldgutiorimsi.imsi.digit15;
+    imsi.u.num.digit1 = msg->oldgutiorimsi.imsi.identity_digit1;
+    imsi.u.num.digit2 = msg->oldgutiorimsi.imsi.identity_digit2;
+    imsi.u.num.digit3 = msg->oldgutiorimsi.imsi.identity_digit3;
+    imsi.u.num.digit4 = msg->oldgutiorimsi.imsi.identity_digit4;
+    imsi.u.num.digit5 = msg->oldgutiorimsi.imsi.identity_digit5;
+    imsi.u.num.digit6 = msg->oldgutiorimsi.imsi.identity_digit6;
+    imsi.u.num.digit7 = msg->oldgutiorimsi.imsi.identity_digit7;
+    imsi.u.num.digit8 = msg->oldgutiorimsi.imsi.identity_digit8;
+    imsi.u.num.digit9 = msg->oldgutiorimsi.imsi.identity_digit9;
+    imsi.u.num.digit10 = msg->oldgutiorimsi.imsi.identity_digit10;
+    imsi.u.num.digit11 = msg->oldgutiorimsi.imsi.identity_digit11;
+    imsi.u.num.digit12 = msg->oldgutiorimsi.imsi.identity_digit12;
+    imsi.u.num.digit13 = msg->oldgutiorimsi.imsi.identity_digit13;
+    imsi.u.num.digit14 = msg->oldgutiorimsi.imsi.identity_digit14;
+    imsi.u.num.digit15 = msg->oldgutiorimsi.imsi.identity_digit15;
     imsi.u.num.parity = msg->oldgutiorimsi.imsi.oddeven;
   } else if (msg->oldgutiorimsi.imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMEI\n");
@@ -250,21 +258,21 @@ emm_recv_attach_request (
      * Get the IMEI
      */
     p_imei = &imei;
-    imei.u.num.tac1 = msg->oldgutiorimsi.imei.digit1;
-    imei.u.num.tac2 = msg->oldgutiorimsi.imei.digit2;
-    imei.u.num.tac3 = msg->oldgutiorimsi.imei.digit3;
-    imei.u.num.tac4 = msg->oldgutiorimsi.imei.digit4;
-    imei.u.num.tac5 = msg->oldgutiorimsi.imei.digit5;
-    imei.u.num.tac6 = msg->oldgutiorimsi.imei.digit6;
-    imei.u.num.tac7 = msg->oldgutiorimsi.imei.digit7;
-    imei.u.num.tac8 = msg->oldgutiorimsi.imei.digit8;
-    imei.u.num.snr1 = msg->oldgutiorimsi.imei.digit9;
-    imei.u.num.snr2 = msg->oldgutiorimsi.imei.digit10;
-    imei.u.num.snr3 = msg->oldgutiorimsi.imei.digit11;
-    imei.u.num.snr4 = msg->oldgutiorimsi.imei.digit12;
-    imei.u.num.snr5 = msg->oldgutiorimsi.imei.digit13;
-    imei.u.num.snr6 = msg->oldgutiorimsi.imei.digit14;
-    imei.u.num.cdsd = msg->oldgutiorimsi.imei.digit15;
+    imei.u.num.tac1 = msg->oldgutiorimsi.imei.identity_digit1;
+    imei.u.num.tac2 = msg->oldgutiorimsi.imei.identity_digit2;
+    imei.u.num.tac3 = msg->oldgutiorimsi.imei.identity_digit3;
+    imei.u.num.tac4 = msg->oldgutiorimsi.imei.identity_digit4;
+    imei.u.num.tac5 = msg->oldgutiorimsi.imei.identity_digit5;
+    imei.u.num.tac6 = msg->oldgutiorimsi.imei.identity_digit6;
+    imei.u.num.tac7 = msg->oldgutiorimsi.imei.identity_digit7;
+    imei.u.num.tac8 = msg->oldgutiorimsi.imei.identity_digit8;
+    imei.u.num.snr1 = msg->oldgutiorimsi.imei.identity_digit9;
+    imei.u.num.snr2 = msg->oldgutiorimsi.imei.identity_digit10;
+    imei.u.num.snr3 = msg->oldgutiorimsi.imei.identity_digit11;
+    imei.u.num.snr4 = msg->oldgutiorimsi.imei.identity_digit12;
+    imei.u.num.snr5 = msg->oldgutiorimsi.imei.identity_digit13;
+    imei.u.num.snr6 = msg->oldgutiorimsi.imei.identity_digit14;
+    imei.u.num.cdsd = msg->oldgutiorimsi.imei.identity_digit15;
     imei.u.num.parity = msg->oldgutiorimsi.imei.oddeven;
   }
 
@@ -274,18 +282,18 @@ emm_recv_attach_request (
   /*
    * Get the Last visited registered TAI
    */
-  tai_t                                   last_visited_registered_tai = {.plmn = {0}, .tac = INVALID_TAC_0000},
+  tai_t                                   last_visited_registered_tai = {0},
                                          *p_last_visited_registered_tai = NULL;
 
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get LAST VISITED REGISTERED TAI\n");
     p_last_visited_registered_tai = &last_visited_registered_tai;
-    last_visited_registered_tai.plmn.mcc_digit1 = msg->lastvisitedregisteredtai.mccdigit1;
-    last_visited_registered_tai.plmn.mcc_digit2 = msg->lastvisitedregisteredtai.mccdigit2;
-    last_visited_registered_tai.plmn.mcc_digit3 = msg->lastvisitedregisteredtai.mccdigit3;
-    last_visited_registered_tai.plmn.mnc_digit1 = msg->lastvisitedregisteredtai.mncdigit1;
-    last_visited_registered_tai.plmn.mnc_digit2 = msg->lastvisitedregisteredtai.mncdigit2;
-    last_visited_registered_tai.plmn.mnc_digit3 = msg->lastvisitedregisteredtai.mncdigit3;
+    last_visited_registered_tai.mcc_digit1 = msg->lastvisitedregisteredtai.mcc_digit1;
+    last_visited_registered_tai.mcc_digit2 = msg->lastvisitedregisteredtai.mcc_digit2;
+    last_visited_registered_tai.mcc_digit3 = msg->lastvisitedregisteredtai.mcc_digit3;
+    last_visited_registered_tai.mnc_digit1 = msg->lastvisitedregisteredtai.mnc_digit1;
+    last_visited_registered_tai.mnc_digit2 = msg->lastvisitedregisteredtai.mnc_digit2;
+    last_visited_registered_tai.mnc_digit3 = msg->lastvisitedregisteredtai.mnc_digit3;
     last_visited_registered_tai.tac = msg->lastvisitedregisteredtai.tac;
   }
 
@@ -420,56 +428,56 @@ emm_recv_detach_request (
      * Get the GUTI
      */
     p_guti = &guti;
-    guti.gummei.plmn.mcc_digit1 = msg->gutiorimsi.guti.mccdigit1;
-    guti.gummei.plmn.mcc_digit2 = msg->gutiorimsi.guti.mccdigit2;
-    guti.gummei.plmn.mcc_digit3 = msg->gutiorimsi.guti.mccdigit3;
-    guti.gummei.plmn.mnc_digit1 = msg->gutiorimsi.guti.mncdigit1;
-    guti.gummei.plmn.mnc_digit2 = msg->gutiorimsi.guti.mncdigit2;
-    guti.gummei.plmn.mnc_digit3 = msg->gutiorimsi.guti.mncdigit3;
-    guti.gummei.mme_gid = msg->gutiorimsi.guti.mmegroupid;
-    guti.gummei.mme_code = msg->gutiorimsi.guti.mmecode;
-    guti.m_tmsi = msg->gutiorimsi.guti.mtmsi;
+    guti.gummei.plmn.mcc_digit1 = msg->gutiorimsi.guti.mcc_digit1;
+    guti.gummei.plmn.mcc_digit2 = msg->gutiorimsi.guti.mcc_digit2;
+    guti.gummei.plmn.mcc_digit3 = msg->gutiorimsi.guti.mcc_digit3;
+    guti.gummei.plmn.mnc_digit1 = msg->gutiorimsi.guti.mnc_digit1;
+    guti.gummei.plmn.mnc_digit2 = msg->gutiorimsi.guti.mnc_digit2;
+    guti.gummei.plmn.mnc_digit3 = msg->gutiorimsi.guti.mnc_digit3;
+    guti.gummei.mme_gid = msg->gutiorimsi.guti.mme_group_id;
+    guti.gummei.mme_code = msg->gutiorimsi.guti.mme_code;
+    guti.m_tmsi = msg->gutiorimsi.guti.m_tmsi;
   } else if (msg->gutiorimsi.imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
     /*
      * Get the IMSI
      */
     p_imsi = &imsi;
-    imsi.u.num.digit1 = msg->gutiorimsi.imsi.digit1;
-    imsi.u.num.digit2 = msg->gutiorimsi.imsi.digit2;
-    imsi.u.num.digit3 = msg->gutiorimsi.imsi.digit3;
-    imsi.u.num.digit4 = msg->gutiorimsi.imsi.digit4;
-    imsi.u.num.digit5 = msg->gutiorimsi.imsi.digit5;
-    imsi.u.num.digit6 = msg->gutiorimsi.imsi.digit6;
-    imsi.u.num.digit7 = msg->gutiorimsi.imsi.digit7;
-    imsi.u.num.digit8 = msg->gutiorimsi.imsi.digit8;
-    imsi.u.num.digit9 = msg->gutiorimsi.imsi.digit9;
-    imsi.u.num.digit10 = msg->gutiorimsi.imsi.digit10;
-    imsi.u.num.digit11 = msg->gutiorimsi.imsi.digit11;
-    imsi.u.num.digit12 = msg->gutiorimsi.imsi.digit12;
-    imsi.u.num.digit13 = msg->gutiorimsi.imsi.digit13;
-    imsi.u.num.digit14 = msg->gutiorimsi.imsi.digit14;
-    imsi.u.num.digit15 = msg->gutiorimsi.imsi.digit15;
+    imsi.u.num.digit1 = msg->gutiorimsi.imsi.identity_digit1;
+    imsi.u.num.digit2 = msg->gutiorimsi.imsi.identity_digit2;
+    imsi.u.num.digit3 = msg->gutiorimsi.imsi.identity_digit3;
+    imsi.u.num.digit4 = msg->gutiorimsi.imsi.identity_digit4;
+    imsi.u.num.digit5 = msg->gutiorimsi.imsi.identity_digit5;
+    imsi.u.num.digit6 = msg->gutiorimsi.imsi.identity_digit6;
+    imsi.u.num.digit7 = msg->gutiorimsi.imsi.identity_digit7;
+    imsi.u.num.digit8 = msg->gutiorimsi.imsi.identity_digit8;
+    imsi.u.num.digit9 = msg->gutiorimsi.imsi.identity_digit9;
+    imsi.u.num.digit10 = msg->gutiorimsi.imsi.identity_digit10;
+    imsi.u.num.digit11 = msg->gutiorimsi.imsi.identity_digit11;
+    imsi.u.num.digit12 = msg->gutiorimsi.imsi.identity_digit12;
+    imsi.u.num.digit13 = msg->gutiorimsi.imsi.identity_digit13;
+    imsi.u.num.digit14 = msg->gutiorimsi.imsi.identity_digit14;
+    imsi.u.num.digit15 = msg->gutiorimsi.imsi.identity_digit15;
     imsi.u.num.parity = msg->gutiorimsi.imsi.oddeven;
   } else if (msg->gutiorimsi.imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
     /*
      * Get the IMEI
      */
     p_imei = &imei;
-    imei.u.num.tac1 = msg->gutiorimsi.imei.digit1;
-    imei.u.num.tac2 = msg->gutiorimsi.imei.digit2;
-    imei.u.num.tac3 = msg->gutiorimsi.imei.digit3;
-    imei.u.num.tac4 = msg->gutiorimsi.imei.digit4;
-    imei.u.num.tac5 = msg->gutiorimsi.imei.digit5;
-    imei.u.num.tac6 = msg->gutiorimsi.imei.digit6;
-    imei.u.num.tac7 = msg->gutiorimsi.imei.digit7;
-    imei.u.num.tac8 = msg->gutiorimsi.imei.digit8;
-    imei.u.num.snr1 = msg->gutiorimsi.imei.digit9;
-    imei.u.num.snr2 = msg->gutiorimsi.imei.digit10;
-    imei.u.num.snr3 = msg->gutiorimsi.imei.digit11;
-    imei.u.num.snr4 = msg->gutiorimsi.imei.digit12;
-    imei.u.num.snr5 = msg->gutiorimsi.imei.digit13;
-    imei.u.num.snr6 = msg->gutiorimsi.imei.digit14;
-    imei.u.num.cdsd = msg->gutiorimsi.imei.digit15;
+    imei.u.num.tac1 = msg->gutiorimsi.imei.identity_digit1;
+    imei.u.num.tac2 = msg->gutiorimsi.imei.identity_digit2;
+    imei.u.num.tac3 = msg->gutiorimsi.imei.identity_digit3;
+    imei.u.num.tac4 = msg->gutiorimsi.imei.identity_digit4;
+    imei.u.num.tac5 = msg->gutiorimsi.imei.identity_digit5;
+    imei.u.num.tac6 = msg->gutiorimsi.imei.identity_digit6;
+    imei.u.num.tac7 = msg->gutiorimsi.imei.identity_digit7;
+    imei.u.num.tac8 = msg->gutiorimsi.imei.identity_digit8;
+    imei.u.num.snr1 = msg->gutiorimsi.imei.identity_digit9;
+    imei.u.num.snr2 = msg->gutiorimsi.imei.identity_digit10;
+    imei.u.num.snr3 = msg->gutiorimsi.imei.identity_digit11;
+    imei.u.num.snr4 = msg->gutiorimsi.imei.identity_digit12;
+    imei.u.num.snr5 = msg->gutiorimsi.imei.identity_digit13;
+    imei.u.num.snr6 = msg->gutiorimsi.imei.identity_digit14;
+    imei.u.num.cdsd = msg->gutiorimsi.imei.identity_digit15;
     imei.u.num.parity = msg->gutiorimsi.imei.oddeven;
   }
 
@@ -603,16 +611,7 @@ emm_recv_identity_response (
                                          *p_imei = NULL;
   imeisv_t                                imeisv = {0},
                                          *p_imeisv = NULL;
-  struct tmsi_struct_t {
-    uint8_t                                 digit1:4;
-    uint8_t                                 digit2:4;
-    uint8_t                                 digit3:4;
-    uint8_t                                 digit4:4;
-    uint8_t                                 digit5:4;
-    uint8_t                                 digit6:4;
-    uint8_t                                 digit7:4;
-    uint8_t                                 digit8:4;
-  } tmsi                                 ,
+  tmsi_t                                  tmsi = 0,
                                          *p_tmsi = NULL;
 
   if (msg->mobileidentity.imsi.typeofidentity == MOBILE_IDENTITY_IMSI) {
@@ -684,14 +683,10 @@ emm_recv_identity_response (
      * Get the TMSI
      */
     p_tmsi = &tmsi;
-    tmsi.digit1 = msg->mobileidentity.tmsi.digit2;
-    tmsi.digit2 = msg->mobileidentity.tmsi.digit3;
-    tmsi.digit3 = msg->mobileidentity.tmsi.digit4;
-    tmsi.digit4 = msg->mobileidentity.tmsi.digit5;
-    tmsi.digit5 = msg->mobileidentity.tmsi.digit6;
-    tmsi.digit6 = msg->mobileidentity.tmsi.digit7;
-    tmsi.digit7 = msg->mobileidentity.tmsi.digit8;
-    tmsi.digit8 = msg->mobileidentity.tmsi.digit9;
+    tmsi  = ((tmsi_t)msg->mobileidentity.tmsi.tmsi[0]) << 24;
+    tmsi |= (((tmsi_t)msg->mobileidentity.tmsi.tmsi[1]) << 16);
+    tmsi |= (((tmsi_t)msg->mobileidentity.tmsi.tmsi[2]) << 8);
+    tmsi |= ((tmsi_t)msg->mobileidentity.tmsi.tmsi[3]);
   }
 
   /*

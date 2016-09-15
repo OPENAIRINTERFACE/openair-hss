@@ -39,7 +39,7 @@
 //------------------------------------------------------------------------------
 // A primary key for a EPS Bearer entry  can be a tuple (eps bearer id, imsi)
 typedef struct sgw_eps_bearer_entry_s {
-  PAA_t                paa;
+  paa_t                paa;
   ebi_t                eps_bearer_id;                    ///< An EPS bearer identity uniquely identifies an EPS bearer for one UE accessing via E-UTRAN
   // TODO traffic_flow_template_t tft;                   ///< Traffic Flow Template
 
