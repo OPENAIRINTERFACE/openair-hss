@@ -612,13 +612,15 @@ hashtable_insert (
 
   while (node) {
     if (node->key == keyP) {
-      if (node->data) {
+      if ((node->data) && (node->data != dataP)) {
         hashtblP->freefunc (&node->data);
+        node->data = dataP;
+        PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
+        return HASH_TABLE_INSERT_OVERWRITTEN_DATA;
       }
-
       node->data = dataP;
-      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
-      return HASH_TABLE_INSERT_OVERWRITTEN_DATA;
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
+      return HASH_TABLE_OK;
     }
 
     node = node->next;
@@ -668,13 +670,17 @@ hashtable_ts_insert (
 
   while (node) {
     if (node->key == keyP) {
-      if (node->data) {
+      if ((node->data) && (node->data != dataP)) {
         hashtblP->freefunc (&node->data);
+        node->data = dataP;
+        pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
+        PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
+        return HASH_TABLE_INSERT_OVERWRITTEN_DATA;
       }
       node->data = dataP;
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
-      return HASH_TABLE_INSERT_OVERWRITTEN_DATA;
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP);
+      return HASH_TABLE_OK;
     }
 
     node = node->next;
