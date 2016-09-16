@@ -94,7 +94,6 @@ typedef int scenario_player_exit_t;
 typedef enum {
   VAR_VALUE_TYPE_NULL = 0,
   VAR_VALUE_TYPE_INT64,
-  VAR_VALUE_TYPE_VAR_UID,
   VAR_VALUE_TYPE_BSTR
 } var_value_type_t;
 

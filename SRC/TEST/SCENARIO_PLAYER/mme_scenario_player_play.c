@@ -304,7 +304,7 @@ void msp_var_notify_listeners (scenario_player_item_t * const item)
 bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const item)
 {
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "var %s\n", item->u.var.name->data);
-  if (VAR_VALUE_TYPE_VAR_UID == item->u.var.value_type) {
+  if (item->u.var.var_ref_uid) {
     // get ref var value
     scenario_player_item_t * spi = NULL;
     hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
@@ -334,7 +334,7 @@ bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const it
       } else {
         AssertFatal(0, "This case should not happen");
       }
-    } else if (VAR_VALUE_TYPE_VAR_UID == spi->u.var.value_type) {
+    } else if (spi->u.var.var_ref_uid) {
       AssertFatal(0, "TODO but discouraged to do so in scenario");
     } else {
       AssertFatal(0, "Unknown var value type %d", spi->u.var.value_type);

@@ -264,6 +264,7 @@ scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlD
 scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
 {
   bstring var_name = NULL;
+  bool    var_already_exist = false;
 
   xmlChar *attr = xmlGetProp(node, (const xmlChar *)NAME_ATTR_XML_STR);
   if (attr) {
@@ -281,11 +282,12 @@ scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr con
   hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, bdata(var_name), blength(var_name), (void**)&uid_ptr);
   if (HASH_TABLE_OK == rc) {
     bdestroy_wrapper(&var_name);
-    int uid = (int)(uintptr_t)uid;
+    int uid = (int)(uintptr_t)uid_ptr;
     hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
         (hash_key_t)uid, (void **)&spi);
     AssertFatal ((HASH_TABLE_OK == hrc) && (spi), "Could not find var item UID %d", uid);
     AssertFatal (SCENARIO_PLAYER_ITEM_VAR == spi->item_type, "Bad type var item UID %d", spi->item_type);
+    var_already_exist = true;
   } else {
     // create it
     spi = calloc(1, sizeof(*spi));
@@ -295,6 +297,7 @@ scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr con
     spi->u.var.name  = var_name;
     var_name = NULL;
     spi->u.var.value.value_u64 = 0;
+    spi->u.var.var_ref_uid = 0;
   }
 
 
@@ -315,7 +318,6 @@ scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr con
       void                                   *uid_ref = NULL;
       hashtable_rc_t rc_ref = obj_hashtable_ts_get (scenario->var_items, &value[1], strlen(value) - 1, (void**)&uid_ref);
       AssertFatal (HASH_TABLE_OK == rc_ref, "Could not find ref var %s", &value[1]);
-      spi->u.var.value_type = VAR_VALUE_TYPE_VAR_UID;
       spi->u.var.var_ref_uid = (int)(uintptr_t)uid_ref;
       // check if uid_ref exist
       rc_ref = hashtable_ts_is_key_exists (scenario->scenario_items, (hash_key_t)spi->u.var.var_ref_uid);
@@ -345,9 +347,10 @@ scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr con
   } else {
     AssertFatal(0, "Could not find var value type");
   }
-  rc = obj_hashtable_ts_insert (scenario->var_items, bdata(spi->u.var.name), blength(spi->u.var.name), (void*)(uintptr_t)spi->uid);
-  AssertFatal(HASH_TABLE_OK == rc, "Error in putting var name in hashtable %d", rc);
-
+  if (!var_already_exist) {
+    rc = obj_hashtable_ts_insert (scenario->var_items, bdata(spi->u.var.name), blength(spi->u.var.name), (void*)(uintptr_t)spi->uid);
+    AssertFatal(HASH_TABLE_OK == rc, "Error in putting var name in hashtable %d", rc);
+  }
   return spi;
 }
 
@@ -728,10 +731,15 @@ void msp_free_message_content (scenario_player_msg_t * msg)
 void msp_scenario_add_item(scenario_t * const scenario, scenario_player_item_t * const item)
 {
   if ((scenario) && (item)) {
-
     // add it in hashtable
-    hashtable_rc_t rc = hashtable_ts_insert (scenario->scenario_items, (hash_key_t)item->uid, (void *)item);
-    AssertFatal(HASH_TABLE_OK == rc, "Error in putting item in hashtable");
+    // test if key exist before because insert will overwrite entry and free it if item is var -> memory corruption
+    hashtable_rc_t rc = hashtable_ts_is_key_exists (scenario->scenario_items, (hash_key_t)item->uid);
+    if (HASH_TABLE_OK == rc) {
+      AssertFatal(SCENARIO_PLAYER_ITEM_VAR == item->item_type, "Error duplicate item in scenario, allowed only for vars, item_type=%d", item->item_type);
+    } else {
+      hashtable_rc_t rc = hashtable_ts_insert (scenario->scenario_items, (hash_key_t)item->uid, (void *)item);
+      AssertFatal(HASH_TABLE_OK == rc, "Error in putting item in hashtable");
+    }
 
     // add it in list
     if (!scenario->head_item) {
