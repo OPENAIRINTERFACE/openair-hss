@@ -263,22 +263,41 @@ scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlD
 //------------------------------------------------------------------------------
 scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
 {
-  // TODO check if var already exists
-  scenario_player_item_t * spi = calloc(1, sizeof(*spi));
-  spi->item_type = SCENARIO_PLAYER_ITEM_VAR;
-  // get a UID
-  spi->uid = msp_get_seq_uid();
-
+  bstring var_name = NULL;
 
   xmlChar *attr = xmlGetProp(node, (const xmlChar *)NAME_ATTR_XML_STR);
   if (attr) {
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found var %s=%s uid=0x%x\n", NAME_ATTR_XML_STR, attr, spi->uid);
-    spi->u.var.name  = bfromcstr((const char *)attr);
-    spi->u.var.value.value_u64 = 0;
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found var %s=%s\n", NAME_ATTR_XML_STR, attr);
+    var_name  = bfromcstr((const char *)attr);
     xmlFree(attr);
   } else {
     AssertFatal(0, "Could not find var name");
   }
+
+  scenario_player_item_t * spi = NULL;
+
+  // Check if var already exists
+  void                                   *uid_ptr = NULL;
+  hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, bdata(var_name), blength(var_name), (void**)&uid_ptr);
+  if (HASH_TABLE_OK == rc) {
+    bdestroy_wrapper(&var_name);
+    int uid = (int)(uintptr_t)uid;
+    hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
+        (hash_key_t)uid, (void **)&spi);
+    AssertFatal ((HASH_TABLE_OK == hrc) && (spi), "Could not find var item UID %d", uid);
+    AssertFatal (SCENARIO_PLAYER_ITEM_VAR == spi->item_type, "Bad type var item UID %d", spi->item_type);
+  } else {
+    // create it
+    spi = calloc(1, sizeof(*spi));
+    spi->item_type = SCENARIO_PLAYER_ITEM_VAR;
+    // get a UID
+    spi->uid = msp_get_seq_uid();
+    spi->u.var.name  = var_name;
+    var_name = NULL;
+    spi->u.var.value.value_u64 = 0;
+  }
+
+
 
   attr = xmlGetProp(node, (const xmlChar *)VALUE_ATTR_XML_STR);
   if (attr) {
@@ -287,14 +306,25 @@ scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr con
     if (!strncasecmp("0x", value, 2)) {
       int ret = sscanf((const char*)(attr+2), "%"SCNx64, &spi->u.var.value.value_u64);
       AssertFatal( ret == 1, "Failed to load var %s  hex value %s", bdata(spi->u.var.name), attr);
+      spi->u.var.value_type = VAR_VALUE_TYPE_INT64;
     } else if (value[0] == '-') {
       int ret = sscanf((const char*)attr, "%"SCNi64, &spi->u.var.value.value_64);
       AssertFatal( ret == 1, "Failed to load var %s  signed value %s", bdata(spi->u.var.name), attr);
+      spi->u.var.value_type = VAR_VALUE_TYPE_INT64;
+    } else if (value[0] == '$') {
+      void                                   *uid_ref = NULL;
+      hashtable_rc_t rc_ref = obj_hashtable_ts_get (scenario->var_items, &value[1], strlen(value) - 1, (void**)&uid_ref);
+      AssertFatal (HASH_TABLE_OK == rc_ref, "Could not find ref var %s", &value[1]);
+      spi->u.var.value_type = VAR_VALUE_TYPE_VAR_UID;
+      spi->u.var.var_ref_uid = (int)(uintptr_t)uid_ref;
+      // check if uid_ref exist
+      rc_ref = hashtable_ts_is_key_exists (scenario->scenario_items, (hash_key_t)spi->u.var.var_ref_uid);
+      AssertFatal(HASH_TABLE_OK == rc_ref, "Error in getting uid ref %u", spi->u.var.var_ref_uid);
     } else {
       int ret = sscanf((const char*)attr, "%"SCNu64, &spi->u.var.value.value_u64);
       AssertFatal( ret == 1, "Failed to load var %s  unsigned value %s", bdata(spi->u.var.name), attr);
+      spi->u.var.value_type = VAR_VALUE_TYPE_INT64;
     }
-    spi->u.var.value_type = VAR_VALUE_TYPE_INT64;
     xmlFree(attr);
   } else if ((attr = xmlGetProp(node, (const xmlChar *)ASCII_STREAM_VALUE_ATTR_XML_STR))) {
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found ascii var %s=%s\n", bdata(spi->u.var.name), attr);
@@ -315,11 +345,12 @@ scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr con
   } else {
     AssertFatal(0, "Could not find var value type");
   }
-  hashtable_rc_t rc = obj_hashtable_ts_insert (scenario->var_items, bdata(spi->u.var.name), blength(spi->u.var.name), (void*)(uintptr_t)spi->uid);
+  rc = obj_hashtable_ts_insert (scenario->var_items, bdata(spi->u.var.name), blength(spi->u.var.name), (void*)(uintptr_t)spi->uid);
   AssertFatal(HASH_TABLE_OK == rc, "Error in putting var name in hashtable %d", rc);
 
   return spi;
 }
+
 //------------------------------------------------------------------------------
 scenario_player_item_t* msp_load_incr_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
 {

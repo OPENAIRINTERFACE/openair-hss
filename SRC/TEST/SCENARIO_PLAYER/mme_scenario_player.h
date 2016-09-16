@@ -94,6 +94,7 @@ typedef int scenario_player_exit_t;
 typedef enum {
   VAR_VALUE_TYPE_NULL = 0,
   VAR_VALUE_TYPE_INT64,
+  VAR_VALUE_TYPE_VAR_UID,
   VAR_VALUE_TYPE_BSTR
 } var_value_type_t;
 
@@ -103,6 +104,7 @@ typedef struct scenario_player_var_s {
   struct list_item_s *value_changed_subscribers; // should be list of msg
   bool                value_changed;
   var_value_type_t    value_type;
+  int                 var_ref_uid;
   union {
     uint64_t    value_u64;
     int64_t     value_64;
