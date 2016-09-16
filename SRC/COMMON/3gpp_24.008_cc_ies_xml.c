@@ -67,7 +67,7 @@ bool supported_codec_list_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)hexascii, NULL);
   if (res) {
     int len = strlen(hexascii);
-    if (ascii_to_hex(hex, hexascii)) res = false;
+    if (!ascii_to_hex(hex, hexascii)) res = false;
     if (res) {
       *supportedcodeclist = blk2bstr((const void *)hex, len/2);
     }

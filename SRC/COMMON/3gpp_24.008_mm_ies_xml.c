@@ -68,7 +68,7 @@ bool authentication_parameter_rand_from_xml (xmlDocPtr xml_doc, xmlXPathContextP
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)hexascii, NULL);
   if (res) {
     int len = strlen(hexascii);
-    if (ascii_to_hex(hex, hexascii)) res = false;
+    if (!ascii_to_hex(hex, hexascii)) res = false;
     if (res) {
       *authenticationparameterrand = blk2bstr((const void *)hex, len/2);
     }
@@ -95,7 +95,7 @@ bool authentication_parameter_autn_from_xml (xmlDocPtr xml_doc, xmlXPathContextP
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)hexascii, NULL);
   if (res) {
     int len = strlen(hexascii);
-    if (ascii_to_hex(hex, hexascii)) res = false;
+    if (!ascii_to_hex(hex, hexascii)) res = false;
     if (res) {
       *authenticationparameterautn = blk2bstr((const void *)hex, len/2);
     }
@@ -123,7 +123,7 @@ bool authentication_response_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathCont
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)hexascii, NULL);
   if (res) {
     int len = strlen(hexascii);
-    if (ascii_to_hex(hex, hexascii)) res = false;
+    if (!ascii_to_hex(hex, hexascii)) res = false;
     if (res) {
       *authenticationresponseparameter = blk2bstr((const void *)hex, len/2);
     }
@@ -150,7 +150,7 @@ bool authentication_failure_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathConte
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)hexascii, NULL);
   if (res) {
     int len = strlen(hexascii);
-    if (ascii_to_hex(hex, hexascii)) res = false;
+    if (!ascii_to_hex(hex, hexascii)) res = false;
     if (res) {
       *authenticationfailureparameter = blk2bstr((const void *)hex, len/2);
     }
