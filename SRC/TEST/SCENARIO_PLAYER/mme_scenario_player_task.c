@@ -88,6 +88,10 @@ void *mme_scenario_player_event_handler (void *args)
       msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 
+    case S6A_AUTH_INFO_ANS:
+      OAILOG_WARNING(LOG_MME_SCENARIO_PLAYER, "TASK_MME_SCENARIO_PLAYER received S6A_AUTH_INFO_ANS\n");
+      break;
+
     case TIMER_HAS_EXPIRED:
       msp_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
       break;
