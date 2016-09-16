@@ -102,6 +102,10 @@ void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expir
     pthread_mutex_lock(&arg->scenario->lock);
     arg->scenario->num_timers    -= 1;
 
+    if (SCENARIO_STATUS_PAUSED == arg->scenario->status) {
+      scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAYING);
+    }
+
     if (SCENARIO_PLAYER_ITEM_ITTI_MSG == arg->item->item_type) {
       // we do not use timer for tx message anymore
       if (arg->item->u.msg.is_tx) {
@@ -250,6 +254,8 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
         scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
         return false;
       } else {
+        scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
+
         struct timeval timer_val = {0};
         int ret      = RETURNerror;
         timersub(&elapsed_time, &item->u.msg.time_out, &timer_val);
@@ -265,6 +271,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
         return false;
       }
     } else {
+      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
       return false;
     }
   } else {
@@ -535,7 +542,9 @@ void msp_run_scenario(scenario_t * const scenario)
       if (item) {
         msp_play_item(scenario, item);
         pthread_mutex_unlock(&scenario->lock);
-        msp_scenario_tick(scenario);
+        if (SCENARIO_STATUS_PAUSED != scenario->status) {
+          msp_scenario_tick(scenario);
+        }
       } else {
         if (!(scenario->num_timers) && (SCENARIO_STATUS_PLAYING == scenario->status)) {
           scenario->status = SCENARIO_STATUS_PLAY_SUCCESS;
