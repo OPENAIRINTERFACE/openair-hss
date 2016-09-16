@@ -147,6 +147,11 @@ int sgw_init (spgw_config_t *spgw_config_pP)
 {
   OAILOG_DEBUG (LOG_SPGW_APP, "Initializing SPGW-APP  task interface\n");
 
+  if ( gtpv1u_init (spgw_config_pP) < 0) {
+    OAILOG_ALERT (LOG_SPGW_APP, "Initializing GTPv1-U ERROR\n");
+    return RETURNerror;
+  }
+
   pgw_load_pool_ip_addresses ();
 
   bstring b = bfromcstr("sgw_s11teid2mme_hashtable");
@@ -207,6 +212,7 @@ int sgw_init (spgw_config_t *spgw_config_pP)
 //------------------------------------------------------------------------------
 static void sgw_exit(void)
 {
+
   if (sgw_app.s11teid2mme_hashtable) {
     hashtable_ts_destroy (sgw_app.s11teid2mme_hashtable);
   }

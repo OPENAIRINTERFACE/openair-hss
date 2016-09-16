@@ -187,51 +187,6 @@ make_certs(){
 }
 
 
-#-------------------------------------------------------------------------------
-# arg1 is force (no interactive script)
-install_xtables_addons_oai() {
-  if [ $1 -eq 0 ]; then
-    read -p "Do you want to install xtables_addons_oai ? <y/N> " prompt
-    rm_option=I
-    OPTION="-y"
-  else
-    prompt='y'
-    rm_option=f
-    OPTION="-y"
-  fi
-  PACKAGE_LIST="\
-    autoconf  \
-    automake  \
-    build-essential \
-    dkms \
-    iptables \
-    iptables-dev \
-    linux-headers-`uname -r`"
-  $SUDO apt-get install $OPTION $PACKAGE_LIST
-
-  if [[ $prompt =~ [yY](es)* ]]
-  then    
-    cd ~
-    if [ -d xtables-addons-oai ]; then
-      echo_warning "Will remove $PWD/xtables-addons-oai"
-      $SUDO rm -rv -$rm_option xtables-addons-oai
-      $SUDO rm -rv -$rm_option xtables-addons-oai
-    fi
-    echo "Downloading xtables-addons-oai source code"
-    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/xtables-addons-oai.git
-    #git clone git@gitlab.eurecom.fr:oai/xtables-addons-oai.git
-    chmod -R o+w xtables-addons-oai
-    chmod -R g+w xtables-addons-oai
-    cd xtables-addons-oai/
-    sync
-    $SUDO autoreconf --install --force
-    $SUDO ./configure 
-    $SUDO make
-    $SUDO make install
-    cd /lib/modules/`uname -r`
-    $SUDO depmod -a
-  fi
-}
 
 ############################################
 # External packages installers
@@ -334,6 +289,41 @@ install_nettle_from_source() {
   fi
 }
 
+install_libgtpnl_from_source() {
+  if [ $1 -gt 0 ]; then
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+
+  # Compilers, generators, ...
+  $SUDO apt-get install $OPTION \
+    autoconf  \
+    automake  \
+    build-essential \
+    libmnl-dev
+
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install libgtpnl ? <y/N> " prompt
+  else
+    prompt='y'
+  fi
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    cd /tmp
+    echo "Downloading libgtpnl archive"
+    $SUDO rm -rf /tmp/libgtpnl*
+    git clone git://git.osmocom.org/libgtpnl
+    cd libgtpnl
+    autoreconf -fi
+    ./configure
+    echo "Compiling nettle"
+    make -j`nproc`
+    $SUDO make install
+    $SUDO ldconfig
+    $SUDO rm -rf /tmp/libgtpnl*
+  fi
+}
 #-------------------------------------------------------------------------------
 # arg1 is force (no interactive script)
 install_gnutls_from_source(){
@@ -581,56 +571,6 @@ test_install_package() {
   fi
 }
 
-#-------------------------------------------------------------------------------
-check_gtpu_kmodule_installed() {
-  if [ -e /lib/modules/`uname -r`/extra/xt_GTPUSP.ko ]; then
-    echo_info "GTPU kernel module installed"
-  else
-    echo_error "GTPU kernel module not installed - SPGW might crash"
-    echo_error "You can continue if you know what you are doing"
-    read -p "Do you want continue? <Y/n> " prompt
-    if [[ $prompt =~ [nN](o)* ]]; then
-      exit -1
-    fi
-  fi  
-}
-
-
-#-------------------------------------------------------------------------------
-# arg1 is required minimal version of linux-headers and linux-image
-# arg2 is force (no interactive script)
-check_kernel_release_and_install_xtables_addons_oai() {
-					      
-  if [ $2 -gt 0 ]; then 
-    OPTION="-y"
-  else
-    OPTION=""
-  fi
-
-  if [ $# -eq 2 ]; then
-    current_k_release=`uname -r`
-    current_kernel_version=`echo $current_k_release | cut -d '.' -f1`
-    current_major_revision=`echo $current_k_release | cut -d '.' -f2`
-  
-    required_kernel_version=`echo $1 | cut -d '.' -f1`
-    required_major_revision=`echo $1 | cut -d '.' -f2`
-  
-    if [ $current_kernel_version -ne $required_kernel_version ] ||  [ "$current_major_revision" -ne "$required_major_revision" ] ; then
-      echo_warning "xtables_addons_oai not installed "
-      echo_error "Please (install if necessary and) boot on required kernel: $required_kernel_version.$required_major_revision"
-      return
-    fi
-    dpkg -s "linux-headers-$current_k_release" > /dev/null 2>&1 && {
-          echo_info "$current_k_release is installed and suitable for S-GW software." 
-          install_xtables_addons_oai $2
-      } || {
-          echo_warning "Package linux-headers-$current_k_release is not installed and required for S-GW software." 
-          $SUDO apt-get install $OPTION linux-headers-$current_k_release  && install_xtables_addons_oai $2
-    }
-  else
-    echo_error "Please provide arguments: kernel ubuntu version and force option"
-  fi 
-}
 
 #-------------------------------------------------------------------------------
 update_package_db() {
@@ -739,9 +679,7 @@ check_install_mme_software() {
     gdb  \
     git \
     pkg-config \
-    subversion \
-    valgrind \
-    Kcachegrind"
+    subversion"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
   if [ $? -ne 0 ]; then 
     echo_fatal "Failed to install package list $PACKAGE_LIST"
@@ -876,8 +814,8 @@ check_install_spgw_software() {
   if [ $? -ne 0 ]; then 
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi
-
-  check_kernel_release_and_install_xtables_addons_oai 3.19.0-28-generic $1
+  
+  install_libgtpnl_from_source $1
 }
 
 
@@ -902,13 +840,10 @@ install_asn1c_from_source(){
 
   if [[ $prompt =~ [yY](es)* ]]
   then    
-    mkdir -p /tmp/asn1c-r1516
-    cd /tmp/asn1c-r1516
-    $SUDO rm -rf /tmp/asn1c-r1516/*
-    svn co https://github.com/vlm/asn1c/trunk  /tmp/asn1c-r1516 -r 1516 > /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch.p0 >> /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch_2.p0 >> /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch_3.p0 >> /tmp/log_compile_asn1c
+    $SUDO rm -rf /tmp/asn1c
+    mkdir -p /tmp/asn1c
+    git clone https://gitlab.eurecom.fr/oai/asn1c.git /tmp/asn1c
+    cd /tmp/asn1c
     ./configure
     make > /tmp/log_compile_asn1c 2>&1
     $SUDO make install
@@ -1175,6 +1110,7 @@ CURPID=$$
 ppid=$$
 arraycounter=1
 echo_info "** Trapped CTRL-C. Killing all subprocesses now..."
+sync
 while true
 do
         FORLOOP=FALSE

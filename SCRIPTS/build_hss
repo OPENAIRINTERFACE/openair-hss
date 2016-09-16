@@ -65,7 +65,7 @@ function main()
   local -i var_check_install_oai_software=0
   local -i force=0
   local    cmake_args=" "
-  local    make_args="-j $NUM_CPU"
+  local    make_args="-j`nproc`"
   local    realm=""
 
   until [ -z "$1" ]; do

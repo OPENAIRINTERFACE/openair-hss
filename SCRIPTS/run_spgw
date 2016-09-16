@@ -49,15 +49,12 @@ function help()
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by spgw if you don't want to use the default one: $g_spgw_default_config_file"
   echo_error "  -d, --daemon                        Run the daemon."
-  echo_error "  -D, --disable-gtpu                  Disable loading GTPU kernel module, useful if working only on signaling aspects with other distributions/kernels than recommended."
   echo_error "  -g, --gdb                           Run with GDB."
   echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
   echo_error "                                      All repetitions of this argument are valid."
   echo_error "  -h, --help                          Print this help."
-  echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in spgw config file. (NOT RECOMMENDED. ONLY FOR DEBUGGING)"
   echo_error "  -k, --kill                          Kill all running SPGW instances, exit script then."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
-  echo_error "  -r, --remove-gtpu-kmodule           Remove gtpu kernel module before starting the S/P-GW"
   echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
   echo_error "                                        0 -> ASN1 XER printf off"
   echo_error "                                        1 -> ASN1 XER printf on and ASN1 debug off"
@@ -94,7 +91,6 @@ function main()
   local    breakpoint_location=""
   local -a gdb_args
   local -i gdb_index=0
-  local -i disable_gtpu=0
 
   until [ -z "$1" ]
     do
@@ -107,11 +103,6 @@ function main()
       -g | --gdb)
         run_gdb=1
         echo "setting GDB flag to: $run_gdb"
-        shift;
-        ;;
-      -d | --disable-gtpu)
-        disable_gtpu=1
-        echo "GTPU disabled"
         shift;
         ;;
       -D | --daemon)
@@ -153,27 +144,6 @@ function main()
           exit -1
         fi
         ;;      
-      -r | --remove-gtpu-kmodule)
-        $SUDO modprobe ip_tables
-        $SUDO modprobe x_tables
-        $SUDO iptables -P INPUT ACCEPT
-        $SUDO iptables -F INPUT
-        $SUDO iptables -P OUTPUT ACCEPT
-        $SUDO iptables -F OUTPUT
-        $SUDO iptables -P FORWARD ACCEPT
-        $SUDO iptables -F FORWARD
-        $SUDO iptables -t nat    -F
-        $SUDO iptables -t mangle -F
-        $SUDO iptables -t filter -F
-        $SUDO iptables -t raw    -F
-        $SUDO iptables -t nat    -Z
-        $SUDO iptables -t mangle -Z
-        $SUDO iptables -t filter -Z
-        $SUDO iptables -t raw    -Z
-        $SUDO ip route flush cache
-        $SUDO rmmod xt_GTPUSP   
-        shift 1;
-        ;;      
       -v | --verbosity-level)
         local verbosity_level=$2
         echo "setting verbosity level to: $verbosity_level"
@@ -191,9 +161,6 @@ function main()
   set_openair_env 
   cecho "OPENAIR_DIR    = $OPENAIR_DIR" $green
   
-  if [ $disable_gtpu -eq 0 ]; then
-    check_gtpu_kmodule_installed
-  fi
 
   if [ ! -f $spgw_config_file ]; then 
     echo_fatal "Please provide -c|--config-file valid argument (\"$spgw_config_file\" not a valid file)"

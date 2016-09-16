@@ -21,11 +21,6 @@
 #ifndef FILE_GTPV1U_SGW_DEFS_SEEN
 #define FILE_GTPV1U_SGW_DEFS_SEEN
 
-#include "mme_config.h"
-#include "gtpv1u.h"
-#include "hashtable.h"
-#include "common_types.h"
-
 #define GTPV1U_UDP_PORT (2152)
 
 #define MAX_BEARERS_PER_UE (11)
@@ -62,7 +57,7 @@ typedef struct {
   /* RB tree of UEs */
   //RB_HEAD(gtpv1u_ue_map, gtpv1u_ue_data_s) gtpv1u_ue_map_head;
   /* Local IP address to use */
-  uint32_t  sgw_ip_address_for_S1u_S12_S4_up;
+  ipv4_nbo_t            sgw_ip_address_for_S1u_S12_S4_up;
   char                 *ip_addr;
 
   uint16_t              seq_num;
@@ -70,9 +65,14 @@ typedef struct {
   //gtpv1u_teid2enb_info_t* teid2enb_mapping[];
   hash_table_t         *S1U_mapping;
 
+  // GTP-U kernel interface
+  pthread_t      reader_thread;
+  int fd0;    /* GTP0 file descriptor */
+  int fd1u;   /* GTP1-U user plane file descriptor */
 } gtpv1u_data_t;
 
 
-int gtpv1u_init(void);
+int gtpv1u_init (spgw_config_t *spgw_config);
+void gtpv1u_exit (gtpv1u_data_t * const gtpv1u_data);
 
 #endif /* FILE_GTPV1U_SGW_DEFS_SEEN */

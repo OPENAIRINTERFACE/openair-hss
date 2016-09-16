@@ -54,7 +54,6 @@ function help()
   echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
   echo_error "                                      All repetitions of this argument are valid."
   echo_error "  -h, --help                          Print this help."
-  echo_error "  -i, --set-nw-interfaces             Set network interfaces as described in MME config file. (NOT RECOMMENDED. ONLY FOR DEBUGGING)"
   echo_error "  -I, --install-mme-files             Install MME config files. (NOT RECOMMENDED. See tutorials on https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or DOCS/EPC_User_Guide.pdf"
   echo_error "  -k, --kill                          Kill all running MME instances, exit script then."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"

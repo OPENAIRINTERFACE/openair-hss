@@ -59,13 +59,16 @@ hss_mysql_query_pdns (
 
   if (mysql_query (db_desc->db_conn, query)) {
     pthread_mutex_unlock (&db_desc->db_cs_mutex);
-    FPRINTF_ERROR ( "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
-    mysql_thread_end ();
+    fprintf (stderr, "Query execution failed: %s\n", mysql_error (db_desc->db_conn));
     return EINVAL;
   }
 
   res = mysql_store_result (db_desc->db_conn);
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
+
+  if ( res == NULL )
+    return EINVAL;
+
   *nb_pdns = 0;
 
   while ((row = mysql_fetch_row (res)) != NULL) {
@@ -143,7 +146,6 @@ hss_mysql_query_pdns (
   }
 
   mysql_free_result (res);
-  mysql_thread_end ();
 
   /*
    * We did not find any APN for the requested IMSI
@@ -165,6 +167,5 @@ err:
   *pdns_p = pdn_array;
   *nb_pdns = 0;
   mysql_free_result (res);
-  mysql_thread_end ();
   return ret;
 }
