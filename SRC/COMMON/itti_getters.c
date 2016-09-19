@@ -145,3 +145,61 @@ void mme_app_connection_establishment_cnf_get_nas_emm_guti_mtmsi (const void * c
 #warning "TODO free nas_message_t content"
 }
 
+//------------------------------------------------------------------------------
+// get value from message into var value attribute of type u64
+void nas_dl_data_req_get_nas_authentication_request_authentication_parameter_rand (const void * const message, void *value_bstring)
+{
+  // assume security protected
+  nas_message_t                           nas_msg = {.security_protected.header = {0},
+                                                     .security_protected.plain.emm.header = {0},
+                                                     .security_protected.plain.esm.header = {0}};
+  nas_message_decode_status_t             decode_status = {0};
+  int                                     decoder_rc = 0;
+  emm_security_context_t                  emm_security_context = {0};
+
+  decoder_rc = nas_message_decode (
+      (const unsigned char *)bdata(((const itti_nas_dl_data_req_t* const)message)->nas_msg),
+      &nas_msg,
+      blength(((const itti_nas_dl_data_req_t* const)message)->nas_msg),
+      &emm_security_context, &decode_status);
+  AssertFatal (0 < decoder_rc, "Error in decoding NAS AUTHENTICATION_REQUEST");
+  // assume security protected
+  AssertFatal (AUTHENTICATION_REQUEST == nas_msg.plain.emm.header.message_type, "No NAS AUTHENTICATION_REQUEST found in itti_nas_dl_data_req_t");
+  // if previous value, free it
+  if (value_bstring) {
+    bdestroy_wrapper((bstring*)value_bstring);
+  }
+  *(bstring*)value_bstring = bstrcpy(nas_msg.plain.emm.authentication_request.authenticationparameterrand);
+#warning "TODO free nas_message_t content"
+}
+
+
+//------------------------------------------------------------------------------
+// get value from message into var value attribute of type u64
+void nas_dl_data_req_get_nas_authentication_request_authentication_parameter_autn (const void * const message, void *value_bstring)
+{
+  // assume security protected
+  nas_message_t                           nas_msg = {.security_protected.header = {0},
+                                                     .security_protected.plain.emm.header = {0},
+                                                     .security_protected.plain.esm.header = {0}};
+  nas_message_decode_status_t             decode_status = {0};
+  int                                     decoder_rc = 0;
+  emm_security_context_t                  emm_security_context = {0};
+
+  decoder_rc = nas_message_decode (
+      (const unsigned char *)bdata(((const itti_nas_dl_data_req_t* const)message)->nas_msg),
+      &nas_msg,
+      blength(((const itti_nas_dl_data_req_t* const)message)->nas_msg),
+      &emm_security_context, &decode_status);
+  AssertFatal (0 < decoder_rc, "Error in decoding NAS AUTHENTICATION_REQUEST");
+  // assume security protected
+  AssertFatal (AUTHENTICATION_REQUEST == nas_msg.plain.emm.header.message_type, "No NAS AUTHENTICATION_REQUEST found in itti_nas_dl_data_req_t");
+  // if previous value, free it
+  if (value_bstring) {
+    bdestroy_wrapper((bstring*)value_bstring);
+  }
+  *(bstring*)value_bstring = bstrcpy(nas_msg.plain.emm.authentication_request.authenticationparameterautn);
+#warning "TODO free nas_message_t content"
+}
+
+

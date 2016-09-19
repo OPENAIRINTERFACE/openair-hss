@@ -38,6 +38,7 @@ typedef enum {
   SCENARIO_PLAYER_ITEM_ITTI_MSG,
   SCENARIO_PLAYER_ITEM_LABEL,
   SCENARIO_PLAYER_ITEM_VAR,
+  SCENARIO_PLAYER_ITEM_VAR_SET,
   SCENARIO_PLAYER_ITEM_VAR_INCR,
   SCENARIO_PLAYER_ITEM_VAR_DECR,
   SCENARIO_PLAYER_ITEM_JUMP_COND,
@@ -111,6 +112,19 @@ typedef struct scenario_player_var_s {
   } value;
 } scenario_player_var_t;
 
+
+typedef struct scenario_player_set_var_s {
+  bstring             name;
+  var_value_type_t    value_type;
+  int                 var_uid;
+  int                 var_ref_uid;
+  union {
+    uint64_t    value_u64;
+    int64_t     value_64;
+    bstring     value_bstr;
+  } value;
+} scenario_player_set_var_t;
+
 typedef enum {
   TEST_EQ = 0,
   TEST_NE,
@@ -145,6 +159,7 @@ typedef struct scenario_player_item_s {
     scenario_player_label_t        label;
     scenario_player_exit_t         exit;
     scenario_player_var_t          var;
+    scenario_player_set_var_t      set_var;
     int                            uid_incr_var;
     int                            uid_decr_var;
     scenario_player_cond_t         cond;
@@ -199,6 +214,7 @@ typedef struct scenario_player_timer_arg_s {
 
 
 scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
+scenario_player_item_t* msp_load_set_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_incr_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_decr_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_sleep (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
@@ -233,6 +249,7 @@ bool msp_play_tx_message(scenario_t * const scenario, scenario_player_item_t * c
 bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * const item);
 void msp_var_notify_listeners (scenario_player_item_t * const item);
 bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const item);
+bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_decr_var(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_sleep(scenario_t * const scenario, scenario_player_item_t * const item);

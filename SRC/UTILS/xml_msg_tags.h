@@ -36,6 +36,7 @@
 #  define SCENARIO_FILE_NODE_XML_STR  "scenario_file"
 #  define SCENARIO_NODE_XML_STR       "scenario"
 #  define VAR_NODE_XML_STR            "var"
+#  define SET_VAR_NODE_XML_STR        "set_var"
 #  define INCR_VAR_INC_NODE_XML_STR   "incr_var"
 #  define DECR_VAR_INC_NODE_XML_STR   "decr_var"
 #  define JUMP_ON_COND_XML_STR        "jcond"

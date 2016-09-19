@@ -302,6 +302,7 @@ void msp_var_notify_listeners (scenario_player_item_t * const item)
     struct scenario_player_item_s *item = value_changed_subscribers->item;
     if (SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) {
       item->u.msg.xml_dump2struct_needed = true;
+      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Notify scenario player item UID %u to be reloaded\n", item->uid);
     }
     value_changed_subscribers = value_changed_subscribers->next;
   }
@@ -356,13 +357,71 @@ bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const it
 }
 //------------------------------------------------------------------------------
 // return true if we can continue playing the scenario
+bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * const item)
+{
+  scenario_player_item_t * var_item = NULL;
+
+  // find the relative item
+  hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
+      (hash_key_t)item->u.set_var.var_uid, (void **)&var_item);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (var_item), "Could not find var item UID %d", item->u.set_var.var_uid);
+  AssertFatal (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type, "Bad type var item UID %d", var_item->item_type);
+
+  if (item->u.set_var.var_ref_uid) {
+    // get ref var value
+    scenario_player_item_t * var_ref = NULL;
+    hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
+        (hash_key_t)item->u.set_var.var_ref_uid, (void **)&var_ref);
+    AssertFatal ((HASH_TABLE_OK == hrc) && (var_ref), "Could not find var ref item UID %d", item->u.set_var.var_ref_uid);
+    AssertFatal (SCENARIO_PLAYER_ITEM_VAR == var_ref->item_type, "Bad type var ref item UID %d", var_ref->item_type);
+    AssertFatal (var_ref->u.var.value_type == var_item->u.var.value_type, "var types to not match %d != %d, discouraged to do so in scenario", var_ref->u.var.value_type, var_item->u.var.value_type);
+    if (VAR_VALUE_TYPE_INT64 == var_ref->u.var.value_type) {
+      if (var_item->u.var.value.value_64 != var_ref->u.var.value.value_64) {
+        var_item->u.var.value_changed = true;
+        var_item->u.var.value.value_64 = var_ref->u.var.value.value_64;
+        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "set var %s=%"PRIx64"\n", var_item->u.var.name->data, var_item->u.var.value.value_64);
+      } else {
+        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "set var %s=%"PRIx64" (unchanged)\n", var_item->u.var.name->data, var_item->u.var.value.value_64);
+      }
+    } else if (VAR_VALUE_TYPE_BSTR == var_ref->u.var.value_type) {
+
+      if ((var_item->u.var.value.value_bstr) && (var_ref->u.var.value.value_bstr)) {
+        if (blength(var_item->u.var.value.value_bstr) != blength(var_ref->u.var.value.value_bstr)) {
+          var_item->u.var.value_changed = true;
+        } else if (memcmp(var_item->u.var.value.value_bstr->data, var_ref->u.var.value.value_bstr->data, blength(var_item->u.var.value.value_bstr))) {
+          var_item->u.var.value_changed = true;
+        }
+        if (var_item->u.var.value_changed) {
+          bassign(var_item->u.var.value.value_bstr, var_ref->u.var.value.value_bstr);
+        }
+      } else if (!(var_item->u.var.value.value_bstr) && (var_ref->u.var.value.value_bstr)) {
+        var_item->u.var.value_changed = true;
+        var_item->u.var.value.value_bstr = bstrcpy(var_ref->u.var.value.value_bstr);
+      } else {
+        AssertFatal(0, "This case should not happen");
+      }
+    } else if (var_ref->u.var.var_ref_uid) {
+      AssertFatal(0, "TODO but discouraged to do so in scenario");
+    } else {
+      AssertFatal(0, "Unknown var value type %d", var_ref->u.var.value_type);
+    }
+  }
+  if (var_item->u.var.value_changed) {
+    msp_var_notify_listeners(var_item);
+    var_item->u.var.value_changed = false;
+  }
+  scenario->last_played_item = item;
+  return true;
+}
+//------------------------------------------------------------------------------
+// return true if we can continue playing the scenario
 bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * const item)
 {
   scenario_player_item_t * ref = NULL;
   // find the relative item
   hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
       (hash_key_t)item->u.uid_decr_var, (void **)&ref);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find var item UID %d", item->u.cond.var_uid);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find var item UID %d", item->u.uid_incr_var);
   AssertFatal (SCENARIO_PLAYER_ITEM_VAR == ref->item_type, "Bad type var item UID %d", ref->item_type);
   AssertFatal ((VAR_VALUE_TYPE_INT64 == ref->u.var.value_type), "Bad var type %d", ref->u.var.value_type);
 
@@ -382,7 +441,7 @@ bool msp_play_decr_var(scenario_t * const scenario, scenario_player_item_t * con
   // find the relative item
   hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
       (hash_key_t)item->u.uid_decr_var, (void **)&ref);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find var item UID %d", item->u.cond.var_uid);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find var item UID %d", item->u.uid_decr_var);
   AssertFatal (SCENARIO_PLAYER_ITEM_VAR == ref->item_type, "Bad type var item UID %d", ref->item_type);
   AssertFatal ((VAR_VALUE_TYPE_INT64 == ref->u.var.value_type), "Bad var type %d", ref->u.var.value_type);
 
@@ -470,6 +529,7 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
     if ((SCENARIO_STATUS_PLAY_FAILED == scenario->status)  || (SCENARIO_STATUS_PLAY_SUCCESS == scenario->status)) {
       return false;
     }
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item UID %u\n", item->uid);
 
     if (SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) {
       scenario_player_msg_t * msg = &item->u.msg;
@@ -492,6 +552,8 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
       return false;
     } else if (SCENARIO_PLAYER_ITEM_VAR == item->item_type) {
       return msp_play_var(scenario, item);
+    } else if (SCENARIO_PLAYER_ITEM_VAR_SET == item->item_type) {
+      return msp_play_set_var(scenario, item);
     } else if (SCENARIO_PLAYER_ITEM_VAR_INCR == item->item_type) {
       return msp_play_incr_var(scenario, item);
     } else if (SCENARIO_PLAYER_ITEM_VAR_DECR == item->item_type) {

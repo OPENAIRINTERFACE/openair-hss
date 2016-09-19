@@ -37,5 +37,7 @@ void mme_app_connection_establishment_cnf_get_erab0_teid (const void * const mes
 void mme_app_connection_establishment_cnf_get_nas_mac (const void * const message, void *value);
 void mme_app_connection_establishment_cnf_get_nas_downlink_sequence_number (const void * const message, void *value);
 void mme_app_connection_establishment_cnf_get_nas_emm_guti_mtmsi (const void * const message, void *value);
+void nas_dl_data_req_get_nas_authentication_request_authentication_parameter_rand (const void * const message, void *value);
+void nas_dl_data_req_get_nas_authentication_request_authentication_parameter_autn (const void * const message, void *value);
 
 #endif /* FILE_ITTI_GETTERS_SEEN */

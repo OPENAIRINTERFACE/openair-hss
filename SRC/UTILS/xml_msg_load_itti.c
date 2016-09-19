@@ -863,6 +863,7 @@ int xml_msg_load_itti_nas_downlink_data_req(scenario_t * const scenario, scenari
 {
   bool res = false;
   if ((msg) && (msg->xml_doc)) {
+    OAILOG_TRACE(LOG_MME_SCENARIO_PLAYER, "Reloading NAS_DOWNLINK_DATA_REQ message\n");
     xmlNodePtr  cur = NULL;
     cur = xmlDocGetRootElement(msg->xml_doc);
     AssertFatal (cur, "Empty document");

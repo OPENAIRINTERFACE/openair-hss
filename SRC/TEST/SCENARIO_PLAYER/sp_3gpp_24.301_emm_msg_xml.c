@@ -283,8 +283,16 @@ bool sp_authentication_request_from_xml (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   bool res = nas_key_set_identifier_from_xml (msg->xml_doc, msg->xpath_ctx, &authentication_request->naskeysetidentifierasme);
-  if (res) {res = authentication_parameter_rand_from_xml (msg->xml_doc, msg->xpath_ctx, &authentication_request->authenticationparameterrand);}
-  if (res) {res = authentication_parameter_autn_from_xml (msg->xml_doc, msg->xpath_ctx, &authentication_request->authenticationparameterautn);}
+  if (res) {
+    bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_RAND_IE_XML_STR);
+    res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr, &authentication_request->authenticationparameterrand);
+    bdestroy_wrapper (&xpath_expr);
+  }
+  if (res) {
+    bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_AUTN_IE_XML_STR);
+    res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr, &authentication_request->authenticationparameterautn);
+    bdestroy_wrapper (&xpath_expr);
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
 }
 
@@ -295,7 +303,10 @@ bool sp_authentication_response_from_xml (
     authentication_response_msg  * const authentication_response)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  bool res = authentication_response_parameter_from_xml (msg->xml_doc, msg->xpath_ctx, &authentication_response->authenticationresponseparameter);
+  bstring xpath_expr = bformat("./%s",AUTHENTICATION_RESPONSE_PARAMETER_IE_XML_STR);
+  bool res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr, &authentication_response->authenticationresponseparameter);
+  bdestroy_wrapper (&xpath_expr);
+
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
 }
 

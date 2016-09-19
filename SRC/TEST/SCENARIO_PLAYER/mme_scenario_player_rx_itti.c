@@ -85,11 +85,12 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
   if ((SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) && !(item->u.msg.is_tx) && !(item->u.msg.is_processed)) {
     if (NAS_DOWNLINK_DATA_REQ == ITTI_MSG_ID (item->u.msg.itti_msg)) {
       // OK messages seems to match
+      OAILOG_TRACE(LOG_MME_SCENARIO_PLAYER, "Found matching NAS_DOWNLINK_DATA_REQ message UID %d\n", item->uid);
+
       msp_get_elapsed_time_since_scenario_start(scenario, &item->u.msg.time_stamp);
 
       // check if variables to load
       struct load_list_item_s *list_var_item = item->u.msg.vars_to_load;
-      bool reload_scenario_message = (NULL != item->u.msg.vars_to_load);
       while (list_var_item) {
         scenario_player_var_t * var_item = &list_var_item->item->u.var;
         list_var_item->value_getter_func(nas_dl_data_req, &var_item->value.value_u64);
@@ -102,7 +103,7 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
         list_var_item = list_var_item->next;
       }
 
-      if (reload_scenario_message) {
+      if ((item->u.msg.xml_dump2struct_needed) || (item->u.msg.vars_to_load)) {
         // reload scenario rx message
         if (msp_reload_message(scenario, item)) {
           scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
@@ -113,6 +114,9 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
       // compare messages
       if (!itti_msg_comp_nas_downlink_data_req(&item->u.msg.itti_msg->ittiMsg.nas_dl_data_req, nas_dl_data_req)) {
         OAILOG_DEBUG(LOG_MME_SCENARIO_PLAYER, "Pending RX NAS_DOWNLINK_DATA_REQ message successfully received\n");
+        if (SCENARIO_STATUS_PAUSED == scenario->status) {
+          scenario_set_status(scenario, SCENARIO_STATUS_PLAYING);
+        }
         scenario->last_played_item = item;
       } else {
         scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
@@ -178,6 +182,9 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
       // compare messages
       if (!itti_msg_comp_mme_app_connection_establishment_cnf(&item->u.msg.itti_msg->ittiMsg.mme_app_connection_establishment_cnf, mme_app_connection_establishment_cnf)) {
         OAILOG_DEBUG(LOG_MME_SCENARIO_PLAYER, "Pending RX MME_APP_CONNECTION_ESTABLISHMENT_CNF message successfully received\n");
+        if (SCENARIO_STATUS_PAUSED == scenario->status) {
+          scenario_set_status(scenario, SCENARIO_STATUS_PLAYING);
+        }
         scenario->last_played_item = item;
       } else {
         scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
