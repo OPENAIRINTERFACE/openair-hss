@@ -135,7 +135,17 @@ void msp_msg_add_var_listener(scenario_t * const scenario, scenario_player_item_
   AssertFatal (SCENARIO_PLAYER_ITEM_ITTI_MSG == msg_item->item_type, "Wrong item type %d (should be %d)", msg_item->item_type, SCENARIO_PLAYER_ITEM_ITTI_MSG);
   AssertFatal (SCENARIO_PLAYER_ITEM_VAR      == var_item->item_type, "Wrong item type %d (should be %d)", var_item->item_type, SCENARIO_PLAYER_ITEM_VAR);
 
-  struct list_item_s *list_item = calloc(1, sizeof(*list_item));
+  struct list_item_s *list_item = var_item->u.var.value_changed_subscribers;
+  while (list_item) {
+    if (list_item->item->uid == msg_item->uid) {
+      OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Did not add var %s listener MSG UID %u \n", var_item->u.var.name->data, msg_item->uid);
+      return;
+    }
+    list_item = list_item->next;
+  }
+
+
+  list_item = calloc(1, sizeof(*list_item));
   AssertFatal(list_item, "Memory alloc failed");
   list_item->item = msg_item;
   if (var_item->u.var.value_changed_subscribers) {

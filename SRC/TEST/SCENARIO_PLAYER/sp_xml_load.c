@@ -150,7 +150,8 @@ bool sp_xml_load_hex_stream_leaf_tag(
           hexa_to_ascii((uint8_t*)bdata(var_item->u.var.value.value_bstr), ascii, blength(var_item->u.var.value.value_bstr));
           OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=%s from var %s uid=0x%lx to be loaded (len=%d)\n",
               bdata(xpath_expr), ascii,  varname, (uintptr_t)uid, blength(var_item->u.var.value.value_bstr));
-#endif        } else {
+#endif
+        } else {
           AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", varname);
         }
       } else {
