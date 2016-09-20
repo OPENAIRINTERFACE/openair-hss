@@ -114,6 +114,7 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->log_config.spgw_app_log_level = MAX_LOG_LEVEL;
   config_pP->log_config.s11_log_level      = MAX_LOG_LEVEL;
   config_pP->log_config.s6a_log_level      = MAX_LOG_LEVEL;
+  config_pP->log_config.secu_log_level     = MAX_LOG_LEVEL;
   config_pP->log_config.util_log_level     = MAX_LOG_LEVEL;
   config_pP->log_config.msc_log_level      = MAX_LOG_LEVEL;
   config_pP->log_config.mme_scenario_player_log_level = MAX_LOG_LEVEL;
@@ -294,6 +295,9 @@ static int mme_config_parse_file (mme_config_t * config_pP)
 
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_S6A_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.s6a_log_level = OAILOG_LEVEL_STR2INT (astring);
+
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_SECU_LOG_LEVEL, (const char **)&astring))
+        config_pP->log_config.secu_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_GTPV2C_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.gtpv2c_log_level = OAILOG_LEVEL_STR2INT (astring);
