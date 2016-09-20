@@ -54,6 +54,7 @@
 #include "dynamic_memory_check.h"
 #include "common_defs.h"
 #include "xml_msg_dump_itti.h"
+#include "usim_authenticate.h"
 
 extern scenario_player_t g_msp_scenarios;
 
@@ -297,6 +298,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
 //------------------------------------------------------------------------------
 void msp_var_notify_listeners (scenario_player_item_t * const item)
 {
+  AssertFatal (SCENARIO_PLAYER_ITEM_VAR == item->item_type, "Bad type var item type %d", item->item_type);
   struct list_item_s *value_changed_subscribers = item->u.var.value_changed_subscribers;
   while (value_changed_subscribers) {
     struct scenario_player_item_s *item = value_changed_subscribers->item;
@@ -318,7 +320,7 @@ bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const it
     hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
         (hash_key_t)item->u.var.var_ref_uid, (void **)&spi);
     AssertFatal ((HASH_TABLE_OK == hrc) && (spi), "Could not find var item UID %d", item->u.var.var_ref_uid);
-    AssertFatal (SCENARIO_PLAYER_ITEM_VAR == spi->item_type, "Bad type var item UID %d", spi->item_type);
+    AssertFatal (SCENARIO_PLAYER_ITEM_VAR == spi->item_type, "Bad type %d var item UID %d", spi->item_type, item->u.var.var_ref_uid);
     AssertFatal (spi->u.var.value_type == item->u.var.value_type, "var types to not match %d != %d, discouraged to do so in scenario", spi->u.var.value_type, item->u.var.value_type);
     if (VAR_VALUE_TYPE_INT64 == spi->u.var.value_type) {
       if (item->u.var.value.value_64 != spi->u.var.value.value_64) {
@@ -522,6 +524,78 @@ bool msp_play_jump_cond(scenario_t * const scenario, scenario_player_item_t * co
   return true;
 }
 //------------------------------------------------------------------------------
+// return true if we can continue playing the scenario
+bool msp_play_compute_authentication_response_parameter(scenario_t * const scenario, scenario_player_item_t * const item)
+{
+  scenario_player_item_t * var_rand = NULL;
+  scenario_player_item_t * var_autn = NULL;
+  scenario_player_item_t * var_auth_param = NULL;
+
+  void                   * vuid_rand = NULL;
+  void                   * vuid_autn = NULL;
+  void                   * vuid_auth_param = NULL;
+
+
+  hashtable_rc_t hrc = obj_hashtable_ts_get (scenario->var_items, "AUTN", strlen("AUTN"), (void **)&vuid_autn);
+  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var AUTN in hashtable");
+  int uid_autn = (int)(uintptr_t)vuid_autn;
+  hrc = hashtable_ts_get (scenario->scenario_items, uid_autn, (void **)&var_autn);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (var_autn), "Could not find var item UID %d", uid_autn);
+
+  hrc = obj_hashtable_ts_get (scenario->var_items, "RAND", strlen("RAND"), (void **)&vuid_rand);
+  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var RAND in hashtable");
+  int uid_rand = (int)(uintptr_t)vuid_rand;
+  hrc = hashtable_ts_get (scenario->scenario_items, uid_rand, (void **)&var_rand);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (var_rand), "Could not find var item UID %d", uid_rand);
+
+  hrc = obj_hashtable_ts_get (scenario->var_items, "AUTHENTICATION_RESPONSE_PARAMETER", strlen("AUTHENTICATION_RESPONSE_PARAMETER"), (void **)&vuid_auth_param);
+  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var AUTHENTICATION_RESPONSE_PARAMETER in hashtable");
+  int uid_auth_param = (int)(uintptr_t)vuid_auth_param;
+  hrc = hashtable_ts_get (scenario->scenario_items, uid_auth_param, (void **)&var_auth_param);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (var_rand), "Could not find var item UID %d", uid_auth_param);
+
+  memcpy(scenario->usim_data.autn, var_autn->u.var.value.value_bstr->data, USIM_AUTN_SIZE);
+  memcpy(scenario->usim_data.rand, var_rand->u.var.value.value_bstr->data, USIM_RAND_SIZE);
+  memset(scenario->usim_data.res, 0, USIM_RES_SIZE);
+
+  int rc = usim_authenticate(&scenario->usim_data,
+      scenario->usim_data.rand,
+      scenario->usim_data.autn,
+      scenario->usim_data.auts,
+      scenario->usim_data.res,
+      ((emm_security_context_t*)scenario->ue_emulated_emm_security_context)->knas_enc,
+      ((emm_security_context_t*)scenario->ue_emulated_emm_security_context)->knas_int);
+  if (RETURNok == rc) {
+    bdestroy_wrapper(&var_auth_param->u.var.value.value_bstr);
+    var_auth_param->u.var.value.value_bstr = blk2bstr(scenario->usim_data.res, 8);
+    msp_var_notify_listeners(var_auth_param);
+    scenario->last_played_item = item;
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "msp_play_compute_authentication_response_parameter succeeded\n");
+    return true;
+  } else {
+    scenario->last_played_item = item;
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "msp_play_compute_authentication_response_parameter failed\n");
+    return false;
+  }
+}
+
+//------------------------------------------------------------------------------
+void msp_init_scenario(scenario_t * const s)
+{
+  if (s) {
+    s->last_played_item      = NULL;
+    int rc = gettimeofday(&s->started, NULL);
+    AssertFatal(0 == rc, "gettimeofday()");
+    pthread_mutex_init(&s->lock, NULL);
+    s->scenario_items = hashtable_ts_create (128, HASH_TABLE_DEFAULT_HASH_FUNC, NULL /* TODO*/, NULL);
+    s->var_items      = obj_hashtable_ts_create (32, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
+    s->label_items    = obj_hashtable_ts_create (8, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
+    s->ue_emulated_emm_security_context = calloc(1, sizeof(emm_security_context_t));
+    scenario_set_status(s, SCENARIO_STATUS_NULL);
+    s->num_timers    = 0;
+  }
+}
+//------------------------------------------------------------------------------
 // return true if we can continue playing the scenario (no timer)
 bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const item)
 {
@@ -562,27 +636,13 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
       return msp_play_jump_cond(scenario, item);
     } else if (SCENARIO_PLAYER_ITEM_SLEEP == item->item_type) {
       return msp_play_sleep(scenario, item);
+    } else if (SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER == item->item_type) {
+      return msp_play_compute_authentication_response_parameter(scenario, item);
     }
   }
   return false;
 }
 
-//------------------------------------------------------------------------------
-void msp_init_scenario(scenario_t * const s)
-{
-  if (s) {
-    s->last_played_item      = NULL;
-    int rc = gettimeofday(&s->started, NULL);
-    AssertFatal(0 == rc, "gettimeofday()");
-    pthread_mutex_init(&s->lock, NULL);
-    s->scenario_items = hashtable_ts_create (128, HASH_TABLE_DEFAULT_HASH_FUNC, NULL /* TODO*/, NULL);
-    s->var_items      = obj_hashtable_ts_create (32, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
-    s->label_items    = obj_hashtable_ts_create (8, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
-    s->ue_emulated_emm_security_context = calloc(1, sizeof(emm_security_context_t));
-    scenario_set_status(s, SCENARIO_STATUS_NULL);
-    s->num_timers    = 0;
-  }
-}
 //------------------------------------------------------------------------------
 void msp_run_scenario(scenario_t * const scenario)
 {
@@ -602,7 +662,7 @@ void msp_run_scenario(scenario_t * const scenario)
         OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Playing scenario %s %p\n", bdata(scenario->name), scenario);
       }
       if (item) {
-        msp_play_item(scenario, item);
+        bool res = msp_play_item(scenario, item);
         pthread_mutex_unlock(&scenario->lock);
         if (SCENARIO_STATUS_PAUSED != scenario->status) {
           msp_scenario_tick(scenario);

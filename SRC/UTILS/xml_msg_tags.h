@@ -64,12 +64,12 @@
 #  define SECONDS_ATTR_XML_STR        "seconds"
 #  define USECONDS_ATTR_XML_STR       "useconds"
 
-#  define UE_SECURITY_CONTEXT_XML_STR "ue_security_context"
-#  define KSI_ATTR_XML_STR            "ksi"
-#  define KNAS_ENC_ATTR_XML_STR       "knas_enc"
-#  define KNAS_INT_ATTR_XML_STR       "knas_int"
-#  define UL_COUNT_ATTR_XML_STR       "ul_count"
-#  define DL_COUNT_ATTR_XML_STR       "dl_count"
+#  define COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_NODE_XML_STR    "compute_authentication_response_parameter"
+
+#  define USIM_NODE_XML_STR           "usim"
+#  define LTE_K_ATTR_XML_STR          "lte_k"
+#  define SQN_MS_ATTR_XML_STR         "sqn_ms"
+
 
 // Related to ITTI messages
 #  define ITTI_SENDER_TASK_XML_STR                 "ITTI_SENDER_TASK"

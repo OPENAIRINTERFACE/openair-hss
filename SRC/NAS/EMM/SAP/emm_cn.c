@@ -107,6 +107,7 @@ static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg)
     memcpy (emm_ctx->_vector[i].xres, msg->vector[i]->xres.data, msg->vector[i]->xres.size);
     emm_ctx->_vector[i].xres_size = msg->vector[i]->xres.size;
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received Vector %u:\n", i);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received XRES ..: " XRES_FORMAT "\n", XRES_DISPLAY (emm_ctx->_vector[i].xres));
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received RAND ..: " RAND_FORMAT "\n", RAND_DISPLAY (emm_ctx->_vector[i].rand));
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received AUTN ..: " AUTN_FORMAT "\n", AUTN_DISPLAY (emm_ctx->_vector[i].autn));
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received KASME .: " KASME_FORMAT " " KASME_FORMAT "\n",

@@ -32,6 +32,8 @@
 
 #include "hashtable.h"
 #include "obj_hashtable.h"
+#include "usim_authenticate.h"
+
 
 typedef enum {
   SCENARIO_PLAYER_ITEM_NULL = 0,
@@ -44,7 +46,7 @@ typedef enum {
   SCENARIO_PLAYER_ITEM_JUMP_COND,
   SCENARIO_PLAYER_ITEM_SLEEP,
   SCENARIO_PLAYER_ITEM_EXIT,
-  SCENARIO_PLAYER_ITEM_UE_SECURITY_CONTEXT
+  SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER
 } scenario_player_item_type_t;
 
 struct scenario_player_item_s;
@@ -196,6 +198,7 @@ typedef struct scenario_s {
   obj_hash_table_t           *label_items;
   scenario_player_item_t     *last_played_item;
   void                       *ue_emulated_emm_security_context; // TODO ? replace void with emm_security_context_t
+  usim_data_t                 usim_data;
 } scenario_t;
 
 typedef struct scenario_player_s {
@@ -213,11 +216,13 @@ typedef struct scenario_player_timer_arg_s {
 
 
 
+int msp_load_usim_data (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_set_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_incr_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_decr_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_sleep (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
+scenario_player_item_t* msp_load_compute_authentication_response_parameter (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_label (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_exit (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_jcond (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
@@ -254,6 +259,7 @@ bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * con
 bool msp_play_decr_var(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_sleep(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_jump_cond(scenario_t * const scenario, scenario_player_item_t * const item);
+bool msp_play_compute_authentication_response_parameter(scenario_t * const scenario, scenario_player_item_t * const item);
 
 bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_schedule_next_message(scenario_t * const s);

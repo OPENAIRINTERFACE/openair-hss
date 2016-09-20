@@ -473,6 +473,8 @@ add_library(SCENARIO_PLAYER
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_nas_message_xml.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_xml_load.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_common_xml.c
+  ${OPENAIRCN_DIR}/SRC/SECU/etsi_ts_135_206_V10.0.0_annex3.c
+  ${OPENAIRCN_DIR}/SRC/SECU/usim_authenticate.c
 )
 include_directories(${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/)
 

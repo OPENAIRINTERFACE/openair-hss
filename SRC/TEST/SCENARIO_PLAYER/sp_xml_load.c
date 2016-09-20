@@ -144,9 +144,13 @@ bool sp_xml_load_hex_stream_leaf_tag(
           }
           res = true;
           msp_msg_add_var_listener(scenario, PARENT_STRUCT(msg, struct scenario_player_item_s, u.msg), var_item);
-          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=%s from var uid=0x%lx\n",
-              bdata(xpath_expr), bdata(var_item->u.var.value.value_bstr), (uintptr_t)uid);
-        } else {
+#if DEBUG_IS_ON
+          char ascii[blength(var_item->u.var.value.value_bstr)*2+1];
+          ascii[blength(var_item->u.var.value.value_bstr)*2] = 0;
+          hexa_to_ascii((uint8_t*)bdata(var_item->u.var.value.value_bstr), ascii, blength(var_item->u.var.value.value_bstr));
+          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=%s from var %s uid=0x%lx to be loaded (len=%d)\n",
+              bdata(xpath_expr), ascii,  varname, (uintptr_t)uid, blength(var_item->u.var.value.value_bstr));
+#endif        } else {
           AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", varname);
         }
       } else {
@@ -164,8 +168,13 @@ bool sp_xml_load_hex_stream_leaf_tag(
           res = true;
           msp_msg_add_var_to_be_loaded(scenario, msg, var_item);
           *container = bstrcpy(var_item->u.var.value.value_bstr);
-          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=%s from var %s uid=0x%lx to be loaded\n",
-              bdata(xpath_expr),bdata(var_item->u.var.value.value_bstr),  varname, (uintptr_t)uid);
+#if DEBUG_IS_ON
+          char ascii[blength(var_item->u.var.value.value_bstr)*2+1];
+          ascii[blength(var_item->u.var.value.value_bstr)*2] = 0;
+          hexa_to_ascii((uint8_t*)bdata(var_item->u.var.value.value_bstr), ascii, blength(var_item->u.var.value.value_bstr));
+          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=%s from var %s uid=0x%lx to be loaded (len=%d)\n",
+              bdata(xpath_expr), ascii,  varname, (uintptr_t)uid, blength(var_item->u.var.value.value_bstr));
+#endif
         } else {
           AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", varname);
         }

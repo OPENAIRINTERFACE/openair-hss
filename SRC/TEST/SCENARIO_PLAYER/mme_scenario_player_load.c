@@ -505,70 +505,54 @@ scenario_player_item_t* msp_load_sleep (scenario_t * const scenario, xmlDocPtr c
   return spi;
 }
 //------------------------------------------------------------------------------
-int msp_load_ue_security_context (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
+int msp_load_usim_data (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
 {
 
-  xmlChar *attr = xmlGetProp(node, (const xmlChar *)KSI_ATTR_XML_STR);
+  xmlChar *attr = xmlGetProp(node, (const xmlChar *)LTE_K_ATTR_XML_STR);
   if (attr) {
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", KSI_ATTR_XML_STR, attr);
-    int ret = sscanf((const char*)attr, "%"SCNu8, &((emm_security_context_t*)(scenario->ue_emulated_emm_security_context))->eksi);
-    AssertFatal( ret == 1, "Failed to load %s value %s", KSI_ATTR_XML_STR, attr);
-    xmlFree(attr);
-  } else {
-    AssertFatal(0, "Could not find %s", KSI_ATTR_XML_STR);
-  }
-
-  attr = xmlGetProp(node, (const xmlChar *)UL_COUNT_ATTR_XML_STR);
-  if (attr) {
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", UL_COUNT_ATTR_XML_STR, attr);
-    uint32_t ul_count = 0;
-    int ret = sscanf((const char*)attr, "%u", &ul_count);
-    ((emm_security_context_t*)scenario->ue_emulated_emm_security_context)->ul_count.seq_num  = ul_count & 0x000000FF;
-    ((emm_security_context_t*)scenario->ue_emulated_emm_security_context)->ul_count.overflow = (ul_count >> 8) & 0x0000FFFF;
-    ((emm_security_context_t*)scenario->ue_emulated_emm_security_context)->ul_count.spare    = (ul_count >> 24) & 0x000000FF;
-
-    AssertFatal( ret == 1, "Failed to load %s value %s", UL_COUNT_ATTR_XML_STR, attr);
-    xmlFree(attr);
-  } else {
-    AssertFatal(0, "Could not find %s", UL_COUNT_ATTR_XML_STR);
-  }
-
-  attr = xmlGetProp(node, (const xmlChar *)KNAS_ENC_ATTR_XML_STR);
-  if (attr) {
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", KNAS_ENC_ATTR_XML_STR, attr);
-    int len = strlen((const char*)attr);
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", LTE_K_ATTR_XML_STR, attr);
+    char * value = (char*)attr;
+    int len = strlen((const char*)value);
     uint8_t hex[len/2];
-    int ret = ascii_to_hex ((uint8_t *) hex, (const char *)attr);
-    if ((ret) && (len/2 == AUTH_KNAS_ENC_SIZE)){
-      OAILOG_TRACE (LOG_UTIL, "Set %s=%s\n", KNAS_ENC_ATTR_XML_STR, attr);
-      memcpy(((emm_security_context_t*)scenario->ue_emulated_emm_security_context)->knas_enc, hex, len/2);
-    } else {
-      AssertFatal( ret == 1, "Failed to load %s value %s", KNAS_ENC_ATTR_XML_STR, attr);
-    }
+    int ret = ascii_to_hex ((uint8_t *) hex, (const char *)value);
+    AssertFatal(ret, "Could not convert hex stream value");
+    AssertFatal(len == 2*USIM_LTE_K_SIZE, "Could not convert hex stream value");
+    memcpy(scenario->usim_data.lte_k, hex, USIM_LTE_K_SIZE);
     xmlFree(attr);
   } else {
-    AssertFatal(0, "Could not find %s", KNAS_ENC_ATTR_XML_STR);
+    AssertFatal(0, "Could not find %s", LTE_K_ATTR_XML_STR);
   }
 
-  attr = xmlGetProp(node, (const xmlChar *)KNAS_INT_ATTR_XML_STR);
+  attr = xmlGetProp(node, (const xmlChar *)SQN_MS_ATTR_XML_STR);
   if (attr) {
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", KNAS_INT_ATTR_XML_STR, attr);
-    int len = strlen((const char*)attr);
-    uint8_t hex[len/2];
-    int ret = ascii_to_hex ((uint8_t *) hex, (const char *)attr);
-    if ((ret) && (len/2 == AUTH_KNAS_INT_SIZE)){
-      OAILOG_TRACE (LOG_UTIL, "Set %s=%s\n", KNAS_INT_ATTR_XML_STR, attr);
-      memcpy(((emm_security_context_t*)scenario->ue_emulated_emm_security_context)->knas_int, hex, len/2);
-    } else {
-      AssertFatal( ret == 1, "Failed to load %s value %s", KNAS_INT_ATTR_XML_STR, attr);
-    }
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", SQN_MS_ATTR_XML_STR, attr);
+    uint64_t sqn_ms = 0;
+    int ret = sscanf((const char*)attr, "%"SCNx64, &sqn_ms);
+    AssertFatal( ret == 1, "Failed to load %s value %s", SQN_MS_ATTR_XML_STR, attr);
+    AssertFatal(0x0000FFFFFFFFFFFF > sqn_ms, "SQN Bad value %"PRIx64" ", sqn_ms);
+    scenario->usim_data.sqn_ms[0] = (sqn_ms >> 5) & 0x00000000000000FF;
+    scenario->usim_data.sqn_ms[1] = (sqn_ms >> 4) & 0x00000000000000FF;
+    scenario->usim_data.sqn_ms[2] = (sqn_ms >> 3) & 0x00000000000000FF;
+    scenario->usim_data.sqn_ms[3] = (sqn_ms >> 2) & 0x00000000000000FF;
+    scenario->usim_data.sqn_ms[4] = (sqn_ms >> 1) & 0x00000000000000FF;
+    scenario->usim_data.sqn_ms[5] =  sqn_ms       & 0x00000000000000FF;
     xmlFree(attr);
   } else {
-    AssertFatal(0, "Could not find %s", KNAS_INT_ATTR_XML_STR);
+    AssertFatal(0, "Could not find %s", SQN_MS_ATTR_XML_STR);
   }
 
   return RETURNok;
 }
+//------------------------------------------------------------------------------
+scenario_player_item_t* msp_load_compute_authentication_response_parameter (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
+{
+  scenario_player_item_t * spi = calloc(1, sizeof(*spi));
+  spi->item_type = SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER;
+  // get a UID
+  spi->uid = msp_get_seq_uid();
+  return spi;
+}
+
 //------------------------------------------------------------------------------
 scenario_player_item_t* msp_load_label (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
 {
@@ -968,11 +952,18 @@ int msp_load_scenario (bstring file_path, scenario_player_t * const scenario_pla
           scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED);
           OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", SLEEP_NODE_XML_STR);
         }
-      } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)UE_SECURITY_CONTEXT_XML_STR))) {
+      } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)USIM_NODE_XML_STR))) {
         // not a scenario_player_item
-        if ((msp_load_ue_security_context(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
+        if ((msp_load_usim_data(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s \n", UE_SECURITY_CONTEXT_XML_STR);
+          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s \n", USIM_NODE_XML_STR);
+        }
+      } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_NODE_XML_STR))) {
+        if ((scenario_player_item = msp_load_compute_authentication_response_parameter(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
+          msp_scenario_add_item(scenario, scenario_player_item);
+        } else {
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED);
+          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_NODE_XML_STR);
         }
       } else {
         OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s\n", nodes->nodeTab[item]->name);
