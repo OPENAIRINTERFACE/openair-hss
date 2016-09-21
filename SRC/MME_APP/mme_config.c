@@ -682,34 +682,34 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         }
       }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3402_TIMER, &aint))) {
-        config_pP->nas_config.t3402_min = (uint8_t) aint;
+        config_pP->nas_config.t3402_min = (uint32_t) aint;
       }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3412_TIMER, &aint))) {
-        config_pP->nas_config.t3412_min = (uint8_t) aint;
+        config_pP->nas_config.t3412_min = (uint32_t) aint;
       }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3422_TIMER, &aint))) {
-        config_pP->nas_config.t3422_sec = (uint8_t) aint;
+        config_pP->nas_config.t3422_sec = (uint32_t) aint;
       }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3450_TIMER, &aint))) {
-        config_pP->nas_config.t3450_sec = (uint8_t) aint;
+        config_pP->nas_config.t3450_sec = (uint32_t) aint;
       }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3460_TIMER, &aint))) {
-        config_pP->nas_config.t3460_sec = (uint8_t) aint;
+        config_pP->nas_config.t3460_sec = (uint32_t) aint;
       }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3470_TIMER, &aint))) {
-        config_pP->nas_config.t3470_sec = (uint8_t) aint;
+        config_pP->nas_config.t3470_sec = (uint32_t) aint;
       }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3485_TIMER, &aint))) {
-        config_pP->nas_config.t3485_sec = (uint8_t) aint;
+        config_pP->nas_config.t3485_sec = (uint32_t) aint;
       }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3486_TIMER, &aint))) {
-        config_pP->nas_config.t3486_sec = (uint8_t) aint;
+        config_pP->nas_config.t3486_sec = (uint32_t) aint;
       }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3489_TIMER, &aint))) {
-        config_pP->nas_config.t3489_sec = (uint8_t) aint;
+        config_pP->nas_config.t3489_sec = (uint32_t) aint;
       }
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3495_TIMER, &aint))) {
-        config_pP->nas_config.t3495_sec = (uint8_t) aint;
+        config_pP->nas_config.t3495_sec = (uint32_t) aint;
       }
     }
   }
