@@ -921,20 +921,6 @@ target_link_libraries (spgw
   pthread m rt gtpnl ${CONFIG_LIBRARIES}  ${LIBXML2_LIBRARIES}  
   )
 
-# auth_request is a helper for scenario builder
-################################
-add_executable(auth_request
-  ${OPENAIRCN_DIR}/SRC/TEST/auth_request.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/ITTI/backtrace.c
-  ${OPENAIRCN_DIR}/SRC/SECU/key_nas_deriver.c
-  ${OPENAIRCN_DIR}/SRC/SECU/kdf.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
-  )
-target_link_libraries (auth_request
-  pthread m rt crypt ${NETTLE_LIBRARIES} gnutls fdproto fdcore
-  )
-
 
 IF( EPC_BUILD OR MME_BUILD )
   INCLUDE(FindFreeDiameter)

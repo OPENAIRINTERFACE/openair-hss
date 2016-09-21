@@ -189,11 +189,7 @@ function main()
   else
     $SUDO killall -q mme
     $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/mme /usr/local/bin && echo_success "mme installed" 
-  fi 
-  
-  compilations MME auth_request auth_request 
-  $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/auth_request /usr/local/bin/ && echo_success "auth_request installed"
-  
+  fi   
 }
 
 
