@@ -33,7 +33,7 @@
 #include "hashtable.h"
 #include "obj_hashtable.h"
 #include "usim_authenticate.h"
-
+#include "emm_data.h"
 
 typedef enum {
   SCENARIO_PLAYER_ITEM_NULL = 0,
@@ -46,7 +46,8 @@ typedef enum {
   SCENARIO_PLAYER_ITEM_JUMP_COND,
   SCENARIO_PLAYER_ITEM_SLEEP,
   SCENARIO_PLAYER_ITEM_EXIT,
-  SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER
+  SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER,
+  SCENARIO_PLAYER_ITEM_UPDATE_EMM_SECURITY_CONTEXT
 } scenario_player_item_type_t;
 
 struct scenario_player_item_s;
@@ -56,7 +57,7 @@ typedef struct list_item_s {
   struct list_item_s            *next;
 } list_item_t;
 
-typedef void (*getter_f)(const void * const, void* );
+typedef void (*getter_f)(const void * const, void*);
 
 typedef struct load_list_item_s {
   getter_f                       value_getter_func;
@@ -150,6 +151,29 @@ typedef struct scenario_player_sleep_s {
   int              useconds;
 } scenario_player_sleep_t;
 
+typedef struct scenario_player_update_emm_sc_s {
+  bool is_seea_present;
+  bool is_seea_a_uid;
+  union {
+    uint8_t     value_u8;
+    int         uid;
+  } seea;
+
+  bool is_seia_present;
+  bool is_seia_a_uid;
+  union {
+    uint8_t     value_u8;
+    int         uid;
+  } seia;
+
+  bool is_ul_count_present;
+  bool is_ul_count_a_uid;
+  union {
+    uint32_t    value_u32;
+    int         uid;
+  } ul_count;
+} scenario_player_update_emm_sc_t;
+
 
 typedef struct scenario_player_item_s {
   scenario_player_item_type_t    item_type;
@@ -157,15 +181,16 @@ typedef struct scenario_player_item_s {
   struct scenario_player_item_s *previous_item;
   struct scenario_player_item_s *next_item;
   union {
-    scenario_player_msg_t          msg;
-    scenario_player_label_t        label;
-    scenario_player_exit_t         exit;
-    scenario_player_var_t          var;
-    scenario_player_set_var_t      set_var;
-    int                            uid_incr_var;
-    int                            uid_decr_var;
-    scenario_player_cond_t         cond;
-    scenario_player_sleep_t        sleep;
+    scenario_player_msg_t           msg;
+    scenario_player_label_t         label;
+    scenario_player_exit_t          exit;
+    scenario_player_var_t           var;
+    scenario_player_set_var_t       set_var;
+    int                             uid_incr_var;
+    int                             uid_decr_var;
+    scenario_player_cond_t          cond;
+    scenario_player_sleep_t         sleep;
+    scenario_player_update_emm_sc_t updata_emm_sc;
   } u;
 } scenario_player_item_t;
 
@@ -197,7 +222,7 @@ typedef struct scenario_s {
   obj_hash_table_t           *var_items;
   obj_hash_table_t           *label_items;
   scenario_player_item_t     *last_played_item;
-  void                       *ue_emulated_emm_security_context; // TODO ? replace void with emm_security_context_t
+  emm_security_context_t     *ue_emulated_emm_security_context;
   usim_data_t                 usim_data;
 } scenario_t;
 
@@ -217,6 +242,7 @@ typedef struct scenario_player_timer_arg_s {
 
 
 int msp_load_usim_data (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
+scenario_player_item_t *msp_load_update_emm_security_context (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_set_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_incr_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);

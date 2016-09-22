@@ -586,8 +586,8 @@ bool nas_security_algorithms_from_xml (
 void nas_security_algorithms_to_xml (NasSecurityAlgorithms * nassecurityalgorithms, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, NAS_SECURITY_ALGORITHMS_IE_XML_STR);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, TYPE_OF_CYPHERING_ALGORITHM_ATTR_XML_STR, "%"PRIx8, nassecurityalgorithms->typeofcipheringalgorithm);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM_ATTR_XML_STR, "%"PRIx8, nassecurityalgorithms->typeofintegrityalgorithm);
+  XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_CYPHERING_ALGORITHM_ATTR_XML_STR, "%"PRIx8, nassecurityalgorithms->typeofcipheringalgorithm);
+  XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM_ATTR_XML_STR, "%"PRIx8, nassecurityalgorithms->typeofintegrityalgorithm);
   XML_WRITE_END_ELEMENT(writer);
 }
 

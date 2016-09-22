@@ -563,8 +563,8 @@ bool msp_play_compute_authentication_response_parameter(scenario_t * const scena
       scenario->usim_data.autn,
       scenario->usim_data.auts,
       scenario->usim_data.res,
-      ((emm_security_context_t*)scenario->ue_emulated_emm_security_context)->knas_enc,
-      ((emm_security_context_t*)scenario->ue_emulated_emm_security_context)->knas_int);
+      scenario->ue_emulated_emm_security_context->knas_enc,
+      scenario->ue_emulated_emm_security_context->knas_int);
   if (RETURNok == rc) {
     bdestroy_wrapper(&var_auth_param->u.var.value.value_bstr);
     var_auth_param->u.var.value.value_bstr = blk2bstr(scenario->usim_data.res, 8);
@@ -662,7 +662,7 @@ void msp_run_scenario(scenario_t * const scenario)
         OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Playing scenario %s %p\n", bdata(scenario->name), scenario);
       }
       if (item) {
-        bool res = msp_play_item(scenario, item);
+        msp_play_item(scenario, item);
         pthread_mutex_unlock(&scenario->lock);
         if (SCENARIO_STATUS_PAUSED != scenario->status) {
           msp_scenario_tick(scenario);

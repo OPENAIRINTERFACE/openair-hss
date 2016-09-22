@@ -134,8 +134,31 @@ bool sp_nas_security_algorithms_from_xml (
     scenario_player_msg_t * const msg,
     NasSecurityAlgorithms          * const nassecurityalgorithms)
 {
-  AssertFatal(0, "TODO if necessary");
-  return false;
+  bool res = false;
+  bstring xpath_expr_nsa = bformat("./%s",NAS_SECURITY_ALGORITHMS_IE_XML_STR);
+  xmlXPathObjectPtr xpath_obj_nsa = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_nsa);
+  if (xpath_obj_nsa) {
+    xmlNodeSetPtr nodes_nsa = xpath_obj_nsa->nodesetval;
+    int size = (nodes_nsa) ? nodes_nsa->nodeNr : 0;
+    if ((1 == size) && (msg->xml_doc)) {
+
+      xmlNodePtr saved_node_ptr = msg->xpath_ctx->node;
+      res = (RETURNok == xmlXPathSetContextNode(nodes_nsa->nodeTab[0], msg->xpath_ctx));
+      if (res) {
+        uint64_t  typeofcipheringalgorithm = 0;
+        res = sp_u64_from_xml (scenario, msg, &typeofcipheringalgorithm, TYPE_OF_CYPHERING_ALGORITHM_ATTR_XML_STR);
+        nassecurityalgorithms->typeofcipheringalgorithm = typeofcipheringalgorithm;
+      }
+      if (res) {
+        uint64_t  typeofintegrityalgorithm = 0;
+        res = sp_u64_from_xml (scenario, msg, &typeofintegrityalgorithm,TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM_ATTR_XML_STR);
+        nassecurityalgorithms->typeofintegrityalgorithm = typeofintegrityalgorithm;
+      }
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
+    }
+  }
+  bdestroy_wrapper (&xpath_expr_nsa);
+  return res;
 }
 //------------------------------------------------------------------------------
 bool sp_nonce_from_xml (

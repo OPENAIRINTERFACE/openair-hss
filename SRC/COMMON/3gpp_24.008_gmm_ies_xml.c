@@ -176,7 +176,7 @@ void identity_type_2_to_xml (const identity_type2_t * const identitytype2, xmlTe
 bool imeisv_request_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, imeisv_request_t * const imeisvrequest)
 {
   OAILOG_FUNC_IN (LOG_UTIL);
-  bstring xpath_expr = bformat("./%s",IMEISV_REQUEST_IE_TYPE);
+  bstring xpath_expr = bformat("./%s",IMEISV_REQUEST_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)imeisvrequest, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_UTIL, res);
@@ -184,7 +184,7 @@ bool imeisv_request_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, i
 //------------------------------------------------------------------------------
 void imeisv_request_to_xml (const imeisv_request_t * const imeisvrequest, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, IMEISV_REQUEST_IE_TYPE, "%"PRIu8, *imeisvrequest);
+  XML_WRITE_FORMAT_ELEMENT(writer, IMEISV_REQUEST_IE_XML_STR, "%"PRIu8, *imeisvrequest);
 }
 
 //------------------------------------------------------------------------------

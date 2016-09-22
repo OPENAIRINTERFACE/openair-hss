@@ -77,8 +77,8 @@ void *mme_scenario_player_event_handler (void *args)
     switch (ITTI_MSG_ID (received_message_p)) {
 
     case NAS_DOWNLINK_DATA_REQ:
-      mme_scenario_player_handle_nas_downlink_data_req (received_message_p->ittiMsgHeader.instance, &NAS_DL_DATA_REQ (received_message_p));
       XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_REQ(&NAS_DL_DATA_REQ (received_message_p), received_message_p->ittiMsgHeader.originTaskId, TASK_MME_SCENARIO_PLAYER, NULL);
+      mme_scenario_player_handle_nas_downlink_data_req (received_message_p->ittiMsgHeader.instance, &NAS_DL_DATA_REQ (received_message_p));
       msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 

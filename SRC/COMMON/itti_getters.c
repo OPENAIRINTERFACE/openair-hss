@@ -203,3 +203,78 @@ void nas_dl_data_req_get_nas_authentication_request_authentication_parameter_aut
 }
 
 
+//------------------------------------------------------------------------------
+// get value from message into var value attribute of type u64
+void nas_dl_data_req_get_nas_mac (const void * const message, void *value)
+{
+  // assume security protected
+  nas_message_t                           nas_msg = {.security_protected.header = {0},
+                                                     .security_protected.plain.emm.header = {0},
+                                                     .security_protected.plain.esm.header = {0}};
+  nas_message_decode_status_t             decode_status = {0};
+  int                                     decoder_rc = 0;
+  emm_security_context_t                  emm_security_context = {0};
+
+  decoder_rc = nas_message_decode (
+      (const unsigned char *)bdata(((const itti_nas_dl_data_req_t* const)message)->nas_msg),
+      &nas_msg,
+      blength(((const itti_nas_dl_data_req_t* const)message)->nas_msg),
+      &emm_security_context, &decode_status);
+  AssertFatal (0 < decoder_rc, "Error in decoding NAS");
+  // assume security protected
+
+  *((uint64_t*)value) = nas_msg.security_protected.header.message_authentication_code;
+#warning "TODO free nas_message_t content"
+}
+
+
+//------------------------------------------------------------------------------
+// get value from message into var value attribute of type u64
+void nas_dl_data_req_get_nas_smc_eia (const void * const message, void *value)
+{
+  // assume security protected
+  nas_message_t                           nas_msg = {.security_protected.header = {0},
+                                                     .security_protected.plain.emm.header = {0},
+                                                     .security_protected.plain.esm.header = {0}};
+  nas_message_decode_status_t             decode_status = {0};
+  int                                     decoder_rc = 0;
+  emm_security_context_t                  emm_security_context = {0};
+
+  decoder_rc = nas_message_decode (
+      (const unsigned char *)bdata(((const itti_nas_dl_data_req_t* const)message)->nas_msg),
+      &nas_msg,
+      blength(((const itti_nas_dl_data_req_t* const)message)->nas_msg),
+      &emm_security_context, &decode_status);
+  AssertFatal (0 < decoder_rc, "Error in decoding NAS");
+  // assume security protected
+  AssertFatal (SECURITY_MODE_COMMAND == nas_msg.plain.emm.header.message_type, "No NAS SECURITY_MODE_COMMAND found in itti_nas_dl_data_req_t");
+
+  *((uint64_t*)value) = nas_msg.plain.emm.security_mode_command.selectednassecurityalgorithms.typeofintegrityalgorithm;
+#warning "TODO free nas_message_t content"
+}
+
+//------------------------------------------------------------------------------
+// get value from message into var value attribute of type u64
+void nas_dl_data_req_get_nas_smc_eea (const void * const message, void *value)
+{
+  // assume security protected
+  nas_message_t                           nas_msg = {.security_protected.header = {0},
+                                                     .security_protected.plain.emm.header = {0},
+                                                     .security_protected.plain.esm.header = {0}};
+  nas_message_decode_status_t             decode_status = {0};
+  int                                     decoder_rc = 0;
+  emm_security_context_t                  emm_security_context = {0};
+
+  decoder_rc = nas_message_decode (
+      (const unsigned char *)bdata(((const itti_nas_dl_data_req_t* const)message)->nas_msg),
+      &nas_msg,
+      blength(((const itti_nas_dl_data_req_t* const)message)->nas_msg),
+      &emm_security_context, &decode_status);
+  AssertFatal (0 < decoder_rc, "Error in decoding NAS");
+  // assume security protected
+  AssertFatal (SECURITY_MODE_COMMAND == nas_msg.plain.emm.header.message_type, "No NAS SECURITY_MODE_COMMAND found in itti_nas_dl_data_req_t");
+
+  *((uint64_t*)value) = nas_msg.plain.emm.security_mode_command.selectednassecurityalgorithms.typeofcipheringalgorithm;
+#warning "TODO free nas_message_t content"
+}
+

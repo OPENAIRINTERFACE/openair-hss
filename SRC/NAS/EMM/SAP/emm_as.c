@@ -328,6 +328,7 @@ static int _emm_as_recv (
   /*
    * Process NAS message
    */
+  // LG WARNING plain.emmm versus security.plain.emm
   EMM_msg                                *emm_msg = &nas_msg.plain.emm;
 
   switch (emm_msg->header.message_type) {

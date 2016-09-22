@@ -82,6 +82,12 @@ getter_f msp_get_getter_function_from_var_name(bstring var_name)
     return nas_dl_data_req_get_nas_authentication_request_authentication_parameter_rand;
   if (biseqcstrcaseless(var_name, "ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_AUTN"))
     return nas_dl_data_req_get_nas_authentication_request_authentication_parameter_autn;
+  if (biseqcstrcaseless(var_name, "ITTI_NAS_DOWNLINK_DATA_REQ.NAS_MAC"))
+    return nas_dl_data_req_get_nas_mac;
+  if (biseqcstrcaseless(var_name, "ITTI_NAS_DOWNLINK_DATA_REQ.NAS.SECURITY_MODE_COMMAND.TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM"))
+    return nas_dl_data_req_get_nas_smc_eia;
+  if (biseqcstrcaseless(var_name, "ITTI_NAS_DOWNLINK_DATA_REQ.NAS.SECURITY_MODE_COMMAND.TYPE_OF_CIPHERING_ALGORITHM"))
+    return nas_dl_data_req_get_nas_smc_eea;
 
   return NULL;
 }
@@ -553,6 +559,83 @@ int msp_load_usim_data (scenario_t * const scenario, xmlDocPtr const xml_doc, xm
 
   return RETURNok;
 }
+
+//------------------------------------------------------------------------------
+scenario_player_item_t *msp_load_update_emm_security_context (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
+{
+  scenario_player_item_t * spi = calloc(1, sizeof(*spi));
+  spi->item_type = SCENARIO_PLAYER_ITEM_UPDATE_EMM_SECURITY_CONTEXT;
+  // get a UID
+  spi->uid = msp_get_seq_uid();
+
+  xmlChar *attr = xmlGetProp(node, (const xmlChar *)SELECTED_EEA_ATTR_XML_STR);
+  if (attr) {
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", SELECTED_EEA_ATTR_XML_STR, attr);
+    spi->u.updata_emm_sc.is_seea_present = true;
+    int ret = sscanf((const char*)attr, "%"SCNx8, &spi->u.updata_emm_sc.seea.value_u8);
+    if (ret == 1) {
+      spi->u.updata_emm_sc.is_seea_a_uid = false;
+    } else if ('$' == attr[0]) {
+      spi->u.updata_emm_sc.is_seea_a_uid = true;
+      void           *uid = NULL;
+      hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, (void*)&attr[1], xmlStrlen(attr)-1, (void**)&uid);
+      if (HASH_TABLE_OK == rc) {
+        spi->u.updata_emm_sc.seea.uid = (uintptr_t)uid;
+      } else {
+        AssertFatal (0, "Could not find %s var, should have been declared in scenario\n", &attr[1]);
+      }
+    } else {
+      AssertFatal(0, "Unable to handle %s", attr);
+    }
+    xmlFree(attr);
+  }
+
+  attr = xmlGetProp(node, (const xmlChar *)SELECTED_EIA_ATTR_XML_STR);
+  if (attr) {
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", SELECTED_EIA_ATTR_XML_STR, attr);
+    spi->u.updata_emm_sc.is_seia_present = true;
+    int ret = sscanf((const char*)attr, "%"SCNx8, &spi->u.updata_emm_sc.seia.value_u8);
+    if (ret == 1) {
+      spi->u.updata_emm_sc.is_seia_a_uid = false;
+    } else if ('$' == attr[0]) {
+      spi->u.updata_emm_sc.is_seia_a_uid = true;
+      void           *uid = NULL;
+      hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, (void*)&attr[1], xmlStrlen(attr)-1, (void**)&uid);
+      if (HASH_TABLE_OK == rc) {
+        spi->u.updata_emm_sc.seia.uid = (uintptr_t)uid;
+      } else {
+        AssertFatal (0, "Could not find %s var, should have been declared in scenario\n", &attr[1]);
+      }
+    } else {
+      AssertFatal(0, "Unable to handle %s", attr);
+    }
+    xmlFree(attr);
+  }
+
+  attr = xmlGetProp(node, (const xmlChar *)UL_COUNT_ATTR_XML_STR);
+  if (attr) {
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", UL_COUNT_ATTR_XML_STR, attr);
+    spi->u.updata_emm_sc.is_ul_count_present = true;
+    int ret = sscanf((const char*)attr, "%"SCNx32, &spi->u.updata_emm_sc.ul_count.value_u32);
+    if (ret == 1) {
+      spi->u.updata_emm_sc.is_ul_count_a_uid = false;
+    } else if ('$' == attr[0]) {
+      spi->u.updata_emm_sc.is_ul_count_a_uid = true;
+      void           *uid = NULL;
+      hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, (void*)&attr[1], xmlStrlen(attr)-1, (void**)&uid);
+      if (HASH_TABLE_OK == rc) {
+        spi->u.updata_emm_sc.ul_count.uid = (uintptr_t)uid;
+      } else {
+        AssertFatal (0, "Could not find %s var, should have been declared in scenario\n", &attr[1]);
+      }
+    } else {
+      AssertFatal(0, "Unable to handle %s", attr);
+    }
+    xmlFree(attr);
+  }
+  return spi;
+}
+
 //------------------------------------------------------------------------------
 scenario_player_item_t* msp_load_compute_authentication_response_parameter (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
 {
@@ -974,6 +1057,13 @@ int msp_load_scenario (bstring file_path, scenario_player_t * const scenario_pla
         } else {
           scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED);
           OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_NODE_XML_STR);
+        }
+      } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)UPDATE_EMM_SECURITY_CONTEXT_NODE_XML_STR))) {
+        if ((scenario_player_item = msp_load_update_emm_security_context(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
+          msp_scenario_add_item(scenario, scenario_player_item);
+        } else {
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED);
+          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", UPDATE_EMM_SECURITY_CONTEXT_NODE_XML_STR);
         }
       } else {
         OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s\n", nodes->nodeTab[item]->name);

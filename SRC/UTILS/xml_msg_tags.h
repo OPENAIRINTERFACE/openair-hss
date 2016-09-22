@@ -70,6 +70,11 @@
 #  define LTE_K_ATTR_XML_STR          "lte_k"
 #  define SQN_MS_ATTR_XML_STR         "sqn_ms"
 
+#  define UPDATE_EMM_SECURITY_CONTEXT_NODE_XML_STR                  "update_emm_security_context"
+#  define SELECTED_EEA_ATTR_XML_STR   "seea"
+#  define SELECTED_EIA_ATTR_XML_STR   "seia"
+#  define UL_COUNT_ATTR_XML_STR       "ul_count"
+
 
 // Related to ITTI messages
 #  define ITTI_SENDER_TASK_XML_STR                 "ITTI_SENDER_TASK"

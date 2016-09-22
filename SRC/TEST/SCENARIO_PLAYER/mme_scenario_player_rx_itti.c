@@ -93,7 +93,11 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
       struct load_list_item_s *list_var_item = item->u.msg.vars_to_load;
       while (list_var_item) {
         scenario_player_var_t * var_item = &list_var_item->item->u.var;
-        list_var_item->value_getter_func(nas_dl_data_req, &var_item->value.value_u64);
+        if (VAR_VALUE_TYPE_INT64 == var_item->value_type) {
+          list_var_item->value_getter_func(nas_dl_data_req, &var_item->value.value_64);
+        } else if (VAR_VALUE_TYPE_BSTR == var_item->value_type) {
+          list_var_item->value_getter_func(nas_dl_data_req, &var_item->value.value_bstr);
+        } else AssertFatal(0, "Unknown var value type %d", var_item->value_type);
         var_item->value_changed = true;
         OAILOG_TRACE(LOG_MME_SCENARIO_PLAYER, "Loaded var %s=0x%" PRIx64 " from NAS_DOWNLINK_DATA_REQ message\n", bdata(var_item->name), var_item->value.value_u64);
 
@@ -161,7 +165,11 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
       bool reload_scenario_message = (NULL != item->u.msg.vars_to_load);
       while (list_var_item) {
         scenario_player_var_t * var_item = &list_var_item->item->u.var;
-        list_var_item->value_getter_func(mme_app_connection_establishment_cnf, &var_item->value.value_u64);
+        if (VAR_VALUE_TYPE_INT64 == var_item->value_type) {
+          list_var_item->value_getter_func(mme_app_connection_establishment_cnf, &var_item->value.value_64);
+        } else if (VAR_VALUE_TYPE_BSTR == var_item->value_type) {
+          list_var_item->value_getter_func(mme_app_connection_establishment_cnf, &var_item->value.value_bstr);
+        } else AssertFatal(0, "Unknown var value type %d", var_item->value_type);
         var_item->value_changed = true;
         OAILOG_TRACE(LOG_MME_SCENARIO_PLAYER, "Loaded var %s=0x%" PRIx64 " from MME_APP_CONNECTION_ESTABLISHMENT_CNF message\n", bdata(var_item->name), var_item->value.value_u64);
 

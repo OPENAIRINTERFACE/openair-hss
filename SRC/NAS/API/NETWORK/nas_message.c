@@ -495,6 +495,7 @@ int nas_message_decode (
     /*
      * Decode security protected NAS message
      */
+    // LG WARNING  msg->plain versus msg->security.plain.
     bytes = _nas_message_protected_decode ((unsigned char *const)(buffer + size), &msg->header, &msg->plain, length - size, emm_security_context, status);
   } else {
     /*

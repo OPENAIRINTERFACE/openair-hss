@@ -419,7 +419,7 @@ bool sp_security_mode_command_from_xml (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   bool res = false;
 
-  res = nas_security_algorithms_from_xml (msg->xml_doc, msg->xpath_ctx, &security_mode_command->selectednassecurityalgorithms);
+  res = sp_nas_security_algorithms_from_xml (scenario, msg, &security_mode_command->selectednassecurityalgorithms);
   if (res) {res = nas_key_set_identifier_from_xml (msg->xml_doc, msg->xpath_ctx, &security_mode_command->naskeysetidentifier);}
   if (res) {res = ue_security_capability_from_xml (msg->xml_doc, msg->xpath_ctx, &security_mode_command->replayeduesecuritycapabilities);}
   if (res) {
