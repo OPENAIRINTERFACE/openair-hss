@@ -88,15 +88,6 @@ static void *nas_intertask_interface (void *args_p)
       break;
 
     case S6A_AUTH_INFO_ANS:{
-        // duplicate message and send it to MME_SCENARIO_PLAYER task
-        if (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) {
-          MessageDef                             *message_p = NULL;
-          s6a_auth_info_ans_t                    *s6a_auth_info_ans_p = NULL;
-          message_p = itti_alloc_new_message (TASK_NAS_MME, S6A_AUTH_INFO_ANS);
-          s6a_auth_info_ans_p = &message_p->ittiMsg.s6a_auth_info_ans;
-          memcpy(s6a_auth_info_ans_p, &S6A_AUTH_INFO_ANS(received_message_p), sizeof(s6a_auth_info_ans_t));
-          itti_send_msg_to_task (TASK_MME_SCENARIO_PLAYER, INSTANCE_DEFAULT, message_p);
-        }
         /*
          * We received the authentication vectors from HSS, trigger a ULR
          * for now. Normaly should trigger an authentication procedure with UE.
