@@ -455,12 +455,12 @@ if (TRACE_XML)
 endif()
 
 add_library(SCENARIO_PLAYER
+  ${OPENAIRCN_DIR}/SRC/SECU/etsi_ts_135_206_V10.0.0_annex3.c
+  ${OPENAIRCN_DIR}/SRC/SECU/usim_authenticate.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_load.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_play.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_rx_itti.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_load.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_task.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/xml_msg_load_itti.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/xml_load.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_23.003_xml.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.007_xml.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.008_common_ies_xml.c
@@ -470,11 +470,12 @@ add_library(SCENARIO_PLAYER
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_esm_msg_xml.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_ies_xml.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_36.401_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_nas_message_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_xml_load.c
   ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_common_xml.c
-  ${OPENAIRCN_DIR}/SRC/SECU/etsi_ts_135_206_V10.0.0_annex3.c
-  ${OPENAIRCN_DIR}/SRC/SECU/usim_authenticate.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_nas_message_xml.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_xml_compare.c
+  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_xml_load.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/xml_load.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/xml_msg_load_itti.c
 )
 include_directories(${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/)
 
@@ -885,7 +886,6 @@ add_executable(mme
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme.c
   ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
   ${OPENAIRCN_DIR}/SRC/COMMON/itti_free_defined_msg.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/itti_getters.c
   ${OPENAIRCN_DIR}/SRC/COMMON/itti_comp.c
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
   ${OPENAIRCN_DIR}/SRC/NAS/API/NETWORK/nas_message_xml.c

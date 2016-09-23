@@ -26,20 +26,11 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-#ifndef FILE_ITTI_GETTERS_SEEN
-#define FILE_ITTI_GETTERS_SEEN
 
-void nas_dl_data_req_get_mme_ue_s1ap_id (const void* const message, void *value_u64);
-void mme_app_connection_establishment_cnf_get_kenb (const void * const message, void *value_bstring);
-void mme_app_connection_establishment_cnf_get_erab0_transport_layer_address (const void * const message, void *value_bstring);
-void mme_app_connection_establishment_cnf_get_erab0_teid (const void * const message, void *value);
-void mme_app_connection_establishment_cnf_get_nas_mac (const void * const message, void *value);
-void mme_app_connection_establishment_cnf_get_nas_downlink_sequence_number (const void * const message, void *value);
-void mme_app_connection_establishment_cnf_get_nas_emm_guti_mtmsi (const void * const message, void *value);
-void nas_dl_data_req_get_nas_authentication_request_authentication_parameter_rand (const void * const message, void *value_bstring);
-void nas_dl_data_req_get_nas_authentication_request_authentication_parameter_autn (const void * const message, void *value_bstring);
-void nas_dl_data_req_get_nas_mac (const void * const message, void *value);
-void nas_dl_data_req_get_nas_smc_eia (const void * const message, void *value);
-void nas_dl_data_req_get_nas_smc_eea (const void * const message, void *value);
+#ifndef FILE_SP_XML_COMPARE_SEEN
+#define FILE_SP_XML_COMPARE_SEEN
 
-#endif /* FILE_ITTI_GETTERS_SEEN */
+int sp_compare_xml_docs(scenario_t *scenario, xmlDoc  *received_doc, xmlDoc  *expected_doc);
+
+#endif
+

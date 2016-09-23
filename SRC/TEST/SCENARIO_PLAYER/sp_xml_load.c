@@ -66,7 +66,6 @@ bool sp_u64_from_xml (
             *container = var_item->u.var.value.value_u64;
             AssertFatal (var_item->u.var.value_type == VAR_VALUE_TYPE_INT64, "Bad var type %d", var_item->u.var.value_type);
             res = true;
-            msp_msg_add_var_listener(scenario, PARENT_STRUCT(msg, struct scenario_player_item_s, u.msg), var_item);
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s= %" PRIx64 " from var uid=0x%lx\n",
                 xml_tag_str, *container, (uintptr_t)uid);
           } else {
@@ -86,7 +85,6 @@ bool sp_u64_from_xml (
           rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);
           if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {
             res = true;
-            msp_msg_add_var_to_be_loaded(scenario, msg, var_item);
             *container = var_item->u.var.value.value_u64;
             AssertFatal (var_item->u.var.value_type == VAR_VALUE_TYPE_INT64, "Bad var type %d", var_item->u.var.value_type);
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=%" PRIx64 " to be loaded\n", xml_tag_str, *container);
@@ -143,7 +141,6 @@ bool sp_xml_load_hex_stream_leaf_tag(
             *container = bfromcstr(zero);
           }
           res = true;
-          msp_msg_add_var_listener(scenario, PARENT_STRUCT(msg, struct scenario_player_item_s, u.msg), var_item);
 #if DEBUG_IS_ON
           char ascii[blength(var_item->u.var.value.value_bstr)*2+1];
           ascii[blength(var_item->u.var.value.value_bstr)*2] = 0;
@@ -167,7 +164,6 @@ bool sp_xml_load_hex_stream_leaf_tag(
         rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);
         if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {
           res = true;
-          msp_msg_add_var_to_be_loaded(scenario, msg, var_item);
           *container = bstrcpy(var_item->u.var.value.value_bstr);
 #if DEBUG_IS_ON
           char ascii[blength(var_item->u.var.value.value_bstr)*2+1];

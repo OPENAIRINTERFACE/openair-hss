@@ -78,6 +78,10 @@ void scenario_set_status(scenario_t * const scenario, const scenario_status_t sc
     OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Run scenario %s FAILED\n", bdata(scenario->name));
   } else if (SCENARIO_STATUS_LOAD_FAILED == scenario_status) {
     OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Load scenario %s FAILED\n", bdata(scenario->name));
+  } else if (SCENARIO_STATUS_PAUSED == scenario_status) {
+    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s PAUSED\n", bdata(scenario->name));
+  } else if (SCENARIO_STATUS_LOADED == scenario_status) {
+    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s LOADED\n", bdata(scenario->name));
   }
 }
 
@@ -86,8 +90,8 @@ static void msp_clear_processed_flags(scenario_t * const scenario)
 {
   scenario_player_item_t *item = scenario->head_item;
   while (item) {
+    item->is_played = false;
     if (SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) {
-      item->u.msg.is_processed = false;
       item->u.msg.time_stamp.tv_sec = 0;
       item->u.msg.time_stamp.tv_usec = 0;
     }
@@ -113,13 +117,8 @@ void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expir
         msp_send_tx_message_no_delay(arg->scenario, arg->item);
       } else {
         // rx message
-
         // obviously if everything is ok, this timer should have been deleted, but
         // timer_remove do not free the arg parameter, pffff, so let it run...
-        if (!(arg->item->u.msg.is_processed)) {
-          // scenario fails
-          scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAY_FAILED);
-        }
       }
     }
     free_wrapper((void**)&arg);
@@ -140,32 +139,19 @@ void msp_get_elapsed_time_since_scenario_start(scenario_t * const scenario, stru
 }
 
 //------------------------------------------------------------------------------
-void msp_process_vars_to_load(scenario_t * const scenario, scenario_player_item_t * const msg_rx_item)
-{
-  AssertFatal (0, "TODO");
-}
-
-//------------------------------------------------------------------------------
 bool msp_send_tx_message_no_delay(scenario_t * const scenario, scenario_player_item_t * const item)
 {
-  if (item->u.msg.xml_dump2struct_needed) {
-    // TODO dump XML to ITTI
-    item->u.msg.xml_dump2struct_needed = false;
-    int rc = msp_reload_message (scenario, item);
-    AssertFatal(RETURNok == rc, "Could not reload message");
-  } else {
-    // finally reload message because of the free of item->u.msg.itti_msg
-    int rc = msp_reload_message (scenario, item);
-    AssertFatal(RETURNok == rc, "Could not reload message");
-  }
-  item->u.msg.is_processed = true;
+
+  int rc = msp_reload_message (scenario, item);
+  AssertFatal(RETURNok == rc, "Could not reload message");
+  item->is_played = true;
+  scenario->last_played_item = item;
   msp_get_elapsed_time_since_scenario_start(scenario, &item->u.msg.time_stamp);
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "ITTI msg id %d -> task %s\n", item->u.msg.itti_msg->ittiMsgHeader.messageId,
       itti_task_id2itti_task_str(item->u.msg.itti_receiver_task));
-  int rc = itti_send_msg_to_task (item->u.msg.itti_receiver_task, INSTANCE_DEFAULT, item->u.msg.itti_msg);
+  rc = itti_send_msg_to_task (item->u.msg.itti_receiver_task, INSTANCE_DEFAULT, item->u.msg.itti_msg);
 
   item->u.msg.itti_msg = NULL;
-  scenario->last_played_item = item;
   return (RETURNok == rc);
 }
 
@@ -175,7 +161,6 @@ bool msp_play_tx_message(scenario_t * const scenario, scenario_player_item_t * c
 {
   // time-out relative to itself
   if (item->u.msg.time_out_relative_to_msg_uid == item->uid) {
-    item->u.msg.is_processed = false;
     // finally prefer sleep instead of timer+mutex/cond synch
     if (0 < item->u.msg.time_out.tv_sec) {
       sleep(item->u.msg.time_out.tv_sec);
@@ -194,7 +179,7 @@ bool msp_play_tx_message(scenario_t * const scenario, scenario_player_item_t * c
     AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find relative item UID %d", item->u.msg.time_out_relative_to_msg_uid);
     AssertFatal (SCENARIO_PLAYER_ITEM_ITTI_MSG == ref->item_type, "Bad type relative item UID %d", item->u.msg.time_out_relative_to_msg_uid);
 
-    if (ref->u.msg.is_processed) {
+    if (!ref->is_played) {
       // compute time
       struct timeval now = {0};
       struct timeval elapsed_time = {0};
@@ -229,7 +214,8 @@ bool msp_play_tx_message(scenario_t * const scenario, scenario_player_item_t * c
 // return true if we can continue playing the scenario (no timer)
 bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * const item)
 {
-  if (item->u.msg.is_processed) {
+  if (item->is_played) {
+    scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
     return true;
   }
 
@@ -241,38 +227,33 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
 
     AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find relative item UID %d", item->u.msg.time_out_relative_to_msg_uid);
     AssertFatal (SCENARIO_PLAYER_ITEM_ITTI_MSG == ref->item_type, "Bad type relative item UID %d", item->u.msg.time_out_relative_to_msg_uid);
-    if (ref->u.msg.is_processed) {
-      struct timeval now = {0};
-      struct timeval elapsed_time = {0};
-      // no thread safe but do not matter a lot
-      msp_get_elapsed_time_since_scenario_start(scenario, &now);
-      timersub(&now, &ref->u.msg.time_stamp, &elapsed_time);
-      if (
-          (elapsed_time.tv_sec > item->u.msg.time_out.tv_sec) ||
-          ((elapsed_time.tv_sec == item->u.msg.time_out.tv_sec) &&
-           (elapsed_time.tv_usec >= item->u.msg.time_out.tv_usec))
-         ) {
-        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
-        return false;
-      } else {
-        scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
-
-        struct timeval timer_val = {0};
-        int ret      = RETURNerror;
-        timersub(&elapsed_time, &item->u.msg.time_out, &timer_val);
-        scenario_player_timer_arg_t *arg = calloc(1, sizeof (*arg));
-        if (arg) {
-          arg->item = item;
-          arg->scenario = scenario;
-          ret = timer_setup (timer_val.tv_sec, timer_val.tv_usec,
-                     TASK_MME_SCENARIO_PLAYER, INSTANCE_DEFAULT,
-                     TIMER_ONE_SHOT, (void*)arg, &item->u.msg.timer_id);
-        }
-        AssertFatal(RETURNok == ret, "Error setting timer item %d", item->uid);
-        return false;
-      }
+    struct timeval now = {0};
+    struct timeval elapsed_time = {0};
+    // no thread safe but do not matter a lot
+    msp_get_elapsed_time_since_scenario_start(scenario, &now);
+    timersub(&now, &ref->u.msg.time_stamp, &elapsed_time);
+    if (
+        (elapsed_time.tv_sec > item->u.msg.time_out.tv_sec) ||
+        ((elapsed_time.tv_sec == item->u.msg.time_out.tv_sec) &&
+         (elapsed_time.tv_usec >= item->u.msg.time_out.tv_usec))
+    ) {
+      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+      return false;
     } else {
       scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
+
+      struct timeval timer_val = {0};
+      int ret      = RETURNerror;
+      timersub(&elapsed_time, &item->u.msg.time_out, &timer_val);
+      scenario_player_timer_arg_t *arg = calloc(1, sizeof (*arg));
+      if (arg) {
+        arg->item = item;
+        arg->scenario = scenario;
+        ret = timer_setup (timer_val.tv_sec, timer_val.tv_usec,
+            TASK_MME_SCENARIO_PLAYER, INSTANCE_DEFAULT,
+            TIMER_ONE_SHOT, (void*)arg, &item->u.msg.timer_id);
+      }
+      AssertFatal(RETURNok == ret, "Error setting timer item %d", item->uid);
       return false;
     }
   } else {
@@ -295,20 +276,30 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
   }
   return true;
 }
+
 //------------------------------------------------------------------------------
-void msp_var_notify_listeners (scenario_player_item_t * const item)
+// return true if we can continue playing the scenario
+void msp_display_var(scenario_player_item_t * const var)
 {
-  AssertFatal (SCENARIO_PLAYER_ITEM_VAR == item->item_type, "Bad type var item type %d", item->item_type);
-  struct list_item_s *value_changed_subscribers = item->u.var.value_changed_subscribers;
-  while (value_changed_subscribers) {
-    struct scenario_player_item_s *item = value_changed_subscribers->item;
-    if (SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) {
-      item->u.msg.xml_dump2struct_needed = true;
-      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Notify scenario player item UID %u to be reloaded\n", item->uid);
+  if (VAR_VALUE_TYPE_INT64 == var->u.var.value_type) {
+    OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Var %s=%"PRIx64"\n", var->u.var.name->data, var->u.var.value.value_64);
+  } else if (VAR_VALUE_TYPE_ASCII_STREAM == var->u.var.value_type) {
+    if (var->u.var.value.value_bstr)
+      OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Var %s=\"%s\"\n", var->u.var.name->data, var->u.var.value.value_bstr->data);
+    else
+      OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Var %s=\"\"\n", var->u.var.name->data);
+  } else if (VAR_VALUE_TYPE_HEX_STREAM == var->u.var.value_type) {
+    int length = blength(var->u.var.value.value_bstr);
+    char *buffer=malloc(blength(var->u.var.value.value_bstr)*2+1);
+    if (buffer) {
+      hexa_to_ascii ((uint8_t *)bdata(var->u.var.value.value_bstr), buffer,length);
+      buffer[2*length]=0;
+      OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Var %s=%s (hex stream)\n", var->u.var.name->data, buffer);
     }
-    value_changed_subscribers = value_changed_subscribers->next;
-  }
+  } else
+    OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Var %s unknown type %d\n", var->u.var.name->data, var->u.var.value_type);
 }
+
 //------------------------------------------------------------------------------
 // return true if we can continue playing the scenario
 bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const item)
@@ -317,29 +308,31 @@ bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const it
   if (item->u.var.var_ref_uid) {
     // get ref var value
     scenario_player_item_t * spi = NULL;
+    bool value_changed = false;
     hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
         (hash_key_t)item->u.var.var_ref_uid, (void **)&spi);
     AssertFatal ((HASH_TABLE_OK == hrc) && (spi), "Could not find var item UID %d", item->u.var.var_ref_uid);
     AssertFatal (SCENARIO_PLAYER_ITEM_VAR == spi->item_type, "Bad type %d var item UID %d", spi->item_type, item->u.var.var_ref_uid);
-    AssertFatal (spi->u.var.value_type == item->u.var.value_type, "var types to not match %d != %d, discouraged to do so in scenario", spi->u.var.value_type, item->u.var.value_type);
+    AssertFatal (spi->u.var.value_type == item->u.var.value_type, "var types to not match %d != %d, discouraged to do so in scenario",
+                 spi->u.var.value_type, item->u.var.value_type);
     if (VAR_VALUE_TYPE_INT64 == spi->u.var.value_type) {
       if (item->u.var.value.value_64 != spi->u.var.value.value_64) {
-        item->u.var.value_changed = true;
+        value_changed = true;
         item->u.var.value.value_64 = spi->u.var.value.value_64;
       }
-    } else if (VAR_VALUE_TYPE_BSTR == spi->u.var.value_type) {
+    } else if ((VAR_VALUE_TYPE_HEX_STREAM == spi->u.var.value_type) || (VAR_VALUE_TYPE_ASCII_STREAM == spi->u.var.value_type)) {
 
       if ((item->u.var.value.value_bstr) && (spi->u.var.value.value_bstr)) {
         if (blength(item->u.var.value.value_bstr) != blength(spi->u.var.value.value_bstr)) {
-          item->u.var.value_changed = true;
+          value_changed = true;
         } else if (memcmp(item->u.var.value.value_bstr->data, spi->u.var.value.value_bstr->data, blength(item->u.var.value.value_bstr))) {
-          item->u.var.value_changed = true;
+          value_changed = true;
         }
-        if (item->u.var.value_changed) {
+        if (value_changed) {
           bassign(item->u.var.value.value_bstr, spi->u.var.value.value_bstr);
         }
       } else if (!(item->u.var.value.value_bstr) && (spi->u.var.value.value_bstr)) {
-        item->u.var.value_changed = true;
+        value_changed = true;
         item->u.var.value.value_bstr = bstrcpy(spi->u.var.value.value_bstr);
       } else {
         AssertFatal(0, "This case should not happen");
@@ -350,11 +343,9 @@ bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const it
       AssertFatal(0, "Unknown var value type %d", spi->u.var.value_type);
     }
   }
-  if (item->u.var.value_changed) {
-    msp_var_notify_listeners(item);
-    item->u.var.value_changed = false;
-  }
+
   scenario->last_played_item = item;
+  msp_display_var(item);
   return true;
 }
 //------------------------------------------------------------------------------
@@ -362,6 +353,7 @@ bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const it
 bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * const item)
 {
   scenario_player_item_t * var_item = NULL;
+  bool value_changed = false;
 
   // find the relative item
   hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
@@ -379,25 +371,22 @@ bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * cons
     AssertFatal (var_ref->u.var.value_type == var_item->u.var.value_type, "var types to not match %d != %d, discouraged to do so in scenario", var_ref->u.var.value_type, var_item->u.var.value_type);
     if (VAR_VALUE_TYPE_INT64 == var_ref->u.var.value_type) {
       if (var_item->u.var.value.value_64 != var_ref->u.var.value.value_64) {
-        var_item->u.var.value_changed = true;
+        value_changed = true;
         var_item->u.var.value.value_64 = var_ref->u.var.value.value_64;
-        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "set var %s=%"PRIx64"\n", var_item->u.var.name->data, var_item->u.var.value.value_64);
-      } else {
-        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "set var %s=%"PRIx64" (unchanged)\n", var_item->u.var.name->data, var_item->u.var.value.value_64);
       }
-    } else if (VAR_VALUE_TYPE_BSTR == var_ref->u.var.value_type) {
+    } else if ((VAR_VALUE_TYPE_HEX_STREAM == var_ref->u.var.value_type) || (VAR_VALUE_TYPE_ASCII_STREAM == var_ref->u.var.value_type)) {
 
       if ((var_item->u.var.value.value_bstr) && (var_ref->u.var.value.value_bstr)) {
         if (blength(var_item->u.var.value.value_bstr) != blength(var_ref->u.var.value.value_bstr)) {
-          var_item->u.var.value_changed = true;
+          value_changed = true;
         } else if (memcmp(var_item->u.var.value.value_bstr->data, var_ref->u.var.value.value_bstr->data, blength(var_item->u.var.value.value_bstr))) {
-          var_item->u.var.value_changed = true;
+          value_changed = true;
         }
-        if (var_item->u.var.value_changed) {
+        if (value_changed) {
           bassign(var_item->u.var.value.value_bstr, var_ref->u.var.value.value_bstr);
         }
       } else if (!(var_item->u.var.value.value_bstr) && (var_ref->u.var.value.value_bstr)) {
-        var_item->u.var.value_changed = true;
+        value_changed = true;
         var_item->u.var.value.value_bstr = bstrcpy(var_ref->u.var.value.value_bstr);
       } else {
         AssertFatal(0, "This case should not happen");
@@ -408,11 +397,10 @@ bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * cons
       AssertFatal(0, "Unknown var value type %d", var_ref->u.var.value_type);
     }
   }
-  if (var_item->u.var.value_changed) {
-    msp_var_notify_listeners(var_item);
-    var_item->u.var.value_changed = false;
-  }
+
+  item->is_played = true;
   scenario->last_played_item = item;
+  msp_display_var(var_item);
   return true;
 }
 //------------------------------------------------------------------------------
@@ -428,10 +416,9 @@ bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * con
   AssertFatal ((VAR_VALUE_TYPE_INT64 == ref->u.var.value_type), "Bad var type %d", ref->u.var.value_type);
 
   ref->u.var.value.value_u64 += 1;
-  ref->u.var.value_changed = true;
 
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "incr var %s=%"PRIu64 "\n", ref->u.var.name->data, ref->u.var.value.value_u64);
-  msp_var_notify_listeners(ref);
+  item->is_played = true;
   scenario->last_played_item = item;
   return true;
 }
@@ -448,10 +435,9 @@ bool msp_play_decr_var(scenario_t * const scenario, scenario_player_item_t * con
   AssertFatal ((VAR_VALUE_TYPE_INT64 == ref->u.var.value_type), "Bad var type %d", ref->u.var.value_type);
 
   ref->u.var.value.value_u64 -= 1;
-  ref->u.var.value_changed = true;
 
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "decr var %s=%"PRIu64 "\n", ref->u.var.name->data, ref->u.var.value.value_u64);
-  msp_var_notify_listeners(ref);
+  item->is_played = true;
   scenario->last_played_item = item;
   return true;
 }
@@ -467,6 +453,7 @@ bool msp_play_sleep(scenario_t * const scenario, scenario_player_item_t * const 
   if (0 < item->u.sleep.useconds) {
     sleep(item->u.sleep.useconds);
   }
+  item->is_played = true;
   scenario->last_played_item = item;
   return true;
 }
@@ -521,6 +508,7 @@ bool msp_play_jump_cond(scenario_t * const scenario, scenario_player_item_t * co
   } else {
     scenario->last_played_item = item;
   }
+  item->is_played = true;
   return true;
 }
 //------------------------------------------------------------------------------
@@ -565,10 +553,12 @@ bool msp_play_compute_authentication_response_parameter(scenario_t * const scena
       scenario->usim_data.res,
       scenario->ue_emulated_emm_security_context->knas_enc,
       scenario->ue_emulated_emm_security_context->knas_int);
+
+  item->is_played = true;
+
   if (RETURNok == rc) {
     bdestroy_wrapper(&var_auth_param->u.var.value.value_bstr);
     var_auth_param->u.var.value.value_bstr = blk2bstr(scenario->usim_data.res, 8);
-    msp_var_notify_listeners(var_auth_param);
     scenario->last_played_item = item;
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "msp_play_compute_authentication_response_parameter succeeded\n");
     return true;
@@ -646,7 +636,7 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
 //------------------------------------------------------------------------------
 void msp_run_scenario(scenario_t * const scenario)
 {
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s %p\n", bdata(scenario->name), scenario);
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s %p status %d\n", bdata(scenario->name), scenario, scenario->status);
   if (scenario) {
     if ((SCENARIO_STATUS_PLAY_FAILED != scenario->status) && (SCENARIO_STATUS_PLAY_SUCCESS != scenario->status)) {
       pthread_mutex_lock(&scenario->lock);

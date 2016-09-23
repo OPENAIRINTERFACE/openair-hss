@@ -52,19 +52,6 @@ typedef enum {
 
 struct scenario_player_item_s;
 
-typedef struct list_item_s {
-  struct scenario_player_item_s *item;
-  struct list_item_s            *next;
-} list_item_t;
-
-typedef void (*getter_f)(const void * const, void*);
-
-typedef struct load_list_item_s {
-  getter_f                       value_getter_func;
-  struct scenario_player_item_s *item;
-  struct load_list_item_s            *next;
-} load_list_item_t;
-
 struct MessageDef_s;
 
 typedef struct scenario_player_msg_s {
@@ -76,14 +63,11 @@ typedef struct scenario_player_msg_s {
   struct timeval           time_out;
   xmlDocPtr                xml_doc;
   xmlXPathContextPtr       xpath_ctx;
-  bool                     xml_dump2struct_needed; // rebuild itti_msg
-  struct load_list_item_s *vars_to_load; // if msg is rx, it can have vars to set (ex: MME_UE_S1AP_ID)
 
   struct MessageDef_s     *itti_msg;
 
   // collected
   struct timeval           time_stamp;
-  bool                     is_processed; // sent or received
   long                     timer_id;
 } scenario_player_msg_t;
 
@@ -98,14 +82,13 @@ typedef int scenario_player_exit_t;
 typedef enum {
   VAR_VALUE_TYPE_NULL = 0,
   VAR_VALUE_TYPE_INT64,
-  VAR_VALUE_TYPE_BSTR
+  VAR_VALUE_TYPE_HEX_STREAM,
+  VAR_VALUE_TYPE_ASCII_STREAM
 } var_value_type_t;
 
 
 typedef struct scenario_player_var_s {
   bstring             name;
-  struct list_item_s *value_changed_subscribers; // should be list of msg
-  bool                value_changed;
   var_value_type_t    value_type;
   int                 var_ref_uid;
   union {
@@ -180,6 +163,8 @@ typedef struct scenario_player_item_s {
   int                            uid;
   struct scenario_player_item_s *previous_item;
   struct scenario_player_item_s *next_item;
+  bool                           is_played;
+
   union {
     scenario_player_msg_t           msg;
     scenario_player_label_t         label;
@@ -278,7 +263,6 @@ void msp_get_elapsed_time_since_scenario_start(scenario_t * const scenario, stru
 bool msp_send_tx_message_no_delay(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_tx_message(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * const item);
-void msp_var_notify_listeners (scenario_player_item_t * const item);
 bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * const item);

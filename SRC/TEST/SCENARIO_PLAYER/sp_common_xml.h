@@ -37,5 +37,7 @@
 #define TEID_XML_FMT      "%"PRIx32
 
 SP_NUM_FROM_XML_PROTOTYPE(teid);
+int sp_assign_value_to_var(scenario_t *scenario, char* var_name, char* str_value);
+int sp_compare_string_value_with_var(scenario_t *scenario, char* var_name, char* str_value);
 
 #endif /* FILE_SP_COMMON_XML_SEEN */

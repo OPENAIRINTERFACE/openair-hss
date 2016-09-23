@@ -93,7 +93,6 @@ bool sp_m_tmsi_from_xml (
           if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {
             *m_tmsi = (tmsi_t)var_item->u.var.value.value_u64;
             res = true;
-            msp_msg_add_var_listener(scenario, PARENT_STRUCT(msg, struct scenario_player_item_s, u.msg), var_item);
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" M_TMSI_XML_FMT " from var uid=0x%lx\n",
                 M_TMSI_IE_XML_STR, *m_tmsi, (uintptr_t)uid);
           } else {
@@ -113,7 +112,6 @@ bool sp_m_tmsi_from_xml (
           rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);
           if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {
             res = true;
-            msp_msg_add_var_to_be_loaded(scenario, msg, var_item);
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s to be loaded\n", M_TMSI_IE_XML_STR);
           } else {
             AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", M_TMSI_IE_XML_STR);
