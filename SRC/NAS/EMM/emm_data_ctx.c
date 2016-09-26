@@ -43,6 +43,7 @@
 #include "emm_proc.h"
 #include "security_types.h"
 #include "mme_config.h"
+#include "secu_defs.h"
 
 static mme_ue_s1ap_id_t mme_ue_s1ap_id_generator = 1;
 
@@ -341,6 +342,8 @@ inline void emm_ctx_clear_security(emm_context_t * const ctxt)
   ctxt->_security.selected_algorithms.encryption = NAS_SECURITY_ALGORITHMS_EEA0;
   ctxt->_security.selected_algorithms.integrity  = NAS_SECURITY_ALGORITHMS_EIA0;
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_SECURITY);
+  ctxt->_security.direction_decode = SECU_DIRECTION_UPLINK;
+  ctxt->_security.direction_encode = SECU_DIRECTION_DOWNLINK;
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " cleared security context \n", ctxt->ue_id);
 }
 
@@ -383,6 +386,8 @@ inline void emm_ctx_clear_non_current_security(emm_context_t * const ctxt)
   ctxt->_non_current_security.selected_algorithms.encryption = NAS_SECURITY_ALGORITHMS_EEA0;
   ctxt->_non_current_security.selected_algorithms.integrity  = NAS_SECURITY_ALGORITHMS_EIA0;
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_NON_CURRENT_SECURITY);
+  ctxt->_security.direction_decode = SECU_DIRECTION_UPLINK;
+  ctxt->_security.direction_encode = SECU_DIRECTION_DOWNLINK;
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " cleared non current security context \n", ctxt->ue_id);
 }
 //------------------------------------------------------------------------------

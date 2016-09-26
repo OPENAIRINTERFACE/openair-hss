@@ -101,6 +101,8 @@ typedef struct emm_security_context_s {
 
   // Requirement MME24.301R10_4.4.4.3_2 (DETACH REQUEST (if sent before security has been activated);)
   uint8_t   activated;
+  uint8_t   direction_encode; // SECU_DIRECTION_DOWNLINK, SECU_DIRECTION_UPLINK
+  uint8_t   direction_decode; // SECU_DIRECTION_DOWNLINK, SECU_DIRECTION_UPLINK
 } emm_security_context_t;
 
 
