@@ -55,6 +55,7 @@
 #include "common_defs.h"
 #include "xml_msg_dump_itti.h"
 #include "usim_authenticate.h"
+#include "secu_defs.h"
 
 extern scenario_player_t g_msp_scenarios;
 
@@ -159,6 +160,7 @@ bool msp_send_tx_message_no_delay(scenario_t * const scenario, scenario_player_i
 // return true if we can continue playing the scenario (no timer)
 bool msp_play_tx_message(scenario_t * const scenario, scenario_player_item_t * const item)
 {
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item TX message  UID %u\n", item->uid);
   // time-out relative to itself
   if (item->u.msg.time_out_relative_to_msg_uid == item->uid) {
     // finally prefer sleep instead of timer+mutex/cond synch
@@ -214,6 +216,7 @@ bool msp_play_tx_message(scenario_t * const scenario, scenario_player_item_t * c
 // return true if we can continue playing the scenario (no timer)
 bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * const item)
 {
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item RX message  UID %u\n", item->uid);
   if (item->is_played) {
     scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
     return true;
@@ -304,7 +307,7 @@ void msp_display_var(scenario_player_item_t * const var)
 // return true if we can continue playing the scenario
 bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const item)
 {
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "var %s\n", item->u.var.name->data);
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item var name %s  UID %u\n", item->u.var.name->data, item->uid);
   if (item->u.var.var_ref_uid) {
     // get ref var value
     scenario_player_item_t * spi = NULL;
@@ -355,6 +358,7 @@ bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * cons
   scenario_player_item_t * var_item = NULL;
   bool value_changed = false;
 
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item set var name %s  UID %u\n", item->u.var.name->data, item->uid);
   // find the relative item
   hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
       (hash_key_t)item->u.set_var.var_uid, (void **)&var_item);
@@ -408,6 +412,7 @@ bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * cons
 bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * const item)
 {
   scenario_player_item_t * ref = NULL;
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item incr var UID %u\n", item->uid);
   // find the relative item
   hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
       (hash_key_t)item->u.uid_decr_var, (void **)&ref);
@@ -427,6 +432,7 @@ bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * con
 bool msp_play_decr_var(scenario_t * const scenario, scenario_player_item_t * const item)
 {
   scenario_player_item_t * ref = NULL;
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item decr var UID %u\n", item->uid);
   // find the relative item
   hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
       (hash_key_t)item->u.uid_decr_var, (void **)&ref);
@@ -446,7 +452,7 @@ bool msp_play_decr_var(scenario_t * const scenario, scenario_player_item_t * con
 bool msp_play_sleep(scenario_t * const scenario, scenario_player_item_t * const item)
 {
 
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "sleep %d.%d seconds\n", item->u.sleep.seconds, item->u.sleep.useconds);
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item sleep %d.%d seconds UID %u\n", item->u.sleep.seconds, item->u.sleep.useconds, item->uid);
   if (0 < item->u.sleep.seconds) {
     sleep(item->u.sleep.seconds);
   }
@@ -462,6 +468,7 @@ bool msp_play_sleep(scenario_t * const scenario, scenario_player_item_t * const 
 bool msp_play_jump_cond(scenario_t * const scenario, scenario_player_item_t * const item)
 {
   scenario_player_item_t * ref = NULL;
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item jump cond  UID %u\n", item->uid);
   // find the relative item
   hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
       (hash_key_t)item->u.cond.var_uid, (void **)&ref);
@@ -524,6 +531,8 @@ bool msp_play_compute_authentication_response_parameter(scenario_t * const scena
   void                   * vuid_auth_param = NULL;
 
 
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item compute authentication response parameter UID %u\n", item->uid);
+
   hashtable_rc_t hrc = obj_hashtable_ts_get (scenario->var_items, "AUTN", strlen("AUTN"), (void **)&vuid_autn);
   AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var AUTN in hashtable");
   int uid_autn = (int)(uintptr_t)vuid_autn;
@@ -570,6 +579,71 @@ bool msp_play_compute_authentication_response_parameter(scenario_t * const scena
 }
 
 //------------------------------------------------------------------------------
+// return true if we can continue playing the scenario
+bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_player_item_t * const item)
+{
+  bool                             res = false;
+  scenario_player_update_emm_sc_t *update_emm_sc = &item->u.updata_emm_sc;
+
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item update emm security context UID %u\n", item->uid);
+  if (update_emm_sc->is_seea_present) {
+    if (update_emm_sc->is_seea_a_uid) {
+      scenario_player_item_t * var = NULL;
+      hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items, update_emm_sc->seea.uid, (void **)&var);
+      AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var uid %d", update_emm_sc->seea.uid);
+      AssertFatal(SCENARIO_PLAYER_ITEM_VAR == var->item_type, "Error uid %d ref is not a var: %d", update_emm_sc->seea.uid, var->item_type);
+      AssertFatal(VAR_VALUE_TYPE_INT64 == var->u.var.value_type, "Error var %s type %d is not VAR_VALUE_TYPE_INT64", bdata(var->u.var.name), var->u.var.value_type);
+      scenario->ue_emulated_emm_security_context->selected_algorithms.encryption = (uint8_t)var->u.var.value.value_u64;
+    } else {
+      scenario->ue_emulated_emm_security_context->selected_algorithms.encryption = update_emm_sc->seea.value_u8;
+    }
+    res = true;
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context SEEA 0x%x\n", scenario->ue_emulated_emm_security_context->selected_algorithms.encryption);
+  }
+
+  if (update_emm_sc->is_seia_present) {
+    if (update_emm_sc->is_seia_a_uid) {
+      scenario_player_item_t * var = NULL;
+      hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items, update_emm_sc->seia.uid, (void **)&var);
+      AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var uid %d", update_emm_sc->seia.uid);
+      AssertFatal(SCENARIO_PLAYER_ITEM_VAR == var->item_type, "Error uid %d ref is not a var: %d", update_emm_sc->seia.uid, var->item_type);
+      AssertFatal(VAR_VALUE_TYPE_INT64 == var->u.var.value_type, "Error var %s type %d is not VAR_VALUE_TYPE_INT64", bdata(var->u.var.name), var->u.var.value_type);
+      scenario->ue_emulated_emm_security_context->selected_algorithms.integrity = (uint8_t)var->u.var.value.value_u64;
+    } else {
+      scenario->ue_emulated_emm_security_context->selected_algorithms.integrity = update_emm_sc->seia.value_u8;
+    }
+    res = true;
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context SEIA 0x%x\n", scenario->ue_emulated_emm_security_context->selected_algorithms.integrity);
+  }
+
+  if (update_emm_sc->is_ul_count_present) {
+    uint32_t ul_count = 0;
+    if (update_emm_sc->is_ul_count_a_uid) {
+      scenario_player_item_t * var = NULL;
+      hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items, update_emm_sc->ul_count.uid, (void **)&var);
+      AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var uid %d", update_emm_sc->ul_count.uid);
+      AssertFatal(SCENARIO_PLAYER_ITEM_VAR == var->item_type, "Error uid %d ref is not a var: %d", update_emm_sc->ul_count.uid, var->item_type);
+      AssertFatal(VAR_VALUE_TYPE_INT64 == var->u.var.value_type, "Error var %s type %d is not VAR_VALUE_TYPE_INT64", bdata(var->u.var.name), var->u.var.value_type);
+      ul_count = (uint32_t)var->u.var.value.value_u64;
+
+    } else {
+      ul_count = update_emm_sc->ul_count.value_u32;
+    }
+    scenario->ue_emulated_emm_security_context->ul_count.seq_num  = (uint8_t)ul_count;
+    scenario->ue_emulated_emm_security_context->ul_count.overflow = (uint16_t)((ul_count >> 8) & 0xFFFF);
+    scenario->ue_emulated_emm_security_context->ul_count.spare    = (uint8_t)(ul_count >> 24);
+
+    scenario->ue_emulated_emm_security_context->dl_count.seq_num  = scenario->ue_emulated_emm_security_context->ul_count.seq_num;
+    scenario->ue_emulated_emm_security_context->dl_count.overflow = scenario->ue_emulated_emm_security_context->ul_count.overflow;
+    scenario->ue_emulated_emm_security_context->dl_count.spare    = scenario->ue_emulated_emm_security_context->ul_count.spare;
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context UL count 0x%x\n", ul_count);
+    res = true;
+  }
+  scenario->last_played_item = item;
+  return res;
+}
+
+//------------------------------------------------------------------------------
 void msp_init_scenario(scenario_t * const s)
 {
   if (s) {
@@ -581,6 +655,8 @@ void msp_init_scenario(scenario_t * const s)
     s->var_items      = obj_hashtable_ts_create (32, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
     s->label_items    = obj_hashtable_ts_create (8, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
     s->ue_emulated_emm_security_context = calloc(1, sizeof(emm_security_context_t));
+    s->ue_emulated_emm_security_context->direction_encode = SECU_DIRECTION_UPLINK;
+    s->ue_emulated_emm_security_context->direction_decode = SECU_DIRECTION_DOWNLINK;
     scenario_set_status(s, SCENARIO_STATUS_NULL);
     s->num_timers    = 0;
   }
@@ -593,7 +669,6 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
     if ((SCENARIO_STATUS_PLAY_FAILED == scenario->status)  || (SCENARIO_STATUS_PLAY_SUCCESS == scenario->status)) {
       return false;
     }
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item UID %u\n", item->uid);
 
     if (SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) {
       scenario_player_msg_t * msg = &item->u.msg;
@@ -628,6 +703,8 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
       return msp_play_sleep(scenario, item);
     } else if (SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER == item->item_type) {
       return msp_play_compute_authentication_response_parameter(scenario, item);
+    } else if (SCENARIO_PLAYER_ITEM_UPDATE_EMM_SECURITY_CONTEXT == item->item_type) {
+      return msp_play_update_emm_security_context(scenario, item);
     }
   }
   return false;

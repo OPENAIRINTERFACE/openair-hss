@@ -989,6 +989,7 @@ int msp_load_scenario (bstring file_path, scenario_player_t * const scenario_pla
         res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
       }
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   AssertFatal(SCENARIO_STATUS_LOADING == scenario->status, "Failed to load scenario %s\n", bdata(file_path));
   if (SCENARIO_STATUS_LOADING == scenario->status) {

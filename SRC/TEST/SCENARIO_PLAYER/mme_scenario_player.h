@@ -263,6 +263,7 @@ void msp_get_elapsed_time_since_scenario_start(scenario_t * const scenario, stru
 bool msp_send_tx_message_no_delay(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_tx_message(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * const item);
+void msp_display_var(scenario_player_item_t * const var);
 bool msp_play_var(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * const item);
@@ -270,6 +271,7 @@ bool msp_play_decr_var(scenario_t * const scenario, scenario_player_item_t * con
 bool msp_play_sleep(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_jump_cond(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_compute_authentication_response_parameter(scenario_t * const scenario, scenario_player_item_t * const item);
+bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_player_item_t * const item);
 
 bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_schedule_next_message(scenario_t * const s);

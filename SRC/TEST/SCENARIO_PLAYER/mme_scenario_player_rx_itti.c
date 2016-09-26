@@ -83,7 +83,8 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
   pthread_mutex_lock(&scenario->lock);
   scenario_player_item_t *item = scenario->last_played_item;
   if (item) item = item->next_item;
-  else {
+
+  if (!item) {
     pthread_mutex_unlock(&scenario->lock);
     OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "No Pending RX message in scenario, NAS_DOWNLINK_DATA_REQ discarded\n");
     return;
