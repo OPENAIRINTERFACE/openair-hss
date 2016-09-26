@@ -347,6 +347,7 @@ bool eps_mobile_identity_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_mi);
   }
   bdestroy_wrapper (&xpath_expr_mi);
   OAILOG_FUNC_RETURN (LOG_NAS, res);
@@ -447,6 +448,7 @@ bool esm_message_container_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_mi);
   }
   bdestroy_wrapper (&xpath_expr_mi);
   OAILOG_FUNC_RETURN (LOG_UTIL, res);
@@ -512,6 +514,7 @@ bool nas_key_set_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpat
       }
       //res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_ksi);
   }
   bdestroy_wrapper (&xpath_expr_ksi);
   return res;
@@ -709,6 +712,7 @@ bool tracking_area_identity_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_tai);
   }
   OAILOG_FUNC_RETURN (LOG_NAS, res);
 }
@@ -1067,6 +1071,7 @@ bool ue_network_capability_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr_nc);
   OAILOG_FUNC_RETURN (LOG_NAS, res);
