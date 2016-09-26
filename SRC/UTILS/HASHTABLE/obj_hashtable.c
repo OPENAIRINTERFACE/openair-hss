@@ -322,6 +322,7 @@ obj_hashtable_ts_destroy (
   }
 
   free_wrapper ((void**)&hashtblP->nodes);
+  free_wrapper((void**)&hashtblP->lock_nodes);
   free_wrapper ((void**)&hashtblP);
   return HASH_TABLE_OK;
 }
