@@ -120,9 +120,9 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
   const s_tmsi_t   const* opt_s_tmsi,
   const csg_id_t   const* opt_csg_id,
   const gummei_t   const* opt_gummei,
-  const void       const* opt_cell_access_mode,
-  const void       const* opt_cell_gw_transport_address,
-  const void       const* opt_relay_node_indicator)
+  const void       const* opt_cell_access_mode,  // unused
+  const void       const* opt_cell_gw_transport_address,  // unused
+  const void       const* opt_relay_node_indicator)  // unused
 {
   MessageDef  *message_p = NULL;
 

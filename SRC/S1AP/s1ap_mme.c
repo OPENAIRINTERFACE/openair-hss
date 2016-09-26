@@ -36,6 +36,7 @@
 #include <stdint.h>
 #include <pthread.h>
 
+
 #include <libxml/xmlwriter.h>
 #include <libxml/xpath.h>
 #include "bstrlib.h"
@@ -52,7 +53,6 @@
 #include "s1ap_mme.h"
 #include "s1ap_mme_decoder.h"
 #include "s1ap_mme_handlers.h"
-#include "s1ap_ies_defs.h"
 #include "s1ap_mme_nas_procedures.h"
 #include "s1ap_mme_retransmission.h"
 #include "s1ap_mme_itti_messaging.h"
@@ -60,6 +60,8 @@
 #include "mme_config.h"
 #include "xml_msg_dump_itti.h"
 #include "mme_scenario_player.h"
+
+
 
 #if S1AP_DEBUG_LIST
 #  define eNB_LIST_OUT(x, args...) OAILOG_DEBUG (LOG_S1AP, "[eNB]%*s"x"\n", 4*indent, "", ##args)
@@ -107,7 +109,7 @@ static int s1ap_send_init_sctp (void)
 //------------------------------------------------------------------------------
 void                                   *
 s1ap_mme_thread (
-  void *args)
+  __attribute__((unused)) void *args)
 {
   itti_mark_task_ready (TASK_S1AP);
 
@@ -245,7 +247,8 @@ s1ap_mme_thread (
 }
 
 //------------------------------------------------------------------------------
-int s1ap_mme_init (const struct mme_config_s * mme_config_p)
+int
+s1ap_mme_init(void)
 {
   OAILOG_DEBUG (LOG_S1AP, "Initializing S1AP interface\n");
 
@@ -299,7 +302,7 @@ s1ap_dump_enb_list (
 }
 
 //------------------------------------------------------------------------------
-bool s1ap_dump_enb_hash_cb (const hash_key_t keyP,
+bool s1ap_dump_enb_hash_cb (__attribute__((unused))const hash_key_t keyP,
                void * const eNB_void,
                void __attribute__((unused)) *unused_parameterP,
                void __attribute__((unused)) **unused_resultP)
@@ -342,7 +345,7 @@ s1ap_dump_enb (
 }
 
 //------------------------------------------------------------------------------
-bool s1ap_dump_ue_hash_cb (const hash_key_t keyP,
+bool s1ap_dump_ue_hash_cb (__attribute__((unused)) const hash_key_t keyP,
                void * const ue_void,
                void __attribute__((unused)) *unused_parameterP,
                void __attribute__((unused)) **unused_resultP)
@@ -373,7 +376,9 @@ s1ap_dump_ue (const ue_description_t * const ue_ref)
 }
 
 //------------------------------------------------------------------------------
-bool s1ap_enb_compare_by_enb_id_cb (const hash_key_t keyP, void * elementP, void * parameterP, void **resultP)
+bool s1ap_enb_compare_by_enb_id_cb (__attribute__((unused)) const hash_key_t keyP,
+                                    void * const elementP,
+                                    void * parameterP, void **resultP)
 {
   const uint32_t                  * const enb_id_p = (const uint32_t*const)parameterP;
   enb_description_t                      *enb_ref  = (enb_description_t*)elementP;
@@ -405,7 +410,9 @@ s1ap_is_enb_assoc_id_in_list (
 }
 
 //------------------------------------------------------------------------------
-bool s1ap_ue_compare_by_enb_ue_s1ap_id_cb (const hash_key_t keyP, void * elementP, void * parameterP, void **resultP)
+// TODO: (amar) unused function check with OAI.
+bool s1ap_ue_compare_by_enb_ue_s1ap_id_cb (__attribute__((unused)) const hash_key_t keyP, void * elementP, void * parameterP,
+                                           void **resultP)
 {
   enb_ue_s1ap_id_t                       *enb_ue_s1ap_id = (enb_ue_s1ap_id_t*)parameterP;
   ue_description_t                       *ue_ref           = (ue_description_t*)elementP;
@@ -427,7 +434,8 @@ s1ap_is_ue_enb_id_in_list (
 }
 
 //------------------------------------------------------------------------------
-bool s1ap_ue_compare_by_mme_ue_id_cb (const hash_key_t keyP, void * elementP, void * parameterP, void **resultP)
+bool s1ap_ue_compare_by_mme_ue_id_cb (__attribute__((unused)) const hash_key_t keyP,
+                                      void * const elementP, void * parameterP, void **resultP)
 {
   mme_ue_s1ap_id_t                      * mme_ue_s1ap_id_p = (mme_ue_s1ap_id_t*)parameterP;
   ue_description_t                       *ue_ref           = (ue_description_t*)elementP;
@@ -440,7 +448,8 @@ bool s1ap_ue_compare_by_mme_ue_id_cb (const hash_key_t keyP, void * elementP, vo
 }
 
 //------------------------------------------------------------------------------
-bool s1ap_enb_find_ue_by_mme_ue_id_cb (const hash_key_t keyP, void * elementP, void * parameterP, void **resultP)
+bool s1ap_enb_find_ue_by_mme_ue_id_cb (__attribute__((unused))const hash_key_t keyP,
+                                       void * const elementP, void * parameterP, void **resultP)
 {
   enb_description_t                      *enb_ref = (enb_description_t*)elementP;
 
@@ -452,7 +461,9 @@ bool s1ap_enb_find_ue_by_mme_ue_id_cb (const hash_key_t keyP, void * elementP, v
   return false;
 }
 //------------------------------------------------------------------------------
-bool s1ap_ue_compare_by_s11_sgw_teid_cb (const hash_key_t keyP, void * elementP, void * const parameterP, void **resultP)
+bool s1ap_ue_compare_by_s11_sgw_teid_cb (__attribute__((unused))const hash_key_t keyP,
+                                         void * const elementP,
+                                         void *parameterP, void **resultP)
 {
   s11_teid_t                       * s11_sgw_teid_p = (s11_teid_t*)parameterP;
   ue_description_t                  *ue_ref         = (ue_description_t*)elementP;
@@ -464,7 +475,8 @@ bool s1ap_ue_compare_by_s11_sgw_teid_cb (const hash_key_t keyP, void * elementP,
 }
 
 //------------------------------------------------------------------------------
-bool s1ap_enb_find_ue_by_s11_sgw_teid_cb (const hash_key_t keyP, void * elementP, void * parameterP, void **resultP)
+bool s1ap_enb_find_ue_by_s11_sgw_teid_cb (__attribute((unused)) const hash_key_t keyP,
+                                          void * const elementP, void * parameterP, void **resultP)
 {
   enb_description_t                      *enb_ref = (enb_description_t*)elementP;
 
@@ -489,6 +501,7 @@ s1ap_is_ue_mme_id_in_list (
 }
 
 //------------------------------------------------------------------------------
+// TODO(amar) unused function check with OAI.
 ue_description_t                       *
 s1ap_is_s11_sgw_teid_in_list (
   const s11_teid_t teid)

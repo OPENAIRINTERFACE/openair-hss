@@ -43,6 +43,7 @@ int s1ap_mme_timer_map_compare_id(
 
 int s1ap_handle_timer_expiry(timer_has_expired_t *timer_has_expired);
 
+// TODO: (amar) unused functions check with OAI.
 int s1ap_timer_insert(const mme_ue_s1ap_id_t mme_ue_s1ap_id, const long timer_id);
 
 int s1ap_timer_remove_ue(const mme_ue_s1ap_id_t mme_ue_s1ap_id);

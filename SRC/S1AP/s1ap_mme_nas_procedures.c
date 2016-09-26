@@ -30,7 +30,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "gcc_diag.h"
+#include "bstrlib.h"
+
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "hashtable.h"
@@ -42,12 +43,8 @@
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
 #include "s1ap_mme_encoder.h"
-#include "s1ap_mme_handlers.h"
-#include "s1ap_mme_nas_procedures.h"
-#include "s1ap_mme_retransmission.h"
 #include "s1ap_mme_itti_messaging.h"
 #include "s1ap_mme.h"
-#include "timer.h"
 
 /* Every time a new UE is associated, increment this variable.
    But care if it wraps to increment also the mme_ue_s1ap_id_has_wrapped
@@ -63,8 +60,8 @@ extern hash_table_ts_t g_s1ap_mme_id2assoc_id_coll; // contains sctp association
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_initial_ue_message (
-  sctp_assoc_id_t assoc_id,
-  sctp_stream_id_t stream,
+  const sctp_assoc_id_t assoc_id,
+  const sctp_stream_id_t stream,
   struct s1ap_message_s *message)
 {
   OAILOG_FUNC_IN (LOG_S1AP);
@@ -212,8 +209,8 @@ s1ap_mme_handle_initial_ue_message (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_uplink_nas_transport (
-  sctp_assoc_id_t assoc_id,
-  sctp_stream_id_t stream,
+  const sctp_assoc_id_t assoc_id,
+  __attribute__((unused)) const sctp_stream_id_t stream,
   struct s1ap_message_s *message)
 {
   OAILOG_FUNC_IN (LOG_S1AP);
@@ -296,7 +293,7 @@ s1ap_mme_handle_uplink_nas_transport (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_nas_non_delivery (
-  sctp_assoc_id_t assoc_id,
+    __attribute__((unused)) sctp_assoc_id_t assoc_id,
   sctp_stream_id_t stream,
   struct s1ap_message_s *message)
 {
@@ -567,8 +564,8 @@ s1ap_handle_conn_est_cnf (
 {
   /*
    * We received create session response from S-GW on S11 interface abstraction.
-   * * * * At least one bearer has been established. We can now send s1ap initial context setup request
-   * * * * message to eNB.
+   * At least one bearer has been established. We can now send s1ap initial context setup request
+   * message to eNB.
    */
   uint8_t                                *buffer_p = NULL;
   uint32_t                                length = 0;

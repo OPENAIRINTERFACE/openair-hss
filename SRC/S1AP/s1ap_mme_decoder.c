@@ -39,7 +39,6 @@
 #include "intertask_interface.h"
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
-#include "s1ap_mme_decoder.h"
 #include "s1ap_mme_handlers.h"
 #include "dynamic_memory_check.h"
 
@@ -213,9 +212,9 @@ int
 s1ap_mme_decode_pdu (
   s1ap_message *message,
   const_bstring const raw) {
-  S1AP_PDU_t                              pdu = {0};
+  S1AP_PDU_t                              pdu = {(S1AP_PDU_PR_NOTHING)};
   S1AP_PDU_t                             *pdu_p = &pdu;
-  asn_dec_rval_t                          dec_ret = {0};
+  asn_dec_rval_t                          dec_ret = {(RC_OK)};
   DevAssert (raw != NULL);
   memset ((void *)pdu_p, 0, sizeof (S1AP_PDU_t));
   dec_ret = aper_decode (NULL, &asn_DEF_S1AP_PDU, (void **)&pdu_p, bdata(raw), blength(raw), 0, 0);

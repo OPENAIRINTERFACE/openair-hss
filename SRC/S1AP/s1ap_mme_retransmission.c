@@ -36,7 +36,6 @@
 #include "assertions.h"
 #include "intertask_interface.h"
 #include "timer.h"
-#include "s1ap_common.h"
 #include "s1ap_mme_retransmission.h"
 #include "dynamic_memory_check.h"
 #include "log.h"
@@ -87,6 +86,8 @@ int                                     s1ap_mme_timer_map_compare_id (
 }
 
 //------------------------------------------------------------------------------
+// TODO (amar) unused, check with OAI if we can remove.
+
 int
 s1ap_timer_insert (
   const mme_ue_s1ap_id_t mme_ue_s1ap_id,
@@ -139,6 +140,7 @@ s1ap_handle_timer_expiry (
 }
 
 //------------------------------------------------------------------------------
+// TODO: (amar) unused check with OAI.
 int
 s1ap_timer_remove_ue (
   const mme_ue_s1ap_id_t mme_ue_s1ap_id)
