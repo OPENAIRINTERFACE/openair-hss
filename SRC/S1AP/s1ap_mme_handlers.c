@@ -414,13 +414,12 @@ s1ap_generate_s1_setup_response (
    * Use the gummei parameters provided by configuration
    * that should be sorted
    */
-  j = 0;
   for (i = 0; i < mme_config.served_tai.nb_tai; i++) {
     bool plmn_added = false;
     for (j=0; j < i; j++) {
       if ((mme_config.served_tai.plmn_mcc[j] == mme_config.served_tai.plmn_mcc[i]) &&
         (mme_config.served_tai.plmn_mnc[j] == mme_config.served_tai.plmn_mnc[i]) &&
-        (mme_config.served_tai.plmn_mnc_len[i] == mme_config.served_tai.plmn_mnc_len[i])
+        (mme_config.served_tai.plmn_mnc_len[j] == mme_config.served_tai.plmn_mnc_len[i])
         ) {
         plmn_added = true;
         break;
@@ -492,7 +491,7 @@ s1ap_generate_s1_setup_response (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_ue_cap_indication (
-    const sctp_assoc_id_t assoc_id,
+    __attribute__((unused)) const sctp_assoc_id_t assoc_id,
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
 {
@@ -560,8 +559,8 @@ s1ap_mme_handle_ue_cap_indication (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_initial_context_setup_response (
-    const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream,
+    __attribute__((unused)) const sctp_assoc_id_t assoc_id,
+    __attribute__((unused)) const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
 {
   S1ap_InitialContextSetupResponseIEs_t  *initialContextSetupResponseIEs_p = NULL;
@@ -626,8 +625,8 @@ s1ap_mme_handle_initial_context_setup_response (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_ue_context_release_request (
-    const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream,
+    __attribute__((unused)) const sctp_assoc_id_t assoc_id,
+    __attribute__((unused)) const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
 {
   S1ap_UEContextReleaseRequestIEs_t      *ueContextReleaseRequest_p = NULL;
@@ -785,8 +784,8 @@ s1ap_handle_ue_context_release_command (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_ue_context_release_complete (
-    const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream,
+    __attribute__((unused)) const sctp_assoc_id_t assoc_id,
+    __attribute__((unused)) const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
 {
   S1ap_UEContextReleaseCompleteIEs_t     *ueContextReleaseComplete_p = NULL;
@@ -828,8 +827,8 @@ s1ap_mme_handle_ue_context_release_complete (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_initial_context_setup_failure (
-    const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream,
+    __attribute__((unused)) const sctp_assoc_id_t assoc_id,
+    __attribute__((unused)) const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
 {
   S1ap_InitialContextSetupFailureIEs_t   *initialContextSetupFailureIEs_p = NULL;
@@ -868,8 +867,8 @@ s1ap_mme_handle_initial_context_setup_failure (
 //------------------------------------------------------------------------------
 int
 s1ap_mme_handle_path_switch_request (
-    const sctp_assoc_id_t assoc_id,
-    const sctp_stream_id_t stream,
+    __attribute__((unused)) const sctp_assoc_id_t assoc_id,
+    __attribute__((unused)) const sctp_stream_id_t stream,
     struct s1ap_message_s *message)
 {
   S1ap_PathSwitchRequestIEs_t            *pathSwitchRequest_p = NULL;
@@ -913,7 +912,7 @@ typedef struct arg_s1ap_send_enb_dereg_ind_s {
 
 //------------------------------------------------------------------------------
 static bool s1ap_send_enb_deregistered_ind (
-    const hash_key_t keyP,
+    __attribute__((unused)) const hash_key_t keyP,
     void * const dataP,
     void *argP,
     void ** resultP) {

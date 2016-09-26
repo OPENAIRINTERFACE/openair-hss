@@ -108,7 +108,7 @@ extern mme_config_t    *global_mme_config_p;
 /** \brief S1AP layer top init
  * @returns -1 in case of failure
  **/
-int s1ap_mme_init(const mme_config_t *mme_config);
+int s1ap_mme_init(void);
 
 /** \brief Look for given eNB id in the list
  * \param enb_id The unique eNB id to search in list
@@ -191,7 +191,8 @@ bool s1ap_dump_ue_hash_cb (const hash_key_t keyP,
  **/
 void s1ap_dump_ue(const ue_description_t * const ue_ref);
 
-bool s1ap_enb_compare_by_enb_id_cb (const hash_key_t keyP, void * elementP, void * parameterP, void __attribute__((unused)) **unused_resultP);
+bool s1ap_enb_compare_by_enb_id_cb (const hash_key_t keyP,
+                                    void * const elementP, void * parameterP, void __attribute__((unused)) **unused_resultP);
 
 /** \brief Remove target UE from the list
  * \param ue_ref UE structure reference to remove

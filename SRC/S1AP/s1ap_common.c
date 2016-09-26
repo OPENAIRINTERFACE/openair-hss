@@ -30,7 +30,6 @@
 #include <stdint.h>
 
 #include "s1ap_common.h"
-#include "S1AP-PDU.h"
 #include "dynamic_memory_check.h"
 #include "log.h"
 
@@ -179,6 +178,7 @@ s1ap_new_ie (
   return buff;
 }
 
+// TODO: (amar) Unused function check with OAI
 void
 s1ap_handle_criticality (
   S1ap_Criticality_t criticality)
