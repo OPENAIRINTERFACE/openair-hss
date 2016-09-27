@@ -192,15 +192,15 @@ int emm_proc_common_initialize(struct emm_context_s        * const emm_ctx,
                                emm_common_non_delivered_callback_t non_delivered,
                                emm_common_abort_callback_t abort);
 
-int emm_proc_common_success(emm_common_data_t *emm_common_data);
-int emm_proc_common_reject(emm_common_data_t *emm_common_data);
-int emm_proc_common_failure(emm_common_data_t *emm_common_data);
-int emm_proc_common_ll_failure(emm_common_data_t *emm_common_data);
-int emm_proc_common_non_delivered(emm_common_data_t *emm_common_data);
-int emm_proc_common_abort(emm_common_data_t *emm_common_data);
+int emm_proc_common_success(emm_common_data_t **emm_common_data);
+int emm_proc_common_reject(emm_common_data_t **emm_common_data);
+int emm_proc_common_failure(emm_common_data_t **emm_common_data);
+int emm_proc_common_ll_failure(emm_common_data_t **emm_common_data);
+int emm_proc_common_non_delivered(emm_common_data_t **emm_common_data);
+int emm_proc_common_abort(emm_common_data_t **emm_common_data);
 
 void *emm_proc_common_get_args(mme_ue_s1ap_id_t ue_id);
-void emm_common_cleanup (emm_common_data_t *emm_common_data);
+void emm_common_cleanup (emm_common_data_t **emm_common_data);
 
 //struct emm_common_data_s *emm_common_data_context_get (struct emm_common_data_head_s *root, mme_ue_s1ap_id_t _ueid);
 

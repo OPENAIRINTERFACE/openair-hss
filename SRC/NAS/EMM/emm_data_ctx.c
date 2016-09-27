@@ -762,7 +762,9 @@ void emm_context_silently_reset_procedures(
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   if (emm_ctx) {
     emm_context_stop_all_timers(emm_ctx);
-    emm_common_cleanup(emm_ctx->common_proc);
+    if (emm_ctx->common_proc) {
+      emm_common_cleanup(&emm_ctx->common_proc);
+    }
   }
   OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }
@@ -789,11 +791,11 @@ emm_context_dump (
   const struct emm_context_s * const elm_pP)
 {
   if (elm_pP ) {
-    char                                    imsi_str[16];
+    char                                    key_string[KASME_LENGTH_OCTETS * 2+1];
+    char                                    imsi_str[16+1];
     int                                     k = 0,
                                             size = 0,
                                             remaining_size = 0;
-    char                                    key_string[KASME_LENGTH_OCTETS * 2];
 
     OAILOG_INFO (LOG_NAS_EMM, "EMM-CTX: ue id:           " MME_UE_S1AP_ID_FMT " (UE identifier)\n", elm_pP->ue_id);
     OAILOG_INFO (LOG_NAS_EMM, "         is_dynamic:       %u      (Dynamically allocated context indicator)\n", elm_pP->is_dynamic);
@@ -837,19 +839,21 @@ emm_context_dump (
       }
     }
     OAILOG_INFO (LOG_NAS_EMM, "         eksi:             %u      (Security key set identifier)\n", elm_pP->_security.eksi);
-    OAILOG_INFO (LOG_NAS_EMM, "         auth_vector:              (EPS authentication vector)\n");
-    OAILOG_INFO (LOG_NAS_EMM, "             kasme: " KASME_FORMAT "" KASME_FORMAT "\n",
-                               KASME_DISPLAY_1 (elm_pP->_vector[elm_pP->_security.eksi].kasme),
-                               KASME_DISPLAY_2 (elm_pP->_vector[elm_pP->_security.eksi].kasme));
-    OAILOG_INFO (LOG_NAS_EMM, "             rand:  " RAND_FORMAT "\n", RAND_DISPLAY (elm_pP->_vector[elm_pP->_security.eksi].rand));
-    OAILOG_INFO (LOG_NAS_EMM, "             autn:  " AUTN_FORMAT "\n", AUTN_DISPLAY (elm_pP->_vector[elm_pP->_security.eksi].autn));
+    for (int vector_index = 0; vector_index < MAX_EPS_AUTH_VECTORS; vector_index++) {
+      OAILOG_INFO (LOG_NAS_EMM, "         auth_vector[%d]:              (EPS authentication vector)\n", vector_index);
+      OAILOG_INFO (LOG_NAS_EMM, "             kasme: " KASME_FORMAT "" KASME_FORMAT "\n",
+                               KASME_DISPLAY_1 (elm_pP->_vector[vector_index].kasme),
+                               KASME_DISPLAY_2 (elm_pP->_vector[vector_index].kasme));
+      OAILOG_INFO (LOG_NAS_EMM, "             rand:  " RAND_FORMAT "\n", RAND_DISPLAY (elm_pP->_vector[vector_index].rand));
+      OAILOG_INFO (LOG_NAS_EMM, "             autn:  " AUTN_FORMAT "\n", AUTN_DISPLAY (elm_pP->_vector[vector_index].autn));
 
-    for (k = 0; k < XRES_LENGTH_MAX; k++) {
-      sprintf (&key_string[k * 3], "%02x,", elm_pP->_vector[elm_pP->_security.eksi].xres[k]);
+      for (k = 0; k < XRES_LENGTH_MAX; k++) {
+        sprintf (&key_string[k * 3], "%02x,", elm_pP->_vector[vector_index].xres[k]);
+      }
+
+      key_string[k * 3 - 1] = '\0';
+      OAILOG_INFO (LOG_NAS_EMM, "             xres:  %s\n", key_string);
     }
-
-    key_string[k * 3 - 1] = '\0';
-    OAILOG_INFO (LOG_NAS_EMM, "             xres:  %s\n", key_string);
 
     if (IS_EMM_CTXT_PRESENT_SECURITY(elm_pP)) {
       OAILOG_INFO (LOG_NAS_EMM, "         security context:          (Current EPS NAS security context)\n");
@@ -865,13 +869,17 @@ emm_context_dump (
         OAILOG_INFO (LOG_NAS_EMM, "             ul_count.overflow: %u\n", elm_pP->_security.ul_count.overflow);
         OAILOG_INFO (LOG_NAS_EMM, "             ul_count.seq_num:  %u\n", elm_pP->_security.ul_count.seq_num);
 
-        if (SECURITY_CTX_TYPE_FULL_NATIVE <= elm_pP->_security.sc_type) {
+//        if (SECURITY_CTX_TYPE_FULL_NATIVE <= elm_pP->_security.sc_type) {
+        if (true) {
           size = 0;
           remaining_size = KASME_LENGTH_OCTETS * 2;
 
           for (k = 0; k < AUTH_KNAS_ENC_SIZE; k++) {
-            size += snprintf (&key_string[size], remaining_size, "0x%x ", elm_pP->_security.knas_enc[k]);
-            remaining_size -= size;
+            int ret = snprintf (&key_string[size], remaining_size, "%x ", elm_pP->_security.knas_enc[k]);
+            if (0 < ret) {
+              size += ret;
+              remaining_size -= ret;
+            } else break;
           }
 
           OAILOG_INFO (LOG_NAS_EMM, "             knas_enc: %s     (NAS cyphering key)\n", key_string);
@@ -880,13 +888,16 @@ emm_context_dump (
           remaining_size = KASME_LENGTH_OCTETS * 2;
 
           for (k = 0; k < AUTH_KNAS_INT_SIZE; k++) {
-            size += snprintf (&key_string[size], remaining_size, "0x%x ", elm_pP->_security.knas_int[k]);
-            remaining_size -= size;
+            int ret = snprintf (&key_string[size], remaining_size, "%x ", elm_pP->_security.knas_int[k]);
+            if (0 < ret) {
+              size += ret;
+              remaining_size -= ret;
+            } else break;
           }
 
 
           OAILOG_INFO (LOG_NAS_EMM, "             knas_int: %s     (NAS integrity key)\n", key_string);
-          OAILOG_INFO (LOG_NAS_EMM, "             TODO  capability");
+          OAILOG_INFO (LOG_NAS_EMM, "             TODO  capability\n");
           OAILOG_INFO (LOG_NAS_EMM, "             selected_algorithms.encryption:  %x\n", elm_pP->_security.selected_algorithms.encryption);
           OAILOG_INFO (LOG_NAS_EMM, "             selected_algorithms.integrity:   %x\n", elm_pP->_security.selected_algorithms.integrity);
         }
