@@ -315,7 +315,7 @@ hashtable_destroy (
   }
 
   free_wrapper ((void**)&hashtblP->nodes);
-  free_wrapper((void**)&hashtblP->name);
+  bdestroy_wrapper(&hashtblP->name);
   if (hashtblP->is_allocated_by_malloc) {
     free_wrapper ((void**)&hashtblP);
   }
@@ -359,7 +359,7 @@ hashtable_ts_destroy (
   }
 
   free_wrapper ((void**)&hashtblP->nodes);
-  free_wrapper((void**)&hashtblP->name);
+  bdestroy_wrapper (&hashtblP->name);
   free_wrapper((void**)&hashtblP->lock_nodes);
   if (hashtblP->is_allocated_by_malloc) {
     free_wrapper ((void**)&hashtblP);
