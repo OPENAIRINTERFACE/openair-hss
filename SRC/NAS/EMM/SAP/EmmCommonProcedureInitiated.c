@@ -109,7 +109,7 @@ EmmCommonProcedureInitiated (
     if (emm_ctx) {
       //tricky:
       if (emm_ctx->common_proc) { // assume cleaned if terminated
-        rc = emm_proc_common_abort (emm_ctx->common_proc);
+        rc = emm_proc_common_abort (&emm_ctx->common_proc);
       } else if (emm_ctx->emm_specific_proc_data) {
         rc = emm_proc_specific_abort (emm_ctx->emm_specific_proc_data);
       }
@@ -127,8 +127,8 @@ EmmCommonProcedureInitiated (
       rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
     }
 
-    if ((rc != RETURNerror) && (emm_ctx)) {
-      rc = emm_proc_common_success (emm_ctx->common_proc);
+    if ((rc != RETURNerror) && (emm_ctx) && (emm_ctx->common_proc)) {
+      rc = emm_proc_common_success (&emm_ctx->common_proc);
     }
 
     break;
@@ -140,8 +140,8 @@ EmmCommonProcedureInitiated (
      */
     rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
 
-    if ((rc != RETURNerror) && (emm_ctx)) {
-      rc = emm_proc_common_reject (emm_ctx->common_proc);
+    if ((rc != RETURNerror) && (emm_ctx) && (emm_ctx->common_proc)) {
+      rc = emm_proc_common_reject (&emm_ctx->common_proc);
     }
 
     break;
@@ -178,12 +178,16 @@ EmmCommonProcedureInitiated (
     if (rc != RETURNerror) {
       rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
     }
-    rc = emm_proc_common_ll_failure (emm_ctx->common_proc);
+    if ((emm_ctx) && (emm_ctx->common_proc)) {
+      rc = emm_proc_common_ll_failure (&emm_ctx->common_proc);
+    }
 
     break;
 
   case _EMMREG_LOWERLAYER_NON_DELIVERY:
-    rc = emm_proc_common_non_delivered (emm_ctx->common_proc);
+    if ((emm_ctx) && (emm_ctx->common_proc)) {
+      rc = emm_proc_common_non_delivered (&emm_ctx->common_proc);
+    }
     if (rc != RETURNerror) {
       rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
     }

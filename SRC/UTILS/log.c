@@ -584,10 +584,12 @@ void log_stream_hex(
   hash_rc = hashtable_ts_get (g_oai_log.thread_context_htbl, (hash_key_t) p, (void **)&thread_ctxt);
   AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
   if (messageP) {
-    log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "%s (%ld bytes)", messageP, sizeP);
+    log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "hex stream ");
+    rv = bformata(message->bstr, "%s (%ld bytes):", messageP, sizeP);
   } else {
-    log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "%p dumped(%ld bytes):", streamP, sizeP);
+    log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "(%ld bytes):", sizeP);
   }
+
   if ((streamP) && (message)) {
     for (octet_index = 0; octet_index < sizeP; octet_index++) {
       // do not call log_message_add(), too much overhead for sizeP*3chars

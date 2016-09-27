@@ -132,7 +132,7 @@ emm_proc_status (
   emm_security_context_t                 *sctx = NULL;
   struct emm_context_s              *ctx = NULL;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM status procedure requested");
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EMM status procedure requested\n");
   /*
    * Notity EMM that EMM status indication has to be sent to lower layers
    */

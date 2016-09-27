@@ -198,7 +198,7 @@ emm_proc_security_mode_control (
    * Allocate parameters of the retransmission timer callback
    */
   if (emm_ctx->common_proc) {
-    emm_common_cleanup(emm_ctx->common_proc);
+    emm_common_cleanup(&emm_ctx->common_proc);
   }
   emm_ctx->common_proc = (emm_common_data_t *) calloc (1, sizeof (*emm_ctx->common_proc));
 
@@ -264,7 +264,7 @@ emm_proc_security_mode_control (
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
-      emm_common_cleanup (emm_ctx->common_proc);
+      emm_common_cleanup (&emm_ctx->common_proc);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 

@@ -338,23 +338,22 @@ bool pdn_address_from_xml (
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
     int size = (nodes) ? nodes->nodeNr : 0;
     if ((1 == size) && (xml_doc)) {
-      if (res) {
-        xmlChar *attr = xmlGetProp(nodes->nodeTab[0], (const xmlChar *)PDN_TYPE_VALUE_ATTR_XML_STR);
-        if (attr) {
-          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", PDN_TYPE_VALUE_ATTR_XML_STR, attr);
-          if (!strcasecmp((const char*)attr, PDN_TYPE_VALUE_IPV4_VAL_XML_STR)) {
-            pdnaddress->pdntypevalue = PDN_VALUE_TYPE_IPV4;
-          } else if (!strcasecmp((const char*)attr, PDN_TYPE_VALUE_IPV6_VAL_XML_STR)) {
-            pdnaddress->pdntypevalue = PDN_VALUE_TYPE_IPV6;
-          } else  if (!strcasecmp((const char*)attr, PDN_TYPE_VALUE_IPV4V6_VAL_XML_STR)) {
-            pdnaddress->pdntypevalue = PDN_VALUE_TYPE_IPV4V6;
-          } else {
-            res = false;
-          }
-          xmlFree(attr);
+      res = true;
+      xmlChar *attr = xmlGetProp(nodes->nodeTab[0], (const xmlChar *)PDN_TYPE_VALUE_ATTR_XML_STR);
+      if (attr) {
+        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", PDN_TYPE_VALUE_ATTR_XML_STR, attr);
+        if (!strcasecmp((const char*)attr, PDN_TYPE_VALUE_IPV4_VAL_XML_STR)) {
+          pdnaddress->pdntypevalue = PDN_VALUE_TYPE_IPV4;
+        } else if (!strcasecmp((const char*)attr, PDN_TYPE_VALUE_IPV6_VAL_XML_STR)) {
+          pdnaddress->pdntypevalue = PDN_VALUE_TYPE_IPV6;
+        } else  if (!strcasecmp((const char*)attr, PDN_TYPE_VALUE_IPV4V6_VAL_XML_STR)) {
+          pdnaddress->pdntypevalue = PDN_VALUE_TYPE_IPV4V6;
         } else {
           res = false;
         }
+        xmlFree(attr);
+      } else {
+        res = false;
       }
 
       if (res) {

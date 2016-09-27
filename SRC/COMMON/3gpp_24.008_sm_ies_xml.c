@@ -146,6 +146,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
         res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
       }
     }
+    xmlXPathFreeObject(xpath_obj_pco);
   }
   bdestroy_wrapper (&xpath_expr_pco);
   OAILOG_FUNC_RETURN (LOG_UTIL, res);

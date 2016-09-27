@@ -340,7 +340,7 @@ void daylight_saving_time_to_xml (const daylight_saving_time_t * const daylights
 bool emergency_number_list_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, emergency_number_list_t * const emergencynumberlist)
 {
   OAILOG_FUNC_IN (LOG_UTIL);
-  AssertFatal(0, "TODO");
+  // TODO...later
   OAILOG_FUNC_RETURN (LOG_UTIL, false);
 }
 

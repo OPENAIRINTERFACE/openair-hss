@@ -315,7 +315,7 @@ hashtable_destroy (
   }
 
   free_wrapper ((void**)&hashtblP->nodes);
-  free_wrapper((void**)&hashtblP->name);
+  bdestroy_wrapper(&hashtblP->name);
   if (hashtblP->is_allocated_by_malloc) {
     free_wrapper ((void**)&hashtblP);
   }
@@ -359,7 +359,8 @@ hashtable_ts_destroy (
   }
 
   free_wrapper ((void**)&hashtblP->nodes);
-  free_wrapper((void**)&hashtblP->name);
+  bdestroy_wrapper (&hashtblP->name);
+  free_wrapper((void**)&hashtblP->lock_nodes);
   if (hashtblP->is_allocated_by_malloc) {
     free_wrapper ((void**)&hashtblP);
   }
@@ -702,12 +703,6 @@ hashtable_ts_insert (
   __sync_fetch_and_add (&hashtblP->num_elements, 1);
   pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
   PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64" data %p) next %p return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP, node->next);
-#define TEMPORARY_DEBUG 1
-#if TEMPORARY_DEBUG
-  bstring b = bfromcstr(" ");
-  hashtable_ts_dump_content(hashtblP, b);
-  PRINT_HASHTABLE (hashtblP, "%s:%s\n", bdata(hashtblP->name), bdata(b));
-#endif
   return HASH_TABLE_OK;
 }
 
@@ -977,13 +972,6 @@ hashtable_ts_get (
   }
   pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
   PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP);
-
-#define TEMPORARY_DEBUG 1
-#if TEMPORARY_DEBUG
-  bstring b = bfromcstr(" ");
-  hashtable_ts_dump_content(hashtblP, b);
-  PRINT_HASHTABLE (hashtblP, "%s:%s\n", bdata(hashtblP->name), bdata(b));
-#endif
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 

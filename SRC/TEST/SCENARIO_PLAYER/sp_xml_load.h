@@ -59,7 +59,6 @@ bool sp_ ## name_lower ## _from_xml (\
             *name_lower = (name_lower ## _t)var_item->u.var.value.value_u64;\
             AssertFatal (var_item->u.var.value_type == VAR_VALUE_TYPE_INT64, "Bad var type %d", var_item->u.var.value_type);\
             res = true;\
-            msp_msg_add_var_listener(scenario, PARENT_STRUCT(msg, struct scenario_player_item_s, u.msg), var_item);\
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" name_upper ## _XML_FMT " from var uid=0x%lx\n",\
                 name_upper ## _IE_XML_STR, *name_lower, (uintptr_t)uid);\
           } else {\
@@ -79,7 +78,6 @@ bool sp_ ## name_lower ## _from_xml (\
           rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);\
           if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {\
             res = true;\
-            msp_msg_add_var_to_be_loaded(scenario, msg, var_item);\
             *name_lower = (name_lower ## _t)var_item->u.var.value.value_u64;\
             AssertFatal (var_item->u.var.value_type == VAR_VALUE_TYPE_INT64, "Bad var type %d", var_item->u.var.value_type);\
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" name_upper ## _XML_FMT " to be loaded\n", name_upper ## _IE_XML_STR, *name_lower);\

@@ -173,7 +173,7 @@ emm_proc_authentication (
    * Allocate parameters of the retransmission timer callback
    */
   if (emm_ctx->common_proc) {
-    emm_common_cleanup(emm_ctx->common_proc);
+    emm_common_cleanup(&emm_ctx->common_proc);
   }
   emm_ctx->common_proc = (emm_common_data_t *) calloc (1, sizeof (*emm_ctx->common_proc));
 

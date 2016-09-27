@@ -130,17 +130,17 @@ int emm_proc_common_initialize (
  **                                                                        **
  ***************************************************************************/
 int
-emm_proc_common_success (emm_common_data_t *emm_common_data)
+emm_proc_common_success (emm_common_data_t **emm_common_data)
 {
   emm_common_success_callback_t           emm_callback = {0};
   int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  if (emm_common_data ) {
-    emm_callback = emm_common_data->success;
+  if (*emm_common_data ) {
+    emm_callback = (*emm_common_data)->success;
 
     if (emm_callback) {
-      emm_context_t  *ctx = emm_common_data->container;
+      emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     }
 
@@ -167,17 +167,17 @@ emm_proc_common_success (emm_common_data_t *emm_common_data)
  **                                                                        **
  ***************************************************************************/
 int
-emm_proc_common_reject (emm_common_data_t *emm_common_data)
+emm_proc_common_reject (emm_common_data_t **emm_common_data)
 {
   int                                     rc = RETURNerror;
   emm_common_reject_callback_t            emm_callback;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  if (emm_common_data ) {
-    emm_callback = emm_common_data->reject;
+  if (*emm_common_data ) {
+    emm_callback = (*emm_common_data)->reject;
 
     if (emm_callback) {
-      emm_context_t  *ctx = emm_common_data->container;
+      emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     }
 
@@ -187,17 +187,17 @@ emm_proc_common_reject (emm_common_data_t *emm_common_data)
 }
 
 //------------------------------------------------------------------------------
-int emm_proc_common_failure (emm_common_data_t *emm_common_data)
+int emm_proc_common_failure (emm_common_data_t **emm_common_data)
 {
   int                                     rc = RETURNerror;
   emm_common_reject_callback_t            emm_callback;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  if (emm_common_data ) {
-    emm_callback = emm_common_data->failure;
+  if (*emm_common_data ) {
+    emm_callback = (*emm_common_data)->failure;
 
     if (emm_callback) {
-      emm_context_t  *ctx = emm_common_data->container;
+      emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     }
 
@@ -225,18 +225,18 @@ int emm_proc_common_failure (emm_common_data_t *emm_common_data)
  **                                                                        **
  ***************************************************************************/
 int
-emm_proc_common_ll_failure (emm_common_data_t *emm_common_data)
+emm_proc_common_ll_failure (emm_common_data_t **emm_common_data)
 {
   emm_common_ll_failure_callback_t           emm_callback;
   int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
-  if (emm_common_data ) {
-    emm_callback = emm_common_data->ll_failure;
+  if (*emm_common_data) {
+    emm_callback = (*emm_common_data)->ll_failure;
 
     if (emm_callback) {
-      emm_context_t  *ctx = emm_common_data->container;
+      emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     }
 
@@ -264,18 +264,18 @@ emm_proc_common_ll_failure (emm_common_data_t *emm_common_data)
  **                                                                        **
  ***************************************************************************/
 int
-emm_proc_common_non_delivered (emm_common_data_t *emm_common_data)
+emm_proc_common_non_delivered (emm_common_data_t **emm_common_data)
 {
   emm_common_non_delivered_callback_t     emm_callback;
   int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
-  if (emm_common_data ) {
-    emm_callback = emm_common_data->non_delivered;
+  if (*emm_common_data) {
+    emm_callback = (*emm_common_data)->non_delivered;
 
     if (emm_callback) {
-      emm_context_t  *ctx = emm_common_data->container;
+      emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     }
 
@@ -302,18 +302,18 @@ emm_proc_common_non_delivered (emm_common_data_t *emm_common_data)
  **                                                                        **
  ***************************************************************************/
 int
-emm_proc_common_abort (emm_common_data_t *emm_common_data)
+emm_proc_common_abort (emm_common_data_t **emm_common_data)
 {
   emm_common_abort_callback_t             emm_callback;
   int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
-  if (emm_common_data ) {
-    emm_callback = emm_common_data->abort;
+  if (*emm_common_data) {
+    emm_callback = (*emm_common_data)->abort;
 
     if (emm_callback) {
-      emm_context_t  *ctx = emm_common_data->container;
+      emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     }
 
@@ -343,10 +343,10 @@ emm_proc_common_abort (emm_common_data_t *emm_common_data)
  **      Others:    _emm_common_data                           **
  **                                                                        **
  ***************************************************************************/
-void emm_common_cleanup (emm_common_data_t *emm_common_data)
+void emm_common_cleanup (emm_common_data_t **emm_common_data)
 {
 
-  if (emm_common_data) {
+  if (*emm_common_data) {
     // nothing to do for all emm_common_arg_t
     /*switch (emm_common_data->type) {
     case EMM_COMMON_PROC_TYPE_AUTHENTICATION:
@@ -357,7 +357,7 @@ void emm_common_cleanup (emm_common_data_t *emm_common_data)
     default:
       ;
     }*/
-    free_wrapper((void**)&emm_common_data);
+    free_wrapper((void**)emm_common_data);
   }
 }
 

@@ -40,7 +40,6 @@
 #include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
-#include "mme_scenario_player.h"
 #include "intertask_interface.h"
 #include "itti_free_defined_msg.h"
 #include "s1ap_mme.h"
@@ -53,6 +52,7 @@
 #include "dynamic_memory_check.h"
 #include "mme_config.h"
 #include "xml_msg_dump_itti.h"
+#include "mme_scenario_player.h"
 
 #if S1AP_DEBUG_LIST
 #  define eNB_LIST_OUT(x, args...) OAILOG_DEBUG (LOG_S1AP, "[eNB]%*s"x"\n", 4*indent, "", ##args)

@@ -317,7 +317,7 @@ void nas_itti_auth_info_req(
   auth_info_req->imsi_length =
       snprintf (auth_info_req->imsi, IMSI_BCD_DIGITS_MAX+1, IMSI_64_FMT, imsi64_P);
 
-  AssertFatal((15 == auth_info_req->imsi_length)|| (14 == auth_info_req->imsi_length),
+  AssertFatal((15 == auth_info_req->imsi_length) || (14 == auth_info_req->imsi_length),
       "Bad IMSI length %d", auth_info_req->imsi_length);
 
   auth_info_req->visited_plmn  = *visited_plmnP;

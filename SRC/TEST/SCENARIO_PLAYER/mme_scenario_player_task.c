@@ -32,7 +32,6 @@
 #include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
-#include "mme_scenario_player.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.008.h"
 #include "3gpp_33.401.h"
@@ -48,6 +47,7 @@
 #include "timer.h"
 #include "dynamic_memory_check.h"
 #include "common_defs.h"
+#include "mme_scenario_player.h"
 #include "xml_msg_tags.h"
 #include "xml_msg_load_itti.h"
 #include "itti_free_defined_msg.h"
@@ -77,14 +77,12 @@ void *mme_scenario_player_event_handler (void *args)
     switch (ITTI_MSG_ID (received_message_p)) {
 
     case NAS_DOWNLINK_DATA_REQ:
-      XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_REQ(&NAS_DL_DATA_REQ (received_message_p), received_message_p->ittiMsgHeader.originTaskId, TASK_MME_SCENARIO_PLAYER, NULL);
-      mme_scenario_player_handle_nas_downlink_data_req (received_message_p->ittiMsgHeader.instance, &NAS_DL_DATA_REQ (received_message_p));
+      mme_scenario_player_handle_nas_downlink_data_req (received_message_p->ittiMsgHeader.instance, received_message_p);
       msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 
     case MME_APP_CONNECTION_ESTABLISHMENT_CNF:
-      mme_scenario_player_handle_mme_app_connection_establishment_cnf (received_message_p->ittiMsgHeader.instance, &MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
-      XML_MSG_DUMP_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF(&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p), received_message_p->ittiMsgHeader.originTaskId, TASK_MME_SCENARIO_PLAYER, NULL);
+      mme_scenario_player_handle_mme_app_connection_establishment_cnf (received_message_p->ittiMsgHeader.instance, received_message_p);
       msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 

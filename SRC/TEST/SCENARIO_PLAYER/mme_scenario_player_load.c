@@ -35,7 +35,6 @@
 #include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
-#include "mme_scenario_player.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.008.h"
 #include "3gpp_33.401.h"
@@ -53,44 +52,13 @@
 #include "intertask_interface.h"
 #include "timer.h"
 #include "dynamic_memory_check.h"
+#include "mme_scenario_player.h"
 #include "common_defs.h"
 #include "xml_msg_tags.h"
 #include "xml_msg_load_itti.h"
 #include "itti_free_defined_msg.h"
-#include "itti_getters.h"
 
 extern scenario_player_t g_msp_scenarios;
-
-//------------------------------------------------------------------------------
-getter_f msp_get_getter_function_from_var_name(bstring var_name)
-{
-  if (biseqcstrcaseless(var_name, "ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"))
-    return nas_dl_data_req_get_mme_ue_s1ap_id;
-  if (biseqcstrcaseless(var_name, "ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.KENB"))
-    return mme_app_connection_establishment_cnf_get_kenb;
-  if (biseqcstrcaseless(var_name, "ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.ERAB.S1U_SGW_TRANSPORT_LAYER_ADDRESS"))
-    return mme_app_connection_establishment_cnf_get_erab0_transport_layer_address;
-  if (biseqcstrcaseless(var_name, "ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.ERAB.S1U_TEID"))
-    return mme_app_connection_establishment_cnf_get_erab0_teid;
-  if (biseqcstrcaseless(var_name, "ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.MAC"))
-    return mme_app_connection_establishment_cnf_get_nas_mac;
-  if (biseqcstrcaseless(var_name, "ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.DOWNLINK_SEQUENCE_NUMBER"))
-    return mme_app_connection_establishment_cnf_get_nas_downlink_sequence_number;
-  if (biseqcstrcaseless(var_name, "ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS_EMM.GUTI.M_TMSI"))
-    return mme_app_connection_establishment_cnf_get_nas_emm_guti_mtmsi;
-  if (biseqcstrcaseless(var_name, "ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_RAND"))
-    return nas_dl_data_req_get_nas_authentication_request_authentication_parameter_rand;
-  if (biseqcstrcaseless(var_name, "ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_AUTN"))
-    return nas_dl_data_req_get_nas_authentication_request_authentication_parameter_autn;
-  if (biseqcstrcaseless(var_name, "ITTI_NAS_DOWNLINK_DATA_REQ.NAS_MAC"))
-    return nas_dl_data_req_get_nas_mac;
-  if (biseqcstrcaseless(var_name, "ITTI_NAS_DOWNLINK_DATA_REQ.NAS.SECURITY_MODE_COMMAND.TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM"))
-    return nas_dl_data_req_get_nas_smc_eia;
-  if (biseqcstrcaseless(var_name, "ITTI_NAS_DOWNLINK_DATA_REQ.NAS.SECURITY_MODE_COMMAND.TYPE_OF_CIPHERING_ALGORITHM"))
-    return nas_dl_data_req_get_nas_smc_eea;
-
-  return NULL;
-}
 
 //------------------------------------------------------------------------------
 unsigned long msp_get_seq_uid(void)
@@ -119,47 +87,6 @@ xmlChar * msp_get_attr_file (xmlDocPtr doc, xmlNodePtr cur)
   return NULL;
 }
 
-//------------------------------------------------------------------------------
-void msp_msg_add_var_to_be_loaded(scenario_t * const scenario, scenario_player_msg_t * const msg, scenario_player_item_t * const var_item)
-{
-  AssertFatal (SCENARIO_PLAYER_ITEM_VAR      == var_item->item_type, "Wrong item type %d (should be %d)", var_item->item_type, SCENARIO_PLAYER_ITEM_VAR);
-
-  struct load_list_item_s *list_item = calloc(1, sizeof(*list_item));
-  AssertFatal(list_item, "Memory alloc failed");
-  list_item->value_getter_func = msp_get_getter_function_from_var_name(var_item->u.var.name);
-  AssertFatal(list_item->value_getter_func, "TODO: Write getter function");
-  list_item->item = var_item;
-  if (msg->vars_to_load) {
-    list_item->next = msg->vars_to_load;
-  }
-  msg->vars_to_load = list_item;
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Add var %s to be loaded\n", var_item->u.var.name->data);
-}
-//------------------------------------------------------------------------------
-void msp_msg_add_var_listener(scenario_t * const scenario, scenario_player_item_t * const msg_item, scenario_player_item_t * const var_item)
-{
-  AssertFatal (SCENARIO_PLAYER_ITEM_ITTI_MSG == msg_item->item_type, "Wrong item type %d (should be %d)", msg_item->item_type, SCENARIO_PLAYER_ITEM_ITTI_MSG);
-  AssertFatal (SCENARIO_PLAYER_ITEM_VAR      == var_item->item_type, "Wrong item type %d (should be %d)", var_item->item_type, SCENARIO_PLAYER_ITEM_VAR);
-
-  struct list_item_s *list_item = var_item->u.var.value_changed_subscribers;
-  while (list_item) {
-    if (list_item->item->uid == msg_item->uid) {
-      OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Did not add var %s listener MSG UID %u \n", var_item->u.var.name->data, msg_item->uid);
-      return;
-    }
-    list_item = list_item->next;
-  }
-
-
-  list_item = calloc(1, sizeof(*list_item));
-  AssertFatal(list_item, "Memory alloc failed");
-  list_item->item = msg_item;
-  if (var_item->u.var.value_changed_subscribers) {
-    list_item->next = var_item->u.var.value_changed_subscribers;
-  }
-  var_item->u.var.value_changed_subscribers = list_item;
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Add var %s listener MSG UID %u \n", var_item->u.var.name->data, msg_item->uid);
-}
 //------------------------------------------------------------------------------
 scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node, bstring scenario_file_path)
 {
@@ -218,18 +145,34 @@ scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlD
       spi->u.msg.time_out.tv_sec  = 0;
       spi->u.msg.time_out.tv_usec = 0;
     } else {
-      uint32_t  val1 = 0;
-      uint32_t  val2 = 0;
-      int ret = sscanf((const char*)attr, "%"SCNu32".%"SCNu32, &val1, &val2);
-      if (2 == ret) {
-        spi->u.msg.time_out.tv_sec  = val1;
-        spi->u.msg.time_out.tv_usec = val2;
-      } else if (1 == ret) {
-        spi->u.msg.time_out.tv_sec  = val1;
-        spi->u.msg.time_out.tv_usec = 0;
+      bstring b = bfromcstr((char *)attr);
+      struct bstrList * blist = bsplit (b, '.');
+      if (0 < blist->qty) {
+        uint32_t  val = 0;
+        int ret = sscanf((const char *)blist->entry[0]->data, "%"SCNu32, &val);
+        AssertFatal (1 == ret, "Could not convert time seconds: %s (%s)", blist->entry[0]->data, attr);
+        spi->u.msg.time_out.tv_sec  = val;
+        spi->u.msg.time_out.tv_usec  = 0;
+        if (1 < blist->qty) {
+          uint32_t  val = 0;
+          while (6 > blength(blist->entry[1])) {
+            bconchar (blist->entry[1], '0');
+          }
+          int ret = sscanf((const char *)blist->entry[1]->data, "%"SCNu32, &val);
+          AssertFatal (1 == ret, "Could not convert time useconds: %s (%s)", blist->entry[1]->data, attr);
+          spi->u.msg.time_out.tv_usec  = val;
+        }
+      } else {
+        uint32_t  val = 0;
+        int ret = sscanf((const char *)attr, "%"SCNu32, &val);
+        AssertFatal (1 == ret, "Could not convert time seconds: %s", attr);
+        spi->u.msg.time_out.tv_sec  = val;
+        spi->u.msg.time_out.tv_usec  = 0;
       }
+      bstrListDestroy(blist);
+      bdestroy_wrapper(&b);
     }
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", TIME_ATTR_XML_STR, attr);
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%ld.%ld sec\n", TIME_ATTR_XML_STR, spi->u.msg.time_out.tv_sec, spi->u.msg.time_out.tv_usec);
     xmlFree(attr);
   } else {
     // by default immediate sent or infinite delay for receiving
@@ -319,9 +262,8 @@ scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr con
   if (attr) {
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found int var %s=%s\n", bdata(spi->u.var.name), attr);
     char * value = (char*)attr;
-    if (!strncasecmp("0x", value, 2)) {
-      int ret = sscanf((const char*)(attr+2), "%"SCNx64, &spi->u.var.value.value_u64);
-      AssertFatal( ret == 1, "Failed to load var %s  hex value %s", bdata(spi->u.var.name), attr);
+    int ret = sscanf((const char*)attr, "%"SCNx64, &spi->u.var.value.value_u64);
+    if ( 1 == ret) {
       spi->u.var.value_type = VAR_VALUE_TYPE_INT64;
     } else if (value[0] == '-') {
       int ret = sscanf((const char*)attr, "%"SCNi64, &spi->u.var.value.value_64);
@@ -342,20 +284,18 @@ scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr con
     }
     xmlFree(attr);
   } else if ((attr = xmlGetProp(node, (const xmlChar *)ASCII_STREAM_VALUE_ATTR_XML_STR))) {
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found ascii var %s=%s\n", bdata(spi->u.var.name), attr);
     char * value = (char*)attr;
     spi->u.var.value.value_bstr = bfromcstr((const char *)value);
-    spi->u.var.value_type = VAR_VALUE_TYPE_BSTR;
+    spi->u.var.value_type = VAR_VALUE_TYPE_ASCII_STREAM;
     xmlFree(attr);
   } else if ((attr = xmlGetProp(node, (const xmlChar *)HEX_STREAM_VALUE_ATTR_XML_STR))) {
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found hex stream var %s=%s\n", bdata(spi->u.var.name), attr);
     char * value = (char*)attr;
     int len = strlen((const char*)value);
     uint8_t hex[len/2];
     int ret = ascii_to_hex ((uint8_t *) hex, (const char *)value);
     AssertFatal(ret, "Could not convert hex stream value");
     spi->u.var.value.value_bstr = blk2bstr(hex,len/2);
-    spi->u.var.value_type = VAR_VALUE_TYPE_BSTR;
+    spi->u.var.value_type = VAR_VALUE_TYPE_HEX_STREAM;
     xmlFree(attr);
   } else {
     AssertFatal(0, "Could not find var value type");
@@ -363,6 +303,7 @@ scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr con
 
   rc = obj_hashtable_ts_insert (scenario->var_items, bdata(spi->u.var.name), blength(spi->u.var.name), (void*)(uintptr_t)spi->uid);
   AssertFatal(HASH_TABLE_OK == rc, "Error in putting var name in hashtable %d", rc);
+  msp_display_var(spi);
   return spi;
 }
 
@@ -431,7 +372,7 @@ scenario_player_item_t* msp_load_set_var (scenario_t * const scenario, xmlDocPtr
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found ascii var %s=%s\n", bdata(spi->u.set_var.name), attr);
     char * value = (char*)attr;
     spi->u.set_var.value.value_bstr = bfromcstr((const char *)value);
-    spi->u.set_var.value_type = VAR_VALUE_TYPE_BSTR;
+    spi->u.set_var.value_type = VAR_VALUE_TYPE_ASCII_STREAM;
     xmlFree(attr);
   } else if ((attr = xmlGetProp(node, (const xmlChar *)HEX_STREAM_VALUE_ATTR_XML_STR))) {
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found hex stream var %s=%s\n", bdata(spi->u.set_var.name), attr);
@@ -441,7 +382,7 @@ scenario_player_item_t* msp_load_set_var (scenario_t * const scenario, xmlDocPtr
     int ret = ascii_to_hex ((uint8_t *) hex, (const char *)value);
     AssertFatal(ret, "Could not convert hex stream value");
     spi->u.set_var.value.value_bstr = blk2bstr(hex,len/2);
-    spi->u.set_var.value_type = VAR_VALUE_TYPE_BSTR;
+    spi->u.set_var.value_type = VAR_VALUE_TYPE_HEX_STREAM;
     xmlFree(attr);
   } else {
     AssertFatal(0, "Could not find var value type");
@@ -781,6 +722,7 @@ int msp_load_message (scenario_t * const scenario, bstring file_path, scenario_p
 
   scenario_player_item->u.msg.xpath_ctx = xmlXPathNewContext(scenario_player_item->u.msg.xml_doc);
 
+  // just for validating XML
   if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_SCTP_NEW_ASSOCIATION_XML_STR)) {
     rc = xml_msg_load_itti_sctp_new_association(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_SCTP_CLOSE_ASSOCIATION_XML_STR)) {
@@ -817,9 +759,6 @@ int msp_reload_message (scenario_t * const scenario, scenario_player_item_t * co
 
   AssertFatal(scenario_player_item->u.msg.xml_doc, "No XML doc found!");
 
-  scenario_player_item->u.msg.xml_dump2struct_needed = false;
-
-
   cur = xmlDocGetRootElement(scenario_player_item->u.msg.xml_doc);
   AssertFatal (cur, "Could not get root element of XML doc");
   // better to clean instead of reset ?
@@ -831,12 +770,6 @@ int msp_reload_message (scenario_t * const scenario, scenario_player_item_t * co
     itti_free_msg_content (scenario_player_item->u.msg.itti_msg);
     itti_free (ITTI_MSG_ORIGIN_ID (scenario_player_item->u.msg.itti_msg), scenario_player_item->u.msg.itti_msg);
     scenario_player_item->u.msg.itti_msg = NULL;
-  }
-
-  while (scenario_player_item->u.msg.vars_to_load) {
-    struct load_list_item_s *vars_to_load = scenario_player_item->u.msg.vars_to_load;
-    scenario_player_item->u.msg.vars_to_load = vars_to_load->next;
-    free_wrapper((void**)&vars_to_load);
   }
 
   if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_SCTP_NEW_ASSOCIATION_XML_STR)) {
@@ -1072,6 +1005,7 @@ int msp_load_scenario (bstring file_path, scenario_player_t * const scenario_pla
         res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
       }
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   AssertFatal(SCENARIO_STATUS_LOADING == scenario->status, "Failed to load scenario %s\n", bdata(file_path));
   if (SCENARIO_STATUS_LOADING == scenario->status) {
@@ -1099,13 +1033,13 @@ void msp_free_scenario_player_item (scenario_player_item_t * item)
       break;
 
     case SCENARIO_PLAYER_ITEM_VAR:
-      if (VAR_VALUE_TYPE_BSTR == item->u.var.value_type) {
+      if ((VAR_VALUE_TYPE_HEX_STREAM == item->u.set_var.value_type) || (VAR_VALUE_TYPE_ASCII_STREAM == item->u.set_var.value_type)) {
         bdestroy_wrapper(&item->u.var.value.value_bstr);
       }
       break;
 
     case SCENARIO_PLAYER_ITEM_VAR_SET:
-      if (VAR_VALUE_TYPE_BSTR == item->u.set_var.value_type) {
+      if ((VAR_VALUE_TYPE_HEX_STREAM == item->u.set_var.value_type) || (VAR_VALUE_TYPE_ASCII_STREAM == item->u.set_var.value_type)) {
         bdestroy_wrapper(&item->u.set_var.value.value_bstr);
       }
       break;

@@ -30,8 +30,8 @@
 #ifndef FILE_MME_SCENARIO_PLAYER_RX_ITTI_SEEN
 #  define FILE_MME_SCENARIO_PLAYER_RX_ITTI_SEEN
 
-void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, const itti_nas_dl_data_req_t * const itti);
-void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t instance, const itti_mme_app_connection_establishment_cnf_t * const itti);
+void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, const MessageDef * const received_message);
+void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t instance, const MessageDef * const received_message);
 
 #endif
 

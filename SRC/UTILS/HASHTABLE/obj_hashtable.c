@@ -289,6 +289,7 @@ obj_hashtable_destroy (
   }
 
   free_wrapper ((void**)&hashtblP->nodes);
+  bdestroy_wrapper (&hashtblP->name);
   free_wrapper ((void**)&hashtblP);
   return HASH_TABLE_OK;
 }
@@ -322,6 +323,8 @@ obj_hashtable_ts_destroy (
   }
 
   free_wrapper ((void**)&hashtblP->nodes);
+  free_wrapper((void**)&hashtblP->lock_nodes);
+  bdestroy_wrapper (&hashtblP->name);
   free_wrapper ((void**)&hashtblP);
   return HASH_TABLE_OK;
 }
@@ -579,28 +582,32 @@ obj_hashtable_ts_insert (
 
   while (node) {
     if (node->key == keyP) {
-      if (node->data) {
+      if ((node->data) && (node->data != dataP)) {
         hashtblP->freedatafunc (node->data);
+        node->data = dataP;
+        node->key_size = key_sizeP;
+        // no waste of memory here because if node->key == keyP, it is a reuse of the same key
+        pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
+        PRINT_HASHTABLE (hashtblP, "%s(%s,key %p data %p) hash %lx return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP, hash);
+        return HASH_TABLE_INSERT_OVERWRITTEN_DATA;
       }
-
       node->data = dataP;
-      node->key_size = key_sizeP;
-      // no waste of memory here because if node->key == keyP, it is a reuse of the same key
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-      PRINT_HASHTABLE (hashtblP, "%s(%s,key %p data %p) hash %lx return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP, hash);
-      return HASH_TABLE_INSERT_OVERWRITTEN_DATA;
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key %p data %p) hash %lx return ok\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP, hash);
+      return HASH_TABLE_OK;
+
     }
 
     node = node->next;
   }
 
-  if (!(node = malloc (sizeof (obj_hash_node_t)))) {
+  if (!(node = calloc (1, sizeof (obj_hash_node_t)))) {
     pthread_mutex_unlock (&hashtblP->lock_nodes[hash]);
     PRINT_HASHTABLE (hashtblP, "%s(%s,key %p) hash %lx return SYSTEM_ERROR\n", __FUNCTION__, bdata(hashtblP->name), keyP, hash);
     return HASH_TABLE_SYSTEM_ERROR;
   }
 
-  if (!(node->key = malloc (key_sizeP))) {
+  if (!(node->key = calloc (1, key_sizeP))) {
     free_wrapper ((void**)&node);
     pthread_mutex_unlock (&hashtblP->lock_nodes[hash]);
     PRINT_HASHTABLE (hashtblP, "%s(%s,key %p) hash %lx return SYSTEM_ERROR\n", __FUNCTION__, bdata(hashtblP->name), keyP, hash);
