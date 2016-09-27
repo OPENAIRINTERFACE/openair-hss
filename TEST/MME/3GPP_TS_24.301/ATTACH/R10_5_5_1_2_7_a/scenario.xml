@@ -15,6 +15,7 @@
 
   <ue_security_context ksi="0" knas_enc="0123456789abcdef0123456789abcdef" knas_int="0123456789abcdef0123456789abcdef" ul_count="0"  />
   <var name="NUM_LOOPS"                                   value="30"         />
+  <var name="MME_UE_S1AP_ID"                              value="0xffffff"   />
   <var name="ENB_UE_S1AP_ID"                              value="0x123456"   />
   <var name="MME_CODE"                                    value="0x01"       />
   <var name="MME_GROUP_IDENTIFIER"                        value="4"          />
@@ -47,6 +48,8 @@
   <message_file action="receive" time_out="0.1" time_ref="-1">
     <file>mme_msg_000003_ITTI_NAS_DOWNLINK_DATA_REQ.xml</file>
   </message_file>
+  <set_var name="MME_UE_S1AP_ID"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   />
+
 
   <message_file action="send" time="now"  time_ref="this">
     <file>mme_msg_000004_ITTI_NAS_UPLINK_DATA_IND.xml</file>
