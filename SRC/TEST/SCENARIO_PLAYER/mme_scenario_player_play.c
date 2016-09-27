@@ -35,7 +35,6 @@
 #include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
-#include "mme_scenario_player.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.008.h"
 #include "3gpp_33.401.h"
@@ -53,6 +52,7 @@
 #include "timer.h"
 #include "dynamic_memory_check.h"
 #include "common_defs.h"
+#include "mme_scenario_player.h"
 #include "xml_msg_dump_itti.h"
 #include "usim_authenticate.h"
 #include "secu_defs.h"
@@ -525,10 +525,12 @@ bool msp_play_compute_authentication_response_parameter(scenario_t * const scena
   scenario_player_item_t * var_rand = NULL;
   scenario_player_item_t * var_autn = NULL;
   scenario_player_item_t * var_auth_param = NULL;
+  scenario_player_item_t * var_selected_plmn = NULL;
 
   void                   * vuid_rand = NULL;
   void                   * vuid_autn = NULL;
   void                   * vuid_auth_param = NULL;
+  void                   * vuid_selected_plmn = NULL;
 
 
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item compute authentication response parameter UID %u\n", item->uid);
@@ -549,23 +551,38 @@ bool msp_play_compute_authentication_response_parameter(scenario_t * const scena
   AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var AUTHENTICATION_RESPONSE_PARAMETER in hashtable");
   int uid_auth_param = (int)(uintptr_t)vuid_auth_param;
   hrc = hashtable_ts_get (scenario->scenario_items, uid_auth_param, (void **)&var_auth_param);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var_rand), "Could not find var item UID %d", uid_auth_param);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (var_auth_param), "Could not find var item UID %d", uid_auth_param);
+
+  hrc = obj_hashtable_ts_get (scenario->var_items, "SELECTED_PLMN", strlen("SELECTED_PLMN"), (void **)&vuid_selected_plmn);
+  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var SELECTED_PLMN in hashtable");
+  int uid_selected_plmn = (int)(uintptr_t)vuid_selected_plmn;
+  hrc = hashtable_ts_get (scenario->scenario_items, uid_selected_plmn, (void **)&var_selected_plmn);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (var_selected_plmn), "Could not find var item UID %d", uid_selected_plmn);
+  AssertFatal (3 == blength(var_selected_plmn->u.var.value.value_bstr), "Bad PLMN hex stream");
 
   memcpy(scenario->usim_data.autn, var_autn->u.var.value.value_bstr->data, USIM_AUTN_SIZE);
   memcpy(scenario->usim_data.rand, var_rand->u.var.value.value_bstr->data, USIM_RAND_SIZE);
   memset(scenario->usim_data.res, 0, USIM_RES_SIZE);
+  memcpy(&scenario->usim_data.selected_plmn, var_selected_plmn->u.var.value.value_bstr->data, min(blength(var_selected_plmn->u.var.value.value_bstr), 3));
 
   int rc = usim_authenticate(&scenario->usim_data,
       scenario->usim_data.rand,
       scenario->usim_data.autn,
       scenario->usim_data.auts,
       scenario->usim_data.res,
-      scenario->ue_emulated_emm_security_context->knas_enc,
-      scenario->ue_emulated_emm_security_context->knas_int);
+      scenario->usim_data.ck,
+      scenario->usim_data.ik);
 
   item->is_played = true;
 
   if (RETURNok == rc) {
+
+    rc = usim_generate_kasme(scenario->usim_data.autn,
+        scenario->usim_data.ck,
+        scenario->usim_data.ik,
+        &scenario->usim_data.selected_plmn,
+        scenario->usim_data.kasme);
+
     bdestroy_wrapper(&var_auth_param->u.var.value.value_bstr);
     var_auth_param->u.var.value.value_bstr = blk2bstr(scenario->usim_data.res, 8);
     scenario->last_played_item = item;
@@ -582,7 +599,7 @@ bool msp_play_compute_authentication_response_parameter(scenario_t * const scena
 // return true if we can continue playing the scenario
 bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_player_item_t * const item)
 {
-  bool                             res = false;
+  bool                             update = false;
   scenario_player_update_emm_sc_t *update_emm_sc = &item->u.updata_emm_sc;
 
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item update emm security context UID %u\n", item->uid);
@@ -597,7 +614,7 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
     } else {
       scenario->ue_emulated_emm_security_context->selected_algorithms.encryption = update_emm_sc->seea.value_u8;
     }
-    res = true;
+    update = true;
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context SEEA 0x%x\n", scenario->ue_emulated_emm_security_context->selected_algorithms.encryption);
   }
 
@@ -612,7 +629,7 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
     } else {
       scenario->ue_emulated_emm_security_context->selected_algorithms.integrity = update_emm_sc->seia.value_u8;
     }
-    res = true;
+    update = true;
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context SEIA 0x%x\n", scenario->ue_emulated_emm_security_context->selected_algorithms.integrity);
   }
 
@@ -632,15 +649,21 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
     scenario->ue_emulated_emm_security_context->ul_count.seq_num  = (uint8_t)ul_count;
     scenario->ue_emulated_emm_security_context->ul_count.overflow = (uint16_t)((ul_count >> 8) & 0xFFFF);
     scenario->ue_emulated_emm_security_context->ul_count.spare    = (uint8_t)(ul_count >> 24);
-
-    scenario->ue_emulated_emm_security_context->dl_count.seq_num  = scenario->ue_emulated_emm_security_context->ul_count.seq_num;
-    scenario->ue_emulated_emm_security_context->dl_count.overflow = scenario->ue_emulated_emm_security_context->ul_count.overflow;
-    scenario->ue_emulated_emm_security_context->dl_count.spare    = scenario->ue_emulated_emm_security_context->ul_count.spare;
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context UL count 0x%x\n", ul_count);
-    res = true;
+  }
+  if (update) {
+    derive_key_nas (NAS_INT_ALG,
+        scenario->ue_emulated_emm_security_context->selected_algorithms.integrity,
+        scenario->usim_data.kasme,
+        scenario->ue_emulated_emm_security_context->knas_int);
+
+    derive_key_nas (NAS_ENC_ALG,
+        scenario->ue_emulated_emm_security_context->selected_algorithms.encryption,
+        scenario->usim_data.kasme,
+        scenario->ue_emulated_emm_security_context->knas_enc);
   }
   scenario->last_played_item = item;
-  return res;
+  return true;
 }
 
 //------------------------------------------------------------------------------
