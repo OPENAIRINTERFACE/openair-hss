@@ -145,18 +145,34 @@ scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlD
       spi->u.msg.time_out.tv_sec  = 0;
       spi->u.msg.time_out.tv_usec = 0;
     } else {
-      uint32_t  val1 = 0;
-      uint32_t  val2 = 0;
-      int ret = sscanf((const char*)attr, "%"SCNu32".%"SCNu32, &val1, &val2);
-      if (2 == ret) {
-        spi->u.msg.time_out.tv_sec  = val1;
-        spi->u.msg.time_out.tv_usec = val2;
-      } else if (1 == ret) {
-        spi->u.msg.time_out.tv_sec  = val1;
-        spi->u.msg.time_out.tv_usec = 0;
+      bstring b = bfromcstr((char *)attr);
+      struct bstrList * blist = bsplit (b, '.');
+      if (0 < blist->qty) {
+        uint32_t  val = 0;
+        int ret = sscanf((const char *)blist->entry[0]->data, "%"SCNu32, &val);
+        AssertFatal (1 == ret, "Could not convert time seconds: %s (%s)", blist->entry[0]->data, attr);
+        spi->u.msg.time_out.tv_sec  = val;
+        spi->u.msg.time_out.tv_usec  = 0;
+        if (1 < blist->qty) {
+          uint32_t  val = 0;
+          while (6 > blength(blist->entry[1])) {
+            bconchar (blist->entry[1], '0');
+          }
+          int ret = sscanf((const char *)blist->entry[1]->data, "%"SCNu32, &val);
+          AssertFatal (1 == ret, "Could not convert time useconds: %s (%s)", blist->entry[1]->data, attr);
+          spi->u.msg.time_out.tv_usec  = val;
+        }
+      } else {
+        uint32_t  val = 0;
+        int ret = sscanf((const char *)attr, "%"SCNu32, &val);
+        AssertFatal (1 == ret, "Could not convert time seconds: %s", attr);
+        spi->u.msg.time_out.tv_sec  = val;
+        spi->u.msg.time_out.tv_usec  = 0;
       }
+      bstrListDestroy(blist);
+      bdestroy_wrapper(&b);
     }
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", TIME_ATTR_XML_STR, attr);
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%ld.%ld sec\n", TIME_ATTR_XML_STR, spi->u.msg.time_out.tv_sec, spi->u.msg.time_out.tv_usec);
     xmlFree(attr);
   } else {
     // by default immediate sent or infinite delay for receiving

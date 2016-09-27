@@ -93,6 +93,8 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
   if ((SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) && !(item->u.msg.is_tx) && !(item->is_played)) {
     if (NAS_DOWNLINK_DATA_REQ == ITTI_MSG_ID (item->u.msg.itti_msg)) {
       // OK messages seems to match
+      msp_get_elapsed_time_since_scenario_start(scenario, &item->u.msg.time_stamp);
+
       OAILOG_TRACE(LOG_MME_SCENARIO_PLAYER, "Found matching NAS_DOWNLINK_DATA_REQ message UID %d\n", item->uid);
 
       const itti_nas_dl_data_req_t * const nas_dl_data_req = &NAS_DL_DATA_REQ (received_message);
@@ -175,6 +177,7 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
   if ((SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) && !(item->u.msg.is_tx) && !(item->is_played)) {
     if (MME_APP_CONNECTION_ESTABLISHMENT_CNF == ITTI_MSG_ID (item->u.msg.itti_msg)) {
       // OK messages seems to match
+      msp_get_elapsed_time_since_scenario_start(scenario, &item->u.msg.time_stamp);
       const itti_mme_app_connection_establishment_cnf_t * const mme_app_connection_establishment_cnf = &MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message);
 
       //-------------------------------

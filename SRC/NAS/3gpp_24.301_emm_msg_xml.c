@@ -72,6 +72,8 @@ bool attach_accept_from_xml (
   if (res) {res = gprs_timer_from_xml (xml_doc, xpath_ctx, GPRS_TIMER_T3412_IE_XML_STR, &attach_accept->t3412value);}
   if (res) {res = tracking_area_identity_list_from_xml (xml_doc, xpath_ctx, &attach_accept->tailist);}
   if (res) {res = esm_message_container_from_xml (xml_doc, xpath_ctx, attach_accept->esmmessagecontainer);}
+
+  attach_accept->presencemask = 0;
   if (res) {
     res = eps_mobile_identity_from_xml (xml_doc, xpath_ctx, &attach_accept->guti);
     if (res) {
@@ -223,6 +225,7 @@ bool attach_reject_from_xml (
   bool res = false;
 
   res = esm_message_container_from_xml (xml_doc, xpath_ctx, attach_reject->esmmessagecontainer);
+  attach_reject->presencemask = 0;
   if (res) {
     attach_reject->presencemask |= ATTACH_REJECT_ESM_MESSAGE_CONTAINER_PRESENT;
   }
@@ -258,6 +261,7 @@ bool attach_request_from_xml (
   if (res) {res = eps_mobile_identity_from_xml (xml_doc, xpath_ctx, &attach_request->oldgutiorimsi);}
   if (res) {res = ue_network_capability_from_xml (xml_doc, xpath_ctx, &attach_request->uenetworkcapability);}
   if (res) {res = esm_message_container_from_xml (xml_doc, xpath_ctx, attach_request->esmmessagecontainer);}
+  attach_request->presencemask = 0;
   if (res) {
     res = p_tmsi_signature_from_xml (xml_doc, xpath_ctx, &attach_request->oldptmsisignature);
     if (res) {
@@ -427,6 +431,7 @@ bool authentication_failure_from_xml (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   bool res = emm_cause_from_xml (xml_doc, xpath_ctx, &authentication_failure->emmcause, NULL);
+  authentication_failure->presencemask = 0;
   if (res) {
     res = authentication_failure_parameter_from_xml (xml_doc, xpath_ctx, &authentication_failure->authenticationfailureparameter);
     if (res) {
@@ -590,6 +595,7 @@ bool emm_information_from_xml (
     emm_information_msg * const emm_information)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_information->presencemask = 0;
   if (network_name_from_xml (xml_doc, xpath_ctx, FULL_NETWORK_NAME_IE_XML_STR, &emm_information->fullnamefornetwork)) {
     emm_information->presencemask |= EMM_INFORMATION_FULL_NAME_FOR_NETWORK_PRESENT;
   }
@@ -718,6 +724,7 @@ bool security_mode_command_from_xml (
   res = nas_security_algorithms_from_xml (xml_doc, xpath_ctx, &security_mode_command->selectednassecurityalgorithms);
   if (res) {res = nas_key_set_identifier_from_xml (xml_doc, xpath_ctx, &security_mode_command->naskeysetidentifier);}
   if (res) {res = ue_security_capability_from_xml (xml_doc, xpath_ctx, &security_mode_command->replayeduesecuritycapabilities);}
+  security_mode_command->presencemask = 0;
   if (res) {
     res = imeisv_request_from_xml (xml_doc, xpath_ctx, &security_mode_command->imeisvrequest);
     if (res) {
@@ -773,6 +780,7 @@ bool security_mode_complete_from_xml (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   bool res = mobile_identity_from_xml (xml_doc, xpath_ctx, &security_mode_complete->imeisv);
+  security_mode_complete->presencemask = 0;
   if (res) {
     security_mode_complete->presencemask |= SECURITY_MODE_COMPLETE_IMEISV_PRESENT;
   }

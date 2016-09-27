@@ -120,13 +120,17 @@ void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expir
         // rx message
         // obviously if everything is ok, this timer should have been deleted, but
         // timer_remove do not free the arg parameter, pffff, so let it run...
+        if (!arg->item->is_played) {
+          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "ITTI msg uid %d timed-out(%ld.%06ld sec)\n",
+              arg->item->uid, arg->item->u.msg.time_out.tv_sec, arg->item->u.msg.time_out.tv_usec);
+          scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAY_FAILED);
+        }
       }
     }
-    free_wrapper((void**)&arg);
-
     // trigger continuation of the scenario
     pthread_mutex_unlock(&arg->scenario->lock);
     msp_scenario_tick(arg->scenario);
+    free_wrapper((void**)&arg);
   }
 }
 
@@ -218,6 +222,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
 {
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item RX message  UID %u\n", item->uid);
   if (item->is_played) {
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "item RX message  UID %u already played\n", item->uid);
     scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
     return true;
   }
@@ -235,6 +240,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
     // no thread safe but do not matter a lot
     msp_get_elapsed_time_since_scenario_start(scenario, &now);
     timersub(&now, &ref->u.msg.time_stamp, &elapsed_time);
+
     if (
         (elapsed_time.tv_sec > item->u.msg.time_out.tv_sec) ||
         ((elapsed_time.tv_sec == item->u.msg.time_out.tv_sec) &&
@@ -247,7 +253,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
 
       struct timeval timer_val = {0};
       int ret      = RETURNerror;
-      timersub(&elapsed_time, &item->u.msg.time_out, &timer_val);
+      timersub(&item->u.msg.time_out, &elapsed_time, &timer_val);
       scenario_player_timer_arg_t *arg = calloc(1, sizeof (*arg));
       if (arg) {
         arg->item = item;
@@ -257,11 +263,13 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
             TIMER_ONE_SHOT, (void*)arg, &item->u.msg.timer_id);
       }
       AssertFatal(RETURNok == ret, "Error setting timer item %d", item->uid);
+      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Setting timer               %ld.%06ld sec\n", timer_val.tv_sec, timer_val.tv_usec);
       return false;
     }
   } else {
     if ((0 < item->u.msg.time_out.tv_sec) ||
         (0 < item->u.msg.time_out.tv_usec)) {
+      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
       scenario_player_timer_arg_t *arg = calloc(1, sizeof (*arg));
       if (arg) {
         arg->item = item;
@@ -270,6 +278,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
                    TASK_MME_SCENARIO_PLAYER, INSTANCE_DEFAULT,
                    TIMER_ONE_SHOT, (void*)arg, &item->u.msg.timer_id);
         AssertFatal(0 == ret, "Error setting timer item %d", item->uid);
+        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Setting timer %ld.%06ld sec\n", item->u.msg.time_out.tv_sec, item->u.msg.time_out.tv_usec);
       }
       return true;
     } else {
@@ -399,6 +408,32 @@ bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * cons
       AssertFatal(0, "TODO but discouraged to do so in scenario");
     } else {
       AssertFatal(0, "Unknown var value type %d", var_ref->u.var.value_type);
+    }
+  } else {
+    AssertFatal (var_item->u.var.value_type == item->u.set_var.value_type, "var type to not match %d != %d, discouraged to do so in scenario",
+        var_item->u.var.value_type, item->u.set_var.value_type);
+
+    if (VAR_VALUE_TYPE_INT64 == var_item->u.var.value_type) {
+      var_item->u.var.value.value_u64 = item->u.set_var.value.value_u64;
+    } else if ((VAR_VALUE_TYPE_HEX_STREAM == var_item->u.var.value_type) || (VAR_VALUE_TYPE_ASCII_STREAM == var_item->u.var.value_type)) {
+
+      if ((var_item->u.var.value.value_bstr) && (item->u.set_var.value.value_bstr)) {
+        if (blength(var_item->u.var.value.value_bstr) != blength(item->u.set_var.value.value_bstr)) {
+          value_changed = true;
+        } else if (memcmp(var_item->u.var.value.value_bstr->data,item->u.set_var.value.value_bstr->data, blength(var_item->u.var.value.value_bstr))) {
+          value_changed = true;
+        }
+        if (value_changed) {
+          bassign(var_item->u.var.value.value_bstr, item->u.set_var.value.value_bstr);
+        }
+      } else if (!(var_item->u.var.value.value_bstr) && (item->u.set_var.value.value_bstr)) {
+        value_changed = true;
+        var_item->u.var.value.value_bstr = bstrcpy(item->u.set_var.value.value_bstr);
+      } else {
+        AssertFatal(0, "This case should not happen");
+      }
+    } else {
+      AssertFatal(0, "Unknown var value type %d", item->u.set_var.value_type);
     }
   }
 

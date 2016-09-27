@@ -71,6 +71,7 @@ bool activate_dedicated_eps_bearer_context_request_from_xml (
   if (res) {res = eps_quality_of_service_from_xml (xml_doc, xpath_ctx, &activate_dedicated_eps_bearer_context_request->epsqos);}
   if (res) {res = traffic_flow_template_from_xml (xml_doc, xpath_ctx, &activate_dedicated_eps_bearer_context_request->tft);}
 
+  activate_dedicated_eps_bearer_context_request->presencemask = 0;
   if (res) {
     res = linked_ti_from_xml (xml_doc, xpath_ctx, &activate_dedicated_eps_bearer_context_request->transactionidentifier);
     if (res) {
@@ -157,6 +158,7 @@ bool activate_default_eps_bearer_context_accept_from_xml (
   memset(activate_default_eps_bearer_context_accept, 0, sizeof(*activate_default_eps_bearer_context_accept));
   bool res = false;
   res = protocol_configuration_options_from_xml (xml_doc, xpath_ctx, &activate_default_eps_bearer_context_accept->protocolconfigurationoptions, true);
+  activate_default_eps_bearer_context_accept->presencemask = 0;
   if (res) {
     activate_default_eps_bearer_context_accept->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
   }
@@ -190,6 +192,7 @@ bool activate_default_eps_bearer_context_request_from_xml (
   if (res) {res = access_point_name_from_xml (xml_doc, xpath_ctx, &activate_default_eps_bearer_context_request->accesspointname);}
   if (res) {res = pdn_address_from_xml (xml_doc, xpath_ctx, &activate_default_eps_bearer_context_request->pdnaddress);}
 
+  activate_default_eps_bearer_context_request->presencemask = 0;
   if (res) {
     res = linked_ti_from_xml (xml_doc, xpath_ctx, &activate_default_eps_bearer_context_request->transactionidentifier);
     if (res) {
@@ -302,6 +305,7 @@ bool pdn_connectivity_request_from_xml (
   res = pdn_type_from_xml (xml_doc, xpath_ctx, &pdn_connectivity_request->pdntype);
   if (res) {res = request_type_from_xml (xml_doc, xpath_ctx, &pdn_connectivity_request->requesttype, NULL);}
 
+  pdn_connectivity_request->presencemask = 0;
   if (res) {
     res = esm_information_transfer_flag_from_xml (xml_doc, xpath_ctx, &pdn_connectivity_request->esminformationtransferflag, NULL);
     if (res) {
