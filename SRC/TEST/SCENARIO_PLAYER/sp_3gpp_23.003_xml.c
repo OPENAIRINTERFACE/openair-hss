@@ -208,7 +208,9 @@ bool sp_s_tmsi_from_xml (
       if (res) {res = sp_m_tmsi_from_xml(scenario, msg, &s_tmsi->m_tmsi);}
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj);
   }
+  bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_UTIL, res);
 }
 

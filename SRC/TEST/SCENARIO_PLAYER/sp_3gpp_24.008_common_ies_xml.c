@@ -182,7 +182,9 @@ bool sp_plmn_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_plmn);
   }
+  bdestroy_wrapper (&xpath_expr_plmn);
   OAILOG_FUNC_RETURN (LOG_UTIL, res);
 }
 

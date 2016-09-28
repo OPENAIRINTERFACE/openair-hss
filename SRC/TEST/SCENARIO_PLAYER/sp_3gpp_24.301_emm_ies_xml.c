@@ -156,6 +156,7 @@ bool sp_nas_security_algorithms_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_nsa);
   }
   bdestroy_wrapper (&xpath_expr_nsa);
   return res;
