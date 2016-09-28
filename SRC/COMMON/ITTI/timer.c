@@ -254,7 +254,6 @@ timer_remove (
   }
 
   free_wrapper ((void**)&timer_p);
-  timer_p = NULL;
   return rc;
 }
 
