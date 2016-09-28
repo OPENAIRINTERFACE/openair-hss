@@ -52,7 +52,15 @@ typedef enum {
 
 struct scenario_player_item_s;
 
+struct scenario_s;
+
 struct MessageDef_s;
+
+typedef struct scenario_player_timer_arg_s {
+  //instance_t              *instance;
+  struct scenario_s              *scenario;
+  struct scenario_player_item_s  *item;
+} scenario_player_timer_arg_t;
 
 typedef struct scenario_player_msg_s {
   // specified
@@ -67,8 +75,9 @@ typedef struct scenario_player_msg_s {
   struct MessageDef_s     *itti_msg;
 
   // collected
-  struct timeval           time_stamp;
-  long                     timer_id;
+  struct timeval              time_stamp;
+  long                        timer_id;
+  scenario_player_timer_arg_t timer_arg;
 } scenario_player_msg_t;
 
 
@@ -217,11 +226,7 @@ typedef struct scenario_player_s {
   scenario_t         *current_scenario; // no scenarios in // (no multi-threads) for a MME instance
 } scenario_player_t;
 
-typedef struct scenario_player_timer_arg_s {
-  //instance_t              *instance;
-  scenario_t              *scenario;
-  scenario_player_item_t  *item;
-} scenario_player_timer_arg_t;
+
 
 
 

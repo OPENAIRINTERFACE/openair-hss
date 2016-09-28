@@ -93,6 +93,9 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
   if ((SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) && !(item->u.msg.is_tx) && !(item->is_played)) {
     if (NAS_DOWNLINK_DATA_REQ == ITTI_MSG_ID (item->u.msg.itti_msg)) {
       // OK messages seems to match
+      if (item->u.msg.timer_id) {
+        timer_remove(item->u.msg.timer_id);
+      }
       msp_get_elapsed_time_since_scenario_start(scenario, &item->u.msg.time_stamp);
 
       OAILOG_TRACE(LOG_MME_SCENARIO_PLAYER, "Found matching NAS_DOWNLINK_DATA_REQ message UID %d\n", item->uid);
