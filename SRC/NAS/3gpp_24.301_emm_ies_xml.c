@@ -60,7 +60,7 @@ NUM_FROM_XML_GENERATE( additional_update_result, ADDITIONAL_UPDATE_RESULT);
 //------------------------------------------------------------------------------
 void additional_update_result_to_xml(additional_update_result_t *additionalupdateresult, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ADDITIONAL_UPDATE_RESULT_IE_XML_STR, "%"PRIx8, *additionalupdateresult);
+  XML_WRITE_FORMAT_ELEMENT(writer, ADDITIONAL_UPDATE_RESULT_IE_XML_STR, "0x%"PRIx8, *additionalupdateresult);
 }
 
 //------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ NUM_FROM_XML_GENERATE( additional_update_type,   ADDITIONAL_UPDATE_TYPE);
 //------------------------------------------------------------------------------
 void additional_update_type_to_xml(additional_update_type_t *additionalupdatetype, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ADDITIONAL_UPDATE_TYPE_IE_XML_STR, "%"PRIx8, *additionalupdatetype);
+  XML_WRITE_FORMAT_ELEMENT(writer, ADDITIONAL_UPDATE_TYPE_IE_XML_STR, "0x%"PRIx8, *additionalupdatetype);
 }
 
 //------------------------------------------------------------------------------
@@ -76,7 +76,7 @@ NUM_FROM_XML_GENERATE( csfb_response,            CSFB_RESPONSE);
 //------------------------------------------------------------------------------
 void csfb_response_to_xml(csfb_response_t *csfbresponse, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, CSFB_RESPONSE_IE_XML_STR, "%x", *csfbresponse);
+  XML_WRITE_FORMAT_ELEMENT(writer, CSFB_RESPONSE_IE_XML_STR, "0x%x", *csfbresponse);
 }
 
 //------------------------------------------------------------------------------
@@ -131,8 +131,8 @@ bool detach_type_from_xml (
 void detach_type_to_xml(detach_type_t *detachtype, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, DETACH_TYPE_IE_XML_STR);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, SWITCH_OFF_ATTR_XML_STR, "%"PRIx8, detachtype->switchoff);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, TYPE_OF_DETACH_ATTR_XML_STR, "%"PRIx8, detachtype->typeofdetach);
+  XML_WRITE_FORMAT_ATTRIBUTE(writer, SWITCH_OFF_ATTR_XML_STR, "0x%"PRIx8, detachtype->switchoff);
+  XML_WRITE_FORMAT_ATTRIBUTE(writer, TYPE_OF_DETACH_ATTR_XML_STR, "0x%"PRIx8, detachtype->typeofdetach);
   XML_WRITE_END_ELEMENT(writer);
 }
 
@@ -142,7 +142,7 @@ NUM_FROM_XML_GENERATE( emm_cause,            EMM_CAUSE);
 void emm_cause_to_xml (emm_cause_t * emmcause, xmlTextWriterPtr writer)
 {
   XML_WRITE_COMMENT(writer, "TODO human readable form, even in comment ?")
-  XML_WRITE_FORMAT_ELEMENT(writer, EMM_CAUSE_IE_XML_STR, "%"PRIx8, *emmcause);
+  XML_WRITE_FORMAT_ELEMENT(writer, EMM_CAUSE_IE_XML_STR, "0x%"PRIx8, *emmcause);
 }
 
 //------------------------------------------------------------------------------
@@ -151,7 +151,7 @@ NUM_FROM_XML_GENERATE( eps_attach_result,    EPS_ATTACH_RESULT);
 void eps_attach_result_to_xml (eps_attach_result_t * epsattachresult, xmlTextWriterPtr writer)
 {
   XML_WRITE_COMMENT(writer, "EPS_ATTACH_RESULT EPS=0x1, IMSI=0x2");
-  XML_WRITE_FORMAT_ELEMENT(writer, EPS_ATTACH_RESULT_IE_XML_STR, "%x", *epsattachresult);
+  XML_WRITE_FORMAT_ELEMENT(writer, EPS_ATTACH_RESULT_IE_XML_STR, "0x%x", *epsattachresult);
 }
 
 //------------------------------------------------------------------------------
@@ -159,7 +159,7 @@ NUM_FROM_XML_GENERATE( eps_attach_type,      EPS_ATTACH_TYPE);
 //------------------------------------------------------------------------------
 void eps_attach_type_to_xml (eps_attach_type_t * epsattachtype, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, EPS_ATTACH_TYPE_IE_XML_STR, "%"PRIx8, *epsattachtype);
+  XML_WRITE_FORMAT_ELEMENT(writer, EPS_ATTACH_TYPE_IE_XML_STR, "0x%"PRIx8, *epsattachtype);
 }
 
 //------------------------------------------------------------------------------
@@ -359,9 +359,9 @@ void eps_mobile_identity_to_xml (eps_mobile_identity_t * epsmobileidentity, xmlT
 
   if (epsmobileidentity->imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
     imsi_eps_mobile_identity_t                *imsi = &epsmobileidentity->imsi;
-    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "%x", imsi->oddeven);
+    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "0x%x", imsi->oddeven);
     XML_WRITE_COMMENT(writer, "type_of_identity = IMSI");
-    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "%x", EPS_MOBILE_IDENTITY_IMSI);
+    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "0x%x", EPS_MOBILE_IDENTITY_IMSI);
     XML_WRITE_FORMAT_ELEMENT(writer, IMSI_ATTR_XML_STR, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
         imsi->identity_digit1,imsi->identity_digit2,imsi->identity_digit3,imsi->identity_digit4,
         imsi->identity_digit5,imsi->identity_digit6,imsi->identity_digit7,imsi->identity_digit8,
@@ -371,9 +371,9 @@ void eps_mobile_identity_to_xml (eps_mobile_identity_t * epsmobileidentity, xmlT
   } else if (epsmobileidentity->guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
     guti_eps_mobile_identity_t                *guti = &epsmobileidentity->guti;
 
-    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "%x", guti->oddeven);
+    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "0x%x", guti->oddeven);
     XML_WRITE_COMMENT(writer, "type_of_identity = GUTI");
-    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "%x", EPS_MOBILE_IDENTITY_GUTI);
+    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "0x%x", EPS_MOBILE_IDENTITY_GUTI);
     XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_COUNTRY_CODE_ATTR_XML_STR, "%x%x%x",
         guti->mcc_digit1, guti->mcc_digit2, guti->mcc_digit3);
     XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_NETWORK_CODE_ATTR_XML_STR, "%x%x%x",
@@ -385,9 +385,9 @@ void eps_mobile_identity_to_xml (eps_mobile_identity_t * epsmobileidentity, xmlT
   } else if (epsmobileidentity->imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
     imei_eps_mobile_identity_t                *imei = &epsmobileidentity->imei;
 
-    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "%x", imei->oddeven);
+    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "0x%x", imei->oddeven);
     XML_WRITE_COMMENT(writer, "type_of_identity = IMEI");
-    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "%x", MOBILE_IDENTITY_IMEI);
+    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "0x%x", MOBILE_IDENTITY_IMEI);
     XML_WRITE_FORMAT_ELEMENT(writer, TAC_ATTR_XML_STR, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
         imei->identity_digit1, imei->identity_digit2, imei->identity_digit3, imei->identity_digit4,
         imei->identity_digit5, imei->identity_digit6, imei->identity_digit7, imei->identity_digit8,
@@ -405,7 +405,7 @@ NUM_FROM_XML_GENERATE( eps_network_feature_support,      EPS_NETWORK_FEATURE_SUP
 //------------------------------------------------------------------------------
 void eps_network_feature_support_to_xml (eps_network_feature_support_t * epsnetworkfeaturesupport, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, EPS_NETWORK_FEATURE_SUPPORT_IE_XML_STR, "%"PRIx8, *epsnetworkfeaturesupport);
+  XML_WRITE_FORMAT_ELEMENT(writer, EPS_NETWORK_FEATURE_SUPPORT_IE_XML_STR, "0x%"PRIx8, *epsnetworkfeaturesupport);
 }
 
 NUM_FROM_XML_GENERATE( eps_update_result,                EPS_UPDATE_RESULT);
@@ -413,23 +413,23 @@ NUM_FROM_XML_GENERATE( eps_update_result,                EPS_UPDATE_RESULT);
 //------------------------------------------------------------------------------
 void eps_update_result_to_xml (eps_update_result_t * epsupdateresult, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, EPS_UPDATE_RESULT_IE_XML_STR, "%"PRIx8, *epsupdateresult);
+  XML_WRITE_FORMAT_ELEMENT(writer, EPS_UPDATE_RESULT_IE_XML_STR, "0x%"PRIx8, *epsupdateresult);
 }
 //------------------------------------------------------------------------------
 void eps_update_type_to_xml (EpsUpdateType * epsupdatetype, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, EPS_UPDATE_TYPE_IE_XML_STR);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, ACTIVE_FLAG_ATTR_XML_STR, "%x", epsupdatetype->active_flag);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, EPS_UPDATE_TYPE_VALUE_ATTR_XML_STR, "%x", epsupdatetype->eps_update_type_value);
+  XML_WRITE_FORMAT_ATTRIBUTE(writer, ACTIVE_FLAG_ATTR_XML_STR, "0x%x", epsupdatetype->active_flag);
+  XML_WRITE_FORMAT_ATTRIBUTE(writer, EPS_UPDATE_TYPE_VALUE_ATTR_XML_STR, "0x%x", epsupdatetype->eps_update_type_value);
   XML_WRITE_END_ELEMENT(writer);
 }
 //------------------------------------------------------------------------------
 bool esm_message_container_from_xml (
     xmlDocPtr                              xml_doc,
     xmlXPathContextPtr                     xpath_ctx,
-    EsmMessageContainer            esmmessagecontainer)
+    EsmMessageContainer            *esmmessagecontainer)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_NAS);
   bool res = false;
   bstring xpath_expr_mi = bformat("./%s",ESM_MESSAGE_CONTAINER_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_mi);
@@ -445,13 +445,22 @@ bool esm_message_container_from_xml (
         memset(&esm, 0, sizeof(esm));
         // Do not load attribute ESM_MESSAGE_CONTAINER_HEX_DUMP_ATTR_XML_STR now. May be used for check ? ...no
         res = esm_msg_from_xml (xml_doc, xpath_ctx, &esm);
+        if (res) {
+#define ESM_BUFF_1024 1024
+          uint8_t buffer[ESM_BUFF_1024];
+          int rc = esm_msg_encode (&esm, buffer, ESM_BUFF_1024);
+          bdestroy_wrapper(esmmessagecontainer);
+          if ((0 < rc) && (ESM_BUFF_1024 >= rc)) {
+            *esmmessagecontainer = blk2bstr(buffer, rc);
+          }
+        }
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
     xmlXPathFreeObject(xpath_obj_mi);
   }
   bdestroy_wrapper (&xpath_expr_mi);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_NAS, res);
 }
 
 //------------------------------------------------------------------------------
@@ -472,8 +481,8 @@ void esm_message_container_to_xml (EsmMessageContainer esmmessagecontainer, xmlT
 void ksi_and_sequence_number_to_xml (KsiAndSequenceNumber * ksiandsequencenumber, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, KSI_AND_SEQUENCE_NUMBER_IE_XML_STR);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, KSI_ATTR_XML_STR, "%x", ksiandsequencenumber->ksi);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, SEQUENCE_NUMBER_ATTR_XML_STR, "%x", ksiandsequencenumber->sequencenumber);
+  XML_WRITE_FORMAT_ATTRIBUTE(writer, KSI_ATTR_XML_STR, "0x%x", ksiandsequencenumber->ksi);
+  XML_WRITE_FORMAT_ATTRIBUTE(writer, SEQUENCE_NUMBER_ATTR_XML_STR, "0x%x", ksiandsequencenumber->sequencenumber);
   XML_WRITE_END_ELEMENT(writer);
 }
 //------------------------------------------------------------------------------
@@ -523,8 +532,8 @@ bool nas_key_set_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpat
 void nas_key_set_identifier_to_xml (NasKeySetIdentifier * naskeysetidentifier, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, NAS_KEY_SET_IDENTIFIER_IE_XML_STR);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, TSC_ATTR_XML_STR, "%"PRIx8, naskeysetidentifier->tsc);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, NAS_KEY_SET_IDENTIFIER_ATTR_XML_STR, "%"PRIx8, naskeysetidentifier->naskeysetidentifier);
+  XML_WRITE_FORMAT_ATTRIBUTE(writer, TSC_ATTR_XML_STR, "0x%"PRIx8, naskeysetidentifier->tsc);
+  XML_WRITE_FORMAT_ATTRIBUTE(writer, NAS_KEY_SET_IDENTIFIER_ATTR_XML_STR, "0x%"PRIx8, naskeysetidentifier->naskeysetidentifier);
   XML_WRITE_END_ELEMENT(writer);
 }
 //------------------------------------------------------------------------------
@@ -589,8 +598,8 @@ bool nas_security_algorithms_from_xml (
 void nas_security_algorithms_to_xml (NasSecurityAlgorithms * nassecurityalgorithms, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, NAS_SECURITY_ALGORITHMS_IE_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_CYPHERING_ALGORITHM_ATTR_XML_STR, "%"PRIx8, nassecurityalgorithms->typeofcipheringalgorithm);
-  XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM_ATTR_XML_STR, "%"PRIx8, nassecurityalgorithms->typeofintegrityalgorithm);
+  XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_CYPHERING_ALGORITHM_ATTR_XML_STR, "0x%"PRIx8, nassecurityalgorithms->typeofcipheringalgorithm);
+  XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM_ATTR_XML_STR, "0x%"PRIx8, nassecurityalgorithms->typeofintegrityalgorithm);
   XML_WRITE_END_ELEMENT(writer);
 }
 
@@ -607,7 +616,7 @@ bool nonce_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const char
 //------------------------------------------------------------------------------
 void nonce_to_xml (const char * const ie, nonce_t * nonce, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ie, "%"PRIx32, *nonce);
+  XML_WRITE_FORMAT_ELEMENT(writer, ie, "0x%"PRIx32, *nonce);
 }
 
 //------------------------------------------------------------------------------
@@ -615,7 +624,7 @@ NUM_FROM_XML_GENERATE( paging_identity, PAGING_IDENTITY);
 //------------------------------------------------------------------------------
 void paging_identity_to_xml (paging_identity_t * pagingidentity, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, PAGING_IDENTITY_IE_XML_STR, "%x", *pagingidentity);
+  XML_WRITE_FORMAT_ELEMENT(writer, PAGING_IDENTITY_IE_XML_STR, "0x%x", *pagingidentity);
 }
 
 //------------------------------------------------------------------------------
@@ -623,7 +632,7 @@ NUM_FROM_XML_GENERATE( service_type, SERVICE_TYPE);
 //------------------------------------------------------------------------------
 void service_type_to_xml (service_type_t * servicetype, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, SERVICE_TYPE_IE_XML_STR, "%"PRIx8, *servicetype);
+  XML_WRITE_FORMAT_ELEMENT(writer, SERVICE_TYPE_IE_XML_STR, "0x%"PRIx8, *servicetype);
 }
 
 //------------------------------------------------------------------------------
@@ -736,7 +745,7 @@ bool tracking_area_code_from_xml (
       xmlFree(key);
       if (1 == ret) {
         res = true;
-        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s = %"PRIx16"\n",
+        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s = 0x%"PRIx16"\n",
             TRACKING_AREA_CODE_IE_XML_STR, *tac);
       }
     }
@@ -750,7 +759,7 @@ bool tracking_area_code_from_xml (
 //------------------------------------------------------------------------------
 void tracking_area_code_to_xml (const tac_t * const tac, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, TRACKING_AREA_CODE_IE_XML_STR, "%"PRIx16, *tac);
+  XML_WRITE_FORMAT_ELEMENT(writer, TRACKING_AREA_CODE_IE_XML_STR, "0x%"PRIx16, *tac);
 }
 
 //------------------------------------------------------------------------------
@@ -926,14 +935,14 @@ void tracking_area_identity_list_to_xml (tai_list_t * trackingareaidentitylist, 
   for (int i = 0; i < trackingareaidentitylist->numberoflists; i++) {
     if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS == trackingareaidentitylist->partial_tai_list[i].typeoflist) {
       XML_WRITE_START_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_IE_XML_STR);
-      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR, "%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
+      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR, "0x%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
       // LW: number of elements is coded as N-1 (0 -> 1 element, 1 -> 2 elements...), see 3GPP TS 24.301, section 9.9.3.33.1
       XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_IE_XML_STR, "%"PRIu8, trackingareaidentitylist->partial_tai_list[i].numberofelements + 1);
       tracking_area_identity_to_xml(&trackingareaidentitylist->partial_tai_list[i].u.tai_one_plmn_consecutive_tacs, writer);
       XML_WRITE_END_ELEMENT(writer);
     } else  if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == trackingareaidentitylist->partial_tai_list[i].typeoflist) {
       XML_WRITE_START_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_IE_XML_STR);
-      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR, "%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
+      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR, "0x%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
       // LW: number of elements is coded as N-1 (0 -> 1 element, 1 -> 2 elements...), see 3GPP TS 24.301, section 9.9.3.33.1
       XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_IE_XML_STR, "%"PRIu8, trackingareaidentitylist->partial_tai_list[i].numberofelements + 1);
 
@@ -954,7 +963,7 @@ void tracking_area_identity_list_to_xml (tai_list_t * trackingareaidentitylist, 
       XML_WRITE_END_ELEMENT(writer);
     } else if (TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS == trackingareaidentitylist->partial_tai_list[i].typeoflist) {
       XML_WRITE_START_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_IE_XML_STR);
-      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR, "%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
+      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR, "0x%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
       // LW: number of elements is coded as N-1 (0 -> 1 element, 1 -> 2 elements...), see 3GPP TS 24.301, section 9.9.3.33.1
       XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_IE_XML_STR, "%"PRIu8, trackingareaidentitylist->partial_tai_list[i].numberofelements + 1);
 
@@ -1080,22 +1089,22 @@ bool ue_network_capability_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 void ue_network_capability_to_xml (ue_network_capability_t * uenetworkcapability, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, UE_NETWORK_CAPABILITY_IE_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_EPS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "%"PRIx8, uenetworkcapability->eea);
-  XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_EPS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "%"PRIx8, uenetworkcapability->eia);
+  XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_EPS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->eea);
+  XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_EPS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->eia);
 
   if (uenetworkcapability->umts_present) {
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_UMTS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "%"PRIx8,uenetworkcapability->uea);
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_UMTS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "%"PRIx8, uenetworkcapability->uia);
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_UCS2_SUPPORT_ATTR_XML_STR, "%"PRIx8, uenetworkcapability->ucs2);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_UMTS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8,uenetworkcapability->uea);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_UMTS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->uia);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_UCS2_SUPPORT_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->ucs2);
   }
 
   if (uenetworkcapability->misc_present) {
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_SPARE_ATTR_XML_STR, "%"PRIx8, uenetworkcapability->spare);
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_NF_ATTR_XML_STR, "%"PRIx8, uenetworkcapability->nf);
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_1xSRVCC_ATTR_XML_STR, "%"PRIx8, uenetworkcapability->srvcc);
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_LOCATION_SERVICES_ATTR_XML_STR, "%"PRIx8, uenetworkcapability->lcs);
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_LTE_POSITIONING_PROTOCOL_ATTR_XML_STR, "%"PRIx8, uenetworkcapability->lpp);
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_ACCESS_CLASS_CONTROL_FOR_CSFB_ATTR_XML_STR, "%"PRIx8, uenetworkcapability->csfb);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_SPARE_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->spare);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_NF_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->nf);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_1xSRVCC_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->srvcc);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_LOCATION_SERVICES_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->lcs);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_LTE_POSITIONING_PROTOCOL_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->lpp);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_ACCESS_CLASS_CONTROL_FOR_CSFB_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->csfb);
   }
   XML_WRITE_END_ELEMENT(writer);
 }
@@ -1106,7 +1115,7 @@ NUM_FROM_XML_GENERATE( ue_radio_capability_information_update_needed, UE_RADIO_C
 void ue_radio_capability_information_update_needed_to_xml (
   ue_radio_capability_information_update_needed_t * ueradiocapabilityinformationupdateneeded, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_IE_XML_STR, "%x", *ueradiocapabilityinformationupdateneeded);
+  XML_WRITE_FORMAT_ELEMENT(writer, UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_IE_XML_STR, "0x%x", *ueradiocapabilityinformationupdateneeded);
 }
 
 //------------------------------------------------------------------------------
@@ -1175,16 +1184,16 @@ bool ue_security_capability_from_xml (
 void ue_security_capability_to_xml (ue_security_capability_t * uesecuritycapability, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, UE_SECURITY_CAPABILITY_IE_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_EPS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "%"PRIx8, uesecuritycapability->eea);
-  XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_EPS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "%"PRIx8, uesecuritycapability->eia);
+  XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_EPS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uesecuritycapability->eea);
+  XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_EPS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uesecuritycapability->eia);
 
   if (uesecuritycapability->umts_present) {
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_UMTS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "%"PRIx8,uesecuritycapability->uea);
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_UMTS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "%"PRIx8, uesecuritycapability->uia);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_UMTS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8,uesecuritycapability->uea);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_UMTS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uesecuritycapability->uia);
   }
 
   if (uesecuritycapability->gprs_present) {
-    XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_GPRS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "%"PRIx8, uesecuritycapability->gea);
+    XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_GPRS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uesecuritycapability->gea);
   }
   XML_WRITE_END_ELEMENT(writer);
 }
@@ -1202,7 +1211,7 @@ NUM_FROM_XML_GENERATE( ss_code, SS_CODE);
 //------------------------------------------------------------------------------
 void ss_code_to_xml (ss_code_t * sscode, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, SS_CODE_IE_XML_STR, "%x", *sscode);
+  XML_WRITE_FORMAT_ELEMENT(writer, SS_CODE_IE_XML_STR, "0x%x", *sscode);
 }
 
 //------------------------------------------------------------------------------
@@ -1210,7 +1219,7 @@ NUM_FROM_XML_GENERATE( lcs_indicator, LCS_INDICATOR);
 //------------------------------------------------------------------------------
 void lcs_indicator_to_xml (lcs_indicator_t * lcsindicator, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, LCS_INDICATOR_IE_XML_STR, "%x", *lcsindicator);
+  XML_WRITE_FORMAT_ELEMENT(writer, LCS_INDICATOR_IE_XML_STR, "0x%x", *lcsindicator);
 }
 
 //------------------------------------------------------------------------------

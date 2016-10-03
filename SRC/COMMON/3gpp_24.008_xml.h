@@ -42,7 +42,7 @@
 //------------------------------------------------------------------------------
 #define CIPHERING_KEY_SEQUENCE_NUMBER_IE_XML_STR      "ciphering_key_sequence_number"
 #define CIPHERING_KEY_SEQUENCE_NUMBER_XML_SCAN_FMT    "%"SCNx8
-#define CIPHERING_KEY_SEQUENCE_NUMBER_XML_FMT         "%"PRIx8
+#define CIPHERING_KEY_SEQUENCE_NUMBER_XML_FMT         "0x%"PRIx8
 
 #define KEY_SEQUENCE_ATTR_XML_STR                     "key_sequence"
 //------------------------------------------------------------------------------

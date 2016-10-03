@@ -384,7 +384,7 @@ emm_proc_attach_request (
        * T3450 shall be restarted if an ATTACH COMPLETE message is expected. In that case, the retransmission
        * counter related to T3450 is not incremented.
        */
-      _emm_attach_accept(emm_ctx, &emm_ctx->emm_specific_proc_data->arg.u.attach_data);
+      _emm_attach_accept(emm_ctx, &emm_ctx->specific_proc->arg.u.attach_data);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
 

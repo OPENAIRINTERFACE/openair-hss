@@ -83,7 +83,7 @@ NUM_FROM_XML_GENERATE( tmsi , TMSI );
 //------------------------------------------------------------------------------
 void tmsi_to_xml (const tmsi_t * const tmsi, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, TMSI_IE_XML_STR, "%08"PRIx32, *tmsi);
+  XML_WRITE_FORMAT_ELEMENT(writer, TMSI_IE_XML_STR, "0x%08"PRIx32, *tmsi);
 }
 
 //------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ bool m_tmsi_from_xml (
 //------------------------------------------------------------------------------
 void m_tmsi_to_xml (const tmsi_t * const m_tmsi, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, M_TMSI_IE_XML_STR, "%"PRIx32, *m_tmsi);
+  XML_WRITE_FORMAT_ELEMENT(writer, M_TMSI_IE_XML_STR, "0x%"PRIx32, *m_tmsi);
 }
 
 //------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ NUM_FROM_XML_GENERATE( mme_code , MME_CODE );
 //------------------------------------------------------------------------------
 void mme_code_to_xml (const mme_code_t * const mme_code, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, MME_CODE_IE_XML_STR, "%"PRIx8, *mme_code);
+  XML_WRITE_FORMAT_ELEMENT(writer, MME_CODE_IE_XML_STR, "0x%"PRIx8, *mme_code);
 }
 
 //------------------------------------------------------------------------------
@@ -122,7 +122,7 @@ NUM_FROM_XML_GENERATE( mme_gid , MME_GID );
 //------------------------------------------------------------------------------
 void mme_gid_to_xml (const mme_gid_t * const mme_gid, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, MME_GID_IE_XML_STR, "%"PRIx16, *mme_gid);
+  XML_WRITE_FORMAT_ELEMENT(writer, MME_GID_IE_XML_STR, "0x%"PRIx16, *mme_gid);
 }
 
 //------------------------------------------------------------------------------

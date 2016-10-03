@@ -107,6 +107,7 @@ int emm_proc_common_initialize (
     emm_common_data->ll_failure    = _ll_failure;
     emm_common_data->non_delivered = _non_delivered;
     emm_common_data->abort         = _abort;
+    emm_common_data->cleanup       = false;
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
@@ -139,11 +140,12 @@ emm_proc_common_success (emm_common_data_t **emm_common_data)
   if (*emm_common_data ) {
     emm_callback = (*emm_common_data)->success;
 
+    (*emm_common_data)->cleanup = true;
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     }
-
+    // kind of garbage collector
     emm_common_cleanup (emm_common_data);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -176,6 +178,7 @@ emm_proc_common_reject (emm_common_data_t **emm_common_data)
   if (*emm_common_data ) {
     emm_callback = (*emm_common_data)->reject;
 
+    (*emm_common_data)->cleanup = true;
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
@@ -196,6 +199,7 @@ int emm_proc_common_failure (emm_common_data_t **emm_common_data)
   if (*emm_common_data ) {
     emm_callback = (*emm_common_data)->failure;
 
+    (*emm_common_data)->cleanup = true;
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
@@ -235,6 +239,7 @@ emm_proc_common_ll_failure (emm_common_data_t **emm_common_data)
   if (*emm_common_data) {
     emm_callback = (*emm_common_data)->ll_failure;
 
+    (*emm_common_data)->cleanup = true;
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
@@ -274,6 +279,7 @@ emm_proc_common_non_delivered (emm_common_data_t **emm_common_data)
   if (*emm_common_data) {
     emm_callback = (*emm_common_data)->non_delivered;
 
+    (*emm_common_data)->cleanup = true;
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
@@ -312,6 +318,7 @@ emm_proc_common_abort (emm_common_data_t **emm_common_data)
   if (*emm_common_data) {
     emm_callback = (*emm_common_data)->abort;
 
+    (*emm_common_data)->cleanup = true;
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
@@ -347,17 +354,30 @@ void emm_common_cleanup (emm_common_data_t **emm_common_data)
 {
 
   if (*emm_common_data) {
-    // nothing to do for all emm_common_arg_t
-    /*switch (emm_common_data->type) {
-    case EMM_COMMON_PROC_TYPE_AUTHENTICATION:
-    case EMM_COMMON_PROC_TYPE_IDENTIFICATION:
-    case EMM_COMMON_PROC_TYPE_SECURITY_MODE_CONTROL:
-    case EMM_COMMON_PROC_TYPE_GUTI_REALLOCATION:
-    case EMM_COMMON_PROC_TYPE_INFORMATION:
-    default:
-      ;
-    }*/
-    free_wrapper((void**)emm_common_data);
+    if ((*emm_common_data)->cleanup) {
+      emm_common_proc_type_t  type = (*emm_common_data)->type;
+      free_wrapper((void**)emm_common_data);
+      // nothing to do for all emm_common_arg_t
+      switch (type) {
+      case EMM_COMMON_PROC_TYPE_AUTHENTICATION:
+        OAILOG_TRACE (LOG_NAS_EMM, "common procedure AUTHENTICATION cleaned\n");
+        break;
+      case EMM_COMMON_PROC_TYPE_IDENTIFICATION:
+        OAILOG_TRACE (LOG_NAS_EMM, "common procedure IDENTIFICATION cleaned\n");
+        break;
+      case EMM_COMMON_PROC_TYPE_SECURITY_MODE_CONTROL:
+        OAILOG_TRACE (LOG_NAS_EMM, "common procedure SECURITY_MODE_CONTROL cleaned\n");
+        break;
+      case EMM_COMMON_PROC_TYPE_GUTI_REALLOCATION:
+        OAILOG_TRACE (LOG_NAS_EMM, "common procedure GUTI_REALLOCATION cleaned\n");
+        break;
+      case EMM_COMMON_PROC_TYPE_INFORMATION:
+        OAILOG_TRACE (LOG_NAS_EMM, "common procedure INFORMATION cleaned\n");
+        break;
+     default:
+       ;
+      }
+    }
   }
 }
 

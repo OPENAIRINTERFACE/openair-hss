@@ -27,6 +27,8 @@
 #include <string.h>
 
 #include "bstrlib.h"
+#include <libxml/xmlwriter.h>
+#include <libxml/xpath.h>
 
 #include "log.h"
 #include "msc.h"
@@ -39,6 +41,7 @@
 #include "nas_proc.h"
 #include "emm_main.h"
 #include "nas_timer.h"
+#include "xml_msg_dump_itti.h"
 
 static void nas_exit(void);
 
@@ -70,7 +73,8 @@ static void *nas_intertask_interface (void *args_p)
       break;
 
     case NAS_UPLINK_DATA_IND:{
-        nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id,
+      XML_MSG_DUMP_ITTI_NAS_UPLINK_DATA_IND(&NAS_UL_DATA_IND (received_message_p), TASK_S1AP, TASK_NAS_MME, NULL);
+      nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id,
             NAS_UL_DATA_IND (received_message_p).tai,
             NAS_UL_DATA_IND (received_message_p).cgi,
             &NAS_UL_DATA_IND (received_message_p).nas_msg);

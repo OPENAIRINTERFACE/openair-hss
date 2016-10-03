@@ -585,9 +585,11 @@ void log_stream_hex(
   AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
   if (messageP) {
     log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "hex stream ");
-    rv = bformata(message->bstr, "%s (%ld bytes):", messageP, sizeP);
+    if (!message) return;
+    rv = bformata(message->bstr, "%s", messageP);
   } else {
-    log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "(%ld bytes):", sizeP);
+    log_message_start(thread_ctxt, log_levelP, protoP, &message, source_fileP, line_numP, "hex stream (%ld bytes):", sizeP);
+    if (!message) return;
   }
 
   if ((streamP) && (message)) {

@@ -47,7 +47,7 @@ void imsi_to_xml (const imsi_t * const imsi, xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
 #define TMSI_IE_XML_STR                "tmsi"
 #define TMSI_XML_SCAN_FMT              "%"SCNx32
-#define TMSI_XML_FMT                   "%"PRIx32
+#define TMSI_XML_FMT                   "0x%"PRIx32
 
 NUM_FROM_XML_PROTOTYPE(tmsi);
 void tmsi_to_xml (const tmsi_t * const tmsi, xmlTextWriterPtr writer);
@@ -59,13 +59,13 @@ void tmsi_to_xml (const tmsi_t * const tmsi, xmlTextWriterPtr writer);
 #define GUMMEI_IE_XML_STR                "gummei"
 #define MME_GID_IE_XML_STR               "mme_group_identifier"
 #define MME_GID_XML_SCAN_FMT             "%"SCNx16
-#define MME_GID_XML_FMT                  "%"PRIx16
+#define MME_GID_XML_FMT                  "0x%"PRIx16
 #define MME_CODE_IE_XML_STR              "mme_code"
 #define MME_CODE_XML_SCAN_FMT            "%"SCNx8
-#define MME_CODE_XML_FMT                 "%"PRIx8
+#define MME_CODE_XML_FMT                 "0x%"PRIx8
 #define M_TMSI_IE_XML_STR                "m_tmsi"
 #define M_TMSI_XML_SCAN_FMT              "%"SCNx32
-#define M_TMSI_XML_FMT                   "%"PRIx32
+#define M_TMSI_XML_FMT                   "0x%"PRIx32
 
 bool m_tmsi_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, tmsi_t * const m_tmsi);
 void m_tmsi_to_xml (const tmsi_t * const m_tmsi, xmlTextWriterPtr writer);

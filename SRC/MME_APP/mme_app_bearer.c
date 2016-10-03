@@ -52,6 +52,7 @@
 #include "common_defs.h"
 #include "gcc_diag.h"
 #include "mme_app_itti_messaging.h"
+#include "xml_msg_dump_itti.h"
 
 
 //------------------------------------------------------------------------------
@@ -422,6 +423,8 @@ mme_app_handle_initial_ue_message (
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP\n");
+  XML_MSG_DUMP_ITTI_MME_APP_INITIAL_UE_MESSAGE(initial_pP, TASK_S1AP, TASK_MME_APP, NULL);
+
   if (INVALID_MME_UE_S1AP_ID != initial_pP->mme_ue_s1ap_id) {
     ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_pP->mme_ue_s1ap_id);
   }

@@ -110,8 +110,8 @@ EmmCommonProcedureInitiated (
       //tricky:
       if (emm_ctx->common_proc) { // assume cleaned if terminated
         rc = emm_proc_common_abort (&emm_ctx->common_proc);
-      } else if (emm_ctx->emm_specific_proc_data) {
-        rc = emm_proc_specific_abort (emm_ctx->emm_specific_proc_data);
+      } else if (emm_ctx->specific_proc) {
+        rc = emm_proc_specific_abort (&emm_ctx->specific_proc);
       }
     }
     break;
@@ -126,6 +126,7 @@ EmmCommonProcedureInitiated (
     } else {
       rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
     }
+    OAILOG_TRACE (LOG_NAS_EMM, "rc=%d, emm_ctx=%p, common_proc=%p\n", rc, emm_ctx, emm_ctx->common_proc);
 
     if ((rc != RETURNerror) && (emm_ctx) && (emm_ctx->common_proc)) {
       rc = emm_proc_common_success (&emm_ctx->common_proc);

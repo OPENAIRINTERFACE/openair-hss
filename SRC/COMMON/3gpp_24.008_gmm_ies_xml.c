@@ -68,7 +68,7 @@ bool tmsi_status_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, tmsi
 //------------------------------------------------------------------------------
 void tmsi_status_to_xml (const tmsi_status_t * const tmsistatus, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, TMSI_STATUS_IE_XML_STR, "%"PRIx8, *tmsistatus);
+  XML_WRITE_FORMAT_ELEMENT(writer, TMSI_STATUS_IE_XML_STR, "0x%"PRIx8, *tmsistatus);
 }
 
 //------------------------------------------------------------------------------
@@ -126,10 +126,10 @@ bool drx_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, dr
 void drx_parameter_to_xml (const drx_parameter_t * const drxparameter, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, DRX_PARAMETER_IE_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, SPLIT_PG_CYCLE_CODE_ATTR_XML_STR, "%"PRIu8, drxparameter->splitpgcyclecode);
-  XML_WRITE_FORMAT_ELEMENT(writer, CN_SPECIFIC_DRX_CYCLE_LENGTH_COEFFICIENT_AND_DRX_VALUE_FOR_S1_MODE_ATTR_XML_STR, "%"PRIu8, drxparameter->cnspecificdrxcyclelengthcoefficientanddrxvaluefors1mode);
-  XML_WRITE_FORMAT_ELEMENT(writer, SPLIT_ON_CCCH_ATTR_XML_STR, "%"PRIu8, drxparameter->splitonccch);
-  XML_WRITE_FORMAT_ELEMENT(writer, NON_DRX_TIMER_ATTR_XML_STR, "%"PRIu8, drxparameter->nondrxtimer);
+  XML_WRITE_FORMAT_ELEMENT(writer, SPLIT_PG_CYCLE_CODE_ATTR_XML_STR, "0x%"PRIx8, drxparameter->splitpgcyclecode);
+  XML_WRITE_FORMAT_ELEMENT(writer, CN_SPECIFIC_DRX_CYCLE_LENGTH_COEFFICIENT_AND_DRX_VALUE_FOR_S1_MODE_ATTR_XML_STR, "0x%"PRIx8, drxparameter->cnspecificdrxcyclelengthcoefficientanddrxvaluefors1mode);
+  XML_WRITE_FORMAT_ELEMENT(writer, SPLIT_ON_CCCH_ATTR_XML_STR, "0x%"PRIx8, drxparameter->splitonccch);
+  XML_WRITE_FORMAT_ELEMENT(writer, NON_DRX_TIMER_ATTR_XML_STR, "0x%"PRIx8, drxparameter->nondrxtimer);
   XML_WRITE_END_ELEMENT(writer);
 }
 
@@ -149,7 +149,7 @@ bool p_tmsi_signature_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx,
 
 void p_tmsi_signature_to_xml ( const p_tmsi_signature_t * const ptmsisignature, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, P_TMSI_SIGNATURE_IE_XML_STR, "%"PRIx32, *ptmsisignature);
+  XML_WRITE_FORMAT_ELEMENT(writer, P_TMSI_SIGNATURE_IE_XML_STR, "0x%"PRIx32, *ptmsisignature);
 }
 
 
@@ -340,24 +340,24 @@ void ms_network_capability_to_xml (const ms_network_capability_t  * const msnetw
 {
 
   XML_WRITE_START_ELEMENT(writer, MS_NETWORK_CAPABILITY_IE_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, GEA1_BITS_ATTR_XML_STR, "%x", msnetworkcapability->gea1);
-  XML_WRITE_FORMAT_ELEMENT(writer, SM_CAPABILITIES_VIA_DEDICATED_CHANNELS_ATTR_XML_STR, "%x", msnetworkcapability->smdc);
-  XML_WRITE_FORMAT_ELEMENT(writer, SM_CAPABILITIES_VIA_GPRS_CHANNELS_ATTR_XML_STR, "%x", msnetworkcapability->smgc);
-  XML_WRITE_FORMAT_ELEMENT(writer, UCS2_SUPPORT_ATTR_XML_STR, "%x", msnetworkcapability->ucs2);
-  XML_WRITE_FORMAT_ELEMENT(writer, SS_SCREENING_INDICATOR_ATTR_XML_STR, "%x", msnetworkcapability->sssi);
-  XML_WRITE_FORMAT_ELEMENT(writer, SOLSA_CAPABILITY_ATTR_XML_STR, "%x", msnetworkcapability->solsa);
-  XML_WRITE_FORMAT_ELEMENT(writer, REVISION_LEVEL_INDICATOR_ATTR_XML_STR, "%x", msnetworkcapability->revli);
-  XML_WRITE_FORMAT_ELEMENT(writer, PFC_FEATURE_MODE_ATTR_XML_STR, "%x", msnetworkcapability->pfc);
-  XML_WRITE_FORMAT_ELEMENT(writer, EXTENDED_GEA_BITS_ATTR_XML_STR, "%x", msnetworkcapability->egea);
-  XML_WRITE_FORMAT_ELEMENT(writer, LCS_VA_CAPABILITY_ATTR_XML_STR, "%x", msnetworkcapability->lcs);
-  XML_WRITE_FORMAT_ELEMENT(writer, PS_INTER_RAT_HO_FROM_GERAN_TO_UTRAN_IU_MODE_CAPABILITY_ATTR_XML_STR, "%x", msnetworkcapability->ps_ho_utran);
-  XML_WRITE_FORMAT_ELEMENT(writer, PS_INTER_RAT_HO_FROM_GERAN_TO_E_UTRAN_S1_MODE_CAPABILITY_ATTR_XML_STR, "%x", msnetworkcapability->ps_ho_eutran);
-  XML_WRITE_FORMAT_ELEMENT(writer, EMM_COMBINED_PROCEDURES_CAPABILITY_ATTR_XML_STR, "%x", msnetworkcapability->emm_cpc);
-  XML_WRITE_FORMAT_ELEMENT(writer, ISR_SUPPORT_ATTR_XML_STR, "%x", msnetworkcapability->isr);
-  XML_WRITE_FORMAT_ELEMENT(writer, SRVCC_TO_GERAN_UTRAN_CAPABILITY_ATTR_XML_STR, "%x", msnetworkcapability->srvcc);
-  XML_WRITE_FORMAT_ELEMENT(writer, EPC_CAPABILITY_ATTR_XML_STR, "%x", msnetworkcapability->epc_cap);
-  XML_WRITE_FORMAT_ELEMENT(writer, NF_CAPABILITY_ATTR_XML_STR, "%x", msnetworkcapability->nf_cap);
-  XML_WRITE_FORMAT_ELEMENT(writer, SPARE_BITS_ATTR_XML_STR, "%x", msnetworkcapability->geran_ns);
+  XML_WRITE_FORMAT_ELEMENT(writer, GEA1_BITS_ATTR_XML_STR, "0x%x", msnetworkcapability->gea1);
+  XML_WRITE_FORMAT_ELEMENT(writer, SM_CAPABILITIES_VIA_DEDICATED_CHANNELS_ATTR_XML_STR, "0x%x", msnetworkcapability->smdc);
+  XML_WRITE_FORMAT_ELEMENT(writer, SM_CAPABILITIES_VIA_GPRS_CHANNELS_ATTR_XML_STR, "0x%x", msnetworkcapability->smgc);
+  XML_WRITE_FORMAT_ELEMENT(writer, UCS2_SUPPORT_ATTR_XML_STR, "0x%x", msnetworkcapability->ucs2);
+  XML_WRITE_FORMAT_ELEMENT(writer, SS_SCREENING_INDICATOR_ATTR_XML_STR, "0x%x", msnetworkcapability->sssi);
+  XML_WRITE_FORMAT_ELEMENT(writer, SOLSA_CAPABILITY_ATTR_XML_STR, "0x%x", msnetworkcapability->solsa);
+  XML_WRITE_FORMAT_ELEMENT(writer, REVISION_LEVEL_INDICATOR_ATTR_XML_STR, "0x%x", msnetworkcapability->revli);
+  XML_WRITE_FORMAT_ELEMENT(writer, PFC_FEATURE_MODE_ATTR_XML_STR, "0x%x", msnetworkcapability->pfc);
+  XML_WRITE_FORMAT_ELEMENT(writer, EXTENDED_GEA_BITS_ATTR_XML_STR, "0x%x", msnetworkcapability->egea);
+  XML_WRITE_FORMAT_ELEMENT(writer, LCS_VA_CAPABILITY_ATTR_XML_STR, "0x%x", msnetworkcapability->lcs);
+  XML_WRITE_FORMAT_ELEMENT(writer, PS_INTER_RAT_HO_FROM_GERAN_TO_UTRAN_IU_MODE_CAPABILITY_ATTR_XML_STR, "0x%x", msnetworkcapability->ps_ho_utran);
+  XML_WRITE_FORMAT_ELEMENT(writer, PS_INTER_RAT_HO_FROM_GERAN_TO_E_UTRAN_S1_MODE_CAPABILITY_ATTR_XML_STR, "0x%x", msnetworkcapability->ps_ho_eutran);
+  XML_WRITE_FORMAT_ELEMENT(writer, EMM_COMBINED_PROCEDURES_CAPABILITY_ATTR_XML_STR, "0x%x", msnetworkcapability->emm_cpc);
+  XML_WRITE_FORMAT_ELEMENT(writer, ISR_SUPPORT_ATTR_XML_STR, "0x%x", msnetworkcapability->isr);
+  XML_WRITE_FORMAT_ELEMENT(writer, SRVCC_TO_GERAN_UTRAN_CAPABILITY_ATTR_XML_STR, "0x%x", msnetworkcapability->srvcc);
+  XML_WRITE_FORMAT_ELEMENT(writer, EPC_CAPABILITY_ATTR_XML_STR, "0x%x", msnetworkcapability->epc_cap);
+  XML_WRITE_FORMAT_ELEMENT(writer, NF_CAPABILITY_ATTR_XML_STR, "0x%x", msnetworkcapability->nf_cap);
+  XML_WRITE_FORMAT_ELEMENT(writer, SPARE_BITS_ATTR_XML_STR, "0x%x", msnetworkcapability->geran_ns);
   XML_WRITE_END_ELEMENT(writer);
 }
 
@@ -375,7 +375,7 @@ bool routing_area_code_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx
 //------------------------------------------------------------------------------
 void routing_area_code_to_xml (const routing_area_code_t * const rac, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ROUTING_AREA_CODE_IE_XML_STR, "%"PRIx8, *rac);
+  XML_WRITE_FORMAT_ELEMENT(writer, ROUTING_AREA_CODE_IE_XML_STR, "0x%"PRIx8, *rac);
 }
 
 //------------------------------------------------------------------------------
@@ -452,8 +452,8 @@ void voice_domain_preference_and_ue_usage_setting_to_xml(
     xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IE_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, UE_USAGE_SETTING_ATTR_XML_STR, "%"PRIx8, voicedomainpreferenceandueusagesetting->ue_usage_setting);
-  XML_WRITE_FORMAT_ELEMENT(writer, VOICE_DOMAIN_PREFERENCE_ATTR_XML_STR, "%"PRIx8, voicedomainpreferenceandueusagesetting->voice_domain_for_eutran);
+  XML_WRITE_FORMAT_ELEMENT(writer, UE_USAGE_SETTING_ATTR_XML_STR, "0x%"PRIx8, voicedomainpreferenceandueusagesetting->ue_usage_setting);
+  XML_WRITE_FORMAT_ELEMENT(writer, VOICE_DOMAIN_PREFERENCE_ATTR_XML_STR, "0x%"PRIx8, voicedomainpreferenceandueusagesetting->voice_domain_for_eutran);
   XML_WRITE_END_ELEMENT(writer);
 }
 

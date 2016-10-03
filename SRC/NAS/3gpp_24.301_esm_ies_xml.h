@@ -74,21 +74,21 @@ void eps_quality_of_service_to_xml (EpsQualityOfService * epsqualityofservice, x
 // 9.9.4.4 ESM cause
 #define ESM_CAUSE_IE_XML_STR      "esm_cause"
 #define ESM_CAUSE_XML_SCAN_FMT    "%"SCNx8
-#define ESM_CAUSE_XML_FMT         "%"PRIx8
+#define ESM_CAUSE_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(esm_cause);
 void esm_cause_to_xml (esm_cause_t * esmcause, xmlTextWriterPtr writer);
 
 // 9.9.4.5 ESM information transfer flag
 #define ESM_INFORMATION_TRANSFER_FLAG_IE_XML_STR      "esm_information_transfer_flag"
 #define ESM_INFORMATION_TRANSFER_FLAG_XML_SCAN_FMT    "%"SCNx8
-#define ESM_INFORMATION_TRANSFER_FLAG_XML_FMT         "%"PRIx8
+#define ESM_INFORMATION_TRANSFER_FLAG_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(esm_information_transfer_flag);
 void esm_information_transfer_flag_to_xml (esm_information_transfer_flag_t * esminformationtransferflag, xmlTextWriterPtr writer);
 
 // 9.9.4.6 Linked EPS bearer identity
 #define LINKED_EPS_BEARER_IDENTITY_IE_XML_STR      "linked_eps_bearer_identity"
 #define LINKED_EPS_BEARER_IDENTITY_XML_SCAN_FMT    "%"SCNx8
-#define LINKED_EPS_BEARER_IDENTITY_XML_FMT         "%"PRIx8
+#define LINKED_EPS_BEARER_IDENTITY_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(linked_eps_bearer_identity);
 void linked_eps_bearer_identity_to_xml (linked_eps_bearer_identity_t * linkedepsbeareridentity, xmlTextWriterPtr writer);
 
@@ -129,7 +129,7 @@ void pdn_type_to_xml (pdn_type_t * pdntype, xmlTextWriterPtr writer);
 // See subclause 10.5.7.2 in 3GPP TS 24.008 [13].
 #define RADIO_PRIORITY_IE_XML_STR "radio_priority"
 #define RADIO_PRIORITY_XML_SCAN_FMT    "%"SCNx8
-#define RADIO_PRIORITY_XML_FMT         "%"PRIx8
+#define RADIO_PRIORITY_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(radio_priority);
 void radio_priority_to_xml (radio_priority_t * radio_priority, xmlTextWriterPtr writer);
 
@@ -137,7 +137,7 @@ void radio_priority_to_xml (radio_priority_t * radio_priority, xmlTextWriterPtr 
 // See subclause 10.5.6.17 in 3GPP TS 24.008 [13].
 #define REQUEST_TYPE_IE_XML_STR "request_type"
 #define REQUEST_TYPE_XML_SCAN_FMT    "%"SCNx8
-#define REQUEST_TYPE_XML_FMT         "%"PRIx8
+#define REQUEST_TYPE_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(request_type);
 void request_type_to_xml (request_type_t * requesttype, xmlTextWriterPtr writer);
 

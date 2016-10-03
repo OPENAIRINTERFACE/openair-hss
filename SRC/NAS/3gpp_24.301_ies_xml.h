@@ -52,7 +52,7 @@
 #define SECURITY_HEADER_TYPE_RESERVED3_ATTR_XML_STR                        "security_reserved3"
 
 #define SECURITY_HEADER_TYPE_IE_XML_STR         "security_header_type"
-#define SECURITY_HEADER_TYPE_XML_FMT            "%06"PRIX8
+#define SECURITY_HEADER_TYPE_XML_FMT            "0x%06"PRIX8
 #define SECURITY_HEADER_TYPE_XML_SCAN_FMT       "%"SCNx8
 NUM_FROM_XML_PROTOTYPE(security_header_type);
 void security_header_type_to_xml ( const security_header_type_t * const security_header_type, xmlTextWriterPtr writer);

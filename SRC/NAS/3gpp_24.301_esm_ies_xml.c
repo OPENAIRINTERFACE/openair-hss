@@ -145,14 +145,14 @@ void apn_aggregate_maximum_bit_rate_to_xml(ApnAggregateMaximumBitRate *apnaggreg
 {
   XML_WRITE_START_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_IE_XML_STR);
   XML_WRITE_COMMENT(writer, "TODO human readable form, even in comment ?")
-  XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_DOWNLINK_ATTR_XML_STR, "%"PRIx8, apnaggregatemaximumbitrate->apnambrfordownlink);
-  XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_UPLINK_ATTR_XML_STR, "%"PRIx8, apnaggregatemaximumbitrate->apnambrforuplink);
+  XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_DOWNLINK_ATTR_XML_STR, "0x%"PRIx8, apnaggregatemaximumbitrate->apnambrfordownlink);
+  XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_UPLINK_ATTR_XML_STR, "0x%"PRIx8, apnaggregatemaximumbitrate->apnambrforuplink);
   if (apnaggregatemaximumbitrate->extensions & APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION_PRESENT) {
-    XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_DOWNLINK_EXTENDED_ATTR_XML_STR, "%"PRIx8, apnaggregatemaximumbitrate->apnambrfordownlink_extended);
-    XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_UPLINK_EXTENDED_ATTR_XML_STR, "%"PRIx8, apnaggregatemaximumbitrate->apnambrforuplink_extended);
+    XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_DOWNLINK_EXTENDED_ATTR_XML_STR, "0x%"PRIx8, apnaggregatemaximumbitrate->apnambrfordownlink_extended);
+    XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_UPLINK_EXTENDED_ATTR_XML_STR, "0x%"PRIx8, apnaggregatemaximumbitrate->apnambrforuplink_extended);
     if (apnaggregatemaximumbitrate->extensions & APN_AGGREGATE_MAXIMUM_BIT_RATE_MAXIMUM_EXTENSION2_PRESENT) {
-      XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_DOWNLINK_EXTENDED2_ATTR_XML_STR, "%"PRIx8, apnaggregatemaximumbitrate->apnambrfordownlink_extended2);
-      XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_UPLINK_EXTENDED2_ATTR_XML_STR, "%"PRIx8, apnaggregatemaximumbitrate->apnambrforuplink_extended2);
+      XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_DOWNLINK_EXTENDED2_ATTR_XML_STR, "0x%"PRIx8, apnaggregatemaximumbitrate->apnambrfordownlink_extended2);
+      XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_UPLINK_EXTENDED2_ATTR_XML_STR, "0x%"PRIx8, apnaggregatemaximumbitrate->apnambrforuplink_extended2);
     }
   }
   XML_WRITE_END_ELEMENT(writer);
@@ -280,20 +280,20 @@ void eps_quality_of_service_to_xml (EpsQualityOfService * epsqualityofservice, x
 {
   XML_WRITE_START_ELEMENT(writer, EPS_QUALITY_OF_SERVICE_IE_XML_STR);
 
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, QCI_ATTR_XML_STR, "%"PRIx8, epsqualityofservice->qci);
+  XML_WRITE_FORMAT_ATTRIBUTE(writer, QCI_ATTR_XML_STR, "0x%"PRIx8, epsqualityofservice->qci);
 
   if (epsqualityofservice->bitRatesPresent) {
-    XML_WRITE_FORMAT_ELEMENT(writer, MAXIMUM_BIT_RATE_FOR_UPLINK_ATTR_XML_STR, "%"PRIx8, epsqualityofservice->bitRates.maxBitRateForUL);
-    XML_WRITE_FORMAT_ELEMENT(writer, MAXIMUM_BIT_RATE_FOR_DOWNLINK_ATTR_XML_STR, "%"PRIx8, epsqualityofservice->bitRates.maxBitRateForDL);
-    XML_WRITE_FORMAT_ELEMENT(writer, GUARANTED_BIT_RATE_FOR_UPLINK_ATTR_XML_STR, "%"PRIx8, epsqualityofservice->bitRates.guarBitRateForUL);
-    XML_WRITE_FORMAT_ELEMENT(writer, GUARANTED_BIT_RATE_FOR_DOWNLINK_ATTR_XML_STR, "%"PRIx8, epsqualityofservice->bitRates.guarBitRateForDL);
+    XML_WRITE_FORMAT_ELEMENT(writer, MAXIMUM_BIT_RATE_FOR_UPLINK_ATTR_XML_STR, "0x%"PRIx8, epsqualityofservice->bitRates.maxBitRateForUL);
+    XML_WRITE_FORMAT_ELEMENT(writer, MAXIMUM_BIT_RATE_FOR_DOWNLINK_ATTR_XML_STR, "0x%"PRIx8, epsqualityofservice->bitRates.maxBitRateForDL);
+    XML_WRITE_FORMAT_ELEMENT(writer, GUARANTED_BIT_RATE_FOR_UPLINK_ATTR_XML_STR, "0x%"PRIx8, epsqualityofservice->bitRates.guarBitRateForUL);
+    XML_WRITE_FORMAT_ELEMENT(writer, GUARANTED_BIT_RATE_FOR_DOWNLINK_ATTR_XML_STR, "0x%"PRIx8, epsqualityofservice->bitRates.guarBitRateForDL);
   }
 
   if (epsqualityofservice->bitRatesExtPresent) {
-    XML_WRITE_FORMAT_ELEMENT(writer, MAXIMUM_BIT_RATE_FOR_UPLINK_EXTENDED_ATTR_XML_STR, "%"PRIx8, epsqualityofservice->bitRatesExt.maxBitRateForUL);
-    XML_WRITE_FORMAT_ELEMENT(writer, MAXIMUM_BIT_RATE_FOR_DOWNLINK_EXTENDED_ATTR_XML_STR, "%"PRIx8, epsqualityofservice->bitRatesExt.maxBitRateForDL);
-    XML_WRITE_FORMAT_ELEMENT(writer, GUARANTED_BIT_RATE_FOR_UPLINK_EXTENDED_ATTR_XML_STR, "%"PRIx8, epsqualityofservice->bitRatesExt.guarBitRateForUL);
-    XML_WRITE_FORMAT_ELEMENT(writer, GUARANTED_BIT_RATE_FOR_DOWNLINK_EXTENDED_ATTR_XML_STR, "%"PRIx8, epsqualityofservice->bitRatesExt.guarBitRateForDL);
+    XML_WRITE_FORMAT_ELEMENT(writer, MAXIMUM_BIT_RATE_FOR_UPLINK_EXTENDED_ATTR_XML_STR, "0x%"PRIx8, epsqualityofservice->bitRatesExt.maxBitRateForUL);
+    XML_WRITE_FORMAT_ELEMENT(writer, MAXIMUM_BIT_RATE_FOR_DOWNLINK_EXTENDED_ATTR_XML_STR, "0x%"PRIx8, epsqualityofservice->bitRatesExt.maxBitRateForDL);
+    XML_WRITE_FORMAT_ELEMENT(writer, GUARANTED_BIT_RATE_FOR_UPLINK_EXTENDED_ATTR_XML_STR, "0x%"PRIx8, epsqualityofservice->bitRatesExt.guarBitRateForUL);
+    XML_WRITE_FORMAT_ELEMENT(writer, GUARANTED_BIT_RATE_FOR_DOWNLINK_EXTENDED_ATTR_XML_STR, "0x%"PRIx8, epsqualityofservice->bitRatesExt.guarBitRateForDL);
   }
 
   XML_WRITE_END_ELEMENT(writer);
@@ -304,7 +304,7 @@ NUM_FROM_XML_GENERATE( esm_cause, ESM_CAUSE);
 //------------------------------------------------------------------------------
 void esm_cause_to_xml (esm_cause_t * esmcause, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ESM_CAUSE_IE_XML_STR, "%"PRIx8, *esmcause);
+  XML_WRITE_FORMAT_ELEMENT(writer, ESM_CAUSE_IE_XML_STR, "0x%"PRIx8, *esmcause);
 }
 
 //------------------------------------------------------------------------------
@@ -312,7 +312,7 @@ NUM_FROM_XML_GENERATE( esm_information_transfer_flag, ESM_INFORMATION_TRANSFER_F
 //------------------------------------------------------------------------------
 void esm_information_transfer_flag_to_xml (esm_information_transfer_flag_t * esminformationtransferflag, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ESM_INFORMATION_TRANSFER_FLAG_IE_XML_STR, "%"PRIx8, *esminformationtransferflag);
+  XML_WRITE_FORMAT_ELEMENT(writer, ESM_INFORMATION_TRANSFER_FLAG_IE_XML_STR, "0x%"PRIx8, *esminformationtransferflag);
 }
 
 //------------------------------------------------------------------------------
@@ -320,7 +320,7 @@ NUM_FROM_XML_GENERATE( linked_eps_bearer_identity, LINKED_EPS_BEARER_IDENTITY);
 //------------------------------------------------------------------------------
 void linked_eps_bearer_identity_to_xml (linked_eps_bearer_identity_t * linkedepsbeareridentity, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, LINKED_EPS_BEARER_IDENTITY_IE_XML_STR, "%"PRIx8, *linkedepsbeareridentity);
+  XML_WRITE_FORMAT_ELEMENT(writer, LINKED_EPS_BEARER_IDENTITY_IE_XML_STR, "0x%"PRIx8, *linkedepsbeareridentity);
 }
 
 //------------------------------------------------------------------------------
@@ -384,7 +384,7 @@ void pdn_address_to_xml (PdnAddress * pdnaddress, xmlTextWriterPtr writer)
     XML_WRITE_FORMAT_ATTRIBUTE(writer, PDN_TYPE_VALUE_ATTR_XML_STR, "%s", PDN_TYPE_VALUE_IPV4V6_VAL_XML_STR);
     break;
   default:
-    XML_WRITE_FORMAT_ATTRIBUTE(writer, PDN_TYPE_VALUE_ATTR_XML_STR, "%x", pdnaddress->pdntypevalue);
+    XML_WRITE_FORMAT_ATTRIBUTE(writer, PDN_TYPE_VALUE_ATTR_XML_STR, "0x%x", pdnaddress->pdntypevalue);
   }
   // hexa to ascii
   XML_WRITE_HEX_ELEMENT(writer, PDN_ADDRESS_INFORMATION_ATTR_XML_STR, bdata(pdnaddress->pdnaddressinformation), blength(pdnaddress->pdnaddressinformation));
@@ -438,7 +438,7 @@ void pdn_type_to_xml (pdn_type_t * pdntype, xmlTextWriterPtr writer)
       XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_IE_XML_STR, "%s", PDN_TYPE_UNUSED_VAL_XML_STR);
       break;
     default:
-      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_IE_XML_STR, "%x", *pdntype);
+      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_IE_XML_STR, "0x%x", *pdntype);
     }
   }
 }

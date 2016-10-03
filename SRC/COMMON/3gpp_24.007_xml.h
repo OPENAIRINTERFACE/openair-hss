@@ -33,7 +33,7 @@
 typedef uint8_t sequence_number_t;
 #define SEQUENCE_NUMBER_IE_XML_STR                      "sequence_number"
 #define SEQUENCE_NUMBER_XML_SCAN_FMT                    "%"SCNx8
-#define SEQUENCE_NUMBER_XML_FMT                         "%"PRIx8
+#define SEQUENCE_NUMBER_XML_FMT                         "0x%"PRIx8
 
 bool sequence_number_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, uint8_t * const sn);
 void sequence_number_to_xml(const uint8_t * const sn, xmlTextWriterPtr writer);
@@ -64,7 +64,7 @@ void protocol_discriminator_to_xml(const eps_protocol_discriminator_t * const pd
 #define EBI_IE_XML_STR                              "ebi"
 #define EBI_UNASSIGNED_VAL_XML_STR                  "EBI_UNASSIGNED"
 #define EBI_XML_SCAN_FMT                            "%"SCNx8
-#define EBI_XML_FMT                                 "%"PRIx8
+#define EBI_XML_FMT                                 "0x%"PRIx8
 bool eps_bearer_identity_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, ebi_t * const ebi);
 void eps_bearer_identity_to_xml(const ebi_t * const ebi, xmlTextWriterPtr writer);
 
@@ -75,7 +75,7 @@ void eps_bearer_identity_to_xml(const ebi_t * const ebi, xmlTextWriterPtr writer
 #define PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED_VAL_XML_STR  "PTI_UNASSIGNED"
 #define PROCEDURE_TRANSACTION_IDENTITY_RESERVED_VAL_XML_STR    "PTI_RESERVED"
 #define PTI_XML_SCAN_FMT                                       "%"SCNx8
-#define PTI_XML_FMT                                            "%"PRIx8
+#define PTI_XML_FMT                                            "0x%"PRIx8
 bool procedure_transaction_identity_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, pti_t * const pti);
 void procedure_transaction_identity_to_xml(const pti_t * const pti, xmlTextWriterPtr writer);
 

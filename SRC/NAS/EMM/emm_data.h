@@ -267,7 +267,7 @@ typedef struct emm_context_s {
 #define           IS_EMM_CTXT_VALID_AUTH_VECTOR( eMmCtXtPtR, KsI )        (!!((eMmCtXtPtR)->member_valid_mask & ((EMM_CTXT_MEMBER_AUTH_VECTOR0) << KsI)))
 
   // only one specific procedure running at a given time
-  emm_specific_procedure_data_t         *emm_specific_proc_data;
+  emm_specific_procedure_data_t         *specific_proc;
 } emm_context_t;
 
 

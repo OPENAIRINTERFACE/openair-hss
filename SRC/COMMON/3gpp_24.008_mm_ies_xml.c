@@ -351,7 +351,7 @@ void emergency_number_list_to_xml (const emergency_number_list_t * const emergen
   XML_WRITE_START_ELEMENT(writer, EMERGENCY_NUMBER_LIST_IE_XML_STR);
   while (e) {
     XML_WRITE_START_ELEMENT(writer, EMERGENCY_NUMBER_LIST_ITEM_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, ADD_CI_ATTR_XML_STR, "%x", e->emergencyservicecategoryvalue);
+    XML_WRITE_FORMAT_ELEMENT(writer, ADD_CI_ATTR_XML_STR, "0x%x", e->emergencyservicecategoryvalue);
     uint8_t digits[EMERGENCY_NUMBER_MAX_DIGITS+1];
     for (int i=0; i < EMERGENCY_NUMBER_MAX_DIGITS; i++) {
       if (e->number_digit[i] < 10) {

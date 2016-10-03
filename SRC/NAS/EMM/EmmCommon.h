@@ -170,6 +170,7 @@ typedef struct emm_common_data_s {
   emm_common_arg_t                        common_arg;
   // At the end of the day, we have to be sure of the type of the common_arg
   emm_common_proc_type_t                  type;
+  bool                                    cleanup;
 } emm_common_data_t;
 
 

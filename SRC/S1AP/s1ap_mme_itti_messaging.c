@@ -172,7 +172,6 @@ void s1ap_mme_itti_mme_app_initial_ue_message(
         (9 < MME_APP_INITIAL_UE_MESSAGE(message_p).tai.mnc_digit3) ? ' ': (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.mnc_digit3 + 0x30),
         MME_APP_INITIAL_UE_MESSAGE(message_p).tai.tac,
         MME_APP_INITIAL_UE_MESSAGE(message_p).nas->slen);
-  XML_MSG_DUMP_ITTI_MME_APP_INITIAL_UE_MESSAGE(&MME_APP_INITIAL_UE_MESSAGE (message_p), TASK_S1AP, TASK_MME_APP, NULL);
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }

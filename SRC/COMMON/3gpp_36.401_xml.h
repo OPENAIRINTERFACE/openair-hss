@@ -32,9 +32,9 @@
 
 #define ENB_UE_S1AP_ID_IE_XML_STR         "enb_ue_s1ap_id"
 #define MME_UE_S1AP_ID_IE_XML_STR         "mme_ue_s1ap_id"
-#define ENB_UE_S1AP_ID_XML_FMT            "%06"PRIX32
+#define ENB_UE_S1AP_ID_XML_FMT            "0x%06"PRIX32
 #define ENB_UE_S1AP_ID_XML_SCAN_FMT       "%"SCNx32
-#define MME_UE_S1AP_ID_XML_FMT            "%08"PRIX32
+#define MME_UE_S1AP_ID_XML_FMT            "0x%08"PRIX32
 #define MME_UE_S1AP_ID_XML_SCAN_FMT       "%"SCNx32
 
 #include "xml_load.h"

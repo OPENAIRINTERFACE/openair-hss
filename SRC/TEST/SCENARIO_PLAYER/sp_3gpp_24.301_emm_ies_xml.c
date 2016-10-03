@@ -183,7 +183,6 @@ bool sp_tracking_area_identity_from_xml (
     scenario_player_msg_t * const msg,
     tai_t * const tai)
 {
-#warning "TODO"
   return tracking_area_identity_from_xml(msg->xml_doc, msg->xpath_ctx, tai);
 }
 

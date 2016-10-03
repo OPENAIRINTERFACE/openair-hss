@@ -489,17 +489,17 @@ static int _emm_tracking_area_update (void *args)
   emm_context_t                          *emm_ctx = (emm_context_t *) (args);
   tau_data_t                             *data = (tau_data_t *) calloc (1, sizeof (tau_data_t));
 
-  if (emm_ctx->emm_specific_proc_data) {
-    emm_proc_specific_cleanup(emm_ctx->emm_specific_proc_data);
+  if (emm_ctx->specific_proc) {
+    emm_proc_specific_cleanup(&emm_ctx->specific_proc);
   }
-  emm_ctx->emm_specific_proc_data = (emm_specific_procedure_data_t *) calloc (1, sizeof (*emm_ctx->emm_specific_proc_data));
+  emm_ctx->specific_proc = (emm_specific_procedure_data_t *) calloc (1, sizeof (*emm_ctx->specific_proc));
 
-  if (emm_ctx->emm_specific_proc_data ) {
+  if (emm_ctx->specific_proc ) {
     /*
      * Setup ongoing EMM procedure callback functions
      */
     AssertFatal(0, "TODO Code commented");
-    rc = emm_proc_specific_initialize (emm_ctx, EMM_SPECIFIC_PROC_TYPE_TAU, emm_ctx->emm_specific_proc_data, NULL, NULL, NULL, NULL, NULL, _emm_tracking_area_update_abort);
+    rc = emm_proc_specific_initialize (emm_ctx, EMM_SPECIFIC_PROC_TYPE_TAU, emm_ctx->specific_proc, NULL, NULL, NULL, NULL, NULL, _emm_tracking_area_update_abort);
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions");

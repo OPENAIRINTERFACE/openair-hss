@@ -71,7 +71,7 @@ typedef struct pdn_connectivity_request_msg_tag {
   ebi_t                                                  epsbeareridentity:4;
   pti_t                                                  proceduretransactionidentity;
   message_type_t                                         messagetype;
-  request_type_t                                            requesttype;
+  request_type_t                                         requesttype;
   pdn_type_t                                             pdntype;
   /* Optional fields */
   uint32_t                                               presencemask;

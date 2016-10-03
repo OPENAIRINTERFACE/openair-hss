@@ -50,7 +50,7 @@ bool attach_accept_from_xml (
   res = eps_attach_result_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->epsattachresult);
   if (res) {res = gprs_timer_from_xml (msg->xml_doc, msg->xpath_ctx, GPRS_TIMER_T3412_IE_XML_STR, &attach_accept->t3412value);}
   if (res) {res = tracking_area_identity_list_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->tailist);}
-  if (res) {res = esm_message_container_from_xml (scenario, msg, attach_accept->esmmessagecontainer);}
+  if (res) {res = esm_message_container_from_xml (scenario, msg, &attach_accept->esmmessagecontainer);}
   if (res) {
     res = eps_mobile_identity_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->guti);
     if (res) {

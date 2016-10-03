@@ -168,7 +168,7 @@ void location_area_identification_to_xml (const location_area_identification_t *
       locationareaidentification->mccdigit1, locationareaidentification->mccdigit2, locationareaidentification->mccdigit3);
   XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_NETWORK_CODE_ATTR_XML_STR, "%x%x%x",
       locationareaidentification->mncdigit1, locationareaidentification->mncdigit2, locationareaidentification->mncdigit3);
-  XML_WRITE_FORMAT_ELEMENT(writer, LOCATION_AREA_CODE_ATTR_XML_STR, "%"PRIx16, locationareaidentification->lac);
+  XML_WRITE_FORMAT_ELEMENT(writer, LOCATION_AREA_CODE_ATTR_XML_STR, "0x%"PRIx16, locationareaidentification->lac);
   XML_WRITE_END_ELEMENT(writer);
 }
 
@@ -531,9 +531,9 @@ void mobile_identity_to_xml (const mobile_identity_t * const mobileidentity, xml
 
   if (mobileidentity->imsi.typeofidentity == MOBILE_IDENTITY_IMSI) {
     const imsi_mobile_identity_t                   * const imsi = &mobileidentity->imsi;
-    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "%"PRIx8, imsi->oddeven);
+    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "0x%"PRIx8, imsi->oddeven);
     XML_WRITE_COMMENT(writer, "type_of_identity = IMSI");
-    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "%"PRIx8, MOBILE_IDENTITY_IMSI);
+    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "0x%"PRIx8, MOBILE_IDENTITY_IMSI);
     XML_WRITE_FORMAT_ELEMENT(writer, IMSI_ATTR_XML_STR, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
         imsi->digit1,imsi->digit2,imsi->digit3,imsi->digit4,imsi->digit5,imsi->digit6,imsi->digit7,imsi->digit8,
         imsi->digit9,imsi->digit10,imsi->digit11,imsi->digit12,imsi->digit13,imsi->digit14,imsi->digit15);
@@ -541,21 +541,21 @@ void mobile_identity_to_xml (const mobile_identity_t * const mobileidentity, xml
   } else if (mobileidentity->imei.typeofidentity == MOBILE_IDENTITY_IMEI) {
     const imei_mobile_identity_t                   * const imei = &mobileidentity->imei;
 
-    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "%"PRIx8, imei->oddeven);
+    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "0x%"PRIx8, imei->oddeven);
     XML_WRITE_COMMENT(writer, "type_of_identity = IMEI");
-    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "%"PRIx8, MOBILE_IDENTITY_IMEI);
+    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "0x%"PRIx8, MOBILE_IDENTITY_IMEI);
     XML_WRITE_FORMAT_ELEMENT(writer, TAC_ATTR_XML_STR, "%x%x%x%x%x%x%x%x",
         imei->tac1,imei->tac2,imei->tac3,imei->tac4,imei->tac5,imei->tac6,imei->tac7,imei->tac8);
     XML_WRITE_FORMAT_ELEMENT(writer, SNR_ATTR_XML_STR, "%x%x%x%x%x%x",
         imei->snr1,imei->snr2,imei->snr3,imei->snr4,imei->snr5,imei->snr6);
-    XML_WRITE_FORMAT_ELEMENT(writer, CDSD_ATTR_XML_STR, "%"PRIx8, imei->cdsd);
+    XML_WRITE_FORMAT_ELEMENT(writer, CDSD_ATTR_XML_STR, "0x%"PRIx8, imei->cdsd);
 
   } else if (mobileidentity->imeisv.typeofidentity == MOBILE_IDENTITY_IMEISV) {
     const imeisv_mobile_identity_t                 * const imeisv = &mobileidentity->imeisv;
 
-    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "%"PRIx8, imeisv->oddeven);
+    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "0x%"PRIx8, imeisv->oddeven);
     XML_WRITE_COMMENT(writer, "type_of_identity = IMEISV");
-    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "%"PRIx8, MOBILE_IDENTITY_IMEISV);
+    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "0x%"PRIx8, MOBILE_IDENTITY_IMEISV);
     XML_WRITE_FORMAT_ELEMENT(writer, TAC_ATTR_XML_STR, "%x%x%x%x%x%x%x%x",
         imeisv->tac1,imeisv->tac2,imeisv->tac3,imeisv->tac4,imeisv->tac5,imeisv->tac6,imeisv->tac7,imeisv->tac8);
     XML_WRITE_FORMAT_ELEMENT(writer, SNR_ATTR_XML_STR, "%x%x%x%x%x%x",
@@ -566,21 +566,21 @@ void mobile_identity_to_xml (const mobile_identity_t * const mobileidentity, xml
   } else if (mobileidentity->tmsi.typeofidentity == MOBILE_IDENTITY_TMSI) {
     const tmsi_mobile_identity_t                   * const tmsi = &mobileidentity->tmsi;
 
-    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "%"PRIx8, tmsi->oddeven);
+    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "0x%"PRIx8, tmsi->oddeven);
     XML_WRITE_COMMENT(writer, "type_of_identity = TMSI");
-    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "%"PRIx8, MOBILE_IDENTITY_TMSI);
+    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "0x%"PRIx8, MOBILE_IDENTITY_TMSI);
     XML_WRITE_FORMAT_ELEMENT(writer, TMSI_ATTR_XML_STR, "%02X%02X%02X%02X",
         tmsi->tmsi[0],tmsi->tmsi[1],tmsi->tmsi[2],tmsi->tmsi[3]);
 
   } else if (mobileidentity->tmgi.typeofidentity == MOBILE_IDENTITY_TMGI) {
     const tmgi_mobile_identity_t                   * const tmgi = &mobileidentity->tmgi;
 
-    XML_WRITE_FORMAT_ELEMENT(writer, MBMS_SESSION_ID_INDIC_ATTR_XML_STR, "%"PRIx8, tmgi->mbmssessionidindication);
-    XML_WRITE_FORMAT_ELEMENT(writer, MCC_MNC_INDIC_ATTR_XML_STR, "%"PRIx8, tmgi->mccmncindication);
-    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "%"PRIx8, tmgi->oddeven);
+    XML_WRITE_FORMAT_ELEMENT(writer, MBMS_SESSION_ID_INDIC_ATTR_XML_STR, "0x%"PRIx8, tmgi->mbmssessionidindication);
+    XML_WRITE_FORMAT_ELEMENT(writer, MCC_MNC_INDIC_ATTR_XML_STR, "0x%"PRIx8, tmgi->mccmncindication);
+    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "0x%"PRIx8, tmgi->oddeven);
     XML_WRITE_COMMENT(writer, "type_of_identity = TMGI");
-    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "%"PRIx8, MOBILE_IDENTITY_TMGI);
-    XML_WRITE_FORMAT_ELEMENT(writer, MBMS_SERVICE_ID_ATTR_XML_STR, "%"PRIx32, tmgi->mbmsserviceid);
+    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "0x%"PRIx8, MOBILE_IDENTITY_TMGI);
+    XML_WRITE_FORMAT_ELEMENT(writer, MBMS_SERVICE_ID_ATTR_XML_STR, "0x%"PRIx32, tmgi->mbmsserviceid);
 
     if (tmgi->mccmncindication) {
       XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_COUNTRY_CODE_ATTR_XML_STR, "%x%x%x",
@@ -589,14 +589,14 @@ void mobile_identity_to_xml (const mobile_identity_t * const mobileidentity, xml
           tmgi->mncdigit1, tmgi->mncdigit2, tmgi->mncdigit3);
     }
     if (tmgi->mbmssessionidindication) {
-      XML_WRITE_FORMAT_ELEMENT(writer, MBMS_SESSION_ID_ATTR_XML_STR, "%"PRIx8, tmgi->mbmssessionid);
+      XML_WRITE_FORMAT_ELEMENT(writer, MBMS_SESSION_ID_ATTR_XML_STR, "0x%"PRIx8, tmgi->mbmssessionid);
     }
 
   } else if (mobileidentity->tmgi.typeofidentity == MOBILE_IDENTITY_NOT_AVAILABLE) {
     const no_mobile_identity_t                   * const no = &mobileidentity->no_id;
-    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "%"PRIx8, no->oddeven);
+    XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "0x%"PRIx8, no->oddeven);
     XML_WRITE_COMMENT(writer, "type_of_identity = NO_IDENTITY");
-    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "%"PRIx8, MOBILE_IDENTITY_NOT_AVAILABLE);
+    XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "0x%"PRIx8, MOBILE_IDENTITY_NOT_AVAILABLE);
   } else {
     AssertFatal (0,"Wrong type of mobile identity (%u)\n", mobileidentity->imsi.typeofidentity);
   }
@@ -673,7 +673,7 @@ bool mobile_station_classmark_2_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr 
         bstring xpath_expr = bformat("./%s",VBS_ATTR_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx16, (void*)&vbs, NULL);
         bdestroy_wrapper (&xpath_expr);
-        mobilestationclassmark2->pscapability = vbs;
+        mobilestationclassmark2->vbs = vbs;
       }
       if (res) {
         uint8_t  vgcs = 0;

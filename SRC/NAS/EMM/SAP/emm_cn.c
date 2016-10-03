@@ -326,8 +326,9 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
    */
   /*************************************************************************/
   OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)bdata(msg_pP->apn));
-  AssertFatal(0, "TODO Code commented here");
-  //data_p = (attach_data_t *) emm_ctx_p->common_proc.common_arg->u.args;
+  if ((emm_ctx_p->specific_proc) && (EMM_SPECIFIC_PROC_TYPE_ATTACH == emm_ctx_p->specific_proc->type)) {
+    data_p = (attach_data_t *) &emm_ctx_p->specific_proc->arg.u.attach_data;
+  }
 
   if (data_p) {
     /*

@@ -64,7 +64,6 @@ bool activate_dedicated_eps_bearer_context_request_from_xml (
     activate_dedicated_eps_bearer_context_request_msg * const activate_dedicated_eps_bearer_context_request)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  memset(activate_dedicated_eps_bearer_context_request, 0, sizeof(*activate_dedicated_eps_bearer_context_request));
   bool res = false;
 
   res = linked_eps_bearer_identity_from_xml (xml_doc, xpath_ctx, &activate_dedicated_eps_bearer_context_request->linkedepsbeareridentity, NULL);
@@ -185,7 +184,6 @@ bool activate_default_eps_bearer_context_request_from_xml (
     activate_default_eps_bearer_context_request_msg * activate_default_eps_bearer_context_request)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  memset(activate_default_eps_bearer_context_request, 0, sizeof(*activate_default_eps_bearer_context_request));
   bool res = false;
 
   res = eps_quality_of_service_from_xml (xml_doc, xpath_ctx, &activate_default_eps_bearer_context_request->epsqos);
@@ -299,7 +297,6 @@ bool pdn_connectivity_request_from_xml (
     pdn_connectivity_request_msg * pdn_connectivity_request)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  memset(pdn_connectivity_request, 0, sizeof(*pdn_connectivity_request));
   bool res = false;
 
   res = pdn_type_from_xml (xml_doc, xpath_ctx, &pdn_connectivity_request->pdntype);

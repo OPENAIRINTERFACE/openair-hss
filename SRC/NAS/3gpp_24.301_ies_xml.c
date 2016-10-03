@@ -303,6 +303,6 @@ void message_type_to_xml(const message_type_t * const messagetype, xmlTextWriter
     XML_WRITE_FORMAT_ELEMENT(writer, MESSAGE_TYPE_IE_XML_STR, "%s", ESM_STATUS_VAL_XML_STR);
     break;
   default:
-    XML_WRITE_FORMAT_ELEMENT(writer, MESSAGE_TYPE_IE_XML_STR, "%x", *messagetype);
+    XML_WRITE_FORMAT_ELEMENT(writer, MESSAGE_TYPE_IE_XML_STR, "0x%x", *messagetype);
   }
 }

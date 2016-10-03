@@ -96,7 +96,9 @@ bool protocol_discriminator_from_xml (
   } else  if (!strcasecmp(val, NON_CALL_RELATED_SS_MESSAGE_VAL_XML_STR)) {
     *pd = NON_CALL_RELATED_SS_MESSAGE;
     res = true;
-  } else
+  } else {
+    OAILOG_ERROR (LOG_UTIL, "Unknown protocol discriminator %s\n", val);
+  }
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_UTIL, res);
 }
@@ -200,6 +202,6 @@ bool procedure_transaction_identity_from_xml (
 //------------------------------------------------------------------------------
 void procedure_transaction_identity_to_xml(const pti_t * const pti, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, PTI_IE_XML_STR, "%"PRIx8, *pti);
+  XML_WRITE_FORMAT_ELEMENT(writer, PTI_IE_XML_STR, "0x%"PRIx8, *pti);
 }
 

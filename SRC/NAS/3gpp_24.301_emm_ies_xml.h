@@ -74,14 +74,14 @@
 // 9.9.3.0A Additional update result
 #define ADDITIONAL_UPDATE_RESULT_IE_XML_STR           "additional_update_result"
 #define ADDITIONAL_UPDATE_RESULT_XML_SCAN_FMT         "%"SCNx8
-#define ADDITIONAL_UPDATE_RESULT_XML_FMT              "%"PRIx8
+#define ADDITIONAL_UPDATE_RESULT_XML_FMT              "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE( additional_update_result );
 void additional_update_result_to_xml(additional_update_result_t *additionalupdateresult, xmlTextWriterPtr writer);
 
 // 9.9.3.0B Additional update type
 #define ADDITIONAL_UPDATE_TYPE_IE_XML_STR           "additional_update_type"
 #define ADDITIONAL_UPDATE_TYPE_XML_SCAN_FMT         "%"SCNx8
-#define ADDITIONAL_UPDATE_TYPE_XML_FMT              "%"PRIx8
+#define ADDITIONAL_UPDATE_TYPE_XML_FMT              "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(additional_update_type);
 void additional_update_type_to_xml(additional_update_type_t *additionalupdatetype, xmlTextWriterPtr writer);
 
@@ -103,7 +103,7 @@ void additional_update_type_to_xml(additional_update_type_t *additionalupdatetyp
 // 9.9.3.5 CSFB response
 #define CSFB_RESPONSE_IE_XML_STR           "csfb_response"
 #define CSFB_RESPONSE_XML_SCAN_FMT         "%"SCNx8
-#define CSFB_RESPONSE_XML_FMT              "%"PRIx8
+#define CSFB_RESPONSE_XML_FMT              "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(csfb_response);
 void csfb_response_to_xml(csfb_response_t *csfbresponse, xmlTextWriterPtr writer);
 
@@ -124,21 +124,21 @@ void detach_type_to_xml(detach_type_t *detachtype, xmlTextWriterPtr writer);
 // 9.9.3.9 EMM cause
 #define EMM_CAUSE_IE_XML_STR           "emm_cause"
 #define EMM_CAUSE_XML_SCAN_FMT         "%"SCNx8
-#define EMM_CAUSE_XML_FMT              "%"PRIx8
+#define EMM_CAUSE_XML_FMT              "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(emm_cause);
 void emm_cause_to_xml (emm_cause_t * emmcause, xmlTextWriterPtr writer);
 
 // 9.9.3.10 EPS attach result
 #define EPS_ATTACH_RESULT_IE_XML_STR        "eps_attach_result"
 #define EPS_ATTACH_RESULT_XML_SCAN_FMT      "%"SCNx8
-#define EPS_ATTACH_RESULT_XML_FMT           "%"PRIx8
+#define EPS_ATTACH_RESULT_XML_FMT           "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(eps_attach_result);
 void eps_attach_result_to_xml (eps_attach_result_t * epsattachresult, xmlTextWriterPtr writer);
 
 // 9.9.3.11 EPS attach type
 #define EPS_ATTACH_TYPE_IE_XML_STR        "eps_attach_type"
 #define EPS_ATTACH_TYPE_XML_SCAN_FMT      "%"SCNx8
-#define EPS_ATTACH_TYPE_XML_FMT           "%"PRIx8
+#define EPS_ATTACH_TYPE_XML_FMT           "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(eps_attach_type);
 void eps_attach_type_to_xml (eps_attach_type_t * epsattachtype, xmlTextWriterPtr writer);
 
@@ -153,14 +153,14 @@ void eps_mobile_identity_to_xml (eps_mobile_identity_t * epsmobileidentity, xmlT
 // 9.9.3.12A EPS network feature support
 #define EPS_NETWORK_FEATURE_SUPPORT_IE_XML_STR                     "eps_network_feature_support"
 #define EPS_NETWORK_FEATURE_SUPPORT_XML_SCAN_FMT                   "%"SCNx8
-#define EPS_NETWORK_FEATURE_SUPPORT_XML_FMT                        "%"PRIx8
+#define EPS_NETWORK_FEATURE_SUPPORT_XML_FMT                        "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(eps_network_feature_support);
 void eps_network_feature_support_to_xml (eps_network_feature_support_t * epsnetworkfeaturesupport, xmlTextWriterPtr writer);
 
 // 9.9.3.13 EPS update result
 #define EPS_UPDATE_RESULT_IE_XML_STR                     "eps_update_result"
 #define EPS_UPDATE_RESULT_XML_SCAN_FMT                   "%"SCNx8
-#define EPS_UPDATE_RESULT_XML_FMT                        "%"PRIx8
+#define EPS_UPDATE_RESULT_XML_FMT                        "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(eps_update_result);
 void eps_update_result_to_xml (eps_update_result_t * epsupdateresult, xmlTextWriterPtr writer);
 
@@ -177,7 +177,7 @@ void eps_update_type_to_xml (EpsUpdateType * epsupdatetype, xmlTextWriterPtr wri
 bool esm_message_container_from_xml (
     xmlDocPtr                              xml_doc,
     xmlXPathContextPtr                     xpath_ctx,
-    EsmMessageContainer            esmmessagecontainer);
+    EsmMessageContainer            * esmmessagecontainer);
 void esm_message_container_to_xml (EsmMessageContainer esmmessagecontainer, xmlTextWriterPtr writer);
 
 // 9.9.3.16 GPRS timer
@@ -235,14 +235,14 @@ void nas_security_algorithms_to_xml (NasSecurityAlgorithms * nassecurityalgorith
 #define REPLAYED_NONCE_UE_IE_XML_STR "replayed_nonce_ue"
 #define NONCE_MME_IE_XML_STR         "nonce_mme"
 #define NONCE_XML_SCAN_FMT           "%"SCNx32
-#define NONCE_XML_FMT                "%"PRIx32
+#define NONCE_XML_FMT                "0x%"PRIx32
 bool nonce_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const char * const ie, nonce_t * const nonce);
 void nonce_to_xml (const char * const ie, nonce_t * nonce, xmlTextWriterPtr writer);
 
 // 9.9.3.25A Paging identity
 #define PAGING_IDENTITY_IE_XML_STR      "pagingidentity"
 #define PAGING_IDENTITY_XML_SCAN_FMT    "%"SCNx8
-#define PAGING_IDENTITY_XML_FMT         "%"PRIx8
+#define PAGING_IDENTITY_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(paging_identity);
 void paging_identity_to_xml (paging_identity_t * pagingidentity, xmlTextWriterPtr writer);
 
@@ -252,14 +252,14 @@ void paging_identity_to_xml (paging_identity_t * pagingidentity, xmlTextWriterPt
 // 9.9.3.27 Service type
 #define SERVICE_TYPE_IE_XML_STR      "service_type"
 #define SERVICE_TYPE_XML_SCAN_FMT    "%"SCNx8
-#define SERVICE_TYPE_XML_FMT         "%"PRIx8
+#define SERVICE_TYPE_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(service_type);
 void service_type_to_xml (service_type_t * servicetype, xmlTextWriterPtr writer);
 
 // 9.9.3.28 Short MAC
 #define SHORT_MAC_IE_XML_STR      "short_mac"
 #define SHORT_MAC_XML_SCAN_FMT    "%"SCNx16
-#define SHORT_MAC_XML_FMT         "%"PRIx16
+#define SHORT_MAC_XML_FMT         "0x%"PRIx16
 NUM_FROM_XML_PROTOTYPE(short_mac);
 void short_mac_to_xml (short_mac_t * shortmac, xmlTextWriterPtr writer);
 
@@ -310,7 +310,7 @@ void ue_network_capability_to_xml (ue_network_capability_t * uenetworkcapability
 // 9.9.3.35 UE radio capability information update needed
 #define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_IE_XML_STR      "ue_radio_capability_information_update_needed"
 #define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_XML_SCAN_FMT    "%"SCNx8
-#define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_XML_FMT         "%"PRIx8
+#define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(ue_radio_capability_information_update_needed);
 void ue_radio_capability_information_update_needed_to_xml (ue_radio_capability_information_update_needed_t * ueradiocapabilityinformationupdateneeded, xmlTextWriterPtr writer);
 
@@ -339,14 +339,14 @@ void cli_to_xml (Cli cli, xmlTextWriterPtr writer);
 // 9.9.3.39 SS Code
 #define SS_CODE_IE_XML_STR      "ss_code"
 #define SS_CODE_XML_SCAN_FMT    "%"SCNx8
-#define SS_CODE_XML_FMT         "%"PRIx8
+#define SS_CODE_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(ss_code);
 void ss_code_to_xml (ss_code_t * sscode, xmlTextWriterPtr writer);
 
 // 9.9.3.40 LCS indicator
 #define LCS_INDICATOR_IE_XML_STR      "lcs_indicator"
 #define LCS_INDICATOR_XML_SCAN_FMT    "%"SCNx8
-#define LCS_INDICATOR_XML_FMT         "%"PRIx8
+#define LCS_INDICATOR_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(lcs_indicator);
 void lcs_indicator_to_xml (lcs_indicator_t * lcsindicator, xmlTextWriterPtr writer);
 

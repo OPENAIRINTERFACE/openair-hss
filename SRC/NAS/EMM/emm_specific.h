@@ -111,12 +111,12 @@ int emm_proc_specific_initialize(struct emm_context_s        * const emm_ctx,
                                emm_specific_non_delivered_callback_t non_delivered,
                                emm_specific_abort_callback_t abort);
 
-int emm_proc_specific_success(emm_specific_procedure_data_t *emm_specific_data);
-int emm_proc_specific_reject(emm_specific_procedure_data_t *emm_specific_data);
-int emm_proc_specific_failure(emm_specific_procedure_data_t *emm_specific_data);
-int emm_proc_specific_ll_failure(emm_specific_procedure_data_t *emm_specific_data);
-int emm_proc_specific_non_delivered(emm_specific_procedure_data_t *emm_specific_data);
-int emm_proc_specific_abort(emm_specific_procedure_data_t *emm_specific_data);
-void emm_proc_specific_cleanup (emm_specific_procedure_data_t *emm_specific_data);
+int emm_proc_specific_success(emm_specific_procedure_data_t **emm_specific_data);
+int emm_proc_specific_reject(emm_specific_procedure_data_t **emm_specific_data);
+int emm_proc_specific_failure(emm_specific_procedure_data_t **emm_specific_data);
+int emm_proc_specific_ll_failure(emm_specific_procedure_data_t **emm_specific_data);
+int emm_proc_specific_non_delivered(emm_specific_procedure_data_t **emm_specific_data);
+int emm_proc_specific_abort(emm_specific_procedure_data_t **emm_specific_data);
+void emm_proc_specific_cleanup (emm_specific_procedure_data_t **emm_specific_data);
 
 #endif /* FILE_EMM_SPECIFIC_SEEN*/

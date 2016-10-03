@@ -333,11 +333,11 @@ int emm_proc_authentication_failure (
       emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
       // Do not accept the UE to attach to the network
       rc = _authentication_reject(&emm_ctx->common_proc->common_arg.u.authentication_data);
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-      emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
-      emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx = emm_ctx;
-      rc = emm_sap_send (&emm_sap);
+      //MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+      //emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
+      //emm_sap.u.emm_reg.ue_id = ue_id;
+      //emm_sap.u.emm_reg.ctx = emm_ctx;
+      //rc = emm_sap_send (&emm_sap);
     }
     break;
 
@@ -433,10 +433,10 @@ emm_proc_authentication_complete (
         /*
          * Notify EMM that the authentication procedure failed
          */
-        MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-        emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
-        emm_sap.u.emm_reg.ue_id = ue_id;
-        emm_sap.u.emm_reg.ctx = emm_ctx;
+        //MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+        //emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
+        //emm_sap.u.emm_reg.ue_id = ue_id;
+        //emm_sap.u.emm_reg.ctx = emm_ctx;
       } else {
         plmn_t visited_plmn = {0};
         visited_plmn.mcc_digit1 = emm_ctx->originating_tai.mcc_digit1;
@@ -513,7 +513,7 @@ emm_proc_authentication_complete (
   }
 
   // Release retransmission timer parameters
-  memset(&emm_ctx->common_proc->common_arg, 0, sizeof(emm_ctx->common_proc->common_arg));
+  // memset(&emm_ctx->common_proc->common_arg, 0, sizeof(emm_ctx->common_proc->common_arg));
 
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

@@ -107,7 +107,7 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
       //-------------------------------
       xmlTextWriterPtr xml_text_writer = NULL;
       char             filename[NAME_MAX+9];
-      if (snprintf(filename, sizeof(filename), "/tmp/mme_scenario_player_msg_%06lu_nas_downlink_data_req_dumped.xml", xml_msg_dump_get_seq_uid()) <= 0) {
+      if (snprintf(filename, sizeof(filename), "/tmp/mme_msg_%06lu_%s.xml", xml_msg_dump_get_seq_uid(), ITTI_NAS_DOWNLINK_DATA_REQ_XML_STR) <= 0) {
         scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
         pthread_mutex_unlock(&scenario->lock);
         OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "xmlTextWriterStartDocument\n");
@@ -188,7 +188,7 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
       //-------------------------------
       xmlTextWriterPtr xml_text_writer = NULL;
       char             filename[NAME_MAX+9];
-      if (snprintf(filename, sizeof(filename), "/tmp/mme_scenario_player_msg_%06lu_mme_app_connection_establishment_cnf_dumped.xml", xml_msg_dump_get_seq_uid()) <= 0) {
+      if (snprintf(filename, sizeof(filename), "/tmp/mme_msg_%06lu_%s.xml", xml_msg_dump_get_seq_uid(), ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF_XML_STR) <= 0) {
         scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
         pthread_mutex_unlock(&scenario->lock);
         OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "xmlTextWriterStartDocument\n");

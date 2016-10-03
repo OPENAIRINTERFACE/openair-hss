@@ -71,7 +71,7 @@ bool attach_accept_from_xml (
   res = eps_attach_result_from_xml (xml_doc, xpath_ctx, &attach_accept->epsattachresult, NULL);
   if (res) {res = gprs_timer_from_xml (xml_doc, xpath_ctx, GPRS_TIMER_T3412_IE_XML_STR, &attach_accept->t3412value);}
   if (res) {res = tracking_area_identity_list_from_xml (xml_doc, xpath_ctx, &attach_accept->tailist);}
-  if (res) {res = esm_message_container_from_xml (xml_doc, xpath_ctx, attach_accept->esmmessagecontainer);}
+  if (res) {res = esm_message_container_from_xml (xml_doc, xpath_ctx, &attach_accept->esmmessagecontainer);}
 
   attach_accept->presencemask = 0;
   if (res) {
@@ -202,7 +202,7 @@ bool attach_complete_from_xml (
     attach_complete_msg * const attach_complete)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  bool res =   res = esm_message_container_from_xml (xml_doc, xpath_ctx, attach_complete->esmmessagecontainer);
+  bool res =   res = esm_message_container_from_xml (xml_doc, xpath_ctx, &attach_complete->esmmessagecontainer);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
 }
 
@@ -224,7 +224,7 @@ bool attach_reject_from_xml (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   bool res = false;
 
-  res = esm_message_container_from_xml (xml_doc, xpath_ctx, attach_reject->esmmessagecontainer);
+  res = esm_message_container_from_xml (xml_doc, xpath_ctx, &attach_reject->esmmessagecontainer);
   attach_reject->presencemask = 0;
   if (res) {
     attach_reject->presencemask |= ATTACH_REJECT_ESM_MESSAGE_CONTAINER_PRESENT;
@@ -260,7 +260,7 @@ bool attach_request_from_xml (
   if (res) {res = eps_attach_type_from_xml (xml_doc, xpath_ctx, &attach_request->epsattachtype, NULL);}
   if (res) {res = eps_mobile_identity_from_xml (xml_doc, xpath_ctx, &attach_request->oldgutiorimsi);}
   if (res) {res = ue_network_capability_from_xml (xml_doc, xpath_ctx, &attach_request->uenetworkcapability);}
-  if (res) {res = esm_message_container_from_xml (xml_doc, xpath_ctx, attach_request->esmmessagecontainer);}
+  if (res) {res = esm_message_container_from_xml (xml_doc, xpath_ctx, &attach_request->esmmessagecontainer);}
   attach_request->presencemask = 0;
   if (res) {
     res = p_tmsi_signature_from_xml (xml_doc, xpath_ctx, &attach_request->oldptmsisignature);
@@ -268,10 +268,11 @@ bool attach_request_from_xml (
       attach_request->presencemask |= ATTACH_REQUEST_OLD_PTMSI_SIGNATURE_PRESENT;
     }
 
-    res = eps_mobile_identity_from_xml (xml_doc, xpath_ctx, &attach_request->additionalguti);
-    if (res) {
-      attach_request->presencemask |= ATTACH_REQUEST_ADDITIONAL_GUTI_PRESENT;
-    }
+    // TODO ERROR HERE: do not search with eps_mobile_identity_from_xml
+    //res = eps_mobile_identity_from_xml (xml_doc, xpath_ctx, &attach_request->additionalguti);
+    //if (res) {
+    //  attach_request->presencemask |= ATTACH_REQUEST_ADDITIONAL_GUTI_PRESENT;
+    //}
 
     res = tracking_area_identity_from_xml (xml_doc, xpath_ctx, &attach_request->lastvisitedregisteredtai);
     if (res) {

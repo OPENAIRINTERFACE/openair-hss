@@ -228,9 +228,9 @@ bool nas_pdu_from_xml (
     bstring                    const *bnas_pdu)
 {
   OAILOG_FUNC_IN (LOG_NAS);
-  nas_message_t                           nas_msg = {.security_protected.header = {0},
-                                                     .security_protected.plain.emm.header = {0},
-                                                     .security_protected.plain.esm.header = {0}};
+  nas_message_t                           nas_msg;
+  memset((void*)&nas_msg, 0, sizeof(nas_msg));
+
   if (nas_message_protected_from_xml(xml_doc, xpath_ctx, &nas_msg)) {
     OAILOG_FUNC_RETURN (LOG_NAS, true);
   } else if (nas_message_plain_from_xml(xml_doc, xpath_ctx, &nas_msg.plain)) {
