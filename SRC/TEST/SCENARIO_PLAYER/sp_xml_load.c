@@ -185,6 +185,69 @@ bool sp_xml_load_hex_stream_leaf_tag(
   return false;
 }
 
+//------------------------------------------------------------------------------
+bool sp_xml_load_ascii_stream_leaf_tag(
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    bstring                       xpath_expr,
+    bstring               * const container)
+{
+  char value[1024];
+  bool res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%s", (void*)value, NULL /* should always succeed*/);
+  if (res) {
+    res = false;
+    if ('$' == value[0]) { // TODO add is alpha test
+      char * varname = &value[1];
+      void           *uid = NULL;
+
+      hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, varname, strlen(varname), (void**)&uid);
+      if (HASH_TABLE_OK == rc) {
+        scenario_player_item_t * var_item = NULL;
+        rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);
+        if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {
+          if (var_item->u.var.value.value_bstr) {
+            *container = bstrcpy(var_item->u.var.value.value_bstr);
+          } else {
+            // return a non null container bstring if var not initialized
+            char zero[] = "00";
+            *container = bfromcstr(zero);
+          }
+          res = true;
+        } else {
+          AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", varname);
+        }
+      } else {
+        AssertFatal (0, "Could not find %s var, should have been declared in scenario\n", varname);
+      }
+    } else if ('#' == value[0]) {
+      char * varname = &value[1];
+      void           *uid = NULL;
+
+      hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, varname, strlen(varname), (void**)&uid);
+      if (HASH_TABLE_OK == rc) {
+        scenario_player_item_t * var_item = NULL;
+        rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);
+        if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {
+          res = true;
+          *container = bstrcpy(var_item->u.var.value.value_bstr);
+        } else {
+          AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", varname);
+        }
+      } else {
+        AssertFatal (0, "Could not find %s var, should have been declared in scenario\n", varname);
+      }
+    } else {
+      OAILOG_TRACE (LOG_UTIL, "Found %s=%s\n", bdata(xpath_expr), value);
+      *container = bfromcstr((const char*)value);
+      res = true;
+      return true;
+    }
+    return res;
+  }
+  OAILOG_TRACE (LOG_UTIL, "Warning: No result for searching %s\n", bdata(xpath_expr));
+  return false;
+}
+
 
 
 

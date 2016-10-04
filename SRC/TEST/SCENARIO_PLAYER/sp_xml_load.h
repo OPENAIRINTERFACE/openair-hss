@@ -106,5 +106,11 @@ bool sp_xml_load_hex_stream_leaf_tag(
     scenario_player_msg_t * const msg,
     bstring                       xpath_expr,
     bstring               * const container);
+
+bool sp_xml_load_ascii_stream_leaf_tag(
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    bstring                       xpath_expr,
+    bstring               * const container);
 #endif
 

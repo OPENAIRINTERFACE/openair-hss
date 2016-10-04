@@ -201,6 +201,16 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
         OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error creating the xml writer\n");
       } else {
         xml_msg_dump_itti_mme_app_connection_establishment_cnf(mme_app_connection_establishment_cnf, received_message->ittiMsgHeader.originTaskId, TASK_MME_SCENARIO_PLAYER, xml_text_writer);
+        int rc = xmlTextWriterEndDocument(xml_text_writer);
+        if (0 > rc) {
+          OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error ending Document\n");
+        }
+        xmlFreeTextWriter(xml_text_writer);
+
+        // OLE.... pretty xml
+        char cmd[400];
+        snprintf(cmd, 400, "tmpfile=`mktemp`;xmllint --format %s > $tmpfile; cp $tmpfile %s;rm  $tmpfile", filename, filename);
+        system(cmd);
 
         //-------------------------------
         // Compare (in XML) received message with scenario message
@@ -208,6 +218,10 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
         xmlDoc *doc = xmlReadFile(filename, NULL, 0);
         if (sp_compare_xml_docs(scenario, doc, item->u.msg.xml_doc)) {
           scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+        } else {
+          if (SCENARIO_STATUS_PAUSED == scenario->status) {
+            scenario_set_status(scenario, SCENARIO_STATUS_PLAYING);
+          }
         }
         xmlFreeDoc(doc);
       }
@@ -217,6 +231,10 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
       scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
       OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Pending RX message in scenario is not MME_APP_CONNECTION_ESTABLISHMENT_CNF, scenario failed\n");
     }
+    scenario->last_played_item = item;
+    pthread_mutex_unlock(&scenario->lock);
+    msp_scenario_tick(scenario);
+    return;
   } else {
     OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "No Pending RX message in scenario, MME_APP_CONNECTION_ESTABLISHMENT_CNF discarded\n");
   }
