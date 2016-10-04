@@ -59,7 +59,7 @@ int mme_app_handle_nas_pdn_connectivity_req  ( itti_nas_pdn_connectivity_req_t *
 
 void mme_app_handle_detach_req (const itti_nas_detach_req_t * const detach_req_p);
 
-void mme_app_handle_conn_est_cnf             (const itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP);
+void mme_app_handle_conn_est_cnf             (itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP);
 
 void mme_app_handle_initial_ue_message       (itti_mme_app_initial_ue_message_t * const conn_est_ind_pP);
 

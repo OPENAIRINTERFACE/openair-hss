@@ -154,7 +154,6 @@ bool activate_default_eps_bearer_context_accept_from_xml (
     activate_default_eps_bearer_context_accept_msg * activate_default_eps_bearer_context_accept)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  memset(activate_default_eps_bearer_context_accept, 0, sizeof(*activate_default_eps_bearer_context_accept));
   bool res = false;
   res = protocol_configuration_options_from_xml (xml_doc, xpath_ctx, &activate_default_eps_bearer_context_accept->protocolconfigurationoptions, true);
   activate_default_eps_bearer_context_accept->presencemask = 0;

@@ -139,7 +139,7 @@ bool sp_activate_default_eps_bearer_context_request_from_xml (
 
   res = eps_quality_of_service_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_request->epsqos);
   if (res) {res = access_point_name_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_request->accesspointname);}
-  if (res) {res = pdn_address_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_request->pdnaddress);}
+  if (res) {res = sp_pdn_address_from_xml (scenario, msg, &activate_default_eps_bearer_context_request->pdnaddress);}
 
   if (res) {
     res = linked_ti_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_request->transactionidentifier);

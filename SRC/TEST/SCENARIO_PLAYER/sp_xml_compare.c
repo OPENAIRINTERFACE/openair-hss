@@ -43,6 +43,7 @@
 #include "sp_xml_compare.h"
 #include "sp_common_xml.h"
 
+#define ANY_ATTR_VALUE_XML_STR "ANY"
 
 //------------------------------------------------------------------------------
 static int sp_xml_compare_elements(scenario_t *scenario, xmlNode * received_node, xmlNode * expected_node)
@@ -55,25 +56,35 @@ static int sp_xml_compare_elements(scenario_t *scenario, xmlNode * received_node
     for (received_cur_node = received_node; (received_cur_node) && (expected_cur_node); received_cur_node = received_cur_node->next) {
       if ((received_cur_node->type == XML_ELEMENT_NODE) && (received_cur_node->type == XML_ELEMENT_NODE)) {
         if (!xmlStrEqual(received_cur_node->name, expected_cur_node->name)) {
-          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Node name %s != %s\n",received_cur_node->name, expected_cur_node->name);
+          OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Node name %s != %s\n",received_cur_node->name, expected_cur_node->name);
           res = RETURNerror;
         }
       } else if ((received_cur_node->type == XML_TEXT_NODE) && (expected_cur_node->type == XML_TEXT_NODE)) {
         if ((0 < xmlStrlen(received_cur_node->content)) &&  (0 < xmlStrlen(expected_cur_node->content))) {
           if (!xmlStrEqual(received_cur_node->content, expected_cur_node->content)) {
-            // may be a variable beginning with '$' or '#'
-            if ('$' == expected_cur_node->content[0]) {
+            if (!strcasecmp((const char*)expected_node->content, ANY_ATTR_VALUE_XML_STR)) {
+              res = RETURNok;
+              // may be a variable beginning with '$' or '#'
+            } else if ('$' == expected_cur_node->content[0]) {
               res = sp_compare_string_value_with_var(scenario, (char *)&expected_cur_node->content[1], (char *)received_cur_node->content);
             } else if ('#' == expected_cur_node->content[0]) {
               res = sp_assign_value_to_var(scenario, (char *)&expected_cur_node->content[1], (char *)received_cur_node->content);
             } else {
+              OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Compare received %s/%d vs expected %s/%d failed\n",
+                  received_cur_node->content, xmlStrlen(received_cur_node->content),
+                  expected_cur_node->content, xmlStrlen(expected_cur_node->content));
               res = RETURNerror;
             }
           }
         } else if (xmlStrlen(received_cur_node->content) != xmlStrlen(expected_cur_node->content)) {
+          OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Compare len received %s/%d vs expected %s/%d failed\n",
+              received_cur_node->content, xmlStrlen(received_cur_node->content),
+              expected_cur_node->content, xmlStrlen(expected_cur_node->content));
           res = RETURNerror;
         }
       } else if (received_cur_node->type != expected_cur_node->type) {
+        OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Compare XML nodes types received %d vs expected %d failed\n",
+            received_cur_node->type, expected_cur_node->type);
         res = RETURNerror;
       }
 
@@ -82,6 +93,7 @@ static int sp_xml_compare_elements(scenario_t *scenario, xmlNode * received_node
       expected_cur_node = expected_cur_node->next;
     }
     if ((received_cur_node) || (expected_cur_node)) {
+      OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Compare XML nodes failed: not same number of elements\n");
       res = RETURNerror;
     }
     return res;

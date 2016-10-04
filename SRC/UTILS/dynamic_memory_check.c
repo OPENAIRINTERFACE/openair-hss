@@ -50,6 +50,8 @@ void free_wrapper(void **ptr)
 //------------------------------------------------------------------------------
 void bdestroy_wrapper(bstring *b)
 {
-  bdestroy(*b);
-  *b = NULL;
+  if ((b) && (*b)) {
+    bdestroy(*b);
+    *b = NULL;
+  }
 }

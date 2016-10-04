@@ -345,7 +345,7 @@ mme_app_handle_nas_pdn_connectivity_req (
 //------------------------------------------------------------------------------
 void
 mme_app_handle_conn_est_cnf (
-  const itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP)
+  itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP)
 {
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
@@ -359,7 +359,7 @@ mme_app_handle_conn_est_cnf (
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_CONNECTION_ESTABLISHMENT_CNF Unknown ue %u", nas_conn_est_cnf_pP->ue_id);
     OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for UE %06" PRIX32 "/dec%u\n", nas_conn_est_cnf_pP->ue_id, nas_conn_est_cnf_pP->ue_id);
     // memory leak
-    bdestroy(nas_conn_est_cnf_pP->nas_msg); // nas_conn_est_cnf_pP->nas_msg = NULL;
+    bdestroy_wrapper(&nas_conn_est_cnf_pP->nas_msg);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
@@ -380,6 +380,7 @@ mme_app_handle_conn_est_cnf (
       establishment_cnf_p->gtp_teid[j]                                 = ue_context_p->eps_bearers[i].s_gw_teid;
       if (!j) {
         establishment_cnf_p->nas_pdu[j]                                = nas_conn_est_cnf_pP->nas_msg;
+        nas_conn_est_cnf_pP->nas_msg = NULL;
       }
       j=j+1;
     }
@@ -750,8 +751,7 @@ mme_app_handle_initial_context_setup_rsp (
     } else {
       AssertFatal(0, "TODO IP address %d bytes", blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
     }
-    bdestroy (initial_ctxt_setup_rsp_pP->transport_layer_address[item]);
-    // initial_ctxt_setup_rsp_pP->transport_layer_address[item] = NULL;
+    bdestroy_wrapper (&initial_ctxt_setup_rsp_pP->transport_layer_address[item]);
   }
   s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context = initial_ctxt_setup_rsp_pP->no_of_e_rabs;
 

@@ -48,52 +48,52 @@ bool sp_ms_network_feature_support_from_xml (scenario_t * const scenario, scenar
 //******************************************************************************
 // 10.5.3 Mobility management information elements.
 //******************************************************************************
-//bool authentication_parameter_rand_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, authentication_parameter_rand_t * authenticationparameterrand);
-//bool authentication_parameter_autn_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, authentication_parameter_autn_t * authenticationparameterautn);
-//bool authentication_response_parameter_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, authentication_response_parameter_t * authenticationresponseparameter);
-//bool authentication_failure_parameter_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, authentication_failure_parameter_t * authenticationfailureparameter);
-//bool network_name_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, const char * const ie, network_name_t * const networkname);
-//bool time_zone_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, time_zone_t * const timezone);
-//bool time_zone_and_time_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, time_zone_and_time_t * const timezoneandtime);
-//bool daylight_saving_time_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, daylight_saving_time_t * const daylightsavingtime);
-//bool emergency_number_list_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, emergency_number_list_t * const emergencynumberlist);
+//bool sp_authentication_parameter_rand_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, authentication_parameter_rand_t * authenticationparameterrand);
+//bool sp_authentication_parameter_autn_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, authentication_parameter_autn_t * authenticationparameterautn);
+//bool sp_authentication_response_parameter_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, authentication_response_parameter_t * authenticationresponseparameter);
+//bool sp_authentication_failure_parameter_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, authentication_failure_parameter_t * authenticationfailureparameter);
+//bool sp_network_name_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, const char * const ie, network_name_t * const networkname);
+//bool sp_time_zone_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, time_zone_t * const timezone);
+//bool sp_time_zone_and_time_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, time_zone_and_time_t * const timezoneandtime);
+//bool sp_daylight_saving_time_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, daylight_saving_time_t * const daylightsavingtime);
+//bool sp_emergency_number_list_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, emergency_number_list_t * const emergencynumberlist);
 
 //******************************************************************************
 // 10.5.4 Call control information elements.
 //******************************************************************************
-//bool supported_codec_list_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, supported_codec_list_t * supportedcodeclist);
+//bool sp_supported_codec_list_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, supported_codec_list_t * supportedcodeclist);
 
 //******************************************************************************
 // 10.5.5 GPRS mobility management information elements
 //******************************************************************************
-//bool tmsi_status_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, tmsi_status_t * const tmsistatus);
-//bool drx_parameter_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, drx_parameter_t * const drxparameter);
-//bool p_tmsi_signature_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, p_tmsi_signature_t * ptmsisignature);
-//bool identity_type_2_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, identity_type2_t * const identitytype2);
-//bool imeisv_request_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, imeisv_request_t * const imeisvrequest);
-//bool ms_network_capability_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, ms_network_capability_t * const msnetworkcapability);
-//bool routing_area_code_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, routing_area_code_t * const rac);
-//bool routing_area_identification_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, routing_area_identification_t * const rai);
-//bool voice_domain_preference_and_ue_usage_setting_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg,voice_domain_preference_and_ue_usage_setting_t * const voicedomainpreferenceandueusagesetting);
+//bool sp_tmsi_status_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, tmsi_status_t * const tmsistatus);
+//bool sp_drx_parameter_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, drx_parameter_t * const drxparameter);
+//bool sp_p_tmsi_signature_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, p_tmsi_signature_t * ptmsisignature);
+//bool sp_identity_type_2_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, identity_type2_t * const identitytype2);
+//bool sp_imeisv_request_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, imeisv_request_t * const imeisvrequest);
+//bool sp_ms_network_capability_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, ms_network_capability_t * const msnetworkcapability);
+//bool sp_routing_area_code_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, routing_area_code_t * const rac);
+//bool sp_routing_area_identification_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, routing_area_identification_t * const rai);
+//bool sp_voice_domain_preference_and_ue_usage_setting_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg,voice_domain_preference_and_ue_usage_setting_t * const voicedomainpreferenceandueusagesetting);
 //******************************************************************************
 // 10.5.6 Session management information elements
 //******************************************************************************
-//bool access_point_name_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, access_point_name_t * access_point_name);
-//bool protocol_configuration_options_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, protocol_configuration_options_t * const pco, bool ms2network_direction);
-//bool quality_of_service_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, quality_of_service_t * const qualityofservice);
-//bool linked_ti_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, linked_ti_t * const linkedti);
-//bool llc_service_access_point_identifier_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, llc_service_access_point_identifier_t * const llc_sap_id);
-//bool packet_flow_identifier_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, packet_flow_identifier_t * const packetflowidentifier);
+bool sp_access_point_name_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, access_point_name_t * access_point_name);
+bool sp_protocol_configuration_options_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, protocol_configuration_options_t * const pco, bool ms2network_direction);
+bool sp_quality_of_service_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, quality_of_service_t * const qualityofservice);
+bool sp_linked_ti_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, linked_ti_t * const linkedti);
+bool sp_llc_service_access_point_identifier_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, llc_service_access_point_identifier_t * const llc_sap_id);
+bool sp_packet_flow_identifier_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, packet_flow_identifier_t * const packetflowidentifier);
 //
-//bool packet_filter_content_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, packet_filter_contents_t * const pfc);
-//bool packet_filter_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, packet_filter_t * const packetfilter);
-//bool packet_filter_identifier_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, packet_filter_identifier_t * const packetfilteridentifier);
-//bool traffic_flow_template_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, traffic_flow_template_t * const trafficflowtemplate);
+bool sp_packet_filter_content_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, packet_filter_contents_t * const pfc);
+bool sp_packet_filter_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, packet_filter_t * const packetfilter);
+bool sp_packet_filter_identifier_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, packet_filter_identifier_t * const packetfilteridentifier);
+bool sp_traffic_flow_template_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, traffic_flow_template_t * const trafficflowtemplate);
 
 //******************************************************************************
 // 10.5.7 GPRS Common information elements
 //******************************************************************************
-//bool gprs_timer_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, const char * const ie, gprs_timer_t * const gprstimer);
+//bool sp_gprs_timer_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, const char * const ie, gprs_timer_t * const gprstimer);
 
 #endif /* FILE_SP_3GPP_24_008_XML_SEEN */
 

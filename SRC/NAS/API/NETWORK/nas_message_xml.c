@@ -30,6 +30,7 @@
 #include <libxml/xpath.h>
 #include "bstrlib.h"
 
+#include "assertions.h"
 #include "dynamic_memory_check.h"
 #include "hashtable.h"
 #include "obj_hashtable.h"
@@ -253,6 +254,7 @@ void nas_pdu_to_xml (bstring bnas_pdu, xmlTextWriterPtr writer)
                                                      .security_protected.plain.emm.header = {0},
                                                      .security_protected.plain.esm.header = {0}};
 
+  AssertFatal((bdata(bnas_pdu))&& (0<blength(bnas_pdu)), "No PDU to dump");
   // Decode the header
   size  = nas_message_header_decode (buffer, &nas_msg.header, length, &decode_status, &is_sr);
 
