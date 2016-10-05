@@ -91,15 +91,15 @@
    Timer handlers
 */
 static void                            *_security_t3460_handler (void *);
-static int _security_ll_failure (void *args);
-static int _security_non_delivered (void *args);
+static int _security_ll_failure (emm_context_t * emm_ctx);
+static int _security_non_delivered (emm_context_t * emm_ctx);
 
 /*
    Function executed whenever the ongoing EMM procedure that initiated
    the security mode control procedure is aborted or the maximum value of the
    retransmission timer counter is exceed
 */
-static int                              _security_abort (void *);
+static int                              _security_abort (emm_context_t * emm_ctx);
 static int                              _security_select_algorithms (
   const int ue_eiaP,
   const int ue_eeaP,
@@ -528,31 +528,32 @@ emm_proc_security_mode_reject (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static void                            *
-_security_t3460_handler (
-  void *args)
+static void* _security_t3460_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  security_data_t                        *data = (security_data_t *) (args);
+  emm_context_t * emm_ctx = (emm_context_t *) (args);
 
-  /*
-   * Increment the retransmission counter
-   */
-  data->retransmission_count += 1;
-  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
+  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC)){
+    security_data_t                  *data = &emm_ctx->common_proc->common_arg.u.security_data;
+    /*
+     * Increment the retransmission counter
+     */
+    data->retransmission_count += 1;
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3460 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
 
-  if (data->retransmission_count < SECURITY_COUNTER_MAX) {
-    REQUIREMENT_3GPP_24_301(R10_5_4_3_7_b__1);
-    /*
-     * Send security mode command message to the UE
-     */
-    _security_request (data, false);
-  } else {
-    REQUIREMENT_3GPP_24_301(R10_5_4_3_7_b__2);
-    /*
-     * Abort the security mode control procedure
-     */
-    _security_abort (data);
+    if (data->retransmission_count < SECURITY_COUNTER_MAX) {
+      REQUIREMENT_3GPP_24_301(R10_5_4_3_7_b__1);
+      /*
+       * Send security mode command message to the UE
+       */
+      _security_request (data, false);
+    } else {
+      REQUIREMENT_3GPP_24_301(R10_5_4_3_7_b__2);
+      /*
+       * Abort the security mode control procedure
+       */
+      _security_abort (emm_ctx);
+    }
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
@@ -637,7 +638,7 @@ _security_request (
         /*
          * Start T3460 timer
          */
-        emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, _security_t3460_handler, data);
+        emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, _security_t3460_handler, emm_ctx);
         OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Started Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
         AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to start T3460");
@@ -649,17 +650,18 @@ _security_request (
 }
 
 
-static int _security_ll_failure (void *args)
+static int _security_ll_failure (emm_context_t * emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  if (args) {
-    security_data_t                  *data = (security_data_t *) (args);
+  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC)){
+    security_data_t                  *data = &emm_ctx->common_proc->common_arg.u.security_data;
     REQUIREMENT_3GPP_24_301(R10_5_4_3_7_a);
     emm_sap_t                               emm_sap = {0};
 
     emm_sap.primitive = EMMREG_PROC_ABORT;
-    emm_sap.u.emm_reg.ue_id = data->ue_id;
+    emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
+    emm_sap.u.emm_reg.ctx   = emm_ctx;
     data->notify_failure = true;
     rc = emm_sap_send (&emm_sap);
   }
@@ -667,12 +669,12 @@ static int _security_ll_failure (void *args)
 }
 
 
-static int _security_non_delivered (void *args)
+static int _security_non_delivered (emm_context_t * emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  if (args) {
-    security_data_t                *data = (security_data_t *) (args);
+  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC)){
+    security_data_t                  *data = &emm_ctx->common_proc->common_arg.u.security_data;
     REQUIREMENT_3GPP_24_301(R10_5_4_3_7_e);
     rc = _security_request(data, false);
   }
@@ -694,16 +696,13 @@ static int _security_non_delivered (void *args)
  **      Others:    T3460                                      **
  **                                                                        **
  ***************************************************************************/
-static int
-_security_abort (
-  void *args)
+static int _security_abort (emm_context_t * emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  struct emm_context_s              *emm_ctx = NULL;
   int                                     rc = RETURNerror;
-  security_data_t                        *data = (security_data_t *) (args);
 
-  if (data) {
+  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC)){
+    security_data_t                  *data = &emm_ctx->common_proc->common_arg.u.security_data;
     unsigned int                            ue_id = data->ue_id;
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort security mode control procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
@@ -731,6 +730,7 @@ _security_abort (
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
       emm_sap.u.emm_reg.ue_id = ue_id;
+      emm_sap.u.emm_reg.ctx   = emm_ctx;
       rc = emm_sap_send (&emm_sap);
     }
   }

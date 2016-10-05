@@ -221,9 +221,9 @@ typedef struct emm_as_data_s {
   //                                     * is registered to          */
   bool                   switch_off;  /* true if the UE is switched off   */
   uint8_t                type;        /* Network detach type          */
-#define EMM_AS_DATA_DELIVERED_LOWER_LAYER_FAILURE                  0
-#define EMM_AS_DATA_DELIVERED_TRUE                                 1
-#define EMM_AS_DATA_DELIVERED_LOWER_LAYER_NON_DELIVERY_INDICATION  2
+#define EMM_AS_DATA_DELIVERED_LOWER_LAYER_FAILURE                            0
+#define EMM_AS_DATA_DELIVERED_TRUE                                           1
+#define EMM_AS_DATA_DELIVERED_LOWER_LAYER_NON_DELIVERY_INDICATION_DUE_TO_HO  2
   uint8_t                delivered;   /* Data message delivery indicator  */
 #define EMM_AS_NAS_DATA_ATTACH  0x01  /* Attach complete      */
 #define EMM_AS_NAS_DATA_DETACH  0x02  /* Detach request       */

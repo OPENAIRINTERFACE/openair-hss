@@ -94,7 +94,7 @@ int emm_proc_common_initialize (
   emm_common_reject_callback_t        _reject,
   emm_common_failure_callback_t       _failure,
   emm_common_ll_failure_callback_t    _ll_failure,
-  emm_common_non_delivered_callback_t _non_delivered,
+  emm_common_non_delivered_ho_callback_t _non_delivered_ho,
   emm_common_abort_callback_t         _abort)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -105,7 +105,7 @@ int emm_proc_common_initialize (
     emm_common_data->reject        = _reject;
     emm_common_data->failure       = _failure;
     emm_common_data->ll_failure    = _ll_failure;
-    emm_common_data->non_delivered = _non_delivered;
+    emm_common_data->non_delivered_ho = _non_delivered_ho;
     emm_common_data->abort         = _abort;
     emm_common_data->cleanup       = false;
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
@@ -269,15 +269,15 @@ emm_proc_common_ll_failure (emm_common_data_t **emm_common_data)
  **                                                                        **
  ***************************************************************************/
 int
-emm_proc_common_non_delivered (emm_common_data_t **emm_common_data)
+emm_proc_common_non_delivered_ho (emm_common_data_t **emm_common_data)
 {
-  emm_common_non_delivered_callback_t     emm_callback;
+  emm_common_non_delivered_ho_callback_t     emm_callback;
   int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   if (*emm_common_data) {
-    emm_callback = (*emm_common_data)->non_delivered;
+    emm_callback = (*emm_common_data)->non_delivered_ho;
 
     (*emm_common_data)->cleanup = true;
     if (emm_callback) {

@@ -78,25 +78,25 @@ inline void emm_ctx_unmark_common_procedure_running(emm_context_t * const ctxt, 
 
 inline bool emm_ctx_is_common_procedure_running(emm_context_t * const ctxt, const int proc_id)
 {
-  if (ctxt->common_proc_mask & proc_id) return true;
+  if ((ctxt) && (ctxt->common_proc_mask & proc_id)) return true;
   return false;
 }
 
 
 
-inline void emm_ctx_mark_specific_procedure(emm_context_t * const ctxt, const int proc_id)
+inline void emm_ctx_mark_specific_procedure_running(emm_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_or(&ctxt->specific_proc_mask, proc_id);
 }
 
-inline void emm_ctx_unmark_specific_procedure(emm_context_t * const ctxt, const int proc_id)
+inline void emm_ctx_unmark_specific_procedure_running(emm_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_and(&ctxt->specific_proc_mask, ~proc_id);
 }
 
-inline bool emm_ctx_is_specific_procedure(emm_context_t * const ctxt, const int proc_id)
+inline bool emm_ctx_is_specific_procedure_running(emm_context_t * const ctxt, const int proc_id)
 {
-  if (ctxt->specific_proc_mask & proc_id) return true;
+  if ((ctxt) && (ctxt->specific_proc_mask & proc_id)) return true;
   return false;
 }
 

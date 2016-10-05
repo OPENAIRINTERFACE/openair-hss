@@ -710,7 +710,7 @@ mme_app_handle_create_sess_resp (
 //------------------------------------------------------------------------------
 void
 mme_app_handle_initial_context_setup_rsp (
-  const itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP)
+  itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP)
 {
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;

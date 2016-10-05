@@ -92,6 +92,7 @@ static const char                      *_emm_fsm_event_str[] = {
   "LOWERLAYER_SUCCESS",
   "LOWERLAYER_FAILURE",
   "LOWERLAYER_RELEASE",
+  "LOWERLAYER_NON_DELIVERY",
 };
 
 /* String representation of EMM status */

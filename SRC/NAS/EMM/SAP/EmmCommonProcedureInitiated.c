@@ -187,7 +187,7 @@ EmmCommonProcedureInitiated (
 
   case _EMMREG_LOWERLAYER_NON_DELIVERY:
     if ((emm_ctx) && (emm_ctx->common_proc)) {
-      rc = emm_proc_common_non_delivered (&emm_ctx->common_proc);
+      rc = emm_proc_common_non_delivered_ho (&emm_ctx->common_proc);
     }
     if (rc != RETURNerror) {
       rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);

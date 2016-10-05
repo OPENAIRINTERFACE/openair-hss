@@ -175,6 +175,39 @@ void s1ap_mme_itti_mme_app_initial_ue_message(
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
+
+//------------------------------------------------------------------------------
+static int s1ap_mme_non_delivery_cause_2_nas_data_rej_cause(const S1ap_Cause_t * const cause)
+{
+  switch (cause->present) {
+
+  case  S1ap_Cause_PR_radioNetwork:
+    switch (cause->choice.radioNetwork) {
+      case S1ap_CauseRadioNetwork_handover_cancelled:
+      case S1ap_CauseRadioNetwork_partial_handover :
+      case S1ap_CauseRadioNetwork_successful_handover:
+      case S1ap_CauseRadioNetwork_ho_failure_in_target_EPC_eNB_or_target_system:
+      case S1ap_CauseRadioNetwork_ho_target_not_allowed:
+      case S1ap_CauseRadioNetwork_handover_desirable_for_radio_reason: /// ?
+      case S1ap_CauseRadioNetwork_time_critical_handover:
+      case S1ap_CauseRadioNetwork_resource_optimisation_handover:
+      case S1ap_CauseRadioNetwork_s1_intra_system_handover_triggered:
+      case S1ap_CauseRadioNetwork_s1_inter_system_handover_triggered:
+      case S1ap_CauseRadioNetwork_x2_handover_triggered:
+        return AS_NON_DELIVERED_DUE_HO;
+        break;
+
+      default:
+        return AS_FAILURE;
+    }
+    break;
+
+  default:
+    return AS_FAILURE;
+
+  }
+  return AS_FAILURE;
+}
 //------------------------------------------------------------------------------
 void s1ap_mme_itti_nas_non_delivery_ind(
     const mme_ue_s1ap_id_t ue_id, uint8_t * const nas_msg, const size_t nas_msg_length, const S1ap_Cause_t * const cause)
@@ -186,7 +219,7 @@ void s1ap_mme_itti_nas_non_delivery_ind(
 
   NAS_DL_DATA_REJ(message_p).ue_id               = ue_id;
   /* Mapping between asn1 definition and NAS definition */
-  //NAS_NON_DELIVERY_IND(message_p).as_cause              = cause + 1;
+  NAS_DL_DATA_REJ(message_p).err_code            = s1ap_mme_non_delivery_cause_2_nas_data_rej_cause(cause);
   NAS_DL_DATA_REJ(message_p).nas_msg  = blk2bstr(nas_msg, nas_msg_length);
 
   MSC_LOG_TX_MESSAGE(

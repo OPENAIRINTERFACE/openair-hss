@@ -77,15 +77,15 @@ typedef enum {
  * - The EMM common procedure failed or is rejected
  * - Lower layer failure occured before the EMM common procedure completion
  */
-typedef int (*emm_common_success_callback_t)(void *);
-typedef int (*emm_common_reject_callback_t) (void *);
-typedef int (*emm_common_failure_callback_t) (void *);
-typedef int (*emm_common_ll_failure_callback_t)(void *);
-typedef int (*emm_common_non_delivered_callback_t)(void *);
+typedef int (*emm_common_success_callback_t)(emm_context_t *emm_ctx);
+typedef int (*emm_common_reject_callback_t) (emm_context_t *emm_ctx);
+typedef int (*emm_common_failure_callback_t) (emm_context_t *emm_ctx);
+typedef int (*emm_common_ll_failure_callback_t)(emm_context_t *emm_ctx);
+typedef int (*emm_common_non_delivered_ho_callback_t)(emm_context_t *emm_ctx);
 /* EMM common procedure to be executed when the ongoing EMM procedure is
  * aborted.
  */
-typedef int (*emm_common_abort_callback_t)(void *);
+typedef int (*emm_common_abort_callback_t)(emm_context_t *emm_ctx);
 
 
 /*
@@ -164,7 +164,7 @@ typedef struct emm_common_data_s {
   emm_common_reject_callback_t            reject;
   emm_common_failure_callback_t           failure;
   emm_common_ll_failure_callback_t        ll_failure;
-  emm_common_non_delivered_callback_t     non_delivered;
+  emm_common_non_delivered_ho_callback_t  non_delivered_ho;
   emm_common_abort_callback_t             abort;
 
   emm_common_arg_t                        common_arg;
@@ -190,14 +190,14 @@ int emm_proc_common_initialize(struct emm_context_s        * const emm_ctx,
                                emm_common_reject_callback_t reject,
                                emm_common_failure_callback_t failure,
                                emm_common_ll_failure_callback_t ll_failure,
-                               emm_common_non_delivered_callback_t non_delivered,
+                               emm_common_non_delivered_ho_callback_t non_delivered_ho,
                                emm_common_abort_callback_t abort);
 
 int emm_proc_common_success(emm_common_data_t **emm_common_data);
 int emm_proc_common_reject(emm_common_data_t **emm_common_data);
 int emm_proc_common_failure(emm_common_data_t **emm_common_data);
 int emm_proc_common_ll_failure(emm_common_data_t **emm_common_data);
-int emm_proc_common_non_delivered(emm_common_data_t **emm_common_data);
+int emm_proc_common_non_delivered_ho(emm_common_data_t **emm_common_data);
 int emm_proc_common_abort(emm_common_data_t **emm_common_data);
 
 void *emm_proc_common_get_args(mme_ue_s1ap_id_t ue_id);

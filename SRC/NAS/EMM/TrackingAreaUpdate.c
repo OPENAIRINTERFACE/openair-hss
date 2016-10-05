@@ -96,11 +96,11 @@ int emm_proc_tracking_area_update_request (
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status);
 
-static int _emm_tracking_area_update (void *args);
-static int _emm_tracking_area_update_security (void *args);
-static int _emm_tracking_area_update_reject (void *args);
+static int _emm_tracking_area_update (emm_context_t *emm_ctx);
+static int _emm_tracking_area_update_security (emm_context_t *emm_ctx);
+static int _emm_tracking_area_update_reject (emm_context_t *emm_ctx);
 static int _emm_tracking_area_update_accept (emm_context_t * emm_ctx, tau_data_t * data);
-static int _emm_tracking_area_update_abort (void *args);
+static int _emm_tracking_area_update_abort (emm_context_t *emm_ctx);
 
 
 /****************************************************************************/
@@ -482,11 +482,10 @@ int emm_proc_tracking_area_update_reject (
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
 
-static int _emm_tracking_area_update (void *args)
+static int _emm_tracking_area_update (emm_context_t *emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_context_t                          *emm_ctx = (emm_context_t *) (args);
   tau_data_t                             *data = (tau_data_t *) calloc (1, sizeof (tau_data_t));
 
   if (emm_ctx->specific_proc) {
@@ -499,7 +498,7 @@ static int _emm_tracking_area_update (void *args)
      * Setup ongoing EMM procedure callback functions
      */
     AssertFatal(0, "TODO Code commented");
-    rc = emm_proc_specific_initialize (emm_ctx, EMM_SPECIFIC_PROC_TYPE_TAU, emm_ctx->specific_proc, NULL, NULL, NULL, NULL, NULL, _emm_tracking_area_update_abort);
+    rc = emm_proc_specific_initialize (emm_ctx, EMM_SPECIFIC_PROC_TYPE_TAU, emm_ctx->specific_proc, NULL, NULL, _emm_tracking_area_update_abort);
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions");
@@ -570,7 +569,7 @@ static void *_emm_tau_t3450_handler (void *args)
     /*
      * Abort the attach procedure
      */
-    _emm_tracking_area_update_abort (data);
+    _emm_tracking_area_update_abort (emm_ctx);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
@@ -582,12 +581,10 @@ static void *_emm_tau_t3450_handler (void *args)
      @returns status of operation
 */
 //------------------------------------------------------------------------------
-static int _emm_tracking_area_update_security (
-  void *args)
+static int _emm_tracking_area_update_security (emm_context_t *emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_context_t                          *emm_ctx = (emm_context_t *) (args);
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Setup NAS security (ue_id=" MME_UE_S1AP_ID_FMT ")", emm_ctx->ue_id);
 
@@ -628,12 +625,10 @@ static int _emm_tracking_area_update_security (
      @returns status of operation
 */
 //------------------------------------------------------------------------------
-static int _emm_tracking_area_update_reject (
-  void *args)
+static int _emm_tracking_area_update_reject (emm_context_t *emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_context_t                          *emm_ctx = (emm_context_t *) (args);
 
   if (emm_ctx) {
     emm_sap_t                               emm_sap = {0};
@@ -761,30 +756,23 @@ static int _emm_tracking_area_update_accept (
 }
 
 //------------------------------------------------------------------------------
-static int _emm_tracking_area_update_abort (void *args)
+static int _emm_tracking_area_update_abort (emm_context_t *emm_ctx)
 {
   int                                     rc = RETURNerror;
-  emm_context_t                          *ctx = NULL;
-  tau_data_t                             *data;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  data = (tau_data_t *) (args);
+  if (emm_ctx_is_specific_procedure_running(emm_ctx, EMM_CTXT_SPEC_PROC_TAU)) {
+    //tau_data_t                          *data = &emm_ctx->specific_proc->arg.u.tau_data;
 
-  if (data) {
-    unsigned int                            ue_id = data->ue_id;
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the TAU procedure (ue_id=" MME_UE_S1AP_ID_FMT ")", emm_ctx->ue_id);
 
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the TAU procedure (ue_id=" MME_UE_S1AP_ID_FMT ")", ue_id);
-    ctx = emm_context_get (&_emm_data, ue_id);
-
-    if (ctx) {
-      /*
-       * Stop timer T3450
-       */
-      if (ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
-        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)", ctx->T3450.id);
-        ctx->T3450.id = nas_timer_stop (ctx->T3450.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT " (TAU)", data->ue_id);
-      }
+    /*
+     * Stop timer T3450
+     */
+    if (emm_ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)", emm_ctx->T3450.id);
+      emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT " (TAU)", emm_ctx->ue_id);
     }
 
     /*
@@ -798,8 +786,8 @@ static int _emm_tracking_area_update_abort (void *args)
     emm_sap_t                               emm_sap = {0};
 
     emm_sap.primitive = EMMREG_ATTACH_REJ;
-    emm_sap.u.emm_reg.ue_id = ue_id;
-    emm_sap.u.emm_reg.ctx = ctx;
+    emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
+    emm_sap.u.emm_reg.ctx = emm_ctx;
     rc = emm_sap_send (&emm_sap);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

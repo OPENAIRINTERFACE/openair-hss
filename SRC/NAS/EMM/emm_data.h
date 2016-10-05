@@ -298,9 +298,9 @@ void emm_ctx_unmark_common_procedure_running(emm_context_t * const ctxt, const i
 bool emm_ctx_is_common_procedure_running(emm_context_t * const ctxt, const int proc_id) __attribute__ ((nonnull)) __attribute__ ((flatten));
 
 
-void emm_ctx_mark_specific_procedure(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
-void emm_ctx_unmark_specific_procedure(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
-bool emm_ctx_is_specific_procedure(emm_context_t * const ctxt, const int proc_id) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_mark_specific_procedure_running(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
+void emm_ctx_unmark_specific_procedure_running(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
+bool emm_ctx_is_specific_procedure_running(emm_context_t * const ctxt, const int proc_id) __attribute__ ((nonnull)) __attribute__ ((flatten));
 
 
 void emm_ctx_set_attribute_present(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));

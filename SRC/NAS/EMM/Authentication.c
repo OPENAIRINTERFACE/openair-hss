@@ -94,23 +94,23 @@
 static void *_authentication_t3460_handler (void *);
 
 // Function executed when occurs a lower layer failure
-static int _authentication_ll_failure (void *args);
+static int _authentication_ll_failure (emm_context_t *emm_ctx);
 
 // Function executed when occurs a lower layer non delivered indication
-static int _authentication_non_delivered (void *args);
+static int _authentication_non_delivered_ho (emm_context_t *emm_ctx);
 
 /*
    Function executed whenever the ongoing EMM procedure that initiated
    the authentication procedure is aborted or the maximum value of the
    retransmission timer counter is exceed
 */
-static int _authentication_abort (void *);
+static int _authentication_abort (emm_context_t *emm_ctx);
 
 
 
-static int                              _authentication_check_imsi_5_4_2_5__1 (void * args);
+static int                              _authentication_check_imsi_5_4_2_5__1 (emm_context_t *emm_ctx);
 static int                              _authentication_request (authentication_data_t * data);
-static int                              _authentication_reject (void* args);
+static int                              _authentication_reject (emm_context_t *emm_ctx);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -180,7 +180,7 @@ emm_proc_authentication (
   if (emm_ctx->common_proc ) {
     // Setup ongoing EMM procedure callback functions
     rc = emm_proc_common_initialize (emm_ctx, EMM_COMMON_PROC_TYPE_AUTHENTICATION, emm_ctx->common_proc,
-        success, reject, failure, _authentication_ll_failure, _authentication_non_delivered, _authentication_abort);
+        success, reject, failure, _authentication_ll_failure, _authentication_non_delivered_ho, _authentication_abort);
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
@@ -289,7 +289,7 @@ int emm_proc_authentication_failure (
       AssertFatal (EMM_COMMON_PROC_TYPE_AUTHENTICATION == emm_ctx->common_proc->type,
           "mismatch in common_proc.type = %d, should be EMM_COMMON_PROC_TYPE_AUTHENTICATION=%d", emm_ctx->common_proc->type, EMM_COMMON_PROC_TYPE_AUTHENTICATION);
       REQUIREMENT_3GPP_24_301(R10_5_4_2_7_e__NOTE3);
-      rc = _authentication_reject(&emm_ctx->common_proc->common_arg.u.authentication_data);
+      rc = _authentication_reject(emm_ctx);
     }
     break;
 
@@ -308,7 +308,7 @@ int emm_proc_authentication_failure (
         // Do not accept the UE to attach to the network
         AssertFatal (EMM_COMMON_PROC_TYPE_AUTHENTICATION == emm_ctx->common_proc->type,
             "mismatch in common_proc.type = %d, should be EMM_COMMON_PROC_TYPE_AUTHENTICATION=%d", emm_ctx->common_proc->type, EMM_COMMON_PROC_TYPE_AUTHENTICATION);
-        rc = _authentication_reject(&emm_ctx->common_proc->common_arg.u.authentication_data);
+        rc = _authentication_reject(emm_ctx);
       }
     } else {
       AssertFatal (EMM_COMMON_PROC_TYPE_AUTHENTICATION == emm_ctx->common_proc->type,
@@ -316,7 +316,7 @@ int emm_proc_authentication_failure (
       REQUIREMENT_3GPP_24_301(R10_5_4_2_5__2);
       emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
       // Do not accept the UE to attach to the network
-      rc = _authentication_reject(&emm_ctx->common_proc->common_arg.u.authentication_data);
+      rc = _authentication_reject(emm_ctx);
     }
     break;
 
@@ -332,7 +332,7 @@ int emm_proc_authentication_failure (
       OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT "EMM-PROC  - Failed to initiate identification procedure\n", emm_ctx->ue_id);
       emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
       // Do not accept the UE to attach to the network
-      rc = _authentication_reject(&emm_ctx->common_proc->common_arg.u.authentication_data);
+      rc = _authentication_reject(emm_ctx);
       //MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       //emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
       //emm_sap.u.emm_reg.ue_id = ue_id;
@@ -429,7 +429,7 @@ emm_proc_authentication_complete (
          * * * * contained in the Authentication Response message received from
          * * * * the UE does not match the XRES parameter computed by the network
          */
-        (void)_authentication_reject (&emm_ctx->common_proc->common_arg.u.authentication_data);
+        (void)_authentication_reject (emm_ctx);
         /*
          * Notify EMM that the authentication procedure failed
          */
@@ -500,7 +500,7 @@ emm_proc_authentication_complete (
        * * * * contained in the Authentication Response message received from
        * * * * the UE does not match the XRES parameter computed by the network
        */
-      (void)_authentication_reject (&emm_ctx->common_proc->common_arg.u.authentication_data);
+      (void)_authentication_reject (emm_ctx);
       /*
        * Notify EMM that the authentication procedure failed
        */
@@ -579,6 +579,7 @@ static void  *_authentication_t3460_handler (void *args)
       emm_sap_t                               emm_sap = {0};
       emm_sap.primitive = EMMREG_PROC_ABORT;
       emm_sap.u.emm_reg.ue_id = data->ue_id;
+      //emm_sap.u.emm_reg.ctx   = ;
       data->notify_failure = true;
       rc = emm_sap_send (&emm_sap);
 
@@ -605,31 +606,26 @@ static void  *_authentication_t3460_handler (void *args)
    --------------------------------------------------------------------------
 */
 
-int _authentication_check_imsi_5_4_2_5__1 (void * args) {
+int _authentication_check_imsi_5_4_2_5__1 (emm_context_t *emm_ctx) {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  struct emm_context_s              *emm_ctx = NULL;
-  authentication_data_t                  *data = (authentication_data_t *) (args);
 
-  if (data) {
-    emm_ctx = emm_context_get (&_emm_data, data->ue_id);
-    if (emm_ctx) {
-      REQUIREMENT_3GPP_24_301(R10_5_4_2_5__1);
-      if (IS_EMM_CTXT_VALID_IMSI(emm_ctx)) { // VALID means received in IDENTITY RESPONSE
-        if (emm_ctx->_imsi64 != emm_ctx->saved_imsi64) {
-          plmn_t visited_plmn = {0};
-          visited_plmn.mcc_digit1 = emm_ctx->originating_tai.mcc_digit1;
-          visited_plmn.mcc_digit2 = emm_ctx->originating_tai.mcc_digit2;
-          visited_plmn.mcc_digit3 = emm_ctx->originating_tai.mcc_digit3;
-          visited_plmn.mnc_digit1 = emm_ctx->originating_tai.mnc_digit1;
-          visited_plmn.mnc_digit2 = emm_ctx->originating_tai.mnc_digit2;
-          visited_plmn.mnc_digit3 = emm_ctx->originating_tai.mnc_digit3;
-          nas_itti_auth_info_req (emm_ctx->ue_id, emm_ctx->_imsi64, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, NULL);
-          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-        }
+  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_AUTH)){
+    REQUIREMENT_3GPP_24_301(R10_5_4_2_5__1);
+    if (IS_EMM_CTXT_VALID_IMSI(emm_ctx)) { // VALID means received in IDENTITY RESPONSE
+      if (emm_ctx->_imsi64 != emm_ctx->saved_imsi64) {
+        plmn_t visited_plmn = {0};
+        visited_plmn.mcc_digit1 = emm_ctx->originating_tai.mcc_digit1;
+        visited_plmn.mcc_digit2 = emm_ctx->originating_tai.mcc_digit2;
+        visited_plmn.mcc_digit3 = emm_ctx->originating_tai.mcc_digit3;
+        visited_plmn.mnc_digit1 = emm_ctx->originating_tai.mnc_digit1;
+        visited_plmn.mnc_digit2 = emm_ctx->originating_tai.mnc_digit2;
+        visited_plmn.mnc_digit3 = emm_ctx->originating_tai.mnc_digit3;
+        nas_itti_auth_info_req (emm_ctx->ue_id, emm_ctx->_imsi64, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, NULL);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
       }
-      rc = _authentication_reject(data);
     }
+    rc = _authentication_reject(emm_ctx);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -648,9 +644,7 @@ int _authentication_check_imsi_5_4_2_5__1 (void * args) {
  **      Others:    T3460                                      **
  **                                                                        **
  ***************************************************************************/
-int
-_authentication_request (
-  authentication_data_t * data)
+int _authentication_request (authentication_data_t * data)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
@@ -722,16 +716,14 @@ _authentication_request (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static int _authentication_reject (void* args)
+static int _authentication_reject (emm_context_t *emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
   emm_sap_t                               emm_sap_rej = {0};
   int                                     rc = RETURNerror;
-  struct emm_context_s              *emm_ctx = NULL;
-  authentication_data_t                  *data = (authentication_data_t *) (args);
-
-  if (data) {
+  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_AUTH)){
+    authentication_data_t                  *data = &emm_ctx->common_proc->common_arg.u.authentication_data;
     /*
      * Notify EMM-AS SAP that Authentication Reject message has to be sent
      * to the UE
@@ -740,7 +732,6 @@ static int _authentication_reject (void* args)
     emm_sap.u.emm_as.u.security.guti = NULL;
     emm_sap.u.emm_as.u.security.ue_id = data->ue_id;
     emm_sap.u.emm_as.u.security.msg_type = EMM_AS_MSG_TYPE_AUTH;
-    emm_ctx = emm_context_get (&_emm_data, data->ue_id);
 
     /*
      * Setup EPS NAS security data
@@ -774,18 +765,19 @@ static int _authentication_reject (void* args)
  **      Others:    T3460                                      **
  **                                                                        **
  ***************************************************************************/
-static int _authentication_ll_failure (void *args)
+static int _authentication_ll_failure (emm_context_t *emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  if (args) {
-    authentication_data_t                  *data = (authentication_data_t *) (args);
+  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_AUTH)){
+    authentication_data_t                  *data = &emm_ctx->common_proc->common_arg.u.authentication_data;
     REQUIREMENT_3GPP_24_301(R10_5_4_2_7_a);
     emm_sap_t                               emm_sap = {0};
 
     emm_sap.primitive = EMMREG_PROC_ABORT;
-    emm_sap.u.emm_reg.ue_id = data->ue_id;
-    data->notify_failure = true;
+    emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
+    emm_sap.u.emm_reg.ctx   = emm_ctx;
+    data->notify_failure    = true;
     rc = emm_sap_send (&emm_sap);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -804,12 +796,12 @@ static int _authentication_ll_failure (void *args)
  **      Others:    T3460                                      **
  **                                                                        **
  ***************************************************************************/
-static int _authentication_non_delivered (void *args)
+static int _authentication_non_delivered_ho (emm_context_t *emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  if (args) {
-    authentication_data_t                *data = (authentication_data_t *) (args);
+  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_AUTH)){
+    authentication_data_t                  *data = &emm_ctx->common_proc->common_arg.u.authentication_data;
     REQUIREMENT_3GPP_24_301(R10_5_4_2_7_j);
     rc = _authentication_request(data);
   }
@@ -831,29 +823,24 @@ static int _authentication_non_delivered (void *args)
  **      Others:    T3460                                      **
  **                                                                        **
  ***************************************************************************/
-static int _authentication_abort (void *args)
+static int _authentication_abort (emm_context_t *emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  struct emm_context_s                   *emm_ctx = NULL;
-  authentication_data_t                  *data = (authentication_data_t *) (args);
 
-  if (data) {
-    mme_ue_s1ap_id_t                        ue_id = data->ue_id;
+  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_AUTH)){
+    authentication_data_t                  *data = &emm_ctx->common_proc->common_arg.u.authentication_data;
 
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort authentication procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
-    emm_ctx = emm_context_get (&_emm_data, ue_id);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort authentication procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", emm_ctx->ue_id);
 
-    if (emm_ctx) {
-      emm_ctx_unmark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_AUTH);
-      /*
-       * Stop timer T3460
-       */
-      if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
-        emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
-      }
+    emm_ctx_unmark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_AUTH);
+    /*
+     * Stop timer T3460
+     */
+    if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
+      emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
     }
 
     if (data->notify_failure) {
@@ -863,7 +850,8 @@ static int _authentication_abort (void *args)
       emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
-      emm_sap.u.emm_reg.ue_id = ue_id;
+      emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
+      emm_sap.u.emm_reg.ctx   = emm_ctx;
       rc = emm_sap_send (&emm_sap);
     }
 

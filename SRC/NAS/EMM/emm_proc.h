@@ -195,7 +195,7 @@ int emm_proc_authentication_failure (mme_ue_s1ap_id_t ue_id, int emm_cause,
 int emm_proc_authentication_complete(mme_ue_s1ap_id_t ue_id, int emm_cause,
     const_bstring const res);
 
-int emm_attach_security(void *args);
+int emm_attach_security(emm_context_t *emm_ctx);
 
 /*
  * --------------------------------------------------------------------------

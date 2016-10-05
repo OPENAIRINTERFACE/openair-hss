@@ -77,7 +77,7 @@ nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const i
 
 void mme_app_handle_nas_auth_param_req       (const itti_nas_auth_param_req_t * const nas_auth_param_req_pP);
 
-void mme_app_handle_initial_context_setup_rsp(const itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
+void mme_app_handle_initial_context_setup_rsp(itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
 
 bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, void *unused_param_pP, void **unused_result_pP);
 

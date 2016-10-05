@@ -290,6 +290,7 @@ typedef struct itti_nas_dl_data_cnf_s {
 typedef struct itti_nas_dl_data_rej_s {
   mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
   bstring          nas_msg;          /* Uplink NAS message           */
+  int              err_code;
 } itti_nas_dl_data_rej_t;
 
 typedef struct itti_nas_rab_est_req_s {

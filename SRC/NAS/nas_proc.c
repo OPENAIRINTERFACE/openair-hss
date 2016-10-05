@@ -260,7 +260,8 @@ nas_proc_dl_transfer_cnf (
  ***************************************************************************/
 int
 nas_proc_dl_transfer_rej (
-  const uint32_t ue_id)
+  const uint32_t ue_id,
+  const nas_error_code_t status)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
@@ -274,7 +275,14 @@ nas_proc_dl_transfer_rej (
    */
   emm_sap.primitive = EMMAS_DATA_IND;
   emm_sap.u.emm_as.u.data.ue_id = ue_id;
-  emm_sap.u.emm_as.u.data.delivered = EMM_AS_DATA_DELIVERED_LOWER_LAYER_NON_DELIVERY_INDICATION;
+  if (AS_SUCCESS == status) {
+    emm_sap.u.emm_as.u.data.delivered = EMM_AS_DATA_DELIVERED_TRUE;
+  } else if (AS_NON_DELIVERED_DUE_HO == status) {
+    emm_sap.u.emm_as.u.data.delivered = EMM_AS_DATA_DELIVERED_LOWER_LAYER_NON_DELIVERY_INDICATION_DUE_TO_HO;
+  } else {
+    emm_sap.u.emm_as.u.data.delivered = EMM_AS_DATA_DELIVERED_LOWER_LAYER_FAILURE;
+  }
+  emm_sap.u.emm_as.u.data.delivered = status;
   emm_sap.u.emm_as.u.data.nas_msg   = NULL;
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

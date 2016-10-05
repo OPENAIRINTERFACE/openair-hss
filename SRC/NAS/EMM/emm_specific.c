@@ -55,90 +55,26 @@
 
 //------------------------------------------------------------------------------
 int emm_proc_specific_initialize (
-  struct emm_context_s          * const emm_ctx,
-  emm_specific_proc_type_t        const type,
-  emm_specific_procedure_data_t * const emm_specific_data,
-  emm_specific_success_callback_t       _success,
-  emm_specific_reject_callback_t        _reject,
-  emm_specific_failure_callback_t       _failure,
-  emm_specific_ll_failure_callback_t    _ll_failure,
-  emm_specific_non_delivered_callback_t _non_delivered,
-  emm_specific_abort_callback_t         _abort)
+  struct emm_context_s             * const emm_ctx,
+  emm_specific_proc_type_t           const type,
+  emm_specific_procedure_data_t    * const emm_specific_data,
+  emm_specific_ll_failure_callback_t       _ll_failure,
+  emm_specific_non_delivered_ho_callback_t _non_delivered_ho,
+  emm_specific_abort_callback_t            _abort)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   if (emm_specific_data) {
     emm_specific_data->container     = emm_ctx;
     emm_specific_data->type          = type;
-    emm_specific_data->success       = _success;
-    emm_specific_data->reject        = _reject;
-    emm_specific_data->failure       = _failure;
     emm_specific_data->ll_failure    = _ll_failure;
-    emm_specific_data->non_delivered = _non_delivered;
+    emm_specific_data->non_delivered_ho = _non_delivered_ho;
     emm_specific_data->abort         = _abort;
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
 }
 
-//------------------------------------------------------------------------------
-int emm_proc_specific_success (emm_specific_procedure_data_t **emm_specific_data)
-{
-  emm_specific_success_callback_t         emm_callback = {0};
-  int                                     rc = RETURNerror;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  if (*emm_specific_data) {
-    emm_callback = (*emm_specific_data)->success;
-
-    if (emm_callback) {
-      emm_context_t  *ctx = (*emm_specific_data)->container;
-      rc = (*emm_callback) (ctx);
-    }
-
-    emm_proc_specific_cleanup (emm_specific_data);
-  }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int emm_proc_specific_reject (emm_specific_procedure_data_t **emm_specific_data)
-{
-  int                                     rc = RETURNerror;
-  emm_specific_reject_callback_t            emm_callback;
-
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  if (*emm_specific_data) {
-    emm_callback = (*emm_specific_data)->reject;
-
-    if (emm_callback) {
-      emm_context_t  *ctx = (*emm_specific_data)->container;
-      rc = (*emm_callback) (ctx);
-    }
-
-    emm_proc_specific_cleanup (emm_specific_data);
-  }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
-
-//------------------------------------------------------------------------------
-int emm_proc_specific_failure (emm_specific_procedure_data_t **emm_specific_data)
-{
-  int                                     rc = RETURNerror;
-  emm_specific_reject_callback_t            emm_callback;
-
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  if (*emm_specific_data) {
-    emm_callback = (*emm_specific_data)->failure;
-
-    if (emm_callback) {
-      emm_context_t  *ctx = (*emm_specific_data)->container;
-      rc = (*emm_callback) (ctx);
-    }
-
-    emm_proc_specific_cleanup (emm_specific_data);
-  }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-}
 //------------------------------------------------------------------------------
 int emm_proc_specific_ll_failure (emm_specific_procedure_data_t **emm_specific_data)
 {
@@ -160,15 +96,15 @@ int emm_proc_specific_ll_failure (emm_specific_procedure_data_t **emm_specific_d
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 //------------------------------------------------------------------------------
-int emm_proc_specific_non_delivered (emm_specific_procedure_data_t **emm_specific_data)
+int emm_proc_specific_non_delivered_ho (emm_specific_procedure_data_t **emm_specific_data)
 {
-  emm_common_non_delivered_callback_t     emm_callback;
+  emm_common_non_delivered_ho_callback_t     emm_callback;
   int                                     rc = RETURNerror;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   if (*emm_specific_data) {
-    emm_callback = (*emm_specific_data)->non_delivered;
+    emm_callback = (*emm_specific_data)->non_delivered_ho;
 
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_specific_data)->container;
@@ -207,12 +143,19 @@ void emm_proc_specific_cleanup (emm_specific_procedure_data_t **emm_specific_dat
     switch ((*emm_specific_data)->type) {
     case EMM_SPECIFIC_PROC_TYPE_ATTACH:
       bdestroy_wrapper (&(*emm_specific_data)->arg.u.attach_data.esm_msg);
+      OAILOG_INFO (LOG_NAS_EMM, "Cleaned specific procedure ATTACH\n");
       break;
     case EMM_SPECIFIC_PROC_TYPE_NONE:
+      OAILOG_INFO (LOG_NAS_EMM, "Cleaned specific procedure NONE\n");
+      break;
     case EMM_SPECIFIC_PROC_TYPE_DETACH:
+      OAILOG_INFO (LOG_NAS_EMM, "Cleaned specific procedure DETACH\n");
+      break;
     case EMM_SPECIFIC_PROC_TYPE_TAU:
+      OAILOG_INFO (LOG_NAS_EMM, "Cleaned specific procedure TAU\n");
       break;
     default:
+      OAILOG_WARNING (LOG_NAS_EMM, "Cleaned specific procedure unknown type %d\n", (*emm_specific_data)->type);
       ;
     }
     free_wrapper((void**)emm_specific_data);

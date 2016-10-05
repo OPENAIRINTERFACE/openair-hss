@@ -40,13 +40,12 @@ typedef enum {
  * - The EMM specific procedure failed or is rejected
  * - Lower layer failure occured before the EMM specific procedure completion
  */
-typedef int (*emm_specific_success_callback_t)(void *);
-typedef int (*emm_specific_reject_callback_t) (void *);
-typedef int (*emm_specific_failure_callback_t) (void *);
-typedef int (*emm_specific_ll_failure_callback_t)(void *);
-typedef int (*emm_specific_non_delivered_callback_t)(void *);
+struct emm_context_s;
+
+typedef int (*emm_specific_ll_failure_callback_t)(struct emm_context_s *emm_ctx);
+typedef int (*emm_specific_non_delivered_ho_callback_t)(struct emm_context_s *emm_ctx);
 /* EMM specific procedure to be executed when the ongoing EMM procedure is aborted.*/
-typedef int (*emm_specific_abort_callback_t)(void *);
+typedef int (*emm_specific_abort_callback_t)(struct emm_context_s *emm_ctx);
 
 
 
@@ -85,37 +84,27 @@ struct emm_context_s;
 /* Ongoing EMM procedure callback functions */
 typedef struct emm_specific_procedure_data_s {
   struct emm_context_s                    * container;
-
-  emm_specific_success_callback_t           success;
-  emm_specific_reject_callback_t            reject;
-  emm_specific_failure_callback_t           failure;
   emm_specific_ll_failure_callback_t        ll_failure;
-  emm_specific_non_delivered_callback_t     non_delivered;
+  emm_specific_non_delivered_ho_callback_t  non_delivered_ho;
   emm_specific_abort_callback_t             abort;
 
-  emm_specific_procedure_arg_t            arg;
+  emm_specific_procedure_arg_t              arg;
   // At the end of the day, we have to be sure of the type of the specific_arg
-  emm_specific_proc_type_t                type;
+  emm_specific_proc_type_t                  type;
 } emm_specific_procedure_data_t;
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int emm_proc_specific_initialize(struct emm_context_s        * const emm_ctx,
-                               emm_specific_proc_type_t        const type,
-                               emm_specific_procedure_data_t * const emm_specific_data,
-                               emm_specific_success_callback_t success,
-                               emm_specific_reject_callback_t reject,
-                               emm_specific_failure_callback_t failure,
-                               emm_specific_ll_failure_callback_t ll_failure,
-                               emm_specific_non_delivered_callback_t non_delivered,
-                               emm_specific_abort_callback_t abort);
+int emm_proc_specific_initialize(struct emm_context_s           * const emm_ctx,
+                               emm_specific_proc_type_t           const type,
+                               emm_specific_procedure_data_t    * const emm_specific_data,
+                               emm_specific_ll_failure_callback_t       ll_failure,
+                               emm_specific_non_delivered_ho_callback_t non_delivered_ho,
+                               emm_specific_abort_callback_t            abort);
 
-int emm_proc_specific_success(emm_specific_procedure_data_t **emm_specific_data);
-int emm_proc_specific_reject(emm_specific_procedure_data_t **emm_specific_data);
-int emm_proc_specific_failure(emm_specific_procedure_data_t **emm_specific_data);
 int emm_proc_specific_ll_failure(emm_specific_procedure_data_t **emm_specific_data);
-int emm_proc_specific_non_delivered(emm_specific_procedure_data_t **emm_specific_data);
+int emm_proc_specific_non_delivered_ho(emm_specific_procedure_data_t **emm_specific_data);
 int emm_proc_specific_abort(emm_specific_procedure_data_t **emm_specific_data);
 void emm_proc_specific_cleanup (emm_specific_procedure_data_t **emm_specific_data);
 
