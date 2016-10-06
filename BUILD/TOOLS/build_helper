@@ -840,13 +840,10 @@ install_asn1c_from_source(){
 
   if [[ $prompt =~ [yY](es)* ]]
   then    
-    mkdir -p /tmp/asn1c-r1516
-    cd /tmp/asn1c-r1516
-    $SUDO rm -rf /tmp/asn1c-r1516/*
-    svn co https://github.com/vlm/asn1c/trunk  /tmp/asn1c-r1516 -r 1516 > /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch.p0 >> /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch_2.p0 >> /tmp/log_compile_asn1c
-    patch -p0 < $OPENAIRCN_DIR/SRC/S1AP/MESSAGES/ASN1/asn1cpatch_3.p0 >> /tmp/log_compile_asn1c
+    $SUDO rm -rf /tmp/asn1c
+    mkdir -p /tmp/asn1c
+    git clone https://gitlab.eurecom.fr/oai/asn1c.git /tmp/asn1c
+    cd /tmp/asn1c
     ./configure
     make > /tmp/log_compile_asn1c 2>&1
     $SUDO make install
