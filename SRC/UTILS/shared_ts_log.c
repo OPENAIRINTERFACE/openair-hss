@@ -119,7 +119,11 @@ int shared_log_get_start_time_sec (void)
 void shared_log_reuse_item(shared_log_queue_item_t * item_p)
 {
   int         rv = 0;
+#if defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
   btrunc(item_p->bstr, 0);
+#else
+  bdestroy_wrapper(&item_p->bstr);
+#endif
   rv = lfds611_stack_guaranteed_push (g_shared_log.log_free_message_queue_p, item_p);
   if (0 == rv) {
     OAI_FPRINTF_ERR("Error while reusing shared_log_queue_item_t (lfds611_stack_guaranteed_push() returned %d)\n", rv);
@@ -135,8 +139,10 @@ static shared_log_queue_item_t * create_new_log_queue_item(sh_ts_log_app_id_t ap
   AssertFatal((app_id >= MIN_SH_TS_LOG_CLIENT), "Allocation of log container failed");
   AssertFatal((app_id < MAX_SH_TS_LOG_CLIENT), "Allocation of log container failed");
   item_p->app_id = app_id;
+#if defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
   item_p->bstr = bfromcstralloc(LOG_MESSAGE_MIN_ALLOC_SIZE, "");
   AssertFatal((item_p->bstr), "Allocation of buf in log container failed");
+#endif
   return item_p;
 }
 
@@ -152,8 +158,14 @@ shared_log_queue_item_t * get_new_log_queue_item(sh_ts_log_app_id_t app_id)
     AssertFatal(item_p,  "Out of memory error");
   } else {
     item_p->app_id = app_id;
+#if defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
     btrunc(item_p->bstr, 0);
+#endif
   }
+#if !defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
+  item_p->bstr = bfromcstralloc(LOG_MESSAGE_MIN_ALLOC_SIZE, "");
+  AssertFatal((item_p->bstr), "Allocation of buf in log container failed");
+#endif
   return item_p;
 }
 //------------------------------------------------------------------------------
@@ -337,10 +349,16 @@ void shared_log_item(shared_log_queue_item_t * messageP)
     rv = lfds611_queue_enqueue (g_shared_log.log_message_queue_p, messageP);
 
     if (0 == rv) {
+#if defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
       btrunc(messageP->bstr, 0);
+#else
+      bdestroy_wrapper (&messageP->bstr);
+#endif
       rv = lfds611_stack_guaranteed_push (g_shared_log.log_free_message_queue_p, messageP);
       if (0 == rv) {
+#if !defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
         bdestroy_wrapper (&messageP->bstr);
+#endif
         free_wrapper ((void**)&messageP);
       }
     }
