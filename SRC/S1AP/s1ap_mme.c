@@ -118,10 +118,11 @@ s1ap_mme_thread (
       }
       break;
 
+      // From SCTP
     case SCTP_DATA_IND:{
         /*
          * New message received from SCTP layer.
-         * * * * Decode and handle it.
+         * Decode and handle it.
          */
         s1ap_message                            message = {0};
 
@@ -142,24 +143,26 @@ s1ap_mme_thread (
       }
       break;
 
+    // From SCTP
     case SCTP_DATA_CNF:
       s1ap_mme_itti_nas_downlink_cnf(SCTP_DATA_CNF (received_message_p).mme_ue_s1ap_id, SCTP_DATA_CNF (received_message_p).is_success);
       break;
-      /*
-       * SCTP layer notifies S1AP of disconnection of a peer.
-       */
+
+      // From SCTP layer, notifies S1AP of disconnection of a peer (eNB).
     case SCTP_CLOSE_ASSOCIATION:{
         XML_MSG_DUMP_ITTI_SCTP_CLOSE_ASSOCIATION(&SCTP_CLOSE_ASSOCIATION(received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_handle_sctp_deconnection (SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id);
       }
       break;
 
+      // From SCTP layer, notifies S1AP of connection of a peer (eNB).
     case SCTP_NEW_ASSOCIATION:{
         XML_MSG_DUMP_ITTI_SCTP_NEW_ASSOCIATION(&SCTP_NEW_ASSOCIATION(received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_handle_new_association (&received_message_p->ittiMsg.sctp_new_peer);
       }
       break;
 
+      // From NAS layer.
     case NAS_DOWNLINK_DATA_REQ:{
         /*
          * New message received from NAS task.
@@ -172,17 +175,21 @@ s1ap_mme_thread (
       }
       break;
 
+    // From MME_APP task
     case S1AP_UE_CONTEXT_RELEASE_COMMAND:{
-        s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
+      XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND(&S1AP_UE_CONTEXT_RELEASE_COMMAND (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
+      s1ap_handle_ue_context_release_command (&received_message_p->ittiMsg.s1ap_ue_context_release_command);
       }
       break;
 
+    // From MME_APP task
     case MME_APP_CONNECTION_ESTABLISHMENT_CNF:{
         XML_MSG_DUMP_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF(&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
         s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
       }
       break;
 
+    // From MME_APP task, silently remove UE context in S1AP when receiving S11_DELETE_SESSION_RESPONSE
     case MME_APP_DELETE_SESSION_RSP:{
         s1ap_handle_delete_session_rsp (&MME_APP_DELETE_SESSION_RSP (received_message_p));
       }

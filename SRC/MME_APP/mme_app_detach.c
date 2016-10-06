@@ -102,11 +102,24 @@ mme_app_handle_detach_req (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   else {
-    // Send a DELETE_SESSION_REQUEST message to the SGW
-    mme_app_send_delete_session_request  (ue_context);
-    // CAROLE il vaut miex attendre de recevoir le delete session response pour effacer le contexte
-    // mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
+    // No session with S-GW
+    if ((ue_context->mme_s11_teid == INVALID_TEID) && (ue_context->sgw_s11_teid == INVALID_TEID)) {
+      // no session was created, no need for deleting session in SGW
+      MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
+      AssertFatal (message_p , "itti_alloc_new_message Failed");
+      S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id;
+      S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
+      MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",
+          S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
+      int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
+      itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+    } else {
+      // Send a DELETE_SESSION_REQUEST message to the SGW
+      mme_app_send_delete_session_request  (ue_context);
+      // CAROLE il vaut miex attendre de recevoir le delete session response pour effacer le contexte
+      // mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
     }
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

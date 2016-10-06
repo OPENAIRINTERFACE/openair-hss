@@ -32,6 +32,7 @@
 
 void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, const MessageDef * const received_message);
 void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t instance, const MessageDef * const received_message);
+void mme_scenario_player_handle_s1ap_ue_context_release_command (instance_t instance, const MessageDef * const received_message);
 
 #endif
 

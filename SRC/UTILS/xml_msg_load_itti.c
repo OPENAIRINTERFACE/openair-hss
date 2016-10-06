@@ -379,6 +379,73 @@ int xml_msg_load_itti_s1ap_ue_context_release_req(scenario_t * const scenario, s
 }
 
 //------------------------------------------------------------------------------
+int xml_msg_load_itti_s1ap_ue_context_release_command(scenario_t * const scenario, scenario_player_msg_t * const msg)
+{
+  bool res = false;
+  if ((msg) && (msg->xml_doc)) {
+    xmlNodePtr  cur = NULL;
+    cur = xmlDocGetRootElement(msg->xml_doc);
+    AssertFatal (cur, "Empty document");
+
+    if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND_XML_STR)) {
+      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND_XML_STR);
+      return RETURNerror;
+    }
+
+    if (!msg->xpath_ctx) {
+      // Create xpath evaluation context
+      msg->xpath_ctx = xmlXPathNewContext(msg->xml_doc);
+    }
+
+    xmlNodePtr saved_node_ptr = msg->xpath_ctx->node;
+    if (RETURNok != xmlXPathSetContextNode(cur, msg->xpath_ctx)) {
+      return RETURNerror;
+    }
+
+    // free it (may be called from msp_reload_message)
+    if (msg->itti_msg) {
+      itti_free_msg_content (msg->itti_msg);
+      itti_free (ITTI_MSG_ORIGIN_ID (msg->itti_msg), msg->itti_msg);
+    }
+
+    msg->itti_msg = itti_alloc_new_message (TASK_MME_SCENARIO_PLAYER, S1AP_UE_CONTEXT_RELEASE_COMMAND);
+    if (msg->itti_msg) {
+      bstring xpath_expr = bformat("./%s",ACTION_XML_STR); // anywhere in XML tree
+      res = xml_load_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, &xml_msg_load_action_tag, (void*)&msg->is_tx);
+      bdestroy_wrapper (&xpath_expr);
+
+      if (res) {
+        xpath_expr = bformat("./%s",ITTI_SENDER_TASK_XML_STR);
+        res = xml_load_itti_task_id_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, &msg->itti_sender_task);
+        bdestroy_wrapper (&xpath_expr);
+      }
+
+      if (res) {
+        xpath_expr = bformat("./%s",ITTI_RECEIVER_TASK_XML_STR);
+        res = xml_load_itti_task_id_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, &msg->itti_receiver_task);
+        bdestroy_wrapper (&xpath_expr);
+      }
+
+      if (res) {
+        enb_ue_s1ap_id_t enb_ue_s1ap_id = 0;
+        res = sp_enb_ue_s1ap_id_from_xml(scenario, msg, &enb_ue_s1ap_id);
+        msg->itti_msg->ittiMsg.s1ap_ue_context_release_command.enb_ue_s1ap_id = enb_ue_s1ap_id;
+      }
+
+      if (res) {
+        res = sp_mme_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_ue_context_release_command.mme_ue_s1ap_id);
+      }
+    } else {
+      res = false;
+    }
+    if (saved_node_ptr) {
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
+    }
+  }
+  return (res)? RETURNok:RETURNerror;
+}
+
+//------------------------------------------------------------------------------
 int xml_msg_load_itti_s1ap_ue_context_release_complete(scenario_t * const scenario, scenario_player_msg_t * const msg)
 {
   bool res = false;

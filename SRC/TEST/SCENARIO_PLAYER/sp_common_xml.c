@@ -153,7 +153,7 @@ int sp_compare_string_value_with_var(scenario_t *scenario, char* var_name, char*
     }
   } else if (VAR_VALUE_TYPE_HEX_STREAM == var->u.var.value_type) {
     int len = strlen((const char*)str_value);
-    if (len == blength(var->u.var.value.value_bstr)) {
+    if ((len/2) == blength(var->u.var.value.value_bstr)) {
       uint8_t hex[len/2];
       int ret = ascii_to_hex ((uint8_t *) hex, (const char *)str_value);
       if (!ret) return RETURNerror;

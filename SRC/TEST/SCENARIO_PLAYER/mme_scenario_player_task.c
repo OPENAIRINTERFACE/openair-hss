@@ -86,6 +86,11 @@ void *mme_scenario_player_event_handler (void *args)
       msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 
+    case S1AP_UE_CONTEXT_RELEASE_COMMAND:
+      mme_scenario_player_handle_s1ap_ue_context_release_command (received_message_p->ittiMsgHeader.instance, received_message_p);
+      msp_scenario_tick(g_msp_scenarios.current_scenario);
+      break;
+
     case TIMER_HAS_EXPIRED:
       msp_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
       break;

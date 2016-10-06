@@ -555,9 +555,14 @@ static void  *_authentication_t3460_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  authentication_data_t                  *data = (authentication_data_t *) (args);
+  emm_context_t                     *emm_ctx = (emm_context_t*)args;
 
-  if (data) {
+  if (emm_ctx) {
+    emm_ctx->T3460.id = NAS_TIMER_INACTIVE_ID;
+  }
+  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_AUTH)){
+    authentication_data_t                  *data = &emm_ctx->common_proc->common_arg.u.authentication_data;
+
     /*
      * Increment the retransmission counter
      */
@@ -574,26 +579,29 @@ static void  *_authentication_t3460_handler (void *args)
       rc = _authentication_request (data);
     } else {
       /*
-       * Abort the authentication procedure
+       * Release the NAS signalling connection
        */
       emm_sap_t                               emm_sap = {0};
-      emm_sap.primitive = EMMREG_PROC_ABORT;
-      emm_sap.u.emm_reg.ue_id = data->ue_id;
-      //emm_sap.u.emm_reg.ctx   = ;
-      data->notify_failure = true;
+      emm_sap.primitive = EMMAS_RELEASE_REQ;
+      emm_sap.u.emm_as.u.release.guti = NULL;
+      emm_sap.u.emm_as.u.release.ue_id = emm_ctx->ue_id;
+      emm_sap.u.emm_as.u.release.cause = EMM_AS_CAUSE_AUTHENTICATION;
       rc = emm_sap_send (&emm_sap);
 
       /*
-       * Release the NAS signalling connection
+       * Abort the authentication procedure
        */
-      if (rc != RETURNerror) {
-        emm_sap_t                               emm_sap = {0};
-        emm_sap.primitive = EMMAS_RELEASE_REQ;
-        emm_sap.u.emm_as.u.release.guti = NULL;
-        emm_sap.u.emm_as.u.release.ue_id = data->ue_id;
-        emm_sap.u.emm_as.u.release.cause = EMM_AS_CAUSE_AUTHENTICATION;
-        rc = emm_sap_send (&emm_sap);
-      }
+      memset((void*)&emm_sap, 0, sizeof(emm_sap));
+      emm_sap.primitive = EMMREG_PROC_ABORT;
+      emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
+      emm_sap.u.emm_reg.ctx   = emm_ctx;
+      data->notify_failure = false;
+      rc = emm_sap_send (&emm_sap);
+
+      // abort ANY ongoing EMM procedure (R10_5_4_2_7_b)
+      rc = emm_proc_specific_abort(&emm_ctx->specific_proc);
+
+
     }
   }
 
@@ -686,16 +694,16 @@ int _authentication_request (authentication_data_t * data)
            */
           emm_ctx->T3460.id = nas_timer_restart (emm_ctx->T3460.id);
           MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 restarted UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
+          OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3460 (%d) restarted, expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
         } else {
           /*
            * Start T3460 timer
            */
-          emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, _authentication_t3460_handler, data);
+          emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, _authentication_t3460_handler, emm_ctx);
           MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
+          OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3460 (%d) started, expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
         }
       }
-
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
     }
   }
 

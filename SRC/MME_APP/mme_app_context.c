@@ -818,7 +818,7 @@ mme_app_handle_s1ap_ue_context_release_req (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-  if ((ue_context_p->mme_s11_teid == 0) && (ue_context_p->sgw_s11_teid == 0)) {
+  if ((ue_context_p->mme_s11_teid == INVALID_TEID) && (ue_context_p->sgw_s11_teid == INVALID_TEID)) {
     // no session was created, no need for releasing bearers in SGW
     message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
     AssertFatal (message_p , "itti_alloc_new_message Failed");
@@ -826,7 +826,8 @@ mme_app_handle_s1ap_ue_context_release_req (
     S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context_p->enb_ue_s1ap_id;
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",
         S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
-    itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+    int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
+    itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
   } else {
     mme_app_send_s11_release_access_bearers_req (ue_context_p);
   }

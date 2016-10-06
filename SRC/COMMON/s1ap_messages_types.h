@@ -70,6 +70,7 @@ typedef struct itti_s1ap_ue_context_release_req_s {
 typedef struct itti_s1ap_ue_context_release_command_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
+  // TODO missing cause
 } itti_s1ap_ue_context_release_command_t;
 
 typedef struct itti_s1ap_ue_context_release_complete_s {

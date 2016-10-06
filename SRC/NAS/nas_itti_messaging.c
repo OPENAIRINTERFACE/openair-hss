@@ -418,8 +418,7 @@ void nas_itti_establish_cnf(
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_detach_req(
-  const uint32_t      ue_idP)
+void nas_itti_detach_req(const uint32_t      ue_idP)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p;

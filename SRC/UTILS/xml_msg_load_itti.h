@@ -33,6 +33,7 @@
 int xml_msg_load_itti_sctp_new_association(scenario_t * const scenario, scenario_player_msg_t * const msg);
 int xml_msg_load_itti_sctp_close_association(scenario_t * const scenario, scenario_player_msg_t * const msg);
 int xml_msg_load_itti_s1ap_ue_context_release_req(scenario_t * const scenario, scenario_player_msg_t * const msg);
+int xml_msg_load_itti_s1ap_ue_context_release_command(scenario_t * const scenario, scenario_player_msg_t * const msg);
 int xml_msg_load_itti_s1ap_ue_context_release_complete(scenario_t * const scenario, scenario_player_msg_t * const msg);
 int xml_msg_load_itti_mme_app_initial_ue_message(scenario_t * const scenario, scenario_player_msg_t * const msg);
 int xml_msg_load_itti_mme_app_initial_context_setup_rsp(scenario_t * const scenario, scenario_player_msg_t * const msg);
