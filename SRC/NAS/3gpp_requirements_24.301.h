@@ -547,13 +547,25 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     procedure."
 #define R10_5_4_4_6_c_BRIEF "Collision of an identification procedure with an attach procedure"
 
-#define R10_5_4_4_6_d "Abnormal cases on the network side                                                               \
-    Collision of an identification procedure with an attach procedure                                                   \
-    If the network receives an ATTACH REQUEST message before the ongoing identification procedure has been              \
-    completed and no attach procedure is pending on the network (i.e. no ATTACH ACCEPT/REJECT message has               \
-    still to be sent as an answer to an ATTACH REQUEST message), the network shall proceed with the attach              \
-    procedure."
-#define R10_5_4_4_6_d_BRIEF "Collision of an identification procedure with an attach procedure"
+#define R10_5_4_4_6_d__1 "Abnormal cases on the network side                                                            \
+    Collision of an identification procedure with an attach procedure when the identification procedure has been        \
+    caused by an attach procedure                                                                                       \
+   If the network receives an ATTACH REQUEST message before the ongoing identification procedure has been               \
+   completed and an attach procedure is pending (i.e. an ATTACH ACCEPT/REJECT message has to be sent as an              \
+   answer to an earlier ATTACH REQUEST message), then:                                                                  \
+   - If one or more of the information elements in the ATTACH REQUEST message differ from the ones                      \
+     received within the previous ATTACH REQUEST message, the network shall proceed with the new attach                 \
+     procedure;"
+#define R10_5_4_4_6_d__1_BRIEF "Collision of an identification procedure with an attach procedure, attach IEs changed, new attach go on"
+#define R10_5_4_4_6_d__2 "Abnormal cases on the network side                                                            \
+    Collision of an identification procedure with an attach procedure when the identification procedure has been        \
+    caused by an attach procedure                                                                                       \
+   If the network receives an ATTACH REQUEST message before the ongoing identification procedure has been               \
+   completed and an attach procedure is pending (i.e. an ATTACH ACCEPT/REJECT message has to be sent as an              \
+   answer to an earlier ATTACH REQUEST message), then:                                                                  \
+   - If the information elements do not differ, then the network shall not treat any further this new ATTACH            \
+     REQUEST."
+#define R10_5_4_4_6_d__2_BRIEF "Collision of an identification procedure with an attach procedure, attach IEs unchanged, new attach discarded"
 
 //-----------------------------------------------------------------------------------------------------------------------
 // ATTACH

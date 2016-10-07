@@ -772,7 +772,7 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
 //------------------------------------------------------------------------------
 void msp_run_scenario(scenario_t * const scenario)
 {
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s %p status %d\n", bdata(scenario->name), scenario, scenario->status);
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s status %d\n", bdata(scenario->name), scenario->status);
   if (scenario) {
     if ((SCENARIO_STATUS_PLAY_FAILED != scenario->status) && (SCENARIO_STATUS_PLAY_SUCCESS != scenario->status)) {
       pthread_mutex_lock(&scenario->lock);
@@ -781,11 +781,11 @@ void msp_run_scenario(scenario_t * const scenario)
 
       if (SCENARIO_STATUS_PLAYING == scenario->status) {
         item = scenario->last_played_item->next_item;
-        OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Continue playing scenario %s %p\n", bdata(scenario->name), scenario);
+        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Continue playing scenario %s\n", bdata(scenario->name));
       } else if (SCENARIO_STATUS_LOADED == scenario->status) {
         item = scenario->head_item;
         scenario->status = SCENARIO_STATUS_PLAYING;
-        OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Playing scenario %s %p\n", bdata(scenario->name), scenario);
+        OAILOG_INFO (LOG_MME_SCENARIO_PLAYER, "Playing scenario %s\n", bdata(scenario->name));
       }
       if (SCENARIO_STATUS_PAUSED != scenario->status) {
         if (item) {

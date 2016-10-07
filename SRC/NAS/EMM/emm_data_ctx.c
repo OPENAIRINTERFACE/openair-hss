@@ -82,8 +82,6 @@ inline bool emm_ctx_is_common_procedure_running(emm_context_t * const ctxt, cons
   return false;
 }
 
-
-
 inline void emm_ctx_mark_specific_procedure_running(emm_context_t * const ctxt, const int proc_id)
 {
   __sync_fetch_and_or(&ctxt->specific_proc_mask, proc_id);

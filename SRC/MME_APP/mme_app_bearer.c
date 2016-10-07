@@ -431,11 +431,13 @@ mme_app_handle_initial_ue_message (
   }
 
   if (!(ue_context_p)) {
-    ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_pP->enb_ue_s1ap_id);
+    enb_s1ap_id_key_t enb_s1ap_id_key = 0;
+    MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->cgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
+    ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_s1ap_id_key);
   }
   if (!(ue_context_p)) {
-    OAILOG_DEBUG (LOG_MME_APP, "Unknown  mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-        initial_pP->mme_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_MME_APP, "Unknown  mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n",
+        initial_pP->mme_ue_s1ap_id, initial_pP->enb_ue_s1ap_id);
 
     // MME UE S1AP ID AND NAS UE ID ARE THE SAME
     if (INVALID_MME_UE_S1AP_ID == initial_pP->mme_ue_s1ap_id) {

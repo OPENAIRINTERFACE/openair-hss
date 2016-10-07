@@ -319,12 +319,21 @@ emm_proc_attach_request (
         if (emm_ctx_is_specific_procedure_running(emm_ctx, EMM_CTXT_SPEC_PROC_ATTACH_ACCEPT_SENT | EMM_CTXT_SPEC_PROC_ATTACH_REJECT_SENT)) {
           REQUIREMENT_3GPP_24_301(R10_5_4_4_6_c); // continue
         } else {
-          REQUIREMENT_3GPP_24_301(R10_5_4_4_6_d);
-          emm_sap_t                               emm_sap = {0};
-          emm_sap.primitive = EMMREG_PROC_ABORT;
-          emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
-          // TODOdata->notify_failure = true;
-          rc = emm_sap_send (&emm_sap);
+          if (_emm_attach_have_changed (emm_ctx, type, ksi, guti, imsi, imei, eea, eia, ucs2, uea, uia, gea, umts_present, gprs_present)) {
+            REQUIREMENT_3GPP_24_301(R10_5_4_4_6_d__1);
+            emm_sap_t                               emm_sap = {0};
+            emm_sap.primitive = EMMREG_PROC_ABORT;
+            emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
+            emm_sap.u.emm_reg.ctx   = emm_ctx;
+            // TODOdata->notify_failure = true;
+            rc = emm_sap_send (&emm_sap);
+
+            emm_context_silently_reset_procedures(emm_ctx);
+          } else {
+            REQUIREMENT_3GPP_24_301(R10_5_4_4_6_d__2);
+            // No need to report an error
+            OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+          }
         }
       } else {
         REQUIREMENT_3GPP_24_301(R10_5_4_4_6_c); // continue
@@ -498,6 +507,7 @@ emm_proc_attach_request (
        * Setup ongoing EMM procedure callback functions
        */
       rc = emm_proc_specific_initialize (emm_ctx, EMM_SPECIFIC_PROC_TYPE_ATTACH, emm_ctx->specific_proc, NULL, NULL, _emm_attach_abort);
+      emm_ctx_mark_specific_procedure_running(emm_ctx, EMM_CTXT_SPEC_PROC_ATTACH);
 
       if (rc != RETURNok) {
         OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions");
