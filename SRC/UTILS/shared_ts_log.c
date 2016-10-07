@@ -172,7 +172,7 @@ shared_log_queue_item_t * get_new_log_queue_item(sh_ts_log_app_id_t app_id)
 void* shared_log_task (__attribute__ ((unused)) void *args_p)
 {
   MessageDef                             *received_message_p = NULL;
-  long                                    timer_id = 0;
+  long                                    timer_id = -1;
   int                                     rc = 0;
 
   itti_mark_task_ready (TASK_SHARED_TS_LOG);
@@ -196,7 +196,10 @@ void* shared_log_task (__attribute__ ((unused)) void *args_p)
         break;
 
       case TERMINATE_MESSAGE:{
-          timer_remove (timer_id);
+          if (-1 != timer_id) {
+            timer_remove (timer_id);
+            timer_id = -1;
+          }
           shared_log_exit ();
           itti_exit_task ();
         }
