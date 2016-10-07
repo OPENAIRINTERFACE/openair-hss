@@ -200,6 +200,7 @@ void* shared_log_task (__attribute__ ((unused)) void *args_p)
             timer_remove (timer_id);
             timer_id = -1;
           }
+          sleep(4); // let other tasks finish before this one
           shared_log_exit ();
           itti_exit_task ();
         }
