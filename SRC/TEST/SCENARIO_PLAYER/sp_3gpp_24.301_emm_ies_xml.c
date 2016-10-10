@@ -58,6 +58,7 @@
 #include "xml2_wrapper.h"
 #include "esm_msg.h"
 #include "3gpp_24.301_esm_msg_xml.h"
+#include "sp_3gpp_23.003_xml.h"
 #include "sp_3gpp_24.301_esm_msg_xml.h"
 
 //------------------------------------------------------------------------------
@@ -88,8 +89,165 @@ bool sp_eps_mobile_identity_from_xml (
     scenario_player_msg_t * const msg,
     eps_mobile_identity_t          * const epsmobileidentity)
 {
-  AssertFatal(0, "TODO if necessary");
-  return false;
+  OAILOG_FUNC_IN (LOG_NAS);
+  bool res = false;
+  bstring xpath_expr_mi = bformat("./%s",EPS_MOBILE_IDENTITY_IE_XML_STR);
+  xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_mi);
+  if (xpath_obj_mi) {
+    xmlNodeSetPtr nodes_mi = xpath_obj_mi->nodesetval;
+    int size = (nodes_mi) ? nodes_mi->nodeNr : 0;
+    if ((1 == size) && (msg->xml_doc)) {
+
+      xmlNodePtr saved_node_ptr = msg->xpath_ctx->node;
+      res = (RETURNok == xmlXPathSetContextNode(nodes_mi->nodeTab[0], msg->xpath_ctx));
+      if (res) {
+        uint8_t  typeofidentity = 0;
+        bstring xpath_expr = bformat("./%s",TYPE_OF_IDENTITY_ATTR_XML_STR);
+        res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx8, (void*)&typeofidentity, NULL);
+        bdestroy_wrapper (&xpath_expr);
+        if (res) {
+          switch (typeofidentity) {
+          case EPS_MOBILE_IDENTITY_IMSI: {
+            epsmobileidentity->imsi.typeofidentity = EPS_MOBILE_IDENTITY_IMSI;
+
+              uint8_t  oddeven = 0;
+              bstring xpath_expr = bformat("./%s",ODDEVEN_ATTR_XML_STR);
+              res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx8, (void*)&oddeven, NULL);
+              bdestroy_wrapper (&xpath_expr);
+              epsmobileidentity->imsi.oddeven = oddeven;
+
+              if (res) {
+                bstring imsi_bstr = NULL;
+                uint8_t digit[15] = {0};
+                xpath_expr = bformat("./%s",IMSI_ATTR_XML_STR);
+                res =  sp_xml_load_ascii_stream_leaf_tag(scenario, msg, xpath_expr, &imsi_bstr);
+                bdestroy_wrapper (&xpath_expr);
+                if (res) {
+                  int ret = sscanf((const char*)bdata(imsi_bstr),
+                      "%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8,
+                      &digit[0], &digit[1], &digit[2], &digit[3], &digit[4], &digit[5], &digit[6], &digit[7],
+                      &digit[8], &digit[9], &digit[10], &digit[11], &digit[12], &digit[13], &digit[14]);
+                  if (15 == ret) {
+                    epsmobileidentity->imsi.identity_digit1 = digit[0];
+                    epsmobileidentity->imsi.identity_digit2 = digit[1];
+                    epsmobileidentity->imsi.identity_digit3 = digit[2];
+                    epsmobileidentity->imsi.identity_digit4 = digit[3];
+                    epsmobileidentity->imsi.identity_digit5 = digit[4];
+                    epsmobileidentity->imsi.identity_digit6 = digit[5];
+                    epsmobileidentity->imsi.identity_digit7 = digit[6];
+                    epsmobileidentity->imsi.identity_digit8 = digit[7];
+                    epsmobileidentity->imsi.identity_digit9 = digit[8];
+                    epsmobileidentity->imsi.identity_digit10 = digit[9];
+                    epsmobileidentity->imsi.identity_digit11 = digit[10];
+                    epsmobileidentity->imsi.identity_digit12 = digit[11];
+                    epsmobileidentity->imsi.identity_digit13 = digit[12];
+                    epsmobileidentity->imsi.identity_digit14 = digit[13];
+                    epsmobileidentity->imsi.identity_digit15 = digit[14];
+                  }
+                  res = (15 == ret);
+                }
+                bdestroy_wrapper (&imsi_bstr);
+              }
+            }
+            break;
+
+          case EPS_MOBILE_IDENTITY_IMEI: {
+              epsmobileidentity->imei.typeofidentity = EPS_MOBILE_IDENTITY_IMEI;
+
+              uint8_t  oddeven = 0;
+              bstring xpath_expr = bformat("./%s",ODDEVEN_ATTR_XML_STR);
+              res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx8, (void*)&oddeven, NULL);
+              bdestroy_wrapper (&xpath_expr);
+              epsmobileidentity->imei.oddeven = oddeven;
+
+              if (res) {
+                bstring imei_bstr = NULL;
+                xpath_expr = bformat("./%s",IMSI_ATTR_XML_STR); // TODO CHECK IMSI/IMEI_ATTR_XML_STR
+                res =  sp_xml_load_ascii_stream_leaf_tag(scenario, msg, xpath_expr, &imei_bstr);
+                bdestroy_wrapper (&xpath_expr);
+                if (res) {
+                  uint8_t digit[15] = {0};
+                  int ret = sscanf((const char*)imei_bstr,
+                      "%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8,
+                      &digit[0], &digit[1], &digit[2], &digit[3], &digit[4], &digit[5], &digit[6], &digit[7],
+                      &digit[8], &digit[9], &digit[10], &digit[11], &digit[12], &digit[13], &digit[14]);
+                  if (15 == ret) {
+                    epsmobileidentity->imei.identity_digit1 = digit[0];
+                    epsmobileidentity->imei.identity_digit2 = digit[1];
+                    epsmobileidentity->imei.identity_digit3 = digit[2];
+                    epsmobileidentity->imei.identity_digit4 = digit[3];
+                    epsmobileidentity->imei.identity_digit5 = digit[4];
+                    epsmobileidentity->imei.identity_digit6 = digit[5];
+                    epsmobileidentity->imei.identity_digit7 = digit[6];
+                    epsmobileidentity->imei.identity_digit8 = digit[7];
+                    epsmobileidentity->imei.identity_digit9 = digit[8];
+                    epsmobileidentity->imei.identity_digit10 = digit[9];
+                    epsmobileidentity->imei.identity_digit11 = digit[10];
+                    epsmobileidentity->imei.identity_digit12 = digit[11];
+                    epsmobileidentity->imei.identity_digit13 = digit[12];
+                    epsmobileidentity->imei.identity_digit14 = digit[13];
+                    epsmobileidentity->imei.identity_digit15 = digit[14];
+                  }
+                  res = (15 == ret);
+                }
+                bdestroy_wrapper (&imei_bstr);
+              }
+            }
+            break;
+
+          case EPS_MOBILE_IDENTITY_GUTI: {
+              epsmobileidentity->guti.typeofidentity = EPS_MOBILE_IDENTITY_GUTI;
+
+              uint8_t  oddeven = 0;
+              bstring xpath_expr = bformat("./%s",ODDEVEN_ATTR_XML_STR);
+              res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx8, (void*)&oddeven, NULL);
+              bdestroy_wrapper (&xpath_expr);
+              epsmobileidentity->guti.oddeven = oddeven;
+              if (res) {res = sp_mme_gid_from_xml(scenario, msg, &epsmobileidentity->guti.mme_group_id);}
+              if (res) {res = sp_mme_code_from_xml (scenario, msg, &epsmobileidentity->guti.mme_code);}
+              if (res) {res = sp_m_tmsi_from_xml (scenario, msg, &epsmobileidentity->guti.m_tmsi);}
+              if (res) {
+                uint64_t mcc64 = 0;
+                res =  sp_u64_from_xml(scenario, msg, &mcc64, MOBILE_COUNTRY_CODE_ATTR_XML_STR);
+                if (res) {
+                  epsmobileidentity->guti.mcc_digit1 = (mcc64 & 0x000000F00) >> 8;
+                  epsmobileidentity->guti.mcc_digit2 = (mcc64 & 0x0000000F0) >> 4;
+                  epsmobileidentity->guti.mcc_digit3 = (mcc64 & 0x00000000F);
+                  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found GUTI/%s = %x%x%x\n",
+                      MOBILE_COUNTRY_CODE_ATTR_XML_STR,
+                      epsmobileidentity->guti.mcc_digit1,
+                      epsmobileidentity->guti.mcc_digit2,
+                      epsmobileidentity->guti.mcc_digit3);
+                }
+              }
+              if (res) {
+                uint64_t mnc64 = 0;
+                res =  sp_u64_from_xml(scenario, msg, &mnc64, MOBILE_NETWORK_CODE_ATTR_XML_STR);
+                if (res) {
+                  epsmobileidentity->guti.mnc_digit1 = (mnc64 & 0x000000F00) >> 8;
+                  epsmobileidentity->guti.mnc_digit2 = (mnc64 & 0x0000000F0) >> 4;
+                  epsmobileidentity->guti.mnc_digit3 = (mnc64 & 0x00000000F);
+                  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found GUTI/%s = %x%x%x\n",
+                      MOBILE_COUNTRY_CODE_ATTR_XML_STR,
+                      epsmobileidentity->guti.mnc_digit1,
+                      epsmobileidentity->guti.mnc_digit2,
+                      epsmobileidentity->guti.mnc_digit3);
+                }
+              }
+            }
+            break;
+
+          default:
+            res = false;
+          }
+        }
+      }
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
+    }
+    xmlXPathFreeObject(xpath_obj_mi);
+  }
+  bdestroy_wrapper (&xpath_expr_mi);
+  OAILOG_FUNC_RETURN (LOG_NAS, res);
 }
 //------------------------------------------------------------------------------
 SP_NUM_FROM_XML_GENERATE( eps_network_feature_support,      EPS_NETWORK_FEATURE_SUPPORT);

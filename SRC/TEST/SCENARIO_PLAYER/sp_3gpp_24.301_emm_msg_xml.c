@@ -46,6 +46,7 @@ EMM msg C struct to/from XML functions
 #include "mme_scenario_player.h"
 #include "xml_load.h"
 #include "sp_3gpp_24.301_emm_msg_xml.h"
+#include "sp_3gpp_24.008_xml.h"
 
 #include "3gpp_24.301_ies_xml.h"
 #include "3gpp_24.301_emm_ies_xml.h"
@@ -74,7 +75,7 @@ bool sp_attach_accept_from_xml (
   if (res) {res = tracking_area_identity_list_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->tailist);}
   if (res) {res = esm_message_container_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->esmmessagecontainer);}
   if (res) {
-    res = eps_mobile_identity_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->guti);
+    res = sp_eps_mobile_identity_from_xml (scenario, msg, &attach_accept->guti);
     if (res) {
       attach_accept->presencemask |= ATTACH_ACCEPT_GUTI_PRESENT;
     }
@@ -167,7 +168,7 @@ bool sp_attach_request_from_xml (
 
   res = nas_key_set_identifier_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_request->naskeysetidentifier);
   if (res) {res = eps_attach_type_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_request->epsattachtype, NULL);}
-  if (res) {res = eps_mobile_identity_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_request->oldgutiorimsi);}
+  if (res) {res = sp_eps_mobile_identity_from_xml (scenario, msg, &attach_request->oldgutiorimsi);}
   if (res) {res = ue_network_capability_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_request->uenetworkcapability);}
   if (res) {res = esm_message_container_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_request->esmmessagecontainer);}
   if (res) {
@@ -176,7 +177,7 @@ bool sp_attach_request_from_xml (
       attach_request->presencemask |= ATTACH_REQUEST_OLD_PTMSI_SIGNATURE_PRESENT;
     }
 
-    res = eps_mobile_identity_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_request->additionalguti);
+    res = sp_eps_mobile_identity_from_xml (scenario, msg, &attach_request->additionalguti);
     if (res) {
       attach_request->presencemask |= ATTACH_REQUEST_ADDITIONAL_GUTI_PRESENT;
     }
@@ -332,7 +333,7 @@ bool sp_detach_request_from_xml (
 
   res = nas_key_set_identifier_from_xml (msg->xml_doc, msg->xpath_ctx, &detach_request->naskeysetidentifier);
   if (res) {res = detach_type_from_xml (msg->xml_doc, msg->xpath_ctx, &detach_request->detachtype);}
-  if (res) {res = eps_mobile_identity_from_xml (msg->xml_doc, msg->xpath_ctx, &detach_request->gutiorimsi);}
+  if (res) {res = sp_eps_mobile_identity_from_xml (scenario, msg, &detach_request->gutiorimsi);}
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
 }
 
@@ -406,7 +407,7 @@ bool sp_identity_response_from_xml (
     identity_response_msg * const identity_response)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  bool res = mobile_identity_from_xml (msg->xml_doc, msg->xpath_ctx, &identity_response->mobileidentity);
+  bool res = sp_mobile_identity_from_xml (scenario, msg, &identity_response->mobileidentity);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
 }
 

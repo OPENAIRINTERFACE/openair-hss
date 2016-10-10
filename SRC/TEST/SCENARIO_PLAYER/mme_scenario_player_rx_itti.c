@@ -90,17 +90,20 @@ static bstring mme_scenario_player_dump_nas_downlink_data_req (const MessageDef 
     OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error creating the xml writer\n");
     return NULL;
   } else {
+    int rc = xmlTextWriterSetIndent(xml_text_writer, 1);
+    if (!(!rc)) {
+      OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error indenting Document\n");
+    }
+    rc = xmlTextWriterSetIndentString(xml_text_writer, (const xmlChar *)"  ");
+    if (!(!rc)) {
+      OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error indenting Document\n");
+    }
     xml_msg_dump_itti_nas_downlink_data_req(nas_dl_data_req, received_message->ittiMsgHeader.originTaskId, TASK_MME_SCENARIO_PLAYER, xml_text_writer);
-    int rc = xmlTextWriterEndDocument(xml_text_writer);
-    if (0 > rc) {
+    rc = xmlTextWriterEndDocument(xml_text_writer);
+    if (!(!rc)) {
       OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error ending Document\n");
     }
     xmlFreeTextWriter(xml_text_writer);
-
-    // OLE.... pretty xml
-    char cmd[400];
-    snprintf(cmd, 400, "tmpfile=`mktemp`;xmllint --format %s > $tmpfile; cp $tmpfile %s;rm  $tmpfile", filename, filename);
-    system(cmd);
     return bfromcstr(filename);
   }
   return NULL;
@@ -216,9 +219,17 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
         scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
         OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error creating the xml writer\n");
       } else {
+        int rc = xmlTextWriterSetIndent(xml_text_writer, 1);
+        if (!(!rc)) {
+          OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error indenting Document\n");
+        }
+        rc = xmlTextWriterSetIndentString(xml_text_writer, (const xmlChar *)"  ");
+        if (!(!rc)) {
+          OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error indenting Document\n");
+        }
         xml_msg_dump_itti_mme_app_connection_establishment_cnf(mme_app_connection_establishment_cnf, received_message->ittiMsgHeader.originTaskId, TASK_MME_SCENARIO_PLAYER, xml_text_writer);
-        int rc = xmlTextWriterEndDocument(xml_text_writer);
-        if (0 > rc) {
+        rc = xmlTextWriterEndDocument(xml_text_writer);
+        if (!(!rc)) {
           OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error ending Document\n");
         }
         xmlFreeTextWriter(xml_text_writer);
@@ -280,18 +291,20 @@ static bstring mme_scenario_player_dump_s1ap_ue_context_release_command (const M
     OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error creating the xml writer\n");
     return NULL;
   } else {
+    int rc = xmlTextWriterSetIndent(xml_text_writer, 1);
+    if (!(!rc)) {
+      OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error indenting Document\n");
+    }
+    rc = xmlTextWriterSetIndentString(xml_text_writer, (const xmlChar *)"  ");
+    if (!(!rc)) {
+      OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error indenting Document\n");
+    }
     xml_msg_dump_itti_s1ap_ue_context_release_command(s1ap_ue_context_release_command, received_message->ittiMsgHeader.originTaskId, TASK_MME_SCENARIO_PLAYER, xml_text_writer);
-    int rc = xmlTextWriterEndDocument(xml_text_writer);
-    if (0 > rc) {
+    rc = xmlTextWriterEndDocument(xml_text_writer);
+    if (!(!rc)) {
       OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error ending Document\n");
     }
     xmlFreeTextWriter(xml_text_writer);
-
-    // OLE.... pretty xml
-    char cmd[400];
-    snprintf(cmd, 400, "tmpfile=`mktemp`;xmllint --format %s > $tmpfile; cp $tmpfile %s;rm  $tmpfile", filename, filename);
-    system(cmd);
-    return bfromcstr(filename);
   }
   return NULL;
 }

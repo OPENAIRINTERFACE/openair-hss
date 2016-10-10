@@ -59,7 +59,9 @@
    if (bearer) {
      unsigned int i;
      for (i=0; i < NET_PACKET_FILTER_MAX; i++) {
-       free_wrapper((void**)&bearer->tft.pkf[i]);
+       if (bearer->tft.pkf[i]) {
+         free_wrapper((void**)&bearer->tft.pkf[i]);
+       }
      }
      free_wrapper((void**)&bearer);
    }

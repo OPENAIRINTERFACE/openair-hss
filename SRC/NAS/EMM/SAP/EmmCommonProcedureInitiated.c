@@ -110,6 +110,7 @@ EmmCommonProcedureInitiated (
       //tricky:
       if (emm_ctx->common_proc) { // assume cleaned if terminated
         rc = emm_proc_common_abort (&emm_ctx->common_proc);
+        emm_fsm_set_status(emm_ctx->ue_id, emm_ctx, EMM_DEREGISTERED);
       } else if (emm_ctx->specific_proc) {
         rc = emm_proc_specific_abort (&emm_ctx->specific_proc);
       }

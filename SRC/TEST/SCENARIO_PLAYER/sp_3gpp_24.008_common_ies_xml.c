@@ -37,6 +37,7 @@
 #include "dynamic_memory_check.h"
 #include "hashtable.h"
 #include "obj_hashtable.h"
+#include "assertions.h"
 #include "common_defs.h"
 #include "assertions.h"
 #include "3gpp_23.003.h"
@@ -80,8 +81,106 @@ bool sp_mobile_identity_from_xml (
     scenario_player_msg_t * const msg,
     mobile_identity_t              * const mobileidentity)
 {
-  AssertFatal(0, "TODO if necessary");
-  return false;
+  bool res = false;
+  bstring xpath_expr_mi = bformat("./%s",MOBILE_IDENTITY_IE_XML_STR);
+  xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_mi);
+  if (xpath_obj_mi) {
+    xmlNodeSetPtr nodes_mi = xpath_obj_mi->nodesetval;
+    int size = (nodes_mi) ? nodes_mi->nodeNr : 0;
+    if ((1 == size) && (msg->xml_doc)) {
+
+      xmlNodePtr saved_node_ptr = msg->xpath_ctx->node;
+      res = (RETURNok == xmlXPathSetContextNode(nodes_mi->nodeTab[0], msg->xpath_ctx));
+      if (res) {
+        uint8_t  typeofidentity = 0;
+        bstring xpath_expr = bformat("./%s",TYPE_OF_IDENTITY_ATTR_XML_STR);
+        res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx8, (void*)&typeofidentity, NULL);
+        bdestroy_wrapper (&xpath_expr);
+        if (res) {
+          switch (typeofidentity) {
+          case MOBILE_IDENTITY_IMSI: {
+              mobileidentity->imsi.typeofidentity = MOBILE_IDENTITY_IMSI;
+
+              uint8_t  oddeven = 0;
+              bstring xpath_expr = bformat("./%s",ODDEVEN_ATTR_XML_STR);
+              res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx8, (void*)&oddeven, NULL);
+              bdestroy_wrapper (&xpath_expr);
+              mobileidentity->imsi.oddeven = oddeven;
+
+              if (res) {
+                bstring imsi_bstr = NULL;
+                uint8_t digit[15] = {0};
+                xpath_expr = bformat("./%s",IMSI_ATTR_XML_STR);
+                res =  sp_xml_load_ascii_stream_leaf_tag(scenario, msg, xpath_expr, &imsi_bstr);
+                bdestroy_wrapper (&xpath_expr);
+                if (res) {
+                  int ret = sscanf((const char*)bdata(imsi_bstr),
+                      "%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8,
+                      &digit[0], &digit[1], &digit[2], &digit[3], &digit[4], &digit[5], &digit[6], &digit[7],
+                      &digit[8], &digit[9], &digit[10], &digit[11], &digit[12], &digit[13], &digit[14]);
+                  if (15 == ret) {
+                    mobileidentity->imsi.digit1 = digit[0];
+                    mobileidentity->imsi.digit2 = digit[1];
+                    mobileidentity->imsi.digit3 = digit[2];
+                    mobileidentity->imsi.digit4 = digit[3];
+                    mobileidentity->imsi.digit5 = digit[4];
+                    mobileidentity->imsi.digit6 = digit[5];
+                    mobileidentity->imsi.digit7 = digit[6];
+                    mobileidentity->imsi.digit8 = digit[7];
+                    mobileidentity->imsi.digit9 = digit[8];
+                    mobileidentity->imsi.digit10 = digit[9];
+                    mobileidentity->imsi.digit11 = digit[10];
+                    mobileidentity->imsi.digit12 = digit[11];
+                    mobileidentity->imsi.digit13 = digit[12];
+                    mobileidentity->imsi.digit14 = digit[13];
+                    mobileidentity->imsi.digit15 = digit[14];
+                  }
+                  res = (15 == ret);
+                }
+                bdestroy_wrapper (&imsi_bstr);
+              }
+            }
+            break;
+
+          case MOBILE_IDENTITY_IMEI:
+            AssertFatal(0, "TODO");
+            break;
+
+          case MOBILE_IDENTITY_IMEISV:
+            AssertFatal(0, "TODO");
+
+            break;
+
+          case MOBILE_IDENTITY_TMSI:
+            AssertFatal(0, "TODO");
+            break;
+
+          case MOBILE_IDENTITY_TMGI:
+              mobileidentity->tmgi.typeofidentity = MOBILE_IDENTITY_TMGI;
+              AssertFatal(0, "TODO");
+            break;
+
+          case MOBILE_IDENTITY_NOT_AVAILABLE: {
+              mobileidentity->no_id.typeofidentity = MOBILE_IDENTITY_NOT_AVAILABLE;
+
+              uint8_t  oddeven = 0;
+              bstring xpath_expr = bformat("./%s",ODDEVEN_ATTR_XML_STR);
+              res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx8, (void*)&oddeven, NULL);
+              bdestroy_wrapper (&xpath_expr);
+              mobileidentity->no_id.oddeven = oddeven;
+            }
+            break;
+
+          default:
+            res = false;
+          }
+        }
+      }
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
+    }
+  }
+  bdestroy_wrapper (&xpath_expr_mi);
+  return res;
 }
 
 //------------------------------------------------------------------------------
