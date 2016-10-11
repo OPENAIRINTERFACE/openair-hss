@@ -28,6 +28,7 @@
 #define PGW
 #define PGW_CONFIG_C
 
+#include <errno.h>
 #include <string.h>
 #include <libconfig.h>
 #include <sys/socket.h>
@@ -123,7 +124,10 @@ int pgw_config_process (pgw_config_t * config_pP)
     int fd = socket(AF_INET, SOCK_DGRAM, 0);
     ifr.ifr_addr.sa_family = AF_INET;
     strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_SGI->data, IFNAMSIZ-1);
-    ioctl(fd, SIOCGIFADDR, &ifr);
+    if (ioctl(fd, SIOCGIFADDR, &ifr)) {
+      OAILOG_CRITICAL(LOG_SPGW_APP, "Failed to read SGI ip addresses: error %s\n", strerror(errno));
+      return RETURNerror;
+    }
     struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
     if (inet_ntop(AF_INET, (const void *)&ipaddr->sin_addr, str_sgi, INET_ADDRSTRLEN) == NULL) {
       OAILOG_ERROR (LOG_SPGW_APP, "inet_ntop");
@@ -133,9 +137,12 @@ int pgw_config_process (pgw_config_t * config_pP)
 
     ifr.ifr_addr.sa_family = AF_INET;
     strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_SGI->data, IFNAMSIZ-1);
-    ioctl(fd, SIOCGIFMTU, &ifr);
+    if (ioctl(fd, SIOCGIFMTU, &ifr)) {
+      OAILOG_CRITICAL(LOG_SPGW_APP, "Failed to probe SGI MTU: error %s\n", strerror(errno));
+      return RETURNerror;
+    }
     config_pP->ipv4.mtu_SGI = ifr.ifr_mtu;
-    OAILOG_DEBUG (LOG_SPGW_APP, "Foung SGI interface MTU=%d\n", config_pP->ipv4.mtu_SGI);
+    OAILOG_DEBUG (LOG_SPGW_APP, "Found SGI interface MTU=%d\n", config_pP->ipv4.mtu_SGI);
     close(fd);
   }
   // GET S5_S8 informations
