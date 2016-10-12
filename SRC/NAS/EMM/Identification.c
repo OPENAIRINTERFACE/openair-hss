@@ -263,7 +263,7 @@ emm_proc_identification_complete (
     /*
      * Stop timer T3470
      */
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%ld)\n", emm_ctx->T3470.id);
     emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
 
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
@@ -354,6 +354,8 @@ static void *_identification_t3470_handler (void *args)
   emm_context_t                     *emm_ctx = (emm_context_t*)args;
 
   if (emm_ctx) {
+    OAILOG_WARNING (LOG_NAS_EMM, "T3470 timer (%ld) expired ue id " MME_UE_S1AP_ID_FMT " \n",
+        emm_ctx->T3470.id, emm_ctx->ue_id);
     emm_ctx->T3470.id = NAS_TIMER_INACTIVE_ID;
   }
   if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_IDENT)){
@@ -363,7 +365,8 @@ static void *_identification_t3470_handler (void *args)
      * Increment the retransmission counter
      */
     data->retransmission_count += 1;
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3470 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3470 (%ld) retransmission counter = %d ue id " MME_UE_S1AP_ID_FMT " \n",
+        emm_ctx->T3470.id, data->retransmission_count, emm_ctx->ue_id);
 
     if (data->retransmission_count < IDENTIFICATION_COUNTER_MAX) {
       REQUIREMENT_3GPP_24_301(R10_5_4_4_6_b__1);
@@ -379,7 +382,7 @@ static void *_identification_t3470_handler (void *args)
       REQUIREMENT_3GPP_24_301(R10_5_4_4_6_b__2);
       emm_sap_t                               emm_sap = {0};
       emm_sap.primitive = EMMREG_PROC_ABORT;
-      emm_sap.u.emm_reg.ue_id = data->ue_id;
+      emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
       emm_sap.u.emm_reg.ctx   = emm_ctx;
       data->notify_failure = true;
       emm_sap_send (&emm_sap);
@@ -440,17 +443,16 @@ int _identification_request (identification_data_t * data)
       /*
        * Re-start T3470 timer
        */
-      emm_ctx->T3470.id = nas_timer_restart (emm_ctx->T3470.id);
+      emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 restarted UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3470 (%d) restarted, expires in %ld seconds\n", emm_ctx->T3470.id, emm_ctx->T3470.sec);
-    } else {
-      /*
-       * Start T3470 timer
-       */
-      emm_ctx->T3470.id = nas_timer_start (emm_ctx->T3470.sec, _identification_t3470_handler, emm_ctx);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3470 (%d) started, expires in %ld seconds\n", emm_ctx->T3470.id, emm_ctx->T3470.sec);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3470 (%ld) stopped, expires in %ld seconds\n", emm_ctx->T3470.id, emm_ctx->T3470.sec);
     }
+    /*
+     * Start T3470 timer
+     */
+    emm_ctx->T3470.id = nas_timer_start (emm_ctx->T3470.sec, 0 /*usec*/, _identification_t3470_handler, emm_ctx);
+    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3470 (%ld) started, expires in %ld seconds\n", emm_ctx->T3470.id, emm_ctx->T3470.sec);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -521,7 +523,7 @@ static int _identification_abort (emm_context_t *emm_ctx)
     emm_ctx_unmark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_IDENT);
 
     if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%ld)\n", emm_ctx->T3470.id);
       emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
     }

@@ -266,7 +266,7 @@ esm_ebr_release (
    * Stop the retransmission timer if still running
    */
   if (ebr_ctx->timer.id != NAS_TIMER_INACTIVE_ID) {
-    OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Stop retransmission timer %d\n", ebr_ctx->timer.id);
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Stop retransmission timer %ld\n", ebr_ctx->timer.id);
     ebr_ctx->timer.id = nas_timer_stop (ebr_ctx->timer.id);
     MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Timer %x ebi %u stopped", ebr_ctx->timer.id, ebi);
   }
@@ -347,7 +347,8 @@ esm_ebr_start_timer (
       /*
        * Re-start the retransmission timer
        */
-      ebr_ctx->timer.id = nas_timer_restart (ebr_ctx->timer.id);
+      ebr_ctx->timer.id = nas_timer_stop (ebr_ctx->timer.id);
+      ebr_ctx->timer.id = nas_timer_start (sec, 0 /* usec */, cb, ebr_ctx->args);
       MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Timer %x ebi %u restarted", ebr_ctx->timer.id, ebi);
     }
   } else {
@@ -378,17 +379,17 @@ esm_ebr_start_timer (
        * Setup the retransmission timer to expire at the given
        * * * * time interval
        */
-      ebr_ctx->timer.id = nas_timer_start (sec, cb, ebr_ctx->args);
+      ebr_ctx->timer.id = nas_timer_start (sec, 0 /* usec */, cb, ebr_ctx->args);
       MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Timer %x ebi %u started", ebr_ctx->timer.id, ebi);
       ebr_ctx->timer.sec = sec;
     }
   }
 
   if ((ebr_ctx->args ) && (ebr_ctx->timer.id != NAS_TIMER_INACTIVE_ID)) {
-    OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Retransmission timer %d expires in " "%ld seconds\n", ebr_ctx->timer.id, ebr_ctx->timer.sec);
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Retransmission timer %ld expires in " "%ld seconds\n", ebr_ctx->timer.id, ebr_ctx->timer.sec);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
   } else {
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-FSM   - ebr_ctx->args == NULL(%p) or ebr_ctx->timer.id == NAS_TIMER_INACTIVE_ID == -1 (%d)\n", ebr_ctx->args, ebr_ctx->timer.id);
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-FSM   - ebr_ctx->args == NULL(%p) or ebr_ctx->timer.id == NAS_TIMER_INACTIVE_ID == -1 (%ld)\n", ebr_ctx->args, ebr_ctx->timer.id);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
@@ -439,7 +440,7 @@ esm_ebr_stop_timer (
    * Stop the retransmission timer if still running
    */
   if (ebr_ctx->timer.id != NAS_TIMER_INACTIVE_ID) {
-    OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Stop retransmission timer %d\n", ebr_ctx->timer.id);
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Stop retransmission timer %ld\n", ebr_ctx->timer.id);
     ebr_ctx->timer.id = nas_timer_stop (ebr_ctx->timer.id);
     MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Timer %x ebi %u stopped", ebr_ctx->timer.id, ebi);
   }

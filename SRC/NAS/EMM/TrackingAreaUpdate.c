@@ -736,17 +736,16 @@ static int _emm_tracking_area_update_accept (
         /*
          * Re-start T3450 timer
          */
-        emm_ctx->T3450.id = nas_timer_restart (emm_ctx->T3450.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 restarted UE " MME_UE_S1AP_ID_FMT " (TAU)", data->ue_id);
-      } else {
-        /*
-         * Start T3450 timer
-         */
-        emm_ctx->T3450.id = nas_timer_start (emm_ctx->T3450.sec, _emm_tau_t3450_handler, data);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 started UE " MME_UE_S1AP_ID_FMT " (TAU)", data->ue_id);
+        emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 Stopped UE " MME_UE_S1AP_ID_FMT " (TAU)", data->ue_id);
       }
+      /*
+       * Start T3450 timer
+       */
+      emm_ctx->T3450.id = nas_timer_start (emm_ctx->T3450.sec, 0  /*usec*/, _emm_tau_t3450_handler, data);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 started UE " MME_UE_S1AP_ID_FMT " (TAU)", data->ue_id);
 
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3450 (%d) expires in %ld seconds (TAU)", emm_ctx->T3450.id, emm_ctx->T3450.sec);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3450 (%ld) expires in %ld seconds (TAU)", emm_ctx->T3450.id, emm_ctx->T3450.sec);
     }
   } else {
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - emm_ctx NULL");
@@ -770,7 +769,7 @@ static int _emm_tracking_area_update_abort (emm_context_t *emm_ctx)
      * Stop timer T3450
      */
     if (emm_ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)", emm_ctx->T3450.id);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%ld)", emm_ctx->T3450.id);
       emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT " (TAU)", emm_ctx->ue_id);
     }

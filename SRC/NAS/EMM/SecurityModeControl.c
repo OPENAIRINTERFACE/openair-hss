@@ -380,7 +380,7 @@ emm_proc_security_mode_complete (
      * Stop timer T3460
      */
     REQUIREMENT_3GPP_24_301(R10_5_4_3_4__1);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%ld)\n", emm_ctx->T3460.id);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
   }
@@ -462,7 +462,7 @@ emm_proc_security_mode_reject (
      * Stop timer T3460
      */
     REQUIREMENT_3GPP_24_301(R10_5_4_3_5__2);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%ld)\n", emm_ctx->T3460.id);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
@@ -630,19 +630,18 @@ _security_request (
         /*
          * Re-start T3460 timer
          */
-        emm_ctx->T3460.id = nas_timer_restart (emm_ctx->T3460.id);
-        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Restarted Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 restarted UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
-        AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to restart T3460");
-      } else {
-        /*
-         * Start T3460 timer
-         */
-        emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, _security_t3460_handler, emm_ctx);
-        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Started Timer T3460 (%d) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
-        AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to start T3460");
+        emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
+        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stopped Timer T3460 (%ld) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 Stopped UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
+        AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to stop T3460");
       }
+      /*
+       * Start T3460 timer
+       */
+      emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, 0  /*usec*/, _security_t3460_handler, emm_ctx);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Started Timer T3460 (%ld) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
+      AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to start T3460");
     }
   }
 
@@ -715,7 +714,7 @@ static int _security_abort (emm_context_t * emm_ctx)
        * Stop timer T3460
        */
       if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
+        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%ld)\n", emm_ctx->T3460.id);
         emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       }
