@@ -56,6 +56,8 @@
 #include "xml_msg_dump_itti.h"
 #include "usim_authenticate.h"
 #include "secu_defs.h"
+#include "mme_config.h"
+#include "mme_scenario_player_task.h"
 
 extern scenario_player_t g_msp_scenarios;
 
@@ -74,11 +76,11 @@ void scenario_set_status(scenario_t * const scenario, const scenario_status_t sc
 {
   scenario->status = scenario_status;
   if (SCENARIO_STATUS_PLAY_SUCCESS == scenario_status) {
-    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s SUCCESS\n", bdata(scenario->name));
+    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s SUCCESS\n", bdata(scenario->name));
   } else if (SCENARIO_STATUS_PLAY_FAILED == scenario_status) {
-    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Run scenario %s FAILED\n", bdata(scenario->name));
+    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s FAILED\n", bdata(scenario->name));
   } else if (SCENARIO_STATUS_LOAD_FAILED == scenario_status) {
-    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Load scenario %s FAILED\n", bdata(scenario->name));
+    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Result Load scenario %s FAILED\n", bdata(scenario->name));
   } else if (SCENARIO_STATUS_PAUSED == scenario_status) {
     OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s PAUSED\n", bdata(scenario->name));
   } else if (SCENARIO_STATUS_LOADED == scenario_status) {
@@ -710,7 +712,7 @@ void msp_init_scenario(scenario_t * const s)
     int rc = gettimeofday(&s->started, NULL);
     AssertFatal(0 == rc, "gettimeofday()");
     pthread_mutex_init(&s->lock, NULL);
-    s->scenario_items = hashtable_ts_create (128, HASH_TABLE_DEFAULT_HASH_FUNC, NULL /* TODO*/, NULL);
+    s->scenario_items = hashtable_ts_create (128, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func /* items are also stored in a list, so do not free them in the hashtable*/, NULL);
     s->var_items      = obj_hashtable_ts_create (32, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
     s->label_items    = obj_hashtable_ts_create (8, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
     s->ue_emulated_emm_security_context = calloc(1, sizeof(emm_security_context_t));
@@ -772,7 +774,7 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
 //------------------------------------------------------------------------------
 void msp_run_scenario(scenario_t * const scenario)
 {
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s status %d\n", bdata(scenario->name), scenario->status);
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Scenario %s status %d\n", bdata(scenario->name), scenario->status);
   if (scenario) {
     if ((SCENARIO_STATUS_PLAY_FAILED != scenario->status) && (SCENARIO_STATUS_PLAY_SUCCESS != scenario->status)) {
       pthread_mutex_lock(&scenario->lock);
@@ -797,7 +799,7 @@ void msp_run_scenario(scenario_t * const scenario)
         } else {
           if (!(scenario->num_timers) && (SCENARIO_STATUS_PLAYING == scenario->status)) {
             scenario->status = SCENARIO_STATUS_PLAY_SUCCESS;
-            OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s SUCCESS\n", bdata(scenario->name));
+            OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s SUCCESS\n", bdata(scenario->name));
             pthread_mutex_unlock(&scenario->lock);
             if (scenario->next_scenario) {
               msp_scenario_tick(scenario->next_scenario);

@@ -1053,6 +1053,8 @@ void msp_free_scenario_player_item (scenario_player_item_t * item)
     case SCENARIO_PLAYER_ITEM_VAR_INCR:
     case SCENARIO_PLAYER_ITEM_VAR_DECR:
     case SCENARIO_PLAYER_ITEM_JUMP_COND:
+    case SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER:
+    case SCENARIO_PLAYER_ITEM_UPDATE_EMM_SECURITY_CONTEXT:
       //NOP
       break;
 

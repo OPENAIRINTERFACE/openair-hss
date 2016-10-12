@@ -107,6 +107,7 @@ void *mme_scenario_player_event_handler (void *args)
     case TERMINATE_MESSAGE:
       mme_scenario_player_exit();
       OAI_FPRINTF_INFO("TASK_MME_SCENARIO_PLAYER terminated");
+      itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
       itti_exit_task ();
       break;
 
@@ -149,9 +150,16 @@ int mme_scenario_player_init (const mme_config_t * mme_config_p)
 //------------------------------------------------------------------------------
 void mme_scenario_player_exit (void)
 {
+  // TODO would need mutex on g_msp_scenarios
   scenario_t *scenario = g_msp_scenarios.head_scenarios;
   scenario_t *next_scenario = NULL;
+  g_msp_scenarios.head_scenarios = NULL;
   while (scenario) {
+    if (SCENARIO_STATUS_PLAY_SUCCESS == scenario->status) {
+      OAI_FPRINTF_INFO ("SUCCESS playing scenario %s\n", bdata(scenario->name));
+    } else {
+      OAI_FPRINTF_ERR ("FAILED  playing scenario %s\n", bdata(scenario->name));
+    }
     next_scenario=scenario->next_scenario;
     msp_free_scenario(scenario);
     scenario = next_scenario;
