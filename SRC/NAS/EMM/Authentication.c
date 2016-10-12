@@ -289,6 +289,7 @@ int emm_proc_authentication_failure (
       AssertFatal (EMM_COMMON_PROC_TYPE_AUTHENTICATION == emm_ctx->common_proc->type,
           "mismatch in common_proc.type = %d, should be EMM_COMMON_PROC_TYPE_AUTHENTICATION=%d", emm_ctx->common_proc->type, EMM_COMMON_PROC_TYPE_AUTHENTICATION);
       REQUIREMENT_3GPP_24_301(R10_5_4_2_7_e__NOTE3);
+      emm_ctx->emm_cause = EMM_CAUSE_SYNCH_FAILURE;
       rc = _authentication_reject(emm_ctx);
     }
     break;
@@ -304,7 +305,7 @@ int emm_proc_authentication_failure (
         REQUIREMENT_3GPP_24_301(R10_5_4_2_7_c__NOTE1); // more or less this case...
         // Failed to initiate the identification procedure
         OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT "EMM-PROC  - Failed to initiate identification procedure\n", emm_ctx->ue_id);
-        emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+        emm_ctx->emm_cause = EMM_CAUSE_MAC_FAILURE;// EMM_CAUSE_ILLEGAL_UE;
         // Do not accept the UE to attach to the network
         AssertFatal (EMM_COMMON_PROC_TYPE_AUTHENTICATION == emm_ctx->common_proc->type,
             "mismatch in common_proc.type = %d, should be EMM_COMMON_PROC_TYPE_AUTHENTICATION=%d", emm_ctx->common_proc->type, EMM_COMMON_PROC_TYPE_AUTHENTICATION);
@@ -314,7 +315,7 @@ int emm_proc_authentication_failure (
       AssertFatal (EMM_COMMON_PROC_TYPE_AUTHENTICATION == emm_ctx->common_proc->type,
           "mismatch in common_proc.type = %d, should be EMM_COMMON_PROC_TYPE_AUTHENTICATION=%d", emm_ctx->common_proc->type, EMM_COMMON_PROC_TYPE_AUTHENTICATION);
       REQUIREMENT_3GPP_24_301(R10_5_4_2_5__2);
-      emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
+      emm_ctx->emm_cause = EMM_CAUSE_MAC_FAILURE; //EMM_CAUSE_ILLEGAL_UE;
       // Do not accept the UE to attach to the network
       rc = _authentication_reject(emm_ctx);
     }

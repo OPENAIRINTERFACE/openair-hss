@@ -62,13 +62,13 @@ bool rrc_establishment_cause_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     rrc_establishment_cause_t * const cause)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",RRC_ESTABLISHMENT_CAUSE_IE_XML_STR);
   uint8_t val = 0;
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, &val, NULL);
   *cause = val;
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------

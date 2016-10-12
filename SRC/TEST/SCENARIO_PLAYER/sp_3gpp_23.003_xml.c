@@ -137,7 +137,7 @@ bool sp_gummei_from_xml (
     scenario_player_msg_t * const msg,
     gummei_t                  * const gummei)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
   bstring xpath_expr = bformat("./%s",GUMMEI_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
@@ -155,7 +155,7 @@ bool sp_gummei_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -164,7 +164,7 @@ bool sp_guti_from_xml (
     scenario_player_msg_t * const msg,
     guti_t                    * const guti)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
   bstring xpath_expr = bformat("./%s",GUTI_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
@@ -181,7 +181,7 @@ bool sp_guti_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -193,7 +193,7 @@ bool sp_s_tmsi_from_xml (
     scenario_player_msg_t * const msg,
     s_tmsi_t                  * const s_tmsi)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
   bstring xpath_expr = bformat("./%s",S_TMSI_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
@@ -211,7 +211,7 @@ bool sp_s_tmsi_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 
@@ -228,11 +228,11 @@ bool sp_csg_id_from_xml (
     scenario_player_msg_t * const msg,
     csg_id_t                  * const csg_id)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bstring xpath_expr = bformat("./%s",CSG_ID_IE_XML_STR);
   bool res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx32, (void*)csg_id, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 //==============================================================================
 // 6 International Mobile Station Equipment Identity and Software Version Number
@@ -262,7 +262,7 @@ bool sp_eci_from_xml (
     scenario_player_msg_t * const msg,
     eci_t                 * const eci)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
   bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_IDENTITY_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
@@ -287,7 +287,7 @@ bool sp_eci_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 
@@ -298,7 +298,7 @@ bool sp_ecgi_from_xml (
     scenario_player_msg_t * const msg,
     ecgi_t                * const ecgi)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
   bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_GLOBAL_IDENTIFICATION_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
@@ -315,7 +315,7 @@ bool sp_ecgi_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 

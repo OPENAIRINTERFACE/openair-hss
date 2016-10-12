@@ -52,7 +52,7 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding)
     handler = xmlFindCharEncodingHandler(encoding);
 
     if (!handler) {
-      OAILOG_ERROR(LOG_UTIL, "xml_encoding_convert_input: no encoding handler found for '%s'\n",
+      OAILOG_ERROR(LOG_XML, "xml_encoding_convert_input: no encoding handler found for '%s'\n",
                encoding ? encoding : "");
         return 0;
     }
@@ -66,9 +66,9 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding)
         ret = handler->input(out, &out_size, (const xmlChar *) in, &temp);
         if ((ret < 0) || (temp - size + 1)) {
             if (ret < 0) {
-              OAILOG_ERROR(LOG_UTIL, "xml_encoding_convert_input: conversion wasn't successful.\n");
+              OAILOG_ERROR(LOG_XML, "xml_encoding_convert_input: conversion wasn't successful.\n");
             } else {
-              OAILOG_ERROR(LOG_UTIL, "xml_encoding_convert_input: conversion wasn't successful. converted: %i octets.\n", temp);
+              OAILOG_ERROR(LOG_XML, "xml_encoding_convert_input: conversion wasn't successful. converted: %i octets.\n", temp);
             }
 
             xmlFree(out);
@@ -78,7 +78,7 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding)
             out[out_size] = 0;  /*null terminating out */
         }
     } else {
-      OAILOG_ERROR(LOG_UTIL, "xml_encoding_convert_input: no mem\n");
+      OAILOG_ERROR(LOG_XML, "xml_encoding_convert_input: no mem\n");
     }
 
     return out;

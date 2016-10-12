@@ -59,7 +59,7 @@
 //------------------------------------------------------------------------------
 bool access_point_name_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, access_point_name_t * access_point_name)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   char apn_str[ACCESS_POINT_NAME_MAX_LENGTH+1]  = {0};
   bstring xpath_expr = bformat("./%s",ACCESS_POINT_NAME_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)apn_str, NULL);
@@ -67,7 +67,7 @@ bool access_point_name_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx
     *access_point_name = blk2bstr((const void *)apn_str, strlen(apn_str));
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ void access_point_name_to_xml (access_point_name_t access_point_name, xmlTextWri
 //------------------------------------------------------------------------------
 bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, protocol_configuration_options_t * const pco, bool ms2network_direction)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   memset(pco, 0, sizeof(*pco));
   bool res = false;
   bstring xpath_expr_pco = bformat("./%s",PROTOCOL_CONFIGURATION_OPTIONS_IE_XML_STR);
@@ -121,20 +121,20 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
               if (attr) {
                 if (!strcasecmp(PROTOCOL_ID_LCP_VAL_XML_STR, (const char *)attr)) {
                   pco->protocol_or_container_ids[i].id = PCO_PI_LCP;
-                  OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", PROTOCOL_ID_LCP_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                  OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", PROTOCOL_ID_LCP_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   pco->num_protocol_or_container_id += 1;
                 } else if (!strcasecmp(PROTOCOL_ID_PAP_VAL_XML_STR, (const char *)attr)) {
                   pco->protocol_or_container_ids[i].id = PCO_PI_PAP;
-                  OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", PROTOCOL_ID_PAP_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                  OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", PROTOCOL_ID_PAP_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   pco->num_protocol_or_container_id += 1;
                 }  else if (!strcasecmp(PROTOCOL_ID_CHAP_VAL_XML_STR, (const char *)attr)) {
                   pco->protocol_or_container_ids[i].id = PCO_PI_CHAP;
-                  OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", PROTOCOL_ID_CHAP_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                  OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", PROTOCOL_ID_CHAP_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   pco->num_protocol_or_container_id += 1;
                 }  else if (!strcasecmp(PROTOCOL_ID_IPCP_VAL_XML_STR, (const char *)attr)) {
                   if (res) {
                     pco->protocol_or_container_ids[i].id = PCO_PI_IPCP;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", PROTOCOL_ID_IPCP_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", PROTOCOL_ID_IPCP_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                     xmlNodePtr saved_node_ptr2 = xpath_ctx->node;
                     res = (RETURNok == xmlXPathSetContextNode(nodes_cid->nodeTab[i], xpath_ctx));
                     if (res) {
@@ -175,7 +175,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                 if (ms2network_direction) {
                   if (!strcasecmp(P_CSCF_IPV6_ADDRESS_REQUEST_VAL_XML_STR, (const char *)attr)) {
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_P_CSCF_IPV6_ADDRESS_REQUEST;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", P_CSCF_IPV6_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", P_CSCF_IPV6_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(DNS_SERVER_IPV6_ADDRESS_REQUEST_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates P-CSCF IPv6 Address Request, DNS Server
                      * IPv6 Address Request, or MSISDN Request, the container identifier contents field is
@@ -183,7 +183,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * zero. If the container identifier contents field is not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_DNS_SERVER_IPV6_ADDRESS_REQUEST;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", DNS_SERVER_IPV6_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", DNS_SERVER_IPV6_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(MS_SUPPORT_OF_NETWORK_REQUESTED_BEARER_CONTROL_INDICATOR_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates MS Support of Network Requested Bearer
                      * Control indicator, the container identifier contents field is empty and the length of
@@ -191,7 +191,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * identifier contents field is not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_MS_SUPPORT_OF_NETWORK_REQUESTED_BEARER_CONTROL_INDICATOR;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", MS_SUPPORT_OF_NETWORK_REQUESTED_BEARER_CONTROL_INDICATOR_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", MS_SUPPORT_OF_NETWORK_REQUESTED_BEARER_CONTROL_INDICATOR_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(DSMIPV6_HOME_AGENT_ADDRESS_REQUEST_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates DSMIPv6 Home Agent Address Request, the
                      * container identifier contents field is empty and the length of container identifier
@@ -199,7 +199,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_DSMIPV6_HOME_AGENT_ADDRESS_REQUEST;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", DSMIPV6_HOME_AGENT_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", DSMIPV6_HOME_AGENT_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(DSMIPV6_HOME_NETWORK_PREFIX_REQUEST_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates DSMIPv6 Home Network Prefix Request, the
                      * container identifier contents field is empty and the length of container identifier
@@ -207,7 +207,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_DSMIPV6_HOME_NETWORK_PREFIX_REQUEST;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", DSMIPV6_HOME_NETWORK_PREFIX_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", DSMIPV6_HOME_NETWORK_PREFIX_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(DSMIPV6_IPV4_HOME_AGENT_ADDRESS_REQUEST_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates DSMIPv6 IPv4 Home Agent Address
                      * Request, the container identifier contents field is empty and the length of container
@@ -215,7 +215,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * field is not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_DSMIPV6_IPV4_HOME_AGENT_ADDRESS_REQUEST;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", DSMIPV6_IPV4_HOME_AGENT_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", DSMIPV6_IPV4_HOME_AGENT_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(IP_ADDRESS_ALLOCATION_VIA_NAS_SIGNALLING_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates IP address allocation via NAS signalling, the
                      * container identifier contents field is empty and the length of container identifier
@@ -223,7 +223,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_IP_ADDRESS_ALLOCATION_VIA_NAS_SIGNALLING;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", IP_ADDRESS_ALLOCATION_VIA_NAS_SIGNALLING_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", IP_ADDRESS_ALLOCATION_VIA_NAS_SIGNALLING_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(IPV4_ADDRESS_ALLOCATION_VIA_DHCPV4_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates IP address allocation via DHCPv4, the
                      * container identifier contents field is empty and the length of container identifier
@@ -231,7 +231,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_IPV4_ADDRESS_ALLOCATION_VIA_DHCPV4;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", IPV4_ADDRESS_ALLOCATION_VIA_DHCPV4_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", IPV4_ADDRESS_ALLOCATION_VIA_DHCPV4_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(P_CSCF_IPV4_ADDRESS_REQUEST_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates P-CSCF IPv4 Address Request, the
                      * container identifier contents field is empty and the length of container identifier
@@ -239,7 +239,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_P_CSCF_IPV4_ADDRESS_REQUEST;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", P_CSCF_IPV4_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", P_CSCF_IPV4_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(DNS_SERVER_IPV4_ADDRESS_REQUEST_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates DNS Server IPv4 Address Request, the
                      * container identifier contents field is empty and the length of container identifier
@@ -247,7 +247,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_DNS_SERVER_IPV4_ADDRESS_REQUEST;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", DNS_SERVER_IPV4_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", DNS_SERVER_IPV4_ADDRESS_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(MSISDN_REQUEST_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates P-CSCF IPv6 Address Request, DNS Server
                      * IPv6 Address Request, or MSISDN Request, the container identifier contents field is
@@ -255,7 +255,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * zero. If the container identifier contents field is not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_MSISDN_REQUEST;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", MSISDN_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", MSISDN_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(IFOM_SUPPORT_REQUEST_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates IFOM Support Request (see
                      * 3GPP TS 24.303 [124] and 3GPP TS 24.327 [125]), the container identifier contents
@@ -263,7 +263,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * to zero. If the container identifier contents field is not empty, it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_IFOM_SUPPORT_REQUEST;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", IFOM_SUPPORT_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", IFOM_SUPPORT_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(IPV4_LINK_MTU_REQUEST_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates IPv4 Link MTU Request, the container
                      * identifier contents field is empty and the length of container identifier contents
@@ -271,7 +271,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * it shall be ignored.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_IPV4_LINK_MTU_REQUEST;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", IPV4_LINK_MTU_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", IPV4_LINK_MTU_REQUEST_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(IM_CN_SUBSYSTEM_SIGNALING_FLAG_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates IM CN Subsystem Signaling Flag (see 3GPP
                      * TS 24.229 [95]), the container identifier contents field is empty and the length of
@@ -281,7 +281,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * requested dedicated signalling PDP context was successfully established.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_IM_CN_SUBSYSTEM_SIGNALING_FLAG;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", IM_CN_SUBSYSTEM_SIGNALING_FLAG_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", IM_CN_SUBSYSTEM_SIGNALING_FLAG_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else {
                     unknown = true;
                   }
@@ -295,7 +295,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * Address are used.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_P_CSCF_IPV6_ADDRESS;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", P_CSCF_IPV6_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", P_CSCF_IPV6_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(DNS_SERVER_IPV6_ADDRESS_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates DNS Server IPv6 Address, the container
                      * identifier contents field contains one IPv6 DNS server address (see 3GPP TS
@@ -305,7 +305,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * used.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_DNS_SERVER_IPV6_ADDRESS;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", DNS_SERVER_IPV6_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", DNS_SERVER_IPV6_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(POLICY_CONTROL_REJECTION_CODE_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates Policy Control rejection code, the container
                      * identifier contents field contains a Go interface related cause code from the GGSN
@@ -314,7 +314,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * its actual length is greater than one octect, then it shall be ignored by the receiver.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_POLICY_CONTROL_REJECTION_CODE;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", POLICY_CONTROL_REJECTION_CODE_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", POLICY_CONTROL_REJECTION_CODE_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(SELECTED_BEARER_CONTROL_MODE_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates Selected Bearer Control Mode, the container
                      * identifier contents field contains the selected bearer control mode, where ‘01H’
@@ -324,7 +324,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * length is greater than one octect, then it shall be ignored by the receiver.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_SELECTED_BEARER_CONTROL_MODE;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", SELECTED_BEARER_CONTROL_MODE_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", SELECTED_BEARER_CONTROL_MODE_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(DSMIPV6_HOME_AGENT_ADDRESS_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates DSMIPv6 Home Agent Address, the
                      * container identifier contents field contains one IPv6 address corresponding to a
@@ -333,7 +333,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * IETF RFC 3513 [99].
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_DSMIPV6_HOME_AGENT_ADDRESS;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", DSMIPV6_HOME_AGENT_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", DSMIPV6_HOME_AGENT_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(DSMIPV6_HOME_NETWORK_PREFIX_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates DSMIPv6 Home Network Prefix, the
                      * container identifier contents field contains one IPv6 Home Network Prefix (see
@@ -342,7 +342,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * prefix length.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_DSMIPV6_HOME_NETWORK_PREFIX;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", DSMIPV6_HOME_NETWORK_PREFIX_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", DSMIPV6_HOME_NETWORK_PREFIX_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(DSMIPV6_IPV4_HOME_AGENT_ADDRESS_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates DSMIPv6 IPv4 Home Agent Address, the
                      * container identifier contents field contains one IPv4 address corresponding to a
@@ -350,28 +350,28 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * 3GPP TS 24.327 [125]).
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_DSMIPV6_IPV4_HOME_AGENT_ADDRESS;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", DSMIPV6_IPV4_HOME_AGENT_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", DSMIPV6_IPV4_HOME_AGENT_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(P_CSCF_IPV4_ADDRESS_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates P-CSCF IPv4 Address, the container
                      * identifier contents field contains one IPv4 address corresponding to the P-CSCF
                      * address to be used.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_P_CSCF_IPV4_ADDRESS;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", P_CSCF_IPV4_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", P_CSCF_IPV4_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(DNS_SERVER_IPV4_ADDRESS_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates DNS Server IPv4 Address, the container
                      * identifier contents field contains one IPv4 address corresponding to the DNS server
                      * address to be used.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_DNS_SERVER_IPV4_ADDRESS;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", DNS_SERVER_IPV4_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", DNS_SERVER_IPV4_ADDRESS_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(MSISDN_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates MSISDN, the container identifier contents
                      * field contains the MSISDN (see 3GPP TS 23.003 [10]) assigned to the MS. Use of
                      * the MSISDN provided is defined in subclause 6.4.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_MSISDN;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", MSISDN_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", MSISDN_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(IFOM_SUPPORT_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates IFOM Support, the container identifier
                      * contents field is empty and the length of container identifier contents indicates a
@@ -379,7 +379,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * ignored. This information indicates that the Home Agent supports IFOM.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_IFOM_SUPPORT;;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", IFOM_SUPPORT_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", IFOM_SUPPORT_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(IPV4_LINK_MTU_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates IPv4 Link MTU, the length of container
                      * identifier contents indicates a length equal to two. The container identifier contents
@@ -390,7 +390,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * different from two octets, then it shall be ignored by the receiver.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_IPV4_LINK_MTU;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", IPV4_LINK_MTU_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", IPV4_LINK_MTU_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else if (!strcasecmp(IM_CN_SUBSYSTEM_SIGNALING_FLAG_VAL_XML_STR, (const char *)attr)) {
                     /* When the container identifier indicates IM CN Subsystem Signaling Flag (see 3GPP
                      * TS 24.229 [95]), the container identifier contents field is empty and the length of
@@ -400,7 +400,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
                      * requested dedicated signalling PDP context was successfully established.
                      */
                     pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id = PCO_CI_IM_CN_SUBSYSTEM_SIGNALING_FLAG;
-                    OAILOG_TRACE (LOG_UTIL, "Found in PCO %s 0x%x\n", IM_CN_SUBSYSTEM_SIGNALING_FLAG_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
+                    OAILOG_TRACE (LOG_XML, "Found in PCO %s 0x%x\n", IM_CN_SUBSYSTEM_SIGNALING_FLAG_VAL_XML_STR, pco->protocol_or_container_ids[pco->num_protocol_or_container_id].id);
                   } else {
                     unknown = true;
                   }
@@ -436,7 +436,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
     xmlXPathFreeObject(xpath_obj_pco);
   }
   bdestroy_wrapper (&xpath_expr_pco);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void protocol_configuration_options_to_xml (const protocol_configuration_options_t * const pco, xmlTextWriterPtr writer, bool ms2network_direction)
@@ -854,7 +854,7 @@ void protocol_configuration_options_to_xml (const protocol_configuration_options
 //------------------------------------------------------------------------------
 bool quality_of_service_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, quality_of_service_t * const qualityofservice)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_qos = bformat("./%s",QUALITY_OF_SERVICE_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj_qos = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_qos);
@@ -995,7 +995,7 @@ bool quality_of_service_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ct
     }
   }
   bdestroy_wrapper (&xpath_expr_qos);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void quality_of_service_to_xml ( const quality_of_service_t * const qualityofservice, xmlTextWriterPtr writer)
@@ -1027,7 +1027,7 @@ void quality_of_service_to_xml ( const quality_of_service_t * const qualityofser
 //------------------------------------------------------------------------------
 bool linked_ti_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, linked_ti_t * const linkedti)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_lti = bformat("./%s",LINKED_TI_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj_lti = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_lti);
@@ -1070,7 +1070,7 @@ bool linked_ti_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, linked
     }
   }
   bdestroy_wrapper (&xpath_expr_lti);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void linked_ti_to_xml ( const linked_ti_t * const linkedti, xmlTextWriterPtr writer)
@@ -1088,11 +1088,11 @@ void linked_ti_to_xml ( const linked_ti_t * const linkedti, xmlTextWriterPtr wri
 //------------------------------------------------------------------------------
 bool llc_service_access_point_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, llc_service_access_point_identifier_t * const llc_sap_id)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",LLC_SERVICE_ACCESS_POINT_IDENTIFIER_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)llc_sap_id, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void llc_service_access_point_identifier_to_xml (const llc_service_access_point_identifier_t * const llc_sap_id, xmlTextWriterPtr writer)
@@ -1105,11 +1105,11 @@ void llc_service_access_point_identifier_to_xml (const llc_service_access_point_
 //------------------------------------------------------------------------------
 bool packet_flow_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, packet_flow_identifier_t * const packetflowidentifier)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",PACKET_FLOW_IDENTIFIER_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)packetflowidentifier, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void packet_flow_identifier_to_xml (const packet_flow_identifier_t * const packetflowidentifier, xmlTextWriterPtr writer)
@@ -1122,9 +1122,9 @@ void packet_flow_identifier_to_xml (const packet_flow_identifier_t * const packe
 //------------------------------------------------------------------------------
 bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, packet_filter_contents_t * const pfc)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   AssertFatal(0, "TODO");
-  OAILOG_FUNC_RETURN (LOG_UTIL, false);
+  OAILOG_FUNC_RETURN (LOG_XML, false);
 }
 //------------------------------------------------------------------------------
 void packet_filter_content_to_xml (const packet_filter_contents_t * const pfc, xmlTextWriterPtr writer)
@@ -1211,9 +1211,9 @@ void packet_filter_content_to_xml (const packet_filter_contents_t * const pfc, x
 //------------------------------------------------------------------------------
 bool packet_filter_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, packet_filter_t * const packetfilter)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   AssertFatal(0, "TODO");
-  OAILOG_FUNC_RETURN (LOG_UTIL, false);
+  OAILOG_FUNC_RETURN (LOG_XML, false);
 }
 //------------------------------------------------------------------------------
 void packet_filter_to_xml (const packet_filter_t * const packetfilter, xmlTextWriterPtr writer)
@@ -1245,11 +1245,11 @@ void packet_filter_to_xml (const packet_filter_t * const packetfilter, xmlTextWr
 //------------------------------------------------------------------------------
 bool packet_filter_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, packet_filter_identifier_t * const packetfilteridentifier)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",IDENTIFIER_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)packetfilteridentifier, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void packet_filter_identifier_to_xml (const packet_filter_identifier_t * const packetfilteridentifier, xmlTextWriterPtr writer)
@@ -1260,9 +1260,9 @@ void packet_filter_identifier_to_xml (const packet_filter_identifier_t * const p
 //------------------------------------------------------------------------------
 bool traffic_flow_template_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, traffic_flow_template_t * const trafficflowtemplate)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   AssertFatal(0, "TODO");
-  OAILOG_FUNC_RETURN (LOG_UTIL, false);
+  OAILOG_FUNC_RETURN (LOG_XML, false);
 }
 //------------------------------------------------------------------------------
 void traffic_flow_template_to_xml (const traffic_flow_template_t * const trafficflowtemplate, xmlTextWriterPtr writer)

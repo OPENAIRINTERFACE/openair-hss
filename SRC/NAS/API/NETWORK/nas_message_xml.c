@@ -76,7 +76,7 @@ bool nas_message_plain_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     nas_message_plain_t       * const nas_message)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",PLAIN_NAS_MESSAGE_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
@@ -103,7 +103,7 @@ bool nas_message_plain_from_xml (
           /*
            * Discard L3 messages with not supported protocol discriminator
            */
-          OAILOG_WARNING(LOG_NAS, "NET-API   - Protocol discriminator 0x%x is " "not supported\n", nas_message->emm.header.protocol_discriminator);
+          OAILOG_WARNING(LOG_XML, "NET-API   - Protocol discriminator 0x%x is " "not supported\n", nas_message->emm.header.protocol_discriminator);
         }
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
@@ -111,7 +111,7 @@ bool nas_message_plain_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 static int nas_message_plain_to_xml (
@@ -120,7 +120,7 @@ static int nas_message_plain_to_xml (
     const size_t length,
     xmlTextWriterPtr writer)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   int                                     bytes = TLV_PROTOCOL_NOT_SUPPORTED;
 
   // really need to change this
@@ -138,10 +138,10 @@ static int nas_message_plain_to_xml (
     /*
      * Discard L3 messages with not supported protocol discriminator
      */
-    OAILOG_WARNING(LOG_NAS, "NET-API   - Protocol discriminator 0x%x is " "not supported\n", msg->emm.header.protocol_discriminator);
+    OAILOG_WARNING(LOG_XML, "NET-API   - Protocol discriminator 0x%x is " "not supported\n", msg->emm.header.protocol_discriminator);
   }
   XML_WRITE_END_ELEMENT(writer);
-  OAILOG_FUNC_RETURN (LOG_NAS, bytes);
+  OAILOG_FUNC_RETURN (LOG_XML, bytes);
 }
 
 //------------------------------------------------------------------------------
@@ -150,7 +150,7 @@ bool nas_message_protected_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     nas_message_t             * const nas_message)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",SECURITY_PROTECTED_NAS_MESSAGE_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
@@ -192,7 +192,7 @@ bool nas_message_protected_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 static int nas_message_protected_to_xml(
@@ -203,7 +203,7 @@ static int nas_message_protected_to_xml(
     nas_message_decode_status_t * const status,
     xmlTextWriterPtr writer)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   int                                     bytes = TLV_BUFFER_TOO_SHORT;
 
   XML_WRITE_START_ELEMENT(writer,  SECURITY_PROTECTED_NAS_MESSAGE_IE_XML_STR);
@@ -219,7 +219,7 @@ static int nas_message_protected_to_xml(
 
   XML_WRITE_END_ELEMENT(writer);
 
-  OAILOG_FUNC_RETURN (LOG_NAS, bytes);
+  OAILOG_FUNC_RETURN (LOG_XML, bytes);
 }
 
 //------------------------------------------------------------------------------
@@ -228,21 +228,21 @@ bool nas_pdu_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     bstring                    const *bnas_pdu)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   nas_message_t                           nas_msg;
   memset((void*)&nas_msg, 0, sizeof(nas_msg));
 
   if (nas_message_protected_from_xml(xml_doc, xpath_ctx, &nas_msg)) {
-    OAILOG_FUNC_RETURN (LOG_NAS, true);
+    OAILOG_FUNC_RETURN (LOG_XML, true);
   } else if (nas_message_plain_from_xml(xml_doc, xpath_ctx, &nas_msg.plain)) {
-    OAILOG_FUNC_RETURN (LOG_NAS, true);
+    OAILOG_FUNC_RETURN (LOG_XML, true);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS, false);
+  OAILOG_FUNC_RETURN (LOG_XML, false);
 }
 //------------------------------------------------------------------------------
 void nas_pdu_to_xml (bstring bnas_pdu, xmlTextWriterPtr writer)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   unsigned char                          *buffer = (unsigned char*)bdata(bnas_pdu);
   size_t                                  length = blength(bnas_pdu);
   emm_security_context_t                 *emm_security_context = NULL; // TODO maybe later
@@ -259,8 +259,8 @@ void nas_pdu_to_xml (bstring bnas_pdu, xmlTextWriterPtr writer)
   size  = nas_message_header_decode (buffer, &nas_msg.header, length, &decode_status, &is_sr);
 
   if (size < 0) {
-    OAILOG_WARNING(LOG_NAS, "Message header %lu bytes is too short\n", length);
-    OAILOG_FUNC_OUT (LOG_NAS);
+    OAILOG_WARNING(LOG_XML, "Message header %lu bytes is too short\n", length);
+    OAILOG_FUNC_OUT (LOG_XML);
   } else
   // SERVICE REQUEST
   if (is_sr) {
@@ -268,8 +268,8 @@ void nas_pdu_to_xml (bstring bnas_pdu, xmlTextWriterPtr writer)
       /*
        * The buffer is not big enough to contain security header
        */
-      OAILOG_WARNING(LOG_NAS, "Message header %lu bytes is too short %u bytes\n", length, NAS_MESSAGE_SECURITY_HEADER_SIZE);
-      OAILOG_FUNC_OUT (LOG_NAS);
+      OAILOG_WARNING(LOG_XML, "Message header %lu bytes is too short %u bytes\n", length, NAS_MESSAGE_SECURITY_HEADER_SIZE);
+      OAILOG_FUNC_OUT (LOG_XML);
     }
     /*
      * Decode the sequence number + ksi: be careful
@@ -315,5 +315,5 @@ void nas_pdu_to_xml (bstring bnas_pdu, xmlTextWriterPtr writer)
      */
     nas_message_plain_to_xml(buffer, &nas_msg.plain, length, writer);
   }
-  OAILOG_FUNC_OUT (LOG_NAS);
+  OAILOG_FUNC_OUT (LOG_XML);
 }

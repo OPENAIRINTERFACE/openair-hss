@@ -63,7 +63,7 @@ bool activate_dedicated_eps_bearer_context_request_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     activate_dedicated_eps_bearer_context_request_msg * const activate_dedicated_eps_bearer_context_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
 
   res = linked_eps_bearer_identity_from_xml (xml_doc, xpath_ctx, &activate_dedicated_eps_bearer_context_request->linkedepsbeareridentity, NULL);
@@ -103,7 +103,7 @@ bool activate_dedicated_eps_bearer_context_request_from_xml (
     }
     res = true;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -111,7 +111,7 @@ int activate_dedicated_eps_bearer_context_request_to_xml (
   activate_dedicated_eps_bearer_context_request_msg * activate_dedicated_eps_bearer_context_request,
   xmlTextWriterPtr writer)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
   linked_eps_bearer_identity_to_xml (&activate_dedicated_eps_bearer_context_request->linkedepsbeareridentity, writer);
   eps_quality_of_service_to_xml (&activate_dedicated_eps_bearer_context_request->epsqos, writer);
   traffic_flow_template_to_xml (&activate_dedicated_eps_bearer_context_request->tft, writer);
@@ -145,7 +145,7 @@ int activate_dedicated_eps_bearer_context_request_to_xml (
       == ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
     protocol_configuration_options_to_xml (&activate_dedicated_eps_bearer_context_request->protocolconfigurationoptions, writer, false);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
 }
 //------------------------------------------------------------------------------
 bool activate_default_eps_bearer_context_accept_from_xml (
@@ -153,14 +153,14 @@ bool activate_default_eps_bearer_context_accept_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     activate_default_eps_bearer_context_accept_msg * activate_default_eps_bearer_context_accept)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   res = protocol_configuration_options_from_xml (xml_doc, xpath_ctx, &activate_default_eps_bearer_context_accept->protocolconfigurationoptions, true);
   activate_default_eps_bearer_context_accept->presencemask = 0;
   if (res) {
     activate_default_eps_bearer_context_accept->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, true);
+  OAILOG_FUNC_RETURN (LOG_XML, true);
 }
 
 //------------------------------------------------------------------------------
@@ -168,13 +168,13 @@ int activate_default_eps_bearer_context_accept_to_xml (
   activate_default_eps_bearer_context_accept_msg * activate_default_eps_bearer_context_accept,
   xmlTextWriterPtr writer)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
 
   if ((activate_default_eps_bearer_context_accept->presencemask & ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT)
       == ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
     protocol_configuration_options_to_xml (&activate_default_eps_bearer_context_accept->protocolconfigurationoptions, writer, true);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
 }
 //------------------------------------------------------------------------------
 bool activate_default_eps_bearer_context_request_from_xml (
@@ -182,7 +182,7 @@ bool activate_default_eps_bearer_context_request_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     activate_default_eps_bearer_context_request_msg * activate_default_eps_bearer_context_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
 
   res = eps_quality_of_service_from_xml (xml_doc, xpath_ctx, &activate_default_eps_bearer_context_request->epsqos);
@@ -232,7 +232,7 @@ bool activate_default_eps_bearer_context_request_from_xml (
     }
     res = true;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -240,7 +240,7 @@ int activate_default_eps_bearer_context_request_to_xml (
   activate_default_eps_bearer_context_request_msg * activate_default_eps_bearer_context_request,
   xmlTextWriterPtr writer)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
 
   eps_quality_of_service_to_xml (&activate_default_eps_bearer_context_request->epsqos, writer);
 
@@ -287,7 +287,7 @@ int activate_default_eps_bearer_context_request_to_xml (
       == ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
     protocol_configuration_options_to_xml (&activate_default_eps_bearer_context_request->protocolconfigurationoptions, writer, false);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
 }
 //------------------------------------------------------------------------------
 bool pdn_connectivity_request_from_xml (
@@ -295,7 +295,7 @@ bool pdn_connectivity_request_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     pdn_connectivity_request_msg * pdn_connectivity_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
 
   res = pdn_type_from_xml (xml_doc, xpath_ctx, &pdn_connectivity_request->pdntype);
@@ -319,7 +319,7 @@ bool pdn_connectivity_request_from_xml (
     }
     res = true;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -327,7 +327,7 @@ int pdn_connectivity_request_to_xml (
   pdn_connectivity_request_msg * pdn_connectivity_request,
   xmlTextWriterPtr writer)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
   pdn_type_to_xml (&pdn_connectivity_request->pdntype, writer);
   request_type_to_xml (&pdn_connectivity_request->requesttype, writer);
 
@@ -345,7 +345,7 @@ int pdn_connectivity_request_to_xml (
       == PDN_CONNECTIVITY_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
     protocol_configuration_options_to_xml (&pdn_connectivity_request->protocolconfigurationoptions, writer, true);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
 }
 //------------------------------------------------------------------------------
 bool esm_msg_from_xml (
@@ -353,7 +353,7 @@ bool esm_msg_from_xml (
     xmlXPathContextPtr                     xpath_ctx,
     ESM_msg               * const esm_msg)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
   bool                                    res = false;
 
   // First decode the EMM message header
@@ -449,12 +449,12 @@ bool esm_msg_from_xml (
       break;
 
     default:
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", esm_msg->header.message_type);
+      OAILOG_ERROR (LOG_XML, "ESM-MSG   - Unexpected message type: 0x%x\n", esm_msg->header.message_type);
       res = false;
       break;
     }
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 /****************************************************************************
@@ -480,7 +480,7 @@ int esm_msg_to_xml (
   uint32_t len,
   xmlTextWriterPtr writer)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
   int                                     header_result = 0;
   int                                     decode_result = 0;
   int                                     encode_result = 0;
@@ -491,11 +491,11 @@ int esm_msg_to_xml (
   header_result = esm_msg_header_to_xml (&msg->header, buffer, len, writer);
 
   if (header_result < 0) {
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to encode ESM message header " "(%d)\n", header_result);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result);
+    OAILOG_ERROR (LOG_XML, "ESM-MSG   - Failed to encode ESM message header " "(%d)\n", header_result);
+    OAILOG_FUNC_RETURN (LOG_XML, header_result);
   }
 
-  OAILOG_TRACE (LOG_NAS_ESM, "ESM-MSG   - Encoded ESM message header " "(%d)\n", header_result);
+  OAILOG_TRACE (LOG_XML, "ESM-MSG   - Encoded ESM message header " "(%d)\n", header_result);
   buffer += header_result;
   len -= header_result;
 
@@ -593,16 +593,16 @@ int esm_msg_to_xml (
     break;
 
   default:
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
+    OAILOG_ERROR (LOG_XML, "ESM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
     encode_result = TLV_WRONG_MESSAGE_TYPE;
     break;
   }
 
   if (encode_result < 0) {
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to encode L3 ESM message 0x%x " "(%d)\n", msg->header.message_type, encode_result);
+    OAILOG_ERROR (LOG_XML, "ESM-MSG   - Failed to encode L3 ESM message 0x%x " "(%d)\n", msg->header.message_type, encode_result);
   }
 
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result + decode_result);
+  OAILOG_FUNC_RETURN (LOG_XML, header_result + decode_result);
 }
 
 /****************************************************************************/
@@ -614,7 +614,7 @@ bool esm_msg_header_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     esm_msg_header_t          * const header)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
   bool     res                           = false;
   ebi_t   eps_bearer_identity            = 0;
   eps_protocol_discriminator_t protocol_discriminator = 0;
@@ -635,7 +635,7 @@ bool esm_msg_header_from_xml (
     res = message_type_from_xml(xml_doc, xpath_ctx, &message_type);
     header->message_type = message_type;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 /****************************************************************************
@@ -662,14 +662,14 @@ int esm_msg_header_to_xml (
   const uint32_t len,
   xmlTextWriterPtr writer)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_XML);
   int                                     header_result = 0;
 
   header_result= esm_msg_decode_header (header, buffer, len);
 
   if (header_result < 0) {
-    OAILOG_ERROR (LOG_NAS_ESM, "EMM-MSG   - Failed to decode ESM message header " "(%d)\n", header_result);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result);
+    OAILOG_ERROR (LOG_XML, "EMM-MSG   - Failed to decode ESM message header " "(%d)\n", header_result);
+    OAILOG_FUNC_RETURN (LOG_XML, header_result);
   }
 
   //buffer += header_result;

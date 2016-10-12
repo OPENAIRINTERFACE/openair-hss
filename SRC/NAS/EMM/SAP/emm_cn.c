@@ -139,8 +139,13 @@ static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg)
      * * * * and NAS security setup to activate integrity protection and NAS
      * * * * ciphering are mandatory.
      */
+    emm_common_reject_callback_t cb = NULL;
+
+    if (emm_ctx_is_specific_procedure_running(emm_ctx, EMM_CTXT_SPEC_PROC_ATTACH)) {
+      cb = _emm_attach_reject;
+    }
     rc = emm_proc_authentication (emm_ctx, emm_ctx->ue_id, eksi,
-        emm_ctx->_vector[vindex].rand, emm_ctx->_vector[vindex].autn, emm_attach_security, NULL, NULL);
+        emm_ctx->_vector[vindex].rand, emm_ctx->_vector[vindex].autn, emm_attach_security, cb, NULL);
 
     if (rc != RETURNok) {
       /*

@@ -262,7 +262,7 @@ void msp_fsm(void);
 struct timer_has_expired_s;
 
 void msp_scenario_tick(scenario_t * const scenario);
-void scenario_set_status(scenario_t * const scenario, const scenario_status_t scenario_status);
+void scenario_set_status(scenario_t * const scenario, const scenario_status_t scenario_status, char* caller, int line);
 void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expired);
 void msp_get_elapsed_time_since_scenario_start(scenario_t * const scenario, struct timeval * const elapsed_time);
 bool msp_send_tx_message_no_delay(scenario_t * const scenario, scenario_player_item_t * const item);

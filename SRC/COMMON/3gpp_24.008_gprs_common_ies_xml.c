@@ -59,7 +59,7 @@
 //------------------------------------------------------------------------------
 bool gprs_timer_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const char * const ie, gprs_timer_t * const gprstimer)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_gprs = bformat("./%s",ie);
   xmlXPathObjectPtr xpath_obj_gprs = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_gprs);
@@ -87,7 +87,7 @@ bool gprs_timer_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const
     }
   }
   bdestroy_wrapper (&xpath_expr_gprs);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------

@@ -123,8 +123,7 @@ static int                              _emm_attach (emm_context_t *emm_ctx);
    Abnormal case attach procedures
 */
 static int                              _emm_attach_release (emm_context_t *emm_ctx);
-static int                              _emm_attach_reject (
-  void *);
+int                              _emm_attach_reject (emm_context_t *emm_ctx);
 static int                              _emm_attach_abort (emm_context_t *emm_ctx);
 
 static int                              _emm_attach_have_changed (
@@ -885,13 +884,10 @@ static int _emm_attach_release (emm_context_t *emm_ctx)
  *      Others:    None
  *
  */
-static int
-_emm_attach_reject (
-  void *args)
+int _emm_attach_reject (emm_context_t *emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_context_t                     *emm_ctx = (emm_context_t *) (args);
 
   if (emm_ctx) {
     emm_sap_t                               emm_sap = {0};
@@ -1082,7 +1078,7 @@ static int _emm_attach_identify (emm_context_t *emm_ctx)
       } else */{
         emm_ctx_set_security_vector_index(emm_ctx, vindex);
         rc = emm_proc_authentication (emm_ctx, emm_ctx->ue_id, eksi,
-          emm_ctx->_vector[vindex].rand, emm_ctx->_vector[vindex].autn, emm_attach_security, NULL, NULL);
+          emm_ctx->_vector[vindex].rand, emm_ctx->_vector[vindex].autn, emm_attach_security, _emm_attach_reject, NULL);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       }
     }

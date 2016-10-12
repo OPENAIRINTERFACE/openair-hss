@@ -96,7 +96,7 @@ bool xml_msg_load_action_tag(
   int size = (nodes) ? nodes->nodeNr : 0;
   if ((1 == size) && (container) && (xml_doc)) {
     xmlChar *key = xmlNodeListGetString(xml_doc, nodes->nodeTab[0]->xmlChildrenNode, 1);
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s = %s\n", ACTION_XML_STR, (const char*)key);
+    OAILOG_TRACE (LOG_XML, "Found %s = %s\n", ACTION_XML_STR, (const char*)key);
     if ((!xmlStrcmp(key, (const xmlChar *)ACTION_SEND_XML_STR))){
       *is_tx = true;
     } else {
@@ -105,7 +105,7 @@ bool xml_msg_load_action_tag(
     xmlFree(key);
     return true;
   }
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Warning: No result for searching tag %s\n", ACTION_XML_STR);
+  OAILOG_TRACE (LOG_XML, "Warning: No result for searching tag %s\n", ACTION_XML_STR);
   return false;
 }
 
@@ -139,7 +139,7 @@ int itti_task_str2itti_task_id(const char * const task_id_str)
   } else if (!strcasecmp(task_id_str, "TASK_MME_SCENARIO_PLAYER")) {
     return TASK_MME_SCENARIO_PLAYER;
   } else {
-    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find task id for %s\n", task_id_str);
+    OAILOG_ERROR (LOG_XML, "Could not find task id for %s\n", task_id_str);
     return TASK_UNKNOWN;
   }
 }
@@ -160,7 +160,7 @@ bool xml_load_itti_task_id_tag(
       if (key) {
         res = true;
         *container = itti_task_str2itti_task_id((const char *)key);
-        OAILOG_TRACE (LOG_UTIL, "Found %s=%s (%d)\n", bdata(xpath_expr), key, *container);
+        OAILOG_TRACE (LOG_XML, "Found %s=%s (%d)\n", bdata(xpath_expr), key, *container);
         xmlFree(key);
       } else {
         *container = TASK_UNKNOWN;
@@ -180,7 +180,7 @@ int xml_msg_load_itti_sctp_new_association(scenario_t * const scenario, scenario
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_SCTP_NEW_ASSOCIATION_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_SCTP_NEW_ASSOCIATION_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_SCTP_NEW_ASSOCIATION_XML_STR);
       return RETURNerror;
     }
 
@@ -257,7 +257,7 @@ int xml_msg_load_itti_sctp_close_association(scenario_t * const scenario, scenar
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_SCTP_CLOSE_ASSOCIATION_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_SCTP_CLOSE_ASSOCIATION_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_SCTP_CLOSE_ASSOCIATION_XML_STR);
       return RETURNerror;
     }
 
@@ -321,7 +321,7 @@ int xml_msg_load_itti_s1ap_ue_context_release_req(scenario_t * const scenario, s
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_UE_CONTEXT_RELEASE_REQ_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_S1AP_UE_CONTEXT_RELEASE_REQ_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_S1AP_UE_CONTEXT_RELEASE_REQ_XML_STR);
       return RETURNerror;
     }
 
@@ -388,7 +388,7 @@ int xml_msg_load_itti_s1ap_ue_context_release_command(scenario_t * const scenari
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND_XML_STR);
       return RETURNerror;
     }
 
@@ -455,7 +455,7 @@ int xml_msg_load_itti_s1ap_ue_context_release_complete(scenario_t * const scenar
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_UE_CONTEXT_RELEASE_COMPLETE_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_S1AP_UE_CONTEXT_RELEASE_COMPLETE_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_S1AP_UE_CONTEXT_RELEASE_COMPLETE_XML_STR);
       return RETURNerror;
     }
 
@@ -522,7 +522,7 @@ int xml_msg_load_itti_mme_app_initial_ue_message (scenario_t * const scenario, s
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_MME_APP_INITIAL_UE_MESSAGE_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_MME_APP_INITIAL_UE_MESSAGE_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_MME_APP_INITIAL_UE_MESSAGE_XML_STR);
       return RETURNerror;
     }
 
@@ -620,7 +620,7 @@ int xml_msg_load_itti_mme_app_initial_context_setup_rsp(scenario_t * const scena
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP_XML_STR);
       return RETURNerror;
     }
 
@@ -713,7 +713,7 @@ int xml_msg_load_itti_mme_app_connection_establishment_cnf(scenario_t * const sc
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF_XML_STR);
       return RETURNerror;
     }
 
@@ -862,7 +862,7 @@ int xml_msg_load_itti_nas_uplink_data_ind(scenario_t * const scenario, scenario_
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_NAS_UPLINK_DATA_IND_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_NAS_UPLINK_DATA_IND_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_NAS_UPLINK_DATA_IND_XML_STR);
       return RETURNerror;
     }
 
@@ -930,13 +930,13 @@ int xml_msg_load_itti_nas_downlink_data_req(scenario_t * const scenario, scenari
 {
   bool res = false;
   if ((msg) && (msg->xml_doc)) {
-    OAILOG_TRACE(LOG_MME_SCENARIO_PLAYER, "Reloading NAS_DOWNLINK_DATA_REQ message\n");
+    OAILOG_TRACE(LOG_XML, "Reloading NAS_DOWNLINK_DATA_REQ message\n");
     xmlNodePtr  cur = NULL;
     cur = xmlDocGetRootElement(msg->xml_doc);
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_NAS_DOWNLINK_DATA_REQ_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_NAS_DOWNLINK_DATA_REQ_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_NAS_DOWNLINK_DATA_REQ_XML_STR);
       return RETURNerror;
     }
 
@@ -1006,7 +1006,7 @@ int xml_msg_load_itti_nas_downlink_data_rej(scenario_t * const scenario, scenari
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_NAS_DOWNLINK_DATA_REJ_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_NAS_DOWNLINK_DATA_REJ_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_NAS_DOWNLINK_DATA_REJ_XML_STR);
       return RETURNerror;
     }
 
@@ -1071,7 +1071,7 @@ int xml_msg_load_itti_nas_downlink_data_cnf(scenario_t * const scenario, scenari
     AssertFatal (cur, "Empty document");
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_NAS_DOWNLINK_DATA_CNF_XML_STR)) {
-      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find tag %s\n", ITTI_NAS_DOWNLINK_DATA_CNF_XML_STR);
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_NAS_DOWNLINK_DATA_CNF_XML_STR);
       return RETURNerror;
     }
 

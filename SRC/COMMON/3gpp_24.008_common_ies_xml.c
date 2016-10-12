@@ -802,7 +802,7 @@ bool plmn_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     plmn_t                * const plmn)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_plmn = bformat("./%s",PLMN_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj_plmn = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_plmn);
@@ -869,7 +869,7 @@ bool plmn_from_xml (
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
   }
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -889,7 +889,7 @@ bool plmn_list_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     plmn_list_t           * const plmnlist)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   memset((void*)plmnlist, 0, sizeof(*plmnlist));
   bool res = false;
   bstring xpath_expr_plmnlist = bformat("./%s",PLMN_LIST_IE_XML_STR);
@@ -978,7 +978,7 @@ bool plmn_list_from_xml (
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
   }
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void plmn_list_to_xml (const plmn_list_t * const plmnlist, xmlTextWriterPtr writer)
@@ -995,7 +995,7 @@ void plmn_list_to_xml (const plmn_list_t * const plmnlist, xmlTextWriterPtr writ
 //------------------------------------------------------------------------------
 bool ms_network_feature_support_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, ms_network_feature_support_t * const msnetworkfeaturesupport)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   memset(msnetworkfeaturesupport, 0, sizeof(*msnetworkfeaturesupport));
   bool res = false;
   bstring xpath_expr = bformat("./%s",MS_NEWORK_FEATURE_SUPPORT_IE_XML_STR);
@@ -1018,7 +1018,7 @@ bool ms_network_feature_support_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr 
     }
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void ms_network_feature_support_to_xml(const ms_network_feature_support_t * const msnetworkfeaturesupport, xmlTextWriterPtr writer)

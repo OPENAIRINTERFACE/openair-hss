@@ -70,7 +70,7 @@ bool apn_aggregate_maximum_bit_rate_from_xml (
     xmlXPathContextPtr                 xpath_ctx,
     ApnAggregateMaximumBitRate * const apnaggregatemaximumbitrate)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   memset(apnaggregatemaximumbitrate, 0, sizeof(*apnaggregatemaximumbitrate));
   bool res = false;
   bstring xpath_expr_apn = bformat("./%s",APN_AGGREGATE_MAXIMUM_BIT_RATE_IE_XML_STR);
@@ -138,7 +138,7 @@ bool apn_aggregate_maximum_bit_rate_from_xml (
     }
   }
   bdestroy_wrapper (&xpath_expr_apn);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void apn_aggregate_maximum_bit_rate_to_xml(ApnAggregateMaximumBitRate *apnaggregatemaximumbitrate, xmlTextWriterPtr writer)
@@ -164,7 +164,7 @@ bool eps_quality_of_service_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     EpsQualityOfService   * const epsqualityofservice)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   memset(epsqualityofservice, 0, sizeof(*epsqualityofservice));
   bool res = false;
   bstring xpath_expr_qos = bformat("./%s",EPS_QUALITY_OF_SERVICE_IE_XML_STR);
@@ -189,7 +189,7 @@ bool eps_quality_of_service_from_xml (
       if (res) {
         xmlChar *attr = xmlGetProp(nodes_qos->nodeTab[0], (const xmlChar *)QCI_ATTR_XML_STR);
         if (attr) {
-          OAILOG_TRACE (LOG_NAS, "Found %s=%s\n", QCI_ATTR_XML_STR, attr);
+          OAILOG_TRACE (LOG_XML, "Found %s=%s\n", QCI_ATTR_XML_STR, attr);
           uint8_t  qci = 0;
           sscanf((const char*)attr, "%"SCNx8, &qci);
           epsqualityofservice->qci = qci;
@@ -273,7 +273,7 @@ bool eps_quality_of_service_from_xml (
     }
   }
   bdestroy_wrapper (&xpath_expr_qos);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void eps_quality_of_service_to_xml (EpsQualityOfService * epsqualityofservice, xmlTextWriterPtr writer)
@@ -329,7 +329,7 @@ bool pdn_address_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     PdnAddress            * const pdnaddress)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   memset(pdnaddress, 0, sizeof(*pdnaddress));
   bool res = false;
   bstring xpath_expr = bformat("./%s",PDN_ADDRESS_IE_XML_STR);
@@ -367,7 +367,7 @@ bool pdn_address_from_xml (
     }
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void pdn_address_to_xml (PdnAddress * pdnaddress, xmlTextWriterPtr writer)
@@ -397,7 +397,7 @@ bool pdn_type_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     pdn_type_t               * const pdntype)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   memset(pdntype, 0, sizeof(*pdntype));
   bstring xpath_expr = bformat("./%s",PDN_TYPE_IE_XML_STR);
   char pdn_type_str[64] = {0};
@@ -417,7 +417,7 @@ bool pdn_type_from_xml (
     }
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------

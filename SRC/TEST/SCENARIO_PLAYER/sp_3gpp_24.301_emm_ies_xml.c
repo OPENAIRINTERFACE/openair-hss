@@ -89,7 +89,7 @@ bool sp_eps_mobile_identity_from_xml (
     scenario_player_msg_t * const msg,
     eps_mobile_identity_t          * const epsmobileidentity)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
   bstring xpath_expr_mi = bformat("./%s",EPS_MOBILE_IDENTITY_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_mi);
@@ -247,7 +247,7 @@ bool sp_eps_mobile_identity_from_xml (
     xmlXPathFreeObject(xpath_obj_mi);
   }
   bdestroy_wrapper (&xpath_expr_mi);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 //------------------------------------------------------------------------------
 SP_NUM_FROM_XML_GENERATE( eps_network_feature_support,      EPS_NETWORK_FEATURE_SUPPORT);
@@ -277,13 +277,13 @@ bool sp_nas_message_container_from_xml (
     scenario_player_msg_t * const msg,
     NasMessageContainer   * const nasmessagecontainer)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
 
   bstring xpath_expr = bformat("./%s",NAS_MESSAGE_CONTAINER_IE_XML_STR);
   res = xml_load_hex_stream_leaf_tag(msg->xml_doc,msg->xpath_ctx, xpath_expr, nasmessagecontainer);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------

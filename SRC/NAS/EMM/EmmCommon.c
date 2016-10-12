@@ -182,6 +182,8 @@ emm_proc_common_reject (emm_common_data_t **emm_common_data)
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
+    } else {
+      rc = RETURNok;
     }
 
     emm_common_cleanup (emm_common_data);
@@ -203,6 +205,8 @@ int emm_proc_common_failure (emm_common_data_t **emm_common_data)
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
+    } else {
+      rc = RETURNok;
     }
 
     emm_common_cleanup (emm_common_data);
@@ -243,6 +247,8 @@ emm_proc_common_ll_failure (emm_common_data_t **emm_common_data)
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
+    } else {
+      rc = RETURNok;
     }
 
     emm_common_cleanup (emm_common_data);
@@ -283,6 +289,8 @@ emm_proc_common_non_delivered_ho (emm_common_data_t **emm_common_data)
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
+    } else {
+      rc = RETURNok;
     }
 
     emm_common_cleanup (emm_common_data);
@@ -322,6 +330,8 @@ emm_proc_common_abort (emm_common_data_t **emm_common_data)
     if (emm_callback) {
       emm_context_t  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
+    } else {
+      rc = RETURNok;
     }
 
     emm_common_cleanup (emm_common_data);

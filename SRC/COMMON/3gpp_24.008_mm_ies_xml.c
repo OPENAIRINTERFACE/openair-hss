@@ -61,7 +61,7 @@
 //------------------------------------------------------------------------------
 bool authentication_parameter_rand_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, authentication_parameter_rand_t * authenticationparameterrand)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   char hexascii[64]  = {0};
   uint8_t hex[32]    = {0};
   bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_RAND_IE_XML_STR);
@@ -74,7 +74,7 @@ bool authentication_parameter_rand_from_xml (xmlDocPtr xml_doc, xmlXPathContextP
     }
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -88,7 +88,7 @@ void authentication_parameter_rand_to_xml (authentication_parameter_rand_t authe
 //------------------------------------------------------------------------------
 bool authentication_parameter_autn_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, authentication_parameter_autn_t * authenticationparameterautn)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   char hexascii[64]  = {0};
   uint8_t hex[32]    = {0};
   bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_AUTN_IE_XML_STR);
@@ -101,7 +101,7 @@ bool authentication_parameter_autn_from_xml (xmlDocPtr xml_doc, xmlXPathContextP
     }
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -116,7 +116,7 @@ void authentication_parameter_autn_to_xml (authentication_parameter_autn_t authe
 //------------------------------------------------------------------------------
 bool authentication_response_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, authentication_response_parameter_t * authenticationresponseparameter)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   char hexascii[64]  = {0};
   uint8_t hex[32]    = {0};
   bstring xpath_expr = bformat("./%s",AUTHENTICATION_RESPONSE_PARAMETER_IE_XML_STR);
@@ -129,7 +129,7 @@ bool authentication_response_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathCont
     }
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -143,7 +143,7 @@ void authentication_response_parameter_to_xml (authentication_response_parameter
 //------------------------------------------------------------------------------
 bool authentication_failure_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, authentication_failure_parameter_t * authenticationfailureparameter)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   char hexascii[64]  = {0};
   uint8_t hex[32]    = {0};
   bstring xpath_expr = bformat("./%s",AUTHENTICATION_FAILURE_PARAMETER_IE_XML_STR);
@@ -156,7 +156,7 @@ bool authentication_failure_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathConte
     }
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -170,7 +170,7 @@ void authentication_failure_parameter_to_xml (authentication_failure_parameter_t
 //------------------------------------------------------------------------------
 bool network_name_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const char * const ie, network_name_t * const networkname)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_nn = bformat("./%s",ie);
   xmlXPathObjectPtr xpath_obj_plmn = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_nn);
@@ -213,7 +213,7 @@ bool network_name_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, con
     }
   }
   bdestroy_wrapper (&xpath_expr_nn);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -232,11 +232,11 @@ void network_name_to_xml (const char * const ie, const network_name_t * const ne
 //------------------------------------------------------------------------------
 bool time_zone_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, time_zone_t * const timezone)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",TIME_ZONE_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)timezone, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -250,7 +250,7 @@ void time_zone_to_xml (const time_zone_t * const timezone, xmlTextWriterPtr writ
 //------------------------------------------------------------------------------
 bool time_zone_and_time_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, time_zone_and_time_t * const timezoneandtime)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_tz = bformat("./%s",TIME_ZONE_AND_TIME_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_tz);
@@ -298,7 +298,7 @@ bool time_zone_and_time_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ct
     }
   }
   bdestroy_wrapper (&xpath_expr_tz);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -321,11 +321,11 @@ void time_zone_and_time_to_xml (const time_zone_and_time_t * const timezoneandti
 //------------------------------------------------------------------------------
 bool daylight_saving_time_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, daylight_saving_time_t * const daylightsavingtime)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",DAYLIGHT_SAVING_TIME_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)daylightsavingtime, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -339,9 +339,9 @@ void daylight_saving_time_to_xml (const daylight_saving_time_t * const daylights
 //------------------------------------------------------------------------------
 bool emergency_number_list_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, emergency_number_list_t * const emergencynumberlist)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   // TODO...later
-  OAILOG_FUNC_RETURN (LOG_UTIL, false);
+  OAILOG_FUNC_RETURN (LOG_XML, false);
 }
 
 //------------------------------------------------------------------------------

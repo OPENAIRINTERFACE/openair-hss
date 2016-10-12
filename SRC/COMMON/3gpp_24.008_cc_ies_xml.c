@@ -60,7 +60,7 @@
 //------------------------------------------------------------------------------
 bool supported_codec_list_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, supported_codec_list_t * supportedcodeclist)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   char hexascii[SUPPORTED_CODEC_LIST_IE_MAX_LENGTH*2]  = {0};
   uint8_t hex[SUPPORTED_CODEC_LIST_IE_MAX_LENGTH]      = {0};
   bstring xpath_expr = bformat("./%s",SUPPORTED_CODEC_LIST_IE_XML_STR);
@@ -73,7 +73,7 @@ bool supported_codec_list_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_
     }
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------

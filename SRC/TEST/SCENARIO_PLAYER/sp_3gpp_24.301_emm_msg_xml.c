@@ -67,7 +67,7 @@ bool sp_attach_accept_from_xml (
     scenario_player_msg_t * const msg,
     attach_accept_msg  * const attach_accept)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
 
   res = eps_attach_result_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->epsattachresult, NULL);
@@ -126,7 +126,7 @@ bool sp_attach_accept_from_xml (
     }
     res = true;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 
@@ -136,9 +136,9 @@ bool sp_attach_complete_from_xml (
     scenario_player_msg_t * const msg,
     attach_complete_msg * const attach_complete)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res =   res = esm_message_container_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_complete->esmmessagecontainer);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -147,14 +147,15 @@ bool sp_attach_reject_from_xml (
     scenario_player_msg_t * const msg,
     attach_reject_msg  * const attach_reject)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
 
   res = esm_message_container_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_reject->esmmessagecontainer);
   if (res) {
     attach_reject->presencemask |= ATTACH_REJECT_ESM_MESSAGE_CONTAINER_PRESENT;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  res = true; // esm container optional
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -163,7 +164,7 @@ bool sp_attach_request_from_xml (
     scenario_player_msg_t * const msg,
     attach_request_msg * const attach_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
 
   res = nas_key_set_identifier_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_request->naskeysetidentifier);
@@ -243,7 +244,7 @@ bool sp_attach_request_from_xml (
     }
     res = true;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -252,16 +253,18 @@ bool sp_authentication_failure_from_xml (
     scenario_player_msg_t * const msg,
     authentication_failure_msg  * const authentication_failure)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  bool res = emm_cause_from_xml (msg->xml_doc, msg->xpath_ctx, &authentication_failure->emmcause, NULL);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  bool res = sp_emm_cause_from_xml (scenario, msg, &authentication_failure->emmcause);
   if (res) {
-    res = authentication_failure_parameter_from_xml (msg->xml_doc, msg->xpath_ctx, &authentication_failure->authenticationfailureparameter);
+    bstring xpath_expr = bformat("./%s",AUTHENTICATION_FAILURE_PARAMETER_IE_XML_STR);
+    bool res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr, &authentication_failure->authenticationfailureparameter);
+    bdestroy_wrapper (&xpath_expr);
     if (res) {
       authentication_failure->presencemask |= AUTHENTICATION_FAILURE_AUTHENTICATION_FAILURE_PARAMETER_PRESENT;
     }
     res = true;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -270,9 +273,9 @@ bool sp_authentication_reject_from_xml (
     scenario_player_msg_t * const msg,
     authentication_reject_msg  * const authentication_reject)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   // NOTHING TODO
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, true);
 }
 
 
@@ -282,7 +285,7 @@ bool sp_authentication_request_from_xml (
     scenario_player_msg_t * const msg,
     authentication_request_msg  * const authentication_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = nas_key_set_identifier_from_xml (msg->xml_doc, msg->xpath_ctx, &authentication_request->naskeysetidentifierasme);
   if (res) {
     bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_RAND_IE_XML_STR);
@@ -294,7 +297,7 @@ bool sp_authentication_request_from_xml (
     res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr, &authentication_request->authenticationparameterautn);
     bdestroy_wrapper (&xpath_expr);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -303,12 +306,12 @@ bool sp_authentication_response_from_xml (
     scenario_player_msg_t * const msg,
     authentication_response_msg  * const authentication_response)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bstring xpath_expr = bformat("./%s",AUTHENTICATION_RESPONSE_PARAMETER_IE_XML_STR);
   bool res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr, &authentication_response->authenticationresponseparameter);
   bdestroy_wrapper (&xpath_expr);
 
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -317,9 +320,9 @@ bool sp_detach_accept_from_xml (
     scenario_player_msg_t * const msg,
     detach_accept_msg  * const detach_accept)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   // NOTHING TODO
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, true);
 }
 
 //------------------------------------------------------------------------------
@@ -328,13 +331,13 @@ bool sp_detach_request_from_xml (
     scenario_player_msg_t * const msg,
     detach_request_msg  * const detach_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
 
   res = nas_key_set_identifier_from_xml (msg->xml_doc, msg->xpath_ctx, &detach_request->naskeysetidentifier);
   if (res) {res = detach_type_from_xml (msg->xml_doc, msg->xpath_ctx, &detach_request->detachtype);}
   if (res) {res = sp_eps_mobile_identity_from_xml (scenario, msg, &detach_request->gutiorimsi);}
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -343,9 +346,9 @@ bool sp_downlink_nas_transport_from_xml (
     scenario_player_msg_t * const msg,
     downlink_nas_transport_msg   * const downlink_nas_transport)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = sp_nas_message_container_from_xml (scenario, msg, &downlink_nas_transport->nasmessagecontainer);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -354,7 +357,7 @@ bool sp_emm_information_from_xml (
     scenario_player_msg_t * const msg,
     emm_information_msg * const emm_information)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   if (network_name_from_xml (msg->xml_doc, msg->xpath_ctx, FULL_NETWORK_NAME_IE_XML_STR, &emm_information->fullnamefornetwork)) {
     emm_information->presencemask |= EMM_INFORMATION_FULL_NAME_FOR_NETWORK_PRESENT;
   }
@@ -375,7 +378,7 @@ bool sp_emm_information_from_xml (
     emm_information->presencemask |= EMM_INFORMATION_NETWORK_DAYLIGHT_SAVING_TIME_PRESENT;
   }
   // no mandatory field
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, true);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, true);
 }
 
 //------------------------------------------------------------------------------
@@ -384,9 +387,9 @@ bool sp_emm_status_from_xml (
     scenario_player_msg_t * const msg,
     emm_status_msg * const emm_status)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = emm_cause_from_xml (msg->xml_doc, msg->xpath_ctx, &emm_status->emmcause, NULL);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -395,9 +398,9 @@ bool sp_identity_request_from_xml (
     scenario_player_msg_t * const msg,
     identity_request_msg * const identity_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = identity_type_2_from_xml (msg->xml_doc, msg->xpath_ctx, &identity_request->identitytype);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -406,9 +409,9 @@ bool sp_identity_response_from_xml (
     scenario_player_msg_t * const msg,
     identity_response_msg * const identity_response)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = sp_mobile_identity_from_xml (scenario, msg, &identity_response->mobileidentity);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -417,7 +420,7 @@ bool sp_security_mode_command_from_xml (
     scenario_player_msg_t * const msg,
     security_mode_command_msg * const security_mode_command)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
 
   res = sp_nas_security_algorithms_from_xml (scenario, msg, &security_mode_command->selectednassecurityalgorithms);
@@ -440,7 +443,7 @@ bool sp_security_mode_command_from_xml (
     }
     res = true;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -449,13 +452,13 @@ bool sp_security_mode_complete_from_xml (
     scenario_player_msg_t * const msg,
     security_mode_complete_msg * const security_mode_complete)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = mobile_identity_from_xml (msg->xml_doc, msg->xpath_ctx, &security_mode_complete->imeisv);
   if (res) {
     security_mode_complete->presencemask |= SECURITY_MODE_COMPLETE_IMEISV_PRESENT;
   }
   res = true;
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 
@@ -465,9 +468,9 @@ bool sp_security_mode_reject_from_xml (
     scenario_player_msg_t * const msg,
     security_mode_reject_msg * const security_mode_reject)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = emm_cause_from_xml (msg->xml_doc, msg->xpath_ctx, &security_mode_reject->emmcause, NULL);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -476,8 +479,8 @@ int sp_service_reject_from_xml (
     scenario_player_msg_t * const msg,
   service_reject_msg * service_reject)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -486,8 +489,8 @@ int sp_service_request_from_xml (
     scenario_player_msg_t * const msg,
   service_request_msg * service_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -496,8 +499,8 @@ int sp_tracking_area_update_accept_from_xml (
     scenario_player_msg_t * const msg,
   tracking_area_update_accept_msg * tracking_area_update_accept)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -506,8 +509,8 @@ int sp_tracking_area_update_complete_from_xml (
     scenario_player_msg_t * const msg,
   tracking_area_update_complete_msg * tracking_area_update_complete)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -516,8 +519,8 @@ int sp_tracking_area_update_reject_from_xml (
     scenario_player_msg_t * const msg,
     tracking_area_update_reject_msg * tracking_area_update_reject)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -526,8 +529,8 @@ int sp_tracking_area_update_request_from_xml (
     scenario_player_msg_t * const msg,
     tracking_area_update_request_msg * tracking_area_update_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNok);
 }
 
 //------------------------------------------------------------------------------
@@ -536,9 +539,9 @@ bool sp_uplink_nas_transport_from_xml (
     scenario_player_msg_t * const msg,
     uplink_nas_transport_msg     * const uplink_nas_transport)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = sp_nas_message_container_from_xml (scenario, msg, &uplink_nas_transport->nasmessagecontainer);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 
@@ -548,7 +551,7 @@ bool sp_emm_msg_from_xml (
     scenario_player_msg_t * const msg,
     EMM_msg                     * emm_msg)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool                                    res = false;
 
   // First decode the EMM message header
@@ -668,12 +671,12 @@ bool sp_emm_msg_from_xml (
       break;
 
     default:
-      OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Unexpected message type: 0x%x", emm_msg->header.message_type);
+      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "EMM-MSG   - Unexpected message type: 0x%x", emm_msg->header.message_type);
       res = false;
       // TODO: Handle not standard layer 3 messages: SERVICE_REQUEST
     }
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -682,7 +685,7 @@ bool sp_emm_msg_header_from_xml (
     scenario_player_msg_t * const msg,
     emm_msg_header_t * header)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool                         res = false;
   security_header_type_t       sht = 0;
   eps_protocol_discriminator_t pd = 0;
@@ -700,6 +703,6 @@ bool sp_emm_msg_header_from_xml (
   if (res) {
     header->message_type = message_type;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 

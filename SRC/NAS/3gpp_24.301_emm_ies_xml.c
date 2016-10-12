@@ -85,7 +85,7 @@ bool detach_type_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     detach_type_t            * const detachtype)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   memset(detachtype, 0, sizeof(*detachtype));
   bool res = false;
   bstring xpath_expr = bformat("./%s",DETACH_TYPE_IE_XML_STR);
@@ -100,7 +100,7 @@ bool detach_type_from_xml (
       if (res) {
         xmlChar *attr = xmlGetProp(nodes->nodeTab[0], (const xmlChar *)SWITCH_OFF_ATTR_XML_STR);
         if (attr) {
-          OAILOG_TRACE (LOG_NAS, "Found %s=%s\n", SWITCH_OFF_ATTR_XML_STR, attr);
+          OAILOG_TRACE (LOG_XML, "Found %s=%s\n", SWITCH_OFF_ATTR_XML_STR, attr);
           uint8_t  switchoff = 0;
           sscanf((const char*)attr, "%"SCNx8, &switchoff);
           detachtype->switchoff = switchoff;
@@ -112,7 +112,7 @@ bool detach_type_from_xml (
       if (res) {
         xmlChar *attr = xmlGetProp(nodes->nodeTab[0], (const xmlChar *)TYPE_OF_DETACH_ATTR_XML_STR);
         if (attr) {
-          OAILOG_TRACE (LOG_NAS, "Found %s=%s\n", TYPE_OF_DETACH_ATTR_XML_STR, attr);
+          OAILOG_TRACE (LOG_XML, "Found %s=%s\n", TYPE_OF_DETACH_ATTR_XML_STR, attr);
           uint8_t  typeofdetach = 0;
           sscanf((const char*)attr, "%"SCNx8, &typeofdetach);
           detachtype->typeofdetach = typeofdetach;
@@ -125,7 +125,7 @@ bool detach_type_from_xml (
     }
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void detach_type_to_xml(detach_type_t *detachtype, xmlTextWriterPtr writer)
@@ -168,7 +168,7 @@ bool eps_mobile_identity_from_xml (
     xmlXPathContextPtr                     xpath_ctx,
     eps_mobile_identity_t          * const epsmobileidentity)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_mi = bformat("./%s",EPS_MOBILE_IDENTITY_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_mi);
@@ -350,7 +350,7 @@ bool eps_mobile_identity_from_xml (
     xmlXPathFreeObject(xpath_obj_mi);
   }
   bdestroy_wrapper (&xpath_expr_mi);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void eps_mobile_identity_to_xml (eps_mobile_identity_t * epsmobileidentity, xmlTextWriterPtr writer)
@@ -429,7 +429,7 @@ bool esm_message_container_from_xml (
     xmlXPathContextPtr                     xpath_ctx,
     EsmMessageContainer            *esmmessagecontainer)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_mi = bformat("./%s",ESM_MESSAGE_CONTAINER_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_mi);
@@ -460,7 +460,7 @@ bool esm_message_container_from_xml (
     xmlXPathFreeObject(xpath_obj_mi);
   }
   bdestroy_wrapper (&xpath_expr_mi);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -500,7 +500,7 @@ bool nas_key_set_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpat
       if (res) {
         xmlChar *attr = xmlGetProp(nodes->nodeTab[0], (const xmlChar *)TSC_ATTR_XML_STR);
         if (attr) {
-          OAILOG_TRACE (LOG_NAS, "Found %s=%s\n", TSC_ATTR_XML_STR, attr);
+          OAILOG_TRACE (LOG_XML, "Found %s=%s\n", TSC_ATTR_XML_STR, attr);
           uint8_t  tsc = 0;
           sscanf((const char*)attr, "%"SCNx8, &tsc);
           naskeysetidentifier->tsc = tsc;
@@ -512,7 +512,7 @@ bool nas_key_set_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpat
       if (res) {
         xmlChar *attr = xmlGetProp(nodes->nodeTab[0], (const xmlChar *)NAS_KEY_SET_IDENTIFIER_ATTR_XML_STR);
         if (attr) {
-          OAILOG_TRACE (LOG_NAS, "Found %s=%s\n", NAS_KEY_SET_IDENTIFIER_ATTR_XML_STR, attr);
+          OAILOG_TRACE (LOG_XML, "Found %s=%s\n", NAS_KEY_SET_IDENTIFIER_ATTR_XML_STR, attr);
           uint8_t  naskeysetidentifier_a = 0;
           sscanf((const char*)attr, "%"SCNx8, &naskeysetidentifier_a);
           naskeysetidentifier->naskeysetidentifier = naskeysetidentifier_a;
@@ -542,13 +542,13 @@ bool nas_message_container_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     NasMessageContainer   * const nasmessagecontainer)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
 
   bstring xpath_expr = bformat("./%s",NAS_MESSAGE_CONTAINER_IE_XML_STR);
   res = xml_load_hex_stream_leaf_tag(xml_doc,xpath_ctx, xpath_expr, nasmessagecontainer);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -563,7 +563,7 @@ bool nas_security_algorithms_from_xml (
     xmlXPathContextPtr                     xpath_ctx,
     NasSecurityAlgorithms          * const nassecurityalgorithms)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_nsa = bformat("./%s",NAS_SECURITY_ALGORITHMS_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj_nsa = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_nsa);
@@ -592,7 +592,7 @@ bool nas_security_algorithms_from_xml (
     }
   }
   bdestroy_wrapper (&xpath_expr_nsa);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void nas_security_algorithms_to_xml (NasSecurityAlgorithms * nassecurityalgorithms, xmlTextWriterPtr writer)
@@ -606,12 +606,12 @@ void nas_security_algorithms_to_xml (NasSecurityAlgorithms * nassecurityalgorith
 //------------------------------------------------------------------------------
 bool nonce_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const char * const ie, nonce_t * const nonce)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
 
   bstring xpath_expr = bformat("./%s",ie);
   bool res =  xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx32, (void*)nonce, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void nonce_to_xml (const char * const ie, nonce_t * nonce, xmlTextWriterPtr writer)
@@ -649,7 +649,7 @@ bool tracking_area_identity_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     tai_t * const tai)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   clear_tai(tai);
   bool res = false;
   bstring xpath_expr_tai = bformat("./%s",TRACKING_AREA_IDENTITY_IE_XML_STR);
@@ -723,7 +723,7 @@ bool tracking_area_identity_from_xml (
     }
     xmlXPathFreeObject(xpath_obj_tai);
   }
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -732,7 +732,7 @@ bool tracking_area_code_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     tac_t                 * const tac)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",TRACKING_AREA_CODE_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
@@ -753,7 +753,7 @@ bool tracking_area_code_from_xml (
   }
   bdestroy_wrapper (&xpath_expr);
 
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -780,7 +780,7 @@ bool tracking_area_identity_list_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     tai_list_t            * const tai_list)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   memset(tai_list, 0, sizeof(*tai_list));
   bool res = false;
   bstring xpath_expr_tai_list = bformat("./%s",TRACKING_AREA_IDENTITY_LIST_IE_XML_STR);
@@ -910,7 +910,7 @@ bool tracking_area_identity_list_from_xml (
                     }
                     break;
                   default:
-                    OAILOG_ERROR (LOG_NAS, "Type of TAI list not handled %d", tai_list->partial_tai_list[p].typeoflist);
+                    OAILOG_ERROR (LOG_XML, "Type of TAI list not handled %d", tai_list->partial_tai_list[p].typeoflist);
                     res = false;
                 }
               }
@@ -926,7 +926,7 @@ bool tracking_area_identity_list_from_xml (
     xmlXPathFreeObject(xpath_obj_tai_list);
   }
   bdestroy_wrapper (&xpath_expr_tai_list);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void tracking_area_identity_list_to_xml (tai_list_t * trackingareaidentitylist, xmlTextWriterPtr writer)
@@ -974,7 +974,7 @@ void tracking_area_identity_list_to_xml (tai_list_t * trackingareaidentitylist, 
       XML_WRITE_END_ELEMENT(writer);
     } else {
       XML_WRITE_FORMAT_COMMENT(writer,"Type of TAI list not handled %d", trackingareaidentitylist->partial_tai_list[i].typeoflist);
-      OAILOG_ERROR (LOG_NAS, "Type of TAI list not handled %d", trackingareaidentitylist->partial_tai_list[i].typeoflist);
+      OAILOG_ERROR (LOG_XML, "Type of TAI list not handled %d", trackingareaidentitylist->partial_tai_list[i].typeoflist);
     }
   }
   XML_WRITE_END_ELEMENT(writer);
@@ -983,7 +983,7 @@ void tracking_area_identity_list_to_xml (tai_list_t * trackingareaidentitylist, 
 //------------------------------------------------------------------------------
 bool ue_network_capability_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, ue_network_capability_t * const uenetworkcapability)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_nc = bformat("./%s",UE_NETWORK_CAPABILITY_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_nc);
@@ -1083,7 +1083,7 @@ bool ue_network_capability_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr_nc);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void ue_network_capability_to_xml (ue_network_capability_t * uenetworkcapability, xmlTextWriterPtr writer)
@@ -1124,7 +1124,7 @@ bool ue_security_capability_from_xml (
     xmlXPathContextPtr                     xpath_ctx,
     ue_security_capability_t           * const uesecuritycapability)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr_nsa = bformat("./%s",UE_SECURITY_CAPABILITY_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj_nsa = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_nsa);
@@ -1177,7 +1177,7 @@ bool ue_security_capability_from_xml (
     }
   }
   bdestroy_wrapper (&xpath_expr_nsa);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------

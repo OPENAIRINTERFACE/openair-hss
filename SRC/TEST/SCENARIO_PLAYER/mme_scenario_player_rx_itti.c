@@ -145,7 +145,7 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
 
       bstring filename = mme_scenario_player_dump_nas_downlink_data_req(received_message);
       if (!filename) {
-        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
         pthread_mutex_unlock(&scenario->lock);
         return;
       }
@@ -154,10 +154,10 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
       //-------------------------------
       xmlDoc *doc = xmlReadFile(bdata(filename), NULL, 0);
       if (sp_compare_xml_docs(scenario, doc, item->u.msg.xml_doc)) {
-        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
       } else {
         if (SCENARIO_STATUS_PAUSED == scenario->status) {
-          scenario_set_status(scenario, SCENARIO_STATUS_PLAYING);
+          scenario_set_status(scenario, SCENARIO_STATUS_PLAYING, __FILE__, __LINE__);
         }
       }
       bdestroy_wrapper(&filename);
@@ -165,7 +165,7 @@ void mme_scenario_player_handle_nas_downlink_data_req (instance_t instance, cons
 
       item->is_played = true;
     } else {
-      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
       OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Pending RX message in scenario is not NAS_DOWNLINK_DATA_REQ, scenario failed\n");
     }
     scenario->last_played_item = item;
@@ -208,7 +208,7 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
       xmlTextWriterPtr xml_text_writer = NULL;
       char             filename[NAME_MAX+9];
       if (snprintf(filename, sizeof(filename), "/tmp/mme_msg_%06lu_%s.xml", xml_msg_dump_get_seq_uid(), ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF_XML_STR) <= 0) {
-        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
         pthread_mutex_unlock(&scenario->lock);
         OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "xmlTextWriterStartDocument\n");
         return;
@@ -216,7 +216,7 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
       /* Create a new XmlWriter for uri, with no compression. */
       xml_text_writer = xmlNewTextWriterFilename(filename, 0);
       if (xml_text_writer == NULL) {
-        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
         OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error creating the xml writer\n");
       } else {
         int rc = xmlTextWriterSetIndent(xml_text_writer, 1);
@@ -244,10 +244,10 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
         //-------------------------------
         xmlDoc *doc = xmlReadFile(filename, NULL, 0);
         if (sp_compare_xml_docs(scenario, doc, item->u.msg.xml_doc)) {
-          scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+          scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
         } else {
           if (SCENARIO_STATUS_PAUSED == scenario->status) {
-            scenario_set_status(scenario, SCENARIO_STATUS_PLAYING);
+            scenario_set_status(scenario, SCENARIO_STATUS_PLAYING, __FILE__, __LINE__);
           }
         }
         xmlFreeDoc(doc);
@@ -255,7 +255,7 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
 
       item->is_played = true;
     } else {
-      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
       OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Pending RX message in scenario is not MME_APP_CONNECTION_ESTABLISHMENT_CNF, scenario failed\n");
     }
     scenario->last_played_item = item;
@@ -305,6 +305,7 @@ static bstring mme_scenario_player_dump_s1ap_ue_context_release_command (const M
       OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error ending Document\n");
     }
     xmlFreeTextWriter(xml_text_writer);
+    return bfromcstr(filename);
   }
   return NULL;
 }
@@ -345,7 +346,7 @@ void mme_scenario_player_handle_s1ap_ue_context_release_command (instance_t inst
 
       bstring filename = mme_scenario_player_dump_s1ap_ue_context_release_command(received_message);
       if (!filename) {
-        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
         pthread_mutex_unlock(&scenario->lock);
         return;
       }
@@ -354,17 +355,17 @@ void mme_scenario_player_handle_s1ap_ue_context_release_command (instance_t inst
       //-------------------------------
       xmlDoc *doc = xmlReadFile(bdata(filename), NULL, 0);
       if (sp_compare_xml_docs(scenario, doc, item->u.msg.xml_doc)) {
-        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
       } else {
         if (SCENARIO_STATUS_PAUSED == scenario->status) {
-          scenario_set_status(scenario, SCENARIO_STATUS_PLAYING);
+          scenario_set_status(scenario, SCENARIO_STATUS_PLAYING, __FILE__, __LINE__);
         }
       }
       xmlFreeDoc(doc);
       bdestroy_wrapper(&filename);
       item->is_played = true;
     } else {
-      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
       OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Pending RX message in scenario is not S1AP_UE_CONTEXT_RELEASE_COMMAND, scenario failed\n");
     }
     scenario->last_played_item = item;

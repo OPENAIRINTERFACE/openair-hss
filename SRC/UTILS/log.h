@@ -61,6 +61,7 @@ extern int fd_g_debug_lvl;
 #define LOG_CONFIG_STRING_SPGW_APP_LOG_LEVEL             "SPGW_APP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_UDP_LOG_LEVEL                  "UDP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_UTIL_LOG_LEVEL                 "UTIL_LOG_LEVEL"
+#define LOG_CONFIG_STRING_XML_LOG_LEVEL                  "XML_LOG_LEVEL"
 
 typedef enum {
   MIN_LOG_ENV = 0,
@@ -102,6 +103,7 @@ typedef enum {
   LOG_UTIL,
   LOG_CONFIG,
   LOG_MSC,
+  LOG_XML,
   LOG_MME_SCENARIO_PLAYER,
   LOG_ITTI,
   MAX_LOG_PROTOS,
@@ -145,6 +147,7 @@ typedef struct log_config_s {
   log_level_t   secu_log_level;      /*!< \brief LTE security log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   util_log_level;     /*!< \brief Misc utilities log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   msc_log_level;      /*!< \brief MSC utility log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   xml_log_level;      /*!< \brief XML dump/load of messages (mainly for MME scenario player) log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   mme_scenario_player_log_level; /*!< \brief scenario player log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   itti_log_level;     /*!< \brief ITTI layer log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   uint8_t       asn1_verbosity_level; /*!< \brief related to asn1c generated code for S1AP verbosity level */

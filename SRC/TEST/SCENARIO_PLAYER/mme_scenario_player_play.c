@@ -72,15 +72,15 @@ void msp_scenario_tick(scenario_t * const scenario)
 }
 
 //------------------------------------------------------------------------------
-void scenario_set_status(scenario_t * const scenario, const scenario_status_t scenario_status)
+void scenario_set_status(scenario_t * const scenario, const scenario_status_t scenario_status, char* caller_file, int caller_line)
 {
   scenario->status = scenario_status;
   if (SCENARIO_STATUS_PLAY_SUCCESS == scenario_status) {
     OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s SUCCESS\n", bdata(scenario->name));
   } else if (SCENARIO_STATUS_PLAY_FAILED == scenario_status) {
-    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s FAILED\n", bdata(scenario->name));
+    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s FAILED set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
   } else if (SCENARIO_STATUS_LOAD_FAILED == scenario_status) {
-    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Result Load scenario %s FAILED\n", bdata(scenario->name));
+    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Result Load scenario %s FAILED set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
   } else if (SCENARIO_STATUS_PAUSED == scenario_status) {
     OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s PAUSED\n", bdata(scenario->name));
   } else if (SCENARIO_STATUS_LOADED == scenario_status) {
@@ -114,7 +114,7 @@ void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expir
     arg->scenario->num_timers    -= 1;
 
     if (SCENARIO_STATUS_PAUSED == arg->scenario->status) {
-      scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAYING);
+      scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAYING, __FILE__, __LINE__);
     }
 
     if (SCENARIO_PLAYER_ITEM_ITTI_MSG == arg->item->item_type) {
@@ -127,7 +127,7 @@ void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expir
         if (!arg->item->is_played) {
           OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "ITTI msg uid %d timed-out(%ld.%06ld sec)\n",
               arg->item->uid, arg->item->u.msg.time_out.tv_sec, arg->item->u.msg.time_out.tv_usec);
-          scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAY_FAILED);
+          scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
         }
         arg->item->u.msg.timer_id = 0;
       }
@@ -227,7 +227,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item RX message  UID %u\n", item->uid);
   if (item->is_played) {
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "item RX message  UID %u already played\n", item->uid);
-    scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
+    scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, __FILE__, __LINE__);
     return true;
   }
   if (item->u.msg.timer_id) {
@@ -253,10 +253,10 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
         ((elapsed_time.tv_sec == item->u.msg.time_out.tv_sec) &&
          (elapsed_time.tv_usec >= item->u.msg.time_out.tv_usec))
     ) {
-      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
       return false;
     } else {
-      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
+      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, __FILE__, __LINE__);
 
       struct timeval timer_val = {0};
       int ret      = RETURNerror;
@@ -274,7 +274,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
   } else {
     if ((0 < item->u.msg.time_out.tv_sec) ||
         (0 < item->u.msg.time_out.tv_usec)) {
-      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED);
+      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, __FILE__, __LINE__);
       item->u.msg.timer_arg.item = item;
       item->u.msg.timer_arg.scenario = scenario;
       int ret = timer_setup (item->u.msg.time_out.tv_sec, item->u.msg.time_out.tv_usec,
@@ -284,7 +284,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
       OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Setting timer %ld.%06ld sec\n", item->u.msg.time_out.tv_sec, item->u.msg.time_out.tv_usec);
       return true;
     } else {
-      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED);
+      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
       return false;
     }
   }
@@ -718,7 +718,7 @@ void msp_init_scenario(scenario_t * const s)
     s->ue_emulated_emm_security_context = calloc(1, sizeof(emm_security_context_t));
     s->ue_emulated_emm_security_context->direction_encode = SECU_DIRECTION_UPLINK;
     s->ue_emulated_emm_security_context->direction_decode = SECU_DIRECTION_DOWNLINK;
-    scenario_set_status(s, SCENARIO_STATUS_NULL);
+    scenario_set_status(s, SCENARIO_STATUS_NULL, __FILE__, __LINE__);
     s->num_timers    = 0;
   }
 }
@@ -747,7 +747,7 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
       scenario->last_played_item = item;
       OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Exiting scenario %s\n", bdata(scenario->name));
       if (item->u.exit) {
-        scenario_set_status(scenario, item->u.exit);
+        scenario_set_status(scenario, item->u.exit, __FILE__, __LINE__);
       }
       return false;
     } else if (SCENARIO_PLAYER_ITEM_VAR == item->item_type) {

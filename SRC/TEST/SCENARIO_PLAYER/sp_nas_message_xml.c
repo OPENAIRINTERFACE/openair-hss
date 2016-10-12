@@ -65,7 +65,7 @@ bool sp_nas_message_plain_from_xml (
     scenario_player_msg_t * const msg,
     nas_message_plain_t       * const nas_message)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
   bstring xpath_expr = bformat("./%s",PLAIN_NAS_MESSAGE_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
@@ -92,7 +92,7 @@ bool sp_nas_message_plain_from_xml (
           /*
            * Discard L3 messages with not supported protocol discriminator
            */
-          OAILOG_WARNING(LOG_NAS, "NET-API   - Protocol discriminator 0x%x is " "not supported\n", nas_message->emm.header.protocol_discriminator);
+          OAILOG_WARNING(LOG_MME_SCENARIO_PLAYER, "NET-API   - Protocol discriminator 0x%x is " "not supported\n", nas_message->emm.header.protocol_discriminator);
         }
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
@@ -100,7 +100,7 @@ bool sp_nas_message_plain_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -109,7 +109,7 @@ bool sp_nas_message_protected_from_xml (
     scenario_player_msg_t * const msg,
     nas_message_t             * const nas_message)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
   bstring xpath_expr = bformat("./%s",SECURITY_PROTECTED_NAS_MESSAGE_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
@@ -151,7 +151,7 @@ bool sp_nas_message_protected_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_NAS, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -160,7 +160,7 @@ bool sp_nas_pdu_from_xml (
     scenario_player_msg_t * const msg,
     bstring               *bnas_pdu)
 {
-  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   nas_message_t                           nas_msg = {.security_protected.header = {0},
                                                      .security_protected.plain.emm.header = {0},
                                                      .security_protected.plain.esm.header = {0}};
@@ -169,14 +169,14 @@ bool sp_nas_pdu_from_xml (
     int rc = nas_message_encode(raw_buffer, &nas_msg, 4096, scenario->ue_emulated_emm_security_context);
     if (0 < rc) {
       *bnas_pdu = blk2bstr(raw_buffer, rc);
-      OAILOG_FUNC_RETURN (LOG_NAS, true);
+      OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, true);
     }
   } else if (sp_nas_message_plain_from_xml(scenario, msg, &nas_msg.plain)) {
     int rc = nas_message_encode(raw_buffer, &nas_msg, 4096, NULL);
     if (0 < rc) {
       *bnas_pdu = blk2bstr(raw_buffer, rc);
-      OAILOG_FUNC_RETURN (LOG_NAS, true);
+      OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, true);
     }
   }
-  OAILOG_FUNC_RETURN (LOG_NAS, false);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, false);
 }

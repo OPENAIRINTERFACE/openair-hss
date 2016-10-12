@@ -215,7 +215,7 @@ bool sp_plmn_from_xml (
     scenario_player_msg_t * const msg,
     plmn_t                * const plmn)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
   bstring xpath_expr_plmn = bformat("./%s",PLMN_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj_plmn = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_plmn);
@@ -284,7 +284,7 @@ bool sp_plmn_from_xml (
     xmlXPathFreeObject(xpath_obj_plmn);
   }
   bdestroy_wrapper (&xpath_expr_plmn);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------

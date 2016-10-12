@@ -55,7 +55,7 @@ bool protocol_discriminator_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     eps_protocol_discriminator_t * const pd)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",PROTOCOL_DISCRIMINATOR_IE_XML_STR);
   char val[128] = {0};
@@ -97,10 +97,10 @@ bool protocol_discriminator_from_xml (
     *pd = NON_CALL_RELATED_SS_MESSAGE;
     res = true;
   } else {
-    OAILOG_ERROR (LOG_UTIL, "Unknown protocol discriminator %s\n", val);
+    OAILOG_ERROR (LOG_XML, "Unknown protocol discriminator %s\n", val);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -154,11 +154,11 @@ bool sequence_number_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     uint8_t                   * const sn)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",SEQUENCE_NUMBER_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)sn, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -173,11 +173,11 @@ bool eps_bearer_identity_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     ebi_t                     * const ebi)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",EBI_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)ebi, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -192,11 +192,11 @@ bool procedure_transaction_identity_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     pti_t                     * const pti)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",PTI_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)pti, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------

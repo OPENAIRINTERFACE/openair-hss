@@ -314,6 +314,9 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_MSC_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.msc_log_level = OAILOG_LEVEL_STR2INT (astring);
 
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_XML_LOG_LEVEL, (const char **)&astring))
+        config_pP->log_config.xml_log_level = OAILOG_LEVEL_STR2INT (astring);
+
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_MME_SCENARIO_PLAYER_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.mme_scenario_player_log_level = OAILOG_LEVEL_STR2INT (astring);
 
@@ -809,19 +812,21 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "    Output thread safe ..: %s\n", (config_pP->log_config.is_output_thread_safe) ? "true":"false");
   OAILOG_INFO (LOG_CONFIG, "    Output with color ...: %s\n", (config_pP->log_config.color) ? "true":"false");
   OAILOG_INFO (LOG_CONFIG, "    UDP log level........: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.udp_log_level));
-  OAILOG_INFO (LOG_CONFIG, "    GTPV1-U log level....: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.gtpv1u_log_level));
   OAILOG_INFO (LOG_CONFIG, "    GTPV2-C log level....: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.gtpv2c_log_level));
   OAILOG_INFO (LOG_CONFIG, "    SCTP log level.......: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.sctp_log_level));
   OAILOG_INFO (LOG_CONFIG, "    S1AP log level.......: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.s1ap_log_level));
   OAILOG_INFO (LOG_CONFIG, "    ASN1 Verbosity level : %d\n", config_pP->log_config.asn1_verbosity_level);
   OAILOG_INFO (LOG_CONFIG, "    NAS log level........: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.nas_log_level));
   OAILOG_INFO (LOG_CONFIG, "    MME_APP log level....: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.mme_app_log_level));
-  OAILOG_INFO (LOG_CONFIG, "    S/P-GW APP log level.: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.spgw_app_log_level));
   OAILOG_INFO (LOG_CONFIG, "    S11 log level........: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.s11_log_level));
   OAILOG_INFO (LOG_CONFIG, "    S6a log level........: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.s6a_log_level));
   OAILOG_INFO (LOG_CONFIG, "    UTIL log level.......: %s\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.util_log_level));
   OAILOG_INFO (LOG_CONFIG, "    MSC log level........: %s (MeSsage Chart)\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.msc_log_level));
   OAILOG_INFO (LOG_CONFIG, "    ITTI log level.......: %s (InTer-Task Interface)\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.itti_log_level));
+  OAILOG_INFO (LOG_CONFIG, "    XML log level........: %s (XML dump/load of messages)\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.xml_log_level));
+  if (RUN_MODE_SCENARIO_PLAYER == config_pP->run_mode) {
+    OAILOG_INFO (LOG_CONFIG, "    MME SP log level.....: %s (MME scenario player)\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.mme_scenario_player_log_level));
+  }
 }
 
 //------------------------------------------------------------------------------

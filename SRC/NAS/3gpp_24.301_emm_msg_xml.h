@@ -219,7 +219,7 @@ int security_mode_reject_to_xml (
   security_mode_reject_msg * security_mode_reject,
   xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
-int service_reject_from_xml (
+bool service_reject_from_xml (
     xmlDocPtr                     xml_doc,
     xmlXPathContextPtr            xpath_ctx,
   service_reject_msg * service_reject);
@@ -228,7 +228,7 @@ int service_reject_to_xml (
   service_reject_msg * service_reject,
   xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
-int service_request_from_xml (
+bool service_request_from_xml (
     xmlDocPtr                     xml_doc,
     xmlXPathContextPtr            xpath_ctx,
   service_request_msg * service_request);
@@ -237,7 +237,7 @@ int service_request_to_xml (
   service_request_msg * service_request,
   xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
-int tracking_area_update_accept_from_xml (
+bool tracking_area_update_accept_from_xml (
   xmlDocPtr                     xml_doc,
   xmlXPathContextPtr            xpath_ctx,
   tracking_area_update_accept_msg * tracking_area_update_accept);
@@ -246,7 +246,7 @@ int tracking_area_update_accept_to_xml (
   tracking_area_update_accept_msg * tracking_area_update_accept,
   xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
-int tracking_area_update_complete_from_xml (
+bool tracking_area_update_complete_from_xml (
     xmlDocPtr                     xml_doc,
     xmlXPathContextPtr            xpath_ctx,
   tracking_area_update_complete_msg * tracking_area_update_complete);
@@ -255,7 +255,7 @@ int tracking_area_update_complete_to_xml (
   tracking_area_update_complete_msg * tracking_area_update_complete,
   xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
-int tracking_area_update_reject_from_xml (
+bool tracking_area_update_reject_from_xml (
     xmlDocPtr                     xml_doc,
     xmlXPathContextPtr            xpath_ctx,
     tracking_area_update_reject_msg * tracking_area_update_reject);
@@ -264,7 +264,7 @@ int tracking_area_update_reject_to_xml (
   tracking_area_update_reject_msg * tracking_area_update_reject,
   xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
-int tracking_area_update_request_from_xml (
+bool tracking_area_update_request_from_xml (
     xmlDocPtr                     xml_doc,
     xmlXPathContextPtr            xpath_ctx,
     tracking_area_update_request_msg * tracking_area_update_request);

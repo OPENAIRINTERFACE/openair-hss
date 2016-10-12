@@ -68,7 +68,7 @@ bool sp_activate_dedicated_eps_bearer_context_request_from_xml (
     scenario_player_msg_t * const msg,
     activate_dedicated_eps_bearer_context_request_msg * const activate_dedicated_eps_bearer_context_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   memset(activate_dedicated_eps_bearer_context_request, 0, sizeof(*activate_dedicated_eps_bearer_context_request));
   bool res = false;
 
@@ -108,7 +108,7 @@ bool sp_activate_dedicated_eps_bearer_context_request_from_xml (
     }
     res = true;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -117,14 +117,14 @@ bool sp_activate_default_eps_bearer_context_accept_from_xml (
     scenario_player_msg_t * const msg,
     activate_default_eps_bearer_context_accept_msg * activate_default_eps_bearer_context_accept)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   memset(activate_default_eps_bearer_context_accept, 0, sizeof(*activate_default_eps_bearer_context_accept));
   bool res = false;
   res = protocol_configuration_options_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_accept->protocolconfigurationoptions, true);
   if (res) {
     activate_default_eps_bearer_context_accept->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, true);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, true);
 }
 
 //------------------------------------------------------------------------------
@@ -133,7 +133,7 @@ bool sp_activate_default_eps_bearer_context_request_from_xml (
     scenario_player_msg_t * const msg,
     activate_default_eps_bearer_context_request_msg * activate_default_eps_bearer_context_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   memset(activate_default_eps_bearer_context_request, 0, sizeof(*activate_default_eps_bearer_context_request));
   bool res = false;
 
@@ -183,7 +183,7 @@ bool sp_activate_default_eps_bearer_context_request_from_xml (
     }
     res = true;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -192,7 +192,7 @@ bool sp_pdn_connectivity_request_from_xml (
     scenario_player_msg_t * const msg,
     pdn_connectivity_request_msg * pdn_connectivity_request)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   memset(pdn_connectivity_request, 0, sizeof(*pdn_connectivity_request));
   bool res = false;
 
@@ -216,7 +216,7 @@ bool sp_pdn_connectivity_request_from_xml (
     }
     res = true;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 //------------------------------------------------------------------------------
@@ -225,7 +225,7 @@ bool sp_esm_msg_from_xml (
     scenario_player_msg_t * const msg,
     ESM_msg               * const esm_msg)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool                                    res = false;
 
   // First decode the EMM message header
@@ -321,12 +321,12 @@ bool sp_esm_msg_from_xml (
       break;
 
     default:
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Unexpected message type: 0x%x\n", esm_msg->header.message_type);
+      OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "ESM-MSG   - Unexpected message type: 0x%x\n", esm_msg->header.message_type);
       res = false;
       break;
     }
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
 
@@ -335,7 +335,7 @@ bool sp_esm_msg_header_from_xml (
     scenario_player_msg_t * const msg,
     esm_msg_header_t          * const header)
 {
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool     res                           = false;
   ebi_t   eps_bearer_identity            = 0;
   eps_protocol_discriminator_t protocol_discriminator = 0;
@@ -356,6 +356,6 @@ bool sp_esm_msg_header_from_xml (
     res = message_type_from_xml(msg->xml_doc, msg->xpath_ctx, &message_type);
     header->message_type = message_type;
   }
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, res);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 

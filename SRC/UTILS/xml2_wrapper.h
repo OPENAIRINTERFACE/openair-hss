@@ -43,7 +43,7 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding);
       tmp = xml_encoding_convert_input(cOmMeNt, XML_ENCODING);\
       rc = xmlTextWriterWriteComment(wRiTeR, tmp);\
       if (rc < 0) {\
-        OAILOG_ERROR(LOG_UTIL, "Error at xmlTextWriterWriteComment\n");\
+        OAILOG_ERROR(LOG_XML, "Error at xmlTextWriterWriteComment\n");\
       }\
       if (tmp != NULL) xmlFree(tmp);\
     } while (0);
@@ -56,7 +56,7 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding);
       int rc = 0;\
       rc = xmlTextWriterWriteFormatComment(wRiTeR, ##__VA_ARGS__);\
       if (rc < 0) {\
-        OAILOG_ERROR(LOG_UTIL, "Error at xmlTextWriterWriteFormatComment\n");\
+        OAILOG_ERROR(LOG_XML, "Error at xmlTextWriterWriteFormatComment\n");\
       }\
     } while (0);
 
@@ -69,7 +69,7 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding);
       /* Start an element. */ \
       rc = xmlTextWriterStartElement(wRiTeR, BAD_CAST eLeMeNtNaMe);\
       if (rc < 0) {\
-        OAILOG_ERROR(LOG_UTIL, "Error at xmlTextWriterStartElement\n");\
+        OAILOG_ERROR(LOG_XML, "Error at xmlTextWriterStartElement\n");\
       }\
     } while (0);
 
@@ -82,7 +82,7 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding);
       /* Close the element */ \
       rc = xmlTextWriterEndElement(wRiTeR);\
       if (rc < 0) {\
-        OAILOG_ERROR(LOG_UTIL, "Error at xmlTextWriterEndElement\n");\
+        OAILOG_ERROR(LOG_XML, "Error at xmlTextWriterEndElement\n");\
       }\
     } while (0);
 
@@ -95,7 +95,7 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding);
        /* Add an attribute */ \
        rc = xmlTextWriterWriteAttribute(wRiTeR, BAD_CAST aTtRiBuTeNaMe,  BAD_CAST aTtRiBuTeValuE); \
        if (rc < 0) {\
-         OAILOG_ERROR(LOG_UTIL, "Error at xmlTextWriterWriteAttribute\n");\
+         OAILOG_ERROR(LOG_XML, "Error at xmlTextWriterWriteAttribute\n");\
        }\
     } while (0);
 
@@ -108,7 +108,7 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding);
        /* Add an attribute */ \
        rc = xmlTextWriterWriteFormatAttribute(wRiTeR, BAD_CAST aTtRiBuTeNaMe, ##__VA_ARGS__);\
        if (rc < 0) {\
-         OAILOG_ERROR(LOG_UTIL, "Error at xmlTextWriterWriteFormatAttribute\n");\
+         OAILOG_ERROR(LOG_XML, "Error at xmlTextWriterWriteFormatAttribute\n");\
        }\
     } while (0);
 
@@ -127,10 +127,10 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding);
           rc = xmlTextWriterWriteAttribute(wRiTeR, BAD_CAST aTtRiBuTeNaMe,  BAD_CAST buffer); \
           free(buffer);\
           if (rc < 0) {\
-            OAILOG_ERROR(LOG_UTIL, "Error at xmlTextWriterWriteAttribute\n");\
+            OAILOG_ERROR(LOG_XML, "Error at xmlTextWriterWriteAttribute\n");\
           }\
         } else {\
-          OAILOG_ERROR(LOG_UTIL, "Error at malloc(%d)\n", (lEnGtH)*2+1);\
+          OAILOG_ERROR(LOG_XML, "Error at malloc(%d)\n", (lEnGtH)*2+1);\
         }\
       } else {\
         rc = xmlTextWriterWriteAttribute(wRiTeR, BAD_CAST aTtRiBuTeNaMe,  BAD_CAST ""); \
@@ -146,7 +146,7 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding);
       /* Write an element */\
       rc = xmlTextWriterWriteFormatElement(wRiTeR, BAD_CAST eLeMeNtNaMe, ##__VA_ARGS__);\
       if (rc < 0) {\
-        OAILOG_ERROR(LOG_UTIL, "Error at xmlTextWriterWriteFormatElement\n");\
+        OAILOG_ERROR(LOG_XML, "Error at xmlTextWriterWriteFormatElement\n");\
       }\
     } while (0);
 
@@ -165,10 +165,10 @@ xmlChar *xml_encoding_convert_input(const char *in, const char *encoding);
           rc = xmlTextWriterWriteFormatElement(wRiTeR, BAD_CAST eLeMeNtNaMe,  "%s", BAD_CAST buffer); \
           free(buffer);\
           if (rc < 0) {\
-            OAILOG_ERROR(LOG_UTIL, "Error at xmlTextWriterWriteFormatElement\n");\
+            OAILOG_ERROR(LOG_XML, "Error at xmlTextWriterWriteFormatElement\n");\
           }\
         } else {\
-          OAILOG_ERROR(LOG_UTIL, "Error at malloc(%d)\n", (lEnGtH)*2+1);\
+          OAILOG_ERROR(LOG_XML, "Error at malloc(%d)\n", (lEnGtH)*2+1);\
         }\
       } else {\
         rc = xmlTextWriterWriteFormatElement(wRiTeR, BAD_CAST eLeMeNtNaMe,  "%s", BAD_CAST ""); \

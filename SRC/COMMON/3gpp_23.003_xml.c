@@ -96,11 +96,11 @@ bool m_tmsi_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     tmsi_t                    * const m_tmsi)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",M_TMSI_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx32, (void*)m_tmsi, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void m_tmsi_to_xml (const tmsi_t * const m_tmsi, xmlTextWriterPtr writer)
@@ -131,7 +131,7 @@ bool gummei_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     gummei_t                  * const gummei)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",GUMMEI_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
@@ -149,7 +149,7 @@ bool gummei_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void gummei_to_xml (const gummei_t * const gummei, xmlTextWriterPtr writer)
@@ -167,7 +167,7 @@ bool guti_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     guti_t                    * const guti)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",GUTI_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
@@ -184,7 +184,7 @@ bool guti_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void guti_to_xml (const guti_t * const guti, xmlTextWriterPtr writer)
@@ -204,7 +204,7 @@ bool s_tmsi_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     s_tmsi_t                  * const s_tmsi)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",S_TMSI_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
@@ -220,7 +220,7 @@ bool s_tmsi_from_xml (
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
   }
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -245,11 +245,11 @@ bool csg_id_from_xml (
     xmlXPathContextPtr                xpath_ctx,
     csg_id_t                  * const csg_id)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bstring xpath_expr = bformat("./%s",CSG_ID_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx32, (void*)csg_id, NULL);
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 void csg_id_to_xml (const csg_id_t * const csg_id, xmlTextWriterPtr writer)
@@ -297,7 +297,7 @@ bool eci_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     eci_t                 * const eci)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_IDENTITY_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
@@ -322,7 +322,7 @@ bool eci_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------
@@ -337,7 +337,7 @@ bool ecgi_from_xml (
     xmlXPathContextPtr            xpath_ctx,
     ecgi_t                * const ecgi)
 {
-  OAILOG_FUNC_IN (LOG_UTIL);
+  OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_GLOBAL_IDENTIFICATION_IE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
@@ -354,7 +354,7 @@ bool ecgi_from_xml (
     xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
-  OAILOG_FUNC_RETURN (LOG_UTIL, res);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
 //------------------------------------------------------------------------------

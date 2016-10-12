@@ -133,6 +133,8 @@ int emm_proc_attach_request(enb_s1ap_id_key_t enb_ue_s1ap_id_key,
                             const bool umts_present, const bool gprs_present, const_bstring esm_msg,
                             const nas_message_decode_status_t  * const decode_status);
 
+int _emm_attach_reject (emm_context_t *emm_ctx);
+
 int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, int emm_cause);
 int emm_proc_attach_complete(mme_ue_s1ap_id_t ue_id, const_bstring esm_msg);
 

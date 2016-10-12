@@ -50,14 +50,14 @@ xmlXPathObjectPtr xml_find_nodes(xmlDocPtr const xml_doc, xmlXPathContextPtr  *x
     *xpath_ctx = xmlXPathNewContext(xml_doc);
   }
   if (!(*xpath_ctx)) {
-    OAILOG_ERROR (LOG_UTIL, "Error: unable to create new XPath context\n");
+    OAILOG_ERROR (LOG_XML, "Error: unable to create new XPath context\n");
     return NULL;
   }
 
   /* Evaluate xpath expression */
   xpath_obj = xmlXPathEvalExpression((const xmlChar *)bdata(xpath_expr), *xpath_ctx);
   if(!xpath_obj) {
-    OAILOG_ERROR (LOG_UTIL, "Error: unable to evaluate xpath expression \"%s\"\n", (const xmlChar *)bdata(xpath_expr));
+    OAILOG_ERROR (LOG_XML, "Error: unable to evaluate xpath expression \"%s\"\n", (const xmlChar *)bdata(xpath_expr));
     return NULL;
   }
   return xpath_obj;
@@ -78,7 +78,7 @@ bool xml_load_tag(
     xmlXPathFreeObject(xpath_obj);
     return res;
   }
-  OAILOG_ERROR (LOG_UTIL, "Failed loading %s\n", bdata(xpath_expr));
+  OAILOG_ERROR (LOG_XML, "Failed loading %s\n", bdata(xpath_expr));
   return false;
 }
 
@@ -101,10 +101,10 @@ bool xml_load_leaf_tag(
       int ret = sscanf((const char*)key, scanf_format, container);
       if (1 == ret) {
         res = true;
-        OAILOG_TRACE (LOG_UTIL, "Found %s=%s\n", bdata(xpath_expr), key);
+        OAILOG_TRACE (LOG_XML, "Found %s=%s\n", bdata(xpath_expr), key);
       } else if ((failed_value)) {
         *failed_value = bfromcstr((const char *)key);
-        OAILOG_TRACE (LOG_UTIL, "Found %s=%s!\n", bdata(xpath_expr), key);
+        OAILOG_TRACE (LOG_XML, "Found %s=%s!\n", bdata(xpath_expr), key);
         // return false
       }
       xmlFree(key);
@@ -132,7 +132,7 @@ bool xml_load_hex_stream_leaf_tag(
         uint8_t hex[len/2];
         int ret = ascii_to_hex ((uint8_t *) hex, (const char *)key);
         if (ret) {
-          OAILOG_TRACE (LOG_UTIL, "Found %s=%s\n", bdata(xpath_expr), key);
+          OAILOG_TRACE (LOG_XML, "Found %s=%s\n", bdata(xpath_expr), key);
           res = true;
           *container = blk2bstr(hex,len/2);
         }
@@ -142,7 +142,7 @@ bool xml_load_hex_stream_leaf_tag(
     xmlXPathFreeObject(xpath_obj);
     return res;
   }
-  OAILOG_TRACE (LOG_UTIL, "Warning: No result for searching %s\n", bdata(xpath_expr));
+  OAILOG_TRACE (LOG_XML, "Warning: No result for searching %s\n", bdata(xpath_expr));
   return false;
 }
 

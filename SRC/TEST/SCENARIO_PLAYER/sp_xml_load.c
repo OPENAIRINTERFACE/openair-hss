@@ -118,7 +118,7 @@ bool sp_xml_load_hex_stream_leaf_tag(
     uint8_t hex[len/2];
     int ret = ascii_to_hex ((uint8_t *) hex, (const char *)value);
     if (ret) {
-      OAILOG_TRACE (LOG_UTIL, "Found %s=%s\n", bdata(xpath_expr), value);
+      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", bdata(xpath_expr), value);
       res = true;
       *container = blk2bstr(hex,len/2);
       return true;
@@ -181,7 +181,7 @@ bool sp_xml_load_hex_stream_leaf_tag(
     }
     return res;
   }
-  OAILOG_TRACE (LOG_UTIL, "Warning: No result for searching %s\n", bdata(xpath_expr));
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Warning: No result for searching %s\n", bdata(xpath_expr));
   return false;
 }
 
@@ -237,14 +237,14 @@ bool sp_xml_load_ascii_stream_leaf_tag(
         AssertFatal (0, "Could not find %s var, should have been declared in scenario\n", varname);
       }
     } else {
-      OAILOG_TRACE (LOG_UTIL, "Found %s=%s\n", bdata(xpath_expr), value);
+      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", bdata(xpath_expr), value);
       *container = bfromcstr((const char*)value);
       res = true;
       return true;
     }
     return res;
   }
-  OAILOG_TRACE (LOG_UTIL, "Warning: No result for searching %s\n", bdata(xpath_expr));
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Warning: No result for searching %s\n", bdata(xpath_expr));
   return false;
 }
 
