@@ -70,7 +70,13 @@ int usim_authenticate(usim_data_t * const usim_data,
                       uint8_t * const res,
                       uint8_t * const ck,
                       uint8_t * const ik);
-
+int usim_authenticate_and_generate_sync_failure(usim_data_t * const usim_data /* size 16 */,
+                      uint8_t * const rand,
+                      uint8_t * const autn,
+                      uint8_t * const auts,
+                      uint8_t * const res,
+                      uint8_t * const ck,
+                      uint8_t * const ik);
 int usim_generate_kasme(const uint8_t * const autn,
                         const uint8_t * const ck,
                         const uint8_t * const ik,

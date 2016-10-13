@@ -635,6 +635,76 @@ bool msp_play_compute_authentication_response_parameter(scenario_t * const scena
 
 //------------------------------------------------------------------------------
 // return true if we can continue playing the scenario
+bool msp_play_compute_authentication_sync_failure_parameter(scenario_t * const scenario, scenario_player_item_t * const item)
+{
+  scenario_player_item_t * var_rand = NULL;
+  scenario_player_item_t * var_autn = NULL;
+  scenario_player_item_t * var_auth_param = NULL;
+  scenario_player_item_t * var_selected_plmn = NULL;
+
+  void                   * vuid_rand = NULL;
+  void                   * vuid_autn = NULL;
+  void                   * vuid_auth_param = NULL;
+  void                   * vuid_selected_plmn = NULL;
+
+
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item compute sync failure parameter UID %u\n", item->uid);
+
+  hashtable_rc_t hrc = obj_hashtable_ts_get (scenario->var_items, "AUTN", strlen("AUTN"), (void **)&vuid_autn);
+  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var AUTN in hashtable");
+  int uid_autn = (int)(uintptr_t)vuid_autn;
+  hrc = hashtable_ts_get (scenario->scenario_items, uid_autn, (void **)&var_autn);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (var_autn), "Could not find var item UID %d", uid_autn);
+
+  hrc = obj_hashtable_ts_get (scenario->var_items, "RAND", strlen("RAND"), (void **)&vuid_rand);
+  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var RAND in hashtable");
+  int uid_rand = (int)(uintptr_t)vuid_rand;
+  hrc = hashtable_ts_get (scenario->scenario_items, uid_rand, (void **)&var_rand);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (var_rand), "Could not find var item UID %d", uid_rand);
+
+  hrc = obj_hashtable_ts_get (scenario->var_items, "AUTHENTICATION_FAILURE_PARAMETER", strlen("AUTHENTICATION_FAILURE_PARAMETER"), (void **)&vuid_auth_param);
+  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var AUTHENTICATION_FAILURE_PARAMETER in hashtable");
+  int uid_auth_param = (int)(uintptr_t)vuid_auth_param;
+  hrc = hashtable_ts_get (scenario->scenario_items, uid_auth_param, (void **)&var_auth_param);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (var_auth_param), "Could not find var item UID %d", uid_auth_param);
+
+  hrc = obj_hashtable_ts_get (scenario->var_items, "SELECTED_PLMN", strlen("SELECTED_PLMN"), (void **)&vuid_selected_plmn);
+  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var SELECTED_PLMN in hashtable");
+  int uid_selected_plmn = (int)(uintptr_t)vuid_selected_plmn;
+  hrc = hashtable_ts_get (scenario->scenario_items, uid_selected_plmn, (void **)&var_selected_plmn);
+  AssertFatal ((HASH_TABLE_OK == hrc) && (var_selected_plmn), "Could not find var item UID %d", uid_selected_plmn);
+  AssertFatal (3 == blength(var_selected_plmn->u.var.value.value_bstr), "Bad PLMN hex stream");
+
+  memcpy(scenario->usim_data.autn, var_autn->u.var.value.value_bstr->data, USIM_AUTN_SIZE);
+  memcpy(scenario->usim_data.rand, var_rand->u.var.value.value_bstr->data, USIM_RAND_SIZE);
+  memset(scenario->usim_data.res, 0, USIM_RES_SIZE);
+  memcpy(&scenario->usim_data.selected_plmn, var_selected_plmn->u.var.value.value_bstr->data, min(blength(var_selected_plmn->u.var.value.value_bstr), 3));
+
+  int rc = usim_authenticate_and_generate_sync_failure(&scenario->usim_data,
+      scenario->usim_data.rand,
+      scenario->usim_data.autn,
+      scenario->usim_data.auts,
+      scenario->usim_data.res,
+      scenario->usim_data.ck,
+      scenario->usim_data.ik);
+
+  item->is_played = true;
+  scenario->last_played_item = item;
+
+  if (RETURNerror == rc) {
+
+    bdestroy_wrapper(&var_auth_param->u.var.value.value_bstr);
+    var_auth_param->u.var.value.value_bstr = blk2bstr(scenario->usim_data.auts, USIM_SQNMS_SIZE + USIM_XMAC_SIZE);
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "msp_play_compute_authentication_sync_failure_parameter succeeded\n");
+    return true;
+  } else {
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "msp_play_compute_authentication_sync_failure_parameter failed\n");
+    return false;
+  }
+}
+
+//------------------------------------------------------------------------------
+// return true if we can continue playing the scenario
 bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_player_item_t * const item)
 {
   bool                             update = false;
@@ -764,6 +834,8 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
       return msp_play_sleep(scenario, item);
     } else if (SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER == item->item_type) {
       return msp_play_compute_authentication_response_parameter(scenario, item);
+    } else if (SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER == item->item_type) {
+      return msp_play_compute_authentication_sync_failure_parameter(scenario, item);
     } else if (SCENARIO_PLAYER_ITEM_UPDATE_EMM_SECURITY_CONTEXT == item->item_type) {
       return msp_play_update_emm_security_context(scenario, item);
     }

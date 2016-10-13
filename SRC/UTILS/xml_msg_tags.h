@@ -65,6 +65,7 @@
 #  define USECONDS_ATTR_XML_STR       "useconds"
 
 #  define COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_NODE_XML_STR    "compute_authentication_response_parameter"
+#  define COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER_NODE_XML_STR "compute_authentication_sync_failure_parameter"
 
 #  define USIM_NODE_XML_STR           "usim"
 #  define LTE_K_ATTR_XML_STR          "lte_k"

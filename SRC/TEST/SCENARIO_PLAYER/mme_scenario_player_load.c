@@ -588,6 +588,16 @@ scenario_player_item_t* msp_load_compute_authentication_response_parameter (scen
 }
 
 //------------------------------------------------------------------------------
+scenario_player_item_t* msp_load_compute_authentication_sync_failure_parameter (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
+{
+  scenario_player_item_t * spi = calloc(1, sizeof(*spi));
+  spi->item_type = SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER;
+  // get a UID
+  spi->uid = msp_get_seq_uid();
+  return spi;
+}
+
+//------------------------------------------------------------------------------
 scenario_player_item_t* msp_load_label (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
 {
   scenario_player_item_t * spi = calloc(1, sizeof(*spi));
@@ -995,6 +1005,13 @@ int msp_load_scenario (bstring file_path, scenario_player_t * const scenario_pla
           scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
           OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_NODE_XML_STR);
         }
+      } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER_NODE_XML_STR))) {
+        if ((scenario_player_item = msp_load_compute_authentication_sync_failure_parameter(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
+          msp_scenario_add_item(scenario, scenario_player_item);
+        } else {
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
+          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER_NODE_XML_STR);
+        }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)UPDATE_EMM_SECURITY_CONTEXT_NODE_XML_STR))) {
         if ((scenario_player_item = msp_load_update_emm_security_context(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
@@ -1054,6 +1071,7 @@ void msp_free_scenario_player_item (scenario_player_item_t * item)
     case SCENARIO_PLAYER_ITEM_VAR_DECR:
     case SCENARIO_PLAYER_ITEM_JUMP_COND:
     case SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER:
+    case SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER:
     case SCENARIO_PLAYER_ITEM_UPDATE_EMM_SECURITY_CONTEXT:
       //NOP
       break;
