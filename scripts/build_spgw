@@ -114,6 +114,7 @@ function main()
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     check_install_spgw_software  $force
+    echo "SPGW not compiled, to compile it, re-run build_spgw without -i option"
     exit 0
   fi
   
