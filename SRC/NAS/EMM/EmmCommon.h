@@ -144,6 +144,7 @@ typedef struct security_data_s {
   bool                                    notify_failure;       /* Indicates whether the identification
                                                                  * procedure failure shall be notified
                                                                  * to the ongoing EMM procedure */
+  bool                                    is_new; /* new security context for SMC header type */
 } security_data_t;
 
 

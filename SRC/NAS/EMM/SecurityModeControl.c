@@ -108,9 +108,7 @@ static int                              _security_select_algorithms (
 
 
 
-static int                              _security_request (
-  security_data_t * data,
-  bool is_new);
+static int                              _security_request (security_data_t * data);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -174,7 +172,7 @@ emm_proc_security_mode_control (
   emm_common_failure_callback_t failure)
 {
   int                                     rc = RETURNerror;
-  int                                     security_context_is_new = false;
+  bool                                    security_context_is_new = false;
   int                                     mme_eea = NAS_SECURITY_ALGORITHMS_EEA0;
   int                                     mme_eia = NAS_SECURITY_ALGORITHMS_EIA0;
   /*
@@ -312,10 +310,12 @@ emm_proc_security_mode_control (
      */
     emm_ctx->common_proc->common_arg.u.security_data.selected_eia = emm_ctx->_security.selected_algorithms.integrity;
 
+    emm_ctx->common_proc->common_arg.u.security_data.is_new = security_context_is_new;
+
     /*
      * Send security mode command message to the UE
      */
-    rc = _security_request (&emm_ctx->common_proc->common_arg.u.security_data, security_context_is_new);
+    rc = _security_request (&emm_ctx->common_proc->common_arg.u.security_data);
 
     if (rc != RETURNerror) {
       emm_ctx_mark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC);
@@ -380,7 +380,7 @@ emm_proc_security_mode_complete (
      * Stop timer T3460
      */
     REQUIREMENT_3GPP_24_301(R10_5_4_3_4__1);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%ld)\n", emm_ctx->T3460.id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%lx)\n", emm_ctx->T3460.id);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
   }
@@ -462,7 +462,7 @@ emm_proc_security_mode_reject (
      * Stop timer T3460
      */
     REQUIREMENT_3GPP_24_301(R10_5_4_3_5__2);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%ld)\n", emm_ctx->T3460.id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%lx)\n", emm_ctx->T3460.id);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
@@ -546,7 +546,7 @@ static void* _security_t3460_handler (void *args)
       /*
        * Send security mode command message to the UE
        */
-      _security_request (data, false);
+      _security_request (data);
     } else {
       REQUIREMENT_3GPP_24_301(R10_5_4_3_7_b__2);
       /*
@@ -581,10 +581,7 @@ static void* _security_t3460_handler (void *args)
  **      Others:    T3460                                      **
  **                                                                        **
  ***************************************************************************/
-int
-_security_request (
-  security_data_t * data,
-  bool is_new)
+int _security_request (security_data_t * data)
 {
   struct emm_context_s              *emm_ctx = NULL;
   emm_sap_t                               emm_sap = {0};
@@ -620,7 +617,7 @@ _security_request (
       /*
    * Setup EPS NAS security data
    */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, &emm_ctx->_security, is_new, false);
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, &emm_ctx->_security, data->is_new, false);
     MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_SECURITY_REQ ue id " MME_UE_S1AP_ID_FMT " ", data->ue_id);
     rc = emm_sap_send (&emm_sap);
 
@@ -631,7 +628,7 @@ _security_request (
          * Re-start T3460 timer
          */
         emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stopped Timer T3460 (%ld) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
+        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stopped Timer T3460 (%lx) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 Stopped UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
         AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to stop T3460");
       }
@@ -639,7 +636,7 @@ _security_request (
        * Start T3460 timer
        */
       emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, 0  /*usec*/, _security_t3460_handler, emm_ctx);
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Started Timer T3460 (%ld) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Started Timer T3460 (%lx) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to start T3460");
     }
@@ -675,7 +672,8 @@ static int _security_non_delivered (emm_context_t * emm_ctx)
   if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC)){
     security_data_t                  *data = &emm_ctx->common_proc->common_arg.u.security_data;
     REQUIREMENT_3GPP_24_301(R10_5_4_3_7_e);
-    rc = _security_request(data, false);
+    data->is_new = false;
+    rc = _security_request(data);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -714,7 +712,7 @@ static int _security_abort (emm_context_t * emm_ctx)
        * Stop timer T3460
        */
       if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%ld)\n", emm_ctx->T3460.id);
+        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%lx)\n", emm_ctx->T3460.id);
         emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       }

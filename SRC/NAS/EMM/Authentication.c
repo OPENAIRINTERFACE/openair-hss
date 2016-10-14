@@ -244,7 +244,7 @@ int emm_proc_authentication_failure (
     // Stop timer T3460
     REQUIREMENT_3GPP_24_301(R10_5_4_2_4__3);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%ld) UE " MME_UE_S1AP_ID_FMT "\n", emm_ctx->T3460.id, emm_ctx->ue_id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%lx) UE " MME_UE_S1AP_ID_FMT "\n", emm_ctx->T3460.id, emm_ctx->ue_id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
   } else {
       OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to authentify the UE\n");
@@ -398,7 +398,7 @@ emm_proc_authentication_complete (
     // Stop timer T3460
     REQUIREMENT_3GPP_24_301(R10_5_4_2_4__1);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%ld) UE " MME_UE_S1AP_ID_FMT "\n", emm_ctx->T3460.id, emm_ctx->ue_id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%lx) UE " MME_UE_S1AP_ID_FMT "\n", emm_ctx->T3460.id, emm_ctx->ue_id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
   } else {
     // Release retransmission timer parameters
@@ -693,14 +693,14 @@ int _authentication_request (authentication_data_t * data)
            */
           emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
           MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 restarted UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
-          OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3460 (%ld) restarted, expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
+          OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3460 (%lx) restarted, expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
         }
         /*
          * Start T3460 timer
          */
         emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, 0  /*usec*/, _authentication_t3460_handler, emm_ctx);
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
-        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3460 (%ld) started, expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
+        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3460 (%lx) started, expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
       }
     }
   }
@@ -844,7 +844,7 @@ static int _authentication_abort (emm_context_t *emm_ctx)
      * Stop timer T3460
      */
     if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%ld)\n", emm_ctx->T3460.id);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%lx)\n", emm_ctx->T3460.id);
       emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
     }
