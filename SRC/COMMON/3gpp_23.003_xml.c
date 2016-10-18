@@ -219,6 +219,7 @@ bool s_tmsi_from_xml (
       if (res) {res = m_tmsi_from_xml(xml_doc, xpath_ctx, &s_tmsi->m_tmsi);}
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   OAILOG_FUNC_RETURN (LOG_XML, res);
 }

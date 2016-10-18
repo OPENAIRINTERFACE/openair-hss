@@ -296,6 +296,7 @@ bool time_zone_and_time_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ct
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr_tz);
   OAILOG_FUNC_RETURN (LOG_XML, res);

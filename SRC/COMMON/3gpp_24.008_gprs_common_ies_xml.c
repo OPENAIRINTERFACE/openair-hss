@@ -85,6 +85,7 @@ bool gprs_timer_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_gprs);
   }
   bdestroy_wrapper (&xpath_expr_gprs);
   OAILOG_FUNC_RETURN (LOG_XML, res);

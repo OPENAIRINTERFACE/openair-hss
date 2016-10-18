@@ -117,6 +117,7 @@ bool drx_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, dr
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr_drx);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -331,6 +332,7 @@ bool ms_network_capability_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -395,6 +397,7 @@ bool routing_area_identification_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr
       if (res) {res= routing_area_code_from_xml(xml_doc, xpath_ctx, &rai->rac);}
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   OAILOG_FUNC_RETURN (LOG_XML, res);
 }
@@ -442,6 +445,7 @@ bool voice_domain_preference_and_ue_usage_setting_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr_vd);
   OAILOG_FUNC_RETURN (LOG_XML, res);

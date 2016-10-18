@@ -376,21 +376,38 @@
 #define PARAMETER_ATTR_XML_STR                              "parameter"
 
 #define PACKET_FILTER_CONTENTS_IE_XML_STR                               "packet_filter_contents"
-#define PACKET_FILTER_CONTENTS_IPV4_REMOTE_ADDRESS_IE_XML_STR           "ipv4_remote_address"
-#define PACKET_FILTER_CONTENTS_IPV4_REMOTE_ADDRESS_MASK_IE_XML_STR      "ipv4_remote_address_mask"
-#define PACKET_FILTER_CONTENTS_IPV6_REMOTE_ADDRESS_IE_XML_STR           "ipv6_remote_address"
-#define PACKET_FILTER_CONTENTS_IPV6_REMOTE_ADDRESS_MASK_IE_XML_STR      "ipv6_remote_address_mask"
-#define PACKET_FILTER_CONTENTS_PROTOCOL_IDENTIFIER_NEXT_HEADER_TYPE_IE_XML_STR  "protocol_identifier_next_header_type"
-#define PACKET_FILTER_CONTENTS_LOCAL_PORT_RANGE_LOW_LIMIT_IE_XML_STR    "local_port_range_low_limit"
-#define PACKET_FILTER_CONTENTS_LOCAL_PORT_RANGE_HIGH_LIMIT_IE_XML_STR   "local_port_range_high_limit"
-#define PACKET_FILTER_CONTENTS_REMOTE_PORT_RANGE_LOW_LIMIT_IE_XML_STR   "remote_port_range_low_limit"
-#define PACKET_FILTER_CONTENTS_REMOTE_PORT_RANGE_HIGH_LIMIT_IE_XML_STR  "remote_port_range_high_limit"
-#define PACKET_FILTER_CONTENTS_SINGLE_LOCAL_PORT_IE_XML_STR             "single_local_port"
-#define PACKET_FILTER_CONTENTS_SINGLE_REMOTE_PORT_IE_XML_STR            "single_remote_port"
-#define PACKET_FILTER_CONTENTS_SECURITY_PARAMETER_INDEX_IE_XML_STR      "security_parameter_index"
-#define PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_IE_XML_STR "type_of_service_traffic_class"
-#define PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_MASK_IE_XML_STR "type_of_service_traffic_class_mask"
-#define PACKET_FILTER_CONTENTS_FLOW_LABEL_IE_XML_STR                    "flow_lable"
+
+#define PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_IPV4_REMOTE_ADDRESS_TYPE_IE_XML_STR  "component_type_identifier_ipv4_remote_address_type"
+#define PACKET_FILTER_CONTENTS_IPV4_ADDRESS_IE_XML_STR                  "ipv4_address"
+#define PACKET_FILTER_CONTENTS_IPV4_ADDRESS_MASK_IE_XML_STR             "ipv4_address_mask"
+
+#define PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_IPV6_REMOTE_ADDRESS_TYPE_IE_XML_STR  "component_type_identifier_ipv6_remote_address_type"
+#define PACKET_FILTER_CONTENTS_IPV6_ADDRESS_IE_XML_STR                  "ipv6_address"
+#define PACKET_FILTER_CONTENTS_IPV6_ADDRESS_MASK_IE_XML_STR             "ipv6_address_mask"
+
+#define PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_PROTOCOL_IDENTIFIER_NEXT_HEADER_IE_XML_STR  "component_type_identifier_protocol_identifier_next_header_type"
+#define PACKET_FILTER_CONTENTS_PROTOCOL_IDENTIFIER_NEXT_HEADER_TYPE_IE_XML_STR  "protocol_header"
+
+#define PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_LOCAL_PORT_RANGE_IE_XML_STR  "component_type_identifier_local_port_range"
+#define PACKET_FILTER_CONTENTS_PORT_RANGE_LOW_LIMIT_IE_XML_STR           "low_limit"
+#define PACKET_FILTER_CONTENTS_PORT_RANGE_HIGH_LIMIT_IE_XML_STR          "high_limit"
+
+#define PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_REMOTE_PORT_RANGE_IE_XML_STR  "component_type_identifier_remote_port_range"
+
+#define PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SINGLE_LOCAL_PORT_IE_XML_STR  "component_type_identifier_single_local_port"
+#define PACKET_FILTER_CONTENTS_SINGLE_PORT_IE_XML_STR                   "port"
+
+#define PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SINGLE_REMOTE_PORT_IE_XML_STR  "component_type_identifier_single_remote_port"
+
+#define PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SECURITY_PARAMETER_INDEX_IE_XML_STR  "component_type_identifier_security_parameter_index"
+#define PACKET_FILTER_CONTENTS_INDEX_IE_XML_STR                          "index"
+
+#define PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_TYPE_OF_SERVICE_CLASS_IE_XML_STR  "component_type_identifier_type_of_service_traffic_class"
+#define PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_IE_XML_STR  "value"
+#define PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_MASK_IE_XML_STR "mask"
+
+#define PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_FLOW_LABEL_IE_XML_STR    "component_type_identifier_flow_label"
+#define PACKET_FILTER_CONTENTS_FLOW_LABEL_IE_XML_STR                     "value"
 
 
 #define COMPONENT_TYPE_IDENTIFIER_ATTR_XML_STR              "component type identifier"

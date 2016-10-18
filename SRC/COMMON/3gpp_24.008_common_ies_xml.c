@@ -155,6 +155,7 @@ bool location_area_identification_from_xml (
       //useless
       //if (res) {res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));}
     }
+    xmlXPathFreeObject(xpath_obj_lai);
   }
   bdestroy_wrapper(&xpath_expr_lai);
   return res;
@@ -519,6 +520,7 @@ bool mobile_identity_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_mi);
   }
   bdestroy_wrapper (&xpath_expr_mi);
   return res;
@@ -740,6 +742,7 @@ bool mobile_station_classmark_2_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr 
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
   return res;
@@ -783,6 +786,7 @@ bool mobile_station_classmark_3_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr 
     if ((1 == size) && (xml_doc)) {
       AssertFatal(0, "TODO");
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
   return res;
@@ -868,6 +872,7 @@ bool plmn_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_plmn);
   }
   OAILOG_FUNC_RETURN (LOG_XML, res);
 }
@@ -977,6 +982,7 @@ bool plmn_list_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_plmnlist);
   }
   OAILOG_FUNC_RETURN (LOG_XML, res);
 }
@@ -1016,6 +1022,7 @@ bool ms_network_feature_support_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr 
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);

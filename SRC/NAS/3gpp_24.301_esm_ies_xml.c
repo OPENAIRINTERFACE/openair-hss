@@ -174,7 +174,6 @@ bool eps_quality_of_service_from_xml (
     int size = (nodes_qos) ? nodes_qos->nodeNr : 0;
     if ((1 == size) && (xml_doc)) {
 
-/*
       xmlNodePtr saved_node_ptr = xpath_ctx->node;
       res = (RETURNok == xmlXPathSetContextNode(nodes_qos->nodeTab[0], xpath_ctx));
       if (res) {
@@ -184,23 +183,7 @@ bool eps_quality_of_service_from_xml (
         bdestroy_wrapper (&xpath_expr);
         epsqualityofservice->qci = qci;
       }
-*/
-      res = true;
-      if (res) {
-        xmlChar *attr = xmlGetProp(nodes_qos->nodeTab[0], (const xmlChar *)QCI_ATTR_XML_STR);
-        if (attr) {
-          OAILOG_TRACE (LOG_XML, "Found %s=%s\n", QCI_ATTR_XML_STR, attr);
-          uint8_t  qci = 0;
-          sscanf((const char*)attr, "%"SCNx8, &qci);
-          epsqualityofservice->qci = qci;
-          xmlFree(attr);
-        } else {
-          res = false;
-        }
-      }
 
-      xmlNodePtr saved_node_ptr = xpath_ctx->node;
-      res = (RETURNok == xmlXPathSetContextNode(nodes_qos->nodeTab[0], xpath_ctx));
       if (res) {
         uint8_t  maxbitrateforul = 0;
         bstring xpath_expr = bformat("./%s",MAXIMUM_BIT_RATE_FOR_UPLINK_ATTR_XML_STR);
@@ -261,7 +244,7 @@ bool eps_quality_of_service_from_xml (
                 bdestroy_wrapper (&xpath_expr);
                 epsqualityofservice->bitRatesExt.guarBitRateForDL = extguarbitratefordl;
               }
-            }else {
+            } else {
               res = true; // do not report that eps_quality_of_service_from_xml failed at all
             }
           }
