@@ -65,7 +65,7 @@
 #include "EmmCommon.h"
 #include "3gpp_requirements_24.301.h"
 
-extern int emm_cn_wrapper_attach_accept (emm_context_t * emm_ctx, void *data);
+extern int emm_cn_wrapper_attach_accept (emm_context_t * emm_ctx);
 
 
 /*
@@ -344,7 +344,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
     /*
      * Send attach accept message to the UE
      */
-    rc = emm_cn_wrapper_attach_accept (emm_ctx_p, data_p);
+    rc = emm_cn_wrapper_attach_accept (emm_ctx_p);
 
     if (rc != RETURNerror) {
       if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_ctx_p) &&

@@ -32,20 +32,22 @@
 
 //------------------------------------------------------------------------------
 int decode_traffic_flow_aggregate_description (
-  TrafficFlowAggregateDescription * trafficflowaggregatedescription,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
+    traffic_flow_aggregate_description_t * trafficflowaggregatedescription,
+    uint8_t iei,
+    uint8_t * buffer,
+    uint32_t len)
 {
+  AssertFatal(0, "The Traffic flow aggregate description information element is decoded using the same format as the Traffic flow template (TFT) information element");
   return 0;
 }
 
 //------------------------------------------------------------------------------
 int encode_traffic_flow_aggregate_description (
-  TrafficFlowAggregateDescription * trafficflowaggregatedescription,
-  uint8_t iei,
-  uint8_t * buffer,
-  uint32_t len)
+    traffic_flow_aggregate_description_t * trafficflowaggregatedescription,
+    uint8_t iei,
+    uint8_t * buffer,
+    uint32_t len)
 {
+  AssertFatal(0, "The Traffic flow aggregate description information element is encoded using the same format as the Traffic flow template (TFT) information element");
   return 0;
 }

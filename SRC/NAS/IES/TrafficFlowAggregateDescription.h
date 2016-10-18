@@ -25,14 +25,13 @@
 #define TRAFFIC_FLOW_AGGREGATE_DESCRIPTION_MINIMUM_LENGTH 1
 #define TRAFFIC_FLOW_AGGREGATE_DESCRIPTION_MAXIMUM_LENGTH 1
 
-typedef struct {
-  uint8_t field;
-} TrafficFlowAggregateDescription;
+#include "3gpp_24.008.h"
+typedef traffic_flow_template_t traffic_flow_aggregate_description_t;
 
 
-int encode_traffic_flow_aggregate_description(TrafficFlowAggregateDescription *trafficflowaggregatedescription, uint8_t iei, uint8_t *buffer, uint32_t len);
+int encode_traffic_flow_aggregate_description(traffic_flow_aggregate_description_t *trafficflowaggregatedescription, uint8_t iei, uint8_t *buffer, uint32_t len);
 
-int decode_traffic_flow_aggregate_description(TrafficFlowAggregateDescription *trafficflowaggregatedescription, uint8_t iei, uint8_t *buffer, uint32_t len);
+int decode_traffic_flow_aggregate_description(traffic_flow_aggregate_description_t *trafficflowaggregatedescription, uint8_t iei, uint8_t *buffer, uint32_t len);
 
 #endif /* TRAFFIC FLOW AGGREGATE DESCRIPTION_SEEN */
 

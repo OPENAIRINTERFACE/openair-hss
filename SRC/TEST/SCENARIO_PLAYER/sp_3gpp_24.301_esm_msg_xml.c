@@ -56,6 +56,7 @@ EMM msg C struct to/from XML functions
 #include "3gpp_36.401_xml.h"
 #include "3gpp_24.007_xml.h"
 #include "3gpp_24.008_xml.h"
+#include "sp_3gpp_24.007_xml.h"
 #include "log.h"
 
 
@@ -72,7 +73,7 @@ bool sp_activate_dedicated_eps_bearer_context_request_from_xml (
   memset(activate_dedicated_eps_bearer_context_request, 0, sizeof(*activate_dedicated_eps_bearer_context_request));
   bool res = false;
 
-  res = linked_eps_bearer_identity_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_dedicated_eps_bearer_context_request->linkedepsbeareridentity, NULL);
+  res = sp_linked_eps_bearer_identity_from_xml (scenario, msg, &activate_dedicated_eps_bearer_context_request->linkedepsbeareridentity);
   if (res) {res = eps_quality_of_service_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_dedicated_eps_bearer_context_request->epsqos);}
   if (res) {res = traffic_flow_template_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_dedicated_eps_bearer_context_request->tft);}
 
@@ -187,6 +188,35 @@ bool sp_activate_default_eps_bearer_context_request_from_xml (
 }
 
 //------------------------------------------------------------------------------
+bool sp_bearer_resource_allocation_request_from_xml (
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    bearer_resource_allocation_request_msg * bearer_resource_allocation_request)
+{
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  memset(bearer_resource_allocation_request, 0, sizeof(*bearer_resource_allocation_request));
+  bool res = false;
+
+
+  /*
+   * Decoding mandatory fields
+   */
+  res = sp_linked_eps_bearer_identity_from_xml (scenario, msg, &bearer_resource_allocation_request->linkedepsbeareridentity);
+
+  if (res) res = traffic_flow_template_from_xml (msg->xml_doc, msg->xpath_ctx, &bearer_resource_allocation_request->trafficflowaggregate);
+  if (res) res = eps_quality_of_service_from_xml (msg->xml_doc, msg->xpath_ctx, &bearer_resource_allocation_request->requiredtrafficflowqos);
+
+  if (res) {
+    res = protocol_configuration_options_from_xml (msg->xml_doc, msg->xpath_ctx, &bearer_resource_allocation_request->protocolconfigurationoptions, true);
+    if (res) {
+      bearer_resource_allocation_request->presencemask |= BEARER_RESOURCE_ALLOCATION_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+    }
+    res = true;
+  }
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
+}
+
+//------------------------------------------------------------------------------
 bool sp_pdn_connectivity_request_from_xml (
     scenario_t            * const scenario,
     scenario_player_msg_t * const msg,
@@ -265,7 +295,7 @@ bool sp_esm_msg_from_xml (
       break;
 
     case BEARER_RESOURCE_ALLOCATION_REQUEST:
-      //res = sp_bearer_resource_allocation_request_from_xml (scenario, msg, &esm_msg->bearer_resource_allocation_request);
+      res = sp_bearer_resource_allocation_request_from_xml (scenario, msg, &esm_msg->bearer_resource_allocation_request);
       break;
 
     case BEARER_RESOURCE_MODIFICATION_REJECT:
@@ -342,14 +372,14 @@ bool sp_esm_msg_header_from_xml (
   pti_t   procedure_transaction_identity = 0;
   uint8_t message_type                   = 0;
 
-  res = eps_bearer_identity_from_xml(msg->xml_doc, msg->xpath_ctx, &eps_bearer_identity);
+  res = sp_ebi_from_xml(scenario, msg, &eps_bearer_identity);
   header->eps_bearer_identity = eps_bearer_identity;
   if (res) {
     res = protocol_discriminator_from_xml(msg->xml_doc, msg->xpath_ctx, &protocol_discriminator);
     header->protocol_discriminator = protocol_discriminator;
   }
   if (res) {
-    res = procedure_transaction_identity_from_xml(msg->xml_doc, msg->xpath_ctx, &procedure_transaction_identity);
+    res = sp_pti_from_xml(scenario, msg, &procedure_transaction_identity);
     header->procedure_transaction_identity = procedure_transaction_identity;
   }
   if (res) {

@@ -109,8 +109,7 @@ static const char                      *_emm_attach_type_str[] = {
 /*
    Timer handlers
 */
-static void                            *_emm_attach_t3450_handler (
-  void *);
+static void                            *_emm_attach_t3450_handler (void *);
 
 /*
    Functions that may initiate EMM common procedures
@@ -164,9 +163,7 @@ static int                              _emm_attach_update (
 
 
 
-static int                              _emm_attach_accept (
-  emm_context_t * emm_ctx,
-  attach_data_t * data);
+static int _emm_attach_accept (emm_context_t * emm_ctx);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -239,11 +236,11 @@ emm_proc_attach_request (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_context_t                      ue_ctx;
+  emm_context_t                           ue_ctx;
   emm_fsm_state_t                         fsm_state = EMM_DEREGISTERED;
   bool                                    create_new_emm_ctxt = false;
   bool                                    duplicate_enb_context_detected = false;
-  emm_context_t                     *emm_ctx = NULL;
+  emm_context_t                         * emm_ctx = NULL;
   imsi64_t                                imsi64  = INVALID_IMSI64;
 
   if (imsi) {
@@ -309,6 +306,7 @@ emm_proc_attach_request (
       emm_sap_t                               emm_sap = {0};
       emm_sap.primitive = EMMREG_PROC_ABORT;
       emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
+      emm_sap.u.emm_reg.ctx   = emm_ctx;
       // TODOdata->notify_failure = true;
       rc = emm_sap_send (&emm_sap);
     }
@@ -387,7 +385,7 @@ emm_proc_attach_request (
        * T3450 shall be restarted if an ATTACH COMPLETE message is expected. In that case, the retransmission
        * counter related to T3450 is not incremented.
        */
-      _emm_attach_accept(emm_ctx, &emm_ctx->specific_proc->arg.u.attach_data);
+      _emm_attach_accept(emm_ctx);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
 
@@ -741,41 +739,40 @@ emm_proc_attach_complete (
  *      Others:    None
  *
  */
-static void                            *
-_emm_attach_t3450_handler (
-  void *args)
+static void *_emm_attach_t3450_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  attach_data_t                          *data = (attach_data_t *) (args);
+  emm_context_t                          *emm_ctx = (emm_context_t *) (args);
 
-  /*
-   * Increment the retransmission counter
-   */
-  data->retransmission_count += 1;
-  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3450 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
-  /*
-   * Get the UE's EMM context
-   */
-  emm_context_t                     *emm_ctx = NULL;
-
-  emm_ctx = emm_context_get (&_emm_data, data->ue_id);
-
-  if (data->retransmission_count < ATTACH_COUNTER_MAX) {
-    REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_c__1);
-    /*
-     * On the first expiry of the timer, the network shall retransmit the ATTACH ACCEPT message and shall reset and
-     * restart timer T3450.
-     */
-    _emm_attach_accept (emm_ctx, data);
-  } else {
-    REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_c__2);
-    /*
-     * Abort the attach procedure
-     */
-    _emm_attach_abort (emm_ctx);
+  if (emm_ctx) {
+    emm_ctx->T3450.id = NAS_TIMER_INACTIVE_ID;
   }
-  // TODO REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_c__3) not coded
+  if (emm_ctx_is_specific_procedure_running(emm_ctx, EMM_CTXT_SPEC_PROC_ATTACH)){
+    attach_data_t                          *data =  &emm_ctx->specific_proc->arg.u.attach_data;
 
+    /*
+     * Increment the retransmission counter
+     */
+    data->retransmission_count += 1;
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - T3450 timer expired, retransmission " "counter = %d\n", data->retransmission_count);
+
+
+    if (data->retransmission_count < ATTACH_COUNTER_MAX) {
+      REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_c__1);
+      /*
+       * On the first expiry of the timer, the network shall retransmit the ATTACH ACCEPT message and shall reset and
+       * restart timer T3450.
+       */
+      _emm_attach_accept (emm_ctx);
+    } else {
+      REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_c__2);
+      /*
+       * Abort the attach procedure
+       */
+      _emm_attach_abort (emm_ctx);
+    }
+    // TODO REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_c__3) not coded
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
 }
 
@@ -1390,12 +1387,9 @@ static int _emm_attach (emm_context_t *emm_ctx)
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-int
-emm_cn_wrapper_attach_accept (
-  emm_context_t * emm_ctx,
-  void *data)
+int emm_cn_wrapper_attach_accept (emm_context_t * emm_ctx)
 {
-  return _emm_attach_accept (emm_ctx, (attach_data_t *) data);
+  return _emm_attach_accept (emm_ctx);
 }
 
 /****************************************************************************
@@ -1412,10 +1406,7 @@ emm_cn_wrapper_attach_accept (
  **      Others:    T3450                                      **
  **                                                                        **
  ***************************************************************************/
-static int
-_emm_attach_accept (
-  emm_context_t * emm_ctx,
-  attach_data_t * data)
+static int _emm_attach_accept (emm_context_t * emm_ctx)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
@@ -1507,9 +1498,10 @@ _emm_attach_accept (
      * Get the activate default EPS bearer context request message to
      * transfer within the ESM container of the attach accept message
      */
-    emm_sap.u.emm_as.u.establish.nas_msg = data->esm_msg;
+    attach_data_t         *attach_data = &emm_ctx->specific_proc->arg.u.attach_data;
+    emm_sap.u.emm_as.u.establish.nas_msg = attach_data->esm_msg;
     OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - nas_msg  src size = %d nas_msg  dst size = %d \n",
-        emm_ctx->ue_id, blength(data->esm_msg), blength(emm_sap.u.emm_as.u.establish.nas_msg));
+        emm_ctx->ue_id, blength(attach_data->esm_msg), blength(emm_sap.u.emm_as.u.establish.nas_msg));
 
     REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__2);
     rc = emm_sap_send (&emm_sap);
@@ -1520,13 +1512,13 @@ _emm_attach_accept (
          * Re-start T3450 timer
          */
         emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT "", data->ue_id);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT "", emm_ctx->ue_id);
       }
       /*
        * Start T3450 timer
        */
-      emm_ctx->T3450.id = nas_timer_start (emm_ctx->T3450.sec, 0 /*usec*/,_emm_attach_t3450_handler, data);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
+      emm_ctx->T3450.id = nas_timer_start (emm_ctx->T3450.sec, 0 /*usec*/,_emm_attach_t3450_handler, emm_ctx);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 started UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
 
       OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT "Timer T3450 (%lx) expires in %ld seconds\n",
           emm_ctx->ue_id, emm_ctx->T3450.id, emm_ctx->T3450.sec);

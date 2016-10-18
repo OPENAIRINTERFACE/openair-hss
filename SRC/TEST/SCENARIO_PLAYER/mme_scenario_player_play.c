@@ -82,7 +82,7 @@ void scenario_set_status(scenario_t * const scenario, const scenario_status_t sc
   } else if (SCENARIO_STATUS_LOAD_FAILED == scenario_status) {
     OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Result Load scenario %s FAILED set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
   } else if (SCENARIO_STATUS_PAUSED == scenario_status) {
-    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s PAUSED\n", bdata(scenario->name));
+    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s PAUSED set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
   } else if (SCENARIO_STATUS_LOADED == scenario_status) {
     OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s LOADED\n", bdata(scenario->name));
   }
@@ -113,14 +113,17 @@ void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expir
     pthread_mutex_lock(&arg->scenario->lock);
     arg->scenario->num_timers    -= 1;
 
-    if (SCENARIO_STATUS_PAUSED == arg->scenario->status) {
-      scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAYING, __FILE__, __LINE__);
-    }
 
     if (SCENARIO_PLAYER_ITEM_ITTI_MSG == arg->item->item_type) {
       // we do not use timer for tx message anymore
       if (arg->item->u.msg.is_tx) {
+        if (SCENARIO_STATUS_PAUSED == arg->scenario->status) {
+          scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAYING, __FILE__, __LINE__);
+        }
         msp_send_tx_message_no_delay(arg->scenario, arg->item);
+        // trigger continuation of the scenario
+        pthread_mutex_unlock(&arg->scenario->lock);
+        msp_scenario_tick(arg->scenario);
       } else {
         // rx message
         // obviously if everything is ok, this timer should have been deleted
@@ -128,13 +131,15 @@ void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expir
           OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "ITTI msg uid %d timed-out(%ld.%06ld sec)\n",
               arg->item->uid, arg->item->u.msg.time_out.tv_sec, arg->item->u.msg.time_out.tv_usec);
           scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
+          // trigger continuation of the scenario
+          pthread_mutex_unlock(&arg->scenario->lock);
+          msp_scenario_tick(arg->scenario);
+        } else {
+          pthread_mutex_unlock(&arg->scenario->lock);
         }
         arg->item->u.msg.timer_id = 0;
       }
     }
-    // trigger continuation of the scenario
-    pthread_mutex_unlock(&arg->scenario->lock);
-    msp_scenario_tick(arg->scenario);
   }
 }
 
@@ -231,7 +236,8 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
     return true;
   }
   if (item->u.msg.timer_id) {
-    return true;
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "item RX message  UID %u timer set (%lx)\n", item->uid, item->u.msg.timer_id);
+    return false;
   }
 
   if (item->u.msg.time_out_relative_to_msg_uid != item->uid) {
@@ -256,7 +262,6 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
       scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
       return false;
     } else {
-      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, __FILE__, __LINE__);
 
       struct timeval timer_val = {0};
       int ret      = RETURNerror;
@@ -267,21 +272,22 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
           TASK_MME_SCENARIO_PLAYER, INSTANCE_DEFAULT,
           TIMER_ONE_SHOT, (void*)&item->u.msg.timer_arg, &item->u.msg.timer_id);
 
+      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, __FILE__, __LINE__);
       AssertFatal(RETURNok == ret, "Error setting timer item %d", item->uid);
-      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Setting timer               %ld.%06ld sec\n", timer_val.tv_sec, timer_val.tv_usec);
+      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Setting timer %lx %ld.%06ld sec\n", item->u.msg.timer_id, timer_val.tv_sec, timer_val.tv_usec);
       return false;
     }
   } else {
     if ((0 < item->u.msg.time_out.tv_sec) ||
         (0 < item->u.msg.time_out.tv_usec)) {
-      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, __FILE__, __LINE__);
       item->u.msg.timer_arg.item = item;
       item->u.msg.timer_arg.scenario = scenario;
       int ret = timer_setup (item->u.msg.time_out.tv_sec, item->u.msg.time_out.tv_usec,
           TASK_MME_SCENARIO_PLAYER, INSTANCE_DEFAULT,
           TIMER_ONE_SHOT, (void*)&item->u.msg.timer_arg, &item->u.msg.timer_id);
+      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, __FILE__, __LINE__);
       AssertFatal(0 == ret, "Error setting timer item %d", item->uid);
-      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Setting timer %ld.%06ld sec\n", item->u.msg.time_out.tv_sec, item->u.msg.time_out.tv_usec);
+      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Setting timer %lx %ld.%06ld sec\n", item->u.msg.timer_id, item->u.msg.time_out.tv_sec, item->u.msg.time_out.tv_usec);
       return true;
     } else {
       scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
@@ -818,6 +824,8 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
       OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Exiting scenario %s\n", bdata(scenario->name));
       if (item->u.exit) {
         scenario_set_status(scenario, item->u.exit, __FILE__, __LINE__);
+      } else {
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_SUCCESS, __FILE__, __LINE__);
       }
       return false;
     } else if (SCENARIO_PLAYER_ITEM_VAR == item->item_type) {
@@ -858,7 +866,7 @@ void msp_run_scenario(scenario_t * const scenario)
         OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Continue playing scenario %s\n", bdata(scenario->name));
       } else if (SCENARIO_STATUS_LOADED == scenario->status) {
         item = scenario->head_item;
-        scenario->status = SCENARIO_STATUS_PLAYING;
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAYING, __FILE__, __LINE__);
         OAILOG_INFO (LOG_MME_SCENARIO_PLAYER, "Playing scenario %s\n", bdata(scenario->name));
       }
       if (SCENARIO_STATUS_PAUSED != scenario->status) {
@@ -870,7 +878,7 @@ void msp_run_scenario(scenario_t * const scenario)
           }
         } else {
           if (!(scenario->num_timers) && (SCENARIO_STATUS_PLAYING == scenario->status)) {
-            scenario->status = SCENARIO_STATUS_PLAY_SUCCESS;
+            scenario_set_status(scenario, SCENARIO_STATUS_PLAY_SUCCESS, __FILE__, __LINE__);
             OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s SUCCESS\n", bdata(scenario->name));
             pthread_mutex_unlock(&scenario->lock);
             if (scenario->next_scenario) {

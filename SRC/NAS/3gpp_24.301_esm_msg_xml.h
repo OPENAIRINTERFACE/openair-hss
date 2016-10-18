@@ -62,6 +62,15 @@ int activate_default_eps_bearer_context_request_to_xml (
   activate_default_eps_bearer_context_request_msg * activate_default_eps_bearer_context_request,
   xmlTextWriterPtr writer);
 
+bool bearer_resource_allocation_request_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    bearer_resource_allocation_request_msg * bearer_resource_allocation_request);
+
+int bearer_resource_allocation_request_to_xml (
+    bearer_resource_allocation_request_msg * bearer_resource_allocation_request,
+    xmlTextWriterPtr writer);
+
 bool pdn_connectivity_request_from_xml (
     xmlDocPtr                         xml_doc,
     xmlXPathContextPtr                xpath_ctx,

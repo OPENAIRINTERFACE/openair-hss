@@ -54,7 +54,7 @@ decode_bearer_resource_modification_request (
 
   decoded++;
 
-  if ((decoded_result = decode_traffic_flow_aggregate_description (&bearer_resource_modification_request->trafficflowaggregate, 0, buffer + decoded, len - decoded)) < 0)
+  if ((decoded_result = decode_traffic_flow_template (&bearer_resource_modification_request->trafficflowaggregate, 0, buffer + decoded, len - decoded)) < 0)
     return decoded_result;
   else
     decoded += decoded_result;
@@ -131,7 +131,7 @@ encode_bearer_resource_modification_request (
   *(buffer + encoded) = ((encode_u8_linked_eps_bearer_identity (&bearer_resource_modification_request->epsbeareridentityforpacketfilter) & 0x0f) << 4) | 0x00;
   encoded++;
 
-  if ((encode_result = encode_traffic_flow_aggregate_description (&bearer_resource_modification_request->trafficflowaggregate, 0, buffer + encoded, len - encoded)) < 0)        //Return in case of error
+  if ((encode_result = encode_traffic_flow_template (&bearer_resource_modification_request->trafficflowaggregate, 0, buffer + encoded, len - encoded)) < 0)        //Return in case of error
     return encode_result;
   else
     encoded += encode_result;

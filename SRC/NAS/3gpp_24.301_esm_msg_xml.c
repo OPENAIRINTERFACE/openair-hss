@@ -289,6 +289,53 @@ int activate_default_eps_bearer_context_request_to_xml (
   }
   OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
 }
+
+//------------------------------------------------------------------------------
+bool bearer_resource_allocation_request_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    bearer_resource_allocation_request_msg * bearer_resource_allocation_request)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  memset(bearer_resource_allocation_request, 0, sizeof(*bearer_resource_allocation_request));
+  bool res = false;
+
+
+  /*
+   * Decoding mandatory fields
+   */
+  res = linked_eps_bearer_identity_from_xml (xml_doc, xpath_ctx, &bearer_resource_allocation_request->linkedepsbeareridentity, NULL);
+
+  if (res) res = traffic_flow_template_from_xml (xml_doc, xpath_ctx, &bearer_resource_allocation_request->trafficflowaggregate);
+  if (res) res = eps_quality_of_service_from_xml (xml_doc, xpath_ctx, &bearer_resource_allocation_request->requiredtrafficflowqos);
+
+  if (res) {
+    res = protocol_configuration_options_from_xml (xml_doc, xpath_ctx, &bearer_resource_allocation_request->protocolconfigurationoptions, true);
+    if (res) {
+      bearer_resource_allocation_request->presencemask |= BEARER_RESOURCE_ALLOCATION_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+    }
+    res = true;
+  }
+  OAILOG_FUNC_RETURN (LOG_XML, res);
+}
+
+//------------------------------------------------------------------------------
+int bearer_resource_allocation_request_to_xml (
+    bearer_resource_allocation_request_msg * bearer_resource_allocation_request,
+    xmlTextWriterPtr writer)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  linked_eps_bearer_identity_to_xml (&bearer_resource_allocation_request->linkedepsbeareridentity, writer);
+  traffic_flow_template_to_xml (&bearer_resource_allocation_request->trafficflowaggregate, writer);
+  eps_quality_of_service_to_xml (&bearer_resource_allocation_request->requiredtrafficflowqos, writer);
+
+  if ((bearer_resource_allocation_request->presencemask & BEARER_RESOURCE_ALLOCATION_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT)
+      == BEARER_RESOURCE_ALLOCATION_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
+    protocol_configuration_options_to_xml (&bearer_resource_allocation_request->protocolconfigurationoptions, writer, true);
+  }
+  OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
+}
+
 //------------------------------------------------------------------------------
 bool pdn_connectivity_request_from_xml (
     xmlDocPtr                         xml_doc,

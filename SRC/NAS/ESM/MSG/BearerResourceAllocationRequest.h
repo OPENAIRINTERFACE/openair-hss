@@ -63,8 +63,8 @@ typedef struct bearer_resource_allocation_request_msg_tag {
   ebi_t                                                  epsbeareridentity:4;
   pti_t                                                  proceduretransactionidentity;
   message_type_t                                         messagetype;
-  linked_eps_bearer_identity_t                                linkedepsbeareridentity;
-  TrafficFlowAggregateDescription                        trafficflowaggregate;
+  linked_eps_bearer_identity_t                           linkedepsbeareridentity;
+  traffic_flow_aggregate_description_t                   trafficflowaggregate;
   EpsQualityOfService                                    requiredtrafficflowqos;
   /* Optional fields */
   uint32_t                                               presencemask;

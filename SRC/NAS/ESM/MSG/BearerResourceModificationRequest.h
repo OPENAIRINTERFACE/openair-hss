@@ -68,12 +68,12 @@ typedef struct bearer_resource_modification_request_msg_tag {
   ebi_t                                                  epsbeareridentity:4;
   pti_t                                                  proceduretransactionidentity;
   message_type_t                                         messagetype;
-  linked_eps_bearer_identity_t                                epsbeareridentityforpacketfilter;
-  TrafficFlowAggregateDescription                        trafficflowaggregate;
+  linked_eps_bearer_identity_t                           epsbeareridentityforpacketfilter;
+  traffic_flow_aggregate_description_t                   trafficflowaggregate;
   /* Optional fields */
   uint32_t                                               presencemask;
   EpsQualityOfService                                    requiredtrafficflowqos;
-  esm_cause_t                                               esmcause;
+  esm_cause_t                                            esmcause;
   protocol_configuration_options_t                       protocolconfigurationoptions;
 } bearer_resource_modification_request_msg;
 
