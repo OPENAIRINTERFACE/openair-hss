@@ -65,7 +65,7 @@ function main()
   local -i var_check_install_oai_software=0
   local -i force=0
   local    cmake_args=" "
-  local    make_args="-j $NUM_CPU"
+  local    make_args="-j`nproc`"
   local    realm=""
 
   until [ -z "$1" ]; do
@@ -123,6 +123,7 @@ function main()
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     check_install_hss_software  $force
+    echo "HSS not compiled, to compile it, re-run build_hss without -i option"
     exit 0
   fi
   

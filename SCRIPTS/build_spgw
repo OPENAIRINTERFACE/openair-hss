@@ -58,7 +58,7 @@ function main()
   local -i verbose=0
   local -i var_check_install_oai_software=0
   local    cmake_args=" "
-  export make_args="-j $NUM_CPU"
+  export make_args="-j`nproc`"
 
 
   until [ -z "$1" ]
@@ -114,6 +114,7 @@ function main()
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     check_install_spgw_software  $force
+    echo "SPGW not compiled, to compile it, re-run build_spgw without -i option"
     exit 0
   fi
   

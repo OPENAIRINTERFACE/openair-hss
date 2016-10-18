@@ -277,6 +277,12 @@ s11_sgw_handle_create_session_response (
       create_session_response_p->s11_sgw_teid.ipv4 ? ntohl(create_session_response_p->s11_sgw_teid.ipv4_address) : 0,
       create_session_response_p->s11_sgw_teid.ipv6 ? create_session_response_p->s11_sgw_teid.ipv6_address : NULL);
 
+  rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ONE, S5_S8_PGW_GTP_C,
+      create_session_response_p->s11_sgw_teid.teid,
+      create_session_response_p->s11_sgw_teid.ipv4 ? ntohl(create_session_response_p->s11_sgw_teid.ipv4_address) : 0,
+      create_session_response_p->s11_sgw_teid.ipv6 ? create_session_response_p->s11_sgw_teid.ipv6_address : NULL);
+
+
   s11_paa_ie_set (&(ulp_req.hMsg), &create_session_response_p->paa);
   /*
    * Put 0 for now i.e. no existing context or restriction
