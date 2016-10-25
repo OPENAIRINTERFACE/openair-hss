@@ -1,3 +1,7 @@
+Openair-cn is distributed under Apache V2.0 License.
+
+However, it also includes third party-software indicated below.
+
 Credits for GTPV2-C user space source code located in folder SRC/GTPV2-C/nwgtpv2c-0.11:
 Amit Chawre <http://www.amitchawre.net/contact.html>, source code under free licence.
 Code modified by Eurecom (http://www.eurecom.fr)
