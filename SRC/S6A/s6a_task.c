@@ -38,9 +38,13 @@
 #include "assertions.h"
 #include "msc.h"
 #include "log.h"
+#include "timer.h"
 
+#define S6A_PEER_CONNECT_TIMEOUT_MICRO_SEC  (0)
+#define S6A_PEER_CONNECT_TIMEOUT_SEC        (1)
 
 static int                              gnutls_log_level = 9;
+static long                             timer_id = 0;
 struct session_handler                 *ts_sess_hdl;
 
 s6a_fd_cnf_t                            s6a_fd_cnf;
@@ -100,6 +104,27 @@ void *s6a_thread (void *args)
       break;
     case S6A_AUTH_INFO_REQ:{
         s6a_generate_authentication_info_req (&received_message_p->ittiMsg.s6a_auth_info_req);
+      }
+      break;
+    case TIMER_HAS_EXPIRED:{
+        /*
+         * Trying to connect to peers
+         */
+        if (s6a_fd_new_peer() == RETURNok) {
+          timer_remove(timer_id);
+        } else {
+          /*
+           * On failure, reschedule timer.
+           * * Preferred over TIMER_PERIODIC because if s6a_fd_new_peer takes
+           * * longer to return than the period, the timer will schedule while
+           * * the previous one is active, causing a seg fault.
+           */
+          OAILOG_ERROR(LOG_S6A, "s6a_fd_new_peer has failed (%s:%d)\n",
+                       __FILE__, __LINE__);
+          timer_setup(S6A_PEER_CONNECT_TIMEOUT_SEC,
+                      S6A_PEER_CONNECT_TIMEOUT_MICRO_SEC, TASK_S6A,
+                      INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &timer_id);
+        }
       }
       break;
     case TERMINATE_MESSAGE:{
@@ -211,16 +236,15 @@ int s6a_init (
     OAILOG_DEBUG (LOG_S6A, "s6a_fd_init_dict_objs done\n");
   }
 
-  /*
-   * Trying to connect to peers
-   */
-  CHECK_FCT (s6a_fd_new_peer ());
-
   if (itti_create_task (TASK_S6A, &s6a_thread, NULL) < 0) {
     OAILOG_ERROR (LOG_S6A, "s6a create task\n");
     return RETURNerror;
   }
   OAILOG_DEBUG (LOG_S6A, "Initializing S6a interface: DONE\n");
+
+  /* Add timer here to send message to connect to peer */
+  timer_setup(S6A_PEER_CONNECT_TIMEOUT_SEC, S6A_PEER_CONNECT_TIMEOUT_MICRO_SEC,
+              TASK_S6A, INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &timer_id);
 
   return RETURNok;
 }
