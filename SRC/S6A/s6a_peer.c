@@ -45,6 +45,8 @@
 #include "dynamic_memory_check.h"
 #include "mme_config.h"
 
+#define NB_MAX_TRIES  (8)
+
 extern __pid_t g_pid;
 
 
@@ -148,7 +150,9 @@ s6a_fd_new_peer (
   size_t            diamidlen = blength (hss_name);
   struct peer_hdr  *peer      = NULL;
   int               nb_tries  = 0;
-  do {
+  for (nb_tries = 0; nb_tries < NB_MAX_TRIES; nb_tries++) {
+    OAILOG_DEBUG (LOG_S6A, "S6a peer connection attempt %d / %d\n",
+                  1 + nb_tries, NB_MAX_TRIES);
     ret = fd_peer_getbyid( diamid, diamidlen, 0, &peer );
     if (!ret) {
       if (peer) {
@@ -186,8 +190,8 @@ s6a_fd_new_peer (
       OAILOG_DEBUG (LOG_S6A, "Could not get S6a peer\n");
     }
     sleep(1);
-  } while (nb_tries < 8);
-  bdestroy_wrapper (&hss_name);
+  }
+  bdestroy(hss_name);
   return RETURNerror;
 #endif
 }

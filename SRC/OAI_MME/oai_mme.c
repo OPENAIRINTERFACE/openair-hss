@@ -167,6 +167,8 @@ main (
   CHECK_INIT_RETURN (mme_app_init (&mme_config));
   CHECK_INIT_RETURN (s6a_init (&mme_config));
   XML_MSG_DUMP_INIT();
+  OAILOG_DEBUG(LOG_MME_APP, "MME app initialization complete\n");
+
   /*
    * Handle signals here
    */
