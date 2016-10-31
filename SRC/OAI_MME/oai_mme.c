@@ -82,15 +82,25 @@
 #include "oai_mme.h"
 #include "pid_file.h"
 
-
 int
 main (
   int argc,
   char *argv[])
 {
-  char   *pid_file_name = NULL;
+  char *pid_dir;
+  char *pid_file_name;
 
-  pid_file_name = get_exe_basename();
+  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
+  CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_DEBUG, MAX_LOG_PROTOS));
+  /*
+   * Parse the command line for options and set the mme_config accordingly.
+   */
+  CHECK_INIT_RETURN (mme_config_parse_opt_line (argc, argv, &mme_config));
+
+  pid_dir = bstr2cstr(mme_config.pid_dir, 1);
+  pid_dir = pid_dir ? pid_dir : "/var/run";
+  pid_file_name = get_exe_absolute_path(pid_dir);
+  bcstrfree(pid_dir);
 
 #if DAEMONIZE
   pid_t pid, sid; // Our process ID and Session ID
@@ -137,13 +147,6 @@ main (
   }
 #endif
 
-
-  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
-  CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_DEBUG, MAX_LOG_PROTOS));
-  /*
-   * Parse the command line for options and set the mme_config accordingly.
-   */
-  CHECK_INIT_RETURN (mme_config_parse_opt_line (argc, argv, &mme_config));
   /*
    * Calling each layer init function
    */

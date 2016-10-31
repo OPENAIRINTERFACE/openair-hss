@@ -83,7 +83,8 @@ main (
 {
   char   *pid_file_name = NULL;
 
-  pid_file_name = get_exe_basename();
+  // Currently hard-coded value. TODO: add as config option.
+  pid_file_name = get_exe_absolute_path("/var/run");
 
 #if DAEMONIZE
   pid_t pid, sid; // Our process ID and Session ID

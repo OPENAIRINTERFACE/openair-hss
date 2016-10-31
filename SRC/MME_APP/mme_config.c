@@ -358,6 +358,12 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       config_pP->realm = bfromcstr (astring);
     }
 
+    if ((config_setting_lookup_string (setting_mme,
+                                       MME_CONFIG_STRING_PID_DIRECTORY,
+                                       (const char **)&astring))) {
+      config_pP->pid_dir = bfromcstr (astring);
+    }
+
     if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MAXENB, &aint))) {
       config_pP->max_enbs = (uint32_t) aint;
     }

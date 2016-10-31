@@ -48,6 +48,7 @@
 #define MAX_GUMMEI                2
 
 #define MME_CONFIG_STRING_MME_CONFIG                     "MME"
+#define MME_CONFIG_STRING_PID_DIRECTORY                  "PID_DIRECTORY"
 #define MME_CONFIG_STRING_REALM                          "REALM"
 #define MME_CONFIG_STRING_MAXENB                         "MAXENB"
 #define MME_CONFIG_STRING_MAXUE                          "MAXUE"
@@ -134,6 +135,7 @@ typedef struct mme_config_s {
 
 
   bstring config_file;
+  bstring pid_dir;
   bstring realm;
 
   run_mode_t  run_mode;
