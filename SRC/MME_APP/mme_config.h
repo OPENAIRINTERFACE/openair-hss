@@ -41,6 +41,7 @@
 #include "bstrlib.h"
 
 #define MME_CONFIG_STRING_MME_CONFIG                     "MME"
+#define MME_CONFIG_STRING_PID_DIRECTORY                  "PID_DIRECTORY"
 #define MME_CONFIG_STRING_RUN_MODE                       "RUN_MODE"
 #define MME_CONFIG_STRING_RUN_MODE_TEST                  "TEST"
 #define MME_CONFIG_STRING_REALM                          "REALM"
@@ -117,6 +118,7 @@ typedef struct mme_config_s {
 
 
   bstring config_file;
+  bstring pid_dir;
   bstring realm;
 
   run_mode_t  run_mode;

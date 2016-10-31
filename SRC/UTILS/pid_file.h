@@ -32,7 +32,15 @@
 #include <stdbool.h>
 
 
-char* get_exe_basename(void);
+/*
+ * Generate the exe absolute path using a specified basepath.
+ *
+ * @param basepath
+ *        the root directory to use.
+ *
+ * @return a C string for the exe absolute path.
+ */
+char* get_exe_absolute_path(char const *basepath);
 
 bool is_pid_file_lock_success(char const *pid_file_name);
 
