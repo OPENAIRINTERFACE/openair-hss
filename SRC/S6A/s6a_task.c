@@ -110,9 +110,7 @@ void *s6a_thread (void *args)
         /*
          * Trying to connect to peers
          */
-        if (s6a_fd_new_peer() == RETURNok) {
-          timer_remove(timer_id);
-        } else {
+        if (s6a_fd_new_peer() != RETURNok) {
           /*
            * On failure, reschedule timer.
            * * Preferred over TIMER_PERIODIC because if s6a_fd_new_peer takes
