@@ -640,12 +640,23 @@ check_install_hss_software() {
   install_gnutls_from_source $1
 
   install_freediameter_from_source $1
-    
+
+  #Install LAMP stack on Ubuntu    
   $SUDO apt-get install $OPTION \
+    apache2 \
+    libapache2-mod-auth-mysql \
+    php5-mysql \
+    php5 \
+    libapache2-mod-php5 \
+    php5-mcrypt \
+    php5-common \
     phpmyadmin \
     python-pexpect \
     php5 \
     libapache2-mod-php5 
+  
+  $SUDO service apache2 restart
+
 }
 
 #-------------------------------------------------------------------------------
@@ -731,7 +742,6 @@ check_install_mme_software() {
     
   PACKAGE_LIST="\
     check \
-    phpmyadmin \
     python-dev \
     python-pexpect \
     unzip"
