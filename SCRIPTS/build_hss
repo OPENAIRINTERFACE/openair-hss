@@ -157,7 +157,7 @@ function main()
     mkdir -m 777 -p -v BUILD
   fi
   cd ./BUILD
-  cmake  $cmake_args .. > /dev/null 
+  cmake  $cmake_args .. 
   make $make_args
   chmod -f 777 *
   if [ $daemon -ne 0 ]; then

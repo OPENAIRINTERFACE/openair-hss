@@ -101,6 +101,7 @@ clean_all_files() {
 # arg 3 Executable name (no path)
 # arg 4 Verbose         (1 or 0)
 compilations() {
+  echo_info "Compilation log for $3 is here: $dlog/$2.txt"
   cd $OPENAIRCN_DIR/BUILD/$1/BUILD
   if [ "a$4" == "a1" ]; then 
     {
@@ -852,7 +853,7 @@ install_asn1c_from_source(){
   then    
     $SUDO rm -rf /tmp/asn1c
     mkdir -p /tmp/asn1c
-    git clone https://gitlab.eurecom.fr/oai/asn1c.git /tmp/asn1c
+    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/asn1c.git /tmp/asn1c
     cd /tmp/asn1c
     ./configure
     make > /tmp/log_compile_asn1c 2>&1
