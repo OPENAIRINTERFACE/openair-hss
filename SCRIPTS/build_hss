@@ -123,6 +123,7 @@ function main()
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     check_install_hss_software  $force
+    echo "HSS not compiled, to compile it, re-run build_hss without -i option"
     exit 0
   fi
   

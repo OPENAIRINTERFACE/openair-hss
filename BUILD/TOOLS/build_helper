@@ -2,9 +2,9 @@
 # Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
-# The OpenAirInterface Software Alliance licenses this file to You under 
+# The OpenAirInterface Software Alliance licenses this file to You under
 # the Apache License, Version 2.0  (the "License"); you may not use this file
-# except in compliance with the License.  
+# except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #      http://www.apache.org/licenses/LICENSE-2.0
@@ -41,7 +41,7 @@ reset_color='\E[00m'
 COLORIZE=1
 
 #-------------------------------------------------------------------------------
-cecho()  {  
+cecho()  {
     # Color-echo
     # arg1 = message
     # arg2 = color
@@ -59,6 +59,35 @@ echo_warning() { cecho "$*" $yellow       ;}
 echo_success() { cecho "$*" $green        ;}
 echo_info()    { cecho "$*" $blue         ;}
 
+
+########################
+# distribution helpers #
+########################
+
+#-------------------------------------------------------------------------------
+# This function return a string to identify the distribution we are running
+# If we can't check the distribution, it returns "Unknown"
+# This function return always true as exit code by design
+# Examples:
+#   Ubuntu16.04
+#   Debian8.5
+get_distribution_release() {
+    local distributor
+    if distributor=$(lsb_release -si 2>/dev/null) ; then
+        echo $distributor$(lsb_release -sr)
+    else
+        echo Unknown
+    fi
+}
+
+check_supported_distribution() {
+    local distribution=$(get_distribution_release)
+    case "$distribution" in
+        "Ubuntu16.04") return 0 ;;
+        "Ubuntu14.04") return 0 ;;
+    esac
+    return 1
+}
 
 
 ###########################
@@ -86,28 +115,78 @@ clean_kernel() {
 clean_all_files() {
  set_openair_env
  dir=$OPENAIRCN_DIR/BUILD
- rm -rf $dir/LOG $OPENAIR_DIR/targets/bin/* 
+ rm -rf $dir/LOG $OPENAIR_DIR/targets/bin/*
  rm -rf $dir/EPC/BUILD $dir/EPC/CMakeLists.txt
  rm -rf $dir/MME/BUILD $dir/MME/CMakeLists.txt
  rm -rf $dir/HSS/BUILD
- rm -rf $dir/AUTOTESTS/BIN $dir/AUTOTESTS/LOG $dir/AUTOTESTS/*/BUILD 
+ rm -rf $dir/AUTOTESTS/BIN $dir/AUTOTESTS/LOG $dir/AUTOTESTS/*/BUILD
+}
+
+#-------------------------------------------------------------------------------
+# Remove Nettle installation which was done from sources
+remove_nettle_from_source() {
+    nettle_uninstall_log=$OPENAIRCN_DIR/BUILD/LOG/nettle_uninstall_log.txt
+    echo_info "\nUn-Installing Nettle from sources. The log file for nettle un-installation is here: $nettle_uninstall_log "
+    (
+    $SUDO apt-get remove -y nettle-dev nettle-bin
+    cd /tmp
+    echo "Downloading nettle archive"
+    $SUDO rm -rf /tmp/nettle-2.5.tar.gz* /tmp/nettle-2.5
+    wget https://ftp.gnu.org/gnu/nettle/nettle-2.5.tar.gz
+    if [ $? -ne 0 ]; then
+      wget ftp://ftp.lysator.liu.se/pub/security/lsh/nettle-2.5.tar.gz
+    fi
+    if [ ! -f nettle-2.5.tar.gz ]; then
+      echo_error "Could not download nettle source files"
+      cd -
+      return
+    fi
+    tar -xzf nettle-2.5.tar.gz
+    cd nettle-2.5/
+    ./configure --disable-openssl --enable-shared --prefix=/usr
+    $SUDO make uninstall || true
+    ) >& $nettle_uninstall_log
+}
+
+#-------------------------------------------------------------------------------
+# Remove Gnutls from source
+remove_gnutls_from_source(){
+    gnutls_uninstall_log=$OPENAIRCN_DIR/BUILD/LOG/gnutls_uninstall_log.txt
+    echo_info "\nUn-Installing Gnutls. The log file for Gnutls un-installation is here: $gnutls_uninstall_log "
+    (
+    $SUDO apt-get remove -y libgnutls-dev
+    cd /tmp
+    echo "Downloading gnutls archive"
+    $SUDO rm -rf /tmp/gnutls-3.1.23.tar.xz* /tmp/gnutls-3.1.23
+    wget http://mirrors.dotsrc.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz || \
+      wget ftp://ftp.gnutls.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz
+    if [ ! -f gnutls-3.1.23.tar.xz ]; then
+      echo_error "Could not download gnutls source files"
+      cd -
+      return
+    fi
+    tar -xJf gnutls-3.1.23.tar.xz
+    cd gnutls-3.1.23/
+    ./configure --prefix=/usr
+    $SUDO make uninstall || true
+    )>& $gnutls_uninstall_log
 }
 
 ###################################
 # Compilers
 ###################################
-# arg 1 Build directory OPENAIR_DIR/BUILD/?
+# arg 1 Build directory OPENAIRCN_DIR/BUILD/?/BUILD
 # arg 2 Executable target name
 # arg 3 Executable name (no path)
 # arg 4 Verbose         (1 or 0)
 compilations() {
   echo_info "Compilation log for $3 is here: $dlog/$2.txt"
   cd $OPENAIRCN_DIR/BUILD/$1/BUILD
-  if [ "a$4" == "a1" ]; then 
+  if [ "a$4" == "a1" ]; then
     {
       rm -f $3
       make $make_args
-    } | tee $dlog/$2.txt 
+    } | tee $dlog/$2.txt
   else
     {
       rm -f $3
@@ -125,17 +204,17 @@ compilations() {
 # make test
 ###################################
 
-# arg 1 Build directory OPENAIR_DIR/BUILD/?
+# arg 1 Build directory OPENAIRCN_DIR/BUILD/?/BUILD
 # arg 2 Executable target name
 # arg 3 Executable name (no path)
 # arg 4 Verbose         (1 or 0)
 make_test() {
   echo_success "unit tests start"
   cd $OPENAIRCN_DIR/BUILD/$1/BUILD
-  if [ "a$4" == "a1" ]; then 
+  if [ "a$4" == "a1" ]; then
     {
       make test ARGS="-V"
-    } | tee $dlog/$2_test.txt 
+    } | tee $dlog/$2_test.txt
   else
     {
       make test
@@ -159,7 +238,7 @@ make_one_cert() {
 
 #-------------------------------------------------------------------------------
 make_certs(){
-    
+
   fqdn=$1
   certs_dir=$FREEDIAMETER_PREFIX/freeDiameter
   # certificates are stored in diameter config directory
@@ -178,7 +257,7 @@ make_certs(){
 
   # CA self certificate
   $SUDO openssl req  -new -batch -x509 -days 3650 -nodes -newkey rsa:1024 -out cacert.pem -keyout cakey.pem -subj /CN=$fqdn/C=FR/ST=PACA/L=Aix/O=Eurecom/OU=CM
-    
+
   # generate hss certificate and sign it
   make_one_cert eur hss
   make_one_cert eur mme
@@ -197,12 +276,12 @@ make_certs(){
 # This function is for internal use of EURECOM developers (no support)
 # arg1 is force (no interactive script)
 install_netmap() {
-  if [ $1 -gt 0 ]; then 
+  if [ $1 -gt 0 ]; then
     OPTION="-y"
   else
     OPTION=""
   fi
-  
+
   # Compilers, generators, ...
   $SUDO apt-get install $OPTION \
     autoconf  \
@@ -232,10 +311,10 @@ install_netmap() {
       $SUDO make
       $SUDO make modules_install
       $SUDO make install
-      echo_warning "check CONFIG_VIRTIO_NET=m for full performance" 
+      echo_warning "check CONFIG_VIRTIO_NET=m for full performance"
       echo_fatal "Please reboot your computer on the new installed kernel (do your own stuff in grub.cfg): $current_kernel_release"
     fi
-       
+
     echo "Downloading netmap"
     cd $OPENAIRCN_DIR/..
     git clone https://github.com/luigirizzo/netmap.git
@@ -244,52 +323,6 @@ install_netmap() {
   fi
 }
 #-------------------------------------------------------------------------------
-# arg1 is force (no interactive script)
-install_nettle_from_source() {
-  if [ $1 -gt 0 ]; then 
-    OPTION="-y"
-  else
-    OPTION=""
-  fi
-  
-  # Compilers, generators, ...
-  $SUDO apt-get install $OPTION \
-    autoconf  \
-    automake  \
-    build-essential \
-    libgmp-dev
-
-  if [ $1 -eq 0 ]; then
-    read -p "Do you want to install nettle ? <y/N> " prompt
-  else
-    prompt='y'
-  fi
-  if [[ $prompt =~ [yY](es)* ]]
-  then    
-    cd /tmp
-    echo "Downloading nettle archive"
-    $SUDO rm -rf /tmp/nettle-2.5.tar.gz* /tmp/nettle-2.5
-    wget https://ftp.gnu.org/gnu/nettle/nettle-2.5.tar.gz
-    if [ $? -ne 0 ]; then
-      wget ftp://ftp.lysator.liu.se/pub/security/lsh/nettle-2.5.tar.gz
-    fi
-    if [ ! -f nettle-2.5.tar.gz ]; then
-      echo_error "Could not download nettle source files"
-      cd -
-      return
-    fi 
-    tar -xzf nettle-2.5.tar.gz
-    cd nettle-2.5/
-    ./configure --disable-openssl --enable-shared --prefix=/usr 
-    echo "Compiling nettle"
-    make -j`nproc`
-    make check 
-    $SUDO make install 
-    cd /tmp
-    rm -rf /tmp/nettle-2.5.tar.gz /tmp/nettle-2.5
-  fi
-}
-
 install_libgtpnl_from_source() {
   if [ $1 -gt 0 ]; then
     OPTION="-y"
@@ -323,68 +356,6 @@ install_libgtpnl_from_source() {
     $SUDO make install
     $SUDO ldconfig
     $SUDO rm -rf /tmp/libgtpnl*
-  fi
-}
-#-------------------------------------------------------------------------------
-# arg1 is force (no interactive script)
-install_gnutls_from_source(){
-  if [ $1 -gt 0 ]; then 
-    OPTION="-y"
-  else
-    OPTION=""
-  fi
-  
-  # Compilers, generators, ...
-  $SUDO apt-get install $OPTION \
-    autoconf  \
-    automake  \
-    build-essential
-
-  if [ `lsb_release -rs` = '14.04' ]; then
-    # not sure about libidn2-0-dev vs libidn11-dev, check symbols
-    PACKAGE_LIST="\
-      libtasn1-6-dev \
-      libtasn1-6-dbg \
-      libp11-kit-dev \
-      libp11-kit0-dbg \
-      libtspi-dev \
-      libtspi1 \
-      libidn2-0-dev \
-      libidn11-dev"
-    $SUDO apt-get install $OPTION $PACKAGE_LIST
-    if [ $? -ne 0 ]; then 
-      echo_fatal "Failed to install package list $PACKAGE_LIST"
-    fi 
-  fi
-
-    
-  if [ $1 -eq 0 ]; then
-    read -p "Do you want to install GNU TLS ? <y/N> " prompt
-  else
-    prompt='y'
-  fi
-  if [[ $prompt =~ [yY](es)* ]]
-  then    
-    cd /tmp 
-    echo "Downloading gnutls archive"
-    $SUDO rm -rf /tmp/gnutls-3.1.23.tar.xz* /tmp/gnutls-3.1.23
-    wget http://mirrors.dotsrc.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz
-    if [ $? -ne 0 ]; then
-      wget ftp://ftp.gnutls.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz 
-    fi
-    if [ ! -f gnutls-3.1.23.tar.xz ]; then
-      echo_error "Could not download gnutls source files"
-      cd -
-      return
-    fi 
-    tar -xJf gnutls-3.1.23.tar.xz
-    cd gnutls-3.1.23/
-    ./configure --prefix=/usr
-    echo "Compiling gnutls"
-    make -j`nproc`
-    $SUDO make install
-    cd /tmp 
-    rm -rf /tmp/gnutls-3.1.23.tar.xz /tmp/gnutls-3.1.23
   fi
 }
 
@@ -425,19 +396,19 @@ install_1.1.5_freediameter_from_source() {
     swig
 
   if [[ $prompt =~ [yY](es)* ]]
-  then    
+  then
     cd /tmp
     echo "Downloading 1.1.5 freeDiameter archive"
     $SUDO rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5 /tmp/freediameter
     GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.1.5
     cd /tmp/freediameter
-    #patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.1.5.patch 
+    #patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.1.5.patch
     mkdir build
     cd build
-    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
+    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
     echo "Compiling freeDiameter"
     make -j`nproc`
-    #make test 
+    #make test
     $SUDO make install
     cd /tmp
     rm -rf /tmp/1.1.5.tar.gz /tmp/freeDiameter-1.1.5 /tmp/freediameter
@@ -468,6 +439,7 @@ install_freediameter_from_source() {
     gcc \
     gdb \
     libgcrypt-dev \
+    libgnutls-dev \
     libidn11-dev \
     libmysqlclient-dev \
     libpq-dev \
@@ -479,23 +451,23 @@ install_freediameter_from_source() {
     ssl-cert \
     swig
 
-  
+
   if [[ $prompt =~ [yY](es)* ]]
-  then    
+  then
     cd /tmp
     echo "Downloading 1.2.0 freeDiameter archive"
     $SUDO rm -rf /tmp/1.2.0.tar.gz* /tmp/freeDiameter-1.2.0 /tmp/freediameter
-    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.2.0  
-    #wget http://www.freediameter.net/hg/freeDiameter/archive/1.2.0.tar.gz 
+    GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/freediameter.git -b eurecom-1.2.0
+    #wget http://www.freediameter.net/hg/freeDiameter/archive/1.2.0.tar.gz
     #tar xzf 1.2.0.tar.gz
     cd freediameter
-    #patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.2.0.patch 
+    #patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.2.0.patch
     mkdir build
     cd build
-    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
+    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
     echo "Compiling freeDiameter"
     make -j`nproc`
-    #make test 
+    #make test
     $SUDO make install
     cd /tmp
     rm -rf /tmp/1.2.0.tar.gz /tmp/freeDiameter-1.2.0 /tmp/freediameter
@@ -512,7 +484,7 @@ install_latest_freediameter_from_source() {
     prompt='y'
     OPTION="-y"
   fi
-  
+
   # libpq-dev 'may' be not needed
   $SUDO apt-get install $OPTION \
     autoconf  \
@@ -537,22 +509,22 @@ install_latest_freediameter_from_source() {
     python-dev \
     ssl-cert \
     swig
-  
+
   if [[ $prompt =~ [yY](es)* ]]
-  then    
+  then
     cd /tmp
     rm -rf /tmp/freeDiameter
     echo "Downloading latest freeDiameter trunk (may be unstable)"
     git clone https://github.com/Metaswitch/freeDiameter.git
     cd freeDiameter
-    patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.2.0.patch 
+    patch -p1 < $OPENAIRCN_DIR/SRC/S6A/freediameter/freediameter-1.2.0.patch
     mkdir build
     cd build
-    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../ 
+    cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
     echo "Compiling freeDiameter"
     make -j`nproc`
-    #make test 
-    $SUDO make install 
+    #make test
+    $SUDO make install
     cd /tmp
     rm -rf /tmp/freediameter
   fi
@@ -564,10 +536,10 @@ test_install_package() {
   # usage: test_install_package package_name
  if [ $# -eq 1 ]; then
    dpkg -s "$1" > /dev/null 2>&1 && {
-          echo "$1 is installed." 
+          echo "$1 is installed."
       } || {
-      echo "$1 is not installed." 
-      $SUDO apt-get install --force-yes $1  
+      echo "$1 is not installed."
+      $SUDO apt-get install --force-yes $1
     }
   fi
 }
@@ -590,19 +562,16 @@ update_package_db() {
 #-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_hss_software() {
-  if [ $1 -gt 0 ]; then 
+  if ! check_supported_distribution; then
+    echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
+    exit 1
+  fi
+  if [ $1 -gt 0 ]; then
     OPTION="-y"
   else
     OPTION=""
   fi
-  
-  # remove incompatible softwares
-  $SUDO apt-get purge $OPTION \
-    libgnutls-dev  \
-    'libgnutlsxx2?'  \
-    nettle-dev  \
-    nettle-bin
-    
+
   # Compilers, generators, ...
   $SUDO apt-get install $OPTION \
     autoconf  \
@@ -615,12 +584,12 @@ check_install_hss_software() {
     doxygen-gui\
     flex  \
     gdb \
-    pkg-config 
-    
+    pkg-config
+
   $SUDO apt-get install $OPTION \
     git \
     subversion
-    
+
   # Libraries
   $SUDO apt-get install $OPTION \
     libconfig8-dev \
@@ -635,46 +604,60 @@ check_install_hss_software() {
     libtool \
     mysql-client \
     mysql-server \
-    openssl 
-    
-  install_nettle_from_source $1
-  install_gnutls_from_source $1
+    openssl
+
+  #Remove old gnutls/nettle installation that was done from sources
+  remove_nettle_from_source
+  $SUDO apt-get install -y nettle-dev nettle-bin
 
   install_freediameter_from_source $1
+<<<<<<< HEAD
 
-  #Install LAMP stack on Ubuntu    
-  $SUDO apt-get install $OPTION \
-    apache2 \
-    libapache2-mod-auth-mysql \
-    php5-mysql \
-    php5 \
-    libapache2-mod-php5 \
-    php5-mcrypt \
-    php5-common \
-    phpmyadmin \
-    python-pexpect \
-    php5 \
-    libapache2-mod-php5 
-  
+  #Install LAMP stack on Ubuntu
+=======
+
+  case "$(get_distribution_release)" in
+    "Ubuntu14.04")
+          $SUDO apt-get install $OPTION \
+              apache2 \
+              libapache2-mod-auth-mysql \
+              php5-mysql \
+              php5 \
+              libapache2-mod-php5 \
+              php5-mcrypt \
+              php5-common \
+              phpmyadmin \
+              python-pexpect \
+              php5 \
+              libapache2-mod-php5
+        ;;
+     "Ubuntu16.04")
+              apache2 \
+              php-mysql \
+              php \
+              libapache2-mod-php* \
+              php-mcrypt \
+              php-common \
+              phpmyadmin \
+              python-pexpect
+        ;;
+  esac
   $SUDO service apache2 restart
-
 }
 
 #-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_mme_software() {
-  if [ $1 -gt 0 ]; then 
+  if ! check_supported_distribution; then
+    echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
+    exit 1
+  fi
+  if [ $1 -gt 0 ]; then
     OPTION="-y"
   else
     OPTION=""
   fi
-    
-  # remove incompatible softwares
-  $SUDO apt-get purge $OPTION \
-    libgnutls-dev  \
-    'libgnutlsxx2?'  \
-    nettle-dev  \
-    nettle-bin
+
 
   # Compilers, generators, ...
   PACKAGE_LIST="\
@@ -693,10 +676,10 @@ check_install_mme_software() {
     pkg-config \
     subversion"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
-  if [ $? -ne 0 ]; then 
+  if [ $? -ne 0 ]; then
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi
-  
+
   # Libraries
   PACKAGE_LIST="\
     guile-2.0-dev \
@@ -719,13 +702,15 @@ check_install_mme_software() {
     check \
     python"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
-  if [ $? -ne 0 ]; then 
+  if [ $? -ne 0 ]; then
     echo_fatal "Failed to install package list $PACKAGE_LIST"
-  fi 
+  fi
 
-
-  install_nettle_from_source $1
-  install_gnutls_from_source $1
+  #Remove old gnutls/nettle installation that was done from sources
+  remove_nettle_from_source
+  remove_gnutls_from_source
+  $SUDO apt-get install -y nettle-dev nettle-bin
+  $SUDO apt-get install -y libgnutls-dev
 
   install_freediameter_from_source $1
   install_asn1c_from_source $1
@@ -737,17 +722,17 @@ check_install_mme_software() {
     vlan \
     tshark"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
-  if [ $? -ne 0 ]; then 
+  if [ $? -ne 0 ]; then
     echo_fatal "Failed to install package list $PACKAGE_LIST"
-  fi 
-    
+  fi
+
   PACKAGE_LIST="\
     check \
     python-dev \
     python-pexpect \
     unzip"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
-  if [ $? -ne 0 ]; then 
+  if [ $? -ne 0 ]; then
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi
 }
@@ -755,12 +740,16 @@ check_install_mme_software() {
 #-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_spgw_software() {
-  if [ $1 -gt 0 ]; then 
+  if ! check_supported_distribution; then
+    echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
+    exit 1
+  fi
+  if [ $1 -gt 0 ]; then
     OPTION="-y"
   else
     OPTION=""
   fi
-    
+
   # Compilers, generators, ...
   PACKAGE_LIST="\
     autoconf  \
@@ -778,10 +767,10 @@ check_install_spgw_software() {
     pkg-config \
     subversion"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
-  if [ $? -ne 0 ]; then 
+  if [ $? -ne 0 ]; then
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi
-  
+
   # Libraries
   PACKAGE_LIST="\
     guile-2.0-dev \
@@ -800,9 +789,9 @@ check_install_spgw_software() {
     openssl \
     python"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
-  if [ $? -ne 0 ]; then 
+  if [ $? -ne 0 ]; then
     echo_fatal "Failed to install package list $PACKAGE_LIST"
-  fi 
+  fi
 
   # Networking
   PACKAGE_LIST="\
@@ -812,20 +801,20 @@ check_install_spgw_software() {
     vlan \
     tshark"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
-  if [ $? -ne 0 ]; then 
+  if [ $? -ne 0 ]; then
     echo_fatal "Failed to install package list $PACKAGE_LIST"
-  fi 
-    
+  fi
+
   PACKAGE_LIST="\
     check \
     python-dev \
     python-pexpect \
     unzip"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
-  if [ $? -ne 0 ]; then 
+  if [ $? -ne 0 ]; then
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi
-  
+
   install_libgtpnl_from_source $1
 }
 
@@ -850,7 +839,7 @@ install_asn1c_from_source(){
     libtool
 
   if [[ $prompt =~ [yY](es)* ]]
-  then    
+  then
     $SUDO rm -rf /tmp/asn1c
     mkdir -p /tmp/asn1c
     GIT_SSL_NO_VERIFY=true git clone https://gitlab.eurecom.fr/oai/asn1c.git /tmp/asn1c
@@ -886,23 +875,23 @@ cidr2mask(){
 netcalc(){
   local IFS='.' ip i
   local -a oct msk
-    
+
   read -ra oct <<<"$1"
   read -ra msk <<<"$2"
 
   for i in ${!oct[@]}; do
     ip+=( "$(( oct[i] & msk[i] ))" )
   done
-    
+
   echo "${ip[*]}"
 }
 
 #-------------------------------------------------------------------------------
-# example: 
+# example:
 bcastcalc(){
   local IFS='.' ip i
   local -a oct msk
-    
+
   read -ra oct <<<"$1"
   read -ra msk <<<"$2"
 
@@ -950,7 +939,7 @@ is_virtual_interface(){
       return 0
     fi
     num=`expr index "$var" :`
-    
+
     if [ $num -eq 0 ]; then
       my_bool=0;
     fi
@@ -1001,12 +990,12 @@ set_virtual_interface_up(){
 set_network_interface(){
   local interface_name=$1
   local ip_cidr=$2
-  
+
   is_virtual_interface $interface_name
   if [ $? -eq 1 ]; then
     echo "$interface_name is virtual interface"
     set_virtual_interface_up $interface_name $ip_cidr
-  else 
+  else
     is_real_interface $interface_name
     if [ $? -eq 1 ]; then
       echo "$interface_name is real interface"
@@ -1023,7 +1012,7 @@ set_network_interface(){
 set_mme_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
   eval $value
-  
+
   # check all var names are correct
   list_var_name="\
         MME_INTERFACE_NAME_FOR_S1_MME         MME_IPV4_ADDRESS_FOR_S1_MME \
@@ -1038,8 +1027,8 @@ set_mme_network_interfaces(){
   done
 
   # configure interfaces
-  set_network_interface  $MME_INTERFACE_NAME_FOR_S1_MME         $MME_IPV4_ADDRESS_FOR_S1_MME 
-  set_network_interface  $MME_INTERFACE_NAME_FOR_S11_MME        $MME_IPV4_ADDRESS_FOR_S11_MME 
+  set_network_interface  $MME_INTERFACE_NAME_FOR_S1_MME         $MME_IPV4_ADDRESS_FOR_S1_MME
+  set_network_interface  $MME_INTERFACE_NAME_FOR_S11_MME        $MME_IPV4_ADDRESS_FOR_S11_MME
 }
 
 #-------------------------------------------------------------------------------
@@ -1047,7 +1036,7 @@ set_mme_network_interfaces(){
 set_spgw_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
   eval $value
-  
+
   # check all var names are correct
   list_var_name="\
         SGW_INTERFACE_NAME_FOR_S11            SGW_IPV4_ADDRESS_FOR_S11 \
@@ -1065,10 +1054,10 @@ set_spgw_network_interfaces(){
   done
 
   # configure interfaces
-  set_network_interface  $SGW_INTERFACE_NAME_FOR_S11            $SGW_IPV4_ADDRESS_FOR_S11 
-  set_network_interface  $SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  $SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP 
-  set_network_interface  $SGW_INTERFACE_NAME_FOR_S5_S8_UP       $SGW_IPV4_ADDRESS_FOR_S5_S8_UP 
-  set_network_interface  $PGW_INTERFACE_NAME_FOR_S5_S8          $PGW_IPV4_ADDRESS_FOR_S5_S8 
+  set_network_interface  $SGW_INTERFACE_NAME_FOR_S11            $SGW_IPV4_ADDRESS_FOR_S11
+  set_network_interface  $SGW_INTERFACE_NAME_FOR_S1U_S12_S4_UP  $SGW_IPV4_ADDRESS_FOR_S1U_S12_S4_UP
+  set_network_interface  $SGW_INTERFACE_NAME_FOR_S5_S8_UP       $SGW_IPV4_ADDRESS_FOR_S5_S8_UP
+  set_network_interface  $PGW_INTERFACE_NAME_FOR_S5_S8          $PGW_IPV4_ADDRESS_FOR_S5_S8
   set_network_interface  $PGW_INTERFACE_NAME_FOR_SGI            $PGW_IPV4_ADDRESS_FOR_SGI
 }
 
@@ -1077,7 +1066,7 @@ set_spgw_network_interfaces(){
 set_enb_network_interfaces(){
   value="`cat $1 | cut -d "#" -f1 | grep 'ADDRESS\|INTERFACE' | tr -d " " | grep "="`"
   eval $value
-  
+
   # check all var names are correct
   list_var_name="\
         ENB_INTERFACE_NAME_FOR_S1_MME         ENB_IPV4_ADDRESS_FOR_S1_MME \
@@ -1092,8 +1081,8 @@ set_enb_network_interfaces(){
   done
 
   # configure interfaces
-  set_network_interface  $ENB_INTERFACE_NAME_FOR_S1_MME         $ENB_IPV4_ADDRESS_FOR_S1_MME 
-  set_network_interface  $ENB_INTERFACE_NAME_FOR_S1U            $ENB_IPV4_ADDRESS_FOR_S1U 
+  set_network_interface  $ENB_INTERFACE_NAME_FOR_S1_MME         $ENB_IPV4_ADDRESS_FOR_S1_MME
+  set_network_interface  $ENB_INTERFACE_NAME_FOR_S1U            $ENB_IPV4_ADDRESS_FOR_S1U
 }
 
 ################################
