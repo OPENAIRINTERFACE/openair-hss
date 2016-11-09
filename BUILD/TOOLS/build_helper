@@ -611,11 +611,8 @@ check_install_hss_software() {
   $SUDO apt-get install -y nettle-dev nettle-bin
 
   install_freediameter_from_source $1
-<<<<<<< HEAD
 
   #Install LAMP stack on Ubuntu
-=======
-
   case "$(get_distribution_release)" in
     "Ubuntu14.04")
           $SUDO apt-get install $OPTION \
