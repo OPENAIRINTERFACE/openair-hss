@@ -417,14 +417,14 @@ mme_app_handle_conn_est_cnf (
 //------------------------------------------------------------------------------
 void
 mme_app_handle_initial_ue_message (
-  itti_mme_app_initial_ue_message_t * const initial_pP)
+  itti_s1ap_initial_ue_message_t * const initial_pP)
 {
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP\n");
-  XML_MSG_DUMP_ITTI_MME_APP_INITIAL_UE_MESSAGE(initial_pP, TASK_S1AP, TASK_MME_APP, NULL);
+  XML_MSG_DUMP_ITTI_S1AP_INITIAL_UE_MESSAGE(initial_pP, TASK_S1AP, TASK_MME_APP, NULL);
 
   if (INVALID_MME_UE_S1AP_ID != initial_pP->mme_ue_s1ap_id) {
     ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_pP->mme_ue_s1ap_id);
@@ -804,3 +804,36 @@ mme_app_handle_release_access_bearers_resp (
   itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
+
+//------------------------------------------------------------------------------
+void
+mme_app_handle_create_bearer_req (
+    const itti_s11_create_bearer_request_t * const create_bearer_request_pP)
+{
+  MessageDef                             *message_p = NULL;
+  struct ue_context_s                    *ue_context_p = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, create_bearer_request_pP->teid);
+
+  if (ue_context_p == NULL) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST local S11 teid " TEID_FMT " ",
+        create_bearer_request_pP->teid);
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", create_bearer_request_pP->teid);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
+      create_bearer_request_pP->teid, ue_context_p->imsi);
+
+  /*message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
+  AssertFatal (message_p , "itti_alloc_new_message Failed");
+  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id;
+  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context_p->enb_ue_s1ap_id;
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",
+      S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
+  int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
+  itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);*/
+
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+

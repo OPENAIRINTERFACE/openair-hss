@@ -131,7 +131,7 @@ encode_bearer_resource_modification_request (
   *(buffer + encoded) = ((encode_u8_linked_eps_bearer_identity (&bearer_resource_modification_request->epsbeareridentityforpacketfilter) & 0x0f) << 4) | 0x00;
   encoded++;
 
-  if ((encode_result = encode_traffic_flow_template (&bearer_resource_modification_request->trafficflowaggregate, 0, buffer + encoded, len - encoded)) < 0)        //Return in case of error
+  if ((encode_result = encode_traffic_flow_template (&bearer_resource_modification_request->trafficflowaggregate, TFT_ENCODE_IEI_FALSE, TFT_ENCODE_LENGTH_TRUE, buffer + encoded, len - encoded)) < 0)        //Return in case of error
     return encode_result;
   else
     encoded += encode_result;

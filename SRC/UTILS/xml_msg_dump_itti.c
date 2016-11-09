@@ -382,8 +382,8 @@ void xml_msg_dump_itti_s1ap_ue_context_release_complete(const itti_s1ap_ue_conte
 }
 
 //------------------------------------------------------------------------------
-void xml_msg_dump_itti_mme_app_initial_ue_message(
-    const itti_mme_app_initial_ue_message_t * const initial_pP,
+void xml_msg_dump_itti_s1ap_initial_ue_message(
+    const itti_s1ap_initial_ue_message_t * const initial_pP,
     const int sender_task,
     const int receiver_task,
     xmlTextWriterPtr xml_text_writer_param)
@@ -396,7 +396,7 @@ void xml_msg_dump_itti_mme_app_initial_ue_message(
   shared_log_get_elapsed_time_since_start(&elapsed_time);
 
   if (!xml_text_writer_param) {
-    xml_text_writer = xml_msg_dump_itti_get_new_xml_text_writter(msg_num, ITTI_MME_APP_INITIAL_UE_MESSAGE_XML_STR);
+    xml_text_writer = xml_msg_dump_itti_get_new_xml_text_writter(msg_num, ITTI_S1AP_INITIAL_UE_MESSAGE_XML_STR);
   } else {
     xml_text_writer = xml_text_writer_param;
   }
@@ -413,7 +413,7 @@ void xml_msg_dump_itti_mme_app_initial_ue_message(
       return;
     }
 
-    XML_WRITE_START_ELEMENT(xml_text_writer, ITTI_MME_APP_INITIAL_UE_MESSAGE_XML_STR);
+    XML_WRITE_START_ELEMENT(xml_text_writer, ITTI_S1AP_INITIAL_UE_MESSAGE_XML_STR);
     XML_WRITE_FORMAT_ELEMENT(xml_text_writer, ACTION_XML_STR, "%s", ACTION_SEND_XML_STR);
     XML_WRITE_FORMAT_ELEMENT(xml_text_writer, ITTI_SENDER_TASK_XML_STR, "%s", itti_task_id2itti_task_str(sender_task));
     XML_WRITE_FORMAT_ELEMENT(xml_text_writer, ITTI_RECEIVER_TASK_XML_STR, "%s", itti_task_id2itti_task_str(receiver_task));

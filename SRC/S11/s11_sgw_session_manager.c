@@ -29,6 +29,7 @@
 #include "assertions.h"
 #include "intertask_interface.h"
 #include "queue.h"
+#include "hashtable.h"
 #include "NwLog.h"
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
@@ -39,6 +40,8 @@
 #include "s11_sgw_session_manager.h"
 #include "s11_ie_formatter.h"
 #include "log.h"
+
+extern hash_table_ts_t                        *s11_sgw_teid_2_gtv2c_teid_handle;
 
 //------------------------------------------------------------------------------
 int
@@ -150,7 +153,7 @@ s11_sgw_handle_create_session_request (
    * Bearer Context IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-           s11_bearer_context_to_be_created_ie_get, &create_session_request_p->bearer_contexts_to_be_created);
+           s11_bearer_context_to_be_created_within_create_session_request_ie_get, &create_session_request_p->bearer_contexts_to_be_created);
   DevAssert (NW_OK == rc);
 
 
@@ -255,6 +258,17 @@ s11_sgw_handle_create_session_response (
   ulp_req.apiInfo.createLocalTunnelInfo.peerIp = create_session_response_p->peer_ip;
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
+
+
+
+  hashtable_rc_t hash_rc = hashtable_ts_insert(s11_sgw_teid_2_gtv2c_teid_handle,
+      (hash_key_t) create_session_response_p->s11_sgw_teid.teid,
+      (void *)ulp_req.apiInfo.createLocalTunnelInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not save GTPv2-C hTunnel %p for local teid %X\n", (void*)ulp_req.apiInfo.createLocalTunnelInfo.hTunnel, create_session_response_p->s11_sgw_teid.teid);
+    return RETURNerror;
+  }
   /*
    * Prepare a create session response to send to MME.
    */
@@ -293,8 +307,10 @@ s11_sgw_handle_create_session_response (
   for (int i = 0; i < create_session_response_p->bearer_contexts_created.num_bearer_context; i++) {
     s11_bearer_context_created_ie_set (&(ulp_req.hMsg), &create_session_response_p->bearer_contexts_created.bearer_contexts[i]);
   }
+
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
+
   return RETURNok;
 }
 
@@ -432,3 +448,14 @@ s11_sgw_handle_delete_session_response (
   DevAssert (NW_OK == rc);
   return RETURNok;
 }
+
+//------------------------------------------------------------------------------
+int
+s11_sgw_handle_create_bearer_response (
+  NwGtpv2cStackHandleT * stack_p,
+  NwGtpv2cUlpApiT * pUlpApi)
+{
+  AssertFatal(0, "TODO");
+  return NW_OK;
+}
+

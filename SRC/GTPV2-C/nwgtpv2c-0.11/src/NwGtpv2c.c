@@ -663,7 +663,8 @@ extern                                  "C" {
     OAILOG_DEBUG (LOG_GTPV2C, "Sending response message over seq '0x%x'\n", pReqTrxn->seqNum);
     rc = nwGtpv2cCreateAndSendMsg (thiz, pReqTrxn->seqNum, pReqTrxn->peerIp, pReqTrxn->peerPort, (NwGtpv2cMsgT *) pUlpRsp->hMsg);
     pReqTrxn->pMsg = (NwGtpv2cMsgT *) pUlpRsp->hMsg;
-    rc = nwGtpv2cTrxnStartDulpicateRequestWaitTimer (pReqTrxn);
+
+    // suspicious  rc = nwGtpv2cTrxnStartDulpicateRequestWaitTimer (pReqTrxn);
 
     if ((pUlpRsp->apiType & 0xFF000000) == NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL) {
       rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->apiInfo.triggeredRspInfo.teidLocal, pReqTrxn->peerIp, pUlpRsp->apiInfo.triggeredRspInfo.hUlpTunnel, &pUlpRsp->apiInfo.triggeredRspInfo.hTunnel);

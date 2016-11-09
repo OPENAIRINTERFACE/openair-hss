@@ -415,58 +415,58 @@ typedef struct {
   uint8_t  qci;
   ambr_t   gbr;           ///< Guaranteed bit rate
   ambr_t   mbr;           ///< Maximum bit rate
-} BearerQOS_t;
+} bearer_qos_t;
 
-/* TFT operation Code */
-typedef enum {
-  /* 0 = spare */
-
-  CREATE_NEW_TFT                          = 0x1,
-  DELETE_EXISTING_TFT                     = 0x2,
-  ADD_PACKET_FILTERS_TO_EXISTING_TFT      = 0x3,
-  REPLACE_PACKET_FILTERS_IN_EXISTING_TFT  = 0x4,
-  DELETE_PACKET_FILTERS_FROM_EXISTING_TFT = 0x5,
-  NO_TFT_OPERATION                        = 0x6,
-
-  TFT_OPERATION_CODE_MAX
-
-  /* Other Values Reserved */
-} tft_operation_code_t;
-
-/* Defined in 3GPP TS 24.008 Table 10.5.162 */
-typedef enum {
-  PACKET_FILTER_PRE_REL_7         = 0,
-  PACKET_FILTER_DIRECTION_DL_ONLY = 1,
-  PACKET_FILTER_DIRECTION_UL_ONLY = 2,
-  PACKET_FILTER_BIDIRECTIONAL     = 3,
-} packet_filter_direction_t;
-
-/* The Traffic Flow Template is specified in 3GPP TS 24.008 #10.5.6.12
- */
-typedef struct {
-  /* The TFT operation code "No TFT operation" shall be used
-   * if a parameters list is included but no packet filter
-   * list is included in the traffic flow template information
-   * element.
-   */
-  tft_operation_code_t tft_operation_code;
-
-  /* The E bit indicates if a parameters list is included
-   * in the TFT IE and it is encoded as follows:
-   * - 0 parameters list is not included
-   * - 1 parameters list is included
-   */
-  unsigned             e_bit:1;
-
-  /* For the "delete existing TFT" operation and for the "no TFT
-   * operation", the number of packet filters shall be coded
-   * as 0. For all other operations, the number of packet filters
-   * shall be greater than 0 and less than or equal to 15.
-   */
-  uint8_t              number_of_packet_filters;
-
-  /* TODO: add packet filter list as defined in 3GPP TS 29.274 Table 10.5.162 */
-} tft_t;
+///* TFT operation Code */
+//typedef enum {
+//  /* 0 = spare */
+//
+//  CREATE_NEW_TFT                          = 0x1,
+//  DELETE_EXISTING_TFT                     = 0x2,
+//  ADD_PACKET_FILTERS_TO_EXISTING_TFT      = 0x3,
+//  REPLACE_PACKET_FILTERS_IN_EXISTING_TFT  = 0x4,
+//  DELETE_PACKET_FILTERS_FROM_EXISTING_TFT = 0x5,
+//  NO_TFT_OPERATION                        = 0x6,
+//
+//  TFT_OPERATION_CODE_MAX
+//
+//  /* Other Values Reserved */
+//} tft_operation_code_t;
+//
+///* Defined in 3GPP TS 24.008 Table 10.5.162 */
+//typedef enum {
+//  PACKET_FILTER_PRE_REL_7         = 0,
+//  PACKET_FILTER_DIRECTION_DL_ONLY = 1,
+//  PACKET_FILTER_DIRECTION_UL_ONLY = 2,
+//  PACKET_FILTER_BIDIRECTIONAL     = 3,
+//} packet_filter_direction_t;
+//
+///* The Traffic Flow Template is specified in 3GPP TS 24.008 #10.5.6.12
+// */
+//typedef struct {
+//  /* The TFT operation code "No TFT operation" shall be used
+//   * if a parameters list is included but no packet filter
+//   * list is included in the traffic flow template information
+//   * element.
+//   */
+//  tft_operation_code_t tft_operation_code;
+//
+//  /* The E bit indicates if a parameters list is included
+//   * in the TFT IE and it is encoded as follows:
+//   * - 0 parameters list is not included
+//   * - 1 parameters list is included
+//   */
+//  unsigned             e_bit:1;
+//
+//  /* For the "delete existing TFT" operation and for the "no TFT
+//   * operation", the number of packet filters shall be coded
+//   * as 0. For all other operations, the number of packet filters
+//   * shall be greater than 0 and less than or equal to 15.
+//   */
+//  uint8_t              number_of_packet_filters;
+//
+//  /* TODO: add packet filter list as defined in 3GPP TS 29.274 Table 10.5.162 */
+//} tft_t;
 
 typedef enum node_type_e {
   NODE_TYPE_MME  = 0,
@@ -533,28 +533,28 @@ typedef struct {
 } gtp_cause_t;
 
 typedef struct {
-  uint8_t     eps_bearer_id;    ///< EBI,  Mandatory CSR
-  BearerQOS_t bearer_level_qos;
-  tft_t       tft;              ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  uint8_t                  eps_bearer_id;    ///< EBI,  Mandatory CSR
+  bearer_qos_t             bearer_level_qos;
+  traffic_flow_template_t  tft;              ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
 } bearer_to_create_t;
 
 //-----------------
 typedef struct bearer_context_to_be_created_s {
-  uint8_t      eps_bearer_id;       ///< EBI,  Mandatory CSR
-  tft_t        tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
-  FTeid_t      s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
-  FTeid_t      s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
-  FTeid_t      s5_s8_u_sgw_fteid;   ///< S5/S8-U SGW F-TEID, Conditional CSR, This IE shall be included on the S5/S8 interface for an "eUTRAN Initial Attach",
-                                    ///  a "PDP Context Activation" or a "UE Requested PDN Connectivity".
-  FTeid_t      s5_s8_u_pgw_fteid;   ///< S5/S8-U PGW F-TEID, Conditional CSR, This IE shall be included on the S4 and S11 interfaces for the TAU/RAU/Handover
-                                    /// cases when the GTP-based S5/S8 is used.
-  FTeid_t      s12_rnc_fteid;       ///< S12 RNC F-TEID, Conditional Optional CSR, This IE shall be included on the S4 interface if the S12
-                                    /// interface is used in the Enhanced serving RNS relocation with SGW relocation procedure.
-  FTeid_t      s2b_u_epdg_fteid;    ///< S2b-U ePDG F-TEID, Conditional CSR, This IE shall be included on the S2b interface for an Attach
-                                    /// with GTP on S2b, a UE initiated Connectivity to Additional PDN with GTP on S2b and a Handover to Untrusted Non-
-                                    /// 3GPP IP Access with GTP on S2b.
+  uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
+  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  FTeid_t                  s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
+  FTeid_t                  s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
+  FTeid_t                  s5_s8_u_sgw_fteid;   ///< S5/S8-U SGW F-TEID, Conditional CSR, This IE shall be included on the S5/S8 interface for an "eUTRAN Initial Attach",
+                                                ///  a "PDP Context Activation" or a "UE Requested PDN Connectivity".
+  FTeid_t                  s5_s8_u_pgw_fteid;   ///< S5/S8-U PGW F-TEID, Conditional CSR, This IE shall be included on the S4 and S11 interfaces for the TAU/RAU/Handover
+                                                /// cases when the GTP-based S5/S8 is used.
+  FTeid_t                  s12_rnc_fteid;       ///< S12 RNC F-TEID, Conditional Optional CSR, This IE shall be included on the S4 interface if the S12
+                                                /// interface is used in the Enhanced serving RNS relocation with SGW relocation procedure.
+  FTeid_t                  s2b_u_epdg_fteid;    ///< S2b-U ePDG F-TEID, Conditional CSR, This IE shall be included on the S2b interface for an Attach
+                                                /// with GTP on S2b, a UE initiated Connectivity to Additional PDN with GTP on S2b and a Handover to Untrusted Non-
+                                                /// 3GPP IP Access with GTP on S2b.
   /* This parameter is received only if the QoS parameters have been modified */
-  BearerQOS_t  bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
+  bearer_qos_t  bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
 } bearer_context_to_be_created_t;
 
 typedef struct bearer_contexts_to_be_created_s {
@@ -598,9 +598,9 @@ typedef struct bearer_context_created_s {
   FTeid_t      s12_sgw_fteid;       ///< S12 SGW F-TEID
 
   /* This parameter is received only if the QoS parameters have been modified */
-  BearerQOS_t *bearer_level_qos;
+  bearer_qos_t *bearer_level_qos;
 
-  tft_t        tft;                 ///< Bearer TFT
+  traffic_flow_template_t  tft;                 ///< Bearer TFT
 } bearer_context_created_t;
 
 typedef struct bearer_contexts_created_s {
@@ -663,6 +663,30 @@ typedef struct ebi_list_s {
 } ebi_list_t;
 
 
+//-----------------
+typedef struct bearer_context_within_create_bearer_request_s {
+  uint8_t      eps_bearer_id;       ///< EBI,  Mandatory CSR
+  traffic_flow_template_t      tft; ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  FTeid_t      s1u_sgw_fteid;       ///< This IE shall be sent on the S11 interface if the S1-U interface is used.
+                                    ///< If SGW supports both IPv4 and IPv6, it shall send both an
+                                    ///< IPv4 address and an IPv6 address within the S1-U SGW F-TEID IE.
+  FTeid_t      s5_s8_u_pgw_fteid;   ///< This IE shall be sent on the S4, S5/S8 and S11 interfaces for GTP-based S5/S8 interface. The MME/SGSN shall
+                                    ///< ignore the IE on S11/S4 for PMIP-based S5/S8 interface.
+  FTeid_t      s12_sgw_fteid;       ///< This IE shall be sent on the S4 interface if the S12 interface is used. See NOTE 1.
+  FTeid_t      s4_u_sgw_fteid;      ///< This IE shall be sent on the S4 interface if the S4-U interface is used. See NOTE 1.
+  FTeid_t      s2b_u_pgw_fteid;     ///< This IE (for user plane) shall be sent on the S2b interface.
+  FTeid_t      s2a_u_pgw_fteid;     ///< This IE (for user plane) shall be sent on the S2a interface.
+  bearer_qos_t  bearer_level_qos;    ///<
+  protocol_configuration_options_t  pco;///< This IE may be sent on the S5/S8 and S4/S11 interfaces
+                                    ///< if ePCO is not supported by the UE or the network. This bearer level IE takes precedence
+                                    ///< over the PCO IE in the message body if they both exist.
+} bearer_context_within_create_bearer_request_t;
+
+typedef struct bearer_contexts_within_create_bearer_request_s {
+#define MSG_CREATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS   11
+  uint8_t num_bearer_context;
+  bearer_context_within_create_bearer_request_t bearer_contexts[MSG_CREATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS];
+} bearer_contexts_within_create_bearer_request_t;
 
 #endif  /* FILE_SGW_IE_DEFS_SEEN */
 

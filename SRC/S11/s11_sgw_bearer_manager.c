@@ -30,6 +30,7 @@
 #include "assertions.h"
 #include "intertask_interface.h"
 #include "queue.h"
+#include "hashtable.h"
 #include "NwLog.h"
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
@@ -40,6 +41,8 @@
 #include "s11_sgw_bearer_manager.h"
 #include "s11_ie_formatter.h"
 #include "log.h"
+
+extern hash_table_ts_t                        *s11_sgw_teid_2_gtv2c_teid_handle;
 
 //------------------------------------------------------------------------------
 int
@@ -93,7 +96,7 @@ s11_sgw_handle_modify_bearer_request (
    * Bearer Context to be modified IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s11_bearer_context_to_be_modified_ie_get, &request_p->bearer_contexts_to_be_modified);
+      s11_bearer_context_to_be_modified_within_modify_bearer_request_ie_get, &request_p->bearer_contexts_to_be_modified);
   DevAssert (NW_OK == rc);
   rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
@@ -295,6 +298,57 @@ s11_sgw_handle_release_access_bearers_response (
   DevAssert (NW_OK == rc);
   cause.cause_value = (uint8_t) response_p->cause;
   s11_cause_ie_set (&(ulp_req.hMsg), &cause);
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+int
+s11_sgw_handle_create_bearer_request (
+  NwGtpv2cStackHandleT * stack_p,
+  itti_s11_create_bearer_request_t * request_p)
+{
+  NwRcT                                   rc;
+  NwGtpv2cUlpApiT                         ulp_req;
+
+  DevAssert (stack_p );
+  DevAssert (request_p );
+  /*
+   * Prepare a create bearer request to send to MME.
+   */
+  memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+
+  ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
+  rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_CREATE_BEARER_REQ, request_p->teid, 0, &(ulp_req.hMsg));
+  DevAssert (NW_OK == rc);
+
+  ulp_req.apiInfo.initialReqInfo.peerIp     = request_p->peer_ip;
+  ulp_req.apiInfo.initialReqInfo.teidLocal  = request_p->local_teid;
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_sgw_teid_2_gtv2c_teid_handle,
+      (hash_key_t) ulp_req.apiInfo.initialReqInfo.teidLocal, (void **)(uintptr_t)&ulp_req.apiInfo.initialReqInfo.hTunnel);
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.apiInfo.initialReqInfo.teidLocal);
+  }
+
+  /*
+   * Set the remote TEID
+   */
+  rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, request_p->teid);
+  DevAssert (NW_OK == rc);
+
+ // TODO   pti_t                      pti; ///< C: This IE shall be sent on the S5/S8 and S4/S11 interfaces
+
+  s11_ebi_ie_set (&(ulp_req.hMsg), (unsigned)request_p->linked_eps_bearer_id);
+
+  for (int i=0; i < request_p->bearer_contexts.num_bearer_context; i++) {
+    rc = s11_bearer_context_to_be_created_within_create_bearer_request_ie_set (&(ulp_req.hMsg), &request_p->bearer_contexts.bearer_contexts[i]);
+    DevAssert (NW_OK == rc);
+  }
+
+  // TODO pgw_fq_csid, sgw_fq_csid
+
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
   return RETURNok;

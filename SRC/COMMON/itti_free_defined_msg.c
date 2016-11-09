@@ -76,11 +76,6 @@ void itti_free_msg_content (MessageDef * const message_p)
     // DO nothing
     break;
 
-  case MME_APP_INITIAL_UE_MESSAGE:
-    bdestroy_wrapper (&message_p->ittiMsg.mme_app_initial_ue_message.nas);
-    AssertFatal(NULL == message_p->ittiMsg.mme_app_initial_ue_message.nas, "TODO clean pointer");
-    break;
-
   case MME_APP_CONNECTION_ESTABLISHMENT_CNF: {
     int num = message_p->ittiMsg.mme_app_connection_establishment_cnf.no_of_e_rabs;
     for (int i = 0; i < num; i++) {
@@ -209,6 +204,24 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
+  case S11_CREATE_BEARER_REQUEST: {
+    int num = message_p->ittiMsg.s11_create_bearer_request.pco.num_protocol_or_container_id;
+    for (int i = 0; i < num; i++) {
+      bdestroy_wrapper (&message_p->ittiMsg.s11_create_bearer_request.pco.protocol_or_container_ids[i].contents);
+      AssertFatal(NULL == message_p->ittiMsg.s11_create_bearer_request.pco.protocol_or_container_ids[i].contents, "TODO clean pointer");
+    }
+  }
+  break;
+
+  case S11_CREATE_BEARER_RESPONSE: {
+    int num = message_p->ittiMsg.s11_create_bearer_response.pco.num_protocol_or_container_id;
+    for (int i = 0; i < num; i++) {
+      bdestroy_wrapper (&message_p->ittiMsg.s11_create_bearer_response.pco.protocol_or_container_ids[i].contents);
+      AssertFatal(NULL == message_p->ittiMsg.s11_create_bearer_response.pco.protocol_or_container_ids[i].contents, "TODO clean pointer");
+    }
+  }
+  break;
+
   case S11_MODIFY_BEARER_REQUEST:
   case S11_MODIFY_BEARER_RESPONSE:
   case S11_DELETE_SESSION_REQUEST:
@@ -240,6 +253,11 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S1AP_UE_CONTEXT_RELEASE_COMMAND_LOG:
   case S1AP_UE_CONTEXT_RELEASE_LOG:
     // DO nothing
+    break;
+
+  case S1AP_INITIAL_UE_MESSAGE:
+    bdestroy_wrapper (&message_p->ittiMsg.s1ap_initial_ue_message.nas);
+    AssertFatal(NULL == message_p->ittiMsg.s1ap_initial_ue_message.nas, "TODO clean pointer");
     break;
 
   case S1AP_UE_CAPABILITIES_IND:

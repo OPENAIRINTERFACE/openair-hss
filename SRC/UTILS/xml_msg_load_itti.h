@@ -35,7 +35,8 @@ int xml_msg_load_itti_sctp_close_association(scenario_t * const scenario, scenar
 int xml_msg_load_itti_s1ap_ue_context_release_req(scenario_t * const scenario, scenario_player_msg_t * const msg);
 int xml_msg_load_itti_s1ap_ue_context_release_command(scenario_t * const scenario, scenario_player_msg_t * const msg);
 int xml_msg_load_itti_s1ap_ue_context_release_complete(scenario_t * const scenario, scenario_player_msg_t * const msg);
-int xml_msg_load_itti_mme_app_initial_ue_message(scenario_t * const scenario, scenario_player_msg_t * const msg);
+int xml_msg_load_itti_s1ap_initial_ue_message(scenario_t * const scenario, scenario_player_msg_t * const msg);
+int xml_msg_load_itti_s1ap_e_rab_setup_req(scenario_t * const scenario, scenario_player_msg_t * const msg);
 int xml_msg_load_itti_mme_app_initial_context_setup_rsp(scenario_t * const scenario, scenario_player_msg_t * const msg);
 int xml_msg_load_itti_mme_app_connection_establishment_cnf(scenario_t * const scenario, scenario_player_msg_t * const msg);
 int xml_msg_load_itti_nas_uplink_data_ind(scenario_t * const scenario, scenario_player_msg_t * const msg);

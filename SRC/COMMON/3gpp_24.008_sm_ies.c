@@ -827,7 +827,7 @@ int decode_traffic_flow_template (
 }
 //------------------------------------------------------------------------------
 static int encode_traffic_flow_template_packet_filter_identifier (
-    packet_filter_identifier_t * packetfilteridentifier,
+  const   packet_filter_identifier_t * packetfilteridentifier,
   uint8_t * buffer,
   const uint32_t len)
 {
@@ -843,7 +843,7 @@ static int encode_traffic_flow_template_packet_filter_identifier (
 
 //------------------------------------------------------------------------------
 static int encode_traffic_flow_template_packet_filter (
-    packet_filter_t * packetfilter,
+  const   packet_filter_t * packetfilter,
   uint8_t * buffer,
   const uint32_t len)
 {
@@ -860,7 +860,7 @@ static int encode_traffic_flow_template_packet_filter (
   /*
    * Packet filter identifier and direction
    */
-  IES_ENCODE_U8 (buffer, encoded, (0x00 | (packetfilter->direction << 4) | (packetfilter->identifier)));
+  IES_ENCODE_U8 (buffer, encoded, ((packetfilter->direction << 4) | (packetfilter->identifier)));
   /*
    * Packet filter evaluation precedence
    */
@@ -892,6 +892,7 @@ static int encode_traffic_flow_template_packet_filter (
       }
 
       encoded += TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE;
+      encoded += TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE;
       break;
 
     case TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG:
@@ -906,6 +907,7 @@ static int encode_traffic_flow_template_packet_filter (
         encoded++;
       }
 
+      encoded += TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE;
       encoded += TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE;
       break;
 
@@ -993,7 +995,7 @@ static int encode_traffic_flow_template_packet_filter (
 
 //------------------------------------------------------------------------------
 static int encode_traffic_flow_template_delete_packet (
-    delete_packet_filter_t * packetfilter,
+    const delete_packet_filter_t * packetfilter,
     uint8_t * buffer,
     const uint32_t len)
 {
@@ -1002,7 +1004,7 @@ static int encode_traffic_flow_template_delete_packet (
 
 //------------------------------------------------------------------------------
 static int encode_traffic_flow_template_create_tft (
-    create_new_tft_t * packetfilter,
+    const create_new_tft_t * packetfilter,
     uint8_t * buffer,
     const uint32_t len)
 {
@@ -1011,7 +1013,7 @@ static int encode_traffic_flow_template_create_tft (
 
 //------------------------------------------------------------------------------
 static int encode_traffic_flow_template_add_packet (
-    add_packet_filter_t * packetfilter,
+    const add_packet_filter_t * packetfilter,
     uint8_t * buffer,
     const uint32_t len)
 {
@@ -1020,7 +1022,7 @@ static int encode_traffic_flow_template_add_packet (
 
 //------------------------------------------------------------------------------
 static int encode_traffic_flow_template_replace_packet (
-    replace_packet_filter_t * packetfilter,
+    const replace_packet_filter_t * packetfilter,
     uint8_t * buffer,
     const uint32_t len)
 {
@@ -1029,8 +1031,9 @@ static int encode_traffic_flow_template_replace_packet (
 
 //------------------------------------------------------------------------------
 int encode_traffic_flow_template (
-  traffic_flow_template_t * trafficflowtemplate,
+  const traffic_flow_template_t * trafficflowtemplate,
   const bool iei_present,
+  const bool length_present,
   uint8_t * buffer,
   const uint32_t len)
 {
@@ -1047,9 +1050,12 @@ int encode_traffic_flow_template (
     encoded++;
   }
 
-  lenPtr = (buffer + encoded);
-  encoded++;
-  *(buffer + encoded) = 0x00 | ((trafficflowtemplate->tftoperationcode & 0x7) << 5) | ((trafficflowtemplate->ebit & 0x1) << 4) | (trafficflowtemplate->numberofpacketfilters & 0xf);
+  if (length_present) {
+    lenPtr = (buffer + encoded);
+    encoded++;
+  }
+
+  *(buffer + encoded) = ((trafficflowtemplate->tftoperationcode & 0x7) << 5) | ((trafficflowtemplate->ebit & 0x1) << 4) | (trafficflowtemplate->numberofpacketfilters & 0xf);
   encoded++;
 
   /*
@@ -1073,6 +1079,8 @@ int encode_traffic_flow_template (
     }
   }
 
-  *lenPtr = encoded - 1 - ((iei_present) ? 1 : 0);
+  if (length_present) {
+    *lenPtr = encoded - 1 - ((iei_present) ? 1 : 0);
+  }
   return encoded;
 }

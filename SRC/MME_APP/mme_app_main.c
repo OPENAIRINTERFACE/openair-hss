@@ -103,6 +103,10 @@ void *mme_app_thread (
       }
       break;
 
+    case S11_CREATE_BEARER_REQUEST:
+      mme_app_handle_create_bearer_req (&received_message_p->ittiMsg.s11_create_bearer_request);
+      break;
+
     case S11_RELEASE_ACCESS_BEARERS_RESPONSE:{
         mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.s11_release_access_bearers_response);
       }
@@ -128,9 +132,8 @@ void *mme_app_thread (
       }
       break;
 
-      // From S1AP Initiating Message/EMM Attach Request
-    case MME_APP_INITIAL_UE_MESSAGE:{
-        mme_app_handle_initial_ue_message (&MME_APP_INITIAL_UE_MESSAGE (received_message_p));
+    case S1AP_INITIAL_UE_MESSAGE:{
+        mme_app_handle_initial_ue_message (&S1AP_INITIAL_UE_MESSAGE (received_message_p));
       }
       break;
 

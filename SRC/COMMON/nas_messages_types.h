@@ -206,8 +206,8 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
   /* QoS */
   qci_t                   qci;
   priority_level_t        prio_level;
-  pre_emp_vulnerability_t pre_emp_vulnerability;
-  pre_emp_capability_t    pre_emp_capability;
+  pre_emption_vulnerability_t pre_emp_vulnerability;
+  pre_emption_capability_t    pre_emp_capability;
 
   /* S-GW TEID for user-plane */
   teid_t                  sgw_s1u_teid;
@@ -227,7 +227,7 @@ typedef struct itti_nas_initial_ue_message_s {
   /* Transparent message from s1ap to be forwarded to MME_APP or
    * to S1AP if connection establishment is rejected by NAS.
    */
-  itti_s1ap_initial_ue_message_t transparent;
+  s1ap_initial_ue_message_t transparent;
 } itti_nas_initial_ue_message_t;
 
 
@@ -314,7 +314,7 @@ typedef struct itti_nas_attach_req_s {
   char imsi[16];
 #define INITIAL_REQUEST (0x1)
   unsigned initial:1;
-  itti_s1ap_initial_ue_message_t transparent;
+  s1ap_initial_ue_message_t transparent;
 } itti_nas_attach_req_t;
 
 

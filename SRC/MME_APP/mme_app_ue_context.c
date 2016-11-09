@@ -30,6 +30,7 @@
 #include "log.h"
 #include "conversions.h"
 #include "common_types.h"
+#include "3gpp_24.007.h"
 #include "mme_app_ue_context.h"
 #include "commonDef.h"
 #include "conversions.h"

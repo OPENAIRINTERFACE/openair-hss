@@ -188,7 +188,7 @@ encode_modify_eps_bearer_context_request (
 
   if ((modify_eps_bearer_context_request->presencemask & MODIFY_EPS_BEARER_CONTEXT_REQUEST_TFT_PRESENT)
       == MODIFY_EPS_BEARER_CONTEXT_REQUEST_TFT_PRESENT) {
-    if ((encode_result = encode_traffic_flow_template (&modify_eps_bearer_context_request->tft, true, buffer + encoded, len - encoded)) < 0)
+    if ((encode_result = encode_traffic_flow_template (&modify_eps_bearer_context_request->tft, TFT_ENCODE_IEI_TRUE, TFT_ENCODE_LENGTH_TRUE, buffer + encoded, len - encoded)) < 0)
       // Return in case of error
       return encode_result;
     else

@@ -68,6 +68,7 @@
 #include "3gpp_24.007_xml.h"
 #include "3gpp_36.401_xml.h"
 #include "3gpp_36.331_xml.h"
+#include "3gpp_36.413_xml.h"
 #include "3gpp_24.301_emm_ies_xml.h"
 #include "nas_message_xml.h"
 #include "xml_load.h"
@@ -513,7 +514,7 @@ int xml_msg_load_itti_s1ap_ue_context_release_complete(scenario_t * const scenar
 }
 
 //------------------------------------------------------------------------------
-int xml_msg_load_itti_mme_app_initial_ue_message (scenario_t * const scenario, scenario_player_msg_t * const msg)
+int xml_msg_load_itti_s1ap_initial_ue_message (scenario_t * const scenario, scenario_player_msg_t * const msg)
 {
   bool res = false;
   if ((msg) && (msg->xml_doc)) {
@@ -521,8 +522,8 @@ int xml_msg_load_itti_mme_app_initial_ue_message (scenario_t * const scenario, s
     cur = xmlDocGetRootElement(msg->xml_doc);
     AssertFatal (cur, "Empty document");
 
-    if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_MME_APP_INITIAL_UE_MESSAGE_XML_STR)) {
-      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_MME_APP_INITIAL_UE_MESSAGE_XML_STR);
+    if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_INITIAL_UE_MESSAGE_XML_STR)) {
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_S1AP_INITIAL_UE_MESSAGE_XML_STR);
       return RETURNerror;
     }
 
@@ -542,7 +543,7 @@ int xml_msg_load_itti_mme_app_initial_ue_message (scenario_t * const scenario, s
       itti_free (ITTI_MSG_ORIGIN_ID (msg->itti_msg), msg->itti_msg);
     }
 
-    msg->itti_msg = itti_alloc_new_message (TASK_MME_SCENARIO_PLAYER, MME_APP_INITIAL_UE_MESSAGE);
+    msg->itti_msg = itti_alloc_new_message (TASK_MME_SCENARIO_PLAYER, S1AP_INITIAL_UE_MESSAGE);
 
     if (msg->itti_msg) {
       bstring xpath_expr = bformat("./%s",ACTION_XML_STR); // anywhere in XML tree
@@ -562,44 +563,116 @@ int xml_msg_load_itti_mme_app_initial_ue_message (scenario_t * const scenario, s
       }
 
       if (res) {
-        res = sp_enb_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_initial_ue_message.enb_ue_s1ap_id);
+        res = sp_enb_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.enb_ue_s1ap_id);
       }
 
       // Don't forget
-      msg->itti_msg->ittiMsg.mme_app_initial_ue_message.mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
+      msg->itti_msg->ittiMsg.s1ap_initial_ue_message.mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
 
       if (res) {
-        res = sp_nas_pdu_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_initial_ue_message.nas);
-      }
-
-      if (res) {
-        res = tracking_area_identity_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.mme_app_initial_ue_message.tai);
+        res = sp_nas_pdu_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.nas);
       }
 
       if (res) {
-        res = ecgi_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.mme_app_initial_ue_message.cgi);
+        res = tracking_area_identity_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.tai);
       }
 
       if (res) {
-        res = rrc_establishment_cause_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.mme_app_initial_ue_message.rrc_establishment_cause);
+        res = ecgi_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.cgi);
       }
 
-      if (sp_s_tmsi_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_initial_ue_message.opt_s_tmsi)) {
-        msg->itti_msg->ittiMsg.mme_app_initial_ue_message.is_s_tmsi_valid = true;
+      if (res) {
+        res = rrc_establishment_cause_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.rrc_establishment_cause);
       }
 
-      if (sp_csg_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_initial_ue_message.opt_csg_id)) {
-        msg->itti_msg->ittiMsg.mme_app_initial_ue_message.is_csg_id_valid = true;
+      if (sp_s_tmsi_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.opt_s_tmsi)) {
+        msg->itti_msg->ittiMsg.s1ap_initial_ue_message.is_s_tmsi_valid = true;
       }
 
-      if (sp_gummei_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_initial_ue_message.opt_gummei)) {
-        msg->itti_msg->ittiMsg.mme_app_initial_ue_message.is_gummei_valid = true;
+      if (sp_csg_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.opt_csg_id)) {
+        msg->itti_msg->ittiMsg.s1ap_initial_ue_message.is_csg_id_valid = true;
+      }
+
+      if (sp_gummei_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.opt_gummei)) {
+        msg->itti_msg->ittiMsg.s1ap_initial_ue_message.is_gummei_valid = true;
       }
 
       // Don't forget
-      msg->itti_msg->ittiMsg.mme_app_initial_ue_message.transparent.mme_ue_s1ap_id = msg->itti_msg->ittiMsg.mme_app_initial_ue_message.mme_ue_s1ap_id;
-      msg->itti_msg->ittiMsg.mme_app_initial_ue_message.transparent.enb_ue_s1ap_id = msg->itti_msg->ittiMsg.mme_app_initial_ue_message.enb_ue_s1ap_id;
-      msg->itti_msg->ittiMsg.mme_app_initial_ue_message.transparent.e_utran_cgi    = msg->itti_msg->ittiMsg.mme_app_initial_ue_message.cgi;
+      msg->itti_msg->ittiMsg.s1ap_initial_ue_message.transparent.mme_ue_s1ap_id = msg->itti_msg->ittiMsg.s1ap_initial_ue_message.mme_ue_s1ap_id;
+      msg->itti_msg->ittiMsg.s1ap_initial_ue_message.transparent.enb_ue_s1ap_id = msg->itti_msg->ittiMsg.s1ap_initial_ue_message.enb_ue_s1ap_id;
+      msg->itti_msg->ittiMsg.s1ap_initial_ue_message.transparent.e_utran_cgi    = msg->itti_msg->ittiMsg.s1ap_initial_ue_message.cgi;
+    } else {
+      res = false;
+    }
+    if (saved_node_ptr) {
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
+    }
+  }
+  return (res)? RETURNok:RETURNerror;
+}
+
+//------------------------------------------------------------------------------
+int xml_msg_load_itti_s1ap_e_rab_setup_req (scenario_t * const scenario, scenario_player_msg_t * const msg)
+{
+  bool res = false;
+  if ((msg) && (msg->xml_doc)) {
+    xmlNodePtr  cur = NULL;
+    cur = xmlDocGetRootElement(msg->xml_doc);
+    AssertFatal (cur, "Empty document");
+
+    if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_E_RAB_SETUP_REQ_XML_STR)) {
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_S1AP_E_RAB_SETUP_REQ_XML_STR);
+      return RETURNerror;
+    }
+
+    if (!msg->xpath_ctx) {
+      // Create xpath evaluation context
+      msg->xpath_ctx = xmlXPathNewContext(msg->xml_doc);
+    }
+
+    xmlNodePtr saved_node_ptr = msg->xpath_ctx->node;
+    if (RETURNok != xmlXPathSetContextNode(cur, msg->xpath_ctx)) {
+      return RETURNerror;
+    }
+
+    // free it (may be called from msp_reload_message)
+    if (msg->itti_msg) {
+      itti_free_msg_content (msg->itti_msg);
+      itti_free (ITTI_MSG_ORIGIN_ID (msg->itti_msg), msg->itti_msg);
+    }
+
+    msg->itti_msg = itti_alloc_new_message (TASK_MME_SCENARIO_PLAYER, S1AP_E_RAB_SETUP_REQ);
+
+    if (msg->itti_msg) {
+      bstring xpath_expr = bformat("./%s",ACTION_XML_STR); // anywhere in XML tree
+      res = xml_load_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, &xml_msg_load_action_tag, (void*)&msg->is_tx);
+      bdestroy_wrapper (&xpath_expr);
+
+      if (res) {
+        xpath_expr = bformat("./%s",ITTI_SENDER_TASK_XML_STR);
+        res = xml_load_itti_task_id_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, &msg->itti_sender_task);
+        bdestroy_wrapper (&xpath_expr);
+      }
+
+      if (res) {
+        xpath_expr = bformat("./%s",ITTI_RECEIVER_TASK_XML_STR);
+        res = xml_load_itti_task_id_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, &msg->itti_receiver_task);
+        bdestroy_wrapper (&xpath_expr);
+      }
+
+      if (res) {
+        res = sp_enb_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_req.enb_ue_s1ap_id);
+      }
+
+      if (res) {
+        res = sp_mme_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_req.mme_ue_s1ap_id);
+      }
+
+      // TODO ue_aggregate_maximum_bit_rate_t
+
+      if (res) {
+        res = e_rab_to_be_setup_list_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list);
+      }
     } else {
       res = false;
     }
@@ -786,14 +859,14 @@ int xml_msg_load_itti_mme_app_connection_establishment_cnf(scenario_t * const sc
               }
               if (res) {
                 xpath_expr = bformat("./%s",PREEMPTION_CAPABILITY_XML_STR);
-                pre_emp_capability_t pre_emp_capability = 0;
+                pre_emption_capability_t pre_emp_capability = 0;
                 res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNu8, (void*)&pre_emp_capability, NULL);
                 msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_preemption_capability[e] = pre_emp_capability;
                 bdestroy_wrapper (&xpath_expr);
               }
               if (res) {
                 xpath_expr = bformat("./%s",PREEMPTION_VULNERABILITY_XML_STR);
-                pre_emp_vulnerability_t pre_emp_vulnerability = 0;
+                pre_emption_vulnerability_t pre_emp_vulnerability = 0;
                 res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNu8, (void*)&pre_emp_vulnerability, NULL);
                 msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_preemption_vulnerability[e] = pre_emp_vulnerability;
                 bdestroy_wrapper (&xpath_expr);

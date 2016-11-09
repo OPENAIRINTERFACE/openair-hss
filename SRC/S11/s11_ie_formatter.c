@@ -504,7 +504,7 @@ s11_bearer_context_to_create_ie_set (
 }
 
 NwRcT
-s11_bearer_context_to_be_created_ie_get (
+s11_bearer_context_to_be_created_within_create_session_request_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
   uint8_t ieInstance,
@@ -579,7 +579,7 @@ s11_bearer_context_to_be_created_ie_get (
 }
 
 int
-s11_bearer_context_to_be_created_ie_set (
+s11_bearer_context_to_be_created_within_create_session_request_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const bearer_context_to_be_created_t * bearer_context)
 {
@@ -602,8 +602,136 @@ s11_bearer_context_to_be_created_ie_set (
   return RETURNok;
 }
 
+NwRcT
+s11_bearer_context_to_be_created_within_create_bearer_request_ie_get (
+  uint8_t ieType,
+  uint8_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  bearer_contexts_within_create_bearer_request_t         *bearer_contexts = (bearer_contexts_within_create_bearer_request_t *) arg;
+  DevAssert (bearer_contexts );
+  DevAssert (0 <= bearer_contexts->num_bearer_context);
+  DevAssert (MSG_CREATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
+  bearer_context_within_create_bearer_request_t          *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
+  uint8_t                                 read = 0;
+  NwRcT                                   rc;
+
+  while (ieLength > read) {
+    NwGtpv2cIeTlvT                         *ie_p;
+
+    ie_p = (NwGtpv2cIeTlvT *) & ieValue[read];
+
+    switch (ie_p->t) {
+    case NW_GTPV2C_IE_EBI:
+      rc = s11_ebi_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (NwGtpv2cIeTlvT)], &bearer_context->eps_bearer_id);
+      DevAssert (NW_OK == rc);
+      break;
+
+    case NW_GTPV2C_IE_BEARER_LEVEL_QOS:
+      rc = s11_bearer_qos_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (NwGtpv2cIeTlvT)], &bearer_context->bearer_level_qos);
+      break;
+
+    case NW_GTPV2C_IE_BEARER_TFT:
+      rc = s11_tft_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (NwGtpv2cIeTlvT)], &bearer_context->tft);
+      DevAssert (NW_OK == rc);
+      break;
+
+    case NW_GTPV2C_IE_PCO:
+      rc = s11_pco_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (NwGtpv2cIeTlvT)], &bearer_context->pco);
+      DevAssert (NW_OK == rc);
+      break;
+
+    case NW_GTPV2C_IE_FTEID:
+      switch (ie_p->i) {
+        case 0:
+          rc = s11_fteid_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (NwGtpv2cIeTlvT)], &bearer_context->s1u_sgw_fteid);
+          break;
+        case 1:
+          rc = s11_fteid_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (NwGtpv2cIeTlvT)], &bearer_context->s5_s8_u_pgw_fteid);
+          break;
+        case 2:
+          rc = s11_fteid_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (NwGtpv2cIeTlvT)], &bearer_context->s12_sgw_fteid);
+          break;
+        case 3:
+          rc = s11_fteid_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (NwGtpv2cIeTlvT)], &bearer_context->s4_u_sgw_fteid);
+          break;
+        case 4:
+          rc = s11_fteid_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (NwGtpv2cIeTlvT)], &bearer_context->s2b_u_pgw_fteid);
+          break;
+        case 5:
+          rc = s11_fteid_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (NwGtpv2cIeTlvT)], &bearer_context->s2a_u_pgw_fteid);
+          break;
+        default:
+          OAILOG_ERROR (LOG_S11, "Received unexpected IE %u instance %u\n", ie_p->t, ie_p->i);
+          return NW_GTPV2C_IE_INCORRECT;
+
+      }
+      DevAssert (NW_OK == rc);
+      break;
+
+    default:
+      OAILOG_ERROR (LOG_S11, "Received unexpected IE %u\n", ie_p->t);
+      return NW_GTPV2C_IE_INCORRECT;
+    }
+
+    read += (ntohs (ie_p->l) + sizeof (NwGtpv2cIeTlvT));
+  }
+  bearer_contexts->num_bearer_context += 1;
+  return NW_OK;
+}
+
 int
-s11_bearer_context_to_be_modified_ie_set (
+s11_bearer_context_to_be_created_within_create_bearer_request_ie_set (
+  NwGtpv2cMsgHandleT * msg,
+  const bearer_context_within_create_bearer_request_t * bearer_context)
+{
+  NwRcT                                   rc;
+
+  DevAssert (msg );
+  DevAssert (bearer_context );
+  /*
+   * Start section for grouped IE: bearer context to create
+   */
+  rc = nwGtpv2cMsgGroupedIeStart (*msg, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO);
+  DevAssert (NW_OK == rc);
+  s11_ebi_ie_set (msg, bearer_context->eps_bearer_id);
+  if (bearer_context->pco.num_protocol_or_container_id) {
+    s11_pco_ie_set(msg, &bearer_context->pco);
+  }
+  if (bearer_context->s1u_sgw_fteid.teid) {
+    s11_fteid_ie_set (msg, &bearer_context->s1u_sgw_fteid);
+  }
+  if (bearer_context->s5_s8_u_pgw_fteid.teid) {
+    s11_fteid_ie_set (msg, &bearer_context->s5_s8_u_pgw_fteid);
+  }
+  if (bearer_context->s12_sgw_fteid.teid) {
+    s11_fteid_ie_set (msg, &bearer_context->s12_sgw_fteid);
+  }
+  if (bearer_context->s4_u_sgw_fteid.teid) {
+    s11_fteid_ie_set (msg, &bearer_context->s4_u_sgw_fteid);
+  }
+  if (bearer_context->s2b_u_pgw_fteid.teid) {
+    s11_fteid_ie_set (msg, &bearer_context->s2b_u_pgw_fteid);
+  }
+  if (bearer_context->s2a_u_pgw_fteid.teid) {
+    s11_fteid_ie_set (msg, &bearer_context->s2a_u_pgw_fteid);
+  }
+  s11_bearer_qos_ie_set(msg, &bearer_context->bearer_level_qos);
+  s11_tft_ie_set(msg, &bearer_context->tft);
+
+  /*
+   * End section for grouped IE: bearer context to create
+   */
+  rc = nwGtpv2cMsgGroupedIeEnd (*msg);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+
+int
+s11_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const bearer_context_to_be_modified_t * bearer_context)
 {
@@ -627,7 +755,7 @@ s11_bearer_context_to_be_modified_ie_set (
 }
 
 NwRcT
-s11_bearer_context_to_be_modified_ie_get (
+s11_bearer_context_to_be_modified_within_modify_bearer_request_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
   uint8_t ieInstance,
@@ -949,6 +1077,41 @@ s11_pco_ie_set (
 }
 
 NwRcT
+s11_tft_ie_get (
+  uint8_t ieType,
+  uint8_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  uint8_t                        offset = 0;
+  traffic_flow_template_t       *tft = (traffic_flow_template_t *) arg;
+
+  DevAssert (tft );
+  offset = decode_traffic_flow_template (tft, 0, ieValue, ieLength);
+  if ((0 < offset) && (TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH >= offset))
+    return NW_OK;
+  else
+    return NW_GTPV2C_IE_INCORRECT;
+}
+
+int
+s11_tft_ie_set (
+  NwGtpv2cMsgHandleT * msg,
+  const traffic_flow_template_t * tft)
+{
+  uint8_t                                 temp[TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH];
+  uint8_t                                 offset = 0;
+  NwRcT                                   rc = NW_OK;
+
+  DevAssert (tft );
+  offset = encode_traffic_flow_template(tft, TFT_ENCODE_IEI_FALSE, TFT_ENCODE_LENGTH_FALSE, temp, TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_TFT, offset, 0, temp);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+NwRcT
 s11_paa_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1163,7 +1326,7 @@ s11_bearer_qos_ie_get (
   uint8_t * ieValue,
   void *arg)
 {
-  BearerQOS_t                       *bearer_qos = (BearerQOS_t *) arg;
+  bearer_qos_t                       *bearer_qos = (bearer_qos_t *) arg;
 
   DevAssert (bearer_qos );
 
@@ -1197,7 +1360,7 @@ s11_bearer_qos_ie_get (
 int
 s11_bearer_qos_ie_set (
   NwGtpv2cMsgHandleT * msg,
-  const BearerQOS_t * bearer_qos)
+  const bearer_qos_t * bearer_qos)
 {
   NwRcT                                   rc;
   uint8_t                                 value[22];

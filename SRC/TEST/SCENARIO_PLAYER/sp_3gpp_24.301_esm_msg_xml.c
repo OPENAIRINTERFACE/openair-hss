@@ -70,7 +70,6 @@ bool sp_activate_dedicated_eps_bearer_context_request_from_xml (
     activate_dedicated_eps_bearer_context_request_msg * const activate_dedicated_eps_bearer_context_request)
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
-  memset(activate_dedicated_eps_bearer_context_request, 0, sizeof(*activate_dedicated_eps_bearer_context_request));
   bool res = false;
 
   res = sp_linked_eps_bearer_identity_from_xml (scenario, msg, &activate_dedicated_eps_bearer_context_request->linkedepsbeareridentity);
@@ -119,7 +118,6 @@ bool sp_activate_default_eps_bearer_context_accept_from_xml (
     activate_default_eps_bearer_context_accept_msg * activate_default_eps_bearer_context_accept)
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
-  memset(activate_default_eps_bearer_context_accept, 0, sizeof(*activate_default_eps_bearer_context_accept));
   bool res = false;
   res = protocol_configuration_options_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_accept->protocolconfigurationoptions, true);
   if (res) {
@@ -135,7 +133,6 @@ bool sp_activate_default_eps_bearer_context_request_from_xml (
     activate_default_eps_bearer_context_request_msg * activate_default_eps_bearer_context_request)
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
-  memset(activate_default_eps_bearer_context_request, 0, sizeof(*activate_default_eps_bearer_context_request));
   bool res = false;
 
   res = eps_quality_of_service_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_request->epsqos);

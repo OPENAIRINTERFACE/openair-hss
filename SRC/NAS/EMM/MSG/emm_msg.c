@@ -75,7 +75,7 @@
 /****************************************************************************/
 
 
-static int                              _emm_msg_encode_header (
+int emm_msg_encode_header (
   const emm_msg_header_t * header,
   uint8_t * buffer,
   uint32_t len);
@@ -294,7 +294,7 @@ emm_msg_encode (
   /*
    * First encode the EMM message header
    */
-  header_result = _emm_msg_encode_header (&msg->header, buffer, len);
+  header_result = emm_msg_encode_header (&msg->header, buffer, len);
 
   if (header_result < 0) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Failed to encode EMM message header " "(%d)\n", header_result);
@@ -514,8 +514,8 @@ int emm_msg_decode_header (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static int
-_emm_msg_encode_header (
+int
+emm_msg_encode_header (
   const emm_msg_header_t * header,
   uint8_t * buffer,
   uint32_t len)

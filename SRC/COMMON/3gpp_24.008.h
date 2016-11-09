@@ -937,12 +937,13 @@ typedef packet_filter_identifier_t delete_packet_filter_t;
  */
 #define TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX 4
 typedef struct packet_filter_s {
-  uint8_t         identifier:4;
+  uint8_t         spare:2;
 #define TRAFFIC_FLOW_TEMPLATE_PRE_REL7_TFT_FILTER 0b00
 #define TRAFFIC_FLOW_TEMPLATE_DOWNLINK_ONLY       0b01
 #define TRAFFIC_FLOW_TEMPLATE_UPLINK_ONLY         0b10
 #define TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL       0b11
   uint8_t         direction:2;
+  uint8_t         identifier:4;
   uint8_t         eval_precedence;
   uint8_t         length;
   packet_filter_contents_t packetfiltercontents;
@@ -1000,7 +1001,13 @@ typedef struct traffic_flow_template_s {
                                        // is set to 0.
 } traffic_flow_template_t;
 
-int encode_traffic_flow_template(traffic_flow_template_t *trafficflowtemplate, const bool iei_present, uint8_t *buffer, const uint32_t len);
+#define TFT_ENCODE_IEI_TRUE     true
+#define TFT_ENCODE_IEI_FALSE    false
+#define TFT_ENCODE_LENGTH_TRUE  true
+#define TFT_ENCODE_LENGTH_FALSE false
+
+int encode_traffic_flow_template(const traffic_flow_template_t *trafficflowtemplate, const bool iei_present, const bool length_present,
+    uint8_t *buffer, const uint32_t len);
 int decode_traffic_flow_template(traffic_flow_template_t *trafficflowtemplate, const bool iei_present, uint8_t *buffer, const uint32_t len);
 
 //******************************************************************************

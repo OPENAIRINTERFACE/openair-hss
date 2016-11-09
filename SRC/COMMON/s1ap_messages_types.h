@@ -30,20 +30,25 @@
 #define FILE_S1AP_MESSAGES_TYPES_SEEN
 
 #include "3gpp_36.401.h"
+#include "3gpp_36.413.h"
+#include "3gpp_36.331.h"
 #include "3gpp_23.003.h"
+#include "TrackingAreaIdentity.h"
 
-#define S1AP_ENB_DEREGISTERED_IND(mSGpTR)   (mSGpTR)->ittiMsg.s1ap_eNB_deregistered_ind
-#define S1AP_DEREGISTER_UE_REQ(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_deregister_ue_req
-#define S1AP_UE_CONTEXT_RELEASE_REQ(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_req
-#define S1AP_UE_CONTEXT_RELEASE_COMMAND(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_command
+#define S1AP_ENB_DEREGISTERED_IND(mSGpTR)        (mSGpTR)->ittiMsg.s1ap_eNB_deregistered_ind
+#define S1AP_DEREGISTER_UE_REQ(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_deregister_ue_req
+#define S1AP_UE_CONTEXT_RELEASE_REQ(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_ue_context_release_req
+#define S1AP_UE_CONTEXT_RELEASE_COMMAND(mSGpTR)  (mSGpTR)->ittiMsg.s1ap_ue_context_release_command
 #define S1AP_UE_CONTEXT_RELEASE_COMPLETE(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_complete
+#define S1AP_E_RAB_SETUP_REQ(mSGpTR)             (mSGpTR)->ittiMsg.s1ap_e_rab_setup_req
+#define S1AP_INITIAL_UE_MESSAGE(mSGpTR)          (mSGpTR)->ittiMsg.s1ap_initial_ue_message
 
 // NOT a ITTI message
-typedef struct itti_s1ap_initial_ue_message_s {
+typedef struct s1ap_initial_ue_message_s {
   mme_ue_s1ap_id_t     mme_ue_s1ap_id;
   enb_ue_s1ap_id_t     enb_ue_s1ap_id:24;
   ecgi_t                e_utran_cgi;
-} itti_s1ap_initial_ue_message_t;
+} s1ap_initial_ue_message_t;
 
 typedef struct itti_s1ap_ue_cap_ind_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
@@ -78,4 +83,39 @@ typedef struct itti_s1ap_ue_context_release_complete_s {
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
 } itti_s1ap_ue_context_release_complete_t;
 
+typedef struct itti_s1ap_initial_ue_message_s {
+  sctp_assoc_id_t     sctp_assoc_id; // key stored in MME_APP for MME_APP forward NAS response to S1AP
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+  bstring             nas;
+  tai_t               tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
+  ecgi_t              cgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
+  rrc_establishment_cause_t      rrc_establishment_cause;          /* Establishment cause                     */
+
+  bool                is_s_tmsi_valid;
+  bool                is_csg_id_valid;
+  bool                is_gummei_valid;
+  s_tmsi_t            opt_s_tmsi;
+  csg_id_t            opt_csg_id;
+  gummei_t            opt_gummei;
+  //void                opt_cell_access_mode;
+  //void                opt_cell_gw_transport_address;
+  //void                opt_relay_node_indicator;
+  /* Transparent message from s1ap to be forwarded to MME_APP or
+   * to S1AP if connection establishment is rejected by NAS.
+   */
+  s1ap_initial_ue_message_t transparent;
+} itti_s1ap_initial_ue_message_t;
+
+typedef struct itti_s1ap_e_rab_setup_req_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+
+  // Applicable for non-GBR E-RABs
+  ue_aggregate_maximum_bit_rate_t ue_aggregate_maximum_bit_rate;
+
+  // E-RAB to Be Setup List
+  e_rab_to_be_setup_list_t        e_rab_to_be_setup_list;
+
+} itti_s1ap_e_rab_setup_req_t;
 #endif /* FILE_S1AP_MESSAGES_TYPES_SEEN */

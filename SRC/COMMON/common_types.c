@@ -105,6 +105,11 @@ void bstring_to_ip_address(bstring const bstr, ip_address_t * const ip_address)
 }
 
 //------------------------------------------------------------------------------
+void copy_paa(paa_t *paa_dst, paa_t *paa_src)
+{
+  memcpy(paa_dst, paa_src, sizeof(paa_t));
+}
+//------------------------------------------------------------------------------
 bstring paa_to_bstring(paa_t *paa)
 {
   bstring bstr = NULL;

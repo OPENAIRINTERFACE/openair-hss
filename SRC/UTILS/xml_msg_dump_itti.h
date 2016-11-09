@@ -40,7 +40,7 @@ void xml_msg_dump_itti_sctp_close_association(const sctp_close_association_t * c
 void xml_msg_dump_itti_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
 void xml_msg_dump_itti_s1ap_ue_context_release_command(const itti_s1ap_ue_context_release_command_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
 void xml_msg_dump_itti_s1ap_ue_context_release_complete(const itti_s1ap_ue_context_release_complete_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
-void xml_msg_dump_itti_mme_app_initial_ue_message(const itti_mme_app_initial_ue_message_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
+void xml_msg_dump_itti_s1ap_initial_ue_message(const itti_s1ap_initial_ue_message_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
 void xml_msg_dump_itti_mme_app_initial_context_setup_rsp(const itti_mme_app_initial_context_setup_rsp_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
 void xml_msg_dump_itti_mme_app_connection_establishment_cnf(const itti_mme_app_connection_establishment_cnf_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
 void xml_msg_dump_itti_nas_uplink_data_ind(const itti_nas_ul_data_ind_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
@@ -53,7 +53,7 @@ void xml_msg_dump_itti_nas_downlink_data_cnf(const itti_nas_dl_data_cnf_t * cons
 #    define XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_REQ                     xml_msg_dump_itti_s1ap_ue_context_release_req
 #    define XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND                 xml_msg_dump_itti_s1ap_ue_context_release_command
 #    define XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_COMPLETE                xml_msg_dump_itti_s1ap_ue_context_release_complete
-#    define XML_MSG_DUMP_ITTI_MME_APP_INITIAL_UE_MESSAGE                      xml_msg_dump_itti_mme_app_initial_ue_message
+#    define XML_MSG_DUMP_ITTI_S1AP_INITIAL_UE_MESSAGE                         xml_msg_dump_itti_s1ap_initial_ue_message
 #    define XML_MSG_DUMP_ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP               xml_msg_dump_itti_mme_app_initial_context_setup_rsp
 #    define XML_MSG_DUMP_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF            xml_msg_dump_itti_mme_app_connection_establishment_cnf
 #    define XML_MSG_DUMP_ITTI_NAS_UPLINK_DATA_IND                             xml_msg_dump_itti_nas_uplink_data_ind
@@ -66,7 +66,7 @@ void xml_msg_dump_itti_nas_downlink_data_cnf(const itti_nas_dl_data_cnf_t * cons
 #    define XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_REQ(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
 #    define XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
 #    define XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_COMPLETE(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
-#    define XML_MSG_DUMP_ITTI_MME_APP_INITIAL_UE_MESSAGE(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
+#    define XML_MSG_DUMP_ITTI_S1AP_INITIAL_UE_MESSAGE(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
 #    define XML_MSG_DUMP_ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
 #    define XML_MSG_DUMP_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
 #    define XML_MSG_DUMP_ITTI_NAS_UPLINK_DATA_IND(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)

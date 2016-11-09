@@ -37,7 +37,7 @@ int s1ap_mme_itti_nas_uplink_ind(const mme_ue_s1ap_id_t ue_id,
 
 int s1ap_mme_itti_nas_downlink_cnf (const mme_ue_s1ap_id_t ue_id, const bool is_success);
 
-void s1ap_mme_itti_mme_app_initial_ue_message(
+void s1ap_mme_itti_s1ap_initial_ue_message(
   const sctp_assoc_id_t   assoc_id,
   const enb_ue_s1ap_id_t  enb_ue_s1ap_id,
   const mme_ue_s1ap_id_t  mme_ue_s1ap_id,

@@ -107,7 +107,7 @@ sgw_display_pdn_connection_sgw_eps_bearers (
   } else {
     OAILOG_DEBUG (LOG_SPGW_APP, "\t\t\t\tINVALID eps_bearer_entry FOUND\n");
   }
-  return false;
+  return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -233,9 +233,7 @@ sgw_cm_remove_s11_tunnel (
 }
 
 //-----------------------------------------------------------------------------
-sgw_eps_bearer_entry_t                 *
-sgw_cm_create_eps_bearer_entry (
-  void)
+sgw_eps_bearer_entry_t *sgw_cm_create_eps_bearer_entry (void)
 //-----------------------------------------------------------------------------
 {
   sgw_eps_bearer_entry_t                 *eps_bearer_entry = NULL;
@@ -279,8 +277,6 @@ sgw_cm_create_pdn_connection (
   if (pdn_connection->sgw_eps_bearers == NULL) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create eps bearers collection object\n");
     free_wrapper ((void**)&pdn_connection);
-    pdn_connection = NULL;
-    return NULL;
   }
 
   return pdn_connection;
@@ -290,7 +286,6 @@ sgw_cm_create_pdn_connection (
 void
 sgw_cm_free_pdn_connection (
   sgw_pdn_connection_t * pdn_connectionP)
-//-----------------------------------------------------------------------------
 {
   if (pdn_connectionP ) {
     if (pdn_connectionP->sgw_eps_bearers ) {
@@ -303,7 +298,6 @@ sgw_cm_free_pdn_connection (
 void
 sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (
   s_plus_p_gw_eps_bearer_context_information_t * contextP)
-//-----------------------------------------------------------------------------
 {
   if (contextP == NULL) {
     return;
@@ -329,7 +323,6 @@ sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (
 s_plus_p_gw_eps_bearer_context_information_t *
 sgw_cm_create_bearer_context_information_in_collection (
   teid_t teid)
-//-----------------------------------------------------------------------------
 {
   s_plus_p_gw_eps_bearer_context_information_t *new_bearer_context_information = NULL;
 
@@ -373,6 +366,7 @@ sgw_cm_create_bearer_context_information_in_collection (
   return new_bearer_context_information;
 }
 
+//-----------------------------------------------------------------------------
 int
 sgw_cm_remove_bearer_context_information (
   teid_t teid)
@@ -386,19 +380,14 @@ sgw_cm_remove_bearer_context_information (
 //--- EPS Bearer Entry
 
 //-----------------------------------------------------------------------------
-sgw_eps_bearer_entry_t                 *
-sgw_cm_create_eps_bearer_entry_in_collection (
+sgw_eps_bearer_entry_t *sgw_cm_create_eps_bearer_entry_in_collection (
   hash_table_ts_t * eps_bearersP,
   ebi_t eps_bearer_idP)
-//-----------------------------------------------------------------------------
 {
   sgw_eps_bearer_entry_t                 *new_eps_bearer_entry = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
-  if (eps_bearersP == NULL) {
-    OAILOG_ERROR (LOG_SPGW_APP, "Failed to create EPS bearer entry for EPS bearer id %u. reason eps bearer hashtable is NULL \n", eps_bearer_idP);
-    return NULL;
-  }
+  AssertFatal (eps_bearersP, "Bad parameter sgw_eps_bearer_entries");
 
   new_eps_bearer_entry = calloc (1, sizeof (sgw_eps_bearer_entry_t));
 
@@ -418,7 +407,6 @@ sgw_cm_create_eps_bearer_entry_in_collection (
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_DEBUG (LOG_SPGW_APP, "Invalid sgw_eps_bearers hashtable for display\n");
   }
-
   /*
    * CHECK DUPLICATES IN HASH TABLES ? if (temp == 1) {
    * SPGW_APP_WARN("This EPS bearer entry already exists: %u\n", eps_bearer_idP);
@@ -427,6 +415,20 @@ sgw_cm_create_eps_bearer_entry_in_collection (
    * }
    */
   return new_eps_bearer_entry;
+}
+
+//-----------------------------------------------------------------------------
+sgw_eps_bearer_entry_t*
+sgw_cm_get_eps_bearer_entry (
+  hash_table_ts_t * eps_bearersP,
+  ebi_t eps_bearer_idP)
+{
+  if (eps_bearersP == NULL) {
+    return NULL;
+  }
+  sgw_eps_bearer_entry_t *eps_bearer_entry_p = NULL;
+  hashtable_ts_get (eps_bearersP, eps_bearer_idP, (void **)&eps_bearer_entry_p);
+  return eps_bearer_entry_p;
 }
 
 //-----------------------------------------------------------------------------
@@ -441,7 +443,7 @@ sgw_cm_remove_eps_bearer_entry (
   if (eps_bearersP == NULL) {
     return RETURNerror;
   }
-
   temp = hashtable_ts_free (eps_bearersP, eps_bearer_idP);
   return temp;
 }
+

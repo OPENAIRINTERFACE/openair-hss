@@ -177,11 +177,20 @@ bool eps_quality_of_service_from_xml (
       xmlNodePtr saved_node_ptr = xpath_ctx->node;
       res = (RETURNok == xmlXPathSetContextNode(nodes_qos->nodeTab[0], xpath_ctx));
       if (res) {
-        uint8_t  qci = 0;
-        bstring xpath_expr = bformat("./%s",QCI_ATTR_XML_STR);
-        res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)&qci, NULL);
-        bdestroy_wrapper (&xpath_expr);
-        epsqualityofservice->qci = qci;
+
+        xmlChar *attr = xmlGetProp(nodes_qos->nodeTab[0], (const xmlChar *)QCI_ATTR_XML_STR);
+        if (attr) {
+          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", QCI_ATTR_XML_STR, attr);
+          uint8_t  qci = 0;
+          int ret = sscanf((const char*)attr, "%"SCNx8, &qci);
+          if (1 == ret) {
+            epsqualityofservice->qci = qci;
+          }
+          res = (1 == ret);
+          xmlFree(attr);
+        } else {
+          res = false;
+        }
       }
 
       if (res) {

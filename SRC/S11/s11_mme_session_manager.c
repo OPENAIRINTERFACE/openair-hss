@@ -101,7 +101,7 @@ s11_mme_create_session_request (
   s11_serving_network_ie_set (&(ulp_req.hMsg), &req_p->serving_network);
   s11_pco_ie_set (&(ulp_req.hMsg), &req_p->pco);
   for (int i = 0; i < req_p->bearer_contexts_to_be_created.num_bearer_context; i++) {
-    s11_bearer_context_to_be_created_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created.bearer_contexts[i]);
+    s11_bearer_context_to_be_created_within_create_session_request_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created.bearer_contexts[i]);
   }
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
@@ -111,12 +111,11 @@ s11_mme_create_session_request (
   hashtable_rc_t hash_rc = hashtable_ts_insert(s11_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) req_p->sender_fteid_for_cp.teid,
       (void *)ulp_req.apiInfo.initialReqInfo.hTunnel);
-  if (HASH_TABLE_OK == hash_rc) {
-    return RETURNok;
-  } else {
+  if (HASH_TABLE_OK != hash_rc) {
     OAILOG_WARNING (LOG_S11, "Could not save GTPv2-C hTunnel %p for local teid %X\n", (void*)ulp_req.apiInfo.initialReqInfo.hTunnel, ulp_req.apiInfo.initialReqInfo.teidLocal);
     return RETURNerror;
   }
+  return RETURNok;
 }
 
 //------------------------------------------------------------------------------

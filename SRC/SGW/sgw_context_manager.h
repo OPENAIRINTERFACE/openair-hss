@@ -70,6 +70,6 @@ s_plus_p_gw_eps_bearer_context_information_t * sgw_cm_create_bearer_context_info
 void                                   sgw_cm_free_s_plus_p_gw_eps_bearer_context_information(s_plus_p_gw_eps_bearer_context_information_t *contextP);
 int                                    sgw_cm_remove_bearer_context_information(teid_t teid);
 sgw_eps_bearer_entry_t *               sgw_cm_create_eps_bearer_entry_in_collection(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
+sgw_eps_bearer_entry_t *               sgw_cm_get_eps_bearer_entry (hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
 int                                    sgw_cm_remove_eps_bearer_entry(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
-
 #endif /* FILE_SGW_CONTEXT_MANAGER_SEEN */

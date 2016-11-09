@@ -33,6 +33,8 @@
 
 #define S11_CREATE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.s11_create_session_request
 #define S11_CREATE_SESSION_RESPONSE(mSGpTR)        (mSGpTR)->ittiMsg.s11_create_session_response
+#define S11_CREATE_BEARER_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_create_bearer_request
+#define S11_CREATE_BEARER_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_create_bearer_response
 #define S11_MODIFY_BEARER_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_modify_bearer_request
 #define S11_MODIFY_BEARER_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_modify_bearer_response
 #define S11_DELETE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.s11_delete_session_request
@@ -493,6 +495,139 @@ typedef struct itti_s11_create_session_response_s {
   void                    *trxn;               ///< Transaction identifier
   uint32_t                 peer_ip;            ///< MME ipv4 address
 } itti_s11_create_session_response_t;
+
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_create_bearer_request_t
+ *  @brief Create Bearer Request
+ *
+ * The direction of this message shall be from PGW to SGW and from SGW to MME/S4-SGSN, and from PGW to ePDG
+ * The Create Bearer Request message shall be sent on the S5/S8 interface by the PGW to the SGW and on the S11
+ * interface by the SGW to the MME as part of the Dedicated Bearer Activation procedure.
+ * The message shall also be sent on the S5/S8 interface by the PGW to the SGW and on the S4 interface by the SGW to
+ * the SGSN as part of the Secondary PDP Context Activation procedure or the Network Requested Secondary PDP
+ * Context Activation procedure.
+ * The message shall also be sent on the S2b interface by the PGW to the ePDG as part of the Dedicated S2b bearer
+ * activation with GTP on S2b.
+ */
+typedef struct itti_s11_create_bearer_request_s {
+  teid_t                     local_teid;       ///< not in specs for inner use
+
+  teid_t                     teid;             ///< S11 SGW Tunnel Endpoint Identifier
+
+  pti_t                      pti; ///< C: This IE shall be sent on the S5/S8 and S4/S11 interfaces
+  ///< when the procedure was initiated by a UE Requested
+  ///< Bearer Resource Modification Procedure or UE Requested
+  ///< Bearer Resource Allocation Procedure (see NOTE 1) or
+  ///< Secondary PDP Context Activation Procedure.
+  ///< The PTI shall be the same as the one used in the
+  ///< corresponding Bearer Resource Command.
+
+  ebi_t                      linked_eps_bearer_id; ///< M: This IE shall be included to indicate the default bearer
+  ///< associated with the PDN connection.
+
+  protocol_configuration_options_t pco;///< O: This IE may be sent on the S5/S8 and S4/S11 interfaces
+
+  bearer_contexts_within_create_bearer_request_t bearer_contexts;    ///< M: Several IEs with this type and instance values shall be
+  ///< included as necessary to represent a list of Bearers.
+
+  FQ_CSID_t                  pgw_fq_csid;       ///< C: This IE shall be included by MME on S11 and shall be
+  ///< forwarded by SGW on S5/S8 according to the
+  ///< requirements in 3GPP TS 23.007 [17].
+
+  FQ_CSID_t                  sgw_fq_csid;       ///< C:This IE shall be included by the SGW on the S11 interface
+  ///< according to the requirements in 3GPP TS 23.007 [17].
+
+  //Change Reporting Action ///< This IE shall be included on the S5/S8 and S4/S11
+  ///< interfaces with the appropriate Action field If the location
+  ///< Change Reporting mechanism is to be started or stopped
+  ///< for this subscriber in the SGSN/MME.
+
+  //CSG Information ///< This IE shall be included on the S5/S8 and S4/S11
+  ///< interfaces with the appropriate Action field if the CSG Info Reporting Action
+  ///< reporting mechanism is to be started or stopped for this
+  ///< subscriber in the SGSN/MME.
+
+  // Private Extension   Private Extension
+
+  /* GTPv2-C specific parameters */
+  void                      *trxn;                        ///< Transaction identifier
+  uint32_t                   peer_ip;
+} itti_s11_create_bearer_request_t;
+
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_create_bearer_response_t
+ *  @brief Create Bearer Response
+ *
+ * The Create Bearer Response message shall be sent on the S5/S8 interface by the SGW to the PGW, and on the S11
+ * interface by the MME to the SGW as part of the Dedicated Bearer Activation procedure.
+ * The message shall also be sent on the S5/S8 interface by the SGW to the PGW and on the S4 interface by the SGSN to
+ * the SGW as part of Secondary PDP Context Activation procedure or the Network Requested Secondary PDP Context
+ * Activation procedure.
+ * The message shall also be sent on the S2b interface by the ePDG to the PGW as part of the Dedicated S2b bearer
+ * activation with GTP on S2b.
+ * Possible Cause values are specified in Table 8.4-1. Message specific cause values are:
+ * - "Request accepted".
+ * - "Request accepted partially".
+ * - "Context not found".
+ * - "Semantic error in the TFT operation".
+ * - "Syntactic error in the TFT operation".
+ * - "Semantic errors in packet filter(s)".
+ * - "Syntactic errors in packet filter(s)".
+ * - "Service not supported".
+ * - "Unable to page UE".
+ * - "UE not responding".
+ * - "Unable to page UE due to Suspension".
+ * - "UE refuses".
+ * - "Denied in RAT".
+ * - "UE context without TFT already activated".
+ */
+typedef struct itti_s11_create_bearer_response_s {
+  teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
+
+  // here fields listed in 3GPP TS 29.274
+  SGWCause_t               cause;               ///< M
+
+  bearer_contexts_created_t bearer_contexts;///< Several IEs with this type and instance value shall be
+  ///< included on the S4/S11, S5/S8 and S2b interfaces as
+  ///< necessary to represent a list of Bearers.
+
+  // Recovery   C This IE shall be included on the S4/S11, S5/S8 and S2b interfaces if contacting the peer for the first time
+
+  FQ_CSID_t                mme_fq_csid;         ///< C This IE shall be included by the MME on the S11
+  ///< interface and shall be forwarded by the SGW on the S5/S8
+  ///< interfaces according to the requirements in 3GPP TS
+  ///< 23.007 [17].
+
+  FQ_CSID_t                sgw_fq_csid;         ///< C This IE shall be included by the MME on the S11
+  ///< interface and shall be forwarded by the SGW on the S5/S8
+  ///< interfaces according to the requirements in 3GPP TS
+  ///< 23.007 [17].
+
+  FQ_CSID_t                epdg_fq_csid;         ///< C This IE shall be included by the ePDG on the S2b interface
+  ///< according to the requirements in 3GPP TS 23.007 [17].
+
+  protocol_configuration_options_t pco;///< C: If the UE includes the PCO IE, then the MME/SGSN shall
+  ///< copy the content of this IE transparently from the PCO IE
+  ///< included by the UE. If the SGW receives PCO from
+  ///< MME/SGSN, SGW shall forward it to the PGW.
+
+  UETimeZone_t             ue_time_zone;      ///< O: This IE is optionally included by the MME on the S11
+  ///< interface or by the SGSN on the S4 interface.
+  ///< CO: The SGW shall forward this IE on the S5/S8 interface if the
+  ///< SGW supports this IE and it receives it from the
+  ///< MME/SGSN.
+
+  Uli_t                    uli;              ///< O: This IE is optionally included by the MME on the S11
+  ///< interface or by the SGSN on the S4 interface.
+  ///< CO: The SGW shall forward this IE on the S5/S8 interface if the
+  ///< SGW supports this IE and it receives it from the
+  ///< MME/SGSN.
+
+  // Private Extension Private Extension        ///< optional
+
+  /* S11 stack specific parameter. Not used in standalone epc mode */
+  void                    *trxn;                      ///< Transaction identifier
+} itti_s11_create_bearer_response_t;
 
 
 //-----------------------------------------------------------------------------

@@ -101,7 +101,7 @@ s1ap_mme_itti_nas_downlink_cnf (
   return itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 }
 //------------------------------------------------------------------------------
-void s1ap_mme_itti_mme_app_initial_ue_message(
+void s1ap_mme_itti_s1ap_initial_ue_message(
   const sctp_assoc_id_t   assoc_id,
   const enb_ue_s1ap_id_t  enb_ue_s1ap_id,
   const mme_ue_s1ap_id_t  mme_ue_s1ap_id,
@@ -121,57 +121,57 @@ void s1ap_mme_itti_mme_app_initial_ue_message(
 
   OAILOG_FUNC_IN (LOG_S1AP);
   AssertFatal((nas_msg_length < 1000), "Bad length for NAS message %lu", nas_msg_length);
-  message_p = itti_alloc_new_message(TASK_S1AP, MME_APP_INITIAL_UE_MESSAGE);
+  message_p = itti_alloc_new_message(TASK_S1AP, S1AP_INITIAL_UE_MESSAGE);
 
-  MME_APP_INITIAL_UE_MESSAGE(message_p).sctp_assoc_id          = assoc_id;
-  MME_APP_INITIAL_UE_MESSAGE(message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
-  MME_APP_INITIAL_UE_MESSAGE(message_p).mme_ue_s1ap_id         = mme_ue_s1ap_id;
+  S1AP_INITIAL_UE_MESSAGE(message_p).sctp_assoc_id          = assoc_id;
+  S1AP_INITIAL_UE_MESSAGE(message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
+  S1AP_INITIAL_UE_MESSAGE(message_p).mme_ue_s1ap_id         = mme_ue_s1ap_id;
 
-  MME_APP_INITIAL_UE_MESSAGE(message_p).nas                    = blk2bstr(nas_msg, nas_msg_length);
+  S1AP_INITIAL_UE_MESSAGE(message_p).nas                    = blk2bstr(nas_msg, nas_msg_length);
 
-  MME_APP_INITIAL_UE_MESSAGE(message_p).tai                    = *tai;
-  MME_APP_INITIAL_UE_MESSAGE(message_p).cgi                    = *cgi;
-  MME_APP_INITIAL_UE_MESSAGE(message_p).rrc_establishment_cause = rrc_cause + 1;
+  S1AP_INITIAL_UE_MESSAGE(message_p).tai                    = *tai;
+  S1AP_INITIAL_UE_MESSAGE(message_p).cgi                    = *cgi;
+  S1AP_INITIAL_UE_MESSAGE(message_p).rrc_establishment_cause = rrc_cause + 1;
 
   if (opt_s_tmsi) {
-    MME_APP_INITIAL_UE_MESSAGE(message_p).is_s_tmsi_valid      = true;
-    MME_APP_INITIAL_UE_MESSAGE(message_p).opt_s_tmsi           = *opt_s_tmsi;
+    S1AP_INITIAL_UE_MESSAGE(message_p).is_s_tmsi_valid      = true;
+    S1AP_INITIAL_UE_MESSAGE(message_p).opt_s_tmsi           = *opt_s_tmsi;
   } else {
-    MME_APP_INITIAL_UE_MESSAGE(message_p).is_s_tmsi_valid      = false;
+    S1AP_INITIAL_UE_MESSAGE(message_p).is_s_tmsi_valid      = false;
   }
   if (opt_csg_id) {
-    MME_APP_INITIAL_UE_MESSAGE(message_p).is_csg_id_valid      = true;
-    MME_APP_INITIAL_UE_MESSAGE(message_p).opt_csg_id           = *opt_csg_id;
+    S1AP_INITIAL_UE_MESSAGE(message_p).is_csg_id_valid      = true;
+    S1AP_INITIAL_UE_MESSAGE(message_p).opt_csg_id           = *opt_csg_id;
   } else {
-    MME_APP_INITIAL_UE_MESSAGE(message_p).is_csg_id_valid      = false;
+    S1AP_INITIAL_UE_MESSAGE(message_p).is_csg_id_valid      = false;
   }
   if (opt_gummei) {
-    MME_APP_INITIAL_UE_MESSAGE(message_p).is_gummei_valid      = true;
-    MME_APP_INITIAL_UE_MESSAGE(message_p).opt_gummei           = *opt_gummei;
+    S1AP_INITIAL_UE_MESSAGE(message_p).is_gummei_valid      = true;
+    S1AP_INITIAL_UE_MESSAGE(message_p).opt_gummei           = *opt_gummei;
   } else {
-    MME_APP_INITIAL_UE_MESSAGE(message_p).is_gummei_valid      = false;
+    S1AP_INITIAL_UE_MESSAGE(message_p).is_gummei_valid      = false;
   }
 
-  MME_APP_INITIAL_UE_MESSAGE(message_p).transparent.mme_ue_s1ap_id = mme_ue_s1ap_id;
-  MME_APP_INITIAL_UE_MESSAGE(message_p).transparent.enb_ue_s1ap_id = enb_ue_s1ap_id;
-  MME_APP_INITIAL_UE_MESSAGE(message_p).transparent.e_utran_cgi    = *cgi;
+  S1AP_INITIAL_UE_MESSAGE(message_p).transparent.mme_ue_s1ap_id = mme_ue_s1ap_id;
+  S1AP_INITIAL_UE_MESSAGE(message_p).transparent.enb_ue_s1ap_id = enb_ue_s1ap_id;
+  S1AP_INITIAL_UE_MESSAGE(message_p).transparent.e_utran_cgi    = *cgi;
 
 
   MSC_LOG_TX_MESSAGE(
         MSC_S1AP_MME,
         MSC_MMEAPP_MME,
         NULL,0,
-        "0 MME_APP_INITIAL_UE_MESSAGE ue_id "MME_UE_S1AP_ID_FMT" as cause %u tai:%c%c%c.%c%c%c:%u len %u ",
+        "0 S1AP_INITIAL_UE_MESSAGE ue_id "MME_UE_S1AP_ID_FMT" as cause %u tai:%c%c%c.%c%c%c:%u len %u ",
         mme_ue_s1ap_id,
-        MME_APP_INITIAL_UE_MESSAGE(message_p).rrc_establishment_cause,
-        (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.mcc_digit1 + 0x30),
-        (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.mcc_digit2 + 0x30),
-        (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.mcc_digit3 + 0x30),
-        (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.mnc_digit1 + 0x30),
-        (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.mnc_digit2 + 0x30),
-        (9 < MME_APP_INITIAL_UE_MESSAGE(message_p).tai.mnc_digit3) ? ' ': (char)(MME_APP_INITIAL_UE_MESSAGE(message_p).tai.mnc_digit3 + 0x30),
-        MME_APP_INITIAL_UE_MESSAGE(message_p).tai.tac,
-        MME_APP_INITIAL_UE_MESSAGE(message_p).nas->slen);
+        S1AP_INITIAL_UE_MESSAGE(message_p).rrc_establishment_cause,
+        (char)(S1AP_INITIAL_UE_MESSAGE(message_p).tai.mcc_digit1 + 0x30),
+        (char)(S1AP_INITIAL_UE_MESSAGE(message_p).tai.mcc_digit2 + 0x30),
+        (char)(S1AP_INITIAL_UE_MESSAGE(message_p).tai.mcc_digit3 + 0x30),
+        (char)(S1AP_INITIAL_UE_MESSAGE(message_p).tai.mnc_digit1 + 0x30),
+        (char)(S1AP_INITIAL_UE_MESSAGE(message_p).tai.mnc_digit2 + 0x30),
+        (9 < S1AP_INITIAL_UE_MESSAGE(message_p).tai.mnc_digit3) ? ' ': (char)(S1AP_INITIAL_UE_MESSAGE(message_p).tai.mnc_digit3 + 0x30),
+        S1AP_INITIAL_UE_MESSAGE(message_p).tai.tac,
+        S1AP_INITIAL_UE_MESSAGE(message_p).nas->slen);
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }

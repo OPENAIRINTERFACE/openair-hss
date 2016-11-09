@@ -28,9 +28,11 @@
 
 #include "bstrlib.h"
 
+#include "dynamic_memory_check.h"
 #include "log.h"
 #include "assertions.h"
 #include "queue.h"
+#include "hashtable.h"
 #include "sgw_config.h"
 #include "intertask_interface.h"
 #include "itti_free_defined_msg.h"
@@ -48,6 +50,8 @@
 
 static NwGtpv2cStackHandleT             s11_sgw_stack_handle = 0;
 
+hash_table_ts_t                        *s11_sgw_teid_2_gtv2c_teid_handle = NULL;
+
 /* ULP callback for the GTPv2-C stack */
 //------------------------------------------------------------------------------
 static NwRcT s11_sgw_ulp_process_stack_req_cb (NwGtpv2cUlpHandleT hUlp, NwGtpv2cUlpApiT * pUlpApi)
@@ -57,36 +61,43 @@ static NwRcT s11_sgw_ulp_process_stack_req_cb (NwGtpv2cUlpHandleT hUlp, NwGtpv2c
   DevAssert (pUlpApi );
 
   switch (pUlpApi->apiType) {
-  case NW_GTPV2C_ULP_API_INITIAL_REQ_IND:
-    OAILOG_DEBUG (LOG_S11, "Received initial req indication\n");
+    case NW_GTPV2C_ULP_API_INITIAL_REQ_IND:
+      OAILOG_DEBUG (LOG_S11, "Received initial req indication\n");
 
-    switch (pUlpApi->apiInfo.initialReqIndInfo.msgType) {
-    case NW_GTP_CREATE_SESSION_REQ:
-      ret = s11_sgw_handle_create_session_request (&s11_sgw_stack_handle, pUlpApi);
+      switch (pUlpApi->apiInfo.initialReqIndInfo.msgType) {
+        case NW_GTP_CREATE_SESSION_REQ:
+          ret = s11_sgw_handle_create_session_request (&s11_sgw_stack_handle, pUlpApi);
+          break;
+
+        case NW_GTP_MODIFY_BEARER_REQ:
+          ret = s11_sgw_handle_modify_bearer_request (&s11_sgw_stack_handle, pUlpApi);
+          break;
+
+        case NW_GTP_DELETE_SESSION_REQ:
+          ret = s11_sgw_handle_delete_session_request (&s11_sgw_stack_handle, pUlpApi);
+          break;
+
+        case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:
+          ret = s11_sgw_handle_release_access_bearers_request (&s11_sgw_stack_handle, pUlpApi);
+          break;
+
+        case NW_GTP_CREATE_BEARER_RSP:
+          ret = s11_sgw_handle_create_bearer_response (&s11_sgw_stack_handle, pUlpApi);
+          break;
+
+        default:
+          OAILOG_WARNING (LOG_S11,  "Received unhandled message type %d\n", pUlpApi->apiInfo.initialReqIndInfo.msgType);
+          break;
+      }
       break;
 
-    case NW_GTP_MODIFY_BEARER_REQ:
-      ret = s11_sgw_handle_modify_bearer_request (&s11_sgw_stack_handle, pUlpApi);
-      break;
-
-    case NW_GTP_DELETE_SESSION_REQ:
-      ret = s11_sgw_handle_delete_session_request (&s11_sgw_stack_handle, pUlpApi);
-      break;
-
-    case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:
-      ret = s11_sgw_handle_release_access_bearers_request (&s11_sgw_stack_handle, pUlpApi);
+    case NW_GTPV2C_ULP_API_RSP_FAILURE_IND:
+      OAILOG_WARNING (LOG_S11, "Received response failure indication from ULP API\n");
       break;
 
     default:
-      OAILOG_WARNING (LOG_S11,  "Received unhandled message type %d\n", pUlpApi->apiInfo.initialReqIndInfo.msgType);
+      OAILOG_ERROR (LOG_S11, "Received unknown stack req message %d\n", pUlpApi->apiType);
       break;
-    }
-
-    break;
-
-  default:
-    OAILOG_ERROR (LOG_S11, "Received unknown stack req message %d\n", pUlpApi->apiType);
-    break;
   }
 
   return ret == -1 ? NW_FAILURE : NW_OK;
@@ -198,6 +209,12 @@ static void *s11_sgw_thread (void *args)
       }
       break;
 
+    case S11_CREATE_BEARER_REQUEST:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_CREATE_BEARER_REQUEST from S-PGW APP\n");
+        s11_sgw_handle_create_bearer_request (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_create_bearer_request);
+      }
+      break;
+
     case S11_DELETE_SESSION_RESPONSE:{
         OAILOG_DEBUG (LOG_S11, "Received S11_DELETE_SESSION_RESPONSE from S-PGW APP\n");
         s11_sgw_handle_delete_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_delete_session_response);
@@ -289,6 +306,12 @@ int s11_sgw_init (sgw_config_t * config_p)
   logMgr.logMgrHandle = 0;
   logMgr.logReqCallback = s11_sgw_log_wrapper;
   DevAssert (NW_OK == nwGtpv2cSetLogMgrEntity (s11_sgw_stack_handle, &logMgr));
+
+
+  bstring b = bfromcstr("s11_sgw_teid_2_gtv2c_teid_handle");
+  s11_sgw_teid_2_gtv2c_teid_handle = hashtable_ts_create(256, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);
+  bdestroy_wrapper (&b);
+
 
   if (itti_create_task (TASK_S11, &s11_sgw_thread, NULL) < 0) {
     OAILOG_ERROR (LOG_S11, "S11 pthread_create: %s\n", strerror (errno));

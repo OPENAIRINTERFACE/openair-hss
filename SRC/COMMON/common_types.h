@@ -191,6 +191,7 @@ typedef struct paa_s{
   uint8_t ipv6_prefix_length;
 } paa_t;
 
+void copy_paa(paa_t *paa_dst, paa_t *paa_src);
 bstring paa_to_bstring(paa_t *paa);
 
 
@@ -227,18 +228,18 @@ typedef enum {
   PRE_EMPTION_CAPABILITY_ENABLED  = 0,
   PRE_EMPTION_CAPABILITY_DISABLED = 1,
   PRE_EMPTION_CAPABILITY_MAX,
-} pre_emp_capability_t;
+} pre_emption_capability_t;
 
 typedef enum {
   PRE_EMPTION_VULNERABILITY_ENABLED  = 0,
   PRE_EMPTION_VULNERABILITY_DISABLED = 1,
   PRE_EMPTION_VULNERABILITY_MAX,
-} pre_emp_vulnerability_t;
+} pre_emption_vulnerability_t;
 
 typedef struct {
-  priority_level_t        priority_level;
-  pre_emp_vulnerability_t pre_emp_vulnerability;
-  pre_emp_capability_t    pre_emp_capability;
+  priority_level_t            priority_level;
+  pre_emption_vulnerability_t pre_emp_vulnerability;
+  pre_emption_capability_t    pre_emp_capability;
 } allocation_retention_priority_t;
 
 typedef struct eps_subscribed_qos_profile_s {

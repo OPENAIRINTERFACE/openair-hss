@@ -33,4 +33,7 @@ int s11_mme_handle_release_access_bearer_response (NwGtpv2cStackHandleT * stack_
 /* @brief Handle a Modify Bearer Response received from S-GW. */
 int s11_mme_handle_modify_bearer_response (NwGtpv2cStackHandleT * stack_p, NwGtpv2cUlpApiT * pUlpApi);
 
+/* @brief Handle a Create Bearer Request received from S-GW. */
+int s11_mme_handle_create_bearer_request (NwGtpv2cStackHandleT * stack_p, NwGtpv2cUlpApiT * pUlpApi);
+
 #endif /* FILE_S11_MME_BEARER_MANAGER_SEEN */

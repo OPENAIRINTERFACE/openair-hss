@@ -188,7 +188,7 @@ s6a_parse_priority_level (
 static inline int
 s6a_parse_pre_emp_capability (
   struct avp_hdr *hdr,
-  pre_emp_capability_t * pre_emp_capability)
+  pre_emption_capability_t * pre_emp_capability)
 {
   DevCheck (hdr->avp_value->u32 < PRE_EMPTION_CAPABILITY_MAX, hdr->avp_value->u32, PRE_EMPTION_CAPABILITY_MAX, 0);
   *pre_emp_capability = hdr->avp_value->u32;
@@ -198,7 +198,7 @@ s6a_parse_pre_emp_capability (
 static inline int
 s6a_parse_pre_emp_vulnerability (
   struct avp_hdr *hdr,
-  pre_emp_vulnerability_t * pre_emp_vulnerability)
+  pre_emption_vulnerability_t * pre_emp_vulnerability)
 {
   DevCheck (hdr->avp_value->u32 < PRE_EMPTION_VULNERABILITY_MAX, hdr->avp_value->u32, PRE_EMPTION_VULNERABILITY_MAX, 0);
   *pre_emp_vulnerability = hdr->avp_value->u32;
