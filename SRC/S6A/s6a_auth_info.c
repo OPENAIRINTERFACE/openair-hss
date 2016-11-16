@@ -221,7 +221,8 @@ s6a_aia_cb (
 
   if (avp) {
     CHECK_FCT (fd_msg_avp_hdr (avp, &hdr));
-    sprintf (s6a_auth_info_ans_p->imsi, "%*s", (int)hdr->avp_value->os.len, hdr->avp_value->os.data);
+    snprintf (s6a_auth_info_ans_p->imsi, (int)hdr->avp_value->os.len + 1,
+              "%*s", (int)hdr->avp_value->os.len, hdr->avp_value->os.data);
   } else {
     DevMessage ("Query has been freed before we received the answer\n");
   }
