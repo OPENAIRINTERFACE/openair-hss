@@ -136,8 +136,7 @@ sgw_handle_create_session_request (
     s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_S11 = session_req_pP->sender_fteid_for_cp.teid;
     s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.s_gw_teid_S11_S4 = new_endpoint_p->local_teid;
     s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn = session_req_pP->trxn;
-    s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_int_ip_address_S11 = session_req_pP->peer_ip;
-    // may use ntohl or reverse, will see
+    //s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_int_ip_address_S11 = session_req_pP->peer_ip;
     FTEID_T_2_IP_ADDRESS_T ((&session_req_pP->sender_fteid_for_cp), (&s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11));
     //--------------------------------------
     // PDN connection
@@ -257,12 +256,10 @@ sgw_handle_sgi_endpoint_created (
      * * * *  we set the cause value regarding the S1-U bearer establishment result status.
      */
     if (resp_pP->status == 0) {
-      uint32_t                                address = sgw_app.sgw_ip_address_S1u_S12_S4_up;
-
       create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid = resp_pP->sgw_S1u_teid;
       create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.interface_type = S1_U_SGW_GTP_U;
       create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4 = 1;
-      create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address = address;
+      create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address.s_addr = sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr;
       create_session_response_p->ambr.br_dl = 100000000;
       create_session_response_p->ambr.br_ul = 40000000;
 
@@ -289,13 +286,13 @@ sgw_handle_sgi_endpoint_created (
     create_session_response_p->s11_sgw_teid.teid = resp_pP->context_teid;
     create_session_response_p->s11_sgw_teid.interface_type = S11_SGW_GTP_C;
     create_session_response_p->s11_sgw_teid.ipv4 = 1;
-    create_session_response_p->s11_sgw_teid.ipv4_address = spgw_config.sgw_config.ipv4.S11;
+    create_session_response_p->s11_sgw_teid.ipv4_address.s_addr = spgw_config.sgw_config.ipv4.S11.s_addr;
 
     create_session_response_p->bearer_contexts_created.bearer_contexts[0].eps_bearer_id = resp_pP->eps_bearer_id;
     create_session_response_p->bearer_contexts_created.num_bearer_context += 1;
 
     create_session_response_p->trxn = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
-    create_session_response_p->peer_ip = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_int_ip_address_S11;
+    create_session_response_p->peer_ip.s_addr = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr;
   } else {
     create_session_response_p->cause = CONTEXT_NOT_FOUND;
     create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
@@ -306,7 +303,7 @@ sgw_handle_sgi_endpoint_created (
                   create_session_response_p->teid,
                   create_session_response_p->s11_sgw_teid.teid,
                   create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid,
-                  create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address,
+                  create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address.s_addr,
                   create_session_response_p->bearer_contexts_created.bearer_contexts[0].eps_bearer_id,
                   create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause);
   MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME,
@@ -315,7 +312,7 @@ sgw_handle_sgi_endpoint_created (
                       create_session_response_p->teid,
                       create_session_response_p->s11_sgw_teid.teid,
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid,
-                      create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address,
+                      create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address.s_addr,
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].eps_bearer_id,
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause);
   rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
@@ -377,7 +374,7 @@ sgw_handle_gtpv1uCreateTunnelResp (
     switch (sgi_create_endpoint_resp.paa.pdn_type) {
     case IPv4_OR_v6:
       if (!pgw_get_free_ipv4_paa_address (&inaddr)) {
-        IN_ADDR_TO_BUFFER (inaddr, sgi_create_endpoint_resp.paa.ipv4_address);
+        sgi_create_endpoint_resp.paa.ipv4_address.s_addr = inaddr.s_addr;
       } else {
         OAILOG_WARNING (LOG_SPGW_APP, "Failed to allocate IPv4 PAA for PDN type IPv4_OR_v6\n");
 
@@ -393,7 +390,7 @@ sgw_handle_gtpv1uCreateTunnelResp (
     case IPv4:
       if (true == address_allocation_via_nas_signalling) {
         if (pgw_get_free_ipv4_paa_address (&inaddr) == 0) {
-          IN_ADDR_TO_BUFFER (inaddr, sgi_create_endpoint_resp.paa.ipv4_address);
+          sgi_create_endpoint_resp.paa.ipv4_address.s_addr = inaddr.s_addr;
         } else {
           OAILOG_ERROR (LOG_SPGW_APP, "Failed to allocate IPv4 PAA for PDN type IPv4\n");
         }
@@ -417,7 +414,7 @@ sgw_handle_gtpv1uCreateTunnelResp (
 
     case IPv4_AND_v6:
       if (!pgw_get_free_ipv4_paa_address (&inaddr)) {
-        IN_ADDR_TO_BUFFER (inaddr, sgi_create_endpoint_resp.paa.ipv4_address);
+        sgi_create_endpoint_resp.paa.ipv4_address.s_addr = inaddr.s_addr;
       } else {
         OAILOG_ERROR (LOG_SPGW_APP, "Failed to allocate IPv4 PAA for PDN type IPv4_AND_v6\n");
       }
@@ -601,16 +598,10 @@ sgw_handle_sgi_endpoint_updated (
 
       //-------------------------
       struct in_addr enb = {.s_addr = 0};
-      enb.s_addr = ((in_addr_t)eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[0]) |
-           ((in_addr_t)eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[1] << 8) |
-           ((in_addr_t)eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[2] << 16) |
-           ((in_addr_t)eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address[3] << 24);
+      enb.s_addr = eps_bearer_entry_p->enb_ip_address_S1u.address.ipv4_address.s_addr;
 
       struct in_addr ue = {.s_addr = 0};
-      ue.s_addr = ((in_addr_t)eps_bearer_entry_p->paa.ipv4_address[0]) |
-           ((in_addr_t)eps_bearer_entry_p->paa.ipv4_address[1] << 8) |
-           ((in_addr_t)eps_bearer_entry_p->paa.ipv4_address[2] << 16) |
-           ((in_addr_t)eps_bearer_entry_p->paa.ipv4_address[3] << 24);
+      ue.s_addr = eps_bearer_entry_p->paa.ipv4_address.s_addr;
 
       rv = gtp_mod_kernel_tunnel_add(ue, enb, eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_entry_p->enb_teid_S1u);
 
@@ -859,7 +850,7 @@ sgw_handle_delete_session_request (
     }
 
     delete_session_resp_p->trxn = delete_session_req_pP->trxn;
-    delete_session_resp_p->peer_ip = delete_session_req_pP->peer_ip;
+    delete_session_resp_p->peer_ip.s_addr = delete_session_req_pP->peer_ip.s_addr;
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_DELETE_SESSION_RESPONSE teid %u cause %u trxn %u", delete_session_resp_p->teid, delete_session_resp_p->cause, delete_session_resp_p->trxn);
     rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
@@ -878,7 +869,7 @@ sgw_handle_delete_session_request (
 
     delete_session_resp_p->cause = CONTEXT_NOT_FOUND;
     delete_session_resp_p->trxn = delete_session_req_pP->trxn;
-    delete_session_resp_p->peer_ip = delete_session_req_pP->peer_ip;
+    delete_session_resp_p->peer_ip.s_addr = delete_session_req_pP->peer_ip.s_addr;
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_DELETE_SESSION_RESPONSE CONTEXT_NOT_FOUND trxn %u", delete_session_resp_p->trxn);
     rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
@@ -980,7 +971,7 @@ int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid)
       itti_s11_create_bearer_request_t *s11_create_bearer_request = &message_p->ittiMsg.s11_create_bearer_request;
 
       //s11_create_bearer_request->trxn = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
-      s11_create_bearer_request->peer_ip = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_int_ip_address_S11;
+      s11_create_bearer_request->peer_ip.s_addr = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr;
       s11_create_bearer_request->local_teid = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.s_gw_teid_S11_S4;
 
       s11_create_bearer_request->teid = s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_S11;
@@ -1006,8 +997,7 @@ int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid)
       s11_create_bearer_request->bearer_contexts.bearer_contexts[0].s1u_sgw_fteid.ipv6           = 0;
       s11_create_bearer_request->bearer_contexts.bearer_contexts[0].s1u_sgw_fteid.interface_type = S1_U_SGW_GTP_U;
       s11_create_bearer_request->bearer_contexts.bearer_contexts[0].s1u_sgw_fteid.teid           = sgw_get_new_s1u_teid ();
-      uint32_t address = sgw_app.sgw_ip_address_S1u_S12_S4_up;
-      s11_create_bearer_request->bearer_contexts.bearer_contexts[0].s1u_sgw_fteid.ipv4_address   = address;
+      s11_create_bearer_request->bearer_contexts.bearer_contexts[0].s1u_sgw_fteid.ipv4_address.s_addr   = sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr;
 
       //s11_create_bearer_request->bearer_contexts.bearer_contexts[0].s5_s8_u_pgw_fteid =;
       //s11_create_bearer_request->bearer_contexts.bearer_contexts[0].s12_sgw_fteid     =;

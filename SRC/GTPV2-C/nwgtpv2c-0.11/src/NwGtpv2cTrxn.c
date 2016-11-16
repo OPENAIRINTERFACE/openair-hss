@@ -68,7 +68,7 @@ extern                                  "C" {
     NwRcT                                   rc;
     NW_ASSERT (thiz);
     NW_ASSERT (thiz->pMsg);
-    rc = thiz->pStack->udp.udpDataReqCallback (thiz->pStack->udp.hUdp, thiz->pMsg->msgBuf, thiz->pMsg->msgLen, thiz->peerIp, thiz->peerPort);
+    rc = thiz->pStack->udp.udpDataReqCallback (thiz->pStack->udp.hUdp, thiz->pMsg->msgBuf, thiz->pMsg->msgLen, &thiz->peerIp, thiz->peerPort);
     thiz->maxRetries--;
     return rc;
   }
@@ -258,7 +258,7 @@ extern                                  "C" {
   NwGtpv2cTrxnT                          *nwGtpv2cTrxnOutstandingRxNew (
   NW_IN NwGtpv2cStackT * thiz,
   __attribute__ ((unused)) NW_IN uint32_t teidLocal,
-  NW_IN uint32_t peerIp,
+  NW_IN struct in_addr * peerIp,
   NW_IN uint32_t peerPort,
   NW_IN uint32_t seqNum) {
     NwRcT                                   rc;
@@ -277,7 +277,7 @@ extern                                  "C" {
       pTrxn->maxRetries = 2;
       pTrxn->t3Timer = 2;
       pTrxn->seqNum = seqNum;
-      pTrxn->peerIp = peerIp;
+      pTrxn->peerIp.s_addr = peerIp->s_addr;
       pTrxn->peerPort = peerPort;
       pTrxn->pMsg = NULL;
       pTrxn->hRspTmr = 0;
@@ -290,7 +290,9 @@ extern                                  "C" {
          * Case of duplicate request message from peer. Retransmit response.
          */
         if (pCollision->pMsg) {
-          rc = pCollision->pStack->udp.udpDataReqCallback (pCollision->pStack->udp.hUdp, pCollision->pMsg->msgBuf, pCollision->pMsg->msgLen, pCollision->peerIp, pCollision->peerPort);
+          rc = pCollision->pStack->udp.udpDataReqCallback (pCollision->pStack->udp.hUdp,
+              pCollision->pMsg->msgBuf, pCollision->pMsg->msgLen,
+              &pCollision->peerIp, pCollision->peerPort);
         }
 
         rc = nwGtpv2cTrxnDelete (&pTrxn);

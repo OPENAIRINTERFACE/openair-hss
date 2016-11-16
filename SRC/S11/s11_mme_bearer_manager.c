@@ -192,8 +192,8 @@ s11_mme_modify_bearer_request (
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
                               S11_MME_GTP_C,
                               req_p->sender_fteid_for_cp.teid,
-                              req_p->sender_fteid_for_cp.ipv4 ? ntohl(req_p->sender_fteid_for_cp.ipv4_address) : 0,
-                              req_p->sender_fteid_for_cp.ipv6 ? req_p->sender_fteid_for_cp.ipv6_address : NULL);
+                              req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
+                              req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
 
 
 
@@ -295,43 +295,57 @@ s11_mme_handle_create_bearer_request (
 
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_CREATE_BEARER_REQUEST);
-  req_p = &message_p->ittiMsg.s11_create_bearer_request;
 
-  req_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+  if (message_p) {
+    req_p = &message_p->ittiMsg.s11_create_bearer_request;
 
-  /*
-   * Create a new message parser
-   */
-  rc = nwGtpv2cMsgParserNew (*stack_p, NW_GTP_CREATE_BEARER_REQ, s11_ie_indication_generic, NULL, &pMsgParser);
-  DevAssert (NW_OK == rc);
+    req_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
 
-
-  AssertFatal(0, "TODO other IEs");
-
-  /*
-   * Run the parser
-   */
-  rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
-
-  if (rc != NW_OK) {
-    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " ", req_p->teid);
     /*
-     * TODO: handle this case
+     * Create a new message parser
      */
-    itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
-    message_p = NULL;
+    rc = nwGtpv2cMsgParserNew (*stack_p, NW_GTP_CREATE_BEARER_REQ, s11_ie_indication_generic, NULL, &pMsgParser);
+    DevAssert (NW_OK == rc);
+
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, s11_ebi_ie_get,
+        &req_p->linked_eps_bearer_id);
+    DevAssert (NW_OK == rc);
+
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PCO, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, s11_pco_ie_get,
+        &req_p->pco);
+    DevAssert (NW_OK == rc);
+
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
+        s11_bearer_context_to_be_created_within_create_bearer_request_ie_get,
+        &req_p->bearer_contexts);
+    DevAssert (NW_OK == rc);
+
+    /*
+     * Run the parser
+     */
+    rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
+
+    if (rc != NW_OK) {
+      MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " ", req_p->teid);
+      /*
+       * TODO: handle this case
+       */
+      itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
+      message_p = NULL;
+      rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+      DevAssert (NW_OK == rc);
+      rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+      DevAssert (NW_OK == rc);
+      return RETURNerror;
+    }
+
+    MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " cause %u",
+      resp_p->teid, resp_p->cause);
     rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
     DevAssert (NW_OK == rc);
     rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
     DevAssert (NW_OK == rc);
-    return RETURNerror;
+    return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   }
-
-  MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " cause %u",
-    resp_p->teid, resp_p->cause);
-  rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
-  DevAssert (NW_OK == rc);
-  rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
-  DevAssert (NW_OK == rc);
-  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  return RETURNerror;
 }

@@ -86,8 +86,8 @@ s11_mme_create_session_request (
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
                               S11_MME_GTP_C,
                               req_p->sender_fteid_for_cp.teid,
-                              req_p->sender_fteid_for_cp.ipv4 ? ntohl(req_p->sender_fteid_for_cp.ipv4_address) : 0,
-                              req_p->sender_fteid_for_cp.ipv6 ? req_p->sender_fteid_for_cp.ipv6_address : NULL);
+                              req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
+                              req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
   /*
    * The P-GW TEID should be present on the S11 interface.
    * * * * In case of an initial attach it should be set to 0...
@@ -95,8 +95,8 @@ s11_mme_create_session_request (
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ONE,
                               S5_S8_PGW_GTP_C,
                               req_p->pgw_address_for_cp.teid,
-                              req_p->pgw_address_for_cp.ipv4 ? ntohl(req_p->pgw_address_for_cp.ipv4_address) : 0,
-                              req_p->pgw_address_for_cp.ipv6 ? req_p->pgw_address_for_cp.ipv6_address : NULL);
+                              req_p->pgw_address_for_cp.ipv4 ? &req_p->pgw_address_for_cp.ipv4_address : 0,
+                              req_p->pgw_address_for_cp.ipv6 ? &req_p->pgw_address_for_cp.ipv6_address : NULL);
   s11_apn_ie_set (&(ulp_req.hMsg), req_p->apn);
   s11_serving_network_ie_set (&(ulp_req.hMsg), &req_p->serving_network);
   s11_pco_ie_set (&(ulp_req.hMsg), &req_p->pco);
@@ -246,8 +246,8 @@ s11_mme_delete_session_request (
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
                               S11_MME_GTP_C,
                               req_p->sender_fteid_for_cp.teid,
-                              req_p->sender_fteid_for_cp.ipv4 ? ntohl(req_p->sender_fteid_for_cp.ipv4_address) : 0,
-                              req_p->sender_fteid_for_cp.ipv6 ? req_p->sender_fteid_for_cp.ipv6_address : NULL);
+                              req_p->sender_fteid_for_cp.ipv4 ? &req_p->sender_fteid_for_cp.ipv4_address : 0,
+                              req_p->sender_fteid_for_cp.ipv6 ? &req_p->sender_fteid_for_cp.ipv6_address : NULL);
 
   s11_ebi_ie_set (&(ulp_req.hMsg), (unsigned)req_p->lbi);
 

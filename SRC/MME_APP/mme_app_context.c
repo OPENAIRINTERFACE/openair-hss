@@ -753,11 +753,12 @@ mme_app_dump_ue_context (
 
           for (i = 0; i < apn_config_p->nb_ip_address; i++) {
             if (apn_config_p->ip_address[i].pdn_type == IPv4) {
-              OAILOG_DEBUG (LOG_MME_APP, "                           [" IPV4_ADDR "]\n", IPV4_ADDR_DISPLAY_8 (apn_config_p->ip_address[i].address.ipv4_address));
+              char ipv4[INET_ADDRSTRLEN];
+              inet_ntop (AF_INET, (void*)&apn_config_p->ip_address[i].address.ipv4_address, ipv4, INET_ADDRSTRLEN);
+              OAILOG_DEBUG (LOG_MME_APP, "                           [%s]\n", ipv4);
             } else {
-              char                                    ipv6[40];
-
-              inet_ntop (AF_INET6, apn_config_p->ip_address[i].address.ipv6_address, ipv6, 40);
+              char                                    ipv6[INET6_ADDRSTRLEN];
+              inet_ntop (AF_INET6, &apn_config_p->ip_address[i].address.ipv6_address, ipv6, INET6_ADDRSTRLEN);
               OAILOG_DEBUG (LOG_MME_APP, "                           [%s]\n", ipv6);
             }
           }

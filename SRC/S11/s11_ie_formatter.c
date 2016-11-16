@@ -444,7 +444,7 @@ s11_cause_ie_get (
   uint8_t * ieValue,
   void *arg)
 {
-  SGWCause_t                             *cause = (SGWCause_t *) arg;
+  sgw_cause_t                             *cause = (sgw_cause_t *) arg;
 
   DevAssert (cause );
   *cause = ieValue[0];
@@ -847,7 +847,7 @@ s11_bearer_context_created_ie_get (
 int
 s11_bearer_context_created_ie_set (
   NwGtpv2cMsgHandleT * msg,
-  const bearer_context_created_t * bearer)
+  const bearer_context_created_t const * bearer)
 {
   NwRcT                                   rc;
 
@@ -863,8 +863,9 @@ s11_bearer_context_created_ie_set (
   DevAssert (NW_OK == rc);
   rc = nwGtpv2cMsgAddIeFteid (*msg, NW_GTPV2C_IE_INSTANCE_ZERO,
                               bearer->s1u_sgw_fteid.interface_type,
-                              bearer->s1u_sgw_fteid.teid, bearer->s1u_sgw_fteid.ipv4 ? htonl (bearer->s1u_sgw_fteid.ipv4_address) : 0,
-                              bearer->s1u_sgw_fteid.ipv6 ? (uint8_t *) bearer->s1u_sgw_fteid.ipv6_address : NULL);
+                              bearer->s1u_sgw_fteid.teid,
+                              bearer->s1u_sgw_fteid.ipv4 ? &bearer->s1u_sgw_fteid.ipv4_address : 0,
+                              bearer->s1u_sgw_fteid.ipv6 ? &bearer->s1u_sgw_fteid.ipv6_address : NULL);
   DevAssert (NW_OK == rc);
   /*
    * End section for grouped IE: bearer context created
@@ -960,7 +961,7 @@ s11_serving_network_ie_set (
 int
 s11_fteid_ie_set (
   NwGtpv2cMsgHandleT * msg,
-  const FTeid_t * fteid)
+  const fteid_t * fteid)
 {
   NwRcT                                   rc;
   uint8_t                                 value[25];
@@ -978,14 +979,17 @@ s11_fteid_ie_set (
 
   int offset = 5;
   if (fteid->ipv4 == 1) {
-    memcpy (&value[offset], &fteid->ipv4_address, 4);
-    offset += 4;
+    uint32_t hbo = ntohl(fteid->ipv4_address.s_addr);
+    value[offset++] = (uint8_t)(hbo >> 24);
+    value[offset++] = (uint8_t)(hbo >> 16);
+    value[offset++] = (uint8_t)(hbo >> 8);
+    value[offset++] = (uint8_t)hbo;
   }
   if (fteid->ipv6 == 1) {
     /*
      * IPv6 present: copy the 16 bytes
      */
-    memcpy (&value[offset], &fteid->ipv6_address[0], 16);
+    memcpy (&value[offset], fteid->ipv6_address.__in6_u.__u6_addr8, 16);
     offset += 16;
   }
 
@@ -1004,7 +1008,7 @@ s11_fteid_ie_get (
   void *arg)
 {
   uint8_t                                 offset = 0;
-  FTeid_t                                *fteid = (FTeid_t *) arg;
+  fteid_t                                *fteid = (fteid_t *) arg;
 
   DevAssert (fteid );
   fteid->ipv4 = (ieValue[0] & 0x80) >> 7;
@@ -1021,20 +1025,24 @@ s11_fteid_ie_get (
     /*
      * IPv4 present: copy the 4 bytes
      */
-    memcpy (&fteid->ipv4_address, &ieValue[5], 4);
+    uint32_t hbo = (((uint32_t)ieValue[5]) << 24) |
+                   (((uint32_t)ieValue[6]) << 16) |
+                   (((uint32_t)ieValue[7]) << 8) |
+                   (uint32_t)ieValue[8];
+    fteid->ipv4_address.s_addr = htonl(hbo);
     offset = 4;
-    OAILOG_DEBUG (LOG_S11, "\t- IPv4 addr   " IPV4_ADDR "\n", IPV4_ADDR_FORMAT (fteid->ipv4_address));
+    OAILOG_DEBUG (LOG_S11, "\t- IPv4 addr   " IN_ADDR_FMT "\n", PRI_IN_ADDR (fteid->ipv4_address));
   }
 
   if (fteid->ipv6 == 1) {
-    char                                    ipv6_ascii[40];
+    char                                    ipv6_ascii[INET6_ADDRSTRLEN];
 
     /*
      * IPv6 present: copy the 16 bytes
      * * * * WARNING: if Ipv4 is present, 4 bytes of offset should be applied
      */
-    memcpy (fteid->ipv6_address, &ieValue[5 + offset], 16);
-    inet_ntop (AF_INET6, fteid->ipv6_address, ipv6_ascii, 40);
+    memcpy (fteid->ipv6_address.__in6_u.__u6_addr8, &ieValue[5 + offset], 16);
+    inet_ntop (AF_INET6, (void*)&fteid->ipv6_address, ipv6_ascii, INET6_ADDRSTRLEN);
     OAILOG_DEBUG (LOG_S11, "\t- IPv6 addr   %s\n", ipv6_ascii);
   }
 
@@ -1127,7 +1135,7 @@ s11_paa_ie_get (
   OAILOG_DEBUG (LOG_S11, "\t- PAA type  %d\n", paa->pdn_type);
 
   if (paa->pdn_type & 0x2) {
-    char                                    ipv6_ascii[40];
+    char                                    ipv6_ascii[INET6_ADDRSTRLEN];
 
     /*
      * IPv6 present: copy the 16 bytes
@@ -1137,8 +1145,9 @@ s11_paa_ie_get (
      * * * * NOTE: in Rel.8 the prefix length has a default value of /64
      */
     paa->ipv6_prefix_length = ieValue[1];
-    memcpy (paa->ipv6_address, &ieValue[2], 16);
-    inet_ntop (AF_INET6, paa->ipv6_address, ipv6_ascii, 40);
+
+    memcpy (paa->ipv6_address.__in6_u.__u6_addr8, &ieValue[2], 16);
+    inet_ntop (AF_INET6, &paa->ipv6_address, ipv6_ascii, INET6_ADDRSTRLEN);
     OAILOG_DEBUG (LOG_S11, "\t- IPv6 addr %s/%u\n", ipv6_ascii, paa->ipv6_prefix_length);
   }
 
@@ -1147,8 +1156,15 @@ s11_paa_ie_get (
   }
 
   if (paa->pdn_type & 0x1) {
-    memcpy (paa->ipv4_address, &ieValue[1 + offset], 4);
-    OAILOG_DEBUG (LOG_S11, "\t- IPv4 addr " IPV4_ADDR "\n", paa->ipv4_address[0], paa->ipv4_address[1], paa->ipv4_address[2], paa->ipv4_address[3]);
+    uint32_t ip = (((uint32_t)ieValue[1 + offset]) << 24) |
+                  (((uint32_t)ieValue[2 + offset]) << 16) |
+                  (((uint32_t)ieValue[3 + offset]) << 8) |
+                   ((uint32_t)ieValue[4 + offset]);
+
+    paa->ipv4_address.s_addr = htonl(ip);
+    char ipv4[INET_ADDRSTRLEN];
+    inet_ntop (AF_INET, (void*)&paa->ipv4_address, ipv4, INET_ADDRSTRLEN);
+    OAILOG_DEBUG (LOG_S11, "\t- IPv4 addr %s\n", ipv4);
   }
 
   paa->pdn_type -= 1;
@@ -1180,13 +1196,16 @@ s11_paa_ie_set (
      * If ipv6 or ipv4v6 present
      */
     temp[1] = paa->ipv6_prefix_length;
-    memcpy (&temp[2], paa->ipv6_address, 16);
+    memcpy (&temp[2], paa->ipv6_address.__in6_u.__u6_addr8, 16);
     offset += 17;
   }
 
   if (pdn_type & 0x1) {
-    memcpy (&temp[offset], paa->ipv4_address, 4);
-    offset += 4;
+    uint32_t hbo = ntohl(paa->ipv4_address.s_addr);
+    temp[offset++] = (uint8_t)(hbo >> 24);
+    temp[offset++] = (uint8_t)(hbo >> 16);
+    temp[offset++] = (uint8_t)(hbo >> 8);
+    temp[offset++] = (uint8_t)hbo;
   }
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_PAA, offset, 0, temp);
@@ -1717,30 +1736,32 @@ s11_fqcsid_ie_get (
 
   switch (fq_csid->node_id_type) {
   case GLOBAL_UNICAST_IPv4:{
+    char                                    ipv4[INET_ADDRSTRLEN];
       if (ieLength != 7) {
         return NW_GTPV2C_IE_INCORRECT;
       }
-
-      fq_csid->node_id.unicast_ipv4 = (ieValue[1] << 24) | (ieValue[2] << 16) | (ieValue[3] << 8) | (ieValue[4]);
+      int addr = (ieValue[1] << 24) | (ieValue[2] << 16) | (ieValue[3] << 8) | (ieValue[4]);
+      fq_csid->node_id.unicast_ipv4.s_addr = addr;
       fq_csid->csid = (ieValue[5] << 8) | ieValue[6];
-      OAILOG_DEBUG (LOG_S11, "\t- v4 address [" IPV4_ADDR "]\n", IPV4_ADDR_FORMAT (fq_csid->node_id.unicast_ipv4));
+      inet_ntop (AF_INET, (void*)&fq_csid->node_id.unicast_ipv4, ipv4, INET_ADDRSTRLEN);
+      OAILOG_DEBUG (LOG_S11, "\t- v4 address [%s]\n", ipv4);
     }
     break;
 
   case GLOBAL_UNICAST_IPv6:{
-      char                                    ipv6[40];
+      char                                    ipv6[INET6_ADDRSTRLEN];
 
       if (ieLength != 19) {
         return NW_GTPV2C_IE_INCORRECT;
       }
 
-      memcpy (fq_csid->node_id.unicast_ipv6, &ieValue[1], 16);
+      memcpy (fq_csid->node_id.unicast_ipv6.__in6_u.__u6_addr8, &ieValue[1], 16);
       fq_csid->csid = (ieValue[17] << 8) | ieValue[18];
       /*
        * Convert the ipv6 to printable string
        */
-      inet_ntop (AF_INET6, fq_csid->node_id.unicast_ipv6, ipv6, 40);
-      OAILOG_DEBUG (LOG_S11, "\t- v6 address [%s]\n", fq_csid->node_id.unicast_ipv6);
+      inet_ntop (AF_INET6, (void*)&fq_csid->node_id.unicast_ipv6, ipv6, INET6_ADDRSTRLEN);
+      OAILOG_DEBUG (LOG_S11, "\t- v6 address [%s]\n", ipv6);
     }
     break;
 

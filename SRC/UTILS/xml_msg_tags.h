@@ -104,6 +104,8 @@
 // should be declared by asn1c compiler (todo asn1 to XML)
 #    define E_RAB_SETUP_ITEM_IE_XML_STR                       "e_rab_setup_item"
 #    define TEID_IE_XML_STR                                   "teid"
+#    define TEID_XML_SCAN_FMT "%"SCNx32
+#    define TEID_XML_FMT      "%"PRIx32
 #    define TRANSPORT_LAYER_ADDRESS_IE_XML_STR                "transport_layer_address"
 #  define ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF_XML_STR "ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF"
 // should be declared by asn1c compiler (todo asn1 to XML)
@@ -119,5 +121,6 @@
 #  define ITTI_NAS_DOWNLINK_DATA_REJ_XML_STR                "ITTI_NAS_DOWNLINK_DATA_REJ"
 #  define ITTI_NAS_DOWNLINK_DATA_CNF_XML_STR                "ITTI_NAS_DOWNLINK_DATA_CNF"
 #    define NAS_ERROR_CODE_XML_STR                            "nas_error_code"
+#  define ITTI_S11_CREATE_BEARER_REQ_XML_STR                "ITTI_S11_CREATE_BEARER_REQ"
 #endif
 

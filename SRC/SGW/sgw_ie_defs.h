@@ -30,6 +30,7 @@
 #define FILE_SGW_IE_DEFS_SEEN
 #include "common_types.h"
 #include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 
 
 typedef uint8_t  EBI_t;
@@ -211,48 +212,13 @@ typedef struct {
   uint8_t mcc[3];
   uint8_t mnc[3];
 } ServingNetwork_t;
-/*
-typedef enum RatType_e {
-    RAT_TYPE_UTRAN = 1,
-    RAT_TYPE_GERAN,
-    RAT_TYPE_WLAN,
-    RAT_TYPE_GAN,
-    RAT_TYPE_HSPA_EVOLUTION,
-    RAT_TYPE_EUTRAN,
-} RatType_t;*/
-
-/* WARNING: not complete... */
-typedef enum InterfaceType_e {
-  S1_U_ENODEB_GTP_U = 0,
-  S1_U_SGW_GTP_U    = 1,
-  S12_RNC_GTP_U     = 2,
-  S12_SGW_GTP_U     = 3,
-  S5_S8_SGW_GTP_U   = 4,
-  S5_S8_PGW_GTP_U   = 5,
-  S5_S8_SGW_GTP_C   = 6,
-  S5_S8_PGW_GTP_C   = 7,
-  S11_MME_GTP_C     = 10,
-  S11_SGW_GTP_C     = 11,
-} InterfaceType_t;
-
-typedef struct {
-  unsigned        ipv4:1;
-  unsigned        ipv6:1;
-  InterfaceType_t interface_type;
-  teid_t          teid; ///< TEID or GRE Key
-  uint32_t        ipv4_address;
-  uint8_t         ipv6_address[16];
-} FTeid_t;
 
 
 #define FTEID_T_2_IP_ADDRESS_T(fte_p,ip_p) \
 do { \
     if ((fte_p)->ipv4) { \
       (ip_p)->pdn_type = IPv4; \
-      (ip_p)->address.ipv4_address[0] = (uint8_t)((fte_p)->ipv4_address & 0x000000FF);         \
-      (ip_p)->address.ipv4_address[1] = (uint8_t)(((fte_p)->ipv4_address & 0x0000FF00) >> 8);  \
-      (ip_p)->address.ipv4_address[2] = (uint8_t)(((fte_p)->ipv4_address & 0x00FF0000) >> 16); \
-      (ip_p)->address.ipv4_address[3] = (uint8_t)(((fte_p)->ipv4_address & 0xFF000000) >> 24); \
+      (ip_p)->address.ipv4_address.s_addr = (fte_p)->ipv4_address.s_addr;         \
     } \
     if ((fte_p)->ipv6) { \
         if ((fte_p)->ipv4) { \
@@ -260,7 +226,7 @@ do { \
         } else { \
           (ip_p)->pdn_type = IPv6; \
         } \
-        memcpy((ip_p)->address.ipv6_address, (fte_p)->ipv6_address, 16); \
+        memcpy(&(ip_p)->address.ipv6_address, &(fte_p)->ipv6_address, sizeof((fte_p)->ipv6_address)); \
     } \
 } while (0)
 
@@ -326,8 +292,8 @@ typedef struct {
   node_id_type_t node_id_type;
   uint16_t       csid;          ///< Connection Set Identifier
   union {
-    uint32_t   unicast_ipv4;
-    uint8_t    unicast_ipv6[16];
+    struct in_addr   unicast_ipv4;
+    struct in6_addr  unicast_ipv6;
     struct {
       uint16_t mcc;
       uint16_t mnc;
@@ -370,156 +336,12 @@ typedef struct {
   unsigned vb:1;
 } bearer_flags_t;
 
-#define PRE_EMPTION_CAPABILITY_ENABLED  (0x0)
-#define PRE_EMPTION_CAPABILITY_DISABLED (0x1)
-#define PRE_EMPTION_VULNERABILITY_ENABLED  (0x0)
-#define PRE_EMPTION_VULNERABILITY_DISABLED (0x1)
-
-typedef struct {
-  /* PCI (Pre-emption Capability)
-   * The following values are defined:
-   * - PRE-EMPTION_CAPABILITY_ENABLED (0)
-   *    This value indicates that the service data flow or bearer is allowed
-   *    to get resources that were already assigned to another service data
-   *    flow or bearer with a lower priority level.
-   * - PRE-EMPTION_CAPABILITY_DISABLED (1)
-   *    This value indicates that the service data flow or bearer is not
-   *    allowed to get resources that were already assigned to another service
-   *    data flow or bearer with a lower priority level.
-   * Default value: PRE-EMPTION_CAPABILITY_DISABLED
-   */
-  unsigned pci:1;
-  /* PL (Priority Level): defined in 3GPP TS.29.212 #5.3.45
-   * Values 1 to 15 are defined, with value 1 as the highest level of priority.
-   * Values 1 to 8 should only be assigned for services that are authorized to
-   * receive prioritized treatment within an operator domain. Values 9 to 15
-   * may be assigned to resources that are authorized by the home network and
-   * thus applicable when a UE is roaming.
-   */
-  unsigned pl:4;
-  /* PVI (Pre-emption Vulnerability): defined in 3GPP TS.29.212 #5.3.47
-   * Defines whether a service data flow can lose the resources assigned to it
-   * in order to admit a service data flow with higher priority level.
-   * The following values are defined:
-   * - PRE-EMPTION_VULNERABILITY_ENABLED (0)
-   *   This value indicates that the resources assigned to the service data
-   *   flow or bearer can be pre-empted and allocated to a service data flow
-   *   or bearer with a higher priority level.
-   * - PRE-EMPTION_VULNERABILITY_DISABLED (1)
-   *   This value indicates that the resources assigned to the service data
-   *   flow or bearer shall not be pre-empted and allocated to a service data
-   *   flow or bearer with a higher priority level.
-   * Default value: EMPTION_VULNERABILITY_ENABLED
-   */
-  unsigned pvi:1;
-  uint8_t  qci;
-  ambr_t   gbr;           ///< Guaranteed bit rate
-  ambr_t   mbr;           ///< Maximum bit rate
-} bearer_qos_t;
-
-///* TFT operation Code */
-//typedef enum {
-//  /* 0 = spare */
-//
-//  CREATE_NEW_TFT                          = 0x1,
-//  DELETE_EXISTING_TFT                     = 0x2,
-//  ADD_PACKET_FILTERS_TO_EXISTING_TFT      = 0x3,
-//  REPLACE_PACKET_FILTERS_IN_EXISTING_TFT  = 0x4,
-//  DELETE_PACKET_FILTERS_FROM_EXISTING_TFT = 0x5,
-//  NO_TFT_OPERATION                        = 0x6,
-//
-//  TFT_OPERATION_CODE_MAX
-//
-//  /* Other Values Reserved */
-//} tft_operation_code_t;
-//
-///* Defined in 3GPP TS 24.008 Table 10.5.162 */
-//typedef enum {
-//  PACKET_FILTER_PRE_REL_7         = 0,
-//  PACKET_FILTER_DIRECTION_DL_ONLY = 1,
-//  PACKET_FILTER_DIRECTION_UL_ONLY = 2,
-//  PACKET_FILTER_BIDIRECTIONAL     = 3,
-//} packet_filter_direction_t;
-//
-///* The Traffic Flow Template is specified in 3GPP TS 24.008 #10.5.6.12
-// */
-//typedef struct {
-//  /* The TFT operation code "No TFT operation" shall be used
-//   * if a parameters list is included but no packet filter
-//   * list is included in the traffic flow template information
-//   * element.
-//   */
-//  tft_operation_code_t tft_operation_code;
-//
-//  /* The E bit indicates if a parameters list is included
-//   * in the TFT IE and it is encoded as follows:
-//   * - 0 parameters list is not included
-//   * - 1 parameters list is included
-//   */
-//  unsigned             e_bit:1;
-//
-//  /* For the "delete existing TFT" operation and for the "no TFT
-//   * operation", the number of packet filters shall be coded
-//   * as 0. For all other operations, the number of packet filters
-//   * shall be greater than 0 and less than or equal to 15.
-//   */
-//  uint8_t              number_of_packet_filters;
-//
-//  /* TODO: add packet filter list as defined in 3GPP TS 29.274 Table 10.5.162 */
-//} tft_t;
-
 typedef enum node_type_e {
   NODE_TYPE_MME  = 0,
   NODE_TYPE_SGSN = 1
 } node_type_t;
 
 
-/* Cause as defined in 3GPP TS 29.274 #8.4 */
-typedef enum SGWCause_e {
-  /* Request / Initial message */
-  LOCAL_DETACH                    = 2,
-  COMPLETE_DETACH                 = 3,
-  RAT_CHANGE_3GPP_TO_NON_3GPP     = 4,  ///< RAT changed from 3GPP to Non-3GPP
-  ISR_DEACTIVATION                = 5,
-  ERROR_IND_FROM_RNC_ENB_SGSN     = 6,
-  IMSI_DETACH_ONLY                = 7,
-  /* Acceptance in a Response/Triggered message */
-  REQUEST_ACCEPTED                = 16,
-  REQUEST_ACCEPTED_PARTIALLY      = 17,
-  NEW_PDN_TYPE_NW_PREF            = 18, ///< New PDN type due to network preference
-  NEW_PDN_TYPE_SAB_ONLY           = 19, ///< New PDN type due to single address bearer only
-  /* Rejection in a Response triggered message. */
-  CONTEXT_NOT_FOUND               = 64,
-  INVALID_MESSAGE_FORMAT          = 65,
-  INVALID_LENGTH                  = 67,
-  SERVICE_NOT_SUPPORTED           = 68,
-  MANDATORY_IE_INCORRECT          = 69,
-  MANDATORY_IE_MISSING            = 70,
-  SYSTEM_FAILURE                  = 72,
-  NO_RESOURCES_AVAILABLE          = 73,
-  SEMANTIC_ERROR_IN_TFT           = 74,
-  SYNTACTIC_ERROR_IN_TFT          = 75,
-  SEMANTIC_ERRORS_IN_PF           = 76,
-  SYNTACTIC_ERRORS_IN_PF          = 77,
-  MISSING_OR_UNKNOWN_APN          = 78,
-  GRE_KEY_NOT_FOUND               = 80,
-  RELOCATION_FAILURE              = 81,
-  DENIED_IN_RAT                   = 82,
-  UE_NOT_RESPONDING               = 87,
-  UE_REFUSES                      = 88,
-  SERVICE_DENIED                  = 89,
-  UNABLE_TO_PAGE_UE               = 90,
-  NO_MEMORY_AVAILABLE             = 91,
-  REQUEST_REJECTED                = 94,
-  DATA_FORWARDING_NOT_SUPPORTED   = 106,
-  INVALID_REPLY_FROM_REMOTE_PEER  = 107,
-  FALLBACK_TO_GTPV1               = 108,
-  INVALID_PEER                    = 109,
-  TEMP_REJECT_HO_IN_PROGRESS      = 110, ///< Temporarily rejected due to handover procedure in progress
-  REJECTED_FOR_PMIPv6_REASON      = 112, ///< Request rejected for a PMIPv6 reason (see 3GPP TS 29.275 [26]).
-  M_PDN_APN_NOT_ALLOWED           = 116, ///< Multiple PDN connections for a given APN not allowed.
-  SGW_CAUSE_MAX
-} SGWCause_t;
 
 typedef struct {
   uint8_t  cause_value;
@@ -542,15 +364,15 @@ typedef struct {
 typedef struct bearer_context_to_be_created_s {
   uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
   traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
-  FTeid_t                  s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
-  FTeid_t                  s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
-  FTeid_t                  s5_s8_u_sgw_fteid;   ///< S5/S8-U SGW F-TEID, Conditional CSR, This IE shall be included on the S5/S8 interface for an "eUTRAN Initial Attach",
+  fteid_t                  s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
+  fteid_t                  s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
+  fteid_t                  s5_s8_u_sgw_fteid;   ///< S5/S8-U SGW F-TEID, Conditional CSR, This IE shall be included on the S5/S8 interface for an "eUTRAN Initial Attach",
                                                 ///  a "PDP Context Activation" or a "UE Requested PDN Connectivity".
-  FTeid_t                  s5_s8_u_pgw_fteid;   ///< S5/S8-U PGW F-TEID, Conditional CSR, This IE shall be included on the S4 and S11 interfaces for the TAU/RAU/Handover
+  fteid_t                  s5_s8_u_pgw_fteid;   ///< S5/S8-U PGW F-TEID, Conditional CSR, This IE shall be included on the S4 and S11 interfaces for the TAU/RAU/Handover
                                                 /// cases when the GTP-based S5/S8 is used.
-  FTeid_t                  s12_rnc_fteid;       ///< S12 RNC F-TEID, Conditional Optional CSR, This IE shall be included on the S4 interface if the S12
+  fteid_t                  s12_rnc_fteid;       ///< S12 RNC F-TEID, Conditional Optional CSR, This IE shall be included on the S4 interface if the S12
                                                 /// interface is used in the Enhanced serving RNS relocation with SGW relocation procedure.
-  FTeid_t                  s2b_u_epdg_fteid;    ///< S2b-U ePDG F-TEID, Conditional CSR, This IE shall be included on the S2b interface for an Attach
+  fteid_t                  s2b_u_epdg_fteid;    ///< S2b-U ePDG F-TEID, Conditional CSR, This IE shall be included on the S2b interface for an Attach
                                                 /// with GTP on S2b, a UE initiated Connectivity to Additional PDN with GTP on S2b and a Handover to Untrusted Non-
                                                 /// 3GPP IP Access with GTP on S2b.
   /* This parameter is received only if the QoS parameters have been modified */
@@ -578,13 +400,13 @@ bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BE
 //-----------------
 typedef struct bearer_context_created_s {
   uint8_t      eps_bearer_id;       ///< EPS Bearer ID
-  SGWCause_t   cause;
+  sgw_cause_t   cause;
 
   /* This parameter is used on S11 interface only */
-  FTeid_t      s1u_sgw_fteid;       ///< S1-U SGW F-TEID
+  fteid_t      s1u_sgw_fteid;       ///< S1-U SGW F-TEID
 
   /* This parameter is used on S4 interface only */
-  FTeid_t      s4u_sgw_fteid;       ///< S4-U SGW F-TEID
+  fteid_t      s4u_sgw_fteid;       ///< S4-U SGW F-TEID
 
   /* This parameter is used on S11 and S5/S8 interface only for a
    * GTP-based S5/S8 interface and during:
@@ -592,10 +414,10 @@ typedef struct bearer_context_created_s {
    * - PDP Context Activation
    * - UE requested PDN connectivity
    */
-  FTeid_t      s5_s8_u_pgw_fteid;   ///< S4-U SGW F-TEID
+  fteid_t      s5_s8_u_pgw_fteid;   ///< S4-U SGW F-TEID
 
   /* This parameter is used on S4 interface only and when S12 interface is used */
-  FTeid_t      s12_sgw_fteid;       ///< S12 SGW F-TEID
+  fteid_t      s12_sgw_fteid;       ///< S12 SGW F-TEID
 
   /* This parameter is received only if the QoS parameters have been modified */
   bearer_qos_t *bearer_level_qos;
@@ -611,8 +433,8 @@ typedef struct bearer_contexts_created_s {
 //-----------------
 typedef struct bearer_context_modified_s {
   uint8_t    eps_bearer_id;   ///< EPS Bearer ID
-  SGWCause_t cause;
-  FTeid_t    s1u_sgw_fteid;   ///< Sender F-TEID for user plane
+  sgw_cause_t cause;
+  fteid_t    s1u_sgw_fteid;   ///< Sender F-TEID for user plane
 } bearer_context_modified_t;
 
 typedef struct bearer_contexts_modified_s {
@@ -624,7 +446,7 @@ typedef struct bearer_contexts_modified_s {
 //-----------------
 typedef struct bearer_context_marked_for_removal_s {
   uint8_t    eps_bearer_id;   ///< EPS bearer ID
-  SGWCause_t cause;
+  sgw_cause_t cause;
 } bearer_context_marked_for_removal_t;
 
 typedef struct bearer_contexts_marked_for_removal_s {
@@ -635,7 +457,7 @@ typedef struct bearer_contexts_marked_for_removal_s {
 //-----------------
 typedef struct bearer_context_to_be_modified_s {
   uint8_t eps_bearer_id;      ///< EPS Bearer ID
-  FTeid_t s1_eNB_fteid;       ///< S1 eNodeB F-TEID
+  fteid_t s1_eNB_fteid;       ///< S1 eNodeB F-TEID
 } bearer_context_to_be_modified_t;
 
 typedef struct bearer_contexts_to_be_modified_s {
@@ -647,7 +469,7 @@ typedef struct bearer_contexts_to_be_modified_s {
 
 typedef struct bearer_context_to_be_removed_s {
   uint8_t eps_bearer_id;      ///< EPS Bearer ID, Mandatory
-  FTeid_t s4u_sgsn_fteid;     ///< S4-U SGSN F-TEID, Conditional , redundant
+  fteid_t s4u_sgsn_fteid;     ///< S4-U SGSN F-TEID, Conditional , redundant
 } bearer_context_to_be_removed_t; // Within Create Session Request, Modify Bearer Request, Modify Access Bearers Request
 
 
@@ -664,23 +486,7 @@ typedef struct ebi_list_s {
 
 
 //-----------------
-typedef struct bearer_context_within_create_bearer_request_s {
-  uint8_t      eps_bearer_id;       ///< EBI,  Mandatory CSR
-  traffic_flow_template_t      tft; ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
-  FTeid_t      s1u_sgw_fteid;       ///< This IE shall be sent on the S11 interface if the S1-U interface is used.
-                                    ///< If SGW supports both IPv4 and IPv6, it shall send both an
-                                    ///< IPv4 address and an IPv6 address within the S1-U SGW F-TEID IE.
-  FTeid_t      s5_s8_u_pgw_fteid;   ///< This IE shall be sent on the S4, S5/S8 and S11 interfaces for GTP-based S5/S8 interface. The MME/SGSN shall
-                                    ///< ignore the IE on S11/S4 for PMIP-based S5/S8 interface.
-  FTeid_t      s12_sgw_fteid;       ///< This IE shall be sent on the S4 interface if the S12 interface is used. See NOTE 1.
-  FTeid_t      s4_u_sgw_fteid;      ///< This IE shall be sent on the S4 interface if the S4-U interface is used. See NOTE 1.
-  FTeid_t      s2b_u_pgw_fteid;     ///< This IE (for user plane) shall be sent on the S2b interface.
-  FTeid_t      s2a_u_pgw_fteid;     ///< This IE (for user plane) shall be sent on the S2a interface.
-  bearer_qos_t  bearer_level_qos;    ///<
-  protocol_configuration_options_t  pco;///< This IE may be sent on the S5/S8 and S4/S11 interfaces
-                                    ///< if ePCO is not supported by the UE or the network. This bearer level IE takes precedence
-                                    ///< over the PCO IE in the message body if they both exist.
-} bearer_context_within_create_bearer_request_t;
+
 
 typedef struct bearer_contexts_within_create_bearer_request_s {
 #define MSG_CREATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS   11

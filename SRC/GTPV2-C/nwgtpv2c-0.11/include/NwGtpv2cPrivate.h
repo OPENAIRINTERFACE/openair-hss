@@ -172,11 +172,11 @@ typedef struct NwGtpv2cMsgS {
  */
 
 typedef struct NwGtpv2cTrxn {
-  uint32_t                        seqNum;
-  uint32_t                        peerIp;
-  uint32_t                        peerPort;
-  uint8_t                         t3Timer;
-  uint8_t                         maxRetries;
+  uint32_t                      seqNum;
+  struct in_addr                peerIp;
+  uint32_t                      peerPort;
+  uint8_t                       t3Timer;
+  uint8_t                       maxRetries;
   NwGtpv2cMsgT*                 pMsg;
   NwGtpv2cStackT*               pStack;
   NwGtpv2cTimerHandleT          hRspTmr;                                /**< Handle to reponse timer            */
@@ -192,11 +192,11 @@ typedef struct NwGtpv2cTrxn {
  */
 
 typedef struct NwGtpv2cPathS {
-  uint32_t                        hUlpPath;                               /**< Handle to ULP path contect         */
-  uint32_t                        ipv4Address;
-  uint32_t                        restartCounter;
-  uint16_t                        t3ResponseTimout;
-  uint16_t                        n3RequestCount;
+  uint32_t                      hUlpPath;                               /**< Handle to ULP path contect         */
+  uint32_t                      ipv4Address;
+  uint32_t                      restartCounter;
+  uint16_t                      t3ResponseTimout;
+  uint16_t                      n3RequestCount;
   NwGtpv2cTimerHandleT          hKeepAliveTmr;                          /**< Handle to path keep alive echo timer */
   RB_ENTRY (NwGtpv2cPathS)      pathMapRbtNode;
 } NwGtpv2cPathT;

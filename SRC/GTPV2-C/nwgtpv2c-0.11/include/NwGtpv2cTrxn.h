@@ -77,7 +77,7 @@ nwGtpv2cTrxnWithSeqNumNew( NW_IN  NwGtpv2cStackT* pStack,
 NwGtpv2cTrxnT*
 nwGtpv2cTrxnOutstandingRxNew( NW_IN  NwGtpv2cStackT* pStack,
                               NW_IN  uint32_t teidLocal,
-                              NW_IN  uint32_t peerIp,
+                              NW_IN  struct in_addr * peerIp,
                               NW_IN  uint32_t peerPort,
                               NW_IN  uint32_t seqNum);
 

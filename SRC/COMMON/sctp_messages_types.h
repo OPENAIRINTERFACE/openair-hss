@@ -71,9 +71,9 @@ typedef struct sctp_init_s {
   /* Request usage of ipv6 */
   unsigned  ipv6:1;
   uint8_t   nb_ipv4_addr;
-  uint32_t  ipv4_address[10];
+  struct in_addr  ipv4_address[10];
   uint8_t   nb_ipv6_addr;
-  char     *ipv6_address[10];
+  struct in6_addr ipv6_address[10];
   uint16_t  port;
   uint32_t  ppid;
 } SctpInit;

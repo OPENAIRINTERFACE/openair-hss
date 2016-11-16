@@ -40,13 +40,13 @@
 
 typedef struct sgw_app_s {
 
-  bstring    sgw_if_name_S1u_S12_S4_up;
-  ipv4_nbo_t sgw_ip_address_S1u_S12_S4_up;
+  bstring        sgw_if_name_S1u_S12_S4_up;
+  struct in_addr sgw_ip_address_S1u_S12_S4_up;
 
-  bstring    sgw_if_name_S11_S4;
-  ipv4_nbo_t sgw_ip_address_S11_S4;
+  bstring        sgw_if_name_S11_S4;
+  struct in_addr sgw_ip_address_S11_S4;
 
-  ipv4_nbo_t sgw_ip_address_S5_S8_up; // unused now
+  struct in_addr sgw_ip_address_S5_S8_up; // unused now
 
   // key is S11 S-GW local teid
   hash_table_ts_t *s11teid2mme_hashtable;

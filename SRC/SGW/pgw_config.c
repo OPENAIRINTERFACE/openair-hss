@@ -128,7 +128,7 @@ int pgw_config_process (pgw_config_t * config_pP)
       OAILOG_ERROR (LOG_SPGW_APP, "inet_ntop");
       return RETURNerror;
     }
-    config_pP->ipv4.SGI = ipaddr->sin_addr.s_addr;
+    config_pP->ipv4.SGI.s_addr = ipaddr->sin_addr.s_addr;
 
     ifr.ifr_addr.sa_family = AF_INET;
     strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_SGI->data, IFNAMSIZ-1);
@@ -150,7 +150,7 @@ int pgw_config_process (pgw_config_t * config_pP)
       OAILOG_ERROR (LOG_SPGW_APP, "inet_ntop");
       return RETURNerror;
     }
-    config_pP->ipv4.S5_S8 = ipaddr->sin_addr.s_addr;
+    config_pP->ipv4.S5_S8.s_addr = ipaddr->sin_addr.s_addr;
 
     ifr.ifr_addr.sa_family = AF_INET;
     strncpy(ifr.ifr_name, (const char *)config_pP->ipv4.if_name_S5_S8->data, IFNAMSIZ-1);
@@ -177,7 +177,7 @@ int pgw_config_process (pgw_config_t * config_pP)
     do {
       addr_start.s_addr = addr_start.s_addr + htonl (2);
       ip4_ref = calloc (1, sizeof (conf_ipv4_list_elm_t));
-      ip4_ref->addr = addr_start;
+      ip4_ref->addr.s_addr = addr_start.s_addr;
       STAILQ_INSERT_TAIL (&config_pP->ipv4_pool_list, ip4_ref, ipv4_entries);
       counter64 = counter64 - 1;
     } while (counter64 > 0);
@@ -339,10 +339,10 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
       if (config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_DEFAULT_DNS_IPV4_ADDRESS, (const char **)&default_dns)
           && config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_DEFAULT_DNS_SEC_IPV4_ADDRESS, (const char **)&default_dns_sec)) {
         config_pP->ipv4.if_name_S5_S8 = bfromcstr (if_S5_S8);
-        IPV4_STR_ADDR_TO_INT_NWBO (default_dns, config_pP->ipv4.default_dns, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS !\n");
-        IPV4_STR_ADDR_TO_INT_NWBO (default_dns_sec, config_pP->ipv4.default_dns_sec, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS SEC!\n");
-        OAILOG_DEBUG (LOG_SPGW_APP, "Parsing configuration file default primary DNS IPv4 address: %x\n", config_pP->ipv4.default_dns);
-        OAILOG_DEBUG (LOG_SPGW_APP, "Parsing configuration file default secondary DNS IPv4 address: %x\n", config_pP->ipv4.default_dns_sec);
+        IPV4_STR_ADDR_TO_INADDR (default_dns, config_pP->ipv4.default_dns, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS !\n");
+        IPV4_STR_ADDR_TO_INADDR (default_dns_sec, config_pP->ipv4.default_dns_sec, "BAD IPv4 ADDRESS FORMAT FOR DEFAULT DNS SEC!\n");
+        OAILOG_DEBUG (LOG_SPGW_APP, "Parsing configuration file default primary DNS IPv4 address: %s\n", default_dns);
+        OAILOG_DEBUG (LOG_SPGW_APP, "Parsing configuration file default secondary DNS IPv4 address: %s\n", default_dns_sec);
       } else {
         OAILOG_WARNING (LOG_SPGW_APP, "NO DNS CONFIGURATION FOUND\n");
       }

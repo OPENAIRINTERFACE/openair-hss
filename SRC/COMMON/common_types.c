@@ -60,18 +60,18 @@ bstring ip_address_to_bstring(ip_address_t *ip_address)
   bstring bstr = NULL;
   switch (ip_address->pdn_type) {
   case IPv4:
-    bstr = blk2bstr(ip_address->address.ipv4_address, 4);
+    bstr = blk2bstr(&ip_address->address.ipv4_address.s_addr, 4);
     break;
   case IPv6:
-    bstr = blk2bstr(ip_address->address.ipv6_address, 16);
+    bstr = blk2bstr(&ip_address->address.ipv6_address, 16);
     break;
   case IPv4_AND_v6:
-    bstr = blk2bstr(ip_address->address.ipv4_address, 4);
-    bcatblk(bstr, ip_address->address.ipv6_address, 16);
+    bstr = blk2bstr(&ip_address->address.ipv4_address.s_addr, 4);
+    bcatblk(bstr, &ip_address->address.ipv6_address, 16);
     break;
   case IPv4_OR_v6:
     // do it like that now, TODO
-    bstr = blk2bstr(ip_address->address.ipv4_address, 4);
+    bstr = blk2bstr(&ip_address->address.ipv4_address.s_addr, 4);
     break;
   default:
     ;
@@ -115,20 +115,20 @@ bstring paa_to_bstring(paa_t *paa)
   bstring bstr = NULL;
   switch (paa->pdn_type) {
   case IPv4:
-    bstr = blk2bstr(paa->ipv4_address, 4);
+    bstr = blk2bstr(&paa->ipv4_address.s_addr, 4);
     break;
   case IPv6:
     DevAssert (paa->ipv6_prefix_length == 64);    // NAS seems to only support 64 bits
-    bstr = blk2bstr(paa->ipv6_address, paa->ipv6_prefix_length / 8);
+    bstr = blk2bstr(&paa->ipv6_address, paa->ipv6_prefix_length / 8);
     break;
   case IPv4_AND_v6:
     DevAssert (paa->ipv6_prefix_length == 64);    // NAS seems to only support 64 bits
-    bstr = blk2bstr(paa->ipv4_address, 4);
-    bcatblk(bstr, paa->ipv6_address, paa->ipv6_prefix_length / 8);
+    bstr = blk2bstr(&paa->ipv4_address.s_addr, 4);
+    bcatblk(bstr, &paa->ipv6_address, paa->ipv6_prefix_length / 8);
     break;
   case IPv4_OR_v6:
     // do it like that now, TODO
-    bstr = blk2bstr(paa->ipv4_address, 4);
+    bstr = blk2bstr(&paa->ipv4_address.s_addr, 4);
     break;
   default:
     ;

@@ -73,7 +73,7 @@ pgw_load_pool_ip_addresses (
   STAILQ_INIT (&pgw_app.ipv4_list_allocated);
   STAILQ_FOREACH (conf_ipv4_p, &spgw_config.pgw_config.ipv4_pool_list, ipv4_entries) {
     ipv4_p = calloc (1, sizeof (struct ipv4_list_elm_s));
-    ipv4_p->addr.s_addr = ntohl (conf_ipv4_p->addr.s_addr);
+    ipv4_p->addr.s_addr = conf_ipv4_p->addr.s_addr;
     STAILQ_INSERT_TAIL (&pgw_app.ipv4_list_free, ipv4_p, ipv4_entries);
     //SPGW_APP_DEBUG("Loaded IPv4 PAA address in pool: %s\n",
     //        inet_ntoa(conf_ipv4_p->addr));

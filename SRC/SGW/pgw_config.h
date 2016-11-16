@@ -75,19 +75,19 @@ typedef struct pgw_config_s {
 
   struct {
     bstring        if_name_S5_S8;
-    ipv4_nbo_t     S5_S8;
+    struct in_addr S5_S8;
     uint32_t       mtu_S5_S8; // read from system
     struct in_addr addr_S5_S8;// read from system
     uint8_t        mask_S5_S8;// read from system
 
     bstring        if_name_SGI;
-    ipv4_nbo_t     SGI;
+    struct in_addr SGI;
     uint32_t       mtu_SGI; // read from system
     struct in_addr addr_sgi;// read from system
     uint8_t        mask_sgi;// read from system
 
-    ipv4_nbo_t     default_dns;
-    ipv4_nbo_t     default_dns_sec;
+    struct in_addr default_dns;
+    struct in_addr default_dns_sec;
   } ipv4;
 
   bool      ue_tcp_mss_clamp; // for UE TCP traffic

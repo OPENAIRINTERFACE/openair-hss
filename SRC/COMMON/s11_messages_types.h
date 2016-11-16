@@ -153,9 +153,9 @@ typedef struct itti_s11_create_session_request_s {
   ///<       present in the message is not authenticated and is
   ///<       for an emergency attached UE.
 
-  FTeid_t            sender_fteid_for_cp; ///< Sender F-TEID for control plane (MME)
+  fteid_t            sender_fteid_for_cp; ///< Sender F-TEID for control plane (MME)
 
-  FTeid_t            pgw_address_for_cp;  ///< PGW S5/S8 address for control plane or PMIP
+  fteid_t            pgw_address_for_cp;  ///< PGW S5/S8 address for control plane or PMIP
   ///< This IE shall be sent on the S11 / S4 interfaces. The TEID
   ///< or GRE Key is set to "0" in the E-UTRAN initial attach, the
   ///< PDP Context Activation and the UE requested PDN
@@ -321,7 +321,7 @@ typedef struct itti_s11_create_session_request_s {
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void              *trxn;                ///< Transaction identifier
-  uint32_t           peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct in_addr     peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t           peer_port;           ///< MME port for S-GW or S-GW port for MME
 } itti_s11_create_session_request_t;
 
@@ -341,7 +341,7 @@ typedef struct itti_s11_create_session_response_s {
   teid_t                   teid;                ///< Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
-  SGWCause_t               cause;               ///< If the SGW cannot accept any of the "Bearer Context Created" IEs within Create Session Request
+  sgw_cause_t               cause;               ///< If the SGW cannot accept any of the "Bearer Context Created" IEs within Create Session Request
   ///< message, the SGW shall send the Create Session Response with appropriate reject Cause value.
 
   // change_reporting_action                    ///< This IE shall be included on the S5/S8 and S4/S11
@@ -354,14 +354,14 @@ typedef struct itti_s11_create_session_response_s {
   ///< reporting mechanism is to be started or stopped for this
   ///< subscriber in the SGSN/MME.
 
-  FTeid_t                  s11_sgw_teid;        ///< Sender F-TEID for control plane
+  fteid_t                  s11_sgw_teid;        ///< Sender F-TEID for control plane
   ///< This IE shall be sent on the S11/S4 interfaces. For the
   ///< S5/S8/S2b interfaces it is not needed because its content
   ///< would be identical to the IE PGW S5/S8/S2b F-TEID for
   ///< PMIP based interface or for GTP based Control Plane
   ///< interface.
 
-  FTeid_t                  s5_s8_pgw_teid;      ///< PGW S5/S8/S2b F-TEID for PMIP based interface or for GTP based Control Plane interface
+  fteid_t                  s5_s8_pgw_teid;      ///< PGW S5/S8/S2b F-TEID for PMIP based interface or for GTP based Control Plane interface
   ///< PGW shall include this IE on the S5/S8 interfaces during
   ///< the Initial Attach, UE requested PDN connectivity and PDP
   ///< Context Activation procedures.
@@ -493,7 +493,7 @@ typedef struct itti_s11_create_session_response_s {
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
   void                    *trxn;               ///< Transaction identifier
-  uint32_t                 peer_ip;            ///< MME ipv4 address
+  struct in_addr           peer_ip;            ///< MME ipv4 address
 } itti_s11_create_session_response_t;
 
 //-----------------------------------------------------------------------------
@@ -551,7 +551,7 @@ typedef struct itti_s11_create_bearer_request_s {
 
   /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
-  uint32_t                   peer_ip;
+  struct in_addr             peer_ip;
 } itti_s11_create_bearer_request_t;
 
 //-----------------------------------------------------------------------------
@@ -585,7 +585,7 @@ typedef struct itti_s11_create_bearer_response_s {
   teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
-  SGWCause_t               cause;               ///< M
+  sgw_cause_t               cause;               ///< M
 
   bearer_contexts_created_t bearer_contexts;///< Several IEs with this type and instance value shall be
   ///< included on the S4/S11, S5/S8 and S2b interfaces as
@@ -746,7 +746,7 @@ typedef struct itti_s11_modify_bearer_request_s {
   ///<   TAU/RAU procedure and set to 1 to allow the
   ///<   SGW changing the GTP-U F-TEID.
 
-  FTeid_t                  sender_fteid_for_cp; ///< C: Sender F-TEID for control plane
+  fteid_t                  sender_fteid_for_cp; ///< C: Sender F-TEID for control plane
   ///< This IE shall be sent on the S11 and S4 interfaces for a
   ///< TAU/RAU/ Handover with MME/SGSN change and without
   ///< any SGW change.
@@ -850,7 +850,7 @@ typedef struct itti_s11_modify_bearer_request_s {
 
   /* GTPv2-C specific parameters */
   void                      *trxn;                        ///< Transaction identifier
-  uint32_t                   peer_ip;
+  struct in_addr             peer_ip;
 } itti_s11_modify_bearer_request_t;
 
 //-----------------------------------------------------------------------------
@@ -870,7 +870,7 @@ typedef struct itti_s11_modify_bearer_response_s {
   teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
-  SGWCause_t               cause;               ///<
+  sgw_cause_t               cause;               ///<
 
   ebi_t                    linked_eps_bearer_id;///< This IE shall be sent on S5/S8 when the UE moves from a
   ///< Gn/Gp SGSN to the S4 SGSN or MME to identify the
@@ -965,7 +965,7 @@ typedef struct itti_s11_delete_session_request_s {
   teid_t      local_teid;             ///< not in specs for inner MME use
   teid_t      teid;                   ///< Tunnel Endpoint Identifier
   EBI_t       lbi;                    ///< Linked EPS Bearer ID
-  FTeid_t     sender_fteid_for_cp;    ///< Sender F-TEID for control plane
+  fteid_t     sender_fteid_for_cp;    ///< Sender F-TEID for control plane
 
   /* Operation Indication: This flag shall be set over S4/S11 interface
    * if the SGW needs to forward the Delete Session Request message to
@@ -981,7 +981,7 @@ typedef struct itti_s11_delete_session_request_s {
 
   /* GTPv2-C specific parameters */
   void       *trxn;
-  uint32_t    peer_ip;
+  struct in_addr peer_ip;
 } itti_s11_delete_session_request_t;
 
 
@@ -1001,7 +1001,7 @@ typedef struct itti_s11_delete_session_request_s {
  */
 typedef struct itti_s11_delete_session_response_s {
   teid_t      teid;                   ///< Remote Tunnel Endpoint Identifier
-  SGWCause_t  cause;
+  sgw_cause_t  cause;
   //recovery_t recovery;              ///< This IE shall be included on the S5/S8, S4/S11 and S2b
                                       ///< interfaces if contacting the peer for the first time
   protocol_configuration_options_t pco;///< PGW shall include Protocol Configuration Options (PCO)
@@ -1011,7 +1011,7 @@ typedef struct itti_s11_delete_session_response_s {
 
   /* GTPv2-C specific parameters */
   void       *trxn;
-  uint32_t    peer_ip;
+  struct in_addr  peer_ip;
 } itti_s11_delete_session_response_t;
 
 
@@ -1041,7 +1041,7 @@ typedef struct itti_s11_release_access_bearers_request_s {
   // Private Extension Private Extension ///< optional
   /* GTPv2-C specific parameters */
   void       *trxn;
-  uint32_t    peer_ip;
+  struct in_addr  peer_ip;
 } itti_s11_release_access_bearers_request_t;
 
 
@@ -1062,11 +1062,11 @@ typedef struct itti_s11_release_access_bearers_request_s {
  */
 typedef struct itti_s11_release_access_bearers_response_s {
   teid_t      teid;                   ///< Tunnel Endpoint Identifier
-  SGWCause_t  cause;
+  sgw_cause_t  cause;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
   /* GTPv2-C specific parameters */
   void       *trxn;
-  uint32_t    peer_ip;
+  struct in_addr  peer_ip;
 } itti_s11_release_access_bearers_response_t;
 #endif /* FILE_S11_MESSAGES_TYPES_SEEN */

@@ -56,7 +56,7 @@ struct udp_socket_desc_s {
 
   pthread_t                               listener_thread;      /* Thread affected to recv */
 
-  char                                   *local_address;        /* Local ipv4 address to use */
+  struct in_addr                          local_address;        /* Local ipv4 address to use */
   uint16_t                                local_port;   /* Local port to use */
 
   task_id_t                               task_id;      /* Task who has requested the new endpoint */
@@ -115,15 +115,14 @@ udp_server_get_socket_desc_by_sd (
 static
   int
 udp_server_create_socket (
-  int port,
-  char *address,
+  uint16_t port,
+  struct in_addr *address,
   task_id_t task_id)
 {
   struct sockaddr_in                      addr;
   int                                     sd;
   struct udp_socket_desc_s               *socket_desc_p = NULL;
 
-  OAILOG_DEBUG (LOG_UDP, "Creating new listen socket on address " IPV4_ADDR " and port %u\n", IPV4_ADDR_FORMAT (inet_addr (address)), port);
 
   /*
    * Create UDP socket
@@ -139,13 +138,17 @@ udp_server_create_socket (
   memset (&addr, 0, sizeof (struct sockaddr_in));
   addr.sin_family = AF_INET;
   addr.sin_port = htons (port);
-  addr.sin_addr.s_addr = inet_addr (address);
+  addr.sin_addr.s_addr = address->s_addr;
+
+  char ipv4[INET_ADDRSTRLEN];
+  inet_ntop (AF_INET, (void*)&addr.sin_addr, ipv4, INET_ADDRSTRLEN);
+  OAILOG_DEBUG (LOG_UDP, "Creating new listen socket on address %s and port %" PRIu16 "\n", ipv4, port);
 
   if (bind (sd, (struct sockaddr *)&addr, sizeof (struct sockaddr_in)) < 0) {
     /*
      * Bind failed
      */
-    OAILOG_ERROR (LOG_UDP, "Socket bind failed (%s) for address " IPV4_ADDR " and port %u\n", strerror (errno), IPV4_ADDR_FORMAT (inet_addr (address)), port);
+    OAILOG_ERROR (LOG_UDP, "Socket bind failed (%s) for address %s and port %" PRIu16 "\n", strerror (errno), ipv4, port);
     close (sd);
     return -1;
   }
@@ -165,7 +168,7 @@ udp_server_create_socket (
   socket_desc_p = calloc (1, sizeof (struct udp_socket_desc_s));
   DevAssert (socket_desc_p != NULL);
   socket_desc_p->sd = sd;
-  socket_desc_p->local_address = address;
+  socket_desc_p->local_address.s_addr = address->s_addr;
   socket_desc_p->local_port = port;
   socket_desc_p->task_id = task_id;
   OAILOG_DEBUG (LOG_UDP, "Inserting new descriptor for task %d, sd %d\n", socket_desc_p->task_id, socket_desc_p->sd);
@@ -235,7 +238,7 @@ udp_server_receive_and_process (
       udp_data_ind_p->buffer = forwarded_buffer;
       udp_data_ind_p->buffer_length = bytes_received;
       udp_data_ind_p->peer_port = htons (addr.sin_port);
-      udp_data_ind_p->peer_address = addr.sin_addr.s_addr;
+      udp_data_ind_p->peer_address = addr.sin_addr;
       OAILOG_DEBUG (LOG_UDP, "Msg of length %d received from %s:%u\n", bytes_received, inet_ntoa (addr.sin_addr), ntohs (addr.sin_port));
 
       if (itti_send_msg_to_task (udp_sock_pP->task_id, INSTANCE_DEFAULT, message_p) < 0) {
@@ -272,7 +275,7 @@ udp_intertask_interface (
       switch (ITTI_MSG_ID (received_message_p)) {
       case UDP_INIT:{
           udp_init_t                             *udp_init_p = &received_message_p->ittiMsg.udp_init;
-          rc = udp_server_create_socket (udp_init_p->port, udp_init_p->address, ITTI_MSG_ORIGIN_ID (received_message_p));
+          rc = udp_server_create_socket (udp_init_p->port, &udp_init_p->address, ITTI_MSG_ORIGIN_ID (received_message_p));
         }
         break;
 
@@ -291,7 +294,7 @@ udp_intertask_interface (
           memset (&peer_addr, 0, sizeof (struct sockaddr_in));
           peer_addr.sin_family = AF_INET;
           peer_addr.sin_port = htons (udp_data_req_p->peer_port);
-          peer_addr.sin_addr.s_addr = udp_data_req_p->peer_address;
+          peer_addr.sin_addr = udp_data_req_p->peer_address;
           pthread_mutex_lock (&udp_socket_list_mutex);
           udp_sock_p = udp_server_get_socket_desc (ITTI_MSG_ORIGIN_ID (received_message_p));
 
@@ -304,7 +307,8 @@ udp_intertask_interface (
 
           udp_sd = udp_sock_p->sd;
           pthread_mutex_unlock (&udp_socket_list_mutex);
-          OAILOG_DEBUG (LOG_UDP, "[%d] Sending message of size %u to " IPV4_ADDR " and port %u\n", udp_sd, udp_data_req_p->buffer_length, IPV4_ADDR_FORMAT (udp_data_req_p->peer_address), udp_data_req_p->peer_port);
+          OAILOG_DEBUG (LOG_UDP, "[%d] Sending message of size %u to " IN_ADDR_FMT " and port %u\n",
+              udp_sd, udp_data_req_p->buffer_length, PRI_IN_ADDR (udp_data_req_p->peer_address), udp_data_req_p->peer_port);
           bytes_written = sendto (udp_sd, &udp_data_req_p->buffer[udp_data_req_p->buffer_offset], udp_data_req_p->buffer_length, 0, (struct sockaddr *)&peer_addr, sizeof (struct sockaddr_in));
           // no free udp_data_req_p->buffer, statically allocated
 

@@ -392,9 +392,9 @@ extern                                  "C" {
   NW_IN NwGtpv2cMsgHandleT hMsg,
   NW_IN uint8_t instance,
   NW_IN uint8_t ifType,
-  NW_IN uint32_t teidOrGreKey,
-  NW_IN uint32_t ipv4Addr,
-  NW_IN uint8_t * pIpv6Addr) {
+  NW_IN const uint32_t teidOrGreKey,
+  NW_IN const struct in_addr  const * ipv4Addr,
+  NW_IN const struct in6_addr const * pIpv6Addr) {
     uint8_t                                 fteidBuf[32];
     uint8_t                                *pFteidBuf = fteidBuf;
 
@@ -405,13 +405,13 @@ extern                                  "C" {
 
     if (ipv4Addr) {
       fteidBuf[0] |= (0x01 << 7);
-      *((uint32_t *) (pFteidBuf)) = htonl (ipv4Addr);
+      *((uint32_t *) (pFteidBuf)) = ipv4Addr->s_addr;
       pFteidBuf += 4;
     }
 
     if (pIpv6Addr) {
       fteidBuf[0] |= (0x01 << 6);
-      memcpy ((pFteidBuf), pIpv6Addr, 16);
+      memcpy ((pFteidBuf), pIpv6Addr->__in6_u.__u6_addr8, 16);
       pFteidBuf += 16;
     }
 
@@ -620,8 +620,8 @@ extern                                  "C" {
   NW_IN uint8_t instance,
   NW_OUT uint8_t * ifType,
   NW_OUT uint32_t * teidOrGreKey,
-  NW_OUT uint32_t * ipv4Addr,
-  NW_OUT uint8_t * pIpv6Addr) {
+  NW_OUT struct in_addr * ipv4Addr,
+  NW_OUT struct in6_addr * pIpv6Addr) {
     NwGtpv2cMsgT                           *thiz = (NwGtpv2cMsgT *) hMsg;
     NwGtpv2cIeTlvT                         *pIe;
 
@@ -639,7 +639,7 @@ extern                                  "C" {
       pIeValue += 4;
 
       if (flags & 0x80) {
-        *ipv4Addr = ntohl (*((uint32_t *) (pIeValue)));
+        ipv4Addr->s_addr =  (*((uint32_t *) (pIeValue)));
         pIeValue += 4;
       }
 

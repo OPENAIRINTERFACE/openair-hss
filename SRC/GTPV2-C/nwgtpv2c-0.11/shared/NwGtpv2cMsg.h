@@ -433,9 +433,9 @@ NwRcT
 nwGtpv2cMsgAddIeFteid(NW_IN NwGtpv2cMsgHandleT hMsg,
                       NW_IN uint8_t       instance,
                       NW_IN uint8_t       ifType,
-                      NW_IN uint32_t      teidOrGreKey,
-                      NW_IN uint32_t      ipv4Addr,
-                      NW_IN uint8_t*      pIpv6Addr);
+                      NW_IN const uint32_t      teidOrGreKey,
+                      NW_IN const struct in_addr  const *ipv4Addr,
+                      NW_IN const struct in6_addr const *pIpv6Addr);
 
 NwRcT
 nwGtpv2cMsgGroupedIeStart(NW_IN NwGtpv2cMsgHandleT hMsg,
@@ -583,8 +583,8 @@ nwGtpv2cMsgGetIeFteid(NW_IN NwGtpv2cMsgHandleT hMsg,
                       NW_IN  uint8_t       instance,
                       NW_OUT uint8_t*      ifType,
                       NW_OUT uint32_t*     teidOrGreKey,
-                      NW_OUT uint32_t*     ipv4Addr,
-                      NW_OUT uint8_t*      pIpv6Addr);
+                      NW_OUT struct in_addr* ipv4Addr,
+                      NW_OUT struct in6_addr* pIpv6Addr);
 
 NwRcT
 nwGtpv2cMsgGetIeCause(NW_IN NwGtpv2cMsgHandleT hMsg,

@@ -30,6 +30,7 @@
 
 #ifndef FILE_MME_CONFIG_SEEN
 #define FILE_MME_CONFIG_SEEN
+#include <arpa/inet.h>
 
 #include "mme_default_values.h"
 #include "3gpp_23.003.h"
@@ -173,15 +174,15 @@ typedef struct mme_config_s {
 
   struct {
     bstring    if_name_s1_mme;
-    ipv4_nbo_t s1_mme;
+    struct in_addr s1_mme;
     int        netmask_s1_mme;
 
     bstring    if_name_s11;
-    ipv4_nbo_t s11;
+    struct in_addr s11;
     int        netmask_s11;
     uint16_t   port_s11;
 
-    ipv4_nbo_t sgw_s11;
+    struct in_addr sgw_s11;
   } ipv4;
 
   struct {

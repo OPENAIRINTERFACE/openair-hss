@@ -342,6 +342,11 @@ s11_sgw_handle_create_bearer_request (
 
   s11_ebi_ie_set (&(ulp_req.hMsg), (unsigned)request_p->linked_eps_bearer_id);
 
+  if (request_p->pco.num_protocol_or_container_id) {
+    rc = s11_pco_ie_set (&(ulp_req.hMsg), &request_p->pco);
+    DevAssert (NW_OK == rc);
+  }
+
   for (int i=0; i < request_p->bearer_contexts.num_bearer_context; i++) {
     rc = s11_bearer_context_to_be_created_within_create_bearer_request_ie_set (&(ulp_req.hMsg), &request_p->bearer_contexts.bearer_contexts[i]);
     DevAssert (NW_OK == rc);

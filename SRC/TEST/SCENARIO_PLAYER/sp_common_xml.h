@@ -32,9 +32,6 @@
 #include "xml_load.h"
 #include "sp_xml_load.h"
 
-#define TEID_IE_XML_STR   "teid"
-#define TEID_XML_SCAN_FMT "%"SCNx32
-#define TEID_XML_FMT      "%"PRIx32
 
 SP_NUM_FROM_XML_PROTOTYPE(teid);
 int sp_assign_value_to_var(scenario_t *scenario, char* var_name, char* str_value);

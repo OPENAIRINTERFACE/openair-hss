@@ -206,7 +206,7 @@ mme_app_send_s11_create_session_req (
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   session_request_p->sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
   mme_config_read_lock (&mme_config);
-  session_request_p->sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+  session_request_p->sender_fteid_for_cp.ipv4_address.s_addr = mme_config.ipv4.s11.s_addr;
   mme_config_unlock (&mme_config);
   session_request_p->sender_fteid_for_cp.ipv4 = 1;
 
@@ -229,20 +229,18 @@ mme_app_send_s11_create_session_req (
     /*
      * UE DHCPv4 allocated ip address
      */
-    memset (session_request_p->paa.ipv4_address, 0, 4);
-    memset (session_request_p->paa.ipv6_address, 0, 16);
+    session_request_p->paa.ipv4_address.s_addr = INADDR_ANY;
+    session_request_p->paa.ipv6_address = in6addr_any;
   } else {
     uint8_t                                 j;
 
     for (j = 0; j < default_apn_p->nb_ip_address; j++) {
-      ip_address_t                           *ip_address;
-
-      ip_address = &default_apn_p->ip_address[j];
+      ip_address_t                           *ip_address = &default_apn_p->ip_address[j];
 
       if (ip_address->pdn_type == IPv4) {
-        memcpy (session_request_p->paa.ipv4_address, ip_address->address.ipv4_address, 4);
+        session_request_p->paa.ipv4_address.s_addr = ip_address->address.ipv4_address.s_addr;
       } else if (ip_address->pdn_type == IPv6) {
-        memcpy (session_request_p->paa.ipv6_address, ip_address->address.ipv6_address, 16);
+        memcpy (&session_request_p->paa.ipv6_address, &ip_address->address.ipv6_address, sizeof(session_request_p->paa.ipv6_address));
       }
       //             free(ip_address);
     }
@@ -748,8 +746,9 @@ mme_app_handle_initial_context_setup_rsp (
           initial_ctxt_setup_rsp_pP->transport_layer_address[item]->data, blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
     } else if (16 == blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item])) {
       s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6         = 1;
-      memcpy(s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6_address,
-          initial_ctxt_setup_rsp_pP->transport_layer_address[item]->data, blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
+      memcpy(&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6_address,
+          initial_ctxt_setup_rsp_pP->transport_layer_address[item]->data,
+          blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
     } else {
       AssertFatal(0, "TODO IP address %d bytes", blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
     }
@@ -810,7 +809,7 @@ void
 mme_app_handle_create_bearer_req (
     const itti_s11_create_bearer_request_t * const create_bearer_request_pP)
 {
-  MessageDef                             *message_p = NULL;
+  //MessageDef                             *message_p = NULL;
   struct ue_context_s                    *ue_context_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);

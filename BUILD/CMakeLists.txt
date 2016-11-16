@@ -290,6 +290,7 @@ add_library(3GPP_TYPES_XML
   ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_gmm_ies_xml.c
   ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_gprs_common_ies_xml.c
   ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_sm_ies_xml.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_29.274_xml.c
   ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_common_ies_xml.c
   ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_ies_xml.c
   ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_emm_ies_xml.c

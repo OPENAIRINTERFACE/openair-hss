@@ -140,11 +140,11 @@ static void mme_config_init (mme_config_t * config_pP)
    * IP configuration
    */
   config_pP->ipv4.if_name_s1_mme = NULL;
-  config_pP->ipv4.s1_mme = 0;
+  config_pP->ipv4.s1_mme.s_addr = INADDR_ANY;
   config_pP->ipv4.if_name_s11 = NULL;
-  config_pP->ipv4.s11 = 0;
+  config_pP->ipv4.s11.s_addr = INADDR_ANY;
   config_pP->ipv4.port_s11 = 2123;
-  config_pP->ipv4.sgw_s11 = 0;
+  config_pP->ipv4.sgw_s11.s_addr = INADDR_ANY;
   config_pP->s6a_config.conf_file = bfromcstr(S6A_CONF_FILE);
   config_pP->itti_config.queue_size = ITTI_QUEUE_MAX_ELEMENTS;
   config_pP->itti_config.log_file = NULL;
@@ -610,10 +610,10 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
         address = list->entry[0];
         mask    = list->entry[1];
-        IPV4_STR_ADDR_TO_INT_NWBO (bdata(address), config_pP->ipv4.s1_mme, "BAD IP ADDRESS FORMAT FOR S1-MME !\n");
+        IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv4.s1_mme, "BAD IP ADDRESS FORMAT FOR S1-MME !\n");
         config_pP->ipv4.netmask_s1_mme = atoi ((const char*)mask->data);
         bstrListDestroy(list);
-        in_addr_var.s_addr = config_pP->ipv4.s1_mme;
+        in_addr_var.s_addr = config_pP->ipv4.s1_mme.s_addr;
         OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found S1-MME: %s/%d on %s\n",
                        inet_ntoa (in_addr_var), config_pP->ipv4.netmask_s1_mme, bdata(config_pP->ipv4.if_name_s1_mme));
         bdestroy_wrapper(&cidr);
@@ -624,11 +624,11 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
         address = list->entry[0];
         mask    = list->entry[1];
-        IPV4_STR_ADDR_TO_INT_NWBO (bdata(address), config_pP->ipv4.s11, "BAD IP ADDRESS FORMAT FOR S11 !\n");
+        IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv4.s11, "BAD IP ADDRESS FORMAT FOR S11 !\n");
         config_pP->ipv4.netmask_s11 = atoi ((const char*)mask->data);
         bstrListDestroy(list);
         bdestroy_wrapper(&cidr);
-        in_addr_var.s_addr = config_pP->ipv4.s11;
+        in_addr_var.s_addr = config_pP->ipv4.s11.s_addr;
         OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found S11: %s/%d on %s\n",
                        inet_ntoa (in_addr_var), config_pP->ipv4.netmask_s11, bdata(config_pP->ipv4.if_name_s11));
       }
@@ -731,10 +731,10 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
       address = list->entry[0];
       mask    = list->entry[1];
-      IPV4_STR_ADDR_TO_INT_NWBO (bdata(address), config_pP->ipv4.sgw_s11, "BAD IP ADDRESS FORMAT FOR SGW S11 !\n");
+      IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv4.sgw_s11, "BAD IP ADDRESS FORMAT FOR SGW S11 !\n");
       bstrListDestroy(list);
       bdestroy_wrapper(&cidr);
-      in_addr_var.s_addr = config_pP->ipv4.sgw_s11;
+      in_addr_var.s_addr = config_pP->ipv4.sgw_s11.s_addr;
       OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found S-GW S11: %s\n", inet_ntoa (in_addr_var));
     }
   }

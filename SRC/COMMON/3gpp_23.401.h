@@ -111,8 +111,6 @@ typedef struct sgw_eps_bearer_context_information_s {
   sgw_pdn_connection_t   pdn_connection;
 
   void                  *trxn;
-  uint32_t               mme_int_ip_address_S11;
-
   itti_s11_create_session_request_t saved_message;
 } sgw_eps_bearer_context_information_t;
 

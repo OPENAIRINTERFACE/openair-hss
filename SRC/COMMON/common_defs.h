@@ -124,12 +124,9 @@ typedef enum {
 
 
 
-#define IPV4_STR_ADDR_TO_INT_NWBO(AdDr_StR,NwBo,MeSsAgE ) do {\
-            struct in_addr inp;\
-            if ( inet_aton(AdDr_StR, &inp ) < 0 ) {\
+#define IPV4_STR_ADDR_TO_INADDR(AdDr_StR,InAdDr,MeSsAgE ) do {\
+            if ( inet_aton(AdDr_StR, &InAdDr ) <= 0 ) {\
                 AssertFatal (0, MeSsAgE);\
-            } else {\
-                NwBo = inp.s_addr;\
             }\
         } while (0)
 

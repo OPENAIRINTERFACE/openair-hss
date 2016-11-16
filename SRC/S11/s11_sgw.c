@@ -108,8 +108,8 @@ static NwRcT s11_sgw_send_udp_msg (
   NwGtpv2cUdpHandleT udpHandle,
   uint8_t * buffer,
   uint32_t buffer_len,
-  uint32_t peerIpAddr,
-  uint32_t peerPort)
+  struct in_addr *peerIpAddr,
+  uint16_t peerPort)
 {
   // Create and alloc new message
   MessageDef                             *message_p;
@@ -118,7 +118,7 @@ static NwRcT s11_sgw_send_udp_msg (
 
   message_p = itti_alloc_new_message (TASK_S11, UDP_DATA_REQ);
   udp_data_req_p = &message_p->ittiMsg.udp_data_req;
-  udp_data_req_p->peer_address = peerIpAddr;
+  udp_data_req_p->peer_address.s_addr = peerIpAddr->s_addr;
   udp_data_req_p->peer_port = peerPort;
   udp_data_req_p->buffer = buffer;
   udp_data_req_p->buffer_length = buffer_len;
@@ -192,7 +192,7 @@ static void *s11_sgw_thread (void *args)
 
         udp_data_ind = &received_message_p->ittiMsg.udp_data_ind;
         OAILOG_DEBUG (LOG_S11, "Processing new data indication from UDP\n");
-        rc = nwGtpv2cProcessUdpReq (s11_sgw_stack_handle, udp_data_ind->buffer, udp_data_ind->buffer_length, udp_data_ind->peer_port, udp_data_ind->peer_address);
+        rc = nwGtpv2cProcessUdpReq (s11_sgw_stack_handle, udp_data_ind->buffer, udp_data_ind->buffer_length, udp_data_ind->peer_port, &udp_data_ind->peer_address);
         DevAssert (rc == NW_OK);
       }
       break;
@@ -249,7 +249,7 @@ static void *s11_sgw_thread (void *args)
 }
 
 //------------------------------------------------------------------------------
-static int s11_send_init_udp (char *address, uint16_t port_number)
+static int s11_send_init_udp (struct in_addr *address, uint16_t port_number)
 {
   MessageDef                             *message_p;
 
@@ -260,9 +260,10 @@ static int s11_send_init_udp (char *address, uint16_t port_number)
   }
 
   message_p->ittiMsg.udp_init.port = port_number;
-  //LG message_p->ittiMsg.udpInit.address = "0.0.0.0"; //ANY address
-  message_p->ittiMsg.udp_init.address = address;
-  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s\n", message_p->ittiMsg.udp_init.address);
+  message_p->ittiMsg.udp_init.address.s_addr = address->s_addr;
+  char ipv4[INET_ADDRSTRLEN];
+  inet_ntop (AF_INET, (void*)&message_p->ittiMsg.udp_init.address, ipv4, INET_ADDRSTRLEN);
+  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s:%" PRIu16"\n", ipv4, message_p->ittiMsg.udp_init.port);
   return itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
 }
 
@@ -274,8 +275,6 @@ int s11_sgw_init (sgw_config_t * config_p)
   NwGtpv2cUdpEntityT                      udp;
   NwGtpv2cTimerMgrEntityT                 tmrMgr;
   NwGtpv2cLogMgrEntityT                   logMgr;
-  struct in_addr                          addr;
-  char                                   *s11_address_str = NULL;
 
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface\n");
 
@@ -320,11 +319,8 @@ int s11_sgw_init (sgw_config_t * config_p)
 
   DevAssert (NW_OK == nwGtpv2cSetLogLevel (s11_sgw_stack_handle, NW_LOG_LEVEL_DEBG));
   sgw_config_read_lock (config_p);
-  addr.s_addr = config_p->ipv4.S11;
+  s11_send_init_udp (&config_p->ipv4.S11, 2123);
   sgw_config_unlock (config_p);
-  s11_address_str = inet_ntoa (addr);
-  DevAssert (s11_address_str );
-  s11_send_init_udp (s11_address_str, 2123);
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: DONE\n");
   return ret;
 fail:

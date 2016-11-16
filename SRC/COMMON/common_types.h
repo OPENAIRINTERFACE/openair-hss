@@ -32,6 +32,7 @@
 #ifndef FILE_COMMON_TYPES_SEEN
 #define FILE_COMMON_TYPES_SEEN
 
+#include <arpa/inet.h>
 #include "bstrlib.h"
 #include "3gpp_33.401.h"
 #include "security_types.h"
@@ -47,7 +48,7 @@
 
 typedef uint16_t                 sctp_stream_id_t;
 typedef uint32_t                 sctp_assoc_id_t;
-typedef uint64_t enb_s1ap_id_key_t ;
+typedef uint64_t                 enb_s1ap_id_key_t ;
 #define MME_APP_ENB_S1AP_ID_KEY(kEy, eNb_Id, eNb_Ue_S1Ap_Id) do { kEy = (((enb_s1ap_id_key_t)eNb_Id) << 24) | eNb_Ue_S1Ap_Id; } while(0);
 #define MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(kEy) (enb_ue_s1ap_id_t)(((enb_s1ap_id_key_t)kEy) & ENB_UE_S1AP_ID_MASK)
 #define MME_APP_ENB_S1AP_ID_KEY_FORMAT "0x%16"PRIx64
@@ -171,7 +172,7 @@ typedef struct {
   bitrate_t br_dl;
 } ambr_t;
 
-typedef uint32_t ipv4_nbo_t;
+//typedef uint32_t ipv4_nbo_t;
 
 typedef uint8_t pdn_type_t;
 
@@ -185,8 +186,8 @@ typedef enum {
 
 typedef struct paa_s{
   pdn_type_value_t pdn_type;
-  uint8_t ipv4_address[4];
-  uint8_t ipv6_address[16];
+  struct in_addr ipv4_address;
+  struct in6_addr ipv6_address;
   /* Note in rel.8 the ipv6 prefix length has a fixed value of /64 */
   uint8_t ipv6_prefix_length;
 } paa_t;
@@ -199,8 +200,8 @@ bstring paa_to_bstring(paa_t *paa);
 typedef struct {
   pdn_type_value_t pdn_type;
   struct {
-    uint8_t ipv4_address[4];
-    uint8_t ipv6_address[16];
+    struct in_addr  ipv4_address;
+    struct in6_addr ipv6_address;
   } address;
 } ip_address_t;
 
@@ -222,7 +223,9 @@ typedef enum {
    * Other are reserved.
    */
   QCI_MAX,
-} qci_t;
+} qci_e;
+
+typedef uint8_t qci_t;
 
 typedef enum {
   PRE_EMPTION_CAPABILITY_ENABLED  = 0,

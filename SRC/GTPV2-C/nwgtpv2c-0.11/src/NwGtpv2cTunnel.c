@@ -50,7 +50,7 @@ extern                                  "C" {
   NwGtpv2cTunnelT                        *nwGtpv2cTunnelNew (
   struct NwGtpv2cStack *pStack,
   uint32_t teid,
-  uint32_t ipv4AddrRemote,
+  struct in_addr *  ipv4AddrRemote,
   NwGtpv2cUlpTunnelHandleT hUlpTunnel) {
     NwGtpv2cTunnelT                        *thiz;
 
@@ -65,7 +65,7 @@ extern                                  "C" {
     if (thiz) {
       memset (thiz, 0, sizeof (NwGtpv2cTunnelT));
       thiz->teid = teid;
-      thiz->ipv4AddrRemote = ipv4AddrRemote;
+      thiz->ipv4AddrRemote.s_addr = ipv4AddrRemote->s_addr;
       thiz->hUlpTunnel = hUlpTunnel;
     }
 

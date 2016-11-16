@@ -307,14 +307,19 @@ s6a_parse_ip_address (
      */
     ip_address->pdn_type = IPv4;
     DevCheck (hdr->avp_value->os.len == 6, hdr->avp_value->os.len, 6, ip_type);
-    memcpy (ip_address->address.ipv4_address, &hdr->avp_value->os.data[2], 4);
+    uint32_t ip = (((uint32_t)hdr->avp_value->os.data[2]) << 24) |
+                  (((uint32_t)hdr->avp_value->os.data[3]) << 16) |
+                  (((uint32_t)hdr->avp_value->os.data[4]) << 8) |
+                   ((uint32_t)hdr->avp_value->os.data[5]);
+
+    ip_address->address.ipv4_address.s_addr = htonl(ip);
   } else if (ip_type == IANA_IPV6) {
     /*
      * This is an IPv6 address
      */
     ip_address->pdn_type = IPv6;
     DevCheck (hdr->avp_value->os.len == 18, hdr->avp_value->os.len, 18, ip_type);
-    memcpy (ip_address->address.ipv6_address, &hdr->avp_value->os.data[2], 16);
+    memcpy (ip_address->address.ipv6_address.__in6_u.__u6_addr8, &hdr->avp_value->os.data[2], 16);
   } else {
     /*
      * unhandled case...

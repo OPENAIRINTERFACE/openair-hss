@@ -327,11 +327,13 @@ static int sctp_create_new_listener (SctpInit * init_p)
     OAILOG_DEBUG (LOG_SCTP, "ipv4 addresses:\n");
 
     for (i = 0; i < init_p->nb_ipv4_addr; i++) {
-      OAILOG_DEBUG (LOG_SCTP, "\t- " IPV4_ADDR "\n", IPV4_ADDR_FORMAT (init_p->ipv4_address[i]));
       ip4_addr = (struct sockaddr_in *)&addr[i];
       ip4_addr->sin_family = AF_INET;
       ip4_addr->sin_port = htons (init_p->port);
-      ip4_addr->sin_addr.s_addr = init_p->ipv4_address[i];
+      ip4_addr->sin_addr.s_addr = init_p->ipv4_address[i].s_addr;
+      char ipv4[INET_ADDRSTRLEN];
+      inet_ntop (AF_INET, (void*)&ip4_addr->sin_addr.s_addr, ipv4, INET_ADDRSTRLEN);
+      OAILOG_DEBUG (LOG_SCTP, "\t- %s\n", ipv4);
     }
   }
 
@@ -341,14 +343,13 @@ static int sctp_create_new_listener (SctpInit * init_p)
     OAILOG_DEBUG (LOG_SCTP, "ipv6 addresses:\n");
 
     for (j = 0; j < init_p->nb_ipv6_addr; j++) {
-      OAILOG_DEBUG (LOG_SCTP, "\t- %s\n", init_p->ipv6_address[j]);
+      char ipv6[INET6_ADDRSTRLEN];
+      inet_ntop (AF_INET6, (void*)&init_p->ipv6_address[j], ipv6, INET6_ADDRSTRLEN);
+      OAILOG_DEBUG (LOG_SCTP, "\t- %s\n", ipv6);
       ip6_addr = (struct sockaddr_in6 *)&addr[i + j];
       ip6_addr->sin6_family = AF_INET6;
       ip6_addr->sin6_port = htons (init_p->port);
-
-      if (inet_pton (AF_INET6, init_p->ipv6_address[j], ip6_addr->sin6_addr.s6_addr) <= 0) {
-        OAILOG_WARNING (LOG_SCTP, "Provided ipv6 address %s is not valid\n", init_p->ipv6_address[j]);
-      }
+      ip6_addr->sin6_addr = init_p->ipv6_address[j];
     }
   }
 

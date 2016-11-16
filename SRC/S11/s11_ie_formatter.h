@@ -100,7 +100,7 @@ int s11_cause_ie_set(NwGtpv2cMsgHandleT *msg, const gtp_cause_t  *cause);
 /* Bearer Context Created grouped Information Element */
 NwRcT s11_bearer_context_created_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
-int s11_bearer_context_created_ie_set(NwGtpv2cMsgHandleT *msg, const bearer_context_created_t *bearer);
+int s11_bearer_context_created_ie_set(NwGtpv2cMsgHandleT *msg, const bearer_context_created_t const * bearer);
 
 /* Serving Network Information Element
  * 3GPP TS 29.274 #8.18
@@ -110,7 +110,7 @@ int s11_serving_network_ie_set(NwGtpv2cMsgHandleT     *msg, const ServingNetwork
 
 
 /* Fully Qualified TEID (F-TEID) Information Element */
-int s11_fteid_ie_set (NwGtpv2cMsgHandleT * msg, const FTeid_t * fteid);
+int s11_fteid_ie_set (NwGtpv2cMsgHandleT * msg, const fteid_t * fteid);
 NwRcT s11_fteid_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
 /* Protocol Configuration Options Information Element */

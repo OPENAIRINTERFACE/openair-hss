@@ -51,6 +51,7 @@
 #include "common_defs.h"
 #include "common_types.h"
 #include "mme_scenario_player.h"
+#include "xml_msg_tags.h"
 #include "sp_common_xml.h"
 
 
