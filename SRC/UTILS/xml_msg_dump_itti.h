@@ -47,6 +47,8 @@ void xml_msg_dump_itti_nas_uplink_data_ind(const itti_nas_ul_data_ind_t * const 
 void xml_msg_dump_itti_nas_downlink_data_req(const itti_nas_dl_data_req_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
 void xml_msg_dump_itti_nas_downlink_data_rej(const itti_nas_dl_data_rej_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
 void xml_msg_dump_itti_nas_downlink_data_cnf(const itti_nas_dl_data_cnf_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);
+void xml_msg_dump_itti_s11_create_bearer_request(const itti_s11_create_bearer_request_t * const itti_msg, int sender_task, int receiver_task, xmlTextWriterPtr xml_text_writer_param);
+
 
 #    define XML_MSG_DUMP_ITTI_SCTP_NEW_ASSOCIATION                            xml_msg_dump_itti_sctp_new_association
 #    define XML_MSG_DUMP_ITTI_SCTP_CLOSE_ASSOCIATION                          xml_msg_dump_itti_sctp_close_association
@@ -60,6 +62,7 @@ void xml_msg_dump_itti_nas_downlink_data_cnf(const itti_nas_dl_data_cnf_t * cons
 #    define XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_REQ                           xml_msg_dump_itti_nas_downlink_data_req
 #    define XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_REJ                           xml_msg_dump_itti_nas_downlink_data_rej
 #    define XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_CNF                           xml_msg_dump_itti_nas_downlink_data_cnf
+#    define XML_MSG_DUMP_ITTI_S11_CRETE_BEARER_REQ                            xml_msg_dump_itti_s11_create_bearer_request
 #  else
 #    define XML_MSG_DUMP_ITTI_SCTP_NEW_ASSOCIATION(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
 #    define XML_MSG_DUMP_ITTI_SCTP_CLOSE_ASSOCIATION(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
@@ -73,6 +76,7 @@ void xml_msg_dump_itti_nas_downlink_data_cnf(const itti_nas_dl_data_cnf_t * cons
 #    define XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_REQ(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
 #    define XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_REJ(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
 #    define XML_MSG_DUMP_ITTI_NAS_DOWNLINK_DATA_CNF(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
+#    define XML_MSG_DUMP_ITTI_S11_CRETE_BEARER_REQ(mEsSaGe, sEnDeR, rEcEiVeR, xMlWrItEr)
 #  endif
 #endif
 

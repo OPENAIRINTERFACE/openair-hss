@@ -66,12 +66,54 @@
 
 extern scenario_player_t g_msp_scenarios;
 
-static bstring mme_scenario_player_dump_nas_downlink_data_req (const MessageDef * const received_message);
-static bstring mme_scenario_player_dump_s1ap_ue_context_release_command (const MessageDef * const received_message);
+bstring mme_scenario_player_dump_nas_downlink_data_req (const MessageDef * const received_message);
+bstring mme_scenario_player_dump_s1ap_ue_context_release_command (const MessageDef * const received_message);
+bstring mme_scenario_player_dump_s11_create_bearer_request (const MessageDef * const received_message);
 
 //------------------------------------------------------------------------------
 // Return xml filename
-static bstring mme_scenario_player_dump_nas_downlink_data_req (const MessageDef * const received_message)
+bstring mme_scenario_player_dump_s11_create_bearer_request (const MessageDef * const received_message)
+{
+  const itti_s11_create_bearer_request_t * const itti_s11_create_bearer_request = &S11_CREATE_BEARER_REQUEST (received_message);
+
+  //-------------------------------
+  // Dump received message in XML
+  //-------------------------------
+  xmlTextWriterPtr xml_text_writer = NULL;
+  char             filename[NAME_MAX+9];
+  if (snprintf(filename, sizeof(filename), "/tmp/mme_msg_%06lu_%s.xml", xml_msg_dump_get_seq_uid(), ITTI_S11_CREATE_BEARER_REQ_XML_STR) <= 0) {
+    OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "xmlTextWriterStartDocument\n");
+    return NULL;
+  }
+  /* Create a new XmlWriter for uri, with no compression. */
+  xml_text_writer = xmlNewTextWriterFilename(filename, 0);
+  if (xml_text_writer == NULL) {
+    OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error creating the xml writer\n");
+    return NULL;
+  } else {
+    int rc = xmlTextWriterSetIndent(xml_text_writer, 1);
+    if (!(!rc)) {
+      OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error indenting Document\n");
+    }
+    rc = xmlTextWriterSetIndentString(xml_text_writer, (const xmlChar *)"  ");
+    if (!(!rc)) {
+      OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error indenting Document\n");
+    }
+    xml_msg_dump_itti_s11_create_bearer_request(itti_s11_create_bearer_request, received_message->ittiMsgHeader.originTaskId, TASK_MME_SCENARIO_PLAYER, xml_text_writer);
+    rc = xmlTextWriterEndDocument(xml_text_writer);
+    if (!(!rc)) {
+      OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error ending Document\n");
+    }
+    xmlFreeTextWriter(xml_text_writer);
+    return bfromcstr(filename);
+  }
+  return NULL;
+}
+
+
+//------------------------------------------------------------------------------
+// Return xml filename
+bstring mme_scenario_player_dump_nas_downlink_data_req (const MessageDef * const received_message)
 {
   const itti_nas_dl_data_req_t * const nas_dl_data_req = &NAS_DL_DATA_REQ (received_message);
 
@@ -272,7 +314,7 @@ void mme_scenario_player_handle_mme_app_connection_establishment_cnf (instance_t
 
 //------------------------------------------------------------------------------
 // Return xml filename
-static bstring mme_scenario_player_dump_s1ap_ue_context_release_command (const MessageDef * const received_message)
+bstring mme_scenario_player_dump_s1ap_ue_context_release_command (const MessageDef * const received_message)
 {
   const itti_s1ap_ue_context_release_command_t * const s1ap_ue_context_release_command = &S1AP_UE_CONTEXT_RELEASE_COMMAND (received_message);
 
