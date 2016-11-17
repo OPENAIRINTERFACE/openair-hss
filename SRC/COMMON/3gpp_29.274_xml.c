@@ -250,9 +250,7 @@ void ipv4_address_to_xml (const struct in_addr * const in_addr, xmlTextWriterPtr
 {
   char          str[INET_ADDRSTRLEN];
 
-  const char*  rc = inet_ntop(AF_INET, in_addr, str, INET_ADDRSTRLEN);
-  AssertFatal (NULL == rc, "inet_ntop");
-
+  inet_ntop(AF_INET, in_addr, str, INET_ADDRSTRLEN);
   XML_WRITE_FORMAT_ELEMENT(writer, IPV4_ADDRESS_XML_STR, "%s", str);
 }
 
@@ -261,9 +259,7 @@ void ipv6_address_to_xml (const struct in6_addr * const in6_addr, xmlTextWriterP
 {
   char          str[INET6_ADDRSTRLEN];
 
-  const char*  rc = inet_ntop(AF_INET6, in6_addr, str, INET6_ADDRSTRLEN);
-  AssertFatal (NULL == rc, "inet_ntop");
-
+  inet_ntop(AF_INET6, in6_addr, str, INET6_ADDRSTRLEN);
   XML_WRITE_FORMAT_ELEMENT(writer, IPV6_ADDRESS_XML_STR, "%s", str);
 }
 
