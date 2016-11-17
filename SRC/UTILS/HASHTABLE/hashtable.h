@@ -82,6 +82,16 @@ typedef struct hash_table_ts_s {
     bool                log_enabled;
 } hash_table_ts_t;
 
+typedef struct hashtable_key_array_s {
+    int                 num_keys;
+    hash_key_t         *keys;
+} hashtable_key_array_t;
+
+typedef struct hashtable_element_array_s {
+    int                 num_elements;
+    void              **elements;
+} hashtable_element_array_t;
+
 char*           hashtable_rc_code2string(hashtable_rc_t rc);
 void            hash_free_int_func(void** memory);
 hash_table_t * hashtable_init (hash_table_t * const hashtbl,const hash_size_t size,hash_size_t (*hashfunc) (const hash_key_t),void (*freefunc) (void **),bstring display_name_p);
@@ -104,6 +114,8 @@ hash_table_ts_t * hashtable_ts_init (hash_table_ts_t * const hashtbl,const hash_
 __attribute__ ((malloc)) hash_table_ts_t   *hashtable_ts_create (const hash_size_t   size, hash_size_t (*hashfunc)(const hash_key_t ), void (*freefunc)(void **), bstring name_p);
 hashtable_rc_t  hashtable_ts_destroy(hash_table_ts_t * hashtbl);
 hashtable_rc_t  hashtable_ts_is_key_exists (const hash_table_ts_t * const hashtbl, const hash_key_t key) __attribute__ ((hot, warn_unused_result));
+hashtable_key_array_t hashtable_ts_get_keys (hash_table_ts_t * const hashtblP);
+hashtable_element_array_t hashtable_ts_get_elements (hash_table_ts_t * const hashtblP);
 hashtable_rc_t  hashtable_ts_apply_callback_on_elements (hash_table_ts_t * const hashtbl,
                                                       bool func_cb(const hash_key_t key, void* const element, void* parameter, void**result),
                                                       void* parameter,

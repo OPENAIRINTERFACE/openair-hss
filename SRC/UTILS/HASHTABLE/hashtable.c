@@ -474,6 +474,63 @@ hashtable_apply_callback_on_elements (
 
 //------------------------------------------------------------------------------
 // may cost a lot CPU...
+hashtable_key_array_t hashtable_ts_get_keys (hash_table_ts_t * const hashtblP)
+{
+  hash_node_t                            *node = NULL;
+  unsigned int                            i = 0;
+  hashtable_key_array_t                   ka = {0};
+
+  if ((!hashtblP) || !(hashtblP->num_elements)){
+    return ka;
+  }
+  ka.keys = calloc(hashtblP->num_elements, sizeof(hash_key_t*));
+
+  while ((ka.num_keys < hashtblP->num_elements) && (i < hashtblP->size)) {
+    pthread_mutex_lock(&hashtblP->lock_nodes[i]);
+    if (hashtblP->nodes[i] != NULL) {
+      node = hashtblP->nodes[i];
+      while (node) {
+        ka.keys[ka.num_keys++] = node->key;
+        node = node->next;
+      }
+    }
+    pthread_mutex_unlock(&hashtblP->lock_nodes[i]);
+    i++;
+  }
+  return ka;
+}
+
+//------------------------------------------------------------------------------
+// may cost a lot CPU...
+hashtable_element_array_t hashtable_ts_get_elements (hash_table_ts_t * const hashtblP)
+{
+  hash_node_t                            *node = NULL;
+  unsigned int                            i = 0;
+  hashtable_element_array_t               ea = {0};
+
+  if ((!hashtblP) || !(hashtblP->num_elements)){
+    return ea;
+  }
+  ea.elements = calloc(hashtblP->num_elements, sizeof(hash_key_t*));
+
+  while ((ea.num_elements < hashtblP->num_elements) && (i < hashtblP->size)) {
+    pthread_mutex_lock(&hashtblP->lock_nodes[i]);
+    if (hashtblP->nodes[i] != NULL) {
+      node = hashtblP->nodes[i];
+      while (node) {
+        ea.elements[ea.num_elements++] = node->data;
+        node = node->next;
+      }
+    }
+    pthread_mutex_unlock(&hashtblP->lock_nodes[i]);
+    i++;
+  }
+  return ea;
+}
+
+
+//------------------------------------------------------------------------------
+// may cost a lot CPU...
 // Also useful if we want to find an element in the collection based on compare criteria different than the single key
 // The compare criteria in implemented in the funct_cb function
 hashtable_rc_t
