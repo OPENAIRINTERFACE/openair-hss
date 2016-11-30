@@ -402,9 +402,23 @@ void nas_itti_establish_cnf(
     NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).ue_id                           = ue_idP;
     NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).err_code                        = error_codeP;
     NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).nas_msg                         = msgP; msgP = NULL;
-    NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).selected_encryption_algorithm   = selected_encryption_algorithmP;
-    NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).selected_integrity_algorithm    = selected_integrity_algorithmP;
 
+    // According to 3GPP 9.2.1.40, the UE security capabilities are 16-bit
+    // strings, EEA0 is inherently supported, so its support is not tracked in
+    // the bit string. However, emm_ctx->eea is an 8-bit string with the highest
+    // order bit representing EEA0 support, so we need to trim it. The same goes
+    // for integrity.
+    //
+    // TODO: change the way the EEA and EIA are translated into the packets.
+    //       Currently, the 16-bit string is 8-bit rotated to produce the string
+    //       sent in the packets, which is why we're using bits 8-10 to
+    //       represent EEA1/2/3 (and EIA1/2/3) support here.
+    NAS_CONNECTION_ESTABLISHMENT_CNF(message_p)
+      .encryption_algorithm_capabilities =
+      ((uint16_t)emm_ctx->eea & ~(1 << 7)) << 1;
+    NAS_CONNECTION_ESTABLISHMENT_CNF(message_p)
+      .integrity_algorithm_capabilities =
+      ((uint16_t)emm_ctx->eia & ~(1 << 7)) << 1;
 
     AssertFatal((0 <= emm_ctx->_security.vector_index) && (MAX_EPS_AUTH_VECTORS > emm_ctx->_security.vector_index),
         "Invalid vector index %d", emm_ctx->_security.vector_index);

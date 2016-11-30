@@ -377,8 +377,10 @@ mme_app_handle_conn_est_cnf (
 //#pragma message  "Check ue_context_p ambr"
   establishment_cnf_p->ambr.br_ul = ue_context_p->subscribed_ambr.br_ul;
   establishment_cnf_p->ambr.br_dl = ue_context_p->subscribed_ambr.br_dl;
-  establishment_cnf_p->security_capabilities_encryption_algorithms = nas_conn_est_cnf_pP->selected_encryption_algorithm;
-  establishment_cnf_p->security_capabilities_integrity_algorithms = nas_conn_est_cnf_pP->selected_integrity_algorithm;
+  establishment_cnf_p->security_capabilities_encryption_algorithms =
+    nas_conn_est_cnf_pP->encryption_algorithm_capabilities;
+  establishment_cnf_p->security_capabilities_integrity_algorithms =
+    nas_conn_est_cnf_pP->integrity_algorithm_capabilities;
   memcpy(establishment_cnf_p->kenb, nas_conn_est_cnf_pP->kenb, AUTH_KASME_SIZE);
 
   OAILOG_DEBUG (LOG_MME_APP, "security_capabilities_encryption_algorithms 0x%04X\n", establishment_cnf_p->security_capabilities_encryption_algorithms);

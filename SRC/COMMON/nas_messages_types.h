@@ -251,8 +251,8 @@ typedef struct itti_nas_conn_est_cnf_s {
 
 
   uint32_t                ul_nas_count;
-  uint16_t                selected_encryption_algorithm;
-  uint16_t                selected_integrity_algorithm;
+  uint16_t                encryption_algorithm_capabilities;
+  uint16_t                integrity_algorithm_capabilities;
 } itti_nas_conn_est_cnf_t;
 
 typedef struct itti_nas_conn_rel_ind_s {
