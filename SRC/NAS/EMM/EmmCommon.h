@@ -77,15 +77,15 @@ typedef enum {
  * - The EMM common procedure failed or is rejected
  * - Lower layer failure occured before the EMM common procedure completion
  */
-typedef int (*emm_common_success_callback_t)(emm_context_t *emm_ctx);
-typedef int (*emm_common_reject_callback_t) (emm_context_t *emm_ctx);
-typedef int (*emm_common_failure_callback_t) (emm_context_t *emm_ctx);
-typedef int (*emm_common_ll_failure_callback_t)(emm_context_t *emm_ctx);
-typedef int (*emm_common_non_delivered_ho_callback_t)(emm_context_t *emm_ctx);
+typedef int (*emm_common_success_callback_t)(struct emm_context_s *emm_context);
+typedef int (*emm_common_reject_callback_t) (struct emm_context_s *emm_context);
+typedef int (*emm_common_failure_callback_t) (struct emm_context_s *emm_context);
+typedef int (*emm_common_ll_failure_callback_t)(struct emm_context_s *emm_context);
+typedef int (*emm_common_non_delivered_ho_callback_t)(struct emm_context_s *emm_context);
 /* EMM common procedure to be executed when the ongoing EMM procedure is
  * aborted.
  */
-typedef int (*emm_common_abort_callback_t)(emm_context_t *emm_ctx);
+typedef int (*emm_common_abort_callback_t)(struct emm_context_s *emm_context);
 
 
 /*
@@ -184,7 +184,7 @@ typedef struct emm_common_data_s {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int emm_proc_common_initialize(struct emm_context_s        * const emm_ctx,
+int emm_proc_common_initialize(struct emm_context_s *emm_context,
                                emm_common_proc_type_t        const type,
                                emm_common_data_t * const emm_common_data,
                                emm_common_success_callback_t success,

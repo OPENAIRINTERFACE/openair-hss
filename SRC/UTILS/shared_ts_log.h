@@ -30,6 +30,7 @@
 #define FILE_SHARED_TS_LOG_SEEN
 
 #include <sys/time.h>
+#include <liblfds710.h>
 #include "msc.h"
 #include "log.h"
 
@@ -47,6 +48,7 @@ typedef enum {
 * to the logger producer in a thread safe manner.
 */
 typedef struct shared_log_queue_item_s {
+  struct lfds710_stack_element              se;
   sh_ts_log_app_id_t                        app_id;    /*!< \brief application identifier. */
   bstring                                   bstr;      /*!< \brief string containing the message. */
   union {

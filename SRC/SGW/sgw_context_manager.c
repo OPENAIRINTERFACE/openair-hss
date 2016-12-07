@@ -438,12 +438,16 @@ sgw_cm_remove_eps_bearer_entry (
   ebi_t eps_bearer_idP)
 //-----------------------------------------------------------------------------
 {
-  int                                     temp = 0;
+  hashtable_rc_t                            hrc = HASH_TABLE_OK;
 
   if (eps_bearersP == NULL) {
     return RETURNerror;
   }
-  temp = hashtable_ts_free (eps_bearersP, eps_bearer_idP);
-  return temp;
+  hrc = hashtable_ts_free (eps_bearersP, eps_bearer_idP);
+  if (HASH_TABLE_OK == hrc) {
+    return RETURNok;
+  } else {
+    return RETURNerror;
+  }
 }
 

@@ -48,7 +48,6 @@
 #include <fcntl.h>
 #include <pthread.h>
 
-#include "liblfds611.h"
 #include <libxml/xmlwriter.h>
 #include <libxml/xpath.h>
 #include "bstrlib.h"
@@ -98,10 +97,11 @@ typedef struct oai_shared_log_s {
   int                                     log_start_time_second;                                       /*!< \brief Logging utility reference time              */
 
   log_message_number_t                    log_message_number;                                          /*!< \brief Counter of log message        */
-  struct lfds611_queue_state             *log_message_queue_p;                                         /*!< \brief Thread safe log message queue */
-  struct lfds611_stack_state             *log_free_message_queue_p;                                          /*!< \brief Thread safe memory pool       */
+  struct lfds710_queue_bmm_element       *qbmme;
+  struct lfds710_queue_bmm_state          log_message_queue;                                         /*!< \brief Thread safe log message queue */
+  struct lfds710_stack_state              log_free_message_queue;                                      /*!< \brief Thread safe memory pool       */
 
-  hash_table_ts_t                           *thread_context_htbl;                                         /*!< \brief Container for log_thread_ctxt_t */
+  hash_table_ts_t                        *thread_context_htbl;                                         /*!< \brief Container for log_thread_ctxt_t */
 
   void (*logger_callback[MAX_SH_TS_LOG_CLIENT])(shared_log_queue_item_t*);
 } oai_shared_log_t;
@@ -118,20 +118,16 @@ int shared_log_get_start_time_sec (void)
 //------------------------------------------------------------------------------
 void shared_log_reuse_item(shared_log_queue_item_t * item_p)
 {
-  int         rv = 0;
 #if defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
   btrunc(item_p->bstr, 0);
 #else
   bdestroy_wrapper(&item_p->bstr);
 #endif
-  rv = lfds611_stack_guaranteed_push (g_shared_log.log_free_message_queue_p, item_p);
-  if (0 == rv) {
-    OAI_FPRINTF_ERR("Error while reusing shared_log_queue_item_t (lfds611_stack_guaranteed_push() returned %d)\n", rv);
-    free_wrapper ((void**)&item_p);
-  }
+  LFDS710_STACK_SET_VALUE_IN_ELEMENT( item_p->se, item_p );
+  lfds710_stack_push( &g_shared_log.log_free_message_queue, &item_p->se );
 }
 
-//------------------------------------------------------------------------------
+//------------------------------------------------>-------------------------------
 static shared_log_queue_item_t * create_new_log_queue_item(sh_ts_log_app_id_t app_id)
 {
   shared_log_queue_item_t * item_p = calloc(1, sizeof(shared_log_queue_item_t));
@@ -149,10 +145,13 @@ static shared_log_queue_item_t * create_new_log_queue_item(sh_ts_log_app_id_t ap
 //------------------------------------------------------------------------------
 shared_log_queue_item_t * get_new_log_queue_item(sh_ts_log_app_id_t app_id)
 {
-  int                       rv = 0;
-  shared_log_queue_item_t * item_p = NULL;
+  int                             rv = 0;
+  shared_log_queue_item_t        *item_p = NULL;
+  struct lfds710_stack_element   *se;
 
-  rv = lfds611_stack_pop (g_shared_log.log_free_message_queue_p, (void **)&item_p);
+  lfds710_stack_pop( &g_shared_log.log_free_message_queue, &se );
+  item_p = LFDS710_STACK_GET_VALUE_FROM_ELEMENT( *se );
+
   if (0 == rv) {
     item_p = create_new_log_queue_item(app_id);
     AssertFatal(item_p,  "Out of memory error");
@@ -234,12 +233,10 @@ void shared_log_get_elapsed_time_since_start(struct timeval * const elapsed_time
 //------------------------------------------------------------------------------
 int shared_log_init (const int max_threadsP)
 {
-  int                                     i = 0;
-  int                                     rv = 0;
   shared_log_queue_item_t                *item_p = NULL;
   struct timeval                          start_time = {.tv_sec=0, .tv_usec=0};
 
-  rv = gettimeofday(&start_time, NULL);
+  gettimeofday(&start_time, NULL);
   g_shared_log.log_start_time_second = start_time.tv_sec;
   g_shared_log.logger_callback[SH_TS_LOG_TXT] = log_flush_message;
 #if MESSAGE_CHART_GENERATOR
@@ -264,21 +261,16 @@ int shared_log_init (const int max_threadsP)
     free_wrapper((void**)&thread_ctxt);
   }
 
-  rv = lfds611_stack_new (&g_shared_log.log_free_message_queue_p, (lfds611_atom_t) max_threadsP + 2);
+  lfds710_stack_init_valid_on_current_logical_core( &g_shared_log.log_free_message_queue, NULL );
+  g_shared_log.qbmme = calloc(LOG_MAX_QUEUE_ELEMENTS, sizeof(*g_shared_log.qbmme));
+  lfds710_queue_bmm_init_valid_on_current_logical_core( &g_shared_log.log_message_queue, g_shared_log.qbmme, LOG_MAX_QUEUE_ELEMENTS, NULL );
 
-  if (0 >= rv) {
-    AssertFatal (0, "lfds611_stack_new failed!\n");
-  }
-
-  rv = lfds611_queue_new (&g_shared_log.log_message_queue_p, (lfds611_atom_t) LOG_MAX_QUEUE_ELEMENTS);
-  AssertFatal (rv, "lfds611_queue_new failed!\n");
-  AssertFatal (g_shared_log.log_message_queue_p != NULL, "g_shared_log.log_message_queue_p is NULL!\n");
   shared_log_start_use ();
 
-  for (i = 0; i < max_threadsP * 30; i++) {
+  for (int i = 0; i < max_threadsP * 30; i++) {
     item_p = create_new_log_queue_item(MIN_SH_TS_LOG_CLIENT); // any logger
-    rv = lfds611_stack_guaranteed_push (g_shared_log.log_free_message_queue_p, item_p);
-    AssertFatal (rv, "lfds611_stack_guaranteed_push failed for item %u\n", i);
+    LFDS710_STACK_SET_VALUE_IN_ELEMENT( item_p->se, item_p );
+    lfds710_stack_push( &g_shared_log.log_free_message_queue, &item_p->se );
   }
 
 
@@ -301,8 +293,9 @@ void shared_log_start_use (void)
   pthread_t      p       = pthread_self();
   hashtable_rc_t hash_rc = hashtable_ts_is_key_exists (g_shared_log.thread_context_htbl, (hash_key_t) p);
   if (HASH_TABLE_KEY_NOT_EXISTS == hash_rc) {
-    lfds611_queue_use (g_shared_log.log_message_queue_p);
-    lfds611_stack_use (g_shared_log.log_free_message_queue_p);
+
+    LFDS710_MISC_MAKE_VALID_ON_CURRENT_LOGICAL_CORE_INITS_COMPLETED_BEFORE_NOW_ON_ANY_OTHER_LOGICAL_CORE;
+
     log_thread_ctxt_t *thread_ctxt = calloc(1, sizeof(log_thread_ctxt_t));
     if (thread_ctxt) {
       thread_ctxt->tid = p;
@@ -323,7 +316,7 @@ void shared_log_flush_messages (void)
   int                                     rv = 0;
   shared_log_queue_item_t                *item_p = NULL;
 
-  while ((rv = lfds611_queue_dequeue (g_shared_log.log_message_queue_p, (void **)&item_p)) == 1) {
+  while ((rv = lfds710_queue_bmm_dequeue(&g_shared_log.log_message_queue, NULL, (void **)&item_p)) == 1) {
     if ((item_p->app_id >= MIN_SH_TS_LOG_CLIENT) && (item_p->app_id < MAX_SH_TS_LOG_CLIENT)) {
       (*g_shared_log.logger_callback[item_p->app_id])(item_p);
     } else {
@@ -334,38 +327,47 @@ void shared_log_flush_messages (void)
 }
 
 //------------------------------------------------------------------------------
+static void shared_log_element_dequeue_cleanup_callback(struct lfds710_queue_bmm_state *qbmms, void *key, void *value)
+{
+  shared_log_queue_item_t        *item_p = (shared_log_queue_item_t*)value;
+
+  if (item_p) {
+    if (item_p->bstr) {
+      bdestroy_wrapper(&item_p->bstr);
+    }
+    free_wrapper((void**)&item_p);
+  }
+}
+//------------------------------------------------------------------------------
+static void shared_log_element_pop_cleanup_callback(struct lfds710_stack_state *ss, struct lfds710_stack_element *se)
+{
+  shared_log_queue_item_t        *item_p = (shared_log_queue_item_t*)se->value;
+
+  if (item_p) {
+    if (item_p->bstr) {
+      bdestroy_wrapper(&item_p->bstr);
+    }
+    free_wrapper((void**)&item_p);
+  }
+}
+//------------------------------------------------------------------------------
 void shared_log_exit (void)
 {
   OAI_FPRINTF_INFO("[TRACE] Entering %s\n", __FUNCTION__);
   shared_log_flush_messages ();
   hashtable_ts_destroy(g_shared_log.thread_context_htbl);
+  lfds710_queue_bmm_cleanup( &g_shared_log.log_message_queue, shared_log_element_dequeue_cleanup_callback);
+  lfds710_stack_cleanup( &g_shared_log.log_free_message_queue, shared_log_element_pop_cleanup_callback );
+  free_wrapper((void**)&g_shared_log.qbmme);
   OAI_FPRINTF_INFO("[TRACE] Leaving %s\n", __FUNCTION__);
 }
 
 //------------------------------------------------------------------------------
 void shared_log_item(shared_log_queue_item_t * messageP)
 {
-  int                                     rv = 0;
-
   if (messageP) {
     shared_log_start_use();
-
-    rv = lfds611_queue_enqueue (g_shared_log.log_message_queue_p, messageP);
-
-    if (0 == rv) {
-#if defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
-      btrunc(messageP->bstr, 0);
-#else
-      bdestroy_wrapper (&messageP->bstr);
-#endif
-      rv = lfds611_stack_guaranteed_push (g_shared_log.log_free_message_queue_p, messageP);
-      if (0 == rv) {
-#if !defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
-        bdestroy_wrapper (&messageP->bstr);
-#endif
-        free_wrapper ((void**)&messageP);
-      }
-    }
+    lfds710_queue_bmm_enqueue( &g_shared_log.log_message_queue, NULL, messageP );
   }
 }
 

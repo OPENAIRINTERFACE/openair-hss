@@ -46,6 +46,7 @@
 #include "mme_app_statistics.h"
 #include "xml_msg_dump.h"
 #include "common_defs.h"
+#include "mme_app_edns_emulation.h"
 
 
 mme_app_desc_t                          mme_app_desc;
@@ -55,9 +56,8 @@ extern xmlTextWriterPtr g_xml_text_writer;
 
 void     *mme_app_thread (void *args);
 
-
-void *mme_app_thread (
-  void *args)
+//------------------------------------------------------------------------------
+void *mme_app_thread (void *args)
 {
   itti_mark_task_ready (TASK_MME_APP);
 
@@ -88,7 +88,7 @@ void *mme_app_thread (
       break;
 
     case S11_MODIFY_BEARER_RESPONSE:{
-        struct ue_context_s                    *ue_context_p = NULL;
+        struct ue_mm_context_s                    *ue_context_p = NULL;
         ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.s11_modify_bearer_response.teid);
 
         if (ue_context_p == NULL) {
@@ -97,7 +97,7 @@ void *mme_app_thread (
           OAILOG_WARNING (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", received_message_p->ittiMsg.s11_modify_bearer_response.teid);
         } else {
           MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
-            received_message_p->ittiMsg.s11_modify_bearer_response.teid, ue_context_p->imsi);
+            received_message_p->ittiMsg.s11_modify_bearer_response.teid, ue_context_p->emm_context._imsi64);
         }
          // TO DO
       }
@@ -184,7 +184,7 @@ void *mme_app_thread (
       break;
 
     case NAS_DOWNLINK_DATA_REQ: {
-      mme_app_handle_nas_dl_req (&received_message_p->ittiMsg.nas_dl_data_req);
+        mme_app_handle_nas_dl_req (&received_message_p->ittiMsg.nas_dl_data_req);
       }
       break;
 
@@ -203,9 +203,8 @@ void *mme_app_thread (
   return NULL;
 }
 
-int
-mme_app_init (
-  const mme_config_t * mme_config_p)
+//------------------------------------------------------------------------------
+int mme_app_init (const mme_config_t * mme_config_p)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
@@ -226,6 +225,9 @@ mme_app_init (
   mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, hash_free_int_func, b);
   bdestroy_wrapper (&b);
 
+  if (mme_app_edns_init(mme_config_p)) {
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
   /*
    * Create the thread associated with MME applicative layer
    */

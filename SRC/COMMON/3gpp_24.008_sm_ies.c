@@ -186,6 +186,20 @@ void clear_protocol_configuration_options (protocol_configuration_options_t * co
 }
 
 //------------------------------------------------------------------------------
+void free_protocol_configuration_options (protocol_configuration_options_t ** const protocol_configuration_options)
+{
+  protocol_configuration_options_t *pco = *protocol_configuration_options;
+  if (pco) {
+    for (int i = 0; i < PCO_UNSPEC_MAXIMUM_PROTOCOL_ID_OR_CONTAINER_ID; i++) {
+      if (pco->protocol_or_container_ids[i].contents) {
+        bdestroy_wrapper (&pco->protocol_or_container_ids[i].contents);
+      }
+    }
+    free_wrapper((void**)protocol_configuration_options);
+  }
+}
+
+//------------------------------------------------------------------------------
 int
 decode_protocol_configuration_options (
     protocol_configuration_options_t * protocolconfigurationoptions,
@@ -1084,3 +1098,38 @@ int encode_traffic_flow_template (
   }
   return encoded;
 }
+
+//------------------------------------------------------------------------------
+void copy_traffic_flow_template (traffic_flow_template_t * const tft_dst, const traffic_flow_template_t * const tft_src)
+{
+  if ((tft_dst) && (tft_src)) {
+    tft_dst->tftoperationcode = tft_src->tftoperationcode;
+    tft_dst->ebit = tft_src->ebit;
+    tft_dst->numberofpacketfilters = tft_src->numberofpacketfilters;
+    memcpy(&tft_dst->packetfilterlist, &tft_src->packetfilterlist, sizeof(tft_src->packetfilterlist));
+    tft_dst->parameterslist.num_parameters = tft_src->parameterslist.num_parameters;
+    // not necessary now to create a subroutine for subtype
+    for (int i = 0; i < tft_src->parameterslist.num_parameters; i++) {
+      tft_dst->parameterslist.parameter[i].parameteridentifier = tft_src->parameterslist.parameter[i].parameteridentifier;
+      tft_dst->parameterslist.parameter[i].length = tft_src->parameterslist.parameter[i].length;
+      tft_dst->parameterslist.parameter[i].contents = bstrcpy(tft_src->parameterslist.parameter[i].contents);
+    }
+  }
+}
+//------------------------------------------------------------------------------
+static void free_traffic_flow_template_parameter (parameter_t * param)
+{
+  bdestroy_wrapper (&param->contents);
+}
+
+//------------------------------------------------------------------------------
+void free_traffic_flow_template(traffic_flow_template_t ** tft)
+{
+  traffic_flow_template_t * trafficflowtemplate = *tft;
+  // nothing to do for packet filters
+  for (int i = 0; i < trafficflowtemplate->parameterslist.num_parameters; i++) {
+    free_traffic_flow_template_parameter (&trafficflowtemplate->parameterslist.parameter[i]);
+  }
+  free_wrapper((void**)tft);
+}
+

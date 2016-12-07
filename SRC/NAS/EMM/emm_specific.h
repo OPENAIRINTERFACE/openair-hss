@@ -42,10 +42,10 @@ typedef enum {
  */
 struct emm_context_s;
 
-typedef int (*emm_specific_ll_failure_callback_t)(struct emm_context_s *emm_ctx);
-typedef int (*emm_specific_non_delivered_ho_callback_t)(struct emm_context_s *emm_ctx);
+typedef int (*emm_specific_ll_failure_callback_t)(struct emm_context_s *emm_context);
+typedef int (*emm_specific_non_delivered_ho_callback_t)(struct emm_context_s *emm_context);
 /* EMM specific procedure to be executed when the ongoing EMM procedure is aborted.*/
-typedef int (*emm_specific_abort_callback_t)(struct emm_context_s *emm_ctx);
+typedef int (*emm_specific_abort_callback_t)(struct emm_context_s *emm_context);
 
 
 
@@ -96,7 +96,7 @@ typedef struct emm_specific_procedure_data_s {
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 
-int emm_proc_specific_initialize(struct emm_context_s           * const emm_ctx,
+int emm_proc_specific_initialize(struct emm_context_s           * const emm_context,
                                emm_specific_proc_type_t           const type,
                                emm_specific_procedure_data_t    * const emm_specific_data,
                                emm_specific_ll_failure_callback_t       ll_failure,

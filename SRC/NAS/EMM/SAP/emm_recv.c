@@ -147,7 +147,6 @@ emm_recv_attach_request (
   const nas_message_decode_status_t  * decode_status)
 {
   int                                     rc = RETURNok;
-  uint8_t                                 gea = 0;
   emm_proc_attach_type_t                  type = EMM_ATTACH_TYPE_RESERVED;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -300,27 +299,13 @@ emm_recv_attach_request (
   /*
    * Execute the requested UE attach procedure
    */
-  if (msg->presencemask & ATTACH_REQUEST_MS_NETWORK_CAPABILITY_PRESENT) {
-    gea = msg->msnetworkcapability.gea1;
-
-    if (gea) {
-      gea = (gea << 6) | msg->msnetworkcapability.egea;
-    }
-  }
-
   rc = emm_proc_attach_request (enb_ue_s1ap_id_key, ue_id, type,
                                 msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED,
                                 msg->naskeysetidentifier.naskeysetidentifier,
                                 msg->oldgutitype != GUTI_MAPPED, p_guti, p_imsi, p_imei,
                                 p_last_visited_registered_tai,originating_tai,originating_ecgi,
-                                msg->uenetworkcapability.eea,
-                                msg->uenetworkcapability.eia,
-                                msg->uenetworkcapability.ucs2,
-                                msg->uenetworkcapability.uea,
-                                msg->uenetworkcapability.uia,
-                                gea,
-                                msg->uenetworkcapability.umts_present,
-                                (gea >= (MS_NETWORK_CAPABILITY_GEA1 >> 1)),
+                                &msg->uenetworkcapability,
+                                (msg->presencemask & ATTACH_REQUEST_MS_NETWORK_CAPABILITY_PRESENT) ? &msg->msnetworkcapability: NULL,
                                 msg->esmmessagecontainer,
                                 decode_status);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

@@ -339,8 +339,8 @@ s11_mme_handle_create_bearer_request (
       return RETURNerror;
     }
 
-    MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " cause %u",
-      resp_p->teid, resp_p->cause);
+    MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_BEARER_REQUEST local S11 teid " TEID_FMT " lebi %u",
+        req_p->teid, req_p->linked_eps_bearer_id);
     rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
     DevAssert (NW_OK == rc);
     rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));

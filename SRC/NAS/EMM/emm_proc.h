@@ -96,8 +96,8 @@ typedef enum {
  *              EMM status procedure
  *---------------------------------------------------------------------------
  */
-int emm_proc_status_ind(mme_ue_s1ap_id_t ue_id, int emm_cause);
-int emm_proc_status(mme_ue_s1ap_id_t ue_id, int emm_cause);
+int emm_proc_status_ind(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
+int emm_proc_status(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 
 /*
  *---------------------------------------------------------------------------
@@ -122,33 +122,33 @@ int emm_proc_status(mme_ue_s1ap_id_t ue_id, int emm_cause);
 
 int emm_proc_attach_request(enb_s1ap_id_key_t enb_ue_s1ap_id_key,
                             mme_ue_s1ap_id_t ue_id,
-                            emm_proc_attach_type_t type,
-                            bool is_native_ksi, ksi_t ksi,
-                            bool is_native_guti, guti_t *guti,
+                            const emm_proc_attach_type_t type,
+                            const bool is_native_ksi, const ksi_t ksi,
+                            const bool is_native_guti, guti_t *guti,
                             imsi_t *imsi,
                             imei_t *imei, tai_t *last_visited_registered_tai,
                             const tai_t              * const originating_tai,
                             const ecgi_t             * const originating_ecgi,
-                            const int eea, const int eia, const int ucs2, const int uea, const int uia, const int gea,
-                            const bool umts_present, const bool gprs_present, const_bstring esm_msg,
-                            const nas_message_decode_status_t  * const decode_status);
+                            const ue_network_capability_t * const ue_network_capability,
+                            const ms_network_capability_t * const ms_network_capability,
+                            const_bstring esm_msg, const nas_message_decode_status_t  * const decode_status);
 
-int _emm_attach_reject (emm_context_t *emm_ctx);
+int _emm_attach_reject (emm_context_t *emm_context);
 
-int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, int emm_cause);
+int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 int emm_proc_attach_complete(mme_ue_s1ap_id_t ue_id, const_bstring esm_msg);
 
 int  emm_proc_tracking_area_update_request (
         const mme_ue_s1ap_id_t ue_id,
         tracking_area_update_request_msg * const msg,
-        int *emm_cause,
+        emm_cause_t *emm_cause,
         const nas_message_decode_status_t  * decode_status);
 
 int emm_proc_tracking_area_update_reject (
         const mme_ue_s1ap_id_t ue_id,
-        const int emm_cause);
+        const emm_cause_t emm_cause);
 
-int emm_proc_service_reject (mme_ue_s1ap_id_t ue_id, int emm_cause);
+int emm_proc_service_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 /*
  * --------------------------------------------------------------------------
  *              Detach procedure
@@ -167,7 +167,7 @@ int emm_proc_detach_request(mme_ue_s1ap_id_t ue_id, emm_proc_detach_type_t type,
  */
 struct emm_context_s;
 
-int emm_proc_identification(struct emm_context_s          *emm_ctx,
+int emm_proc_identification(emm_context_t *emm_context,
                             emm_proc_identity_type_t       type,
                             emm_common_success_callback_t  success,
                             emm_common_reject_callback_t   reject,
@@ -184,7 +184,8 @@ int emm_proc_identification_complete(const mme_ue_s1ap_id_t ue_id,
  * --------------------------------------------------------------------------
  */
 
-int emm_proc_authentication(struct emm_context_s *ctx, mme_ue_s1ap_id_t ue_id, ksi_t ksi,
+int emm_proc_authentication(emm_context_t *emm_context,
+                            mme_ue_s1ap_id_t ue_id, ksi_t ksi,
                             const uint8_t   * const rand,
                             const uint8_t   * const autn,
                             emm_common_success_callback_t success,
@@ -197,7 +198,7 @@ int emm_proc_authentication_failure (mme_ue_s1ap_id_t ue_id, int emm_cause,
 int emm_proc_authentication_complete(mme_ue_s1ap_id_t ue_id, int emm_cause,
     const_bstring const res);
 
-int emm_attach_security(emm_context_t *emm_ctx);
+int emm_attach_security(struct emm_context_s *emm_context);
 
 /*
  * --------------------------------------------------------------------------
@@ -206,11 +207,9 @@ int emm_attach_security(emm_context_t *emm_ctx);
  */
 
 int emm_proc_security_mode_control(const mme_ue_s1ap_id_t ue_id, ksi_t ksi,
-    const int eea, int eia,const int ucs2, const int uea, const int uia, const int gea,
-    const bool umts_present, const bool gprs_present,
-                                   emm_common_success_callback_t success,
-                                   emm_common_reject_callback_t reject,
-                                   emm_common_failure_callback_t failure);
+    emm_common_success_callback_t success,
+    emm_common_reject_callback_t reject,
+    emm_common_failure_callback_t failure);
 int emm_proc_security_mode_complete(mme_ue_s1ap_id_t ue_id);
 int emm_proc_security_mode_reject(mme_ue_s1ap_id_t ue_id);
 

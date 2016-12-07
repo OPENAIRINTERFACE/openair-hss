@@ -243,11 +243,11 @@ mme_api_get_emm_config (
 
 // TODO
 void mme_api_duplicate_enb_ue_s1ap_id_detected (
-    const enb_s1ap_id_key_t enb_s1ap_id_key,
-    const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+    const enb_s1ap_id_key_t new_enb_s1ap_id_key,
+    const mme_ue_s1ap_id_t old_mme_ue_s1ap_id,
     const bool             is_remove_old)
 {
-  mme_ue_context_duplicate_enb_ue_s1ap_id_detected(enb_s1ap_id_key, mme_ue_s1ap_id, is_remove_old);
+  mme_ue_context_duplicate_enb_ue_s1ap_id_detected(new_enb_s1ap_id_key, old_mme_ue_s1ap_id, is_remove_old);
 }
 
 
@@ -304,7 +304,7 @@ mme_api_notify_imsi (
   const mme_ue_s1ap_id_t id,
   const imsi64_t imsi64)
 {
-  ue_context_t                           *ue_context = NULL;
+  ue_mm_context_t                           *ue_context = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS);
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
@@ -316,8 +316,8 @@ mme_api_notify_imsi (
         ue_context->enb_s1ap_id_key,
         id,
         imsi64,
-        ue_context->mme_s11_teid,
-        &ue_context->guti);
+        ue_context->mme_teid_s11,
+        &ue_context->emm_context._guti);
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
@@ -341,20 +341,19 @@ mme_api_notify_new_guti (
   const mme_ue_s1ap_id_t id,
   guti_t * const guti)
 {
-  ue_context_t                           *ue_context = NULL;
+  ue_mm_context_t                           *ue_context = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS);
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
 
 
   if ( ue_context) {
-    ue_context->is_guti_set = true;
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts,
         ue_context,
         ue_context->enb_s1ap_id_key,
         id,
-        ue_context->imsi,
-        ue_context->mme_s11_teid,
+        ue_context->emm_context._imsi64,
+        ue_context->mme_teid_s11,
         guti);
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
@@ -418,7 +417,7 @@ mme_api_new_guti (
   const tai_t      * const originating_tai,
   tai_list_t * const tai_list)
 {
-  ue_context_t                           *ue_context = NULL;
+  ue_mm_context_t                           *ue_context = NULL;
   imsi64_t                                mme_imsi = 0;
 
   OAILOG_FUNC_IN (LOG_NAS);

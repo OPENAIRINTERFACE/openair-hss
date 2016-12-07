@@ -30,13 +30,15 @@
 #include "log.h"
 #include "conversions.h"
 #include "common_types.h"
+#include "common_defs.h"
 #include "3gpp_24.007.h"
 #include "mme_app_ue_context.h"
 #include "commonDef.h"
-#include "conversions.h"
+#include "dynamic_memory_check.h"
 
 #include <string.h>
 #include <stdbool.h>
+
 
 
 /**
@@ -115,7 +117,7 @@ mme_app_imsi_to_string (char * const imsi_dst,
 }
 
 /**
- * @brief mme_app_is_imsi_empty: checks if an imsi structe is empty returns true if it is empty
+ * @brief mme_app_is_imsi_empty: checks if an imsi struct is empty returns true if it is empty
  * @param imsi
  * @return
  */
@@ -126,7 +128,7 @@ mme_app_is_imsi_empty (mme_app_imsi_t const * imsi)
 }
 
 /**
- * @brief mme_app_imsi_to_u64: converts imsi to uint64 (be carefull leading 00 will be cut off)
+ * @brief mme_app_imsi_to_u64: converts imsi to uint64 (be careful leading 00 will be cut off)
  * @param imsi_src
  * @return
  */
@@ -138,3 +140,7 @@ mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src)
   sscanf(imsi_src.data, "%" SCNu64, &uint_imsi);
   return uint_imsi;
 }
+
+
+
+

@@ -55,6 +55,7 @@
 #include "3gpp_24.008.h"
 #include "3gpp_36.401.h"
 #include "common_defs.h"
+#include "mme_app_ue_context.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "log.h"
@@ -68,7 +69,7 @@
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
 
-extern int _pdn_connectivity_delete (struct emm_context_s * ctx, int pid);
+extern int _pdn_connectivity_delete (emm_context_t * emm_context, pdn_cid_t pid);
 
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
@@ -83,7 +84,7 @@ extern int _pdn_connectivity_delete (struct emm_context_s * ctx, int pid);
 /*
    PDN disconnection handlers
 */
-static int _pdn_disconnect_get_pid (esm_data_context_t * ctx, int pti);
+static int _pdn_disconnect_get_pid (emm_context_t * emm_context, proc_tid_t pti);
 
 
 /****************************************************************************/
@@ -123,26 +124,27 @@ static int _pdn_disconnect_get_pid (esm_data_context_t * ctx, int pti);
  ***************************************************************************/
 int
 esm_proc_pdn_disconnect_request (
-  struct emm_context_s * ctx,
-  int pti,
-  int *esm_cause)
+  emm_context_t * emm_context,
+  proc_tid_t pti,
+  esm_cause_t *esm_cause)
 {
-  int                                     pid = RETURNerror;
-
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n", ctx->ue_id, pti);
+  pdn_cid_t                               pid = RETURNerror;
+  mme_ue_s1ap_id_t                        ue_id = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
+
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n", ue_id, pti);
 
   /*
    * Get UE's ESM context
    */
-  if (ctx->esm_data_ctx.n_pdns > 1) {
+  if (emm_context->esm_ctx.n_active_pdns > 1) {
     /*
      * Get the identifier of the PDN connection entry assigned to the
      * * * * procedure transaction identity
      */
-    pid = _pdn_disconnect_get_pid (&ctx->esm_data_ctx, pti);
+    pid = _pdn_disconnect_get_pid (emm_context, pti);
 
-    if (pid < 0) {
+    if (pid >= MAX_APN_PER_UE) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (pti=%d)\n", pti);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
@@ -182,12 +184,13 @@ esm_proc_pdn_disconnect_request (
  ***************************************************************************/
 int
 esm_proc_pdn_disconnect_accept (
-  struct emm_context_s * ctx,
-  int pid,
-  int *esm_cause)
+  emm_context_t * emm_context,
+  pdn_cid_t pid,
+  esm_cause_t *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ctx->ue_id, pid);
+  mme_ue_s1ap_id_t      ue_id = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect accepted by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n", ue_id, pid);
   /*
    * Release the connectivity with the requested PDN
    */
@@ -197,7 +200,7 @@ esm_proc_pdn_disconnect_accept (
     /*
      * Delete the PDN connection entry
      */
-    int                                     pti = _pdn_connectivity_delete (ctx, pid);
+    proc_tid_t                            pti = _pdn_connectivity_delete (emm_context, pid);
 
     if (pti != ESM_PT_UNASSIGNED) {
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
@@ -236,22 +239,23 @@ esm_proc_pdn_disconnect_accept (
 int
 esm_proc_pdn_disconnect_reject (
   const bool is_standalone,
-  struct emm_context_s * ctx,
-  int ebi,
+  emm_context_t * emm_context,
+  ebi_t ebi,
   bstring msg,
   const bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
   emm_sap_t                               emm_sap = {0};
+  mme_ue_s1ap_id_t                        ue_id = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
 
-  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect not accepted by the network " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ctx->ue_id);
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect not accepted by the network " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Notity EMM that ESM PDU has to be forwarded to lower layers
    */
   emm_sap.primitive = EMMESM_UNITDATA_REQ;
-  emm_sap.u.emm_esm.ue_id = ctx->ue_id;
-  emm_sap.u.emm_esm.ctx = ctx;
+  emm_sap.u.emm_esm.ue_id = ue_id;
+  emm_sap.u.emm_esm.ctx = emm_context;
   emm_sap.u.emm_esm.u.data.msg = msg;
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -293,30 +297,23 @@ esm_proc_pdn_disconnect_reject (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static int
+static pdn_cid_t
 _pdn_disconnect_get_pid (
-  esm_data_context_t * ctx,
-  int pti)
+  emm_context_t * emm_context,
+  proc_tid_t pti)
 {
-  int                                     i = ESM_DATA_PDN_MAX;
+  pdn_cid_t                           i = MAX_APN_PER_UE;
 
-  if (ctx ) {
-    for (i = 0; i < ESM_DATA_PDN_MAX; i++) {
-      if ((ctx->pdn[i].pid != -1) && (ctx->pdn[i].data )) {
-        if (ctx->pdn[i].data->pti != pti) {
-          continue;
+  if (emm_context) {
+    ue_mm_context_t      *ue_mm_context = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context);
+    for (i = 0; i < MAX_APN_PER_UE; i++) {
+      if (ue_mm_context->pdn_contexts[i]) {
+        if (ue_mm_context->pdn_contexts[i]->esm_data.pti == pti ) {
+          return (i);
         }
-
-        /*
-         * PDN entry found
-         */
-        break;
       }
     }
   }
 
-  /*
-   * Return the identifier of the PDN connection
-   */
-  return (ctx->pdn[i].pid);
+  return RETURNerror;
 }

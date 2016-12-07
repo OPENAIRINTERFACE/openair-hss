@@ -92,12 +92,12 @@ EmmDeregisteredInitiated (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  assert (emm_fsm_get_status (evt->ue_id, evt->ctx) == EMM_DEREGISTERED_INITIATED);
+  assert (emm_fsm_get_state (evt->ctx) == EMM_DEREGISTERED_INITIATED);
 
   switch (evt->primitive) {
 
     case _EMMREG_DETACH_CNF:
-      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
       break;
 
     case _EMMREG_LOWERLAYER_FAILURE:
@@ -105,11 +105,11 @@ EmmDeregisteredInitiated (
        * Transmission failure occurred before the EMM common
        * procedure being completed
        */
-      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
       break;
 
     case _EMMREG_LOWERLAYER_NON_DELIVERY:
-      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
       break;
 
   default:

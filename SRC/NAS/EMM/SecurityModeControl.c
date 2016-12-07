@@ -60,6 +60,8 @@
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "3gpp_requirements_24.301.h"
+#include "3gpp_24.007.h"
+#include "mme_app_ue_context.h"
 #include "emm_proc.h"
 #include "common_defs.h"
 #include "nas_timer.h"
@@ -67,6 +69,7 @@
 #include "emm_sap.h"
 #include "emm_cause.h"
 #include "secu_defs.h"
+#include "mme_app_defs.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -91,15 +94,15 @@
    Timer handlers
 */
 static void                            *_security_t3460_handler (void *);
-static int _security_ll_failure (emm_context_t * emm_ctx);
-static int _security_non_delivered (emm_context_t * emm_ctx);
+static int _security_ll_failure (emm_context_t *emm_context);
+static int _security_non_delivered (emm_context_t *emm_context);
 
 /*
    Function executed whenever the ongoing EMM procedure that initiated
    the security mode control procedure is aborted or the maximum value of the
    retransmission timer counter is exceed
 */
-static int                              _security_abort (emm_context_t * emm_ctx);
+static int                              _security_abort (emm_context_t *emm_context);
 static int                              _security_select_algorithms (
   const int ue_eiaP,
   const int ue_eeaP,
@@ -159,31 +162,29 @@ int
 emm_proc_security_mode_control (
   const mme_ue_s1ap_id_t ue_id,
   ksi_t ksi,
-  const int eea,
-  const int eia,
-  const int ucs2,
-  const int uea,
-  const int uia,
-  const int gea,
-  const bool umts_present,
-  const bool gprs_present,
   emm_common_success_callback_t success,
   emm_common_reject_callback_t reject,
   emm_common_failure_callback_t failure)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   bool                                    security_context_is_new = false;
   int                                     mme_eea = NAS_SECURITY_ALGORITHMS_EEA0;
   int                                     mme_eia = NAS_SECURITY_ALGORITHMS_EIA0;
+  ue_mm_context_t                        *ue_mm_context = NULL;
+  emm_context_t                          *emm_ctx = NULL;
   /*
    * Get the UE context
    */
-  emm_context_t                     *emm_ctx = NULL;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate security mode control procedure " "KSI = %d EEA = %d EIA = %d\n", ksi, eea, eia);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate security mode control procedure " "KSI = %d\n", ksi);
 
-  emm_ctx = emm_context_get (&_emm_data, ue_id);
+  ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+  if (ue_mm_context) {
+    emm_ctx = &ue_mm_context->emm_context;
+  } else {
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
 
   //TODO better than that (quick fixes)
   if (KSI_NO_KEY_AVAILABLE == ksi) {
@@ -227,7 +228,7 @@ emm_proc_security_mode_control (
        *  Compute NAS cyphering and integrity keys
        */
 
-      rc = _security_select_algorithms (eia, eea, &mme_eia, &mme_eea);
+      rc = _security_select_algorithms (emm_ctx->_ue_network_capability.eia, emm_ctx->_ue_network_capability.eea, &mme_eia, &mme_eea);
       emm_ctx->_security.selected_algorithms.encryption = mme_eea;
       emm_ctx->_security.selected_algorithms.integrity = mme_eia;
 
@@ -281,26 +282,31 @@ emm_proc_security_mode_control (
     /*
      * Set the EPS encryption algorithms to be replayed to the UE
      */
-    emm_ctx->common_proc->common_arg.u.security_data.eea = eea;
+    emm_ctx->common_proc->common_arg.u.security_data.eea = emm_ctx->_ue_network_capability.eea;
     /*
      * Set the EPS integrity algorithms to be replayed to the UE
      */
-    emm_ctx->common_proc->common_arg.u.security_data.eia = eia;
-    emm_ctx->common_proc->common_arg.u.security_data.ucs2 = ucs2;
+    emm_ctx->common_proc->common_arg.u.security_data.eia = emm_ctx->_ue_network_capability.eia;
+    emm_ctx->common_proc->common_arg.u.security_data.ucs2 = emm_ctx->_ue_network_capability.ucs2;
     /*
      * Set the UMTS encryption algorithms to be replayed to the UE
      */
-    emm_ctx->common_proc->common_arg.u.security_data.uea = uea;
+    emm_ctx->common_proc->common_arg.u.security_data.uea = emm_ctx->_ue_network_capability.uea;
     /*
      * Set the UMTS integrity algorithms to be replayed to the UE
      */
-    emm_ctx->common_proc->common_arg.u.security_data.uia = uia;
+    emm_ctx->common_proc->common_arg.u.security_data.uia = emm_ctx->_ue_network_capability.uia;
     /*
      * Set the GPRS integrity algorithms to be replayed to the UE
      */
+
+    uint8_t gea = emm_ctx->_ms_network_capability.gea1;
+    if (gea) {
+      gea = (gea << 6) | emm_ctx->_ms_network_capability.egea;
+    }
     emm_ctx->common_proc->common_arg.u.security_data.gea = gea;
-    emm_ctx->common_proc->common_arg.u.security_data.umts_present = umts_present;
-    emm_ctx->common_proc->common_arg.u.security_data.gprs_present = gprs_present;
+    emm_ctx->common_proc->common_arg.u.security_data.umts_present = emm_ctx->_ue_network_capability.umts_present;
+    emm_ctx->common_proc->common_arg.u.security_data.gprs_present = (gea >= (MS_NETWORK_CAPABILITY_GEA1 >> 1));
     /*
      * Set the EPS encryption algorithms selected to the UE
      */
@@ -361,19 +367,24 @@ int
 emm_proc_security_mode_complete (
   mme_ue_s1ap_id_t ue_id)
 {
-  emm_context_t                     *emm_ctx = NULL;
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  ue_mm_context_t                        *ue_mm_context = NULL;
+  emm_context_t                          *emm_ctx = NULL;
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Security mode complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Get the UE context
    */
 
-  if (ue_id > 0) {
-    emm_ctx = emm_context_get (&_emm_data, ue_id);
+  ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+  if (ue_mm_context) {
+    emm_ctx = &ue_mm_context->emm_context;
+  } else {
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
+
 
   if (emm_ctx) {
     /*
@@ -445,17 +456,22 @@ int
 emm_proc_security_mode_reject (
   mme_ue_s1ap_id_t ue_id)
 {
-  emm_context_t                     *emm_ctx = NULL;
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  ue_mm_context_t                        *ue_mm_context = NULL;
+  emm_context_t                          *emm_ctx = NULL;
   int                                     rc = RETURNerror;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Security mode command not accepted by the UE" "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Get the UE context
    */
 
-  emm_ctx = emm_context_get (&_emm_data, ue_id);
-  DevAssert (emm_ctx );
+  ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+  if (ue_mm_context) {
+    emm_ctx = &ue_mm_context->emm_context;
+  } else {
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
 
   if (emm_ctx) {
     /*
@@ -531,7 +547,11 @@ emm_proc_security_mode_reject (
 static void* _security_t3460_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_context_t * emm_ctx = (emm_context_t *) (args);
+  emm_context_t * emm_ctx = NULL;
+  ue_mm_context_t * ue_mm_context = (ue_mm_context_t *) (args);
+  if (ue_mm_context) {
+    emm_ctx = &ue_mm_context->emm_context;
+  }
 
   if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC)){
     security_data_t                  *data = &emm_ctx->common_proc->common_arg.u.security_data;
@@ -583,11 +603,12 @@ static void* _security_t3460_handler (void *args)
  ***************************************************************************/
 int _security_request (security_data_t * data)
 {
-  struct emm_context_s              *emm_ctx = NULL;
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  ue_mm_context_t                        *ue_mm_context = NULL;
+  struct emm_context_s                   *emm_ctx = NULL;
   emm_sap_t                               emm_sap = {0};
   int                                     rc = RETURNerror;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
   if (data) {
     /*
      * Notify EMM-AS SAP that Security Mode Command message has to be sent
@@ -610,8 +631,11 @@ int _security_request (security_data_t * data)
     emm_sap.u.emm_as.u.security.selected_eea = data->selected_eea;
     emm_sap.u.emm_as.u.security.selected_eia = data->selected_eia;
 
-    if (data->ue_id > 0) {
-      emm_ctx = emm_context_get (&_emm_data, data->ue_id);
+    ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, data->ue_id);
+    if (ue_mm_context) {
+      emm_ctx = &ue_mm_context->emm_context;
+    } else {
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
       /*
@@ -635,7 +659,7 @@ int _security_request (security_data_t * data)
       /*
        * Start T3460 timer
        */
-      emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, 0  /*usec*/, _security_t3460_handler, emm_ctx);
+      emm_ctx->T3460.id = nas_timer_start (emm_ctx->T3460.sec, 0  /*usec*/, _security_t3460_handler, ue_mm_context);
       OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Started Timer T3460 (%lx) expires in %ld seconds\n", emm_ctx->T3460.id, emm_ctx->T3460.sec);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 started UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       AssertFatal(NAS_TIMER_INACTIVE_ID != emm_ctx->T3460.id, "Failed to start T3460");
@@ -645,19 +669,21 @@ int _security_request (security_data_t * data)
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-
-static int _security_ll_failure (emm_context_t * emm_ctx)
+//------------------------------------------------------------------------------
+static int _security_ll_failure (emm_context_t * emm_context)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC)){
-    security_data_t                  *data = &emm_ctx->common_proc->common_arg.u.security_data;
+
+  if (emm_ctx_is_common_procedure_running(emm_context, EMM_CTXT_COMMON_PROC_SMC)){
+    security_data_t                  *data = &emm_context->common_proc->common_arg.u.security_data;
     REQUIREMENT_3GPP_24_301(R10_5_4_3_7_a);
     emm_sap_t                               emm_sap = {0};
+    mme_ue_s1ap_id_t                        ue_id = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
 
     emm_sap.primitive = EMMREG_PROC_ABORT;
-    emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
-    emm_sap.u.emm_reg.ctx   = emm_ctx;
+    emm_sap.u.emm_reg.ue_id = ue_id;
+    emm_sap.u.emm_reg.ctx   = emm_context;
     data->notify_failure = true;
     rc = emm_sap_send (&emm_sap);
   }
@@ -665,12 +691,13 @@ static int _security_ll_failure (emm_context_t * emm_ctx)
 }
 
 
-static int _security_non_delivered (emm_context_t * emm_ctx)
+//------------------------------------------------------------------------------
+static int _security_non_delivered (emm_context_t * emm_context)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC)){
-    security_data_t                  *data = &emm_ctx->common_proc->common_arg.u.security_data;
+  if (emm_ctx_is_common_procedure_running(emm_context, EMM_CTXT_COMMON_PROC_SMC)){
+    security_data_t                  *data = &emm_context->common_proc->common_arg.u.security_data;
     REQUIREMENT_3GPP_24_301(R10_5_4_3_7_e);
     data->is_new = false;
     rc = _security_request(data);
@@ -693,27 +720,26 @@ static int _security_non_delivered (emm_context_t * emm_ctx)
  **      Others:    T3460                                      **
  **                                                                        **
  ***************************************************************************/
-static int _security_abort (emm_context_t * emm_ctx)
+static int _security_abort (emm_context_t * emm_context)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  if (emm_ctx_is_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC)){
-    security_data_t                  *data = &emm_ctx->common_proc->common_arg.u.security_data;
-    unsigned int                            ue_id = data->ue_id;
+  if (emm_ctx_is_common_procedure_running(emm_context, EMM_CTXT_COMMON_PROC_SMC)){
+    security_data_t                  *data = &emm_context->common_proc->common_arg.u.security_data;
+    mme_ue_s1ap_id_t                  ue_id = data->ue_id;
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort security mode control procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
-    emm_ctx = emm_context_get (&_emm_data, data->ue_id);
-    if (emm_ctx) {
-      emm_ctx_unmark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_SMC);
+    {
+      emm_ctx_unmark_common_procedure_running(emm_context, EMM_CTXT_COMMON_PROC_SMC);
 
       /*
        * Stop timer T3460
        */
-      if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%lx)\n", emm_ctx->T3460.id);
-        emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
+      if (emm_context->T3460.id != NAS_TIMER_INACTIVE_ID) {
+        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%lx)\n", emm_context->T3460.id);
+        emm_context->T3460.id = nas_timer_stop (emm_context->T3460.id);
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
       }
     }
@@ -727,7 +753,7 @@ static int _security_abort (emm_context_t * emm_ctx)
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
       emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx   = emm_ctx;
+      emm_sap.u.emm_reg.ctx   = emm_context;
       rc = emm_sap_send (&emm_sap);
     }
   }

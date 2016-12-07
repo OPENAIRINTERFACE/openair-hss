@@ -46,33 +46,34 @@ int nas_itti_dl_data_req(
 
 void nas_itti_pdn_connectivity_req(
   int                     ptiP,
-  unsigned int            ue_idP,
+  const mme_ue_s1ap_id_t  ue_idP,
+  const pdn_cid_t         pdn_cidP,
   const imsi_t           *const imsi_pP,
   esm_proc_data_t        *proc_data_pP,
   esm_proc_pdn_request_t  request_typeP);
 
 void nas_itti_auth_info_req(
-  const uint32_t        ue_idP,
-  const imsi64_t        imsi64_P,
-  const bool            is_initial_reqP,
-  plmn_t        * const visited_plmnP,
-  const uint8_t         num_vectorsP,
-  const_bstring   const auts_pP);
+  const mme_ue_s1ap_id_t ue_idP,
+  const imsi64_t         imsi64_P,
+  const bool             is_initial_reqP,
+  plmn_t         * const visited_plmnP,
+  const uint8_t          num_vectorsP,
+  const_bstring    const auts_pP);
 
 void nas_itti_establish_rej(
-  const uint32_t      ue_idP,
-  const imsi_t *const imsi_pP
-  , uint8_t           initial_reqP);
+  const mme_ue_s1ap_id_t ue_idP,
+  const imsi_t  * const imsi_pP
+  , uint8_t             initial_reqP);
 
 void nas_itti_establish_cnf(
-  const uint32_t         ue_idP,
+  const mme_ue_s1ap_id_t ue_idP,
   const nas_error_code_t error_codeP,
   bstring                msgP,
   const uint16_t         selected_encryption_algorithmP,
   const uint16_t         selected_integrity_algorithmP);
 
 void nas_itti_detach_req(
-  const uint32_t      ue_idP);
+  const mme_ue_s1ap_id_t      ue_idP);
 
 
 #endif /* FILE_NAS_ITTI_MESSAGING_SEEN */

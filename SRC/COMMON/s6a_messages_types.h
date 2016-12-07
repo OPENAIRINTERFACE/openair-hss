@@ -64,7 +64,7 @@ typedef struct s6a_update_location_ans_s {
   // Maximum Requested Bandwidth Uplink, downlink
   // access restriction data
   // msisdn
-  apn_config_profile_t  apn_config_profile;// APN configuration profile
+  //apn_config_profile_t  apn_config_profile;// APN configuration profile
 
   network_access_mode_t access_mode;
   rau_tau_timer_t       rau_tau_timer;

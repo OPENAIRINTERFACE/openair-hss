@@ -27,4 +27,11 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#include "lfds611_freelist_internal.h"/****************************************************************************/void                                   *lfds611_freelist_get_user_data_from_element (  struct lfds611_freelist_element *fe,  void **user_data) {  assert (fe != NULL);  // TRD : user_data can be NULL  LFDS611_BARRIER_LOAD;  if (user_data != NULL)    *user_data = fe->user_data;  return (fe->user_data);}/****************************************************************************/voidlfds611_freelist_set_user_data_in_element (  struct lfds611_freelist_element *fe,  void *user_data) {  assert (fe != NULL);  // TRD : user_data can be NULL  fe->user_data = user_data;  LFDS611_BARRIER_STORE;  return;}
+#ifndef FILE_MME_APP_APN_SELECTION_SEEN
+#define FILE_MME_APP_APN_SELECTION_SEEN
+
+struct apn_configuration_s   * mme_app_select_apn(ue_mm_context_t * const ue_context, const_bstring const ue_selected_apn);
+
+struct apn_configuration_s *mme_app_get_apn_config(ue_mm_context_t * const ue_context, const context_identifier_t context_identifier);
+
+#endif

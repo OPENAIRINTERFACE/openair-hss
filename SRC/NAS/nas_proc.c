@@ -54,6 +54,8 @@
 #include "esm_sap.h"
 #include "msc.h"
 #include "s6a_defs.h"
+#include "mme_app_ue_context.h"
+#include "mme_app_defs.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -349,17 +351,21 @@ int
 nas_proc_authentication_info_answer (
     s6a_auth_info_ans_t * aia)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   imsi64_t                                imsi64  = INVALID_IMSI64;
   int                                     rc      = RETURNerror;
   emm_context_t                          *ctxt    = NULL;
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  ue_mm_context_t                        *ue_mm_context = NULL;
 
    DevAssert (aia);
    IMSI_STRING_TO_IMSI64 ((char *)aia->imsi, &imsi64);
 
    OAILOG_DEBUG (LOG_NAS_EMM, "Handling imsi " IMSI_64_FMT "\n", imsi64);
 
-   ctxt = emm_context_get_by_imsi (&_emm_data, imsi64);
+   ue_mm_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
+   if (ue_mm_context) {
+     ctxt = &ue_mm_context->emm_context;
+   }
 
    if (!(ctxt)) {
      OAILOG_ERROR (LOG_NAS_EMM, "That's embarrassing as we don't know this IMSI\n");
@@ -376,7 +382,7 @@ nas_proc_authentication_info_answer (
      DevCheck(aia->auth_info.nb_of_vectors > 0, aia->auth_info.nb_of_vectors, 1, 0);
 
      OAILOG_DEBUG (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP SUCCESS got %u vector(s)\n", aia->auth_info.nb_of_vectors);
-     rc = nas_proc_auth_param_res (ctxt->ue_id, aia->auth_info.nb_of_vectors, aia->auth_info.eutran_vector);
+     rc = nas_proc_auth_param_res (ue_mm_context->mme_ue_s1ap_id, aia->auth_info.nb_of_vectors, aia->auth_info.eutran_vector);
    } else {
      OAILOG_ERROR (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
      MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi " IMSI_64_FMT, imsi64);
@@ -385,9 +391,9 @@ nas_proc_authentication_info_answer (
       * Inform NAS layer with the right failure
       */
      if (aia->result.present == S6A_RESULT_BASE) {
-       rc = nas_proc_auth_param_fail (ctxt->ue_id, s6a_error_2_nas_cause (aia->result.choice.base, 0));
+       rc = nas_proc_auth_param_fail (ue_mm_context->mme_ue_s1ap_id, s6a_error_2_nas_cause (aia->result.choice.base, 0));
      } else {
-       rc = nas_proc_auth_param_fail (ctxt->ue_id, s6a_error_2_nas_cause (aia->result.choice.experimental, 1));
+       rc = nas_proc_auth_param_fail (ue_mm_context->mme_ue_s1ap_id, s6a_error_2_nas_cause (aia->result.choice.experimental, 1));
      }
    }
 
@@ -459,6 +465,22 @@ nas_proc_deregister_ue (
 
 //------------------------------------------------------------------------------
 int
+nas_proc_pdn_config_res (
+  emm_cn_pdn_config_res_t * emm_cn_pdn_config_res)
+{
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONFIG_RES");
+  emm_sap.primitive = EMMCN_PDN_CONFIG_RES;
+  emm_sap.u.emm_cn.u.emm_cn_pdn_config_res = emm_cn_pdn_config_res;
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+int
 nas_proc_pdn_connectivity_res (
   emm_cn_pdn_res_t * emm_cn_pdn_res)
 {
@@ -488,6 +510,19 @@ nas_proc_pdn_connectivity_fail (
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
+
+//------------------------------------------------------------------------------
+int nas_proc_create_dedicated_bearer(emm_cn_activate_dedicated_bearer_req_t * emm_cn_activate){
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_CN_ACTIVATE_DEDICATED_BEARER_REQ");
+  emm_sap.primitive = _EMMCN_ACTIVATE_DEDICATED_BEARER_REQ;
+  emm_sap.u.emm_cn.u.activate_dedicated_bearer_req = emm_cn_activate;
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

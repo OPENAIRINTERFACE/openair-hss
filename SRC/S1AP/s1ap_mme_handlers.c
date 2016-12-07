@@ -604,7 +604,7 @@ s1ap_mme_handle_initial_context_setup_response (
   ue_ref_p->s1_ue_state = S1AP_UE_CONNECTED;
   message_p = itti_alloc_new_message (TASK_S1AP, MME_APP_INITIAL_CONTEXT_SETUP_RSP);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-  MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
+  MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).ue_id = ue_ref_p->mme_ue_s1ap_id;
   MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).no_of_e_rabs = initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count;
   for (int item = 0; item < initialContextSetupResponseIEs_p->e_RABSetupListCtxtSURes.s1ap_E_RABSetupItemCtxtSURes.count; item++) {
     /*
@@ -622,7 +622,7 @@ s1ap_mme_handle_initial_context_setup_response (
                       MSC_MMEAPP_MME,
                       NULL, 0,
                       "0 MME_APP_INITIAL_CONTEXT_SETUP_RSP mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ebi %u s1u enb teid %u",
-                      MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).mme_ue_s1ap_id,
+                      MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).ue_id,
                       MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).e_rab_id[0],
                       MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p).gtp_teid[0]);
   XML_MSG_DUMP_ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP(&MME_APP_INITIAL_CONTEXT_SETUP_RSP (message_p), TASK_S1AP, TASK_MME_APP, NULL);

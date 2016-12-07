@@ -516,6 +516,7 @@ int xml_msg_load_itti_s1ap_ue_context_release_complete(scenario_t * const scenar
 //------------------------------------------------------------------------------
 int xml_msg_load_itti_s1ap_initial_ue_message (scenario_t * const scenario, scenario_player_msg_t * const msg)
 {
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
   if ((msg) && (msg->xml_doc)) {
     xmlNodePtr  cur = NULL;
@@ -524,7 +525,7 @@ int xml_msg_load_itti_s1ap_initial_ue_message (scenario_t * const scenario, scen
 
     if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_INITIAL_UE_MESSAGE_XML_STR)) {
       OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_S1AP_INITIAL_UE_MESSAGE_XML_STR);
-      return RETURNerror;
+      OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNerror);
     }
 
     if (!msg->xpath_ctx) {
@@ -534,7 +535,7 @@ int xml_msg_load_itti_s1ap_initial_ue_message (scenario_t * const scenario, scen
 
     xmlNodePtr saved_node_ptr = msg->xpath_ctx->node;
     if (RETURNok != xmlXPathSetContextNode(cur, msg->xpath_ctx)) {
-      return RETURNerror;
+      OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNerror);
     }
 
     // free it (may be called from msp_reload_message)
@@ -608,7 +609,10 @@ int xml_msg_load_itti_s1ap_initial_ue_message (scenario_t * const scenario, scen
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
     }
   }
-  return (res)? RETURNok:RETURNerror;
+  if (res)
+    OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNok);
+  else
+    OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNerror);
 }
 
 //------------------------------------------------------------------------------
@@ -733,7 +737,7 @@ int xml_msg_load_itti_mme_app_initial_context_setup_rsp(scenario_t * const scena
       }
 
       if (res) {
-        res = sp_mme_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.mme_ue_s1ap_id);
+        res = sp_mme_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.ue_id);
       }
 
       if (res) {

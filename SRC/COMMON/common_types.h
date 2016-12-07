@@ -148,10 +148,9 @@ typedef uint32_t SequenceNumber_t;
 typedef uint32_t access_restriction_t;
 typedef uint32_t context_identifier_t;
 typedef uint32_t rau_tau_timer_t;
-
-//typedef uint32_t in_addr_t; is network byte order
-
 typedef uint32_t ard_t;
+typedef int      pdn_cid_t;  // pdn connexion identity, related to esm protocol, sometimes type is mixed with int return code!!...
+typedef uint8_t  proc_tid_t; // procedure transaction identity, related to esm protocol
 #define ARD_UTRAN_NOT_ALLOWED               (1U)
 #define ARD_GERAN_NOT_ALLOWED               (1U << 1)
 #define ARD_GAN_NOT_ALLOWED                 (1U << 2)
@@ -172,7 +171,6 @@ typedef struct {
   bitrate_t br_dl;
 } ambr_t;
 
-//typedef uint32_t ipv4_nbo_t;
 
 typedef uint8_t pdn_type_t;
 

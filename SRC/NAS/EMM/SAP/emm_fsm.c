@@ -49,10 +49,13 @@
 #include "commonDef.h"
 #include "log.h"
 #include "common_defs.h"
+#include "3gpp_24.007.h"
+#include "mme_app_ue_context.h"
 #include "mme_api.h"
 #include "emm_data.h"
 #include "assertions.h"
 #include "msc.h"
+#include "mme_app_defs.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -95,13 +98,13 @@ static const char                      *_emm_fsm_event_str[] = {
   "LOWERLAYER_NON_DELIVERY",
 };
 
-/* String representation of EMM status */
-static const char                      *_emm_fsm_status_str[EMM_STATE_MAX] = {
+/* String representation of EMM state */
+static const char                      * const _emm_fsm_status_str[EMM_STATE_MAX] = {
   "INVALID",
-  "DEREGISTERED",
-  "REGISTERED",
-  "DEREGISTERED-INITIATED",
-  "COMMON-PROCEDURE-INITIATED",
+  "EMM-DEREGISTERED",
+  "EMM-REGISTERED",
+  "EMM-DEREGISTERED-INITIATED",
+  "EMM-COMMON-PROCEDURE-INITIATED",
 };
 
 /*
@@ -135,7 +138,7 @@ static const emm_fsm_handler_t          _emm_fsm_handlers[EMM_STATE_MAX] = {
 
 /*
    -----------------------------------------------------------------------------
-            Current EPS Mobility Management status
+            Current EPS Mobility Management state
    -----------------------------------------------------------------------------
 */
 
@@ -169,10 +172,10 @@ emm_fsm_initialize (
  **                                                                        **
  ** Name:    emm_fsm_set_status()                                      **
  **                                                                        **
- ** Description: Set the EPS Mobility Management status to the given state **
+ ** Description: Set the EPS Mobility Management state to the given state **
  **                                                                        **
  ** Inputs:  ue_id:      Lower layers UE identifier                 **
- **      status:    The new EMM status                         **
+ **      state:    The new EMM state                         **
  **      Others:    None                                       **
  **                                                                        **
  ** Outputs:     None                                                      **
@@ -181,20 +184,20 @@ emm_fsm_initialize (
  **                                                                        **
  ***************************************************************************/
 int
-emm_fsm_set_status (
-    mme_ue_s1ap_id_t ue_id,
-  void *ctx,
-  emm_fsm_state_t status)
+emm_fsm_set_state (
+  const mme_ue_s1ap_id_t ue_id,
+  struct emm_context_s * const emm_context,
+  const emm_fsm_state_t state)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_context_t                     *emm_ctx = (emm_context_t *) ctx;
+  //emm_context_t                     *emm_context = (emm_context_t *) ctx;
 
-  DevAssert (emm_ctx);
-  if (status < EMM_STATE_MAX) {
-    if (status != emm_ctx->_emm_fsm_status) {
-      OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status changed: %s ===> %s\n", ue_id, _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " MME_UE_S1AP_ID_FMT" ", _emm_fsm_status_str[status], ue_id);
-      emm_ctx->_emm_fsm_status = status;
+  DevAssert (emm_context);
+  if (state < EMM_STATE_MAX) {
+    if (state != emm_context->_emm_fsm_state) {
+      OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status changed: %s ===> %s\n", ue_id, _emm_fsm_status_str[emm_context->_emm_fsm_state], _emm_fsm_status_str[state]);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " MME_UE_S1AP_ID_FMT" ", _emm_fsm_status_str[state], ue_id);
+      emm_context->_emm_fsm_state = state;
     }
 
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
@@ -204,38 +207,43 @@ emm_fsm_set_status (
 
 /****************************************************************************
  **                                                                        **
- ** Name:    emm_fsm_get_status()                                      **
+ ** Name:    emm_fsm_get_state()                                      **
  **                                                                        **
  ** Description: Get the current value of the EPS Mobility Management      **
- **      status                                                    **
+ **      state                                                    **
  **                                                                        **
  ** Inputs:  ue_id:      Lower layers UE identifier                 **
  **      Others:    _emm_fsm_status                            **
  **                                                                        **
  ** Outputs:     None                                                      **
- **      Return:    The current value of the EMM status        **
+ **      Return:    The current value of the EMM state        **
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
 emm_fsm_state_t
-emm_fsm_get_status (
-    mme_ue_s1ap_id_t ue_id,
-  void *ctx)
+emm_fsm_get_state (const struct emm_context_s * const emm_context)
 {
-  emm_context_t                     *emm_ctx = (emm_context_t *) ctx;
-
-  if (emm_ctx == NULL) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - try again get context ue_id " MME_UE_S1AP_ID_FMT "\n", ue_id);
-    emm_ctx = emm_context_get (&_emm_data, ue_id);
+  if (emm_context ) {
+    AssertFatal((emm_context->_emm_fsm_state < EMM_STATE_MAX) && (emm_context->_emm_fsm_state > EMM_STATE_MIN),
+        "ue_id " MME_UE_S1AP_ID_FMT " BAD EMM state %d",
+        PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id,
+        emm_context->_emm_fsm_state);
+    return emm_context->_emm_fsm_state;
   }
-
-  if (emm_ctx ) {
-    AssertFatal((emm_ctx->_emm_fsm_status < EMM_STATE_MAX) && (emm_ctx->_emm_fsm_status > EMM_STATE_MIN),
-        "ue_id " MME_UE_S1AP_ID_FMT " BAD EMM state %d", ue_id, emm_ctx->_emm_fsm_status);
-    return emm_ctx->_emm_fsm_status;
-  }
-  return EMM_INVALID;           // LG TEST: changed EMM_STATE_MAX to EMM_INVALID;
+  return EMM_INVALID;
 }
+
+//------------------------------------------------------------------------------
+const char *
+emm_fsm_get_state_str (const struct emm_context_s * const emm_context)
+{
+  if (emm_context ) {
+    emm_fsm_state_t state  = emm_fsm_get_state (emm_context);
+    return _emm_fsm_status_str[state];
+  }
+  return  _emm_fsm_status_str[EMM_INVALID];
+}
+
 
 /****************************************************************************
  **                                                                        **
@@ -256,7 +264,7 @@ emm_fsm_process (
   const emm_reg_t * evt)
 {
   int                                     rc = RETURNerror;
-  emm_fsm_state_t                         status;
+  emm_fsm_state_t                         state;
   emm_reg_primitive_t                     primitive;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -264,13 +272,13 @@ emm_fsm_process (
   emm_context_t                     *emm_ctx = (emm_context_t *) evt->ctx;
 
   if (emm_ctx) {
-    status = emm_fsm_get_status (evt->ue_id, emm_ctx);
-    DevAssert (status != EMM_INVALID);
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[status]);
+    state = emm_fsm_get_state (emm_ctx);
+    DevAssert (state != EMM_INVALID);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[state]);
     /*
      * Execute the EMM state machine
      */
-    rc = (_emm_fsm_handlers[status]) (evt);
+    rc = (_emm_fsm_handlers[state]) (evt);
   } else {
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) but no EMM data context provided\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive);
   }

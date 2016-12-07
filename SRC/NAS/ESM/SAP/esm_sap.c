@@ -49,6 +49,7 @@
 
 #include "log.h"
 #include "3gpp_24.007.h"
+#include "mme_app_ue_context.h"
 #include "nas_message.h"
 #include "esm_sap.h"
 #include "esm_recv.h"
@@ -72,20 +73,20 @@
 
 static int _esm_sap_recv (
   int msg_type,
-  int is_standalone,
-  emm_context_t * ctx,
+  bool is_standalone,
+  emm_context_t * emm_context,
   const_bstring req,
   bstring rsp,
   esm_sap_error_t * err);
 
 static int _esm_sap_send (
   int msg_type,
-  int is_standalone,
-  emm_context_t * ctx,
-  int pti,
-  int ebi,
+  bool is_standalone,
+  emm_context_t * emm_context,
+  proc_tid_t pti,
+  ebi_t ebi,
   const esm_sap_data_t * data,
-  bstring rsp) __attribute__ ((unused));
+  bstring rsp);
 
 /*
    String representation of ESM-SAP primitives
@@ -159,12 +160,11 @@ esm_sap_initialize (
  **                                                                        **
  ***************************************************************************/
 int
-esm_sap_send (
-  esm_sap_t * msg)
+esm_sap_send (esm_sap_t * msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
-  int                                     pid;
+  pdn_cid_t                               pid = MAX_APN_PER_UE;
 
   /*
    * Check the ESM-SAP primitive
@@ -229,7 +229,26 @@ esm_sap_send (
     rc = _esm_sap_recv (ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REJECT, msg->is_standalone, msg->ctx, msg->recv, msg->send, &msg->err);
     break;
 
-  case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ:
+  case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ: {
+      esm_eps_dedicated_bearer_context_activate_t* bearer_activate = &msg->data.eps_dedicated_bearer_context_activate;
+      if (msg->is_standalone) {
+        rc = esm_proc_dedicated_eps_bearer_context (msg->ctx,
+            pid,
+            &bearer_activate->ebi,
+            &bearer_activate->linked_ebi,
+            (const esm_proc_qos_t *)NULL,
+            bearer_activate->tft,
+            NULL);
+        if (rc != RETURNok) {
+          break;
+        }
+        /* Send PDN connectivity request */
+
+        rc = _esm_sap_send(ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST,
+            msg->is_standalone, msg->ctx, (proc_tid_t)0 , bearer_activate->ebi,
+            &msg->data, msg->send);
+      }
+    }
     break;
 
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_CNF:
@@ -248,7 +267,7 @@ esm_sap_send (
     break;
 
   case ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
-      int                                     bid;
+      int                                     bid = BEARERS_PER_UE;
 
       /*
        * Locally deactivate EPS bearer context
@@ -311,14 +330,14 @@ esm_sap_send (
 static int
 _esm_sap_recv (
   int msg_type,
-  int is_standalone,
-  emm_context_t * ctx,
+  bool is_standalone,
+  emm_context_t * emm_context,
   const_bstring req,
   bstring rsp,
   esm_sap_error_t * err)
 {
   esm_proc_procedure_t                    esm_procedure = NULL;
-  int                                     esm_cause = ESM_CAUSE_SUCCESS;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   int                                     rc = RETURNerror;
   int                                     decoder_rc;
   ESM_msg                                 esm_msg;
@@ -380,12 +399,12 @@ _esm_sap_recv (
   /*
    * Get the procedure transaction identity
    */
-  unsigned int                            pti = esm_msg.header.procedure_transaction_identity;
+  pti_t                            pti = esm_msg.header.procedure_transaction_identity;
 
   /*
    * Get the EPS bearer identity
    */
-  unsigned int                            ebi = esm_msg.header.eps_bearer_identity;
+  ebi_t                            ebi = esm_msg.header.eps_bearer_identity;
 
   /*
    * Indicate whether the ESM bearer context related procedure was triggered
@@ -397,7 +416,7 @@ _esm_sap_recv (
   /*
    * Indicate whether the received message shall be ignored
    */
-  int                                     is_discarded = false;
+  bool                                     is_discarded = false;
 
   if (esm_cause != ESM_CAUSE_SUCCESS) {
     OAILOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Failed to decode expected ESM message " "0x%x\n", msg_type);
@@ -412,7 +431,7 @@ _esm_sap_recv (
        * Process activate default EPS bearer context accept message
        * received from the UE
        */
-      esm_cause = esm_recv_activate_default_eps_bearer_context_accept (ctx, pti, ebi, &esm_msg.activate_default_eps_bearer_context_accept);
+      esm_cause = esm_recv_activate_default_eps_bearer_context_accept (emm_context, pti, ebi, &esm_msg.activate_default_eps_bearer_context_accept);
 
       if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
         /*
@@ -432,7 +451,7 @@ _esm_sap_recv (
        * Process activate default EPS bearer context reject message
        * received from the UE
        */
-      esm_cause = esm_recv_activate_default_eps_bearer_context_reject (ctx, pti, ebi, &esm_msg.activate_default_eps_bearer_context_reject);
+      esm_cause = esm_recv_activate_default_eps_bearer_context_reject (emm_context, pti, ebi, &esm_msg.activate_default_eps_bearer_context_reject);
 
       if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
         /*
@@ -452,7 +471,7 @@ _esm_sap_recv (
        * Process deactivate EPS bearer context accept message
        * received from the UE
        */
-      esm_cause = esm_recv_deactivate_eps_bearer_context_accept (ctx, pti, ebi, &esm_msg.deactivate_eps_bearer_context_accept);
+      esm_cause = esm_recv_deactivate_eps_bearer_context_accept (emm_context, pti, ebi, &esm_msg.deactivate_eps_bearer_context_accept);
 
       if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
         /*
@@ -472,7 +491,7 @@ _esm_sap_recv (
        * Process activate dedicated EPS bearer context accept message
        * received from the UE
        */
-      esm_cause = esm_recv_activate_dedicated_eps_bearer_context_accept (ctx, pti, ebi, &esm_msg.activate_dedicated_eps_bearer_context_accept);
+      esm_cause = esm_recv_activate_dedicated_eps_bearer_context_accept (emm_context, pti, ebi, &esm_msg.activate_dedicated_eps_bearer_context_accept);
 
       if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
         /*
@@ -492,7 +511,7 @@ _esm_sap_recv (
        * Process activate dedicated EPS bearer context reject message
        * received from the UE
        */
-      esm_cause = esm_recv_activate_dedicated_eps_bearer_context_reject (ctx, pti, ebi, &esm_msg.activate_dedicated_eps_bearer_context_reject);
+      esm_cause = esm_recv_activate_dedicated_eps_bearer_context_reject (emm_context, pti, ebi, &esm_msg.activate_dedicated_eps_bearer_context_reject);
 
       if ((esm_cause == ESM_CAUSE_INVALID_PTI_VALUE) || (esm_cause == ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY)) {
         /*
@@ -521,7 +540,7 @@ _esm_sap_recv (
         /*
          * Process PDN connectivity request message received from the UE
          */
-        esm_cause = esm_recv_pdn_connectivity_request (ctx, pti, ebi, &esm_msg.pdn_connectivity_request, &ebi, &data);
+        esm_cause = esm_recv_pdn_connectivity_request (emm_context, pti, ebi, &esm_msg.pdn_connectivity_request, &ebi, &data);
 
         if (esm_cause != ESM_CAUSE_SUCCESS) {
           /*
@@ -624,7 +643,7 @@ _esm_sap_recv (
       /*
        * Process PDN disconnect request message received from the UE
        */
-      esm_cause = esm_recv_pdn_disconnect_request (ctx, pti, ebi, &esm_msg.pdn_disconnect_request, &ebi);
+      esm_cause = esm_recv_pdn_disconnect_request (emm_context, pti, ebi, &esm_msg.pdn_disconnect_request, &ebi);
 
       if (esm_cause != ESM_CAUSE_SUCCESS) {
         /*
@@ -667,7 +686,7 @@ _esm_sap_recv (
       /*
        * Process received ESM status message
        */
-      esm_cause = esm_recv_status (ctx, pti, ebi, &esm_msg.esm_status);
+      esm_cause = esm_recv_status (emm_context, pti, ebi, &esm_msg.esm_status);
       break;
 
     default:
@@ -709,20 +728,21 @@ _esm_sap_recv (
   }
 
   if ((rc != RETURNerror) && (esm_procedure )) {
+    #define ESM_SAP_BUFFER_SIZE 4096
+    uint8_t           esm_sap_buffer[ESM_SAP_BUFFER_SIZE];
     /*
      * Encode the returned ESM response message
      */
-    int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) ctx->esm_data_ctx.esm_sap_buffer,
-                                                                   ESM_SAP_BUFFER_SIZE);
+    int size = esm_msg_encode (&esm_msg, (uint8_t *) esm_sap_buffer, ESM_SAP_BUFFER_SIZE);
 
     if (size > 0) {
-      rsp = blk2bstr(ctx->esm_data_ctx.esm_sap_buffer, size);
+      rsp = blk2bstr(esm_sap_buffer, size);
     }
 
     /*
      * Complete the relevant ESM procedure
      */
-    rc = (*esm_procedure) (is_standalone, ctx, ebi, rsp, triggered_by_ue);
+    rc = (*esm_procedure) (is_standalone, emm_context, ebi, rsp, triggered_by_ue);
 
     if (is_discarded) {
       /*
@@ -772,10 +792,10 @@ _esm_sap_recv (
 static int
 _esm_sap_send (
   int msg_type,
-  int is_standalone,
-  emm_context_t * ctx,
-  int pti,
-  int ebi,
+  bool is_standalone,
+  emm_context_t * emm_context,
+  proc_tid_t pti,
+  ebi_t ebi,
   const esm_sap_data_t * data,
   bstring rsp)
 {
@@ -825,20 +845,22 @@ _esm_sap_send (
   }
 
   if (rc != RETURNerror) {
+    #define ESM_SAP_BUFFER_SIZE 4096
+    uint8_t           esm_sap_buffer[ESM_SAP_BUFFER_SIZE];
     /*
      * Encode the returned ESM response message
      */
-    int size = esm_msg_encode (&esm_msg, (uint8_t *) ctx->esm_data_ctx.esm_sap_buffer, ESM_SAP_BUFFER_SIZE);
+    int size = esm_msg_encode (&esm_msg, esm_sap_buffer, ESM_SAP_BUFFER_SIZE);
 
     if (size > 0) {
-      rsp = blk2bstr(ctx->esm_data_ctx.esm_sap_buffer, size);
+      rsp = blk2bstr(esm_sap_buffer, size);
     }
 
     /*
      * Execute the relevant ESM procedure
      */
     if (esm_procedure) {
-      rc = (*esm_procedure) (is_standalone, ctx, pti, rsp, sent_by_ue);
+      rc = (*esm_procedure) (is_standalone, emm_context, pti, rsp, sent_by_ue);
     }
   }
 

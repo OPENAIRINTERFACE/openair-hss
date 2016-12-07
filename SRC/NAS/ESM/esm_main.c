@@ -47,6 +47,7 @@
 
 #include "3gpp_24.007.h"
 #include "common_defs.h"
+#include "mme_app_ue_context.h"
 #include "esm_main.h"
 #include "commonDef.h"
 #include "log.h"

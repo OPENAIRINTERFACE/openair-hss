@@ -32,12 +32,13 @@
 #include "intertask_interface.h"
 #include "mme_app_ue_context.h"
 
-typedef struct {
+typedef struct mme_app_desc_s {
   /* UE contexts + some statistics variables */
   mme_ue_context_t mme_ue_contexts;
 
   long statistic_timer_id;
   uint32_t statistic_timer_period;
+
 } mme_app_desc_t;
 
 extern mme_app_desc_t mme_app_desc;
@@ -47,11 +48,11 @@ int mme_app_handle_s1ap_ue_capabilities_ind  (const itti_s1ap_ue_cap_ind_t const
 void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context_release_complete_t const *s1ap_ue_context_release_complete);
 
 
-int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context_pP);
+int mme_app_send_s11_release_access_bearers_req (struct ue_mm_context_s *const ue_context_pP, pdn_cid_t pdn_index);
 
-int mme_app_send_s11_create_session_req      (struct ue_context_s * const ue_context_pP);
+int mme_app_send_s11_create_session_req (struct ue_mm_context_s *const ue_mm_context, const pdn_cid_t pdn_cid);
 
-int mme_app_send_s6a_update_location_req     (struct ue_context_s * const ue_context_pP);
+int mme_app_send_s6a_update_location_req     (struct ue_mm_context_s * const ue_context_pP);
 
 int mme_app_handle_s6a_update_location_ans   (const s6a_update_location_ans_t * const ula_pP);
 
@@ -75,7 +76,9 @@ void  mme_app_handle_release_access_bearers_resp (const itti_s11_release_access_
 
 void mme_app_handle_create_bearer_req        (const itti_s11_create_bearer_request_t * const create_bearer_request_pP);
 
-nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);
+void mme_app_bearer_create_workflow (ue_mm_context_t * const ue_context, const pdn_cid_t cid);
+
+//nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);
 
 void mme_app_handle_nas_auth_param_req       (const itti_nas_auth_param_req_t * const nas_auth_param_req_pP);
 

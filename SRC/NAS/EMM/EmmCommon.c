@@ -87,7 +87,7 @@
  **                                                                        **
  ***************************************************************************/
 int emm_proc_common_initialize (
-  emm_context_t               * const emm_ctx,
+  struct emm_context_s               * const emm_context,
   emm_common_proc_type_t        const type,
   emm_common_data_t           * const emm_common_data,
   emm_common_success_callback_t       _success,
@@ -99,7 +99,7 @@ int emm_proc_common_initialize (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   if (emm_common_data) {
-    emm_common_data->container     = emm_ctx;
+    emm_common_data->container     = emm_context;
     emm_common_data->type          = type;
     emm_common_data->success       = _success;
     emm_common_data->reject        = _reject;
@@ -142,7 +142,7 @@ emm_proc_common_success (emm_common_data_t **emm_common_data)
 
     (*emm_common_data)->cleanup = true;
     if (emm_callback) {
-      emm_context_t  *ctx = (*emm_common_data)->container;
+      struct emm_context_s  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     }
     // kind of garbage collector
@@ -180,7 +180,7 @@ emm_proc_common_reject (emm_common_data_t **emm_common_data)
 
     (*emm_common_data)->cleanup = true;
     if (emm_callback) {
-      emm_context_t  *ctx = (*emm_common_data)->container;
+      struct emm_context_s  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     } else {
       rc = RETURNok;
@@ -203,7 +203,7 @@ int emm_proc_common_failure (emm_common_data_t **emm_common_data)
 
     (*emm_common_data)->cleanup = true;
     if (emm_callback) {
-      emm_context_t  *ctx = (*emm_common_data)->container;
+      struct emm_context_s  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     } else {
       rc = RETURNok;
@@ -245,7 +245,7 @@ emm_proc_common_ll_failure (emm_common_data_t **emm_common_data)
 
     (*emm_common_data)->cleanup = true;
     if (emm_callback) {
-      emm_context_t  *ctx = (*emm_common_data)->container;
+      struct emm_context_s  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     } else {
       rc = RETURNok;
@@ -287,7 +287,7 @@ emm_proc_common_non_delivered_ho (emm_common_data_t **emm_common_data)
 
     (*emm_common_data)->cleanup = true;
     if (emm_callback) {
-      emm_context_t  *ctx = (*emm_common_data)->container;
+      struct emm_context_s  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     } else {
       rc = RETURNok;
@@ -328,7 +328,7 @@ emm_proc_common_abort (emm_common_data_t **emm_common_data)
 
     (*emm_common_data)->cleanup = true;
     if (emm_callback) {
-      emm_context_t  *ctx = (*emm_common_data)->container;
+      struct emm_context_s  *ctx = (*emm_common_data)->container;
       rc = (*emm_callback) (ctx);
     } else {
       rc = RETURNok;

@@ -492,7 +492,7 @@ void xml_msg_dump_itti_mme_app_initial_context_setup_rsp(const itti_mme_app_init
     XML_WRITE_FORMAT_ELEMENT(xml_text_writer, TIMESTAMP_XML_STR, "%lu.%lu", elapsed_time.tv_sec, elapsed_time.tv_usec);
 
     // mandatory attributes of initial_ue_message
-    mme_ue_s1ap_id_to_xml(&itti_msg->mme_ue_s1ap_id, xml_text_writer);
+    mme_ue_s1ap_id_to_xml(&itti_msg->ue_id, xml_text_writer);
     for (int i=0; i < itti_msg->no_of_e_rabs; i++) {
       XML_WRITE_START_ELEMENT(xml_text_writer, E_RAB_SETUP_ITEM_IE_XML_STR);
       eps_bearer_identity_to_xml(&itti_msg->e_rab_id[i], xml_text_writer);

@@ -47,8 +47,10 @@ typedef enum emmcn_primitive_s {
   _EMMCN_AUTHENTICATION_PARAM_RES,
   _EMMCN_AUTHENTICATION_PARAM_FAIL,
   _EMMCN_DEREGISTER_UE,
+  _EMMCN_PDN_CONFIG_RES, // LG
   _EMMCN_PDN_CONNECTIVITY_RES, // LG
   _EMMCN_PDN_CONNECTIVITY_FAIL,// LG
+  _EMMCN_ACTIVATE_DEDICATED_BEARER_REQ,// LG
   _EMMCN_END
 } emm_cn_primitive_t;
 
@@ -71,10 +73,14 @@ typedef struct emm_cn_auth_fail_s {
   nas_cause_t cause;
 } emm_cn_auth_fail_t;
 
+struct itti_nas_pdn_config_rsp_s;
 struct itti_nas_pdn_connectivity_rsp_s;
 struct itti_nas_pdn_connectivity_fail_s;
+struct itti_mme_app_create_dedicated_bearer_req_s;
+typedef struct itti_nas_pdn_config_rsp_s        emm_cn_pdn_config_res_t;
 typedef struct itti_nas_pdn_connectivity_rsp_s  emm_cn_pdn_res_t;
 typedef struct itti_nas_pdn_connectivity_fail_s emm_cn_pdn_fail_t;
+typedef struct itti_mme_app_create_dedicated_bearer_req_s emm_cn_activate_dedicated_bearer_req_t;
 
 typedef struct emm_cn_deregister_ue_s {
   uint32_t ue_id;
@@ -86,8 +92,10 @@ typedef struct emm_mme_ul_s {
     emm_cn_auth_res_t       *auth_res;
     emm_cn_auth_fail_t      *auth_fail;
     emm_cn_deregister_ue_t   deregister;
+    emm_cn_pdn_config_res_t *emm_cn_pdn_config_res;
     emm_cn_pdn_res_t        *emm_cn_pdn_res;
     emm_cn_pdn_fail_t       *emm_cn_pdn_fail;
+    emm_cn_activate_dedicated_bearer_req_t *activate_dedicated_bearer_req;
   } u;
 } emm_cn_t;
 

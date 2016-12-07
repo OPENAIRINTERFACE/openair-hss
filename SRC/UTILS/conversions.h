@@ -397,7 +397,7 @@ do {                                                    \
             l_i++; \
           } \
           for(; l_j < MaXlEn; l_j++) \
-              iMsI_sTr[l_j] = '\0'; \
+              (iMsI_sTr)[l_j] = '\0'; \
         } while (0);\
 
 #define IMEI_TO_STRING(iMeI_t_PtR,iMeI_sTr, MaXlEn) \

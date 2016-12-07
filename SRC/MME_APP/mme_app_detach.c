@@ -49,16 +49,14 @@
 
 
 //------------------------------------------------------------------------------
-void
-mme_app_send_delete_session_request (
-  struct ue_context_s                    *ue_context_p)
+void mme_app_send_delete_session_request (struct ue_mm_context_s * const ue_context_p, const pdn_cid_t cid)
 {
   MessageDef                             *message_p = NULL;
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_SESSION_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
-  S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_s11_teid;
-  S11_DELETE_SESSION_REQUEST (message_p).teid       = ue_context_p->sgw_s11_teid;
+  S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_teid_s11;
+  S11_DELETE_SESSION_REQUEST (message_p).teid       = ue_context_p->pdn_contexts[cid]->s_gw_teid_s11_s4;
   S11_DELETE_SESSION_REQUEST (message_p).lbi        = 0; //default bearer
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
@@ -75,7 +73,7 @@ mme_app_send_delete_session_request (
    */
   S11_DELETE_SESSION_REQUEST  (message_p).trxn = NULL;
   mme_config_read_lock (&mme_config);
-  S11_DELETE_SESSION_REQUEST (message_p).peer_ip = mme_config.ipv4.sgw_s11;
+  S11_DELETE_SESSION_REQUEST (message_p).peer_ip = ue_context_p->pdn_contexts[cid]->s_gw_address_s11_s4.address.ipv4_address;
   mme_config_unlock (&mme_config);
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME,
@@ -93,7 +91,8 @@ void
 mme_app_handle_detach_req (
   const itti_nas_detach_req_t * const detach_req_p)
 {
-  struct ue_context_s *ue_context    = NULL;
+  struct ue_mm_context_s *ue_context    = NULL;
+  bool   sent_sgw = false;
 
   DevAssert(detach_req_p != NULL);
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, detach_req_p->ue_id);
@@ -102,8 +101,21 @@ mme_app_handle_detach_req (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   else {
-    // No session with S-GW
-    if ((ue_context->mme_s11_teid == INVALID_TEID) && (ue_context->sgw_s11_teid == INVALID_TEID)) {
+    for (pdn_cid_t cid = 0; cid < MAX_APN_PER_UE; cid++) {
+      // No session with S-GW
+      if (INVALID_TEID != ue_context->mme_teid_s11) {
+        if (ue_context->pdn_contexts[cid]) {
+          if (INVALID_TEID != ue_context->pdn_contexts[cid]->s_gw_teid_s11_s4) {
+            // Send a DELETE_SESSION_REQUEST message to the SGW
+            mme_app_send_delete_session_request  (ue_context, cid);
+            sent_sgw = true;
+            // CAROLE il vaut miex attendre de recevoir le delete session response pour effacer le contexte
+            // mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
+          }
+        }
+      }
+    }
+    if (!sent_sgw) {
       // no session was created, no need for deleting session in SGW
       MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
       AssertFatal (message_p , "itti_alloc_new_message Failed");
@@ -113,11 +125,6 @@ mme_app_handle_detach_req (
           S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
       int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
       itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
-    } else {
-      // Send a DELETE_SESSION_REQUEST message to the SGW
-      mme_app_send_delete_session_request  (ue_context);
-      // CAROLE il vaut miex attendre de recevoir le delete session response pour effacer le contexte
-      // mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
     }
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);

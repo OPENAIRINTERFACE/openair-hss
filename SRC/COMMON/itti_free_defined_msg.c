@@ -61,11 +61,7 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case SGI_CREATE_ENDPOINT_RESPONSE: {
-    int num = message_p->ittiMsg.sgi_create_end_point_response.pco.num_protocol_or_container_id;
-    for (int i = 0; i < num; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.sgi_create_end_point_response.pco.protocol_or_container_ids[i].contents);
-      AssertFatal(NULL == message_p->ittiMsg.sgi_create_end_point_response.pco.protocol_or_container_ids[i].contents, "TODO clean pointer");
-    }
+    clear_protocol_configuration_options(&message_p->ittiMsg.sgi_create_end_point_response.pco);
   }
   break;
 
@@ -95,6 +91,13 @@ void itti_free_msg_content (MessageDef * const message_p)
   }
   break;
 
+  case MME_APP_CREATE_DEDICATED_BEARER_REQ: {
+    if (message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tft) {
+      free_traffic_flow_template(&message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tft);
+    }
+  }
+  break;
+
   case MME_APP_DELETE_SESSION_RSP:
     // DO nothing
     break;
@@ -118,11 +121,7 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case NAS_PDN_CONNECTIVITY_REQ:{
-    int num = message_p->ittiMsg.nas_pdn_connectivity_req.pco.num_protocol_or_container_id;
-    for (int i = 0; i < num; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.pco.protocol_or_container_ids[i].contents);
-      AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_req.pco.protocol_or_container_ids[i].contents, "TODO clean pointer");
-    }
+    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_req.pco);
     bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.apn);
     bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_req.pdn_addr);
     AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_req.pdn_addr, "TODO clean pointer");
@@ -171,12 +170,7 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case NAS_PDN_CONNECTIVITY_RSP:{
-    int num = message_p->ittiMsg.nas_pdn_connectivity_rsp.pco.num_protocol_or_container_id;
-    for (int i = 0; i < num; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_rsp.pco.protocol_or_container_ids[i].contents);
-      AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_rsp.pco.protocol_or_container_ids[i].contents, "TODO clean pointer");
-    }
-    bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_rsp.apn);
+    clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_rsp.pco);
     bdestroy_wrapper (&message_p->ittiMsg.nas_pdn_connectivity_rsp.pdn_addr);
     AssertFatal(NULL == message_p->ittiMsg.nas_pdn_connectivity_rsp.pdn_addr, "TODO clean pointer");
   }
@@ -187,38 +181,22 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case S11_CREATE_SESSION_REQUEST: {
-    int num = message_p->ittiMsg.s11_create_session_request.pco.num_protocol_or_container_id;
-    for (int i = 0; i < num; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.s11_create_session_request.pco.protocol_or_container_ids[i].contents);
-      AssertFatal(NULL == message_p->ittiMsg.s11_create_session_request.pco.protocol_or_container_ids[i].contents, "TODO clean pointer");
-    }
+    clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_request.pco);
   }
   break;
 
   case S11_CREATE_SESSION_RESPONSE: {
-    int num = message_p->ittiMsg.s11_create_session_response.pco.num_protocol_or_container_id;
-    for (int i = 0; i < num; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.s11_create_session_response.pco.protocol_or_container_ids[i].contents);
-      AssertFatal(NULL == message_p->ittiMsg.s11_create_session_response.pco.protocol_or_container_ids[i].contents, "TODO clean pointer");
-    }
+    clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_session_response.pco);
   }
   break;
 
   case S11_CREATE_BEARER_REQUEST: {
-    int num = message_p->ittiMsg.s11_create_bearer_request.pco.num_protocol_or_container_id;
-    for (int i = 0; i < num; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.s11_create_bearer_request.pco.protocol_or_container_ids[i].contents);
-      AssertFatal(NULL == message_p->ittiMsg.s11_create_bearer_request.pco.protocol_or_container_ids[i].contents, "TODO clean pointer");
-    }
+    clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_bearer_request.pco);
   }
   break;
 
   case S11_CREATE_BEARER_RESPONSE: {
-    int num = message_p->ittiMsg.s11_create_bearer_response.pco.num_protocol_or_container_id;
-    for (int i = 0; i < num; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.s11_create_bearer_response.pco.protocol_or_container_ids[i].contents);
-      AssertFatal(NULL == message_p->ittiMsg.s11_create_bearer_response.pco.protocol_or_container_ids[i].contents, "TODO clean pointer");
-    }
+    clear_protocol_configuration_options(&message_p->ittiMsg.s11_create_bearer_response.pco);
   }
   break;
 
@@ -229,11 +207,7 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case S11_DELETE_SESSION_RESPONSE: {
-    int num = message_p->ittiMsg.s11_delete_session_response.pco.num_protocol_or_container_id;
-    for (int i = 0; i < num; i++) {
-      bdestroy_wrapper (&message_p->ittiMsg.s11_delete_session_response.pco.protocol_or_container_ids[i].contents);
-      AssertFatal(NULL == message_p->ittiMsg.s11_delete_session_response.pco.protocol_or_container_ids[i].contents, "TODO clean pointer");
-    }
+    clear_protocol_configuration_options(&message_p->ittiMsg.s11_delete_session_response.pco);
   }
   break;
 

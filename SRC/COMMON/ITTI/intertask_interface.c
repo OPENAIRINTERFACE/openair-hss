@@ -41,7 +41,7 @@
 
 #include <libxml/xpath.h>
 #include <libxml/xmlwriter.h>
-#include "liblfds611.h"
+#include "liblfds710.h"
 #include "bstrlib.h"
 
 #include "assertions.h"
@@ -150,7 +150,8 @@ typedef struct task_desc_s {
   /*
    * Queue of messages belonging to the task
    */
-  struct lfds611_queue_state             *message_queue;
+  struct lfds710_queue_bmm_state         message_queue;
+  struct lfds710_queue_bmm_element      *qbmme;
 } task_desc_t;
 
 typedef struct itti_desc_s {
@@ -439,7 +440,7 @@ itti_send_msg_to_task (
       /*
        * Enqueue message in destination task queue
        */
-      lfds611_queue_enqueue (itti_desc.tasks[destination_task_id].message_queue, new);
+      lfds710_queue_bmm_enqueue (&itti_desc.tasks[destination_task_id].message_queue, NULL, new);
       VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_ENQUEUE_MESSAGE, VCD_FUNCTION_OUT);
       {
         /*
@@ -605,7 +606,7 @@ itti_receive_msg_internal_event_fd (
       read_ret = read (itti_desc.threads[thread_id].task_event_fd, &sem_counter, sizeof (sem_counter));
       AssertFatal (read_ret == sizeof (sem_counter), "Read from task message FD (%d) failed (%d/%d)!\n", thread_id, (int)read_ret, (int)sizeof (sem_counter));
 
-      if (lfds611_queue_dequeue (itti_desc.tasks[task_id].message_queue, (void **)&message) == 0) {
+      if (lfds710_queue_bmm_dequeue (&itti_desc.tasks[task_id].message_queue, NULL, (void **)&message) == 0) {
         /*
          * No element in list -> this should not happen
          */
@@ -646,7 +647,7 @@ itti_poll_msg (
   {
     struct message_list_s                  *message;
 
-    if (lfds611_queue_dequeue (itti_desc.tasks[task_id].message_queue, (void **)&message) == 1) {
+    if (lfds710_queue_bmm_dequeue (&itti_desc.tasks[task_id].message_queue, NULL, (void **)&message) == 1) {
       int                                     result;
 
       *received_msg = message->msg;
@@ -739,7 +740,7 @@ itti_mark_task_ready (
   /*
    * Mark the thread as using LFDS queue
    */
-  lfds611_queue_use (itti_desc.tasks[task_id].message_queue);
+  LFDS710_MISC_MAKE_VALID_ON_CURRENT_LOGICAL_CORE_INITS_COMPLETED_BEFORE_NOW_ON_ANY_OTHER_LOGICAL_CORE;
   itti_desc.threads[thread_id].task_state = TASK_STATE_READY;
   itti_desc.ready_tasks++;
 
@@ -789,7 +790,6 @@ itti_init (
 {
   task_id_t                               task_id;
   thread_id_t                             thread_id;
-  int                                     ret;
 
   itti_desc.message_number = 1;
   ITTI_DEBUG (ITTI_DEBUG_INIT, " Init: %d tasks, %d threads, %d messages\n", task_max, thread_max, messages_id_max);
@@ -821,11 +821,10 @@ itti_init (
                 itti_desc.tasks_info[task_id].name,
                 itti_desc.tasks_info[task_id].parent_task != TASK_UNKNOWN ? " with parent " : "", itti_desc.tasks_info[task_id].parent_task != TASK_UNKNOWN ? itti_get_task_name (itti_desc.tasks_info[task_id].parent_task) : "");
     ITTI_DEBUG (ITTI_DEBUG_INIT, " Creating queue of message of size %u\n", itti_desc.tasks_info[task_id].queue_size);
-    ret = lfds611_queue_new (&itti_desc.tasks[task_id].message_queue, itti_desc.tasks_info[task_id].queue_size);
+    printf (" Creating queue of message of size %u\n", itti_desc.tasks_info[task_id].queue_size);
 
-    if (0 == ret) {
-      AssertFatal (0, "lfds611_queue_new failed for task %s!\n", itti_get_task_name (task_id));
-    }
+    itti_desc.tasks[task_id].qbmme = calloc(itti_desc.tasks_info[task_id].queue_size, sizeof(struct lfds710_queue_bmm_element));
+    lfds710_queue_bmm_init_valid_on_current_logical_core( &itti_desc.tasks[task_id].message_queue, itti_desc.tasks[task_id].qbmme, itti_desc.tasks_info[task_id].queue_size, NULL );
   }
 
   /*

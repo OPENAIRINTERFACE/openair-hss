@@ -55,12 +55,14 @@
 
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "mme_app_ue_context.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "common_defs.h"
 #include "log.h"
 #include "esm_cause.h"
 #include "emm_sap.h"
+
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -100,13 +102,13 @@
  ***************************************************************************/
 int
 esm_proc_status_ind (
-  struct emm_context_s * ctx,
-  int pti,
-  int ebi,
-  int *esm_cause)
+  emm_context_t * emm_context,
+  proc_tid_t pti,
+  ebi_t ebi,
+  esm_cause_t *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc;
+  int                                     rc = RETURNerror;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested (cause=%d)\n", *esm_cause);
   OAILOG_DEBUG (LOG_NAS_ESM, "ESM-PROC  - To be implemented\n");
@@ -182,22 +184,23 @@ esm_proc_status_ind (
 int
 esm_proc_status (
   bool is_standalone,
-  struct emm_context_s * ctx,
-  int ebi,
+  emm_context_t * emm_context,
+  ebi_t ebi,
   bstring msg,
   bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc;
+  int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
+  mme_ue_s1ap_id_t                        ue_id = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - ESM status procedure requested\n");
   /*
    * Notity EMM that ESM PDU has to be forwarded to lower layers
    */
   emm_sap.primitive = EMMESM_UNITDATA_REQ;
-  emm_sap.u.emm_esm.ue_id = ctx->ue_id;
-  emm_sap.u.emm_esm.ctx = ctx;
+  emm_sap.u.emm_esm.ue_id = ue_id;
+  emm_sap.u.emm_esm.ctx = emm_context;
   emm_sap.u.emm_esm.u.data.msg = msg;
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);

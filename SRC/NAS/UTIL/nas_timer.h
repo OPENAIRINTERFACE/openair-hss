@@ -53,10 +53,10 @@ Description Timer utilities
 /****************************************************************************/
 
 /* Timer structure */
-struct nas_timer_t {
+typedef struct nas_timer_s {
   long int id;     /* The timer identifier                 */
   long sec;        /* The timer interval value in seconds  */
-};
+} nas_timer_t;
 
 /* Type of the callback executed when the timer expired */
 typedef void *(*nas_timer_callback_t)(void *);

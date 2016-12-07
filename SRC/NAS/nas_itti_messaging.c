@@ -37,8 +37,10 @@
 #include "intertask_interface.h"
 #include "common_defs.h"
 #include "secu_defs.h"
+#include "mme_app_ue_context.h"
 #include "esm_proc.h"
 #include "nas_itti_messaging.h"
+#include "mme_app_defs.h"
 
 
 #define TASK_ORIGIN  TASK_NAS_MME
@@ -222,10 +224,73 @@ nas_itti_dl_data_req (
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
 
+
+//------------------------------------------------------------------------------
+void nas_itti_pdn_config_req(
+  int                     ptiP,
+  unsigned int            ue_idP,
+  const imsi_t           *const imsi_pP,
+  esm_proc_data_t        *proc_data_pP,
+  esm_proc_pdn_request_t  request_typeP)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef *message_p = NULL;
+
+  AssertFatal(imsi_pP       != NULL, "imsi_pP param is NULL");
+  AssertFatal(proc_data_pP  != NULL, "proc_data_pP param is NULL");
+
+
+  message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_PDN_CONFIG_REQ);
+
+  hexa_to_ascii((uint8_t *)imsi_pP->u.value,
+      NAS_PDN_CONFIG_REQ(message_p).imsi,
+      imsi_pP->length);
+  NAS_PDN_CONFIG_REQ(message_p).imsi_length = imsi_pP->length;
+
+  NAS_PDN_CONFIG_REQ(message_p).ue_id           = ue_idP;
+
+
+  bassign(NAS_PDN_CONFIG_REQ(message_p).apn, proc_data_pP->apn);
+  bassign(NAS_PDN_CONFIG_REQ(message_p).pdn_addr, proc_data_pP->pdn_addr);
+
+  switch (proc_data_pP->pdn_type) {
+  case ESM_PDN_TYPE_IPV4:
+    NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv4;
+    break;
+
+  case ESM_PDN_TYPE_IPV6:
+    NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv6;
+    break;
+
+  case ESM_PDN_TYPE_IPV4V6:
+    NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv4_AND_v6;
+    break;
+
+  default:
+    NAS_PDN_CONFIG_REQ(message_p).pdn_type = IPv4;
+    break;
+  }
+
+  NAS_PDN_CONFIG_REQ(message_p).request_type  = request_typeP;
+
+
+  MSC_LOG_TX_MESSAGE(
+        MSC_NAS_MME,
+        MSC_MMEAPP_MME,
+        NULL,0,
+        "NAS_PDN_CONFIG_REQ ue id %06"PRIX32" IMSI %X",
+        ue_idP, NAS_PDN_CONFIG_REQ(message_p).imsi);
+
+  itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
+
+
 //------------------------------------------------------------------------------
 void nas_itti_pdn_connectivity_req(
   int                     ptiP,
-  unsigned int            ue_idP,
+  mme_ue_s1ap_id_t        ue_idP,
+  pdn_cid_t               pdn_cidP,
   const imsi_t           *const imsi_pP,
   esm_proc_data_t        *proc_data_pP,
   esm_proc_pdn_request_t  request_typeP)
@@ -243,6 +308,7 @@ void nas_itti_pdn_connectivity_req(
                 NAS_PDN_CONNECTIVITY_REQ(message_p).imsi,
                 8);
 
+  NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_cid         = pdn_cidP;
   NAS_PDN_CONNECTIVITY_REQ(message_p).pti             = ptiP;
   NAS_PDN_CONNECTIVITY_REQ(message_p).ue_id           = ue_idP;
   NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[15]        = '\0';
@@ -299,11 +365,11 @@ void nas_itti_pdn_connectivity_req(
 
 //------------------------------------------------------------------------------
 void nas_itti_auth_info_req(
-  const uint32_t        ue_idP,
-  const imsi64_t        imsi64_P,
-  const bool            is_initial_reqP,
-  plmn_t        * const visited_plmnP,
-  const uint8_t         num_vectorsP,
+  const mme_ue_s1ap_id_t ue_idP,
+  const imsi64_t         imsi64_P,
+  const bool             is_initial_reqP,
+  plmn_t         * const visited_plmnP,
+  const uint8_t          num_vectorsP,
   const_bstring const auts_pP)
 {
   OAILOG_FUNC_IN(LOG_NAS);
@@ -340,9 +406,9 @@ void nas_itti_auth_info_req(
 
 //------------------------------------------------------------------------------
 void nas_itti_establish_rej(
-  const uint32_t      ue_idP,
-  const imsi_t *const imsi_pP
-  , uint8_t           initial_reqP)
+  const mme_ue_s1ap_id_t  ue_idP,
+  const imsi_t     *const imsi_pP
+  , uint8_t               initial_reqP)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p;
@@ -377,7 +443,7 @@ void nas_itti_establish_rej(
 
 //------------------------------------------------------------------------------
 void nas_itti_establish_cnf(
-  const uint32_t         ue_idP,
+  const mme_ue_s1ap_id_t ue_idP,
   const nas_error_code_t error_codeP,
   bstring                msgP,
   const uint16_t         selected_encryption_algorithmP,
@@ -385,9 +451,11 @@ void nas_itti_establish_cnf(
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef                             *message_p        = NULL;
-  emm_context_t                     *emm_ctx = emm_context_get (&_emm_data, ue_idP);
+  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_idP);
+  emm_context_t                          *emm_ctx = NULL;
 
-  if (emm_ctx) {
+  if (ue_mm_context) {
+    emm_ctx = &ue_mm_context->emm_context;
 
     message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_CONNECTION_ESTABLISHMENT_CNF);
     NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).ue_id                           = ue_idP;
@@ -418,7 +486,7 @@ void nas_itti_establish_cnf(
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_detach_req(const uint32_t      ue_idP)
+void nas_itti_detach_req(const mme_ue_s1ap_id_t      ue_idP)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p;

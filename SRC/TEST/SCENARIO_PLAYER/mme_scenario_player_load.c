@@ -90,6 +90,7 @@ xmlChar * msp_get_attr_file (xmlDocPtr doc, xmlNodePtr cur)
 //------------------------------------------------------------------------------
 scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node, bstring scenario_file_path)
 {
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   scenario_player_item_t * spi = calloc(1, sizeof(*spi));
   spi->item_type = SCENARIO_PLAYER_ITEM_ITTI_MSG;
   // get a UID
@@ -199,7 +200,7 @@ scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlD
       if (0 > ret) {
         msp_free_message_content(&spi->u.msg);
         free(spi);
-        return NULL;
+        OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, NULL);
       }
     } else {
       // relative path
@@ -213,16 +214,16 @@ scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlD
         if (0 > ret) {
           msp_free_message_content(&spi->u.msg);
           free(spi);
-          return NULL;
+          OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, NULL);
         }
       } else {
         OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find char / in scenarios path %s\n", scenario_file_path->data);
         free(spi);
-        return NULL;
+        OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, NULL);
       }
     }
   }
-  return spi;
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, spi);
 }
 
 //------------------------------------------------------------------------------
@@ -709,6 +710,7 @@ scenario_player_item_t* msp_load_jcond (scenario_t * const scenario, xmlDocPtr c
 //------------------------------------------------------------------------------
 int msp_load_message (scenario_t * const scenario, bstring file_path, scenario_player_item_t * const scenario_player_item)
 {
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   xmlNodePtr  cur = NULL;
   int         rc = RETURNerror;
 
@@ -718,7 +720,7 @@ int msp_load_message (scenario_t * const scenario, bstring file_path, scenario_p
     scenario_player_item->u.msg.xml_doc = xmlParseFile(bdata(file_path));
     if (NULL == scenario_player_item->u.msg.xml_doc ) {
       OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Document %s not parsed successfully\n", bdata(file_path));
-      return RETURNerror;
+      OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNerror);
     }
   }
   cur = xmlDocGetRootElement(scenario_player_item->u.msg.xml_doc);
@@ -727,7 +729,7 @@ int msp_load_message (scenario_t * const scenario, bstring file_path, scenario_p
     OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Empty document %s \n", bdata(file_path));
     xmlFreeDoc(scenario_player_item->u.msg.xml_doc);
     scenario_player_item->u.msg.xml_doc = NULL;
-    return RETURNok;
+    OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, RETURNok);
   }
 
   scenario_player_item->u.msg.xpath_ctx = xmlXPathNewContext(scenario_player_item->u.msg.xml_doc);
@@ -757,8 +759,10 @@ int msp_load_message (scenario_t * const scenario, bstring file_path, scenario_p
     rc = xml_msg_load_itti_nas_downlink_data_rej(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_NAS_DOWNLINK_DATA_CNF_XML_STR)) {
     rc = xml_msg_load_itti_nas_downlink_data_cnf(scenario, &scenario_player_item->u.msg);
+  } else {
+    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Unrecognized message %s\n", cur->name);
   }
-  return rc;
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, rc);
 }
 
 //------------------------------------------------------------------------------

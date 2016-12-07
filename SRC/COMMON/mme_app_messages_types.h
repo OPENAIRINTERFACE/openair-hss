@@ -32,6 +32,7 @@
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
 #define MME_APP_DELETE_SESSION_RSP(mSGpTR)               (mSGpTR)->ittiMsg.mme_app_delete_session_rsp
+#define MME_APP_CREATE_DEDICATED_BEARER_REQ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_req
 
 
 typedef struct itti_mme_app_connection_establishment_cnf_s {
@@ -83,7 +84,7 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
 } itti_mme_app_connection_establishment_cnf_t;
 
 typedef struct itti_mme_app_initial_context_setup_rsp_s {
-  uint32_t                mme_ue_s1ap_id;
+  mme_ue_s1ap_id_t        ue_id;
   uint16_t                no_of_e_rabs;
   ebi_t                   e_rab_id[BEARERS_PER_UE];
   bstring                 transport_layer_address[BEARERS_PER_UE];
@@ -92,8 +93,18 @@ typedef struct itti_mme_app_initial_context_setup_rsp_s {
 
 typedef struct itti_mme_app_delete_session_rsp_s {
   /* UE identifier */
-  mme_ue_s1ap_id_t	  ue_id;
+  mme_ue_s1ap_id_t    ue_id;
 } itti_mme_app_delete_session_rsp_t;
+
+typedef struct itti_mme_app_create_dedicated_bearer_req_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t         ue_id;
+  pdn_cid_t                cid;
+  ebi_t                    ebi;
+  ebi_t                    linked_ebi;
+  qci_t                    qci;
+  traffic_flow_template_t *tft;
+} itti_mme_app_create_dedicated_bearer_req_t;
 
 
 #endif /* FILE_MME_APP_MESSAGES_TYPES_SEEN */

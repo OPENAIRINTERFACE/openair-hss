@@ -158,5 +158,7 @@ typedef enum {
    && ((((__const uint32_t *) (a))[2] & (((__const uint32_t *) (m))[2])) == (((__const uint32_t *) (b))[2] & (((__const uint32_t *) (m))[2])))  \
    && ((((__const uint32_t *) (a))[3] & (((__const uint32_t *) (m))[3])) == (((__const uint32_t *) (b))[3] & (((__const uint32_t *) (m))[3]))))
 
+#define EBI_TO_INDEX(eBi) (eBi-5)
+#define INDEX_TO_EBI(iNdEx) (iNdEx+5)
 
 #endif /* FILE_COMMON_DEFS_SEEN */

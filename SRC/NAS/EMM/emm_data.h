@@ -118,7 +118,7 @@ struct emm_common_data_s;
  * ---------------------------------------------------------------------------
  */
 typedef struct emm_context_s {
-  mme_ue_s1ap_id_t ue_id;        /* UE identifier                                  */
+  //mme_ue_s1ap_id_t ue_id;        /* UE identifier                                  */
   bool             is_dynamic;  /* Dynamically allocated context indicator         */
   bool             is_attached; /* Attachment indicator                            */
   bool             is_emergency;/* Emergency bearer services indicator             */
@@ -188,14 +188,9 @@ typedef struct emm_context_s {
   tai_t                    originating_tai;
 
   ksi_t                    ue_ksi;       /* Security key set identifier provided by the UE  */
-  int                      eea;          /* EPS encryption algorithms supported by the UE   */
-  int                      eia;          /* EPS integrity algorithms supported by the UE    */
-  int                      ucs2;         /* UCS2 Alphabet*/
-  int                      uea;          /* UMTS encryption algorithms supported by the UE  */
-  int                      uia;          /* UMTS integrity algorithms supported by the UE   */
-  int                      gea;          /* GPRS encryption algorithms supported by the UE  */
-  bool                     umts_present; /* For encoding ue network capabilities (variable size)*/
-  bool                     gprs_present; /* For encoding ue network capabilities (variable size)*/
+  ue_network_capability_t  _ue_network_capability;
+  ms_network_capability_t  _ms_network_capability;
+
 
   int                      remaining_vectors;
   auth_vector_t            _vector[MAX_EPS_AUTH_VECTORS];/* EPS authentication vector                            */
@@ -213,17 +208,17 @@ typedef struct emm_context_s {
 
   int                      emm_cause;    /* EMM failure cause code                          */
 
-  emm_fsm_state_t          _emm_fsm_status;
+  emm_fsm_state_t          _emm_fsm_state;
 
-  struct nas_timer_t       T3450; /* EMM message retransmission timer */
-  struct nas_timer_t       T3460; /* Authentication timer         */
-  struct nas_timer_t       T3470; /* Identification timer         */
+  struct nas_timer_s       T3450; /* EMM message retransmission timer */
+  struct nas_timer_s       T3460; /* Authentication timer         */
+  struct nas_timer_s       T3470; /* Identification timer         */
 
-  struct esm_data_context_s  esm_data_ctx;
+  struct esm_context_s     esm_ctx;
 
 
-  ue_network_capability_t  _ue_network_capability_ie; /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_2*/
-  ms_network_capability_t  _ms_network_capability_ie; /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_2*/
+  ue_network_capability_t  tau_ue_network_capability;         /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
+  ms_network_capability_t  tau_ms_network_capability;         /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
   drx_parameter_t          _current_drx_parameter;            /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
   drx_parameter_t          _pending_drx_parameter;            /* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_4*/
   eps_bearer_context_status_t   _eps_bearer_context_status;/* stored TAU Request IE Requirement MME24.301R10_5.5.3.2.4_5*/
@@ -345,11 +340,13 @@ void emm_ctx_clear_non_current_security(emm_context_t * const ctxt) __attribute_
 void emm_ctx_clear_non_current_security_vector_index(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
 void emm_ctx_set_non_current_security_vector_index(emm_context_t * const ctxt, int vector_index)__attribute__ ((nonnull)) ;
 
-void emm_ctx_clear_ue_nw_cap_ie(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
-void emm_ctx_set_ue_nw_cap_ie(emm_context_t * const ctxt, ue_network_capability_t *ue_nw_cap_ie) __attribute__ ((nonnull)) ;
-void emm_ctx_set_valid_ue_nw_cap_ie(emm_context_t * const ctxt, ue_network_capability_t *ue_nw_cap_ie) __attribute__ ((nonnull)) ;
+void emm_ctx_clear_ue_nw_cap(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
+void emm_ctx_set_ue_nw_cap(emm_context_t * const ctxt, const ue_network_capability_t * const ue_nw_cap_ie) __attribute__ ((nonnull)) ;
+void emm_ctx_set_valid_ue_nw_cap(emm_context_t * const ctxt, const ue_network_capability_t * const ue_nw_cap_ie) __attribute__ ((nonnull)) ;
 
 void emm_ctx_clear_ms_nw_cap(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
+void emm_ctx_set_ms_nw_cap(emm_context_t * const ctxt, const ms_network_capability_t * const ms_nw_cap_ie);
+void emm_ctx_set_valid_ms_nw_cap(emm_context_t * const ctxt, const ms_network_capability_t * const ms_nw_cap_ie);
 
 void emm_ctx_clear_current_drx_parameter(emm_context_t * const ctxt) __attribute__ ((nonnull)) ;
 void emm_ctx_set_current_drx_parameter(emm_context_t * const ctxt, drx_parameter_t *drx) __attribute__ ((nonnull)) ;
@@ -364,28 +361,19 @@ void emm_ctx_set_eps_bearer_context_status(emm_context_t * const ctxt, eps_beare
 void emm_ctx_set_valid_eps_bearer_context_status(emm_context_t * const ctxt, eps_bearer_context_status_t *status) __attribute__ ((nonnull)) ;
 
 
-
-struct emm_context_s *emm_context_get(
-  emm_data_t *emm_data, const mme_ue_s1ap_id_t ueid) __attribute__ ((nonnull)) ;
-
-struct emm_context_s *emm_context_get_by_imsi (
-  emm_data_t * emm_data, imsi64_t imsi64) __attribute__ ((nonnull)) ;
-
-struct emm_context_s *emm_context_get_by_guti(
-  emm_data_t *emm_data, guti_t *guti) __attribute__ ((nonnull)) ;
-
 struct emm_context_s *emm_context_remove(
   emm_data_t *_emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
 
-int  emm_context_add(emm_data_t *emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
 int  emm_context_add_guti (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
 int  emm_context_add_old_guti (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
 int  emm_context_add_imsi (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
 
 void emm_context_silently_reset_procedures (struct emm_context_s *emm_ctx) __attribute__ ((nonnull)) ;
+void emm_init_context(struct emm_context_s *emm_ctx)  __attribute__ ((nonnull)) ;
 void emm_context_stop_all_timers (struct emm_context_s *emm_ctx) __attribute__ ((nonnull)) ;
-void free_emm_context(struct emm_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
-void emm_context_dump(const struct emm_context_s * const elm_pP) __attribute__ ((nonnull)) ;
+void emm_context_free(struct emm_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
+void emm_context_free_content(struct emm_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
+void emm_context_dump (const struct emm_context_s * const elm_pP, const uint8_t indent_spaces, bstring bstr_dump) __attribute__ ((nonnull)) ;
 
 void emm_context_dump_all(void);
 

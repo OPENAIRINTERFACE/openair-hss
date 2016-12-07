@@ -27,18 +27,17 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#include "lfds611_liblfds_internal.h"
-    
-/****************************************************************************/ 
-void                                   
-lfds611_liblfds_aligned_free (
-   void *memory)
-{
-  assert (memory != NULL);
-  
-    // TRD : the "void *" stored above memory points to the root of the allocation
-    lfds611_abstraction_free (*((void **)memory - 1));
-  return;
-}
+#ifndef FILE_MME_APP_BEARER_CONTEXT_SEEN
+#define FILE_MME_APP_BEARER_CONTEXT_SEEN
 
-   
+const char * const bearer_state2string(const mme_app_bearer_state_t bearer_state);
+bearer_context_t *  mme_app_create_bearer_context(ue_mm_context_t * const ue_mm_context, const pdn_cid_t pdn_cid, const ebi_t ebi);
+void mme_app_free_bearer_context (bearer_context_t ** const bearer_context);
+bearer_context_t* mme_app_get_bearer_context(ue_mm_context_t * const ue_context, const ebi_t ebi);
+bearer_context_t* mme_app_get_bearer_context_by_state(ue_mm_context_t * const ue_context, const pdn_cid_t cid, const mme_app_bearer_state_t state);
+void mme_app_add_bearer_context(ue_mm_context_t * const ue_context, bearer_context_t  * const bc, const pdn_cid_t pdn_cid);
+ebi_t mme_app_get_free_bearer_id(ue_mm_context_t * const ue_context);
+
+
+
+#endif

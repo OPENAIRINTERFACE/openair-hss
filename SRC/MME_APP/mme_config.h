@@ -109,6 +109,9 @@
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING        "annoying"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_INFO            "info"
 
+#define MME_CONFIG_STRING_SGW_LIST_SELECTION             "S-GW_LIST_SELECTION"
+#define MME_CONFIG_STRING_ID                             "ID"
+
 #define MME_CONFIG_STRING_SCENARIO_PLAYER_TESTING        "TESTING"
 #define MME_CONFIG_STRING_SCENARIO_PLAYER_SCENARIO_FILE  "SCENARIO_FILE"
 
@@ -181,8 +184,6 @@ typedef struct mme_config_s {
     struct in_addr s11;
     int        netmask_s11;
     uint16_t   port_s11;
-
-    struct in_addr sgw_s11;
   } ipv4;
 
   struct {
@@ -208,6 +209,13 @@ typedef struct mme_config_s {
     uint32_t t3489_sec;
     uint32_t t3495_sec;
   } nas_config;
+
+  struct {
+    int            nb_sgw_entries;
+#define MME_CONFIG_MAX_SGW 16
+    bstring        sgw_id[MME_CONFIG_MAX_SGW];
+    struct in_addr sgw_ip_addr[MME_CONFIG_MAX_SGW];
+  } e_dns_emulation;
 
   struct {
     bstring scenario_list_file;

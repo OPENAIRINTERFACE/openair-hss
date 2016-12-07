@@ -100,6 +100,11 @@ static void *nas_intertask_interface (void *args_p)
       }
       break;
 
+    case NAS_PDN_CONFIG_RSP:{
+      nas_proc_pdn_config_res (&NAS_PDN_CONFIG_RSP (received_message_p));
+    }
+    break;
+
 
     case NAS_PDN_CONNECTIVITY_RSP:{
         nas_proc_pdn_connectivity_res (&NAS_PDN_CONNECTIVITY_RSP (received_message_p));
@@ -109,6 +114,10 @@ static void *nas_intertask_interface (void *args_p)
     case NAS_PDN_CONNECTIVITY_FAIL:{
         nas_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
       }
+      break;
+
+    case MME_APP_CREATE_DEDICATED_BEARER_REQ:
+      nas_proc_create_dedicated_bearer(&MME_APP_CREATE_DEDICATED_BEARER_REQ (received_message_p));
       break;
 
     case TIMER_HAS_EXPIRED:{

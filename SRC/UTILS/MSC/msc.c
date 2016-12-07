@@ -63,7 +63,6 @@
 #include <inttypes.h>
 #include <sys/time.h>
 
-#include "liblfds611.h"
 #include <libxml/xmlwriter.h>
 #include <libxml/xpath.h>
 #include "bstrlib.h"

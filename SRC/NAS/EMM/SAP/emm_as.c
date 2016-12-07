@@ -54,6 +54,8 @@
 #include "msc.h"
 #include "common_defs.h"
 #include "3gpp_requirements_24.301.h"
+#include "3gpp_24.007.h"
+#include "mme_app_ue_context.h"
 #include "as_message.h"
 #include "emm_cause.h"
 #include "nas_itti_messaging.h"
@@ -61,6 +63,7 @@
 #include "emm_recv.h"
 #include "LowerLayer.h"
 #include "emm_send.h"
+#include "mme_app_defs.h"
 
 
 /****************************************************************************/
@@ -306,11 +309,16 @@ static int _emm_as_recv (
     decode_status = &local_decode_status;
   }
 
-  emm_context_t     *emm_ctx =  emm_context_get (&_emm_data, ue_id);
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
-  if (emm_ctx) {
-    if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-      emm_security_context = &emm_ctx->_security;
+  emm_context_t     *emm_ctx =  NULL;
+
+  if (ue_mm_context) {
+    emm_ctx = &ue_mm_context->emm_context;
+    if (emm_ctx) {
+      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+        emm_security_context = &emm_ctx->_security;
+      }
     }
   }
 
@@ -481,10 +489,12 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
         /*
          * Decrypt the received security protected message
          */
-        emm_context_t                     *emm_ctx = NULL;
+        ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-        if (msg->ue_id > 0) {
-          emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
+        emm_context_t     *emm_ctx =  NULL;
+
+        if (ue_mm_context) {
+          emm_ctx = &ue_mm_context->emm_context;
           if (emm_ctx) {
             if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
               security = &emm_ctx->_security;
@@ -564,6 +574,7 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
  ***************************************************************************/
 static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   struct emm_context_s                   *emm_ctx = NULL;
   emm_security_context_t                 *emm_security_context = NULL;
   nas_message_decode_status_t             decode_status = {0};
@@ -571,18 +582,20 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
   int                                     rc = RETURNerror;
   tai_t                                   originating_tai = {0};
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS connection establish request\n");
   nas_message_t                           nas_msg = {.security_protected.header = {0},
                                                      .security_protected.plain.emm.header = {0},
                                                      .security_protected.plain.esm.header = {0}};
 
-  emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-  if (emm_ctx) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - got context %p\n", emm_ctx);
-    if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-      emm_security_context = &emm_ctx->_security;
+  if (ue_mm_context) {
+    emm_ctx = &ue_mm_context->emm_context;
+    if (emm_ctx) {
+      OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - got context %p\n", emm_ctx);
+      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+        emm_security_context = &emm_ctx->_security;
+      }
     }
   }
 
@@ -1038,12 +1051,14 @@ static int _emm_as_data_req (const emm_as_data_t * msg, ul_info_transfer_req_t *
     int                                     bytes = 0;
     emm_security_context_t                 *emm_security_context = NULL;
     struct emm_context_s                   *emm_ctx = NULL;
+    ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
-
-    if (emm_ctx) {
-      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-        emm_security_context = &emm_ctx->_security;
+    if (ue_mm_context) {
+      emm_ctx = &ue_mm_context->emm_context;
+      if (emm_ctx) {
+        if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+          emm_security_context = &emm_ctx->_security;
+        }
       }
     }
 
@@ -1122,13 +1137,15 @@ static int _emm_as_status_ind (const emm_as_status_t * msg, ul_info_transfer_req
 
   if (size > 0) {
     emm_security_context_t                 *emm_security_context = NULL;
-    struct emm_context_s              *emm_ctx = NULL;
+    struct emm_context_s                   *emm_ctx = NULL;
+    ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
-
-    if (emm_ctx) {
-      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-        emm_security_context = &emm_ctx->_security;
+    if (ue_mm_context) {
+      emm_ctx = &ue_mm_context->emm_context;
+      if (emm_ctx) {
+        if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+          emm_security_context = &emm_ctx->_security;
+        }
       }
     }
 
@@ -1278,15 +1295,17 @@ static int _emm_as_security_req (const emm_as_security_t * msg, dl_info_transfer
   if (size > 0) {
     struct emm_context_s              *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
+    ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
+    if (ue_mm_context) {
+      emm_ctx = &ue_mm_context->emm_context;
 
-    if (emm_ctx) {
-
-      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-        emm_security_context = &emm_ctx->_security;
-        nas_msg.header.sequence_number = emm_ctx->_security.dl_count.seq_num;
-        OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+      if (emm_ctx) {
+        if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+          emm_security_context = &emm_ctx->_security;
+          nas_msg.header.sequence_number = emm_ctx->_security.dl_count.seq_num;
+          OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+        }
       }
     }
 
@@ -1367,19 +1386,20 @@ static int _emm_as_security_rej (const emm_as_security_t * msg, dl_info_transfer
     }
 
   if (size > 0) {
-    struct emm_context_s              *emm_ctx = NULL;
+    struct emm_context_s                   *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
+    ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
-
-
-    if (emm_ctx) {
-      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-        emm_security_context = &emm_ctx->_security;
-        nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-        OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
-      } else {
-        OAILOG_DEBUG (LOG_NAS_EMM, "No security context, not set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+    if (ue_mm_context) {
+      emm_ctx = &ue_mm_context->emm_context;
+      if (emm_ctx) {
+        if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+          emm_security_context = &emm_ctx->_security;
+          nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
+          OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+        } else {
+          OAILOG_DEBUG (LOG_NAS_EMM, "No security context, not set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+        }
       }
     }
 
@@ -1467,22 +1487,24 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
   if (size > 0) {
     struct emm_context_s                   *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
+    ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
+    if (ue_mm_context) {
+      emm_ctx = &ue_mm_context->emm_context;
+      if (emm_ctx) {
+        if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+          emm_security_context = &emm_ctx->_security;
+          as_msg->nas_ul_count = 0x00000000 | (emm_security_context->ul_count.overflow << 8) | emm_security_context->ul_count.seq_num;
+          OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - NAS UL COUNT %8x\n", as_msg->nas_ul_count);
+        }
 
-    if (emm_ctx) {
-      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-        emm_security_context = &emm_ctx->_security;
-        as_msg->nas_ul_count = 0x00000000 | (emm_security_context->ul_count.overflow << 8) | emm_security_context->ul_count.seq_num;
-        OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - NAS UL COUNT %8x\n", as_msg->nas_ul_count);
+        nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
+        OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+        as_msg->selected_encryption_algorithm = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.encryption);
+        as_msg->selected_integrity_algorithm  = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.integrity);
+        OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_encryption_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_encryption_algorithm, emm_security_context->selected_algorithms.encryption);
+        OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_integrity_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_integrity_algorithm, emm_security_context->selected_algorithms.integrity);
       }
-
-      nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-      OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
-      as_msg->selected_encryption_algorithm = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.encryption);
-      as_msg->selected_integrity_algorithm  = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.integrity);
-      OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_encryption_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_encryption_algorithm, emm_security_context->selected_algorithms.encryption);
-      OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_integrity_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_integrity_algorithm, emm_security_context->selected_algorithms.integrity);
     }
 
     /*
@@ -1600,16 +1622,18 @@ static int _emm_as_establish_rej (const emm_as_establish_t * msg, nas_establish_
   }
 
   if (size > 0) {
-    struct emm_context_s              *emm_ctx = NULL;
+    struct emm_context_s                   *emm_ctx = NULL;
     emm_security_context_t                 *emm_security_context = NULL;
+    ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-    emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
-
-    if (emm_ctx) {
-      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-        emm_security_context = &emm_ctx->_security;
-        nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-        OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+    if (ue_mm_context) {
+      emm_ctx = &ue_mm_context->emm_context;
+      if (emm_ctx) {
+        if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+          emm_security_context = &emm_ctx->_security;
+          nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
+          OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+        }
       }
     }
 

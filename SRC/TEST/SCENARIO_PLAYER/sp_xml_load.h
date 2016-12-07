@@ -62,13 +62,18 @@ bool sp_ ## name_lower ## _from_xml (\
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" name_upper ## _XML_FMT " from var uid=0x%lx\n",\
                 name_upper ## _IE_XML_STR, *name_lower, (uintptr_t)uid);\
           } else {\
-            AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", name_upper ## _IE_XML_STR);\
+            AssertFatal (0, "Could not find %s/$%s var uid %lu, should have been declared in scenario\n",\
+                name_upper ## _IE_XML_STR, bdata(xml_var), (uintptr_t)uid);\
           }\
         } else {\
-          AssertFatal (0, "Could not find %s var, should have been declared in scenario\n", name_upper ## _IE_XML_STR);\
+          bstring bstr = bfromcstr(" ");\
+          obj_hashtable_dump_content(scenario->var_items, bstr); \
+          printf("%s\n",bdata(bstr));\
+          AssertFatal (0, "Could not find %s/$%s var, should have been declared in scenario\n", \
+            name_upper ## _IE_XML_STR, bdata(xml_var));\
         }\
       }\
-    } else if ('#' == xml_var->data[0]) {\
+    } else if ('#' == xml_var->data[0]) { \
       if (BSTR_OK == bdelete(xml_var, 0, 1)) { \
         void           *uid = NULL;\
 \
@@ -82,10 +87,12 @@ bool sp_ ## name_lower ## _from_xml (\
             AssertFatal (var_item->u.var.value_type == VAR_VALUE_TYPE_INT64, "Bad var type %d", var_item->u.var.value_type);\
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" name_upper ## _XML_FMT " to be loaded\n", name_upper ## _IE_XML_STR, *name_lower);\
           } else {\
-            AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", name_upper ## _IE_XML_STR);\
+            AssertFatal (0, "Could not find %s/#%s var uid %lu, should have been declared in scenario\n",\
+                name_upper ## _IE_XML_STR, bdata(xml_var), (uintptr_t)uid);\
           }\
         } else {\
-          AssertFatal (0, "Could not find %s var, should have been declared in scenario\n", name_upper ## _IE_XML_STR);\
+          AssertFatal (0, "Could not find %s/#%s var, should have been declared in scenario\n", \
+            name_upper ## _IE_XML_STR, bdata(xml_var));\
         }\
       }\
     }\

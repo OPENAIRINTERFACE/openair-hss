@@ -56,7 +56,10 @@
 #include "common_defs.h"
 #include "emm_fsm.h"
 #include "commonDef.h"
+#include "3gpp_24.007.h"
+#include "mme_app_ue_context.h"
 #include "emm_proc.h"
+#include "mme_app_defs.h"
 
 
 /****************************************************************************/
@@ -96,10 +99,7 @@ EmmCommonProcedureInitiated (
   int                                     rc = RETURNerror;
   emm_context_t                          *emm_ctx = evt->ctx;
 
-  if (!(emm_ctx)) {
-    emm_ctx = emm_context_get (&_emm_data, evt->ue_id);
-  }
-  assert (emm_fsm_get_status (evt->ue_id, emm_ctx) == EMM_COMMON_PROCEDURE_INITIATED);
+  assert (emm_fsm_get_state (emm_ctx) == EMM_COMMON_PROCEDURE_INITIATED);
 
   switch (evt->primitive) {
   case _EMMREG_PROC_ABORT:
@@ -110,7 +110,7 @@ EmmCommonProcedureInitiated (
       //tricky:
       if (emm_ctx->common_proc) { // assume cleaned if terminated
         rc = emm_proc_common_abort (&emm_ctx->common_proc);
-        emm_fsm_set_status(emm_ctx->ue_id, emm_ctx, EMM_DEREGISTERED);
+        emm_fsm_set_state(evt->ue_id, emm_ctx, EMM_DEREGISTERED);
       } else if (emm_ctx->specific_proc) {
         rc = emm_proc_specific_abort (&emm_ctx->specific_proc);
       }
@@ -123,9 +123,9 @@ EmmCommonProcedureInitiated (
      * An EMM common procedure successfully completed;
      */
     if (evt->u.common.is_attached) {
-      rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_REGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_REGISTERED);
     } else {
-      rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
     }
     OAILOG_TRACE (LOG_NAS_EMM, "rc=%d, emm_ctx=%p, common_proc=%p\n", rc, emm_ctx, emm_ctx->common_proc);
 
@@ -140,7 +140,7 @@ EmmCommonProcedureInitiated (
      * An EMM common procedure failed;
      * enter state EMM-DEREGISTERED.
      */
-    rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
 
     if ((rc != RETURNerror) && (emm_ctx) && (emm_ctx->common_proc)) {
       rc = emm_proc_common_reject (&emm_ctx->common_proc);
@@ -154,7 +154,7 @@ EmmCommonProcedureInitiated (
      * context activated;
      * enter state EMM-REGISTERED.
      */
-    rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_REGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_REGISTERED);
     break;
 
   case _EMMREG_ATTACH_REJ:
@@ -162,7 +162,7 @@ EmmCommonProcedureInitiated (
      * Attach procedure failed;
      * enter state EMM-DEREGISTERED.
      */
-    rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
     break;
 
   case _EMMREG_LOWERLAYER_SUCCESS:
@@ -178,7 +178,7 @@ EmmCommonProcedureInitiated (
      * procedure being completed
      */
     if (rc != RETURNerror) {
-      rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
     }
     if ((emm_ctx) && (emm_ctx->common_proc)) {
       rc = emm_proc_common_ll_failure (&emm_ctx->common_proc);
@@ -191,7 +191,7 @@ EmmCommonProcedureInitiated (
       rc = emm_proc_common_non_delivered_ho (&emm_ctx->common_proc);
     }
     if (rc != RETURNerror) {
-      rc = emm_fsm_set_status (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
     }
     break;
 

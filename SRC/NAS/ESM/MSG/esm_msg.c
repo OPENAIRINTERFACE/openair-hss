@@ -72,6 +72,7 @@
 #include "EsmInformationResponse.h"
 #include "EsmStatus.h"
 
+#include "mme_app_ue_context.h"
 #include "esm_msg.h"
 #include "esm_proc.h"
 #include "nas_itti_messaging.h"

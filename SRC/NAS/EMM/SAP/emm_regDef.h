@@ -115,7 +115,7 @@ typedef struct {
 typedef struct {
   emm_reg_primitive_t primitive;
   mme_ue_s1ap_id_t    ue_id;
-  void               *ctx;
+  struct emm_context_s  *ctx;
 
   union {
     emm_reg_attach_t    attach;

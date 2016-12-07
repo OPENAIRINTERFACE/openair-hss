@@ -55,7 +55,7 @@
 
 //------------------------------------------------------------------------------
 int emm_proc_specific_initialize (
-  struct emm_context_s             * const emm_ctx,
+  emm_context_t             * const emm_context,
   emm_specific_proc_type_t           const type,
   emm_specific_procedure_data_t    * const emm_specific_data,
   emm_specific_ll_failure_callback_t       _ll_failure,
@@ -64,7 +64,7 @@ int emm_proc_specific_initialize (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   if (emm_specific_data) {
-    emm_specific_data->container     = emm_ctx;
+    emm_specific_data->container     = emm_context;
     emm_specific_data->type          = type;
     emm_specific_data->ll_failure    = _ll_failure;
     emm_specific_data->non_delivered_ho = _non_delivered_ho;
@@ -87,7 +87,7 @@ int emm_proc_specific_ll_failure (emm_specific_procedure_data_t **emm_specific_d
     emm_callback = (*emm_specific_data)->ll_failure;
 
     if (emm_callback) {
-      emm_context_t  *ctx = (*emm_specific_data)->container;
+      struct emm_context_s  *ctx = (*emm_specific_data)->container;
       rc = (*emm_callback) (ctx);
     }
 
@@ -107,7 +107,7 @@ int emm_proc_specific_non_delivered_ho (emm_specific_procedure_data_t **emm_spec
     emm_callback = (*emm_specific_data)->non_delivered_ho;
 
     if (emm_callback) {
-      emm_context_t  *ctx = (*emm_specific_data)->container;
+      struct emm_context_s  *ctx = (*emm_specific_data)->container;
       rc = (*emm_callback) (ctx);
     }
 
@@ -127,7 +127,7 @@ int emm_proc_specific_abort (emm_specific_procedure_data_t **emm_specific_data)
     emm_callback = (*emm_specific_data)->abort;
 
     if (emm_callback) {
-      emm_context_t  *ctx = (*emm_specific_data)->container;
+      struct emm_context_s  *ctx = (*emm_specific_data)->container;
       rc = (*emm_callback) (ctx);
     }
 

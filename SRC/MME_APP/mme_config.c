@@ -144,7 +144,6 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->ipv4.if_name_s11 = NULL;
   config_pP->ipv4.s11.s_addr = INADDR_ANY;
   config_pP->ipv4.port_s11 = 2123;
-  config_pP->ipv4.sgw_s11.s_addr = INADDR_ANY;
   config_pP->s6a_config.conf_file = bfromcstr(S6A_CONF_FILE);
   config_pP->itti_config.queue_size = ITTI_QUEUE_MAX_ELEMENTS;
   config_pP->itti_config.log_file = NULL;
@@ -719,25 +718,46 @@ static int mme_config_parse_file (mme_config_t * config_pP)
     }
   }
 
-  setting = config_lookup (&cfg, SGW_CONFIG_STRING_SGW_CONFIG);
 
+  setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_SGW_LIST_SELECTION);
   if (setting != NULL) {
-    if ((config_setting_lookup_string (setting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11, (const char **)&sgw_ip_address_for_s11)
-        )
-      ) {
+    num = config_setting_length (setting);
 
-      cidr = bfromcstr (sgw_ip_address_for_s11);
-      struct bstrList *list = bsplit (cidr, '/');
-      AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
-      address = list->entry[0];
-      mask    = list->entry[1];
-      IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->ipv4.sgw_s11, "BAD IP ADDRESS FORMAT FOR SGW S11 !\n");
-      bstrListDestroy(list);
-      bdestroy_wrapper(&cidr);
-      in_addr_var.s_addr = config_pP->ipv4.sgw_s11.s_addr;
-      OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found S-GW S11: %s\n", inet_ntoa (in_addr_var));
+    AssertFatal(num <= MME_CONFIG_MAX_SGW, "Too many SGW entries defined (%d>%d)", num, MME_CONFIG_MAX_SGW);
+
+    config_pP->e_dns_emulation.nb_sgw_entries = 0;
+    for (i = 0; i < num; i++) {
+      sub2setting = config_setting_get_elem (setting, i);
+
+      if (sub2setting != NULL) {
+        const char                             *id = NULL;
+        if (!(config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_ID, &id))) {
+          OAILOG_ERROR (LOG_SPGW_APP, "Could not get SGW ID item %d in %s\n", i, MME_CONFIG_STRING_SGW_LIST_SELECTION);
+          break;
+        }
+        config_pP->e_dns_emulation.sgw_id[i] = bfromcstr(id);
+
+        if ((config_setting_lookup_string (sub2setting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11, (const char **)&sgw_ip_address_for_s11)
+            )
+          ) {
+
+          cidr = bfromcstr (sgw_ip_address_for_s11);
+          struct bstrList *list = bsplit (cidr, '/');
+          AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+          address = list->entry[0];
+          mask    = list->entry[1];
+          IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->e_dns_emulation.sgw_ip_addr[i], "BAD IP ADDRESS FORMAT FOR SGW S11 !\n");
+          bstrListDestroy(list);
+          bdestroy_wrapper(&cidr);
+          OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found S-GW S11: %s\n", inet_ntoa (config_pP->e_dns_emulation.sgw_ip_addr[i]));
+        }
+      }
+      config_pP->e_dns_emulation.nb_sgw_entries++;
     }
   }
+
+
+
 
   OAILOG_SET_CONFIG(&config_pP->log_config);
   config_destroy (&cfg);

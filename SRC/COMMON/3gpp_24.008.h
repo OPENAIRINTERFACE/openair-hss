@@ -742,6 +742,7 @@ typedef struct protocol_configuration_options_s {
 
 void copy_protocol_configuration_options (protocol_configuration_options_t * const pco_dst, const protocol_configuration_options_t * const pco_src);
 void clear_protocol_configuration_options (protocol_configuration_options_t * const pco);
+void free_protocol_configuration_options (protocol_configuration_options_t ** const protocol_configuration_options);
 
 int decode_protocol_configuration_options (
     protocol_configuration_options_t * protocolconfigurationoptions,
@@ -1009,6 +1010,8 @@ typedef struct traffic_flow_template_s {
 int encode_traffic_flow_template(const traffic_flow_template_t *trafficflowtemplate, const bool iei_present, const bool length_present,
     uint8_t *buffer, const uint32_t len);
 int decode_traffic_flow_template(traffic_flow_template_t *trafficflowtemplate, const bool iei_present, uint8_t *buffer, const uint32_t len);
+void copy_traffic_flow_template (traffic_flow_template_t * const tft_dst, const traffic_flow_template_t * const tft_src);
+void free_traffic_flow_template(traffic_flow_template_t ** tft);
 
 //******************************************************************************
 // 10.5.7 GPRS Common information elements

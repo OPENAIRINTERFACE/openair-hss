@@ -58,6 +58,8 @@
 #include "msc.h"
 #include "dynamic_memory_check.h"
 #include "common_defs.h"
+#include "3gpp_24.007.h"
+#include "mme_app_ue_context.h"
 #include "emm_proc.h"
 #include "nas_timer.h"
 #include "emm_data.h"
@@ -106,7 +108,7 @@ static int  _emm_service_reject (void *args);
 int
 emm_proc_service_reject (
   mme_ue_s1ap_id_t ue_id,
-  int emm_cause)
+  emm_cause_t emm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
@@ -114,23 +116,23 @@ emm_proc_service_reject (
   /*
    * Create temporary UE context
    */
-  emm_context_t                      ue_ctx = {0};
+  struct ue_mm_context_s                      ue_mm_ctx = {0};
 
-  ue_ctx.is_dynamic = false;
-  ue_ctx.ue_id = ue_id;
+  ue_mm_ctx.emm_context.is_dynamic = false;
+  ue_mm_ctx.mme_ue_s1ap_id = ue_id;
   /*
    * Update the EMM cause code
    */
   if (ue_id > 0) {
-    ue_ctx.emm_cause = emm_cause;
+    ue_mm_ctx.emm_context.emm_cause = emm_cause;
   } else {
-    ue_ctx.emm_cause = EMM_CAUSE_IMPLICITLY_DETACHED;
+    ue_mm_ctx.emm_context.emm_cause = EMM_CAUSE_IMPLICITLY_DETACHED;
   }
 
   /*
    * Do not accept attach request with protocol error
    */
-  rc = _emm_service_reject (&ue_ctx);
+  rc = _emm_service_reject (&ue_mm_ctx);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 /****************************************************************************/
@@ -147,32 +149,32 @@ _emm_service_reject (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_context_t                     *emm_ctx = (emm_context_t *) (args);
+  struct ue_mm_context_s                 *ue_mm_ctx = (struct ue_mm_context_s *) (args);
 
-  if (emm_ctx) {
+  if (ue_mm_ctx) {
     emm_sap_t                               emm_sap = {0};
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM service procedure not accepted " "by the network (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n",
-        emm_ctx->ue_id, emm_ctx->emm_cause);
+    		ue_mm_ctx->mme_ue_s1ap_id, ue_mm_ctx->emm_context.emm_cause);
     /*
      * Notify EMM-AS SAP that Tracking Area Update Reject message has to be sent
      * onto the network
      */
     emm_sap.primitive = EMMAS_ESTABLISH_REJ;
-    emm_sap.u.emm_as.u.establish.ue_id = emm_ctx->ue_id;
+    emm_sap.u.emm_as.u.establish.ue_id = ue_mm_ctx->mme_ue_s1ap_id;
     emm_sap.u.emm_as.u.establish.eps_id.guti = NULL;
 
-    if (emm_ctx->emm_cause == EMM_CAUSE_SUCCESS) {
-      emm_ctx->emm_cause = EMM_CAUSE_IMPLICITLY_DETACHED;
+    if (ue_mm_ctx->emm_context.emm_cause == EMM_CAUSE_SUCCESS) {
+    	ue_mm_ctx->emm_context.emm_cause = EMM_CAUSE_IMPLICITLY_DETACHED;
     }
 
-    emm_sap.u.emm_as.u.establish.emm_cause = emm_ctx->emm_cause;
+    emm_sap.u.emm_as.u.establish.emm_cause = ue_mm_ctx->emm_context.emm_cause;
     emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_SR;
     emm_sap.u.emm_as.u.establish.nas_msg = NULL;
     /*
      * Setup EPS NAS security data
      */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_ctx->_security, false, false);
+    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &ue_mm_ctx->emm_context._security, false, false);
     rc = emm_sap_send (&emm_sap);
   }
 

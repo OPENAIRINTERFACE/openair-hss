@@ -53,11 +53,14 @@
 #include "gcc_diag.h"
 #include "commonDef.h"
 #include "common_defs.h"
+#include "3gpp_24.007.h"
+#include "mme_app_ue_context.h"
 #include "emm_data.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
 #include "log.h"
 #include "LowerLayer.h"
+#include "mme_app_defs.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -133,13 +136,9 @@ lowerlayer_failure (
 
   emm_sap.primitive = EMMREG_LOWERLAYER_FAILURE;
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_context_t                     *emm_ctx = NULL;
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
-  if (ue_id > 0) {
-    emm_ctx = emm_context_get (&_emm_data, ue_id);
-  }
-
-  emm_sap.u.emm_reg.ctx = emm_ctx;
+  emm_sap.u.emm_reg.ctx = &ue_mm_context->emm_context;
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -169,13 +168,10 @@ lowerlayer_non_delivery_indication (
 
   emm_sap.primitive = EMMREG_LOWERLAYER_NON_DELIVERY;
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_context_t                     *emm_ctx = NULL;
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
-  if (ue_id > 0) {
-    emm_ctx = emm_context_get (&_emm_data, ue_id);
-  }
 
-  emm_sap.u.emm_reg.ctx = emm_ctx;
+  emm_sap.u.emm_reg.ctx = &ue_mm_context->emm_context;
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -257,17 +253,15 @@ lowerlayer_data_ind (
 {
   esm_sap_t                               esm_sap = {0};
   int                                     rc = RETURNok;
-  emm_context_t                     *emm_ctx = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
-  if (ue_id > 0) {
-    emm_ctx = emm_context_get (&_emm_data, ue_id);
-  }
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+
   esm_sap.primitive = ESM_UNITDATA_IND;
   esm_sap.is_standalone = true;
   esm_sap.ue_id = ue_id;
-  esm_sap.ctx = emm_ctx;
+  esm_sap.ctx = &ue_mm_context->emm_context;
   esm_sap.recv = data;
   data = NULL;
   rc = esm_sap_send (&esm_sap);
@@ -299,18 +293,15 @@ lowerlayer_data_req (
   int                                     rc = RETURNok;
   emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
-  struct emm_context_s              *ctx = NULL;
+  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
   emm_sap.primitive = EMMAS_DATA_REQ;
   emm_sap.u.emm_as.u.data.guti = NULL;
   emm_sap.u.emm_as.u.data.ue_id = ue_id;
 
-  if (ue_id > 0) {
-    ctx = emm_context_get (&_emm_data, ue_id);
-  }
 
-  if (ctx) {
-    sctx = &ctx->_security;
+  if (ue_mm_context) {
+    sctx = &ue_mm_context->emm_context._security;
   }
 
   emm_sap.u.emm_as.u.data.nas_info = 0;

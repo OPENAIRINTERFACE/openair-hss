@@ -65,12 +65,23 @@ obj_hashtable_no_free_key_callback (
 static                                  hash_size_t
 def_hashfunc (
   const void *const keyP,
-  int key_sizeP)
+  const int key_sizeP)
 {
   hash_size_t                             hash = 0;
+  int                                     key_size = key_sizeP;
 
-  while (key_sizeP)
-    hash ^= ((unsigned char *)keyP)[--key_sizeP];
+  // may use MD4 ?
+  while (key_size > 0) {
+    uint32_t val = 0;
+    int      size = sizeof(val);
+    while ((size > 0) && (key_size > 0)) {
+      val = val << 8;
+      val |= ((uint8_t*)keyP)[key_size - 1];
+      size--;
+      key_size--;
+    }
+    hash ^= val;
+  }
 
   return hash;
 }
@@ -353,11 +364,11 @@ obj_hashtable_is_key_exists (
 
   while (node) {
     if (node->key == keyP) {
-      PRINT_HASHTABLE (hashtblP, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, hash);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u) hash %lx return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, key_sizeP, hash);
       return HASH_TABLE_OK;
     } else if (node->key_size == key_sizeP) {
       if (memcmp (node->key, keyP, key_sizeP) == 0) {
-        PRINT_HASHTABLE (hashtblP, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, hash);
+        PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u) hash %lx return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, key_sizeP, hash);
         return HASH_TABLE_OK;
       }
     }
@@ -365,7 +376,7 @@ obj_hashtable_is_key_exists (
     node = node->next;
   }
 
-  PRINT_HASHTABLE (hashtblP, "%s(%s,key %p) hash %lx return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP, hash);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u) hash %lx return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP, key_sizeP, hash);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 //------------------------------------------------------------------------------
@@ -394,12 +405,14 @@ obj_hashtable_ts_is_key_exists (
   while (node) {
     if (node->key == keyP) {
       pthread_mutex_unlock (&hashtblP->lock_nodes[hash]);
-      PRINT_HASHTABLE (hashtblP, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, hash);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u) hash %lx return OK\n", __FUNCTION__,
+              bdata(hashtblP->name), keyP, key_sizeP, hash);
       return HASH_TABLE_OK;
     } else if (node->key_size == key_sizeP) {
       if (memcmp (node->key, keyP, key_sizeP) == 0) {
         pthread_mutex_unlock (&hashtblP->lock_nodes[hash]);
-        PRINT_HASHTABLE (hashtblP, "%s(%s,key %p) hash %lx return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, hash);
+        PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u) hash %lx return OK\n", __FUNCTION__,
+                bdata(hashtblP->name), keyP, key_sizeP, hash);
         return HASH_TABLE_OK;
       }
     }
@@ -408,7 +421,8 @@ obj_hashtable_ts_is_key_exists (
   }
   pthread_mutex_unlock (&hashtblP->lock_nodes[hash]);
 
-  PRINT_HASHTABLE (hashtblP, "%s(%s,key %p) hash %lx return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP, hash);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u) hash %lx return KEY_NOT_EXISTS\n", __FUNCTION__,
+          bdata(hashtblP->name), keyP, key_sizeP, hash);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 
@@ -518,7 +532,8 @@ obj_hashtable_insert (
       node->data = dataP;
       node->key_size = key_sizeP;
       // waste of memory here (keyP is lost) we should free_wrapper it now
-      PRINT_HASHTABLE (hashtblP, "%s(%s,key %p data %p) hash %lx return INSERT_OVERWRITTEN_DATA\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP, hash);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key %p data %p) hash %lx return INSERT_OVERWRITTEN_DATA\n",
+                     __FUNCTION__, bdata(hashtblP->name), keyP, dataP, hash);
       return HASH_TABLE_INSERT_OVERWRITTEN_DATA;
     }
 
@@ -548,7 +563,8 @@ obj_hashtable_insert (
 
   hashtblP->nodes[hash] = node;
   __sync_fetch_and_add (&hashtblP->num_elements, 1);
-  PRINT_HASHTABLE (hashtblP, "%s(%s,key %p data %p) hash %lx return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP, hash);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u data %p) hash %lx return OK\n", __FUNCTION__,
+          bdata(hashtblP->name), keyP, key_sizeP, dataP, hash);
   return HASH_TABLE_OK;
 }
 
@@ -628,7 +644,8 @@ obj_hashtable_ts_insert (
   hashtblP->nodes[hash] = node;
   __sync_fetch_and_add (&hashtblP->num_elements, 1);
   pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-  PRINT_HASHTABLE (hashtblP, "%s(%s,key %p data %p) hash %lx return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, dataP, hash);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u data %p) hash %lx return OK\n", __FUNCTION__,
+          bdata(hashtblP->name), keyP, key_sizeP, dataP, hash);
   return HASH_TABLE_OK;
 }
 
@@ -922,13 +939,15 @@ obj_hashtable_ts_get (
     if (node->key == keyP) {
       *dataP = node->data;
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-      PRINT_HASHTABLE (hashtblP, "%s(%s,key %p data %p) hash %lx return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, *dataP, hash);
+      PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u data %p) hash %lx return OK\n", __FUNCTION__,
+              bdata(hashtblP->name), keyP, key_sizeP, *dataP, hash);
       return HASH_TABLE_OK;
     } else if (node->key_size == key_sizeP) {
       if (memcmp (node->key, keyP, key_sizeP) == 0) {
         *dataP = node->data;
         pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-        PRINT_HASHTABLE (hashtblP, "%s(%s,key %p data %p) hash %lx return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP, *dataP, hash);
+        PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u data %p) hash %lx return OK\n", __FUNCTION__,
+                bdata(hashtblP->name), keyP, key_sizeP, *dataP, hash);
         return HASH_TABLE_OK;
       }
     }
@@ -938,7 +957,8 @@ obj_hashtable_ts_get (
 
   *dataP = NULL;
   pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
-  PRINT_HASHTABLE (hashtblP, "%s(%s,key %p) hash %lx return KEY_NOT_EXISTS\n", __FUNCTION__, bdata(hashtblP->name), keyP, hash);
+  PRINT_HASHTABLE (hashtblP, "%s(%s,key %p klen %u) hash %lx return KEY_NOT_EXISTS\n", __FUNCTION__,
+          bdata(hashtblP->name), keyP, key_sizeP, hash);
   return HASH_TABLE_KEY_NOT_EXISTS;
 }
 

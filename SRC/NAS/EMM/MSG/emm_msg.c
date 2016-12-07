@@ -58,6 +58,7 @@
 #include "3gpp_24.301.h"
 #include "security_types.h"
 #include "common_types.h"
+#include "mme_app_ue_context.h"
 #include "emm_msg.h"
 #include "esm_msg.h"
 #include "intertask_interface.h"

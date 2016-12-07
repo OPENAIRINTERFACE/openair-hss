@@ -413,7 +413,6 @@ include_directories("${OPENAIRCN_DIR}/SRC/S1AP")
 include_directories("${OPENAIRCN_DIR}/SRC/UDP")
 include_directories("${OPENAIRCN_DIR}/SRC/GTPV1-U")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE")
-include_directories("${OPENAIRCN_DIR}/SRC/UTILS/LFDS/liblfds6.1.1/liblfds611/inc")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/MSC")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/BSTR")
 include_directories("${OPENAIRCN_DIR}/SRC/SGW")
@@ -598,16 +597,21 @@ add_library (SGW
 
 set(MME_DIR ${OPENAIRCN_DIR}/SRC/MME_APP)
 add_library(MME_APP
+  ${MME_DIR}/mme_app_apn_selection.c
+  ${MME_DIR}/mme_app_authentication.c
+  ${MME_DIR}/mme_app_bearer.c
+  ${MME_DIR}/mme_app_bearer_context.c
   ${MME_DIR}/mme_app_capabilities.c
   ${MME_DIR}/mme_app_context.c
-  ${MME_DIR}/mme_app_main.c
-  ${MME_DIR}/mme_app_bearer.c
-  ${MME_DIR}/mme_app_authentication.c
   ${MME_DIR}/mme_app_detach.c
+  ${MME_DIR}/mme_app_edns_emulation.c
   ${MME_DIR}/mme_app_location.c
+  ${MME_DIR}/mme_app_main.c
+  ${MME_DIR}/mme_app_pdn_context.c
+  ${MME_DIR}/mme_app_sgw_selection.c
+  ${MME_DIR}/mme_app_statistics.c
   ${MME_DIR}/mme_app_transport.c
   ${MME_DIR}/mme_app_ue_context.c
-  ${MME_DIR}/mme_app_statistics.c
   ${MME_DIR}/mme_config.c
   ${MME_DIR}/s6a_2_nas_cause.c
   )
@@ -718,7 +722,6 @@ set(libnas_ies_OBJS
   ${NAS_SRC}IES/SsCode.c
   ${NAS_SRC}IES/TrackingAreaIdentity.c
   ${NAS_SRC}IES/TrackingAreaIdentityList.c
-  ${NAS_SRC}IES/TrafficFlowAggregateDescription.c
   ${NAS_SRC}IES/UeNetworkCapability.c
   ${NAS_SRC}IES/UeRadioCapabilityInformationUpdateNeeded.c
   ${NAS_SRC}IES/UeSecurityCapability.c
@@ -809,27 +812,6 @@ include_directories(${NAS_SRC}/ESM)
 include_directories(${NAS_SRC}/ESM/SAP)
 
 
-# Make lfds as a own source code (even if it is a outside library)
-# For better intergration with compilation flags & structure of cmake
-###################################################################
-set(lfds ${OPENAIRCN_DIR}/SRC/UTILS/LFDS/liblfds6.1.1/liblfds611/src/)
-file(GLOB lfds_queue ${lfds}/lfds611_queue/*.c)
-file(GLOB lfds_ring ${lfds}/lfds611_ringbuffer/*.c)
-file(GLOB lfds_slist ${lfds}/lfds611_slist/*.c)
-file(GLOB lfds_stack ${lfds}/lfds611_stack/*.c)
-file(GLOB lfds_freelist ${lfds}/lfds611_freelist/*.c)
-
-include_directories(${lfds})
-add_library(LFDS
-  ${lfds_queue} ${lfds_ring} ${lfds_slist} ${lfds_stack} ${lfds_freelist}
-  ${lfds}/lfds611_liblfds/lfds611_liblfds_abstraction_test_helpers.c
-  ${lfds}/lfds611_liblfds/lfds611_liblfds_aligned_free.c
-  ${lfds}/lfds611_liblfds/lfds611_liblfds_aligned_malloc.c
-  ${lfds}/lfds611_abstraction/lfds611_abstraction_free.c
-  ${lfds}/lfds611_abstraction/lfds611_abstraction_malloc.c
-)
-
-
 # System packages that are required
 # We use either the cmake buildin, in ubuntu are in: /usr/share/cmake*/Modules/
 # or cmake provide a generic interface to pkg-config that widely used
@@ -849,14 +831,6 @@ include_directories(${CONFIG_INCLUDE_DIRS})
 
 pkg_search_module(CRYPTO libcrypto REQUIRED)
 include_directories(${CRYPTO_INCLUDE_DIRS})
-
-
-pkg_search_module(OPENPGM openpgm-5.1)
-if(NOT ${OPENPGM_FOUND})
-  message("PACKAGE openpgm-5.1 is required by binaries such as oaisim: will fail later if this target is built")
-else()
-  include_directories(${OPENPGM_INCLUDE_DIRS})
-endif()
 
 pkg_search_module(NETTLE nettle)
 if(NOT ${NETTLE_FOUND})
@@ -886,6 +860,11 @@ endif()
 add_definitions("-DNETTLE_VERSION_MAJOR=${NETTLE_VERSION_MAJOR}")
 add_definitions("-DNETTLE_VERSION_MINOR=${NETTLE_VERSION_MINOR}")
 
+find_library(LFDS lfds710 PATHS /usr/local/lib /usr/lib )
+
+if ("${LFDS}" STREQUAL "LFDS-NOTFOUND")
+  message(FATAL_ERROR "LIB LFDS not found, please install it" )
+endif()
 
 pkg_search_module(XPM xpm)
 if(NOT ${XPM_FOUND})
@@ -921,13 +900,12 @@ if( ITTI_ANALYZER )
 endif( ITTI_ANALYZER )
 target_link_libraries (mme
   -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC S11_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN 
-   S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB} 
+    S1AP_LIB S1AP_EPC S11_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN 
+   S6A MME_APP LIB_NAS_MME ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB} 
    ${3GPP_TYPES_XML_LIB} CN_UTILS SCENARIO_PLAYER HASHTABLE BSTR 
   -Wl,--end-group
-  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} ${LIBXML2_LIBRARIES} gnutls fdproto fdcore
+  pthread m sctp  rt crypt ${LFDS} ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} ${LIBXML2_LIBRARIES} gnutls fdproto fdcore
   )
-
 
 # spgw is S-GW +P-GW  nodes all in one implementation
 ################################
@@ -940,10 +918,10 @@ if( ITTI_ANALYZER )
 endif( ITTI_ANALYZER )
 target_link_libraries (spgw
   -Wl,--start-group
-  GTPV1U SGW S11_SGW GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB} 
+  GTPV1U SGW S11_SGW GTPV2C UDP_SERVER ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB} 
    ${3GPP_TYPES_XML_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
-  pthread m rt gtpnl ${CONFIG_LIBRARIES}  ${LIBXML2_LIBRARIES}  
+  pthread m rt gtpnl ${LFDS} ${CONFIG_LIBRARIES}  ${LIBXML2_LIBRARIES}  
   )
 
 
@@ -991,7 +969,7 @@ add_test(NAME test_imsi_convert   COMMAND test_mme_app_ue_context_imsi)
 #    ${OPENAIRCN_DIR}/SRC/TEST/test_${myExe}.c
 #    )
 #  target_link_libraries (test_${myExe}
-#    -Wl,--start-group SECU_CN UTIL LFDS -Wl,--end-group m rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
+#    -Wl,--start-group SECU_CN UTIL -Wl,--end-group ${LFDS}  m rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
 #    )
 #endforeach(myExe)
 

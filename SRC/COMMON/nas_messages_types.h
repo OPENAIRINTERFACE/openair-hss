@@ -53,6 +53,9 @@
 #define NAS_DL_DATA_REQ(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_req
 #define NAS_DL_DATA_CNF(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_cnf
 #define NAS_DL_DATA_REJ(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_rej
+#define NAS_PDN_CONFIG_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_pdn_config_req
+#define NAS_PDN_CONFIG_RSP(mSGpTR)                  (mSGpTR)->ittiMsg.nas_pdn_config_rsp
+#define NAS_PDN_CONFIG_FAIL(mSGpTR)                 (mSGpTR)->ittiMsg.nas_pdn_config_fail
 #define NAS_PDN_CONNECTIVITY_REQ(mSGpTR)            (mSGpTR)->ittiMsg.nas_pdn_connectivity_req
 #define NAS_PDN_CONNECTIVITY_RSP(mSGpTR)            (mSGpTR)->ittiMsg.nas_pdn_connectivity_rsp
 #define NAS_PDN_CONNECTIVITY_FAIL(mSGpTR)           (mSGpTR)->ittiMsg.nas_pdn_connectivity_fail
@@ -170,13 +173,14 @@ typedef struct itti_nas_paging_ind_s {
 
 
 typedef struct itti_nas_pdn_connectivity_req_s {
-  int                    pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
+  proc_tid_t             pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
   mme_ue_s1ap_id_t       ue_id; // nas ref
   char                   imsi[16];
   uint8_t                imsi_length;
   network_qos_t          qos;
   protocol_configuration_options_t pco;
   bstring                apn;
+  pdn_cid_t              pdn_cid;
   bstring                pdn_addr;
   int                    pdn_type;
   int                    request_type;
@@ -184,10 +188,10 @@ typedef struct itti_nas_pdn_connectivity_req_s {
 
 
 typedef struct itti_nas_pdn_connectivity_rsp_s {
-  int                     pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
+  pdn_cid_t               pdn_cid;
+  proc_tid_t              pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
   network_qos_t           qos;
   protocol_configuration_options_t pco;
-  bstring                 apn;
   bstring                 pdn_addr;
   int                     pdn_type;
   int                     request_type;
@@ -215,10 +219,30 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
   ip_address_t            sgw_s1u_address;
 } itti_nas_pdn_connectivity_rsp_t;
 
-
 typedef struct itti_nas_pdn_connectivity_fail_s {
   mme_ue_s1ap_id_t        ue_id; // nas ref
 } itti_nas_pdn_connectivity_fail_t;
+
+
+typedef struct itti_nas_pdn_config_req_s {
+  proc_tid_t             pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
+  mme_ue_s1ap_id_t       ue_id; // nas ref
+  char                   imsi[16];
+  uint8_t                imsi_length;
+  bstring                apn;
+  bstring                pdn_addr;
+  pdn_type_t             pdn_type;
+  int                    request_type;
+} itti_nas_pdn_config_req_t;
+
+typedef struct itti_nas_pdn_config_rsp_s {
+  mme_ue_s1ap_id_t        ue_id; // nas ref
+  pdn_cid_t               pdn_cid;
+} itti_nas_pdn_config_rsp_t;
+
+typedef struct itti_nas_pdn_config_fail_s {
+  mme_ue_s1ap_id_t        ue_id; // nas ref
+} itti_nas_pdn_config_fail_t;
 
 
 typedef struct itti_nas_initial_ue_message_s {
@@ -329,9 +353,9 @@ typedef struct itti_nas_auth_req_s {
 } itti_nas_auth_req_t;
 
 
-typedef struct itti_nas_auth_resp_s {
+typedef struct itti_nas_auth_rsp_s {
   char imsi[16];
-} itti_nas_auth_resp_t;
+} itti_nas_auth_rsp_t;
 
 typedef struct itti_nas_auth_param_req_s {
   /* UE identifier */
