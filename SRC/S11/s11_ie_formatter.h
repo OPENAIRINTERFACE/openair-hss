@@ -31,7 +31,7 @@
  */
 NwRcT s11_imsi_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
-int s11_imsi_ie_set(NwGtpv2cMsgHandleT *msg, const Imsi_t *imsi);
+int s11_imsi_ie_set(NwGtpv2cMsgHandleT *msg, const imsi_t *imsi);
 
 NwRcT s11_msisdn_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 

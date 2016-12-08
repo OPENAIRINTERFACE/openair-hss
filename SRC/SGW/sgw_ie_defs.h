@@ -112,27 +112,6 @@ typedef struct indication_flags_s {
 #define ISRAI_FLAG_BIT_POS    1
 #define SGWCI_FLAG_BIT_POS    0
 
-#define IMSI(imsi) \
-        (imsi)->digit[0], \
-        (imsi)->digit[1], \
-        (imsi)->digit[2], \
-        (imsi)->digit[3], \
-        (imsi)->digit[4], \
-        (imsi)->digit[5], \
-        (imsi)->digit[6], \
-        (imsi)->digit[7], \
-        (imsi)->digit[8], \
-        (imsi)->digit[9], \
-        (imsi)->digit[10], \
-        (imsi)->digit[11], \
-        (imsi)->digit[12], \
-        (imsi)->digit[13], \
-        (imsi)->digit[14]
-
-typedef struct {
-  uint8_t digit[IMSI_BCD_DIGITS_MAX+1]; // +1 for '\0` macro sprintf changed in snprintf
-  uint8_t length;
-} Imsi_t;
 
 typedef struct {
   uint8_t digit[MSISDN_LENGTH];

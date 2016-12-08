@@ -119,12 +119,9 @@ esm_msg_decode (
   uint8_t * buffer,
   uint32_t len)
 {
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     header_result = 0;
   int                                     decode_result = 0;
-  uint8_t                                *buffer_log = buffer;
-  uint32_t                                len_log = len;
-  int                                     down_link = 0;
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
   /*
    * First decode the ESM message header
    */
@@ -236,12 +233,7 @@ esm_msg_decode (
   if (decode_result < 0) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to decode L3 ESM message 0x%x " "(%u)\n", msg->header.message_type, decode_result);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, decode_result);
-  } else {
-    /*
-     * Message has been decoded and security header removed, handle it has a plain message
-     */
-    nas_itti_plain_msg ((char *)buffer_log, (nas_message_t *) msg, len_log, down_link);
-  }
+  } 
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result + decode_result);
 }
@@ -272,8 +264,6 @@ esm_msg_encode (
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     header_result = 0;
   int                                     encode_result = 0;
-  uint8_t                                *buffer_log = buffer;
-  int                                     down_link = 1;
   /*
    * First encode the ESM message header
    */
@@ -385,8 +375,6 @@ esm_msg_encode (
 
   if (encode_result < 0) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-MSG   - Failed to encode L3 ESM message 0x%x " "(%d)\n", msg->header.message_type, encode_result);
-  } else {
-    nas_itti_plain_msg ((char *)buffer_log, (nas_message_t *) msg, header_result + encode_result, down_link);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, header_result + encode_result);

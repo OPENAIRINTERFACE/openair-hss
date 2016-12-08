@@ -122,6 +122,13 @@ void *mme_app_thread (void *args)
       }
       break;
 
+    case NAS_PDN_CONFIG_REQ: {
+      struct ue_mm_context_s                    *ue_context_p = NULL;
+      ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.nas_pdn_config_req.ue_id);
+        mme_app_send_s6a_update_location_req(ue_context_p);
+      }
+      break;
+
     case NAS_DETACH_REQ: {
         mme_app_handle_detach_req(&received_message_p->ittiMsg.nas_detach_req);
       }

@@ -250,11 +250,11 @@ emm_proc_identification_complete (
   imeisv_t * const imeisv,
   uint32_t * const tmsi)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
   emm_context_t                          *emm_ctx = NULL;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Identification complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   /*
    * Release retransmission timer parameters
@@ -281,8 +281,7 @@ emm_proc_identification_complete (
       /*
        * Update the IMSI
        */
-      imsi64_t imsi64 = INVALID_IMSI64;
-      IMSI_TO_IMSI64(imsi,imsi64);
+      imsi64_t imsi64 = imsi_to_imsi64(imsi);
       emm_ctx_set_valid_imsi(emm_ctx, imsi, imsi64);
     } else if (imei) {
       /*

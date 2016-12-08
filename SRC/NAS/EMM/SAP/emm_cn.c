@@ -242,6 +242,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
     return RETURNerror;
   }
 
+  // search for an already set PDN context
   for (pdn_cid = 0; pdn_cid < MAX_APN_PER_UE; pdn_cid++) {
     if ((ue_mm_context->pdn_contexts[pdn_cid]) && (ue_mm_context->pdn_contexts[pdn_cid]->context_identifier == apn_config->context_identifier)) {
       break;
@@ -297,8 +298,8 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
     } else {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     }
-    //nas_itti_pdn_connectivity_req (emm_ctx->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, &emm_ctx->_imsi,
-    //    emm_ctx->esm_ctx.esm_proc_data, emm_ctx->esm_ctx.esm_proc_data->request_type);
+    nas_itti_pdn_connectivity_req (emm_ctx->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, &emm_ctx->_imsi,
+        emm_ctx->esm_ctx.esm_proc_data, emm_ctx->esm_ctx.esm_proc_data->request_type);
 
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }

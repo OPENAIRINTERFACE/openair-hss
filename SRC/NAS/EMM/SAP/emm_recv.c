@@ -251,6 +251,15 @@ emm_recv_attach_request (
     imsi.u.num.digit14 = msg->oldgutiorimsi.imsi.identity_digit14;
     imsi.u.num.digit15 = msg->oldgutiorimsi.imsi.identity_digit15;
     imsi.u.num.parity = msg->oldgutiorimsi.imsi.oddeven;
+    for (int index=0; index < IMSI_BCD8_SIZE; index++) {
+      if (imsi.u.value[index] == 0xff) {
+        imsi.length = index;
+        break;
+      } else  if ((imsi.u.value[index] & 0xf0) == 0xf0) {
+        imsi.length = index + 1;
+        break;
+      }
+    }
   } else if (msg->oldgutiorimsi.imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMEI\n");
     /*
@@ -619,7 +628,16 @@ emm_recv_identity_response (
     imsi.u.num.digit13 = msg->mobileidentity.imsi.digit13;
     imsi.u.num.digit14 = msg->mobileidentity.imsi.digit14;
     imsi.u.num.digit15 = msg->mobileidentity.imsi.digit15;
-    imsi.u.num.parity = msg->mobileidentity.imsi.oddeven;
+    imsi.u.num.parity  = 0x0f;
+    for (int index=0; index < IMSI_BCD8_SIZE; index++) {
+      if (imsi.u.value[index] == 0xff) {
+        imsi.length = index;
+        break;
+      } else  if ((imsi.u.value[index] & 0xf0) == 0xf0) {
+        imsi.length = index + 1;
+        break;
+      }
+    }
   } else if (msg->mobileidentity.imei.typeofidentity == MOBILE_IDENTITY_IMEI) {
     /*
      * Get the IMEI

@@ -60,7 +60,7 @@
 typedef struct itti_s11_create_session_request_s {
   teid_t             teid;                ///< S11- S-GW Tunnel Endpoint Identifier
 
-  Imsi_t             imsi;                ///< The IMSI shall be included in the message on the S4/S11
+  imsi_t             imsi;                ///< The IMSI shall be included in the message on the S4/S11
   ///< interface, and on S5/S8 interface if provided by the
   ///< MME/SGSN, except for the case:
   ///<     - If the UE is emergency attached and the UE is UICCless.

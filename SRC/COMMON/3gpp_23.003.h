@@ -78,7 +78,6 @@ typedef struct plmn_s {
 * \brief Structure containing an IMSI, BCD structure.
 */
 typedef struct imsi_s {
-  uint8_t length;
   union {
     struct {
       uint8_t digit2:4;
@@ -103,6 +102,7 @@ typedef struct imsi_s {
 #define IMSI_BCD8_SIZE                    8                /*!< \brief  The number of digits in IMSI shall not exceed 15.       */
     uint8_t value[IMSI_BCD8_SIZE];
   } u;
+  uint8_t length;
 } imsi_t;
 #define IMSI_BCD_DIGITS_MAX              15
 

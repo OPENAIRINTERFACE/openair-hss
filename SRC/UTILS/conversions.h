@@ -30,6 +30,9 @@
 #ifndef FILE_CONVERSIONS_SEEN
 #define FILE_CONVERSIONS_SEEN
 
+#include "common_types.h"
+#include "3gpp_23.003.h"
+
 /* Endianness conversions for 16 and 32 bits integers from host to network order */
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 # define hton_int32(x)   \
@@ -314,72 +317,8 @@ do {                                                    \
 /* Convert the IMSI contained by a char string NULL terminated to uint64_t */
 #define IMSI_STRING_TO_IMSI64(sTRING, iMSI64_pTr) sscanf(sTRING, IMSI_64_FMT, iMSI64_pTr)
 #define IMSI64_TO_STRING(iMSI64, sTRING) snprintf(sTRING, IMSI_BCD_DIGITS_MAX+1, IMSI_64_FMT, iMSI64)
-#define IMSI_TO_IMSI64(iMsI_t_PtR,iMsI_u64) \
-        {\
-          uint64_t mUlT = 1; \
-          iMsI_u64 = (iMsI_t_PtR)->u.num.digit1; \
-          if ((iMsI_t_PtR)->u.num.digit15 != 0xf) { \
-            iMsI_u64 = (iMsI_t_PtR)->u.num.digit15 + \
-                       (iMsI_t_PtR)->u.num.digit14 *10 + \
-                       (iMsI_t_PtR)->u.num.digit13 *100 + \
-                       (iMsI_t_PtR)->u.num.digit12 *1000 + \
-                       (iMsI_t_PtR)->u.num.digit11 *10000 + \
-                       (iMsI_t_PtR)->u.num.digit10 *100000 + \
-                       (iMsI_t_PtR)->u.num.digit9  *1000000 + \
-                       (iMsI_t_PtR)->u.num.digit8  *10000000 + \
-                       (iMsI_t_PtR)->u.num.digit7  *100000000;  \
-            mUlT = 1000000000; \
-          } else { \
-            iMsI_u64 = (iMsI_t_PtR)->u.num.digit14  + \
-                       (iMsI_t_PtR)->u.num.digit13 *10 + \
-                       (iMsI_t_PtR)->u.num.digit12 *100 + \
-                       (iMsI_t_PtR)->u.num.digit11 *1000 + \
-                       (iMsI_t_PtR)->u.num.digit10 *10000 + \
-                       (iMsI_t_PtR)->u.num.digit9  *100000 + \
-                       (iMsI_t_PtR)->u.num.digit8  *1000000 + \
-                       (iMsI_t_PtR)->u.num.digit7  *10000000;  \
-            mUlT = 100000000; \
-          } \
-          if ((iMsI_t_PtR)->u.num.digit6 != 0xf) {\
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit6 *mUlT;   \
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit5 *mUlT*10; \
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit4 *mUlT*100; \
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit3 *mUlT*1000; \
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit2 *mUlT*10000; \
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit1 *mUlT*100000; \
-          } else { \
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit5 *mUlT;    \
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit4 *mUlT*10;  \
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit3 *mUlT*100;  \
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit2 *mUlT*1000;  \
-              iMsI_u64 += (iMsI_t_PtR)->u.num.digit1 *mUlT*10000;  \
-          } \
-        }
-/*#define IMSI_TO_STRING(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
-        {\
-          int l_offset = 0;\
-          int l_ret    = 0;\
-          l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u",\
-              (iMsI_t_PtR)->u.num.digit1, (iMsI_t_PtR)->u.num.digit2,\
-                  (iMsI_t_PtR)->u.num.digit3, (iMsI_t_PtR)->u.num.digit4,\
-                  (iMsI_t_PtR)->u.num.digit5);\
-          if (((iMsI_t_PtR)->u.num.digit6 != 0xf)  && (l_ret > 0)) {\
-            l_offset += l_ret;\
-            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset,  "%u", (iMsI_t_PtR)->u.num.digit6);\
-          }\
-          if (l_ret > 0) {\
-            l_offset += l_ret;\
-            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u%u%u%u%u%u%u%u",\
-                (iMsI_t_PtR)->u.num.digit7, (iMsI_t_PtR)->u.num.digit8,\
-                (iMsI_t_PtR)->u.num.digit9, (iMsI_t_PtR)->u.num.digit10,\
-                (iMsI_t_PtR)->u.num.digit11, (iMsI_t_PtR)->u.num.digit12,\
-                (iMsI_t_PtR)->u.num.digit13, (iMsI_t_PtR)->u.num.digit14);\
-          }\
-          if (((iMsI_t_PtR)->u.num.digit15 != 0x0)   && (l_ret > 0)) {\
-            l_offset += l_ret;\
-            l_ret = snprintf(iMsI_sTr + l_offset, MaXlEn - l_offset, "%u", (iMsI_t_PtR)->u.num.digit15);\
-          }\
-        }*/
+imsi64_t imsi_to_imsi64(const imsi_t * const imsi);
+
 
 #define IMSI_TO_STRING(iMsI_t_PtR,iMsI_sTr, MaXlEn) \
         do { \

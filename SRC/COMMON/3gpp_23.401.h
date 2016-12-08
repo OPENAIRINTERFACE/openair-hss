@@ -91,7 +91,7 @@ typedef struct sgw_pdn_connection_s {
 // The Serving GW maintains the following EPS bearer context information for UEs.
 // Struct sgw_eps_bearer_context_information_t contain the context fields for one UE.
 typedef struct sgw_eps_bearer_context_information_s {
-  Imsi_t               imsi;                           ///< IMSI (International Mobile Subscriber Identity) is the subscriber permanent identity.
+  imsi_t               imsi;                           ///< IMSI (International Mobile Subscriber Identity) is the subscriber permanent identity.
   int8_t               imsi_unauthenticated_indicator; /// This is an IMSI indicator to show the IMSI is unauthenticated.
   // TO BE CHECKED me_identity_t    me_identity;       ///< Mobile Equipment Identity (e.g. IMEI/IMEISV).
   char                 msisdn[MSISDN_LENGTH];          ///< The basic MSISDN of the UE. The presence is dictated by its storage in the HSS.
@@ -122,7 +122,7 @@ typedef struct sgw_eps_bearer_context_information_s {
 // The PDN GW maintains the following EPS bearer context information for UEs.
 // For emergency attached UEs which are not authenticated, IMEI is stored in context.
 typedef struct pgw_eps_bearer_context_information_s {
-  Imsi_t               imsi;                           ///< IMSI (International Mobile Subscriber Identity) is the subscriber permanent identity.
+  imsi_t               imsi;                           ///< IMSI (International Mobile Subscriber Identity) is the subscriber permanent identity.
   int8_t               imsi_unauthenticated_indicator; ///< This is an IMSI indicator to show the IMSI is unauthenticated.
   // TO BE CHECKED me_identity_t    me_identity;       ///< Mobile Equipment Identity (e.g. IMEI/IMEISV).
   char                 msisdn[MSISDN_LENGTH];          ///< The basic MSISDN of the UE. The presence is dictated by its storage in the HSS.

@@ -127,7 +127,10 @@ bool sp_eps_mobile_identity_from_xml (
                       "%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8,
                       &digit[0], &digit[1], &digit[2], &digit[3], &digit[4], &digit[5], &digit[6], &digit[7],
                       &digit[8], &digit[9], &digit[10], &digit[11], &digit[12], &digit[13], &digit[14]);
-                  if (15 == ret) {
+                  if (1 <= ret) {
+                    for (int ff=ret; ff < 15; ff++) {
+                      digit[ff] = 0xf;
+                    }
                     epsmobileidentity->imsi.identity_digit1 = digit[0];
                     epsmobileidentity->imsi.identity_digit2 = digit[1];
                     epsmobileidentity->imsi.identity_digit3 = digit[2];
@@ -143,8 +146,9 @@ bool sp_eps_mobile_identity_from_xml (
                     epsmobileidentity->imsi.identity_digit13 = digit[12];
                     epsmobileidentity->imsi.identity_digit14 = digit[13];
                     epsmobileidentity->imsi.identity_digit15 = digit[14];
+                    epsmobileidentity->imsi.num_digits = ret;
                   }
-                  res = (15 == ret);
+                  res = (1 <= ret);
                 }
                 bdestroy_wrapper (&imsi_bstr);
               }
@@ -228,7 +232,7 @@ bool sp_eps_mobile_identity_from_xml (
                   epsmobileidentity->guti.mnc_digit2 = (mnc64 & 0x0000000F0) >> 4;
                   epsmobileidentity->guti.mnc_digit3 = (mnc64 & 0x00000000F);
                   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found GUTI/%s = %x%x%x\n",
-                      MOBILE_COUNTRY_CODE_ATTR_XML_STR,
+                      MOBILE_NETWORK_CODE_ATTR_XML_STR,
                       epsmobileidentity->guti.mnc_digit1,
                       epsmobileidentity->guti.mnc_digit2,
                       epsmobileidentity->guti.mnc_digit3);

@@ -145,9 +145,8 @@ int mme_app_send_s11_create_session_req (struct ue_mm_context_s *const ue_mm_con
    * The remote teid will be provided in the response message.
    */
   session_request_p->teid = 0;
-  IMSI_TO_STRING (&(ue_mm_context->emm_context._imsi), (char *)(session_request_p->imsi.digit), MSISDN_DIGIT_SIZE);
-  // message content was set to 0
-  session_request_p->imsi.length = ue_mm_context->emm_context._imsi.length;
+  memcpy(&session_request_p->imsi, &ue_mm_context->emm_context._imsi, sizeof(session_request_p->imsi));
+
   /*
    * Copy the MSISDN
    */
@@ -167,7 +166,6 @@ int mme_app_send_s11_create_session_req (struct ue_mm_context_s *const ue_mm_con
   // default bearer already created by NAS
   bearer_context_t *bc = mme_app_get_bearer_context(ue_mm_context, ue_mm_context->pdn_contexts[pdn_cid]->default_ebi);
 
-  AssertFatal(0, "DO THINGS HERE: lok at folowing lines of code");
   bc->bearer_state   = BEARER_STATE_SGW_CREATE_REQUESTED;
 
   // Zero because default bearer (see 29.274)

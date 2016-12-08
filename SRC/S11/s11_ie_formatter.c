@@ -56,60 +56,40 @@ s11_imsi_ie_get (
   uint8_t * ieValue,
   void *arg)
 {
-  Imsi_t                                 *imsi;
+  imsi_t                                 *imsi = (imsi_t *) arg;
   uint8_t                                 i;
-  uint8_t                                 mask = 0x0F;
-  uint8_t                                 imsi_length = 2 * ieLength;
 
   DevAssert (arg );
-  imsi = (Imsi_t *) arg;
 
-  for (i = 0; i < ieLength * 2; i++) {
-    if (mask == 0x0F) {
-      imsi->digit[i] = (ieValue[i / 2] & (mask));
-    } else {
-      imsi->digit[i] = (ieValue[i / 2] & (mask)) >> 4;
-    }
-
-    imsi->digit[i] += '0';
-    mask = ~mask;
+  for (i = 0; i < ieLength; i++) {
+    imsi->u.value[i] = ieValue[i];
   }
 
-  if (imsi->digit[imsi_length - 1] == (0x0f + '0')) {
-    imsi->digit[imsi_length - 1] = 0;
-    imsi_length--;
-  }
-
-  imsi->length = imsi_length;
-  OAILOG_DEBUG (LOG_S11, "\t- IMSI length %d\n", imsi->length);
-  OAILOG_DEBUG (LOG_S11, "\t-      value  %*s\n", imsi->length, imsi->digit);
+  imsi->length = ieLength;
   return NW_OK;
 }
 
 int
 s11_imsi_ie_set (
   NwGtpv2cMsgHandleT * msg,
-  const Imsi_t * imsi)
+  const imsi_t * imsi)
 {
   uint8_t                                *temp = NULL;
-  uint8_t                                 imsi_length,
-                                          i;
+  int                                     i;
   NwRcT                                   rc;
 
   DevAssert (msg );
   DevAssert (imsi );
-  /*
-   * In case of odd/even imsi
-   */
-  imsi_length = imsi->length % 2 == 0 ? imsi->length / 2 : imsi->length / 2 + 1;
-  temp = calloc (imsi_length, sizeof (uint8_t));
+
+
+  temp = calloc (imsi->length, sizeof (uint8_t));
   DevAssert (temp );
 
   for (i = 0; i < imsi->length; i++) {
-    temp[i / 2] |= ((imsi->digit[i] - '0') & 0x0F) << (i % 2 ? 4 : 0);
+    temp[i] = imsi->u.value[i];
   }
 
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IMSI, imsi_length, 0, temp);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IMSI, imsi->length, 0, temp);
   DevAssert (NW_OK == rc);
   free_wrapper ((void**)&temp);
   return RETURNok;

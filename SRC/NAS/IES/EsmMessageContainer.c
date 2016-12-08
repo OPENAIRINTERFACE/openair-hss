@@ -84,8 +84,6 @@ int encode_esm_message_container (
 
   lenPtr = (buffer + encoded);
 
-  //encoded += 2;
-  //if ((encode_result = encode_octet_string(&esmmessagecontainer->esmmessagecontainercontents, buffer + sizeof(uint16_t), len - sizeof(uint16_t))) < 0)
   if ((encode_result = encode_bstring (esmmessagecontainer, lenPtr + sizeof (uint16_t), len - sizeof (uint16_t))) < 0)
     return encode_result;
   else

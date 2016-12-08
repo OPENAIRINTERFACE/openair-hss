@@ -551,7 +551,7 @@ emm_context_remove (
 
   if ( IS_EMM_CTXT_PRESENT_IMSI(elm)) {
     imsi64_t imsi64 = INVALID_IMSI64;
-    IMSI_TO_IMSI64(&elm->_imsi,imsi64);
+    imsi64 = imsi_to_imsi64(&elm->_imsi);
     hashtable_ts_remove (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64, (void **)&emm_ue_id);
 
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_imsi context %p UE id " MME_UE_S1AP_ID_FMT " imsi " IMSI_64_FMT "\n",
@@ -754,39 +754,39 @@ void emm_context_free_content(struct emm_context_s * const emm_ctx)
 
 //------------------------------------------------------------------------------
 void emm_context_dump (
-  const struct emm_context_s * const elm_pP,
+  const struct emm_context_s * const emm_context,
   const uint8_t         indent_spaces,
   bstring bstr_dump)
 {
-  if (elm_pP ) {
+  if (emm_context ) {
     char                                    key_string[KASME_LENGTH_OCTETS * 2+1];
     char                                    imsi_str[16+1];
     int                                     k = 0,
                                             size = 0,
                                             remaining_size = 0;
 
-    bformata (bstr_dump, "%*s - EMM-CTX: ue id:           " MME_UE_S1AP_ID_FMT " (UE identifier)\n", indent_spaces, " ", (PARENT_STRUCT(elm_pP, struct ue_mm_context_s, emm_context))->mme_ue_s1ap_id);
-    bformata (bstr_dump, "%*s     - is_dynamic:       %u      (Dynamically allocated context indicator)\n", indent_spaces, " ", elm_pP->is_dynamic);
-    bformata (bstr_dump, "%*s     - is_attached:      %u      (Attachment indicator)\n", indent_spaces, " ", elm_pP->is_attached);
-    bformata (bstr_dump, "%*s     - is_emergency:     %u      (Emergency bearer services indicator)\n", indent_spaces, " ", elm_pP->is_emergency);
-    IMSI_TO_STRING (&elm_pP->_imsi, imsi_str, 16);
+    bformata (bstr_dump, "%*s - EMM-CTX: ue id:           " MME_UE_S1AP_ID_FMT " (UE identifier)\n", indent_spaces, " ", (PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context))->mme_ue_s1ap_id);
+    bformata (bstr_dump, "%*s     - is_dynamic:       %u      (Dynamically allocated context indicator)\n", indent_spaces, " ", emm_context->is_dynamic);
+    bformata (bstr_dump, "%*s     - is_attached:      %u      (Attachment indicator)\n", indent_spaces, " ", emm_context->is_attached);
+    bformata (bstr_dump, "%*s     - is_emergency:     %u      (Emergency bearer services indicator)\n", indent_spaces, " ", emm_context->is_emergency);
+    IMSI_TO_STRING (&emm_context->_imsi, imsi_str, 16);
     bformata (bstr_dump, "%*s     - imsi:             %s      (The IMSI provided by the UE or the MME)\n", indent_spaces, " ", imsi_str);
     bformata (bstr_dump, "%*s     - imei:             TODO    (The IMEI provided by the UE)\n", indent_spaces, " ");
     bformata (bstr_dump, "%*s     - imeisv:           TODO    (The IMEISV provided by the UE)\n", indent_spaces, " ");
-    bformata (bstr_dump, "%*s     - guti:             "GUTI_FMT"      (The GUTI assigned to the UE)\n", indent_spaces, " ", GUTI_ARG(&elm_pP->_guti));
-    bformata (bstr_dump, "%*s     - old_guti:         "GUTI_FMT"      (The old GUTI)\n", indent_spaces, " ", GUTI_ARG(&elm_pP->_old_guti));
-    for (k=0; k < elm_pP->_tai_list.numberoflists; k++) {
-      switch (elm_pP->_tai_list.partial_tai_list[k].typeoflist) {
+    bformata (bstr_dump, "%*s     - guti:             "GUTI_FMT"      (The GUTI assigned to the UE)\n", indent_spaces, " ", GUTI_ARG(&emm_context->_guti));
+    bformata (bstr_dump, "%*s     - old_guti:         "GUTI_FMT"      (The old GUTI)\n", indent_spaces, " ", GUTI_ARG(&emm_context->_old_guti));
+    for (k=0; k < emm_context->_tai_list.numberoflists; k++) {
+      switch (emm_context->_tai_list.partial_tai_list[k].typeoflist) {
       case TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS: {
           tai_t tai = {0};
-          tai.mcc_digit1 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit1;
-          tai.mcc_digit2 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit2;
-          tai.mcc_digit3 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit3;
-          tai.mnc_digit1 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit1;
-          tai.mnc_digit2 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit2;
-          tai.mnc_digit3 = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit3;
-          for (int p = 0; p < (elm_pP->_tai_list.partial_tai_list[k].numberofelements+1); p++) {
-            tai.tac        = elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.tac[p];
+          tai.mcc_digit1 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit1;
+          tai.mcc_digit2 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit2;
+          tai.mcc_digit3 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit3;
+          tai.mnc_digit1 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit1;
+          tai.mnc_digit2 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit2;
+          tai.mnc_digit3 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit3;
+          for (int p = 0; p < (emm_context->_tai_list.partial_tai_list[k].numberofelements+1); p++) {
+            tai.tac        = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.tac[p];
 
             bformata (bstr_dump, "%*s     - tai:              "TAI_FMT" (Tracking area identity the UE is registered to)\n", indent_spaces, " ",
               TAI_ARG(&tai));
@@ -795,55 +795,55 @@ void emm_context_dump (
         break;
       case TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS:
         bformata (bstr_dump, "%*s     - tai:              "TAI_FMT"+%u consecutive tacs   (Tracking area identity the UE is registered to)\n", indent_spaces, " ",
-          TAI_ARG(&elm_pP->_tai_list.partial_tai_list[k].u.tai_one_plmn_consecutive_tacs), elm_pP->_tai_list.partial_tai_list[k].numberofelements);
+          TAI_ARG(&emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_consecutive_tacs), emm_context->_tai_list.partial_tai_list[k].numberofelements);
         break;
       case TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS:
-        for (int p = 0; p < (elm_pP->_tai_list.partial_tai_list[k].numberofelements+1); p++) {
+        for (int p = 0; p < (emm_context->_tai_list.partial_tai_list[k].numberofelements+1); p++) {
           bformata (bstr_dump, "%*s     - tai:              "TAI_FMT" (Tracking area identity the UE is registered to)\n", indent_spaces, " ",
-            TAI_ARG(&elm_pP->_tai_list.partial_tai_list[k].u.tai_many_plmn[p]));
+            TAI_ARG(&emm_context->_tai_list.partial_tai_list[k].u.tai_many_plmn[p]));
         }
         break;
       default: ;
       }
     }
-    bformata (bstr_dump, "%*s     - eksi:             %u      (Security key set identifier)\n", indent_spaces, " ", elm_pP->_security.eksi);
+    bformata (bstr_dump, "%*s     - eksi:             %u      (Security key set identifier)\n", indent_spaces, " ", emm_context->_security.eksi);
     for (int vector_index = 0; vector_index < MAX_EPS_AUTH_VECTORS; vector_index++) {
       bformata (bstr_dump, "%*s     - auth_vector[%d]:              (EPS authentication vector)\n", indent_spaces, " ", vector_index);
       bformata (bstr_dump, "%*s         - kasme: " KASME_FORMAT "" KASME_FORMAT "\n", indent_spaces, " ",
-                               KASME_DISPLAY_1 (elm_pP->_vector[vector_index].kasme),
-                               KASME_DISPLAY_2 (elm_pP->_vector[vector_index].kasme));
-      bformata (bstr_dump, "%*s         - rand:  " RAND_FORMAT "\n", indent_spaces, " ", RAND_DISPLAY (elm_pP->_vector[vector_index].rand));
-      bformata (bstr_dump, "%*s         - autn:  " AUTN_FORMAT "\n", indent_spaces, " ", AUTN_DISPLAY (elm_pP->_vector[vector_index].autn));
+                               KASME_DISPLAY_1 (emm_context->_vector[vector_index].kasme),
+                               KASME_DISPLAY_2 (emm_context->_vector[vector_index].kasme));
+      bformata (bstr_dump, "%*s         - rand:  " RAND_FORMAT "\n", indent_spaces, " ", RAND_DISPLAY (emm_context->_vector[vector_index].rand));
+      bformata (bstr_dump, "%*s         - autn:  " AUTN_FORMAT "\n", indent_spaces, " ", AUTN_DISPLAY (emm_context->_vector[vector_index].autn));
 
       for (k = 0; k < XRES_LENGTH_MAX; k++) {
-        sprintf (&key_string[k * 3], "%02x,", elm_pP->_vector[vector_index].xres[k]);
+        sprintf (&key_string[k * 3], "%02x,", emm_context->_vector[vector_index].xres[k]);
       }
 
       key_string[k * 3 - 1] = '\0';
       bformata (bstr_dump, "%*s         - xres:  %s\n", indent_spaces, " ", key_string);
     }
 
-    if (IS_EMM_CTXT_PRESENT_SECURITY(elm_pP)) {
+    if (IS_EMM_CTXT_PRESENT_SECURITY(emm_context)) {
       bformata (bstr_dump, "%*s     - security context:          (Current EPS NAS security context)\n", indent_spaces, " ");
       bformata (bstr_dump, "%*s         - type:  %s              (Type of security context)\n", indent_spaces, " ",
-          (elm_pP->_security.sc_type == SECURITY_CTX_TYPE_NOT_AVAILABLE)  ? "NOT_AVAILABLE" :
-          (elm_pP->_security.sc_type == SECURITY_CTX_TYPE_PARTIAL_NATIVE) ? "PARTIAL_NATIVE" :
-          (elm_pP->_security.sc_type == SECURITY_CTX_TYPE_FULL_NATIVE)    ? "FULL_NATIVE" :  "MAPPED");
-      bformata (bstr_dump, "%*s         - eksi:  %u              (NAS key set identifier for E-UTRAN)\n", indent_spaces, " ", elm_pP->_security.eksi);
+          (emm_context->_security.sc_type == SECURITY_CTX_TYPE_NOT_AVAILABLE)  ? "NOT_AVAILABLE" :
+          (emm_context->_security.sc_type == SECURITY_CTX_TYPE_PARTIAL_NATIVE) ? "PARTIAL_NATIVE" :
+          (emm_context->_security.sc_type == SECURITY_CTX_TYPE_FULL_NATIVE)    ? "FULL_NATIVE" :  "MAPPED");
+      bformata (bstr_dump, "%*s         - eksi:  %u              (NAS key set identifier for E-UTRAN)\n", indent_spaces, " ", emm_context->_security.eksi);
 
-      if (SECURITY_CTX_TYPE_PARTIAL_NATIVE <= elm_pP->_security.sc_type) {
-        bformata (bstr_dump, "%*s         - dl_count.overflow: %05u", indent_spaces, " ", elm_pP->_security.dl_count.overflow);
-        bformata (bstr_dump, " dl_count.seq_num:  %03u\n", elm_pP->_security.dl_count.seq_num);
-        bformata (bstr_dump, "%*s         - ul_count.overflow: %05u", indent_spaces, " ", elm_pP->_security.ul_count.overflow);
-        bformata (bstr_dump, " ul_count.seq_num:  %03u\n", elm_pP->_security.ul_count.seq_num);
+      if (SECURITY_CTX_TYPE_PARTIAL_NATIVE <= emm_context->_security.sc_type) {
+        bformata (bstr_dump, "%*s         - dl_count.overflow: %05u", indent_spaces, " ", emm_context->_security.dl_count.overflow);
+        bformata (bstr_dump, " dl_count.seq_num:  %03u\n", emm_context->_security.dl_count.seq_num);
+        bformata (bstr_dump, "%*s         - ul_count.overflow: %05u", indent_spaces, " ", emm_context->_security.ul_count.overflow);
+        bformata (bstr_dump, " ul_count.seq_num:  %03u\n", emm_context->_security.ul_count.seq_num);
 
-//        if (SECURITY_CTX_TYPE_FULL_NATIVE <= elm_pP->_security.sc_type) {
+//        if (SECURITY_CTX_TYPE_FULL_NATIVE <= emm_context->_security.sc_type) {
         if (true) {
           size = 0;
           remaining_size = KASME_LENGTH_OCTETS * 2;
 
           for (k = 0; k < AUTH_KNAS_ENC_SIZE; k++) {
-            int ret = snprintf (&key_string[size], remaining_size, "%02x ", elm_pP->_security.knas_enc[k]);
+            int ret = snprintf (&key_string[size], remaining_size, "%02x ", emm_context->_security.knas_enc[k]);
             if (0 < ret) {
               size += ret;
               remaining_size -= ret;
@@ -856,7 +856,7 @@ void emm_context_dump (
           remaining_size = KASME_LENGTH_OCTETS * 2;
 
           for (k = 0; k < AUTH_KNAS_INT_SIZE; k++) {
-            int ret = snprintf (&key_string[size], remaining_size, "%02x ", elm_pP->_security.knas_int[k]);
+            int ret = snprintf (&key_string[size], remaining_size, "%02x ", emm_context->_security.knas_int[k]);
             if (0 < ret) {
               size += ret;
               remaining_size -= ret;
@@ -867,66 +867,96 @@ void emm_context_dump (
           bformata (bstr_dump, "%*s     - knas_int: %s     (NAS integrity key)\n", indent_spaces, " ", key_string);
           bformata (bstr_dump, "%*s     - UE network capabilities\n", indent_spaces, " ");
           bformata (bstr_dump, "%*s         EEA: %c%c%c%c%c%c%c%c   EIA: %c%c%c%c%c%c%c%c\n", indent_spaces, " ",
-              (elm_pP->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA0) ? '0':'_',
-              (elm_pP->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA1) ? '1':'_',
-              (elm_pP->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA2) ? '2':'_',
-              (elm_pP->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA3) ? '3':'_',
-              (elm_pP->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA4) ? '4':'_',
-              (elm_pP->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA5) ? '5':'_',
-              (elm_pP->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA6) ? '6':'_',
-              (elm_pP->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA7) ? '7':'_',
-              (elm_pP->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA0) ? '0':'_',
-              (elm_pP->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA1) ? '1':'_',
-              (elm_pP->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA2) ? '2':'_',
-              (elm_pP->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA3) ? '3':'_',
-              (elm_pP->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA4) ? '4':'_',
-              (elm_pP->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA5) ? '5':'_',
-              (elm_pP->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA6) ? '6':'_',
-              (elm_pP->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA7) ? '7':'_');
-          if (elm_pP->_ue_network_capability.umts_present) {
+              (emm_context->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA0) ? '0':'_',
+              (emm_context->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA1) ? '1':'_',
+              (emm_context->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA2) ? '2':'_',
+              (emm_context->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA3) ? '3':'_',
+              (emm_context->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA4) ? '4':'_',
+              (emm_context->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA5) ? '5':'_',
+              (emm_context->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA6) ? '6':'_',
+              (emm_context->_ue_network_capability.eea & UE_NETWORK_CAPABILITY_EEA7) ? '7':'_',
+              (emm_context->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA0) ? '0':'_',
+              (emm_context->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA1) ? '1':'_',
+              (emm_context->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA2) ? '2':'_',
+              (emm_context->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA3) ? '3':'_',
+              (emm_context->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA4) ? '4':'_',
+              (emm_context->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA5) ? '5':'_',
+              (emm_context->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA6) ? '6':'_',
+              (emm_context->_ue_network_capability.eia & UE_NETWORK_CAPABILITY_EIA7) ? '7':'_');
+          if (emm_context->_ue_network_capability.umts_present) {
             bformata (bstr_dump, "%*s         UEA: %c%c%c%c%c%c%c%c   UIA:  %c%c%c%c%c%c%c \n", indent_spaces, " ",
-                (elm_pP->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA0) ? '0':'_',
-                (elm_pP->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA1) ? '1':'_',
-                (elm_pP->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA2) ? '2':'_',
-                (elm_pP->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA3) ? '3':'_',
-                (elm_pP->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA4) ? '4':'_',
-                (elm_pP->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA5) ? '5':'_',
-                (elm_pP->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA6) ? '6':'_',
-                (elm_pP->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA7) ? '7':'_',
-                (elm_pP->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA1) ? '1':'_',
-                (elm_pP->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA2) ? '2':'_',
-                (elm_pP->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA3) ? '3':'_',
-                (elm_pP->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA4) ? '4':'_',
-                (elm_pP->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA5) ? '5':'_',
-                (elm_pP->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA6) ? '6':'_',
-                (elm_pP->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA7) ? '7':'_');
+                (emm_context->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA0) ? '0':'_',
+                (emm_context->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA1) ? '1':'_',
+                (emm_context->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA2) ? '2':'_',
+                (emm_context->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA3) ? '3':'_',
+                (emm_context->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA4) ? '4':'_',
+                (emm_context->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA5) ? '5':'_',
+                (emm_context->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA6) ? '6':'_',
+                (emm_context->_ue_network_capability.uea & UE_NETWORK_CAPABILITY_UEA7) ? '7':'_',
+                (emm_context->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA1) ? '1':'_',
+                (emm_context->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA2) ? '2':'_',
+                (emm_context->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA3) ? '3':'_',
+                (emm_context->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA4) ? '4':'_',
+                (emm_context->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA5) ? '5':'_',
+                (emm_context->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA6) ? '6':'_',
+                (emm_context->_ue_network_capability.uia & UE_NETWORK_CAPABILITY_UIA7) ? '7':'_');
             bformata (bstr_dump, "%*s         Alphabet | CSFB | LPP | LCS | SRVCC | NF \n", indent_spaces, " ");
             bformata (bstr_dump, "%*s           %s       %c     %c     %c     %c      %c\n", indent_spaces, " ",
-                (elm_pP->_ue_network_capability.ucs2) ? "UCS2":"DEFT",
-                (elm_pP->_ue_network_capability.csfb) ?   '1':'0',
-                (elm_pP->_ue_network_capability.lpp) ?   '1':'0',
-                (elm_pP->_ue_network_capability.lcs) ?   '1':'0',
-                (elm_pP->_ue_network_capability.srvcc) ? '1':'0',
-                (elm_pP->_ue_network_capability.nf) ? '1':'0');
+                (emm_context->_ue_network_capability.ucs2) ? "UCS2":"DEFT",
+                (emm_context->_ue_network_capability.csfb) ?   '1':'0',
+                (emm_context->_ue_network_capability.lpp) ?   '1':'0',
+                (emm_context->_ue_network_capability.lcs) ?   '1':'0',
+                (emm_context->_ue_network_capability.srvcc) ? '1':'0',
+                (emm_context->_ue_network_capability.nf) ? '1':'0');
           }
           bformata (bstr_dump, "%*s     - MS network capabilities TODO\n", indent_spaces, " ");
 
           bformata (bstr_dump, "%*s     - selected_algorithms EEA%u EIA%u\n", indent_spaces, " ",
-              elm_pP->_security.selected_algorithms.encryption, elm_pP->_security.selected_algorithms.integrity);
+              emm_context->_security.selected_algorithms.encryption, emm_context->_security.selected_algorithms.integrity);
         }
       }
     } else {
       bformata (bstr_dump, "%*s     - No security context\n", indent_spaces, " ");
     }
 
-    bformata (bstr_dump, "%*s     - EMM state:     %s\n", indent_spaces, " ", emm_fsm_get_state_str(elm_pP));
+    bformata (bstr_dump, "%*s     - EMM state:     %s\n", indent_spaces, " ", emm_fsm_get_state_str(emm_context));
     bformata (bstr_dump, "%*s     - Timers : T3450      T3460     T3470\n", indent_spaces, " ");
     bformata (bstr_dump, "%*s                %s   %s  %s\n", indent_spaces, " ",
-        (NAS_TIMER_INACTIVE_ID != elm_pP->T3450.id) ? "Running ":"Inactive",
-        (NAS_TIMER_INACTIVE_ID != elm_pP->T3460.id) ? "Running ":"Inactive",
-        (NAS_TIMER_INACTIVE_ID != elm_pP->T3470.id) ? "Running ":"Inactive");
+        (NAS_TIMER_INACTIVE_ID != emm_context->T3450.id) ? "Running ":"Inactive",
+        (NAS_TIMER_INACTIVE_ID != emm_context->T3460.id) ? "Running ":"Inactive",
+        (NAS_TIMER_INACTIVE_ID != emm_context->T3470.id) ? "Running ":"Inactive");
 
+    if (emm_context->esm_msg) {
+      bformata (bstr_dump, "%*s     - Pending ESM msg :\n", indent_spaces, " ");
+      bformata (bstr_dump, "%*s     +-----+-------------------------------------------------+\n", indent_spaces, " ");
+      bformata (bstr_dump, "%*s     |     |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n", indent_spaces, " ");
+      bformata (bstr_dump, "%*s     |-----|-------------------------------------------------|\n", indent_spaces, " ");
+
+      int octet_index;
+      for (octet_index = 0; octet_index < blength(emm_context->esm_msg); octet_index++) {
+        if ((octet_index % 16) == 0) {
+          if (octet_index != 0) {
+            bformata (bstr_dump, " |\n");
+          }
+          bformata (bstr_dump, "%*s     |%04ld |", indent_spaces, " ", octet_index);
+        }
+
+        /*
+         * Print every single octet in hexadecimal form
+         */
+        bformata (bstr_dump, " %02x", emm_context->esm_msg->data[octet_index]);
+      }
+      /*
+       * Append enough spaces and put final pipe
+       */
+      for (int index = octet_index%16; index < 16; ++index) {
+        bformata (bstr_dump, "   ");
+      }
+      bformata (bstr_dump, " |\n");
+      bformata (bstr_dump, "%*s     +-----+-------------------------------------------------+\n", indent_spaces, " ");
+    }
     bformata (bstr_dump, "%*s     - TODO  esm_data_ctx\n", indent_spaces, " ");
+    //esm_context_dump(&emm_context->esm_ctx, indent_spaces, bstr_dump);
   }
 }
 

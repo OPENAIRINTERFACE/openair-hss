@@ -25,7 +25,8 @@
 #define ESM_CAUSE_MINIMUM_LENGTH 1
 #define ESM_CAUSE_MAXIMUM_LENGTH 1
 
-typedef uint8_t esm_cause_t;
+// warning coding flaws in ESM, do not use uint8_t yet.
+typedef int esm_cause_t;
 
 int encode_esm_cause(esm_cause_t *esmcause, uint8_t iei, uint8_t *buffer, uint32_t len);
 

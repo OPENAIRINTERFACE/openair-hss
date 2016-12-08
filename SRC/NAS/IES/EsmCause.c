@@ -44,7 +44,7 @@ int decode_esm_cause (
     decoded++;
   }
 
-  *esmcause = *(buffer + decoded);
+  *esmcause = (esm_cause_t)*(buffer + decoded);
   decoded++;
   return decoded;
 }
@@ -68,7 +68,7 @@ int encode_esm_cause (
     encoded++;
   }
 
-  *(buffer + encoded) = *esmcause;
+  *(buffer + encoded) = (uint8_t)*esmcause;
   encoded++;
   return encoded;
 }

@@ -336,13 +336,13 @@ _esm_sap_recv (
   bstring rsp,
   esm_sap_error_t * err)
 {
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_proc_procedure_t                    esm_procedure = NULL;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   int                                     rc = RETURNerror;
   int                                     decoder_rc;
   ESM_msg                                 esm_msg;
 
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
   memset (&esm_msg, 0, sizeof (ESM_msg));
   /*
    * Decode the received ESM message
@@ -359,7 +359,7 @@ _esm_sap_recv (
      * * * * message type information element
      */
     if (decoder_rc == TLV_BUFFER_TOO_SHORT) {
-      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Discard message too short to " "contain a complete message type IE\n");
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Discard message too short to contain a complete message type IE\n");
       /*
        * Return indication that received message has been discarded
        */
@@ -391,7 +391,7 @@ _esm_sap_recv (
       /*
        * Semantically incorrect ESM message
        */
-      OAILOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Received ESM message 0x%x is not " "of the expected type (0x%x)\n", esm_msg.header.message_type, msg_type);
+      OAILOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Received ESM message 0x%x is not of the expected type (0x%x)\n", esm_msg.header.message_type, msg_type);
       esm_cause = ESM_CAUSE_SEMANTICALLY_INCORRECT;
     }
   }
@@ -419,7 +419,7 @@ _esm_sap_recv (
   bool                                     is_discarded = false;
 
   if (esm_cause != ESM_CAUSE_SUCCESS) {
-    OAILOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Failed to decode expected ESM message " "0x%x\n", msg_type);
+    OAILOG_ERROR (LOG_NAS_ESM , "ESM-SAP   - Failed to decode expected ESM message 0x%x cause %d\n", msg_type, esm_cause);
   }
   /*
    * Process the received ESM message

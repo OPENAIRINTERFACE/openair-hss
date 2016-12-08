@@ -117,7 +117,6 @@ sgw_handle_create_session_request (
   OAILOG_DEBUG (LOG_SPGW_APP, "Rx CREATE-SESSION-REQUEST MME S11 teid %u S-GW S11 teid %u APN %s EPS bearer Id %d\n",
       new_endpoint_p->remote_teid, new_endpoint_p->local_teid, session_req_pP->apn,
       session_req_pP->bearer_contexts_to_be_created.bearer_contexts[0].eps_bearer_id);
-  OAILOG_DEBUG (LOG_SPGW_APP, "                          IMSI %c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n", IMSI (&session_req_pP->imsi));
   s_plus_p_gw_eps_bearer_ctxt_info_p = sgw_cm_create_bearer_context_information_in_collection (new_endpoint_p->local_teid);
 
   if (s_plus_p_gw_eps_bearer_ctxt_info_p ) {
@@ -129,8 +128,8 @@ sgw_handle_create_session_request (
     //--------------------------------------------------
     // copy informations from create session request to bearer context information
     //--------------------------------------------------
-    memcpy (s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.digit, session_req_pP->imsi.digit, IMSI_BCD_DIGITS_MAX);
-    memcpy (s_plus_p_gw_eps_bearer_ctxt_info_p->pgw_eps_bearer_context_information.imsi.digit, session_req_pP->imsi.digit, IMSI_BCD_DIGITS_MAX);
+    memcpy (&s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi, &session_req_pP->imsi, sizeof(imsi_t));
+    memcpy (&s_plus_p_gw_eps_bearer_ctxt_info_p->pgw_eps_bearer_context_information.imsi, &session_req_pP->imsi, sizeof(imsi_t));
     s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi_unauthenticated_indicator = 1;
     s_plus_p_gw_eps_bearer_ctxt_info_p->pgw_eps_bearer_context_information.imsi_unauthenticated_indicator = 1;
     s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_S11 = session_req_pP->sender_fteid_for_cp.teid;

@@ -118,7 +118,10 @@ bool sp_mobile_identity_from_xml (
                       "%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8,
                       &digit[0], &digit[1], &digit[2], &digit[3], &digit[4], &digit[5], &digit[6], &digit[7],
                       &digit[8], &digit[9], &digit[10], &digit[11], &digit[12], &digit[13], &digit[14]);
-                  if (15 == ret) {
+                  if (1 <= ret) {
+                    for (int ff=ret; ff < 15; ff++) {
+                      digit[ff] = 0xf;
+                    }
                     mobileidentity->imsi.digit1 = digit[0];
                     mobileidentity->imsi.digit2 = digit[1];
                     mobileidentity->imsi.digit3 = digit[2];
@@ -135,11 +138,21 @@ bool sp_mobile_identity_from_xml (
                     mobileidentity->imsi.digit14 = digit[13];
                     mobileidentity->imsi.digit15 = digit[14];
                   }
-                  res = (15 == ret);
+                  res = (1 <= ret);
                 }
                 bdestroy_wrapper (&imsi_bstr);
               }
             }
+            OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %u%u%u%u%u%u%u%u%u%u%u%u%u%u%u\n",
+                MOBILE_IDENTITY_IE_XML_STR, IMSI_ATTR_XML_STR,
+                mobileidentity->imsi.digit1, mobileidentity->imsi.digit2,
+                mobileidentity->imsi.digit3, mobileidentity->imsi.digit4,
+                mobileidentity->imsi.digit5, mobileidentity->imsi.digit6,
+                mobileidentity->imsi.digit7, mobileidentity->imsi.digit8,
+                mobileidentity->imsi.digit9, mobileidentity->imsi.digit10,
+                mobileidentity->imsi.digit11, mobileidentity->imsi.digit12,
+                mobileidentity->imsi.digit13, mobileidentity->imsi.digit14,
+                mobileidentity->imsi.digit15);
             break;
 
           case MOBILE_IDENTITY_IMEI:

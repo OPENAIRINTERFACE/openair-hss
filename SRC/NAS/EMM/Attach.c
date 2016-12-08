@@ -228,7 +228,7 @@ emm_proc_attach_request (
   imsi64_t                                imsi64  = INVALID_IMSI64;
 
   if (imsi) {
-    IMSI_TO_IMSI64(imsi,imsi64);
+    imsi64 = imsi_to_imsi64(imsi);
   }
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EPS attach type = %s (%d) requested (ue_id=" MME_UE_S1AP_ID_FMT ")\n", _emm_attach_type_str[type], type, ue_id);
@@ -1802,8 +1802,7 @@ _emm_attach_update (
    * The IMSI if provided by the UE
    */
   if (imsi) {
-    imsi64_t new_imsi64 = INVALID_IMSI64;
-    IMSI_TO_IMSI64(imsi,new_imsi64);
+    imsi64_t new_imsi64 = imsi_to_imsi64(imsi);
     if (new_imsi64 != emm_context->_imsi64) {
       emm_ctx_set_valid_imsi(emm_context, imsi, new_imsi64);
 

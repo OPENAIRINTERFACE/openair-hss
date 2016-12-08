@@ -60,6 +60,8 @@ typedef struct imsi_eps_mobile_identity_s {
   uint8_t  identity_digit13:4;
   uint8_t  identity_digit14:4;
   uint8_t  identity_digit15:4;
+  // because of union put this extra attribute at the end
+  uint8_t  num_digits;
 } imsi_eps_mobile_identity_t;
 
 typedef imsi_eps_mobile_identity_t imei_eps_mobile_identity_t;

@@ -417,12 +417,11 @@ mme_api_new_guti (
   const tai_t      * const originating_tai,
   tai_list_t * const tai_list)
 {
-  ue_mm_context_t                           *ue_context = NULL;
-  imsi64_t                                mme_imsi = 0;
-
   OAILOG_FUNC_IN (LOG_NAS);
-  IMSI_TO_IMSI64 (imsi, mme_imsi);
-  ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, mme_imsi);
+  ue_mm_context_t                       *ue_context = NULL;
+  imsi64_t                               imsi64 = imsi_to_imsi64 (imsi);
+
+  ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
 
   if ( ue_context) {
     if ((INVALID_M_TMSI                   !=  old_guti->m_tmsi ) &&

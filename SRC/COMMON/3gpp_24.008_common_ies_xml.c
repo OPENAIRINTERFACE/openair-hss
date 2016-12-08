@@ -218,7 +218,10 @@ bool mobile_identity_from_xml (
                       "%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8"%1"SCNx8,
                       &digit[0], &digit[1], &digit[2], &digit[3], &digit[4], &digit[5], &digit[6], &digit[7],
                       &digit[8], &digit[9], &digit[10], &digit[11], &digit[12], &digit[13], &digit[14]);
-                  if (15 == ret) {
+                  if (1 <= ret) {
+                    for (int ff=ret; ff < 15; ff++) {
+                      digit[ff] = 0xf;
+                    }
                     mobileidentity->imsi.digit1 = digit[0];
                     mobileidentity->imsi.digit2 = digit[1];
                     mobileidentity->imsi.digit3 = digit[2];
@@ -235,7 +238,7 @@ bool mobile_identity_from_xml (
                     mobileidentity->imsi.digit14 = digit[13];
                     mobileidentity->imsi.digit15 = digit[14];
                   }
-                  res = (15 == ret);
+                  res = (1 <= ret);
                 }
               }
             }

@@ -53,14 +53,13 @@
 
 //------------------------------------------------------------------------------
 int mme_app_send_s6a_update_location_req (
-  struct ue_mm_context_s *const ue_context_pP)
+  struct ue_mm_context_s *const ue_mm_context)
 {
-  struct ue_mm_context_s                    *ue_context_p = NULL;
+  OAILOG_FUNC_IN (LOG_MME_APP);
   MessageDef                             *message_p = NULL;
   s6a_update_location_req_t              *s6a_ulr_p = NULL;
   int                                     rc = RETURNok;
 
-  OAILOG_FUNC_IN (LOG_MME_APP);
 
   message_p = itti_alloc_new_message (TASK_MME_APP, S6A_UPDATE_LOCATION_REQ);
 
@@ -69,16 +68,16 @@ int mme_app_send_s6a_update_location_req (
   }
 
   s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
-  IMSI64_TO_STRING (ue_context_pP->emm_context._imsi64, s6a_ulr_p->imsi);
+  IMSI64_TO_STRING (ue_mm_context->emm_context._imsi64, s6a_ulr_p->imsi);
   s6a_ulr_p->imsi_length = strlen (s6a_ulr_p->imsi);
   s6a_ulr_p->initial_attach = INITIAL_ATTACH;
-  memcpy (&s6a_ulr_p->visited_plmn, &ue_context_p->emm_context._guti.gummei.plmn, sizeof (plmn_t));
+  memcpy (&s6a_ulr_p->visited_plmn, &ue_mm_context->emm_context._guti.gummei.plmn, sizeof (plmn_t));
   s6a_ulr_p->rat_type = RAT_EUTRAN;
   /*
    * Check if we already have UE data
    */
   s6a_ulr_p->skip_subscriber_data = 0;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi " IMSI_64_FMT, ue_context_pP->emm_context._imsi64);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi " IMSI_64_FMT, ue_mm_context->emm_context._imsi64);
   rc =  itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
@@ -88,11 +87,11 @@ int mme_app_send_s6a_update_location_req (
 int mme_app_handle_s6a_update_location_ans (
   const s6a_update_location_ans_t * const ula_pP)
 {
+  OAILOG_FUNC_IN (LOG_MME_APP);
   uint64_t                                imsi64 = 0;
   struct ue_mm_context_s                 *ue_mm_context = NULL;
   int                                     rc = RETURNok;
 
-  OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (ula_pP );
 
   if (ula_pP->result.present == S6A_RESULT_BASE) {

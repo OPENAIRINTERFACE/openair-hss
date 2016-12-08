@@ -276,13 +276,14 @@ static int decode_imsi_mobile_identity (
   uint8_t * buffer,
   const uint32_t len)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     decoded = 0;
 
   CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, MOBILE_IDENTITY_IE_IMSI_LENGTH, len);
   imsi->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (imsi->typeofidentity != MOBILE_IDENTITY_IMSI) {
-    return (TLV_VALUE_DOESNT_MATCH);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
   }
 
   imsi->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -291,35 +292,55 @@ static int decode_imsi_mobile_identity (
   imsi->digit2 = *(buffer + decoded) & 0xf;
   imsi->digit3 = (*(buffer + decoded) >> 4) & 0xf;
   decoded++;
-  imsi->digit4 = *(buffer + decoded) & 0xf;
-  imsi->digit5 = (*(buffer + decoded) >> 4) & 0xf;
-  decoded++;
-  imsi->digit6 = *(buffer + decoded) & 0xf;
-  imsi->digit7 = (*(buffer + decoded) >> 4) & 0xf;
-  decoded++;
-  imsi->digit8 = *(buffer + decoded) & 0xf;
-  imsi->digit9 = (*(buffer + decoded) >> 4) & 0xf;
-  decoded++;
-  imsi->digit10 = *(buffer + decoded) & 0xf;
-  imsi->digit11 = (*(buffer + decoded) >> 4) & 0xf;
-  decoded++;
-  imsi->digit12 = *(buffer + decoded) & 0xf;
-  imsi->digit13 = (*(buffer + decoded) >> 4) & 0xf;
-  decoded++;
-  imsi->digit14 = *(buffer + decoded) & 0xf;
-  imsi->digit15 = (*(buffer + decoded) >> 4) & 0xf;
-
-  /*
-   * IMSI is coded using BCD coding. If the number of identity digits is
-   * even then bits 5 to 8 of the last octet shall be filled with an end
-   * mark coded as "1111".
-   */
-  if ((imsi->oddeven == MOBILE_IDENTITY_EVEN) && (imsi->digit15 != 0x0f)) {
-    return (TLV_VALUE_DOESNT_MATCH);
+  if (decoded < len) {
+    imsi->digit4 = *(buffer + decoded) & 0xf;
+    imsi->digit5 = (*(buffer + decoded) >> 4) & 0xf;
+    if ((MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->digit5 != 0x0f)) {
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
+    }
+    decoded++;
+    if (decoded < len) {
+      imsi->digit6 = *(buffer + decoded) & 0xf;
+      imsi->digit7 = (*(buffer + decoded) >> 4) & 0xf;
+      if ((MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->digit7 != 0x0f)) {
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
+      }
+      decoded++;
+      if (decoded < len) {
+        imsi->digit8 = *(buffer + decoded) & 0xf;
+        imsi->digit9 = (*(buffer + decoded) >> 4) & 0xf;
+        if ((MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->digit9 != 0x0f)) {
+          OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
+        }
+        decoded++;
+        if (decoded < len) {
+          imsi->digit10 = *(buffer + decoded) & 0xf;
+          imsi->digit11 = (*(buffer + decoded) >> 4) & 0xf;
+          if ((MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->digit11 != 0x0f)) {
+            OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
+          }
+          decoded++;
+          if (decoded < len) {
+            imsi->digit12 = *(buffer + decoded) & 0xf;
+            imsi->digit13 = (*(buffer + decoded) >> 4) & 0xf;
+            if ((MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->digit13 != 0x0f)) {
+              OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
+            }
+            decoded++;
+            if (decoded < len) {
+              imsi->digit14 = *(buffer + decoded) & 0xf;
+              imsi->digit15 = (*(buffer + decoded) >> 4) & 0xf;
+              if ((MOBILE_IDENTITY_EVEN == imsi->oddeven)  && (imsi->digit15 != 0x0f)) {
+                OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
+              }
+              decoded++;
+            }
+          }
+        }
+      }
+    }
   }
-
-  decoded++;
-  return decoded;
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoded);
 }
 
 //------------------------------------------------------------------------------
@@ -328,13 +349,14 @@ static int decode_imei_mobile_identity (
   uint8_t * buffer,
   const uint32_t len)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     decoded = 0;
 
   CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, MOBILE_IDENTITY_IE_IMEI_LENGTH, len);
   imei->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (imei->typeofidentity != MOBILE_IDENTITY_IMEI) {
-    return (TLV_VALUE_DOESNT_MATCH);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
   }
 
   imei->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -367,11 +389,11 @@ static int decode_imei_mobile_identity (
    * mark coded as "1111".
    */
   if ((imei->oddeven == MOBILE_IDENTITY_EVEN) && (imei->cdsd != 0x0f)) {
-    return (TLV_VALUE_DOESNT_MATCH);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
   }
 
   decoded++;
-  return decoded;
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoded);
 }
 
 //------------------------------------------------------------------------------
@@ -380,13 +402,14 @@ static int decode_imeisv_mobile_identity (
   uint8_t * buffer,
   const uint32_t len)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     decoded = 0;
 
   CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, MOBILE_IDENTITY_IE_IMEISV_LENGTH, len);
   imeisv->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (imeisv->typeofidentity != MOBILE_IDENTITY_IMEISV) {
-    return (TLV_VALUE_DOESNT_MATCH);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
   }
 
   imeisv->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -422,11 +445,11 @@ static int decode_imeisv_mobile_identity (
    * mark coded as "1111".
    */
   if ((imeisv->oddeven == MOBILE_IDENTITY_EVEN) && (imeisv->last != 0x0f)) {
-    return (TLV_VALUE_DOESNT_MATCH);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
   }
 
   decoded++;
-  return decoded;
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoded);
 }
 
 //------------------------------------------------------------------------------
@@ -435,13 +458,14 @@ static int decode_tmsi_mobile_identity (
   uint8_t * buffer,
   const uint32_t len)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     decoded = 0;
 
   CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, MOBILE_IDENTITY_IE_TMSI_LENGTH, len);
   tmsi->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (tmsi->typeofidentity != MOBILE_IDENTITY_TMSI) {
-    return (TLV_VALUE_DOESNT_MATCH);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
   }
 
   tmsi->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -452,7 +476,7 @@ static int decode_tmsi_mobile_identity (
    * of octet 3 are coded as "1111".
    */
   if (tmsi->f != 0xf) {
-    return (TLV_VALUE_DOESNT_MATCH);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
   }
 
   decoded++;
@@ -464,7 +488,7 @@ static int decode_tmsi_mobile_identity (
   decoded++;
   tmsi->tmsi[3] = *(buffer + decoded);
   decoded++;
-  return decoded;
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoded);
 }
 
 //------------------------------------------------------------------------------
@@ -517,13 +541,14 @@ static int decode_no_mobile_identity (
   uint8_t * buffer,
   const uint32_t len)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     decoded = 0;
 
   CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, 1, len);
   no_id->typeofidentity = *(buffer + decoded) & 0x7;
 
   if (no_id->typeofidentity != MOBILE_IDENTITY_NOT_AVAILABLE) {
-    return (TLV_VALUE_DOESNT_MATCH);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, TLV_VALUE_DOESNT_MATCH);
   }
 
   no_id->oddeven = (*(buffer + decoded) >> 3) & 0x1;
@@ -539,7 +564,7 @@ static int decode_no_mobile_identity (
       decoded++;
     }
   }
-  return decoded;
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoded);
 }
 
 //------------------------------------------------------------------------------
@@ -550,29 +575,57 @@ static int encode_imsi_mobile_identity (
 {
   uint32_t                                encoded = 0;
 
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, MOBILE_IDENTITY_IE_IMSI_LENGTH, len);
-  *(buffer + encoded) = (imsi->digit1 << 4) | (imsi->oddeven << 3) | (imsi->typeofidentity);
+  *(buffer + encoded) = 0x00 | (imsi->digit1 << 4) | (imsi->oddeven << 3) | (imsi->typeofidentity);
   encoded++;
-  *(buffer + encoded) = (imsi->digit3 << 4) | imsi->digit2;
-  encoded++;
-  *(buffer + encoded) = (imsi->digit5 << 4) | imsi->digit4;
-  encoded++;
-  *(buffer + encoded) = (imsi->digit7 << 4) | imsi->digit6;
-  encoded++;
-  *(buffer + encoded) = (imsi->digit9 << 4) | imsi->digit8;
-  encoded++;
-  *(buffer + encoded) = (imsi->digit11 << 4) | imsi->digit10;
-  encoded++;
-  *(buffer + encoded) = (imsi->digit13 << 4) | imsi->digit12;
+  *(buffer + encoded) = 0x00 | (imsi->digit3 << 4) | imsi->digit2;
   encoded++;
 
-  if (imsi->oddeven != MOBILE_IDENTITY_EVEN) {
-    *(buffer + encoded) = (imsi->digit15 << 4) | imsi->digit14;
+  if (imsi->digit4 != 0xf) {
+    *(buffer + encoded) = 0x00 | (imsi->digit5 << 4) | imsi->digit4;
   } else {
-    *(buffer + encoded) = 0xf0 | imsi->digit14;
+    *(buffer + encoded) = 0xf0 | imsi->digit4;
   }
-
   encoded++;
+  if (imsi->digit6 != 0xf) {
+    if (imsi->oddeven != MOBILE_IDENTITY_EVEN) {
+      *(buffer + encoded) = 0x00 | (imsi->digit7 << 4) | imsi->digit6;
+    } else {
+      *(buffer + encoded) = 0xf0 | imsi->digit6;
+    }
+    encoded++;
+    if (imsi->digit8 != 0xf) {
+      if (imsi->oddeven != MOBILE_IDENTITY_EVEN) {
+        *(buffer + encoded) = 0x00 | (imsi->digit9 << 4) | imsi->digit8;
+      } else {
+        *(buffer + encoded) = 0xf0 | imsi->digit8;
+      }
+      encoded++;
+      if (imsi->digit10 != 0xf) {
+        if (imsi->oddeven != MOBILE_IDENTITY_EVEN) {
+          *(buffer + encoded) = 0x00 | (imsi->digit11 << 4) | imsi->digit10;
+        } else {
+          *(buffer + encoded) = 0xf0 | imsi->digit10;
+        }
+        encoded++;
+        if (imsi->digit12 != 0xf) {
+          if (imsi->oddeven != MOBILE_IDENTITY_EVEN) {
+            *(buffer + encoded) = 0x00 | (imsi->digit13 << 4) | imsi->digit12;
+          } else {
+            *(buffer + encoded) = 0xf0 | imsi->digit12;
+          }
+          encoded++;
+          if (imsi->digit14 != 0xf) {
+            if (imsi->oddeven != MOBILE_IDENTITY_EVEN) {
+              *(buffer + encoded) = 0x00 | (imsi->digit15 << 4) | imsi->digit14;
+            } else {
+              *(buffer + encoded) = 0xf0 | imsi->digit14;
+            }
+            encoded++;
+          }
+        }
+      }
+    }
+  }
   return encoded;
 }
 

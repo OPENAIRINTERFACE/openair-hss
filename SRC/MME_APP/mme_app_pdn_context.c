@@ -66,6 +66,7 @@ static void mme_app_pdn_context_init(ue_mm_context_t * const ue_context, pdn_con
 //------------------------------------------------------------------------------
 pdn_context_t *  mme_app_create_pdn_context(ue_mm_context_t * const ue_mm_context, const pdn_cid_t pdn_cid, const context_identifier_t context_identifier)
 {
+  OAILOG_FUNC_IN (LOG_MME_APP);
   if (!ue_mm_context->pdn_contexts[pdn_cid]) {
     pdn_context_t * pdn_context = malloc(sizeof(*pdn_context));
 
@@ -93,12 +94,12 @@ pdn_context_t *  mme_app_create_pdn_context(ue_mm_context_t * const ue_mm_contex
         // TODO pdn_context->apn_in_use     =
 
         ue_mm_context->pdn_contexts[pdn_cid] = pdn_context;
-        return pdn_context;
+        OAILOG_FUNC_RETURN (LOG_MME_APP, pdn_context);
       } else {
         free_wrapper((void**)&pdn_context);
       }
     }
   }
-  return NULL;
+  OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
 }
 
