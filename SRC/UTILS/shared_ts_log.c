@@ -76,7 +76,7 @@
 #include "dynamic_memory_check.h"
 #include "gcc_diag.h"
 //-------------------------------
-#define LOG_MAX_QUEUE_ELEMENTS                1024
+#define LOG_MAX_QUEUE_ELEMENTS                2048
 #define LOG_MESSAGE_MIN_ALLOC_SIZE             256
 
 #define LOG_FLUSH_PERIOD_SEC                     0
@@ -147,24 +147,32 @@ shared_log_queue_item_t * get_new_log_queue_item(sh_ts_log_app_id_t app_id)
 {
   int                             rv = 0;
   shared_log_queue_item_t        *item_p = NULL;
-  struct lfds710_stack_element   *se;
+  struct lfds710_stack_element   *se = NULL;
 
   lfds710_stack_pop( &g_shared_log.log_free_message_queue, &se );
-  item_p = LFDS710_STACK_GET_VALUE_FROM_ELEMENT( *se );
-
-  if (0 == rv) {
-    item_p = create_new_log_queue_item(app_id);
-    AssertFatal(item_p,  "Out of memory error");
-  } else {
-    item_p->app_id = app_id;
-#if defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
-    btrunc(item_p->bstr, 0);
-#endif
+  if (!se) {
+    shared_log_flush_messages();
+    lfds710_stack_pop( &g_shared_log.log_free_message_queue, &se );
   }
-#if !defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
-  item_p->bstr = bfromcstralloc(LOG_MESSAGE_MIN_ALLOC_SIZE, "");
-  AssertFatal((item_p->bstr), "Allocation of buf in log container failed");
+  if (se) {
+    item_p = LFDS710_STACK_GET_VALUE_FROM_ELEMENT( *se );
+
+    if (0 == rv) {
+      item_p = create_new_log_queue_item(app_id);
+      AssertFatal(item_p,  "Out of memory error");
+    } else {
+      item_p->app_id = app_id;
+#if defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
+      btrunc(item_p->bstr, 0);
 #endif
+    }
+#if !defined(SHARED_LOG_PREALLOC_STRING_BUFFERS)
+    item_p->bstr = bfromcstralloc(LOG_MESSAGE_MIN_ALLOC_SIZE, "");
+    AssertFatal((item_p->bstr), "Allocation of buf in log container failed");
+#endif
+  } else {
+    OAI_FPRINTF_ERR("Could not get memory for logging\n");
+  }
   return item_p;
 }
 //------------------------------------------------------------------------------
@@ -236,13 +244,13 @@ int shared_log_init (const int max_threadsP)
   shared_log_queue_item_t                *item_p = NULL;
   struct timeval                          start_time = {.tv_sec=0, .tv_usec=0};
 
+  OAI_FPRINTF_INFO("Initializing shared logging\n");
   gettimeofday(&start_time, NULL);
   g_shared_log.log_start_time_second = start_time.tv_sec;
   g_shared_log.logger_callback[SH_TS_LOG_TXT] = log_flush_message;
 #if MESSAGE_CHART_GENERATOR
   g_shared_log.logger_callback[SH_TS_LOG_MSC] = msc_flush_message;
 #endif
-  OAI_FPRINTF_INFO("Initializing shared logging\n");
 
   bstring b = bfromcstr("Logging thread context hashtable");
   g_shared_log.thread_context_htbl = hashtable_ts_create (LOG_MESSAGE_MIN_ALLOC_SIZE, NULL, free_wrapper, b);
@@ -274,8 +282,8 @@ int shared_log_init (const int max_threadsP)
   }
 
 
-  OAI_FPRINTF_INFO("Initializing OAI logging Done\n");
-  log_message (thread_ctxt, OAILOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing OAI logging Done\n");
+  OAI_FPRINTF_INFO("Initializing shared logging Done\n");
+  log_message (thread_ctxt, OAILOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing shared logging Done\n");
   return 0;
 }
 
