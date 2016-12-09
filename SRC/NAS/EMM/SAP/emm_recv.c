@@ -250,12 +250,12 @@ emm_recv_attach_request (
     imsi.u.num.digit13 = msg->oldgutiorimsi.imsi.identity_digit13;
     imsi.u.num.digit14 = msg->oldgutiorimsi.imsi.identity_digit14;
     imsi.u.num.digit15 = msg->oldgutiorimsi.imsi.identity_digit15;
-    imsi.u.num.parity = msg->oldgutiorimsi.imsi.oddeven;
+    imsi.u.num.parity  = 0x0f;
     for (int index=0; index < IMSI_BCD8_SIZE; index++) {
       if (imsi.u.value[index] == 0xff) {
         imsi.length = index;
         break;
-      } else  if ((imsi.u.value[index] & 0xf0) == 0xf0) {
+      } else  if ((imsi.u.value[index] & 0x0f) == 0x0f) {
         imsi.length = index + 1;
         break;
       }
@@ -451,7 +451,16 @@ emm_recv_detach_request (
     imsi.u.num.digit13 = msg->gutiorimsi.imsi.identity_digit13;
     imsi.u.num.digit14 = msg->gutiorimsi.imsi.identity_digit14;
     imsi.u.num.digit15 = msg->gutiorimsi.imsi.identity_digit15;
-    imsi.u.num.parity = msg->gutiorimsi.imsi.oddeven;
+    imsi.u.num.parity  = 0x0f;
+    for (int index=0; index < IMSI_BCD8_SIZE; index++) {
+      if (imsi.u.value[index] == 0xff) {
+        imsi.length = index;
+        break;
+      } else  if ((imsi.u.value[index] & 0x0f) == 0x0f) {
+        imsi.length = index + 1;
+        break;
+      }
+    }
   } else if (msg->gutiorimsi.imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
     /*
      * Get the IMEI
@@ -629,11 +638,12 @@ emm_recv_identity_response (
     imsi.u.num.digit14 = msg->mobileidentity.imsi.digit14;
     imsi.u.num.digit15 = msg->mobileidentity.imsi.digit15;
     imsi.u.num.parity  = 0x0f;
+
     for (int index=0; index < IMSI_BCD8_SIZE; index++) {
       if (imsi.u.value[index] == 0xff) {
         imsi.length = index;
         break;
-      } else  if ((imsi.u.value[index] & 0xf0) == 0xf0) {
+      } else  if ((imsi.u.value[index] & 0x0f) == 0x0f) {
         imsi.length = index + 1;
         break;
       }

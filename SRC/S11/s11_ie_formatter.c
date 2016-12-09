@@ -57,15 +57,24 @@ s11_imsi_ie_get (
   void *arg)
 {
   imsi_t                                 *imsi = (imsi_t *) arg;
-  uint8_t                                 i;
+  uint8_t                                 decoded = 0;
 
   DevAssert (arg );
-
-  for (i = 0; i < ieLength; i++) {
-    imsi->u.value[i] = ieValue[i];
+  DevAssert (ieLength <= IMSI_BCD_DIGITS_MAX);
+  imsi->length = 0;
+  while (decoded < ieLength) {
+    uint8_t tmp = ieValue[decoded++];
+    imsi->u.value[imsi->length++] = (tmp >> 4) | (tmp << 4);
+  }
+  for (int i = imsi->length; i < IMSI_BCD8_SIZE; i++) {
+    imsi->u.value[i] = 0xff;
   }
 
-  imsi->length = ieLength;
+  OAILOG_DEBUG (LOG_S11, "\t- IMSI (l=%d) %u%u%u%u%u%u%u%u%u%u%u%u%u%u%u\n",  imsi->length,
+      imsi->u.num.digit1, imsi->u.num.digit2, imsi->u.num.digit3, imsi->u.num.digit4,
+      imsi->u.num.digit5, imsi->u.num.digit6, imsi->u.num.digit7, imsi->u.num.digit8,
+      imsi->u.num.digit9, imsi->u.num.digit10, imsi->u.num.digit11, imsi->u.num.digit12,
+      imsi->u.num.digit13, imsi->u.num.digit14, imsi->u.num.digit15);
   return NW_OK;
 }
 
@@ -74,24 +83,19 @@ s11_imsi_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const imsi_t * imsi)
 {
-  uint8_t                                *temp = NULL;
-  int                                     i;
   NwRcT                                   rc;
+  imsi_t                                  imsi_nbo = {0};
 
   DevAssert (msg );
   DevAssert (imsi );
-
-
-  temp = calloc (imsi->length, sizeof (uint8_t));
-  DevAssert (temp );
-
-  for (i = 0; i < imsi->length; i++) {
-    temp[i] = imsi->u.value[i];
+  memcpy(&imsi_nbo, imsi, sizeof (imsi_nbo));
+  for (int i = 0; i < IMSI_BCD8_SIZE; i++) {
+    uint8_t tmp = imsi_nbo.u.value[i];
+    imsi_nbo.u.value[i] = (tmp >> 4) | (tmp << 4);
   }
 
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IMSI, imsi->length, 0, temp);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IMSI, imsi_nbo.length, 0, (uint8_t*)imsi_nbo.u.value);
   DevAssert (NW_OK == rc);
-  free_wrapper ((void**)&temp);
   return RETURNok;
 }
 
