@@ -57,7 +57,7 @@ Description Defines functions used to handle EPS bearer contexts.
 
 
 ebi_t esm_ebr_context_create(emm_context_t * emm_context, pdn_cid_t pid, ebi_t ebi, bool is_default,
-                           const network_qos_t *qos, const traffic_flow_template_t *tft);
+                           const bearer_qos_t *qos, const traffic_flow_template_t *tft);
 
 void esm_ebr_context_init (esm_ebr_context_t *esm_ebr_context);
 

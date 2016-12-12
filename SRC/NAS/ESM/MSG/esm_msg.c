@@ -46,8 +46,11 @@
 #include "log.h"
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
+#include "common_types.h"
+#include "3gpp_24.008.h"
 #include "3gpp_36.331.h"
 #include "3gpp_36.401.h"
+#include "3gpp_29.274.h"
 
 #include "ActivateDedicatedEpsBearerContextRequest.h"
 #include "ActivateDedicatedEpsBearerContextAccept.h"

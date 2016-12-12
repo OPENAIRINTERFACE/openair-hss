@@ -43,7 +43,10 @@
 
 #include "bstrlib.h"
 
+#include "common_types.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "emm_data.h"
 #include "nas_timer.h"
 #include "esm_data.h"

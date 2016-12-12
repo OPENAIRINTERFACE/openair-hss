@@ -58,8 +58,10 @@
 #include "bstrlib.h"
 
 #include "log.h"
+#include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "emm_data.h"
 #include "mme_app_ue_context.h"
 #include "esm_proc.h"
@@ -133,7 +135,7 @@ esm_proc_dedicated_eps_bearer_context (
   pdn_cid_t pid,
   ebi_t *ebi,
   ebi_t *default_ebi,
-  const esm_proc_qos_t * qos,
+  const bearer_qos_t * qos,
   const traffic_flow_template_t * tft,
   esm_cause_t *esm_cause)
 {

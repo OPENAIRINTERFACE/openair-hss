@@ -54,7 +54,10 @@
 #include "msc.h"
 #include "common_defs.h"
 #include "3gpp_requirements_24.301.h"
+#include "common_types.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
 #include "as_message.h"
 #include "emm_cause.h"
@@ -603,7 +606,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
    * Decode initial NAS message
    */
   decoder_rc = nas_message_decode (msg->nas_msg->data, &nas_msg, blength(msg->nas_msg), emm_security_context, &decode_status);
-  bdestroy(msg->nas_msg); //msg->nas_msg = NULL;
+  bdestroy_wrapper(&msg->nas_msg);
 
 
   if (decoder_rc < TLV_FATAL_ERROR) {

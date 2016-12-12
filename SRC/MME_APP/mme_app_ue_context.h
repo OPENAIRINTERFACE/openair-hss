@@ -117,7 +117,7 @@ typedef struct bearer_context_s {
   // NOTE:
   // The PDN GW TEID is needed in MME context as S-GW relocation is triggered without interaction with the source S-GW, e.g. when a TAU
   // occurs. The Target S-GW requires this Information Element, so it must be stored by the MME.
-  teid_t                      pgw_teid_s5_s8_up;
+  teid_t                      p_gw_teid_s5_s8_up;
 
   // PDN GW IP address for S5/S8 (user plane): P GW IP address for user plane for the S5/S8 interface for the user plane. (Used for S-GW change only).
   // NOTE:
@@ -209,7 +209,7 @@ typedef struct pdn_context_s {
 
   // PDN GW TEID for S5/S8 (control plane): PDN GW Tunnel Endpoint Identifier for the S5/S8 interface for the control plane.
   //                                        (For GTP-based S5/S8 only).
-  teid_t                      pgw_teid_s5_s8_cp;
+  teid_t                      p_gw_teid_s5_s8_cp;
 
   // MS Info Change Reporting Action: Need to communicate change in User Location Information to the PDN GW with this EPS bearer Context.
 
@@ -231,7 +231,7 @@ typedef struct pdn_context_s {
 
   // APN-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across
   // all Non-GBR bearers, which are established for this APN, as decided by the PDN GW.
-  ambr_t                       pgw_apn_ambr;
+  ambr_t                       p_gw_apn_ambr;
 
   // PDN GW GRE Key for uplink traffic (user plane): PDN GW assigned GRE Key for the S5/S8 interface for the user plane for uplink traffic. (For PMIP-based S5/S8 only)
 
@@ -256,7 +256,7 @@ typedef struct pdn_context_s {
 
 
 
-/** @struct ue_context_t
+/** @struct ue_mm_context_t
  *  @brief Useful parameters to know in MME application layer. They are set
  * according to 3GPP TS.23.401 #5.7.2
  */

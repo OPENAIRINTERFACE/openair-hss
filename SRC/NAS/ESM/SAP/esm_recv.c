@@ -49,7 +49,10 @@
 
 #include "log.h"
 #include "dynamic_memory_check.h"
+#include "common_types.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "commonDef.h"
 #include "mme_app_ue_context.h"
 #include "nas_itti_messaging.h"
@@ -166,7 +169,6 @@ esm_recv_pdn_connectivity_request (
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
-  uint8_t                                 i = 0;
   mme_ue_s1ap_id_t                        ue_id = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
 
   OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Connectivity Request message " "(ue_id=%u, pti=%d, ebi=%d)\n", ue_id, pti, ebi);

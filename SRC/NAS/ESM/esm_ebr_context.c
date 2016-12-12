@@ -50,7 +50,10 @@
 #include "gcc_diag.h"
 #include "dynamic_memory_check.h"
 #include "assertions.h"
+#include "common_types.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
 #include "common_defs.h"
 #include "commonDef.h"
@@ -103,7 +106,7 @@ esm_ebr_context_create (
   pdn_cid_t pid,
   ebi_t ebi,
   bool is_default,
-  const network_qos_t * qos,
+  const bearer_qos_t * qos,
   const traffic_flow_template_t * tft)
 {
   int                                     bidx = 0;
@@ -168,8 +171,14 @@ esm_ebr_context_create (
         /*
          * EPS bearer level QoS parameters
          */
-#warning "TODO QOS"
-        //bearer_context->qos = *qos;
+        bearer_context->qci = qos->qci;
+        bearer_context->gbr_dl = qos->gbr.br_dl;
+        bearer_context->gbr_ul = qos->gbr.br_ul;
+        bearer_context->mbr_dl = qos->mbr.br_dl;
+        bearer_context->mbr_ul = qos->mbr.br_ul;
+        bearer_context->preemption_capability = qos->pci;
+        bearer_context->preemption_vulnerability = qos->pvi;
+        bearer_context->priority_level = qos->pl;
       }
 
       if (tft) {

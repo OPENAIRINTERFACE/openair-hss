@@ -210,7 +210,7 @@ void e_rab_level_qos_parameters_to_xml (const e_rab_level_qos_parameters_t * con
 bool qci_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, qci_t * const qci)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",QCI_XML_STR);
+  bstring xpath_expr = bformat("./%s",QCI_IE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)qci, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -218,7 +218,7 @@ bool qci_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, qci_t * cons
 //------------------------------------------------------------------------------
 void qci_to_xml (const qci_t * const qci, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, QCI_XML_STR, "%"PRIu8, *qci);
+  XML_WRITE_FORMAT_ELEMENT(writer, QCI_IE_XML_STR, "%"PRIu8, *qci);
 }
 
 //------------------------------------------------------------------------------

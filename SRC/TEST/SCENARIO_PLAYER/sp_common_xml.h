@@ -32,7 +32,10 @@
 #include "xml_load.h"
 #include "sp_xml_load.h"
 
-
+SP_NUM_FROM_XML_PROTOTYPE(qci);
+SP_NUM_FROM_XML_PROTOTYPE(priority_level);
+SP_NUM_FROM_XML_PROTOTYPE(pre_emption_capability);
+SP_NUM_FROM_XML_PROTOTYPE(pre_emption_vulnerability);
 SP_NUM_FROM_XML_PROTOTYPE(teid);
 int sp_assign_value_to_var(scenario_t *scenario, char* var_name, char* str_value);
 int sp_compare_string_value_with_var(scenario_t *scenario, char* var_name, char* str_value);

@@ -164,7 +164,9 @@ nas_proc_establish_ind (
   const enb_s1ap_id_key_t enb_ue_s1ap_id_key,
   const mme_ue_s1ap_id_t ue_id,
   const tai_t originating_tai,
-  const ecgi_t cgi,
+  const ecgi_t ecgi,
+  const as_cause_t as_cause,
+  const s_tmsi_t s_tmsi,
   STOLEN_REF bstring *msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -194,7 +196,7 @@ nas_proc_establish_ind (
     emm_sap.u.emm_as.u.establish.tai                = &originating_tai;
     //emm_sap.u.emm_as.u.establish.plmn_id            = &originating_tai.plmn;
     //emm_sap.u.emm_as.u.establish.tac                = originating_tai.tac;
-    emm_sap.u.emm_as.u.establish.ecgi               = cgi;
+    emm_sap.u.emm_as.u.establish.ecgi               = ecgi;
     rc = emm_sap_send (&emm_sap);
   }
 

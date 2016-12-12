@@ -67,7 +67,9 @@ static void *nas_intertask_interface (void *args_p)
         nas_proc_establish_ind (enb_s1ap_id_key,
             nas_est_ind_p->ue_id,
             nas_est_ind_p->tai,
-            nas_est_ind_p->cgi,
+            nas_est_ind_p->ecgi,
+            nas_est_ind_p->as_cause,
+            nas_est_ind_p->s_tmsi,
             &nas_est_ind_p->initial_nas_msg);
       }
       break;

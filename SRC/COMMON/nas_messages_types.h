@@ -177,7 +177,7 @@ typedef struct itti_nas_pdn_connectivity_req_s {
   mme_ue_s1ap_id_t       ue_id; // nas ref
   char                   imsi[16];
   uint8_t                imsi_length;
-  network_qos_t          qos;
+  bearer_qos_t           bearer_qos;
   protocol_configuration_options_t pco;
   bstring                apn;
   pdn_cid_t              pdn_cid;
@@ -237,7 +237,6 @@ typedef struct itti_nas_pdn_config_req_s {
 
 typedef struct itti_nas_pdn_config_rsp_s {
   mme_ue_s1ap_id_t        ue_id; // nas ref
-  pdn_cid_t               pdn_cid;
 } itti_nas_pdn_config_rsp_t;
 
 typedef struct itti_nas_pdn_config_fail_s {

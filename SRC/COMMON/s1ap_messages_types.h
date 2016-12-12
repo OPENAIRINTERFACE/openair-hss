@@ -89,7 +89,7 @@ typedef struct itti_s1ap_initial_ue_message_s {
   enb_ue_s1ap_id_t    enb_ue_s1ap_id;
   bstring             nas;
   tai_t               tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
-  ecgi_t              cgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
+  ecgi_t              ecgi;              /* Indicating the cell from which the UE has sent the NAS message.                         */
   rrc_establishment_cause_t      rrc_establishment_cause;          /* Establishment cause                     */
 
   bool                is_s_tmsi_valid;

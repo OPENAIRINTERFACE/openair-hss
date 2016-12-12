@@ -30,20 +30,6 @@
 #ifndef FILE_SP_3GPP_36_413_XML_SEEN
 #define FILE_SP_3GPP_36_413_XML_SEEN
 
-#define E_RAB_TO_BE_SETUP_LIST_XML_STR         "e_rab_to_be_setup_list"
-#define E_RAB_TO_BE_SETUP_ITEM_XML_STR         "e_rab_to_be_setup_item"
-#define E_RAB_ID_IE_XML_STR                    "e_rab_id"
-#define E_RAB_LEVEL_QOS_PARAMETERS_XML_STR     "e_rab_level_qos_parameters"
-#define ALLOCATION_AND_RETENTION_PRIORITY_IE_XML_STR "allocation_and_retention_priority"
-#define PRIORITY_LEVEL_IE_XML_STR              "priority_level"
-#define PRE_EMPTION_CAPABILITY_IE_XML_STR      "pre_emption_capability"
-#define PRE_EMPTION_VULNERABILITY_IE_XML_STR   "pre_emption_vulnerability"
-#define E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_IE_XML_STR "e_rab_guaranteed_bit_rate_downlink"
-#define GBR_QOS_INFORMATION_XML_STR            "gbr_qos_information"
-#define  E_RAB_MAXIMUM_BIT_RATE_DOWNLINK_IE_XML_STR    "e_rab_maximum_bit_rate_downlink"
-#define  E_RAB_MAXIMUM_BIT_RATE_UPLINK_IE_XML_STR      "e_rab_maximum_bit_rate_uplink"
-#define  E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_IE_XML_STR "e_rab_guaranteed_bit_rate_downlink"
-#define  E_RAB_GUARANTEED_BIT_RATE_UPLINK_IE_XML_STR   "e_rab_guaranteed_bit_rate_uplink"
 
 
 bool e_rab_to_be_setup_list_from_xml (

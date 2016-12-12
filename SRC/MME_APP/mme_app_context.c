@@ -777,7 +777,7 @@ void mme_app_dump_bearer_context (const bearer_context_t * const bc, uint8_t ind
     inet_ntop (AF_INET6, &bc->p_gw_address_s5_s8_up.address.ipv6_address, ipv6, INET6_ADDRSTRLEN);
     bformata (bstr_dump, "%*s - P-GW S5-S8 IPv6..: [%s]\n", indent_spaces, " ", ipv6);
   }
-  bformata (bstr_dump, "%*s - P-GW TEID S5-S8..: " TEID_FMT "\n", indent_spaces, " ", bc->pgw_teid_s5_s8_up);
+  bformata (bstr_dump, "%*s - P-GW TEID S5-S8..: " TEID_FMT "\n", indent_spaces, " ", bc->p_gw_teid_s5_s8_up);
   bformata (bstr_dump, "%*s - QCI .............: %u\n", indent_spaces, " ", bc->qci);
   bformata (bstr_dump, "%*s - Priority level ..: %u\n", indent_spaces, " ", bc->priority_level);
   bformata (bstr_dump, "%*s - Pre-emp vul .....: %s\n", indent_spaces, " ", (bc->preemption_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");
@@ -837,7 +837,7 @@ void mme_app_dump_pdn_context (const struct ue_mm_context_s *const ue_mm_context
       inet_ntop (AF_INET6, &pdn_context->p_gw_address_s5_s8_cp.address.ipv6_address, ipv6, INET6_ADDRSTRLEN);
       bformata (bstr_dump, "%*s - P-GW s5 s8 cp (IPv6): %s\n", indent_spaces, " ", ipv6);
     }
-    bformata (bstr_dump, "%*s - P-GW TEID s5 s8 cp .: " TEID_FMT "\n", indent_spaces, " ", pdn_context->pgw_teid_s5_s8_cp);
+    bformata (bstr_dump, "%*s - P-GW TEID s5 s8 cp .: " TEID_FMT "\n", indent_spaces, " ", pdn_context->p_gw_teid_s5_s8_cp);
     if (pdn_context->s_gw_address_s11_s4.pdn_type == IPv4) {
       char ipv4[INET_ADDRSTRLEN];
       inet_ntop (AF_INET, (void*)&pdn_context->s_gw_address_s11_s4.address.ipv4_address, ipv4, INET_ADDRSTRLEN);
@@ -856,8 +856,8 @@ void mme_app_dump_pdn_context (const struct ue_mm_context_s *const ue_mm_context
     bformata (bstr_dump, "%*s     - Pre-emp capability .......: %s\n", indent_spaces, " ", (pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_capability == PRE_EMPTION_CAPABILITY_ENABLED) ? "ENABLED" : "DISABLED");
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) DL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_dl);
     bformata (bstr_dump, "%*s     - APN-AMBR (bits/s) UL .....: %010" PRIu64 "\n", indent_spaces, " ", pdn_context->subscribed_apn_ambr.br_ul);
-    bformata (bstr_dump, "%*s     - P-GW-APN-AMBR (bits/s) DL : %010" PRIu64 "\n", indent_spaces, " ", pdn_context->pgw_apn_ambr.br_dl);
-    bformata (bstr_dump, "%*s     - P-GW-APN-AMBR (bits/s) UL : %010" PRIu64 "\n", indent_spaces, " ", pdn_context->pgw_apn_ambr.br_ul);
+    bformata (bstr_dump, "%*s     - P-GW-APN-AMBR (bits/s) DL : %010" PRIu64 "\n", indent_spaces, " ", pdn_context->p_gw_apn_ambr.br_dl);
+    bformata (bstr_dump, "%*s     - P-GW-APN-AMBR (bits/s) UL : %010" PRIu64 "\n", indent_spaces, " ", pdn_context->p_gw_apn_ambr.br_ul);
     bformata (bstr_dump, "%*s     - Default EBI ..............: %u\n", indent_spaces, " ", pdn_context->default_ebi);
     bformata (bstr_dump, "%*s - NAS ESM private data:\n");
     bformata (bstr_dump, "%*s     - Procedure transaction ID .: %x\n", indent_spaces, " ", pdn_context->esm_data.pti);
@@ -1000,7 +1000,7 @@ mme_app_dump_ue_context (
       }
     }
     bcatcstr (bstr_dump, "---------------------------------------------------------\n");
-    OAILOG_DEBUG(LOG_MME_APP, "%s", bdata(bstr_dump));
+    OAILOG_DEBUG(LOG_MME_APP, "%s\n", bdata(bstr_dump));
     return false;
   }
   return true;

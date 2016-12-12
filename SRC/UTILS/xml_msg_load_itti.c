@@ -72,6 +72,7 @@
 #include "3gpp_24.301_emm_ies_xml.h"
 #include "nas_message_xml.h"
 #include "xml_load.h"
+#include "sp_3gpp_24.007_xml.h"
 #include "sp_3gpp_36.401_xml.h"
 #include "sp_3gpp_24.301_emm_ies_xml.h"
 #include "sp_common_xml.h"
@@ -579,7 +580,7 @@ int xml_msg_load_itti_s1ap_initial_ue_message (scenario_t * const scenario, scen
       }
 
       if (res) {
-        res = ecgi_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.cgi);
+        res = ecgi_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.ecgi);
       }
 
       if (res) {
@@ -601,7 +602,7 @@ int xml_msg_load_itti_s1ap_initial_ue_message (scenario_t * const scenario, scen
       // Don't forget
       msg->itti_msg->ittiMsg.s1ap_initial_ue_message.transparent.mme_ue_s1ap_id = msg->itti_msg->ittiMsg.s1ap_initial_ue_message.mme_ue_s1ap_id;
       msg->itti_msg->ittiMsg.s1ap_initial_ue_message.transparent.enb_ue_s1ap_id = msg->itti_msg->ittiMsg.s1ap_initial_ue_message.enb_ue_s1ap_id;
-      msg->itti_msg->ittiMsg.s1ap_initial_ue_message.transparent.e_utran_cgi    = msg->itti_msg->ittiMsg.s1ap_initial_ue_message.cgi;
+      msg->itti_msg->ittiMsg.s1ap_initial_ue_message.transparent.e_utran_cgi    = msg->itti_msg->ittiMsg.s1ap_initial_ue_message.ecgi;
     } else {
       res = false;
     }
@@ -846,34 +847,19 @@ int xml_msg_load_itti_mme_app_connection_establishment_cnf(scenario_t * const sc
               res = (RETURNok == xmlXPathSetContextNode(nodes_erab->nodeTab[e], msg->xpath_ctx));
 
               if (res) {
-                res = eps_bearer_identity_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_id[e]);
+                res = sp_ebi_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_id[e]);
               }
               if (res) {
-                xpath_expr = bformat("./%s",QCI_XML_STR);
-                uint8_t qci = 0;
-                res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNu8, (void*)&qci, NULL);
-                msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_qci[e] = qci;
-                bdestroy_wrapper (&xpath_expr);
+                res = sp_qci_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_qci[e]);
               }
               if (res) {
-                xpath_expr = bformat("./%s",PRIORITY_LEVEL_XML_STR);
-                res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNu8,
-                    (void*)&msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_priority_level[e], NULL);
-                bdestroy_wrapper (&xpath_expr);
+                res = sp_priority_level_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_priority_level[e]);
               }
               if (res) {
-                xpath_expr = bformat("./%s",PREEMPTION_CAPABILITY_XML_STR);
-                pre_emption_capability_t pre_emp_capability = 0;
-                res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNu8, (void*)&pre_emp_capability, NULL);
-                msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_preemption_capability[e] = pre_emp_capability;
-                bdestroy_wrapper (&xpath_expr);
+                res = sp_pre_emption_capability_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_preemption_capability[e]);
               }
               if (res) {
-                xpath_expr = bformat("./%s",PREEMPTION_VULNERABILITY_XML_STR);
-                pre_emption_vulnerability_t pre_emp_vulnerability = 0;
-                res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNu8, (void*)&pre_emp_vulnerability, NULL);
-                msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_preemption_vulnerability[e] = pre_emp_vulnerability;
-                bdestroy_wrapper (&xpath_expr);
+                res = sp_pre_emption_vulnerability_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_preemption_vulnerability[e]);
               }
               if (res) {
                 bstring xpath_expr_tla = bformat("./%s",TRANSPORT_LAYER_ADDRESS_IE_XML_STR);

@@ -54,8 +54,10 @@
 #include "bstrlib.h"
 
 #include "log.h"
+#include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "emm_data.h"
 #include "mme_app_ue_context.h"
 #include "esm_proc.h"
@@ -129,13 +131,14 @@ esm_proc_default_eps_bearer_context (
   emm_context_t * emm_context,
   pdn_cid_t pid,
   ebi_t *ebi,
-  const esm_proc_qos_t * qos,
+  const bearer_qos_t * qos,
   esm_cause_t *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   mme_ue_s1ap_id_t                        ue_id = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d, GBR UL %u GBR DL %u, MBR UL %u MBR DL %u QCI %u)\n",
-      ue_id, pid, qos->gbrUL, qos->gbrDL, qos->mbrUL, qos->mbrDL, qos->qci);
+  OAILOG_INFO (LOG_NAS_ESM,
+      "ESM-PROC  - Default EPS bearer context activation (ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d, GBR UL %"PRIu64" GBR DL %"PRIu64", MBR UL %"PRIu64" MBR DL %"PRIu64" QCI %u)\n",
+      ue_id, pid, qos->gbr.br_ul, qos->gbr.br_dl, qos->mbr.br_ul, qos->mbr.br_dl, qos->qci);
   /*
    * Assign new EPS bearer context
    */

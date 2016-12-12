@@ -425,7 +425,7 @@ void xml_msg_dump_itti_s1ap_initial_ue_message(
     enb_ue_s1ap_id_to_xml(&initial_pP->enb_ue_s1ap_id, xml_text_writer);
     nas_pdu_to_xml(initial_pP->nas, xml_text_writer);
     tracking_area_identity_to_xml(&initial_pP->tai, xml_text_writer);
-    ecgi_to_xml(&initial_pP->cgi, xml_text_writer);
+    ecgi_to_xml(&initial_pP->ecgi, xml_text_writer);
     rrc_establishment_cause_to_xml(&initial_pP->rrc_establishment_cause, xml_text_writer);
 
     // optional attributes
@@ -556,10 +556,10 @@ void xml_msg_dump_itti_mme_app_connection_establishment_cnf(const itti_mme_app_c
     for (int i=0; i < itti_msg->no_of_e_rabs; i++) {
       XML_WRITE_START_ELEMENT(xml_text_writer, E_RAB_SETUP_ITEM_IE_XML_STR);
       eps_bearer_identity_to_xml(&itti_msg->e_rab_id[i], xml_text_writer);
-      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, QCI_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_qci[i]);
-      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PRIORITY_LEVEL_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_priority_level[i]);
-      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PREEMPTION_CAPABILITY_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_preemption_capability[i]);
-      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PREEMPTION_VULNERABILITY_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_preemption_vulnerability[i]);
+      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, QCI_IE_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_qci[i]);
+      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PRIORITY_LEVEL_IE_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_priority_level[i]);
+      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PRE_EMPTION_CAPABILITY_IE_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_preemption_capability[i]);
+      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PRE_EMPTION_VULNERABILITY_IE_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_preemption_vulnerability[i]);
       XML_WRITE_HEX_ELEMENT(xml_text_writer, TRANSPORT_LAYER_ADDRESS_IE_XML_STR,
           bdata(itti_msg->transport_layer_address[i]),
           blength(itti_msg->transport_layer_address[i]));

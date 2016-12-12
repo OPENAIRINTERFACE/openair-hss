@@ -50,6 +50,8 @@
 #include "log.h"
 #include "common_defs.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
 #include "mme_api.h"
 #include "emm_data.h"

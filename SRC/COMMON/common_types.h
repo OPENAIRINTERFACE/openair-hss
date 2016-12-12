@@ -144,6 +144,9 @@ typedef char*    APN_t;
 typedef uint8_t  APNRestriction_t;
 typedef uint8_t  DelayValue_t;
 typedef uint8_t  priority_level_t;
+#define PRIORITY_LEVEL_FMT                "0x%"PRIu8
+#define PRIORITY_LEVEL_SCAN_FMT            SCNu8
+
 typedef uint32_t SequenceNumber_t;
 typedef uint32_t access_restriction_t;
 typedef uint32_t context_identifier_t;
@@ -224,6 +227,8 @@ typedef enum {
 } qci_e;
 
 typedef uint8_t qci_t;
+#define QCI_FMT                "0x%"PRIu8
+#define QCI_SCAN_FMT            SCNu8
 
 typedef enum {
   PRE_EMPTION_CAPABILITY_ENABLED  = 0,
@@ -231,11 +236,17 @@ typedef enum {
   PRE_EMPTION_CAPABILITY_MAX,
 } pre_emption_capability_t;
 
+#define PRE_EMPTION_CAPABILITY_FMT                "0x%"PRIu8
+#define PRE_EMPTION_CAPABILITY_SCAN_FMT            SCNu8
+
 typedef enum {
   PRE_EMPTION_VULNERABILITY_ENABLED  = 0,
   PRE_EMPTION_VULNERABILITY_DISABLED = 1,
   PRE_EMPTION_VULNERABILITY_MAX,
 } pre_emption_vulnerability_t;
+
+#define PRE_EMPTION_VULNERABILITY_FMT                "0x%"PRIu8
+#define PRE_EMPTION_VULNERABILITY_SCAN_FMT            SCNu8
 
 typedef struct {
   priority_level_t            priority_level;

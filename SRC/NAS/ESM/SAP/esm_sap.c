@@ -48,7 +48,10 @@
 #include "bstrlib.h"
 
 #include "log.h"
+#include "common_types.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
 #include "nas_message.h"
 #include "esm_sap.h"
@@ -236,7 +239,7 @@ esm_sap_send (esm_sap_t * msg)
             pid,
             &bearer_activate->ebi,
             &bearer_activate->linked_ebi,
-            (const esm_proc_qos_t *)NULL,
+            (const bearer_qos_t *)NULL,
             bearer_activate->tft,
             NULL);
         if (rc != RETURNok) {

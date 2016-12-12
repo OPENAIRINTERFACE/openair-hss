@@ -58,8 +58,10 @@
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "log.h"
+#include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "3gpp_36.401.h"
 #include "mme_app_ue_context.h"
 #include "commonDef.h"
@@ -161,7 +163,7 @@ esm_proc_pdn_connectivity_request (
   const_bstring          const apn,
   esm_proc_pdn_type_t          pdn_type,
   const_bstring          const pdn_addr,
-  esm_proc_qos_t             * esm_qos,
+  bearer_qos_t             * default_qos,
   esm_cause_t                 *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);

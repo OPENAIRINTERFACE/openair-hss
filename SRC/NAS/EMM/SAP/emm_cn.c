@@ -52,7 +52,11 @@
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "commonDef.h"
+#include "common_types.h"
+#include "common_defs.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
 #include "emm_cn.h"
 #include "emm_sap.h"
@@ -68,6 +72,7 @@
 #include "3gpp_requirements_24.301.h"
 #include "mme_app_defs.h"
 #include "mme_app_apn_selection.h"
+#include "nas_itti_messaging.h"
 
 extern int emm_cn_wrapper_attach_accept (emm_context_t * emm_context);
 
@@ -206,13 +211,6 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   struct emm_context_s                   *emm_ctx = NULL;
-  esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
-  ESM_msg                                 esm_msg = {.header = {0}};
-  EpsQualityOfService                     qos = {0};
-  bstring                                 rsp = NULL;
-  bool                                    is_standalone = false;    // warning hardcoded
-  bool                                    triggered_by_ue = true;  // warning hardcoded
-  attach_data_t                          *data_p = NULL;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   pdn_cid_t                               pdn_cid = 0;
   ebi_t                                   new_ebi = 0;
@@ -263,6 +261,14 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
      * Execute the PDN connectivity procedure requested by the UE
      */
     emm_ctx->esm_ctx.esm_proc_data->pdn_cid = pdn_cid;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci       = apn_config->subscribed_qos.qci;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pci       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pl        = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pvi       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_ul = 0;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_dl = 0;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_ul = 0;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_dl = 0;
 #warning "Better to throw emm_ctx->esm_ctx.esm_proc_data as a parameter or as a hidden parameter ?"
     rc = esm_proc_pdn_connectivity_request (emm_ctx,
         emm_ctx->esm_ctx.esm_proc_data->pti,
@@ -272,26 +278,15 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
         emm_ctx->esm_ctx.esm_proc_data->apn,
         emm_ctx->esm_ctx.esm_proc_data->pdn_type,
         emm_ctx->esm_ctx.esm_proc_data->pdn_addr,
-        &emm_ctx->esm_ctx.esm_proc_data->qos,
+        &emm_ctx->esm_ctx.esm_proc_data->bearer_qos,
         &esm_cause);
 
     if (rc != RETURNerror) {
       /*
        * Create local default EPS bearer context
        */
-      rc = esm_proc_default_eps_bearer_context (emm_ctx, pdn_cid, &new_ebi, &emm_ctx->esm_ctx.esm_proc_data->qos, &esm_cause);
-//      // default bearer creation
-//      bearer_context_t * default_bearer_context = mme_app_create_bearer_context(ue_mm_context, pdn_cid, EPS_BEARER_IDENTITY_UNASSIGNED);
-//      if (!default_bearer_context) {
-//        AssertFatal(0, "TODO Release PDN context");
-//        return RETURNerror;
-//      }
-//      default_bearer_context->qci            = apn_config->subscribed_qos.qci;
-//      default_bearer_context->priority_level = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
-//      default_bearer_context->preemption_vulnerability = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
-//      default_bearer_context->preemption_capability    = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
-//      pdn_context->default_ebi = default_bearer_context->ebi;
-//
+      rc = esm_proc_default_eps_bearer_context (emm_ctx, pdn_cid, &new_ebi, &emm_ctx->esm_ctx.esm_proc_data->bearer_qos, &esm_cause);
+
       if (rc != RETURNerror) {
         esm_cause = ESM_CAUSE_SUCCESS;
       }
@@ -319,8 +314,6 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   bool                                    is_standalone = false;    // warning hardcoded
   bool                                    triggered_by_ue = true;  // warning hardcoded
   attach_data_t                          *data_p = NULL;
-  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
-  ebi_t                                   new_ebi = 0;
 
   ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
 
@@ -404,7 +397,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
     /*
      * Complete the relevant ESM procedure
      */
-    rc = esm_proc_default_eps_bearer_context_request (is_standalone, emm_ctx, new_ebi,        //0, //ESM_EBI_UNASSIGNED, //msg->ebi,
+    rc = esm_proc_default_eps_bearer_context_request (is_standalone, emm_ctx, msg_pP->ebi,        //0, //ESM_EBI_UNASSIGNED, //msg->ebi,
                                                       &rsp, triggered_by_ue);
 
     if (rc != RETURNok) {

@@ -44,6 +44,13 @@ int nas_itti_dl_data_req(
   const mme_ue_s1ap_id_t ue_idP,
   bstring                nas_msgP);
 
+void nas_itti_pdn_config_req(
+  int                     ptiP,
+  unsigned int            ue_idP,
+  const imsi_t           *const imsi_pP,
+  esm_proc_data_t        *proc_data_pP,
+  esm_proc_pdn_request_t  request_typeP);
+
 void nas_itti_pdn_connectivity_req(
   int                     ptiP,
   const mme_ue_s1ap_id_t  ue_idP,

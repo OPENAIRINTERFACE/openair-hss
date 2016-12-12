@@ -90,7 +90,10 @@ static int sp_xml_compare_elements(scenario_t *scenario, xmlNode * received_node
       if (RETURNerror != res) {
         res = sp_xml_compare_elements(scenario, received_cur_node->children, expected_cur_node->children);
       }
-      if (RETURNerror == res) return RETURNerror;
+      if (RETURNerror == res) {
+        OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Compare failed %s\n", received_cur_node->name);
+        return RETURNerror;
+      }
       expected_cur_node = expected_cur_node->next;
     }
     if ((received_cur_node) || (expected_cur_node)) {

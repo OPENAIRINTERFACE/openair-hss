@@ -169,25 +169,6 @@ typedef struct esm_context_s {
   bool is_emergency;  /* Indicates whether a PDN connection for emergency
              * bearer services is established       */
   struct esm_proc_data_s *esm_proc_data;
-//#define ESM_DATA_PDN_MAX    4
-//  struct {
-//    int pid;     /* Identifier of the PDN connection        */
-//    bool is_active;   /* true/false if the PDN connection is active/inactive
-//              * or the process to activate/deactivate the PDN
-//              * connection is in progress           */
-//    esm_pdn_t *data; /* Active PDN connection data          */
-//  } pdn[ESM_DATA_PDN_MAX+1];
-
-  //esm_ebr_data_t ebr;
-
-  /*
-     Buffer used to encode ESM messages before being returned to the EPS
-     Mobility Management sublayer in order to be sent onto the network.
-     Used in _esm_sap_send(), _esm_sap_recv().
-     TODO: May be not the best place to put this buffer, but better than global variable as it was before
-  */
-  //#define ESM_SAP_BUFFER_SIZE 4096
-  //char           esm_sap_buffer[ESM_SAP_BUFFER_SIZE];
 } esm_context_t;
 
 
@@ -209,12 +190,7 @@ typedef struct esm_data_s {
    * -----------------
    */
   struct mme_api_esm_config_s conf;
-  /*
-   * ESM contexts
-   * ------------
-   */
-  /* Use a tree for ue data context within MME */
-  //RB_HEAD(esm_data_context_map, esm_context_s) ctx_map;
+
 } esm_data_t;
 
 

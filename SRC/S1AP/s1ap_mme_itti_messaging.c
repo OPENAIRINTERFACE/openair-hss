@@ -108,7 +108,7 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
   const uint8_t * const   nas_msg,
   const size_t            nas_msg_length,
   const tai_t      const* tai,
-  const ecgi_t     const* cgi,
+  const ecgi_t     const* ecgi,
   const long              rrc_cause,
   const s_tmsi_t   const* opt_s_tmsi,
   const csg_id_t   const* opt_csg_id,
@@ -130,7 +130,7 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
   S1AP_INITIAL_UE_MESSAGE(message_p).nas                    = blk2bstr(nas_msg, nas_msg_length);
 
   S1AP_INITIAL_UE_MESSAGE(message_p).tai                    = *tai;
-  S1AP_INITIAL_UE_MESSAGE(message_p).cgi                    = *cgi;
+  S1AP_INITIAL_UE_MESSAGE(message_p).ecgi                    = *ecgi;
   S1AP_INITIAL_UE_MESSAGE(message_p).rrc_establishment_cause = rrc_cause + 1;
 
   if (opt_s_tmsi) {
@@ -154,7 +154,7 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
 
   S1AP_INITIAL_UE_MESSAGE(message_p).transparent.mme_ue_s1ap_id = mme_ue_s1ap_id;
   S1AP_INITIAL_UE_MESSAGE(message_p).transparent.enb_ue_s1ap_id = enb_ue_s1ap_id;
-  S1AP_INITIAL_UE_MESSAGE(message_p).transparent.e_utran_cgi    = *cgi;
+  S1AP_INITIAL_UE_MESSAGE(message_p).transparent.e_utran_cgi    = *ecgi;
 
 
   MSC_LOG_TX_MESSAGE(

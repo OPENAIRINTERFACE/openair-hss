@@ -73,8 +73,8 @@ struct emm_context_s;
  */
 typedef int (*esm_proc_procedure_t) (bool, struct emm_context_s *, ebi_t, bstring, bool);
 
-/* EPS bearer level QoS parameters */
-typedef network_qos_t esm_proc_qos_t;
+///* EPS bearer level QoS parameters */
+//typedef network_qos_t esm_proc_qos_t;
 
 typedef protocol_configuration_options_t esm_proc_pco_t;
 
@@ -86,7 +86,7 @@ typedef struct esm_proc_data_s {
   pdn_cid_t               pdn_cid;
   esm_proc_pdn_type_t     pdn_type;
   bstring                 pdn_addr;
-  esm_proc_qos_t          qos;
+  bearer_qos_t            bearer_qos;
   traffic_flow_template_t tft;
   esm_proc_pco_t          pco;
 } esm_proc_data_t;
@@ -121,7 +121,7 @@ int esm_proc_pdn_connectivity_request(emm_context_t * emm_context, const proc_ti
                                      const pdn_cid_t pdn_cid,   const context_identifier_t   context_identifier,
                                      const esm_proc_pdn_request_t request_type,
                                      const_bstring const apn, esm_proc_pdn_type_t pdn_type,
-                                     const_bstring const pdn_addr, esm_proc_qos_t *esm_qos,
+                                     const_bstring const pdn_addr, bearer_qos_t *default_qos,
                                      esm_cause_t *esm_cause);
 
 int esm_proc_pdn_connectivity_reject(bool is_standalone, emm_context_t * emm_context,
@@ -146,7 +146,7 @@ int esm_proc_pdn_disconnect_reject(const bool is_standalone, emm_context_t * emm
  * --------------------------------------------------------------------------
  */
 int esm_proc_default_eps_bearer_context(emm_context_t * emm_context, pdn_cid_t pid,
-    ebi_t *ebi, const esm_proc_qos_t *esm_qos, esm_cause_t *esm_cause);
+    ebi_t *ebi, const bearer_qos_t *default_qos, esm_cause_t *esm_cause);
 int esm_proc_default_eps_bearer_context_request(bool is_standalone, emm_context_t * emm_context, ebi_t ebi, STOLEN_REF bstring *msg, bool ue_triggered);
 int esm_proc_default_eps_bearer_context_failure(emm_context_t * emm_context);
 
@@ -160,7 +160,7 @@ int esm_proc_default_eps_bearer_context_reject(emm_context_t * emm_context, ebi_
  * --------------------------------------------------------------------------
  */
 int esm_proc_dedicated_eps_bearer_context(emm_context_t * emm_context, pdn_cid_t pid,
-    ebi_t *ebi, ebi_t *default_ebi, const esm_proc_qos_t *qos, const traffic_flow_template_t *tft, esm_cause_t *esm_cause);
+    ebi_t *ebi, ebi_t *default_ebi, const bearer_qos_t *bearer_qos, const traffic_flow_template_t *tft, esm_cause_t *esm_cause);
 int esm_proc_dedicated_eps_bearer_context_request(bool is_standalone, emm_context_t * emm_context, ebi_t ebi, STOLEN_REF bstring *msg, bool ue_triggered);
 
 int esm_proc_dedicated_eps_bearer_context_accept(emm_context_t * emm_context, ebi_t ebi, esm_cause_t *esm_cause);

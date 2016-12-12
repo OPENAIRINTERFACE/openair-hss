@@ -56,6 +56,7 @@
 #include "3gpp_36.401.h"
 #include "3gpp_36.331.h"
 #include "3gpp_24.301.h"
+#include "3gpp_29.274.h"
 #include "security_types.h"
 #include "common_types.h"
 #include "mme_app_ue_context.h"

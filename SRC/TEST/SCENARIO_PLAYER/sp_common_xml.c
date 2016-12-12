@@ -54,7 +54,14 @@
 #include "xml_msg_tags.h"
 #include "sp_common_xml.h"
 
-
+//------------------------------------------------------------------------------
+SP_NUM_FROM_XML_GENERATE( qci, QCI );
+//------------------------------------------------------------------------------
+SP_NUM_FROM_XML_GENERATE( priority_level, PRIORITY_LEVEL );
+//------------------------------------------------------------------------------
+SP_NUM_FROM_XML_GENERATE( pre_emption_capability, PRE_EMPTION_CAPABILITY );
+//------------------------------------------------------------------------------
+SP_NUM_FROM_XML_GENERATE( pre_emption_vulnerability, PRE_EMPTION_VULNERABILITY );
 //------------------------------------------------------------------------------
 SP_NUM_FROM_XML_GENERATE( teid, TEID );
 

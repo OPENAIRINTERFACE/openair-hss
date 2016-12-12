@@ -323,7 +323,7 @@ typedef struct nas_establish_req_s {
 typedef struct nas_establish_ind_s {
   mme_ue_s1ap_id_t ue_id;             /* UE lower layer identifier               */
   tai_t            tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
-  ecgi_t            cgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
+  ecgi_t           ecgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
   as_cause_t       as_cause;          /* Establishment cause                     */
   s_tmsi_t         s_tmsi;            /* UE identity optional field, if not present, value is NOT_A_S_TMSI */
   bstring          initial_nas_msg;   /* Initial NAS message to transfer         */
