@@ -371,6 +371,7 @@ esm_send_activate_dedicated_eps_bearer_context_request (
   msg->epsbeareridentity = ebi;
   msg->messagetype = ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST;
   msg->proceduretransactionidentity = pti;
+  msg->linkedepsbeareridentity = linked_ebi;
   /*
    * Mandatory - EPS QoS
    */
