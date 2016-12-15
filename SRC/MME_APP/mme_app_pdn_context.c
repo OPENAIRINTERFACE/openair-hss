@@ -53,6 +53,24 @@
 static void mme_app_pdn_context_init(ue_mm_context_t * const ue_context, pdn_context_t *const  pdn_context);
 
 //------------------------------------------------------------------------------
+void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)
+{
+  if ((*pdn_context)->apn_in_use) {
+    bdestroy_wrapper(&(*pdn_context)->apn_in_use);
+  }
+  if ((*pdn_context)->apn_subscribed) {
+    bdestroy_wrapper(&(*pdn_context)->apn_subscribed);
+  }
+  if ((*pdn_context)->apn_oi_replacement) {
+    bdestroy_wrapper(&(*pdn_context)->apn_oi_replacement);
+  }
+  if ((*pdn_context)->pco) {
+    free_protocol_configuration_options(&(*pdn_context)->pco);
+  }
+
+  free_wrapper((void**)pdn_context);
+}
+//------------------------------------------------------------------------------
 static void mme_app_pdn_context_init(ue_mm_context_t * const ue_context, pdn_context_t *const  pdn_context)
 {
   if ((pdn_context) && (ue_context)) {
@@ -94,6 +112,8 @@ pdn_context_t *  mme_app_create_pdn_context(ue_mm_context_t * const ue_mm_contex
         // TODO pdn_context->apn_in_use     =
 
         ue_mm_context->pdn_contexts[pdn_cid] = pdn_context;
+        MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", pdn_cid, apn_configuration->service_selection);
+
         OAILOG_FUNC_RETURN (LOG_MME_APP, pdn_context);
       } else {
         free_wrapper((void**)&pdn_context);

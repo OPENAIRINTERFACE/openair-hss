@@ -55,6 +55,7 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_bearer_context.h"
 #include "common_defs.h"
 #include "commonDef.h"
 #include "emm_data.h"
@@ -103,11 +104,17 @@
 ebi_t
 esm_ebr_context_create (
   emm_context_t * emm_context,
+  const proc_tid_t pti,
   pdn_cid_t pid,
   ebi_t ebi,
   bool is_default,
-  const bearer_qos_t * qos,
-  const traffic_flow_template_t * tft)
+  const qci_t qci,
+  const bitrate_t gbr_dl,
+  const bitrate_t gbr_ul,
+  const bitrate_t mbr_dl,
+  const bitrate_t mbr_ul,
+  const traffic_flow_template_t * tft,
+  const protocol_configuration_options_t * pco)
 {
   int                                     bidx = 0;
   esm_context_t                          *esm_ctx = NULL;
@@ -138,7 +145,7 @@ esm_ebr_context_create (
        */
       pdn = &ue_mm_context->pdn_contexts[pid]->esm_data;
 
-      if (ue_mm_context->bearer_contexts[bidx] ) {
+      if ((ue_mm_context->bearer_contexts[bidx]) && (ESM_EBR_INACTIVE != ue_mm_context->bearer_contexts[bidx]->esm_ebr_context.status)) {
         OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - A EPS bearer context " "is already allocated\n");
         OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
       }
@@ -149,9 +156,16 @@ esm_ebr_context_create (
     /*
      * Create new EPS bearer context
      */
-    bearer_context_t                       *bearer_context = (bearer_context_t *) calloc (1, sizeof (bearer_context_t));
+    bearer_context_t *bearer_context =  NULL;
+    if (ue_mm_context->bearer_contexts[bidx]) {
+      bearer_context =  ue_mm_context->bearer_contexts[bidx];
+    } else {
+      bearer_context =  mme_app_create_bearer_context(ue_mm_context, pid, ebi);
+    }
 
     if (bearer_context ) {
+      MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create Bearer ebi %u cid %u pti %u", ebi, pid, pti);
+      bearer_context->transaction_identifier = pti;
       /*
        * Increment the total number of active EPS bearers
        */
@@ -163,27 +177,26 @@ esm_ebr_context_create (
       /*
        * Setup the EPS bearer data
        */
-      ue_mm_context->pdn_contexts[pid]->bearer_contexts[bidx] = bidx;
-      ue_mm_context->bearer_contexts[bidx] = bearer_context;
-      bearer_context->ebi = ebi;
 
-      if (qos ) {
-        /*
-         * EPS bearer level QoS parameters
-         */
-        bearer_context->qci = qos->qci;
-        bearer_context->gbr_dl = qos->gbr.br_dl;
-        bearer_context->gbr_ul = qos->gbr.br_ul;
-        bearer_context->mbr_dl = qos->mbr.br_dl;
-        bearer_context->mbr_ul = qos->mbr.br_ul;
-        bearer_context->preemption_capability = qos->pci;
-        bearer_context->preemption_vulnerability = qos->pvi;
-        bearer_context->priority_level = qos->pl;
+      bearer_context->qci = qci;
+      bearer_context->esm_ebr_context.gbr_dl = gbr_dl;
+      bearer_context->esm_ebr_context.gbr_ul = gbr_ul;
+      bearer_context->esm_ebr_context.mbr_dl = mbr_dl;
+      bearer_context->esm_ebr_context.mbr_ul = mbr_ul;
+
+      if (bearer_context->esm_ebr_context.tft) {
+        free_traffic_flow_template(&bearer_context->esm_ebr_context.tft);
       }
-
       if (tft) {
-        bearer_context->tft = calloc(1, sizeof(traffic_flow_template_t));
-        copy_traffic_flow_template(bearer_context->tft, tft);
+        bearer_context->esm_ebr_context.tft = calloc(1, sizeof(traffic_flow_template_t));
+        copy_traffic_flow_template(bearer_context->esm_ebr_context.tft, tft);
+      }
+      if (bearer_context->esm_ebr_context.pco) {
+        free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
+      }
+      if (tft) {
+        bearer_context->esm_ebr_context.pco = calloc(1, sizeof(protocol_configuration_options_t));
+        copy_protocol_configuration_options(bearer_context->esm_ebr_context.pco, pco);
       }
 
       if (is_default) {

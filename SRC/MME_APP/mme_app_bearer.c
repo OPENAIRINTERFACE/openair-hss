@@ -51,6 +51,7 @@
 #include "mme_app_apn_selection.h"
 #include "mme_app_pdn_context.h"
 #include "mme_app_sgw_selection.h"
+#include "mme_app_bearer_context.h"
 #include "sgw_ie_defs.h"
 #include "common_defs.h"
 #include "gcc_diag.h"
@@ -169,10 +170,10 @@ int mme_app_send_s11_create_session_req (struct ue_mm_context_s *const ue_mm_con
   bc->bearer_state   = BEARER_STATE_SGW_CREATE_REQUESTED;
 
   // Zero because default bearer (see 29.274)
-  session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.gbr.br_ul = bc->gbr_ul;
-  session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.gbr.br_dl = bc->gbr_dl;
-  session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.mbr.br_ul = bc->mbr_ul;
-  session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.mbr.br_dl = bc->mbr_dl;
+  session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.gbr.br_ul = bc->esm_ebr_context.gbr_ul;
+  session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.gbr.br_dl = bc->esm_ebr_context.gbr_dl;
+  session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.mbr.br_ul = bc->esm_ebr_context.mbr_ul;
+  session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.mbr.br_dl = bc->esm_ebr_context.mbr_dl;
   session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.qci       = bc->qci;
   session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pvi       = bc->preemption_vulnerability;
   session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pci       = bc->preemption_capability;
@@ -230,8 +231,8 @@ int mme_app_send_s11_create_session_req (struct ue_mm_context_s *const ue_mm_con
     }
   }
 
-  if (bc->pco) {
-    copy_protocol_configuration_options (&session_request_p->pco, bc->pco);
+  if (ue_mm_context->pdn_contexts[pdn_cid]->pco) {
+    copy_protocol_configuration_options (&session_request_p->pco, ue_mm_context->pdn_contexts[pdn_cid]->pco);
   }
 
   // TODO perform SGW selection
@@ -568,15 +569,17 @@ mme_app_handle_create_sess_resp (
     memset (&current_bearer_p->p_gw_address_s5_s8_up, 0, sizeof (ip_address_t));
 
     // if modified by pgw
-    if (create_sess_resp_pP->bearer_contexts_created.bearer_contexts[bearer_id].bearer_level_qos ) {
+    if (create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos ) {
       current_bearer_p->qci                      = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->qci;
       current_bearer_p->priority_level           = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->pl;
       current_bearer_p->preemption_vulnerability = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->pvi;
       current_bearer_p->preemption_capability    = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->pci;
-      current_bearer_p->gbr_dl                   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->gbr.br_dl;
-      current_bearer_p->gbr_ul                   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->gbr.br_ul;
-      current_bearer_p->mbr_dl                   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->mbr.br_dl;
-      current_bearer_p->mbr_ul                   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->mbr.br_ul;
+
+//TODO should be set in NAS_PDN_CONNECTIVITY_RSP message
+      current_bearer_p->esm_ebr_context.gbr_dl   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->gbr.br_dl;
+      current_bearer_p->esm_ebr_context.gbr_ul   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->gbr.br_ul;
+      current_bearer_p->esm_ebr_context.mbr_dl   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->mbr.br_dl;
+      current_bearer_p->esm_ebr_context.mbr_ul   = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos->mbr.br_ul;
       OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u\n", current_bearer_p->qci, bearer_id);
     } else {
       OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u (qos not modified by P-GW)\n", current_bearer_p->qci, bearer_id);
@@ -586,14 +589,10 @@ mme_app_handle_create_sess_resp (
   //uint8_t *keNB = NULL;
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONNECTIVITY_RSP);
   itti_nas_pdn_connectivity_rsp_t *nas_pdn_connectivity_rsp = &message_p->ittiMsg.nas_pdn_connectivity_rsp;
-  // moved to NAS_CONNECTION_ESTABLISHMENT_CONF, keNB not handled in NAS MME
-  //derive_keNB(ue_context_p->vector_in_use->kasme, 156, &keNB);
-  //memcpy(NAS_PDN_CONNECTIVITY_RSP(message_p).keNB, keNB, 32);
-  //free(keNB);
+
   nas_pdn_connectivity_rsp->pdn_cid = pdn_cx_id;
   nas_pdn_connectivity_rsp->pti = transaction_identifier;  // NAS internal ref
   nas_pdn_connectivity_rsp->ue_id = ue_context_p->mme_ue_s1ap_id;      // NAS internal ref
-
 
 
   nas_pdn_connectivity_rsp->pdn_addr = paa_to_bstring(&create_sess_resp_pP->paa);
@@ -759,7 +758,7 @@ mme_app_handle_create_bearer_req (
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
       create_bearer_request_pP->teid, ue_context_p->emm_context._imsi64);
 
-  // check if bearer already created
+  // check if default bearer already created
   ebi_t linked_eps_bearer_id = create_bearer_request_pP->linked_eps_bearer_id;
   bearer_context_t * linked_bc = mme_app_get_bearer_context(ue_context_p, linked_eps_bearer_id);
   if (!linked_bc) {
@@ -774,11 +773,10 @@ mme_app_handle_create_bearer_req (
   pdn_cid_t cid = linked_bc->pdn_cx_id;
 
   for (int i = 0; i < create_bearer_request_pP->bearer_contexts.num_bearer_context; i++) {
-    bearer_context_t *dedicated_bc = calloc(1, sizeof(bearer_context_t));
-    esm_ebr_context_init(&dedicated_bc->esm_ebr_context);
-
     const bearer_context_within_create_bearer_request_t *msg_bc = &create_bearer_request_pP->bearer_contexts.bearer_contexts[i];
-    dedicated_bc->ebi            = msg_bc->eps_bearer_id;
+    bearer_context_t *  dedicated_bc = mme_app_create_bearer_context(ue_context_p, cid, msg_bc->eps_bearer_id);
+
+
     dedicated_bc->bearer_state   = BEARER_STATE_MME_CREATE_REQUESTED;
 
     dedicated_bc->s_gw_teid_s1u      = msg_bc->s1u_sgw_fteid.teid;
@@ -786,55 +784,33 @@ mme_app_handle_create_bearer_req (
     dedicated_bc->p_gw_teid_s5_s8_up      = msg_bc->s5_s8_u_pgw_fteid.teid;
     FTEID_T_2_IP_ADDRESS_T(&msg_bc->s5_s8_u_pgw_fteid, &dedicated_bc->p_gw_address_s5_s8_up);
 
-    dedicated_bc->qci            = msg_bc->bearer_level_qos.qci;
-    dedicated_bc->priority_level = msg_bc->bearer_level_qos.pl;
+    dedicated_bc->qci                      = msg_bc->bearer_level_qos.qci;
+    dedicated_bc->priority_level           = msg_bc->bearer_level_qos.pl;
     dedicated_bc->preemption_vulnerability = msg_bc->bearer_level_qos.pvi;
     dedicated_bc->preemption_capability    = msg_bc->bearer_level_qos.pci;
-    // ambr
 
-    // if valid IE
-    if (msg_bc->tft.numberofpacketfilters) {
-      dedicated_bc->tft = calloc(1, sizeof(traffic_flow_template_t));
-      memcpy(dedicated_bc->tft, (const void *)&msg_bc->tft, sizeof(traffic_flow_template_t));
-    }
-    // if valid IE
-    if (msg_bc->pco.num_protocol_or_container_id) {
-      dedicated_bc->pco = calloc(1, sizeof(protocol_configuration_options_t));
-      memcpy(dedicated_bc->pco, (const void *)&msg_bc->pco, sizeof(protocol_configuration_options_t));
-    }
-
-    mme_app_add_bearer_context(ue_context_p, dedicated_bc, cid);
-  }
-
-  mme_app_bearer_create_workflow(ue_context_p, cid);
-  OAILOG_FUNC_OUT (LOG_MME_APP);
-}
-
-//------------------------------------------------------------------------------
-void mme_app_bearer_create_workflow (ue_mm_context_t * const ue_context, const pdn_cid_t cid)
-{
-  // process bearers one  by one
-  bearer_context_t* bc = mme_app_get_bearer_context_by_state(ue_context, cid, BEARER_STATE_MME_CREATE_REQUESTED_FORWARDED_NAS);
-  if (bc) {
-    // a response (successfull or unsuccessfull) from NAS task should come back (T3485).
-    return;
-  }
-  bc = mme_app_get_bearer_context_by_state(ue_context, cid, BEARER_STATE_MME_CREATE_REQUESTED);
-  if (bc) {
     // forward request to NAS
     MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_CREATE_DEDICATED_BEARER_REQ);
     AssertFatal (message_p , "itti_alloc_new_message Failed");
-    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).ue_id          = ue_context->mme_ue_s1ap_id;
-    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).ebi            = bc->ebi;
-    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).linked_ebi     = ue_context->pdn_contexts[cid]->default_ebi;
-    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).qci            = bc->qci;
-    if (bc->tft) {
+    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).ue_id          = ue_context_p->mme_ue_s1ap_id;
+    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).cid            = cid;
+    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).ebi            = dedicated_bc->ebi;
+    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).linked_ebi     = ue_context_p->pdn_contexts[cid]->default_ebi;
+    MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).bearer_qos     = msg_bc->bearer_level_qos;
+    if (msg_bc->tft.numberofpacketfilters) {
       MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).tft = calloc(1, sizeof(traffic_flow_template_t));
-      copy_traffic_flow_template(MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).tft, bc->tft);
+      copy_traffic_flow_template(MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).tft, &msg_bc->tft);
     }
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_CREATE_DEDICATED_BEARER_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
-        MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).ue_id);
+    if (msg_bc->pco.num_protocol_or_container_id) {
+      MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).pco = calloc(1, sizeof(protocol_configuration_options_t));
+      copy_protocol_configuration_options(MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).pco, &msg_bc->pco);
+    }
+
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 MME_APP_CREATE_DEDICATED_BEARER_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " qci %u ebi %u cid %u",
+        MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).ue_id, dedicated_bc->qci, dedicated_bc->ebi, cid);
     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 
   }
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
+

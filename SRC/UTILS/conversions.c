@@ -29,9 +29,11 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <ctype.h>
 #include <inttypes.h>
 
+#include "common_defs.h"
 #include "conversions.h"
 
 static const char                       hex_to_ascii_table[16] = {
@@ -136,3 +138,5 @@ imsi64_t imsi_to_imsi64(const imsi_t * const imsi)
   }
   return imsi64;
 }
+
+

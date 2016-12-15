@@ -42,7 +42,7 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
   ambr_t                  ue_ambr;
 
   // E-RAB to Be Setup List
-  uint16_t                no_of_e_rabs; // spec says max 256, actually stay with BEARERS_PER_UE
+  uint8_t                 no_of_e_rabs; // spec says max 256, actually stay with BEARERS_PER_UE
   //     >>E-RAB ID
   ebi_t                   e_rab_id[BEARERS_PER_UE];
   //     >>E-RAB Level QoS Parameters
@@ -85,7 +85,7 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
 
 typedef struct itti_mme_app_initial_context_setup_rsp_s {
   mme_ue_s1ap_id_t        ue_id;
-  uint16_t                no_of_e_rabs;
+  uint8_t                 no_of_e_rabs;
   ebi_t                   e_rab_id[BEARERS_PER_UE];
   bstring                 transport_layer_address[BEARERS_PER_UE];
   s1u_teid_t              gtp_teid[BEARERS_PER_UE];
@@ -98,12 +98,13 @@ typedef struct itti_mme_app_delete_session_rsp_s {
 
 typedef struct itti_mme_app_create_dedicated_bearer_req_s {
   /* UE identifier */
-  mme_ue_s1ap_id_t         ue_id;
-  pdn_cid_t                cid;
-  ebi_t                    ebi;
-  ebi_t                    linked_ebi;
-  qci_t                    qci;
-  traffic_flow_template_t *tft;
+  mme_ue_s1ap_id_t                  ue_id;
+  pdn_cid_t                         cid;
+  ebi_t                             ebi;
+  ebi_t                             linked_ebi;
+  bearer_qos_t                      bearer_qos;
+  traffic_flow_template_t           *tft;
+  protocol_configuration_options_t  *pco;
 } itti_mme_app_create_dedicated_bearer_req_t;
 
 

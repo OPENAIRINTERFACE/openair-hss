@@ -81,7 +81,7 @@ static void mme_app_bearer_context_init(bearer_context_t *const  bearer_context)
     memset(bearer_context, 0, sizeof(*bearer_context));
     bearer_context->bearer_state = BEARER_STATE_NULL;
 
-    bearer_context->esm_ebr_context.status = ESM_EBR_INACTIVE;
+    esm_bearer_context_init(&bearer_context->esm_ebr_context);
   }
 }
 //------------------------------------------------------------------------------
@@ -109,12 +109,7 @@ bearer_context_t *  mme_app_create_bearer_context(ue_mm_context_t * const ue_mm_
 //------------------------------------------------------------------------------
 void mme_app_free_bearer_context (bearer_context_t ** const bearer_context)
 {
-  if ((*bearer_context)->tft) {
-    free_traffic_flow_template(&(*bearer_context)->tft);
-  }
-  if ((*bearer_context)->pco) {
-    free_protocol_configuration_options(&(*bearer_context)->pco);
-  }
+  free_esm_bearer_context(&(*bearer_context)->esm_ebr_context);
   free_wrapper((void**)bearer_context);
 }
 

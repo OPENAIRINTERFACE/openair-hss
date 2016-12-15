@@ -54,6 +54,7 @@
 #include "bstrlib.h"
 
 #include "common_types.h"
+#include "dynamic_memory_check.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
@@ -185,11 +186,11 @@ esm_proc_status_ind (
  ***************************************************************************/
 int
 esm_proc_status (
-  bool is_standalone,
-  emm_context_t * emm_context,
-  ebi_t ebi,
-  bstring msg,
-  bool ue_triggered)
+  const bool is_standalone,
+  emm_context_t * const emm_context,
+  const ebi_t ebi,
+  STOLEN_REF bstring *msg,
+  const bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
@@ -203,7 +204,8 @@ esm_proc_status (
   emm_sap.primitive = EMMESM_UNITDATA_REQ;
   emm_sap.u.emm_esm.ue_id = ue_id;
   emm_sap.u.emm_esm.ctx = emm_context;
-  emm_sap.u.emm_esm.u.data.msg = msg;
+  emm_sap.u.emm_esm.u.data.msg = *msg;
+  *msg = NULL;
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

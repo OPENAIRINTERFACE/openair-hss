@@ -209,6 +209,7 @@ esm_recv_pdn_connectivity_request (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PROTOCOL_ERROR);
   }
 
+  esm_data->pti = pti;
   /*
    * Get the PDN connectivity request type
    */
@@ -251,6 +252,9 @@ esm_recv_pdn_connectivity_request (
     esm_data->apn = msg->accesspointname;
   }
 
+  if (msg->presencemask & PDN_CONNECTIVITY_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
+    copy_protocol_configuration_options(&esm_data->pco, &msg->protocolconfigurationoptions);
+  }
   /*
    * Get the ESM information transfer flag
    */
@@ -270,8 +274,6 @@ esm_recv_pdn_connectivity_request (
      */
     //TODO: rc = esm_proc_information_request();
   }
-
-  copy_protocol_configuration_options(&esm_data->pco, &msg->protocolconfigurationoptions);
 
 
 #if ORIGINAL_CODE

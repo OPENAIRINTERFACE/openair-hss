@@ -146,7 +146,12 @@ typedef struct esm_eps_dedicated_bearer_context_activate_s {
   ebi_t                    ebi;   /* EPS bearer identity of the EPS bearer context to be activated                */
   ebi_t                    linked_ebi;
   qci_t                    qci;
+  bitrate_t                gbr_ul;
+  bitrate_t                gbr_dl;
+  bitrate_t                mbr_ul;
+  bitrate_t                mbr_dl;
   traffic_flow_template_t *tft;
+  protocol_configuration_options_t*pco;
 } esm_eps_dedicated_bearer_context_activate_t;
 
 /*

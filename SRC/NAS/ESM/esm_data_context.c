@@ -43,6 +43,7 @@
 
 #include "bstrlib.h"
 
+#include "assertions.h"
 #include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
@@ -58,18 +59,30 @@
 
 // free allocated structs
 //------------------------------------------------------------------------------
-// void free_esm_bearer(esm_bearer_t * bearer)
-// {
-//   if (bearer) {
-//     unsigned int i;
-//     for (i=0; i < NET_PACKET_FILTER_MAX; i++) {
-//       if (bearer->tft) {
-//         free_traffic_flow_template(&bearer->tft);
-//       }
-//     }
-//     free_wrapper((void**)&bearer);
-//   }
-// }
+void free_esm_bearer_context(esm_ebr_context_t * esm_ebr_context)
+{
+  if (esm_ebr_context) {
+    if (esm_ebr_context->pco) {
+      free_protocol_configuration_options(&esm_ebr_context->pco);
+    }
+    if (esm_ebr_context->tft) {
+      free_traffic_flow_template(&esm_ebr_context->tft);
+    }
+    if (esm_ebr_context->args) {
+      AssertFatal(0, "TODO");
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+void esm_bearer_context_init(esm_ebr_context_t * esm_ebr_context)
+{
+  if (esm_ebr_context) {
+    memset(esm_ebr_context, 0, sizeof(*esm_ebr_context));
+    esm_ebr_context->status   = ESM_EBR_INACTIVE;
+    esm_ebr_context->timer.id = NAS_TIMER_INACTIVE_ID;
+  }
+}
 
 
 // free allocated structs

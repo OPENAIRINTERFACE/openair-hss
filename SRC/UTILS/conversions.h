@@ -32,6 +32,9 @@
 
 #include "common_types.h"
 #include "3gpp_23.003.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
+#include "EpsQualityOfService.h"
 
 /* Endianness conversions for 16 and 32 bits integers from host to network order */
 #if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -376,5 +379,6 @@ int ascii_to_hex(uint8_t *dst, const char *h);
     ((bYtE) & 0x04 ? '1':'0'),\
     ((bYtE) & 0x02 ? '1':'0'),\
     ((bYtE) & 0x01 ? '1':'0')
+
 
 #endif /* FILE_CONVERSIONS_SEEN */

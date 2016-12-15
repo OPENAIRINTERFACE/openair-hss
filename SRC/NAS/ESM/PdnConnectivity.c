@@ -101,6 +101,7 @@ static pdn_cid_t _pdn_connectivity_create (
   const_bstring const apn,
   pdn_type_t pdn_type,
   const_bstring const pdn_addr,
+  protocol_configuration_options_t * const pco,
   const bool is_emergency);
 
 proc_tid_t _pdn_connectivity_delete (emm_context_t * emm_context, pdn_cid_t pdn_cid);
@@ -164,6 +165,7 @@ esm_proc_pdn_connectivity_request (
   esm_proc_pdn_type_t          pdn_type,
   const_bstring          const pdn_addr,
   bearer_qos_t             * default_qos,
+  protocol_configuration_options_t * const pco,
   esm_cause_t                 *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -188,7 +190,7 @@ esm_proc_pdn_connectivity_request (
   /*
    * Create new PDN connection
    */
-  rc = _pdn_connectivity_create (emm_context, pti, pdn_cid, context_identifier, apn, pdn_type, pdn_addr, is_emergency);
+  rc = _pdn_connectivity_create (emm_context, pti, pdn_cid, context_identifier, apn, pdn_type, pdn_addr, pco, is_emergency);
 
   if (rc < 0) {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection\n");
@@ -230,7 +232,7 @@ esm_proc_pdn_connectivity_reject (
   bool is_standalone,
   emm_context_t * emm_context,
   ebi_t ebi,
-  bstring msg,
+  STOLEN_REF bstring *msg,
   bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -248,7 +250,8 @@ esm_proc_pdn_connectivity_reject (
     emm_sap.primitive = EMMESM_UNITDATA_REQ;
     emm_sap.u.emm_esm.ue_id = ue_id;
     emm_sap.u.emm_esm.ctx = emm_context;
-    emm_sap.u.emm_esm.u.data.msg = msg;
+    emm_sap.u.emm_esm.u.data.msg = *msg;
+    msg = NULL;
     rc = emm_sap_send (&emm_sap);
   }
 
@@ -342,6 +345,7 @@ _pdn_connectivity_create (
   const_bstring const apn,
   pdn_type_t pdn_type,
   const_bstring const pdn_addr,
+  protocol_configuration_options_t * const pco,
   const bool is_emergency)
 {
   ue_mm_context_t                              *ue_mm_context = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context);
@@ -372,6 +376,14 @@ _pdn_connectivity_create (
        */
       pdn_context->esm_data.is_emergency = is_emergency;
 
+      if (pco) {
+        if (!pdn_context->pco) {
+          pdn_context->pco = malloc(sizeof(protocol_configuration_options_t));
+        } else {
+          clear_protocol_configuration_options(pdn_context->pco);
+        }
+        copy_protocol_configuration_options(pdn_context->pco, pco);
+      }
       /*
        * Setup the IP address allocated by the network
        */

@@ -241,10 +241,10 @@ int esm_ebr_assign (emm_context_t * emm_context, ebi_t ebi)
  ***************************************************************************/
 int esm_ebr_release (emm_context_t * emm_context, ebi_t ebi)
 {
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_ebr_context_t                      *ebr_ctx = NULL;
   bearer_context_t                       *bearer_context = NULL;
 
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
@@ -328,10 +328,10 @@ int esm_ebr_start_timer (emm_context_t * emm_context, ebi_t ebi,
   long sec,
   nas_timer_callback_t cb)
 {
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_ebr_context_t                      *ebr_ctx = NULL;
   bearer_context_t                       *bearer_context = NULL;
 
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
 
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-FSM   - Retransmission timer bad ebi %d\n", ebi);
@@ -374,6 +374,7 @@ int esm_ebr_start_timer (emm_context_t * emm_context, ebi_t ebi,
        * Set the UE identifier
        */
       ebr_ctx->args->ue_id = ue_mm_context->mme_ue_s1ap_id;
+      ebr_ctx->args->ctx = emm_context;
       /*
        * Set the EPS bearer identity
        */
@@ -546,7 +547,7 @@ esm_ebr_set_status (
   emm_context_t * emm_context,
   ebi_t ebi,
   esm_ebr_state status,
-  int ue_requested)
+  bool ue_requested)
 {
   bearer_context_t                       *bearer_context = NULL;
   esm_ebr_context_t                      *ebr_ctx = 0;

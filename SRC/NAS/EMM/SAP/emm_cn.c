@@ -279,13 +279,14 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
         emm_ctx->esm_ctx.esm_proc_data->pdn_type,
         emm_ctx->esm_ctx.esm_proc_data->pdn_addr,
         &emm_ctx->esm_ctx.esm_proc_data->bearer_qos,
+        (emm_ctx->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_ctx->esm_ctx.esm_proc_data->pco:NULL,
         &esm_cause);
 
     if (rc != RETURNerror) {
       /*
        * Create local default EPS bearer context
        */
-      rc = esm_proc_default_eps_bearer_context (emm_ctx, pdn_cid, &new_ebi, &emm_ctx->esm_ctx.esm_proc_data->bearer_qos, &esm_cause);
+      rc = esm_proc_default_eps_bearer_context (emm_ctx, emm_ctx->esm_ctx.esm_proc_data->pti, pdn_cid, &new_ebi, emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci, &esm_cause);
 
       if (rc != RETURNerror) {
         esm_cause = ESM_CAUSE_SUCCESS;
@@ -453,16 +454,16 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 //------------------------------------------------------------------------------
 static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
 {
-  int                                     rc = RETURNok;
   OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 //------------------------------------------------------------------------------
 static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bearer_req_t * msg)
 {
-  int                                     rc = RETURNok;
   OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
   // forward to ESM
   esm_sap_t                               esm_sap = {0};
 
@@ -472,14 +473,20 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
   esm_sap.ctx           = &ue_mm_context->emm_context;
   esm_sap.is_standalone = true;
   esm_sap.ue_id         = msg->ue_id;
-
   esm_sap.data.eps_dedicated_bearer_context_activate.cid         = msg->cid;
   esm_sap.data.eps_dedicated_bearer_context_activate.ebi         = msg->ebi;
   esm_sap.data.eps_dedicated_bearer_context_activate.linked_ebi  = msg->linked_ebi;
-  esm_sap.data.eps_dedicated_bearer_context_activate.qci         = msg->qci;
   esm_sap.data.eps_dedicated_bearer_context_activate.tft         = msg->tft;
+  esm_sap.data.eps_dedicated_bearer_context_activate.qci         = msg->bearer_qos.qci;
+  esm_sap.data.eps_dedicated_bearer_context_activate.gbr_ul      = msg->bearer_qos.gbr.br_ul;
+  esm_sap.data.eps_dedicated_bearer_context_activate.gbr_dl      = msg->bearer_qos.gbr.br_dl;
+  esm_sap.data.eps_dedicated_bearer_context_activate.mbr_ul      = msg->bearer_qos.mbr.br_ul;
+  esm_sap.data.eps_dedicated_bearer_context_activate.mbr_dl      = msg->bearer_qos.mbr.br_dl;
   // stole ref if any
   msg->tft = NULL;
+  esm_sap.data.eps_dedicated_bearer_context_activate.pco         = msg->pco;
+  // stole ref if any
+  msg->pco = NULL;
   rc = esm_sap_send (&esm_sap);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

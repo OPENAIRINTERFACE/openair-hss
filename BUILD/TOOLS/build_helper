@@ -709,6 +709,7 @@ check_install_mme_software() {
     libtool \
     libxml2 \
     libxml2-dev \
+    libxml2-utils \
     mscgen \
     openssl \
     check \

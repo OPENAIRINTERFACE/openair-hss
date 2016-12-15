@@ -243,7 +243,7 @@ esm_proc_pdn_disconnect_reject (
   const bool is_standalone,
   emm_context_t * emm_context,
   ebi_t ebi,
-  bstring msg,
+  STOLEN_REF bstring *msg,
   const bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -258,7 +258,8 @@ esm_proc_pdn_disconnect_reject (
   emm_sap.primitive = EMMESM_UNITDATA_REQ;
   emm_sap.u.emm_esm.ue_id = ue_id;
   emm_sap.u.emm_esm.ctx = emm_context;
-  emm_sap.u.emm_esm.u.data.msg = msg;
+  emm_sap.u.emm_esm.u.data.msg = *msg;
+  *msg = NULL;
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

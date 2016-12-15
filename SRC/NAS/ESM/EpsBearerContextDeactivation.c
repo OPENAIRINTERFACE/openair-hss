@@ -54,6 +54,7 @@
 #include "bstrlib.h"
 
 #include "log.h"
+#include "dynamic_memory_check.h"
 #include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
@@ -235,11 +236,11 @@ esm_proc_eps_bearer_context_deactivate (
  ***************************************************************************/
 int
 esm_proc_eps_bearer_context_deactivate_request (
-  bool is_standalone,
-  emm_context_t * ue_context,
-  ebi_t ebi,
-  bstring msg,
-  bool ue_triggered)
+  const bool is_standalone,
+  emm_context_t * const ue_context,
+  const ebi_t ebi,
+  STOLEN_REF bstring *msg,
+  const bool ue_triggered)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc;
@@ -251,7 +252,8 @@ esm_proc_eps_bearer_context_deactivate_request (
    * Send deactivate EPS bearer context request message and
    * * * * start timer T3495
    */
-  rc = _eps_bearer_deactivate (ue_context, ebi, &msg);
+  rc = _eps_bearer_deactivate (ue_context, ebi, msg);
+  msg = NULL;
 
   if (rc != RETURNerror) {
     /*
@@ -459,16 +461,18 @@ _eps_bearer_deactivate (
   emm_sap.u.emm_esm.ue_id = ue_id;
   emm_sap.u.emm_esm.ctx = ue_context;
   emm_esm->msg = *msg;
-  msg = NULL;
+  bstring msg_dup = bstrcpy(*msg);
+  *msg = NULL;
   rc = emm_sap_send (&emm_sap);
 
   if (rc != RETURNerror) {
     /*
      * Start T3495 retransmission timer
      */
-    rc = esm_ebr_start_timer (ue_context, ebi, *msg, mme_config.nas_config.t3495_sec, _eps_bearer_deactivate_t3495_handler);
+    rc = esm_ebr_start_timer (ue_context, ebi, msg_dup, mme_config.nas_config.t3495_sec, _eps_bearer_deactivate_t3495_handler);
+  }else {
+    bdestroy_wrapper(&msg_dup);
   }
-  *msg = NULL;
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 

@@ -235,13 +235,20 @@ esm_sap_send (esm_sap_t * msg)
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ: {
       esm_eps_dedicated_bearer_context_activate_t* bearer_activate = &msg->data.eps_dedicated_bearer_context_activate;
       if (msg->is_standalone) {
+        esm_cause_t esm_cause;
         rc = esm_proc_dedicated_eps_bearer_context (msg->ctx,
-            pid,
+            0,
+            bearer_activate->cid,
             &bearer_activate->ebi,
             &bearer_activate->linked_ebi,
-            (const bearer_qos_t *)NULL,
+            bearer_activate->qci,
+            bearer_activate->gbr_dl,
+            bearer_activate->gbr_ul,
+            bearer_activate->mbr_dl,
+            bearer_activate->mbr_ul,
             bearer_activate->tft,
-            NULL);
+            bearer_activate->pco,
+            &esm_cause);
         if (rc != RETURNok) {
           break;
         }
@@ -745,7 +752,7 @@ _esm_sap_recv (
     /*
      * Complete the relevant ESM procedure
      */
-    rc = (*esm_procedure) (is_standalone, emm_context, ebi, rsp, triggered_by_ue);
+    rc = (*esm_procedure) (is_standalone, emm_context, ebi, &rsp, triggered_by_ue);
 
     if (is_discarded) {
       /*
@@ -821,7 +828,24 @@ _esm_sap_send (
   case ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST:
     break;
 
-  case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST:
+  case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST: {
+      const   esm_eps_dedicated_bearer_context_activate_t *msg = &data->eps_dedicated_bearer_context_activate;
+
+      EpsQualityOfService eps_qos = {0};
+
+      rc = qos_params_to_eps_qos(msg->qci, msg->mbr_dl, msg->mbr_ul, msg->gbr_dl, msg->gbr_ul,
+          &eps_qos, false);
+
+      if (RETURNok == rc) {
+        rc = esm_send_activate_dedicated_eps_bearer_context_request (
+            pti, msg->ebi,
+            &esm_msg.activate_dedicated_eps_bearer_context_request,
+            msg->linked_ebi, &eps_qos, msg->tft, msg->pco);
+
+        esm_procedure = esm_proc_dedicated_eps_bearer_context_request;
+      }
+    }
+
     break;
 
   case MODIFY_EPS_BEARER_CONTEXT_REQUEST:
@@ -863,7 +887,7 @@ _esm_sap_send (
      * Execute the relevant ESM procedure
      */
     if (esm_procedure) {
-      rc = (*esm_procedure) (is_standalone, emm_context, pti, rsp, sent_by_ue);
+      rc = (*esm_procedure) (is_standalone, emm_context, ebi, &rsp, sent_by_ue);
     }
   }
 

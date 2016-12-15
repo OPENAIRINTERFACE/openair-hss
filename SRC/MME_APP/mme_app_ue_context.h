@@ -131,18 +131,16 @@ typedef struct bearer_context_s {
   // TFT: Traffic Flow Template. (For PMIP-based S5/S8 only)
   //traffic_flow_template_t          *tft_pmip;
 
-  bitrate_t gbr_ul;
-  bitrate_t gbr_dl;
-
-  bitrate_t mbr_ul;
-  bitrate_t mbr_dl;
+//  bitrate_t gbr_ul;
+//  bitrate_t gbr_dl;
+//
+//  bitrate_t mbr_ul;
+//  bitrate_t mbr_dl;
 
 
   // extra 23.401 spec members
   pdn_cid_t                         pdn_cx_id;
   mme_app_bearer_state_t            bearer_state;
-  traffic_flow_template_t          *tft; // temp storage of information waiting for activation of required procedure
-  protocol_configuration_options_t *pco; // temp storage of information waiting for activation of required procedure
   esm_ebr_context_t                 esm_ebr_context;
 
 
@@ -249,6 +247,7 @@ typedef struct pdn_context_s {
 
   esm_pdn_t                   esm_data;
   bool                        is_active;
+  protocol_configuration_options_t *pco; // temp storage of information waiting for activation of required procedure
 
 } pdn_context_t;
 

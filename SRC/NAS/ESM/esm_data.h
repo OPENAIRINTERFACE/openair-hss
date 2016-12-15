@@ -66,25 +66,21 @@ Description Defines internal private data handled by EPS Session
 
 /* EPS bearer context states */
 typedef enum {
-  ESM_EBR_INACTIVE,       /* No EPS bearer context exists     */
-  ESM_EBR_ACTIVE,     /* The EPS bearer context is active,
-                 * in the UE, in the network        */
-  ESM_EBR_INACTIVE_PENDING,   /* The network has initiated an EPS bearer
-                 * context deactivation towards the UE  */
-  ESM_EBR_MODIFY_PENDING, /* The network has initiated an EPS bearer
-                 * context modification towards the UE  */
-  ESM_EBR_ACTIVE_PENDING, /* The network has initiated an EPS bearer
-                 * context activation towards the UE    */
+  ESM_EBR_INACTIVE = 0,     /* No EPS bearer context exists     */
+  ESM_EBR_ACTIVE,           /* The EPS bearer context is active, in the UE, in the network        */
+  ESM_EBR_INACTIVE_PENDING, /* The network has initiated an EPS bearer context deactivation towards the UE  */
+  ESM_EBR_MODIFY_PENDING,   /* The network has initiated an EPS bearer context modification towards the UE  */
+  ESM_EBR_ACTIVE_PENDING,   /* The network has initiated an EPS bearer context activation towards the UE    */
   ESM_EBR_STATE_MAX
 } esm_ebr_state;
 
 /* ESM message timer retransmission data */
 typedef struct esm_ebr_timer_data_s {
-  void            *ctx;
-  mme_ue_s1ap_id_t ue_id;      /* Lower layers UE identifier       */
-  ebi_t            ebi;       /* EPS bearer identity          */
-  unsigned int     count;     /* Retransmission counter       */
-  bstring          msg;        /* Encoded ESM message to re-transmit   */
+  struct emm_context_s  *ctx;
+  mme_ue_s1ap_id_t       ue_id;      /* Lower layers UE identifier       */
+  ebi_t                  ebi;       /* EPS bearer identity          */
+  unsigned int           count;     /* Retransmission counter       */
+  bstring                msg;        /* Encoded ESM message to re-transmit   */
 } esm_ebr_timer_data_t;
 
 /*
@@ -93,11 +89,16 @@ typedef struct esm_ebr_timer_data_s {
  * -----------------------
  */
 typedef struct esm_ebr_context_s {
-  //ebi_t ebi;      /* EPS bearer identity          */
-  esm_ebr_state status;   /* EPS bearer context status        */
-
-  struct nas_timer_s timer;   /* Retransmission timer         */
-  esm_ebr_timer_data_t *args; /* Retransmission timer parameters data */
+  //ebi_t                           ebi;      /* EPS bearer identity          */
+  esm_ebr_state                     status;   /* EPS bearer context status        */
+  bitrate_t                         gbr_dl;
+  bitrate_t                         gbr_ul;
+  bitrate_t                         mbr_dl;
+  bitrate_t                         mbr_ul;
+  traffic_flow_template_t          *tft;
+  protocol_configuration_options_t *pco;
+  struct nas_timer_s                timer;   /* Retransmission timer         */
+  esm_ebr_timer_data_t             *args; /* Retransmission timer parameters data */
 } esm_ebr_context_t;
 
 typedef struct esm_ebr_data_s {
@@ -194,6 +195,8 @@ typedef struct esm_data_s {
 } esm_data_t;
 
 
+void free_esm_bearer_context(esm_ebr_context_t * esm_ebr_context);
+void esm_bearer_context_init(esm_ebr_context_t * esm_ebr_context);
 void free_esm_data_context(esm_context_t * esm_data_ctx);
 void esm_init_context(struct esm_context_s *esm_ctx);
 

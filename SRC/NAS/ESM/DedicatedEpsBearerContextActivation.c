@@ -58,6 +58,7 @@
 #include "bstrlib.h"
 
 #include "log.h"
+#include "dynamic_memory_check.h"
 #include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
@@ -132,11 +133,17 @@ static int _dedicated_eps_bearer_activate (emm_context_t * emm_context, ebi_t eb
 int
 esm_proc_dedicated_eps_bearer_context (
   emm_context_t * emm_context,
+  const proc_tid_t   pti,
   pdn_cid_t pid,
   ebi_t *ebi,
   ebi_t *default_ebi,
-  const bearer_qos_t * qos,
+  const qci_t qci,
+  const bitrate_t gbr_dl,
+  const bitrate_t gbr_ul,
+  const bitrate_t mbr_dl,
+  const bitrate_t mbr_ul,
   const traffic_flow_template_t * tft,
+  const protocol_configuration_options_t * pco,
   esm_cause_t *esm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -146,13 +153,15 @@ esm_proc_dedicated_eps_bearer_context (
   /*
    * Assign new EPS bearer context
    */
-  *ebi = esm_ebr_assign (emm_context, ESM_EBI_UNASSIGNED);
+  if (*ebi == ESM_EBI_UNASSIGNED) {
+    *ebi = esm_ebr_assign (emm_context, ESM_EBI_UNASSIGNED);
+  }
 
   if (*ebi != ESM_EBI_UNASSIGNED) {
     /*
      * Create dedicated EPS bearer context
      */
-    *default_ebi = esm_ebr_context_create (emm_context, pid, *ebi, false, qos, tft);
+    *default_ebi = esm_ebr_context_create (emm_context, pti, pid, *ebi, IS_DEFAULT_BEARER_NO, qci, gbr_dl, gbr_ul, mbr_dl, mbr_ul, tft, pco);
 
     if (*default_ebi == ESM_EBI_UNASSIGNED) {
       /*
@@ -479,16 +488,18 @@ static int _dedicated_eps_bearer_activate (
   emm_sap.u.emm_esm.ue_id = ue_id;
   emm_sap.u.emm_esm.ctx = emm_context;
   emm_esm->msg = *msg;
-  msg = NULL;
+  bstring msg_dup = bstrcpy(*msg);
+  *msg = NULL;
   rc = emm_sap_send (&emm_sap);
 
   if (rc != RETURNerror) {
     /*
      * Start T3485 retransmission timer
      */
-    rc = esm_ebr_start_timer (emm_context, ebi, *msg, mme_config.nas_config.t3485_sec, _dedicated_eps_bearer_activate_t3485_handler);
+    rc = esm_ebr_start_timer (emm_context, ebi, msg_dup, mme_config.nas_config.t3485_sec, _dedicated_eps_bearer_activate_t3485_handler);
+  } else {
+    bdestroy_wrapper(&msg_dup);
   }
-  *msg = NULL;
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }

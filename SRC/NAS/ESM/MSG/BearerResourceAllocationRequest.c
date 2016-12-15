@@ -28,6 +28,7 @@
 #include "bstrlib.h"
 
 #include "log.h"
+#include "common_types.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.301.h"
 #include "TLVEncoder.h"

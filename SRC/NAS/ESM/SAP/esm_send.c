@@ -240,7 +240,7 @@ esm_send_pdn_disconnect_reject (
 int
 esm_send_activate_default_eps_bearer_context_request (
   int pti,
-  int ebi,
+  ebi_t ebi,
   activate_default_eps_bearer_context_request_msg * msg,
   bstring apn,
   const protocol_configuration_options_t * pco,
@@ -360,11 +360,9 @@ esm_send_activate_dedicated_eps_bearer_context_request (
   activate_dedicated_eps_bearer_context_request_msg * msg,
   int linked_ebi,
   const EpsQualityOfService * qos,
-  packet_filter_t * pkf,
-  int n_pkfs)
+  traffic_flow_template_t *tft,
+  protocol_configuration_options_t *pco)
 {
-  int                                     i;
-
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   /*
    * Mandatory - ESM message header
@@ -380,18 +378,19 @@ esm_send_activate_dedicated_eps_bearer_context_request (
   /*
    * Mandatory - traffic flow template
    */
-  msg->tft.tftoperationcode = TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE_NEW_TFT;
-  msg->tft.ebit = TRAFFIC_FLOW_TEMPLATE_PARAMETER_LIST_IS_NOT_INCLUDED;
-  msg->tft.numberofpacketfilters = n_pkfs;
-
-  for (i = 0; i < msg->tft.numberofpacketfilters; i++) {
-    msg->tft.packetfilterlist.createnewtft[i] = pkf[i];
+  if (tft) {
+    memcpy(&msg->tft, tft, sizeof(traffic_flow_template_t));
   }
 
   /*
    * Optional
    */
   msg->presencemask = 0;
+  if (pco) {
+    memcpy(&msg->protocolconfigurationoptions, pco, sizeof(protocol_configuration_options_t));
+    msg->presencemask |= ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_IEI;
+  }
+
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send Activate Dedicated EPS Bearer Context " "Request message (pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }
