@@ -168,6 +168,12 @@ s11_mme_handle_create_session_response (
       s11_paa_ie_get, &resp_p->paa);
   DevAssert (NW_OK == rc);
   /*
+   * APN RESTRICTION
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_APN_RESTRICTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
+      s11_apn_restriction_ie_get, &resp_p->apn_restriction);
+  DevAssert (NW_OK == rc);
+  /*
    * PCO IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PCO, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,

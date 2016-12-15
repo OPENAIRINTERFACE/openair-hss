@@ -252,7 +252,7 @@ decode_protocol_configuration_options_ie (
     protocol_configuration_options_t * protocolconfigurationoptions,
     const bool iei_present,
     const uint8_t * const buffer,
-    const const uint32_t len)
+    const uint32_t len)
 {
   int                                     decoded = 0;
   int                                     decoded2 = 0;
@@ -559,7 +559,7 @@ int encode_packet_flow_identifier_ie (
 //------------------------------------------------------------------------------
 static int decode_traffic_flow_template_packet_filter_identifier (
     packet_filter_identifier_t * packetfilteridentifier,
-    uint8_t * buffer,
+    const uint8_t * const buffer,
     const uint32_t len)
 {
   int                                     decoded = 0;
@@ -573,7 +573,7 @@ static int decode_traffic_flow_template_packet_filter_identifier (
 //------------------------------------------------------------------------------
 static int decode_traffic_flow_template_packet_filter (
     packet_filter_t * packetfilter,
-    uint8_t * buffer,
+    const uint8_t * const buffer,
     const uint32_t len)
 {
   int                                     decoded = 0,j;
@@ -741,35 +741,35 @@ static int decode_traffic_flow_template_packet_filter (
 }
 //------------------------------------------------------------------------------
 static int decode_traffic_flow_template_delete_packet (
-    delete_packet_filter_t * packetfilter,
-    uint8_t * buffer,
-    const uint32_t len)
+  delete_packet_filter_t * packetfilter,
+  const uint8_t * const buffer,
+  const uint32_t len)
 {
   return decode_traffic_flow_template_packet_filter_identifier ((packet_filter_identifier_t *)packetfilter, buffer, len);
 }
 
 //------------------------------------------------------------------------------
 static int decode_traffic_flow_template_create_tft (
-    create_new_tft_t * packetfilter,
-    uint8_t * buffer,
-    const uint32_t len)
+  create_new_tft_t * packetfilter,
+  const uint8_t * const buffer,
+  const uint32_t len)
 {
   return decode_traffic_flow_template_packet_filter ((packet_filter_t *)packetfilter, buffer, len);
 }
 
 //------------------------------------------------------------------------------
 static int decode_traffic_flow_template_add_packet (
-    add_packet_filter_t * packetfilter,
-    uint8_t * buffer,
-    const uint32_t len)
+  add_packet_filter_t * packetfilter,
+  const uint8_t * const buffer,
+  const uint32_t len)
 {
   return decode_traffic_flow_template_packet_filter ((packet_filter_t *)packetfilter, buffer, len);
 }
 
 //------------------------------------------------------------------------------
 static int decode_traffic_flow_template_replace_packet (
-    replace_packet_filter_t * packetfilter,
-  uint8_t * buffer,
+  replace_packet_filter_t * packetfilter,
+  const uint8_t * const buffer,
   const uint32_t len)
 {
   return decode_traffic_flow_template_packet_filter((packet_filter_t *)packetfilter, buffer, len);
@@ -778,22 +778,12 @@ static int decode_traffic_flow_template_replace_packet (
 //------------------------------------------------------------------------------
 int decode_traffic_flow_template (
   traffic_flow_template_t * trafficflowtemplate,
-  const bool iei_present,
-  uint8_t * buffer,
+  const uint8_t * const buffer,
   const uint32_t len)
 {
   int                                     decoded = 0;
   int                                     decoded_result = 0;
-  uint8_t                                 ielen = 0;
 
-  if (iei_present) {
-    CHECK_IEI_DECODER (SM_TRAFFIC_FLOW_TEMPLATE_IEI, *buffer);
-    decoded++;
-  }
-
-  ielen = *(buffer + decoded);
-  decoded++;
-  CHECK_LENGTH_DECODER (len - decoded, ielen);
   trafficflowtemplate->tftoperationcode = (*(buffer + decoded) >> 5) & 0x7;
   trafficflowtemplate->ebit = (*(buffer + decoded) >> 4) & 0x1;
   trafficflowtemplate->numberofpacketfilters = *(buffer + decoded) & 0xf;
@@ -839,6 +829,35 @@ int decode_traffic_flow_template (
 
   return decoded;
 }
+//------------------------------------------------------------------------------
+int
+decode_traffic_flow_template_ie (
+    traffic_flow_template_t * trafficflowtemplate,
+    const bool iei_present,
+    const uint8_t * const buffer,
+    const uint32_t len)
+{
+  int                                     decoded = 0;
+  int                                     decoded2 = 0;
+  uint8_t                                 ielen = 0;
+
+  if (iei_present) {
+    CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, TRAFFIC_FLOW_TEMPLATE_MINIMUM_LENGTH, len);
+    CHECK_IEI_DECODER (SM_PROTOCOL_CONFIGURATION_OPTIONS_IEI, *buffer);
+    decoded++;
+  } else {
+    CHECK_PDU_POINTER_AND_LENGTH_DECODER (buffer, (TRAFFIC_FLOW_TEMPLATE_MINIMUM_LENGTH - 1), len);
+  }
+
+  ielen = *(buffer + decoded);
+  decoded++;
+  CHECK_LENGTH_DECODER (len - decoded, ielen);
+
+  decoded2 = decode_traffic_flow_template(trafficflowtemplate, buffer + decoded, len - decoded);
+  if (decoded2 < 0) return decoded2;
+  return decoded+decoded2;
+}
+
 //------------------------------------------------------------------------------
 static int encode_traffic_flow_template_packet_filter_identifier (
   const   packet_filter_identifier_t * packetfilteridentifier,
@@ -1046,28 +1065,11 @@ static int encode_traffic_flow_template_replace_packet (
 //------------------------------------------------------------------------------
 int encode_traffic_flow_template (
   const traffic_flow_template_t * trafficflowtemplate,
-  const bool iei_present,
-  const bool length_present,
   uint8_t * buffer,
   const uint32_t len)
 {
-  uint8_t                                *lenPtr;
   uint32_t                                encoded = 0;
 
-  /*
-   * Checking IEI and pointer
-   */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, TRAFFIC_FLOW_TEMPLATE_MINIMUM_LENGTH, len);
-
-  if (iei_present) {
-    *buffer = SM_TRAFFIC_FLOW_TEMPLATE_IEI;
-    encoded++;
-  }
-
-  if (length_present) {
-    lenPtr = (buffer + encoded);
-    encoded++;
-  }
 
   *(buffer + encoded) = ((trafficflowtemplate->tftoperationcode & 0x7) << 5) | ((trafficflowtemplate->ebit & 0x1) << 4) | (trafficflowtemplate->numberofpacketfilters & 0xf);
   encoded++;
@@ -1093,9 +1095,34 @@ int encode_traffic_flow_template (
     }
   }
 
-  if (length_present) {
-    *lenPtr = encoded - 1 - ((iei_present) ? 1 : 0);
-  }
+  return encoded;
+}
+
+//------------------------------------------------------------------------------
+int
+encode_traffic_flow_template_ie (
+    const traffic_flow_template_t * const trafficflowtemplate,
+    const bool iei_present,
+    uint8_t * buffer,
+    const uint32_t len)
+{
+  uint8_t                                *lenPtr = NULL;
+  uint32_t                                encoded = 0;
+
+ if (iei_present) {
+   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, TRAFFIC_FLOW_TEMPLATE_MINIMUM_LENGTH, len);
+   *buffer = SM_TRAFFIC_FLOW_TEMPLATE_IEI;
+   encoded++;
+ } else {
+   CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, (TRAFFIC_FLOW_TEMPLATE_MINIMUM_LENGTH - 1), len);
+ }
+
+ lenPtr = (buffer + encoded);
+ encoded++;
+
+ encoded += encode_traffic_flow_template(trafficflowtemplate, buffer + encoded, len - encoded);
+
+  *lenPtr = encoded - 1 - ((iei_present) ? 1 : 0);
   return encoded;
 }
 

@@ -187,17 +187,12 @@ esm_ebr_context_create (
       if (bearer_context->esm_ebr_context.tft) {
         free_traffic_flow_template(&bearer_context->esm_ebr_context.tft);
       }
-      if (tft) {
-        bearer_context->esm_ebr_context.tft = calloc(1, sizeof(traffic_flow_template_t));
-        copy_traffic_flow_template(bearer_context->esm_ebr_context.tft, tft);
-      }
+      bearer_context->esm_ebr_context.tft = tft;
+
       if (bearer_context->esm_ebr_context.pco) {
         free_protocol_configuration_options(&bearer_context->esm_ebr_context.pco);
       }
-      if (tft) {
-        bearer_context->esm_ebr_context.pco = calloc(1, sizeof(protocol_configuration_options_t));
-        copy_protocol_configuration_options(bearer_context->esm_ebr_context.pco, pco);
-      }
+      bearer_context->esm_ebr_context.pco = pco;
 
       if (is_default) {
         /*

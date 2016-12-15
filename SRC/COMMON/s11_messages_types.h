@@ -964,7 +964,7 @@ typedef struct itti_s11_modify_bearer_response_s {
 typedef struct itti_s11_delete_session_request_s {
   teid_t      local_teid;             ///< not in specs for inner MME use
   teid_t      teid;                   ///< Tunnel Endpoint Identifier
-  EBI_t       lbi;                    ///< Linked EPS Bearer ID
+  ebi_t       lbi;                    ///< Linked EPS Bearer ID
   fteid_t     sender_fteid_for_cp;    ///< Sender F-TEID for control plane
 
   /* Operation Indication: This flag shall be set over S4/S11 interface

@@ -860,6 +860,19 @@ s11_bearer_context_created_ie_set (
   return RETURNok;
 }
 
+NwRcT
+s11_apn_restriction_ie_get (
+  uint8_t ieType,
+  uint8_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  APNRestriction_t         *apn_restriction = (APNRestriction_t *) arg;
+  OAILOG_DEBUG (LOG_S11, "\t- APN restriction 0x%02x\n", *apn_restriction);
+  return NW_OK;
+}
+
 /* This IE shall be included in the E-UTRAN initial attach,
    PDP Context Activation and UE Requested PDN connectivity procedures.
    This IE denotes the most stringent restriction as required
@@ -1081,7 +1094,7 @@ s11_tft_ie_get (
   traffic_flow_template_t       *tft = (traffic_flow_template_t *) arg;
 
   DevAssert (tft );
-  offset = decode_traffic_flow_template (tft, 0, ieValue, ieLength);
+  offset = decode_traffic_flow_template (tft, ieValue, ieLength);
   if ((0 < offset) && (TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH >= offset))
     return NW_OK;
   else {
@@ -1100,7 +1113,7 @@ s11_tft_ie_set (
   NwRcT                                   rc = NW_OK;
 
   DevAssert (tft );
-  offset = encode_traffic_flow_template(tft, TFT_ENCODE_IEI_FALSE, TFT_ENCODE_LENGTH_FALSE, temp, TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH);
+  offset = encode_traffic_flow_template(tft, temp, TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH);
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_TFT, offset, 0, temp);
   DevAssert (NW_OK == rc);
   return RETURNok;

@@ -1007,9 +1007,10 @@ typedef struct traffic_flow_template_s {
 #define TFT_ENCODE_LENGTH_TRUE  true
 #define TFT_ENCODE_LENGTH_FALSE false
 
-int encode_traffic_flow_template(const traffic_flow_template_t *trafficflowtemplate, const bool iei_present, const bool length_present,
-    uint8_t *buffer, const uint32_t len);
-int decode_traffic_flow_template(traffic_flow_template_t *trafficflowtemplate, const bool iei_present, uint8_t *buffer, const uint32_t len);
+int encode_traffic_flow_template(const traffic_flow_template_t *trafficflowtemplate, uint8_t *buffer, const uint32_t len);
+int encode_traffic_flow_template_ie (const traffic_flow_template_t * const trafficflowtemplate, const bool iei_present, uint8_t * buffer, const uint32_t len);
+int decode_traffic_flow_template(traffic_flow_template_t *trafficflowtemplate, const uint8_t * const buffer, const uint32_t len);
+int decode_traffic_flow_template_ie(traffic_flow_template_t *trafficflowtemplate, const bool iei_present, const uint8_t * const buffer, const uint32_t len);
 void copy_traffic_flow_template (traffic_flow_template_t * const tft_dst, const traffic_flow_template_t * const tft_src);
 void free_traffic_flow_template(traffic_flow_template_t ** tft);
 

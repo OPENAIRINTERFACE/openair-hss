@@ -97,8 +97,8 @@
  ***************************************************************************/
 int
 esm_send_status (
-  int pti,
-  int ebi,
+  pti_t pti,
+  ebi_t ebi,
   esm_status_msg * msg,
   int esm_cause)
 {
@@ -145,7 +145,7 @@ esm_send_status (
  ***************************************************************************/
 int
 esm_send_pdn_connectivity_reject (
-  int pti,
+  pti_t pti,
   pdn_connectivity_reject_msg * msg,
   int esm_cause)
 {
@@ -189,7 +189,7 @@ esm_send_pdn_connectivity_reject (
  ***************************************************************************/
 int
 esm_send_pdn_disconnect_reject (
-  int pti,
+  pti_t pti,
   pdn_disconnect_reject_msg * msg,
   int esm_cause)
 {
@@ -239,7 +239,7 @@ esm_send_pdn_disconnect_reject (
  ***************************************************************************/
 int
 esm_send_activate_default_eps_bearer_context_request (
-  int pti,
+  pti_t pti,
   ebi_t ebi,
   activate_default_eps_bearer_context_request_msg * msg,
   bstring apn,
@@ -355,10 +355,10 @@ esm_send_activate_default_eps_bearer_context_request (
  ***************************************************************************/
 int
 esm_send_activate_dedicated_eps_bearer_context_request (
-  int pti,
-  int ebi,
+  pti_t pti,
+  ebi_t ebi,
   activate_dedicated_eps_bearer_context_request_msg * msg,
-  int linked_ebi,
+  ebi_t linked_ebi,
   const EpsQualityOfService * qos,
   traffic_flow_template_t *tft,
   protocol_configuration_options_t *pco)
@@ -418,8 +418,8 @@ esm_send_activate_dedicated_eps_bearer_context_request (
  ***************************************************************************/
 int
 esm_send_deactivate_eps_bearer_context_request (
-  int pti,
-  int ebi,
+  pti_t pti,
+  ebi_t ebi,
   deactivate_eps_bearer_context_request_msg * msg,
   int esm_cause)
 {

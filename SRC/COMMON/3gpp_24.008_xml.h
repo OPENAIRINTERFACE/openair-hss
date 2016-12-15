@@ -410,7 +410,7 @@
 #define PACKET_FILTER_CONTENTS_FLOW_LABEL_IE_XML_STR                     "value"
 
 
-#define COMPONENT_TYPE_IDENTIFIER_ATTR_XML_STR              "component type identifier"
+#define COMPONENT_TYPE_IDENTIFIER_ATTR_XML_STR              "component_type_identifier"
 
 //------------------------------------------------------------------------------
 // 10.5.7.3 GPRS Timer

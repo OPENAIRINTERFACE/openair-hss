@@ -60,7 +60,7 @@ decode_activate_dedicated_eps_bearer_context_request (
   else
     decoded += decoded_result;
 
-  if ((decoded_result = decode_traffic_flow_template (&activate_dedicated_eps_bearer_context_request->tft, 0, buffer + decoded, len - decoded)) < 0)
+  if ((decoded_result = decode_traffic_flow_template_ie (&activate_dedicated_eps_bearer_context_request->tft, 0, buffer + decoded, len - decoded)) < 0)
     return decoded_result;
   else
     decoded += decoded_result;
@@ -179,7 +179,7 @@ encode_activate_dedicated_eps_bearer_context_request (
   else
     encoded += encode_result;
 
-  if ((encode_result = encode_traffic_flow_template (&activate_dedicated_eps_bearer_context_request->tft, TFT_ENCODE_IEI_FALSE, TFT_ENCODE_LENGTH_TRUE, buffer + encoded, len - encoded)) < 0)     //Return in case of error
+  if ((encode_result = encode_traffic_flow_template_ie (&activate_dedicated_eps_bearer_context_request->tft, TFT_ENCODE_IEI_FALSE, buffer + encoded, len - encoded)) < 0)     //Return in case of error
     return encode_result;
   else
     encoded += encode_result;

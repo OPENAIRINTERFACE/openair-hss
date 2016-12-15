@@ -141,7 +141,10 @@ NwRcT s11_mei_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8
 
 NwRcT s11_uli_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
-/* APN restrtiction Information Element */
+/* APN restriction Information Element
+ * 3GPP TS 29.274 #8.57
+ */
+NwRcT s11_apn_restriction_ie_get (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 int s11_apn_restriction_ie_set(NwGtpv2cMsgHandleT *msg, const uint8_t apn_restriction);
 
 /* Bearer level Qos Information Element
