@@ -851,7 +851,11 @@ emm_recv_security_mode_complete (
   /*
    * Execute the NAS security mode control completion procedure
    */
-  rc = emm_proc_security_mode_complete (ue_id);
+  if (msg->presencemask & SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT) {
+    rc = emm_proc_security_mode_complete (ue_id, &msg->imeisv.imeisv);
+  } else {
+    rc = emm_proc_security_mode_complete (ue_id, NULL);
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
