@@ -386,13 +386,14 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
     /*
      * Encode the returned ESM response message
      */
-    int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) emm_ctx->emm_cn_sap_buffer,
+    char                                    emm_cn_sap_buffer[EMM_CN_SAP_BUFFER_SIZE];
+    int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) emm_cn_sap_buffer,
                                                                    EMM_CN_SAP_BUFFER_SIZE);
 
     OAILOG_INFO (LOG_NAS_EMM, "ESM encoded MSG size %d\n", size);
 
     if (size > 0) {
-      rsp = blk2bstr(emm_ctx->emm_cn_sap_buffer, size);
+      rsp = blk2bstr(emm_cn_sap_buffer, size);
     }
 
     /*

@@ -162,13 +162,10 @@ struct esm_proc_data_s;
  * a PDN connection.
  */
 typedef struct esm_context_s {
-  //mme_ue_s1ap_id_t ue_id;
-
-  int n_active_ebrs;     /* Total number of active EPS bearer contexts   */
-  int n_active_pdns;     /* Number of active PDN connections     */
-  int n_pdns;
-  bool is_emergency;  /* Indicates whether a PDN connection for emergency
-             * bearer services is established       */
+  int        n_active_ebrs;     /* Total number of active EPS bearer contexts   */
+  int        n_active_pdns;     /* Number of active PDN connections     */
+  int        n_pdns;
+  bool       is_emergency;  /* Indicates whether a PDN connection for emergency bearer services is established       */
   struct esm_proc_data_s *esm_proc_data;
 } esm_context_t;
 

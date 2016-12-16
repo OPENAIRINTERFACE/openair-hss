@@ -228,7 +228,6 @@ typedef struct emm_context_s {
   // TODO: DO BETTER  WITH BELOW
   bstring         esm_msg;      /* ESM message contained within the initial request*/
 #  define EMM_CN_SAP_BUFFER_SIZE 4096
-  char                             emm_cn_sap_buffer[EMM_CN_SAP_BUFFER_SIZE];
 
 
 #define           IS_EMM_CTXT_PRESENT_IMSI( eMmCtXtPtR )                  (!!((eMmCtXtPtR)->member_present_mask & EMM_CTXT_MEMBER_IMSI))
