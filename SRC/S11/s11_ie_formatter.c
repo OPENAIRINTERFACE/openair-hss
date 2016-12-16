@@ -37,6 +37,8 @@
 #include "3gpp_33.401.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.008.h"
+#include "3gpp_24.007.h"
+#include "3gpp_36.413.h"
 #include "NwGtpv2c.h"
 #include "NwGtpv2cIe.h"
 #include "NwGtpv2cMsg.h"
@@ -1350,21 +1352,37 @@ s11_bearer_qos_ie_get (
   DevAssert (bearer_qos );
 
   if (22 <= ieLength) {
-    bearer_qos->pci = (ieValue[0] >> 6) & 0x01;
-    bearer_qos->pci = (ieValue[0] >> 6) & 0x01;
-    bearer_qos->pl  = (ieValue[0] >> 2) & 0x0F;
-    bearer_qos->pvi = ieValue[0] & 0x01;
-    bearer_qos->qci = ieValue[1];
+    int index = 0;
+    bearer_qos->pci = (ieValue[index] >> 6) & 0x01;
+    bearer_qos->pci = (ieValue[index] >> 6) & 0x01;
+    bearer_qos->pl  = (ieValue[index] >> 2) & 0x0F;
+    bearer_qos->pvi = ieValue[index++] & 0x01;
+    bearer_qos->qci = ieValue[index++];
 
-    memcpy (&bearer_qos->mbr.br_ul, &ieValue[2], 4);
-    memcpy (&bearer_qos->mbr.br_dl, &ieValue[6], 4);
-    memcpy (&bearer_qos->gbr.br_ul, &ieValue[10], 4);
-    memcpy (&bearer_qos->gbr.br_dl, &ieValue[14], 4);
+    bearer_qos->mbr.br_ul = ((bit_rate_t)ieValue[index++]) << 32;
+    bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 24);
+    bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 16);
+    bearer_qos->mbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 8);
+    bearer_qos->mbr.br_ul |= (bit_rate_t)ieValue[index++];
 
-    bearer_qos->mbr.br_ul = ntohl(bearer_qos->mbr.br_ul);
-    bearer_qos->mbr.br_dl = ntohl(bearer_qos->mbr.br_dl);
-    bearer_qos->gbr.br_ul = ntohl(bearer_qos->gbr.br_ul);
-    bearer_qos->gbr.br_dl = ntohl(bearer_qos->gbr.br_dl);
+    bearer_qos->mbr.br_dl = ((bit_rate_t)ieValue[index++]) << 32;
+    bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 24);
+    bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 16);
+    bearer_qos->mbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 8);
+    bearer_qos->mbr.br_dl |= (bit_rate_t)ieValue[index++];
+
+    bearer_qos->gbr.br_ul = ((bit_rate_t)ieValue[index++]) << 32;
+    bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 24);
+    bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 16);
+    bearer_qos->gbr.br_ul |= (((bit_rate_t)ieValue[index++]) << 8);
+    bearer_qos->gbr.br_ul |= (bit_rate_t)ieValue[index++];
+
+    bearer_qos->gbr.br_dl = ((bit_rate_t)ieValue[index++]) << 32;
+    bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 24);
+    bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 16);
+    bearer_qos->gbr.br_dl |= (((bit_rate_t)ieValue[index++]) << 8);
+    bearer_qos->gbr.br_dl |= (bit_rate_t)ieValue[index++];
+
     if (22 < ieLength) {
       OAILOG_ERROR (LOG_S11, "TODO s11_bearer_qos_ie_get() BearerQOS_t\n");
       return NW_GTPV2C_IE_INCORRECT;
