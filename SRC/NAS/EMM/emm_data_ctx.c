@@ -775,7 +775,15 @@ void emm_context_dump (
     IMSI_TO_STRING (&emm_context->_imsi, imsi_str, 16);
     bformata (bstr_dump, "%*s     - imsi:             %s      (The IMSI provided by the UE or the MME)\n", indent_spaces, " ", imsi_str);
     bformata (bstr_dump, "%*s     - imei:             TODO    (The IMEI provided by the UE)\n", indent_spaces, " ");
-    bformata (bstr_dump, "%*s     - imeisv:           TODO    (The IMEISV provided by the UE)\n", indent_spaces, " ");
+    if (IS_EMM_CTXT_PRESENT_IMEISV(emm_context)) {
+      bformata (bstr_dump, "%*s     - imeisv:           %x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x \n", indent_spaces, " ",
+        emm_context->_imeisv.u.num.tac1, emm_context->_imeisv.u.num.tac2, emm_context->_imeisv.u.num.tac3, emm_context->_imeisv.u.num.tac4,
+        emm_context->_imeisv.u.num.tac5, emm_context->_imeisv.u.num.tac6, emm_context->_imeisv.u.num.tac7, emm_context->_imeisv.u.num.tac8,
+        emm_context->_imeisv.u.num.snr1, emm_context->_imeisv.u.num.snr2, emm_context->_imeisv.u.num.snr3, emm_context->_imeisv.u.num.snr4,
+        emm_context->_imeisv.u.num.snr5, emm_context->_imeisv.u.num.snr6, emm_context->_imeisv.u.num.svn1, emm_context->_imeisv.u.num.svn2);
+    } else {
+      bformata (bstr_dump, "%*s     - imeisv:           UNKNOWN\n", indent_spaces, " ");
+    }
     bformata (bstr_dump, "%*s     - guti:             "GUTI_FMT"      (The GUTI assigned to the UE)\n", indent_spaces, " ", GUTI_ARG(&emm_context->_guti));
     bformata (bstr_dump, "%*s     - old_guti:         "GUTI_FMT"      (The old GUTI)\n", indent_spaces, " ", GUTI_ARG(&emm_context->_old_guti));
     for (k=0; k < emm_context->_tai_list.numberoflists; k++) {

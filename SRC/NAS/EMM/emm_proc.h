@@ -210,7 +210,7 @@ int emm_proc_security_mode_control(const mme_ue_s1ap_id_t ue_id, ksi_t ksi,
     emm_common_success_callback_t success,
     emm_common_reject_callback_t reject,
     emm_common_failure_callback_t failure);
-int emm_proc_security_mode_complete(mme_ue_s1ap_id_t ue_id);
+int emm_proc_security_mode_complete(mme_ue_s1ap_id_t ue_id, const imeisv_mobile_identity_t * const imeisv);
 int emm_proc_security_mode_reject(mme_ue_s1ap_id_t ue_id);
 
 /*

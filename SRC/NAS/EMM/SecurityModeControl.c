@@ -370,7 +370,7 @@ emm_proc_security_mode_control (
  ***************************************************************************/
 int
 emm_proc_security_mode_complete (
-  mme_ue_s1ap_id_t ue_id)
+  mme_ue_s1ap_id_t ue_id, const imeisv_mobile_identity_t * const imeisvmob)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   ue_mm_context_t                        *ue_mm_context = NULL;
@@ -399,6 +399,28 @@ emm_proc_security_mode_complete (
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%lx)\n", emm_ctx->T3460.id);
     emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
+
+    if (imeisvmob) {
+      imeisv_t imeisv = {0};
+      imeisv.u.num.tac1 = imeisvmob->tac1;
+      imeisv.u.num.tac2 = imeisvmob->tac2;
+      imeisv.u.num.tac3 = imeisvmob->tac3;
+      imeisv.u.num.tac4 = imeisvmob->tac4;
+      imeisv.u.num.tac5 = imeisvmob->tac5;
+      imeisv.u.num.tac6 = imeisvmob->tac6;
+      imeisv.u.num.tac7 = imeisvmob->tac7;
+      imeisv.u.num.tac8 = imeisvmob->tac8;
+      imeisv.u.num.snr1 = imeisvmob->snr1;
+      imeisv.u.num.snr2 = imeisvmob->snr2;
+      imeisv.u.num.snr3 = imeisvmob->snr3;
+      imeisv.u.num.snr4 = imeisvmob->snr4;
+      imeisv.u.num.snr5 = imeisvmob->snr5;
+      imeisv.u.num.snr6 = imeisvmob->snr6;
+      imeisv.u.num.svn1 = imeisvmob->svn1;
+      imeisv.u.num.svn2 = imeisvmob->svn2;
+      imeisv.u.num.parity = imeisvmob->oddeven;
+      emm_ctx_set_valid_imeisv(emm_ctx, &imeisv);
+    }
   }
 
   /*
