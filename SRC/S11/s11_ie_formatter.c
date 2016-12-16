@@ -1384,18 +1384,40 @@ s11_bearer_qos_ie_set (
 {
   NwRcT                                   rc;
   uint8_t                                 value[22];
+  int                                     index = 0;
 
   DevAssert (msg );
   DevAssert (bearer_qos );
-  value[0] = (bearer_qos->pci << 6) | (bearer_qos->pl << 2) | (bearer_qos->pvi);
-  value[1] = bearer_qos->qci;
+  value[index++] = (bearer_qos->pci << 6) | (bearer_qos->pl << 2) | (bearer_qos->pvi);
+  value[index++] = bearer_qos->qci;
   /*
    * TODO: check endianness
    */
-  memcpy (&value[2], &bearer_qos->mbr.br_ul, 5);
-  memcpy (&value[7], &bearer_qos->mbr.br_dl, 5);
-  memcpy (&value[12], &bearer_qos->gbr.br_ul, 5);
-  memcpy (&value[17], &bearer_qos->gbr.br_dl, 5);
+  value[index++] = (bearer_qos->mbr.br_ul & 0xFF00000000) >> 32;
+  value[index++] = (bearer_qos->mbr.br_ul & 0x00FF000000) >> 24;
+  value[index++] = (bearer_qos->mbr.br_ul & 0x0000FF0000) >> 16;
+  value[index++] = (bearer_qos->mbr.br_ul & 0x000000FF00) >> 8;
+  value[index++] = (bearer_qos->mbr.br_ul & 0x00000000FF);
+
+  value[index++] = (bearer_qos->mbr.br_dl & 0xFF00000000) >> 32;
+  value[index++] = (bearer_qos->mbr.br_dl & 0x00FF000000) >> 24;
+  value[index++] = (bearer_qos->mbr.br_dl & 0x0000FF0000) >> 16;
+  value[index++] = (bearer_qos->mbr.br_dl & 0x000000FF00) >> 8;
+  value[index++] = (bearer_qos->mbr.br_dl & 0x00000000FF);
+
+  value[index++] = (bearer_qos->gbr.br_ul & 0xFF00000000) >> 32;
+  value[index++] = (bearer_qos->gbr.br_ul & 0x00FF000000) >> 24;
+  value[index++] = (bearer_qos->gbr.br_ul & 0x0000FF0000) >> 16;
+  value[index++] = (bearer_qos->gbr.br_ul & 0x000000FF00) >> 8;
+  value[index++] = (bearer_qos->gbr.br_ul & 0x00000000FF);
+
+  value[index++] = (bearer_qos->gbr.br_dl & 0xFF00000000) >> 32;
+  value[index++] = (bearer_qos->gbr.br_dl & 0x00FF000000) >> 24;
+  value[index++] = (bearer_qos->gbr.br_dl & 0x0000FF0000) >> 16;
+  value[index++] = (bearer_qos->gbr.br_dl & 0x000000FF00) >> 8;
+  value[index++] = (bearer_qos->gbr.br_dl & 0x00000000FF);
+
+
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_BEARER_LEVEL_QOS, 22, 0, value);
   DevAssert (NW_OK == rc);
   return RETURNok;
