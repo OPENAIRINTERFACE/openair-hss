@@ -55,14 +55,14 @@ int decode_ue_security_capability (
   uesecuritycapability->eia = *(buffer + decoded);
   decoded++;
 
-  if (len >= decoded + 2) {
+  if (len >= (decoded + 2)) {
     uesecuritycapability->umts_present = 1;
     uesecuritycapability->uea = *(buffer + decoded);
     decoded++;
     uesecuritycapability->uia = *(buffer + decoded) & 0x7f;
     decoded++;
 
-    if (len == decoded + 1) {
+    if (len >= (decoded + 1)) {
       uesecuritycapability->gprs_present = 1;
       uesecuritycapability->gea = *(buffer + decoded) & 0x7f;
       decoded++;

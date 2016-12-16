@@ -1285,12 +1285,16 @@ int emm_msg_to_xml (
     decode_result = decode_attach_accept (&msg->attach_accept, buffer, len);
     if (0 < decode_result)
       encode_result = attach_accept_to_xml (&msg->attach_accept, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode ATTACH_ACCEPT\n");
     break;
 
   case ATTACH_COMPLETE:
     decode_result = decode_attach_complete (&msg->attach_complete, buffer, len);
     if (0 < decode_result)
       encode_result = attach_complete_to_xml (&msg->attach_complete, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode ATTACH_COMPLETE\n");
     break;
 
   case ATTACH_REJECT:
@@ -1302,12 +1306,16 @@ int emm_msg_to_xml (
     decode_result = decode_attach_request (&msg->attach_request, buffer, len);
     if (0 < decode_result)
       encode_result = attach_request_to_xml (&msg->attach_request, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode ATTACH_REQUEST\n");
     break;
 
   case AUTHENTICATION_REJECT:
     decode_result = decode_authentication_reject (&msg->authentication_reject, buffer, len);
     if (0 <= decode_result)
       encode_result = authentication_reject_to_xml (&msg->authentication_reject, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode AUTHENTICATION_REJECT\n");
     break;
 
   case AUTHENTICATION_FAILURE:
@@ -1319,12 +1327,16 @@ int emm_msg_to_xml (
     decode_result = decode_authentication_request (&msg->authentication_request, buffer, len);
     if (0 < decode_result)
       encode_result = authentication_request_to_xml (&msg->authentication_request, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode AUTHENTICATION_REQUEST\n");
     break;
 
   case AUTHENTICATION_RESPONSE:
     decode_result = decode_authentication_response (&msg->authentication_response, buffer, len);
     if (0 < decode_result)
       encode_result = authentication_response_to_xml (&msg->authentication_response, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode AUTHENTICATION_RESPONSE\n");
     break;
 
   case CS_SERVICE_NOTIFICATION:
@@ -1335,30 +1347,40 @@ int emm_msg_to_xml (
     decode_result = decode_detach_accept (&msg->detach_accept, buffer, len);
     if (0 < decode_result)
       encode_result = detach_accept_to_xml (&msg->detach_accept, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode DETACH_ACCEPT\n");
     break;
 
   case DETACH_REQUEST:
     decode_result = decode_detach_request (&msg->detach_request, buffer, len);
     if (0 < decode_result)
       encode_result = detach_request_to_xml (&msg->detach_request, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode DETACH_REQUEST\n");
     break;
 
   case DOWNLINK_NAS_TRANSPORT:
     decode_result = decode_downlink_nas_transport (&msg->downlink_nas_transport, buffer, len);
     if (0 < decode_result)
       encode_result = downlink_nas_transport_to_xml (&msg->downlink_nas_transport, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode DOWNLINK_NAS_TRANSPORT\n");
     break;
 
   case EMM_INFORMATION:
     decode_result = decode_emm_information (&msg->emm_information, buffer, len);
     if (0 < decode_result)
       encode_result = emm_information_to_xml (&msg->emm_information, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode EMM_INFORMATION\n");
     break;
 
   case EMM_STATUS:
     decode_result = decode_emm_status (&msg->emm_status, buffer, len);
     if (0 < decode_result)
       encode_result = emm_status_to_xml (&msg->emm_status, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode EMM_STATUS\n");
     break;
 
   case EXTENDED_SERVICE_REQUEST:
@@ -1377,71 +1399,96 @@ int emm_msg_to_xml (
     decode_result = decode_identity_response (&msg->identity_response, buffer, len);
     if (0 < decode_result)
       encode_result = identity_response_to_xml (&msg->identity_response, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode IDENTITY_RESPONSE\n");
     break;
 
   case IDENTITY_REQUEST:
     decode_result = decode_identity_request (&msg->identity_request, buffer, len);
     if (0 < decode_result)
       encode_result = identity_request_to_xml (&msg->identity_request, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode IDENTITY_REQUEST\n");
     break;
 
   case SECURITY_MODE_COMMAND:
     decode_result = decode_security_mode_command (&msg->security_mode_command, buffer, len);
     if (0 < decode_result)
       encode_result = security_mode_command_to_xml (&msg->security_mode_command, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode SECURITY_MODE_COMMAND\n");
     break;
 
   case SECURITY_MODE_COMPLETE:
     decode_result = decode_security_mode_complete (&msg->security_mode_complete, buffer, len);
-    encode_result = security_mode_complete_to_xml (&msg->security_mode_complete, writer);
+    if (0 < decode_result)
+      encode_result = security_mode_complete_to_xml (&msg->security_mode_complete, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode SECURITY_MODE_COMPLETE\n");
     break;
 
   case SECURITY_MODE_REJECT:
     decode_result = decode_security_mode_reject (&msg->security_mode_reject, buffer, len);
     if (0 < decode_result)
       encode_result = security_mode_reject_to_xml (&msg->security_mode_reject, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode SECURITY_MODE_REJECT\n");
     break;
 
   case SERVICE_REJECT:
     decode_result = decode_service_reject (&msg->service_reject, buffer, len);
     if (0 < decode_result)
       encode_result = service_reject_to_xml (&msg->service_reject, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode SERVICE_REJECT\n");
     break;
 
   case SERVICE_REQUEST:
     decode_result = decode_service_request (&msg->service_request, buffer, len);
     if (0 < decode_result)
       encode_result = service_request_to_xml (&msg->service_request, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode SERVICE_REQUEST\n");
     break;
 
   case TRACKING_AREA_UPDATE_ACCEPT:
     decode_result = decode_tracking_area_update_accept (&msg->tracking_area_update_accept, buffer, len);
     if (0 < decode_result)
       encode_result = tracking_area_update_accept_to_xml (&msg->tracking_area_update_accept, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode TRACKING_AREA_UPDATE_ACCEPT\n");
     break;
 
   case TRACKING_AREA_UPDATE_COMPLETE:
     decode_result = decode_tracking_area_update_complete (&msg->tracking_area_update_complete, buffer, len);
     if (0 < decode_result)
       encode_result = tracking_area_update_complete_to_xml (&msg->tracking_area_update_complete, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode TRACKING_AREA_UPDATE_COMPLETE\n");
     break;
 
   case TRACKING_AREA_UPDATE_REJECT:
     decode_result = decode_tracking_area_update_reject (&msg->tracking_area_update_reject, buffer, len);
     if (0 < decode_result)
       encode_result = tracking_area_update_reject_to_xml (&msg->tracking_area_update_reject, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode TRACKING_AREA_UPDATE_REJECT\n");
     break;
 
   case TRACKING_AREA_UPDATE_REQUEST:
     decode_result = decode_tracking_area_update_request (&msg->tracking_area_update_request, buffer, len);
     if (0 < decode_result)
       encode_result = tracking_area_update_request_to_xml (&msg->tracking_area_update_request, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode TRACKING_AREA_UPDATE_REQUEST\n");
     break;
 
   case UPLINK_NAS_TRANSPORT:
     decode_result = decode_uplink_nas_transport (&msg->uplink_nas_transport, buffer, len);
     if (0 < decode_result)
       encode_result = uplink_nas_transport_to_xml (&msg->uplink_nas_transport, writer);
+    else
+      OAILOG_ERROR (LOG_XML, "Failed to decode UPLINK_NAS_TRANSPORT\n");
     break;
 
   default:

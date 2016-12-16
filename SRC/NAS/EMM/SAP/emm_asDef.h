@@ -124,6 +124,7 @@ typedef struct emm_as_security_s {
   uint8_t gea;        /* Replayed GPRS encryption algorithms   */
   bool    umts_present;
   bool    gprs_present;
+  bool    imeisv_request;
 
   // Added by LG
   uint8_t selected_eea; /* Selected EPS encryption algorithms   */

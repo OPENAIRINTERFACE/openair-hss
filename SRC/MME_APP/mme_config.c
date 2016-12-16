@@ -117,6 +117,7 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->log_config.secu_log_level     = MAX_LOG_LEVEL;
   config_pP->log_config.util_log_level     = MAX_LOG_LEVEL;
   config_pP->log_config.msc_log_level      = MAX_LOG_LEVEL;
+  config_pP->log_config.xml_log_level      = MAX_LOG_LEVEL;
   config_pP->log_config.mme_scenario_player_log_level = MAX_LOG_LEVEL;
   config_pP->log_config.itti_log_level     = MAX_LOG_LEVEL;
 

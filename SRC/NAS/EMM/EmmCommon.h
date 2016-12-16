@@ -145,6 +145,8 @@ typedef struct security_data_s {
                                                                  * procedure failure shall be notified
                                                                  * to the ongoing EMM procedure */
   bool                                    is_new; /* new security context for SMC header type */
+  bool                                    imeisv_request;
+
 } security_data_t;
 
 

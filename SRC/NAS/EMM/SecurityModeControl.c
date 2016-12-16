@@ -321,6 +321,8 @@ emm_proc_security_mode_control (
 
     emm_ctx->common_proc->common_arg.u.security_data.is_new = security_context_is_new;
 
+    emm_ctx->common_proc->common_arg.u.security_data.imeisv_request = (IS_EMM_CTXT_PRESENT_IMEISV(emm_ctx)) ? false:true;
+
     /*
      * Send security mode command message to the UE
      */
@@ -633,6 +635,7 @@ int _security_request (security_data_t * data)
     emm_sap.u.emm_as.u.security.gprs_present = data->gprs_present;
     emm_sap.u.emm_as.u.security.selected_eea = data->selected_eea;
     emm_sap.u.emm_as.u.security.selected_eia = data->selected_eia;
+    emm_sap.u.emm_as.u.security.imeisv_request = data->imeisv_request;
 
     ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, data->ue_id);
     if (ue_mm_context) {

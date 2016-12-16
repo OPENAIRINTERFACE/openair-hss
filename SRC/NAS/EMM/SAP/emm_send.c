@@ -744,6 +744,15 @@ emm_send_security_mode_command (
   emm_msg->replayeduesecuritycapabilities.uea = msg->uea;
   emm_msg->replayeduesecuritycapabilities.uia = msg->uia;
   emm_msg->replayeduesecuritycapabilities.gea = msg->gea;
+
+  emm_msg->presencemask = 0;
+
+  if (msg->imeisv_request) {
+    size += IMEISV_REQUEST_IE_MAX_LENGTH;
+    emm_msg->presencemask |= SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT;
+    emm_msg->imeisvrequest = IMEISV_REQUESTED;
+    OAILOG_INFO (LOG_NAS_EMM, "imeisvrequest                               %d\n", emm_msg->imeisvrequest);
+  }
   OAILOG_INFO (LOG_NAS_EMM, "replayeduesecuritycapabilities.gprs_present %d\n", emm_msg->replayeduesecuritycapabilities.gprs_present);
   OAILOG_INFO (LOG_NAS_EMM, "replayeduesecuritycapabilities.gea          %d\n", emm_msg->replayeduesecuritycapabilities.gea);
 

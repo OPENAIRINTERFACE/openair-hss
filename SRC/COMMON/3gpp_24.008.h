@@ -544,6 +544,9 @@ int decode_identity_type_2_ie(identity_type2_t *identitytype2, bool is_ie_presen
 
 typedef uint8_t imeisv_request_t;
 
+#define IMEISV_NOT_REQUESTED  0b000
+#define IMEISV_REQUESTED      0b001
+
 int encode_imeisv_request_ie(imeisv_request_t *imeisvrequest, bool is_ie_present, uint8_t *buffer, const uint32_t len);
 int decode_imeisv_request_ie(imeisv_request_t *imeisvrequest, bool is_ie_present, uint8_t *buffer, const uint32_t len);
 

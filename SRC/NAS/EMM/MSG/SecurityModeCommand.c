@@ -73,7 +73,7 @@ decode_security_mode_command (
     /*
      * Type | value iei are below 0x80 so just return the first 4 bits
      */
-    if (ieiDecoded >= 0x80)
+    if (ieiDecoded >= SECURITY_MODE_COMMAND_IMEISV_REQUEST_IEI)
       ieiDecoded = ieiDecoded & 0xf0;
 
     switch (ieiDecoded) {
@@ -112,6 +112,8 @@ decode_security_mode_command (
 
     default:
       errorCodeDecoder = TLV_UNEXPECTED_IEI;
+      OAILOG_ERROR (LOG_NAS_EMM, "Failed to decode SECURITY_MODE_COMMAND unexpected IEI 0x%02x\n", ieiDecoded);
+      log_stream_hex(OAILOG_LEVEL_ERROR, LOG_NAS_EMM, __FILE__, __LINE__, NULL ,buffer, len);
       return TLV_UNEXPECTED_IEI;
     }
   }
