@@ -122,6 +122,7 @@ int emm_proc_status(mme_ue_s1ap_id_t ue_id, int emm_cause);
 int emm_proc_attach_request(enb_s1ap_id_key_t enb_ue_s1ap_id_key,
                             mme_ue_s1ap_id_t ue_id,
                             emm_proc_attach_type_t type,
+                            AdditionalUpdateType additional_update_type,
                             bool is_native_ksi, ksi_t ksi,
                             bool is_native_guti, guti_t *guti,
                             imsi_t *imsi,

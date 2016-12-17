@@ -26,7 +26,12 @@
 #define ADDITIONAL_UPDATE_TYPE_MINIMUM_LENGTH 1
 #define ADDITIONAL_UPDATE_TYPE_MAXIMUM_LENGTH 1
 
-typedef uint8_t AdditionalUpdateType;
+typedef enum {
+  NO_ADDITIONAL_INFORMATION = 0x0,
+  SMS_ONLY                  = 0x1,
+  MAX                       = 1 << ADDITIONAL_UPDATE_TYPE_MAXIMUM_LENGTH,
+  SENTINEL_MAX              = 0xFF
+} AdditionalUpdateType;
 
 int encode_additional_update_type(AdditionalUpdateType *additionalupdatetype, uint8_t iei, uint8_t *buffer, uint32_t len);
 

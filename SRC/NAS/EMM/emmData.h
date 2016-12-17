@@ -55,6 +55,7 @@ Description Defines internal private data handled by EPS Mobility
 #include "mme_api.h"
 #include "3gpp_33.401.h"
 
+#include "AdditionalUpdateType.h"
 #include "UeNetworkCapability.h"
 #include "MsNetworkCapability.h"
 #include "DrxParameter.h"
@@ -141,6 +142,14 @@ typedef struct emm_data_context_s {
   bool             is_attached; /* Attachment indicator                            */
   bool             is_emergency;/* Emergency bearer services indicator             */
   bool             is_has_been_attached; /* Attachment indicator                   */
+
+  /*
+   * attach_type has type emm_proc_attach_type_t.
+   *
+   * Here, it is un-typedef'ed as uint8_t to avoid circular dependency issues.
+   */
+  uint8_t                    attach_type;  /* EPS/Combined/etc. */
+  AdditionalUpdateType       additional_update_type;
 
   uint             num_attach_request;/* Num attach request received               */
   //bool             is_attach_accept_sent ;/* Do we have sent attach accept         */

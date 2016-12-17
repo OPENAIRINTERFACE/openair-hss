@@ -172,6 +172,11 @@ emm_send_attach_accept (
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
   int                                     i = 0;
 
+  // Get the UE context
+  emm_data_context_t *ue_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+  DevAssert(ue_ctx);
+  DevAssert(msg->ue_id == ue_ctx->ue_id);
+
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Attach Accept message\n");
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size = EMM_HEADER_MAXIMUM_LENGTH(%d)\n", size);
   /*
@@ -182,7 +187,46 @@ emm_send_attach_accept (
    * Mandatory - EPS attach result
    */
   size += EPS_ATTACH_RESULT_MAXIMUM_LENGTH;
-  emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS_IMSI;
+  OAILOG_INFO (
+      LOG_NAS_EMM,
+      "EMMAS-SAP - size += EPS_ATTACH_RESULT_MAXIMUM_LENGTH(%d)  (%d)\n",
+      EPS_ATTACH_RESULT_MAXIMUM_LENGTH, size);
+  switch (ue_ctx->attach_type) {
+  case EMM_ATTACH_TYPE_COMBINED_EPS_IMSI:
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - Combined EPS/IMSI attach\n");
+    OAILOG_DEBUG (LOG_NAS_EMM,
+                  "EMMAS-SAP - Combined EPS/IMSI attach unsupported, "
+                  "defaulting to EPS attach\n");
+    emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS;
+    if (MAX > ue_ctx->additional_update_type) {
+      OAILOG_DEBUG (LOG_NAS_EMM,
+                    "EMMAS-SAP - Discovered additional update type\n");
+      size += EMM_CAUSE_MAXIMUM_LENGTH;
+      OAILOG_INFO (LOG_NAS_EMM,
+                   "EMMAS-SAP - size += EMM_CAUSE_MAXIMUM_LENGTH(%d)  (%d)\n",
+                   EMM_CAUSE_MAXIMUM_LENGTH, size);
+      if (SMS_ONLY == ue_ctx->additional_update_type) {
+        emm_msg->emmcause = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE;
+      } else {  // No additional information
+        // TODO: eventually handle this case differently?
+        emm_msg->emmcause = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE;
+      }
+    }
+    break;
+  case EMM_ATTACH_TYPE_RESERVED:
+  default:
+    OAILOG_DEBUG (LOG_NAS_EMM,
+                  "EMMAS-SAP - Unused attach type defaults to EPS attach\n");
+  case EMM_ATTACH_TYPE_EPS:
+    emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS;
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - EPS attach\n");
+    break;
+  case EMM_ATTACH_TYPE_EMERGENCY:  // We should not reach here
+    OAILOG_ERROR (LOG_NAS_EMM,
+                  "EMMAS-SAP - EPS emergency attach, currently unsupported\n");
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, 0);  // TODO: fix once supported
+    break;
+  }
   /*
    * Mandatory - T3412 value
    */
