@@ -57,6 +57,9 @@
 #include "emm_proc.h"
 #include "mme_config.h"
 #include "emm_send.h"
+#include "3gpp_29.274.h"
+#include "mme_app_ue_context.h"
+#include "mme_app_defs.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -179,6 +182,11 @@ emm_send_attach_accept (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
+  // Get the UE context
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, msg->ue_id);
+  DevAssert(ue_mm_context);
+  DevAssert(msg->ue_id == ue_mm_context->mme_ue_s1ap_id);
+
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Attach Accept message\n");
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size = EMM_HEADER_MAXIMUM_LENGTH(%d)\n", size);
   /*
@@ -189,7 +197,47 @@ emm_send_attach_accept (
    * Mandatory - EPS attach result
    */
   size += EPS_ATTACH_RESULT_MAXIMUM_LENGTH;
-  emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS_IMSI;
+  OAILOG_INFO (
+      LOG_NAS_EMM,
+      "EMMAS-SAP - size += EPS_ATTACH_RESULT_MAXIMUM_LENGTH(%d)  (%d)\n",
+      EPS_ATTACH_RESULT_MAXIMUM_LENGTH, size);
+  // TODO ? attach_type and additional_update_type passed as parameter in emm_as_establish_t
+  switch (ue_mm_context->emm_context.attach_type) {
+  case EMM_ATTACH_TYPE_COMBINED_EPS_IMSI:
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - Combined EPS/IMSI attach\n");
+    OAILOG_DEBUG (LOG_NAS_EMM,
+                  "EMMAS-SAP - Combined EPS/IMSI attach unsupported, "
+                  "defaulting to EPS attach\n");
+    emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS;
+    if (MAX > ue_mm_context->emm_context.additional_update_type) {
+      OAILOG_DEBUG (LOG_NAS_EMM,
+                    "EMMAS-SAP - Discovered additional update type\n");
+      size += EMM_CAUSE_MAXIMUM_LENGTH;
+      OAILOG_INFO (LOG_NAS_EMM,
+                   "EMMAS-SAP - size += EMM_CAUSE_MAXIMUM_LENGTH(%d)  (%d)\n",
+                   EMM_CAUSE_MAXIMUM_LENGTH, size);
+      if (SMS_ONLY == ue_mm_context->emm_context.additional_update_type) {
+        emm_msg->emmcause = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE;
+      } else {  // No additional information
+        // TODO: eventually handle this case differently?
+        emm_msg->emmcause = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE;
+      }
+    }
+    break;
+  case EMM_ATTACH_TYPE_RESERVED:
+  default:
+    OAILOG_DEBUG (LOG_NAS_EMM,
+                  "EMMAS-SAP - Unused attach type defaults to EPS attach\n");
+  case EMM_ATTACH_TYPE_EPS:
+    emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS;
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - EPS attach\n");
+    break;
+  case EMM_ATTACH_TYPE_EMERGENCY:  // We should not reach here
+    OAILOG_ERROR (LOG_NAS_EMM,
+                  "EMMAS-SAP - EPS emergency attach, currently unsupported\n");
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, 0);  // TODO: fix once supported
+    break;
+  }
   /*
    * Mandatory - T3412 value
    */

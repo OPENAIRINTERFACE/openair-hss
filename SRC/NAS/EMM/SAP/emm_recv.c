@@ -311,6 +311,7 @@ emm_recv_attach_request (
    * Execute the requested UE attach procedure
    */
   rc = emm_proc_attach_request (enb_ue_s1ap_id_key, ue_id, is_initial, type,
+                                msg->additionalupdatetype,
                                 msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED,
                                 msg->naskeysetidentifier.naskeysetidentifier,
                                 msg->oldgutitype != GUTI_MAPPED, p_guti, p_imsi, p_imei,

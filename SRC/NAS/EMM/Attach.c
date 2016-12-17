@@ -208,6 +208,7 @@ emm_proc_attach_request (
   mme_ue_s1ap_id_t ue_id,
   const bool is_initial,
   const emm_proc_attach_type_t type,
+  const additional_update_type_t additional_update_type,
   const bool is_native_ksi,
   const ksi_t     ksi,
   const bool is_native_guti,
@@ -308,7 +309,9 @@ emm_proc_attach_request (
   if (!(_emm_data.conf.eps_network_feature_support & EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE_SUPPORTED) &&
       (type == EMM_ATTACH_TYPE_EMERGENCY)) {
     REQUIREMENT_3GPP_24_301(R10_5_5_1__1);
-    ue_ctx.emm_context.emm_cause = EMM_CAUSE_IMEI_NOT_ACCEPTED;
+    // TODO: update this if/when emergency attach is supported
+    ue_ctx.emm_context.emm_cause =
+      imei ? EMM_CAUSE_IMEI_NOT_ACCEPTED : EMM_CAUSE_NOT_AUTHORIZED_IN_PLMN;
     /*
      * Do not accept the UE to attach for emergency services
      */
@@ -319,6 +322,8 @@ emm_proc_attach_request (
   fsm_state = emm_fsm_get_state (&ue_mm_context->emm_context);
 
   if (ue_mm_context) {
+    ue_mm_context->emm_context.attach_type = type;
+    ue_mm_context->emm_context.additional_update_type = additional_update_type;
     if (emm_ctx_is_common_procedure_running(&ue_mm_context->emm_context, EMM_CTXT_COMMON_PROC_SMC)) {
       REQUIREMENT_3GPP_24_301(R10_5_4_3_7_c);
       emm_sap_t                               emm_sap = {0};

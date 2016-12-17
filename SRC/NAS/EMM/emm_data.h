@@ -48,6 +48,7 @@ Description Defines internal private data handled by EPS Mobility
 #include "nas_timer.h"
 #include "3gpp_24.301.h"
 #include "3gpp_24.008.h"
+#include "AdditionalUpdateType.h"
 #include "UeNetworkCapability.h"
 #include "EpsBearerContextStatus.h"
 #include "EpsNetworkFeatureSupport.h"
@@ -123,6 +124,14 @@ typedef struct emm_context_s {
   bool             is_attached; /* Attachment indicator                            */
   bool             is_emergency;/* Emergency bearer services indicator             */
   bool             is_has_been_attached; /* Attachment indicator                   */
+
+  /*
+   * attach_type has type emm_proc_attach_type_t.
+   *
+   * Here, it is un-typedef'ed as uint8_t to avoid circular dependency issues.
+   */
+  uint8_t                    attach_type;  /* EPS/Combined/etc. */
+  additional_update_type_t   additional_update_type;
 
   uint             num_attach_request;/* Num attach request received               */
   //bool             is_attach_accept_sent ;/* Do we have sent attach accept         */

@@ -27,6 +27,11 @@
 
 typedef uint8_t additional_update_type_t;
 
+#define NO_ADDITIONAL_INFORMATION 0x0
+#define SMS_ONLY                  0x1
+#define MAX                       (1 << ADDITIONAL_UPDATE_TYPE_MAXIMUM_LENGTH)
+#define SENTINEL_MAX              0xFF
+
 int encode_additional_update_type(additional_update_type_t *additionalupdatetype, uint8_t iei, uint8_t *buffer, uint32_t len);
 int decode_additional_update_type(additional_update_type_t *additionalupdatetype, uint8_t iei, uint8_t *buffer, uint32_t len);
 
