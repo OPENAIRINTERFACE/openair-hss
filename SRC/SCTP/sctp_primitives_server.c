@@ -35,12 +35,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/sctp.h>
 #include <arpa/inet.h>
-#include <signal.h>
 
 #include "bstrlib.h"
 
@@ -52,7 +50,6 @@
 #include "intertask_interface.h"
 #include "itti_free_defined_msg.h"
 #include "sctp_primitives_server.h"
-#include "mme_config.h"
 #include "conversions.h"
 #include "sctp_common.h"
 #include "sctp_itti_messaging.h"
@@ -412,15 +409,15 @@ static inline int sctp_read_from_socket (int sd, int ppid)
     n;
   socklen_t                               from_len = 0;
   struct sctp_sndrcvinfo                  sinfo = {0};
-  struct sockaddr_in                      addr = {0};
+  struct sockaddr_in6                     addr = {0};
   uint8_t                                 buffer[SCTP_RECV_BUFFER_SIZE];
 
   if (sd < 0) {
     return -1;
   }
 
-  memset ((void *)&addr, 0, sizeof (struct sockaddr_in));
-  from_len = (socklen_t) sizeof (struct sockaddr_in);
+  memset ((void *)&addr, 0, sizeof (struct sockaddr_in6));
+  from_len = (socklen_t) sizeof (struct sockaddr_in6);
   memset ((void *)&sinfo, 0, sizeof (struct sctp_sndrcvinfo));
   n = sctp_recvmsg (sd, (void *)buffer, SCTP_RECV_BUFFER_SIZE, (struct sockaddr *)&addr, &from_len, &sinfo, &flags);
 
@@ -506,7 +503,7 @@ static inline int sctp_read_from_socket (int sd, int ppid)
       return SCTP_RC_ERROR;
     }
 
-    OAILOG_DEBUG (LOG_SCTP, "[%d][%d] Msg of length %d received from port %u, on stream %d, PPID %d\n", sinfo.sinfo_assoc_id, sd, n, ntohs (addr.sin_port), sinfo.sinfo_stream, ntohl (sinfo.sinfo_ppid));
+    OAILOG_DEBUG (LOG_SCTP, "[%d][%d] Msg of length %d received from port %u, on stream %d, PPID %d\n", sinfo.sinfo_assoc_id, sd, n, ntohs (addr.sin6_port), sinfo.sinfo_stream, ntohl (sinfo.sinfo_ppid));
     bstring payload = blk2bstr(buffer, n);
     sctp_itti_send_new_message_ind (&payload, sinfo.sinfo_assoc_id, sinfo.sinfo_stream, association->instreams, association->outstreams);
   }
