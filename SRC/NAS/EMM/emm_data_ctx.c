@@ -534,30 +534,23 @@ emm_context_remove (
   struct emm_context_s *elm)
 {
   struct emm_context_s              *emm_context_p = NULL;
-  mme_ue_s1ap_id_t                       *emm_ue_id          = NULL;
-
+  mme_ue_s1ap_id_t                  *emm_ue_id_p          = NULL;
   OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " MME_UE_S1AP_ID_FMT "\n", elm, (PARENT_STRUCT(elm, struct ue_mm_context_s, emm_context))->mme_ue_s1ap_id);
-
   if ( IS_EMM_CTXT_PRESENT_GUTI(elm)) {
-    obj_hashtable_ts_remove (emm_data->ctx_coll_guti, (const void *)&elm->_guti, sizeof (elm->_guti), (void **)&emm_ue_id);
-
+    obj_hashtable_ts_remove (emm_data->ctx_coll_guti, (const void *)&elm->_guti, sizeof (elm->_guti), (void **)&emm_ue_id_p);
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " MME_UE_S1AP_ID_FMT " guti "GUTI_FMT"\n",
-        elm, (mme_ue_s1ap_id_t)((uintptr_t)emm_ue_id), GUTI_ARG(&elm->_guti));
+        elm, (mme_ue_s1ap_id_t)((uintptr_t)emm_ue_id_p), GUTI_ARG(&elm->_guti));
   }
-
   if ( IS_EMM_CTXT_PRESENT_IMSI(elm)) {
     imsi64_t imsi64 = INVALID_IMSI64;
     imsi64 = imsi_to_imsi64(&elm->_imsi);
-    hashtable_ts_remove (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64, (void **)&emm_ue_id);
-
+    hashtable_ts_remove (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64, (void **)&emm_ue_id_p);
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_imsi context %p UE id " MME_UE_S1AP_ID_FMT " imsi " IMSI_64_FMT "\n",
-        elm, (mme_ue_s1ap_id_t)((uintptr_t)emm_ue_id), imsi64);
+        elm, (mme_ue_s1ap_id_t)((uintptr_t)emm_ue_id_p), imsi64);
   }
-
   hashtable_ts_remove (emm_data->ctx_coll_ue_id, (const hash_key_t)((PARENT_STRUCT(elm, struct ue_mm_context_s, emm_context))->mme_ue_s1ap_id), (void **)&emm_context_p);
   return emm_context_p;
 }
-
 
 //------------------------------------------------------------------------------
 int
