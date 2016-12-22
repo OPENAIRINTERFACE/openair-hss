@@ -529,14 +529,14 @@ emm_data_context_get_by_imsi (
   imsi64_t     imsi64)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  mme_ue_s1ap_id_t                       *emm_ue_id = NULL;
+  mme_ue_s1ap_id_t                       *emm_ue_id_p = NULL;
 
   DevAssert (emm_data );
 
-  h_rc = hashtable_ts_get (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64, (void **)&emm_ue_id);
+  h_rc = hashtable_ts_get (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64, (void **)&emm_ue_id_p);
 
   if (HASH_TABLE_OK == h_rc) {
-    struct emm_data_context_s * tmp = emm_data_context_get (emm_data, (const hash_key_t)*emm_ue_id);
+    struct emm_data_context_s * tmp = emm_data_context_get (emm_data, (const hash_key_t)*emm_ue_id_p);
 #if DEBUG_IS_ON
     if ((tmp)) {
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - get UE id " MME_UE_S1AP_ID_FMT " context %p by imsi " IMSI_64_FMT "\n", tmp->ue_id, tmp, imsi64);
@@ -555,16 +555,16 @@ emm_data_context_get_by_guti (
   guti_t * guti)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  mme_ue_s1ap_id_t                        *emm_ue_id = NULL;
+  mme_ue_s1ap_id_t                        *emm_ue_id_p = NULL;
 
   DevAssert (emm_data );
 
   if ( guti) {
 
-    h_rc = obj_hashtable_ts_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **)(uintptr_t)&emm_ue_id);
+    h_rc = obj_hashtable_ts_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **)&emm_ue_id_p);
 
     if (HASH_TABLE_OK == h_rc) {
-      struct emm_data_context_s * tmp = emm_data_context_get (emm_data, (const hash_key_t)*emm_ue_id);
+      struct emm_data_context_s * tmp = emm_data_context_get (emm_data, (const hash_key_t)*emm_ue_id_p);
 #if DEBUG_IS_ON
       if ((tmp)) {
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - get UE id " MME_UE_S1AP_ID_FMT " context %p by guti " GUTI_FMT "\n", tmp->ue_id, tmp, GUTI_ARG(guti));
