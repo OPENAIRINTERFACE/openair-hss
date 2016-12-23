@@ -52,8 +52,8 @@ typedef uint64_t bit_rate_t;
 //and the Uplink direction and provided by the MME to the eNB.
 // Applicable for non-GBR E-RABs
 typedef struct ue_aggregate_maximum_bit_rate_s  {
-  bit_rate_t ue_aggregate_maximum_bit_rate_downlink;
-  bit_rate_t ue_aggregate_maximum_bit_rate_uplink;
+  bit_rate_t dl;
+  bit_rate_t ul;
 } ue_aggregate_maximum_bit_rate_t;
 
 
@@ -71,7 +71,6 @@ typedef struct gbr_qos_information_s  {
 typedef struct e_rab_level_qos_parameters_s  {
   qci_t                               qci;
   allocation_and_retention_priority_t allocation_and_retention_priority;
-  bit_rate_t e_rab_guaranteed_bit_rate_downlink;
   gbr_qos_information_t gbr_qos_information;
 } e_rab_level_qos_parameters_t;
 

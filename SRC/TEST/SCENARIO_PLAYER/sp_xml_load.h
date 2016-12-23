@@ -31,6 +31,8 @@
 #define FILE_SP_XML_LOAD_SEEN
 
 
+scenario_player_item_t * sp_get_var(scenario_t * const scenario, unsigned char * var_name);
+
 #define SP_NUM_FROM_XML_PROTOTYPE(name_lower) \
 bool sp_ ## name_lower ## _from_xml (\
     scenario_t            * const scenario,\
@@ -47,53 +49,28 @@ bool sp_ ## name_lower ## _from_xml (\
   bstring xml_var = NULL;\
   bool res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, name_upper ## _XML_SCAN_FMT, (void*)name_lower, &xml_var);\
   if (!res && xml_var) {\
-    if ('$' == xml_var->data[0]) {\
-      if (BSTR_OK == bdelete(xml_var, 0, 1)) { \
-        void           *uid = NULL;\
-\
-        hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, bdata(xml_var), blength(xml_var), (void**)&uid);\
-        if (HASH_TABLE_OK == rc) {\
-          scenario_player_item_t * var_item = NULL;\
-          rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);\
-          if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {\
+    if (('$' == xml_var->data[0]) || ('#' == xml_var->data[0])) {\
+      scenario_player_item_t * var_item = sp_get_var(scenario, &xml_var->data[1]);\
+      if ((var_item) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {\
+        if ('$' == xml_var->data[0]) {\
+          if (BSTR_OK == bdelete(xml_var, 0, 1)) { \
             *name_lower = (name_lower ## _t)var_item->u.var.value.value_u64;\
             AssertFatal (var_item->u.var.value_type == VAR_VALUE_TYPE_INT64, "Bad var type %d", var_item->u.var.value_type);\
             res = true;\
-            OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" name_upper ## _XML_FMT " from var uid=0x%lx\n",\
-                name_upper ## _IE_XML_STR, *name_lower, (uintptr_t)uid);\
-          } else {\
-            AssertFatal (0, "Could not find %s/$%s var uid %lu, should have been declared in scenario\n",\
-                name_upper ## _IE_XML_STR, bdata(xml_var), (uintptr_t)uid);\
+            OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" name_upper ## _XML_FMT " from var %s\n",\
+                name_upper ## _IE_XML_STR, *name_lower, bdata(xml_var));\
           }\
-        } else {\
-          bstring bstr = bfromcstr(" ");\
-          obj_hashtable_dump_content(scenario->var_items, bstr); \
-          printf("%s\n",bdata(bstr));\
-          AssertFatal (0, "Could not find %s/$%s var, should have been declared in scenario\n", \
-            name_upper ## _IE_XML_STR, bdata(xml_var));\
-        }\
-      }\
-    } else if ('#' == xml_var->data[0]) { \
-      if (BSTR_OK == bdelete(xml_var, 0, 1)) { \
-        void           *uid = NULL;\
-\
-        hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, bdata(xml_var), blength(xml_var), (void**)&uid);\
-        if (HASH_TABLE_OK == rc) {\
-          scenario_player_item_t * var_item = NULL;\
-          rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);\
-          if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {\
+        } else if ('#' == xml_var->data[0]) { \
+          if (BSTR_OK == bdelete(xml_var, 0, 1)) { \
             res = true;\
             *name_lower = (name_lower ## _t)var_item->u.var.value.value_u64;\
             AssertFatal (var_item->u.var.value_type == VAR_VALUE_TYPE_INT64, "Bad var type %d", var_item->u.var.value_type);\
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" name_upper ## _XML_FMT " to be loaded\n", name_upper ## _IE_XML_STR, *name_lower);\
-          } else {\
-            AssertFatal (0, "Could not find %s/#%s var uid %lu, should have been declared in scenario\n",\
-                name_upper ## _IE_XML_STR, bdata(xml_var), (uintptr_t)uid);\
           }\
-        } else {\
-          AssertFatal (0, "Could not find %s/#%s var, should have been declared in scenario\n", \
-            name_upper ## _IE_XML_STR, bdata(xml_var));\
         }\
+      } else {\
+        AssertFatal (0, "Could not find %s/$%s, should have been declared in scenario\n",\
+            name_upper ## _IE_XML_STR, bdata(xml_var));\
       }\
     }\
     bdestroy_wrapper (&xml_var);\

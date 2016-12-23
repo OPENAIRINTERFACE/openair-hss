@@ -366,12 +366,19 @@ void eps_mobile_identity_to_xml (eps_mobile_identity_t * epsmobileidentity, xmlT
     XML_WRITE_FORMAT_ELEMENT(writer, ODDEVEN_ATTR_XML_STR, "0x%x", imsi->oddeven);
     XML_WRITE_COMMENT(writer, "type_of_identity = IMSI");
     XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_IDENTITY_ATTR_XML_STR, "0x%x", EPS_MOBILE_IDENTITY_IMSI);
-    XML_WRITE_FORMAT_ELEMENT(writer, IMSI_ATTR_XML_STR, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
-        imsi->identity_digit1,imsi->identity_digit2,imsi->identity_digit3,imsi->identity_digit4,
-        imsi->identity_digit5,imsi->identity_digit6,imsi->identity_digit7,imsi->identity_digit8,
-        imsi->identity_digit9,imsi->identity_digit10,imsi->identity_digit11,imsi->identity_digit12,
+    bstring imsi_str = bfromcstralloc(17, "");
+    bformata(imsi_str, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
+        imsi->identity_digit1,imsi->identity_digit2,imsi->identity_digit3,
+        imsi->identity_digit4, imsi->identity_digit5,imsi->identity_digit6,
+        imsi->identity_digit7,imsi->identity_digit8, imsi->identity_digit9,
+        imsi->identity_digit10,imsi->identity_digit11,imsi->identity_digit12,
         imsi->identity_digit13,imsi->identity_digit14,imsi->identity_digit15);
-
+    // !....!
+    if (imsi->num_digits < 15) {
+      btrunc(imsi_str, imsi->num_digits);
+    }
+    XML_WRITE_FORMAT_ELEMENT(writer, IMSI_ATTR_XML_STR, "%s", bdata(imsi_str));
+    bdestroy_wrapper(&imsi_str);
   } else if (epsmobileidentity->guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
     guti_eps_mobile_identity_t                *guti = &epsmobileidentity->guti;
 

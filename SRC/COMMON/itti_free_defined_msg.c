@@ -101,24 +101,6 @@ void itti_free_msg_content (MessageDef * const message_p)
   case MME_APP_DELETE_SESSION_RSP:
     // DO nothing
     break;
-  case NAS_DL_EMM_RAW_MSG:
-  case NAS_UL_EMM_RAW_MSG:
-  case NAS_DL_EMM_PLAIN_MSG:
-  case NAS_UL_EMM_PLAIN_MSG:
-  case NAS_DL_EMM_PROTECTED_MSG:
-  case NAS_UL_EMM_PROTECTED_MSG:
-  case NAS_DL_ESM_RAW_MSG:
-  case NAS_UL_ESM_RAW_MSG:
-  case NAS_DL_ESM_PLAIN_MSG:
-  case NAS_UL_ESM_PLAIN_MSG:
-  case NAS_DL_ESM_PROTECTED_MSG:
-  case NAS_UL_ESM_PROTECTED_MSG:
-    // DO nothing
-    break;
-
-  case NAS_PAGING_IND:
-    // UNUSED UE related
-    break;
 
   case NAS_PDN_CONNECTIVITY_REQ:{
     clear_protocol_configuration_options(&message_p->ittiMsg.nas_pdn_connectivity_req.pco);
@@ -161,9 +143,6 @@ void itti_free_msg_content (MessageDef * const message_p)
     AssertFatal(NULL == message_p->ittiMsg.nas_dl_data_rej.nas_msg, "TODO clean pointer");
     break;
 
-  case NAS_RAB_ESTABLISHMENT_REQ:
-  case NAS_RAB_ESTABLISHMENT_RESP:
-  case NAS_RAB_RELEASE_REQ:
   case NAS_AUTHENTICATION_PARAM_REQ:
   case NAS_DETACH_REQ:
     // DO nothing
@@ -231,8 +210,16 @@ void itti_free_msg_content (MessageDef * const message_p)
 
   case S1AP_INITIAL_UE_MESSAGE:
     bdestroy_wrapper (&message_p->ittiMsg.s1ap_initial_ue_message.nas);
-    AssertFatal(NULL == message_p->ittiMsg.s1ap_initial_ue_message.nas, "TODO clean pointer");
     break;
+
+  case S1AP_E_RAB_SETUP_REQ: {
+      for (int i = 0; i < message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.no_of_items; i++) {
+        bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].nas_pdu);
+        bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
+      }
+    }
+    break;
+
 
   case S1AP_UE_CAPABILITIES_IND:
   case S1AP_ENB_DEREGISTERED_IND:

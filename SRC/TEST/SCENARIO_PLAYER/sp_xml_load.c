@@ -248,6 +248,38 @@ bool sp_xml_load_ascii_stream_leaf_tag(
   return false;
 }
 
+//------------------------------------------------------------------------------
+scenario_player_item_t * sp_get_var(scenario_t * const scenario, unsigned char * var_name)
+{
+  void                    *uid = NULL;
+  hashtable_rc_t           rc = HASH_TABLE_OK;
+  scenario_player_item_t * var_item = NULL;
+  if (scenario) {
 
+    rc = obj_hashtable_ts_get (scenario->var_items, var_name, strlen((char*)var_name), (void**)&uid);
+    if (HASH_TABLE_OK == rc) {
+      rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);
+      if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {
+        return var_item;
+      } else {
+        AssertFatal (0, "Could not find var %s uid %lu, should have been declared in scenario\n", var_name, (uintptr_t)uid);
+      }
+    } else {
+      scenario_t * scenario_up = scenario->parent;
+      while (scenario_up) {
+        rc = obj_hashtable_ts_get (scenario_up->var_items, var_name, strlen((char*)var_name), (void**)&uid);
+        if (HASH_TABLE_OK == rc) {
+          rc = hashtable_ts_get (scenario_up->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);
+          if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {
+            // make a copy into scenario
+            return var_item;
+          }
+        }
+        scenario_up = scenario_up->parent;
+      }
+    }
+  }
+  return NULL;
+}
 
 

@@ -739,6 +739,8 @@ int msp_load_message (scenario_t * const scenario, bstring file_path, scenario_p
     rc = xml_msg_load_itti_sctp_new_association(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_SCTP_CLOSE_ASSOCIATION_XML_STR)) {
     rc = xml_msg_load_itti_sctp_close_association(scenario, &scenario_player_item->u.msg);
+  } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_E_RAB_SETUP_REQ_XML_STR)) {
+    rc = xml_msg_load_itti_s1ap_e_rab_setup_req(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_UE_CONTEXT_RELEASE_REQ_XML_STR)) {
     rc = xml_msg_load_itti_s1ap_ue_context_release_req(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND_XML_STR)) {
@@ -792,6 +794,8 @@ int msp_reload_message (scenario_t * const scenario, scenario_player_item_t * co
     rc = xml_msg_load_itti_sctp_new_association(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_SCTP_CLOSE_ASSOCIATION_XML_STR)) {
     rc = xml_msg_load_itti_sctp_close_association(scenario, &scenario_player_item->u.msg);
+  } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_E_RAB_SETUP_REQ_XML_STR)) {
+    rc = xml_msg_load_itti_s1ap_e_rab_setup_req(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_UE_CONTEXT_RELEASE_REQ_XML_STR)) {
     rc = xml_msg_load_itti_s1ap_ue_context_release_req(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND_XML_STR)) {
@@ -862,6 +866,10 @@ void msp_scenario_add_item(scenario_t * const scenario, scenario_player_item_t *
     item->next_item = NULL;
     item->previous_item = scenario->tail_item;
     scenario->tail_item = item;
+
+    if (SCENARIO_PLAYER_ITEM_SCENARIO == item->item_type) {
+      item->u.scenario->parent = scenario;
+    }
     OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Scenario added item type %d uid %u\n", item->item_type, item->uid);
   }
 }
@@ -869,48 +877,45 @@ void msp_scenario_add_item(scenario_t * const scenario, scenario_player_item_t *
 void msp_scenario_player_add_scenario(scenario_player_t * const scenario_player, scenario_t * const scenario)
 {
   if ((scenario_player) && (scenario)) {
-
-    if (scenario_player->tail_scenarios) {
-      scenario_player->tail_scenarios->next_scenario = scenario;
-
-      scenario->previous_scenario = scenario_player->tail_scenarios;
-
-    } else {
+    if (!(scenario_player->head_scenarios)) {
       scenario_player->head_scenarios = scenario;
-      scenario->previous_scenario = NULL;
     }
-    scenario_player->tail_scenarios = scenario;
-    scenario->next_scenario = NULL;
   }
 }
 //------------------------------------------------------------------------------
-int msp_load_scenario (bstring file_path, scenario_player_t * const scenario_player)
+scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_t * const scenario_player, scenario_t * parent_scenario)
 {
   xmlDocPtr               doc = NULL;
   xmlNodePtr              cur = NULL;
+  scenario_player_item_t *scenario_item = NULL;
   scenario_player_item_t *scenario_player_item = NULL;
 
   OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Loading scenario from XML file %s\n", bdata(file_path));
   doc = xmlParseFile(bdata(file_path));
   if (doc == NULL ) {
     OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Document %s not parsed successfully\n", bdata(file_path));
-    return RETURNerror;
+    return NULL;
   }
   cur = xmlDocGetRootElement(doc);
   if (cur == NULL) {
     // do not consider this as an error
     OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "empty document %s \n", bdata(file_path));
     xmlFreeDoc(doc);
-    return RETURNok;
+    return NULL;
   }
 
   if (xmlStrcmp(cur->name, (const xmlChar *) SCENARIO_NODE_XML_STR)) {
     OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "document %s of the wrong type, root node != %s %s\n", bdata(file_path), SCENARIO_NODE_XML_STR, cur->name);
     xmlFreeDoc(doc);
-    return RETURNerror;
+    return NULL;
   }
 
-  scenario_t * scenario = calloc(1, sizeof(scenario_t));
+  scenario_item             = calloc(1, sizeof(scenario_player_item_t));
+  scenario_t * scenario            = calloc(1, sizeof(scenario_t));
+  scenario_item->item_type  = SCENARIO_PLAYER_ITEM_SCENARIO;
+  scenario_item->uid        = msp_get_seq_uid();
+  scenario_item->u.scenario = scenario;
+
   msp_init_scenario(scenario);
   scenario_set_status(scenario, SCENARIO_STATUS_LOADING, __FILE__, __LINE__);
 
@@ -923,6 +928,8 @@ int msp_load_scenario (bstring file_path, scenario_player_t * const scenario_pla
     AssertFatal(0, "Could not find scenario %s", NAME_ATTR_XML_STR);
   }
 
+  msp_scenario_player_add_scenario(scenario_player, scenario);
+
   xmlXPathContextPtr xpath_ctx = xmlXPathNewContext(doc);
   bool res = true;
   bstring xpath_expr = bformat("/%s/*",SCENARIO_NODE_XML_STR);
@@ -933,6 +940,50 @@ int msp_load_scenario (bstring file_path, scenario_player_t * const scenario_pla
     for (int item = 0 ; item < size; item ++) {
       xmlNodePtr saved_node_ptr = xpath_ctx->node;
       res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[item], xpath_ctx));
+
+      if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)SCENARIO_FILE_NODE_XML_STR))){
+        xmlChar* scenario_file = msp_get_attr_file (doc, nodes->nodeTab[item]);
+        if (scenario_file) {
+          // remove file name from file_path
+          bstring bstr = NULL;
+          if ('/' == scenario_file[0]) {
+            // Absolute path
+            bstr = bfromcstr ((const char *)scenario_file);
+            xmlFree(scenario_file);
+            if ((scenario_player_item = msp_load_scenario(bstr, scenario_player, scenario))) {
+              msp_scenario_add_item(scenario, scenario_player_item);
+            } else {
+              scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
+              OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s %s\n", MESSAGE_FILE_NODE_XML_STR, bdata(file_path));
+            }
+            bdestroy_wrapper (&bstr);
+          } else {
+            // relative path
+            int pos = bstrrchrp (file_path, '/', blength(file_path) - 1);
+            if (BSTR_ERR != pos) {
+              bstr = bstrcpy(file_path);
+              btrunc(bstr, pos + 1); // keep '/'
+              bcatblk(bstr, scenario_file, xmlStrlen(scenario_file)+1);
+              xmlFree(scenario_file);
+              if ((scenario_player_item = msp_load_scenario(bstr, scenario_player, scenario))) {
+                msp_scenario_add_item(scenario, scenario_player_item);
+              } else {
+                scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
+                OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s %s\n", MESSAGE_FILE_NODE_XML_STR, bdata(file_path));
+              }
+              bdestroy_wrapper (&bstr);
+            } else {
+              OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find char / in scenario path %s\n", file_path->data);
+              xmlFree(scenario_file);
+              return NULL;
+            }
+          }
+        } else {
+          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not get scenario file attr \n");
+          return NULL;
+        }
+      }
+
       if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)MESSAGE_FILE_NODE_XML_STR))) {
         if ((scenario_player_item = msp_load_message_file(scenario, doc, xpath_ctx, nodes->nodeTab[item], file_path))) {
           msp_scenario_add_item(scenario, scenario_player_item);
@@ -1035,12 +1086,9 @@ int msp_load_scenario (bstring file_path, scenario_player_t * const scenario_pla
   AssertFatal(SCENARIO_STATUS_LOADING == scenario->status, "Failed to load scenario %s\n", bdata(file_path));
   if (SCENARIO_STATUS_LOADING == scenario->status) {
     scenario_set_status(scenario, SCENARIO_STATUS_LOADED, __FILE__, __LINE__);
-  } //else {
-    //OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Scenario %s not loaded \n", bdata(file_path));
-  //}
-  msp_scenario_player_add_scenario(scenario_player, scenario);
+  }
   xmlFreeDoc(doc);
-  return RETURNok;
+  return scenario_item;
 }
 
 
@@ -1049,6 +1097,10 @@ void msp_free_scenario_player_item (scenario_player_item_t * item)
 {
   if (item) {
     switch (item->item_type) {
+    case SCENARIO_PLAYER_ITEM_SCENARIO:
+      msp_free_scenario(item->u.scenario);
+      break;
+
     case SCENARIO_PLAYER_ITEM_ITTI_MSG:
       msp_free_message_content(&item->u.msg);
       break;
@@ -1108,113 +1160,6 @@ void msp_free_scenario (scenario_t * scenario)
     pthread_mutex_destroy(&scenario->lock);
     free_wrapper((void**)&scenario);
   }
-}
-
-//------------------------------------------------------------------------------
-int msp_load_scenarios (bstring file_path, scenario_player_t * const scenario_player)
-{
-  xmlDocPtr  doc = NULL;
-  xmlNodePtr cur = NULL;
-
-  OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Loading scenarios from XML file %s\n", bdata(file_path));
-  doc = xmlParseFile(bdata(file_path));
-  if (doc == NULL ) {
-    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Document %s not parsed successfully\n", bdata(file_path));
-    return RETURNerror;
-  }
-  cur = xmlDocGetRootElement(doc);
-  if (cur == NULL) {
-    // do not consider this as an error
-    OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "empty document %s \n", bdata(file_path));
-    xmlFreeDoc(doc);
-    return RETURNok;
-  }
-
-  if (xmlStrcmp(cur->name, (const xmlChar *) SCENARIOS_NODE_XML_STR)) {
-    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "document %s of the wrong type, root node != %s %s\n", bdata(file_path), SCENARIOS_NODE_XML_STR, cur->name);
-    xmlFreeDoc(doc);
-    return RETURNerror;
-  }
-
-  cur = cur->xmlChildrenNode;
-  while (cur != NULL) {
-    if ((!xmlStrcmp(cur->name, (const xmlChar *)SCENARIOS_FILE_NODE_XML_STR))) {
-      xmlChar* scenarios_file = msp_get_attr_file (doc, cur);
-      if (scenarios_file) {
-        // remove file name from file_path
-        bstring bstr = NULL;
-        if ('/' == scenarios_file[0]) {
-          // Absolute path
-          bstr = bfromcstr ((const char *)scenarios_file);
-          xmlFree(scenarios_file);
-          int ret = msp_load_scenarios(bstr, scenario_player);
-          bdestroy_wrapper (&bstr);
-          if (0 > ret) {
-            return RETURNerror;
-          }
-        } else {
-          // relative path
-          int pos = bstrrchrp (file_path, '/', blength(file_path) - 1);
-          if (BSTR_ERR != pos) {
-            bstr = bstrcpy(file_path);
-            btrunc(bstr, pos + 1); // keep '/'
-            bcatblk(bstr, scenarios_file, xmlStrlen(scenarios_file));
-            xmlFree(scenarios_file);
-            int ret = msp_load_scenarios(bstr, scenario_player);
-            bdestroy_wrapper (&bstr);
-            if (0 > ret) {
-              return RETURNerror;
-            }
-          } else {
-            OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find char / in scenarios path %s\n", file_path->data);
-            xmlFree(scenarios_file);
-            return RETURNerror;
-          }
-        }
-      } else {
-        return RETURNerror;
-      }
-    } else if ((!xmlStrcmp(cur->name, (const xmlChar *)SCENARIO_FILE_NODE_XML_STR))){
-      xmlChar* scenario_file = msp_get_attr_file (doc, cur);
-      if (scenario_file) {
-        // remove file name from file_path
-        bstring bstr = NULL;
-        if ('/' == scenario_file[0]) {
-          // Absolute path
-          bstr = bfromcstr ((const char *)scenario_file);
-          xmlFree(scenario_file);
-          int ret = msp_load_scenario(bstr, scenario_player);
-          bdestroy_wrapper (&bstr);
-          if (0 > ret) {
-            return RETURNerror;
-          }
-        } else {
-          // relative path
-          int pos = bstrrchrp (file_path, '/', blength(file_path) - 1);
-          if (BSTR_ERR != pos) {
-            bstr = bstrcpy(file_path);
-            btrunc(bstr, pos + 1); // keep '/'
-            bcatblk(bstr, scenario_file, xmlStrlen(scenario_file)+1);
-            xmlFree(scenario_file);
-            int ret = msp_load_scenario(bstr, scenario_player);
-            bdestroy_wrapper (&bstr);
-            if (0 > ret) {
-              return RETURNerror;
-            }
-          } else {
-            OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find char / in scenario path %s\n", file_path->data);
-            xmlFree(scenario_file);
-            return RETURNerror;
-          }
-        }
-      } else {
-        return RETURNerror;
-      }
-    }
-    cur = cur->next;
-  }
-  xmlFreeDoc(doc);
-  return RETURNok;
 }
 
 //------------------------------------------------------------------------------

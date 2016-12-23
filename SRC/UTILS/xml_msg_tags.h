@@ -137,8 +137,11 @@
 #  define TEID_XML_FMT                                      "%"PRIx32
 #  define TEID_XML_SCAN_FMT                                 "%"SCNx32
 #  define TRANSPORT_LAYER_ADDRESS_IE_XML_STR                "transport_layer_address"
+#  define UE_AGGREGATE_MAXIMUM_BIT_RATE_XML_STR             "ue_aggregate_maximum_bit_rate"
 #  define UE_SECURITY_CAPABILITIES_ENCRYPTION_ALGORITHMS_XML_STR  "ue_security_capabilities_encryption_algorithms"
 #  define UE_SECURITY_CAPABILITIES_INTEGRITY_PROTECTION_ALGORITHMS_XML_STR  "ue_security_capabilities_integrity_protection_algorithms"
+#  define DOWNLINK_XML_STR                                  "downlink"
+#  define UPLINK_XML_STR                                    "uplink"
 
 
 

@@ -63,6 +63,7 @@
 #include "3gpp_24.008_xml.h"
 #include "3gpp_36.331_xml.h"
 #include "3gpp_36.401_xml.h"
+#include "3gpp_36.413_xml.h"
 #include "3gpp_29.274_xml.h"
 #include "nas_message_xml.h"
 #include "xml_msg_dump.h"
@@ -452,6 +453,65 @@ void xml_msg_dump_itti_s1ap_initial_ue_message(
       xmlFreeTextWriter(xml_text_writer);
     }
   }
+}
+
+//------------------------------------------------------------------------------
+void xml_msg_dump_itti_s1ap_e_rab_setup_req(
+    const itti_s1ap_e_rab_setup_req_t * const itti_msg,
+    const int sender_task,
+    const int receiver_task,
+    xmlTextWriterPtr xml_text_writer_param)
+{
+  xmlTextWriterPtr xml_text_writer = NULL;
+  int              rc = RETURNok;
+  struct timeval   elapsed_time = {0};
+  unsigned long    msg_num = xml_msg_dump_get_seq_uid();
+
+  shared_log_get_elapsed_time_since_start(&elapsed_time);
+
+  if (!xml_text_writer_param) {
+    xml_text_writer = xml_msg_dump_itti_get_new_xml_text_writter(msg_num, ITTI_S1AP_E_RAB_SETUP_REQ_XML_STR);
+  } else {
+    xml_text_writer = xml_text_writer_param;
+  }
+
+  if (xml_text_writer) {
+
+    /* Start the document with the xml default for the version,
+     * encoding ISO 8859-1 and the default for the standalone
+     * declaration. */
+    rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
+    if (rc < 0) {
+      OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
+      xmlFreeTextWriter(xml_text_writer);
+      return;
+    }
+
+    XML_WRITE_START_ELEMENT(xml_text_writer, ITTI_S1AP_E_RAB_SETUP_REQ_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(xml_text_writer, ACTION_XML_STR, "%s", ACTION_WAIT_RECEIVE_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(xml_text_writer, ITTI_SENDER_TASK_XML_STR, "%s", itti_task_id2itti_task_str(sender_task));
+    XML_WRITE_FORMAT_ELEMENT(xml_text_writer, ITTI_RECEIVER_TASK_XML_STR, "%s", itti_task_id2itti_task_str(receiver_task));
+    XML_WRITE_FORMAT_ELEMENT(xml_text_writer, TIMESTAMP_XML_STR, "%lu.%lu", elapsed_time.tv_sec, elapsed_time.tv_usec);
+
+    // mandatory attributes of initial_ue_message
+    enb_ue_s1ap_id_to_xml(&itti_msg->enb_ue_s1ap_id, xml_text_writer);
+    mme_ue_s1ap_id_to_xml(&itti_msg->mme_ue_s1ap_id, xml_text_writer);
+
+    ue_aggregate_maximum_bit_rate_to_xml(&itti_msg->ue_aggregate_maximum_bit_rate, xml_text_writer);
+
+    e_rab_to_be_setup_list_to_xml(&itti_msg->e_rab_to_be_setup_list, xml_text_writer);
+    XML_WRITE_END_ELEMENT(xml_text_writer);
+
+    rc = xmlTextWriterEndDocument(xml_text_writer);
+    if (rc < 0) {
+      OAI_FPRINTF_ERR("%s: Error at xmlTextWriterEndDocument\n", __FUNCTION__);
+    }
+
+    if (!xml_text_writer_param) {
+      xmlFreeTextWriter(xml_text_writer);
+    }
+  }
+
 }
 
 //------------------------------------------------------------------------------

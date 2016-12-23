@@ -807,7 +807,12 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
       return false;
     }
 
-    if (SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) {
+    if (SCENARIO_PLAYER_ITEM_SCENARIO == item->item_type) {
+      msp_run_scenario(item->u.scenario);
+      //....
+      scenario->last_played_item = item;
+      return true;
+    } else if (SCENARIO_PLAYER_ITEM_ITTI_MSG == item->item_type) {
       scenario_player_msg_t * msg = &item->u.msg;
       if (msg->is_tx) {
         return msp_play_tx_message(scenario, item);
@@ -854,55 +859,73 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
 //------------------------------------------------------------------------------
 void msp_run_scenario(scenario_t * const scenario)
 {
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Scenario %s status %d\n", bdata(scenario->name), scenario->status);
   if (scenario) {
-    if ((SCENARIO_STATUS_PLAY_FAILED != scenario->status) && (SCENARIO_STATUS_PLAY_SUCCESS != scenario->status)) {
-      pthread_mutex_lock(&scenario->lock);
-      g_msp_scenarios.current_scenario = scenario;
-      scenario_player_item_t *item = NULL;
+    pthread_mutex_lock(&scenario->lock);
+    g_msp_scenarios.current_scenario = scenario;
+    scenario_player_item_t *item = NULL;
 
-      if (SCENARIO_STATUS_PLAYING == scenario->status) {
-        item = scenario->last_played_item->next_item;
-        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Continue playing scenario %s\n", bdata(scenario->name));
-      } else if (SCENARIO_STATUS_LOADED == scenario->status) {
+    switch (scenario->status) {
+      case SCENARIO_STATUS_LOADED:
         item = scenario->head_item;
         scenario_set_status(scenario, SCENARIO_STATUS_PLAYING, __FILE__, __LINE__);
         OAILOG_INFO (LOG_MME_SCENARIO_PLAYER, "Playing scenario %s\n", bdata(scenario->name));
-      }
-      if (SCENARIO_STATUS_PAUSED != scenario->status) {
-        if (item) {
-          msp_play_item(scenario, item);
-          pthread_mutex_unlock(&scenario->lock);
-          if (SCENARIO_STATUS_PAUSED != scenario->status) {
-            msp_scenario_tick(scenario);
-          }
-        } else {
-          if (!(scenario->num_timers) && (SCENARIO_STATUS_PLAYING == scenario->status)) {
-            scenario_set_status(scenario, SCENARIO_STATUS_PLAY_SUCCESS, __FILE__, __LINE__);
-            OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s SUCCESS\n", bdata(scenario->name));
-            pthread_mutex_unlock(&scenario->lock);
-            if (scenario->next_scenario) {
-              msp_scenario_tick(scenario->next_scenario);
-            } else {
-              // end of scenario player, no more scenarios to play
-              itti_send_terminate_message (TASK_MME_SCENARIO_PLAYER);
-            }
-          } else { // wait a RX message ?
-            pthread_mutex_unlock(&scenario->lock);
-          }
-        }
-      } else {
+        break;
+
+      case SCENARIO_STATUS_PLAYING:
+        item = scenario->last_played_item->next_item;
+        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Continue playing scenario %s\n", bdata(scenario->name));
+        break;
+
+      case SCENARIO_STATUS_LOAD_FAILED:
+      case SCENARIO_STATUS_PLAY_FAILED:
+      case SCENARIO_STATUS_PLAY_SUCCESS:
         pthread_mutex_unlock(&scenario->lock);
+        if (!(scenario->num_timers) && (scenario->parent)) {
+          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Continue playing parent scenario %s of scenario %s\n", bdata(scenario->parent->name), bdata(scenario->name));
+          msp_scenario_tick(scenario->parent);
+        } else if (!scenario->parent) {
+          // end of scenario player, no more scenarios to play
+          //itti_send_terminate_message (TASK_MME_SCENARIO_PLAYER);
+          itti_terminate_tasks (TASK_MME_SCENARIO_PLAYER);
+        }
+        return;
+        break;
+
+      case SCENARIO_STATUS_PAUSED:
+        pthread_mutex_unlock(&scenario->lock);
+        return;
+        break;
+
+
+      case SCENARIO_STATUS_NULL:
+      case SCENARIO_STATUS_LOADING:
+      default:
+        AssertFatal(0, "Invalid Scenario status %d", scenario->status);
+    }
+
+    if (item) {
+      pthread_mutex_unlock(&scenario->lock);
+      msp_play_item(scenario, item);
+      if ((SCENARIO_PLAYER_ITEM_SCENARIO != item->item_type)  && (SCENARIO_STATUS_PAUSED != scenario->status)) {
+        msp_scenario_tick(scenario);
       }
     } else {
-      if (scenario->next_scenario) {
-        msp_scenario_tick(scenario->next_scenario);
-      } else {
-        // end of scenario player, no more scenarios to play
-        //itti_send_terminate_message (TASK_MME_SCENARIO_PLAYER);
-        itti_terminate_tasks (TASK_MME_SCENARIO_PLAYER);
+      if (!(scenario->num_timers) && (SCENARIO_STATUS_PLAYING == scenario->status)) {
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_SUCCESS, __FILE__, __LINE__);
+        OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s SUCCESS\n", bdata(scenario->name));
+        pthread_mutex_unlock(&scenario->lock);
+        if (scenario->parent) {
+          msp_scenario_tick(scenario->parent);
+        } else {
+          // end of scenario player, no more scenarios to play
+          itti_send_terminate_message (TASK_MME_SCENARIO_PLAYER);
+        }
+      } else { // wait a RX message ?
+        pthread_mutex_unlock(&scenario->lock);
       }
     }
+  } else {
+    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "No scenario to run\n");
   }
 }
 

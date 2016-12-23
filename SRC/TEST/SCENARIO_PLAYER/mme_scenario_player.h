@@ -37,6 +37,7 @@
 
 typedef enum {
   SCENARIO_PLAYER_ITEM_NULL = 0,
+  SCENARIO_PLAYER_ITEM_SCENARIO,
   SCENARIO_PLAYER_ITEM_ITTI_MSG,
   SCENARIO_PLAYER_ITEM_LABEL,
   SCENARIO_PLAYER_ITEM_VAR,
@@ -167,6 +168,7 @@ typedef struct scenario_player_update_emm_sc_s {
   } ul_count;
 } scenario_player_update_emm_sc_t;
 
+struct scenario_s;
 
 typedef struct scenario_player_item_s {
   scenario_player_item_type_t    item_type;
@@ -186,6 +188,7 @@ typedef struct scenario_player_item_s {
     scenario_player_cond_t          cond;
     scenario_player_sleep_t         sleep;
     scenario_player_update_emm_sc_t updata_emm_sc;
+    struct scenario_s              *scenario;
   } u;
 } scenario_player_item_t;
 
@@ -206,8 +209,7 @@ typedef struct scenario_s {
   scenario_player_item_t *tail_item;
   bstring                 name;
   xmlDocPtr               xml_doc;
-  struct scenario_s      *previous_scenario;
-  struct scenario_s      *next_scenario;
+  struct scenario_s      *parent;
   pthread_mutex_t         lock;
 
   // scenario play vars
@@ -255,7 +257,7 @@ void msp_free_message_content (scenario_player_msg_t * msg);
 void msp_scenario_add_item(scenario_t * const scenario, scenario_player_item_t * const item);
 void msp_scenario_player_add_scenario(scenario_player_t * const scenario_player, scenario_t * const scenario);
 
-int  msp_load_scenario (bstring file_path, scenario_player_t * const scenario_player);
+scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_t * const scenario_player, scenario_t * parent_scenario);
 void msp_free_scenario_player_item (scenario_player_item_t * item);
 void msp_free_scenario (scenario_t * scenario);
 int  msp_load_scenarios (bstring file_path, scenario_player_t * const scenario_player);

@@ -71,4 +71,12 @@ bool gbr_qos_information_from_xml (
     gbr_qos_information_t * const gqi);
 void gbr_qos_information_to_xml (const gbr_qos_information_t * const gqi, xmlTextWriterPtr writer);
 
+
+bool ue_aggregate_maximum_bit_rate_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    ue_aggregate_maximum_bit_rate_t * const ue_ambr);
+void ue_aggregate_maximum_bit_rate_to_xml (const ue_aggregate_maximum_bit_rate_t * const ue_ambr, xmlTextWriterPtr writer);
+
+
 #endif /* FILE_SP_3GPP_36_413_XML_SEEN */

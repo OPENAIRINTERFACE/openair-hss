@@ -78,18 +78,24 @@ void *mme_scenario_player_event_handler (void *args)
 
     case NAS_DOWNLINK_DATA_REQ:
       mme_scenario_player_handle_nas_downlink_data_req (received_message_p->ittiMsgHeader.instance, received_message_p);
-      msp_scenario_tick(g_msp_scenarios.current_scenario);
+      //msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 
     case MME_APP_CONNECTION_ESTABLISHMENT_CNF:
       mme_scenario_player_handle_mme_app_connection_establishment_cnf (received_message_p->ittiMsgHeader.instance, received_message_p);
-      msp_scenario_tick(g_msp_scenarios.current_scenario);
+      //msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 
     case S1AP_UE_CONTEXT_RELEASE_COMMAND:
       mme_scenario_player_handle_s1ap_ue_context_release_command (received_message_p->ittiMsgHeader.instance, received_message_p);
-      msp_scenario_tick(g_msp_scenarios.current_scenario);
+      //msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
+
+    case S1AP_E_RAB_SETUP_REQ:
+      mme_scenario_player_handle_s1ap_e_rab_setup_req (received_message_p->ittiMsgHeader.instance, received_message_p);
+      //msp_scenario_tick(g_msp_scenarios.current_scenario);
+      break;
+
 
     case TIMER_HAS_EXPIRED:
       msp_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
@@ -131,8 +137,8 @@ int mme_scenario_player_init (const mme_config_t * mme_config_p)
 {
   OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Initializing\n");
   if (RUN_MODE_SCENARIO_PLAYER == mme_config_p->run_mode) {
-    if (mme_config_p->scenario_player_config.scenario_list_file) {
-      if (msp_load_scenarios (mme_config_p->scenario_player_config.scenario_list_file, &g_msp_scenarios) < 0) {
+    if (mme_config_p->scenario_player_config.scenario_file) {
+      if (msp_load_scenario (mme_config_p->scenario_player_config.scenario_file, &g_msp_scenarios, NULL) < 0) {
         return RETURNerror;
       }
       if (itti_create_task (TASK_MME_SCENARIO_PLAYER, &mme_scenario_player_event_handler, NULL) < 0) {
@@ -151,18 +157,6 @@ int mme_scenario_player_init (const mme_config_t * mme_config_p)
 void mme_scenario_player_exit (void)
 {
   // TODO would need mutex on g_msp_scenarios
-  scenario_t *scenario = g_msp_scenarios.head_scenarios;
-  scenario_t *next_scenario = NULL;
-  g_msp_scenarios.head_scenarios = NULL;
-  while (scenario) {
-    if (SCENARIO_STATUS_PLAY_SUCCESS == scenario->status) {
-      OAI_FPRINTF_INFO ("SUCCESS playing scenario %s\n", bdata(scenario->name));
-    } else {
-      OAI_FPRINTF_ERR ("FAILED  playing scenario %s\n", bdata(scenario->name));
-    }
-    next_scenario=scenario->next_scenario;
-    msp_free_scenario(scenario);
-    scenario = next_scenario;
-  }
+  msp_free_scenario(g_msp_scenarios.head_scenarios);
 }
 

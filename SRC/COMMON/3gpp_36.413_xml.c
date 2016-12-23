@@ -80,12 +80,12 @@ bool e_rab_to_be_setup_list_from_xml (
         bstring xpath_expr_items = bformat("./%s",E_RAB_TO_BE_SETUP_ITEM_XML_STR);
         xmlXPathObjectPtr xpath_obj_items = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_items);
         if (xpath_obj_items) {
-          xmlNodeSetPtr items = xpath_obj->nodesetval;
-          int no_of_items = (nodes) ? items->nodeNr : 0;
-          xmlNodePtr saved_node_ptr2 = xpath_ctx->node;
+          xmlNodeSetPtr items = xpath_obj_items->nodesetval;
+          int no_of_items = (items) ? items->nodeNr : 0;
           for (int item = 0; item < no_of_items; item++) {
+            xmlNodePtr saved_node_ptr2 = xpath_ctx->node;
             res = (RETURNok == xmlXPathSetContextNode(items->nodeTab[item], xpath_ctx));
-            res = e_rab_to_be_setup_item_from_xml (xml_doc, xpath_ctx, &list->item[item]);
+            if (res) res = e_rab_to_be_setup_item_from_xml (xml_doc, xpath_ctx, &items->nodeTab[item]);
             if (res) list->no_of_items++;
             res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr2, xpath_ctx)) & res;
           }
@@ -182,9 +182,7 @@ bool e_rab_level_qos_parameters_from_xml (
       }
 
       if (res) {
-        bstring xpath_expr_br = bformat("./%s",E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_IE_XML_STR);
-        res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_br, "%"SCNu64, (void*)&params->e_rab_guaranteed_bit_rate_downlink, NULL);
-        bdestroy_wrapper (&xpath_expr_br);
+        res = gbr_qos_information_from_xml (xml_doc, xpath_ctx, &params->gbr_qos_information);
       }
 
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
@@ -201,7 +199,7 @@ void e_rab_level_qos_parameters_to_xml (const e_rab_level_qos_parameters_t * con
   XML_WRITE_START_ELEMENT(writer, E_RAB_LEVEL_QOS_PARAMETERS_XML_STR);
   qci_to_xml (&params->qci, writer);
   allocation_and_retention_priority_to_xml (&params->allocation_and_retention_priority, writer);
-  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_IE_XML_STR, "%"PRIu64, params->e_rab_guaranteed_bit_rate_downlink);
+  gbr_qos_information_to_xml(&params->gbr_qos_information, writer);
   XML_WRITE_END_ELEMENT(writer);
 }
 
@@ -320,6 +318,48 @@ void gbr_qos_information_to_xml (const gbr_qos_information_t * const gqi, xmlTex
   XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_MAXIMUM_BIT_RATE_UPLINK_IE_XML_STR, "%"PRIu64, gqi->e_rab_maximum_bit_rate_uplink);
   XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_IE_XML_STR, "%"PRIu64, gqi->e_rab_guaranteed_bit_rate_downlink);
   XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_GUARANTEED_BIT_RATE_UPLINK_IE_XML_STR, "%"PRIu64, gqi->e_rab_guaranteed_bit_rate_uplink);
+  XML_WRITE_END_ELEMENT(writer);
+}
+
+//------------------------------------------------------------------------------
+bool ue_aggregate_maximum_bit_rate_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    ue_aggregate_maximum_bit_rate_t * const ue_ambr)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  bool res = false;
+  bstring xpath_expr = bformat("./%s",UE_AGGREGATE_MAXIMUM_BIT_RATE_XML_STR);
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
+  if (xpath_obj) {
+    xmlNodeSetPtr nodes = xpath_obj->nodesetval;
+    int size = (nodes) ? nodes->nodeNr : 0;
+    if ((1 == size)  && (xml_doc)) {
+      xmlNodePtr saved_node_ptr = xpath_ctx->node;
+      res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
+
+      bstring xpath_expr_prio = bformat("./%s",DOWNLINK_XML_STR);
+      res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_prio, "%"SCNu64, (void*)&ue_ambr->dl, NULL);
+      bdestroy_wrapper (&xpath_expr_prio);
+      if (res) {
+        bstring xpath_expr_cap = bformat("./%s",UPLINK_XML_STR);
+        res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_cap, "%"SCNu64, (void*)&ue_ambr->ul, NULL);
+        bdestroy_wrapper (&xpath_expr_cap);
+      }
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
+    }
+    xmlXPathFreeObject(xpath_obj);
+  }
+  bdestroy_wrapper (&xpath_expr);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
+}
+
+//------------------------------------------------------------------------------
+void ue_aggregate_maximum_bit_rate_to_xml (const ue_aggregate_maximum_bit_rate_t * const ue_ambr, xmlTextWriterPtr writer)
+{
+  XML_WRITE_START_ELEMENT(writer, UE_AGGREGATE_MAXIMUM_BIT_RATE_XML_STR);
+  XML_WRITE_FORMAT_ELEMENT(writer, DOWNLINK_XML_STR, "%"PRIu64, ue_ambr->dl);
+  XML_WRITE_FORMAT_ELEMENT(writer, UPLINK_XML_STR, "%"PRIu64, ue_ambr->ul);
   XML_WRITE_END_ELEMENT(writer);
 }
 
