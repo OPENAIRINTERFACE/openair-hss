@@ -275,6 +275,7 @@ scenario_player_item_t * sp_get_var(scenario_t * const scenario, unsigned char *
             return var_item;
           }
         }
+        OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Could not find var %s in scenario %s\n", var_name, scenario_up->name->data);
         scenario_up = scenario_up->parent;
       }
     }

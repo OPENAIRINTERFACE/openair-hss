@@ -918,6 +918,7 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
 
   msp_init_scenario(scenario);
   scenario_set_status(scenario, SCENARIO_STATUS_LOADING, __FILE__, __LINE__);
+  scenario->parent = parent_scenario;
 
   xmlChar *attr = xmlGetProp(cur, (const xmlChar *)NAME_ATTR_XML_STR);
   if (attr) {
