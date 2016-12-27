@@ -55,7 +55,7 @@ extern "C" {
 typedef signed int              NwFdT;          /**< Use this for file descriptor */
 
 typedef uintptr_t               NwPtrT;         /**< Use this for generic pointers      */
-typedef unsigned int            NwHandleT;      /**< Use this for generic handles       */
+typedef uintptr_t               NwHandleT;      /**< Use this for generic handles       */
 
 
 #ifdef __cplusplus
