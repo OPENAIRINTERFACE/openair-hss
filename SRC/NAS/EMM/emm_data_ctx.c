@@ -204,7 +204,7 @@ inline void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set IMSI %s (valid)\n", ctxt->ue_id, imsi_str);
 #endif
   mme_api_notify_imsi(ctxt->ue_id, imsi64);
-  hashtable_ts_insert (_emm_data.ctx_coll_imsi, imsi64, (void*)((uintptr_t )ctxt->ue_id));
+  hashtable_ts_insert (_emm_data.ctx_coll_imsi, imsi64, (void*)&ctxt->ue_id);
 }
 
 //------------------------------------------------------------------------------
@@ -635,7 +635,7 @@ emm_data_context_add (
     if ( IS_EMM_CTXT_PRESENT_IMSI(elm)) {
       imsi64_t imsi64 = INVALID_IMSI64;
       IMSI_TO_IMSI64(&elm->_imsi,imsi64);
-      h_rc = hashtable_ts_insert (emm_data->ctx_coll_imsi, imsi64, (void*)((uintptr_t )elm->ue_id));
+      h_rc = hashtable_ts_insert (emm_data->ctx_coll_imsi, imsi64, (void*)&elm->ue_id);
 
       if (HASH_TABLE_OK == h_rc) {
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT"\n", elm->ue_id, imsi64);
@@ -700,7 +700,7 @@ emm_data_context_add_imsi (
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
 
   if ( IS_EMM_CTXT_PRESENT_IMSI(elm)) {
-    h_rc = hashtable_ts_insert (emm_data->ctx_coll_imsi, elm->_imsi64, (void*)((uintptr_t )elm->ue_id));
+    h_rc = hashtable_ts_insert (emm_data->ctx_coll_imsi, elm->_imsi64, (void*)(&elm->ue_id));
 
     if (HASH_TABLE_OK == h_rc) {
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT"\n", elm->ue_id, elm->_imsi64);
