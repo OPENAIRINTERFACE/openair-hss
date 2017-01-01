@@ -58,6 +58,7 @@
 #include "secu_defs.h"
 #include "mme_config.h"
 #include "mme_scenario_player_task.h"
+#include "sp_xml_load.h"
 
 extern scenario_player_t g_msp_scenarios;
 
@@ -376,19 +377,17 @@ bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * cons
   scenario_player_item_t * var_item = NULL;
   bool value_changed = false;
 
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item set var name %s  UID %u\n", item->u.var.name->data, item->uid);
   // find the relative item
-  hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
-      (hash_key_t)item->u.set_var.var_uid, (void **)&var_item);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var_item), "Could not find var item UID %d", item->u.set_var.var_uid);
-  AssertFatal (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type, "Bad type var item UID %d", var_item->item_type);
+  // Check if var already exists
+  var_item = sp_get_var(scenario, (unsigned char *)bdata(item->u.set_var.name));
+  AssertFatal(var_item, "var %s not found", bdata(item->u.set_var.name));
+  AssertFatal((item->u.set_var.var_uid == var_item->uid), "var %s uid do not match %d/%d", bdata(item->u.set_var.name), item->u.set_var.var_uid, var_item->uid);
 
   if (item->u.set_var.var_ref_uid) {
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item set var name %s  UID %u from var UID %u\n", item->u.set_var.name->data, var_item->uid, item->u.set_var.var_ref_uid);
     // get ref var value
-    scenario_player_item_t * var_ref = NULL;
-    hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
-        (hash_key_t)item->u.set_var.var_ref_uid, (void **)&var_ref);
-    AssertFatal ((HASH_TABLE_OK == hrc) && (var_ref), "Could not find var ref item UID %d", item->u.set_var.var_ref_uid);
+    scenario_player_item_t * var_ref = sp_get_var_by_uid(scenario, (hash_key_t)item->u.set_var.var_ref_uid);
+    AssertFatal ( (var_ref), "Could not find var ref item UID %d", item->u.set_var.var_ref_uid);
     AssertFatal (SCENARIO_PLAYER_ITEM_VAR == var_ref->item_type, "Bad type var ref item UID %d", var_ref->item_type);
     AssertFatal (var_ref->u.var.value_type == var_item->u.var.value_type, "var types to not match %d != %d, discouraged to do so in scenario", var_ref->u.var.value_type, var_item->u.var.value_type);
     if (VAR_VALUE_TYPE_INT64 == var_ref->u.var.value_type) {
@@ -423,6 +422,7 @@ bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * cons
         var_item->u.var.value_type, item->u.set_var.value_type);
 
     if (VAR_VALUE_TYPE_INT64 == var_item->u.var.value_type) {
+      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item set var name %s  UID %u from value int 64 %" PRIx64"\n", item->u.set_var.name->data, var_item->uid, item->u.set_var.value.value_u64);
       var_item->u.var.value.value_u64 = item->u.set_var.value.value_u64;
     } else if ((VAR_VALUE_TYPE_HEX_STREAM == var_item->u.var.value_type) || (VAR_VALUE_TYPE_ASCII_STREAM == var_item->u.var.value_type)) {
 
@@ -456,15 +456,44 @@ bool msp_play_set_var(scenario_t * const scenario, scenario_player_item_t * cons
 bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * const item)
 {
   scenario_player_item_t * ref = NULL;
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item incr var UID %u\n", item->uid);
   // find the relative item
-  hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
-      (hash_key_t)item->u.uid_decr_var, (void **)&ref);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find var item UID %d", item->u.uid_incr_var);
+  ref = sp_get_var_by_uid(scenario, (hash_key_t)item->u.uid_incr_var);
+  AssertFatal ((ref), "Could not find var item UID %d", item->u.uid_incr_var);
   AssertFatal (SCENARIO_PLAYER_ITEM_VAR == ref->item_type, "Bad type var item UID %d", ref->item_type);
-  AssertFatal ((VAR_VALUE_TYPE_INT64 == ref->u.var.value_type), "Bad var type %d", ref->u.var.value_type);
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item incr var %s UID %u\n", ref->u.var.name->data, ref->uid);
 
-  ref->u.var.value.value_u64 += 1;
+  switch (ref->u.var.value_type) {
+    case VAR_VALUE_TYPE_INT64:
+      ref->u.var.value.value_u64 += 1;
+      break;
+
+    case VAR_VALUE_TYPE_ASCII_STREAM: {
+        // may be useful for string representing IMSI
+        int index  = ref->u.var.value.value_bstr->slen - 1;
+        char c = ref->u.var.value.value_bstr->data[index];
+
+        while ((0 <= index) && ('0' <= c) && ( '9' >= c)) {
+          c = c + 1;
+          if (('0' <= c) && ( '9' >= c)) {
+            ref->u.var.value.value_bstr->data[index] = c;
+            break;
+          } else {
+            ref->u.var.value.value_bstr->data[index] = '0';
+          }
+          index--;
+          c = ref->u.var.value.value_bstr->data[index];
+        }
+      }
+      break;
+
+    case VAR_VALUE_TYPE_HEX_STREAM: {
+        AssertFatal (0, "TODO incr VAR_VALUE_TYPE_HEX_STREAM");
+      }
+      break;
+
+    default:
+      AssertFatal (0, "TODO incr var type %d", ref->u.var.value_type);
+  }
 
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "incr var %s=%"PRIu64 "\n", ref->u.var.name->data, ref->u.var.value.value_u64);
   item->is_played = true;
@@ -476,13 +505,12 @@ bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * con
 bool msp_play_decr_var(scenario_t * const scenario, scenario_player_item_t * const item)
 {
   scenario_player_item_t * ref = NULL;
-  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item decr var UID %u\n", item->uid);
   // find the relative item
-  hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
-      (hash_key_t)item->u.uid_decr_var, (void **)&ref);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find var item UID %d", item->u.uid_decr_var);
+  ref = sp_get_var_by_uid(scenario, (hash_key_t)item->u.uid_decr_var);
+  AssertFatal ((ref), "Could not find var item UID %d", item->u.uid_decr_var);
   AssertFatal (SCENARIO_PLAYER_ITEM_VAR == ref->item_type, "Bad type var item UID %d", ref->item_type);
   AssertFatal ((VAR_VALUE_TYPE_INT64 == ref->u.var.value_type), "Bad var type %d", ref->u.var.value_type);
+  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item decr var %s UID %u\n", ref->u.var.name->data, ref->uid);
 
   ref->u.var.value.value_u64 -= 1;
 
@@ -571,37 +599,19 @@ bool msp_play_compute_authentication_response_parameter(scenario_t * const scena
   scenario_player_item_t * var_auth_param = NULL;
   scenario_player_item_t * var_selected_plmn = NULL;
 
-  void                   * vuid_rand = NULL;
-  void                   * vuid_autn = NULL;
-  void                   * vuid_auth_param = NULL;
-  void                   * vuid_selected_plmn = NULL;
-
-
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item compute authentication response parameter UID %u\n", item->uid);
 
-  hashtable_rc_t hrc = obj_hashtable_ts_get (scenario->var_items, "AUTN", strlen("AUTN"), (void **)&vuid_autn);
-  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var AUTN in hashtable");
-  int uid_autn = (int)(uintptr_t)vuid_autn;
-  hrc = hashtable_ts_get (scenario->scenario_items, uid_autn, (void **)&var_autn);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var_autn), "Could not find var item UID %d", uid_autn);
+  var_autn = sp_get_var(scenario, (unsigned char *)"AUTN");
+  AssertFatal ((var_autn), "Could not find var AUTN");
 
-  hrc = obj_hashtable_ts_get (scenario->var_items, "RAND", strlen("RAND"), (void **)&vuid_rand);
-  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var RAND in hashtable");
-  int uid_rand = (int)(uintptr_t)vuid_rand;
-  hrc = hashtable_ts_get (scenario->scenario_items, uid_rand, (void **)&var_rand);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var_rand), "Could not find var item UID %d", uid_rand);
+  var_rand = sp_get_var(scenario, (unsigned char *)"RAND");
+  AssertFatal ((var_rand), "Could not find var RAND");
 
-  hrc = obj_hashtable_ts_get (scenario->var_items, "AUTHENTICATION_RESPONSE_PARAMETER", strlen("AUTHENTICATION_RESPONSE_PARAMETER"), (void **)&vuid_auth_param);
-  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var AUTHENTICATION_RESPONSE_PARAMETER in hashtable");
-  int uid_auth_param = (int)(uintptr_t)vuid_auth_param;
-  hrc = hashtable_ts_get (scenario->scenario_items, uid_auth_param, (void **)&var_auth_param);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var_auth_param), "Could not find var item UID %d", uid_auth_param);
+  var_auth_param = sp_get_var(scenario, (unsigned char *)"AUTHENTICATION_RESPONSE_PARAMETER");
+  AssertFatal ((var_auth_param), "Could not find var AUTHENTICATION_RESPONSE_PARAMETER");
 
-  hrc = obj_hashtable_ts_get (scenario->var_items, "SELECTED_PLMN", strlen("SELECTED_PLMN"), (void **)&vuid_selected_plmn);
-  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var SELECTED_PLMN in hashtable");
-  int uid_selected_plmn = (int)(uintptr_t)vuid_selected_plmn;
-  hrc = hashtable_ts_get (scenario->scenario_items, uid_selected_plmn, (void **)&var_selected_plmn);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var_selected_plmn), "Could not find var item UID %d", uid_selected_plmn);
+  var_selected_plmn = sp_get_var(scenario, (unsigned char *)"SELECTED_PLMN");
+  AssertFatal ((var_selected_plmn), "Could not find var SELECTED_PLMN");
   AssertFatal (3 == blength(var_selected_plmn->u.var.value.value_bstr), "Bad PLMN hex stream");
 
   memcpy(scenario->usim_data.autn, var_autn->u.var.value.value_bstr->data, USIM_AUTN_SIZE);
@@ -648,37 +658,19 @@ bool msp_play_compute_authentication_sync_failure_parameter(scenario_t * const s
   scenario_player_item_t * var_auth_param = NULL;
   scenario_player_item_t * var_selected_plmn = NULL;
 
-  void                   * vuid_rand = NULL;
-  void                   * vuid_autn = NULL;
-  void                   * vuid_auth_param = NULL;
-  void                   * vuid_selected_plmn = NULL;
-
-
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item compute sync failure parameter UID %u\n", item->uid);
 
-  hashtable_rc_t hrc = obj_hashtable_ts_get (scenario->var_items, "AUTN", strlen("AUTN"), (void **)&vuid_autn);
-  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var AUTN in hashtable");
-  int uid_autn = (int)(uintptr_t)vuid_autn;
-  hrc = hashtable_ts_get (scenario->scenario_items, uid_autn, (void **)&var_autn);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var_autn), "Could not find var item UID %d", uid_autn);
+  var_autn = sp_get_var (scenario, (unsigned char *)"AUTN");
+  AssertFatal ((var_autn), "Could not find var AUTN");
 
-  hrc = obj_hashtable_ts_get (scenario->var_items, "RAND", strlen("RAND"), (void **)&vuid_rand);
-  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var RAND in hashtable");
-  int uid_rand = (int)(uintptr_t)vuid_rand;
-  hrc = hashtable_ts_get (scenario->scenario_items, uid_rand, (void **)&var_rand);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var_rand), "Could not find var item UID %d", uid_rand);
+  var_rand = sp_get_var (scenario, (unsigned char *)"RAND");
+  AssertFatal ((var_rand), "Could not find var RAND");
 
-  hrc = obj_hashtable_ts_get (scenario->var_items, "AUTHENTICATION_FAILURE_PARAMETER", strlen("AUTHENTICATION_FAILURE_PARAMETER"), (void **)&vuid_auth_param);
-  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var AUTHENTICATION_FAILURE_PARAMETER in hashtable");
-  int uid_auth_param = (int)(uintptr_t)vuid_auth_param;
-  hrc = hashtable_ts_get (scenario->scenario_items, uid_auth_param, (void **)&var_auth_param);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var_auth_param), "Could not find var item UID %d", uid_auth_param);
+  var_auth_param = sp_get_var (scenario, (unsigned char *)"AUTHENTICATION_FAILURE_PARAMETER");
+  AssertFatal ((var_auth_param), "Could not find var AUTHENTICATION_FAILURE_PARAMETER");
 
-  hrc = obj_hashtable_ts_get (scenario->var_items, "SELECTED_PLMN", strlen("SELECTED_PLMN"), (void **)&vuid_selected_plmn);
-  AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var SELECTED_PLMN in hashtable");
-  int uid_selected_plmn = (int)(uintptr_t)vuid_selected_plmn;
-  hrc = hashtable_ts_get (scenario->scenario_items, uid_selected_plmn, (void **)&var_selected_plmn);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var_selected_plmn), "Could not find var item UID %d", uid_selected_plmn);
+  var_selected_plmn = sp_get_var (scenario, (unsigned char *)"SELECTED_PLMN");
+  AssertFatal ((var_selected_plmn), "Could not find var SELECTED_PLMN");
   AssertFatal (3 == blength(var_selected_plmn->u.var.value.value_bstr), "Bad PLMN hex stream");
 
   memcpy(scenario->usim_data.autn, var_autn->u.var.value.value_bstr->data, USIM_AUTN_SIZE);
@@ -719,9 +711,8 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item update emm security context UID %u\n", item->uid);
   if (update_emm_sc->is_seea_present) {
     if (update_emm_sc->is_seea_a_uid) {
-      scenario_player_item_t * var = NULL;
-      hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items, update_emm_sc->seea.uid, (void **)&var);
-      AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var uid %d", update_emm_sc->seea.uid);
+      scenario_player_item_t * var = sp_get_var_by_uid(scenario, update_emm_sc->seea.uid);
+      AssertFatal((var), "Error in getting var uid %d", update_emm_sc->seea.uid);
       AssertFatal(SCENARIO_PLAYER_ITEM_VAR == var->item_type, "Error uid %d ref is not a var: %d", update_emm_sc->seea.uid, var->item_type);
       AssertFatal(VAR_VALUE_TYPE_INT64 == var->u.var.value_type, "Error var %s type %d is not VAR_VALUE_TYPE_INT64", bdata(var->u.var.name), var->u.var.value_type);
       scenario->ue_emulated_emm_security_context->selected_algorithms.encryption = (uint8_t)var->u.var.value.value_u64;
@@ -734,9 +725,8 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
 
   if (update_emm_sc->is_seia_present) {
     if (update_emm_sc->is_seia_a_uid) {
-      scenario_player_item_t * var = NULL;
-      hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items, update_emm_sc->seia.uid, (void **)&var);
-      AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var uid %d", update_emm_sc->seia.uid);
+      scenario_player_item_t * var = sp_get_var_by_uid (scenario, update_emm_sc->seia.uid);
+      AssertFatal((var), "Error in getting var uid %d", update_emm_sc->seia.uid);
       AssertFatal(SCENARIO_PLAYER_ITEM_VAR == var->item_type, "Error uid %d ref is not a var: %d", update_emm_sc->seia.uid, var->item_type);
       AssertFatal(VAR_VALUE_TYPE_INT64 == var->u.var.value_type, "Error var %s type %d is not VAR_VALUE_TYPE_INT64", bdata(var->u.var.name), var->u.var.value_type);
       scenario->ue_emulated_emm_security_context->selected_algorithms.integrity = (uint8_t)var->u.var.value.value_u64;
@@ -750,9 +740,8 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
   if (update_emm_sc->is_ul_count_present) {
     uint32_t ul_count = 0;
     if (update_emm_sc->is_ul_count_a_uid) {
-      scenario_player_item_t * var = NULL;
-      hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items, update_emm_sc->ul_count.uid, (void **)&var);
-      AssertFatal(HASH_TABLE_OK == hrc, "Error in getting var uid %d", update_emm_sc->ul_count.uid);
+      scenario_player_item_t * var = sp_get_var_by_uid (scenario, update_emm_sc->ul_count.uid);
+      AssertFatal((var), "Error in getting var uid %d", update_emm_sc->ul_count.uid);
       AssertFatal(SCENARIO_PLAYER_ITEM_VAR == var->item_type, "Error uid %d ref is not a var: %d", update_emm_sc->ul_count.uid, var->item_type);
       AssertFatal(VAR_VALUE_TYPE_INT64 == var->u.var.value_type, "Error var %s type %d is not VAR_VALUE_TYPE_INT64", bdata(var->u.var.name), var->u.var.value_type);
       ul_count = (uint32_t)var->u.var.value.value_u64;

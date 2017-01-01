@@ -210,6 +210,7 @@ typedef struct scenario_s {
   bstring                 name;
   xmlDocPtr               xml_doc;
   struct scenario_s      *parent;
+  struct scenario_s      *next; // only to maintain a list, but nothing to do with the playing sequence
   pthread_mutex_t         lock;
 
   // scenario play vars
@@ -256,6 +257,7 @@ int msp_reload_message (scenario_t * const scenario, scenario_player_item_t * co
 void msp_free_message_content (scenario_player_msg_t * msg);
 void msp_scenario_add_item(scenario_t * const scenario, scenario_player_item_t * const item);
 void msp_scenario_player_add_scenario(scenario_player_t * const scenario_player, scenario_t * const scenario);
+bool msp_exist_scenario(scenario_player_t * const scenario_player, const char * const name);
 
 scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_t * const scenario_player, scenario_t * parent_scenario);
 void msp_free_scenario_player_item (scenario_player_item_t * item);

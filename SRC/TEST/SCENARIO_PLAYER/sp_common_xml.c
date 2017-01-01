@@ -68,10 +68,8 @@ SP_NUM_FROM_XML_GENERATE( teid, TEID );
 //------------------------------------------------------------------------------
 int sp_assign_value_to_var(scenario_t *scenario, char* var_name, char* str_value)
 {
-  void                                   *uid = NULL;
-
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Assigning to var %s value %s\n", var_name, str_value);
-  scenario_player_item_t * var = sp_get_var(scenario, var_name);
+  scenario_player_item_t * var = sp_get_var(scenario, (unsigned char *)var_name);
 
   AssertFatal (var, "Could not find var %s", var_name);
   AssertFatal (SCENARIO_PLAYER_ITEM_VAR == var->item_type, "Bad type var item UID %d", var->item_type);
@@ -117,16 +115,8 @@ int sp_assign_value_to_var(scenario_t *scenario, char* var_name, char* str_value
 //------------------------------------------------------------------------------
 int sp_compare_string_value_with_var(scenario_t *scenario, char* var_name, char* str_value)
 {
-  void                                   *uid = NULL;
-  hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, (const void *)var_name, strlen(var_name), (void **)&uid);
-  AssertFatal(HASH_TABLE_OK == rc, "Error in getting var %s in hashtable", var_name);
-  int uid_int = (int)(uintptr_t)uid;
-
-  scenario_player_item_t * var = NULL;
-  // find the relative item
-  hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
-      (hash_key_t)uid_int, (void **)&var);
-  AssertFatal ((HASH_TABLE_OK == hrc) && (var), "Could not find var item UID %d", uid_int);
+  scenario_player_item_t * var = sp_get_var(scenario, (unsigned char *)var_name);
+  AssertFatal ((var), "Could not find var %s", var_name);
   AssertFatal (SCENARIO_PLAYER_ITEM_VAR == var->item_type, "Bad type var item UID %d", var->item_type);
 
   if (VAR_VALUE_TYPE_INT64 == var->u.var.value_type) {

@@ -32,6 +32,8 @@
 
 
 scenario_player_item_t * sp_get_var(scenario_t * const scenario, unsigned char * var_name);
+scenario_player_item_t * sp_get_var_by_uid(scenario_t * const scenario, const int uid);
+
 
 #define SP_NUM_FROM_XML_PROTOTYPE(name_lower) \
 bool sp_ ## name_lower ## _from_xml (\

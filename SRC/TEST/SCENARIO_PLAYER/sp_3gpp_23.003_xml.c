@@ -84,40 +84,26 @@ bool sp_m_tmsi_from_xml (
   if (!res && xml_var) {
     if ('$' == xml_var->data[0]) {
       if (BSTR_OK == bdelete(xml_var, 0, 1)) {
-        void           *uid = NULL;
-
-        hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, bdata(xml_var), blength(xml_var), (void**)&uid);
-        if (HASH_TABLE_OK == rc) {
-          scenario_player_item_t * var_item = NULL;
-          rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);
-          if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {
-            *m_tmsi = (tmsi_t)var_item->u.var.value.value_u64;
-            res = true;
-            OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" M_TMSI_XML_FMT " from var uid=0x%lx\n",
-                M_TMSI_IE_XML_STR, *m_tmsi, (uintptr_t)uid);
-          } else {
-            AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", M_TMSI_IE_XML_STR);
-          }
+        // Check if var already exists
+        scenario_player_item_t * spi_var = sp_get_var(scenario, (unsigned char *)bdata(xml_var));
+        AssertFatal(spi_var, "var %s not found", bdata(xml_var));
+        if (SCENARIO_PLAYER_ITEM_VAR == spi_var->item_type) {
+          *m_tmsi = (tmsi_t)spi_var->u.var.value.value_u64;
+          res = true;
+          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" M_TMSI_XML_FMT " from var uid=0x%lx\n",
+              M_TMSI_IE_XML_STR, *m_tmsi, (uintptr_t)spi_var->uid);
         } else {
-          AssertFatal (0, "Could not find %s var, should have been declared in scenario\n", M_TMSI_IE_XML_STR);
+          AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", M_TMSI_IE_XML_STR);
         }
       }
     } else if ('#' == xml_var->data[0]) {
       if (BSTR_OK == bdelete(xml_var, 0, 1)) {
-        void           *uid = NULL;
-
-        hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, bdata(xml_var), blength(xml_var), (void**)&uid);
-        if (HASH_TABLE_OK == rc) {
-          scenario_player_item_t * var_item = NULL;
-          rc = hashtable_ts_get (scenario->scenario_items, (const hash_key_t)(uintptr_t)uid, (void **)&var_item);
-          if ((HASH_TABLE_OK == rc) && (SCENARIO_PLAYER_ITEM_VAR == var_item->item_type)) {
-            res = true;
-            OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s to be loaded\n", M_TMSI_IE_XML_STR);
-          } else {
-            AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", M_TMSI_IE_XML_STR);
-          }
-        } else {
-          AssertFatal (0, "Could not find %s var, should have been declared in scenario\n", M_TMSI_IE_XML_STR);
+        // Check if var already exists
+        scenario_player_item_t * spi_var = sp_get_var(scenario, (unsigned char *)bdata(xml_var));
+        AssertFatal(spi_var, "var %s not found", bdata(xml_var));
+        if (SCENARIO_PLAYER_ITEM_VAR == spi_var->item_type) {
+          res = true;
+          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s to be loaded\n", M_TMSI_IE_XML_STR);
         }
       }
     }
