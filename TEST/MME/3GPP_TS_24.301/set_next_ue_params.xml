@@ -5,4 +5,5 @@
   <incr_var name="ENB_UE_S1AP_ID"/>
   <incr_var name="M_TMSI"/>
   <incr_var name="IMSI"/>
+  <incr_var name="ENB_S1U_TEID"/>
 </scenario>

@@ -11,16 +11,39 @@
     
   <!-- VARIABLES TO MME -->
   <var name="ENB_UE_S1AP_ID"                                       value="EBE1A"   />
+  <var name="ENB_S1U_TEID"                                         value="7e1d0000"   />
 
   <!-- VARIABLES FROM MME -->
-  <var name="NAS_MAC_DL"                                                                            value="00000000" />
-  <var name="MME_UE_S1AP_ID"                                        value="000000"   />
-  <var name="ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"                                             value="00000000" />
+  <var name="NAS_MAC_DL"                                           value="00000000" />
+  <var name="MME_UE_S1AP_ID"                                       value="000000"   />
+  <var name="MME_S1U_TEID"                                         value="000000"   />
+  <var name="S1U_SGW_TRANSPORT_LAYER_ADDRESS"                      ascii_stream_value="000000"   />
+  <var name="ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"            value="00000000" />
+
+  <var name="UE_AMBR_DL"                                           value="000000"   />
+  <var name="UE_AMBR_UL"                                           value="000000"   />
   
-  
-  <var name="DEFAULT_BEARER_PRIORITY_LEVEL"                        value="0"          />
-  <var name="DEFAULT_BEARER_PREEMPTION_CAPABILITY"                 value="0"          />
-  <var name="DEFAULT_BEARER_PREEMPTION_VULNERABILITY"              value="0"          />
+  <var name="DEFAULT_BEARER_PRIORITY_LEVEL"                        value="0"        />
+  <var name="DEFAULT_BEARER_PREEMPTION_CAPABILITY"                 value="0"        />
+  <var name="DEFAULT_BEARER_PREEMPTION_VULNERABILITY"              value="0"        />
+    
+  <var name="DEDICATED_EPS_BEARER_IDENTITY"                        value="0x06"     />
+  <var name="LINKED_EPS_BEARER_IDENTITY"                           value="0x05"     />
+  <var name="DEDICATED_BEARER_PRIORITY_LEVEL"                      value="0"        />
+  <var name="DEDICATED_BEARER_PREEMPTION_CAPABILITY"               value="0"        />
+  <var name="DEDICATED_BEARER_PREEMPTION_VULNERABILITY"            value="0"        />
+  <var name="DEDICATED_BEARER_QOS_MBR_DL"                          value="0"        />
+  <var name="DEDICATED_BEARER_QOS_MBR_UL"                          value="0"        />
+  <var name="DEDICATED_BEARER_QOS_GBR_DL"                          value="0"        />
+  <var name="DEDICATED_BEARER_QOS_GBR_UL"                          value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_MBR_DL"                      value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_MBR_UL"                      value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_GBR_DL"                      value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_GBR_UL"                      value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_MBR_DL_EXT"                  value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_MBR_UL_EXT"                  value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_GBR_DL_EXT"                  value="0"        />
+  <var name="DEDICATED_BEARER_EPS_QOS_GBR_UL_EXT"                  value="0"        />
     
   <!-- "good" scenarios: no error cases -->
   <scenario_file><file>ATTACH/R10_attach_guti_complete/scenario_R10_attach_guti_complete.xml</file></scenario_file>

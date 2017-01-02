@@ -791,6 +791,8 @@ int msp_reload_message (scenario_t * const scenario, scenario_player_item_t * co
     rc = xml_msg_load_itti_sctp_close_association(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_E_RAB_SETUP_REQ_XML_STR)) {
     rc = xml_msg_load_itti_s1ap_e_rab_setup_req(scenario, &scenario_player_item->u.msg);
+  } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_E_RAB_SETUP_RSP_XML_STR)) {
+    rc = xml_msg_load_itti_s1ap_e_rab_setup_rsp(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_UE_CONTEXT_RELEASE_REQ_XML_STR)) {
     rc = xml_msg_load_itti_s1ap_ue_context_release_req(scenario, &scenario_player_item->u.msg);
   } else if (!xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND_XML_STR)) {

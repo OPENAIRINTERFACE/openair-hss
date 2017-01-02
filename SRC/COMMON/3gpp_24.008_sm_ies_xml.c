@@ -1768,9 +1768,9 @@ bool traffic_flow_template_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 void traffic_flow_template_to_xml (const traffic_flow_template_t * const trafficflowtemplate, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, TRAFFIC_FLOW_TEMPLATE_XML_STR);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, TFT_OPERATION_CODE_ATTR_XML_STR, "0x%"PRIx8, trafficflowtemplate->tftoperationcode);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, E_ATTR_XML_STR, "0x%"PRIx8, trafficflowtemplate->ebit);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, NUMBER_OF_PACKET_FILTERS_ATTR_XML_STR, "%"PRIu8, trafficflowtemplate->numberofpacketfilters);
+  XML_WRITE_FORMAT_ELEMENT(writer, TFT_OPERATION_CODE_ATTR_XML_STR, "0x%"PRIx8, trafficflowtemplate->tftoperationcode);
+  XML_WRITE_FORMAT_ELEMENT(writer, E_ATTR_XML_STR, "0x%"PRIx8, trafficflowtemplate->ebit);
+  XML_WRITE_FORMAT_ELEMENT(writer, NUMBER_OF_PACKET_FILTERS_ATTR_XML_STR, "%"PRIu8, trafficflowtemplate->numberofpacketfilters);
   switch (trafficflowtemplate->tftoperationcode) {
     case TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE_NEW_TFT:
       for (int i = 0; i < trafficflowtemplate->numberofpacketfilters; i++) {

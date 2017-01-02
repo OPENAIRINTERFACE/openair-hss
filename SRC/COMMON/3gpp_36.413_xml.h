@@ -27,8 +27,8 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef FILE_SP_3GPP_36_413_XML_SEEN
-#define FILE_SP_3GPP_36_413_XML_SEEN
+#ifndef FILE_3GPP_36_413_XML_SEEN
+#define FILE_3GPP_36_413_XML_SEEN
 
 
 
@@ -86,4 +86,4 @@ bool ue_aggregate_maximum_bit_rate_from_xml (
 void ue_aggregate_maximum_bit_rate_to_xml (const ue_aggregate_maximum_bit_rate_t * const ue_ambr, xmlTextWriterPtr writer);
 
 
-#endif /* FILE_SP_3GPP_36_413_XML_SEEN */
+#endif /* FILE_3GPP_36_413_XML_SEEN */

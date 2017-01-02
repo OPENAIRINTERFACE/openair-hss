@@ -52,6 +52,8 @@
 #include "mme_scenario_player.h"
 #include "3gpp_36.413_xml.h"
 #include "conversions.h"
+#include "nas_message.h"
+#include "nas_message_xml.h"
 
 #include "xml_load.h"
 #include "xml2_wrapper.h"
@@ -229,6 +231,12 @@ void e_rab_to_be_setup_item_to_xml (const e_rab_to_be_setup_item_t * const item,
   XML_WRITE_START_ELEMENT(writer, E_RAB_TO_BE_SETUP_ITEM_XML_STR);
   e_rab_id_to_xml(&item->e_rab_id, writer);
   e_rab_level_qos_parameters_to_xml(&item->e_rab_level_qos_parameters, writer);
+  XML_WRITE_FORMAT_ELEMENT(writer, TEID_XML_STR, "%"PRIx32, item->gtp_teid);
+  XML_WRITE_HEX_ELEMENT(writer, TRANSPORT_LAYER_ADDRESS_XML_STR,
+           bdata(item->transport_layer_address),
+           blength(item->transport_layer_address));
+
+  nas_pdu_to_xml(item->nas_pdu, writer);
   XML_WRITE_END_ELEMENT(writer);
 }
 

@@ -74,6 +74,7 @@
 #include "xml_load.h"
 #include "sp_3gpp_24.007_xml.h"
 #include "sp_3gpp_36.401_xml.h"
+#include "sp_3gpp_36.413_xml.h"
 #include "sp_3gpp_24.301_emm_ies_xml.h"
 #include "sp_common_xml.h"
 
@@ -673,10 +674,12 @@ int xml_msg_load_itti_s1ap_e_rab_setup_req (scenario_t * const scenario, scenari
         res = sp_mme_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_req.mme_ue_s1ap_id);
       }
 
-      // TODO ue_aggregate_maximum_bit_rate_t
+      if (res) {
+        res = sp_ue_aggregate_maximum_bit_rate_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_req.ue_aggregate_maximum_bit_rate);
+      }
 
       if (res) {
-        res = e_rab_to_be_setup_list_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list);
+        res = sp_e_rab_to_be_setup_list_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list);
       }
     } else {
       res = false;
@@ -744,8 +747,6 @@ int xml_msg_load_itti_s1ap_e_rab_setup_rsp (scenario_t * const scenario, scenari
       if (res) {
         res = sp_mme_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_rsp.mme_ue_s1ap_id);
       }
-
-      // TODO ue_aggregate_maximum_bit_rate_t
 
       if (res) {
         res = e_rab_setup_list_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_rsp.e_rab_setup_list);
@@ -826,16 +827,14 @@ int xml_msg_load_itti_mme_app_initial_context_setup_rsp(scenario_t * const scena
               res = (RETURNok == xmlXPathSetContextNode(nodes_erab->nodeTab[e], msg->xpath_ctx));
 
               if (res) {
-                res = eps_bearer_identity_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.e_rab_id[e]);
+                res = sp_ebi_from_xml (scenario, msg, &msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.e_rab_id[e]);
               }
               if (res) {
-                xpath_expr = bformat("./%s",TEID_XML_STR);
-                res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx32, (void*)&msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.gtp_teid[e], NULL);
-                bdestroy_wrapper (&xpath_expr);
+                res = sp_teid_from_xml(scenario, msg, (void*)&msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.gtp_teid[e]);
               }
               if (res) {
                 bstring xpath_expr_tla = bformat("./%s",TRANSPORT_LAYER_ADDRESS_XML_STR);
-                res = xml_load_hex_stream_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr_tla, &msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.transport_layer_address[e]);
+                res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr_tla, &msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.transport_layer_address[e]);
                 bdestroy_wrapper (&xpath_expr_tla);
               }
               res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr2, msg->xpath_ctx)) & res;
@@ -939,9 +938,7 @@ int xml_msg_load_itti_mme_app_connection_establishment_cnf(scenario_t * const sc
                 bdestroy_wrapper (&xpath_expr_tla);
               }
               if (res) {
-                //xpath_expr = bformat("./%s",TEID_XML_STR);
                 res = sp_teid_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.gtp_teid[e]);
-                //bdestroy_wrapper (&xpath_expr);
               }
               if (res) {
                 res = sp_nas_pdu_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.nas_pdu[e]);
