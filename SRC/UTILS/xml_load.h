@@ -69,7 +69,7 @@ bool name_lower##_from_xml (\
     name_lower##_t        * const name_lower,\
     bstring                       failed_result)\
 {\
-  bstring xpath_expr = bformat("./%s",name_upper##_IE_XML_STR);\
+  bstring xpath_expr = bformat("./%s",name_upper##_XML_STR);\
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, name_upper##_XML_SCAN_FMT, (void*)name_lower, &failed_result);\
   bdestroy_wrapper (&xpath_expr);\
   return res;\

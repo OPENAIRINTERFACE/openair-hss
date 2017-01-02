@@ -60,7 +60,7 @@
 bool tmsi_status_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, tmsi_status_t * const tmsistatus)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",TMSI_STATUS_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",TMSI_STATUS_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)tmsistatus, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -68,7 +68,7 @@ bool tmsi_status_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, tmsi
 //------------------------------------------------------------------------------
 void tmsi_status_to_xml (const tmsi_status_t * const tmsistatus, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, TMSI_STATUS_IE_XML_STR, "0x%"PRIx8, *tmsistatus);
+  XML_WRITE_FORMAT_ELEMENT(writer, TMSI_STATUS_XML_STR, "0x%"PRIx8, *tmsistatus);
 }
 
 //------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ bool drx_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, dr
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_drx = bformat("./%s",DRX_PARAMETER_IE_XML_STR);
+  bstring xpath_expr_drx = bformat("./%s",DRX_PARAMETER_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_drx);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -126,7 +126,7 @@ bool drx_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, dr
 //------------------------------------------------------------------------------
 void drx_parameter_to_xml (const drx_parameter_t * const drxparameter, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, DRX_PARAMETER_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, DRX_PARAMETER_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, SPLIT_PG_CYCLE_CODE_ATTR_XML_STR, "0x%"PRIx8, drxparameter->splitpgcyclecode);
   XML_WRITE_FORMAT_ELEMENT(writer, CN_SPECIFIC_DRX_CYCLE_LENGTH_COEFFICIENT_AND_DRX_VALUE_FOR_S1_MODE_ATTR_XML_STR, "0x%"PRIx8, drxparameter->cnspecificdrxcyclelengthcoefficientanddrxvaluefors1mode);
   XML_WRITE_FORMAT_ELEMENT(writer, SPLIT_ON_CCCH_ATTR_XML_STR, "0x%"PRIx8, drxparameter->splitonccch);
@@ -140,7 +140,7 @@ void drx_parameter_to_xml (const drx_parameter_t * const drxparameter, xmlTextWr
 bool p_tmsi_signature_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, p_tmsi_signature_t * ptmsisignature)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",P_TMSI_SIGNATURE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",P_TMSI_SIGNATURE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx32, (void*)ptmsisignature, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -150,7 +150,7 @@ bool p_tmsi_signature_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx,
 
 void p_tmsi_signature_to_xml ( const p_tmsi_signature_t * const ptmsisignature, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, P_TMSI_SIGNATURE_IE_XML_STR, "0x%"PRIx32, *ptmsisignature);
+  XML_WRITE_FORMAT_ELEMENT(writer, P_TMSI_SIGNATURE_XML_STR, "0x%"PRIx32, *ptmsisignature);
 }
 
 
@@ -160,7 +160,7 @@ void p_tmsi_signature_to_xml ( const p_tmsi_signature_t * const ptmsisignature, 
 bool identity_type_2_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, identity_type2_t * const identitytype2)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",IDENTITY_TYPE_2_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",IDENTITY_TYPE_2_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)identitytype2, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -168,7 +168,7 @@ bool identity_type_2_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, 
 //------------------------------------------------------------------------------
 void identity_type_2_to_xml (const identity_type2_t * const identitytype2, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, IDENTITY_TYPE_2_IE_XML_STR, "%"PRIu8, *identitytype2);
+  XML_WRITE_FORMAT_ELEMENT(writer, IDENTITY_TYPE_2_XML_STR, "%"PRIu8, *identitytype2);
 }
 
 //------------------------------------------------------------------------------
@@ -177,7 +177,7 @@ void identity_type_2_to_xml (const identity_type2_t * const identitytype2, xmlTe
 bool imeisv_request_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, imeisv_request_t * const imeisvrequest)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",IMEISV_REQUEST_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",IMEISV_REQUEST_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)imeisvrequest, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -185,7 +185,7 @@ bool imeisv_request_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, i
 //------------------------------------------------------------------------------
 void imeisv_request_to_xml (const imeisv_request_t * const imeisvrequest, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, IMEISV_REQUEST_IE_XML_STR, "%"PRIu8, *imeisvrequest);
+  XML_WRITE_FORMAT_ELEMENT(writer, IMEISV_REQUEST_XML_STR, "%"PRIu8, *imeisvrequest);
 }
 
 //------------------------------------------------------------------------------
@@ -195,7 +195,7 @@ bool ms_network_capability_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",MS_NETWORK_CAPABILITY_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",MS_NETWORK_CAPABILITY_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -341,7 +341,7 @@ bool ms_network_capability_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 void ms_network_capability_to_xml (const ms_network_capability_t  * const msnetworkcapability, xmlTextWriterPtr writer)
 {
 
-  XML_WRITE_START_ELEMENT(writer, MS_NETWORK_CAPABILITY_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, MS_NETWORK_CAPABILITY_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, GEA1_BITS_ATTR_XML_STR, "0x%x", msnetworkcapability->gea1);
   XML_WRITE_FORMAT_ELEMENT(writer, SM_CAPABILITIES_VIA_DEDICATED_CHANNELS_ATTR_XML_STR, "0x%x", msnetworkcapability->smdc);
   XML_WRITE_FORMAT_ELEMENT(writer, SM_CAPABILITIES_VIA_GPRS_CHANNELS_ATTR_XML_STR, "0x%x", msnetworkcapability->smgc);
@@ -369,7 +369,7 @@ void ms_network_capability_to_xml (const ms_network_capability_t  * const msnetw
 bool routing_area_code_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, routing_area_code_t * const rac)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",ROUTING_AREA_CODE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",ROUTING_AREA_CODE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)rac, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -377,7 +377,7 @@ bool routing_area_code_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx
 //------------------------------------------------------------------------------
 void routing_area_code_to_xml (const routing_area_code_t * const rac, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ROUTING_AREA_CODE_IE_XML_STR, "0x%"PRIx8, *rac);
+  XML_WRITE_FORMAT_ELEMENT(writer, ROUTING_AREA_CODE_XML_STR, "0x%"PRIx8, *rac);
 }
 
 //------------------------------------------------------------------------------
@@ -385,7 +385,7 @@ bool routing_area_identification_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",ROUTING_AREA_IDENTIFICATION_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",ROUTING_AREA_IDENTIFICATION_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -404,7 +404,7 @@ bool routing_area_identification_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr
 //------------------------------------------------------------------------------
 void routing_area_identification_to_xml (const routing_area_identification_t * const rai, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, ROUTING_AREA_IDENTIFICATION_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, ROUTING_AREA_IDENTIFICATION_XML_STR);
   location_area_identification_to_xml (&rai->lai, writer);
   routing_area_code_to_xml (&rai->rac, writer);
   XML_WRITE_END_ELEMENT(writer);
@@ -420,7 +420,7 @@ bool voice_domain_preference_and_ue_usage_setting_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_vd = bformat("./%s",VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IE_XML_STR);
+  bstring xpath_expr_vd = bformat("./%s",VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_vd);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -455,7 +455,7 @@ void voice_domain_preference_and_ue_usage_setting_to_xml(
     const voice_domain_preference_and_ue_usage_setting_t * const voicedomainpreferenceandueusagesetting,
     xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, VOICE_DOMAIN_PREFERENCE_AND_UE_USAGE_SETTING_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, UE_USAGE_SETTING_ATTR_XML_STR, "0x%"PRIx8, voicedomainpreferenceandueusagesetting->ue_usage_setting);
   XML_WRITE_FORMAT_ELEMENT(writer, VOICE_DOMAIN_PREFERENCE_ATTR_XML_STR, "0x%"PRIx8, voicedomainpreferenceandueusagesetting->voice_domain_for_eutran);
   XML_WRITE_END_ELEMENT(writer);

@@ -143,9 +143,9 @@ bool ambr_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const char 
 void bearer_qos_to_xml(const bearer_qos_t * const bearer_qos, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, BEARER_CONTEXT_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, PRIORITY_LEVEL_IE_XML_STR, "%"PRIu8, bearer_qos->pl);
-  XML_WRITE_FORMAT_ELEMENT(writer, PRE_EMPTION_CAPABILITY_IE_XML_STR, "%"PRIu8, bearer_qos->pci);
-  XML_WRITE_FORMAT_ELEMENT(writer, PRE_EMPTION_VULNERABILITY_IE_XML_STR, "%"PRIu8, bearer_qos->pvi);
+  XML_WRITE_FORMAT_ELEMENT(writer, PRIORITY_LEVEL_XML_STR, "%"PRIu8, bearer_qos->pl);
+  XML_WRITE_FORMAT_ELEMENT(writer, PRE_EMPTION_CAPABILITY_XML_STR, "%"PRIu8, bearer_qos->pci);
+  XML_WRITE_FORMAT_ELEMENT(writer, PRE_EMPTION_VULNERABILITY_XML_STR, "%"PRIu8, bearer_qos->pvi);
   qci_to_xml(&bearer_qos->qci, writer);
   ambr_to_xml(&bearer_qos->gbr, GUARANTED_AMBR_XML_STR, writer);
   ambr_to_xml(&bearer_qos->mbr, MAXIMUM_AMBR_XML_STR, writer);
@@ -177,21 +177,21 @@ bool bearer_qos_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, beare
 
         if (res) {
           unsigned  pl = 0;
-          bstring xpath_expr = bformat("./%s", PRIORITY_LEVEL_IE_XML_STR);
+          bstring xpath_expr = bformat("./%s", PRIORITY_LEVEL_XML_STR);
           res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)&pl, NULL);
           bdestroy_wrapper (&xpath_expr);
           bearer_qos->pl = pl;
         }
         if (res) {
           unsigned  pci = 0;
-          bstring xpath_expr = bformat("./%s", PRE_EMPTION_CAPABILITY_IE_XML_STR);
+          bstring xpath_expr = bformat("./%s", PRE_EMPTION_CAPABILITY_XML_STR);
           res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)&pci, NULL);
           bdestroy_wrapper (&xpath_expr);
           bearer_qos->pci = pci;
         }
         if (res) {
           unsigned  pvi = 0;
-          bstring xpath_expr = bformat("./%s", PRE_EMPTION_VULNERABILITY_IE_XML_STR);
+          bstring xpath_expr = bformat("./%s", PRE_EMPTION_VULNERABILITY_XML_STR);
           res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)&pvi, NULL);
           bdestroy_wrapper (&xpath_expr);
           bearer_qos->pvi = pvi;
@@ -242,7 +242,7 @@ NUM_FROM_XML_GENERATE( teid , TEID );
 //------------------------------------------------------------------------------
 void teid_to_xml (const teid_t * const teid, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, TEID_IE_XML_STR, TEID_XML_FMT, *teid);
+  XML_WRITE_FORMAT_ELEMENT(writer, TEID_XML_STR, TEID_XML_FMT, *teid);
 }
 
 //------------------------------------------------------------------------------

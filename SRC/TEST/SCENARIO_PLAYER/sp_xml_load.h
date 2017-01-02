@@ -47,7 +47,7 @@ bool sp_ ## name_lower ## _from_xml (\
     scenario_player_msg_t * const msg,\
     name_lower##_t        * const name_lower)\
 {\
-  bstring xpath_expr = bformat("./%s",name_upper ## _IE_XML_STR);\
+  bstring xpath_expr = bformat("./%s",name_upper ## _XML_STR);\
   bstring xml_var = NULL;\
   bool res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, name_upper ## _XML_SCAN_FMT, (void*)name_lower, &xml_var);\
   if (!res && xml_var) {\
@@ -60,19 +60,19 @@ bool sp_ ## name_lower ## _from_xml (\
             AssertFatal (var_item->u.var.value_type == VAR_VALUE_TYPE_INT64, "Bad var type %d", var_item->u.var.value_type);\
             res = true;\
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" name_upper ## _XML_FMT " from var %s\n",\
-                name_upper ## _IE_XML_STR, *name_lower, bdata(xml_var));\
+                name_upper ## _XML_STR, *name_lower, bdata(xml_var));\
           }\
         } else if ('#' == xml_var->data[0]) { \
           if (BSTR_OK == bdelete(xml_var, 0, 1)) { \
             res = true;\
             *name_lower = (name_lower ## _t)var_item->u.var.value.value_u64;\
             AssertFatal (var_item->u.var.value_type == VAR_VALUE_TYPE_INT64, "Bad var type %d", var_item->u.var.value_type);\
-            OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" name_upper ## _XML_FMT " to be loaded\n", name_upper ## _IE_XML_STR, *name_lower);\
+            OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" name_upper ## _XML_FMT " to be loaded\n", name_upper ## _XML_STR, *name_lower);\
           }\
         }\
       } else {\
         AssertFatal (0, "Could not find %s/$%s, should have been declared in scenario\n",\
-            name_upper ## _IE_XML_STR, bdata(xml_var));\
+            name_upper ## _XML_STR, bdata(xml_var));\
       }\
     }\
     bdestroy_wrapper (&xml_var);\

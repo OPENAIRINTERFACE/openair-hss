@@ -51,11 +51,102 @@
 #include "common_defs.h"
 #include "mme_scenario_player.h"
 #include "3gpp_36.413_xml.h"
+#include "conversions.h"
 
 #include "xml_load.h"
 #include "xml2_wrapper.h"
 #include "xml_msg_tags.h"
 #include "log.h"
+
+//------------------------------------------------------------------------------
+bool e_rab_setup_item_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    e_rab_setup_item_t * const item)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  bool res = true;
+
+  res = e_rab_id_from_xml (xml_doc, xpath_ctx, &item->e_rab_id);
+  if (res) {
+    bstring xpath_expr_tla = bformat("./%s",TRANSPORT_LAYER_ADDRESS_XML_STR);
+    res = xml_load_hex_stream_leaf_tag(xml_doc, xpath_ctx, xpath_expr_tla, &item->transport_layer_address);
+    bdestroy_wrapper (&xpath_expr_tla);
+  }
+  if (res) {
+    bstring xpath_expr = bformat("./%s",TEID_XML_STR);
+    res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx32, (void*)&item->gtp_teid, NULL);
+    bdestroy_wrapper (&xpath_expr);
+  }
+
+  OAILOG_FUNC_RETURN (LOG_XML, res);
+}
+
+//------------------------------------------------------------------------------
+void e_rab_setup_item_to_xml (const e_rab_setup_item_t * const item, xmlTextWriterPtr writer)
+{
+  XML_WRITE_START_ELEMENT(writer, E_RAB_SETUP_ITEM_XML_STR);
+  e_rab_id_to_xml(&item->e_rab_id, writer);
+  XML_WRITE_HEX_ELEMENT(writer, TRANSPORT_LAYER_ADDRESS_XML_STR,
+      bdata(item->transport_layer_address),
+      blength(item->transport_layer_address));
+  XML_WRITE_FORMAT_ELEMENT(writer, TEID_XML_STR, "%"PRIx32, item->gtp_teid);
+  XML_WRITE_END_ELEMENT(writer);
+}
+
+//------------------------------------------------------------------------------
+bool e_rab_setup_list_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    e_rab_setup_list_t        * const list)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  bool res = false;
+  list->no_of_items = 0;
+  bstring xpath_expr = bformat("./%s",E_RAB_SETUP_LIST_XML_STR);
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
+  if (xpath_obj) {
+    xmlNodeSetPtr nodes = xpath_obj->nodesetval;
+    int size = (nodes) ? nodes->nodeNr : 0;
+    if ((1 == size)  && (xml_doc)) {
+      xmlNodePtr saved_node_ptr = xpath_ctx->node;
+      res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
+
+      if (res) {
+        bstring xpath_expr_items = bformat("./%s",E_RAB_SETUP_ITEM_XML_STR);
+        xmlXPathObjectPtr xpath_obj_items = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_items);
+        if (xpath_obj_items) {
+          xmlNodeSetPtr items = xpath_obj_items->nodesetval;
+          int no_of_items = (items) ? items->nodeNr : 0;
+          for (int item = 0; item < no_of_items; item++) {
+            xmlNodePtr saved_node_ptr2 = xpath_ctx->node;
+            res = (RETURNok == xmlXPathSetContextNode(items->nodeTab[item], xpath_ctx));
+            if (res) res = e_rab_setup_item_from_xml (xml_doc, xpath_ctx, &list->item[list->no_of_items]);
+            if (res) list->no_of_items++;
+            res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr2, xpath_ctx)) & res;
+          }
+          xmlXPathFreeObject(xpath_obj_items);
+        }
+        bdestroy_wrapper (&xpath_expr_items);
+      }
+
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
+    }
+    xmlXPathFreeObject(xpath_obj);
+  }
+  bdestroy_wrapper (&xpath_expr);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
+}
+
+//------------------------------------------------------------------------------
+void e_rab_setup_list_to_xml (const e_rab_setup_list_t * const list, xmlTextWriterPtr writer)
+{
+  XML_WRITE_START_ELEMENT(writer, E_RAB_SETUP_LIST_XML_STR);
+  for (int item = 0; item < list->no_of_items; item++) {
+    e_rab_setup_item_to_xml (&list->item[item], writer);
+  }
+  XML_WRITE_END_ELEMENT(writer);
+}
 
 
 //------------------------------------------------------------------------------
@@ -85,7 +176,7 @@ bool e_rab_to_be_setup_list_from_xml (
           for (int item = 0; item < no_of_items; item++) {
             xmlNodePtr saved_node_ptr2 = xpath_ctx->node;
             res = (RETURNok == xmlXPathSetContextNode(items->nodeTab[item], xpath_ctx));
-            if (res) res = e_rab_to_be_setup_item_from_xml (xml_doc, xpath_ctx, &items->nodeTab[item]);
+            if (res) res = e_rab_to_be_setup_item_from_xml (xml_doc, xpath_ctx, &list->item[list->no_of_items]);
             if (res) list->no_of_items++;
             res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr2, xpath_ctx)) & res;
           }
@@ -145,7 +236,7 @@ void e_rab_to_be_setup_item_to_xml (const e_rab_to_be_setup_item_t * const item,
 bool e_rab_id_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, e_rab_id_t * const e_rab_id)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",E_RAB_ID_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",E_RAB_ID_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)e_rab_id, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -154,7 +245,7 @@ bool e_rab_id_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, e_rab_i
 //------------------------------------------------------------------------------
 void e_rab_id_to_xml (const e_rab_id_t * const e_rab_id, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_ID_IE_XML_STR, "%"PRIu8, *e_rab_id);
+  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_ID_XML_STR, "%"PRIu8, *e_rab_id);
 }
 
 //------------------------------------------------------------------------------
@@ -208,7 +299,7 @@ void e_rab_level_qos_parameters_to_xml (const e_rab_level_qos_parameters_t * con
 bool qci_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, qci_t * const qci)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",QCI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",QCI_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)qci, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -216,7 +307,7 @@ bool qci_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, qci_t * cons
 //------------------------------------------------------------------------------
 void qci_to_xml (const qci_t * const qci, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, QCI_IE_XML_STR, "%"PRIu8, *qci);
+  XML_WRITE_FORMAT_ELEMENT(writer, QCI_XML_STR, "%"PRIu8, *qci);
 }
 
 //------------------------------------------------------------------------------
@@ -227,7 +318,7 @@ bool allocation_and_retention_priority_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",ALLOCATION_AND_RETENTION_PRIORITY_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",ALLOCATION_AND_RETENTION_PRIORITY_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -236,16 +327,16 @@ bool allocation_and_retention_priority_from_xml (
       xmlNodePtr saved_node_ptr = xpath_ctx->node;
       res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
 
-      bstring xpath_expr_prio = bformat("./%s",PRIORITY_LEVEL_IE_XML_STR);
+      bstring xpath_expr_prio = bformat("./%s",PRIORITY_LEVEL_XML_STR);
       res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_prio, "%"SCNu8, (void*)&arp->priority_level, NULL);
       bdestroy_wrapper (&xpath_expr_prio);
       if (res) {
-        bstring xpath_expr_cap = bformat("./%s",PRE_EMPTION_CAPABILITY_IE_XML_STR);
+        bstring xpath_expr_cap = bformat("./%s",PRE_EMPTION_CAPABILITY_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_cap, "%"SCNu8, (void*)&arp->pre_emption_capability, NULL);
         bdestroy_wrapper (&xpath_expr_cap);
       }
       if (res) {
-        bstring xpath_expr_vul = bformat("./%s",PRE_EMPTION_VULNERABILITY_IE_XML_STR);
+        bstring xpath_expr_vul = bformat("./%s",PRE_EMPTION_VULNERABILITY_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_vul, "%"SCNu8, (void*)&arp->pre_emption_vulnerability, NULL);
         bdestroy_wrapper (&xpath_expr_vul);
       }
@@ -260,10 +351,10 @@ bool allocation_and_retention_priority_from_xml (
 //------------------------------------------------------------------------------
 void allocation_and_retention_priority_to_xml (const allocation_and_retention_priority_t * const arp, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, ALLOCATION_AND_RETENTION_PRIORITY_IE_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, PRIORITY_LEVEL_IE_XML_STR, "%"PRIu8, arp->priority_level);
-  XML_WRITE_FORMAT_ELEMENT(writer, PRE_EMPTION_CAPABILITY_IE_XML_STR, "%"PRIu8, arp->pre_emption_capability);
-  XML_WRITE_FORMAT_ELEMENT(writer, PRE_EMPTION_VULNERABILITY_IE_XML_STR, "%"PRIu8, arp->pre_emption_vulnerability);
+  XML_WRITE_START_ELEMENT(writer, ALLOCATION_AND_RETENTION_PRIORITY_XML_STR);
+  XML_WRITE_FORMAT_ELEMENT(writer, PRIORITY_LEVEL_XML_STR, "%"PRIu8, arp->priority_level);
+  XML_WRITE_FORMAT_ELEMENT(writer, PRE_EMPTION_CAPABILITY_XML_STR, "%"PRIu8, arp->pre_emption_capability);
+  XML_WRITE_FORMAT_ELEMENT(writer, PRE_EMPTION_VULNERABILITY_XML_STR, "%"PRIu8, arp->pre_emption_vulnerability);
   XML_WRITE_END_ELEMENT(writer);
 }
 
@@ -284,21 +375,21 @@ bool gbr_qos_information_from_xml (
       xmlNodePtr saved_node_ptr = xpath_ctx->node;
       res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
 
-      bstring xpath_expr_prio = bformat("./%s",E_RAB_MAXIMUM_BIT_RATE_DOWNLINK_IE_XML_STR);
+      bstring xpath_expr_prio = bformat("./%s",E_RAB_MAXIMUM_BIT_RATE_DOWNLINK_XML_STR);
       res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_prio, "%"SCNu64, (void*)&gqi->e_rab_maximum_bit_rate_downlink, NULL);
       bdestroy_wrapper (&xpath_expr_prio);
       if (res) {
-        bstring xpath_expr_cap = bformat("./%s",E_RAB_MAXIMUM_BIT_RATE_UPLINK_IE_XML_STR);
+        bstring xpath_expr_cap = bformat("./%s",E_RAB_MAXIMUM_BIT_RATE_UPLINK_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_cap, "%"SCNu64, (void*)&gqi->e_rab_maximum_bit_rate_uplink, NULL);
         bdestroy_wrapper (&xpath_expr_cap);
       }
       if (res) {
-        bstring xpath_expr_vul = bformat("./%s",E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_IE_XML_STR);
+        bstring xpath_expr_vul = bformat("./%s",E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_vul, "%"SCNu64, (void*)&gqi->e_rab_guaranteed_bit_rate_downlink, NULL);
         bdestroy_wrapper (&xpath_expr_vul);
       }
       if (res) {
-        bstring xpath_expr_vul = bformat("./%s",E_RAB_GUARANTEED_BIT_RATE_UPLINK_IE_XML_STR);
+        bstring xpath_expr_vul = bformat("./%s",E_RAB_GUARANTEED_BIT_RATE_UPLINK_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_vul, "%"SCNu64, (void*)&gqi->e_rab_guaranteed_bit_rate_uplink, NULL);
         bdestroy_wrapper (&xpath_expr_vul);
       }
@@ -314,10 +405,10 @@ bool gbr_qos_information_from_xml (
 void gbr_qos_information_to_xml (const gbr_qos_information_t * const gqi, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, GBR_QOS_INFORMATION_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_MAXIMUM_BIT_RATE_DOWNLINK_IE_XML_STR, "%"PRIu64, gqi->e_rab_maximum_bit_rate_downlink);
-  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_MAXIMUM_BIT_RATE_UPLINK_IE_XML_STR, "%"PRIu64, gqi->e_rab_maximum_bit_rate_uplink);
-  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_IE_XML_STR, "%"PRIu64, gqi->e_rab_guaranteed_bit_rate_downlink);
-  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_GUARANTEED_BIT_RATE_UPLINK_IE_XML_STR, "%"PRIu64, gqi->e_rab_guaranteed_bit_rate_uplink);
+  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_MAXIMUM_BIT_RATE_DOWNLINK_XML_STR, "%"PRIu64, gqi->e_rab_maximum_bit_rate_downlink);
+  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_MAXIMUM_BIT_RATE_UPLINK_XML_STR, "%"PRIu64, gqi->e_rab_maximum_bit_rate_uplink);
+  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_XML_STR, "%"PRIu64, gqi->e_rab_guaranteed_bit_rate_downlink);
+  XML_WRITE_FORMAT_ELEMENT(writer, E_RAB_GUARANTEED_BIT_RATE_UPLINK_XML_STR, "%"PRIu64, gqi->e_rab_guaranteed_bit_rate_uplink);
   XML_WRITE_END_ELEMENT(writer);
 }
 

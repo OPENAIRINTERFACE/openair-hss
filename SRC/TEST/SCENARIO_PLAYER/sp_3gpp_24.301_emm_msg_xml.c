@@ -71,7 +71,7 @@ bool sp_attach_accept_from_xml (
   bool res = false;
 
   res = eps_attach_result_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->epsattachresult, NULL);
-  if (res) {res = gprs_timer_from_xml (msg->xml_doc, msg->xpath_ctx, GPRS_TIMER_T3412_IE_XML_STR, &attach_accept->t3412value);}
+  if (res) {res = gprs_timer_from_xml (msg->xml_doc, msg->xpath_ctx, GPRS_TIMER_T3412_XML_STR, &attach_accept->t3412value);}
   if (res) {res = tracking_area_identity_list_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->tailist);}
   if (res) {res = esm_message_container_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->esmmessagecontainer);}
   if (res) {
@@ -95,12 +95,12 @@ bool sp_attach_accept_from_xml (
       attach_accept->presencemask |= ATTACH_ACCEPT_EMM_CAUSE_PRESENT;
     }
 
-    res = gprs_timer_from_xml (msg->xml_doc, msg->xpath_ctx, GPRS_TIMER_T3402_IE_XML_STR, &attach_accept->t3402value);
+    res = gprs_timer_from_xml (msg->xml_doc, msg->xpath_ctx, GPRS_TIMER_T3402_XML_STR, &attach_accept->t3402value);
     if (res) {
       attach_accept->presencemask |= ATTACH_ACCEPT_T3402_VALUE_PRESENT;
     }
 
-    res = gprs_timer_from_xml (msg->xml_doc, msg->xpath_ctx, GPRS_TIMER_T3423_IE_XML_STR, &attach_accept->t3423value);
+    res = gprs_timer_from_xml (msg->xml_doc, msg->xpath_ctx, GPRS_TIMER_T3423_XML_STR, &attach_accept->t3423value);
     if (res) {
       attach_accept->presencemask |= ATTACH_ACCEPT_T3423_VALUE_PRESENT;
     }
@@ -256,7 +256,7 @@ bool sp_authentication_failure_from_xml (
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = sp_emm_cause_from_xml (scenario, msg, &authentication_failure->emmcause);
   if (res) {
-    bstring xpath_expr = bformat("./%s",AUTHENTICATION_FAILURE_PARAMETER_IE_XML_STR);
+    bstring xpath_expr = bformat("./%s",AUTHENTICATION_FAILURE_PARAMETER_XML_STR);
     bool res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr, &authentication_failure->authenticationfailureparameter);
     bdestroy_wrapper (&xpath_expr);
     if (res) {
@@ -288,12 +288,12 @@ bool sp_authentication_request_from_xml (
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = nas_key_set_identifier_from_xml (msg->xml_doc, msg->xpath_ctx, &authentication_request->naskeysetidentifierasme);
   if (res) {
-    bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_RAND_IE_XML_STR);
+    bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_RAND_XML_STR);
     res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr, &authentication_request->authenticationparameterrand);
     bdestroy_wrapper (&xpath_expr);
   }
   if (res) {
-    bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_AUTN_IE_XML_STR);
+    bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_AUTN_XML_STR);
     res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr, &authentication_request->authenticationparameterautn);
     bdestroy_wrapper (&xpath_expr);
   }
@@ -307,7 +307,7 @@ bool sp_authentication_response_from_xml (
     authentication_response_msg  * const authentication_response)
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
-  bstring xpath_expr = bformat("./%s",AUTHENTICATION_RESPONSE_PARAMETER_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",AUTHENTICATION_RESPONSE_PARAMETER_XML_STR);
   bool res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr, &authentication_response->authenticationresponseparameter);
   bdestroy_wrapper (&xpath_expr);
 
@@ -358,11 +358,11 @@ bool sp_emm_information_from_xml (
     emm_information_msg * const emm_information)
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
-  if (network_name_from_xml (msg->xml_doc, msg->xpath_ctx, FULL_NETWORK_NAME_IE_XML_STR, &emm_information->fullnamefornetwork)) {
+  if (network_name_from_xml (msg->xml_doc, msg->xpath_ctx, FULL_NETWORK_NAME_XML_STR, &emm_information->fullnamefornetwork)) {
     emm_information->presencemask |= EMM_INFORMATION_FULL_NAME_FOR_NETWORK_PRESENT;
   }
 
-  if (network_name_from_xml (msg->xml_doc, msg->xpath_ctx, SHORT_NETWORK_NAME_IE_XML_STR, &emm_information->shortnamefornetwork)) {
+  if (network_name_from_xml (msg->xml_doc, msg->xpath_ctx, SHORT_NETWORK_NAME_XML_STR, &emm_information->shortnamefornetwork)) {
     emm_information->presencemask |= EMM_INFORMATION_SHORT_NAME_FOR_NETWORK_PRESENT;
   }
 
@@ -432,12 +432,12 @@ bool sp_security_mode_command_from_xml (
       security_mode_command->presencemask |= SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT;
     }
 
-    res = nonce_from_xml (msg->xml_doc, msg->xpath_ctx, REPLAYED_NONCE_UE_IE_XML_STR, &security_mode_command->replayednonceue);
+    res = nonce_from_xml (msg->xml_doc, msg->xpath_ctx, REPLAYED_NONCE_UE_XML_STR, &security_mode_command->replayednonceue);
     if (res) {
       security_mode_command->presencemask |= SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_PRESENT;
     }
 
-    res = nonce_from_xml (msg->xml_doc, msg->xpath_ctx, NONCE_MME_IE_XML_STR, &security_mode_command->noncemme);
+    res = nonce_from_xml (msg->xml_doc, msg->xpath_ctx, NONCE_MME_XML_STR, &security_mode_command->noncemme);
     if (res) {
       security_mode_command->presencemask |= SECURITY_MODE_COMMAND_NONCEMME_PRESENT;
     }

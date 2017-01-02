@@ -26,8 +26,8 @@ Author      Lionel GAUTHIER
 #ifndef FILE_SP_NAS_MESSAGE_XML_SEEN
 #define FILE_SP_NAS_MESSAGE_XML_SEEN
 
-#define SECURITY_PROTECTED_NAS_MESSAGE_IE_XML_STR "security_protected_nas_message"
-#define PLAIN_NAS_MESSAGE_IE_XML_STR              "plain_nas_message"
+#define SECURITY_PROTECTED_NAS_MESSAGE_XML_STR "security_protected_nas_message"
+#define PLAIN_NAS_MESSAGE_XML_STR              "plain_nas_message"
 
 
 bool sp_nas_message_plain_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, nas_message_plain_t * const nas_message);

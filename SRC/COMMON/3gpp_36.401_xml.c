@@ -62,12 +62,12 @@ NUM_FROM_XML_GENERATE( mme_ue_s1ap_id , MME_UE_S1AP_ID );
 //------------------------------------------------------------------------------
 void enb_ue_s1ap_id_to_xml (const enb_ue_s1ap_id_t * const enb_ue_s1ap_id, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ENB_UE_S1AP_ID_IE_XML_STR, ENB_UE_S1AP_ID_XML_FMT, *enb_ue_s1ap_id);
+  XML_WRITE_FORMAT_ELEMENT(writer, ENB_UE_S1AP_ID_XML_STR, ENB_UE_S1AP_ID_XML_FMT, *enb_ue_s1ap_id);
 }
 
 //------------------------------------------------------------------------------
 void mme_ue_s1ap_id_to_xml (const mme_ue_s1ap_id_t * const mme_ue_s1ap_id, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, MME_UE_S1AP_ID_IE_XML_STR, MME_UE_S1AP_ID_XML_FMT, *mme_ue_s1ap_id);
+  XML_WRITE_FORMAT_ELEMENT(writer, MME_UE_S1AP_ID_XML_STR, MME_UE_S1AP_ID_XML_FMT, *mme_ue_s1ap_id);
 }
 

@@ -72,14 +72,14 @@
 // 9.9.3 EPS Mobility Management (EMM) information elements
 //------------------------------------------------------------------------------
 // 9.9.3.0A Additional update result
-#define ADDITIONAL_UPDATE_RESULT_IE_XML_STR           "additional_update_result"
+#define ADDITIONAL_UPDATE_RESULT_XML_STR              "additional_update_result"
 #define ADDITIONAL_UPDATE_RESULT_XML_SCAN_FMT         "%"SCNx8
 #define ADDITIONAL_UPDATE_RESULT_XML_FMT              "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE( additional_update_result );
 void additional_update_result_to_xml(additional_update_result_t *additionalupdateresult, xmlTextWriterPtr writer);
 
 // 9.9.3.0B Additional update type
-#define ADDITIONAL_UPDATE_TYPE_IE_XML_STR           "additional_update_type"
+#define ADDITIONAL_UPDATE_TYPE_XML_STR           "additional_update_type"
 #define ADDITIONAL_UPDATE_TYPE_XML_SCAN_FMT         "%"SCNx8
 #define ADDITIONAL_UPDATE_TYPE_XML_FMT              "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(additional_update_type);
@@ -101,7 +101,7 @@ void additional_update_type_to_xml(additional_update_type_t *additionalupdatetyp
 // See subclause 10.5.1.2 in 3GPP TS 24.008 [13].
 
 // 9.9.3.5 CSFB response
-#define CSFB_RESPONSE_IE_XML_STR           "csfb_response"
+#define CSFB_RESPONSE_XML_STR              "csfb_response"
 #define CSFB_RESPONSE_XML_SCAN_FMT         "%"SCNx8
 #define CSFB_RESPONSE_XML_FMT              "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(csfb_response);
@@ -122,21 +122,21 @@ void detach_type_to_xml(detach_type_t *detachtype, xmlTextWriterPtr writer);
 // See subclause 10.5.5.6 in 3GPP TS 24.008 [13].
 
 // 9.9.3.9 EMM cause
-#define EMM_CAUSE_IE_XML_STR           "emm_cause"
+#define EMM_CAUSE_XML_STR              "emm_cause"
 #define EMM_CAUSE_XML_SCAN_FMT         "%"SCNx8
 #define EMM_CAUSE_XML_FMT              "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(emm_cause);
 void emm_cause_to_xml (emm_cause_t * emmcause, xmlTextWriterPtr writer);
 
 // 9.9.3.10 EPS attach result
-#define EPS_ATTACH_RESULT_IE_XML_STR        "eps_attach_result"
+#define EPS_ATTACH_RESULT_XML_STR           "eps_attach_result"
 #define EPS_ATTACH_RESULT_XML_SCAN_FMT      "%"SCNx8
 #define EPS_ATTACH_RESULT_XML_FMT           "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(eps_attach_result);
 void eps_attach_result_to_xml (eps_attach_result_t * epsattachresult, xmlTextWriterPtr writer);
 
 // 9.9.3.11 EPS attach type
-#define EPS_ATTACH_TYPE_IE_XML_STR        "eps_attach_type"
+#define EPS_ATTACH_TYPE_XML_STR           "eps_attach_type"
 #define EPS_ATTACH_TYPE_XML_SCAN_FMT      "%"SCNx8
 #define EPS_ATTACH_TYPE_XML_FMT           "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(eps_attach_type);
@@ -151,28 +151,28 @@ bool eps_mobile_identity_from_xml (
 void eps_mobile_identity_to_xml (eps_mobile_identity_t * epsmobileidentity, xmlTextWriterPtr writer);
 
 // 9.9.3.12A EPS network feature support
-#define EPS_NETWORK_FEATURE_SUPPORT_IE_XML_STR                     "eps_network_feature_support"
+#define EPS_NETWORK_FEATURE_SUPPORT_XML_STR                        "eps_network_feature_support"
 #define EPS_NETWORK_FEATURE_SUPPORT_XML_SCAN_FMT                   "%"SCNx8
 #define EPS_NETWORK_FEATURE_SUPPORT_XML_FMT                        "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(eps_network_feature_support);
 void eps_network_feature_support_to_xml (eps_network_feature_support_t * epsnetworkfeaturesupport, xmlTextWriterPtr writer);
 
 // 9.9.3.13 EPS update result
-#define EPS_UPDATE_RESULT_IE_XML_STR                     "eps_update_result"
+#define EPS_UPDATE_RESULT_XML_STR                        "eps_update_result"
 #define EPS_UPDATE_RESULT_XML_SCAN_FMT                   "%"SCNx8
 #define EPS_UPDATE_RESULT_XML_FMT                        "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(eps_update_result);
 void eps_update_result_to_xml (eps_update_result_t * epsupdateresult, xmlTextWriterPtr writer);
 
 // 9.9.3.14 EPS update type
-#define EPS_UPDATE_TYPE_IE_XML_STR                     "eps_update_type"
+#define EPS_UPDATE_TYPE_XML_STR                        "eps_update_type"
 #define ACTIVE_FLAG_ATTR_XML_STR                       "active_flag"
 #define EPS_UPDATE_TYPE_VALUE_ATTR_XML_STR             "eps_update_type_value"
 // TODO from_xml
 void eps_update_type_to_xml (EpsUpdateType * epsupdatetype, xmlTextWriterPtr writer);
 
 // 9.9.3.15 ESM message container
-#define ESM_MESSAGE_CONTAINER_IE_XML_STR                "esm_message_container"
+#define ESM_MESSAGE_CONTAINER_XML_STR                   "esm_message_container"
 #define ESM_MESSAGE_CONTAINER_HEX_DUMP_ATTR_XML_STR     "hex_dump"
 bool esm_message_container_from_xml (
     xmlDocPtr                              xml_doc,
@@ -192,7 +192,7 @@ void esm_message_container_to_xml (EsmMessageContainer esmmessagecontainer, xmlT
 // See subclause 10.5.5.10 in 3GPP TS 24.008 [13].
 
 // 9.9.3.19 KSI and sequence number
-#define KSI_AND_SEQUENCE_NUMBER_IE_XML_STR                        "ksi_and_sequence_number"
+#define KSI_AND_SEQUENCE_NUMBER_XML_STR                           "ksi_and_sequence_number"
 #define KSI_ATTR_XML_STR                                          "ksi"
 #define SEQUENCE_NUMBER_ATTR_XML_STR                              "sequence_number"
 void ksi_and_sequence_number_to_xml (KsiAndSequenceNumber * ksiandsequencenumber, xmlTextWriterPtr writer);
@@ -203,14 +203,14 @@ void ksi_and_sequence_number_to_xml (KsiAndSequenceNumber * ksiandsequencenumber
 // See subclause 10.5.1.15 in 3GPP TS 24.008 [13].
 
 // 9.9.3.21 NAS key set identifier
-#define NAS_KEY_SET_IDENTIFIER_IE_XML_STR   "nas_key_set_identifier"
+#define NAS_KEY_SET_IDENTIFIER_XML_STR      "nas_key_set_identifier"
 #define TSC_ATTR_XML_STR                    "tsc"
 #define NAS_KEY_SET_IDENTIFIER_ATTR_XML_STR "ksi"
 bool nas_key_set_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, NasKeySetIdentifier * const naskeysetidentifier);
 void nas_key_set_identifier_to_xml (NasKeySetIdentifier * naskeysetidentifier, xmlTextWriterPtr writer);
 
 // 9.9.3.22 NAS message container
-#define NAS_MESSAGE_CONTAINER_IE_XML_STR "nas_message_container"
+#define NAS_MESSAGE_CONTAINER_XML_STR "nas_message_container"
 bool nas_message_container_from_xml (
     xmlDocPtr                     xml_doc,
     xmlXPathContextPtr            xpath_ctx,
@@ -218,7 +218,7 @@ bool nas_message_container_from_xml (
 void nas_message_container_to_xml (NasMessageContainer nasmessagecontainer, xmlTextWriterPtr writer);
 
 // 9.9.3.23 NAS security algorithms
-#define NAS_SECURITY_ALGORITHMS_IE_XML_STR                  "nas_security_algorithms"
+#define NAS_SECURITY_ALGORITHMS_XML_STR                     "nas_security_algorithms"
 #define TYPE_OF_CYPHERING_ALGORITHM_ATTR_XML_STR            "type_of_ciphering_algorithm"
 #define TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM_ATTR_XML_STR "type_of_integrity_protection_algorithm"
 bool nas_security_algorithms_from_xml (
@@ -231,16 +231,16 @@ void nas_security_algorithms_to_xml (NasSecurityAlgorithms * nassecurityalgorith
 // See subclause 10.5.3.5a in 3GPP TS 24.008 [13].
 
 // 9.9.3.25 Nonce
-#define NONCE_IE_XML_STR             "nonce"
-#define REPLAYED_NONCE_UE_IE_XML_STR "replayed_nonce_ue"
-#define NONCE_MME_IE_XML_STR         "nonce_mme"
+#define NONCE_XML_STR                "nonce"
+#define REPLAYED_NONCE_UE_XML_STR    "replayed_nonce_ue"
+#define NONCE_MME_XML_STR            "nonce_mme"
 #define NONCE_XML_SCAN_FMT           "%"SCNx32
 #define NONCE_XML_FMT                "0x%"PRIx32
 bool nonce_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const char * const ie, nonce_t * const nonce);
 void nonce_to_xml (const char * const ie, nonce_t * nonce, xmlTextWriterPtr writer);
 
 // 9.9.3.25A Paging identity
-#define PAGING_IDENTITY_IE_XML_STR      "pagingidentity"
+#define PAGING_IDENTITY_XML_STR         "pagingidentity"
 #define PAGING_IDENTITY_XML_SCAN_FMT    "%"SCNx8
 #define PAGING_IDENTITY_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(paging_identity);
@@ -250,14 +250,14 @@ void paging_identity_to_xml (paging_identity_t * pagingidentity, xmlTextWriterPt
 // See subclause 10.5.5.8 in 3GPP TS 24.008 [13].
 
 // 9.9.3.27 Service type
-#define SERVICE_TYPE_IE_XML_STR      "service_type"
+#define SERVICE_TYPE_XML_STR         "service_type"
 #define SERVICE_TYPE_XML_SCAN_FMT    "%"SCNx8
 #define SERVICE_TYPE_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(service_type);
 void service_type_to_xml (service_type_t * servicetype, xmlTextWriterPtr writer);
 
 // 9.9.3.28 Short MAC
-#define SHORT_MAC_IE_XML_STR      "short_mac"
+#define SHORT_MAC_XML_STR         "short_mac"
 #define SHORT_MAC_XML_SCAN_FMT    "%"SCNx16
 #define SHORT_MAC_XML_FMT         "0x%"PRIx16
 NUM_FROM_XML_PROTOTYPE(short_mac);
@@ -273,18 +273,18 @@ void short_mac_to_xml (short_mac_t * shortmac, xmlTextWriterPtr writer);
 // See subclause 10.5.5.4 in 3GPP TS 24.008 [13].
 
 // 9.9.3.32 Tracking area identity
-#define TRACKING_AREA_CODE_IE_XML_STR                "tracking_area_code"
-#define TRACKING_AREA_IDENTITY_IE_XML_STR            "tracking_area_identity"
+#define TRACKING_AREA_CODE_XML_STR                "tracking_area_code"
+#define TRACKING_AREA_IDENTITY_XML_STR            "tracking_area_identity"
 bool tracking_area_identity_from_xml(xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, tai_t * const tai);
 bool tracking_area_code_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, tac_t * const tac);
 void tracking_area_code_to_xml (const tac_t * const tac, xmlTextWriterPtr writer);
 void tracking_area_identity_to_xml (const tai_t * const tai, xmlTextWriterPtr writer);
 
 // 9.9.3.33 Tracking area identity list
-#define TRACKING_AREA_IDENTITY_LIST_IE_XML_STR                 "tracking_area_identity_list"
-#define PARTIAL_TRACKING_AREA_IDENTITY_LIST_IE_XML_STR         "partial_tracking_area_identity_list"
-#define PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR    "type_of_list"
-#define PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_IE_XML_STR     "number_of_elements"
+#define TRACKING_AREA_IDENTITY_LIST_XML_STR                 "tracking_area_identity_list"
+#define PARTIAL_TRACKING_AREA_IDENTITY_LIST_XML_STR         "partial_tracking_area_identity_list"
+#define PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_XML_STR    "type_of_list"
+#define PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_XML_STR     "number_of_elements"
 bool tracking_area_identity_list_from_xml (
     xmlDocPtr                     xml_doc,
     xmlXPathContextPtr            xpath_ctx,
@@ -292,7 +292,7 @@ bool tracking_area_identity_list_from_xml (
 void tracking_area_identity_list_to_xml (tai_list_t * trackingareaidentitylist, xmlTextWriterPtr writer);
 
 // 9.9.3.34 UE network capability
-#define UE_NETWORK_CAPABILITY_IE_XML_STR                                         "ue_network_capability"
+#define UE_NETWORK_CAPABILITY_XML_STR                                            "ue_network_capability"
 #define UE_NETWORK_CAPABILITY_EPS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR   "eea"
 #define UE_NETWORK_CAPABILITY_EPS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR    "eia"
 #define UE_NETWORK_CAPABILITY_UMTS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR  "uea"
@@ -308,14 +308,14 @@ bool ue_network_capability_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 void ue_network_capability_to_xml (ue_network_capability_t * uenetworkcapability, xmlTextWriterPtr writer);
 
 // 9.9.3.35 UE radio capability information update needed
-#define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_IE_XML_STR      "ue_radio_capability_information_update_needed"
+#define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_XML_STR         "ue_radio_capability_information_update_needed"
 #define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_XML_SCAN_FMT    "%"SCNx8
 #define UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(ue_radio_capability_information_update_needed);
 void ue_radio_capability_information_update_needed_to_xml (ue_radio_capability_information_update_needed_t * ueradiocapabilityinformationupdateneeded, xmlTextWriterPtr writer);
 
 // 9.9.3.36 UE security capability
-#define UE_SECURITY_CAPABILITY_IE_XML_STR "ue_security_capability"
+#define UE_SECURITY_CAPABILITY_XML_STR "ue_security_capability"
 #define UE_SECURITY_CAPABILITY_EPS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR   "eea"
 #define UE_SECURITY_CAPABILITY_EPS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR    "eia"
 #define UE_SECURITY_CAPABILITY_UMTS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR  "uea"
@@ -332,26 +332,26 @@ void ue_security_capability_to_xml (ue_security_capability_t * uesecuritycapabil
 // See subclause 10.5.3.13 in 3GPP TS 24.008 [13].
 
 // 9.9.3.38 CLI
-#define CLI_IE_XML_STR "cli"
+#define CLI_XML_STR "cli"
 // TODO cli_from_xml
 void cli_to_xml (Cli cli, xmlTextWriterPtr writer);
 
 // 9.9.3.39 SS Code
-#define SS_CODE_IE_XML_STR      "ss_code"
+#define SS_CODE_XML_STR         "ss_code"
 #define SS_CODE_XML_SCAN_FMT    "%"SCNx8
 #define SS_CODE_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(ss_code);
 void ss_code_to_xml (ss_code_t * sscode, xmlTextWriterPtr writer);
 
 // 9.9.3.40 LCS indicator
-#define LCS_INDICATOR_IE_XML_STR      "lcs_indicator"
+#define LCS_INDICATOR_XML_STR         "lcs_indicator"
 #define LCS_INDICATOR_XML_SCAN_FMT    "%"SCNx8
 #define LCS_INDICATOR_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(lcs_indicator);
 void lcs_indicator_to_xml (lcs_indicator_t * lcsindicator, xmlTextWriterPtr writer);
 
 // 9.9.3.41 LCS client identity
-#define LCS_CLIENT_IDENTITY_IE_XML_STR "lcs_client_identity"
+#define LCS_CLIENT_IDENTITY_XML_STR "lcs_client_identity"
 // TODO lcs_client_identity_from_xml
 void lcs_client_identity_to_xml (LcsClientIdentity  lcsclientidentity, xmlTextWriterPtr writer);
 
@@ -363,7 +363,7 @@ void lcs_client_identity_to_xml (LcsClientIdentity  lcsclientidentity, xmlTextWr
 // See subclause 10.5.5.28 in 3GPP TS 24.008 [13].
 
 // 9.9.3.45 GUTI type
-#define GUTI_TYPE_IE_XML_STR                        "guti_type"
+#define GUTI_TYPE_XML_STR                        "guti_type"
 bool guti_type_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, guti_type_t * const gutitype);
 void guti_type_to_xml (guti_type_t * gutitype, xmlTextWriterPtr writer);
 

@@ -34,21 +34,7 @@
 #include "as_message.h"
 #include "networkDef.h"
 
-#define NAS_DL_EMM_RAW_MSG(mSGpTR)                  (mSGpTR)->ittiMsg.nas_dl_emm_raw_msg
-#define NAS_UL_EMM_RAW_MSG(mSGpTR)                  (mSGpTR)->ittiMsg.nas_ul_emm_raw_msg
 
-#define NAS_DL_EMM_PROTECTED_MSG(mSGpTR)            (mSGpTR)->ittiMsg.nas_dl_emm_protected_msg
-#define NAS_UL_EMM_PROTECTED_MSG(mSGpTR)            (mSGpTR)->ittiMsg.nas_ul_emm_protected_msg
-#define NAS_DL_EMM_PLAIN_MSG(mSGpTR)                (mSGpTR)->ittiMsg.nas_dl_emm_plain_msg
-#define NAS_UL_EMM_PLAIN_MSG(mSGpTR)                (mSGpTR)->ittiMsg.nas_ul_emm_plain_msg
-
-#define NAS_DL_ESM_RAW_MSG(mSGpTR)                  (mSGpTR)->ittiMsg.nas_dl_esm_raw_msg
-#define NAS_UL_ESM_RAW_MSG(mSGpTR)                  (mSGpTR)->ittiMsg.nas_ul_esm_raw_msg
-
-#define NAS_DL_ESM_PROTECTED_MSG(mSGpTR)            (mSGpTR)->ittiMsg.nas_dl_esm_protected_msg
-#define NAS_UL_ESM_PROTECTED_MSG(mSGpTR)            (mSGpTR)->ittiMsg.nas_ul_esm_protected_msg
-#define NAS_DL_ESM_PLAIN_MSG(mSGpTR)                (mSGpTR)->ittiMsg.nas_dl_esm_plain_msg
-#define NAS_UL_ESM_PLAIN_MSG(mSGpTR)                (mSGpTR)->ittiMsg.nas_ul_esm_plain_msg
 #define NAS_UL_DATA_IND(mSGpTR)                     (mSGpTR)->ittiMsg.nas_ul_data_ind
 #define NAS_DL_DATA_REQ(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_req
 #define NAS_DL_DATA_CNF(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_cnf
@@ -65,111 +51,9 @@
 #define NAS_AUTHENTICATION_REQ(mSGpTR)              (mSGpTR)->ittiMsg.nas_auth_req
 #define NAS_AUTHENTICATION_PARAM_REQ(mSGpTR)        (mSGpTR)->ittiMsg.nas_auth_param_req
 #define NAS_DETACH_REQ(mSGpTR)                      (mSGpTR)->ittiMsg.nas_detach_req
-#define NAS_DATA_LENGHT_MAX     256
+#define NAS_ERAB_SETUP_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.itti_erab_setup_req
 
 
-
-typedef enum {
-  EMM_MSG_HEADER = 1,
-  EMM_MSG_ATTACH_REQUEST,
-  EMM_MSG_ATTACH_ACCEPT,
-  EMM_MSG_ATTACH_COMPLETE,
-  EMM_MSG_ATTACH_REJECT,
-  EMM_MSG_DETACH_REQUEST,
-  EMM_MSG_DETACH_ACCEPT,
-  EMM_MSG_TRACKING_AREA_UPDATE_REQUEST,
-  EMM_MSG_TRACKING_AREA_UPDATE_ACCEPT,
-  EMM_MSG_TRACKING_AREA_UPDATE_COMPLETE,
-  EMM_MSG_TRACKING_AREA_UPDATE_REJECT,
-  EMM_MSG_EXTENDED_SERVICE_REQUEST,
-  EMM_MSG_SERVICE_REQUEST,
-  EMM_MSG_SERVICE_REJECT,
-  EMM_MSG_GUTI_REALLOCATION_COMMAND,
-  EMM_MSG_GUTI_REALLOCATION_COMPLETE,
-  EMM_MSG_AUTHENTICATION_REQUEST,
-  EMM_MSG_AUTHENTICATION_RESPONSE,
-  EMM_MSG_AUTHENTICATION_REJECT,
-  EMM_MSG_AUTHENTICATION_FAILURE,
-  EMM_MSG_IDENTITY_REQUEST,
-  EMM_MSG_IDENTITY_RESPONSE,
-  EMM_MSG_SECURITY_MODE_COMMAND,
-  EMM_MSG_SECURITY_MODE_COMPLETE,
-  EMM_MSG_SECURITY_MODE_REJECT,
-  EMM_MSG_EMM_STATUS,
-  EMM_MSG_EMM_INFORMATION,
-  EMM_MSG_DOWNLINK_NAS_TRANSPORT,
-  EMM_MSG_UPLINK_NAS_TRANSPORT,
-  EMM_MSG_CS_SERVICE_NOTIFICATION,
-} itti_emm_message_ids_t;
-
-
-
-typedef enum {
-  ESM_MSG_HEADER = 1,
-  ESM_MSG_ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST,
-  ESM_MSG_ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT,
-  ESM_MSG_ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REJECT,
-  ESM_MSG_ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST,
-  ESM_MSG_ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT,
-  ESM_MSG_ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REJECT,
-  ESM_MSG_MODIFY_EPS_BEARER_CONTEXT_REQUEST,
-  ESM_MSG_MODIFY_EPS_BEARER_CONTEXT_ACCEPT,
-  ESM_MSG_MODIFY_EPS_BEARER_CONTEXT_REJECT,
-  ESM_MSG_DEACTIVATE_EPS_BEARER_CONTEXT_REQUEST,
-  ESM_MSG_DEACTIVATE_EPS_BEARER_CONTEXT_ACCEPT,
-  ESM_MSG_PDN_CONNECTIVITY_REQUEST,
-  ESM_MSG_PDN_CONNECTIVITY_REJECT,
-  ESM_MSG_PDN_DISCONNECT_REQUEST,
-  ESM_MSG_PDN_DISCONNECT_REJECT,
-  ESM_MSG_BEARER_RESOURCE_ALLOCATION_REQUEST,
-  ESM_MSG_BEARER_RESOURCE_ALLOCATION_REJECT,
-  ESM_MSG_BEARER_RESOURCE_MODIFICATION_REQUEST,
-  ESM_MSG_BEARER_RESOURCE_MODIFICATION_REJECT,
-  ESM_MSG_ESM_INFORMATION_REQUEST,
-  ESM_MSG_ESM_INFORMATION_RESPONSE,
-  ESM_MSG_ESM_STATUS,
-} itti_esm_message_ids_t;
-
-
-
-typedef struct itti_nas_raw_msg_s {
-  size_t                          length;
-  uint8_t                         data[NAS_DATA_LENGHT_MAX];
-} itti_nas_raw_msg_t;
-
-
-
-typedef struct itti_nas_emm_plain_msg_s {
-  itti_emm_message_ids_t          present;
-  EMM_msg                         choice;
-
-} itti_nas_emm_plain_msg_t;
-
-
-
-typedef struct itti_nas_emm_protected_msg_s {
-  nas_message_security_header_t   header;
-  itti_emm_message_ids_t          present;
-  EMM_msg                         choice;
-} itti_nas_emm_protected_msg_t;
-
-
-typedef struct itti_nas_esm_plain_msg_s {
-  itti_esm_message_ids_t          present;
-  ESM_msg                         choice;
-} itti_nas_esm_plain_msg_t;
-
-
-typedef struct itti_nas_esm_protected_msg_s {
-  nas_message_security_header_t   header;
-  itti_esm_message_ids_t          present;
-  ESM_msg                         choice;
-} itti_nas_esm_protected_msg_t;
-
-
-typedef struct itti_nas_paging_ind_s {
-
-} itti_nas_paging_ind_t;
 
 
 typedef struct itti_nas_pdn_connectivity_req_s {
@@ -316,19 +200,15 @@ typedef struct itti_nas_dl_data_rej_s {
   int              err_code;
 } itti_nas_dl_data_rej_t;
 
-typedef struct itti_nas_rab_est_req_s {
-
-} itti_nas_rab_est_req_t;
-
-
-typedef struct itti_nas_rab_est_rsp_s {
-
-} itti_nas_rab_est_rsp_t;
-
-
-typedef struct itti_nas_rab_rel_req_s {
-
-} itti_nas_rab_rel_req_t;
+typedef struct itti_erab_setup_req_s {
+  mme_ue_s1ap_id_t ue_id;            /* UE lower layer identifier   */
+  ebi_t            ebi;              /* EPS bearer id        */
+  bstring          nas_msg;          /* NAS erab bearer context activation message           */
+  bitrate_t        mbr_dl;
+  bitrate_t        mbr_ul;
+  bitrate_t        gbr_dl;
+  bitrate_t        gbr_ul;
+} itti_erab_setup_req_t;
 
 
 typedef struct itti_nas_attach_req_s {

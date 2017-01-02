@@ -51,7 +51,7 @@ NUM_FROM_XML_GENERATE(eps_bearer_context_status, EPS_BEARER_CONTEXT_STATUS);
 //------------------------------------------------------------------------------
 void eps_bearer_context_status_to_xml (eps_bearer_context_status_t * epsbearercontextstatus, xmlTextWriterPtr writer)
 {
-  //XML_WRITE_FORMAT_COMMENT(writer, "%s:"UINT8_TO_BINARY_FMT, EPS_BEARER_CONTEXT_STATUS_IE_XML_STR, UINT8_TO_BINARY_ARG(((uint8_t*)epsbearercontextstatus)[0]));
-  //XML_WRITE_FORMAT_COMMENT(writer, "%s:"UINT8_TO_BINARY_FMT, EPS_BEARER_CONTEXT_STATUS_IE_XML_STR, UINT8_TO_BINARY_ARG(((uint8_t*)epsbearercontextstatus)[1]));
-  XML_WRITE_FORMAT_ELEMENT(writer, EPS_BEARER_CONTEXT_STATUS_IE_XML_STR, "0x%"PRIx16, *epsbearercontextstatus);
+  //XML_WRITE_FORMAT_COMMENT(writer, "%s:"UINT8_TO_BINARY_FMT, EPS_BEARER_CONTEXT_STATUS_XML_STR, UINT8_TO_BINARY_ARG(((uint8_t*)epsbearercontextstatus)[0]));
+  //XML_WRITE_FORMAT_COMMENT(writer, "%s:"UINT8_TO_BINARY_FMT, EPS_BEARER_CONTEXT_STATUS_XML_STR, UINT8_TO_BINARY_ARG(((uint8_t*)epsbearercontextstatus)[1]));
+  XML_WRITE_FORMAT_ELEMENT(writer, EPS_BEARER_CONTEXT_STATUS_XML_STR, "0x%"PRIx16, *epsbearercontextstatus);
 }

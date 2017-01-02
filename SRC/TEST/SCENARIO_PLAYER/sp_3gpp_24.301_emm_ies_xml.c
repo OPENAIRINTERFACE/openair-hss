@@ -91,7 +91,7 @@ bool sp_eps_mobile_identity_from_xml (
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
-  bstring xpath_expr_mi = bformat("./%s",EPS_MOBILE_IDENTITY_IE_XML_STR);
+  bstring xpath_expr_mi = bformat("./%s",EPS_MOBILE_IDENTITY_XML_STR);
   xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_mi);
   if (xpath_obj_mi) {
     xmlNodeSetPtr nodes_mi = xpath_obj_mi->nodesetval;
@@ -284,7 +284,7 @@ bool sp_nas_message_container_from_xml (
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
 
-  bstring xpath_expr = bformat("./%s",NAS_MESSAGE_CONTAINER_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",NAS_MESSAGE_CONTAINER_XML_STR);
   res = xml_load_hex_stream_leaf_tag(msg->xml_doc,msg->xpath_ctx, xpath_expr, nasmessagecontainer);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
@@ -297,7 +297,7 @@ bool sp_nas_security_algorithms_from_xml (
     NasSecurityAlgorithms          * const nassecurityalgorithms)
 {
   bool res = false;
-  bstring xpath_expr_nsa = bformat("./%s",NAS_SECURITY_ALGORITHMS_IE_XML_STR);
+  bstring xpath_expr_nsa = bformat("./%s",NAS_SECURITY_ALGORITHMS_XML_STR);
   xmlXPathObjectPtr xpath_obj_nsa = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_nsa);
   if (xpath_obj_nsa) {
     xmlNodeSetPtr nodes_nsa = xpath_obj_nsa->nodesetval;

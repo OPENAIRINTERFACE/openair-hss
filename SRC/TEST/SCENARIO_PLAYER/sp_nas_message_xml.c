@@ -67,7 +67,7 @@ bool sp_nas_message_plain_from_xml (
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",PLAIN_NAS_MESSAGE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",PLAIN_NAS_MESSAGE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -111,7 +111,7 @@ bool sp_nas_message_protected_from_xml (
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",SECURITY_PROTECTED_NAS_MESSAGE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",SECURITY_PROTECTED_NAS_MESSAGE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;

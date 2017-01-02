@@ -78,7 +78,7 @@ bool sp_m_tmsi_from_xml (
     scenario_player_msg_t * const msg,
     tmsi_t                    * const m_tmsi)
 {
-  bstring xpath_expr = bformat("./%s",M_TMSI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s", M_TMSI_XML_STR);
   bstring xml_var = NULL;
   bool res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, M_TMSI_XML_SCAN_FMT, (void*)m_tmsi, &xml_var);
   if (!res && xml_var) {
@@ -91,9 +91,9 @@ bool sp_m_tmsi_from_xml (
           *m_tmsi = (tmsi_t)spi_var->u.var.value.value_u64;
           res = true;
           OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s=" M_TMSI_XML_FMT " from var uid=0x%lx\n",
-              M_TMSI_IE_XML_STR, *m_tmsi, (uintptr_t)spi_var->uid);
+              M_TMSI_XML_STR, *m_tmsi, (uintptr_t)spi_var->uid);
         } else {
-          AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", M_TMSI_IE_XML_STR);
+          AssertFatal (0, "Could not find %s var uid, should have been declared in scenario\n", M_TMSI_XML_STR);
         }
       }
     } else if ('#' == xml_var->data[0]) {
@@ -103,7 +103,7 @@ bool sp_m_tmsi_from_xml (
         AssertFatal(spi_var, "var %s not found", bdata(xml_var));
         if (SCENARIO_PLAYER_ITEM_VAR == spi_var->item_type) {
           res = true;
-          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s to be loaded\n", M_TMSI_IE_XML_STR);
+          OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set %s to be loaded\n", M_TMSI_XML_STR);
         }
       }
     }
@@ -125,7 +125,7 @@ bool sp_gummei_from_xml (
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",GUMMEI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s", GUMMEI_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -152,7 +152,7 @@ bool sp_guti_from_xml (
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",GUTI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",GUTI_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -181,7 +181,7 @@ bool sp_s_tmsi_from_xml (
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",S_TMSI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",S_TMSI_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -215,7 +215,7 @@ bool sp_csg_id_from_xml (
     csg_id_t                  * const csg_id)
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
-  bstring xpath_expr = bformat("./%s",CSG_ID_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",CSG_ID_XML_STR);
   bool res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx32, (void*)csg_id, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
@@ -239,8 +239,8 @@ bool sp_csg_id_from_xml (
 //------------------------------------------------------------------------------
 // 19.6  E-UTRAN Cell Identity (ECI) and E-UTRAN Cell Global Identification (ECGI)
 //------------------------------------------------------------------------------
-#define E_UTRAN_CELL_IDENTITY_IE_XML_STR                "eci"
-#define E_UTRAN_CELL_GLOBAL_IDENTIFICATION_IE_XML_STR   "ecgi"
+#define E_UTRAN_CELL_IDENTITY_XML_STR                "eci"
+#define E_UTRAN_CELL_GLOBAL_IDENTIFICATION_XML_STR   "ecgi"
 
 //------------------------------------------------------------------------------
 bool sp_eci_from_xml (
@@ -250,7 +250,7 @@ bool sp_eci_from_xml (
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_IDENTITY_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_IDENTITY_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -266,7 +266,7 @@ bool sp_eci_from_xml (
         eci->cell_id = cell_id;
         res = true;
         OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s = %05x%02x\n",
-            E_UTRAN_CELL_IDENTITY_IE_XML_STR,
+            E_UTRAN_CELL_IDENTITY_XML_STR,
             eci->enb_id, eci->cell_id);
       }
     }
@@ -286,7 +286,7 @@ bool sp_ecgi_from_xml (
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_GLOBAL_IDENTIFICATION_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_GLOBAL_IDENTIFICATION_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;

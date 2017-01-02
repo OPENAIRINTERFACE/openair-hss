@@ -63,7 +63,7 @@ bool supported_codec_list_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_
   OAILOG_FUNC_IN (LOG_XML);
   char hexascii[SUPPORTED_CODEC_LIST_IE_MAX_LENGTH*2]  = {0};
   uint8_t hex[SUPPORTED_CODEC_LIST_IE_MAX_LENGTH]      = {0};
-  bstring xpath_expr = bformat("./%s",SUPPORTED_CODEC_LIST_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",SUPPORTED_CODEC_LIST_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)hexascii, NULL);
   if (res) {
     int len = strlen(hexascii);
@@ -79,5 +79,5 @@ bool supported_codec_list_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_
 //------------------------------------------------------------------------------
 void supported_codec_list_to_xml (const supported_codec_list_t * const supportedcodeclist, xmlTextWriterPtr writer)
 {
-  XML_WRITE_HEX_ELEMENT(writer, SUPPORTED_CODEC_LIST_IE_XML_STR, bdata(*supportedcodeclist), blength(*supportedcodeclist));
+  XML_WRITE_HEX_ELEMENT(writer, SUPPORTED_CODEC_LIST_XML_STR, bdata(*supportedcodeclist), blength(*supportedcodeclist));
 }

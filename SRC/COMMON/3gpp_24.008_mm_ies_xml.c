@@ -64,7 +64,7 @@ bool authentication_parameter_rand_from_xml (xmlDocPtr xml_doc, xmlXPathContextP
   OAILOG_FUNC_IN (LOG_XML);
   char hexascii[64]  = {0};
   uint8_t hex[32]    = {0};
-  bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_RAND_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_RAND_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)hexascii, NULL);
   if (res) {
     int len = strlen(hexascii);
@@ -80,7 +80,7 @@ bool authentication_parameter_rand_from_xml (xmlDocPtr xml_doc, xmlXPathContextP
 //------------------------------------------------------------------------------
 void authentication_parameter_rand_to_xml (authentication_parameter_rand_t authenticationparameterrand, xmlTextWriterPtr writer)
 {
-  XML_WRITE_HEX_ELEMENT(writer, AUTHENTICATION_PARAMETER_RAND_IE_XML_STR, bdata(authenticationparameterrand), blength(authenticationparameterrand));
+  XML_WRITE_HEX_ELEMENT(writer, AUTHENTICATION_PARAMETER_RAND_XML_STR, bdata(authenticationparameterrand), blength(authenticationparameterrand));
 }
 
 //------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ bool authentication_parameter_autn_from_xml (xmlDocPtr xml_doc, xmlXPathContextP
   OAILOG_FUNC_IN (LOG_XML);
   char hexascii[64]  = {0};
   uint8_t hex[32]    = {0};
-  bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_AUTN_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",AUTHENTICATION_PARAMETER_AUTN_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)hexascii, NULL);
   if (res) {
     int len = strlen(hexascii);
@@ -108,7 +108,7 @@ bool authentication_parameter_autn_from_xml (xmlDocPtr xml_doc, xmlXPathContextP
 
 void authentication_parameter_autn_to_xml (authentication_parameter_autn_t authenticationparameterautn, xmlTextWriterPtr writer)
 {
-  XML_WRITE_HEX_ELEMENT(writer, AUTHENTICATION_PARAMETER_AUTN_IE_XML_STR, bdata(authenticationparameterautn), blength(authenticationparameterautn));
+  XML_WRITE_HEX_ELEMENT(writer, AUTHENTICATION_PARAMETER_AUTN_XML_STR, bdata(authenticationparameterautn), blength(authenticationparameterautn));
 }
 
 //------------------------------------------------------------------------------
@@ -119,7 +119,7 @@ bool authentication_response_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathCont
   OAILOG_FUNC_IN (LOG_XML);
   char hexascii[64]  = {0};
   uint8_t hex[32]    = {0};
-  bstring xpath_expr = bformat("./%s",AUTHENTICATION_RESPONSE_PARAMETER_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",AUTHENTICATION_RESPONSE_PARAMETER_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)hexascii, NULL);
   if (res) {
     int len = strlen(hexascii);
@@ -135,7 +135,7 @@ bool authentication_response_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathCont
 //------------------------------------------------------------------------------
 void authentication_response_parameter_to_xml (authentication_response_parameter_t authenticationresponseparameter, xmlTextWriterPtr writer)
 {
-  XML_WRITE_HEX_ELEMENT(writer, AUTHENTICATION_RESPONSE_PARAMETER_IE_XML_STR, bdata(authenticationresponseparameter), blength(authenticationresponseparameter));
+  XML_WRITE_HEX_ELEMENT(writer, AUTHENTICATION_RESPONSE_PARAMETER_XML_STR, bdata(authenticationresponseparameter), blength(authenticationresponseparameter));
 }
 
 //------------------------------------------------------------------------------
@@ -146,7 +146,7 @@ bool authentication_failure_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathConte
   OAILOG_FUNC_IN (LOG_XML);
   char hexascii[64]  = {0};
   uint8_t hex[32]    = {0};
-  bstring xpath_expr = bformat("./%s",AUTHENTICATION_FAILURE_PARAMETER_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",AUTHENTICATION_FAILURE_PARAMETER_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)hexascii, NULL);
   if (res) {
     int len = strlen(hexascii);
@@ -162,7 +162,7 @@ bool authentication_failure_parameter_from_xml (xmlDocPtr xml_doc, xmlXPathConte
 //------------------------------------------------------------------------------
 void authentication_failure_parameter_to_xml (authentication_failure_parameter_t authenticationfailureparameter, xmlTextWriterPtr writer)
 {
-  XML_WRITE_HEX_ELEMENT(writer, AUTHENTICATION_FAILURE_PARAMETER_IE_XML_STR, bdata(authenticationfailureparameter), blength(authenticationfailureparameter));
+  XML_WRITE_HEX_ELEMENT(writer, AUTHENTICATION_FAILURE_PARAMETER_XML_STR, bdata(authenticationfailureparameter), blength(authenticationfailureparameter));
 }
 
 //------------------------------------------------------------------------------
@@ -233,7 +233,7 @@ void network_name_to_xml (const char * const ie, const network_name_t * const ne
 bool time_zone_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, time_zone_t * const timezone)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",TIME_ZONE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",TIME_ZONE_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)timezone, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -242,7 +242,7 @@ bool time_zone_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, time_z
 //------------------------------------------------------------------------------
 void time_zone_to_xml (const time_zone_t * const timezone, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, TIME_ZONE_IE_XML_STR, "%"PRIx8, *timezone);
+  XML_WRITE_FORMAT_ELEMENT(writer, TIME_ZONE_XML_STR, "%"PRIx8, *timezone);
 }
 
 //------------------------------------------------------------------------------
@@ -252,7 +252,7 @@ bool time_zone_and_time_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ct
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_tz = bformat("./%s",TIME_ZONE_AND_TIME_IE_XML_STR);
+  bstring xpath_expr_tz = bformat("./%s",TIME_ZONE_AND_TIME_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_tz);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -305,7 +305,7 @@ bool time_zone_and_time_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ct
 //------------------------------------------------------------------------------
 void time_zone_and_time_to_xml (const time_zone_and_time_t * const timezoneandtime, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, TIME_ZONE_AND_TIME_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, TIME_ZONE_AND_TIME_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, YEAR_ATTR_XML_STR, "%"PRIu8,   timezoneandtime->year);
   XML_WRITE_FORMAT_ELEMENT(writer, MONTH_ATTR_XML_STR, "%"PRIu8,  timezoneandtime->month);
   XML_WRITE_FORMAT_ELEMENT(writer, DAY_ATTR_XML_STR, "%"PRIu8,    timezoneandtime->day);
@@ -323,7 +323,7 @@ void time_zone_and_time_to_xml (const time_zone_and_time_t * const timezoneandti
 bool daylight_saving_time_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, daylight_saving_time_t * const daylightsavingtime)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",DAYLIGHT_SAVING_TIME_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",DAYLIGHT_SAVING_TIME_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)daylightsavingtime, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -332,7 +332,7 @@ bool daylight_saving_time_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_
 //------------------------------------------------------------------------------
 void daylight_saving_time_to_xml (const daylight_saving_time_t * const daylightsavingtime, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, DAYLIGHT_SAVING_TIME_IE_XML_STR, "%"PRIu8, *daylightsavingtime);
+  XML_WRITE_FORMAT_ELEMENT(writer, DAYLIGHT_SAVING_TIME_XML_STR, "%"PRIu8, *daylightsavingtime);
 }
 
 //------------------------------------------------------------------------------
@@ -349,7 +349,7 @@ bool emergency_number_list_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 void emergency_number_list_to_xml (const emergency_number_list_t * const emergencynumberlist, xmlTextWriterPtr writer)
 {
   const emergency_number_list_t *  e = emergencynumberlist;
-  XML_WRITE_START_ELEMENT(writer, EMERGENCY_NUMBER_LIST_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, EMERGENCY_NUMBER_LIST_XML_STR);
   while (e) {
     XML_WRITE_START_ELEMENT(writer, EMERGENCY_NUMBER_LIST_ITEM_XML_STR);
     XML_WRITE_FORMAT_ELEMENT(writer, ADD_CI_ATTR_XML_STR, "0x%x", e->emergencyservicecategoryvalue);

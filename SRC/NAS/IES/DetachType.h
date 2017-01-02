@@ -39,7 +39,7 @@ typedef struct detach_type_s {
   uint8_t  typeofdetach:3;
 } detach_type_t;
 
-#define DETACH_TYPE_IE_XML_STR        "detach_type"
+#define DETACH_TYPE_XML_STR           "detach_type"
 #define SWITCH_OFF_ATTR_XML_STR       "switch_off"
 #define TYPE_OF_DETACH_ATTR_XML_STR   "type_of_detach"
 

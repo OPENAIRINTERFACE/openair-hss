@@ -27,22 +27,16 @@
 #include "as_message.h"
 #include "esm_proc.h"
 
-int nas_itti_plain_msg(
-  const char          *buffer,
-  const nas_message_t *msg,
-  const size_t         lengthP,
-  const bool           is_down_link);
-
-int nas_itti_protected_msg(
-  const char          *buffer,
-  const nas_message_t *msg,
-  const size_t         lengthP,
-  const bool           is_down_link);
-
 
 int nas_itti_dl_data_req(
   const mme_ue_s1ap_id_t ue_idP,
   bstring                nas_msgP);
+
+int
+nas_itti_erab_setup_req (
+    const mme_ue_s1ap_id_t ue_id,
+    const ebi_t            ebi,
+    bstring                nas_msg);
 
 void nas_itti_pdn_config_req(
   int                     ptiP,

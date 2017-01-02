@@ -554,10 +554,10 @@ void xml_msg_dump_itti_mme_app_initial_context_setup_rsp(const itti_mme_app_init
     // mandatory attributes of initial_ue_message
     mme_ue_s1ap_id_to_xml(&itti_msg->ue_id, xml_text_writer);
     for (int i=0; i < itti_msg->no_of_e_rabs; i++) {
-      XML_WRITE_START_ELEMENT(xml_text_writer, E_RAB_SETUP_ITEM_IE_XML_STR);
+      XML_WRITE_START_ELEMENT(xml_text_writer, E_RAB_SETUP_ITEM_XML_STR);
       eps_bearer_identity_to_xml(&itti_msg->e_rab_id[i], xml_text_writer);
-      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, TEID_IE_XML_STR, "%"PRIx32, itti_msg->gtp_teid[i]);
-      XML_WRITE_HEX_ELEMENT(xml_text_writer, TRANSPORT_LAYER_ADDRESS_IE_XML_STR,
+      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, TEID_XML_STR, "%"PRIx32, itti_msg->gtp_teid[i]);
+      XML_WRITE_HEX_ELEMENT(xml_text_writer, TRANSPORT_LAYER_ADDRESS_XML_STR,
           bdata(itti_msg->transport_layer_address[i]),
           blength(itti_msg->transport_layer_address[i]));
       XML_WRITE_END_ELEMENT(xml_text_writer);
@@ -614,16 +614,16 @@ void xml_msg_dump_itti_mme_app_connection_establishment_cnf(const itti_mme_app_c
     // mandatory attributes of initial_ue_message
     mme_ue_s1ap_id_to_xml(&itti_msg->ue_id, xml_text_writer);
     for (int i=0; i < itti_msg->no_of_e_rabs; i++) {
-      XML_WRITE_START_ELEMENT(xml_text_writer, E_RAB_SETUP_ITEM_IE_XML_STR);
+      XML_WRITE_START_ELEMENT(xml_text_writer, E_RAB_SETUP_ITEM_XML_STR);
       eps_bearer_identity_to_xml(&itti_msg->e_rab_id[i], xml_text_writer);
-      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, QCI_IE_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_qci[i]);
-      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PRIORITY_LEVEL_IE_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_priority_level[i]);
-      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PRE_EMPTION_CAPABILITY_IE_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_preemption_capability[i]);
-      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PRE_EMPTION_VULNERABILITY_IE_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_preemption_vulnerability[i]);
-      XML_WRITE_HEX_ELEMENT(xml_text_writer, TRANSPORT_LAYER_ADDRESS_IE_XML_STR,
+      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, QCI_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_qci[i]);
+      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PRIORITY_LEVEL_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_priority_level[i]);
+      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PRE_EMPTION_CAPABILITY_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_preemption_capability[i]);
+      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, PRE_EMPTION_VULNERABILITY_XML_STR, "%"PRIu8, itti_msg->e_rab_level_qos_preemption_vulnerability[i]);
+      XML_WRITE_HEX_ELEMENT(xml_text_writer, TRANSPORT_LAYER_ADDRESS_XML_STR,
           bdata(itti_msg->transport_layer_address[i]),
           blength(itti_msg->transport_layer_address[i]));
-      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, TEID_IE_XML_STR, "%"PRIx32, itti_msg->gtp_teid[i]);
+      XML_WRITE_FORMAT_ELEMENT(xml_text_writer, TEID_XML_STR, "%"PRIx32, itti_msg->gtp_teid[i]);
       nas_pdu_to_xml(itti_msg->nas_pdu[i], xml_text_writer);
       XML_WRITE_END_ELEMENT(xml_text_writer);
     }

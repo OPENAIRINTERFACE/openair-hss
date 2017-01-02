@@ -31,7 +31,7 @@
 #define FILE_3GPP_24_007_XML_SEEN
 
 typedef uint8_t sequence_number_t;
-#define SEQUENCE_NUMBER_IE_XML_STR                      "sequence_number"
+#define SEQUENCE_NUMBER_XML_STR                         "sequence_number"
 #define SEQUENCE_NUMBER_XML_SCAN_FMT                    "%"SCNx8
 #define SEQUENCE_NUMBER_XML_FMT                         "0x%"PRIx8
 
@@ -41,7 +41,7 @@ void sequence_number_to_xml(const uint8_t * const sn, xmlTextWriterPtr writer);
 //..............................................................................
 // 11.2.3.1.1  Protocol discriminator
 //..............................................................................
-#define PROTOCOL_DISCRIMINATOR_IE_XML_STR                "protocol_discriminator"
+#define PROTOCOL_DISCRIMINATOR_XML_STR                   "protocol_discriminator"
 #define GROUP_CALL_CONTROL_VAL_XML_STR                   "GROUP_CALL_CONTROL"
 #define BROADCAST_CALL_CONTROL_VAL_XML_STR               "BROADCAST_CALL_CONTROL"
 #define EPS_SESSION_MANAGEMENT_MESSAGE_VAL_XML_STR       "EPS_SESSION_MANAGEMENT_MESSAGE"
@@ -61,7 +61,7 @@ void protocol_discriminator_to_xml(const eps_protocol_discriminator_t * const pd
 //..............................................................................
 // 11.2.3.1.5  EPS bearer identity
 //..............................................................................
-#define EBI_IE_XML_STR                              "ebi"
+#define EBI_XML_STR                                 "ebi"
 #define EBI_UNASSIGNED_VAL_XML_STR                  "EBI_UNASSIGNED"
 #define EBI_XML_SCAN_FMT                            "%"SCNx8
 #define EBI_XML_FMT                                 "0x%"PRIx8
@@ -71,7 +71,7 @@ void eps_bearer_identity_to_xml(const ebi_t * const ebi, xmlTextWriterPtr writer
 //..............................................................................
 // 11.2.3.1a   Procedure transaction identity
 //..............................................................................
-#define PTI_IE_XML_STR                                         "pti"
+#define PTI_XML_STR                                            "pti"
 #define PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED_VAL_XML_STR  "PTI_UNASSIGNED"
 #define PROCEDURE_TRANSACTION_IDENTITY_RESERVED_VAL_XML_STR    "PTI_RESERVED"
 #define PTI_XML_SCAN_FMT                                       "%"SCNx8

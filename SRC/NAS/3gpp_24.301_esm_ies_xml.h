@@ -41,7 +41,7 @@
 // See subclause 10.5.6.1 in 3GPP TS 24.008 [13].
 
 // 9.9.4.2 APN aggregate maximum bit rate
-#define APN_AGGREGATE_MAXIMUM_BIT_RATE_IE_XML_STR                           "apn_agregate_maximum_bit_rate"
+#define APN_AGGREGATE_MAXIMUM_BIT_RATE_XML_STR                              "apn_agregate_maximum_bit_rate"
 #define APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_DOWNLINK_ATTR_XML_STR            "apn_ambr_dl"
 #define APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_UPLINK_ATTR_XML_STR              "apn_ambr_ul"
 #define APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_DOWNLINK_EXTENDED_ATTR_XML_STR   "apn_ambr_dl_ext"
@@ -55,7 +55,7 @@ void apn_aggregate_maximum_bit_rate_to_xml(ApnAggregateMaximumBitRate *apnaggreg
 // See subclause 10.5.6.19 in 3GPP TS 24.008 [13].
 
 // 9.9.4.3 EPS quality of service
-#define EPS_QUALITY_OF_SERVICE_IE_XML_STR                     "eps_quality_of_service"
+#define EPS_QUALITY_OF_SERVICE_XML_STR                        "eps_quality_of_service"
 #define QCI_ATTR_XML_STR                                      "qci"
 #define MAXIMUM_BIT_RATE_FOR_UPLINK_ATTR_XML_STR              "maximum_bit_rate_for_uplink"
 #define MAXIMUM_BIT_RATE_FOR_DOWNLINK_ATTR_XML_STR            "maximum_bit_rate_for_downlink"
@@ -72,21 +72,21 @@ bool eps_quality_of_service_from_xml (
 void eps_quality_of_service_to_xml (EpsQualityOfService * epsqualityofservice, xmlTextWriterPtr writer);
 
 // 9.9.4.4 ESM cause
-#define ESM_CAUSE_IE_XML_STR      "esm_cause"
+#define ESM_CAUSE_XML_STR         "esm_cause"
 #define ESM_CAUSE_XML_SCAN_FMT    "%"SCNx8
 #define ESM_CAUSE_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(esm_cause);
 void esm_cause_to_xml (esm_cause_t * esmcause, xmlTextWriterPtr writer);
 
 // 9.9.4.5 ESM information transfer flag
-#define ESM_INFORMATION_TRANSFER_FLAG_IE_XML_STR      "esm_information_transfer_flag"
+#define ESM_INFORMATION_TRANSFER_FLAG_XML_STR         "esm_information_transfer_flag"
 #define ESM_INFORMATION_TRANSFER_FLAG_XML_SCAN_FMT    "%"SCNx8
 #define ESM_INFORMATION_TRANSFER_FLAG_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(esm_information_transfer_flag);
 void esm_information_transfer_flag_to_xml (esm_information_transfer_flag_t * esminformationtransferflag, xmlTextWriterPtr writer);
 
 // 9.9.4.6 Linked EPS bearer identity
-#define LINKED_EPS_BEARER_IDENTITY_IE_XML_STR      "linked_eps_bearer_identity"
+#define LINKED_EPS_BEARER_IDENTITY_XML_STR         "linked_eps_bearer_identity"
 #define LINKED_EPS_BEARER_IDENTITY_XML_SCAN_FMT    "%"SCNx8
 #define LINKED_EPS_BEARER_IDENTITY_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(linked_eps_bearer_identity);
@@ -102,7 +102,7 @@ void linked_eps_bearer_identity_to_xml (linked_eps_bearer_identity_t * linkedeps
 // See subclause 10.5.6.11 in 3GPP TS 24.008 [13].
 
 // 9.9.4.9 PDN address
-#define PDN_ADDRESS_IE_XML_STR                    "pdn_address"
+#define PDN_ADDRESS_XML_STR                       "pdn_address"
 #define PDN_TYPE_VALUE_ATTR_XML_STR               "pdn_type_value"
 #define PDN_ADDRESS_INFORMATION_ATTR_XML_STR      "pdn_address_information"
 #define PDN_TYPE_VALUE_IPV4_VAL_XML_STR           "IPV4"
@@ -112,7 +112,7 @@ bool pdn_address_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, PdnA
 void pdn_address_to_xml (PdnAddress * pdnaddress, xmlTextWriterPtr writer);
 
 // 9.9.4.10 PDN type
-#define PDN_TYPE_IE_XML_STR         "pdn_type"
+#define PDN_TYPE_XML_STR            "pdn_type"
 #define PDN_TYPE_IPV4_VAL_XML_STR   "IPv4"
 #define PDN_TYPE_IPV6_VAL_XML_STR   "IPv6"
 #define PDN_TYPE_IPV4V6_VAL_XML_STR "IPV4V6"
@@ -127,7 +127,7 @@ void pdn_type_to_xml (pdn_type_t * pdntype, xmlTextWriterPtr writer);
 
 // 9.9.4.13 Radio priority
 // See subclause 10.5.7.2 in 3GPP TS 24.008 [13].
-#define RADIO_PRIORITY_IE_XML_STR "radio_priority"
+#define RADIO_PRIORITY_XML_STR         "radio_priority"
 #define RADIO_PRIORITY_XML_SCAN_FMT    "%"SCNx8
 #define RADIO_PRIORITY_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(radio_priority);
@@ -135,7 +135,7 @@ void radio_priority_to_xml (radio_priority_t * radio_priority, xmlTextWriterPtr 
 
 // 9.9.4.14 Request type
 // See subclause 10.5.6.17 in 3GPP TS 24.008 [13].
-#define REQUEST_TYPE_IE_XML_STR "request_type"
+#define REQUEST_TYPE_XML_STR         "request_type"
 #define REQUEST_TYPE_XML_SCAN_FMT    "%"SCNx8
 #define REQUEST_TYPE_XML_FMT         "0x%"PRIx8
 NUM_FROM_XML_PROTOTYPE(request_type);
@@ -143,7 +143,7 @@ void request_type_to_xml (request_type_t * requesttype, xmlTextWriterPtr writer)
 
 
 // 9.9.4.15 Traffic flow aggregate description
-#define TRAFFIC_FLOW_AGGREGATE_DESCRIPTION_IE_XML_STR "traffic_flow_aggregate_description"
+#define TRAFFIC_FLOW_AGGREGATE_DESCRIPTION_XML_STR "traffic_flow_aggregate_description"
 // TODO void traffic_flow_aggregate_description_to_xml(TrafficFlowAggregateDescription *trafficflowaggregatedescription, uint8_t iei);
 
 // 9.9.4.16 Traffic flow template

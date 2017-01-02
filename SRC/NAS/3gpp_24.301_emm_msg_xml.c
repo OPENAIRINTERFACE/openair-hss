@@ -69,7 +69,7 @@ bool attach_accept_from_xml (
   bool res = false;
 
   res = eps_attach_result_from_xml (xml_doc, xpath_ctx, &attach_accept->epsattachresult, NULL);
-  if (res) {res = gprs_timer_from_xml (xml_doc, xpath_ctx, GPRS_TIMER_T3412_IE_XML_STR, &attach_accept->t3412value);}
+  if (res) {res = gprs_timer_from_xml (xml_doc, xpath_ctx, GPRS_TIMER_T3412_XML_STR, &attach_accept->t3412value);}
   if (res) {res = tracking_area_identity_list_from_xml (xml_doc, xpath_ctx, &attach_accept->tailist);}
   if (res) {res = esm_message_container_from_xml (xml_doc, xpath_ctx, &attach_accept->esmmessagecontainer);}
 
@@ -95,12 +95,12 @@ bool attach_accept_from_xml (
       attach_accept->presencemask |= ATTACH_ACCEPT_EMM_CAUSE_PRESENT;
     }
 
-    res = gprs_timer_from_xml (xml_doc, xpath_ctx, GPRS_TIMER_T3402_IE_XML_STR, &attach_accept->t3402value);
+    res = gprs_timer_from_xml (xml_doc, xpath_ctx, GPRS_TIMER_T3402_XML_STR, &attach_accept->t3402value);
     if (res) {
       attach_accept->presencemask |= ATTACH_ACCEPT_T3402_VALUE_PRESENT;
     }
 
-    res = gprs_timer_from_xml (xml_doc, xpath_ctx, GPRS_TIMER_T3423_IE_XML_STR, &attach_accept->t3423value);
+    res = gprs_timer_from_xml (xml_doc, xpath_ctx, GPRS_TIMER_T3423_XML_STR, &attach_accept->t3423value);
     if (res) {
       attach_accept->presencemask |= ATTACH_ACCEPT_T3423_VALUE_PRESENT;
     }
@@ -137,7 +137,7 @@ int attach_accept_to_xml (
   OAILOG_FUNC_IN (LOG_XML);
   eps_attach_result_to_xml (&attach_accept->epsattachresult, writer);
 
-  gprs_timer_to_xml (GPRS_TIMER_T3412_IE_XML_STR, &attach_accept->t3412value, writer);
+  gprs_timer_to_xml (GPRS_TIMER_T3412_XML_STR, &attach_accept->t3412value, writer);
 
   tracking_area_identity_list_to_xml (&attach_accept->tailist, writer);
 
@@ -165,12 +165,12 @@ int attach_accept_to_xml (
 
   if ((attach_accept->presencemask & ATTACH_ACCEPT_T3402_VALUE_PRESENT)
       == ATTACH_ACCEPT_T3402_VALUE_PRESENT) {
-    gprs_timer_to_xml (GPRS_TIMER_T3402_IE_XML_STR, &attach_accept->t3402value, writer);
+    gprs_timer_to_xml (GPRS_TIMER_T3402_XML_STR, &attach_accept->t3402value, writer);
   }
 
   if ((attach_accept->presencemask & ATTACH_ACCEPT_T3423_VALUE_PRESENT)
       == ATTACH_ACCEPT_T3423_VALUE_PRESENT) {
-    gprs_timer_to_xml (GPRS_TIMER_T3423_IE_XML_STR, &attach_accept->t3423value, writer);
+    gprs_timer_to_xml (GPRS_TIMER_T3423_XML_STR, &attach_accept->t3423value, writer);
   }
 
   if ((attach_accept->presencemask & ATTACH_ACCEPT_EQUIVALENT_PLMNS_PRESENT)
@@ -597,11 +597,11 @@ bool emm_information_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   emm_information->presencemask = 0;
-  if (network_name_from_xml (xml_doc, xpath_ctx, FULL_NETWORK_NAME_IE_XML_STR, &emm_information->fullnamefornetwork)) {
+  if (network_name_from_xml (xml_doc, xpath_ctx, FULL_NETWORK_NAME_XML_STR, &emm_information->fullnamefornetwork)) {
     emm_information->presencemask |= EMM_INFORMATION_FULL_NAME_FOR_NETWORK_PRESENT;
   }
 
-  if (network_name_from_xml (xml_doc, xpath_ctx, SHORT_NETWORK_NAME_IE_XML_STR, &emm_information->shortnamefornetwork)) {
+  if (network_name_from_xml (xml_doc, xpath_ctx, SHORT_NETWORK_NAME_XML_STR, &emm_information->shortnamefornetwork)) {
     emm_information->presencemask |= EMM_INFORMATION_SHORT_NAME_FOR_NETWORK_PRESENT;
   }
 
@@ -628,12 +628,12 @@ int emm_information_to_xml (
   OAILOG_FUNC_IN (LOG_XML);
   if ((emm_information->presencemask & EMM_INFORMATION_FULL_NAME_FOR_NETWORK_PRESENT)
       == EMM_INFORMATION_FULL_NAME_FOR_NETWORK_PRESENT) {
-    network_name_to_xml (FULL_NETWORK_NAME_IE_XML_STR, &emm_information->fullnamefornetwork, writer);
+    network_name_to_xml (FULL_NETWORK_NAME_XML_STR, &emm_information->fullnamefornetwork, writer);
   }
 
   if ((emm_information->presencemask & EMM_INFORMATION_SHORT_NAME_FOR_NETWORK_PRESENT)
       == EMM_INFORMATION_SHORT_NAME_FOR_NETWORK_PRESENT) {
-    network_name_to_xml (SHORT_NETWORK_NAME_IE_XML_STR, &emm_information->shortnamefornetwork, writer);
+    network_name_to_xml (SHORT_NETWORK_NAME_XML_STR, &emm_information->shortnamefornetwork, writer);
   }
 
   if ((emm_information->presencemask & EMM_INFORMATION_LOCAL_TIME_ZONE_PRESENT)
@@ -732,12 +732,12 @@ bool security_mode_command_from_xml (
       security_mode_command->presencemask |= SECURITY_MODE_COMMAND_IMEISV_REQUEST_PRESENT;
     }
 
-    res = nonce_from_xml (xml_doc, xpath_ctx, REPLAYED_NONCE_UE_IE_XML_STR, &security_mode_command->replayednonceue);
+    res = nonce_from_xml (xml_doc, xpath_ctx, REPLAYED_NONCE_UE_XML_STR, &security_mode_command->replayednonceue);
     if (res) {
       security_mode_command->presencemask |= SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_PRESENT;
     }
 
-    res = nonce_from_xml (xml_doc, xpath_ctx, NONCE_MME_IE_XML_STR, &security_mode_command->noncemme);
+    res = nonce_from_xml (xml_doc, xpath_ctx, NONCE_MME_XML_STR, &security_mode_command->noncemme);
     if (res) {
       security_mode_command->presencemask |= SECURITY_MODE_COMMAND_NONCEMME_PRESENT;
     }
@@ -764,12 +764,12 @@ int security_mode_command_to_xml (
 
   if ((security_mode_command->presencemask & SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_PRESENT)
       == SECURITY_MODE_COMMAND_REPLAYED_NONCEUE_PRESENT) {
-    nonce_to_xml (REPLAYED_NONCE_UE_IE_XML_STR, &security_mode_command->replayednonceue, writer);
+    nonce_to_xml (REPLAYED_NONCE_UE_XML_STR, &security_mode_command->replayednonceue, writer);
   }
 
   if ((security_mode_command->presencemask & SECURITY_MODE_COMMAND_NONCEMME_PRESENT)
       == SECURITY_MODE_COMMAND_NONCEMME_PRESENT) {
-    nonce_to_xml (NONCE_MME_IE_XML_STR, &security_mode_command->noncemme, writer);
+    nonce_to_xml (NONCE_MME_XML_STR, &security_mode_command->noncemme, writer);
   }
   OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
 }
@@ -841,8 +841,8 @@ int service_reject_to_xml (
 
   emm_cause_to_xml (&service_reject->emmcause, writer);
   // Just wait a litle bit for CS...
-  //gprs_timer_to_xml (GPRS_TIMER_T3442_IE_XML_STR, &service_reject->t3442value, writer);
-  //gprs_timer_to_xml (GPRS_TIMER_T3346_IE_XML_STR, &service_reject->t3346value, writer);
+  //gprs_timer_to_xml (GPRS_TIMER_T3442_XML_STR, &service_reject->t3442value, writer);
+  //gprs_timer_to_xml (GPRS_TIMER_T3346_XML_STR, &service_reject->t3346value, writer);
   OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
 }
 //------------------------------------------------------------------------------
@@ -887,7 +887,7 @@ int tracking_area_update_accept_to_xml (
 
   if ((tracking_area_update_accept->presencemask & TRACKING_AREA_UPDATE_ACCEPT_T3412_VALUE_PRESENT)
       == TRACKING_AREA_UPDATE_ACCEPT_T3412_VALUE_PRESENT) {
-    gprs_timer_to_xml (GPRS_TIMER_T3412_IE_XML_STR, &tracking_area_update_accept->t3412value, writer);
+    gprs_timer_to_xml (GPRS_TIMER_T3412_XML_STR, &tracking_area_update_accept->t3412value, writer);
   }
 
   if ((tracking_area_update_accept->presencemask & TRACKING_AREA_UPDATE_ACCEPT_GUTI_PRESENT)
@@ -922,12 +922,12 @@ int tracking_area_update_accept_to_xml (
 
   if ((tracking_area_update_accept->presencemask & TRACKING_AREA_UPDATE_ACCEPT_T3402_VALUE_PRESENT)
       == TRACKING_AREA_UPDATE_ACCEPT_T3402_VALUE_PRESENT) {
-    gprs_timer_to_xml (GPRS_TIMER_T3402_IE_XML_STR, &tracking_area_update_accept->t3402value, writer);
+    gprs_timer_to_xml (GPRS_TIMER_T3402_XML_STR, &tracking_area_update_accept->t3402value, writer);
   }
 
   if ((tracking_area_update_accept->presencemask & TRACKING_AREA_UPDATE_ACCEPT_T3423_VALUE_PRESENT)
       == TRACKING_AREA_UPDATE_ACCEPT_T3423_VALUE_PRESENT) {
-    gprs_timer_to_xml (GPRS_TIMER_T3423_IE_XML_STR, &tracking_area_update_accept->t3423value, writer);
+    gprs_timer_to_xml (GPRS_TIMER_T3423_XML_STR, &tracking_area_update_accept->t3423value, writer);
   }
 
   if ((tracking_area_update_accept->presencemask & TRACKING_AREA_UPDATE_ACCEPT_EQUIVALENT_PLMNS_PRESENT)
@@ -1031,7 +1031,7 @@ int tracking_area_update_request_to_xml (
 
   if ((tracking_area_update_request->presencemask & TRACKING_AREA_UPDATE_REQUEST_NONCEUE_PRESENT)
       == TRACKING_AREA_UPDATE_REQUEST_NONCEUE_PRESENT) {
-    nonce_to_xml (REPLAYED_NONCE_UE_IE_XML_STR, &tracking_area_update_request->nonceue, writer);
+    nonce_to_xml (REPLAYED_NONCE_UE_XML_STR, &tracking_area_update_request->nonceue, writer);
   }
 
   if ((tracking_area_update_request->presencemask & TRACKING_AREA_UPDATE_REQUEST_UE_NETWORK_CAPABILITY_PRESENT)

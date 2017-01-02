@@ -60,7 +60,7 @@ NUM_FROM_XML_GENERATE( additional_update_result, ADDITIONAL_UPDATE_RESULT);
 //------------------------------------------------------------------------------
 void additional_update_result_to_xml(additional_update_result_t *additionalupdateresult, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ADDITIONAL_UPDATE_RESULT_IE_XML_STR, "0x%"PRIx8, *additionalupdateresult);
+  XML_WRITE_FORMAT_ELEMENT(writer, ADDITIONAL_UPDATE_RESULT_XML_STR, "0x%"PRIx8, *additionalupdateresult);
 }
 
 //------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ NUM_FROM_XML_GENERATE( additional_update_type,   ADDITIONAL_UPDATE_TYPE);
 //------------------------------------------------------------------------------
 void additional_update_type_to_xml(additional_update_type_t *additionalupdatetype, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ADDITIONAL_UPDATE_TYPE_IE_XML_STR, "0x%"PRIx8, *additionalupdatetype);
+  XML_WRITE_FORMAT_ELEMENT(writer, ADDITIONAL_UPDATE_TYPE_XML_STR, "0x%"PRIx8, *additionalupdatetype);
 }
 
 //------------------------------------------------------------------------------
@@ -76,7 +76,7 @@ NUM_FROM_XML_GENERATE( csfb_response,            CSFB_RESPONSE);
 //------------------------------------------------------------------------------
 void csfb_response_to_xml(csfb_response_t *csfbresponse, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, CSFB_RESPONSE_IE_XML_STR, "0x%x", *csfbresponse);
+  XML_WRITE_FORMAT_ELEMENT(writer, CSFB_RESPONSE_XML_STR, "0x%x", *csfbresponse);
 }
 
 //------------------------------------------------------------------------------
@@ -88,7 +88,7 @@ bool detach_type_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   memset(detachtype, 0, sizeof(*detachtype));
   bool res = false;
-  bstring xpath_expr = bformat("./%s",DETACH_TYPE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",DETACH_TYPE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -130,7 +130,7 @@ bool detach_type_from_xml (
 //------------------------------------------------------------------------------
 void detach_type_to_xml(detach_type_t *detachtype, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, DETACH_TYPE_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, DETACH_TYPE_XML_STR);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, SWITCH_OFF_ATTR_XML_STR, "0x%"PRIx8, detachtype->switchoff);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, TYPE_OF_DETACH_ATTR_XML_STR, "0x%"PRIx8, detachtype->typeofdetach);
   XML_WRITE_END_ELEMENT(writer);
@@ -142,7 +142,7 @@ NUM_FROM_XML_GENERATE( emm_cause,            EMM_CAUSE);
 void emm_cause_to_xml (emm_cause_t * emmcause, xmlTextWriterPtr writer)
 {
   XML_WRITE_COMMENT(writer, "TODO human readable form, even in comment ?")
-  XML_WRITE_FORMAT_ELEMENT(writer, EMM_CAUSE_IE_XML_STR, "0x%"PRIx8, *emmcause);
+  XML_WRITE_FORMAT_ELEMENT(writer, EMM_CAUSE_XML_STR, "0x%"PRIx8, *emmcause);
 }
 
 //------------------------------------------------------------------------------
@@ -151,7 +151,7 @@ NUM_FROM_XML_GENERATE( eps_attach_result,    EPS_ATTACH_RESULT);
 void eps_attach_result_to_xml (eps_attach_result_t * epsattachresult, xmlTextWriterPtr writer)
 {
   XML_WRITE_COMMENT(writer, "EPS_ATTACH_RESULT EPS=0x1, IMSI=0x2");
-  XML_WRITE_FORMAT_ELEMENT(writer, EPS_ATTACH_RESULT_IE_XML_STR, "0x%x", *epsattachresult);
+  XML_WRITE_FORMAT_ELEMENT(writer, EPS_ATTACH_RESULT_XML_STR, "0x%x", *epsattachresult);
 }
 
 //------------------------------------------------------------------------------
@@ -159,7 +159,7 @@ NUM_FROM_XML_GENERATE( eps_attach_type,      EPS_ATTACH_TYPE);
 //------------------------------------------------------------------------------
 void eps_attach_type_to_xml (eps_attach_type_t * epsattachtype, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, EPS_ATTACH_TYPE_IE_XML_STR, "0x%"PRIx8, *epsattachtype);
+  XML_WRITE_FORMAT_ELEMENT(writer, EPS_ATTACH_TYPE_XML_STR, "0x%"PRIx8, *epsattachtype);
 }
 
 //------------------------------------------------------------------------------
@@ -170,7 +170,7 @@ bool eps_mobile_identity_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_mi = bformat("./%s",EPS_MOBILE_IDENTITY_IE_XML_STR);
+  bstring xpath_expr_mi = bformat("./%s",EPS_MOBILE_IDENTITY_XML_STR);
   xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_mi);
   if (xpath_obj_mi) {
     xmlNodeSetPtr nodes_mi = xpath_obj_mi->nodesetval;
@@ -359,7 +359,7 @@ bool eps_mobile_identity_from_xml (
 //------------------------------------------------------------------------------
 void eps_mobile_identity_to_xml (eps_mobile_identity_t * epsmobileidentity, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, EPS_MOBILE_IDENTITY_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, EPS_MOBILE_IDENTITY_XML_STR);
 
   if (epsmobileidentity->imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
     imsi_eps_mobile_identity_t                *imsi = &epsmobileidentity->imsi;
@@ -416,7 +416,7 @@ NUM_FROM_XML_GENERATE( eps_network_feature_support,      EPS_NETWORK_FEATURE_SUP
 //------------------------------------------------------------------------------
 void eps_network_feature_support_to_xml (eps_network_feature_support_t * epsnetworkfeaturesupport, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, EPS_NETWORK_FEATURE_SUPPORT_IE_XML_STR, "0x%"PRIx8, *epsnetworkfeaturesupport);
+  XML_WRITE_FORMAT_ELEMENT(writer, EPS_NETWORK_FEATURE_SUPPORT_XML_STR, "0x%"PRIx8, *epsnetworkfeaturesupport);
 }
 
 NUM_FROM_XML_GENERATE( eps_update_result,                EPS_UPDATE_RESULT);
@@ -424,12 +424,12 @@ NUM_FROM_XML_GENERATE( eps_update_result,                EPS_UPDATE_RESULT);
 //------------------------------------------------------------------------------
 void eps_update_result_to_xml (eps_update_result_t * epsupdateresult, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, EPS_UPDATE_RESULT_IE_XML_STR, "0x%"PRIx8, *epsupdateresult);
+  XML_WRITE_FORMAT_ELEMENT(writer, EPS_UPDATE_RESULT_XML_STR, "0x%"PRIx8, *epsupdateresult);
 }
 //------------------------------------------------------------------------------
 void eps_update_type_to_xml (EpsUpdateType * epsupdatetype, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, EPS_UPDATE_TYPE_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, EPS_UPDATE_TYPE_XML_STR);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, ACTIVE_FLAG_ATTR_XML_STR, "0x%x", epsupdatetype->active_flag);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, EPS_UPDATE_TYPE_VALUE_ATTR_XML_STR, "0x%x", epsupdatetype->eps_update_type_value);
   XML_WRITE_END_ELEMENT(writer);
@@ -442,7 +442,7 @@ bool esm_message_container_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_mi = bformat("./%s",ESM_MESSAGE_CONTAINER_IE_XML_STR);
+  bstring xpath_expr_mi = bformat("./%s",ESM_MESSAGE_CONTAINER_XML_STR);
   xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_mi);
   if (xpath_obj_mi) {
     xmlNodeSetPtr nodes_mi = xpath_obj_mi->nodesetval;
@@ -478,7 +478,7 @@ bool esm_message_container_from_xml (
 void esm_message_container_to_xml (EsmMessageContainer esmmessagecontainer, xmlTextWriterPtr writer)
 {
   if (esmmessagecontainer) {
-    XML_WRITE_START_ELEMENT(writer, ESM_MESSAGE_CONTAINER_IE_XML_STR);
+    XML_WRITE_START_ELEMENT(writer, ESM_MESSAGE_CONTAINER_XML_STR);
     XML_WRITE_FORMAT_ATTRIBUTE(writer, LENGTH_ATTR_XML_STR, "%d", blength(esmmessagecontainer));
     XML_WRITE_HEX_ATTRIBUTE(writer, ESM_MESSAGE_CONTAINER_HEX_DUMP_ATTR_XML_STR, bdata(esmmessagecontainer), blength(esmmessagecontainer));
     ESM_msg esm;
@@ -491,7 +491,7 @@ void esm_message_container_to_xml (EsmMessageContainer esmmessagecontainer, xmlT
 //------------------------------------------------------------------------------
 void ksi_and_sequence_number_to_xml (KsiAndSequenceNumber * ksiandsequencenumber, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, KSI_AND_SEQUENCE_NUMBER_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, KSI_AND_SEQUENCE_NUMBER_XML_STR);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, KSI_ATTR_XML_STR, "0x%x", ksiandsequencenumber->ksi);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, SEQUENCE_NUMBER_ATTR_XML_STR, "0x%x", ksiandsequencenumber->sequencenumber);
   XML_WRITE_END_ELEMENT(writer);
@@ -500,7 +500,7 @@ void ksi_and_sequence_number_to_xml (KsiAndSequenceNumber * ksiandsequencenumber
 bool nas_key_set_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, NasKeySetIdentifier * const naskeysetidentifier)
 {
   bool res = true;
-  bstring xpath_expr_ksi = bformat("./%s",NAS_KEY_SET_IDENTIFIER_IE_XML_STR);
+  bstring xpath_expr_ksi = bformat("./%s",NAS_KEY_SET_IDENTIFIER_XML_STR);
   xmlXPathObjectPtr xpath_obj_ksi = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_ksi);
   if (xpath_obj_ksi) {
     xmlNodeSetPtr nodes = xpath_obj_ksi->nodesetval;
@@ -542,7 +542,7 @@ bool nas_key_set_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpat
 //------------------------------------------------------------------------------
 void nas_key_set_identifier_to_xml (NasKeySetIdentifier * naskeysetidentifier, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, NAS_KEY_SET_IDENTIFIER_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, NAS_KEY_SET_IDENTIFIER_XML_STR);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, TSC_ATTR_XML_STR, "0x%"PRIx8, naskeysetidentifier->tsc);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, NAS_KEY_SET_IDENTIFIER_ATTR_XML_STR, "0x%"PRIx8, naskeysetidentifier->naskeysetidentifier);
   XML_WRITE_END_ELEMENT(writer);
@@ -556,7 +556,7 @@ bool nas_message_container_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
 
-  bstring xpath_expr = bformat("./%s",NAS_MESSAGE_CONTAINER_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",NAS_MESSAGE_CONTAINER_XML_STR);
   res = xml_load_hex_stream_leaf_tag(xml_doc,xpath_ctx, xpath_expr, nasmessagecontainer);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -565,7 +565,7 @@ bool nas_message_container_from_xml (
 //------------------------------------------------------------------------------
 void nas_message_container_to_xml (NasMessageContainer nasmessagecontainer, xmlTextWriterPtr writer)
 {
-  XML_WRITE_HEX_ELEMENT(writer, NAS_MESSAGE_CONTAINER_IE_XML_STR, bdata(nasmessagecontainer), blength(nasmessagecontainer));
+  XML_WRITE_HEX_ELEMENT(writer, NAS_MESSAGE_CONTAINER_XML_STR, bdata(nasmessagecontainer), blength(nasmessagecontainer));
 }
 
 //------------------------------------------------------------------------------
@@ -576,7 +576,7 @@ bool nas_security_algorithms_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_nsa = bformat("./%s",NAS_SECURITY_ALGORITHMS_IE_XML_STR);
+  bstring xpath_expr_nsa = bformat("./%s",NAS_SECURITY_ALGORITHMS_XML_STR);
   xmlXPathObjectPtr xpath_obj_nsa = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_nsa);
   if (xpath_obj_nsa) {
     xmlNodeSetPtr nodes_nsa = xpath_obj_nsa->nodesetval;
@@ -608,7 +608,7 @@ bool nas_security_algorithms_from_xml (
 //------------------------------------------------------------------------------
 void nas_security_algorithms_to_xml (NasSecurityAlgorithms * nassecurityalgorithms, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, NAS_SECURITY_ALGORITHMS_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, NAS_SECURITY_ALGORITHMS_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_CYPHERING_ALGORITHM_ATTR_XML_STR, "0x%"PRIx8, nassecurityalgorithms->typeofcipheringalgorithm);
   XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM_ATTR_XML_STR, "0x%"PRIx8, nassecurityalgorithms->typeofintegrityalgorithm);
   XML_WRITE_END_ELEMENT(writer);
@@ -635,7 +635,7 @@ NUM_FROM_XML_GENERATE( paging_identity, PAGING_IDENTITY);
 //------------------------------------------------------------------------------
 void paging_identity_to_xml (paging_identity_t * pagingidentity, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, PAGING_IDENTITY_IE_XML_STR, "0x%x", *pagingidentity);
+  XML_WRITE_FORMAT_ELEMENT(writer, PAGING_IDENTITY_XML_STR, "0x%x", *pagingidentity);
 }
 
 //------------------------------------------------------------------------------
@@ -643,7 +643,7 @@ NUM_FROM_XML_GENERATE( service_type, SERVICE_TYPE);
 //------------------------------------------------------------------------------
 void service_type_to_xml (service_type_t * servicetype, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, SERVICE_TYPE_IE_XML_STR, "0x%"PRIx8, *servicetype);
+  XML_WRITE_FORMAT_ELEMENT(writer, SERVICE_TYPE_XML_STR, "0x%"PRIx8, *servicetype);
 }
 
 //------------------------------------------------------------------------------
@@ -651,7 +651,7 @@ NUM_FROM_XML_GENERATE( short_mac, SHORT_MAC);
 //------------------------------------------------------------------------------
 void short_mac_to_xml (short_mac_t * shortmac, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, SHORT_MAC_IE_XML_STR, SHORT_MAC_FMT, *shortmac);
+  XML_WRITE_FORMAT_ELEMENT(writer, SHORT_MAC_XML_STR, SHORT_MAC_FMT, *shortmac);
 }
 
 //------------------------------------------------------------------------------
@@ -663,7 +663,7 @@ bool tracking_area_identity_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   clear_tai(tai);
   bool res = false;
-  bstring xpath_expr_tai = bformat("./%s",TRACKING_AREA_IDENTITY_IE_XML_STR);
+  bstring xpath_expr_tai = bformat("./%s",TRACKING_AREA_IDENTITY_XML_STR);
   xmlXPathObjectPtr xpath_obj_tai = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_tai);
   if (xpath_obj_tai) {
     xmlNodeSetPtr nodes_tai = xpath_obj_tai->nodesetval;
@@ -690,7 +690,7 @@ bool tracking_area_identity_from_xml (
               tai->mcc_digit2 = mcc_digit[1];
               tai->mcc_digit3 = mcc_digit[2];
               OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                  TRACKING_AREA_IDENTITY_IE_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
+                  TRACKING_AREA_IDENTITY_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
                   tai->mcc_digit1, tai->mcc_digit2, tai->mcc_digit3);
             }
             res = (3 == ret);
@@ -717,7 +717,7 @@ bool tracking_area_identity_from_xml (
               tai->mnc_digit2 = mnc_digit[1];
               tai->mnc_digit3 = mnc_digit[2];
               OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                  TRACKING_AREA_IDENTITY_IE_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
+                  TRACKING_AREA_IDENTITY_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
                   tai->mnc_digit1, tai->mnc_digit2, tai->mnc_digit3);
             }
             res = (3 == ret);
@@ -745,7 +745,7 @@ bool tracking_area_code_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",TRACKING_AREA_CODE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",TRACKING_AREA_CODE_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -757,7 +757,7 @@ bool tracking_area_code_from_xml (
       if (1 == ret) {
         res = true;
         OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s = 0x%"PRIx16"\n",
-            TRACKING_AREA_CODE_IE_XML_STR, *tac);
+            TRACKING_AREA_CODE_XML_STR, *tac);
       }
     }
     xmlXPathFreeObject(xpath_obj);
@@ -770,13 +770,13 @@ bool tracking_area_code_from_xml (
 //------------------------------------------------------------------------------
 void tracking_area_code_to_xml (const tac_t * const tac, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, TRACKING_AREA_CODE_IE_XML_STR, "0x%"PRIx16, *tac);
+  XML_WRITE_FORMAT_ELEMENT(writer, TRACKING_AREA_CODE_XML_STR, "0x%"PRIx16, *tac);
 }
 
 //------------------------------------------------------------------------------
 void tracking_area_identity_to_xml (const tai_t * const tai, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, TRACKING_AREA_IDENTITY_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, TRACKING_AREA_IDENTITY_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_COUNTRY_CODE_ATTR_XML_STR, "%"PRIx8"%"PRIx8"%"PRIx8,
       tai->mcc_digit1, tai->mcc_digit2, tai->mcc_digit3);
   XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_NETWORK_CODE_ATTR_XML_STR, "%"PRIx8"%"PRIx8"%"PRIx8,
@@ -794,7 +794,7 @@ bool tracking_area_identity_list_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   memset(tai_list, 0, sizeof(*tai_list));
   bool res = false;
-  bstring xpath_expr_tai_list = bformat("./%s",TRACKING_AREA_IDENTITY_LIST_IE_XML_STR);
+  bstring xpath_expr_tai_list = bformat("./%s",TRACKING_AREA_IDENTITY_LIST_XML_STR);
   xmlXPathObjectPtr xpath_obj_tai_list = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_tai_list);
   if (xpath_obj_tai_list) {
     xmlNodeSetPtr nodes_tai_list = xpath_obj_tai_list->nodesetval;
@@ -806,7 +806,7 @@ bool tracking_area_identity_list_from_xml (
 
       if (res) {
         res = false;
-        bstring xpath_expr_partial = bformat("./%s",PARTIAL_TRACKING_AREA_IDENTITY_LIST_IE_XML_STR);
+        bstring xpath_expr_partial = bformat("./%s",PARTIAL_TRACKING_AREA_IDENTITY_LIST_XML_STR);
         xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_partial);
         if (xpath_obj) {
           res = true;
@@ -818,13 +818,13 @@ bool tracking_area_identity_list_from_xml (
               res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[p], xpath_ctx)) & res;
 
               if (res) {
-                bstring xpath_expr = bformat("./%s",PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR);
+                bstring xpath_expr = bformat("./%s",PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_XML_STR);
                 res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)&tai_list->partial_tai_list[p].typeoflist, NULL);
                 bdestroy_wrapper (&xpath_expr);
               }
 
               if (res) {
-                bstring xpath_expr = bformat("./%s",PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_IE_XML_STR);
+                bstring xpath_expr = bformat("./%s",PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_XML_STR);
                 res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)&tai_list->partial_tai_list[p].numberofelements, NULL);
                 // LW: number of elements is coded as N-1 (0 -> 1 element, 1 -> 2 elements...), see 3GPP TS 24.301, section 9.9.3.33.1
                 tai_list->partial_tai_list[p].numberofelements--;
@@ -837,7 +837,7 @@ bool tracking_area_identity_list_from_xml (
                     break;
                   case TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS:
                     {
-                      bstring xpath_expr_tai = bformat("./%s",TRACKING_AREA_IDENTITY_IE_XML_STR);
+                      bstring xpath_expr_tai = bformat("./%s",TRACKING_AREA_IDENTITY_XML_STR);
                       xmlXPathObjectPtr xpath_obj_tai = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_tai);
                       if (xpath_obj_tai) {
                         xmlNodeSetPtr nodes_tai = xpath_obj_tai->nodesetval;
@@ -864,7 +864,7 @@ bool tracking_area_identity_list_from_xml (
                                   tai_list->partial_tai_list[p].u.tai_one_plmn_non_consecutive_tacs.mcc_digit2 = mcc_digit[1];
                                   tai_list->partial_tai_list[p].u.tai_one_plmn_non_consecutive_tacs.mcc_digit3 = mcc_digit[2];
                                   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                                      TRACKING_AREA_IDENTITY_IE_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
+                                      TRACKING_AREA_IDENTITY_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
                                       tai_list->partial_tai_list[p].u.tai_one_plmn_non_consecutive_tacs.mcc_digit1,
                                       tai_list->partial_tai_list[p].u.tai_one_plmn_non_consecutive_tacs.mcc_digit2,
                                       tai_list->partial_tai_list[p].u.tai_one_plmn_non_consecutive_tacs.mcc_digit3);
@@ -893,7 +893,7 @@ bool tracking_area_identity_list_from_xml (
                                   tai_list->partial_tai_list[p].u.tai_one_plmn_non_consecutive_tacs.mnc_digit2 = mnc_digit[1];
                                   tai_list->partial_tai_list[p].u.tai_one_plmn_non_consecutive_tacs.mnc_digit3 = mnc_digit[2];
                                   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                                      TRACKING_AREA_IDENTITY_IE_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
+                                      TRACKING_AREA_IDENTITY_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
                                       tai_list->partial_tai_list[p].u.tai_one_plmn_non_consecutive_tacs.mnc_digit1,
                                       tai_list->partial_tai_list[p].u.tai_one_plmn_non_consecutive_tacs.mnc_digit2,
                                       tai_list->partial_tai_list[p].u.tai_one_plmn_non_consecutive_tacs.mnc_digit3);
@@ -942,22 +942,22 @@ bool tracking_area_identity_list_from_xml (
 //------------------------------------------------------------------------------
 void tracking_area_identity_list_to_xml (tai_list_t * trackingareaidentitylist, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, TRACKING_AREA_IDENTITY_LIST_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, TRACKING_AREA_IDENTITY_LIST_XML_STR);
   for (int i = 0; i < trackingareaidentitylist->numberoflists; i++) {
     if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS == trackingareaidentitylist->partial_tai_list[i].typeoflist) {
-      XML_WRITE_START_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_IE_XML_STR);
-      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR, "0x%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
+      XML_WRITE_START_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_XML_STR, "0x%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
       // LW: number of elements is coded as N-1 (0 -> 1 element, 1 -> 2 elements...), see 3GPP TS 24.301, section 9.9.3.33.1
-      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_IE_XML_STR, "%"PRIu8, trackingareaidentitylist->partial_tai_list[i].numberofelements + 1);
+      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_XML_STR, "%"PRIu8, trackingareaidentitylist->partial_tai_list[i].numberofelements + 1);
       tracking_area_identity_to_xml(&trackingareaidentitylist->partial_tai_list[i].u.tai_one_plmn_consecutive_tacs, writer);
       XML_WRITE_END_ELEMENT(writer);
     } else  if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == trackingareaidentitylist->partial_tai_list[i].typeoflist) {
-      XML_WRITE_START_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_IE_XML_STR);
-      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR, "0x%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
+      XML_WRITE_START_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_XML_STR, "0x%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
       // LW: number of elements is coded as N-1 (0 -> 1 element, 1 -> 2 elements...), see 3GPP TS 24.301, section 9.9.3.33.1
-      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_IE_XML_STR, "%"PRIu8, trackingareaidentitylist->partial_tai_list[i].numberofelements + 1);
+      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_XML_STR, "%"PRIu8, trackingareaidentitylist->partial_tai_list[i].numberofelements + 1);
 
-      XML_WRITE_START_ELEMENT(writer, TRACKING_AREA_IDENTITY_IE_XML_STR);
+      XML_WRITE_START_ELEMENT(writer, TRACKING_AREA_IDENTITY_XML_STR);
       XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_COUNTRY_CODE_ATTR_XML_STR, "%"PRIx8"%"PRIx8"%"PRIx8,
           trackingareaidentitylist->partial_tai_list[i].u.tai_one_plmn_non_consecutive_tacs.mcc_digit1,
           trackingareaidentitylist->partial_tai_list[i].u.tai_one_plmn_non_consecutive_tacs.mcc_digit2,
@@ -973,10 +973,10 @@ void tracking_area_identity_list_to_xml (tai_list_t * trackingareaidentitylist, 
 
       XML_WRITE_END_ELEMENT(writer);
     } else if (TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS == trackingareaidentitylist->partial_tai_list[i].typeoflist) {
-      XML_WRITE_START_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_IE_XML_STR);
-      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_IE_XML_STR, "0x%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
+      XML_WRITE_START_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_TYPE_XML_STR, "0x%"PRIx8, trackingareaidentitylist->partial_tai_list[i].typeoflist);
       // LW: number of elements is coded as N-1 (0 -> 1 element, 1 -> 2 elements...), see 3GPP TS 24.301, section 9.9.3.33.1
-      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_IE_XML_STR, "%"PRIu8, trackingareaidentitylist->partial_tai_list[i].numberofelements + 1);
+      XML_WRITE_FORMAT_ELEMENT(writer, PARTIAL_TRACKING_AREA_IDENTITY_LIST_NUM_XML_STR, "%"PRIu8, trackingareaidentitylist->partial_tai_list[i].numberofelements + 1);
 
       for (int j = 0; j < trackingareaidentitylist->partial_tai_list[i].numberofelements +1; j++) {
         tracking_area_identity_to_xml (&trackingareaidentitylist->partial_tai_list[i].u.tai_many_plmn[j] , writer);
@@ -996,7 +996,7 @@ bool ue_network_capability_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_nc = bformat("./%s",UE_NETWORK_CAPABILITY_IE_XML_STR);
+  bstring xpath_expr_nc = bformat("./%s",UE_NETWORK_CAPABILITY_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_nc);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1099,7 +1099,7 @@ bool ue_network_capability_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 //------------------------------------------------------------------------------
 void ue_network_capability_to_xml (ue_network_capability_t * uenetworkcapability, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, UE_NETWORK_CAPABILITY_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, UE_NETWORK_CAPABILITY_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_EPS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->eea);
   XML_WRITE_FORMAT_ELEMENT(writer, UE_NETWORK_CAPABILITY_EPS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uenetworkcapability->eia);
 
@@ -1126,7 +1126,7 @@ NUM_FROM_XML_GENERATE( ue_radio_capability_information_update_needed, UE_RADIO_C
 void ue_radio_capability_information_update_needed_to_xml (
   ue_radio_capability_information_update_needed_t * ueradiocapabilityinformationupdateneeded, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_IE_XML_STR, "0x%x", *ueradiocapabilityinformationupdateneeded);
+  XML_WRITE_FORMAT_ELEMENT(writer, UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_XML_STR, "0x%x", *ueradiocapabilityinformationupdateneeded);
 }
 
 //------------------------------------------------------------------------------
@@ -1137,7 +1137,7 @@ bool ue_security_capability_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_nsa = bformat("./%s",UE_SECURITY_CAPABILITY_IE_XML_STR);
+  bstring xpath_expr_nsa = bformat("./%s",UE_SECURITY_CAPABILITY_XML_STR);
   xmlXPathObjectPtr xpath_obj_nsa = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_nsa);
   if (xpath_obj_nsa) {
     xmlNodeSetPtr nodes_nsa = xpath_obj_nsa->nodesetval;
@@ -1194,7 +1194,7 @@ bool ue_security_capability_from_xml (
 //------------------------------------------------------------------------------
 void ue_security_capability_to_xml (ue_security_capability_t * uesecuritycapability, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, UE_SECURITY_CAPABILITY_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, UE_SECURITY_CAPABILITY_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_EPS_ENCRYPTION_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uesecuritycapability->eea);
   XML_WRITE_FORMAT_ELEMENT(writer, UE_SECURITY_CAPABILITY_EPS_INTEGRITY_ALGORITHMS_SUPPORTED_ATTR_XML_STR, "0x%"PRIx8, uesecuritycapability->eia);
 
@@ -1213,7 +1213,7 @@ void ue_security_capability_to_xml (ue_security_capability_t * uesecuritycapabil
 //------------------------------------------------------------------------------
 void cli_to_xml (Cli cli, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, CLI_IE_XML_STR, "%s", bdata(cli));
+  XML_WRITE_FORMAT_ELEMENT(writer, CLI_XML_STR, "%s", bdata(cli));
 }
 
 
@@ -1222,7 +1222,7 @@ NUM_FROM_XML_GENERATE( ss_code, SS_CODE);
 //------------------------------------------------------------------------------
 void ss_code_to_xml (ss_code_t * sscode, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, SS_CODE_IE_XML_STR, "0x%x", *sscode);
+  XML_WRITE_FORMAT_ELEMENT(writer, SS_CODE_XML_STR, "0x%x", *sscode);
 }
 
 //------------------------------------------------------------------------------
@@ -1230,19 +1230,19 @@ NUM_FROM_XML_GENERATE( lcs_indicator, LCS_INDICATOR);
 //------------------------------------------------------------------------------
 void lcs_indicator_to_xml (lcs_indicator_t * lcsindicator, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, LCS_INDICATOR_IE_XML_STR, "0x%x", *lcsindicator);
+  XML_WRITE_FORMAT_ELEMENT(writer, LCS_INDICATOR_XML_STR, "0x%x", *lcsindicator);
 }
 
 //------------------------------------------------------------------------------
 void lcs_client_identity_to_xml (LcsClientIdentity  lcsclientidentity, xmlTextWriterPtr writer)
 {
-  XML_WRITE_HEX_ELEMENT(writer, LCS_CLIENT_IDENTITY_IE_XML_STR, bdata(lcsclientidentity), blength(lcsclientidentity));
+  XML_WRITE_HEX_ELEMENT(writer, LCS_CLIENT_IDENTITY_XML_STR, bdata(lcsclientidentity), blength(lcsclientidentity));
 }
 
 //------------------------------------------------------------------------------
 bool guti_type_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, guti_type_t * const gutitype)
 {
-  bstring xpath_expr = bformat("./%s",GUTI_TYPE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",GUTI_TYPE_XML_STR);
   char gutitype_str[64] = {0};
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)gutitype_str, NULL);
   if (!strcasecmp(gutitype_str, NATIVE_VAL_XML_STR)) {
@@ -1256,5 +1256,5 @@ bool guti_type_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, guti_t
 //------------------------------------------------------------------------------
 void guti_type_to_xml (guti_type_t * gutitype, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, GUTI_TYPE_IE_XML_STR, "%s", (*gutitype == 0) ? NATIVE_VAL_XML_STR:MAPPED_VAL_XML_STR);
+  XML_WRITE_FORMAT_ELEMENT(writer, GUTI_TYPE_XML_STR, "%s", (*gutitype == 0) ? NATIVE_VAL_XML_STR:MAPPED_VAL_XML_STR);
 }

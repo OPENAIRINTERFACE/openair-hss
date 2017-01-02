@@ -63,7 +63,7 @@ bool rrc_establishment_cause_from_xml (
     rrc_establishment_cause_t * const cause)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",RRC_ESTABLISHMENT_CAUSE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",RRC_ESTABLISHMENT_CAUSE_XML_STR);
   uint8_t val = 0;
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, &val, NULL);
   *cause = val;
@@ -74,7 +74,7 @@ bool rrc_establishment_cause_from_xml (
 //------------------------------------------------------------------------------
 void rrc_establishment_cause_to_xml (const rrc_establishment_cause_t * const cause, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, RRC_ESTABLISHMENT_CAUSE_IE_XML_STR, "%"PRIu8, *cause);
+  XML_WRITE_FORMAT_ELEMENT(writer, RRC_ESTABLISHMENT_CAUSE_XML_STR, "%"PRIu8, *cause);
 }
 
 

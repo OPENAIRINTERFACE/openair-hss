@@ -529,7 +529,7 @@ bool msp_play_sleep(scenario_t * const scenario, scenario_player_item_t * const 
     sleep(item->u.sleep.seconds);
   }
   if (0 < item->u.sleep.useconds) {
-    sleep(item->u.sleep.useconds);
+    usleep(item->u.sleep.useconds);
   }
   item->is_played = true;
   scenario->last_played_item = item;

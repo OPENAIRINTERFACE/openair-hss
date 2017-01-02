@@ -82,7 +82,7 @@ bool sp_mobile_identity_from_xml (
     mobile_identity_t              * const mobileidentity)
 {
   bool res = false;
-  bstring xpath_expr_mi = bformat("./%s",MOBILE_IDENTITY_IE_XML_STR);
+  bstring xpath_expr_mi = bformat("./%s",MOBILE_IDENTITY_XML_STR);
   xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_mi);
   if (xpath_obj_mi) {
     xmlNodeSetPtr nodes_mi = xpath_obj_mi->nodesetval;
@@ -144,7 +144,7 @@ bool sp_mobile_identity_from_xml (
               }
             }
             OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %u%u%u%u%u%u%u%u%u%u%u%u%u%u%u\n",
-                MOBILE_IDENTITY_IE_XML_STR, IMSI_ATTR_XML_STR,
+                MOBILE_IDENTITY_XML_STR, IMSI_ATTR_XML_STR,
                 mobileidentity->imsi.digit1, mobileidentity->imsi.digit2,
                 mobileidentity->imsi.digit3, mobileidentity->imsi.digit4,
                 mobileidentity->imsi.digit5, mobileidentity->imsi.digit6,
@@ -230,7 +230,7 @@ bool sp_plmn_from_xml (
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
-  bstring xpath_expr_plmn = bformat("./%s",PLMN_IE_XML_STR);
+  bstring xpath_expr_plmn = bformat("./%s",PLMN_XML_STR);
   xmlXPathObjectPtr xpath_obj_plmn = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_plmn);
   if (xpath_obj_plmn) {
     xmlNodeSetPtr nodes_plmn = xpath_obj_plmn->nodesetval;
@@ -256,7 +256,7 @@ bool sp_plmn_from_xml (
               plmn->mcc_digit2 = mcc_digit[1];
               plmn->mcc_digit3 = mcc_digit[2];
               OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                  PLMN_IE_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
+                  PLMN_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
                   plmn->mcc_digit1, plmn->mcc_digit2, plmn->mcc_digit3);
             }
             res = (3 == ret);
@@ -283,7 +283,7 @@ bool sp_plmn_from_xml (
               plmn->mnc_digit2 = mnc_digit[1];
               plmn->mnc_digit3 = mnc_digit[2];
               OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                  PLMN_IE_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
+                  PLMN_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
                   plmn->mnc_digit1, plmn->mnc_digit2, plmn->mnc_digit3);
             }
             res = (3 == ret);

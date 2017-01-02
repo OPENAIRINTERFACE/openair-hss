@@ -60,7 +60,7 @@
 //------------------------------------------------------------------------------
 bool ciphering_key_sequence_number_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, ciphering_key_sequence_number_t * const cipheringkeysequencenumber)
 {
-  bstring xpath_expr = bformat("./%s",CIPHERING_KEY_SEQUENCE_NUMBER_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",CIPHERING_KEY_SEQUENCE_NUMBER_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)cipheringkeysequencenumber, NULL);
   bdestroy_wrapper(&xpath_expr);
   return res;
@@ -69,7 +69,7 @@ bool ciphering_key_sequence_number_from_xml (xmlDocPtr xml_doc, xmlXPathContextP
 //------------------------------------------------------------------------------
 void ciphering_key_sequence_number_to_xml ( const ciphering_key_sequence_number_t * const cipheringkeysequencenumber, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, CIPHERING_KEY_SEQUENCE_NUMBER_IE_XML_STR, "%"PRIu8, *cipheringkeysequencenumber);
+  XML_WRITE_FORMAT_ELEMENT(writer, CIPHERING_KEY_SEQUENCE_NUMBER_XML_STR, "%"PRIu8, *cipheringkeysequencenumber);
 }
 
 //------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ bool location_area_identification_from_xml (
     location_area_identification_t * const locationareaidentification)
 {
   bool res = false;
-  bstring xpath_expr_lai = bformat("./%s",LOCATION_AREA_IDENTIFICATION_IE_XML_STR);
+  bstring xpath_expr_lai = bformat("./%s",LOCATION_AREA_IDENTIFICATION_XML_STR);
   xmlXPathObjectPtr xpath_obj_lai = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_lai);
   if (xpath_obj_lai) {
     xmlNodeSetPtr nodes_lai = xpath_obj_lai->nodesetval;
@@ -107,7 +107,7 @@ bool location_area_identification_from_xml (
               locationareaidentification->mccdigit2 = mcc_digit[1];
               locationareaidentification->mccdigit3 = mcc_digit[2];
               OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                  LOCATION_AREA_IDENTIFICATION_IE_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
+                  LOCATION_AREA_IDENTIFICATION_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
                   locationareaidentification->mccdigit1,
                   locationareaidentification->mccdigit2,
                   locationareaidentification->mccdigit3);
@@ -136,7 +136,7 @@ bool location_area_identification_from_xml (
               locationareaidentification->mncdigit2 = mnc_digit[1];
               locationareaidentification->mncdigit3 = mnc_digit[2];
               OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                  LOCATION_AREA_IDENTIFICATION_IE_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
+                  LOCATION_AREA_IDENTIFICATION_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
                   locationareaidentification->mncdigit1,
                   locationareaidentification->mncdigit2,
                   locationareaidentification->mncdigit3);
@@ -164,7 +164,7 @@ bool location_area_identification_from_xml (
 //------------------------------------------------------------------------------
 void location_area_identification_to_xml (const location_area_identification_t * const locationareaidentification, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, LOCATION_AREA_IDENTIFICATION_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, LOCATION_AREA_IDENTIFICATION_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_COUNTRY_CODE_ATTR_XML_STR, "%x%x%x",
       locationareaidentification->mccdigit1, locationareaidentification->mccdigit2, locationareaidentification->mccdigit3);
   XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_NETWORK_CODE_ATTR_XML_STR, "%x%x%x",
@@ -182,7 +182,7 @@ bool mobile_identity_from_xml (
     mobile_identity_t              * const mobileidentity)
 {
   bool res = false;
-  bstring xpath_expr_mi = bformat("./%s",MOBILE_IDENTITY_IE_XML_STR);
+  bstring xpath_expr_mi = bformat("./%s",MOBILE_IDENTITY_XML_STR);
   xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_mi);
   if (xpath_obj_mi) {
     xmlNodeSetPtr nodes_mi = xpath_obj_mi->nodesetval;
@@ -208,7 +208,7 @@ bool mobile_identity_from_xml (
               mobileidentity->imsi.oddeven = oddeven;
 
               if (res) {
-                char imsi_str[32] = {0}; // MOBILE_IDENTITY_IE_IMSI_LENGTH*2+1
+                char imsi_str[32] = {0}; // MOBILE_IDENTITY_IMSI_LENGTH*2+1
                 bstring xpath_expr = bformat("./%s",IMSI_ATTR_XML_STR);
                 res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)&imsi_str, NULL);
                 bdestroy_wrapper (&xpath_expr);
@@ -532,7 +532,7 @@ bool mobile_identity_from_xml (
 //------------------------------------------------------------------------------
 void mobile_identity_to_xml (const mobile_identity_t * const mobileidentity, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, MOBILE_IDENTITY_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, MOBILE_IDENTITY_XML_STR);
 
   if (mobileidentity->imsi.typeofidentity == MOBILE_IDENTITY_IMSI) {
     const imsi_mobile_identity_t                   * const imsi = &mobileidentity->imsi;
@@ -615,7 +615,7 @@ void mobile_identity_to_xml (const mobile_identity_t * const mobileidentity, xml
 bool mobile_station_classmark_2_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, mobile_station_classmark2_t * const mobilestationclassmark2)
 {
   bool res = false;
-  bstring xpath_expr = bformat("./%s",MOBILE_STATION_CLASSMARK_2_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",MOBILE_STATION_CLASSMARK_2_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -754,7 +754,7 @@ bool mobile_station_classmark_2_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr 
 //------------------------------------------------------------------------------
 void mobile_station_classmark_2_to_xml (const mobile_station_classmark2_t * const mobilestationclassmark2, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, MOBILE_STATION_CLASSMARK_2_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, MOBILE_STATION_CLASSMARK_2_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, REVISION_LEVEL_ATTR_XML_STR, "0x%x", mobilestationclassmark2->revisionlevel);
   XML_WRITE_FORMAT_ELEMENT(writer, ES_IND_LEVEL_ATTR_XML_STR, "0x%x", mobilestationclassmark2->esind);
   XML_WRITE_FORMAT_ELEMENT(writer, A51_LEVEL_ATTR_XML_STR, "0x%x", mobilestationclassmark2->a51);
@@ -781,7 +781,7 @@ void mobile_station_classmark_2_to_xml (const mobile_station_classmark2_t * cons
 bool mobile_station_classmark_3_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, mobile_station_classmark3_t * const mobilestationclassmark3)
 {
   bool res = false;
-  bstring xpath_expr = bformat("./%s",MOBILE_STATION_CLASSMARK_3_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",MOBILE_STATION_CLASSMARK_3_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -798,7 +798,7 @@ bool mobile_station_classmark_3_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr 
 //------------------------------------------------------------------------------
 void mobile_station_classmark_3_to_xml (const mobile_station_classmark3_t * const mobilestationclassmark3, xmlTextWriterPtr writer)
 {
-  XML_WRITE_COMMENT(writer, "TODO "MOBILE_STATION_CLASSMARK_3_IE_XML_STR);
+  XML_WRITE_COMMENT(writer, "TODO "MOBILE_STATION_CLASSMARK_3_XML_STR);
 }
 
 //------------------------------------------------------------------------------
@@ -811,7 +811,7 @@ bool plmn_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_plmn = bformat("./%s",PLMN_IE_XML_STR);
+  bstring xpath_expr_plmn = bformat("./%s",PLMN_XML_STR);
   xmlXPathObjectPtr xpath_obj_plmn = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_plmn);
   if (xpath_obj_plmn) {
     xmlNodeSetPtr nodes_plmn = xpath_obj_plmn->nodesetval;
@@ -837,7 +837,7 @@ bool plmn_from_xml (
               plmn->mcc_digit2 = mcc_digit[1];
               plmn->mcc_digit3 = mcc_digit[2];
               OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                  PLMN_IE_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
+                  PLMN_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
                   plmn->mcc_digit1, plmn->mcc_digit2, plmn->mcc_digit3);
             }
             res = (3 == ret);
@@ -864,7 +864,7 @@ bool plmn_from_xml (
               plmn->mnc_digit2 = mnc_digit[1];
               plmn->mnc_digit3 = mnc_digit[2];
               OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                  PLMN_IE_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
+                  PLMN_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
                   plmn->mnc_digit1, plmn->mnc_digit2, plmn->mnc_digit3);
             }
             res = (3 == ret);
@@ -883,7 +883,7 @@ bool plmn_from_xml (
 //------------------------------------------------------------------------------
 void plmn_to_xml (const plmn_t * const plmn, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, PLMN_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, PLMN_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_COUNTRY_CODE_ATTR_XML_STR, "%x%x%x",
       plmn->mcc_digit1, plmn->mcc_digit2, plmn->mcc_digit3);
   XML_WRITE_FORMAT_ELEMENT(writer, MOBILE_NETWORK_CODE_ATTR_XML_STR, "%x%x%x",
@@ -900,7 +900,7 @@ bool plmn_list_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   memset((void*)plmnlist, 0, sizeof(*plmnlist));
   bool res = false;
-  bstring xpath_expr_plmnlist = bformat("./%s",PLMN_LIST_IE_XML_STR);
+  bstring xpath_expr_plmnlist = bformat("./%s",PLMN_LIST_XML_STR);
   xmlXPathObjectPtr xpath_obj_plmnlist = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_plmnlist);
   if (xpath_obj_plmnlist) {
     xmlNodeSetPtr nodes_plmnlist = xpath_obj_plmnlist->nodesetval;
@@ -910,7 +910,7 @@ bool plmn_list_from_xml (
       xmlNodePtr saved_node_ptr = xpath_ctx->node;
       res = (RETURNok == xmlXPathSetContextNode(nodes_plmnlist->nodeTab[0], xpath_ctx));
       if (res) {
-        bstring xpath_expr_plmn = bformat("./%s",PLMN_IE_XML_STR);
+        bstring xpath_expr_plmn = bformat("./%s",PLMN_XML_STR);
         xmlXPathObjectPtr xpath_obj_plmn = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_plmn);
         if (xpath_obj_plmn) {
           xmlNodeSetPtr nodes_plmn = xpath_obj_plmn->nodesetval;
@@ -936,7 +936,7 @@ bool plmn_list_from_xml (
                       plmnlist->plmn[i].mcc_digit2 = mcc_digit[1];
                       plmnlist->plmn[i].mcc_digit3 = mcc_digit[2];
                       OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                          PLMN_IE_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
+                          PLMN_XML_STR, MOBILE_COUNTRY_CODE_ATTR_XML_STR,
                           plmnlist->plmn[i].mcc_digit1,
                           plmnlist->plmn[i].mcc_digit2,
                           plmnlist->plmn[i].mcc_digit3);
@@ -965,7 +965,7 @@ bool plmn_list_from_xml (
                       plmnlist->plmn[i].mnc_digit2 = mnc_digit[1];
                       plmnlist->plmn[i].mnc_digit3 = mnc_digit[2];
                       OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s/%s = %x%x%x\n",
-                          PLMN_IE_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
+                          PLMN_XML_STR, MOBILE_NETWORK_CODE_ATTR_XML_STR,
                           plmnlist->plmn[i].mnc_digit1,
                           plmnlist->plmn[i].mnc_digit2,
                           plmnlist->plmn[i].mnc_digit3);
@@ -992,7 +992,7 @@ bool plmn_list_from_xml (
 //------------------------------------------------------------------------------
 void plmn_list_to_xml (const plmn_list_t * const plmnlist, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, PLMN_LIST_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, PLMN_LIST_XML_STR);
   for (int i = 0; i < plmnlist->num_plmn; i++) {
     plmn_to_xml(&plmnlist->plmn[i], writer);
   }
@@ -1007,7 +1007,7 @@ bool ms_network_feature_support_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr 
   OAILOG_FUNC_IN (LOG_XML);
   memset(msnetworkfeaturesupport, 0, sizeof(*msnetworkfeaturesupport));
   bool res = false;
-  bstring xpath_expr = bformat("./%s",MS_NEWORK_FEATURE_SUPPORT_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",MS_NEWORK_FEATURE_SUPPORT_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1018,7 +1018,7 @@ bool ms_network_feature_support_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr 
       res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
       if (res) {
         uint8_t extended_periodic_timers= 0;
-        bstring xpath_expr = bformat("./%s",EXTENDED_PERIODIC_TIMERS_IE_XML_STR);
+        bstring xpath_expr = bformat("./%s",EXTENDED_PERIODIC_TIMERS_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)&extended_periodic_timers, NULL);
         bdestroy_wrapper (&xpath_expr);
         msnetworkfeaturesupport->extended_periodic_timers = extended_periodic_timers;
@@ -1033,8 +1033,8 @@ bool ms_network_feature_support_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr 
 //------------------------------------------------------------------------------
 void ms_network_feature_support_to_xml(const ms_network_feature_support_t * const msnetworkfeaturesupport, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, MS_NEWORK_FEATURE_SUPPORT_IE_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, EXTENDED_PERIODIC_TIMERS_IE_XML_STR, "%"PRIu8, msnetworkfeaturesupport->extended_periodic_timers);
+  XML_WRITE_START_ELEMENT(writer, MS_NEWORK_FEATURE_SUPPORT_XML_STR);
+  XML_WRITE_FORMAT_ELEMENT(writer, EXTENDED_PERIODIC_TIMERS_XML_STR, "%"PRIu8, msnetworkfeaturesupport->extended_periodic_timers);
   XML_WRITE_END_ELEMENT(writer);
 }
 

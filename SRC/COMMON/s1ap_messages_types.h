@@ -41,6 +41,7 @@
 #define S1AP_UE_CONTEXT_RELEASE_COMMAND(mSGpTR)  (mSGpTR)->ittiMsg.s1ap_ue_context_release_command
 #define S1AP_UE_CONTEXT_RELEASE_COMPLETE(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_complete
 #define S1AP_E_RAB_SETUP_REQ(mSGpTR)             (mSGpTR)->ittiMsg.s1ap_e_rab_setup_req
+#define S1AP_E_RAB_SETUP_RSP(mSGpTR)             (mSGpTR)->ittiMsg.s1ap_e_rab_setup_rsp
 #define S1AP_INITIAL_UE_MESSAGE(mSGpTR)          (mSGpTR)->ittiMsg.s1ap_initial_ue_message
 
 // NOT a ITTI message
@@ -118,4 +119,18 @@ typedef struct itti_s1ap_e_rab_setup_req_s {
   e_rab_to_be_setup_list_t        e_rab_to_be_setup_list;
 
 } itti_s1ap_e_rab_setup_req_t;
+
+
+typedef struct itti_s1ap_e_rab_setup_rsp_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+
+  // E-RAB to Be Setup List
+  e_rab_setup_list_t                  e_rab_setup_list;
+
+  // Optional
+  e_rab_list_t        e_rab_failed_to_setup_list;
+
+} itti_s1ap_e_rab_setup_rsp_t;
+
 #endif /* FILE_S1AP_MESSAGES_TYPES_SEEN */

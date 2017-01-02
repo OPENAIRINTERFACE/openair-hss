@@ -71,14 +71,14 @@ bool gprs_timer_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const
       res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
       if (res) {
         uint8_t  unit = 0;
-        bstring xpath_expr = bformat("./%s",UNIT_IE_XML_STR);
+        bstring xpath_expr = bformat("./%s",UNIT_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)&unit, NULL);
         bdestroy_wrapper (&xpath_expr);
         gprstimer->unit = unit;
       }
       if (res) {
         uint8_t  timervalue = 0;
-        bstring xpath_expr = bformat("./%s",TIMER_VALUE_IE_XML_STR);
+        bstring xpath_expr = bformat("./%s",TIMER_VALUE_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)&timervalue, NULL);
         bdestroy_wrapper (&xpath_expr);
         gprstimer->timervalue = timervalue;
@@ -95,7 +95,7 @@ bool gprs_timer_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, const
 void gprs_timer_to_xml (const char * const ie_xml_str, const gprs_timer_t * const gprstimer, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, ie_xml_str);
-  XML_WRITE_FORMAT_ELEMENT(writer, UNIT_IE_XML_STR, "%"PRIu8, gprstimer->unit);
-  XML_WRITE_FORMAT_ELEMENT(writer, TIMER_VALUE_IE_XML_STR, "%"PRIu8, gprstimer->timervalue);
+  XML_WRITE_FORMAT_ELEMENT(writer, UNIT_XML_STR, "%"PRIu8, gprstimer->unit);
+  XML_WRITE_FORMAT_ELEMENT(writer, TIMER_VALUE_XML_STR, "%"PRIu8, gprstimer->timervalue);
   XML_WRITE_END_ELEMENT(writer);
 }

@@ -75,7 +75,7 @@ typedef union eps_mobile_identity_s {
   imei_eps_mobile_identity_t imei;
 } eps_mobile_identity_t;
 
-#define EPS_MOBILE_IDENTITY_IE_XML_STR "eps_mobile_identity"
+#define EPS_MOBILE_IDENTITY_XML_STR    "eps_mobile_identity"
 #define TYPE_OF_IDENTITY_ATTR_XML_STR  "type_of_identity"
 
 

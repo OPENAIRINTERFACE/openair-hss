@@ -61,7 +61,7 @@ bool access_point_name_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx
 {
   OAILOG_FUNC_IN (LOG_XML);
   char apn_str[ACCESS_POINT_NAME_MAX_LENGTH+1]  = {0};
-  bstring xpath_expr = bformat("./%s",ACCESS_POINT_NAME_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",ACCESS_POINT_NAME_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)apn_str, NULL);
   if (res) {
     *access_point_name = blk2bstr((const void *)apn_str, strlen(apn_str));
@@ -73,7 +73,7 @@ bool access_point_name_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx
 //------------------------------------------------------------------------------
 void access_point_name_to_xml (access_point_name_t access_point_name, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ACCESS_POINT_NAME_IE_XML_STR, "%s", bdata(access_point_name));
+  XML_WRITE_FORMAT_ELEMENT(writer, ACCESS_POINT_NAME_XML_STR, "%s", bdata(access_point_name));
 }
 
 //------------------------------------------------------------------------------
@@ -84,7 +84,7 @@ bool protocol_configuration_options_from_xml (xmlDocPtr xml_doc, xmlXPathContext
   OAILOG_FUNC_IN (LOG_XML);
   memset(pco, 0, sizeof(*pco));
   bool res = false;
-  bstring xpath_expr_pco = bformat("./%s",PROTOCOL_CONFIGURATION_OPTIONS_IE_XML_STR);
+  bstring xpath_expr_pco = bformat("./%s",PROTOCOL_CONFIGURATION_OPTIONS_XML_STR);
   xmlXPathObjectPtr xpath_obj_pco = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_pco);
   if (xpath_obj_pco) {
     xmlNodeSetPtr nodes_pco = xpath_obj_pco->nodesetval;
@@ -444,7 +444,7 @@ void protocol_configuration_options_to_xml (const protocol_configuration_options
   int                                     i = 0;
 
   if (pco) {
-    XML_WRITE_START_ELEMENT(writer, PROTOCOL_CONFIGURATION_OPTIONS_IE_XML_STR);
+    XML_WRITE_START_ELEMENT(writer, PROTOCOL_CONFIGURATION_OPTIONS_XML_STR);
     XML_WRITE_FORMAT_ELEMENT(writer, EXTENSION_ATTR_XML_STR, "%"PRIx8, pco->ext);
     XML_WRITE_FORMAT_ELEMENT(writer, CONFIGURATION_PROTOCOL_ATTR_XML_STR, "%"PRIx8, pco->configuration_protocol);
     while (i < pco->num_protocol_or_container_id) {
@@ -856,7 +856,7 @@ bool quality_of_service_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ct
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_qos = bformat("./%s",QUALITY_OF_SERVICE_IE_XML_STR);
+  bstring xpath_expr_qos = bformat("./%s",QUALITY_OF_SERVICE_XML_STR);
   xmlXPathObjectPtr xpath_obj_qos = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_qos);
   if (xpath_obj_qos) {
     xmlNodeSetPtr nodes = xpath_obj_qos->nodesetval;
@@ -1001,7 +1001,7 @@ bool quality_of_service_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ct
 //------------------------------------------------------------------------------
 void quality_of_service_to_xml ( const quality_of_service_t * const qualityofservice, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, QUALITY_OF_SERVICE_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, QUALITY_OF_SERVICE_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, DELAY_CLASS_VAL_XML_STR, "%"PRIu8, qualityofservice->delayclass);
   XML_WRITE_FORMAT_ELEMENT(writer, RELIABILITY_CLASS_VAL_XML_STR, "%"PRIu8, qualityofservice->reliabilityclass);
   XML_WRITE_FORMAT_ELEMENT(writer, PEAK_THROUGHPUT_VAL_XML_STR, "%"PRIu8, qualityofservice->peakthroughput);
@@ -1030,7 +1030,7 @@ bool linked_ti_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, linked
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_lti = bformat("./%s",LINKED_TI_IE_XML_STR);
+  bstring xpath_expr_lti = bformat("./%s",LINKED_TI_XML_STR);
   xmlXPathObjectPtr xpath_obj_lti = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_lti);
   if (xpath_obj_lti) {
     xmlNodeSetPtr nodes = xpath_obj_lti->nodesetval;
@@ -1041,28 +1041,28 @@ bool linked_ti_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, linked
 
       if (res) {
         uint8_t  tiflag = 0;
-        bstring xpath_expr = bformat("./%s",TI_FLAG_IE_XML_STR);
+        bstring xpath_expr = bformat("./%s",TI_FLAG_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)&tiflag, NULL);
         bdestroy_wrapper (&xpath_expr);
         linkedti->tiflag = tiflag;
       }
       if (res) {
         uint8_t  tivalue       = 0;
-        bstring xpath_expr = bformat("./%s",TIO_IE_XML_STR);
+        bstring xpath_expr = bformat("./%s",TIO_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)&tivalue, NULL);
         bdestroy_wrapper (&xpath_expr);
         linkedti->tivalue = tivalue;
       }
       if (res) {
         uint8_t  ext       = 0;
-        bstring xpath_expr = bformat("./%s",TI_EXT_IE_XML_STR);
+        bstring xpath_expr = bformat("./%s",TI_EXT_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)&ext, NULL);
         bdestroy_wrapper (&xpath_expr);
         linkedti->ext = ext;
       }
       if (res) {
         uint8_t  tivalue_cont       = 0;
-        bstring xpath_expr = bformat("./%s",TIE_IE_XML_STR);
+        bstring xpath_expr = bformat("./%s",TIE_XML_STR);
         res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)&tivalue_cont, NULL);
         bdestroy_wrapper (&xpath_expr);
         linkedti->tivalue_cont = tivalue_cont;
@@ -1077,11 +1077,11 @@ bool linked_ti_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, linked
 //------------------------------------------------------------------------------
 void linked_ti_to_xml ( const linked_ti_t * const linkedti, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, LINKED_TI_IE_XML_STR);
-  XML_WRITE_FORMAT_ELEMENT(writer, TI_FLAG_IE_XML_STR, "%"PRIx8, linkedti->tiflag);
-  XML_WRITE_FORMAT_ELEMENT(writer, TIO_IE_XML_STR, "%"PRIu8, linkedti->tivalue);
-  XML_WRITE_FORMAT_ELEMENT(writer, TI_EXT_IE_XML_STR, "%"PRIu8, linkedti->ext);
-  XML_WRITE_FORMAT_ELEMENT(writer, TIE_IE_XML_STR, "%"PRIu8, linkedti->tivalue_cont);
+  XML_WRITE_START_ELEMENT(writer, LINKED_TI_XML_STR);
+  XML_WRITE_FORMAT_ELEMENT(writer, TI_FLAG_XML_STR, "%"PRIx8, linkedti->tiflag);
+  XML_WRITE_FORMAT_ELEMENT(writer, TIO_XML_STR, "%"PRIu8, linkedti->tivalue);
+  XML_WRITE_FORMAT_ELEMENT(writer, TI_EXT_XML_STR, "%"PRIu8, linkedti->ext);
+  XML_WRITE_FORMAT_ELEMENT(writer, TIE_XML_STR, "%"PRIu8, linkedti->tivalue_cont);
   XML_WRITE_END_ELEMENT(writer);
 }
 
@@ -1091,7 +1091,7 @@ void linked_ti_to_xml ( const linked_ti_t * const linkedti, xmlTextWriterPtr wri
 bool llc_service_access_point_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, llc_service_access_point_identifier_t * const llc_sap_id)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",LLC_SERVICE_ACCESS_POINT_IDENTIFIER_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",LLC_SERVICE_ACCESS_POINT_IDENTIFIER_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)llc_sap_id, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -1099,7 +1099,7 @@ bool llc_service_access_point_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathCo
 //------------------------------------------------------------------------------
 void llc_service_access_point_identifier_to_xml (const llc_service_access_point_identifier_t * const llc_sap_id, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, LLC_SERVICE_ACCESS_POINT_IDENTIFIER_IE_XML_STR, "%"PRIu8, *llc_sap_id);
+  XML_WRITE_FORMAT_ELEMENT(writer, LLC_SERVICE_ACCESS_POINT_IDENTIFIER_XML_STR, "%"PRIu8, *llc_sap_id);
 }
 
 //------------------------------------------------------------------------------
@@ -1108,7 +1108,7 @@ void llc_service_access_point_identifier_to_xml (const llc_service_access_point_
 bool packet_flow_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, packet_flow_identifier_t * const packetflowidentifier)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",PACKET_FLOW_IDENTIFIER_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",PACKET_FLOW_IDENTIFIER_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)packetflowidentifier, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -1116,7 +1116,7 @@ bool packet_flow_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpat
 //------------------------------------------------------------------------------
 void packet_flow_identifier_to_xml (const packet_flow_identifier_t * const packetflowidentifier, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FLOW_IDENTIFIER_IE_XML_STR, "%"PRIx8, *packetflowidentifier);
+  XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FLOW_IDENTIFIER_XML_STR, "%"PRIx8, *packetflowidentifier);
 }
 
 //------------------------------------------------------------------------------
@@ -1126,7 +1126,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_pfc = bformat("./%s",PACKET_FILTER_CONTENTS_IE_XML_STR);
+  bstring xpath_expr_pfc = bformat("./%s",PACKET_FILTER_CONTENTS_XML_STR);
   xmlXPathObjectPtr xpath_obj_pfc = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_pfc);
   if (xpath_obj_pfc) {
     xmlNodeSetPtr nodes = xpath_obj_pfc->nodesetval;
@@ -1136,7 +1136,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
       res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
 
       if (res) {
-        bstring xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_IPV4_REMOTE_ADDRESS_TYPE_IE_XML_STR);
+        bstring xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_IPV4_REMOTE_ADDRESS_TYPE_XML_STR);
         xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
         if (xpath_obj) {
           xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1145,7 +1145,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             xmlNodePtr saved_node_ptr2 = xpath_ctx->node;
             res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
             if (res) {
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_IPV4_ADDRESS_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_IPV4_ADDRESS_XML_STR);
               xmlXPathObjectPtr xpath_obj2 = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr2);
               if (xpath_obj2) {
                 xmlNodeSetPtr nodes2 = xpath_obj->nodesetval;
@@ -1163,7 +1163,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
               bdestroy_wrapper (&xpath_expr2);
             }
             if (res) {
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_IPV4_ADDRESS_MASK_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_IPV4_ADDRESS_MASK_XML_STR);
               xmlXPathObjectPtr xpath_obj2 = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr2);
               if (xpath_obj2) {
                 xmlNodeSetPtr nodes2 = xpath_obj->nodesetval;
@@ -1190,7 +1190,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
         bdestroy_wrapper (&xpath_expr);
 
 
-        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_IPV6_REMOTE_ADDRESS_TYPE_IE_XML_STR);
+        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_IPV6_REMOTE_ADDRESS_TYPE_XML_STR);
         xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
         if (xpath_obj) {
           xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1199,7 +1199,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             xmlNodePtr saved_node_ptr2 = xpath_ctx->node;
             res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
             if (res) {
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_IPV6_ADDRESS_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_IPV6_ADDRESS_XML_STR);
               xmlXPathObjectPtr xpath_obj2 = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr2);
               if (xpath_obj2) {
                 xmlNodeSetPtr nodes2 = xpath_obj->nodesetval;
@@ -1223,7 +1223,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
               bdestroy_wrapper (&xpath_expr2);
             }
             if (res) {
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_IPV6_ADDRESS_MASK_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_IPV6_ADDRESS_MASK_XML_STR);
               xmlXPathObjectPtr xpath_obj2 = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr2);
               if (xpath_obj2) {
                 xmlNodeSetPtr nodes2 = xpath_obj->nodesetval;
@@ -1256,7 +1256,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
         bdestroy_wrapper (&xpath_expr);
 
 
-        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_PROTOCOL_IDENTIFIER_NEXT_HEADER_IE_XML_STR);
+        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_PROTOCOL_IDENTIFIER_NEXT_HEADER_XML_STR);
         xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
         if (xpath_obj) {
           xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1266,7 +1266,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
             if (res) {
               uint8_t  protocolidentifier_nextheader = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_PROTOCOL_IDENTIFIER_NEXT_HEADER_TYPE_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_PROTOCOL_IDENTIFIER_NEXT_HEADER_TYPE_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu8, (void*)&protocolidentifier_nextheader, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1281,7 +1281,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
         bdestroy_wrapper (&xpath_expr);
 
 
-        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SINGLE_LOCAL_PORT_IE_XML_STR);
+        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SINGLE_LOCAL_PORT_XML_STR);
         xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
         if (xpath_obj) {
           xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1291,7 +1291,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
             if (res) {
               uint16_t  singlelocalport = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_SINGLE_PORT_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_SINGLE_PORT_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu16, (void*)&singlelocalport, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1306,7 +1306,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
         bdestroy_wrapper (&xpath_expr);
 
 
-        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_LOCAL_PORT_RANGE_IE_XML_STR);
+        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_LOCAL_PORT_RANGE_XML_STR);
         xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
         if (xpath_obj) {
           xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1316,7 +1316,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
             if (res) {
               uint16_t  lowlimit = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_PORT_RANGE_LOW_LIMIT_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_PORT_RANGE_LOW_LIMIT_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu16, (void*)&lowlimit, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1325,7 +1325,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             }
             if (res) {
               uint16_t  highlimit = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_PORT_RANGE_HIGH_LIMIT_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_PORT_RANGE_HIGH_LIMIT_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu16, (void*)&highlimit, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1340,7 +1340,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
         bdestroy_wrapper (&xpath_expr);
 
 
-        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SINGLE_REMOTE_PORT_IE_XML_STR);
+        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SINGLE_REMOTE_PORT_XML_STR);
         xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
         if (xpath_obj) {
           xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1350,7 +1350,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
             if (res) {
               uint16_t  singleremoteport = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_SINGLE_PORT_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_SINGLE_PORT_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu16, (void*)&singleremoteport, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1365,7 +1365,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
         bdestroy_wrapper (&xpath_expr);
 
 
-        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_REMOTE_PORT_RANGE_IE_XML_STR);
+        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_REMOTE_PORT_RANGE_XML_STR);
         xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
         if (xpath_obj) {
           xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1375,7 +1375,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
             if (res) {
               uint16_t  lowlimit = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_PORT_RANGE_LOW_LIMIT_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_PORT_RANGE_LOW_LIMIT_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu16, (void*)&lowlimit, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1384,7 +1384,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             }
             if (res) {
               uint16_t  highlimit = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_PORT_RANGE_HIGH_LIMIT_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_PORT_RANGE_HIGH_LIMIT_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu16, (void*)&highlimit, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1399,7 +1399,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
         bdestroy_wrapper (&xpath_expr);
 
 
-        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SECURITY_PARAMETER_INDEX_IE_XML_STR);
+        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SECURITY_PARAMETER_INDEX_XML_STR);
         xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
         if (xpath_obj) {
           xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1409,7 +1409,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
             if (res) {
               uint32_t  securityparameterindex = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_INDEX_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_INDEX_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu32, (void*)&securityparameterindex, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1424,7 +1424,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
         bdestroy_wrapper (&xpath_expr);
 
 
-        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_TYPE_OF_SERVICE_CLASS_IE_XML_STR);
+        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_TYPE_OF_SERVICE_CLASS_XML_STR);
         xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
         if (xpath_obj) {
           xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1434,7 +1434,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
             if (res) {
               uint8_t  value = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu8, (void*)&value, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1443,7 +1443,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             }
             if (res) {
               uint8_t  mask = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_MASK_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_MASK_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu8, (void*)&mask, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1458,7 +1458,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
         bdestroy_wrapper (&xpath_expr);
 
 
-        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_FLOW_LABEL_IE_XML_STR);
+        xpath_expr = bformat("./%s",PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_FLOW_LABEL_XML_STR);
         xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
         if (xpath_obj) {
           xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -1468,7 +1468,7 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
             res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
             if (res) {
               uint32_t  flowlabel = 0;
-              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_FLOW_LABEL_IE_XML_STR);
+              bstring xpath_expr2 = bformat("./%s",PACKET_FILTER_CONTENTS_FLOW_LABEL_XML_STR);
               res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr2, "%"SCNu32, (void*)&flowlabel, NULL);
               bdestroy_wrapper (&xpath_expr2);
               if (res) {
@@ -1492,31 +1492,31 @@ bool packet_filter_content_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 //------------------------------------------------------------------------------
 void packet_filter_content_to_xml (const packet_filter_contents_t * const pfc, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_CONTENTS_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_CONTENTS_XML_STR);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, COMPONENT_TYPE_IDENTIFIER_ATTR_XML_STR, "0x%x", pfc->flags);
 
   if (pfc->flags & TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG) {
-    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_IPV4_REMOTE_ADDRESS_TYPE_IE_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_IPV4_ADDRESS_IE_XML_STR, "%u.%u.%u.%u",
+    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_IPV4_REMOTE_ADDRESS_TYPE_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_IPV4_ADDRESS_XML_STR, "%u.%u.%u.%u",
         pfc->ipv4remoteaddr[0].addr, pfc->ipv4remoteaddr[1].addr,
         pfc->ipv4remoteaddr[2].addr, pfc->ipv4remoteaddr[3].addr);
 
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_IPV4_ADDRESS_MASK_IE_XML_STR, "%u.%u.%u.%u",
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_IPV4_ADDRESS_MASK_XML_STR, "%u.%u.%u.%u",
         pfc->ipv4remoteaddr[0].mask, pfc->ipv4remoteaddr[1].mask,
         pfc->ipv4remoteaddr[2].mask, pfc->ipv4remoteaddr[3].mask);
     XML_WRITE_END_ELEMENT(writer);
   }
 
   if (pfc->flags & TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG) {
-    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_IPV6_REMOTE_ADDRESS_TYPE_IE_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_IPV6_ADDRESS_IE_XML_STR,
+    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_IPV6_REMOTE_ADDRESS_TYPE_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_IPV6_ADDRESS_XML_STR,
         "%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x",
         pfc->ipv6remoteaddr[0].addr, pfc->ipv6remoteaddr[1].addr, pfc->ipv6remoteaddr[2].addr, pfc->ipv6remoteaddr[3].addr,
         pfc->ipv6remoteaddr[4].addr, pfc->ipv6remoteaddr[5].addr, pfc->ipv6remoteaddr[6].addr, pfc->ipv6remoteaddr[7].addr,
         pfc->ipv6remoteaddr[8].addr, pfc->ipv6remoteaddr[9].addr, pfc->ipv6remoteaddr[10].addr, pfc->ipv6remoteaddr[11].addr,
         pfc->ipv6remoteaddr[12].addr, pfc->ipv6remoteaddr[13].addr, pfc->ipv6remoteaddr[14].addr, pfc->ipv6remoteaddr[15].addr);
 
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_IPV6_ADDRESS_MASK_IE_XML_STR,
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_IPV6_ADDRESS_MASK_XML_STR,
         "%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x:%x%.2x",
         pfc->ipv6remoteaddr[0].mask, pfc->ipv6remoteaddr[1].mask, pfc->ipv6remoteaddr[2].mask, pfc->ipv6remoteaddr[3].mask,
         pfc->ipv6remoteaddr[4].mask, pfc->ipv6remoteaddr[5].mask, pfc->ipv6remoteaddr[6].mask, pfc->ipv6remoteaddr[7].mask,
@@ -1526,63 +1526,63 @@ void packet_filter_content_to_xml (const packet_filter_contents_t * const pfc, x
   }
 
   if (pfc->flags & TRAFFIC_FLOW_TEMPLATE_PROTOCOL_NEXT_HEADER_FLAG) {
-    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_PROTOCOL_IDENTIFIER_NEXT_HEADER_IE_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_PROTOCOL_IDENTIFIER_NEXT_HEADER_TYPE_IE_XML_STR,
+    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_PROTOCOL_IDENTIFIER_NEXT_HEADER_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_PROTOCOL_IDENTIFIER_NEXT_HEADER_TYPE_XML_STR,
         "%"PRIu8,
         pfc->protocolidentifier_nextheader);
     XML_WRITE_END_ELEMENT(writer);
   }
 
   if (pfc->flags & TRAFFIC_FLOW_TEMPLATE_SINGLE_LOCAL_PORT_FLAG) {
-    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SINGLE_LOCAL_PORT_IE_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_SINGLE_PORT_IE_XML_STR,
+    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SINGLE_LOCAL_PORT_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_SINGLE_PORT_XML_STR,
         "%"PRIu16, pfc->singlelocalport);
     XML_WRITE_END_ELEMENT(writer);
   }
 
   if (pfc->flags & TRAFFIC_FLOW_TEMPLATE_LOCAL_PORT_RANGE_FLAG) {
-    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_LOCAL_PORT_RANGE_IE_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_PORT_RANGE_LOW_LIMIT_IE_XML_STR,
+    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_LOCAL_PORT_RANGE_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_PORT_RANGE_LOW_LIMIT_XML_STR,
         "%"PRIu16, pfc->localportrange.lowlimit);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_PORT_RANGE_HIGH_LIMIT_IE_XML_STR,
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_PORT_RANGE_HIGH_LIMIT_XML_STR,
         "%"PRIu16, pfc->localportrange.highlimit);
     XML_WRITE_END_ELEMENT(writer);
   }
 
   if (pfc->flags & TRAFFIC_FLOW_TEMPLATE_SINGLE_REMOTE_PORT_FLAG) {
-    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SINGLE_REMOTE_PORT_IE_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_SINGLE_PORT_IE_XML_STR,"%"PRIu16, pfc->singleremoteport);
+    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SINGLE_REMOTE_PORT_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_SINGLE_PORT_XML_STR,"%"PRIu16, pfc->singleremoteport);
     XML_WRITE_END_ELEMENT(writer);
   }
 
   if (pfc->flags & TRAFFIC_FLOW_TEMPLATE_REMOTE_PORT_RANGE_FLAG) {
-    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_REMOTE_PORT_RANGE_IE_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_PORT_RANGE_LOW_LIMIT_IE_XML_STR,
+    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_REMOTE_PORT_RANGE_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_PORT_RANGE_LOW_LIMIT_XML_STR,
         "%"PRIu16, pfc->remoteportrange.lowlimit);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_PORT_RANGE_HIGH_LIMIT_IE_XML_STR,
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_PORT_RANGE_HIGH_LIMIT_XML_STR,
         "%"PRIu16, pfc->remoteportrange.highlimit);
     XML_WRITE_END_ELEMENT(writer);
   }
 
   if (pfc->flags & TRAFFIC_FLOW_TEMPLATE_SECURITY_PARAMETER_INDEX_FLAG) {
-    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SECURITY_PARAMETER_INDEX_IE_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_INDEX_IE_XML_STR,
+    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_SECURITY_PARAMETER_INDEX_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_INDEX_XML_STR,
         "%u", pfc->securityparameterindex);
     XML_WRITE_END_ELEMENT(writer);
   }
 
   if (pfc->flags & TRAFFIC_FLOW_TEMPLATE_TYPE_OF_SERVICE_TRAFFIC_CLASS_FLAG) {
-    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_TYPE_OF_SERVICE_CLASS_IE_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_IE_XML_STR,
+    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_TYPE_OF_SERVICE_CLASS_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_XML_STR,
         "%u", pfc->typdeofservice_trafficclass.value);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_MASK_IE_XML_STR,
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_TYPE_OF_SERVICE_TRAFFIC_CLASS_MASK_XML_STR,
         "%u", pfc->typdeofservice_trafficclass.mask);
     XML_WRITE_END_ELEMENT(writer);
   }
 
   if (pfc->flags & TRAFFIC_FLOW_TEMPLATE_FLOW_LABEL_FLAG) {
-    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_FLOW_LABEL_IE_XML_STR);
-    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_FLOW_LABEL_IE_XML_STR,"%u", pfc->flowlabel);
+    XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_COMPONENT_TYPE_IDENTIFIER_FLOW_LABEL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_CONTENTS_FLOW_LABEL_XML_STR,"%u", pfc->flowlabel);
     XML_WRITE_END_ELEMENT(writer);
   }
 
@@ -1594,7 +1594,7 @@ bool packet_filter_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, pa
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_pf = bformat("./%s",PACKET_FILTER_IE_XML_STR);
+  bstring xpath_expr_pf = bformat("./%s",PACKET_FILTER_XML_STR);
   xmlXPathObjectPtr xpath_obj_pf = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_pf);
   if (xpath_obj_pf) {
     xmlNodeSetPtr nodes = xpath_obj_pf->nodesetval;
@@ -1644,7 +1644,7 @@ bool packet_filter_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, pa
 //------------------------------------------------------------------------------
 void packet_filter_to_xml (const packet_filter_t * const packetfilter, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, PACKET_FILTER_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, IDENTIFIER_ATTR_XML_STR, "0x%"PRIx8, packetfilter->identifier);
   XML_WRITE_FORMAT_ELEMENT(writer, PACKET_FILTER_EVALUATION_PRECEDENCE_ATTR_XML_STR, "0x%"PRIx8, packetfilter->eval_precedence);
 //  switch (packetfilter->direction) {
@@ -1672,7 +1672,7 @@ void packet_filter_to_xml (const packet_filter_t * const packetfilter, xmlTextWr
 bool packet_filter_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, packet_filter_identifier_t * const packetfilteridentifier)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",IDENTIFIER_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",IDENTIFIER_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)packetfilteridentifier, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -1680,7 +1680,7 @@ bool packet_filter_identifier_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xp
 //------------------------------------------------------------------------------
 void packet_filter_identifier_to_xml (const packet_filter_identifier_t * const packetfilteridentifier, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, IDENTIFIER_IE_XML_STR, "%"PRIx8, packetfilteridentifier->identifier);
+  XML_WRITE_FORMAT_ELEMENT(writer, IDENTIFIER_XML_STR, "%"PRIx8, packetfilteridentifier->identifier);
 }
 
 //------------------------------------------------------------------------------
@@ -1688,7 +1688,7 @@ bool traffic_flow_template_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr_tft = bformat("./%s",TRAFFIC_FLOW_TEMPLATE_IE_XML_STR);
+  bstring xpath_expr_tft = bformat("./%s",TRAFFIC_FLOW_TEMPLATE_XML_STR);
   xmlXPathObjectPtr xpath_obj_tft = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_tft);
   if (xpath_obj_tft) {
     xmlNodeSetPtr nodes = xpath_obj_tft->nodesetval;
@@ -1767,7 +1767,7 @@ bool traffic_flow_template_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath
 //------------------------------------------------------------------------------
 void traffic_flow_template_to_xml (const traffic_flow_template_t * const trafficflowtemplate, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, TRAFFIC_FLOW_TEMPLATE_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, TRAFFIC_FLOW_TEMPLATE_XML_STR);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, TFT_OPERATION_CODE_ATTR_XML_STR, "0x%"PRIx8, trafficflowtemplate->tftoperationcode);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, E_ATTR_XML_STR, "0x%"PRIx8, trafficflowtemplate->ebit);
   XML_WRITE_FORMAT_ATTRIBUTE(writer, NUMBER_OF_PACKET_FILTERS_ATTR_XML_STR, "%"PRIu8, trafficflowtemplate->numberofpacketfilters);

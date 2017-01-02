@@ -73,7 +73,7 @@ bool apn_aggregate_maximum_bit_rate_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   memset(apnaggregatemaximumbitrate, 0, sizeof(*apnaggregatemaximumbitrate));
   bool res = false;
-  bstring xpath_expr_apn = bformat("./%s",APN_AGGREGATE_MAXIMUM_BIT_RATE_IE_XML_STR);
+  bstring xpath_expr_apn = bformat("./%s",APN_AGGREGATE_MAXIMUM_BIT_RATE_XML_STR);
   xmlXPathObjectPtr xpath_obj_apn = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_apn);
   if (xpath_obj_apn) {
     xmlNodeSetPtr nodes_apn = xpath_obj_apn->nodesetval;
@@ -143,7 +143,7 @@ bool apn_aggregate_maximum_bit_rate_from_xml (
 //------------------------------------------------------------------------------
 void apn_aggregate_maximum_bit_rate_to_xml(ApnAggregateMaximumBitRate *apnaggregatemaximumbitrate, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_XML_STR);
   XML_WRITE_COMMENT(writer, "TODO human readable form, even in comment ?")
   XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_DOWNLINK_ATTR_XML_STR, "0x%"PRIx8, apnaggregatemaximumbitrate->apnambrfordownlink);
   XML_WRITE_FORMAT_ELEMENT(writer, APN_AGGREGATE_MAXIMUM_BIT_RATE_FOR_UPLINK_ATTR_XML_STR, "0x%"PRIx8, apnaggregatemaximumbitrate->apnambrforuplink);
@@ -167,7 +167,7 @@ bool eps_quality_of_service_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   memset(epsqualityofservice, 0, sizeof(*epsqualityofservice));
   bool res = false;
-  bstring xpath_expr_qos = bformat("./%s",EPS_QUALITY_OF_SERVICE_IE_XML_STR);
+  bstring xpath_expr_qos = bformat("./%s",EPS_QUALITY_OF_SERVICE_XML_STR);
   xmlXPathObjectPtr xpath_obj_qos = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_qos);
   if (xpath_obj_qos) {
     xmlNodeSetPtr nodes_qos = xpath_obj_qos->nodesetval;
@@ -270,7 +270,7 @@ bool eps_quality_of_service_from_xml (
 //------------------------------------------------------------------------------
 void eps_quality_of_service_to_xml (EpsQualityOfService * epsqualityofservice, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, EPS_QUALITY_OF_SERVICE_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, EPS_QUALITY_OF_SERVICE_XML_STR);
 
   XML_WRITE_FORMAT_ATTRIBUTE(writer, QCI_ATTR_XML_STR, "0x%"PRIx8, epsqualityofservice->qci);
 
@@ -296,7 +296,7 @@ NUM_FROM_XML_GENERATE( esm_cause, ESM_CAUSE);
 //------------------------------------------------------------------------------
 void esm_cause_to_xml (esm_cause_t * esmcause, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ESM_CAUSE_IE_XML_STR, "0x%"PRIx8, *esmcause);
+  XML_WRITE_FORMAT_ELEMENT(writer, ESM_CAUSE_XML_STR, "0x%"PRIx8, *esmcause);
 }
 
 //------------------------------------------------------------------------------
@@ -304,7 +304,7 @@ NUM_FROM_XML_GENERATE( esm_information_transfer_flag, ESM_INFORMATION_TRANSFER_F
 //------------------------------------------------------------------------------
 void esm_information_transfer_flag_to_xml (esm_information_transfer_flag_t * esminformationtransferflag, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, ESM_INFORMATION_TRANSFER_FLAG_IE_XML_STR, "0x%"PRIx8, *esminformationtransferflag);
+  XML_WRITE_FORMAT_ELEMENT(writer, ESM_INFORMATION_TRANSFER_FLAG_XML_STR, "0x%"PRIx8, *esminformationtransferflag);
 }
 
 //------------------------------------------------------------------------------
@@ -312,7 +312,7 @@ NUM_FROM_XML_GENERATE( linked_eps_bearer_identity, LINKED_EPS_BEARER_IDENTITY);
 //------------------------------------------------------------------------------
 void linked_eps_bearer_identity_to_xml (linked_eps_bearer_identity_t * linkedepsbeareridentity, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, LINKED_EPS_BEARER_IDENTITY_IE_XML_STR, "0x%"PRIx8, *linkedepsbeareridentity);
+  XML_WRITE_FORMAT_ELEMENT(writer, LINKED_EPS_BEARER_IDENTITY_XML_STR, "0x%"PRIx8, *linkedepsbeareridentity);
 }
 
 //------------------------------------------------------------------------------
@@ -324,7 +324,7 @@ bool pdn_address_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   memset(pdnaddress, 0, sizeof(*pdnaddress));
   bool res = false;
-  bstring xpath_expr = bformat("./%s",PDN_ADDRESS_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",PDN_ADDRESS_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -364,7 +364,7 @@ bool pdn_address_from_xml (
 //------------------------------------------------------------------------------
 void pdn_address_to_xml (PdnAddress * pdnaddress, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, PDN_ADDRESS_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, PDN_ADDRESS_XML_STR);
   switch(pdnaddress->pdntypevalue) {
   case PDN_VALUE_TYPE_IPV4:
     XML_WRITE_FORMAT_ATTRIBUTE(writer, PDN_TYPE_VALUE_ATTR_XML_STR, "%s", PDN_TYPE_VALUE_IPV4_VAL_XML_STR);
@@ -391,7 +391,7 @@ bool pdn_type_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   memset(pdntype, 0, sizeof(*pdntype));
-  bstring xpath_expr = bformat("./%s",PDN_TYPE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",PDN_TYPE_XML_STR);
   char pdn_type_str[64] = {0};
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)pdn_type_str, NULL);
   if (res) {
@@ -418,19 +418,19 @@ void pdn_type_to_xml (pdn_type_t * pdntype, xmlTextWriterPtr writer)
   if (pdntype) {
     switch (*pdntype) {
     case PDN_TYPE_IPV4:
-      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_IE_XML_STR, "%s", PDN_TYPE_IPV4_VAL_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_XML_STR, "%s", PDN_TYPE_IPV4_VAL_XML_STR);
       break;
     case PDN_TYPE_IPV6:
-      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_IE_XML_STR, "%s", PDN_TYPE_IPV6_VAL_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_XML_STR, "%s", PDN_TYPE_IPV6_VAL_XML_STR);
       break;
     case PDN_TYPE_IPV4V6:
-      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_IE_XML_STR, "%s", PDN_TYPE_IPV4V6_VAL_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_XML_STR, "%s", PDN_TYPE_IPV4V6_VAL_XML_STR);
       break;
     case PDN_TYPE_UNUSED:
-      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_IE_XML_STR, "%s", PDN_TYPE_UNUSED_VAL_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_XML_STR, "%s", PDN_TYPE_UNUSED_VAL_XML_STR);
       break;
     default:
-      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_IE_XML_STR, "0x%x", *pdntype);
+      XML_WRITE_FORMAT_ELEMENT(writer, PDN_TYPE_XML_STR, "0x%x", *pdntype);
     }
   }
 }
@@ -440,7 +440,7 @@ NUM_FROM_XML_GENERATE(radio_priority, RADIO_PRIORITY);
 //------------------------------------------------------------------------------
 void radio_priority_to_xml (radio_priority_t * radio_priority, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, RADIO_PRIORITY_IE_XML_STR, RADIO_PRIORITY_XML_FMT, *radio_priority);
+  XML_WRITE_FORMAT_ELEMENT(writer, RADIO_PRIORITY_XML_STR, RADIO_PRIORITY_XML_FMT, *radio_priority);
 }
 
 //------------------------------------------------------------------------------
@@ -448,7 +448,7 @@ NUM_FROM_XML_GENERATE( request_type, REQUEST_TYPE);
 //------------------------------------------------------------------------------
 void request_type_to_xml (request_type_t * requesttype, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, REQUEST_TYPE_IE_XML_STR, REQUEST_TYPE_XML_FMT, *requesttype);
+  XML_WRITE_FORMAT_ELEMENT(writer, REQUEST_TYPE_XML_STR, REQUEST_TYPE_XML_FMT, *requesttype);
 }
 
 

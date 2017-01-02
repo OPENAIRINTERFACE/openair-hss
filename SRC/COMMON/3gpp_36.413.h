@@ -30,6 +30,7 @@
 #ifndef FILE_3GPP_36_413_SEEN
 #define FILE_3GPP_36_413_SEEN
 
+
 // 9.2.1.60 Allocation and Retention Priority
 // This IE specifies the relative importance compared to other E-RABs for allocation and retention of the E-UTRAN
 // Radio Access Bearer.
@@ -92,5 +93,26 @@ typedef struct e_rab_to_be_setup_list_s {
 #define MAX_NO_OF_E_RABS 16 /* Spec says 256 */
   e_rab_to_be_setup_item_t      item[MAX_NO_OF_E_RABS];
 } e_rab_to_be_setup_list_t;
+
+// 9.1.3.2 E-RAB SETUP RESPONSE
+typedef struct e_rab_setup_item_s {
+  e_rab_id_t                       e_rab_id;
+  bstring                          transport_layer_address;
+  teid_t                           gtp_teid;
+} e_rab_setup_item_t;
+
+
+typedef struct e_rab_setup_list_s {
+  uint16_t                      no_of_items;
+  e_rab_setup_item_t            item[MAX_NO_OF_E_RABS];
+} e_rab_setup_list_t;
+
+#include "S1ap-Cause.h"
+
+typedef struct e_rab_list_s {
+  uint16_t              no_of_items;
+  e_rab_id_t            item[MAX_NO_OF_E_RABS];
+  S1ap_Cause_t          cause[MAX_NO_OF_E_RABS];
+} e_rab_list_t;
 
 #endif /* FILE_3GPP_36_413_SEEN */

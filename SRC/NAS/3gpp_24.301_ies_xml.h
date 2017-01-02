@@ -51,7 +51,7 @@
 #define SECURITY_HEADER_TYPE_RESERVED2_ATTR_XML_STR                        "security_reserved2"
 #define SECURITY_HEADER_TYPE_RESERVED3_ATTR_XML_STR                        "security_reserved3"
 
-#define SECURITY_HEADER_TYPE_IE_XML_STR         "security_header_type"
+#define SECURITY_HEADER_TYPE_XML_STR            "security_header_type"
 #define SECURITY_HEADER_TYPE_XML_FMT            "0x%06"PRIX8
 #define SECURITY_HEADER_TYPE_XML_SCAN_FMT       "%"SCNx8
 NUM_FROM_XML_PROTOTYPE(security_header_type);
@@ -61,7 +61,7 @@ void security_header_type_to_xml ( const security_header_type_t * const security
 //------------------------------------------------------------------------------
 // 9.5 Message authentication code
 //------------------------------------------------------------------------------
-#define MAC_IE_XML_STR                                                     "mac"
+#define MAC_XML_STR                                                        "mac"
 #define MAC_FMT                                                            "0x%08"PRIX32
 
 bool mac_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, uint32_t * const mac);
@@ -71,7 +71,7 @@ void mac_to_xml ( const uint32_t * const mac, xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
 // 9.8 Message type
 //------------------------------------------------------------------------------
-#define MESSAGE_TYPE_IE_XML_STR  "message_type"
+#define MESSAGE_TYPE_XML_STR  "message_type"
 bool message_type_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, message_type_t * const messagetype);
 void message_type_to_xml(const message_type_t * const messagetype, xmlTextWriterPtr writer);
 // Table 9.8.1: Message types for EPS mobility management

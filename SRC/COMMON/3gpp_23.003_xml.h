@@ -38,14 +38,14 @@
 //------------------------------------------------------------------------------
 // 2.2 Composition of IMSI
 //------------------------------------------------------------------------------
-#define IMSI_IE_XML_STR         "imsi"
+#define IMSI_XML_STR         "imsi"
 
 void imsi_to_xml (const imsi_t * const imsi, xmlTextWriterPtr writer);
 
 //------------------------------------------------------------------------------
 // 2.4 Structure of TMSI
 //------------------------------------------------------------------------------
-#define TMSI_IE_XML_STR                "tmsi"
+#define TMSI_XML_STR                   "tmsi"
 #define TMSI_XML_SCAN_FMT              "%"SCNx32
 #define TMSI_XML_FMT                   "0x%"PRIx32
 
@@ -55,17 +55,17 @@ void tmsi_to_xml (const tmsi_t * const tmsi, xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
 // 2.8 Globally Unique Temporary UE Identity (GUTI)
 //------------------------------------------------------------------------------
-#define GUTI_IE_XML_STR                  "guti"
-#define GUMMEI_IE_XML_STR                "gummei"
-#define MME_GID_IE_XML_STR               "mme_group_identifier"
-#define MME_GID_XML_SCAN_FMT             "%"SCNx16
-#define MME_GID_XML_FMT                  "0x%"PRIx16
-#define MME_CODE_IE_XML_STR              "mme_code"
-#define MME_CODE_XML_SCAN_FMT            "%"SCNx8
-#define MME_CODE_XML_FMT                 "0x%"PRIx8
-#define M_TMSI_IE_XML_STR                "m_tmsi"
-#define M_TMSI_XML_SCAN_FMT              "%"SCNx32
-#define M_TMSI_XML_FMT                   "0x%"PRIx32
+#define GUTI_XML_STR                  "guti"
+#define GUMMEI_XML_STR                "gummei"
+#define MME_GID_XML_STR               "mme_group_identifier"
+#define MME_GID_XML_SCAN_FMT          "%"SCNx16
+#define MME_GID_XML_FMT               "0x%"PRIx16
+#define MME_CODE_XML_STR              "mme_code"
+#define MME_CODE_XML_SCAN_FMT         "%"SCNx8
+#define MME_CODE_XML_FMT              "0x%"PRIx8
+#define M_TMSI_XML_STR                "m_tmsi"
+#define M_TMSI_XML_SCAN_FMT           "%"SCNx32
+#define M_TMSI_XML_FMT                "0x%"PRIx32
 
 bool m_tmsi_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, tmsi_t * const m_tmsi);
 void m_tmsi_to_xml (const tmsi_t * const m_tmsi, xmlTextWriterPtr writer);
@@ -81,7 +81,7 @@ void guti_to_xml (const guti_t * const guti, xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
 // 2.9 Structure of the S-Temporary Mobile Subscriber Identity (S-TMSI)
 //------------------------------------------------------------------------------
-#define S_TMSI_IE_XML_STR                  "s_tmsi"
+#define S_TMSI_XML_STR                  "s_tmsi"
 bool s_tmsi_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, s_tmsi_t * const s_tmsi);
 void s_tmsi_to_xml (const s_tmsi_t * const s_tmsi, xmlTextWriterPtr writer);
 
@@ -92,7 +92,7 @@ void s_tmsi_to_xml (const s_tmsi_t * const s_tmsi, xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
 // 4.7  Closed Subscriber Group
 //------------------------------------------------------------------------------
-#define CSG_ID_IE_XML_STR                  "csg_id"
+#define CSG_ID_XML_STR                  "csg_id"
 
 bool csg_id_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, csg_id_t * const csg_id);
 void csg_id_to_xml (const csg_id_t * const csg_id, xmlTextWriterPtr writer);
@@ -105,13 +105,13 @@ void csg_id_to_xml (const csg_id_t * const csg_id, xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
 // 6.2.1 Composition of IMEI
 //------------------------------------------------------------------------------
-#define IMEI_IE_XML_STR                               "imeisv"
+#define IMEI_XML_STR                               "imeisv"
 void imei_to_xml (const imei_t * const imei, xmlTextWriterPtr writer);
 
 //------------------------------------------------------------------------------
 // 6.2.2 Composition of IMEISV
 //------------------------------------------------------------------------------
-#define IMEISV_IE_XML_STR                               "imeisv"
+#define IMEISV_XML_STR                               "imeisv"
 void imeisv_to_xml (const imeisv_t * const imeisv, xmlTextWriterPtr writer);
 
 
@@ -122,8 +122,8 @@ void imeisv_to_xml (const imeisv_t * const imeisv, xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
 // 19.6  E-UTRAN Cell Identity (ECI) and E-UTRAN Cell Global Identification (ECGI)
 //------------------------------------------------------------------------------
-#define E_UTRAN_CELL_IDENTITY_IE_XML_STR                "eci"
-#define E_UTRAN_CELL_GLOBAL_IDENTIFICATION_IE_XML_STR   "ecgi"
+#define E_UTRAN_CELL_IDENTITY_XML_STR                "eci"
+#define E_UTRAN_CELL_GLOBAL_IDENTIFICATION_XML_STR   "ecgi"
 
 bool eci_from_xml (
     xmlDocPtr                     xml_doc,

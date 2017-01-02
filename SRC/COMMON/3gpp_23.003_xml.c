@@ -71,7 +71,7 @@ void imsi_to_xml (const imsi_t * const imsi, xmlTextWriterPtr writer)
     }
   }
   OAI_GCC_DIAG_OFF(address);
-  XML_WRITE_HEX_ELEMENT(writer, IMSI_IE_XML_STR, digits, j);
+  XML_WRITE_HEX_ELEMENT(writer, IMSI_XML_STR, digits, j);
   OAI_GCC_DIAG_ON(address);
 }
 
@@ -83,7 +83,7 @@ NUM_FROM_XML_GENERATE( tmsi , TMSI );
 //------------------------------------------------------------------------------
 void tmsi_to_xml (const tmsi_t * const tmsi, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, TMSI_IE_XML_STR, "0x%08"PRIx32, *tmsi);
+  XML_WRITE_FORMAT_ELEMENT(writer, TMSI_XML_STR, "0x%08"PRIx32, *tmsi);
 }
 
 //------------------------------------------------------------------------------
@@ -97,7 +97,7 @@ bool m_tmsi_from_xml (
     tmsi_t                    * const m_tmsi)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",M_TMSI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",M_TMSI_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx32, (void*)m_tmsi, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -105,7 +105,7 @@ bool m_tmsi_from_xml (
 //------------------------------------------------------------------------------
 void m_tmsi_to_xml (const tmsi_t * const m_tmsi, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, M_TMSI_IE_XML_STR, "0x%"PRIx32, *m_tmsi);
+  XML_WRITE_FORMAT_ELEMENT(writer, M_TMSI_XML_STR, "0x%"PRIx32, *m_tmsi);
 }
 
 //------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ NUM_FROM_XML_GENERATE( mme_code , MME_CODE );
 //------------------------------------------------------------------------------
 void mme_code_to_xml (const mme_code_t * const mme_code, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, MME_CODE_IE_XML_STR, "0x%"PRIx8, *mme_code);
+  XML_WRITE_FORMAT_ELEMENT(writer, MME_CODE_XML_STR, "0x%"PRIx8, *mme_code);
 }
 
 //------------------------------------------------------------------------------
@@ -122,7 +122,7 @@ NUM_FROM_XML_GENERATE( mme_gid , MME_GID );
 //------------------------------------------------------------------------------
 void mme_gid_to_xml (const mme_gid_t * const mme_gid, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, MME_GID_IE_XML_STR, "0x%"PRIx16, *mme_gid);
+  XML_WRITE_FORMAT_ELEMENT(writer, MME_GID_XML_STR, "0x%"PRIx16, *mme_gid);
 }
 
 //------------------------------------------------------------------------------
@@ -133,7 +133,7 @@ bool gummei_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",GUMMEI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",GUMMEI_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -154,7 +154,7 @@ bool gummei_from_xml (
 //------------------------------------------------------------------------------
 void gummei_to_xml (const gummei_t * const gummei, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, GUMMEI_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, GUMMEI_XML_STR);
   plmn_to_xml(&gummei->plmn, writer);
   mme_gid_to_xml(&gummei->mme_gid, writer);
   mme_code_to_xml(&gummei->mme_code, writer);
@@ -169,7 +169,7 @@ bool guti_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",GUTI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",GUTI_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -189,7 +189,7 @@ bool guti_from_xml (
 //------------------------------------------------------------------------------
 void guti_to_xml (const guti_t * const guti, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, GUTI_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, GUTI_XML_STR);
   gummei_to_xml(&guti->gummei, writer);
   m_tmsi_to_xml(&guti->m_tmsi, writer);
   XML_WRITE_END_ELEMENT(writer);
@@ -206,7 +206,7 @@ bool s_tmsi_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",S_TMSI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",S_TMSI_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -227,7 +227,7 @@ bool s_tmsi_from_xml (
 //------------------------------------------------------------------------------
 void s_tmsi_to_xml (const s_tmsi_t * const s_tmsi, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, S_TMSI_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, S_TMSI_XML_STR);
   mme_code_to_xml(&s_tmsi->mme_code, writer);
   m_tmsi_to_xml(&s_tmsi->m_tmsi, writer);
   XML_WRITE_END_ELEMENT(writer);
@@ -247,7 +247,7 @@ bool csg_id_from_xml (
     csg_id_t                  * const csg_id)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",CSG_ID_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",CSG_ID_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx32, (void*)csg_id, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -255,7 +255,7 @@ bool csg_id_from_xml (
 //------------------------------------------------------------------------------
 void csg_id_to_xml (const csg_id_t * const csg_id, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, CSG_ID_IE_XML_STR, "%07"PRIx32, *csg_id);
+  XML_WRITE_FORMAT_ELEMENT(writer, CSG_ID_XML_STR, "%07"PRIx32, *csg_id);
 }
 
 //==============================================================================
@@ -267,7 +267,7 @@ void csg_id_to_xml (const csg_id_t * const csg_id, xmlTextWriterPtr writer)
 //------------------------------------------------------------------------------
 void imei_to_xml (const imei_t * const imei, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, IMEI_IE_XML_STR, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
+  XML_WRITE_FORMAT_ELEMENT(writer, IMEI_XML_STR, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
       imei->u.num.tac1,imei->u.num.tac2,imei->u.num.tac3,imei->u.num.tac4,imei->u.num.tac5,imei->u.num.tac6,imei->u.num.tac7,imei->u.num.tac8,
       imei->u.num.snr1,imei->u.num.snr2,imei->u.num.snr3,imei->u.num.snr4,imei->u.num.snr5,imei->u.num.snr6, imei->u.num.cdsd);
 }
@@ -277,7 +277,7 @@ void imei_to_xml (const imei_t * const imei, xmlTextWriterPtr writer)
 //------------------------------------------------------------------------------
 void imeisv_to_xml (const imeisv_t * const imeisv, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, IMEISV_IE_XML_STR, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
+  XML_WRITE_FORMAT_ELEMENT(writer, IMEISV_XML_STR, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
       imeisv->u.num.tac1,imeisv->u.num.tac2,imeisv->u.num.tac3,imeisv->u.num.tac4,imeisv->u.num.tac5,imeisv->u.num.tac6,imeisv->u.num.tac7,imeisv->u.num.tac8,
       imeisv->u.num.snr1,imeisv->u.num.snr2,imeisv->u.num.snr3,imeisv->u.num.snr4,imeisv->u.num.snr5,imeisv->u.num.snr6, imeisv->u.num.svn1, imeisv->u.num.svn2);
 }
@@ -289,8 +289,8 @@ void imeisv_to_xml (const imeisv_t * const imeisv, xmlTextWriterPtr writer)
 //------------------------------------------------------------------------------
 // 19.6  E-UTRAN Cell Identity (ECI) and E-UTRAN Cell Global Identification (ECGI)
 //------------------------------------------------------------------------------
-#define E_UTRAN_CELL_IDENTITY_IE_XML_STR                "eci"
-#define E_UTRAN_CELL_GLOBAL_IDENTIFICATION_IE_XML_STR   "ecgi"
+#define E_UTRAN_CELL_IDENTITY_XML_STR                "eci"
+#define E_UTRAN_CELL_GLOBAL_IDENTIFICATION_XML_STR   "ecgi"
 
 //------------------------------------------------------------------------------
 bool eci_from_xml (
@@ -300,7 +300,7 @@ bool eci_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_IDENTITY_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_IDENTITY_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -316,7 +316,7 @@ bool eci_from_xml (
         eci->cell_id = cell_id;
         res = true;
         OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s = %05x%02x\n",
-            E_UTRAN_CELL_IDENTITY_IE_XML_STR,
+            E_UTRAN_CELL_IDENTITY_XML_STR,
             eci->enb_id, eci->cell_id);
       }
     }
@@ -329,7 +329,7 @@ bool eci_from_xml (
 //------------------------------------------------------------------------------
 void eci_to_xml (const eci_t * const eci, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, E_UTRAN_CELL_IDENTITY_IE_XML_STR, "%05x%02x", eci->enb_id, eci->cell_id);
+  XML_WRITE_FORMAT_ELEMENT(writer, E_UTRAN_CELL_IDENTITY_XML_STR, "%05x%02x", eci->enb_id, eci->cell_id);
 }
 
 //------------------------------------------------------------------------------
@@ -340,7 +340,7 @@ bool ecgi_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_GLOBAL_IDENTIFICATION_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",E_UTRAN_CELL_GLOBAL_IDENTIFICATION_XML_STR);
   xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
@@ -361,7 +361,7 @@ bool ecgi_from_xml (
 //------------------------------------------------------------------------------
 void ecgi_to_xml (const ecgi_t * const ecgi, xmlTextWriterPtr writer)
 {
-  XML_WRITE_START_ELEMENT(writer, E_UTRAN_CELL_GLOBAL_IDENTIFICATION_IE_XML_STR);
+  XML_WRITE_START_ELEMENT(writer, E_UTRAN_CELL_GLOBAL_IDENTIFICATION_XML_STR);
   plmn_to_xml (&ecgi->plmn, writer);
   eci_to_xml (&ecgi->cell_identity, writer);
   XML_WRITE_END_ELEMENT(writer);

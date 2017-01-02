@@ -689,6 +689,78 @@ int xml_msg_load_itti_s1ap_e_rab_setup_req (scenario_t * const scenario, scenari
 }
 
 //------------------------------------------------------------------------------
+int xml_msg_load_itti_s1ap_e_rab_setup_rsp (scenario_t * const scenario, scenario_player_msg_t * const msg)
+{
+  bool res = false;
+  if ((msg) && (msg->xml_doc)) {
+    xmlNodePtr  cur = NULL;
+    cur = xmlDocGetRootElement(msg->xml_doc);
+    AssertFatal (cur, "Empty document");
+
+    if (xmlStrcmp(cur->name, (const xmlChar *) ITTI_S1AP_E_RAB_SETUP_RSP_XML_STR)) {
+      OAILOG_ERROR (LOG_XML, "Could not find tag %s\n", ITTI_S1AP_E_RAB_SETUP_RSP_XML_STR);
+      return RETURNerror;
+    }
+
+    if (!msg->xpath_ctx) {
+      // Create xpath evaluation context
+      msg->xpath_ctx = xmlXPathNewContext(msg->xml_doc);
+    }
+
+    xmlNodePtr saved_node_ptr = msg->xpath_ctx->node;
+    if (RETURNok != xmlXPathSetContextNode(cur, msg->xpath_ctx)) {
+      return RETURNerror;
+    }
+
+    // free it (may be called from msp_reload_message)
+    if (msg->itti_msg) {
+      itti_free_msg_content (msg->itti_msg);
+      itti_free (ITTI_MSG_ORIGIN_ID (msg->itti_msg), msg->itti_msg);
+    }
+
+    msg->itti_msg = itti_alloc_new_message (TASK_MME_SCENARIO_PLAYER, S1AP_E_RAB_SETUP_RSP);
+
+    if (msg->itti_msg) {
+      bstring xpath_expr = bformat("./%s",ACTION_XML_STR); // anywhere in XML tree
+      res = xml_load_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, &xml_msg_load_action_tag, (void*)&msg->is_tx);
+      bdestroy_wrapper (&xpath_expr);
+
+      if (res) {
+        xpath_expr = bformat("./%s",ITTI_SENDER_TASK_XML_STR);
+        res = xml_load_itti_task_id_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, &msg->itti_sender_task);
+        bdestroy_wrapper (&xpath_expr);
+      }
+
+      if (res) {
+        xpath_expr = bformat("./%s",ITTI_RECEIVER_TASK_XML_STR);
+        res = xml_load_itti_task_id_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, &msg->itti_receiver_task);
+        bdestroy_wrapper (&xpath_expr);
+      }
+
+      if (res) {
+        res = sp_enb_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_rsp.enb_ue_s1ap_id);
+      }
+
+      if (res) {
+        res = sp_mme_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_rsp.mme_ue_s1ap_id);
+      }
+
+      // TODO ue_aggregate_maximum_bit_rate_t
+
+      if (res) {
+        res = e_rab_setup_list_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_rsp.e_rab_setup_list);
+      }
+    } else {
+      res = false;
+    }
+    if (saved_node_ptr) {
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
+    }
+  }
+  return (res)? RETURNok:RETURNerror;
+}
+
+//------------------------------------------------------------------------------
 int xml_msg_load_itti_mme_app_initial_context_setup_rsp(scenario_t * const scenario, scenario_player_msg_t * const msg)
 {
   bool res = false;
@@ -742,7 +814,7 @@ int xml_msg_load_itti_mme_app_initial_context_setup_rsp(scenario_t * const scena
       }
 
       if (res) {
-        bstring xpath_expr_erab = bformat("./%s",E_RAB_SETUP_ITEM_IE_XML_STR);
+        bstring xpath_expr_erab = bformat("./%s",E_RAB_SETUP_ITEM_XML_STR);
         xmlXPathObjectPtr xpath_obj_erab = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_erab);
         if (xpath_obj_erab) {
           xmlNodeSetPtr nodes_erab = xpath_obj_erab->nodesetval;
@@ -757,12 +829,12 @@ int xml_msg_load_itti_mme_app_initial_context_setup_rsp(scenario_t * const scena
                 res = eps_bearer_identity_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.e_rab_id[e]);
               }
               if (res) {
-                xpath_expr = bformat("./%s",TEID_IE_XML_STR);
+                xpath_expr = bformat("./%s",TEID_XML_STR);
                 res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%"SCNx32, (void*)&msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.gtp_teid[e], NULL);
                 bdestroy_wrapper (&xpath_expr);
               }
               if (res) {
-                bstring xpath_expr_tla = bformat("./%s",TRANSPORT_LAYER_ADDRESS_IE_XML_STR);
+                bstring xpath_expr_tla = bformat("./%s",TRANSPORT_LAYER_ADDRESS_XML_STR);
                 res = xml_load_hex_stream_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr_tla, &msg->itti_msg->ittiMsg.mme_app_initial_context_setup_rsp.transport_layer_address[e]);
                 bdestroy_wrapper (&xpath_expr_tla);
               }
@@ -835,7 +907,7 @@ int xml_msg_load_itti_mme_app_connection_establishment_cnf(scenario_t * const sc
       }
 
       if (res) {
-        bstring xpath_expr_erab = bformat("./%s",E_RAB_SETUP_ITEM_IE_XML_STR);
+        bstring xpath_expr_erab = bformat("./%s",E_RAB_SETUP_ITEM_XML_STR);
         xmlXPathObjectPtr xpath_obj_erab = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_erab);
         if (xpath_obj_erab) {
           xmlNodeSetPtr nodes_erab = xpath_obj_erab->nodesetval;
@@ -862,12 +934,12 @@ int xml_msg_load_itti_mme_app_connection_establishment_cnf(scenario_t * const sc
                 res = sp_pre_emption_vulnerability_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.e_rab_level_qos_preemption_vulnerability[e]);
               }
               if (res) {
-                bstring xpath_expr_tla = bformat("./%s",TRANSPORT_LAYER_ADDRESS_IE_XML_STR);
+                bstring xpath_expr_tla = bformat("./%s",TRANSPORT_LAYER_ADDRESS_XML_STR);
                 res = sp_xml_load_hex_stream_leaf_tag(scenario, msg, xpath_expr_tla, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.transport_layer_address[e]);
                 bdestroy_wrapper (&xpath_expr_tla);
               }
               if (res) {
-                //xpath_expr = bformat("./%s",TEID_IE_XML_STR);
+                //xpath_expr = bformat("./%s",TEID_XML_STR);
                 res = sp_teid_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.mme_app_connection_establishment_cnf.gtp_teid[e]);
                 //bdestroy_wrapper (&xpath_expr);
               }

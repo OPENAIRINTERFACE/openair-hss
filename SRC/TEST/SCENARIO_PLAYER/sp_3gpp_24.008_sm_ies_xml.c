@@ -62,7 +62,7 @@
 bool sp_access_point_name_from_xml (scenario_t * const scenario, scenario_player_msg_t * const msg, access_point_name_t * access_point_name)
 {
 
-  bstring xpath_expr = bformat("./%s",ACCESS_POINT_NAME_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",ACCESS_POINT_NAME_XML_STR);
   bool res = sp_xml_load_ascii_stream_leaf_tag (scenario, msg, xpath_expr, access_point_name);
   bdestroy_wrapper (&xpath_expr);
   return res;

@@ -63,11 +63,11 @@ bool sp_mac_from_xml (
     uint32_t                  * const mac)
 {
   uint64_t              value = 0;
-  bool res = sp_u64_from_xml (scenario, msg, &value, MAC_IE_XML_STR);
+  bool res = sp_u64_from_xml (scenario, msg, &value, MAC_XML_STR);
   if (res) {
     *mac = (uint32_t)value;
   } else {
-    OAILOG_ERROR (LOG_UTIL, "Did not find %s\n", MAC_IE_XML_STR);
+    OAILOG_ERROR (LOG_UTIL, "Did not find %s\n", MAC_XML_STR);
   }
 
   return res;
@@ -79,7 +79,7 @@ bool sp_message_type_from_xml (
     message_type_t * const messagetype)
 {
   char message_type_str[128]  = {0};
-  bstring xpath_expr = bformat("./%s",MESSAGE_TYPE_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",MESSAGE_TYPE_XML_STR);
   bool res = xml_load_leaf_tag(msg->xml_doc, msg->xpath_ctx, xpath_expr, "%s", (void*)message_type_str, NULL);
   bdestroy_wrapper (&xpath_expr);
   *messagetype = 0;

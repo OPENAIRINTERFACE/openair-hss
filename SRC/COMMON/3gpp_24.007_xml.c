@@ -57,7 +57,7 @@ bool protocol_discriminator_from_xml (
 {
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
-  bstring xpath_expr = bformat("./%s",PROTOCOL_DISCRIMINATOR_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",PROTOCOL_DISCRIMINATOR_XML_STR);
   char val[128] = {0};
   res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", val, NULL);
   if (!strcasecmp(val, GROUP_CALL_CONTROL_VAL_XML_STR)) {
@@ -108,43 +108,43 @@ void protocol_discriminator_to_xml(const eps_protocol_discriminator_t * const pd
 {
   switch (*pd) {
   case GROUP_CALL_CONTROL:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", GROUP_CALL_CONTROL_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", GROUP_CALL_CONTROL_VAL_XML_STR);
     break;
   case BROADCAST_CALL_CONTROL:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", BROADCAST_CALL_CONTROL_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", BROADCAST_CALL_CONTROL_VAL_XML_STR);
     break;
   case EPS_SESSION_MANAGEMENT_MESSAGE:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", EPS_SESSION_MANAGEMENT_MESSAGE_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", EPS_SESSION_MANAGEMENT_MESSAGE_VAL_XML_STR);
     break;
   case CALL_CONTROL_CC_RELATED_SS_MESSAGE:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", CALL_CONTROL_CC_RELATED_SS_MESSAGE_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", CALL_CONTROL_CC_RELATED_SS_MESSAGE_VAL_XML_STR);
     break;
   case GPRS_TRANSPARENT_TRANSPORT_PROTOCOL:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", GPRS_TRANSPARENT_TRANSPORT_PROTOCOL_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", GPRS_TRANSPARENT_TRANSPORT_PROTOCOL_VAL_XML_STR);
     break;
   case MOBILITY_MANAGEMENT_MESSAGE:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", MOBILITY_MANAGEMENT_MESSAGE_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", MOBILITY_MANAGEMENT_MESSAGE_VAL_XML_STR);
     break;
   case RADIO_RESOURCES_MANAGEMENT_MESSAGE:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", RADIO_RESOURCES_MANAGEMENT_MESSAGE_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", RADIO_RESOURCES_MANAGEMENT_MESSAGE_VAL_XML_STR);
     break;
   case EPS_MOBILITY_MANAGEMENT_MESSAGE:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", EPS_MOBILITY_MANAGEMENT_MESSAGE_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", EPS_MOBILITY_MANAGEMENT_MESSAGE_VAL_XML_STR);
     break;
   case GPRS_MOBILITY_MANAGEMENT_MESSAGE:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", GPRS_MOBILITY_MANAGEMENT_MESSAGE_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", GPRS_MOBILITY_MANAGEMENT_MESSAGE_VAL_XML_STR);
     break;
   case SMS_MESSAGE:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", SMS_MESSAGE_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", SMS_MESSAGE_VAL_XML_STR);
     break;
   case GPRS_SESSION_MANAGEMENT_MESSAGE:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", GPRS_SESSION_MANAGEMENT_MESSAGE_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", GPRS_SESSION_MANAGEMENT_MESSAGE_VAL_XML_STR);
     break;
   case NON_CALL_RELATED_SS_MESSAGE:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", NON_CALL_RELATED_SS_MESSAGE_VAL_XML_STR);
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", NON_CALL_RELATED_SS_MESSAGE_VAL_XML_STR);
     break;
   default:
-    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_IE_XML_STR, "%s", "UNKNOWN");
+    XML_WRITE_FORMAT_ELEMENT(writer, PROTOCOL_DISCRIMINATOR_XML_STR, "%s", "UNKNOWN");
   }
 }
 
@@ -155,7 +155,7 @@ bool sequence_number_from_xml (
     uint8_t                   * const sn)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",SEQUENCE_NUMBER_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",SEQUENCE_NUMBER_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)sn, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -164,7 +164,7 @@ bool sequence_number_from_xml (
 //------------------------------------------------------------------------------
 void sequence_number_to_xml(const uint8_t * const sn, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, SEQUENCE_NUMBER_IE_XML_STR, "%"PRIu8, *sn);
+  XML_WRITE_FORMAT_ELEMENT(writer, SEQUENCE_NUMBER_XML_STR, "%"PRIu8, *sn);
 }
 
 //------------------------------------------------------------------------------
@@ -174,7 +174,7 @@ bool eps_bearer_identity_from_xml (
     ebi_t                     * const ebi)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",EBI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",EBI_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNu8, (void*)ebi, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -183,7 +183,7 @@ bool eps_bearer_identity_from_xml (
 //------------------------------------------------------------------------------
 void eps_bearer_identity_to_xml(const ebi_t * const ebi, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, EBI_IE_XML_STR, "%"PRIu8, *ebi);
+  XML_WRITE_FORMAT_ELEMENT(writer, EBI_XML_STR, "%"PRIu8, *ebi);
 }
 
 //------------------------------------------------------------------------------
@@ -193,7 +193,7 @@ bool procedure_transaction_identity_from_xml (
     pti_t                     * const pti)
 {
   OAILOG_FUNC_IN (LOG_XML);
-  bstring xpath_expr = bformat("./%s",PTI_IE_XML_STR);
+  bstring xpath_expr = bformat("./%s",PTI_XML_STR);
   bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%"SCNx8, (void*)pti, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -202,6 +202,6 @@ bool procedure_transaction_identity_from_xml (
 //------------------------------------------------------------------------------
 void procedure_transaction_identity_to_xml(const pti_t * const pti, xmlTextWriterPtr writer)
 {
-  XML_WRITE_FORMAT_ELEMENT(writer, PTI_IE_XML_STR, "0x%"PRIx8, *pti);
+  XML_WRITE_FORMAT_ELEMENT(writer, PTI_XML_STR, "0x%"PRIx8, *pti);
 }
 

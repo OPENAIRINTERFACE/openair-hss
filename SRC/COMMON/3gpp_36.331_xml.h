@@ -30,7 +30,7 @@
 #ifndef FILE_3GPP_36_331_XML_SEEN
 #define FILE_3GPP_36_331_XML_SEEN
 
-#define RRC_ESTABLISHMENT_CAUSE_IE_XML_STR         "rrc_establishment_cause"
+#define RRC_ESTABLISHMENT_CAUSE_XML_STR         "rrc_establishment_cause"
 
 bool rrc_establishment_cause_from_xml (
     xmlDocPtr                         xml_doc,

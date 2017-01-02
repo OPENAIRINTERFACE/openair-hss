@@ -32,6 +32,13 @@
 
 
 
+bool e_rab_setup_list_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    e_rab_setup_list_t * const list);
+void e_rab_setup_list_to_xml (const e_rab_setup_list_t * const list, xmlTextWriterPtr writer);
+
+
 bool e_rab_to_be_setup_list_from_xml (
     xmlDocPtr                         xml_doc,
     xmlXPathContextPtr                xpath_ctx,

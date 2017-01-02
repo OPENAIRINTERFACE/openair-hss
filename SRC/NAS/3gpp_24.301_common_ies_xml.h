@@ -43,7 +43,7 @@
 // See subclause 10.5.7.8 in 3GPP TS 24.008 [13].
 
 // 9.9.2.1 EPS bearer context status
-#define EPS_BEARER_CONTEXT_STATUS_IE_XML_STR        "eps_bearer_context_status"
+#define EPS_BEARER_CONTEXT_STATUS_XML_STR           "eps_bearer_context_status"
 #define EPS_BEARER_CONTEXT_STATUS_XML_SCAN_FMT      "%"SCNx16
 NUM_FROM_XML_PROTOTYPE(eps_bearer_context_status);
 void eps_bearer_context_status_to_xml (eps_bearer_context_status_t * epsbearercontextstatus, xmlTextWriterPtr writer);
