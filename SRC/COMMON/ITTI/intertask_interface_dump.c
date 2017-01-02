@@ -757,13 +757,6 @@ itti_dump_queue_message (
   return 0;
 }
 
-/* This function should be called by each thread that will use the ring buffer */
-void
-itti_dump_thread_use_ring_buffer (
-  void)
-{
-  lfds611_ringbuffer_use (itti_dump_queue.itti_message_queue);
-}
 
 int
 itti_dump_init (

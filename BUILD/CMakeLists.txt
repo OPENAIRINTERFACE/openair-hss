@@ -220,7 +220,7 @@ add_boolean_option( DISPLAY_LICENCE_INFO            False    "If a module has a 
 add_boolean_option( ENABLE_ITTI                     True     "ITTI is internal messaging, should remain enabled for most targets")
 add_boolean_option( ENABLE_ITTI_ANALYZER            False    "ITTI Analyzer is a GUI based on GTK that displays the ITTI messages exchanged between tasks")
 add_integer_option( ITTI_TASK_STACK_SIZE            0        "pthread allocated stack size in bytes of an ITTI task, if 0, use default stack size ") 
-add_integer_option( ITTI_LITE                       0        "Do not use ITTI systematically for each message exchanged between layer modules") 
+add_boolean_option( ITTI_LITE                       False    "Do not use ITTI systematically for each message exchanged between layer modules") 
 add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
 add_boolean_option( GTP_KERNEL_MODULE_UNAVAILABLE   False    "disable calls to GTP kernel API")
 # NAS LAYER OPTIONS
@@ -619,7 +619,6 @@ add_library(MME_APP
 
 set(NAS_SRC ${OPENAIRCN_DIR}/SRC/NAS/)
 set(libnas_api_OBJS
-  ${NAS_SRC}API/NETWORK/as_message.c
   ${NAS_SRC}API/NETWORK/nas_message.c
   )
   
@@ -974,38 +973,6 @@ add_test(NAME test_imsi_convert   COMMAND test_mme_app_ue_context_imsi)
 #endforeach(myExe)
 
 
-##################################################
-# Generated specific cases is not regular code
-##################################################
-
-#######################################################################
-# itti symbolic debug print require to generate a specific include file
-#######################################################################
-
-  if( ENABLE_ITTI_ANALYZER )
-  # retrieve the compiler options to send it to gccxml
-    get_directory_property( DirDefs COMPILE_DEFINITIONS )
-    foreach( d ${DirDefs} )
-      list(APPEND itti_compiler_options "-D${d}")
-    endforeach()
-    get_directory_property( DirDefs INCLUDE_DIRECTORIES )
-    foreach( d ${DirDefs} )
-      list(APPEND itti_compiler_options "-I${d}")
-    endforeach()
-
-    set (ITTI_H ${ITTI_DIR}/intertask_interface_types.h)
-    add_custom_command (
-    OUTPUT ${OPENAIRCN_BIN_DIR}/messages.xml
-      COMMAND gccxml ${itti_compiler_options} -fxml=${OPENAIRCN_BIN_DIR}/messages.xml ${ITTI_H}
-      DEPENDS ${S1AP_OAI_generated} 
-    )
-
-    add_custom_command (
-      OUTPUT ${OPENAIRCN_BIN_DIR}/messages_xml.h
-      COMMAND sed -e 's/ *//'   -e 's/\"/\\\\\"/g' -e 's/^/\"/' -e 's/$$/\\\\n\"/' ${OPENAIRCN_BIN_DIR}/messages.xml  > ${OPENAIRCN_BIN_DIR}/messages_xml.h
-      DEPENDS ${OPENAIRCN_BIN_DIR}/messages.xml 
-    )
-  endif(ENABLE_ITTI_ANALYZER)
 
 
 

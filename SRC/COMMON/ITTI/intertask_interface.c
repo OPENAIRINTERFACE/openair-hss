@@ -408,9 +408,6 @@ itti_send_msg_to_task (
    * Increment the global message number
    */
   message_number = itti_increment_message_number ();
-#if ENABLE_ITTI_ANALYZER
-  itti_dump_queue_message (origin_task_id, message_number, message, itti_desc.messages_info[message_id].name, sizeof (MessageHeader) + message->ittiMsgHeader.ittiMsgSize);
-#endif
 
   if (destination_task_id != TASK_UNKNOWN) {
     VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME (VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_ENQUEUE_MESSAGE, VCD_FUNCTION_IN);
@@ -731,12 +728,7 @@ itti_mark_task_ready (
   thread_id_t                             thread_id = TASK_GET_THREAD_ID (task_id);
 
   AssertFatal (thread_id < itti_desc.thread_max, "Thread id (%d) is out of range (%d)!\n", thread_id, itti_desc.thread_max);
-  /*
-   * Register the thread in itti dump
-   */
-#if ENABLE_ITTI_ANALYZER
-  itti_dump_thread_use_ring_buffer ();
-#endif
+
   /*
    * Mark the thread as using LFDS queue
    */
@@ -889,10 +881,6 @@ itti_init (
   itti_desc.vcd_receive_msg = 0;
   itti_desc.vcd_send_msg = 0;
 
-#if ENABLE_ITTI_ANALYZER
-  itti_dump_init (messages_definition_xml, dump_file_name);
-#endif
-
   CHECK_INIT_RETURN (timer_init ());
   // Could not be launched before ITTI initialization
   shared_log_itti_connect();
@@ -972,10 +960,6 @@ itti_wait_tasks_end (
     ITTI_DEBUG (ITTI_DEBUG_ISSUES, " Some threads are still running, force exit\n");
     exit (0);
   }
-
-#if ENABLE_ITTI_ANALYZER
-  itti_dump_exit ();
-#endif
 }
 
 void

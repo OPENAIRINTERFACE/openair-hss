@@ -244,10 +244,10 @@ static int mme_config_parse_file (mme_config_t * config_pP)
     if (setting != NULL) {
       if (config_setting_lookup_string (setting, MME_CONFIG_STRING_SCENARIO_PLAYER_SCENARIO_FILE, (const char **)&astring)) {
         if (astring != NULL) {
-          if (config_pP->scenario_player_config.scenario_list_file) {
-            bassigncstr(config_pP->scenario_player_config.scenario_list_file , astring);
+          if (config_pP->scenario_player_config.scenario_file) {
+            bassigncstr(config_pP->scenario_player_config.scenario_file , astring);
           } else {
-            config_pP->scenario_player_config.scenario_list_file = bfromcstr(astring);
+            config_pP->scenario_player_config.scenario_file = bfromcstr(astring);
           }
         }
       }
@@ -772,6 +772,26 @@ static void mme_config_display (mme_config_t * config_pP)
   int                                     j;
 
   OAILOG_INFO (LOG_CONFIG, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
+#if DEBUG_IS_ON
+  OAILOG_DEBUG (LOG_CONFIG, "Built with CMAKE_BUILD_TYPE ................: %s\n", CMAKE_BUILD_TYPE);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with DISABLE_ITTI_DETECT_SUB_TASK_ID .: %d\n", DISABLE_ITTI_DETECT_SUB_TASK_ID);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with ENABLE_ITTI .....................: %d\n", ENABLE_ITTI);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with ENABLE_ITTI_ANALYZER ............: %d\n", ENABLE_ITTI_ANALYZER);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with ITTI_TASK_STACK_SIZE ............: %d\n", ITTI_TASK_STACK_SIZE);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with ITTI_LITE .......................: %d\n", ITTI_LITE);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with LOG_OAI .........................: %d\n", LOG_OAI);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with LOG_OAI_CLEAN_HARD ..............: %d\n", LOG_OAI_CLEAN_HARD);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with MESSAGE_CHART_GENERATOR .........: %d\n", MESSAGE_CHART_GENERATOR);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with NAS_FORCE_REJECT_SR .............: %d\n", NAS_FORCE_REJECT_SR);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with NAS_FORCE_REJECT_TAU ............: %d\n", NAS_FORCE_REJECT_TAU);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with PACKAGE_NAME ....................: %s\n", PACKAGE_NAME);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with S1AP_DEBUG_LIST .................: %d\n", S1AP_DEBUG_LIST);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with SECU_DEBUG ......................: %d\n", SECU_DEBUG);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with SCTP_DUMP_LIST ..................: %d\n", SCTP_DUMP_LIST);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_HASHTABLE .................: %d\n", TRACE_HASHTABLE);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_3GPP_SPEC .................: %d\n", TRACE_3GPP_SPEC);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_XML .......................: %d\n", TRACE_XML);
+#endif
   OAILOG_INFO (LOG_CONFIG, "Configuration:\n");
   OAILOG_INFO (LOG_CONFIG, "- File .................................: %s\n", bdata(config_pP->config_file));
   OAILOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", bdata(config_pP->realm));

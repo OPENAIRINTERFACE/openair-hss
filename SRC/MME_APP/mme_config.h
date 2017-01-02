@@ -218,7 +218,7 @@ typedef struct mme_config_s {
   } e_dns_emulation;
 
   struct {
-    bstring scenario_list_file;
+    bstring scenario_file;
   } scenario_player_config;
 
   log_config_t log_config;
