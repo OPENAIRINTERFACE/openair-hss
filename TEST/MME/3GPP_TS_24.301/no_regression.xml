@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
-<!-- Scenarios may contain also scenarios_file -->
-<scenarios>
-  <scenario_file>
-    <file>ATTACH/R10_5_5_1_2_7_a/scenario.xml</file>
-  </scenario_file>
-</scenarios>
