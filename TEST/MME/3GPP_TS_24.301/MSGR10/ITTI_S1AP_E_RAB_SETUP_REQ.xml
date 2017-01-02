@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_S1AP_E_RAB_SETUP_REQ>
+  <ACTION>WAIT_RECEIVE</ACTION>
+  <ITTI_SENDER_TASK>TASK_MME_APP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_MME_SCENARIO_PLAYER</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>ANY</TIMESTAMP>
+  <enb_ue_s1ap_id>$ENB_UE_S1AP_ID</enb_ue_s1ap_id>
+  <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <ue_aggregate_maximum_bit_rate>
+    <downlink>0</downlink>
+    <uplink>0</uplink>
+  </ue_aggregate_maximum_bit_rate>
+  <e_rab_to_be_setup_list>
+    <e_rab_to_be_setup_item>
+      <e_rab_id>6</e_rab_id>
+      <e_rab_level_qos_parameters>
+        <qci>5</qci>
+        <allocation_and_retention_priority>
+          <priority_level>7</priority_level>
+          <pre_emption_capability>1</pre_emption_capability>
+          <pre_emption_vulnerability>1</pre_emption_vulnerability>
+        </allocation_and_retention_priority>
+        <gbr_qos_information>
+          <e_rab_maximum_bit_rate_downlink>0</e_rab_maximum_bit_rate_downlink>
+          <e_rab_maximum_bit_rate_uplink>0</e_rab_maximum_bit_rate_uplink>
+          <e_rab_guaranteed_bit_rate_downlink>0</e_rab_guaranteed_bit_rate_downlink>
+          <e_rab_guaranteed_bit_rate_uplink>0</e_rab_guaranteed_bit_rate_uplink>
+        </gbr_qos_information>
+      </e_rab_level_qos_parameters>
+    </e_rab_to_be_setup_item>
+  </e_rab_to_be_setup_list>
+</ITTI_S1AP_E_RAB_SETUP_REQ>

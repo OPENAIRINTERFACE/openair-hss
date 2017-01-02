@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_NAS_DOWNLINK_DATA_REJ>
+  <ACTION>SEND</ACTION>
+  <ITTI_SENDER_TASK>TASK_S1AP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_NAS_MME</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>ANY</TIMESTAMP>
+  <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <plain_nas_message>
+    <security_header_type>0x000000</security_header_type>
+    <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
+    <message_type>AUTHENTICATION_REQUEST</message_type>
+    <nas_key_set_identifier tsc="0" ksi="0"/>
+    <authentication_parameter_rand>$ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_RAND</authentication_parameter_rand>
+    <authentication_parameter_autn>$ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_AUTN</authentication_parameter_autn>
+  </plain_nas_message>
+</ITTI_NAS_DOWNLINK_DATA_REJ>

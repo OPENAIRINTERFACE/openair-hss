@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+<scenario name="set_next_ue_params">
+  <set_var  name="NAS_UPLINK_SEQUENCE_NUMBER"                  value="0"        />
+  <incr_var name="ENB_UE_S1AP_ID"/>
+  <incr_var name="M_TMSI"/>
+  <incr_var name="IMSI"/>
+</scenario>

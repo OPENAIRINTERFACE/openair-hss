@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_S1AP_E_RAB_SETUP_RSP>
+  <ACTION>SEND</ACTION>
+  <ITTI_SENDER_TASK>TASK_S1AP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_MME_APP</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>ANY</TIMESTAMP>
+  <enb_ue_s1ap_id>$ENB_UE_S1AP_ID</enb_ue_s1ap_id>
+  <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <e_rab_setup_list>
+    <e_rab_setup_item>
+      <e_rab_id>6</e_rab_id>
+      <transport_layer_address>#ITTI_S1AP_E_RAB_SETUP_RSP.ERAB0.S1U_ENB_TRANSPORT_LAYER_ADDRESS</transport_layer_address>
+      <teid>#ITTI_S1AP_E_RAB_SETUP_RSP.ERAB0.S1U_ENB_TEID</teid>
+    </e_rab_setup_item>
+  </e_rab_setup_list>
+  <e_rab_failed_to_setup_list>
+  </e_rab_failed_to_setup_list>
+</ITTI_S1AP_E_RAB_SETUP_REQ>

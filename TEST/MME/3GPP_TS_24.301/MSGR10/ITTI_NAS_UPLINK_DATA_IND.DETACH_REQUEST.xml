@@ -3,18 +3,29 @@
   <ACTION>SEND</ACTION>
   <ITTI_SENDER_TASK>7</ITTI_SENDER_TASK>
   <ITTI_RECEIVER_TASK>5</ITTI_RECEIVER_TASK>
-  <TIMESTAMP>74.871154</TIMESTAMP>
+  <TIMESTAMP>ANY</TIMESTAMP>
   <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
   <security_protected_nas_message>
-    <security_header_type>1</security_header_type>
+    <security_header_type>2</security_header_type>
     <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
-    <mac>0x51281A32</mac>
-    <sequence_number>4</sequence_number>
+    <mac>0x8E40EA28</mac>
+    <sequence_number>2</sequence_number>
     <plain_nas_message>
       <security_header_type>0</security_header_type>
       <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
-      <message_type>AUTHENTICATION_RESPONSE</message_type>
-      <authentication_response_parameter>4fdc54b676223d0b</authentication_response_parameter>
+      <message_type>DETACH_REQUEST</message_type>
+      <nas_key_set_identifier tsc="0" ksi="0"/>
+      <detach_type switch_off="1" type_of_detach="3"/>
+      <eps_mobile_identity>
+        <oddeven>0</oddeven>
+        <!--type_of_identity = GUTI-->
+        <type_of_identity>6</type_of_identity>
+        <mcc>208</mcc>
+        <mnc>93f</mnc>
+        <mme_group_identifier>4</mme_group_identifier>
+        <mme_code>1</mme_code>
+        <m_tmsi>608acd01</m_tmsi>
+      </eps_mobile_identity>
     </plain_nas_message>
   </security_protected_nas_message>
   <tracking_area_identity>

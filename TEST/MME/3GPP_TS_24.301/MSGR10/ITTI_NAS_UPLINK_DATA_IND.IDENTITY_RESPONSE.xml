@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <ITTI_NAS_UPLINK_DATA_IND>
   <ACTION>SEND</ACTION>
-  <ITTI_SENDER_TASK>7</ITTI_SENDER_TASK>
-  <ITTI_RECEIVER_TASK>5</ITTI_RECEIVER_TASK>
-  <TIMESTAMP>75.114447</TIMESTAMP>
+  <ITTI_SENDER_TASK>TASK_S1AP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_NAS_MME</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>74.743041</TIMESTAMP>
   <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
   <security_protected_nas_message>
-    <security_header_type>2</security_header_type>
+    <security_header_type>0x000001</security_header_type>
     <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
-    <mac>0xF1B20E8F</mac>
-    <sequence_number>1</sequence_number>
+    <mac>0</mac>
+    <sequence_number>$NAS_UPLINK_SEQUENCE_NUMBER</sequence_number>
     <plain_nas_message>
       <security_header_type>0</security_header_type>
       <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
-      <message_type>ATTACH_COMPLETE</message_type>
-      <esm_message_container length="3" hex_dump="5200c2">
-        <ebi>5</ebi>
-        <protocol_discriminator>EPS_SESSION_MANAGEMENT_MESSAGE</protocol_discriminator>
-        <pti>0</pti>
-        <message_type>ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT</message_type>
-      </esm_message_container>
+      <message_type>IDENTITY_RESPONSE</message_type>
+      <mobile_identity>
+        <oddeven>1</oddeven>
+        <!--type_of_identity = IMSI-->
+        <type_of_identity>1</type_of_identity>
+        <imsi>$IMSI</imsi>
+      </mobile_identity>
     </plain_nas_message>
   </security_protected_nas_message>
   <tracking_area_identity>

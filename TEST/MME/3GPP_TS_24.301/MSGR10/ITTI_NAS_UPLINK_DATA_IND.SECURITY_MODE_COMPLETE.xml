@@ -3,22 +3,23 @@
   <ACTION>SEND</ACTION>
   <ITTI_SENDER_TASK>TASK_S1AP</ITTI_SENDER_TASK>
   <ITTI_RECEIVER_TASK>TASK_NAS_MME</ITTI_RECEIVER_TASK>
-  <TIMESTAMP>74.743041</TIMESTAMP>
-  <mme_ue_s1ap_id>$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <TIMESTAMP>74.885116</TIMESTAMP>
+  <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
   <security_protected_nas_message>
-    <security_header_type>1</security_header_type>
+    <security_header_type>0x000004</security_header_type>
     <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
-    <mac>0xA72579A3</mac>
-    <sequence_number>3</sequence_number>
+    <mac>0</mac>
+    <sequence_number>0</sequence_number>
     <plain_nas_message>
       <security_header_type>0</security_header_type>
       <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
-      <message_type>IDENTITY_RESPONSE</message_type>
+      <message_type>SECURITY_MODE_COMPLETE</message_type>
       <mobile_identity>
         <oddeven>1</oddeven>
-        <!--type_of_identity = IMSI-->
-        <type_of_identity>1</type_of_identity>
-        <imsi>208930100001114</imsi>
+        <type_of_identity>0x3</type_of_identity>
+        <tac>12345678</tac>
+        <snr>123456</snr>
+        <svn>12</svn>
       </mobile_identity>
     </plain_nas_message>
   </security_protected_nas_message>

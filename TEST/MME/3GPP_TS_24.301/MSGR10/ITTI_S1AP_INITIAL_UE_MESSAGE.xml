@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<ITTI_MME_APP_INITIAL_UE_MESSAGE>
+<ITTI_S1AP_INITIAL_UE_MESSAGE>
   <ACTION>SEND</ACTION>
   <ITTI_SENDER_TASK>TASK_S1AP</ITTI_SENDER_TASK>
   <ITTI_RECEIVER_TASK>TASK_MME_APP</ITTI_RECEIVER_TASK>
-  <TIMESTAMP>74.731180</TIMESTAMP>
+  <TIMESTAMP>ANY</TIMESTAMP>
   <enb_ue_s1ap_id>$ENB_UE_S1AP_ID</enb_ue_s1ap_id>
   <security_protected_nas_message>
     <security_header_type>1</security_header_type>
     <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
     <mac>0x00000000</mac>
-    <sequence_number>2</sequence_number>
+    <sequence_number>$NAS_UPLINK_SEQUENCE_NUMBER</sequence_number>
     <plain_nas_message>
       <security_header_type>0</security_header_type>
       <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
       <message_type>ATTACH_REQUEST</message_type>
-      <nas_key_set_identifier tsc="0" ksi="0"/>
-      <eps_attach_type>2</eps_attach_type>
+      <nas_key_set_identifier tsc="0x0" ksi="0x0"/>
+      <eps_attach_type>0x2</eps_attach_type>
       <eps_mobile_identity>
-        <oddeven>0</oddeven>
+        <oddeven>0x0</oddeven>
         <!--type_of_identity = GUTI-->
-        <type_of_identity>6</type_of_identity>
-        <mcc>208</mcc>
-        <mnc>93f</mnc>
-        <mme_group_identifier>4</mme_group_identifier>
-        <mme_code>1</mme_code>
-        <m_tmsi>608acd01</m_tmsi>
+        <type_of_identity>0x6</type_of_identity>
+        <mcc>$MCC</mcc>
+        <mnc>$MNC</mnc>
+        <mme_group_identifier>$MME_GROUP_IDENTIFIER</mme_group_identifier>
+        <mme_code>$MME_CODE</mme_code>
+        <m_tmsi>$M_TMSI</m_tmsi>
       </eps_mobile_identity>
       <ue_network_capability>
-        <eea>e0</eea>
-        <eia>60</eia>
-        <uea>c0</uea>
-        <uia>40</uia>
-        <ucs2>0</ucs2>
+        <eea>0xe0</eea>
+        <eia>0x60</eia>
+        <uea>0xc0</uea>
+        <uia>0x40</uia>
+        <ucs2>0x0</ucs2>
       </ue_network_capability>
       <esm_message_container length="33" hex_dump="0201d011d1271a8080211001000010810600000000830600000000000d00000a00">
         <ebi>0</ebi>
@@ -55,35 +55,35 @@
       <tracking_area_identity>
         <mcc>208</mcc>
         <mnc>93f</mnc>
-        <tracking_area_code>1</tracking_area_code>
+        <tracking_area_code>0x1</tracking_area_code>
       </tracking_area_identity>
       <drx_parameter>
-        <split_pg_cycle_code>10</split_pg_cycle_code>
-        <cn_specific_drx_cycle_length_coefficient_and_drx_value_for_s1_mode>0</cn_specific_drx_cycle_length_coefficient_and_drx_value_for_s1_mode>
-        <split_on_ccch>0</split_on_ccch>
-        <non_drx_timer>0</non_drx_timer>
+        <split_pg_cycle_code>0x16</split_pg_cycle_code>
+        <cn_specific_drx_cycle_length_coefficient_and_drx_value_for_s1_mode>0x0</cn_specific_drx_cycle_length_coefficient_and_drx_value_for_s1_mode>
+        <split_on_ccch>0x0</split_on_ccch>
+        <non_drx_timer>0x0</non_drx_timer>
       </drx_parameter>
       <ms_network_capability>
-        <gea1_bits>1</gea1_bits>
-        <sm_capabilities_via_dedicated_channels>1</sm_capabilities_via_dedicated_channels>
-        <sm_capabilities_via_gprs_channels>1</sm_capabilities_via_gprs_channels>
-        <ucs2_support>0</ucs2_support>
-        <ss_screening_indicator>1</ss_screening_indicator>
-        <solsa_capability>0</solsa_capability>
-        <revision_level_indicator>1</revision_level_indicator>
-        <pfc_feature_mode>1</pfc_feature_mode>
-        <extended_gea_bits>30</extended_gea_bits>
-        <lcs_va_capability>0</lcs_va_capability>
-        <ps_inter_rat_ho_from_geran_to_utran_iu_mode_capability>0</ps_inter_rat_ho_from_geran_to_utran_iu_mode_capability>
-        <ps_inter_rat_ho_from_geran_to_e_utran_s1_mode_capability>0</ps_inter_rat_ho_from_geran_to_e_utran_s1_mode_capability>
-        <emm_combined_procedures_capability>1</emm_combined_procedures_capability>
-        <isr_support>1</isr_support>
-        <srvcc_to_geran_utran_capability>0</srvcc_to_geran_utran_capability>
-        <epc_capability>1</epc_capability>
-        <nf_capability>0</nf_capability>
-        <spare_bits>0</spare_bits>
+        <gea1_bits>0x1</gea1_bits>
+        <sm_capabilities_via_dedicated_channels>0x1</sm_capabilities_via_dedicated_channels>
+        <sm_capabilities_via_gprs_channels>0x1</sm_capabilities_via_gprs_channels>
+        <ucs2_support>0x0</ucs2_support>
+        <ss_screening_indicator>0x1</ss_screening_indicator>
+        <solsa_capability>0x0</solsa_capability>
+        <revision_level_indicator>0x1</revision_level_indicator>
+        <pfc_feature_mode>0x1</pfc_feature_mode>
+        <extended_gea_bits>0x30</extended_gea_bits>
+        <lcs_va_capability>0x0</lcs_va_capability>
+        <ps_inter_rat_ho_from_geran_to_utran_iu_mode_capability>0x0</ps_inter_rat_ho_from_geran_to_utran_iu_mode_capability>
+        <ps_inter_rat_ho_from_geran_to_e_utran_s1_mode_capability>0x0</ps_inter_rat_ho_from_geran_to_e_utran_s1_mode_capability>
+        <emm_combined_procedures_capability>0x1</emm_combined_procedures_capability>
+        <isr_support>0x1</isr_support>
+        <srvcc_to_geran_utran_capability>0x0</srvcc_to_geran_utran_capability>
+        <epc_capability>0x1</epc_capability>
+        <nf_capability>0x0</nf_capability>
+        <spare_bits>0x0</spare_bits>
       </ms_network_capability>
-      <tmsi_status>0</tmsi_status>
+      <tmsi_status>0x0</tmsi_status>
       <mobile_station_classmark_2>
         <revision_level>0x2</revision_level>
         <es_ind>0x1</es_ind>
@@ -105,15 +105,15 @@
       </mobile_station_classmark_2>
       <guti_type>NATIVE</guti_type>
       <voice_domain_preference_and_ue_usage_setting>
-        <ue_usage_setting>0</ue_usage_setting>
-        <voice_domain_preference>0</voice_domain_preference>
+        <ue_usage_setting>0x0</ue_usage_setting>
+        <voice_domain_preference>0x0</voice_domain_preference>
       </voice_domain_preference_and_ue_usage_setting>
     </plain_nas_message>
   </security_protected_nas_message>
   <tracking_area_identity>
     <mcc>208</mcc>
     <mnc>93f</mnc>
-    <tracking_area_code>1</tracking_area_code>
+    <tracking_area_code>0x1</tracking_area_code>
   </tracking_area_identity>
   <ecgi>
     <plmn>
@@ -128,7 +128,7 @@
       <mcc>208</mcc>
       <mnc>93f</mnc>
     </plmn>
-    <mme_group_identifier>4</mme_group_identifier>
-    <mme_code>1</mme_code>
+    <mme_group_identifier>0x4</mme_group_identifier>
+    <mme_code>0x1</mme_code>
   </gummei>
-</ITTI_MME_APP_INITIAL_UE_MESSAGE>
+</ITTI_S1AP_INITIAL_UE_MESSAGE>
