@@ -578,7 +578,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         config_pP->ipv4.netmask_s1_mme = atoi ((const char*)mask->data);
         bstrListDestroy(list);
         in_addr_var.s_addr = config_pP->ipv4.s1_mme;
-        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found S1-MME: %s/%d on %s\n",
+        OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S1-MME: %s/%d on %s\n",
                        inet_ntoa (in_addr_var), config_pP->ipv4.netmask_s1_mme, bdata(config_pP->ipv4.if_name_s1_mme));
 
         config_pP->ipv4.if_name_s11 = bfromcstr(if_name_s11);
@@ -591,7 +591,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         config_pP->ipv4.netmask_s11 = atoi ((const char*)mask->data);
         bstrListDestroy(list);
         in_addr_var.s_addr = config_pP->ipv4.s11;
-        OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found S11: %s/%d on %s\n",
+        OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S11: %s/%d on %s\n",
                        inet_ntoa (in_addr_var), config_pP->ipv4.netmask_s11, bdata(config_pP->ipv4.if_name_s11));
       }
     }
