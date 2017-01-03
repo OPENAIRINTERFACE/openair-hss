@@ -379,13 +379,14 @@ esm_proc_default_eps_bearer_context_reject (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int esm_proc_default_eps_bearer_context_failure (emm_context_t * emm_context)
+int esm_proc_default_eps_bearer_context_failure (emm_context_t * emm_context, pdn_cid_t * const pid)
 {
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
-  pdn_cid_t                               pid = MAX_APN_PER_UE;
   mme_ue_s1ap_id_t                        ue_id = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
 
-  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  *pid = MAX_APN_PER_UE;
+
   if (emm_context) {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Default EPS bearer context activation " "failure (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
   } else {
@@ -404,14 +405,9 @@ int esm_proc_default_eps_bearer_context_failure (emm_context_t * emm_context)
     /*
      * Release the default EPS bearer context and enter state INACTIVE
      */
-    rc = esm_proc_eps_bearer_context_deactivate (emm_context, true, ebi, &pid, &bid, NULL);
+    rc = esm_proc_eps_bearer_context_deactivate (emm_context, true, ebi, pid, &bid, NULL);
   }
-
-  if (rc != RETURNerror) {
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, pid);
-  }
-
-  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
 }
 
 

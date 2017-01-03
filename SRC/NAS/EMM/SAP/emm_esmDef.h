@@ -55,6 +55,7 @@ typedef enum {
   _EMMESM_START = 100,
   _EMMESM_RELEASE_IND,
   _EMMESM_UNITDATA_REQ,
+  _EMMESM_ACTIVATE_BEARER_REQ,
   _EMMESM_UNITDATA_IND,
   _EMMESM_END
 } emm_esm_primitive_t;
@@ -67,7 +68,7 @@ typedef enum {
  * EMMESM primitive for connection establishment
  * ---------------------------------------------
  */
-typedef struct {
+typedef struct emm_esm_establish_s {
   bool is_emergency;   /* Indicates whether the PDN connection is established
              * for emergency bearer services only       */
   bool is_attached;    /* Indicates whether the UE remains attached to the
@@ -75,10 +76,23 @@ typedef struct {
 } emm_esm_establish_t;
 
 /*
+ * EMMESM primitive for EPS bearer context establishment
+ * ---------------------------------------------
+ */
+typedef struct emm_esm_activate_bearer_req_s {
+  ebi_t            ebi;        /* bearer to activate */
+  bitrate_t        mbr_dl;
+  bitrate_t        mbr_ul;
+  bitrate_t        gbr_dl;
+  bitrate_t        gbr_ul;
+  bstring          msg;        /* ESM message to be transfered     */
+} emm_esm_activate_bearer_req_t;
+
+/*
  * EMMESM primitive for data transfer
  * ----------------------------------
  */
-typedef struct {
+typedef struct emm_esm_data_s {
   bstring          msg;        /* ESM message to be transfered     */
 } emm_esm_data_t;
 
@@ -96,6 +110,7 @@ typedef struct {
   union {
     emm_esm_establish_t establish;
     emm_esm_data_t data;
+    emm_esm_activate_bearer_req_t activate_bearer;
   } u;
   /* TODO: complete emm_esm_t structure definition */
 } emm_esm_t;

@@ -895,17 +895,6 @@ mme_app_dump_ue_context (
   if (ue_mm_context) {
     bstring                                 bstr_dump = bfromcstralloc(2048, "\n-----------------------UE MM context ");
     bformata (bstr_dump, "%p --------------------\n", ue_mm_context);
-    bformata (bstr_dump, "    - IMSI ...........: " IMSI_64_FMT "\n", ue_mm_context->emm_context._imsi64);
-    bformata (bstr_dump, "                        |  m_tmsi  | mmec | mmegid | mcc | mnc |\n");
-    bformata (bstr_dump, "    - GUTI............: | %08x |  %02x  |  %04x  | %u%u%u | %u%u%c |\n",
-        ue_mm_context->emm_context._guti.m_tmsi, ue_mm_context->emm_context._guti.gummei.mme_code,
-        ue_mm_context->emm_context._guti.gummei.mme_gid,
-        ue_mm_context->emm_context._guti.gummei.plmn.mcc_digit1,
-        ue_mm_context->emm_context._guti.gummei.plmn.mcc_digit2,
-        ue_mm_context->emm_context._guti.gummei.plmn.mcc_digit3,
-        ue_mm_context->emm_context._guti.gummei.plmn.mnc_digit1,
-        ue_mm_context->emm_context._guti.gummei.plmn.mnc_digit2,
-        (ue_mm_context->emm_context._guti.gummei.plmn.mnc_digit3 > 9) ? ' ':0x30+ue_mm_context->emm_context._guti.gummei.plmn.mnc_digit3);
     bformata (bstr_dump, "    - Authenticated ..: %s\n", (ue_mm_context->imsi_auth == IMSI_UNAUTHENTICATED) ? "FALSE" : "TRUE");
     bformata (bstr_dump, "    - eNB UE s1ap ID .: %08x\n", ue_mm_context->enb_ue_s1ap_id);
     bformata (bstr_dump, "    - MME UE s1ap ID .: %08x\n", ue_mm_context->mme_ue_s1ap_id);
@@ -1001,6 +990,7 @@ mme_app_dump_ue_context (
     }
     bcatcstr (bstr_dump, "---------------------------------------------------------\n");
     OAILOG_DEBUG(LOG_MME_APP, "%s\n", bdata(bstr_dump));
+    bdestroy_wrapper(&bstr_dump);
     return false;
   }
   return true;

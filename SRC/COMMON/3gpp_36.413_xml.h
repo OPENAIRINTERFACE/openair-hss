@@ -32,11 +32,33 @@
 
 
 
+bool e_rab_item_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    e_rab_item_t * const item);
+void e_rab_item_to_xml (const e_rab_item_t * const item, xmlTextWriterPtr writer);
+
+
+bool e_rab_setup_item_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    e_rab_setup_item_t * const item);
+void e_rab_setup_item_to_xml (const e_rab_setup_item_t * const item, xmlTextWriterPtr writer);
+
+
 bool e_rab_setup_list_from_xml (
     xmlDocPtr                         xml_doc,
     xmlXPathContextPtr                xpath_ctx,
     e_rab_setup_list_t * const list);
 void e_rab_setup_list_to_xml (const e_rab_setup_list_t * const list, xmlTextWriterPtr writer);
+
+
+bool e_rab_list_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    e_rab_list_t * const list,
+    char * const xml_tag);
+void e_rab_list_to_xml (const e_rab_list_t * const list, xmlTextWriterPtr writer, char * const xml_tag);
 
 
 bool e_rab_to_be_setup_list_from_xml (

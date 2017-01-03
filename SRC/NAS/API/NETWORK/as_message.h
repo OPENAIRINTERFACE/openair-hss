@@ -44,6 +44,7 @@ Description Defines the messages supported by the Access Stratum sublayer
 
 #include "commonDef.h"
 #include "networkDef.h"
+#include "3gpp_24.007.h"
 #include "3gpp_24.301.h"
 #include "3gpp_23.003.h"
 #include "3gpp_36.331.h"
@@ -79,7 +80,6 @@ Description Defines the messages supported by the Access Stratum sublayer
 /* Paging information */
 #define AS_PAGING           0x03
 #define AS_PAGING_REQ           (AS_PAGING | AS_REQUEST)
-#define AS_PAGING_IND           (AS_PAGING | AS_INDICATION)
 
 /* NAS signalling connection establishment */
 #define AS_NAS_ESTABLISH        0x04
@@ -106,11 +106,8 @@ Description Defines the messages supported by the Access Stratum sublayer
 #define AS_DL_INFO_TRANSFER_IND     (AS_DL_INFO_TRANSFER | AS_INDICATION)
 
 /* Radio Access Bearer establishment */
-#define AS_RAB_ESTABLISH        0x08
-#define AS_RAB_ESTABLISH_REQ        (AS_RAB_ESTABLISH | AS_REQUEST)
-#define AS_RAB_ESTABLISH_IND        (AS_RAB_ESTABLISH | AS_INDICATION)
-#define AS_RAB_ESTABLISH_RSP        (AS_RAB_ESTABLISH | AS_RESPONSE)
-#define AS_RAB_ESTABLISH_CNF        (AS_RAB_ESTABLISH | AS_CONFIRM)
+#define AS_ACTIVATE_BEARER_CONTEXT        0x08
+#define AS_ACTIVATE_BEARER_CONTEXT_REQ        (AS_ACTIVATE_BEARER_CONTEXT | AS_REQUEST)
 
 /* Radio Access Bearer release */
 #define AS_RAB_RELEASE          0x09
@@ -451,26 +448,24 @@ typedef ul_info_transfer_ind_t dl_info_transfer_ind_t;
  * --------------------------------------------------------------------------
  */
 
-/* TODO: Quality of Service parameters */
-typedef struct {} as_qos_t;
-
 /*
  * NAS->AS - Radio access bearer establishment request
  * NAS requests the AS to allocate transmission resources to radio access
  * bearer initialized at the network side.
  */
-typedef struct rab_establish_req_s {
-  s_tmsi_t    s_tmsi;      /* UE identity                      */
-  as_rab_id_t rab_id;      /* Radio access bearer identity     */
-  as_qos_t    qos;         /* Requested Quality of Service     */
-} rab_establish_req_t;
+typedef struct activate_bearer_context_req_s {
+  mme_ue_s1ap_id_t ue_id;  /* UE lower layer identifier        */
+  ebi_t            ebi;    /* EPS bearer id    */
+  bstring          nas_msg; /* NAS message to transfer     */
+} activate_bearer_context_req_t;
 
 /*
  * AS->NAS - Radio access bearer establishment indication
  * AS notifies the NAS that specific radio access bearer has to be setup.
  */
 typedef struct rab_establish_ind_s {
-  as_rab_id_t rab_id;      /* Radio access bearer identity     */
+  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
+  ebi_t            ebi;    /* EPS bearer id    */
 } rab_establish_ind_t;
 
 /*
@@ -479,9 +474,9 @@ typedef struct rab_establish_ind_s {
  * successfully setup or not.
  */
 typedef struct rab_establish_rsp_s {
-  s_tmsi_t         s_tmsi;        /* UE identity                      */
-  as_rab_id_t      rab_id;         /* Radio access bearer identity     */
-  nas_error_code_t err_code;       /* Transaction status               */
+  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
+  ebi_t            ebi;    /* EPS bearer id    */
+  nas_error_code_t err_code;  /* Transaction status               */
 } rab_establish_rsp_t;
 
 /*
@@ -490,8 +485,9 @@ typedef struct rab_establish_rsp_s {
  * successfully setup at the UE side or not.
  */
 typedef struct rab_establish_cnf_s {
-  as_rab_id_t      rab_id;          /* Radio access bearer identity     */
-  nas_error_code_t err_code;   /* Transaction status               */
+  mme_ue_s1ap_id_t ue_id;     /* UE lower layer identifier        */
+  ebi_t            ebi;    /* EPS bearer id    */
+  nas_error_code_t err_code;  /* Transaction status               */
 } rab_establish_cnf_t;
 
 /*
@@ -544,7 +540,7 @@ typedef struct as_message_s {
     dl_info_transfer_req_t dl_info_transfer_req;
     dl_info_transfer_cnf_t dl_info_transfer_cnf;
     dl_info_transfer_ind_t dl_info_transfer_ind;
-    rab_establish_req_t    rab_establish_req;
+    activate_bearer_context_req_t  activate_bearer_context_req;
     rab_establish_ind_t    rab_establish_ind;
     rab_establish_rsp_t    rab_establish_rsp;
     rab_establish_cnf_t    rab_establish_cnf;

@@ -501,6 +501,7 @@ emm_proc_attach_request (
        */
       rc = emm_proc_specific_initialize (&ue_mm_context->emm_context, EMM_SPECIFIC_PROC_TYPE_ATTACH, ue_mm_context->emm_context.specific_proc, NULL, NULL, _emm_attach_abort);
       emm_ctx_mark_specific_procedure_running (&ue_mm_context->emm_context, EMM_CTXT_SPEC_PROC_ATTACH);
+      ue_mm_context->emm_context.specific_proc->arg.u.attach_data.ue_id = ue_id;
 
       if (rc != RETURNok) {
         OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions");
@@ -960,6 +961,8 @@ static int _emm_attach_abort (emm_context_t *emm_context)
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the attach procedure (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
+    AssertFatal(EMM_SPECIFIC_PROC_TYPE_ATTACH == emm_context->specific_proc->type, "Mismatch in specific proc arg type %d UE id" MME_UE_S1AP_ID_FMT "\n",
+        emm_context->specific_proc->type, ue_id);
     AssertFatal(ue_id == data->ue_id, "Mismatch in UE ids: ctx UE id" MME_UE_S1AP_ID_FMT " data UE id" MME_UE_S1AP_ID_FMT "\n", ue_id, data->ue_id);
     /*
      * Stop timer T3450
@@ -1300,62 +1303,7 @@ static int _emm_attach (emm_context_t *emm_context)
     /*
      * Allocate parameters of the retransmission timer callback
      */
-    attach_data_t                          *data = (attach_data_t *) calloc (1, sizeof (attach_data_t));
-
-    if (data) {
-      /*
-       * Setup ongoing EMM procedure callback functions
-       */
-      //rc = emm_proc_common_initialize (EMM_COMMON_PROC_TYPE_NONE, &ue_mm_context->common_proc, NULL, NULL, NULL, NULL, NULL, _emm_attach_abort, data);
-
-      if (rc != RETURNok) {
-        OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " Failed to initialize EMM callback functions\n", ue_id);
-        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-      }
-
-      /*
-       * Set the UE identifier
-       */
-      data->ue_id = ue_id;
-      /*
-       * Reset the retransmission counter
-       */
-      data->retransmission_count = 0;
-#if ORIGINAL_CODE
-      /*
-       * Setup the ESM message container
-       */
-      data->esm_msg.value = (uint8_t *) malloc (esm_sap.send.length);
-
-      if (data->esm_msg.value) {
-        data->esm_msg.length = esm_sap.send.length;
-        memcpy (data->esm_msg.value, esm_sap.send.value, esm_sap.send.length);
-      } else {
-        data->esm_msg.length = 0;
-      }
-
-      /*
-       * Send attach accept message to the UE
-       */
-      rc = _emm_attach_accept (ue_mm_context, data);
-
-      if (rc != RETURNerror) {
-        if (ue_mm_context->guti_is_new && ue_mm_context->old_guti) {
-          /*
-           * Implicit GUTI reallocation;
-           * Notify EMM that common procedure has been initiated
-           */
-          emm_sap_t                               emm_sap = {0};
-
-          emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
-          emm_sap.u.emm_reg.ue_id = data->ue_id;
-          rc = emm_sap_send (&emm_sap);
-        }
-      }
-#else
-      rc = RETURNok;
-#endif
-    }
+    rc = RETURNok;
   } else if (esm_sap.err != ESM_SAP_DISCARDED) {
     /*
      * The attach procedure failed due to an ESM procedure failure

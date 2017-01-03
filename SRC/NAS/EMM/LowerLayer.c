@@ -318,6 +318,47 @@ lowerlayer_data_req (
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
+//------------------------------------------------------------------------------
+int
+lowerlayer_activate_bearer_req (
+    const mme_ue_s1ap_id_t ue_id,
+    const ebi_t            ebi,
+    const bitrate_t        mbr_dl,
+    const bitrate_t        mbr_ul,
+    const bitrate_t        gbr_dl,
+    const bitrate_t        gbr_ul,
+    bstring data)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
+  emm_sap_t                               emm_sap = {0};
+  emm_security_context_t                 *sctx = NULL;
+  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+
+  emm_sap.primitive = EMMAS_ERAB_SETUP_REQ;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.ebi    = ebi;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.ue_id  = ue_id;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_dl = mbr_dl;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.mbr_ul = mbr_ul;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_dl = gbr_dl;
+  emm_sap.u.emm_as.u.activate_bearer_context_req.gbr_ul = gbr_ul;
+
+
+  if (ue_mm_context) {
+    sctx = &ue_mm_context->emm_context._security;
+  }
+
+  emm_sap.u.emm_as.u.activate_bearer_context_req.nas_msg = data;
+  data = NULL;
+  /*
+   * Setup EPS NAS security data
+   */
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.activate_bearer_context_req.sctx, sctx, false, true);
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+
+}
+
 /*
    --------------------------------------------------------------------------
                 EMM procedure handlers

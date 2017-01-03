@@ -97,6 +97,7 @@ s11_mme_create_session_request (
                               req_p->pgw_address_for_cp.teid,
                               req_p->pgw_address_for_cp.ipv4 ? &req_p->pgw_address_for_cp.ipv4_address : 0,
                               req_p->pgw_address_for_cp.ipv6 ? &req_p->pgw_address_for_cp.ipv6_address : NULL);
+
   s11_apn_ie_set (&(ulp_req.hMsg), req_p->apn);
   s11_serving_network_ie_set (&(ulp_req.hMsg), &req_p->serving_network);
   s11_pco_ie_set (&(ulp_req.hMsg), &req_p->pco);

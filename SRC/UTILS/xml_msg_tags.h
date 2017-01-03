@@ -104,13 +104,16 @@
 
 
 #  define ALLOCATION_AND_RETENTION_PRIORITY_XML_STR      "allocation_and_retention_priority"
+#  define E_RAB_FAILED_TO_SETUP_LIST_XML_STR             "e_rab_failed_to_setup_list"
 #  define E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_XML_STR     "e_rab_guaranteed_bit_rate_downlink"
 #  define E_RAB_GUARANTEED_BIT_RATE_DOWNLINK_XML_STR     "e_rab_guaranteed_bit_rate_downlink"
 #  define E_RAB_GUARANTEED_BIT_RATE_UPLINK_XML_STR       "e_rab_guaranteed_bit_rate_uplink"
 #  define E_RAB_ID_XML_FMT                               "0x%"PRIx8
 #  define E_RAB_ID_XML_SCAN_FMT                          "%"SCNx8
 #  define E_RAB_ID_XML_STR                               "e_rab_id"
+#  define E_RAB_ITEM_XML_STR                             "e_rab_item"
 #  define E_RAB_LEVEL_QOS_PARAMETERS_XML_STR             "e_rab_level_qos_parameters"
+#  define E_RAB_LIST_XML_STR                             "e_rab_list"
 #  define E_RAB_MAXIMUM_BIT_RATE_DOWNLINK_XML_STR        "e_rab_maximum_bit_rate_downlink"
 #  define E_RAB_MAXIMUM_BIT_RATE_UPLINK_XML_STR          "e_rab_maximum_bit_rate_uplink"
 #  define E_RAB_SETUP_ITEM_XML_STR                       "e_rab_setup_item"

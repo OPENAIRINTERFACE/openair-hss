@@ -139,8 +139,18 @@ void *mme_app_thread (void *args)
       }
       break;
 
+    case NAS_ERAB_SETUP_REQ:{
+      mme_app_handle_erab_setup_req (&NAS_ERAB_SETUP_REQ (received_message_p));
+    }
+    break;
+
     case S1AP_INITIAL_UE_MESSAGE:{
         mme_app_handle_initial_ue_message (&S1AP_INITIAL_UE_MESSAGE (received_message_p));
+      }
+      break;
+
+    case S1AP_E_RAB_SETUP_RSP:{
+        AssertFatal (0, "TODO S1AP_E_RAB_SETUP_RSP");
       }
       break;
 

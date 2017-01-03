@@ -362,11 +362,11 @@ emm_proc_identification_complete (
 static void *_identification_t3470_handler (void *args)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  ue_mm_context_t                     *ue_mm_context = (ue_mm_context_t*)args;
-  emm_context_t                       *emm_ctx = NULL;
+  emm_context_t                       *emm_ctx = (emm_context_t*)args;
+  ue_mm_context_t                     *ue_mm_context = NULL;
 
-  if (ue_mm_context) {
-    emm_ctx = &ue_mm_context->emm_context;
+  if (emm_ctx) {
+    ue_mm_context = PARENT_STRUCT(emm_ctx, struct ue_mm_context_s, emm_context);
     OAILOG_WARNING (LOG_NAS_EMM, "T3470 timer (%lx) expired ue id " MME_UE_S1AP_ID_FMT " \n",
         emm_ctx->T3470.id, ue_mm_context->mme_ue_s1ap_id);
     emm_ctx->T3470.id = NAS_TIMER_INACTIVE_ID;

@@ -123,12 +123,12 @@ typedef struct esm_ebr_data_s {
  * butes. An EPS bearer corresponds to one Quality of Service policy
  * applied within the EPC and E-UTRAN.
  */
-typedef struct esm_bearer_s {
-  int bid;        /* Identifier of the EPS bearer         */
-  unsigned int ebi;   /* EPS bearer identity              */
-  network_qos_t qos;  /* EPS bearer level QoS parameters      */
-  traffic_flow_template_t *tft;  /* Traffic Flow Template for packet filtering   */
-} esm_bearer_t;
+//typedef struct esm_bearer_s {
+//  int bid;        /* Identifier of the EPS bearer         */
+//  unsigned int ebi;   /* EPS bearer identity              */
+//  network_qos_t qos;  /* EPS bearer level QoS parameters      */
+//  traffic_flow_template_t *tft;  /* Traffic Flow Template for packet filtering   */
+//} esm_bearer_t;
 
 /*
  * Structure of a PDN connection

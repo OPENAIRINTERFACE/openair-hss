@@ -68,6 +68,7 @@
 static const char                      *_emm_esm_primitive_str[] = {
   "EMMESM_RELEASE_IND",
   "EMMESM_UNITDATA_REQ",
+  "EMMESM_ACTIVATE_BEARER_REQ",
   "EMMESM_UNITDATA_IND",
 };
 
@@ -130,6 +131,15 @@ emm_esm_send (
      * ESM requests EMM to transfer ESM data unit to lower layer
      */
     rc = lowerlayer_data_req (msg->ue_id, msg->u.data.msg);
+    break;
+
+  case _EMMESM_ACTIVATE_BEARER_REQ:
+    rc = lowerlayer_activate_bearer_req (msg->ue_id, msg->u.activate_bearer.ebi,
+        msg->u.activate_bearer.mbr_dl,
+        msg->u.activate_bearer.mbr_ul,
+        msg->u.activate_bearer.gbr_dl,
+        msg->u.activate_bearer.gbr_ul,
+        msg->u.activate_bearer.msg);
     break;
 
   default:

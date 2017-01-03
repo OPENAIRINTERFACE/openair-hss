@@ -189,9 +189,9 @@ esm_sap_send (esm_sap_t * msg)
     /*
      * PDN connectivity locally failed
      */
-    pid = esm_proc_default_eps_bearer_context_failure (msg->ctx);
+    rc = esm_proc_default_eps_bearer_context_failure (msg->ctx, &pid);
 
-    if (pid != RETURNerror) {
+    if (rc != RETURNerror) {
       rc = esm_proc_pdn_connectivity_failure (msg->ctx, pid);
     }
 

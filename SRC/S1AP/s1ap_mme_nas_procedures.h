@@ -61,4 +61,6 @@ int s1ap_generate_downlink_nas_transport (
   const mme_ue_s1ap_id_t ue_id,
   STOLEN_REF bstring *payload);
 
+int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_rab_setup_req);
+
 #endif /* FILE_S1AP_MME_NAS_PROCEDURES_SEEN */

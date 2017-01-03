@@ -66,6 +66,9 @@ typedef enum emm_as_primitive_u {
   _EMMAS_ESTABLISH_REJ, /* AS->EMM: Connection establish reject   */
   _EMMAS_RELEASE_REQ,   /* EMM->AS: Connection release request    */
   _EMMAS_RELEASE_IND,   /* AS->EMM: Connection release indication */
+  _EMMAS_ERAB_SETUP_REQ, /* EMM->AS: ERAB setup request  */
+  _EMMAS_ERAB_SETUP_CNF, /* AS->EMM  */
+  _EMMAS_ERAB_SETUP_REJ, /* AS->EMM  */
   _EMMAS_DATA_REQ,      /* EMM->AS: Data transfer request     */
   _EMMAS_DATA_IND,      /* AS->EMM: Data transfer indication      */
   _EMMAS_PAGE_IND,      /* AS->EMM: Paging data indication        */
@@ -238,6 +241,18 @@ typedef struct emm_as_data_s {
  */
 typedef struct emm_as_page_s {} emm_as_page_t;
 
+typedef struct emm_as_activate_bearer_context_req_s {
+  mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
+  ebi_t                  ebi;         /* EPS rab id                       */
+  bitrate_t              mbr_dl;
+  bitrate_t              mbr_ul;
+  bitrate_t              gbr_dl;
+  bitrate_t              gbr_ul;
+  emm_as_security_data_t sctx;        /* EPS NAS security context         */
+  bstring                nas_msg;     /* NAS message to be transfered     */
+} emm_as_activate_bearer_context_req_t;
+
+
 /*
  * EMMAS primitive for status indication
  * -------------------------------------
@@ -258,9 +273,9 @@ typedef struct emm_as_cell_info_s {
 #define EMM_AS_PLMN_LIST_SIZE   6
   PLMN_LIST_T(EMM_AS_PLMN_LIST_SIZE) plmn_ids;
   /* List of identifiers of available PLMNs   */
-  uint8_t                             rat;      /* Bitmap of Radio Access Technologies      */
+  uint8_t                            rat;      /* Bitmap of Radio Access Technologies      */
   tac_t                              tac;      /* Tracking Area Code               */
-  eci_t                               cell_id;  /* cell identity                */
+  eci_t                              cell_id;  /* cell identity                */
 } emm_as_cell_info_t;
 
 /*
@@ -271,13 +286,14 @@ typedef struct emm_as_cell_info_s {
 typedef struct emm_as_s {
   emm_as_primitive_t primitive;
   union {
-    emm_as_security_t  security;
-    emm_as_establish_t establish;
-    emm_as_release_t   release;
-    emm_as_data_t      data;
-    emm_as_page_t      page;
-    emm_as_status_t    status;
-    emm_as_cell_info_t cell_info;
+    emm_as_security_t   security;
+    emm_as_establish_t  establish;
+    emm_as_release_t    release;
+    emm_as_data_t       data;
+    emm_as_activate_bearer_context_req_t activate_bearer_context_req;
+    emm_as_page_t       page;
+    emm_as_status_t     status;
+    emm_as_cell_info_t  cell_info;
   } u;
 } emm_as_t;
 

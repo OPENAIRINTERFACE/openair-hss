@@ -772,8 +772,12 @@ void emm_context_dump (
     bformata (bstr_dump, "%*s     - is_dynamic:       %u      (Dynamically allocated context indicator)\n", indent_spaces, " ", emm_context->is_dynamic);
     bformata (bstr_dump, "%*s     - is_attached:      %u      (Attachment indicator)\n", indent_spaces, " ", emm_context->is_attached);
     bformata (bstr_dump, "%*s     - is_emergency:     %u      (Emergency bearer services indicator)\n", indent_spaces, " ", emm_context->is_emergency);
-    IMSI_TO_STRING (&emm_context->_imsi, imsi_str, 16);
-    bformata (bstr_dump, "%*s     - imsi:             %s      (The IMSI provided by the UE or the MME)\n", indent_spaces, " ", imsi_str);
+    if (IS_EMM_CTXT_PRESENT_IMSI(emm_context)) {
+      IMSI_TO_STRING (&emm_context->_imsi, imsi_str, 16);
+      bformata (bstr_dump, "%*s     - imsi:             %s      (The IMSI provided by the UE or the MME)\n", indent_spaces, " ", imsi_str);
+    } else {
+      bformata (bstr_dump, "%*s     - imsi:             UNKNOWN\n", indent_spaces, " ");
+    }
     bformata (bstr_dump, "%*s     - imei:             TODO    (The IMEI provided by the UE)\n", indent_spaces, " ");
     if (IS_EMM_CTXT_PRESENT_IMEISV(emm_context)) {
       bformata (bstr_dump, "%*s     - imeisv:           %x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x \n", indent_spaces, " ",
@@ -784,8 +788,36 @@ void emm_context_dump (
     } else {
       bformata (bstr_dump, "%*s     - imeisv:           UNKNOWN\n", indent_spaces, " ");
     }
-    bformata (bstr_dump, "%*s     - guti:             "GUTI_FMT"      (The GUTI assigned to the UE)\n", indent_spaces, " ", GUTI_ARG(&emm_context->_guti));
-    bformata (bstr_dump, "%*s     - old_guti:         "GUTI_FMT"      (The old GUTI)\n", indent_spaces, " ", GUTI_ARG(&emm_context->_old_guti));
+    if (IS_EMM_CTXT_PRESENT_GUTI(emm_context)) {
+      bformata (bstr_dump, "%*s                         |  m_tmsi  | mmec | mmegid | mcc | mnc |\n", indent_spaces, " ");
+      bformata (bstr_dump, "%*s     - GUTI............: | %08x |  %02x  |  %04x  | %u%u%u | %u%u%c |\n", indent_spaces, " ",
+        emm_context->_guti.m_tmsi, emm_context->_guti.gummei.mme_code,
+        emm_context->_guti.gummei.mme_gid,
+        emm_context->_guti.gummei.plmn.mcc_digit1,
+        emm_context->_guti.gummei.plmn.mcc_digit2,
+        emm_context->_guti.gummei.plmn.mcc_digit3,
+        emm_context->_guti.gummei.plmn.mnc_digit1,
+        emm_context->_guti.gummei.plmn.mnc_digit2,
+        (emm_context->_guti.gummei.plmn.mnc_digit3 > 9) ? ' ':0x30+emm_context->_guti.gummei.plmn.mnc_digit3);
+      //bformata (bstr_dump, "%*s     - guti:             "GUTI_FMT"      (The GUTI assigned to the UE)\n", indent_spaces, " ", GUTI_ARG(&emm_context->_guti));
+    } else {
+      bformata (bstr_dump, "%*s     - GUTI............: UNKNOWN\n", indent_spaces, " ");
+    }
+    if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_context)) {
+      bformata (bstr_dump, "%*s                         |  m_tmsi  | mmec | mmegid | mcc | mnc |\n", indent_spaces, " ");
+      bformata (bstr_dump, "%*s     - OLD GUTI........: | %08x |  %02x  |  %04x  | %u%u%u | %u%u%c |\n", indent_spaces, " ",
+        emm_context->_old_guti.m_tmsi, emm_context->_old_guti.gummei.mme_code,
+        emm_context->_old_guti.gummei.mme_gid,
+        emm_context->_old_guti.gummei.plmn.mcc_digit1,
+        emm_context->_old_guti.gummei.plmn.mcc_digit2,
+        emm_context->_old_guti.gummei.plmn.mcc_digit3,
+        emm_context->_old_guti.gummei.plmn.mnc_digit1,
+        emm_context->_old_guti.gummei.plmn.mnc_digit2,
+        (emm_context->_old_guti.gummei.plmn.mnc_digit3 > 9) ? ' ':0x30+emm_context->_old_guti.gummei.plmn.mnc_digit3);
+      //bformata (bstr_dump, "%*s     - old_guti:         "GUTI_FMT"      (The old GUTI)\n", indent_spaces, " ", GUTI_ARG(&emm_context->_old_guti));
+    } else {
+      bformata (bstr_dump, "%*s     - OLD GUTI........: UNKNOWN\n", indent_spaces, " ");
+    }
     for (k=0; k < emm_context->_tai_list.numberoflists; k++) {
       switch (emm_context->_tai_list.partial_tai_list[k].typeoflist) {
       case TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS: {

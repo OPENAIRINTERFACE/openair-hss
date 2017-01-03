@@ -61,6 +61,29 @@
 #include "log.h"
 
 //------------------------------------------------------------------------------
+bool e_rab_item_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    e_rab_item_t * const item)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  bool res = true;
+
+  res = e_rab_id_from_xml (xml_doc, xpath_ctx, &item->e_rab_id);
+  // TODO s1ap_cause_from_xml(xml_doc, xpath_ctx, &item->cause);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
+}
+
+//------------------------------------------------------------------------------
+void e_rab_item_to_xml (const e_rab_item_t * const item, xmlTextWriterPtr writer)
+{
+  XML_WRITE_START_ELEMENT(writer, E_RAB_ITEM_XML_STR);
+  e_rab_id_to_xml(&item->e_rab_id, writer);
+  // TODO s1ap_cause_to_xml(&item->cause, writer);
+  XML_WRITE_END_ELEMENT(writer);
+}
+
+//------------------------------------------------------------------------------
 bool e_rab_setup_item_from_xml (
     xmlDocPtr                         xml_doc,
     xmlXPathContextPtr                xpath_ctx,
@@ -150,7 +173,69 @@ void e_rab_setup_list_to_xml (const e_rab_setup_list_t * const list, xmlTextWrit
   XML_WRITE_END_ELEMENT(writer);
 }
 
+//------------------------------------------------------------------------------
+bool e_rab_list_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    e_rab_list_t              * const list,
+    char * const xml_tag)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  bool res = false;
+  list->no_of_items = 0;
+  bstring xpath_expr = NULL;
+  if (xml_tag) {
+    xpath_expr = bformat("./%s",xml_tag);
+  } else {
+    xpath_expr = bformat("./%s",E_RAB_LIST_XML_STR);
+  }
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
+  if (xpath_obj) {
+    xmlNodeSetPtr nodes = xpath_obj->nodesetval;
+    int size = (nodes) ? nodes->nodeNr : 0;
+    if ((1 == size)  && (xml_doc)) {
+      xmlNodePtr saved_node_ptr = xpath_ctx->node;
+      res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
 
+      if (res) {
+        bstring xpath_expr_items = bformat("./%s",E_RAB_ITEM_XML_STR);
+        xmlXPathObjectPtr xpath_obj_items = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr_items);
+        if (xpath_obj_items) {
+          xmlNodeSetPtr items = xpath_obj_items->nodesetval;
+          int no_of_items = (items) ? items->nodeNr : 0;
+          for (int item = 0; item < no_of_items; item++) {
+            xmlNodePtr saved_node_ptr2 = xpath_ctx->node;
+            res = (RETURNok == xmlXPathSetContextNode(items->nodeTab[item], xpath_ctx));
+            if (res) res = e_rab_item_from_xml (xml_doc, xpath_ctx, &list->item[list->no_of_items]);
+            if (res) list->no_of_items++;
+            res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr2, xpath_ctx)) & res;
+          }
+          xmlXPathFreeObject(xpath_obj_items);
+        }
+        bdestroy_wrapper (&xpath_expr_items);
+      }
+
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
+    }
+    xmlXPathFreeObject(xpath_obj);
+  }
+  bdestroy_wrapper (&xpath_expr);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
+}
+
+//------------------------------------------------------------------------------
+void e_rab_list_to_xml (const e_rab_list_t * const list, xmlTextWriterPtr writer, char * const xml_tag)
+{
+  if (xml_tag) {
+    XML_WRITE_START_ELEMENT(writer, xml_tag);
+  } else {
+    XML_WRITE_START_ELEMENT(writer, E_RAB_LIST_XML_STR);
+  }
+  for (int item = 0; item < list->no_of_items; item++) {
+    e_rab_item_to_xml(&list->item[item], writer);
+  }
+  XML_WRITE_END_ELEMENT(writer);
+}
 //------------------------------------------------------------------------------
 bool e_rab_to_be_setup_list_from_xml (
     xmlDocPtr                         xml_doc,
