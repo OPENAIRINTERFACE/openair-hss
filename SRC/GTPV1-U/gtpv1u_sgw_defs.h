@@ -21,6 +21,9 @@
 #ifndef FILE_GTPV1U_SGW_DEFS_SEEN
 #define FILE_GTPV1U_SGW_DEFS_SEEN
 
+#include "hashtable.h"
+#include "common_types.h"
+
 #define GTPV1U_UDP_PORT (2152)
 
 #define MAX_BEARERS_PER_UE (11)

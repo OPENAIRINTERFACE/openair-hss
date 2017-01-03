@@ -16,6 +16,9 @@
 #include "log.h"
 #include "common_defs.h"
 #include "gtp_mod_kernel.h"
+#include "spgw_config.h"
+#include "gtpv1u_sgw_defs.h"
+#include "dynamic_memory_check.h"
 
 
 static struct {
