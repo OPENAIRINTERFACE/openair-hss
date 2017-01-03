@@ -239,20 +239,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
 
   if (setting_mme != NULL) {
 
-    // TESTING setting
-    setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_SCENARIO_PLAYER_TESTING);
-    if (setting != NULL) {
-      if (config_setting_lookup_string (setting, MME_CONFIG_STRING_SCENARIO_PLAYER_SCENARIO_FILE, (const char **)&astring)) {
-        if (astring != NULL) {
-          if (config_pP->scenario_player_config.scenario_file) {
-            bassigncstr(config_pP->scenario_player_config.scenario_file , astring);
-          } else {
-            config_pP->scenario_player_config.scenario_file = bfromcstr(astring);
-          }
-        }
-      }
-    }
-
     // LOGGING setting
     setting = config_setting_get_member (setting_mme, LOG_CONFIG_STRING_LOGGING);
     if (setting != NULL) {
@@ -932,7 +918,8 @@ mme_config_parse_opt_line (
 
     case 's':
       config_pP->run_mode = RUN_MODE_SCENARIO_PLAYER;
-      OAI_FPRINTF_INFO ("%s mme_config.itti_config.log_file %s\n", __FUNCTION__, bdata(config_pP->itti_config.log_file));
+      config_pP->scenario_player_config.scenario_file = blk2bstr(optarg, strlen(optarg));
+      OAI_FPRINTF_INFO ("%s mme_config.scenario_player_config.scenario_file %s\n", __FUNCTION__, bdata(config_pP->scenario_player_config.scenario_file));
       break;
 
     case 'h':                  /* Fall through */
