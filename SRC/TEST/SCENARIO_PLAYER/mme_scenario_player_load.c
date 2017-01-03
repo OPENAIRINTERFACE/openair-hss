@@ -1129,12 +1129,14 @@ void msp_free_scenario_player_item (scenario_player_item_t * item)
       if ((VAR_VALUE_TYPE_HEX_STREAM == item->u.set_var.value_type) || (VAR_VALUE_TYPE_ASCII_STREAM == item->u.set_var.value_type)) {
         bdestroy_wrapper(&item->u.var.value.value_bstr);
       }
+      bdestroy_wrapper(&item->u.var.name);
       break;
 
     case SCENARIO_PLAYER_ITEM_VAR_SET:
       if ((VAR_VALUE_TYPE_HEX_STREAM == item->u.set_var.value_type) || (VAR_VALUE_TYPE_ASCII_STREAM == item->u.set_var.value_type)) {
         bdestroy_wrapper(&item->u.set_var.value.value_bstr);
       }
+      bdestroy_wrapper(&item->u.set_var.name);
       break;
 
     case SCENARIO_PLAYER_ITEM_EXIT:
