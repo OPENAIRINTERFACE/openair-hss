@@ -316,6 +316,7 @@ void msp_display_var(scenario_player_item_t * const var)
       hexa_to_ascii ((uint8_t *)bdata(var->u.var.value.value_bstr), buffer,length);
       buffer[2*length]=0;
       OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Var %s=%s (hex stream)\n", var->u.var.name->data, buffer);
+      free_wrapper((void**)&buffer);
     }
   } else
     OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Var %s unknown type %d\n", var->u.var.name->data, var->u.var.value_type);

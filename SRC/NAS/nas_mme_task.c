@@ -148,6 +148,7 @@ static void *nas_intertask_interface (void *args_p)
 
     case TERMINATE_MESSAGE:{
         nas_exit();
+        OAI_FPRINTF_INFO("TASK_NAS_MME terminated\n");
         itti_exit_task ();
       }
       break;

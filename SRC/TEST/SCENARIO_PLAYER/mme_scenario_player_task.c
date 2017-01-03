@@ -125,6 +125,7 @@ void *mme_scenario_player_event_handler (void *args)
       OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Unknown message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       break;
     }
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }

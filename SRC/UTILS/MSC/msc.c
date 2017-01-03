@@ -450,7 +450,7 @@ msc_log_message (
   new_item_p = get_new_log_queue_item (SH_TS_LOG_MSC);
 
   if (NULL != new_item_p) {
-      struct timeval elapsed_time;
+    struct timeval elapsed_time;
     shared_log_get_elapsed_time_since_start(&elapsed_time);
     rv = bassignformat (new_item_p->bstr, "%" PRIu64 " [MESSAGE] %d %s %d %" PRIu64 " %04ld:%06ld",
           __sync_fetch_and_add (&g_message_number, 1), proto1P, message_operationP, proto2P, mac, elapsed_time.tv_sec, elapsed_time.tv_usec);
@@ -458,16 +458,16 @@ msc_log_message (
     if (BSTR_ERR ==  rv) {
       OAI_FPRINTF_ERR ("Error while logging MSC message : %s/%s", &g_msc_proto2str[proto1P][0], &g_msc_proto2str[proto2P][0]);
       return;
-      }
+    }
 
-      va_start (args, format);
+    va_start (args, format);
     rv = bvcformata (new_item_p->bstr, MSC_MAX_MESSAGE_LENGTH - rv, format, args);
-      va_end (args);
+    va_end (args);
 
     if (BSTR_ERR == rv) {
       OAI_FPRINTF_ERR("Error while logging MSC message : %s/%s", &g_msc_proto2str[proto1P][0], &g_msc_proto2str[proto2P][0]);
       return;
-      }
+    }
 
     bcatcstr(new_item_p->bstr, "\n");
 
@@ -475,7 +475,7 @@ msc_log_message (
     new_item_p->u_app_log.msc.message_bin_size = num_bytes;
 
     shared_log_item(new_item_p);
-      }
+  }
 }
 //------------------------------------------------------------------------------
 void msc_flush_message (struct shared_log_queue_item_s *item_p)

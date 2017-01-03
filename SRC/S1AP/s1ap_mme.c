@@ -209,6 +209,7 @@ s1ap_mme_thread (
       break;
 
     case TERMINATE_MESSAGE:{
+        s1ap_mme_exit();
         OAI_FPRINTF_INFO("TASK_S1AP terminated\n");
         itti_exit_task ();
       }
@@ -233,9 +234,7 @@ s1ap_mme_thread (
 }
 
 //------------------------------------------------------------------------------
-int
-s1ap_mme_init (
-  const struct mme_config_s * mme_config_p)
+int s1ap_mme_init (const struct mme_config_s * mme_config_p)
 {
   OAILOG_DEBUG (LOG_S1AP, "Initializing S1AP interface\n");
 
@@ -270,6 +269,14 @@ s1ap_mme_init (
 
   OAILOG_DEBUG (LOG_S1AP, "Initializing S1AP interface: DONE\n");
   return RETURNok;
+}
+//------------------------------------------------------------------------------
+void s1ap_mme_exit (void)
+{
+  OAILOG_DEBUG (LOG_S1AP, "Cleaning S1AP\n");
+  hashtable_ts_destroy (&g_s1ap_enb_coll);
+  hashtable_ts_destroy (&g_s1ap_mme_id2assoc_id_coll);
+  OAILOG_DEBUG (LOG_S1AP, "Cleaning S1AP: DONE\n");
 }
 
 //------------------------------------------------------------------------------

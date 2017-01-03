@@ -159,6 +159,10 @@ void* log_task (__attribute__ ((unused)) void *args_p)
       case TERMINATE_MESSAGE:{
           timer_remove (timer_id);
           log_exit ();
+
+          MessageDef   *terminate_message_p = itti_alloc_new_message (TASK_LOG, TERMINATE_MESSAGE);
+          rc =  itti_send_msg_to_task (TASK_SHARED_TS_LOG, INSTANCE_DEFAULT, terminate_message_p);
+
           itti_exit_task ();
         }
         break;

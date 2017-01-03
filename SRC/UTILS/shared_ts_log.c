@@ -104,6 +104,7 @@ typedef struct oai_shared_log_s {
   hash_table_ts_t                        *thread_context_htbl;                                         /*!< \brief Container for log_thread_ctxt_t */
 
   void (*logger_callback[MAX_SH_TS_LOG_CLIENT])(shared_log_queue_item_t*);
+  bool                                    running;
 } oai_shared_log_t;
 
 static oai_shared_log_t g_shared_log={0};    /*!< \brief  logging utility internal variables global var definition*/
@@ -181,6 +182,7 @@ void* shared_log_task (__attribute__ ((unused)) void *args_p)
   MessageDef                             *received_message_p = NULL;
   long                                    timer_id = -1;
   int                                     rc = 0;
+  int                                     exit_count = 2;
 
   itti_mark_task_ready (TASK_SHARED_TS_LOG);
   shared_log_start_use ();
@@ -203,13 +205,16 @@ void* shared_log_task (__attribute__ ((unused)) void *args_p)
         break;
 
       case TERMINATE_MESSAGE:{
-          if (-1 != timer_id) {
-            timer_remove (timer_id);
-            timer_id = -1;
+          exit_count--;
+          if (!exit_count) {
+            g_shared_log.running = false;
+            if (-1 != timer_id) {
+              timer_remove (timer_id);
+              timer_id = -1;
+            }
+            shared_log_exit ();
+            itti_exit_task ();
           }
-          sleep(4); // let other tasks finish before this one
-          shared_log_exit ();
-          itti_exit_task ();
         }
         break;
 
@@ -283,6 +288,9 @@ int shared_log_init (const int max_threadsP)
 
 
   OAI_FPRINTF_INFO("Initializing shared logging Done\n");
+
+  g_shared_log.running = true;
+
   log_message (thread_ctxt, OAILOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing shared logging Done\n");
   return 0;
 }
@@ -374,8 +382,15 @@ void shared_log_exit (void)
 void shared_log_item(shared_log_queue_item_t * messageP)
 {
   if (messageP) {
-    shared_log_start_use();
-    lfds710_queue_bmm_enqueue( &g_shared_log.log_message_queue, NULL, messageP );
+    if (g_shared_log.running) {
+      shared_log_start_use();
+      lfds710_queue_bmm_enqueue( &g_shared_log.log_message_queue, NULL, messageP );
+    } else {
+      if (messageP->bstr) {
+        bdestroy_wrapper(&messageP->bstr);
+      }
+      free_wrapper((void**)&messageP);
+    }
   }
 }
 

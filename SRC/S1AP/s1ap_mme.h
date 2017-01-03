@@ -109,6 +109,11 @@ extern struct mme_config_s    *global_mme_config_p;
  **/
 int s1ap_mme_init(const struct mme_config_s *mme_config);
 
+/** \brief S1AP layer top exit
+ **/
+void s1ap_mme_exit (void);
+
+
 /** \brief Look for given eNB id in the list
  * \param enb_id The unique eNB id to search in list
  * @returns NULL if no eNB matchs the eNB id, or reference to the eNB element in list if matches
