@@ -49,19 +49,19 @@ function help()
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --config-file     file_abs_path Config file to be used by MME if you don't want to use the default one: $g_mme_default_config_file"
-  echo_error "  -D, --daemon                        Run the daemon."
-  echo_error "  -g, --gdb                           Run with GDB."
-  echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
-  echo_error "                                      All repetitions of this argument are valid."
-  echo_error "  -h, --help                          Print this help."
-  echo_error "  -I, --install-mme-files             Install MME config files. (NOT RECOMMENDED. See tutorials on https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or DOCS/EPC_User_Guide.pdf"
-  echo_error "  -k, --kill                          Kill all running MME instances, exit script then."
-  echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
-  echo_error "  -s, --scenario-player               Run scenario player with scenarios set in mme config file"
-  echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
-  echo_error "                                        0 -> ASN1 XER printf off"
-  echo_error "                                        1 -> ASN1 XER printf on and ASN1 debug off"
-  echo_error "                                        2 -> ASN1 XER printf on and ASN1 debug on"
+  echo_error "  -D, --daemon                             Run the daemon."
+  echo_error "  -g, --gdb                                Run with GDB."
+  echo_error "  -G, --gdb-cmd         cmd cmd_arg        Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
+  echo_error "                                           All repetitions of this argument are valid."
+  echo_error "  -h, --help                               Print this help."
+  echo_error "  -I, --install-mme-files                  Install MME config files. (NOT RECOMMENDED. See tutorials on https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or DOCS/EPC_User_Guide.pdf"
+  echo_error "  -k, --kill                               Kill all running MME instances, exit script then."
+  echo_error "  -m, --mscgen          directory          Generate mscgen output files in a directory"
+  echo_error "  -s, --scenario-player scenario_abs_path  Run scenario player"
+  echo_error "  -v, --verbosity-level                    Verbosity level (0,1,2)."
+  echo_error "                                             0 -> ASN1 XER printf off"
+  echo_error "                                             1 -> ASN1 XER printf on and ASN1 debug off"
+  echo_error "                                             2 -> ASN1 XER printf on and ASN1 debug on"
 }
 
 function do_msc_gen()
@@ -105,6 +105,7 @@ function main()
   local -i var_check_install_mme_files=0
   local    exe_arguments=" "
   local    mme_config_file=$g_mme_default_config_file
+  local    scenario_file
   local -a gdb_args
   local -i gdb_index=0
 
@@ -168,9 +169,11 @@ function main()
       -s | --scenario-player)
         run_scenario_player=1
         echo "setting scenario player flag to: $run_scenario_player"
-        exe_arguments="-s $exe_arguments"
-        DAEMON_ARGS=$DAEMON_ARGS" -s "
-        shift;
+        scenario_file=$2
+        echo "setting scenario file to: $scenario_file"
+        exe_arguments="-s $scenario_file $exe_arguments"
+        DAEMON_ARGS=$DAEMON_ARGS" -s $scenario_file"
+        shift 2;
         ;;
       -v | --verbosity-level)
         local verbosity_level=$2

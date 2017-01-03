@@ -889,7 +889,7 @@ mme_config_parse_opt_line (
   /*
    * Parsing command line
    */
-  while ((c = getopt (argc, argv, "c:hsi:K:v:V")) != -1) {
+  while ((c = getopt (argc, argv, "c:hs:i:K:v:V")) != -1) {
     switch (c) {
     case 'c':{
         /*
