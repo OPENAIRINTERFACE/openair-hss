@@ -832,6 +832,7 @@ void msp_free_message_content (scenario_player_msg_t * msg)
 
     if (msg->itti_msg) {
       //TODO  need to do more than that
+      itti_free_msg_content(msg->itti_msg);
       itti_free (ITTI_MSG_ORIGIN_ID (msg->itti_msg), msg->itti_msg);
       msg->itti_msg = NULL;
     }

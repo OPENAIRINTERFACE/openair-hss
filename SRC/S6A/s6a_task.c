@@ -106,6 +106,7 @@ void *s6a_thread (void *args)
       break;
     case TERMINATE_MESSAGE:{
         s6a_exit();
+        OAI_FPRINTF_INFO("TASK_S6A terminated\n");
         itti_exit_task ();
       }
       break;
@@ -243,5 +244,4 @@ static void s6a_exit(void)
   if (rv) {
     OAI_FPRINTF_ERR ("An error occurred during fd_core_wait_shutdown_complete().\n");
   }
-  OAI_FPRINTF_INFO("TASK_S6A terminated");
 }

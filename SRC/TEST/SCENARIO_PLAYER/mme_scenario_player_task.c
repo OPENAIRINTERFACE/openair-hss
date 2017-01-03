@@ -112,7 +112,7 @@ void *mme_scenario_player_event_handler (void *args)
 
     case TERMINATE_MESSAGE:
       mme_scenario_player_exit();
-      OAI_FPRINTF_INFO("TASK_MME_SCENARIO_PLAYER terminated");
+      OAI_FPRINTF_INFO("TASK_MME_SCENARIO_PLAYER terminated\n");
       itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
       itti_exit_task ();
       break;

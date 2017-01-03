@@ -146,7 +146,6 @@ static shared_log_queue_item_t * create_new_log_queue_item(sh_ts_log_app_id_t ap
 //------------------------------------------------------------------------------
 shared_log_queue_item_t * get_new_log_queue_item(sh_ts_log_app_id_t app_id)
 {
-  int                             rv = 0;
   shared_log_queue_item_t        *item_p = NULL;
   struct lfds710_stack_element   *se = NULL;
 
@@ -158,7 +157,7 @@ shared_log_queue_item_t * get_new_log_queue_item(sh_ts_log_app_id_t app_id)
   if (se) {
     item_p = LFDS710_STACK_GET_VALUE_FROM_ELEMENT( *se );
 
-    if (0 == rv) {
+    if (!item_p) {
       item_p = create_new_log_queue_item(app_id);
       AssertFatal(item_p,  "Out of memory error");
     } else {
