@@ -448,8 +448,8 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   } else {
     /*
-     * We have fount the UE in the list.
-     * * * * Create new IE list message and encode it.
+     * We have found the UE in the list.
+     * Create new IE list message and encode it.
      */
     S1ap_E_RABSetupRequestIEs_t            *e_rabsetuprequesties = NULL;
     s1ap_message                            message = {0};
@@ -467,6 +467,10 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
      * Fill in the NAS pdu
      */
     e_rabsetuprequesties->presenceMask = 0;
+//    if (e_rab_setup_req->ue_aggregate_maximum_bit_rate_present) {
+//      e_rabsetuprequesties->presenceMask |= S1AP_E_RABSETUPREQUESTIES_UEAGGREGATEMAXIMUMBITRATE_PRESENT;
+//      TO DO e_rabsetuprequesties->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL.buf
+//    }
 
     S1ap_E_RABToBeSetupItemBearerSUReq_t s1ap_E_RABToBeSetupItemBearerSUReq[e_rab_setup_req->e_rab_to_be_setup_list.no_of_items];
     struct S1ap_GBR_QosInformation       gbrQosInformation[e_rab_setup_req->e_rab_to_be_setup_list.no_of_items];
@@ -571,18 +575,14 @@ s1ap_handle_conn_est_cnf (
     e_RABToBeSetup[item].e_RABlevelQoSParameters.qCI = conn_est_cnf_pP->e_rab_level_qos_qci[item];
 
     nas_pdu.size = blength(conn_est_cnf_pP->nas_pdu[item]);
-    nas_pdu.buf  = (uint8_t*)bdata(conn_est_cnf_pP->nas_pdu[item]);
+    nas_pdu.buf  = malloc(blength(conn_est_cnf_pP->nas_pdu[item]));
+    memcpy(nas_pdu.buf, (void*)conn_est_cnf_pP->nas_pdu[item]->data, blength(conn_est_cnf_pP->nas_pdu[item]));
 
     e_RABToBeSetup[item].nAS_PDU = &nas_pdu;
-#  if ORIGINAL_S1AP_CODE
-    e_RABToBeSetup[item].e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = S1ap_PriorityLevel_lowest;
-    e_RABToBeSetup[item].e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability = S1ap_Pre_emptionCapability_shall_not_trigger_pre_emption;
-    e_RABToBeSetup[item].e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability = S1ap_Pre_emptionVulnerability_not_pre_emptable;
-#  else
+
     e_RABToBeSetup[item].e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = conn_est_cnf_pP->e_rab_level_qos_priority_level[item];
     e_RABToBeSetup[item].e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability = conn_est_cnf_pP->e_rab_level_qos_preemption_capability[item];
     e_RABToBeSetup[item].e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability = conn_est_cnf_pP->e_rab_level_qos_preemption_vulnerability[item];
-#  endif
     /*
      * Set the GTP-TEID. This is the S1-U S-GW TEID
      */
@@ -594,7 +594,7 @@ s1ap_handle_conn_est_cnf (
     e_RABToBeSetup[item].transportLayerAddress.bits_unused = 0;
     ASN_SEQUENCE_ADD (&initialContextSetupRequest_p->e_RABToBeSetupListCtxtSUReq, &e_RABToBeSetup[item]);
     // TODO check in asn1c
-    //bdestroy (conn_est_cnf_pP->nas_pdu[item]);
+    bdestroy_wrapper (&conn_est_cnf_pP->nas_pdu[item]);
   }
   initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.buf = (uint8_t *) & conn_est_cnf_pP->ue_security_capabilities_encryption_algorithms;
   initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.size = 2;

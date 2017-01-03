@@ -113,6 +113,7 @@ typedef struct itti_s1ap_e_rab_setup_req_s {
   enb_ue_s1ap_id_t    enb_ue_s1ap_id;
 
   // Applicable for non-GBR E-RABs
+  bool                            ue_aggregate_maximum_bit_rate_present;
   ue_aggregate_maximum_bit_rate_t ue_aggregate_maximum_bit_rate;
 
   // E-RAB to Be Setup List

@@ -97,7 +97,7 @@ bool sp_e_rab_setup_list_from_xml (
   bool res = false;
   list->no_of_items = 0;
   bstring xpath_expr = bformat("./%s",E_RAB_SETUP_LIST_XML_STR);
-  xmlXPathObjectPtr xpath_obj = xml_find_nodes(scenario->xml_doc, &msg->xpath_ctx, xpath_expr);
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
     int size = (nodes) ? nodes->nodeNr : 0;
@@ -107,7 +107,7 @@ bool sp_e_rab_setup_list_from_xml (
 
       if (res) {
         bstring xpath_expr_items = bformat("./%s",E_RAB_SETUP_ITEM_XML_STR);
-        xmlXPathObjectPtr xpath_obj_items = xml_find_nodes(scenario->xml_doc, &msg->xpath_ctx, xpath_expr_items);
+        xmlXPathObjectPtr xpath_obj_items = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_items);
         if (xpath_obj_items) {
           xmlNodeSetPtr items = xpath_obj_items->nodesetval;
           int no_of_items = (items) ? items->nodeNr : 0;
@@ -143,7 +143,7 @@ bool sp_e_rab_to_be_setup_list_from_xml (
   bool res = false;
   list->no_of_items = 0;
   bstring xpath_expr = bformat("./%s",E_RAB_TO_BE_SETUP_LIST_XML_STR);
-  xmlXPathObjectPtr xpath_obj = xml_find_nodes(scenario->xml_doc, &msg->xpath_ctx, xpath_expr);
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
     int size = (nodes) ? nodes->nodeNr : 0;
@@ -153,7 +153,7 @@ bool sp_e_rab_to_be_setup_list_from_xml (
 
       if (res) {
         bstring xpath_expr_items = bformat("./%s",E_RAB_TO_BE_SETUP_ITEM_XML_STR);
-        xmlXPathObjectPtr xpath_obj_items = xml_find_nodes(scenario->xml_doc, &msg->xpath_ctx, xpath_expr_items);
+        xmlXPathObjectPtr xpath_obj_items = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_items);
         if (xpath_obj_items) {
           xmlNodeSetPtr items = xpath_obj_items->nodesetval;
           int no_of_items = (items) ? items->nodeNr : 0;
@@ -224,7 +224,7 @@ bool sp_e_rab_level_qos_parameters_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",E_RAB_LEVEL_QOS_PARAMETERS_XML_STR);
-  xmlXPathObjectPtr xpath_obj = xml_find_nodes(scenario->xml_doc, &msg->xpath_ctx, xpath_expr);
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
     int size = (nodes) ? nodes->nodeNr : 0;
@@ -260,7 +260,7 @@ bool sp_allocation_and_retention_priority_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",ALLOCATION_AND_RETENTION_PRIORITY_XML_STR);
-  xmlXPathObjectPtr xpath_obj = xml_find_nodes(scenario->xml_doc, &msg->xpath_ctx, xpath_expr);
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
     int size = (nodes) ? nodes->nodeNr : 0;
@@ -296,7 +296,7 @@ bool sp_gbr_qos_information_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",GBR_QOS_INFORMATION_XML_STR);
-  xmlXPathObjectPtr xpath_obj = xml_find_nodes(scenario->xml_doc, &msg->xpath_ctx, xpath_expr);
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
     int size = (nodes) ? nodes->nodeNr : 0;
@@ -334,7 +334,7 @@ bool sp_ue_aggregate_maximum_bit_rate_from_xml (
   OAILOG_FUNC_IN (LOG_XML);
   bool res = false;
   bstring xpath_expr = bformat("./%s",UE_AGGREGATE_MAXIMUM_BIT_RATE_XML_STR);
-  xmlXPathObjectPtr xpath_obj = xml_find_nodes(scenario->xml_doc, &msg->xpath_ctx, xpath_expr);
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
   if (xpath_obj) {
     xmlNodeSetPtr nodes = xpath_obj->nodesetval;
     int size = (nodes) ? nodes->nodeNr : 0;

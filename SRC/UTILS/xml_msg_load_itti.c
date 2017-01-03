@@ -749,7 +749,7 @@ int xml_msg_load_itti_s1ap_e_rab_setup_rsp (scenario_t * const scenario, scenari
       }
 
       if (res) {
-        res = e_rab_setup_list_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_rsp.e_rab_setup_list);
+        res = sp_e_rab_setup_list_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_e_rab_setup_rsp.e_rab_setup_list);
       }
     } else {
       res = false;
