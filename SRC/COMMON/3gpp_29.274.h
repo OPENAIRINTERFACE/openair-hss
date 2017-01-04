@@ -225,4 +225,42 @@ typedef struct bearer_context_within_create_bearer_request_s {
                                     ///< over the PCO IE in the message body if they both exist.
 } bearer_context_within_create_bearer_request_t;
 
+//-------------------------------------
+// 7.2.4-2: Bearer Context within Create Bearer Response
+
+typedef struct bearer_context_within_create_bearer_response_s {
+  uint8_t      eps_bearer_id;       ///< EBI
+  sgw_cause_t  cause;               ///< This IE shall indicate if the bearer handling was successful,
+                                    ///< and if not, it gives information on the reason.
+  fteid_t      s1u_enb_fteid;       ///< This IE shall be sent on the S11 interface if the S1-U interface is used.
+  fteid_t      s1u_sgw_fteid;       ///< This IE shall be sent on the S11 interface. It shall be used
+                                    ///< to correlate the bearers with those in the Create Bearer
+                                    ///< Request.
+  fteid_t      s5_s8_u_sgw_fteid;   ///< This IE shall be sent on the S5/S8 interfaces.
+  fteid_t      s5_s8_u_pgw_fteid;   ///< This IE shall be sent on the S5/S8 interfaces. It shall be
+                                    ///< used to correlate the bearers with those in the Create
+                                    ///< Bearer Request.
+  fteid_t      s12_rnc_fteid;       ///< C This IE shall be sent on the S4 interface if the S12
+                                    ///< interface is used. See NOTE 1.
+  fteid_t      s12_sgw_fteid;       ///< C This IE shall be sent on the S4 interface. It shall be used to
+                                    ///< correlate the bearers with those in the Create Bearer
+                                    ///< Request. See NOTE1.
+  fteid_t      s4_u_sgsn_fteid ;    ///< C This IE shall be sent on the S4 interface if the S4-U
+                                    ///< interface is used. See NOTE1.
+  fteid_t      s4_u_sgw_fteid;      ///< C This IE shall be sent on the S4 interface. It shall be used to
+                                    ///< correlate the bearers with those in the Create Bearer
+                                    ///< Request. See NOTE1.
+  fteid_t      s2b_u_epdg_fteid;    ///<  C This IE shall be sent on the S2b interface.
+  fteid_t      s2b_u_pgw_fteid;     ///<  C This IE shall be sent on the S2b interface. It shall be used
+                                    ///< to correlate the bearers with those in the Create Bearer
+                                    ///<   Request.
+  protocol_configuration_options_t  pco;///< If the UE includes the PCO IE in the corresponding
+                                    ///< message, then the MME/SGSN shall copy the content of
+                                    ///< this IE transparently from the PCO IE included by the UE.
+                                    ///< If the SGW receives PCO from MME/SGSN, SGW shall
+                                    ///< forward it to the PGW. This bearer level IE takes
+                                    ///< precedence over the PCO IE in the message body if they
+                                    ///< both exist.
+} bearer_context_within_create_bearer_response_t;
+
 #endif /* FILE_3GPP_29_274_SEEN */

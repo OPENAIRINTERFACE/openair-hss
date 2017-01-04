@@ -44,6 +44,7 @@
 #include "enum_string.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_bearer_context.h"
 #include "mme_app_defs.h"
 #include "s1ap_mme.h"
 #include "common_defs.h"
@@ -786,7 +787,9 @@ void mme_app_dump_bearer_context (const bearer_context_t * const bc, uint8_t ind
   bformata (bstr_dump, "%*s - GBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.gbr_dl);
   bformata (bstr_dump, "%*s - MBR UL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.mbr_ul);
   bformata (bstr_dump, "%*s - MBR DL ..........: %010" PRIu64 "\n", indent_spaces, " ", bc->esm_ebr_context.mbr_dl);
-  bformata (bstr_dump, "%*s - State ...........: %s\n", indent_spaces, " ", bearer_state2string(bc->bearer_state));
+  bstring bstate = bearer_state2string(bc->bearer_state);
+  bformata (bstr_dump, "%*s - State ...........: %s\n", indent_spaces, " ", bdata(bstate));
+  bdestroy_wrapper(&bstate);
   bformata (bstr_dump, "%*s - "ANSI_COLOR_BOLD_ON"NAS ESM bearer private data .:\n", indent_spaces, " ");
   bformata (bstr_dump, "%*s -     ESM State .......: %s\n", indent_spaces, " ", esm_ebr_state2string(bc->esm_ebr_context.status));
   bformata (bstr_dump, "%*s -     Timer id ........: %lx\n", indent_spaces, " ", bc->esm_ebr_context.timer.id);

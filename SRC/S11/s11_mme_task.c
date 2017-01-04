@@ -197,6 +197,10 @@ s11_mme_thread (
       }
       break;
 
+    case S11_CREATE_BEARER_RESPONSE:{
+        AssertFatal(0, "TODO");
+      }
+      break;
 
     case S11_DELETE_SESSION_REQUEST:{
         s11_mme_delete_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_delete_session_request);

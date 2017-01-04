@@ -90,4 +90,6 @@ bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, 
 
 int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);
 
+void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t const * e_rab_setup_rsp);
+
 #endif /* MME_APP_DEFS_H_ */

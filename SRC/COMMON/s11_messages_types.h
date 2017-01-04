@@ -587,7 +587,7 @@ typedef struct itti_s11_create_bearer_response_s {
   // here fields listed in 3GPP TS 29.274
   sgw_cause_t               cause;               ///< M
 
-  bearer_contexts_created_t bearer_contexts;///< Several IEs with this type and instance value shall be
+  bearer_contexts_within_create_bearer_response_t bearer_contexts;///< Several IEs with this type and instance value shall be
   ///< included on the S4/S11, S5/S8 and S2b interfaces as
   ///< necessary to represent a list of Bearers.
 

@@ -593,8 +593,6 @@ s1ap_handle_conn_est_cnf (
     e_RABToBeSetup[item].transportLayerAddress.size = blength(conn_est_cnf_pP->transport_layer_address[item]);
     e_RABToBeSetup[item].transportLayerAddress.bits_unused = 0;
     ASN_SEQUENCE_ADD (&initialContextSetupRequest_p->e_RABToBeSetupListCtxtSUReq, &e_RABToBeSetup[item]);
-    // TODO check in asn1c
-    bdestroy_wrapper (&conn_est_cnf_pP->nas_pdu[item]);
   }
   initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.buf = (uint8_t *) & conn_est_cnf_pP->ue_security_capabilities_encryption_algorithms;
   initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.size = 2;

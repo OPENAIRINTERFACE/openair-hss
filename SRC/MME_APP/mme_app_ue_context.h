@@ -81,21 +81,14 @@ void mme_app_ue_context_uint_to_imsi(uint64_t imsi_src, mme_app_imsi_t *imsi_dst
 void mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst, const imsi_t *imsi_src);
 
 
+#define BEARER_STATE_NULL        0
+#define BEARER_STATE_SGW_CREATED (1 << 0)
+#define BEARER_STATE_MME_CREATED (1 << 1)
+#define BEARER_STATE_ENB_CREATED (1 << 2)
+#define BEARER_STATE_ACTIVE      (1 << 3)
 
-// TODO
-typedef enum {
-  BEARER_STATE_MIN = 0,
-  BEARER_STATE_NULL = BEARER_STATE_MIN,
-  BEARER_STATE_SGW_CREATE_REQUESTED,
-  BEARER_STATE_SGW_CREATED,
-  BEARER_STATE_MME_CREATE_REQUESTED,
-  BEARER_STATE_MME_CREATE_REQUESTED_FORWARDED_NAS,
-  BEARER_STATE_MME_CREATED,
-  BEARER_STATE_ACTIVE,
-  BEARER_STATE_MAX
-} mme_app_bearer_state_t;
+typedef uint8_t mme_app_bearer_state_t;
 
-const char * const bearer_state2string(const mme_app_bearer_state_t bearer_state);
 
 /** @struct bearer_context_t
  *  @brief Parameters that should be kept for an eps bearer.
@@ -142,6 +135,7 @@ typedef struct bearer_context_s {
   pdn_cid_t                         pdn_cx_id;
   mme_app_bearer_state_t            bearer_state;
   esm_ebr_context_t                 esm_ebr_context;
+  teid_t                            enb_teid_s1u;
 
 
   /* QoS for this bearer */

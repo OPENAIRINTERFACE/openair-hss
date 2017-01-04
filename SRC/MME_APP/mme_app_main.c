@@ -150,9 +150,7 @@ void *mme_app_thread (void *args)
       break;
 
     case S1AP_E_RAB_SETUP_RSP:{
-        OAILOG_WARNING (LOG_MME_APP, "TODO S1AP_E_RAB_SETUP_RSP, EXITING\n");
-        OAI_FPRINTF_INFO("TODO S1AP_E_RAB_SETUP_RSP, EXITING\n");
-        itti_send_terminate_message (TASK_MME_APP);
+        mme_app_handle_e_rab_setup_rsp (&S1AP_E_RAB_SETUP_RSP (received_message_p));
       }
       break;
 

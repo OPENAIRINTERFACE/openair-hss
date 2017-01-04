@@ -52,26 +52,19 @@
 static void mme_app_bearer_context_init(bearer_context_t *const  bearer_context);
 
 //------------------------------------------------------------------------------
-const char * const bearer_state2string(const mme_app_bearer_state_t bearer_state)
+bstring bearer_state2string(const mme_app_bearer_state_t bearer_state)
 {
-  switch (bearer_state) {
-    case BEARER_STATE_NULL:
-      return "BEARER_STATE_NULL";
-    case BEARER_STATE_SGW_CREATE_REQUESTED:
-      return "BEARER_STATE_SGW_CREATE_REQUESTED";
-    case BEARER_STATE_SGW_CREATED:
-      return "BEARER_STATE_SGW_CREATED";
-    case BEARER_STATE_MME_CREATE_REQUESTED:
-      return "BEARER_STATE_MME_CREATE_REQUESTED";
-    case BEARER_STATE_MME_CREATE_REQUESTED_FORWARDED_NAS:
-      return "BEARER_STATE_MME_CREATE_REQUESTED_FORWARDED_NAS";
-    case BEARER_STATE_MME_CREATED:
-      return "BEARER_STATE_MME_CREATED";
-    case BEARER_STATE_ACTIVE:
-      return "BEARER_STATE_ACTIVE";
-    default :
-      return "UNKNOWN";
+  bstring bsstr = NULL;
+  if  (BEARER_STATE_NULL == bearer_state) {
+    bsstr = bfromcstr("BEARER_STATE_NULL");
+    return bsstr;
   }
+  bsstr = bfromcstr(" ");
+  if  (BEARER_STATE_SGW_CREATED & bearer_state) bcatcstr(bsstr, "SGW_CREATED ");
+  if  (BEARER_STATE_MME_CREATED & bearer_state) bcatcstr(bsstr, "MME_CREATED ");
+  if  (BEARER_STATE_ENB_CREATED & bearer_state) bcatcstr(bsstr, "ENB_CREATED ");
+  if  (BEARER_STATE_ACTIVE & bearer_state) bcatcstr(bsstr, "ACTIVE");
+  return bsstr;
 }
 
 //------------------------------------------------------------------------------

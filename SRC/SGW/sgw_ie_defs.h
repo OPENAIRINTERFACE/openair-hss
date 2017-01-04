@@ -471,5 +471,11 @@ typedef struct bearer_contexts_within_create_bearer_request_s {
   bearer_context_within_create_bearer_request_t bearer_contexts[MSG_CREATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS];
 } bearer_contexts_within_create_bearer_request_t;
 
+typedef struct bearer_contexts_within_create_bearer_response_s {
+#define MSG_CREATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS   11
+  uint8_t num_bearer_context;
+  bearer_context_within_create_bearer_response_t bearer_contexts[MSG_CREATE_BEARER_RESPONSE_MAX_BEARER_CONTEXTS];
+} bearer_contexts_within_create_bearer_response_t;
+
 #endif  /* FILE_SGW_IE_DEFS_SEEN */
 

@@ -30,7 +30,7 @@
 #ifndef FILE_MME_APP_BEARER_CONTEXT_SEEN
 #define FILE_MME_APP_BEARER_CONTEXT_SEEN
 
-const char * const bearer_state2string(const mme_app_bearer_state_t bearer_state);
+bstring bearer_state2string(const mme_app_bearer_state_t bearer_state);
 bearer_context_t *  mme_app_create_bearer_context(ue_mm_context_t * const ue_mm_context, const pdn_cid_t pdn_cid, const ebi_t ebi);
 void mme_app_free_bearer_context (bearer_context_t ** const bearer_context);
 bearer_context_t* mme_app_get_bearer_context(ue_mm_context_t * const ue_context, const ebi_t ebi);
