@@ -290,7 +290,6 @@ int shared_log_init (const int max_threadsP)
 
   g_shared_log.running = true;
 
-  log_message (thread_ctxt, OAILOG_LEVEL_INFO, LOG_UTIL, __FILE__, __LINE__, "Initializing shared logging Done\n");
   return 0;
 }
 

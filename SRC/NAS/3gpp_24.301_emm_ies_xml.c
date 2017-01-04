@@ -601,6 +601,7 @@ bool nas_security_algorithms_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_nsa);
   }
   bdestroy_wrapper (&xpath_expr_nsa);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -1187,6 +1188,7 @@ bool ue_security_capability_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_nsa);
   }
   bdestroy_wrapper (&xpath_expr_nsa);
   OAILOG_FUNC_RETURN (LOG_XML, res);

@@ -197,7 +197,9 @@ void xml_msg_dump_itti_sctp_close_association(const sctp_close_association_t * c
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -249,7 +251,9 @@ void xml_msg_dump_itti_s1ap_ue_context_release_req(const itti_s1ap_ue_context_re
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -303,7 +307,9 @@ void xml_msg_dump_itti_s1ap_ue_context_release_command(const itti_s1ap_ue_contex
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -357,7 +363,9 @@ void xml_msg_dump_itti_s1ap_ue_context_release_complete(const itti_s1ap_ue_conte
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -412,7 +420,9 @@ void xml_msg_dump_itti_s1ap_initial_ue_message(
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -483,7 +493,9 @@ void xml_msg_dump_itti_s1ap_e_rab_setup_req(
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -541,7 +553,9 @@ void xml_msg_dump_itti_s1ap_e_rab_setup_rsp(
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -598,7 +612,9 @@ void xml_msg_dump_itti_mme_app_initial_context_setup_rsp(const itti_mme_app_init
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -658,7 +674,9 @@ void xml_msg_dump_itti_mme_app_connection_establishment_cnf(const itti_mme_app_c
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -727,7 +745,9 @@ void xml_msg_dump_itti_nas_uplink_data_ind(const itti_nas_ul_data_ind_t * const 
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -779,7 +799,9 @@ void xml_msg_dump_itti_nas_downlink_data_req(const itti_nas_dl_data_req_t * cons
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -834,7 +856,9 @@ void xml_msg_dump_itti_nas_downlink_data_rej(const itti_nas_dl_data_rej_t * cons
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -886,7 +910,9 @@ void xml_msg_dump_itti_nas_downlink_data_cnf(const itti_nas_dl_data_cnf_t * cons
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 
@@ -939,7 +965,9 @@ void xml_msg_dump_itti_s11_create_bearer_request(const itti_s11_create_bearer_re
     rc = xmlTextWriterStartDocument(xml_text_writer, NULL, XML_ENCODING, NULL);
     if (rc < 0) {
       OAI_FPRINTF_ERR("%s: Error at xmlTextWriterStartDocument\n", __FUNCTION__);
-      xmlFreeTextWriter(xml_text_writer);
+      if (!xml_text_writer_param) {
+        xmlFreeTextWriter(xml_text_writer);
+      }
       return;
     }
 

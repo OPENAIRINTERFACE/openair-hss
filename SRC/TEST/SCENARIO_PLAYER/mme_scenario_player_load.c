@@ -224,6 +224,7 @@ scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlD
       }
     }
   }
+  bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, spi);
 }
 

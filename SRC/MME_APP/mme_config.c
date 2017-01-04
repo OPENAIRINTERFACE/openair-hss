@@ -190,7 +190,34 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->s1ap_config.outcome_drop_timer_sec = S1AP_OUTCOME_TIMER_DEFAULT;
 }
 
+//------------------------------------------------------------------------------
+void mme_config_exit (void)
+{
+  pthread_rwlock_destroy (&mme_config.rw_lock);
+  bdestroy_wrapper(&mme_config.log_config.output);
+  bdestroy_wrapper(&mme_config.realm);
+  bdestroy_wrapper(&mme_config.config_file);
 
+  /*
+   * IP configuration
+   */
+  bdestroy_wrapper(&mme_config.ipv4.if_name_s1_mme);
+  bdestroy_wrapper(&mme_config.ipv4.if_name_s11);
+  bdestroy_wrapper(&mme_config.s6a_config.conf_file);
+  bdestroy_wrapper(&mme_config.s6a_config.hss_host_name);
+  bdestroy_wrapper(&mme_config.itti_config.log_file);
+
+  free_wrapper((void**)&mme_config.served_tai.plmn_mcc);
+  free_wrapper((void**)&mme_config.served_tai.plmn_mnc);
+  free_wrapper((void**)&mme_config.served_tai.plmn_mnc_len);
+  free_wrapper((void**)&mme_config.served_tai.tac);
+
+  for (int i = 0; i < mme_config.e_dns_emulation.nb_sgw_entries; i++) {
+    bdestroy_wrapper(&mme_config.e_dns_emulation.sgw_id[i]);
+  }
+
+  bdestroy_wrapper(&mme_config.scenario_player_config.scenario_file);
+}
 //------------------------------------------------------------------------------
 static int mme_config_parse_file (mme_config_t * config_pP)
 {

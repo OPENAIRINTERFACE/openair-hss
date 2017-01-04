@@ -840,7 +840,9 @@ int xml_msg_load_itti_mme_app_initial_context_setup_rsp(scenario_t * const scena
               res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr2, msg->xpath_ctx)) & res;
             }
           }
+          xmlXPathFreeObject(xpath_obj_erab);
         }
+        bdestroy_wrapper (&xpath_expr_erab);
       }
     } else {
       res = false;
@@ -946,7 +948,9 @@ int xml_msg_load_itti_mme_app_connection_establishment_cnf(scenario_t * const sc
               res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr2, msg->xpath_ctx)) & res;
             }
           }
+          xmlXPathFreeObject(xpath_obj_erab);
         }
+        bdestroy_wrapper (&xpath_expr_erab);
       }
 
       if (res) {
