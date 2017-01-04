@@ -23,5 +23,6 @@
 #define FILE_S11_MME_SEEN
 
 int s11_mme_init(const mme_config_t * const mme_config);
+void s11_mme_exit (void);
 
 #endif /* FILE_S11_MME_SEEN */

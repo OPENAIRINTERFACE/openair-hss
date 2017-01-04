@@ -324,3 +324,9 @@ fail:
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: FAILURE\n");
   return RETURNerror;
 }
+//------------------------------------------------------------------------------
+void s11_mme_exit (void)
+{
+  nwGtpv2cFinalize (s11_mme_stack_handle);
+  hashtable_ts_destroy(s11_mme_teid_2_gtv2c_teid_handle);
+}

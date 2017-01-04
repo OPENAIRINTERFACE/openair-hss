@@ -1099,11 +1099,14 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
     }
     xmlXPathFreeObject(xpath_obj);
   }
+  xmlXPathFreeContext(xpath_ctx);
+  xmlFreeDoc(doc);
+  bdestroy_wrapper (&xpath_expr);
+
   AssertFatal(SCENARIO_STATUS_LOADING == scenario->status, "Failed to load scenario %s\n", bdata(file_path));
   if (SCENARIO_STATUS_LOADING == scenario->status) {
     scenario_set_status(scenario, SCENARIO_STATUS_LOADED, __FILE__, __LINE__);
   }
-  xmlFreeDoc(doc);
   return scenario_item;
 }
 
@@ -1172,6 +1175,7 @@ void msp_free_scenario (scenario_t * scenario)
     bdestroy_wrapper (&scenario->name);
     hashtable_ts_destroy(scenario->scenario_items);
     obj_hashtable_ts_destroy(scenario->var_items);
+    obj_hashtable_ts_destroy(scenario->label_items);
     free_wrapper((void**)&scenario->ue_emulated_emm_security_context);
 
     pthread_mutex_unlock(&scenario->lock);

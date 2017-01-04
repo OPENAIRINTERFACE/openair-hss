@@ -522,6 +522,9 @@ void log_exit (void)
   if (!g_oai_log.is_output_is_fd) {
     closelog();
   }
+  hashtable_ts_destroy (g_oai_log.thread_context_htbl);
+  bdestroy_wrapper(&g_oai_log.bserver_address);
+  bdestroy_wrapper(&g_oai_log.bserver_port);
   OAI_FPRINTF_INFO("[TRACE] Leaving %s\n", __FUNCTION__);
 }
 

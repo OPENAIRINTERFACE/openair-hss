@@ -159,5 +159,6 @@ void mme_scenario_player_exit (void)
 {
   // TODO would need mutex on g_msp_scenarios
   msp_free_scenario(g_msp_scenarios.head_scenarios);
+  xmlCleanupParser();
 }
 

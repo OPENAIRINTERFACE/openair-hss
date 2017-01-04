@@ -87,6 +87,7 @@ void mme_app_select_sgw(const tai_t * const tai, struct in_addr * const sgw_in_a
     sgw_in_addr->s_addr = entry->s_addr;
   }
   OAILOG_DEBUG (LOG_MME_APP, "SGW lookup %s returned %s\n", application_unique_string->data, inet_ntoa (*sgw_in_addr));
+  bdestroy_wrapper(&application_unique_string);
   return;
 
 lookup_error:
