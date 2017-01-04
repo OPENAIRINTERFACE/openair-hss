@@ -191,6 +191,7 @@ bool sp_mobile_identity_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_mi);
   }
   bdestroy_wrapper (&xpath_expr_mi);
   return res;

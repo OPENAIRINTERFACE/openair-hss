@@ -79,3 +79,8 @@ int  mme_app_edns_init (const mme_config_t * mme_config_p)
   }
   return RETURNerror;
 }
+//------------------------------------------------------------------------------
+void  mme_app_edns_exit (void)
+{
+  obj_hashtable_destroy (g_e_dns_entries);
+}

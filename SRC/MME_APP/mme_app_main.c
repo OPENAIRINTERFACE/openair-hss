@@ -175,13 +175,7 @@ void *mme_app_thread (void *args)
         /*
          * Termination message received TODO -> release any data allocated
          */
-
-        XML_MSG_DUMP_EXIT();
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
-        hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
-        obj_hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
+        mme_app_exit();
         OAI_FPRINTF_INFO("TASK_MME_APP terminated\n");
         itti_exit_task ();
       }
@@ -267,4 +261,16 @@ int mme_app_init (const mme_config_t * mme_config_p)
 
   OAILOG_DEBUG (LOG_MME_APP, "Initializing MME applicative layer: DONE\n");
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+void mme_app_exit (void)
+{
+  mme_app_edns_exit();
+  XML_MSG_DUMP_EXIT();
+  hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
+  hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
+  hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
+  hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
+  obj_hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
 }

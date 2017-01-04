@@ -26,5 +26,7 @@
 struct in_addr* mme_app_edns_get_sgw_entry(bstring id);
 int mme_app_edns_add_sgw_entry(bstring id, struct in_addr in_addr);
 int  mme_app_edns_init (const mme_config_t * mme_config_p);
+void  mme_app_edns_exit (void);
+
 
 #endif

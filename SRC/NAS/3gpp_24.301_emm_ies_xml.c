@@ -734,6 +734,7 @@ bool tracking_area_identity_from_xml (
     }
     xmlXPathFreeObject(xpath_obj_tai);
   }
+  bdestroy_wrapper (&xpath_expr_tai);
   OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 

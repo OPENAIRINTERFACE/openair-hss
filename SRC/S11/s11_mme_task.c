@@ -228,6 +228,7 @@ s11_mme_thread (
       break;
 
     case TERMINATE_MESSAGE:{
+        s11_mme_exit();
         OAI_FPRINTF_INFO("TASK_S11 terminated\n");
         itti_exit_task ();
       }

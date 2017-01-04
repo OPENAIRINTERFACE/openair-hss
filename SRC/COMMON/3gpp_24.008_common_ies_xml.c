@@ -877,6 +877,7 @@ bool plmn_from_xml (
     }
     xmlXPathFreeObject(xpath_obj_plmn);
   }
+  bdestroy_wrapper (&xpath_expr_plmn);
   OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 
@@ -987,6 +988,7 @@ bool plmn_list_from_xml (
     }
     xmlXPathFreeObject(xpath_obj_plmnlist);
   }
+  bdestroy_wrapper (&xpath_expr_plmnlist);
   OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------

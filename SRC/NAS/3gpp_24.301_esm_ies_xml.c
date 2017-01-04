@@ -136,6 +136,7 @@ bool apn_aggregate_maximum_bit_rate_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_apn);
   }
   bdestroy_wrapper (&xpath_expr_apn);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -263,6 +264,7 @@ bool eps_quality_of_service_from_xml (
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
+    xmlXPathFreeObject(xpath_obj_qos);
   }
   bdestroy_wrapper (&xpath_expr_qos);
   OAILOG_FUNC_RETURN (LOG_XML, res);
@@ -357,6 +359,7 @@ bool pdn_address_from_xml (
         res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
       }
     }
+    xmlXPathFreeObject(xpath_obj);
   }
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_XML, res);
