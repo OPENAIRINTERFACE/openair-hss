@@ -645,9 +645,33 @@ sgw_handle_sgi_endpoint_deleted (
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
   int                                     rv = RETURNok;
 
+  // free PDN address
+  switch (resp_pP->paa.pdn_type) {
+  case IPv4_OR_v6:
+    pgw_release_free_ipv4_paa_address (&resp_pP->paa.ipv4_address);
+    break;
+
+  case IPv4:
+    pgw_release_free_ipv4_paa_address (&resp_pP->paa.ipv4_address);
+    break;
+
+  case IPv6:
+    // TODO
+    break;
+
+  case IPv4_AND_v6:
+    pgw_release_free_ipv4_paa_address (&resp_pP->paa.ipv4_address);
+    // TODO
+    break;
+
+  default:
+    break;
+  }
 
 	OAILOG_DEBUG (LOG_SPGW_APP, "bcom Rx SGI_DELETE_ENDPOINT_REQUEST, Context teid %u, SGW S1U teid %u, EPS bearer id %u\n",
                 resp_pP->context_teid, resp_pP->sgw_S1u_teid, resp_pP->eps_bearer_id);
+
+
 
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, resp_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
 

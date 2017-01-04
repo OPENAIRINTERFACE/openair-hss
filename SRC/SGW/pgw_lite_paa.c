@@ -132,7 +132,7 @@ pgw_release_free_ipv4_paa_address (
   STAILQ_FOREACH (ipv4_p, &pgw_app.ipv4_list_allocated, ipv4_entries) {
     if (ipv4_p->addr.s_addr == addr_pP->s_addr) {
       STAILQ_REMOVE (&pgw_app.ipv4_list_allocated, ipv4_p, ipv4_list_elm_s, ipv4_entries);
-      STAILQ_INSERT_TAIL (&pgw_app.ipv4_list_free, ipv4_p, ipv4_entries);
+      STAILQ_INSERT_HEAD (&pgw_app.ipv4_list_free, ipv4_p, ipv4_entries);
       return RETURNok;
     }
   }
