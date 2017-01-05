@@ -325,8 +325,8 @@ mme_app_handle_conn_est_cnf (
         establishment_cnf_p->e_rab_level_qos_priority_level[j]           = bc->priority_level;
         establishment_cnf_p->e_rab_level_qos_preemption_capability[j]    = bc->preemption_capability;
         establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[j] = bc->preemption_vulnerability;
-        establishment_cnf_p->transport_layer_address[j]                  = ip_address_to_bstring(&bc->s_gw_address_s1u);
-        establishment_cnf_p->gtp_teid[j]                                 = bc->s_gw_teid_s1u;
+        establishment_cnf_p->transport_layer_address[j]                  = fteid_ip_address_to_bstring(&bc->s_gw_fteid_s1u);
+        establishment_cnf_p->gtp_teid[j]                                 = bc->s_gw_fteid_s1u.teid;
         if (!j) {
           establishment_cnf_p->nas_pdu[j]                                = nas_conn_est_cnf_pP->nas_msg;
           nas_conn_est_cnf_pP->nas_msg = NULL;
@@ -502,13 +502,17 @@ mme_app_handle_erab_setup_req (itti_erab_setup_req_t * const itti_erab_setup_req
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.gbr_qos_information.e_rab_guaranteed_bit_rate_uplink   = itti_erab_setup_req->gbr_ul;
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_level_qos_parameters.qci = bearer_context->qci;
 
-    s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].gtp_teid = bearer_context->s_gw_teid_s1u;
-    s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].transport_layer_address = ip_address_to_bstring(&bearer_context->s_gw_address_s1u);
+    s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].gtp_teid = bearer_context->s_gw_fteid_s1u.teid;
+    s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].transport_layer_address = fteid_ip_address_to_bstring(&bearer_context->s_gw_fteid_s1u);
 
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].nas_pdu = itti_erab_setup_req->nas_msg;
     itti_erab_setup_req->nas_msg = NULL;
 
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_E_RAB_SETUP_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_context_p->mme_ue_s1ap_id, bearer_context->ebi);
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_E_RAB_SETUP_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u teid " " tla %s",
+        ue_context_p->mme_ue_s1ap_id,
+        s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_id,
+        s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].gtp_teid,
+        s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].transport_layer_address->data);
     int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
     itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
   } else {
@@ -615,11 +619,8 @@ mme_app_handle_create_sess_resp (
      */
     mme_app_desc.mme_ue_contexts.nb_bearers_managed++;
     mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat++;
-    current_bearer_p->s_gw_teid_s1u = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].s1u_sgw_fteid.teid;
-    FTEID_T_2_IP_ADDRESS_T(&create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].s1u_sgw_fteid, &current_bearer_p->s_gw_address_s1u);
-
-    current_bearer_p->p_gw_teid_s5_s8_up = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].s5_s8_u_pgw_fteid.teid;
-    memset (&current_bearer_p->p_gw_address_s5_s8_up, 0, sizeof (ip_address_t));
+    current_bearer_p->s_gw_fteid_s1u = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].s1u_sgw_fteid;
+    current_bearer_p->p_gw_fteid_s5_s8_up = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].s5_s8_u_pgw_fteid;
 
     // if modified by pgw
     if (create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].bearer_level_qos ) {
@@ -660,9 +661,7 @@ mme_app_handle_create_sess_resp (
   nas_pdn_connectivity_rsp->prio_level            = current_bearer_p->priority_level;
   nas_pdn_connectivity_rsp->pre_emp_vulnerability = current_bearer_p->preemption_vulnerability;
   nas_pdn_connectivity_rsp->pre_emp_capability    = current_bearer_p->preemption_capability;
-  nas_pdn_connectivity_rsp->sgw_s1u_teid          = current_bearer_p->s_gw_teid_s1u;
-
-  memcpy (&nas_pdn_connectivity_rsp->sgw_s1u_address, &current_bearer_p->s_gw_address_s1u, sizeof (ip_address_t));
+  nas_pdn_connectivity_rsp->sgw_s1u_fteid         = current_bearer_p->s_gw_fteid_s1u;
 
   // optional IE
   nas_pdn_connectivity_rsp->ambr.br_ul            = ue_context_p->suscribed_ue_ambr.br_ul;
@@ -676,7 +675,7 @@ mme_app_handle_create_sess_resp (
   }
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONNECTIVITY_RSP sgw_s1u_teid %u ebi %u qci %u prio %u",
-      current_bearer_p->s_gw_teid_s1u,
+      current_bearer_p->s_gw_fteid_s1u.teid,
       bearer_id,
       current_bearer_p->qci,
       current_bearer_p->priority_level);
@@ -832,10 +831,8 @@ mme_app_handle_create_bearer_req (
 
     dedicated_bc->bearer_state   |= BEARER_STATE_SGW_CREATED;
 
-    dedicated_bc->s_gw_teid_s1u      = msg_bc->s1u_sgw_fteid.teid;
-    FTEID_T_2_IP_ADDRESS_T(&msg_bc->s1u_sgw_fteid, &dedicated_bc->s_gw_address_s1u);
-    dedicated_bc->p_gw_teid_s5_s8_up      = msg_bc->s5_s8_u_pgw_fteid.teid;
-    FTEID_T_2_IP_ADDRESS_T(&msg_bc->s5_s8_u_pgw_fteid, &dedicated_bc->p_gw_address_s5_s8_up);
+    dedicated_bc->s_gw_fteid_s1u      = msg_bc->s1u_sgw_fteid;
+    dedicated_bc->p_gw_fteid_s5_s8_up = msg_bc->s5_s8_u_pgw_fteid;
 
     dedicated_bc->qci                      = msg_bc->bearer_level_qos.qci;
     dedicated_bc->priority_level           = msg_bc->bearer_level_qos.pl;
@@ -943,50 +940,13 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
             memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv6_address,
                 &enb_ip_address.address.ipv6_address, sizeof(enb_ip_address.address.ipv6_address));
             break;
-          case IPv4_AND_v6:
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4         = 1;
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4_address = enb_ip_address.address.ipv4_address;
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv6         = 1;
-            memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv6_address,
-                &enb_ip_address.address.ipv6_address, sizeof(enb_ip_address.address.ipv6_address));
-            break;
-          case IPv4_OR_v6:
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4         = 1;
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4_address = enb_ip_address.address.ipv4_address;
-            break;
           default:
             AssertFatal(0, "Bug enb_ip_address->pdn_type");
         }
         bdestroy_wrapper (&e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address);
 
         // FTEID SGW S1U
-        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_sgw_fteid.teid = bc->s_gw_teid_s1u;       ///< This IE shall be sent on the S11 interface. It shall be used
-        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_sgw_fteid.interface_type = S1_U_SGW_GTP_U;
-        // TODO better than that later
-        switch (bc->s_gw_address_s1u.pdn_type) {
-          case IPv4:
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4         = 1;
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4_address = bc->s_gw_address_s1u.address.ipv4_address;
-            break;
-          case IPv6:
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv6         = 1;
-            memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv6_address,
-                &bc->s_gw_address_s1u.address.ipv6_address, sizeof(bc->s_gw_address_s1u.address.ipv6_address));
-            break;
-          case IPv4_AND_v6:
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4         = 1;
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4_address = bc->s_gw_address_s1u.address.ipv4_address;
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv6         = 1;
-            memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv6_address,
-                &bc->s_gw_address_s1u.address.ipv6_address, sizeof(bc->s_gw_address_s1u.address.ipv6_address));
-            break;
-          case IPv4_OR_v6:
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4         = 1;
-            s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4_address = bc->s_gw_address_s1u.address.ipv4_address;
-            break;
-          default:
-            AssertFatal(0, "Bug bc->s_gw_address_s1u.pdn_type");
-        }
+        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_sgw_fteid = bc->s_gw_fteid_s1u;       ///< This IE shall be sent on the S11 interface. It shall be used
         s11_create_bearer_response->bearer_contexts.num_bearer_context++;
       }
     }

@@ -44,6 +44,7 @@
 #include "security_types.h"
 #include "common_types.h"
 #include "common_defs.h"
+#include "3gpp_29.274.h"
 
 /* Clear GUTI without free it */
 void clear_guti(guti_t * const guti) {memset(guti, 0, sizeof(guti_t));guti->m_tmsi = INVALID_TMSI;}
@@ -53,6 +54,18 @@ void clear_imsi(imsi_t * const imsi){memset(imsi, 0, sizeof(imsi_t));}
 void clear_imei(imei_t * const imei){memset(imei, 0, sizeof(imei_t));}
 /* Clear IMEISV without free it */
 void clear_imeisv(imeisv_t * const imeisv){memset(imeisv, 0, sizeof(imeisv_t));}
+
+//------------------------------------------------------------------------------
+bstring fteid_ip_address_to_bstring(struct fteid_s *fteid)
+{
+  bstring bstr = NULL;
+  if (fteid->ipv4) {
+    bstr = blk2bstr(&fteid->ipv4_address.s_addr, 4);
+  } else if (fteid->ipv6) {
+    bstr = blk2bstr(&fteid->ipv6_address, 16);
+  }
+  return bstr;
+}
 
 //------------------------------------------------------------------------------
 bstring ip_address_to_bstring(ip_address_t *ip_address)

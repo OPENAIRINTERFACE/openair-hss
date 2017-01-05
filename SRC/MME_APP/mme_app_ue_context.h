@@ -101,22 +101,18 @@ typedef struct bearer_context_s {
   proc_tid_t                  transaction_identifier;
 
   // S-GW IP address for S1-u: IP address of the S-GW for the S1-u interfaces.
-  ip_address_t                s_gw_address_s1u;
-
   // S-GW TEID for S1u: Tunnel Endpoint Identifier of the S-GW for the S1-u interface.
-  teid_t                      s_gw_teid_s1u;            // set by S11 CREATE_SESSION_RESPONSE
+  fteid_t                      s_gw_fteid_s1u;            // set by S11 CREATE_SESSION_RESPONSE
 
   // PDN GW TEID for S5/S8 (user plane): P-GW Tunnel Endpoint Identifier for the S5/S8 interface for the user plane. (Used for S-GW change only).
   // NOTE:
   // The PDN GW TEID is needed in MME context as S-GW relocation is triggered without interaction with the source S-GW, e.g. when a TAU
   // occurs. The Target S-GW requires this Information Element, so it must be stored by the MME.
-  teid_t                      p_gw_teid_s5_s8_up;
-
   // PDN GW IP address for S5/S8 (user plane): P GW IP address for user plane for the S5/S8 interface for the user plane. (Used for S-GW change only).
   // NOTE:
   // The PDN GW IP address for user plane is needed in MME context as S-GW relocation is triggered without interaction with the source S-GW,
   // e.g. when a TAU occurs. The Target S GW requires this Information Element, so it must be stored by the MME.
-  ip_address_t                p_gw_address_s5_s8_up;
+  fteid_t                      p_gw_fteid_s5_s8_up;
 
   // EPS bearer QoS: QCI and ARP, optionally: GBR and MBR for GBR bearer
   qci_t                       qci;

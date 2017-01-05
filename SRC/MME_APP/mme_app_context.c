@@ -759,26 +759,26 @@ void mme_app_dump_bearer_context (const bearer_context_t * const bc, uint8_t ind
 {
   bformata (bstr_dump, "%*s - Bearer id .......: %02u\n", indent_spaces, " ", bc->ebi);
   bformata (bstr_dump, "%*s - Transaction ID ..: %x\n", indent_spaces, " ", bc->transaction_identifier);
-  if (bc->s_gw_address_s1u.pdn_type == IPv4) {
+  if (bc->s_gw_fteid_s1u.ipv4) {
     char ipv4[INET_ADDRSTRLEN];
-    inet_ntop (AF_INET, (void*)&bc->s_gw_address_s1u.address.ipv4_address, ipv4, INET_ADDRSTRLEN);
+    inet_ntop (AF_INET, (void*)&bc->s_gw_fteid_s1u.ipv4_address.s_addr, ipv4, INET_ADDRSTRLEN);
     bformata (bstr_dump, "%*s - S-GW S1-U IPv4 Address...: [%s]\n", indent_spaces, " ", ipv4);
-  } else {
+  } else if (bc->s_gw_fteid_s1u.ipv6) {
     char                                    ipv6[INET6_ADDRSTRLEN];
-    inet_ntop (AF_INET6, &bc->s_gw_address_s1u.address.ipv6_address, ipv6, INET6_ADDRSTRLEN);
+    inet_ntop (AF_INET6, &bc->s_gw_fteid_s1u.ipv6_address, ipv6, INET6_ADDRSTRLEN);
     bformata (bstr_dump, "%*s - S-GW S1-U IPv6 Address...: [%s]\n", indent_spaces, " ", ipv6);
   }
-  bformata (bstr_dump, "%*s - S-GW TEID (UP)...: " TEID_FMT "\n", indent_spaces, " ", bc->s_gw_teid_s1u);
-  if (bc->p_gw_address_s5_s8_up.pdn_type == IPv4) {
+  bformata (bstr_dump, "%*s - S-GW TEID (UP)...: " TEID_FMT "\n", indent_spaces, " ", bc->s_gw_fteid_s1u.teid);
+  if (bc->p_gw_fteid_s5_s8_up.ipv4) {
     char ipv4[INET_ADDRSTRLEN];
-    inet_ntop (AF_INET, (void*)&bc->p_gw_address_s5_s8_up.address.ipv4_address, ipv4, INET_ADDRSTRLEN);
+    inet_ntop (AF_INET, (void*)&bc->p_gw_fteid_s5_s8_up.ipv4_address.s_addr, ipv4, INET_ADDRSTRLEN);
     bformata (bstr_dump, "%*s - P-GW S5-S8 IPv4..: [%s]\n", ipv4);
-  } else {
+  } else if (bc->p_gw_fteid_s5_s8_up.ipv6) {
     char                                    ipv6[INET6_ADDRSTRLEN];
-    inet_ntop (AF_INET6, &bc->p_gw_address_s5_s8_up.address.ipv6_address, ipv6, INET6_ADDRSTRLEN);
+    inet_ntop (AF_INET6, &bc->p_gw_fteid_s5_s8_up.ipv6_address, ipv6, INET6_ADDRSTRLEN);
     bformata (bstr_dump, "%*s - P-GW S5-S8 IPv6..: [%s]\n", indent_spaces, " ", ipv6);
   }
-  bformata (bstr_dump, "%*s - P-GW TEID S5-S8..: " TEID_FMT "\n", indent_spaces, " ", bc->p_gw_teid_s5_s8_up);
+  bformata (bstr_dump, "%*s - P-GW TEID S5-S8..: " TEID_FMT "\n", indent_spaces, " ", bc->p_gw_fteid_s5_s8_up.teid);
   bformata (bstr_dump, "%*s - QCI .............: %u\n", indent_spaces, " ", bc->qci);
   bformata (bstr_dump, "%*s - Priority level ..: %u\n", indent_spaces, " ", bc->priority_level);
   bformata (bstr_dump, "%*s - Pre-emp vul .....: %s\n", indent_spaces, " ", (bc->preemption_vulnerability == PRE_EMPTION_VULNERABILITY_ENABLED) ? "ENABLED" : "DISABLED");

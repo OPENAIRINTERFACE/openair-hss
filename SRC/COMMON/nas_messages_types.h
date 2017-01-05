@@ -98,9 +98,8 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
   pre_emption_capability_t    pre_emp_capability;
 
   /* S-GW TEID for user-plane */
-  teid_t                  sgw_s1u_teid;
   /* S-GW IP address for User-Plane */
-  ip_address_t            sgw_s1u_address;
+  fteid_t                  sgw_s1u_fteid;
 } itti_nas_pdn_connectivity_rsp_t;
 
 typedef struct itti_nas_pdn_connectivity_fail_s {
