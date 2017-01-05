@@ -57,7 +57,7 @@ function help()
   echo_error "  -I, --install-mme-files                  Install MME config files. (NOT RECOMMENDED. See tutorials on https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or DOCS/EPC_User_Guide.pdf"
   echo_error "  -k, --kill                               Kill all running MME instances, exit script then."
   echo_error "  -m, --mscgen          directory          Generate mscgen output files in a directory"
-  echo_error "  -s, --scenario-player scenario_abs_path  Run scenario player"
+  echo_error "  -s, --scenario-player scenario_abs_path  Run MME with scenario player (check it is built in MME by setting TRACE_XML to 'True' in $THIS_SCRIPT_PATH/../BUILD/MME/CMakeLists.template)"
   echo_error "  -v, --verbosity-level                    Verbosity level (0,1,2)."
   echo_error "                                             0 -> ASN1 XER printf off"
   echo_error "                                             1 -> ASN1 XER printf on and ASN1 debug off"

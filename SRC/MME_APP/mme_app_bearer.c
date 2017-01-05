@@ -866,7 +866,7 @@ mme_app_handle_create_bearer_req (
 }
 
 //------------------------------------------------------------------------------
-void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t const * e_rab_setup_rsp)
+void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_setup_rsp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_mm_context_s                 *ue_context_p = NULL;

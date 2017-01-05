@@ -243,7 +243,7 @@ add_boolean_option( NAS_FORCE_REJECT_SR             True     "TEMP, TO be disabl
 add_boolean_option( NAS_FORCE_REJECT_TAU            True     "TEMP, TO be disabled for community after development and test: Force the EMM NAS layer to respond to any TAU Request by reject")
 
 add_boolean_option( TRACE_3GPP_SPEC                 True     "Log hits of 3GPP specifications requirements")
-add_boolean_option( TRACE_XML                       False     "Log NAS,...(to be continued) messages in XML")
+add_boolean_option( TRACE_XML                       False     "Log some messages in XML (messages necessary for MME scenario player)")
 
 
 set (ITTI_DIR ${OPENAIRCN_DIR}/SRC/COMMON/ITTI)
@@ -281,26 +281,7 @@ add_library(3GPP_TYPES
   ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_sm_ies.c)
 set(3GPP_TYPES_LIB 3GPP_TYPES)
 
-add_library(3GPP_TYPES_XML
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_23.003_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.007_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_cc_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_common_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_mm_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_gmm_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_gprs_common_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_sm_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_29.274_xml.c
-  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_common_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_emm_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_esm_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_emm_msg_xml.c
-  ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_esm_msg_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_36.331_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_36.401_xml.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_36.413_xml.c)
-set(3GPP_TYPES_XML_LIB 3GPP_TYPES_XML)
+
 
 
 ###############################################################################
@@ -451,35 +432,59 @@ if (TRACE_XML)
   add_library(XML_MSG_DUMP  
     ${OPENAIRCN_DIR}/SRC/UTILS/xml_msg_dump.c
     ${OPENAIRCN_DIR}/SRC/UTILS/xml_msg_dump_itti.c
+    ${OPENAIRCN_DIR}/SRC/NAS/API/NETWORK/nas_message_xml.c
   )
   set(XML_MSG_DUMP_LIB XML_MSG_DUMP)
-endif()
+  
+ add_library(3GPP_TYPES_XML
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_23.003_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.007_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_cc_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_common_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_mm_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_gmm_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_gprs_common_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008_sm_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_29.274_xml.c
+    ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_common_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_emm_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_esm_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_emm_msg_xml.c
+    ${OPENAIRCN_DIR}/SRC/NAS/3gpp_24.301_esm_msg_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_36.331_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_36.401_xml.c
+    ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_36.413_xml.c)
+  set(3GPP_TYPES_XML_LIB 3GPP_TYPES_XML)  
 
-add_library(SCENARIO_PLAYER
-  ${OPENAIRCN_DIR}/SRC/SECU/etsi_ts_135_206_V10.0.0_annex3.c
-  ${OPENAIRCN_DIR}/SRC/SECU/usim_authenticate.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_load.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_play.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_rx_itti.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_task.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_23.003_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.007_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.008_common_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.008_sm_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_emm_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_emm_msg_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_esm_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_esm_msg_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_ies_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_36.401_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_36.413_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_common_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_nas_message_xml.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_xml_compare.c
-  ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_xml_load.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/xml_load.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/xml_msg_load_itti.c
-)
+  add_library(SCENARIO_PLAYER
+    ${OPENAIRCN_DIR}/SRC/SECU/etsi_ts_135_206_V10.0.0_annex3.c
+    ${OPENAIRCN_DIR}/SRC/SECU/usim_authenticate.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_load.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_play.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_rx_itti.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/mme_scenario_player_task.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_23.003_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.007_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.008_common_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.008_sm_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_emm_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_emm_msg_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_esm_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_esm_msg_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_24.301_ies_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_36.401_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_3gpp_36.413_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_common_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_nas_message_xml.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_xml_compare.c
+    ${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/sp_xml_load.c
+    ${OPENAIRCN_DIR}/SRC/UTILS/xml_load.c
+    ${OPENAIRCN_DIR}/SRC/UTILS/xml_msg_load_itti.c
+  )
+  set(SCENARIO_PLAYER_LIB SCENARIO_PLAYER)
+endif (TRACE_XML)
+
 include_directories(${OPENAIRCN_DIR}/SRC/TEST/SCENARIO_PLAYER/)
 
 ###############################################################################
@@ -892,7 +897,6 @@ add_executable(mme
   ${OPENAIRCN_DIR}/SRC/COMMON/itti_free_defined_msg.c
   ${OPENAIRCN_DIR}/SRC/COMMON/itti_comp.c
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
-  ${OPENAIRCN_DIR}/SRC/NAS/API/NETWORK/nas_message_xml.c
   )
   
 if( ITTI_ANALYZER )
@@ -902,10 +906,11 @@ target_link_libraries (mme
   -Wl,--start-group
     S1AP_LIB S1AP_EPC S11_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN 
    S6A MME_APP LIB_NAS_MME ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB} 
-   ${3GPP_TYPES_XML_LIB} CN_UTILS SCENARIO_PLAYER HASHTABLE BSTR 
+   ${3GPP_TYPES_XML_LIB} CN_UTILS ${SCENARIO_PLAYER_LIB} HASHTABLE BSTR 
   -Wl,--end-group
   pthread m sctp  rt crypt ${LFDS} ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} ${LIBXML2_LIBRARIES} gnutls fdproto fdcore
   )
+
 
 # spgw is S-GW +P-GW  nodes all in one implementation
 ################################

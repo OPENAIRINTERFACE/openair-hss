@@ -32,7 +32,7 @@
 
 char* itti_task_id2itti_task_str(int task_id);
 
-#  if defined(TRACE_XML)
+#  if TRACE_XML
 #    include "xml_msg_tags.h"
 
 void xml_msg_dump_itti_sctp_new_association(const sctp_new_peer_t * const itti_msg, int sender, int receiver, xmlTextWriterPtr xml_text_writer);

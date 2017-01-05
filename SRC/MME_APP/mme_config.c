@@ -216,7 +216,9 @@ void mme_config_exit (void)
     bdestroy_wrapper(&mme_config.e_dns_emulation.sgw_id[i]);
   }
 
+#if TRACE_XML
   bdestroy_wrapper(&mme_config.scenario_player_config.scenario_file);
+#endif
 }
 //------------------------------------------------------------------------------
 static int mme_config_parse_file (mme_config_t * config_pP)
@@ -803,7 +805,7 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_DEBUG (LOG_CONFIG, "Built with SCTP_DUMP_LIST ..................: %d\n", SCTP_DUMP_LIST);
   OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_HASHTABLE .................: %d\n", TRACE_HASHTABLE);
   OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_3GPP_SPEC .................: %d\n", TRACE_3GPP_SPEC);
-  OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_XML .......................: %d\n", TRACE_XML);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_XML .......................: %d (enable MME scenario player feature)\n", TRACE_XML);
 #endif
   OAILOG_INFO (LOG_CONFIG, "Configuration:\n");
   OAILOG_INFO (LOG_CONFIG, "- File .................................: %s\n", bdata(config_pP->config_file));
@@ -894,8 +896,10 @@ static void usage (char *target)
   OAI_FPRINTF_INFO( "-c<path>\n");
   OAI_FPRINTF_INFO( "        Set the configuration file for mme\n");
   OAI_FPRINTF_INFO( "        See template in UTILS/CONF\n");
-  OAI_FPRINTF_INFO( "-K<file>\n");
-  OAI_FPRINTF_INFO( "        Output intertask messages to provided file\n");
+#if TRACE_XML
+  OAI_FPRINTF_INFO( "-s<path>\n");
+  OAI_FPRINTF_INFO( "        Set the scenario file for mme scenario player\n");
+#endif
   OAI_FPRINTF_INFO( "-V      Print %s version and return\n", PACKAGE_NAME);
   OAI_FPRINTF_INFO( "-v[1-2] Debug level:\n");
   OAI_FPRINTF_INFO( "            1 -> ASN1 XER printf on and ASN1 debug off\n");
@@ -943,11 +947,13 @@ mme_config_parse_opt_line (
       OAI_FPRINTF_INFO ("%s mme_config.itti_config.log_file %s\n", __FUNCTION__, bdata(config_pP->itti_config.log_file));
       break;
 
+#if TRACE_XML
     case 's':
       config_pP->run_mode = RUN_MODE_SCENARIO_PLAYER;
       config_pP->scenario_player_config.scenario_file = blk2bstr(optarg, strlen(optarg));
       OAI_FPRINTF_INFO ("%s mme_config.scenario_player_config.scenario_file %s\n", __FUNCTION__, bdata(config_pP->scenario_player_config.scenario_file));
       break;
+#endif
 
     case 'h':                  /* Fall through */
     default:

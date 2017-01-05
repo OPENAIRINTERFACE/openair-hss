@@ -149,7 +149,9 @@ main (
 #endif
           NULL));
   MSC_INIT (MSC_MME, THREAD_MAX + TASK_MAX);
+#if TRACE_XML
   CHECK_INIT_RETURN (mme_scenario_player_init (&mme_config));
+#endif
   CHECK_INIT_RETURN (nas_init (&mme_config));
   CHECK_INIT_RETURN (sctp_init (&mme_config));
   CHECK_INIT_RETURN (udp_init ());

@@ -90,12 +90,11 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMM_CN_AUTHENTICATION_PARAM_RES",
   "EMM_CN_AUTHENTICATION_PARAM_FAIL",
   "EMM_CN_DEREGISTER_UE",
+  "EMM_CN_PDN_CONFIG_RES",
   "EMM_CN_PDN_CONNECTIVITY_RES",
-  "EMM_CN_PDN_CONNECTIVITY_FAIL",
   "EMM_CN_PDN_CONNECTIVITY_FAIL",
   "EMM_CN_ACTIVATE_DEDICATED_BEARER_REQ",
 };
-
 
 //------------------------------------------------------------------------------
 static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg)

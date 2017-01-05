@@ -213,9 +213,11 @@ typedef struct mme_config_s {
     struct in_addr sgw_ip_addr[MME_CONFIG_MAX_SGW];
   } e_dns_emulation;
 
+#if TRACE_XML
   struct {
     bstring scenario_file;
   } scenario_player_config;
+#endif
 
   log_config_t log_config;
 } mme_config_t;
