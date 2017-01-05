@@ -56,7 +56,7 @@ nas_itti_dl_data_req (
   NAS_DL_DATA_REQ (message_p).ue_id   = ue_id;
   NAS_DL_DATA_REQ (message_p).nas_msg = nas_msg;
   nas_msg = NULL;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_REQ ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_REQ ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
@@ -72,7 +72,7 @@ nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
   NAS_ERAB_SETUP_REQ (message_p).ebi     = ebi;
   NAS_ERAB_SETUP_REQ (message_p).nas_msg = nas_msg;
   nas_msg = NULL;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_ERAB_SETUP_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u len %u", ue_id, ebi, blength(nas_msg));
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_ERAB_SETUP_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u len %u", ue_id, ebi, blength(NAS_ERAB_SETUP_REQ (message_p).nas_msg));
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }

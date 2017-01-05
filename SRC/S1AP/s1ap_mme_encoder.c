@@ -62,6 +62,10 @@ static inline int                       s1ap_mme_encode_downlink_nas_transport (
   s1ap_message * message_p,
   uint8_t ** buffer,
   uint32_t * length);
+static inline int                       s1ap_mme_encode_e_rab_setup (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length);
 
 static inline int                       s1ap_mme_encode_initiating (
   s1ap_message * message_p,
@@ -76,6 +80,7 @@ static inline int                       s1ap_mme_encode_unsuccessfull_outcome (
   uint8_t ** buffer,
   uint32_t * len);
 
+//------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_initial_context_setup_request (
   s1ap_message * message_p,
@@ -94,6 +99,7 @@ s1ap_mme_encode_initial_context_setup_request (
   return s1ap_generate_initiating_message (buffer, length, S1ap_ProcedureCode_id_InitialContextSetup, S1ap_Criticality_reject, &asn_DEF_S1ap_InitialContextSetupRequest, initialContextSetupRequest_p);
 }
 
+//------------------------------------------------------------------------------
 int
 s1ap_mme_encode_pdu (
   s1ap_message * message_p,
@@ -115,13 +121,14 @@ s1ap_mme_encode_pdu (
     return s1ap_mme_encode_unsuccessfull_outcome (message_p, buffer, length);
 
   default:
-    OAILOG_DEBUG (LOG_S1AP, "Unknown message outcome (%d) or not implemented", (int)message_p->direction);
+    OAILOG_NOTICE (LOG_S1AP, "Unknown message outcome (%d) or not implemented", (int)message_p->direction);
     break;
   }
 
   return -1;
 }
 
+//------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_initiating (
   s1ap_message * message_p,
@@ -138,14 +145,18 @@ s1ap_mme_encode_initiating (
   case S1ap_ProcedureCode_id_UEContextRelease:
     return s1ap_mme_encode_ue_context_release_command (message_p, buffer, length);
 
+  case S1ap_ProcedureCode_id_E_RABSetup:
+    return s1ap_mme_encode_e_rab_setup (message_p, buffer, length);
+
   default:
-    OAILOG_DEBUG (LOG_S1AP, "Unknown procedure ID (%d) for initiating message_p\n", (int)message_p->procedureCode);
+    OAILOG_NOTICE (LOG_S1AP, "Unknown procedure ID (%d) for initiating message_p\n", (int)message_p->procedureCode);
     break;
   }
 
   return -1;
 }
 
+//------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_successfull_outcome (
   s1ap_message * message_p,
@@ -164,6 +175,7 @@ s1ap_mme_encode_successfull_outcome (
   return -1;
 }
 
+//------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_unsuccessfull_outcome (
   s1ap_message * message_p,
@@ -182,6 +194,7 @@ s1ap_mme_encode_unsuccessfull_outcome (
   return -1;
 }
 
+//------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_s1setupresponse (
   s1ap_message * message_p,
@@ -200,6 +213,7 @@ s1ap_mme_encode_s1setupresponse (
   return s1ap_generate_successfull_outcome (buffer, length, S1ap_ProcedureCode_id_S1Setup, message_p->criticality, &asn_DEF_S1ap_S1SetupResponse, s1SetupResponse_p);
 }
 
+//------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_s1setupfailure (
   s1ap_message * message_p,
@@ -218,6 +232,7 @@ s1ap_mme_encode_s1setupfailure (
   return s1ap_generate_unsuccessfull_outcome (buffer, length, S1ap_ProcedureCode_id_S1Setup, message_p->criticality, &asn_DEF_S1ap_S1SetupFailure, s1SetupFailure_p);
 }
 
+//------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_downlink_nas_transport (
   s1ap_message * message_p,
@@ -242,6 +257,7 @@ s1ap_mme_encode_downlink_nas_transport (
   return s1ap_generate_initiating_message (buffer, length, S1ap_ProcedureCode_id_downlinkNASTransport, message_p->criticality, &asn_DEF_S1ap_DownlinkNASTransport, downlinkNasTransport_p);
 }
 
+//------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_ue_context_release_command (
   s1ap_message * message_p,
@@ -261,4 +277,26 @@ s1ap_mme_encode_ue_context_release_command (
   }
 
   return s1ap_generate_initiating_message (buffer, length, S1ap_ProcedureCode_id_UEContextRelease, message_p->criticality, &asn_DEF_S1ap_UEContextReleaseCommand, ueContextReleaseCommand_p);
+}
+
+//------------------------------------------------------------------------------
+static inline int
+s1ap_mme_encode_e_rab_setup (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length)
+{
+  S1ap_E_RABSetupRequest_t          e_rab_setup;
+  S1ap_E_RABSetupRequest_t         *e_rab_setup_p = &e_rab_setup;
+
+  memset (e_rab_setup_p, 0, sizeof (S1ap_E_RABSetupRequest_t));
+
+  /*
+   * Convert IE structure into asn1 message_p
+   */
+  if (s1ap_encode_s1ap_e_rabsetuprequesties(e_rab_setup_p, &message_p->msg.s1ap_E_RABSetupRequestIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_initiating_message (buffer, length, S1ap_ProcedureCode_id_E_RABSetup, message_p->criticality, &asn_DEF_S1ap_E_RABSetupRequest, e_rab_setup_p);
 }

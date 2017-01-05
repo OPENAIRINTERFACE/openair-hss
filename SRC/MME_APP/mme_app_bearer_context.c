@@ -146,8 +146,12 @@ void mme_app_add_bearer_context(ue_mm_context_t * const ue_context, bearer_conte
       bc->pdn_cx_id       = pdn_cid;
       ue_context->pdn_contexts[pdn_cid]->bearer_contexts[index] = index;
       ue_context->bearer_contexts[index] = bc;
+      return;
     }
+    OAILOG_WARNING (LOG_MME_APP, "No PDN id %u exist for ue id " MME_UE_S1AP_ID_FMT "\n", pdn_cid, ue_context->mme_ue_s1ap_id);
+    return;
   }
+  OAILOG_WARNING (LOG_MME_APP, "Bearer ebi %u PDN id %u already exist for ue id " MME_UE_S1AP_ID_FMT "\n", bc->ebi, pdn_cid, ue_context->mme_ue_s1ap_id);
 }
 
 

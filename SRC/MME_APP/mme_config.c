@@ -880,9 +880,11 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "    MSC log level........: %s (MeSsage Chart)\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.msc_log_level));
   OAILOG_INFO (LOG_CONFIG, "    ITTI log level.......: %s (InTer-Task Interface)\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.itti_log_level));
   OAILOG_INFO (LOG_CONFIG, "    XML log level........: %s (XML dump/load of messages)\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.xml_log_level));
+#if TRACE_XML
   if (RUN_MODE_SCENARIO_PLAYER == config_pP->run_mode) {
     OAILOG_INFO (LOG_CONFIG, "    MME SP log level.....: %s (MME scenario player)\n", OAILOG_LEVEL_INT2STR(config_pP->log_config.mme_scenario_player_log_level));
   }
+#endif
 }
 
 //------------------------------------------------------------------------------
