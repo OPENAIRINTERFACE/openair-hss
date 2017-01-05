@@ -275,11 +275,11 @@ sgw_handle_sgi_endpoint_created (
        * Set the Cause information from bearer context created.
        * "Request accepted" is returned when the GTPv2 entity has accepted a control plane request.
        */
-      create_session_response_p->cause = REQUEST_ACCEPTED;
-      create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause = REQUEST_ACCEPTED;
+      create_session_response_p->cause.cause_value = REQUEST_ACCEPTED;
+      create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value = REQUEST_ACCEPTED;
     } else {
-      create_session_response_p->cause = M_PDN_APN_NOT_ALLOWED;
-      create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause = M_PDN_APN_NOT_ALLOWED;
+      create_session_response_p->cause.cause_value = M_PDN_APN_NOT_ALLOWED;
+      create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value = M_PDN_APN_NOT_ALLOWED;
     }
 
     create_session_response_p->s11_sgw_teid.teid = resp_pP->context_teid;
@@ -293,8 +293,8 @@ sgw_handle_sgi_endpoint_created (
     create_session_response_p->trxn = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
     create_session_response_p->peer_ip.s_addr = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr;
   } else {
-    create_session_response_p->cause = CONTEXT_NOT_FOUND;
-    create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
+    create_session_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
+    create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value = CONTEXT_NOT_FOUND;
     create_session_response_p->bearer_contexts_created.num_bearer_context += 1;
   }
 
@@ -304,7 +304,7 @@ sgw_handle_sgi_endpoint_created (
                   create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid,
                   create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address.s_addr,
                   create_session_response_p->bearer_contexts_created.bearer_contexts[0].eps_bearer_id,
-                  create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause);
+                  create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value);
   MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME,
                       NULL, 0,
                       "0 S11_CREATE_SESSION_RESPONSE S11 MME teid %u S11 S-GW teid %u S1U teid %u S1U@ 0x%x ebi %u status %d",
@@ -313,7 +313,7 @@ sgw_handle_sgi_endpoint_created (
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid,
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address.s_addr,
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].eps_bearer_id,
-                      create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause);
+                      create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value);
   rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
 }
@@ -442,8 +442,8 @@ sgw_handle_gtpv1uCreateTunnelResp (
     }
 
     create_session_response_p = &message_p->ittiMsg.s11_create_session_response;
-    create_session_response_p->cause = CONTEXT_NOT_FOUND;
-    create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
+    create_session_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
+    create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value = CONTEXT_NOT_FOUND;
     create_session_response_p->bearer_contexts_created.num_bearer_context += 1;
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_CREATE_SESSION_RESPONSE teid %u CONTEXT_NOT_FOUND", endpoint_created_pP->context_teid);
     rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
@@ -487,9 +487,9 @@ sgw_handle_gtpv1uUpdateTunnelResp (
 
       modify_response_p = &message_p->ittiMsg.s11_modify_bearer_response;
       modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id = endpoint_updated_pP->eps_bearer_id;
-      modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
+      modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause.cause_value = CONTEXT_NOT_FOUND;
       modify_response_p->bearer_contexts_marked_for_removal.num_bearer_context += 1;
-      modify_response_p->cause = CONTEXT_NOT_FOUND;
+      modify_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
       modify_response_p->trxn = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
       rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
       OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
@@ -509,7 +509,8 @@ sgw_handle_gtpv1uUpdateTunnelResp (
       OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
     }
   } else {
-    OAILOG_DEBUG (LOG_SPGW_APP, "Sending S11_MODIFY_BEARER_RESPONSE trxn %p bearer %u CONTEXT_NOT_FOUND (s11_bearer_context_information_hashtable)\n", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn, endpoint_updated_pP->eps_bearer_id);
+    OAILOG_DEBUG (LOG_SPGW_APP, "Sending S11_MODIFY_BEARER_RESPONSE trxn %p bearer %u CONTEXT_NOT_FOUND (s11_bearer_context_information_hashtable)\n",
+        new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn, endpoint_updated_pP->eps_bearer_id);
     message_p = itti_alloc_new_message (TASK_SPGW_APP, S11_MODIFY_BEARER_RESPONSE);
 
     if (!message_p) {
@@ -518,9 +519,9 @@ sgw_handle_gtpv1uUpdateTunnelResp (
 
     modify_response_p = &message_p->ittiMsg.s11_modify_bearer_response;
     modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id = endpoint_updated_pP->eps_bearer_id;
-    modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
+    modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause.cause_value = CONTEXT_NOT_FOUND;
     modify_response_p->bearer_contexts_marked_for_removal.num_bearer_context += 1;
-    modify_response_p->cause = CONTEXT_NOT_FOUND;
+    modify_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
     modify_response_p->trxn = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME,
                         NULL, 0, "0 S11_MODIFY_BEARER_RESPONSE ebi %u CONTEXT_NOT_FOUND trxn %u",
@@ -573,9 +574,9 @@ sgw_handle_sgi_endpoint_updated (
 
       modify_response_p->teid = tun_pair_p->remote_teid;
       modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id = resp_pP->eps_bearer_id;
-      modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
+      modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause.cause_value = CONTEXT_NOT_FOUND;
       modify_response_p->bearer_contexts_marked_for_removal.num_bearer_context += 1;
-      modify_response_p->cause = CONTEXT_NOT_FOUND;
+      modify_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
       modify_response_p->trxn = 0;
       MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME,
                           NULL, 0, "0 S11_MODIFY_BEARER_RESPONSE ebi %u CONTEXT_NOT_FOUND trxn %u",
@@ -588,9 +589,9 @@ sgw_handle_sgi_endpoint_updated (
       // accept anyway
       modify_response_p->teid = tun_pair_p->remote_teid;
       modify_response_p->bearer_contexts_modified.bearer_contexts[0].eps_bearer_id = resp_pP->eps_bearer_id;
-      modify_response_p->bearer_contexts_modified.bearer_contexts[0].cause = REQUEST_ACCEPTED;
+      modify_response_p->bearer_contexts_modified.bearer_contexts[0].cause.cause_value = REQUEST_ACCEPTED;
       modify_response_p->bearer_contexts_modified.num_bearer_context += 1;
-      modify_response_p->cause = REQUEST_ACCEPTED;
+      modify_response_p->cause.cause_value = REQUEST_ACCEPTED;
       modify_response_p->trxn = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
       // if default bearer
       //#pragma message  "TODO define constant for default eps_bearer id"
@@ -619,9 +620,9 @@ sgw_handle_sgi_endpoint_updated (
       OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_UPDATE_ENDPOINT_RESPONSE: CONTEXT_NOT_FOUND (S11 context)\n");
       modify_response_p->teid = resp_pP->context_teid;    // TO BE CHECKED IF IT IS THIS TEID
       modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id = resp_pP->eps_bearer_id;
-      modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
+      modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause.cause_value = CONTEXT_NOT_FOUND;
       modify_response_p->bearer_contexts_marked_for_removal.num_bearer_context += 1;
-      modify_response_p->cause = CONTEXT_NOT_FOUND;
+      modify_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
       modify_response_p->trxn = 0;
       MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME,  MSC_S11_MME,
                         NULL, 0, "0 S11_MODIFY_BEARER_RESPONSE ebi %u CONTEXT_NOT_FOUND trxn %u",
@@ -703,7 +704,7 @@ sgw_handle_sgi_endpoint_deleted (
     modify_response_p->bearer_present = MODIFY_BEARER_RESPONSE_REM;
     modify_response_p->bearer_choice.bearer_for_removal.eps_bearer_id = resp_pP->eps_bearer_id;
     modify_response_p->bearer_choice.bearer_for_removal.cause = CONTEXT_NOT_FOUND;
-    modify_response_p->cause = CONTEXT_NOT_FOUND;
+    modify_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
     modify_response_p->trxn = 0;
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME,
                         NULL, 0, "0 S11_MODIFY_BEARER_RESPONSE ebi %u CONTEXT_NOT_FOUND trxn %u", modify_response_p->bearer_choice.bearer_contexts_modified.eps_bearer_id, modify_response_p->trxn);
@@ -751,9 +752,9 @@ sgw_handle_modify_bearer_request (
       modify_response_p = &message_p->ittiMsg.s11_modify_bearer_response;
       modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id =
           modify_bearer_pP->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id;
-      modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
+      modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause.cause_value = CONTEXT_NOT_FOUND;
       modify_response_p->bearer_contexts_marked_for_removal.num_bearer_context += 1;
-      modify_response_p->cause = CONTEXT_NOT_FOUND;
+      modify_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
       modify_response_p->trxn = modify_bearer_pP->trxn;
       OAILOG_DEBUG (LOG_SPGW_APP, "Rx MODIFY_BEARER_REQUEST, eps_bearer_id %u CONTEXT_NOT_FOUND\n",
           modify_bearer_pP->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id);
@@ -790,9 +791,9 @@ sgw_handle_modify_bearer_request (
 
     modify_response_p = &message_p->ittiMsg.s11_modify_bearer_response;
     modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id = modify_bearer_pP->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id;
-    modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
+    modify_response_p->bearer_contexts_marked_for_removal.bearer_contexts[0].cause.cause_value = CONTEXT_NOT_FOUND;
     modify_response_p->bearer_contexts_marked_for_removal.num_bearer_context += 1;
-    modify_response_p->cause = CONTEXT_NOT_FOUND;
+    modify_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
     modify_response_p->trxn = modify_bearer_pP->trxn;
     OAILOG_DEBUG (LOG_SPGW_APP, "Rx MODIFY_BEARER_REQUEST, teid %u CONTEXT_NOT_FOUND\n", modify_bearer_pP->teid);
     rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
@@ -837,13 +838,13 @@ sgw_handle_delete_session_request (
        */
       if (delete_session_req_pP->teid != ctx_p->sgw_eps_bearer_context_information.mme_teid_S11) {
         delete_session_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_S11;
-        delete_session_resp_p->cause = INVALID_PEER;
+        delete_session_resp_p->cause.cause_value = INVALID_PEER;
         OAILOG_DEBUG (LOG_SPGW_APP, "Mismatch in MME Teid for CP\n");
       } else {
         delete_session_resp_p->teid = delete_session_req_pP->sender_fteid_for_cp.teid;
       }
     } else {
-      delete_session_resp_p->cause = REQUEST_ACCEPTED;
+      delete_session_resp_p->cause.cause_value = REQUEST_ACCEPTED;
       delete_session_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_S11;
 
       itti_sgi_delete_end_point_request_t   	 sgi_delete_end_point_request;
@@ -890,7 +891,7 @@ sgw_handle_delete_session_request (
       delete_session_resp_p->teid = delete_session_req_pP->sender_fteid_for_cp.teid;
     }
 
-    delete_session_resp_p->cause = CONTEXT_NOT_FOUND;
+    delete_session_resp_p->cause.cause_value = CONTEXT_NOT_FOUND;
     delete_session_resp_p->trxn = delete_session_req_pP->trxn;
     delete_session_resp_p->peer_ip.s_addr = delete_session_req_pP->peer_ip.s_addr;
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_DELETE_SESSION_RESPONSE CONTEXT_NOT_FOUND trxn %u", delete_session_resp_p->trxn);
@@ -954,7 +955,7 @@ sgw_handle_release_access_bearers_request (
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, release_access_bearers_req_pP->teid, (void **)&ctx_p);
 
   if (HASH_TABLE_OK == hash_rc) {
-    release_access_bearers_resp_p->cause = REQUEST_ACCEPTED;
+    release_access_bearers_resp_p->cause.cause_value = REQUEST_ACCEPTED;
     release_access_bearers_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_S11;
     release_access_bearers_resp_p->trxn = ctx_p->sgw_eps_bearer_context_information.trxn;
 //#pragma message  "TODO Here the release (sgw_handle_release_access_bearers_request)"
@@ -965,7 +966,7 @@ sgw_handle_release_access_bearers_request (
     rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
   } else {
-    release_access_bearers_resp_p->cause = CONTEXT_NOT_FOUND;
+    release_access_bearers_resp_p->cause.cause_value = CONTEXT_NOT_FOUND;
     release_access_bearers_resp_p->teid = 0;
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_RELEASE_ACCESS_BEARERS_RESPONSE cause CONTEXT_NOT_FOUND");
     rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);

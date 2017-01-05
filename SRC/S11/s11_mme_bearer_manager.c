@@ -118,7 +118,7 @@ s11_mme_handle_release_access_bearer_response (
   /*
    * Cause IE
    */
-  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_CAUSE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, s11_cause_ie_get,
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_CAUSE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, gtpv2c_cause_ie_get,
 		  &resp_p->cause);
   DevAssert (NW_OK == rc);
   /*
@@ -198,7 +198,7 @@ s11_mme_modify_bearer_request (
 
 
   for (int i=0; i < req_p->bearer_contexts_to_be_modified.num_bearer_context; i++) {
-    rc = s11_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_modified.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (&(ulp_req.hMsg), & req_p->bearer_contexts_to_be_modified.bearer_contexts[i]);
     DevAssert (NW_OK == rc);
   }
 
@@ -211,6 +211,52 @@ s11_mme_modify_bearer_request (
    DevAssert (NW_OK == rc);
    return RETURNok;
 
+}
+
+//------------------------------------------------------------------------------
+int
+s11_mme_create_bearer_response (
+  NwGtpv2cStackHandleT * stack_p,
+  itti_s11_create_bearer_response_t * response_p)
+{
+  gtpv2c_cause_t                           cause;
+  NwRcT                                   rc;
+  NwGtpv2cUlpApiT                         ulp_req;
+  NwGtpv2cTrxnHandleT                     trxn;
+
+  DevAssert (stack_p );
+  DevAssert (response_p );
+  trxn = (NwGtpv2cTrxnHandleT) response_p->trxn;
+  /*
+   * Prepare a modify bearer response to send to SGW.
+   */
+  memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+  memset (&cause, 0, sizeof (gtpv2c_cause_t));
+  ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
+  ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
+  rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_CREATE_BEARER_RSP, 0, 0, &(ulp_req.hMsg));
+  DevAssert (NW_OK == rc);
+  /*
+   * Set the remote TEID
+   */
+  rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, response_p->teid);
+  DevAssert (NW_OK == rc);
+
+  // TODO relay cause
+  cause =response_p->cause;
+  gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
+
+  for (int i=0; i < response_p->bearer_contexts.num_bearer_context; i++) {
+    rc = gtpv2c_bearer_context_within_create_bearer_response_ie_set (&(ulp_req.hMsg), & response_p->bearer_contexts.bearer_contexts[i]);
+    DevAssert (NW_OK == rc);
+  }
+
+  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_BEARER_RESPONSE S11 teid " TEID_FMT " num bearers ctx %u",
+      response_p->teid, response_p->bearer_contexts.num_bearer_context);
+
+  rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
 }
 
 //------------------------------------------------------------------------------
@@ -241,7 +287,7 @@ s11_mme_handle_modify_bearer_response (
   /*
    * Cause IE
    */
-  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_CAUSE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, s11_cause_ie_get,
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_CAUSE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, gtpv2c_cause_ie_get,
       &resp_p->cause);
   DevAssert (NW_OK == rc);
   /*
@@ -307,16 +353,16 @@ s11_mme_handle_create_bearer_request (
     rc = nwGtpv2cMsgParserNew (*stack_p, NW_GTP_CREATE_BEARER_REQ, s11_ie_indication_generic, NULL, &pMsgParser);
     DevAssert (NW_OK == rc);
 
-    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, s11_ebi_ie_get,
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, gtpv2c_ebi_ie_get,
         &req_p->linked_eps_bearer_id);
     DevAssert (NW_OK == rc);
 
-    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PCO, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, s11_pco_ie_get,
+    rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PCO, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, gtpv2c_pco_ie_get,
         &req_p->pco);
     DevAssert (NW_OK == rc);
 
     rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-        s11_bearer_context_to_be_created_within_create_bearer_request_ie_get,
+        gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get,
         &req_p->bearer_contexts);
     DevAssert (NW_OK == rc);
 

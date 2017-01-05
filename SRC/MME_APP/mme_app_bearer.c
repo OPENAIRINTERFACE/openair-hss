@@ -539,7 +539,7 @@ mme_app_handle_delete_session_rsp (
     OAILOG_WARNING (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", delete_sess_resp_pP->teid);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  if (delete_sess_resp_pP->cause != REQUEST_ACCEPTED) {
+  if (delete_sess_resp_pP->cause.cause_value != REQUEST_ACCEPTED) {
     DevMessage ("Cases where bearer cause != REQUEST_ACCEPTED are not handled\n");
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_SESSION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
@@ -597,7 +597,7 @@ mme_app_handle_create_sess_resp (
      */
     DevCheck ((bearer_id < BEARERS_PER_UE) && (bearer_id >= 0), bearer_id, BEARERS_PER_UE, 0);
 
-    if (create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].cause != REQUEST_ACCEPTED) {
+    if (create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].cause.cause_value != REQUEST_ACCEPTED) {
       DevMessage ("Cases where bearer cause != REQUEST_ACCEPTED are not handled\n");
     }
     DevAssert (create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].s1u_sgw_fteid.interface_type == S1_U_SGW_GTP_U);
@@ -913,16 +913,16 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
     itti_s11_create_bearer_response_t *s11_create_bearer_response = &message_p->ittiMsg.s11_create_bearer_response;
     s11_create_bearer_response->teid = ue_context_p->mme_teid_s11;
     s11_create_bearer_response->trxn = NULL;
-    s11_create_bearer_response->cause = 0;
+    s11_create_bearer_response->cause.cause_value = 0;
     int msg_bearer_index = 0;
 
     for (int i = 0; i < e_rab_setup_rsp->e_rab_setup_list.no_of_items; i++) {
       e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_setup_list.item[i].e_rab_id;
       bearer_context_t * bc = mme_app_get_bearer_context(ue_context_p, (ebi_t) e_rab_id);
       if (bc->bearer_state & BEARER_STATE_ENB_CREATED) {
-        s11_create_bearer_response->cause = REQUEST_ACCEPTED;
+        s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
         s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].eps_bearer_id = e_rab_id;
-        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause = REQUEST_ACCEPTED;
+        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause.cause_value = REQUEST_ACCEPTED;
         //  FTEID eNB
         ip_address_t enb_ip_address = {0};
         bstring_to_ip_address(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address, &enb_ip_address);
@@ -955,13 +955,13 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
       e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_setup_list.item[i].e_rab_id;
       bearer_context_t * bc = mme_app_get_bearer_context(ue_context_p, (ebi_t) e_rab_id);
       if (bc->bearer_state & BEARER_STATE_MME_CREATED) {
-        if (REQUEST_ACCEPTED == s11_create_bearer_response->cause) {
-          s11_create_bearer_response->cause = REQUEST_ACCEPTED_PARTIALLY;
+        if (REQUEST_ACCEPTED == s11_create_bearer_response->cause.cause_value) {
+          s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
         } else {
-          s11_create_bearer_response->cause = REQUEST_REJECTED;
+          s11_create_bearer_response->cause.cause_value = REQUEST_REJECTED;
         }
         s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].eps_bearer_id = e_rab_id;
-        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause = REQUEST_REJECTED; // TODO translation of S1AP cause to SGW cause
+        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause.cause_value = REQUEST_REJECTED; // TODO translation of S1AP cause to SGW cause
         s11_create_bearer_response->bearer_contexts.num_bearer_context++;
         bc->bearer_state = BEARER_STATE_NULL;
       }

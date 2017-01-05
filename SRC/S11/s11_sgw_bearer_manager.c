@@ -72,40 +72,40 @@ s11_sgw_handle_modify_bearer_request (
    * Indication Flags IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_INDICATION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s11_indication_flags_ie_get, &request_p->indication_flags);
+      gtpv2c_indication_flags_ie_get, &request_p->indication_flags);
   DevAssert (NW_OK == rc);
   /*
    * MME-FQ-CSID IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FQ_CSID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s11_fqcsid_ie_get, &request_p->mme_fq_csid);
+      gtpv2c_fqcsid_ie_get, &request_p->mme_fq_csid);
   DevAssert (NW_OK == rc);
   /*
    * RAT Type IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_RAT_TYPE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s11_rat_type_ie_get, &request_p->rat_type);
+      gtpv2c_rat_type_ie_get, &request_p->rat_type);
   DevAssert (NW_OK == rc);
   /*
    * Delay Value IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_DELAY_VALUE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s11_delay_value_ie_get, &request_p->delay_dl_packet_notif_req);
+      gtpv2c_delay_value_ie_get, &request_p->delay_dl_packet_notif_req);
   DevAssert (NW_OK == rc);
   /*
    * Bearer Context to be modified IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s11_bearer_context_to_be_modified_within_modify_bearer_request_ie_get, &request_p->bearer_contexts_to_be_modified);
+      gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_get, &request_p->bearer_contexts_to_be_modified);
   DevAssert (NW_OK == rc);
   rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
   if (rc != NW_OK) {
-    gtp_cause_t                             cause;
+    gtpv2c_cause_t                             cause;
     NwGtpv2cUlpApiT                         ulp_req;
 
     memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
-    memset (&cause, 0, sizeof (gtp_cause_t));
+    memset (&cause, 0, sizeof (gtpv2c_cause_t));
     cause.offending_ie_type = offendingIeType;
     cause.offending_ie_length = offendingIeLength;
     cause.offending_ie_instance = offendingIeInstance;
@@ -128,7 +128,7 @@ s11_sgw_handle_modify_bearer_request (
     ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
     ulp_req.apiInfo.triggeredRspInfo.hTrxn = pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
     rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_MODIFY_BEARER_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
-    s11_cause_ie_set (&(ulp_req.hMsg), &cause);
+    gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
     OAILOG_DEBUG (LOG_S11, "Received NW_GTP_MODIFY_BEARER_REQ, Sending NW_GTP_MODIFY_BEARER_RSP!\n");
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
@@ -154,7 +154,7 @@ s11_sgw_handle_modify_bearer_response (
   NwGtpv2cStackHandleT * stack_p,
   itti_s11_modify_bearer_response_t * response_p)
 {
-  gtp_cause_t                             cause;
+  gtpv2c_cause_t                             cause;
   NwRcT                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
   NwGtpv2cTrxnHandleT                     trxn;
@@ -166,7 +166,7 @@ s11_sgw_handle_modify_bearer_response (
    * Prepare a modify bearer response to send to MME.
    */
   memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
-  memset (&cause, 0, sizeof (gtp_cause_t));
+  memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
   ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
   rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_MODIFY_BEARER_RSP, 0, 0, &(ulp_req.hMsg));
@@ -176,8 +176,8 @@ s11_sgw_handle_modify_bearer_response (
    */
   rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, response_p->teid);
   DevAssert (NW_OK == rc);
-  cause.cause_value = (uint8_t) response_p->cause;
-  s11_cause_ie_set (&(ulp_req.hMsg), &cause);
+  cause = response_p->cause;
+  gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
   return RETURNok;
@@ -211,20 +211,20 @@ s11_sgw_handle_release_access_bearers_request (
 
 
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_NODE_TYPE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s11_node_type_ie_get, &request_p->originating_node);
+      gtpv2c_node_type_ie_get, &request_p->originating_node);
 
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s11_ebi_ie_get_list, &request_p->list_of_rabs);
+      gtpv2c_ebi_ie_get_list, &request_p->list_of_rabs);
   DevAssert (NW_OK == rc);
 
   rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
   if (rc != NW_OK) {
-    gtp_cause_t                             cause;
+    gtpv2c_cause_t                             cause;
     NwGtpv2cUlpApiT                         ulp_req;
 
     memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
-    memset (&cause, 0, sizeof (gtp_cause_t));
+    memset (&cause, 0, sizeof (gtpv2c_cause_t));
     cause.offending_ie_type = offendingIeType;
     cause.offending_ie_length = offendingIeLength;
     cause.offending_ie_instance = offendingIeInstance;
@@ -247,7 +247,7 @@ s11_sgw_handle_release_access_bearers_request (
     ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
     ulp_req.apiInfo.triggeredRspInfo.hTrxn = pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
     rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_RELEASE_ACCESS_BEARERS_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
-    s11_cause_ie_set (&(ulp_req.hMsg), &cause);
+    gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
     OAILOG_DEBUG (LOG_S11, "Received NW_GTP_RELEASE_ACCESS_BEARERS_REQ, Sending NW_GTP_RELEASE_ACCESS_BEARERS_RSP!\n");
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
@@ -274,7 +274,7 @@ s11_sgw_handle_release_access_bearers_response (
   NwGtpv2cStackHandleT * stack_p,
   itti_s11_release_access_bearers_response_t * response_p)
 {
-  gtp_cause_t                             cause;
+  gtpv2c_cause_t                             cause;
   NwRcT                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
   NwGtpv2cTrxnHandleT                     trxn;
@@ -286,7 +286,7 @@ s11_sgw_handle_release_access_bearers_response (
    * Prepare a release access bearer response to send to MME.
    */
   memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
-  memset (&cause, 0, sizeof (gtp_cause_t));
+  memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
   ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
   rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_RELEASE_ACCESS_BEARERS_RSP, 0, 0, &(ulp_req.hMsg));
@@ -296,8 +296,9 @@ s11_sgw_handle_release_access_bearers_response (
    */
   rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, response_p->teid);
   DevAssert (NW_OK == rc);
-  cause.cause_value = (uint8_t) response_p->cause;
-  s11_cause_ie_set (&(ulp_req.hMsg), &cause);
+  //TODO relay cause
+  cause = response_p->cause;
+  gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
   return RETURNok;
@@ -340,15 +341,15 @@ s11_sgw_handle_create_bearer_request (
 
  // TODO   pti_t                      pti; ///< C: This IE shall be sent on the S5/S8 and S4/S11 interfaces
 
-  s11_ebi_ie_set (&(ulp_req.hMsg), (unsigned)request_p->linked_eps_bearer_id);
+  gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)request_p->linked_eps_bearer_id);
 
   if (request_p->pco.num_protocol_or_container_id) {
-    rc = s11_pco_ie_set (&(ulp_req.hMsg), &request_p->pco);
+    rc = gtpv2c_pco_ie_set (&(ulp_req.hMsg), &request_p->pco);
     DevAssert (NW_OK == rc);
   }
 
   for (int i=0; i < request_p->bearer_contexts.num_bearer_context; i++) {
-    rc = s11_bearer_context_to_be_created_within_create_bearer_request_ie_set (&(ulp_req.hMsg), &request_p->bearer_contexts.bearer_contexts[i]);
+    rc = gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_set (&(ulp_req.hMsg), &request_p->bearer_contexts.bearer_contexts[i]);
     DevAssert (NW_OK == rc);
   }
 

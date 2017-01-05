@@ -341,7 +341,7 @@ typedef struct itti_s11_create_session_response_s {
   teid_t                   teid;                ///< Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
-  sgw_cause_t               cause;               ///< If the SGW cannot accept any of the "Bearer Context Created" IEs within Create Session Request
+  gtpv2c_cause_t            cause;               ///< If the SGW cannot accept any of the "Bearer Context Created" IEs within Create Session Request
   ///< message, the SGW shall send the Create Session Response with appropriate reject Cause value.
 
   // change_reporting_action                    ///< This IE shall be included on the S5/S8 and S4/S11
@@ -585,7 +585,7 @@ typedef struct itti_s11_create_bearer_response_s {
   teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
-  sgw_cause_t               cause;               ///< M
+  gtpv2c_cause_t            cause;               ///< M
 
   bearer_contexts_within_create_bearer_response_t bearer_contexts;///< Several IEs with this type and instance value shall be
   ///< included on the S4/S11, S5/S8 and S2b interfaces as
@@ -870,7 +870,7 @@ typedef struct itti_s11_modify_bearer_response_s {
   teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274
-  sgw_cause_t               cause;               ///<
+  gtpv2c_cause_t            cause;               ///<
 
   ebi_t                    linked_eps_bearer_id;///< This IE shall be sent on S5/S8 when the UE moves from a
   ///< Gn/Gp SGSN to the S4 SGSN or MME to identify the
@@ -980,7 +980,7 @@ typedef struct itti_s11_delete_session_request_s {
   indication_flags_t indication_flags;
 
   /* GTPv2-C specific parameters */
-  void       *trxn;
+  void          *trxn;
   struct in_addr peer_ip;
 } itti_s11_delete_session_request_t;
 
@@ -1000,8 +1000,8 @@ typedef struct itti_s11_delete_session_request_s {
  * - S1 Based handover cancel with SGW change
  */
 typedef struct itti_s11_delete_session_response_s {
-  teid_t      teid;                   ///< Remote Tunnel Endpoint Identifier
-  sgw_cause_t  cause;
+  teid_t         teid;                ///< Remote Tunnel Endpoint Identifier
+  gtpv2c_cause_t  cause;
   //recovery_t recovery;              ///< This IE shall be included on the S5/S8, S4/S11 and S2b
                                       ///< interfaces if contacting the peer for the first time
   protocol_configuration_options_t pco;///< PGW shall include Protocol Configuration Options (PCO)
@@ -1040,7 +1040,7 @@ typedef struct itti_s11_release_access_bearers_request_s {
                                          ///< This IE shall be sent on S4 interface, if ISR is active in the SGSN
   // Private Extension Private Extension ///< optional
   /* GTPv2-C specific parameters */
-  void       *trxn;
+  void           *trxn;
   struct in_addr  peer_ip;
 } itti_s11_release_access_bearers_request_t;
 
@@ -1061,12 +1061,12 @@ typedef struct itti_s11_release_access_bearers_request_s {
  * - "Context not found
  */
 typedef struct itti_s11_release_access_bearers_response_s {
-  teid_t      teid;                   ///< Tunnel Endpoint Identifier
-  sgw_cause_t  cause;
+  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  gtpv2c_cause_t   cause;
   // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
   // Private Extension  ///< optional
   /* GTPv2-C specific parameters */
-  void       *trxn;
+  void           *trxn;
   struct in_addr  peer_ip;
 } itti_s11_release_access_bearers_response_t;
 #endif /* FILE_S11_MESSAGES_TYPES_SEEN */

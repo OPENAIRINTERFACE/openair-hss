@@ -320,16 +320,7 @@ typedef enum node_type_e {
 
 
 
-typedef struct {
-  uint8_t  cause_value;
-  uint8_t  pce:1;
-  uint8_t  bce:1;
-  uint8_t  cs:1;
 
-  uint8_t  offending_ie_type;
-  uint16_t offending_ie_length;
-  uint8_t  offending_ie_instance;
-} gtp_cause_t;
 
 typedef struct {
   uint8_t                  eps_bearer_id;    ///< EBI,  Mandatory CSR
@@ -376,14 +367,14 @@ bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BE
 
 //-----------------
 typedef struct bearer_context_created_s {
-  uint8_t      eps_bearer_id;       ///< EPS Bearer ID
-  sgw_cause_t   cause;
+  uint8_t       eps_bearer_id;       ///< EPS Bearer ID
+  gtpv2c_cause_t cause;
 
   /* This parameter is used on S11 interface only */
-  fteid_t      s1u_sgw_fteid;       ///< S1-U SGW F-TEID
+  fteid_t       s1u_sgw_fteid;       ///< S1-U SGW F-TEID
 
   /* This parameter is used on S4 interface only */
-  fteid_t      s4u_sgw_fteid;       ///< S4-U SGW F-TEID
+  fteid_t       s4u_sgw_fteid;       ///< S4-U SGW F-TEID
 
   /* This parameter is used on S11 and S5/S8 interface only for a
    * GTP-based S5/S8 interface and during:
@@ -391,10 +382,10 @@ typedef struct bearer_context_created_s {
    * - PDP Context Activation
    * - UE requested PDN connectivity
    */
-  fteid_t      s5_s8_u_pgw_fteid;   ///< S4-U SGW F-TEID
+  fteid_t       s5_s8_u_pgw_fteid;   ///< S4-U SGW F-TEID
 
   /* This parameter is used on S4 interface only and when S12 interface is used */
-  fteid_t      s12_sgw_fteid;       ///< S12 SGW F-TEID
+  fteid_t       s12_sgw_fteid;       ///< S12 SGW F-TEID
 
   /* This parameter is received only if the QoS parameters have been modified */
   bearer_qos_t *bearer_level_qos;
@@ -409,9 +400,9 @@ typedef struct bearer_contexts_created_s {
 
 //-----------------
 typedef struct bearer_context_modified_s {
-  uint8_t    eps_bearer_id;   ///< EPS Bearer ID
-  sgw_cause_t cause;
-  fteid_t    s1u_sgw_fteid;   ///< Sender F-TEID for user plane
+  uint8_t       eps_bearer_id;   ///< EPS Bearer ID
+  gtpv2c_cause_t cause;
+  fteid_t       s1u_sgw_fteid;   ///< Sender F-TEID for user plane
 } bearer_context_modified_t;
 
 typedef struct bearer_contexts_modified_s {
@@ -422,8 +413,8 @@ typedef struct bearer_contexts_modified_s {
 
 //-----------------
 typedef struct bearer_context_marked_for_removal_s {
-  uint8_t    eps_bearer_id;   ///< EPS bearer ID
-  sgw_cause_t cause;
+  uint8_t       eps_bearer_id;   ///< EPS bearer ID
+  gtpv2c_cause_t cause;
 } bearer_context_marked_for_removal_t;
 
 typedef struct bearer_contexts_marked_for_removal_s {

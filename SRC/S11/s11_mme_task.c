@@ -198,7 +198,7 @@ s11_mme_thread (
       break;
 
     case S11_CREATE_BEARER_RESPONSE:{
-        AssertFatal(0, "TODO");
+      s11_mme_create_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_bearer_response);
       }
       break;
 

@@ -37,5 +37,4 @@ int s11_mme_handle_delete_session_response (NwGtpv2cStackHandleT * stack_p, NwGt
 /* @brief Create a new Modify Bearer Request and send it to provided S-GW. */
 int s11_mme_modify_bearer_request(NwGtpv2cStackHandleT *stack_p, itti_s11_modify_bearer_request_t *modify_bearer_p);
 
-
 #endif /* FILE_S11_MME_SESSION_MANAGER_SEEN */

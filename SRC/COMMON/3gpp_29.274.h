@@ -34,7 +34,7 @@
 //-------------------------------------
 // 8.4 Cause
 
-typedef enum sgw_cause_e {
+typedef enum gtpv2c_cause_value_e {
   /* Request / Initial message */
   LOCAL_DETACH                    = 2,
   COMPLETE_DETACH                 = 3,
@@ -104,7 +104,20 @@ typedef enum sgw_cause_e {
   UE_ALREADY_RE_ATTACHED          = 115,
   M_PDN_APN_NOT_ALLOWED           = 116, ///< Multiple PDN connections for a given APN not allowed.
   SGW_CAUSE_MAX
-} sgw_cause_t;
+} gtpv2c_cause_value_t;
+
+
+typedef struct {
+  gtpv2c_cause_value_t  cause_value;
+  uint8_t  pce:1;
+  uint8_t  bce:1;
+  uint8_t  cs:1;
+
+  uint8_t  offending_ie_type;
+  uint16_t offending_ie_length;
+  uint8_t  offending_ie_instance;
+} gtpv2c_cause_t;
+
 //-------------------------------------
 // 8.15 Bearer Quality of Service (Bearer QoS)
 #define PRE_EMPTION_CAPABILITY_ENABLED  (0x0)
@@ -218,7 +231,6 @@ typedef struct bearer_context_within_create_bearer_request_s {
   fteid_t      s12_sgw_fteid;       ///< This IE shall be sent on the S4 interface if the S12 interface is used. See NOTE 1.
   fteid_t      s4_u_sgw_fteid;      ///< This IE shall be sent on the S4 interface if the S4-U interface is used. See NOTE 1.
   fteid_t      s2b_u_pgw_fteid;     ///< This IE (for user plane) shall be sent on the S2b interface.
-  fteid_t      s2a_u_pgw_fteid;     ///< This IE (for user plane) shall be sent on the S2a interface.
   bearer_qos_t  bearer_level_qos;    ///<
   protocol_configuration_options_t  pco;///< This IE may be sent on the S5/S8 and S4/S11 interfaces
                                     ///< if ePCO is not supported by the UE or the network. This bearer level IE takes precedence
@@ -230,7 +242,7 @@ typedef struct bearer_context_within_create_bearer_request_s {
 
 typedef struct bearer_context_within_create_bearer_response_s {
   uint8_t      eps_bearer_id;       ///< EBI
-  sgw_cause_t  cause;               ///< This IE shall indicate if the bearer handling was successful,
+  gtpv2c_cause_t  cause;               ///< This IE shall indicate if the bearer handling was successful,
                                     ///< and if not, it gives information on the reason.
   fteid_t      s1u_enb_fteid;       ///< This IE shall be sent on the S11 interface if the S1-U interface is used.
   fteid_t      s1u_sgw_fteid;       ///< This IE shall be sent on the S11 interface. It shall be used

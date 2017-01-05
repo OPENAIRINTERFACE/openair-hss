@@ -36,4 +36,7 @@ int s11_mme_handle_modify_bearer_response (NwGtpv2cStackHandleT * stack_p, NwGtp
 /* @brief Handle a Create Bearer Request received from S-GW. */
 int s11_mme_handle_create_bearer_request (NwGtpv2cStackHandleT * stack_p, NwGtpv2cUlpApiT * pUlpApi);
 
+/* @brief Create a new Create Bearer Response and send it to provided S-GW. */
+int s11_mme_create_bearer_response (NwGtpv2cStackHandleT * stack_p, itti_s11_create_bearer_response_t * rsp_p);
+
 #endif /* FILE_S11_MME_BEARER_MANAGER_SEEN */

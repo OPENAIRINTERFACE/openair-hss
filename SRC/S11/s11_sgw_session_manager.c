@@ -69,49 +69,49 @@ s11_sgw_handle_create_session_request (
    * Imsi IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_IMSI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-		  s11_imsi_ie_get, &create_session_request_p->imsi);
+		  gtpv2c_imsi_ie_get, &create_session_request_p->imsi);
   DevAssert (NW_OK == rc);
   /*
    * MSISDN IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_MSISDN, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-		  s11_msisdn_ie_get, &create_session_request_p->msisdn);
+		  gtpv2c_msisdn_ie_get, &create_session_request_p->msisdn);
   DevAssert (NW_OK == rc);
   /*
    * MEI IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_MEI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-		  s11_mei_ie_get, &create_session_request_p->mei);
+		  gtpv2c_mei_ie_get, &create_session_request_p->mei);
   DevAssert (NW_OK == rc);
   /*
    * ULI IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_ULI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-		  s11_uli_ie_get, &create_session_request_p->uli);
+		  gtpv2c_uli_ie_get, &create_session_request_p->uli);
   DevAssert (NW_OK == rc);
   /*
    * Serving Network IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_SERVING_NETWORK, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-		  s11_serving_network_ie_get, &create_session_request_p->serving_network);
+		  gtpv2c_serving_network_ie_get, &create_session_request_p->serving_network);
   DevAssert (NW_OK == rc);
   /*
    * RAT Type IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_RAT_TYPE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-		  s11_rat_type_ie_get, &create_session_request_p->rat_type);
+		  gtpv2c_rat_type_ie_get, &create_session_request_p->rat_type);
   DevAssert (NW_OK == rc);
   /*
    * Indication Flags IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_INDICATION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-		  s11_indication_flags_ie_get, &create_session_request_p->indication_flags);
+		  gtpv2c_indication_flags_ie_get, &create_session_request_p->indication_flags);
   DevAssert (NW_OK == rc);
   /*
    * APN IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_APN, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-		  s11_apn_ie_get, &create_session_request_p->apn);
+		  gtpv2c_apn_ie_get, &create_session_request_p->apn);
   DevAssert (NW_OK == rc);
   /*
    * Selection Mode IE
@@ -123,25 +123,25 @@ s11_sgw_handle_create_session_request (
    * PDN Type IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PDN_TYPE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-		  s11_pdn_type_ie_get, &create_session_request_p->pdn_type);
+		  gtpv2c_pdn_type_ie_get, &create_session_request_p->pdn_type);
   DevAssert (NW_OK == rc);
   /*
    * PAA IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PAA, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-           s11_paa_ie_get, &create_session_request_p->paa);
+           gtpv2c_paa_ie_get, &create_session_request_p->paa);
   DevAssert (NW_OK == rc);
   /*
    * Sender FTEID for CP IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FTEID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-           s11_fteid_ie_get, &create_session_request_p->sender_fteid_for_cp);
+           gtpv2c_fteid_ie_get, &create_session_request_p->sender_fteid_for_cp);
   DevAssert (NW_OK == rc);
   /*
    * PGW FTEID for CP IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FTEID, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-		  s11_fteid_ie_get, &create_session_request_p->pgw_address_for_cp);
+		  gtpv2c_fteid_ie_get, &create_session_request_p->pgw_address_for_cp);
   DevAssert (NW_OK == rc);
   /*
    * APN Restriction IE
@@ -153,7 +153,7 @@ s11_sgw_handle_create_session_request (
    * Bearer Context IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-           s11_bearer_context_to_be_created_within_create_session_request_ie_get, &create_session_request_p->bearer_contexts_to_be_created);
+      gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_get, &create_session_request_p->bearer_contexts_to_be_created);
   DevAssert (NW_OK == rc);
 
 
@@ -161,7 +161,7 @@ s11_sgw_handle_create_session_request (
    * Protocol Configuration Options IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PCO, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s11_pco_ie_get, &create_session_request_p->pco);
+      gtpv2c_pco_ie_get, &create_session_request_p->pco);
   DevAssert (NW_OK == rc);
 
 
@@ -173,7 +173,7 @@ s11_sgw_handle_create_session_request (
    * AMBR IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_AMBR, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-           s11_ambr_ie_get, &create_session_request_p->ambr);
+           gtpv2c_ambr_ie_get, &create_session_request_p->ambr);
   DevAssert (NW_OK == rc);
   /*
    * Recovery IE
@@ -187,11 +187,11 @@ s11_sgw_handle_create_session_request (
   rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
   if (rc != NW_OK) {
-    gtp_cause_t                             cause;
+    gtpv2c_cause_t                             cause;
     NwGtpv2cUlpApiT                         ulp_req;
 
     memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
-    memset (&cause, 0, sizeof (gtp_cause_t));
+    memset (&cause, 0, sizeof (gtpv2c_cause_t));
     cause.offending_ie_type = offendingIeType;
     cause.offending_ie_length = offendingIeLength;
     cause.offending_ie_instance = offendingIeInstance;
@@ -214,7 +214,7 @@ s11_sgw_handle_create_session_request (
     ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
     ulp_req.apiInfo.triggeredRspInfo.hTrxn = pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
     rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_CREATE_SESSION_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
-    s11_cause_ie_set (&(ulp_req.hMsg), &cause);
+    gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
     OAILOG_DEBUG (LOG_S11, "Received NW_GTP_CREATE_SESSION_REQ, Sending NW_GTP_CREATE_SESSION_RSP!\n");
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
@@ -243,7 +243,7 @@ s11_sgw_handle_create_session_response (
   NwRcT                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
   NwGtpv2cTrxnHandleT                     trxn;
-  gtp_cause_t                             cause;
+  gtpv2c_cause_t                             cause;
 
   DevAssert (create_session_response_p );
   DevAssert (stack_p );
@@ -273,7 +273,7 @@ s11_sgw_handle_create_session_response (
    * Prepare a create session response to send to MME.
    */
   memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
-  memset (&cause, 0, sizeof (gtp_cause_t));
+  memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
   ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
   rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_CREATE_SESSION_RSP, 0, 0, &(ulp_req.hMsg));
@@ -283,8 +283,8 @@ s11_sgw_handle_create_session_response (
    */
   rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, create_session_response_p->teid);
   DevAssert (NW_OK == rc);
-  cause.cause_value = (uint8_t) create_session_response_p->cause;
-  s11_cause_ie_set (&(ulp_req.hMsg), &cause);
+  cause = create_session_response_p->cause;
+  gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
 
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO, S11_SGW_GTP_C,
       create_session_response_p->s11_sgw_teid.teid,
@@ -297,15 +297,15 @@ s11_sgw_handle_create_session_response (
       create_session_response_p->s11_sgw_teid.ipv6 ? &create_session_response_p->s11_sgw_teid.ipv6_address : NULL);
 
 
-  s11_paa_ie_set (&(ulp_req.hMsg), &create_session_response_p->paa);
+  gtpv2c_paa_ie_set (&(ulp_req.hMsg), &create_session_response_p->paa);
   /*
    * Put 0 for now i.e. no existing context or restriction
    */
-  s11_apn_restriction_ie_set (&(ulp_req.hMsg), 0);
-  s11_pco_ie_set (&(ulp_req.hMsg), &create_session_response_p->pco);
+  gtpv2c_apn_restriction_ie_set (&(ulp_req.hMsg), 0);
+  gtpv2c_pco_ie_set (&(ulp_req.hMsg), &create_session_response_p->pco);
 
   for (int i = 0; i < create_session_response_p->bearer_contexts_created.num_bearer_context; i++) {
-    s11_bearer_context_created_ie_set (&(ulp_req.hMsg), &create_session_response_p->bearer_contexts_created.bearer_contexts[i]);
+    gtpv2c_bearer_context_created_ie_set (&(ulp_req.hMsg), &create_session_response_p->bearer_contexts_created.bearer_contexts[i]);
   }
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
@@ -340,7 +340,7 @@ s11_sgw_handle_delete_session_request (
    * MME FTEID for CP IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FTEID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL,
-      s11_fteid_ie_get, &delete_session_request_p->sender_fteid_for_cp);
+      gtpv2c_fteid_ie_get, &delete_session_request_p->sender_fteid_for_cp);
   DevAssert (NW_OK == rc);
   /*
    * Linked EPS Bearer Id IE
@@ -348,7 +348,7 @@ s11_sgw_handle_delete_session_request (
    * * * * S-GW relocation procedures.
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL,
-      s11_ebi_ie_get, &delete_session_request_p->lbi);
+      gtpv2c_ebi_ie_get, &delete_session_request_p->lbi);
   DevAssert (NW_OK == rc);
   /*
    * Indication Flags IE
@@ -356,7 +356,7 @@ s11_sgw_handle_delete_session_request (
    * * * * only the Operation Indication flag might be present.
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_INDICATION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s11_indication_flags_ie_get, &delete_session_request_p->indication_flags);
+      gtpv2c_indication_flags_ie_get, &delete_session_request_p->indication_flags);
   DevAssert (NW_OK == rc);
   delete_session_request_p->teid = nwGtpv2cMsgGetTeid (pUlpApi->hMsg);
   delete_session_request_p->trxn = (void *)pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
@@ -365,7 +365,7 @@ s11_sgw_handle_delete_session_request (
 
   if (rc != NW_OK) {
     NwGtpv2cUlpApiT                         ulp_req;
-    gtp_cause_t                             cause = {0};
+    gtpv2c_cause_t                             cause = {0};
 
     memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
     cause.offending_ie_type = offendingIeType;
@@ -393,7 +393,7 @@ s11_sgw_handle_delete_session_request (
     /*
      * Adding the cause
      */
-    s11_cause_ie_set (&(ulp_req.hMsg), &cause);
+    gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
     OAILOG_DEBUG (LOG_S11, "Received NW_GTP_DELETE_SESSION_REQ, Sending NW_GTP_DELETE_SESSION_RSP!\n");
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
     DevAssert (NW_OK == rc);
@@ -422,7 +422,7 @@ s11_sgw_handle_delete_session_response (
   NwRcT                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
   NwGtpv2cTrxnHandleT                     trxn;
-  gtp_cause_t                             cause;
+  gtpv2c_cause_t                             cause;
 
   DevAssert (delete_session_response_p );
   DevAssert (stack_p );
@@ -432,7 +432,7 @@ s11_sgw_handle_delete_session_response (
    * Prepare a delete session response to send to MME.
    */
   memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
-  memset (&cause, 0, sizeof (gtp_cause_t));
+  memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
   ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
   rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_DELETE_SESSION_RSP, 0, 0, &(ulp_req.hMsg));
@@ -442,8 +442,8 @@ s11_sgw_handle_delete_session_response (
    */
   rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, delete_session_response_p->teid);
   DevAssert (NW_OK == rc);
-  cause.cause_value = delete_session_response_p->cause;
-  s11_cause_ie_set (&(ulp_req.hMsg), &cause);
+  cause = delete_session_response_p->cause;
+  gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
   return RETURNok;
