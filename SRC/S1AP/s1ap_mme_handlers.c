@@ -646,6 +646,8 @@ s1ap_mme_handle_ue_context_release_request (
   S1ap_UEContextReleaseRequestIEs_t      *ueContextReleaseRequest_p = NULL;
   ue_description_t                       *ue_ref_p = NULL;
   MessageDef                             *message_p = NULL;
+  S1ap_Cause_PR                           cause_type;
+  long                                    cause_value;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_S1AP);
@@ -655,7 +657,44 @@ s1ap_mme_handle_ue_context_release_request (
                       NULL, 0,
                       "0 UEContextReleaseRequest/%s enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
                       s1ap_direction2String[message->direction], ueContextReleaseRequest_p->eNB_UE_S1AP_ID, ueContextReleaseRequest_p->mme_ue_s1ap_id);
+  // Log the Cause Type and Cause value
+  cause_type = ueContextReleaseRequest_p->cause.present;
 
+  switch (cause_type) 
+  {
+    case S1ap_Cause_PR_radioNetwork:
+      cause_value = ueContextReleaseRequest_p->cause.choice.radioNetwork;
+      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = Radio Network and Cause_Value = %ld\n", cause_value);
+      break;
+
+    case S1ap_Cause_PR_transport:
+      cause_value = ueContextReleaseRequest_p->cause.choice.transport;
+      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = Transport and Cause_Value = %ld\n", cause_value);
+      break;
+
+    case S1ap_Cause_PR_nas:
+      cause_value = ueContextReleaseRequest_p->cause.choice.nas;
+      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = NAS and Cause_Value = %ld\n", cause_value);
+      break;
+
+    case S1ap_Cause_PR_protocol:
+      cause_value = ueContextReleaseRequest_p->cause.choice.protocol;
+      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = Protocol and Cause_Value = %ld\n", cause_value);
+      break;
+
+    case S1ap_Cause_PR_misc:
+      cause_value = ueContextReleaseRequest_p->cause.choice.misc;
+      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = MISC and Cause_Value = %ld\n", cause_value);
+      break;
+
+    default:
+      OAILOG_ERROR (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Invalid Cause_Type = %d\n", cause_type);
+      OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  }
+
+  /* Fix - MME shall handle UE Context Release received from the eNB irrespective of the cause. And MME should release the S1-U bearers for the UE and move the UE to ECM idle mode. 
+  Cause can influence whether to preserve GBR bearers or not.Since, as of now EPC doesn't support dedicated bearers, it is don't care scenario till we add support for dedicated bearers.
+  */ 
 
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (ueContextReleaseRequest_p->mme_ue_s1ap_id)) == NULL) {
     /*
