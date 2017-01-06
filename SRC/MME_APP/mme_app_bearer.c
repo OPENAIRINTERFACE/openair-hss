@@ -508,11 +508,10 @@ mme_app_handle_erab_setup_req (itti_erab_setup_req_t * const itti_erab_setup_req
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].nas_pdu = itti_erab_setup_req->nas_msg;
     itti_erab_setup_req->nas_msg = NULL;
 
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_E_RAB_SETUP_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u teid " " tla %s",
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_E_RAB_SETUP_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u teid " TEID_FMT " ",
         ue_context_p->mme_ue_s1ap_id,
         s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_id,
-        s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].gtp_teid,
-        s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].transport_layer_address->data);
+        s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].gtp_teid);
     int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
     itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
   } else {
@@ -821,8 +820,8 @@ mme_app_handle_create_bearer_req (
 
   pdn_cid_t cid = linked_bc->pdn_cx_id;
 
-  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST ue id " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " ",
-      ue_context_p->mme_ue_s1ap_id, cid, ue_context_p->emm_context._imsi64);
+  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST ue id " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " n ebi %u",
+      ue_context_p->mme_ue_s1ap_id, cid, ue_context_p->emm_context._imsi64, create_bearer_request_pP->bearer_contexts.num_bearer_context);
 
   for (int i = 0; i < create_bearer_request_pP->bearer_contexts.num_bearer_context; i++) {
     const bearer_context_within_create_bearer_request_t *msg_bc = &create_bearer_request_pP->bearer_contexts.bearer_contexts[i];
@@ -830,6 +829,7 @@ mme_app_handle_create_bearer_req (
 
 
     dedicated_bc->bearer_state   |= BEARER_STATE_SGW_CREATED;
+    dedicated_bc->bearer_state   |= BEARER_STATE_MME_CREATED;
 
     dedicated_bc->s_gw_fteid_s1u      = msg_bc->s1u_sgw_fteid;
     dedicated_bc->p_gw_fteid_s5_s8_up = msg_bc->s5_s8_u_pgw_fteid;

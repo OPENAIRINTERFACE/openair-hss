@@ -208,14 +208,13 @@ emm_proc_identification (
         /*
          * Notify EMM that common procedure has been initiated
          */
-        MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " (identification)",
-                ue_id);
         emm_sap_t                               emm_sap = {0};
 
         emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
         emm_sap.u.emm_reg.ue_id = ue_id;
         emm_sap.u.emm_reg.ctx = emm_context;
         rc = emm_sap_send (&emm_sap);
+        MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ (IDENT) ue id " MME_UE_S1AP_ID_FMT " ",ue_id);
       }
     }
   }
@@ -306,7 +305,7 @@ emm_proc_identification_complete (
     /*
      * Notify EMM that the identification procedure successfully completed
      */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_CNF (IDENT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     emm_sap.primitive = EMMREG_COMMON_PROC_CNF;
     emm_sap.u.emm_reg.ue_id = ue_id;
     emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -317,7 +316,7 @@ emm_proc_identification_complete (
     /*
      * Notify EMM that the identification procedure failed
      */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ (IDENT) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
     emm_sap.u.emm_reg.ue_id = ue_id;
     emm_sap.u.emm_reg.ctx = emm_ctx;
@@ -398,6 +397,7 @@ static void *_identification_t3470_handler (void *args)
       emm_sap.u.emm_reg.ue_id = ue_mm_context->mme_ue_s1ap_id;
       emm_sap.u.emm_reg.ctx   = emm_ctx;
       data->notify_failure = true;
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_PROC_ABORT (identification) ue id " MME_UE_S1AP_ID_FMT " ", ue_mm_context->mme_ue_s1ap_id);
       emm_sap_send (&emm_sap);
     }
   }
@@ -450,6 +450,7 @@ int _identification_request (identification_data_t * data)
    * Setup EPS NAS security data
    */
   emm_as_set_security_data (&emm_sap.u.emm_as.u.security.sctx, &emm_ctx->_security, false, true);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_SECURITY_REQ (identification) ue id " MME_UE_S1AP_ID_FMT " ", data->ue_id);
   rc = emm_sap_send (&emm_sap);
 
   if (rc != RETURNerror) {
@@ -493,6 +494,7 @@ static int _identification_ll_failure (struct emm_context_s *emm_context)
       emm_sap.u.emm_reg.ue_id = ue_id;
       emm_sap.u.emm_reg.ctx   = emm_context;
       data->notify_failure = true;
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_PROC_ABORT (identification) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       rc = emm_sap_send (&emm_sap);
     }
     // abort ANY ongoing EMM procedure (R10_5_4_4_6_a)
@@ -562,6 +564,7 @@ static int _identification_abort (struct emm_context_s *emm_context)
         emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
         emm_sap.u.emm_reg.ue_id = ue_id;
         emm_sap.u.emm_reg.ctx   = emm_context;
+        MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REJ (abort identification) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
         rc = emm_sap_send (&emm_sap);
       } else {
         rc = RETURNok;

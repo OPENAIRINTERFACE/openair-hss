@@ -67,7 +67,6 @@ int mme_app_handle_nas_dl_req (
   if (ue_context) {
     OAILOG_DEBUG (LOG_MME_APP, "DOWNLINK NAS TRANSPORT Found enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", ue_context->enb_ue_s1ap_id);
     enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
-    mme_app_dump_ue_context ((const hash_key_t)0, ue_context, NULL, NULL);
   }
 
   NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
@@ -75,7 +74,7 @@ int mme_app_handle_nas_dl_req (
   NAS_DL_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
   nas_dl_req_pP->nas_msg                             = NULL;
 
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,TASK_S1AP,NULL, 0,
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0,
       "0 DOWNLINK NAS TRANSPORT enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue id " MME_UE_S1AP_ID_FMT " ",
       enb_ue_s1ap_id, nas_dl_req_pP->ue_id);
 

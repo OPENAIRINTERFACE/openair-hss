@@ -178,6 +178,7 @@ _emm_service_reject (
      * Setup EPS NAS security data
      */
     emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &ue_mm_ctx->emm_context._security, false, false);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_mm_ctx->mme_ue_s1ap_id);
     rc = emm_sap_send (&emm_sap);
   }
 

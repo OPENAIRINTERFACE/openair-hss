@@ -63,6 +63,9 @@ bstring fteid_ip_address_to_bstring(struct fteid_s *fteid)
     bstr = blk2bstr(&fteid->ipv4_address.s_addr, 4);
   } else if (fteid->ipv6) {
     bstr = blk2bstr(&fteid->ipv6_address, 16);
+  } else {
+    char avoid_seg_fault[4] = {0,0,0,0};
+    bstr = blk2bstr(avoid_seg_fault, 4);
   }
   return bstr;
 }

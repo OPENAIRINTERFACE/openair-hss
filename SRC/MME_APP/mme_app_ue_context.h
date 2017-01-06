@@ -120,13 +120,6 @@ typedef struct bearer_context_s {
   // TFT: Traffic Flow Template. (For PMIP-based S5/S8 only)
   //traffic_flow_template_t          *tft_pmip;
 
-//  bitrate_t gbr_ul;
-//  bitrate_t gbr_dl;
-//
-//  bitrate_t mbr_ul;
-//  bitrate_t mbr_dl;
-
-
   // extra 23.401 spec members
   pdn_cid_t                         pdn_cx_id;
   mme_app_bearer_state_t            bearer_state;

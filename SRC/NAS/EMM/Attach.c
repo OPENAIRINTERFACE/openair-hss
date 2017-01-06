@@ -305,6 +305,7 @@ emm_proc_attach_request (
       emm_sap.u.emm_reg.ue_id = ue_mm_context->mme_ue_s1ap_id;
       emm_sap.u.emm_reg.ctx   = &ue_mm_context->emm_context;
       // TODOdata->notify_failure = true;
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_PROC_ABORT (SMC) ue id " MME_UE_S1AP_ID_FMT " ", ue_mm_context->mme_ue_s1ap_id);
       rc = emm_sap_send (&emm_sap);
     }
     if (emm_ctx_is_common_procedure_running(&ue_mm_context->emm_context, EMM_CTXT_COMMON_PROC_IDENT)) {
@@ -683,6 +684,7 @@ emm_proc_attach_complete (
     emm_sap.primitive = EMMREG_ATTACH_CNF;
     emm_sap.u.emm_reg.ue_id = ue_id;
     emm_sap.u.emm_reg.ctx = &ue_mm_context->emm_context;
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_ATTACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     rc = emm_sap_send (&emm_sap);
   } else if (esm_sap.err != ESM_SAP_DISCARDED) {
     /*
@@ -850,6 +852,7 @@ static int _emm_attach_release (emm_context_t *emm_context)
     /*
      * Notify EMM that the attach procedure is aborted
      */
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_PROC_ABORT ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     emm_sap_t                               emm_sap = {0};
 
 
@@ -920,6 +923,7 @@ int _emm_attach_reject (emm_context_t *emm_context)
      * Setup EPS NAS security data
      */
     emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_context->_security, false, true);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     rc = emm_sap_send (&emm_sap);
 
     /*
@@ -981,6 +985,7 @@ static int _emm_attach_abort (emm_context_t *emm_context)
      * Notify ESM that the network locally refused PDN connectivity
      * to the UE
      */
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_CONNECTIVITY_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     esm_sap.primitive = ESM_PDN_CONNECTIVITY_REJ;
     esm_sap.ue_id = ue_id;
     esm_sap.ctx = emm_context;
@@ -991,6 +996,7 @@ static int _emm_attach_abort (emm_context_t *emm_context)
       /*
        * Notify EMM that EPS attach procedure failed
        */
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 EMMREG_ATTACH_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_ATTACH_REJ;
@@ -1280,6 +1286,8 @@ static int _emm_attach (emm_context_t *emm_context)
   /*
    * Notify ESM that PDN connectivity is requested
    */
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_PDN_CONNECTIVITY_REQ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+
   esm_sap.primitive = ESM_PDN_CONNECTIVITY_REQ;
   esm_sap.is_standalone = false;
   esm_sap.ue_id = ue_id;
@@ -1458,6 +1466,7 @@ static int _emm_attach_accept (emm_context_t * emm_context)
         ue_id, blength(attach_data->esm_msg), blength(emm_sap.u.emm_as.u.establish.nas_msg));
 
     REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__2);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     rc = emm_sap_send (&emm_sap);
 
     if (RETURNerror != rc) {

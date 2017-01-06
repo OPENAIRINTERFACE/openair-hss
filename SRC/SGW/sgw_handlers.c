@@ -1033,9 +1033,9 @@ int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid)
       s11_create_bearer_request->bearer_contexts.bearer_contexts[0].bearer_level_qos.pvi       = 1;
       s11_create_bearer_request->bearer_contexts.bearer_contexts[0].bearer_level_qos.qci       = 5;
       s11_create_bearer_request->bearer_contexts.bearer_contexts[0].bearer_level_qos.gbr.br_ul = 32000;
-      s11_create_bearer_request->bearer_contexts.bearer_contexts[0].bearer_level_qos.gbr.br_dl = 32000;
+      s11_create_bearer_request->bearer_contexts.bearer_contexts[0].bearer_level_qos.gbr.br_dl = 33000;
       s11_create_bearer_request->bearer_contexts.bearer_contexts[0].bearer_level_qos.mbr.br_ul = 48000;
-      s11_create_bearer_request->bearer_contexts.bearer_contexts[0].bearer_level_qos.mbr.br_dl = 48000;
+      s11_create_bearer_request->bearer_contexts.bearer_contexts[0].bearer_level_qos.mbr.br_dl = 49000;
 
       rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
       OAILOG_FUNC_RETURN(LOG_SPGW_APP, rc);

@@ -320,9 +320,13 @@ mme_ue_context_update_coll_keys (
   OAILOG_TRACE (LOG_MME_APP, "Update ue context.enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue context.mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ue context.IMSI " IMSI_64_FMT " ue context.GUTI "GUTI_FMT"\n",
              ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->emm_context._imsi64, GUTI_ARG(&ue_context_p->emm_context._guti));
 
-  OAILOG_TRACE (LOG_MME_APP, "Update ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " GUTI " GUTI_FMT "\n",
+  if (guti_p) {
+    OAILOG_TRACE (LOG_MME_APP, "Update ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " GUTI " GUTI_FMT "\n",
             ue_context_p, ue_context_p->enb_ue_s1ap_id, mme_ue_s1ap_id, imsi, GUTI_ARG(guti_p));
-
+  } else {
+    OAILOG_TRACE (LOG_MME_APP, "Update ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT "\n",
+            ue_context_p, ue_context_p->enb_ue_s1ap_id, mme_ue_s1ap_id, imsi);
+  }
   AssertFatal(ue_context_p->enb_s1ap_id_key == enb_s1ap_id_key,
       "Mismatch in UE context enb_s1ap_id_key "MME_APP_ENB_S1AP_ID_KEY_FORMAT"/"MME_APP_ENB_S1AP_ID_KEY_FORMAT"\n",
       ue_context_p->enb_s1ap_id_key, enb_s1ap_id_key);
@@ -896,7 +900,7 @@ mme_app_dump_ue_context (
   struct ue_mm_context_s           *const ue_mm_context = (struct ue_mm_context_s *)ue_mm_context_pP;
   uint8_t                                 j = 0;
   if (ue_mm_context) {
-    bstring                                 bstr_dump = bfromcstralloc(2048, "\n-----------------------UE MM context ");
+    bstring                                 bstr_dump = bfromcstralloc(4096, "\n-----------------------UE MM context ");
     bformata (bstr_dump, "%p --------------------\n", ue_mm_context);
     bformata (bstr_dump, "    - Authenticated ..: %s\n", (ue_mm_context->imsi_auth == IMSI_UNAUTHENTICATED) ? "FALSE" : "TRUE");
     bformata (bstr_dump, "    - eNB UE s1ap ID .: %08x\n", ue_mm_context->enb_ue_s1ap_id);

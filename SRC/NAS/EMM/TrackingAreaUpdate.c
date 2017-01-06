@@ -546,6 +546,7 @@ static int _emm_tracking_area_update_reject (emm_context_t * emm_context)
      * Setup EPS NAS security data
      */
     emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_context->_security, false, true);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     rc = emm_sap_send (&emm_sap);
   }
 
@@ -624,6 +625,7 @@ static int _emm_tracking_area_update_accept (
      */
     //emm_sap.u.emm_as.u.establish.nas_msg = ...;
     //LOG_INFO (LOG_NAS_EMM, "EMM-PROC  - nas_msg  src size = %d nas_msg  dst size = %d ", data->esm_msg.length, emm_sap.u.emm_as.u.establish.nas_msg.length);
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_CNF ue id " MME_UE_S1AP_ID_FMT " ", data->ue_id);
     rc = emm_sap_send (&emm_sap);
 
     if (rc != RETURNerror) {
@@ -684,6 +686,7 @@ static int _emm_tracking_area_update_abort (emm_context_t * emm_context)
       emm_sap.primitive = EMMREG_ATTACH_REJ;
       emm_sap.u.emm_reg.ue_id = ue_id;
       emm_sap.u.emm_reg.ctx = emm_context;
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_ATTACH_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       rc = emm_sap_send (&emm_sap);
     }
   }

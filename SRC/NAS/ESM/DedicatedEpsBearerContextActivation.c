@@ -484,6 +484,7 @@ static int _dedicated_eps_bearer_activate (
    * Notify EMM that an activate dedicated EPS bearer context request
    * message has to be sent to the UE
    */
+  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMESM_ACTIVATE_BEARER_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_id, ebi);
   emm_esm_activate_bearer_req_t          *emm_esm = &emm_sap.u.emm_esm.u.activate_bearer;
 
   emm_sap.primitive       = EMMESM_ACTIVATE_BEARER_REQ;

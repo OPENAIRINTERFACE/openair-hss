@@ -539,7 +539,7 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
         }
 
         bdestroy_wrapper (&plain_msg);
-        mme_app_dump_ue_context ((const hash_key_t)0, ue_mm_context, NULL, NULL);
+        //mme_app_dump_ue_context ((const hash_key_t)0, ue_mm_context, NULL, NULL);
       }
     } else {
       /*

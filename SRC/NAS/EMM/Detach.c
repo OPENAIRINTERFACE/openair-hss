@@ -274,7 +274,6 @@ emm_proc_detach_request (
     emm_sap_t                               emm_sap = {0};
     emm_as_data_t                          *emm_as = &emm_sap.u.emm_as.u.data;
 
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_NAS_INFO_DETACH ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     /*
      * Setup NAS information message to transfer
      */
@@ -295,6 +294,7 @@ emm_proc_detach_request (
      * be sent to the network
      */
     emm_sap.primitive = EMMAS_DATA_REQ;
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_REQ (DETACH) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     rc = emm_sap_send (&emm_sap);
   }
 

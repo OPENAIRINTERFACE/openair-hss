@@ -480,20 +480,56 @@ int s1ap_generate_s1ap_e_rab_setup_req (itti_s1ap_e_rab_setup_req_t * const e_ra
 
       s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RAB_ID = e_rab_setup_req->e_rab_to_be_setup_list.item[i].e_rab_id;
       s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.qCI = e_rab_setup_req->e_rab_to_be_setup_list.item[i].e_rab_level_qos_parameters.qci;
+
       s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel =
           e_rab_setup_req->e_rab_to_be_setup_list.item[i].e_rab_level_qos_parameters.allocation_and_retention_priority.priority_level;
+
       s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability =
           e_rab_setup_req->e_rab_to_be_setup_list.item[i].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_capability;
+
       s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionVulnerability =
           e_rab_setup_req->e_rab_to_be_setup_list.item[i].e_rab_level_qos_parameters.allocation_and_retention_priority.pre_emption_vulnerability;
       /* OPTIONAL */
-      //s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = &gbrQosInformation[i];
+      gbr_qos_information_t *gbr_qos_information = &e_rab_setup_req->e_rab_to_be_setup_list.item[i].e_rab_level_qos_parameters.gbr_qos_information;
+      if ((gbr_qos_information->e_rab_maximum_bit_rate_downlink)    ||
+          (gbr_qos_information->e_rab_maximum_bit_rate_uplink)      ||
+          (gbr_qos_information->e_rab_guaranteed_bit_rate_downlink) ||
+          (gbr_qos_information->e_rab_guaranteed_bit_rate_uplink)) {
+
+        OAILOG_NOTICE (LOG_S1AP, "Encoding of e_RABlevelQoSParameters.gbrQosInformation\n");
+
+        //s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = calloc(1, sizeof(struct S1ap_GBR_QosInformation));
+        s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation = &gbrQosInformation[i];
+        memset(&gbrQosInformation[i], 0, sizeof(gbrQosInformation[i]));
+        if (s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation) {
+          asn_uint642INTEGER(&s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation->e_RAB_MaximumBitrateDL,
+              gbr_qos_information->e_rab_maximum_bit_rate_downlink);
+
+          asn_uint642INTEGER(&s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation->e_RAB_MaximumBitrateUL,
+              gbr_qos_information->e_rab_maximum_bit_rate_uplink);
+
+          asn_uint642INTEGER(&s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation->e_RAB_GuaranteedBitrateDL,
+              gbr_qos_information->e_rab_guaranteed_bit_rate_downlink);
+
+          asn_uint642INTEGER(&s1ap_E_RABToBeSetupItemBearerSUReq[i].e_RABlevelQoSParameters.gbrQosInformation->e_RAB_GuaranteedBitrateUL,
+              gbr_qos_information->e_rab_guaranteed_bit_rate_uplink);
+        }
+      } else {
+        OAILOG_NOTICE (LOG_S1AP, "NOT Encoding of e_RABlevelQoSParameters.gbrQosInformation\n");
+      }
+
       INT32_TO_OCTET_STRING (e_rab_setup_req->e_rab_to_be_setup_list.item[i].gtp_teid, &s1ap_E_RABToBeSetupItemBearerSUReq[i].gTP_TEID);
+
+      s1ap_E_RABToBeSetupItemBearerSUReq[i].transportLayerAddress.buf = calloc (blength(e_rab_setup_req->e_rab_to_be_setup_list.item[i].transport_layer_address), sizeof (uint8_t));
+      memcpy (s1ap_E_RABToBeSetupItemBearerSUReq[i].transportLayerAddress.buf,
+          e_rab_setup_req->e_rab_to_be_setup_list.item[i].transport_layer_address->data,
+          blength(e_rab_setup_req->e_rab_to_be_setup_list.item[i].transport_layer_address));
+
+      s1ap_E_RABToBeSetupItemBearerSUReq[i].transportLayerAddress.size = blength(e_rab_setup_req->e_rab_to_be_setup_list.item[i].transport_layer_address);
+      s1ap_E_RABToBeSetupItemBearerSUReq[i].transportLayerAddress.bits_unused = 0;
 
       OCTET_STRING_fromBuf (&s1ap_E_RABToBeSetupItemBearerSUReq[i].nAS_PDU, (char *)bdata(e_rab_setup_req->e_rab_to_be_setup_list.item[i].nas_pdu),
           blength(e_rab_setup_req->e_rab_to_be_setup_list.item[i].nas_pdu));
-
-      bdestroy_wrapper (&e_rab_setup_req->e_rab_to_be_setup_list.item[i].nas_pdu);
 
       ASN_SEQUENCE_ADD (&e_rabsetuprequesties->e_RABToBeSetupListBearerSUReq, &s1ap_E_RABToBeSetupItemBearerSUReq[i]);
     }

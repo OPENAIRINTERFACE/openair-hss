@@ -35,6 +35,7 @@
 
 #include "log.h"
 #include "assertions.h"
+#include "common_defs.h"
 #include "intertask_interface.h"
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
@@ -46,57 +47,57 @@ static int
 s1ap_mme_decode_initiating (
   s1ap_message *message,
   S1ap_InitiatingMessage_t *initiating_p) {
-  int                                     ret = -1;
-  MessageDef                             *message_p = NULL;
-  char                                   *message_string = NULL;
-  size_t                                  message_string_size;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
+  int                                     ret = RETURNerror;
+  //MessageDef                             *message_p = NULL;
+  //char                                   *message_string = NULL;
+  //size_t                                  message_string_size;
+  //MessagesIds                             message_id = MESSAGES_ID_MAX;
   DevAssert (initiating_p != NULL);
-  message_string = calloc (10000, sizeof (char));
-  s1ap_string_total_size = 0;
+  //message_string = calloc (10000, sizeof (char));
+  //s1ap_string_total_size = 0;
   message->procedureCode = initiating_p->procedureCode;
   message->criticality = initiating_p->criticality;
 
   switch (initiating_p->procedureCode) {
     case S1ap_ProcedureCode_id_uplinkNASTransport: {
         ret = s1ap_decode_s1ap_uplinknastransporties (&message->msg.s1ap_UplinkNASTransportIEs, &initiating_p->value);
-        s1ap_xer_print_s1ap_uplinknastransport (s1ap_xer__print2sp, message_string, message);
-        message_id = S1AP_UPLINK_NAS_LOG;
+        //s1ap_xer_print_s1ap_uplinknastransport (s1ap_xer__print2sp, message_string, message);
+        //message_id = S1AP_UPLINK_NAS_LOG;
       }
       break;
 
     case S1ap_ProcedureCode_id_S1Setup: {
         ret = s1ap_decode_s1ap_s1setuprequesties (&message->msg.s1ap_S1SetupRequestIEs, &initiating_p->value);
-        s1ap_xer_print_s1ap_s1setuprequest (s1ap_xer__print2sp, message_string, message);
-        message_id = S1AP_S1_SETUP_LOG;
+        //s1ap_xer_print_s1ap_s1setuprequest (s1ap_xer__print2sp, message_string, message);
+        //message_id = S1AP_S1_SETUP_LOG;
       }
       break;
 
     case S1ap_ProcedureCode_id_initialUEMessage: {
         ret = s1ap_decode_s1ap_initialuemessageies (&message->msg.s1ap_InitialUEMessageIEs, &initiating_p->value);
-        s1ap_xer_print_s1ap_initialuemessage (s1ap_xer__print2sp, message_string, message);
-        message_id = S1AP_INITIAL_UE_MESSAGE_LOG;
+        //s1ap_xer_print_s1ap_initialuemessage (s1ap_xer__print2sp, message_string, message);
+        //message_id = S1AP_INITIAL_UE_MESSAGE_LOG;
       }
       break;
 
     case S1ap_ProcedureCode_id_UEContextReleaseRequest: {
         ret = s1ap_decode_s1ap_uecontextreleaserequesties (&message->msg.s1ap_UEContextReleaseRequestIEs, &initiating_p->value);
-        s1ap_xer_print_s1ap_uecontextreleaserequest (s1ap_xer__print2sp, message_string, message);
-        message_id = S1AP_UE_CONTEXT_RELEASE_REQ_LOG;
+        //s1ap_xer_print_s1ap_uecontextreleaserequest (s1ap_xer__print2sp, message_string, message);
+        //message_id = S1AP_UE_CONTEXT_RELEASE_REQ_LOG;
       }
       break;
 
     case S1ap_ProcedureCode_id_UECapabilityInfoIndication: {
         ret = s1ap_decode_s1ap_uecapabilityinfoindicationies (&message->msg.s1ap_UECapabilityInfoIndicationIEs, &initiating_p->value);
-        s1ap_xer_print_s1ap_uecapabilityinfoindication (s1ap_xer__print2sp, message_string, message);
-        message_id = S1AP_UE_CAPABILITY_IND_LOG;
+        //s1ap_xer_print_s1ap_uecapabilityinfoindication (s1ap_xer__print2sp, message_string, message);
+        //message_id = S1AP_UE_CAPABILITY_IND_LOG;
       }
       break;
 
     case S1ap_ProcedureCode_id_NASNonDeliveryIndication: {
         ret = s1ap_decode_s1ap_nasnondeliveryindication_ies (&message->msg.s1ap_NASNonDeliveryIndication_IEs, &initiating_p->value);
-        s1ap_xer_print_s1ap_nasnondeliveryindication_ (s1ap_xer__print2sp, message_string, message);
-        message_id = S1AP_NAS_NON_DELIVERY_IND_LOG;
+        //s1ap_xer_print_s1ap_nasnondeliveryindication_ (s1ap_xer__print2sp, message_string, message);
+        //message_id = S1AP_NAS_NON_DELIVERY_IND_LOG;
       }
       break;
 
@@ -107,12 +108,12 @@ s1ap_mme_decode_initiating (
       break;
   }
 
-  message_string_size = strlen (message_string);
-  message_p = itti_alloc_new_message_sized (TASK_S1AP, message_id, message_string_size + sizeof (IttiMsgText));
-  message_p->ittiMsg.s1ap_uplink_nas_log.size = message_string_size;
-  memcpy (&message_p->ittiMsg.s1ap_uplink_nas_log.text, message_string, message_string_size);
-  itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free_wrapper ((void**)&message_string);
+//  message_string_size = strlen (message_string);
+//  message_p = itti_alloc_new_message_sized (TASK_S1AP, message_id, message_string_size + sizeof (IttiMsgText));
+//  message_p->ittiMsg.s1ap_uplink_nas_log.size = message_string_size;
+//  memcpy (&message_p->ittiMsg.s1ap_uplink_nas_log.text, message_string, message_string_size);
+//  itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
+//  free_wrapper ((void**)&message_string);
   return ret;
 }
 
@@ -120,29 +121,36 @@ static int
 s1ap_mme_decode_successfull_outcome (
   s1ap_message *message,
   S1ap_SuccessfulOutcome_t *successfullOutcome_p) {
-  int                                     ret = -1;
-  MessageDef                             *message_p = NULL;
-  char                                   *message_string = NULL;
-  size_t                                  message_string_size = 0;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
+  int                                     ret = RETURNerror;
+  //MessageDef                             *message_p = NULL;
+  //char                                   *message_string = NULL;
+  //size_t                                  message_string_size = 0;
+  //MessagesIds                             message_id = MESSAGES_ID_MAX;
   DevAssert (successfullOutcome_p != NULL);
-  message_string = calloc (10000, sizeof (char));
-  s1ap_string_total_size = 0;
+  //message_string = calloc (10000, sizeof (char));
+  //s1ap_string_total_size = 0;
   message->procedureCode = successfullOutcome_p->procedureCode;
   message->criticality = successfullOutcome_p->criticality;
 
   switch (successfullOutcome_p->procedureCode) {
     case S1ap_ProcedureCode_id_InitialContextSetup: {
         ret = s1ap_decode_s1ap_initialcontextsetupresponseies (&message->msg.s1ap_InitialContextSetupResponseIEs, &successfullOutcome_p->value);
-        s1ap_xer_print_s1ap_initialcontextsetupresponse (s1ap_xer__print2sp, message_string, message);
-        message_id = S1AP_INITIAL_CONTEXT_SETUP_LOG;
+        //s1ap_xer_print_s1ap_initialcontextsetupresponse (s1ap_xer__print2sp, message_string, message);
+        //message_id = S1AP_INITIAL_CONTEXT_SETUP_LOG;
       }
       break;
 
     case S1ap_ProcedureCode_id_UEContextRelease: {
         ret = s1ap_decode_s1ap_uecontextreleasecompleteies (&message->msg.s1ap_UEContextReleaseCompleteIEs, &successfullOutcome_p->value);
-        s1ap_xer_print_s1ap_uecontextreleasecomplete (s1ap_xer__print2sp, message_string, message);
-        message_id = S1AP_UE_CONTEXT_RELEASE_LOG;
+        //s1ap_xer_print_s1ap_uecontextreleasecomplete (s1ap_xer__print2sp, message_string, message);
+        //message_id = S1AP_UE_CONTEXT_RELEASE_LOG;
+      }
+      break;
+
+    case S1ap_ProcedureCode_id_E_RABSetup: {
+        ret = s1ap_decode_s1ap_e_rabsetupresponseies (&message->msg.s1ap_E_RABSetupResponseIEs, &successfullOutcome_p->value);
+        //s1ap_xer_print_s1ap_e_rabsetupresponse (s1ap_xer__print2sp, message_string, message);
+        //message_id = S1AP_E_RABSETUP_RESPONSE_LOG;
       }
       break;
 
@@ -152,12 +160,14 @@ s1ap_mme_decode_successfull_outcome (
       break;
   }
 
-  message_string_size = strlen (message_string);
-  message_p = itti_alloc_new_message_sized (TASK_S1AP, message_id, message_string_size + sizeof (IttiMsgText));
-  message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
-  memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
-  itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free_wrapper ((void**)&message_string);
+//  if (MESSAGES_ID_MAX != message_id) {
+//    message_string_size = strlen (message_string);
+//    message_p = itti_alloc_new_message_sized (TASK_S1AP, message_id, message_string_size + sizeof (IttiMsgText));
+//    message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
+//    memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
+//    itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
+//    free_wrapper ((void**)&message_string);
+//  }
   return ret;
 }
 
@@ -165,22 +175,22 @@ static int
 s1ap_mme_decode_unsuccessfull_outcome (
   s1ap_message *message,
   S1ap_UnsuccessfulOutcome_t *unSuccessfulOutcome_p) {
-  int                                     ret = -1;
-  MessageDef                             *message_p = NULL;
-  char                                   *message_string = NULL;
-  size_t                                  message_string_size = 0;
-  MessagesIds                             message_id = MESSAGES_ID_MAX;
+  int                                     ret = RETURNerror;
+  //MessageDef                             *message_p = NULL;
+  //char                                   *message_string = NULL;
+  //size_t                                  message_string_size = 0;
+  //MessagesIds                             message_id = MESSAGES_ID_MAX;
   DevAssert (unSuccessfulOutcome_p != NULL);
-  message_string = calloc (10000, sizeof (char));
-  s1ap_string_total_size = 0;
+  //message_string = calloc (10000, sizeof (char));
+  //s1ap_string_total_size = 0;
   message->procedureCode = unSuccessfulOutcome_p->procedureCode;
   message->criticality = unSuccessfulOutcome_p->criticality;
 
   switch (unSuccessfulOutcome_p->procedureCode) {
     case S1ap_ProcedureCode_id_InitialContextSetup: {
         ret = s1ap_decode_s1ap_initialcontextsetupfailureies (&message->msg.s1ap_InitialContextSetupFailureIEs, &unSuccessfulOutcome_p->value);
-        s1ap_xer_print_s1ap_initialcontextsetupfailure (s1ap_xer__print2sp, message_string, message);
-        message_id = S1AP_INITIAL_CONTEXT_SETUP_LOG;
+        //s1ap_xer_print_s1ap_initialcontextsetupfailure (s1ap_xer__print2sp, message_string, message);
+        //message_id = S1AP_INITIAL_CONTEXT_SETUP_LOG;
       }
       break;
 
@@ -190,12 +200,12 @@ s1ap_mme_decode_unsuccessfull_outcome (
       break;
   }
 
-  message_string_size = strlen (message_string);
-  message_p = itti_alloc_new_message_sized (TASK_S1AP, message_id, message_string_size + sizeof (IttiMsgText));
-  message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
-  memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
-  itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free_wrapper ((void**)&message_string);
+//  message_string_size = strlen (message_string);
+//  message_p = itti_alloc_new_message_sized (TASK_S1AP, message_id, message_string_size + sizeof (IttiMsgText));
+//  message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
+//  memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
+//  itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
+//  free_wrapper ((void**)&message_string);
   return ret;
 }
 
@@ -232,5 +242,5 @@ s1ap_mme_decode_pdu (
       break;
   }
 
-  return -1;
+  return RETURNerror;
 }
