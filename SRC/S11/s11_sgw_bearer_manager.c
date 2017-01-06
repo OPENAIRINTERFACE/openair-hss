@@ -50,7 +50,7 @@ s11_sgw_handle_modify_bearer_request (
   NwGtpv2cStackHandleT * stack_p,
   NwGtpv2cUlpApiT * pUlpApi)
 {
-  NwRcT                                   rc = NW_OK;
+  nw_rc_t                                   rc = NW_OK;
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
@@ -127,7 +127,7 @@ s11_sgw_handle_modify_bearer_request (
      */
     ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
     ulp_req.apiInfo.triggeredRspInfo.hTrxn = pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
-    rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_MODIFY_BEARER_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
+    rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_MODIFY_BEARER_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
     gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
     OAILOG_DEBUG (LOG_S11, "Received NW_GTP_MODIFY_BEARER_REQ, Sending NW_GTP_MODIFY_BEARER_RSP!\n");
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
@@ -155,7 +155,7 @@ s11_sgw_handle_modify_bearer_response (
   itti_s11_modify_bearer_response_t * response_p)
 {
   gtpv2c_cause_t                             cause;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
   NwGtpv2cTrxnHandleT                     trxn;
 
@@ -169,7 +169,7 @@ s11_sgw_handle_modify_bearer_response (
   memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
   ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
-  rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_MODIFY_BEARER_RSP, 0, 0, &(ulp_req.hMsg));
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_MODIFY_BEARER_RSP, 0, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
   /*
    * Set the remote TEID
@@ -189,7 +189,7 @@ s11_sgw_handle_release_access_bearers_request (
   NwGtpv2cStackHandleT * stack_p,
   NwGtpv2cUlpApiT * pUlpApi)
 {
-  NwRcT                                   rc = NW_OK;
+  nw_rc_t                                   rc = NW_OK;
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
@@ -246,7 +246,7 @@ s11_sgw_handle_release_access_bearers_request (
      */
     ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
     ulp_req.apiInfo.triggeredRspInfo.hTrxn = pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
-    rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_RELEASE_ACCESS_BEARERS_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
+    rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_RELEASE_ACCESS_BEARERS_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
     gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
     OAILOG_DEBUG (LOG_S11, "Received NW_GTP_RELEASE_ACCESS_BEARERS_REQ, Sending NW_GTP_RELEASE_ACCESS_BEARERS_RSP!\n");
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
@@ -275,7 +275,7 @@ s11_sgw_handle_release_access_bearers_response (
   itti_s11_release_access_bearers_response_t * response_p)
 {
   gtpv2c_cause_t                             cause;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
   NwGtpv2cTrxnHandleT                     trxn;
 
@@ -289,7 +289,7 @@ s11_sgw_handle_release_access_bearers_response (
   memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
   ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
-  rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_RELEASE_ACCESS_BEARERS_RSP, 0, 0, &(ulp_req.hMsg));
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_RELEASE_ACCESS_BEARERS_RSP, 0, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
   /*
    * Set the remote TEID
@@ -310,7 +310,7 @@ s11_sgw_handle_create_bearer_request (
   NwGtpv2cStackHandleT * stack_p,
   itti_s11_create_bearer_request_t * request_p)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
 
   DevAssert (stack_p );
@@ -321,7 +321,7 @@ s11_sgw_handle_create_bearer_request (
   memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
 
   ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
-  rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_CREATE_BEARER_REQ, request_p->teid, 0, &(ulp_req.hMsg));
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CREATE_BEARER_REQ, request_p->teid, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
 
   ulp_req.apiInfo.initialReqInfo.peerIp     = request_p->peer_ip;

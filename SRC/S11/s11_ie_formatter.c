@@ -52,7 +52,7 @@
 #include "s11_ie_formatter.h"
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_imsi_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -88,7 +88,7 @@ gtpv2c_imsi_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const imsi_t * imsi)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   imsi_t                                  imsi_nbo = {0};
 
   DevAssert (msg );
@@ -105,7 +105,7 @@ gtpv2c_imsi_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_msisdn_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -144,7 +144,7 @@ gtpv2c_msisdn_ie_get (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_mei_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -159,7 +159,7 @@ gtpv2c_mei_ie_get (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_node_type_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -190,7 +190,7 @@ gtpv2c_node_type_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const node_type_t * node_type)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 value;
 
   DevAssert (node_type );
@@ -216,7 +216,7 @@ gtpv2c_node_type_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_pdn_type_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -258,7 +258,7 @@ gtpv2c_pdn_type_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const pdn_type_t * pdn_type)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 value;
 
   DevAssert (pdn_type );
@@ -289,7 +289,7 @@ gtpv2c_pdn_type_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_rat_type_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -341,7 +341,7 @@ gtpv2c_rat_type_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const rat_type_t * rat_type)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 value;
 
   DevAssert (rat_type );
@@ -388,7 +388,7 @@ gtpv2c_ebi_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const unsigned ebi)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 value = 0;
 
   value = ebi & 0x0F;
@@ -398,7 +398,7 @@ gtpv2c_ebi_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_ebi_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -415,7 +415,7 @@ gtpv2c_ebi_ie_get (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_ebi_ie_get_list (
   uint8_t ieType,
   uint8_t ieLength,
@@ -437,7 +437,7 @@ gtpv2c_ebi_ie_get_list (
 
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_cause_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -468,7 +468,7 @@ gtpv2c_cause_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const gtpv2c_cause_t * cause)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 value[6];
 
   DevAssert (msg );
@@ -496,7 +496,7 @@ gtpv2c_bearer_context_to_create_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const bearer_to_create_t * bearer_to_create)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (msg );
   DevAssert (bearer_to_create );
@@ -515,7 +515,7 @@ gtpv2c_bearer_context_to_create_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -529,7 +529,7 @@ gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_get (
   DevAssert (MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
   bearer_context_to_be_created_t          *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
   uint8_t                                 read = 0;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   while (ieLength > read) {
     NwGtpv2cIeTlvT                         *ie_p;
@@ -596,7 +596,7 @@ gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const bearer_context_to_be_created_t * bearer_context)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (msg );
   DevAssert (bearer_context );
@@ -616,7 +616,7 @@ gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -630,7 +630,7 @@ gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_get (
   DevAssert (MSG_CREATE_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
   bearer_context_within_create_bearer_request_t          *bearer_context  = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
   uint8_t                                 read = 0;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   while (ieLength > read) {
     NwGtpv2cIeTlvT                         *ie_p;
@@ -699,7 +699,7 @@ gtpv2c_bearer_context_to_be_created_within_create_bearer_request_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const bearer_context_within_create_bearer_request_t * bearer_context)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (msg );
   DevAssert (bearer_context );
@@ -743,7 +743,7 @@ int gtpv2c_bearer_context_within_create_bearer_response_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const bearer_context_within_create_bearer_response_t * bearer_context)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (msg );
   DevAssert (bearer_context );
@@ -793,7 +793,7 @@ int gtpv2c_bearer_context_within_create_bearer_response_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_bearer_context_within_create_bearer_response_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -807,7 +807,7 @@ gtpv2c_bearer_context_within_create_bearer_response_ie_get (
   DevAssert (MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
   bearer_context_within_create_bearer_response_t        *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
   uint8_t                                 read = 0;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (bearer_context);
 
@@ -887,7 +887,7 @@ gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const bearer_context_to_be_modified_t * bearer_context)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (msg );
   DevAssert (bearer_context );
@@ -907,7 +907,7 @@ gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -921,7 +921,7 @@ gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_get (
   DevAssert (MSG_MODIFY_BEARER_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
   bearer_context_to_be_modified_t        *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
   uint8_t                                 read = 0;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (bearer_context);
 
@@ -952,7 +952,7 @@ gtpv2c_bearer_context_to_be_modified_within_modify_bearer_request_ie_get (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_bearer_context_created_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -966,7 +966,7 @@ gtpv2c_bearer_context_created_ie_get (
   DevAssert (MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS >= bearer_contexts->num_bearer_context);
   bearer_context_created_t               *bearer_context = &bearer_contexts->bearer_contexts[bearer_contexts->num_bearer_context];
   uint8_t                                 read = 0;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   while (ieLength > read) {
     NwGtpv2cIeTlvT                         *ie_p;
@@ -1004,7 +1004,7 @@ gtpv2c_bearer_context_created_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const bearer_context_created_t const * bearer)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (msg );
   DevAssert (bearer);
@@ -1031,7 +1031,7 @@ gtpv2c_bearer_context_created_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_apn_restriction_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1056,7 +1056,7 @@ gtpv2c_apn_restriction_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const uint8_t apn_restriction)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (msg );
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN_RESTRICTION, 1, 0, (uint8_t *) & apn_restriction);
@@ -1065,7 +1065,7 @@ gtpv2c_apn_restriction_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_serving_network_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1103,7 +1103,7 @@ gtpv2c_serving_network_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const ServingNetwork_t * serving_network)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 value[3];
 
   DevAssert (msg );
@@ -1137,7 +1137,7 @@ gtpv2c_fteid_ie_set (
   const fteid_t * fteid,
   const uint8_t   instance)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 value[25];
 
   DevAssert (msg );
@@ -1174,7 +1174,7 @@ gtpv2c_fteid_ie_set (
 
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_fteid_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1225,7 +1225,7 @@ gtpv2c_fteid_ie_get (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_pco_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1252,7 +1252,7 @@ gtpv2c_pco_ie_set (
 {
   uint8_t                                 temp[PROTOCOL_CONFIGURATION_OPTIONS_IE_MAX_LENGTH];
   uint8_t                                 offset = 0;
-  NwRcT                                   rc = NW_OK;
+  nw_rc_t                                   rc = NW_OK;
 
   DevAssert (pco );
   offset = encode_protocol_configuration_options(pco, temp, PROTOCOL_CONFIGURATION_OPTIONS_IE_MAX_LENGTH);
@@ -1262,7 +1262,7 @@ gtpv2c_pco_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_tft_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1291,7 +1291,7 @@ gtpv2c_tft_ie_set (
 {
   uint8_t                                 temp[TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH];
   uint8_t                                 offset = 0;
-  NwRcT                                   rc = NW_OK;
+  nw_rc_t                                   rc = NW_OK;
 
   DevAssert (tft );
   offset = encode_traffic_flow_template(tft, temp, TRAFFIC_FLOW_TEMPLATE_MAXIMUM_LENGTH);
@@ -1301,7 +1301,7 @@ gtpv2c_tft_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_paa_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1367,7 +1367,7 @@ gtpv2c_paa_ie_set (
   uint8_t                                 temp[22];
   uint8_t                                 pdn_type;
   uint8_t                                 offset = 0;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (paa );
   pdn_type = paa->pdn_type + 1;
@@ -1404,7 +1404,7 @@ gtpv2c_paa_ie_set (
    only of the alphabetic characters (A-Z and a-z), digits (0-9)
    and the hyphen (-).
 */
-NwRcT
+nw_rc_t
 gtpv2c_apn_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1449,7 +1449,7 @@ gtpv2c_apn_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const char *apn)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                *value;
   uint8_t                                 apn_length;
   uint8_t                                 offset = 0;
@@ -1486,7 +1486,7 @@ gtpv2c_apn_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_ambr_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1505,7 +1505,7 @@ gtpv2c_ambr_ie_get (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_uli_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1525,7 +1525,7 @@ gtpv2c_uli_ie_get (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_bearer_qos_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1586,7 +1586,7 @@ gtpv2c_bearer_qos_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const bearer_qos_t * bearer_qos)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 value[22];
   int                                     index = 0;
 
@@ -1628,7 +1628,7 @@ gtpv2c_bearer_qos_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_ip_address_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1672,7 +1672,7 @@ gtpv2c_ip_address_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_delay_value_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1700,7 +1700,7 @@ gtpv2c_delay_value_ie_set (
   const DelayValue_t * delay_value)
 {
   uint8_t                                 value;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (msg );
   DevAssert (delay_value );
@@ -1711,7 +1711,7 @@ gtpv2c_delay_value_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_ue_time_zone_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1741,7 +1741,7 @@ gtpv2c_ue_time_zone_ie_set (
   const UETimeZone_t * ue_time_zone)
 {
   uint8_t                                 value[2];
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
 
   DevAssert (msg );
   DevAssert (ue_time_zone );
@@ -1753,7 +1753,7 @@ gtpv2c_ue_time_zone_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_target_identification_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1826,7 +1826,7 @@ gtpv2c_target_identification_ie_get (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_bearer_flags_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1853,7 +1853,7 @@ gtpv2c_bearer_flags_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const bearer_flags_t * bearer_flags)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 value;
 
   DevAssert (msg );
@@ -1865,7 +1865,7 @@ gtpv2c_bearer_flags_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_indication_flags_ie_get (
   uint8_t ieType,
   uint8_t ieLength,
@@ -1916,7 +1916,7 @@ gtpv2c_indication_flags_ie_set (
   NwGtpv2cMsgHandleT * msg,
   const indication_flags_t * indication_flags)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 value[3];
 
   DevAssert (msg );
@@ -1951,7 +1951,7 @@ gtpv2c_indication_flags_ie_set (
 }
 
 //------------------------------------------------------------------------------
-NwRcT
+nw_rc_t
 gtpv2c_fqcsid_ie_get (
   uint8_t ieType,
   uint8_t ieLength,

@@ -49,7 +49,7 @@ s11_sgw_handle_create_session_request (
   NwGtpv2cStackHandleT * stack_p,
   NwGtpv2cUlpApiT * pUlpApi)
 {
-  NwRcT                                   rc = NW_OK;
+  nw_rc_t                                   rc = NW_OK;
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
@@ -213,7 +213,7 @@ s11_sgw_handle_create_session_request (
      */
     ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
     ulp_req.apiInfo.triggeredRspInfo.hTrxn = pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
-    rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_CREATE_SESSION_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
+    rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CREATE_SESSION_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
     gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
     OAILOG_DEBUG (LOG_S11, "Received NW_GTP_CREATE_SESSION_REQ, Sending NW_GTP_CREATE_SESSION_RSP!\n");
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
@@ -240,7 +240,7 @@ s11_sgw_handle_create_session_response (
   NwGtpv2cStackHandleT * stack_p,
   itti_s11_create_session_response_t * create_session_response_p)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
   NwGtpv2cTrxnHandleT                     trxn;
   gtpv2c_cause_t                             cause;
@@ -276,7 +276,7 @@ s11_sgw_handle_create_session_response (
   memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
   ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
-  rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_CREATE_SESSION_RSP, 0, 0, &(ulp_req.hMsg));
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CREATE_SESSION_RSP, 0, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
   /*
    * Set the remote TEID
@@ -320,7 +320,7 @@ s11_sgw_handle_delete_session_request (
   NwGtpv2cStackHandleT * stack_p,
   NwGtpv2cUlpApiT * pUlpApi)
 {
-  NwRcT                                   rc = NW_OK;
+  nw_rc_t                                   rc = NW_OK;
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
@@ -389,7 +389,7 @@ s11_sgw_handle_delete_session_request (
      */
     ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
     ulp_req.apiInfo.triggeredRspInfo.hTrxn = pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
-    rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_DELETE_SESSION_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
+    rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DELETE_SESSION_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
     /*
      * Adding the cause
      */
@@ -419,7 +419,7 @@ s11_sgw_handle_delete_session_response (
   NwGtpv2cStackHandleT * stack_p,
   itti_s11_delete_session_response_t * delete_session_response_p)
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   NwGtpv2cUlpApiT                         ulp_req;
   NwGtpv2cTrxnHandleT                     trxn;
   gtpv2c_cause_t                             cause;
@@ -435,7 +435,7 @@ s11_sgw_handle_delete_session_response (
   memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
   ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
-  rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_DELETE_SESSION_RSP, 0, 0, &(ulp_req.hMsg));
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DELETE_SESSION_RSP, 0, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
   /*
    * Set the remote TEID

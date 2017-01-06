@@ -233,7 +233,7 @@ typedef struct NwGtpv2cIeTlv {
  * @param[out] phMsg : Pointer to message handle.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgNew( NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
                 NW_IN uint8_t     teidPresent,
                 NW_IN uint8_t     msgType,
@@ -251,7 +251,7 @@ nwGtpv2cMsgNew( NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
  * @param[out] phMsg : Pointer to message handle.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgFromBufferNew( NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
                           NW_IN uint8_t* pBuf,
                           NW_IN uint32_t bufLen,
@@ -264,7 +264,7 @@ nwGtpv2cMsgFromBufferNew( NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
  * @param[in] hMsg : Message handle.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgDelete( NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
                    NW_IN NwGtpv2cMsgHandleT hMsg);
 
@@ -275,7 +275,7 @@ nwGtpv2cMsgDelete( NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
  * @param[in] teid: TEID value.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgSetTeid(NW_IN NwGtpv2cMsgHandleT hMsg, uint32_t teid);
 
 /**
@@ -285,8 +285,8 @@ nwGtpv2cMsgSetTeid(NW_IN NwGtpv2cMsgHandleT hMsg, uint32_t teid);
  * @param[in] teidPesent: Flag boolean value.
  */
 
-NwRcT
-nwGtpv2cMsgSetTeidPresent(NW_IN NwGtpv2cMsgHandleT hMsg, NwBoolT teidPresent);
+nw_rc_t
+nwGtpv2cMsgSetTeidPresent(NW_IN NwGtpv2cMsgHandleT hMsg, bool teidPresent);
 
 /**
  * Set sequence for gtpv2c message.
@@ -295,7 +295,7 @@ nwGtpv2cMsgSetTeidPresent(NW_IN NwGtpv2cMsgHandleT hMsg, NwBoolT teidPresent);
  * @param[in] seqNum: Flag boolean value.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgSetSeqNumber(NW_IN NwGtpv2cMsgHandleT hMsg, uint32_t seqNum);
 
 /**
@@ -313,7 +313,7 @@ nwGtpv2cMsgGetTeid(NW_IN NwGtpv2cMsgHandleT hMsg);
  * @param[in] hMsg : Message handle.
  */
 
-NwBoolT
+bool
 nwGtpv2cMsgGetTeidPresent(NW_IN NwGtpv2cMsgHandleT hMsg);
 
 /**
@@ -343,7 +343,7 @@ nwGtpv2cMsgGetLength(NW_IN NwGtpv2cMsgHandleT hMsg);
  * @param[in] value : IE value.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgAddIeTV1(NW_IN NwGtpv2cMsgHandleT hMsg,
                     NW_IN uint8_t       type,
                     NW_IN uint8_t       instance,
@@ -359,7 +359,7 @@ nwGtpv2cMsgAddIeTV1(NW_IN NwGtpv2cMsgHandleT hMsg,
  * @param[in] value : IE value.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgAddIeTV2(NW_IN NwGtpv2cMsgHandleT hMsg,
                     NW_IN uint8_t       type,
                     NW_IN uint8_t       instance,
@@ -375,7 +375,7 @@ nwGtpv2cMsgAddIeTV2(NW_IN NwGtpv2cMsgHandleT hMsg,
  * @param[in] value : IE value.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgAddIeTV4(NW_IN NwGtpv2cMsgHandleT hMsg,
                     NW_IN uint8_t       type,
                     NW_IN uint8_t       instance,
@@ -392,7 +392,7 @@ nwGtpv2cMsgAddIeTV4(NW_IN NwGtpv2cMsgHandleT hMsg,
  * @param[in] value : IE value.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgAddIe(NW_IN NwGtpv2cMsgHandleT hMsg,
                  NW_IN uint8_t       type,
                  NW_IN uint16_t      length,
@@ -410,7 +410,7 @@ nwGtpv2cMsgAddIe(NW_IN NwGtpv2cMsgHandleT hMsg,
  * @param[in] offendingIeInstance: Offending IE instance.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgAddIeCause(NW_IN NwGtpv2cMsgHandleT hMsg,
                       NW_IN uint8_t instance,
                       NW_IN uint8_t causeValue,
@@ -429,7 +429,7 @@ nwGtpv2cMsgAddIeCause(NW_IN NwGtpv2cMsgHandleT hMsg,
  * @param[in] pIpv6Addr: Pointer to IPv6 Address in Network Byte Order.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgAddIeFteid(NW_IN NwGtpv2cMsgHandleT hMsg,
                       NW_IN uint8_t       instance,
                       NW_IN uint8_t       ifType,
@@ -437,12 +437,12 @@ nwGtpv2cMsgAddIeFteid(NW_IN NwGtpv2cMsgHandleT hMsg,
                       NW_IN const struct in_addr  const *ipv4Addr,
                       NW_IN const struct in6_addr const *pIpv6Addr);
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgGroupedIeStart(NW_IN NwGtpv2cMsgHandleT hMsg,
                           NW_IN uint8_t       type,
                           NW_IN uint8_t       instance);
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgGroupedIeEnd(NW_IN NwGtpv2cMsgHandleT hMsg);
 
 
@@ -456,7 +456,7 @@ nwGtpv2cMsgGroupedIeEnd(NW_IN NwGtpv2cMsgHandleT hMsg);
  * @return NW_TRUE on success, NW_FALSE on failure.
  */
 
-NwBoolT
+bool
 nwGtpv2cMsgIsIePresent(NW_IN NwGtpv2cMsgHandleT hMsg,
                        NW_IN uint8_t type,
                        NW_IN uint8_t instance);
@@ -471,7 +471,7 @@ nwGtpv2cMsgIsIePresent(NW_IN NwGtpv2cMsgHandleT hMsg,
  * @return NW_OK on success.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgGetIeTV1(NW_IN NwGtpv2cMsgHandleT hMsg,
                     NW_IN uint8_t type,
                     NW_IN uint8_t instance,
@@ -488,7 +488,7 @@ nwGtpv2cMsgGetIeTV1(NW_IN NwGtpv2cMsgHandleT hMsg,
  */
 
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgGetIeTV2(NW_IN NwGtpv2cMsgHandleT hMsg,
                     NW_IN uint8_t type,
                     NW_IN uint8_t instance,
@@ -505,7 +505,7 @@ nwGtpv2cMsgGetIeTV2(NW_IN NwGtpv2cMsgHandleT hMsg,
  */
 
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgGetIeTV4(NW_IN NwGtpv2cMsgHandleT hMsg,
                     NW_IN uint8_t type,
                     NW_IN uint8_t instance,
@@ -522,7 +522,7 @@ nwGtpv2cMsgGetIeTV4(NW_IN NwGtpv2cMsgHandleT hMsg,
  */
 
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgGetIeTV8(NW_IN NwGtpv2cMsgHandleT hMsg,
                     NW_IN uint8_t type,
                     NW_IN uint8_t instance,
@@ -540,7 +540,7 @@ nwGtpv2cMsgGetIeTV8(NW_IN NwGtpv2cMsgHandleT hMsg,
  * @return NW_OK on success.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgGetIeTlv(NW_IN NwGtpv2cMsgHandleT hMsg,
                     NW_IN uint8_t type,
                     NW_IN uint8_t instance,
@@ -559,7 +559,7 @@ nwGtpv2cMsgGetIeTlv(NW_IN NwGtpv2cMsgHandleT hMsg,
  * @return NW_OK on success.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgGetIeTlvP(NW_IN NwGtpv2cMsgHandleT hMsg,
                      NW_IN uint8_t type,
                      NW_IN uint8_t instance,
@@ -578,7 +578,7 @@ nwGtpv2cMsgGetIeTlvP(NW_IN NwGtpv2cMsgHandleT hMsg,
  * @param[out] pIpv6Addr: Pointer to IPv6 Address in Network Byte Order.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgGetIeFteid(NW_IN NwGtpv2cMsgHandleT hMsg,
                       NW_IN  uint8_t       instance,
                       NW_OUT uint8_t*      ifType,
@@ -586,7 +586,7 @@ nwGtpv2cMsgGetIeFteid(NW_IN NwGtpv2cMsgHandleT hMsg,
                       NW_OUT struct in_addr* ipv4Addr,
                       NW_OUT struct in6_addr* pIpv6Addr);
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgGetIeCause(NW_IN NwGtpv2cMsgHandleT hMsg,
                       NW_IN  uint8_t       instance,
                       NW_OUT uint8_t*      causeValue,
@@ -610,7 +610,7 @@ nwGtpv2cMsgGetMsgType(NW_IN NwGtpv2cMsgHandleT hMsg);
  * @param[in] fp: Pointer to output file.
  */
 
-NwRcT
+nw_rc_t
 nwGtpv2cMsgHexDump(NwGtpv2cMsgHandleT hMsg, FILE* fp);
 
 #ifdef __cplusplus

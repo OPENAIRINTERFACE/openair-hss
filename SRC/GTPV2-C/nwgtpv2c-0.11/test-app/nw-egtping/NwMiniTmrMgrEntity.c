@@ -36,7 +36,7 @@ extern                                  "C" {
   static void
                                           NW_TMR_CALLBACK (
   nwGtpv2cNodeHandleStackTimerTimeout) {
-    NwRcT                                   rc;
+    nw_rc_t                                   rc;
     NwGtpv2cNodeTmrT                       *pTmr = (NwGtpv2cNodeTmrT *) arg;
 
     /*
@@ -52,14 +52,14 @@ extern                                  "C" {
    Public functions
   --------------------------------------------------------------------------*/
 
-  NwRcT                                   nwTimerStart (
+  nw_rc_t                                   nwTimerStart (
   NwGtpv2cTimerMgrHandleT tmrMgrHandle,
   uint32_t timeoutSec,
   uint32_t timeoutUsec,
   uint32_t tmrType,
   void *timeoutArg,
   NwGtpv2cTimerHandleT * hTmr) {
-    NwRcT                                   rc = NW_OK;
+    nw_rc_t                                   rc = NW_OK;
     NwGtpv2cNodeTmrT                       *pTmr;
     struct timeval                          tv;
 
@@ -80,7 +80,7 @@ extern                                  "C" {
     return rc;
   }
 
-  NwRcT                                   nwTimerStop (
+  nw_rc_t                                   nwTimerStop (
   NwGtpv2cTimerMgrHandleT tmrMgrHandle,
   NwGtpv2cTimerHandleT hTmr) {
     evtimer_del (&(((NwGtpv2cNodeTmrT *) hTmr)->ev));

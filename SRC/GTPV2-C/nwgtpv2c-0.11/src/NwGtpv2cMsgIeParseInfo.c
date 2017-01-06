@@ -506,7 +506,7 @@ extern                                  "C" {
     return count;
   }*/
 
-  static NwRcT                            nwGtpv2cMsgIeParseInfoUpdate (
+  static nw_rc_t                            nwGtpv2cMsgIeParseInfoUpdate (
   NwGtpv2cMsgIeParseInfoT * thiz,
   NwGtpv2cMsgIeInfoT * pMsgIeInfo) {
     uint32_t                                i,
@@ -543,7 +543,7 @@ extern                                  "C" {
     return NW_OK;
   }
 
-  static NwRcT                            nwGtpv2cMsgGroupedIeParse (
+  static nw_rc_t                            nwGtpv2cMsgGroupedIeParse (
   NW_IN NwGtpv2cGroupedIeParseInfoT * thiz,
   NW_IN uint8_t ieType,
   NW_IN uint16_t ieLength,
@@ -566,7 +566,7 @@ extern                                  "C" {
   NwGtpv2cMsgIeParseInfoT                *nwGtpv2cMsgIeParseInfoNew (
   NwGtpv2cStackHandleT hStack,
   uint8_t msgType) {
-    NwRcT                                   rc;
+    nw_rc_t                                   rc;
     NwGtpv2cMsgIeParseInfoT                *thiz;
 
     NW_GTPV2C_MALLOC (hStack, sizeof (NwGtpv2cMsgIeParseInfoT), thiz, NwGtpv2cMsgIeParseInfoT *);
@@ -713,7 +713,7 @@ extern                                  "C" {
    @return NW_OK on success.
 */
 
-  NwRcT                                   nwGtpv2cMsgIeParseInfoDelete (
+  nw_rc_t                                   nwGtpv2cMsgIeParseInfoDelete (
   NwGtpv2cMsgIeParseInfoT * thiz) {
     NW_GTPV2C_FREE (thiz->hStack, thiz);
     return NW_OK;
@@ -724,11 +724,11 @@ extern                                  "C" {
    @return NW_OK on success.
 */
 
-  NwRcT                                   nwGtpv2cMsgIeParse (
+  nw_rc_t                                   nwGtpv2cMsgIeParse (
   NW_IN NwGtpv2cMsgIeParseInfoT * thiz,
   NW_IN NwGtpv2cMsgHandleT hMsg,
   NW_INOUT NwGtpv2cErrorT * pError) {
-    NwRcT                                   rc = NW_OK;
+    nw_rc_t                                   rc = NW_OK;
     uint16_t                                mandatoryIeCount = 0;
     uint8_t                                *pIeBufStart;
     uint8_t                                *pIeBufEnd;
@@ -736,13 +736,13 @@ extern                                  "C" {
     uint16_t                                ieLength;
     uint16_t                                ieInstance;
     NwGtpv2cIeTlvT                         *pIe;
-    NwGtpv2cMsgT                           *pMsg = (NwGtpv2cMsgT *) hMsg;
+    nw_gtpv2c_msg_t                           *pMsg = (nw_gtpv2c_msg_t *) hMsg;
     uint8_t                                 flags = *((uint8_t *) (pMsg->msgBuf));
 
     pIeBufStart = (uint8_t *) (pMsg->msgBuf + (flags & 0x08 ? 12 : 8));
     pIeBufEnd = (uint8_t *) (pMsg->msgBuf + pMsg->msgLen);
     //memset(pMsg->pIe, 0, sizeof(uint8_t*) * (NW_GTPV2C_IE_TYPE_MAXIMUM) * (NW_GTPV2C_IE_INSTANCE_MAXIMUM));
-    memset (pMsg->isIeValid, (NW_FALSE), sizeof (uint8_t) * (NW_GTPV2C_IE_TYPE_MAXIMUM) * (NW_GTPV2C_IE_INSTANCE_MAXIMUM));
+    memset (pMsg->isIeValid, (false), sizeof (uint8_t) * (NW_GTPV2C_IE_TYPE_MAXIMUM) * (NW_GTPV2C_IE_INSTANCE_MAXIMUM));
 
     while (pIeBufStart < pIeBufEnd) {
       pIe = (NwGtpv2cIeTlvT *) pIeBufStart;
@@ -777,7 +777,7 @@ extern                                  "C" {
           }
         }
 
-        if (pMsg->isIeValid[ieType][ieInstance] == NW_TRUE) {
+        if (pMsg->isIeValid[ieType][ieInstance] == true) {
           /*
            * If an information element is repeated in a GTP signalling
            * message in which repetition of the information element is
@@ -791,7 +791,7 @@ extern                                  "C" {
         }
 
         pMsg->pIe[ieType][ieInstance] = (uint8_t *) pIeBufStart;
-        pMsg->isIeValid[ieType][ieInstance] = NW_TRUE;
+        pMsg->isIeValid[ieType][ieInstance] = true;
 
         if (thiz->ieParseInfo[ieType][ieInstance].pGroupedIeInfo) {
           /*
@@ -822,7 +822,7 @@ extern                                  "C" {
       for (ieType = 0; ieType < NW_GTPV2C_IE_TYPE_MAXIMUM; ieType++) {
         for (ieInstance = 0; ieInstance < NW_GTPV2C_IE_INSTANCE_MAXIMUM; ieInstance++) {
           if (thiz->ieParseInfo[ieType][ieInstance].iePresence == NW_GTPV2C_IE_PRESENCE_MANDATORY) {
-            if (pMsg->isIeValid[ieType][ieInstance] == NW_FALSE) {
+            if (pMsg->isIeValid[ieType][ieInstance] == false) {
               OAILOG_ERROR (LOG_GTPV2C, "Mandatory IE of type %u and instance %u missing in msg type %u\n", ieType, ieInstance, pMsg->msgType);
               pError->cause = NW_GTPV2C_CAUSE_MANDATORY_IE_MISSING;
               pError->offendingIe.type = ieType;

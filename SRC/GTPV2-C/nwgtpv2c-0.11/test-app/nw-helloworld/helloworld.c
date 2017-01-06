@@ -42,16 +42,16 @@ main (
   int argc,
   char *argv[])
 {
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint32_t                                logLevel;
   uint8_t                                *logLevelStr;
   NwGtpv2cStackHandleT                    hGtpv2cStack = 0;
   NwGtpv2cNodeUlpT                        ulpObj;
   NwGtpv2cNodeUdpT                        udpObj;
-  NwGtpv2cUlpEntityT                      ulp;
-  NwGtpv2cUdpEntityT                      udp;
-  NwGtpv2cTimerMgrEntityT                 tmrMgr;
-  NwGtpv2cLogMgrEntityT                   logMgr;
+  nw_gtpv2c_ulp_entity_t                      ulp;
+  nw_gtpv2c_udp_entity_t                      udp;
+  nw_gtpv2c_timer_mgr_entity_t                 tmrMgr;
+  nw_gtpv2c_log_mgr_entity_t                   logMgr;
 
   if (argc != 3) {
     printf ("Usage: %s <local-ip> <peer-ip>\n", argv[0]);

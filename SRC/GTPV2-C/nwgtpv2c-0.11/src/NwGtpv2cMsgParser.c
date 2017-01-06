@@ -57,10 +57,10 @@ extern                                  "C" {
    @param[out] pthiz : Pointer to message parser handle.
 */
 
-  NwRcT                                   nwGtpv2cMsgParserNew (
+  nw_rc_t                                   nwGtpv2cMsgParserNew (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
   NW_IN uint8_t msgType,
-  NW_IN NwRcT                             (*ieReadCallback) (uint8_t ieType,
+  NW_IN nw_rc_t                             (*ieReadCallback) (uint8_t ieType,
                                                              uint8_t ieLength,
                                                              uint8_t ieInstance,
                                                              uint8_t * ieValue,
@@ -92,16 +92,16 @@ extern                                  "C" {
    @param[in] thiz : Message parser handle.
 */
 
-  NwRcT                                   nwGtpv2cMsgParserDelete (
+  nw_rc_t                                   nwGtpv2cMsgParserDelete (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
   NW_IN NwGtpv2cMsgParserT * thiz) {
     NW_GTPV2C_FREE (hGtpcStackHandle, thiz);
     return NW_OK;
   }
 
-  NwRcT                                   nwGtpv2cMsgParserUpdateIeReadCallback (
+  nw_rc_t                                   nwGtpv2cMsgParserUpdateIeReadCallback (
   NW_IN NwGtpv2cMsgParserT * thiz,
-  NW_IN NwRcT                             (*ieReadCallback) (uint8_t ieType,
+  NW_IN nw_rc_t                             (*ieReadCallback) (uint8_t ieType,
                                                              uint8_t ieLength,
                                                              uint8_t ieInstance,
                                                              uint8_t * ieValue,
@@ -114,7 +114,7 @@ extern                                  "C" {
     return NW_FAILURE;
   }
 
-  NwRcT                                   nwGtpv2cMsgParserUpdateIeReadCallbackArg (
+  nw_rc_t                                   nwGtpv2cMsgParserUpdateIeReadCallbackArg (
   NW_IN NwGtpv2cMsgParserT * thiz,
   NW_IN void *ieReadCallbackArg) {
     if (thiz) {
@@ -125,11 +125,11 @@ extern                                  "C" {
     return NW_FAILURE;
   }
 
-  NwRcT
+  nw_rc_t
     nwGtpv2cMsgParserAddIe (NW_IN NwGtpv2cMsgParserT * thiz,
                             NW_IN uint8_t ieType,
                             NW_IN uint8_t ieInstance,
-                            NW_IN uint8_t iePresence, NW_IN NwRcT (*ieReadCallback) (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *ieReadCallbackArg), NW_IN void *ieReadCallbackArg) {
+                            NW_IN uint8_t iePresence, NW_IN nw_rc_t (*ieReadCallback) (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *ieReadCallbackArg), NW_IN void *ieReadCallbackArg) {
     NW_ASSERT (thiz);
 
     if (thiz->ieParseInfo[ieType][ieInstance].iePresence == 0) {
@@ -148,11 +148,11 @@ extern                                  "C" {
     return NW_OK;
   }
 
-  NwRcT
+  nw_rc_t
     nwGtpv2cMsgParserUpdateIe (NW_IN NwGtpv2cMsgParserT * thiz,
                                NW_IN uint8_t ieType,
                                NW_IN uint8_t ieInstance,
-                               NW_IN uint8_t iePresence, NW_IN NwRcT (*ieReadCallback) (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *ieReadCallbackArg), NW_IN void *ieReadCallbackArg) {
+                               NW_IN uint8_t iePresence, NW_IN nw_rc_t (*ieReadCallback) (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *ieReadCallbackArg), NW_IN void *ieReadCallbackArg) {
     NW_ASSERT (thiz);
 
     if (thiz->ieParseInfo[ieType][ieInstance].iePresence) {
@@ -168,20 +168,20 @@ extern                                  "C" {
 
 
 
-  NwRcT                                   nwGtpv2cMsgParserRun (
+  nw_rc_t                                   nwGtpv2cMsgParserRun (
   NW_IN NwGtpv2cMsgParserT * thiz,
   NW_IN NwGtpv2cMsgHandleT hMsg,
   NW_OUT uint8_t * pOffendingIeType,
   NW_OUT uint8_t * pOffendingIeInstance,
   NW_OUT uint16_t * pOffendingIeLength) {
-    NwRcT                                   rc = NW_OK;
+    nw_rc_t                                   rc = NW_OK;
     uint8_t                                 flags;
     uint16_t                                mandatoryIeCount = 0;
     NwGtpv2cIeTlvT                         *pIe;
     uint8_t                                *pIeStart;
     uint8_t                                *pIeEnd;
     uint16_t                                ieLength;
-    NwGtpv2cMsgT                           *pMsg = (NwGtpv2cMsgT *) hMsg;
+    nw_gtpv2c_msg_t                           *pMsg = (nw_gtpv2c_msg_t *) hMsg;
 
     NW_ASSERT (pMsg);
     flags = *((uint8_t *) (pMsg->msgBuf));

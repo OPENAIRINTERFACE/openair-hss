@@ -29,16 +29,16 @@ typedef struct {
 extern "C" {
 #endif
 
-NwRcT
+nw_rc_t
 nwGtpv2cUlpInit(NwGtpv2cNodeUlpT* thiz, NwGtpv2cStackHandleT hGtpv2cStack, char* peerIpStr );
 
-NwRcT
+nw_rc_t
 nwGtpv2cUlpDestroy(NwGtpv2cNodeUlpT* thiz);
 
-NwRcT
+nw_rc_t
 nwGtpv2cUlpCreateSessionRequestToPeer(NwGtpv2cNodeUlpT* thiz);
 
-NwRcT
+nw_rc_t
 nwGtpv2cUlpProcessStackReqCallback (NwGtpv2cUlpHandleT hUlp,
                                     NwGtpv2cUlpApiT *pUlpApi);
 

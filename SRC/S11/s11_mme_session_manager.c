@@ -54,7 +54,7 @@ s11_mme_create_session_request (
   itti_s11_create_session_request_t * req_p)
 {
   NwGtpv2cUlpApiT                         ulp_req;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   uint8_t                                 restart_counter = 0;
 
   DevAssert (stack_p );
@@ -64,7 +64,7 @@ s11_mme_create_session_request (
   /*
    * Prepare a new Create Session Request msg
    */
-  rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_CREATE_SESSION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CREATE_SESSION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
   ulp_req.apiInfo.initialReqInfo.peerIp     = req_p->peer_ip;
   ulp_req.apiInfo.initialReqInfo.teidLocal  = req_p->sender_fteid_for_cp.teid;
   ulp_req.apiInfo.initialReqInfo.hUlpTunnel = 0;
@@ -125,7 +125,7 @@ s11_mme_handle_create_session_response (
   NwGtpv2cStackHandleT * stack_p,
   NwGtpv2cUlpApiT * pUlpApi)
 {
-  NwRcT                                   rc = NW_OK;
+  nw_rc_t                                   rc = NW_OK;
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
@@ -222,7 +222,7 @@ s11_mme_delete_session_request (
   itti_s11_delete_session_request_t * req_p)
 {
   NwGtpv2cUlpApiT                         ulp_req;
-  NwRcT                                   rc;
+  nw_rc_t                                   rc;
   //uint8_t                                 restart_counter = 0;
 
   DevAssert (stack_p );
@@ -232,7 +232,7 @@ s11_mme_delete_session_request (
   /*
    * Prepare a new Delete Session Request msg
    */
-  rc = nwGtpv2cMsgNew (*stack_p, NW_TRUE, NW_GTP_DELETE_SESSION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DELETE_SESSION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
   ulp_req.apiInfo.initialReqInfo.peerIp = req_p->peer_ip;
   ulp_req.apiInfo.initialReqInfo.teidLocal = req_p->local_teid;
   hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
@@ -274,7 +274,7 @@ s11_mme_handle_delete_session_response (
   NwGtpv2cStackHandleT * stack_p,
   NwGtpv2cUlpApiT * pUlpApi)
 {
-  NwRcT                                   rc = NW_OK;
+  nw_rc_t                                   rc = NW_OK;
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;

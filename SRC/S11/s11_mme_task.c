@@ -49,20 +49,20 @@ static NwGtpv2cStackHandleT             s11_mme_stack_handle = 0;
 // Store the GTPv2-C teid handle
 hash_table_ts_t                        *s11_mme_teid_2_gtv2c_teid_handle = NULL;
 //------------------------------------------------------------------------------
-static NwRcT
+static nw_rc_t
 s11_mme_log_wrapper (
   NwGtpv2cLogMgrHandleT hLogMgr,
   uint32_t logLevel,
-  NwCharT * file,
+  char * file,
   uint32_t line,
-  NwCharT * logStr)
+  char * logStr)
 {
   OAILOG_DEBUG (LOG_S11, "%s\n", logStr);
   return NW_OK;
 }
 
 //------------------------------------------------------------------------------
-static NwRcT
+static nw_rc_t
 s11_mme_ulp_process_stack_req_cb (
   NwGtpv2cUlpHandleT hUlp,
   NwGtpv2cUlpApiT * pUlpApi)
@@ -116,7 +116,7 @@ s11_mme_ulp_process_stack_req_cb (
 }
 
 //------------------------------------------------------------------------------
-static NwRcT
+static nw_rc_t
 s11_mme_send_udp_msg (
   NwGtpv2cUdpHandleT udpHandle,
   uint8_t * buffer,
@@ -140,7 +140,7 @@ s11_mme_send_udp_msg (
 }
 
 //------------------------------------------------------------------------------
-static NwRcT
+static nw_rc_t
 s11_mme_start_timer_wrapper (
   NwGtpv2cTimerMgrHandleT tmrMgrHandle,
   uint32_t timeoutSec,
@@ -163,7 +163,7 @@ s11_mme_start_timer_wrapper (
 }
 
 //------------------------------------------------------------------------------
-static NwRcT
+static nw_rc_t
 s11_mme_stop_timer_wrapper (
   NwGtpv2cTimerMgrHandleT tmrMgrHandle,
   NwGtpv2cTimerHandleT tmrHandle)
@@ -216,7 +216,7 @@ s11_mme_thread (
         /*
          * We received new data to handle from the UDP layer
          */
-        NwRcT                                   rc;
+        nw_rc_t                                   rc;
         udp_data_ind_t                         *udp_data_ind;
 
         udp_data_ind = &received_message_p->ittiMsg.udp_data_ind;
@@ -274,10 +274,10 @@ s11_send_init_udp (
 int s11_mme_init (const mme_config_t * const mme_config_p)
 {
   int                                     ret = 0;
-  NwGtpv2cUlpEntityT                      ulp;
-  NwGtpv2cUdpEntityT                      udp;
-  NwGtpv2cTimerMgrEntityT                 tmrMgr;
-  NwGtpv2cLogMgrEntityT                   logMgr;
+  nw_gtpv2c_ulp_entity_t                      ulp;
+  nw_gtpv2c_udp_entity_t                      udp;
+  nw_gtpv2c_timer_mgr_entity_t                 tmrMgr;
+  nw_gtpv2c_log_mgr_entity_t                   logMgr;
 
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface\n");
 

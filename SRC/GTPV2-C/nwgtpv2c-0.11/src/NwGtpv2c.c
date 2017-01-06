@@ -97,12 +97,12 @@
 extern                                  "C" {
 #endif
 
-  static NwGtpv2cTimeoutInfoT            *gpGtpv2cTimeoutInfoPool = NULL;
+  static nw_gtpv2c_timeout_info_t            *gpGtpv2cTimeoutInfoPool = NULL;
 
   typedef struct {
     int                                     currSize;
     int                                     maxSize;
-    NwGtpv2cTimeoutInfoT                  **pHeap;
+    nw_gtpv2c_timeout_info_t                  **pHeap;
   } NwGtpv2cTmrMinHeapT;
 
 #define NW_HEAP_PARENT_INDEX(__child)           ( ( (__child) - 1 ) / 2 )
@@ -115,7 +115,7 @@ extern                                  "C" {
     if (thiz) {
       thiz->currSize = 0;
       thiz->maxSize = maxSize;
-      thiz->pHeap = (NwGtpv2cTimeoutInfoT **) malloc (maxSize * sizeof (NwGtpv2cTimeoutInfoT *));
+      thiz->pHeap = (nw_gtpv2c_timeout_info_t **) malloc (maxSize * sizeof (nw_gtpv2c_timeout_info_t *));
     }
 
     return                                  thiz;
@@ -128,9 +128,9 @@ extern                                  "C" {
     free_wrapper ((void**)&thiz);
   }
 
-  static NwRcT                            nwGtpv2cTmrMinHeapInsert (
+  static nw_rc_t                            nwGtpv2cTmrMinHeapInsert (
   NwGtpv2cTmrMinHeapT * thiz,
-  NwGtpv2cTimeoutInfoT * pTimerEvent) {
+  nw_gtpv2c_timeout_info_t * pTimerEvent) {
     int                                     holeIndex = thiz->currSize++;
 
     NW_ASSERT (thiz->currSize < thiz->maxSize);
@@ -147,10 +147,10 @@ extern                                  "C" {
   }
 
 #define NW_MIN_HEAP_INDEX_INVALID                       (0xFFFFFFFF)
-  static NwRcT                            nwGtpv2cTmrMinHeapRemove (
+  static nw_rc_t                            nwGtpv2cTmrMinHeapRemove (
   NwGtpv2cTmrMinHeapT * thiz,
   int minHeapIndex) {
-    NwGtpv2cTimeoutInfoT                   *pTimerEvent = NULL;
+    nw_gtpv2c_timeout_info_t                   *pTimerEvent = NULL;
     int                                     holeIndex = minHeapIndex;
     int                                     minChild = 0,
                                             maxChild = 0;
@@ -202,7 +202,7 @@ extern                                  "C" {
     return NW_FAILURE;
   }
 
-  static NwGtpv2cTimeoutInfoT            *nwGtpv2cTmrMinHeapPeek (
+  static nw_gtpv2c_timeout_info_t            *nwGtpv2cTmrMinHeapPeek (
   NwGtpv2cTmrMinHeapT * thiz) {
     if (thiz->currSize) {
       //printf("- Peek Returning %p at index %u(%u)\n", thiz->pHeap[0], thiz->pHeap[0]->timerMinHeapIndex, thiz->currSize);
@@ -217,7 +217,7 @@ extern                                  "C" {
 
   static void
                                           nwGtpv2cDisplayBanner (
-  NwGtpv2cStackT * thiz) {
+  nw_gtpv2c_stack_t * thiz) {
 #if DISPLAY_LICENCE_INFO
     OAILOG_INFO(LOG_GTPV2C, " *----------------------------------------------------------------------------*\n");
     OAILOG_INFO(LOG_GTPV2C, " *                                                                            *\n");
@@ -267,9 +267,9 @@ extern                                  "C" {
   object pointed to by a is greater than, equal to or less than the object pointed to by b.
 */
 
-  static inline NwS32T                    nwGtpv2cCompareTunnel (
-  struct NwGtpv2cTunnel *a,
-  struct NwGtpv2cTunnel *b) {
+  static inline int32_t                    nwGtpv2cCompareTunnel (
+  struct nw_gtpv2c_tunnel_s *a,
+  struct nw_gtpv2c_tunnel_s *b) {
     if (a->teid > b->teid)
       return 1;
 
@@ -285,7 +285,7 @@ extern                                  "C" {
     return 0;
   }
 
-  RB_GENERATE (NwGtpv2cTunnelMap, NwGtpv2cTunnel, tunnelMapRbtNode, nwGtpv2cCompareTunnel)
+  RB_GENERATE (NwGtpv2cTunnelMap, nw_gtpv2c_tunnel_s, tunnelMapRbtNode, nwGtpv2cCompareTunnel)
 
 /*---------------------------------------------------------------------------
    Transaction RBTree Search Data Structure
@@ -298,9 +298,9 @@ extern                                  "C" {
   @return  An integer greater than, equal to or less than zero according to whether the
   object pointed to by a is greater than, equal to or less than the object pointed to by b.
 */
-  static inline NwS32T                    nwGtpv2cCompareOutstandingTxSeqNumTrxn (
-  struct NwGtpv2cTrxn *a,
-  struct NwGtpv2cTrxn *b) {
+  static inline int32_t                    nwGtpv2cCompareOutstandingTxSeqNumTrxn (
+  struct nw_gtpv2c_trxn_s *a,
+  struct nw_gtpv2c_trxn_s *b) {
     if (a->seqNum > b->seqNum)
       return 1;
 
@@ -316,7 +316,7 @@ extern                                  "C" {
     return 0;
   }
 
-  RB_GENERATE (NwGtpv2cOutstandingTxSeqNumTrxnMap, NwGtpv2cTrxn, outstandingTxSeqNumMapRbtNode, nwGtpv2cCompareOutstandingTxSeqNumTrxn)
+  RB_GENERATE (NwGtpv2cOutstandingTxSeqNumTrxnMap, nw_gtpv2c_trxn_s, outstandingTxSeqNumMapRbtNode, nwGtpv2cCompareOutstandingTxSeqNumTrxn)
 
 /**
   Comparator funtion for comparing outstanding RX transactions.
@@ -326,9 +326,9 @@ extern                                  "C" {
   @return  An integer greater than, equal to or less than zero according to whether the
   object pointed to by a is greater than, equal to or less than the object pointed to by b.
 */
-  static inline NwS32T                    nwGtpv2cCompareOutstandingRxSeqNumTrxn (
-  struct NwGtpv2cTrxn *a,
-  struct NwGtpv2cTrxn *b) {
+  static inline int32_t                    nwGtpv2cCompareOutstandingRxSeqNumTrxn (
+  struct nw_gtpv2c_trxn_s *a,
+  struct nw_gtpv2c_trxn_s *b) {
     if (a->seqNum > b->seqNum)
       return 1;
 
@@ -350,7 +350,7 @@ extern                                  "C" {
     return 0;
   }
 
-  RB_GENERATE (NwGtpv2cOutstandingRxSeqNumTrxnMap, NwGtpv2cTrxn, outstandingRxSeqNumMapRbtNode, nwGtpv2cCompareOutstandingRxSeqNumTrxn)
+  RB_GENERATE (NwGtpv2cOutstandingRxSeqNumTrxnMap, nw_gtpv2c_trxn_s, outstandingRxSeqNumMapRbtNode, nwGtpv2cCompareOutstandingRxSeqNumTrxn)
 
 /*---------------------------------------------------------------------------
    Timer RB-tree data structure.
@@ -363,9 +363,9 @@ extern                                  "C" {
   @return  An integer greater than, equal to or less than zero according to whether the
   object pointed to by a is greater than, equal to or less than the object pointed to by b.
 */
-  static inline NwS32T                    nwGtpv2cCompareOutstandingTxRexmitTime (
-  struct NwGtpv2cTimeoutInfo *a,
-  struct NwGtpv2cTimeoutInfo *b) {
+  static inline int32_t                    nwGtpv2cCompareOutstandingTxRexmitTime (
+  struct nw_gtpv2c_timeout_info_s *a,
+  struct nw_gtpv2c_timeout_info_s *b) {
     if (NW_GTPV2C_TIMER_CMP_P (&a->tvTimeout, &b->tvTimeout, >))
       return 1;
 
@@ -375,7 +375,7 @@ extern                                  "C" {
     return 0;
   }
 
-  RB_GENERATE (NwGtpv2cActiveTimerList, NwGtpv2cTimeoutInfo, activeTimerListRbtNode, nwGtpv2cCompareOutstandingTxRexmitTime)
+  RB_GENERATE (NwGtpv2cActiveTimerList, nw_gtpv2c_timeout_info_s, activeTimerListRbtNode, nwGtpv2cCompareOutstandingTxRexmitTime)
 
 
 
@@ -388,13 +388,13 @@ extern                                  "C" {
    @param[in] pMsg : Message to be sent.
    @return NW_OK on success.
 */
-  static NwRcT                            nwGtpv2cCreateAndSendMsg (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cCreateAndSendMsg (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN uint32_t seqNum,
   NW_IN struct in_addr * peerIp,
   NW_IN uint32_t peerPort,
-  NW_IN NwGtpv2cMsgT * pMsg) {
-    NwRcT                                   rc = NW_FAILURE;
+  NW_IN nw_gtpv2c_msg_t * pMsg) {
+    nw_rc_t                                   rc = NW_FAILURE;
     uint8_t                                *msgHdr = NULL;
 
     NW_ASSERT (thiz);
@@ -442,18 +442,18 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cSendVersionNotSupportedInd (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cSendVersionNotSupportedInd (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN struct in_addr *peerIp,
   NW_IN uint32_t peerPort,
   NW_IN uint32_t seqNum) {
-    NwRcT                                   rc = NW_FAILURE;
+    nw_rc_t                                   rc = NW_FAILURE;
     NwGtpv2cMsgHandleT                      hMsg = 0;
 
-    rc = nwGtpv2cMsgNew ((NwGtpv2cStackHandleT) thiz, NW_FALSE, NW_GTP_VERSION_NOT_SUPPORTED_IND, 0x00, seqNum, (&hMsg));
+    rc = nwGtpv2cMsgNew ((NwGtpv2cStackHandleT) thiz, false, NW_GTP_VERSION_NOT_SUPPORTED_IND, 0x00, seqNum, (&hMsg));
     NW_ASSERT (NW_OK == rc);
     OAILOG_NOTICE (LOG_GTPV2C,  "Sending Version Not Supported Indication message to %x:%x with seq %u\n", peerIp->s_addr, peerPort, seqNum);
-    rc = nwGtpv2cCreateAndSendMsg (thiz, seqNum, peerIp, peerPort, (NwGtpv2cMsgT *) hMsg);
+    rc = nwGtpv2cCreateAndSendMsg (thiz, seqNum, peerIp, peerPort, (nw_gtpv2c_msg_t *) hMsg);
     rc = nwGtpv2cMsgDelete ((NwGtpv2cStackHandleT) thiz, hMsg);
     NW_ASSERT (NW_OK == rc);
     return rc;
@@ -466,14 +466,15 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cCreateLocalTunnel (
-  NW_IN NwGtpv2cStackT * thiz,
+static nw_rc_t nwGtpv2cCreateLocalTunnel (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN uint32_t teid,
   NW_IN struct in_addr *ipv4Remote,
   NW_IN NwGtpv2cUlpTunnelHandleT hUlpTunnel,
-  NW_OUT NwGtpv2cTunnelHandleT * phTunnel) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cTunnelT                        *pTunnel = NULL,
+  NW_OUT NwGtpv2cTunnelHandleT * phTunnel)
+{
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_tunnel_t                        *pTunnel = NULL,
                                            *pCollision = NULL;
     char                                    ipv4[INET_ADDRSTRLEN];
 
@@ -508,16 +509,16 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cDeleteLocalTunnel (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cDeleteLocalTunnel (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_OUT NwGtpv2cTunnelHandleT hTunnel) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cTunnelT                        *pTunnel = (NwGtpv2cTunnelT *) hTunnel;
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_tunnel_t                        *pTunnel = (nw_gtpv2c_tunnel_t *) hTunnel;
     char                                    ipv4[INET_ADDRSTRLEN];
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
-    pTunnel = RB_REMOVE (NwGtpv2cTunnelMap, &(thiz->tunnelMap), (NwGtpv2cTunnelT *) hTunnel);
-    NW_ASSERT (pTunnel == (NwGtpv2cTunnelT *) hTunnel);
+    pTunnel = RB_REMOVE (NwGtpv2cTunnelMap, &(thiz->tunnelMap), (nw_gtpv2c_tunnel_t *) hTunnel);
+    NW_ASSERT (pTunnel == (nw_gtpv2c_tunnel_t *) hTunnel);
     inet_ntop (AF_INET, (void*)&pTunnel->ipv4AddrRemote, ipv4, INET_ADDRSTRLEN);
     OAILOG_DEBUG (LOG_GTPV2C, "Deleting local tunnel with teid '0x%x' and peer IP %s\n", pTunnel->teid, ipv4);
     rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
@@ -537,11 +538,11 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cHandleUlpInitialReq (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cHandleUlpInitialReq (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN NwGtpv2cUlpApiT * pUlpReq) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cTrxnT                          *pTrxn = NULL;
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_trxn_t                          *pTrxn = NULL;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
     /*
@@ -557,10 +558,10 @@ extern                                  "C" {
         NW_ASSERT (NW_OK == rc);
       }
 
-      pTrxn->pMsg = (NwGtpv2cMsgT *) pUlpReq->hMsg;
+      pTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
       pTrxn->hTunnel = pUlpReq->apiInfo.initialReqInfo.hTunnel;
       pTrxn->hUlpTrxn = pUlpReq->apiInfo.initialReqInfo.hUlpTrxn;
-      pTrxn->peerIp = ((NwGtpv2cTunnelT *) (pTrxn->hTunnel))->ipv4AddrRemote;
+      pTrxn->peerIp = ((nw_gtpv2c_tunnel_t *) (pTrxn->hTunnel))->ipv4AddrRemote;
       pTrxn->peerPort = NW_GTPV2C_UDP_PORT;
 
       if (pUlpReq->apiType & NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE) {
@@ -599,25 +600,25 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cHandleUlpTriggeredReq (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cHandleUlpTriggeredReq (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN NwGtpv2cUlpApiT * pUlpReq) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cTrxnT                          *pTrxn = NULL;
-    NwGtpv2cTrxnT                          *pReqTrxn = NULL;
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_trxn_t                          *pTrxn = NULL;
+    nw_gtpv2c_trxn_t                          *pReqTrxn = NULL;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
     /*
      * Create New Transaction
      */
-    pTrxn = nwGtpv2cTrxnWithSeqNumNew (thiz, (((NwGtpv2cMsgT *) (pUlpReq->hMsg))->seqNum));
+    pTrxn = nwGtpv2cTrxnWithSeqNumNew (thiz, (((nw_gtpv2c_msg_t *) (pUlpReq->hMsg))->seqNum));
 
     if (pTrxn) {
-      pReqTrxn = (NwGtpv2cTrxnT *) pUlpReq->apiInfo.triggeredReqInfo.hTrxn;
+      pReqTrxn = (nw_gtpv2c_trxn_t *) pUlpReq->apiInfo.triggeredReqInfo.hTrxn;
       pTrxn->hUlpTrxn = pUlpReq->apiInfo.triggeredReqInfo.hUlpTrxn;
       pTrxn->peerIp.s_addr = pReqTrxn->peerIp.s_addr;
       pTrxn->peerPort = pReqTrxn->peerPort;
-      pTrxn->pMsg = (NwGtpv2cMsgT *) pUlpReq->hMsg;
+      pTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
       rc = nwGtpv2cCreateAndSendMsg (thiz, pTrxn->seqNum, &pTrxn->peerIp, pTrxn->peerPort, pTrxn->pMsg);
 
       if (NW_OK == rc) {
@@ -655,22 +656,22 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cHandleUlpTriggeredRsp (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cHandleUlpTriggeredRsp (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN NwGtpv2cUlpApiT * pUlpRsp) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cTrxnT                          *pReqTrxn = NULL;
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_trxn_t                          *pReqTrxn = NULL;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
-    pReqTrxn = (NwGtpv2cTrxnT *) pUlpRsp->apiInfo.triggeredRspInfo.hTrxn;
+    pReqTrxn = (nw_gtpv2c_trxn_t *) pUlpRsp->apiInfo.triggeredRspInfo.hTrxn;
     NW_ASSERT (pReqTrxn != NULL);
 
-    if (((NwGtpv2cMsgT *) pUlpRsp->hMsg)->seqNum == 0)
-      ((NwGtpv2cMsgT *) pUlpRsp->hMsg)->seqNum = pReqTrxn->seqNum;
+    if (((nw_gtpv2c_msg_t *) pUlpRsp->hMsg)->seqNum == 0)
+      ((nw_gtpv2c_msg_t *) pUlpRsp->hMsg)->seqNum = pReqTrxn->seqNum;
 
     OAILOG_DEBUG (LOG_GTPV2C, "Sending response message over seq '0x%x'\n", pReqTrxn->seqNum);
-    rc = nwGtpv2cCreateAndSendMsg (thiz, pReqTrxn->seqNum, &pReqTrxn->peerIp, pReqTrxn->peerPort, (NwGtpv2cMsgT *) pUlpRsp->hMsg);
-    pReqTrxn->pMsg = (NwGtpv2cMsgT *) pUlpRsp->hMsg;
+    rc = nwGtpv2cCreateAndSendMsg (thiz, pReqTrxn->seqNum, &pReqTrxn->peerIp, pReqTrxn->peerPort, (nw_gtpv2c_msg_t *) pUlpRsp->hMsg);
+    pReqTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpRsp->hMsg;
 
     // suspicious  rc = nwGtpv2cTrxnStartDulpicateRequestWaitTimer (pReqTrxn);
 
@@ -691,33 +692,33 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cHandleUlpCreateLocalTunnel (
-  NW_IN NwGtpv2cStackT * thiz,
-  NW_IN NwGtpv2cUlpApiT * pUlpReq) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cTunnelT                        *pTunnel = NULL,
-                                           *pCollision = NULL;
-    char                                    ipv4[INET_ADDRSTRLEN];
+static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thiz, NW_IN NwGtpv2cUlpApiT * pUlpReq)
+{
+  OAILOG_FUNC_IN (LOG_GTPV2C);
+  nw_rc_t                                   rc = NW_FAILURE;
+  nw_gtpv2c_tunnel_t                        *pTunnel = NULL,
+                                         *pCollision = NULL;
+  char                                    ipv4[INET_ADDRSTRLEN];
 
-    OAILOG_FUNC_IN (LOG_GTPV2C);
-    inet_ntop (AF_INET, (void*)&pUlpReq->apiInfo.createLocalTunnelInfo.peerIp, ipv4, INET_ADDRSTRLEN);
-    OAILOG_DEBUG (LOG_GTPV2C, "Creating local tunnel with teid '0x%x' and peer IP %s\n",
-        pUlpReq->apiInfo.createLocalTunnelInfo.teidLocal, ipv4);
-    pTunnel = nwGtpv2cTunnelNew (thiz, pUlpReq->apiInfo.createLocalTunnelInfo.teidLocal, &pUlpReq->apiInfo.createLocalTunnelInfo.peerIp,
-        pUlpReq->apiInfo.triggeredRspInfo.hUlpTunnel);
-    NW_ASSERT (pTunnel);
-    pCollision = RB_INSERT (NwGtpv2cTunnelMap, &(thiz->tunnelMap), pTunnel);
+  inet_ntop (AF_INET, (void*)&pUlpReq->apiInfo.createLocalTunnelInfo.peerIp, ipv4, INET_ADDRSTRLEN);
+  OAILOG_DEBUG (LOG_GTPV2C, "Creating local tunnel with teid '0x%x' and peer IP %s\n", pUlpReq->apiInfo.createLocalTunnelInfo.teidLocal, ipv4);
+  pTunnel = nwGtpv2cTunnelNew (thiz,
+                              pUlpReq->apiInfo.createLocalTunnelInfo.teidLocal,
+                              &pUlpReq->apiInfo.createLocalTunnelInfo.peerIp,
+                              pUlpReq->apiInfo.triggeredRspInfo.hUlpTunnel);
+  NW_ASSERT (pTunnel);
+  pCollision = RB_INSERT (NwGtpv2cTunnelMap, &(thiz->tunnelMap), pTunnel);
 
-    if (pCollision) {
-      rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
-      NW_ASSERT (NW_OK == rc);
-      pUlpReq->apiInfo.createLocalTunnelInfo.hTunnel = (NwGtpv2cTunnelHandleT) 0;
-      OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_FAILURE);
-    }
-
-    pUlpReq->apiInfo.createLocalTunnelInfo.hTunnel = (NwGtpv2cTunnelHandleT) pTunnel;
-    OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
+  if (pCollision) {
+    rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
+    NW_ASSERT (NW_OK == rc);
+    pUlpReq->apiInfo.createLocalTunnelInfo.hTunnel = (NwGtpv2cTunnelHandleT) 0;
+    OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_FAILURE);
   }
+
+  pUlpReq->apiInfo.createLocalTunnelInfo.hTunnel = (NwGtpv2cTunnelHandleT) pTunnel;
+  OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
+}
 
 /**
   Process NW_GTPV2C_ULP_DELETE_LOCAL_TUNNEL Request from ULP entity.
@@ -727,10 +728,10 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cHandleUlpDeleteLocalTunnel (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cHandleUlpDeleteLocalTunnel (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN NwGtpv2cUlpApiT * pUlpReq) {
-    NwRcT                                   rc = NW_FAILURE;
+    nw_rc_t                                   rc = NW_FAILURE;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
     rc = nwGtpv2cDeleteLocalTunnel (thiz, pUlpReq->apiInfo.deleteLocalTunnelInfo.hTunnel);
@@ -744,16 +745,16 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cSendInitialReqIndToUlp (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cSendInitialReqIndToUlp (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN NwGtpv2cErrorT * pError,
-  NW_IN NwGtpv2cTrxnT * pTrxn,
+  NW_IN nw_gtpv2c_trxn_t * pTrxn,
   NW_IN uint32_t hUlpTunnel,
   NW_IN uint32_t msgType,
   NW_IN struct in_addr *peerIp,
   NW_IN uint16_t peerPort,
   NW_IN NwGtpv2cMsgHandleT hMsg) {
-    NwRcT                                   rc = NW_FAILURE;
+    nw_rc_t                                   rc = NW_FAILURE;
     NwGtpv2cUlpApiT                         ulpApi;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
@@ -776,14 +777,14 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cSendTriggeredRspIndToUlp (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cSendTriggeredRspIndToUlp (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN NwGtpv2cErrorT * pError,
   NW_IN uint32_t hUlpTrxn,
   NW_IN uint32_t hUlpTunnel,
   NW_IN uint32_t msgType,
   NW_IN NwGtpv2cMsgHandleT hMsg) {
-    NwRcT                                   rc = NW_FAILURE;
+    nw_rc_t                                   rc = NW_FAILURE;
     NwGtpv2cUlpApiT                         ulpApi;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
@@ -804,14 +805,14 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cHandleEchoReq (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cHandleEchoReq (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN uint32_t msgType,
   NW_IN uint8_t * msgBuf,
   NW_IN uint32_t msgBufLen,
   NW_IN uint16_t peerPort,
   NW_IN struct in_addr *peerIp) {
-    NwRcT                                   rc = NW_FAILURE;
+    nw_rc_t                                   rc = NW_FAILURE;
     uint32_t                                seqNum = 0;
     NwGtpv2cMsgHandleT                      hMsg = 0;
 
@@ -819,7 +820,7 @@ extern                                  "C" {
     /*
      * Send Echo Response
      */
-    rc = nwGtpv2cMsgNew ((NwGtpv2cStackHandleT) thiz, NW_FALSE, /* TEID present flag    */
+    rc = nwGtpv2cMsgNew ((NwGtpv2cStackHandleT) thiz, false, /* TEID present flag    */
                          NW_GTP_ECHO_RSP,       /* Msg Type             */
                          0x00,  /* TEID                 */
                          seqNum,        /* Seq Number           */
@@ -829,7 +830,7 @@ extern                                  "C" {
     char                                    ipv4[INET_ADDRSTRLEN];
     inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
     OAILOG_ERROR (LOG_GTPV2C, "Sending NW_GTP_ECHO_RSP message to %s:%u with seq %u\n", ipv4, peerPort, (seqNum));
-    rc = nwGtpv2cCreateAndSendMsg (thiz, (seqNum), peerIp, peerPort, (NwGtpv2cMsgT *) hMsg);
+    rc = nwGtpv2cCreateAndSendMsg (thiz, (seqNum), peerIp, peerPort, (nw_gtpv2c_msg_t *) hMsg);
     rc = nwGtpv2cMsgDelete ((NwGtpv2cStackHandleT) thiz, hMsg);
     NW_ASSERT (NW_OK == rc);
     return rc;
@@ -842,18 +843,18 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cHandleInitialReq (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cHandleInitialReq (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN uint32_t msgType,
   NW_IN uint8_t * msgBuf,
   NW_IN uint32_t msgBufLen,
   NW_IN uint16_t peerPort,
   NW_IN struct in_addr *peerIp) {
-    NwRcT                                   rc = NW_FAILURE;
+    nw_rc_t                                   rc = NW_FAILURE;
     uint32_t                                seqNum = 0;
     uint32_t                                teidLocal = 0;
-    NwGtpv2cTrxnT                          *pTrxn = NULL;
-    NwGtpv2cTunnelT                        *pLocalTunnel = NULL,
+    nw_gtpv2c_trxn_t                          *pTrxn = NULL;
+    nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
                                             keyTunnel = {0};
     NwGtpv2cMsgHandleT                      hMsg = 0;
     NwGtpv2cUlpTunnelHandleT                hUlpTunnel = 0;
@@ -903,15 +904,15 @@ extern                                  "C" {
   @return NW_OK on success.
 */
 
-  static NwRcT                            nwGtpv2cHandleTriggeredRsp (
-  NW_IN NwGtpv2cStackT * thiz,
+  static nw_rc_t                            nwGtpv2cHandleTriggeredRsp (
+  NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN uint32_t msgType,
   NW_IN uint8_t * msgBuf,
   NW_IN uint32_t msgBufLen,
   NW_IN uint16_t peerPort,
   NW_IN struct in_addr* peerIp) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cTrxnT                          *pTrxn = NULL,
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_trxn_t                          *pTrxn = NULL,
                                             keyTrxn;
     NwGtpv2cMsgHandleT                      hMsg = 0;
     NwGtpv2cErrorT                          error = {0};
@@ -925,7 +926,7 @@ extern                                  "C" {
       uint32_t                                hUlpTunnel;
 
       hUlpTrxn = pTrxn->hUlpTrxn;
-      hUlpTunnel = (pTrxn->hTunnel ? ((NwGtpv2cTunnelT *) (pTrxn->hTunnel))->hUlpTunnel : 0);
+      hUlpTunnel = (pTrxn->hTunnel ? ((nw_gtpv2c_tunnel_t *) (pTrxn->hTunnel))->hUlpTunnel : 0);
       RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
       rc = nwGtpv2cTrxnDelete (&pTrxn);
       NW_ASSERT (NW_OK == rc);
@@ -957,13 +958,13 @@ extern                                  "C" {
    Constructor
 */
 
-  NwRcT                                   nwGtpv2cInitialize (
+  nw_rc_t                                   nwGtpv2cInitialize (
   NW_INOUT NwGtpv2cStackHandleT * hGtpcStackHandle) {
-    NwRcT                                   rc = NW_OK;
-    NwGtpv2cStackT                         *thiz = NULL;
+    nw_rc_t                                   rc = NW_OK;
+    nw_gtpv2c_stack_t                         *thiz = NULL;
 
-    thiz = (NwGtpv2cStackT *) malloc (sizeof (NwGtpv2cStackT));
-    memset (thiz, 0, sizeof (NwGtpv2cStackT));
+    thiz = (nw_gtpv2c_stack_t *) malloc (sizeof (nw_gtpv2c_stack_t));
+    memset (thiz, 0, sizeof (nw_gtpv2c_stack_t));
 
     if (thiz) {
       OAI_GCC_DIAG_OFF(pointer-to-int-cast);
@@ -1017,7 +1018,7 @@ extern                                  "C" {
    Destructor
 */
 
-  NwRcT                                   nwGtpv2cFinalize (
+  nw_rc_t                                   nwGtpv2cFinalize (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle) {
     if (!hGtpcStackHandle)
       return NW_FAILURE;
@@ -1051,7 +1052,7 @@ extern                                  "C" {
 //    nwGtpv2cMsgIeParseInfoDelete(((NwGtpv2cStackT*)hGtpcStackHandle)->pGtpv2cMsgIeParseInfo[NW_GTP_IDENTIFICATION_RSP]);
 
     OAI_GCC_DIAG_OFF(int-to-pointer-cast);
-    nwGtpv2cTmrMinHeapDelete((NwGtpv2cTmrMinHeapT*)((NwGtpv2cStackT*)hGtpcStackHandle)->hTmrMinHeap);
+    nwGtpv2cTmrMinHeapDelete((NwGtpv2cTmrMinHeapT*)((nw_gtpv2c_stack_t*)hGtpcStackHandle)->hTmrMinHeap);
     OAI_GCC_DIAG_ON(int-to-pointer-cast);
 
     free_wrapper ((void**)&hGtpcStackHandle);
@@ -1063,10 +1064,10 @@ extern                                  "C" {
    Set ULP entity
 */
 
-  NwRcT                                   nwGtpv2cSetUlpEntity (
+  nw_rc_t                                   nwGtpv2cSetUlpEntity (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
-  NW_IN NwGtpv2cUlpEntityT * pUlpEntity) {
-    NwGtpv2cStackT                         *thiz = (NwGtpv2cStackT *) hGtpcStackHandle;
+  NW_IN nw_gtpv2c_ulp_entity_t * pUlpEntity) {
+    nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
     if (!pUlpEntity)
       return NW_FAILURE;
@@ -1079,10 +1080,10 @@ extern                                  "C" {
    Set UDP entity
 */
 
-  NwRcT                                   nwGtpv2cSetUdpEntity (
+  nw_rc_t                                   nwGtpv2cSetUdpEntity (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
-  NW_IN NwGtpv2cUdpEntityT * pUdpEntity) {
-    NwGtpv2cStackT                         *thiz = (NwGtpv2cStackT *) hGtpcStackHandle;
+  NW_IN nw_gtpv2c_udp_entity_t * pUdpEntity) {
+    nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
     if (!pUdpEntity)
       return NW_FAILURE;
@@ -1095,10 +1096,10 @@ extern                                  "C" {
    Set MEM MGR entity
 */
 
-  NwRcT                                   nwGtpv2cSetMemMgrEntity (
+  nw_rc_t                                   nwGtpv2cSetMemMgrEntity (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
-  NW_IN NwGtpv2cMemMgrEntityT * pMemMgrEntity) {
-    NwGtpv2cStackT                         *thiz = (NwGtpv2cStackT *) hGtpcStackHandle;
+  NW_IN nw_gtpv2c_mem_mgr_entity_t * pMemMgrEntity) {
+    nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
     if (!pMemMgrEntity)
       return NW_FAILURE;
@@ -1111,10 +1112,10 @@ extern                                  "C" {
    Set TMR MGR entity
 */
 
-  NwRcT                                   nwGtpv2cSetTimerMgrEntity (
+  nw_rc_t                                   nwGtpv2cSetTimerMgrEntity (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
-  NW_IN NwGtpv2cTimerMgrEntityT * pTmrMgrEntity) {
-    NwGtpv2cStackT                         *thiz = (NwGtpv2cStackT *) hGtpcStackHandle;
+  NW_IN nw_gtpv2c_timer_mgr_entity_t * pTmrMgrEntity) {
+    nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
     if (!pTmrMgrEntity)
       return NW_FAILURE;
@@ -1128,10 +1129,10 @@ extern                                  "C" {
    Set LOG MGR entity
 */
 
-  NwRcT                                   nwGtpv2cSetLogMgrEntity (
+  nw_rc_t                                   nwGtpv2cSetLogMgrEntity (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
-  NW_IN NwGtpv2cLogMgrEntityT * pLogMgrEntity) {
-    NwGtpv2cStackT                         *thiz = (NwGtpv2cStackT *) hGtpcStackHandle;
+  NW_IN nw_gtpv2c_log_mgr_entity_t * pLogMgrEntity) {
+    nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
     if (!pLogMgrEntity)
       return NW_FAILURE;
@@ -1144,10 +1145,10 @@ extern                                  "C" {
   Set log level for the stack.
 */
 
-  NwRcT                                   nwGtpv2cSetLogLevel (
+  nw_rc_t                                   nwGtpv2cSetLogLevel (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
   NW_IN uint32_t logLevel) {
-    NwGtpv2cStackT                         *thiz = (NwGtpv2cStackT *) hGtpcStackHandle;
+    nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
     thiz->logLevel = logLevel;
     return NW_OK;
@@ -1157,17 +1158,17 @@ extern                                  "C" {
    Process Request from Udp Layer
 */
 
-  NwRcT                                   nwGtpv2cProcessUdpReq (
+  nw_rc_t                                   nwGtpv2cProcessUdpReq (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
   NW_IN uint8_t * udpData,
   NW_IN uint32_t udpDataLen,
   NW_IN uint16_t peerPort,
   NW_IN struct in_addr * peerIp) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cStackT                         *thiz = NULL;
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_stack_t                         *thiz = NULL;
     uint16_t                                msgType = 0;
 
-    thiz = (NwGtpv2cStackT *) hGtpcStackHandle;
+    thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
     NW_ASSERT (thiz);
     OAILOG_FUNC_IN (LOG_GTPV2C);
 
@@ -1251,11 +1252,11 @@ extern                                  "C" {
    Process Request from Upper Layer
 */
 
-  NwRcT                                   nwGtpv2cProcessUlpReq (
+  nw_rc_t                                   nwGtpv2cProcessUlpReq (
   NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
   NW_IN NwGtpv2cUlpApiT * pUlpReq) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cStackT                         *thiz = (NwGtpv2cStackT *) hGtpcStackHandle;
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
     NW_ASSERT (thiz);
     NW_ASSERT (pUlpReq != NULL);
@@ -1306,16 +1307,16 @@ extern                                  "C" {
    Process Timer timeout Request from Timer ULP Manager
 */
 
-  NwRcT                                   nwGtpv2cProcessTimeoutOld (
+  nw_rc_t                                   nwGtpv2cProcessTimeoutOld (
   void *arg) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cStackT                         *thiz = NULL;
-    NwGtpv2cTimeoutInfoT                   *timeoutInfo = (NwGtpv2cTimeoutInfoT *) arg;
-    NwGtpv2cTimeoutInfoT                   *pNextTimeoutInfo = NULL;
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_stack_t                         *thiz = NULL;
+    nw_gtpv2c_timeout_info_t                   *timeoutInfo = (nw_gtpv2c_timeout_info_t *) arg;
+    nw_gtpv2c_timeout_info_t                   *pNextTimeoutInfo = NULL;
     struct timeval                          tv = {0};
 
     NW_ASSERT (timeoutInfo != NULL);
-    thiz = (NwGtpv2cStackT *) (((NwGtpv2cTimeoutInfoT *) timeoutInfo)->hStack);
+    thiz = (nw_gtpv2c_stack_t *) (((nw_gtpv2c_timeout_info_t *) timeoutInfo)->hStack);
     NW_ASSERT (thiz != NULL);
     OAILOG_FUNC_IN (LOG_GTPV2C);
 
@@ -1361,15 +1362,15 @@ extern                                  "C" {
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
 
-  NwRcT                                   nwGtpv2cProcessTimeout (
+  nw_rc_t                                   nwGtpv2cProcessTimeout (
   void *arg) {
-    NwRcT                                   rc = NW_FAILURE;
-    NwGtpv2cStackT                         *thiz = NULL;
-    NwGtpv2cTimeoutInfoT                   *timeoutInfo = (NwGtpv2cTimeoutInfoT *) arg;
+    nw_rc_t                                   rc = NW_FAILURE;
+    nw_gtpv2c_stack_t                         *thiz = NULL;
+    nw_gtpv2c_timeout_info_t                   *timeoutInfo = (nw_gtpv2c_timeout_info_t *) arg;
     struct timeval                          tv = {0};
 
     NW_ASSERT (timeoutInfo != NULL);
-    thiz = (NwGtpv2cStackT *) (timeoutInfo->hStack);
+    thiz = (nw_gtpv2c_stack_t *) (timeoutInfo->hStack);
     NW_ASSERT (thiz != NULL);
     OAILOG_FUNC_IN (LOG_GTPV2C);
 
@@ -1434,17 +1435,17 @@ extern                                  "C" {
 
 
 
-  NwRcT                                   nwGtpv2cStartTimer (
-  NwGtpv2cStackT * thiz,
+  nw_rc_t                                   nwGtpv2cStartTimer (
+  nw_gtpv2c_stack_t * thiz,
   uint32_t timeoutSec,
   uint32_t timeoutUsec,
   uint32_t tmrType,
-  NwRcT                                   (*timeoutCallbackFunc) (void *),
+  nw_rc_t                                   (*timeoutCallbackFunc) (void *),
   void *timeoutCallbackArg,
   NwGtpv2cTimerHandleT * phTimer) {
-    NwRcT                                   rc = NW_OK;
+    nw_rc_t                                   rc = NW_OK;
     struct timeval                          tv = { 0 };
-    NwGtpv2cTimeoutInfoT                   *timeoutInfo = NULL;
+    nw_gtpv2c_timeout_info_t                   *timeoutInfo = NULL;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
 
@@ -1452,7 +1453,7 @@ extern                                  "C" {
       timeoutInfo = gpGtpv2cTimeoutInfoPool;
       gpGtpv2cTimeoutInfoPool = gpGtpv2cTimeoutInfoPool->next;
     } else {
-      NW_GTPV2C_MALLOC (thiz, sizeof (NwGtpv2cTimeoutInfoT), timeoutInfo, NwGtpv2cTimeoutInfoT *);
+      NW_GTPV2C_MALLOC (thiz, sizeof (nw_gtpv2c_timeout_info_t), timeoutInfo, nw_gtpv2c_timeout_info_t *);
     }
 
     if (timeoutInfo) {
@@ -1509,18 +1510,18 @@ extern                                  "C" {
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
 
-  NwRcT                                   nwGtpv2cStartTimerOld (
-  NwGtpv2cStackT * thiz,
+  nw_rc_t                                   nwGtpv2cStartTimerOld (
+  nw_gtpv2c_stack_t * thiz,
   uint32_t timeoutSec,
   uint32_t timeoutUsec,
   uint32_t tmrType,
-  NwRcT                                   (*timeoutCallbackFunc) (void *),
+  nw_rc_t                                   (*timeoutCallbackFunc) (void *),
   void *timeoutCallbackArg,
   NwGtpv2cTimerHandleT * phTimer) {
-    NwRcT                                   rc = NW_OK;
+    nw_rc_t                                   rc = NW_OK;
     struct timeval                          tv;
-    NwGtpv2cTimeoutInfoT                   *timeoutInfo;
-    NwGtpv2cTimeoutInfoT                   *collision;
+    nw_gtpv2c_timeout_info_t                   *timeoutInfo;
+    nw_gtpv2c_timeout_info_t                   *collision;
 
     NW_ASSERT (thiz != NULL);
     OAILOG_FUNC_IN (LOG_GTPV2C);
@@ -1529,7 +1530,7 @@ extern                                  "C" {
       timeoutInfo = gpGtpv2cTimeoutInfoPool;
       gpGtpv2cTimeoutInfoPool = gpGtpv2cTimeoutInfoPool->next;
     } else {
-      NW_GTPV2C_MALLOC (thiz, sizeof (NwGtpv2cTimeoutInfoT), timeoutInfo, NwGtpv2cTimeoutInfoT *);
+      NW_GTPV2C_MALLOC (thiz, sizeof (nw_gtpv2c_timeout_info_t), timeoutInfo, nw_gtpv2c_timeout_info_t *);
     }
 
     if (timeoutInfo) {
@@ -1583,16 +1584,16 @@ extern                                  "C" {
 /**
    Stop Timer with ULP Timer Manager
 */
-  NwRcT                                   nwGtpv2cStopTimer (
-  NwGtpv2cStackT * thiz,
+  nw_rc_t                                   nwGtpv2cStopTimer (
+  nw_gtpv2c_stack_t * thiz,
   NwGtpv2cTimerHandleT hTimer) {
-    NwRcT                                   rc = NW_OK;
+    nw_rc_t                                   rc = NW_OK;
     struct timeval                          tv;
-    NwGtpv2cTimeoutInfoT                   *timeoutInfo;
+    nw_gtpv2c_timeout_info_t                   *timeoutInfo;
 
     NW_ASSERT (thiz != NULL);
     OAILOG_FUNC_IN (LOG_GTPV2C);
-    timeoutInfo = (NwGtpv2cTimeoutInfoT *) hTimer;
+    timeoutInfo = (nw_gtpv2c_timeout_info_t *) hTimer;
     OAI_GCC_DIAG_OFF(int-to-pointer-cast);
     rc = nwGtpv2cTmrMinHeapRemove ((NwGtpv2cTmrMinHeapT *)thiz->hTmrMinHeap, timeoutInfo->timerMinHeapIndex);
     OAI_GCC_DIAG_ON(int-to-pointer-cast);
@@ -1629,16 +1630,16 @@ extern                                  "C" {
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
 
-  NwRcT                                   nwGtpv2cStopTimerOld (
-  NwGtpv2cStackT * thiz,
+  nw_rc_t                                   nwGtpv2cStopTimerOld (
+  nw_gtpv2c_stack_t * thiz,
   NwGtpv2cTimerHandleT hTimer) {
-    NwRcT                                   rc = NW_OK;
+    nw_rc_t                                   rc = NW_OK;
     struct timeval                          tv;
-    NwGtpv2cTimeoutInfoT                   *timeoutInfo;
+    nw_gtpv2c_timeout_info_t                   *timeoutInfo;
 
     NW_ASSERT (thiz != NULL);
     OAILOG_FUNC_IN (LOG_GTPV2C);
-    timeoutInfo = (NwGtpv2cTimeoutInfoT *) hTimer;
+    timeoutInfo = (nw_gtpv2c_timeout_info_t *) hTimer;
     RB_REMOVE (NwGtpv2cActiveTimerList, &(thiz->activeTimerList), timeoutInfo);
     timeoutInfo->next = gpGtpv2cTimeoutInfoPool;
     gpGtpv2cTimeoutInfoPool = timeoutInfo;

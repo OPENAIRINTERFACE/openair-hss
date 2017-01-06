@@ -38,18 +38,18 @@ extern                                  "C" {
    Public Functions
   --------------------------------------------------------------------------*/
 
-  NwRcT                                   nwGtpv2cUlpInit (
+  nw_rc_t                                   nwGtpv2cUlpInit (
   NwGtpv2cNodeUlpT * thiz,
   NwGtpv2cStackHandleT hGtpv2cStack,
   char *peerIpStr) {
-    NwRcT                                   rc;
+    nw_rc_t                                   rc;
 
     thiz->hGtpv2cStack = hGtpv2cStack;
     strcpy (thiz->peerIpStr, peerIpStr);
     return NW_OK;
   }
 
-  NwRcT                                   nwGtpv2cUlpDestroy (
+  nw_rc_t                                   nwGtpv2cUlpDestroy (
   NwGtpv2cNodeUlpT * thiz) {
     NW_ASSERT (thiz);
     memset (thiz, 0, sizeof (NwGtpv2cNodeUlpT));
@@ -70,7 +70,7 @@ extern                                  "C" {
   NwGtpv2cPeerT                          *nwGtpv2cUlpCreatePeerContext (
   NwGtpv2cNodeUlpT * thiz,
   uint32_t peerIp) {
-    NwRcT                                   rc;
+    nw_rc_t                                   rc;
     NwGtpv2cUlpApiT                         ulpReq;
     NwGtpv2cPeerT                          *pPeer = (NwGtpv2cPeerT *) malloc (sizeof (NwGtpv2cPeerT));
 
@@ -92,10 +92,10 @@ extern                                  "C" {
     return pPeer;
   }
 
-  NwRcT                                   nwGtpv2cUlpSendEchoRequestToPeer (
+  nw_rc_t                                   nwGtpv2cUlpSendEchoRequestToPeer (
   NwGtpv2cNodeUlpT * thiz,
   NwGtpv2cPeerT * pPeer) {
-    NwRcT                                   rc;
+    nw_rc_t                                   rc;
     struct timeval                          tv;
     NwGtpv2cUlpApiT                         ulpReq;
 
@@ -117,14 +117,14 @@ extern                                  "C" {
     return NW_OK;
   }
 
-  NwRcT                                   nwGtpv2cUlpPing (
+  nw_rc_t                                   nwGtpv2cUlpPing (
   NwGtpv2cNodeUlpT * thiz,
   uint32_t peerIp,
   uint32_t pingCount,
   uint32_t pingInterval,
   uint32_t t3Time,
   uint32_t n3Count) {
-    NwRcT                                   rc;
+    nw_rc_t                                   rc;
     NwGtpv2cPeerT                          *pPeer;
     NwGtpv2cUlpApiT                         ulpReq;
 
@@ -140,10 +140,10 @@ extern                                  "C" {
     return rc;
   }
 
-  NwRcT                                   nwGtpv2cUlpProcessStackReqCallback (
+  nw_rc_t                                   nwGtpv2cUlpProcessStackReqCallback (
   NwGtpv2cUlpHandleT hUlp,
   NwGtpv2cUlpApiT * pUlpApi) {
-    NwRcT                                   rc;
+    nw_rc_t                                   rc;
     uint32_t                                seqNum;
     uint32_t                                len;
     uint32_t                                recvTimeStamp;

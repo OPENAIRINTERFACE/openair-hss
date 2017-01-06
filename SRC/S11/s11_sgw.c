@@ -54,7 +54,7 @@ hash_table_ts_t                        *s11_sgw_teid_2_gtv2c_teid_handle = NULL;
 
 /* ULP callback for the GTPv2-C stack */
 //------------------------------------------------------------------------------
-static NwRcT s11_sgw_ulp_process_stack_req_cb (NwGtpv2cUlpHandleT hUlp, NwGtpv2cUlpApiT * pUlpApi)
+static nw_rc_t s11_sgw_ulp_process_stack_req_cb (NwGtpv2cUlpHandleT hUlp, NwGtpv2cUlpApiT * pUlpApi)
 {
   int                                     ret = 0;
 
@@ -104,7 +104,7 @@ static NwRcT s11_sgw_ulp_process_stack_req_cb (NwGtpv2cUlpHandleT hUlp, NwGtpv2c
 }
 
 //------------------------------------------------------------------------------
-static NwRcT s11_sgw_send_udp_msg (
+static nw_rc_t s11_sgw_send_udp_msg (
   NwGtpv2cUdpHandleT udpHandle,
   uint8_t * buffer,
   uint32_t buffer_len,
@@ -127,19 +127,19 @@ static NwRcT s11_sgw_send_udp_msg (
 }
 
 //------------------------------------------------------------------------------
-static NwRcT s11_sgw_log_wrapper (
+static nw_rc_t s11_sgw_log_wrapper (
   NwGtpv2cLogMgrHandleT hLogMgr,
   uint32_t logLevel,
-  NwCharT * file,
+  char * file,
   uint32_t line,
-  NwCharT * logStr)
+  char * logStr)
 {
   OAILOG_DEBUG (LOG_S11, "%s\n", logStr);
   return NW_OK;
 }
 
 //------------------------------------------------------------------------------
-static NwRcT s11_sgw_start_timer_wrapper (
+static nw_rc_t s11_sgw_start_timer_wrapper (
   NwGtpv2cTimerMgrHandleT tmrMgrHandle,
   uint32_t timeoutSec,
   uint32_t timeoutUsec,
@@ -160,7 +160,7 @@ static NwRcT s11_sgw_start_timer_wrapper (
 }
 
 //------------------------------------------------------------------------------
-static NwRcT s11_sgw_stop_timer_wrapper (
+static nw_rc_t s11_sgw_stop_timer_wrapper (
   NwGtpv2cTimerMgrHandleT tmrMgrHandle,
   NwGtpv2cTimerHandleT tmrHandle)
 {
@@ -187,7 +187,7 @@ static void *s11_sgw_thread (void *args)
         /*
          * We received new data to handle from the UDP layer
          */
-        NwRcT                                   rc;
+        nw_rc_t                                   rc;
         udp_data_ind_t                         *udp_data_ind;
 
         udp_data_ind = &received_message_p->ittiMsg.udp_data_ind;
@@ -271,10 +271,10 @@ static int s11_send_init_udp (struct in_addr *address, uint16_t port_number)
 int s11_sgw_init (sgw_config_t * config_p)
 {
   int                                     ret = 0;
-  NwGtpv2cUlpEntityT                      ulp;
-  NwGtpv2cUdpEntityT                      udp;
-  NwGtpv2cTimerMgrEntityT                 tmrMgr;
-  NwGtpv2cLogMgrEntityT                   logMgr;
+  nw_gtpv2c_ulp_entity_t                      ulp;
+  nw_gtpv2c_udp_entity_t                      udp;
+  nw_gtpv2c_timer_mgr_entity_t                 tmrMgr;
+  nw_gtpv2c_log_mgr_entity_t                   logMgr;
 
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface\n");
 

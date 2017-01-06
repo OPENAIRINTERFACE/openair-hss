@@ -28,7 +28,7 @@
 #include "s11_common.h"
 #include "log.h"
 
-NwRcT
+nw_rc_t
 s11_ie_indication_generic (
   uint8_t ieType,
   uint8_t ieLength,

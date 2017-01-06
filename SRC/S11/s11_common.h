@@ -22,7 +22,7 @@
 #ifndef FILE_S11_COMMON_SEEN
 #define FILE_S11_COMMON_SEEN
 
-NwRcT s11_ie_indication_generic(uint8_t  ieType,
+nw_rc_t s11_ie_indication_generic(uint8_t  ieType,
                                 uint8_t  ieLength,
                                 uint8_t  ieInstance,
                                 uint8_t *ieValue,

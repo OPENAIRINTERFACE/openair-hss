@@ -38,7 +38,7 @@ typedef struct {
 extern "C" {
 #endif
 
-NwRcT nwTimerStart( NwGtpv2cTimerMgrHandleT tmrMgrHandle,
+nw_rc_t nwTimerStart( NwGtpv2cTimerMgrHandleT tmrMgrHandle,
                     uint32_t timeoutSec,
                     uint32_t timeoutUsec,
                     uint32_t tmrType,
@@ -46,7 +46,7 @@ NwRcT nwTimerStart( NwGtpv2cTimerMgrHandleT tmrMgrHandle,
                     NwGtpv2cTimerHandleT* hTmr);
 
 
-NwRcT nwTimerStop( NwGtpv2cTimerMgrHandleT tmrMgrHandle,
+nw_rc_t nwTimerStop( NwGtpv2cTimerMgrHandleT tmrMgrHandle,
                    NwGtpv2cTimerHandleT hTmr);
 
 
