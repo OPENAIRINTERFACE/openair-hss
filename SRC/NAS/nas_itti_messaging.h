@@ -36,6 +36,10 @@ int
 nas_itti_erab_setup_req (
     const mme_ue_s1ap_id_t ue_id,
     const ebi_t            ebi,
+    const bitrate_t        mbr_dl,
+    const bitrate_t        mbr_ul,
+    const bitrate_t        gbr_dl,
+    const bitrate_t        gbr_ul,
     bstring                nas_msg);
 
 void nas_itti_pdn_config_req(

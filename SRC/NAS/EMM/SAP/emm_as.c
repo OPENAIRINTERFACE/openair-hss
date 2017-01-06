@@ -958,7 +958,13 @@ static int _emm_as_send (const emm_as_t * msg)
       break;
 
     case AS_ACTIVATE_BEARER_CONTEXT_REQ:{
-      nas_itti_erab_setup_req (as_msg.msg.activate_bearer_context_req.ue_id, as_msg.msg.activate_bearer_context_req.ebi, as_msg.msg.activate_bearer_context_req.nas_msg);
+      nas_itti_erab_setup_req (as_msg.msg.activate_bearer_context_req.ue_id,
+          as_msg.msg.activate_bearer_context_req.ebi,
+          as_msg.msg.activate_bearer_context_req.mbr_dl,
+          as_msg.msg.activate_bearer_context_req.mbr_ul,
+          as_msg.msg.activate_bearer_context_req.gbr_dl,
+          as_msg.msg.activate_bearer_context_req.gbr_ul,
+          as_msg.msg.activate_bearer_context_req.nas_msg);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
     break;
@@ -1449,8 +1455,13 @@ static int _emm_as_erab_setup_req (const emm_as_activate_bearer_context_req_t * 
   /*
    * Setup the AS message
    */
-  as_msg->ue_id = msg->ue_id;
-  as_msg->ebi   = msg->ebi;
+  as_msg->ue_id  = msg->ue_id;
+  as_msg->ebi    = msg->ebi;
+  as_msg->gbr_dl = msg->gbr_dl;
+  as_msg->gbr_ul = msg->gbr_ul;
+  as_msg->mbr_dl = msg->mbr_dl;
+  as_msg->mbr_ul = msg->mbr_ul;
+
   /*
    * Setup the NAS security header
    */

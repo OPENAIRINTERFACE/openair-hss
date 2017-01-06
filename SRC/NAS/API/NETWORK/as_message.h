@@ -456,6 +456,10 @@ typedef ul_info_transfer_ind_t dl_info_transfer_ind_t;
 typedef struct activate_bearer_context_req_s {
   mme_ue_s1ap_id_t ue_id;  /* UE lower layer identifier        */
   ebi_t            ebi;    /* EPS bearer id    */
+  bitrate_t        mbr_dl;
+  bitrate_t        mbr_ul;
+  bitrate_t        gbr_dl;
+  bitrate_t        gbr_ul;
   bstring          nas_msg; /* NAS message to transfer     */
 } activate_bearer_context_req_t;
 

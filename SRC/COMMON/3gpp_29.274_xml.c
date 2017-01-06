@@ -299,9 +299,6 @@ void bearer_context_within_create_bearer_request_to_xml (const bearer_context_wi
   if (bearer_context->s2b_u_pgw_fteid.teid) {
     fteid_to_xml(&bearer_context->s2b_u_pgw_fteid, S2B_U_PGW_FTEID_XML_STR, writer);
   }
-  if (bearer_context->s2a_u_pgw_fteid.teid) {
-    fteid_to_xml(&bearer_context->s2a_u_pgw_fteid, S2A_U_PGW_FTEID_XML_STR, writer);
-  }
   bearer_qos_to_xml(&bearer_context->bearer_level_qos, writer);
   protocol_configuration_options_to_xml(&bearer_context->pco, writer, false);
   XML_WRITE_END_ELEMENT(writer);

@@ -484,22 +484,22 @@ static int _dedicated_eps_bearer_activate (
    * Notify EMM that an activate dedicated EPS bearer context request
    * message has to be sent to the UE
    */
-  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMESM_ACTIVATE_BEARER_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_id, ebi);
-  emm_esm_activate_bearer_req_t          *emm_esm = &emm_sap.u.emm_esm.u.activate_bearer;
+  emm_esm_activate_bearer_req_t          *emm_esm_activate = &emm_sap.u.emm_esm.u.activate_bearer;
 
   emm_sap.primitive       = EMMESM_ACTIVATE_BEARER_REQ;
   emm_sap.u.emm_esm.ue_id = ue_id;
   emm_sap.u.emm_esm.ctx   = emm_context;
-  emm_esm->msg            = *msg;
-  emm_esm->ebi            = ebi;
+  emm_esm_activate->msg            = *msg;
+  emm_esm_activate->ebi            = ebi;
 
-  emm_esm->mbr_dl         = bearer_context->esm_ebr_context.mbr_dl;
-  emm_esm->mbr_ul         = bearer_context->esm_ebr_context.mbr_ul;
-  emm_esm->gbr_dl         = bearer_context->esm_ebr_context.gbr_dl;
-  emm_esm->gbr_ul         = bearer_context->esm_ebr_context.gbr_ul;
+  emm_esm_activate->mbr_dl         = bearer_context->esm_ebr_context.mbr_dl;
+  emm_esm_activate->mbr_ul         = bearer_context->esm_ebr_context.mbr_ul;
+  emm_esm_activate->gbr_dl         = bearer_context->esm_ebr_context.gbr_dl;
+  emm_esm_activate->gbr_ul         = bearer_context->esm_ebr_context.gbr_ul;
 
   bstring msg_dup = bstrcpy(*msg);
   *msg = NULL;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_ESM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMESM_ACTIVATE_BEARER_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_id, ebi);
   rc = emm_sap_send (&emm_sap);
 
   if (rc != RETURNerror) {
