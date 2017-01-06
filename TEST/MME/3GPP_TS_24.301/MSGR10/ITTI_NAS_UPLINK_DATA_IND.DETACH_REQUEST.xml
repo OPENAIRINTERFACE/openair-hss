@@ -8,7 +8,7 @@
   <security_protected_nas_message>
     <security_header_type>2</security_header_type>
     <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
-    <mac>0x8E40EA28</mac>
+    <mac>0</mac>
     <sequence_number>2</sequence_number>
     <plain_nas_message>
       <security_header_type>0</security_header_type>

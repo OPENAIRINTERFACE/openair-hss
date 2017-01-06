@@ -14,7 +14,7 @@
     <e_rab_to_be_setup_item>
       <e_rab_id>#DEDICATED_EPS_BEARER_IDENTITY</e_rab_id>
       <e_rab_level_qos_parameters>
-        <qci>5</qci>
+        <qci>2</qci>
         <allocation_and_retention_priority>
           <priority_level>#DEDICATED_BEARER_PRIORITY_LEVEL</priority_level>
           <pre_emption_capability>#DEDICATED_BEARER_PREEMPTION_CAPABILITY</pre_emption_capability>
@@ -40,7 +40,7 @@
           <pti>0x0</pti>
           <message_type>ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST</message_type>
           <linked_eps_bearer_identity>#LINKED_EPS_BEARER_IDENTITY</linked_eps_bearer_identity>
-          <eps_quality_of_service qci="0x5">
+          <eps_quality_of_service qci="0x2">
             <maximum_bit_rate_for_uplink>#DEDICATED_BEARER_EPS_QOS_MBR_UL</maximum_bit_rate_for_uplink>
             <maximum_bit_rate_for_downlink>#DEDICATED_BEARER_EPS_QOS_MBR_DL</maximum_bit_rate_for_downlink>
             <guaranted_bit_rate_for_uplink>#DEDICATED_BEARER_EPS_QOS_GBR_UL</guaranted_bit_rate_for_uplink>
