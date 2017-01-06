@@ -372,9 +372,10 @@ void emm_ctx_set_valid_eps_bearer_context_status(emm_context_t * const ctxt, eps
 struct emm_context_s *emm_context_remove(
   emm_data_t *_emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
 
-int  emm_context_add_guti (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
-int  emm_context_add_old_guti (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
-int  emm_context_add_imsi (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
+int emm_context_add_guti (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
+int emm_context_add_old_guti (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
+int emm_context_add_imsi (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__ ((nonnull)) ;
+int emm_context_upsert_imsi (emm_data_t * emm_data, struct emm_context_s *elm) __attribute__((nonnull));
 
 void emm_context_silently_reset_procedures (struct emm_context_s *emm_ctx) __attribute__ ((nonnull)) ;
 void emm_init_context(struct emm_context_s * const emm_ctx, const bool init_esm_ctxt)  __attribute__ ((nonnull)) ;
