@@ -89,12 +89,12 @@ extern                                  "C" {
       NW_ASSERT (NW_OK == rc);
       rc = nwGtpv2cStartTimer (thiz->pStack, thiz->t3Timer, 0, NW_GTPV2C_TMR_TYPE_ONE_SHOT, nwGtpv2cTrxnPeerRspWaitTimeout, thiz, &thiz->hRspTmr);
     } else {
-      NwGtpv2cUlpApiT                         ulpApi;
+      nw_gtpv2c_ulp_api_t                         ulpApi;
 
       ulpApi.hMsg = 0;
       ulpApi.apiType = NW_GTPV2C_ULP_API_RSP_FAILURE_IND;
-      ulpApi.apiInfo.rspFailureInfo.hUlpTrxn = thiz->hUlpTrxn;
-      ulpApi.apiInfo.rspFailureInfo.hUlpTunnel = ((thiz->hTunnel) ? ((nw_gtpv2c_tunnel_t *) (thiz->hTunnel))->hUlpTunnel : 0);
+      ulpApi.u_api_info.rspFailureInfo.hUlpTrxn = thiz->hUlpTrxn;
+      ulpApi.u_api_info.rspFailureInfo.hUlpTunnel = ((thiz->hTunnel) ? ((nw_gtpv2c_tunnel_t *) (thiz->hTunnel))->hUlpTunnel : 0);
       OAILOG_ERROR (LOG_GTPV2C, "N3 retries expired for transaction 0x%p\n", thiz);
       RB_REMOVE (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(pStack->outstandingTxSeqNumMap), thiz);
       rc = nwGtpv2cTrxnDelete (&thiz);
@@ -327,7 +327,7 @@ extern                                  "C" {
     }
 
     if (thiz->pMsg) {
-      rc = nwGtpv2cMsgDelete ((NwGtpv2cStackHandleT) pStack, (NwGtpv2cMsgHandleT) thiz->pMsg);
+      rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) pStack, (nw_gtpv2c_msg_handle_t) thiz->pMsg);
       NW_ASSERT (NW_OK == rc);
     }
 

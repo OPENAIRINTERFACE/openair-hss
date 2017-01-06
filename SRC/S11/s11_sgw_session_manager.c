@@ -46,8 +46,8 @@ extern hash_table_ts_t                        *s11_sgw_teid_2_gtv2c_teid_handle;
 //------------------------------------------------------------------------------
 int
 s11_sgw_handle_create_session_request (
-  NwGtpv2cStackHandleT * stack_p,
-  NwGtpv2cUlpApiT * pUlpApi)
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
 {
   nw_rc_t                                   rc = NW_OK;
   uint8_t                                 offendingIeType,
@@ -55,7 +55,7 @@ s11_sgw_handle_create_session_request (
   uint16_t                                offendingIeLength;
   itti_s11_create_session_request_t      *create_session_request_p;
   MessageDef                             *message_p;
-  NwGtpv2cMsgParserT                     *pMsgParser;
+  nw_gtpv2c_msg_parser_t                     *pMsgParser;
 
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_CREATE_SESSION_REQUEST);
@@ -182,15 +182,15 @@ s11_sgw_handle_create_session_request (
 		  s11_ie_indication_generic, NULL);
   DevAssert (NW_OK == rc);
   create_session_request_p->teid = nwGtpv2cMsgGetTeid (pUlpApi->hMsg);
-  create_session_request_p->trxn = (void *)pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
-  create_session_request_p->peer_ip = pUlpApi->apiInfo.initialReqIndInfo.peerIp;
+  create_session_request_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
+  create_session_request_p->peer_ip = pUlpApi->u_api_info.initialReqIndInfo.peerIp;
   rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
   if (rc != NW_OK) {
     gtpv2c_cause_t                             cause;
-    NwGtpv2cUlpApiT                         ulp_req;
+    nw_gtpv2c_ulp_api_t                         ulp_req;
 
-    memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+    memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
     memset (&cause, 0, sizeof (gtpv2c_cause_t));
     cause.offending_ie_type = offendingIeType;
     cause.offending_ie_length = offendingIeLength;
@@ -212,7 +212,7 @@ s11_sgw_handle_create_session_request (
      * Send Create session response with failure to Gtpv2c Stack Instance
      */
     ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
-    ulp_req.apiInfo.triggeredRspInfo.hTrxn = pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
+    ulp_req.u_api_info.triggeredRspInfo.hTrxn = pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
     rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CREATE_SESSION_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
     gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
     OAILOG_DEBUG (LOG_S11, "Received NW_GTP_CREATE_SESSION_REQ, Sending NW_GTP_CREATE_SESSION_RSP!\n");
@@ -237,25 +237,25 @@ s11_sgw_handle_create_session_request (
 //------------------------------------------------------------------------------
 int
 s11_sgw_handle_create_session_response (
-  NwGtpv2cStackHandleT * stack_p,
+  nw_gtpv2c_stack_handle_t * stack_p,
   itti_s11_create_session_response_t * create_session_response_p)
 {
   nw_rc_t                                   rc;
-  NwGtpv2cUlpApiT                         ulp_req;
-  NwGtpv2cTrxnHandleT                     trxn;
+  nw_gtpv2c_ulp_api_t                         ulp_req;
+  nw_gtpv2c_trxn_handle_t                     trxn;
   gtpv2c_cause_t                             cause;
 
   DevAssert (create_session_response_p );
   DevAssert (stack_p );
-  trxn = (NwGtpv2cTrxnHandleT) create_session_response_p->trxn;
+  trxn = (nw_gtpv2c_trxn_handle_t) create_session_response_p->trxn;
   DevAssert (trxn );
   /*
    * Create a tunnel for the GTPv2-C stack
    */
-  memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   ulp_req.apiType = NW_GTPV2C_ULP_CREATE_LOCAL_TUNNEL;
-  ulp_req.apiInfo.createLocalTunnelInfo.teidLocal = create_session_response_p->s11_sgw_teid.teid;
-  ulp_req.apiInfo.createLocalTunnelInfo.peerIp.s_addr = create_session_response_p->peer_ip.s_addr;
+  ulp_req.u_api_info.createLocalTunnelInfo.teidLocal = create_session_response_p->s11_sgw_teid.teid;
+  ulp_req.u_api_info.createLocalTunnelInfo.peerIp.s_addr = create_session_response_p->peer_ip.s_addr;
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
 
@@ -263,19 +263,19 @@ s11_sgw_handle_create_session_response (
 
   hashtable_rc_t hash_rc = hashtable_ts_insert(s11_sgw_teid_2_gtv2c_teid_handle,
       (hash_key_t) create_session_response_p->s11_sgw_teid.teid,
-      (void *)ulp_req.apiInfo.createLocalTunnelInfo.hTunnel);
+      (void *)ulp_req.u_api_info.createLocalTunnelInfo.hTunnel);
 
   if (HASH_TABLE_OK != hash_rc) {
-    OAILOG_WARNING (LOG_S11, "Could not save GTPv2-C hTunnel %p for local teid %X\n", (void*)ulp_req.apiInfo.createLocalTunnelInfo.hTunnel, create_session_response_p->s11_sgw_teid.teid);
+    OAILOG_WARNING (LOG_S11, "Could not save GTPv2-C hTunnel %p for local teid %X\n", (void*)ulp_req.u_api_info.createLocalTunnelInfo.hTunnel, create_session_response_p->s11_sgw_teid.teid);
     return RETURNerror;
   }
   /*
    * Prepare a create session response to send to MME.
    */
-  memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
-  ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
+  ulp_req.u_api_info.triggeredRspInfo.hTrxn = trxn;
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CREATE_SESSION_RSP, 0, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
   /*
@@ -317,8 +317,8 @@ s11_sgw_handle_create_session_response (
 //------------------------------------------------------------------------------
 int
 s11_sgw_handle_delete_session_request (
-  NwGtpv2cStackHandleT * stack_p,
-  NwGtpv2cUlpApiT * pUlpApi)
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
 {
   nw_rc_t                                   rc = NW_OK;
   uint8_t                                 offendingIeType,
@@ -326,7 +326,7 @@ s11_sgw_handle_delete_session_request (
   uint16_t                                offendingIeLength;
   itti_s11_delete_session_request_t      *delete_session_request_p;
   MessageDef                             *message_p;
-  NwGtpv2cMsgParserT                     *pMsgParser;
+  nw_gtpv2c_msg_parser_t                     *pMsgParser;
 
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_DELETE_SESSION_REQUEST);
@@ -359,15 +359,15 @@ s11_sgw_handle_delete_session_request (
       gtpv2c_indication_flags_ie_get, &delete_session_request_p->indication_flags);
   DevAssert (NW_OK == rc);
   delete_session_request_p->teid = nwGtpv2cMsgGetTeid (pUlpApi->hMsg);
-  delete_session_request_p->trxn = (void *)pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
-  delete_session_request_p->peer_ip = pUlpApi->apiInfo.initialReqIndInfo.peerIp;
+  delete_session_request_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
+  delete_session_request_p->peer_ip = pUlpApi->u_api_info.initialReqIndInfo.peerIp;
   rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
   if (rc != NW_OK) {
-    NwGtpv2cUlpApiT                         ulp_req;
+    nw_gtpv2c_ulp_api_t                         ulp_req;
     gtpv2c_cause_t                             cause = {0};
 
-    memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+    memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
     cause.offending_ie_type = offendingIeType;
     cause.offending_ie_length = offendingIeLength;
     cause.offending_ie_instance = offendingIeInstance;
@@ -388,7 +388,7 @@ s11_sgw_handle_delete_session_request (
      * Send Create session response with failure to Gtpv2c Stack Instance
      */
     ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
-    ulp_req.apiInfo.triggeredRspInfo.hTrxn = pUlpApi->apiInfo.initialReqIndInfo.hTrxn;
+    ulp_req.u_api_info.triggeredRspInfo.hTrxn = pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
     rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DELETE_SESSION_RSP, 0, nwGtpv2cMsgGetSeqNumber (pUlpApi->hMsg), &(ulp_req.hMsg));
     /*
      * Adding the cause
@@ -416,25 +416,25 @@ s11_sgw_handle_delete_session_request (
 //------------------------------------------------------------------------------
 int
 s11_sgw_handle_delete_session_response (
-  NwGtpv2cStackHandleT * stack_p,
+  nw_gtpv2c_stack_handle_t * stack_p,
   itti_s11_delete_session_response_t * delete_session_response_p)
 {
   nw_rc_t                                   rc;
-  NwGtpv2cUlpApiT                         ulp_req;
-  NwGtpv2cTrxnHandleT                     trxn;
+  nw_gtpv2c_ulp_api_t                         ulp_req;
+  nw_gtpv2c_trxn_handle_t                     trxn;
   gtpv2c_cause_t                             cause;
 
   DevAssert (delete_session_response_p );
   DevAssert (stack_p );
-  trxn = (NwGtpv2cTrxnHandleT) delete_session_response_p->trxn;
+  trxn = (nw_gtpv2c_trxn_handle_t) delete_session_response_p->trxn;
   DevAssert (trxn );
   /*
    * Prepare a delete session response to send to MME.
    */
-  memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
-  ulp_req.apiInfo.triggeredRspInfo.hTrxn = trxn;
+  ulp_req.u_api_info.triggeredRspInfo.hTrxn = trxn;
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DELETE_SESSION_RSP, 0, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
   /*
@@ -452,8 +452,8 @@ s11_sgw_handle_delete_session_response (
 //------------------------------------------------------------------------------
 int
 s11_sgw_handle_create_bearer_response (
-  NwGtpv2cStackHandleT * stack_p,
-  NwGtpv2cUlpApiT * pUlpApi)
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
 {
   AssertFatal(0, "TODO");
   return NW_OK;

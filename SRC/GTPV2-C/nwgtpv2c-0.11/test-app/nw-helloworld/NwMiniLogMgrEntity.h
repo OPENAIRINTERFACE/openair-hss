@@ -76,7 +76,7 @@ nw_rc_t nwMiniLogMgrSetLogLevel(NwMiniLogMgrT* thiz, uint32_t logLevel);
  * @param line : Line Number
  * @param logStr : Log string
  */
-nw_rc_t nwMiniLogMgrLogRequest (NwGtpv2cLogMgrHandleT logMgrHandle,
+nw_rc_t nwMiniLogMgrLogRequest (nw_gtpv2c_LogMgrHandleT logMgrHandle,
                               uint32_t logLevel,
                               NwCharT* file,
                               uint32_t line,

@@ -72,7 +72,7 @@ extern                                  "C" {
 
   nw_rc_t                                   nwGtpv2cUdpInit (
   NwGtpv2cNodeUdpT * thiz,
-  NwGtpv2cStackHandleT hGtpv2cStack,
+  nw_gtpv2c_StackHandleT hGtpv2cStack,
   uint8_t * ipv4Addr) {
     int                                     sd;
     struct sockaddr_in                      addr;
@@ -106,7 +106,7 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cUdpDataReq (
-  NwGtpv2cUdpHandleT udpHandle,
+  nw_gtpv2c_UdpHandleT udpHandle,
   uint8_t * dataBuf,
   uint32_t dataSize,
   uint32_t peerIp,

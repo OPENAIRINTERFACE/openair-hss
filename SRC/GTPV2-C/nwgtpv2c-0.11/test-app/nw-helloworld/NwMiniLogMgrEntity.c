@@ -54,7 +54,7 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwMiniLogMgrLogRequest (
-  NwGtpv2cLogMgrHandleT hLogMgr,
+  nw_gtpv2c_LogMgrHandleT hLogMgr,
   uint32_t logLevel,
   NwCharT * file,
   uint32_t line,

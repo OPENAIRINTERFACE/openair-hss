@@ -104,7 +104,7 @@ typedef struct nw_gtpv2c_stack_s {
   uint32_t                        logLevel;
   uint32_t                        restartCounter;
 
-  NwGtpv2cMsgIeParseInfoT       *pGtpv2cMsgIeParseInfo[NW_GTP_MSG_END];
+  nw_gtpv2c_msg_ie_parse_info_t       *pGtpv2cMsgIeParseInfo[NW_GTP_MSG_END];
   struct nw_gtpv2c_timeout_info_s    *activeTimerInfo;
 
   RB_HEAD( NwGtpv2cTunnelMap, nw_gtpv2c_tunnel_s                ) tunnelMap;
@@ -124,15 +124,15 @@ typedef struct nw_gtpv2c_stack_s {
  */
 
 typedef struct nw_gtpv2c_timeout_info_s {
-  NwGtpv2cStackHandleT          hStack;
-  struct timeval                tvTimeout;
-  uint32_t                        tmrType;
-  void*                         timeoutArg;
+  nw_gtpv2c_stack_handle_t          hStack;
+  struct timeval                    tvTimeout;
+  uint32_t                          tmrType;
+  void*                             timeoutArg;
   nw_rc_t                         (*timeoutCallbackFunc)(void*);
-  NwGtpv2cTimerHandleT          hTimer;
+  nw_gtpv2c_timer_handle_t          hTimer;
   RB_ENTRY (nw_gtpv2c_timeout_info_s)       activeTimerListRbtNode;            /**< RB Tree Data Structure Node        */
-  uint32_t                        timerMinHeapIndex;
-  struct nw_gtpv2c_timeout_info_s *next;
+  uint32_t                          timerMinHeapIndex;
+  struct nw_gtpv2c_timeout_info_s  *next;
 } nw_gtpv2c_timeout_info_t;
 
 
@@ -156,14 +156,14 @@ typedef struct nw_gtpv2c_msg_s {
 
 #define NW_GTPV2C_MAX_GROUPED_IE_DEPTH                                  (2)
   struct {
-    NwGtpv2cIeTlvT *pIe[NW_GTPV2C_MAX_GROUPED_IE_DEPTH];
-    uint8_t         top;
+    nw_gtpv2c_ie_tlv_t *pIe[NW_GTPV2C_MAX_GROUPED_IE_DEPTH];
+    uint8_t             top;
   } groupedIeEncodeStack;
 
-  bool                       isIeValid[NW_GTPV2C_IE_TYPE_MAXIMUM][NW_GTPV2C_IE_INSTANCE_MAXIMUM];
+  bool                          isIeValid[NW_GTPV2C_IE_TYPE_MAXIMUM][NW_GTPV2C_IE_INSTANCE_MAXIMUM];
   uint8_t                      *pIe[NW_GTPV2C_IE_TYPE_MAXIMUM][NW_GTPV2C_IE_INSTANCE_MAXIMUM];
   uint8_t                       msgBuf[NW_GTPV2C_MAX_MSG_LEN];
-  NwGtpv2cStackHandleT          hStack;
+  nw_gtpv2c_stack_handle_t      hStack;
   struct nw_gtpv2c_msg_s*       next;
 } nw_gtpv2c_msg_t;
 
@@ -179,9 +179,9 @@ typedef struct nw_gtpv2c_trxn_s {
   uint8_t                       maxRetries;
   nw_gtpv2c_msg_t*              pMsg;
   nw_gtpv2c_stack_t*            pStack;
-  NwGtpv2cTimerHandleT          hRspTmr;                                /**< Handle to reponse timer            */
-  NwGtpv2cTunnelHandleT         hTunnel;                                /**< Handle to local tunnel context     */
-  NwGtpv2cUlpTrxnHandleT        hUlpTrxn;                               /**< Handle to ULP tunnel context       */
+  nw_gtpv2c_timer_handle_t      hRspTmr;                                /**< Handle to reponse timer            */
+  nw_gtpv2c_tunnel_handle_t     hTunnel;                                /**< Handle to local tunnel context     */
+  nw_gtpv2c_ulp_trxn_handle_t   hUlpTrxn;                               /**< Handle to ULP tunnel context       */
   RB_ENTRY (nw_gtpv2c_trxn_s)   outstandingTxSeqNumMapRbtNode;          /**< RB Tree Data Structure Node        */
   RB_ENTRY (nw_gtpv2c_trxn_s)   outstandingRxSeqNumMapRbtNode;          /**< RB Tree Data Structure Node        */
   struct nw_gtpv2c_trxn_s*      next;
@@ -197,7 +197,7 @@ typedef struct NwGtpv2cPathS {
   uint32_t                      restartCounter;
   uint16_t                      t3ResponseTimout;
   uint16_t                      n3RequestCount;
-  NwGtpv2cTimerHandleT          hKeepAliveTmr;                          /**< Handle to path keep alive echo timer */
+  nw_gtpv2c_timer_handle_t      hKeepAliveTmr;                          /**< Handle to path keep alive echo timer */
   RB_ENTRY (NwGtpv2cPathS)      pathMapRbtNode;
 } NwGtpv2cPathT;
 
@@ -218,7 +218,7 @@ nwGtpv2cStartTimer(nw_gtpv2c_stack_t* thiz,
                    uint32_t tmrType,
                    nw_rc_t (*timeoutCallbackFunc)(void*),
                    void*  timeoutCallbackArg,
-                   NwGtpv2cTimerHandleT *phTimer);
+                   nw_gtpv2c_timer_handle_t *phTimer);
 
 
 /**
@@ -227,7 +227,7 @@ nwGtpv2cStartTimer(nw_gtpv2c_stack_t* thiz,
 
 nw_rc_t
 nwGtpv2cStopTimer(nw_gtpv2c_stack_t* thiz,
-                  NwGtpv2cTimerHandleT hTimer);
+                  nw_gtpv2c_timer_handle_t hTimer);
 
 #ifdef __cplusplus
 }

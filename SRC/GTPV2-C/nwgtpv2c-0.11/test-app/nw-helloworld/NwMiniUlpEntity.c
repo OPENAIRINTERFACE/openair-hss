@@ -49,7 +49,7 @@ extern                                  "C" {
 
   nw_rc_t                                   nwGtpv2cUlpInit (
   NwGtpv2cNodeUlpT * thiz,
-  NwGtpv2cStackHandleT hGtpv2cStack,
+  nw_gtpv2c_StackHandleT hGtpv2cStack,
   char *peerIpStr) {
     nw_rc_t                                   rc;
 
@@ -69,16 +69,16 @@ extern                                  "C" {
   NwGtpv2cNodeUlpT * thiz,
   uint32_t peerIp) {
     nw_rc_t                                   rc;
-    NwGtpv2cUlpApiT                         ulpReq;
+    nw_gtpv2c_ulp_api_t                         ulpReq;
 
     /*
      * Send Message Request to Gtpv2c Stack Instance
      */
     ulpReq.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
     ulpReq.apiInfo.initialReqInfo.hTunnel = 0;
-    ulpReq.apiInfo.initialReqInfo.hUlpTrxn = (NwGtpv2cUlpTrxnHandleT) thiz;
-    ulpReq.apiInfo.initialReqInfo.hUlpTunnel = (NwGtpv2cUlpTrxnHandleT) thiz;
-    ulpReq.apiInfo.initialReqInfo.teidLocal = (NwGtpv2cUlpTrxnHandleT) 0;
+    ulpReq.apiInfo.initialReqInfo.hUlpTrxn = (nw_gtpv2c_UlpTrxnHandleT) thiz;
+    ulpReq.apiInfo.initialReqInfo.hUlpTunnel = (nw_gtpv2c_UlpTrxnHandleT) thiz;
+    ulpReq.apiInfo.initialReqInfo.teidLocal = (nw_gtpv2c_UlpTrxnHandleT) 0;
     ulpReq.apiInfo.initialReqInfo.peerIp = htonl (peerIp);
     rc = nwGtpv2cMsgNew (thiz->hGtpv2cStack, NW_FALSE, NW_GTP_ECHO_REQ, 0, 0, &(ulpReq.hMsg));
     NW_ASSERT (NW_OK == rc);
@@ -92,14 +92,14 @@ extern                                  "C" {
   nw_rc_t                                   nwGtpv2cUlpCreateSessionRequestToPeer (
   NwGtpv2cNodeUlpT * thiz) {
     nw_rc_t                                   rc;
-    NwGtpv2cUlpApiT                         ulpReq;
+    nw_gtpv2c_ulp_api_t                         ulpReq;
 
     /*
      * Send Message Request to Gtpv2c Stack Instance
      */
     ulpReq.apiType = (NW_GTPV2C_ULP_API_INITIAL_REQ | NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL);
-    ulpReq.apiInfo.initialReqInfo.hUlpTrxn = (NwGtpv2cUlpTrxnHandleT) thiz;
-    ulpReq.apiInfo.initialReqInfo.teidLocal = (NwGtpv2cUlpTrxnHandleT) thiz;
+    ulpReq.apiInfo.initialReqInfo.hUlpTrxn = (nw_gtpv2c_UlpTrxnHandleT) thiz;
+    ulpReq.apiInfo.initialReqInfo.teidLocal = (nw_gtpv2c_UlpTrxnHandleT) thiz;
     ulpReq.apiInfo.initialReqInfo.peerIp = ntohl (inet_addr (thiz->peerIpStr));
     rc = nwGtpv2cMsgNew (thiz->hGtpv2cStack, NW_TRUE, NW_GTP_CREATE_SESSION_REQ, 0, 0, &(ulpReq.hMsg));
     NW_ASSERT (NW_OK == rc);
@@ -111,8 +111,8 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cUlpProcessStackReqCallback (
-  NwGtpv2cUlpHandleT hUlp,
-  NwGtpv2cUlpApiT * pUlpApi) {
+  nw_gtpv2c_UlpHandleT hUlp,
+  nw_gtpv2c_ulp_api_t * pUlpApi) {
     nw_rc_t                                   rc;
     NwGtpv2cNodeUlpT                       *thiz;
 
@@ -121,8 +121,8 @@ extern                                  "C" {
 
     switch (pUlpApi->apiType) {
     case NW_GTPV2C_ULP_API_INITIAL_REQ_IND:{
-        NwGtpv2cUlpApiT                         ulpReq;
-        NwGtpv2cMsgParserT                     *pMsgParser;
+        nw_gtpv2c_ulp_api_t                         ulpReq;
+        nw_gtpv2c_msg_parser_t                     *pMsgParser;
 
         NW_LOG (NW_LOG_LEVEL_DEBG, "Received NW_GTPV2C_ULP_API_INITIAL_REQ_IND from gtpv2c stack! %X:%u", pUlpApi->apiInfo.initialReqIndInfo.peerIp, pUlpApi->apiInfo.initialReqIndInfo.peerPort);
         rc = nwGtpv2cMsgParserNew (thiz->hGtpv2cStack, NW_GTP_CREATE_SESSION_REQ, nwGtpv2cCreateSessionRequestIeIndication, NULL, &pMsgParser);
@@ -181,8 +181,8 @@ extern                                  "C" {
       break;
 
     case NW_GTPV2C_ULP_API_TRIGGERED_RSP_IND:{
-        NwGtpv2cUlpApiT                         ulpReq;
-        NwGtpv2cMsgParserT                     *pMsgParser;
+        nw_gtpv2c_ulp_api_t                         ulpReq;
+        nw_gtpv2c_msg_parser_t                     *pMsgParser;
 
         NW_LOG (NW_LOG_LEVEL_DEBG, "Received NW_GTPV2C_ULP_API_TRIGGERED_RSP_IND from gtpv2c stack!", pUlpApi->apiInfo.triggeredRspIndInfo, pUlpApi->apiInfo.triggeredRspIndInfo);
         rc = nwGtpv2cMsgParserNew (thiz->hGtpv2cStack, NW_GTP_CREATE_SESSION_REQ, nwGtpv2cCreateSessionRequestIeIndication, NULL, &pMsgParser);

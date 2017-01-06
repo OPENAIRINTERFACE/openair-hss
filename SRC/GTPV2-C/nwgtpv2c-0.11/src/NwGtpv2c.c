@@ -88,7 +88,7 @@
 #define NW_GTPV2C_INIT_MSG_IE_PARSE_INFO(__thiz, __msgType)             \
   do {                                                                \
     __thiz->pGtpv2cMsgIeParseInfo[__msgType] =                        \
-        nwGtpv2cMsgIeParseInfoNew((NwGtpv2cStackHandleT)__thiz, __msgType);\
+        nwGtpv2cMsgIeParseInfoNew((nw_gtpv2c_stack_handle_t)__thiz, __msgType);\
   } while(0)
 
 #define NW_GTPV2C_UDP_PORT                                              (2123)
@@ -448,13 +448,13 @@ extern                                  "C" {
   NW_IN uint32_t peerPort,
   NW_IN uint32_t seqNum) {
     nw_rc_t                                   rc = NW_FAILURE;
-    NwGtpv2cMsgHandleT                      hMsg = 0;
+    nw_gtpv2c_msg_handle_t                      hMsg = 0;
 
-    rc = nwGtpv2cMsgNew ((NwGtpv2cStackHandleT) thiz, false, NW_GTP_VERSION_NOT_SUPPORTED_IND, 0x00, seqNum, (&hMsg));
+    rc = nwGtpv2cMsgNew ((nw_gtpv2c_stack_handle_t) thiz, false, NW_GTP_VERSION_NOT_SUPPORTED_IND, 0x00, seqNum, (&hMsg));
     NW_ASSERT (NW_OK == rc);
     OAILOG_NOTICE (LOG_GTPV2C,  "Sending Version Not Supported Indication message to %x:%x with seq %u\n", peerIp->s_addr, peerPort, seqNum);
     rc = nwGtpv2cCreateAndSendMsg (thiz, seqNum, peerIp, peerPort, (nw_gtpv2c_msg_t *) hMsg);
-    rc = nwGtpv2cMsgDelete ((NwGtpv2cStackHandleT) thiz, hMsg);
+    rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) thiz, hMsg);
     NW_ASSERT (NW_OK == rc);
     return rc;
   }
@@ -470,8 +470,8 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
   NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN uint32_t teid,
   NW_IN struct in_addr *ipv4Remote,
-  NW_IN NwGtpv2cUlpTunnelHandleT hUlpTunnel,
-  NW_OUT NwGtpv2cTunnelHandleT * phTunnel)
+  NW_IN nw_gtpv2c_ulp_tunnel_handle_t hUlpTunnel,
+  NW_OUT nw_gtpv2c_tunnel_handle_t * phTunnel)
 {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_tunnel_t                        *pTunnel = NULL,
@@ -489,7 +489,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       if (pCollision) {
         rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
         NW_ASSERT (NW_OK == rc);
-        *phTunnel = (NwGtpv2cTunnelHandleT) 0;
+        *phTunnel = (nw_gtpv2c_tunnel_handle_t) 0;
         OAILOG_WARNING (LOG_GTPV2C,  "Local tunnel creation failed for teid '0x%x' and peer IP %s. Tunnel already exists!\n", teid, ipv4);
         NW_ASSERT (0);
         OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
@@ -498,7 +498,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
       rc = NW_FAILURE;
     }
 
-    *phTunnel = (NwGtpv2cTunnelHandleT) pTunnel;
+    *phTunnel = (nw_gtpv2c_tunnel_handle_t) pTunnel;
     OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
   }
 
@@ -511,7 +511,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
 
   static nw_rc_t                            nwGtpv2cDeleteLocalTunnel (
   NW_IN nw_gtpv2c_stack_t * thiz,
-  NW_OUT NwGtpv2cTunnelHandleT hTunnel) {
+  NW_OUT nw_gtpv2c_tunnel_handle_t hTunnel) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_tunnel_t                        *pTunnel = (nw_gtpv2c_tunnel_t *) hTunnel;
     char                                    ipv4[INET_ADDRSTRLEN];
@@ -540,7 +540,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
 
   static nw_rc_t                            nwGtpv2cHandleUlpInitialReq (
   NW_IN nw_gtpv2c_stack_t * thiz,
-  NW_IN NwGtpv2cUlpApiT * pUlpReq) {
+  NW_IN nw_gtpv2c_ulp_api_t * pUlpReq) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_trxn_t                          *pTrxn = NULL;
 
@@ -551,16 +551,16 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     pTrxn = nwGtpv2cTrxnNew (thiz);
 
     if (pTrxn) {
-      if (!pUlpReq->apiInfo.initialReqInfo.hTunnel) {
-        rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->apiInfo.initialReqInfo.teidLocal, &pUlpReq->apiInfo.initialReqInfo.peerIp,
-            pUlpReq->apiInfo.initialReqInfo.hUlpTunnel,
-            &pUlpReq->apiInfo.initialReqInfo.hTunnel);
+      if (!pUlpReq->u_api_info.initialReqInfo.hTunnel) {
+        rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal, &pUlpReq->u_api_info.initialReqInfo.peerIp,
+            pUlpReq->u_api_info.initialReqInfo.hUlpTunnel,
+            &pUlpReq->u_api_info.initialReqInfo.hTunnel);
         NW_ASSERT (NW_OK == rc);
       }
 
       pTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
-      pTrxn->hTunnel = pUlpReq->apiInfo.initialReqInfo.hTunnel;
-      pTrxn->hUlpTrxn = pUlpReq->apiInfo.initialReqInfo.hUlpTrxn;
+      pTrxn->hTunnel = pUlpReq->u_api_info.initialReqInfo.hTunnel;
+      pTrxn->hUlpTrxn = pUlpReq->u_api_info.initialReqInfo.hUlpTrxn;
       pTrxn->peerIp = ((nw_gtpv2c_tunnel_t *) (pTrxn->hTunnel))->ipv4AddrRemote;
       pTrxn->peerPort = NW_GTPV2C_UDP_PORT;
 
@@ -602,7 +602,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
 
   static nw_rc_t                            nwGtpv2cHandleUlpTriggeredReq (
   NW_IN nw_gtpv2c_stack_t * thiz,
-  NW_IN NwGtpv2cUlpApiT * pUlpReq) {
+  NW_IN nw_gtpv2c_ulp_api_t * pUlpReq) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_trxn_t                          *pTrxn = NULL;
     nw_gtpv2c_trxn_t                          *pReqTrxn = NULL;
@@ -614,8 +614,8 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     pTrxn = nwGtpv2cTrxnWithSeqNumNew (thiz, (((nw_gtpv2c_msg_t *) (pUlpReq->hMsg))->seqNum));
 
     if (pTrxn) {
-      pReqTrxn = (nw_gtpv2c_trxn_t *) pUlpReq->apiInfo.triggeredReqInfo.hTrxn;
-      pTrxn->hUlpTrxn = pUlpReq->apiInfo.triggeredReqInfo.hUlpTrxn;
+      pReqTrxn = (nw_gtpv2c_trxn_t *) pUlpReq->u_api_info.triggeredReqInfo.hTrxn;
+      pTrxn->hUlpTrxn = pUlpReq->u_api_info.triggeredReqInfo.hUlpTrxn;
       pTrxn->peerIp.s_addr = pReqTrxn->peerIp.s_addr;
       pTrxn->peerPort = pReqTrxn->peerPort;
       pTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
@@ -632,10 +632,10 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
          */
         RB_INSERT (NwGtpv2cOutstandingTxSeqNumTrxnMap, &(thiz->outstandingTxSeqNumMap), pTrxn);
 
-        if (!pUlpReq->apiInfo.triggeredReqInfo.hTunnel) {
-          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->apiInfo.triggeredReqInfo.teidLocal, &pReqTrxn->peerIp,
-              pUlpReq->apiInfo.triggeredReqInfo.hUlpTunnel,
-              &pUlpReq->apiInfo.triggeredReqInfo.hTunnel);
+        if (!pUlpReq->u_api_info.triggeredReqInfo.hTunnel) {
+          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.triggeredReqInfo.teidLocal, &pReqTrxn->peerIp,
+              pUlpReq->u_api_info.triggeredReqInfo.hUlpTunnel,
+              &pUlpReq->u_api_info.triggeredReqInfo.hTunnel);
         }
       } else {
         rc = nwGtpv2cTrxnDelete (&pTrxn);
@@ -658,12 +658,12 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
 
   static nw_rc_t                            nwGtpv2cHandleUlpTriggeredRsp (
   NW_IN nw_gtpv2c_stack_t * thiz,
-  NW_IN NwGtpv2cUlpApiT * pUlpRsp) {
+  NW_IN nw_gtpv2c_ulp_api_t * pUlpRsp) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_trxn_t                          *pReqTrxn = NULL;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
-    pReqTrxn = (nw_gtpv2c_trxn_t *) pUlpRsp->apiInfo.triggeredRspInfo.hTrxn;
+    pReqTrxn = (nw_gtpv2c_trxn_t *) pUlpRsp->u_api_info.triggeredRspInfo.hTrxn;
     NW_ASSERT (pReqTrxn != NULL);
 
     if (((nw_gtpv2c_msg_t *) pUlpRsp->hMsg)->seqNum == 0)
@@ -676,9 +676,9 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     // suspicious  rc = nwGtpv2cTrxnStartDulpicateRequestWaitTimer (pReqTrxn);
 
     if ((pUlpRsp->apiType & 0xFF000000) == NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL) {
-      rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->apiInfo.triggeredRspInfo.teidLocal, &pReqTrxn->peerIp,
-          pUlpRsp->apiInfo.triggeredRspInfo.hUlpTunnel,
-          &pUlpRsp->apiInfo.triggeredRspInfo.hTunnel);
+      rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, &pReqTrxn->peerIp,
+          pUlpRsp->u_api_info.triggeredRspInfo.hUlpTunnel,
+          &pUlpRsp->u_api_info.triggeredRspInfo.hTunnel);
     }
 
     OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
@@ -692,7 +692,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
   @return NW_OK on success.
 */
 
-static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thiz, NW_IN NwGtpv2cUlpApiT * pUlpReq)
+static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thiz, NW_IN nw_gtpv2c_ulp_api_t * pUlpReq)
 {
   OAILOG_FUNC_IN (LOG_GTPV2C);
   nw_rc_t                                   rc = NW_FAILURE;
@@ -700,23 +700,23 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
                                          *pCollision = NULL;
   char                                    ipv4[INET_ADDRSTRLEN];
 
-  inet_ntop (AF_INET, (void*)&pUlpReq->apiInfo.createLocalTunnelInfo.peerIp, ipv4, INET_ADDRSTRLEN);
-  OAILOG_DEBUG (LOG_GTPV2C, "Creating local tunnel with teid '0x%x' and peer IP %s\n", pUlpReq->apiInfo.createLocalTunnelInfo.teidLocal, ipv4);
+  inet_ntop (AF_INET, (void*)&pUlpReq->u_api_info.createLocalTunnelInfo.peerIp, ipv4, INET_ADDRSTRLEN);
+  OAILOG_DEBUG (LOG_GTPV2C, "Creating local tunnel with teid '0x%x' and peer IP %s\n", pUlpReq->u_api_info.createLocalTunnelInfo.teidLocal, ipv4);
   pTunnel = nwGtpv2cTunnelNew (thiz,
-                              pUlpReq->apiInfo.createLocalTunnelInfo.teidLocal,
-                              &pUlpReq->apiInfo.createLocalTunnelInfo.peerIp,
-                              pUlpReq->apiInfo.triggeredRspInfo.hUlpTunnel);
+                              pUlpReq->u_api_info.createLocalTunnelInfo.teidLocal,
+                              &pUlpReq->u_api_info.createLocalTunnelInfo.peerIp,
+                              pUlpReq->u_api_info.triggeredRspInfo.hUlpTunnel);
   NW_ASSERT (pTunnel);
   pCollision = RB_INSERT (NwGtpv2cTunnelMap, &(thiz->tunnelMap), pTunnel);
 
   if (pCollision) {
     rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
     NW_ASSERT (NW_OK == rc);
-    pUlpReq->apiInfo.createLocalTunnelInfo.hTunnel = (NwGtpv2cTunnelHandleT) 0;
+    pUlpReq->u_api_info.createLocalTunnelInfo.hTunnel = (nw_gtpv2c_tunnel_handle_t) 0;
     OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_FAILURE);
   }
 
-  pUlpReq->apiInfo.createLocalTunnelInfo.hTunnel = (NwGtpv2cTunnelHandleT) pTunnel;
+  pUlpReq->u_api_info.createLocalTunnelInfo.hTunnel = (nw_gtpv2c_tunnel_handle_t) pTunnel;
   OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
 }
 
@@ -730,11 +730,11 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 
   static nw_rc_t                            nwGtpv2cHandleUlpDeleteLocalTunnel (
   NW_IN nw_gtpv2c_stack_t * thiz,
-  NW_IN NwGtpv2cUlpApiT * pUlpReq) {
+  NW_IN nw_gtpv2c_ulp_api_t * pUlpReq) {
     nw_rc_t                                   rc = NW_FAILURE;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
-    rc = nwGtpv2cDeleteLocalTunnel (thiz, pUlpReq->apiInfo.deleteLocalTunnelInfo.hTunnel);
+    rc = nwGtpv2cDeleteLocalTunnel (thiz, pUlpReq->u_api_info.deleteLocalTunnelInfo.hTunnel);
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
 
@@ -747,25 +747,25 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 
   static nw_rc_t                            nwGtpv2cSendInitialReqIndToUlp (
   NW_IN nw_gtpv2c_stack_t * thiz,
-  NW_IN NwGtpv2cErrorT * pError,
+  NW_IN nw_gtpv2c_error_t * pError,
   NW_IN nw_gtpv2c_trxn_t * pTrxn,
   NW_IN uint32_t hUlpTunnel,
   NW_IN uint32_t msgType,
   NW_IN struct in_addr *peerIp,
   NW_IN uint16_t peerPort,
-  NW_IN NwGtpv2cMsgHandleT hMsg) {
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     nw_rc_t                                   rc = NW_FAILURE;
-    NwGtpv2cUlpApiT                         ulpApi;
+    nw_gtpv2c_ulp_api_t                         ulpApi;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
     ulpApi.hMsg = hMsg;
     ulpApi.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ_IND;
-    ulpApi.apiInfo.initialReqIndInfo.msgType = msgType;
-    ulpApi.apiInfo.initialReqIndInfo.hTrxn = (NwGtpv2cTrxnHandleT) pTrxn;
-    ulpApi.apiInfo.initialReqIndInfo.hUlpTunnel = hUlpTunnel;
-    ulpApi.apiInfo.initialReqIndInfo.peerIp.s_addr = peerIp->s_addr;
-    ulpApi.apiInfo.initialReqIndInfo.peerPort = peerPort;
-    ulpApi.apiInfo.triggeredRspIndInfo.error = *pError;
+    ulpApi.u_api_info.initialReqIndInfo.msgType = msgType;
+    ulpApi.u_api_info.initialReqIndInfo.hTrxn = (nw_gtpv2c_trxn_handle_t) pTrxn;
+    ulpApi.u_api_info.initialReqIndInfo.hUlpTunnel = hUlpTunnel;
+    ulpApi.u_api_info.initialReqIndInfo.peerIp.s_addr = peerIp->s_addr;
+    ulpApi.u_api_info.initialReqIndInfo.peerPort = peerPort;
+    ulpApi.u_api_info.triggeredRspIndInfo.error = *pError;
     rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
@@ -779,21 +779,21 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 
   static nw_rc_t                            nwGtpv2cSendTriggeredRspIndToUlp (
   NW_IN nw_gtpv2c_stack_t * thiz,
-  NW_IN NwGtpv2cErrorT * pError,
+  NW_IN nw_gtpv2c_error_t * pError,
   NW_IN uint32_t hUlpTrxn,
   NW_IN uint32_t hUlpTunnel,
   NW_IN uint32_t msgType,
-  NW_IN NwGtpv2cMsgHandleT hMsg) {
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     nw_rc_t                                   rc = NW_FAILURE;
-    NwGtpv2cUlpApiT                         ulpApi;
+    nw_gtpv2c_ulp_api_t                         ulpApi;
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
     ulpApi.hMsg = hMsg;
     ulpApi.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP_IND;
-    ulpApi.apiInfo.triggeredRspIndInfo.msgType = msgType;
-    ulpApi.apiInfo.triggeredRspIndInfo.hUlpTrxn = hUlpTrxn;
-    ulpApi.apiInfo.triggeredRspIndInfo.hUlpTunnel = hUlpTunnel;
-    ulpApi.apiInfo.triggeredRspIndInfo.error = *pError;
+    ulpApi.u_api_info.triggeredRspIndInfo.msgType = msgType;
+    ulpApi.u_api_info.triggeredRspIndInfo.hUlpTrxn = hUlpTrxn;
+    ulpApi.u_api_info.triggeredRspIndInfo.hUlpTunnel = hUlpTunnel;
+    ulpApi.u_api_info.triggeredRspIndInfo.error = *pError;
     rc = thiz->ulp.ulpReqCallback (thiz->ulp.hUlp, &ulpApi);
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
@@ -814,13 +814,13 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
   NW_IN struct in_addr *peerIp) {
     nw_rc_t                                   rc = NW_FAILURE;
     uint32_t                                seqNum = 0;
-    NwGtpv2cMsgHandleT                      hMsg = 0;
+    nw_gtpv2c_msg_handle_t                      hMsg = 0;
 
     seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;
     /*
      * Send Echo Response
      */
-    rc = nwGtpv2cMsgNew ((NwGtpv2cStackHandleT) thiz, false, /* TEID present flag    */
+    rc = nwGtpv2cMsgNew ((nw_gtpv2c_stack_handle_t) thiz, false, /* TEID present flag    */
                          NW_GTP_ECHO_RSP,       /* Msg Type             */
                          0x00,  /* TEID                 */
                          seqNum,        /* Seq Number           */
@@ -831,7 +831,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     inet_ntop (AF_INET, (void*)peerIp, ipv4, INET_ADDRSTRLEN);
     OAILOG_ERROR (LOG_GTPV2C, "Sending NW_GTP_ECHO_RSP message to %s:%u with seq %u\n", ipv4, peerPort, (seqNum));
     rc = nwGtpv2cCreateAndSendMsg (thiz, (seqNum), peerIp, peerPort, (nw_gtpv2c_msg_t *) hMsg);
-    rc = nwGtpv2cMsgDelete ((NwGtpv2cStackHandleT) thiz, hMsg);
+    rc = nwGtpv2cMsgDelete ((nw_gtpv2c_stack_handle_t) thiz, hMsg);
     NW_ASSERT (NW_OK == rc);
     return rc;
   }
@@ -856,9 +856,9 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     nw_gtpv2c_trxn_t                          *pTrxn = NULL;
     nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
                                             keyTunnel = {0};
-    NwGtpv2cMsgHandleT                      hMsg = 0;
-    NwGtpv2cUlpTunnelHandleT                hUlpTunnel = 0;
-    NwGtpv2cErrorT                          error = {0};
+    nw_gtpv2c_msg_handle_t                      hMsg = 0;
+    nw_gtpv2c_ulp_tunnel_handle_t                hUlpTunnel = 0;
+    nw_gtpv2c_error_t                          error = {0};
     char                                    ipv4[INET_ADDRSTRLEN];
 
     teidLocal = *((uint32_t *) (msgBuf + 4));
@@ -883,7 +883,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     pTrxn = nwGtpv2cTrxnOutstandingRxNew (thiz, ntohl (teidLocal), peerIp, peerPort, (seqNum));
 
     if (pTrxn) {
-      rc = nwGtpv2cMsgFromBufferNew ((NwGtpv2cStackHandleT) thiz, msgBuf, msgBufLen, &(hMsg));
+      rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
       NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
       rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
 
@@ -914,8 +914,8 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_trxn_t                          *pTrxn = NULL,
                                             keyTrxn;
-    NwGtpv2cMsgHandleT                      hMsg = 0;
-    NwGtpv2cErrorT                          error = {0};
+    nw_gtpv2c_msg_handle_t                      hMsg = 0;
+    nw_gtpv2c_error_t                          error = {0};
 
     keyTrxn.seqNum = ntohl (*((uint32_t *) (msgBuf + (((*msgBuf) & 0x08) ? 8 : 4)))) >> 8;;
     keyTrxn.peerIp.s_addr = peerIp->s_addr;
@@ -931,7 +931,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
       rc = nwGtpv2cTrxnDelete (&pTrxn);
       NW_ASSERT (NW_OK == rc);
       NW_ASSERT (msgBuf && msgBufLen);
-      rc = nwGtpv2cMsgFromBufferNew ((NwGtpv2cStackHandleT) thiz, msgBuf, msgBufLen, &(hMsg));
+      rc = nwGtpv2cMsgFromBufferNew ((nw_gtpv2c_stack_handle_t) thiz, msgBuf, msgBufLen, &(hMsg));
       NW_ASSERT (thiz->pGtpv2cMsgIeParseInfo[msgType]);
       rc = nwGtpv2cMsgIeParse (thiz->pGtpv2cMsgIeParseInfo[msgType], hMsg, &error);
 
@@ -959,7 +959,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
 
   nw_rc_t                                   nwGtpv2cInitialize (
-  NW_INOUT NwGtpv2cStackHandleT * hGtpcStackHandle) {
+  NW_INOUT nw_gtpv2c_stack_handle_t * hGtpcStackHandle) {
     nw_rc_t                                   rc = NW_OK;
     nw_gtpv2c_stack_t                         *thiz = NULL;
 
@@ -1009,7 +1009,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
       rc = NW_FAILURE;
     }
 
-    *hGtpcStackHandle = (NwGtpv2cStackHandleT) thiz;
+    *hGtpcStackHandle = (nw_gtpv2c_stack_handle_t) thiz;
     return rc;
   }
 
@@ -1019,7 +1019,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
 
   nw_rc_t                                   nwGtpv2cFinalize (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle) {
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle) {
     if (!hGtpcStackHandle)
       return NW_FAILURE;
 
@@ -1065,7 +1065,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
 
   nw_rc_t                                   nwGtpv2cSetUlpEntity (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN nw_gtpv2c_ulp_entity_t * pUlpEntity) {
     nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
@@ -1081,7 +1081,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
 
   nw_rc_t                                   nwGtpv2cSetUdpEntity (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN nw_gtpv2c_udp_entity_t * pUdpEntity) {
     nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
@@ -1097,7 +1097,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
 
   nw_rc_t                                   nwGtpv2cSetMemMgrEntity (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN nw_gtpv2c_mem_mgr_entity_t * pMemMgrEntity) {
     nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
@@ -1113,7 +1113,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
 
   nw_rc_t                                   nwGtpv2cSetTimerMgrEntity (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN nw_gtpv2c_timer_mgr_entity_t * pTmrMgrEntity) {
     nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
@@ -1130,7 +1130,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
 
   nw_rc_t                                   nwGtpv2cSetLogMgrEntity (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN nw_gtpv2c_log_mgr_entity_t * pLogMgrEntity) {
     nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
@@ -1146,7 +1146,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
 
   nw_rc_t                                   nwGtpv2cSetLogLevel (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN uint32_t logLevel) {
     nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
@@ -1159,7 +1159,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
 
   nw_rc_t                                   nwGtpv2cProcessUdpReq (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN uint8_t * udpData,
   NW_IN uint32_t udpDataLen,
   NW_IN uint16_t peerPort,
@@ -1253,8 +1253,8 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
 
   nw_rc_t                                   nwGtpv2cProcessUlpReq (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
-  NW_IN NwGtpv2cUlpApiT * pUlpReq) {
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
+  NW_IN nw_gtpv2c_ulp_api_t * pUlpReq) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_stack_t                         *thiz = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
 
@@ -1442,7 +1442,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
   uint32_t tmrType,
   nw_rc_t                                   (*timeoutCallbackFunc) (void *),
   void *timeoutCallbackArg,
-  NwGtpv2cTimerHandleT * phTimer) {
+  nw_gtpv2c_timer_handle_t * phTimer) {
     nw_rc_t                                   rc = NW_OK;
     struct timeval                          tv = { 0 };
     nw_gtpv2c_timeout_info_t                   *timeoutInfo = NULL;
@@ -1460,7 +1460,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
       timeoutInfo->tmrType = tmrType;
       timeoutInfo->timeoutArg = timeoutCallbackArg;
       timeoutInfo->timeoutCallbackFunc = timeoutCallbackFunc;
-      timeoutInfo->hStack = (NwGtpv2cStackHandleT) thiz;
+      timeoutInfo->hStack = (nw_gtpv2c_stack_handle_t) thiz;
       NW_ASSERT (gettimeofday (&tv, NULL) == 0);
       NW_ASSERT (gettimeofday (&timeoutInfo->tvTimeout, NULL) == 0);
       timeoutInfo->tvTimeout.tv_sec = timeoutSec;
@@ -1495,7 +1495,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
           NW_ASSERT (NW_OK == rc);
         } else {
           OAILOG_DEBUG (LOG_GTPV2C, "Already Started timer 0x%" PRIxPTR " for info 0x%p!\n", thiz->activeTimerInfo->hTimer, thiz->activeTimerInfo);
-          *phTimer = (NwGtpv2cTimerHandleT) timeoutInfo;
+          *phTimer = (nw_gtpv2c_timer_handle_t) timeoutInfo;
           OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
         }
       }
@@ -1506,7 +1506,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
       thiz->activeTimerInfo = timeoutInfo;
     }
 
-    *phTimer = (NwGtpv2cTimerHandleT) timeoutInfo;
+    *phTimer = (nw_gtpv2c_timer_handle_t) timeoutInfo;
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
 
@@ -1517,7 +1517,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
   uint32_t tmrType,
   nw_rc_t                                   (*timeoutCallbackFunc) (void *),
   void *timeoutCallbackArg,
-  NwGtpv2cTimerHandleT * phTimer) {
+  nw_gtpv2c_timer_handle_t * phTimer) {
     nw_rc_t                                   rc = NW_OK;
     struct timeval                          tv;
     nw_gtpv2c_timeout_info_t                   *timeoutInfo;
@@ -1537,7 +1537,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
       timeoutInfo->tmrType = tmrType;
       timeoutInfo->timeoutArg = timeoutCallbackArg;
       timeoutInfo->timeoutCallbackFunc = timeoutCallbackFunc;
-      timeoutInfo->hStack = (NwGtpv2cStackHandleT) thiz;
+      timeoutInfo->hStack = (nw_gtpv2c_stack_handle_t) thiz;
       NW_ASSERT (gettimeofday (&tv, NULL) == 0);
       NW_ASSERT (gettimeofday (&timeoutInfo->tvTimeout, NULL) == 0);
       timeoutInfo->tvTimeout.tv_sec = timeoutSec;
@@ -1566,7 +1566,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
           NW_ASSERT (NW_OK == rc);
         } else {
           OAILOG_DEBUG (LOG_GTPV2C, "Already Started timer 0x%" PRIxPTR " for info 0x%p!\n", thiz->activeTimerInfo->hTimer, thiz->activeTimerInfo);
-          *phTimer = (NwGtpv2cTimerHandleT) timeoutInfo;
+          *phTimer = (nw_gtpv2c_timer_handle_t) timeoutInfo;
           OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
         }
       }
@@ -1577,7 +1577,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
       thiz->activeTimerInfo = timeoutInfo;
     }
 
-    *phTimer = (NwGtpv2cTimerHandleT) timeoutInfo;
+    *phTimer = (nw_gtpv2c_timer_handle_t) timeoutInfo;
     OAILOG_FUNC_RETURN (LOG_GTPV2C, rc);
   }
 
@@ -1586,7 +1586,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 */
   nw_rc_t                                   nwGtpv2cStopTimer (
   nw_gtpv2c_stack_t * thiz,
-  NwGtpv2cTimerHandleT hTimer) {
+  nw_gtpv2c_timer_handle_t hTimer) {
     nw_rc_t                                   rc = NW_OK;
     struct timeval                          tv;
     nw_gtpv2c_timeout_info_t                   *timeoutInfo;
@@ -1632,7 +1632,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 
   nw_rc_t                                   nwGtpv2cStopTimerOld (
   nw_gtpv2c_stack_t * thiz,
-  NwGtpv2cTimerHandleT hTimer) {
+  nw_gtpv2c_timer_handle_t hTimer) {
     nw_rc_t                                   rc = NW_OK;
     struct timeval                          tv;
     nw_gtpv2c_timeout_info_t                   *timeoutInfo;

@@ -50,25 +50,25 @@ extern hash_table_ts_t                        *s11_mme_teid_2_gtv2c_teid_handle;
 //------------------------------------------------------------------------------
 int
 s11_mme_create_session_request (
-  NwGtpv2cStackHandleT * stack_p,
+  nw_gtpv2c_stack_handle_t * stack_p,
   itti_s11_create_session_request_t * req_p)
 {
-  NwGtpv2cUlpApiT                         ulp_req;
+  nw_gtpv2c_ulp_api_t                         ulp_req;
   nw_rc_t                                   rc;
   uint8_t                                 restart_counter = 0;
 
   DevAssert (stack_p );
   DevAssert (req_p );
-  memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
   /*
    * Prepare a new Create Session Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CREATE_SESSION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.apiInfo.initialReqInfo.peerIp     = req_p->peer_ip;
-  ulp_req.apiInfo.initialReqInfo.teidLocal  = req_p->sender_fteid_for_cp.teid;
-  ulp_req.apiInfo.initialReqInfo.hUlpTunnel = 0;
-  ulp_req.apiInfo.initialReqInfo.hTunnel    = 0;
+  ulp_req.u_api_info.initialReqInfo.peerIp     = req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.teidLocal  = req_p->sender_fteid_for_cp.teid;
+  ulp_req.u_api_info.initialReqInfo.hUlpTunnel = 0;
+  ulp_req.u_api_info.initialReqInfo.hTunnel    = 0;
   /*
    * Add recovery if contacting the peer for the first time
    */
@@ -111,9 +111,9 @@ s11_mme_create_session_request (
 
   hashtable_rc_t hash_rc = hashtable_ts_insert(s11_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) req_p->sender_fteid_for_cp.teid,
-      (void *)ulp_req.apiInfo.initialReqInfo.hTunnel);
+      (void *)ulp_req.u_api_info.initialReqInfo.hTunnel);
   if (HASH_TABLE_OK != hash_rc) {
-    OAILOG_WARNING (LOG_S11, "Could not save GTPv2-C hTunnel %p for local teid %X\n", (void*)ulp_req.apiInfo.initialReqInfo.hTunnel, ulp_req.apiInfo.initialReqInfo.teidLocal);
+    OAILOG_WARNING (LOG_S11, "Could not save GTPv2-C hTunnel %p for local teid %X\n", (void*)ulp_req.u_api_info.initialReqInfo.hTunnel, ulp_req.u_api_info.initialReqInfo.teidLocal);
     return RETURNerror;
   }
   return RETURNok;
@@ -122,8 +122,8 @@ s11_mme_create_session_request (
 //------------------------------------------------------------------------------
 int
 s11_mme_handle_create_session_response (
-  NwGtpv2cStackHandleT * stack_p,
-  NwGtpv2cUlpApiT * pUlpApi)
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
 {
   nw_rc_t                                   rc = NW_OK;
   uint8_t                                 offendingIeType,
@@ -131,7 +131,7 @@ s11_mme_handle_create_session_response (
   uint16_t                                offendingIeLength;
   itti_s11_create_session_response_t     *resp_p;
   MessageDef                             *message_p;
-  NwGtpv2cMsgParserT                     *pMsgParser;
+  nw_gtpv2c_msg_parser_t                     *pMsgParser;
 
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S11, S11_CREATE_SESSION_RESPONSE);
@@ -218,29 +218,29 @@ s11_mme_handle_create_session_response (
 //------------------------------------------------------------------------------
 int
 s11_mme_delete_session_request (
-  NwGtpv2cStackHandleT * stack_p,
+  nw_gtpv2c_stack_handle_t * stack_p,
   itti_s11_delete_session_request_t * req_p)
 {
-  NwGtpv2cUlpApiT                         ulp_req;
+  nw_gtpv2c_ulp_api_t                         ulp_req;
   nw_rc_t                                   rc;
   //uint8_t                                 restart_counter = 0;
 
   DevAssert (stack_p );
   DevAssert (req_p );
-  memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_INITIAL_REQ;
   /*
    * Prepare a new Delete Session Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_DELETE_SESSION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.apiInfo.initialReqInfo.peerIp = req_p->peer_ip;
-  ulp_req.apiInfo.initialReqInfo.teidLocal = req_p->local_teid;
+  ulp_req.u_api_info.initialReqInfo.peerIp = req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.teidLocal = req_p->local_teid;
   hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
-      (hash_key_t) ulp_req.apiInfo.initialReqInfo.teidLocal,
-      (void **)(uintptr_t)&ulp_req.apiInfo.initialReqInfo.hTunnel);
+      (hash_key_t) ulp_req.u_api_info.initialReqInfo.teidLocal,
+      (void **)(uintptr_t)&ulp_req.u_api_info.initialReqInfo.hTunnel);
 
   if (HASH_TABLE_OK != hash_rc) {
-    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.apiInfo.initialReqInfo.teidLocal);
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", ulp_req.u_api_info.initialReqInfo.teidLocal);
     return RETURNerror;
   }
 
@@ -271,8 +271,8 @@ s11_mme_delete_session_request (
 //------------------------------------------------------------------------------
 int
 s11_mme_handle_delete_session_response (
-  NwGtpv2cStackHandleT * stack_p,
-  NwGtpv2cUlpApiT * pUlpApi)
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
 {
   nw_rc_t                                   rc = NW_OK;
   uint8_t                                 offendingIeType,
@@ -280,7 +280,7 @@ s11_mme_handle_delete_session_response (
   uint16_t                                offendingIeLength;
   itti_s11_delete_session_response_t     *resp_p;
   MessageDef                             *message_p;
-  NwGtpv2cMsgParserT                     *pMsgParser;
+  nw_gtpv2c_msg_parser_t                     *pMsgParser;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
   DevAssert (stack_p );
@@ -340,12 +340,12 @@ s11_mme_handle_delete_session_response (
   MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 DELETE_SESSION_RESPONSE local S11 teid " TEID_FMT " ", resp_p->teid);
 
   // delete local tunnel
-  NwGtpv2cUlpApiT                         ulp_req;
-  memset (&ulp_req, 0, sizeof (NwGtpv2cUlpApiT));
+  nw_gtpv2c_ulp_api_t                         ulp_req;
+  memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   ulp_req.apiType = NW_GTPV2C_ULP_DELETE_LOCAL_TUNNEL;
   hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
       (hash_key_t) resp_p->teid,
-      (void **)(uintptr_t)&ulp_req.apiInfo.deleteLocalTunnelInfo.hTunnel);
+      (void **)(uintptr_t)&ulp_req.u_api_info.deleteLocalTunnelInfo.hTunnel);
   if (HASH_TABLE_OK != hash_rc) {
     OAILOG_ERROR (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", resp_p->teid);
     MSC_LOG_EVENT (MSC_S11_MME, "Failed to deleted teid " TEID_FMT "", resp_p->teid);

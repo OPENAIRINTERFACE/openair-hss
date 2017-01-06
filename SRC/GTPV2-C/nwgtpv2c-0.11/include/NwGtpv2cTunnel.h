@@ -53,19 +53,19 @@ struct nw_gtpv2c_stack_s;
 typedef struct nw_gtpv2c_tunnel_s {
   uint32_t                      teid;
   struct in_addr                ipv4AddrRemote;
-  NwGtpv2cUlpTunnelHandleT      hUlpTunnel;
+  nw_gtpv2c_ulp_tunnel_handle_t      hUlpTunnel;
   RB_ENTRY (nw_gtpv2c_tunnel_s)     tunnelMapRbtNode;            /**< RB Tree Data Structure Node        */
   struct nw_gtpv2c_tunnel_s*        next;
 } nw_gtpv2c_tunnel_t;
 
 nw_gtpv2c_tunnel_t*
-nwGtpv2cTunnelNew(struct nw_gtpv2c_stack_s *hStack, uint32_t teid, struct in_addr * peerIpv4Addr, NwGtpv2cUlpTunnelHandleT hUlpTunnel);
+nwGtpv2cTunnelNew(struct nw_gtpv2c_stack_s *hStack, uint32_t teid, struct in_addr * peerIpv4Addr, nw_gtpv2c_ulp_tunnel_handle_t hUlpTunnel);
 
 nw_rc_t
 nwGtpv2cTunnelDelete(struct nw_gtpv2c_stack_s *pStack, nw_gtpv2c_tunnel_t* thiz);
 
 nw_rc_t
-nwGtpv2cTunnelGetUlpTunnelHandle( nw_gtpv2c_tunnel_t* thiz, NwGtpv2cUlpTunnelHandleT* phUlpTunnel);
+nwGtpv2cTunnelGetUlpTunnelHandle( nw_gtpv2c_tunnel_t* thiz, nw_gtpv2c_ulp_tunnel_handle_t* phUlpTunnel);
 
 #ifdef __cplusplus
 }

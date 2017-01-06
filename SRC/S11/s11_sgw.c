@@ -48,13 +48,13 @@
 #include "s11_sgw_session_manager.h"
 
 
-static NwGtpv2cStackHandleT             s11_sgw_stack_handle = 0;
+static nw_gtpv2c_stack_handle_t             s11_sgw_stack_handle = 0;
 
 hash_table_ts_t                        *s11_sgw_teid_2_gtv2c_teid_handle = NULL;
 
 /* ULP callback for the GTPv2-C stack */
 //------------------------------------------------------------------------------
-static nw_rc_t s11_sgw_ulp_process_stack_req_cb (NwGtpv2cUlpHandleT hUlp, NwGtpv2cUlpApiT * pUlpApi)
+static nw_rc_t s11_sgw_ulp_process_stack_req_cb (nw_gtpv2c_ulp_handle_t hUlp, nw_gtpv2c_ulp_api_t * pUlpApi)
 {
   int                                     ret = 0;
 
@@ -64,7 +64,7 @@ static nw_rc_t s11_sgw_ulp_process_stack_req_cb (NwGtpv2cUlpHandleT hUlp, NwGtpv
     case NW_GTPV2C_ULP_API_INITIAL_REQ_IND:
       OAILOG_DEBUG (LOG_S11, "Received initial req indication\n");
 
-      switch (pUlpApi->apiInfo.initialReqIndInfo.msgType) {
+      switch (pUlpApi->u_api_info.initialReqIndInfo.msgType) {
         case NW_GTP_CREATE_SESSION_REQ:
           ret = s11_sgw_handle_create_session_request (&s11_sgw_stack_handle, pUlpApi);
           break;
@@ -86,7 +86,7 @@ static nw_rc_t s11_sgw_ulp_process_stack_req_cb (NwGtpv2cUlpHandleT hUlp, NwGtpv
           break;
 
         default:
-          OAILOG_WARNING (LOG_S11,  "Received unhandled message type %d\n", pUlpApi->apiInfo.initialReqIndInfo.msgType);
+          OAILOG_WARNING (LOG_S11,  "Received unhandled message type %d\n", pUlpApi->u_api_info.initialReqIndInfo.msgType);
           break;
       }
       break;
@@ -105,7 +105,7 @@ static nw_rc_t s11_sgw_ulp_process_stack_req_cb (NwGtpv2cUlpHandleT hUlp, NwGtpv
 
 //------------------------------------------------------------------------------
 static nw_rc_t s11_sgw_send_udp_msg (
-  NwGtpv2cUdpHandleT udpHandle,
+  nw_gtpv2c_udp_handle_t udpHandle,
   uint8_t * buffer,
   uint32_t buffer_len,
   struct in_addr *peerIpAddr,
@@ -128,7 +128,7 @@ static nw_rc_t s11_sgw_send_udp_msg (
 
 //------------------------------------------------------------------------------
 static nw_rc_t s11_sgw_log_wrapper (
-  NwGtpv2cLogMgrHandleT hLogMgr,
+  nw_gtpv2c_log_mgr_handle_t hLogMgr,
   uint32_t logLevel,
   char * file,
   uint32_t line,
@@ -140,12 +140,12 @@ static nw_rc_t s11_sgw_log_wrapper (
 
 //------------------------------------------------------------------------------
 static nw_rc_t s11_sgw_start_timer_wrapper (
-  NwGtpv2cTimerMgrHandleT tmrMgrHandle,
+  nw_gtpv2c_timer_mgr_handle_t tmrMgrHandle,
   uint32_t timeoutSec,
   uint32_t timeoutUsec,
   uint32_t tmrType,
   void *timeoutArg,
-  NwGtpv2cTimerHandleT * hTmr)
+  nw_gtpv2c_timer_handle_t * hTmr)
 {
   long                                    timer_id;
   int                                     ret = 0;
@@ -161,8 +161,8 @@ static nw_rc_t s11_sgw_start_timer_wrapper (
 
 //------------------------------------------------------------------------------
 static nw_rc_t s11_sgw_stop_timer_wrapper (
-  NwGtpv2cTimerMgrHandleT tmrMgrHandle,
-  NwGtpv2cTimerHandleT tmrHandle)
+  nw_gtpv2c_timer_mgr_handle_t tmrMgrHandle,
+  nw_gtpv2c_timer_handle_t tmrHandle)
 {
   int                                     ret;
   long                                    timer_id;
@@ -286,19 +286,19 @@ int s11_sgw_init (sgw_config_t * config_p)
   /*
    * Set ULP entity
    */
-  ulp.hUlp = (NwGtpv2cUlpHandleT) NULL;
+  ulp.hUlp = (nw_gtpv2c_ulp_handle_t) NULL;
   ulp.ulpReqCallback = s11_sgw_ulp_process_stack_req_cb;
   DevAssert (NW_OK == nwGtpv2cSetUlpEntity (s11_sgw_stack_handle, &ulp));
   /*
    * Set UDP entity
    */
-  udp.hUdp = (NwGtpv2cUdpHandleT) NULL;
+  udp.hUdp = (nw_gtpv2c_udp_handle_t) NULL;
   udp.udpDataReqCallback = s11_sgw_send_udp_msg;
   DevAssert (NW_OK == nwGtpv2cSetUdpEntity (s11_sgw_stack_handle, &udp));
   /*
    * Set Timer entity
    */
-  tmrMgr.tmrMgrHandle = (NwGtpv2cTimerMgrHandleT) NULL;
+  tmrMgr.tmrMgrHandle = (nw_gtpv2c_timer_mgr_handle_t) NULL;
   tmrMgr.tmrStartCallback = s11_sgw_start_timer_wrapper;
   tmrMgr.tmrStopCallback = s11_sgw_stop_timer_wrapper;
   DevAssert (NW_OK == nwGtpv2cSetTimerMgrEntity (s11_sgw_stack_handle, &tmrMgr));

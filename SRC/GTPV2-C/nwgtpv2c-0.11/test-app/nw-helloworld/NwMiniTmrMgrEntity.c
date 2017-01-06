@@ -53,12 +53,12 @@ extern                                  "C" {
   --------------------------------------------------------------------------*/
 
   nw_rc_t                                   nwTimerStart (
-  NwGtpv2cTimerMgrHandleT tmrMgrHandle,
+  nw_gtpv2c_TimerMgrHandleT tmrMgrHandle,
   uint32_t timeoutSec,
   uint32_t timeoutUsec,
   uint32_t tmrType,
   void *timeoutArg,
-  NwGtpv2cTimerHandleT * hTmr) {
+  nw_gtpv2c_TimerHandleT * hTmr) {
     nw_rc_t                                   rc = NW_OK;
     NwGtpv2cNodeTmrT                       *pTmr;
     struct timeval                          tv;
@@ -77,13 +77,13 @@ extern                                  "C" {
      * add event
      */
     event_add (&(pTmr->ev), &tv);
-    *hTmr = (NwGtpv2cTimerHandleT) pTmr;
+    *hTmr = (nw_gtpv2c_TimerHandleT) pTmr;
     return rc;
   }
 
   nw_rc_t                                   nwTimerStop (
-  NwGtpv2cTimerMgrHandleT tmrMgrHandle,
-  NwGtpv2cTimerHandleT hTmr) {
+  nw_gtpv2c_TimerMgrHandleT tmrMgrHandle,
+  nw_gtpv2c_TimerHandleT hTmr) {
     NW_LOG (NW_LOG_LEVEL_DEBG, "Received stop timer request from stack for timer handle %u", hTmr);
     evtimer_del (&(((NwGtpv2cNodeTmrT *) hTmr)->ev));
     free ((void *)hTmr);

@@ -65,12 +65,12 @@ extern                                  "C" {
   ----------------------------------------------------------------------------*/
 
   nw_rc_t                                   nwGtpv2cMsgNew (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN uint8_t teidPresent,
   NW_IN uint8_t msgType,
   NW_IN uint32_t teid,
   NW_IN uint32_t seqNum,
-  NW_OUT NwGtpv2cMsgHandleT * phMsg) {
+  NW_OUT nw_gtpv2c_msg_handle_t * phMsg) {
     nw_gtpv2c_stack_t                         *pStack = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
     nw_gtpv2c_msg_t                           *pMsg;
                                             NW_ASSERT (
@@ -92,7 +92,7 @@ extern                                  "C" {
       pMsg->msgLen = (NW_GTPV2C_EPC_SPECIFIC_HEADER_SIZE - (teidPresent ? 0 : 4));
       pMsg->groupedIeEncodeStack.top = 0;
       pMsg->hStack = hGtpcStackHandle;
-      *phMsg = (NwGtpv2cMsgHandleT) pMsg;
+      *phMsg = (nw_gtpv2c_msg_handle_t) pMsg;
       OAILOG_DEBUG (LOG_GTPV2C, "Created message %p!\n", pMsg);
       return NW_OK;
     }
@@ -101,10 +101,10 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgFromBufferNew (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
   NW_IN uint8_t * pBuf,
   NW_IN uint32_t bufLen,
-  NW_OUT NwGtpv2cMsgHandleT * phMsg) {
+  NW_OUT nw_gtpv2c_msg_handle_t * phMsg) {
     nw_gtpv2c_stack_t                         *pStack = (nw_gtpv2c_stack_t *) hGtpcStackHandle;
     nw_gtpv2c_msg_t                           *pMsg;
 
@@ -118,7 +118,7 @@ extern                                  "C" {
     }
 
     if (pMsg) {
-      *phMsg = (NwGtpv2cMsgHandleT) pMsg;
+      *phMsg = (nw_gtpv2c_msg_handle_t) pMsg;
       memcpy (pMsg->msgBuf, pBuf, bufLen);
       pMsg->msgLen = bufLen;
       pMsg->version = ((*pBuf) & 0xE0) >> 5;
@@ -143,8 +143,8 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgDelete (
-  NW_IN NwGtpv2cStackHandleT hGtpcStackHandle,
-  NW_IN NwGtpv2cMsgHandleT hMsg) {
+  NW_IN nw_gtpv2c_stack_handle_t hGtpcStackHandle,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     // warning: unused variable ‘pStack’ [-Wunused-variable]: NwGtpv2cStackT                         *pStack = (NwGtpv2cStackT *) hGtpcStackHandle;
 
     OAILOG_DEBUG (LOG_GTPV2C, "Purging message %" PRIxPTR "!\n", hMsg);
@@ -161,7 +161,7 @@ extern                                  "C" {
 */
 
   nw_rc_t                                   nwGtpv2cMsgSetTeid (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   uint32_t teid) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
 
@@ -177,7 +177,7 @@ extern                                  "C" {
 */
 
   nw_rc_t                                   nwGtpv2cMsgSetTeidPresent (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   bool teidPresent) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
 
@@ -193,7 +193,7 @@ extern                                  "C" {
 */
 
   nw_rc_t                                   nwGtpv2cMsgSetSeqNumber (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   uint32_t seqNum) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
 
@@ -208,7 +208,7 @@ extern                                  "C" {
 */
 
   uint32_t                                nwGtpv2cMsgGetTeid (
-  NW_IN NwGtpv2cMsgHandleT hMsg) {
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
 
     return (thiz->teid);
@@ -221,7 +221,7 @@ extern                                  "C" {
 */
 
   bool                                 nwGtpv2cMsgGetTeidPresent (
-  NW_IN NwGtpv2cMsgHandleT hMsg) {
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
 
     return (thiz->teidPresent);
@@ -234,7 +234,7 @@ extern                                  "C" {
 */
 
   uint32_t                                nwGtpv2cMsgGetSeqNumber (
-  NW_IN NwGtpv2cMsgHandleT hMsg) {
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
 
     return (thiz->seqNum);
@@ -247,7 +247,7 @@ extern                                  "C" {
 */
 
   uint32_t                                nwGtpv2cMsgGetMsgType (
-  NW_IN NwGtpv2cMsgHandleT hMsg) {
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
 
     return (thiz->msgType);
@@ -260,7 +260,7 @@ extern                                  "C" {
 */
 
   uint32_t                                nwGtpv2cMsgGetLength (
-  NW_IN NwGtpv2cMsgHandleT hMsg) {
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
 
     return (thiz->msgLen);
@@ -268,66 +268,66 @@ extern                                  "C" {
 
 
   nw_rc_t                                   nwGtpv2cMsgAddIeTV1 (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance,
   NW_IN uint8_t value) {
     nw_gtpv2c_msg_t                           *pMsg = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTv1T                         *pIe;
+    nw_gtpv2c_ie_tv1_t                         *pIe;
 
-    pIe = (NwGtpv2cIeTv1T *) (pMsg->msgBuf + pMsg->msgLen);
+    pIe = (nw_gtpv2c_ie_tv1_t *) (pMsg->msgBuf + pMsg->msgLen);
     pIe->t = type;
     pIe->l = htons (0x0001);
     pIe->i = instance & 0x00ff;
     pIe->v = value;
-    pMsg->msgLen += sizeof (NwGtpv2cIeTv1T);
+    pMsg->msgLen += sizeof (nw_gtpv2c_ie_tv1_t);
     return NW_OK;
   }
 
   nw_rc_t                                   nwGtpv2cMsgAddIeTV2 (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance,
   NW_IN uint16_t value) {
     nw_gtpv2c_msg_t                           *pMsg = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTv2T                         *pIe;
+    nw_gtpv2c_ie_tv2_t                         *pIe;
 
-    pIe = (NwGtpv2cIeTv2T *) (pMsg->msgBuf + pMsg->msgLen);
+    pIe = (nw_gtpv2c_ie_tv2_t *) (pMsg->msgBuf + pMsg->msgLen);
     pIe->t = type;
     pIe->l = htons (0x0002);
     pIe->i = instance & 0x00ff;
     pIe->v = htons (value);
-    pMsg->msgLen += sizeof (NwGtpv2cIeTv2T);
+    pMsg->msgLen += sizeof (nw_gtpv2c_ie_tv2_t);
     return NW_OK;
   }
 
   nw_rc_t                                   nwGtpv2cMsgAddIeTV4 (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance,
   NW_IN uint32_t value) {
     nw_gtpv2c_msg_t                           *pMsg = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTv4T                         *pIe;
+    nw_gtpv2c_ie_tv4_t                         *pIe;
 
-    pIe = (NwGtpv2cIeTv4T *) (pMsg->msgBuf + pMsg->msgLen);
+    pIe = (nw_gtpv2c_ie_tv4_t *) (pMsg->msgBuf + pMsg->msgLen);
     pIe->t = type;
     pIe->l = htons (0x0004);
     pIe->i = instance & 0x00ff;
     pIe->v = htonl (value);
-    pMsg->msgLen += sizeof (NwGtpv2cIeTv4T);
+    pMsg->msgLen += sizeof (nw_gtpv2c_ie_tv4_t);
     return NW_OK;
   }
 
   nw_rc_t                                   nwGtpv2cMsgAddIe (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint16_t length,
   NW_IN uint8_t instance,
   NW_IN uint8_t * pVal) {
     nw_gtpv2c_msg_t                           *pMsg = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTlvT                         *pIe;
+    nw_gtpv2c_ie_tlv_t                         *pIe;
 
-    pIe = (NwGtpv2cIeTlvT *) (pMsg->msgBuf + pMsg->msgLen);
+    pIe = (nw_gtpv2c_ie_tlv_t *) (pMsg->msgBuf + pMsg->msgLen);
     pIe->t = type;
     pIe->l = htons (length);
     pIe->i = instance & 0x00ff;
@@ -337,13 +337,13 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgGroupedIeStart (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance) {
     nw_gtpv2c_msg_t                           *pMsg = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTlvT                         *pIe;
+    nw_gtpv2c_ie_tlv_t                         *pIe;
 
-    pIe = (NwGtpv2cIeTlvT *) (pMsg->msgBuf + pMsg->msgLen);
+    pIe = (nw_gtpv2c_ie_tlv_t *) (pMsg->msgBuf + pMsg->msgLen);
     pIe->t = type;
     pIe->i = instance & 0x00ff;
     pMsg->msgLen += (4);
@@ -355,9 +355,9 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgGroupedIeEnd (
-  NW_IN NwGtpv2cMsgHandleT hMsg) {
+  NW_IN nw_gtpv2c_msg_handle_t hMsg) {
     nw_gtpv2c_msg_t                           *pMsg = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTlvT                         *pIe;
+    nw_gtpv2c_ie_tlv_t                         *pIe;
 
     NW_ASSERT (pMsg->groupedIeEncodeStack.top > 0);
     pMsg->groupedIeEncodeStack.top--;
@@ -367,7 +367,7 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgAddIeCause (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t instance,
   NW_IN uint8_t causeValue,
   NW_IN uint8_t bitFlags,
@@ -389,7 +389,7 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgAddIeFteid (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t instance,
   NW_IN uint8_t ifType,
   NW_IN const uint32_t teidOrGreKey,
@@ -420,29 +420,29 @@ extern                                  "C" {
 
 
   bool                                 nwGtpv2cMsgIsIePresent (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
 
-    if ((NwGtpv2cIeTv1T *) thiz->pIe[type][instance])
+    if ((nw_gtpv2c_ie_tv1_t *) thiz->pIe[type][instance])
       return true;
 
     return false;
   }
 
   nw_rc_t                                   nwGtpv2cMsgGetIeTV1 (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance,
   NW_OUT uint8_t * pVal) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTv1T                         *pIe;
+    nw_gtpv2c_ie_tv1_t                         *pIe;
 
     NW_ASSERT (instance <= NW_GTPV2C_IE_INSTANCE_MAXIMUM);
 
     if (thiz->isIeValid[type][instance]) {
-      pIe = (NwGtpv2cIeTv1T *) thiz->pIe[type][instance];
+      pIe = (nw_gtpv2c_ie_tv1_t *) thiz->pIe[type][instance];
 
       if (ntohs (pIe->l) != 0x01)
         return NW_GTPV2C_IE_INCORRECT;
@@ -457,17 +457,17 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgGetIeTV2 (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance,
   NW_OUT uint16_t * pVal) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTv2T                         *pIe;
+    nw_gtpv2c_ie_tv2_t                         *pIe;
 
     NW_ASSERT (instance <= NW_GTPV2C_IE_INSTANCE_MAXIMUM);
 
     if (thiz->isIeValid[type][instance]) {
-      pIe = (NwGtpv2cIeTv2T *) thiz->pIe[type][instance];
+      pIe = (nw_gtpv2c_ie_tv2_t *) thiz->pIe[type][instance];
 
       if (ntohs (pIe->l) != 0x02)
         return NW_GTPV2C_IE_INCORRECT;
@@ -482,17 +482,17 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgGetIeTV4 (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance,
   NW_OUT uint32_t * pVal) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTv4T                         *pIe;
+    nw_gtpv2c_ie_tv4_t                         *pIe;
 
     NW_ASSERT (instance <= NW_GTPV2C_IE_INSTANCE_MAXIMUM);
 
     if (thiz->isIeValid[type][instance]) {
-      pIe = (NwGtpv2cIeTv4T *) thiz->pIe[type][instance];
+      pIe = (nw_gtpv2c_ie_tv4_t *) thiz->pIe[type][instance];
 
       if (ntohs (pIe->l) != 0x04)
         return NW_GTPV2C_IE_INCORRECT;
@@ -507,17 +507,17 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgGetIeTV8 (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance,
   NW_OUT uint64_t * pVal) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTv8T                         *pIe;
+    nw_gtpv2c_ie_tv8_t                         *pIe;
 
     NW_ASSERT (instance <= NW_GTPV2C_IE_INSTANCE_MAXIMUM);
 
     if (thiz->isIeValid[type][instance]) {
-      pIe = (NwGtpv2cIeTv8T *) thiz->pIe[type][instance];
+      pIe = (nw_gtpv2c_ie_tv8_t *) thiz->pIe[type][instance];
 
       if (ntohs (pIe->l) != 0x08)
         return NW_GTPV2C_IE_INCORRECT;
@@ -533,19 +533,19 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgGetIeTlv (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance,
   NW_IN uint16_t maxLen,
   NW_OUT uint8_t * pVal,
   NW_OUT uint16_t * pLen) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTlvT                         *pIe;
+    nw_gtpv2c_ie_tlv_t                         *pIe;
 
     NW_ASSERT (instance <= NW_GTPV2C_IE_INSTANCE_MAXIMUM);
 
     if (thiz->isIeValid[type][instance]) {
-      pIe = (NwGtpv2cIeTlvT *) thiz->pIe[type][instance];
+      pIe = (nw_gtpv2c_ie_tlv_t *) thiz->pIe[type][instance];
 
       if (ntohs (pIe->l) <= maxLen) {
         if (pVal)
@@ -562,18 +562,18 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgGetIeTlvP (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t type,
   NW_IN uint8_t instance,
   NW_OUT uint8_t ** ppVal,
   NW_OUT uint16_t * pLen) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTlvT                         *pIe;
+    nw_gtpv2c_ie_tlv_t                         *pIe;
 
     NW_ASSERT (instance <= NW_GTPV2C_IE_INSTANCE_MAXIMUM);
 
     if (thiz->isIeValid[type][instance]) {
-      pIe = (NwGtpv2cIeTlvT *) thiz->pIe[type][instance];
+      pIe = (nw_gtpv2c_ie_tlv_t *) thiz->pIe[type][instance];
 
       if (ppVal)
         *ppVal = ((uint8_t *) pIe) + 4;
@@ -588,19 +588,19 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgGetIeCause (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t instance,
   NW_OUT uint8_t * causeValue,
   NW_OUT uint8_t * flags,
   NW_OUT uint8_t * offendingIeType,
   NW_OUT uint8_t * offendingIeInstance) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTlvT                         *pIe;
+    nw_gtpv2c_ie_tlv_t                         *pIe;
 
     NW_ASSERT (instance <= NW_GTPV2C_IE_INSTANCE_MAXIMUM);
 
     if (thiz->isIeValid[NW_GTPV2C_IE_CAUSE][instance]) {
-      pIe = (NwGtpv2cIeTlvT *) thiz->pIe[NW_GTPV2C_IE_CAUSE][instance];
+      pIe = (nw_gtpv2c_ie_tlv_t *) thiz->pIe[NW_GTPV2C_IE_CAUSE][instance];
       *causeValue = *((uint8_t *) (((uint8_t *) pIe) + 4));
       *flags = *((uint8_t *) (((uint8_t *) pIe) + 5));
 
@@ -616,19 +616,19 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgGetIeFteid (
-  NW_IN NwGtpv2cMsgHandleT hMsg,
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
   NW_IN uint8_t instance,
   NW_OUT uint8_t * ifType,
   NW_OUT uint32_t * teidOrGreKey,
   NW_OUT struct in_addr * ipv4Addr,
   NW_OUT struct in6_addr * pIpv6Addr) {
     nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
-    NwGtpv2cIeTlvT                         *pIe;
+    nw_gtpv2c_ie_tlv_t                         *pIe;
 
     NW_ASSERT (instance <= NW_GTPV2C_IE_INSTANCE_MAXIMUM);
 
     if (thiz->isIeValid[NW_GTPV2C_IE_FTEID][instance]) {
-      pIe = (NwGtpv2cIeTlvT *) thiz->pIe[NW_GTPV2C_IE_FTEID][instance];
+      pIe = (nw_gtpv2c_ie_tlv_t *) thiz->pIe[NW_GTPV2C_IE_FTEID][instance];
       uint8_t                                 flags;
       uint8_t                                *pIeValue = ((uint8_t *) pIe) + 4;
 
@@ -650,7 +650,7 @@ extern                                  "C" {
   }
 
   nw_rc_t                                   nwGtpv2cMsgHexDump (
-  NwGtpv2cMsgHandleT hMsg,
+  nw_gtpv2c_msg_handle_t hMsg,
   FILE * fp) {
     nw_gtpv2c_msg_t                           *pMsg = (nw_gtpv2c_msg_t *) hMsg;
     uint8_t                                *data = pMsg->msgBuf;
