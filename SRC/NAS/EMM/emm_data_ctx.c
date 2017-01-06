@@ -49,6 +49,25 @@ static bool emm_data_context_dump_hash_table_wrapper (
   void *parameterP,
   void**resultP);
 
+//------------------------------------------------------------------------------
+
+static hashtable_rc_t
+_emm_data_context_hashtable_insert(
+    emm_data_t *emm_data,
+    struct emm_data_context_s *elm)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+
+  if ( IS_EMM_CTXT_PRESENT_IMSI(elm)) {
+    h_rc = hashtable_ts_insert (emm_data->ctx_coll_imsi, elm->_imsi64, (void*)(&elm->ue_id));
+  } else {
+    // This should not happen. Possible UE bug?
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-CTX doesn't contain valid imsi UE id " MME_UE_S1AP_ID_FMT "\n", elm->ue_id);
+  }
+  return h_rc;
+}
+
+
 mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(emm_data_context_t *ctxt)
 {
   mme_ue_s1ap_id_t tmp = 0;
@@ -204,7 +223,6 @@ inline void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set IMSI %s (valid)\n", ctxt->ue_id, imsi_str);
 #endif
   mme_api_notify_imsi(ctxt->ue_id, imsi64);
-  hashtable_ts_insert (_emm_data.ctx_coll_imsi, imsi64, (void*)&ctxt->ue_id);
 }
 
 //------------------------------------------------------------------------------
@@ -692,28 +710,50 @@ emm_data_context_add_old_guti (
 }
 
 //------------------------------------------------------------------------------
+
 int
 emm_data_context_add_imsi (
   emm_data_t * emm_data,
-  struct emm_data_context_s *elm)
-{
-  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+  struct emm_data_context_s *elm) {
+  hashtable_rc_t h_rc = HASH_TABLE_OK;
 
-  if ( IS_EMM_CTXT_PRESENT_IMSI(elm)) {
-    h_rc = hashtable_ts_insert (emm_data->ctx_coll_imsi, elm->_imsi64, (void*)(&elm->ue_id));
+  h_rc = _emm_data_context_hashtable_insert(emm_data, elm);
 
-    if (HASH_TABLE_OK == h_rc) {
-      OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT"\n", elm->ue_id, elm->_imsi64);
-    } else {
-      OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT" Failed %s\n",
-          elm->ue_id, elm->_imsi64, hashtable_rc_code2string (h_rc));
-      return RETURNerror;
-    }
+  if (HASH_TABLE_OK == h_rc) {
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with IMSI " IMSI_64_FMT "\n",
+                  elm->ue_id, elm->_imsi64);
+    return RETURNok;
+  } else {
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with IMSI " IMSI_64_FMT
+        " Failed %s\n", elm->ue_id, elm->_imsi64, hashtable_rc_code2string(h_rc));
+    return RETURNerror;
   }
-  return RETURNok;
 }
 
 //------------------------------------------------------------------------------
+
+int
+emm_data_context_upsert_imsi (
+    emm_data_t * emm_data,
+    struct emm_data_context_s *elm)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+
+  h_rc = _emm_data_context_hashtable_insert(emm_data, elm);
+
+  if (HASH_TABLE_OK == h_rc || HASH_TABLE_INSERT_OVERWRITTEN_DATA == h_rc) {
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Upsert in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT"\n",
+                  elm->ue_id, elm->_imsi64);
+    return RETURNok;
+  } else {
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Upsert in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT" "
+        "Failed %s\n", elm->ue_id, elm->_imsi64, hashtable_rc_code2string (h_rc));
+    return RETURNerror;
+  }
+}
+
+//------------------------------------------------------------------------------
+
 void emm_data_context_stop_all_timers (struct emm_data_context_s *emm_ctx)
 {
   if (emm_ctx ) {

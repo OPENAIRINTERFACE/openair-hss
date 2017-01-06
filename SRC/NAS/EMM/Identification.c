@@ -280,6 +280,7 @@ emm_proc_identification_complete (
       imsi64_t imsi64 = INVALID_IMSI64;
       IMSI_TO_IMSI64(imsi,imsi64);
       emm_ctx_set_valid_imsi(emm_ctx, imsi, imsi64);
+      emm_data_context_upsert_imsi(&_emm_data, emm_ctx);
     } else if (imei) {
       /*
        * Update the IMEI
