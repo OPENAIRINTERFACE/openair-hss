@@ -394,6 +394,67 @@ int pdn_connectivity_request_to_xml (
   }
   OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
 }
+
+//------------------------------------------------------------------------------
+bool esm_information_request_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    esm_information_request_msg * esm_information_request)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  OAILOG_FUNC_RETURN (LOG_XML, true);
+}
+
+//------------------------------------------------------------------------------
+int esm_information_request_to_xml (
+  esm_information_request_msg * esm_information_request,
+  xmlTextWriterPtr writer)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+bool esm_information_response_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    esm_information_response_msg * esm_information_response)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  bool res = true;
+  esm_information_response->presencemask = 0;
+
+  res = access_point_name_from_xml (xml_doc, xpath_ctx, &esm_information_response->accesspointname);
+  if (res) {
+    esm_information_response->presencemask |= ESM_INFORMATION_RESPONSE_ACCESS_POINT_NAME_PRESENT;
+  }
+
+  res = protocol_configuration_options_from_xml (xml_doc, xpath_ctx, &esm_information_response->protocolconfigurationoptions, true);
+  if (res) {
+    esm_information_response->presencemask |= ESM_INFORMATION_RESPONSE_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+  }
+  res = true;
+  OAILOG_FUNC_RETURN (LOG_XML, true);
+}
+
+//------------------------------------------------------------------------------
+int esm_information_response_to_xml (
+    esm_information_response_msg * esm_information_response,
+  xmlTextWriterPtr writer)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  if ((esm_information_response->presencemask & ESM_INFORMATION_RESPONSE_ACCESS_POINT_NAME_PRESENT)
+      == ESM_INFORMATION_RESPONSE_ACCESS_POINT_NAME_PRESENT) {
+    access_point_name_to_xml (esm_information_response->accesspointname, writer);
+  }
+
+  if ((esm_information_response->presencemask & ESM_INFORMATION_RESPONSE_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT)
+      == ESM_INFORMATION_RESPONSE_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
+    protocol_configuration_options_to_xml (&esm_information_response->protocolconfigurationoptions, writer, true);
+  }
+  OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
+}
+
 //------------------------------------------------------------------------------
 bool esm_msg_from_xml (
     xmlDocPtr                              xml_doc,
@@ -456,11 +517,11 @@ bool esm_msg_from_xml (
       break;
 
     case ESM_INFORMATION_REQUEST:
-      //res = esm_information_request_from_xml (xml_doc, xpath_ctx, &esm_msg->esm_information_request);
+      res = esm_information_request_from_xml (xml_doc, xpath_ctx, &esm_msg->esm_information_request);
       break;
 
     case ESM_INFORMATION_RESPONSE:
-      //res = esm_information_response_from_xml (xml_doc, xpath_ctx, &esm_msg->esm_information_response);
+      res = esm_information_response_from_xml (xml_doc, xpath_ctx, &esm_msg->esm_information_response);
       break;
 
     case ESM_STATUS:
@@ -599,11 +660,13 @@ int esm_msg_to_xml (
     break;
 
   case ESM_INFORMATION_REQUEST:
-    //encode_result = esm_information_request_to_xml (&msg->esm_information_request, writer);
+    decode_result = decode_esm_information_request (&msg->esm_information_request, buffer, len);
+    encode_result = esm_information_request_to_xml (&msg->esm_information_request, writer);
     break;
 
   case ESM_INFORMATION_RESPONSE:
-    //encode_result = esm_information_response_to_xml (&msg->esm_information_response, writer);
+    decode_result = decode_esm_information_response (&msg->esm_information_response, buffer, len);
+    encode_result = esm_information_response_to_xml (&msg->esm_information_response, writer);
     break;
 
   case ESM_STATUS:

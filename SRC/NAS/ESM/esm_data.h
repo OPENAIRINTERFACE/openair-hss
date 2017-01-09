@@ -78,8 +78,8 @@ typedef enum {
 typedef struct esm_ebr_timer_data_s {
   struct emm_context_s  *ctx;
   mme_ue_s1ap_id_t       ue_id;      /* Lower layers UE identifier       */
-  ebi_t                  ebi;       /* EPS bearer identity          */
-  unsigned int           count;     /* Retransmission counter       */
+  ebi_t                  ebi;        /* EPS bearer identity          */
+  unsigned int           count;      /* Retransmission counter       */
   bstring                msg;        /* Encoded ESM message to re-transmit   */
 } esm_ebr_timer_data_t;
 
@@ -167,6 +167,7 @@ typedef struct esm_context_s {
   int        n_pdns;
   bool       is_emergency;  /* Indicates whether a PDN connection for emergency bearer services is established       */
   struct esm_proc_data_s *esm_proc_data;
+  struct nas_timer_s      T3489;
 } esm_context_t;
 
 
@@ -194,7 +195,7 @@ typedef struct esm_data_s {
 
 void free_esm_bearer_context(esm_ebr_context_t * esm_ebr_context);
 void esm_bearer_context_init(esm_ebr_context_t * esm_ebr_context);
-void free_esm_data_context(esm_context_t * esm_data_ctx);
+void free_esm_context_content(esm_context_t * esm_ctx);
 void esm_init_context(struct esm_context_s *esm_ctx);
 
 

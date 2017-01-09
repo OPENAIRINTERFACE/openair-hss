@@ -136,6 +136,17 @@ int esm_proc_pdn_disconnect_accept(emm_context_t * emm_context, pdn_cid_t pid, e
 int esm_proc_pdn_disconnect_reject(const bool is_standalone, emm_context_t * emm_context,
     ebi_t ebi, bstring *msg, const bool ue_triggered);
 
+
+/*
+ * --------------------------------------------------------------------------
+ *              ESM information procedure
+ * --------------------------------------------------------------------------
+ */
+
+int esm_proc_esm_information_request (emm_context_t * const ue_context, const pti_t pti);
+
+int esm_proc_esm_information_response (emm_context_t * ue_context, pti_t pti, const_bstring const apn, const protocol_configuration_options_t * const pco, esm_cause_t * const esm_cause);
+
 /*
  * --------------------------------------------------------------------------
  *      Default EPS bearer context activation procedure

@@ -94,11 +94,14 @@ esm_cause_t esm_recv_status(emm_context_t * emm_context, proc_tid_t pti, ebi_t e
  * ----------------------------
  */
 esm_cause_t esm_recv_pdn_connectivity_request(emm_context_t * emm_context, proc_tid_t pti, ebi_t ebi,
-                                      const pdn_connectivity_request_msg *msg, ebi_t *new_ebi, void *data);
+                                      const pdn_connectivity_request_msg *msg, ebi_t *new_ebi);
 
 esm_cause_t esm_recv_pdn_disconnect_request(emm_context_t * emm_context, proc_tid_t pti, ebi_t ebi,
                                     const pdn_disconnect_request_msg *msg,
                                     ebi_t *linked_ebi);
+
+esm_cause_t esm_recv_information_response (emm_context_t * emm_context, proc_tid_t pti, ebi_t ebi,
+                                    const esm_information_response_msg * msg);
 
 /*
  * Messages related to EPS bearer contexts

@@ -1104,7 +1104,7 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
   xmlFreeDoc(doc);
   bdestroy_wrapper (&xpath_expr);
 
-  AssertFatal(SCENARIO_STATUS_LOADING == scenario->status, "Failed to load scenario %s\n", bdata(file_path));
+  AssertFatal(SCENARIO_STATUS_LOADING == scenario->status, "Failed to load scenario %s: status=%d\n", bdata(file_path), scenario->status);
   if (SCENARIO_STATUS_LOADING == scenario->status) {
     scenario_set_status(scenario, SCENARIO_STATUS_LOADED, __FILE__, __LINE__);
   }

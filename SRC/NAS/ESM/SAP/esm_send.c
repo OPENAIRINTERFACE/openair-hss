@@ -72,9 +72,26 @@
 
 /*
    --------------------------------------------------------------------------
-   Functions executed by both the UE and the MME to send ESM messages
+   Functions executed by the MME to send ESM messages
    --------------------------------------------------------------------------
 */
+
+
+int esm_send_esm_information_request (pti_t pti, ebi_t ebi, esm_information_request_msg * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  /*
+   * Mandatory - ESM message header
+   */
+  msg->protocoldiscriminator        = EPS_SESSION_MANAGEMENT_MESSAGE;
+  msg->epsbeareridentity            = ebi;
+  msg->messagetype                  = ESM_INFORMATION_REQUEST;
+  msg->proceduretransactionidentity = pti;
+  OAILOG_NOTICE (LOG_NAS_ESM, "ESM-SAP   - Send ESM_INFORMATION_REQUEST message (pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+}
+
+
 /****************************************************************************
  **                                                                        **
  ** Name:    esm_send_status()                                         **

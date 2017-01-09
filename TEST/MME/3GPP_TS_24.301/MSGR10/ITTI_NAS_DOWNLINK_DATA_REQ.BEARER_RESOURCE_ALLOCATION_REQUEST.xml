@@ -10,7 +10,7 @@
     <security_header_type>0x000002</security_header_type>
     <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
     <mac>#NAS_MAC_DL</mac>
-    <sequence_number>$NAS_UPLINK_SEQUENCE_NUMBER</sequence_number>
+    <sequence_number>$NAS_DOWNLINK_SEQUENCE_NUMBER</sequence_number>
     <!--esm_message_container length="0" hex_dump=""-->
     <plain_nas_message>
       <ebi>$DEDICATED_EPS_BEARER_IDENTITY</ebi>

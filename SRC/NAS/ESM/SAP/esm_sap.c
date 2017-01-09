@@ -543,14 +543,11 @@ _esm_sap_recv (
       break;
 
     case PDN_CONNECTIVITY_REQUEST:{
-        esm_proc_data_t                         data;
-
-        memset (&data, 0, sizeof (esm_proc_data_t));
         OAILOG_DEBUG (LOG_NAS_ESM, "ESM-SAP   - PDN_CONNECTIVITY_REQUEST pti %u ebi %u\n", pti, ebi);
         /*
          * Process PDN connectivity request message received from the UE
          */
-        esm_cause = esm_recv_pdn_connectivity_request (emm_context, pti, ebi, &esm_msg.pdn_connectivity_request, &ebi, &data);
+        esm_cause = esm_recv_pdn_connectivity_request (emm_context, pti, ebi, &esm_msg.pdn_connectivity_request, &ebi);
 
         if (esm_cause != ESM_CAUSE_SUCCESS) {
           /*
@@ -690,6 +687,7 @@ _esm_sap_recv (
       break;
 
     case ESM_INFORMATION_RESPONSE:
+      esm_cause = esm_recv_information_response (emm_context, pti, ebi, &esm_msg.esm_information_response);
       break;
 
     case ESM_STATUS:

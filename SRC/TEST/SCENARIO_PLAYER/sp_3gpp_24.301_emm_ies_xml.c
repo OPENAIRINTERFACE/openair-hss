@@ -261,10 +261,40 @@ SP_NUM_FROM_XML_GENERATE( eps_update_result,                EPS_UPDATE_RESULT);
 bool sp_esm_message_container_from_xml (
     scenario_t            * const scenario,
     scenario_player_msg_t * const msg,
-    EsmMessageContainer            esmmessagecontainer)
+    EsmMessageContainer            *esmmessagecontainer)
 {
-  AssertFatal(0, "TODO if necessary");
-  return false;
+  OAILOG_FUNC_IN (LOG_XML);
+  bool res = false;
+  bstring xpath_expr_mi = bformat("./%s",ESM_MESSAGE_CONTAINER_XML_STR);
+  xmlXPathObjectPtr xpath_obj_mi = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr_mi);
+  if (xpath_obj_mi) {
+    xmlNodeSetPtr nodes_mi = xpath_obj_mi->nodesetval;
+    int size = (nodes_mi) ? nodes_mi->nodeNr : 0;
+    if ((1 == size) && (msg->xml_doc)) {
+
+      xmlNodePtr saved_node_ptr = msg->xpath_ctx->node;
+      res = (RETURNok == xmlXPathSetContextNode(nodes_mi->nodeTab[0], msg->xpath_ctx));
+      if (res) {
+        ESM_msg esm;
+        memset(&esm, 0, sizeof(esm));
+        // Do not load attribute ESM_MESSAGE_CONTAINER_HEX_DUMP_ATTR_XML_STR now. May be used for check ? ...no
+        res = sp_esm_msg_from_xml (scenario, msg, &esm);
+        if (res) {
+#define ESM_BUFF_1024 1024
+          uint8_t buffer[ESM_BUFF_1024];
+          int rc = esm_msg_encode (&esm, buffer, ESM_BUFF_1024);
+          bdestroy_wrapper(esmmessagecontainer);
+          if ((0 < rc) && (ESM_BUFF_1024 >= rc)) {
+            *esmmessagecontainer = blk2bstr(buffer, rc);
+          }
+        }
+      }
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
+    }
+    xmlXPathFreeObject(xpath_obj_mi);
+  }
+  bdestroy_wrapper (&xpath_expr_mi);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
 }
 //------------------------------------------------------------------------------
 bool sp_nas_key_set_identifier_from_xml (

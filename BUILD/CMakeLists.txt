@@ -779,6 +779,7 @@ set (libnas_mme_esm_OBJS
   ${NAS_SRC}ESM/esm_data_context.c
   ${NAS_SRC}ESM/esm_ebr.c
   ${NAS_SRC}ESM/esm_ebr_context.c
+  ${NAS_SRC}ESM/esm_information.c
   ${NAS_SRC}ESM/esm_ip.c
   ${NAS_SRC}ESM/esm_main.c
   ${NAS_SRC}ESM/esm_pt.c

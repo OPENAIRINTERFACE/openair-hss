@@ -839,7 +839,7 @@ static int _emm_attach_release (emm_context_t *emm_context)
      * Stop timer T3470
      */
     if (emm_context->T3470.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%lx)\n", emm_context->T3460.id);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%lx)\n", emm_context->T3470.id);
       emm_context->T3470.id = nas_timer_stop (emm_context->T3470.id);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     }

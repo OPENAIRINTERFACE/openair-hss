@@ -55,6 +55,16 @@ bool sp_pdn_connectivity_request_from_xml (
     scenario_player_msg_t * const msg,
     pdn_connectivity_request_msg * pdn_connectivity_request);
 
+bool sp_esm_information_request_from_xml (
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    esm_information_request_msg * esm_information_request);
+
+bool sp_esm_information_response_from_xml (
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    esm_information_response_msg * esm_information_response);
+
 bool sp_esm_msg_from_xml (
     scenario_t            * const scenario,
     scenario_player_msg_t * const msg,

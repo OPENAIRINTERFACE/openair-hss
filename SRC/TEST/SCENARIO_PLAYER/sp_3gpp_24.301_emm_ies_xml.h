@@ -136,7 +136,7 @@ SP_NUM_FROM_XML_PROTOTYPE(eps_update_result);
 bool sp_esm_message_container_from_xml (
     scenario_t            * const scenario,
     scenario_player_msg_t * const msg,
-    EsmMessageContainer           esmmessagecontainer);
+    EsmMessageContainer           *esmmessagecontainer);
 
 // 9.9.3.16 GPRS timer
 // See subclause 10.5.7.3 in 3GPP TS 24.008 [13].

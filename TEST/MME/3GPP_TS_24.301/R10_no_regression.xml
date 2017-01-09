@@ -8,6 +8,10 @@
   <var name="SELECTED_PLMN"                               hex_stream_value="208f93"    />
   <var name="M_TMSI"                                      value="EBE1A"    />
   <var name="IMSI"                                        ascii_stream_value="208930100001111"    />
+  <var name="NAS_PTI_UL"                                  value="12"        />
+  <var name="UE_APN"                                      ascii_stream_value="oai.ipv4"   />
+  <var name="ESM_INFORMATION_TRANSFER_FLAG"               value="1"        />
+
     
   <!-- VARIABLES TO MME -->
   <var name="ENB_UE_S1AP_ID"                                       value="EBE1A"   />
@@ -19,6 +23,8 @@
   <var name="MME_S1U_TEID"                                         value="000000"   />
   <var name="S1U_SGW_TRANSPORT_LAYER_ADDRESS"                      ascii_stream_value="000000"   />
   <var name="ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"            value="00000000" />
+  <var name="NAS_DOWNLINK_SEQUENCE_NUMBER"                         value="0"        />
+  <var name="NAS_PTI_DL"                                           value="0"        />
 
   <var name="UE_AMBR_DL"                                           value="000000"   />
   <var name="UE_AMBR_UL"                                           value="000000"   />

@@ -80,6 +80,24 @@ int pdn_connectivity_request_to_xml (
   pdn_connectivity_request_msg * pdn_connectivity_request,
   xmlTextWriterPtr writer);
 
+bool esm_information_request_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    esm_information_request_msg * esm_information_request);
+
+int esm_information_request_to_xml (
+  esm_information_request_msg * esm_information_request,
+  xmlTextWriterPtr writer);
+
+bool esm_information_response_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    esm_information_response_msg * esm_information_response);
+
+int esm_information_response_to_xml (
+    esm_information_response_msg * esm_information_response,
+  xmlTextWriterPtr writer);
+
 bool esm_msg_from_xml (
     xmlDocPtr                              xml_doc,
     xmlXPathContextPtr                     xpath_ctx,

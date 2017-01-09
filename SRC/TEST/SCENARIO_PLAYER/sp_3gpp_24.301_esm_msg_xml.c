@@ -57,6 +57,7 @@ EMM msg C struct to/from XML functions
 #include "3gpp_24.007_xml.h"
 #include "3gpp_24.008_xml.h"
 #include "sp_3gpp_24.007_xml.h"
+#include "sp_3gpp_24.008_xml.h"
 #include "log.h"
 
 
@@ -136,8 +137,8 @@ bool sp_activate_default_eps_bearer_context_request_from_xml (
   bool res = false;
 
   res = eps_quality_of_service_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_request->epsqos);
-  if (res) {res = access_point_name_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_request->accesspointname);}
-  if (res) {res = sp_pdn_address_from_xml (scenario, msg, &activate_default_eps_bearer_context_request->pdnaddress);}
+  if (res) {res = sp_access_point_name_from_xml (scenario, msg, &activate_default_eps_bearer_context_request->accesspointname);}
+  if (res) {res = pdn_address_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_request->pdnaddress);}
 
   if (res) {
     res = linked_ti_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_default_eps_bearer_context_request->transactionidentifier);
@@ -191,7 +192,6 @@ bool sp_bearer_resource_allocation_request_from_xml (
     bearer_resource_allocation_request_msg * bearer_resource_allocation_request)
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
-  memset(bearer_resource_allocation_request, 0, sizeof(*bearer_resource_allocation_request));
   bool res = false;
 
 
@@ -220,19 +220,18 @@ bool sp_pdn_connectivity_request_from_xml (
     pdn_connectivity_request_msg * pdn_connectivity_request)
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
-  memset(pdn_connectivity_request, 0, sizeof(*pdn_connectivity_request));
   bool res = false;
 
   res = pdn_type_from_xml (msg->xml_doc, msg->xpath_ctx, &pdn_connectivity_request->pdntype);
   if (res) {res = request_type_from_xml (msg->xml_doc, msg->xpath_ctx, &pdn_connectivity_request->requesttype, NULL);}
 
   if (res) {
-    res = esm_information_transfer_flag_from_xml (msg->xml_doc, msg->xpath_ctx, &pdn_connectivity_request->esminformationtransferflag, NULL);
+    res = sp_esm_information_transfer_flag_from_xml (scenario, msg, &pdn_connectivity_request->esminformationtransferflag);
     if (res) {
       pdn_connectivity_request->presencemask |= PDN_CONNECTIVITY_REQUEST_ESM_INFORMATION_TRANSFER_FLAG_PRESENT;
     }
 
-    res = access_point_name_from_xml (msg->xml_doc, msg->xpath_ctx, &pdn_connectivity_request->accesspointname);
+    res = sp_access_point_name_from_xml (scenario, msg, &pdn_connectivity_request->accesspointname);
     if (res) {
       pdn_connectivity_request->presencemask |= PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT;
     }
@@ -243,6 +242,38 @@ bool sp_pdn_connectivity_request_from_xml (
     }
     res = true;
   }
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
+}
+
+//------------------------------------------------------------------------------
+bool sp_esm_information_request_from_xml (
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    esm_information_request_msg * esm_information_request)
+{
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, true);
+}
+
+//------------------------------------------------------------------------------
+bool sp_esm_information_response_from_xml (
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    esm_information_response_msg * esm_information_response)
+{
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  bool res = true;
+
+  res = sp_access_point_name_from_xml (scenario, msg, &esm_information_response->accesspointname);
+  if (res) {
+    esm_information_response->presencemask |= ESM_INFORMATION_RESPONSE_ACCESS_POINT_NAME_PRESENT;
+  }
+
+  res = protocol_configuration_options_from_xml (msg->xml_doc, msg->xpath_ctx, &esm_information_response->protocolconfigurationoptions, true);
+  if (res) {
+    esm_information_response->presencemask |= ESM_INFORMATION_RESPONSE_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+  }
+  res = true;
   OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, res);
 }
 
@@ -308,11 +339,11 @@ bool sp_esm_msg_from_xml (
       break;
 
     case ESM_INFORMATION_REQUEST:
-      //res = sp_esm_information_request_from_xml (scenario, msg, &esm_msg->esm_information_request);
+      res = sp_esm_information_request_from_xml (scenario, msg, &esm_msg->esm_information_request);
       break;
 
     case ESM_INFORMATION_RESPONSE:
-      //res = sp_esm_information_response_from_xml (scenario, msg, &esm_msg->esm_information_response);
+      res = sp_esm_information_response_from_xml (scenario, msg, &esm_msg->esm_information_response);
       break;
 
     case ESM_STATUS:

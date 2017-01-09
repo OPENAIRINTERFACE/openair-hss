@@ -164,8 +164,7 @@ esm_recv_pdn_connectivity_request (
   proc_tid_t pti,
   ebi_t ebi,
   const pdn_connectivity_request_msg * msg,
-  ebi_t *new_ebi,
-  void *data)
+  ebi_t *new_ebi)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     esm_cause = ESM_CAUSE_SUCCESS;
@@ -202,12 +201,12 @@ esm_recv_pdn_connectivity_request (
   /*
    * Get PDN connection and EPS bearer context data structure to setup
    */
-  esm_proc_data_t                        *esm_data = (esm_proc_data_t *) (data);
 
-  if (data == NULL) {
-    OAILOG_ERROR (LOG_NAS_ESM, "ESM-SAP   - Invalid ESM data structure\n");
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_PROTOCOL_ERROR);
+  if (!emm_context->esm_ctx.esm_proc_data) {
+    emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));
   }
+
+  struct esm_proc_data_s * esm_data = emm_context->esm_ctx.esm_proc_data;
 
   esm_data->pti = pti;
   /*
@@ -249,12 +248,15 @@ esm_recv_pdn_connectivity_request (
    * Get the Access Point Name, if provided
    */
   if (msg->presencemask & PDN_CONNECTIVITY_REQUEST_ACCESS_POINT_NAME_PRESENT) {
+    if (esm_data->apn) bdestroy_wrapper(&esm_data->apn);
     esm_data->apn = msg->accesspointname;
   }
 
   if (msg->presencemask & PDN_CONNECTIVITY_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
+    if (esm_data->pco.num_protocol_or_container_id) clear_protocol_configuration_options(&esm_data->pco);
     copy_protocol_configuration_options(&esm_data->pco, &msg->protocolconfigurationoptions);
   }
+
   /*
    * Get the ESM information transfer flag
    */
@@ -272,7 +274,8 @@ esm_recv_pdn_connectivity_request (
      * * * * The MME waits for completion of the ESM information request
      * * * * procedure before proceeding with the PDN connectivity procedure.
      */
-    //TODO: rc = esm_proc_information_request();
+    esm_proc_esm_information_request(emm_context, pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
   }
 
 
@@ -298,13 +301,7 @@ esm_recv_pdn_connectivity_request (
     }
   }
 #else
-  // save esm_data that is allocated on the call stack
-  esm_proc_data_t    *esm_save_data = (esm_proc_data_t *) malloc(sizeof(*esm_save_data));
-  memcpy(esm_save_data, esm_data, sizeof(*esm_save_data));
-  if (emm_context->esm_ctx.esm_proc_data) {
-    free_wrapper((void**)&emm_context->esm_ctx.esm_proc_data);
-  }
-  emm_context->esm_ctx.esm_proc_data = esm_save_data;
+
   nas_itti_pdn_config_req(pti, ue_id, &emm_context->_imsi, esm_data, esm_data->request_type);
 
   esm_cause = ESM_CAUSE_SUCCESS;
@@ -402,6 +399,65 @@ esm_recv_pdn_disconnect_request (
    */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
+
+//------------------------------------------------------------------------------
+esm_cause_t esm_recv_information_response (
+  emm_context_t * emm_context,
+  proc_tid_t pti,
+  ebi_t ebi,
+  const esm_information_response_msg * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  esm_cause_t                               esm_cause = ESM_CAUSE_SUCCESS;
+  mme_ue_s1ap_id_t      ue_id = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
+
+  OAILOG_INFO(LOG_NAS_ESM, "ESM-SAP   - Received PDN Disconnect Request message " "(ue_id=%d, pti=%d, ebi=%d)\n", ue_id, pti, ebi);
+
+  /*
+   * Procedure transaction identity checking
+   */
+  if ((pti == ESM_PT_UNASSIGNED) || esm_pt_is_reserved (pti)) {
+    /*
+     * 3GPP TS 24.301, section 7.3.1, case b
+     * * * * Reserved or unassigned PTI value
+     */
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid PTI value (pti=%d)\n", pti);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_PTI_VALUE);
+  }
+  /*
+   * EPS bearer identity checking
+   */
+  else if (ebi != ESM_EBI_UNASSIGNED) {
+    /*
+     * 3GPP TS 24.301, section 7.3.2, case b
+     * * * * Reserved or assigned EPS bearer identity value
+     */
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+  }
+
+  /*
+   * Message processing
+   */
+  /*
+   * Execute the PDN disconnect procedure requested by the UE
+   */
+  int pid = esm_proc_esm_information_response (emm_context, pti, msg->accesspointname, &msg->protocolconfigurationoptions, &esm_cause);
+
+  if (pid != RETURNerror) {
+
+    // Continue with pdn connectivity request
+    nas_itti_pdn_config_req(pti, ue_id, &emm_context->_imsi, emm_context->esm_ctx.esm_proc_data, emm_context->esm_ctx.esm_proc_data->request_type);
+
+    esm_cause = ESM_CAUSE_SUCCESS;
+  }
+
+  /*
+   * Return the ESM cause value
+   */
+  OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+}
+
 
 /****************************************************************************
  **                                                                        **

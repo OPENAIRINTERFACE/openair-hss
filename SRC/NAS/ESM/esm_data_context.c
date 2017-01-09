@@ -56,6 +56,9 @@
 #include "log.h"
 #include "esm_ebr_context.h"
 #include "dynamic_memory_check.h"
+#include "common_defs.h"
+#include "mme_app_ue_context.h"
+#include "mme_config.h"
 
 // free allocated structs
 //------------------------------------------------------------------------------
@@ -101,24 +104,30 @@ void esm_bearer_context_init(esm_ebr_context_t * esm_ebr_context)
 
 // free allocated structs
 //------------------------------------------------------------------------------
-void free_esm_data_context(esm_context_t * esm_data_ctx)
+void free_esm_context_content(esm_context_t * esm_context)
 {
 
-//  if (esm_data_ctx) {
-//    unsigned int i;
-//    for (i=0; i < (ESM_DATA_PDN_MAX+1); i++) {
-//      free_esm_pdn(esm_data_ctx->pdn[i].data);
-//    }
-//
-//    for (i=0; i < (ESM_EBR_DATA_SIZE + 1); i++) {
-//      free_esm_ebr_context(esm_data_ctx->ebr.context[i]);
-//    }
-//    free_wrapper(esm_data_ctx);
-//  }
+  if (esm_context) {
+    emm_context_t        *emm_context   = PARENT_STRUCT(esm_context, struct emm_context_s, esm_ctx);
+    ue_mm_context_t      *ue_mm_context = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context);
+    mme_ue_s1ap_id_t       ue_id = ue_mm_context->mme_ue_s1ap_id;
+   if (esm_context->T3489.id != NAS_TIMER_INACTIVE_ID) {
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3489 (%ld)\n", esm_context->T3489.id);
+      esm_context->T3489.id = nas_timer_stop (esm_context->T3489.id);
+      if (NAS_TIMER_INACTIVE_ID == esm_context->T3489.id) {
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3489 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
+        OAILOG_DEBUG (LOG_NAS_EMM, "T3489 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
+      } else {
+        OAILOG_ERROR (LOG_NAS_EMM, "Could not stop T3489 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
+      }
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
 void esm_init_context(struct esm_context_s *esm_ctx)
 {
-
+  memset(esm_ctx, 0, sizeof(*esm_ctx));
+  esm_ctx->T3489.id        = NAS_TIMER_INACTIVE_ID;
+  esm_ctx->T3489.sec       = mme_config.nas_config.t3489_sec;
 }
