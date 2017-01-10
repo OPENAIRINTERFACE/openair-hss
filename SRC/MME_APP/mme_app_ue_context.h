@@ -544,8 +544,6 @@ void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
 
-void mme_app_add_bearer_context(ue_mm_context_t * const ue_context, bearer_context_t * const bc, const pdn_cid_t pdn_cid);
-
 bearer_context_t* mme_app_get_bearer_context(ue_mm_context_t  * const ue_context, const ebi_t ebi);
 
 bearer_context_t* mme_app_get_bearer_context_by_state(ue_mm_context_t * const ue_context, const pdn_cid_t cid, const mme_app_bearer_state_t state);

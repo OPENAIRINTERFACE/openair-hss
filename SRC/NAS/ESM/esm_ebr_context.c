@@ -160,7 +160,7 @@ esm_ebr_context_create (
     if (ue_mm_context->bearer_contexts[bidx]) {
       bearer_context =  ue_mm_context->bearer_contexts[bidx];
     } else {
-      bearer_context =  mme_app_create_bearer_context(ue_mm_context, pid, ebi);
+      bearer_context =  mme_app_create_bearer_context(ue_mm_context, pid, ebi, is_default);
     }
 
     if (bearer_context ) {

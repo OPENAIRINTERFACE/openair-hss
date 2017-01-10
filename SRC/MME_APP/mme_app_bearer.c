@@ -825,7 +825,7 @@ mme_app_handle_create_bearer_req (
 
   for (int i = 0; i < create_bearer_request_pP->bearer_contexts.num_bearer_context; i++) {
     const bearer_context_within_create_bearer_request_t *msg_bc = &create_bearer_request_pP->bearer_contexts.bearer_contexts[i];
-    bearer_context_t *  dedicated_bc = mme_app_create_bearer_context(ue_context_p, cid, msg_bc->eps_bearer_id);
+    bearer_context_t *  dedicated_bc = mme_app_create_bearer_context(ue_context_p, cid, msg_bc->eps_bearer_id, false);
 
 
     dedicated_bc->bearer_state   |= BEARER_STATE_SGW_CREATED;
