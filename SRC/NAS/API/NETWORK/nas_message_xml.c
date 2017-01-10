@@ -124,14 +124,14 @@ static int nas_message_plain_to_xml (
   int                                     bytes = TLV_PROTOCOL_NOT_SUPPORTED;
 
   // really need to change this
-  msg->emm.header.protocol_discriminator =  *buffer & 0x0f;
+  uint8_t protocol_discriminator =  *buffer & 0x0f;
 
   XML_WRITE_START_ELEMENT(writer,  PLAIN_NAS_MESSAGE_IE_XML_STR);
 
-  if (msg->emm.header.protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
+  if (protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
     // dump EPS Mobility Management L3 message
     bytes = emm_msg_to_xml (&msg->emm, (uint8_t *) buffer, length, writer);
-  } else if (msg->esm.header.protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {
+  } else if (protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {
     // Dump EPS Session Management L3 message
     bytes = esm_msg_to_xml (&msg->esm, (uint8_t *) buffer, length, writer);
   } else {
@@ -163,27 +163,27 @@ bool nas_message_protected_from_xml (
 
       uint8_t security_header_type = 0;
       res = security_header_type_from_xml (xml_doc, xpath_ctx, &security_header_type, NULL);
+      nas_message->security_protected.header.security_header_type = security_header_type;
 
-      eps_protocol_discriminator_t protocol_discriminator = 0;
       if (res) {
-        nas_message->security_protected.header.security_header_type = security_header_type;
+        eps_protocol_discriminator_t protocol_discriminator = 0;
         res = protocol_discriminator_from_xml (xml_doc, xpath_ctx, &protocol_discriminator);
-      }
-
-      uint32_t message_authentication_code = 0;
-      if (res) {
         nas_message->security_protected.header.protocol_discriminator = protocol_discriminator;
+      }
+
+      if (res) {
+        uint32_t message_authentication_code = 0;
         res = mac_from_xml (xml_doc, xpath_ctx, &message_authentication_code);
-      }
-
-      uint8_t sequence_number = 0;
-      if (res) {
         nas_message->security_protected.header.message_authentication_code = message_authentication_code;
-        res = sequence_number_from_xml (xml_doc, xpath_ctx, &sequence_number);
       }
 
       if (res) {
+        uint8_t sequence_number = 0;
+        res = sequence_number_from_xml (xml_doc, xpath_ctx, &sequence_number);
         nas_message->security_protected.header.sequence_number = sequence_number;
+      }
+
+      if (res) {
         res = nas_message_plain_from_xml (xml_doc, xpath_ctx, &nas_message->security_protected.plain);
       }
       res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;

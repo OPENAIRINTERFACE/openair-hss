@@ -395,22 +395,22 @@ bool sp_esm_msg_header_from_xml (
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool     res                           = false;
-  ebi_t   eps_bearer_identity            = 0;
-  eps_protocol_discriminator_t protocol_discriminator = 0;
-  pti_t   procedure_transaction_identity = 0;
-  uint8_t message_type                   = 0;
 
+  ebi_t   eps_bearer_identity            = 0;
   res = sp_ebi_from_xml(scenario, msg, &eps_bearer_identity);
   header->eps_bearer_identity = eps_bearer_identity;
   if (res) {
+    eps_protocol_discriminator_t protocol_discriminator = 0;
     res = protocol_discriminator_from_xml(msg->xml_doc, msg->xpath_ctx, &protocol_discriminator);
-    header->protocol_discriminator = protocol_discriminator;
+    header->protocol_discriminator = (uint8_t)protocol_discriminator;
   }
   if (res) {
+    pti_t   procedure_transaction_identity = 0;
     res = sp_pti_from_xml(scenario, msg, &procedure_transaction_identity);
     header->procedure_transaction_identity = procedure_transaction_identity;
   }
   if (res) {
+    uint8_t message_type                   = 0;
     res = message_type_from_xml(msg->xml_doc, msg->xpath_ctx, &message_type);
     header->message_type = message_type;
   }

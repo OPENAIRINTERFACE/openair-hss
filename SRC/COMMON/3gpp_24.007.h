@@ -33,7 +33,10 @@
 //..............................................................................
 // 11.2.3.1.1  Protocol discriminator
 //..............................................................................
-typedef enum eps_protocol_discriminator_e {
+typedef uint8_t                       eps_protocol_discriminator_t; //4 bits only
+
+
+typedef enum eps_protocol_discriminator_value_e {
   GROUP_CALL_CONTROL                  =    0x0,
   BROADCAST_CALL_CONTROL              =    0x1,
   EPS_SESSION_MANAGEMENT_MESSAGE      =    0x2, /* Protocol discriminator identifier for EPS Session Management */
@@ -46,8 +49,7 @@ typedef enum eps_protocol_discriminator_e {
   SMS_MESSAGE                         =    0x9,
   GPRS_SESSION_MANAGEMENT_MESSAGE     =    0xA,
   NON_CALL_RELATED_SS_MESSAGE         =    0xB,
-
-} eps_protocol_discriminator_t;
+} eps_protocol_discriminator_value_t;
 
 //..............................................................................
 // 11.2.3.1.5  EPS bearer identity

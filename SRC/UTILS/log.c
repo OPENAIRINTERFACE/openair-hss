@@ -585,8 +585,8 @@ void log_stream_hex_array(
   const size_t      sizeP)
 {
   struct shared_log_queue_item_s *  message = NULL;
-  size_t                            octet_index = 0;
-  size_t                            index = 0;
+  unsigned long                     octet_index = 0;
+  unsigned long                     index = 0;
   log_thread_ctxt_t                *thread_ctxt = NULL;
   hashtable_rc_t                    hash_rc = HASH_TABLE_OK;
 
@@ -600,7 +600,7 @@ void log_stream_hex_array(
   AssertFatal(NULL != thread_ctxt, "Could not get new log thread context\n");
 
   if (messageP) {
-    log_message(thread_ctxt, log_levelP, protoP, source_fileP, line_numP, "%s", messageP);
+    log_message(thread_ctxt, log_levelP, protoP, source_fileP, line_numP, "%s\n", messageP);
   }
   log_message(thread_ctxt, log_levelP, protoP, source_fileP, line_numP, "------+-------------------------------------------------|\n");
   log_message(thread_ctxt, log_levelP, protoP, source_fileP, line_numP, "      |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |\n");
@@ -619,12 +619,12 @@ void log_stream_hex_array(
       /*
        * Print every single octet in hexadecimal form
        */
-      log_message_add(message, " %02x", streamP[octet_index]);
+      log_message_add(message, " %02x", ((unsigned char*)streamP)[octet_index]);
     }
     /*
      * Append enough spaces and put final pipe
      */
-    for (index = octet_index; index < 16; ++index) {
+    for (index = octet_index % 16; index < 16; ++index) {
       log_message_add(message, "   ");
     }
     log_message_add(message, " |");
