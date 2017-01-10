@@ -123,6 +123,7 @@ esm_msg_decode (
   uint32_t len)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
+  OAILOG_TRACE (LOG_NAS_ESM, "length %d\n", len);
   int                                     header_result = 0;
   int                                     decode_result = 0;
   /*

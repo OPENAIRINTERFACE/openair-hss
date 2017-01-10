@@ -164,6 +164,7 @@ int nas_message_encrypt (
     void *security)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes = length;
 
@@ -280,6 +281,7 @@ int nas_message_decrypt (
     nas_message_decode_status_t * status)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes = length;
   bool                                    is_sr = false; // unused
@@ -382,6 +384,7 @@ int nas_message_decode (
     nas_message_decode_status_t * status)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes = 0;
   uint32_t                                mac   = 0,
@@ -565,6 +568,7 @@ int nas_message_encode (
     void *security)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes;
 
@@ -696,6 +700,7 @@ int nas_message_header_decode (
     bool * const is_sr)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   int                                     size = 0;
 
   /*
@@ -775,6 +780,7 @@ static int _nas_message_plain_decode (
     size_t length)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   int                                     bytes = TLV_PROTOCOL_NOT_SUPPORTED;
 
   if (header->protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
@@ -826,6 +832,7 @@ static int _nas_message_protected_decode (
     nas_message_decode_status_t * const status)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   int                                     bytes = TLV_BUFFER_TOO_SHORT;
   unsigned char                    *const plain_msg = (unsigned char *)calloc (1, length);
 
@@ -882,6 +889,7 @@ static int _nas_message_header_encode (
     size_t length)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   int                                     size = 0;
 
   /*
@@ -943,6 +951,7 @@ static int _nas_message_plain_encode (
     size_t length)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   int                                     bytes = TLV_PROTOCOL_NOT_SUPPORTED;
 
   if (EPS_MOBILITY_MANAGEMENT_MESSAGE == header->protocol_discriminator) {
@@ -1014,6 +1023,7 @@ static int _nas_message_protected_encode (
     void *security)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes = TLV_BUFFER_TOO_SHORT;
   unsigned char                          *plain_msg = (unsigned char *)calloc (1, length);
@@ -1077,11 +1087,11 @@ static int _nas_message_decrypt (
     emm_security_context_t * const emm_security_context,
     nas_message_decode_status_t * status)
 {
+  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
   nas_stream_cipher_t                     stream_cipher = {0};
   uint32_t                                count = 0;
   uint8_t                                 direction = SECU_DIRECTION_UPLINK;
-
-  OAILOG_FUNC_IN (LOG_NAS);
   int                                     size = 0;
   nas_message_security_header_t           header = {0};
 
@@ -1239,10 +1249,11 @@ static int _nas_message_encrypt (
     size_t length,
     emm_security_context_t * const emm_security_context)
 {
+  OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
+
   nas_stream_cipher_t                     stream_cipher = {0};
   uint32_t                                count = 0;
-
-  OAILOG_FUNC_IN (LOG_NAS);
 
   if (!emm_security_context) {
     OAILOG_ERROR(LOG_NAS, "No security context set for encryption protection algorithm\n");
@@ -1366,6 +1377,7 @@ static uint32_t _nas_message_get_mac (
     emm_security_context_t * const emm_security_context)
 {
   OAILOG_FUNC_IN (LOG_NAS);
+  OAILOG_TRACE (LOG_NAS, "length %d\n", length);
 
   if (!emm_security_context) {
     OAILOG_DEBUG (LOG_NAS, "No security context set for integrity protection algorithm\n");
