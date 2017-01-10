@@ -535,6 +535,8 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
           /*
            * Foward ESM data to EPS session management
            */
+          // shrink plain_msg
+          btrunc(plain_msg, bytes);
           rc = lowerlayer_data_ind (msg->ue_id, plain_msg);
         }
 
