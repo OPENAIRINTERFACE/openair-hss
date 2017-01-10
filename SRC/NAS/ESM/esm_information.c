@@ -154,10 +154,16 @@ int esm_proc_esm_information_response (emm_context_t * ue_context, pti_t pti, co
   }
 
   if (apn) {
+    if (ue_context->esm_ctx.esm_proc_data->apn) {
+      bdestroy_wrapper(&ue_context->esm_ctx.esm_proc_data->apn);
+    }
     ue_context->esm_ctx.esm_proc_data->apn = bstrcpy(apn);
   }
 
-  if (pco) {
+  if ((pco) && (pco->num_protocol_or_container_id)) {
+    if (ue_context->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id) {
+      clear_protocol_configuration_options(&ue_context->esm_ctx.esm_proc_data->pco);
+    }
     copy_protocol_configuration_options(&ue_context->esm_ctx.esm_proc_data->pco, pco);
   }
 
