@@ -96,9 +96,6 @@ mme_app_handle_detach_req (
   else {
     // Send a DELETE_SESSION_REQUEST message to the SGW
     mme_app_send_delete_session_request  (ue_context);
-    // CAROLE il vaut miex attendre de recevoir le delete session response pour effacer le contexte
-    // mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);
-    }
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
-

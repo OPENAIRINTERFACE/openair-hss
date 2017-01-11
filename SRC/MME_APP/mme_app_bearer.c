@@ -520,12 +520,9 @@ mme_app_handle_delete_session_rsp (
    */
   mme_app_desc.mme_ue_contexts.nb_bearers_managed--;
   mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat--;
+  ue_context_p->mm_state = UE_UNREGISTERED;
+  mme_app_itti_ue_context_release(ue_context_p, S1AP_NAS_DETACH /* cause */);
 
-  /*
-   * Remove UE Context
-   */
-  mme_app_itti_delete_session_rsp(ue_context_p->mme_ue_s1ap_id);
-  mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -818,14 +815,6 @@ mme_app_handle_release_access_bearers_resp (
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 RELEASE_ACCESS_BEARERS_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
     rel_access_bearers_rsp_pP->teid, ue_context_p->imsi);
-
-  message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
-  AssertFatal (message_p , "itti_alloc_new_message Failed");
-  memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_command, 0, sizeof (itti_s1ap_ue_context_release_command_t));
-  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id;
-  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context_p->enb_ue_s1ap_id;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",
-      S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
-  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  mme_app_itti_ue_context_release(ue_context_p, S1AP_RADIO_EUTRAN_GENERATED_REASON);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

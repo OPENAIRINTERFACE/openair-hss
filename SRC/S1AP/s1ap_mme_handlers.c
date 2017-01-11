@@ -44,9 +44,10 @@
 extern hash_table_ts_t g_s1ap_enb_coll; // contains eNB_description_s, key is eNB_description_s.assoc_id
 
 static int                              s1ap_generate_s1_setup_response (
-  enb_description_t * enb_association);
+    enb_description_t * enb_association);
+
 static int                              s1ap_mme_generate_ue_context_release_command (
-  ue_description_t * ue_ref_p);
+    ue_description_t * ue_ref_p, enum s1cause);
 
 //Forward declaration
 struct s1ap_message_s;
@@ -725,13 +726,15 @@ s1ap_mme_handle_ue_context_release_request (
 //------------------------------------------------------------------------------
 static int
 s1ap_mme_generate_ue_context_release_command (
-  ue_description_t * ue_ref_p)
+  ue_description_t * ue_ref_p, enum s1cause cause)
 {
   uint8_t                                *buffer = NULL;
   uint32_t                                length = 0;
   s1ap_message                            message = {0};
   S1ap_UEContextReleaseCommandIEs_t      *ueContextReleaseCommandIEs_p = NULL;
   int                                     rc = RETURNok;
+  S1ap_Cause_PR                           cause_type;
+  long                                    cause_value;
 
   OAILOG_FUNC_IN (LOG_S1AP);
   if (ue_ref_p == NULL) {
@@ -748,8 +751,17 @@ s1ap_mme_generate_ue_context_release_command (
   ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.mME_UE_S1AP_ID = ue_ref_p->mme_ue_s1ap_id;
   ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.eNB_UE_S1AP_ID = ue_ref_p->enb_ue_s1ap_id;
   ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.iE_Extensions = NULL;
-  ueContextReleaseCommandIEs_p->cause.present = S1ap_Cause_PR_radioNetwork;
-  ueContextReleaseCommandIEs_p->cause.choice.radioNetwork = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
+  switch(cause) {
+    case S1AP_NAS_DETACH:
+      cause_type = S1ap_Cause_PR_nas;
+      cause_value = S1ap_CauseNas_detach;
+      break;
+    case S1AP_RADIO_EUTRAN_GENERATED_REASON:
+      cause_type = S1ap_Cause_PR_radioNetwork;
+      cause_value = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
+      break;
+  }
+  s1ap_mme_set_cause(&ueContextReleaseCommandIEs_p->cause, cause_type, cause_value);
 
   if (s1ap_mme_encode_pdu (&message, &buffer, &length) < 0) {
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UEContextRelease/initiatingMessage enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " encoding failed",
@@ -762,24 +774,8 @@ s1ap_mme_generate_ue_context_release_command (
 
   bstring b = blk2bstr(buffer, length);
   rc = s1ap_mme_itti_send_sctp_request (&b, ue_ref_p->enb->sctp_assoc_id, ue_ref_p->sctp_stream_send, ue_ref_p->mme_ue_s1ap_id);
+  ue_ref_p->s1_ue_state = S1AP_UE_WAITING_CRR;
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
-}
-
-
-void
-s1ap_handle_delete_session_rsp (
-  const itti_mme_app_delete_session_rsp_t * const mme_app_delete_session_rsp_p)
-{
-  ue_description_t                       *ue_ref = NULL;
-  OAILOG_FUNC_IN (LOG_S1AP);
-  DevAssert (mme_app_delete_session_rsp_p != NULL);
-  if ((ue_ref = s1ap_is_ue_mme_id_in_list (mme_app_delete_session_rsp_p->ue_id)) == NULL) {
-    OAILOG_DEBUG (LOG_S1AP, "This mme ue s1ap id " MME_UE_S1AP_ID_FMT " is not attached to any UE context\n", mme_app_delete_session_rsp_p->ue_id);
-  }
-  else {
-    s1ap_remove_ue (ue_ref);
-  }
-  OAILOG_FUNC_OUT (LOG_S1AP);
 }
 
 //------------------------------------------------------------------------------
@@ -802,7 +798,7 @@ s1ap_handle_ue_context_release_command (
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_COMMAND ignored, no context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ue_context_release_command_pP->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   } else {
-    rc = s1ap_mme_generate_ue_context_release_command (ue_ref_p);
+    rc = s1ap_mme_generate_ue_context_release_command (ue_ref_p, ue_context_release_command_pP->cause);
     OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   }
 
@@ -839,7 +835,7 @@ s1ap_mme_handle_ue_context_release_complete (
 
   /*
    * eNB has sent a release complete message. We can safely remove UE context.
-   * * * * TODO: inform NAS and remove e-RABS.
+   * TODO: inform NAS and remove e-RABS.
    */
   message_p = itti_alloc_new_message (TASK_S1AP, S1AP_UE_CONTEXT_RELEASE_COMPLETE);
   AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
@@ -847,6 +843,7 @@ s1ap_mme_handle_ue_context_release_complete (
   S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  DevAssert(ue_ref_p->s1_ue_state == S1AP_UE_WAITING_CRR);
   s1ap_remove_ue (ue_ref_p);
   OAILOG_DEBUG (LOG_S1AP, "Removed UE " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ueContextReleaseComplete_p->mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);

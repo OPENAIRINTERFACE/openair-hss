@@ -38,6 +38,7 @@
 #include "enum_string.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
+#include "mme_app_itti_messaging.h"
 #include "s1ap_mme.h"
 
 //------------------------------------------------------------------------------
@@ -191,6 +192,7 @@ void mme_app_move_context (ue_context_t *dst, ue_context_t *src)
     memcpy((void *)dst->msisdn, (const void *)src->msisdn, sizeof(src->msisdn));
     dst->msisdn_length           = src->msisdn_length;src->msisdn_length = 0;
     dst->mm_state                = src->mm_state;
+    dst->ecm_state               = src->ecm_state;
     dst->is_guti_set             = src->is_guti_set;
     dst->guti                    = src->guti;
     dst->me_identity             = src->me_identity;
@@ -810,14 +812,7 @@ mme_app_handle_s1ap_ue_context_release_req (
 
   if ((ue_context_p->mme_s11_teid == 0) && (ue_context_p->sgw_s11_teid == 0)) {
     // no session was created, no need for releasing bearers in SGW
-    message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
-    AssertFatal (message_p , "itti_alloc_new_message Failed");
-    memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_command, 0, sizeof (itti_s1ap_ue_context_release_command_t));
-    S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id;
-    S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context_p->enb_ue_s1ap_id;
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",
-        S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
-    itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+    mme_app_itti_ue_context_release(ue_context_p, S1AP_RADIO_EUTRAN_GENERATED_REASON);
   } else {
     mme_app_send_s11_release_access_bearers_req (ue_context_p);
   }
@@ -857,7 +852,15 @@ mme_app_handle_s1ap_ue_context_release_complete (
   }
 
   mme_notify_ue_context_released(&mme_app_desc.mme_ue_contexts, ue_context_p);
-  //mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+
+  if (ue_context_p->mm_state == UE_UNREGISTERED) {
+    OAILOG_DEBUG (LOG_MME_APP, "Deleting UE context associated in MME for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n ",
+                  s1ap_ue_context_release_complete->mme_ue_s1ap_id);
+    mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+  } else {
+    ue_context_p->ecm_state = ECM_IDLE;
+  }
+
   // TODO remove in context GBR bearers
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

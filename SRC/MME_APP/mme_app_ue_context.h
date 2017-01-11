@@ -49,12 +49,15 @@
 #include "security_types.h"
 #include "sgw_ie_defs.h"
 
-// TODO: (amar) Enum unused check with OAI.
+typedef enum {
+  UE_REGISTERED,
+  UE_UNREGISTERED,
+} mm_state_t;
+
 typedef enum {
   ECM_IDLE,
   ECM_CONNECTED,
-  ECM_DEREGISTERED,
-} mm_state_t;
+} ecm_state;
 
 #define IMSI_DIGITS_MAX 15
 
@@ -132,7 +135,8 @@ typedef struct ue_context_s {
   uint8_t                msisdn[MSISDN_LENGTH+1];     // set by S6A UPDATE LOCATION ANSWER
   uint8_t                msisdn_length;               // set by S6A UPDATE LOCATION ANSWER
 
-  mm_state_t             mm_state;                    // not set/read
+  mm_state_t             mm_state;
+  ecm_state              ecm_state;
   /* Globally Unique Temporary Identity */
   bool                   is_guti_set;                 // is guti has been set
   guti_t                 guti;                        // guti.gummei.plmn set by nas_auth_param_req_t
