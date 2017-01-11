@@ -52,10 +52,9 @@
 #include "esm_data.h"
 
 typedef enum {
-  ECM_IDLE,
+  ECM_IDLE = 0,
   ECM_CONNECTED,
-  ECM_DEREGISTERED,
-} mm_state_t;
+} ecm_state_t;
 
 #define IMSI_DIGITS_MAX 15
 
@@ -86,6 +85,7 @@ void mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst, const imsi_t *
 #define BEARER_STATE_MME_CREATED (1 << 1)
 #define BEARER_STATE_ENB_CREATED (1 << 2)
 #define BEARER_STATE_ACTIVE      (1 << 3)
+#define BEARER_STATE_S1_RELEASED (1 << 4)
 
 typedef uint8_t mme_app_bearer_state_t;
 
@@ -253,8 +253,10 @@ typedef struct ue_mm_context_s {
   bstring                msisdn;                    // The basic MSISDN of the UE. The presence is dictated by its storage in the HSS.
                                                     // set by S6A UPDATE LOCATION ANSWER
 
-  mm_state_t             mm_state;                  // Mobility management state ECM-IDLE, ECM-CONNECTED, EMM-DEREGISTERED.
+  ecm_state_t             ecm_state;                // ECM state ECM-IDLE, ECM-CONNECTED.
                                                     // not set/read
+  bool                    is_s1_ue_context_release;
+  S1ap_Cause_t            s1_ue_context_release_cause;
 
   // Globally Unique Temporary Identity can be found in emm_nas_context
   //bool                   is_guti_set;                 // is GUTI has been set
@@ -347,6 +349,7 @@ typedef struct ue_mm_context_s {
 
   // MME UE S1AP ID, Unique identity of the UE within MME.
   mme_ue_s1ap_id_t       mme_ue_s1ap_id;
+
 
   // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user.
   ambr_t                 suscribed_ue_ambr;
@@ -551,6 +554,9 @@ bearer_context_t* mme_app_get_bearer_context_by_state(ue_mm_context_t * const ue
 ebi_t mme_app_get_free_bearer_id(ue_mm_context_t * const ue_context);
 
 void mme_app_free_bearer_context(bearer_context_t ** bc);
+
+void mme_app_ue_context_s1_release_enb_informations(ue_mm_context_t *ue_context);
+
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 

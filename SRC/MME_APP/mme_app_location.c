@@ -121,36 +121,37 @@ int mme_app_handle_s6a_update_location_ans (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-  ue_mm_context->subscription_known = SUBSCRIPTION_KNOWN;
-  ue_mm_context->subscriber_status = ula_pP->subscription_data.subscriber_status;
-  ue_mm_context->access_restriction_data = ula_pP->subscription_data.access_restriction;
-  /*
-   * Copy the subscribed ambr to the sgw create session request message
-   */
-  memcpy (&ue_mm_context->suscribed_ue_ambr, &ula_pP->subscription_data.subscribed_ambr, sizeof (ambr_t));
+  if (!ue_mm_context->is_s1_ue_context_release) {
+    ue_mm_context->subscription_known = SUBSCRIPTION_KNOWN;
+    ue_mm_context->subscriber_status = ula_pP->subscription_data.subscriber_status;
+    ue_mm_context->access_restriction_data = ula_pP->subscription_data.access_restriction;
+    /*
+     * Copy the subscribed ambr to the sgw create session request message
+     */
+    memcpy (&ue_mm_context->suscribed_ue_ambr, &ula_pP->subscription_data.subscribed_ambr, sizeof (ambr_t));
 
-  ue_mm_context->msisdn = blk2bstr(ula_pP->subscription_data.msisdn, ula_pP->subscription_data.msisdn_length);
-  AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0");
-  AssertFatal (ula_pP->subscription_data.msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
+    ue_mm_context->msisdn = blk2bstr(ula_pP->subscription_data.msisdn, ula_pP->subscription_data.msisdn_length);
+    AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0");
+    AssertFatal (ula_pP->subscription_data.msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
 
-  ue_mm_context->rau_tau_timer = ula_pP->subscription_data.rau_tau_timer;
-  ue_mm_context->network_access_mode = ula_pP->subscription_data.access_mode;
-  memcpy (&ue_mm_context->apn_config_profile, &ula_pP->subscription_data.apn_config_profile, sizeof (apn_config_profile_t));
+    ue_mm_context->rau_tau_timer = ula_pP->subscription_data.rau_tau_timer;
+    ue_mm_context->network_access_mode = ula_pP->subscription_data.access_mode;
+    memcpy (&ue_mm_context->apn_config_profile, &ula_pP->subscription_data.apn_config_profile, sizeof (apn_config_profile_t));
 
 
-  MessageDef                             *message_p = NULL;
-  itti_nas_pdn_config_rsp_t              *nas_pdn_config_rsp = NULL;
+    MessageDef                             *message_p = NULL;
+    itti_nas_pdn_config_rsp_t              *nas_pdn_config_rsp = NULL;
 
-  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
+    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
 
-  if (message_p == NULL) {
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    if (message_p == NULL) {
+      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    }
+
+    nas_pdn_config_rsp = &message_p->ittiMsg.nas_pdn_config_rsp;
+    nas_pdn_config_rsp->ue_id = ue_mm_context->mme_ue_s1ap_id;
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP imsi " IMSI_64_FMT, ue_mm_context->mme_ue_s1ap_id);
+    rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   }
-
-  nas_pdn_config_rsp = &message_p->ittiMsg.nas_pdn_config_rsp;
-  nas_pdn_config_rsp->ue_id = ue_mm_context->mme_ue_s1ap_id;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP imsi " IMSI_64_FMT, ue_mm_context->mme_ue_s1ap_id);
-  rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }

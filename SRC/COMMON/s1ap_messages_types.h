@@ -71,6 +71,7 @@ typedef struct itti_s1ap_deregister_ue_req_s {
 typedef struct itti_s1ap_ue_context_release_req_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
+  S1ap_Cause_t      cause;             // Should translate this S1ap_Cause_t type
 } itti_s1ap_ue_context_release_req_t;
 
 typedef struct itti_s1ap_ue_context_release_command_s {

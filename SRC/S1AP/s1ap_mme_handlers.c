@@ -652,17 +652,6 @@ s1ap_mme_handle_ue_context_release_request (
                       "0 UEContextReleaseRequest/%s enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
                       s1ap_direction2String[message->direction], ueContextReleaseRequest_p->eNB_UE_S1AP_ID, ueContextReleaseRequest_p->mme_ue_s1ap_id);
 
-  /*
-   * The UE context release procedure is initiated if the cause is != than user inactivity.
-   * * * * TS36.413 #8.3.2.2.
-   */
-  if (ueContextReleaseRequest_p->cause.present == S1ap_Cause_PR_radioNetwork) {
-    if (ueContextReleaseRequest_p->cause.choice.radioNetwork == S1ap_CauseRadioNetwork_user_inactivity) {
-      OAILOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_REQUEST ignored, cause user inactivity\n");
-      MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_REQUEST ignored, cause user inactivity", ueContextReleaseRequest_p->mme_ue_s1ap_id);
-      OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
-    }
-  }
 
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (ueContextReleaseRequest_p->mme_ue_s1ap_id)) == NULL) {
     /*
@@ -686,6 +675,8 @@ s1ap_mme_handle_ue_context_release_request (
       AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
+      S1AP_UE_CONTEXT_RELEASE_REQ (message_p).cause = ueContextReleaseRequest_p->cause;
+
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
               S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id);
       XML_MSG_DUMP_ITTI_S1AP_UE_CONTEXT_RELEASE_REQ(&S1AP_UE_CONTEXT_RELEASE_REQ (message_p), TASK_S1AP, TASK_MME_APP, NULL);

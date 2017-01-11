@@ -37,7 +37,6 @@ bearer_context_t* mme_app_get_bearer_context(ue_mm_context_t * const ue_context,
 bearer_context_t* mme_app_get_bearer_context_by_state(ue_mm_context_t * const ue_context, const pdn_cid_t cid, const mme_app_bearer_state_t state);
 void mme_app_add_bearer_context(ue_mm_context_t * const ue_context, bearer_context_t  * const bc, const pdn_cid_t pdn_cid, const bool is_default);
 ebi_t mme_app_get_free_bearer_id(ue_mm_context_t * const ue_context);
-
-
+void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const bc);
 
 #endif

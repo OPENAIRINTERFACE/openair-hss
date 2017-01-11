@@ -1032,6 +1032,10 @@ mme_app_handle_s1ap_ue_context_release_req (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
+  ue_context_p->is_s1_ue_context_release = true;
+  ue_context_p->s1_ue_context_release_cause = s1ap_ue_context_release_req->cause;
+
+
   if (!ue_context_p->nb_active_pdn_contexts) {
     // no session was created, no need for releasing bearers in SGW
     message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
@@ -1054,16 +1058,20 @@ mme_app_handle_s1ap_ue_context_release_req (
 
 
 /*
-   From GPP TS 23.401 version 11.11.0 Release 11, section 5.3.5 S1 release procedure, point 6:
+   From GPP TS 23.401 version 10.13.0 Release 10, section 5.3.5 S1 release procedure, point 6:
+   The eNodeB confirms the S1 Release by returning an S1 UE Context Release Complete message to the MME.
+   With this, the signalling connection between the MME and the eNodeB for that UE is released. This step shall be
+   performed promptly after step 4, e.g. it shall not be delayed in situations where the UE does not acknowledge the
+   RRC Connection Release.
    The MME deletes any eNodeB related information ("eNodeB Address in Use for S1-MME" and "eNB UE S1AP
    ID") from the UE's MME context, but, retains the rest of the UE's MME context including the S-GW's S1-U
    configuration information (address and TEIDs). All non-GBR EPS bearers established for the UE are preserved
    in the MME and in the Serving GW.
-   If the cause of S1 release is because of User is inactivity, Inter-RAT Redirection, the MME shall preserve the
+   If the cause of S1 release is because of User I inactivity, Inter-RAT Redirection, the MME shall preserve the
    GBR bearers. If the cause of S1 release is because of CS Fallback triggered, further details about bearer handling
-   are described in TS 23.272 [58]. Otherwise, e.g. Radio Connection With UE Lost, S1 signalling connection lost,
-   eNodeB failure the MME shall trigger the MME Initiated Dedicated Bearer Deactivation procedure
-   (clause 5.4.4.2) for the GBR bearer(s) of the UE after the S1 Release procedure is completed.
+   are described in TS 23.272 [58]. Otherwise, e.g. Radio Connection With UE Lost, the MME shall trigger the
+   MME Initiated Dedicated Bearer Deactivation procedure (clause 5.4.4.2) for the GBR bearer(s) of the UE after
+   the S1 Release procedure is completed.
 */
 //------------------------------------------------------------------------------
 void
@@ -1082,6 +1090,20 @@ mme_app_handle_s1ap_ue_context_release_complete (
     OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
         s1ap_ue_context_release_complete->enb_ue_s1ap_id, s1ap_ue_context_release_complete->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
+  ue_context_p->ecm_state = ECM_IDLE;
+  ue_context_p->is_s1_ue_context_release = false;
+
+  mme_app_ue_context_s1_release_enb_informations(ue_context_p);
+
+  if (((S1ap_Cause_PR_radioNetwork == ue_context_p->s1_ue_context_release_cause.present) && (S1ap_CauseRadioNetwork_radio_connection_with_ue_lost == ue_context_p->s1_ue_context_release_cause.choice.radioNetwork))) {
+    // initiate deactivation procedure
+    for (pdn_cid_t i = 0; i < MAX_APN_PER_UE; i++) {
+      if (ue_context_p->pdn_contexts[i]) {
+        mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_context_p, i);
+      }
+    }
   }
 
   mme_notify_ue_context_released(&mme_app_desc.mme_ue_contexts, ue_context_p);

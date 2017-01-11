@@ -170,3 +170,12 @@ ebi_t mme_app_get_free_bearer_id(ue_mm_context_t * const ue_context)
   return EPS_BEARER_IDENTITY_UNASSIGNED;
 }
 
+//------------------------------------------------------------------------------
+void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const bc)
+{
+  if (bc) {
+    bc->bearer_state = BEARER_STATE_S1_RELEASED;
+    bc->enb_teid_s1u = INVALID_TEID;
+  }
+}
+

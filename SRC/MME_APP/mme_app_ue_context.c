@@ -38,6 +38,7 @@
 #include "mme_app_ue_context.h"
 #include "commonDef.h"
 #include "dynamic_memory_check.h"
+#include "mme_app_bearer_context.h"
 
 #include <string.h>
 #include <stdbool.h>
@@ -144,6 +145,16 @@ mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src)
   return uint_imsi;
 }
 
+//------------------------------------------------------------------------------
+void mme_app_ue_context_s1_release_enb_informations(ue_mm_context_t *ue_context)
+{
+  for (int i = 0; i < BEARERS_PER_UE; i++) {
+    bearer_context_t *bc = ue_context->bearer_contexts[i];
+    if (bc) {
+      mme_app_bearer_context_s1_release_enb_informations(bc);
+    }
+  }
+}
 
 
 

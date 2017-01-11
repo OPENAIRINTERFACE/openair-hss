@@ -38,6 +38,7 @@
 #define S11_MODIFY_BEARER_REQUEST(mSGpTR)          (mSGpTR)->ittiMsg.s11_modify_bearer_request
 #define S11_MODIFY_BEARER_RESPONSE(mSGpTR)         (mSGpTR)->ittiMsg.s11_modify_bearer_response
 #define S11_DELETE_SESSION_REQUEST(mSGpTR)         (mSGpTR)->ittiMsg.s11_delete_session_request
+#define S11_DELETE_BEARER_COMMAND(mSGpTR)          (mSGpTR)->ittiMsg.s11_delete_bearer_command
 #define S11_DELETE_SESSION_RESPONSE(mSGpTR)        (mSGpTR)->ittiMsg.s11_delete_session_response
 #define S11_RELEASE_ACCESS_BEARERS_REQUEST(mSGpTR) (mSGpTR)->ittiMsg.s11_release_access_bearers_request
 #define S11_RELEASE_ACCESS_BEARERS_RESPONSE(mSGpTR) (mSGpTR)->ittiMsg.s11_release_access_bearers_response
@@ -1030,12 +1031,6 @@ typedef struct itti_s11_delete_session_response_s {
 typedef struct itti_s11_release_access_bearers_request_s {
   teid_t     local_teid;               ///< not in specs for inner MME use
   teid_t     teid;                     ///< Tunnel Endpoint Identifier
-  ebi_list_t list_of_rabs;             ///< Shall be present on S4 interface when this message is
-                                       ///< used to release a subset of all active RABs according to
-                                       ///< the RAB release procedure.
-                                       ///< Several IEs with this type and instance values shall be
-                                       ///< included as necessary to represent a list of RABs to be
-                                       ///< released.
   node_type_t originating_node;        ///< This IE shall be sent on S11 interface, if ISR is active in the MME.
                                          ///< This IE shall be sent on S4 interface, if ISR is active in the SGSN
   // Private Extension Private Extension ///< optional
@@ -1069,4 +1064,24 @@ typedef struct itti_s11_release_access_bearers_response_s {
   void           *trxn;
   struct in_addr  peer_ip;
 } itti_s11_release_access_bearers_response_t;
-#endif /* FILE_S11_MESSAGES_TYPES_SEEN */
+
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_delete_bearer_command_t
+ *  @brief Initiate Delete Bearer procedure
+ *
+ * A Delete Bearer Command message shall be sent on the S11 interface by the MME to the SGW and on the S5/S8
+ * interface by the SGW to the PGW as a part of the eNodeB requested bearer release or MME-Initiated Dedicated Bearer
+ * Deactivation procedure.
+ * The message shall also be sent on the S4 interface by the SGSN to the SGW and on the S5/S8 interface by the SGW to
+ * the PGW as part of the MS and SGSN Initiated Bearer Deactivation procedure using S4.
+ */
+typedef struct itti_s11_delete_bearer_command_s {
+  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+
+  // TODO
+  void           *trxn;
+  struct in_addr  peer_ip;
+} itti_s11_delete_bearer_command_s;
+
+#endif
+/* FILE_S11_MESSAGES_TYPES_SEEN */

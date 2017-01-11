@@ -75,18 +75,13 @@ s11_mme_release_access_bearers_request (
     return RETURNerror;
   }
 
-  for (int i=0; i < req_p->list_of_rabs.num_ebi; i++) {
-    rc = nwGtpv2cMsgAddIe ((ulp_req.hMsg), NW_GTPV2C_IE_EBI, 1, 0, (uint8_t *) & req_p->list_of_rabs.ebis[i]);
-    DevAssert (NW_OK == rc);
-  }
   // TODO add node_type_t originating_node if ISR active
   rc = nwGtpv2cMsgAddIe ((ulp_req.hMsg), NW_GTPV2C_IE_NODE_TYPE, 1, 0, (uint8_t *) & req_p->originating_node);
   DevAssert (NW_OK == rc);
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
-  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 RELEASE_ACCESS_BEARERS_REQUEST local S11 teid " TEID_FMT " num ebi %u",
-    req_p->local_teid, req_p->list_of_rabs.num_ebi);
+  MSC_LOG_TX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 RELEASE_ACCESS_BEARERS_REQUEST local S11 teid " TEID_FMT " ", req_p->local_teid);
   return RETURNok;
 }
 
