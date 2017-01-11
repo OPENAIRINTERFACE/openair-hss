@@ -91,8 +91,8 @@ typedef struct emm_security_context_s {
     uint8_t umts_encryption;  /* algorithm used for ciphering            */
     uint8_t umts_integrity;   /* algorithm used for integrity protection */
     uint8_t gprs_encryption;  /* algorithm used for ciphering            */
-    bool    umts_present:1;
-    bool    gprs_present:1;
+    bool    umts_present;
+    bool    gprs_present;
   } capability;       /* UE network capability           */
   struct {
     uint8_t encryption:4;   /* algorithm used for ciphering           */

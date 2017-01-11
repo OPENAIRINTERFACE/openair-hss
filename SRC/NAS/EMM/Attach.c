@@ -252,6 +252,7 @@ emm_proc_attach_request (
         ue_id = ue_mm_context->mme_ue_s1ap_id;
         if (ue_mm_context->enb_s1ap_id_key != enb_ue_s1ap_id_key) {
           duplicate_enb_context_detected = true;
+          OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - Found old ue_mm_context matching GUTI in ATTACH_REQUEST\n");
         }
       }
     }
@@ -260,6 +261,7 @@ emm_proc_attach_request (
       if (ue_mm_context) {
         ue_id = ue_mm_context->mme_ue_s1ap_id;
         if (ue_mm_context->enb_s1ap_id_key != enb_ue_s1ap_id_key) {
+          OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - Found old ue_mm_context matching IMSI in ATTACH_REQUEST\n");
           duplicate_enb_context_detected = true;
         }
       }
@@ -267,6 +269,7 @@ emm_proc_attach_request (
     if (!ue_mm_context) {
       ue_mm_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_ue_s1ap_id_key);
       if (ue_mm_context) {
+        OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - Found old ue_mm_context matching enb_ue_s1ap_id in ATTACH_REQUEST\n");
         ue_id = emm_ctx_get_new_ue_id(&ue_mm_context->emm_context);
         mme_api_notified_new_ue_s1ap_id_association (ue_mm_context->enb_ue_s1ap_id, originating_ecgi->cell_identity.enb_id, ue_id);
       }
@@ -1726,6 +1729,7 @@ _emm_attach_update (
   /*
    * Security key set identifier
    */
+  OAILOG_TRACE (LOG_NAS_EMM, "UE id " MME_UE_S1AP_ID_FMT " Update ksi %d -> %d\n", ue_mm_context->mme_ue_s1ap_id, emm_context->ue_ksi, ksi);
   emm_context->ue_ksi = ksi;
   /*
    * Supported EPS encryption algorithms
