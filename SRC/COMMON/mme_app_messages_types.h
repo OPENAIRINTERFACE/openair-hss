@@ -39,7 +39,6 @@
 
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
-#define MME_APP_DELETE_SESSION_RSP(mSGpTR)               (mSGpTR)->ittiMsg.mme_app_delete_session_rsp
 #define MME_APP_CREATE_DEDICATED_BEARER_REQ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_req
 #define MME_APP_CREATE_DEDICATED_BEARER_RSP(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_rsp
 #define MME_APP_CREATE_DEDICATED_BEARER_REJ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_rej

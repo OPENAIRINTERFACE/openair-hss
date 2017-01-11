@@ -657,8 +657,6 @@ void mme_remove_ue_context (
     OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection\n",
       ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
 
-  mme_app_notify_s1ap_ue_context_released(ue_context_p->mme_ue_s1ap_id);
-
   mme_app_ue_context_free_content(ue_context_p);
   free_wrapper ((void**)&ue_context_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -1068,12 +1066,14 @@ mme_app_handle_s1ap_ue_context_release_req (
     }
   }
   ue_context_p->is_s1_ue_context_release = true;
-  ue_context_p->s1_ue_context_release_cause = s1ap_ue_context_release_req->cause;
 
 
   if (!ue_context_p->nb_active_pdn_contexts) {
     // no session was created, no need for releasing bearers in SGW
-    mme_app_send_s1ap_ue_context_release_command(ue_context_p, s1ap_ue_context_release_req->cause);
+    S1ap_Cause_t            s1_ue_context_release_cause = {0};
+    s1_ue_context_release_cause.present = S1ap_Cause_PR_radioNetwork;
+    s1_ue_context_release_cause.choice.radioNetwork = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
+    mme_app_send_s1ap_ue_context_release_command(ue_context_p, s1_ue_context_release_cause);
     mme_app_send_nas_signalling_connection_rel_ind(ue_context_p->mme_ue_s1ap_id);
   } else {
     for (pdn_cid_t i = 0; i < MAX_APN_PER_UE; i++) {
@@ -1121,9 +1121,9 @@ mme_app_handle_s1ap_ue_context_release_complete (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-  ue_context_p->ecm_state = ECM_IDLE;
-  ue_context_p->is_s1_ue_context_release = false;
-
+//  ue_context_p->ecm_state = ECM_IDLE;
+//  ue_context_p->is_s1_ue_context_release = false;
+//
   mme_app_ue_context_s1_release_enb_informations(ue_context_p);
   mme_app_delete_s11_procedure_create_bearer(ue_context_p);
 
@@ -1138,7 +1138,15 @@ mme_app_handle_s1ap_ue_context_release_complete (
   }
 
   mme_notify_ue_context_released(&mme_app_desc.mme_ue_contexts, ue_context_p);
-  //mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+
+  if (ue_context_p->mm_state == UE_UNREGISTERED) {
+    OAILOG_DEBUG (LOG_MME_APP, "Deleting UE context associated in MME for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n ",
+                  s1ap_ue_context_release_complete->mme_ue_s1ap_id);
+    mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+  } else {
+    ue_context_p->ecm_state = ECM_IDLE;
+  }
+
   // TODO remove in context GBR bearers
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -1147,10 +1155,6 @@ mme_app_handle_s1ap_ue_context_release_complete (
 //------------------------------------------------------------------------------
 void mme_app_send_s1ap_ue_context_release_command (ue_mm_context_t *ue_context, S1ap_Cause_t cause)
 {
-  // no session was created, no need for deleting session in SGW
-  // may be redundant...
-  ue_context->s1_ue_context_release_cause =  cause;
-
   MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id;

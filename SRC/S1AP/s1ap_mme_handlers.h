@@ -61,7 +61,6 @@ int s1ap_mme_handle_path_switch_request(const sctp_assoc_id_t assoc_id, const sc
 
 int s1ap_mme_handle_ue_context_release_request(const sctp_assoc_id_t assoc_id,
                                                const sctp_stream_id_t stream, struct s1ap_message_s *message_p);
-void s1ap_handle_delete_session_rsp (const itti_mme_app_delete_session_rsp_t const * mme_app_delete_session_rsp_p);
 
 int s1ap_handle_ue_context_release_command(
 		const itti_s1ap_ue_context_release_command_t * const ue_context_release_command_pP);

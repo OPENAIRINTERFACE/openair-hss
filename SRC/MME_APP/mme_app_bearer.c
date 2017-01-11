@@ -343,12 +343,13 @@ mme_app_handle_delete_session_rsp (
    */
   mme_app_desc.mme_ue_contexts.nb_bearers_managed--;
   mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat--;
+  ue_context_p->mm_state = UE_UNREGISTERED;
 
-  /*
-   * Remove UE Context
-   */
-  mme_app_send_s1ap_ue_context_release_command(ue_context_p, ue_context_p->s1_ue_context_release_cause);
-  mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+  S1ap_Cause_t            s1_ue_context_release_cause = {0};
+  s1_ue_context_release_cause.present = S1ap_Cause_PR_nas;
+  s1_ue_context_release_cause.choice.nas = S1ap_CauseNas_detach;
+
+  mme_app_send_s1ap_ue_context_release_command(ue_context_p, s1_ue_context_release_cause /* cause */);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -564,7 +565,6 @@ mme_app_handle_release_access_bearers_resp (
   const itti_s11_release_access_bearers_response_t * const rel_access_bearers_rsp_pP)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  MessageDef                             *message_p = NULL;
   struct ue_mm_context_s                    *ue_context_p = NULL;
 
   ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, rel_access_bearers_rsp_pP->teid);
@@ -575,17 +575,13 @@ mme_app_handle_release_access_bearers_resp (
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", rel_access_bearers_rsp_pP->teid);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 RELEASE_ACCESS_BEARERS_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
-    rel_access_bearers_rsp_pP->teid, ue_context_p->emm_context._imsi64);
+  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 RELEASE_ACCESS_BEARERS_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ", rel_access_bearers_rsp_pP->teid, ue_context_p->emm_context._imsi64);
 
-  message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
-  AssertFatal (message_p , "itti_alloc_new_message Failed");
-  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id;
-  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context_p->enb_ue_s1ap_id;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
-      S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
-  int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
-  itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+  S1ap_Cause_t            s1_ue_context_release_cause = {0};
+  s1_ue_context_release_cause.present = S1ap_Cause_PR_radioNetwork;
+  s1_ue_context_release_cause.choice.radioNetwork = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
+
+  mme_app_send_s1ap_ue_context_release_command(ue_context_p, s1_ue_context_release_cause);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -789,7 +785,6 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
       // TODO create a procedure with bearers to receive a response from NAS
     }
   }
-
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

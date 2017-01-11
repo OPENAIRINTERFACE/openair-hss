@@ -52,11 +52,16 @@
 #include "emm_data.h"
 #include "esm_data.h"
 
-// TODO: (amar) Enum unused check with OAI.
+typedef enum {
+  UE_REGISTERED,
+  UE_UNREGISTERED,
+} mm_state_t;
+
 typedef enum {
   ECM_IDLE = 0,
   ECM_CONNECTED,
 } ecm_state_t;
+
 
 #define IMSI_DIGITS_MAX 15
 
@@ -263,6 +268,8 @@ typedef struct ue_mm_context_s {
   // Globally Unique Temporary Identity can be found in emm_nas_context
   //bool                   is_guti_set;                 // is GUTI has been set
   //guti_t                 guti;                        // Globally Unique Temporary Identity. guti.gummei.plmn set by nas_auth_param_req_t
+
+  mm_state_t             mm_state;
 
   // read by S6A UPDATE LOCATION REQUEST
   // was me_identity_t // Mobile Equipment Identity – (e.g. IMEI/IMEISV) Software Version Number not set/read except read by display utility

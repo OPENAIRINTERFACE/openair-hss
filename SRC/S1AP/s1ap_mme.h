@@ -47,6 +47,7 @@ enum s1_ue_state_s {
   S1AP_UE_WAITING_CSR,    ///< Waiting for Initial Context Setup Response
   S1AP_UE_HANDOVER,       ///< Handover procedure triggered
   S1AP_UE_CONNECTED,      ///< UE context ready
+  S1AP_UE_WAITING_CRR,   /// UE Context release Procedure initiated , waiting for UE context Release Complete
 };
 
 /** Main structure representing UE association over s1ap

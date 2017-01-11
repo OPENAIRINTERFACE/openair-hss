@@ -142,12 +142,6 @@ s1ap_mme_thread (
       }
       break;
 
-    // From MME_APP task, silently remove UE context in S1AP when receiving S11_DELETE_SESSION_RESPONSE
-    case MME_APP_DELETE_SESSION_RSP:{
-        s1ap_handle_delete_session_rsp (&MME_APP_DELETE_SESSION_RSP (received_message_p));
-      }
-      break;
-
       // Forwarded from MME_APP layer (origin NAS).
     case NAS_DOWNLINK_DATA_REQ:{
         /*
@@ -614,7 +608,7 @@ s1ap_remove_ue (
       ue_ref->enb_ue_s1ap_id, ue_ref->mme_ue_s1ap_id, enb_ref->enb_id);
   MSC_LOG_EVENT (MSC_S1AP_MME, " Disassociated ue  (enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id:" MME_UE_S1AP_ID_FMT ") from eNB %s", ue_ref->enb_ue_s1ap_id, ue_ref->mme_ue_s1ap_id, enb_ref->enb_name);
   hashtable_ts_free (&enb_ref->ue_coll, ue_ref->enb_ue_s1ap_id);
-  // enb_ref->nb_ue_associated--;
+  enb_ref->nb_ue_associated--;
 }
 
 //------------------------------------------------------------------------------

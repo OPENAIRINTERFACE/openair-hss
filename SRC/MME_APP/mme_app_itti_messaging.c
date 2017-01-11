@@ -59,28 +59,6 @@
 
 
 //------------------------------------------------------------------------------
-int mme_app_notify_s1ap_ue_context_released(const mme_ue_s1ap_id_t   ue_idP)
-{
-  OAILOG_FUNC_IN(LOG_MME_APP);
-  MessageDef                             *message_p = NULL;
-  int                                     rc = RETURNok;
-
-  message_p = itti_alloc_new_message(TASK_MME_APP, MME_APP_DELETE_SESSION_RSP);
-
-  MME_APP_DELETE_SESSION_RSP(message_p).ue_id = ue_idP;
-
-  MSC_LOG_TX_MESSAGE(
-                MSC_MMEAPP_MME,
-                MSC_S1AP_MME,
-                NULL,0,
-                "0 MME_APP_DELETE_SESSION_RSP ue id "MME_UE_S1AP_ID_FMT" ",
-          ue_idP);
-
-  rc = itti_send_msg_to_task(TASK_S1AP, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
-}
-
-//------------------------------------------------------------------------------
 int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id)
 {
   OAILOG_FUNC_IN(LOG_MME_APP);
