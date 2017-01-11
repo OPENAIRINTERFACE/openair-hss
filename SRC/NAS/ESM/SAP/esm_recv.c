@@ -61,6 +61,7 @@
 #include "esm_ebr.h"
 #include "esm_proc.h"
 #include "esm_cause.h"
+#include "mme_config.h"
 
 
 /****************************************************************************/
@@ -274,8 +275,10 @@ esm_recv_pdn_connectivity_request (
      * * * * The MME waits for completion of the ESM information request
      * * * * procedure before proceeding with the PDN connectivity procedure.
      */
-    esm_proc_esm_information_request(emm_context, pti);
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+    if (!mme_config.nas_config.disable_esm_information) {
+      esm_proc_esm_information_request(emm_context, pti);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
+    }
   }
 
 

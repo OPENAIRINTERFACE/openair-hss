@@ -239,9 +239,6 @@ add_boolean_option( LOG_OAI                         False    "Thread safe loggin
 add_boolean_option( LOG_OAI_CLEAN_HARD              False    "Thread safe logging utility option for cleaning inner structs")
 add_boolean_option( SECU_DEBUG                      False    "Traces, option to be removed soon")
 
-add_boolean_option( NAS_FORCE_REJECT_SR             True     "TEMP, TO be disabled for community after development and test: Force the EMM NAS layer to respond to any SR by reject")
-add_boolean_option( NAS_FORCE_REJECT_TAU            True     "TEMP, TO be disabled for community after development and test: Force the EMM NAS layer to respond to any TAU Request by reject")
-
 add_boolean_option( TRACE_3GPP_SPEC                 True     "Log hits of 3GPP specifications requirements")
 add_boolean_option( TRACE_XML                       False     "Log some messages in XML (messages necessary for MME scenario player)")
 

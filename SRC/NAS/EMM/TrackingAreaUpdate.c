@@ -89,7 +89,7 @@
 int emm_proc_tracking_area_update_request (
   const mme_ue_s1ap_id_t ue_id,
   tracking_area_update_request_msg * const msg,
-  emm_cause_t *emm_cause,
+  int *emm_cause,
   const nas_message_decode_status_t  * decode_status);
 
 static int _emm_tracking_area_update (emm_context_t * ctx);
@@ -107,7 +107,7 @@ static int _emm_tracking_area_update_abort (emm_context_t * ctx);
 int emm_proc_tracking_area_update_request (
   const mme_ue_s1ap_id_t ue_id,
   tracking_area_update_request_msg *const msg,
-  emm_cause_t *emm_cause,
+  int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);

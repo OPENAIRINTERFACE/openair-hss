@@ -137,7 +137,6 @@ static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg)
 
   ksi_t eksi = 0;
   if (emm_ctx->_security.eksi !=  KSI_NO_KEY_AVAILABLE) {
-    AssertFatal(0 !=  0, "emm_ctx->_security.eksi %d", emm_ctx->_security.eksi);
     REQUIREMENT_3GPP_24_301(R10_5_4_2_4__2);
     eksi = (emm_ctx->_security.eksi + 1) % (EKSI_MAX_VALUE + 1);
   }

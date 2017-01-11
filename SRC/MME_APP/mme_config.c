@@ -173,7 +173,9 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->nas_config.t3486_sec = T3486_DEFAULT_VALUE;
   config_pP->nas_config.t3489_sec = T3489_DEFAULT_VALUE;
   config_pP->nas_config.t3495_sec = T3495_DEFAULT_VALUE;
-
+  config_pP->nas_config.force_reject_tau = true;
+  config_pP->nas_config.force_reject_sr  = true;
+  config_pP->nas_config.disable_esm_information = false;
 
   /*
    * Set the TAI
@@ -731,6 +733,25 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       if ((config_setting_lookup_int (setting, MME_CONFIG_STRING_NAS_T3495_TIMER, &aint))) {
         config_pP->nas_config.t3495_sec = (uint32_t) aint;
       }
+
+      if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_NAS_FORCE_REJECT_TAU, (const char **)&astring))) {
+        if (strcasecmp (astring, "yes") == 0)
+          config_pP->nas_config.force_reject_tau = true;
+        else
+          config_pP->nas_config.force_reject_tau = false;
+      }
+      if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_NAS_FORCE_REJECT_SR, (const char **)&astring))) {
+        if (strcasecmp (astring, "yes") == 0)
+          config_pP->nas_config.force_reject_sr = true;
+        else
+          config_pP->nas_config.force_reject_sr = false;
+      }
+      if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_NAS_DISABLE_ESM_INFORMATION, (const char **)&astring))) {
+        if (strcasecmp (astring, "yes") == 0)
+          config_pP->nas_config.disable_esm_information = true;
+        else
+          config_pP->nas_config.disable_esm_information = false;
+      }
     }
   }
 
@@ -797,8 +818,6 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_DEBUG (LOG_CONFIG, "Built with LOG_OAI .........................: %d\n", LOG_OAI);
   OAILOG_DEBUG (LOG_CONFIG, "Built with LOG_OAI_CLEAN_HARD ..............: %d\n", LOG_OAI_CLEAN_HARD);
   OAILOG_DEBUG (LOG_CONFIG, "Built with MESSAGE_CHART_GENERATOR .........: %d\n", MESSAGE_CHART_GENERATOR);
-  OAILOG_DEBUG (LOG_CONFIG, "Built with NAS_FORCE_REJECT_SR .............: %d\n", NAS_FORCE_REJECT_SR);
-  OAILOG_DEBUG (LOG_CONFIG, "Built with NAS_FORCE_REJECT_TAU ............: %d\n", NAS_FORCE_REJECT_TAU);
   OAILOG_DEBUG (LOG_CONFIG, "Built with PACKAGE_NAME ....................: %s\n", PACKAGE_NAME);
   OAILOG_DEBUG (LOG_CONFIG, "Built with S1AP_DEBUG_LIST .................: %d\n", S1AP_DEBUG_LIST);
   OAILOG_DEBUG (LOG_CONFIG, "Built with SECU_DEBUG ......................: %d\n", SECU_DEBUG);
@@ -860,6 +879,32 @@ static void mme_config_display (mme_config_t * config_pP)
           config_pP->served_tai.plmn_mcc[j], config_pP->served_tai.plmn_mnc[j], config_pP->served_tai.tac[j]);
     }
   }
+  OAILOG_INFO (LOG_CONFIG, "- NAS:\n");
+  OAILOG_INFO (LOG_CONFIG, "    Prefered Integrity Algorithms .: EIA%d EIA%d EIA%d EIA%d (decreasing priority)\n",
+      config_pP->nas_config.prefered_integrity_algorithm[0],
+      config_pP->nas_config.prefered_integrity_algorithm[1],
+      config_pP->nas_config.prefered_integrity_algorithm[2],
+      config_pP->nas_config.prefered_integrity_algorithm[3]);
+  OAILOG_INFO (LOG_CONFIG, "    Prefered Integrity Algorithms .: EEA%d EEA%d EEA%d EEA%d (decreasing priority)\n",
+      config_pP->nas_config.prefered_ciphering_algorithm[0],
+      config_pP->nas_config.prefered_ciphering_algorithm[1],
+      config_pP->nas_config.prefered_ciphering_algorithm[2],
+      config_pP->nas_config.prefered_ciphering_algorithm[3]);
+  OAILOG_INFO (LOG_CONFIG, "    T3402 ....: %d min\n", config_pP->nas_config.t3402_min);
+  OAILOG_INFO (LOG_CONFIG, "    T3412 ....: %d min\n", config_pP->nas_config.t3412_min);
+  OAILOG_INFO (LOG_CONFIG, "    T3422 ....: %d sec\n", config_pP->nas_config.t3422_sec);
+  OAILOG_INFO (LOG_CONFIG, "    T3450 ....: %d sec\n", config_pP->nas_config.t3450_sec);
+  OAILOG_INFO (LOG_CONFIG, "    T3460 ....: %d sec\n", config_pP->nas_config.t3460_sec);
+  OAILOG_INFO (LOG_CONFIG, "    T3470 ....: %d sec\n", config_pP->nas_config.t3470_sec);
+  OAILOG_INFO (LOG_CONFIG, "    T3485 ....: %d sec\n", config_pP->nas_config.t3485_sec);
+  OAILOG_INFO (LOG_CONFIG, "    T3486 ....: %d sec\n", config_pP->nas_config.t3486_sec);
+  OAILOG_INFO (LOG_CONFIG, "    T3489 ....: %d sec\n", config_pP->nas_config.t3489_sec);
+  OAILOG_INFO (LOG_CONFIG, "    T3470 ....: %d sec\n", config_pP->nas_config.t3470_sec);
+  OAILOG_INFO (LOG_CONFIG, "    T3495 ....: %d sec\n", config_pP->nas_config.t3495_sec);
+  OAILOG_INFO (LOG_CONFIG, "    NAS non standart features .:\n");
+  OAILOG_INFO (LOG_CONFIG, "      Force reject TAU ............: %s\n", (config_pP->nas_config.force_reject_tau) ? "true":"false");
+  OAILOG_INFO (LOG_CONFIG, "      Force reject SR .............: %s\n", (config_pP->nas_config.force_reject_sr) ? "true":"false");
+  OAILOG_INFO (LOG_CONFIG, "      Disable Esm information .....: %s\n", (config_pP->nas_config.disable_esm_information) ? "true":"false");
 
   OAILOG_INFO (LOG_CONFIG, "- S6A:\n");
   OAILOG_INFO (LOG_CONFIG, "    conf file ........: %s\n", bdata(config_pP->s6a_config.conf_file));

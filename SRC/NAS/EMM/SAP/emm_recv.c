@@ -56,6 +56,7 @@
 #include "emm_msgDef.h"
 #include "emm_cause.h"
 #include "emm_proc.h"
+#include "mme_config.h"
 
 
 /****************************************************************************/
@@ -511,7 +512,7 @@ emm_recv_detach_request (
 int
 emm_recv_tracking_area_update_request (
   const mme_ue_s1ap_id_t ue_id,
-  const tracking_area_update_request_msg * msg,
+  tracking_area_update_request_msg * const msg,
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
 {
@@ -524,12 +525,12 @@ emm_recv_tracking_area_update_request (
       (decode_status->mac_matched)?"yes":"no",
       (decode_status->ciphered_message)?"yes":"no");
 
-#if NAS_FORCE_REJECT_TAU
-  // LW: Not completely implemented; send a Received Tracking Area Update Reject to induce a Attach Request from UE!
-  rc = emm_proc_tracking_area_update_reject (ue_id, EMM_CAUSE_IMPLICITLY_DETACHED);
-#else
-  rc = emm_proc_tracking_area_update_request(ue_id, msg, emm_cause, decode_status);
-#endif
+  if (mme_config.nas_config.force_reject_tau) {
+    // LW: Not completely implemented; send a Received Tracking Area Update Reject to induce a Attach Request from UE!
+    rc = emm_proc_tracking_area_update_reject (ue_id, EMM_CAUSE_IMPLICITLY_DETACHED);
+  } else {
+    rc = emm_proc_tracking_area_update_request(ue_id, msg, emm_cause, decode_status);
+  }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -565,14 +566,14 @@ emm_recv_service_request (
       (decode_status->mac_matched)?"yes":"no",
       (decode_status->ciphered_message)?"yes":"no");
 
-#if NAS_FORCE_REJECT_SR | 1
-  /*
-   * Service request procedure not implemented, send a Service Reject to induce a Attach Request from UE!
-   */
-  // EMM causes for triggering an attach in the UE can be "UE identity cannot be derived by the network": EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW,
-  // "Implicitly detached": EMM_CAUSE_IMPLICITLY_DETACHED,
-  rc = emm_proc_service_reject (ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
-#endif
+  if (mme_config.nas_config.force_reject_sr) {
+    /*
+     * Service request procedure not implemented, send a Service Reject to induce a Attach Request from UE!
+     */
+    // EMM causes for triggering an attach in the UE can be "UE identity cannot be derived by the network": EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW,
+    // "Implicitly detached": EMM_CAUSE_IMPLICITLY_DETACHED,
+    rc = emm_proc_service_reject (ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
