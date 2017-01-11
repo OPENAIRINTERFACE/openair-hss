@@ -213,10 +213,6 @@ s11_sgw_handle_release_access_bearers_request (
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_NODE_TYPE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
       gtpv2c_node_type_ie_get, &request_p->originating_node);
 
-  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_EBI, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      gtpv2c_ebi_ie_get_list, &request_p->list_of_rabs);
-  DevAssert (NW_OK == rc);
-
   rc = nwGtpv2cMsgParserRun (pMsgParser, pUlpApi->hMsg, &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
   if (rc != NW_OK) {
