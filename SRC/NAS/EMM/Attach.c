@@ -1468,6 +1468,9 @@ static int _emm_attach_accept (emm_context_t * emm_context)
     OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - nas_msg  src size = %d nas_msg  dst size = %d \n",
         ue_id, blength(attach_data->esm_msg), blength(emm_sap.u.emm_as.u.establish.nas_msg));
 
+    // Send T3402
+    emm_sap.u.emm_as.u.establish.t3402 = &mme_config.nas_config.t3402_min;
+
     REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__2);
     MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     rc = emm_sap_send (&emm_sap);

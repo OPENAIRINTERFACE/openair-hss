@@ -247,6 +247,21 @@ emm_send_attach_accept (
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH, size);
   }
 
+  /*
+   * Optional - T3402
+   */
+  if (msg->t3402) {
+    size += GPRS_TIMER_IE_MAX_LENGTH;
+    emm_msg->presencemask |= ATTACH_ACCEPT_T3402_VALUE_PRESENT;
+    if (mme_config.nas_config.t3402_min <= 31) {
+      emm_msg->t3402value.unit = GPRS_TIMER_UNIT_60S;
+      emm_msg->t3402value.timervalue = mme_config.nas_config.t3402_min;
+    } else  {
+      emm_msg->t3402value.unit = GPRS_TIMER_UNIT_360S;
+      emm_msg->t3402value.timervalue = mme_config.nas_config.t3402_min / 6;
+    }
+  }
+
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
 }
 
