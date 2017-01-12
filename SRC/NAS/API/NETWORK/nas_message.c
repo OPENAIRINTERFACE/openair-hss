@@ -1321,9 +1321,9 @@ static uint32_t _nas_message_get_mac (
       uint32_t                               *mac32;
 
       if (direction == SECU_DIRECTION_UPLINK) {
-        count = 0x00000000 || ((emm_security_context->ul_count.overflow && 0x0000FFFF) << 8) || (emm_security_context->ul_count.seq_num & 0x000000FF);
+        count = 0x00000000 | ((emm_security_context->ul_count.overflow & 0x0000FFFF) << 8) | (emm_security_context->ul_count.seq_num & 0x000000FF);
       } else {
-        count = 0x00000000 || ((emm_security_context->dl_count.overflow && 0x0000FFFF) << 8) || (emm_security_context->dl_count.seq_num & 0x000000FF);
+        count = 0x00000000 | ((emm_security_context->dl_count.overflow & 0x0000FFFF) << 8) | (emm_security_context->dl_count.seq_num & 0x000000FF);
       }
 
       OAILOG_DEBUG (LOG_NAS,
@@ -1355,9 +1355,11 @@ static uint32_t _nas_message_get_mac (
       uint32_t                               *mac32;
 
       if (direction == SECU_DIRECTION_UPLINK) {
-        count = 0x00000000 || ((emm_security_context->ul_count.overflow && 0x0000FFFF) << 8) || (emm_security_context->ul_count.seq_num & 0x000000FF);
+        count = 0x00000000 | ((emm_security_context->ul_count.overflow & 0x0000FFFF) << 8) |
+            (emm_security_context->ul_count.seq_num & 0x000000FF);
       } else {
-        count = 0x00000000 || ((emm_security_context->dl_count.overflow && 0x0000FFFF) << 8) || (emm_security_context->dl_count.seq_num & 0x000000FF);
+        count = 0x00000000 | ((emm_security_context->dl_count.overflow & 0x0000FFFF) << 8) |
+            (emm_security_context->dl_count.seq_num & 0x000000FF);
       }
 
       OAILOG_DEBUG (LOG_NAS,
