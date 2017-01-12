@@ -734,19 +734,19 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         config_pP->nas_config.t3495_sec = (uint32_t) aint;
       }
 
-      if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_NAS_FORCE_REJECT_TAU, (const char **)&astring))) {
+      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_FORCE_REJECT_TAU, (const char **)&astring))) {
         if (strcasecmp (astring, "yes") == 0)
           config_pP->nas_config.force_reject_tau = true;
         else
           config_pP->nas_config.force_reject_tau = false;
       }
-      if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_NAS_FORCE_REJECT_SR, (const char **)&astring))) {
+      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_FORCE_REJECT_SR, (const char **)&astring))) {
         if (strcasecmp (astring, "yes") == 0)
           config_pP->nas_config.force_reject_sr = true;
         else
           config_pP->nas_config.force_reject_sr = false;
       }
-      if ((config_setting_lookup_string (setting_mme, MME_CONFIG_STRING_NAS_DISABLE_ESM_INFORMATION, (const char **)&astring))) {
+      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_DISABLE_ESM_INFORMATION, (const char **)&astring))) {
         if (strcasecmp (astring, "yes") == 0)
           config_pP->nas_config.disable_esm_information = true;
         else
