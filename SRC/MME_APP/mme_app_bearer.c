@@ -986,6 +986,6 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
 // See 3GPP TS 23.401 version 10.13.0 Release 10: 5.4.4.2 MME Initiated Dedicated Bearer Deactivation
 void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_mm_context_t * const ue_context, const pdn_cid_t cid)
 {
-  AssertFatal (0 , "TODO");
+  OAILOG_DEBUG (LOG_MME_APP, "TODO \n");
 }
 
