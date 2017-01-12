@@ -26,7 +26,6 @@
 
 
 
-#define S1AP_UE_RADIOCAPABILITY_MAX_SIZE 400
 
 /** \brief Handle decoded incoming messages from SCTP
  * \param assoc_id SCTP association ID

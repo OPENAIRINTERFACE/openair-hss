@@ -51,10 +51,12 @@ typedef struct s1ap_initial_ue_message_s {
   ecgi_t                e_utran_cgi;
 } s1ap_initial_ue_message_t;
 
+#define S1AP_UE_RADIOCAPABILITY_MAX_SIZE 1000
+
 typedef struct itti_s1ap_ue_cap_ind_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
-  uint8_t           radio_capabilities[512];
+  uint8_t           radio_capabilities[S1AP_UE_RADIOCAPABILITY_MAX_SIZE];
   size_t            radio_capabilities_length;
 } itti_s1ap_ue_cap_ind_t;
 
