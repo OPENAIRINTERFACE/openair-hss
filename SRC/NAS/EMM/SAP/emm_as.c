@@ -1569,12 +1569,10 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
   if (emm_msg )
     switch (msg->nas_info) {
     case EMM_AS_NAS_INFO_ATTACH:
-      OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg->slen);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       size = emm_send_attach_accept (msg, &emm_msg->attach_accept);
       break;
     case EMM_AS_NAS_INFO_TAU:
-      OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg->slen);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TAU_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
       size = emm_send_tracking_area_update_accept (msg, &emm_msg->tracking_area_update_accept);
       break;
