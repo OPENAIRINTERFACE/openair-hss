@@ -54,6 +54,7 @@
 #include "dynamic_memory_check.h"
 #include "mme_scenario_player.h"
 #include "common_defs.h"
+#include "secu_defs.h"
 #include "xml_msg_tags.h"
 #include "xml_msg_load_itti.h"
 #include "itti_free_defined_msg.h"
@@ -87,7 +88,30 @@ xmlChar * msp_get_attr_file (xmlDocPtr doc, xmlNodePtr cur)
   OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not get attr %s from node %s\n", FILE_ATTR_XML_STR, cur->name);
   return NULL;
 }
-
+//------------------------------------------------------------------------------
+usim_data_t * msp_get_usim_data(scenario_t * const scenario)
+{
+  scenario_t * scenario_p = scenario;
+  while (scenario_p) {
+    if (scenario_p->usim_data) {
+        return scenario_p->usim_data;
+    }
+    scenario_p = scenario_p->parent;
+  }
+  return NULL;
+}
+//------------------------------------------------------------------------------
+emm_security_context_t * msp_get_ue_emulated_emm_security_context(scenario_t * const scenario)
+{
+  scenario_t * scenario_p = scenario;
+  while (scenario_p) {
+    if (scenario_p->ue_emulated_emm_security_context) {
+        return scenario_p->ue_emulated_emm_security_context;
+    }
+    scenario_p = scenario_p->parent;
+  }
+  return NULL;
+}
 //------------------------------------------------------------------------------
 scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node, bstring scenario_file_path)
 {
@@ -463,6 +487,11 @@ scenario_player_item_t* msp_load_sleep (scenario_t * const scenario, xmlDocPtr c
 int msp_load_usim_data (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node)
 {
 
+  if (scenario->usim_data) {
+    memset((void*)scenario->usim_data, 0, sizeof(usim_data_t));
+  } else {
+    scenario->usim_data = calloc(1, sizeof(usim_data_t));
+  }
   xmlChar *attr = xmlGetProp(node, (const xmlChar *)LTE_K_ATTR_XML_STR);
   if (attr) {
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s\n", LTE_K_ATTR_XML_STR, attr);
@@ -472,7 +501,7 @@ int msp_load_usim_data (scenario_t * const scenario, xmlDocPtr const xml_doc, xm
     int ret = ascii_to_hex ((uint8_t *) hex, (const char *)value);
     AssertFatal(ret, "Could not convert hex stream value");
     AssertFatal(len == 2*USIM_LTE_K_SIZE, "Could not convert hex stream value");
-    memcpy(scenario->usim_data.lte_k, hex, USIM_LTE_K_SIZE);
+    memcpy(scenario->usim_data->lte_k, hex, USIM_LTE_K_SIZE);
     xmlFree(attr);
   } else {
     AssertFatal(0, "Could not find %s", LTE_K_ATTR_XML_STR);
@@ -485,16 +514,22 @@ int msp_load_usim_data (scenario_t * const scenario, xmlDocPtr const xml_doc, xm
     int ret = sscanf((const char*)attr, "%"SCNx64, &sqn_ms);
     AssertFatal( ret == 1, "Failed to load %s value %s", SQN_MS_ATTR_XML_STR, attr);
     AssertFatal(0x0000FFFFFFFFFFFF > sqn_ms, "SQN Bad value %"PRIx64" ", sqn_ms);
-    scenario->usim_data.sqn_ms[0] = (sqn_ms >> 5) & 0x00000000000000FF;
-    scenario->usim_data.sqn_ms[1] = (sqn_ms >> 4) & 0x00000000000000FF;
-    scenario->usim_data.sqn_ms[2] = (sqn_ms >> 3) & 0x00000000000000FF;
-    scenario->usim_data.sqn_ms[3] = (sqn_ms >> 2) & 0x00000000000000FF;
-    scenario->usim_data.sqn_ms[4] = (sqn_ms >> 1) & 0x00000000000000FF;
-    scenario->usim_data.sqn_ms[5] =  sqn_ms       & 0x00000000000000FF;
+    scenario->usim_data->sqn_ms[0] = (sqn_ms >> 5) & 0x00000000000000FF;
+    scenario->usim_data->sqn_ms[1] = (sqn_ms >> 4) & 0x00000000000000FF;
+    scenario->usim_data->sqn_ms[2] = (sqn_ms >> 3) & 0x00000000000000FF;
+    scenario->usim_data->sqn_ms[3] = (sqn_ms >> 2) & 0x00000000000000FF;
+    scenario->usim_data->sqn_ms[4] = (sqn_ms >> 1) & 0x00000000000000FF;
+    scenario->usim_data->sqn_ms[5] =  sqn_ms       & 0x00000000000000FF;
     xmlFree(attr);
   } else {
     AssertFatal(0, "Could not find %s", SQN_MS_ATTR_XML_STR);
   }
+
+  // ue_emulated_emm_security_context allocated in the same scenario as usim_data
+  scenario->ue_emulated_emm_security_context = calloc(1, sizeof(emm_security_context_t));
+  scenario->ue_emulated_emm_security_context->direction_encode = SECU_DIRECTION_UPLINK;
+  scenario->ue_emulated_emm_security_context->direction_decode = SECU_DIRECTION_DOWNLINK;
+
 
   return RETURNok;
 }
@@ -640,17 +675,21 @@ scenario_player_item_t* msp_load_jcond (scenario_t * const scenario, xmlDocPtr c
 {
   scenario_player_item_t * spi = calloc(1, sizeof(*spi));
   spi->item_type = SCENARIO_PLAYER_ITEM_JUMP_COND;
+  // get a UID
+  spi->uid = msp_get_seq_uid();
+
   xmlChar *attr = xmlGetProp(node, (const xmlChar *)VAR_NAME_ATTR_XML_STR);
   void                                   *uid = NULL;
   if (attr) {
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s uid=%u\n", VAR_NAME_ATTR_XML_STR, attr, spi->uid);
-    hashtable_rc_t rc = obj_hashtable_ts_get (scenario->var_items, (const void *)attr, xmlStrlen(attr), (void **)&uid);
-    AssertFatal(HASH_TABLE_OK == rc, "Error in getting var %s in hashtable", attr);
+
+    scenario_player_item_t * spi_var = sp_get_var(scenario, (unsigned char *)attr);
+    AssertFatal(spi_var, "var %s not found", attr);
     xmlFree(attr);
+    spi->u.cond.var_uid = (int)(uintptr_t)spi_var->uid;
   } else {
     AssertFatal(0, "Could not find var_name");
   }
-  spi->u.cond.var_uid = (int)(uintptr_t)uid;
 
   attr = xmlGetProp(node, (const xmlChar *)COND_ATTR_XML_STR);
   if (attr) {
@@ -681,12 +720,17 @@ scenario_player_item_t* msp_load_jcond (scenario_t * const scenario, xmlDocPtr c
   if (attr) {
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s=%s uid=%u\n", LABEL_ATTR_XML_STR, attr, spi->uid);
     hashtable_rc_t rc = obj_hashtable_ts_get (scenario->label_items, (const void *)attr, xmlStrlen(attr), (void **)&uid);
-    AssertFatal(HASH_TABLE_OK == rc, "Error in getting label %s in hashtable", attr);
+    // may be jump forward label (defined lines after the jump condition)
+    if (HASH_TABLE_OK != rc) {
+      spi->u.cond.jump_label_uid = -1;
+    } else {
+      spi->u.cond.jump_label_uid = (int)(uintptr_t)uid;
+    }
+    spi->u.cond.jump_label = bfromcstr((const char *)attr);
     xmlFree(attr);
   } else {
     AssertFatal(0, "Could not find %s", LABEL_ATTR_XML_STR);
   }
-  spi->u.cond.jump_label_uid = (int)(uintptr_t)uid;
 
   attr = xmlGetProp(node, (const xmlChar *)VALUE_ATTR_XML_STR);
   uid = NULL;
@@ -1007,6 +1051,7 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
         } else {
           scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
           OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s %s\n", MESSAGE_FILE_NODE_XML_STR, bdata(file_path));
+          AssertFatal(0, "Prefer Stop here");
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)EXIT_ATTR_XML_STR))) {
         if ((scenario_player_item = msp_load_exit(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
@@ -1129,6 +1174,10 @@ void msp_free_scenario_player_item (scenario_player_item_t * item)
       bdestroy_wrapper (&item->u.label);
       break;
 
+    case SCENARIO_PLAYER_ITEM_JUMP_COND:
+      bdestroy_wrapper (&item->u.cond.jump_label);
+      break;
+
     case SCENARIO_PLAYER_ITEM_VAR:
       if ((VAR_VALUE_TYPE_HEX_STREAM == item->u.set_var.value_type) || (VAR_VALUE_TYPE_ASCII_STREAM == item->u.set_var.value_type)) {
         bdestroy_wrapper(&item->u.var.value.value_bstr);
@@ -1147,7 +1196,6 @@ void msp_free_scenario_player_item (scenario_player_item_t * item)
     case SCENARIO_PLAYER_ITEM_SLEEP:
     case SCENARIO_PLAYER_ITEM_VAR_INCR:
     case SCENARIO_PLAYER_ITEM_VAR_DECR:
-    case SCENARIO_PLAYER_ITEM_JUMP_COND:
     case SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER:
     case SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER:
     case SCENARIO_PLAYER_ITEM_UPDATE_EMM_SECURITY_CONTEXT:
@@ -1166,6 +1214,9 @@ void msp_free_scenario (scenario_t * scenario)
   if (scenario) {
     OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Freeing scenario %s\n", bdata(scenario->name));
     pthread_mutex_lock(&scenario->lock);
+    if (scenario->usim_data) {
+      free_wrapper((void**)scenario->usim_data);
+    }
     scenario_player_item_t *item = scenario->head_item;
     while (item) {
       scenario_player_item_t *last_item = item;
@@ -1177,8 +1228,9 @@ void msp_free_scenario (scenario_t * scenario)
     hashtable_ts_destroy(scenario->scenario_items);
     obj_hashtable_ts_destroy(scenario->var_items);
     obj_hashtable_ts_destroy(scenario->label_items);
-    free_wrapper((void**)&scenario->ue_emulated_emm_security_context);
-
+    if (scenario->ue_emulated_emm_security_context) {
+      free_wrapper((void**)&scenario->ue_emulated_emm_security_context);
+    }
     pthread_mutex_unlock(&scenario->lock);
     pthread_mutex_destroy(&scenario->lock);
     free_wrapper((void**)&scenario);

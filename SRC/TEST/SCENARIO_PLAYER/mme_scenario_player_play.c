@@ -101,6 +101,8 @@ static void msp_clear_processed_flags(scenario_t * const scenario)
       item->u.msg.timer_id = 0;
       item->u.msg.timer_arg.item = NULL;
       item->u.msg.timer_arg.scenario = NULL;
+    } else if (SCENARIO_PLAYER_ITEM_SCENARIO == item->item_type) {
+      msp_clear_processed_flags(item->u.scenario);
     }
     item = item->next_item;
   }
@@ -540,14 +542,11 @@ bool msp_play_sleep(scenario_t * const scenario, scenario_player_item_t * const 
 // return true if we can continue playing the scenario
 bool msp_play_jump_cond(scenario_t * const scenario, scenario_player_item_t * const item)
 {
-  scenario_player_item_t * ref = NULL;
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item jump cond  UID %u\n", item->uid);
   // find the relative item
-  hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
-      (hash_key_t)item->u.cond.var_uid, (void **)&ref);
+  scenario_player_item_t * ref = sp_get_var_by_uid(scenario, item->u.cond.var_uid);
+  AssertFatal ((ref), "Could not find var item UID %d", item->u.cond.var_uid);
 
-  AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find var item UID %d", item->u.cond.var_uid);
-  AssertFatal (SCENARIO_PLAYER_ITEM_VAR == ref->item_type, "Bad type var item UID %d", ref->item_type);
   bool test = false;
   switch (item->u.cond.test_operator) {
   case TEST_EQ:
@@ -572,9 +571,17 @@ bool msp_play_jump_cond(scenario_t * const scenario, scenario_player_item_t * co
     AssertFatal(0, "TEST unknown");
   }
   if (test) {
+    hashtable_rc_t hrc;
+    // may be jump forward label (defined lines after the jump condition)
+    if (-1 == item->u.cond.jump_label_uid) {
+      void                                   *uid = NULL;
+      hrc = obj_hashtable_ts_get (scenario->label_items, (const void *)bdata(item->u.cond.jump_label), blength(item->u.cond.jump_label), (void **)&uid);
+      AssertFatal ((HASH_TABLE_OK == hrc), "Could not find (supposed) forward label item %s", bdata(item->u.cond.jump_label));
+      item->u.cond.jump_label_uid = (int)(uintptr_t)uid;
+    }
+
     // jump
-    hrc = hashtable_ts_get (scenario->scenario_items,
-        (hash_key_t)item->u.cond.jump_label_uid, (void **)&ref);
+    hrc = hashtable_ts_get (scenario->scenario_items, (hash_key_t)item->u.cond.jump_label_uid, (void **)&ref);
     AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find var item UID %d", item->u.cond.jump_label_uid);
     AssertFatal (SCENARIO_PLAYER_ITEM_LABEL == ref->item_type, "Bad type var item UID %d", ref->item_type);
     scenario->last_played_item = ref;
@@ -615,31 +622,32 @@ bool msp_play_compute_authentication_response_parameter(scenario_t * const scena
   AssertFatal ((var_selected_plmn), "Could not find var SELECTED_PLMN");
   AssertFatal (3 == blength(var_selected_plmn->u.var.value.value_bstr), "Bad PLMN hex stream");
 
-  memcpy(scenario->usim_data.autn, var_autn->u.var.value.value_bstr->data, USIM_AUTN_SIZE);
-  memcpy(scenario->usim_data.rand, var_rand->u.var.value.value_bstr->data, USIM_RAND_SIZE);
-  memset(scenario->usim_data.res, 0, USIM_RES_SIZE);
-  memcpy(&scenario->usim_data.selected_plmn, var_selected_plmn->u.var.value.value_bstr->data, min(blength(var_selected_plmn->u.var.value.value_bstr), 3));
+  usim_data_t * usim_data = msp_get_usim_data(scenario) ;
+  memcpy(usim_data->autn, var_autn->u.var.value.value_bstr->data, USIM_AUTN_SIZE);
+  memcpy(usim_data->rand, var_rand->u.var.value.value_bstr->data, USIM_RAND_SIZE);
+  memset(usim_data->res, 0, USIM_RES_SIZE);
+  memcpy(&usim_data->selected_plmn, var_selected_plmn->u.var.value.value_bstr->data, min(blength(var_selected_plmn->u.var.value.value_bstr), 3));
 
-  int rc = usim_authenticate(&scenario->usim_data,
-      scenario->usim_data.rand,
-      scenario->usim_data.autn,
-      scenario->usim_data.auts,
-      scenario->usim_data.res,
-      scenario->usim_data.ck,
-      scenario->usim_data.ik);
+  int rc = usim_authenticate(usim_data,
+      usim_data->rand,
+      usim_data->autn,
+      usim_data->auts,
+      usim_data->res,
+      usim_data->ck,
+      usim_data->ik);
 
   item->is_played = true;
 
   if (RETURNok == rc) {
 
-    rc = usim_generate_kasme(scenario->usim_data.autn,
-        scenario->usim_data.ck,
-        scenario->usim_data.ik,
-        &scenario->usim_data.selected_plmn,
-        scenario->usim_data.kasme);
+    rc = usim_generate_kasme(usim_data->autn,
+        usim_data->ck,
+        usim_data->ik,
+        &usim_data->selected_plmn,
+        usim_data->kasme);
 
     bdestroy_wrapper(&var_auth_param->u.var.value.value_bstr);
-    var_auth_param->u.var.value.value_bstr = blk2bstr(scenario->usim_data.res, 8);
+    var_auth_param->u.var.value.value_bstr = blk2bstr(usim_data->res, 8);
     scenario->last_played_item = item;
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "msp_play_compute_authentication_response_parameter succeeded\n");
     return true;
@@ -674,18 +682,19 @@ bool msp_play_compute_authentication_sync_failure_parameter(scenario_t * const s
   AssertFatal ((var_selected_plmn), "Could not find var SELECTED_PLMN");
   AssertFatal (3 == blength(var_selected_plmn->u.var.value.value_bstr), "Bad PLMN hex stream");
 
-  memcpy(scenario->usim_data.autn, var_autn->u.var.value.value_bstr->data, USIM_AUTN_SIZE);
-  memcpy(scenario->usim_data.rand, var_rand->u.var.value.value_bstr->data, USIM_RAND_SIZE);
-  memset(scenario->usim_data.res, 0, USIM_RES_SIZE);
-  memcpy(&scenario->usim_data.selected_plmn, var_selected_plmn->u.var.value.value_bstr->data, min(blength(var_selected_plmn->u.var.value.value_bstr), 3));
+  usim_data_t * usim_data = msp_get_usim_data(scenario) ;
+  memcpy(usim_data->autn, var_autn->u.var.value.value_bstr->data, USIM_AUTN_SIZE);
+  memcpy(usim_data->rand, var_rand->u.var.value.value_bstr->data, USIM_RAND_SIZE);
+  memset(usim_data->res, 0, USIM_RES_SIZE);
+  memcpy(&usim_data->selected_plmn, var_selected_plmn->u.var.value.value_bstr->data, min(blength(var_selected_plmn->u.var.value.value_bstr), 3));
 
-  int rc = usim_authenticate_and_generate_sync_failure(&scenario->usim_data,
-      scenario->usim_data.rand,
-      scenario->usim_data.autn,
-      scenario->usim_data.auts,
-      scenario->usim_data.res,
-      scenario->usim_data.ck,
-      scenario->usim_data.ik);
+  int rc = usim_authenticate_and_generate_sync_failure(usim_data,
+      usim_data->rand,
+      usim_data->autn,
+      usim_data->auts,
+      usim_data->res,
+      usim_data->ck,
+      usim_data->ik);
 
   item->is_played = true;
   scenario->last_played_item = item;
@@ -693,7 +702,7 @@ bool msp_play_compute_authentication_sync_failure_parameter(scenario_t * const s
   if (RETURNerror == rc) {
 
     bdestroy_wrapper(&var_auth_param->u.var.value.value_bstr);
-    var_auth_param->u.var.value.value_bstr = blk2bstr(scenario->usim_data.auts, USIM_SQNMS_SIZE + USIM_XMAC_SIZE);
+    var_auth_param->u.var.value.value_bstr = blk2bstr(usim_data->auts, USIM_SQNMS_SIZE + USIM_XMAC_SIZE);
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "msp_play_compute_authentication_sync_failure_parameter succeeded\n");
     return true;
   } else {
@@ -709,6 +718,8 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
   bool                             update = false;
   scenario_player_update_emm_sc_t *update_emm_sc = &item->u.updata_emm_sc;
 
+  emm_security_context_t * ue_emulated_emm_security_context = msp_get_ue_emulated_emm_security_context(scenario);
+
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item update emm security context UID %u\n", item->uid);
   if (update_emm_sc->is_seea_present) {
     if (update_emm_sc->is_seea_a_uid) {
@@ -716,12 +727,12 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
       AssertFatal((var), "Error in getting var uid %d", update_emm_sc->seea.uid);
       AssertFatal(SCENARIO_PLAYER_ITEM_VAR == var->item_type, "Error uid %d ref is not a var: %d", update_emm_sc->seea.uid, var->item_type);
       AssertFatal(VAR_VALUE_TYPE_INT64 == var->u.var.value_type, "Error var %s type %d is not VAR_VALUE_TYPE_INT64", bdata(var->u.var.name), var->u.var.value_type);
-      scenario->ue_emulated_emm_security_context->selected_algorithms.encryption = (uint8_t)var->u.var.value.value_u64;
+      ue_emulated_emm_security_context->selected_algorithms.encryption = (uint8_t)var->u.var.value.value_u64;
     } else {
-      scenario->ue_emulated_emm_security_context->selected_algorithms.encryption = update_emm_sc->seea.value_u8;
+      ue_emulated_emm_security_context->selected_algorithms.encryption = update_emm_sc->seea.value_u8;
     }
     update = true;
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context SEEA 0x%x\n", scenario->ue_emulated_emm_security_context->selected_algorithms.encryption);
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context SEEA 0x%x\n", ue_emulated_emm_security_context->selected_algorithms.encryption);
   }
 
   if (update_emm_sc->is_seia_present) {
@@ -730,12 +741,12 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
       AssertFatal((var), "Error in getting var uid %d", update_emm_sc->seia.uid);
       AssertFatal(SCENARIO_PLAYER_ITEM_VAR == var->item_type, "Error uid %d ref is not a var: %d", update_emm_sc->seia.uid, var->item_type);
       AssertFatal(VAR_VALUE_TYPE_INT64 == var->u.var.value_type, "Error var %s type %d is not VAR_VALUE_TYPE_INT64", bdata(var->u.var.name), var->u.var.value_type);
-      scenario->ue_emulated_emm_security_context->selected_algorithms.integrity = (uint8_t)var->u.var.value.value_u64;
+      ue_emulated_emm_security_context->selected_algorithms.integrity = (uint8_t)var->u.var.value.value_u64;
     } else {
-      scenario->ue_emulated_emm_security_context->selected_algorithms.integrity = update_emm_sc->seia.value_u8;
+      ue_emulated_emm_security_context->selected_algorithms.integrity = update_emm_sc->seia.value_u8;
     }
     update = true;
-    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context SEIA 0x%x\n", scenario->ue_emulated_emm_security_context->selected_algorithms.integrity);
+    OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context SEIA 0x%x\n", ue_emulated_emm_security_context->selected_algorithms.integrity);
   }
 
   if (update_emm_sc->is_ul_count_present) {
@@ -750,21 +761,22 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
     } else {
       ul_count = update_emm_sc->ul_count.value_u32;
     }
-    scenario->ue_emulated_emm_security_context->ul_count.seq_num  = (uint8_t)ul_count;
-    scenario->ue_emulated_emm_security_context->ul_count.overflow = (uint16_t)((ul_count >> 8) & 0xFFFF);
-    scenario->ue_emulated_emm_security_context->ul_count.spare    = (uint8_t)(ul_count >> 24);
+    ue_emulated_emm_security_context->ul_count.seq_num  = (uint8_t)ul_count;
+    ue_emulated_emm_security_context->ul_count.overflow = (uint16_t)((ul_count >> 8) & 0xFFFF);
+    ue_emulated_emm_security_context->ul_count.spare    = (uint8_t)(ul_count >> 24);
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Set UE security context UL count 0x%x\n", ul_count);
   }
   if (update) {
+    usim_data_t * usim_data = msp_get_usim_data(scenario) ;
     derive_key_nas (NAS_INT_ALG,
-        scenario->ue_emulated_emm_security_context->selected_algorithms.integrity,
-        scenario->usim_data.kasme,
-        scenario->ue_emulated_emm_security_context->knas_int);
+        ue_emulated_emm_security_context->selected_algorithms.integrity,
+        usim_data->kasme,
+        ue_emulated_emm_security_context->knas_int);
 
     derive_key_nas (NAS_ENC_ALG,
-        scenario->ue_emulated_emm_security_context->selected_algorithms.encryption,
-        scenario->usim_data.kasme,
-        scenario->ue_emulated_emm_security_context->knas_enc);
+        ue_emulated_emm_security_context->selected_algorithms.encryption,
+        usim_data->kasme,
+        ue_emulated_emm_security_context->knas_enc);
   }
   scenario->last_played_item = item;
   return true;
@@ -781,9 +793,6 @@ void msp_init_scenario(scenario_t * const s)
     s->scenario_items = hashtable_ts_create (128, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func /* items are also stored in a list, so do not free them in the hashtable*/, NULL);
     s->var_items      = obj_hashtable_ts_create (32, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
     s->label_items    = obj_hashtable_ts_create (8, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
-    s->ue_emulated_emm_security_context = calloc(1, sizeof(emm_security_context_t));
-    s->ue_emulated_emm_security_context->direction_encode = SECU_DIRECTION_UPLINK;
-    s->ue_emulated_emm_security_context->direction_decode = SECU_DIRECTION_DOWNLINK;
     scenario_set_status(s, SCENARIO_STATUS_NULL, __FILE__, __LINE__);
     s->num_timers    = 0;
   }
@@ -851,6 +860,8 @@ void msp_run_scenario(scenario_t * const scenario)
 {
   if (scenario) {
     pthread_mutex_lock(&scenario->lock);
+    msp_clear_processed_flags(scenario);
+
     g_msp_scenarios.current_scenario = scenario;
     scenario_player_item_t *item = NULL;
 

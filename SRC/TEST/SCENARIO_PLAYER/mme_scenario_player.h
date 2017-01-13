@@ -135,8 +135,9 @@ typedef struct scenario_player_cond_s {
   // specified
   int              var_uid;
   uint64_t         var_test_value;
-  test_operator_t   test_operator;
+  test_operator_t  test_operator;
   int              jump_label_uid;
+  bstring          jump_label;
 } scenario_player_cond_t;
 
 typedef struct scenario_player_sleep_s {
@@ -221,7 +222,7 @@ typedef struct scenario_s {
   obj_hash_table_t           *label_items;
   scenario_player_item_t     *last_played_item;
   emm_security_context_t     *ue_emulated_emm_security_context;
-  usim_data_t                 usim_data;
+  usim_data_t                *usim_data;
 } scenario_t;
 
 typedef struct scenario_player_s {
@@ -234,7 +235,8 @@ typedef struct scenario_player_s {
 
 
 
-
+usim_data_t * msp_get_usim_data(scenario_t * const scenario);
+emm_security_context_t * msp_get_ue_emulated_emm_security_context(scenario_t * const scenario);
 int msp_load_usim_data (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t *msp_load_update_emm_security_context (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);

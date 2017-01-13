@@ -371,6 +371,10 @@ int xml_msg_load_itti_s1ap_ue_context_release_req(scenario_t * const scenario, s
       if (res) {
         res = sp_mme_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_ue_context_release_req.mme_ue_s1ap_id);
       }
+
+      if (res) {
+        res = s1ap_cause_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_ue_context_release_req.cause);
+      }
     } else {
       res = false;
     }
@@ -437,6 +441,10 @@ int xml_msg_load_itti_s1ap_ue_context_release_command(scenario_t * const scenari
 
       if (res) {
         res = sp_mme_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_ue_context_release_command.mme_ue_s1ap_id);
+      }
+
+      if (res) {
+        res = s1ap_cause_from_xml(msg->xml_doc, msg->xpath_ctx, &msg->itti_msg->ittiMsg.s1ap_ue_context_release_command.cause);
       }
     } else {
       res = false;
