@@ -61,7 +61,7 @@ void mme_app_handle_detach_req (const itti_nas_detach_req_t * const detach_req_p
 
 void mme_app_handle_conn_est_cnf             (const itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP);
 
-void mme_app_handle_initial_ue_message       (const itti_mme_app_initial_ue_message_t * const conn_est_ind_pP);
+void mme_app_handle_initial_ue_message       (itti_mme_app_initial_ue_message_t * const conn_est_ind_pP);
 
 int mme_app_handle_create_sess_resp          (itti_s11_create_session_response_t * const create_sess_resp_pP); //not const because we need to free internal stucts
 

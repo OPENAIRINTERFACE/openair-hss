@@ -514,8 +514,6 @@ s1ap_new_ue (
   DevAssert (ue_ref != NULL);
   ue_ref->enb = enb_ref;
   ue_ref->enb_ue_s1ap_id = enb_ue_s1ap_id;
-  // Increment number of UE
-  enb_ref->nb_ue_associated++;
 
   hashtable_rc_t  hashrc = hashtable_ts_insert (&enb_ref->ue_coll, (const hash_key_t) enb_ue_s1ap_id, (void *)ue_ref);
   if (HASH_TABLE_OK != hashrc) {
@@ -523,6 +521,8 @@ s1ap_new_ue (
     free_wrapper(ue_ref);
     return NULL;
   }
+  // Increment number of UE
+  enb_ref->nb_ue_associated++;
   return ue_ref;
 }
 

@@ -312,7 +312,7 @@ int nas_message_decrypt (
       status->mac_matched = 1;
       OAILOG_DEBUG (LOG_NAS, "Integrity: MAC Success\n");
     } else {
-      OAILOG_DEBUG (LOG_NAS,
+      OAILOG_CRITICAL (LOG_NAS,
                  "MAC Failure MSG:%08X(%u) <> INT ALGO:%08X(%u) Type of security context %u\n",
                  header->message_authentication_code, header->message_authentication_code, mac, mac, (emm_security_context ) ? emm_security_context->sc_type: 0);
       // LG: Do not return now (out of spec but we need that with only one MME)

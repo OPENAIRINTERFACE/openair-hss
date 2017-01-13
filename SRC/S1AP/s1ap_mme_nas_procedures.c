@@ -69,7 +69,7 @@ s1ap_mme_handle_initial_ue_message (
           s1ap_direction2String[message->direction], assoc_id, stream, (enb_ue_s1ap_id_t)initialUEMessage_p->eNB_UE_S1AP_ID);
 
   if ((eNB_ref = s1ap_is_enb_assoc_id_in_list (assoc_id)) == NULL) {
-    OAILOG_WARNING (LOG_S1AP, "Unknown eNB on assoc_id %d\n", assoc_id);
+    OAILOG_ERROR (LOG_S1AP, "Unknown eNB on assoc_id %d\n", assoc_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
   // eNB UE S1AP ID is limited to 24 bits
@@ -92,6 +92,7 @@ s1ap_mme_handle_initial_ue_message (
      */
     if ((ue_ref = s1ap_new_ue (assoc_id, enb_ue_s1ap_id)) == NULL) {
       // If we failed to allocate a new UE return -1
+      OAILOG_ERROR (LOG_S1AP, "S1AP:Initial UE Message- Failed to allocate S1AP UE Context, eNBUeS1APId:" ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
       OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
     }
 
@@ -110,28 +111,15 @@ s1ap_mme_handle_initial_ue_message (
      * If the next sctp stream is >= instream negociated between eNB and MME, wrap to first stream.
      * TODO: search for the first available stream instead.
      */
+
+    /* 
+     * TODO task#15456359.
+     * Below logic seems to be incorrect , revisit it.
+     */
     ue_ref->enb->next_sctp_stream += 1;
     if (ue_ref->enb->next_sctp_stream >= ue_ref->enb->instreams) {
       ue_ref->enb->next_sctp_stream = 1;
     }
-
-    /*
-     * Increment the unique UE mme s1ap id and
-     * * * * take care about overflow case.
-     */
-//    if (mme_ue_s1ap_id_has_wrapped == false) {
-//      mme_ue_s1ap_id++;
-//
-//      if (mme_ue_s1ap_id == 0) {
-//        mme_ue_s1ap_id_has_wrapped = true;
-//      }
-//    } else {
-//      /*
-//       * TODO: should take the first available mme_ue_s1ap_id instead of
-//       * * * * the mme_ue_s1ap_id variable.
-//       */
-//      DevMessage ("mme ue s1ap id has wrapped -> case not handled\n");
-//    }
 
     s1ap_dump_enb (ue_ref->enb);
     // TAI mandatory IE

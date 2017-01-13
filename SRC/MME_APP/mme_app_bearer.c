@@ -39,7 +39,11 @@
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mme_app_itti_messaging.h"
+#include "mme_config.h"
+#include "emmData.h"
 
+//----------------------------------------------------------------------------
+static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t * const s_tmsi_p,  guti_t * const guti_p);
 
 //------------------------------------------------------------------------------
 int
@@ -395,63 +399,72 @@ mme_app_handle_conn_est_cnf (
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
-
-
 // sent by S1AP
 //------------------------------------------------------------------------------
 void
 mme_app_handle_initial_ue_message (
-  const itti_mme_app_initial_ue_message_t * const initial_pP)
+  itti_mme_app_initial_ue_message_t * const initial_pP)
 {
   struct ue_context_s                    *ue_context_p = NULL;
   MessageDef                             *message_p = NULL;
-
+  bool                                    is_guti_valid = false;
+  emm_data_context_t                     *ue_nas_ctx = NULL;
+  enb_s1ap_id_key_t                       enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
   OAILOG_FUNC_IN (LOG_MME_APP);
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP\n");
-  if (INVALID_MME_UE_S1AP_ID != initial_pP->mme_ue_s1ap_id) {
-    ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_pP->mme_ue_s1ap_id);
-  }
-
-  if (!(ue_context_p)) {
-    ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_pP->enb_ue_s1ap_id);
-  }
-  if (!(ue_context_p)) {
-    OAILOG_DEBUG (LOG_MME_APP, "Unknown  mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-        initial_pP->mme_ue_s1ap_id);
-
-    // MME UE S1AP ID AND NAS UE ID ARE THE SAME
-    if (INVALID_MME_UE_S1AP_ID == initial_pP->mme_ue_s1ap_id) {
-      if (initial_pP->is_s_tmsi_valid) {
-        // try to build a Guti
-        guti_t guti = {.gummei.plmn = {0}, .gummei.mme_gid = 0, .gummei.mme_code = 0, .m_tmsi = INVALID_M_TMSI};
-        guti.m_tmsi = initial_pP->opt_s_tmsi.m_tmsi;
-        guti.gummei.mme_code = initial_pP->opt_s_tmsi.mme_code;
-
-        if (initial_pP->is_gummei_valid) {
-          memcpy(&guti.gummei, (const void*)&initial_pP->opt_gummei, sizeof(guti.gummei));
-          ue_context_p = mme_ue_context_exists_guti (&mme_app_desc.mme_ue_contexts, &guti);
-
-          if (ue_context_p) {
-            if (ue_context_p->enb_ue_s1ap_id == initial_pP->enb_ue_s1ap_id) {
-              // update ue_context, the only parameter to update is guti
-              mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
+    
+  DevAssert(INVALID_MME_UE_S1AP_ID == initial_pP->mme_ue_s1ap_id);
+   
+  // Check if there is any existing UE context using S-TMSI/GUTI
+  if (initial_pP->is_s_tmsi_valid) 
+  {
+    OAILOG_DEBUG (LOG_MME_APP, "INITIAL UE Message: Valid S-TMSI received from eNB.\n",
+                                                                        initial_pP->opt_s_tmsi.mme_code,initial_pP->opt_s_tmsi.m_tmsi);
+    guti_t guti = {.gummei.plmn = {0}, .gummei.mme_gid = 0, .gummei.mme_code = 0, .m_tmsi = INVALID_M_TMSI};
+    is_guti_valid = mme_app_construct_guti(&(initial_pP->tai.plmn),&(initial_pP->opt_s_tmsi),&guti);
+    if (is_guti_valid)
+    {
+      ue_nas_ctx = emm_data_context_get_by_guti (&_emm_data, &guti);
+      if (ue_nas_ctx) 
+      {
+        initial_pP->mme_ue_s1ap_id = ue_nas_ctx->ue_id;
+        // Get the UE context using mme_ue_s1ap_id 
+        ue_context_p =  mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts,ue_nas_ctx->ue_id);
+        DevAssert(ue_context_p != NULL);
+        DevAssert(ue_context_p->mme_ue_s1ap_id == ue_nas_ctx->ue_id);
+        DevAssert(memcmp(&(ue_context_p->guti),&guti,sizeof(guti)) == 0);
+        DevAssert(ue_context_p->enb_ue_s1ap_id == INVALID_ENB_UE_S1AP_ID);
+        DevAssert(ue_context_p->enb_s1ap_id_key == INVALID_ENB_UE_S1AP_ID_KEY);
+        // Update MME UE context with new enb_ue_s1ap_id
+        ue_context_p->enb_ue_s1ap_id = initial_pP->enb_ue_s1ap_id;
+        // regenerate the enb_s1ap_id_key as enb_ue_s1ap_id is changed.
+        MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->cgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
+        // Update enb_s1ap_id_key in hashtable  
+        mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
                 ue_context_p,
-                ue_context_p->enb_s1ap_id_key,
-                ue_context_p->mme_ue_s1ap_id,
-                ue_context_p->imsi,
+                enb_s1ap_id_key,
+                ue_nas_ctx->ue_id,
+                ue_nas_ctx->_imsi64,
                 ue_context_p->mme_s11_teid,
                 &guti);
-            } else {
-              OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP, previous conflicting S_TMSI context found with provided S_TMSI, GUMMEI\n");
-            }
-          } else {
-            OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP, no previous context found with provided S_TMSI, GUMMEI\n");
-          }
         }
-      }
-    } // no else actually TODO action
+        else 
+        { 
+          OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE with S-TMSI: no UE context found \n",
+                                                                             initial_pP->opt_s_tmsi.mme_code,initial_pP->opt_s_tmsi.m_tmsi);
+        }
+    }
+    else
+    {
+        OAILOG_DEBUG (LOG_MME_APP, "No MME is configured with MME code received in S-TMSI from UE.\n",
+                                                                             initial_pP->opt_s_tmsi.mme_code,initial_pP->opt_s_tmsi.m_tmsi);
+    }
   }
-  // finally create a new ue context if anything found
+  else
+  {
+    OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE from S1AP,without S-TMSI. \n");
+  }
+  // create a new ue context if nothing is found
   if (!(ue_context_p)) {
     OAILOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one\n");
     if ((ue_context_p = mme_create_new_ue_context ()) == NULL) {
@@ -465,14 +478,12 @@ mme_app_handle_initial_ue_message (
     ue_context_p->enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
     MME_APP_ENB_S1AP_ID_KEY(ue_context_p->enb_s1ap_id_key, initial_pP->cgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
     ue_context_p->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
-
     DevAssert (mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p) == 0);
   }
   ue_context_p->e_utran_cgi = initial_pP->cgi;
-
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_INITIAL_UE_MESSAGE);
   // do this because of same message types name but not same struct in different .h
-  message_p->ittiMsg.nas_initial_ue_message.nas.ue_id           = ue_context_p->mme_ue_s1ap_id;
+  message_p->ittiMsg.nas_initial_ue_message.nas.ue_id           = initial_pP->mme_ue_s1ap_id;
   message_p->ittiMsg.nas_initial_ue_message.nas.tai             = initial_pP->tai;
   message_p->ittiMsg.nas_initial_ue_message.nas.cgi             = initial_pP->cgi;
   message_p->ittiMsg.nas_initial_ue_message.nas.as_cause        = initial_pP->as_cause;
@@ -483,14 +494,11 @@ mme_app_handle_initial_ue_message (
     message_p->ittiMsg.nas_initial_ue_message.nas.s_tmsi.m_tmsi   = INVALID_M_TMSI;
   }
   message_p->ittiMsg.nas_initial_ue_message.nas.initial_nas_msg   =  initial_pP->nas;
-
   memcpy (&message_p->ittiMsg.nas_initial_ue_message.transparent, (const void*)&initial_pP->transparent, sizeof (message_p->ittiMsg.nas_initial_ue_message.transparent));
-
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_INITIAL_UE_MESSAGE");
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
-
 
 //------------------------------------------------------------------------------
 void
@@ -818,3 +826,59 @@ mme_app_handle_release_access_bearers_resp (
   mme_app_itti_ue_context_release(ue_context_p, S1AP_RADIO_EUTRAN_GENERATED_REASON);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
+
+//------------------------------------------------------------------------------
+static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t * const s_tmsi_p,  guti_t * const guti_p)
+{
+  /*
+   * This is a helper function to construct GUTI from S-TMSI. It uses PLMN id and MME Group Id of the serving MME for
+   * this purpose. 
+   *
+   */
+  
+  bool                                    is_guti_valid = false; // Set to true if serving MME is found and GUTI is constructed 
+  uint8_t                                 num_mme       = 0;     // Number of configured MME in the MME pool  
+  guti_p->m_tmsi = s_tmsi_p->m_tmsi;
+  guti_p->gummei.mme_code = s_tmsi_p->mme_code;
+  // Create GUTI by using PLMN Id and MME-Group Id of serving MME
+  OAILOG_DEBUG (LOG_MME_APP, "Construct GUTI using S-TMSI received form UE and MME Group Id and PLMN id from MME Conf \n",
+                                                                                            s_tmsi_p->m_tmsi,s_tmsi_p->mme_code);
+  mme_config_read_lock (&mme_config);
+  /*
+   * Check number of MMEs in the pool.
+   * At present it is assumed that one MME is supported in MME pool but in case there are more 
+   * than one MME configured then search the serving MME using MME code. 
+   * Assumption is that within one PLMN only one pool of MME will be configured
+   */
+  if (mme_config.gummei.nb > 1) 
+  {
+    OAILOG_DEBUG (LOG_MME_APP, "More than one MMEs are configured.");
+  }
+  for (num_mme = 0; num_mme < mme_config.gummei.nb; num_mme++)
+  {
+    /*Verify that the MME code within S-TMSI is same as what is configured in MME conf*/
+    if ((plmn_p->mcc_digit2 == mme_config.gummei.gummei[num_mme].plmn.mcc_digit2) &&
+        (plmn_p->mcc_digit1 == mme_config.gummei.gummei[num_mme].plmn.mcc_digit1) &&
+        (plmn_p->mnc_digit3 == mme_config.gummei.gummei[num_mme].plmn.mnc_digit3) &&
+        (plmn_p->mcc_digit3 == mme_config.gummei.gummei[num_mme].plmn.mcc_digit3) &&
+        (plmn_p->mnc_digit2 == mme_config.gummei.gummei[num_mme].plmn.mnc_digit2) && 
+        (plmn_p->mnc_digit1 == mme_config.gummei.gummei[num_mme].plmn.mnc_digit1) &&
+        (guti_p->gummei.mme_code == mme_config.gummei.gummei[num_mme].mme_code))
+    {
+      break;
+    }
+  }          
+  if (num_mme >= mme_config.gummei.nb)
+  {
+    OAILOG_DEBUG (LOG_MME_APP, "No MME serves this UE");
+  }
+  else 
+  {
+    guti_p->gummei.plmn = mme_config.gummei.gummei[num_mme].plmn;
+    guti_p->gummei.mme_gid = mme_config.gummei.gummei[num_mme].mme_gid;
+    is_guti_valid = true;
+  }
+  mme_config_unlock (&mme_config);
+  return is_guti_valid;
+}
+

@@ -430,6 +430,12 @@ typedef struct tai_s {
  *        of each PLMN operator. */
 typedef struct eci_s {
   uint32_t enb_id:20;
+ /* Anoop - This is correct only when eNB type is macro. In case eNB type is
+  * Home eNB then all the 28 bits are used for eNB id . This needs
+  * correction since MME uses combination of enb_id and "eNB S1AP UEid" for the
+  * key to UE context,this may not work if MME is connected to many HeNBs -
+  * which is not critical now.*/
+ 
   uint32_t cell_id:8;
   uint32_t empty:4;
 } eci_t;

@@ -62,6 +62,7 @@ typedef uint64_t enb_s1ap_id_key_t ;
 // UE S1AP IDs
 
 #define INVALID_ENB_UE_S1AP_ID   UINT32_MAX
+#define INVALID_ENB_UE_S1AP_ID_KEY   0xFFFFFFFFFFFFFFFF
 #define ENB_UE_S1AP_ID_MASK      0x00FFFFFF
 #define ENB_UE_S1AP_ID_FMT       "0x%06"PRIX32
 

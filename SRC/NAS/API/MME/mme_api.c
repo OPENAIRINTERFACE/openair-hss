@@ -299,15 +299,13 @@ mme_api_notify_new_guti (
  */
 int
 mme_api_notified_new_ue_s1ap_id_association (
-    const enb_ue_s1ap_id_t enb_ue_s1ap_id,
+    const enb_s1ap_id_key_t  enb_ue_s1ap_id_key,
     const uint32_t         enb_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id)
 {
   int                                     ret = RETURNok;
   OAILOG_FUNC_IN (LOG_NAS);
-  enb_s1ap_id_key_t                       enb_key = 0;
-  MME_APP_ENB_S1AP_ID_KEY(enb_key, enb_id, enb_ue_s1ap_id);
-  ret = mme_ue_context_notified_new_ue_s1ap_id_association(enb_key, mme_ue_s1ap_id);
+  ret = mme_ue_context_notified_new_ue_s1ap_id_association(enb_ue_s1ap_id_key, mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN (LOG_NAS, ret);
 }
 

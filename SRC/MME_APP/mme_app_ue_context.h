@@ -57,7 +57,7 @@ typedef enum {
 typedef enum {
   ECM_IDLE,
   ECM_CONNECTED,
-} ecm_state;
+} ecm_state_t;
 
 #define IMSI_DIGITS_MAX 15
 
@@ -136,7 +136,7 @@ typedef struct ue_context_s {
   uint8_t                msisdn_length;               // set by S6A UPDATE LOCATION ANSWER
 
   mm_state_t             mm_state;
-  ecm_state              ecm_state;
+  ecm_state_t              ecm_state;
   /* Globally Unique Temporary Identity */
   bool                   is_guti_set;                 // is guti has been set
   guti_t                 guti;                        // guti.gummei.plmn set by nas_auth_param_req_t
