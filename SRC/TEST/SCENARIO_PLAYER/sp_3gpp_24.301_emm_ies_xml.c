@@ -87,7 +87,7 @@ SP_NUM_FROM_XML_GENERATE( eps_attach_type,      EPS_ATTACH_TYPE);
 bool sp_eps_mobile_identity_from_xml (
     scenario_t            * const scenario,
     scenario_player_msg_t * const msg,
-    eps_mobile_identity_t          * const epsmobileidentity)
+    eps_mobile_identity_t * const epsmobileidentity)
 {
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
@@ -148,7 +148,25 @@ bool sp_eps_mobile_identity_from_xml (
                     epsmobileidentity->imsi.identity_digit15 = digit[14];
                     epsmobileidentity->imsi.num_digits = ret;
                   }
-                  res = (1 <= ret);
+                  res = (14 <= ret) && (15 >= ret);
+                  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found IMSI/%s = %x%x%x%x%x%x%x%x%x%x%x%x%x%x%x num digits %d\n",
+                      IMSI_ATTR_XML_STR,
+                      epsmobileidentity->imsi.identity_digit1,
+                      epsmobileidentity->imsi.identity_digit2,
+                      epsmobileidentity->imsi.identity_digit3,
+                      epsmobileidentity->imsi.identity_digit4,
+                      epsmobileidentity->imsi.identity_digit5,
+                      epsmobileidentity->imsi.identity_digit6,
+                      epsmobileidentity->imsi.identity_digit7,
+                      epsmobileidentity->imsi.identity_digit8,
+                      epsmobileidentity->imsi.identity_digit9,
+                      epsmobileidentity->imsi.identity_digit10,
+                      epsmobileidentity->imsi.identity_digit11,
+                      epsmobileidentity->imsi.identity_digit12,
+                      epsmobileidentity->imsi.identity_digit13,
+                      epsmobileidentity->imsi.identity_digit14,
+                      epsmobileidentity->imsi.identity_digit15,
+                      epsmobileidentity->imsi.num_digits);
                 }
                 bdestroy_wrapper (&imsi_bstr);
               }
@@ -166,7 +184,7 @@ bool sp_eps_mobile_identity_from_xml (
 
               if (res) {
                 bstring imei_bstr = NULL;
-                xpath_expr = bformat("./%s",IMSI_ATTR_XML_STR); // TODO CHECK IMSI/IMEI_ATTR_XML_STR
+                xpath_expr = bformat("./%s",IMEI_XML_STR); // TODO CHECK IMSI/IMEI_ATTR_XML_STR
                 res =  sp_xml_load_ascii_stream_leaf_tag(scenario, msg, xpath_expr, &imei_bstr);
                 bdestroy_wrapper (&xpath_expr);
                 if (res) {
@@ -193,6 +211,23 @@ bool sp_eps_mobile_identity_from_xml (
                     epsmobileidentity->imei.identity_digit15 = digit[14];
                   }
                   res = (15 == ret);
+                  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found IMEI/%s = %x%x%x%x%x%x%x%x%x%x%x%x%x%x%x\n",
+                      IMEI_XML_STR,
+                      epsmobileidentity->imei.identity_digit1,
+                      epsmobileidentity->imei.identity_digit2,
+                      epsmobileidentity->imei.identity_digit3,
+                      epsmobileidentity->imei.identity_digit4,
+                      epsmobileidentity->imei.identity_digit5,
+                      epsmobileidentity->imei.identity_digit6,
+                      epsmobileidentity->imei.identity_digit7,
+                      epsmobileidentity->imei.identity_digit8,
+                      epsmobileidentity->imei.identity_digit9,
+                      epsmobileidentity->imei.identity_digit10,
+                      epsmobileidentity->imei.identity_digit11,
+                      epsmobileidentity->imei.identity_digit12,
+                      epsmobileidentity->imei.identity_digit13,
+                      epsmobileidentity->imei.identity_digit14,
+                      epsmobileidentity->imei.identity_digit15);
                 }
                 bdestroy_wrapper (&imei_bstr);
               }

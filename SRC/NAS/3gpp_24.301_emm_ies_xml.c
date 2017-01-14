@@ -95,33 +95,18 @@ bool detach_type_from_xml (
     int size = (nodes) ? nodes->nodeNr : 0;
     if ((1 == size) && (xml_doc)) {
 
-      //xmlNodePtr saved_node_ptr = xpath_ctx->node;
-      //res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
-      if (res) {
-        xmlChar *attr = xmlGetProp(nodes->nodeTab[0], (const xmlChar *)SWITCH_OFF_ATTR_XML_STR);
-        if (attr) {
-          OAILOG_TRACE (LOG_XML, "Found %s=%s\n", SWITCH_OFF_ATTR_XML_STR, attr);
-          uint8_t  switchoff = 0;
-          sscanf((const char*)attr, "%"SCNx8, &switchoff);
-          detachtype->switchoff = switchoff;
-          xmlFree(attr);
-        } else {
-          res = false;
-        }
-      }
-      if (res) {
-        xmlChar *attr = xmlGetProp(nodes->nodeTab[0], (const xmlChar *)TYPE_OF_DETACH_ATTR_XML_STR);
-        if (attr) {
-          OAILOG_TRACE (LOG_XML, "Found %s=%s\n", TYPE_OF_DETACH_ATTR_XML_STR, attr);
-          uint8_t  typeofdetach = 0;
-          sscanf((const char*)attr, "%"SCNx8, &typeofdetach);
-          detachtype->typeofdetach = typeofdetach;
-          xmlFree(attr);
-        } else {
-          res = false;
-        }
-      }
-      //res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
+      xmlNodePtr saved_node_ptr = xpath_ctx->node;
+      res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
+
+      bstring xpath_expr_so = bformat("./%s",SWITCH_OFF_ATTR_XML_STR);
+      res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_so, "%"SCNx8, (void*)&detachtype->switchoff, NULL);
+      bdestroy_wrapper (&xpath_expr_so);
+
+      bstring xpath_expr_tod = bformat("./%s",TYPE_OF_DETACH_ATTR_XML_STR);
+      res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_tod, "%"SCNx8, (void*)&detachtype->typeofdetach, NULL);
+      bdestroy_wrapper (&xpath_expr_tod);
+
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
     }
   }
   bdestroy_wrapper (&xpath_expr);
@@ -131,8 +116,8 @@ bool detach_type_from_xml (
 void detach_type_to_xml(detach_type_t *detachtype, xmlTextWriterPtr writer)
 {
   XML_WRITE_START_ELEMENT(writer, DETACH_TYPE_XML_STR);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, SWITCH_OFF_ATTR_XML_STR, "0x%"PRIx8, detachtype->switchoff);
-  XML_WRITE_FORMAT_ATTRIBUTE(writer, TYPE_OF_DETACH_ATTR_XML_STR, "0x%"PRIx8, detachtype->typeofdetach);
+  XML_WRITE_FORMAT_ELEMENT(writer, SWITCH_OFF_ATTR_XML_STR, "0x%"PRIx8, detachtype->switchoff);
+  XML_WRITE_FORMAT_ELEMENT(writer, TYPE_OF_DETACH_ATTR_XML_STR, "0x%"PRIx8, detachtype->typeofdetach);
   XML_WRITE_END_ELEMENT(writer);
 }
 
@@ -227,7 +212,25 @@ bool eps_mobile_identity_from_xml (
                     epsmobileidentity->imsi.identity_digit15 = digit[14];
                     epsmobileidentity->imsi.num_digits = ret;
                   }
-                  res = (1 <= ret);
+                  res = (14 <= ret) && (15 >= ret);
+                  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found IMSI/%s = %x%x%x%x%x%x%x%x%x%x%x%x%x%x%x num digits %d\n",
+                      IMSI_ATTR_XML_STR,
+                      epsmobileidentity->imsi.identity_digit1,
+                      epsmobileidentity->imsi.identity_digit2,
+                      epsmobileidentity->imsi.identity_digit3,
+                      epsmobileidentity->imsi.identity_digit4,
+                      epsmobileidentity->imsi.identity_digit5,
+                      epsmobileidentity->imsi.identity_digit6,
+                      epsmobileidentity->imsi.identity_digit7,
+                      epsmobileidentity->imsi.identity_digit8,
+                      epsmobileidentity->imsi.identity_digit9,
+                      epsmobileidentity->imsi.identity_digit10,
+                      epsmobileidentity->imsi.identity_digit11,
+                      epsmobileidentity->imsi.identity_digit12,
+                      epsmobileidentity->imsi.identity_digit13,
+                      epsmobileidentity->imsi.identity_digit14,
+                      epsmobileidentity->imsi.identity_digit15,
+                      epsmobileidentity->imsi.num_digits);
                 }
               }
             }
@@ -244,7 +247,7 @@ bool eps_mobile_identity_from_xml (
 
               if (res) {
                 char imei_str[32] = {0}; // MOBILE_IDENTITY_IE_IMEI_LENGTH*2+1
-                bstring xpath_expr = bformat("./%s",IMSI_ATTR_XML_STR);
+                bstring xpath_expr = bformat("./%s",IMEI_XML_STR);
                 res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr, "%s", (void*)&imei_str, NULL);
                 bdestroy_wrapper (&xpath_expr);
                 if (res) {
@@ -271,6 +274,23 @@ bool eps_mobile_identity_from_xml (
                     epsmobileidentity->imei.identity_digit15 = digit[14];
                   }
                   res = (15 == ret);
+                  OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found IMEI/%s = %x%x%x%x%x%x%x%x%x%x%x%x%x%x%x\n",
+                      IMEI_XML_STR,
+                      epsmobileidentity->imei.identity_digit1,
+                      epsmobileidentity->imei.identity_digit2,
+                      epsmobileidentity->imei.identity_digit3,
+                      epsmobileidentity->imei.identity_digit4,
+                      epsmobileidentity->imei.identity_digit5,
+                      epsmobileidentity->imei.identity_digit6,
+                      epsmobileidentity->imei.identity_digit7,
+                      epsmobileidentity->imei.identity_digit8,
+                      epsmobileidentity->imei.identity_digit9,
+                      epsmobileidentity->imei.identity_digit10,
+                      epsmobileidentity->imei.identity_digit11,
+                      epsmobileidentity->imei.identity_digit12,
+                      epsmobileidentity->imei.identity_digit13,
+                      epsmobileidentity->imei.identity_digit14,
+                      epsmobileidentity->imei.identity_digit15);
                 }
               }
             }

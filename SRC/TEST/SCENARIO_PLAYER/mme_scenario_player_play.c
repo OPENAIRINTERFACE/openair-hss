@@ -75,17 +75,30 @@ void msp_scenario_tick(scenario_t * const scenario)
 //------------------------------------------------------------------------------
 void scenario_set_status(scenario_t * const scenario, const scenario_status_t scenario_status, char* caller_file, int caller_line)
 {
+  bstring b = NULL;
   scenario->status = scenario_status;
   if (SCENARIO_STATUS_PLAY_SUCCESS == scenario_status) {
-    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s SUCCESS\n", bdata(scenario->name));
+    b = bformat("SUCCESS PLAY   scenario %s set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
+    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "%s", bdata(b));
   } else if (SCENARIO_STATUS_PLAY_FAILED == scenario_status) {
-    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s FAILED set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
+    b = bformat("FAILURE PLAY   scenario %s set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
+    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "%s", bdata(b));
   } else if (SCENARIO_STATUS_LOAD_FAILED == scenario_status) {
-    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Result Load scenario %s FAILED set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
+    b = bformat("FAILURE LOAD   scenario %s set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
+    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "%s", bdata(b));
   } else if (SCENARIO_STATUS_PAUSED == scenario_status) {
     OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s PAUSED set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
   } else if (SCENARIO_STATUS_LOADED == scenario_status) {
-    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s LOADED\n", bdata(scenario->name));
+    b = bformat("SUCCESS LOADED scenario %s\n", bdata(scenario->name));
+    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "%s", bdata(b));
+  }
+  if (b) {
+    int rv_put = fputs ((const char *)b->data, g_msp_scenarios.result_fd);
+    if (rv_put < 0) {
+      // error occured
+      OAILOG_WARNING(LOG_MME_SCENARIO_PLAYER, "Error while logging scenario status %d: %s\n", rv_put, bdata(b));
+    }
+    fflush (g_msp_scenarios.result_fd);
   }
 }
 
@@ -249,7 +262,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
     hashtable_rc_t hrc = hashtable_ts_get (scenario->scenario_items,
         (hash_key_t)item->u.msg.time_out_relative_to_msg_uid, (void **)&ref);
 
-    AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find relative item UID %d", item->u.msg.time_out_relative_to_msg_uid);
+    AssertFatal ((HASH_TABLE_OK == hrc) && (ref), "Could not find relative item UID %d scenario %s", item->u.msg.time_out_relative_to_msg_uid, scenario->name->data);
     AssertFatal (SCENARIO_PLAYER_ITEM_ITTI_MSG == ref->item_type, "Bad type relative item UID %d", item->u.msg.time_out_relative_to_msg_uid);
     struct timeval now = {0};
     struct timeval elapsed_time = {0};
@@ -783,6 +796,35 @@ bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_
 }
 
 //------------------------------------------------------------------------------
+// return true if we can continue playing the scenario
+bool msp_play_scenario(scenario_t * const parent_scenario, scenario_player_item_t * const item)
+{
+
+  switch (item->u.scenario->status) {
+    case SCENARIO_STATUS_LOADED:
+    case SCENARIO_STATUS_PLAYING:
+    case SCENARIO_STATUS_PLAY_FAILED:
+    case SCENARIO_STATUS_PLAY_SUCCESS:
+    case SCENARIO_STATUS_PAUSED:
+      OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play scenario %s from %s\n", item->u.scenario->name->data, parent_scenario->name->data);
+      item->u.scenario->last_played_item = NULL;
+      item->u.scenario->status = SCENARIO_STATUS_LOADED;
+      msp_clear_processed_flags(item->u.scenario);
+      msp_run_scenario(item->u.scenario);
+      return true;
+      break;
+
+    case SCENARIO_STATUS_LOAD_FAILED:
+    case SCENARIO_STATUS_NULL:
+    case SCENARIO_STATUS_LOADING:
+    default:
+      OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Do not play scenario %s from %s\n", item->u.scenario->name->data, parent_scenario->name->data);
+      return false;
+  }
+  return true;
+}
+
+//------------------------------------------------------------------------------
 void msp_init_scenario(scenario_t * const s)
 {
   if (s) {
@@ -807,7 +849,7 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
     }
 
     if (SCENARIO_PLAYER_ITEM_SCENARIO == item->item_type) {
-      msp_run_scenario(item->u.scenario);
+      msp_play_scenario(scenario, item);
       //....
       scenario->last_played_item = item;
       return true;
@@ -860,7 +902,6 @@ void msp_run_scenario(scenario_t * const scenario)
 {
   if (scenario) {
     pthread_mutex_lock(&scenario->lock);
-    msp_clear_processed_flags(scenario);
 
     g_msp_scenarios.current_scenario = scenario;
     scenario_player_item_t *item = NULL;

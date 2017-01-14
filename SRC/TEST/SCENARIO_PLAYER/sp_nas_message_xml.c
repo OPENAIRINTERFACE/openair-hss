@@ -166,7 +166,7 @@ bool sp_nas_pdu_from_xml (
                                                      .security_protected.plain.esm.header = {0}};
   unsigned char raw_buffer[4096];
   if (sp_nas_message_protected_from_xml(scenario, msg, &nas_msg)) {
-    int rc = nas_message_encode(raw_buffer, &nas_msg, 4096, scenario->ue_emulated_emm_security_context);
+    int rc = nas_message_encode(raw_buffer, &nas_msg, 4096, msp_get_ue_emulated_emm_security_context(scenario));
     if (0 < rc) {
       *bnas_pdu = blk2bstr(raw_buffer, rc);
       OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, true);

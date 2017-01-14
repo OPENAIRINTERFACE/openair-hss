@@ -229,6 +229,7 @@ typedef struct scenario_player_s {
   scenario_t         *head_scenarios;
   scenario_t         *tail_scenarios;
   scenario_t         *current_scenario; // no scenarios in // (no multi-threads) for a MME instance
+  FILE               *result_fd;
 } scenario_player_t;
 
 
@@ -285,6 +286,7 @@ bool msp_play_sleep(scenario_t * const scenario, scenario_player_item_t * const 
 bool msp_play_jump_cond(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_compute_authentication_response_parameter(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_play_update_emm_security_context(scenario_t * const scenario, scenario_player_item_t * const item);
+bool msp_play_scenario(scenario_t * const parent_scenario, scenario_player_item_t * const item);
 
 bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const item);
 bool msp_schedule_next_message(scenario_t * const s);
