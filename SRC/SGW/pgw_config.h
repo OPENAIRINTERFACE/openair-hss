@@ -42,6 +42,7 @@
 #define PGW_CONFIG_STRING_PGW_MASQUERADE_SGI                    "PGW_MASQUERADE_SGI"
 #define PGW_CONFIG_STRING_UE_TCP_MSS_CLAMPING                   "UE_TCP_MSS_CLAMPING"
 #define PGW_CONFIG_STRING_NAS_FORCE_PUSH_PCO                    "FORCE_PUSH_PROTOCOL_CONFIGURATION_OPTIONS"
+#define PGW_CONFIG_STRING_PUSH_DEDICATED_BEARER                 "PUSH_DEDICATED_BEARER"
 
 #define PGW_CONFIG_STRING_IP_ADDRESS_POOL                       "IP_ADDRESS_POOL"
 #define PGW_CONFIG_STRING_IPV4_ADDRESS_LIST                     "IPV4_LIST"
@@ -100,6 +101,7 @@ typedef struct pgw_config_s {
 
   bool      force_push_pco;
   uint16_t  ue_mtu;
+  bool      push_dedicated_bearer;
 
   STAILQ_HEAD(ipv4_pool_head_s, conf_ipv4_list_elm_s) ipv4_pool_list;
 } pgw_config_t;

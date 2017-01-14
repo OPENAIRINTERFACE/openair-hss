@@ -361,6 +361,15 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
       config_pP->ue_mtu = 1463;
     }
     OAILOG_DEBUG (LOG_SPGW_APP, "UE MTU : %u\n", config_pP->ue_mtu);
+    if (config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_PUSH_DEDICATED_BEARER, (const char **)&astring)) {
+      if (strcasecmp (astring, "yes") == 0) {
+        config_pP->push_dedicated_bearer = true;
+        OAILOG_DEBUG (LOG_SPGW_APP, "Automatic push dedicated bearer to UE after default bearer creation enabled\n");
+      } else {
+        config_pP->push_dedicated_bearer = false;
+        OAILOG_DEBUG (LOG_SPGW_APP, "Automatic push dedicated bearer to UE after default bearer creation Disabled\n");
+      }
+    }
   } else {
     OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW not found\n");
   }
@@ -385,7 +394,8 @@ void pgw_config_display (pgw_config_t * config_p)
   OAILOG_INFO (LOG_SPGW_APP, "    SGi ip  (read)........: %s\n", inet_ntoa (*((struct in_addr *)&config_p->ipv4.SGI)));
   OAILOG_INFO (LOG_SPGW_APP, "    SGi MTU (read)........: %u\n", config_p->ipv4.mtu_SGI);
 
-  OAILOG_INFO (LOG_SPGW_APP, "- MSS clamping: ..........: %d\n", config_p->ue_tcp_mss_clamp);
-  OAILOG_INFO (LOG_SPGW_APP, "- Masquerading: ..........: %d\n", config_p->masquerade_SGI);
-  OAILOG_INFO (LOG_SPGW_APP, "- Push PCO: ..............: %d\n", config_p->force_push_pco);
+  OAILOG_INFO (LOG_SPGW_APP, "- MSS clamping  ..........: %d\n", config_p->ue_tcp_mss_clamp);
+  OAILOG_INFO (LOG_SPGW_APP, "- Masquerading  ..........: %d\n", config_p->masquerade_SGI);
+  OAILOG_INFO (LOG_SPGW_APP, "- Push PCO  ..............: %d\n", config_p->force_push_pco);
+  OAILOG_INFO (LOG_SPGW_APP, "- Push dedicated bearer: .: %d\n", config_p->push_dedicated_bearer);
 }

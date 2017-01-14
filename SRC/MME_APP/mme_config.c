@@ -746,7 +746,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         else
           config_pP->nas_config.force_reject_sr = false;
       }
-      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_DISABLE_ESM_INFORMATION, (const char **)&astring))) {
+      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_DISABLE_ESM_INFORMATION_PROCEDURE, (const char **)&astring))) {
         if (strcasecmp (astring, "yes") == 0)
           config_pP->nas_config.disable_esm_information = true;
         else

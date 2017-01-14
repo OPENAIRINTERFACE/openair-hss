@@ -163,8 +163,6 @@ static int spgw_config_parse_file (spgw_config_t * config_pP)
     return RETURNerror;
   }
 
-  spgw_config_display(config_pP);
-
   config_destroy (&cfg);
   return RETURNok;
 }

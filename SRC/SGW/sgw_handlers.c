@@ -777,8 +777,10 @@ sgw_handle_modify_bearer_request (
         sgi_update_end_point_resp.status = 0x00;
         rv = sgw_handle_sgi_endpoint_updated (&sgi_update_end_point_resp);
         if (RETURNok == rv) {
-          // upon S/P-GW config, establish a dedicated radio bearer
-          sgw_no_pcef_create_dedicated_bearer(modify_bearer_pP->teid);
+          if (spgw_config.pgw_config.push_dedicated_bearer) {
+            // upon S/P-GW config, establish a dedicated radio bearer
+            sgw_no_pcef_create_dedicated_bearer(modify_bearer_pP->teid);
+          }
         }
       }
     }
