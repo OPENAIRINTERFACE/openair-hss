@@ -107,5 +107,8 @@ bool ue_aggregate_maximum_bit_rate_from_xml (
     ue_aggregate_maximum_bit_rate_t * const ue_ambr);
 void ue_aggregate_maximum_bit_rate_to_xml (const ue_aggregate_maximum_bit_rate_t * const ue_ambr, xmlTextWriterPtr writer);
 
+bool s1ap_cause_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, S1ap_Cause_t * const cause);
+void s1ap_cause_to_xml (const S1ap_Cause_t * const cause, xmlTextWriterPtr writer);
+
 
 #endif /* FILE_3GPP_36_413_XML_SEEN */

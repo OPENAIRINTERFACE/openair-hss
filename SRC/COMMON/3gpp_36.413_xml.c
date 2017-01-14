@@ -54,6 +54,7 @@
 #include "conversions.h"
 #include "nas_message.h"
 #include "nas_message_xml.h"
+#include "S1ap-Cause.h"
 
 #include "xml_load.h"
 #include "xml2_wrapper.h"
@@ -544,6 +545,89 @@ void ue_aggregate_maximum_bit_rate_to_xml (const ue_aggregate_maximum_bit_rate_t
   XML_WRITE_START_ELEMENT(writer, UE_AGGREGATE_MAXIMUM_BIT_RATE_XML_STR);
   XML_WRITE_FORMAT_ELEMENT(writer, DOWNLINK_XML_STR, "%"PRIu64, ue_ambr->dl);
   XML_WRITE_FORMAT_ELEMENT(writer, UPLINK_XML_STR, "%"PRIu64, ue_ambr->ul);
+  XML_WRITE_END_ELEMENT(writer);
+}
+
+//------------------------------------------------------------------------------
+bool s1ap_cause_from_xml (xmlDocPtr xml_doc, xmlXPathContextPtr xpath_ctx, S1ap_Cause_t * const cause)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  bool res = false;
+  bstring xpath_expr = bformat("./%s",S1AP_CAUSE_XML_STR);
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(xml_doc, &xpath_ctx, xpath_expr);
+  if (xpath_obj) {
+    xmlNodeSetPtr nodes = xpath_obj->nodesetval;
+    int size = (nodes) ? nodes->nodeNr : 0;
+    if ((1 == size)  && (xml_doc)) {
+      xmlNodePtr saved_node_ptr = xpath_ctx->node;
+      res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], xpath_ctx));
+
+      char group_name_str[256]  = {0};
+      bstring xpath_expr_group = bformat("./%s",S1AP_CAUSE_GROUP_XML_STR);
+      bool res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_group, "%s", (void*)group_name_str, NULL);
+      bdestroy_wrapper (&xpath_expr_group);
+      if (res) {
+        bstring xpath_expr_cause_value = bformat("./%s",S1AP_CAUSE_GROUP_CAUSE_XML_STR);
+        if (!strcasecmp(group_name_str, S1AP_CAUSE_GROUP_RADIO_NETWORK_LAYER_XML_STR)) {
+          cause->present = S1ap_Cause_PR_radioNetwork;
+          res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_cause_value, S1AP_CAUSE_GROUP_CAUSE_SCAN_FMT, (void*)&cause->choice.radioNetwork, NULL);
+        } else  if (!strcasecmp(group_name_str, S1AP_CAUSE_GROUP_TRANSPORT_LAYER_XML_STR)) {
+          cause->present = S1ap_Cause_PR_transport;
+          res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_cause_value, S1AP_CAUSE_GROUP_CAUSE_SCAN_FMT, (void*)&cause->choice.transport, NULL);
+        } else  if (!strcasecmp(group_name_str, S1AP_CAUSE_GROUP_NAS_XML_STR)) {
+          cause->present = S1ap_Cause_PR_nas;
+          res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_cause_value, S1AP_CAUSE_GROUP_CAUSE_SCAN_FMT, (void*)&cause->choice.nas, NULL);
+        } else  if (!strcasecmp(group_name_str, S1AP_CAUSE_GROUP_PROTOCOL_XML_STR)) {
+          cause->present = S1ap_Cause_PR_protocol;
+          res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_cause_value, S1AP_CAUSE_GROUP_CAUSE_SCAN_FMT, (void*)&cause->choice.protocol, NULL);
+        } else  if (!strcasecmp(group_name_str, S1AP_CAUSE_GROUP_MISC_XML_STR)) {
+          cause->present = S1ap_Cause_PR_misc;
+          res = xml_load_leaf_tag(xml_doc, xpath_ctx, xpath_expr_cause_value, S1AP_CAUSE_GROUP_CAUSE_SCAN_FMT, (void*)&cause->choice.misc, NULL);
+        } else {
+          cause->present = S1ap_Cause_PR_NOTHING;
+        }
+        bdestroy_wrapper (&xpath_expr_cause_value);
+      }
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, xpath_ctx)) & res;
+    }
+    xmlXPathFreeObject(xpath_obj);
+  }
+  bdestroy_wrapper (&xpath_expr);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
+
+}
+
+
+//------------------------------------------------------------------------------
+void s1ap_cause_to_xml (const S1ap_Cause_t * const cause, xmlTextWriterPtr writer)
+{
+  XML_WRITE_START_ELEMENT(writer, S1AP_CAUSE_XML_STR);
+  switch (cause->present) {
+    case S1ap_Cause_PR_NOTHING:
+      XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_XML_STR, "%s", S1AP_CAUSE_GROUP_NOTHING_XML_STR);
+      break;
+    case S1ap_Cause_PR_radioNetwork:
+      XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_XML_STR, "%s", S1AP_CAUSE_GROUP_RADIO_NETWORK_LAYER_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_CAUSE_XML_STR, S1AP_CAUSE_GROUP_CAUSE_FMT, cause->choice.radioNetwork);
+      break;
+    case S1ap_Cause_PR_transport:
+      XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_XML_STR, "%s", S1AP_CAUSE_GROUP_TRANSPORT_LAYER_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_CAUSE_XML_STR, S1AP_CAUSE_GROUP_CAUSE_FMT, cause->choice.transport);
+      break;
+    case S1ap_Cause_PR_nas:
+      XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_XML_STR, "%s", S1AP_CAUSE_GROUP_NAS_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_CAUSE_XML_STR, S1AP_CAUSE_GROUP_CAUSE_FMT, cause->choice.nas);
+      break;
+   case S1ap_Cause_PR_protocol:
+     XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_XML_STR, "%s", S1AP_CAUSE_GROUP_PROTOCOL_XML_STR);
+     XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_CAUSE_XML_STR, S1AP_CAUSE_GROUP_CAUSE_FMT, cause->choice.protocol);
+     break;
+    case S1ap_Cause_PR_misc:
+      XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_XML_STR, "%s", S1AP_CAUSE_GROUP_MISC_XML_STR);
+      XML_WRITE_FORMAT_ELEMENT(writer, S1AP_CAUSE_GROUP_CAUSE_XML_STR, S1AP_CAUSE_GROUP_CAUSE_FMT, cause->choice.misc);
+      break;
+    default:;
+  }
   XML_WRITE_END_ELEMENT(writer);
 }
 
