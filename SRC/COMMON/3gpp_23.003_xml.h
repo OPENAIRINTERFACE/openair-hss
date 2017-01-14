@@ -105,7 +105,7 @@ void csg_id_to_xml (const csg_id_t * const csg_id, xmlTextWriterPtr writer);
 //------------------------------------------------------------------------------
 // 6.2.1 Composition of IMEI
 //------------------------------------------------------------------------------
-#define IMEI_XML_STR                               "imeisv"
+#define IMEI_XML_STR                               "imei"
 void imei_to_xml (const imei_t * const imei, xmlTextWriterPtr writer);
 
 //------------------------------------------------------------------------------

@@ -30,13 +30,13 @@
 typedef struct detach_type_s {
 #define DETACH_TYPE_NORMAL_DETACH 0
 #define DETACH_TYPE_SWITCH_OFF    1
-  uint8_t  switchoff:1;
+  bool     switchoff;
 #define DETACH_TYPE_EPS     0b001
 #define DETACH_TYPE_IMSI    0b010
 #define DETACH_TYPE_EPS_IMSI    0b011
 #define DETACH_TYPE_RESERVED_1    0b110
 #define DETACH_TYPE_RESERVED_2    0b111
-  uint8_t  typeofdetach:3;
+  uint8_t  typeofdetach;
 } detach_type_t;
 
 #define DETACH_TYPE_XML_STR           "detach_type"

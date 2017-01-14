@@ -954,36 +954,12 @@ static int _nas_message_plain_encode (
   OAILOG_TRACE (LOG_NAS, "length %lu\n", length);
   int                                     bytes = TLV_PROTOCOL_NOT_SUPPORTED;
 
-  if (EPS_MOBILITY_MANAGEMENT_MESSAGE == header->protocol_discriminator) {
-    if (EPS_MOBILITY_MANAGEMENT_MESSAGE == msg->emm.header.protocol_discriminator) {
-      /*
-       * Encode EPS Mobility Management L3 message
-       */
-      bytes = emm_msg_encode ((EMM_msg *) (&msg->emm), (uint8_t *) buffer, length);
-    } else if (EPS_SESSION_MANAGEMENT_MESSAGE == msg->esm.header.protocol_discriminator) {
-
-      /*
-       * First encode the EMM message header
-       */
-      // ugly cast, ugly as the 'game' of unions in nas_messages.h is ugly (nas_message_security_header_t)
-      int header_result = emm_msg_encode_header ((const emm_msg_header_t *)header, buffer, length);
-
-      if (header_result < 0) {
-        OAILOG_ERROR (LOG_NAS, "EMM-MSG   - Failed to encode EMM message header " "(%d)\n", header_result);
-        OAILOG_FUNC_RETURN (LOG_NAS, header_result);
-      }
-
-      buffer += header_result;
-      length -= header_result;
-      /*
-       * Encode EPS Session Management L3 message
-       */
-      bytes = esm_msg_encode ((ESM_msg *) (&msg->esm), (uint8_t *) buffer, length);
-    } else {
-      OAILOG_WARNING(LOG_NAS, "NET-API   - Malformed packet ?\n");
-      OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
-    }
-  } else if (header->protocol_discriminator == EPS_SESSION_MANAGEMENT_MESSAGE) {
+  if (EPS_MOBILITY_MANAGEMENT_MESSAGE == msg->emm.header.protocol_discriminator) {
+    /*
+     * Encode EPS Mobility Management L3 message
+     */
+    bytes = emm_msg_encode ((EMM_msg *) (&msg->emm), (uint8_t *) buffer, length);
+  } else if (EPS_SESSION_MANAGEMENT_MESSAGE == msg->emm.header.protocol_discriminator) {
     /*
      * Encode EPS Session Management L3 message
      */
