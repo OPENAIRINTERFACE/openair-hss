@@ -58,6 +58,9 @@ function help()
   echo_error "  -k, --kill                               Kill all running MME instances, exit script then."
   echo_error "  -m, --mscgen          directory          Generate mscgen output files in a directory"
   echo_error "  -s, --scenario-player scenario_abs_path  Run MME with scenario player (check it is built in MME by setting TRACE_XML to 'True' in $THIS_SCRIPT_PATH/../BUILD/MME/CMakeLists.template)"
+  echo_error "                                           Continue playing scenario(s) even if an error is encountered"
+  echo_error "  -S,                   scenario_abs_path  Run MME with scenario player (check it is built in MME by setting TRACE_XML to 'True' in $THIS_SCRIPT_PATH/../BUILD/MME/CMakeLists.template)"
+  echo_error "                                           Stop playing scenario(s) on first error encountered"
   echo_error "  -v, --verbosity-level                    Verbosity level (0,1,2)."
   echo_error "                                             0 -> ASN1 XER printf off"
   echo_error "                                             1 -> ASN1 XER printf on and ASN1 debug off"
@@ -173,6 +176,15 @@ function main()
         echo "setting scenario file to: $scenario_file"
         exe_arguments="-s $scenario_file $exe_arguments"
         DAEMON_ARGS=$DAEMON_ARGS" -s $scenario_file"
+        shift 2;
+        ;;
+      -S)
+        run_scenario_player=1
+        echo "setting scenario player flag to: $run_scenario_player"
+        scenario_file=$2
+        echo "setting scenario file to: $scenario_file"
+        exe_arguments="-S $scenario_file $exe_arguments"
+        DAEMON_ARGS=$DAEMON_ARGS" -S $scenario_file"
         shift 2;
         ;;
       -v | --verbosity-level)

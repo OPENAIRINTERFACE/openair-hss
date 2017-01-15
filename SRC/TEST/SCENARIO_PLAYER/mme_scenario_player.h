@@ -204,6 +204,38 @@ typedef enum {
   SCENARIO_STATUS_PLAY_SUCCESS
 } scenario_status_t;
 
+typedef enum {
+  SCENARIO_REASON_NONE = 0,
+  SCENARIO_XML_FILE_LOAD_SUCCEED,
+  SCENARIO_XML_FILE_LOAD_FAILED,
+  SCENARIO_XML_ITEM_MSG_FILE_LOAD_FAILED,
+  SCENARIO_XML_ITEM_EXIT_LOAD_FAILED,
+  SCENARIO_XML_ITEM_LABEL_LOAD_FAILED,
+  SCENARIO_XML_ITEM_VAR_LOAD_FAILED,
+  SCENARIO_XML_ITEM_SET_VAR_LOAD_FAILED,
+  SCENARIO_XML_ITEM_INCR_VAR_LOAD_FAILED,
+  SCENARIO_XML_ITEM_DECR_VAR_LOAD_FAILED,
+  SCENARIO_XML_ITEM_JUMP_ON_COND_LOAD_FAILED,
+  SCENARIO_XML_ITEM_SLEEP_LOAD_FAILED,
+  SCENARIO_XML_USIM_LOAD_FAILED,
+  SCENARIO_XML_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_LOAD_FAILED,
+  SCENARIO_XML_ITEM_COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER_LOAD_FAILED,
+  SCENARIO_XML_ITEM_UPDATE_EMM_SECURITY_CONTEXT_LOAD_FAILED,
+  SCENARIO_XML_FILE_DUMP_SUCCEED,
+  SCENARIO_XML_FILE_DUMP_FAILED,
+  SCENARIO_XML_COMPARISON_SUCCEED,
+  SCENARIO_XML_COMPARISON_FAILED,
+  SCENARIO_XML_WRONG_MESSAGE_TYPE,
+  SCENARIO_TX_MSG_NO_DELAY,
+  SCENARIO_RX_MSG_TIMED_OUT,
+  SCENARIO_RX_MSG_PLAYED,
+  SCENARIO_WAIT_RX_MSG,
+  SCENARIO_WAS_PAUSED,
+  SCENARIO_EXIT_ITEM,
+  SCENARIO_NO_MORE_ITEM
+} scenario_reason_t;
+
+
 typedef struct scenario_s {
   scenario_status_t       status;
   scenario_player_item_t *head_item;
@@ -271,7 +303,8 @@ void msp_fsm(void);
 struct timer_has_expired_s;
 
 void msp_scenario_tick(scenario_t * const scenario);
-void scenario_set_status(scenario_t * const scenario, const scenario_status_t scenario_status, char* caller, int line);
+bstring scenario_get_scenario_full_path_name(scenario_t * const scenario);
+void scenario_set_status(scenario_t * const scenario, const scenario_status_t scenario_status, const scenario_reason_t scenario_reason, char* hint);
 void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expired);
 void msp_get_elapsed_time_since_scenario_start(scenario_t * const scenario, struct timeval * const elapsed_time);
 bool msp_send_tx_message_no_delay(scenario_t * const scenario, scenario_player_item_t * const item);

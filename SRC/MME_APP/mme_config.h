@@ -226,6 +226,7 @@ typedef struct mme_config_s {
 #if TRACE_XML
   struct {
     bstring scenario_file;
+    bool    stop_on_error;
   } scenario_player_config;
 #endif
 

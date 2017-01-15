@@ -990,7 +990,7 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
   scenario_item->u.scenario = scenario;
 
   msp_init_scenario(scenario);
-  scenario_set_status(scenario, SCENARIO_STATUS_LOADING, __FILE__, __LINE__);
+  scenario_set_status(scenario, SCENARIO_STATUS_LOADING, SCENARIO_REASON_NONE, NULL);
   scenario->parent = parent_scenario;
   scenario->name = bfromcstr((const char *)attr);
   xmlFree(attr);
@@ -1049,92 +1049,78 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
         if ((scenario_player_item = msp_load_message_file(scenario, doc, xpath_ctx, nodes->nodeTab[item], file_path))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s %s\n", MESSAGE_FILE_NODE_XML_STR, bdata(file_path));
-          AssertFatal(0, "Prefer Stop here");
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_MSG_FILE_LOAD_FAILED, bdata(file_path));
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)EXIT_ATTR_XML_STR))) {
         if ((scenario_player_item = msp_load_exit(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", EXIT_ATTR_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_EXIT_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)LABEL_ATTR_XML_STR))) {
         if ((scenario_player_item = msp_load_label(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", LABEL_ATTR_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_LABEL_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)VAR_NODE_XML_STR))) {
         if ((scenario_player_item = msp_load_var(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", VAR_NODE_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_VAR_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)SET_VAR_NODE_XML_STR))) {
         if ((scenario_player_item = msp_load_set_var(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", SET_VAR_NODE_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_SET_VAR_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)INCR_VAR_INC_NODE_XML_STR))) {
         if ((scenario_player_item = msp_load_incr_var(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", INCR_VAR_INC_NODE_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_INCR_VAR_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)DECR_VAR_INC_NODE_XML_STR))) {
         if ((scenario_player_item = msp_load_decr_var(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", DECR_VAR_INC_NODE_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_DECR_VAR_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)JUMP_ON_COND_XML_STR))) {
         if ((scenario_player_item = msp_load_jcond(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", JUMP_ON_COND_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_JUMP_ON_COND_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)SLEEP_NODE_XML_STR))) {
         if ((scenario_player_item = msp_load_sleep(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", SLEEP_NODE_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_SLEEP_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)USIM_NODE_XML_STR))) {
         // not a scenario_player_item
         if ((msp_load_usim_data(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s \n", USIM_NODE_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_USIM_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_NODE_XML_STR))) {
         if ((scenario_player_item = msp_load_compute_authentication_response_parameter(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_NODE_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER_NODE_XML_STR))) {
         if ((scenario_player_item = msp_load_compute_authentication_sync_failure_parameter(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER_NODE_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)UPDATE_EMM_SECURITY_CONTEXT_NODE_XML_STR))) {
         if ((scenario_player_item = msp_load_update_emm_security_context(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, __FILE__, __LINE__);
-          OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Failed to load %s\n", UPDATE_EMM_SECURITY_CONTEXT_NODE_XML_STR);
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_UPDATE_EMM_SECURITY_CONTEXT_LOAD_FAILED, NULL);
         }
       } else {
         OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Found %s\n", nodes->nodeTab[item]->name);
@@ -1151,7 +1137,7 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
 
   AssertFatal(SCENARIO_STATUS_LOADING == scenario->status, "Failed to load scenario %s: status=%d\n", bdata(file_path), scenario->status);
   if (SCENARIO_STATUS_LOADING == scenario->status) {
-    scenario_set_status(scenario, SCENARIO_STATUS_LOADED, __FILE__, __LINE__);
+    scenario_set_status(scenario, SCENARIO_STATUS_LOADED, SCENARIO_REASON_NONE, NULL);
   }
   return scenario_item;
 }

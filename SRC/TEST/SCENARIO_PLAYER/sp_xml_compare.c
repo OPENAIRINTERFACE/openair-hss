@@ -70,7 +70,7 @@ static int sp_xml_compare_elements(scenario_t *scenario, xmlNode * received_node
             } else if ('#' == expected_cur_node->content[0]) {
               res = sp_assign_value_to_var(scenario, (char *)&expected_cur_node->content[1], (char *)received_cur_node->content);
             } else {
-              OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Compare received %s %s/%d vs expected %s %s/%d failed\n",
+              OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "Compare received /%s/%s/%d vs expected /%s/%s/%d failed\n",
                   received_cur_node->parent->name, received_cur_node->content, xmlStrlen(received_cur_node->content),
                   expected_cur_node->parent->name, expected_cur_node->content, xmlStrlen(expected_cur_node->content));
               res = RETURNerror;

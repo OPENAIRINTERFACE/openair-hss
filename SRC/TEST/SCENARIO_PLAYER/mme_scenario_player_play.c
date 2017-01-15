@@ -71,34 +71,100 @@ void msp_scenario_tick(scenario_t * const scenario)
   message_p->ittiMsg.scenario_tick.scenario = scenario;
   itti_send_msg_to_task (TASK_MME_SCENARIO_PLAYER, INSTANCE_DEFAULT, message_p);
 }
+//------------------------------------------------------------------------------
+bstring scenario_get_scenario_full_path_name(scenario_t * const scenario)
+{
+  bstring fp_name = bstrcpy(scenario->name);
+  scenario_t * scenario_up = scenario->parent;
+  while (scenario_up) {
+    binsertch(fp_name, 0, 1, '/');
+    binsert (fp_name, 0, scenario_up->name, '#');
+    scenario_up = scenario_up->parent;
+  }
+  return fp_name;
+}
 
 //------------------------------------------------------------------------------
-void scenario_set_status(scenario_t * const scenario, const scenario_status_t scenario_status, char* caller_file, int caller_line)
+bstring scenario_reason2str(const scenario_reason_t scenario_reason)
+{
+  char * reason_str = NULL;
+  switch (scenario_reason) {
+    case SCENARIO_REASON_NONE:                       reason_str = "REASON NONE"; break;
+    case SCENARIO_XML_FILE_LOAD_SUCCEED:             reason_str = "REASON XML FILE LOAD SUCCEED"; break;
+    case SCENARIO_XML_FILE_LOAD_FAILED:              reason_str = "REASON XML FILE LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_MSG_FILE_LOAD_FAILED:     reason_str = "REASON XML ITEM MSG FILE LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_EXIT_LOAD_FAILED:         reason_str = "REASON XML ITEM EXIT_LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_LABEL_LOAD_FAILED:        reason_str = "REASON XML_ITEM LABEL LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_VAR_LOAD_FAILED:          reason_str = "REASON XML ITEM VAR LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_SET_VAR_LOAD_FAILED:      reason_str = "REASON XML ITEM SET VAR LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_INCR_VAR_LOAD_FAILED:     reason_str = "REASON XML ITEM INCR VAR LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_DECR_VAR_LOAD_FAILED:     reason_str = "REASON XML ITEM DECR VAR LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_JUMP_ON_COND_LOAD_FAILED: reason_str = "REASON XML ITEM JUMP ON COND LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_SLEEP_LOAD_FAILED:        reason_str = "REASON XML ITEM SLEEP LOAD FAILED"; break;
+    case SCENARIO_XML_USIM_LOAD_FAILED:              reason_str = "REASON XML USIM LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_LOAD_FAILED: reason_str = "REASON XML ITEM COMPUTE AUTHENTICATION RESPONSE PARAMETER LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER_LOAD_FAILED: reason_str = "REASON XML ITEM COMPUTE AUTHENTICATION SYNC FAILURE PARAMETER LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_UPDATE_EMM_SECURITY_CONTEXT_LOAD_FAILED: reason_str = "REASON XML ITEM UPDATE EMM SECURITY CONTEXT LOAD FAILED"; break;
+    case SCENARIO_XML_FILE_DUMP_SUCCEED:             reason_str = "REASON XML FILE DUMP SUCCEED"; break;
+    case SCENARIO_XML_FILE_DUMP_FAILED:              reason_str = "REASON XML FILE DUMP FAILED"; break;
+    case SCENARIO_XML_COMPARISON_SUCCEED:            reason_str = "REASON XML COMPARISON SUCCEED"; break;
+    case SCENARIO_XML_COMPARISON_FAILED:             reason_str = "REASON XML COMPARISON FAILED"; break;
+    case SCENARIO_XML_WRONG_MESSAGE_TYPE:            reason_str = "REASON XML WRONG MESSAGE TYPE"; break;
+    case SCENARIO_TX_MSG_NO_DELAY:                   reason_str = "REASON TX MSG NO DELAY"; break;
+    case SCENARIO_RX_MSG_TIMED_OUT:                  reason_str = "REASON RX MSG TIMED OUT"; break;
+    case SCENARIO_RX_MSG_PLAYED:                     reason_str = "REASON RX MSG PLAYED"; break;
+    case SCENARIO_WAIT_RX_MSG:                       reason_str = "REASON WAIT RX MSG"; break;
+    case SCENARIO_WAS_PAUSED:                        reason_str = "REASON WAS PAUSED"; break;
+    case SCENARIO_EXIT_ITEM:                         reason_str = "REASON EXIT ITEM"; break;
+    case SCENARIO_NO_MORE_ITEM:                      reason_str = "REASON NO MORE ITEM"; break;
+    default:
+      reason_str = "UNKNOWN REASON"; break;
+  }
+  return (bfromcstr(reason_str));
+}
+
+//------------------------------------------------------------------------------
+void scenario_set_status(scenario_t * const scenario, const scenario_status_t scenario_status, const scenario_reason_t scenario_reason, char* extra)
 {
   bstring b = NULL;
+  bstring fp_name = scenario_get_scenario_full_path_name(scenario);
   scenario->status = scenario_status;
+  bstring reason = scenario_reason2str(scenario_reason);
+  if (extra) {
+    bconchar(reason, ' ');
+    bcatcstr(reason, extra);
+  }
   if (SCENARIO_STATUS_PLAY_SUCCESS == scenario_status) {
-    b = bformat("SUCCESS PLAY   scenario %s set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
+    b = bformat("SUCCESS PLAY   scenario %s set by %s\n", bdata(fp_name), bdata(reason));
     OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "%s", bdata(b));
   } else if (SCENARIO_STATUS_PLAY_FAILED == scenario_status) {
-    b = bformat("FAILURE PLAY   scenario %s set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
+    b = bformat("FAILURE PLAY   scenario %s set by %s\n", bdata(fp_name), bdata(reason));
     OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "%s", bdata(b));
   } else if (SCENARIO_STATUS_LOAD_FAILED == scenario_status) {
-    b = bformat("FAILURE LOAD   scenario %s set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
+    b = bformat("FAILURE LOAD   scenario %s set by %s\n", bdata(fp_name), bdata(reason));
     OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "%s", bdata(b));
   } else if (SCENARIO_STATUS_PAUSED == scenario_status) {
-    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s PAUSED set by %s:%d\n", bdata(scenario->name), caller_file, caller_line);
+    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Run scenario %s PAUSED set by %s\n", bdata(scenario->name), bdata(reason));
   } else if (SCENARIO_STATUS_LOADED == scenario_status) {
-    b = bformat("SUCCESS LOADED scenario %s\n", bdata(scenario->name));
+    b = bformat("SUCCESS LOADED scenario %s set by %s\n", bdata(fp_name), bdata(reason));
     OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "%s", bdata(b));
   }
+  bdestroy_wrapper(&fp_name);
+  bdestroy_wrapper(&reason);
   if (b) {
     int rv_put = fputs ((const char *)b->data, g_msp_scenarios.result_fd);
     if (rv_put < 0) {
       // error occured
       OAILOG_WARNING(LOG_MME_SCENARIO_PLAYER, "Error while logging scenario status %d: %s\n", rv_put, bdata(b));
     }
+    bdestroy_wrapper(&b);
     fflush (g_msp_scenarios.result_fd);
+  }
+  if (
+      ((SCENARIO_STATUS_LOAD_FAILED == scenario_status) ||
+       (SCENARIO_STATUS_PLAY_FAILED == scenario_status))   &&
+      (mme_config.scenario_player_config.stop_on_error)) {
+    itti_terminate_tasks (TASK_MME_SCENARIO_PLAYER);
   }
 }
 
@@ -134,7 +200,7 @@ void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expir
       // we do not use timer for tx message anymore
       if (arg->item->u.msg.is_tx) {
         if (SCENARIO_STATUS_PAUSED == arg->scenario->status) {
-          scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAYING, __FILE__, __LINE__);
+          scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAYING, SCENARIO_TX_MSG_NO_DELAY, "TIMER");
         }
         msp_send_tx_message_no_delay(arg->scenario, arg->item);
         // trigger continuation of the scenario
@@ -146,7 +212,7 @@ void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expir
         if (!arg->item->is_played) {
           OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "ITTI msg uid %d timed-out(%ld.%06ld sec)\n",
               arg->item->uid, arg->item->u.msg.time_out.tv_sec, arg->item->u.msg.time_out.tv_usec);
-          scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
+          scenario_set_status(arg->scenario, SCENARIO_STATUS_PLAY_FAILED, SCENARIO_RX_MSG_TIMED_OUT, "NULL");
           // trigger continuation of the scenario
           pthread_mutex_unlock(&arg->scenario->lock);
           msp_scenario_tick(arg->scenario);
@@ -248,7 +314,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Play item RX message  UID %u\n", item->uid);
   if (item->is_played) {
     OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "item RX message  UID %u already played\n", item->uid);
-    scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, __FILE__, __LINE__);
+    scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, SCENARIO_RX_MSG_PLAYED, NULL);
     return true;
   }
   if (item->u.msg.timer_id) {
@@ -275,7 +341,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
         ((elapsed_time.tv_sec == item->u.msg.time_out.tv_sec) &&
          (elapsed_time.tv_usec >= item->u.msg.time_out.tv_usec))
     ) {
-      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
+      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, SCENARIO_RX_MSG_TIMED_OUT, NULL);
       return false;
     } else {
 
@@ -288,7 +354,7 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
           TASK_MME_SCENARIO_PLAYER, INSTANCE_DEFAULT,
           TIMER_ONE_SHOT, (void*)&item->u.msg.timer_arg, &item->u.msg.timer_id);
 
-      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, __FILE__, __LINE__);
+      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, SCENARIO_WAIT_RX_MSG, NULL);
       AssertFatal(RETURNok == ret, "Error setting timer item %d", item->uid);
       OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Setting timer %lx %ld.%06ld sec\n", item->u.msg.timer_id, timer_val.tv_sec, timer_val.tv_usec);
       return false;
@@ -301,12 +367,12 @@ bool msp_play_rx_message(scenario_t * const scenario, scenario_player_item_t * c
       int ret = timer_setup (item->u.msg.time_out.tv_sec, item->u.msg.time_out.tv_usec,
           TASK_MME_SCENARIO_PLAYER, INSTANCE_DEFAULT,
           TIMER_ONE_SHOT, (void*)&item->u.msg.timer_arg, &item->u.msg.timer_id);
-      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, __FILE__, __LINE__);
+      scenario_set_status(scenario, SCENARIO_STATUS_PAUSED, SCENARIO_WAIT_RX_MSG, NULL);
       AssertFatal(0 == ret, "Error setting timer item %d", item->uid);
       OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Setting timer %lx %ld.%06ld sec\n", item->u.msg.timer_id, item->u.msg.time_out.tv_sec, item->u.msg.time_out.tv_usec);
       return true;
     } else {
-      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, __FILE__, __LINE__);
+      scenario_set_status(scenario, SCENARIO_STATUS_PLAY_FAILED, SCENARIO_RX_MSG_TIMED_OUT, NULL);
       return false;
     }
   }
@@ -835,7 +901,7 @@ void msp_init_scenario(scenario_t * const s)
     s->scenario_items = hashtable_ts_create (128, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func /* items are also stored in a list, so do not free them in the hashtable*/, NULL);
     s->var_items      = obj_hashtable_ts_create (32, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
     s->label_items    = obj_hashtable_ts_create (8, HASH_TABLE_DEFAULT_HASH_FUNC, NULL , hash_free_int_func, NULL);
-    scenario_set_status(s, SCENARIO_STATUS_NULL, __FILE__, __LINE__);
+    scenario_set_status(s, SCENARIO_STATUS_NULL, SCENARIO_REASON_NONE, NULL);
     s->num_timers    = 0;
   }
 }
@@ -869,9 +935,9 @@ bool msp_play_item(scenario_t * const scenario, scenario_player_item_t * const i
       scenario->last_played_item = item;
       OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Exiting scenario %s\n", bdata(scenario->name));
       if (item->u.exit) {
-        scenario_set_status(scenario, item->u.exit, __FILE__, __LINE__);
+        scenario_set_status(scenario, item->u.exit, SCENARIO_EXIT_ITEM, NULL);
       } else {
-        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_SUCCESS, __FILE__, __LINE__);
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_SUCCESS, SCENARIO_EXIT_ITEM, NULL);
       }
       return false;
     } else if (SCENARIO_PLAYER_ITEM_VAR == item->item_type) {
@@ -909,7 +975,7 @@ void msp_run_scenario(scenario_t * const scenario)
     switch (scenario->status) {
       case SCENARIO_STATUS_LOADED:
         item = scenario->head_item;
-        scenario_set_status(scenario, SCENARIO_STATUS_PLAYING, __FILE__, __LINE__);
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAYING, SCENARIO_REASON_NONE, NULL);
         OAILOG_INFO (LOG_MME_SCENARIO_PLAYER, "Playing scenario %s\n", bdata(scenario->name));
         break;
 
@@ -953,7 +1019,7 @@ void msp_run_scenario(scenario_t * const scenario)
       }
     } else {
       if (!(scenario->num_timers) && (SCENARIO_STATUS_PLAYING == scenario->status)) {
-        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_SUCCESS, __FILE__, __LINE__);
+        scenario_set_status(scenario, SCENARIO_STATUS_PLAY_SUCCESS, SCENARIO_NO_MORE_ITEM, NULL);
         OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s SUCCESS\n", bdata(scenario->name));
         pthread_mutex_unlock(&scenario->lock);
         if (scenario->parent) {

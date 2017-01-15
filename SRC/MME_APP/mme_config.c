@@ -967,7 +967,7 @@ mme_config_parse_opt_line (
   /*
    * Parsing command line
    */
-  while ((c = getopt (argc, argv, "c:hs:i:K:v:V")) != -1) {
+  while ((c = getopt (argc, argv, "c:hs:S:v:V")) != -1) {
     switch (c) {
     case 'c':{
         /*
@@ -989,15 +989,17 @@ mme_config_parse_opt_line (
       }
       break;
 
-    case 'K':
-      config_pP->itti_config.log_file = blk2bstr (optarg, strlen(optarg));;
-      OAI_FPRINTF_INFO ("%s mme_config.itti_config.log_file %s\n", __FUNCTION__, bdata(config_pP->itti_config.log_file));
-      break;
-
 #if TRACE_XML
+    case 'S':
+      config_pP->run_mode = RUN_MODE_SCENARIO_PLAYER;
+      config_pP->scenario_player_config.scenario_file = blk2bstr(optarg, strlen(optarg));
+      config_pP->scenario_player_config.stop_on_error = true;
+      OAI_FPRINTF_INFO ("%s mme_config.scenario_player_config.scenario_file %s\n", __FUNCTION__, bdata(config_pP->scenario_player_config.scenario_file));
+      break;
     case 's':
       config_pP->run_mode = RUN_MODE_SCENARIO_PLAYER;
       config_pP->scenario_player_config.scenario_file = blk2bstr(optarg, strlen(optarg));
+      config_pP->scenario_player_config.stop_on_error = false;
       OAI_FPRINTF_INFO ("%s mme_config.scenario_player_config.scenario_file %s\n", __FUNCTION__, bdata(config_pP->scenario_player_config.scenario_file));
       break;
 #endif
