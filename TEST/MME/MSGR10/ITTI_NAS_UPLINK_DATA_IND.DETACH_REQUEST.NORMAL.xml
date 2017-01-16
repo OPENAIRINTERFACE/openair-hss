@@ -36,7 +36,7 @@
   <ecgi>
     <plmn>
       <mcc>208</mcc>
-      <mnc>93</mnc>
+      <mnc>93f</mnc>
     </plmn>
     <eci>00e0000</eci>
   </ecgi>

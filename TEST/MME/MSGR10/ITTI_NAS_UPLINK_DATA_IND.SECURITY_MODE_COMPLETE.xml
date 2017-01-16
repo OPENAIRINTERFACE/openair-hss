@@ -3,7 +3,7 @@
   <ACTION>SEND</ACTION>
   <ITTI_SENDER_TASK>TASK_S1AP</ITTI_SENDER_TASK>
   <ITTI_RECEIVER_TASK>TASK_NAS_MME</ITTI_RECEIVER_TASK>
-  <TIMESTAMP>74.885116</TIMESTAMP>
+  <TIMESTAMP>ANY</TIMESTAMP>
   <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
   <security_protected_nas_message>
     <security_header_type>0x000004</security_header_type>

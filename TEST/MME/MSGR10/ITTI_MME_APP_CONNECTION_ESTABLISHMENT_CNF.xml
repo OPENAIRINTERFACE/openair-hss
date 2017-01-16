@@ -32,7 +32,7 @@
         <esm_message_container length="ANY" hex_dump="ANY">
           <ebi>5</ebi>
           <protocol_discriminator>EPS_SESSION_MANAGEMENT_MESSAGE</protocol_discriminator>
-          <pti>0x1</pti>
+          <pti>$NAS_PTI_DL</pti>
           <message_type>ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST</message_type>
           <eps_quality_of_service qci="0x9"/>
           <apn>#ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.APN</apn>
@@ -49,7 +49,6 @@
             <configuration_protocol>0</configuration_protocol>
             <protocol id="IPCP" length="16">
               <raw>ANY</raw>
-              <!--TODO IPCP (replace raw content by human readable tags)-->
             </protocol>
             <container id="DNS_SERVER_IPV4_ADDRESS" length="4" hex_data="ANY">
               <!--DNS_SERVER_IPV4_ADDRESS=192.168.106.12
@@ -67,6 +66,10 @@
           <mme_code>$MME_CODE</mme_code>
           <m_tmsi>#ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS_EMM.GUTI.M_TMSI</m_tmsi>
         </eps_mobile_identity>
+        <gprs_timer_t3402>
+          <unit>ANY</unit>
+          <timer_value>ANY</timer_value>
+        </gprs_timer_t3402>
       </plain_nas_message>
     </security_protected_nas_message>
   </e_rab_setup_item>

@@ -27,7 +27,7 @@
         <m_tmsi>$M_TMSI</m_tmsi>
       </eps_mobile_identity>
       <ue_network_capability>
-        <eea>0xa0</eea>
+        <eea>0xe0</eea>
         <eia>0x60</eia>
         <uea>0xc0</uea>
         <uia>0x40</uia>
@@ -36,11 +36,11 @@
       <esm_message_container length="33" hex_dump="0201d011d1271a8080211001000010810600000000830600000000000d00000a00">
         <ebi>0</ebi>
         <protocol_discriminator>EPS_SESSION_MANAGEMENT_MESSAGE</protocol_discriminator>
-        <pti>1</pti>
+        <pti>$NAS_PTI_UL</pti>
         <message_type>PDN_CONNECTIVITY_REQUEST</message_type>
         <pdn_type>IPv4</pdn_type>
         <request_type>1</request_type>
-        <esm_information_transfer_flag>1</esm_information_transfer_flag>
+        <esm_information_transfer_flag>$ESM_INFORMATION_TRANSFER_FLAG</esm_information_transfer_flag>
         <pco>
           <extension>0</extension>
           <configuration_protocol>0</configuration_protocol>
@@ -53,8 +53,8 @@
         </pco>
       </esm_message_container>
       <tracking_area_identity>
-        <mcc>$MCC</mcc>
-        <mnc>$MNC</mnc>
+        <mcc>208</mcc>
+        <mnc>93f</mnc>
         <tracking_area_code>0x1</tracking_area_code>
       </tracking_area_identity>
       <drx_parameter>
