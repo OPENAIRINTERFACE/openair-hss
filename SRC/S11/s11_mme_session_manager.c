@@ -258,7 +258,10 @@ s11_mme_delete_session_request (
 
   gtpv2c_ebi_ie_set (&(ulp_req.hMsg), (unsigned)req_p->lbi);
 
-  gtpv2c_indication_flags_ie_set (&(ulp_req.hMsg), &req_p->indication_flags);
+
+  if ((req_p->indication_flags.oi) || (req_p->indication_flags.si)){
+    gtpv2c_indication_flags_ie_set (&(ulp_req.hMsg), &req_p->indication_flags);
+  }
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);

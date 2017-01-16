@@ -47,9 +47,10 @@
 #include "mme_app_defs.h"
 #include "mcc_mnc_itu.h"
 
+static void mme_app_send_delete_session_request (struct ue_mm_context_s * const ue_context_p, const ebi_t ebi, const pdn_cid_t cid);
 
 //------------------------------------------------------------------------------
-void mme_app_send_delete_session_request (struct ue_mm_context_s * const ue_context_p, const pdn_cid_t cid)
+static void mme_app_send_delete_session_request (struct ue_mm_context_s * const ue_context_p, const ebi_t ebi, const pdn_cid_t cid)
 {
   MessageDef                             *message_p = NULL;
 
@@ -57,7 +58,7 @@ void mme_app_send_delete_session_request (struct ue_mm_context_s * const ue_cont
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_teid_s11;
   S11_DELETE_SESSION_REQUEST (message_p).teid       = ue_context_p->pdn_contexts[cid]->s_gw_teid_s11_s4;
-  S11_DELETE_SESSION_REQUEST (message_p).lbi        = 0; //default bearer
+  S11_DELETE_SESSION_REQUEST (message_p).lbi        = ebi; //default bearer
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
@@ -67,6 +68,8 @@ void mme_app_send_delete_session_request (struct ue_mm_context_s * const ue_cont
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
   mme_config_unlock (&mme_config);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4 = 1;
+
+  S11_DELETE_SESSION_REQUEST (message_p).indication_flags.oi = 1;
 
   /*
    * S11 stack specific parameter. Not used in standalone epc mode
@@ -108,7 +111,7 @@ mme_app_handle_detach_req (
           if (ue_context->pdn_contexts[cid]) {
             if (INVALID_TEID != ue_context->pdn_contexts[cid]->s_gw_teid_s11_s4) {
               // Send a DELETE_SESSION_REQUEST message to the SGW
-              mme_app_send_delete_session_request  (ue_context, cid);
+              mme_app_send_delete_session_request  (ue_context, ue_context->pdn_contexts[cid]->default_ebi, cid);
               sent_sgw = true;
               // CAROLE il vaut miex attendre de recevoir le delete session response pour effacer le contexte
               // mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context);

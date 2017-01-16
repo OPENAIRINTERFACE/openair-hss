@@ -1877,37 +1877,41 @@ gtpv2c_indication_flags_ie_get (
 
   DevAssert (indication_flags );
 
-  if (ieLength != 3) { // think about more than 3 later
-    return NW_GTPV2C_IE_INCORRECT;
+  if (2 <= ieLength) { // think about more than 3 later
+    indication_flags->daf   = (ieValue[0] >> DAF_FLAG_BIT_POS)   & 0x01;
+    indication_flags->dtf   = (ieValue[0] >> DTF_FLAG_BIT_POS)   & 0x01;
+    indication_flags->hi    = (ieValue[0] >> HI_FLAG_BIT_POS)    & 0x01;
+    indication_flags->dfi   = (ieValue[0] >> DFI_FLAG_BIT_POS)   & 0x01;
+    indication_flags->oi    = (ieValue[0] >> OI_FLAG_BIT_POS)    & 0x01;
+    indication_flags->isrsi = (ieValue[0] >> ISRSI_FLAG_BIT_POS) & 0x01;
+    indication_flags->israi = (ieValue[0] >> ISRAI_FLAG_BIT_POS) & 0x01;
+    indication_flags->sgwci = (ieValue[0] >> SGWCI_FLAG_BIT_POS) & 0x01;
+
+    indication_flags->sqci  = (ieValue[1] >> SQSI_FLAG_BIT_POS)  & 0x01;
+    indication_flags->uimsi = (ieValue[1] >> UIMSI_FLAG_BIT_POS) & 0x01;
+    indication_flags->cfsi  = (ieValue[1] >> CFSI_FLAG_BIT_POS)  & 0x01;
+    indication_flags->crsi  = (ieValue[1] >> CRSI_FLAG_BIT_POS)  & 0x01;
+    indication_flags->p     = (ieValue[1] >> P_FLAG_BIT_POS)     & 0x01;
+    indication_flags->pt    = (ieValue[1] >> PT_FLAG_BIT_POS)    & 0x01;
+    indication_flags->si    = (ieValue[1] >> SI_FLAG_BIT_POS)    & 0x01;
+    indication_flags->msv   = (ieValue[1] >> MSV_FLAG_BIT_POS)   & 0x01;
+
+    if (2 == ieLength) {
+      return NW_OK;
+    }
+    if (3 == ieLength) {
+      indication_flags->spare1 = 0;
+      indication_flags->spare2 = 0;
+      indication_flags->spare3 = 0;
+      indication_flags->s6af  = (ieValue[2] >> S6AF_FLAG_BIT_POS)  & 0x01;
+      indication_flags->s4af  = (ieValue[2] >> S4AF_FLAG_BIT_POS)  & 0x01;
+      indication_flags->mbmdt = (ieValue[2] >> MBMDT_FLAG_BIT_POS) & 0x01;
+      indication_flags->israu = (ieValue[2] >> ISRAU_FLAG_BIT_POS) & 0x01;
+      indication_flags->ccrsi = (ieValue[2] >> CRSI_FLAG_BIT_POS)  & 0x01;
+      return NW_OK;
+    }
   }
-
-  indication_flags->daf   = (ieValue[0] >> DAF_FLAG_BIT_POS)   & 0x01;
-  indication_flags->dtf   = (ieValue[0] >> DTF_FLAG_BIT_POS)   & 0x01;
-  indication_flags->hi    = (ieValue[0] >> HI_FLAG_BIT_POS)    & 0x01;
-  indication_flags->dfi   = (ieValue[0] >> DFI_FLAG_BIT_POS)   & 0x01;
-  indication_flags->oi    = (ieValue[0] >> OI_FLAG_BIT_POS)    & 0x01;
-  indication_flags->isrsi = (ieValue[0] >> ISRSI_FLAG_BIT_POS) & 0x01;
-  indication_flags->israi = (ieValue[0] >> ISRAI_FLAG_BIT_POS) & 0x01;
-  indication_flags->sgwci = (ieValue[0] >> SGWCI_FLAG_BIT_POS) & 0x01;
-
-  indication_flags->sqci  = (ieValue[1] >> SQSI_FLAG_BIT_POS)  & 0x01;
-  indication_flags->uimsi = (ieValue[1] >> UIMSI_FLAG_BIT_POS) & 0x01;
-  indication_flags->cfsi  = (ieValue[1] >> CFSI_FLAG_BIT_POS)  & 0x01;
-  indication_flags->crsi  = (ieValue[1] >> CRSI_FLAG_BIT_POS)  & 0x01;
-  indication_flags->p     = (ieValue[1] >> P_FLAG_BIT_POS)     & 0x01;
-  indication_flags->pt    = (ieValue[1] >> PT_FLAG_BIT_POS)    & 0x01;
-  indication_flags->si    = (ieValue[1] >> SI_FLAG_BIT_POS)    & 0x01;
-  indication_flags->msv   = (ieValue[1] >> MSV_FLAG_BIT_POS)   & 0x01;
-
-  indication_flags->spare1 = 0;
-  indication_flags->spare2 = 0;
-  indication_flags->spare3 = 0;
-  indication_flags->s6af  = (ieValue[2] >> S6AF_FLAG_BIT_POS)  & 0x01;
-  indication_flags->s4af  = (ieValue[2] >> S4AF_FLAG_BIT_POS)  & 0x01;
-  indication_flags->mbmdt = (ieValue[2] >> MBMDT_FLAG_BIT_POS) & 0x01;
-  indication_flags->israu = (ieValue[2] >> ISRAU_FLAG_BIT_POS) & 0x01;
-  indication_flags->ccrsi = (ieValue[2] >> CRSI_FLAG_BIT_POS)  & 0x01;
-  return NW_OK;
+  return NW_GTPV2C_IE_INCORRECT;
 }
 
 //------------------------------------------------------------------------------
@@ -1945,7 +1949,7 @@ gtpv2c_indication_flags_ie_set (
       (indication_flags->israu  << ISRAU_FLAG_BIT_POS) |
       (indication_flags->ccrsi  << CCRSI_FLAG_BIT_POS);
 
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_INDICATION, 1, 3, (uint8_t*)value);
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_INDICATION, 3, 0, (uint8_t*)value);
   DevAssert (NW_OK == rc);
   return RETURNok;
 }
