@@ -49,10 +49,8 @@
 
 extern hash_table_ts_t g_s1ap_enb_coll; // contains eNB_description_s, key is eNB_description_s.assoc_id
 
-static int                              s1ap_generate_s1_setup_response (
-  enb_description_t * enb_association);
-static int                              s1ap_mme_generate_ue_context_release_command (
-  ue_description_t * ue_ref_p);
+static int s1ap_generate_s1_setup_response (enb_description_t * enb_association);
+static int s1ap_mme_generate_ue_context_release_command (ue_description_t * ue_ref_p, S1ap_Cause_t cause);
 
 //Forward declaration
 struct s1ap_message_s;
@@ -697,8 +695,7 @@ s1ap_mme_handle_ue_context_release_request (
 
 //------------------------------------------------------------------------------
 static int
-s1ap_mme_generate_ue_context_release_command (
-  ue_description_t * ue_ref_p)
+s1ap_mme_generate_ue_context_release_command (ue_description_t * ue_ref_p, S1ap_Cause_t cause)
 {
   uint8_t                                *buffer = NULL;
   uint32_t                                length = 0;
@@ -721,8 +718,7 @@ s1ap_mme_generate_ue_context_release_command (
   ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.mME_UE_S1AP_ID = ue_ref_p->mme_ue_s1ap_id;
   ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.eNB_UE_S1AP_ID = ue_ref_p->enb_ue_s1ap_id;
   ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.iE_Extensions = NULL;
-  ueContextReleaseCommandIEs_p->cause.present = S1ap_Cause_PR_radioNetwork;
-  ueContextReleaseCommandIEs_p->cause.choice.radioNetwork = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
+  ueContextReleaseCommandIEs_p->cause = cause;
 
   if (s1ap_mme_encode_pdu (&message, &buffer, &length) < 0) {
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UEContextRelease/initiatingMessage enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " encoding failed",
@@ -771,7 +767,7 @@ s1ap_handle_ue_context_release_command (
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_COMMAND ignored, no context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ue_context_release_command_pP->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   } else {
-    rc = s1ap_mme_generate_ue_context_release_command (ue_ref_p);
+    rc = s1ap_mme_generate_ue_context_release_command (ue_ref_p, ue_context_release_command_pP->cause);
     OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   }
 

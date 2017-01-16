@@ -104,6 +104,8 @@ mme_app_handle_detach_req (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   else {
+    ue_context->s1_ue_context_release_cause.present = S1ap_Cause_PR_nas;
+    ue_context->s1_ue_context_release_cause.choice.nas = S1ap_CauseNas_detach;
     if (!ue_context->is_s1_ue_context_release) {
       for (pdn_cid_t cid = 0; cid < MAX_APN_PER_UE; cid++) {
         // No session with S-GW
@@ -120,15 +122,7 @@ mme_app_handle_detach_req (
         }
       }
       if (!sent_sgw) {
-        // no session was created, no need for deleting session in SGW
-        MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
-        AssertFatal (message_p , "itti_alloc_new_message Failed");
-        S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id;
-        S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
-        MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",
-            S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
-        int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
-        itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+        mme_app_send_s1ap_ue_context_release_command(ue_context, ue_context->s1_ue_context_release_cause);
       }
     }
   }

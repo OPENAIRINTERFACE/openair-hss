@@ -30,6 +30,7 @@
 static inline void mme_app_itti_delete_session_rsp(
   const mme_ue_s1ap_id_t   ue_idP)
 {
+  OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p;
 
   message_p = itti_alloc_new_message(TASK_MME_APP, MME_APP_DELETE_SESSION_RSP);

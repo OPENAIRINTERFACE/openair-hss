@@ -266,6 +266,7 @@ void xml_msg_dump_itti_s1ap_ue_context_release_req(const itti_s1ap_ue_context_re
     enb_ue_s1ap_id_t  enb_ue_s1ap_id = itti_msg->enb_ue_s1ap_id;
     enb_ue_s1ap_id_to_xml(&enb_ue_s1ap_id, xml_text_writer);
     mme_ue_s1ap_id_to_xml(&itti_msg->mme_ue_s1ap_id, xml_text_writer);
+    s1ap_cause_to_xml(&itti_msg->cause, xml_text_writer);
 
     XML_WRITE_END_ELEMENT(xml_text_writer);
 
@@ -322,7 +323,7 @@ void xml_msg_dump_itti_s1ap_ue_context_release_command(const itti_s1ap_ue_contex
     enb_ue_s1ap_id_t  enb_ue_s1ap_id = itti_msg->enb_ue_s1ap_id;
     enb_ue_s1ap_id_to_xml(&enb_ue_s1ap_id, xml_text_writer);
     mme_ue_s1ap_id_to_xml(&itti_msg->mme_ue_s1ap_id, xml_text_writer);
-
+    s1ap_cause_to_xml(&itti_msg->cause, xml_text_writer);
     XML_WRITE_END_ELEMENT(xml_text_writer);
 
     rc = xmlTextWriterEndDocument(xml_text_writer);

@@ -386,6 +386,10 @@ bstring mme_scenario_player_dump_s1ap_ue_context_release_command (const MessageD
       OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error ending Document\n");
     }
     xmlFreeTextWriter(xml_text_writer);
+    // OLE.... pretty xml
+    char cmd[400];
+    snprintf(cmd, 400, "tmpfile=`mktemp`;xmllint --format %s > $tmpfile; cp $tmpfile %s;rm  $tmpfile; sync;", filename, filename);
+    system(cmd);
     return bfromcstr(filename);
   }
   return NULL;
@@ -497,6 +501,10 @@ bstring mme_scenario_player_dump_s1ap_e_rab_setup_req (const MessageDef * const 
       OAILOG_ERROR(LOG_MME_SCENARIO_PLAYER, "Error ending Document\n");
     }
     xmlFreeTextWriter(xml_text_writer);
+    // OLE.... pretty xml
+    char cmd[400];
+    snprintf(cmd, 400, "tmpfile=`mktemp`;xmllint --format %s > $tmpfile; cp $tmpfile %s;rm  $tmpfile; sync;", filename, filename);
+    system(cmd);
     return bfromcstr(filename);
   }
   return NULL;

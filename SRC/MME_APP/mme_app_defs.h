@@ -47,6 +47,8 @@ int mme_app_handle_s1ap_ue_capabilities_ind  (const itti_s1ap_ue_cap_ind_t const
 
 void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context_release_complete_t const *s1ap_ue_context_release_complete);
 
+void mme_app_send_s1ap_ue_context_release_command (ue_mm_context_t *ue_context, S1ap_Cause_t cause);
+
 
 int mme_app_send_s11_release_access_bearers_req (struct ue_mm_context_s *const ue_context_pP, pdn_cid_t pdn_index);
 

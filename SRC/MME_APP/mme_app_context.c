@@ -581,10 +581,10 @@ void mme_remove_ue_context (
   mme_ue_context_t * const mme_ue_context_p,
   struct ue_mm_context_s *ue_context_p)
 {
+  OAILOG_FUNC_IN (LOG_MME_APP);
   unsigned int                           *id = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
-  OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (mme_ue_context_p );
   DevAssert (ue_context_p );
   /*
@@ -1110,4 +1110,23 @@ mme_app_handle_s1ap_ue_context_release_complete (
   //mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
   // TODO remove in context GBR bearers
   OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+
+//------------------------------------------------------------------------------
+void mme_app_send_s1ap_ue_context_release_command (ue_mm_context_t *ue_context, S1ap_Cause_t cause)
+{
+  // no session was created, no need for deleting session in SGW
+  // may be redundant...
+  ue_context->s1_ue_context_release_cause =  cause;
+
+  MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
+  AssertFatal (message_p , "itti_alloc_new_message Failed");
+  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id;
+  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
+  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).cause = cause;
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",
+      S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
+  int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
+  itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
 }
