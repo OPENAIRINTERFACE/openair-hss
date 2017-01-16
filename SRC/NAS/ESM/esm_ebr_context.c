@@ -309,7 +309,7 @@ esm_ebr_context_release (
      * first EPS bearer context entry at index bid = 0
      */
     if (*pid < MAX_APN_PER_UE) {
-      if (ue_mm_context->pdn_contexts[*pid]) {
+      if (!ue_mm_context->pdn_contexts[*pid]) {
         OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - PDN connection identifier %d " "is not valid\n", *pid);
       } /*else if (!ue_mm_context->active_pdn_contexts[*pid]->esm_data.is_active) {
         OAILOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - PDN connection %d is not active\n", *pid);

@@ -139,12 +139,12 @@ static int _eps_bearer_release (emm_context_t * ue_context, ebi_t ebi, pdn_cid_t
  ***************************************************************************/
 int
 esm_proc_eps_bearer_context_deactivate (
-  emm_context_t * ue_context,
-  bool is_local,
-  ebi_t ebi,
+  emm_context_t * const ue_context,
+  const bool is_local,
+  const ebi_t ebi,
   pdn_cid_t *pid,
-  int *bidx,
-  esm_cause_t *esm_cause)
+  int * const bidx,
+  esm_cause_t * const esm_cause)
 {
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
@@ -161,18 +161,17 @@ esm_proc_eps_bearer_context_deactivate (
       /*
        * Locally release all the EPS bearer contexts
        */
-      *bidx = BEARERS_PER_UE;
-
-      for (*pid = 0; *pid < MAX_APN_PER_UE; (*pid)++) {
-        if (ue_mm_context->pdn_contexts[*pid]) {
-          rc = _eps_bearer_release (ue_context, ESM_EBI_UNASSIGNED, pid, bidx);
+      for (int bix = 0; bix < BEARERS_PER_UE; bix++) {
+        if (ue_mm_context->bearer_contexts[bix] ) {
+          *pid = ue_mm_context->bearer_contexts[bix]->pdn_cx_id;
+          rc = _eps_bearer_release (ue_context,
+              ue_mm_context->bearer_contexts[bix]->ebi, pid, bidx);
           if (rc != RETURNok) {
             break;
           }
         }
       }
     }
-
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
   }
 
