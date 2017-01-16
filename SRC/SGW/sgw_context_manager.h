@@ -67,7 +67,7 @@ sgw_eps_bearer_entry_t *               sgw_cm_create_eps_bearer_entry(void);
 sgw_pdn_connection_t *                 sgw_cm_create_pdn_connection(void);
 void                                   sgw_cm_free_pdn_connection(sgw_pdn_connection_t *pdn_connectionP);
 s_plus_p_gw_eps_bearer_context_information_t * sgw_cm_create_bearer_context_information_in_collection(teid_t teid);
-void                                   sgw_cm_free_s_plus_p_gw_eps_bearer_context_information(s_plus_p_gw_eps_bearer_context_information_t *contextP);
+void                                   sgw_cm_free_s_plus_p_gw_eps_bearer_context_information(s_plus_p_gw_eps_bearer_context_information_t **contextP);
 int                                    sgw_cm_remove_bearer_context_information(teid_t teid);
 sgw_eps_bearer_entry_t *               sgw_cm_create_eps_bearer_entry_in_collection(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
 sgw_eps_bearer_entry_t *               sgw_cm_get_eps_bearer_entry (hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);

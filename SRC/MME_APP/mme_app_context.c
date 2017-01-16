@@ -596,21 +596,21 @@ void mme_remove_ue_context (
   if (ue_context_p->emm_context._imsi64) {
     hash_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->emm_context._imsi64, (void **)&id);
     if (HASH_TABLE_OK != hash_rc)
-      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", IMSI " IMSI_64_FMT "  not in IMSI collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", IMSI " IMSI_64_FMT "  not in IMSI collection\n",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->emm_context._imsi64);
   }
   // filled NAS UE ID
   if (INVALID_MME_UE_S1AP_ID != ue_context_p->mme_ue_s1ap_id) {
     hash_rc = hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&id);
     if (HASH_TABLE_OK != hash_rc)
-      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not in MME UE S1AP ID collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not in MME UE S1AP ID collection\n",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
   }
   // filled S11 tun id
   if (ue_context_p->mme_teid_s11) {
     hash_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_teid_s11, (void **)&id);
     if (HASH_TABLE_OK != hash_rc)
-      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME S11 TEID  " TEID_FMT "  not in S11 collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME S11 TEID  " TEID_FMT "  not in S11 collection\n",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->mme_teid_s11);
   }
   // filled guti
@@ -618,13 +618,13 @@ void mme_remove_ue_context (
       (ue_context_p->emm_context._guti.gummei.plmn.mcc_digit1) || (ue_context_p->emm_context._guti.gummei.plmn.mcc_digit2) || (ue_context_p->emm_context._guti.gummei.plmn.mcc_digit3)) { // MCC 000 does not exist in ITU table
     hash_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->emm_context._guti, sizeof (ue_context_p->emm_context._guti), (void **)&id);
     if (HASH_TABLE_OK != hash_rc)
-      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", GUTI  not in GUTI collection",
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", GUTI  not in GUTI collection\n",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
   }
 
   hash_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&ue_context_p);
   if (HASH_TABLE_OK != hash_rc)
-    OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection",
+    OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection\n",
       ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
 
   mme_app_ue_context_free_content(ue_context_p);

@@ -297,26 +297,25 @@ sgw_cm_free_pdn_connection (
 //-----------------------------------------------------------------------------
 void
 sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (
-  s_plus_p_gw_eps_bearer_context_information_t * contextP)
+  s_plus_p_gw_eps_bearer_context_information_t ** contextP)
 {
-  if (contextP == NULL) {
-    return;
-  }
+    if (*contextP) {
 
-  /*
-   * if (contextP->sgw_eps_bearer_context_information.pdn_connections ) {
-   * obj_hashtable_ts_destroy(contextP->sgw_eps_bearer_context_information.pdn_connections);
-   * }
-   */
-  if (contextP->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers ) {
-    hashtable_ts_destroy (contextP->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers);
-  }
+    /*
+     * if (contextP->sgw_eps_bearer_context_information.pdn_connections ) {
+     * obj_hashtable_ts_destroy(contextP->sgw_eps_bearer_context_information.pdn_connections);
+     * }
+     */
+    if ((*contextP)->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers ) {
+      hashtable_ts_destroy ((*contextP)->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers);
+    }
 
-  if (contextP->pgw_eps_bearer_context_information.apns ) {
-    obj_hashtable_ts_destroy (contextP->pgw_eps_bearer_context_information.apns);
-  }
+    if ((*contextP)->pgw_eps_bearer_context_information.apns ) {
+      obj_hashtable_ts_destroy ((*contextP)->pgw_eps_bearer_context_information.apns);
+    }
 
-  free_wrapper ((void**)&contextP);
+    free_wrapper ((void**)contextP);
+  }
 }
 
 //-----------------------------------------------------------------------------

@@ -152,9 +152,7 @@ hash_table_t * hashtable_init (hash_table_t * const hashtblP,
   if (display_name_pP) {
     bassign(hashtblP->name, display_name_pP);
   } else {
-    hashtblP->name = bfromcstr ("");
-    btrunc(hashtblP->name, 0);
-    bassignformat(hashtblP->name,"hashtable%u@%p", size, hashtblP);
+    hashtblP->name = bformat("hashtable%u@%p", size, hashtblP);
   }
   hashtblP->is_allocated_by_malloc = false;
   return hashtblP;
@@ -250,9 +248,7 @@ hash_table_ts_t * hashtable_ts_init (hash_table_ts_t * const hashtblP,
   if (display_name_pP) {
     hashtblP->name = bstrcpy(display_name_pP);
   } else {
-    hashtblP->name = bfromcstr ("hashtable@0123456789ABCDEF");
-    btrunc(hashtblP->name, 0);
-    bassignformat(hashtblP->name,"hashtable@%p", hashtblP);
+    hashtblP->name = bformat("hashtable@%p", hashtblP);
   }
   hashtblP->is_allocated_by_malloc = false;
   hashtblP->log_enabled = true;
