@@ -396,6 +396,16 @@ mme_app_handle_conn_est_cnf (
                       establishment_cnf_p->bearer_s1u_sgw_fteid.teid,
                       establishment_cnf_p->bearer_qos_qci, establishment_cnf_p->bearer_qos_prio_level, establishment_cnf_p->security_capabilities_encryption_algorithms, establishment_cnf_p->security_capabilities_integrity_algorithms);
   itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+
+  /*
+   * Move the UE to ECM Connected State.However if S1-U bearer establishment fails then we need to move the UE to idle.
+   * S1 Signaling connection gets established via first DL NAS Trasnport message in some scenarios so check the state
+   * first 
+   */
+  if (ue_context_p->ecm_state != ECM_CONNECTED)  
+  {
+    mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts,ue_context_p,ECM_CONNECTED);
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

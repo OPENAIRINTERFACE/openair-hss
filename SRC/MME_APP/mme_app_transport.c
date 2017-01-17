@@ -74,6 +74,15 @@ int mme_app_handle_nas_dl_req (
       enb_ue_s1ap_id, nas_dl_req_pP->ue_id);
 
   rc = itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  /*
+   * Move the UE to ECM Connected State ,if not in connected state already 
+   * S1 Signaling connection gets established via first DL NAS Trasnport message in some scenarios so check the state
+   * first 
+   */
+  if (ue_context->ecm_state != ECM_CONNECTED)  
+  {
+    mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts,ue_context,ECM_CONNECTED);
+  }
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 

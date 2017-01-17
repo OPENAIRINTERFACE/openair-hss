@@ -56,6 +56,7 @@
 #include "emm_cause.h"
 #include "LowerLayer.h"
 #include "nas_itti_messaging.h"
+#include "emm_proc.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -641,11 +642,17 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
         (0 == decode_status.integrity_protected_message) ||
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched))) {
-      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
+      
+      rc = emm_proc_service_reject (msg->ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
+      /* task #15467099
+       * TODO Implicit deatch - clean up the EMM and ESM conext  
+       * TODO Delete Session Request followed by UE context release command 
+       */
     }
-
-    rc = emm_recv_service_request (msg->ue_id, &emm_msg->service_request, emm_cause, &decode_status);
+    else
+    {
+      rc = emm_recv_service_request (msg->ue_id, &emm_msg->service_request, emm_cause, &decode_status);
+    }
     break;
 
   case EXTENDED_SERVICE_REQUEST:
@@ -1424,13 +1431,13 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
 {
   EMM_msg                                *emm_msg = NULL;
   int                                     size = 0;
+  int                                     ret_val = 0;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send AS connection establish confirmation\n");
   nas_message_t                           nas_msg = {.security_protected.header = {0},
                                                      .security_protected.plain.emm.header = {0},
                                                      .security_protected.plain.esm.header = {0}};
-
   /*
    * Setup the AS message
    */
@@ -1438,73 +1445,75 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
 
   if (msg->eps_id.guti == NULL) {
     OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - GUTI is NULL...");
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, 0);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, ret_val);
   }
 
   as_msg->s_tmsi.mme_code = msg->eps_id.guti->gummei.mme_code;
   as_msg->s_tmsi.m_tmsi = msg->eps_id.guti->m_tmsi;
-  /*
-   * Setup the NAS security header
-   */
-  emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx);
-
-  /*
-   * Setup the initial NAS information message
-   */
-  if (emm_msg )
-    switch (msg->nas_info) {
-    case EMM_AS_NAS_INFO_ATTACH:
-      OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg->slen);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
-      size = emm_send_attach_accept (msg, &emm_msg->attach_accept);
-      break;
-    case EMM_AS_NAS_INFO_TAU:
-      OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg->slen);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TAU_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
-      size = emm_send_tracking_area_update_accept (msg, &emm_msg->tracking_area_update_accept);
-      break;
-    default:
-      OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->nas_info);
-      break;
-    }
-
-  if (size > 0) {
-    struct emm_data_context_s              *emm_ctx = NULL;
-    emm_security_context_t                 *emm_security_context = NULL;
-
-    emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
-
-    if (emm_ctx) {
-      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-        emm_security_context = &emm_ctx->_security;
-        as_msg->nas_ul_count = 0x00000000 | (emm_security_context->ul_count.overflow << 8) | emm_security_context->ul_count.seq_num;
-        OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - NAS UL COUNT %8x\n", as_msg->nas_ul_count);
-      }
-
-      nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-      OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+  as_msg->nas_msg = msg->nas_msg;
+  
+  struct emm_data_context_s              *emm_ctx = NULL;
+  emm_security_context_t                 *emm_security_context = NULL;
+  emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+  if (emm_ctx) {
+    if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+      emm_security_context = &emm_ctx->_security;
       as_msg->selected_encryption_algorithm = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.encryption);
       as_msg->selected_integrity_algorithm  = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.integrity);
       OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_encryption_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_encryption_algorithm, emm_security_context->selected_algorithms.encryption);
       OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_integrity_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_integrity_algorithm, emm_security_context->selected_algorithms.integrity);
+      as_msg->nas_ul_count = 0x00000000 | (emm_security_context->ul_count.overflow << 8) | emm_security_context->ul_count.seq_num;
+      OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - NAS UL COUNT %8x\n", as_msg->nas_ul_count);
+    }
+  }
+  if ((msg->nas_msg))
+  {
+    /*
+     * Setup the NAS security header
+     */
+    emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx);
+
+    /*
+     * Setup the initial NAS information message
+     */
+    if (emm_msg)
+      switch (msg->nas_info) {
+      case EMM_AS_NAS_INFO_ATTACH:
+        OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg->slen);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
+        size = emm_send_attach_accept (msg, &emm_msg->attach_accept);
+        break;
+      case EMM_AS_NAS_INFO_TAU:
+        OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg->slen);
+        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TAU_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
+        size = emm_send_tracking_area_update_accept (msg, &emm_msg->tracking_area_update_accept);
+        break;
+      default:
+        OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->nas_info);
+        break;
+      }
+
+    if (size > 0) {
+      nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
+      OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
     }
 
     /*
      * Encode the initial NAS information message
      */
-    int                                     bytes = _emm_as_encode (&as_msg->nas_msg,
-                                                                    &nas_msg,
-                                                                    size,
-                                                                    emm_security_context);
+    int bytes = _emm_as_encode (&as_msg->nas_msg, &nas_msg,size,emm_security_context);
 
     if (bytes > 0) {
       as_msg->err_code = AS_SUCCESS;
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_NAS_ESTABLISH_CNF);
+      ret_val = AS_NAS_ESTABLISH_CNF;
     }
+  } 
+  else // No nas message 
+  {
+    as_msg->err_code = AS_SUCCESS;
+    ret_val = AS_NAS_ESTABLISH_CNF;
   }
-
-  OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Size <= 0\n");
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, 0);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, ret_val);
 }
 
 /****************************************************************************

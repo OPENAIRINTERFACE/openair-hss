@@ -61,7 +61,7 @@
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-
+#define SR_MAC_SIZE_BYTES 2
 
 /* Functions used to decode layer 3 NAS messages */
 static int _nas_message_header_decode (
@@ -374,10 +374,12 @@ int nas_message_decode (
   OAILOG_FUNC_IN (LOG_NAS);
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes = 0;
-  uint32_t                                mac   = 0,
-                                          mac2  = 0;
+  uint32_t                                mac   = 0;
+  uint16_t                                short_mac  = 0;
   int                                     size  = 0;
   bool                                    is_sr = false;
+  uint8_t                                 sequence_number = 0;
+  uint8_t                                 temp_sequence_number = 0;
   /*
    * Decode the header
    */
@@ -391,9 +393,7 @@ int nas_message_decode (
 
   if (size < 0) {
     OAILOG_FUNC_RETURN (LOG_NAS, TLV_BUFFER_TOO_SHORT);
-  } else
-  // SERVICE REQUEST
-  if (is_sr) {
+  } else if (is_sr) {
     if (length < NAS_MESSAGE_SERVICE_REQUEST_SECURITY_HEADER_SIZE) {
       /*
        * The buffer is not big enough to contain security header
@@ -401,62 +401,56 @@ int nas_message_decode (
       OAILOG_WARNING(LOG_NAS, "Message header %lu bytes is too short %u bytes\n", length, NAS_MESSAGE_SECURITY_HEADER_SIZE);
       OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
     }
-    /*
-     * Decode the sequence number + ksi: be careful
-     */
-    DECODE_U8 (buffer + size, msg->header.sequence_number, size);
-    /*
-     * Decode the message authentication code
-     */
-    DECODE_U16 (buffer + size, mac, size);
-
-    // sequence number
-    uint8_t sequence_number = msg->header.sequence_number;
-    // sequence number
+    // Decode Service Request message. It has different format than any other standard layer-3 message 
+    DECODE_U8 (buffer + size, sequence_number, size);
+    DECODE_U16 (buffer + size, short_mac, size);
 
     //shortcut
+    msg->plain.emm.header.message_type                       = SERVICE_REQUEST;
     msg->plain.emm.service_request.ksiandsequencenumber.ksi  = sequence_number >> 5;
     msg->plain.emm.service_request.ksiandsequencenumber.sequencenumber  = sequence_number & 0x1F;
-    msg->plain.emm.service_request.messageauthenticationcode = mac;
+    msg->plain.emm.service_request.messageauthenticationcode = short_mac;
     msg->plain.emm.service_request.protocoldiscriminator     = EPS_MOBILITY_MANAGEMENT_MESSAGE;
     msg->plain.emm.service_request.securityheadertype        = SECURITY_HEADER_TYPE_SERVICE_REQUEST;
-    msg->plain.emm.service_request.messagetype               =  SERVICE_REQUEST;
+    msg->plain.emm.service_request.messagetype               = SERVICE_REQUEST;
 
     /*
      * Compute offset of the sequence number field
      */
+
     // remove ksi
     sequence_number = sequence_number & 0x1F;
-
-    if (emm_security_context) {
-      status->security_context_available = 1;
-      if (emm_security_context->ul_count.seq_num > sequence_number) {
-        emm_security_context->ul_count.overflow += 1;
-      }
-
-      emm_security_context->ul_count.seq_num = sequence_number;
-      /*
-       * Compute the NAS message authentication code, return 0 if no security context
-       */
-      mac2 = _nas_message_get_mac (buffer,
-          2, // 2 first bytes of message...only,
-          SECU_DIRECTION_UPLINK,
-          emm_security_context);
-      /*
-       * Check NAS message integrity
-       */
-      if (mac == msg->plain.emm.service_request.messageauthenticationcode) {
-        status->mac_matched = 1;
-        OAILOG_DEBUG (LOG_NAS, "Service Request: message MAC = %04X == computed = %04X\n", mac, mac2);
-      } else {
-        OAILOG_DEBUG (LOG_NAS, "Service Request: message MAC = %04X != computed = %04X\n", mac, mac2);
-      }
+    DevAssert(emm_security_context != NULL);
+    // Estimate 8bit sequence number from 5 bit sequence number 
+    temp_sequence_number = (emm_security_context->ul_count.seq_num & 0xE0) >> 5;
+    if ((emm_security_context->ul_count.seq_num & 0x1F) > sequence_number) {
+        temp_sequence_number+=1;  
     }
-#if NAS_FORCE_REJECT_SR | 1
-    status->integrity_protected_message = 1;
-    status->security_context_available = 1;
-    status->mac_matched = 1;
-#endif
+    sequence_number = ((temp_sequence_number & 0x07) << 5) | (sequence_number & 0x1F);
+
+    if (emm_security_context->ul_count.seq_num > sequence_number) {
+        emm_security_context->ul_count.overflow += 1;
+    }
+    emm_security_context->ul_count.seq_num = sequence_number;
+      
+    /*
+     * Compute the NAS message authentication code, return 0 if no security context
+     */
+    mac = _nas_message_get_mac (buffer,SR_MAC_SIZE_BYTES,SECU_DIRECTION_UPLINK,emm_security_context);
+      
+    /*
+     * Check NAS message integrity
+     */
+    
+    // Compare last 2 LSB bytes for SR
+    short_mac = mac & 0x0000FFFF;
+    if (short_mac == msg->plain.emm.service_request.messageauthenticationcode) {
+      status->mac_matched = 1;
+      OAILOG_DEBUG (LOG_NAS, "Service Request: message MAC = %04X == computed = %04X\n", msg->plain.emm.service_request.messageauthenticationcode, short_mac);
+    } else {
+      OAILOG_DEBUG (LOG_NAS, "Service Request: message MAC = %04X != computed = %04X\n", msg->plain.emm.service_request.messageauthenticationcode, short_mac);
+    }
+    
   } else if (size > 1) {
     // found security header
     /*
@@ -486,14 +480,11 @@ int nas_message_decode (
         OAILOG_DEBUG (LOG_NAS, "msg->header.message_authentication_code = %04X != computed = %04X\n", msg->header.message_authentication_code, mac);
       }
     }
-
-
-    /*
-     * Log message header
-     */
+    
     /*
      * Decode security protected NAS message
      */
+    
     bytes = _nas_message_protected_decode ((unsigned char *const)(buffer + size), &msg->header, &msg->plain, length - size, emm_security_context, status);
   } else {
     /*
@@ -502,14 +493,13 @@ int nas_message_decode (
     bytes = _nas_message_plain_decode (buffer, &msg->header, &msg->plain, length);
   }
 
-  if (bytes < 0) {
+  if ((bytes < 0) && (!is_sr)) {
     OAILOG_FUNC_RETURN (LOG_NAS, bytes);
   }
 
   if (size > 1) {
     OAILOG_FUNC_RETURN (LOG_NAS, size + bytes);
   }
-
   OAILOG_FUNC_RETURN (LOG_NAS, bytes);
 }
 
@@ -671,7 +661,7 @@ static int _nas_message_header_decode (
   *is_sr = false;
   if (header->protocol_discriminator == EPS_MOBILITY_MANAGEMENT_MESSAGE) {
     if (header->security_header_type != SECURITY_HEADER_TYPE_NOT_PROTECTED) {
-      if ( status) {
+      if (status) {
         switch (header->security_header_type) {
           case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED:
           case SECURITY_HEADER_TYPE_INTEGRITY_PROTECTED_NEW:
@@ -685,31 +675,34 @@ static int _nas_message_header_decode (
           case SECURITY_HEADER_TYPE_SERVICE_REQUEST:
             *is_sr = true;
             status->integrity_protected_message = 1;
+            /*
+             * Current Scope - Service Request message that comes as Initial
+             * NAS Message is supported. Note - Service reqeust message which is sent in connected mode
+             * due to CSFB comes ciphered as well and is not handled currently. 
+             * CSFB is not a critical feature from data only service pov and it is not supported. 
+             */ 
+
             OAILOG_FUNC_RETURN (LOG_NAS, size);
             break;
           default:;
         }
       }
-
-      if (length < NAS_MESSAGE_SECURITY_HEADER_SIZE) {
+      if (*is_sr == false)
+      {
+        if (length < NAS_MESSAGE_SECURITY_HEADER_SIZE) {
         /*
          * The buffer is not big enough to contain security header
          */
-        OAILOG_WARNING(LOG_NAS, "NET-API   - The size of the header (%u) " "exceeds the buffer length (%lu)\n", NAS_MESSAGE_SECURITY_HEADER_SIZE, length);
-        OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+         OAILOG_WARNING(LOG_NAS, "NET-API   - The size of the header (%u) " "exceeds the buffer length (%lu)\n", NAS_MESSAGE_SECURITY_HEADER_SIZE, length);
+         OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
+        }
+        // Decode the message authentication code
+        DECODE_U32 (buffer + size, header->message_authentication_code, size);
+        // Decode the sequence number
+        DECODE_U8 (buffer + size, header->sequence_number, size);
       }
-
-      /*
-       * Decode the message authentication code
-       */
-      DECODE_U32 (buffer + size, header->message_authentication_code, size);
-      /*
-       * Decode the sequence number
-       */
-      DECODE_U8 (buffer + size, header->sequence_number, size);
     }
   }
-
   OAILOG_FUNC_RETURN (LOG_NAS, size);
 }
 

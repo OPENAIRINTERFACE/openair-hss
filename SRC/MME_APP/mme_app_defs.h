@@ -83,4 +83,7 @@ bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, 
 
 int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);
 
+void mme_ue_context_update_ue_sig_connection_state (mme_ue_context_t * const mme_ue_context_p,
+                                                                            struct ue_context_s *ue_context_p,ecm_state_t new_ecm_state);
+
 #endif /* MME_APP_DEFS_H_ */

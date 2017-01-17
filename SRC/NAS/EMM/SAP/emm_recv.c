@@ -47,6 +47,7 @@
 #include "emm_msgDef.h"
 #include "emm_cause.h"
 #include "emm_proc.h"
+#include "emm_sap.h"
 
 #include <string.h>             // memcpy
 
@@ -65,7 +66,9 @@
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
-
+static int
+_emm_initiate_default_bearer_re_establishment (
+  emm_data_context_t * emm_ctx);
 /*
    --------------------------------------------------------------------------
    Functions executed by both the UE and the MME upon receiving EMM messages
@@ -547,22 +550,28 @@ emm_recv_service_request (
   const nas_message_decode_status_t  * decode_status)
 {
   int                                     rc = RETURNok;
-
+  emm_data_context_t * emm_ctx = NULL;
+  *emm_cause = EMM_CAUSE_PROTOCOL_ERROR; 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received Service Request message, Security context %s Integrity protected %s MAC matched %s Ciphered %s\n",
       (decode_status->security_context_available)?"yes":"no",
       (decode_status->integrity_protected_message)?"yes":"no",
       (decode_status->mac_matched)?"yes":"no",
       (decode_status->ciphered_message)?"yes":"no");
-
-#if NAS_FORCE_REJECT_SR | 1
+  
+  // Get emm_ctx 
+  emm_ctx = emm_data_context_get (&_emm_data,ue_id);
   /*
-   * Service request procedure not implemented, send a Service Reject to induce a Attach Request from UE!
+   * Do following: 
+   * 1. Re-establish UE specfic S1 signaling connection and S1-U tunnel for default bearer.
+   * note - At present, only default bearer is supported 
+   * 2. Move UE ECM state to Connected 
+   * 3. Stop Mobile reachability time and Implicit Deatch timer ( if running)
    */
-  // EMM causes for triggering an attach in the UE can be "UE identity cannot be derived by the network": EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW,
-  // "Implicitly detached": EMM_CAUSE_IMPLICITLY_DETACHED,
-  rc = emm_proc_service_reject (ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
-#endif
+  rc = _emm_initiate_default_bearer_re_establishment(emm_ctx);
+  if (rc == RETURNok) { 
+    *emm_cause = EMM_CAUSE_SUCCESS;
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -898,3 +907,31 @@ emm_recv_security_mode_reject (
   rc = emm_proc_security_mode_reject (ue_id);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
+
+//-------------------------------------------------------------------------------------
+static int
+_emm_initiate_default_bearer_re_establishment (
+  emm_data_context_t * emm_ctx)
+{
+  /*
+   * This function is used to trigger initial context setup request towards eNB via S1AP module as part of serivce request handling.
+   * This inturn triggers re-establishment of "data radio bearer" and "S1-U bearer" between UE & eNB and eNB & EPC respectively.
+   */
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_sap_t                               emm_sap = {0};
+  int                                     rc = RETURNerror;
+  if (emm_ctx) {
+    emm_sap.primitive = EMMAS_ESTABLISH_CNF;
+    emm_sap.u.emm_as.u.establish.ue_id = emm_ctx->ue_id;
+    emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_NONE;
+    emm_sap.u.emm_as.u.establish.encryption = emm_ctx->_security.selected_algorithms.encryption;
+    emm_sap.u.emm_as.u.establish.integrity = emm_ctx->_security.selected_algorithms.integrity;
+    emm_sap.u.emm_as.u.establish.nas_msg = NULL;
+    *(emm_sap.u.emm_as.u.establish.guti) = emm_ctx->_guti;
+    
+    rc = emm_sap_send (&emm_sap);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
