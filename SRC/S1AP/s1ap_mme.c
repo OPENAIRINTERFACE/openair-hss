@@ -512,9 +512,7 @@ void s1ap_notified_new_ue_mme_s1ap_id_association (
 }
 
 //------------------------------------------------------------------------------
-enb_description_t                      *
-s1ap_new_enb (
-  void)
+enb_description_t *s1ap_new_enb (void)
 {
   enb_description_t                      *enb_ref = NULL;
 
@@ -562,6 +560,7 @@ s1ap_new_ue (
     free_wrapper((void**)&ue_ref);
     return NULL;
   }
+  MSC_LOG_EVENT (MSC_S1AP_MME, " Associating ue  (enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT ") to eNB %s", ue_ref->mme_ue_s1ap_id, enb_ref->enb_name);
   return ue_ref;
 }
 
@@ -589,6 +588,7 @@ s1ap_remove_ue (
   //     s1ap_timer_remove_ue(ue_ref->mme_ue_s1ap_id);
   OAILOG_TRACE(LOG_S1AP, "Removing UE enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id:" MME_UE_S1AP_ID_FMT " in eNB id : %d\n",
       ue_ref->enb_ue_s1ap_id, ue_ref->mme_ue_s1ap_id, enb_ref->enb_id);
+  MSC_LOG_EVENT (MSC_S1AP_MME, " Disassociated ue  (enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id:" MME_UE_S1AP_ID_FMT ") from eNB %s", ue_ref->mme_ue_s1ap_id, enb_ref->enb_name);
   hashtable_ts_free (&enb_ref->ue_coll, ue_ref->enb_ue_s1ap_id);
   // enb_ref->nb_ue_associated--;
 }

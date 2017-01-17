@@ -242,12 +242,12 @@ mme_api_get_emm_config (
 }
 
 // TODO
-void mme_api_duplicate_enb_ue_s1ap_id_detected (
+struct ue_mm_context_s * mme_api_duplicate_enb_ue_s1ap_id_detected (
     const enb_s1ap_id_key_t new_enb_s1ap_id_key,
     const mme_ue_s1ap_id_t old_mme_ue_s1ap_id,
     const bool             is_remove_old)
 {
-  mme_ue_context_duplicate_enb_ue_s1ap_id_detected(new_enb_s1ap_id_key, old_mme_ue_s1ap_id, is_remove_old);
+  return mme_ue_context_duplicate_enb_ue_s1ap_id_detected(new_enb_s1ap_id_key, old_mme_ue_s1ap_id, is_remove_old);
 }
 
 

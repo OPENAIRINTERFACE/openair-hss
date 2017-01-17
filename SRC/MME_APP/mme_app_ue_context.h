@@ -466,7 +466,7 @@ void mme_app_move_context (ue_mm_context_t *dst, ue_mm_context_t *src);
  * \param mme_ue_s1ap_id The UE id identifier used in MME_APP and NAS
  * \param is_remove_old  Remove old UE context or new UE context ?
  **/
-void
+ue_mm_context_t *
 mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
   const enb_s1ap_id_key_t enb_key,
   const mme_ue_s1ap_id_t  mme_ue_s1ap_id,

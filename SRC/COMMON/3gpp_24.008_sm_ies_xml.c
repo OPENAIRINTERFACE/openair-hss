@@ -475,7 +475,7 @@ void protocol_configuration_options_to_xml (const protocol_configuration_options
         XML_WRITE_ATTRIBUTE(writer, PROTOCOL_ID_ATTR_XML_STR, PROTOCOL_ID_IPCP_VAL_XML_STR);
         XML_WRITE_FORMAT_ATTRIBUTE(writer, LENGTH_ATTR_XML_STR, "%d", pco->protocol_or_container_ids[i].length);
         XML_WRITE_HEX_ELEMENT(writer, RAW_CONTENT_ATTR_XML_STR, bdata(pco->protocol_or_container_ids[i].contents), blength(pco->protocol_or_container_ids[i].contents));
-        XML_WRITE_COMMENT(writer, "TODO IPCP (replace raw content by human readable tags)");
+        //XML_WRITE_COMMENT(writer, "TODO IPCP (replace raw content by human readable tags)");
         XML_WRITE_END_ELEMENT(writer);
         break;
 

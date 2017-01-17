@@ -410,9 +410,21 @@ _pdn_connectivity_create (
       return (RETURNok);
     }
 
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create new PDN connection " "(pdn_cid=%d)\n", pdn_cid);
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create new PDN connection (pdn_cid=%d)\n", pdn_cid);
   } else {
-    AssertFatal(0, "TODO");
+    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection already exist (pdn_cid=%d)\n", pdn_cid);
+    // already created
+    pdn_context_t *pdn_context = ue_mm_context->pdn_contexts[pdn_cid];
+
+    if (pdn_context) {
+
+      /*
+       * Set the procedure transaction identity
+       */
+      pdn_context->esm_data.pti = pti;
+      AssertFatal(0, "TODO");
+      return (RETURNok);
+    }
   }
 
   return RETURNerror;

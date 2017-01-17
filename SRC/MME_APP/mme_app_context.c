@@ -46,6 +46,7 @@
 #include "mme_app_ue_context.h"
 #include "mme_app_bearer_context.h"
 #include "mme_app_defs.h"
+#include "mme_app_itti_messaging.h"
 #include "s1ap_mme.h"
 #include "common_defs.h"
 #include "esm_ebr.h"
@@ -98,8 +99,8 @@ mme_ue_context_exists_enb_ue_s1ap_id (
 
   hashtable_ts_get (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_key, (void **)&ue_context_p);
   if (ue_context_p) {
-    OAILOG_TRACE (LOG_MME_APP, "Fetched ue_mm_context MME_UE_S1AP_ID=" MME_UE_S1AP_ID_FMT " ENB_UE_S1AP_ID=" ENB_UE_S1AP_ID_FMT " @%p\n",
-        ue_context_p->mme_ue_s1ap_id, ue_context_p->enb_ue_s1ap_id, ue_context_p);
+    OAILOG_TRACE (LOG_MME_APP, "Fetched ue_mm_context (key " MME_APP_ENB_S1AP_ID_KEY_FORMAT ") MME_UE_S1AP_ID=" MME_UE_S1AP_ID_FMT " ENB_UE_S1AP_ID=" ENB_UE_S1AP_ID_FMT " @%p\n",
+        enb_key, ue_context_p->mme_ue_s1ap_id, ue_context_p->enb_ue_s1ap_id, ue_context_p);
   }
   return ue_context_p;
 }
@@ -179,25 +180,19 @@ void mme_app_move_context (ue_mm_context_t *dst, ue_mm_context_t *src)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   if ((dst) && (src)) {
-    enb_s1ap_id_key_t enb_s1ap_id_key = dst->enb_s1ap_id_key;
-    enb_ue_s1ap_id_t  enb_ue_s1ap_id  = dst->enb_ue_s1ap_id;
-    mme_ue_s1ap_id_t  mme_ue_s1ap_id  = dst->mme_ue_s1ap_id;
+    OAILOG_DEBUG (LOG_MME_APP,
+           "mme_app_move_context("ENB_UE_S1AP_ID_FMT " <- " ENB_UE_S1AP_ID_FMT ")\n",
+           dst->enb_ue_s1ap_id, src->enb_ue_s1ap_id);
+    mme_app_ue_context_free_content(dst);
     memcpy(dst, src, sizeof(*dst)); // dangerous (memory leaks), TODO check
     memset(src, 0, sizeof(*src));
-
-    dst->enb_s1ap_id_key = enb_s1ap_id_key;
-    dst->enb_ue_s1ap_id = enb_ue_s1ap_id;
-    dst->mme_ue_s1ap_id = mme_ue_s1ap_id;
-    OAILOG_DEBUG (LOG_MME_APP,
-           "mme_app_move_context("ENB_UE_S1AP_ID_FMT " <- " ENB_UE_S1AP_ID_FMT ") done\n",
-           dst->enb_ue_s1ap_id, src->enb_ue_s1ap_id);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 //------------------------------------------------------------------------------
 // a duplicate ue_mm context can be detected only while receiving an INITIAL UE message
 // moves old ue context content to new ue context
-void
+ue_mm_context_t *
 mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
   const enb_s1ap_id_key_t new_enb_key,
   const mme_ue_s1ap_id_t  old_mme_ue_s1ap_id,
@@ -215,7 +210,7 @@ mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
     OAILOG_ERROR (LOG_MME_APP,
         "Error could not associate this enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
         new_enb_ue_s1ap_id, old_mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
   }
   h_rc = hashtable_ts_get (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id,  (void **)&id);
   if (HASH_TABLE_OK == h_rc) {
@@ -230,19 +225,35 @@ mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
           ue_mm_context_t                           *new = NULL;
           h_rc = hashtable_ts_get (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)new_enb_key, (void **)&new);
           mme_app_move_context(new, old);
-          mme_app_ue_context_free_content(old);
+          new->enb_s1ap_id_key = new_enb_key;
+          new->enb_ue_s1ap_id  = new_enb_ue_s1ap_id;
+          new->mme_ue_s1ap_id  = old_mme_ue_s1ap_id;
+
+          //mme_app_ue_context_free_content(old);
           OAILOG_DEBUG (LOG_MME_APP,
                   "Removed old UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
                   MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(old_enb_key), old_mme_ue_s1ap_id);
+          OAILOG_FUNC_RETURN(LOG_MME_APP, new);
         }
       } else {
         ue_mm_context_t                           *new = NULL;
+        h_rc = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id, (void **)&id);
+        h_rc = hashtable_ts_insert (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id, (void *)(uintptr_t)new_enb_key);
         h_rc = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)new_enb_key, (void **)&new);
         if (HASH_TABLE_OK == h_rc) {
+          ue_mm_context_t                           *old = NULL;
+          h_rc = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_enb_key, (void **)&old);
+          if (HASH_TABLE_OK == h_rc) {
+            h_rc = hashtable_ts_insert (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)new_enb_key, (void *)old);
+            old->enb_s1ap_id_key = new_enb_key;
+            old->enb_ue_s1ap_id  = new_enb_ue_s1ap_id;
+          }
           mme_app_ue_context_free_content(new);
+          free_wrapper((void**)&new);
           OAILOG_DEBUG (LOG_MME_APP,
                   "Removed new UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
                   new_enb_ue_s1ap_id, old_mme_ue_s1ap_id);
+          OAILOG_FUNC_RETURN(LOG_MME_APP, old);
         }
       }
     } else {
@@ -255,7 +266,7 @@ mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
             "Error could find this mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
             old_mme_ue_s1ap_id);
   }
-  OAILOG_FUNC_OUT (LOG_MME_APP);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, NULL);
 }
 
 //------------------------------------------------------------------------------
@@ -626,6 +637,8 @@ void mme_remove_ue_context (
   if (HASH_TABLE_OK != hash_rc)
     OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection\n",
       ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
+
+  mme_app_notify_s1ap_ue_context_released(ue_context_p->mme_ue_s1ap_id);
 
   mme_app_ue_context_free_content(ue_context_p);
   free_wrapper ((void**)&ue_context_p);
@@ -1087,7 +1100,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
 
   if (!ue_context_p) {
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE Unknown mme_ue_s1ap_id 0x%06" PRIX32 " ", s1ap_ue_context_release_complete->mme_ue_s1ap_id);
-    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+    OAILOG_WARNING (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
         s1ap_ue_context_release_complete->enb_ue_s1ap_id, s1ap_ue_context_release_complete->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
@@ -1097,7 +1110,8 @@ mme_app_handle_s1ap_ue_context_release_complete (
 
   mme_app_ue_context_s1_release_enb_informations(ue_context_p);
 
-  if (((S1ap_Cause_PR_radioNetwork == ue_context_p->s1_ue_context_release_cause.present) && (S1ap_CauseRadioNetwork_radio_connection_with_ue_lost == ue_context_p->s1_ue_context_release_cause.choice.radioNetwork))) {
+  if (((S1ap_Cause_PR_radioNetwork == ue_context_p->s1_ue_context_release_cause.present) &&
+       (S1ap_CauseRadioNetwork_radio_connection_with_ue_lost == ue_context_p->s1_ue_context_release_cause.choice.radioNetwork))) {
     // initiate deactivation procedure
     for (pdn_cid_t i = 0; i < MAX_APN_PER_UE; i++) {
       if (ue_context_p->pdn_contexts[i]) {

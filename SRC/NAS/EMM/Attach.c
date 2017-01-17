@@ -346,10 +346,10 @@ emm_proc_attach_request (
       OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - the new ATTACH REQUEST is progressed\n");
       emm_context_silently_reset_procedures(&ue_mm_context->emm_context); // TEST
       emm_fsm_set_state(ue_id, &ue_mm_context->emm_context, EMM_DEREGISTERED);
-#warning "TODO think about emm_context_remove"
+      // "TODO think about emm_context_remove"
       //ue_mm_context = emm_context_remove (&_emm_data, ue_mm_context);
       if (duplicate_enb_context_detected) {
-        mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id, REMOVE_OLD_CONTEXT);
+        ue_mm_context = mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id, REMOVE_OLD_CONTEXT);
       }
       emm_context_free_content(&ue_mm_context->emm_context);
 
@@ -380,7 +380,7 @@ emm_proc_attach_request (
         emm_ctx_mark_specific_procedure_running (&ue_mm_context->emm_context, EMM_CTXT_SPEC_PROC_ATTACH_REJECT_SENT);
       }
       if (duplicate_enb_context_detected) {
-        mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id, REMOVE_OLD_CONTEXT);
+        ue_mm_context = mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id, REMOVE_OLD_CONTEXT);
       }
     } else {
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_d__2);
@@ -423,7 +423,7 @@ emm_proc_attach_request (
         emm_ctx_mark_specific_procedure_running (&ue_mm_context->emm_context, EMM_CTXT_SPEC_PROC_ATTACH_REJECT_SENT);
       }
       if (duplicate_enb_context_detected) {
-        mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id, REMOVE_OLD_CONTEXT);
+        ue_mm_context = mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id, REMOVE_NEW_CONTEXT);
       }
     } else {
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_e__2);
@@ -441,7 +441,7 @@ emm_proc_attach_request (
     } else {
       ue_mm_context->emm_context.num_attach_request++;
       if (duplicate_enb_context_detected) {
-        mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id,REMOVE_OLD_CONTEXT);
+        ue_mm_context = mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id,REMOVE_OLD_CONTEXT);
       }
     }
   }

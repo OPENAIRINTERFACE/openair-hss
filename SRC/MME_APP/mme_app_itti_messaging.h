@@ -27,7 +27,7 @@
 #include "msc.h"
 
 
-static inline void mme_app_itti_delete_session_rsp(
+static inline void mme_app_notify_s1ap_ue_context_released(
   const mme_ue_s1ap_id_t   ue_idP)
 {
   OAILOG_FUNC_IN(LOG_NAS);

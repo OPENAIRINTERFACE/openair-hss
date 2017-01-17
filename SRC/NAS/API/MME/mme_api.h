@@ -123,7 +123,7 @@ int mme_api_get_emm_config(mme_api_emm_config_t *config, struct mme_config_s *mm
 
 #define REMOVE_OLD_CONTEXT true
 #define REMOVE_NEW_CONTEXT false
-void mme_api_duplicate_enb_ue_s1ap_id_detected (
+struct ue_mm_context_s *  mme_api_duplicate_enb_ue_s1ap_id_detected (
     const enb_s1ap_id_key_t enb_ue_s1ap_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     const bool             is_remove_old);

@@ -219,10 +219,12 @@ emm_proc_detach_request (
     /*
      * The UE is switched off
      */
-    emm_ctx_clear_old_guti(emm_ctx);
-    emm_ctx_clear_guti(emm_ctx);
-    emm_ctx_clear_imsi(emm_ctx);
-    emm_ctx_clear_imei(emm_ctx);
+    // Let these lines commented: do not clear key information (keys of hashtables)
+    //emm_ctx_clear_old_guti(emm_ctx);
+    //emm_ctx_clear_guti(emm_ctx);
+    //emm_ctx_clear_imsi(emm_ctx);
+    //emm_ctx_clear_imei(emm_ctx);
+    //emm_ctx_clear_imeisv(emm_ctx);
     emm_ctx_clear_auth_vectors(emm_ctx);
     emm_ctx_clear_security(emm_ctx);
     emm_ctx_clear_non_current_security(emm_ctx);

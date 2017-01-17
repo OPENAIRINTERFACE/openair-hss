@@ -1015,7 +1015,10 @@ void msp_run_scenario(scenario_t * const scenario)
       pthread_mutex_unlock(&scenario->lock);
       msp_play_item(scenario, item);
       if ((SCENARIO_PLAYER_ITEM_SCENARIO != item->item_type)  && (SCENARIO_STATUS_PAUSED != scenario->status)) {
-        msp_scenario_tick(scenario);
+        // recursive, may be dangerous
+        msp_run_scenario(scenario);
+        // asynchronous, dangerous may be late for receiving a message
+        //msp_scenario_tick(scenario);
       }
     } else {
       if (!(scenario->num_timers) && (SCENARIO_STATUS_PLAYING == scenario->status)) {

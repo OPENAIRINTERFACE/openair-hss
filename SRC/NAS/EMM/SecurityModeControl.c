@@ -321,7 +321,9 @@ emm_proc_security_mode_control (
 
     emm_ctx->common_proc->common_arg.u.security_data.is_new = security_context_is_new;
 
-    emm_ctx->common_proc->common_arg.u.security_data.imeisv_request = (IS_EMM_CTXT_PRESENT_IMEISV(emm_ctx)) ? false:true;
+    // always ask for IMEISV (Do it simple now)
+    emm_ctx->common_proc->common_arg.u.security_data.imeisv_request = true;
+    //emm_ctx->common_proc->common_arg.u.security_data.imeisv_request = (IS_EMM_CTXT_PRESENT_IMEISV(emm_ctx)) ? false:true;
 
     /*
      * Send security mode command message to the UE
