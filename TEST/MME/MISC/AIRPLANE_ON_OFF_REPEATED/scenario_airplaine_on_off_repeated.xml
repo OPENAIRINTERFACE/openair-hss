@@ -60,7 +60,7 @@
   <usim lte_k="8baf473f2f8fd09487cccbd7097c6862" sqn_ms="FF9BB4000E0C"/>
 
   
-  <var name="LOOP_COUNTER"      value="0x0001"          />
+  <var name="LOOP_COUNTER"      value="0x0020"          />
 <!--  <scenario_file><file>../../3GPP_TS_24.301/ATTACH/R10_attach_imsi_complete/scenario_R10_attach_imsi_complete.xml</file></scenario_file>
   <sleep    seconds="1"     useconds="0"          />
   <message_file action="send" time="now"  time_ref="this"><file>../../MSGR10/ITTI_NAS_UPLINK_DATA_IND.DETACH_REQUEST.SWITCH_OFF.xml</file></message_file>
