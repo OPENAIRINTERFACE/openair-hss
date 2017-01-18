@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="all">    
+  <!-- relative paths -->
+  <scenario_file><file>no_regression.xml</file></scenario_file>
+  <scenario_file><file>MISC/AIRPLANE_ON_OFF_REPEATED/scenario_airplane_on_off_repeated.xml</file></scenario_file>
+</scenario>
