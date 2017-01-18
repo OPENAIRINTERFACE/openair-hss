@@ -79,22 +79,18 @@ void *mme_scenario_player_event_handler (void *args)
 
     case NAS_DOWNLINK_DATA_REQ:
       mme_scenario_player_handle_nas_downlink_data_req (received_message_p->ittiMsgHeader.instance, received_message_p);
-      //msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 
     case MME_APP_CONNECTION_ESTABLISHMENT_CNF:
       mme_scenario_player_handle_mme_app_connection_establishment_cnf (received_message_p->ittiMsgHeader.instance, received_message_p);
-      //msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 
     case S1AP_UE_CONTEXT_RELEASE_COMMAND:
       mme_scenario_player_handle_s1ap_ue_context_release_command (received_message_p->ittiMsgHeader.instance, received_message_p);
-      //msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 
     case S1AP_E_RAB_SETUP_REQ:
       mme_scenario_player_handle_s1ap_e_rab_setup_req (received_message_p->ittiMsgHeader.instance, received_message_p);
-      //msp_scenario_tick(g_msp_scenarios.current_scenario);
       break;
 
 
@@ -108,7 +104,9 @@ void *mme_scenario_player_event_handler (void *args)
       break;
 
     case SP_SCENARIO_TICK:
-      msp_run_scenario((scenario_t*)(SP_SCENARIO_TICK(received_message_p).scenario));
+      //AssertFatal ((scenario_t*)(received_message_p->ittiMsg.scenario_tick.scenario) == g_msp_scenarios.current_scenario,
+      //    "Missing message assertion in scenario %s ?", ((scenario_t*)received_message_p->ittiMsg.scenario_tick.scenario)->name->data);
+      msp_run_scenario(g_msp_scenarios.current_scenario);
       break;
 
     case TERMINATE_MESSAGE:

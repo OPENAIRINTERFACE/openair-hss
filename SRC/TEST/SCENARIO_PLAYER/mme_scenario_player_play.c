@@ -990,6 +990,7 @@ void msp_run_scenario(scenario_t * const scenario)
         pthread_mutex_unlock(&scenario->lock);
         if (!(scenario->num_timers) && (scenario->parent)) {
           OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "Continue playing parent scenario %s of scenario %s\n", bdata(scenario->parent->name), bdata(scenario->name));
+          g_msp_scenarios.current_scenario = scenario->parent;
           msp_scenario_tick(scenario->parent);
         } else if (!scenario->parent) {
           // end of scenario player, no more scenarios to play
@@ -1026,6 +1027,7 @@ void msp_run_scenario(scenario_t * const scenario)
         OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "Result Run scenario %s SUCCESS\n", bdata(scenario->name));
         pthread_mutex_unlock(&scenario->lock);
         if (scenario->parent) {
+          g_msp_scenarios.current_scenario = scenario->parent;
           msp_scenario_tick(scenario->parent);
         } else {
           // end of scenario player, no more scenarios to play
