@@ -947,6 +947,7 @@ bool msp_exist_scenario(scenario_player_t * const scenario_player, const char * 
 //------------------------------------------------------------------------------
 scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_t * const scenario_player, scenario_t * parent_scenario)
 {
+  OAILOG_FUNC_IN(LOG_MME_SCENARIO_PLAYER);
   xmlDocPtr               doc = NULL;
   xmlNodePtr              cur = NULL;
   scenario_player_item_t *scenario_item = NULL;
@@ -961,13 +962,13 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
     // do not consider this as an error
     OAILOG_WARNING (LOG_MME_SCENARIO_PLAYER, "empty document %s \n", bdata(file_path));
     xmlFreeDoc(doc);
-    return NULL;
+    OAILOG_FUNC_RETURN(LOG_MME_SCENARIO_PLAYER, NULL);
   }
 
   if (xmlStrcmp(cur->name, (const xmlChar *) SCENARIO_NODE_XML_STR)) {
     AssertFatal (0, "document %s of the wrong type, root node != %s %s\n", bdata(file_path), SCENARIO_NODE_XML_STR, cur->name);
     xmlFreeDoc(doc);
-    return NULL;
+    OAILOG_FUNC_RETURN(LOG_MME_SCENARIO_PLAYER, NULL);
   }
 
 
@@ -977,12 +978,7 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
   } else {
     AssertFatal(0, "Could not find scenario %s", NAME_ATTR_XML_STR);
   }
-  if (msp_exist_scenario(scenario_player, (const char * const)attr)) {
-    OAILOG_DEBUG (LOG_MME_SCENARIO_PLAYER, "Found scenario %s %s already parsed\n", NAME_ATTR_XML_STR, attr);
-    xmlFree(attr);
-    xmlFreeDoc(doc);
-    return NULL;
-  }
+
   scenario_item             = calloc(1, sizeof(scenario_player_item_t));
   scenario_t * scenario            = calloc(1, sizeof(scenario_t));
   scenario_item->item_type  = SCENARIO_PLAYER_ITEM_SCENARIO;
@@ -1036,12 +1032,12 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
             } else {
               OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not find char / in scenario path %s\n", file_path->data);
               xmlFree(scenario_file);
-              return NULL;
+              OAILOG_FUNC_RETURN(LOG_MME_SCENARIO_PLAYER, NULL);
             }
           }
         } else {
           OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "Could not get scenario file attr \n");
-          return NULL;
+          OAILOG_FUNC_RETURN(LOG_MME_SCENARIO_PLAYER, NULL);
         }
       }
 
@@ -1139,7 +1135,7 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
   if (SCENARIO_STATUS_LOADING == scenario->status) {
     scenario_set_status(scenario, SCENARIO_STATUS_LOADED, SCENARIO_REASON_NONE, NULL);
   }
-  return scenario_item;
+  OAILOG_FUNC_RETURN(LOG_MME_SCENARIO_PLAYER, scenario_item);
 }
 
 
