@@ -357,6 +357,7 @@ static int sctp_create_new_listener (SctpInit * init_p)
   memset ((void *)&event, 0, sizeof (struct sctp_event_subscribe));
   event.sctp_association_event = 1;
   event.sctp_shutdown_event = 1;
+  event.sctp_data_io_event = 1;
 
   if (setsockopt (sd, IPPROTO_SCTP, SCTP_EVENTS, &event, sizeof (struct sctp_event_subscribe)) < 0) {
     OAILOG_ERROR (LOG_SCTP, "setsockopt: %s:%d\n", strerror (errno), errno);
