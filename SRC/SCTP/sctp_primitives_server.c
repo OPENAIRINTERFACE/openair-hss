@@ -354,7 +354,7 @@ static int sctp_create_new_listener (SctpInit * init_p)
     return -1;
   }
 
-  memset ((void *)&event, 1, sizeof (struct sctp_event_subscribe));
+  memset ((void *)&event, 0, sizeof (struct sctp_event_subscribe));
   event.sctp_association_event = 1;
   event.sctp_shutdown_event = 1;
 
