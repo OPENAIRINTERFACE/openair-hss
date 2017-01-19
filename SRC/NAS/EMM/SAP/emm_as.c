@@ -619,7 +619,8 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
     break;
 
   case DETACH_REQUEST:
-    // Requirements MME24.301R10_4.4.4.3_1 MME24.301R10_4.4.4.3_2
+    REQUIREMENT_3GPP_24_301(R10_4_4_4_3__1);
+    REQUIREMENT_3GPP_24_301(R10_4_4_4_3__2);
     if ((1 == decode_status.security_context_available) && (0 < emm_security_context->activated) &&
         ((0 == decode_status.integrity_protected_message) ||
        (0 == decode_status.mac_matched))) {
@@ -627,9 +628,8 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message TODO DETACH_REQUEST\n");
-    *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
-    rc = RETURNok;              /* TODO */
+    rc = emm_recv_detach_request (
+      msg->ue_id, &emm_msg->detach_request, emm_cause, &decode_status);
     break;
 
   case TRACKING_AREA_UPDATE_REQUEST:

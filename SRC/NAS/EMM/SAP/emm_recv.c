@@ -483,6 +483,7 @@ emm_recv_detach_request (
   rc = emm_proc_detach_request (ue_id, type, msg->detachtype.switchoff != DETACH_TYPE_NORMAL_DETACH,
       msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED,
       msg->naskeysetidentifier.naskeysetidentifier, p_guti, p_imsi, p_imei);
+  *emm_cause = RETURNok == rc ? EMM_CAUSE_SUCCESS : EMM_CAUSE_PROTOCOL_ERROR;
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

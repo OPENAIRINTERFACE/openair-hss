@@ -53,6 +53,9 @@
 #include "emm_proc.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
+#include "mme_app_defs.h"
+#include "mme_app_itti_messaging.h"
+#include "mme_app_ue_context.h"
 #include "nas_itti_messaging.h" 
 
 
@@ -253,6 +256,10 @@ emm_proc_detach_request (
 
     rc = RETURNok;
   } else {
+    /*
+     * TODO task#15563589: Cleanup on non-switchoff UE-initiated detach
+     */
+
     /*
      * Normal detach without UE switch-off
      */

@@ -550,7 +550,16 @@ mme_app_handle_delete_session_rsp (
   mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat--;
   ue_context_p->mm_state = UE_UNREGISTERED;
   ue_context_p->ue_context_rel_cause = S1AP_NAS_DETACH;
-  mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
+
+  // If already in idle state, skip telling eNB to release context and just
+  // clean up on our end.
+  if (ECM_IDLE == ue_context_p->ecm_state) {
+    mme_notify_ue_context_released(&mme_app_desc.mme_ue_contexts, ue_context_p);
+    mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+  } else {
+    mme_app_itti_ue_context_release (
+      ue_context_p, ue_context_p->ue_context_rel_cause);
+  }
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
