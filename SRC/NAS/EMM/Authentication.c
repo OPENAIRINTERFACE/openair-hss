@@ -411,7 +411,7 @@ emm_proc_authentication_complete (
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, " T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_mm_context->mme_ue_s1ap_id);
   } else {
     // Release retransmission timer parameters
-    memset(&emm_ctx->common_proc->common_arg, 0, sizeof(emm_ctx->common_proc->common_arg));
+    //memset(&emm_ctx->common_proc->common_arg, 0, sizeof(emm_ctx->common_proc->common_arg));
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to authentify the UE\n");
     emm_cause = EMM_CAUSE_ILLEGAL_UE;
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
