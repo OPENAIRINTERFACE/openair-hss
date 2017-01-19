@@ -83,6 +83,20 @@ uint64_t mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src);
 void mme_app_ue_context_uint_to_imsi(uint64_t imsi_src, mme_app_imsi_t *imsi_dst);
 void mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst, const imsi_t *imsi_src);
 
+/*
+ * Timer identifier returned when in inactive state (timer is stopped or has
+ * failed to be started)
+ */
+#define MME_APP_TIMER_INACTIVE_ID   (-1)
+#define MME_APP_DELTA_T3412_REACHABILITY_TIMER 4 // in minutes 
+#define MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER 0 // in minutes 
+
+/* Timer structure */
+struct mme_app_timer_t {
+  long id;         /* The timer identifier                 */
+  long sec;       /* The timer interval value in seconds  */
+};
+
 /** @struct bearer_context_t
  *  @brief Parameters that should be kept for an eps bearer.
  */
@@ -128,6 +142,8 @@ typedef struct ue_context_s {
   mme_ue_s1ap_id_t       mme_ue_s1ap_id;
   sctp_assoc_id_t        sctp_assoc_id_key;
 
+  enum s1cause           ue_context_rel_cause;
+
 
 #define SUBSCRIPTION_UNKNOWN    0x0
 #define SUBSCRIPTION_KNOWN      0x1
@@ -136,7 +152,7 @@ typedef struct ue_context_s {
   uint8_t                msisdn_length;               // set by S6A UPDATE LOCATION ANSWER
 
   mm_state_t             mm_state;
-  ecm_state_t              ecm_state;
+  ecm_state_t            ecm_state;
   /* Globally Unique Temporary Identity */
   bool                   is_guti_set;                 // is guti has been set
   guti_t                 guti;                        // guti.gummei.plmn set by nas_auth_param_req_t
@@ -195,6 +211,12 @@ typedef struct ue_context_s {
 
   ebi_t                  default_bearer_id;
   bearer_context_t       eps_bearers[BEARERS_PER_UE];
+  
+  // Mobile Reachability Timer-Start when UE moves to idle state. Stop when UE moves to connected state
+  struct mme_app_timer_t       mobile_reachability_timer; 
+  // Implicit Detach Timer-Start at the expiry of Mobile Reachability timer. Stop when UE moves to connected state
+  struct mme_app_timer_t       implicit_detach_timer; 
+
 } ue_context_t;
 
 

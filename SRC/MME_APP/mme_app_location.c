@@ -40,7 +40,7 @@
 #include "intertask_interface.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-
+#include "mme_config.h"
 
 int
 mme_app_send_s6a_update_location_req (
@@ -139,6 +139,16 @@ mme_app_handle_s6a_update_location_ans (
   ue_context_p->rau_tau_timer = ula_pP->subscription_data.rau_tau_timer;
   ue_context_p->access_mode = ula_pP->subscription_data.access_mode;
   memcpy (&ue_context_p->apn_profile, &ula_pP->subscription_data.apn_config_profile, sizeof (apn_config_profile_t));
+  /*
+   * Set the value of  Mobile Reachability timer based on value of T3412 (Periodic TAU timer) sent in Attach accept /TAU accept.
+   * Set it to MME_APP_DELTA_T3412_REACHABILITY_TIMER minutes greater than T3412.
+   * Set the value of Implicit timer. Set it to MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER minutes greater than  Mobile Reachability timer 
+  */
+  ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context_p->mobile_reachability_timer.sec = ((mme_config.nas_config.t3412_min) + MME_APP_DELTA_T3412_REACHABILITY_TIMER) * 60;
+  ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context_p->implicit_detach_timer.sec = (ue_context_p->mobile_reachability_timer.sec) + MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER * 60; 
+  
   rc =  mme_app_send_s11_create_session_req (ue_context_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }

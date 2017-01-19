@@ -40,6 +40,7 @@
 #include "mme_app_defs.h"
 #include "mme_app_itti_messaging.h"
 #include "s1ap_mme.h"
+#include "timer.h"
 
 //------------------------------------------------------------------------------
 ue_context_t *mme_create_new_ue_context (void)
@@ -686,7 +687,7 @@ void mme_ue_context_update_ue_sig_connection_state (
   struct ue_context_s *ue_context_p,
   ecm_state_t new_ecm_state)
 {
-  //Function is to update UE's Signaling Connection State 
+  // Function is to update UE's Signaling Connection State 
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -703,11 +704,34 @@ void mme_ue_context_update_ue_sig_connection_state (
     ue_context_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
     ue_context_p->enb_ue_s1ap_id  = INVALID_ENB_UE_S1AP_ID;
     ue_context_p->ecm_state       = ECM_IDLE;
-    //TO DO task#15401931 - Start Mobile reachability timer 
+    
+    // Start Mobile reachability timer 
+    if (timer_setup (ue_context_p->mobile_reachability_timer.sec, 0, TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &(ue_context_p->mobile_reachability_timer.id)) < 0) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to start Mobile Reachability timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+      ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+    }
   }else if ((ue_context_p->ecm_state == ECM_IDLE) && (new_ecm_state == ECM_CONNECTED))
   {
     ue_context_p->ecm_state = ECM_CONNECTED;
-    //TO DO task#14193405 - Stop Mtobile reachability timer 
+    
+    // Stop Mobile reachability timer,if running 
+    if (ue_context_p->mobile_reachability_timer.id != MME_APP_TIMER_INACTIVE_ID)
+    {
+      if (timer_remove(ue_context_p->mobile_reachability_timer.id)) {
+
+        OAILOG_ERROR (LOG_MME_APP, "Failed to stop Mobile Reachability timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+      } 
+      ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+    }
+    // Stop Implicit detach timer,if running 
+    if (ue_context_p->implicit_detach_timer.id != MME_APP_TIMER_INACTIVE_ID)
+    {
+      if (timer_remove(ue_context_p->implicit_detach_timer.id)) {
+
+        OAILOG_ERROR (LOG_MME_APP, "Failed to stop Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+      } 
+      ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+    }
   }
   return;
 }
@@ -868,11 +892,22 @@ mme_app_handle_s1ap_ue_context_release_req (
         s1ap_ue_context_release_req->enb_ue_s1ap_id, s1ap_ue_context_release_req->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-
+  // Set the UE context release cause in UE context. This is used while constructing UE Context Release Command
+  ue_context_p->ue_context_rel_cause = S1AP_RADIO_EUTRAN_GENERATED_REASON; 
+  
+  if (ue_context_p->ecm_state == ECM_IDLE)
+  {
+    // Abnormal case. Log it and ignore the message. 
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ- UE already in Idle state. MME UE S1AP Id 0x%06" PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
+    OAILOG_ERROR (LOG_MME_APP, " Ignoring the message. UE already in Idle state for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+        s1ap_ue_context_release_req->enb_ue_s1ap_id, s1ap_ue_context_release_req->mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
   if ((ue_context_p->mme_s11_teid == 0) && (ue_context_p->sgw_s11_teid == 0)) {
-    // no session was created, no need for releasing bearers in SGW
-    mme_app_itti_ue_context_release(ue_context_p, S1AP_RADIO_EUTRAN_GENERATED_REASON);
+    // No session was created, no need for releasing bearers in SGW
+    mme_app_itti_ue_context_release(ue_context_p, ue_context_p->ue_context_rel_cause);
   } else {
+    // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
     mme_app_send_s11_release_access_bearers_req (ue_context_p);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -910,7 +945,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-  mme_notify_ue_context_released(&mme_app_desc.mme_ue_contexts, ue_context_p);
+  mme_notify_ue_context_released (&mme_app_desc.mme_ue_contexts, ue_context_p);
 
   if (ue_context_p->mm_state == UE_UNREGISTERED) {
     OAILOG_DEBUG (LOG_MME_APP, "Deleting UE context associated in MME for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n ",

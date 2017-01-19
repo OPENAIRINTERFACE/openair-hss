@@ -520,7 +520,7 @@ mme_app_handle_delete_session_rsp (
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (delete_sess_resp_pP );
-  OAILOG_DEBUG (LOG_MME_APP, "Received S11_DELETE_SESSION_RESPONSE from S+P-GW with the ID " MME_UE_S1AP_ID_FMT "\n ",delete_sess_resp_pP->teid);
+  OAILOG_DEBUG (LOG_MME_APP, "Received S11_DELETE_SESSION_RESPONSE from S+P-GW with teid " TEID_FMT "\n ",delete_sess_resp_pP->teid);
   ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, delete_sess_resp_pP->teid);
 
   if (ue_context_p == NULL) {
@@ -539,7 +539,8 @@ mme_app_handle_delete_session_rsp (
   mme_app_desc.mme_ue_contexts.nb_bearers_managed--;
   mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat--;
   ue_context_p->mm_state = UE_UNREGISTERED;
-  mme_app_itti_ue_context_release(ue_context_p, S1AP_NAS_DETACH /* cause */);
+  ue_context_p->ue_context_rel_cause = S1AP_NAS_DETACH;
+  mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -833,7 +834,7 @@ mme_app_handle_release_access_bearers_resp (
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 RELEASE_ACCESS_BEARERS_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
     rel_access_bearers_rsp_pP->teid, ue_context_p->imsi);
-  mme_app_itti_ue_context_release(ue_context_p, S1AP_RADIO_EUTRAN_GENERATED_REASON);
+  mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

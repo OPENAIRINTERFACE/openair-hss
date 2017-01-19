@@ -88,7 +88,7 @@ typedef struct itti_s1ap_ue_context_release_req_s {
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
 } itti_s1ap_ue_context_release_req_t;
 
-// List of possible causes for MME generated context release
+// List of possible causes for MME generated UE context release command towards eNB
 enum s1cause {
   S1AP_NAS_DETACH,
   S1AP_RADIO_EUTRAN_GENERATED_REASON,
