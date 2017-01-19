@@ -445,6 +445,17 @@ s1ap_handle_conn_est_cnf (
   initialContextSetupRequest_p = &message.msg.s1ap_InitialContextSetupRequestIEs;
   initialContextSetupRequest_p->mme_ue_s1ap_id = (unsigned long)ue_ref->mme_ue_s1ap_id;
   initialContextSetupRequest_p->eNB_UE_S1AP_ID = (unsigned long)ue_ref->enb_ue_s1ap_id;
+
+  /*
+   * Only add capability information if it's not empty.
+   */
+  if (conn_est_cnf_pP->ue_radio_cap_length) {
+    OAILOG_DEBUG (LOG_S1AP, "UE radio capability found, adding to message\n");
+    OCTET_STRING_fromBuf(&initialContextSetupRequest_p->ueRadioCapability,
+                         conn_est_cnf_pP->ue_radio_capabilities,
+                         conn_est_cnf_pP->ue_radio_cap_length);
+  }
+
   /*
    * uEaggregateMaximumBitrateDL and uEaggregateMaximumBitrateUL expressed in term of bits/sec
    */

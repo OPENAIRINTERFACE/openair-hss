@@ -73,6 +73,8 @@
 #include "emm_cause.h"
 #include "NasSecurityAlgorithms.h"
 #include "mme_api.h"
+#include "mme_app_defs.h"
+#include "mme_app_ue_context.h"
 #include "mme_config.h"
 #include "nas_itti_messaging.h"
 
@@ -1503,6 +1505,23 @@ _emm_attach_accept (
     REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__14);
     emm_sap.u.emm_as.u.establish.eps_network_feature_support = &_emm_data.conf.eps_network_feature_support;
 
+    /*
+     * Delete any preexisting UE radio capabilities, pursuant to
+     * GPP 24.310:5.5.1.2.4
+     */
+    ue_context_t *ue_context_p =
+      mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts,
+                                           emm_ctx->ue_id);
+
+    OAILOG_DEBUG (LOG_NAS_EMM,
+                 "UE context already exists: %s\n",
+                 ue_context_p ? "yes" : "no");
+    if (ue_context_p) {
+      // Note: this is safe from double-free errors because it sets to NULL
+      // after freeing, which free treats as a no-op.
+      free_wrapper(ue_context_p->ue_radio_capabilities);
+      ue_context_p->ue_radio_cap_length = 0;  // Logically "deletes" info
+    }
     /*
      * Setup EPS NAS security data
      */

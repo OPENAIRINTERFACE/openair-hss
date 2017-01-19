@@ -356,6 +356,16 @@ mme_app_handle_conn_est_cnf (
   memset (establishment_cnf_p, 0, sizeof (itti_mme_app_connection_establishment_cnf_t));
   memcpy (&establishment_cnf_p->nas_conn_est_cnf, nas_conn_est_cnf_pP, sizeof (itti_nas_conn_est_cnf_t));
 
+  // Copy UE radio capabilities into message if it exists
+  OAILOG_DEBUG (LOG_MME_APP, "UE radio context already cached: %s\n",
+               ue_context_p->ue_radio_cap_length ? "yes" : "no");
+  establishment_cnf_p->ue_radio_cap_length = ue_context_p->ue_radio_cap_length;
+  if (establishment_cnf_p->ue_radio_cap_length) {
+    memcpy (establishment_cnf_p->ue_radio_capabilities,
+            ue_context_p->ue_radio_capabilities,
+            establishment_cnf_p->ue_radio_cap_length);
+  }
+
   bearer_id = ue_context_p->default_bearer_id;
   current_bearer_p = &ue_context_p->eps_bearers[bearer_id];
   establishment_cnf_p->eps_bearer_id = bearer_id;

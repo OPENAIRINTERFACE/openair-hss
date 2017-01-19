@@ -190,8 +190,8 @@ typedef struct ue_context_s {
   /* Store the radio capabilities as received in S1AP UE capability indication
    * message.
    */
-  //char                  *ue_radio_capabilities;       // not set/read
-  //int                    ue_radio_cap_length;         // not set/read
+  char                  *ue_radio_capabilities;
+  int                    ue_radio_cap_length;
 
   teid_t                 mme_s11_teid;                // set by mme_app_send_s11_create_session_req
   teid_t                 sgw_s11_teid;                // set by S11 CREATE_SESSION_RESPONSE

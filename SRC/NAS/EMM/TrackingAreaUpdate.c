@@ -56,6 +56,8 @@
 #include "emm_sap.h"
 #include "emm_cause.h"
 #include "EpsUpdateResult.h"
+#include "mme_app_defs.h"
+#include "mme_app_ue_context.h"
 
 
 /****************************************************************************/
@@ -248,8 +250,20 @@ emm_proc_tracking_area_update_request (
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_UE_RADIO_CAPABILITY_INFORMATION_UPDATE_NEEDED_IEI) {
     if ( ue_ctx) {
       if (0 != msg->ueradiocapabilityinformationupdateneeded) {
-        // delete the stored UE radio capability information if any
-//#pragma message  "TODO: Actually UE radio capability information is not stored in EPC"
+        ue_context_t *ue_context_p =
+          mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts,
+                                               ue_id);
+
+        OAILOG_DEBUG (LOG_NAS_EMM,
+                     "UE context already exists: %s\n",
+                     ue_context_p ? "yes" : "no");
+        if (ue_context_p) {
+          // Note: this is safe from double-free errors because it sets to NULL
+          // after freeing, which free treats as a no-op.
+
+          free_wrapper(ue_context_p->ue_radio_capabilities);
+          ue_context_p->ue_radio_cap_length = 0;  // Logically "deletes" info
+        }
       }
     }
   }
