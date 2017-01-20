@@ -254,6 +254,7 @@ typedef struct itti_nas_auth_param_req_s {
 typedef struct itti_nas_detach_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t ue_id;
+  long             cause;
 } itti_nas_detach_req_t;
 
 

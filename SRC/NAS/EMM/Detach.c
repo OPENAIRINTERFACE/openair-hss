@@ -327,7 +327,7 @@ emm_proc_detach_request (
       rc = emm_sap_send (&emm_sap);
     }
 	
-    nas_itti_detach_req(ue_id);
+    nas_itti_detach_req(ue_id, (long)EMM_AS_CAUSE_DETACH);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

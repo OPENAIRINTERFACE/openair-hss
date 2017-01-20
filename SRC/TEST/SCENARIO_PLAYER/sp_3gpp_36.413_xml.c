@@ -357,3 +357,64 @@ bool sp_ue_aggregate_maximum_bit_rate_from_xml (
 }
 
 
+//------------------------------------------------------------------------------
+bool sp_s1ap_cause_from_xml (
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    S1ap_Cause_t * const cause)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  bool res = false;
+  bstring xpath_expr = bformat("./%s",S1AP_CAUSE_XML_STR);
+  xmlXPathObjectPtr xpath_obj = xml_find_nodes(msg->xml_doc, &msg->xpath_ctx, xpath_expr);
+  if (xpath_obj) {
+    xmlNodeSetPtr nodes = xpath_obj->nodesetval;
+    int size = (nodes) ? nodes->nodeNr : 0;
+    if ((1 == size)  && (msg->xml_doc)) {
+      xmlNodePtr saved_node_ptr = msg->xpath_ctx->node;
+      res = (RETURNok == xmlXPathSetContextNode(nodes->nodeTab[0], msg->xpath_ctx));
+
+      bstring group_name  = NULL;
+      bstring xpath_expr_group = bformat("./%s",S1AP_CAUSE_GROUP_XML_STR);
+      bool res = sp_xml_load_ascii_stream_leaf_tag(scenario, msg, xpath_expr_group, &group_name);
+      bdestroy_wrapper (&xpath_expr_group);
+      if (res) {
+        uint64_t cause64 = 0;
+        res = sp_u64_from_xml (scenario, msg, (uint64_t*)&cause64, S1AP_CAUSE_GROUP_CAUSE_XML_STR);
+        if (!strcasecmp((const char *)group_name->data, S1AP_CAUSE_GROUP_RADIO_NETWORK_LAYER_XML_STR)) {
+          cause->present = S1ap_Cause_PR_radioNetwork;
+          if (res) {
+            cause->choice.radioNetwork = cause64;
+          }
+        } else  if (!strcasecmp((const char *)group_name->data, S1AP_CAUSE_GROUP_TRANSPORT_LAYER_XML_STR)) {
+          cause->present = S1ap_Cause_PR_transport;
+          if (res) {
+            cause->choice.transport = cause64;
+          }
+        } else  if (!strcasecmp((const char *)group_name->data, S1AP_CAUSE_GROUP_NAS_XML_STR)) {
+          cause->present = S1ap_Cause_PR_nas;
+          if (res) {
+            cause->choice.nas = cause64;
+          }
+        } else  if (!strcasecmp((const char *)group_name->data, S1AP_CAUSE_GROUP_PROTOCOL_XML_STR)) {
+          cause->present = S1ap_Cause_PR_protocol;
+          if (res) {
+            cause->choice.protocol = cause64;
+          }
+        } else  if (!strcasecmp((const char *)group_name->data, S1AP_CAUSE_GROUP_MISC_XML_STR)) {
+          cause->present = S1ap_Cause_PR_misc;
+          if (res) {
+            cause->choice.misc = cause64;
+          }
+        } else {
+          cause->present = S1ap_Cause_PR_NOTHING;
+        }
+      }
+      res = (RETURNok == xmlXPathSetContextNode(saved_node_ptr, msg->xpath_ctx)) & res;
+    }
+    xmlXPathFreeObject(xpath_obj);
+  }
+  bdestroy_wrapper (&xpath_expr);
+  OAILOG_FUNC_RETURN (LOG_XML, res);
+
+}

@@ -74,4 +74,9 @@ bool sp_ue_aggregate_maximum_bit_rate_from_xml (
     scenario_player_msg_t * const msg,
     ue_aggregate_maximum_bit_rate_t * const ue_ambr);
 
+bool sp_s1ap_cause_from_xml (
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    S1ap_Cause_t * const cause);
+
 #endif /* FILE_SP_3GPP_36_413_XML_SEEN */

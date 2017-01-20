@@ -37,6 +37,7 @@
 #include "assertions.h"
 #include "log.h"
 #include "msc.h"
+#include "3gpp_requirements_36.413.h"
 #include "common_types.h"
 #include "conversions.h"
 #include "intertask_interface.h"
@@ -1033,32 +1034,28 @@ mme_app_handle_s1ap_ue_context_release_req (
   const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req)
 //------------------------------------------------------------------------------
 {
-  struct ue_mm_context_s                    *ue_context_p = NULL;
-  MessageDef                             *message_p = NULL;
-
   OAILOG_FUNC_IN (LOG_MME_APP);
+  struct ue_mm_context_s                    *ue_context_p = NULL;
+
   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s1ap_ue_context_release_req->mme_ue_s1ap_id);
   if (!ue_context_p) {
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ Unknown mme_ue_s1ap_id 0x%06" PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-        s1ap_ue_context_release_req->enb_ue_s1ap_id, s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
+    ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s1ap_ue_context_release_req->enb_ue_s1ap_id);
+    if ((!ue_context_p) || (INVALID_MME_UE_S1AP_ID == ue_context_p->mme_ue_s1ap_id)) {
+      NOT_REQUIREMENT_3GPP_36_413(R10_8_3_3_2__2);
+      MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ Unknown mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "  enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ",
+          s1ap_ue_context_release_req->mme_ue_s1ap_id, s1ap_ue_context_release_req->enb_ue_s1ap_id);
+      OAILOG_ERROR (LOG_MME_APP, "S1AP_UE_CONTEXT_RELEASE_REQ group %d cause %ld, UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+          s1ap_ue_context_release_req->cause.present, s1ap_ue_context_release_req->cause.choice.misc, s1ap_ue_context_release_req->enb_ue_s1ap_id, s1ap_ue_context_release_req->mme_ue_s1ap_id);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
+    }
   }
-
   ue_context_p->is_s1_ue_context_release = true;
   ue_context_p->s1_ue_context_release_cause = s1ap_ue_context_release_req->cause;
 
 
   if (!ue_context_p->nb_active_pdn_contexts) {
     // no session was created, no need for releasing bearers in SGW
-    message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
-    AssertFatal (message_p , "itti_alloc_new_message Failed");
-    S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id;
-    S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context_p->enb_ue_s1ap_id;
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",
-        S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
-    int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
-    itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+    mme_app_send_s1ap_ue_context_release_command(ue_context_p, s1ap_ue_context_release_req->cause);
   } else {
     for (pdn_cid_t i = 0; i < MAX_APN_PER_UE; i++) {
       if (ue_context_p->pdn_contexts[i]) {

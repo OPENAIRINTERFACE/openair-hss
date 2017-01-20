@@ -192,7 +192,7 @@ typedef struct emm_context_s {
   ms_network_capability_t  _ms_network_capability;
 
 
-  int                      remaining_vectors;
+  int                      remaining_vectors;         // remaining unused vectors
   auth_vector_t            _vector[MAX_EPS_AUTH_VECTORS];/* EPS authentication vector                            */
   emm_security_context_t   _security;                /* Current EPS security context: The security context which has been activated most recently. Note that a current EPS
                                                         security context originating from either a mapped or native EPS security context may exist simultaneously with a native

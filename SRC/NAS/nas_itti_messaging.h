@@ -78,7 +78,7 @@ void nas_itti_establish_cnf(
   const uint16_t         selected_integrity_algorithmP);
 
 void nas_itti_detach_req(
-  const mme_ue_s1ap_id_t      ue_idP);
+  const mme_ue_s1ap_id_t      ue_idP, long cause);
 
 
 #endif /* FILE_NAS_ITTI_MESSAGING_SEEN */

@@ -130,6 +130,15 @@ typedef struct esm_ebr_data_s {
 //  traffic_flow_template_t *tft;  /* Traffic Flow Template for packet filtering   */
 //} esm_bearer_t;
 
+/* ESM procedure transaction states */
+typedef enum {
+  ESM_PROCEDURE_TRANSACTION_INACTIVE = 0,
+  ESM_PROCEDURE_TRANSACTION_PENDING,
+  ESM_PROCEDURE_TRANSACTION_MAX
+} esm_pt_state_e;
+
+
+
 /*
  * Structure of a PDN connection
  * -----------------------------
@@ -149,6 +158,7 @@ typedef struct esm_pdn_s {
              * than the one already activated       */
   int n_bearers;  /* Number of allocated EPS bearers;
              * default EPS bearer is defined at index 0 */
+  esm_pt_state_e pt_state; // procedure transaction state
 } esm_pdn_t;
 
 struct esm_proc_data_s;

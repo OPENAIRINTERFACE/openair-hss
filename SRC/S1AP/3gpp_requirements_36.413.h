@@ -27,17 +27,23 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-#ifndef FILE_3GPP_REQUIREMENTS_33_401_SEEN
-#define FILE_3GPP_REQUIREMENTS_33_401_SEEN
+#ifndef FILE_3GPP_REQUIREMENTS_36_413_SEEN
+#define FILE_3GPP_REQUIREMENTS_36_413_SEEN
 
 #include "3gpp_requirements.h"
 #include "log.h"
 
-#define REQUIREMENT_3GPP_33_401(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_S1AP, "Hit 3GPP TS 33_401"#rElEaSe_sEcTiOn__OaImark" : "rElEaSe_sEcTiOn__OaImark##_BRIEF"\n")
-#define NO_REQUIREMENT_3GPP_33_401(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_S1AP, "#NOT IMPLEMENTED 3GPP TS 33_401"#rElEaSe_sEcTiOn__OaImark" : "rElEaSe_sEcTiOn__OaImark##_BRIEF"\n")
-#define NOT_REQUIREMENT_3GPP_33_401(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_S1AP, "#NOT ASSERTED 3GPP TS 33_401"#rElEaSe_sEcTiOn__OaImark" : "rElEaSe_sEcTiOn__OaImark##_BRIEF"\n")
+#define REQUIREMENT_3GPP_36_413(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_S1AP, "Hit 3GPP TS 36_413"#rElEaSe_sEcTiOn__OaImark" : "rElEaSe_sEcTiOn__OaImark##_BRIEF"\n")
+#define NO_REQUIREMENT_3GPP_36_413(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_S1AP, "#NOT IMPLEMENTED 3GPP TS 36_413"#rElEaSe_sEcTiOn__OaImark" : "rElEaSe_sEcTiOn__OaImark##_BRIEF"\n")
+#define NOT_REQUIREMENT_3GPP_36_413(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_S1AP, "#NOT ASSERTED 3GPP TS 36_413"#rElEaSe_sEcTiOn__OaImark" : "rElEaSe_sEcTiOn__OaImark##_BRIEF"\n")
 
 //-----------------------------------------------------------------------------------------------------------------------
+#define R10_8_3_3_2__2 "MME36.413R10_8.3.3.2_2: Successful Operation\
+                                                                                                                        \
+    The UE CONTEXT RELEASE COMMAND message shall contain the UE S1AP ID pair IE if available, otherwise the             \
+    message shall contain the MME UE S1AP ID IE."                                                                                \
+
+#define R10_8_3_3_2__2_BRIEF "UE CONTEXT RELEASE COMMAND contains UE S1AP ID pair IE or at least MME UE S1AP ID IE"
 
 
-#endif /* FILE_3GPP_REQUIREMENTS_33_401_SEEN */
+#endif /* FILE_3GPP_REQUIREMENTS_36_413_SEEN */

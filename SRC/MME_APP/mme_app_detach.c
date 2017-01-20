@@ -105,7 +105,7 @@ mme_app_handle_detach_req (
   }
   else {
     ue_context->s1_ue_context_release_cause.present = S1ap_Cause_PR_nas;
-    ue_context->s1_ue_context_release_cause.choice.nas = S1ap_CauseNas_detach;
+    ue_context->s1_ue_context_release_cause.choice.nas = detach_req_p->cause;
     if (!ue_context->is_s1_ue_context_release) {
       for (pdn_cid_t cid = 0; cid < MAX_APN_PER_UE; cid++) {
         // No session with S-GW

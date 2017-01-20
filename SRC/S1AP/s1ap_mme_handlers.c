@@ -33,6 +33,7 @@
 #include "hashtable.h"
 #include "log.h"
 #include "msc.h"
+#include "3gpp_requirements_36.413.h"
 #include "assertions.h"
 #include "conversions.h"
 #include "intertask_interface.h"
@@ -714,11 +715,22 @@ s1ap_mme_generate_ue_context_release_command (ue_description_t * ue_ref_p, S1ap_
   /*
    * Fill in ID pair
    */
-  ueContextReleaseCommandIEs_p->uE_S1AP_IDs.present = S1ap_UE_S1AP_IDs_PR_uE_S1AP_ID_pair;
-  ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.mME_UE_S1AP_ID = ue_ref_p->mme_ue_s1ap_id;
-  ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.eNB_UE_S1AP_ID = ue_ref_p->enb_ue_s1ap_id;
-  ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.iE_Extensions = NULL;
-  ueContextReleaseCommandIEs_p->cause = cause;
+  if (INVALID_MME_UE_S1AP_ID != ue_ref_p->mme_ue_s1ap_id) {
+    REQUIREMENT_3GPP_36_413(R10_8_3_3_2__2);
+    if (INVALID_ENB_UE_S1AP_ID != ue_ref_p->enb_ue_s1ap_id) {
+      ueContextReleaseCommandIEs_p->uE_S1AP_IDs.present = S1ap_UE_S1AP_IDs_PR_uE_S1AP_ID_pair;
+      ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.mME_UE_S1AP_ID = ue_ref_p->mme_ue_s1ap_id;
+      ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.eNB_UE_S1AP_ID = ue_ref_p->enb_ue_s1ap_id;
+      ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.uE_S1AP_ID_pair.iE_Extensions = NULL;
+    } else {
+      ueContextReleaseCommandIEs_p->uE_S1AP_IDs.present = S1ap_UE_S1AP_IDs_PR_mME_UE_S1AP_ID;
+      ueContextReleaseCommandIEs_p->uE_S1AP_IDs.choice.mME_UE_S1AP_ID = ue_ref_p->mme_ue_s1ap_id;
+    }
+    ueContextReleaseCommandIEs_p->cause = cause;
+  } else {
+    NOT_REQUIREMENT_3GPP_36_413(R10_8_3_3_2__2);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  }
 
   if (s1ap_mme_encode_pdu (&message, &buffer, &length) < 0) {
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UEContextRelease/initiatingMessage enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " encoding failed",

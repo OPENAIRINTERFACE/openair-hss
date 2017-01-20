@@ -8,4 +8,13 @@
   <message_file action="send" time="now"  time_ref="this">
     <file>../../MSGR10/ITTI_S1AP_UE_CONTEXT_RELEASE_REQUEST.xml</file>
   </message_file>  
+    
+  <message_file action="receive" time="2.0"  time_ref="-1">
+    <file>../../MSGR10/ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND.xml</file>
+  </message_file>  
+
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../MSGR10/ITTI_S1AP_UE_CONTEXT_RELEASE_COMPLETE.xml</file>
+  </message_file>
+    
 </scenario>

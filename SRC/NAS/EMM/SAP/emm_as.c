@@ -996,7 +996,7 @@ static int _emm_as_send (const emm_as_t * msg)
       break;
 
     case AS_NAS_RELEASE_REQ:
-      nas_itti_detach_req(as_msg.msg.nas_release_req.ue_id);
+      nas_itti_detach_req(as_msg.msg.nas_release_req.ue_id, as_msg.msg.nas_release_req.cause);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
       break;
 

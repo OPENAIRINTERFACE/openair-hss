@@ -342,7 +342,7 @@ void nas_itti_establish_cnf(
 }
 
 //------------------------------------------------------------------------------
-void nas_itti_detach_req(const mme_ue_s1ap_id_t      ue_idP)
+void nas_itti_detach_req(const mme_ue_s1ap_id_t ue_idP, long cause)
 {
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef *message_p;
@@ -350,6 +350,7 @@ void nas_itti_detach_req(const mme_ue_s1ap_id_t      ue_idP)
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_DETACH_REQ);
 
   NAS_DETACH_REQ(message_p).ue_id = ue_idP;
+  NAS_DETACH_REQ(message_p).cause = cause;
 
   MSC_LOG_TX_MESSAGE(
                 MSC_NAS_MME,

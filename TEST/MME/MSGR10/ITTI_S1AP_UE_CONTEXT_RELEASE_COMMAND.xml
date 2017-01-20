@@ -7,7 +7,7 @@
   <enb_ue_s1ap_id>$ENB_UE_S1AP_ID</enb_ue_s1ap_id>
   <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
   <s1ap_cause>
-    <group>nas</group>
-    <group_cause>2</group_cause>
+    <group>$S1AP_CAUSE_GROUP</group>
+    <group_cause>$S1AP_CAUSE_GROUP_CAUSE</group_cause>
   </s1ap_cause>
 </ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND>
