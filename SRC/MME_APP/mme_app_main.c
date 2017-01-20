@@ -34,7 +34,7 @@
 #include "assertions.h"
 #include "msc.h"
 
-mme_app_desc_t                          mme_app_desc;
+mme_app_desc_t                          mme_app_desc = {.rw_lock = PTHREAD_RWLOCK_INITIALIZER, 0} ;
 
 void     *mme_app_thread (void *args);
 
@@ -82,8 +82,11 @@ void *mme_app_thread (
         } else {
           MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
             received_message_p->ittiMsg.s11_modify_bearer_response.teid, ue_context_p->imsi);
+          /*
+          * Updating statistics
+          */
+          update_mme_app_stats_s1u_bearer_add();
         }
-         // TO DO
       }
       break;
 
@@ -186,6 +189,7 @@ mme_app_init (
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
+  pthread_rwlock_init (&mme_app_desc.rw_lock, NULL);
   bstring b = bfromcstr("mme_app_imsi_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
   btrunc(b, 0);

@@ -38,6 +38,34 @@ typedef struct {
 
   long statistic_timer_id;
   uint32_t statistic_timer_period;
+  
+  /* Reader/writer lock */
+  pthread_rwlock_t rw_lock;
+  
+  /* ***************Statistics*************
+   * number of attached UE,number of connected UE,
+   * number of idle UE,number of default bearers, 
+   * number of S1_U bearers,number of PDN sessions
+   */ 
+  
+  uint32_t               nb_enb_connected;
+  uint32_t               nb_ue_attached;
+  uint32_t               nb_ue_connected;
+  uint32_t               nb_default_eps_bearers;
+  uint32_t               nb_s1u_bearers;
+  
+  /* ***************Changes in Statistics**************/
+
+  uint32_t               nb_ue_attached_since_last_stat;
+  uint32_t               nb_ue_detached_since_last_stat;
+  uint32_t               nb_ue_connected_since_last_stat;
+  uint32_t               nb_ue_disconnected_since_last_stat;
+  uint32_t               nb_eps_bearers_established_since_last_stat;
+  uint32_t               nb_eps_bearers_released_since_last_stat;
+  uint32_t               nb_enb_connected_since_last_stat;
+  uint32_t               nb_enb_released_since_last_stat;
+  uint32_t               nb_s1u_bearers_released_since_last_stat;
+  uint32_t               nb_s1u_bearers_established_since_last_stat;
 } mme_app_desc_t;
 
 extern mme_app_desc_t mme_app_desc;
@@ -85,5 +113,9 @@ int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);
 
 void mme_ue_context_update_ue_sig_connection_state (mme_ue_context_t * const mme_ue_context_p,
                                                                             struct ue_context_s *ue_context_p,ecm_state_t new_ecm_state);
+
+#define mme_stats_read_lock(mMEsTATS)  pthread_rwlock_rdlock(&(mMEsTATS)->rw_lock)
+#define mme_stats_write_lock(mMEsTATS) pthread_rwlock_wrlock(&(mMEsTATS)->rw_lock)
+#define mme_stats_unlock(mMEsTATS)     pthread_rwlock_unlock(&(mMEsTATS)->rw_lock)
 
 #endif /* MME_APP_DEFS_H_ */

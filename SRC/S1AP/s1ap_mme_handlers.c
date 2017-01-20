@@ -39,6 +39,7 @@
 #include "s1ap_mme_itti_messaging.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_ta.h"
+#include "mme_app_statistics.h"
 
 
 extern hash_table_ts_t g_s1ap_enb_coll; // contains eNB_description_s, key is eNB_description_s.assoc_id
@@ -375,6 +376,10 @@ s1ap_mme_handle_s1_setup_request (
 
     s1ap_dump_enb (enb_association);
     rc =  s1ap_generate_s1_setup_response (enb_association);
+    if (rc == RETURNok)
+    {
+      update_mme_app_stats_connected_enb_add();
+    }
     OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   } else {
     /*
@@ -486,6 +491,8 @@ s1ap_generate_s1_setup_response (
    */
   bstring b = blk2bstr(buffer, length);
   rc = s1ap_mme_itti_send_sctp_request (&b, enb_association->sctp_assoc_id, 0, INVALID_MME_UE_S1AP_ID);
+
+
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 

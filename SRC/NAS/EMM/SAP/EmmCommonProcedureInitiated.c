@@ -144,6 +144,7 @@ EmmCommonProcedureInitiated (
      * enter state EMM-REGISTERED.
      */
     rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_REGISTERED);
+
     break;
 
   case _EMMREG_ATTACH_REJ:

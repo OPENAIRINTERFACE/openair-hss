@@ -149,4 +149,6 @@ int mme_api_subscribe(bstring *apn, mme_api_ip_version_t mme_pdn_index, bstring 
                       int is_emergency, mme_api_qos_t *qos);
 int mme_api_unsubscribe(bstring apn);
 
+void mme_ue_context_update_ue_emm_state (mme_ue_s1ap_id_t mme_ue_s1ap_id, int  new_emm_state);
+
 #endif /* FILE_MME_API_SEEN*/

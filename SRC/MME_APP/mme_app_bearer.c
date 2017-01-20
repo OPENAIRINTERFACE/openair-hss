@@ -41,6 +41,7 @@
 #include "mme_app_itti_messaging.h"
 #include "mme_config.h"
 #include "emmData.h"
+#include "mme_app_statistics.h"
 
 //----------------------------------------------------------------------------
 static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t * const s_tmsi_p,  guti_t * const guti_p);
@@ -546,9 +547,10 @@ mme_app_handle_delete_session_rsp (
   /*
    * Updating statistics
    */
-  mme_app_desc.mme_ue_contexts.nb_bearers_managed--;
-  mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat--;
-  ue_context_p->mm_state = UE_UNREGISTERED;
+  update_mme_app_stats_s1u_bearer_sub();
+  update_mme_app_stats_default_bearer_sub();
+  
+  // Send UE Context Release Command 
   ue_context_p->ue_context_rel_cause = S1AP_NAS_DETACH;
 
   // If already in idle state, skip telling eNB to release context and just
@@ -613,8 +615,8 @@ mme_app_handle_create_sess_resp (
   /*
    * Updating statistics
    */
-  mme_app_desc.mme_ue_contexts.nb_bearers_managed++;
-  mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat++;
+  update_mme_app_stats_default_bearer_add();
+
   current_bearer_p = &ue_context_p->eps_bearers[bearer_id];
   current_bearer_p->s_gw_teid = create_sess_resp_pP->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid;
 
@@ -775,6 +777,7 @@ mme_app_handle_create_sess_resp (
     clear_protocol_configuration_options(&create_sess_resp_pP->pco);
 
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONNECTIVITY_RSP sgw_s1u_teid %u ebi %u qci %u prio %u", current_bearer_p->s_gw_teid, bearer_id, current_bearer_p->qci, current_bearer_p->prio_level);
+
     rc = itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
   }
@@ -853,6 +856,12 @@ mme_app_handle_release_access_bearers_resp (
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 RELEASE_ACCESS_BEARERS_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
     rel_access_bearers_rsp_pP->teid, ue_context_p->imsi);
+  /*
+   * Updating statistics
+   */
+  update_mme_app_stats_s1u_bearer_sub();
+
+  // Send UE Context Release Command 
   mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

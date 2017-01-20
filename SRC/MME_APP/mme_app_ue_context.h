@@ -50,12 +50,12 @@
 #include "sgw_ie_defs.h"
 
 typedef enum {
+  UE_UNREGISTERED = 0,
   UE_REGISTERED,
-  UE_UNREGISTERED,
 } mm_state_t;
 
 typedef enum {
-  ECM_IDLE,
+  ECM_IDLE = 0,
   ECM_CONNECTED,
 } ecm_state_t;
 
@@ -221,14 +221,6 @@ typedef struct ue_context_s {
 
 
 typedef struct mme_ue_context_s {
-  uint32_t               nb_ue_managed;
-  uint32_t               nb_ue_idle;
-
-  uint32_t               nb_bearers_managed;
-
-  uint32_t               nb_ue_since_last_stat;
-  uint32_t               nb_bearers_since_last_stat;
-
   hash_table_ts_t       *imsi_ue_context_htbl;
   hash_table_ts_t       *tun11_ue_context_htbl;
   hash_table_ts_t       *mme_ue_s1ap_id_ue_context_htbl;
@@ -359,6 +351,7 @@ void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 
 
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
+
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 

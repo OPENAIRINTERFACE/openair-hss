@@ -41,6 +41,7 @@
 #include "mme_app_itti_messaging.h"
 #include "s1ap_mme.h"
 #include "timer.h"
+#include "mme_app_statistics.h"
 
 //------------------------------------------------------------------------------
 ue_context_t *mme_create_new_ue_context (void)
@@ -596,31 +597,16 @@ mme_insert_ue_context (
       }
     }
   }
-
-  /*
-   * Updating statistics
-   */
-  __sync_fetch_and_add (&mme_ue_context_p->nb_ue_managed, 1);
-  __sync_fetch_and_add (&mme_ue_context_p->nb_ue_since_last_stat, 1);
-      
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
-
-
 //------------------------------------------------------------------------------
 void mme_notify_ue_context_released (
     mme_ue_context_t * const mme_ue_context_p,
     struct ue_context_s *ue_context_p)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (mme_ue_context_p );
-  DevAssert (ue_context_p );
-  /*
-   * Updating statistics
-   */
-  __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_managed, 1);
-  __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_since_last_stat, 1);
-
+  DevAssert (mme_ue_context_p);
+  DevAssert (ue_context_p);
   // TODO HERE free resources
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -636,12 +622,7 @@ void mme_remove_ue_context (
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (mme_ue_context_p );
   DevAssert (ue_context_p );
-  /*
-   * Updating statistics
-   */
-  __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_managed, 1);
-  __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_since_last_stat, 1);
-
+  
   if (ue_context_p->imsi) {
     hash_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
     if (HASH_TABLE_OK != hash_rc)
@@ -687,7 +668,7 @@ void mme_ue_context_update_ue_sig_connection_state (
   struct ue_context_s *ue_context_p,
   ecm_state_t new_ecm_state)
 {
-  // Function is to update UE's Signaling Connection State 
+  // Function is used to update UE's Signaling Connection State 
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -710,6 +691,9 @@ void mme_ue_context_update_ue_sig_connection_state (
       OAILOG_ERROR (LOG_MME_APP, "Failed to start Mobile Reachability timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
       ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
     }
+    // Update Stats
+    update_mme_app_stats_connected_ue_sub();
+
   }else if ((ue_context_p->ecm_state == ECM_IDLE) && (new_ecm_state == ECM_CONNECTED))
   {
     ue_context_p->ecm_state = ECM_CONNECTED;
@@ -727,16 +711,15 @@ void mme_ue_context_update_ue_sig_connection_state (
     if (ue_context_p->implicit_detach_timer.id != MME_APP_TIMER_INACTIVE_ID)
     {
       if (timer_remove(ue_context_p->implicit_detach_timer.id)) {
-
         OAILOG_ERROR (LOG_MME_APP, "Failed to stop Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
       } 
       ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
     }
+    // Update Stats
+    update_mme_app_stats_connected_ue_add();
   }
   return;
 }
-
-
 //------------------------------------------------------------------------------
 bool
 mme_app_dump_ue_context (
@@ -958,4 +941,33 @@ mme_app_handle_s1ap_ue_context_release_complete (
     mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context_p,ECM_IDLE);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//-------------------------------------------------------------------------------------------------------
+void mme_ue_context_update_ue_emm_state (
+  mme_ue_s1ap_id_t       mme_ue_s1ap_id, int  new_mm_state)
+{
+  // Function is used to update UE's mobility management State- Registered/Un-Registered 
+
+  struct ue_context_s                    *ue_context_p = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
+  if (ue_context_p == NULL);
+    return;
+  if ((ue_context_p->mm_state == UE_UNREGISTERED) && (new_mm_state == UE_REGISTERED))
+  {
+    ue_context_p->mm_state = (mm_state_t) new_mm_state;
+    
+    // Update Stats
+    update_mme_app_stats_attached_ue_add();
+
+  } else if ((ue_context_p->mm_state == UE_REGISTERED) && (new_mm_state == UE_UNREGISTERED))
+  {
+    ue_context_p->mm_state = (mm_state_t) new_mm_state;
+    
+    // Update Stats
+    update_mme_app_stats_attached_ue_sub();
+  }
+  return;
 }

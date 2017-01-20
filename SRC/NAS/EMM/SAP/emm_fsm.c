@@ -56,7 +56,8 @@
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
-
+#define STATE_REGISTERED    1
+#define STATE_UNREGISTERED  0
 /*
    -----------------------------------------------------------------------------
             Data used for trace logging
@@ -179,13 +180,20 @@ emm_fsm_set_status (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
-
+  int new_emm_state;
   DevAssert (emm_ctx);
   if (status < EMM_STATE_MAX) {
     if (status != emm_ctx->_emm_fsm_status) {
       OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status changed: %s ===> %s\n", ue_id, _emm_fsm_status_str[emm_ctx->_emm_fsm_status], _emm_fsm_status_str[status]);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " MME_UE_S1AP_ID_FMT" ", _emm_fsm_status_str[status], ue_id);
       emm_ctx->_emm_fsm_status = status;
+      if (status == EMM_REGISTERED) {
+        new_emm_state = STATE_REGISTERED;
+      } else if (status == EMM_DEREGISTERED) {
+        new_emm_state = STATE_UNREGISTERED;
+      }
+      // Update mme_ue_context's emm_state and overall stats
+      mme_ue_context_update_ue_emm_state (emm_ctx->ue_id, new_emm_state);
     }
 
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
