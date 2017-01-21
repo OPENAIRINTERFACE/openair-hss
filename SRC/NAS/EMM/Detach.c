@@ -252,7 +252,7 @@ emm_proc_detach_request (
      * Release the EMM context
      */
     emm_data_context_remove (&_emm_data, emm_ctx);
-    free_wrapper (emm_ctx);
+    free_wrapper ((void**) &emm_ctx);
 
     rc = RETURNok;
   } else {

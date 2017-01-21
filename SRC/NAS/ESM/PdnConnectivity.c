@@ -564,7 +564,7 @@ _pdn_connectivity_delete (
       bdestroy (ctx->esm_data_ctx.pdn[pid].data->apn);
     }
 
-    free_wrapper (ctx->esm_data_ctx.pdn[pid].data);
+    free_wrapper ((void**) &ctx->esm_data_ctx.pdn[pid].data);
     ctx->esm_data_ctx.pdn[pid].data = NULL;
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d released\n", pid);
   }

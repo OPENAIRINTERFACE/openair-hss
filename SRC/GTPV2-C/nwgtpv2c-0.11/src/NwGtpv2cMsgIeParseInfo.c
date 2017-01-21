@@ -610,7 +610,7 @@ extern                                  "C" {
         break;
 
       default:{
-          free_wrapper (thiz);
+          free_wrapper ((void**) &thiz);
           thiz = NULL;
         }
         break;

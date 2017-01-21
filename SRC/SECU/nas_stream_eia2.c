@@ -87,6 +87,6 @@ nas_stream_encrypt_eia2 (
   CMAC_CTX_free (cmac_ctx);
   OAILOG_STREAM_HEX(OAILOG_LEVEL_TRACE, LOG_NAS, "Out:", data, size);
   memcpy ((void*)out, data, 4);
-  free_wrapper (m);
+  free_wrapper ((void**) &m);
   return 0;
 }

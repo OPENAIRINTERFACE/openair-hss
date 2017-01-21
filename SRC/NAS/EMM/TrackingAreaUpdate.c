@@ -261,7 +261,7 @@ emm_proc_tracking_area_update_request (
           // Note: this is safe from double-free errors because it sets to NULL
           // after freeing, which free treats as a no-op.
 
-          free_wrapper(ue_context_p->ue_radio_capabilities);
+          free_wrapper((void**) &ue_context_p->ue_radio_capabilities);
           ue_context_p->ue_radio_cap_length = 0;  // Logically "deletes" info
         }
       }
@@ -516,7 +516,7 @@ _emm_tracking_area_update (
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions");
-      free_wrapper (data);
+      free_wrapper ((void**) &data);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
@@ -817,7 +817,7 @@ _emm_tracking_area_update_abort (
      * Release retransmission timer parameters
      */
     // no contained struct to free
-    free_wrapper (data);
+    free_wrapper ((void**) &data);
 
     /*
      * Notify EMM that EPS attach procedure failed

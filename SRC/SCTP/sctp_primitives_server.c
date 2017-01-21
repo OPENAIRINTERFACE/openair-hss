@@ -197,7 +197,7 @@ static int sctp_remove_assoc_from_list (sctp_assoc_id_t assoc_id)
     int rv = sctp_freepaddrs(assoc_desc->peer_addresses);
     if (rv) OAILOG_DEBUG (LOG_SCTP, "sctp_freepaddrs(%p) failed\n", assoc_desc->peer_addresses);
   }
-  free_wrapper (assoc_desc);
+  free_wrapper ((void**) &assoc_desc);
   sctp_desc.number_of_connections--;
   return 0;
 }
@@ -551,7 +551,7 @@ void *sctp_receiver_thread (void *args_p)
 
     if (select (fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
       OAILOG_ERROR (LOG_SCTP, "[%d] Select() error: %s\n", sctp_arg_p->sd, strerror (errno));
-      free_wrapper (args_p);
+      free_wrapper ((void**) &args_p);
       args_p = NULL;
       pthread_exit (NULL);
     }
@@ -565,7 +565,7 @@ void *sctp_receiver_thread (void *args_p)
            */
           if ((clientsock = accept (sctp_arg_p->sd, NULL, NULL)) < 0) {
             OAILOG_ERROR (LOG_SCTP, "[%d] accept: %s:%d\n", sctp_arg_p->sd, strerror (errno), errno);
-            free_wrapper (args_p);
+            free_wrapper ((void**) &args_p);
             args_p = NULL;
             pthread_exit (NULL);
           } else {
@@ -606,7 +606,7 @@ void *sctp_receiver_thread (void *args_p)
     }
   }
 
-  free_wrapper (args_p);
+  free_wrapper ((void**) &args_p);
   args_p = NULL;
   return NULL;
 }
@@ -788,7 +788,7 @@ static void sctp_exit (void)
       rv = sctp_freepaddrs(sctp_assoc_p->peer_addresses);
       if (rv) OAILOG_DEBUG (LOG_SCTP, "sctp_freepaddrs(%p) failed\n", sctp_assoc_p->peer_addresses);
     }
-    free_wrapper (sctp_assoc_p);
+    free_wrapper ((void**) &sctp_assoc_p);
     sctp_desc.number_of_connections--;
   }
 }

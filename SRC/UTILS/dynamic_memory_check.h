@@ -30,5 +30,5 @@
 #ifndef FILE_DYNAMIC_MEMORY_CHECK_SEEN
 #define FILE_DYNAMIC_MEMORY_CHECK_SEEN
 
-void free_wrapper(void *ptr)                      __attribute__ ((hot));
+void free_wrapper(void **ptr)                      __attribute__ ((hot));
 #endif /* FILE_DYNAMIC_MEMORY_CHECK_SEEN */

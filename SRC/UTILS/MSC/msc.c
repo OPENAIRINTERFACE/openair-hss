@@ -417,7 +417,7 @@ void msc_flush_messages (void)
       rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, item_p->message_str);
     }
     // TODO free_wrapper BIN DATA
-    free_wrapper (item_p);
+    free_wrapper ((void**) &item_p);
   }
 
   fflush (g_msc_fd);
@@ -483,7 +483,7 @@ void msc_log_declare_proto (const msc_proto_t protoP)
           if (0 == rv) {
             fprintf (stderr, "Error while lfds611_queue_guaranteed_enqueue message %s in MSC", char_message_p);
             rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, char_message_p);
-            free_wrapper (new_item_p);
+            free_wrapper ((void**) &new_item_p);
           }
         }
 
@@ -492,7 +492,7 @@ void msc_log_declare_proto (const msc_proto_t protoP)
         fprintf (stderr, "Error while lfds611_stack_pop()\n");
       }
 
-      free_wrapper (new_item_p);
+      free_wrapper ((void**) &new_item_p);
     } else {
       fprintf (stderr, "Error while malloc in MSC");
     }
@@ -560,10 +560,10 @@ void msc_log_event (const msc_proto_t protoP, char *format, ...)
       if (0 == rv) {
         fprintf (stderr, "Error while lfds611_queue_guaranteed_enqueue message %s in MSC", char_message_p);
         rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, char_message_p);
-        free_wrapper (new_item_p);
+        free_wrapper ((void**) &new_item_p);
       }
     } else {
-      free_wrapper (new_item_p);
+      free_wrapper ((void**) &new_item_p);
       fprintf (stderr, "Error while lfds611_stack_pop()\n");
     }
   }
@@ -571,7 +571,7 @@ void msc_log_event (const msc_proto_t protoP, char *format, ...)
   return;
 error_event:
   rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, char_message_p);
-  free_wrapper (new_item_p);
+  free_wrapper ((void**) &new_item_p);
 }
 
 //------------------------------------------------------------------------------
@@ -644,10 +644,10 @@ msc_log_message (
       if (0 == rv) {
         fprintf (stderr, "Error while lfds611_queue_guaranteed_enqueue message %s in MSC", char_message_p);
         rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, char_message_p);
-        free_wrapper (new_item_p);
+        free_wrapper ((void**) &new_item_p);
       }
     } else {
-      free_wrapper (new_item_p);
+      free_wrapper ((void**) &new_item_p);
       fprintf (stderr, "Error while lfds611_stack_pop()\n");
       msc_flush_messages ();
     }
@@ -656,5 +656,5 @@ msc_log_message (
   return;
 error_event:
   rv = lfds611_stack_guaranteed_push (g_msc_memory_stack_p, char_message_p);
-  free_wrapper (new_item_p);
+  free_wrapper ((void**) &new_item_p);
 }

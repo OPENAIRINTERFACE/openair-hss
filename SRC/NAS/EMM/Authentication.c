@@ -271,7 +271,7 @@ int emm_proc_authentication_failure (
       emm_cause = EMM_CAUSE_ILLEGAL_UE;
       if (data) {
         // Release retransmission timer parameters
-        free_wrapper (data);
+        free_wrapper ((void **) &data);
       }
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
@@ -298,7 +298,7 @@ int emm_proc_authentication_failure (
       rc = RETURNok;
       if (data) {
         // Release retransmission timer parameters
-        free_wrapper (data);
+        free_wrapper ((void**) &data);
       }
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     } else {
@@ -359,7 +359,7 @@ int emm_proc_authentication_failure (
   data = (authentication_data_t *) (emm_proc_common_get_args (ue_id));
   if (data) {
     // Release retransmission timer parameters
-    free_wrapper (data);
+    free_wrapper ((void**) &data);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -412,7 +412,7 @@ emm_proc_authentication_complete (
   } else {
     if (data) {
       // Release retransmission timer parameters
-      free_wrapper (data);
+      free_wrapper ((void**) &data);
     }
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to authentify the UE\n");
     emm_cause = EMM_CAUSE_ILLEGAL_UE;
@@ -450,7 +450,7 @@ emm_proc_authentication_complete (
         nas_itti_auth_info_req (ue_id, emm_ctx->_imsi64, false, &emm_ctx->originating_tai.plmn, MAX_EPS_AUTH_VECTORS, res);
         if (data) {
           // Release retransmission timer parameters
-          free_wrapper (data);
+          free_wrapper ((void**) &data);
         }
         rc = RETURNok;
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -483,7 +483,7 @@ emm_proc_authentication_complete (
       nas_itti_auth_info_req (ue_id, emm_ctx->_imsi64, false, &emm_ctx->originating_tai.plmn, MAX_EPS_AUTH_VECTORS, res);
       if (data) {
         // Release retransmission timer parameters
-        free_wrapper (data);
+        free_wrapper ((void**) &data);
       }
       rc = RETURNok;
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -510,7 +510,7 @@ emm_proc_authentication_complete (
 
   if (data) {
     // Release retransmission timer parameters
-    free_wrapper (data);
+    free_wrapper ((void**) &data);
   }
 
   rc = emm_sap_send (&emm_sap);
@@ -862,7 +862,7 @@ static int _authentication_abort (void *args)
      * Release retransmission timer parameters
      * Do it after emm_sap_send
      */
-    free_wrapper (data);
+    free_wrapper ((void**) &data);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

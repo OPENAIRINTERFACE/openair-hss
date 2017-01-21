@@ -100,7 +100,7 @@ s11_imsi_ie_set (
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IMSI, imsi_length, 0, temp);
   DevAssert (NW_OK == rc);
-  free_wrapper (temp);
+  free_wrapper ((void**) &temp);
   return RETURNok;
 }
 
@@ -1104,7 +1104,7 @@ s11_apn_ie_set (
   *last_size = word_length;
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN, apn_length + 1, 0, value);
   DevAssert (NW_OK == rc);
-  free_wrapper (value);
+  free_wrapper ((void**) &value);
   return RETURNok;
 }
 

@@ -79,7 +79,7 @@ hashtable_rc_code2string (
    hash_free_int_func() is used when this hashtable is used to store int values as data (pointer = value).
 */
 
-void hash_free_int_func (void *memoryP) {}
+void hash_free_int_func (void **memoryP) {}
 
 //------------------------------------------------------------------------------
 /*
@@ -103,7 +103,7 @@ static inline hash_size_t def_hashfunc (const uint64_t keyP)
 hash_table_t * hashtable_init (hash_table_t * const hashtblP,
     const hash_size_t sizeP,
     hash_size_t (*hashfuncP) (const hash_key_t),
-    void (*freefuncP) (void *),
+    void (*freefuncP) (void **),
     bstring display_name_pP)
 {
   hash_size_t size = sizeP;
@@ -126,7 +126,7 @@ hash_table_t * hashtable_init (hash_table_t * const hashtblP,
   size++;
 
   if (!(hashtblP->nodes = calloc (size, sizeof (hash_node_t *)))) {
-    free_wrapper (hashtblP);
+    free_wrapper((void **) &hashtblP);
     return NULL;
   }
   hashtblP->log_enabled = true;
@@ -166,7 +166,7 @@ hash_table_t                           *
 hashtable_create (
   const hash_size_t sizeP,
   hash_size_t (*hashfuncP) (const hash_key_t),
-  void (*freefuncP) (void *),
+  void (*freefuncP) (void **),
   bstring display_name_pP)
 {
   hash_table_t                           *hashtbl = NULL;
@@ -189,7 +189,7 @@ hashtable_create (
 hash_table_ts_t * hashtable_ts_init (hash_table_ts_t * const hashtblP,
     const hash_size_t sizeP,
     hash_size_t (*hashfuncP) (const hash_key_t),
-    void (*freefuncP) (void *),
+    void (*freefuncP) (void **),
     bstring display_name_pP)
 {
   hash_size_t size = sizeP;
@@ -214,14 +214,14 @@ hash_table_ts_t * hashtable_ts_init (hash_table_ts_t * const hashtblP,
   memset(hashtblP, 0, sizeof(*hashtblP));
 
   if (!(hashtblP->nodes = calloc (size, sizeof (hash_node_t *)))) {
-    free_wrapper (hashtblP);
+    free_wrapper((void **) &hashtblP);
     return NULL;
   }
 
   if (!(hashtblP->lock_nodes = calloc (size, sizeof (pthread_mutex_t)))) {
-    free_wrapper (hashtblP->nodes);
-    free_wrapper (hashtblP->name);
-    free_wrapper (hashtblP);
+    free_wrapper((void **) &hashtblP->nodes);
+    free_wrapper((void **) &hashtblP->name);
+    free_wrapper((void **) &hashtblP);
     return NULL;
   }
 
@@ -264,7 +264,7 @@ hash_table_ts_t                           *
 hashtable_ts_create (
   const hash_size_t sizeP,
   hash_size_t (*hashfuncP) (const hash_key_t),
-  void (*freefuncP) (void *),
+  void (*freefuncP) (void **),
   bstring display_name_pP)
 {
   hash_table_ts_t                           *hashtbl = NULL;
@@ -302,17 +302,17 @@ hashtable_destroy (
       node = node->next;
 
       if (oldnode->data) {
-        hashtblP->freefunc (oldnode->data);
+        hashtblP->freefunc (&oldnode->data);
       }
 
-      free_wrapper (oldnode);
+      free_wrapper((void **) &oldnode);
     }
   }
 
-  free_wrapper (hashtblP->nodes);
-  free_wrapper(hashtblP->name);
+  free_wrapper((void **) &hashtblP->nodes);
+  free_wrapper((void **) &hashtblP->name);
   if (hashtblP->is_allocated_by_malloc) {
-    free_wrapper (hashtblP);
+    free_wrapper((void **) &hashtblP);
   }
   return HASH_TABLE_OK;
 }
@@ -343,20 +343,20 @@ hashtable_ts_destroy (
       node = node->next;
 
       if (oldnode->data) {
-        hashtblP->freefunc (oldnode->data);
+        hashtblP->freefunc (&oldnode->data);
       }
 
-      free_wrapper (oldnode);
+      free_wrapper((void **) &oldnode);
     }
 
     pthread_mutex_unlock (&hashtblP->lock_nodes[n]);
     pthread_mutex_destroy (&hashtblP->lock_nodes[n]);
   }
 
-  free_wrapper (hashtblP->nodes);
-  free_wrapper(hashtblP->name);
+  free_wrapper((void **) &hashtblP->nodes);
+  free_wrapper((void **) &hashtblP->name);
   if (hashtblP->is_allocated_by_malloc) {
-    free_wrapper (hashtblP);
+    free_wrapper((void **) &hashtblP);
   }
   return HASH_TABLE_OK;
 }
@@ -608,7 +608,7 @@ hashtable_insert (
   while (node) {
     if (node->key == keyP) {
       if (node->data) {
-        hashtblP->freefunc (node->data);
+        hashtblP->freefunc (&node->data);
       }
 
       node->data = dataP;
@@ -664,7 +664,7 @@ hashtable_ts_insert (
   while (node) {
     if (node->key == keyP) {
       if (node->data) {
-        hashtblP->freefunc (node->data);
+        hashtblP->freefunc (&node->data);
       }
       node->data = dataP;
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
@@ -731,10 +731,10 @@ hashtable_free (
         hashtblP->nodes[hash] = node->next;
 
       if (node->data) {
-        hashtblP->freefunc (node->data);
+        hashtblP->freefunc (&node->data);
       }
 
-      free_wrapper (node);
+      free_wrapper((void **) &node);
       __sync_fetch_and_sub (&hashtblP->num_elements, 1);
       PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP);
       return HASH_TABLE_OK;
@@ -779,10 +779,10 @@ hashtable_ts_free (
         hashtblP->nodes[hash] = node->next;
 
       if (node->data) {
-        hashtblP->freefunc (node->data);
+        hashtblP->freefunc (&node->data);
       }
 
-      free_wrapper (node);
+      free_wrapper((void **) &node);
       __sync_fetch_and_sub (&hashtblP->num_elements, 1);
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
       PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP);
@@ -830,7 +830,7 @@ hashtable_remove (
         hashtblP->nodes[hash] = node->next;
 
       *dataP = node->data;
-      free_wrapper (node);
+      free_wrapper((void **) &node);
       __sync_fetch_and_sub (&hashtblP->num_elements, 1);
       PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP);
       return HASH_TABLE_OK;
@@ -876,7 +876,7 @@ hashtable_ts_remove (
         hashtblP->nodes[hash] = node->next;
 
       *dataP = node->data;
-      free_wrapper (node);
+      free_wrapper((void **) &node);
       __sync_fetch_and_sub (&hashtblP->num_elements, 1);
       pthread_mutex_unlock(&hashtblP->lock_nodes[hash]);
       PRINT_HASHTABLE (hashtblP, "%s(%s,key 0x%"PRIx64") return OK\n", __FUNCTION__, bdata(hashtblP->name), keyP);
@@ -1036,7 +1036,7 @@ hashtable_resize (
     }
   }
 
-  free_wrapper (hashtblP->nodes);
+  free_wrapper((void **) &hashtblP->nodes);
   hashtblP->nodes = newtbl.nodes;
   hashtblP->size = newtbl.size;
   return HASH_TABLE_OK;
@@ -1096,7 +1096,7 @@ hashtable_ts_resize (
     return HASH_TABLE_SYSTEM_ERROR;
 
   if (!(newtbl.lock_nodes = calloc (size, sizeof (pthread_mutex_t)))) {
-    free_wrapper (newtbl.nodes);
+    free_wrapper((void **) &newtbl.nodes);
     return HASH_TABLE_SYSTEM_ERROR;
   }
   for (n = 0; n < hashtblP->size; ++n) {
@@ -1112,8 +1112,8 @@ hashtable_ts_resize (
     }
   }
 
-  free_wrapper (hashtblP->nodes);
-  free_wrapper (hashtblP->lock_nodes);
+  free_wrapper((void **) &hashtblP->nodes);
+  free_wrapper((void **) &hashtblP->lock_nodes);
   hashtblP->size = newtbl.size;
   hashtblP->nodes = newtbl.nodes;
   hashtblP->lock_nodes = newtbl.lock_nodes;

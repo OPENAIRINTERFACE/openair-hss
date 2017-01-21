@@ -802,7 +802,7 @@ static int _nas_message_protected_decode (
      * Decode the decrypted message as plain NAS message
      */
     bytes = _nas_message_plain_decode (plain_msg, header, msg, length);
-    free_wrapper (plain_msg);
+    free_wrapper ((void**) &plain_msg);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS, bytes);
@@ -970,7 +970,7 @@ static int _nas_message_protected_encode (
       //seq ++;
     }
 
-    free_wrapper (plain_msg);
+    free_wrapper ((void**) &plain_msg);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS, bytes);

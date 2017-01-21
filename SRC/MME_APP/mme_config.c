@@ -416,16 +416,16 @@ static int mme_config_parse_file (mme_config_t * config_pP)
 
       if (config_pP->served_tai.nb_tai != num) {
         if (config_pP->served_tai.plmn_mcc != NULL)
-          free_wrapper (config_pP->served_tai.plmn_mcc);
+          free_wrapper ((void**) &config_pP->served_tai.plmn_mcc);
 
         if (config_pP->served_tai.plmn_mnc != NULL)
-          free_wrapper (config_pP->served_tai.plmn_mnc);
+          free_wrapper ((void**) &config_pP->served_tai.plmn_mnc);
 
         if (config_pP->served_tai.plmn_mnc_len != NULL)
-          free_wrapper (config_pP->served_tai.plmn_mnc_len);
+          free_wrapper ((void**) &config_pP->served_tai.plmn_mnc_len);
 
         if (config_pP->served_tai.tac != NULL)
-          free_wrapper (config_pP->served_tai.tac);
+          free_wrapper ((void**) &config_pP->served_tai.tac);
 
         config_pP->served_tai.plmn_mcc = calloc (num, sizeof (*config_pP->served_tai.plmn_mcc));
         config_pP->served_tai.plmn_mnc = calloc (num, sizeof (*config_pP->served_tai.plmn_mnc));

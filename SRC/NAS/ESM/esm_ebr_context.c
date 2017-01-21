@@ -344,13 +344,13 @@ esm_ebr_context_release (
      * Delete the TFT
      */
     for (i = 0; i < pdn->bearer[*bid]->tft.n_pkfs; i++) {
-      free_wrapper (pdn->bearer[*bid]->tft.pkf[i]);
+      free_wrapper ((void**) &pdn->bearer[*bid]->tft.pkf[i]);
     }
 
     /*
      * Release the specified EPS bearer data
      */
-    free_wrapper (pdn->bearer[*bid]);
+    free_wrapper ((void**) &pdn->bearer[*bid]);
     pdn->bearer[*bid] = NULL;
     /*
      * Decrement the number of EPS bearer context allocated
@@ -377,7 +377,7 @@ esm_ebr_context_release (
            * Delete the TFT
            */
           for (j = 0; j < pdn->bearer[i]->tft.n_pkfs; j++) {
-            free_wrapper (pdn->bearer[i]->tft.pkf[j]);
+            free_wrapper ((void**) &pdn->bearer[i]->tft.pkf[j]);
           }
 
           /*
@@ -392,7 +392,7 @@ esm_ebr_context_release (
           /*
            * Release dedicated EPS bearer data
            */
-          free_wrapper (pdn->bearer[i]);
+          free_wrapper ((void**) &pdn->bearer[i]);
           pdn->bearer[i] = NULL;
           /*
            * Decrement the number of EPS bearer context allocated
@@ -441,7 +441,7 @@ void free_esm_ebr_context(esm_ebr_context_t * ctx)
       bdestroy(ctx->args->msg);
       // do not free ctx->args->ctx
     }
-    free_wrapper(ctx);
+    free_wrapper((void**) &ctx);
   }
 }
 

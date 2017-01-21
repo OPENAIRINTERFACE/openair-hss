@@ -68,7 +68,7 @@ nas_stream_encrypt_eea2 (
     data[byte_length - 1] = data[byte_length - 1] & (uint8_t) (0xFF << (8 - zero_bit));
 
   memcpy (out, data, byte_length);
-  free_wrapper (data);
-  free_wrapper (ctx);
+  free_wrapper ((void**) &data);
+  free_wrapper (&ctx);
   return 0;
 }

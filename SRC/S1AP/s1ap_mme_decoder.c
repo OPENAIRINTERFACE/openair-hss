@@ -107,7 +107,7 @@ s1ap_mme_decode_initiating (
   message_p->ittiMsg.s1ap_uplink_nas_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_uplink_nas_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free_wrapper (message_string);
+  free_wrapper ((void**) &message_string);
   return ret;
 }
 
@@ -152,7 +152,7 @@ s1ap_mme_decode_successfull_outcome (
   message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free_wrapper (message_string);
+  free_wrapper ((void**) &message_string);
   return ret;
 }
 
@@ -190,7 +190,7 @@ s1ap_mme_decode_unsuccessfull_outcome (
   message_p->ittiMsg.s1ap_initial_context_setup_log.size = message_string_size;
   memcpy (&message_p->ittiMsg.s1ap_initial_context_setup_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
-  free_wrapper (message_string);
+  free_wrapper ((void**) &message_string);
   return ret;
 }
 

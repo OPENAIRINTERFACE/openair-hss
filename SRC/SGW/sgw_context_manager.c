@@ -164,12 +164,12 @@ sgw_display_s11_bearer_context_information_mapping (
 //-----------------------------------------------------------------------------
 void
 pgw_lite_cm_free_apn (
-  pgw_apn_t * apnP)
+  pgw_apn_t ** apnP)
 //-----------------------------------------------------------------------------
 {
-  if (apnP ) {
-    if (apnP->pdn_connections ) {
-      obj_hashtable_ts_destroy (apnP->pdn_connections);
+  if (*apnP ) {
+    if ((*apnP)->pdn_connections ) {
+      obj_hashtable_ts_destroy ((*apnP)->pdn_connections);
     }
   }
 }
@@ -274,7 +274,7 @@ sgw_cm_create_pdn_connection (
 
   if (pdn_connection->sgw_eps_bearers == NULL) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create eps bearers collection object\n");
-    free_wrapper (pdn_connection);
+    free_wrapper ((void**) &pdn_connection);
     pdn_connection = NULL;
     return NULL;
   }
@@ -285,12 +285,12 @@ sgw_cm_create_pdn_connection (
 //-----------------------------------------------------------------------------
 void
 sgw_cm_free_pdn_connection (
-  sgw_pdn_connection_t * pdn_connectionP)
+  sgw_pdn_connection_t ** pdn_connectionP)
 //-----------------------------------------------------------------------------
 {
   if (pdn_connectionP ) {
-    if (pdn_connectionP->sgw_eps_bearers ) {
-      hashtable_ts_destroy (pdn_connectionP->sgw_eps_bearers);
+    if ((*pdn_connectionP)->sgw_eps_bearers ) {
+      hashtable_ts_destroy ((*pdn_connectionP)->sgw_eps_bearers);
     }
   }
 }
@@ -298,10 +298,10 @@ sgw_cm_free_pdn_connection (
 //-----------------------------------------------------------------------------
 void
 sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (
-  s_plus_p_gw_eps_bearer_context_information_t * contextP)
+  s_plus_p_gw_eps_bearer_context_information_t ** contextP)
 //-----------------------------------------------------------------------------
 {
-  if (contextP == NULL) {
+  if (*contextP == NULL) {
     return;
   }
 
@@ -310,15 +310,15 @@ sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (
    * obj_hashtable_ts_destroy(contextP->sgw_eps_bearer_context_information.pdn_connections);
    * }
    */
-  if (contextP->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers ) {
-    hashtable_ts_destroy (contextP->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers);
+  if ((*contextP)->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers ) {
+    hashtable_ts_destroy ((*contextP)->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers);
   }
 
-  if (contextP->pgw_eps_bearer_context_information.apns ) {
-    obj_hashtable_ts_destroy (contextP->pgw_eps_bearer_context_information.apns);
+  if ((*contextP)->pgw_eps_bearer_context_information.apns ) {
+    obj_hashtable_ts_destroy ((*contextP)->pgw_eps_bearer_context_information.apns);
   }
 
-  free_wrapper (contextP);
+  free_wrapper ((void**) contextP);
 }
 
 //-----------------------------------------------------------------------------
@@ -351,12 +351,12 @@ sgw_cm_create_bearer_context_information_in_collection (
    */
   bstring b = bfromcstr("pgw_eps_bearer_ctxt_info_apns");
   new_bearer_context_information->pgw_eps_bearer_context_information.apns =
-      obj_hashtable_ts_create (32, NULL, NULL, (void (*) (void *))pgw_lite_cm_free_apn, b);
+      obj_hashtable_ts_create (32, NULL, NULL, (void (*) (void **))pgw_lite_cm_free_apn, b);
   bdestroy(b);
 
   if (new_bearer_context_information->pgw_eps_bearer_context_information.apns == NULL) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create APN collection object entry for EPS bearer S11 teid %u \n", teid);
-    sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (new_bearer_context_information);
+    sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (&new_bearer_context_information);
     return NULL;
   }
 

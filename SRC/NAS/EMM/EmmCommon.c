@@ -471,8 +471,8 @@ void emm_common_cleanup (emm_common_data_t *emm_common_data_ctx)
        */
       pthread_mutex_lock(&emm_common_data_head.mutex);
       RB_REMOVE (emm_common_data_map, &emm_common_data_head.emm_common_data_root, emm_common_data_ctx);
-      free_wrapper (emm_common_data_ctx->args);
-      free_wrapper (emm_common_data_ctx);
+      free_wrapper (&emm_common_data_ctx->args);
+      free_wrapper ((void **) &emm_common_data_ctx);
       pthread_mutex_unlock(&emm_common_data_head.mutex);
     }
   }
@@ -488,8 +488,8 @@ void emm_common_cleanup_by_ueid (mme_ue_s1ap_id_t ue_id)
     __sync_fetch_and_sub(&emm_common_data_ctx->ref_count, 1);
     pthread_mutex_lock(&emm_common_data_head.mutex);
     RB_REMOVE (emm_common_data_map, &emm_common_data_head.emm_common_data_root, emm_common_data_ctx);
-    free_wrapper (emm_common_data_ctx->args);
-    free_wrapper (emm_common_data_ctx);
+    free_wrapper (&emm_common_data_ctx->args);
+    free_wrapper ((void **) &emm_common_data_ctx);
     pthread_mutex_unlock(&emm_common_data_head.mutex);
   }
 }

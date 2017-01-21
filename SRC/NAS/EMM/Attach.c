@@ -624,7 +624,7 @@ emm_proc_attach_complete (
 
   if (data) {
     bdestroy (data->esm_msg);
-    free_wrapper (data);
+    free_wrapper ((void **) &data);
   }
 
   /*
@@ -977,7 +977,7 @@ _emm_attach_abort (
      * Release retransmission timer parameters
      */
     bdestroy (data->esm_msg);
-    free_wrapper (data);
+    free_wrapper ((void**) &data);
     /*
      * Notify ESM that the network locally refused PDN connectivity
      * to the UE
@@ -1314,7 +1314,7 @@ _emm_attach (
 
       if (rc != RETURNok) {
         OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " Failed to initialize EMM callback functions\n", emm_ctx->ue_id);
-        free_wrapper (data);
+        free_wrapper ((void**) &data);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
       }
 
@@ -1519,7 +1519,7 @@ _emm_attach_accept (
     if (ue_context_p) {
       // Note: this is safe from double-free errors because it sets to NULL
       // after freeing, which free treats as a no-op.
-      free_wrapper(ue_context_p->ue_radio_capabilities);
+      free_wrapper((void**) &ue_context_p->ue_radio_capabilities);
       ue_context_p->ue_radio_cap_length = 0;  // Logically "deletes" info
     }
     /*

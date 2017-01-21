@@ -50,9 +50,9 @@
    if (bearer) {
      unsigned int i;
      for (i=0; i < NET_PACKET_FILTER_MAX; i++) {
-       free_wrapper(bearer->tft.pkf[i]);
+       free_wrapper((void**) &bearer->tft.pkf[i]);
      }
-     free_wrapper(bearer);
+     free_wrapper((void**) &bearer);
    }
  }
 
@@ -66,7 +66,7 @@ void free_esm_pdn(esm_pdn_t * pdn)
     for (i=0; i < ESM_DATA_EPS_BEARER_MAX; i++) {
       free_esm_bearer(pdn->bearer[i]);
     }
-    free_wrapper(pdn);
+    free_wrapper((void**) &pdn);
   }
 }
 

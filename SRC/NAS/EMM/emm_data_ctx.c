@@ -809,7 +809,7 @@ void free_emm_data_context(
     emm_data_context_stop_all_timers(emm_ctx);
 
     free_esm_data_context(&emm_ctx->esm_data_ctx);
-    free_wrapper(emm_ctx);
+    free_wrapper((void**) &emm_ctx);
   }
 }
 

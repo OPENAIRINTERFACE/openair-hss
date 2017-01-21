@@ -174,7 +174,7 @@ emm_proc_identification (
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
-      free_wrapper (data);
+      free_wrapper ((void**) &data);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
@@ -267,10 +267,9 @@ emm_proc_identification_complete (
      */
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
     emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-    /* For memo: double free
     if (data) {
-      free_wrapper (data);
-    }*/
+      free_wrapper ((void**) &data);
+    }
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
     if (imsi) {
@@ -561,7 +560,7 @@ _identification_abort (
     /*
      * Release retransmission timer parameters
      */
-    free_wrapper (data);
+    free_wrapper ((void**) &data);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

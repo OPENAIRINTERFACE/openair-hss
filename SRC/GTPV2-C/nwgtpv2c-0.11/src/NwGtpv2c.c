@@ -120,8 +120,8 @@ extern                                  "C" {
   void
                                           nwGtpv2cTmrMinHeapDelete (
   NwGtpv2cTmrMinHeapT * thiz) {
-    free_wrapper (thiz->pHeap);
-    free_wrapper (thiz);
+    free_wrapper ((void**) &thiz->pHeap);
+    free_wrapper ((void**) &thiz);
   }
 
   static NwRcT                            nwGtpv2cTmrMinHeapInsert (
@@ -995,7 +995,7 @@ extern                                  "C" {
     if (!hGtpcStackHandle)
       return NW_FAILURE;
 
-    free_wrapper ((void *)hGtpcStackHandle);
+    free_wrapper ((void **) &hGtpcStackHandle);
     return NW_OK;
   }
 

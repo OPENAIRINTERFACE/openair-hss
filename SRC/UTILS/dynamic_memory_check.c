@@ -31,8 +31,8 @@
 #include "dynamic_memory_check.h"
 
 //------------------------------------------------------------------------------
-void free_wrapper(void *ptr)
+void free_wrapper(void **ptr)
 {
-  free(ptr);
-  ptr = NULL;
+  free(*ptr);
+  *ptr = NULL;
 }

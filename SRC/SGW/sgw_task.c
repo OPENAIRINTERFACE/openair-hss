@@ -175,7 +175,7 @@ int sgw_init (spgw_config_t *spgw_config_pP)
 
   bassigncstr(b, "sgw_s11_bearer_context_information_hashtable");
   sgw_app.s11_bearer_context_information_hashtable = hashtable_ts_create (512, NULL,
-          (void (*)(void*))sgw_cm_free_s_plus_p_gw_eps_bearer_context_information,b);
+          (void (*)(void**))sgw_cm_free_s_plus_p_gw_eps_bearer_context_information,b);
   bdestroy(b);
 
   if (sgw_app.s11_bearer_context_information_hashtable == NULL) {
@@ -228,6 +228,6 @@ static void sgw_exit(void)
 
   while ((conf_ipv4_p = STAILQ_FIRST (&spgw_config.pgw_config.ipv4_pool_list))) {
     STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.ipv4_pool_list, ipv4_entries);
-    free_wrapper (conf_ipv4_p);
+    free_wrapper ((void**) &conf_ipv4_p);
   }
 }

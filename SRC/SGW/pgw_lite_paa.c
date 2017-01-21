@@ -93,7 +93,7 @@ pgw_load_pool_ip_addresses (
 
   while ((conf_ipv4_p = STAILQ_FIRST (&spgw_config.pgw_config.ipv4_pool_list))) {
     STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.ipv4_pool_list, ipv4_entries);
-    free_wrapper (conf_ipv4_p);
+    free_wrapper ((void **) &conf_ipv4_p);
   }
 
 #endif

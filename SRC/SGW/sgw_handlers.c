@@ -219,7 +219,7 @@ sgw_handle_create_session_request (
     }
   } else {
     OAILOG_WARNING (LOG_SPGW_APP, "Could not create new transaction for SESSION_CREATE message\n");
-    free_wrapper (new_endpoint_p);
+    free_wrapper ((void**) &new_endpoint_p);
     new_endpoint_p = NULL;
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, RETURNerror);
   }

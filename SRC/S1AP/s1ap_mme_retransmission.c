@@ -89,7 +89,7 @@ s1ap_timer_insert (
 
   if (RB_INSERT (s1ap_timer_map, &s1ap_timer_tree, new) != NULL) {
     OAILOG_WARNING (LOG_S1AP, "Timer with id 0x%lx already exists\n", timer_id);
-    free_wrapper (new);
+    free_wrapper ((void**) &new);
     return -1;
   }
 
@@ -119,7 +119,7 @@ s1ap_handle_timer_expiry (
   /*
    * Destroy the element
    */
-  free_wrapper (find);
+  free_wrapper ((void**) &find);
   /*
    * TODO: notify NAS and remove ue context
    */
@@ -145,7 +145,7 @@ s1ap_timer_remove_ue (
       /*
        * Destroy the element
        */
-      free_wrapper (find);
+      free_wrapper ((void**) &find);
     }
   }
   return 0;

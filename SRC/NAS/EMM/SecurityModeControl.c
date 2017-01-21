@@ -288,7 +288,7 @@ emm_proc_security_mode_control (
 
     if (rc != RETURNok) {
       OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions\n");
-      free_wrapper (data);
+      free_wrapper ((void**) &data);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
 
@@ -412,11 +412,11 @@ emm_proc_security_mode_complete (
   /*
    * Release retransmission timer parameters
    */
-  /*security_data_t                        *data = (security_data_t *) (emm_proc_common_get_args (ue_id));
+  security_data_t                        *data = (security_data_t *) (emm_proc_common_get_args (ue_id));
 
   if (data) {
-    free_wrapper (data);
-  }*/
+    free_wrapper ((void **) &data);
+  }
 
   if (emm_ctx && IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
     /*
@@ -770,7 +770,7 @@ _security_abort (
     /*
      * Release retransmission timer parameters
      */
-    free_wrapper (data);
+    free_wrapper ((void**) &data);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

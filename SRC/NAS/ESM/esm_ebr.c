@@ -273,14 +273,14 @@ esm_ebr_release (
       bdestroy (ebr_ctx->args->msg);
     }
 
-    free_wrapper (ebr_ctx->args);
+    free_wrapper ((void**) &ebr_ctx->args);
     ebr_ctx->args = NULL;
   }
 
   /*
    * Release EPS bearer context data
    */
-  free_wrapper (ebr_ctx);
+  free_wrapper ((void**) &ebr_ctx);
   ebr_ctx = NULL;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context %d released\n", ebi);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
@@ -447,7 +447,7 @@ esm_ebr_stop_timer (
       bdestroy (ebr_ctx->args->msg);
     }
 
-    free_wrapper (ebr_ctx->args);
+    free_wrapper ((void**) &ebr_ctx->args);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);

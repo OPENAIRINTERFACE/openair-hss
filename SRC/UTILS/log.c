@@ -151,7 +151,7 @@ static void log_reuse_item(log_queue_item_t * item_p)
 #endif
   rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, item_p);
   if (0 == rv) {
-    free_wrapper (item_p);
+    free_wrapper ((void**) &item_p);
   }
 }
 
@@ -437,7 +437,7 @@ log_init (
   hashtable_rc_t hash_rc = hashtable_ts_insert(g_oai_log.thread_context_htbl, (hash_key_t) p, thread_ctxt);
   if (HASH_TABLE_OK != hash_rc) {
     OAI_FPRINTF_ERR("Error Could not register log thread context\n");
-    free_wrapper(thread_ctxt);
+    free_wrapper((void**) &thread_ctxt);
   }
 
   rv = lfds611_stack_new (&g_oai_log.log_free_message_queue_p, (lfds611_atom_t) max_threadsP + 2);
@@ -524,7 +524,7 @@ log_start_use (
       hash_rc = hashtable_ts_insert(g_oai_log.thread_context_htbl, (hash_key_t) p, thread_ctxt);
       if (HASH_TABLE_OK != hash_rc) {
         OAI_FPRINTF_ERR("Error Could not register log thread context\n");
-        free_wrapper(thread_ctxt);
+        free_wrapper((void**) &thread_ctxt);
       }
     } else {
       OAI_FPRINTF_ERR("Error Could not create log thread context\n");
@@ -754,7 +754,7 @@ log_message_finish (
       rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, messageP);
       if (0 == rv) {
         bdestroy(messageP->bstr);
-        free_wrapper (messageP);
+        free_wrapper ((void**) &messageP);
       }
     }
   }
@@ -1017,13 +1017,13 @@ log_message (
         if (0 == rv) {
           OAI_FPRINTF_ERR("Error while logging LOG message : lfds611_stack_guaranteed_push %s", &g_oai_log.log_proto2str[protoP][0]);
           bdestroy (new_item_p->bstr);
-          free_wrapper (new_item_p);
+          free_wrapper ((void**) &new_item_p);
         }
       }
     } else {
       AssertFatal(0, "Should not go here");
       bdestroy (new_item_p->bstr);
-      free_wrapper (new_item_p);
+      free_wrapper ((void**) &new_item_p);
       OAI_FPRINTF_ERR("Error while lfds611_stack_pop()\n");
     }
   }
@@ -1034,7 +1034,7 @@ error_event:
   rv = lfds611_stack_guaranteed_push (g_oai_log.log_free_message_queue_p, new_item_p);
   if (0 == rv) {
     bdestroy (new_item_p->bstr);
-    free_wrapper (new_item_p);
+    free_wrapper ((void**) &new_item_p);
   }
 }
 

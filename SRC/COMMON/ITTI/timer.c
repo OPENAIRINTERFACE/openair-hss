@@ -182,7 +182,7 @@ timer_setup (
    */
   if (timer_create (CLOCK_REALTIME, &se, &timer) < 0) {
     OAILOG_ERROR (LOG_ITTI, "Failed to create timer: (%s:%d)\n", strerror (errno), errno);
-    free_wrapper (timer_p);
+    free_wrapper ((void**) &timer_p);
     return -1;
   }
 
@@ -250,7 +250,7 @@ timer_remove (
     rc = -1;
   }
 
-  free_wrapper (timer_p);
+  free_wrapper ((void **) &timer_p);
   timer_p = NULL;
   return rc;
 }

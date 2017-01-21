@@ -658,7 +658,7 @@ void mme_remove_ue_context (
       ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
 
   mme_app_ue_context_free_content(ue_context_p);
-  free_wrapper (ue_context_p);
+  free_wrapper ((void**) &ue_context_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 //-------------------------------------------------------------------------------------------------------

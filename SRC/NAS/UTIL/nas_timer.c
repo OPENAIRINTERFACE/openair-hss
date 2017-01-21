@@ -497,7 +497,7 @@ _nas_timer_handler (
      * TODO: Check returned result ???
      */
     if (result) {
-      free_wrapper (result);
+      free_wrapper ((void**) &result);
     }
   }
 }
@@ -669,7 +669,7 @@ _nas_timer_db_delete_entry (
    * Delete the timer entry from the queue
    */
   _nas_timer_db.tq[id].id = NAS_TIMER_INACTIVE_ID;
-  free_wrapper (_nas_timer_db.tq[id].entry);
+  free_wrapper ((void**) &_nas_timer_db.tq[id].entry);
   _nas_timer_db.tq[id].entry = NULL;
 }
 

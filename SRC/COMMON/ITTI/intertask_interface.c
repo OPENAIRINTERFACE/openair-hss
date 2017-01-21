@@ -202,7 +202,7 @@ itti_malloc (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     OAILOG_ERROR (LOG_ITTI, " Memory pools statistics:\n%s", statistics);
-    free_wrapper (statistics);
+    free_wrapper ((void **) &statistics);
   }
   AssertFatal (ptr != NULL, "Memory allocation of %d bytes failed (%d -> %d)!\n", (int)size, origin_task_id, destination_task_id);
   return ptr;
@@ -879,7 +879,7 @@ itti_init (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s", statistics);
-    free_wrapper (statistics);
+    free_wrapper ((void **) &statistics);
   }
   itti_desc.vcd_poll_msg = 0;
   itti_desc.vcd_receive_msg = 0;
@@ -959,7 +959,7 @@ itti_wait_tasks_end (
     char                                   *statistics = memory_pools_statistics (itti_desc.memory_pools_handle);
 
     ITTI_DEBUG (ITTI_DEBUG_MP_STATISTICS, " Memory pools statistics:\n%s\n", statistics);
-    free_wrapper (statistics);
+    free_wrapper ((void**) &statistics);
   }
 
   if (ready_tasks > 0) {
