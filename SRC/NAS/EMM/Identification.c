@@ -252,10 +252,6 @@ emm_proc_identification_complete (
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Identification complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
-  /*
-   * Release retransmission timer parameters
-   */
-  identification_data_t                  *data = (identification_data_t *) (emm_proc_common_get_args (ue_id));
 
   // Get the UE context
   emm_ctx = emm_data_context_get (&_emm_data, ue_id);
@@ -267,9 +263,7 @@ emm_proc_identification_complete (
      */
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3470.id);
     emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-    if (data) {
-      free_wrapper ((void**) &data);
-    }
+    emm_proc_common_clear_args(ue_id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
 
     if (imsi) {

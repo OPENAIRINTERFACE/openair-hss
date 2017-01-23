@@ -412,11 +412,7 @@ emm_proc_security_mode_complete (
   /*
    * Release retransmission timer parameters
    */
-  security_data_t                        *data = (security_data_t *) (emm_proc_common_get_args (ue_id));
-
-  if (data) {
-    free_wrapper ((void **) &data);
-  }
+  emm_proc_common_clear_args(ue_id);
 
   if (emm_ctx && IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
     /*
@@ -513,6 +509,8 @@ emm_proc_security_mode_reject (
     /*
      * Release retransmission timer parameters
      */
+    emm_proc_common_clear_args(ue_id);
+    data = NULL;
   }
 
 

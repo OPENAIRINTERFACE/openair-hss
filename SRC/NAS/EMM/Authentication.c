@@ -252,10 +252,11 @@ int emm_proc_authentication_failure (
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
+  authentication_data_t                  *data = (authentication_data_t *) (emm_proc_common_get_args (ue_id));
+
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Authentication failure (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n", ue_id, emm_cause);
 
-  authentication_data_t                  *data = (authentication_data_t *) (emm_proc_common_get_args (ue_id));
   // Get the UE context
   emm_data_context_t *emm_ctx = emm_data_context_get (&_emm_data, ue_id);
 
@@ -267,13 +268,11 @@ int emm_proc_authentication_failure (
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d) UE " MME_UE_S1AP_ID_FMT "\n", emm_ctx->T3460.id, emm_ctx->ue_id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
   } else {
-      OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to authentify the UE\n");
-      emm_cause = EMM_CAUSE_ILLEGAL_UE;
-      if (data) {
-        // Release retransmission timer parameters
-        free_wrapper ((void **) &data);
-      }
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to authentify the UE\n");
+    emm_cause = EMM_CAUSE_ILLEGAL_UE;
+    emm_proc_common_clear_args(ue_id);
+    data = NULL;
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
 
@@ -296,10 +295,8 @@ int emm_proc_authentication_failure (
       REQUIREMENT_3GPP_24_301(R10_5_4_2_7_e__2);
       nas_itti_auth_info_req (ue_id, emm_ctx->_imsi64, false, &emm_ctx->originating_tai.plmn, MAX_EPS_AUTH_VECTORS, auts);
       rc = RETURNok;
-      if (data) {
-        // Release retransmission timer parameters
-        free_wrapper ((void**) &data);
-      }
+      emm_proc_common_clear_args(ue_id);
+      data = NULL;
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     } else {
       REQUIREMENT_3GPP_24_301(R10_5_4_2_7_e__NOTE3);
@@ -356,11 +353,8 @@ int emm_proc_authentication_failure (
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - The MME received an unknown EMM CAUSE %d\n", emm_cause);
 
   }
-  data = (authentication_data_t *) (emm_proc_common_get_args (ue_id));
-  if (data) {
-    // Release retransmission timer parameters
-    free_wrapper ((void**) &data);
-  }
+  emm_proc_common_clear_args(ue_id);
+  data = NULL;
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -400,7 +394,7 @@ emm_proc_authentication_complete (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Authentication complete (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n", ue_id, emm_cause);
   // Get the UE context
-  emm_data_context_t *emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+  emm_data_context_t                     *emm_ctx = emm_data_context_get (&_emm_data, ue_id);
   authentication_data_t                  *data = (authentication_data_t *) (emm_proc_common_get_args (ue_id));
 
   if (emm_ctx) {
@@ -410,10 +404,8 @@ emm_proc_authentication_complete (
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d) UE " MME_UE_S1AP_ID_FMT "\n", emm_ctx->T3460.id, emm_ctx->ue_id);
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
   } else {
-    if (data) {
-      // Release retransmission timer parameters
-      free_wrapper ((void**) &data);
-    }
+    emm_proc_common_clear_args(ue_id);
+    data = NULL;
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to authentify the UE\n");
     emm_cause = EMM_CAUSE_ILLEGAL_UE;
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -448,10 +440,8 @@ emm_proc_authentication_complete (
         emm_sap.u.emm_reg.ctx = emm_ctx;
       } else {
         nas_itti_auth_info_req (ue_id, emm_ctx->_imsi64, false, &emm_ctx->originating_tai.plmn, MAX_EPS_AUTH_VECTORS, res);
-        if (data) {
-          // Release retransmission timer parameters
-          free_wrapper ((void**) &data);
-        }
+        emm_proc_common_clear_args(ue_id);
+        data = NULL;
         rc = RETURNok;
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       }
@@ -481,10 +471,8 @@ emm_proc_authentication_complete (
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "SQN SYNCH_FAILURE ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - USIM has detected a mismatch in SQN Ask for new vector(s)\n");
       nas_itti_auth_info_req (ue_id, emm_ctx->_imsi64, false, &emm_ctx->originating_tai.plmn, MAX_EPS_AUTH_VECTORS, res);
-      if (data) {
-        // Release retransmission timer parameters
-        free_wrapper ((void**) &data);
-      }
+      emm_proc_common_clear_args(data);
+      data = NULL;
       rc = RETURNok;
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       break;
@@ -508,10 +496,8 @@ emm_proc_authentication_complete (
     }
   }
 
-  if (data) {
-    // Release retransmission timer parameters
-    free_wrapper ((void**) &data);
-  }
+  emm_proc_common_clear_args(ue_id);
+  data = NULL;
 
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -862,7 +848,8 @@ static int _authentication_abort (void *args)
      * Release retransmission timer parameters
      * Do it after emm_sap_send
      */
-    free_wrapper ((void**) &data);
+    emm_proc_common_clear_args(ue_id);
+    data = NULL;
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

@@ -129,6 +129,8 @@ int emm_proc_common_non_delivered(emm_common_data_t *emm_common_data_ctx);
 int emm_proc_common_abort(emm_common_data_t *emm_common_data_ctx);
 
 void *emm_proc_common_get_args(mme_ue_s1ap_id_t ue_id);
+// Free args and set it to NULL
+void emm_proc_common_clear_args(mme_ue_s1ap_id_t ue_id);
 void emm_common_cleanup (emm_common_data_t *emm_common_data_ctx);
 void emm_common_cleanup_by_ueid (mme_ue_s1ap_id_t ue_id);
 

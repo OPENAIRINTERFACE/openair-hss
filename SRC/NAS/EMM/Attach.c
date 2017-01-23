@@ -620,12 +620,7 @@ emm_proc_attach_complete (
   /*
    * Release retransmission timer parameters
    */
-  attach_data_t                          *data = (attach_data_t *) (emm_proc_common_get_args (ue_id));
-
-  if (data) {
-    bdestroy (data->esm_msg);
-    free_wrapper ((void **) &data);
-  }
+  emm_proc_common_clear_args(ue_id);
 
   /*
    * Get the UE context
