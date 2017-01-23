@@ -940,7 +940,7 @@ static bool s1ap_send_enb_deregistered_ind (
     // max ues reached
     if (arg->current_ue_index == 0 && arg->handled_ues > 0) {
       S1AP_ENB_DEREGISTERED_IND (arg->message_p).nb_ue_to_deregister = S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE;
-      itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, arg->message_p);
+      itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, arg->message_p);
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 S1AP_ENB_DEREGISTERED_IND num ue to deregister %u",
           S1AP_ENB_DEREGISTERED_IND (arg->message_p).nb_ue_to_deregister);
       arg->message_p = NULL;

@@ -214,7 +214,7 @@ emm_proc_detach_request (
   emm_context_t *emm_ctx = &ue_mm_context->emm_context;
 
   if (switch_off) {
-    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Removing UE context ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Clearing secu/auth UE context ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
 
     /*
      * The UE is switched off

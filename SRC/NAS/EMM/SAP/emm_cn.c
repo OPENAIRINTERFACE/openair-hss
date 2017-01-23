@@ -212,6 +212,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   pdn_cid_t                               pdn_cid = 0;
   ebi_t                                   new_ebi = 0;
+  bool                                    is_pdn_connectivity = false;
 
   ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
 
@@ -241,6 +242,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   // search for an already set PDN context
   for (pdn_cid = 0; pdn_cid < MAX_APN_PER_UE; pdn_cid++) {
     if ((ue_mm_context->pdn_contexts[pdn_cid]) && (ue_mm_context->pdn_contexts[pdn_cid]->context_identifier == apn_config->context_identifier)) {
+      is_pdn_connectivity = true;
       break;
     }
   }
@@ -284,7 +286,9 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
       /*
        * Create local default EPS bearer context
        */
-      rc = esm_proc_default_eps_bearer_context (emm_ctx, emm_ctx->esm_ctx.esm_proc_data->pti, pdn_cid, &new_ebi, emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci, &esm_cause);
+      if ((!is_pdn_connectivity) || ((is_pdn_connectivity) && (EPS_BEARER_IDENTITY_UNASSIGNED != ue_mm_context->pdn_contexts[pdn_cid]->default_ebi))) {
+        rc = esm_proc_default_eps_bearer_context (emm_ctx, emm_ctx->esm_ctx.esm_proc_data->pti, pdn_cid, &new_ebi, emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci, &esm_cause);
+      }
 
       if (rc != RETURNerror) {
         esm_cause = ESM_CAUSE_SUCCESS;
@@ -292,8 +296,12 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
     } else {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     }
-    nas_itti_pdn_connectivity_req (emm_ctx->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, &emm_ctx->_imsi,
+    if (!is_pdn_connectivity) {
+      nas_itti_pdn_connectivity_req (emm_ctx->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, &emm_ctx->_imsi,
         emm_ctx->esm_ctx.esm_proc_data, emm_ctx->esm_ctx.esm_proc_data->request_type);
+    } else {
+
+    }
 
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }

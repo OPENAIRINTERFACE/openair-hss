@@ -120,47 +120,22 @@ s1ap_mme_thread (
       }
       break;
 
-      // From SCTP
-    case SCTP_DATA_IND:{
-        /*
-         * New message received from SCTP layer.
-         * Decode and handle it.
-         */
-        s1ap_message                            message = {0};
-
-        /*
-         * Invoke S1AP message decoder
-         */
-        if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).payload) < 0) {
-          // TODO: Notify eNB of failure with right cause
-          OAILOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
-        } else {
-          s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &message);
-        }
-
-        /*
-         * Free received PDU array
-         */
-        bdestroy_wrapper (&SCTP_DATA_IND (received_message_p).payload);
+    case MESSAGE_TEST:{
+        OAI_FPRINTF_INFO("TASK_S1AP received MESSAGE_TEST\n");
       }
       break;
 
-    // From SCTP
-    case SCTP_DATA_CNF:
-      s1ap_mme_itti_nas_downlink_cnf(SCTP_DATA_CNF (received_message_p).mme_ue_s1ap_id, SCTP_DATA_CNF (received_message_p).is_success);
-      break;
 
-      // From SCTP layer, notifies S1AP of disconnection of a peer (eNB).
-    case SCTP_CLOSE_ASSOCIATION:{
-        XML_MSG_DUMP_ITTI_SCTP_CLOSE_ASSOCIATION(&SCTP_CLOSE_ASSOCIATION(received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
-        s1ap_handle_sctp_deconnection (SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id);
+    // From MME_APP task
+    case MME_APP_CONNECTION_ESTABLISHMENT_CNF:{
+        XML_MSG_DUMP_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF(&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
+        s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
       }
       break;
 
-      // From SCTP layer, notifies S1AP of connection of a peer (eNB).
-    case SCTP_NEW_ASSOCIATION:{
-        XML_MSG_DUMP_ITTI_SCTP_NEW_ASSOCIATION(&SCTP_NEW_ASSOCIATION(received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
-        s1ap_handle_new_association (&received_message_p->ittiMsg.sctp_new_peer);
+    // From MME_APP task, silently remove UE context in S1AP when receiving S11_DELETE_SESSION_RESPONSE
+    case MME_APP_DELETE_SESSION_RSP:{
+        s1ap_handle_delete_session_rsp (&MME_APP_DELETE_SESSION_RSP (received_message_p));
       }
       break;
 
@@ -190,33 +165,62 @@ s1ap_mme_thread (
       }
       break;
 
-    // From MME_APP task
-    case MME_APP_CONNECTION_ESTABLISHMENT_CNF:{
-        XML_MSG_DUMP_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF(&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
-        s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
+      // From SCTP layer, notifies S1AP of disconnection of a peer (eNB).
+    case SCTP_CLOSE_ASSOCIATION:{
+        XML_MSG_DUMP_ITTI_SCTP_CLOSE_ASSOCIATION(&SCTP_CLOSE_ASSOCIATION(received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
+        s1ap_handle_sctp_deconnection (SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id);
       }
       break;
 
-    // From MME_APP task, silently remove UE context in S1AP when receiving S11_DELETE_SESSION_RESPONSE
-    case MME_APP_DELETE_SESSION_RSP:{
-        s1ap_handle_delete_session_rsp (&MME_APP_DELETE_SESSION_RSP (received_message_p));
+    // From SCTP
+    case SCTP_DATA_CNF:
+      s1ap_mme_itti_nas_downlink_cnf(SCTP_DATA_CNF (received_message_p).mme_ue_s1ap_id, SCTP_DATA_CNF (received_message_p).is_success);
+      break;
+
+      // From SCTP
+    case SCTP_DATA_IND:{
+        /*
+         * New message received from SCTP layer.
+         * Decode and handle it.
+         */
+        s1ap_message                            message = {0};
+
+        /*
+         * Invoke S1AP message decoder
+         */
+        if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).payload) < 0) {
+          // TODO: Notify eNB of failure with right cause
+          OAILOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
+        } else {
+          s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &message);
+        }
+
+        /*
+         * Free received PDU array
+         */
+        bdestroy_wrapper (&SCTP_DATA_IND (received_message_p).payload);
+      }
+      break;
+
+      // From SCTP layer, notifies S1AP of connection of a peer (eNB).
+    case SCTP_NEW_ASSOCIATION:{
+        XML_MSG_DUMP_ITTI_SCTP_NEW_ASSOCIATION(&SCTP_NEW_ASSOCIATION(received_message_p), ITTI_MSG_ORIGIN_ID (received_message_p), TASK_S1AP, NULL);
+        s1ap_handle_new_association (&received_message_p->ittiMsg.sctp_new_peer);
+      }
+      break;
+
+    case TERMINATE_MESSAGE:{
+        s1ap_mme_exit();
+        itti_free_msg_content(received_message_p);
+        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+        OAI_FPRINTF_INFO("TASK_S1AP terminated\n");
+        itti_exit_task ();
       }
       break;
 
     case TIMER_HAS_EXPIRED:{
         s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
       }
-      break;
-
-    case TERMINATE_MESSAGE:{
-        s1ap_mme_exit();
-        OAI_FPRINTF_INFO("TASK_S1AP terminated\n");
-        itti_exit_task ();
-      }
-      break;
-
-    case MESSAGE_TEST:
-      OAILOG_DEBUG (LOG_S1AP, "Received MESSAGE_TEST\n");
       break;
 
     default:{

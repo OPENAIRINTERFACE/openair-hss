@@ -526,7 +526,7 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     Lower layer failure                                                                                                 \
     Upon detection of a lower layer failure before the IDENTITY RESPONSE is received, the network shall abort           \
     any ongoing EMM procedure."
-#define R10_5_4_4_6_a_BRIEF ""
+#define R10_5_4_4_6_a_BRIEF "Lower layer failure detected, abort iedentification procedure"
 
 #define R10_5_4_4_6_b__1 "Abnormal cases on the network side                                                            \
     Expiry of timer T3470                                                                                               \

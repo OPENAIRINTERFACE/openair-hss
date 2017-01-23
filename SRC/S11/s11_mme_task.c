@@ -187,6 +187,11 @@ s11_mme_thread (
     assert (received_message_p );
 
     switch (ITTI_MSG_ID (received_message_p)) {
+    case MESSAGE_TEST:{
+        OAI_FPRINTF_INFO("TASK_S11 received MESSAGE_TEST\n");
+      }
+      break;
+
     case S11_CREATE_SESSION_REQUEST:{
         s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_session_request);
       }

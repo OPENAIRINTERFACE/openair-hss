@@ -86,7 +86,7 @@ pdn_context_t *  mme_app_create_pdn_context(ue_mm_context_t * const ue_mm_contex
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   if (!ue_mm_context->pdn_contexts[pdn_cid]) {
-    pdn_context_t * pdn_context = malloc(sizeof(*pdn_context));
+    pdn_context_t * pdn_context = calloc(1, sizeof(*pdn_context));
 
     if (pdn_context) {
       struct apn_configuration_s *apn_configuration = mme_app_get_apn_config(ue_mm_context, context_identifier);
@@ -109,6 +109,7 @@ pdn_context_t *  mme_app_create_pdn_context(ue_mm_context_t * const ue_mm_contex
         //pdn_context->pgw_apn_ambr = ;
         pdn_context->is_active = true;
         pdn_context->apn_subscribed = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);
+        pdn_context->default_ebi = EPS_BEARER_IDENTITY_UNASSIGNED;
         // TODO pdn_context->apn_in_use     =
 
         ue_mm_context->pdn_contexts[pdn_cid] = pdn_context;

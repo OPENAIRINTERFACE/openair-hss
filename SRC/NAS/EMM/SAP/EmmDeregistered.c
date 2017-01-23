@@ -133,7 +133,8 @@ EmmDeregistered (
     rc = RETURNok;
     break;
 
-  case _EMMREG_LOWERLAYER_FAILURE:
+    case _EMMREG_LOWERLAYER_RELEASE:
+    case _EMMREG_LOWERLAYER_FAILURE:
     /*
      * Data failed to be delivered to the network
      */

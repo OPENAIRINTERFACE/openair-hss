@@ -1732,7 +1732,7 @@ _emm_attach_update (
   /*
    * Security key set identifier
    */
-  OAILOG_TRACE (LOG_NAS_EMM, "UE id " MME_UE_S1AP_ID_FMT " Update ksi %d -> %d\n", ue_mm_context->mme_ue_s1ap_id, emm_context->ue_ksi, ksi);
+  OAILOG_TRACE (LOG_NAS_EMM, "UE id " MME_UE_S1AP_ID_FMT " Update ue ksi %d -> %d\n", ue_mm_context->mme_ue_s1ap_id, emm_context->ue_ksi, ksi);
   emm_context->ue_ksi = ksi;
   /*
    * Supported EPS encryption algorithms

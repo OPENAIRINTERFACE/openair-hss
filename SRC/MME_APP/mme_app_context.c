@@ -584,6 +584,8 @@ void mme_notify_ue_context_released (
   __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_managed, 1);
   __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_since_last_stat, 1);
 
+  mme_app_send_nas_signalling_connection_rel_ind(ue_context_p->mme_ue_s1ap_id);
+
   // TODO HERE free resources
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -1056,6 +1058,7 @@ mme_app_handle_s1ap_ue_context_release_req (
   if (!ue_context_p->nb_active_pdn_contexts) {
     // no session was created, no need for releasing bearers in SGW
     mme_app_send_s1ap_ue_context_release_command(ue_context_p, s1ap_ue_context_release_req->cause);
+    mme_app_send_nas_signalling_connection_rel_ind(ue_context_p->mme_ue_s1ap_id);
   } else {
     for (pdn_cid_t i = 0; i < MAX_APN_PER_UE; i++) {
       if (ue_context_p->pdn_contexts[i]) {
@@ -1090,9 +1093,9 @@ mme_app_handle_s1ap_ue_context_release_complete (
   *s1ap_ue_context_release_complete)
 //------------------------------------------------------------------------------
 {
+  OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_mm_context_s                    *ue_context_p = NULL;
 
-  OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, s1ap_ue_context_release_complete->mme_ue_s1ap_id);
 
   if (!ue_context_p) {

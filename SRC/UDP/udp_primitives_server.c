@@ -49,6 +49,7 @@
 #include "conversions.h"
 #include "intertask_interface.h"
 #include "udp_primitives_server.h"
+#include "itti_free_defined_msg.h"
 
 
 struct udp_socket_desc_s {
@@ -272,6 +273,21 @@ static void *udp_intertask_interface (void *args_p)
 
     if (received_message_p != NULL) {
       switch (ITTI_MSG_ID (received_message_p)) {
+      case MESSAGE_TEST:{
+          OAI_FPRINTF_INFO("TASK_UDP received MESSAGE_TEST\n");
+        }
+        break;
+
+
+      case TERMINATE_MESSAGE:{
+          udp_exit();
+          itti_free_msg_content(received_message_p);
+          itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+          OAI_FPRINTF_INFO("TASK_UDP terminated\n");
+          itti_exit_task ();
+        }
+        break;
+
       case UDP_INIT:{
           udp_init_t                             *udp_init_p = &received_message_p->ittiMsg.udp_init;
           rc = udp_server_create_socket (udp_init_p->port, &udp_init_p->address, ITTI_MSG_ORIGIN_ID (received_message_p));
@@ -317,17 +333,6 @@ static void *udp_intertask_interface (void *args_p)
         }
         break;
 
-      case TERMINATE_MESSAGE:{
-          udp_exit();
-          OAI_FPRINTF_INFO("TASK_UDP terminated\n");
-          itti_exit_task ();
-        }
-        break;
-
-      case MESSAGE_TEST:{
-        }
-        break;
-
       default:{
           OAILOG_DEBUG (LOG_UDP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
         }
@@ -335,6 +340,7 @@ static void *udp_intertask_interface (void *args_p)
       }
 
     on_error:
+      itti_free_msg_content(received_message_p);
       rc = itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
       AssertFatal (rc == EXIT_SUCCESS, "Failed to free memory (%d)!\n", rc);
       received_message_p = NULL;

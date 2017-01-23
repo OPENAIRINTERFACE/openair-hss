@@ -66,7 +66,7 @@ int lowerlayer_success(mme_ue_s1ap_id_t ueid);
 int lowerlayer_failure(mme_ue_s1ap_id_t ueid);
 int lowerlayer_non_delivery_indication (mme_ue_s1ap_id_t ue_id);
 int lowerlayer_establish(void);
-int lowerlayer_release(int cause);
+int lowerlayer_release(mme_ue_s1ap_id_t ue_id, int cause);
 
 int lowerlayer_data_ind(mme_ue_s1ap_id_t ueid, const_bstring data);
 int lowerlayer_data_req(mme_ue_s1ap_id_t ueid, bstring data);

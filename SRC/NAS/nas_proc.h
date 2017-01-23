@@ -109,5 +109,6 @@ int nas_proc_pdn_config_res (emm_cn_pdn_config_res_t * emm_cn_pdn_config_res);
 int nas_proc_pdn_connectivity_res(emm_cn_pdn_res_t *nas_pdn_connectivity_rsp);
 int nas_proc_pdn_connectivity_fail(emm_cn_pdn_fail_t *nas_pdn_connectivity_fail);
 int nas_proc_create_dedicated_bearer(emm_cn_activate_dedicated_bearer_req_t * emm_cn_activate);
+int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id);
 
 #endif /* FILE_NAS_PROC_SEEN*/

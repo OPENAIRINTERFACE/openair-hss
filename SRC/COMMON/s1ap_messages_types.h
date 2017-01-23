@@ -60,9 +60,9 @@ typedef struct itti_s1ap_ue_cap_ind_s {
   size_t            radio_capabilities_length;
 } itti_s1ap_ue_cap_ind_t;
 
-#define S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE 20
+#define S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE 400
 typedef struct itti_s1ap_eNB_deregistered_ind_s {
-  uint8_t          nb_ue_to_deregister;
+  uint16_t         nb_ue_to_deregister;
   mme_ue_s1ap_id_t mme_ue_s1ap_id[S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE];
 } itti_s1ap_eNB_deregistered_ind_t;
 

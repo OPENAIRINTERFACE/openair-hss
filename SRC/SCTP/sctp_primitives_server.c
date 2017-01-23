@@ -637,21 +637,6 @@ static void * sctp_intertask_interface (void *args_p)
     itti_receive_msg (TASK_SCTP, &received_message_p);
 
     switch (ITTI_MSG_ID (received_message_p)) {
-    case SCTP_INIT_MSG:{
-        OAILOG_DEBUG (LOG_SCTP, "Received SCTP_INIT_MSG\n");
-
-        /*
-         * We received a new connection request
-         */
-        if (sctp_create_new_listener (&received_message_p->ittiMsg.sctpInit) < 0) {
-          /*
-           * SCTP socket creation or bind failed...
-           */
-          OAILOG_ERROR (LOG_SCTP, "Failed to create new SCTP listener\n");
-        }
-      }
-      break;
-
     case SCTP_CLOSE_ASSOCIATION:{
       }
       break;
@@ -678,14 +663,30 @@ static void * sctp_intertask_interface (void *args_p)
       }
       break;
 
+    case SCTP_INIT_MSG:{
+        OAILOG_DEBUG (LOG_SCTP, "Received SCTP_INIT_MSG\n");
+
+        /*
+         * We received a new connection request
+         */
+        if (sctp_create_new_listener (&received_message_p->ittiMsg.sctpInit) < 0) {
+          /*
+           * SCTP socket creation or bind failed...
+           */
+          OAILOG_ERROR (LOG_SCTP, "Failed to create new SCTP listener\n");
+        }
+      }
+      break;
+
     case MESSAGE_TEST:{
-        //                 int i = 10000;
-        //                 while(i--);
+        OAI_FPRINTF_INFO("TASK_SCTP received MESSAGE_TEST\n");
       }
       break;
 
     case TERMINATE_MESSAGE:{
         sctp_exit();
+        itti_free_msg_content(received_message_p);
+        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
         itti_exit_task ();
       }
       break;
