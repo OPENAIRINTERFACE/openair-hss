@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- Scenarios may contain also scenarios_file -->
 
-<scenario name="3gpp_24.301_Release_10_6.6.1.2.4 (ESM_INFORMATION)">
+<scenario name="3gpp_24.301_Rel10_6.6.1.2.4 (ESM_INFORMATION)">
   <!-- time allowed values = seconds.microseconds or "now" -->
   <!-- time_ref allowed values = negative integers (-n= n'th item before this), or "this" -->
 

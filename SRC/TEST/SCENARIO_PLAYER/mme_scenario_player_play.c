@@ -92,6 +92,7 @@ bstring scenario_reason2str(const scenario_reason_t scenario_reason)
     case SCENARIO_REASON_NONE:                       reason_str = "REASON NONE"; break;
     case SCENARIO_XML_FILE_LOAD_SUCCEED:             reason_str = "REASON XML FILE LOAD SUCCEED"; break;
     case SCENARIO_XML_FILE_LOAD_FAILED:              reason_str = "REASON XML FILE LOAD FAILED"; break;
+    case SCENARIO_XML_ITEM_MSG_FILE_LOAD_SUCCEED:    reason_str = "REASON XML ITEM MSG FILE LOAD SUCCEED"; break;
     case SCENARIO_XML_ITEM_MSG_FILE_LOAD_FAILED:     reason_str = "REASON XML ITEM MSG FILE LOAD FAILED"; break;
     case SCENARIO_XML_ITEM_EXIT_LOAD_FAILED:         reason_str = "REASON XML ITEM EXIT_LOAD FAILED"; break;
     case SCENARIO_XML_ITEM_LABEL_LOAD_FAILED:        reason_str = "REASON XML_ITEM LABEL LOAD FAILED"; break;
@@ -152,12 +153,17 @@ void scenario_set_status(scenario_t * const scenario, const scenario_status_t sc
   bdestroy_wrapper(&fp_name);
   bdestroy_wrapper(&reason);
   if (b) {
-    int rv_put = fputs ((const char *)b->data, g_msp_scenarios.result_fd);
+    struct timeval elapsed_time;
+    shared_log_get_elapsed_time_since_start(&elapsed_time);
+    bstring btime = bformat("%05ld:%06ld ", elapsed_time.tv_sec, elapsed_time.tv_usec);
+    bconcat(btime, b);
+    bdestroy_wrapper(&b);
+    int rv_put = fputs ((const char *)btime->data, g_msp_scenarios.result_fd);
     if (rv_put < 0) {
       // error occured
-      OAILOG_WARNING(LOG_MME_SCENARIO_PLAYER, "Error while logging scenario status %d: %s\n", rv_put, bdata(b));
+      OAILOG_WARNING(LOG_MME_SCENARIO_PLAYER, "Error while logging scenario status %d: %s\n", rv_put, bdata(btime));
     }
-    bdestroy_wrapper(&b);
+    bdestroy_wrapper(&btime);
     fflush (g_msp_scenarios.result_fd);
   }
   if (
@@ -165,6 +171,50 @@ void scenario_set_status(scenario_t * const scenario, const scenario_status_t sc
        (SCENARIO_STATUS_PLAY_FAILED == scenario_status))   &&
       (mme_config.scenario_player_config.stop_on_error)) {
     itti_terminate_tasks (TASK_MME_SCENARIO_PLAYER);
+  }
+}
+
+//------------------------------------------------------------------------------
+void message_log_status(scenario_t * const scenario, const char * const str_file_path, int uid, const scenario_reason_t scenario_reason, char* extra)
+{
+  bstring b = NULL;
+  bstring reason = scenario_reason2str(scenario_reason);
+  if (extra) {
+    bconchar(reason, ' ');
+    bcatcstr(reason, extra);
+  }
+  bstring file_path = bfromcstr(str_file_path);
+  int pos = bstrrchrp (file_path, '/', blength(file_path) -1);
+  bstring cfile_path = bstrcpy(file_path);
+  if (BSTR_ERR != pos) {
+    bassignmidstr (cfile_path, file_path, pos+1, blength(file_path) - pos - 1);
+  } else {
+    cfile_path = bstrcpy(file_path);
+  }
+  bdestroy_wrapper(&file_path);
+
+  if (SCENARIO_XML_ITEM_MSG_FILE_LOAD_FAILED == scenario_reason) {
+    b = bformat("FAILURE LOAD   message %s uid %d set by %s\n", bdata(cfile_path), uid, bdata(reason));
+    OAILOG_ERROR (LOG_MME_SCENARIO_PLAYER, "%s", bdata(b));
+  } else if (SCENARIO_XML_ITEM_MSG_FILE_LOAD_SUCCEED == scenario_reason) {
+    b = bformat("SUCCESS LOADED message %s uid %d set by %s\n", bdata(cfile_path), uid, bdata(reason));
+    OAILOG_NOTICE (LOG_MME_SCENARIO_PLAYER, "%s", bdata(b));
+  }
+  bdestroy_wrapper(&reason);
+  bdestroy_wrapper(&cfile_path);
+  if (b) {
+    struct timeval elapsed_time;
+    shared_log_get_elapsed_time_since_start(&elapsed_time);
+    bstring btime = bformat("%05ld:%06ld ", elapsed_time.tv_sec, elapsed_time.tv_usec);
+    bconcat(btime, b);
+    bdestroy_wrapper(&b);
+    int rv_put = fputs ((const char *)btime->data, g_msp_scenarios.result_fd);
+    if (rv_put < 0) {
+      // error occured
+      OAILOG_WARNING(LOG_MME_SCENARIO_PLAYER, "Error while logging message status %d: %s\n", rv_put, bdata(btime));
+    }
+    bdestroy_wrapper(&btime);
+    fflush (g_msp_scenarios.result_fd);
   }
 }
 
@@ -580,6 +630,7 @@ bool msp_play_incr_var(scenario_t * const scenario, scenario_player_item_t * con
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "incr var %s=%"PRIu64 "\n", ref->u.var.name->data, ref->u.var.value.value_u64);
   item->is_played = true;
   scenario->last_played_item = item;
+  msp_display_var(ref);
   return true;
 }
 //------------------------------------------------------------------------------
@@ -599,6 +650,7 @@ bool msp_play_decr_var(scenario_t * const scenario, scenario_player_item_t * con
   OAILOG_TRACE (LOG_MME_SCENARIO_PLAYER, "decr var %s=%"PRIu64 "\n", ref->u.var.name->data, ref->u.var.value.value_u64);
   item->is_played = true;
   scenario->last_played_item = item;
+  msp_display_var(ref);
   return true;
 }
 //------------------------------------------------------------------------------

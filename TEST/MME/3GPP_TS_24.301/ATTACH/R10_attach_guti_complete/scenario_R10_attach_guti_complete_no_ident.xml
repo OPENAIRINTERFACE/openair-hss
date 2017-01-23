@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- Scenarios may contain also scenarios_file -->
 
-<scenario name="3gpp_24.301_Rel10_5.5.1.2.7_c">
-
+<scenario name="3gpp_24.301_Rel10_attach_guti_complete_no_ident">
 
   <!-- VARIABLES TO MME -->
 
@@ -44,22 +43,12 @@
   </message_file>
   <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
 
-  <!-- IDENTITY REQUEST -->
-  <message_file action="receive" time="2.0" time_ref="-2">
-    <file>../../../MSGR10/ITTI_NAS_DOWNLINK_DATA_REQ.IDENTITY_REQUEST.xml</file>
-  </message_file>
-  <set_var name="MME_UE_S1AP_ID"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   />
-
-  <!-- IDENTITY RESPONSE -->
-  <message_file action="send" time="now"  time_ref="this">
-    <file>../../../MSGR10/ITTI_NAS_UPLINK_DATA_IND.IDENTITY_RESPONSE.xml</file>
-  </message_file>
-  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
-
   <!-- AUTHENTICATION REQUEST -->
   <message_file action="receive" time="2.0" time_ref="-2">
-    <file>../../../MSGR10/ITTI_NAS_DOWNLINK_DATA_REQ.AUTHENTICATION_REQUEST.xml</file>
+    <file>../../../MSGR10/ITTI_NAS_DOWNLINK_DATA_REQ.AUTHENTICATION_REQUEST_PROTECTED.FIRST_DL.xml</file>
   </message_file>
+
+  <set_var name="MME_UE_S1AP_ID"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   />
 
   <set_var name="RAND"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_RAND"   />
   <set_var name="AUTN"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.NAS.AUTHENTICATION_REQUEST.AUTHENTICATION_PARAMETER_AUTN"   />
@@ -103,33 +92,31 @@
     <file>../../../MSGR10/ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.xml</file>
   </message_file>
 
-  <incr_var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.DOWNLINK_SEQUENCE_NUMBER"/>
-
-  <!-- MME_APP_CONNECTION_ESTABLISHMENT_CNF -->
-  <message_file action="receive" time="8.0" time_ref="-2">
-    <file>../../../MSGR10/ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.REPEAT.xml</file>
+  <!-- MME_APP_INITIAL_CONTEXT_SETUP_RSP -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../../MSGR10/ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP.xml</file>
   </message_file>
 
-  <incr_var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.DOWNLINK_SEQUENCE_NUMBER"/>
-
-  <!-- MME_APP_CONNECTION_ESTABLISHMENT_CNF -->
-  <message_file action="receive" time="8.0" time_ref="-2">
-    <file>../../../MSGR10/ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.REPEAT.xml</file>
+  <!-- ATTACH_COMPLETE/ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_ACCEPT -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../../MSGR10/ITTI_NAS_UPLINK_DATA_IND.ATTACH_COMPLETE.xml</file>
   </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+  <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/>
 
-  <incr_var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.DOWNLINK_SEQUENCE_NUMBER"/>
+  <!-- ITTI_S1AP_E_RAB_SETUP_REQ >
+  <message_file action="receive" time="2.0"  time_ref="-3">
+    <file>../../../MSGR10/ITTI_S1AP_E_RAB_SETUP_REQ.xml</file>
+  </message_file-->
 
-  <!-- MME_APP_CONNECTION_ESTABLISHMENT_CNF -->
-  <message_file action="receive" time="8.0" time_ref="-2">
-    <file>../../../MSGR10/ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.REPEAT.xml</file>
+
+  <!-- ITTI_S1AP_E_RAB_SETUP_RESPONSE >
+  <incr_var name="ENB_S1U_TEID"/>  
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../../MSGR10/ITTI_S1AP_E_RAB_SETUP_RESPONSE.xml</file>
   </message_file>
-
-  <incr_var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.DOWNLINK_SEQUENCE_NUMBER"/>
-
-  <!-- MME_APP_CONNECTION_ESTABLISHMENT_CNF -->
-  <message_file action="receive" time="8.0" time_ref="-2">
-    <file>../../../MSGR10/ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.REPEAT.xml</file>
-  </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+  <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/-->
 
    <sleep    seconds="1"     useconds="0"          />
 

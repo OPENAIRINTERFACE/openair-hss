@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- Scenarios may contain also scenarios_file -->
 
-<scenario name="3gpp_24.301_Release_10_5_4_2_7_e">
+<scenario name="3gpp_24.301_Rel10_5_4_2_7_e">
 
   <!-- VARIABLES TO MME -->
   <var name="MME_CODE"                                    value="01"       />

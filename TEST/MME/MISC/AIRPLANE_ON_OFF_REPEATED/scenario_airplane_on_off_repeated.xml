@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- Scenarios may contain also scenarios_file -->
 
-<scenario name="scenario_airplane_on_off_repeated">
+<scenario name="airplane_on_off_iter">
 
   <var name="S1AP_CAUSE_GROUP"                            ascii_stream_value="nas"        />
   <var name="S1AP_CAUSE_GROUP_CAUSE"                      value="2"        />
 
+  <scenario_file><file>../../3GPP_TS_24.301/set_next_ue_params.xml</file></scenario_file>
   
   <var name="LOOP_COUNTER"      value="0x0020"          />
 <!--  <scenario_file><file>../../3GPP_TS_24.301/ATTACH/R10_attach_imsi_complete/scenario_R10_attach_imsi_complete.xml</file></scenario_file>
