@@ -199,12 +199,12 @@ mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
   const mme_ue_s1ap_id_t  old_mme_ue_s1ap_id,
   const bool              is_remove_old)
 {
+  OAILOG_FUNC_IN (LOG_MME_APP);
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
   void                                   *id = NULL;
   enb_ue_s1ap_id_t                        new_enb_ue_s1ap_id = 0;
   enb_s1ap_id_key_t                       old_enb_key = 0;
 
-  OAILOG_FUNC_IN (LOG_MME_APP);
   new_enb_ue_s1ap_id = MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(new_enb_key);
 
   if (INVALID_MME_UE_S1AP_ID == old_mme_ue_s1ap_id) {

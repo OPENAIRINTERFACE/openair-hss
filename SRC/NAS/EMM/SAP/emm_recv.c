@@ -144,6 +144,7 @@ emm_recv_attach_request (
   const tai_t              * const originating_tai,
   const ecgi_t             * const originating_ecgi,
   const attach_request_msg * const msg,
+  const bool                       is_initial,
   int * const emm_cause,
   const nas_message_decode_status_t  * decode_status)
 {
@@ -553,6 +554,7 @@ emm_recv_tracking_area_update_request (
 int
 emm_recv_service_request (
   mme_ue_s1ap_id_t ue_id,
+  enb_ue_s1ap_id_t enb_ue_s1ap_id,
   const service_request_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
@@ -572,7 +574,7 @@ emm_recv_service_request (
      */
     // EMM causes for triggering an attach in the UE can be "UE identity cannot be derived by the network": EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW,
     // "Implicitly detached": EMM_CAUSE_IMPLICITLY_DETACHED,
-    rc = emm_proc_service_reject (ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
+    rc = emm_proc_service_reject (ue_id, enb_ue_s1ap_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

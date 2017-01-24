@@ -175,11 +175,15 @@ lowerlayer_non_delivery_indication (
   emm_sap.u.emm_reg.ue_id = ue_id;
   ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
-
-  emm_sap.u.emm_reg.ctx = &ue_mm_context->emm_context;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMREG_LOWERLAYER_NON_DELIVERY ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-  rc = emm_sap_send (&emm_sap);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  if (ue_mm_context) {
+    emm_sap.u.emm_reg.ctx = &ue_mm_context->emm_context;
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMREG_LOWERLAYER_NON_DELIVERY ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+    rc = emm_sap_send (&emm_sap);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  } else {
+    OAILOG_INFO (LOG_NAS_EMM, "Unknown ue id " MME_UE_S1AP_ID_FMT "\n",ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
 }
 
 /****************************************************************************
@@ -232,6 +236,9 @@ int lowerlayer_release (mme_ue_s1ap_id_t ue_id, int cause)
   ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
   if (ue_mm_context) {
     emm_sap.u.emm_reg.ctx = &ue_mm_context->emm_context;
+  } else {
+    OAILOG_INFO (LOG_NAS_EMM, "Unknown ue id " MME_UE_S1AP_ID_FMT "\n",ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
   MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_MME, NULL, 0, "EMMREG_LOWERLAYER_RELEASE ue id " MME_UE_S1AP_ID_FMT " ", emm_sap.u.emm_reg.ue_id);
   rc = emm_sap_send (&emm_sap);

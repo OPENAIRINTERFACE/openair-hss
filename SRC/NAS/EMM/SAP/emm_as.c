@@ -371,7 +371,7 @@ static int _emm_as_recv (
     REQUIREMENT_3GPP_24_301(R10_4_4_4_3__2); // Integrity checking of NAS signalling messages in the MME
     enb_s1ap_id_key_t enb_s1ap_id_key = 0;
     MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, originating_ecgi->cell_identity.enb_id, INVALID_ENB_UE_S1AP_ID);
-    rc = emm_recv_attach_request (enb_s1ap_id_key, ue_id, originating_tai, originating_ecgi, &emm_msg->attach_request, emm_cause, decode_status);
+    rc = emm_recv_attach_request (enb_s1ap_id_key, ue_id, originating_tai, originating_ecgi, &emm_msg->attach_request, false, emm_cause, decode_status);
     break;
 
   case IDENTITY_RESPONSE:
@@ -640,7 +640,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
   switch (emm_msg->header.message_type) {
   case ATTACH_REQUEST:
     memcpy(&originating_tai, msg->tai, sizeof(originating_tai));
-    rc = emm_recv_attach_request (msg->enb_ue_s1ap_id_key, msg->ue_id, &originating_tai, &msg->ecgi, &emm_msg->attach_request, emm_cause, &decode_status);
+    rc = emm_recv_attach_request (msg->enb_ue_s1ap_id_key, msg->ue_id, &originating_tai, &msg->ecgi, &emm_msg->attach_request, msg->is_initial, emm_cause, &decode_status);
     break;
 
   case DETACH_REQUEST:
@@ -669,7 +669,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    rc = emm_recv_service_request (msg->ue_id, &emm_msg->service_request, emm_cause, &decode_status);
+    rc = emm_recv_service_request (msg->ue_id, MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(msg->enb_ue_s1ap_id_key), &emm_msg->service_request, emm_cause, &decode_status);
     break;
 
   case EXTENDED_SERVICE_REQUEST:
