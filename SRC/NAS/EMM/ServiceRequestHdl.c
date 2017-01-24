@@ -68,6 +68,7 @@
 #include "emm_data.h"
 #include "emm_sap.h"
 #include "emm_cause.h"
+#include "mme_app_defs.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -111,6 +112,7 @@ static int  _emm_service_reject (void *args);
 int
 emm_proc_service_reject (
   mme_ue_s1ap_id_t ue_id,
+  enb_ue_s1ap_id_t enb_ue_s1ap_id,
   emm_cause_t emm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -119,23 +121,30 @@ emm_proc_service_reject (
   /*
    * Create temporary UE context
    */
-  struct ue_mm_context_s                      ue_mm_ctx = {0};
+  struct ue_mm_context_s                     * ue_mm_context = NULL;
 
-  ue_mm_ctx.emm_context.is_dynamic = false;
-  ue_mm_ctx.mme_ue_s1ap_id = ue_id;
-  /*
-   * Update the EMM cause code
-   */
-  if (ue_id > 0) {
-    ue_mm_ctx.emm_context.emm_cause = emm_cause;
+  if (INVALID_MME_UE_S1AP_ID == ue_id) {
+    ue_mm_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_ue_s1ap_id);
+    if (ue_mm_context) {
+      ue_mm_context->mme_ue_s1ap_id = emm_ctx_get_new_ue_id(&ue_mm_context->emm_context);
+      mme_api_notified_new_ue_s1ap_id_association (ue_mm_context->enb_ue_s1ap_id, ue_mm_context->e_utran_cgi.cell_identity.enb_id, ue_mm_context->mme_ue_s1ap_id);
+      ue_mm_context->emm_context.emm_cause = EMM_CAUSE_IMPLICITLY_DETACHED;
+    } else {
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    }
   } else {
-    ue_mm_ctx.emm_context.emm_cause = EMM_CAUSE_IMPLICITLY_DETACHED;
+    ue_mm_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+    if (ue_mm_context) {
+      ue_mm_context->emm_context.emm_cause = emm_cause;
+    } else {
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    }
   }
 
   /*
    * Do not accept attach request with protocol error
    */
-  rc = _emm_service_reject (&ue_mm_ctx);
+  rc = _emm_service_reject (&ue_mm_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 /****************************************************************************/
@@ -159,6 +168,8 @@ _emm_service_reject (
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM service procedure not accepted " "by the network (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n",
     		ue_mm_ctx->mme_ue_s1ap_id, ue_mm_ctx->emm_context.emm_cause);
+
+
     /*
      * Notify EMM-AS SAP that Tracking Area Update Reject message has to be sent
      * onto the network

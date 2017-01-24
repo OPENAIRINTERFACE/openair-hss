@@ -209,38 +209,6 @@ mme_app_handle_initial_ue_message (
   if (!(ue_context_p)) {
     OAILOG_DEBUG (LOG_MME_APP, "Unknown  mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n",
         initial_pP->mme_ue_s1ap_id, initial_pP->enb_ue_s1ap_id);
-
-    // MME UE S1AP ID AND NAS UE ID ARE THE SAME
-    if (INVALID_MME_UE_S1AP_ID == initial_pP->mme_ue_s1ap_id) {
-      if (initial_pP->is_s_tmsi_valid) {
-        // try to build a Guti
-        guti_t guti = {.gummei.plmn = {0}, .gummei.mme_gid = 0, .gummei.mme_code = 0, .m_tmsi = INVALID_M_TMSI};
-        guti.m_tmsi = initial_pP->opt_s_tmsi.m_tmsi;
-        guti.gummei.mme_code = initial_pP->opt_s_tmsi.mme_code;
-
-        if (initial_pP->is_gummei_valid) {
-          memcpy(&guti.gummei, (const void*)&initial_pP->opt_gummei, sizeof(guti.gummei));
-          ue_context_p = mme_ue_context_exists_guti (&mme_app_desc.mme_ue_contexts, &guti);
-
-          if (ue_context_p) {
-            if (ue_context_p->enb_ue_s1ap_id == initial_pP->enb_ue_s1ap_id) {
-              // update ue_context, the only parameter to update is guti
-              mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
-                ue_context_p,
-                ue_context_p->enb_s1ap_id_key,
-                ue_context_p->mme_ue_s1ap_id,
-                ue_context_p->emm_context._imsi64,
-                ue_context_p->mme_teid_s11,
-                &guti);
-            } else {
-              OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP, previous conflicting S_TMSI context found with provided S_TMSI, GUMMEI\n");
-            }
-          } else {
-            OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP, no previous context found with provided S_TMSI, GUMMEI\n");
-          }
-        }
-      }
-    } // no else actually TODO action
   }
 
   if ((ue_context_p) && (ue_context_p->is_s1_ue_context_release)) {
@@ -249,21 +217,26 @@ mme_app_handle_initial_ue_message (
 
   // finally create a new ue context if anything found
   if (!(ue_context_p)) {
-    OAILOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one\n");
-    if ((ue_context_p = mme_create_new_ue_context ()) == NULL) {
+    if (!(ue_context_p = mme_create_new_ue_context ())) {
       /*
        * Error during ue context malloc
        */
-      DevMessage ("mme_create_new_ue_context");
+      OAILOG_ERROR (LOG_MME_APP, "Failed to create new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
+    OAILOG_DEBUG (LOG_MME_APP, "Created new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
     ue_context_p->ecm_state         = ECM_CONNECTED;
     ue_context_p->mme_ue_s1ap_id    = initial_pP->mme_ue_s1ap_id;
     ue_context_p->enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
     MME_APP_ENB_S1AP_ID_KEY(ue_context_p->enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
     ue_context_p->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
 
-    DevAssert (mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p) == 0);
+    if (RETURNerror == mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p)) {
+      mme_app_ue_context_free_content(ue_context_p);
+      free_wrapper ((void**)&ue_context_p);
+      OAILOG_ERROR (LOG_MME_APP, "Failed to insert new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
+    }
   }
   ue_context_p->e_utran_cgi = initial_pP->ecgi;
 

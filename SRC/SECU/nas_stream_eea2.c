@@ -56,7 +56,7 @@ nas_stream_encrypt_eea2 (
     byte_length += 1;
 
   ctx = malloc (nettle_aes128.context_size);
-  data = malloc (byte_length);
+  data = calloc (1, byte_length);
   local_count = hton_int32 (stream_cipher->count);
   memset (m, 0, sizeof (m));
   memcpy (&m[0], &local_count, 4);

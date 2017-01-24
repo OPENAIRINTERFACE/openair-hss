@@ -184,6 +184,7 @@ nas_proc_establish_ind (
     emm_sap.primitive = EMMAS_ESTABLISH_REQ;
     emm_sap.u.emm_as.u.establish.enb_ue_s1ap_id_key = enb_ue_s1ap_id_key;
     emm_sap.u.emm_as.u.establish.ue_id              = ue_id;
+    emm_sap.u.emm_as.u.establish.is_initial         = true;
 
     emm_sap.u.emm_as.u.establish.nas_msg            = *msg;
     *msg = NULL;

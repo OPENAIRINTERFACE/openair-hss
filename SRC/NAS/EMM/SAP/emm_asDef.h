@@ -157,6 +157,7 @@ typedef struct emm_as_establish_s {
   emm_as_EPS_identity_t  eps_id;                      /* UE's EPS mobile identity      */
   emm_as_security_data_t sctx;                        /* EPS NAS security context      */
   bool                   switch_off;                  /* true if the UE is switched off    */
+  bool                   is_initial;                  /* true if contained in initial message    */
   uint8_t                type;                        /* Network attach/detach type        */
   uint8_t                rrc_cause;                   /* Connection establishment cause    */
   uint8_t                rrc_type;                    /* Associated call type          */

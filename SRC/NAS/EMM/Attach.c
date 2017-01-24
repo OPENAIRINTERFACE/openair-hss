@@ -355,7 +355,7 @@ emm_proc_attach_request (
 
       create_new_emm_ctxt = true;
     }
-  } else if ((ue_mm_context) && emm_ctx_is_specific_procedure_running (&ue_mm_context->emm_context, EMM_CTXT_SPEC_PROC_ATTACH_ACCEPT_SENT)) {// && (!ue_mm_context->is_attach_complete_received): implicit
+  } else if ((ue_mm_context) && emm_ctx_is_specific_procedure_running (&ue_mm_context->emm_context, EMM_CTXT_SPEC_PROC_ATTACH | EMM_CTXT_SPEC_PROC_ATTACH_ACCEPT_SENT)) {// && (!ue_mm_context->is_attach_complete_received): implicit
     ue_mm_context->emm_context.num_attach_request++;
     if (_emm_attach_have_changed(&ue_mm_context->emm_context, type, ksi, guti, imsi, imei, ue_network_capability, ms_network_capability)) {
       OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Attach parameters have changed\n");
@@ -369,7 +369,7 @@ emm_proc_attach_request (
       emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_PROC_ABORT;
-      emm_sap.u.emm_reg.ue_id = ue_id;
+      emm_sap.u.emm_reg.ue_id = ue_mm_context->mme_ue_s1ap_id;
       emm_sap.u.emm_reg.ctx = &ue_mm_context->emm_context;
       rc = emm_sap_send (&emm_sap);
 
@@ -394,6 +394,7 @@ emm_proc_attach_request (
     }
 
   } else if ((ue_mm_context) && (0 < ue_mm_context->emm_context.num_attach_request) &&
+             (emm_ctx_is_specific_procedure_running (&ue_mm_context->emm_context, EMM_CTXT_SPEC_PROC_ATTACH)) &&
              (!emm_ctx_is_specific_procedure_running (&ue_mm_context->emm_context, EMM_CTXT_SPEC_PROC_ATTACH_ACCEPT_SENT)) &&
              (!emm_ctx_is_specific_procedure_running (&ue_mm_context->emm_context, EMM_CTXT_SPEC_PROC_ATTACH_REJECT_SENT))) {
 
@@ -495,6 +496,11 @@ emm_proc_attach_request (
 //    mme_api_notified_new_ue_s1ap_id_association (ue_mm_context->enb_ue_s1ap_id, originating_ecgi->cell_identity.enb_id, ue_mm_context->mme_ue_s1ap_id);
   }
 
+#warning "Quick workaround for MWCDEMO2017 define DEMOMWC2017"
+#define DEMOMWC2017 1
+#if defined(DEMOMWC2017)
+    emm_ctx_clear_attribute_valid(&ue_mm_context->emm_context, EMM_CTXT_MEMBER_AUTH_VECTORS);
+#endif
 
   if (!ue_mm_context->emm_context.specific_proc) {
     ue_mm_context->emm_context.specific_proc = (emm_specific_procedure_data_t *) calloc (1, sizeof (*ue_mm_context->emm_context.specific_proc));
@@ -1724,7 +1730,11 @@ _emm_attach_update (
   /*
    * UE identifier
    */
+  if ((INVALID_MME_UE_S1AP_ID == ue_mm_context->mme_ue_s1ap_id) && (ue_mm_context->mme_ue_s1ap_id != ue_id)) {
+    mme_api_notified_new_ue_s1ap_id_association (ue_mm_context->enb_ue_s1ap_id, ue_mm_context->e_utran_cgi.cell_identity.enb_id, ue_id);
+  }
   ue_mm_context->mme_ue_s1ap_id = ue_id;
+
   /*
    * Emergency bearer services indicator
    */

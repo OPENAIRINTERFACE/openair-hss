@@ -148,7 +148,7 @@ int esm_proc_esm_information_response (emm_context_t * ue_context, pti_t pti, co
    * Stop T3489 timer if running
    */
   if (ue_context->esm_ctx.T3489.id != NAS_TIMER_INACTIVE_ID) {
-    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Stop timer T3489 (%lx)\n", ue_context->esm_ctx.T3489.id);
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Stop timer T3489 (%lx) UE " MME_UE_S1AP_ID_FMT "\n", ue_context->esm_ctx.T3489.id, ue_id);
     ue_context->esm_ctx.T3489.id = nas_timer_stop (ue_context->esm_ctx.T3489.id);
     MSC_LOG_EVENT (MSC_NAS_ESM_MME, "T3489 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
   }
