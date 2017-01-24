@@ -90,7 +90,7 @@ nas_stream_encrypt_eea1 (
    * Run SNOW 3G algorithm to generate sequence of key stream bits KS
    */
   snow3g_initialize (K, IV, &snow_3g_context);
-  KS = (uint32_t *) malloc (4 * n);
+  KS = (uint32_t *) calloc (1, 4 * n);
   snow3g_generate_key_stream (n, (uint32_t *) KS, &snow_3g_context);
 
   if (zero_bit > 0) {
