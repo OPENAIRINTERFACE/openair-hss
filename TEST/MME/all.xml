@@ -60,10 +60,11 @@
   <usim lte_k="fec86ba6eb707ed08905757b1bb44b8f" sqn_ms="FF9BB4000E0C"/>
   
   <!-- relative paths -->
+  <scenario_file><file>MISC/ATTACH_RELEASE_REPEATED/scenario_attach_release_repeated.xml</file></scenario_file>
   <scenario_file><file>MISC/RANDOM_S1AP_UE_CONTEXT_RELEASE/scenario_R10_random_s1ap_ue_context_release_same_ue.xml</file></scenario_file>
-  <!--scenario_file><file>no_regression.xml</file></scenario_file>
+  <scenario_file><file>no_regression.xml</file></scenario_file>
   <scenario_file><file>MISC/AIRPLANE_ON_OFF_REPEATED/scenario_airplane_on_off_repeated.xml</file></scenario_file>
-  <scenario_file><file>MISC/RANDOM_S1AP_UE_CONTEXT_RELEASE/scenario_R10_random_s1ap_ue_context_release.xml</file></scenario_file-->
+  <scenario_file><file>MISC/RANDOM_S1AP_UE_CONTEXT_RELEASE/scenario_R10_random_s1ap_ue_context_release.xml</file></scenario_file>
 
 
   <!-- End of all scenarios: Let some timers show some bugs ? -->
