@@ -69,6 +69,11 @@
     <set_var  name="MME_UE_S1AP_ID"                              value="0xFFFFFFFF" />
     <incr_var name="ENB_UE_S1AP_ID"/>
     
+    <!-- TEST SLEEP TO REMOVE -->
+    <sleep    seconds="8"     useconds="0"          />
+    <sleep    seconds="8"     useconds="0"          />
+    
+    
     <scenario_file><file>../../3GPP_TS_24.301/ATTACH/R10_attach_guti_complete/scenario_R10_attach_guti_complete_no_ident.xml</file></scenario_file>
     <sleep    seconds="0"     useconds="1000"          />
     <message_file action="send" time="now"  time_ref="this"><file>../../MSGR10/ITTI_NAS_UPLINK_DATA_IND.DETACH_REQUEST.SWITCH_OFF.xml</file></message_file>

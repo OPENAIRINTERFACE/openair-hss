@@ -31,9 +31,12 @@
     <file>../../../MSGR10/ITTI_NAS_DOWNLINK_DATA_REQ.IDENTITY_REQUEST.xml</file>
   </message_file>
   <set_var name="MME_UE_S1AP_ID"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   />
+  <jcond var_name="MME_UE_S1AP_ID" cond="ne"  value="0xFFFFFFFF" label="checked_mme_ue_s1ap_id_invalid"/>
+    <exit  status="failed" />
+  <label name="checked_mme_ue_s1ap_id_invalid" />
 
   <!-- IDENTITY REQUEST -->
-  <message_file action="receive" time="8.0" time_ref="-2">
+  <message_file action="receive" time="8.0" time_ref="-5">
     <file>../../../MSGR10/ITTI_NAS_DOWNLINK_DATA_REQ.IDENTITY_REQUEST.RETRIED.xml</file>
   </message_file>
 
