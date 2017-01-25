@@ -206,6 +206,7 @@ int
 emm_proc_attach_request (
   enb_s1ap_id_key_t  enb_ue_s1ap_id_key,
   mme_ue_s1ap_id_t ue_id,
+  const bool is_initial,
   const emm_proc_attach_type_t type,
   const bool is_native_ksi,
   const ksi_t     ksi,
@@ -269,10 +270,18 @@ emm_proc_attach_request (
     if (!ue_mm_context) {
       ue_mm_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_ue_s1ap_id_key);
       if (ue_mm_context) {
-        OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - Found old ue_mm_context matching enb_ue_s1ap_id in ATTACH_REQUEST\n");
+        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Found old ue_mm_context matching enb_ue_s1ap_id in ATTACH_REQUEST...very suspicious\n");
         ue_id = emm_ctx_get_new_ue_id(&ue_mm_context->emm_context);
         mme_api_notified_new_ue_s1ap_id_association (ue_mm_context->enb_ue_s1ap_id, originating_ecgi->cell_identity.enb_id, ue_id);
       }
+    }
+  }
+
+  if (duplicate_enb_context_detected) {
+    if (is_initial) {
+      // remove new context
+      ue_mm_context = mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id, REMOVE_NEW_CONTEXT);
+      duplicate_enb_context_detected = false; // Problem solved
     }
   }
 
@@ -349,11 +358,10 @@ emm_proc_attach_request (
       // "TODO think about emm_context_remove"
       //ue_mm_context = emm_context_remove (&_emm_data, ue_mm_context);
       if (duplicate_enb_context_detected) {
+        OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - Warning for developper: this has been thought as a case that cannot happen\n");
         ue_mm_context = mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id, REMOVE_OLD_CONTEXT);
       }
-      emm_context_free_content(&ue_mm_context->emm_context);
-
-      create_new_emm_ctxt = true;
+      emm_init_context(&ue_mm_context->emm_context, false);
     }
   } else if ((ue_mm_context) && emm_ctx_is_specific_procedure_running (&ue_mm_context->emm_context, EMM_CTXT_SPEC_PROC_ATTACH | EMM_CTXT_SPEC_PROC_ATTACH_ACCEPT_SENT)) {// && (!ue_mm_context->is_attach_complete_received): implicit
     ue_mm_context->emm_context.num_attach_request++;

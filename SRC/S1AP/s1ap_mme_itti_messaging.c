@@ -104,7 +104,6 @@ s1ap_mme_itti_nas_downlink_cnf (
 void s1ap_mme_itti_s1ap_initial_ue_message(
   const sctp_assoc_id_t   assoc_id,
   const enb_ue_s1ap_id_t  enb_ue_s1ap_id,
-  const mme_ue_s1ap_id_t  mme_ue_s1ap_id,
   const uint8_t * const   nas_msg,
   const size_t            nas_msg_length,
   const tai_t      const* tai,
@@ -125,7 +124,6 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
 
   S1AP_INITIAL_UE_MESSAGE(message_p).sctp_assoc_id          = assoc_id;
   S1AP_INITIAL_UE_MESSAGE(message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
-  S1AP_INITIAL_UE_MESSAGE(message_p).mme_ue_s1ap_id         = mme_ue_s1ap_id;
 
   S1AP_INITIAL_UE_MESSAGE(message_p).nas                    = blk2bstr(nas_msg, nas_msg_length);
 
@@ -152,7 +150,6 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
     S1AP_INITIAL_UE_MESSAGE(message_p).is_gummei_valid      = false;
   }
 
-  S1AP_INITIAL_UE_MESSAGE(message_p).transparent.mme_ue_s1ap_id = mme_ue_s1ap_id;
   S1AP_INITIAL_UE_MESSAGE(message_p).transparent.enb_ue_s1ap_id = enb_ue_s1ap_id;
   S1AP_INITIAL_UE_MESSAGE(message_p).transparent.e_utran_cgi    = *ecgi;
 
@@ -161,8 +158,8 @@ void s1ap_mme_itti_s1ap_initial_ue_message(
         MSC_S1AP_MME,
         MSC_MMEAPP_MME,
         NULL,0,
-        "0 S1AP_INITIAL_UE_MESSAGE ue_id "MME_UE_S1AP_ID_FMT" as cause %u tai:%c%c%c.%c%c%c:%u len %u ",
-        mme_ue_s1ap_id,
+        "0 S1AP_INITIAL_UE_MESSAGE eNB ue_id "ENB_UE_S1AP_ID_FMT" as cause %u tai:%c%c%c.%c%c%c:%u len %u ",
+        enb_ue_s1ap_id,
         S1AP_INITIAL_UE_MESSAGE(message_p).rrc_establishment_cause,
         (char)(S1AP_INITIAL_UE_MESSAGE(message_p).tai.mcc_digit1 + 0x30),
         (char)(S1AP_INITIAL_UE_MESSAGE(message_p).tai.mcc_digit2 + 0x30),

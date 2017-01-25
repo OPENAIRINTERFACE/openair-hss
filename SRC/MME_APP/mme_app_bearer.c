@@ -197,18 +197,12 @@ mme_app_handle_initial_ue_message (
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP\n");
   XML_MSG_DUMP_ITTI_S1AP_INITIAL_UE_MESSAGE(initial_pP, TASK_S1AP, TASK_MME_APP, NULL);
 
-  if (INVALID_MME_UE_S1AP_ID != initial_pP->mme_ue_s1ap_id) {
-    ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_pP->mme_ue_s1ap_id);
-  }
+  enb_s1ap_id_key_t enb_s1ap_id_key = 0;
+  MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
+  ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_s1ap_id_key);
 
   if (!(ue_context_p)) {
-    enb_s1ap_id_key_t enb_s1ap_id_key = 0;
-    MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
-    ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_s1ap_id_key);
-  }
-  if (!(ue_context_p)) {
-    OAILOG_DEBUG (LOG_MME_APP, "Unknown  mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n",
-        initial_pP->mme_ue_s1ap_id, initial_pP->enb_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_MME_APP, "Unknown enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
   }
 
   if ((ue_context_p) && (ue_context_p->is_s1_ue_context_release)) {
@@ -226,7 +220,7 @@ mme_app_handle_initial_ue_message (
     }
     OAILOG_DEBUG (LOG_MME_APP, "Created new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
     ue_context_p->ecm_state         = ECM_CONNECTED;
-    ue_context_p->mme_ue_s1ap_id    = initial_pP->mme_ue_s1ap_id;
+    ue_context_p->mme_ue_s1ap_id    = INVALID_MME_UE_S1AP_ID;
     ue_context_p->enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
     MME_APP_ENB_S1AP_ID_KEY(ue_context_p->enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
     ue_context_p->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
@@ -242,7 +236,7 @@ mme_app_handle_initial_ue_message (
 
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_INITIAL_UE_MESSAGE);
   // do this because of same message types name but not same struct in different .h
-  message_p->ittiMsg.nas_initial_ue_message.nas.ue_id           = ue_context_p->mme_ue_s1ap_id;
+  message_p->ittiMsg.nas_initial_ue_message.nas.ue_id           = INVALID_MME_UE_S1AP_ID;
   message_p->ittiMsg.nas_initial_ue_message.nas.tai             = initial_pP->tai;
   message_p->ittiMsg.nas_initial_ue_message.nas.ecgi            = initial_pP->ecgi;
   message_p->ittiMsg.nas_initial_ue_message.nas.as_cause        = initial_pP->rrc_establishment_cause;

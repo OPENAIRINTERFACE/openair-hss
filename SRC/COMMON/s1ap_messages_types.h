@@ -46,7 +46,6 @@
 
 // NOT a ITTI message
 typedef struct s1ap_initial_ue_message_s {
-  mme_ue_s1ap_id_t     mme_ue_s1ap_id;
   enb_ue_s1ap_id_t     enb_ue_s1ap_id:24;
   ecgi_t                e_utran_cgi;
 } s1ap_initial_ue_message_t;
@@ -89,7 +88,6 @@ typedef struct itti_s1ap_ue_context_release_complete_s {
 
 typedef struct itti_s1ap_initial_ue_message_s {
   sctp_assoc_id_t     sctp_assoc_id; // key stored in MME_APP for MME_APP forward NAS response to S1AP
-  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
   enb_ue_s1ap_id_t    enb_ue_s1ap_id;
   bstring             nas;
   tai_t               tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */

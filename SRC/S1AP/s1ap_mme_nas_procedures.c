@@ -183,7 +183,6 @@ s1ap_mme_handle_initial_ue_message (
 #else
     s1ap_mme_itti_s1ap_initial_ue_message (assoc_id,
         ue_ref->enb_ue_s1ap_id,
-        ue_ref->mme_ue_s1ap_id,
         initialUEMessage_p->nas_pdu.buf,
         initialUEMessage_p->nas_pdu.size,
         &tai,

@@ -630,7 +630,7 @@ emm_context_add_imsi (
 }
 
 //------------------------------------------------------------------------------
-void emm_init_context(struct emm_context_s *emm_ctx)
+void emm_init_context(struct emm_context_s * const emm_ctx, const bool init_esm_ctxt)
 {
     emm_ctx->emm_cause       = EMM_CAUSE_SUCCESS;
     emm_ctx->_emm_fsm_state = EMM_INVALID;
@@ -641,6 +641,7 @@ void emm_init_context(struct emm_context_s *emm_ctx)
     emm_ctx->T3470.id        = NAS_TIMER_INACTIVE_ID;
     emm_ctx->T3470.sec       = mme_config.nas_config.t3470_sec;
     struct ue_mm_context_s * ue_mm_context = PARENT_STRUCT(emm_ctx, struct ue_mm_context_s, emm_context);
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Init UE id " MME_UE_S1AP_ID_FMT "\n", ue_mm_context->mme_ue_s1ap_id);
     emm_fsm_set_state (ue_mm_context->mme_ue_s1ap_id, emm_ctx, EMM_DEREGISTERED);
 
     emm_ctx_clear_guti(emm_ctx);
@@ -658,7 +659,9 @@ void emm_init_context(struct emm_context_s *emm_ctx)
     emm_ctx_clear_pending_current_drx_parameter(emm_ctx);
     emm_ctx_clear_eps_bearer_context_status(emm_ctx);
 
-    esm_init_context(&emm_ctx->esm_ctx);
+    if (init_esm_ctxt) {
+      esm_init_context(&emm_ctx->esm_ctx);
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -728,7 +731,6 @@ void emm_context_free(struct emm_context_s * const emm_ctx)
   if (emm_ctx ) {
     if (emm_ctx->esm_msg) {
       bdestroy_wrapper (&emm_ctx->esm_msg);
-      emm_ctx->esm_msg = NULL;
     }
 
     emm_context_stop_all_timers(emm_ctx);
@@ -744,7 +746,6 @@ void emm_context_free_content(struct emm_context_s * const emm_ctx)
   if (emm_ctx ) {
     if (emm_ctx->esm_msg) {
       bdestroy_wrapper (&emm_ctx->esm_msg);
-      emm_ctx->esm_msg = NULL;
     }
 
     emm_context_stop_all_timers(emm_ctx);
