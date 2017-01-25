@@ -144,6 +144,7 @@ emm_recv_attach_request (
   const tai_t              * const originating_tai,
   const ecgi_t             * const originating_ecgi,
   const attach_request_msg * const msg,
+  const bool                       is_initial,
   int * const emm_cause,
   const nas_message_decode_status_t  * decode_status)
 {
@@ -183,23 +184,23 @@ emm_recv_attach_request (
    */
   if (msg->epsattachtype == EPS_ATTACH_TYPE_EPS) {
     type = EMM_ATTACH_TYPE_EPS;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EPS\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EPS\n");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_COMBINED_EPS_IMSI) {
     type = EMM_ATTACH_TYPE_COMBINED_EPS_IMSI;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_COMBINED_EPS_IMSI\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_COMBINED_EPS_IMSI\n");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_EMERGENCY) {
     type = EMM_ATTACH_TYPE_EMERGENCY;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EMERGENCY\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EMERGENCY\n");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_RESERVED) {
     type = EMM_ATTACH_TYPE_RESERVED;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EMM_ATTACH_TYPE_RESERVED\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get attach type EMM_ATTACH_TYPE_RESERVED\n");
   } else {
     /*
      * Requirement MME24.301R10_9.9.3.11_1
      * All other values shall be interpreted as "EPS attach"
      */
     type = EMM_ATTACH_TYPE_EPS;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type forced to EMM_ATTACH_TYPE_EPS\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get attach type forced to EMM_ATTACH_TYPE_EPS\n");
   }
 
   /*
@@ -216,7 +217,7 @@ emm_recv_attach_request (
                                          *p_imei = NULL;
 
   if (msg->oldgutiorimsi.guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get GUTI\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get GUTI\n");
     /*
      * Get the GUTI
      */
@@ -231,7 +232,7 @@ emm_recv_attach_request (
     guti.gummei.mme_code = msg->oldgutiorimsi.guti.mme_code;
     guti.m_tmsi = msg->oldgutiorimsi.guti.m_tmsi;
   } else if (msg->oldgutiorimsi.imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMSI\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get IMSI\n");
     /*
      * Get the IMSI
      */
@@ -262,7 +263,7 @@ emm_recv_attach_request (
       }
     }
   } else if (msg->oldgutiorimsi.imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMEI\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get IMEI\n");
     /*
      * Get the IMEI
      */
@@ -295,7 +296,7 @@ emm_recv_attach_request (
                                          *p_last_visited_registered_tai = NULL;
 
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get LAST VISITED REGISTERED TAI\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get LAST VISITED REGISTERED TAI\n");
     p_last_visited_registered_tai = &last_visited_registered_tai;
     last_visited_registered_tai.mcc_digit1 = msg->lastvisitedregisteredtai.mcc_digit1;
     last_visited_registered_tai.mcc_digit2 = msg->lastvisitedregisteredtai.mcc_digit2;
@@ -309,7 +310,7 @@ emm_recv_attach_request (
   /*
    * Execute the requested UE attach procedure
    */
-  rc = emm_proc_attach_request (enb_ue_s1ap_id_key, ue_id, type,
+  rc = emm_proc_attach_request (enb_ue_s1ap_id_key, ue_id, is_initial, type,
                                 msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED,
                                 msg->naskeysetidentifier.naskeysetidentifier,
                                 msg->oldgutitype != GUTI_MAPPED, p_guti, p_imsi, p_imei,
@@ -553,6 +554,7 @@ emm_recv_tracking_area_update_request (
 int
 emm_recv_service_request (
   mme_ue_s1ap_id_t ue_id,
+  enb_ue_s1ap_id_t enb_ue_s1ap_id,
   const service_request_msg * msg,
   int *emm_cause,
   const nas_message_decode_status_t  * decode_status)
@@ -572,7 +574,7 @@ emm_recv_service_request (
      */
     // EMM causes for triggering an attach in the UE can be "UE identity cannot be derived by the network": EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW,
     // "Implicitly detached": EMM_CAUSE_IMPLICITLY_DETACHED,
-    rc = emm_proc_service_reject (ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
+    rc = emm_proc_service_reject (ue_id, enb_ue_s1ap_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

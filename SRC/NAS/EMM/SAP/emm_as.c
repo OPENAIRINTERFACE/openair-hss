@@ -121,6 +121,8 @@ static int _emm_as_recv (
 
 static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause);
 static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause);
+static int _emm_as_release_ind (const emm_as_release_t * const release, int *emm_cause);
+
 
 /*
    Functions executed to send data to the network when requested
@@ -190,7 +192,7 @@ int emm_as_send (const emm_as_t * msg)
   int                                     rc = RETURNok;
   int                                     emm_cause = EMM_CAUSE_SUCCESS;
   emm_as_primitive_t                      primitive = msg->primitive;
-  uint32_t                                ue_id = 0;
+  mme_ue_s1ap_id_t                        ue_id = 0;
 
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received primitive %s (%d)\n", _emm_as_primitive_str[primitive - _EMMAS_START - 1], primitive);
 
@@ -203,6 +205,11 @@ int emm_as_send (const emm_as_t * msg)
   case _EMMAS_ESTABLISH_REQ:
     rc = _emm_as_establish_req (&msg->u.establish, &emm_cause);
     ue_id = msg->u.establish.ue_id;
+    break;
+
+  case _EMMAS_RELEASE_IND:
+    rc = _emm_as_release_ind (&msg->u.release, &emm_cause);
+    ue_id = msg->u.release.ue_id;
     break;
 
   default:
@@ -364,7 +371,7 @@ static int _emm_as_recv (
     REQUIREMENT_3GPP_24_301(R10_4_4_4_3__2); // Integrity checking of NAS signalling messages in the MME
     enb_s1ap_id_key_t enb_s1ap_id_key = 0;
     MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, originating_ecgi->cell_identity.enb_id, INVALID_ENB_UE_S1AP_ID);
-    rc = emm_recv_attach_request (enb_s1ap_id_key, ue_id, originating_tai, originating_ecgi, &emm_msg->attach_request, emm_cause, decode_status);
+    rc = emm_recv_attach_request (enb_s1ap_id_key, ue_id, originating_tai, originating_ecgi, &emm_msg->attach_request, false, emm_cause, decode_status);
     break;
 
   case IDENTITY_RESPONSE:
@@ -633,7 +640,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
   switch (emm_msg->header.message_type) {
   case ATTACH_REQUEST:
     memcpy(&originating_tai, msg->tai, sizeof(originating_tai));
-    rc = emm_recv_attach_request (msg->enb_ue_s1ap_id_key, msg->ue_id, &originating_tai, &msg->ecgi, &emm_msg->attach_request, emm_cause, &decode_status);
+    rc = emm_recv_attach_request (msg->enb_ue_s1ap_id_key, msg->ue_id, &originating_tai, &msg->ecgi, &emm_msg->attach_request, msg->is_initial, emm_cause, &decode_status);
     break;
 
   case DETACH_REQUEST:
@@ -645,9 +652,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Initial NAS message TODO DETACH_REQUEST\n");
-    *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_IMPLEMENTED;
-    rc = RETURNok;              /* TODO */
+    rc = emm_recv_detach_request (msg->ue_id, &emm_msg->detach_request, emm_cause, &decode_status);
     break;
 
   case TRACKING_AREA_UPDATE_REQUEST:
@@ -664,7 +669,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
-    rc = emm_recv_service_request (msg->ue_id, &emm_msg->service_request, emm_cause, &decode_status);
+    rc = emm_recv_service_request (msg->ue_id, MME_APP_ENB_S1AP_ID_KEY2ENB_S1AP_ID(msg->enb_ue_s1ap_id_key), &emm_msg->service_request, emm_cause, &decode_status);
     break;
 
   case EXTENDED_SERVICE_REQUEST:
@@ -691,6 +696,13 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
+//------------------------------------------------------------------------------
+static int _emm_as_release_ind (const emm_as_release_t * const release, int *emm_cause)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int rc = lowerlayer_release(release->ue_id, release->cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
 
 /*
    --------------------------------------------------------------------------

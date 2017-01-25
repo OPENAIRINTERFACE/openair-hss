@@ -1002,10 +1002,17 @@ mme_config_parse_opt_line (
       config_pP->scenario_player_config.stop_on_error = false;
       OAI_FPRINTF_INFO ("%s mme_config.scenario_player_config.scenario_file %s\n", __FUNCTION__, bdata(config_pP->scenario_player_config.scenario_file));
       break;
+#else
+    case 's':
+    case 'S':
+      OAI_FPRINTF_ERR ("Should have compiled mme executable with TRACE_XML set in CMakeLists.template\n");
+      exit (0);
+      break;
 #endif
 
     case 'h':                  /* Fall through */
     default:
+      OAI_FPRINTF_ERR ("Unknown command line option %c\n", c);
       usage (argv[0]);
       exit (0);
     }

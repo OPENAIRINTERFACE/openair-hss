@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!-- Scenarios may contain also scenarios_file -->
 
-<scenario name="3gpp_24.301_Release_10_5_4_2_7_e">
+<scenario name="3gpp_24.301_Rel10_5_4_2_7_e">
 
   <!-- VARIABLES TO MME -->
   <var name="MME_CODE"                                    value="01"       />
@@ -43,6 +43,9 @@
     <file>../../MSGR10/ITTI_NAS_DOWNLINK_DATA_REQ.IDENTITY_REQUEST.xml</file>
   </message_file>
   <set_var name="MME_UE_S1AP_ID"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   />
+  <jcond var_name="MME_UE_S1AP_ID" cond="ne"  value="0xFFFFFFFF" label="checked_mme_ue_s1ap_id_invalid"/>
+    <exit  status="failed" />
+  <label name="checked_mme_ue_s1ap_id_invalid" />
 
   <!-- IDENTITY RESPONSE -->
   <message_file action="send" time="now"  time_ref="this">

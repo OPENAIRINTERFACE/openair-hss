@@ -24,27 +24,9 @@
 #ifndef FILE_MME_APP_ITTI_MESSAGING_SEEN
 #define FILE_MME_APP_ITTI_MESSAGING_SEEN
 
-#include "msc.h"
+int mme_app_notify_s1ap_ue_context_released(const mme_ue_s1ap_id_t   ue_idP);
+int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id);
+int mme_app_send_s11_release_access_bearers_req (struct ue_mm_context_s *const ue_mm_context, const pdn_cid_t pdn_index);
+int mme_app_send_s11_create_session_req (struct ue_mm_context_s *const ue_mm_context, const pdn_cid_t pdn_cid);
 
-
-static inline void mme_app_notify_s1ap_ue_context_released(
-  const mme_ue_s1ap_id_t   ue_idP)
-{
-  OAILOG_FUNC_IN(LOG_NAS);
-  MessageDef *message_p;
-
-  message_p = itti_alloc_new_message(TASK_MME_APP, MME_APP_DELETE_SESSION_RSP);
-
-  MME_APP_DELETE_SESSION_RSP(message_p).ue_id = ue_idP;
-
-  MSC_LOG_TX_MESSAGE(
-                MSC_MMEAPP_MME,
-                MSC_S1AP_MME,
-                NULL,0,
-                "0 MME_APP_DELETE_SESSION_RSP ue id %06"PRIX32" ",
-          ue_idP);
-
-  itti_send_msg_to_task(TASK_S1AP, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_OUT(LOG_NAS);
-}
 #endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */

@@ -100,6 +100,7 @@ EmmDeregisteredInitiated (
       rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
       break;
 
+    case _EMMREG_LOWERLAYER_RELEASE:
     case _EMMREG_LOWERLAYER_FAILURE:
       /*
        * Transmission failure occurred before the EMM common

@@ -608,6 +608,7 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_context.c
   ${MME_DIR}/mme_app_detach.c
   ${MME_DIR}/mme_app_edns_emulation.c
+  ${MME_DIR}/mme_app_itti_messaging.c
   ${MME_DIR}/mme_app_location.c
   ${MME_DIR}/mme_app_main.c
   ${MME_DIR}/mme_app_pdn_context.c

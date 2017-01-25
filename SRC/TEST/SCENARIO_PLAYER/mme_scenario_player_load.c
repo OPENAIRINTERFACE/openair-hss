@@ -248,6 +248,7 @@ scenario_player_item_t* msp_load_message_file (scenario_t * const scenario, xmlD
       }
     }
   }
+  message_log_status(scenario, filename, spi->uid, SCENARIO_XML_ITEM_MSG_FILE_LOAD_SUCCEED, NULL);
   bdestroy_wrapper (&xpath_expr);
   OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, spi);
 }
@@ -1045,7 +1046,7 @@ scenario_player_item_t *  msp_load_scenario (bstring file_path, scenario_player_
         if ((scenario_player_item = msp_load_message_file(scenario, doc, xpath_ctx, nodes->nodeTab[item], file_path))) {
           msp_scenario_add_item(scenario, scenario_player_item);
         } else {
-          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_MSG_FILE_LOAD_FAILED, bdata(file_path));
+          scenario_set_status(scenario, SCENARIO_STATUS_LOAD_FAILED, SCENARIO_XML_ITEM_MSG_FILE_LOAD_FAILED, NULL);
         }
       } else if ((!xmlStrcmp(nodes->nodeTab[item]->name, (const xmlChar *)EXIT_ATTR_XML_STR))) {
         if ((scenario_player_item = msp_load_exit(scenario, doc, xpath_ctx, nodes->nodeTab[item]))) {

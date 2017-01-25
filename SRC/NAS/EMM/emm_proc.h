@@ -122,6 +122,7 @@ int emm_proc_status(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 
 int emm_proc_attach_request(enb_s1ap_id_key_t enb_ue_s1ap_id_key,
                             mme_ue_s1ap_id_t ue_id,
+                            const bool is_initial,
                             const emm_proc_attach_type_t type,
                             const bool is_native_ksi, const ksi_t ksi,
                             const bool is_native_guti, guti_t *guti,
@@ -148,7 +149,7 @@ int emm_proc_tracking_area_update_reject (
         const mme_ue_s1ap_id_t ue_id,
         const emm_cause_t emm_cause);
 
-int emm_proc_service_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
+int emm_proc_service_reject (mme_ue_s1ap_id_t ue_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, emm_cause_t emm_cause);
 /*
  * --------------------------------------------------------------------------
  *              Detach procedure

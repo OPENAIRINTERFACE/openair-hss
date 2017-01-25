@@ -526,7 +526,7 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     Lower layer failure                                                                                                 \
     Upon detection of a lower layer failure before the IDENTITY RESPONSE is received, the network shall abort           \
     any ongoing EMM procedure."
-#define R10_5_4_4_6_a_BRIEF ""
+#define R10_5_4_4_6_a_BRIEF "Lower layer failure detected, abort iedentification procedure"
 
 #define R10_5_4_4_6_b__1 "Abnormal cases on the network side                                                            \
     Expiry of timer T3470                                                                                               \
@@ -592,7 +592,7 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     The network may initiate EMM common procedures, e.g. the identification, authentication and security mode control   \
     procedures during the attach procedure, depending on the information received in the ATTACH REQUEST message         \
     (e.g. IMSI, GUTI and KSI)."
-#define R10_5_5_1_2_3__1_BRIEF ""
+#define R10_5_5_1_2_3__1_BRIEF "EMM common procedure initiation during attach procedure"
 
 //#define R10_5_5_1_2_3__2 "Attach procedure - EMM common procedure initiation
 //    If the network receives an ATTACH REQUEST message containing the Old GUTI type IE and the EPS mobile identity

@@ -318,10 +318,10 @@ emm_proc_common_non_delivered_ho (emm_common_data_t **emm_common_data)
 int
 emm_proc_common_abort (emm_common_data_t **emm_common_data)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_common_abort_callback_t             emm_callback;
   int                                     rc = RETURNerror;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   if (*emm_common_data) {
     emm_callback = (*emm_common_data)->abort;

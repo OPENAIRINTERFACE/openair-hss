@@ -275,7 +275,6 @@ emm_fsm_process (
 
   if (emm_ctx) {
     state = emm_fsm_get_state (emm_ctx);
-    DevAssert (state != EMM_INVALID);
     OAILOG_INFO (LOG_NAS_EMM, "EMM-FSM   - Received event %s (%d) in state %s\n", _emm_fsm_event_str[primitive - _EMMREG_START - 1], primitive, _emm_fsm_status_str[state]);
     /*
      * Execute the EMM state machine

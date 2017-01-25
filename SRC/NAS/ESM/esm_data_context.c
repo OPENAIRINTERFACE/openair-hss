@@ -125,9 +125,12 @@ void free_esm_context_content(esm_context_t * esm_context)
 }
 
 //------------------------------------------------------------------------------
-void esm_init_context(struct esm_context_s *esm_ctx)
+void esm_init_context(struct esm_context_s *esm_context)
 {
-  memset(esm_ctx, 0, sizeof(*esm_ctx));
-  esm_ctx->T3489.id        = NAS_TIMER_INACTIVE_ID;
-  esm_ctx->T3489.sec       = mme_config.nas_config.t3489_sec;
+  emm_context_t        *emm_context   = PARENT_STRUCT(esm_context, struct emm_context_s, esm_ctx);
+  ue_mm_context_t      *ue_mm_context = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context);
+  OAILOG_DEBUG (LOG_NAS_ESM, "ESM-CTX - Init UE id " MME_UE_S1AP_ID_FMT "\n", ue_mm_context->mme_ue_s1ap_id);
+  memset(esm_context, 0, sizeof(*esm_context));
+  esm_context->T3489.id        = NAS_TIMER_INACTIVE_ID;
+  esm_context->T3489.sec       = mme_config.nas_config.t3489_sec;
 }

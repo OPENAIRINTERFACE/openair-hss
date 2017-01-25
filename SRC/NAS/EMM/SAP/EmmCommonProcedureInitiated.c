@@ -174,17 +174,18 @@ EmmCommonProcedureInitiated (
     rc = RETURNok;
     break;
 
+  case _EMMREG_LOWERLAYER_RELEASE:
   case _EMMREG_LOWERLAYER_FAILURE:
     /*
      * Transmission failure occurred before the EMM common
      * procedure being completed
      */
-    if (rc != RETURNerror) {
-      rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
-    }
+
     if ((emm_ctx) && (emm_ctx->common_proc)) {
       rc = emm_proc_common_ll_failure (&emm_ctx->common_proc);
     }
+
+    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED);
 
     break;
 

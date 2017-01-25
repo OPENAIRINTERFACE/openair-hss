@@ -74,16 +74,63 @@ void *mme_app_thread (void *args)
 
     switch (ITTI_MSG_ID (received_message_p)) {
 
-    case S6A_UPDATE_LOCATION_ANS:{
-        /*
-         * We received the update location answer message from HSS -> Handle it
-         */
-        mme_app_handle_s6a_update_location_ans (&received_message_p->ittiMsg.s6a_update_location_ans);
+    case MESSAGE_TEST:{
+        OAI_FPRINTF_INFO("TASK_MME_APP received MESSAGE_TEST\n");
       }
+      break;
+
+    case MME_APP_INITIAL_CONTEXT_SETUP_RSP:{
+        mme_app_handle_initial_context_setup_rsp (&MME_APP_INITIAL_CONTEXT_SETUP_RSP (received_message_p));
+      }
+      break;
+
+    case NAS_CONNECTION_ESTABLISHMENT_CNF:{
+        mme_app_handle_conn_est_cnf (&NAS_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
+      }
+      break;
+
+    case NAS_DETACH_REQ: {
+        mme_app_handle_detach_req(&received_message_p->ittiMsg.nas_detach_req);
+      }
+      break;
+
+    case NAS_DOWNLINK_DATA_REQ: {
+        mme_app_handle_nas_dl_req (&received_message_p->ittiMsg.nas_dl_data_req);
+      }
+      break;
+
+    case NAS_ERAB_SETUP_REQ:{
+      mme_app_handle_erab_setup_req (&NAS_ERAB_SETUP_REQ (received_message_p));
+    }
+    break;
+
+    case NAS_PDN_CONFIG_REQ: {
+        struct ue_mm_context_s                    *ue_context_p = NULL;
+        ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.nas_pdn_config_req.ue_id);
+        if (ue_context_p) {
+          if (!ue_context_p->is_s1_ue_context_release) {
+            mme_app_send_s6a_update_location_req(ue_context_p);
+          }
+        }
+      }
+      break;
+
+    case NAS_PDN_CONNECTIVITY_REQ:{
+        mme_app_handle_nas_pdn_connectivity_req (&received_message_p->ittiMsg.nas_pdn_connectivity_req);
+      }
+      break;
+
+    case S11_CREATE_BEARER_REQUEST:
+      mme_app_handle_s11_create_bearer_req (&received_message_p->ittiMsg.s11_create_bearer_request);
       break;
 
     case S11_CREATE_SESSION_RESPONSE:{
         mme_app_handle_create_sess_resp (&received_message_p->ittiMsg.s11_create_session_response);
+      }
+      break;
+
+    case S11_DELETE_SESSION_RESPONSE: {
+      mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.s11_delete_session_response);
       }
       break;
 
@@ -103,63 +150,59 @@ void *mme_app_thread (void *args)
       }
       break;
 
-    case S11_CREATE_BEARER_REQUEST:
-      mme_app_handle_create_bearer_req (&received_message_p->ittiMsg.s11_create_bearer_request);
-      break;
-
     case S11_RELEASE_ACCESS_BEARERS_RESPONSE:{
         mme_app_handle_release_access_bearers_resp (&received_message_p->ittiMsg.s11_release_access_bearers_response);
       }
       break;
 
-    case S11_DELETE_SESSION_RESPONSE: {
-      mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.s11_delete_session_response);
-      }
-      break;
-
-    case NAS_PDN_CONNECTIVITY_REQ:{
-        mme_app_handle_nas_pdn_connectivity_req (&received_message_p->ittiMsg.nas_pdn_connectivity_req);
-      }
-      break;
-
-    case NAS_PDN_CONFIG_REQ: {
-        struct ue_mm_context_s                    *ue_context_p = NULL;
-        ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.nas_pdn_config_req.ue_id);
-        if (ue_context_p) {
-          if (!ue_context_p->is_s1_ue_context_release) {
-            mme_app_send_s6a_update_location_req(ue_context_p);
-          }
-        }
-      }
-      break;
-
-    case NAS_DETACH_REQ: {
-        mme_app_handle_detach_req(&received_message_p->ittiMsg.nas_detach_req);
-      }
-      break;
-
-    case NAS_CONNECTION_ESTABLISHMENT_CNF:{
-        mme_app_handle_conn_est_cnf (&NAS_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
-      }
-      break;
-
-    case NAS_ERAB_SETUP_REQ:{
-      mme_app_handle_erab_setup_req (&NAS_ERAB_SETUP_REQ (received_message_p));
-    }
-    break;
-
-    case S1AP_INITIAL_UE_MESSAGE:{
-        mme_app_handle_initial_ue_message (&S1AP_INITIAL_UE_MESSAGE (received_message_p));
-      }
-      break;
 
     case S1AP_E_RAB_SETUP_RSP:{
         mme_app_handle_e_rab_setup_rsp (&S1AP_E_RAB_SETUP_RSP (received_message_p));
       }
       break;
 
-    case MME_APP_INITIAL_CONTEXT_SETUP_RSP:{
-        mme_app_handle_initial_context_setup_rsp (&MME_APP_INITIAL_CONTEXT_SETUP_RSP (received_message_p));
+    case S1AP_ENB_DEREGISTERED_IND: {
+        mme_app_handle_s1ap_enb_deregistered_ind (&received_message_p->ittiMsg.s1ap_eNB_deregistered_ind);
+      }
+      break;
+
+    case S1AP_INITIAL_UE_MESSAGE:{
+        mme_app_handle_initial_ue_message (&S1AP_INITIAL_UE_MESSAGE (received_message_p));
+      }
+      break;
+
+    case S1AP_UE_CAPABILITIES_IND:{
+        mme_app_handle_s1ap_ue_capabilities_ind (&received_message_p->ittiMsg.s1ap_ue_cap_ind);
+      }
+      break;
+
+    case S1AP_UE_CONTEXT_RELEASE_COMPLETE:{
+        mme_app_handle_s1ap_ue_context_release_complete (&received_message_p->ittiMsg.s1ap_ue_context_release_complete);
+      }
+      break;
+
+    case S1AP_UE_CONTEXT_RELEASE_REQ:{
+        mme_app_handle_s1ap_ue_context_release_req (&received_message_p->ittiMsg.s1ap_ue_context_release_req);
+      }
+      break;
+
+    case S6A_UPDATE_LOCATION_ANS:{
+        /*
+         * We received the update location answer message from HSS -> Handle it
+         */
+        mme_app_handle_s6a_update_location_ans (&received_message_p->ittiMsg.s6a_update_location_ans);
+      }
+      break;
+
+    case TERMINATE_MESSAGE:{
+        /*
+         * Termination message received TODO -> release any data allocated
+         */
+        mme_app_exit();
+        itti_free_msg_content(received_message_p);
+        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+        OAI_FPRINTF_INFO("TASK_MME_APP terminated\n");
+        itti_exit_task ();
       }
       break;
 
@@ -170,36 +213,6 @@ void *mme_app_thread (void *args)
         if (received_message_p->ittiMsg.timer_has_expired.timer_id == mme_app_desc.statistic_timer_id) {
           mme_app_statistics_display ();
         }
-      }
-      break;
-
-    case TERMINATE_MESSAGE:{
-        /*
-         * Termination message received TODO -> release any data allocated
-         */
-        mme_app_exit();
-        OAI_FPRINTF_INFO("TASK_MME_APP terminated\n");
-        itti_exit_task ();
-      }
-      break;
-
-    case S1AP_UE_CAPABILITIES_IND:{
-        mme_app_handle_s1ap_ue_capabilities_ind (&received_message_p->ittiMsg.s1ap_ue_cap_ind);
-      }
-      break;
-
-    case S1AP_UE_CONTEXT_RELEASE_REQ:{
-        mme_app_handle_s1ap_ue_context_release_req (&received_message_p->ittiMsg.s1ap_ue_context_release_req);
-      }
-      break;
-
-    case S1AP_UE_CONTEXT_RELEASE_COMPLETE:{
-        mme_app_handle_s1ap_ue_context_release_complete (&received_message_p->ittiMsg.s1ap_ue_context_release_complete);
-      }
-      break;
-
-    case NAS_DOWNLINK_DATA_REQ: {
-        mme_app_handle_nas_dl_req (&received_message_p->ittiMsg.nas_dl_data_req);
       }
       break;
 

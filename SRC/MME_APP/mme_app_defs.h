@@ -43,14 +43,13 @@ typedef struct mme_app_desc_s {
 
 extern mme_app_desc_t mme_app_desc;
 
+void mme_app_handle_s1ap_enb_deregistered_ind (const itti_s1ap_eNB_deregistered_ind_t * const enb_dereg_ind);
+
 int mme_app_handle_s1ap_ue_capabilities_ind  (const itti_s1ap_ue_cap_ind_t const * s1ap_ue_cap_ind_pP);
 
 void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context_release_complete_t const *s1ap_ue_context_release_complete);
 
 void mme_app_send_s1ap_ue_context_release_command (ue_mm_context_t *ue_context, S1ap_Cause_t cause);
-
-
-int mme_app_send_s11_release_access_bearers_req (struct ue_mm_context_s *const ue_context_pP, pdn_cid_t pdn_index);
 
 int mme_app_send_s11_create_session_req (struct ue_mm_context_s *const ue_mm_context, const pdn_cid_t pdn_cid);
 
@@ -78,7 +77,7 @@ int mme_app_handle_authentication_info_answer(const s6a_auth_info_ans_t * const 
 
 void  mme_app_handle_release_access_bearers_resp (const itti_s11_release_access_bearers_response_t * const rel_access_bearers_rsp_pP);
 
-void mme_app_handle_create_bearer_req        (const itti_s11_create_bearer_request_t * const create_bearer_request_pP);
+void mme_app_handle_s11_create_bearer_req        (const itti_s11_create_bearer_request_t * const create_bearer_request_pP);
 
 void mme_app_bearer_create_workflow (ue_mm_context_t * const ue_context, const pdn_cid_t cid);
 

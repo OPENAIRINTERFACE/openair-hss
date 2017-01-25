@@ -49,7 +49,8 @@ typedef enum {
   SCENARIO_PLAYER_ITEM_EXIT,
   SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER,
   SCENARIO_PLAYER_ITEM_COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER,
-  SCENARIO_PLAYER_ITEM_UPDATE_EMM_SECURITY_CONTEXT
+  SCENARIO_PLAYER_ITEM_UPDATE_EMM_SECURITY_CONTEXT,
+  SCENARIO_PLAYER_ITEM_HSS_DATABASE_INIT
 } scenario_player_item_type_t;
 
 struct scenario_player_item_s;
@@ -208,6 +209,7 @@ typedef enum {
   SCENARIO_REASON_NONE = 0,
   SCENARIO_XML_FILE_LOAD_SUCCEED,
   SCENARIO_XML_FILE_LOAD_FAILED,
+  SCENARIO_XML_ITEM_MSG_FILE_LOAD_SUCCEED,
   SCENARIO_XML_ITEM_MSG_FILE_LOAD_FAILED,
   SCENARIO_XML_ITEM_EXIT_LOAD_FAILED,
   SCENARIO_XML_ITEM_LABEL_LOAD_FAILED,
@@ -218,6 +220,7 @@ typedef enum {
   SCENARIO_XML_ITEM_JUMP_ON_COND_LOAD_FAILED,
   SCENARIO_XML_ITEM_SLEEP_LOAD_FAILED,
   SCENARIO_XML_USIM_LOAD_FAILED,
+  SCENARIO_XML_HSS_DATABASE_INIT_LOAD_FAILED,
   SCENARIO_XML_ITEM_COMPUTE_AUTHENTICATION_RESPONSE_PARAMETER_LOAD_FAILED,
   SCENARIO_XML_ITEM_COMPUTE_AUTHENTICATION_SYNC_FAILURE_PARAMETER_LOAD_FAILED,
   SCENARIO_XML_ITEM_UPDATE_EMM_SECURITY_CONTEXT_LOAD_FAILED,
@@ -271,6 +274,7 @@ typedef struct scenario_player_s {
 usim_data_t * msp_get_usim_data(scenario_t * const scenario);
 emm_security_context_t * msp_get_ue_emulated_emm_security_context(scenario_t * const scenario);
 int msp_load_usim_data (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
+scenario_player_item_t *msp_load_database_init (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t *msp_load_update_emm_security_context (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
 scenario_player_item_t* msp_load_set_var (scenario_t * const scenario, xmlDocPtr const xml_doc, xmlXPathContextPtr  xpath_ctx, xmlNodePtr node);
@@ -305,6 +309,8 @@ struct timer_has_expired_s;
 void msp_scenario_tick(scenario_t * const scenario);
 bstring scenario_get_scenario_full_path_name(scenario_t * const scenario);
 void scenario_set_status(scenario_t * const scenario, const scenario_status_t scenario_status, const scenario_reason_t scenario_reason, char* hint);
+void message_log_status(scenario_t * const scenario, const char * const str_file_path, int uid, const scenario_reason_t scenario_reason, char* extra);
+
 void msp_handle_timer_expiry (struct timer_has_expired_s * const timer_has_expired);
 void msp_get_elapsed_time_since_scenario_start(scenario_t * const scenario, struct timeval * const elapsed_time);
 bool msp_send_tx_message_no_delay(scenario_t * const scenario, scenario_player_item_t * const item);

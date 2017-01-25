@@ -96,20 +96,30 @@ void *s6a_thread (void *args)
     DevAssert (received_message_p );
 
     switch (ITTI_MSG_ID (received_message_p)) {
-    case S6A_UPDATE_LOCATION_REQ:{
-        s6a_generate_update_location (&received_message_p->ittiMsg.s6a_update_location_req);
+    case MESSAGE_TEST:{
+        OAI_FPRINTF_INFO("TASK_S6A received MESSAGE_TEST\n");
       }
       break;
+
     case S6A_AUTH_INFO_REQ:{
         s6a_generate_authentication_info_req (&received_message_p->ittiMsg.s6a_auth_info_req);
       }
       break;
+
+    case S6A_UPDATE_LOCATION_REQ:{
+        s6a_generate_update_location (&received_message_p->ittiMsg.s6a_update_location_req);
+      }
+      break;
+
     case TERMINATE_MESSAGE:{
         s6a_exit();
+        itti_free_msg_content(received_message_p);
+        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
         OAI_FPRINTF_INFO("TASK_S6A terminated\n");
         itti_exit_task ();
       }
       break;
+
     default:{
         OAILOG_DEBUG (LOG_S6A, "Unkwnon message ID %d: %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
