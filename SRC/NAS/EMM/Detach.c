@@ -213,6 +213,8 @@ emm_proc_detach_request (
 
   emm_context_t *emm_ctx = &ue_mm_context->emm_context;
 
+  emm_context_silently_reset_procedures(emm_ctx);
+
   if (switch_off) {
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Clearing secu/auth UE context ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
 

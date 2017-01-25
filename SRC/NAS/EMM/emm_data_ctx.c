@@ -722,6 +722,13 @@ void emm_context_silently_reset_procedures(
     if (emm_ctx->common_proc) {
       emm_common_cleanup(&emm_ctx->common_proc);
     }
+    emm_ctx_unmark_common_procedure_running(emm_ctx, EMM_CTXT_COMMON_PROC_GUTI | EMM_CTXT_COMMON_PROC_AUTH  |
+                                                     EMM_CTXT_COMMON_PROC_SMC  | EMM_CTXT_COMMON_PROC_IDENT |
+                                                     EMM_CTXT_COMMON_PROC_INFO);
+    emm_ctx_unmark_specific_procedure_running(emm_ctx, EMM_CTXT_SPEC_PROC_ATTACH | EMM_CTXT_SPEC_PROC_ATTACH_ACCEPT_SENT |
+                                                       EMM_CTXT_SPEC_PROC_ATTACH_REJECT_SENT | EMM_CTXT_SPEC_PROC_TAU    |
+                                                       EMM_CTXT_SPEC_PROC_TAU_ACCEPT_SENT    | EMM_CTXT_SPEC_PROC_TAU_REJECT_SENT |
+                                                       EMM_CTXT_SPEC_PROC_MME_INITIATED_DETACH_SENT);
   }
   OAILOG_FUNC_OUT (LOG_NAS_EMM);
 }

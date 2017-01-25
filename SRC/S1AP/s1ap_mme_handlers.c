@@ -775,7 +775,8 @@ s1ap_handle_ue_context_release_command (
      * MME doesn't know the MME UE S1AP ID provided.
      * * * * TODO
      */
-    OAILOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_COMMAND ignored cause could not get context with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " %u(10)\n", ue_context_release_command_pP->mme_ue_s1ap_id, ue_context_release_command_pP->mme_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_S1AP, "UE_CONTEXT_RELEASE_COMMAND ignored cause could not get context with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+        ue_context_release_command_pP->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UE_CONTEXT_RELEASE_COMMAND ignored, no context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ue_context_release_command_pP->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   } else {

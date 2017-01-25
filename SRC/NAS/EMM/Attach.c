@@ -235,7 +235,8 @@ emm_proc_attach_request (
     imsi64 = imsi_to_imsi64(imsi);
   }
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EPS attach type = %s (%d) requested (ue_id=" MME_UE_S1AP_ID_FMT ")\n", _emm_attach_type_str[type], type, ue_id);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  ATTACH - EPS attach type = %s (%d) initial %u requested (ue_id=" MME_UE_S1AP_ID_FMT ")\n",
+      _emm_attach_type_str[type], type, is_initial, ue_id);
   /*
    * Initialize the temporary UE context
    */
@@ -253,7 +254,9 @@ emm_proc_attach_request (
         ue_id = ue_mm_context->mme_ue_s1ap_id;
         if (ue_mm_context->enb_s1ap_id_key != enb_ue_s1ap_id_key) {
           duplicate_enb_context_detected = true;
-          OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - Found old ue_mm_context matching GUTI in ATTACH_REQUEST\n");
+          OAILOG_TRACE (LOG_NAS_EMM,
+              "EMM-PROC  - Found old ue_mm_context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " matching GUTI in ATTACH_REQUEST\n",
+              ue_mm_context->enb_ue_s1ap_id, ue_mm_context->mme_ue_s1ap_id);
         }
       }
     }
@@ -264,6 +267,9 @@ emm_proc_attach_request (
         if (ue_mm_context->enb_s1ap_id_key != enb_ue_s1ap_id_key) {
           OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - Found old ue_mm_context matching IMSI in ATTACH_REQUEST\n");
           duplicate_enb_context_detected = true;
+          OAILOG_TRACE (LOG_NAS_EMM,
+              "EMM-PROC  - Found old ue_mm_context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " matching IMSI in ATTACH_REQUEST\n",
+              ue_mm_context->enb_ue_s1ap_id, ue_mm_context->mme_ue_s1ap_id);
         }
       }
     }
@@ -282,6 +288,9 @@ emm_proc_attach_request (
       // remove new context
       ue_mm_context = mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id, REMOVE_NEW_CONTEXT);
       duplicate_enb_context_detected = false; // Problem solved
+      OAILOG_TRACE (LOG_NAS_EMM,
+          "EMM-PROC  - ue_mm_context now enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+          ue_mm_context->enb_ue_s1ap_id, ue_mm_context->mme_ue_s1ap_id);
     }
   }
 
@@ -1638,13 +1647,14 @@ _emm_attach_have_changed (
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, true);
   }
 
+  /* Bad test
   if ((!imsi) && (IS_EMM_CTXT_VALID_IMSI(emm_context))) {
     char                                    imsi_str[16];
 
     IMSI_TO_STRING (&emm_context->_imsi, imsi_str, 16);
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  _emm_attach_have_changed: imsi NULL/%s (ctxt)\n", imsi_str);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, true);
-  }
+  } */
 
   if ((imsi) && (IS_EMM_CTXT_VALID_IMSI(emm_context))) {
     if (memcmp (imsi, &emm_context->_imsi, sizeof (emm_context->_imsi)) != 0) {
@@ -1750,8 +1760,10 @@ _emm_attach_update (
   /*
    * Security key set identifier
    */
-  OAILOG_TRACE (LOG_NAS_EMM, "UE id " MME_UE_S1AP_ID_FMT " Update ue ksi %d -> %d\n", ue_mm_context->mme_ue_s1ap_id, emm_context->ue_ksi, ksi);
-  emm_context->ue_ksi = ksi;
+  if (emm_context->ue_ksi != ksi) {
+    OAILOG_TRACE (LOG_NAS_EMM, "UE id " MME_UE_S1AP_ID_FMT " Update ue ksi %d -> %d\n", ue_mm_context->mme_ue_s1ap_id, emm_context->ue_ksi, ksi);
+    emm_context->ue_ksi = ksi;
+  }
   /*
    * Supported EPS encryption algorithms
    */

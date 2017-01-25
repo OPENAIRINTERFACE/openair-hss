@@ -255,6 +255,9 @@ mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
         }
         mme_app_ue_context_free_content(new);
         free_wrapper((void**)&new);
+
+        s1ap_notified_new_ue_mme_s1ap_id_association (old->sctp_assoc_id_key, old->enb_ue_s1ap_id, old->mme_ue_s1ap_id);
+
         OAILOG_DEBUG (LOG_MME_APP,
             "Removed new UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
             new_enb_ue_s1ap_id, old_mme_ue_s1ap_id);

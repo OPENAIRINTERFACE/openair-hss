@@ -184,23 +184,23 @@ emm_recv_attach_request (
    */
   if (msg->epsattachtype == EPS_ATTACH_TYPE_EPS) {
     type = EMM_ATTACH_TYPE_EPS;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EPS\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EPS\n");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_COMBINED_EPS_IMSI) {
     type = EMM_ATTACH_TYPE_COMBINED_EPS_IMSI;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_COMBINED_EPS_IMSI\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_COMBINED_EPS_IMSI\n");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_EMERGENCY) {
     type = EMM_ATTACH_TYPE_EMERGENCY;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EMERGENCY\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get attach type EPS_ATTACH_TYPE_EMERGENCY\n");
   } else if (msg->epsattachtype == EPS_ATTACH_TYPE_RESERVED) {
     type = EMM_ATTACH_TYPE_RESERVED;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type EMM_ATTACH_TYPE_RESERVED\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get attach type EMM_ATTACH_TYPE_RESERVED\n");
   } else {
     /*
      * Requirement MME24.301R10_9.9.3.11_1
      * All other values shall be interpreted as "EPS attach"
      */
     type = EMM_ATTACH_TYPE_EPS;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get attach type forced to EMM_ATTACH_TYPE_EPS\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get attach type forced to EMM_ATTACH_TYPE_EPS\n");
   }
 
   /*
@@ -217,7 +217,7 @@ emm_recv_attach_request (
                                          *p_imei = NULL;
 
   if (msg->oldgutiorimsi.guti.typeofidentity == EPS_MOBILE_IDENTITY_GUTI) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get GUTI\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get GUTI\n");
     /*
      * Get the GUTI
      */
@@ -232,7 +232,7 @@ emm_recv_attach_request (
     guti.gummei.mme_code = msg->oldgutiorimsi.guti.mme_code;
     guti.m_tmsi = msg->oldgutiorimsi.guti.m_tmsi;
   } else if (msg->oldgutiorimsi.imsi.typeofidentity == EPS_MOBILE_IDENTITY_IMSI) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMSI\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get IMSI\n");
     /*
      * Get the IMSI
      */
@@ -263,7 +263,7 @@ emm_recv_attach_request (
       }
     }
   } else if (msg->oldgutiorimsi.imei.typeofidentity == EPS_MOBILE_IDENTITY_IMEI) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get IMEI\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get IMEI\n");
     /*
      * Get the IMEI
      */
@@ -296,7 +296,7 @@ emm_recv_attach_request (
                                          *p_last_visited_registered_tai = NULL;
 
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - get LAST VISITED REGISTERED TAI\n");
+    OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get LAST VISITED REGISTERED TAI\n");
     p_last_visited_registered_tai = &last_visited_registered_tai;
     last_visited_registered_tai.mcc_digit1 = msg->lastvisitedregisteredtai.mcc_digit1;
     last_visited_registered_tai.mcc_digit2 = msg->lastvisitedregisteredtai.mcc_digit2;

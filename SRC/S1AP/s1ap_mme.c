@@ -139,7 +139,7 @@ s1ap_mme_thread (
       }
       break;
 
-      // From NAS layer.
+      // Forwarded from MME_APP layer (origin NAS).
     case NAS_DOWNLINK_DATA_REQ:{
         /*
          * New message received from NAS task.
