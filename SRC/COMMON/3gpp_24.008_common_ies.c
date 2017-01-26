@@ -850,7 +850,7 @@ int decode_mobile_station_classmark_3_ie (
   uint8_t * buffer,
   const uint32_t len)
 {
-  AssertFatal(false, "TODO");
+  //AssertFatal(false, "TODO");
   return 0;
 }
 
@@ -861,7 +861,7 @@ int encode_mobile_station_classmark_3_ie(
   uint8_t * buffer,
   const uint32_t len)
 {
-  AssertFatal(false, "TODO");
+  //AssertFatal(false, "TODO");
   return 0;
 }
 

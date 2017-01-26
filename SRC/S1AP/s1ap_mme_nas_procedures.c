@@ -653,7 +653,8 @@ s1ap_handle_conn_est_cnf (
 
   if (s1ap_mme_encode_pdu (&message, &buffer_p, &length) < 0) {
     // TODO: handle something
-    DevMessage ("Failed to encode initial context setup request message\n");
+    OAILOG_ERROR (LOG_S1AP, "Failed to encode initial context setup request message\n");
+    OAILOG_FUNC_OUT (LOG_S1AP);
   }
 
   OAILOG_NOTICE (LOG_S1AP, "Send S1AP_INITIAL_CONTEXT_SETUP_REQUEST message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
