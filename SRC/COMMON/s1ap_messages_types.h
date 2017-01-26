@@ -92,6 +92,7 @@ typedef struct itti_s1ap_ue_context_release_req_s {
 enum s1cause {
   S1AP_NAS_DETACH,
   S1AP_RADIO_EUTRAN_GENERATED_REASON,
+  S1AP_IMPLICIT_CONTEXT_RELEASE 
 };
 typedef struct itti_s1ap_ue_context_release_command_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;

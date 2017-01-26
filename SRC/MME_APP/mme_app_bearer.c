@@ -551,17 +551,22 @@ mme_app_handle_delete_session_rsp (
   update_mme_app_stats_s1u_bearer_sub();
   update_mme_app_stats_default_bearer_sub();
   
-  // Send UE Context Release Command 
-  ue_context_p->ue_context_rel_cause = S1AP_NAS_DETACH;
-
-  // If already in idle state, skip telling eNB to release context and just
-  // clean up on our end.
+  /*
+   * If UE is already in idle state, skip asking eNB to release UE context and just clean up locally. 
+   * This can happen during implicit detach and UE initiated detach when UE sends detach req (type = switch off) 
+   * as initial NAS message. 
+   */
   if (ECM_IDLE == ue_context_p->ecm_state) {
-    mme_notify_ue_context_released(&mme_app_desc.mme_ue_contexts, ue_context_p);
-    mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+    ue_context_p->ue_context_rel_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
+    // Notify S1AP to release S1AP UE context locally
+    mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
+    // Free MME UE Context   
+    mme_notify_ue_context_released (&mme_app_desc.mme_ue_contexts, ue_context_p);
+    mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p);
   } else {
-    mme_app_itti_ue_context_release (
-      ue_context_p, ue_context_p->ue_context_rel_cause);
+    ue_context_p->ue_context_rel_cause = S1AP_NAS_DETACH;
+    // Notify S1AP to send UE Context Release Command to eNB
+    mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
   }
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
