@@ -231,10 +231,14 @@ emm_send_attach_accept (
    * Mandatory - T3412 value
    */
   size += GPRS_TIMER_MAXIMUM_LENGTH;
-  if (mme_config.nas_config.t3412_min <= 31) {
+  // Check whether Periodic TAU timer is disabled 
+  if (mme_config.nas_config.t3412_min == 0) {
+    emm_msg->t3412value.unit = GPRS_TIMER_UNIT_0S;
+    emm_msg->t3412value.timervalue = mme_config.nas_config.t3412_min;
+  } else if (mme_config.nas_config.t3412_min <= 31) {
     emm_msg->t3412value.unit = GPRS_TIMER_UNIT_60S;
     emm_msg->t3412value.timervalue = mme_config.nas_config.t3412_min;
-  } else  {
+  } else {
     emm_msg->t3412value.unit = GPRS_TIMER_UNIT_360S;
     emm_msg->t3412value.timervalue = mme_config.nas_config.t3412_min / 6;
   }
