@@ -42,6 +42,7 @@ void     *mme_app_thread (void *args);
 void *mme_app_thread (
   void *args)
 {
+  struct ue_context_s                    *ue_context_p = NULL;
   itti_mark_task_ready (TASK_MME_APP);
   MSC_START_USE ();
 
@@ -72,7 +73,6 @@ void *mme_app_thread (
       break;
 
     case S11_MODIFY_BEARER_RESPONSE:{
-        struct ue_context_s                    *ue_context_p = NULL;
         ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.s11_modify_bearer_response.teid);
 
         if (ue_context_p == NULL) {
@@ -128,10 +128,24 @@ void *mme_app_thread (
 
     case TIMER_HAS_EXPIRED:{
         /*
-         * Check if it is the statistic timer
+         * Check statistic timer
          */
         if (received_message_p->ittiMsg.timer_has_expired.timer_id == mme_app_desc.statistic_timer_id) {
           mme_app_statistics_display ();
+        } else if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) { 
+          mme_ue_s1ap_id_t mme_ue_s1ap_id = *((mme_ue_s1ap_id_t *)(received_message_p->ittiMsg.timer_has_expired.arg));
+          ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
+          if (ue_context_p == NULL) {
+            OAILOG_WARNING (LOG_MME_APP, "Timer expired but no assoicated UE context for UE id %d\n",mme_ue_s1ap_id);
+            break;
+          }
+          if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->mobile_reachability_timer.id) {
+            // Mobile Reachability Timer expiry handler 
+            mme_app_handle_mobile_reachability_timer_expiry (ue_context_p);
+          } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->implicit_detach_timer.id) {
+            // Implicit Detach Timer expiry handler 
+            mme_app_handle_implicit_detach_timer_expiry (ue_context_p);
+          }
         }
       }
       break;

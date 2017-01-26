@@ -182,6 +182,18 @@ static int _emm_cn_deregister_ue (const uint32_t ue_id)
 }
 
 //------------------------------------------------------------------------------
+static int _emm_cn_implicit_detach_ue (const uint32_t ue_id)
+{
+  int                                     rc = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC Implicit Detach UE" MME_UE_S1AP_ID_FMT "\n", ue_id);
+  emm_proc_detach_request (ue_id, EMM_DETACH_TYPE_EPS, 1 /*switch_off */ , 0 /*native_ksi */ , 0 /*ksi */ ,
+                           NULL /*guti */ , NULL /*imsi */ , NULL /*imei */ );
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
 static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 {
   int                                     rc = RETURNerror;
@@ -394,6 +406,10 @@ int emm_cn_send (const emm_cn_t * msg)
 
   case EMMCN_PDN_CONNECTIVITY_FAIL:
     rc = _emm_cn_pdn_connectivity_fail (msg->u.emm_cn_pdn_fail);
+    break;
+  
+  case EMMCN_IMPLICIT_DETACH_UE:
+    rc = _emm_cn_implicit_detach_ue (msg->u.emm_cn_implicit_detach.ue_id);
     break;
 
   default:

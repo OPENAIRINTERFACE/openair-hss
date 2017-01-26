@@ -114,6 +114,10 @@ int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);
 void mme_ue_context_update_ue_sig_connection_state (mme_ue_context_t * const mme_ue_context_p,
                                                                             struct ue_context_s *ue_context_p,ecm_state_t new_ecm_state);
 
+void mme_app_handle_mobile_reachability_timer_expiry (struct ue_context_s *ue_context_p);
+
+void mme_app_handle_implicit_detach_timer_expiry (struct ue_context_s *ue_context_p); 
+
 #define mme_stats_read_lock(mMEsTATS)  pthread_rwlock_rdlock(&(mMEsTATS)->rw_lock)
 #define mme_stats_write_lock(mMEsTATS) pthread_rwlock_wrlock(&(mMEsTATS)->rw_lock)
 #define mme_stats_unlock(mMEsTATS)     pthread_rwlock_unlock(&(mMEsTATS)->rw_lock)

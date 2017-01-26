@@ -60,6 +60,7 @@
 #define NAS_AUTHENTICATION_REQ(mSGpTR)              (mSGpTR)->ittiMsg.nas_auth_req
 #define NAS_AUTHENTICATION_PARAM_REQ(mSGpTR)        (mSGpTR)->ittiMsg.nas_auth_param_req
 #define NAS_DETACH_REQ(mSGpTR)                      (mSGpTR)->ittiMsg.nas_detach_req
+#define NAS_IMPLICIT_DETACH_UE_IND(mSGpTR)          (mSGpTR)->ittiMsg.nas_implicit_detach_ue_ind
 #define NAS_DATA_LENGHT_MAX     256
 
 
@@ -352,6 +353,11 @@ typedef struct itti_nas_detach_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t ue_id;
 } itti_nas_detach_req_t;
+
+typedef struct itti_nas_implicit_detach_ue_ind_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t ue_id;
+} itti_nas_implicit_detach_ue_ind_t;
 
 
 #endif /* FILE_NAS_MESSAGES_TYPES_SEEN */

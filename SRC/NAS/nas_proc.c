@@ -472,6 +472,20 @@ nas_proc_pdn_connectivity_fail (
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
+//------------------------------------------------------------------------------
+int
+nas_proc_implicit_deatch_ue_ind (
+  mme_ue_s1ap_id_t ue_id)
+{
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ue_id;
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
 
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/

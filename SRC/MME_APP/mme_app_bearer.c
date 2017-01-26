@@ -42,6 +42,7 @@
 #include "mme_config.h"
 #include "emmData.h"
 #include "mme_app_statistics.h"
+#include "timer.h"
 
 //----------------------------------------------------------------------------
 static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t * const s_tmsi_p,  guti_t * const guti_p);
@@ -865,6 +866,43 @@ mme_app_handle_release_access_bearers_resp (
   mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
+//------------------------------------------------------------------------------
+void
+mme_app_handle_mobile_reachability_timer_expiry (struct ue_context_s *ue_context_p) 
+{
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (ue_context_p != NULL);
+  ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  OAILOG_DEBUG (LOG_MME_APP, "Expired- Mobile Reachability Timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  // Start Implicit Detach timer 
+  if (timer_setup (ue_context_p->implicit_detach_timer.sec, 0, 
+                TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)&(ue_context_p->mme_ue_s1ap_id), &(ue_context_p->implicit_detach_timer.id)) < 0) { 
+    OAILOG_ERROR (LOG_MME_APP, "Failed to start Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  } else {
+    OAILOG_DEBUG (LOG_MME_APP, "Started Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  }
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+//------------------------------------------------------------------------------
+void
+mme_app_handle_implicit_detach_timer_expiry (struct ue_context_s *ue_context_p) 
+{
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (ue_context_p != NULL);
+  MessageDef                             *message_p = NULL;
+  OAILOG_DEBUG (LOG_MME_APP, "Expired- Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  
+  // Initiate Implicit Detach for the UE
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+  DevAssert (message_p != NULL);
+  message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context_p->mme_ue_s1ap_id;
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
 
 //------------------------------------------------------------------------------
 static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t * const s_tmsi_p,  guti_t * const guti_p)

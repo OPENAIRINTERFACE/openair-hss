@@ -127,6 +127,11 @@ static void *nas_intertask_interface (void *args_p)
         nas_proc_deregister_ue (S1AP_DEREGISTER_UE_REQ (received_message_p).mme_ue_s1ap_id);
       }
       break;
+    
+    case NAS_IMPLICIT_DETACH_UE_IND:{
+        nas_proc_implicit_deatch_ue_ind (NAS_IMPLICIT_DETACH_UE_IND (received_message_p).ue_id);
+      }
+      break;
 
     case TERMINATE_MESSAGE:{
         nas_exit();

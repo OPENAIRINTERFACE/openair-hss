@@ -687,9 +687,11 @@ void mme_ue_context_update_ue_sig_connection_state (
     ue_context_p->ecm_state       = ECM_IDLE;
     
     // Start Mobile reachability timer 
-    if (timer_setup (ue_context_p->mobile_reachability_timer.sec, 0, TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &(ue_context_p->mobile_reachability_timer.id)) < 0) {
+    if (timer_setup (ue_context_p->mobile_reachability_timer.sec, 0, TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)&(ue_context_p->mme_ue_s1ap_id), &(ue_context_p->mobile_reachability_timer.id)) < 0) {
       OAILOG_ERROR (LOG_MME_APP, "Failed to start Mobile Reachability timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
       ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+    } else {
+      OAILOG_DEBUG (LOG_MME_APP, "Started Mobile Reachability timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
     }
     // Update Stats
     update_mme_app_stats_connected_ue_sub();
