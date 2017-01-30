@@ -577,9 +577,6 @@ int xml_msg_load_itti_s1ap_initial_ue_message (scenario_t * const scenario, scen
         res = sp_enb_ue_s1ap_id_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.enb_ue_s1ap_id);
       }
 
-      // Don't forget
-      msg->itti_msg->ittiMsg.s1ap_initial_ue_message.mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
-
       if (res) {
         res = sp_nas_pdu_from_xml(scenario, msg, &msg->itti_msg->ittiMsg.s1ap_initial_ue_message.nas);
       }
@@ -608,8 +605,6 @@ int xml_msg_load_itti_s1ap_initial_ue_message (scenario_t * const scenario, scen
         msg->itti_msg->ittiMsg.s1ap_initial_ue_message.is_gummei_valid = true;
       }
 
-      // Don't forget
-      msg->itti_msg->ittiMsg.s1ap_initial_ue_message.transparent.mme_ue_s1ap_id = msg->itti_msg->ittiMsg.s1ap_initial_ue_message.mme_ue_s1ap_id;
       msg->itti_msg->ittiMsg.s1ap_initial_ue_message.transparent.enb_ue_s1ap_id = msg->itti_msg->ittiMsg.s1ap_initial_ue_message.enb_ue_s1ap_id;
       msg->itti_msg->ittiMsg.s1ap_initial_ue_message.transparent.e_utran_cgi    = msg->itti_msg->ittiMsg.s1ap_initial_ue_message.ecgi;
     } else {

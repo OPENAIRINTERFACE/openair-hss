@@ -35,6 +35,11 @@
 #include "esm_msg.h"
 
 //------------------------------------------------------------------------------
+bool sp_activate_dedicated_eps_bearer_context_accept_from_xml (
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    activate_dedicated_eps_bearer_context_accept_msg * activate_dedicated_eps_bearer_context_accept);
+
 bool sp_activate_dedicated_eps_bearer_context_request_from_xml (
     scenario_t            * const scenario,
     scenario_player_msg_t * const msg,

@@ -58,6 +58,35 @@ EMM msg C struct to/from XML functions
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 //------------------------------------------------------------------------------
+bool activate_dedicated_eps_bearer_context_accept_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    activate_dedicated_eps_bearer_context_accept_msg * activate_dedicated_eps_bearer_context_accept)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+  bool res = false;
+  res = protocol_configuration_options_from_xml (xml_doc, xpath_ctx, &activate_dedicated_eps_bearer_context_accept->protocolconfigurationoptions, true);
+  activate_dedicated_eps_bearer_context_accept->presencemask = 0;
+  if (res) {
+    activate_dedicated_eps_bearer_context_accept->presencemask |= ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+  }
+  OAILOG_FUNC_RETURN (LOG_XML, true);
+}
+
+//------------------------------------------------------------------------------
+int activate_dedicated_eps_bearer_context_accept_to_xml (
+  activate_dedicated_eps_bearer_context_accept_msg * activate_dedicated_eps_bearer_context_accept,
+  xmlTextWriterPtr writer)
+{
+  OAILOG_FUNC_IN (LOG_XML);
+
+  if ((activate_dedicated_eps_bearer_context_accept->presencemask & ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT)
+      == ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT) {
+    protocol_configuration_options_to_xml (&activate_dedicated_eps_bearer_context_accept->protocolconfigurationoptions, writer, true);
+  }
+  OAILOG_FUNC_RETURN (LOG_XML, RETURNok);
+}
+//------------------------------------------------------------------------------
 bool activate_dedicated_eps_bearer_context_request_from_xml (
     xmlDocPtr                         xml_doc,
     xmlXPathContextPtr                xpath_ctx,
@@ -473,7 +502,7 @@ bool esm_msg_from_xml (
       break;
 
     case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT:
-      //res = activate_dedicated_eps_bearer_context_accept_from_xml (xml_doc, xpath_ctx, &esm_msg->activate_dedicated_eps_bearer_context_accept);
+      res = activate_dedicated_eps_bearer_context_accept_from_xml (xml_doc, xpath_ctx, &esm_msg->activate_dedicated_eps_bearer_context_accept);
       break;
 
     case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REJECT:
@@ -613,7 +642,8 @@ int esm_msg_to_xml (
     break;
 
   case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT:
-    //encode_result = activate_dedicated_eps_bearer_context_accept_to_xml (&msg->activate_dedicated_eps_bearer_context_accept, writer);
+    decode_result = decode_activate_dedicated_eps_bearer_context_accept (&msg->activate_dedicated_eps_bearer_context_accept, buffer, len);
+    encode_result = activate_dedicated_eps_bearer_context_accept_to_xml (&msg->activate_dedicated_eps_bearer_context_accept, writer);
     break;
 
   case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REJECT:

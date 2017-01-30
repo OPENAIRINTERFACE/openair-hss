@@ -33,7 +33,7 @@
         <security_header_type>0x000002</security_header_type>
         <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
         <mac>#NAS_MAC_DL</mac>
-        <sequence_number>2</sequence_number>
+        <sequence_number>#NAS_DOWNLINK_SEQUENCE_NUMBER</sequence_number>
         <plain_nas_message>
           <ebi>$DEDICATED_EPS_BEARER_IDENTITY</ebi>
           <protocol_discriminator>EPS_SESSION_MANAGEMENT_MESSAGE</protocol_discriminator>
@@ -45,10 +45,6 @@
             <maximum_bit_rate_for_downlink>#DEDICATED_BEARER_EPS_QOS_MBR_DL</maximum_bit_rate_for_downlink>
             <guaranted_bit_rate_for_uplink>#DEDICATED_BEARER_EPS_QOS_GBR_UL</guaranted_bit_rate_for_uplink>
             <guaranted_bit_rate_for_downlink>#DEDICATED_BEARER_EPS_QOS_GBR_DL</guaranted_bit_rate_for_downlink>
-            <maximum_bit_rate_for_uplink_extended>#DEDICATED_BEARER_EPS_QOS_MBR_UL_EXT</maximum_bit_rate_for_uplink_extended>
-            <maximum_bit_rate_for_downlink_extended>#DEDICATED_BEARER_EPS_QOS_MBR_DL_EXT</maximum_bit_rate_for_downlink_extended>
-            <guaranted_bit_rate_for_uplink_extended>#DEDICATED_BEARER_EPS_QOS_GBR_UL_EXT</guaranted_bit_rate_for_uplink_extended>
-            <guaranted_bit_rate_for_downlink_extended>#DEDICATED_BEARER_EPS_QOS_GBR_DL_EXT</guaranted_bit_rate_for_downlink_extended>
           </eps_quality_of_service>
           <traffic_flow_template>
             <tft_operation_code>0x1</tft_operation_code>

@@ -35,6 +35,15 @@
 #include "esm_msg.h"
 
 //------------------------------------------------------------------------------
+bool activate_dedicated_eps_bearer_context_accept_from_xml (
+    xmlDocPtr                         xml_doc,
+    xmlXPathContextPtr                xpath_ctx,
+    activate_dedicated_eps_bearer_context_accept_msg * activate_dedicated_eps_bearer_context_accept);
+
+int activate_dedicated_eps_bearer_context_accept_to_xml (
+    activate_dedicated_eps_bearer_context_accept_msg * activate_dedicated_eps_bearer_context_accept,
+    xmlTextWriterPtr writer);
+
 bool activate_dedicated_eps_bearer_context_request_from_xml (
     xmlDocPtr                         xml_doc,
     xmlXPathContextPtr                xpath_ctx,

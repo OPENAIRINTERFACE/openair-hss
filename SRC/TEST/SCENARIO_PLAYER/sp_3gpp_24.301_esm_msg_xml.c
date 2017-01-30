@@ -65,6 +65,21 @@ EMM msg C struct to/from XML functions
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
 /****************************************************************************/
 //------------------------------------------------------------------------------
+bool sp_activate_dedicated_eps_bearer_context_accept_from_xml (
+    scenario_t            * const scenario,
+    scenario_player_msg_t * const msg,
+    activate_dedicated_eps_bearer_context_accept_msg * activate_dedicated_eps_bearer_context_accept)
+{
+  OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
+  bool res = false;
+  res = protocol_configuration_options_from_xml (msg->xml_doc, msg->xpath_ctx, &activate_dedicated_eps_bearer_context_accept->protocolconfigurationoptions, true);
+  if (res) {
+    activate_dedicated_eps_bearer_context_accept->presencemask |= ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
+  }
+  OAILOG_FUNC_RETURN (LOG_MME_SCENARIO_PLAYER, true);
+}
+
+//------------------------------------------------------------------------------
 bool sp_activate_dedicated_eps_bearer_context_request_from_xml (
     scenario_t            * const scenario,
     scenario_player_msg_t * const msg,
@@ -295,7 +310,7 @@ bool sp_esm_msg_from_xml (
       break;
 
     case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_ACCEPT:
-      //res = sp_activate_dedicated_eps_bearer_context_accept_from_xml (scenario, msg, &esm_msg->activate_dedicated_eps_bearer_context_accept);
+      res = sp_activate_dedicated_eps_bearer_context_accept_from_xml (scenario, msg, &esm_msg->activate_dedicated_eps_bearer_context_accept);
       break;
 
     case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REJECT:
