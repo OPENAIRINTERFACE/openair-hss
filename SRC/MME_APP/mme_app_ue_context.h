@@ -208,7 +208,6 @@ typedef struct ue_context_s {
   protocol_configuration_options_t   pending_pdn_connectivity_req_pco;
   void                  *pending_pdn_connectivity_req_proc_data;
   int                    pending_pdn_connectivity_req_request_type;
-
   ebi_t                  default_bearer_id;
   bearer_context_t       eps_bearers[BEARERS_PER_UE];
   

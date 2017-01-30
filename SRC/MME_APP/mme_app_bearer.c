@@ -503,6 +503,11 @@ mme_app_handle_initial_ue_message (
     DevAssert (mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p) == 0);
   }
   ue_context_p->e_utran_cgi = initial_pP->cgi;
+  
+  // Initialize timers to INVALID IDs
+  ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_INITIAL_UE_MESSAGE);
   // do this because of same message types name but not same struct in different .h
   message_p->ittiMsg.nas_initial_ue_message.nas.ue_id           = initial_pP->mme_ue_s1ap_id;
@@ -840,6 +845,7 @@ mme_app_handle_initial_context_setup_rsp (
                       NULL, 0, "0 S11_MODIFY_BEARER_REQUEST teid %u ebi %u", s11_modify_bearer_request->teid,
                       s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id);
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

@@ -935,6 +935,7 @@ sgw_handle_release_access_bearers_request (
   int                                     rv = RETURNok;
 
   OAILOG_FUNC_IN(LOG_SPGW_APP);
+  OAILOG_DEBUG (LOG_SPGW_APP, "Release Access Bearer Request Received in SGW\n");
 
   message_p = itti_alloc_new_message (TASK_SPGW_APP, S11_RELEASE_ACCESS_BEARERS_RESPONSE);
 
@@ -950,13 +951,15 @@ sgw_handle_release_access_bearers_request (
   if (HASH_TABLE_OK == hash_rc) {
     release_access_bearers_resp_p->cause = REQUEST_ACCEPTED;
     release_access_bearers_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_S11;
-    release_access_bearers_resp_p->trxn = ctx_p->sgw_eps_bearer_context_information.trxn;
+    release_access_bearers_resp_p->trxn = release_access_bearers_req_pP->trxn;
 //#pragma message  "TODO Here the release (sgw_handle_release_access_bearers_request)"
     hash_rc = hashtable_ts_apply_callback_on_elements (ctx_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers, sgw_release_all_enb_related_information, NULL, NULL);
     // TODO The S-GW starts buffering downlink packets received for the UE
     // (set target on GTPUSP to order the buffering)
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_RELEASE_ACCESS_BEARERS_RESPONSE S11 MME teid %u cause REQUEST_ACCEPTED", release_access_bearers_resp_p->teid);
     rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+
+    OAILOG_DEBUG (LOG_SPGW_APP, "Release Access Bearer Respone sent to SGW\n");
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
   } else {
     release_access_bearers_resp_p->cause = CONTEXT_NOT_FOUND;

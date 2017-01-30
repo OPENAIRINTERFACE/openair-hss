@@ -83,8 +83,8 @@ void *mme_app_thread (
           MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
             received_message_p->ittiMsg.s11_modify_bearer_response.teid, ue_context_p->imsi);
           /*
-          * Updating statistics
-          */
+           * Updating statistics
+           */
           update_mme_app_stats_s1u_bearer_add();
         }
       }

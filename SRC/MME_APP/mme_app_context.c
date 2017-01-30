@@ -897,6 +897,7 @@ mme_app_handle_s1ap_ue_context_release_req (
     // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
     mme_app_send_s11_release_access_bearers_req (ue_context_p);
   }
+
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -957,15 +958,16 @@ void mme_ue_context_update_ue_emm_state (
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
-  if (ue_context_p == NULL);
-    return;
+  if (ue_context_p == NULL) {
+    OAILOG_CRITICAL (LOG_MME_APP, "**** Abnormal- UE context is null.****\n");
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
   if ((ue_context_p->mm_state == UE_UNREGISTERED) && (new_mm_state == UE_REGISTERED))
   {
     ue_context_p->mm_state = (mm_state_t) new_mm_state;
     
     // Update Stats
     update_mme_app_stats_attached_ue_add();
-
   } else if ((ue_context_p->mm_state == UE_REGISTERED) && (new_mm_state == UE_UNREGISTERED))
   {
     ue_context_p->mm_state = (mm_state_t) new_mm_state;
@@ -973,5 +975,5 @@ void mme_ue_context_update_ue_emm_state (
     // Update Stats
     update_mme_app_stats_attached_ue_sub();
   }
-  return;
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }

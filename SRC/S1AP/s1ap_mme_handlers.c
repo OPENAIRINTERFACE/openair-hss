@@ -658,31 +658,31 @@ s1ap_mme_handle_ue_context_release_request (
   {
     case S1ap_Cause_PR_radioNetwork:
       cause_value = ueContextReleaseRequest_p->cause.choice.radioNetwork;
-      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = Radio Network and Cause_Value =", cause_value);
+      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = Radio Network and Cause_Value = %ld\n", cause_value);
       break;
 
     case S1ap_Cause_PR_transport:
       cause_value = ueContextReleaseRequest_p->cause.choice.transport;
-      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = Transport and Cause_Value = ", cause_value);
+      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = Transport and Cause_Value = %ld\n", cause_value);
       break;
 
     case S1ap_Cause_PR_nas:
       cause_value = ueContextReleaseRequest_p->cause.choice.nas;
-      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = NAS and Cause_Value = ", cause_value);
+      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = NAS and Cause_Value = %ld\n", cause_value);
       break;
 
     case S1ap_Cause_PR_protocol:
       cause_value = ueContextReleaseRequest_p->cause.choice.protocol;
-      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = Protocol and Cause_Value = ", cause_value);
+      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = Protocol and Cause_Value = %ld\n", cause_value);
       break;
 
     case S1ap_Cause_PR_misc:
       cause_value = ueContextReleaseRequest_p->cause.choice.misc;
-      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = MISC and Cause_Value = ", cause_value);
+      OAILOG_DEBUG (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Cause_Type = MISC and Cause_Value = %ld\n", cause_value);
       break;
 
     default:
-      OAILOG_ERROR (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Invalid Cause_Type = ", cause_type);
+      OAILOG_ERROR (LOG_S1AP, "UE CONTEXT RELEASE REQUEST with Invalid Cause_Type = %d\n", cause_type);
       OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
