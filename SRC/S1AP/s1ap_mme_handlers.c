@@ -74,7 +74,7 @@ s1ap_message_decoded_callback           messages_callback[][3] = {
   {s1ap_mme_handle_initial_ue_message, 0, 0},   /* initialUEMessage */
   {s1ap_mme_handle_uplink_nas_transport, 0, 0}, /* uplinkNASTransport */
   {0, 0, 0},                    /* Reset */
-  {0, 0, 0},                    /* ErrorIndication */
+  {s1ap_mme_handle_error_ind_message, 0, 0},                    /* ErrorIndication */
   {s1ap_mme_handle_nas_non_delivery, 0, 0},     /* NASNonDeliveryIndication */
   {s1ap_mme_handle_s1_setup_request, 0, 0},     /* S1Setup */
   {s1ap_mme_handle_ue_context_release_request, 0, 0},   /* UEContextReleaseRequest */
@@ -1114,5 +1114,13 @@ s1ap_mme_handle_ue_context_rel_comp_timer_expiry (ue_description_t *ue_ref_p)
   s1ap_remove_ue (ue_ref_p);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
-
+//------------------------------------------------------------------------------
+int
+s1ap_mme_handle_error_ind_message (const sctp_assoc_id_t assoc_id, const sctp_stream_id_t stream, struct s1ap_message_s *message)
+{
+  OAILOG_FUNC_IN (LOG_S1AP);
+  OAILOG_DEBUG (LOG_S1AP, "*****ERROR IND is not supported*****\n");
+  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+}
+//------------------------------------------------------------------------------
 

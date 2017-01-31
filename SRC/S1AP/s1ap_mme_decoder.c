@@ -46,6 +46,9 @@ s1ap_mme_decode_initiating (
   char                                   *message_string = NULL;
   size_t                                  message_string_size;
   MessagesIds                             message_id = MESSAGES_ID_MAX;
+  
+  OAILOG_FUNC_IN (LOG_S1AP);
+ 
   DevAssert (initiating_p != NULL);
   message_string = calloc (10000, sizeof (char));
   s1ap_string_total_size = 0;
@@ -94,10 +97,37 @@ s1ap_mme_decode_initiating (
         message_id = S1AP_NAS_NON_DELIVERY_IND_LOG;
       }
       break;
+    
+    case S1ap_ProcedureCode_id_ErrorIndication: {
+        OAILOG_ERROR (LOG_S1AP, "Error Indication is received. Ignoring it. Procedure code = %d\n", (int)initiating_p->procedureCode);
+        ret = s1ap_decode_s1ap_errorindicationies (&message->msg.s1ap_ErrorIndicationIEs, &initiating_p->value);
+        OAILOG_FUNC_RETURN (LOG_S1AP, ret);
+      }
+      break;
+    
+    case S1ap_ProcedureCode_id_Reset: {
+        OAILOG_ERROR (LOG_S1AP, "RESET is received. Ignoring it. Procedure code = %d\n", (int)initiating_p->procedureCode);
+        OAILOG_FUNC_RETURN (LOG_S1AP, ret);
+        /*
+         * TODO- Add handling for eNB initiated RESET message.
+         */
+        // ret = s1ap_decode_s1ap_reset_ies (&message->msg.s1ap_Reset_IEs, &initiating_p->value);
+      }
+      break;
+    
+    case S1ap_ProcedureCode_id_ENBConfigurationUpdate: {
+        OAILOG_ERROR (LOG_S1AP, "eNB Configuration update is received. Ignoring it. Procedure code = %d\n", (int)initiating_p->procedureCode);
+        OAILOG_FUNC_RETURN (LOG_S1AP, ret);
+        /*
+         * TODO- Add handling for eNB Configuration Update
+         */
+        // ret = s1ap_decode_s1ap_enbconfigurationupdate_ies (&message->msg.s1ap_ENBConfigurationUpdate_IEs, &initiating_p->value);
+      }
+      break;
 
     default: {
         OAILOG_ERROR (LOG_S1AP, "Unknown procedure ID (%d) for initiating message\n", (int)initiating_p->procedureCode);
-        AssertFatal (0, "Unknown procedure ID (%d) for initiating message\n", (int)initiating_p->procedureCode);
+        OAILOG_FUNC_RETURN (LOG_S1AP, ret);
       }
       break;
   }
@@ -108,7 +138,7 @@ s1ap_mme_decode_initiating (
   memcpy (&message_p->ittiMsg.s1ap_uplink_nas_log.text, message_string, message_string_size);
   itti_send_msg_to_task (TASK_UNKNOWN, INSTANCE_DEFAULT, message_p);
   free_wrapper ((void**) &message_string);
-  return ret;
+  OAILOG_FUNC_RETURN (LOG_S1AP, ret);
 }
 
 static int
