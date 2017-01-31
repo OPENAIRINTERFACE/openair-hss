@@ -37,6 +37,7 @@
 #include "s1ap_mme_retransmission.h"
 #include "s1ap_mme_itti_messaging.h"
 #include "dynamic_memory_check.h"
+#include "timer.h"
 
 #if S1AP_DEBUG_LIST
 #  define eNB_LIST_OUT(x, args...) OAILOG_DEBUG (LOG_S1AP, "[eNB]%*s"x"\n", 4*indent, "", ##args)
@@ -165,7 +166,24 @@ s1ap_mme_thread (
       break;
 
     case TIMER_HAS_EXPIRED:{
-        s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
+        ue_description_t                       *ue_ref_p = NULL;
+        if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) { 
+          mme_ue_s1ap_id_t mme_ue_s1ap_id = *((mme_ue_s1ap_id_t *)(received_message_p->ittiMsg.timer_has_expired.arg));
+          if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (mme_ue_s1ap_id)) == NULL) {
+            OAILOG_WARNING (LOG_S1AP, "Timer expired but no assoicated UE context for UE id %d\n",mme_ue_s1ap_id);
+            break;
+          }
+          if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_ref_p->s1ap_ue_context_rel_timer.id) {
+            // UE context release complete timer expiry handler 
+            s1ap_mme_handle_ue_context_rel_comp_timer_expiry (ue_ref_p);
+          } 
+        }
+        
+        /* TODO - Commenting out below function as it is not used as of now. 
+         * Need to handle it when we support other timers in S1AP
+         */
+
+        //s1ap_handle_timer_expiry (&received_message_p->ittiMsg.timer_has_expired);
       }
       break;
 
@@ -538,15 +556,23 @@ s1ap_remove_ue (
    */
   if (ue_ref == NULL)
     return;
-
+  
   enb_ref = ue_ref->enb;
   /*
    * Updating number of UE
    */
   enb_ref->nb_ue_associated--;
+  
   /*
    * Remove any attached timer
    */
+  // Stop UE Context Release Complete timer,if running 
+  if (ue_ref->s1ap_ue_context_rel_timer.id != S1AP_TIMER_INACTIVE_ID) {
+    if (timer_remove (ue_ref->s1ap_ue_context_rel_timer.id)) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop s1ap ue context release complete timer for UE id  %d \n", ue_ref->mme_ue_s1ap_id);
+    } 
+    ue_ref->s1ap_ue_context_rel_timer.id = S1AP_TIMER_INACTIVE_ID;
+  }
   //     s1ap_timer_remove_ue(ue_ref->mme_ue_s1ap_id);
   OAILOG_TRACE(LOG_S1AP, "Removing UE enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id:" MME_UE_S1AP_ID_FMT " in eNB id : %d\n",
       ue_ref->enb_ue_s1ap_id, ue_ref->mme_ue_s1ap_id, enb_ref->enb_id);

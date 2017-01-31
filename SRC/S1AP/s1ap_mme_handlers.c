@@ -40,6 +40,7 @@
 #include "s1ap_mme.h"
 #include "s1ap_mme_ta.h"
 #include "mme_app_statistics.h"
+#include "timer.h"
 
 
 extern hash_table_ts_t g_s1ap_enb_coll; // contains eNB_description_s, key is eNB_description_s.assoc_id
@@ -780,6 +781,15 @@ s1ap_mme_generate_ue_context_release_command (
   bstring b = blk2bstr(buffer, length);
   rc = s1ap_mme_itti_send_sctp_request (&b, ue_ref_p->enb->sctp_assoc_id, ue_ref_p->sctp_stream_send, ue_ref_p->mme_ue_s1ap_id);
   ue_ref_p->s1_ue_state = S1AP_UE_WAITING_CRR;
+  
+  // Start timer to track UE context release complete from eNB
+  if (timer_setup (ue_ref_p->s1ap_ue_context_rel_timer.sec, 0, 
+                TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)&(ue_ref_p->mme_ue_s1ap_id), &(ue_ref_p->s1ap_ue_context_rel_timer.id)) < 0) { 
+    OAILOG_ERROR (LOG_S1AP, "Failed to start UE context release complete timer for UE id %d \n", ue_ref_p->mme_ue_s1ap_id);
+    ue_ref_p->s1ap_ue_context_rel_timer.id = S1AP_TIMER_INACTIVE_ID;
+  } else {
+    OAILOG_DEBUG (LOG_S1AP, "Started S1AP UE context release timer for UE id  %d \n", ue_ref_p->mme_ue_s1ap_id);
+  }
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
@@ -839,10 +849,12 @@ s1ap_mme_handle_ue_context_release_complete (
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (ueContextReleaseComplete_p->mme_ue_s1ap_id)) == NULL) {
     /*
      * MME doesn't know the MME UE S1AP ID provided.
-     * * * * TODO
+     * This implies that UE context has already been deleted on the expiry of timer
+     * Ignore this message. 
      */
+    OAILOG_DEBUG (LOG_S1AP, " UE Context Release commplete:No S1 context. Ignore the message for ueid " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ueContextReleaseComplete_p->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 UEContextReleaseComplete ignored, no context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", ueContextReleaseComplete_p->mme_ue_s1ap_id);
-    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
   }
 
   /*
@@ -1078,4 +1090,29 @@ s1ap_handle_new_association (
   MSC_LOG_EVENT (MSC_S1AP_MME, "0 Event SCTP_NEW_ASSOCIATION assoc_id: %d", enb_association->sctp_assoc_id);
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
 }
+
+//------------------------------------------------------------------------------
+void
+s1ap_mme_handle_ue_context_rel_comp_timer_expiry (ue_description_t *ue_ref_p)
+{
+  MessageDef                             *message_p = NULL;
+  OAILOG_FUNC_IN (LOG_S1AP);
+  DevAssert (ue_ref_p != NULL);
+  ue_ref_p->s1ap_ue_context_rel_timer.id = S1AP_TIMER_INACTIVE_ID;
+  OAILOG_DEBUG (LOG_S1AP, "Expired- UE Context Release Timer for UE id  %d \n", ue_ref_p->mme_ue_s1ap_id);
+  /*
+   * Remove UE context and inform MME_APP.
+   */
+  message_p = itti_alloc_new_message (TASK_S1AP, S1AP_UE_CONTEXT_RELEASE_COMPLETE);
+  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
+  memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_complete, 0, sizeof (itti_s1ap_ue_context_release_complete_t));
+  S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
+  MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMPLETE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", S1AP_UE_CONTEXT_RELEASE_COMPLETE (message_p).mme_ue_s1ap_id);
+  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  DevAssert(ue_ref_p->s1_ue_state == S1AP_UE_WAITING_CRR);
+  OAILOG_DEBUG (LOG_S1AP, "Removed S1AP UE " MME_UE_S1AP_ID_FMT "\n", (uint32_t) ue_ref_p->mme_ue_s1ap_id);
+  s1ap_remove_ue (ue_ref_p);
+  OAILOG_FUNC_OUT (LOG_S1AP);
+}
+
 

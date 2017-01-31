@@ -101,6 +101,9 @@ s1ap_mme_handle_initial_ue_message (
     ue_ref->enb_ue_s1ap_id = enb_ue_s1ap_id;
     // Will be allocated by NAS
     ue_ref->mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
+    
+    ue_ref->s1ap_ue_context_rel_timer.id  = S1AP_TIMER_INACTIVE_ID;
+    ue_ref->s1ap_ue_context_rel_timer.sec = S1AP_UE_CONTEXT_REL_COMP_TIMER;
 
     // On which stream we received the message
     ue_ref->sctp_stream_recv = stream;
@@ -120,7 +123,6 @@ s1ap_mme_handle_initial_ue_message (
     if (ue_ref->enb->next_sctp_stream >= ue_ref->enb->instreams) {
       ue_ref->enb->next_sctp_stream = 1;
     }
-
     s1ap_dump_enb (ue_ref->enb);
     // TAI mandatory IE
     OCTET_STRING_TO_TAC (&initialUEMessage_p->tai.tAC, tai.tac);

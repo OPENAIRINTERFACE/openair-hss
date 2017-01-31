@@ -939,6 +939,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
     OAILOG_DEBUG (LOG_MME_APP, "Deleting UE context associated in MME for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n ",
                   s1ap_ue_context_release_complete->mme_ue_s1ap_id);
     mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+    update_mme_app_stats_connected_ue_sub();
   } 
   else 
   {

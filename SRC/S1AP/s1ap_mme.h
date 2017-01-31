@@ -33,6 +33,15 @@
 // Forward declarations
 struct enb_description_s;
 
+#define S1AP_TIMER_INACTIVE_ID   (-1)
+#define S1AP_UE_CONTEXT_REL_COMP_TIMER 2 // in seconds 
+
+/* Timer structure */
+struct s1ap_timer_t {
+  long id;           /* The timer identifier                 */
+  long sec;          /* The timer interval value in seconds  */
+};
+
 enum s1_enb_state_s {
   S1AP_RESETING,      ///< After a reset request (eNB or MME initiated)
   S1AP_READY          ///< MME and eNB are S1 associated, UE contexts can be added
@@ -68,9 +77,14 @@ typedef struct ue_description_s {
   /*@}*/
 
   s11_teid_t       s11_sgw_teid;
+  
 
   /* Timer for procedure outcome issued by MME that should be answered */
   long outcome_response_timer_id;
+  
+  // UE Context Release procedure guard timer 
+  struct s1ap_timer_t       s1ap_ue_context_rel_timer; 
+
 } ue_description_t;
 
 /* Main structure representing eNB association over s1ap
