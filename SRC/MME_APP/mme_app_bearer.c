@@ -741,7 +741,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
       MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, S11_CREATE_BEARER_RESPONSE);
       AssertFatal (message_p , "itti_alloc_new_message Failed");
       itti_s11_create_bearer_response_t *s11_create_bearer_response = &message_p->ittiMsg.s11_create_bearer_response;
-      s11_create_bearer_response->teid = ue_context_p->mme_teid_s11;
+      s11_create_bearer_response->local_teid = ue_context_p->mme_teid_s11;
       s11_create_bearer_response->trxn = NULL;
       s11_create_bearer_response->cause.cause_value = 0;
       int msg_bearer_index = 0;

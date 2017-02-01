@@ -323,7 +323,9 @@ extern                                  "C" {
 
     if (thiz->hRspTmr) {
       rc = nwGtpv2cTrxnStopPeerRspTimer (thiz);
-      NW_ASSERT (NW_OK == rc);
+      if (NW_OK != rc) {
+        OAILOG_INFO (LOG_GTPV2C, "Stopping peer response timer for trxn 0x%p failed!\n", thiz);
+      }
     }
 
     if (thiz->pMsg) {

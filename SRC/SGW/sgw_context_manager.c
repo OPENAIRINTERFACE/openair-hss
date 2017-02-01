@@ -352,7 +352,7 @@ sgw_cm_create_bearer_context_information_in_collection (
 
   if (new_bearer_context_information->pgw_eps_bearer_context_information.apns == NULL) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create APN collection object entry for EPS bearer S11 teid %u \n", teid);
-    sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (new_bearer_context_information);
+    sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (&new_bearer_context_information);
     return NULL;
   }
 

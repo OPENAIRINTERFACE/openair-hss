@@ -419,6 +419,8 @@ mme_ue_context_update_coll_keys (
           "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_teid_s11 " TEID_FMT " : %s\n",
           ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, mme_teid_s11, hashtable_rc_code2string(h_rc));
     }
+    OAILOG_TRACE (LOG_MME_APP,
+        "Update ue context.mme_teid_s11 " TEID_FMT " -> " TEID_FMT "\n", ue_context_p->mme_teid_s11, mme_teid_s11);
     ue_context_p->mme_teid_s11 = mme_teid_s11;
   }
 

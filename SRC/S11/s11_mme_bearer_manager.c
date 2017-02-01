@@ -241,8 +241,15 @@ s11_mme_create_bearer_response (
   /*
    * Set the remote TEID
    */
-  rc = nwGtpv2cMsgSetTeid (ulp_req.hMsg, response_p->teid);
-  DevAssert (NW_OK == rc);
+  ulp_req.u_api_info.triggeredRspInfo.teidLocal  = response_p->local_teid;
+
+  hashtable_rc_t hash_rc = hashtable_ts_get(s11_mme_teid_2_gtv2c_teid_handle,
+      (hash_key_t) response_p->local_teid, (void **)(uintptr_t)&ulp_req.u_api_info.triggeredRspInfo.hTunnel);
+
+  if (HASH_TABLE_OK != hash_rc) {
+    OAILOG_WARNING (LOG_S11, "Could not get GTPv2-C hTunnel for local teid %X\n", response_p->local_teid);
+    return RETURNerror;
+  }
 
   // TODO relay cause
   cause =response_p->cause;

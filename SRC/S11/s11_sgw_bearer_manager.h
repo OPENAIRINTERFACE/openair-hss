@@ -50,4 +50,8 @@ int s11_sgw_handle_create_bearer_request (
   nw_gtpv2c_stack_handle_t * stack_p,
   itti_s11_create_bearer_request_t * request_p);
 
+int s11_sgw_handle_create_bearer_response (
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi);
+
 #endif /* FILE_S11_SGW_BEARER_MANAGER_SEEN */

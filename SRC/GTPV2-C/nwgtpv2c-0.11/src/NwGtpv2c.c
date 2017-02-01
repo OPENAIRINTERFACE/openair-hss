@@ -1605,7 +1605,9 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
       OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p!\n", timeoutInfo->hTimer, timeoutInfo);
       rc = thiz->tmrMgr.tmrStopCallback (thiz->tmrMgr.tmrMgrHandle, timeoutInfo->hTimer);
       thiz->activeTimerInfo = NULL;
-      NW_ASSERT (NW_OK == rc);
+      if (NW_OK != rc) {
+        OAILOG_INFO (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p failed!\n", timeoutInfo->hTimer, timeoutInfo);
+      }
       OAI_GCC_DIAG_OFF(int-to-pointer-cast);
       timeoutInfo = nwGtpv2cTmrMinHeapPeek ((NwGtpv2cTmrMinHeapT *)thiz->hTmrMinHeap);
       OAI_GCC_DIAG_ON(int-to-pointer-cast);

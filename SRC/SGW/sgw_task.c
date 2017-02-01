@@ -78,6 +78,22 @@ static void *sgw_intertask_interface (void *args_p)
     itti_receive_msg (TASK_SPGW_APP, &received_message_p);
 
     switch (ITTI_MSG_ID (received_message_p)) {
+
+    case GTPV1U_CREATE_TUNNEL_RESP:{
+        OAILOG_DEBUG (LOG_SPGW_APP, "Received teid for S1-U: %u and status: %s\n", received_message_p->ittiMsg.gtpv1uCreateTunnelResp.S1u_teid, received_message_p->ittiMsg.gtpv1uCreateTunnelResp.status == 0 ? "Success" : "Failure");
+        sgw_handle_gtpv1uCreateTunnelResp (&received_message_p->ittiMsg.gtpv1uCreateTunnelResp);
+      }
+      break;
+
+    case GTPV1U_UPDATE_TUNNEL_RESP:{
+        sgw_handle_gtpv1uUpdateTunnelResp (&received_message_p->ittiMsg.gtpv1uUpdateTunnelResp);
+      }
+      break;
+
+    case MESSAGE_TEST:
+      OAILOG_DEBUG (LOG_SPGW_APP, "Received MESSAGE_TEST\n");
+      break;
+
     case S11_CREATE_SESSION_REQUEST:{
         /*
          * We received a create session request from MME (with GTP abstraction here)
@@ -89,13 +105,8 @@ static void *sgw_intertask_interface (void *args_p)
       }
       break;
 
-    case S11_MODIFY_BEARER_REQUEST:{
-        sgw_handle_modify_bearer_request (&received_message_p->ittiMsg.s11_modify_bearer_request);
-      }
-      break;
-
-    case S11_RELEASE_ACCESS_BEARERS_REQUEST:{
-        sgw_handle_release_access_bearers_request (&received_message_p->ittiMsg.s11_release_access_bearers_request);
+    case S11_CREATE_BEARER_RESPONSE:{
+        sgw_handle_create_bearer_response (&received_message_p->ittiMsg.s11_create_bearer_response);
       }
       break;
 
@@ -104,14 +115,13 @@ static void *sgw_intertask_interface (void *args_p)
       }
       break;
 
-    case GTPV1U_CREATE_TUNNEL_RESP:{
-        OAILOG_DEBUG (LOG_SPGW_APP, "Received teid for S1-U: %u and status: %s\n", received_message_p->ittiMsg.gtpv1uCreateTunnelResp.S1u_teid, received_message_p->ittiMsg.gtpv1uCreateTunnelResp.status == 0 ? "Success" : "Failure");
-        sgw_handle_gtpv1uCreateTunnelResp (&received_message_p->ittiMsg.gtpv1uCreateTunnelResp);
+    case S11_MODIFY_BEARER_REQUEST:{
+        sgw_handle_modify_bearer_request (&received_message_p->ittiMsg.s11_modify_bearer_request);
       }
       break;
 
-    case GTPV1U_UPDATE_TUNNEL_RESP:{
-        sgw_handle_gtpv1uUpdateTunnelResp (&received_message_p->ittiMsg.gtpv1uUpdateTunnelResp);
+    case S11_RELEASE_ACCESS_BEARERS_REQUEST:{
+        sgw_handle_release_access_bearers_request (&received_message_p->ittiMsg.s11_release_access_bearers_request);
       }
       break;
 
@@ -129,10 +139,6 @@ static void *sgw_intertask_interface (void *args_p)
         sgw_exit();
         itti_exit_task ();
       }
-      break;
-
-    case MESSAGE_TEST:
-      OAILOG_DEBUG (LOG_SPGW_APP, "Received MESSAGE_TEST\n");
       break;
 
     default:{

@@ -89,19 +89,28 @@ static nw_rc_t s11_sgw_ulp_process_stack_req_cb (nw_gtpv2c_ulp_handle_t hUlp, nw
           ret = s11_sgw_handle_release_access_bearers_request (&s11_sgw_stack_handle, pUlpApi);
           break;
 
-        case NW_GTP_CREATE_BEARER_RSP:
-          ret = s11_sgw_handle_create_bearer_response (&s11_sgw_stack_handle, pUlpApi);
-          break;
-
         default:
-          OAILOG_WARNING (LOG_S11,  "Received unhandled message type %d\n", pUlpApi->u_api_info.initialReqIndInfo.msgType);
+          OAILOG_WARNING (LOG_S11,  "Received unhandled initial request message type %d\n", pUlpApi->u_api_info.initialReqIndInfo.msgType);
           break;
       }
       break;
 
-    case NW_GTPV2C_ULP_API_RSP_FAILURE_IND:
-      OAILOG_WARNING (LOG_S11, "Received response failure indication from ULP API\n");
-      break;
+      case NW_GTPV2C_ULP_API_RSP_FAILURE_IND:
+        OAILOG_WARNING (LOG_S11, "Received response failure indication from ULP API\n");
+        break;
+
+      case NW_GTPV2C_ULP_API_TRIGGERED_RSP_IND:
+        OAILOG_WARNING (LOG_S11, "Received response indication from ULP API\n");
+        switch (pUlpApi->u_api_info.triggeredRspIndInfo.msgType) {
+        case NW_GTP_CREATE_BEARER_RSP:
+          ret = s11_sgw_handle_create_bearer_response (&s11_sgw_stack_handle, pUlpApi);
+          break;
+
+          default:
+            OAILOG_WARNING (LOG_S11,  "Received unhandled response message type %d\n", pUlpApi->u_api_info.triggeredRspIndInfo.msgType);
+            break;
+        }
+        break;
 
     default:
       OAILOG_ERROR (LOG_S11, "Received unknown stack req message %d\n", pUlpApi->apiType);
@@ -205,27 +214,27 @@ static void *s11_sgw_thread (void *args)
       }
       break;
 
-    case S11_CREATE_SESSION_RESPONSE:{
-        OAILOG_DEBUG (LOG_S11, "Received S11_CREATE_SESSION_RESPONSE from S-PGW APP\n");
-        s11_sgw_handle_create_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_create_session_response);
-      }
-      break;
-
-    case S11_MODIFY_BEARER_RESPONSE:{
-        OAILOG_DEBUG (LOG_S11, "Received S11_MODIFY_BEARER_RESPONSE from S-PGW APP\n");
-        s11_sgw_handle_modify_bearer_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_response);
-      }
-      break;
-
     case S11_CREATE_BEARER_REQUEST:{
         OAILOG_DEBUG (LOG_S11, "Received S11_CREATE_BEARER_REQUEST from S-PGW APP\n");
         s11_sgw_handle_create_bearer_request (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_create_bearer_request);
       }
       break;
 
+    case S11_CREATE_SESSION_RESPONSE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_CREATE_SESSION_RESPONSE from S-PGW APP\n");
+        s11_sgw_handle_create_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_create_session_response);
+      }
+      break;
+
     case S11_DELETE_SESSION_RESPONSE:{
         OAILOG_DEBUG (LOG_S11, "Received S11_DELETE_SESSION_RESPONSE from S-PGW APP\n");
         s11_sgw_handle_delete_session_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_delete_session_response);
+      }
+      break;
+
+    case S11_MODIFY_BEARER_RESPONSE:{
+        OAILOG_DEBUG (LOG_S11, "Received S11_MODIFY_BEARER_RESPONSE from S-PGW APP\n");
+        s11_sgw_handle_modify_bearer_response (&s11_sgw_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_response);
       }
       break;
 

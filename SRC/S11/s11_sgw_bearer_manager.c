@@ -362,3 +362,76 @@ s11_sgw_handle_create_bearer_request (
   DevAssert (NW_OK == rc);
   return RETURNok;
 }
+
+//------------------------------------------------------------------------------
+int
+s11_sgw_handle_create_bearer_response (
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
+{
+  nw_rc_t                                 rc = NW_OK;
+  uint8_t                                 offendingIeType,
+                                          offendingIeInstance;
+  uint16_t                                offendingIeLength;
+  itti_s11_create_bearer_response_t      *resp_p;
+  MessageDef                             *message_p;
+  nw_gtpv2c_msg_parser_t                 *pMsgParser;
+
+  DevAssert (stack_p );
+  message_p = itti_alloc_new_message (TASK_S11, S11_CREATE_BEARER_RESPONSE);
+  resp_p = &message_p->ittiMsg.s11_create_bearer_response;
+
+  resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+
+  /*
+   * Create a new message parser
+   */
+  rc = nwGtpv2cMsgParserNew (*stack_p, NW_GTP_CREATE_BEARER_RSP, s11_ie_indication_generic, NULL, &pMsgParser);
+  DevAssert (NW_OK == rc);
+  /*
+   * Cause IE
+   */
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_CAUSE, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY, gtpv2c_cause_ie_get,
+      &resp_p->cause);
+  DevAssert (NW_OK == rc);
+
+
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
+      gtpv2c_bearer_context_within_create_bearer_response_ie_get,
+      &resp_p->bearer_contexts);
+  DevAssert (NW_OK == rc);
+
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PCO, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_OPTIONAL, gtpv2c_pco_ie_get,
+      &resp_p->pco);
+  DevAssert (NW_OK == rc);
+
+
+  /*
+   * Run the parser
+   */
+  rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
+
+  if (rc != NW_OK) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_BEARER_RESPONSE local S11 teid " TEID_FMT " ", resp_p->teid);
+    /*
+     * TODO: handle this case
+     */
+    itti_free (ITTI_MSG_ORIGIN_ID (message_p), message_p);
+    message_p = NULL;
+    rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+    DevAssert (NW_OK == rc);
+    rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+    DevAssert (NW_OK == rc);
+    return RETURNerror;
+  }
+
+  MSC_LOG_RX_MESSAGE (MSC_S11_MME, MSC_SGW, NULL, 0, "0 CREATE_BEARER_RESPONSE local S11 teid " TEID_FMT " cause %u",
+    resp_p->teid, resp_p->cause);
+
+  rc = nwGtpv2cMsgParserDelete (*stack_p, pMsgParser);
+  DevAssert (NW_OK == rc);
+  rc = nwGtpv2cMsgDelete (*stack_p, (pUlpApi->hMsg));
+  DevAssert (NW_OK == rc);
+  return itti_send_msg_to_task (TASK_SPGW_APP, INSTANCE_DEFAULT, message_p);
+}
+

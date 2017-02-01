@@ -129,7 +129,7 @@ void mme_app_s11_procedure_create_bearer_send_response(ue_mm_context_t * const u
   MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, S11_CREATE_BEARER_RESPONSE);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_create_bearer_response_t *s11_create_bearer_response = &message_p->ittiMsg.s11_create_bearer_response;
-  s11_create_bearer_response->teid = ue_context_p->mme_teid_s11;
+  s11_create_bearer_response->local_teid = ue_context_p->mme_teid_s11;
   s11_create_bearer_response->trxn = (void*)s11_proc_create->proc.s11_trxn;
   s11_create_bearer_response->cause.cause_value = 0;
   int msg_bearer_index = 0;

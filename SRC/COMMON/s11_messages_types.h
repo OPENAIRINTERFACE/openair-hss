@@ -591,6 +591,7 @@ typedef struct itti_s11_create_bearer_request_s {
  * - "UE context without TFT already activated".
  */
 typedef struct itti_s11_create_bearer_response_s {
+  teid_t                   local_teid;       ///< not in specs for inner MME use
   teid_t                   teid;                ///< S11 MME Tunnel Endpoint Identifier
 
   // here fields listed in 3GPP TS 29.274

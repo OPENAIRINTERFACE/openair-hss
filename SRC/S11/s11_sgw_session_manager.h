@@ -45,8 +45,4 @@ int s11_sgw_handle_delete_session_response(
   nw_gtpv2c_stack_handle_t     *stack_p,
   itti_s11_delete_session_response_t *delete_session_response_p);
 
-int s11_sgw_handle_create_bearer_response (
-  nw_gtpv2c_stack_handle_t * stack_p,
-  nw_gtpv2c_ulp_api_t * pUlpApi);
-
 #endif /* FILE_S11_SGW_SESSION_MANAGER_SEEN */

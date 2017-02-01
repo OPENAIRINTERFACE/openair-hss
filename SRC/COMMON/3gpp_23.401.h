@@ -36,6 +36,7 @@
 
 #ifndef FILE_3GPP_23_401_SEEN
 #define FILE_3GPP_23_401_SEEN
+#include "queue.h"
 
 //==============================================================================
 //5.7 Information storage
@@ -68,6 +69,11 @@ typedef struct sgw_eps_bearer_entry_s {
 
 } sgw_eps_bearer_entry_t;
 
+// for saving a pointer in a list (avoid inflating memory use with extra pointers)
+typedef struct sgw_eps_bearer_entry_wrapper_s {
+  LIST_ENTRY(sgw_eps_bearer_entry_wrapper_s) entries;
+  sgw_eps_bearer_entry_t *sgw_eps_bearer_entry;
+} sgw_eps_bearer_entry_wrapper_t;
 
 typedef struct sgw_pdn_connection_s {
   APN_t                apn_in_use;                     ///< The APN currently used, as received from the MME or S4 SGSN.
@@ -118,7 +124,10 @@ typedef struct sgw_eps_bearer_context_information_s {
   sgw_pdn_connection_t   pdn_connection;
 
   void                  *trxn;
+  // TODO change this saved_message (add procedure/transaction)
   itti_s11_create_session_request_t saved_message;
+  LIST_HEAD(pending_eps_bearers_s, sgw_eps_bearer_entry_wrapper_s) *pending_eps_bearers;
+
 } sgw_eps_bearer_context_information_t;
 
 //------------------------------------------------------------------------------
