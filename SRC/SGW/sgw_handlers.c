@@ -1091,23 +1091,22 @@ sgw_handle_create_bearer_response (
         if (REQUEST_ACCEPTED == create_bearer_response_pP->bearer_contexts.bearer_contexts[i].cause.cause_value) {
           sgw_eps_bearer_entry_t                 *eps_bearer_entry_p = NULL;
           struct sgw_eps_bearer_entry_wrapper_s  *sgw_eps_bearer_entry_wrapper = NULL;
+          struct sgw_eps_bearer_entry_wrapper_s  *sgw_eps_bearer_entry_wrapper2 = NULL;
 
           if (ctx_p->sgw_eps_bearer_context_information.pending_eps_bearers) {
 
-            LIST_FOREACH(sgw_eps_bearer_entry_wrapper, ctx_p->sgw_eps_bearer_context_information.pending_eps_bearers, entries) {
+            sgw_eps_bearer_entry_wrapper = LIST_FIRST(ctx_p->sgw_eps_bearer_context_information.pending_eps_bearers);
+            while (sgw_eps_bearer_entry_wrapper != NULL) {
+              // Save
+              sgw_eps_bearer_entry_wrapper2 = LIST_NEXT(sgw_eps_bearer_entry_wrapper, entries);
               eps_bearer_entry_p = sgw_eps_bearer_entry_wrapper->sgw_eps_bearer_entry;
               // This comparison may be enough, else compare IP address also
               if (create_bearer_response_pP->bearer_contexts.bearer_contexts[i].s1u_sgw_fteid.teid == eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up) {
                 // List management
                 LIST_REMOVE(sgw_eps_bearer_entry_wrapper, entries);
-                free_wrapper((void**)sgw_eps_bearer_entry_wrapper);
-                sgw_eps_bearer_entry_wrapper = LIST_FIRST(ctx_p->sgw_eps_bearer_context_information.pending_eps_bearers);
-                if (!sgw_eps_bearer_entry_wrapper) {
-                  LIST_INIT(ctx_p->sgw_eps_bearer_context_information.pending_eps_bearers);
-                  free_wrapper((void**)ctx_p->sgw_eps_bearer_context_information.pending_eps_bearers);
-                }
+                free_wrapper((void**)&sgw_eps_bearer_entry_wrapper);
 
-
+                eps_bearer_entry_p->eps_bearer_id = create_bearer_response_pP->bearer_contexts.bearer_contexts[i].eps_bearer_id;
                 hash_rc = hashtable_ts_insert (ctx_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers,
                                                eps_bearer_entry_p->eps_bearer_id, eps_bearer_entry_p);
                 if (HASH_TABLE_OK == hash_rc) {
@@ -1126,7 +1125,16 @@ sgw_handle_create_bearer_response (
                 } else {
                   OAILOG_INFO (LOG_SPGW_APP, "Failed to setup EPS bearer id %u\n", eps_bearer_entry_p->eps_bearer_id);
                 }
+                // Restore
+                sgw_eps_bearer_entry_wrapper = sgw_eps_bearer_entry_wrapper2;
+
+                break;
               }
+            }
+            sgw_eps_bearer_entry_wrapper = LIST_FIRST(ctx_p->sgw_eps_bearer_context_information.pending_eps_bearers);
+            if (!sgw_eps_bearer_entry_wrapper) {
+              LIST_INIT(ctx_p->sgw_eps_bearer_context_information.pending_eps_bearers);
+              free_wrapper((void**)&ctx_p->sgw_eps_bearer_context_information.pending_eps_bearers);
             }
           }
         } else {
