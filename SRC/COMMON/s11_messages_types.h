@@ -363,14 +363,14 @@ typedef struct itti_s11_create_session_response_s {
   ///< reporting mechanism is to be started or stopped for this
   ///< subscriber in the SGSN/MME.
 
-  fteid_t                  s11_sgw_teid;        ///< Sender F-TEID for control plane
+  fteid_t                  s11_sgw_fteid;        ///< Sender F-TEID for control plane
   ///< This IE shall be sent on the S11/S4 interfaces. For the
   ///< S5/S8/S2b interfaces it is not needed because its content
   ///< would be identical to the IE PGW S5/S8/S2b F-TEID for
   ///< PMIP based interface or for GTP based Control Plane
   ///< interface.
 
-  fteid_t                  s5_s8_pgw_teid;      ///< PGW S5/S8/S2b F-TEID for PMIP based interface or for GTP based Control Plane interface
+  fteid_t                  s5_s8_pgw_fteid;      ///< PGW S5/S8/S2b F-TEID for PMIP based interface or for GTP based Control Plane interface
   ///< PGW shall include this IE on the S5/S8 interfaces during
   ///< the Initial Attach, UE requested PDN connectivity and PDP
   ///< Context Activation procedures.

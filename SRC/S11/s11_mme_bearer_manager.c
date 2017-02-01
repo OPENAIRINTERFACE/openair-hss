@@ -236,7 +236,7 @@ s11_mme_create_bearer_response (
   memset (&cause, 0, sizeof (gtpv2c_cause_t));
   ulp_req.apiType = NW_GTPV2C_ULP_API_TRIGGERED_RSP;
   ulp_req.u_api_info.triggeredRspInfo.hTrxn = trxn;
-  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CREATE_BEARER_RSP, 0, 0, &(ulp_req.hMsg));
+  rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_CREATE_BEARER_RSP, response_p->teid, 0, &(ulp_req.hMsg));
   DevAssert (NW_OK == rc);
   /*
    * Set the remote TEID

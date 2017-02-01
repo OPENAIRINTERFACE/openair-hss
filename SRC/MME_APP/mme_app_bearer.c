@@ -407,7 +407,7 @@ mme_app_handle_create_sess_resp (
          * Store the S-GW teid
          */
         AssertFatal((pdn_cx_id >= 0) && (pdn_cx_id < MAX_APN_PER_UE), "Bad pdn id for bearer");
-        ue_context_p->pdn_contexts[pdn_cx_id]->s_gw_teid_s11_s4 = create_sess_resp_pP->s11_sgw_teid.teid;
+        ue_context_p->pdn_contexts[pdn_cx_id]->s_gw_teid_s11_s4 = create_sess_resp_pP->s11_sgw_fteid.teid;
         transaction_identifier = current_bearer_p->transaction_identifier;
       }
       /*

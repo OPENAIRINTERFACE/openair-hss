@@ -262,7 +262,7 @@ s11_sgw_handle_create_session_response (
    */
   memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   ulp_req.apiType = NW_GTPV2C_ULP_CREATE_LOCAL_TUNNEL;
-  ulp_req.u_api_info.createLocalTunnelInfo.teidLocal = create_session_response_p->s11_sgw_teid.teid;
+  ulp_req.u_api_info.createLocalTunnelInfo.teidLocal = create_session_response_p->s11_sgw_fteid.teid;
   ulp_req.u_api_info.createLocalTunnelInfo.peerIp.s_addr = create_session_response_p->peer_ip.s_addr;
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
@@ -270,11 +270,12 @@ s11_sgw_handle_create_session_response (
 
 
   hashtable_rc_t hash_rc = hashtable_ts_insert(s11_sgw_teid_2_gtv2c_teid_handle,
-      (hash_key_t) create_session_response_p->s11_sgw_teid.teid,
+      (hash_key_t) create_session_response_p->s11_sgw_fteid.teid,
       (void *)ulp_req.u_api_info.createLocalTunnelInfo.hTunnel);
 
   if (HASH_TABLE_OK != hash_rc) {
-    OAILOG_WARNING (LOG_S11, "Could not save GTPv2-C hTunnel %p for local teid %X\n", (void*)ulp_req.u_api_info.createLocalTunnelInfo.hTunnel, create_session_response_p->s11_sgw_teid.teid);
+    OAILOG_WARNING (LOG_S11, "Could not save GTPv2-C hTunnel %p for local teid %X\n", (void*)ulp_req.u_api_info.createLocalTunnelInfo.hTunnel,
+        create_session_response_p->s11_sgw_fteid.teid);
     return RETURNerror;
   }
   /*
@@ -295,14 +296,14 @@ s11_sgw_handle_create_session_response (
   gtpv2c_cause_ie_set (&(ulp_req.hMsg), &cause);
 
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO, S11_SGW_GTP_C,
-      create_session_response_p->s11_sgw_teid.teid,
-      create_session_response_p->s11_sgw_teid.ipv4 ? &create_session_response_p->s11_sgw_teid.ipv4_address : 0,
-      create_session_response_p->s11_sgw_teid.ipv6 ? &create_session_response_p->s11_sgw_teid.ipv6_address : NULL);
+      create_session_response_p->s11_sgw_fteid.teid,
+      create_session_response_p->s11_sgw_fteid.ipv4 ? &create_session_response_p->s11_sgw_fteid.ipv4_address : 0,
+      create_session_response_p->s11_sgw_fteid.ipv6 ? &create_session_response_p->s11_sgw_fteid.ipv6_address : NULL);
 
   rc = nwGtpv2cMsgAddIeFteid ((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ONE, S5_S8_PGW_GTP_C,
-      create_session_response_p->s11_sgw_teid.teid,
-      create_session_response_p->s11_sgw_teid.ipv4 ? &create_session_response_p->s11_sgw_teid.ipv4_address : 0,
-      create_session_response_p->s11_sgw_teid.ipv6 ? &create_session_response_p->s11_sgw_teid.ipv6_address : NULL);
+      create_session_response_p->s11_sgw_fteid.teid,
+      create_session_response_p->s11_sgw_fteid.ipv4 ? &create_session_response_p->s11_sgw_fteid.ipv4_address : 0,
+      create_session_response_p->s11_sgw_fteid.ipv6 ? &create_session_response_p->s11_sgw_fteid.ipv6_address : NULL);
 
 
   gtpv2c_paa_ie_set (&(ulp_req.hMsg), &create_session_response_p->paa);

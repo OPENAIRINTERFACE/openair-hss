@@ -128,6 +128,7 @@ void mme_app_s11_procedure_create_bearer_send_response(ue_mm_context_t * const u
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, S11_CREATE_BEARER_RESPONSE);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
+
   itti_s11_create_bearer_response_t *s11_create_bearer_response = &message_p->ittiMsg.s11_create_bearer_response;
   s11_create_bearer_response->local_teid = ue_context_p->mme_teid_s11;
   s11_create_bearer_response->trxn = (void*)s11_proc_create->proc.s11_trxn;
@@ -139,6 +140,10 @@ void mme_app_s11_procedure_create_bearer_send_response(ue_mm_context_t * const u
     ebi_t ebi = INDEX_TO_EBI(ebix);
     if (S11_PROC_BEARER_FAILED == s11_proc_create->bearer_status[ebix]) {
       bearer_context_t * bc = mme_app_get_bearer_context(ue_context_p, ebi);
+      // should not fail (bc != NULL)
+      // Find remote S11 teid == find pdn
+      s11_create_bearer_response->teid = ue_context_p->pdn_contexts[bc->pdn_cx_id]->s_gw_teid_s11_s4;
+
       s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].eps_bearer_id = ebi;
       s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause.cause_value = REQUEST_REJECTED;
       //  FTEID eNB
@@ -148,6 +153,10 @@ void mme_app_s11_procedure_create_bearer_send_response(ue_mm_context_t * const u
       s11_create_bearer_response->bearer_contexts.num_bearer_context++;
     } else if (S11_PROC_BEARER_SUCCESS == s11_proc_create->bearer_status[ebix]) {
       bearer_context_t * bc = mme_app_get_bearer_context(ue_context_p, ebi);
+      // should not fail (bc != NULL)
+      // Find remote S11 teid == find pdn
+      s11_create_bearer_response->teid = ue_context_p->pdn_contexts[bc->pdn_cx_id]->s_gw_teid_s11_s4;
+
       s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].eps_bearer_id = ebi;
       s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause.cause_value = REQUEST_ACCEPTED;
       //  FTEID eNB

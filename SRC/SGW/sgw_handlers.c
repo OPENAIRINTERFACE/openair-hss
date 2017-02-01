@@ -282,10 +282,10 @@ sgw_handle_sgi_endpoint_created (
       create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value = M_PDN_APN_NOT_ALLOWED;
     }
 
-    create_session_response_p->s11_sgw_teid.teid = resp_pP->context_teid;
-    create_session_response_p->s11_sgw_teid.interface_type = S11_SGW_GTP_C;
-    create_session_response_p->s11_sgw_teid.ipv4 = 1;
-    create_session_response_p->s11_sgw_teid.ipv4_address.s_addr = spgw_config.sgw_config.ipv4.S11.s_addr;
+    create_session_response_p->s11_sgw_fteid.teid = resp_pP->context_teid;
+    create_session_response_p->s11_sgw_fteid.interface_type = S11_SGW_GTP_C;
+    create_session_response_p->s11_sgw_fteid.ipv4 = 1;
+    create_session_response_p->s11_sgw_fteid.ipv4_address.s_addr = spgw_config.sgw_config.ipv4.S11.s_addr;
 
     create_session_response_p->bearer_contexts_created.bearer_contexts[0].eps_bearer_id = resp_pP->eps_bearer_id;
     create_session_response_p->bearer_contexts_created.num_bearer_context += 1;
@@ -301,7 +301,7 @@ sgw_handle_sgi_endpoint_created (
   OAILOG_DEBUG (LOG_SPGW_APP,
       "Tx CREATE-SESSION-RESPONSE SPGW -> TASK_S11, S11 MME teid "TEID_FMT" S11 S-GW teid "TEID_FMT" S1U teid "TEID_FMT" S1U addr 0x%x EPS bearer id %u status %d\n",
                   create_session_response_p->teid,
-                  create_session_response_p->s11_sgw_teid.teid,
+                  create_session_response_p->s11_sgw_fteid.teid,
                   create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid,
                   create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address.s_addr,
                   create_session_response_p->bearer_contexts_created.bearer_contexts[0].eps_bearer_id,
@@ -310,7 +310,7 @@ sgw_handle_sgi_endpoint_created (
                       NULL, 0,
                       "0 S11_CREATE_SESSION_RESPONSE S11 MME teid "TEID_FMT" S11 S-GW teid "TEID_FMT" S1U teid "TEID_FMT" S1U@ 0x%x ebi %u status %d",
                       create_session_response_p->teid,
-                      create_session_response_p->s11_sgw_teid.teid,
+                      create_session_response_p->s11_sgw_fteid.teid,
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid,
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.ipv4_address.s_addr,
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].eps_bearer_id,

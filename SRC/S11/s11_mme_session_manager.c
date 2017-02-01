@@ -161,13 +161,13 @@ s11_mme_handle_create_session_response (
    * Sender FTEID for CP IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FTEID, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      gtpv2c_fteid_ie_get, &resp_p->s11_sgw_teid);
+      gtpv2c_fteid_ie_get, &resp_p->s11_sgw_fteid);
   DevAssert (NW_OK == rc);
   /*
    * Sender FTEID for PGW S5/S8 IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_FTEID, NW_GTPV2C_IE_INSTANCE_ONE, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      gtpv2c_fteid_ie_get, &resp_p->s5_s8_pgw_teid);
+      gtpv2c_fteid_ie_get, &resp_p->s5_s8_pgw_fteid);
   DevAssert (NW_OK == rc);
   /*
    * PAA IE
@@ -284,13 +284,13 @@ s11_mme_handle_delete_session_response (
   nw_gtpv2c_stack_handle_t * stack_p,
   nw_gtpv2c_ulp_api_t * pUlpApi)
 {
-  nw_rc_t                                   rc = NW_OK;
+  nw_rc_t                                 rc = NW_OK;
   uint8_t                                 offendingIeType,
                                           offendingIeInstance;
   uint16_t                                offendingIeLength;
-  itti_s11_delete_session_response_t     *resp_p;
-  MessageDef                             *message_p;
-  nw_gtpv2c_msg_parser_t                     *pMsgParser;
+  itti_s11_delete_session_response_t     *resp_p = NULL;
+  MessageDef                             *message_p = NULL;
+  nw_gtpv2c_msg_parser_t                 *pMsgParser = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
   DevAssert (stack_p );
