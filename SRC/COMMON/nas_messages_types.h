@@ -27,6 +27,13 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file nas_messages_types.h
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_NAS_MESSAGES_TYPES_SEEN
 #define FILE_NAS_MESSAGES_TYPES_SEEN
 

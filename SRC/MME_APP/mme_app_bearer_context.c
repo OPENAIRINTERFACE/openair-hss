@@ -20,10 +20,11 @@
  */
 
 
-/*! \file mme_app_pdn_context.c
+/*! \file mme_app_bearer_context.c
   \brief
   \author Lionel Gauthier
   \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
 */
 #include <stdio.h>
 #include <string.h>
@@ -175,7 +176,8 @@ void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const
 {
   if (bc) {
     bc->bearer_state = BEARER_STATE_S1_RELEASED;
-    bc->enb_teid_s1u = INVALID_TEID;
+    memset(&bc->enb_fteid_s1u, 0, sizeof(bc->enb_fteid_s1u));
+    bc->enb_fteid_s1u.teid = INVALID_TEID;
   }
 }
 

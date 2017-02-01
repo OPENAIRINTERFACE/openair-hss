@@ -28,6 +28,13 @@
  */
 
 
+/*! \file log.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_LOG_SEEN
 #define FILE_LOG_SEEN
 

@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s11_mme_bearer_manager.h
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #ifndef FILE_S11_MME_BEARER_MANAGER_SEEN
 #define FILE_S11_MME_BEARER_MANAGER_SEEN

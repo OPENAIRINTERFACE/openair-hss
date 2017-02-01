@@ -27,6 +27,13 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file common_types.c
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>

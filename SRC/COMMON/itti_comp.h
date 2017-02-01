@@ -19,6 +19,13 @@
  *      contact@openairinterface.org
  */
 
+/*! \file itti_comp.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_ITTI_COMP_SEEN
 #define FILE_ITTI_COMP_SEEN
 

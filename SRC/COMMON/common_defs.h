@@ -27,7 +27,12 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-
+/*! \file common_defs.h
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #ifndef FILE_COMMON_DEFS_SEEN
 #define FILE_COMMON_DEFS_SEEN

@@ -19,6 +19,13 @@
  *      contact@openairinterface.org
  */
 
+/*! \file mme_app_edns_emulation.c
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>

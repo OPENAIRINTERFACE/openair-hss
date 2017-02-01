@@ -27,6 +27,13 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file obj_hashtable.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_OBJ_HASHTABLE_SEEN
 #define FILE_OBJ_HASHTABLE_SEEN
 

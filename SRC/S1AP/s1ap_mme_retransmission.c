@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s1ap_mme_retransmission.c
+  \brief
+  \author Sebastien ROUX
+  \company Eurecom
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>

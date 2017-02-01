@@ -27,6 +27,12 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file enum_string.c
+  \brief
+  \author Sebastien ROUX
+  \company Eurecom
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

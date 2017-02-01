@@ -28,6 +28,13 @@
  */
 
 
+/*! \file mme_config.c
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #if HAVE_CONFIG_H
 #  include "config.h"
 #endif

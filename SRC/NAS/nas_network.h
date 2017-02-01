@@ -30,7 +30,7 @@ Product     NAS stack
 
 Subsystem   NAS main process
 
-Author      Frederic Maurel
+Author      Frederic Maurel, Lionel GAUTHIER
 
 Description NAS procedure functions triggered by the network
 

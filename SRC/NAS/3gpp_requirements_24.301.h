@@ -27,6 +27,13 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file 3gpp_requirements_24.301.h
+   \brief
+   \author  Lionel GAUTHIER
+   \date
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_3GPP_REQUIREMENTS_24_301_SEEN
 #define FILE_3GPP_REQUIREMENTS_24_301_SEEN
 

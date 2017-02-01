@@ -27,6 +27,13 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file xml_msg_tags.h
+   \brief
+   \author  Lionel GAUTHIER
+   \date 2016
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_XML_MSG_TAGS_SEEN
 #define FILE_XML_MSG_TAGS_SEEN
 

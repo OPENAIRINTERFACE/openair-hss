@@ -18,6 +18,14 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
+
+/*! \file nas_message_xml.c
+   \brief
+   \author  Lionel GAUTHIER
+   \date 2016
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdint.h>

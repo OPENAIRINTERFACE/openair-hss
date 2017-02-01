@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s1ap_mme_nas_procedures.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #include <stdio.h>
 #include <stdint.h>

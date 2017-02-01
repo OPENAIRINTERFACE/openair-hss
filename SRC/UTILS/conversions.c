@@ -27,6 +27,12 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file conversions.c
+  \brief
+  \author Sebastien ROUX
+  \company Eurecom
+*/
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>

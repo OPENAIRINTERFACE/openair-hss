@@ -24,6 +24,7 @@
   \brief
   \author Lionel Gauthier
   \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
 */
 #include <stdio.h>
 #include <string.h>

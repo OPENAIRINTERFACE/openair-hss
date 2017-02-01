@@ -19,6 +19,13 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s11_mme_bearer_manager.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -223,7 +230,7 @@ s11_mme_create_bearer_response (
   DevAssert (response_p );
   trxn = (nw_gtpv2c_trxn_handle_t) response_p->trxn;
   /*
-   * Prepare a modify bearer response to send to SGW.
+   * Prepare a create bearer response to send to SGW.
    */
   memset (&ulp_req, 0, sizeof (nw_gtpv2c_ulp_api_t));
   memset (&cause, 0, sizeof (gtpv2c_cause_t));
@@ -341,6 +348,7 @@ s11_mme_handle_create_bearer_request (
     req_p = &message_p->ittiMsg.s11_create_bearer_request;
 
     req_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
+    req_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
 
     /*
      * Create a new message parser

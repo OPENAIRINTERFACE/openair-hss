@@ -19,6 +19,13 @@
  *      contact@openairinterface.org
  */
 
+/*! \file itti_comp.c
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>

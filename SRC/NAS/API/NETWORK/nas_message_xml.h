@@ -19,10 +19,13 @@
  *      contact@openairinterface.org
  */
 
-/*****************************************************************************
-Source      nas_message_xml.h
-Author      Lionel GAUTHIER
-*****************************************************************************/
+/*! \file nas_message_xml.h
+   \brief
+   \author  Lionel GAUTHIER
+   \date 2016
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_NAS_MESSAGE_XML_SEEN
 #define FILE_NAS_MESSAGE_XML_SEEN
 

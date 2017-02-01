@@ -26,6 +26,14 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
+
+/*! \file xml_msg_load_itti.c
+   \brief
+   \author  Lionel GAUTHIER
+   \date 2016
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

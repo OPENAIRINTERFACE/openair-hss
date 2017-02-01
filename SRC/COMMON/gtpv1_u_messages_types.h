@@ -26,6 +26,14 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
+
+/*! \file gtpv1_u_messages_types.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_GTPV1_U_MESSAGES_TYPES_SEEN
 #define FILE_GTPV1_U_MESSAGES_TYPES_SEEN
 

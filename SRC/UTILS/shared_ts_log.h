@@ -26,6 +26,14 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
+
+/*! \file shared_ts_log.h
+   \brief
+   \author  Lionel GAUTHIER
+   \date 2016
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_SHARED_TS_LOG_SEEN
 #define FILE_SHARED_TS_LOG_SEEN
 

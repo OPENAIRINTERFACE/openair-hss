@@ -19,11 +19,13 @@
  *      contact@openairinterface.org
  */
 
-/*****************************************************************************
-Source    3gpp_24.301_esm_msg_xml.c"
-Author    Lionel GAUTHIER
-EMM msg C struct to/from XML functions
-*****************************************************************************/
+/*! \file 3gpp_24.301_esm_msg_xml.c
+   \brief
+   \author  Lionel GAUTHIER
+   \date 2016
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdbool.h>
 #include <stdint.h>
 

@@ -26,6 +26,14 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
+
+/*! \file 3gpp_24.008_gprs_common_ies_xml.c
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <pthread.h>

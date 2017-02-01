@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s1ap_mme_handlers.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #include <stdlib.h>
 #include <stdio.h>

@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file mme_app_itti_messaging.h
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 
 #ifndef FILE_MME_APP_ITTI_MESSAGING_SEEN

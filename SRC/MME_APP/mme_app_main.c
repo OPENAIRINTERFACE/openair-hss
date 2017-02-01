@@ -19,7 +19,12 @@
  *      contact@openairinterface.org
  */
 
-
+/*! \file mme_app_main.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,6 +88,16 @@ void *mme_app_thread (void *args)
         mme_app_handle_initial_context_setup_rsp (&MME_APP_INITIAL_CONTEXT_SETUP_RSP (received_message_p));
       }
       break;
+
+    case MME_APP_CREATE_DEDICATED_BEARER_RSP:{
+      mme_app_handle_create_dedicated_bearer_rsp (&MME_APP_CREATE_DEDICATED_BEARER_RSP (received_message_p));
+    }
+    break;
+
+    case MME_APP_CREATE_DEDICATED_BEARER_REJ:{
+      mme_app_handle_create_dedicated_bearer_rej (&MME_APP_CREATE_DEDICATED_BEARER_REJ (received_message_p));
+    }
+    break;
 
     case NAS_CONNECTION_ESTABLISHMENT_CNF:{
         mme_app_handle_conn_est_cnf (&NAS_CONNECTION_ESTABLISHMENT_CNF (received_message_p));

@@ -19,6 +19,13 @@
  *      contact@openairinterface.org
  */
 
+/*! \file oai_mme.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdio.h>
 #include <pthread.h>
 #include <inttypes.h>

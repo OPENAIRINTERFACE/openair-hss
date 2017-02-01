@@ -27,6 +27,13 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file 3gpp_24.301_esm_ies_xml.h
+   \brief
+   \author  Lionel GAUTHIER
+   \date 2016
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_3GPP_24_301_ESM_IES_XML_SEEN
 #define FILE_3GPP_24_301_ESM_IES_XML_SEEN
 #include "xml_load.h"

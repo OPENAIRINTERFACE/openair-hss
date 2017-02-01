@@ -27,6 +27,13 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file mme_app_bearer_context.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_MME_APP_BEARER_CONTEXT_SEEN
 #define FILE_MME_APP_BEARER_CONTEXT_SEEN
 

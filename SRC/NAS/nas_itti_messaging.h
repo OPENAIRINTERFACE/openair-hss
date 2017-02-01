@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file nas_itti_messaging.h
+   \brief
+   \author  Sebastien ROUX, Lionel GAUTHIER
+   \date
+   \email: lionel.gauthier@eurecom.fr
+*/
 
 #ifndef FILE_NAS_ITTI_MESSAGING_SEEN
 #define FILE_NAS_ITTI_MESSAGING_SEEN
@@ -80,5 +86,12 @@ void nas_itti_establish_cnf(
 void nas_itti_detach_req(
   const mme_ue_s1ap_id_t      ue_idP, long cause);
 
+void nas_itti_dedicated_eps_bearer_complete(
+    const mme_ue_s1ap_id_t ue_idP,
+    const ebi_t ebiP);
+
+void nas_itti_dedicated_eps_bearer_reject(
+    const mme_ue_s1ap_id_t ue_idP,
+    const ebi_t ebiP);
 
 #endif /* FILE_NAS_ITTI_MESSAGING_SEEN */

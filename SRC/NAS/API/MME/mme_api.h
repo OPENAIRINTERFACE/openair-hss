@@ -30,7 +30,7 @@ Product     NAS stack
 
 Subsystem   Application Programming Interface
 
-Author      Frederic Maurel
+Author      Frederic Maurel, Lionel GAUTHIER
 
 Description Implements the API used by the NAS layer running in the MME
         to interact with a Mobility Management Entity

@@ -23,14 +23,14 @@
 
 /*! \file mme_app_ue_context.h
  *  \brief MME applicative layer
- *  \author Sebastien ROUX
+ *  \author Sebastien ROUX, Lionel Gauthier
  *  \date 2013
  *  \version 1.0
+ *  \email: lionel.gauthier@eurecom.fr
  *  @defgroup _mme_app_impl_ MME applicative layer
  *  @ingroup _ref_implementation_
  *  @{
  */
-
 
 #ifndef FILE_MME_APP_UE_CONTEXT_SEEN
 #define FILE_MME_APP_UE_CONTEXT_SEEN
@@ -39,6 +39,7 @@
 #include <time.h>       /* to provide time_t */
 
 #include "tree.h"
+#include "queue.h"
 #include "hashtable.h"
 #include "obj_hashtable.h"
 #include "bstrlib.h"
@@ -124,8 +125,7 @@ typedef struct bearer_context_s {
   pdn_cid_t                         pdn_cx_id;
   mme_app_bearer_state_t            bearer_state;
   esm_ebr_context_t                 esm_ebr_context;
-  teid_t                            enb_teid_s1u;
-
+  fteid_t                           enb_fteid_s1u;
 
   /* QoS for this bearer */
   priority_level_t            priority_level;
@@ -396,6 +396,7 @@ typedef struct ue_mm_context_s {
   ambr_t                 used_ambr;
   subscriber_status_t    subscriber_status;        // set by S6A UPDATE LOCATION ANSWER
   network_access_mode_t  network_access_mode;       // set by S6A UPDATE LOCATION ANSWER
+  LIST_HEAD(s11_procedures_s, mme_app_s11_proc_s) *s11_procedures;
 } ue_mm_context_t;
 
 

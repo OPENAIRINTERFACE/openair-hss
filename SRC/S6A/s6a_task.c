@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s6a_task.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #include <stdio.h>
 #include <stdlib.h>

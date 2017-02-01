@@ -19,6 +19,11 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s6a_auth_info.c
+  \brief
+  \author Sebastien ROUX
+  \company Eurecom
+*/
 
 #include <stdio.h>
 #include <stdint.h>

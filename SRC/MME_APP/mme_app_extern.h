@@ -19,7 +19,12 @@
  *      contact@openairinterface.org
  */
 
-
+/*! \file mme_app_extern.h
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #ifndef FILE_MME_APP_EXTERN_SEEN
 #define FILE_MME_APP_EXTERN_SEEN

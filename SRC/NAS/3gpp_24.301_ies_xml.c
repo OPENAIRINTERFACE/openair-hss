@@ -27,6 +27,13 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file 3gpp_24.301_ies_xml.c
+   \brief EMM msg C struct to/from XML functions
+   \author  Lionel GAUTHIER
+   \date 2016
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <pthread.h>

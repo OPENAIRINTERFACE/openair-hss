@@ -612,6 +612,7 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_location.c
   ${MME_DIR}/mme_app_main.c
   ${MME_DIR}/mme_app_pdn_context.c
+  ${MME_DIR}/mme_app_procedures.c
   ${MME_DIR}/mme_app_sgw_selection.c
   ${MME_DIR}/mme_app_statistics.c
   ${MME_DIR}/mme_app_transport.c

@@ -30,7 +30,7 @@
 
   Subsystem   NAS main process
 
-  Author      Frederic Maurel
+  Author      Frederic Maurel, Lionel GAUTHIER
 
   Description NAS procedure call manager
 

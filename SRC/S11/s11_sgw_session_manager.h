@@ -19,6 +19,13 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s11_sgw_session_manager.h
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_S11_SGW_SESSION_MANAGER_SEEN
 #define FILE_S11_SGW_SESSION_MANAGER_SEEN
 

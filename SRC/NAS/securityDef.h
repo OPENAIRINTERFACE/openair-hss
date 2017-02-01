@@ -30,7 +30,7 @@ Product     NAS stack
 
 Subsystem   include
 
-Author      Frederic Maurel
+Author      Frederic Maurel, Lionel GAUTHIER
 
 Description Contains global security definitions
 

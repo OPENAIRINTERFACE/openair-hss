@@ -19,6 +19,14 @@
  *      contact@openairinterface.org
  */
 
+/*! \file nas_mme_task.c
+   \brief
+   \author  Sebastien ROUX, Lionel GAUTHIER
+   \date
+   \email: lionel.gauthier@eurecom.fr
+*/
+
+
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>

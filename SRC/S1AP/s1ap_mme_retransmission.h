@@ -20,6 +20,11 @@
  */
 
 
+/*! \file s1ap_mme_retransmission.h
+  \brief
+  \author Sebastien ROUX
+  \company Eurecom
+*/
 
 #ifndef FILE_S1AP_MME_RETRANSMISSION_SEEN
 #define FILE_S1AP_MME_RETRANSMISSION_SEEN

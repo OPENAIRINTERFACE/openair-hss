@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file mme_app_context.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #include <unistd.h>
 #include <errno.h>

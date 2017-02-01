@@ -27,6 +27,13 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file 3gpp_requirements_36.413.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_3GPP_REQUIREMENTS_36_413_SEEN
 #define FILE_3GPP_REQUIREMENTS_36_413_SEEN
 

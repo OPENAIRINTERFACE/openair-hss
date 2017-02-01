@@ -19,6 +19,13 @@
  *      contact@openairinterface.org
  */
 
+/*! \file nas_itti_messaging.c
+   \brief
+   \author  Sebastien ROUX, Lionel GAUTHIER
+   \date
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -83,6 +90,34 @@ nas_itti_erab_setup_req (const mme_ue_s1ap_id_t ue_id,
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_ERAB_SETUP_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u len %u", ue_id, ebi, blength(NAS_ERAB_SETUP_REQ (message_p).nas_msg));
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+}
+
+//------------------------------------------------------------------------------
+void nas_itti_dedicated_eps_bearer_complete(
+    const mme_ue_s1ap_id_t ue_idP,
+    const ebi_t ebiP)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_CREATE_DEDICATED_BEARER_RSP);
+  MME_APP_CREATE_DEDICATED_BEARER_RSP (message_p).ue_id   = ue_idP;
+  MME_APP_CREATE_DEDICATED_BEARER_RSP (message_p).ebi     = ebiP;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_CREATE_DEDICATED_BEARER_RSP ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ebiP);
+  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
+
+//------------------------------------------------------------------------------
+void nas_itti_dedicated_eps_bearer_reject(
+    const mme_ue_s1ap_id_t ue_idP,
+    const ebi_t ebiP)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_CREATE_DEDICATED_BEARER_REJ);
+  MME_APP_CREATE_DEDICATED_BEARER_REJ (message_p).ue_id   = ue_idP;
+  MME_APP_CREATE_DEDICATED_BEARER_REJ (message_p).ebi     = ebiP;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_CREATE_DEDICATED_BEARER_REJ ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ebiP);
+  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
 }
 
 //------------------------------------------------------------------------------

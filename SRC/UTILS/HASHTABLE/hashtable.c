@@ -26,7 +26,12 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-
+/*! \file hashtable.c
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

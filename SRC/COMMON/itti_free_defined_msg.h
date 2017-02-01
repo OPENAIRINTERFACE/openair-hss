@@ -26,6 +26,14 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
+
+/*! \file itti_free_defined_msg.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_ITTI_FREE_DEFINED_MSG_SEEN
 #define FILE_ITTI_FREE_DEFINED_MSG_SEEN
 

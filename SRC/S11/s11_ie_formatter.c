@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s11_ie_formatter.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #include <stdio.h>
 #include <stdint.h>

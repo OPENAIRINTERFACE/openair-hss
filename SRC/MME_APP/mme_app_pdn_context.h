@@ -26,7 +26,12 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-
+/*! \file mme_app_pdn_context.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 #ifndef FILE_MME_APP_PDN_CONTEXT_SEEN
 #define FILE_MME_APP_PDN_CONTEXT_SEEN
 

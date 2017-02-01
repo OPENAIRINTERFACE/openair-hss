@@ -27,10 +27,10 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-/*! \file log.c
-   \brief Thread safe logging utility, log output can be redirected to stdout, file or remote host through TCP.
+/*! \file shared_ts_log.c
+   \brief
    \author  Lionel GAUTHIER
-   \date 2015
+   \date 2016
    \email: lionel.gauthier@eurecom.fr
 */
 #include <stdio.h>

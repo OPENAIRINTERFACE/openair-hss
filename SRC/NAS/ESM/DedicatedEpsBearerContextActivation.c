@@ -72,6 +72,7 @@
 #include "esm_ebr_context.h"
 #include "emm_sap.h"
 #include "mme_config.h"
+#include "nas_itti_messaging.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -295,6 +296,7 @@ esm_proc_dedicated_eps_bearer_context_accept (
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already ACTIVE\n", ebi);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     }
+    nas_itti_dedicated_eps_bearer_complete(ue_id, ebi);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -358,6 +360,7 @@ esm_proc_dedicated_eps_bearer_context_reject (
        */
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     }
+    nas_itti_dedicated_eps_bearer_reject(ue_id, ebi);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);

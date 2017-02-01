@@ -19,7 +19,11 @@
  *      contact@openairinterface.org
  */
 
-
+/*! \file s6a_defs.h
+  \brief
+  \author Sebastien ROUX
+  \company Eurecom
+*/
 #ifndef S6A_DEFS_H_
 #define S6A_DEFS_H_
 

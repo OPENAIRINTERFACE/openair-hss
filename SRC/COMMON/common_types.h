@@ -27,7 +27,12 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
-
+/*! \file common_types.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #ifndef FILE_COMMON_TYPES_SEEN
 #define FILE_COMMON_TYPES_SEEN

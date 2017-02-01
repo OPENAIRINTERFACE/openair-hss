@@ -19,6 +19,11 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s6a_dict.c
+  \brief
+  \author Sebastien ROUX
+  \company Eurecom
+*/
 
 #if HAVE_CONFIG_H
 #  include "config.h"

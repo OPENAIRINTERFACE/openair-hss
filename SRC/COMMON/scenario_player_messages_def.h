@@ -28,5 +28,13 @@
  */
 //WARNING: Do not include this header directly. Use intertask_interface.h instead.
 
+/*! \file scenario_player_messages_def.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
+
 MESSAGE_DEF(SP_SCENARIO_TICK,      MESSAGE_PRIORITY_MED, sp_scenario_tick_t,          scenario_tick)
 

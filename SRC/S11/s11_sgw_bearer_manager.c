@@ -19,6 +19,13 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s11_sgw_bearer_manager.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

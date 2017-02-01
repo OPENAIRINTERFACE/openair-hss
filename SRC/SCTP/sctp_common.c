@@ -21,8 +21,8 @@
 
 
 /*! \file sctp_common.c
-    \brief eNB/MME SCTP related common procedures
-    \author Sebastien ROUX
+    \brief MME SCTP related common procedures
+    \author Sebastien ROUX, Lionel GAUTHIER
     \date 2013
     \version 1.0
     @ingroup _sctp

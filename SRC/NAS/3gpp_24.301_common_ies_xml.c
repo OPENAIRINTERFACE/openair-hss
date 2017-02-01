@@ -26,6 +26,14 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
+
+/*! \file 3gpp_24.301_common_ies_xml.c
+   \brief
+   \author  Lionel GAUTHIER
+   \date 2016
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <pthread.h>
@@ -43,8 +51,6 @@
 #include "xml_load.h"
 #include "3gpp_24.301_common_ies_xml.h"
 #include "xml2_wrapper.h"
-
-
 
 //------------------------------------------------------------------------------
 NUM_FROM_XML_GENERATE(eps_bearer_context_status, EPS_BEARER_CONTEXT_STATUS);

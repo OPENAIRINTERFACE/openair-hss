@@ -56,6 +56,7 @@
 #include "common_defs.h"
 #include "gcc_diag.h"
 #include "mme_app_itti_messaging.h"
+#include "mme_app_procedures.h"
 #include "xml_msg_dump_itti.h"
 
 
@@ -624,10 +625,15 @@ mme_app_handle_s11_create_bearer_req (
     MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST ue id " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " n ebi %u",
         ue_context_p->mme_ue_s1ap_id, cid, ue_context_p->emm_context._imsi64, create_bearer_request_pP->bearer_contexts.num_bearer_context);
 
+    mme_app_s11_proc_create_bearer_t* s11_proc_create_bearer = mme_app_create_s11_procedure_create_bearer(ue_context_p);
+    s11_proc_create_bearer->proc.s11_trxn  = (uintptr_t)create_bearer_request_pP->trxn;
+
     for (int i = 0; i < create_bearer_request_pP->bearer_contexts.num_bearer_context; i++) {
       const bearer_context_within_create_bearer_request_t *msg_bc = &create_bearer_request_pP->bearer_contexts.bearer_contexts[i];
       bearer_context_t *  dedicated_bc = mme_app_create_bearer_context(ue_context_p, cid, msg_bc->eps_bearer_id, false);
 
+      s11_proc_create_bearer->num_bearers++;
+      s11_proc_create_bearer->bearer_status[EBI_TO_INDEX(dedicated_bc->ebi)] = S11_PROC_BEARER_PENDING;
 
       dedicated_bc->bearer_state   |= BEARER_STATE_SGW_CREATED;
       dedicated_bc->bearer_state   |= BEARER_STATE_MME_CREATED;
@@ -687,9 +693,29 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
       e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_setup_list.item[i].e_rab_id;
       bearer_context_t * bc = mme_app_get_bearer_context(ue_context_p, (ebi_t) e_rab_id);
       if (bc->bearer_state & BEARER_STATE_SGW_CREATED) {
-        bc->enb_teid_s1u = e_rab_setup_rsp->e_rab_setup_list.item[i].gtp_teid;
+        bc->enb_fteid_s1u.teid = e_rab_setup_rsp->e_rab_setup_list.item[i].gtp_teid;
         // Do not process transport_layer_address now
         //bstring e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address;
+        ip_address_t enb_ip_address = {0};
+        bstring_to_ip_address(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address, &enb_ip_address);
+
+        bc->enb_fteid_s1u.interface_type = S1_U_ENODEB_GTP_U;
+        // TODO better than that later
+        switch (enb_ip_address.pdn_type) {
+          case IPv4:
+            bc->enb_fteid_s1u.ipv4         = 1;
+            bc->enb_fteid_s1u.ipv4_address = enb_ip_address.address.ipv4_address;
+            break;
+          case IPv6:
+            bc->enb_fteid_s1u.ipv6         = 1;
+            memcpy(&bc->enb_fteid_s1u.ipv6_address,
+                &enb_ip_address.address.ipv6_address, sizeof(enb_ip_address.address.ipv6_address));
+            break;
+          default:
+            AssertFatal(0, "Bug enb_ip_address->pdn_type");
+        }
+        bdestroy_wrapper (&e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address);
+
         AssertFatal(bc->bearer_state & BEARER_STATE_MME_CREATED, "TO DO check bearer state");
         bc->bearer_state |= BEARER_STATE_ENB_CREATED;
 
@@ -728,26 +754,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
           s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].eps_bearer_id = e_rab_id;
           s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause.cause_value = REQUEST_ACCEPTED;
           //  FTEID eNB
-          ip_address_t enb_ip_address = {0};
-          bstring_to_ip_address(e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address, &enb_ip_address);
-
-          s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.teid = bc->enb_teid_s1u;
-          s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.interface_type = S1_U_ENODEB_GTP_U;
-          // TODO better than that later
-          switch (enb_ip_address.pdn_type) {
-            case IPv4:
-              s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4         = 1;
-              s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv4_address = enb_ip_address.address.ipv4_address;
-              break;
-            case IPv6:
-              s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv6         = 1;
-              memcpy(&s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid.ipv6_address,
-                  &enb_ip_address.address.ipv6_address, sizeof(enb_ip_address.address.ipv6_address));
-              break;
-            default:
-              AssertFatal(0, "Bug enb_ip_address->pdn_type");
-          }
-          bdestroy_wrapper (&e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address);
+          s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid = bc->enb_fteid_s1u;
 
           // FTEID SGW S1U
           s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_sgw_fteid = bc->s_gw_fteid_s1u;       ///< This IE shall be sent on the S11 interface. It shall be used
@@ -774,9 +781,82 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
       MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
                         NULL, 0, "0 S11_CREATE_BEARER_RESPONSE teid %u", s11_create_bearer_response->teid);
       itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+    } else {
+      // not send S11 response
+      // TODO create a procedure with bearers to receive a response from NAS
     }
   }
 
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
+void mme_app_handle_create_dedicated_bearer_rsp (itti_mme_app_create_dedicated_bearer_rsp_t   * const create_dedicated_bearer_rsp)
+{
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  struct ue_mm_context_s                 *ue_context_p = NULL;
+
+  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, create_dedicated_bearer_rsp->ue_id);
+
+  if (ue_context_p == NULL) {
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rsp->ue_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
+  if (!ue_context_p->is_s1_ue_context_release) {
+
+    // TODO:
+    // Actually do it simple, because it appear we have to wait for NAS procedure reworking (work in progress on another branch)
+    // for responding to S11 without mistakes (may be the create bearer procedure can be impacted by a S1 ue context release or
+    // a UE originating  NAS procedure)
+    mme_app_s11_proc_create_bearer_t *s11_proc_create = mme_app_get_s11_procedure_create_bearer(ue_context_p);
+    if (s11_proc_create) {
+      ebi_t ebi = create_dedicated_bearer_rsp->ebi;
+
+      s11_proc_create->num_status_received++;
+      s11_proc_create->bearer_status[EBI_TO_INDEX(ebi)] = S11_PROC_BEARER_SUCCESS;
+      // if received all bearers creation results
+      if (s11_proc_create->num_status_received == s11_proc_create->num_bearers) {
+        mme_app_s11_procedure_create_bearer_send_response(ue_context_p, s11_proc_create);
+        mme_app_delete_s11_procedure_create_bearer(ue_context_p);
+      }
+    }
+  }
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
+void mme_app_handle_create_dedicated_bearer_rej (itti_mme_app_create_dedicated_bearer_rej_t   * const create_dedicated_bearer_rej)
+{
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  struct ue_mm_context_s                 *ue_context_p = NULL;
+
+  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, create_dedicated_bearer_rej->ue_id);
+
+  if (ue_context_p == NULL) {
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rej->ue_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
+  if (!ue_context_p->is_s1_ue_context_release) {
+
+    // TODO:
+    // Actually do it simple, because it appear we have to wait for NAS procedure reworking (work in progress on another branch)
+    // for responding to S11 without mistakes (may be the create bearer procedure can be impacted by a S1 ue context release or
+    // a UE originating  NAS procedure)
+    mme_app_s11_proc_create_bearer_t *s11_proc_create = mme_app_get_s11_procedure_create_bearer(ue_context_p);
+    if (s11_proc_create) {
+      ebi_t ebi = create_dedicated_bearer_rej->ebi;
+
+      s11_proc_create->num_status_received++;
+      s11_proc_create->bearer_status[EBI_TO_INDEX(ebi)] = S11_PROC_BEARER_FAILED;
+      // if received all bearers creation results
+      if (s11_proc_create->num_status_received == s11_proc_create->num_bearers) {
+        mme_app_s11_procedure_create_bearer_send_response(ue_context_p, s11_proc_create);
+        mme_app_delete_s11_procedure_create_bearer(ue_context_p);
+      }
+    }
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
