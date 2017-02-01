@@ -977,20 +977,21 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
   OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
   if (!ue_context_p) {
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ Unknown mme_ue_s1ap_id 0x%06" PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-                  enb_ue_s1ap_id, mme_ue_s1ap_id);
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ Unknown mme_ue_s1ap_id 0x%06"
+        PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
+    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "
+        ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id, mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   // Set the UE context release cause in UE context. This is used while constructing UE Context Release Command
   ue_context_p->ue_context_rel_cause = cause;
 
-  if (ue_context_p->ecm_state == ECM_IDLE)
-  {
-    // Abnormal case. Log it and ignore the message.
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ- UE already in Idle state. MME UE S1AP Id 0x%06" PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    OAILOG_ERROR (LOG_MME_APP, " Ignoring the message. UE already in Idle state for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-                  enb_ue_s1ap_id, mme_ue_s1ap_id);
+  if (ue_context_p->ecm_state == ECM_IDLE) {
+    // This case could happen during sctp reset, before the UE could move to ECM_CONNECTED
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ- UE already in Idle state. MME UE S1AP Id 0x%06"
+        PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
+    OAILOG_WARNING (LOG_MME_APP, " Ignoring the message. UE already in Idle state for enb_ue_s1ap_ue_id "
+        ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id, mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   if ((ue_context_p->mme_s11_teid == 0) && (ue_context_p->sgw_s11_teid == 0)) {
@@ -1002,7 +1003,7 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     }
   } else {
     // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
-    mme_app_send_s11_release_access_bearers_req (ue_context_p);
+    mme_app_send_s11_release_access_bearers_req(ue_context_p);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

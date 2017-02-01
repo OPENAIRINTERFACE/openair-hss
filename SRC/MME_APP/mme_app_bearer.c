@@ -531,6 +531,7 @@ mme_app_handle_delete_session_rsp (
 //------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
+  void                                   *id = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (delete_sess_resp_pP );
@@ -542,6 +543,11 @@ mme_app_handle_delete_session_rsp (
     OAILOG_WARNING (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", delete_sess_resp_pP->teid);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+  hashtable_ts_remove(mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl,
+                      (const hash_key_t) ue_context_p->mme_s11_teid, &id);
+  ue_context_p->mme_s11_teid = 0;
+  ue_context_p->sgw_s11_teid = 0;
+
   if (delete_sess_resp_pP->cause != REQUEST_ACCEPTED) {
     DevMessage ("Cases where bearer cause != REQUEST_ACCEPTED are not handled\n");
   }
