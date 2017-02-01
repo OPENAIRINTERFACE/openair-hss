@@ -54,6 +54,7 @@
 #include "mme_app_bearer_context.h"
 #include "mme_app_defs.h"
 #include "mme_app_itti_messaging.h"
+#include "mme_app_procedures.h"
 #include "s1ap_mme.h"
 #include "common_defs.h"
 #include "esm_ebr.h"
@@ -92,6 +93,9 @@ void mme_app_ue_context_free_content (ue_mm_context_t * const mme_ue_context_p)
     if (mme_ue_context_p->bearer_contexts[i]) {
       mme_app_free_bearer_context(&mme_ue_context_p->bearer_contexts[i]);
     }
+  }
+  if (mme_ue_context_p->s11_procedures) {
+    mme_app_delete_s11_procedures(mme_ue_context_p);
   }
   memset(mme_ue_context_p, 0, sizeof(*mme_ue_context_p));
 }
@@ -1121,6 +1125,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
   ue_context_p->is_s1_ue_context_release = false;
 
   mme_app_ue_context_s1_release_enb_informations(ue_context_p);
+  mme_app_delete_s11_procedure_create_bearer(ue_context_p);
 
   if (((S1ap_Cause_PR_radioNetwork == ue_context_p->s1_ue_context_release_cause.present) &&
        (S1ap_CauseRadioNetwork_radio_connection_with_ue_lost == ue_context_p->s1_ue_context_release_cause.choice.radioNetwork))) {

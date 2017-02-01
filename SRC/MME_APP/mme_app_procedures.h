@@ -86,6 +86,7 @@ typedef enum {
   MME_APP_S1AP_PROC_TYPE_INITIAL
 } mme_app_s1ap_proc_type_t;
 
+void mme_app_delete_s11_procedures(ue_mm_context_t * const ue_context_p);
 mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p);
 mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p);
 void mme_app_delete_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p);

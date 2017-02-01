@@ -49,6 +49,27 @@
 #include "common_defs.h"
 #include "mme_app_procedures.h"
 
+static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_proc);
+
+//------------------------------------------------------------------------------
+void mme_app_delete_s11_procedures(ue_mm_context_t * const ue_context_p)
+{
+  if (ue_context_p->s11_procedures) {
+    mme_app_s11_proc_t *s11_proc1 = NULL;
+    mme_app_s11_proc_t *s11_proc2 = NULL;
+
+    s11_proc1 = LIST_FIRST(ue_context_p->s11_procedures);                 /* Faster List Deletion. */
+    while (s11_proc1) {
+      s11_proc2 = LIST_NEXT(s11_proc1, entries);
+      if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc1->type) {
+        mme_app_free_s11_procedure_create_bearer(&s11_proc1);
+      } // else ...
+      s11_proc1 = s11_proc2;
+    }
+    LIST_INIT(ue_context_p->s11_procedures);
+    free_wrapper((void**)ue_context_p->s11_procedures);
+  }
+}
 //------------------------------------------------------------------------------
 mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p)
 {
@@ -68,11 +89,13 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
 //------------------------------------------------------------------------------
 mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p)
 {
-  mme_app_s11_proc_t *s11_proc = NULL;
+  if (ue_context_p->s11_procedures) {
+    mme_app_s11_proc_t *s11_proc = NULL;
 
-  LIST_FOREACH(s11_proc, ue_context_p->s11_procedures, entries) {
-    if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
-      return (mme_app_s11_proc_create_bearer_t*)s11_proc;
+    LIST_FOREACH(s11_proc, ue_context_p->s11_procedures, entries) {
+      if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
+        return (mme_app_s11_proc_create_bearer_t*)s11_proc;
+      }
     }
   }
   return NULL;
@@ -80,15 +103,26 @@ mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_mm_
 //------------------------------------------------------------------------------
 void mme_app_delete_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p)
 {
-  mme_app_s11_proc_t *s11_proc = NULL;
+  if (ue_context_p->s11_procedures) {
+    mme_app_s11_proc_t *s11_proc = NULL;
 
-  LIST_FOREACH(s11_proc, ue_context_p->s11_procedures, entries) {
-    if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
-      LIST_REMOVE(s11_proc, entries);
-      return;
+    LIST_FOREACH(s11_proc, ue_context_p->s11_procedures, entries) {
+      if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
+        LIST_REMOVE(s11_proc, entries);
+        mme_app_free_s11_procedure_create_bearer(&s11_proc);
+        return;
+      }
     }
   }
 }
+//------------------------------------------------------------------------------
+static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_proc)
+{
+  // DO here specific releases (memory,etc)
+  // nothing to do actually
+  free_wrapper((void**)s11_proc);
+}
+
 //------------------------------------------------------------------------------
 void mme_app_s11_procedure_create_bearer_send_response(ue_mm_context_t * const ue_context_p, mme_app_s11_proc_create_bearer_t* s11_proc_create)
 {
