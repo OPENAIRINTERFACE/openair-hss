@@ -53,11 +53,6 @@
 
 #define EMM_FSM_NB_UE_MAX   (MME_API_NB_UE_MAX + 1)
 
-/****************************************************************************/
-/*******************  L O C A L    D E F I N I T I O N S  *******************/
-/****************************************************************************/
-#define STATE_REGISTERED    1
-#define STATE_UNREGISTERED  0
 /*
    -----------------------------------------------------------------------------
             Data used for trace logging
@@ -180,7 +175,7 @@ emm_fsm_set_status (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) ctx;
-  int new_emm_state;
+  mm_state_t                              new_emm_state = UE_UNREGISTERED;
   DevAssert (emm_ctx);
   if (status < EMM_STATE_MAX) {
     if (status != emm_ctx->_emm_fsm_status) {
@@ -188,9 +183,9 @@ emm_fsm_set_status (
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " MME_UE_S1AP_ID_FMT" ", _emm_fsm_status_str[status], ue_id);
       emm_ctx->_emm_fsm_status = status;
       if (status == EMM_REGISTERED) {
-        new_emm_state = STATE_REGISTERED;
+        new_emm_state = UE_REGISTERED;
       } else if (status == EMM_DEREGISTERED) {
-        new_emm_state = STATE_UNREGISTERED;
+        new_emm_state = UE_UNREGISTERED;
       }
       // Update mme_ue_context's emm_state and overall stats
       mme_ue_context_update_ue_emm_state (emm_ctx->ue_id, new_emm_state);

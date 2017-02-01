@@ -49,10 +49,7 @@
 #include "security_types.h"
 #include "sgw_ie_defs.h"
 
-typedef enum {
-  UE_UNREGISTERED = 0,
-  UE_REGISTERED,
-} mm_state_t;
+
 
 typedef enum {
   ECM_IDLE = 0,
@@ -351,6 +348,7 @@ void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
 
+void mme_app_handle_enb_deregister_ind(const itti_s1ap_eNB_deregistered_ind_t const* eNB_deregistered_ind);
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 

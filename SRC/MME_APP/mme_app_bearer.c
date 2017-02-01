@@ -440,8 +440,8 @@ mme_app_handle_initial_ue_message (
   // Check if there is any existing UE context using S-TMSI/GUTI
   if (initial_pP->is_s_tmsi_valid) 
   {
-    OAILOG_DEBUG (LOG_MME_APP, "INITIAL UE Message: Valid S-TMSI received from eNB.\n",
-                                                                        initial_pP->opt_s_tmsi.mme_code,initial_pP->opt_s_tmsi.m_tmsi);
+    OAILOG_DEBUG (LOG_MME_APP, "INITIAL UE Message: Valid mme_code %u and S-TMSI %u received from eNB.\n",
+                  initial_pP->opt_s_tmsi.mme_code, initial_pP->opt_s_tmsi.m_tmsi);
     guti_t guti = {.gummei.plmn = {0}, .gummei.mme_gid = 0, .gummei.mme_code = 0, .m_tmsi = INVALID_M_TMSI};
     is_guti_valid = mme_app_construct_guti(&(initial_pP->tai.plmn),&(initial_pP->opt_s_tmsi),&guti);
     if (is_guti_valid)
@@ -470,16 +470,13 @@ mme_app_handle_initial_ue_message (
                 ue_context_p->mme_s11_teid,
                 &guti);
         }
-        else 
-        { 
-          OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE with S-TMSI: no UE context found \n",
-                                                                             initial_pP->opt_s_tmsi.mme_code,initial_pP->opt_s_tmsi.m_tmsi);
-        }
-    }
-    else
-    {
-        OAILOG_DEBUG (LOG_MME_APP, "No MME is configured with MME code received in S-TMSI from UE.\n",
-                                                                             initial_pP->opt_s_tmsi.mme_code,initial_pP->opt_s_tmsi.m_tmsi);
+        else {
+        OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE with mme code %u and S-TMSI %u:"
+            "no UE context found \n", initial_pP->opt_s_tmsi.mme_code, initial_pP->opt_s_tmsi.m_tmsi);
+      }
+    } else {
+      OAILOG_DEBUG (LOG_MME_APP, "No MME is configured with MME code %u received in S-TMSI %u from UE.\n",
+                    initial_pP->opt_s_tmsi.mme_code, initial_pP->opt_s_tmsi.m_tmsi);
     }
   }
   else
@@ -557,20 +554,19 @@ mme_app_handle_delete_session_rsp (
   update_mme_app_stats_default_bearer_sub();
   
   /*
-   * If UE is already in idle state, skip asking eNB to release UE context and just clean up locally. 
-   * This can happen during implicit detach and UE initiated detach when UE sends detach req (type = switch off) 
-   * as initial NAS message. 
+   * If UE is already in idle state, skip asking eNB to release UE context and just clean up locally.
+   * This can happen during implicit detach and UE initiated detach when UE sends detach req (type = switch off)
    */
   if (ECM_IDLE == ue_context_p->ecm_state) {
     ue_context_p->ue_context_rel_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
-    // Notify S1AP to release S1AP UE context locally
+    // Notify S1AP to release S1AP UE context locally.
     mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
     // Free MME UE Context   
     mme_notify_ue_context_released (&mme_app_desc.mme_ue_contexts, ue_context_p);
     mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p);
   } else {
     ue_context_p->ue_context_rel_cause = S1AP_NAS_DETACH;
-    // Notify S1AP to send UE Context Release Command to eNB
+    // Notify S1AP to send UE Context Release Command to eNB or free s1 context locally.
     mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
   }
 
@@ -854,7 +850,6 @@ void
 mme_app_handle_release_access_bearers_resp (
   const itti_s11_release_access_bearers_response_t * const rel_access_bearers_rsp_pP)
 {
-  MessageDef                             *message_p = NULL;
   struct ue_context_s                    *ue_context_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -873,8 +868,12 @@ mme_app_handle_release_access_bearers_resp (
    */
   update_mme_app_stats_s1u_bearer_sub();
 
-  // Send UE Context Release Command 
-  mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
+  // Send UE Context Release Command
+  mme_app_itti_ue_context_release(ue_context_p, ue_context_p->ue_context_rel_cause);
+  if (ue_context_p->ue_context_rel_cause == S1AP_SCTP_SHUTDOWN_OR_RESET) {
+    // Just cleanup the MME APP state associated with s1.
+    mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context_p, ECM_IDLE);
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 //------------------------------------------------------------------------------
@@ -929,8 +928,9 @@ static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t
   guti_p->m_tmsi = s_tmsi_p->m_tmsi;
   guti_p->gummei.mme_code = s_tmsi_p->mme_code;
   // Create GUTI by using PLMN Id and MME-Group Id of serving MME
-  OAILOG_DEBUG (LOG_MME_APP, "Construct GUTI using S-TMSI received form UE and MME Group Id and PLMN id from MME Conf \n",
-                                                                                            s_tmsi_p->m_tmsi,s_tmsi_p->mme_code);
+  OAILOG_DEBUG (LOG_MME_APP,
+                "Construct GUTI using S-TMSI received form UE and MME Group Id and PLMN id from MME Conf: %u, %u \n",
+                s_tmsi_p->m_tmsi, s_tmsi_p->mme_code);
   mme_config_read_lock (&mme_config);
   /*
    * Check number of MMEs in the pool.

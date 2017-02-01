@@ -72,7 +72,8 @@ extern mme_app_desc_t mme_app_desc;
 
 int mme_app_handle_s1ap_ue_capabilities_ind  (const itti_s1ap_ue_cap_ind_t const * s1ap_ue_cap_ind_pP);
 
-void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context_release_complete_t const *s1ap_ue_context_release_complete);
+void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context_release_complete_t const
+                                                       *s1ap_ue_context_release_complete);
 
 
 int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context_pP);

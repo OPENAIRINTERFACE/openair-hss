@@ -43,6 +43,12 @@
 #include "timer.h"
 #include "mme_app_statistics.h"
 
+
+static void _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+                                                     const enb_ue_s1ap_id_t enb_ue_s1ap_id,
+                                                     enum s1cause cause);
+
+
 //------------------------------------------------------------------------------
 ue_context_t *mme_create_new_ue_context (void)
 {
@@ -738,7 +744,7 @@ mme_app_dump_ue_context (
 
   OAILOG_DEBUG (LOG_MME_APP, "-----------------------UE context %p --------------------\n", ue_context_pP);
   if (context_p) {
-    OAILOG_DEBUG (LOG_MME_APP, "    - IMSI ...........: %" IMSI_64_FMT "\n", context_p->imsi);
+    OAILOG_DEBUG (LOG_MME_APP, "    - IMSI ...........: " IMSI_64_FMT "\n", context_p->imsi);
     OAILOG_DEBUG (LOG_MME_APP, "                        |  m_tmsi  | mmec | mmegid | mcc | mnc |\n");
     OAILOG_DEBUG (LOG_MME_APP, "    - GUTI............: | %08x |  %02x  |  %04x  | %03u | %03u |\n", context_p->guti.m_tmsi, context_p->guti.gummei.mme_code, context_p->guti.gummei.mme_gid,
                  /*
@@ -862,45 +868,24 @@ mme_app_dump_ue_contexts (
 }
 
 
-//------------------------------------------------------------------------------
 void
 mme_app_handle_s1ap_ue_context_release_req (
   const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req)
 //------------------------------------------------------------------------------
 {
-  struct ue_context_s                    *ue_context_p = NULL;
-  MessageDef                             *message_p = NULL;
-
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s1ap_ue_context_release_req->mme_ue_s1ap_id);
-  if (!ue_context_p) {
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ Unknown mme_ue_s1ap_id 0x%06" PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-        s1ap_ue_context_release_req->enb_ue_s1ap_id, s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-  // Set the UE context release cause in UE context. This is used while constructing UE Context Release Command
-  ue_context_p->ue_context_rel_cause = S1AP_RADIO_EUTRAN_GENERATED_REASON; 
-  
-  if (ue_context_p->ecm_state == ECM_IDLE)
-  {
-    // Abnormal case. Log it and ignore the message. 
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ- UE already in Idle state. MME UE S1AP Id 0x%06" PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    OAILOG_ERROR (LOG_MME_APP, " Ignoring the message. UE already in Idle state for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-        s1ap_ue_context_release_req->enb_ue_s1ap_id, s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-  if ((ue_context_p->mme_s11_teid == 0) && (ue_context_p->sgw_s11_teid == 0)) {
-    // No session was created, no need for releasing bearers in SGW
-    mme_app_itti_ue_context_release(ue_context_p, ue_context_p->ue_context_rel_cause);
-  } else {
-    // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
-    mme_app_send_s11_release_access_bearers_req (ue_context_p);
-  }
-
-  OAILOG_FUNC_OUT (LOG_MME_APP);
+  _mme_app_handle_s1ap_ue_context_release(s1ap_ue_context_release_req->mme_ue_s1ap_id,
+                                          s1ap_ue_context_release_req->enb_ue_s1ap_id,
+                                          S1AP_RADIO_EUTRAN_GENERATED_REASON);
 }
 
+void
+mme_app_handle_enb_deregister_ind(const itti_s1ap_eNB_deregistered_ind_t const * eNB_deregistered_ind) {
+  for (int i = 0; i < eNB_deregistered_ind->nb_ue_to_deregister; i++) {
+    _mme_app_handle_s1ap_ue_context_release(eNB_deregistered_ind->mme_ue_s1ap_id[i],
+                                            eNB_deregistered_ind->enb_ue_s1ap_id[i],
+                                            S1AP_SCTP_SHUTDOWN_OR_RESET);
+  }
+}
 
 /*
    From GPP TS 23.401 version 11.11.0 Release 11, section 5.3.5 S1 release procedure, point 6:
@@ -951,7 +936,7 @@ mme_app_handle_s1ap_ue_context_release_complete (
 
 //-------------------------------------------------------------------------------------------------------
 void mme_ue_context_update_ue_emm_state (
-  mme_ue_s1ap_id_t       mme_ue_s1ap_id, int  new_mm_state)
+  mme_ue_s1ap_id_t       mme_ue_s1ap_id, mm_state_t  new_mm_state)
 {
   // Function is used to update UE's mobility management State- Registered/Un-Registered 
 
@@ -965,16 +950,59 @@ void mme_ue_context_update_ue_emm_state (
   }
   if ((ue_context_p->mm_state == UE_UNREGISTERED) && (new_mm_state == UE_REGISTERED))
   {
-    ue_context_p->mm_state = (mm_state_t) new_mm_state;
+    ue_context_p->mm_state = new_mm_state;
     
     // Update Stats
     update_mme_app_stats_attached_ue_add();
   } else if ((ue_context_p->mm_state == UE_REGISTERED) && (new_mm_state == UE_UNREGISTERED))
   {
-    ue_context_p->mm_state = (mm_state_t) new_mm_state;
+    ue_context_p->mm_state = new_mm_state;
     
     // Update Stats
     update_mme_app_stats_attached_ue_sub();
+  }
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+
+//------------------------------------------------------------------------------
+static void
+_mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
+                                         const enb_ue_s1ap_id_t enb_ue_s1ap_id,
+                                         enum s1cause cause)
+//------------------------------------------------------------------------------
+{
+  struct ue_context_s                    *ue_context_p = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
+  if (!ue_context_p) {
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ Unknown mme_ue_s1ap_id 0x%06" PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
+    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+                  enb_ue_s1ap_id, mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  // Set the UE context release cause in UE context. This is used while constructing UE Context Release Command
+  ue_context_p->ue_context_rel_cause = cause;
+
+  if (ue_context_p->ecm_state == ECM_IDLE)
+  {
+    // Abnormal case. Log it and ignore the message.
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ- UE already in Idle state. MME UE S1AP Id 0x%06" PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
+    OAILOG_ERROR (LOG_MME_APP, " Ignoring the message. UE already in Idle state for enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+                  enb_ue_s1ap_id, mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  if ((ue_context_p->mme_s11_teid == 0) && (ue_context_p->sgw_s11_teid == 0)) {
+    // No session was created, no need for releasing bearers in SGW
+    mme_app_itti_ue_context_release(ue_context_p, ue_context_p->ue_context_rel_cause);
+    if (ue_context_p->ue_context_rel_cause == S1AP_SCTP_SHUTDOWN_OR_RESET) {
+      // Just cleanup the MME APP state associated with s1.
+      mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context_p, ECM_IDLE);
+    }
+  } else {
+    // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
+    mme_app_send_s11_release_access_bearers_req (ue_context_p);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

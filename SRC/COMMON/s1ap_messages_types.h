@@ -73,9 +73,10 @@ typedef struct itti_s1ap_ue_cap_ind_s {
   size_t            radio_capabilities_length;
 } itti_s1ap_ue_cap_ind_t;
 
-#define S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE 20
+#define S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE 128
 typedef struct itti_s1ap_eNB_deregistered_ind_s {
   uint8_t          nb_ue_to_deregister;
+  enb_ue_s1ap_id_t enb_ue_s1ap_id[S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE];
   mme_ue_s1ap_id_t mme_ue_s1ap_id[S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE];
 } itti_s1ap_eNB_deregistered_ind_t;
 
@@ -92,7 +93,8 @@ typedef struct itti_s1ap_ue_context_release_req_s {
 enum s1cause {
   S1AP_NAS_DETACH,
   S1AP_RADIO_EUTRAN_GENERATED_REASON,
-  S1AP_IMPLICIT_CONTEXT_RELEASE 
+  S1AP_IMPLICIT_CONTEXT_RELEASE,
+  S1AP_SCTP_SHUTDOWN_OR_RESET
 };
 typedef struct itti_s1ap_ue_context_release_command_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;

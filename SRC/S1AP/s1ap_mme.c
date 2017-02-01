@@ -135,7 +135,8 @@ s1ap_mme_thread (
        * SCTP layer notifies S1AP of disconnection of a peer.
        */
     case SCTP_CLOSE_ASSOCIATION:{
-        s1ap_handle_sctp_deconnection (SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id);
+      s1ap_handle_sctp_deconnection(SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id,
+                                    SCTP_CLOSE_ASSOCIATION (received_message_p).reset);
       }
       break;
 
@@ -561,6 +562,7 @@ s1ap_remove_ue (
   /*
    * Updating number of UE
    */
+  DevAssert(enb_ref->nb_ue_associated > 0);
   enb_ref->nb_ue_associated--;
   
   /*
@@ -577,7 +579,16 @@ s1ap_remove_ue (
   OAILOG_TRACE(LOG_S1AP, "Removing UE enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id:" MME_UE_S1AP_ID_FMT " in eNB id : %d\n",
       ue_ref->enb_ue_s1ap_id, ue_ref->mme_ue_s1ap_id, enb_ref->enb_id);
   hashtable_ts_free (&enb_ref->ue_coll, ue_ref->enb_ue_s1ap_id);
-  enb_ref->nb_ue_associated--;
+
+  if (!enb_ref->nb_ue_associated) {
+    if (enb_ref->s1_state == S1AP_RESETING) {
+      OAILOG_INFO(LOG_S1AP, "Moving eNB state to S1AP_INIT");
+      enb_ref->s1_state = S1AP_INIT;
+    } else if (enb_ref->s1_state == S1AP_SHUTDOWN) {
+      OAILOG_INFO(LOG_S1AP, "Deleting eNB");
+      s1ap_remove_enb(enb_ref);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

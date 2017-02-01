@@ -112,17 +112,6 @@ static void *nas_intertask_interface (void *args_p)
       }
       break;
 
-    case S1AP_ENB_DEREGISTERED_IND:{
-      /*
-        int                                     i;
-
-        for (i = 0; i < S1AP_ENB_DEREGISTERED_IND (received_message_p).nb_ue_to_deregister; i++) {
-          nas_proc_deregister_ue (S1AP_ENB_DEREGISTERED_IND (received_message_p).mme_ue_s1ap_id[i]);
-        }
-*/
-      }
-      break;
-
     case S1AP_DEREGISTER_UE_REQ:{
         nas_proc_deregister_ue (S1AP_DEREGISTER_UE_REQ (received_message_p).mme_ue_s1ap_id);
       }

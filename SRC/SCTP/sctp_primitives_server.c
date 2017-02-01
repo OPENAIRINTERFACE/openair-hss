@@ -481,7 +481,7 @@ static inline int sctp_read_from_socket (int sd, uint32_t ppid)
 static int sctp_handle_com_down (sctp_assoc_id_t assoc_id) {
   OAILOG_DEBUG (LOG_SCTP, "Sending close connection for assoc_id %u\n", assoc_id);
 
-  if (sctp_itti_send_com_down_ind(assoc_id) < 0) {
+  if (sctp_itti_send_com_down_ind(assoc_id, false) < 0) {
     OAILOG_ERROR (LOG_SCTP, "Failed to send message to TASK_S1AP\n");
   }
 
@@ -495,17 +495,12 @@ static int sctp_handle_com_down (sctp_assoc_id_t assoc_id) {
 static int sctp_handle_reset(const sctp_assoc_id_t assoc_id) {
   OAILOG_DEBUG(LOG_SCTP, "Handling sctp reset\n");
 
-  if (sctp_itti_send_com_down_ind(assoc_id) < 0) {
+  if (sctp_itti_send_com_down_ind(assoc_id, true) < 0) {
     OAILOG_ERROR(LOG_SCTP, "Failed to send release message to TASK_S1AP\n");
     return SCTP_RC_ERROR;
   }
   sctp_association_t *assoc = sctp_is_assoc_in_list(assoc_id);
   DevAssert(assoc != NULL);
-
-  if (sctp_itti_send_new_association(assoc->assoc_id, assoc->instreams, assoc->outstreams) < 0) {
-    OAILOG_ERROR(LOG_SCTP, "FAILED to add back association after restet\n");
-    return SCTP_RC_ERROR;
-  }
 
   return SCTP_RC_NORMAL_READ;
 }

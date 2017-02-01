@@ -74,7 +74,7 @@ int s1ap_mme_handle_initial_context_setup_response(
     const sctp_stream_id_t stream,
     struct s1ap_message_s *message_p);
 
-int s1ap_handle_sctp_deconnection(const sctp_assoc_id_t assoc_id);
+int s1ap_handle_sctp_disconnection(const sctp_assoc_id_t assoc_id, bool reset);
 
 int s1ap_handle_new_association(sctp_new_peer_t *sctp_new_peer_p);
 

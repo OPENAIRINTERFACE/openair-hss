@@ -70,6 +70,11 @@ typedef enum mme_api_ip_version_e {
   MME_API_ADDR_MAX
 } mme_api_ip_version_t;
 
+typedef enum {
+  UE_UNREGISTERED = 0,
+  UE_REGISTERED,
+} mm_state_t;
+
 /*
  * EPS Mobility Management configuration data
  * ------------------------------------------
@@ -149,6 +154,6 @@ int mme_api_subscribe(bstring *apn, mme_api_ip_version_t mme_pdn_index, bstring 
                       int is_emergency, mme_api_qos_t *qos);
 int mme_api_unsubscribe(bstring apn);
 
-void mme_ue_context_update_ue_emm_state (mme_ue_s1ap_id_t mme_ue_s1ap_id, int  new_emm_state);
+void mme_ue_context_update_ue_emm_state (mme_ue_s1ap_id_t mme_ue_s1ap_id, mm_state_t new_emm_state);
 
 #endif /* FILE_MME_API_SEEN*/

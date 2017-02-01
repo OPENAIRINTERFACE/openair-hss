@@ -288,15 +288,7 @@ void nas_itti_pdn_connectivity_req(
         "NAS_PDN_CONNECTIVITY_REQ ue id %06"PRIX32" IMSI %X",
         ue_idP, NAS_PDN_CONNECTIVITY_REQ(message_p).imsi);
 
-#define TEMPORARY_DEBUG 1
-#if TEMPORARY_DEBUG
-  mme_ue_context_dump_coll_keys();
-#endif
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-#define TEMPORARY_DEBUG 1
-#if TEMPORARY_DEBUG
-  mme_ue_context_dump_coll_keys();
-#endif
 
   OAILOG_FUNC_OUT(LOG_NAS);
 }

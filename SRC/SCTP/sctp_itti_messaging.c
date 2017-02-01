@@ -88,8 +88,7 @@ int sctp_itti_send_new_message_ind(
 
 //------------------------------------------------------------------------------
 int
-sctp_itti_send_com_down_ind (
-    const sctp_assoc_id_t assoc_id)
+sctp_itti_send_com_down_ind (const sctp_assoc_id_t assoc_id, bool reset)
 {
   MessageDef                             *message_p = NULL;
   sctp_close_association_t               *sctp_close_association_p = NULL;
@@ -97,5 +96,6 @@ sctp_itti_send_com_down_ind (
   message_p = itti_alloc_new_message (TASK_SCTP, SCTP_CLOSE_ASSOCIATION);
   sctp_close_association_p = &message_p->ittiMsg.sctp_close_association;
   sctp_close_association_p->assoc_id = assoc_id;
+  sctp_close_association_p->reset = reset;
   return itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
 }

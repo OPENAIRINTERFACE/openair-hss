@@ -471,7 +471,7 @@ emm_proc_authentication_complete (
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "SQN SYNCH_FAILURE ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - USIM has detected a mismatch in SQN Ask for new vector(s)\n");
       nas_itti_auth_info_req (ue_id, emm_ctx->_imsi64, false, &emm_ctx->originating_tai.plmn, MAX_EPS_AUTH_VECTORS, res);
-      emm_proc_common_clear_args(data);
+      emm_proc_common_clear_args(ue_id);
       data = NULL;
       rc = RETURNok;
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

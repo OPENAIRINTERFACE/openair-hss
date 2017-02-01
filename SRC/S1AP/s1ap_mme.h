@@ -42,9 +42,12 @@ struct s1ap_timer_t {
   long sec;          /* The timer interval value in seconds  */
 };
 
-enum s1_enb_state_s {
-  S1AP_RESETING,      ///< After a reset request (eNB or MME initiated)
-  S1AP_READY          ///< MME and eNB are S1 associated, UE contexts can be added
+// The current s1 state of the MME relating to the specific eNB.
+enum mme_s1_enb_state_s {
+  S1AP_INIT,          /// The sctp association has been established but s1 hasn't been setup.
+  S1AP_RESETING,      /// The s1state is resetting due to an SCTP reset on the bound association.
+  S1AP_READY,         ///< MME and eNB are S1 associated, UE contexts can be added
+  S1AP_SHUTDOWN       /// The S1 state is being torn down due to sctp shutdown.
 };
 
 enum s1_ue_state_s {
@@ -92,7 +95,7 @@ typedef struct ue_description_s {
  */
 typedef struct enb_description_s {
 
-  enum s1_enb_state_s s1_state;         ///< State of the eNB S1AP association over MME
+  enum mme_s1_enb_state_s s1_state;         ///< State of the eNB specific S1AP association
 
   /** eNB related parameters **/
   /*@{*/
