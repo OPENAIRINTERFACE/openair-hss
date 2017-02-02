@@ -135,8 +135,8 @@ s1ap_mme_thread (
        * SCTP layer notifies S1AP of disconnection of a peer.
        */
     case SCTP_CLOSE_ASSOCIATION:{
-      s1ap_handle_sctp_deconnection(SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id,
-                                    SCTP_CLOSE_ASSOCIATION (received_message_p).reset);
+      s1ap_handle_sctp_disconnection(SCTP_CLOSE_ASSOCIATION (received_message_p).assoc_id,
+                                     SCTP_CLOSE_ASSOCIATION (received_message_p).reset);
       }
       break;
 
