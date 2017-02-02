@@ -28,15 +28,15 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include "dynamic_memory_check.h"
 #include "intertask_interface.h"
 #include "assertions.h"
+#include "mme_app_statistics.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_decoder.h"
 #include "s1ap_mme_handlers.h"
 #include "s1ap_mme_nas_procedures.h"
-#include "s1ap_mme_retransmission.h"
 #include "s1ap_mme_itti_messaging.h"
-#include "dynamic_memory_check.h"
 #include "timer.h"
 
 #if S1AP_DEBUG_LIST
@@ -584,6 +584,7 @@ s1ap_remove_ue (
     if (enb_ref->s1_state == S1AP_RESETING) {
       OAILOG_INFO(LOG_S1AP, "Moving eNB state to S1AP_INIT");
       enb_ref->s1_state = S1AP_INIT;
+      update_mme_app_stats_connected_enb_sub();
     } else if (enb_ref->s1_state == S1AP_SHUTDOWN) {
       OAILOG_INFO(LOG_S1AP, "Deleting eNB");
       s1ap_remove_enb(enb_ref);

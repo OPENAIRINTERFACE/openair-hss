@@ -79,7 +79,7 @@ int mme_app_handle_nas_dl_req (
    * S1 Signaling connection gets established via first DL NAS Trasnport message in some scenarios so check the state
    * first 
    */
-  if (ue_context->ecm_state != ECM_CONNECTED)  
+  if (ue_context && ue_context->ecm_state != ECM_CONNECTED)
   {
     mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts,ue_context,ECM_CONNECTED);
   }
