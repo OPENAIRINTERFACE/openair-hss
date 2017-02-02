@@ -772,6 +772,10 @@ mme_app_handle_create_sess_resp (
     nas_pdn_connectivity_rsp->qos.gbrDL = 120;       /* 120=512kb/s Guaranteed Bit Rate for downlink */
     nas_pdn_connectivity_rsp->qos.mbrUL = 72;        /* 72=128kb/s   Maximum Bit Rate for uplink      */
     nas_pdn_connectivity_rsp->qos.mbrDL = 135;       /*135=1024kb/s Maximum Bit Rate for downlink    */
+    /*
+     * Note : Above values are insignificant because bearer with QCI = 9 is NON-GBR bearer and ESM would not include GBR and MBR values
+     * in Activate Default EPS Bearer Context Setup Request message 
+     */ 
     nas_pdn_connectivity_rsp->qos.qci = 9;   /* QoS Class Identifier                           */
     nas_pdn_connectivity_rsp->request_type = ue_context_p->pending_pdn_connectivity_req_request_type;        // NAS internal ref
     ue_context_p->pending_pdn_connectivity_req_request_type = 0;

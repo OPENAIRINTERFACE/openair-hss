@@ -131,6 +131,14 @@ mme_app_handle_s6a_update_location_ans (
    * Copy the subscribed ambr to the sgw create session request message
    */
   memcpy (&ue_context_p->subscribed_ambr, &ula_pP->subscription_data.subscribed_ambr, sizeof (ambr_t));
+  // In Activate Default EPS Bearer Context Setup Request message APN-AMPBR is forced to 200Mbps and 100 Mbps for DL
+  // and UL respectively. Since as of now we support only one bearer, forcing AMBR as well to APN-AMBR values.
+  ue_context_p->subscribed_ambr.br_ul = 100000000; // Setting it to 100 Mbps
+  ue_context_p->subscribed_ambr.br_dl = 200000000; // Setting it to 200 Mbps 
+  // TODO task#14477798 - Configure the policy driven values in HSS and use those here and in NAS.
+  //ue_context_p->subscribed_ambr.br_ul = ue_context_p->subscribed_ambr.br_ul; // Setting it to 100 Mbps
+  //ue_context_p->subscribed_ambr.br_dl = ue_context_p->subscribed_ambr.br_dl; // Setting it to 200 Mbps 
+
   memcpy (ue_context_p->msisdn, ula_pP->subscription_data.msisdn, ula_pP->subscription_data.msisdn_length);
   ue_context_p->msisdn_length = ula_pP->subscription_data.msisdn_length;
   AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0");

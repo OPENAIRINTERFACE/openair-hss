@@ -304,6 +304,8 @@ esm_send_activate_default_eps_bearer_context_request (
 //#pragma message  "TEST LG FORCE APN-AMBR"
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - FORCE APN-AMBR\n");
   msg->presencemask |= ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_APNAMBR_PRESENT;
+  // APN AMBR is hardcoded to DL AMBR = 200 Mbps and UL APN MBR = 100 Mbps - Which is ok for now for TDD 20 MHz
+  // TODO task#14477798 - need to change these to apm-subscribed values 
   msg->apnambr.apnambrfordownlink = 0xfe;       // (8640kbps)
   msg->apnambr.apnambrforuplink = 0xfe; // (8640kbps)
   msg->apnambr.apnambrfordownlink_extended = 0xde;      // (200Mbps)
