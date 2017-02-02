@@ -1090,7 +1090,7 @@ static int _emm_attach_identify (emm_context_t *emm_context)
       visited_plmn.mnc_digit2 = emm_context->originating_tai.mnc_digit2;
       visited_plmn.mnc_digit3 = emm_context->originating_tai.mnc_digit3;
 
-      nas_itti_auth_info_req (ue_id, emm_context->_imsi64, true, &visited_plmn, MAX_EPS_AUTH_VECTORS, NULL);
+      nas_itti_auth_info_req (ue_id, &emm_context->_imsi, true, &visited_plmn, MAX_EPS_AUTH_VECTORS, NULL);
       rc = RETURNok;
     } else {
       ksi_t                                   eksi = 0;

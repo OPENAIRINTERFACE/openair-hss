@@ -257,7 +257,7 @@ void nas_itti_pdn_connectivity_req(
 //------------------------------------------------------------------------------
 void nas_itti_auth_info_req(
   const mme_ue_s1ap_id_t ue_idP,
-  const imsi64_t         imsi64_P,
+  const imsi_t   * const imsiP,
   const bool             is_initial_reqP,
   plmn_t         * const visited_plmnP,
   const uint8_t          num_vectorsP,
@@ -271,8 +271,8 @@ void nas_itti_auth_info_req(
   message_p = itti_alloc_new_message (TASK_NAS_MME, S6A_AUTH_INFO_REQ);
   auth_info_req = &message_p->ittiMsg.s6a_auth_info_req;
 
-  auth_info_req->imsi_length =
-      snprintf (auth_info_req->imsi, IMSI_BCD_DIGITS_MAX+1, IMSI_64_FMT, imsi64_P);
+  IMSI_TO_STRING(imsiP,auth_info_req->imsi, IMSI_BCD_DIGITS_MAX+1);
+  auth_info_req->imsi_length = strlen(auth_info_req->imsi);
 
   AssertFatal((15 >= auth_info_req->imsi_length) && (0 < auth_info_req->imsi_length),
       "Bad IMSI length %d", auth_info_req->imsi_length);

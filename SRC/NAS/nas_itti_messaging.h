@@ -65,7 +65,7 @@ void nas_itti_pdn_connectivity_req(
 
 void nas_itti_auth_info_req(
   const mme_ue_s1ap_id_t ue_idP,
-  const imsi64_t         imsi64_P,
+  const imsi_t   * const imsiP,
   const bool             is_initial_reqP,
   plmn_t         * const visited_plmnP,
   const uint8_t          num_vectorsP,

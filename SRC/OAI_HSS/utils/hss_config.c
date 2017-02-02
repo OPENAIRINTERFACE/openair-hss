@@ -297,8 +297,7 @@ hss_config_parse_file (
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_OPERATOR_KEY, (const char **)&astring) )) {
       hss_config_p->operator_key = strdup(astring);
     } else {
-      FPRINTF_ERROR( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_OPERATOR_KEY);
-      return ret;
+      FPRINTF_NOTICE( "Failed to parse HSS configuration file token %s!\n", HSS_CONFIG_STRING_OPERATOR_KEY);
     }
 
     if (  (config_setting_lookup_string( setting, HSS_CONFIG_STRING_RANDOM, (const char **)&astring) )) {

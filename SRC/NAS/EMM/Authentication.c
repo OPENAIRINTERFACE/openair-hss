@@ -284,7 +284,7 @@ int emm_proc_authentication_failure (
       visited_plmn.mnc_digit2 = emm_ctx->originating_tai.mnc_digit2;
       visited_plmn.mnc_digit3 = emm_ctx->originating_tai.mnc_digit3;
 
-      nas_itti_auth_info_req (ue_id, emm_ctx->_imsi64, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, auts);
+      nas_itti_auth_info_req (ue_id, &emm_ctx->_imsi, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, auts);
       rc = RETURNok;
       if (EMM_COMMON_PROC_TYPE_AUTHENTICATION == emm_ctx->common_proc->type) {
         // Release retransmission timer parameters
@@ -455,7 +455,7 @@ emm_proc_authentication_complete (
         visited_plmn.mnc_digit1 = emm_ctx->originating_tai.mnc_digit1;
         visited_plmn.mnc_digit2 = emm_ctx->originating_tai.mnc_digit2;
         visited_plmn.mnc_digit3 = emm_ctx->originating_tai.mnc_digit3;
-        nas_itti_auth_info_req (ue_id, emm_ctx->_imsi64, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, res);
+        nas_itti_auth_info_req (ue_id, &emm_ctx->_imsi, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, res);
 
         // Release retransmission timer parameters
         memset(&emm_ctx->common_proc->common_arg, 0, sizeof(emm_ctx->common_proc->common_arg));
@@ -639,7 +639,7 @@ int _authentication_check_imsi_5_4_2_5__1 (struct emm_context_s *emm_context) {
         visited_plmn.mnc_digit1 = emm_context->originating_tai.mnc_digit1;
         visited_plmn.mnc_digit2 = emm_context->originating_tai.mnc_digit2;
         visited_plmn.mnc_digit3 = emm_context->originating_tai.mnc_digit3;
-        nas_itti_auth_info_req (ue_id, emm_context->_imsi64, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, NULL);
+        nas_itti_auth_info_req (ue_id, &emm_context->_imsi, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, NULL);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
       }
     }

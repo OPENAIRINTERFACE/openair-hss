@@ -68,7 +68,8 @@ int mme_app_send_s6a_update_location_req (
   }
 
   s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
-  IMSI64_TO_STRING (ue_mm_context->emm_context._imsi64, s6a_ulr_p->imsi);
+
+  IMSI_TO_STRING((&ue_mm_context->emm_context._imsi),s6a_ulr_p->imsi, IMSI_BCD_DIGITS_MAX+1);
   s6a_ulr_p->imsi_length = strlen (s6a_ulr_p->imsi);
   s6a_ulr_p->initial_attach = INITIAL_ATTACH;
 
@@ -86,7 +87,7 @@ int mme_app_send_s6a_update_location_req (
    * Check if we already have UE data
    */
   s6a_ulr_p->skip_subscriber_data = 0;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi " IMSI_64_FMT, ue_mm_context->emm_context._imsi64);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi %s", s6a_ulr_p->imsi);
   rc =  itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
@@ -159,7 +160,7 @@ int mme_app_handle_s6a_update_location_ans (
 
     nas_pdn_config_rsp = &message_p->ittiMsg.nas_pdn_config_rsp;
     nas_pdn_config_rsp->ue_id = ue_mm_context->mme_ue_s1ap_id;
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP imsi " IMSI_64_FMT, ue_mm_context->mme_ue_s1ap_id);
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP imsi " IMSI_64_FMT, ue_mm_context->_imsi64);
     rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   }
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
