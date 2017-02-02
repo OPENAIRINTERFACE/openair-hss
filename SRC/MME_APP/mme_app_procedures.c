@@ -67,7 +67,7 @@ void mme_app_delete_s11_procedures(ue_mm_context_t * const ue_context_p)
       s11_proc1 = s11_proc2;
     }
     LIST_INIT(ue_context_p->s11_procedures);
-    free_wrapper((void**)ue_context_p->s11_procedures);
+    free_wrapper((void**)&ue_context_p->s11_procedures);
   }
 }
 //------------------------------------------------------------------------------
