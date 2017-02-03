@@ -29,16 +29,12 @@
 #include "obj_hashtable.h"
 #include "log.h"
 #include "msc.h"
-#include "tree.h"
-#include "3gpp_24.007.h"
 #include "3gpp_24.301.h"
 #include "common_types.h"
-#include "commonDef.h"
 #include "NasSecurityAlgorithms.h"
 #include "conversions.h"
 #include "emmData.h"
 #include "EmmCommon.h"
-#include "security_types.h"
 
 static mme_ue_s1ap_id_t mme_ue_s1ap_id_generator = 1;
 
@@ -579,10 +575,10 @@ emm_data_context_get_by_guti (
 
   if ( guti) {
 
-    h_rc = obj_hashtable_ts_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **)&emm_ue_id_p);
+    h_rc = obj_hashtable_ts_get (emm_data->ctx_coll_guti, (const void *)guti, sizeof (*guti), (void **) &emm_ue_id_p);
 
     if (HASH_TABLE_OK == h_rc) {
-      struct emm_data_context_s * tmp = emm_data_context_get (emm_data, (const hash_key_t)*emm_ue_id_p);
+      struct emm_data_context_s * tmp = emm_data_context_get (emm_data, *emm_ue_id_p);
 #if DEBUG_IS_ON
       if ((tmp)) {
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - get UE id " MME_UE_S1AP_ID_FMT " context %p by guti " GUTI_FMT "\n", tmp->ue_id, tmp, GUTI_ARG(guti));
@@ -607,10 +603,11 @@ emm_data_context_remove (
   OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " MME_UE_S1AP_ID_FMT "\n", elm, elm->ue_id);
 
   if ( IS_EMM_CTXT_PRESENT_GUTI(elm)) {
-    obj_hashtable_ts_remove (emm_data->ctx_coll_guti, (const void *)&elm->_guti, sizeof (elm->_guti), (void **)&emm_ue_id);
+    obj_hashtable_ts_remove(emm_data->ctx_coll_guti, (const void *) &elm->_guti, sizeof(elm->_guti),
+                            (void **) &emm_ue_id);
 
-    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " MME_UE_S1AP_ID_FMT " guti "GUTI_FMT"\n",
-        elm, (mme_ue_s1ap_id_t)((uintptr_t)emm_ue_id), GUTI_ARG(&elm->_guti));
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " MME_UE_S1AP_ID_FMT " guti " " "
+        GUTI_FMT "\n", elm, (mme_ue_s1ap_id_t) (*emm_ue_id), GUTI_ARG(&elm->_guti));
   }
 
   if ( IS_EMM_CTXT_PRESENT_IMSI(elm)) {
@@ -641,7 +638,8 @@ emm_data_context_add (
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context %p UE id " MME_UE_S1AP_ID_FMT "\n", elm, elm->ue_id);
 
     if ( IS_EMM_CTXT_PRESENT_GUTI(elm)) {
-      h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(&elm->_guti), sizeof (elm->_guti), (void*)((uintptr_t )elm->ue_id));
+      h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(&elm->_guti), sizeof (elm->_guti),
+                                      &elm->ue_id);
 
       if (HASH_TABLE_OK == h_rc) {
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with GUTI "GUTI_FMT"\n", elm->ue_id, GUTI_ARG(&elm->_guti));
@@ -677,7 +675,8 @@ emm_data_context_add_guti (
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
 
   if ( IS_EMM_CTXT_PRESENT_GUTI(elm)) {
-    h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(&elm->_guti), sizeof (elm->_guti), (void*)((uintptr_t )elm->ue_id));
+    h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(&elm->_guti), sizeof (elm->_guti),
+                                    &elm->ue_id);
 
     if (HASH_TABLE_OK == h_rc) {
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with GUTI "GUTI_FMT"\n", elm->ue_id, GUTI_ARG(&elm->_guti));
@@ -697,7 +696,8 @@ emm_data_context_add_old_guti (
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
 
   if ( IS_EMM_CTXT_PRESENT_OLD_GUTI(elm)) {
-    h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(&elm->_old_guti), sizeof (elm->_old_guti), (void*)((uintptr_t )elm->ue_id));
+    h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(&elm->_old_guti),
+                                    sizeof(elm->_old_guti), &elm->ue_id);
 
     if (HASH_TABLE_OK == h_rc) {
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with old GUTI "GUTI_FMT"\n", elm->ue_id, GUTI_ARG(&elm->_old_guti));
@@ -905,11 +905,11 @@ emm_data_context_dump (
 
 //------------------------------------------------------------------------------
 static bool
-emm_data_context_dump_hash_table_wrapper (
-  hash_key_t keyP,
-  void *dataP,
-  void *parameterP,
-  void**resultP)
+emm_data_context_dump_hash_table_wrapper(
+    const hash_key_t keyP,
+    void *const dataP,
+    __attribute__((unused)) void *parameterP,
+    __attribute__((unused)) void **resultP)
 {
   emm_data_context_dump (dataP);
   return false; // otherwise dump stop

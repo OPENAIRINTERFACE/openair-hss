@@ -44,19 +44,14 @@
 
 *****************************************************************************/
 
-#include <stdlib.h>
 #include "log.h"
 #include "msc.h"
 #include "dynamic_memory_check.h"
-#include "nas_timer.h"
 #include "emmData.h"
 #include "emm_proc.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
-#include "mme_app_defs.h"
-#include "mme_app_itti_messaging.h"
-#include "mme_app_ue_context.h"
-#include "nas_itti_messaging.h" 
+#include "nas_itti_messaging.h"
 
 
 /****************************************************************************/
@@ -72,6 +67,26 @@ static const char                      *_emm_detach_type_str[] = {
   "EPS", "IMSI", "EPS/IMSI",
   "RE-ATTACH REQUIRED", "RE-ATTACH NOT REQUIRED", "RESERVED"
 };
+
+
+static void
+_clear_emm_ctxt(emm_data_context_t *emm_ctx) {
+  DevAssert(emm_ctx);
+
+  if (emm_ctx->esm_msg) {
+    bdestroy(emm_ctx->esm_msg);
+  }
+
+  emm_data_context_stop_all_timers(emm_ctx);
+
+  /*
+   * Release the EMM context
+   */
+  emm_data_context_remove(&_emm_data, emm_ctx);
+  free_wrapper((void **) &emm_ctx);
+}
+
+
 
 /*
    --------------------------------------------------------------------------
@@ -204,62 +219,8 @@ emm_proc_detach_request (
 
   if (switch_off) {
     MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Removing UE context ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-
-    /*
-     * The UE is switched off
-     */
-    emm_ctx_clear_old_guti(emm_ctx);
-    emm_ctx_clear_guti(emm_ctx);
-    emm_ctx_clear_imsi(emm_ctx);
-    emm_ctx_clear_imei(emm_ctx);
-    emm_ctx_clear_auth_vectors(emm_ctx);
-    emm_ctx_clear_security(emm_ctx);
-    emm_ctx_clear_non_current_security(emm_ctx);
-
-
-    if (emm_ctx->esm_msg) {
-      bdestroy (emm_ctx->esm_msg);
-    }
-
-    /*
-     * Stop timer T3450
-     */
-    if (emm_ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)", emm_ctx->T3450.id);
-      emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
-    }
-
-    /*
-     * Stop timer T3460
-     */
-    if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)", emm_ctx->T3460.id);
-      emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
-    }
-
-    /*
-     * Stop timer T3470
-     */
-    if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3460.id);
-      emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
-    }
-
-    /*
-     * Release the EMM context
-     */
-    emm_data_context_remove (&_emm_data, emm_ctx);
-    free_wrapper ((void**) &emm_ctx);
-
     rc = RETURNok;
   } else {
-    /*
-     * TODO task#15563589: Cleanup on non-switchoff UE-initiated detach
-     */
-
     /*
      * Normal detach without UE switch-off
      */
@@ -275,8 +236,6 @@ emm_proc_detach_request (
     /*
      * Set the UE identifier
      */
-    emm_ctx_clear_old_guti(emm_ctx);
-    emm_ctx_clear_guti(emm_ctx);
     emm_as->ue_id = ue_id;
     /*
      * Setup EPS NAS security data
@@ -319,6 +278,7 @@ emm_proc_detach_request (
 	
     nas_itti_detach_req(ue_id);
   }
+  _clear_emm_ctxt(emm_ctx);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

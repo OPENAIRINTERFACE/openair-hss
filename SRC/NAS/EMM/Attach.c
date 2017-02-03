@@ -639,9 +639,7 @@ emm_proc_attach_complete (
      * and consider the GUTI sent in the ATTACH ACCEPT message as valid.
      */
     emm_ctx_set_attribute_valid(emm_ctx, EMM_CTXT_MEMBER_GUTI);
-    OAI_GCC_DIAG_OFF(int-to-pointer-cast);
-    obj_hashtable_ts_insert (_emm_data.ctx_coll_guti, (const void *const)&emm_ctx->_guti, sizeof (emm_ctx->_guti), (void *)emm_ctx->ue_id);
-    OAI_GCC_DIAG_ON(int-to-pointer-cast);
+    emm_data_context_add_guti(&_emm_data, emm_ctx);
     emm_ctx_clear_old_guti(emm_ctx);
 
     /*

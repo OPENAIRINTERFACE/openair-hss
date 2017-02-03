@@ -759,7 +759,7 @@ obj_hashtable_remove (
         hashtblP->nodes[hash] = node->next;
       }
 
-      hashtblP->freekeyfunc (node->key);
+      hashtblP->freekeyfunc (&node->key);
       *dataP = node->data;
       free_wrapper((void **) &node);
       hashtblP->num_elements -= 1;
@@ -811,7 +811,7 @@ obj_hashtable_ts_remove (
         hashtblP->nodes[hash] = node->next;
       }
 
-      hashtblP->freekeyfunc (node->key);
+      hashtblP->freekeyfunc (&node->key);
       *dataP = node->data;
       free_wrapper((void **) &node);
       __sync_fetch_and_sub (&hashtblP->num_elements, 1);
