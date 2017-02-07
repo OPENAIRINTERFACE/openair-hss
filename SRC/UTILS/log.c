@@ -269,6 +269,9 @@ void log_set_config(const log_config_t * const config)
     if ((MAX_LOG_LEVEL > config->mme_scenario_player_log_level) && (MIN_LOG_LEVEL <= config->mme_scenario_player_log_level))
       g_oai_log.log_level[LOG_MME_SCENARIO_PLAYER]      = config->mme_scenario_player_log_level;
     if ((MAX_LOG_LEVEL > config->itti_log_level) && (MIN_LOG_LEVEL <= config->itti_log_level))         g_oai_log.log_level[LOG_ITTI]     = config->itti_log_level;
+    if ((MAX_LOG_LEVEL > config->async_system_log_level) && (MIN_LOG_LEVEL <= config->async_system_log_level))
+      g_oai_log.log_level[LOG_ASYNC_SYSTEM] = config->async_system_log_level;
+
 
     g_oai_log.is_output_fd_buffered = config->is_output_thread_safe;
 
@@ -403,6 +406,7 @@ log_init (
   snprintf (&g_oai_log.log_proto2str[LOG_XML][0], LOG_MAX_PROTO_NAME_LENGTH, "XML");
   snprintf (&g_oai_log.log_proto2str[LOG_MME_SCENARIO_PLAYER][0], LOG_MAX_PROTO_NAME_LENGTH, "MME-TEST");
   snprintf (&g_oai_log.log_proto2str[LOG_ITTI][0], LOG_MAX_PROTO_NAME_LENGTH, "ITTI");
+  snprintf (&g_oai_log.log_proto2str[LOG_ASYNC_SYSTEM][0], LOG_MAX_PROTO_NAME_LENGTH, "CMD");
 
   snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_TRACE][0], LOG_LEVEL_NAME_MAX_LENGTH, "TRACE");
   snprintf (&g_oai_log.log_level2str[OAILOG_LEVEL_DEBUG][0], LOG_LEVEL_NAME_MAX_LENGTH, "DEBUG");

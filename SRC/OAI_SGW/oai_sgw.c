@@ -52,6 +52,7 @@
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "msc.h"
+#include "async_system.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.008.h"
 #include "3gpp_33.401.h"
@@ -127,13 +128,8 @@ main (
   }
 #endif
 
-
   CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
   CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
-  /*
-   * Parse the command line for options and set the mme_config accordingly.
-   */
-  CHECK_INIT_RETURN (spgw_config_parse_opt_line (argc, argv, &spgw_config));
   /*
    * Calling each layer init function
    */
@@ -144,6 +140,11 @@ main (
           NULL,
 #endif
           NULL));
+  CHECK_INIT_RETURN (async_system_init());
+  /*
+   * Parse the command line for options and set the mme_config accordingly.
+   */
+  CHECK_INIT_RETURN (spgw_config_parse_opt_line (argc, argv, &spgw_config));
   MSC_INIT (MSC_SP_GW, THREAD_MAX + TASK_MAX);
   CHECK_INIT_RETURN (udp_init ());
   CHECK_INIT_RETURN (s11_sgw_init (&spgw_config.sgw_config));

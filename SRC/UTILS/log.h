@@ -84,19 +84,18 @@ extern int fd_g_debug_lvl;
 #define ANSI_COLOR_REV_VIDEO_ON "\x1b[7m"
 #define ANSI_COLOR_CONCEALED_ON "\x1b[8m"
 
-#define LOG_CONFIG_STRING_LOGGING                        "LOGGING"
-#define LOG_CONFIG_STRING_OUTPUT                         "OUTPUT"
-#define LOG_CONFIG_STRING_OUTPUT_THREAD_SAFE             "THREAD_SAFE"
+#define LOG_CONFIG_STRING_ASYNC_SYSTEM_LOG_LEVEL         "ASYNC_SYSTEM"
 #define LOG_CONFIG_STRING_COLOR                          "COLOR"
 #define LOG_CONFIG_STRING_OUTPUT_CONSOLE                 "CONSOLE"
-#define LOG_CONFIG_STRING_OUTPUT_SYSLOG                  "SYSLOG"
 #define LOG_CONFIG_STRING_GTPV1U_LOG_LEVEL               "GTPV1U_LOG_LEVEL"
 #define LOG_CONFIG_STRING_GTPV2C_LOG_LEVEL               "GTPV2C_LOG_LEVEL"
 #define LOG_CONFIG_STRING_ITTI_LOG_LEVEL                 "ITTI_LOG_LEVEL"
+#define LOG_CONFIG_STRING_LOGGING                        "LOGGING"
 #define LOG_CONFIG_STRING_MME_APP_LOG_LEVEL              "MME_APP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_MME_SCENARIO_PLAYER_LOG_LEVEL  "MME_SCENARIO_PLAYER_LOG_LEVEL"
 #define LOG_CONFIG_STRING_MSC_LOG_LEVEL                  "MSC_LOG_LEVEL"
 #define LOG_CONFIG_STRING_NAS_LOG_LEVEL                  "NAS_LOG_LEVEL"
+#define LOG_CONFIG_STRING_OUTPUT                         "OUTPUT"
 #define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S1AP_LOG_LEVEL                 "S1AP_LOG_LEVEL"
@@ -105,6 +104,8 @@ extern int fd_g_debug_lvl;
 #define LOG_CONFIG_STRING_SCTP_LOG_LEVEL                 "SCTP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_SPGW_APP_LOG_LEVEL             "SPGW_APP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_SPGW_APP_LOG_LEVEL             "SPGW_APP_LOG_LEVEL"
+#define LOG_CONFIG_STRING_OUTPUT_SYSLOG                  "SYSLOG"
+#define LOG_CONFIG_STRING_OUTPUT_THREAD_SAFE             "THREAD_SAFE"
 #define LOG_CONFIG_STRING_UDP_LOG_LEVEL                  "UDP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_UTIL_LOG_LEVEL                 "UTIL_LOG_LEVEL"
 #define LOG_CONFIG_STRING_XML_LOG_LEVEL                  "XML_LOG_LEVEL"
@@ -152,6 +153,7 @@ typedef enum {
   LOG_XML,
   LOG_MME_SCENARIO_PLAYER,
   LOG_ITTI,
+  LOG_ASYNC_SYSTEM,
   MAX_LOG_PROTOS,
 } log_proto_t;
 
@@ -195,6 +197,7 @@ typedef struct log_config_s {
   log_level_t   msc_log_level;      /*!< \brief MSC utility log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   xml_log_level;      /*!< \brief XML dump/load of messages (mainly for MME scenario player) log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   mme_scenario_player_log_level; /*!< \brief scenario player log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   async_system_log_level; /*!< \brief async system log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   itti_log_level;     /*!< \brief ITTI layer log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   uint8_t       asn1_verbosity_level; /*!< \brief related to asn1c generated code for S1AP verbosity level */
   bool          color;              /*!< \brief use of ANSI styling codes or no */
@@ -370,12 +373,12 @@ int log_get_start_time_sec (void);
 #      define ASN_DEBUG(...)                                         do {vsyslog (LOG_ERR , ##__VA_ARGS__);} while(0)
 #    endif
 #  else
-#    define OAI_FPRINTF_ERR(...)                                     do {fprintf (stderr,   ##__VA_ARGS__);} while(0)
-#    define OAI_FPRINTF_INFO(...)                                    do {fprintf (stdout,   ##__VA_ARGS__);} while(0)
-#    define OAI_VFPRINTF_ERR(...)                                    do {vfprintf (stderr , ##__VA_ARGS__);} while(0)
-#    define OAI_VFPRINTF_INFO(...)                                   do {vfprintf (stderr , ##__VA_ARGS__);} while(0)
+#    define OAI_FPRINTF_ERR(...)                                     do {fprintf (stderr,   ##__VA_ARGS__);fflush(stderr);} while(0)
+#    define OAI_FPRINTF_INFO(...)                                    do {fprintf (stdout,   ##__VA_ARGS__);fflush(stdout);} while(0)
+#    define OAI_VFPRINTF_ERR(...)                                    do {vfprintf (stderr , ##__VA_ARGS__);fflush(stderr);} while(0)
+#    define OAI_VFPRINTF_INFO(...)                                   do {vfprintf (stderr , ##__VA_ARGS__);fflush(stderr);} while(0)
 #    if EMIT_ASN_DEBUG_EXTERN
-#      define ASN_DEBUG(...)                                         do {vfprintf (stderr , ##__VA_ARGS__);} while(0)
+#      define ASN_DEBUG(...)                                         do {vfprintf (stderr , ##__VA_ARGS__);fflush(stderr);} while(0)
 #    endif
 #  endif
 #endif /* FILE_LOG_SEEN */

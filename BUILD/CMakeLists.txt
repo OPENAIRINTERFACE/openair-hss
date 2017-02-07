@@ -223,6 +223,7 @@ add_integer_option( ITTI_TASK_STACK_SIZE            0        "pthread allocated 
 add_boolean_option( ITTI_LITE                       False    "Do not use ITTI systematically for each message exchanged between layer modules") 
 add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
 add_boolean_option( GTP_KERNEL_MODULE_UNAVAILABLE   False    "disable calls to GTP kernel API")
+add_boolean_option( GTP_KERNEL_MODULE_DEDICATED_BEARER_ENABLED   False    "Original Osmocom GTP kernel module and libs modified for PoC dedicated bearer")
 # NAS LAYER OPTIONS
 ##########################
 add_boolean_option( EPC_BUILD                       False    "BUILD MME-xGW executable")
@@ -506,10 +507,11 @@ add_library(SECU_CN ${SECU_CN_SRC})
 ###############################################################################
 
 set(CN_UTILS_SRC
+  ${OPENAIRCN_DIR}/SRC/UTILS/async_system.c
   ${OPENAIRCN_DIR}/SRC/UTILS/conversions.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
   ${OPENAIRCN_DIR}/SRC/UTILS/enum_string.c
   ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
   ${OPENAIRCN_DIR}/SRC/UTILS/pid_file.c
   ${OPENAIRCN_DIR}/SRC/UTILS/shared_ts_log.c
   ${OPENAIRCN_DIR}/SRC/UTILS/TLVEncoder.c
@@ -587,15 +589,17 @@ add_library(S6A
 
 set(SGW_DIR ${OPENAIRCN_DIR}/SRC/SGW)
 add_library (SGW
-  ${SGW_DIR}/spgw_config.c
   ${SGW_DIR}/pgw_config.c
-  ${SGW_DIR}/sgw_config.c
-  ${SGW_DIR}/s11_causes.c
-  ${SGW_DIR}/sgw_task.c
-  ${SGW_DIR}/sgw_handlers.c
-  ${SGW_DIR}/sgw_context_manager.c
   ${SGW_DIR}/pgw_lite_paa.c
+  ${SGW_DIR}/pgw_pcef_emulation.c
   ${SGW_DIR}/pgw_pco.c
+  ${SGW_DIR}/pgw_procedures.c
+  ${SGW_DIR}/s11_causes.c
+  ${SGW_DIR}/sgw_config.c
+  ${SGW_DIR}/sgw_context_manager.c
+  ${SGW_DIR}/sgw_handlers.c
+  ${SGW_DIR}/sgw_task.c
+  ${SGW_DIR}/spgw_config.c
   )
 
 set(MME_DIR ${OPENAIRCN_DIR}/SRC/MME_APP)

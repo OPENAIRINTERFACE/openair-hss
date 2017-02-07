@@ -48,6 +48,7 @@
 #include "dynamic_memory_check.h"
 #include "log.h"
 #include "intertask_interface.h"
+#include "async_system.h"
 #include "common_defs.h"
 #include "sgw_config.h"
 #include "pgw_config.h"
@@ -61,31 +62,6 @@
 #define SYSTEM_CMD_MAX_STR_SIZE 512
 
 //------------------------------------------------------------------------------
-static int pgw_system (
-  bstring command_pP,
-  bool    is_abort_on_errorP,
-  const char *const file_nameP,
-  const int line_numberP)
-{
-  int                                     ret = RETURNerror;
-
-  if (command_pP) {
-    ret = 0;
-    OAILOG_DEBUG (LOG_SPGW_APP, "system command: %s\n", bdata(command_pP));
-    ret = system (bdata(command_pP));
-
-    if (ret != 0) {
-      OAILOG_ERROR (LOG_SPGW_APP, "ERROR in system command %s: %d at %s:%u\n", bdata(command_pP), ret, file_nameP, line_numberP);
-
-      if (is_abort_on_errorP) {
-        exit (-1);              // may be not exit
-      }
-    }
-  }
-  return ret;
-}
-
-//------------------------------------------------------------------------------
 void pgw_config_init (pgw_config_t * config_pP)
 {
   memset ((char *)config_pP, 0, sizeof (*config_pP));
@@ -96,19 +72,14 @@ void pgw_config_init (pgw_config_t * config_pP)
 //------------------------------------------------------------------------------
 int pgw_config_process (pgw_config_t * config_pP)
 {
-  bstring                                 system_cmd = NULL;
   struct in_addr                          addr_start, addr_mask;
   uint64_t                                counter64 = 0;
   conf_ipv4_list_elm_t                   *ip4_ref = NULL;
 
-  system_cmd = bformat ("iptables -t mangle -F FORWARD");
-  pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-  bdestroy_wrapper (&system_cmd);
+  async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t mangle -F FORWARD");
 
   if (config_pP->masquerade_SGI) {
-    system_cmd = bformat ("iptables -t nat -F POSTROUTING");
-    pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-    bdestroy_wrapper (&system_cmd);
+    async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t nat -F POSTROUTING");
   }
 
   // Get ipv4 address
@@ -184,11 +155,9 @@ int pgw_config_process (pgw_config_t * config_pP)
 
     //---------------
     if (config_pP->masquerade_SGI) {
-      system_cmd = bformat ("iptables -t nat -I POSTROUTING -s %s/%d -o %s  ! --protocol sctp -j SNAT --to-source %s",
+      async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t nat -I POSTROUTING -s %s/%d -o %s  ! --protocol sctp -j SNAT --to-source %s",
           inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i],
           bdata(config_pP->ipv4.if_name_SGI), str_sgi);
-      pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-      bdestroy_wrapper (&system_cmd);
     }
 
     uint32_t min_mtu = config_pP->ipv4.mtu_SGI;
@@ -197,15 +166,11 @@ int pgw_config_process (pgw_config_t * config_pP)
       min_mtu = config_pP->ipv4.mtu_S5_S8 - 36;
     }
     if (config_pP->ue_tcp_mss_clamp) {
-      system_cmd = bformat ("iptables -t mangle -I FORWARD -s %s/%d   -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %u",
+      async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t mangle -I FORWARD -s %s/%d   -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %u",
           inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i], min_mtu - 40);
-      pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-      btrunc(system_cmd, 0);
 
-      bassignformat (system_cmd, "iptables -t mangle -I FORWARD -d %s/%d -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %u",
+      async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t mangle -I FORWARD -d %s/%d -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %u",
           inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i], min_mtu - 40);
-      pgw_system (system_cmd, PGW_ABORT_ON_ERROR, __FILE__, __LINE__);
-      bdestroy_wrapper (&system_cmd);
     }
   }
   return 0;
@@ -361,14 +326,53 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
       config_pP->ue_mtu = 1463;
     }
     OAILOG_DEBUG (LOG_SPGW_APP, "UE MTU : %u\n", config_pP->ue_mtu);
-    if (config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_PUSH_DEDICATED_BEARER, (const char **)&astring)) {
-      if (strcasecmp (astring, "yes") == 0) {
-        config_pP->push_dedicated_bearer = true;
-        OAILOG_DEBUG (LOG_SPGW_APP, "Automatic push dedicated bearer to UE after default bearer creation enabled\n");
+
+    subsetting = config_setting_get_member (setting_pgw, PGW_CONFIG_STRING_PCEF);
+    if (subsetting) {
+      if ((config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_PCEF_ENABLED, (const char **)&astring))) {
+        if (strcasecmp (astring, "yes") == 0) {
+          config_pP->pcef.enabled = true;
+
+          if (config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_AUTOMATIC_PUSH_DEDICATED_BEARER, (const char **)&astring)) {
+            if (strcasecmp (astring, "yes") == 0) {
+              config_pP->pcef.automatic_push_dedicated_bearer = true;
+              OAILOG_DEBUG (LOG_SPGW_APP, "Automatic push dedicated bearer to UE after default bearer creation enabled\n");
+            } else {
+              config_pP->pcef.automatic_push_dedicated_bearer = false;
+              OAILOG_DEBUG (LOG_SPGW_APP, "Automatic push dedicated bearer to UE after default bearer creation Disabled\n");
+            }
+          }
+
+          libconfig_int ratio = 0;
+          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_UL, &ratio)) {
+            AssertFatal((ratio <= 100) && (ratio >= 0), "Bad ratio value %d", ratio);
+            config_pP->pcef.reserved_non_guaranted_bit_rate_ratio_ul = ratio;
+          } else {
+            config_pP->pcef.reserved_non_guaranted_bit_rate_ratio_ul = 50;
+          }
+          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_DL, &ratio)) {
+            AssertFatal((ratio <= 100) && (ratio >= 0), "Bad ratio value %d", ratio);
+            config_pP->pcef.reserved_non_guaranted_bit_rate_ratio_dl = ratio;
+          } else {
+            config_pP->pcef.reserved_non_guaranted_bit_rate_ratio_dl = 50;
+          }
+          libconfig_int bw = 0;
+          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_PGW_MAX_BIT_RATE_UL, &bw)) {
+            config_pP->pcef.if_bandwidth_ul = bw;
+          }
+          AssertFatal((bw <= 100000000) && (bw > 0), "Bad UL bandwidth value %d", bw);
+          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_PGW_MAX_BIT_RATE_DL, &bw)) {
+            config_pP->pcef.if_bandwidth_dl = bw;
+          }
+          AssertFatal((bw <= 100000000) && (bw > 0), "Bad DL bandwidth value %d", bw);
+        } else {
+          config_pP->pcef.enabled = false;
+        }
       } else {
-        config_pP->push_dedicated_bearer = false;
-        OAILOG_DEBUG (LOG_SPGW_APP, "Automatic push dedicated bearer to UE after default bearer creation Disabled\n");
+        OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW / %s parsing failed\n", PGW_CONFIG_STRING_PCEF);
       }
+    } else {
+      OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW / %s not found\n", PGW_CONFIG_STRING_PCEF);
     }
   } else {
     OAILOG_WARNING (LOG_SPGW_APP, "CONFIG P-GW not found\n");
@@ -393,9 +397,20 @@ void pgw_config_display (pgw_config_t * config_p)
   OAILOG_INFO (LOG_SPGW_APP, "    SGi iface ............: %s\n", bdata(config_p->ipv4.if_name_SGI));
   OAILOG_INFO (LOG_SPGW_APP, "    SGi ip  (read)........: %s\n", inet_ntoa (*((struct in_addr *)&config_p->ipv4.SGI)));
   OAILOG_INFO (LOG_SPGW_APP, "    SGi MTU (read)........: %u\n", config_p->ipv4.mtu_SGI);
+  OAILOG_INFO (LOG_SPGW_APP, "    User TCP MSS clamping : %s\n", config_p->ue_tcp_mss_clamp == 0 ? "false" : "true");
+  OAILOG_INFO (LOG_SPGW_APP, "    User IP masquerading  : %s\n", config_p->masquerade_SGI == 0 ? "false" : "true");
 
-  OAILOG_INFO (LOG_SPGW_APP, "- MSS clamping  ..........: %d\n", config_p->ue_tcp_mss_clamp);
-  OAILOG_INFO (LOG_SPGW_APP, "- Masquerading  ..........: %d\n", config_p->masquerade_SGI);
-  OAILOG_INFO (LOG_SPGW_APP, "- Push PCO  ..............: %d\n", config_p->force_push_pco);
-  OAILOG_INFO (LOG_SPGW_APP, "- Push dedicated bearer: .: %d\n", config_p->push_dedicated_bearer);
+  OAILOG_INFO (LOG_SPGW_APP, "- PCEF support ...........: %s (in development)\n", config_p->pcef.enabled == 0 ? "false" : "true");
+  if (config_p->pcef.enabled) {
+    OAILOG_INFO (LOG_SPGW_APP, "    Traffic shaping ....: %s (TODO it soon)\n",
+        config_p->pcef.traffic_shaping_enabled == 0 ? "false" : "true");
+    OAILOG_INFO (LOG_SPGW_APP, "    Push dedicated bearer : %s (testing dedicated bearer functionality down to OAI UE/COSTS UE)\n",
+        config_p->pcef.automatic_push_dedicated_bearer == 0 ? "false" : "true");
+    OAILOG_INFO (LOG_SPGW_APP, "    User plane BW UL .....: %"PRIu64" (Kilo bits/s)\n", config_p->pcef.if_bandwidth_ul);
+    OAILOG_INFO (LOG_SPGW_APP, "    User plane BW DL .....: %"PRIu64" (Kilo bits/s)\n", config_p->pcef.if_bandwidth_dl);
+    OAILOG_INFO (LOG_SPGW_APP, "    Reserved NGBR UL .....: %"PRIu8" %c\n", config_p->pcef.reserved_non_guaranted_bit_rate_ratio_ul,'%');
+    OAILOG_INFO (LOG_SPGW_APP, "    Reserved NGBR DL .....: %"PRIu8" %c\n", config_p->pcef.reserved_non_guaranted_bit_rate_ratio_dl,'%');
+  }
+  OAILOG_INFO (LOG_SPGW_APP, "- Helpers:\n");
+  OAILOG_INFO (LOG_SPGW_APP, "    Push PCO (DNS+MTU) ........: %s\n", config_p->force_push_pco == 0 ? "false" : "true");
 }

@@ -58,6 +58,7 @@
 #include "sgw.h"
 #include "spgw_config.h"
 #include "pgw_lite_paa.h"
+#include "pgw_pcef_emulation.h"
 
 spgw_config_t                           spgw_config;
 sgw_app_t                               sgw_app;
@@ -203,6 +204,10 @@ int sgw_init (spgw_config_t *spgw_config_pP)
   sgw_app.sgw_ip_address_S11_S4.s_addr = spgw_config_pP->sgw_config.ipv4.S11.s_addr;
 
   sgw_app.sgw_ip_address_S5_S8_up.s_addr      = spgw_config_pP->sgw_config.ipv4.S5_S8_up.s_addr;
+
+  if (RETURNerror == pgw_pcef_emulation_init (&spgw_config_pP->pgw_config)) {
+    return RETURNerror;
+  }
 
   if (itti_create_task (TASK_SPGW_APP, &sgw_intertask_interface, NULL) < 0) {
     perror ("pthread_create");

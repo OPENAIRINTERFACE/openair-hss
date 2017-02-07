@@ -60,6 +60,8 @@ static nw_gtpv2c_stack_handle_t             s11_sgw_stack_handle = 0;
 
 hash_table_ts_t                        *s11_sgw_teid_2_gtv2c_teid_handle = NULL;
 
+static void s11_sgw_exit (void);
+
 /* ULP callback for the GTPv2-C stack */
 //------------------------------------------------------------------------------
 static nw_rc_t s11_sgw_ulp_process_stack_req_cb (nw_gtpv2c_ulp_handle_t hUlp, nw_gtpv2c_ulp_api_t * pUlpApi)
@@ -251,6 +253,13 @@ static void *s11_sgw_thread (void *args)
       }
       break;
 
+    case TERMINATE_MESSAGE:{
+        s11_sgw_exit();
+        OAI_FPRINTF_INFO("TASK_S11 terminated\n");
+        itti_exit_task ();
+      }
+      break;
+
     default:{
         OAILOG_ERROR (LOG_S11, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
@@ -344,3 +353,10 @@ fail:
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: FAILURE\n");
   return RETURNerror;
 }
+//------------------------------------------------------------------------------
+static void s11_sgw_exit (void)
+{
+  nwGtpv2cFinalize (s11_sgw_stack_handle);
+  hashtable_ts_destroy(s11_sgw_teid_2_gtv2c_teid_handle);
+}
+

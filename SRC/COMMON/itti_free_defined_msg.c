@@ -51,6 +51,13 @@
 void itti_free_msg_content (MessageDef * const message_p)
 {
   switch (ITTI_MSG_ID (message_p)) {
+  case ASYNC_SYSTEM_COMMAND:{
+      if (ASYNC_SYSTEM_COMMAND (message_p).system_command) {
+        bdestroy_wrapper(&ASYNC_SYSTEM_COMMAND (message_p).system_command);
+      }
+    }
+    break;
+
   case GTPV1U_CREATE_TUNNEL_REQ:
   case GTPV1U_CREATE_TUNNEL_RESP:
   case GTPV1U_UPDATE_TUNNEL_REQ:

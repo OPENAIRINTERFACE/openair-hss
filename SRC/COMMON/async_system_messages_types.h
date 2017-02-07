@@ -26,38 +26,22 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-// This task is mandatory and must always be placed in first position
-TASK_DEF(TASK_TIMER,    TASK_PRIORITY_MED, 128)
 
-// Other possible tasks in the process
+/*! \file async_system_messages_types.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
-//MME SCENARIO PLAYER TEST TASK
-TASK_DEF(TASK_MME_SCENARIO_PLAYER, TASK_PRIORITY_MED, 256)
-/// GTPV1-U task
-TASK_DEF(TASK_GTPV1_U,  TASK_PRIORITY_MED, 256)
-/// FW_IP task
-TASK_DEF(TASK_FW_IP,    TASK_PRIORITY_MED, 256)
-/// MME Applicative task
-TASK_DEF(TASK_MME_APP,  TASK_PRIORITY_MED, 256)
-/// NAS task
-TASK_DEF(TASK_NAS_MME,  TASK_PRIORITY_MED, 256)
-/// S11 task
-TASK_DEF(TASK_S11,      TASK_PRIORITY_MED, 256)
-/// S1AP task
-TASK_DEF(TASK_S1AP,     TASK_PRIORITY_MED, 256)
-/// S6a task
-TASK_DEF(TASK_S6A,      TASK_PRIORITY_MED, 256)
-/// SCTP task
-TASK_DEF(TASK_SCTP,     TASK_PRIORITY_MED, 256)
-/// Serving and Proxy Gateway Application task
-TASK_DEF(TASK_SPGW_APP, TASK_PRIORITY_MED, 256)
-/// UDP task
-TASK_DEF(TASK_UDP,      TASK_PRIORITY_MED, 256)
-//LOGGING TXT TASK
-TASK_DEF(TASK_LOG,      TASK_PRIORITY_MED, 1024)
-//GENERAL PURPOSE SHARED LOGGING TASK
-TASK_DEF(TASK_SHARED_TS_LOG, TASK_PRIORITY_MED, 1024)
-//UTILITY TASK FOR SYSTEM() CALLS
-TASK_DEF(TASK_ASYNC_SYSTEM, TASK_PRIORITY_MED, 256)
+#ifndef FILE_ASYNC_SYSTEM_MESSAGES_TYPES_SEEN
+#define FILE_ASYNC_SYSTEM_MESSAGES_TYPES_SEEN
 
+#define ASYNC_SYSTEM_COMMAND(mSGpTR)                     (mSGpTR)->ittiMsg.async_system_command
 
+typedef struct itti_async_system_command_s {
+  bstring                  system_command;
+  bool                     is_abort_on_error;
+} itti_async_system_command_t;
+
+#endif /* FILE_ASYNC_SYSTEM_MESSAGES_TYPES_SEEN */

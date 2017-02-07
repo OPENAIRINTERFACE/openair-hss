@@ -133,6 +133,8 @@ int sgw_config_parse_file (sgw_config_t * config_pP)
     config_pP->log_config.util_log_level     = MAX_LOG_LEVEL;
     config_pP->log_config.msc_log_level      = MAX_LOG_LEVEL;
     config_pP->log_config.itti_log_level     = MAX_LOG_LEVEL;
+    config_pP->log_config.async_system_log_level = MAX_LOG_LEVEL;
+
     if (subsetting) {
       if (config_setting_lookup_string (subsetting, LOG_CONFIG_STRING_OUTPUT, (const char **)&astring)) {
         if (astring != NULL) {
@@ -188,6 +190,10 @@ int sgw_config_parse_file (sgw_config_t * config_pP)
 
       if (config_setting_lookup_string (subsetting, LOG_CONFIG_STRING_ITTI_LOG_LEVEL, (const char **)&astring)) {
         config_pP->log_config.itti_log_level = OAILOG_LEVEL_STR2INT (astring);
+      }
+
+      if (config_setting_lookup_string (subsetting, LOG_CONFIG_STRING_ASYNC_SYSTEM_LOG_LEVEL, (const char **)&astring)) {
+        config_pP->log_config.async_system_log_level = OAILOG_LEVEL_STR2INT (astring);
       }
     }
     OAILOG_SET_CONFIG(&config_pP->log_config);

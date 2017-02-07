@@ -42,7 +42,6 @@
 #define PGW_CONFIG_STRING_PGW_MASQUERADE_SGI                    "PGW_MASQUERADE_SGI"
 #define PGW_CONFIG_STRING_UE_TCP_MSS_CLAMPING                   "UE_TCP_MSS_CLAMPING"
 #define PGW_CONFIG_STRING_NAS_FORCE_PUSH_PCO                    "FORCE_PUSH_PROTOCOL_CONFIGURATION_OPTIONS"
-#define PGW_CONFIG_STRING_PUSH_DEDICATED_BEARER                 "PUSH_DEDICATED_BEARER"
 
 #define PGW_CONFIG_STRING_IP_ADDRESS_POOL                       "IP_ADDRESS_POOL"
 #define PGW_CONFIG_STRING_IPV4_ADDRESS_LIST                     "IPV4_LIST"
@@ -52,6 +51,14 @@
 #define PGW_CONFIG_STRING_UE_MTU                                "UE_MTU"
 
 #define PGW_CONFIG_STRING_INTERFACE_DISABLED                    "none"
+
+#define PGW_CONFIG_STRING_PCEF                                  "PCEF"
+#define PGW_CONFIG_STRING_PCEF_ENABLED                          "PCEF_ENABLED"
+#define PGW_CONFIG_STRING_AUTOMATIC_PUSH_DEDICATED_BEARER       "AUTOMATIC_PUSH_DEDICATED_BEARER"
+#define PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_UL "RESERVED_NON_GUARANTED_BIT_RATE_RATIO_UL"
+#define PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_DL "RESERVED_NON_GUARANTED_BIT_RATE_RATIO_DL"
+#define PGW_CONFIG_STRING_PGW_MAX_BIT_RATE_UL                   "PGW_MAX_BIT_RATE_UL"
+#define PGW_CONFIG_STRING_PGW_MAX_BIT_RATE_DL                   "PGW_MAX_BIT_RATE_DL"
 
 #define PGW_ABORT_ON_ERROR true
 #define PGW_WARN_ON_ERROR  false
@@ -101,7 +108,17 @@ typedef struct pgw_config_s {
 
   bool      force_push_pco;
   uint16_t  ue_mtu;
-  bool      push_dedicated_bearer;
+
+  struct {
+    bool      enabled;
+    bool      traffic_shaping_enabled;
+    bool      automatic_push_dedicated_bearer;
+    uint64_t  if_bandwidth_ul;
+    uint64_t  if_bandwidth_dl;
+    uint8_t   reserved_non_guaranted_bit_rate_ratio_ul;
+    uint8_t   reserved_non_guaranted_bit_rate_ratio_dl;
+  } pcef;
+
 
   STAILQ_HEAD(ipv4_pool_head_s, conf_ipv4_list_elm_s) ipv4_pool_list;
 } pgw_config_t;

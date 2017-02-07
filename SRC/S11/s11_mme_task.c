@@ -55,6 +55,9 @@
 static nw_gtpv2c_stack_handle_t             s11_mme_stack_handle = 0;
 // Store the GTPv2-C teid handle
 hash_table_ts_t                        *s11_mme_teid_2_gtv2c_teid_handle = NULL;
+
+static void s11_mme_exit (void);
+
 //------------------------------------------------------------------------------
 static nw_rc_t
 s11_mme_log_wrapper (
@@ -199,18 +202,13 @@ s11_mme_thread (
       }
       break;
 
-    case S11_CREATE_SESSION_REQUEST:{
-        s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_session_request);
-      }
-      break;
-
-    case S11_MODIFY_BEARER_REQUEST:{
-        s11_mme_modify_bearer_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_request);
-      }
-      break;
-
     case S11_CREATE_BEARER_RESPONSE:{
       s11_mme_create_bearer_response (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_bearer_response);
+      }
+      break;
+
+    case S11_CREATE_SESSION_REQUEST:{
+        s11_mme_create_session_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_create_session_request);
       }
       break;
 
@@ -219,8 +217,26 @@ s11_mme_thread (
       }
       break;
 
+    case S11_MODIFY_BEARER_REQUEST:{
+        s11_mme_modify_bearer_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_modify_bearer_request);
+      }
+      break;
+
     case S11_RELEASE_ACCESS_BEARERS_REQUEST:{
         s11_mme_release_access_bearers_request (&s11_mme_stack_handle, &received_message_p->ittiMsg.s11_release_access_bearers_request);
+      }
+      break;
+
+    case TERMINATE_MESSAGE:{
+        s11_mme_exit();
+        OAI_FPRINTF_INFO("TASK_S11 terminated\n");
+        itti_exit_task ();
+      }
+      break;
+
+    case TIMER_HAS_EXPIRED:{
+        OAILOG_DEBUG (LOG_S11, "Processing timeout for timer_id 0x%lx and arg %p\n", received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
+        DevAssert (nwGtpv2cProcessTimeout (received_message_p->ittiMsg.timer_has_expired.arg) == NW_OK);
       }
       break;
 
@@ -237,23 +253,8 @@ s11_mme_thread (
       }
       break;
 
-    case TIMER_HAS_EXPIRED:{
-        OAILOG_DEBUG (LOG_S11, "Processing timeout for timer_id 0x%lx and arg %p\n", received_message_p->ittiMsg.timer_has_expired.timer_id, received_message_p->ittiMsg.timer_has_expired.arg);
-        DevAssert (nwGtpv2cProcessTimeout (received_message_p->ittiMsg.timer_has_expired.arg) == NW_OK);
-      }
-      break;
-
-    case TERMINATE_MESSAGE:{
-        s11_mme_exit();
-        OAI_FPRINTF_INFO("TASK_S11 terminated\n");
-        itti_exit_task ();
-      }
-      break;
-
-    default:{
+    default:
         OAILOG_ERROR (LOG_S11, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
-      }
-      break;
     }
 
     itti_free_msg_content(received_message_p);
@@ -342,7 +343,7 @@ fail:
   return RETURNerror;
 }
 //------------------------------------------------------------------------------
-void s11_mme_exit (void)
+static void s11_mme_exit (void)
 {
   nwGtpv2cFinalize (s11_mme_stack_handle);
   hashtable_ts_destroy(s11_mme_teid_2_gtv2c_teid_handle);

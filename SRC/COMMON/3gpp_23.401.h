@@ -69,11 +69,6 @@ typedef struct sgw_eps_bearer_entry_s {
 
 } sgw_eps_bearer_entry_t;
 
-// for saving a pointer in a list (avoid inflating memory use with extra pointers)
-typedef struct sgw_eps_bearer_entry_wrapper_s {
-  LIST_ENTRY(sgw_eps_bearer_entry_wrapper_s) entries;
-  sgw_eps_bearer_entry_t *sgw_eps_bearer_entry;
-} sgw_eps_bearer_entry_wrapper_t;
 
 typedef struct sgw_pdn_connection_s {
   APN_t                apn_in_use;                     ///< The APN currently used, as received from the MME or S4 SGSN.
@@ -126,7 +121,7 @@ typedef struct sgw_eps_bearer_context_information_s {
   void                  *trxn;
   // TODO change this saved_message (add procedure/transaction)
   itti_s11_create_session_request_t saved_message;
-  LIST_HEAD(pending_eps_bearers_s, sgw_eps_bearer_entry_wrapper_s) *pending_eps_bearers;
+  LIST_HEAD(pending_procedures_s, pgw_base_proc_s) *pending_procedures;
 
 } sgw_eps_bearer_context_information_t;
 
