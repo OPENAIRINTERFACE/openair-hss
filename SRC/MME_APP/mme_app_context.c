@@ -57,7 +57,7 @@ ue_context_t *mme_create_new_ue_context (void)
 }
 
 //------------------------------------------------------------------------------
-void mme_app_ue_context_free_content (ue_context_t * const mme_ue_context_p)
+void mme_app_ue_context_free_content (ue_context_t * const ue_context_p)
 {
   //  imsi64_t         imsi;
   //  unsigned               imsi_auth:1;
@@ -82,15 +82,34 @@ void mme_app_ue_context_free_content (ue_context_t * const mme_ue_context_p)
   //  ambr_t                 subscribed_ambr;
   //  ambr_t                 used_ambr;
   //  rau_tau_timer_t        rau_tau_timer;
-  //if (mme_ue_context_p->ue_radio_capabilities) free_wrapper(mme_ue_context_p->ue_radio_capabilities);
   // int                    ue_radio_cap_length;
   // teid_t                 mme_s11_teid;
   // teid_t                 sgw_s11_teid;
   // PAA_t                  paa;
   // char                   pending_pdn_connectivity_req_imsi[16];
   // uint8_t                pending_pdn_connectivity_req_imsi_length;
-  bdestroy(mme_ue_context_p->pending_pdn_connectivity_req_apn);
-  bdestroy(mme_ue_context_p->pending_pdn_connectivity_req_pdn_addr);
+  DevAssert(ue_context_p != NULL);
+  bdestroy(ue_context_p->pending_pdn_connectivity_req_apn);
+  bdestroy(ue_context_p->pending_pdn_connectivity_req_pdn_addr);
+  
+  // Stop Mobile reachability timer,if running 
+  if (ue_context_p->mobile_reachability_timer.id != MME_APP_TIMER_INACTIVE_ID) {
+    if (timer_remove(ue_context_p->mobile_reachability_timer.id)) {
+
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop Mobile Reachability timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    } 
+    ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  }
+  // Stop Implicit detach timer,if running 
+  if (ue_context_p->implicit_detach_timer.id != MME_APP_TIMER_INACTIVE_ID) {
+    if (timer_remove(ue_context_p->implicit_detach_timer.id)) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    } 
+    ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  }
+  if (ue_context_p->ue_radio_capabilities) {
+    free_wrapper((void**) &(ue_context_p->ue_radio_capabilities));
+  }
   // int                    pending_pdn_connectivity_req_pti;
   // unsigned               pending_pdn_connectivity_req_ue_id;
   // network_qos_t          pending_pdn_connectivity_req_qos;
@@ -691,6 +710,8 @@ void mme_ue_context_update_ue_sig_connection_state (
     ue_context_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
     ue_context_p->enb_ue_s1ap_id  = INVALID_ENB_UE_S1AP_ID;
     ue_context_p->ecm_state       = ECM_IDLE;
+
+    OAILOG_DEBUG (LOG_MME_APP, "MME_APP: UE Connection State changed to IDLE. mme_ue_s1ap_id = %d\n", ue_context_p->mme_ue_s1ap_id);
     
     if (mme_config.nas_config.t3412_min > 0) {
       // Start Mobile reachability timer only if peroidic TAU timer is not disabled 
@@ -707,6 +728,8 @@ void mme_ue_context_update_ue_sig_connection_state (
   }else if ((ue_context_p->ecm_state == ECM_IDLE) && (new_ecm_state == ECM_CONNECTED))
   {
     ue_context_p->ecm_state = ECM_CONNECTED;
+
+    OAILOG_DEBUG (LOG_MME_APP, "MME_APP: UE Connection State changed to CONNECTED.enb_ue_s1ap_id = %d, mme_ue_s1ap_id = %d\n", ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
     
     // Stop Mobile reachability timer,if running 
     if (ue_context_p->mobile_reachability_timer.id != MME_APP_TIMER_INACTIVE_ID)

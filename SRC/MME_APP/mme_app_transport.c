@@ -60,10 +60,10 @@ int mme_app_handle_nas_dl_req (
 
   ue_context_t   *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, nas_dl_req_pP->ue_id);
   if (ue_context) {
-    OAILOG_DEBUG (LOG_MME_APP, "DOWNLINK NAS TRANSPORT Found enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", ue_context->enb_ue_s1ap_id);
     enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
+  } else {
+    OAILOG_WARNING (LOG_MME_APP, " MME_APP:DOWNLINK NAS TRANSPORT. Null UE Context for mme_ue_s1ap_id %d \n", nas_dl_req_pP->ue_id);
   }
-
   NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
   NAS_DL_DATA_REQ (message_p).ue_id                  = nas_dl_req_pP->ue_id;
   NAS_DL_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
@@ -81,6 +81,7 @@ int mme_app_handle_nas_dl_req (
    */
   if (ue_context && ue_context->ecm_state != ECM_CONNECTED)
   {
+    OAILOG_DEBUG (LOG_MME_APP, "MME_APP:DOWNLINK NAS TRANSPORT. Establishing S1 sig connection. mme_ue_s1ap_id = %d,enb_ue_s1ap_id = %d \n", nas_dl_req_pP->ue_id, enb_ue_s1ap_id);
     mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts,ue_context,ECM_CONNECTED);
   }
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
