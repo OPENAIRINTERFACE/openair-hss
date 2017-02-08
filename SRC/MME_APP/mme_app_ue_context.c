@@ -24,6 +24,7 @@
 #include "mme_app_ue_context.h"
 #include "conversions.h"
 
+static mme_ue_s1ap_id_t mme_app_ue_s1ap_id_generator = 1;
 
 /**
  * @brief mme_app_convert_imsi_to_imsi_mme: converts the imsi_t struct to the imsi mme struct
@@ -125,4 +126,11 @@ mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src)
   uint64_t uint_imsi;
   sscanf(imsi_src.data, "%" SCNu64, &uint_imsi);
   return uint_imsi;
+}
+
+mme_ue_s1ap_id_t mme_app_ctx_get_new_ue_id(void)
+{
+  mme_ue_s1ap_id_t tmp = 0;
+  tmp = __sync_fetch_and_add (&mme_app_ue_s1ap_id_generator, 1);
+  return tmp;
 }

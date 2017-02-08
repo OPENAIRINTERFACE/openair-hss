@@ -68,4 +68,8 @@ int s1ap_generate_downlink_nas_transport (
   const mme_ue_s1ap_id_t ue_id,
   STOLEN_REF bstring *payload);
 
+void
+s1ap_handle_mme_ue_id_notification (
+  const itti_mme_app_s1ap_mme_ue_id_notification_t * const notification_p);
+
 #endif /* FILE_S1AP_MME_NAS_PROCEDURES_SEEN */

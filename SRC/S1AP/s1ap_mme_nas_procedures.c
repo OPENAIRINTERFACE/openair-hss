@@ -183,6 +183,8 @@ s1ap_mme_handle_initial_ue_message (
         );
 #endif
 #endif
+  } else {
+    OAILOG_ERROR (LOG_S1AP, "S1AP:Initial UE Message- Duplicate ENB_UE_S1AP_ID. Ignoring the message, eNBUeS1APId:" ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
   }
 
   OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
@@ -338,12 +340,16 @@ s1ap_generate_downlink_nas_transport (
   void                                   *id = NULL;
 
   OAILOG_FUNC_IN (LOG_S1AP);
-  hashtable_ts_get (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t)ue_id, (void **)&id);
-  if (id) {
+
+  // Try to retrieve SCTP assoication id using mme_ue_s1ap_id
+  if (HASH_TABLE_OK ==  hashtable_ts_get (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t)ue_id, (void **)&id)) {
     sctp_assoc_id_t sctp_assoc_id = (sctp_assoc_id_t)(uintptr_t)id;
     enb_description_t  *enb_ref = s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
     if (enb_ref) {
       ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
+    } else {
+      OAILOG_ERROR (LOG_S1AP, "No eNB for SCTP association id %d \n", sctp_assoc_id);
+      OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
     }
   }
   // TODO remove soon:
@@ -356,7 +362,7 @@ s1ap_generate_downlink_nas_transport (
      * If the UE-associated logical S1-connection is not established,
      * * * * the MME shall allocate a unique MME UE S1AP ID to be used for the UE.
      */
-    OAILOG_DEBUG (LOG_S1AP, "Unknown UE MME ID " MME_UE_S1AP_ID_FMT ", This case is not handled right now\n", ue_id);
+    OAILOG_WARNING (LOG_S1AP, "Unknown UE MME ID " MME_UE_S1AP_ID_FMT ", This case is not handled right now\n", ue_id);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   } else {
     /*
@@ -419,11 +425,12 @@ s1ap_handle_conn_est_cnf (
   S1ap_E_RABToBeSetupItemCtxtSUReq_t      e_RABToBeSetup = {0}; // yes, alloc on stack
   S1ap_NAS_PDU_t                          nas_pdu = {0}; // yes, alloc on stack
   s1ap_message                            message = {0}; // yes, alloc on stack
+  void                                   *id = NULL;
 
   OAILOG_FUNC_IN (LOG_S1AP);
   DevAssert (conn_est_cnf_pP != NULL);
-
-  ue_ref = s1ap_is_ue_mme_id_in_list (conn_est_cnf_pP->nas_conn_est_cnf.ue_id);
+  
+   ue_ref = s1ap_is_ue_mme_id_in_list (conn_est_cnf_pP->nas_conn_est_cnf.ue_id);
   if (!ue_ref) {
     OAILOG_ERROR (LOG_S1AP, "This mme ue s1ap id (" MME_UE_S1AP_ID_FMT ") is not attached to any UE context\n", conn_est_cnf_pP->nas_conn_est_cnf.ue_id);
     // There are some race conditions were NAS T3450 timer is stopped and removed at same time
@@ -559,5 +566,17 @@ s1ap_handle_conn_est_cnf (
                       (enb_ue_s1ap_id_t)initialContextSetupRequest_p->eNB_UE_S1AP_ID, nas_pdu.size);
   bstring b = blk2bstr(buffer_p, length);
   s1ap_mme_itti_send_sctp_request (&b, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
+  OAILOG_FUNC_OUT (LOG_S1AP);
+}
+//------------------------------------------------------------------------------
+void
+s1ap_handle_mme_ue_id_notification (
+  const itti_mme_app_s1ap_mme_ue_id_notification_t * const notification_p)
+{
+
+  OAILOG_FUNC_IN (LOG_S1AP);
+  DevAssert (notification_p != NULL);
+  s1ap_notified_new_ue_mme_s1ap_id_association (
+                          notification_p->sctp_assoc_id, notification_p->enb_ue_s1ap_id, notification_p->mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }

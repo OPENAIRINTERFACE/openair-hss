@@ -36,8 +36,8 @@
 #include "msc.h"
 #include "intertask_interface.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_itti_messaging.h"
 #include "mme_app_defs.h"
-
 
 //------------------------------------------------------------------------------
 void
@@ -93,9 +93,25 @@ mme_app_handle_detach_req (
     OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist -> Nothing to do :-) \n");
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  else {
+  if ((ue_context->mme_s11_teid == 0) && (ue_context->sgw_s11_teid == 0)) {
+    /* No Session.
+     * If UE is already in idle state, skip asking eNB to release UE context and just clean up locally.
+     */
+    if (ECM_IDLE == ue_context->ecm_state) {
+      ue_context->ue_context_rel_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
+      // Notify S1AP to release S1AP UE context locally.
+      mme_app_itti_ue_context_release (ue_context, ue_context->ue_context_rel_cause);
+      // Free MME UE Context   
+      mme_notify_ue_context_released (&mme_app_desc.mme_ue_contexts, ue_context);
+      mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context);
+    } else {
+       ue_context->ue_context_rel_cause = S1AP_NAS_DETACH;
+      // Notify S1AP to send UE Context Release Command to eNB.
+      mme_app_itti_ue_context_release (ue_context, ue_context->ue_context_rel_cause);
+    }
+  } else {
     // Send a DELETE_SESSION_REQUEST message to the SGW
-    mme_app_send_delete_session_request  (ue_context);
+    mme_app_send_delete_session_request (ue_context);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

@@ -402,6 +402,9 @@ struct emm_data_context_s *emm_data_context_get_by_guti(
 struct emm_data_context_s *emm_data_context_remove(
   emm_data_t *_emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
 
+void emm_data_context_remove_mobile_ids(
+  emm_data_t *_emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
+
 int  emm_data_context_add(emm_data_t *emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
 int  emm_data_context_add_guti (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
 int  emm_data_context_add_old_guti (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;

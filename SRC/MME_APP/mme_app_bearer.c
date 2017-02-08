@@ -43,9 +43,11 @@
 #include "emmData.h"
 #include "mme_app_statistics.h"
 #include "timer.h"
+#include "s1ap_mme.h"
 
 //----------------------------------------------------------------------------
 static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t * const s_tmsi_p,  guti_t * const guti_p);
+static void notify_s1ap_new_ue_mme_s1ap_id_association (struct ue_context_s *ue_context_p);
 
 //------------------------------------------------------------------------------
 int
@@ -493,21 +495,29 @@ mme_app_handle_initial_ue_message (
       DevMessage ("mme_create_new_ue_context");
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
-    ue_context_p->mme_ue_s1ap_id    = initial_pP->mme_ue_s1ap_id;
+    // Allocate new mme_ue_s1ap_id
+    ue_context_p->mme_ue_s1ap_id    = mme_app_ctx_get_new_ue_id ();
+    if (ue_context_p->mme_ue_s1ap_id  == INVALID_MME_UE_S1AP_ID) {
+      OAILOG_CRITICAL (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE. MME_UE_S1AP_ID allocation Failed.\n");
+      mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
+    }
+    OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE.Allocated new MME UE context and new mme_ue_s1ap_id. %d\n",ue_context_p->mme_ue_s1ap_id);
     ue_context_p->enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
     MME_APP_ENB_S1AP_ID_KEY(ue_context_p->enb_s1ap_id_key, initial_pP->cgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
-    ue_context_p->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
     DevAssert (mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p) == 0);
   }
+  ue_context_p->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
   ue_context_p->e_utran_cgi = initial_pP->cgi;
-  
+  // Notify S1AP about the mapping between mme_ue_s1ap_id and sctp assoc id + enb_ue_s1ap_id 
+  notify_s1ap_new_ue_mme_s1ap_id_association (ue_context_p);
   // Initialize timers to INVALID IDs
   ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
   ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
 
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_INITIAL_UE_MESSAGE);
   // do this because of same message types name but not same struct in different .h
-  message_p->ittiMsg.nas_initial_ue_message.nas.ue_id           = initial_pP->mme_ue_s1ap_id;
+  message_p->ittiMsg.nas_initial_ue_message.nas.ue_id           = ue_context_p->mme_ue_s1ap_id;
   message_p->ittiMsg.nas_initial_ue_message.nas.tai             = initial_pP->tai;
   message_p->ittiMsg.nas_initial_ue_message.nas.cgi             = initial_pP->cgi;
   message_p->ittiMsg.nas_initial_ue_message.nas.as_cause        = initial_pP->as_cause;
@@ -980,3 +990,25 @@ static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t
   return is_guti_valid;
 }
 
+//------------------------------------------------------------------------------
+static void notify_s1ap_new_ue_mme_s1ap_id_association (struct ue_context_s *ue_context_p)
+{
+  MessageDef                             *message_p = NULL;
+  itti_mme_app_s1ap_mme_ue_id_notification_t *notification_p = NULL;
+  
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  if (ue_context_p == NULL) {
+    OAILOG_ERROR (LOG_MME_APP, " NULL UE context ptr\n" );
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_S1AP_MME_UE_ID_NOTIFICATION);
+  notification_p = &message_p->ittiMsg.mme_app_s1ap_mme_ue_id_notification;
+  memset (notification_p, 0, sizeof (itti_mme_app_s1ap_mme_ue_id_notification_t)); 
+  notification_p->enb_ue_s1ap_id = ue_context_p->enb_ue_s1ap_id; 
+  notification_p->mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id;
+  notification_p->sctp_assoc_id  = ue_context_p->sctp_assoc_id_key;
+
+  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  OAILOG_DEBUG (LOG_MME_APP, " Sent MME_APP_S1AP_MME_UE_ID_NOTIFICATION to S1AP for UE Id %u\n", notification_p->mme_ue_s1ap_id);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}

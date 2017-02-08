@@ -69,7 +69,7 @@ static const char                      *_emm_detach_type_str[] = {
 };
 
 
-static void
+void
 _clear_emm_ctxt(emm_data_context_t *emm_ctx) {
   DevAssert(emm_ctx);
 

@@ -26,7 +26,6 @@
 
 #include "msc.h"
 
-
 static inline void mme_app_itti_ue_context_release(
     struct ue_context_s *ue_context_p, enum s1cause cause)
 {
@@ -42,4 +41,5 @@ static inline void mme_app_itti_ue_context_release(
   itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
+
 #endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */

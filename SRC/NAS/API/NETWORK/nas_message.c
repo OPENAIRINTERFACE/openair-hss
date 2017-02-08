@@ -272,7 +272,7 @@ int nas_message_decrypt (
   OAILOG_FUNC_IN (LOG_NAS);
   emm_security_context_t                 *emm_security_context = (emm_security_context_t *) security;
   int                                     bytes = length;
-  bool                                    is_sr = false; // unused
+  bool                                    is_sr = false; 
   /*
    * Decode the header
    */

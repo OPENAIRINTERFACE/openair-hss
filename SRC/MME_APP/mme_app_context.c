@@ -53,6 +53,12 @@ static void _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_
 ue_context_t *mme_create_new_ue_context (void)
 {
   ue_context_t                           *new_p = calloc (1, sizeof (ue_context_t));
+  new_p->mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
+  new_p->enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
+  new_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+  // Initialize timers to INVALID IDs
+  new_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  new_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
   return new_p;
 }
 
@@ -385,8 +391,8 @@ mme_ue_context_update_coll_keys (
   
   if ((INVALID_ENB_UE_S1AP_ID_KEY != enb_s1ap_id_key) && (ue_context_p->enb_s1ap_id_key != enb_s1ap_id_key)) {
       // new insertion of enb_ue_s1ap_id_key,
-      h_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key,  (void **)&ue_context_p);
-      h_rc = hashtable_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_s1ap_id_key, (void *)ue_context_p);
+      h_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&id);
+      h_rc = hashtable_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_s1ap_id_key, (void *)(uintptr_t)mme_ue_s1ap_id);
 
       if (HASH_TABLE_OK != h_rc) {
         OAILOG_ERROR (LOG_MME_APP,
@@ -548,7 +554,7 @@ mme_insert_ue_context (
   }
   h_rc = hashtable_ts_insert (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl,
                              (const hash_key_t)ue_context_p->enb_s1ap_id_key,
-                             (void *)ue_context_p);
+                              (void *)((uintptr_t)ue_context_p->mme_ue_s1ap_id));
 
   if (HASH_TABLE_OK != h_rc) {
     OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue_id 0x%x\n",
@@ -556,8 +562,7 @@ mme_insert_ue_context (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-
-  if ( INVALID_MME_UE_S1AP_ID != ue_context_p->mme_ue_s1ap_id) {
+  if (INVALID_MME_UE_S1AP_ID != ue_context_p->mme_ue_s1ap_id) {
     h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id);
 
     if (HASH_TABLE_OK == h_rc) {
@@ -565,13 +570,10 @@ mme_insert_ue_context (
           ue_context_p, ue_context_p->mme_ue_s1ap_id);
       OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
     }
-    //OAI_GCC_DIAG_OFF(discarded-qualifiers);
 
-    // Anoop - This looks weired . Inserting UE context using invalid key.
     h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl,
                                 (const hash_key_t)ue_context_p->mme_ue_s1ap_id,
-                                (void *)((uintptr_t)ue_context_p->enb_s1ap_id_key));
-    //OAI_GCC_DIAG_ON(discarded-qualifiers);
+                                (void *)ue_context_p);
 
     if (HASH_TABLE_OK != h_rc) {
       OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
@@ -645,22 +647,23 @@ void mme_remove_ue_context (
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (mme_ue_context_p );
-  DevAssert (ue_context_p );
+  DevAssert (mme_ue_context_p);
+  DevAssert (ue_context_p);
   
+  // IMSI 
   if (ue_context_p->imsi) {
     hash_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->imsi, (void **)&id);
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", IMSI %" SCNu64 "  not in IMSI collection",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->imsi);
   }
-  // filled NAS UE ID
-  if (INVALID_MME_UE_S1AP_ID != ue_context_p->mme_ue_s1ap_id) {
-    hash_rc = hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&id);
-    if (HASH_TABLE_OK != hash_rc)
-      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not in MME UE S1AP ID collection",
-          ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
-  }
+  
+  // eNB UE S1P UE ID
+  hash_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&id);
+  if (HASH_TABLE_OK != hash_rc)
+    OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection",
+      ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
+  
   // filled S11 tun id
   if (ue_context_p->mme_s11_teid) {
     hash_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
@@ -676,11 +679,14 @@ void mme_remove_ue_context (
       OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", GUTI  not in GUTI collection",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
   }
-
-  hash_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&ue_context_p);
-  if (HASH_TABLE_OK != hash_rc)
-    OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection",
-      ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
+  
+  // filled NAS UE ID/ MME UE S1AP ID
+  if (INVALID_MME_UE_S1AP_ID != ue_context_p->mme_ue_s1ap_id) {
+    hash_rc = hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&ue_context_p);
+    if (HASH_TABLE_OK != hash_rc)
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not in MME UE S1AP ID collection",
+          ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
+  }
 
   mme_app_ue_context_free_content(ue_context_p);
   free_wrapper ((void**) &ue_context_p);
@@ -887,7 +893,7 @@ mme_app_dump_ue_contexts (
   const mme_ue_context_t * const mme_ue_context_p)
 //------------------------------------------------------------------------------
 {
-  hashtable_ts_apply_callback_on_elements (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL, NULL);
+  hashtable_ts_apply_callback_on_elements (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, mme_app_dump_ue_context, NULL, NULL);
 }
 
 

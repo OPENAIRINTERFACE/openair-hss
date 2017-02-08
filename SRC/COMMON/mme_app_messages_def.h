@@ -31,5 +31,6 @@
 MESSAGE_DEF(MME_APP_INITIAL_UE_MESSAGE            , MESSAGE_PRIORITY_MED, itti_mme_app_initial_ue_message_t  ,           mme_app_initial_ue_message)
 MESSAGE_DEF(MME_APP_CONNECTION_ESTABLISHMENT_CNF  , MESSAGE_PRIORITY_MED, itti_mme_app_connection_establishment_cnf_t  , mme_app_connection_establishment_cnf)
 MESSAGE_DEF(MME_APP_INITIAL_CONTEXT_SETUP_RSP     , MESSAGE_PRIORITY_MED, itti_mme_app_initial_context_setup_rsp_t  ,    mme_app_initial_context_setup_rsp)
-MESSAGE_DEF(MME_APP_DELETE_SESSION_RSP     	  , MESSAGE_PRIORITY_MED, itti_mme_app_delete_session_rsp_t  ,    	 mme_app_delete_session_rsp)
+MESSAGE_DEF(MME_APP_DELETE_SESSION_RSP     	      , MESSAGE_PRIORITY_MED, itti_mme_app_delete_session_rsp_t  ,    	     mme_app_delete_session_rsp)
+MESSAGE_DEF(MME_APP_S1AP_MME_UE_ID_NOTIFICATION	  , MESSAGE_PRIORITY_MED, itti_mme_app_s1ap_mme_ue_id_notification_t  ,  mme_app_s1ap_mme_ue_id_notification)
 

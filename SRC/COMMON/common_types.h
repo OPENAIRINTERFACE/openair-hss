@@ -67,8 +67,13 @@ typedef uint64_t enb_s1ap_id_key_t ;
 #define ENB_UE_S1AP_ID_FMT       "0x%06"PRIX32
 
 #define MME_UE_S1AP_ID_FMT       "0x%08"PRIX32
-#define INVALID_MME_UE_S1AP_ID   0xFFFFFFFF          // You can pick any value between 0..2^32-1,
-                                                     // all values are allowed. try to find another way (boolean is_valid for example)
+
+
+/* INVALID_MME_UE_S1AP_ID 
+ * Any value between 0..2^32-1, is allowed/valid as per 3GPP spec 36.413.
+ * Here we are conisdering 0 as invalid. Don't allocate 0 and consider this as invalid 
+ */
+#define INVALID_MME_UE_S1AP_ID   0x0     
 
 //------------------------------------------------------------------------------
 // TEIDs

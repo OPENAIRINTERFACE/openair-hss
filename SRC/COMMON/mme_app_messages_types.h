@@ -32,6 +32,7 @@
 #define MME_APP_INITIAL_UE_MESSAGE(mSGpTR)               (mSGpTR)->ittiMsg.mme_app_initial_ue_message
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
+#define MME_APP_S1AP_MME_UE_ID_NOTIFICATION(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_s1ap_mme_ue_id_notification
 
 typedef struct itti_mme_app_initial_ue_message_s {
   sctp_assoc_id_t     sctp_assoc_id; // key stored in MME_APP for MME_APP forward NAS response to S1AP
@@ -87,5 +88,11 @@ typedef struct itti_mme_app_delete_session_rsp_s {
   /* UE identifier */
   mme_ue_s1ap_id_t	  ue_id;
 } itti_mme_app_delete_session_rsp_t;
+
+typedef struct itti_mme_app_s1ap_mme_ue_id_notification_s {
+  enb_ue_s1ap_id_t	  enb_ue_s1ap_id;
+  mme_ue_s1ap_id_t	  mme_ue_s1ap_id;
+  sctp_assoc_id_t     sctp_assoc_id;
+} itti_mme_app_s1ap_mme_ue_id_notification_t;
 
 #endif /* FILE_MME_APP_MESSAGES_TYPES_SEEN */

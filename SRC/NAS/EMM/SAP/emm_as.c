@@ -341,9 +341,7 @@ static int _emm_as_recv (
   case ATTACH_REQUEST:
     REQUIREMENT_3GPP_24_301(R10_4_4_4_3__1); // Integrity checking of NAS signalling messages in the MME
     REQUIREMENT_3GPP_24_301(R10_4_4_4_3__2); // Integrity checking of NAS signalling messages in the MME
-    enb_s1ap_id_key_t enb_s1ap_id_key = 0;
-    MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, originating_ecgi->cell_identity.enb_id, INVALID_ENB_UE_S1AP_ID);
-    rc = emm_recv_attach_request (enb_s1ap_id_key, ue_id, originating_tai, originating_ecgi, &emm_msg->attach_request, emm_cause, decode_status);
+    rc = emm_recv_attach_request (ue_id, originating_tai, originating_ecgi, &emm_msg->attach_request, emm_cause, decode_status);
     break;
 
   case IDENTITY_RESPONSE:
@@ -477,7 +475,7 @@ static int _emm_as_data_ind (const emm_as_data_t * msg, int *emm_cause)
          */
         emm_data_context_t                     *emm_ctx = NULL;
 
-        if (msg->ue_id > 0) {
+        if (msg->ue_id > INVALID_MME_UE_S1AP_ID) {
           emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
           if (emm_ctx) {
             if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
@@ -615,7 +613,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
     originating_tai.plmn.mnc_digit1 = msg->plmn_id->mnc_digit1;
     originating_tai.plmn.mnc_digit2 = msg->plmn_id->mnc_digit2;
     originating_tai.plmn.mnc_digit3 = msg->plmn_id->mnc_digit3;
-    rc = emm_recv_attach_request (msg->enb_ue_s1ap_id_key, msg->ue_id, &originating_tai, &msg->ecgi, &emm_msg->attach_request, emm_cause, &decode_status);
+    rc = emm_recv_attach_request (msg->ue_id, &originating_tai, &msg->ecgi, &emm_msg->attach_request, emm_cause, &decode_status);
     break;
 
   case DETACH_REQUEST:

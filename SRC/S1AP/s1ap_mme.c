@@ -165,6 +165,11 @@ s1ap_mme_thread (
         s1ap_handle_conn_est_cnf (&MME_APP_CONNECTION_ESTABLISHMENT_CNF (received_message_p));
       }
       break;
+    
+    case MME_APP_S1AP_MME_UE_ID_NOTIFICATION:{
+        s1ap_handle_mme_ue_id_notification (&MME_APP_S1AP_MME_UE_ID_NOTIFICATION (received_message_p));
+      }
+      break;
 
     case TIMER_HAS_EXPIRED:{
         ue_description_t                       *ue_ref_p = NULL;

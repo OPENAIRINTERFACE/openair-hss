@@ -119,8 +119,7 @@ int emm_proc_status(mme_ue_s1ap_id_t ue_id, int emm_cause);
  */
 
 
-int emm_proc_attach_request(enb_s1ap_id_key_t enb_ue_s1ap_id_key,
-                            mme_ue_s1ap_id_t ue_id,
+int emm_proc_attach_request(mme_ue_s1ap_id_t ue_id,
                             emm_proc_attach_type_t type,
                             AdditionalUpdateType additional_update_type,
                             bool is_native_ksi, ksi_t ksi,
@@ -211,6 +210,8 @@ int emm_proc_security_mode_control(const mme_ue_s1ap_id_t ue_id, ksi_t ksi,
 int emm_proc_security_mode_complete(mme_ue_s1ap_id_t ue_id);
 int emm_proc_security_mode_reject(mme_ue_s1ap_id_t ue_id);
 
+void
+_clear_emm_ctxt(emm_data_context_t *emm_ctx); 
 /*
  *---------------------------------------------------------------------------
  *             Network indication handlers

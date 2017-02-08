@@ -54,12 +54,7 @@ static void *nas_intertask_interface (void *args_p)
         nas_establish_ind_t                    *nas_est_ind_p = NULL;
 
         nas_est_ind_p = &received_message_p->ittiMsg.nas_initial_ue_message.nas;
-        enb_s1ap_id_key_t enb_s1ap_id_key = 0;
-        MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key,
-            received_message_p->ittiMsg.nas_initial_ue_message.transparent.e_utran_cgi.cell_identity.enb_id,
-            received_message_p->ittiMsg.nas_initial_ue_message.transparent.enb_ue_s1ap_id);
-        nas_proc_establish_ind (enb_s1ap_id_key,
-            nas_est_ind_p->ue_id,
+        nas_proc_establish_ind (nas_est_ind_p->ue_id,
             nas_est_ind_p->tai,
             nas_est_ind_p->cgi,
             &nas_est_ind_p->initial_nas_msg);

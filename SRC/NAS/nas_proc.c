@@ -153,7 +153,6 @@ nas_proc_cleanup (
  ***************************************************************************/
 int
 nas_proc_establish_ind (
-  const enb_s1ap_id_key_t enb_ue_s1ap_id_key,
   const mme_ue_s1ap_id_t ue_id,
   const tai_t originating_tai,
   const ecgi_t cgi,
@@ -178,7 +177,6 @@ nas_proc_establish_ind (
      */
 
     emm_sap.primitive = EMMAS_ESTABLISH_REQ;
-    emm_sap.u.emm_as.u.establish.enb_ue_s1ap_id_key = enb_ue_s1ap_id_key;
     emm_sap.u.emm_as.u.establish.ue_id              = ue_id;
 
     emm_sap.u.emm_as.u.establish.nas_msg            = *msg;
