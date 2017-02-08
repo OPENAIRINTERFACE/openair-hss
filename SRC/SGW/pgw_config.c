@@ -173,6 +173,16 @@ int pgw_config_process (pgw_config_t * config_pP)
       async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "iptables -t mangle -I FORWARD -d %s/%d -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss %u",
           inet_ntoa(config_pP->ue_pool_addr[i]), config_pP->ue_pool_mask[i], min_mtu - 40);
     }
+
+    if (config_pP->pcef.enabled) {
+      if (config_pP->pcef.tcp_ecn_enabled) {
+        async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "sysctl -w net.ipv4.tcp_ecn=1");
+      }
+      if (config_pP->pcef.traffic_shaping_enabled) {
+        async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "tc qdisc del root dev %s", bdata(config_pP->ipv4.if_name_SGI));
+        async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "tc qdisc add dev %s root handle 1: htb default 0xFFFFFFFF", bdata(config_pP->ipv4.if_name_SGI));
+      }
+    }
   }
   return 0;
 }
@@ -334,6 +344,24 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
         if (strcasecmp (astring, "yes") == 0) {
           config_pP->pcef.enabled = true;
 
+          if (config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_TRAFFIC_SHAPPING_ENABLED, (const char **)&astring)) {
+            if (strcasecmp (astring, "yes") == 0) {
+              config_pP->pcef.traffic_shaping_enabled = true;
+              OAILOG_DEBUG (LOG_SPGW_APP, "Traffic shapping enabled\n");
+            } else {
+              config_pP->pcef.traffic_shaping_enabled = false;
+            }
+          }
+
+          if (config_setting_lookup_string (setting_pgw, PGW_CONFIG_STRING_TCP_ECN_ENABLED, (const char **)&astring)) {
+            if (strcasecmp (astring, "yes") == 0) {
+              config_pP->pcef.tcp_ecn_enabled = true;
+              OAILOG_DEBUG (LOG_SPGW_APP, "TCP ECN enabled\n");
+            } else {
+              config_pP->pcef.tcp_ecn_enabled = false;
+            }
+          }
+
           if (config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_AUTOMATIC_PUSH_DEDICATED_BEARER, (const char **)&astring)) {
             if (strcasecmp (astring, "yes") == 0) {
               config_pP->pcef.automatic_push_dedicated_bearer = true;
@@ -405,6 +433,7 @@ void pgw_config_display (pgw_config_t * config_p)
   if (config_p->pcef.enabled) {
     OAILOG_INFO (LOG_SPGW_APP, "    Traffic shaping ....: %s (TODO it soon)\n",
         config_p->pcef.traffic_shaping_enabled == 0 ? "false" : "true");
+    OAILOG_INFO (LOG_SPGW_APP, "    TCP ECN  ...........: %s\n", config_p->pcef.tcp_ecn_enabled == 0 ? "false" : "true");
     OAILOG_INFO (LOG_SPGW_APP, "    Push dedicated bearer : %s (testing dedicated bearer functionality down to OAI UE/COSTS UE)\n",
         config_p->pcef.automatic_push_dedicated_bearer == 0 ? "false" : "true");
     OAILOG_INFO (LOG_SPGW_APP, "    User plane BW UL .....: %"PRIu64" (Kilo bits/s)\n", config_p->pcef.if_bandwidth_ul);

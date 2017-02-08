@@ -54,6 +54,8 @@
 
 #define PGW_CONFIG_STRING_PCEF                                  "PCEF"
 #define PGW_CONFIG_STRING_PCEF_ENABLED                          "PCEF_ENABLED"
+#define PGW_CONFIG_STRING_TRAFFIC_SHAPPING_ENABLED              "TRAFFIC_SHAPPING_ENABLED"
+#define PGW_CONFIG_STRING_TCP_ECN_ENABLED                       "TCP_ECN_ENABLED"
 #define PGW_CONFIG_STRING_AUTOMATIC_PUSH_DEDICATED_BEARER       "AUTOMATIC_PUSH_DEDICATED_BEARER"
 #define PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_UL "RESERVED_NON_GUARANTED_BIT_RATE_RATIO_UL"
 #define PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_DL "RESERVED_NON_GUARANTED_BIT_RATE_RATIO_DL"
@@ -112,6 +114,7 @@ typedef struct pgw_config_s {
   struct {
     bool      enabled;
     bool      traffic_shaping_enabled;
+    bool      tcp_ecn_enabled;           // test for CoDel qdisc
     bool      automatic_push_dedicated_bearer;
     uint64_t  if_bandwidth_ul;
     uint64_t  if_bandwidth_dl;
