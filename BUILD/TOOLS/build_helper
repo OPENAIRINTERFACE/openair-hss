@@ -350,7 +350,7 @@ install_libgtpnl_from_source() {
     cd libgtpnl
     autoreconf -fi
     ./configure
-    echo "Compiling nettle"
+    echo "Compiling libgtpnl"
     make -j`nproc`
     $SUDO make install
     $SUDO ldconfig

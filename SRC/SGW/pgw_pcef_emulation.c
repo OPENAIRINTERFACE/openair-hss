@@ -196,7 +196,7 @@ int pgw_pcef_emulation_init (const pgw_config_t * const pgw_config_p)
 
   // really necessary ?
   pcc_rule = calloc (1, sizeof (pcc_rule_t));
-  pcc_rule->name = bfromcstr("TEST_PING_PCC_RULE");
+  pcc_rule->name = bfromcstr("DEFAULT_PCC_RULE");
   pcc_rule->is_activated = false;
   pcc_rule->sdf_id = SDF_ID_NGBR_DEFAULT;
   pcc_rule->bearer_qos.pci = PRE_EMPTION_CAPABILITY_DISABLED;
@@ -223,13 +223,23 @@ int pgw_pcef_emulation_init (const pgw_config_t * const pgw_config_p)
   pcc_rule->sdf_template.sdf_filter[1].packetfiltercontents.flags = TRAFFIC_FLOW_TEMPLATE_PROTOCOL_NEXT_HEADER_FLAG | TRAFFIC_FLOW_TEMPLATE_SINGLE_REMOTE_PORT_FLAG;
   pcc_rule->sdf_template.sdf_filter[1].packetfiltercontents.protocolidentifier_nextheader = IPPROTO_TCP;
   pcc_rule->sdf_template.sdf_filter[1].packetfiltercontents.singleremoteport = 80;
-  pcc_rule->sdf_template.number_of_packet_filters = 2;
+  pcc_rule->sdf_template.sdf_filter[2].identifier = PF_ID_DNS;
+  pcc_rule->sdf_template.sdf_filter[2].spare = 0;
+  pcc_rule->sdf_template.sdf_filter[2].direction = TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL;
+  pcc_rule->sdf_template.sdf_filter[2].eval_precedence = 0;
+  pcc_rule->sdf_template.sdf_filter[2].length = 9;
+  pcc_rule->sdf_template.sdf_filter[2].packetfiltercontents.flags = TRAFFIC_FLOW_TEMPLATE_PROTOCOL_NEXT_HEADER_FLAG | TRAFFIC_FLOW_TEMPLATE_SINGLE_REMOTE_PORT_FLAG;
+  pcc_rule->sdf_template.sdf_filter[2].packetfiltercontents.protocolidentifier_nextheader = IPPROTO_UDP;
+  pcc_rule->sdf_template.sdf_filter[2].packetfiltercontents.singleremoteport = 53;
+  pcc_rule->sdf_template.number_of_packet_filters = 3;
   hrc = hashtable_ts_insert(pgw_app.deactivated_predefined_pcc_rules, pcc_rule->sdf_id, pcc_rule);
   if (HASH_TABLE_OK != hrc) {
     return RETURNerror;
   }
 
+
   pgw_pcef_emulation_apply_rule(SDF_ID_TEST_PING, pgw_config_p);
+  pgw_pcef_emulation_apply_rule(SDF_ID_NGBR_DEFAULT, pgw_config_p);
 
   return rc;
 }
@@ -251,6 +261,7 @@ void pgw_pcef_emulation_apply_rule(const sdf_id_t sdf_id, const pgw_config_t * c
 
   if (HASH_TABLE_OK == hrc) {
     if (!pcc_rule->is_activated) {
+      OAILOG_INFO (LOG_SPGW_APP, "Loading PCC rule %s\n", bdata(pcc_rule->name));
       pcc_rule->is_activated = true;
       for (int sdff_i = 0; sdff_i < pcc_rule->sdf_template.number_of_packet_filters; sdff_i++) {
         pgw_pcef_emulation_apply_sdf_filter(&pcc_rule->sdf_template.sdf_filter[sdff_i], pcc_rule->sdf_id, pgw_config_p);
@@ -269,7 +280,7 @@ void pgw_pcef_emulation_apply_sdf_filter(sdf_filter_t   * const sdf_f, const sdf
     if ((TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG | TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG) & sdf_f->packetfiltercontents.flags) {
       marking_command = bformat("iptables -I INPUT -t mangle --in-interface %s  %s -j MARK --set-mark %d", bdata(pgw_config_p->ipv4.if_name_SGI), bdata(filter), sdf_id);
     } else {
-      marking_command = bformat("iptables -I INPUT -t mangle --in-interface %s --source %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
+      marking_command = bformat("iptables -I INPUT -t mangle --in-interface %s --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
           bdata(pgw_config_p->ipv4.if_name_SGI), NIPADDR(pgw_config_p->ue_pool_addr[0].s_addr),
           pgw_config_p->ue_pool_mask[0], bdata(filter), sdf_id);
     }

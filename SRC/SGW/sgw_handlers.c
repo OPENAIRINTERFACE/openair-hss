@@ -61,6 +61,7 @@
 #include "pgw_pcef_emulation.h"
 #include "sgw_context_manager.h"
 #include "pgw_procedures.h"
+#include "async_system.h"
 
 extern sgw_app_t                        sgw_app;
 extern spgw_config_t                    spgw_config;
@@ -608,6 +609,13 @@ sgw_handle_sgi_endpoint_updated (
       ue.s_addr = eps_bearer_entry_p->paa.ipv4_address.s_addr;
 
       rv = gtp_mod_kernel_tunnel_add(ue, enb, eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_entry_p->enb_teid_S1u, eps_bearer_entry_p->eps_bearer_id);
+      bstring marking_command = bformat(
+          "iptables -I INPUT -t mangle --in-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
+          NIPADDR(eps_bearer_entry_p->paa.ipv4_address.s_addr), SDF_ID_NGBR_DEFAULT, eps_bearer_entry_p->eps_bearer_id);
+      async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
+      bdestroy_wrapper(&marking_command);
+
+      sgw_display_s11_bearer_context_information_mapping ();
 
       if (rv < 0) {
         OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up TUNNEL err=%d\n", rv);
@@ -733,7 +741,6 @@ sgw_handle_modify_bearer_request (
 
   OAILOG_DEBUG (LOG_SPGW_APP, "Rx MODIFY_BEARER_REQUEST, teid "TEID_FMT"\n", modify_bearer_pP->teid);
   sgw_display_s11teid2mme_mappings ();
-  sgw_display_s11_bearer_context_information_mapping ();
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, modify_bearer_pP->teid, (void **)&new_bearer_ctxt_info_p);
 
   if (HASH_TABLE_OK == hash_rc) {
@@ -1008,6 +1015,9 @@ int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid)
       OAILOG_DEBUG (LOG_SPGW_APP, "Creating bearer teid " TEID_FMT " remote teid " TEID_FMT "\n", teid, s11_create_bearer_request->teid);
 
       sgw_eps_bearer_entry_t *eps_bearer_entry_p  = calloc (1, sizeof (sgw_eps_bearer_entry_t));
+      sgw_eps_bearer_entry_t *default_eps_bearer_entry_p =
+                sgw_cm_get_eps_bearer_entry(s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers,
+                    s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.default_bearer);
 
       uint8_t number_of_packet_filters = 0;
       rc = pgw_pcef_get_sdf_parameters (SDF_ID_TEST_PING, &eps_bearer_entry_p->eps_bearer_qos,
@@ -1015,6 +1025,7 @@ int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid)
           &number_of_packet_filters);
 
       eps_bearer_entry_p->eps_bearer_id = 0;
+      eps_bearer_entry_p->paa = default_eps_bearer_entry_p->paa;
       eps_bearer_entry_p->tft.tftoperationcode = TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE_NEW_TFT;
       eps_bearer_entry_p->tft.ebit = TRAFFIC_FLOW_TEMPLATE_PARAMETER_LIST_IS_NOT_INCLUDED;
       eps_bearer_entry_p->tft.numberofpacketfilters = number_of_packet_filters;
@@ -1107,9 +1118,15 @@ sgw_handle_create_bearer_response (
                   ue.s_addr = eps_bearer_entry_p->paa.ipv4_address.s_addr;
 
                   rv = gtp_mod_kernel_tunnel_add(ue, enb, eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_entry_p->enb_teid_S1u, eps_bearer_entry_p->eps_bearer_id);
+
                   if (rv < 0) {
                     OAILOG_INFO (LOG_SPGW_APP, "Failed to setup EPS bearer id %u tunnel " TEID_FMT "\n", eps_bearer_entry_p->eps_bearer_id, eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up);
                   } else {
+                    bstring marking_command = bformat(
+                        "iptables -I INPUT -t mangle --in-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
+                        NIPADDR(eps_bearer_entry_p->paa.ipv4_address.s_addr), pgw_ni_cbr_proc->sdf_id, eps_bearer_entry_p->eps_bearer_id);
+                    async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
+                    bdestroy_wrapper(&marking_command);
                     OAILOG_INFO (LOG_SPGW_APP, "Setup EPS bearer id %u tunnel " TEID_FMT "\n", eps_bearer_entry_p->eps_bearer_id, eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up);
                   }
                 } else {
