@@ -63,7 +63,7 @@ void clear_imei(imei_t * const imei){memset(imei, 0, sizeof(imei_t));}
 void clear_imeisv(imeisv_t * const imeisv){memset(imeisv, 0, sizeof(imeisv_t));}
 
 //------------------------------------------------------------------------------
-bstring fteid_ip_address_to_bstring(struct fteid_s *fteid)
+bstring fteid_ip_address_to_bstring(const struct fteid_s * const fteid)
 {
   bstring bstr = NULL;
   if (fteid->ipv4) {

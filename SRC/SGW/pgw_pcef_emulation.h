@@ -41,6 +41,7 @@ typedef enum {
   PF_ID_WEB_BROWSING,
   PF_ID_DNS,
   PF_ID_PING,
+  PF_ID_DEFAULT,
   PF_ID_MAX
 } pf_id_t;
 

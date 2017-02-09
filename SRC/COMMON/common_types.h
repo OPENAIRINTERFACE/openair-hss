@@ -212,7 +212,7 @@ typedef struct {
 } ip_address_t;
 
 struct fteid_s;
-bstring fteid_ip_address_to_bstring(struct fteid_s *fteid);
+bstring fteid_ip_address_to_bstring(const struct fteid_s * const fteid);
 bstring ip_address_to_bstring(ip_address_t *ip_address);
 void    bstring_to_ip_address(bstring const bstr, ip_address_t * const ip_address);
 

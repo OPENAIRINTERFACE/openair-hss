@@ -920,6 +920,7 @@ target_link_libraries (mme
 ################################
 add_executable(spgw
   ${OPENAIRCN_DIR}/SRC/OAI_SGW/oai_sgw.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
   ${OPENAIRCN_DIR}/SRC/COMMON/itti_free_defined_msg.c
   )
 if( ITTI_ANALYZER )

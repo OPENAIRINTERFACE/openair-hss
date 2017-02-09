@@ -610,7 +610,7 @@ sgw_handle_sgi_endpoint_updated (
 
       rv = gtp_mod_kernel_tunnel_add(ue, enb, eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_entry_p->enb_teid_S1u, eps_bearer_entry_p->eps_bearer_id);
       bstring marking_command = bformat(
-          "iptables -I INPUT -t mangle --in-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
+          "iptables -I FORWARD -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
           NIPADDR(eps_bearer_entry_p->paa.ipv4_address.s_addr), SDF_ID_NGBR_DEFAULT, eps_bearer_entry_p->eps_bearer_id);
       async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
       bdestroy_wrapper(&marking_command);
@@ -1026,6 +1026,8 @@ int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid)
 
       eps_bearer_entry_p->eps_bearer_id = 0;
       eps_bearer_entry_p->paa = default_eps_bearer_entry_p->paa;
+      eps_bearer_entry_p->s_gw_ip_address_S1u_S12_S4_up = default_eps_bearer_entry_p->s_gw_ip_address_S1u_S12_S4_up;
+      eps_bearer_entry_p->s_gw_ip_address_S5_S8_up = default_eps_bearer_entry_p->s_gw_ip_address_S5_S8_up;
       eps_bearer_entry_p->tft.tftoperationcode = TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE_NEW_TFT;
       eps_bearer_entry_p->tft.ebit = TRAFFIC_FLOW_TEMPLATE_PARAMETER_LIST_IS_NOT_INCLUDED;
       eps_bearer_entry_p->tft.numberofpacketfilters = number_of_packet_filters;
@@ -1108,6 +1110,12 @@ sgw_handle_create_bearer_response (
                 free_wrapper((void**)&sgw_eps_bearer_entry_wrapper);
 
                 eps_bearer_entry_p->eps_bearer_id = create_bearer_response_pP->bearer_contexts.bearer_contexts[i].eps_bearer_id;
+
+                bstring bip = fteid_ip_address_to_bstring(&create_bearer_response_pP->bearer_contexts.bearer_contexts[i].s1u_enb_fteid);
+                bstring_to_ip_address(bip, &eps_bearer_entry_p->enb_ip_address_S1u);
+                eps_bearer_entry_p->enb_teid_S1u = create_bearer_response_pP->bearer_contexts.bearer_contexts[i].s1u_enb_fteid.teid;
+                bdestroy_wrapper(&bip);
+
                 hash_rc = hashtable_ts_insert (ctx_p->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers,
                                                eps_bearer_entry_p->eps_bearer_id, eps_bearer_entry_p);
                 if (HASH_TABLE_OK == hash_rc) {
@@ -1123,11 +1131,12 @@ sgw_handle_create_bearer_response (
                     OAILOG_INFO (LOG_SPGW_APP, "Failed to setup EPS bearer id %u tunnel " TEID_FMT "\n", eps_bearer_entry_p->eps_bearer_id, eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up);
                   } else {
                     bstring marking_command = bformat(
-                        "iptables -I INPUT -t mangle --in-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
+                        "iptables -I FORWARD -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
                         NIPADDR(eps_bearer_entry_p->paa.ipv4_address.s_addr), pgw_ni_cbr_proc->sdf_id, eps_bearer_entry_p->eps_bearer_id);
                     async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
                     bdestroy_wrapper(&marking_command);
-                    OAILOG_INFO (LOG_SPGW_APP, "Setup EPS bearer id %u tunnel " TEID_FMT "\n", eps_bearer_entry_p->eps_bearer_id, eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up);
+                    OAILOG_INFO (LOG_SPGW_APP, "Setup EPS bearer id %u tunnel " TEID_FMT " <-> " TEID_FMT "\n",
+                        eps_bearer_entry_p->eps_bearer_id, eps_bearer_entry_p->enb_teid_S1u, eps_bearer_entry_p->s_gw_teid_S1u_S12_S4_up);
                   }
                 } else {
                   OAILOG_INFO (LOG_SPGW_APP, "Failed to setup EPS bearer id %u\n", eps_bearer_entry_p->eps_bearer_id);

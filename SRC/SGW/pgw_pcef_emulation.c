@@ -207,31 +207,23 @@ int pgw_pcef_emulation_init (const pgw_config_t * const pgw_config_p)
   pcc_rule->bearer_qos.gbr.br_dl = 0; // kilobits per second (1 kbps = 1000 bps)
   pcc_rule->bearer_qos.mbr.br_ul = 1000; // kilobits per second (1 kbps = 1000 bps)
   pcc_rule->bearer_qos.mbr.br_dl = 1000; // kilobits per second (1 kbps = 1000 bps)
-  pcc_rule->sdf_template.sdf_filter[0].identifier = PF_ID_SEC_WEB_BROWSING;
+  pcc_rule->sdf_template.sdf_filter[0].identifier = PF_ID_DEFAULT;
   pcc_rule->sdf_template.sdf_filter[0].spare = 0;
-  pcc_rule->sdf_template.sdf_filter[0].direction = TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL;
-  pcc_rule->sdf_template.sdf_filter[0].eval_precedence = 1;
+  pcc_rule->sdf_template.sdf_filter[0].direction = TRAFFIC_FLOW_TEMPLATE_DOWNLINK_ONLY;
+  pcc_rule->sdf_template.sdf_filter[0].eval_precedence = 2;
   pcc_rule->sdf_template.sdf_filter[0].length = 9;
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.flags = TRAFFIC_FLOW_TEMPLATE_PROTOCOL_NEXT_HEADER_FLAG | TRAFFIC_FLOW_TEMPLATE_SINGLE_REMOTE_PORT_FLAG;
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.protocolidentifier_nextheader = IPPROTO_TCP;
-  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.singleremoteport = 443;
-  pcc_rule->sdf_template.sdf_filter[1].identifier = PF_ID_WEB_BROWSING;
-  pcc_rule->sdf_template.sdf_filter[1].spare = 0;
-  pcc_rule->sdf_template.sdf_filter[1].direction = TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL;
-  pcc_rule->sdf_template.sdf_filter[1].eval_precedence = 0;
-  pcc_rule->sdf_template.sdf_filter[1].length = 9;
-  pcc_rule->sdf_template.sdf_filter[1].packetfiltercontents.flags = TRAFFIC_FLOW_TEMPLATE_PROTOCOL_NEXT_HEADER_FLAG | TRAFFIC_FLOW_TEMPLATE_SINGLE_REMOTE_PORT_FLAG;
-  pcc_rule->sdf_template.sdf_filter[1].packetfiltercontents.protocolidentifier_nextheader = IPPROTO_TCP;
-  pcc_rule->sdf_template.sdf_filter[1].packetfiltercontents.singleremoteport = 80;
-  pcc_rule->sdf_template.sdf_filter[2].identifier = PF_ID_DNS;
-  pcc_rule->sdf_template.sdf_filter[2].spare = 0;
-  pcc_rule->sdf_template.sdf_filter[2].direction = TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL;
-  pcc_rule->sdf_template.sdf_filter[2].eval_precedence = 0;
-  pcc_rule->sdf_template.sdf_filter[2].length = 9;
-  pcc_rule->sdf_template.sdf_filter[2].packetfiltercontents.flags = TRAFFIC_FLOW_TEMPLATE_PROTOCOL_NEXT_HEADER_FLAG | TRAFFIC_FLOW_TEMPLATE_SINGLE_REMOTE_PORT_FLAG;
-  pcc_rule->sdf_template.sdf_filter[2].packetfiltercontents.protocolidentifier_nextheader = IPPROTO_UDP;
-  pcc_rule->sdf_template.sdf_filter[2].packetfiltercontents.singleremoteport = 53;
-  pcc_rule->sdf_template.number_of_packet_filters = 3;
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.flags = TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG;
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[0].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[1].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr >> 8) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[2].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr >> 16) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[3].addr = (uint8_t) ((pgw_config_p->ue_pool_addr[0].s_addr >> 24) & 0x000000FF);
+  struct in_addr addr_mask = {0};
+  addr_mask.s_addr = htonl (0xFFFFFFFF << (32 - pgw_config_p->ue_pool_mask[0]));
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[0].mask = (uint8_t) ((addr_mask.s_addr) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[1].mask = (uint8_t) ((addr_mask.s_addr >> 8) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[2].mask = (uint8_t) ((addr_mask.s_addr >> 16) & 0x000000FF);
+  pcc_rule->sdf_template.sdf_filter[0].packetfiltercontents.ipv4remoteaddr[3].mask = (uint8_t) ((addr_mask.s_addr >> 24) & 0x000000FF);
+  pcc_rule->sdf_template.number_of_packet_filters = 1;
   hrc = hashtable_ts_insert(pgw_app.deactivated_predefined_pcc_rules, pcc_rule->sdf_id, pcc_rule);
   if (HASH_TABLE_OK != hrc) {
     return RETURNerror;
@@ -278,9 +270,9 @@ void pgw_pcef_emulation_apply_sdf_filter(sdf_filter_t   * const sdf_f, const sdf
 
     bstring marking_command = NULL;
     if ((TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG | TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG) & sdf_f->packetfiltercontents.flags) {
-      marking_command = bformat("iptables -I INPUT -t mangle --in-interface %s  %s -j MARK --set-mark %d", bdata(pgw_config_p->ipv4.if_name_SGI), bdata(filter), sdf_id);
+      marking_command = bformat("iptables -I PREROUTING -t mangle --in-interface %s  %s -j MARK --set-mark %d", bdata(pgw_config_p->ipv4.if_name_SGI), bdata(filter), sdf_id);
     } else {
-      marking_command = bformat("iptables -I INPUT -t mangle --in-interface %s --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
+      marking_command = bformat("iptables -I PREROUTING -t mangle --in-interface %s --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
           bdata(pgw_config_p->ipv4.if_name_SGI), NIPADDR(pgw_config_p->ue_pool_addr[0].s_addr),
           pgw_config_p->ue_pool_mask[0], bdata(filter), sdf_id);
     }
@@ -295,12 +287,20 @@ bstring pgw_pcef_emulation_packet_filter_2_iptable_string(packet_filter_contents
 {
   bstring bstr = bfromcstralloc(64, " ");
 
-  if (TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG & packetfiltercontents->flags) {
-    bformata(bstr, " --source %d.%d.%d.%d/%d/%d/%d/%d",
+  if ((TRAFFIC_FLOW_TEMPLATE_DOWNLINK_ONLY == direction) || (TRAFFIC_FLOW_TEMPLATE_BIDIRECTIONAL == direction)){
+    if (TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG & packetfiltercontents->flags) {
+      bformata(bstr, "  --destination %d.%d.%d.%d/%d.%d.%d.%d",
         packetfiltercontents->ipv4remoteaddr[0].addr, packetfiltercontents->ipv4remoteaddr[1].addr,
         packetfiltercontents->ipv4remoteaddr[2].addr, packetfiltercontents->ipv4remoteaddr[3].addr,
         packetfiltercontents->ipv4remoteaddr[0].mask, packetfiltercontents->ipv4remoteaddr[1].mask,
         packetfiltercontents->ipv4remoteaddr[2].mask, packetfiltercontents->ipv4remoteaddr[3].mask);
+    } else {
+      bformata(bstr, " --source %d.%d.%d.%d/%d.%d.%d.%d",
+        packetfiltercontents->ipv4remoteaddr[0].addr, packetfiltercontents->ipv4remoteaddr[1].addr,
+        packetfiltercontents->ipv4remoteaddr[2].addr, packetfiltercontents->ipv4remoteaddr[3].addr,
+        packetfiltercontents->ipv4remoteaddr[0].mask, packetfiltercontents->ipv4remoteaddr[1].mask,
+        packetfiltercontents->ipv4remoteaddr[2].mask, packetfiltercontents->ipv4remoteaddr[3].mask);
+    }
   }
   if (TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG & packetfiltercontents->flags) {
     AssertFatal(0, "TODO"); // we have time
