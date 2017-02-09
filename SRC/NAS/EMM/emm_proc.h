@@ -145,7 +145,7 @@ int emm_proc_tracking_area_update_reject (
         const mme_ue_s1ap_id_t ue_id,
         const int emm_cause);
 
-int emm_proc_service_reject (mme_ue_s1ap_id_t ue_id, int emm_cause);
+int emm_proc_service_reject (const mme_ue_s1ap_id_t ue_id, const int emm_cause);
 /*
  * --------------------------------------------------------------------------
  *              Detach procedure

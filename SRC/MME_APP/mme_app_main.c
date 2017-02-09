@@ -96,7 +96,7 @@ void *mme_app_thread (
       break;
 
     case S11_DELETE_SESSION_RESPONSE: {
-      mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.s11_delete_session_response);
+        mme_app_handle_delete_session_rsp (&received_message_p->ittiMsg.s11_delete_session_response);
       }
       break;
 
@@ -179,17 +179,17 @@ void *mme_app_thread (
       break;
 
     case NAS_DOWNLINK_DATA_REQ: {
-      mme_app_handle_nas_dl_req (&received_message_p->ittiMsg.nas_dl_data_req);
+        mme_app_handle_nas_dl_req (&received_message_p->ittiMsg.nas_dl_data_req);
       }
       break;
 
     case S1AP_ENB_DEREGISTERED_IND: {
-      mme_app_handle_enb_deregister_ind(&received_message_p->ittiMsg.s1ap_eNB_deregistered_ind);
+        mme_app_handle_enb_deregister_ind(&received_message_p->ittiMsg.s1ap_eNB_deregistered_ind);
     }
     break;
 
     default:{
-      OAILOG_DEBUG (LOG_MME_APP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
+        OAILOG_DEBUG (LOG_MME_APP, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
         AssertFatal (0, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;

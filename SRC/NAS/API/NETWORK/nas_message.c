@@ -393,7 +393,8 @@ int nas_message_decode (
 
   if (size < 0) {
     OAILOG_FUNC_RETURN (LOG_NAS, TLV_BUFFER_TOO_SHORT);
-  } else if (is_sr) {
+  } 
+  if (is_sr) {
     if (length < NAS_MESSAGE_SERVICE_REQUEST_SECURITY_HEADER_SIZE) {
       /*
        * The buffer is not big enough to contain security header
@@ -413,14 +414,22 @@ int nas_message_decode (
     msg->plain.emm.service_request.protocoldiscriminator     = EPS_MOBILITY_MANAGEMENT_MESSAGE;
     msg->plain.emm.service_request.securityheadertype        = SECURITY_HEADER_TYPE_SERVICE_REQUEST;
     msg->plain.emm.service_request.messagetype               = SERVICE_REQUEST;
+    
+    if (emm_security_context == NULL) {
+     
+      /* 
+       * This implies UE context is not present. Send Service Reject with Cause- "UE identity cannot be derived by the
+       * network" so that UE can do fresh attach 
+       */
+      status->mac_matched = 0;
+      OAILOG_FUNC_RETURN (LOG_NAS, size);
+    }
 
     /*
      * Compute offset of the sequence number field
      */
-
     // remove ksi
     sequence_number = sequence_number & 0x1F;
-    DevAssert(emm_security_context != NULL);
     // Estimate 8bit sequence number from 5 bit sequence number 
     temp_sequence_number = (emm_security_context->ul_count.seq_num & 0xE0) >> 5;
     if ((emm_security_context->ul_count.seq_num & 0x1F) > sequence_number) {
@@ -451,7 +460,9 @@ int nas_message_decode (
       OAILOG_DEBUG (LOG_NAS, "Service Request: message MAC = %04X != computed = %04X\n", msg->plain.emm.service_request.messageauthenticationcode, short_mac);
     }
     
-  } else if (size > 1) {
+    OAILOG_FUNC_RETURN (LOG_NAS, size + bytes);
+  }
+  if (size > 1) {
     // found security header
     /*
      * Compute offset of the sequence number field
@@ -493,7 +504,7 @@ int nas_message_decode (
     bytes = _nas_message_plain_decode (buffer, &msg->header, &msg->plain, length);
   }
 
-  if ((bytes < 0) && (!is_sr)) {
+  if (bytes < 0)  {
     OAILOG_FUNC_RETURN (LOG_NAS, bytes);
   }
 

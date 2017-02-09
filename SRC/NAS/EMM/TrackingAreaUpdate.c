@@ -102,7 +102,7 @@ int                                     emm_proc_tracking_area_update_request (
 
 static int _emm_tracking_area_update (void *args);
 static int _emm_tracking_area_update_security (void *args);
-static int _emm_tracking_area_update_reject (void *args);
+static int _emm_tracking_area_update_reject (mme_ue_s1ap_id_t ue_id, int emm_cause);
 static int _emm_tracking_area_update_accept (emm_data_context_t * emm_ctx,tau_accept_data_t * data);
 static int _emm_tracking_area_update_abort (void *args);
 
@@ -467,31 +467,9 @@ int emm_proc_tracking_area_update_reject (
   const mme_ue_s1ap_id_t ue_id,
   const int emm_cause)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-
-  /*
-   * Create temporary UE context
-   */
-  emm_data_context_t                      ue_ctx;
-
-  memset (&ue_ctx, 0, sizeof (emm_data_context_t));
-  ue_ctx.is_dynamic = false;
-  ue_ctx.ue_id = ue_id;
-  /*
-   * Update the EMM cause code
-   */
-  if (ue_id > 0)
-  {
-    ue_ctx.emm_cause = emm_cause;
-  } else {
-    ue_ctx.emm_cause = EMM_CAUSE_ILLEGAL_UE;
-  }
-
-  /*
-   * Do not accept attach request with protocol error
-   */
-  rc = _emm_tracking_area_update_reject (&ue_ctx);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  rc = _emm_tracking_area_update_reject (ue_id, emm_cause);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -503,8 +481,8 @@ static int
 _emm_tracking_area_update (
     void *args)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
   tau_accept_data_t                      *data = (tau_accept_data_t *) calloc (1, sizeof (tau_accept_data_t));
 
@@ -538,7 +516,7 @@ _emm_tracking_area_update (
      */
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Failed to respond to TAU Request");
     emm_ctx->emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-    rc = _emm_tracking_area_update_reject (emm_ctx);
+    rc = _emm_tracking_area_update_reject (emm_ctx->ue_id, emm_ctx->emm_cause);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -592,7 +570,7 @@ _emm_tau_t3450_handler (
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
 }
 
-/** \fn void _emm_tracking_area_update_reject(void *args);
+/** \fn void _emm_tracking_area_update_security(void *args);
     \brief Performs the tracking area update procedure not accepted by the network.
      @param [in]args UE EMM context data
      @returns status of operation
@@ -634,50 +612,48 @@ _emm_tracking_area_update_security (
     /*
      * Do not accept the UE to attach to the network
      */
-    rc = _emm_tracking_area_update_reject (emm_ctx);
+    rc = _emm_tracking_area_update_reject (emm_ctx->ue_id,emm_ctx->emm_cause);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-/** \fn void _emm_tracking_area_update_reject(void *args);
+/** \fn  _emm_tracking_area_update_reject();
     \brief Performs the tracking area update procedure not accepted by the network.
      @param [in]args UE EMM context data
      @returns status of operation
 */
 //------------------------------------------------------------------------------
 static int
-_emm_tracking_area_update_reject (
-  void *args)
+_emm_tracking_area_update_reject (mme_ue_s1ap_id_t ue_id, int emm_cause) 
+  
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
+  emm_data_context_t                     *emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+  emm_sap_t                               emm_sap = {0};
 
+  OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC- Sending Tracking Area Update Reject. ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n",
+        ue_id, emm_cause);
+  /*
+   * Notify EMM-AS SAP that Tracking Area Update Reject message has to be sent
+   * onto the network
+   */
+  emm_sap.primitive = EMMAS_ESTABLISH_REJ;
+  emm_sap.u.emm_as.u.establish.ue_id = ue_id;
+  emm_sap.u.emm_as.u.establish.eps_id.guti = NULL;
+
+  emm_sap.u.emm_as.u.establish.emm_cause = emm_cause;
+  emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_TAU;
+  emm_sap.u.emm_as.u.establish.nas_msg = NULL;
+  /*
+   * Setup EPS NAS security data
+   */
   if (emm_ctx) {
-    emm_sap_t                               emm_sap = {0};
-
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM tracking area update procedure not accepted " "by the network (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)", emm_ctx->ue_id, emm_ctx->emm_cause);
-    /*
-     * Notify EMM-AS SAP that Tracking Area Update Reject message has to be sent
-     * onto the network
-     */
-    emm_sap.primitive = EMMAS_ESTABLISH_REJ;
-    emm_sap.u.emm_as.u.establish.ue_id = emm_ctx->ue_id;
-    emm_sap.u.emm_as.u.establish.eps_id.guti = NULL;
-
-    if (emm_ctx->emm_cause == EMM_CAUSE_SUCCESS) {
-      emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
-    }
-
-    emm_sap.u.emm_as.u.establish.emm_cause = emm_ctx->emm_cause;
-    emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_TAU;
-    emm_sap.u.emm_as.u.establish.nas_msg = NULL;
-    /*
-     * Setup EPS NAS security data
-     */
-    emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_ctx->_security, false, true);
-    rc = emm_sap_send (&emm_sap);
+     emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_ctx->_security, false, false);
+  } else {
+      emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, NULL, false, false);
   }
+  rc = emm_sap_send (&emm_sap);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

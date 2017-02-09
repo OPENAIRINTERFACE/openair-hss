@@ -766,6 +766,9 @@ s1ap_mme_generate_ue_context_release_command (
   case S1AP_NAS_DETACH:cause_type = S1ap_Cause_PR_nas;
     cause_value = S1ap_CauseNas_detach;
     break;
+  case S1AP_NAS_NORMAL_RELEASE:cause_type = S1ap_Cause_PR_nas;
+    cause_value = S1ap_CauseNas_normal_release;
+    break;
   case S1AP_RADIO_EUTRAN_GENERATED_REASON:cause_type = S1ap_Cause_PR_radioNetwork;
     cause_value = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
     break;

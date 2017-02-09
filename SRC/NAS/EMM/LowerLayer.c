@@ -368,9 +368,8 @@ emm_as_set_security_data (
     OAILOG_STREAM_HEX (OAILOG_LEVEL_DEBUG, LOG_NAS_EMM, "knas_enc:", context->knas_enc, AUTH_KNAS_ENC_SIZE);
     data->is_new = is_new;
     data->ksi = context->eksi;
-    data->sqn = context->dl_count.seq_num;
-    // LG data->count = *(uint32_t *)(&context->ul_count);
-    data->count = 0x00000000 | (context->dl_count.overflow << 8) | context->dl_count.seq_num;
+    data->sqn = context->dl_count.seq_num; //TODO AT check whether we need to increment this by one or it is already incremented after sending last NAS mssage. 
+    data->count = 0x00000000 | ((context->dl_count.overflow & 0x0000FFFF) << 8) | (context->dl_count.seq_num & 0x000000FF);
     /*
      * NAS integrity and cyphering keys may not be available if the
      * * * * current security context is a partial EPS security context
@@ -396,7 +395,7 @@ emm_as_set_security_data (
       memcpy(data->knas_enc, context->knas_enc, sizeof(data->knas_enc));
     }
   } else {
-    OAILOG_WARNING (LOG_NAS_EMM, "EMM_AS_NO_KEY_AVAILABLE\n");
+    OAILOG_DEBUG (LOG_NAS_EMM, "NO Valid Security Context Available\n");
     /*
      * No valid EPS security context exists
      */

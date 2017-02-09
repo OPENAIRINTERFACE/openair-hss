@@ -37,7 +37,7 @@
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "sgw_ie_defs.h"
-
+#include "mme_app_itti_messaging.h"
 #include "secu_defs.h"
 
 #include "assertions.h"
@@ -64,6 +64,7 @@ int mme_app_handle_nas_dl_req (
   } else {
     OAILOG_WARNING (LOG_MME_APP, " MME_APP:DOWNLINK NAS TRANSPORT. Null UE Context for mme_ue_s1ap_id %d \n", nas_dl_req_pP->ue_id);
   }
+  
   NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
   NAS_DL_DATA_REQ (message_p).ue_id                  = nas_dl_req_pP->ue_id;
   NAS_DL_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
@@ -84,6 +85,14 @@ int mme_app_handle_nas_dl_req (
     OAILOG_DEBUG (LOG_MME_APP, "MME_APP:DOWNLINK NAS TRANSPORT. Establishing S1 sig connection. mme_ue_s1ap_id = %d,enb_ue_s1ap_id = %d \n", nas_dl_req_pP->ue_id, enb_ue_s1ap_id);
     mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts,ue_context,ECM_CONNECTED);
   }
+
+  // Check the transaction status. And trigger the UE context release command accrordingly.
+  if (nas_dl_req_pP->transaction_status != AS_SUCCESS) {
+    ue_context->ue_context_rel_cause = S1AP_NAS_NORMAL_RELEASE;
+    // Notify S1AP to send UE Context Release Command to eNB.
+    mme_app_itti_ue_context_release (ue_context, ue_context->ue_context_rel_cause);
+  }
+
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 

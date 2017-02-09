@@ -263,24 +263,21 @@ emm_proc_detach_request (
     esm_sap.data.eps_bearer_context_deactivate.ebi = ESM_SAP_ALL_EBI;
     rc = esm_sap_send (&esm_sap);
 
-    if (rc != RETURNerror) {
-      emm_sap_t                               emm_sap = {0};
+    emm_sap_t                               emm_sap = {0};
 
-      /*
-       * Notify EMM that the UE has been implicitly detached
-       */
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_REQ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-      emm_sap.primitive = EMMREG_DETACH_REQ;
-      emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx = emm_ctx;
-      rc = emm_sap_send (&emm_sap);
-    }
-	
+    /*
+     * Notify EMM that the UE has been implicitly detached
+     */
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_REQ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+    emm_sap.primitive = EMMREG_DETACH_REQ;
+    emm_sap.u.emm_reg.ue_id = ue_id;
+    emm_sap.u.emm_reg.ctx = emm_ctx;
+    rc = emm_sap_send (&emm_sap);
     nas_itti_detach_req(ue_id);
   }
   _clear_emm_ctxt(emm_ctx);
 
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
 
 /****************************************************************************/

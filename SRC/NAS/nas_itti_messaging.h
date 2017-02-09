@@ -47,7 +47,8 @@ int nas_itti_protected_msg(
 
 int nas_itti_dl_data_req(
   const mme_ue_s1ap_id_t ue_idP,
-  bstring                nas_msgP);
+  bstring                nas_msgP,
+  nas_error_code_t transaction_status);
 
 void nas_itti_pdn_connectivity_req(
   int                     ptiP,

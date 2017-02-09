@@ -200,13 +200,16 @@ nas_itti_protected_msg (
 int
 nas_itti_dl_data_req (
   const mme_ue_s1ap_id_t ue_id,
-  bstring                nas_msg)
+  bstring                nas_msg,
+  nas_error_code_t transaction_status
+  )
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_DOWNLINK_DATA_REQ);
   NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
   NAS_DL_DATA_REQ (message_p).ue_id   = ue_id;
   NAS_DL_DATA_REQ (message_p).nas_msg = nas_msg;
   nas_msg = NULL;
+  NAS_DL_DATA_REQ (message_p).transaction_status = transaction_status;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_REQ ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);

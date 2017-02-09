@@ -61,7 +61,7 @@ typedef uint64_t enb_s1ap_id_key_t ;
 //------------------------------------------------------------------------------
 // UE S1AP IDs
 
-#define INVALID_ENB_UE_S1AP_ID   0xFFFFFF
+#define INVALID_ENB_UE_S1AP_ID   0xFFFFFFFF // valid values are 0 to 2^24-1. 
 #define INVALID_ENB_UE_S1AP_ID_KEY   0xFFFFFFFFFFFFFFFF
 #define ENB_UE_S1AP_ID_MASK      0x00FFFFFF
 #define ENB_UE_S1AP_ID_FMT       "0x%06"PRIX32
@@ -77,7 +77,6 @@ typedef uint64_t enb_s1ap_id_key_t ;
 
 //------------------------------------------------------------------------------
 // TEIDs
-
 typedef uint32_t                 teid_t;
 #define TEID_FMT                "0x%"PRIX32
 typedef teid_t                   s11_teid_t;

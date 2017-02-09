@@ -277,10 +277,10 @@ typedef struct itti_nas_ul_data_ind_s {
 
 
 typedef struct itti_nas_dl_data_req_s {
-  enb_ue_s1ap_id_t  enb_ue_s1ap_id; /* UE lower layer identifier        */
-  mme_ue_s1ap_id_t  ue_id;          /* UE lower layer identifier        */
-  //nas_error_code_t err_code;      /* Transaction status               */
-  bstring           nas_msg;        /* Uplink NAS message           */
+  enb_ue_s1ap_id_t  enb_ue_s1ap_id;     /* UE lower layer identifier        */
+  mme_ue_s1ap_id_t  ue_id;              /* UE lower layer identifier        */
+  nas_error_code_t  transaction_status;  /* Transaction status               */
+  bstring           nas_msg;            /* Downlink NAS message             */
 } itti_nas_dl_data_req_t;
 
 typedef struct itti_nas_dl_data_cnf_s {
