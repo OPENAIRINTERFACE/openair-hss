@@ -229,8 +229,9 @@ int pgw_pcef_emulation_init (const pgw_config_t * const pgw_config_p)
     return RETURNerror;
   }
 
-
-  pgw_pcef_emulation_apply_rule(SDF_ID_TEST_PING, pgw_config_p);
+  if (pgw_config_p->pcef.automatic_push_dedicated_bearer) {
+    pgw_pcef_emulation_apply_rule(SDF_ID_TEST_PING, pgw_config_p);
+  }
   pgw_pcef_emulation_apply_rule(SDF_ID_NGBR_DEFAULT, pgw_config_p);
 
   return rc;
