@@ -90,24 +90,13 @@ sgw_display_s11teid2mme_mappings (
 }
 
 //-----------------------------------------------------------------------------
-static bool
-sgw_display_pdn_connection_sgw_eps_bearers (
-  uint64_t keyP,
-  void *dataP,
-  void *unused_parameterP,
-  void **unused_resultP)
+void sgw_display_sgw_eps_bearer_context (const sgw_eps_bearer_ctxt_t  * const eps_bearer_ctxt)
 //-----------------------------------------------------------------------------
 {
-  sgw_eps_bearer_entry_t                 *eps_bearer_entry = NULL;
-
-  if (dataP ) {
-    eps_bearer_entry = (sgw_eps_bearer_entry_t *) dataP;
-    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\t\t\t%" PRId64 "\t<-> ebi: %u, enb_teid_for_S1u: %u, s_gw_teid_for_S1u_S12_S4_up: %u (tbc)\n",
-                    keyP, eps_bearer_entry->eps_bearer_id, eps_bearer_entry->enb_teid_S1u, eps_bearer_entry->s_gw_teid_S1u_S12_S4_up);
-  } else {
-    OAILOG_DEBUG (LOG_SPGW_APP, "\t\t\t\tINVALID eps_bearer_entry FOUND\n");
+  if (eps_bearer_ctxt) {
+    OAILOG_DEBUG (LOG_SPGW_APP, "|\t\t\t\tebi: %u, enb_teid_for_S1u: %u, s_gw_teid_for_S1u_S12_S4_up: %u (tbc)\n",
+        eps_bearer_ctxt->eps_bearer_id, eps_bearer_ctxt->enb_teid_S1u, eps_bearer_ctxt->s_gw_teid_S1u_S12_S4_up);
   }
-  return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -120,7 +109,6 @@ sgw_display_s11_bearer_context_information (
 //-----------------------------------------------------------------------------
 {
   s_plus_p_gw_eps_bearer_context_information_t *sp_context_information = NULL;
-  hashtable_rc_t                                hash_rc = HASH_TABLE_OK;
 
   if (dataP ) {
     sp_context_information = (s_plus_p_gw_eps_bearer_context_information_t *) dataP;
@@ -138,11 +126,8 @@ sgw_display_s11_bearer_context_information (
     OAILOG_DEBUG (LOG_SPGW_APP, "|\t\t\tapn_in_use:        %s\n", sp_context_information->sgw_eps_bearer_context_information.pdn_connection.apn_in_use);
     OAILOG_DEBUG (LOG_SPGW_APP, "|\t\t\tdefault_bearer:    %u\n", sp_context_information->sgw_eps_bearer_context_information.pdn_connection.default_bearer);
     OAILOG_DEBUG (LOG_SPGW_APP, "|\t\t\teps_bearers:\n");
-    hash_rc = hashtable_ts_apply_callback_on_elements (sp_context_information->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers,
-                                                       sgw_display_pdn_connection_sgw_eps_bearers, NULL, NULL);
-
-    if (HASH_TABLE_OK != hash_rc) {
-      OAILOG_DEBUG (LOG_SPGW_APP, "Invalid sgw_eps_bearers hashtable for display\n");
+    for (int ebix = 0; ebix < BEARERS_PER_UE; ebix++) {
+      sgw_display_sgw_eps_bearer_context(sp_context_information->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers_array[ebix]);
     }
     //void                  *trxn;
     //uint32_t               peer_ip;
@@ -233,14 +218,14 @@ sgw_cm_remove_s11_tunnel (
 }
 
 //-----------------------------------------------------------------------------
-sgw_eps_bearer_entry_t *sgw_cm_create_eps_bearer_entry (void)
+sgw_eps_bearer_ctxt_t *sgw_cm_create_eps_bearer_context (void)
 //-----------------------------------------------------------------------------
 {
-  sgw_eps_bearer_entry_t                 *eps_bearer_entry = NULL;
+  sgw_eps_bearer_ctxt_t                 *sgw_eps_bearer_ctxt = NULL;
 
-  eps_bearer_entry = calloc (1, sizeof (sgw_eps_bearer_entry_t));
+  sgw_eps_bearer_ctxt = calloc (1, sizeof (sgw_eps_bearer_ctxt_t));
 
-  if (eps_bearer_entry == NULL) {
+  if (sgw_eps_bearer_ctxt == NULL) {
     /*
      * Malloc failed, may be ENOMEM error
      */
@@ -248,67 +233,52 @@ sgw_eps_bearer_entry_t *sgw_cm_create_eps_bearer_entry (void)
     return NULL;
   }
 
-  return eps_bearer_entry;
+  return sgw_eps_bearer_ctxt;
 }
 
 
 //-----------------------------------------------------------------------------
-sgw_pdn_connection_t                   *
-sgw_cm_create_pdn_connection (
-  void)
+sgw_pdn_connection_t *sgw_cm_create_pdn_connection (void)
 //-----------------------------------------------------------------------------
 {
   sgw_pdn_connection_t                   *pdn_connection = NULL;
 
   pdn_connection = calloc (1, sizeof (sgw_pdn_connection_t));
 
-  if (pdn_connection == NULL) {
-    /*
-     * Malloc failed, may be ENOMEM error
-     */
+  if (!pdn_connection) {
     OAILOG_ERROR (LOG_SPGW_APP, "Failed to create new PDN connection object\n");
-    return NULL;
   }
-
-  bstring b = bfromcstr("sgw_eps_bearers");
-  pdn_connection->sgw_eps_bearers = hashtable_ts_create (12, NULL, NULL, b);
-  bdestroy_wrapper (&b);
-
-  if (pdn_connection->sgw_eps_bearers == NULL) {
-    OAILOG_ERROR (LOG_SPGW_APP, "Failed to create eps bearers collection object\n");
-    free_wrapper ((void**)&pdn_connection);
-  }
-
   return pdn_connection;
 }
 
 //-----------------------------------------------------------------------------
-void
-sgw_cm_free_pdn_connection (
-  sgw_pdn_connection_t * pdn_connectionP)
+void sgw_cm_free_pdn_connection (sgw_pdn_connection_t * pdn_connectionP)
 {
   if (pdn_connectionP ) {
-    if (pdn_connectionP->sgw_eps_bearers ) {
-      hashtable_ts_destroy (pdn_connectionP->sgw_eps_bearers);
+    if (pdn_connectionP->apn_in_use) {
+      free_wrapper((void**)&pdn_connectionP->apn_in_use);
+    }
+    for (int ebix = 0; ebix < BEARERS_PER_UE; ebix++) {
+      sgw_free_sgw_eps_bearer_context(&pdn_connectionP->sgw_eps_bearers_array[ebix]);
     }
   }
 }
 
 //-----------------------------------------------------------------------------
-void
-sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (
-  s_plus_p_gw_eps_bearer_context_information_t ** contextP)
+void sgw_free_sgw_eps_bearer_context (sgw_eps_bearer_ctxt_t ** sgw_eps_bearer_ctxt)
 {
-    if (*contextP) {
+  if (*sgw_eps_bearer_ctxt) {
+    // nothing to do actually
+    free_wrapper((void**) sgw_eps_bearer_ctxt);
+  }
+}
 
-    /*
-     * if (contextP->sgw_eps_bearer_context_information.pdn_connections ) {
-     * obj_hashtable_ts_destroy(contextP->sgw_eps_bearer_context_information.pdn_connections);
-     * }
-     */
-    if ((*contextP)->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers ) {
-      hashtable_ts_destroy ((*contextP)->sgw_eps_bearer_context_information.pdn_connection.sgw_eps_bearers);
-    }
+//-----------------------------------------------------------------------------
+void sgw_cm_free_s_plus_p_gw_eps_bearer_context_information (s_plus_p_gw_eps_bearer_context_information_t ** contextP)
+{
+  if (*contextP) {
+
+    sgw_cm_free_pdn_connection(&(*contextP)->sgw_eps_bearer_context_information.pdn_connection);
 
     if ((*contextP)->pgw_eps_bearer_context_information.apns ) {
       obj_hashtable_ts_destroy ((*contextP)->pgw_eps_bearer_context_information.apns);
@@ -379,55 +349,63 @@ sgw_cm_remove_bearer_context_information (
 //--- EPS Bearer Entry
 
 //-----------------------------------------------------------------------------
-sgw_eps_bearer_entry_t *sgw_cm_create_eps_bearer_entry_in_collection (
-  hash_table_ts_t * eps_bearersP,
-  ebi_t eps_bearer_idP)
+sgw_eps_bearer_ctxt_t *sgw_cm_create_eps_bearer_ctxt_in_collection (
+    sgw_pdn_connection_t * const sgw_pdn_connection,
+    const ebi_t                  eps_bearer_idP)
 {
-  sgw_eps_bearer_entry_t                 *new_eps_bearer_entry = NULL;
-  hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
+  sgw_eps_bearer_ctxt_t                 *new_eps_bearer_entry = NULL;
 
-  AssertFatal (eps_bearersP, "Bad parameter sgw_eps_bearer_entries");
+  AssertFatal (sgw_pdn_connection, "Bad parameter sgw_pdn_connection");
+  AssertFatal ((eps_bearer_idP >= EPS_BEARER_IDENTITY_FIRST) && (eps_bearer_idP <= EPS_BEARER_IDENTITY_LAST), "Bad parameter ebi %u", eps_bearer_idP);
 
-  new_eps_bearer_entry = calloc (1, sizeof (sgw_eps_bearer_entry_t));
+  if (!sgw_pdn_connection->sgw_eps_bearers_array[EBI_TO_INDEX(eps_bearer_idP)]) {
+    new_eps_bearer_entry = calloc (1, sizeof (sgw_eps_bearer_ctxt_t));
 
-  if (new_eps_bearer_entry == NULL) {
-    /*
-     * Malloc failed, may be ENOMEM error
-     */
-    OAILOG_ERROR (LOG_SPGW_APP, "Failed to create EPS bearer entry for EPS bearer id %u \n", eps_bearer_idP);
+    if (new_eps_bearer_entry == NULL) {
+      /*
+       * Malloc failed, may be ENOMEM error
+       */
+      OAILOG_ERROR (LOG_SPGW_APP, "Failed to create EPS bearer entry for EPS bearer id %u \n", eps_bearer_idP);
+      return NULL;
+    }
+
+    new_eps_bearer_entry->eps_bearer_id = eps_bearer_idP;
+    sgw_pdn_connection->sgw_eps_bearers_array[EBI_TO_INDEX(eps_bearer_idP)] = new_eps_bearer_entry;
+    OAILOG_DEBUG (LOG_SPGW_APP, "Inserted new EPS bearer entry for EPS bearer id %u \n", eps_bearer_idP);
+  } else {
+    OAILOG_WARNING (LOG_SPGW_APP, "Could not create mew EPS bearer ctxt for EPS bearer id %u : already exist\n", eps_bearer_idP);
+  }
+  return new_eps_bearer_entry;
+}
+//-----------------------------------------------------------------------------
+sgw_eps_bearer_ctxt_t *sgw_cm_insert_eps_bearer_ctxt_in_collection (
+    sgw_pdn_connection_t * const sgw_pdn_connection,
+    sgw_eps_bearer_ctxt_t * const sgw_eps_bearer_ctxt)
+{
+
+  if (!sgw_eps_bearer_ctxt) {
+    OAILOG_ERROR (LOG_SPGW_APP, "Failed to insert EPS bearer context : NULL context\n");
     return NULL;
   }
 
-  new_eps_bearer_entry->eps_bearer_id = eps_bearer_idP;
-  hash_rc = hashtable_ts_insert (eps_bearersP, eps_bearer_idP, new_eps_bearer_entry);
-  OAILOG_DEBUG (LOG_SPGW_APP, "Inserted new EPS bearer entry for EPS bearer id %u status %s\n", eps_bearer_idP, hashtable_rc_code2string (hash_rc));
-  hash_rc = hashtable_ts_apply_callback_on_elements (eps_bearersP, sgw_display_pdn_connection_sgw_eps_bearers, NULL, NULL);
-
-  if (HASH_TABLE_OK != hash_rc) {
-    OAILOG_DEBUG (LOG_SPGW_APP, "Invalid sgw_eps_bearers hashtable for display\n");
+  if (!sgw_pdn_connection->sgw_eps_bearers_array[EBI_TO_INDEX(sgw_eps_bearer_ctxt->eps_bearer_id)]) {
+    sgw_pdn_connection->sgw_eps_bearers_array[EBI_TO_INDEX(sgw_eps_bearer_ctxt->eps_bearer_id)] = sgw_eps_bearer_ctxt;
+    OAILOG_DEBUG (LOG_SPGW_APP, "Inserted new EPS bearer entry for EPS bearer id %u \n", sgw_eps_bearer_ctxt->eps_bearer_id);
+  } else {
+    OAILOG_WARNING (LOG_SPGW_APP, "Could not create mew EPS bearer ctxt for EPS bearer id %u : already exist\n", sgw_eps_bearer_ctxt->eps_bearer_id);
   }
-  /*
-   * CHECK DUPLICATES IN HASH TABLES ? if (temp == 1) {
-   * SPGW_APP_WARN("This EPS bearer entry already exists: %u\n", eps_bearer_idP);
-   * free_wrapper(new_eps_bearer_entry);
-   * new_eps_bearer_entry = collision_p;
-   * }
-   */
-  return new_eps_bearer_entry;
+  return sgw_eps_bearer_ctxt;
 }
 
 //-----------------------------------------------------------------------------
-sgw_eps_bearer_entry_t*
-sgw_cm_get_eps_bearer_entry (
-  hash_table_ts_t * eps_bearersP,
-  ebi_t eps_bearer_idP)
+sgw_eps_bearer_ctxt_t* sgw_cm_get_eps_bearer_entry (
+    sgw_pdn_connection_t * const sgw_pdn_connection,
+    ebi_t ebi)
 {
-  if (eps_bearersP == NULL) {
+  if ((ebi < EPS_BEARER_IDENTITY_FIRST) || (ebi > EPS_BEARER_IDENTITY_LAST)) {
     return NULL;
   }
-  sgw_eps_bearer_entry_t *eps_bearer_entry_p = NULL;
-  hashtable_ts_get (eps_bearersP, eps_bearer_idP, (void **)&eps_bearer_entry_p);
-  return eps_bearer_entry_p;
+  return sgw_pdn_connection->sgw_eps_bearers_array[EBI_TO_INDEX(ebi)];
 }
 
 //-----------------------------------------------------------------------------

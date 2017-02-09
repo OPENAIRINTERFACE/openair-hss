@@ -46,7 +46,7 @@ typedef struct pgw_base_proc_s {
 
 typedef struct sgw_eps_bearer_entry_wrapper_s {
   LIST_ENTRY(sgw_eps_bearer_entry_wrapper_s) entries;      /* List. */
-  sgw_eps_bearer_entry_t     *sgw_eps_bearer_entry;
+  sgw_eps_bearer_ctxt_t     *sgw_eps_bearer_entry;
 } sgw_eps_bearer_entry_wrapper_t;
 
 
@@ -54,7 +54,7 @@ typedef struct pgw_ni_cbr_proc_s {
   pgw_base_proc_t           proc;
   teid_t                    teid;
   sdf_id_t                  sdf_id;
-  // TODO a list of sgw_eps_bearer_entry_t
+  // a list of sgw_eps_bearer_entry_t
   LIST_HEAD(pending_eps_bearers_s, sgw_eps_bearer_entry_wrapper_s) *pending_eps_bearers;
 } pgw_ni_cbr_proc_t;
 
