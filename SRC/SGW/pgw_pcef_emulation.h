@@ -63,7 +63,6 @@ typedef enum {
   SDF_ID_NGBR_DEFAULT_PREMIUM,
   SDF_ID_NGBR_DEFAULT,
   SDF_ID_TEST_PING,
-  SDF_ID,
   SDF_ID_MAX
 } sdf_id_t;
 
@@ -91,11 +90,12 @@ typedef struct pcc_rule_s {
   STAILQ_ENTRY(pcc_rule_s) entries;
 } pcc_rule_t;
 
+struct pgw_config_s;
 
-int pgw_pcef_emulation_init (const pgw_config_t * const pgw_config_p);
+int pgw_pcef_emulation_init (const struct pgw_config_s * const pgw_config_p);
 void pgw_pcef_emulation_exit (void);
-void pgw_pcef_emulation_apply_rule(const sdf_id_t sdf_id, const pgw_config_t * const pgw_config_p);
-void pgw_pcef_emulation_apply_sdf_filter(sdf_filter_t   * const sdf_f, const sdf_id_t sdf_id, const pgw_config_t * const pgw_config_p);
+void pgw_pcef_emulation_apply_rule(const sdf_id_t sdf_id, const struct pgw_config_s * const pgw_config_p);
+void pgw_pcef_emulation_apply_sdf_filter(sdf_filter_t   * const sdf_f, const sdf_id_t sdf_id, const struct pgw_config_s * const pgw_config_p);
 bstring pgw_pcef_emulation_packet_filter_2_iptable_string(packet_filter_contents_t * const packetfiltercontents, uint8_t direction);
 int pgw_pcef_get_sdf_parameters (const sdf_id_t sdf_id, bearer_qos_t * const bearer_qos, packet_filter_t * const packet_filter, uint8_t * const num_pf);
 

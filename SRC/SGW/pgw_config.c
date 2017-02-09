@@ -50,8 +50,8 @@
 #include "intertask_interface.h"
 #include "async_system.h"
 #include "common_defs.h"
-#include "sgw_config.h"
-#include "pgw_config.h"
+#include "pgw_pcef_emulation.h"
+#include "spgw_config.h"
 
 #ifdef LIBCONFIG_LONG
 #  define libconfig_int long
@@ -362,13 +362,25 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
             }
           }
 
-          if (config_setting_lookup_string (subsetting, PGW_CONFIG_STRING_AUTOMATIC_PUSH_DEDICATED_BEARER, (const char **)&astring)) {
-            if (strcasecmp (astring, "yes") == 0) {
-              config_pP->pcef.automatic_push_dedicated_bearer = true;
-              OAILOG_DEBUG (LOG_SPGW_APP, "Automatic push dedicated bearer to UE after default bearer creation enabled\n");
-            } else {
-              config_pP->pcef.automatic_push_dedicated_bearer = false;
-              OAILOG_DEBUG (LOG_SPGW_APP, "Automatic push dedicated bearer to UE after default bearer creation Disabled\n");
+          libconfig_int sdf_id = 0;
+          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_AUTOMATIC_PUSH_DEDICATED_BEARER_PCC_RULE, &sdf_id)) {
+            AssertFatal((sdf_id < SDF_ID_MAX) && (sdf_id >= 0), "Bad SDF identifier value %d for dedicated bearer", sdf_id);
+            config_pP->pcef.automatic_push_dedicated_bearer_sdf_identifier = sdf_id;
+          }
+
+          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_DEFAULT_BEARER_STATIC_PCC_RULE, &sdf_id)) {
+            AssertFatal((sdf_id < SDF_ID_MAX) && (sdf_id >= 0), "Bad SDF identifier value %d for default bearer", sdf_id);
+            config_pP->pcef.default_bearer_sdf_identifier = sdf_id;
+          }
+
+          sub2setting = config_setting_get_member (subsetting, PGW_CONFIG_STRING_PUSH_STATIC_PCC_RULES);
+          if (sub2setting != NULL) {
+            num = config_setting_length (sub2setting);
+
+            AssertFatal(num <= (SDF_ID_MAX - 1), "Too many PCC rules defined (%d>%d)", num, SDF_ID_MAX);
+
+            for (i = 0; i < num; i++) {
+              config_pP->pcef.preload_static_sdf_identifiers[i] = config_setting_get_int_elem(sub2setting, i);
             }
           }
 
@@ -434,8 +446,28 @@ void pgw_config_display (pgw_config_t * config_p)
     OAILOG_INFO (LOG_SPGW_APP, "    Traffic shaping ......: %s (TODO it soon)\n",
         config_p->pcef.traffic_shaping_enabled == 0 ? "false" : "true");
     OAILOG_INFO (LOG_SPGW_APP, "    TCP ECN  .............: %s\n", config_p->pcef.tcp_ecn_enabled == 0 ? "false" : "true");
-    OAILOG_INFO (LOG_SPGW_APP, "    Push dedicated bearer : %s (testing dedicated bearer functionality down to OAI UE/COSTS UE)\n",
-        config_p->pcef.automatic_push_dedicated_bearer == 0 ? "false" : "true");
+    OAILOG_INFO (LOG_SPGW_APP, "    Push dedicated bearer SDF ID: %d (testing dedicated bearer functionality down to OAI UE/COSTS UE)\n",
+        config_p->pcef.automatic_push_dedicated_bearer_sdf_identifier);
+    OAILOG_INFO (LOG_SPGW_APP, "    Default bearer SDF ID.: %d\n",config_p->pcef.default_bearer_sdf_identifier);
+    bstring pcc_rules= bfromcstralloc(64, "(");
+    for (int i = 0; i < (SDF_ID_MAX-1); i++) {
+      if (i == 0) {
+        bformata(pcc_rules, " %u", config_p->pcef.preload_static_sdf_identifiers[i]);
+        if (!config_p->pcef.preload_static_sdf_identifiers[i]) {
+          break;
+        }
+      } else {
+        if (config_p->pcef.preload_static_sdf_identifiers[i]) {
+          bformata(pcc_rules, ", %u", config_p->pcef.preload_static_sdf_identifiers[i]);
+        } else
+          break;
+      }
+    }
+    bcatcstr(pcc_rules, " )");
+    OAILOG_INFO (LOG_SPGW_APP, "    Preloaded static PCC Rules.: %s\n", bdata(pcc_rules));
+    bdestroy_wrapper(&pcc_rules);
+
+
     OAILOG_INFO (LOG_SPGW_APP, "    User plane BW UL .....: %"PRIu64" (Kilo bits/s)\n", config_p->pcef.if_bandwidth_ul);
     OAILOG_INFO (LOG_SPGW_APP, "    User plane BW DL .....: %"PRIu64" (Kilo bits/s)\n", config_p->pcef.if_bandwidth_dl);
     OAILOG_INFO (LOG_SPGW_APP, "    Reserved NGBR UL .....: %"PRIu8" %c\n", config_p->pcef.reserved_non_guaranted_bit_rate_ratio_ul,'%');

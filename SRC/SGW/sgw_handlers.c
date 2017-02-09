@@ -784,7 +784,7 @@ sgw_handle_modify_bearer_request (
         sgi_update_end_point_resp.status = 0x00;
         rv = sgw_handle_sgi_endpoint_updated (&sgi_update_end_point_resp);
         if (RETURNok == rv) {
-          if (spgw_config.pgw_config.pcef.automatic_push_dedicated_bearer) {
+          if (spgw_config.pgw_config.pcef.automatic_push_dedicated_bearer_sdf_identifier) {
             // upon S/P-GW config, establish a dedicated radio bearer
             sgw_no_pcef_create_dedicated_bearer(modify_bearer_pP->teid);
           }
@@ -1013,7 +1013,8 @@ int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid)
                     s_plus_p_gw_eps_bearer_ctxt_info_p->sgw_eps_bearer_context_information.pdn_connection.default_bearer);
 
       uint8_t number_of_packet_filters = 0;
-      rc = pgw_pcef_get_sdf_parameters (SDF_ID_TEST_PING, &eps_bearer_ctxt_p->eps_bearer_qos,
+      rc = pgw_pcef_get_sdf_parameters (spgw_config.pgw_config.pcef.automatic_push_dedicated_bearer_sdf_identifier,
+          &eps_bearer_ctxt_p->eps_bearer_qos,
           &eps_bearer_ctxt_p->tft.packetfilterlist.createnewtft[0],
           &number_of_packet_filters);
 
@@ -1032,7 +1033,7 @@ int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid)
       // Put in cache the sgw_eps_bearer_entry_t
       // TODO create a procedure with a time out
       pgw_ni_cbr_proc_t* pgw_ni_cbr_proc    = pgw_create_procedure_create_bearer(s_plus_p_gw_eps_bearer_ctxt_info_p);
-      pgw_ni_cbr_proc->sdf_id               = SDF_ID_TEST_PING;
+      pgw_ni_cbr_proc->sdf_id               = spgw_config.pgw_config.pcef.automatic_push_dedicated_bearer_sdf_identifier;
       pgw_ni_cbr_proc->teid                 = teid;
       struct sgw_eps_bearer_entry_wrapper_s *sgw_eps_bearer_entry_wrapper = calloc(1, sizeof(*sgw_eps_bearer_entry_wrapper));
       sgw_eps_bearer_entry_wrapper->sgw_eps_bearer_entry = eps_bearer_ctxt_p;

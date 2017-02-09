@@ -229,10 +229,16 @@ int pgw_pcef_emulation_init (const pgw_config_t * const pgw_config_p)
     return RETURNerror;
   }
 
-  if (pgw_config_p->pcef.automatic_push_dedicated_bearer) {
-    pgw_pcef_emulation_apply_rule(SDF_ID_TEST_PING, pgw_config_p);
+  for (int i = 0; i < (SDF_ID_MAX-1); i++) {
+    if (pgw_config_p->pcef.preload_static_sdf_identifiers[i]) {
+      pgw_pcef_emulation_apply_rule(pgw_config_p->pcef.preload_static_sdf_identifiers[i], pgw_config_p);
+    } else
+        break;
   }
-  pgw_pcef_emulation_apply_rule(SDF_ID_NGBR_DEFAULT, pgw_config_p);
+
+  if (pgw_config_p->pcef.automatic_push_dedicated_bearer_sdf_identifier) {
+    pgw_pcef_emulation_apply_rule(pgw_config_p->pcef.automatic_push_dedicated_bearer_sdf_identifier, pgw_config_p);
+  }
 
   return rc;
 }

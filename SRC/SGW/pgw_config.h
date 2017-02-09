@@ -56,7 +56,9 @@
 #define PGW_CONFIG_STRING_PCEF_ENABLED                          "PCEF_ENABLED"
 #define PGW_CONFIG_STRING_TRAFFIC_SHAPPING_ENABLED              "TRAFFIC_SHAPPING_ENABLED"
 #define PGW_CONFIG_STRING_TCP_ECN_ENABLED                       "TCP_ECN_ENABLED"
-#define PGW_CONFIG_STRING_AUTOMATIC_PUSH_DEDICATED_BEARER       "AUTOMATIC_PUSH_DEDICATED_BEARER"
+#define PGW_CONFIG_STRING_AUTOMATIC_PUSH_DEDICATED_BEARER_PCC_RULE  "AUTOMATIC_PUSH_DEDICATED_BEARER_PCC_RULE"
+#define PGW_CONFIG_STRING_DEFAULT_BEARER_STATIC_PCC_RULE        "DEFAULT_BEARER_STATIC_PCC_RULE"
+#define PGW_CONFIG_STRING_PUSH_STATIC_PCC_RULES                 "PUSH_STATIC_PCC_RULES"
 #define PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_UL "RESERVED_NON_GUARANTED_BIT_RATE_RATIO_UL"
 #define PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_DL "RESERVED_NON_GUARANTED_BIT_RATE_RATIO_DL"
 #define PGW_CONFIG_STRING_PGW_MAX_BIT_RATE_UL                   "PGW_MAX_BIT_RATE_UL"
@@ -77,6 +79,7 @@ typedef struct conf_ipv4_list_elm_s {
 
 
 
+#include "pgw_pcef_emulation.h"
 
 typedef struct pgw_config_s {
   /* Reader/writer lock for this configuration */
@@ -115,7 +118,9 @@ typedef struct pgw_config_s {
     bool      enabled;
     bool      traffic_shaping_enabled;
     bool      tcp_ecn_enabled;           // test for CoDel qdisc
-    bool      automatic_push_dedicated_bearer;
+    sdf_id_t  default_bearer_sdf_identifier;
+    sdf_id_t  automatic_push_dedicated_bearer_sdf_identifier;
+    sdf_id_t  preload_static_sdf_identifiers[SDF_ID_MAX-1];
     uint64_t  if_bandwidth_ul;
     uint64_t  if_bandwidth_dl;
     uint8_t   reserved_non_guaranted_bit_rate_ratio_ul;
