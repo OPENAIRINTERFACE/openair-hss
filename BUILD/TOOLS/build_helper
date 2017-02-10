@@ -348,6 +348,7 @@ install_libgtpnl_from_source() {
     $SUDO rm -rf /tmp/libgtpnl*
     git clone git://git.osmocom.org/libgtpnl
     cd libgtpnl
+    patch --verbose -p1  < $OPENAIRCN_DIR/BUILD/TOOLS/libgtpnl.LTE_dedicated_bearer.v0.patch 
     autoreconf -fi
     ./configure
     echo "Compiling libgtpnl"
