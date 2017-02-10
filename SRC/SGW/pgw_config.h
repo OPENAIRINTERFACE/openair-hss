@@ -59,10 +59,8 @@
 #define PGW_CONFIG_STRING_AUTOMATIC_PUSH_DEDICATED_BEARER_PCC_RULE  "AUTOMATIC_PUSH_DEDICATED_BEARER_PCC_RULE"
 #define PGW_CONFIG_STRING_DEFAULT_BEARER_STATIC_PCC_RULE        "DEFAULT_BEARER_STATIC_PCC_RULE"
 #define PGW_CONFIG_STRING_PUSH_STATIC_PCC_RULES                 "PUSH_STATIC_PCC_RULES"
-#define PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_UL "RESERVED_NON_GUARANTED_BIT_RATE_RATIO_UL"
-#define PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_DL "RESERVED_NON_GUARANTED_BIT_RATE_RATIO_DL"
-#define PGW_CONFIG_STRING_PGW_MAX_BIT_RATE_UL                   "PGW_MAX_BIT_RATE_UL"
-#define PGW_CONFIG_STRING_PGW_MAX_BIT_RATE_DL                   "PGW_MAX_BIT_RATE_DL"
+#define PGW_CONFIG_STRING_APN_AMBR_UL                           "APN_AMBR_UL"
+#define PGW_CONFIG_STRING_APN_AMBR_DL                           "APN_AMBR_DL"
 
 #define PGW_ABORT_ON_ERROR true
 #define PGW_WARN_ON_ERROR  false
@@ -121,10 +119,8 @@ typedef struct pgw_config_s {
     sdf_id_t  default_bearer_sdf_identifier;
     sdf_id_t  automatic_push_dedicated_bearer_sdf_identifier;
     sdf_id_t  preload_static_sdf_identifiers[SDF_ID_MAX-1];
-    uint64_t  if_bandwidth_ul;
-    uint64_t  if_bandwidth_dl;
-    uint8_t   reserved_non_guaranted_bit_rate_ratio_ul;
-    uint8_t   reserved_non_guaranted_bit_rate_ratio_dl;
+    uint64_t  apn_ambr_ul;
+    uint64_t  apn_ambr_dl;
   } pcef;
 
 

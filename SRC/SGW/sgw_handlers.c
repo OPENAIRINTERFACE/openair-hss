@@ -470,8 +470,8 @@ sgw_handle_gtpv1uUpdateTunnelResp (
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
   int                                     rv = RETURNok;
 
-  OAILOG_DEBUG (LOG_SPGW_APP, "Rx GTPV1U_UPDATE_TUNNEL_RESP, Context teid "TEID_FMT", SGW S1U teid " TEID_FMT ", eNB S1U teid "TEID_FMT", EPS bearer id %u, status %d\n",
-                  endpoint_updated_pP->context_teid, endpoint_updated_pP->sgw_S1u_teid, endpoint_updated_pP->enb_S1u_teid, endpoint_updated_pP->eps_bearer_id, endpoint_updated_pP->status);
+  OAILOG_DEBUG (LOG_SPGW_APP, "Rx GTPV1U_UPDATE_TUNNEL_RESP, Context teid "TEID_FMT", Tunnel " TEID_FMT " (eNB) <-> (SGW) " TEID_FMT ", EPS bearer id %u, status %d\n",
+                  endpoint_updated_pP->context_teid, endpoint_updated_pP->enb_S1u_teid, endpoint_updated_pP->sgw_S1u_teid, endpoint_updated_pP->eps_bearer_id, endpoint_updated_pP->status);
   hash_rc = hashtable_ts_get (sgw_app.s11_bearer_context_information_hashtable, endpoint_updated_pP->context_teid, (void **)&new_bearer_ctxt_info_p);
 
   if (HASH_TABLE_OK == hash_rc) {
@@ -554,8 +554,8 @@ sgw_handle_sgi_endpoint_updated (
   mme_sgw_tunnel_t                       *tun_pair_p = NULL;
 
 
-  OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_UPDATE_ENDPOINT_RESPONSE, Context teid " TEID_FMT ", SGW S1U teid "TEID_FMT", eNB S1U teid "TEID_FMT", EPS bearer id %u, status %d\n",
-                  resp_pP->context_teid, resp_pP->sgw_S1u_teid, resp_pP->enb_S1u_teid, resp_pP->eps_bearer_id, resp_pP->status);
+  OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_UPDATE_ENDPOINT_RESPONSE, Context teid " TEID_FMT " Tunnel " TEID_FMT " (eNB) <-> (SGW) " TEID_FMT " EPS bearer id %u, status %d\n",
+                  resp_pP->context_teid, resp_pP->enb_S1u_teid, resp_pP->sgw_S1u_teid, resp_pP->eps_bearer_id, resp_pP->status);
   message_p = itti_alloc_new_message (TASK_SPGW_APP, S11_MODIFY_BEARER_RESPONSE);
 
   if (!message_p) {
@@ -611,6 +611,11 @@ sgw_handle_sgi_endpoint_updated (
           NIPADDR(eps_bearer_ctxt_p->paa.ipv4_address.s_addr), SDF_ID_NGBR_DEFAULT, eps_bearer_ctxt_p->eps_bearer_id);
       async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
       bdestroy_wrapper(&marking_command);
+      AssertFatal((TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX > eps_bearer_ctxt_p->num_sdf), "Too much flows aggregated in this Bearer (should not happen => see MME)");
+      if (TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX > eps_bearer_ctxt_p->num_sdf) {
+        eps_bearer_ctxt_p->sdf_id[eps_bearer_ctxt_p->num_sdf] = SDF_ID_NGBR_DEFAULT;
+        eps_bearer_ctxt_p->num_sdf += 1;
+      }
 
       sgw_display_s11_bearer_context_information_mapping ();
 
@@ -693,30 +698,11 @@ sgw_handle_sgi_endpoint_deleted (
       OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_DELETE_ENDPOINT_REQUEST: CONTEXT_NOT_FOUND (pdn_connection.sgw_eps_bearers context)\n");
     } else {
       OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_DELETE_ENDPOINT_REQUEST: REQUEST_ACCEPTED\n");
-       // if default bearer
-//#pragma message  "TODO define constant for default eps_bearer id"
-
-      rv = gtp_mod_kernel_tunnel_del(eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_ctxt_p->enb_teid_S1u);
-
-      if (rv < 0) {
-        OAILOG_ERROR (LOG_SPGW_APP, "ERROR in deleting TUNNEL\n");
-      }
     }
 
-//    MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_MODIFY_BEARER_RESPONSE ebi %u  trxn %u", modify_response_p->bearer_choice.bearer_contexts_modified.eps_bearer_id, modify_response_p->trxn);
-//    rv = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
   } else {
     OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_DELETE_ENDPOINT_RESPONSE: CONTEXT_NOT_FOUND (S11 context)\n");
-/*    modify_response_p->teid = resp_pP->context_teid;    // TO BE CHECKED IF IT IS THIS TEID
-    modify_response_p->bearer_present = MODIFY_BEARER_RESPONSE_REM;
-    modify_response_p->bearer_choice.bearer_for_removal.eps_bearer_id = resp_pP->eps_bearer_id;
-    modify_response_p->bearer_choice.bearer_for_removal.cause = CONTEXT_NOT_FOUND;
-    modify_response_p->cause.cause_value = CONTEXT_NOT_FOUND;
-    modify_response_p->trxn = 0;
-    MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME,
-                        NULL, 0, "0 S11_MODIFY_BEARER_RESPONSE ebi %u CONTEXT_NOT_FOUND trxn %u", modify_response_p->bearer_choice.bearer_contexts_modified.eps_bearer_id, modify_response_p->trxn);
-    rv = itti_send_msg_to_task (task_S11, INSTANCE_DEFAULT, message_p);*/
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
   }
 }
@@ -859,9 +845,49 @@ sgw_handle_delete_session_request (
       itti_sgi_delete_end_point_request_t   	 sgi_delete_end_point_request;
       sgw_eps_bearer_ctxt_t                	 *eps_bearer_ctxt_p = NULL;
 
-      eps_bearer_ctxt_p =
-          sgw_cm_get_eps_bearer_entry(&ctx_p->sgw_eps_bearer_context_information.pdn_connection, delete_session_req_pP->lbi);
+      for (int ebix = 0; ebix < BEARERS_PER_UE; ebix++) {
+        ebi_t ebi = INDEX_TO_EBI(ebix);
+        eps_bearer_ctxt_p = sgw_cm_get_eps_bearer_entry(&ctx_p->sgw_eps_bearer_context_information.pdn_connection, ebi);
+
+        if (eps_bearer_ctxt_p) {
+          if (ebi != delete_session_req_pP->lbi) {
+            rv = gtp_mod_kernel_tunnel_del(eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_ctxt_p->enb_teid_S1u);
+            if (rv < 0) {
+              OAILOG_ERROR (LOG_SPGW_APP, "ERROR in deleting TUNNEL " TEID_FMT " (eNB) <-> (SGW) " TEID_FMT "\n",
+                  eps_bearer_ctxt_p->enb_teid_S1u, eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up);
+            }
+
+            for (int sdfx = 0; sdfx < eps_bearer_ctxt_p->num_sdf; sdfx++) {
+              if (eps_bearer_ctxt_p->sdf_id[sdfx]) {
+                bstring marking_command = bformat(
+                    "iptables -D FORWARD -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
+                    NIPADDR(eps_bearer_ctxt_p->paa.ipv4_address.s_addr), eps_bearer_ctxt_p->sdf_id[sdfx], eps_bearer_ctxt_p->eps_bearer_id);
+                async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
+                bdestroy_wrapper(&marking_command);
+              }
+            }
+            eps_bearer_ctxt_p->num_sdf = 0;
+          }
+        }
+      }
+
+      eps_bearer_ctxt_p = sgw_cm_get_eps_bearer_entry(&ctx_p->sgw_eps_bearer_context_information.pdn_connection, delete_session_req_pP->lbi);
       if (eps_bearer_ctxt_p) {
+        rv = gtp_mod_kernel_tunnel_del(eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_ctxt_p->enb_teid_S1u);
+        if (rv < 0) {
+          OAILOG_ERROR (LOG_SPGW_APP, "ERROR in deleting TUNNEL\n");
+        }
+        for (int sdfx = 0; sdfx < eps_bearer_ctxt_p->num_sdf; sdfx++) {
+          if (eps_bearer_ctxt_p->sdf_id[sdfx]) {
+            bstring marking_command = bformat(
+                "iptables -D FORWARD -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
+                NIPADDR(eps_bearer_ctxt_p->paa.ipv4_address.s_addr), eps_bearer_ctxt_p->sdf_id[sdfx], eps_bearer_ctxt_p->eps_bearer_id);
+            async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
+            bdestroy_wrapper(&marking_command);
+          }
+        }
+        eps_bearer_ctxt_p->num_sdf = 0;
+
         sgi_delete_end_point_request.context_teid = delete_session_req_pP->teid ;
         sgi_delete_end_point_request.sgw_S1u_teid = eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up;
         sgi_delete_end_point_request.eps_bearer_id = delete_session_req_pP->lbi;
@@ -1123,14 +1149,21 @@ sgw_handle_create_bearer_response (
                   rv = gtp_mod_kernel_tunnel_add(ue, enb, eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_ctxt_p->enb_teid_S1u, eps_bearer_ctxt_p->eps_bearer_id);
 
                   if (rv < 0) {
-                    OAILOG_INFO (LOG_SPGW_APP, "Failed to setup EPS bearer id %u tunnel " TEID_FMT "\n", eps_bearer_ctxt_p->eps_bearer_id, eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up);
+                    OAILOG_INFO (LOG_SPGW_APP, "Failed to setup EPS bearer id %u tunnel " TEID_FMT " (eNB) <-> (SGW) " TEID_FMT "\n",
+                        eps_bearer_ctxt_p->eps_bearer_id, eps_bearer_ctxt_p->enb_teid_S1u, eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up);
                   } else {
                     bstring marking_command = bformat(
                         "iptables -I FORWARD -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
                         NIPADDR(eps_bearer_ctxt_p->paa.ipv4_address.s_addr), pgw_ni_cbr_proc->sdf_id, eps_bearer_ctxt_p->eps_bearer_id);
                     async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
+                    AssertFatal((TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX > eps_bearer_ctxt_p->num_sdf), "Too much flows aggregated in this Bearer (should not happen => see MME)");
+                    if (TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX > eps_bearer_ctxt_p->num_sdf) {
+                      eps_bearer_ctxt_p->sdf_id[eps_bearer_ctxt_p->num_sdf] = pgw_ni_cbr_proc->sdf_id;
+                      eps_bearer_ctxt_p->num_sdf += 1;
+                    }
+
                     bdestroy_wrapper(&marking_command);
-                    OAILOG_INFO (LOG_SPGW_APP, "Setup EPS bearer id %u tunnel " TEID_FMT " <-> " TEID_FMT "\n",
+                    OAILOG_INFO (LOG_SPGW_APP, "Setup EPS bearer id %u tunnel " TEID_FMT " (eNB) <-> (SGW) " TEID_FMT "\n",
                         eps_bearer_ctxt_p->eps_bearer_id, eps_bearer_ctxt_p->enb_teid_S1u, eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up);
                   }
                 } else {

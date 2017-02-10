@@ -384,28 +384,20 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
             }
           }
 
-          libconfig_int ratio = 0;
-          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_UL, &ratio)) {
-            AssertFatal((ratio <= 100) && (ratio >= 0), "Bad ratio value %d", ratio);
-            config_pP->pcef.reserved_non_guaranted_bit_rate_ratio_ul = ratio;
+          libconfig_int apn_ambr_ul = 0;
+          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_APN_AMBR_UL, &apn_ambr_ul)) {
+            AssertFatal((0 < apn_ambr_ul), "Bad APN AMBR UL value %d", apn_ambr_ul);
+            config_pP->pcef.apn_ambr_ul = apn_ambr_ul;
           } else {
-            config_pP->pcef.reserved_non_guaranted_bit_rate_ratio_ul = 50;
+            config_pP->pcef.apn_ambr_ul = 50000;
           }
-          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_RESERVED_NON_GUARANTED_BIT_RATE_RATIO_DL, &ratio)) {
-            AssertFatal((ratio <= 100) && (ratio >= 0), "Bad ratio value %d", ratio);
-            config_pP->pcef.reserved_non_guaranted_bit_rate_ratio_dl = ratio;
+          libconfig_int apn_ambr_dl = 0;
+          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_APN_AMBR_DL, &apn_ambr_dl)) {
+            AssertFatal((0 < apn_ambr_dl), "Bad APN AMBR DL value %d", apn_ambr_dl);
+            config_pP->pcef.apn_ambr_dl = apn_ambr_dl;
           } else {
-            config_pP->pcef.reserved_non_guaranted_bit_rate_ratio_dl = 50;
+            config_pP->pcef.apn_ambr_dl = 50000;
           }
-          libconfig_int bw = 0;
-          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_PGW_MAX_BIT_RATE_UL, &bw)) {
-            config_pP->pcef.if_bandwidth_ul = bw;
-          }
-          AssertFatal((bw <= 100000000) && (bw > 0), "Bad UL bandwidth value %d", bw);
-          if (config_setting_lookup_int (subsetting, PGW_CONFIG_STRING_PGW_MAX_BIT_RATE_DL, &bw)) {
-            config_pP->pcef.if_bandwidth_dl = bw;
-          }
-          AssertFatal((bw <= 100000000) && (bw > 0), "Bad DL bandwidth value %d", bw);
         } else {
           config_pP->pcef.enabled = false;
         }
@@ -468,10 +460,8 @@ void pgw_config_display (pgw_config_t * config_p)
     bdestroy_wrapper(&pcc_rules);
 
 
-    OAILOG_INFO (LOG_SPGW_APP, "    User plane BW UL .....: %"PRIu64" (Kilo bits/s)\n", config_p->pcef.if_bandwidth_ul);
-    OAILOG_INFO (LOG_SPGW_APP, "    User plane BW DL .....: %"PRIu64" (Kilo bits/s)\n", config_p->pcef.if_bandwidth_dl);
-    OAILOG_INFO (LOG_SPGW_APP, "    Reserved NGBR UL .....: %"PRIu8" %c\n", config_p->pcef.reserved_non_guaranted_bit_rate_ratio_ul,'%');
-    OAILOG_INFO (LOG_SPGW_APP, "    Reserved NGBR DL .....: %"PRIu8" %c\n", config_p->pcef.reserved_non_guaranted_bit_rate_ratio_dl,'%');
+    OAILOG_INFO (LOG_SPGW_APP, "    APN AMBR UL ..........: %"PRIu64" (Kilo bits/s)\n", config_p->pcef.apn_ambr_ul);
+    OAILOG_INFO (LOG_SPGW_APP, "    APN AMBR DL ..........: %"PRIu64" (Kilo bits/s)\n", config_p->pcef.apn_ambr_dl);
   }
   OAILOG_INFO (LOG_SPGW_APP, "- Helpers:\n");
   OAILOG_INFO (LOG_SPGW_APP, "    Push PCO (DNS+MTU) ........: %s\n", config_p->force_push_pco == 0 ? "false" : "true");
