@@ -50,6 +50,7 @@ int s1ap_mme_itti_nas_downlink_cnf (const mme_ue_s1ap_id_t ue_id, const bool is_
 
 static inline void s1ap_mme_itti_mme_app_initial_ue_message(
   const sctp_assoc_id_t   assoc_id,
+  const uint32_t          enb_id,
   const enb_ue_s1ap_id_t  enb_ue_s1ap_id,
   const mme_ue_s1ap_id_t  mme_ue_s1ap_id,
   const uint8_t * const   nas_msg,
@@ -71,6 +72,7 @@ static inline void s1ap_mme_itti_mme_app_initial_ue_message(
   message_p = itti_alloc_new_message(TASK_S1AP, MME_APP_INITIAL_UE_MESSAGE);
 
   MME_APP_INITIAL_UE_MESSAGE(message_p).sctp_assoc_id          = assoc_id;
+  MME_APP_INITIAL_UE_MESSAGE(message_p).enb_id                 = enb_id;
   MME_APP_INITIAL_UE_MESSAGE(message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
   MME_APP_INITIAL_UE_MESSAGE(message_p).mme_ue_s1ap_id         = mme_ue_s1ap_id;
 

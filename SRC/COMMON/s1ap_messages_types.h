@@ -78,6 +78,7 @@ typedef struct itti_s1ap_eNB_deregistered_ind_s {
   uint8_t          nb_ue_to_deregister;
   enb_ue_s1ap_id_t enb_ue_s1ap_id[S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE];
   mme_ue_s1ap_id_t mme_ue_s1ap_id[S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE];
+  uint32_t         enb_id;
 } itti_s1ap_eNB_deregistered_ind_t;
 
 typedef struct itti_s1ap_deregister_ue_req_s {
@@ -87,6 +88,7 @@ typedef struct itti_s1ap_deregister_ue_req_s {
 typedef struct itti_s1ap_ue_context_release_req_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
+  uint32_t         enb_id;
 } itti_s1ap_ue_context_release_req_t;
 
 // List of possible causes for MME generated UE context release command towards eNB

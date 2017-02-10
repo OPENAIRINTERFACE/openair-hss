@@ -167,6 +167,7 @@ s1ap_mme_handle_initial_ue_message (
         &tai, &cgi, &s_tmsi, &gummei);
 #else
     s1ap_mme_itti_mme_app_initial_ue_message (assoc_id,
+        ue_ref->enb->enb_id,
         ue_ref->enb_ue_s1ap_id,
         ue_ref->mme_ue_s1ap_id,
         initialUEMessage_p->nas_pdu.buf,

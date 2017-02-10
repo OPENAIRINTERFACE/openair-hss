@@ -46,6 +46,7 @@
 
 static void _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
                                                      const enb_ue_s1ap_id_t enb_ue_s1ap_id,
+                                                     uint32_t enb_id,
                                                      enum s1cause cause);
 
 
@@ -134,10 +135,15 @@ mme_ue_context_exists_enb_ue_s1ap_id (
   mme_ue_context_t * const mme_ue_context_p,
   const enb_s1ap_id_key_t enb_key)
 {
-  struct ue_context_s                    *ue_context_p = NULL;
-
-  hashtable_ts_get (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_key, (void **)&ue_context_p);
-  return ue_context_p;
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+  void                                   *id = NULL;
+  
+  hashtable_ts_get (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_key, (void **)&id);
+  
+  if (HASH_TABLE_OK == h_rc) {
+    return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (mme_ue_s1ap_id_t)(uintptr_t) id);
+  }
+  return NULL;
 }
 
 //------------------------------------------------------------------------------
@@ -259,6 +265,11 @@ void mme_app_move_context (ue_context_t *dst, ue_context_t *src)
 }
 //------------------------------------------------------------------------------
 // this is detected only while receiving an INITIAL UE message
+
+/***********************************************IMPORTANT*****************************************************
+ * We are not using this function. If plan to use this in future then the key insertion and removal within this 
+ * function need to modified.
+ **********************************************IMPORTANT*****************************************************/
 void
 mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
   const enb_s1ap_id_key_t enb_key,
@@ -285,6 +296,10 @@ mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
     if (old_enb_key != enb_key) {
       if (is_remove_old) {
         ue_context_t                           *old = NULL;
+        /* TODO
+         * Insert and remove need to be corrected. mme_ue_s1ap_id is used to point to context ptr and
+         * enb_ue_s1ap_id_key is used to point to mme_ue_s1ap_id
+         */ 
         h_rc = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void **)&id);
         h_rc = hashtable_ts_insert (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)(uintptr_t)enb_key);
         h_rc = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_enb_key, (void **)&old);
@@ -378,17 +393,12 @@ mme_ue_context_update_coll_keys (
 
   OAILOG_FUNC_IN(LOG_MME_APP);
 
-  OAILOG_TRACE (LOG_MME_APP, "Update ue context.enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue context.mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ue context.IMSI " IMSI_64_FMT " ue context.GUTI "GUTI_FMT"\n",
-             ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->imsi, GUTI_ARG(&ue_context_p->guti));
+  OAILOG_TRACE (LOG_MME_APP, "Update ue context.old_enb_ue_s1ap_id_key " %ld " ue context.old_mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ue context.old_IMSI " IMSI_64_FMT " ue context.old_GUTI "GUTI_FMT"\n",
+             ue_context_p->enb_ue_s1ap_id_key, ue_context_p->mme_ue_s1ap_id, ue_context_p->imsi, GUTI_ARG(&ue_context_p->guti));
 
-  OAILOG_TRACE (LOG_MME_APP, "Update ue context %p enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " GUTI " GUTI_FMT "\n",
-            ue_context_p, ue_context_p->enb_ue_s1ap_id, mme_ue_s1ap_id, imsi, GUTI_ARG(guti_p));
+  OAILOG_TRACE (LOG_MME_APP, "Update ue context %p updated_enb_ue_s1ap_id_key " %ld " updated_mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " updated_IMSI " IMSI_64_FMT " updated_GUTI " GUTI_FMT "\n",
+            ue_context_p, enb_ue_s1ap_id_key, mme_ue_s1ap_id, imsi, GUTI_ARG(guti_p));
 
-  AssertFatal(ue_context_p->enb_s1ap_id_key == enb_s1ap_id_key,
-      "Mismatch in UE context enb_s1ap_id_key "MME_APP_ENB_S1AP_ID_KEY_FORMAT"/"MME_APP_ENB_S1AP_ID_KEY_FORMAT"\n",
-      ue_context_p->enb_s1ap_id_key, enb_s1ap_id_key);
-
-  
   if ((INVALID_ENB_UE_S1AP_ID_KEY != enb_s1ap_id_key) && (ue_context_p->enb_s1ap_id_key != enb_s1ap_id_key)) {
       // new insertion of enb_ue_s1ap_id_key,
       h_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&id);
@@ -701,21 +711,21 @@ void mme_ue_context_update_ue_sig_connection_state (
 {
   // Function is used to update UE's Signaling Connection State 
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
+  unsigned int                           *id = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (mme_ue_context_p);
   DevAssert (ue_context_p);
-  if ((ue_context_p->ecm_state == ECM_CONNECTED) && (new_ecm_state == ECM_IDLE))
+  if (new_ecm_state == ECM_IDLE)
   {
-    hash_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&ue_context_p);
+    hash_rc = hashtable_ts_remove (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&id);
     if (HASH_TABLE_OK != hash_rc) 
     {
-      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID not ENB_UE_S1AP_ID collection",
-                                  ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
+      OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id_key %ld mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", ENB_UE_S1AP_ID_KEY could not be found",
+                                  ue_context_p->enb_s1ap_id_key, ue_context_p->mme_ue_s1ap_id);
     }
     ue_context_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
     ue_context_p->enb_ue_s1ap_id  = INVALID_ENB_UE_S1AP_ID;
-    ue_context_p->ecm_state       = ECM_IDLE;
 
     OAILOG_DEBUG (LOG_MME_APP, "MME_APP: UE Connection State changed to IDLE. mme_ue_s1ap_id = %d\n", ue_context_p->mme_ue_s1ap_id);
     
@@ -728,8 +738,11 @@ void mme_ue_context_update_ue_sig_connection_state (
         OAILOG_DEBUG (LOG_MME_APP, "Started Mobile Reachability timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
       }
     }
-    // Update Stats
-    update_mme_app_stats_connected_ue_sub();
+    if (ue_context_p->ecm_state == ECM_CONNECTED) {
+      ue_context_p->ecm_state       = ECM_IDLE;
+      // Update Stats
+      update_mme_app_stats_connected_ue_sub();
+    }
 
   }else if ((ue_context_p->ecm_state == ECM_IDLE) && (new_ecm_state == ECM_CONNECTED))
   {
@@ -904,6 +917,7 @@ mme_app_handle_s1ap_ue_context_release_req (
 {
   _mme_app_handle_s1ap_ue_context_release(s1ap_ue_context_release_req->mme_ue_s1ap_id,
                                           s1ap_ue_context_release_req->enb_ue_s1ap_id,
+                                          s1ap_ue_context_release_req->enb_id,
                                           S1AP_RADIO_EUTRAN_GENERATED_REASON);
 }
 
@@ -912,6 +926,7 @@ mme_app_handle_enb_deregister_ind(const itti_s1ap_eNB_deregistered_ind_t const *
   for (int i = 0; i < eNB_deregistered_ind->nb_ue_to_deregister; i++) {
     _mme_app_handle_s1ap_ue_context_release(eNB_deregistered_ind->mme_ue_s1ap_id[i],
                                             eNB_deregistered_ind->enb_ue_s1ap_id[i],
+                                            eNB_deregistered_ind->enb_id,
                                             S1AP_SCTP_SHUTDOWN_OR_RESET);
   }
 }
@@ -998,17 +1013,28 @@ void mme_ue_context_update_ue_emm_state (
 static void
 _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
                                          const enb_ue_s1ap_id_t enb_ue_s1ap_id,
+                                         uint32_t  enb_id,           
                                          enum s1cause cause)
 //------------------------------------------------------------------------------
 {
   struct ue_context_s                    *ue_context_p = NULL;
+  enb_s1ap_id_key_t                       enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
   if (!ue_context_p) {
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ Unknown mme_ue_s1ap_id 0x%06"
-        PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for enb_ue_s1ap_ue_id "
+    /* 
+     * Use enb_ue_s1ap_id_key to get the UE context - In case MME APP could not update S1AP with valid mme_ue_s1ap_id
+     * before context release is triggered from s1ap.
+     */
+    MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, enb_id, enb_ue_s1ap_id);
+    ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, enb_s1ap_id_key);
+
+    OAILOG_WARNING (LOG_MME_APP, "Invalid mme_ue_s1ap_ue_id " 
+      MME_UE_S1AP_ID_FMT " received from S1AP. Using enb_s1ap_id_key %ld to get the context \n", mme_ue_s1ap_id, enb_s1ap_id_key);
+  }
+  if (!ue_context_p) {
+    OAILOG_ERROR (LOG_MME_APP, " UE Context Release Req: UE context doesn't exist for enb_ue_s1ap_ue_id "
         ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id, mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
@@ -1017,10 +1043,15 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
 
   if (ue_context_p->ecm_state == ECM_IDLE) {
     // This case could happen during sctp reset, before the UE could move to ECM_CONNECTED
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S1AP_UE_CONTEXT_RELEASE_REQ- UE already in Idle state. MME UE S1AP Id 0x%06"
-        PRIX32 " ", s1ap_ue_context_release_req->mme_ue_s1ap_id);
-    OAILOG_WARNING (LOG_MME_APP, " Ignoring the message. UE already in Idle state for enb_ue_s1ap_ue_id "
-        ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id, mme_ue_s1ap_id);
+    // calling below function to set the enb_s1ap_id_key to invalid
+    if (ue_context_p->ue_context_rel_cause == S1AP_SCTP_SHUTDOWN_OR_RESET) {
+      mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context_p, ECM_IDLE);
+      mme_app_itti_ue_context_release(ue_context_p, ue_context_p->ue_context_rel_cause);
+      OAILOG_WARNING (LOG_MME_APP, "UE Conetext Release Reqeust:Cause SCTP RESET/SHUTDOWN. UE state: IDLE. mme_ue_s1ap_id = %d, enb_ue_s1ap_id = %d Action -- Handle the message\n ", 
+                                  ue_context_p->mme_ue_s1ap_id, ue_context_p->enb_ue_s1ap_id);
+    }
+    OAILOG_ERROR (LOG_MME_APP, "ERROR: UE Context Release Request: UE state : IDLE. enb_ue_s1ap_ue_id " 
+    ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " Action--- Ignore the message\n", ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   if ((ue_context_p->mme_s11_teid == 0) && (ue_context_p->sgw_s11_teid == 0)) {

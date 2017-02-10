@@ -717,6 +717,7 @@ s1ap_mme_handle_ue_context_release_request (
       memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_req, 0, sizeof (itti_s1ap_ue_context_release_req_t));
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
+      S1AP_UE_CONTEXT_RELEASE_REQ (message_p).enb_id         = ue_ref_p->enb->enb_id;
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
               S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id);
       rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
@@ -984,8 +985,8 @@ static bool s1ap_send_enb_deregistered_ind (
 
     }
     if (ue_ref_p->mme_ue_s1ap_id == INVALID_MME_UE_S1AP_ID) {
-      // TODO: Handle this case better.
-      OAILOG_WARNING(LOG_S1AP, "UE with invalid MME s1ap id found not handled correctly");
+      // Send deregistered ind for this also and let MMEAPP find the context using enb_ue_s1ap_id_key
+      OAILOG_WARNING(LOG_S1AP, "UE with invalid MME s1ap id found");
     }
 
     AssertFatal(arg->current_ue_index < S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE, "Too many deregistered UEs reported in S1AP_ENB_DEREGISTERED_IND message ");
@@ -1038,6 +1039,7 @@ s1ap_handle_sctp_disconnection(
       update_mme_app_stats_connected_enb_sub();
     } else {
       s1ap_remove_enb(enb_association);
+      update_mme_app_stats_connected_enb_sub();
       OAILOG_INFO(LOG_S1AP, "Removing eNB with association id %u \n", assoc_id);
     }
     OAILOG_FUNC_RETURN(LOG_S1AP, RETURNok);
@@ -1054,6 +1056,7 @@ s1ap_handle_sctp_disconnection(
     S1AP_ENB_DEREGISTERED_IND (message_p).mme_ue_s1ap_id[arg.current_ue_index] = 0;
     S1AP_ENB_DEREGISTERED_IND (message_p).enb_ue_s1ap_id[arg.current_ue_index] = 0;
   }
+  S1AP_ENB_DEREGISTERED_IND (message_p).enb_id = enb_association->enb_id;
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 S1AP_ENB_DEREGISTERED_IND num ue to deregister %u",
                       S1AP_ENB_DEREGISTERED_IND (message_p).nb_ue_to_deregister);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);

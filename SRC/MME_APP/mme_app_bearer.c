@@ -434,6 +434,7 @@ mme_app_handle_initial_ue_message (
   bool                                    is_guti_valid = false;
   emm_data_context_t                     *ue_nas_ctx = NULL;
   enb_s1ap_id_key_t                       enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+  void                                   *id = NULL;
   OAILOG_FUNC_IN (LOG_MME_APP);
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP\n");
     
@@ -456,13 +457,21 @@ mme_app_handle_initial_ue_message (
         ue_context_p =  mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts,ue_nas_ctx->ue_id);
         DevAssert(ue_context_p != NULL);
         DevAssert(ue_context_p->mme_ue_s1ap_id == ue_nas_ctx->ue_id);
-        DevAssert(memcmp(&(ue_context_p->guti),&guti,sizeof(guti)) == 0);
         DevAssert(ue_context_p->enb_ue_s1ap_id == INVALID_ENB_UE_S1AP_ID);
         DevAssert(ue_context_p->enb_s1ap_id_key == INVALID_ENB_UE_S1AP_ID_KEY);
+        if (ue_context_p->enb_s1ap_id_key != INVALID_ENB_UE_S1AP_ID_KEY)
+        {
+          // Ideally this should never happen. When UE move to IDLE this key is set to INVALID.
+          // However if this key is valid, remove the key from the hashtable.
+
+          OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE.ERROR***** enb_s1ap_id_key %ld has valid value.\n" ,ue_context_p->enb_s1ap_id_key);
+          hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&id);
+          ue_context_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+        }
         // Update MME UE context with new enb_ue_s1ap_id
         ue_context_p->enb_ue_s1ap_id = initial_pP->enb_ue_s1ap_id;
         // regenerate the enb_s1ap_id_key as enb_ue_s1ap_id is changed.
-        MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->cgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
+        MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->enb_id, initial_pP->enb_ue_s1ap_id);
         // Update enb_s1ap_id_key in hashtable  
         mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
                 ue_context_p,
@@ -504,7 +513,7 @@ mme_app_handle_initial_ue_message (
     }
     OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE.Allocated new MME UE context and new mme_ue_s1ap_id. %d\n",ue_context_p->mme_ue_s1ap_id);
     ue_context_p->enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
-    MME_APP_ENB_S1AP_ID_KEY(ue_context_p->enb_s1ap_id_key, initial_pP->cgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
+    MME_APP_ENB_S1AP_ID_KEY(ue_context_p->enb_s1ap_id_key, initial_pP->enb_id, initial_pP->enb_ue_s1ap_id);
     DevAssert (mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p) == 0);
   }
   ue_context_p->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
@@ -522,7 +531,7 @@ mme_app_handle_initial_ue_message (
   message_p->ittiMsg.nas_initial_ue_message.nas.cgi             = initial_pP->cgi;
   message_p->ittiMsg.nas_initial_ue_message.nas.as_cause        = initial_pP->as_cause;
   if (initial_pP->is_s_tmsi_valid) {
-    message_p->ittiMsg.nas_initial_ue_message.nas.s_tmsi          = initial_pP->opt_s_tmsi;
+    message_p->ittiMsg.nas_initial_ue_message.nas.s_tmsi        = initial_pP->opt_s_tmsi;
   } else {
     message_p->ittiMsg.nas_initial_ue_message.nas.s_tmsi.mme_code = 0;
     message_p->ittiMsg.nas_initial_ue_message.nas.s_tmsi.m_tmsi   = INVALID_M_TMSI;

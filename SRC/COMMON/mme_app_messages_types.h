@@ -36,6 +36,7 @@
 
 typedef struct itti_mme_app_initial_ue_message_s {
   sctp_assoc_id_t     sctp_assoc_id; // key stored in MME_APP for MME_APP forward NAS response to S1AP
+  uint32_t            enb_id; 
   mme_ue_s1ap_id_t    mme_ue_s1ap_id;
   enb_ue_s1ap_id_t    enb_ue_s1ap_id;
   bstring             nas;
@@ -90,9 +91,9 @@ typedef struct itti_mme_app_delete_session_rsp_s {
 } itti_mme_app_delete_session_rsp_t;
 
 typedef struct itti_mme_app_s1ap_mme_ue_id_notification_s {
-  enb_ue_s1ap_id_t	  enb_ue_s1ap_id;
-  mme_ue_s1ap_id_t	  mme_ue_s1ap_id;
-  sctp_assoc_id_t     sctp_assoc_id;
+  enb_ue_s1ap_id_t	    enb_ue_s1ap_id;
+  mme_ue_s1ap_id_t	    mme_ue_s1ap_id;
+  sctp_assoc_id_t       sctp_assoc_id;
 } itti_mme_app_s1ap_mme_ue_id_notification_t;
 
 #endif /* FILE_MME_APP_MESSAGES_TYPES_SEEN */
