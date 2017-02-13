@@ -393,11 +393,11 @@ mme_ue_context_update_coll_keys (
 
   OAILOG_FUNC_IN(LOG_MME_APP);
 
-  OAILOG_TRACE (LOG_MME_APP, "Update ue context.old_enb_ue_s1ap_id_key " %ld " ue context.old_mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ue context.old_IMSI " IMSI_64_FMT " ue context.old_GUTI "GUTI_FMT"\n",
-             ue_context_p->enb_ue_s1ap_id_key, ue_context_p->mme_ue_s1ap_id, ue_context_p->imsi, GUTI_ARG(&ue_context_p->guti));
+  OAILOG_TRACE (LOG_MME_APP, "Update ue context.old_enb_ue_s1ap_id_key %ld ue context.old_mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ue context.old_IMSI " IMSI_64_FMT " ue context.old_GUTI "GUTI_FMT"\n",
+             ue_context_p->enb_s1ap_id_key, ue_context_p->mme_ue_s1ap_id, ue_context_p->imsi, GUTI_ARG(&ue_context_p->guti));
 
-  OAILOG_TRACE (LOG_MME_APP, "Update ue context %p updated_enb_ue_s1ap_id_key " %ld " updated_mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " updated_IMSI " IMSI_64_FMT " updated_GUTI " GUTI_FMT "\n",
-            ue_context_p, enb_ue_s1ap_id_key, mme_ue_s1ap_id, imsi, GUTI_ARG(guti_p));
+  OAILOG_TRACE (LOG_MME_APP, "Update ue context %p updated_enb_ue_s1ap_id_key %ld updated_mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " updated_IMSI " IMSI_64_FMT " updated_GUTI " GUTI_FMT "\n",
+            ue_context_p, enb_s1ap_id_key, mme_ue_s1ap_id, imsi, GUTI_ARG(guti_p));
 
   if ((INVALID_ENB_UE_S1AP_ID_KEY != enb_s1ap_id_key) && (ue_context_p->enb_s1ap_id_key != enb_s1ap_id_key)) {
       // new insertion of enb_ue_s1ap_id_key,
