@@ -150,9 +150,7 @@ int gtp_mod_kernel_tunnel_add(struct in_addr ue, struct in_addr enb, uint32_t i_
   gtp_tunnel_set_sgsn_ip4(t, &enb);
   gtp_tunnel_set_i_tei(t, i_tei);
   gtp_tunnel_set_o_tei(t, o_tei);
-#if GTP_KERNEL_MODULE_DEDICATED_BEARER_ENABLED
   gtp_tunnel_set_bearer_id(t, bearer_id);
-#endif
   ret = gtp_add_tunnel(gtp_nl.genl_id, gtp_nl.nl, t);
   gtp_tunnel_free(t);
 #endif

@@ -222,8 +222,6 @@ add_boolean_option( ENABLE_ITTI_ANALYZER            False    "ITTI Analyzer is a
 add_integer_option( ITTI_TASK_STACK_SIZE            0        "pthread allocated stack size in bytes of an ITTI task, if 0, use default stack size ") 
 add_boolean_option( ITTI_LITE                       False    "Do not use ITTI systematically for each message exchanged between layer modules") 
 add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
-add_boolean_option( GTP_KERNEL_MODULE_UNAVAILABLE   False    "disable calls to GTP kernel API")
-add_boolean_option( GTP_KERNEL_MODULE_DEDICATED_BEARER_ENABLED   False    "Original Osmocom GTP kernel module and libs modified for PoC dedicated bearer")
 # NAS LAYER OPTIONS
 ##########################
 add_boolean_option( EPC_BUILD                       False    "BUILD MME-xGW executable")

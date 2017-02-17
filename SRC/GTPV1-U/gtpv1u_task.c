@@ -116,30 +116,28 @@ int gtpv1u_init (spgw_config_t *spgw_config)
 
   // START-GTP quick integration only for evaluation purpose
   // Clean hard previous mappings.
-#if ! GTP_KERNEL_MODULE_UNAVAILABLE
-  int rv = system ("rmmod gtp");
-  rv = system ("modprobe gtp");
-  if (rv != 0) {
-    OAILOG_CRITICAL (TASK_GTPV1_U, "ERROR in loading gtp kernel module (check if built in kernel)\n");
-    return -1;
-  }
-#endif
-  AssertFatal(spgw_config->pgw_config.num_ue_pool == 1, "No more than 1 UE pool allowed actually");
-  for (int i = 0; i < spgw_config->pgw_config.num_ue_pool; i++) {
-    // GTP device same MTU as SGi.
-    gtp_mod_kernel_init(&sgw_app.gtpv1u_data.fd0, &sgw_app.gtpv1u_data.fd1u,
-        &spgw_config->pgw_config.ue_pool_addr[i],
-        spgw_config->pgw_config.ue_pool_mask[i],
-        spgw_config->pgw_config.ipv4.mtu_SGI);
-  }
-  // END-GTP quick integration only for evaluation purpose
+  if (spgw_config->pgw_config.use_gtp_kernel_module) {
+    if (spgw_config->pgw_config.enable_loading_gtp_kernel_module) {
+      async_system_command (TASK_ASYNC_SYSTEM, PGW_WARN_ON_ERROR, "rmmod gtp");
+      async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "modprobe gtp");
+    }
 
-  if (itti_create_task (TASK_GTPV1_U, &gtpv1u_thread, &sgw_app.gtpv1u_data) < 0) {
-    OAILOG_ERROR (LOG_GTPV1U , "gtpv1u phtread_create: %s", strerror (errno));
-    gtp_mod_kernel_stop();
-    return -1;
-  }
+    AssertFatal(spgw_config->pgw_config.num_ue_pool == 1, "No more than 1 UE pool allowed actually");
+    for (int i = 0; i < spgw_config->pgw_config.num_ue_pool; i++) {
+      // GTP device same MTU as SGi.
+      gtp_mod_kernel_init(&sgw_app.gtpv1u_data.fd0, &sgw_app.gtpv1u_data.fd1u,
+          &spgw_config->pgw_config.ue_pool_addr[i],
+          spgw_config->pgw_config.ue_pool_mask[i],
+          spgw_config->pgw_config.ipv4.mtu_SGI);
+    }
+    // END-GTP quick integration only for evaluation purpose
 
+    if (itti_create_task (TASK_GTPV1_U, &gtpv1u_thread, &sgw_app.gtpv1u_data) < 0) {
+      OAILOG_ERROR (LOG_GTPV1U , "gtpv1u phtread_create: %s", strerror (errno));
+      gtp_mod_kernel_stop();
+      return -1;
+    }
+  }
   OAILOG_DEBUG (LOG_GTPV1U , "Initializing GTPV1U interface: DONE\n");
   return 0;
 }
@@ -163,7 +161,9 @@ void gtpv1u_exit (gtpv1u_data_t * const gtpv1u_data)
 //    OAILOG_ERROR (LOG_GTPV1U , "gtp_decaps1u thread wasn't canceled\n");
 //  }
 
-  gtp_mod_kernel_stop();
+  if (spgw_config.pgw_config.use_gtp_kernel_module) {
+    gtp_mod_kernel_stop();
+  }
   // END-GTP quick integration only for evaluation purpose
   itti_exit_task ();
 }

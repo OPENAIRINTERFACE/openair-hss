@@ -49,6 +49,10 @@
 #define PGW_CONFIG_STRING_DEFAULT_DNS_IPV4_ADDRESS              "DEFAULT_DNS_IPV4_ADDRESS"
 #define PGW_CONFIG_STRING_DEFAULT_DNS_SEC_IPV4_ADDRESS          "DEFAULT_DNS_SEC_IPV4_ADDRESS"
 #define PGW_CONFIG_STRING_UE_MTU                                "UE_MTU"
+#define PGW_CONFIG_STRING_GTPV1U_REALIZATION                    "GTPV1U_REALIZATION"
+#define PGW_CONFIG_STRING_NO_GTP_KERNEL_AVAILABLE               "NO_GTP_KERNEL_AVAILABLE"
+#define PGW_CONFIG_STRING_GTP_KERNEL_MODULE                     "GTP_KERNEL_MODULE"
+#define PGW_CONFIG_STRING_GTP_KERNEL                            "GTP_KERNEL"
 
 #define PGW_CONFIG_STRING_INTERFACE_DISABLED                    "none"
 
@@ -111,6 +115,8 @@ typedef struct pgw_config_s {
 
   bool      force_push_pco;
   uint16_t  ue_mtu;
+  bool      use_gtp_kernel_module;
+  bool      enable_loading_gtp_kernel_module;
 
   struct {
     bool      enabled;
