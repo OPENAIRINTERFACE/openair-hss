@@ -118,8 +118,12 @@ int gtpv1u_init (spgw_config_t *spgw_config)
   // Clean hard previous mappings.
   if (spgw_config->pgw_config.use_gtp_kernel_module) {
     if (spgw_config->pgw_config.enable_loading_gtp_kernel_module) {
-      async_system_command (TASK_ASYNC_SYSTEM, PGW_WARN_ON_ERROR, "rmmod gtp");
-      async_system_command (TASK_ASYNC_SYSTEM, PGW_ABORT_ON_ERROR, "modprobe gtp");
+      int rv = system ("rmmod gtp");
+      rv = system ("modprobe gtp");
+      if (rv != 0) {
+        OAILOG_CRITICAL (TASK_GTPV1_U, "ERROR in loading gtp kernel module (check if built in kernel)\n");
+        return -1;
+      }
     }
 
     AssertFatal(spgw_config->pgw_config.num_ue_pool == 1, "No more than 1 UE pool allowed actually");
