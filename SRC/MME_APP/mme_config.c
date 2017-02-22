@@ -133,7 +133,7 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->max_enbs    = 2;
   config_pP->max_ues     = 2;
   config_pP->unauthenticated_imsi_supported = 0;
-  config_pP->run_mode    = RUN_MODE_TEST; // RUN_MODE_BASIC;
+  config_pP->run_mode    = RUN_MODE_BASIC; //RUN_MODE_TEST; 
 
   /*
    * EPS network feature support

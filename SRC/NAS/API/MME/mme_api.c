@@ -73,6 +73,9 @@
 #include "mme_config.h"
 #include "emm_data.h"
 
+#include <stdlib.h>
+#include <time.h>
+
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
@@ -445,9 +448,10 @@ mme_api_new_guti (
       guti->gummei.plmn.mnc_digit2 = _emm_data.conf.gummei.plmn.mnc_digit2;
       guti->gummei.plmn.mnc_digit3 = _emm_data.conf.gummei.plmn.mnc_digit3;
       if (RUN_MODE_TEST == mme_config.run_mode) {
-        guti->m_tmsi = __sync_fetch_and_add (&mme_m_tmsi_generator, 0x00010101);
+	guti->m_tmsi = __sync_fetch_and_add (&mme_m_tmsi_generator, 0x00010101);
       } else {
-        guti->m_tmsi                 = (tmsi_t)(uintptr_t)ue_context;
+	srand(time(NULL));
+        guti->m_tmsi                 = (tmsi_t)rand();
       }
     }
     mme_api_notify_new_guti(ue_context->mme_ue_s1ap_id, guti);
