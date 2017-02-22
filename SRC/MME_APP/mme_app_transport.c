@@ -52,11 +52,12 @@ int mme_app_handle_nas_dl_req (
 {
   MessageDef                             *message_p    = NULL;
   int                                     rc = RETURNok;
-  enb_ue_s1ap_id_t                        enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
+  enb_ue_s1ap_id_t                        enb_ue_s1ap_id;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
 
-  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_DOWNLINK_DATA_REQ);
+  message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_NAS_DL_DATA_REQ);
+  memset ((void *)&message_p->ittiMsg.s1ap_nas_dl_data_req, 0, sizeof (itti_s1ap_nas_dl_data_req_t));
 
   ue_context_t   *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, nas_dl_req_pP->ue_id);
   if (ue_context) {
@@ -65,9 +66,9 @@ int mme_app_handle_nas_dl_req (
     OAILOG_WARNING (LOG_MME_APP, " MME_APP:DOWNLINK NAS TRANSPORT. Null UE Context for mme_ue_s1ap_id %d \n", nas_dl_req_pP->ue_id);
   }
   
-  NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
-  NAS_DL_DATA_REQ (message_p).ue_id                  = nas_dl_req_pP->ue_id;
-  NAS_DL_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
+  S1AP_NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
+  S1AP_NAS_DL_DATA_REQ (message_p).mme_ue_s1ap_id         = nas_dl_req_pP->ue_id;
+  S1AP_NAS_DL_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,TASK_S1AP,NULL, 0,
       "0 DOWNLINK NAS TRANSPORT enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue id " MME_UE_S1AP_ID_FMT " ",
@@ -82,7 +83,7 @@ int mme_app_handle_nas_dl_req (
   if (ue_context && ue_context->ecm_state != ECM_CONNECTED)
   {
     OAILOG_DEBUG (LOG_MME_APP, "MME_APP:DOWNLINK NAS TRANSPORT. Establishing S1 sig connection. mme_ue_s1ap_id = %d,enb_ue_s1ap_id = %d \n", nas_dl_req_pP->ue_id, enb_ue_s1ap_id);
-    mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts,ue_context,ECM_CONNECTED);
+    mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
   }
 
   // Check the transaction status. And trigger the UE context release command accrordingly.

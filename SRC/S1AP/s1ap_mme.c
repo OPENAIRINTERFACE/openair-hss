@@ -145,14 +145,14 @@ s1ap_mme_thread (
       }
       break;
 
-    case NAS_DOWNLINK_DATA_REQ:{
+    case S1AP_NAS_DL_DATA_REQ:{
         /*
          * New message received from NAS task.
          * * * * This corresponds to a S1AP downlink nas transport message.
          */
-        s1ap_generate_downlink_nas_transport (NAS_DL_DATA_REQ (received_message_p).enb_ue_s1ap_id,
-            NAS_DL_DATA_REQ (received_message_p).ue_id,
-            &NAS_DL_DATA_REQ (received_message_p).nas_msg);
+        s1ap_generate_downlink_nas_transport (S1AP_NAS_DL_DATA_REQ (received_message_p).enb_ue_s1ap_id,
+            S1AP_NAS_DL_DATA_REQ (received_message_p).mme_ue_s1ap_id,
+            &S1AP_NAS_DL_DATA_REQ (received_message_p).nas_msg);
       }
       break;
 

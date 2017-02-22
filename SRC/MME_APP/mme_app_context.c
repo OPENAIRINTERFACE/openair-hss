@@ -55,7 +55,6 @@ ue_context_t *mme_create_new_ue_context (void)
 {
   ue_context_t                           *new_p = calloc (1, sizeof (ue_context_t));
   new_p->mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
-  new_p->enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
   new_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
   // Initialize timers to INVALID IDs
   new_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
@@ -725,7 +724,6 @@ void mme_ue_context_update_ue_sig_connection_state (
                                   ue_context_p->enb_s1ap_id_key, ue_context_p->mme_ue_s1ap_id);
     }
     ue_context_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
-    ue_context_p->enb_ue_s1ap_id  = INVALID_ENB_UE_S1AP_ID;
 
     OAILOG_DEBUG (LOG_MME_APP, "MME_APP: UE Connection State changed to IDLE. mme_ue_s1ap_id = %d\n", ue_context_p->mme_ue_s1ap_id);
     

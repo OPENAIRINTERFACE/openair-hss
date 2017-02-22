@@ -34,6 +34,7 @@
 #define S1AP_UE_CONTEXT_RELEASE_REQ(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_req
 #define S1AP_UE_CONTEXT_RELEASE_COMMAND(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_command
 #define S1AP_UE_CONTEXT_RELEASE_COMPLETE(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_complete
+#define S1AP_NAS_DL_DATA_REQ(mSGpTR)        (mSGpTR)->ittiMsg.s1ap_nas_dl_data_req
 
 typedef struct itti_s1ap_initial_ue_message_s {
   mme_ue_s1ap_id_t     mme_ue_s1ap_id;
@@ -104,6 +105,12 @@ typedef struct itti_s1ap_ue_context_release_command_s {
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
   enum s1cause      cause;
 } itti_s1ap_ue_context_release_command_t;
+
+typedef struct itti_s1ap_dl_nas_data_req_s {
+  mme_ue_s1ap_id_t  mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
+  bstring           nas_msg;            /* Downlink NAS message             */
+} itti_s1ap_nas_dl_data_req_t;
 
 typedef struct itti_s1ap_ue_context_release_complete_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;

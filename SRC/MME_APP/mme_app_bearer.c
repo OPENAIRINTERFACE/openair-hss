@@ -457,7 +457,6 @@ mme_app_handle_initial_ue_message (
         ue_context_p =  mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts,ue_nas_ctx->ue_id);
         DevAssert(ue_context_p != NULL);
         DevAssert(ue_context_p->mme_ue_s1ap_id == ue_nas_ctx->ue_id);
-        DevAssert(ue_context_p->enb_ue_s1ap_id == INVALID_ENB_UE_S1AP_ID);
         DevAssert(ue_context_p->enb_s1ap_id_key == INVALID_ENB_UE_S1AP_ID_KEY);
         if (ue_context_p->enb_s1ap_id_key != INVALID_ENB_UE_S1AP_ID_KEY)
         {

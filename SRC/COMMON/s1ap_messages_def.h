@@ -46,3 +46,4 @@ MESSAGE_DEF(S1AP_DEREGISTER_UE_REQ         ,  MESSAGE_PRIORITY_MED, itti_s1ap_de
 MESSAGE_DEF(S1AP_UE_CONTEXT_RELEASE_REQ    ,  MESSAGE_PRIORITY_MED, itti_s1ap_ue_context_release_req_t    ,  s1ap_ue_context_release_req)
 MESSAGE_DEF(S1AP_UE_CONTEXT_RELEASE_COMMAND,  MESSAGE_PRIORITY_MED, itti_s1ap_ue_context_release_command_t,  s1ap_ue_context_release_command)
 MESSAGE_DEF(S1AP_UE_CONTEXT_RELEASE_COMPLETE, MESSAGE_PRIORITY_MED, itti_s1ap_ue_context_release_complete_t, s1ap_ue_context_release_complete)
+MESSAGE_DEF(S1AP_NAS_DL_DATA_REQ           ,  MESSAGE_PRIORITY_MED, itti_s1ap_nas_dl_data_req_t           ,  s1ap_nas_dl_data_req)

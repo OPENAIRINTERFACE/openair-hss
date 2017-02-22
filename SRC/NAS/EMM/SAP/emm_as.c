@@ -632,7 +632,6 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
     
     REQUIREMENT_3GPP_24_301(R10_4_4_4_3__1);
     REQUIREMENT_3GPP_24_301(R10_4_4_4_3__2);
-
     if ((1 == decode_status.security_context_available) && 
                     (0 < emm_security_context->activated) &&
                       ((0 == decode_status.integrity_protected_message) ||
