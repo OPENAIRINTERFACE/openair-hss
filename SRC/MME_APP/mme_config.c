@@ -133,7 +133,7 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->max_enbs    = 2;
   config_pP->max_ues     = 2;
   config_pP->unauthenticated_imsi_supported = 0;
-  config_pP->run_mode    = RUN_MODE_TEST; // RUN_MODE_BASIC;
+  config_pP->run_mode    = RUN_MODE_BASIC;
 
   /*
    * EPS network feature support
@@ -836,7 +836,7 @@ static void mme_config_display (mme_config_t * config_pP)
   OAILOG_INFO (LOG_CONFIG, "Configuration:\n");
   OAILOG_INFO (LOG_CONFIG, "- File .................................: %s\n", bdata(config_pP->config_file));
   OAILOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", bdata(config_pP->realm));
-  OAILOG_INFO (LOG_CONFIG, "- Run mode .............................: %s\n", (RUN_MODE_TEST == config_pP->run_mode) ? "TEST":(RUN_MODE_SCENARIO_PLAYER == config_pP->run_mode) ? "SCENARIO_PLAYER":"BASIC");
+  OAILOG_INFO (LOG_CONFIG, "- Run mode .............................: %s\n", (RUN_MODE_BASIC == config_pP->run_mode) ? "BASIC":(RUN_MODE_SCENARIO_PLAYER == config_pP->run_mode) ? "SCENARIO_PLAYER":"UNKNOWN");
   OAILOG_INFO (LOG_CONFIG, "- Max eNBs .............................: %u\n", config_pP->max_enbs);
   OAILOG_INFO (LOG_CONFIG, "- Max UEs ..............................: %u\n", config_pP->max_ues);
   OAILOG_INFO (LOG_CONFIG, "- IMS voice over PS session in S1 ......: %s\n", config_pP->eps_network_feature_support.ims_voice_over_ps_session_in_s1 == 0 ? "false" : "true");

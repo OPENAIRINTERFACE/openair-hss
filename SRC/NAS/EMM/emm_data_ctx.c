@@ -51,8 +51,6 @@
 #include "secu_defs.h"
 #include "emm_cause.h"
 
-static mme_ue_s1ap_id_t mme_ue_s1ap_id_generator = 1;
-
 //------------------------------------------------------------------------------
 static bool emm_context_dump_hash_table_wrapper (
   hash_key_t keyP,
@@ -60,15 +58,10 @@ static bool emm_context_dump_hash_table_wrapper (
   void *parameterP,
   void**resultP);
 
-mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(emm_context_t *ctxt)
+//------------------------------------------------------------------------------
+mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(const emm_context_t * const ctxt)
 {
-  mme_ue_s1ap_id_t tmp = 0;
-  if (RUN_MODE_TEST == mme_config.run_mode) {
-    tmp = __sync_fetch_and_add (&mme_ue_s1ap_id_generator, 1);
-  } else {
-    tmp = (mme_ue_s1ap_id_t)((uint)((uintptr_t)ctxt) >> 4);// ^ 0xBABA53AB;
-  }
-  return tmp;
+  return (mme_ue_s1ap_id_t)((uint)((uintptr_t)ctxt) >> 4);
 }
 
 //------------------------------------------------------------------------------
