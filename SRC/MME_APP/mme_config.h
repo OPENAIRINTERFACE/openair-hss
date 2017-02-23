@@ -124,9 +124,8 @@
 #define MME_CONFIG_STRING_ID                             "ID"
 
 typedef enum {
-   RUN_MODE_TEST = 0,
-   RUN_MODE_SCENARIO_PLAYER,
-   RUN_MODE_BASIC
+   RUN_MODE_BASIC,
+   RUN_MODE_SCENARIO_PLAYER
 } run_mode_t;
 
 typedef struct mme_config_s {

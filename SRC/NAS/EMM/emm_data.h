@@ -285,7 +285,7 @@ typedef struct emm_data_s {
   obj_hash_table_t   *ctx_coll_guti;  // key is guti, data is emm ue id (unsigned int)
 } emm_data_t;
 
-mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(emm_context_t *ctxt) __attribute__((nonnull));
+mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(const emm_context_t * const ctxt) __attribute__((nonnull));
 
 void emm_ctx_mark_common_procedure_running(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
 void emm_ctx_unmark_common_procedure_running(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
