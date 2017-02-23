@@ -928,8 +928,7 @@ _emm_initiate_default_bearer_re_establishment (
     emm_sap.u.emm_as.u.establish.encryption = emm_ctx->_security.selected_algorithms.encryption;
     emm_sap.u.emm_as.u.establish.integrity = emm_ctx->_security.selected_algorithms.integrity;
     emm_sap.u.emm_as.u.establish.nas_msg = NULL;
-    *(emm_sap.u.emm_as.u.establish.guti) = emm_ctx->_guti;
-    
+    emm_sap.u.emm_as.u.establish.eps_id.guti = &emm_ctx->_guti;
     rc = emm_sap_send (&emm_sap);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
