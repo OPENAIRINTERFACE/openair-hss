@@ -473,9 +473,12 @@ s1ap_handle_conn_est_cnf (
   e_RABToBeSetup.e_RAB_ID = conn_est_cnf_pP->eps_bearer_id;     //5;
   e_RABToBeSetup.e_RABlevelQoSParameters.qCI = conn_est_cnf_pP->bearer_qos_qci;
 
-  nas_pdu.size = conn_est_cnf_pP->nas_conn_est_cnf.nas_msg->slen;
-  nas_pdu.buf  = conn_est_cnf_pP->nas_conn_est_cnf.nas_msg->data;
-  e_RABToBeSetup.nAS_PDU = &nas_pdu;
+  if (conn_est_cnf_pP->nas_conn_est_cnf.nas_msg != NULL) {
+    // NAS PDU is optional in rab_setup
+    nas_pdu.size = conn_est_cnf_pP->nas_conn_est_cnf.nas_msg->slen;
+    nas_pdu.buf  = conn_est_cnf_pP->nas_conn_est_cnf.nas_msg->data;
+    e_RABToBeSetup.nAS_PDU = &nas_pdu;
+  }
 #  if ORIGINAL_S1AP_CODE
   e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.priorityLevel = S1ap_PriorityLevel_lowest;
   e_RABToBeSetup.e_RABlevelQoSParameters.allocationRetentionPriority.pre_emptionCapability = S1ap_Pre_emptionCapability_shall_not_trigger_pre_emption;
@@ -555,7 +558,9 @@ s1ap_handle_conn_est_cnf (
     DevMessage ("Failed to encode initial context setup request message\n");
   }
 
-  bdestroy (conn_est_cnf_pP->nas_conn_est_cnf.nas_msg);
+  if (conn_est_cnf_pP->nas_conn_est_cnf.nas_msg != NULL) {
+    bdestroy (conn_est_cnf_pP->nas_conn_est_cnf.nas_msg);
+  }
   OAILOG_NOTICE (LOG_S1AP, "Send S1AP_INITIAL_CONTEXT_SETUP_REQUEST message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
               (mme_ue_s1ap_id_t)initialContextSetupRequest_p->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)initialContextSetupRequest_p->eNB_UE_S1AP_ID);
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
