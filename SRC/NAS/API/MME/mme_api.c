@@ -76,7 +76,7 @@ static mme_api_ip_version_t             _mme_api_ip_capability = MME_API_IPV4V6_
 /* Total number of PDN connections (should not exceed MME_API_PDN_MAX) */
 static int                              _mme_api_pdn_id = 0;
 
-static tmsi_t                           mme_m_tmsi_generator = 0x608ACD01;
+static tmsi_t                           mme_m_tmsi_generator = 0x00000001;
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -344,32 +344,22 @@ mme_api_new_guti (
   IMSI_TO_IMSI64 (imsi, mme_imsi);
   ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, mme_imsi);
 
-  if ( ue_context) {
-    if ((INVALID_M_TMSI                   !=  old_guti->m_tmsi ) &&
-        (old_guti->gummei.mme_gid         == _emm_data.conf.gummei.mme_gid) &&
-        (old_guti->gummei.mme_code        == _emm_data.conf.gummei.mme_code) &&
-        (old_guti->gummei.plmn.mcc_digit1 == _emm_data.conf.gummei.plmn.mcc_digit1) &&
-        (old_guti->gummei.plmn.mcc_digit2 == _emm_data.conf.gummei.plmn.mcc_digit2) &&
-        (old_guti->gummei.plmn.mcc_digit3 == _emm_data.conf.gummei.plmn.mcc_digit3) &&
-        (old_guti->gummei.plmn.mnc_digit1 == _emm_data.conf.gummei.plmn.mnc_digit1) &&
-        (old_guti->gummei.plmn.mnc_digit2 == _emm_data.conf.gummei.plmn.mnc_digit2) &&
-        (old_guti->gummei.plmn.mnc_digit3 == _emm_data.conf.gummei.plmn.mnc_digit3))  {
-
-      *guti = *old_guti;
+  if (ue_context) {
+    guti->gummei.mme_gid         = _emm_data.conf.gummei.mme_gid;
+    guti->gummei.mme_code        = _emm_data.conf.gummei.mme_code;
+    guti->gummei.plmn.mcc_digit1 = _emm_data.conf.gummei.plmn.mcc_digit1;
+    guti->gummei.plmn.mcc_digit2 = _emm_data.conf.gummei.plmn.mcc_digit2;
+    guti->gummei.plmn.mcc_digit3 = _emm_data.conf.gummei.plmn.mcc_digit3;
+    guti->gummei.plmn.mnc_digit1 = _emm_data.conf.gummei.plmn.mnc_digit1;
+    guti->gummei.plmn.mnc_digit2 = _emm_data.conf.gummei.plmn.mnc_digit2;
+    guti->gummei.plmn.mnc_digit3 = _emm_data.conf.gummei.plmn.mnc_digit3;
+    if (RUN_MODE_TEST == mme_config.run_mode) {
+      guti->m_tmsi = __sync_fetch_and_add (&mme_m_tmsi_generator, 0x00000001);
     } else {
-      guti->gummei.mme_gid         = _emm_data.conf.gummei.mme_gid;
-      guti->gummei.mme_code        = _emm_data.conf.gummei.mme_code;
-      guti->gummei.plmn.mcc_digit1 = _emm_data.conf.gummei.plmn.mcc_digit1;
-      guti->gummei.plmn.mcc_digit2 = _emm_data.conf.gummei.plmn.mcc_digit2;
-      guti->gummei.plmn.mcc_digit3 = _emm_data.conf.gummei.plmn.mcc_digit3;
-      guti->gummei.plmn.mnc_digit1 = _emm_data.conf.gummei.plmn.mnc_digit1;
-      guti->gummei.plmn.mnc_digit2 = _emm_data.conf.gummei.plmn.mnc_digit2;
-      guti->gummei.plmn.mnc_digit3 = _emm_data.conf.gummei.plmn.mnc_digit3;
-      if (RUN_MODE_TEST == mme_config.run_mode) {
-        guti->m_tmsi = __sync_fetch_and_add (&mme_m_tmsi_generator, 0x00010101);
-      } else {
-        guti->m_tmsi                 = (tmsi_t)(uintptr_t)ue_context;
-      }
+      guti->m_tmsi                 = (tmsi_t)(uintptr_t)ue_context;
+    }
+    if (guti->m_tmsi == INVALID_M_TMSI) {
+      OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
     }
     mme_api_notify_new_guti(ue_context->mme_ue_s1ap_id, guti);
   } else {

@@ -1076,10 +1076,9 @@ _emm_attach_identify (
     // procedure completes
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 
-  } else if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_ctx)) {
+  } else if (emm_ctx->is_guti_based_attach) {
 
-    OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Force to identify the UE using provided old GUTI "GUTI_FMT"\n",
-        emm_ctx->ue_id, GUTI_ARG(&emm_ctx->_old_guti));
+    OAILOG_NOTICE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - GUTI based Attach Request \n", emm_ctx->ue_id);
     /*
      * 3GPP TS 24.401, Figure 5.3.2.1-1, point 4
      * The UE was attempting to attach to the network using a GUTI
@@ -1826,18 +1825,14 @@ _emm_attach_update (
   ctx->gprs_present = gprs_present;
 
   ctx->originating_tai = *originating_tai;
+  ctx->is_guti_based_attach = false;
 
   /*
-   * The GUTI if provided by the UE
+   * The GUTI if provided by the UE. Trigger UE Identity Procedure to fetch IMSI
    */
   if (guti) {
-    if (memcmp(guti, &ctx->_old_guti, sizeof(ctx->_old_guti))) {
-      //TODO remove previous guti entry in coll if was present
-      emm_ctx_set_old_guti(ctx, guti);
-      emm_data_context_add_old_guti (&_emm_data, ctx);
-    }
+   ctx->is_guti_based_attach = true;
   }
-
   /*
    * The IMSI if provided by the UE
    */

@@ -212,6 +212,7 @@ typedef struct emm_data_context_s {
   tai_list_t               _tai_list;    /* TACs the the UE is registered to                */
   tai_t                    _lvr_tai;
   tai_t                    originating_tai;
+  bool                     is_guti_based_attach;
 
   ksi_t                    ue_ksi;       /* Security key set identifier provided by the UE  */
   int                      eea;          /* EPS encryption algorithms supported by the UE   */
