@@ -512,7 +512,7 @@ s6a_error_2_nas_cause (
        * 5003
        */
     case ER_DIAMETER_AUTHORIZATION_REJECTED:
-      return NAS_CAUSE_NO_SUITABLE_CELLS_IN_TRACKING_AREA;
+      return NAS_CAUSE_IMSI_UNKNOWN_IN_HSS;
 
       /*
        * 5012

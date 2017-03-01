@@ -123,6 +123,9 @@ retcode_2_string (
 
   case ER_DIAMETER_INVALID_AVP_VALUE:
     return "DIAMETER_INVALID_AVP_VALUE";
+  
+  case ER_DIAMETER_AUTHORIZATION_REJECTED:
+    return "DIAMETER_AUTHORIZATION_REJECTED";
 
   default:
     break;
