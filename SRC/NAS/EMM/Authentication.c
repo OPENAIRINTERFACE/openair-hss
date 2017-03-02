@@ -250,7 +250,6 @@ int emm_proc_authentication_failure (
   const_bstring auts)
 {
   int                                     rc = RETURNerror;
-  emm_sap_t                               emm_sap = {0};
 
   authentication_data_t                  *data = (authentication_data_t *) (emm_proc_common_get_args (ue_id));
 
@@ -341,16 +340,13 @@ int emm_proc_authentication_failure (
       // Do not accept the UE to attach to the network
       rc = _authentication_reject(data);
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REJ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-      emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
-      emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx = emm_ctx;
-      rc = emm_sap_send (&emm_sap);
     }
     break;
 
   default:
     emm_ctx->auth_sync_fail_count = 0;
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - The MME received an unknown EMM CAUSE %d\n", emm_cause);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 
   }
   emm_proc_common_clear_args(ue_id);
@@ -733,6 +729,8 @@ static int _authentication_reject (void* args)
     emm_sap_rej.u.emm_reg.ue_id = data->ue_id;
     emm_sap_rej.u.emm_reg.ctx = emm_ctx;
     rc = emm_sap_send (&emm_sap_rej);
+    
+   _clear_emm_ctxt(emm_ctx);
 
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

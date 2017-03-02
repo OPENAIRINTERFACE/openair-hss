@@ -125,8 +125,8 @@ static int _emm_as_security_rej (const emm_as_security_t *, dl_info_transfer_req
 static int _emm_as_establish_cnf (const emm_as_establish_t *, nas_establish_rsp_t *);
 static int _emm_as_establish_rej (const emm_as_establish_t *, nas_establish_rsp_t *);
 static int _emm_as_page_ind (const emm_as_page_t *, paging_req_t *);
-static int _emm_as_data_req (const emm_as_data_t *, ul_info_transfer_req_t *);
-static int _emm_as_status_ind (const emm_as_status_t *, ul_info_transfer_req_t *);
+static int _emm_as_data_req (const emm_as_data_t *, dl_info_transfer_req_t *);
+static int _emm_as_status_ind (const emm_as_status_t *, dl_info_transfer_req_t *);
 static int _emm_as_release_req (const emm_as_release_t *, nas_release_req_t *);
 
 /****************************************************************************/
@@ -925,11 +925,11 @@ static int _emm_as_send (const emm_as_t * msg)
 
   switch (msg->primitive) {
   case _EMMAS_DATA_REQ:
-    as_msg.msg_id = _emm_as_data_req (&msg->u.data, &as_msg.msg.ul_info_transfer_req);
+    as_msg.msg_id = _emm_as_data_req (&msg->u.data, &as_msg.msg.dl_info_transfer_req);
     break;
 
   case _EMMAS_STATUS_IND:
-    as_msg.msg_id = _emm_as_status_ind (&msg->u.status, &as_msg.msg.ul_info_transfer_req);
+    as_msg.msg_id = _emm_as_status_ind (&msg->u.status, &as_msg.msg.dl_info_transfer_req);
     break;
 
   case _EMMAS_RELEASE_REQ:
@@ -969,7 +969,7 @@ static int _emm_as_send (const emm_as_t * msg)
 
     switch (as_msg.msg_id) {
     case AS_DL_INFO_TRANSFER_REQ:{
-        nas_itti_dl_data_req (as_msg.msg.dl_info_transfer_req.ue_id, as_msg.msg.dl_info_transfer_req.nas_msg, AS_SUCCESS);
+        nas_itti_dl_data_req (as_msg.msg.dl_info_transfer_req.ue_id, as_msg.msg.dl_info_transfer_req.nas_msg,as_msg.msg.dl_info_transfer_req.err_code);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
       }
       break;
@@ -1027,7 +1027,7 @@ static int _emm_as_send (const emm_as_t * msg)
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static int _emm_as_data_req (const emm_as_data_t * msg, ul_info_transfer_req_t * as_msg)
+static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t * as_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = 0;
@@ -1102,6 +1102,7 @@ static int _emm_as_data_req (const emm_as_data_t * msg, ul_info_transfer_req_t *
     }
 
     if (bytes > 0) {
+      as_msg->err_code = AS_SUCCESS;
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
     }
   }
@@ -1125,7 +1126,7 @@ static int _emm_as_data_req (const emm_as_data_t * msg, ul_info_transfer_req_t *
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static int _emm_as_status_ind (const emm_as_status_t * msg, ul_info_transfer_req_t * as_msg)
+static int _emm_as_status_ind (const emm_as_status_t * msg, dl_info_transfer_req_t * as_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     size = 0;
@@ -1183,6 +1184,7 @@ static int _emm_as_status_ind (const emm_as_status_t * msg, ul_info_transfer_req
                                                                     emm_security_context);
 
     if (bytes > 0) {
+      as_msg->err_code = AS_SUCCESS;
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
     }
   }
@@ -1267,7 +1269,6 @@ static int _emm_as_security_req (const emm_as_security_t * msg, dl_info_transfer
   } else {
     as_msg->ue_id = msg->ue_id;
   }
-
   /*
    * Setup the NAS security header
    */
@@ -1336,6 +1337,7 @@ static int _emm_as_security_req (const emm_as_security_t * msg, dl_info_transfer
                                                                     emm_security_context);
 
     if (bytes > 0) {
+      as_msg->err_code = AS_SUCCESS;
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
     }
   }
@@ -1378,7 +1380,7 @@ static int _emm_as_security_rej (const emm_as_security_t * msg, dl_info_transfer
   } else {
     as_msg->ue_id = msg->ue_id;
   }
-
+  
   /*
    * Setup the NAS security header
    */
@@ -1429,6 +1431,10 @@ static int _emm_as_security_rej (const emm_as_security_t * msg, dl_info_transfer
                                                                     emm_security_context);
 
     if (bytes > 0) {
+      /* 
+       *  Indicate to lower layer that procedure needs to be terminated after sending DL NAS message.
+       */
+      as_msg->err_code = AS_TERMINATED_NAS;
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
     }
   }

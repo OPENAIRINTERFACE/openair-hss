@@ -430,7 +430,12 @@ typedef struct ul_info_transfer_ind_s {
  * NAS requests the AS to transfer downlink information to the NAS that
  * operates at the UE side.
  */
-typedef ul_info_transfer_req_t dl_info_transfer_req_t;
+typedef struct dl_info_transfer_req_s {
+  mme_ue_s1ap_id_t ue_id;       /* UE lower layer identifier        */
+  as_stmsi_t       s_tmsi;      /* UE identity              */
+  bstring          nas_msg;     /* Uplink NAS message           */
+  nas_error_code_t err_code;   /* Transaction status               */
+} dl_info_transfer_req_t;
 
 /*
  * AS->NAS - Downlink data transfer confirm
