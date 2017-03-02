@@ -19,6 +19,11 @@
  *      contact@openairinterface.org
  */
 
+/*! \file mme_app_statistics.h
+  \brief
+  \author Sebastien ROUX
+  \company Eurecom
+*/
 
 #ifndef FILE_MME_APP_STATISTICS_SEEN
 #define FILE_MME_APP_STATISTICS_SEEN

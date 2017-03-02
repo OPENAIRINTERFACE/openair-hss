@@ -38,10 +38,20 @@
         is using the Evolved UTRA Network.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
+
+#include "bstrlib.h"
 
 #include "3gpp_24.007.h"
 #include "emm_sap.h"
 #include "commonDef.h"
+#include "common_defs.h"
 #include "log.h"
 
 #include "emm_reg.h"

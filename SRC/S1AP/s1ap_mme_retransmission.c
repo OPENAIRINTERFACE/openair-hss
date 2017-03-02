@@ -19,10 +19,18 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s1ap_mme_retransmission.c
+  \brief
+  \author Sebastien ROUX
+  \company Eurecom
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <stdint.h>
+
+#include "bstrlib.h"
 
 #include "tree.h"
 #include "assertions.h"
@@ -33,6 +41,7 @@
 #include "dynamic_memory_check.h"
 #include "log.h"
 
+//------------------------------------------------------------------------------
 inline int                              s1ap_mme_timer_map_compare_id (
   const struct s1ap_timer_map_s * const p1,
   const struct s1ap_timer_map_s * const p2);
@@ -77,6 +86,7 @@ int                                     s1ap_mme_timer_map_compare_id (
   return 0;
 }
 
+//------------------------------------------------------------------------------
 int
 s1ap_timer_insert (
   const mme_ue_s1ap_id_t mme_ue_s1ap_id,
@@ -90,13 +100,14 @@ s1ap_timer_insert (
 
   if (RB_INSERT (s1ap_timer_map, &s1ap_timer_tree, new) != NULL) {
     OAILOG_WARNING (LOG_S1AP, "Timer with id 0x%lx already exists\n", timer_id);
-    free_wrapper (new);
+    free_wrapper ((void**)&new);
     return -1;
   }
 
   return 0;
 }
 
+//------------------------------------------------------------------------------
 int
 s1ap_handle_timer_expiry (
   timer_has_expired_t * timer_has_expired)
@@ -120,13 +131,14 @@ s1ap_handle_timer_expiry (
   /*
    * Destroy the element
    */
-  free_wrapper (find);
+  free_wrapper ((void**)&find);
   /*
    * TODO: notify NAS and remove ue context
    */
   return 0;
 }
 
+//------------------------------------------------------------------------------
 int
 s1ap_timer_remove_ue (
   const mme_ue_s1ap_id_t mme_ue_s1ap_id)
@@ -145,7 +157,7 @@ s1ap_timer_remove_ue (
       /*
        * Destroy the element
        */
-      free_wrapper (find);
+      free_wrapper ((void**)&find);
     }
   }
   return 0;

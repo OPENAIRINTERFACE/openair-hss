@@ -18,19 +18,22 @@
  * For more information about the OpenAirInterface (OAI) Software Alliance:
  *      contact@openairinterface.org
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <arpa/inet.h>
 
+#include "bstrlib.h"
 
+#include "log.h"
 #include "TLVEncoder.h"
 #include "TLVDecoder.h"
 #include "EpsBearerContextStatus.h"
 
-int
-decode_eps_bearer_context_status (
-  EpsBearerContextStatus * epsbearercontextstatus,
+//------------------------------------------------------------------------------
+int decode_eps_bearer_context_status (
+  eps_bearer_context_status_t * epsbearercontextstatus,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -51,9 +54,9 @@ decode_eps_bearer_context_status (
   return decoded;
 }
 
-int
-encode_eps_bearer_context_status (
-  EpsBearerContextStatus * epsbearercontextstatus,
+//------------------------------------------------------------------------------
+int encode_eps_bearer_context_status (
+  eps_bearer_context_status_t * epsbearercontextstatus,
   uint8_t iei,
   uint8_t * buffer,
   uint32_t len)
@@ -76,14 +79,4 @@ encode_eps_bearer_context_status (
   IES_ENCODE_U16 (buffer, encoded, *epsbearercontextstatus);
   *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
   return encoded;
-}
-
-void
-dump_eps_bearer_context_status_xml (
-  EpsBearerContextStatus * epsbearercontextstatus,
-  uint8_t iei)
-{
-  OAILOG_DEBUG (LOG_NAS, "<Eps Bearer Context Status>\n");
-  OAILOG_DEBUG (LOG_NAS, "    <EBI>%u</EBI>\n", *epsbearercontextstatus);
-  OAILOG_DEBUG (LOG_NAS, "</Eps Bearer Context Status>\n");
 }

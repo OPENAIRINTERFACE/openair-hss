@@ -27,6 +27,13 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 
+/*! \file 3gpp_requirements_24.301.h
+   \brief
+   \author  Lionel GAUTHIER
+   \date
+   \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_3GPP_REQUIREMENTS_24_301_SEEN
 #define FILE_3GPP_REQUIREMENTS_24_301_SEEN
 
@@ -34,7 +41,8 @@
 #include "log.h"
 
 #define REQUIREMENT_3GPP_24_301(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_NAS, "Hit 3GPP TS 24_301"#rElEaSe_sEcTiOn__OaImark" : "rElEaSe_sEcTiOn__OaImark##_BRIEF"\n")
-#define NO_REQUIREMENT_3GPP_24_301(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_NAS, "3GPP TS 24_301"#rElEaSe_sEcTiOn__OaImark" NOT IMPLEMENTED\n")
+#define NO_REQUIREMENT_3GPP_24_301(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_NAS, "#NOT IMPLEMENTED 3GPP TS 24_301"#rElEaSe_sEcTiOn__OaImark" : "rElEaSe_sEcTiOn__OaImark##_BRIEF"\n")
+#define NOT_REQUIREMENT_3GPP_24_301(rElEaSe_sEcTiOn__OaImark) REQUIREMENT_3GPP_SPEC(LOG_NAS, "#NOT ASSERTED 3GPP TS 24_301"#rElEaSe_sEcTiOn__OaImark" : "rElEaSe_sEcTiOn__OaImark##_BRIEF"\n")
 
 //-----------------------------------------------------------------------------------------------------------------------
 
@@ -470,7 +478,7 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
 #define R10_5_4_3_7_b__2 "Abnormal cases on the network side                                                            \
     Expiry of timer T3460                                                                                               \
     on the fifth expiry of timer T3460, the procedure shall be aborted."
-#define R10_5_4_3_7_b__2_BRIEF ""
+#define R10_5_4_3_7_b__2_BRIEF "Expiry of timer T3460, procedure shall be aborted"
 
 //NOTE:
 //If the SECURITY MODE COMMAND message was sent to create a mapped EPS security context
@@ -482,12 +490,12 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     Collision between security mode control procedure and attach, service request, tracking area updating procedure     \
     or detach procedure not indicating switch off                                                                       \
     The network shall abort the security mode control procedure and proceed with the UE initiated procedure."
-#define R10_5_4_3_7_c_BRIEF ""
+#define R10_5_4_3_7_c_BRIEF "Collision between SMC procedure and attach, SR, TAU or detach not indicating switch off"
 
 #define R10_5_4_3_7_d "Abnormal cases on the network side                                                               \
     Collision between security mode control procedure and other EMM procedures than in item c                           \
     The network shall progress both procedures."
-#define R10_5_4_3_7_d_BRIEF ""
+#define R10_5_4_3_7_d_BRIEF "Collision between security mode control procedure and other EMM procedures"
 
 #define R10_5_4_3_7_e "Abnormal cases on the network side                                                               \
     Lower layers indication of non-delivered NAS PDU due to handover                                                    \
@@ -496,7 +504,7 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     shall retransmit the SECURITY MODE COMMAND message. If a failure of the handover procedure is reported              \
     by the lower layer and the S1 signalling connection exists, the MME shall retransmit the SECURITY MODE              \
     COMMAND message."
-#define R10_5_4_3_7_e_BRIEF ""
+#define R10_5_4_3_7_e_BRIEF "Lower layers indication of non-delivered NAS PDU due to handover"
 
 //-----------------------------------------------------------------------------------------------------------------------
 // IDENTIFICATION
@@ -515,29 +523,29 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     The network initiates the identification procedure by sending an IDENTITY REQUEST message to the UE and starting    \
     the timer T3470 (see example in figure 5.4.4.2.1). The IDENTITY REQUEST message specifies the requested             \
     identification parameters in the Identity type information element."
-#define R10_5_4_4_2_BRIEF ""
+#define R10_5_4_4_2_BRIEF "Identification initiation by the network"
 
 #define R10_5_4_4_4 "Identification completion by the network                                                           \
     Upon receipt of the IDENTITY RESPONSE the network shall stop the timer T3470."
-#define R10_5_4_4_4_BRIEF ""
+#define R10_5_4_4_4_BRIEF "Identification completion by the network"
 
 #define R10_5_4_4_6_a "Abnormal cases on the network side                                                               \
     Lower layer failure                                                                                                 \
     Upon detection of a lower layer failure before the IDENTITY RESPONSE is received, the network shall abort           \
     any ongoing EMM procedure."
-#define R10_5_4_4_6_a_BRIEF ""
+#define R10_5_4_4_6_a_BRIEF "Lower layer failure detected, abort iedentification procedure"
 
 #define R10_5_4_4_6_b__1 "Abnormal cases on the network side                                                            \
     Expiry of timer T3470                                                                                               \
     The identification procedure is supervised by the network by the timer T3470. The network shall, on the first       \
     expiry of the timer T3470, retransmit the IDENTITY REQUEST message and reset and restart the timer T3470."
-#define R10_5_4_4_6_b__1_BRIEF ""
+#define R10_5_4_4_6_b__1_BRIEF "Expiry of timer T3470"
 
 #define R10_5_4_4_6_b__2 "Abnormal cases on the network side                                                            \
     Expiry of timer T3470                                                                                               \
     This retransmission is repeated four times, i.e. on the fifth expiry of timer T3470, the network shall abort the    \
     identification procedure and any ongoing EMM procedure."
-#define R10_5_4_4_6_b__2_BRIEF ""
+#define R10_5_4_4_6_b__2_BRIEF "Expiry of timer T3470"
 
 #define R10_5_4_4_6_c "Abnormal cases on the network side                                                               \
     Collision of an identification procedure with an attach procedure                                                   \
@@ -545,15 +553,27 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     completed and no attach procedure is pending on the network (i.e. no ATTACH ACCEPT/REJECT message has               \
     still to be sent as an answer to an ATTACH REQUEST message), the network shall proceed with the attach              \
     procedure."
-#define R10_5_4_4_6_c_BRIEF ""
+#define R10_5_4_4_6_c_BRIEF "Collision of an identification procedure with an attach procedure"
 
-#define R10_5_4_4_6_d "Abnormal cases on the network side                                                               \
-    Collision of an identification procedure with an attach procedure                                                   \
-    If the network receives an ATTACH REQUEST message before the ongoing identification procedure has been              \
-    completed and no attach procedure is pending on the network (i.e. no ATTACH ACCEPT/REJECT message has               \
-    still to be sent as an answer to an ATTACH REQUEST message), the network shall proceed with the attach              \
-    procedure."
-#define R10_5_4_4_6_d_BRIEF ""
+#define R10_5_4_4_6_d__1 "Abnormal cases on the network side                                                            \
+    Collision of an identification procedure with an attach procedure when the identification procedure has been        \
+    caused by an attach procedure                                                                                       \
+   If the network receives an ATTACH REQUEST message before the ongoing identification procedure has been               \
+   completed and an attach procedure is pending (i.e. an ATTACH ACCEPT/REJECT message has to be sent as an              \
+   answer to an earlier ATTACH REQUEST message), then:                                                                  \
+   - If one or more of the information elements in the ATTACH REQUEST message differ from the ones                      \
+     received within the previous ATTACH REQUEST message, the network shall proceed with the new attach                 \
+     procedure;"
+#define R10_5_4_4_6_d__1_BRIEF "Collision of an identification procedure with an attach procedure, attach IEs changed, new attach go on"
+#define R10_5_4_4_6_d__2 "Abnormal cases on the network side                                                            \
+    Collision of an identification procedure with an attach procedure when the identification procedure has been        \
+    caused by an attach procedure                                                                                       \
+   If the network receives an ATTACH REQUEST message before the ongoing identification procedure has been               \
+   completed and an attach procedure is pending (i.e. an ATTACH ACCEPT/REJECT message has to be sent as an              \
+   answer to an earlier ATTACH REQUEST message), then:                                                                  \
+   - If the information elements do not differ, then the network shall not treat any further this new ATTACH            \
+     REQUEST."
+#define R10_5_4_4_6_d__2_BRIEF "Collision of an identification procedure with an attach procedure, attach IEs unchanged, new attach discarded"
 
 //-----------------------------------------------------------------------------------------------------------------------
 // ATTACH
@@ -579,7 +599,7 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     The network may initiate EMM common procedures, e.g. the identification, authentication and security mode control   \
     procedures during the attach procedure, depending on the information received in the ATTACH REQUEST message         \
     (e.g. IMSI, GUTI and KSI)."
-#define R10_5_5_1_2_3__1_BRIEF ""
+#define R10_5_5_1_2_3__1_BRIEF "EMM common procedure initiation during attach procedure"
 
 //#define R10_5_5_1_2_3__2 "Attach procedure - EMM common procedure initiation
 //    If the network receives an ATTACH REQUEST message containing the Old GUTI type IE and the EPS mobile identity
@@ -724,20 +744,20 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     If the old GUTI was allocated by an MME other than the current MME, the current MME does not need to retain         \
     the old GUTI. If the old GUTI is used by the UE in a subsequent attach message, the network may use the             \
     identification procedure to request the UE's IMSI.       "
-#define R10_5_5_1_2_7_a_BRIEF ""
+#define R10_5_5_1_2_7_a_BRIEF "Abnormal cases on the network side: Lower layer failure"
 
 #define R10_5_5_1_2_7_c__1 "Abnormal cases on the network side                                                          \
     c) T3450 time-out                                                                                                   \
     On the first expiry of the timer, the network shall retransmit the ATTACH ACCEPT message and shall reset and        \
     restart timer T3450.                                                                                                \
     This retransmission is repeated four times"     
-#define R10_5_5_1_2_7_c__1_BRIEF ""
+#define R10_5_5_1_2_7_c__1_BRIEF "Abnormal cases on the network side: T3450 time-out"
 
 #define R10_5_5_1_2_7_c__2 "Abnormal cases on the network side                                                          \
     c) T3450 time-out                                                                                                   \
     i.e. on the fifth expiry of timer T3450, the attach procedure shall be                                              \
     aborted and the MME enters state EMM-DEREGISTERED. "
-#define R10_5_5_1_2_7_c__2_BRIEF ""
+#define R10_5_5_1_2_7_c__2_BRIEF "Abnormal cases on the network side: fifth expiry of timer T3450"
 
 #define R10_5_5_1_2_7_c__3 "Abnormal cases on the network side                                                          \
     c) T3450 time-out                                                                                                   \

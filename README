@@ -19,10 +19,9 @@ Licence info
 #---------------------
 Linux
 #---------------------
-  The Openair-cn code actually is written, executed, and tested on UBUNTU 
-  desktop 14.04 64 bits.
-  Actually the S-GW network element requires a linux kernel version 3.19 (for tag <= v0.3.2).
-  Actually the S-GW network element requires a linux kernel version >= 4.7.x (for tag >= v0.4.0).
+  The Openair-cn code actually is written, executed, and tested on UBUNTU desktop.
+  Actually the S-GW network element requires a linux kernel version 3.19 (for tag <= v0.3.2), tested on UBUNTU desktop 14.04 64 bits.
+  Actually the S-GW network element requires a linux kernel version >= 4.7.x (for tag >= v0.4.0), tested on UBUNTU desktop 16.04 64 bits.
 
   
 #---------------------
@@ -30,8 +29,8 @@ Collaborative work
 #---------------------
   This source code is managed through a GITLAB, a collaborative development 
   platform, URL: https://gitlab.eurecom.fr/oai/openair-cn
-  
-   
+
+
 #---------------------
 Contributions request
 #---------------------
@@ -39,26 +38,21 @@ Contributions request
   code in any network component. Contributions can be simple bugfixes, advices
   and remarks on the design, architecture, coding/implementation, are can can 
   size up to a project collaboration.
-  
-  There are large areas where help is needed, and some more specifics:
-  
-    # By order of decreasing priority level:
-  
-      - Development of test tools: eNB(s) emulator on S1 interface.
-      
-      - Enhance the implementation of the HSS, many things are missing there.
-      
-      - Re-implement a GTPv1-U framework in S-GW using a 'zero-copy' framework.
-      
-      - Enhance the NAS layer with compliant TAU and SR procedures, implement 
-        the handling of dedicated bearers in NAS and S/P-GW.
 
-      - Propagate the use of ITTI inside the NAS for exchanges between EMM and 
-        ESM.
+  There are large areas where help is needed, and some more specifics:
+
+    # By order of decreasing priority level:
+
+      - Development of test tools: eNB(s) emulator on S1 interface.
+
+      - Enhance the implementation of the HSS, many things are missing there.
+
+      - Enhance the NAS layer with compliant TAU and SR procedures, complete 
+        the handling of dedicated bearers in NAS and S/P-GW.
 
       - Improve the design and implementation of the InTer-Task-Interface 
         middleware, a message passing software.
-      
+
       - Enhance the S1AP MME application with the handling of new messages.
 
       - Help documenting, cleaning and harmonizing the source code.
@@ -85,5 +79,4 @@ How to contribute
     Work closely with the OAI community to ensure periodic review takes place 
     with them so you code can be merged to the main repository.
     Use Gitlab for collaborative development, bug fixing, feature requests, etc.
-
 

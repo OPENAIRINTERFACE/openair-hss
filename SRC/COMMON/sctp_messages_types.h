@@ -26,6 +26,14 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
+
+/*! \file sctp_messages_types.h
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_SCTP_MESSAGES_TYPES_SEEN
 #define FILE_SCTP_MESSAGES_TYPES_SEEN
 
@@ -33,6 +41,7 @@
 #define SCTP_DATA_REQ(mSGpTR)           (mSGpTR)->ittiMsg.sctp_data_req
 #define SCTP_DATA_CNF(mSGpTR)           (mSGpTR)->ittiMsg.sctp_data_cnf
 #define SCTP_INIT_MSG(mSGpTR)           (mSGpTR)->ittiMsg.sctpInit
+#define SCTP_NEW_ASSOCIATION(mSGpTR)    (mSGpTR)->ittiMsg.sctp_new_peer
 #define SCTP_CLOSE_ASSOCIATION(mSGpTR)  (mSGpTR)->ittiMsg.sctp_close_association
 
 
@@ -70,9 +79,9 @@ typedef struct sctp_init_s {
   /* Request usage of ipv6 */
   unsigned  ipv6:1;
   uint8_t   nb_ipv4_addr;
-  uint32_t  ipv4_address[10];
+  struct in_addr  ipv4_address[10];
   uint8_t   nb_ipv6_addr;
-  char     *ipv6_address[10];
+  struct in6_addr ipv6_address[10];
   uint16_t  port;
   uint32_t  ppid;
 } SctpInit;

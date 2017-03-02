@@ -19,25 +19,48 @@
  *      contact@openairinterface.org
  */
 
+/*! \file oai_mme.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #include <stdio.h>
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <syslog.h>
-#include <string.h>
 
 #if HAVE_CONFIG_H
 #  include "config.h"
 #endif
 
+#include "bstrlib.h"
+
+
+#include "log.h"
 #include "dynamic_memory_check.h"
 #include "assertions.h"
-#include "log.h"
 #include "msc.h"
+#include "3gpp_23.003.h"
+#include "3gpp_24.008.h"
+#include "3gpp_33.401.h"
+#include "3gpp_24.007.h"
+#include "3gpp_36.401.h"
+#include "3gpp_36.331.h"
+#include "security_types.h"
+#include "common_types.h"
+#include "common_defs.h"
+#include "xml_msg_dump.h"
 #include "mme_config.h"
 
 #include "intertask_interface_init.h"
@@ -49,6 +72,7 @@
 #include "mme_app_extern.h"
 #include "nas_defs.h"
 #include "s11_mme.h"
+#include "mme_scenario_player_task.h"
 
 /* FreeDiameter headers for support of S6A interface */
 #include <freeDiameter/freeDiameter-host.h>
@@ -100,21 +124,21 @@ main (
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
 
-  openlog(NULL, 0, LOG_DAEMON);
 
   if (! is_pid_file_lock_success(pid_file_name)) {
     closelog();
-    free_wrapper(pid_file_name);
+    free_wrapper((void**)&pid_file_name);
     exit (-EDEADLK);
   }
 #else
   if (! is_pid_file_lock_success(pid_file_name)) {
-    free_wrapper(pid_file_name);
+    free_wrapper((void**)&pid_file_name);
     exit (-EDEADLK);
   }
 #endif
 
 
+  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
   CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_DEBUG, MAX_LOG_PROTOS));
   /*
    * Parse the command line for options and set the mme_config accordingly.
@@ -132,6 +156,9 @@ main (
 #endif
           NULL));
   MSC_INIT (MSC_MME, THREAD_MAX + TASK_MAX);
+#if TRACE_XML
+  CHECK_INIT_RETURN (mme_scenario_player_init (&mme_config));
+#endif
   CHECK_INIT_RETURN (nas_init (&mme_config));
   CHECK_INIT_RETURN (sctp_init (&mme_config));
   CHECK_INIT_RETURN (udp_init ());
@@ -139,11 +166,13 @@ main (
   CHECK_INIT_RETURN (s1ap_mme_init (&mme_config));
   CHECK_INIT_RETURN (mme_app_init (&mme_config));
   CHECK_INIT_RETURN (s6a_init (&mme_config));
+  XML_MSG_DUMP_INIT();
   /*
    * Handle signals here
    */
   itti_wait_tasks_end ();
   pid_file_unlock();
-  free_wrapper(pid_file_name);
+  free_wrapper((void**)&pid_file_name);
+  XML_MSG_DUMP_EXIT();
   return 0;
 }

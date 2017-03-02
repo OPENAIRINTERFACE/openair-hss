@@ -26,56 +26,50 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
+
+/*! \file s1ap_messages_types.h
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 #ifndef FILE_S1AP_MESSAGES_TYPES_SEEN
 #define FILE_S1AP_MESSAGES_TYPES_SEEN
 
-#define S1AP_ENB_DEREGISTERED_IND(mSGpTR)   (mSGpTR)->ittiMsg.s1ap_eNB_deregistered_ind
-#define S1AP_DEREGISTER_UE_REQ(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_deregister_ue_req
-#define S1AP_UE_CONTEXT_RELEASE_REQ(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_req
-#define S1AP_UE_CONTEXT_RELEASE_COMMAND(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_command
-#define S1AP_UE_CONTEXT_RELEASE_COMPLETE(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_complete
+#include "3gpp_36.401.h"
+#include "3gpp_36.413.h"
+#include "3gpp_36.331.h"
+#include "3gpp_23.003.h"
+#include "TrackingAreaIdentity.h"
 
-typedef struct itti_s1ap_initial_ue_message_s {
-  mme_ue_s1ap_id_t     mme_ue_s1ap_id;
+#define S1AP_ENB_DEREGISTERED_IND(mSGpTR)        (mSGpTR)->ittiMsg.s1ap_eNB_deregistered_ind
+#define S1AP_DEREGISTER_UE_REQ(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_deregister_ue_req
+#define S1AP_UE_CONTEXT_RELEASE_REQ(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_ue_context_release_req
+#define S1AP_UE_CONTEXT_RELEASE_COMMAND(mSGpTR)  (mSGpTR)->ittiMsg.s1ap_ue_context_release_command
+#define S1AP_UE_CONTEXT_RELEASE_COMPLETE(mSGpTR) (mSGpTR)->ittiMsg.s1ap_ue_context_release_complete
+#define S1AP_E_RAB_SETUP_REQ(mSGpTR)             (mSGpTR)->ittiMsg.s1ap_e_rab_setup_req
+#define S1AP_E_RAB_SETUP_RSP(mSGpTR)             (mSGpTR)->ittiMsg.s1ap_e_rab_setup_rsp
+#define S1AP_INITIAL_UE_MESSAGE(mSGpTR)          (mSGpTR)->ittiMsg.s1ap_initial_ue_message
+
+// NOT a ITTI message
+typedef struct s1ap_initial_ue_message_s {
   enb_ue_s1ap_id_t     enb_ue_s1ap_id:24;
   ecgi_t                e_utran_cgi;
-} itti_s1ap_initial_ue_message_t;
+} s1ap_initial_ue_message_t;
 
-typedef struct itti_s1ap_initial_ctxt_setup_req_s {
-  mme_ue_s1ap_id_t        mme_ue_s1ap_id;
-  enb_ue_s1ap_id_t        enb_ue_s1ap_id:24;
-
-  /* Key eNB */
-  uint8_t                 kenb[32];
-
-  ambr_t                  ambr;
-  ambr_t                  apn_ambr;
-
-  /* EPS bearer ID */
-  unsigned                ebi:4;
-
-  /* QoS */
-  qci_t                   qci;
-  priority_level_t        prio_level;
-  pre_emp_vulnerability_t pre_emp_vulnerability;
-  pre_emp_capability_t    pre_emp_capability;
-
-  /* S-GW TEID for user-plane */
-  teid_t                  teid;
-  /* S-GW IP address for User-Plane */
-  ip_address_t            s_gw_address;
-} itti_s1ap_initial_ctxt_setup_req_t;
+#define S1AP_UE_RADIOCAPABILITY_MAX_SIZE 1000
 
 typedef struct itti_s1ap_ue_cap_ind_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
-  uint8_t           radio_capabilities[512];
+  uint8_t           radio_capabilities[S1AP_UE_RADIOCAPABILITY_MAX_SIZE];
   size_t            radio_capabilities_length;
 } itti_s1ap_ue_cap_ind_t;
 
-#define S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE 20
+#define S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE 400
 typedef struct itti_s1ap_eNB_deregistered_ind_s {
-  uint8_t          nb_ue_to_deregister;
+  uint16_t         nb_ue_to_deregister;
   mme_ue_s1ap_id_t mme_ue_s1ap_id[S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE];
 } itti_s1ap_eNB_deregistered_ind_t;
 
@@ -86,16 +80,67 @@ typedef struct itti_s1ap_deregister_ue_req_s {
 typedef struct itti_s1ap_ue_context_release_req_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
+  S1ap_Cause_t      cause;             // Should translate this S1ap_Cause_t type
 } itti_s1ap_ue_context_release_req_t;
 
 typedef struct itti_s1ap_ue_context_release_command_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
+  S1ap_Cause_t      cause;             // Should translate this S1ap_Cause_t type
 } itti_s1ap_ue_context_release_command_t;
 
 typedef struct itti_s1ap_ue_context_release_complete_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
 } itti_s1ap_ue_context_release_complete_t;
+
+typedef struct itti_s1ap_initial_ue_message_s {
+  sctp_assoc_id_t     sctp_assoc_id; // key stored in MME_APP for MME_APP forward NAS response to S1AP
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+  bstring             nas;
+  tai_t               tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
+  ecgi_t              ecgi;              /* Indicating the cell from which the UE has sent the NAS message.                         */
+  rrc_establishment_cause_t      rrc_establishment_cause;          /* Establishment cause                     */
+
+  bool                is_s_tmsi_valid;
+  bool                is_csg_id_valid;
+  bool                is_gummei_valid;
+  s_tmsi_t            opt_s_tmsi;
+  csg_id_t            opt_csg_id;
+  gummei_t            opt_gummei;
+  //void                opt_cell_access_mode;
+  //void                opt_cell_gw_transport_address;
+  //void                opt_relay_node_indicator;
+  /* Transparent message from s1ap to be forwarded to MME_APP or
+   * to S1AP if connection establishment is rejected by NAS.
+   */
+  s1ap_initial_ue_message_t transparent;
+} itti_s1ap_initial_ue_message_t;
+
+typedef struct itti_s1ap_e_rab_setup_req_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+
+  // Applicable for non-GBR E-RABs
+  bool                            ue_aggregate_maximum_bit_rate_present;
+  ue_aggregate_maximum_bit_rate_t ue_aggregate_maximum_bit_rate;
+
+  // E-RAB to Be Setup List
+  e_rab_to_be_setup_list_t        e_rab_to_be_setup_list;
+
+} itti_s1ap_e_rab_setup_req_t;
+
+
+typedef struct itti_s1ap_e_rab_setup_rsp_s {
+  mme_ue_s1ap_id_t    mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t    enb_ue_s1ap_id;
+
+  // E-RAB to Be Setup List
+  e_rab_setup_list_t                  e_rab_setup_list;
+
+  // Optional
+  e_rab_list_t        e_rab_failed_to_setup_list;
+
+} itti_s1ap_e_rab_setup_rsp_t;
 
 #endif /* FILE_S1AP_MESSAGES_TYPES_SEEN */

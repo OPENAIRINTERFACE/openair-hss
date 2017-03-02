@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="no_regression">    
+  <!-- relative paths -->
+  <scenario_file><file>3GPP_TS_24.301/R10_no_regression.xml</file></scenario_file>
+</scenario>

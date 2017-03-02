@@ -42,12 +42,11 @@ Description Defines the EMM Service Access Points at which the EPS
 #ifndef FILE_EMM_SAP_SEEN
 #define FILE_EMM_SAP_SEEN
 
-#include "emmData.h"
+#include "emm_data.h"
 #include "emm_regDef.h"
 #include "emm_esmDef.h"
 #include "emm_asDef.h"
 #include "emm_cnDef.h"
-
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
@@ -87,6 +86,7 @@ typedef enum {
   /* EMMESM-SAP */
   EMMESM_RELEASE_IND      = _EMMESM_RELEASE_IND,
   EMMESM_UNITDATA_REQ     = _EMMESM_UNITDATA_REQ,
+  EMMESM_ACTIVATE_BEARER_REQ  = _EMMESM_ACTIVATE_BEARER_REQ,
   EMMESM_UNITDATA_IND     = _EMMESM_UNITDATA_IND,
   /* EMMAS-SAP */
   EMMAS_SECURITY_REQ      = _EMMAS_SECURITY_REQ,
@@ -98,6 +98,9 @@ typedef enum {
   EMMAS_ESTABLISH_REJ     = _EMMAS_ESTABLISH_REJ,
   EMMAS_RELEASE_REQ       = _EMMAS_RELEASE_REQ,
   EMMAS_RELEASE_IND       = _EMMAS_RELEASE_IND,
+  EMMAS_ERAB_SETUP_REQ    = _EMMAS_ERAB_SETUP_REQ,
+  EMMAS_ERAB_SETUP_CNF    = _EMMAS_ERAB_SETUP_CNF,
+  EMMAS_ERAB_SETUP_REJ    = _EMMAS_ERAB_SETUP_REJ,
   EMMAS_DATA_REQ          = _EMMAS_DATA_REQ,
   EMMAS_DATA_IND          = _EMMAS_DATA_IND,
   EMMAS_PAGE_IND          = _EMMAS_PAGE_IND,
@@ -106,8 +109,10 @@ typedef enum {
   EMMCN_AUTHENTICATION_PARAM_RES      = _EMMCN_AUTHENTICATION_PARAM_RES,
   EMMCN_AUTHENTICATION_PARAM_FAIL     = _EMMCN_AUTHENTICATION_PARAM_FAIL,
   EMMCN_DEREGISTER_UE                 = _EMMCN_DEREGISTER_UE,
+  EMMCN_PDN_CONFIG_RES                = _EMMCN_PDN_CONFIG_RES,
   EMMCN_PDN_CONNECTIVITY_RES          = _EMMCN_PDN_CONNECTIVITY_RES,
-  EMMCN_PDN_CONNECTIVITY_FAIL         = _EMMCN_PDN_CONNECTIVITY_FAIL
+  EMMCN_PDN_CONNECTIVITY_FAIL         = _EMMCN_PDN_CONNECTIVITY_FAIL,
+  EMMCN_ACTIVATE_DEDICATED_BEARER_REQ = _EMMCN_ACTIVATE_DEDICATED_BEARER_REQ
 } emm_primitive_t;
 
 /*

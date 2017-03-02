@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="ue_ctxt_rel_req_enb_initiated">
+
+  <!-- time allowed values = seconds.microseconds or "now" -->
+  <!-- time_ref allowed values = negative integers (-n= n'th item before this), or "this" -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../MSGR10/ITTI_S1AP_UE_CONTEXT_RELEASE_REQUEST.xml</file>
+  </message_file>  
+    
+  <message_file action="receive" time="2.0"  time_ref="-1">
+    <file>../../MSGR10/ITTI_S1AP_UE_CONTEXT_RELEASE_COMMAND.xml</file>
+  </message_file>  
+
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../MSGR10/ITTI_S1AP_UE_CONTEXT_RELEASE_COMPLETE.xml</file>
+  </message_file>
+    
+</scenario>

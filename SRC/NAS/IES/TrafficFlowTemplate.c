@@ -61,33 +61,33 @@ static int                              decode_traffic_flow_template_packet_filt
   uint32_t len);
 
 static int                              encode_traffic_flow_template_delete_packet (
-  DeletePacketFilter * packetfilter,
+  const DeletePacketFilter * packetfilter,
   uint8_t nbpacketfilters,
   uint8_t * buffer,
   uint32_t len);
 static int                              encode_traffic_flow_template_create_tft (
-  CreateNewTft * packetfilter,
+  const CreateNewTft * packetfilter,
   uint8_t nbpacketfilters,
   uint8_t * buffer,
   uint32_t len);
 static int                              encode_traffic_flow_template_add_packet (
-  AddPacketFilter * packetfilter,
+  const AddPacketFilter * packetfilter,
   uint8_t nbpacketfilters,
   uint8_t * buffer,
   uint32_t len);
 static int                              encode_traffic_flow_template_replace_packet (
-  ReplacePacketFilter * packetfilter,
+  const ReplacePacketFilter * packetfilter,
   uint8_t nbpacketfilters,
   uint8_t * buffer,
   uint32_t len);
 
 static int                              encode_traffic_flow_template_packet_filter_identifiers (
-  PacketFilterIdentifiers * packetfilteridentifiers,
+  const PacketFilterIdentifiers * packetfilteridentifiers,
   uint8_t nbpacketfilters,
   uint8_t * buffer,
   uint32_t len);
 static int                              encode_traffic_flow_template_packet_filters (
-  PacketFilters * packetfilters,
+  const PacketFilters * packetfilters,
   uint8_t nbpacketfilters,
   uint8_t * buffer,
   uint32_t len);
@@ -110,38 +110,38 @@ decode_traffic_flow_template (
   int                                     decoded_result = 0;
   uint8_t                                 ielen = 0;
 
-  if (iei > 0) {
-    CHECK_IEI_DECODER (iei, *buffer);
-    decoded++;
-  }
-
-  ielen = *(buffer + decoded);
-  decoded++;
-  CHECK_LENGTH_DECODER (len - decoded, ielen);
-  trafficflowtemplate->tftoperationcode = (*(buffer + decoded) >> 5) & 0x7;
-  trafficflowtemplate->ebit = (*(buffer + decoded) >> 4) & 0x1;
-  trafficflowtemplate->numberofpacketfilters = *(buffer + decoded) & 0xf;
-  decoded++;
-
-  /*
-   * Decoding packet filter list
-   */
-  if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET) {
-    decoded_result = decode_traffic_flow_template_delete_packet (&trafficflowtemplate->packetfilterlist.deletepacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + decoded), len - decoded);
-  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE) {
-    decoded_result = decode_traffic_flow_template_create_tft (&trafficflowtemplate->packetfilterlist.createtft, trafficflowtemplate->numberofpacketfilters, (buffer + decoded), len - decoded);
-  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_ADD_PACKET) {
-    decoded_result = decode_traffic_flow_template_add_packet (&trafficflowtemplate->packetfilterlist.addpacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + decoded), len - decoded);
-  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_REPLACE_PACKET) {
-    decoded_result = decode_traffic_flow_template_replace_packet (&trafficflowtemplate->packetfilterlist.replacepacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + decoded), len - decoded);
-  }
-#if NAS_DEBUG
-  dump_traffic_flow_template_xml (trafficflowtemplate, iei);
-#endif
-
-  if (decoded_result < 0) {
-    return decoded_result;
-  }
+//  if (iei > 0) {
+//    CHECK_IEI_DECODER (iei, *buffer);
+//    decoded++;
+//  }
+//
+//  ielen = *(buffer + decoded);
+//  decoded++;
+//  CHECK_LENGTH_DECODER (len - decoded, ielen);
+//  trafficflowtemplate->tftoperationcode = (*(buffer + decoded) >> 5) & 0x7;
+//  trafficflowtemplate->ebit = (*(buffer + decoded) >> 4) & 0x1;
+//  trafficflowtemplate->numberofpacketfilters = *(buffer + decoded) & 0xf;
+//  decoded++;
+//
+//  /*
+//   * Decoding packet filter list
+//   */
+//  if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET) {
+//    decoded_result = decode_traffic_flow_template_delete_packet (&trafficflowtemplate->packetfilterlist.deletepacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + decoded), len - decoded);
+//  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE) {
+//    decoded_result = decode_traffic_flow_template_create_tft (&trafficflowtemplate->packetfilterlist.createtft, trafficflowtemplate->numberofpacketfilters, (buffer + decoded), len - decoded);
+//  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_ADD_PACKET) {
+//    decoded_result = decode_traffic_flow_template_add_packet (&trafficflowtemplate->packetfilterlist.addpacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + decoded), len - decoded);
+//  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_REPLACE_PACKET) {
+//    decoded_result = decode_traffic_flow_template_replace_packet (&trafficflowtemplate->packetfilterlist.replacepacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + decoded), len - decoded);
+//  }
+//#if NAS_DEBUG
+//  dump_traffic_flow_template_xml (trafficflowtemplate, iei);
+//#endif
+//
+//  if (decoded_result < 0) {
+//    return decoded_result;
+//  }
 
   return (decoded + decoded_result);
 }
@@ -156,38 +156,38 @@ encode_traffic_flow_template (
   uint8_t                                *lenPtr;
   uint32_t                                encoded = 0;
 
-  /*
-   * Checking IEI and pointer
-   */
-  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, TRAFFIC_FLOW_TEMPLATE_MINIMUM_LENGTH, len);
-#if NAS_DEBUG
-  dump_traffic_flow_template_xml (trafficflowtemplate, iei);
-#endif
-
-  if (iei > 0) {
-    *buffer = iei;
-    encoded++;
-  }
-
-  lenPtr = (buffer + encoded);
-  encoded++;
-  *(buffer + encoded) = 0x00 | ((trafficflowtemplate->tftoperationcode & 0x7) << 5) | ((trafficflowtemplate->ebit & 0x1) << 4) | (trafficflowtemplate->numberofpacketfilters & 0xf);
-  encoded++;
-
-  /*
-   * Encoding packet filter list
-   */
-  if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET) {
-    encoded += encode_traffic_flow_template_delete_packet (&trafficflowtemplate->packetfilterlist.deletepacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + encoded), len - encoded);
-  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE) {
-    encoded += encode_traffic_flow_template_create_tft (&trafficflowtemplate->packetfilterlist.createtft, trafficflowtemplate->numberofpacketfilters, (buffer + encoded), len - encoded);
-  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_ADD_PACKET) {
-    encoded += encode_traffic_flow_template_add_packet (&trafficflowtemplate->packetfilterlist.addpacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + encoded), len - encoded);
-  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_REPLACE_PACKET) {
-    encoded += encode_traffic_flow_template_replace_packet (&trafficflowtemplate->packetfilterlist.replacepacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + encoded), len - encoded);
-  }
-
-  *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
+//  /*
+//   * Checking IEI and pointer
+//   */
+//  CHECK_PDU_POINTER_AND_LENGTH_ENCODER (buffer, TRAFFIC_FLOW_TEMPLATE_MINIMUM_LENGTH, len);
+//#if NAS_DEBUG
+//  dump_traffic_flow_template_xml (trafficflowtemplate, iei);
+//#endif
+//
+//  if (iei > 0) {
+//    *buffer = iei;
+//    encoded++;
+//  }
+//
+//  lenPtr = (buffer + encoded);
+//  encoded++;
+//  *(buffer + encoded) = 0x00 | ((trafficflowtemplate->tftoperationcode & 0x7) << 5) | ((trafficflowtemplate->ebit & 0x1) << 4) | (trafficflowtemplate->numberofpacketfilters & 0xf);
+//  encoded++;
+//
+//  /*
+//   * Encoding packet filter list
+//   */
+//  if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_DELETE_PACKET) {
+//    encoded += encode_traffic_flow_template_delete_packet (&trafficflowtemplate->packetfilterlist.deletepacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + encoded), len - encoded);
+//  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_CREATE) {
+//    encoded += encode_traffic_flow_template_create_tft (&trafficflowtemplate->packetfilterlist.createtft, trafficflowtemplate->numberofpacketfilters, (buffer + encoded), len - encoded);
+//  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_ADD_PACKET) {
+//    encoded += encode_traffic_flow_template_add_packet (&trafficflowtemplate->packetfilterlist.addpacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + encoded), len - encoded);
+//  } else if (trafficflowtemplate->tftoperationcode == TRAFFIC_FLOW_TEMPLATE_OPCODE_REPLACE_PACKET) {
+//    encoded += encode_traffic_flow_template_replace_packet (&trafficflowtemplate->packetfilterlist.replacepacketfilter, trafficflowtemplate->numberofpacketfilters, (buffer + encoded), len - encoded);
+//  }
+//
+//  *lenPtr = encoded - 1 - ((iei > 0) ? 1 : 0);
   return encoded;
 }
 

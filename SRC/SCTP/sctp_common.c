@@ -21,8 +21,8 @@
 
 
 /*! \file sctp_common.c
-    \brief eNB/MME SCTP related common procedures
-    \author Sebastien ROUX
+    \brief MME SCTP related common procedures
+    \author Sebastien ROUX, Lionel GAUTHIER
     \date 2013
     \version 1.0
     @ingroup _sctp
@@ -36,6 +36,10 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/sctp.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "bstrlib.h"
 
 #include "sctp_common.h"
 #include "log.h"

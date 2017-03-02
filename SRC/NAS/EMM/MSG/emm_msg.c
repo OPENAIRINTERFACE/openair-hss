@@ -36,13 +36,36 @@
   Description Defines EPS Mobility Management messages
 
 *****************************************************************************/
+#include <stdint.h>
+#include <stdbool.h>
 
-#include "common_types.h"
-#include "emm_msg.h"
+#include <libxml/xmlwriter.h>
+#include <libxml/xpath.h>
+#include "bstrlib.h"
+
+#include "hashtable.h"
+#include "obj_hashtable.h"
 #include "log.h"
+#include "msc.h"
+#include "assertions.h"
+#include "conversions.h"
+#include "3gpp_23.003.h"
+#include "3gpp_24.008.h"
+#include "3gpp_33.401.h"
+#include "3gpp_24.007.h"
+#include "3gpp_36.401.h"
+#include "3gpp_36.331.h"
+#include "3gpp_24.301.h"
+#include "3gpp_29.274.h"
+#include "security_types.h"
+#include "common_types.h"
+#include "mme_app_ue_context.h"
+#include "emm_msg.h"
+#include "esm_msg.h"
+#include "intertask_interface.h"
 #include "TLVDecoder.h"
 #include "TLVEncoder.h"
-#include "log.h"
+#include "esm_proc.h"
 #include "nas_itti_messaging.h"
 
 /****************************************************************************/
@@ -53,11 +76,8 @@
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
 
-static int                              _emm_msg_decode_header (
-  emm_msg_header_t * header,
-  const uint8_t * buffer,
-  uint32_t len);
-static int                              _emm_msg_encode_header (
+
+int emm_msg_encode_header (
   const emm_msg_header_t * header,
   uint8_t * buffer,
   uint32_t len);
@@ -93,14 +113,11 @@ emm_msg_decode (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     header_result = 0;
   int                                     decode_result = 0;
-  uint8_t                                *buffer_log = buffer;
-  uint32_t                                len_log = len;
-  bool                                    is_down_link = false;
 
   /*
    * First decode the EMM message header
    */
-  header_result = _emm_msg_decode_header (&msg->header, buffer, len);
+  header_result = emm_msg_decode_header (&msg->header, buffer, len);
 
   if (header_result < 0) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Failed to decode EMM message header " "(%d)\n", header_result);
@@ -109,7 +126,7 @@ emm_msg_decode (
 
   buffer += header_result;
   len -= header_result;
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-MSG   - Message Type 0x%02x\n", msg->header.message_type);
+  OAILOG_DEBUG (LOG_NAS_EMM, "EMM-MSG   - Message Type 0x%02x\n", msg->header.message_type);
 
   switch (msg->header.message_type) {
   case EMM_INFORMATION:
@@ -225,7 +242,7 @@ emm_msg_decode (
     break;
 
   default:
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Unexpected message type: 0x%x", msg->header.message_type);
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Unexpected message type: 0x%x\n", msg->header.message_type);
     decode_result = TLV_WRONG_MESSAGE_TYPE;
     /*
      * TODO: Handle not standard layer 3 messages: SERVICE_REQUEST
@@ -235,11 +252,6 @@ emm_msg_decode (
   if (decode_result < 0) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Failed to decode L3 EMM message 0x%x " "(%d)\n", msg->header.message_type, decode_result);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, decode_result);
-  } else {
-    /*
-     * Message has been decoded and security header removed, handle it has a plain message
-     */
-    nas_itti_plain_msg ((char *)buffer_log, (nas_message_t *) msg, len_log, is_down_link);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, header_result + decode_result);
@@ -271,12 +283,10 @@ emm_msg_encode (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     header_result;
   int                                     encode_result;
-  uint8_t                                *buffer_log = buffer;
-  bool                                    is_down_link = true;
   /*
    * First encode the EMM message header
    */
-  header_result = _emm_msg_encode_header (&msg->header, buffer, len);
+  header_result = emm_msg_encode_header (&msg->header, buffer, len);
 
   if (header_result < 0) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Failed to encode EMM message header " "(%d)\n", header_result);
@@ -413,8 +423,6 @@ emm_msg_encode (
 
   if (encode_result < 0) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-MSG   - Failed to encode L3 EMM message 0x%x " "(%d)\n", msg->header.message_type, encode_result);
-  } else {
-    nas_itti_plain_msg ((char *)buffer_log, (nas_message_t *) msg, header_result + encode_result, is_down_link);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, header_result + encode_result);
@@ -426,7 +434,7 @@ emm_msg_encode (
 
 /****************************************************************************
  **                                                                        **
- ** Name:    _emm_msg_decode_header()                                  **
+ ** Name:    emm_msg_decode_header()                                  **
  **                                                                        **
  ** Description: Decode header of EPS Mobility Management message.         **
  **      The protocol discriminator and the security header type   **
@@ -444,8 +452,7 @@ emm_msg_encode (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static int
-_emm_msg_decode_header (
+int emm_msg_decode_header (
   emm_msg_header_t * header,
   const uint8_t * buffer,
   uint32_t len)
@@ -497,8 +504,8 @@ _emm_msg_decode_header (
  **      Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-static int
-_emm_msg_encode_header (
+int
+emm_msg_encode_header (
   const emm_msg_header_t * header,
   uint8_t * buffer,
   uint32_t len)

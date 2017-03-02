@@ -43,17 +43,30 @@
         to the network and re-establish all PDN connections.
 
 *****************************************************************************/
-
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
+
+#include "bstrlib.h"
+
 #include "log.h"
 #include "msc.h"
 #include "dynamic_memory_check.h"
+#include "assertions.h"
 #include "nas_timer.h"
-#include "emmData.h"
+#include "emm_data.h"
+#include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
+#include "mme_app_ue_context.h"
 #include "emm_proc.h"
 #include "emm_sap.h"
 #include "esm_sap.h"
 #include "nas_itti_messaging.h" 
+#include "mme_app_defs.h"
 
 
 /****************************************************************************/
@@ -186,70 +199,76 @@ emm_proc_detach_request (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
-  emm_data_context_t                     *emm_ctx = NULL;
 
   OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Detach type = %s (%d) requested (ue_id=" MME_UE_S1AP_ID_FMT ")", _emm_detach_type_str[type], type, ue_id);
   /*
    * Get the UE context
    */
-  emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
-  if (emm_ctx == NULL) {
+  if (ue_mm_context == NULL) {
     OAILOG_WARNING (LOG_NAS_EMM, "No EMM context exists for the UE (ue_id=" MME_UE_S1AP_ID_FMT ")", ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 
+  emm_context_t *emm_ctx = &ue_mm_context->emm_context;
+
+  emm_context_silently_reset_procedures(emm_ctx);
+
   if (switch_off) {
-    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Removing UE context ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+    MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 Clearing secu/auth UE context ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
 
     /*
      * The UE is switched off
      */
-    emm_ctx_clear_old_guti(emm_ctx);
-    emm_ctx_clear_guti(emm_ctx);
-    emm_ctx_clear_imsi(emm_ctx);
-    emm_ctx_clear_imei(emm_ctx);
+    // Let these lines commented: do not clear key information (keys of hashtables)
+    //emm_ctx_clear_old_guti(emm_ctx);
+    //emm_ctx_clear_guti(emm_ctx);
+    //emm_ctx_clear_imsi(emm_ctx);
+    //emm_ctx_clear_imei(emm_ctx);
+    //emm_ctx_clear_imeisv(emm_ctx);
     emm_ctx_clear_auth_vectors(emm_ctx);
     emm_ctx_clear_security(emm_ctx);
     emm_ctx_clear_non_current_security(emm_ctx);
 
 
     if (emm_ctx->esm_msg) {
-      bdestroy (emm_ctx->esm_msg);
+      bdestroy_wrapper (&emm_ctx->esm_msg);
     }
 
     /*
      * Stop timer T3450
      */
     if (emm_ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)", emm_ctx->T3450.id);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%ld)", emm_ctx->T3450.id);
       emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3450 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     }
 
     /*
      * Stop timer T3460
      */
     if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)", emm_ctx->T3460.id);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%ld)", emm_ctx->T3460.id);
       emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     }
 
     /*
      * Stop timer T3470
      */
     if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)", emm_ctx->T3460.id);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%ld)", emm_ctx->T3460.id);
       emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "0 T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", ue_id);
     }
 
     /*
      * Release the EMM context
      */
-    emm_data_context_remove (&_emm_data, emm_ctx);
-    free_wrapper (emm_ctx);
+#warning "TODO think about emm_context_remove"
+    //emm_context_remove (&_emm_data, emm_ctx);
+    //free_wrapper ((void**)&emm_ctx);
 
     rc = RETURNok;
   } else {
@@ -259,7 +278,6 @@ emm_proc_detach_request (
     emm_sap_t                               emm_sap = {0};
     emm_as_data_t                          *emm_as = &emm_sap.u.emm_as.u.data;
 
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_NAS_INFO_DETACH ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     /*
      * Setup NAS information message to transfer
      */
@@ -280,6 +298,7 @@ emm_proc_detach_request (
      * be sent to the network
      */
     emm_sap.primitive = EMMAS_DATA_REQ;
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_REQ (DETACH) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     rc = emm_sap_send (&emm_sap);
   }
 
@@ -293,7 +312,7 @@ emm_proc_detach_request (
 
     esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ;
     esm_sap.ue_id = ue_id;
-    esm_sap.ctx = emm_ctx;
+    esm_sap.ctx = &ue_mm_context->emm_context;
     esm_sap.data.eps_bearer_context_deactivate.ebi = ESM_SAP_ALL_EBI;
     rc = esm_sap_send (&esm_sap);
 
@@ -306,11 +325,11 @@ emm_proc_detach_request (
       MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_REQ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       emm_sap.primitive = EMMREG_DETACH_REQ;
       emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx = emm_ctx;
+      emm_sap.u.emm_reg.ctx = &ue_mm_context->emm_context;
       rc = emm_sap_send (&emm_sap);
     }
 	
-    nas_itti_detach_req(ue_id);
+    nas_itti_detach_req(ue_id, (long)EMM_AS_CAUSE_DETACH);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ITTI_NAS_DOWNLINK_DATA_REQ>
+  <ACTION>WAIT_RECEIVE</ACTION>
+  <ITTI_SENDER_TASK>TASK_MME_APP</ITTI_SENDER_TASK>
+  <ITTI_RECEIVER_TASK>TASK_MME_SCENARIO_PLAYER</ITTI_RECEIVER_TASK>
+  <TIMESTAMP>ANY</TIMESTAMP>
+  <mme_ue_s1ap_id>$MME_UE_S1AP_ID</mme_ue_s1ap_id>
+  <enb_ue_s1ap_id>$ENB_UE_S1AP_ID</enb_ue_s1ap_id>
+  <security_protected_nas_message>
+    <security_header_type>0x000003</security_header_type>
+    <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
+    <mac>#NAS_MAC_DL</mac>
+    <sequence_number>#NAS_DOWNLINK_SEQUENCE_NUMBER</sequence_number>
+    <plain_nas_message>
+      <security_header_type>0x000000</security_header_type>
+      <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
+      <message_type>SECURITY_MODE_COMMAND</message_type>
+      <nas_security_algorithms>
+        <type_of_ciphering_algorithm>#ITTI_NAS_DOWNLINK_DATA_REQ.NAS.SECURITY_MODE_COMMAND.TYPE_OF_CIPHERING_ALGORITHM</type_of_ciphering_algorithm>
+        <type_of_integrity_protection_algorithm>#ITTI_NAS_DOWNLINK_DATA_REQ.NAS.SECURITY_MODE_COMMAND.TYPE_OF_INTEGRITY_PROTECTION_ALGORITHM</type_of_integrity_protection_algorithm>
+      </nas_security_algorithms>
+      <nas_key_set_identifier tsc="0" ksi="0"/>
+      <ue_security_capability>
+        <eea>0xe0</eea>
+        <eia>0x60</eia>
+        <uea>0xc0</uea>
+        <uia>0x40</uia>
+        <gea>0x70</gea>
+      </ue_security_capability>
+      <imeisv_request>1</imeisv_request>
+    </plain_nas_message>
+  </security_protected_nas_message>
+</ITTI_NAS_DOWNLINK_DATA_REQ>
+

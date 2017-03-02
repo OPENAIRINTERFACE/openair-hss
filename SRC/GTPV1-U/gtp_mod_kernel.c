@@ -5,20 +5,24 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#include <errno.h>
+#include <time.h>
 
 #include <libgtpnl/gtp.h>
 #include <libgtpnl/gtpnl.h>
 #include <libmnl/libmnl.h>
-#include <errno.h>
-#include <time.h>
+#include "bstrlib.h"
 
 #include "log.h"
-#include "hashtable.h"
-#include "common_types.h"
 #include "common_defs.h"
+#include "gtp_mod_kernel.h"
+#include "common_types.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
+#include "pgw_pcef_emulation.h"
 #include "spgw_config.h"
 #include "gtpv1u_sgw_defs.h"
-#include "gtp_mod_kernel.h"
+#include "dynamic_memory_check.h"
 
 
 static struct {
@@ -33,6 +37,7 @@ static struct {
 //------------------------------------------------------------------------------
 int gtp_mod_kernel_init(int *fd0, int *fd1u, struct in_addr *ue_net, int mask, int gtp_dev_mtu)
 {
+#if ! GTP_KERNEL_MODULE_UNAVAILABLE
   // we don't need GTP v0, but interface with kernel requires 2 file descriptors
   *fd0 = socket(AF_INET, SOCK_DGRAM, 0);
   *fd1u = socket(AF_INET, SOCK_DGRAM, 0);
@@ -84,10 +89,10 @@ int gtp_mod_kernel_init(int *fd0, int *fd1u, struct in_addr *ue_net, int mask, i
   int ret = system ((const char *)system_cmd->data);
   if (ret) {
     OAILOG_ERROR (LOG_GTPV1U, "ERROR in system command %s: %d at %s:%u\n", bdata(system_cmd), ret, __FILE__, __LINE__);
-    bdestroy(system_cmd);
+    bdestroy_wrapper (&system_cmd);
     return RETURNerror;
   }
-  bdestroy(system_cmd);
+  bdestroy_wrapper (&system_cmd);
 
   struct in_addr ue_gw;
   ue_gw.s_addr = ue_net->s_addr | htonl(1);
@@ -95,10 +100,10 @@ int gtp_mod_kernel_init(int *fd0, int *fd1u, struct in_addr *ue_net, int mask, i
   ret = system ((const char *)system_cmd->data);
   if (ret) {
     OAILOG_ERROR (LOG_GTPV1U, "ERROR in system command %s: %d at %s:%u\n", bdata(system_cmd), ret, __FILE__, __LINE__);
-    bdestroy(system_cmd);
+    bdestroy_wrapper (&system_cmd);
     return RETURNerror;
   }
-  bdestroy(system_cmd);
+  bdestroy_wrapper (&system_cmd);
 
 
   OAILOG_DEBUG (LOG_GTPV1U, "Setting route to reach UE net %s via %s\n", inet_ntoa(*ue_net), GTP_DEVNAME);
@@ -109,24 +114,27 @@ int gtp_mod_kernel_init(int *fd0, int *fd1u, struct in_addr *ue_net, int mask, i
   }
 
   OAILOG_NOTICE (LOG_GTPV1U, "GTP kernel configured\n");
-
+#endif
   return RETURNok;
 }
 
 //------------------------------------------------------------------------------
 void gtp_mod_kernel_stop(void)
 {
+#if ! GTP_KERNEL_MODULE_UNAVAILABLE
   if (!gtp_nl.is_enabled)
     return;
 
   gtp_dev_destroy(GTP_DEVNAME);
+#endif
 }
 
 //------------------------------------------------------------------------------
-int gtp_mod_kernel_tunnel_add(struct in_addr ue, struct in_addr enb, uint32_t i_tei, uint32_t o_tei)
+int gtp_mod_kernel_tunnel_add(struct in_addr ue, struct in_addr enb, uint32_t i_tei, uint32_t o_tei, uint8_t bearer_id)
 {
+  int ret = RETURNok;
+#if ! GTP_KERNEL_MODULE_UNAVAILABLE
   struct gtp_tunnel *t;
-  int ret;
 
   if (!gtp_nl.is_enabled)
     return RETURNok;
@@ -142,18 +150,19 @@ int gtp_mod_kernel_tunnel_add(struct in_addr ue, struct in_addr enb, uint32_t i_
   gtp_tunnel_set_sgsn_ip4(t, &enb);
   gtp_tunnel_set_i_tei(t, i_tei);
   gtp_tunnel_set_o_tei(t, o_tei);
-
+  gtp_tunnel_set_bearer_id(t, bearer_id);
   ret = gtp_add_tunnel(gtp_nl.genl_id, gtp_nl.nl, t);
   gtp_tunnel_free(t);
-
+#endif
   return ret;
 }
 
 //------------------------------------------------------------------------------
 int gtp_mod_kernel_tunnel_del(uint32_t i_tei, uint32_t o_tei)
 {
+  int ret = RETURNok;
+#if ! GTP_KERNEL_MODULE_UNAVAILABLE
   struct gtp_tunnel *t;
-  int ret;
 
   if (!gtp_nl.is_enabled)
     return RETURNok;
@@ -172,6 +181,7 @@ int gtp_mod_kernel_tunnel_del(uint32_t i_tei, uint32_t o_tei)
   ret = gtp_del_tunnel(gtp_nl.genl_id, gtp_nl.nl, t);
   gtp_tunnel_free(t);
 
+#endif
   return ret;
 }
 

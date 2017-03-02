@@ -96,6 +96,6 @@ dump_authentication_parameter_rand_xml (
 
   bstring b = dump_bstring_xml (authenticationparameterrand);
   OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
-  bdestroy(b);
+  bdestroy_wrapper(&b);
   OAILOG_DEBUG (LOG_NAS, "</Authentication Parameter Rand>\n");
 }

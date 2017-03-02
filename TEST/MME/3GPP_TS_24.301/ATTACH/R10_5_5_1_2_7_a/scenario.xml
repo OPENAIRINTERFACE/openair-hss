@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+<!-- 
+    a) Lower layer failure                                                                                              
+    If a lower layer failure occurs before the message ATTACH COMPLETE has been received from the UE, the               
+    network shall locally abort the attach procedure, enter state EMM-DEREGISTERED and shall not resend the             
+    message ATTACH ACCEPT. If a new GUTI was assigned to the UE in the attach procedure, the MME shall                  
+    consider both the old and the new GUTI as valid until the old GUTI can be considered as invalid by the network      
+    or the EMM context which has been marked as detached in the network is released.                                    
+    If the old GUTI was allocated by an MME other than the current MME, the current MME does not need to retain         
+    the old GUTI. If the old GUTI is used by the UE in a subsequent attach message, the network may use the             
+    identification procedure to request the UE's IMSI.       "
+ -->
+<scenario name="R10_5_5_1_2_7_a">
+
+  <ue_security_context ksi="0" knas_enc="0123456789abcdef0123456789abcdef" knas_int="0123456789abcdef0123456789abcdef" ul_count="0"  />
+  <var name="NUM_LOOPS"                                   value="30"         />
+  <var name="MME_UE_S1AP_ID"                              value="0xffffff"   />
+  <var name="ENB_UE_S1AP_ID"                              value="0x123456"   />
+  <var name="MME_CODE"                                    value="0x01"       />
+  <var name="MME_GROUP_IDENTIFIER"                        value="4"          />
+  <var name="MCC"                                         value="0x208"      />
+  <var name="MNC"                                         value="0x93f"      />
+  <var name="TRACKING_AREA_CODE"                          value="1"          />
+  <var name="NAS_MAC"                                     value="0xD8C12369" />
+  <var name="NAS_UPLINK_SEQUENCE_NUMBER"                  value="0"          />
+
+  <var name="ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   value="0x00000000" />
+
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.DOWNLINK_SEQUENCE_NUMBER"                value="0"          />
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.KENB"                                        hex_stream_value="00"/>
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS.MAC"                                     value="0"          />
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.ERAB.S1U_SGW_TRANSPORT_LAYER_ADDRESS"        value="0"/>
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.ERAB.S1U_TEID"                               value="0"          />
+  <var name="ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.NAS_EMM.GUTI.M_TMSI"                         value="0x608acd01" />
+
+  
+  <label name="loop0" />
+
+  <!-- time allowed values = seconds.microseconds or "now" -->
+  <!-- time_ref allowed values = negative integers (-n= n'th item before this), or "this" -->
+  <message_file action="send" time="now"  time_ref="this">
+    <file>mme_msg_000002_ITTI_MME_APP_INITIAL_UE_MESSAGE.xml</file>
+  </message_file>
+
+  <!-- time allowed values = seconds.microseconds or "now" -->
+  <!-- time_ref allowed values = negative integers (-n= n'th item before this), or "this" -->
+  <message_file action="receive" time_out="0.1" time_ref="-1">
+    <file>mme_msg_000003_ITTI_NAS_DOWNLINK_DATA_REQ.xml</file>
+  </message_file>
+  <set_var name="MME_UE_S1AP_ID"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   />
+
+
+  <message_file action="send" time="now"  time_ref="this">
+    <file>mme_msg_000004_ITTI_NAS_UPLINK_DATA_IND.xml</file>
+  </message_file>
+
+  <message_file action="receive" time_out="0.5" time_ref="-1">
+    <file>mme_msg_000009_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.xml</file>
+  </message_file>
+
+  <exit/>
+
+  <label name="exit_error" />
+  <exit  status="failed" />
+  <!--   
+  <sleep    seconds="5"     useconds="0"          />
+  <decr_var name="NUM_LOOPS"     value="1"          />
+  <jcond var_name="NUM_LOOPS" cond="gt"  value="0" label="loop0"/>
+  <message_file action="receive" time_out="0.5" time_ref="-1">
+    <file>mme_msg_000003_ITTI_NAS_DOWNLINK_DATA_REQ.xml</file>
+  </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"       value="0"          />
+  <message_file action="send" time="now" time_ref="-1">
+    <file>mme_msg_000002_ITTI_MME_APP_INITIAL_UE_MESSAGE.xml</file>
+  </message_file>
+  <message_file action="receive" time_out="0.5" time_ref="-1">
+    <file>mme_msg_000009_ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.xml</file>
+  </message_file>
+  <message_file action="send" time="now"  time_ref="-1">
+    <file>mme_msg_000010_ITTI_MME_APP_INITIAL_CONTEXT_SETUP_RSP.xml</file>
+  </message_file> -->
+</scenario>

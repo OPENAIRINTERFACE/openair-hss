@@ -97,6 +97,6 @@ dump_authentication_response_parameter_xml (
   OAILOG_DEBUG (LOG_NAS, "<Authentication Response Parameter>\n");
   bstring b = dump_bstring_xml (authenticationresponseparameter);
   OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
-  bdestroy(b);
+  bdestroy_wrapper (&b);
   OAILOG_DEBUG (LOG_NAS, "</Authentication Response Parameter>\n");
 }

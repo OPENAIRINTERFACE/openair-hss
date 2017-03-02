@@ -27,8 +27,6 @@
 */
 #ifndef FILE_PGW_PCO_SEEN
 #define FILE_PGW_PCO_SEEN
-#include <stdbool.h>
-#include "ProtocolConfigurationOptions.h"
 
 int pgw_pco_push_protocol_or_container_id(protocol_configuration_options_t * const pco, pco_protocol_or_container_id_t * const poc_id);
 

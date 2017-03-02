@@ -19,15 +19,18 @@
  *      contact@openairinterface.org
  */
 
-
+/*! \file s1ap_mme_handlers.h
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #ifndef FILE_S1AP_MME_HANDLERS_SEEN
 #define FILE_S1AP_MME_HANDLERS_SEEN
-#include "s1ap_ies_defs.h"
-#include "intertask_interface.h"
 
 
-#define S1AP_UE_RADIOCAPABILITY_MAX_SIZE 400
+
 
 /** \brief Handle decoded incoming messages from SCTP
  * \param assoc_id SCTP association ID
@@ -83,5 +86,11 @@ int s1ap_mme_set_cause(S1ap_Cause_t *cause_p, const S1ap_Cause_PR cause_type, co
 int s1ap_mme_generate_s1_setup_failure(
     const sctp_assoc_id_t assoc_id, const S1ap_Cause_PR cause_type, const long cause_value,
     const long time_to_wait);
+
+int s1ap_mme_handle_erab_setup_response (const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream, struct s1ap_message_s *message);
+
+int s1ap_mme_handle_erab_setup_failure (const sctp_assoc_id_t assoc_id,
+    const sctp_stream_id_t stream, struct s1ap_message_s *message);
 
 #endif /* FILE_S1AP_MME_HANDLERS_SEEN */

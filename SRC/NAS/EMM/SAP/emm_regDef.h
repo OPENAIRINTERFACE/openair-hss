@@ -43,6 +43,7 @@ Description Defines the EMMREG Service Access Point that provides
 
 #include "common_types.h"
 #include "commonDef.h"
+#include "3gpp_36.401.h"
 #include <stdbool.h>
 
 /****************************************************************************/
@@ -114,7 +115,7 @@ typedef struct {
 typedef struct {
   emm_reg_primitive_t primitive;
   mme_ue_s1ap_id_t    ue_id;
-  void               *ctx;
+  struct emm_context_s  *ctx;
 
   union {
     emm_reg_attach_t    attach;

@@ -36,39 +36,52 @@
   Description
 
 *****************************************************************************/
-
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
 
+#include "bstrlib.h"
 
 #include "log.h"
+#include "msc.h"
+#include "gcc_diag.h"
+#include "dynamic_memory_check.h"
+#include "assertions.h"
 #include "commonDef.h"
-
+#include "common_types.h"
+#include "common_defs.h"
+#include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
+#include "mme_app_ue_context.h"
 #include "emm_cn.h"
 #include "emm_sap.h"
 #include "emm_proc.h"
 #include "emm_cause.h"
-
 #include "esm_send.h"
 #include "esm_proc.h"
 #include "esm_cause.h"
 #include "assertions.h"
-#include "emmData.h"
+#include "emm_data.h"
 #include "esm_sap.h"
 #include "EmmCommon.h"
 #include "3gpp_requirements_24.301.h"
+#include "mme_app_defs.h"
+#include "mme_app_apn_selection.h"
+#include "nas_itti_messaging.h"
 
-extern int emm_cn_wrapper_attach_accept (emm_data_context_t * emm_ctx, void *data);
+extern int emm_cn_wrapper_attach_accept (emm_context_t * emm_context);
 
-/*
-   Internal data used for attach procedure
-*/
-typedef struct {
-  unsigned int                            ue_id; /* UE identifier        */
-#  define ATTACH_COUNTER_MAX  5
-  unsigned int                            retransmission_count; /* Retransmission counter   */
-  bstring                                 esm_msg;      /* ESM message to be sent within
-                                                         * the Attach Accept message    */
-} attach_data_t;
+static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg);
+static int _emm_cn_authentication_fail (const emm_cn_auth_fail_t * msg);
+static int _emm_cn_deregister_ue (const mme_ue_s1ap_id_t ue_id);
+static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP);
+static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP);
+
 
 /*
    String representation of EMMCN-SAP primitives
@@ -77,23 +90,27 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMM_CN_AUTHENTICATION_PARAM_RES",
   "EMM_CN_AUTHENTICATION_PARAM_FAIL",
   "EMM_CN_DEREGISTER_UE",
+  "EMM_CN_PDN_CONFIG_RES",
   "EMM_CN_PDN_CONNECTIVITY_RES",
   "EMM_CN_PDN_CONNECTIVITY_FAIL",
+  "EMM_CN_ACTIVATE_DEDICATED_BEARER_REQ",
 };
-
 
 //------------------------------------------------------------------------------
 static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg)
 {
-  emm_data_context_t                     *emm_ctx = NULL;
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_context_t                          *emm_ctx = NULL;
   int                                     rc = RETURNerror;
 
   /*
    * We received security vector from HSS. Try to setup security with UE
    */
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
+  if (ue_mm_context) {
+    emm_ctx = &ue_mm_context->emm_context;
+  }
   if (emm_ctx == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -109,6 +126,7 @@ static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg)
     memcpy (emm_ctx->_vector[i].xres, msg->vector[i]->xres.data, msg->vector[i]->xres.size);
     emm_ctx->_vector[i].xres_size = msg->vector[i]->xres.size;
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received Vector %u:\n", i);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received XRES ..: " XRES_FORMAT "\n", XRES_DISPLAY (emm_ctx->_vector[i].xres));
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received RAND ..: " RAND_FORMAT "\n", RAND_DISPLAY (emm_ctx->_vector[i].rand));
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received AUTN ..: " AUTN_FORMAT "\n", AUTN_DISPLAY (emm_ctx->_vector[i].autn));
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Received KASME .: " KASME_FORMAT " " KASME_FORMAT "\n",
@@ -119,7 +137,6 @@ static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg)
 
   ksi_t eksi = 0;
   if (emm_ctx->_security.eksi !=  KSI_NO_KEY_AVAILABLE) {
-    AssertFatal(0 !=  0, "emm_ctx->_security.eksi %d", emm_ctx->_security.eksi);
     REQUIREMENT_3GPP_24_301(R10_5_4_2_4__2);
     eksi = (emm_ctx->_security.eksi + 1) % (EKSI_MAX_VALUE + 1);
   }
@@ -140,8 +157,13 @@ static int _emm_cn_authentication_res (const emm_cn_auth_res_t * msg)
      * * * * and NAS security setup to activate integrity protection and NAS
      * * * * ciphering are mandatory.
      */
-    rc = emm_proc_authentication (emm_ctx, emm_ctx->ue_id, eksi,
-        emm_ctx->_vector[vindex].rand, emm_ctx->_vector[vindex].autn, emm_attach_security, NULL, NULL);
+    emm_common_reject_callback_t cb = NULL;
+
+    if (emm_ctx_is_specific_procedure_running(emm_ctx, EMM_CTXT_SPEC_PROC_ATTACH)) {
+      cb = _emm_attach_reject;
+    }
+    rc = emm_proc_authentication (emm_ctx, ue_mm_context->mme_ue_s1ap_id, eksi,
+        emm_ctx->_vector[vindex].rand, emm_ctx->_vector[vindex].autn, emm_attach_security, cb, NULL);
 
     if (rc != RETURNok) {
       /*
@@ -169,7 +191,7 @@ static int _emm_cn_authentication_fail (const emm_cn_auth_fail_t * msg)
 }
 
 //------------------------------------------------------------------------------
-static int _emm_cn_deregister_ue (const uint32_t ue_id)
+static int _emm_cn_deregister_ue (const mme_ue_s1ap_id_t ue_id)
 {
   int                                     rc = RETURNok;
 
@@ -182,10 +204,116 @@ static int _emm_cn_deregister_ue (const uint32_t ue_id)
 }
 
 //------------------------------------------------------------------------------
+static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNerror;
+  struct emm_context_s                   *emm_ctx = NULL;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  pdn_cid_t                               pdn_cid = 0;
+  ebi_t                                   new_ebi = 0;
+  bool                                    is_pdn_connectivity = false;
+
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
+
+  if (ue_mm_context) {
+    emm_ctx = &ue_mm_context->emm_context;
+  }
+
+  if (emm_ctx == NULL) {
+    OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
+
+  //----------------------------------------------------------------------------
+  // PDN selection here
+  // Because NAS knows APN selected by UE if any
+  // default APN selection
+  struct apn_configuration_s* apn_config = mme_app_select_apn(ue_mm_context, emm_ctx->esm_ctx.esm_proc_data->apn);
+
+  if (!apn_config) {
+    /*
+     * Unfortunately we didn't find our default APN...
+     */
+    OAILOG_INFO (LOG_NAS_ESM, "No suitable APN found ue_id=" MME_UE_S1AP_ID_FMT ")\n",ue_mm_context->mme_ue_s1ap_id);
+    return RETURNerror;
+  }
+
+  // search for an already set PDN context
+  for (pdn_cid = 0; pdn_cid < MAX_APN_PER_UE; pdn_cid++) {
+    if ((ue_mm_context->pdn_contexts[pdn_cid]) && (ue_mm_context->pdn_contexts[pdn_cid]->context_identifier == apn_config->context_identifier)) {
+      is_pdn_connectivity = true;
+      break;
+    }
+  }
+
+  if (pdn_cid >= MAX_APN_PER_UE) {
+    /*
+     * Search for an available PDN connection entry
+     */
+    for (pdn_cid = 0; pdn_cid < MAX_APN_PER_UE; pdn_cid++) {
+      if (!ue_mm_context->pdn_contexts[pdn_cid]) break;
+    }
+  }
+  if (pdn_cid < MAX_APN_PER_UE) {
+
+    /*
+     * Execute the PDN connectivity procedure requested by the UE
+     */
+    emm_ctx->esm_ctx.esm_proc_data->pdn_cid = pdn_cid;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci       = apn_config->subscribed_qos.qci;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pci       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pl        = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pvi       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_ul = 0;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_dl = 0;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_ul = 0;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_dl = 0;
+#warning "Better to throw emm_ctx->esm_ctx.esm_proc_data as a parameter or as a hidden parameter ?"
+    rc = esm_proc_pdn_connectivity_request (emm_ctx,
+        emm_ctx->esm_ctx.esm_proc_data->pti,
+        emm_ctx->esm_ctx.esm_proc_data->pdn_cid,
+        apn_config->context_identifier,
+        emm_ctx->esm_ctx.esm_proc_data->request_type,
+        emm_ctx->esm_ctx.esm_proc_data->apn,
+        emm_ctx->esm_ctx.esm_proc_data->pdn_type,
+        emm_ctx->esm_ctx.esm_proc_data->pdn_addr,
+        &emm_ctx->esm_ctx.esm_proc_data->bearer_qos,
+        (emm_ctx->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_ctx->esm_ctx.esm_proc_data->pco:NULL,
+        &esm_cause);
+
+    if (rc != RETURNerror) {
+      /*
+       * Create local default EPS bearer context
+       */
+      if ((!is_pdn_connectivity) || ((is_pdn_connectivity) && (EPS_BEARER_IDENTITY_UNASSIGNED != ue_mm_context->pdn_contexts[pdn_cid]->default_ebi))) {
+        rc = esm_proc_default_eps_bearer_context (emm_ctx, emm_ctx->esm_ctx.esm_proc_data->pti, pdn_cid, &new_ebi, emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci, &esm_cause);
+      }
+
+      if (rc != RETURNerror) {
+        esm_cause = ESM_CAUSE_SUCCESS;
+      }
+    } else {
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    }
+    if (!is_pdn_connectivity) {
+      nas_itti_pdn_connectivity_req (emm_ctx->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, &emm_ctx->_imsi,
+        emm_ctx->esm_ctx.esm_proc_data, emm_ctx->esm_ctx.esm_proc_data->request_type);
+    } else {
+
+    }
+
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+}
+
+//------------------------------------------------------------------------------
 static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 {
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  struct emm_data_context_s              *emm_ctx_p = NULL;
+  struct emm_context_s                   *emm_ctx = NULL;
   esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
   ESM_msg                                 esm_msg = {.header = {0}};
   EpsQualityOfService                     qos = {0};
@@ -193,14 +321,14 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   bool                                    is_standalone = false;    // warning hardcoded
   bool                                    triggered_by_ue = true;  // warning hardcoded
   attach_data_t                          *data_p = NULL;
-  int                                     esm_cause = ESM_CAUSE_SUCCESS;
-  int                                     pid = 0;
-  unsigned int                            new_ebi = 0;
 
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_ctx_p = emm_data_context_get (&_emm_data, msg_pP->ue_id);
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
 
-  if (emm_ctx_p == NULL) {
+  if (ue_mm_context) {
+    emm_ctx = &ue_mm_context->emm_context;
+  }
+
+  if (emm_ctx == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
@@ -247,48 +375,16 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   qos.bitRatesExt.guarBitRateForUL = 0;
   qos.bitRatesExt.guarBitRateForDL = 0;
 
+  int def_bearer_index = EBI_TO_INDEX(msg_pP->ebi);
+  pdn_cid_t pdn_cid = ue_mm_context->bearer_contexts[def_bearer_index]->pdn_cx_id;
 
-  /*************************************************************************/
-  /*
-   * CODE THAT WAS IN esm_recv.c/esm_recv_pdn_connectivity_request()
-   */
-  /*************************************************************************/
-  /*
-   * Execute the PDN connectivity procedure requested by the UE
-   */
-  pid = esm_proc_pdn_connectivity_request (emm_ctx_p, msg_pP->pti, msg_pP->request_type, msg_pP->apn, esm_pdn_type, msg_pP->pdn_addr, NULL, &esm_cause);
-  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)bdata(msg_pP->apn));
-
-  if (pid != RETURNerror) {
-    /*
-     * Create local default EPS bearer context
-     */
-    rc = esm_proc_default_eps_bearer_context (emm_ctx_p, pid, &new_ebi, &msg_pP->qos, &esm_cause);
-
-    if (rc != RETURNerror) {
-      esm_cause = ESM_CAUSE_SUCCESS;
-    }
-  } else {
-    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-  }
-
-  /**************************************************************************/
-  /*
-   * END OF CODE THAT WAS IN esm_recv.c/esm_recv_pdn_connectivity_request()
-   */
-  /**************************************************************************/
-  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)bdata(msg_pP->apn));
-  /*************************************************************************/
-  /*
-   * CODE THAT WAS IN esm_sap.c/_esm_sap_recv()
-   */
-  /*************************************************************************/
   /*
    * Return default EPS bearer context request message
    */
-  rc = esm_send_activate_default_eps_bearer_context_request (msg_pP->pti, new_ebi,      //msg_pP->ebi,
+  rc = esm_send_activate_default_eps_bearer_context_request (msg_pP->pti, msg_pP->ebi,      //msg_pP->ebi,
                                                              &esm_msg.activate_default_eps_bearer_context_request,
-                                                             msg_pP->apn, &msg_pP->pco,
+                                                             ue_mm_context->pdn_contexts[pdn_cid]->apn_subscribed,
+                                                             &msg_pP->pco,
                                                              esm_pdn_type, msg_pP->pdn_addr,
                                                              &qos, ESM_CAUSE_SUCCESS);
   clear_protocol_configuration_options(&msg_pP->pco);
@@ -296,19 +392,20 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
     /*
      * Encode the returned ESM response message
      */
-    int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) emm_ctx_p->emm_cn_sap_buffer,
+    char                                    emm_cn_sap_buffer[EMM_CN_SAP_BUFFER_SIZE];
+    int                                     size = esm_msg_encode (&esm_msg, (uint8_t *) emm_cn_sap_buffer,
                                                                    EMM_CN_SAP_BUFFER_SIZE);
 
     OAILOG_INFO (LOG_NAS_EMM, "ESM encoded MSG size %d\n", size);
 
     if (size > 0) {
-      rsp = blk2bstr(emm_ctx_p->emm_cn_sap_buffer, size);
+      rsp = blk2bstr(emm_cn_sap_buffer, size);
     }
 
     /*
      * Complete the relevant ESM procedure
      */
-    rc = esm_proc_default_eps_bearer_context_request (is_standalone, emm_ctx_p, new_ebi,        //0, //ESM_EBI_UNASSIGNED, //msg->ebi,
+    rc = esm_proc_default_eps_bearer_context_request (is_standalone, emm_ctx, msg_pP->ebi,        //0, //ESM_EBI_UNASSIGNED, //msg->ebi,
                                                       &rsp, triggered_by_ue);
 
     if (rc != RETURNok) {
@@ -326,43 +423,86 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
    * END OF CODE THAT WAS IN esm_sap.c/_esm_sap_recv()
    */
   /*************************************************************************/
-  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s\n", (char *)bdata(msg_pP->apn));
-  data_p = (attach_data_t *) emm_proc_common_get_args (msg_pP->ue_id);
-  /*
-   * Setup the ESM message container
-   */
-  data_p->esm_msg = rsp;
+  if ((emm_ctx->specific_proc) && (EMM_SPECIFIC_PROC_TYPE_ATTACH == emm_ctx->specific_proc->type)) {
+    data_p = (attach_data_t *) &emm_ctx->specific_proc->arg.u.attach_data;
+  }
 
-  /*
-   * Send attach accept message to the UE
-   */
-  rc = emm_cn_wrapper_attach_accept (emm_ctx_p, data_p);
+  if (data_p) {
+    /*
+     * Setup the ESM message container
+     */
+    data_p->esm_msg = rsp;
 
-  if (rc != RETURNerror) {
-    if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_ctx_p) &&
-        (memcmp(&emm_ctx_p->_old_guti, &emm_ctx_p->_guti, sizeof(emm_ctx_p->_guti)))) {
-      /*
-       * Implicit GUTI reallocation;
-       * * * * Notify EMM that common procedure has been initiated
-       */
-      emm_sap_t                               emm_sap = {0};
+    /*
+     * Send attach accept message to the UE
+     */
+    rc = emm_cn_wrapper_attach_accept (emm_ctx);
 
-      emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
-      emm_sap.u.emm_reg.ue_id = msg_pP->ue_id;
-      emm_sap.u.emm_reg.ctx  = emm_ctx_p;
-      rc = emm_sap_send (&emm_sap);
+    if (rc != RETURNerror) {
+      if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_ctx) &&
+          (memcmp(&emm_ctx->_old_guti, &emm_ctx->_guti, sizeof(emm_ctx->_guti)))) {
+        /*
+         * Implicit GUTI reallocation;
+         * * * * Notify EMM that common procedure has been initiated
+         */
+        emm_sap_t                               emm_sap = {0};
+
+        emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
+        emm_sap.u.emm_reg.ue_id = msg_pP->ue_id;
+        emm_sap.u.emm_reg.ctx  = emm_ctx;
+
+        MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg_pP->ue_id);
+
+        rc = emm_sap_send (&emm_sap);
+      }
     }
   }
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMM  -  APN = %s \n", (char *)bdata(msg_pP->apn));
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
 //------------------------------------------------------------------------------
 static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
 {
-  int                                     rc = RETURNok;
   OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bearer_req_t * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
+  // forward to ESM
+  esm_sap_t                               esm_sap = {0};
+
+  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
+
+  esm_sap.primitive = ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ;
+  esm_sap.ctx           = &ue_mm_context->emm_context;
+  esm_sap.is_standalone = true;
+  esm_sap.ue_id         = msg->ue_id;
+  esm_sap.data.eps_dedicated_bearer_context_activate.cid         = msg->cid;
+  esm_sap.data.eps_dedicated_bearer_context_activate.ebi         = msg->ebi;
+  esm_sap.data.eps_dedicated_bearer_context_activate.linked_ebi  = msg->linked_ebi;
+  esm_sap.data.eps_dedicated_bearer_context_activate.tft         = msg->tft;
+  esm_sap.data.eps_dedicated_bearer_context_activate.qci         = msg->bearer_qos.qci;
+  esm_sap.data.eps_dedicated_bearer_context_activate.gbr_ul      = msg->bearer_qos.gbr.br_ul;
+  esm_sap.data.eps_dedicated_bearer_context_activate.gbr_dl      = msg->bearer_qos.gbr.br_dl;
+  esm_sap.data.eps_dedicated_bearer_context_activate.mbr_ul      = msg->bearer_qos.mbr.br_ul;
+  esm_sap.data.eps_dedicated_bearer_context_activate.mbr_dl      = msg->bearer_qos.mbr.br_dl;
+  // stole ref if any
+  msg->tft = NULL;
+  esm_sap.data.eps_dedicated_bearer_context_activate.pco         = msg->pco;
+  // stole ref if any
+  msg->pco = NULL;
+
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u",
+      esm_sap.ue_id,esm_sap.data.eps_dedicated_bearer_context_activate.ebi);
+
+  rc = esm_sap_send (&esm_sap);
+
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -388,12 +528,20 @@ int emm_cn_send (const emm_cn_t * msg)
     rc = _emm_cn_deregister_ue (msg->u.deregister.ue_id);
     break;
 
+  case EMMCN_PDN_CONFIG_RES:
+    rc = _emm_cn_pdn_config_res (msg->u.emm_cn_pdn_config_res);
+    break;
+
   case EMMCN_PDN_CONNECTIVITY_RES:
     rc = _emm_cn_pdn_connectivity_res (msg->u.emm_cn_pdn_res);
     break;
 
   case EMMCN_PDN_CONNECTIVITY_FAIL:
     rc = _emm_cn_pdn_connectivity_fail (msg->u.emm_cn_pdn_fail);
+    break;
+
+  case EMMCN_ACTIVATE_DEDICATED_BEARER_REQ:
+    rc = _emm_cn_activate_dedicated_bearer_req (msg->u.activate_dedicated_bearer_req);
     break;
 
   default:

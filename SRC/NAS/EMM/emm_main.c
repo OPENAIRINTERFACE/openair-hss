@@ -36,16 +36,23 @@
         the main entry point for elementary EMM processing.
 
 *****************************************************************************/
-
-#include "3gpp_24.007.h"
-#include "emm_main.h"
-#include "log.h"
-#include "emmData.h"
-
-
-#include "mme_config.h"
-#include "obj_hashtable.h"
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
+
+#include "bstrlib.h"
+
+#include "log.h"
+#include "obj_hashtable.h"
+#include "3gpp_24.007.h"
+#include "common_defs.h"
+#include "emm_main.h"
+#include "emm_data.h"
+#include "mme_config.h"
+
 
 
 /****************************************************************************/

@@ -19,18 +19,29 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s1ap_mme_ta.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <pthread.h>
 
+#include "bstrlib.h"
+
+#include "log.h"
 #include "assertions.h"
 #include "conversions.h"
 #include "mme_config.h"
 #include "s1ap_mme.h"
 #include "s1ap_common.h"
 #include "s1ap_mme_ta.h"
-#include "log.h"
+
 
 static
   int

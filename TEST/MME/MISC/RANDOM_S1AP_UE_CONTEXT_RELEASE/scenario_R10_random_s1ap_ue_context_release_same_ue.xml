@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="Rel10_random_s1ap_ue_ctxt_rel_same_ue">
+
+  <!-- VARIABLES FROM UE -->
+
+  <var name="S1AP_CAUSE_GROUP"                            ascii_stream_value="radio_network_layer"        />
+  <var name="S1AP_CAUSE_GROUP_CAUSE"                      value="0x15"        />
+
+  
+  <var name="LOOP_COUNTER"      value="0x01"          />
+  
+  <scenario_file><file>../../3GPP_TS_24.301/set_next_ue_params.xml</file></scenario_file>
+  <label name="random_s1ap_ue_context_release_same_ue_loop" />
+  
+    <!-- Design problem see inside this file 
+    <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_attach_guti.xml</file></scenario_file>
+    -->
+
+    <var name="INNER_LOOP_COUNTER"      value="0x01"          />
+    <label name="inner_loop1" />
+      <set_var  name="MME_UE_S1AP_ID"                              value="0xFFFFFFFF" />
+      <incr_var name="ENB_UE_S1AP_ID"/>
+    
+      <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_identity_request.xml</file></scenario_file>
+      <decr_var name="INNER_LOOP_COUNTER"/>
+    <jcond var_name="INNER_LOOP_COUNTER" cond="gt"  value="0" label="inner_loop1"/>
+
+
+    <set_var  name="MME_UE_S1AP_ID"                              value="0xFFFFFFFF" />
+    <incr_var name="ENB_UE_S1AP_ID"/>
+    
+    <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_auth_request.xml</file></scenario_file>
+
+    <!-- avoid mixed logs of next scenario -->
+    <sleep    seconds="0"     useconds="50000"          />
+
+    <set_var name="INNER_LOOP_COUNTER"      value="0x01"          />
+    
+    <label name="inner_loop2" />
+      <set_var  name="MME_UE_S1AP_ID"                              value="0xFFFFFFFF" />
+      <incr_var name="ENB_UE_S1AP_ID"/>
+    
+      <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_auth_request_no_ident.xml</file></scenario_file>
+      <!-- avoid mixed logs of next scenario -->
+      <sleep    seconds="0"     useconds="50000"          />
+      <decr_var name="INNER_LOOP_COUNTER"/>
+    <jcond var_name="INNER_LOOP_COUNTER" cond="gt"  value="0" label="inner_loop2"/>
+
+
+    <set_var  name="MME_UE_S1AP_ID"                              value="0xFFFFFFFF" />
+    <incr_var name="ENB_UE_S1AP_ID"/>
+    
+    <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_sm_command_no_ident.xml</file></scenario_file>
+    <!-- avoid mixed logs of next scenario -->
+    <sleep    seconds="0"     useconds="50000"          />
+
+    <!-- Design problem, seems to be necessary to create a new type of behavior:
+       MAY/COULD (not MUST/SHOULD) rx message in a middle of a scenario (in this case attach accept), then deactivate it.
+    <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_sm_complete.xml</file></scenario_file>
+    -->
+
+    <set_var  name="MME_UE_S1AP_ID"                              value="0xFFFFFFFF" />
+    <incr_var name="ENB_UE_S1AP_ID"/>
+    
+    <scenario_file><file>scenario_R10_s1ap_ue_context_release_after_attach_accept.xml</file></scenario_file>
+
+    <set_var  name="MME_UE_S1AP_ID"                              value="0xFFFFFFFF" />
+    <incr_var name="ENB_UE_S1AP_ID"/>
+    
+    <!-- TEST SLEEP TO REMOVE -->
+    <sleep    seconds="8"     useconds="0"          />
+    <sleep    seconds="8"     useconds="0"          />
+    
+    
+    <scenario_file><file>../../3GPP_TS_24.301/ATTACH/R10_attach_guti_complete/scenario_R10_attach_guti_complete_no_ident.xml</file></scenario_file>
+    <sleep    seconds="0"     useconds="1000"          />
+    <message_file action="send" time="now"  time_ref="this"><file>../../MSGR10/ITTI_NAS_UPLINK_DATA_IND.DETACH_REQUEST.SWITCH_OFF.xml</file></message_file>
+    <scenario_file><file>../../3GPP_TS_36.413/UE_CONTEXT_RELEASE_MME_INITIATED/ue_context_release_mme_initiated.xml</file></scenario_file>
+    
+    <decr_var name="LOOP_COUNTER"/>
+  <jcond var_name="LOOP_COUNTER" cond="gt"  value="0" label="random_s1ap_ue_context_release_same_ue_loop"/>
+
+</scenario>

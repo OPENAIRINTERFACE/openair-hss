@@ -166,13 +166,13 @@ s1ap_new_ie (
 
   if (ANY_fromType_aper (&buff->value, type, sptr) < 0) {
     OAILOG_ERROR (LOG_S1AP, "Encoding of %s failed\n", type->name);
-    free_wrapper (buff);
+    free_wrapper ((void**)&buff);
     return NULL;
   }
 
   if (asn1_xer_print)
     if (xer_fprint (stdout, &asn_DEF_S1ap_IE, buff) < 0) {
-      free_wrapper (buff);
+      free_wrapper ((void**)&buff);
       return NULL;
     }
 

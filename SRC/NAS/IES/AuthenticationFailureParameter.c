@@ -104,6 +104,6 @@ dump_authentication_failure_parameter_xml (
 
   bstring b = dump_bstring_xml (authenticationfailureparameter);
   OAILOG_DEBUG (LOG_NAS, "%s", bdata(b));
-  bdestroy(b);
+  bdestroy_wrapper (&b);
   OAILOG_DEBUG (LOG_NAS, "</Authentication Failure Parameter>\n");
 }

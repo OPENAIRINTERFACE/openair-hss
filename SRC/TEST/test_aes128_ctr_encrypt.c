@@ -19,18 +19,41 @@
  *      contact@openairinterface.org
  */
 
+#include <check.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
-
-#include "test_util.h"
 
 #include "secu_defs.h"
 
 #include <nettle/nettle-meta.h>
 #include <nettle/aes.h>
 #include <nettle/ctr.h>
+
+static int
+compare_buffer (
+    const uint8_t * const buffer,
+    const uint32_t length_buffer,
+    const uint8_t * const pattern,
+    const uint32_t length_pattern)
+{
+  int                                     i;
+
+  if (length_buffer != length_pattern) {
+    printf ("Length mismatch, expecting %d bytes, got %d bytes\n", length_pattern, length_buffer);
+    return -1;
+  }
+
+  for (i = 0; i < length_buffer; i++) {
+    if (pattern[i] != buffer[i]) {
+      printf ("Mismatch fount in byte %d\nExpecting 0x%02x, got 0x%02x\n", i, pattern[i], buffer[i]);
+      return -1;
+    }
+  }
+
+  return 0;
+}
 
 static void
 test_cipher_ctr (
@@ -59,9 +82,7 @@ test_cipher_ctr (
   free (ctr);
 }
 
-void
-doit (
-  void)
+START_TEST(doit_test_aes128_ctr_encrypt)
 {
   /*
    * From NIST spec 800-38a on AES modes,
@@ -80,4 +101,37 @@ doit (
                        "30c81c46a35ce411e5fbc1191a0a52ef"
                        "f69f2445df4f9b17ad2b417be66c3710"),
                    H ("874d6191b620e3261bef6864990db6ce" "9806f66b7970fdff8617187bb9fffdff" "5ae4df3edbd5d35e5b4f09020db03eab" "1e031dda2fbe03d1792170a0f3009cee"), H ("f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"));
+}
+END_TEST
+
+
+Suite * suite(void)
+{
+    Suite *s;
+    TCase *tc_core;
+
+    s = suite_create("AES128 CTR decrypt tests");
+
+    /* Core test case */
+    tc_core = tcase_create("vector test");
+    tcase_add_test(tc_core, doit_test_aes128_ctr_encrypt);
+    suite_add_tcase(s, tc_core);
+
+    return s;
+}
+
+int main(void)
+{
+    int number_failed;
+    Suite *s;
+    SRunner *sr;
+
+    /* Create SQR Test Suite */
+    s = suite();
+    sr = srunner_create(s);
+
+    srunner_run_all(sr, CK_NORMAL);
+    number_failed = srunner_ntests_failed(sr);
+    srunner_free(sr);
+    return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

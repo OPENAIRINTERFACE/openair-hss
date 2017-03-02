@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="R10_no_regression">
+
+  <!-- "bad" scenarios: abnormal cases -->
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>IDENTIFICATION/R10_5_4_4_6_a/scenario_R10_5_4_4_6_a.xml</file></scenario_file>
+  
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>IDENTIFICATION/R10_5_4_4_6_b/scenario_R10_5_4_4_6_b.xml</file></scenario_file>
+
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>IDENTIFICATION/R10_5_4_4_6_d/scenario_R10_5_4_4_6_d1.xml</file></scenario_file>
+
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>IDENTIFICATION/R10_5_4_4_6_d/scenario_R10_5_4_4_6_d2.xml</file></scenario_file>
+  
+  <!--scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <TODO find a way to send a identity request with EPS context established scenario_file><file>IDENTIFICATION/R10_5_4_4_6_d/scenario_R10_5_4_4_6_e1.xml</file></scenario_file>
+  
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  < TODO find a way to send a identity request with EPS context established scenario_file><file>IDENTIFICATION/R10_5_4_4_6_d/scenario_R10_5_4_4_6_e2.xml</file></scenario_file-->
+
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>AUTHENTICATION/R10_5_4_2_5__2/scenario_R10_5_4_2_5__2.xml</file></scenario_file>
+  
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>AUTHENTICATION/R10_5_4_2_7_a/scenario_R10_5_4_2_7_a.xml</file></scenario_file>
+  
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>AUTHENTICATION/R10_5_4_2_7_b/scenario_R10_5_4_2_7_b.xml</file></scenario_file>
+  
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>AUTHENTICATION/R10_5_4_2_7_e/scenario_R10_5_4_2_7_e_1.xml</file></scenario_file>
+
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>AUTHENTICATION/R10_5_4_2_7_e/scenario_R10_5_4_2_7_e_note3.xml</file></scenario_file>
+
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>SECURITY_MODE_CONTROL/R10_5_4_3_7_a/scenario_R10_5_4_3_7_a.xml</file></scenario_file>
+
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>SECURITY_MODE_CONTROL/R10_5_4_3_7_b/scenario_R10_5_4_3_7_b.xml</file></scenario_file>
+
+  <scenario_file><file>set_next_ue_params.xml</file></scenario_file>
+  <scenario_file><file>ATTACH/R10_5_5_1_2_7_c/scenario_R10_5_5_1_2_7_c.xml</file></scenario_file>
+
+</scenario>

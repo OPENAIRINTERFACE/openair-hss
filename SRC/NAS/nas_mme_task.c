@@ -19,21 +19,38 @@
  *      contact@openairinterface.org
  */
 
+/*! \file nas_mme_task.c
+   \brief
+   \author  Sebastien ROUX, Lionel GAUTHIER
+   \date
+   \email: lionel.gauthier@eurecom.fr
+*/
+
+
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
+
+#include "bstrlib.h"
+#include <libxml/xmlwriter.h>
+#include <libxml/xpath.h>
 
 #include "log.h"
 #include "msc.h"
+#include "assertions.h"
+#include "common_defs.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "mme_config.h"
 #include "nas_defs.h"
 #include "nas_network.h"
 #include "nas_proc.h"
 #include "emm_main.h"
 #include "nas_timer.h"
+#include "xml_msg_dump_itti.h"
 
 static void nas_exit(void);
 
@@ -41,8 +58,6 @@ static void nas_exit(void);
 static void *nas_intertask_interface (void *args_p)
 {
   itti_mark_task_ready (TASK_NAS_MME);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -50,6 +65,25 @@ static void *nas_intertask_interface (void *args_p)
     itti_receive_msg (TASK_NAS_MME, &received_message_p);
 
     switch (ITTI_MSG_ID (received_message_p)) {
+    case MESSAGE_TEST:{
+        OAI_FPRINTF_INFO("TASK_NAS_MME received MESSAGE_TEST\n");
+      }
+      break;
+
+    case MME_APP_CREATE_DEDICATED_BEARER_REQ:
+      nas_proc_create_dedicated_bearer(&MME_APP_CREATE_DEDICATED_BEARER_REQ (received_message_p));
+      break;
+
+    case NAS_DOWNLINK_DATA_CNF:{
+        nas_proc_dl_transfer_cnf (NAS_DL_DATA_CNF (received_message_p).ue_id, NAS_DL_DATA_CNF (received_message_p).err_code);
+      }
+      break;
+
+    case NAS_DOWNLINK_DATA_REJ:{
+        nas_proc_dl_transfer_rej (NAS_DL_DATA_REJ (received_message_p).ue_id, NAS_DL_DATA_REJ (received_message_p).err_code);
+      }
+      break;
+
     case NAS_INITIAL_UE_MESSAGE:{
         nas_establish_ind_t                    *nas_est_ind_p = NULL;
 
@@ -61,26 +95,44 @@ static void *nas_intertask_interface (void *args_p)
         nas_proc_establish_ind (enb_s1ap_id_key,
             nas_est_ind_p->ue_id,
             nas_est_ind_p->tai,
-            nas_est_ind_p->cgi,
+            nas_est_ind_p->ecgi,
+            nas_est_ind_p->as_cause,
+            nas_est_ind_p->s_tmsi,
             &nas_est_ind_p->initial_nas_msg);
       }
       break;
 
+    case NAS_PDN_CONFIG_RSP:{
+      nas_proc_pdn_config_res (&NAS_PDN_CONFIG_RSP (received_message_p));
+    }
+    break;
+
+    case NAS_PDN_CONNECTIVITY_FAIL:{
+        nas_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
+      }
+      break;
+
+    case NAS_PDN_CONNECTIVITY_RSP:{
+        nas_proc_pdn_connectivity_res (&NAS_PDN_CONNECTIVITY_RSP (received_message_p));
+      }
+      break;
+
+    case NAS_SIGNALLING_CONNECTION_REL_IND:{
+      nas_proc_signalling_connection_rel_ind (NAS_SIGNALLING_CONNECTION_REL_IND (received_message_p).ue_id);
+      }
+      break;
+
     case NAS_UPLINK_DATA_IND:{
-        nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id,
+      XML_MSG_DUMP_ITTI_NAS_UPLINK_DATA_IND(&NAS_UL_DATA_IND (received_message_p), TASK_S1AP, TASK_NAS_MME, NULL);
+      nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id,
             NAS_UL_DATA_IND (received_message_p).tai,
             NAS_UL_DATA_IND (received_message_p).cgi,
             &NAS_UL_DATA_IND (received_message_p).nas_msg);
       }
       break;
 
-    case NAS_DOWNLINK_DATA_CNF:{
-        nas_proc_dl_transfer_cnf (NAS_DL_DATA_CNF (received_message_p).ue_id, NAS_DL_DATA_CNF (received_message_p).err_code);
-      }
-      break;
-
-    case NAS_DOWNLINK_DATA_REJ:{
-        nas_proc_dl_transfer_rej (NAS_DL_DATA_REJ (received_message_p).ue_id);
+    case S1AP_DEREGISTER_UE_REQ:{
+        nas_proc_deregister_ue (S1AP_DEREGISTER_UE_REQ (received_message_p).mme_ue_s1ap_id);
       }
       break;
 
@@ -93,14 +145,12 @@ static void *nas_intertask_interface (void *args_p)
       }
       break;
 
-
-    case NAS_PDN_CONNECTIVITY_RSP:{
-        nas_proc_pdn_connectivity_res (&NAS_PDN_CONNECTIVITY_RSP (received_message_p));
-      }
-      break;
-
-    case NAS_PDN_CONNECTIVITY_FAIL:{
-        nas_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
+    case TERMINATE_MESSAGE:{
+        nas_exit();
+        OAI_FPRINTF_INFO("TASK_NAS_MME terminated\n");
+        itti_free_msg_content(received_message_p);
+        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+        itti_exit_task ();
       }
       break;
 
@@ -112,43 +162,16 @@ static void *nas_intertask_interface (void *args_p)
       }
       break;
 
-    case S1AP_ENB_DEREGISTERED_IND:{
-      /*
-        int                                     i;
-
-        for (i = 0; i < S1AP_ENB_DEREGISTERED_IND (received_message_p).nb_ue_to_deregister; i++) {
-          nas_proc_deregister_ue (S1AP_ENB_DEREGISTERED_IND (received_message_p).mme_ue_s1ap_id[i]);
-        }
-*/
-      }
-      break;
-
-    case S1AP_DEREGISTER_UE_REQ:{
-        nas_proc_deregister_ue (S1AP_DEREGISTER_UE_REQ (received_message_p).mme_ue_s1ap_id);
-      }
-      break;
-
-    case TERMINATE_MESSAGE:{
-        nas_exit();
-        itti_exit_task ();
-      }
-      break;
-
-    case MESSAGE_TEST:
-      OAILOG_DEBUG (LOG_NAS, "Received MESSAGE_TEST\n");
-      break;
-
     default:{
         OAILOG_DEBUG (LOG_NAS, "Unkwnon message ID %d:%s from %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p), ITTI_MSG_ORIGIN_NAME (received_message_p));
       }
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
-
   }
-
   return NULL;
 }
 

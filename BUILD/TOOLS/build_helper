@@ -185,12 +185,12 @@ compilations() {
   if [ "a$4" == "a1" ]; then
     {
       rm -f $3
-      make $make_args
-    } | tee $dlog/$2.txt
+      make $make_args $2
+    } | tee $dlog/$2.txt 
   else
     {
       rm -f $3
-      make $make_args
+      make $make_args $2
     } > $dlog/$2.txt 2>&1
   fi
   if [ -s $3 ] ; then
@@ -349,13 +349,45 @@ install_libgtpnl_from_source() {
     $SUDO rm -rf /tmp/libgtpnl*
     git clone git://git.osmocom.org/libgtpnl
     cd libgtpnl
+    patch --verbose -p1  < $OPENAIRCN_DIR/BUILD/TOOLS/libgtpnl.LTE_dedicated_bearer.v0.patch 
     autoreconf -fi
     ./configure
-    echo "Compiling nettle"
+    echo "Compiling libgtpnl"
     make -j`nproc`
     $SUDO make install
     $SUDO ldconfig
     $SUDO rm -rf /tmp/libgtpnl*
+  fi
+}
+
+#-------------------------------------------------------------------------------
+install_liblfds7.1.0_from_source() {
+  if [ $1 -gt 0 ]; then
+    OPTION="-y"
+  else
+    OPTION=""
+  fi
+
+  # Compilers, generators, ...
+  $SUDO apt-get install $OPTION \
+    build-essential 
+
+  if [ $1 -eq 0 ]; then
+    read -p "Do you want to install liblfds7.1.0 ? <y/N> " prompt
+  else
+    prompt='y'
+  fi
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    cd /tmp
+    echo "Downloading liblfds7.1.0 archive"
+    $SUDO rm -rf /tmp/liblfds*
+    git clone https://github.com/liblfds/liblfds.git
+    cd liblfds/liblfds/liblfds7.1.0/liblfds710/build/gcc_gnumake
+    #make so_rel # do a selector
+    make so_dbg
+    $SUDO make so_install
+    $SUDO rm -rf /tmp/liblfds*
   fi
 }
 
@@ -694,6 +726,7 @@ check_install_mme_software() {
     libtool \
     libxml2 \
     libxml2-dev \
+    libxml2-utils \
     mscgen \
     openssl \
     check \
@@ -711,7 +744,8 @@ check_install_mme_software() {
 
   install_freediameter_from_source $1
   install_asn1c_from_source $1
-
+  install_liblfds7.1.0_from_source $1
+  
   # Networking
   PACKAGE_LIST="\
     ethtool \
@@ -778,6 +812,7 @@ check_install_spgw_software() {
     libgtk-3-dev \
     libidn2-0-dev \
     libidn11-dev \
+    libmnl-dev \
     libpthread-stubs0-dev \
     libtool \
     libxml2 \
@@ -813,6 +848,7 @@ check_install_spgw_software() {
   fi
 
   install_libgtpnl_from_source $1
+  install_liblfds7.1.0_from_source $1
 }
 
 

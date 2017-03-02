@@ -44,16 +44,22 @@
         performed.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+#include <assert.h>
 
 #include "common_defs.h"
 #include "emm_fsm.h"
 #include "commonDef.h"
 #include "networkDef.h"
 #include "log.h"
-
 #include "emm_proc.h"
 
-#include <assert.h>
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -89,7 +95,7 @@ EmmRegistered (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  assert (emm_fsm_get_status (evt->ue_id, evt->ctx) == EMM_REGISTERED);
+  assert (emm_fsm_get_state (evt->ctx) == EMM_REGISTERED);
 
   switch (evt->primitive) {
   case _EMMREG_DETACH_REQ:
@@ -97,7 +103,7 @@ EmmRegistered (
      * Network detach has been requested (implicit detach);
      * enter state EMM-DEREGISTERED
      */
-    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
     break;
 
   case _EMMREG_COMMON_PROC_REQ:
@@ -105,11 +111,11 @@ EmmRegistered (
      * An EMM common procedure has been initiated;
      * enter state EMM-COMMON-PROCEDURE-INITIATED.
      */
-    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_COMMON_PROCEDURE_INITIATED);
+    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_COMMON_PROCEDURE_INITIATED);
     break;
 
   case _EMMREG_TAU_REJ:
-    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
     break;
 
   case _EMMREG_LOWERLAYER_SUCCESS:
@@ -119,6 +125,7 @@ EmmRegistered (
     rc = RETURNok;
     break;
 
+  case _EMMREG_LOWERLAYER_RELEASE:
   case _EMMREG_LOWERLAYER_FAILURE:
     /*
      * Data failed to be delivered to the network

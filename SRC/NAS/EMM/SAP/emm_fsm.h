@@ -77,9 +77,9 @@ typedef enum {
 void emm_fsm_initialize(void);
 
 //LG 2015-03-13 struct emm_data_context_t;
-int emm_fsm_set_status(mme_ue_s1ap_id_t ueid, void *ctx, emm_fsm_state_t status);
-emm_fsm_state_t emm_fsm_get_status(mme_ue_s1ap_id_t ueid, void *ctx);
-
+int emm_fsm_set_state(const mme_ue_s1ap_id_t ueid, struct emm_context_s * const emm_context, const emm_fsm_state_t status);
+emm_fsm_state_t emm_fsm_get_state(const struct emm_context_s * const emm_context);
+const char *emm_fsm_get_state_str (const struct emm_context_s * const emm_context);
 int emm_fsm_process(const emm_reg_t *evt);
 
 #endif /* FILE_EMM_FSM_SEEN*/

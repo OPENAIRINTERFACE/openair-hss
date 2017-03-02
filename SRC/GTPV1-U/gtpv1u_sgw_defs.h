@@ -21,6 +21,9 @@
 #ifndef FILE_GTPV1U_SGW_DEFS_SEEN
 #define FILE_GTPV1U_SGW_DEFS_SEEN
 
+#include "hashtable.h"
+#include "common_types.h"
+
 #define GTPV1U_UDP_PORT (2152)
 
 #define MAX_BEARERS_PER_UE (11)
@@ -32,7 +35,7 @@ typedef enum {
   BEARER_DL_HANDOVER,
   BEARER_UL_HANDOVER,
   BEARER_MAX,
-} bearer_state_t;
+} s1_bearer_state_t;
 
 #define BUFFER_TO_uint32_t(buf, x) \
 do {                            \
@@ -46,10 +49,10 @@ do {                            \
 
 typedef struct gtpv1u_teid2enb_info_s {
   /* TEID used in dl and ul */
-  uint32_t       teid_enb;         ///< Remote eNB TEID
-  ip_address_t   enb_ip_addr;
-  bearer_state_t state;
-  uint16_t       port; /// LG ???
+  uint32_t          teid_enb;         ///< Remote eNB TEID
+  ip_address_t      enb_ip_addr;
+  s1_bearer_state_t state;
+  uint16_t          port; /// LG ???
 } gtpv1u_teid2enb_info_t;
 
 
@@ -57,7 +60,7 @@ typedef struct {
   /* RB tree of UEs */
   //RB_HEAD(gtpv1u_ue_map, gtpv1u_ue_data_s) gtpv1u_ue_map_head;
   /* Local IP address to use */
-  ipv4_nbo_t            sgw_ip_address_for_S1u_S12_S4_up;
+  struct in_addr        sgw_ip_address_for_S1u_S12_S4_up;
   char                 *ip_addr;
 
   uint16_t              seq_num;

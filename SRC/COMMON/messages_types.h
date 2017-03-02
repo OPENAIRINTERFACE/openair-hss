@@ -45,5 +45,7 @@
 #include "sgw_messages_types.h"
 #include "udp_messages_types.h"
 #include "mme_app_messages_types.h"
+#include "scenario_player_messages_types.h"
+#include "async_system_messages_types.h"
 
 #endif /* FILE_MESSAGES_TYPES_SEEN */

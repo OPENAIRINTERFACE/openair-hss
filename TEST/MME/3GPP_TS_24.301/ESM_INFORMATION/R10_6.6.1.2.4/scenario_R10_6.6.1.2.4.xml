@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="3gpp_24.301_Rel10_6.6.1.2.4 (ESM_INFORMATION)">
+  <!-- time allowed values = seconds.microseconds or "now" -->
+  <!-- time_ref allowed values = negative integers (-n= n'th item before this), or "this" -->
+
+  <!-- ESM INFORMATION -->
+  <message_file action="receive" time="2.0" time_ref="this">
+    <file>../../../MSGR10/ITTI_NAS_DOWNLINK_DATA_REQ.ESM_INFORMATION_REQUEST.xml</file>
+  </message_file>
+
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../../MSGR10/ITTI_NAS_UPLINK_DATA_IND.ESM_INFORMATION_RESPONSE.xml</file>
+  </message_file>
+  <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
+  <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+</scenario>

@@ -19,14 +19,38 @@
  *      contact@openairinterface.org
  */
 
+/*! \file mme_app_ue_context.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <sys/time.h>
+#include <pthread.h>
+
+#include "bstrlib.h"
+
+#include "log.h"
+#include "conversions.h"
 #include "common_types.h"
+#include "common_defs.h"
+#include "common_types.h"
+#include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
 #include "commonDef.h"
-#include "conversions.h"
+#include "dynamic_memory_check.h"
+#include "mme_app_bearer_context.h"
 
 #include <string.h>
 #include <stdbool.h>
+
 
 
 /**
@@ -105,7 +129,7 @@ mme_app_imsi_to_string (char * const imsi_dst,
 }
 
 /**
- * @brief mme_app_is_imsi_empty: checks if an imsi structe is empty returns true if it is empty
+ * @brief mme_app_is_imsi_empty: checks if an imsi struct is empty returns true if it is empty
  * @param imsi
  * @return
  */
@@ -116,7 +140,7 @@ mme_app_is_imsi_empty (mme_app_imsi_t const * imsi)
 }
 
 /**
- * @brief mme_app_imsi_to_u64: converts imsi to uint64 (be carefull leading 00 will be cut off)
+ * @brief mme_app_imsi_to_u64: converts imsi to uint64 (be careful leading 00 will be cut off)
  * @param imsi_src
  * @return
  */
@@ -128,3 +152,17 @@ mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src)
   sscanf(imsi_src.data, "%" SCNu64, &uint_imsi);
   return uint_imsi;
 }
+
+//------------------------------------------------------------------------------
+void mme_app_ue_context_s1_release_enb_informations(ue_mm_context_t *ue_context)
+{
+  for (int i = 0; i < BEARERS_PER_UE; i++) {
+    bearer_context_t *bc = ue_context->bearer_contexts[i];
+    if (bc) {
+      mme_app_bearer_context_s1_release_enb_informations(bc);
+    }
+  }
+}
+
+
+

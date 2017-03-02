@@ -42,15 +42,21 @@
         response from the UE.
 
 *****************************************************************************/
+#include <pthread.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+#include <assert.h>
 
 #include "common_defs.h"
 #include "emm_fsm.h"
 #include "commonDef.h"
 #include "log.h"
-
 #include "emm_proc.h"
 
-#include <assert.h>
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -86,24 +92,25 @@ EmmDeregisteredInitiated (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
-  assert (emm_fsm_get_status (evt->ue_id, evt->ctx) == EMM_DEREGISTERED_INITIATED);
+  assert (emm_fsm_get_state (evt->ctx) == EMM_DEREGISTERED_INITIATED);
 
   switch (evt->primitive) {
 
     case _EMMREG_DETACH_CNF:
-      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
       break;
 
+    case _EMMREG_LOWERLAYER_RELEASE:
     case _EMMREG_LOWERLAYER_FAILURE:
       /*
        * Transmission failure occurred before the EMM common
        * procedure being completed
        */
-      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
       break;
 
     case _EMMREG_LOWERLAYER_NON_DELIVERY:
-      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
       break;
 
   default:
