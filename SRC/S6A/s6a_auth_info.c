@@ -240,6 +240,7 @@ s6a_aia_cb (
 
     if (hdr->avp_value->u32 != ER_DIAMETER_SUCCESS) {
       OAILOG_ERROR (LOG_S6A, "Got error %u:%s\n", hdr->avp_value->u32, retcode_2_string (hdr->avp_value->u32));
+      skip_auth_res = 1;
     } else {
       OAILOG_DEBUG (LOG_S6A, "Received S6A Result code %u:%s\n", s6a_auth_info_ans_p->result.choice.base, retcode_2_string (s6a_auth_info_ans_p->result.choice.base));
     }
@@ -278,6 +279,7 @@ s6a_aia_cb (
       CHECK_FCT (s6a_parse_authentication_info_avp (avp, &s6a_auth_info_ans_p->auth_info));
     } else {
       DevMessage ("We requested E-UTRAN vectors with an immediate response...\n");
+      return RETURNerror;
     }
   }
 
