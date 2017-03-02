@@ -30,6 +30,7 @@
 #define FILE_PGW_PCEF_EMULATION_SEEN
 
 #include "queue.h"
+#include "3gpp_24.007.h"
 
 typedef enum {
   PF_ID_MIN = 0,
@@ -46,7 +47,7 @@ typedef enum {
 } pf_id_t;
 
 typedef enum {
-  SDF_ID_MIN = 0,
+  SDF_ID_MIN = (EPS_BEARER_IDENTITY_LAST+1),
   SDF_ID_GBR_VOLTE_16K,
   SDF_ID_GBR_VOLTE_24K,
   SDF_ID_GBR_VOLTE_40K,
