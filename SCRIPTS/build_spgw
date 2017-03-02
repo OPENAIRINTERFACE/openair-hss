@@ -150,7 +150,7 @@ function main()
   echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
   
   cd ./BUILD
-  cmake  $cmake_args .. > /dev/null 
+  cmake  $cmake_args .. 
   
   compilations SPGW spgw spgw
   if [ $daemon -ne 0 ]; then
