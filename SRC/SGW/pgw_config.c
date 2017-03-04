@@ -144,14 +144,19 @@ int pgw_config_process (pgw_config_t * config_pP)
     }
 
     counter64 = 0x00000000FFFFFFFF >> config_pP->ue_pool_mask[i];  // address Prefix_mask/0..0 not valid
+    /* .1 reserved for gateway
+     * the last address is reserved traditionally (.255 in the case of mask 24)
+     */
     counter64 = counter64 - 2;
 
+    //Any math should be applied onto host byte order i.e. ntohl()
+    addr_start.s_addr = htonl( ntohl(addr_start.s_addr) + 2 );
     do {
-      addr_start.s_addr = addr_start.s_addr + htonl (2);
       ip4_ref = calloc (1, sizeof (conf_ipv4_list_elm_t));
       ip4_ref->addr.s_addr = addr_start.s_addr;
       STAILQ_INSERT_TAIL (&config_pP->ipv4_pool_list, ip4_ref, ipv4_entries);
       counter64 = counter64 - 1;
+      addr_start.s_addr = htonl( ntohl(addr_start.s_addr) + 1 );
     } while (counter64 > 0);
 
     //---------------
