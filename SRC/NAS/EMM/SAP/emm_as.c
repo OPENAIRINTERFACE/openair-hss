@@ -659,7 +659,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
       OAILOG_FUNC_RETURN (LOG_NAS_EMM,rc);
     }
     
-    // Process TAU  TODO - Already task is open for TAU code review and necessary fixes task#14193405 
+    // Process periodic TAU   
     rc = emm_recv_tracking_area_update_request (msg->ue_id, &emm_msg->tracking_area_update_request, emm_cause, &decode_status);
     break;
 
@@ -1062,6 +1062,10 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
       size = emm_send_detach_accept (msg, &emm_msg->detach_accept);
       break;
 
+    case EMM_AS_NAS_DATA_TAU: 
+      size = emm_send_tracking_area_update_accept_dl_nas (msg, &emm_msg->tracking_area_update_accept);
+      break;
+    
     default:
       /*
        * Send other NAS messages as already encoded ESM messages
@@ -1102,7 +1106,11 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
     }
 
     if (bytes > 0) {
-      as_msg->err_code = AS_SUCCESS;
+      if (msg->nas_info == EMM_AS_NAS_DATA_TAU) {
+        as_msg->err_code = AS_TERMINATED_NAS;
+      } else {
+        as_msg->err_code = AS_SUCCESS;
+      }
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
     }
   }
@@ -1482,7 +1490,7 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
 
   as_msg->s_tmsi.mme_code = msg->eps_id.guti->gummei.mme_code;
   as_msg->s_tmsi.m_tmsi = msg->eps_id.guti->m_tmsi;
-  as_msg->nas_msg = msg->nas_msg;
+  as_msg->nas_msg = msg->nas_msg; 
   
   struct emm_data_context_s              *emm_ctx = NULL;
   emm_security_context_t                 *emm_security_context = NULL;
@@ -1494,54 +1502,54 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
       as_msg->selected_integrity_algorithm  = (uint16_t) htons(0x10000 >> emm_security_context->selected_algorithms.integrity);
       OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_encryption_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_encryption_algorithm, emm_security_context->selected_algorithms.encryption);
       OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.selected_integrity_algorithm -> NBO: 0x%04X (%u)\n", as_msg->selected_integrity_algorithm, emm_security_context->selected_algorithms.integrity);
-      as_msg->nas_ul_count = 0x00000000 | (emm_security_context->ul_count.overflow << 8) | emm_security_context->ul_count.seq_num;
+      as_msg->nas_ul_count = 0x00000000 | (emm_security_context->ul_count.overflow << 8) | emm_security_context->ul_count.seq_num;  // This is sent to calculate KeNB 
       OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - NAS UL COUNT %8x\n", as_msg->nas_ul_count);
     }
   }
-  if ((msg->nas_msg))
-  {
+  switch (msg->nas_info) {
+  case EMM_AS_NAS_INFO_ATTACH:
     /*
      * Setup the NAS security header
      */
     emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx);
-
-    /*
-     * Setup the initial NAS information message
-     */
-    if (emm_msg)
-      switch (msg->nas_info) {
-      case EMM_AS_NAS_INFO_ATTACH:
-        OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg->slen);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
-        size = emm_send_attach_accept (msg, &emm_msg->attach_accept);
-        break;
-      case EMM_AS_NAS_INFO_TAU:
-        OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg->slen);
-        MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TAU_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
-        size = emm_send_tracking_area_update_accept (msg, &emm_msg->tracking_area_update_accept);
-        break;
-      default:
-        OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->nas_info);
-        break;
-      }
-
-    if (size > 0) {
-      nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-      OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+    if (emm_msg) {
+      OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - emm_as_establish.nasMSG.length=%d\n", msg->nas_msg->slen);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send ATTACH_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
+      size = emm_send_attach_accept (msg, &emm_msg->attach_accept);
     }
-
+    break;
+    
+  case EMM_AS_NAS_INFO_TAU:
     /*
-     * Encode the initial NAS information message
+     * Setup the NAS security header
      */
-    int bytes = _emm_as_encode (&as_msg->nas_msg, &nas_msg,size,emm_security_context);
-
-    if (bytes > 0) {
-      as_msg->err_code = AS_SUCCESS;
-      ret_val = AS_NAS_ESTABLISH_CNF;
+    emm_msg = _emm_as_set_header (&nas_msg, &msg->sctx);
+    if (emm_msg) {
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "send TAU_ACCEPT to s_TMSI %u.%u ", as_msg->s_tmsi.mme_code, as_msg->s_tmsi.m_tmsi);
+      size = emm_send_tracking_area_update_accept (msg, &emm_msg->tracking_area_update_accept);
     }
+    break;
+  case EMM_AS_NAS_INFO_NONE:  //Response to SR
+    as_msg->err_code = AS_SUCCESS;
+    ret_val = AS_NAS_ESTABLISH_CNF;
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, ret_val);
+  default:
+    OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Type of initial NAS " "message 0x%.2x is not valid\n", msg->nas_info);
+    break;
   } 
-  else // No nas message 
-  {
+
+  if (size > 0) {
+    nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
+    OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
+  } else {
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, ret_val);
+  }
+  /*
+   * Encode the initial NAS information message
+   */
+  int bytes = _emm_as_encode (&as_msg->nas_msg, &nas_msg,size,emm_security_context);
+
+  if (bytes > 0) {
     as_msg->err_code = AS_SUCCESS;
     ret_val = AS_NAS_ESTABLISH_CNF;
   }

@@ -135,11 +135,11 @@ int emm_proc_attach_request(mme_ue_s1ap_id_t ue_id,
 int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, int emm_cause);
 int emm_proc_attach_complete(mme_ue_s1ap_id_t ue_id, const_bstring esm_msg);
 
-int  emm_proc_tracking_area_update_request (
+int emm_proc_tracking_area_update_request (
         const mme_ue_s1ap_id_t ue_id,
-        tracking_area_update_request_msg * const msg,
+        const tracking_area_update_request_msg *msg,
         int *emm_cause,
-        const nas_message_decode_status_t  * decode_status);
+        const nas_message_decode_status_t *decode_status);
 
 int emm_proc_tracking_area_update_reject (
         const mme_ue_s1ap_id_t ue_id,

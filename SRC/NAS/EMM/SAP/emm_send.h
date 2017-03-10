@@ -93,6 +93,9 @@ int emm_send_tracking_area_update_reject(const emm_as_establish_t *msg,
 int emm_send_tracking_area_update_accept (const emm_as_establish_t * msg,
                                    tracking_area_update_accept_msg * emm_msg);
 
+int emm_send_tracking_area_update_accept_dl_nas (const emm_as_data_t * msg,
+                                   tracking_area_update_accept_msg * emm_msg);
+
 int emm_send_service_reject(const emm_as_establish_t *msg,
                                    service_reject_msg *emm_msg);
 

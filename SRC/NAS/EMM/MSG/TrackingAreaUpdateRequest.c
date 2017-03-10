@@ -44,10 +44,10 @@ decode_tracking_area_update_request (
   /*
    * Decoding mandatory fields
    */
-  if ((decoded_result = decode_u8_eps_update_type (&tracking_area_update_request->epsupdatetype, 0, *(buffer + decoded) >> 4, len - decoded)) < 0)
+  if ((decoded_result = decode_u8_eps_update_type (&tracking_area_update_request->epsupdatetype, 0, *(buffer + decoded) & 0x0f, len - decoded)) < 0)
     return decoded_result;
 
-  if ((decoded_result = decode_u8_nas_key_set_identifier (&tracking_area_update_request->naskeysetidentifier, 0, *(buffer + decoded) & 0x0f, len - decoded)) < 0)
+  if ((decoded_result = decode_u8_nas_key_set_identifier (&tracking_area_update_request->naskeysetidentifier, 0, *(buffer + decoded) >> 4, len - decoded)) < 0)
     return decoded_result;
 
   decoded++;

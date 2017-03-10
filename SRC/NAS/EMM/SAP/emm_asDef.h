@@ -225,6 +225,7 @@ typedef struct emm_as_data_s {
   uint8_t                delivered;   /* Data message delivery indicator  */
 #define EMM_AS_NAS_DATA_ATTACH  0x01  /* Attach complete      */
 #define EMM_AS_NAS_DATA_DETACH  0x02  /* Detach request       */
+#define EMM_AS_NAS_DATA_TAU     0x03  /* TAU    Accept        */
   uint8_t                nas_info;    /* Type of NAS information to transfer  */
   bstring                nas_msg;     /* NAS message to be transfered     */
 } emm_as_data_t;

@@ -62,8 +62,8 @@ decode_u8_eps_update_type (
   int                                     decoded = 0;
   uint8_t                                *buffer = &value;
 
-  epsupdatetype->activeflag = (*(buffer + decoded) >> 3) & 0x1;
-  epsupdatetype->epsupdatetypevalue = *(buffer + decoded) & 0x7;
+  epsupdatetype->activeflag = (*(buffer + decoded) >> 3) & 0x01;
+  epsupdatetype->epsupdatetypevalue = *(buffer + decoded) & 0x07;
   decoded++;
 #if NAS_DEBUG
   dump_eps_update_type_xml (epsupdatetype, iei);

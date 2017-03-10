@@ -366,6 +366,9 @@ emm_send_attach_reject (
  **              The Tracking Area Update Accept message is sent by the    **
  **              network to the UE to indicate that the corresponding      **
  **              tracking area update has been accepted.                   **
+ **              This function is used to send TAU Accept message together **
+ **              with Initial context setup request message to establish   **
+ **              radio bearers as well.                                    **
  **                                                                        **
  ** Inputs:      msg:           The EMMAS-SAP primitive to process         **
  **              Others:        None                                       **
@@ -397,7 +400,7 @@ emm_send_tracking_area_update_accept (
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_UPDATE_RESULT_MAXIMUM_LENGTH, size);
 
   // Optional - GPRS Timer T3412
-  if (*msg->t3412) {
+  if (msg->t3412) {
     size += GPRS_TIMER_MAXIMUM_LENGTH;
     emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_T3412_VALUE_PRESENT;
     if (*msg->t3412 <= 31) {
@@ -410,7 +413,7 @@ emm_send_tracking_area_update_accept (
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "GPRS_TIMER_MAXIMUM_LENGTH(%d)  (%d)\n", GPRS_TIMER_MAXIMUM_LENGTH, size);
   }
   // Optional - GUTI
-  if (msg->guti) {
+  if (msg->new_guti) {
     size += EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH;
     emm_msg->presencemask |= ATTACH_ACCEPT_GUTI_PRESENT;
     emm_msg->guti.guti.typeofidentity = EPS_MOBILE_IDENTITY_GUTI;
@@ -503,12 +506,6 @@ emm_send_tracking_area_update_accept (
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "MOBILE_IDENTITY_MINIMUM_LENGTH(%d)  (%d)", MOBILE_IDENTITY_MINIMUM_LENGTH, size);
   }*/
   // Optional - EMM cause
-  if (msg->emm_cause) {
-    size += EMM_CAUSE_MAXIMUM_LENGTH;
-    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_EMM_CAUSE_PRESENT;
-    emm_msg->emmcause = msg->emm_cause;
-    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "MOBILE_IDENTITY_MINIMUM_LENGTH(%d)  (%d)\n", EMM_CAUSE_MAXIMUM_LENGTH, size);
-  }
   // Optional - GPRS Timer T3402
   if (msg->t3402) {
     size += GPRS_TIMER_MAXIMUM_LENGTH;
@@ -564,6 +561,47 @@ emm_send_tracking_area_update_accept (
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "ADDITIONAL_UPDATE_RESULT_MAXIMUM_LENGTH(%d)  (%d)", ADDITIONAL_UPDATE_RESULT_MAXIMUM_LENGTH, size);
   }*/
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
+}
+/****************************************************************************
+ **                                                                        **
+ ** Name:        emm_send_tracking_area_update_accept_dl_nas()             **
+ **                                                                        **
+ ** Description: Builds Tracking Area Update Accept message                **
+ **                                                                        **
+ **              The Tracking Area Update Accept message is sent by the    **
+ **              network to the UE to indicate that the corresponding      **
+ **              tracking area update has been accepted.                   **
+ **              This function is used to send TAU Accept message via      **
+ **              S1AP DL NAS Transport message.                            **
+ **                                                                        **
+ ** Inputs:      msg:           The EMMAS-SAP primitive to process         **
+ **              Others:        None                                       **
+ **                                                                        **
+ ** Outputs:     emm_msg:       The EMM message to be sent                 **
+ **              Return:        The size of the EMM message                **
+ **              Others:        None                                       **
+ **                                                                        **
+ ***************************************************************************/
+
+int
+emm_send_tracking_area_update_accept_dl_nas (
+  const emm_as_data_t * msg,
+  tracking_area_update_accept_msg * emm_msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
+  /*
+   * Mandatory - Message type
+   */
+  emm_msg->messagetype = TRACKING_AREA_UPDATE_ACCEPT;
+  /*
+   * Mandatory - EMM cause
+   */
+  size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH;
+  emm_msg->epsupdateresult = EPS_UPDATE_RESULT_TA_UPDATED;
+  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Sending DL NAS - TAU Accept\n");
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
+
 }
 
 /****************************************************************************

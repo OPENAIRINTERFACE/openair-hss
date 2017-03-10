@@ -516,13 +516,11 @@ emm_recv_tracking_area_update_request (
       (decode_status->integrity_protected_message)?"yes":"no",
       (decode_status->mac_matched)?"yes":"no",
       (decode_status->ciphered_message)?"yes":"no");
-
-#if NAS_FORCE_REJECT_TAU
-  // LW: Not completely implemented; send a Received Tracking Area Update Reject to induce a Attach Request from UE!
-  rc = emm_proc_tracking_area_update_reject (ue_id, EMM_CAUSE_IMPLICITLY_DETACHED);
-#else
+  /* Basic Periodic TAU Request handling is supported. Only mandatory IEs are supported
+   * TODO - Add support for re-auth during TAU , Implicit GUTI Re-allocation & TAU Complete,
+   * TAU due to change in TAs, optional IEs 
+   */
   rc = emm_proc_tracking_area_update_request(ue_id, msg, emm_cause, decode_status);
-#endif
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
