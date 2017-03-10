@@ -412,6 +412,7 @@ sgw_handle_gtpv1uCreateTunnelResp (
           sgi_create_endpoint_resp.status = SGI_STATUS_OK;
         } else {
           OAILOG_ERROR (LOG_SPGW_APP, "Failed to allocate IPv4 PAA for PDN type IPv4\n");
+          //TODO Check the error code returned by "IP address allocator" and handle it accordingly
           sgi_create_endpoint_resp.status = SGI_STATUS_ERROR_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
         }
       }
@@ -489,6 +490,11 @@ sgw_handle_gtpv1uCreateTunnelResp (
   create_session_response_p->cause = cause;
   create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause = cause;
   create_session_response_p->bearer_contexts_created.num_bearer_context += 1;
+  if (new_bearer_ctxt_info_p) {
+    create_session_response_p->teid = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_S11;
+    create_session_response_p->trxn = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.trxn;
+    create_session_response_p->peer_ip = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.peer_ip;
+  }
   rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
 }
