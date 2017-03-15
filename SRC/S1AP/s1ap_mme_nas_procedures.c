@@ -460,6 +460,8 @@ s1ap_handle_conn_est_cnf (
    */
   if (conn_est_cnf_pP->ue_radio_cap_length) {
     OAILOG_DEBUG (LOG_S1AP, "UE radio capability found, adding to message\n");
+    initialContextSetupRequest_p->presenceMask |=
+      S1AP_INITIALCONTEXTSETUPREQUESTIES_UERADIOCAPABILITY_PRESENT;
     OCTET_STRING_fromBuf(&initialContextSetupRequest_p->ueRadioCapability,
                          conn_est_cnf_pP->ue_radio_capabilities,
                          conn_est_cnf_pP->ue_radio_cap_length);
