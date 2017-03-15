@@ -495,6 +495,8 @@ emm_proc_attach_request (
     OAILOG_NOTICE (LOG_NAS_EMM, "EMM-PROC  - Create EMM context ue_id = " MME_UE_S1AP_ID_FMT "\n", ue_id);
     new_emm_ctx->is_dynamic = true;
     bdestroy(new_emm_ctx->esm_msg);
+    new_emm_ctx->attach_type = type;
+    new_emm_ctx->additional_update_type = additional_update_type;
     new_emm_ctx->emm_cause = EMM_CAUSE_SUCCESS;
     new_emm_ctx->_emm_fsm_status = EMM_INVALID;
     new_emm_ctx->T3450.id = NAS_TIMER_INACTIVE_ID;
