@@ -99,7 +99,14 @@ decode_pdn_connectivity_request (
        */
       pdn_connectivity_request->presencemask |= PDN_CONNECTIVITY_REQUEST_PROTOCOL_CONFIGURATION_OPTIONS_PRESENT;
       break;
-
+    
+    case PDN_CONNECTIVITY_REQUEST_DEVICE_PROPERTIES_IEI:
+    case PDN_CONNECTIVITY_REQUEST_DEVICE_PROPERTIES_LOW_PRIO_IEI:
+      // Skip this IE. Not supported. It is relevant for delay tolerant devices such as IoT devices.
+      OAILOG_INFO (LOG_NAS_ESM, "ESM-MSG - Device Properties IE in PDN Connectivity Request is not supported. Skipping this IE. IE = %x\n", ieiDecoded);
+      decoded +=1; // Device Properties is 1 byte
+      break;
+      
     default:
       errorCodeDecoder = TLV_UNEXPECTED_IEI;
       return TLV_UNEXPECTED_IEI;
