@@ -79,6 +79,8 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMM_CN_DEREGISTER_UE",
   "EMM_CN_PDN_CONNECTIVITY_RES",
   "EMM_CN_PDN_CONNECTIVITY_FAIL",
+  "EMMCN_IMPLICIT_DETACH_UE",
+  "EMMCN_SMC_PROC_FAIL",
 };
 
 
@@ -165,6 +167,16 @@ static int _emm_cn_authentication_fail (const emm_cn_auth_fail_t * msg)
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   rc = emm_proc_attach_reject (msg->ue_id, msg->cause);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+static int _emm_cn_smc_fail (const emm_cn_smc_fail_t * msg)
+{
+  int                                     rc = RETURNerror;
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  rc = emm_proc_attach_reject (msg->ue_id, msg->emm_cause);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -462,6 +474,9 @@ int emm_cn_send (const emm_cn_t * msg)
   
   case EMMCN_IMPLICIT_DETACH_UE:
     rc = _emm_cn_implicit_detach_ue (msg->u.emm_cn_implicit_detach.ue_id);
+    break;
+  case EMMCN_SMC_PROC_FAIL:
+    rc = _emm_cn_smc_fail (msg->u.smc_fail);
     break;
 
   default:

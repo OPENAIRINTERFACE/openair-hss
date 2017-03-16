@@ -298,15 +298,15 @@ emm_proc_attach_request (
     if (guti) { // no need for  && (is_native_guti)
       guti_emm_ctx = emm_data_context_get_by_guti (&_emm_data, guti);
       if (guti_emm_ctx) {
-        // Don't do anything for old context - It would be cleaned up via implicit detach timer
-        // Remove IMSI and GUTI from old context to avoid duplication 
+        
         /* 
-         * Note- Ideally we should use old UE context to handle this request. However as of now there is no
-         * intelligence in state machine to reuse old session parameters (bearer and IP address) 
-         * and to skip sending session request to SPGW in this case. So for now, using new context to handle this.
-         * TODO- add aforementioned support in the code.
+         * This implies either UE or eNB has not sent S-TMSI in intial UE message even though UE has old GUTI. 
+         * Trigger clean up
          */
-        emm_data_context_remove_mobile_ids (&_emm_data, guti_emm_ctx);
+          emm_sap_t                               emm_sap = {0};
+          emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+          emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = guti_emm_ctx->ue_id;
+          rc = emm_sap_send (&emm_sap);
       }
       // Allocate new context and process the new request as fresh attach request
       create_new_emm_ctxt = true;
@@ -359,9 +359,11 @@ emm_proc_attach_request (
           REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_f);
           if (imsi_emm_ctx->is_has_been_attached) {
             OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - the new ATTACH REQUEST is progressed\n");
-            // Don't do anything for old context - It would be cleaned up via implicit detach timer
-            // Remove IMSI and GUTI from old context to avoid duplication 
-            emm_data_context_remove_mobile_ids (&_emm_data, imsi_emm_ctx);
+            // Trigger clean up
+            emm_sap_t                               emm_sap = {0};
+            emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+            emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = imsi_emm_ctx->ue_id;
+            rc = emm_sap_send (&emm_sap);
             // Allocate new context and process the new request as fresh attach request
             create_new_emm_ctxt = true;
           }
@@ -448,7 +450,16 @@ emm_proc_attach_request (
     }// If IMSI !=NULL 
   } else {
     // This implies UE has GUTI from previous registration procedure
-    // Cleanup and remove current EMM context - TODO - IP address release 
+    // Cleanup and remove current EMM context - TODO - IP address release
+    /* Note - 
+     * Since we dont support IP address release here , this can result in duplicate session  allocation.
+     * So rejecting the attach and deleting the old context so that next attach from UE can be handled w/o 
+     * causing duplicate session allocation.
+     */
+    rc = _emm_attach_reject (new_emm_ctx);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+    #if 0 
+    // TODO - send session delete request towards SGW 
     /*
      * Notify ESM that all EPS bearer contexts allocated for this UE have
      * to be locally deactivated
@@ -474,6 +485,7 @@ emm_proc_attach_request (
 	
     _clear_emm_ctxt(new_emm_ctx);
     create_new_emm_ctxt = true;
+    #endif 
   }
   if (create_new_emm_ctxt) {
     /*

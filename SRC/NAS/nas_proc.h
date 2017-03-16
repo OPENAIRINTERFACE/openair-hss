@@ -105,5 +105,6 @@ int nas_proc_deregister_ue(uint32_t ue_id);
 int nas_proc_pdn_connectivity_res(itti_nas_pdn_connectivity_rsp_t *nas_pdn_connectivity_rsp);
 int nas_proc_pdn_connectivity_fail(itti_nas_pdn_connectivity_fail_t *nas_pdn_connectivity_fail);
 int nas_proc_implicit_detach_ue_ind (mme_ue_s1ap_id_t ue_id);
+int nas_proc_smc_fail(emm_cn_smc_fail_t *emm_cn_smc_fail);
 
 #endif /* FILE_NAS_PROC_SEEN*/

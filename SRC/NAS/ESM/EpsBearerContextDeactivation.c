@@ -134,11 +134,21 @@ esm_proc_eps_bearer_context_deactivate (
   int *bid,
   int *esm_cause)
 {
-  int                                     rc = RETURNerror;
+  int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
+  if (!((ctx) && (ctx->esm_data_ctx.pdn[0].data) && (ctx->esm_data_ctx.pdn[0].data->bearer[0]))) {
+    /* At present only one PDN connection and one bearer within that PDN connection is supported 
+     * So using index 0 for pid and bid.
+     */
+    OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation: No Valid context\n");
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+  }
 
   if (is_local) {
+    // Get the valid EPS bearer Id from the ESM context and set the ebi value accordingly 
+    ebi = ctx->esm_data_ctx.pdn[0].data->bearer[0]->ebi;
+    OAILOG_DEBUG (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ctx->ue_id, ebi);
     if (ebi != ESM_SAP_ALL_EBI) {
       /*
        * Locally release the specified EPS bearer context
@@ -483,7 +493,7 @@ _eps_bearer_release (
   int *bid)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  int                                     rc = RETURNerror;
+  int                                     rc = RETURNok;
 
   /*
    * Release the EPS bearer context entry
@@ -503,15 +513,14 @@ _eps_bearer_release (
        * The EPS bearer context was already in INACTIVE state
        */
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - EBI %d was already INACTIVE\n", ebi);
-    } else {
-      /*
-       * Release EPS bearer data
-       */
-      rc = esm_ebr_release (ctx, ebi);
+    } 
+    /*
+     * Release EPS bearer data
+     */
+    rc = esm_ebr_release (ctx, ebi);
 
-      if (rc != RETURNok) {
-        OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer data\n");
-      }
+    if (rc != RETURNok) {
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer data\n");
     }
   }
 

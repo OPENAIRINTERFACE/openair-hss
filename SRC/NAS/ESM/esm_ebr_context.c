@@ -267,7 +267,7 @@ esm_ebr_context_release (
      * Search for active PDN connection
      */
     for (*pid = 0; *pid < ESM_DATA_PDN_MAX; (*pid)++) {
-      if (!esm_ctx->pdn[*pid].is_active) {
+      if (!esm_ctx->pdn[*pid].data) {
         continue;
       }
 

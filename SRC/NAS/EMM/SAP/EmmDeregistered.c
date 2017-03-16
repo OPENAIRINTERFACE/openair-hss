@@ -142,6 +142,10 @@ EmmDeregistered (
     rc = RETURNok;
     break;
 
+  case _EMMREG_DETACH_REQ:
+    
+    rc = RETURNok;
+    break;
 
   default:
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)\n", evt->primitive);

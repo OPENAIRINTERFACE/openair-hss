@@ -141,16 +141,17 @@ esm_ebr_assign (
   int                                     i;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  ebr_ctx = ctx->esm_data_ctx.ebr.context[ebi - ESM_EBI_MIN];
 
   if (ebi != ESM_EBI_UNASSIGNED) {
     if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
-    } else if (ebr_ctx ) {
-      OAILOG_WARNING (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context already " "assigned (ebi=%d)\n", ebi);
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
-    }
-
+    } else {
+      ebr_ctx = ctx->esm_data_ctx.ebr.context[ebi - ESM_EBI_MIN];
+      if (ebr_ctx) {
+        OAILOG_WARNING (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context already " "assigned (ebi=%d)\n", ebi);
+        OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
+      }
+    }   
     /*
      * The specified EPS bearer context is available
      */
@@ -235,7 +236,6 @@ esm_ebr_release (
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
-
   /*
    * Get EPS bearer context data
    */

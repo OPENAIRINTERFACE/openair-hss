@@ -452,27 +452,30 @@ mme_app_handle_initial_ue_message (
       ue_nas_ctx = emm_data_context_get_by_guti (&_emm_data, &guti);
       if (ue_nas_ctx) 
       {
-        initial_pP->mme_ue_s1ap_id = ue_nas_ctx->ue_id;
         // Get the UE context using mme_ue_s1ap_id 
         ue_context_p =  mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts,ue_nas_ctx->ue_id);
         DevAssert(ue_context_p != NULL);
-        DevAssert(ue_context_p->mme_ue_s1ap_id == ue_nas_ctx->ue_id);
-        DevAssert(ue_context_p->enb_s1ap_id_key == INVALID_ENB_UE_S1AP_ID_KEY);
-        if (ue_context_p->enb_s1ap_id_key != INVALID_ENB_UE_S1AP_ID_KEY)
-        {
-          // Ideally this should never happen. When UE move to IDLE this key is set to INVALID.
-          // However if this key is valid, remove the key from the hashtable.
+        if ((ue_context_p != NULL) && (ue_context_p->mme_ue_s1ap_id == ue_nas_ctx->ue_id)) {
+          initial_pP->mme_ue_s1ap_id = ue_nas_ctx->ue_id;
+          if (ue_context_p->enb_s1ap_id_key != INVALID_ENB_UE_S1AP_ID_KEY)
+          {
+            /*
+             * Ideally this should never happen. When UE move to IDLE this key is set to INVALID.
+             * Note - This can happen if eNB detects RLF late and by that time UE sends Initial NAS message via new RRC
+             * connection 
+             * However if this key is valid, remove the key from the hashtable.
+             */
 
-          OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE.ERROR***** enb_s1ap_id_key %ld has valid value.\n" ,ue_context_p->enb_s1ap_id_key);
-          hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&id);
-          ue_context_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
-        }
-        // Update MME UE context with new enb_ue_s1ap_id
-        ue_context_p->enb_ue_s1ap_id = initial_pP->enb_ue_s1ap_id;
-        // regenerate the enb_s1ap_id_key as enb_ue_s1ap_id is changed.
-        MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->enb_id, initial_pP->enb_ue_s1ap_id);
-        // Update enb_s1ap_id_key in hashtable  
-        mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
+            OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE.ERROR***** enb_s1ap_id_key %ld has valid value.\n" ,ue_context_p->enb_s1ap_id_key);
+            hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&id);
+            ue_context_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+          }
+          // Update MME UE context with new enb_ue_s1ap_id
+          ue_context_p->enb_ue_s1ap_id = initial_pP->enb_ue_s1ap_id;
+          // regenerate the enb_s1ap_id_key as enb_ue_s1ap_id is changed.
+          MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->enb_id, initial_pP->enb_ue_s1ap_id);
+          // Update enb_s1ap_id_key in hashtable  
+          mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
                 ue_context_p,
                 enb_s1ap_id_key,
                 ue_nas_ctx->ue_id,
@@ -480,17 +483,15 @@ mme_app_handle_initial_ue_message (
                 ue_context_p->mme_s11_teid,
                 &guti);
         }
-        else {
-        OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE with mme code %u and S-TMSI %u:"
+      } else {
+          OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE with mme code %u and S-TMSI %u:"
             "no UE context found \n", initial_pP->opt_s_tmsi.mme_code, initial_pP->opt_s_tmsi.m_tmsi);
       }
     } else {
       OAILOG_DEBUG (LOG_MME_APP, "No MME is configured with MME code %u received in S-TMSI %u from UE.\n",
                     initial_pP->opt_s_tmsi.mme_code, initial_pP->opt_s_tmsi.m_tmsi);
     }
-  }
-  else
-  {
+  } else {
     OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE from S1AP,without S-TMSI. \n");
   }
   // create a new ue context if nothing is found
@@ -567,7 +568,7 @@ mme_app_handle_delete_session_rsp (
   ue_context_p->sgw_s11_teid = 0;
 
   if (delete_sess_resp_pP->cause != REQUEST_ACCEPTED) {
-    DevMessage ("Cases where bearer cause != REQUEST_ACCEPTED are not handled\n");
+    OAILOG_WARNING (LOG_MME_APP, "***WARNING****S11 Delete Session Rsp: NACK received from SPGW : %08x\n", delete_sess_resp_pP->teid);
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_SESSION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
     delete_sess_resp_pP->teid, ue_context_p->imsi);

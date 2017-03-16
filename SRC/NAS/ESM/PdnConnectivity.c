@@ -527,47 +527,49 @@ _pdn_connectivity_delete (
 {
   int                                     pti = ESM_PT_UNASSIGNED;
 
-  if (ctx == NULL) {
+  if (ctx == NULL || pid >= ESM_DATA_PDN_MAX) {
     return pti;
   }
-
-  if (pid < ESM_DATA_PDN_MAX) {
-    if (pid != ctx->esm_data_ctx.pdn[pid].pid) {
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection identifier is not valid\n");
-    } else if (ctx->esm_data_ctx.pdn[pid].data == NULL) {
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has not been allocated\n");
-    } else if (ctx->esm_data_ctx.pdn[pid].is_active) {
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection is active\n");
-    } else {
-      /*
-       * Get the identity of the procedure transaction that created
-       * * * * the PDN connection
-       */
-      pti = ctx->esm_data_ctx.pdn[pid].data->pti;
-    }
+  if (ctx->esm_data_ctx.pdn[pid].data == NULL) {
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection identifier is not valid\n");
+    return pti;
+  }
+  if (pid != ctx->esm_data_ctx.pdn[pid].pid) {
+    OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection identifier is not valid\n");
+    return pti;
+  } 
+  if (ctx->esm_data_ctx.pdn[pid].is_active) {
+      OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN connection is active\n");
+  } 
+  /*
+   * Get the identity of the procedure transaction that created
+   *  the PDN connection
+   */
+  pti = ctx->esm_data_ctx.pdn[pid].data->pti;
+  
+  /*
+   * Decrement the number of PDN connections
+   */
+  ctx->esm_data_ctx.n_pdns -= 1;
+  
+  /*
+   * Set the PDN connection as available
+   */
+  
+  ctx->esm_data_ctx.pdn[pid].pid = -1;
+    
+  ctx->esm_data_ctx.pdn[pid].is_active = false;
+    
+  /*
+   * Release allocated PDN connection data
+   */
+  if (ctx->esm_data_ctx.pdn[pid].data->apn) {
+    bdestroy (ctx->esm_data_ctx.pdn[pid].data->apn);
   }
 
-  if (pti != ESM_PT_UNASSIGNED) {
-    /*
-     * Decrement the number of PDN connections
-     */
-    ctx->esm_data_ctx.n_pdns -= 1;
-    /*
-     * Set the PDN connection as available
-     */
-    ctx->esm_data_ctx.pdn[pid].pid = -1;
-
-    /*
-     * Release allocated PDN connection data
-     */
-    if (ctx->esm_data_ctx.pdn[pid].data->apn) {
-      bdestroy (ctx->esm_data_ctx.pdn[pid].data->apn);
-    }
-
-    free_wrapper ((void**) &ctx->esm_data_ctx.pdn[pid].data);
-    ctx->esm_data_ctx.pdn[pid].data = NULL;
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d released\n", pid);
-  }
+  free_wrapper ((void**) &ctx->esm_data_ctx.pdn[pid].data);
+  ctx->esm_data_ctx.pdn[pid].data = NULL;
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d released\n", pid);
 
   /*
    * Return the procedure transaction identity

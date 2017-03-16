@@ -50,6 +50,7 @@ typedef enum emmcn_primitive_s {
   _EMMCN_PDN_CONNECTIVITY_RES, // LG
   _EMMCN_PDN_CONNECTIVITY_FAIL,// LG
   _EMMCN_IMPLICIT_DETACH_UE,
+  _EMMCN_SMC_PROC_FAIL,
   _EMMCN_END
 } emm_cn_primitive_t;
 
@@ -83,6 +84,11 @@ typedef struct emm_cn_implicit_detach_ue_s {
   uint32_t ue_id;
 } emm_cn_implicit_detach_ue_t;
 
+typedef struct emm_cn_smc_fail_s {
+  mme_ue_s1ap_id_t    ue_id;
+  nas_cause_t emm_cause;
+} emm_cn_smc_fail_t;
+
 typedef struct emm_mme_ul_s {
   emm_cn_primitive_t primitive;
   union {
@@ -92,6 +98,7 @@ typedef struct emm_mme_ul_s {
     emm_cn_pdn_res_t        *emm_cn_pdn_res;
     emm_cn_pdn_fail_t       *emm_cn_pdn_fail;
     emm_cn_implicit_detach_ue_t   emm_cn_implicit_detach;
+    emm_cn_smc_fail_t        *smc_fail;
   } u;
 } emm_cn_t;
 

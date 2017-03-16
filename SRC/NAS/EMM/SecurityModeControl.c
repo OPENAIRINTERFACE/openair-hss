@@ -59,6 +59,7 @@
 
 #include "emm_sap.h"
 #include "emm_cause.h"
+#include "nas_proc.h"
 
 #include "UeSecurityCapability.h"
 
@@ -525,6 +526,13 @@ emm_proc_security_mode_reject (
   emm_sap.u.emm_reg.ue_id = ue_id;
   emm_sap.u.emm_reg.ctx = emm_ctx;
   rc = emm_sap_send (&emm_sap);
+
+  // Send Attach Reject and release EMM context  
+  emm_cn_smc_fail_t emm_cn_smc_fail;
+  emm_cn_smc_fail.ue_id = ue_id;
+  emm_cn_smc_fail.emm_cause = NAS_CAUSE_SECURITY_MODE_REJECTED;
+
+  nas_proc_smc_fail(&emm_cn_smc_fail);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

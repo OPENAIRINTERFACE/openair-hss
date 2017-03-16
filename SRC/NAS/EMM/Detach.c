@@ -73,11 +73,27 @@ void
 _clear_emm_ctxt(emm_data_context_t *emm_ctx) {
   DevAssert(emm_ctx);
 
+  emm_data_context_stop_all_timers(emm_ctx);
+  
+  esm_sap_t                               esm_sap = {0};
+  /* 
+   * Release ESM PDN and bearer context
+   */
+
+  esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ;
+  esm_sap.ue_id = emm_ctx->ue_id;
+  esm_sap.ctx = emm_ctx;
+  esm_sap.data.eps_bearer_context_deactivate.ebi = ESM_SAP_ALL_EBI;
+  esm_sap_send (&esm_sap);
+  
   if (emm_ctx->esm_msg) {
     bdestroy(emm_ctx->esm_msg);
   }
 
-  emm_data_context_stop_all_timers(emm_ctx);
+  // Change the FSM state to Deregistered
+  if (emm_fsm_get_status (emm_ctx->ue_id, emm_ctx) != EMM_DEREGISTERED) {
+    emm_fsm_set_status (emm_ctx->ue_id, emm_ctx, EMM_DEREGISTERED); 
+  }
 
   /*
    * Release the EMM context
@@ -214,6 +230,8 @@ emm_proc_detach_request (
 
   if (emm_ctx == NULL) {
     OAILOG_WARNING (LOG_NAS_EMM, "No EMM context exists for the UE (ue_id=" MME_UE_S1AP_ID_FMT ")", ue_id);
+    // There may be MME APP Context. Trigger clean up in MME APP 
+    nas_itti_detach_req(ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
 
@@ -250,31 +268,21 @@ emm_proc_detach_request (
   }
 
   if (rc != RETURNerror) {
-    /*
-     * Notify ESM that all EPS bearer contexts allocated for this UE have
-     * to be locally deactivated
-     */
-    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-    esm_sap_t                               esm_sap = {0};
-
-    esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ;
-    esm_sap.ue_id = ue_id;
-    esm_sap.ctx = emm_ctx;
-    esm_sap.data.eps_bearer_context_deactivate.ebi = ESM_SAP_ALL_EBI;
-    rc = esm_sap_send (&esm_sap);
 
     emm_sap_t                               emm_sap = {0};
 
     /*
-     * Notify EMM that the UE has been implicitly detached
+     * Notify EMM FSM that the UE has been implicitly detached
      */
     MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_REQ ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
     emm_sap.primitive = EMMREG_DETACH_REQ;
     emm_sap.u.emm_reg.ue_id = ue_id;
     emm_sap.u.emm_reg.ctx = emm_ctx;
     rc = emm_sap_send (&emm_sap);
+    // Notify MME APP to trigger Session release towards SGW and S1 signaling release towards S1AP.
     nas_itti_detach_req(ue_id);
   }
+  // Release emm and esm context  
   _clear_emm_ctxt(emm_ctx);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);

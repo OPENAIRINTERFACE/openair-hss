@@ -105,10 +105,14 @@ EmmDeregisteredInitiated (
     case _EMMREG_LOWERLAYER_NON_DELIVERY:
       rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
       break;
+    
+    case _EMMREG_DETACH_REQ:
+      rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+      break;
 
-  default:
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)\n", evt->primitive);
-    break;
+    default:
+      OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM   - Primitive is not valid (%d)\n", evt->primitive);
+      break;
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

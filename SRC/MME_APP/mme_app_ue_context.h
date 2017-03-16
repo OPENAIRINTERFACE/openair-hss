@@ -80,7 +80,6 @@ uint64_t mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src);
 void mme_app_ue_context_uint_to_imsi(uint64_t imsi_src, mme_app_imsi_t *imsi_dst);
 void mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst, const imsi_t *imsi_src);
 mme_ue_s1ap_id_t mme_app_ctx_get_new_ue_id(void);
-
 /*
  * Timer identifier returned when in inactive state (timer is stopped or has
  * failed to be started)
@@ -350,6 +349,8 @@ void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
 
 void mme_app_handle_enb_deregister_ind(const itti_s1ap_eNB_deregistered_ind_t const* eNB_deregistered_ind);
+
+void mme_app_send_delete_session_request (struct ue_context_s *ue_context_p);
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 

@@ -963,11 +963,19 @@ mme_app_handle_s1ap_ue_context_release_complete (
   mme_notify_ue_context_released (&mme_app_desc.mme_ue_contexts, ue_context_p);
 
   if (ue_context_p->mm_state == UE_UNREGISTERED) {
-    OAILOG_DEBUG (LOG_MME_APP, "Deleting UE context associated in MME for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n ",
+    if ((ue_context_p->mme_s11_teid == 0) && (ue_context_p->sgw_s11_teid == 0)) {
+      // No Session
+      OAILOG_DEBUG (LOG_MME_APP, "Deleting UE context associated in MME for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n ",
                   s1ap_ue_context_release_complete->mme_ue_s1ap_id);
-    mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
-    update_mme_app_stats_connected_ue_sub();
-  } 
+      mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
+      update_mme_app_stats_connected_ue_sub();
+    } else { 
+      // Send a DELETE_SESSION_REQUEST message to the SGW
+      mme_app_send_delete_session_request (ue_context_p);
+      // Move the UE to Idle state
+      mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context_p,ECM_IDLE);
+    }
+  }  
   else 
   {
     // Update keys and ECM state 

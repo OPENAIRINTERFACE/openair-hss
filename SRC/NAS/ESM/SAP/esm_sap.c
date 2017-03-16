@@ -57,7 +57,7 @@
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
-
+extern int _pdn_connectivity_delete (emm_data_context_t * ctx, int pid);
 /****************************************************************************/
 /*******************  L O C A L    D E F I N I T I O N S  *******************/
 /****************************************************************************/
@@ -247,6 +247,11 @@ esm_sap_send (
        * Locally deactivate EPS bearer context
        */
       rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.eps_bearer_context_deactivate.ebi, &pid, &bid, NULL);
+
+      // At present only default bearer is supported so release PDN connection as well - Implicit Detach
+     
+      _pdn_connectivity_delete (msg->ctx, pid);
+      
     }
     break;
 
