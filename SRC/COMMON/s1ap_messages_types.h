@@ -70,7 +70,7 @@ typedef struct itti_s1ap_initial_ctxt_setup_req_s {
 typedef struct itti_s1ap_ue_cap_ind_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
-  uint8_t           radio_capabilities[512];
+  uint8_t           radio_capabilities[1024];
   size_t            radio_capabilities_length;
 } itti_s1ap_ue_cap_ind_t;
 

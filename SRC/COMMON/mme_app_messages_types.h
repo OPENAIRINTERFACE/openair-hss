@@ -73,7 +73,7 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
   uint16_t                security_capabilities_encryption_algorithms;
   uint16_t                security_capabilities_integrity_algorithms;
 
-  char                    ue_radio_capabilities[512];
+  char                    ue_radio_capabilities[1024];
   int                     ue_radio_cap_length;
 
   itti_nas_conn_est_cnf_t nas_conn_est_cnf;
