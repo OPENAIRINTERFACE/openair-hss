@@ -355,7 +355,7 @@ emm_send_attach_reject (
    * Optional - ESM message container
    */
   if (msg->nas_msg) {
-    size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + blength(msg->nas_msg);
+    size += ESM_MESSAGE_CONTAINER_MINIMUM_LENGTH + blength(msg->nas_msg) + 1; // Adding 1 byte since ESM Container is optional IE in Attach Reject
     emm_msg->presencemask |= ATTACH_REJECT_ESM_MESSAGE_CONTAINER_PRESENT;
     emm_msg->esmmessagecontainer = msg->nas_msg;
   }
