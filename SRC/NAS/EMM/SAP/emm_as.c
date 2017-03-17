@@ -1547,7 +1547,7 @@ static int _emm_as_establish_cnf (const emm_as_establish_t * msg, nas_establish_
   /*
    * Encode the initial NAS information message
    */
-  int bytes = _emm_as_encode (&as_msg->nas_msg, &nas_msg,size,emm_security_context);
+  int bytes = _emm_as_encode (&as_msg->nas_msg, &nas_msg, size, emm_security_context);
 
   if (bytes > 0) {
     as_msg->err_code = AS_SUCCESS;

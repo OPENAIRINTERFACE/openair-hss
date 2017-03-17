@@ -1461,6 +1461,13 @@ _emm_attach_accept (
       } else {
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
       }
+    } else {
+      // Set the TAI attributes from the stored context for resends.
+      emm_sap.u.emm_as.u.establish.tai_list.list_type = emm_ctx->_tai_list.list_type;
+      emm_sap.u.emm_as.u.establish.tai_list.n_tais    = emm_ctx->_tai_list.n_tais;
+      for (i=0; i < emm_ctx->_tai_list.n_tais; i++) {
+        memcpy(&emm_sap.u.emm_as.u.establish.tai_list.tai[i], &emm_ctx->_tai_list.tai[i], sizeof(tai_t));
+      }
     }
 
     emm_sap.u.emm_as.u.establish.eps_id.guti = &emm_ctx->_guti;

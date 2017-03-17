@@ -605,9 +605,11 @@ emm_data_context_remove (
   if ( IS_EMM_CTXT_PRESENT_GUTI(elm)) {
     obj_hashtable_ts_remove(emm_data->ctx_coll_guti, (const void *) &elm->_guti, sizeof(elm->_guti),
                             (void **) &emm_ue_id);
-
-    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id " MME_UE_S1AP_ID_FMT " guti " " "
-        GUTI_FMT "\n", elm, (mme_ue_s1ap_id_t) (*emm_ue_id), GUTI_ARG(&elm->_guti));
+    if (emm_ue_id) {
+      // The GUTI is only inserted as part of attach complete, so it might be NULL.
+      OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_guti context %p UE id "
+          MME_UE_S1AP_ID_FMT " guti " " " GUTI_FMT "\n", elm, (mme_ue_s1ap_id_t) (*emm_ue_id), GUTI_ARG(&elm->_guti));
+    }
     emm_ctx_clear_guti(elm);
   }
   
@@ -617,7 +619,7 @@ emm_data_context_remove (
     hashtable_ts_remove (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64, (void **)&emm_ue_id);
 
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in ctx_coll_imsi context %p UE id " MME_UE_S1AP_ID_FMT " imsi " IMSI_64_FMT "\n",
-        elm, (mme_ue_s1ap_id_t)((uintptr_t)emm_ue_id), imsi64);
+                  elm, (mme_ue_s1ap_id_t)((uintptr_t)emm_ue_id), imsi64);
     emm_ctx_clear_imsi(elm);
   }
 
