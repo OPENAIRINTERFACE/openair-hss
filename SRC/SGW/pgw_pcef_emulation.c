@@ -277,15 +277,33 @@ void pgw_pcef_emulation_apply_sdf_filter(sdf_filter_t   * const sdf_f, const sdf
 
     bstring marking_command = NULL;
     if ((TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG | TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG) & sdf_f->packetfiltercontents.flags) {
-      marking_command = bformat("iptables -I PREROUTING -t mangle --in-interface %s  %s -j MARK --set-mark %d", bdata(pgw_config_p->ipv4.if_name_SGI), bdata(filter), sdf_id);
+      marking_command = bformat("iptables -I POSTROUTING -t mangle  %s -j MARK --set-mark %d",  bdata(filter), sdf_id);
     } else {
-      marking_command = bformat("iptables -I PREROUTING -t mangle --in-interface %s --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
-          bdata(pgw_config_p->ipv4.if_name_SGI), NIPADDR(pgw_config_p->ue_pool_addr[0].s_addr),
+      //marking_command = bformat("iptables -I PREROUTING -t mangle --in-interface %s --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
+      marking_command = bformat("iptables -I POSTROUTING -t mangle  --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
+          NIPADDR(pgw_config_p->ue_pool_addr[0].s_addr),
           pgw_config_p->ue_pool_mask[0], bdata(filter), sdf_id);
     }
     bdestroy_wrapper(&filter);
     async_system_command (TASK_ASYNC_SYSTEM, false, bdata(marking_command));
     bdestroy_wrapper(&marking_command);
+
+    // for UE <-> PGW traffic
+    filter = pgw_pcef_emulation_packet_filter_2_iptable_string(&sdf_f->packetfiltercontents, sdf_f->direction);
+
+    marking_command = NULL;
+    if ((TRAFFIC_FLOW_TEMPLATE_IPV4_REMOTE_ADDR_FLAG | TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG) & sdf_f->packetfiltercontents.flags) {
+      marking_command = bformat("iptables -I OUTPUT -t mangle  %s -j MARK --set-mark %d",  bdata(filter), sdf_id);
+    } else {
+      marking_command = bformat("iptables -I OUTPUT -t mangle  --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/%"PRIu8" %s -j MARK --set-mark %d",
+          NIPADDR(pgw_config_p->ue_pool_addr[0].s_addr),
+          pgw_config_p->ue_pool_mask[0], bdata(filter), sdf_id);
+    }
+    bdestroy_wrapper(&filter);
+    async_system_command (TASK_ASYNC_SYSTEM, false, bdata(marking_command));
+    bdestroy_wrapper(&marking_command);
+
+
   }
 }
 

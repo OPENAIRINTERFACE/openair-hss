@@ -608,7 +608,7 @@ sgw_handle_sgi_endpoint_updated (
       if (spgw_config.pgw_config.use_gtp_kernel_module) {
         rv = gtp_mod_kernel_tunnel_add(ue, enb, eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_ctxt_p->enb_teid_S1u, eps_bearer_ctxt_p->eps_bearer_id);
         bstring marking_command = bformat(
-            "iptables -I FORWARD -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
+            "iptables -A POSTROUTING -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
             NIPADDR(eps_bearer_ctxt_p->paa.ipv4_address.s_addr), SDF_ID_NGBR_DEFAULT, eps_bearer_ctxt_p->eps_bearer_id);
         async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
         bdestroy_wrapper(&marking_command);
@@ -861,7 +861,7 @@ sgw_handle_delete_session_request (
             for (int sdfx = 0; sdfx < eps_bearer_ctxt_p->num_sdf; sdfx++) {
               if (eps_bearer_ctxt_p->sdf_id[sdfx]) {
                 bstring marking_command = bformat(
-                    "iptables -D FORWARD -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
+                    "iptables -D POSTROUTING -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
                     NIPADDR(eps_bearer_ctxt_p->paa.ipv4_address.s_addr), eps_bearer_ctxt_p->sdf_id[sdfx], eps_bearer_ctxt_p->eps_bearer_id);
                 async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
                 bdestroy_wrapper(&marking_command);
@@ -882,7 +882,7 @@ sgw_handle_delete_session_request (
           for (int sdfx = 0; sdfx < eps_bearer_ctxt_p->num_sdf; sdfx++) {
             if (eps_bearer_ctxt_p->sdf_id[sdfx]) {
               bstring marking_command = bformat(
-                  "iptables -D FORWARD -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
+                  "iptables -D POSTROUTING -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
                   NIPADDR(eps_bearer_ctxt_p->paa.ipv4_address.s_addr), eps_bearer_ctxt_p->sdf_id[sdfx], eps_bearer_ctxt_p->eps_bearer_id);
               async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
               bdestroy_wrapper(&marking_command);
@@ -1156,10 +1156,12 @@ sgw_handle_create_bearer_response (
                       OAILOG_INFO (LOG_SPGW_APP, "Failed to setup EPS bearer id %u tunnel " TEID_FMT " (eNB) <-> (SGW) " TEID_FMT "\n",
                           eps_bearer_ctxt_p->eps_bearer_id, eps_bearer_ctxt_p->enb_teid_S1u, eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up);
                     } else {
+
                       bstring marking_command = bformat(
-                          "iptables -I FORWARD -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
+                          "iptables -A POSTROUTING -t mangle --out-interface gtp0 --dest %"PRIu8".%"PRIu8".%"PRIu8".%"PRIu8"/32 -m mark --mark 0x%04X -j MARK --set-mark %d",
                           NIPADDR(eps_bearer_ctxt_p->paa.ipv4_address.s_addr), pgw_ni_cbr_proc->sdf_id, eps_bearer_ctxt_p->eps_bearer_id);
                       async_system_command (TASK_SPGW_APP, false, bdata(marking_command));
+
                       AssertFatal((TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX > eps_bearer_ctxt_p->num_sdf), "Too much flows aggregated in this Bearer (should not happen => see MME)");
                       if (TRAFFIC_FLOW_TEMPLATE_NB_PACKET_FILTERS_MAX > eps_bearer_ctxt_p->num_sdf) {
                         eps_bearer_ctxt_p->sdf_id[eps_bearer_ctxt_p->num_sdf] = pgw_ni_cbr_proc->sdf_id;
