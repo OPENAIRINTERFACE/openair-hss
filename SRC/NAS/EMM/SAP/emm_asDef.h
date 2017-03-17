@@ -210,22 +210,29 @@ typedef struct emm_as_release_s {
  * ---------------------------------
  */
 typedef struct emm_as_data_s {
-  mme_ue_s1ap_id_t       ue_id;       /* UE lower layer identifier        */
-  const guti_t          *guti;        /* GUTI temporary mobile identity   */
-  emm_as_security_data_t sctx;        /* EPS NAS security context     */
-  const plmn_t          *plmn_id;     /* Identifier of the selected PLMN   */
-  ecgi_t                 ecgi;        /* E-UTRAN CGI This information element is used to globally identify a cell */
-  tac_t                  tac;         /* Code of the first tracking area the UE
-                                       * is registered to          */
-  bool                   switch_off;  /* true if the UE is switched off   */
-  uint8_t                type;        /* Network detach type          */
+  mme_ue_s1ap_id_t       ue_id;         /* UE lower layer identifier        */
+  emm_as_EPS_identity_t  eps_id;        /* UE's EPS mobile identity         */
+  const guti_t          *guti;          /* GUTI temporary mobile identity   */
+  const guti_t          *new_guti;      /* New GUTI, if re-allocated        */
+  emm_as_security_data_t sctx;          /* EPS NAS security context         */
+  uint8_t                encryption:4;  /* Ciphering algorithm              */
+  uint8_t                integrity:4;   /* Integrity protection algorithm   */
+  const plmn_t          *plmn_id;       /* Identifier of the selected PLMN  */
+  ecgi_t                 ecgi;          /* E-UTRAN CGI This information element is used to globally identify a cell */
+  TAI_LIST_T(16)         tai_list;      /* Valid field if num tai > 0       */
+  tac_t                  tac;           /* Code of the first tracking area the UE
+                                         * is registered to                 */
+  uint8_t               *eps_network_feature_support; /* TAU Network feature support */
+  bool                   switch_off;    /* true if the UE is switched off   */
+  uint8_t                type;          /* Network detach type          */
 #define EMM_AS_DATA_DELIVERED_LOWER_LAYER_FAILURE                  0
 #define EMM_AS_DATA_DELIVERED_TRUE                                 1
 #define EMM_AS_DATA_DELIVERED_LOWER_LAYER_NON_DELIVERY_INDICATION  2
   uint8_t                delivered;   /* Data message delivery indicator  */
-#define EMM_AS_NAS_DATA_ATTACH  0x01  /* Attach complete      */
-#define EMM_AS_NAS_DATA_DETACH  0x02  /* Detach request       */
-#define EMM_AS_NAS_DATA_TAU     0x03  /* TAU    Accept        */
+#define EMM_AS_NAS_DATA_ATTACH          0x01  /* Attach complete      */
+#define EMM_AS_NAS_DATA_DETACH          0x02  /* Detach request       */
+#define EMM_AS_NAS_DATA_TAU             0x03  /* TAU    Accept        */
+#define EMM_AS_NAS_DATA_ATTACH_ACCEPT   0x04  /* Attach Accept        */
   uint8_t                nas_info;    /* Type of NAS information to transfer  */
   bstring                nas_msg;     /* NAS message to be transfered     */
 } emm_as_data_t;

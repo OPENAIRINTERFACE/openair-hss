@@ -400,6 +400,8 @@ int
 nas_timer_restart (
   int id)
 {
+  int ret;
+  
   /*
    * Check if the timer entry is active
    */
@@ -417,6 +419,14 @@ nas_timer_restart (
      * Insert again the entry into the timer queue
      */
     _nas_timer_db_insert_entry (id, te);
+  #if ENABLE_ITTI
+    ret = timer_setup (te->itv.tv_sec, 0, TASK_NAS_MME, INSTANCE_DEFAULT, TIMER_ONE_SHOT, te->args, &(te->timer_id));
+
+    if (ret == -1) {
+      return NAS_TIMER_INACTIVE_ID;
+    }
+  #endif
+    
     return (id);
   }
 

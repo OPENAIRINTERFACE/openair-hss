@@ -174,6 +174,9 @@ typedef struct attach_data_s {
 static int                              _emm_attach_accept (
   emm_data_context_t * emm_ctx,
   attach_data_t * data);
+static int                              _emm_attach_accept_retx(
+  emm_data_context_t * emm_ctx,
+  attach_data_t * data);
 
 /****************************************************************************/
 /******************  E X P O R T E D    F U N C T I O N S  ******************/
@@ -401,7 +404,7 @@ emm_proc_attach_request (
                */
               attach_data_t *data = (attach_data_t *) emm_proc_common_get_args (ue_id);
 
-              _emm_attach_accept(imsi_emm_ctx, data);
+              _emm_attach_accept_retx(imsi_emm_ctx, data);
               // Clean up new UE context that was created to handle new attach request 
               nas_itti_detach_req(ue_id);
               OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
@@ -780,7 +783,7 @@ _emm_attach_t3450_handler (
      * On the first expiry of the timer, the network shall retransmit the ATTACH ACCEPT message and shall reset and
      * restart timer T3450.
      */
-    _emm_attach_accept (emm_ctx, data);
+    _emm_attach_accept_retx (emm_ctx, data);
   } else {
     REQUIREMENT_3GPP_24_301(R10_5_5_1_2_7_c__2);
     /*
@@ -942,7 +945,6 @@ _emm_attach_abort (
 
   if (data) {
     unsigned int                            ue_id = data->ue_id;
-    esm_sap_t                               esm_sap = {0};
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort the attach procedure (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
     ctx = emm_data_context_get (&_emm_data, ue_id);
@@ -956,40 +958,16 @@ _emm_attach_abort (
         ctx->T3450.id = nas_timer_stop (ctx->T3450.id);
         MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT " ", data->ue_id);
       }
-    }
-
-    /*
-     * Release retransmission timer parameters
-     */
-    bdestroy (data->esm_msg);
-    free_wrapper ((void**) &data);
-    /*
-     * Notify ESM that the network locally refused PDN connectivity
-     * to the UE
-     */
-    esm_sap.primitive = ESM_PDN_CONNECTIVITY_REJ;
-    esm_sap.ue_id = ue_id;
-    esm_sap.ctx = ctx;
-    esm_sap.recv = NULL;
-    rc = esm_sap_send (&esm_sap);
-
-    if (rc != RETURNerror) {
       /*
-       * Notify EMM that EPS attach procedure failed
+       * Release retransmission timer parameters
        */
+      bdestroy (data->esm_msg);
+      free_wrapper ((void**) &data);
+      // Trigger clean up
       emm_sap_t                               emm_sap = {0};
-
-      emm_sap.primitive = EMMREG_ATTACH_REJ;
-      emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx = ctx;
+      emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ctx->ue_id;
       rc = emm_sap_send (&emm_sap);
-
-      if (rc != RETURNerror) {
-        /*
-         * Release the UE context
-         */
-        rc = _emm_attach_release (ctx);
-      }
     }
   }
 
@@ -1556,6 +1534,83 @@ _emm_attach_accept (
     OAILOG_WARNING (LOG_NAS_EMM, "emm_ctx NULL\n");
   }
 
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+/****************************************************************************
+ **                                                                        **
+ ** Name:    _emm_attach_accept_retx()                                     **
+ **                                                                        **
+ ** Description: Retransmit ATTACH ACCEPT message and restart timer T3450  **
+ **                                                                        **
+ ** Inputs:  data:      Attach accept retransmission data                  **
+ **      Others:    None                                                   **
+ ** Outputs:     None                                                      **
+ **      Return:    RETURNok, RETURNerror                                  **
+ **      Others:    T3450                                                  **
+ **                                                                        **
+ ***************************************************************************/
+static int
+_emm_attach_accept_retx (
+  emm_data_context_t * emm_ctx,
+  attach_data_t * data)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_sap_t                               emm_sap = {0};
+  int                                     i = 0;
+  int                                     rc = RETURNerror;
+  if (!emm_ctx) {
+    OAILOG_WARNING (LOG_NAS_EMM, "emm_ctx NULL\n");
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
+  if (!IS_EMM_CTXT_PRESENT_GUTI(emm_ctx)) {
+    OAILOG_WARNING (LOG_NAS_EMM, " No GUTI present in emm_ctx. Abormal case. Skipping Retx of Attach Accept NULL\n");
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
+  /*
+   * Notify EMM-AS SAP that Attach Accept message together with an Activate
+   * Default EPS Bearer Context Request message has to be sent to the UE.
+   * Retx of Attach Accept needs to be done via DL NAS Transport S1AP message
+   */
+  emm_sap.primitive = EMMAS_DATA_REQ;
+  emm_sap.u.emm_as.u.data.ue_id = emm_ctx->ue_id;
+  emm_sap.u.emm_as.u.data.nas_info = EMM_AS_NAS_DATA_ATTACH_ACCEPT;
+  emm_sap.u.emm_as.u.data.tai_list.list_type = emm_ctx->_tai_list.list_type;
+  emm_sap.u.emm_as.u.data.tai_list.n_tais    = emm_ctx->_tai_list.n_tais;
+  for (i = 0; i < emm_ctx->_tai_list.n_tais; i++) {
+    memcpy(&emm_sap.u.emm_as.u.data.tai_list.tai[i], &emm_ctx->_tai_list.tai[i], sizeof(tai_t));
+  }
+  emm_sap.u.emm_as.u.data.eps_id.guti = &emm_ctx->_guti;
+  OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Include the same GUTI in the Attach Accept Retx message\n", emm_ctx->ue_id);
+  emm_sap.u.emm_as.u.data.new_guti    = &emm_ctx->_guti;
+  emm_sap.u.emm_as.u.data.eps_network_feature_support = &_emm_data.conf.eps_network_feature_support;
+  /*
+   * Setup EPS NAS security data
+   */
+  emm_as_set_security_data (&emm_sap.u.emm_as.u.data.sctx, &emm_ctx->_security, false, true);
+  emm_sap.u.emm_as.u.data.encryption = emm_ctx->_security.selected_algorithms.encryption;
+  emm_sap.u.emm_as.u.data.integrity = emm_ctx->_security.selected_algorithms.integrity;
+  /*
+   * Get the activate default EPS bearer context request message to
+   * transfer within the ESM container of the attach accept message
+   */
+  emm_sap.u.emm_as.u.data.nas_msg = data->esm_msg;
+  OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - nas_msg  src size = %d nas_msg  dst size = %d \n",
+    emm_ctx->ue_id, blength(data->esm_msg), blength(emm_sap.u.emm_as.u.data.nas_msg));
+
+  rc = emm_sap_send (&emm_sap);
+
+  if (RETURNerror != rc) {
+    OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  -Sent Retx Attach Accept message\n", emm_ctx->ue_id);
+    /*
+     * Re-start T3450 timer
+     */
+    emm_ctx->T3450.id = nas_timer_restart (emm_ctx->T3450.id);
+    OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  T3450 restarted\n", emm_ctx->ue_id);
+    OAILOG_DEBUG (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT "Timer T3450 (%d) expires in %ld seconds\n",
+      emm_ctx->ue_id, emm_ctx->T3450.id, emm_ctx->T3450.sec);
+  } else {
+    OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Send failed- Retx Attach Accept message\n", emm_ctx->ue_id);
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

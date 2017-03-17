@@ -1058,6 +1058,10 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
    */
   if (emm_msg )
     switch (msg->nas_info) {
+    case EMM_AS_NAS_DATA_ATTACH_ACCEPT:
+      size = emm_send_attach_accept_dl_nas (msg, &emm_msg->attach_accept);
+      break;
+    
     case EMM_AS_NAS_DATA_DETACH:
       size = emm_send_detach_accept (msg, &emm_msg->detach_accept);
       break;
