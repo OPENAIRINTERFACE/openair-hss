@@ -71,7 +71,10 @@ static const char                      *_emm_detach_type_str[] = {
 
 void
 _clear_emm_ctxt(emm_data_context_t *emm_ctx) {
-  DevAssert(emm_ctx);
+  
+  if (!emm_ctx) {
+    return;
+  }
 
   emm_data_context_stop_all_timers(emm_ctx);
   

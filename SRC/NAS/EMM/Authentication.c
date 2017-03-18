@@ -59,6 +59,7 @@
 #include "msc.h"
 #include "3gpp_requirements_24.301.h"
 #include "emm_proc.h"
+#include "nas_proc.h"
 #include "emm_sap.h"
 #include "nas_itti_messaging.h"
 
@@ -472,9 +473,8 @@ emm_proc_authentication_complete (
  ***************************************************************************/
 static void  *_authentication_t3460_handler (void *args)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     rc = RETURNerror;
   authentication_data_t                  *data = (authentication_data_t *) (args);
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   if (data) {
     /*
@@ -499,22 +499,13 @@ static void  *_authentication_t3460_handler (void *args)
       emm_sap.primitive = EMMREG_PROC_ABORT;
       emm_sap.u.emm_reg.ue_id = data->ue_id;
       data->notify_failure = true;
-      rc = emm_sap_send (&emm_sap);
-
-      /*
-       * Release the NAS signalling connection
-       */
-      if (rc != RETURNerror) {
-        emm_sap.primitive = EMMAS_RELEASE_REQ;
-        emm_sap.u.emm_as.u.release.guti = NULL;
-        emm_sap.u.emm_as.u.release.ue_id = data->ue_id;
-        emm_sap.u.emm_as.u.release.cause = EMM_AS_CAUSE_AUTHENTICATION;
-        rc = emm_sap_send (&emm_sap);
-        // TODO: Check return value.
-      }
+      emm_sap_send (&emm_sap);
+      // Clean up MME APP UE context  
+      emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+      emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = data->ue_id;
+      emm_sap_send (&emm_sap);
     }
   }
-
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, NULL);
 }
 

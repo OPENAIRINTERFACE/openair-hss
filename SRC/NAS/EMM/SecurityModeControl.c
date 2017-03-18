@@ -62,6 +62,7 @@
 #include "nas_proc.h"
 
 #include "UeSecurityCapability.h"
+#include "nas_itti_messaging.h"
 
 #if ENABLE_ITTI
 #  include "assertions.h"
@@ -526,13 +527,9 @@ emm_proc_security_mode_reject (
   emm_sap.u.emm_reg.ue_id = ue_id;
   emm_sap.u.emm_reg.ctx = emm_ctx;
   rc = emm_sap_send (&emm_sap);
+  // Clean up MME APP UE context 
+  nas_itti_detach_req(ue_id);
 
-  // Send Attach Reject and release EMM context  
-  emm_cn_smc_fail_t emm_cn_smc_fail;
-  emm_cn_smc_fail.ue_id = ue_id;
-  emm_cn_smc_fail.emm_cause = NAS_CAUSE_SECURITY_MODE_REJECTED;
-
-  nas_proc_smc_fail(&emm_cn_smc_fail);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -592,6 +589,7 @@ _security_t3460_handler (
     /*
      * Abort the security mode control procedure
      */
+    data->notify_failure = true;
     _security_abort (data);
   }
 
@@ -742,9 +740,10 @@ _security_abort (
   struct emm_data_context_s              *emm_ctx = NULL;
   int                                     rc = RETURNerror;
   security_data_t                        *data = (security_data_t *) (args);
+  unsigned int                            ue_id;
 
   if (data) {
-    unsigned int                            ue_id = data->ue_id;
+    ue_id = data->ue_id;
 
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Abort security mode control procedure " "(ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
 
@@ -778,7 +777,13 @@ _security_abort (
      */
     free_wrapper ((void**) &data);
   }
-
+  if (emm_ctx) {
+    // Clean up MME APP UE context  
+    emm_sap_t                               emm_sap = {0};
+    emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+    emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = emm_ctx->ue_id;
+    rc = emm_sap_send (&emm_sap);
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

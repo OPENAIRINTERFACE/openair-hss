@@ -157,7 +157,7 @@ esm_sap_send (
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
-  int                                     pid;
+  int                                     pid = ESM_DATA_PDN_MAX;
 
   /*
    * Check the ESM-SAP primitive
@@ -241,7 +241,7 @@ esm_sap_send (
     break;
 
   case ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
-      int                                     bid;
+      int                                     bid = 0;
 
       /*
        * Locally deactivate EPS bearer context

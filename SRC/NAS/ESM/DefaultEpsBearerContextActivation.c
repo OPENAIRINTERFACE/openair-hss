@@ -361,7 +361,7 @@ esm_proc_default_eps_bearer_context_failure (
   emm_data_context_t * ctx)
 {
   int                                     rc = RETURNerror;
-  int                                     pid;
+  int                                     pid = ESM_DATA_PDN_MAX;
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   if (ctx) {
@@ -377,7 +377,7 @@ esm_proc_default_eps_bearer_context_failure (
   int                                     ebi = esm_ebr_get_pending_ebi (ctx, ESM_EBR_ACTIVE_PENDING);
 
   if (ebi != ESM_EBI_UNASSIGNED) {
-    int                                     bid;
+    int                                     bid = 0;
 
     /*
      * Release the default EPS bearer context and enter state INACTIVE
