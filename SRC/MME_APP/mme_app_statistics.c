@@ -20,14 +20,12 @@
  */
 
 
-#include <stdlib.h>
 #include <stdio.h>
 
 #include "intertask_interface.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mme_app_statistics.h"
-#include "log.h"
 
 int
 mme_app_statistics_display (

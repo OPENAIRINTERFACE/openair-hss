@@ -27,6 +27,8 @@
 #include "log.h"
 #include "mme_app_if.h"
 
+// TODO: amar This file doesn't actually compile follow up with OAI
+
 #if ITTI_LITE
 int itf_mme_app_nas_initial_ue_message(
     const sctp_assoc_id_t    assoc_id,

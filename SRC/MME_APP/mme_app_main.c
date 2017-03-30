@@ -26,7 +26,6 @@
 #include <string.h>
 
 #include "intertask_interface.h"
-#include "mme_config.h"
 #include "timer.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
@@ -34,7 +33,6 @@
 #include "mme_app_statistics.h"
 #include "assertions.h"
 #include "msc.h"
-#include "log.h"
 
 mme_app_desc_t                          mme_app_desc;
 

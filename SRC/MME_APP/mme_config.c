@@ -38,7 +38,6 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include <libconfig.h>
 
 #include <arpa/inet.h>          /* To provide inet_addr */
@@ -46,13 +45,8 @@
 #include "assertions.h"
 #include "dynamic_memory_check.h"
 #include "log.h"
-#include "msc.h"
 #include "intertask_interface.h"
-#include "common_types.h"
-#include "mme_config.h"
 #include "spgw_config.h"
-#include "3gpp_33.401.h"
-#include "intertask_interface_conf.h"
 
 mme_config_t                            mme_config = {.rw_lock = PTHREAD_RWLOCK_INITIALIZER, 0};
 
@@ -680,7 +674,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       struct bstrList *list = bsplit (cidr, '/');
       AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
       address = list->entry[0];
-      mask    = list->entry[1];
       IPV4_STR_ADDR_TO_INT_NWBO (bdata(address), config_pP->ipv4.sgw_s11, "BAD IP ADDRESS FORMAT FOR SGW S11 !\n");
       bstrListDestroy(list);
       in_addr_var.s_addr = config_pP->ipv4.sgw_s11;

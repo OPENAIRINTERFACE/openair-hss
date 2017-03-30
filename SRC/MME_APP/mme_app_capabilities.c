@@ -28,17 +28,10 @@
 */
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "intertask_interface.h"
-#include "mme_config.h"
-#include "mme_app_extern.h"
-#include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-#include "secu_defs.h"
 #include "assertions.h"
-#include "common_types.h"
-#include "log.h"
 
 int
 mme_app_handle_s1ap_ue_capabilities_ind (

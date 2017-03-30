@@ -49,6 +49,7 @@
 #include "security_types.h"
 #include "sgw_ie_defs.h"
 
+// TODO: (amar) Enum unused check with OAI.
 typedef enum {
   ECM_IDLE,
   ECM_CONNECTED,
@@ -62,6 +63,7 @@ typedef struct {
   char data[IMSI_DIGITS_MAX + 1];
 } mme_app_imsi_t;
 
+// TODO: (amar) only used in testing
 #define IMSI_FORMAT "s"
 #define IMSI_DATA(MME_APP_IMSI) (MME_APP_IMSI.data)
 

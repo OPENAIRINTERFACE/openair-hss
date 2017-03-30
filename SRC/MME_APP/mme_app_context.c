@@ -24,13 +24,10 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include <stdint.h>
 #include <inttypes.h>
 #include <arpa/inet.h>
 
-#include "tree.h"
-#include "gcc_diag.h"
 #include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "log.h"
@@ -38,9 +35,7 @@
 #include "common_types.h"
 #include "conversions.h"
 #include "intertask_interface.h"
-#include "mme_config.h"
 #include "enum_string.h"
-#include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "s1ap_mme.h"

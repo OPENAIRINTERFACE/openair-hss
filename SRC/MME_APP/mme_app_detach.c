@@ -31,16 +31,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "assertions.h"
 #include "msc.h"
 #include "intertask_interface.h"
-#include "mme_app_itti_messaging.h"
-#include "mme_config.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-#include "mcc_mnc_itu.h"
 
 
 //------------------------------------------------------------------------------

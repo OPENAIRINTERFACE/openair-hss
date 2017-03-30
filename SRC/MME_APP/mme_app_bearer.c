@@ -36,13 +36,9 @@
 #include "conversions.h"
 #include "common_types.h"
 #include "intertask_interface.h"
-#include "mme_config.h"
-#include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-#include "sgw_ie_defs.h"
 #include "mme_app_itti_messaging.h"
-#include "secu_defs.h"
 
 
 //------------------------------------------------------------------------------
@@ -640,8 +636,8 @@ mme_app_handle_create_sess_resp (
 //#pragma message  "may force QCI here to 9"
     current_bearer_p->qci = 9;
     current_bearer_p->prio_level = 1;
-    current_bearer_p->pre_emp_vulnerability = 0;
-    current_bearer_p->pre_emp_capability = 0;
+    current_bearer_p->pre_emp_vulnerability = PRE_EMPTION_VULNERABILITY_ENABLED;
+    current_bearer_p->pre_emp_capability = PRE_EMPTION_CAPABILITY_ENABLED;
     OAILOG_DEBUG (LOG_MME_APP, "Set qci %u in bearer %u (qos not modified by S/P-GW)\n", current_bearer_p->qci, ue_context_p->default_bearer_id);
   }
 

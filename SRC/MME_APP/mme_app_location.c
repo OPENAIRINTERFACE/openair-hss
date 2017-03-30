@@ -38,11 +38,8 @@
 #include "msc.h"
 #include "log.h"
 #include "intertask_interface.h"
-#include "mme_config.h"
-#include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-#include "secu_defs.h"
 
 
 int
