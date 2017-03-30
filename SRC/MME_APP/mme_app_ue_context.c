@@ -44,12 +44,7 @@
 #include "3gpp_24.008.h"
 #include "3gpp_29.274.h"
 #include "mme_app_ue_context.h"
-#include "commonDef.h"
-#include "dynamic_memory_check.h"
 #include "mme_app_bearer_context.h"
-
-#include <string.h>
-#include <stdbool.h>
 
 
 
@@ -58,6 +53,8 @@
  * @param imsi_dst
  * @param imsi_src
  */
+// TODO: (amar) This and below functions are only used in testing possibly move
+// these to the testing module
 void
 mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst,
                                   const imsi_t *imsi_src)

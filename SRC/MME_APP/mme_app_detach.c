@@ -41,11 +41,9 @@
 #include "msc.h"
 #include "intertask_interface.h"
 #include "gcc_diag.h"
-#include "mme_app_itti_messaging.h"
 #include "mme_config.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
-#include "mcc_mnc_itu.h"
 
 static void mme_app_send_delete_session_request (struct ue_mm_context_s * const ue_context_p, const ebi_t ebi, const pdn_cid_t cid);
 

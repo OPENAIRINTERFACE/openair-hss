@@ -27,7 +27,9 @@
 */
 
 #include <unistd.h>
-#include <errno.h>
+#include <string.h>
+#include <stdint.h>
+
 #include <inttypes.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -37,7 +39,6 @@
 #include <stdint.h>
 #include <pthread.h>
 
-#include "tree.h"
 #include "gcc_diag.h"
 #include "dynamic_memory_check.h"
 #include "assertions.h"
@@ -49,7 +50,6 @@
 #include "intertask_interface.h"
 #include "mme_config.h"
 #include "enum_string.h"
-#include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_bearer_context.h"
 #include "mme_app_defs.h"

@@ -45,19 +45,18 @@
 #include "common_types.h"
 #include "intertask_interface.h"
 #include "mme_config.h"
-#include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mme_app_apn_selection.h"
 #include "mme_app_pdn_context.h"
 #include "mme_app_sgw_selection.h"
 #include "mme_app_bearer_context.h"
-#include "sgw_ie_defs.h"
 #include "common_defs.h"
 #include "gcc_diag.h"
 #include "mme_app_itti_messaging.h"
 #include "mme_app_procedures.h"
 #include "xml_msg_dump_itti.h"
+
 
 
 

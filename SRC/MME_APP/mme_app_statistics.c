@@ -25,10 +25,8 @@
   \company Eurecom
 */
 
-#include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <sys/time.h>
 #include <pthread.h>
 
 #include "bstrlib.h"

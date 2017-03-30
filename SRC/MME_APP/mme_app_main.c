@@ -39,7 +39,6 @@
 
 #include "dynamic_memory_check.h"
 #include "log.h"
-#include "msc.h"
 #include "assertions.h"
 #include "intertask_interface.h"
 #include "itti_free_defined_msg.h"
