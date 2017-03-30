@@ -63,6 +63,15 @@
 #define NAS_IMPLICIT_DETACH_UE_IND(mSGpTR)          (mSGpTR)->ittiMsg.nas_implicit_detach_ue_ind
 #define NAS_DATA_LENGHT_MAX     256
 
+typedef enum pdn_conn_rsp_cause_e {
+  CAUSE_OK = 16,
+  CAUSE_CONTEXT_NOT_FOUND = 64,                     
+  CAUSE_INVALID_MESSAGE_FORMAT = 65, 
+  CAUSE_SERVICE_NOT_SUPPORTED = 68,                  
+  CAUSE_SYSTEM_FAILURE = 72,                        
+  CAUSE_NO_RESOURCES_AVAILABLE = 73,           
+  CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED = 84   
+} pdn_conn_rsp_cause_t;
 
 
 typedef enum {
@@ -218,7 +227,9 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
 
 
 typedef struct itti_nas_pdn_connectivity_fail_s {
-  mme_ue_s1ap_id_t        ue_id; // nas ref
+  mme_ue_s1ap_id_t        ue_id; 
+  int                     pti;  
+  pdn_conn_rsp_cause_t    cause;  
 } itti_nas_pdn_connectivity_fail_t;
 
 

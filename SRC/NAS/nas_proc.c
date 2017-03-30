@@ -472,7 +472,7 @@ nas_proc_pdn_connectivity_fail (
 }
 //------------------------------------------------------------------------------
 int
-nas_proc_implicit_deatch_ue_ind (
+nas_proc_implicit_detach_ue_ind (
   mme_ue_s1ap_id_t ue_id)
 {
   int                                     rc = RETURNerror;

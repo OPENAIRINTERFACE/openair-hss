@@ -155,7 +155,7 @@ esm_send_pdn_connectivity_reject (
    * Optional IEs
    */
   msg->presencemask = 0;
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Send PDN Connectivity Reject message " "(pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
+  OAILOG_DEBUG (LOG_NAS_ESM, "ESM-SAP   - Send PDN Connectivity Reject message " "(pti=%d, ebi=%d)\n", msg->proceduretransactionidentity, msg->epsbeareridentity);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }
 

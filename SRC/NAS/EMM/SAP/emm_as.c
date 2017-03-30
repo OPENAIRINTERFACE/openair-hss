@@ -57,6 +57,7 @@
 #include "LowerLayer.h"
 #include "nas_itti_messaging.h"
 #include "emm_proc.h"
+#include "nas_proc.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -638,7 +639,7 @@ static int _emm_as_establish_req (const emm_as_establish_t * msg, int *emm_cause
                                                 (0 == decode_status.mac_matched))) {
       *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
       // Delete EMM,ESM conext, MMEAPP UE context and S1AP context
-      nas_proc_implicit_deatch_ue_ind(emm_ctx->ue_id);       
+      nas_proc_implicit_detach_ue_ind(emm_ctx->ue_id);       
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
     // Process Detach Request

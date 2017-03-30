@@ -581,31 +581,22 @@ emm_proc_attach_reject (
   mme_ue_s1ap_id_t ue_id,
   int emm_cause)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
 
-  /*
-   * Create temporary UE context
-   */
-  emm_data_context_t                      ue_ctx;
-
-  memset (&ue_ctx, 0, sizeof (emm_data_context_t));
-  ue_ctx.is_dynamic = false;
-  ue_ctx.ue_id = ue_id;
-  /*
-   * Update the EMM cause code
-   */
-
-  if (ue_id > 0) {
-    ue_ctx.emm_cause = emm_cause;
-  } else {
+  if (ue_id == INVALID_MME_UE_S1AP_ID) {
+    // Create temporary UE context
+    emm_data_context_t                      ue_ctx;
+    memset (&ue_ctx, 0, sizeof (emm_data_context_t));
+    ue_ctx.is_dynamic = false;
+    ue_ctx.ue_id = ue_id;
     ue_ctx.emm_cause = EMM_CAUSE_ILLEGAL_UE;
-  }
-
-  /*
-   * Do not accept attach request with protocol error
-   */
-  rc = _emm_attach_reject (&ue_ctx);
+    rc = _emm_attach_reject (&ue_ctx);
+  } else {
+    emm_data_context_t * emm_ctx_p = emm_data_context_get (&_emm_data, ue_id);
+    emm_ctx_p->emm_cause = emm_cause;
+    rc = _emm_attach_reject (emm_ctx_p);
+ }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -820,48 +811,6 @@ _emm_attach_release (
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Release UE context data (ue_id=" MME_UE_S1AP_ID_FMT ")\n", emm_ctx->ue_id);
     unsigned int                            ue_id = emm_ctx->ue_id;
 
-    emm_ctx_clear_old_guti(emm_ctx);
-    emm_ctx_clear_guti(emm_ctx);
-    emm_ctx_clear_imsi(emm_ctx);
-    emm_ctx_clear_imei(emm_ctx);
-    emm_ctx_clear_auth_vectors(emm_ctx);
-    emm_ctx_clear_security(emm_ctx);
-    emm_ctx_clear_non_current_security(emm_ctx);
-
-    bdestroy(emm_ctx->esm_msg);
-
-
-    /*
-     * Stop timer T3450
-     */
-    if (emm_ctx->T3450.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3450 (%d)\n", emm_ctx->T3450.id);
-      emm_ctx->T3450.id = nas_timer_stop (emm_ctx->T3450.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3450 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
-    }
-
-    /*
-     * Stop timer T3460
-     */
-    if (emm_ctx->T3460.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3460 (%d)\n", emm_ctx->T3460.id);
-      emm_ctx->T3460.id = nas_timer_stop (emm_ctx->T3460.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3460 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
-    }
-
-    /*
-     * Stop timer T3470
-     */
-    if (emm_ctx->T3470.id != NAS_TIMER_INACTIVE_ID) {
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Stop timer T3470 (%d)\n", emm_ctx->T3460.id);
-      emm_ctx->T3470.id = nas_timer_stop (emm_ctx->T3470.id);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, "T3470 stopped UE " MME_UE_S1AP_ID_FMT " ", emm_ctx->ue_id);
-    }
-
-    /*
-     * Release the EMM context
-     */
-    emm_data_context_remove (&_emm_data, emm_ctx);
     /*
      * Notify EMM that the attach procedure is aborted
      */
@@ -872,6 +821,11 @@ _emm_attach_release (
     emm_sap.u.emm_reg.ue_id = ue_id;
     emm_sap.u.emm_reg.ctx = emm_ctx;
     rc = emm_sap_send (&emm_sap);
+    
+    /*
+     * Release the EMM context
+     */
+    _clear_emm_ctxt(emm_ctx);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -903,10 +857,11 @@ _emm_attach_reject (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_data_context_t                     *emm_ctx = (emm_data_context_t *) (args);
+  attach_data_t                          *data_p = NULL;
 
   if (emm_ctx) {
     emm_sap_t                               emm_sap = {0};
-
+    data_p = (attach_data_t *) emm_proc_common_get_args (emm_ctx->ue_id);
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - EMM attach procedure not accepted " "by the network (ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n", emm_ctx->ue_id, emm_ctx->emm_cause);
     /*
      * Notify EMM-AS SAP that Attach Reject message has to be sent
@@ -916,17 +871,13 @@ _emm_attach_reject (
     emm_sap.u.emm_as.u.establish.ue_id = emm_ctx->ue_id;
     emm_sap.u.emm_as.u.establish.eps_id.guti = NULL;
 
-    if (emm_ctx->emm_cause == EMM_CAUSE_SUCCESS) {
-      emm_ctx->emm_cause = EMM_CAUSE_ILLEGAL_UE;
-    }
-
     emm_sap.u.emm_as.u.establish.emm_cause = emm_ctx->emm_cause;
     emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_ATTACH;
 
     if (emm_ctx->emm_cause != EMM_CAUSE_ESM_FAILURE) {
       emm_sap.u.emm_as.u.establish.nas_msg = NULL;
     } else if (emm_ctx->esm_msg) {
-      emm_sap.u.emm_as.u.establish.nas_msg = emm_ctx->esm_msg;
+      emm_sap.u.emm_as.u.establish.nas_msg = data_p->esm_msg;
     } else {
       OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - ESM message is missing\n");
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);

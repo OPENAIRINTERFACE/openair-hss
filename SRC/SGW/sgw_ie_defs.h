@@ -522,6 +522,7 @@ typedef enum SGWCause_e {
   GRE_KEY_NOT_FOUND               = 80,
   RELOCATION_FAILURE              = 81,
   DENIED_IN_RAT                   = 82,
+  ALL_DYNAMIC_IP_ADD_OCCUPIED     = 84,
   UE_NOT_RESPONDING               = 87,
   UE_REFUSES                      = 88,
   SERVICE_DENIED                  = 89,

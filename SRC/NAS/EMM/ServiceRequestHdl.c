@@ -114,7 +114,7 @@ emm_proc_service_reject (
      @param [in]args UE EMM context data
      @returns status of operation
 */
-int
+static int
 _emm_service_reject (mme_ue_s1ap_id_t ue_id, int emm_cause) 
   
 {

@@ -2,9 +2,9 @@
  * Licensed to the OpenAirInterface (OAI) Software Alliance under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The OpenAirInterface Software Alliance licenses this file to You under 
+ * The OpenAirInterface Software Alliance licenses this file to You under
  * the Apache License, Version 2.0  (the "License"); you may not use this file
- * except in compliance with the License.  
+ * except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *      http://www.apache.org/licenses/LICENSE-2.0
@@ -146,7 +146,7 @@ sgw_handle_create_session_request (
     //--------------------------------------
     /*
      * pdn_connection = sgw_cm_create_pdn_connection();
-     * 
+     *
      * if (pdn_connection == NULL) {
      * // Malloc failed, may be ENOMEM error
      * SPGW_APP_ERROR("Failed to create new PDN connection\n");
@@ -259,7 +259,7 @@ sgw_handle_sgi_endpoint_created (
      * Preparing to send create session response on S11 abstraction interface.
      * * * *  we set the cause value regarding the S1-U bearer establishment result status.
      */
-    if (resp_pP->status == 0) {
+    if (resp_pP->status == SGI_STATUS_OK) {
       uint32_t                                address = sgw_app.sgw_ip_address_S1u_S12_S4_up;
 
       create_session_response_p->bearer_contexts_created.bearer_contexts[0].s1u_sgw_fteid.teid = resp_pP->sgw_S1u_teid;
@@ -347,7 +347,7 @@ sgw_handle_gtpv1uCreateTunnelResp (
   //struct in6_addr                         in6addr = IN6ADDR_ANY_INIT;
   itti_sgi_create_end_point_response_t    sgi_create_endpoint_resp = {0};
   int                                     rv = RETURNok;
-
+  SGWCause_t                              cause = REQUEST_ACCEPTED;
   OAILOG_FUNC_IN(LOG_SPGW_APP);
 
   OAILOG_DEBUG (LOG_SPGW_APP, "Rx GTPV1U_CREATE_TUNNEL_RESP, Context S-GW S11 teid %u, S-GW S1U teid %u EPS bearer id %u status %d\n",
@@ -409,32 +409,28 @@ sgw_handle_gtpv1uCreateTunnelResp (
       if (!pco_ids.ci_ipv4_address_allocation_via_dhcpv4) {
         if (pgw_get_free_ipv4_paa_address (&inaddr) == 0) {
           IN_ADDR_TO_BUFFER (inaddr, sgi_create_endpoint_resp.paa.ipv4_address);
+          sgi_create_endpoint_resp.status = SGI_STATUS_OK;
         } else {
           OAILOG_ERROR (LOG_SPGW_APP, "Failed to allocate IPv4 PAA for PDN type IPv4\n");
+          sgi_create_endpoint_resp.status = SGI_STATUS_ERROR_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
         }
       }
 
-      /*
-       * else {
-       * // TODO
-       * }
-       */
       break;
 
     case IPv6:
-//      if (!pgw_lite_get_free_ipv6_paa_prefix (&in6addr)) {
-//        IN6_ADDR_TO_BUFFER (in6addr, sgi_create_endpoint_resp.paa.ipv6_address);
-//      } else {
-//        OAILOG_ERROR (LOG_SPGW_APP, "Failed to allocate IPv6 PAA for PDN type IPv6\n");
-//      }
+          OAILOG_ERROR (LOG_SPGW_APP, "IPV6 PDN type NOT Supported\n");
+          sgi_create_endpoint_resp.status = SGI_STATUS_ERROR_SERVICE_NOT_SUPPORTED;
 
       break;
 
     case IPv4_AND_v6:
       if (!pgw_get_free_ipv4_paa_address (&inaddr)) {
         IN_ADDR_TO_BUFFER (inaddr, sgi_create_endpoint_resp.paa.ipv4_address);
+        sgi_create_endpoint_resp.status = SGI_STATUS_OK;
       } else {
         OAILOG_ERROR (LOG_SPGW_APP, "Failed to allocate IPv4 PAA for PDN type IPv4_AND_v6\n");
+        sgi_create_endpoint_resp.status = SGI_STATUS_ERROR_ALL_DYNAMIC_ADDRESSES_OCCUPIED;
       }
 
 //      if (!pgw_get_free_ipv6_paa_prefix (&in6addr)) {
@@ -450,30 +446,52 @@ sgw_handle_gtpv1uCreateTunnelResp (
       break;
     }
 
-    sgi_create_endpoint_resp.status = SGI_STATUS_OK;
-    sgw_handle_sgi_endpoint_created (&sgi_create_endpoint_resp);
-  } else {                      // if (HASH_TABLE_OK == hash_rc) {
+  } else {                      // if (HASH_TABLE_OK == hash_rc)
     OAILOG_DEBUG (LOG_SPGW_APP, "Rx S11_S1U_ENDPOINT_CREATED, Context: teid %u NOT FOUND\n", endpoint_created_pP->context_teid);
-    message_p = itti_alloc_new_message (TASK_SPGW_APP, S11_CREATE_SESSION_RESPONSE);
-
-    if (!message_p) {
-      OAILOG_FUNC_RETURN(LOG_SPGW_APP, RETURNerror);
-    }
-
-    create_session_response_p = &message_p->ittiMsg.s11_create_session_response;
-    memset (create_session_response_p, 0, sizeof (itti_s11_create_session_response_t));
-    create_session_response_p->cause = CONTEXT_NOT_FOUND;
-    create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause = CONTEXT_NOT_FOUND;
-    create_session_response_p->bearer_contexts_created.num_bearer_context += 1;
-    MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME, NULL, 0, "0 S11_CREATE_SESSION_RESPONSE teid %u CONTEXT_NOT_FOUND", endpoint_created_pP->context_teid);
-    rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-    OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
+    sgi_create_endpoint_resp.status = SGI_STATUS_ERROR_CONTEXT_NOT_FOUND;
   }
-  OAILOG_FUNC_RETURN(LOG_SPGW_APP, RETURNerror);
+  switch (sgi_create_endpoint_resp.status) {
+  case SGI_STATUS_OK:
+    // Send Create Session Response with ack
+    sgw_handle_sgi_endpoint_created (&sgi_create_endpoint_resp);
+    OAILOG_FUNC_RETURN(LOG_SPGW_APP, RETURNok);
+
+    break;
+
+  case SGI_STATUS_ERROR_CONTEXT_NOT_FOUND:
+    cause = CONTEXT_NOT_FOUND;
+
+    break;
+
+  case SGI_STATUS_ERROR_ALL_DYNAMIC_ADDRESSES_OCCUPIED:
+    cause = ALL_DYNAMIC_IP_ADD_OCCUPIED;
+
+    break;
+
+  case SGI_STATUS_ERROR_SERVICE_NOT_SUPPORTED:
+    cause = SERVICE_NOT_SUPPORTED;
+
+    break;
+
+    default:
+    cause = REQUEST_REJECTED; // Unspecified reason
+
+   break;
+  }
+  // Send Create Session Response with Nack
+  message_p = itti_alloc_new_message (TASK_SPGW_APP, S11_CREATE_SESSION_RESPONSE);
+  if (!message_p) {
+    OAILOG_ERROR (LOG_SPGW_APP, "Message Create Session Response alloction failed\n");
+    OAILOG_FUNC_RETURN(LOG_SPGW_APP, RETURNerror);
+  }
+  create_session_response_p = &message_p->ittiMsg.s11_create_session_response;
+  memset (create_session_response_p, 0, sizeof (itti_s11_create_session_response_t));
+  create_session_response_p->cause = cause;
+  create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause = cause;
+  create_session_response_p->bearer_contexts_created.num_bearer_context += 1;
+  rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
 }
-
-
-
 //------------------------------------------------------------------------------
 int
 sgw_handle_gtpv1uUpdateTunnelResp (
@@ -856,13 +874,13 @@ sgw_handle_delete_session_request (
       memcpy (&sgi_delete_end_point_request.paa, &eps_bearer_entry_p->paa, sizeof (PAA_t));
 
       sgw_handle_sgi_endpoint_deleted (&sgi_delete_end_point_request);
-      
+
       /*
        * Delete S11 bearer context and remove s11 tunnel
        */
-      
+
       hashtable_ts_free (sgw_app.s11_bearer_context_information_hashtable, delete_session_req_pP->teid);
-      sgw_cm_remove_s11_tunnel( delete_session_req_pP->teid);  
+      sgw_cm_remove_s11_tunnel( delete_session_req_pP->teid);
     }
 
     delete_session_resp_p->trxn = delete_session_req_pP->trxn;

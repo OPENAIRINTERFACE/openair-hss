@@ -374,7 +374,59 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
 {
   int                                     rc = RETURNok;
+  struct emm_data_context_s              *emm_ctx_p = NULL;
+  attach_data_t                          *data_p = NULL;
+  ESM_msg                                 esm_msg = {.header = {0}};
+  int                                     esm_cause; 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_ctx_p = emm_data_context_get (&_emm_data, msg->ue_id);
+  if (emm_ctx_p == NULL) {
+    OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
+  memset (&esm_msg, 0, sizeof (ESM_msg));
+  
+  // Map S11 cause to ESM cause
+  switch (msg->cause) {
+    case CAUSE_CONTEXT_NOT_FOUND:
+      esm_cause = ESM_CAUSE_REQUEST_REJECTED_BY_GW; 
+      break;
+    case CAUSE_INVALID_MESSAGE_FORMAT:
+      esm_cause = ESM_CAUSE_REQUEST_REJECTED_BY_GW; 
+      break;
+    case CAUSE_SERVICE_NOT_SUPPORTED:                  
+      esm_cause = ESM_CAUSE_SERVICE_OPTION_NOT_SUPPORTED;
+      break;
+    case CAUSE_SYSTEM_FAILURE:                        
+      esm_cause = ESM_CAUSE_NETWORK_FAILURE; 
+      break;
+    case CAUSE_NO_RESOURCES_AVAILABLE:           
+      esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES; 
+      break;
+    case CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED:  
+      esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
+      break;
+    default: 
+      esm_cause = ESM_CAUSE_REQUEST_REJECTED_BY_GW; 
+      break;
+  }
+
+  rc = esm_send_pdn_connectivity_reject (msg->pti, &esm_msg.pdn_connectivity_reject, esm_cause);
+  /*
+   * Encode the returned ESM response message
+   */
+  int size = esm_msg_encode (&esm_msg, (uint8_t *) emm_ctx_p->emm_cn_sap_buffer,
+                                                                   EMM_CN_SAP_BUFFER_SIZE);
+  OAILOG_INFO (LOG_NAS_EMM, "ESM encoded MSG size %d\n", size);
+
+  if (size > 0) {
+    data_p = (attach_data_t *) emm_proc_common_get_args (msg->ue_id);
+    /*
+     * Setup the ESM message container
+     */
+    data_p->esm_msg = blk2bstr(emm_ctx_p->emm_cn_sap_buffer, size);
+    rc = emm_proc_attach_reject (msg->ue_id, EMM_CAUSE_ESM_FAILURE);
+  }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

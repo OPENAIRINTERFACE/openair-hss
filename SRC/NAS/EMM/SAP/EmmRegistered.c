@@ -111,7 +111,11 @@ EmmRegistered (
   case _EMMREG_TAU_REJ:
     rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
     break;
-
+  
+  case _EMMREG_PROC_ABORT:
+    rc = emm_fsm_set_status (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+    break;
+  
   case _EMMREG_LOWERLAYER_SUCCESS:
     /*
      * Data successfully delivered to the network

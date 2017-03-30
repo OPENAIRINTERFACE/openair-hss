@@ -624,6 +624,27 @@ mme_app_handle_create_sess_resp (
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_SESSION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
     create_sess_resp_pP->teid, ue_context_p->imsi);
 
+  /* Whether SGW has created the session (IP address allocation, local GTP-U end point creation etc.) 
+   * successfully or not , it is indicated by cause value in create session response message.
+   * If cause value is not equal to "REQUEST_ACCEPTED" then this implies that SGW could not allocate the resources for
+   * the requested session. In this case, MME-APP sends PDN Connectivity fail message to NAS-ESM with the "cause" received
+   * in S11 Session Create Response message. 
+   * NAS-ESM maps this "S11 cause" to "ESM cause" and sends it in PDN Connectivity Reject message to the UE.
+   */
+
+  if (create_sess_resp_pP->cause != REQUEST_ACCEPTED) {
+   // Send PDN CONNECTIVITY FAIL message  to NAS layer 
+    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONNECTIVITY_FAIL);
+    itti_nas_pdn_connectivity_fail_t *nas_pdn_connectivity_fail = &message_p->ittiMsg.nas_pdn_connectivity_fail;
+    memset ((void *)nas_pdn_connectivity_fail, 0, sizeof (itti_nas_pdn_connectivity_fail_t));
+    nas_pdn_connectivity_fail->pti = ue_context_p->pending_pdn_connectivity_req_pti;  
+    nas_pdn_connectivity_fail->ue_id = ue_context_p->pending_pdn_connectivity_req_ue_id; 
+    nas_pdn_connectivity_fail->cause = (pdn_conn_rsp_cause_t)(create_sess_resp_pP->cause); 
+    rc = itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+  }
+
+
   /*
    * Store the S-GW teid
    */
