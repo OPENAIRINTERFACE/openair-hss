@@ -38,6 +38,7 @@
 
 
 #define AUTS_LENGTH 14
+#define RESYNC_PARAM_LENGTH AUTS_LENGTH + RAND_LENGTH_OCTETS
 
 typedef struct s6a_update_location_req_s {
 #define SKIP_SUBSCRIBER_DATA (0x1)
@@ -86,7 +87,7 @@ typedef struct s6a_auth_info_req_s {
   /* AUTS to provide to AUC.
    * Only present and interpreted if re_synchronization == 1.
    */
-  uint8_t auts[AUTS_LENGTH];
+  uint8_t resync_param[RAND_LENGTH_OCTETS + AUTS_LENGTH];
 } s6a_auth_info_req_t;
 
 typedef struct s6a_auth_info_ans_s {

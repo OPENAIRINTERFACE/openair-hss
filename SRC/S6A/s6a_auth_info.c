@@ -29,11 +29,9 @@
 #include "conversions.h"
 
 #include "intertask_interface.h"
-#include "security_types.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
 #include "msc.h"
-#include "log.h"
 
 static
   int
@@ -408,8 +406,9 @@ s6a_generate_authentication_info_req (
      */
     if (air_p->re_synchronization) {
       CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_re_synchronization_info, 0, &child_avp));
+      // TODO Fix after updating HSS
       value.os.len = AUTS_LENGTH;
-      value.os.data = air_p->auts;
+      value.os.data = (air_p->resync_param + RAND_LENGTH_OCTETS);
       CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
       CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, child_avp));
     }

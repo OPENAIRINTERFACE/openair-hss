@@ -1016,7 +1016,8 @@ _emm_attach_identify (
     // The UE identifies itself using an IMSI
     if (!IS_EMM_CTXT_PRESENT_AUTH_VECTORS(emm_ctx)) {
       // Ask upper layer to fetch new security context
-      nas_itti_auth_info_req (emm_ctx->ue_id, emm_ctx->_imsi64, true, &emm_ctx->originating_tai.plmn, MAX_EPS_AUTH_VECTORS, NULL);
+      nas_itti_auth_info_req (emm_ctx->ue_id, emm_ctx->_imsi64, true, &emm_ctx->originating_tai.plmn,
+                              MAX_EPS_AUTH_VECTORS, NULL);
       rc = RETURNok;
     } else {
       ksi_t                                   eksi = 0;

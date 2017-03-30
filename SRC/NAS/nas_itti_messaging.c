@@ -22,12 +22,12 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "log.h"
-#include "msc.h"
 #include "conversions.h"
 #include "intertask_interface.h"
-#include "secu_defs.h"
+#include "msc.h"
+#include "mme_app_ue_context.h"
 #include "nas_itti_messaging.h"
+#include "secu_defs.h"
 
 
 #define TASK_ORIGIN  TASK_NAS_MME
@@ -322,12 +322,13 @@ void nas_itti_auth_info_req(
   auth_info_req->visited_plmn  = *visited_plmnP;
   auth_info_req->nb_of_vectors = num_vectorsP;
 
-  if (auts_pP ) {
-    auth_info_req->re_synchronization = 1;
-    memcpy (auth_info_req->auts, auts_pP->data, sizeof (auth_info_req->auts));
-  } else {
+  if (is_initial_reqP ) {
     auth_info_req->re_synchronization = 0;
-    memset (auth_info_req->auts, 0, sizeof (auth_info_req->auts));
+    memset (auth_info_req->resync_param, 0, sizeof auth_info_req->resync_param);
+  } else {
+    AssertFatal(auts_pP != NULL, "Autn Null during resynchronization");
+    auth_info_req->re_synchronization = 1;
+    memcpy (auth_info_req->resync_param, auts_pP->data, sizeof auth_info_req->resync_param);
   }
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S6A_MME, NULL, 0, "0 S6A_AUTH_INFO_REQ IMSI "IMSI_64_FMT" visited_plmn "PLMN_FMT" re_sync %u",

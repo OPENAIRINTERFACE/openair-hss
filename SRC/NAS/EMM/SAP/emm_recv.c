@@ -41,15 +41,10 @@
 
 #include "3gpp_24.007.h"
 #include "emm_recv.h"
-#include "commonDef.h"
-#include "log.h"
 
-#include "emm_msgDef.h"
 #include "emm_cause.h"
 #include "emm_proc.h"
 #include "emm_sap.h"
-
-#include <string.h>             // memcpy
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -759,7 +754,7 @@ emm_recv_authentication_response (
   /*
    * Execute the authentication completion procedure
    */
-  rc = emm_proc_authentication_complete (ue_id, EMM_CAUSE_SUCCESS, msg->authenticationresponseparameter);
+  rc = emm_proc_authentication_complete (ue_id);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

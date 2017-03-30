@@ -190,8 +190,7 @@ int emm_proc_authentication(void *ctx, mme_ue_s1ap_id_t ue_id, ksi_t ksi,
 int emm_proc_authentication_failure (mme_ue_s1ap_id_t ue_id, int emm_cause,
                                      const_bstring auts);
 
-int emm_proc_authentication_complete(mme_ue_s1ap_id_t ue_id, int emm_cause,
-    const_bstring const res);
+int emm_proc_authentication_complete(mme_ue_s1ap_id_t ue_id);
 
 int emm_attach_security(void *args);
 

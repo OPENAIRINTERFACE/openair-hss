@@ -50,7 +50,6 @@
 #include "nas_timer.h"
 #include "3gpp_requirements_24.301.h"
 #include "emm_proc.h"
-#include "emmData.h"
 #include "emm_sap.h"
 #include "conversions.h"
 
