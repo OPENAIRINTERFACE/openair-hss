@@ -242,12 +242,11 @@ int pgw_process_pco_link_mtu_request(protocol_configuration_options_t * const pc
 
 //------------------------------------------------------------------------------
 
-int pgw_process_pco_request(const protocol_configuration_options_t * const pco_req, protocol_configuration_options_t * pco_resp, bool * const address_allocation_via_nas_signalling)
-{
-  bool mtu_requested = false;
-  bool dns_requested = false;
-
-  *address_allocation_via_nas_signalling = false;
+int pgw_process_pco_request(
+  const protocol_configuration_options_t * const pco_req,
+  protocol_configuration_options_t * pco_resp,
+  protocol_configuration_options_ids_t * const pco_ids) {
+  memset(pco_ids, 0, sizeof *pco_ids);
 
   switch (pco_req->configuration_protocol) {
     case PCO_CONFIGURATION_PROTOCOL_PPP_FOR_USE_WITH_IP_PDP_TYPE_OR_IP_PDN_TYPE:
@@ -262,41 +261,43 @@ int pgw_process_pco_request(const protocol_configuration_options_t * const pco_r
       break;
   }
 
-  int id = 0;
-  while (id < pco_req->num_protocol_or_container_id) {
+  for (int id = 0; id < pco_req->num_protocol_or_container_id; id++) {
 
     switch (pco_req->protocol_or_container_ids[id].id) {
     case PCO_PI_IPCP:
       pgw_process_pco_request_ipcp(pco_resp, &pco_req->protocol_or_container_ids[id]);
+      pco_ids->pi_ipcp = true;
       break;
 
     case PCO_CI_DNS_SERVER_IPV4_ADDRESS_REQUEST:
       pgw_process_pco_dns_server_request(pco_resp, &pco_req->protocol_or_container_ids[id]);
-      dns_requested = true;
-      break;
-
-    case PCO_CI_IPV4_LINK_MTU_REQUEST:
-      pgw_process_pco_link_mtu_request(pco_resp, &pco_req->protocol_or_container_ids[id]);
-      mtu_requested = true;
+      pco_ids->ci_dns_server_ipv4_address_request = true;
       break;
 
     case PCO_CI_IP_ADDRESS_ALLOCATION_VIA_NAS_SIGNALLING:
       OAILOG_DEBUG (LOG_SPGW_APP, "PCO: Allocation via NAS signalling requested\n");
-      *address_allocation_via_nas_signalling = true;
+      pco_ids->ci_ip_address_allocation_via_nas_signalling = true;
+      break;
+
+    case PCO_CI_IPV4_LINK_MTU_REQUEST:
+      pgw_process_pco_link_mtu_request(pco_resp, &pco_req->protocol_or_container_ids[id]);
+      pco_ids->ci_ipv4_link_mtu_request = true;
       break;
 
     default:
-      OAILOG_WARNING (LOG_SPGW_APP, "PCO: Protocol identifier 0x%X not supported now\n", pco_req->protocol_or_container_ids[id].id);
+      OAILOG_WARNING (
+        LOG_SPGW_APP,
+        "PCO: Protocol/container identifier 0x%04X not supported now\n",
+        pco_req->protocol_or_container_ids[id].id);
     }
-    id++;
   }
 
   if (spgw_config.pgw_config.force_push_pco) {
-    *address_allocation_via_nas_signalling = true;
-    if (!dns_requested) {
+    pco_ids->ci_ip_address_allocation_via_nas_signalling = true;
+    if (!pco_ids->ci_dns_server_ipv4_address_request) {
       pgw_process_pco_dns_server_request(pco_resp, NULL);
     }
-    if (!mtu_requested) {
+    if (!pco_ids->ci_ipv4_link_mtu_request) {
       pgw_process_pco_link_mtu_request(pco_resp, NULL);
     }
   }

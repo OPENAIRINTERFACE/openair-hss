@@ -337,7 +337,6 @@ sgw_handle_gtpv1uCreateTunnelResp (
   struct in_addr                          inaddr;
   //struct in6_addr                         in6addr = IN6ADDR_ANY_INIT;
   itti_sgi_create_end_point_response_t    sgi_create_endpoint_resp = {0};
-  bool                                    address_allocation_via_nas_signalling = false;
   int                                     rv = RETURNok;
 
   OAILOG_DEBUG (LOG_SPGW_APP, "Rx GTPV1U_CREATE_TUNNEL_RESP, Context S-GW S11 teid "TEID_FMT", S-GW S1U teid "TEID_FMT" EPS bearer id %u status %d\n",
@@ -359,8 +358,12 @@ sgw_handle_gtpv1uCreateTunnelResp (
     //--------------------------------------------------------------------------
     protocol_configuration_options_t *pco_req = &new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.saved_message.pco;
     protocol_configuration_options_t pco_resp = {0};
+    protocol_configuration_options_ids_t pco_ids;
+    memset(&pco_ids, 0, sizeof pco_ids);
 
-    AssertFatal (0 == pgw_process_pco_request(pco_req, &pco_resp, &address_allocation_via_nas_signalling), "Error in processing PCO in request");
+    // TODO: perhaps change to a nonfatal assert?
+    AssertFatal (0 == pgw_process_pco_request(pco_req, &pco_resp, &pco_ids),
+                 "Error in processing PCO in request");
     copy_protocol_configuration_options (&sgi_create_endpoint_resp.pco, &pco_resp);
     clear_protocol_configuration_options(&pco_resp);
 
@@ -373,23 +376,28 @@ sgw_handle_gtpv1uCreateTunnelResp (
     sgi_create_endpoint_resp.paa.pdn_type = new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.saved_message.pdn_type;
 
     switch (sgi_create_endpoint_resp.paa.pdn_type) {
-    case IPv4_OR_v6:
-      if (!pgw_get_free_ipv4_paa_address (&inaddr)) {
-        sgi_create_endpoint_resp.paa.ipv4_address.s_addr = inaddr.s_addr;
-      } else {
-        OAILOG_WARNING (LOG_SPGW_APP, "Failed to allocate IPv4 PAA for PDN type IPv4_OR_v6\n");
-
-//        if (!pgw_get_free_ipv6_paa_prefix (&in6addr)) {
-//          IN6_ADDR_TO_BUFFER (in6addr, sgi_create_endpoint_resp.paa.ipv6_address);
-//        } else {
-//          OAILOG_ERROR (LOG_SPGW_APP, "Failed to allocate IPv6 PAA for PDN type IPv4_OR_v6\n");
-//        }
-      }
-
-      break;
-
     case IPv4:
-      if (true == address_allocation_via_nas_signalling) {
+      // Use NAS by default if no preference is set.
+      //
+      // For context, the protocol configuration options (PCO) section of the
+      // packet from the UE is optional, which means that it is perfectly valid
+      // for a UE to send no PCO preferences at all. The previous logic only
+      // allocates an IPv4 address if the UE has explicitly set the PCO
+      // parameter for allocating IPv4 via NAS signaling (as opposed to via
+      // DHCPv4). This means that, in the absence of either parameter being set,
+      // the does not know what to do, so we need a default option as well.
+      //
+      // Since we only support the NAS signaling option right now, we will
+      // default to using NAS signaling UNLESS we see a preference for DHCPv4.
+      // This means that all IPv4 addresses are now allocated via NAS signaling
+      // unless specified otherwise.
+      //
+      // In the long run, we will want to evolve the logic to use whatever
+      // information we have to choose the ``best" allocation method. This means
+      // adding new bitfields to pco_ids in pgw_pco.h, setting them in pgw_pco.c
+      // and using them here in conditional logic. We will also want to
+      // implement different logic between the PDN types.
+      if (!pco_ids.ci_ipv4_address_allocation_via_dhcpv4) {
         if (pgw_get_free_ipv4_paa_address (&inaddr) == 0) {
           sgi_create_endpoint_resp.paa.ipv4_address.s_addr = inaddr.s_addr;
         } else {
@@ -683,7 +691,7 @@ sgw_handle_sgi_endpoint_deleted (
     break;
   }
 
-	OAILOG_DEBUG (LOG_SPGW_APP, "bcom Rx SGI_DELETE_ENDPOINT_REQUEST, Context teid "TEID_FMT", SGW S1U teid "TEID_FMT", EPS bearer id %u\n",
+  OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_DELETE_ENDPOINT_REQUEST, Context teid %u, SGW S1U teid %u, EPS bearer id %u\n",
                 resp_pP->context_teid, resp_pP->sgw_S1u_teid, resp_pP->eps_bearer_id);
 
 
@@ -843,8 +851,8 @@ sgw_handle_delete_session_request (
       delete_session_resp_p->cause.cause_value = REQUEST_ACCEPTED;
       delete_session_resp_p->teid = ctx_p->sgw_eps_bearer_context_information.mme_teid_S11;
 
-      itti_sgi_delete_end_point_request_t   	 sgi_delete_end_point_request;
-      sgw_eps_bearer_ctxt_t                	 *eps_bearer_ctxt_p = NULL;
+      itti_sgi_delete_end_point_request_t       sgi_delete_end_point_request;
+      sgw_eps_bearer_ctxt_t                    *eps_bearer_ctxt_p = NULL;
 
       for (int ebix = 0; ebix < BEARERS_PER_UE; ebix++) {
         ebi_t ebi = INDEX_TO_EBI(ebix);
