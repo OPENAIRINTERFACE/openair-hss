@@ -59,11 +59,9 @@ extern int fd_g_debug_lvl;
 #define LOG_CONFIG_STRING_MSC_LOG_LEVEL                  "MSC_LOG_LEVEL"
 #define LOG_CONFIG_STRING_NAS_LOG_LEVEL                  "NAS_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
-#define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S1AP_LOG_LEVEL                 "S1AP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S6A_LOG_LEVEL                  "S6A_LOG_LEVEL"
 #define LOG_CONFIG_STRING_SCTP_LOG_LEVEL                 "SCTP_LOG_LEVEL"
-#define LOG_CONFIG_STRING_SPGW_APP_LOG_LEVEL             "SPGW_APP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_SPGW_APP_LOG_LEVEL             "SPGW_APP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_UDP_LOG_LEVEL                  "UDP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_UTIL_LOG_LEVEL                 "UTIL_LOG_LEVEL"
@@ -293,13 +291,13 @@ int log_get_start_time_sec (void);
 #    define OAILOG_DEBUG(...)                                           {void;}
 #  endif
 #  if !defined(OAILOG_TRACE)
-#    define OAILOG_TRACE(...)                                           {void;}
+#    define OAILOG_TRACE(pRoTo, ...)                                    (void)(pRoTo)
 #  endif
 #  if !defined(OAILOG_EXTERNAL)
-#    define OAILOG_EXTERNAL(...)                                        {void;}
+#    define OAILOG_EXTERNAL(lOgLeVeL, pRoTo, ...)                       (void)(lOgLeVeL), (void)(pRoTo)
 #  endif
 #  if !defined(OAILOG_FUNC_IN)
-#    define OAILOG_FUNC_IN(...)                                         {void;}
+#    define OAILOG_FUNC_IN(pRoTo)                                       (void)(pRoTo)
 #  endif
 #  if !defined(OAILOG_FUNC_OUT)
 #    define OAILOG_FUNC_OUT(pRoTo)                                      do{ return;} while 0

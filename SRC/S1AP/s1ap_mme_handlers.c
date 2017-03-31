@@ -774,6 +774,7 @@ s1ap_mme_generate_ue_context_release_command (
     cause_value = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
     break;
   default:
+    AssertFatal(false, "Unknown cause for context release");
     break;
   }
   s1ap_mme_set_cause(&ueContextReleaseCommandIEs_p->cause, cause_type, cause_value);

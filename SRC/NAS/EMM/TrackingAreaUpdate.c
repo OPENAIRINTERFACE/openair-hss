@@ -52,12 +52,8 @@
 #include "nas_timer.h"
 #include "3gpp_requirements_24.301.h"
 #include "emm_proc.h"
-#include "emmData.h"
 #include "emm_sap.h"
-#include "emm_cause.h"
-#include "EpsUpdateResult.h"
 #include "mme_app_defs.h"
-#include "mme_app_ue_context.h"
 
 
 /****************************************************************************/
@@ -105,6 +101,7 @@ static int _emm_tracking_area_update_security (void *args);
 static int _emm_tracking_area_update_reject (mme_ue_s1ap_id_t ue_id, int emm_cause);
 static int _emm_tracking_area_update_accept (emm_data_context_t * emm_ctx,tau_accept_data_t * data);
 static int _emm_tracking_area_update_abort (void *args);
+static int _emm_tracking_area_update_reject_cb(void *args) ;
 
 
 /****************************************************************************/
@@ -345,8 +342,8 @@ emm_proc_tracking_area_update_request (
       ue_ctx->umts_present,
       ue_ctx->gprs_present,
       _emm_tracking_area_update,
-      _emm_tracking_area_update_reject,
-      _emm_tracking_area_update_reject);
+      _emm_tracking_area_update_reject_cb,
+      _emm_tracking_area_update_reject_cb);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   } /*else {
      *
@@ -392,8 +389,8 @@ emm_proc_tracking_area_update_request (
           ue_ctx->_vector[vindex].rand,
           ue_ctx->_vector[vindex].autn,
           _emm_tracking_area_update_security,
-          _emm_tracking_area_update_reject,
-          _emm_tracking_area_update_reject);
+          _emm_tracking_area_update_reject_cb,
+          _emm_tracking_area_update_reject_cb);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     } else {
       bool network_capability_have_changed = false;
@@ -434,8 +431,8 @@ emm_proc_tracking_area_update_request (
             ue_ctx->umts_present,
             ue_ctx->gprs_present,
             _emm_tracking_area_update,
-            _emm_tracking_area_update_reject,
-            _emm_tracking_area_update_reject);
+            _emm_tracking_area_update_reject_cb,
+            _emm_tracking_area_update_reject_cb);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       } //else {
         // TAU Accept
@@ -600,8 +597,8 @@ _emm_tracking_area_update_security (
                                        emm_ctx->uea, emm_ctx->uia, emm_ctx->gea,
                                        emm_ctx->umts_present, emm_ctx->gprs_present,
                                        _emm_tracking_area_update,
-                                       _emm_tracking_area_update_reject,
-                                       _emm_tracking_area_update_reject);
+                                       _emm_tracking_area_update_reject_cb,
+                                       _emm_tracking_area_update_reject_cb);
 
   if (rc != RETURNok) {
     /*
@@ -656,6 +653,16 @@ _emm_tracking_area_update_reject (mme_ue_s1ap_id_t ue_id, int emm_cause)
   rc = emm_sap_send (&emm_sap);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+static int
+_emm_tracking_area_update_reject_cb(void *args) {
+  int rc = RETURNerror;
+  emm_data_context_t *emm_ctx = (emm_data_context_t *) (args);
+  if (emm_ctx) {
+    return _emm_tracking_area_update_reject(emm_ctx->ue_id, emm_ctx->emm_cause);
+  }
+  return rc;
 }
 
 /** \fn void _emm_tracking_area_update_accept (emm_data_context_t * emm_ctx,tau_accept_data_t * data);

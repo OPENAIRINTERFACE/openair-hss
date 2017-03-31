@@ -145,4 +145,8 @@ typedef enum {
    && ((((__const uint32_t *) (a))[3] & (((__const uint32_t *) (m))[3])) == (((__const uint32_t *) (b))[3] & (((__const uint32_t *) (m))[3]))))
 
 
+#ifndef UNUSED
+#define UNUSED(x) (void)(x)
+#endif
+
 #endif /* FILE_COMMON_DEFS_SEEN */

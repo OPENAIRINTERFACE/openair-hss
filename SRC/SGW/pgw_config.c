@@ -227,7 +227,6 @@ int pgw_config_parse_file (pgw_config_t * config_pP)
   config_setting_t                       *subsetting = NULL;
   config_setting_t                       *sub2setting = NULL;
   char                                   *if_S5_S8 = NULL;
-  char                                   *S5_S8 = NULL;
   char                                   *if_SGI = NULL;
   char                                   *masquerade_SGI = NULL;
   char                                   *ue_tcp_mss_clamping = NULL;

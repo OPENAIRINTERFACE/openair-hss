@@ -682,7 +682,7 @@ sgw_handle_sgi_endpoint_updated (
 int
 sgw_handle_sgi_endpoint_deleted (
   const itti_sgi_delete_end_point_request_t * const resp_pP)
-  {
+{
   s_plus_p_gw_eps_bearer_context_information_t *new_bearer_ctxt_info_p = NULL;
   sgw_eps_bearer_entry_t                 *eps_bearer_entry_p = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
@@ -726,8 +726,8 @@ sgw_handle_sgi_endpoint_deleted (
     MSC_LOG_TX_MESSAGE (MSC_SP_GWAPP_MME, MSC_S11_MME,
                         NULL, 0, "0 S11_MODIFY_BEARER_RESPONSE ebi %u CONTEXT_NOT_FOUND trxn %u", modify_response_p->bearer_choice.bearer_contexts_modified.eps_bearer_id, modify_response_p->trxn);
     rv = itti_send_msg_to_task (task_S11, INSTANCE_DEFAULT, message_p);*/
-    OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
   }
+  OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
 }
 
 

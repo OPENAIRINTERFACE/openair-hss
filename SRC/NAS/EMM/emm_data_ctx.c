@@ -627,7 +627,6 @@ void
 emm_data_context_remove_mobile_ids (
   emm_data_t * emm_data, struct emm_data_context_s *elm)
 {
-  struct emm_data_context_s              *emm_data_context_p = NULL;
   mme_ue_s1ap_id_t                       *emm_ue_id          = NULL;
 
   OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Remove in context %p UE id " MME_UE_S1AP_ID_FMT "\n", elm, elm->ue_id);
