@@ -903,7 +903,7 @@ generate_authentication_info_req (
     if (air_p->re_synchronization) {
       CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_re_synchronization_info, 0, &child_avp));
       value.os.len = AUTS_LENGTH;
-      value.os.data = air_p->auts;
+      value.os.data = air_p->resync_param;
       CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
       CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, child_avp));
     }
@@ -969,7 +969,7 @@ config_parse_opt_line (
 //------------------------------------------------------------------------------
 int main (int argc, char** argv)
 {
-  s6a_auth_info_req_t  air           = {.auts = {0}, .imsi = {0}, .visited_plmn = {0}, 0};
+  s6a_auth_info_req_t  air           = {.resync_param = {0}, .imsi = {0}, .visited_plmn = {0}, 0};
 
   config_parse_opt_line(argc, argv);
   auth_request_init(gfd_config_file);
