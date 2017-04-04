@@ -495,7 +495,7 @@ emm_proc_authentication_complete (
       visited_plmn.mnc_digit1 = emm_ctx->originating_tai.mnc_digit1;
       visited_plmn.mnc_digit2 = emm_ctx->originating_tai.mnc_digit2;
       visited_plmn.mnc_digit3 = emm_ctx->originating_tai.mnc_digit3;
-      nas_itti_auth_info_req (ue_id, emm_ctx->_imsi64, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, res);
+      nas_itti_auth_info_req (ue_id, &emm_ctx->_imsi, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, res);
 
       // Release retransmission timer parameters
       memset(&emm_ctx->common_proc->common_arg, 0, sizeof(emm_ctx->common_proc->common_arg));
