@@ -365,10 +365,10 @@ void nas_itti_establish_cnf(
     //       represent EEA1/2/3 (and EIA1/2/3) support here.
     NAS_CONNECTION_ESTABLISHMENT_CNF(message_p)
       .encryption_algorithm_capabilities =
-      ((uint16_t)emm_ctx->_security.capability.eps_encryption & ~(1 << 7)) << 1;
+      ((uint16_t)emm_ctx->_ue_network_capability.eea & ~(1 << 7)) << 1;
     NAS_CONNECTION_ESTABLISHMENT_CNF(message_p)
       .integrity_algorithm_capabilities =
-      ((uint16_t)emm_ctx->_security.capability.eps_integrity & ~(1 << 7)) << 1;
+      ((uint16_t)emm_ctx->_ue_network_capability.eia & ~(1 << 7)) << 1;
 
     AssertFatal((0 <= emm_ctx->_security.vector_index) && (MAX_EPS_AUTH_VECTORS > emm_ctx->_security.vector_index),
         "Invalid vector index %d", emm_ctx->_security.vector_index);
