@@ -288,8 +288,8 @@ void nas_itti_auth_info_req(
     memset (auth_info_req->auts, 0, sizeof (auth_info_req->auts));
   }
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S6A_MME, NULL, 0, "0 S6A_AUTH_INFO_REQ IMSI "IMSI_64_FMT" visited_plmn "PLMN_FMT" re_sync %u",
-      imsi64_P, PLMN_ARG(visited_plmnP), auth_info_req->re_synchronization);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S6A_MME, NULL, 0, "0 S6A_AUTH_INFO_REQ IMSI %s visited_plmn "PLMN_FMT" re_sync %u",
+      auth_info_req->imsi, PLMN_ARG(visited_plmnP), auth_info_req->re_synchronization);
   itti_send_msg_to_task (TASK_S6A, INSTANCE_DEFAULT, message_p);
 
   OAILOG_FUNC_OUT(LOG_NAS);

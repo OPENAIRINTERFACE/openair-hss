@@ -14,7 +14,7 @@
     <e_rab_to_be_setup_item>
       <e_rab_id>#DEDICATED_EPS_BEARER_IDENTITY</e_rab_id>
       <e_rab_level_qos_parameters>
-        <qci>2</qci>
+        <qci>7</qci>
         <allocation_and_retention_priority>
           <priority_level>#DEDICATED_BEARER_PRIORITY_LEVEL</priority_level>
           <pre_emption_capability>#DEDICATED_BEARER_PREEMPTION_CAPABILITY</pre_emption_capability>
@@ -40,7 +40,7 @@
           <pti>0x0</pti>
           <message_type>ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST</message_type>
           <linked_eps_bearer_identity>#LINKED_EPS_BEARER_IDENTITY</linked_eps_bearer_identity>
-          <eps_quality_of_service qci="0x2">
+          <eps_quality_of_service qci="0x7">
             <maximum_bit_rate_for_uplink>#DEDICATED_BEARER_EPS_QOS_MBR_UL</maximum_bit_rate_for_uplink>
             <maximum_bit_rate_for_downlink>#DEDICATED_BEARER_EPS_QOS_MBR_DL</maximum_bit_rate_for_downlink>
             <guaranted_bit_rate_for_uplink>#DEDICATED_BEARER_EPS_QOS_GBR_UL</guaranted_bit_rate_for_uplink>
@@ -51,17 +51,14 @@
             <e>0x0</e>
             <number_of_packet_filters>1</number_of_packet_filters>
             <packet_filter>
-              <identifier>0x0</identifier>
-              <evaluation_precedence>0x7e</evaluation_precedence>
-              <direction>0x2</direction>
+              <identifier>0x8</identifier>
+              <evaluation_precedence>0x2</evaluation_precedence>
+              <direction>0x3</direction>
               <length>0x0</length>
               <packet_filter_contents component_type_identifier="0x24">
                 <component_type_identifier_protocol_identifier_next_header_type>
-                  <protocol_header>17</protocol_header>
+                  <protocol_header>1</protocol_header>
                 </component_type_identifier_protocol_identifier_next_header_type>
-                <component_type_identifier_single_remote_port>
-                  <port>55555</port>
-                </component_type_identifier_single_remote_port>
               </packet_filter_contents>
             </packet_filter>
           </traffic_flow_template>

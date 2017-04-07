@@ -70,7 +70,7 @@ bool sp_attach_accept_from_xml (
   OAILOG_FUNC_IN (LOG_MME_SCENARIO_PLAYER);
   bool res = false;
 
-  res = eps_attach_result_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->epsattachresult, NULL);
+  res = sp_eps_attach_result_from_xml (scenario, msg, &attach_accept->epsattachresult);
   if (res) {res = gprs_timer_from_xml (msg->xml_doc, msg->xpath_ctx, GPRS_TIMER_T3412_XML_STR, &attach_accept->t3412value);}
   if (res) {res = tracking_area_identity_list_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_accept->tailist);}
   if (res) {res = sp_esm_message_container_from_xml (scenario, msg, &attach_accept->esmmessagecontainer);}
@@ -168,7 +168,7 @@ bool sp_attach_request_from_xml (
   bool res = false;
 
   res = nas_key_set_identifier_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_request->naskeysetidentifier);
-  if (res) {res = eps_attach_type_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_request->epsattachtype, NULL);}
+  if (res) {res = sp_eps_attach_type_from_xml (scenario, msg, &attach_request->epsattachtype);}
   if (res) {res = sp_eps_mobile_identity_from_xml (scenario, msg, &attach_request->oldgutiorimsi);}
   if (res) {res = ue_network_capability_from_xml (msg->xml_doc, msg->xpath_ctx, &attach_request->uenetworkcapability);}
   if (res) {res = sp_esm_message_container_from_xml (scenario, msg, &attach_request->esmmessagecontainer);}

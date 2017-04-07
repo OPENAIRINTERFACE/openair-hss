@@ -23,7 +23,7 @@
         <protocol_discriminator>EPS_MOBILITY_MANAGEMENT_MESSAGE</protocol_discriminator>
         <message_type>ATTACH_ACCEPT</message_type>
         <!--EPS_ATTACH_RESULT EPS=0x1, IMSI=0x2-->
-        <eps_attach_result>0x2</eps_attach_result>
+        <eps_attach_result>$EPS_ATTACH_RESULT</eps_attach_result>
         <gprs_timer_t3412>
           <unit>2</unit>
           <timer_value>9</timer_value>
@@ -73,7 +73,7 @@
       </plain_nas_message>
     </security_protected_nas_message>
   </e_rab_setup_item>
-  <ue_security_capabilities_encryption_algorithms>0</ue_security_capabilities_encryption_algorithms>
-  <ue_security_capabilities_integrity_protection_algorithms>40</ue_security_capabilities_integrity_protection_algorithms>
+  <ue_security_capabilities_encryption_algorithms>c0</ue_security_capabilities_encryption_algorithms>
+  <ue_security_capabilities_integrity_protection_algorithms>c0</ue_security_capabilities_integrity_protection_algorithms>
   <kenb>#ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.KENB</kenb>
 </ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF>

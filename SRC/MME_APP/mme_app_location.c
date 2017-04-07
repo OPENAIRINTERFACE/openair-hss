@@ -156,7 +156,7 @@ int mme_app_handle_s6a_update_location_ans (
 
     nas_pdn_config_rsp = &message_p->ittiMsg.nas_pdn_config_rsp;
     nas_pdn_config_rsp->ue_id = ue_mm_context->mme_ue_s1ap_id;
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP imsi " IMSI_64_FMT, ue_mm_context->_imsi64);
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP imsi " IMSI_64_FMT, imsi64);
     rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   }
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
