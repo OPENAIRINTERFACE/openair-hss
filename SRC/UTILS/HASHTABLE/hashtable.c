@@ -106,7 +106,7 @@ static inline hash_size_t def_hashfunc (const uint64_t keyP)
 //------------------------------------------------------------------------------
 /*
    Initialization
-   hashtable_create() set up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
+   hashtable_init() set up the initial structure of the hash table. The user specified size will be allocated and initialized to NULL.
    The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
    If an error occurred, NULL is returned. All other values in the returned hash_table_t pointer should be released with hashtable_destroy().
 */
@@ -190,7 +190,7 @@ hashtable_create (
 //------------------------------------------------------------------------------
 /*
    Initialization
-   hashtable_ts_create() sets up the initial structure of the thread safe hash table. The user specified size will be allocated and initialized to NULL.
+   hashtable_ts_init() sets up the initial structure of the thread safe hash table. The user specified size will be allocated and initialized to NULL.
    The user can also specify a hash function. If the hashfunc argument is NULL, a default hash function is used.
    If an error occurred, NULL is returned. All other values in the returned hash_table_t pointer should be released with hashtable_destroy().
 */
