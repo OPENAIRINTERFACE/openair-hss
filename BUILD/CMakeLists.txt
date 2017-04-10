@@ -411,7 +411,9 @@ include_directories(${OPENAIRCN_DIR}/SRC/UTILS/BSTR)
 
 add_library(HASHTABLE
   ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/hashtable.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/hashtable_uint64.c
   ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/obj_hashtable.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE/obj_hashtable_uint64.c
 )
 include_directories(${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE)
 

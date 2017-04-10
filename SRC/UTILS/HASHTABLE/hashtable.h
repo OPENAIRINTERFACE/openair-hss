@@ -62,8 +62,13 @@ typedef struct hash_node_s {
     hash_key_t          key;
     void               *data;
     struct hash_node_s *next;
-
 } hash_node_t;
+
+typedef struct hash_node_uint64_s {
+    hash_key_t                 key;
+    uint64_t                   data;
+    struct hash_node_uint64_s *next;
+} hash_node_uint64_t;
 
 typedef struct hash_table_s {
     hash_size_t         size;
@@ -89,6 +94,28 @@ typedef struct hash_table_ts_s {
     bool                log_enabled;
 } hash_table_ts_t;
 
+typedef struct hash_table_uint64_s {
+    hash_size_t         size;
+    hash_size_t         num_elements;
+    struct hash_node_uint64_s **nodes;
+    hash_size_t       (*hashfunc)(const hash_key_t);
+    bstring             name;
+    bool                is_allocated_by_malloc;
+    bool                log_enabled;
+} hash_table_uint64_t;
+
+typedef struct hash_table_uint64_ts_s {
+    pthread_mutex_t     mutex;
+    hash_size_t         size;
+    hash_size_t         num_elements;
+    struct hash_node_uint64_s **nodes;
+    pthread_mutex_t     *lock_nodes;
+    hash_size_t       (*hashfunc)(const hash_key_t);
+    bstring             name;
+    bool                is_allocated_by_malloc;
+    bool                log_enabled;
+} hash_table_uint64_ts_t;
+
 typedef struct hashtable_key_array_s {
     int                 num_keys;
     hash_key_t         *keys;
@@ -98,6 +125,11 @@ typedef struct hashtable_element_array_s {
     int                 num_elements;
     void              **elements;
 } hashtable_element_array_t;
+
+typedef struct hashtable_uint64_element_array_s {
+    int                 num_elements;
+    uint64_t           *elements;
+} hashtable_uint64_element_array_t;
 
 char*           hashtable_rc_code2string(hashtable_rc_t rc);
 void            hash_free_int_func(void** memory);
@@ -121,8 +153,8 @@ hash_table_ts_t * hashtable_ts_init (hash_table_ts_t * const hashtbl,const hash_
 __attribute__ ((malloc)) hash_table_ts_t   *hashtable_ts_create (const hash_size_t   size, hash_size_t (*hashfunc)(const hash_key_t ), void (*freefunc)(void **), bstring name_p);
 hashtable_rc_t  hashtable_ts_destroy(hash_table_ts_t * hashtbl);
 hashtable_rc_t  hashtable_ts_is_key_exists (const hash_table_ts_t * const hashtbl, const hash_key_t key) __attribute__ ((hot, warn_unused_result));
-hashtable_key_array_t hashtable_ts_get_keys (hash_table_ts_t * const hashtblP);
-hashtable_element_array_t hashtable_ts_get_elements (hash_table_ts_t * const hashtblP);
+hashtable_key_array_t * hashtable_ts_get_keys (hash_table_ts_t * const hashtblP);
+hashtable_element_array_t* hashtable_ts_get_elements (hash_table_ts_t * const hashtblP);
 hashtable_rc_t  hashtable_ts_apply_callback_on_elements (hash_table_ts_t * const hashtbl,
                                                       bool func_cb(const hash_key_t key, void* const element, void* parameter, void**result),
                                                       void* parameter,
@@ -133,6 +165,23 @@ hashtable_rc_t  hashtable_ts_free (hash_table_ts_t * const hashtbl, const hash_k
 hashtable_rc_t  hashtable_ts_remove(hash_table_ts_t * const hashtbl, const hash_key_t key, void** element);
 hashtable_rc_t  hashtable_ts_get    (const hash_table_ts_t * const hashtbl, const hash_key_t key, void **element) __attribute__ ((hot));
 hashtable_rc_t  hashtable_ts_resize (hash_table_ts_t * const hashtbl, const hash_size_t size);
+
+hash_table_uint64_ts_t * hashtable_uint64_ts_init (hash_table_uint64_ts_t * const hashtbl, const hash_size_t size, hash_size_t (*hashfunc) (const hash_key_t),bstring display_name_p);
+__attribute__ ((malloc)) hash_table_uint64_ts_t   *hashtable_uint64_ts_create (const hash_size_t   size, hash_size_t (*hashfunc)(const hash_key_t ), bstring name_p);
+hashtable_rc_t  hashtable_uint64_ts_destroy(hash_table_uint64_ts_t * hashtbl);
+hashtable_rc_t  hashtable_uint64_ts_is_key_exists (const hash_table_uint64_ts_t * const hashtbl, const hash_key_t key) __attribute__ ((hot, warn_unused_result));
+hashtable_key_array_t * hashtable_uint64_ts_get_keys (hash_table_uint64_ts_t * const hashtblP);
+hashtable_uint64_element_array_t * hashtable_uint64_ts_get_elements (hash_table_uint64_ts_t * const hashtblP);
+hashtable_rc_t  hashtable_uint64_ts_apply_callback_on_elements (hash_table_uint64_ts_t * const hashtbl,
+                                                      bool func_cb(const hash_key_t key, const uint64_t element, void* parameter, void**result),
+                                                      void* parameter,
+                                                      void**result);
+hashtable_rc_t  hashtable_uint64_ts_dump_content (const hash_table_uint64_ts_t * const hashtbl, bstring str);
+hashtable_rc_t  hashtable_uint64_ts_insert (hash_table_uint64_ts_t * const hashtbl, const hash_key_t key, const uint64_t dataP);
+hashtable_rc_t  hashtable_uint64_ts_free (hash_table_uint64_ts_t * const hashtbl, const hash_key_t key);
+hashtable_rc_t  hashtable_uint64_ts_remove(hash_table_uint64_ts_t * const hashtbl, const hash_key_t key);
+hashtable_rc_t  hashtable_uint64_ts_get    (const hash_table_uint64_ts_t * const hashtbl, const hash_key_t key, uint64_t * const dataP) __attribute__ ((hot));
+hashtable_rc_t  hashtable_uint64_ts_resize (hash_table_uint64_ts_t * const hashtbl, const hash_size_t size);
 
 #endif
 

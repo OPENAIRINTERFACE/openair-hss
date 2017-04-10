@@ -414,11 +414,11 @@ typedef struct mme_ue_context_s {
   uint32_t               nb_ue_since_last_stat;
   uint32_t               nb_bearers_since_last_stat;
 
-  hash_table_ts_t       *imsi_ue_context_htbl;
-  hash_table_ts_t       *tun11_ue_context_htbl;
-  hash_table_ts_t       *mme_ue_s1ap_id_ue_context_htbl;
-  hash_table_ts_t       *enb_ue_s1ap_id_ue_context_htbl;
-  obj_hash_table_t      *guti_ue_context_htbl;
+  hash_table_uint64_ts_t  *imsi_ue_context_htbl; // data is mme_ue_s1ap_id_t
+  hash_table_uint64_ts_t  *tun11_ue_context_htbl;// data is mme_ue_s1ap_id_t
+  hash_table_uint64_ts_t  *mme_ue_s1ap_id_ue_context_htbl; // data is enb_s1ap_id_key_t
+  hash_table_ts_t         *enb_ue_s1ap_id_ue_context_htbl;
+  obj_hash_table_uint64_t *guti_ue_context_htbl;// data is mme_ue_s1ap_id_t
 } mme_ue_context_t;
 
 

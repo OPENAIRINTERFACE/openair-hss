@@ -123,12 +123,12 @@ mme_ue_context_exists_mme_ue_s1ap_id (
   const mme_ue_s1ap_id_t mme_ue_s1ap_id)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  void                                   *id = NULL;
+  uint64_t                                enb_s1ap_id_key64 = 0;
 
-  h_rc = hashtable_ts_get (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void **)&id);
+  h_rc = hashtable_uint64_ts_get (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, &enb_s1ap_id_key64);
 
   if (HASH_TABLE_OK == h_rc) {
-    return mme_ue_context_exists_enb_ue_s1ap_id (mme_ue_context_p, (enb_s1ap_id_key_t)(uintptr_t) id);
+    return mme_ue_context_exists_enb_ue_s1ap_id (mme_ue_context_p, (enb_s1ap_id_key_t) enb_s1ap_id_key64);
   }
 
   return NULL;
@@ -140,12 +140,12 @@ mme_ue_context_exists_imsi (
   const imsi64_t imsi)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  void                                   *id = NULL;
+  uint64_t                                mme_ue_s1ap_id64 = 0;
 
-  h_rc = hashtable_ts_get (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void **)&id);
+  h_rc = hashtable_uint64_ts_get (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, &mme_ue_s1ap_id64);
 
   if (HASH_TABLE_OK == h_rc) {
-    return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (mme_ue_s1ap_id_t)(uintptr_t) id);
+    return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (mme_ue_s1ap_id_t)mme_ue_s1ap_id64);
   }
 
   return NULL;
@@ -158,12 +158,12 @@ mme_ue_context_exists_s11_teid (
   const s11_teid_t teid)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  void                                   *id = NULL;
+  uint64_t                                mme_ue_s1ap_id64 = 0;
 
-  h_rc = hashtable_ts_get (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)teid, (void **)&id);
+  h_rc = hashtable_uint64_ts_get (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)teid, &mme_ue_s1ap_id64);
 
   if (HASH_TABLE_OK == h_rc) {
-    return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (mme_ue_s1ap_id_t)(uintptr_t) id);
+    return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (mme_ue_s1ap_id_t) mme_ue_s1ap_id64);
   }
   return NULL;
 }
@@ -175,12 +175,12 @@ mme_ue_context_exists_guti (
   const guti_t * const guti_p)
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  void                                   *id = NULL;
+  uint64_t                                mme_ue_s1ap_id64 = 0;
 
-  h_rc = obj_hashtable_ts_get (mme_ue_context_p->guti_ue_context_htbl, (const void *)guti_p, sizeof (*guti_p), (void **)&id);
+  h_rc = obj_hashtable_uint64_ts_get (mme_ue_context_p->guti_ue_context_htbl, (const void *)guti_p, sizeof (*guti_p), &mme_ue_s1ap_id64);
 
   if (HASH_TABLE_OK == h_rc) {
-    return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (mme_ue_s1ap_id_t)(uintptr_t)id);
+    return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (mme_ue_s1ap_id_t)mme_ue_s1ap_id64);
   }
 
   return NULL;
@@ -211,7 +211,7 @@ mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  void                                   *id = NULL;
+  uint64_t                                id64 = 0;
   enb_ue_s1ap_id_t                        new_enb_ue_s1ap_id = 0;
   enb_s1ap_id_key_t                       old_enb_key = 0;
 
@@ -223,14 +223,14 @@ mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
         new_enb_ue_s1ap_id, old_mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
   }
-  h_rc = hashtable_ts_get (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id,  (void **)&id);
+  h_rc = hashtable_uint64_ts_get (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id, &id64);
   if (HASH_TABLE_OK == h_rc) {
-    old_enb_key = (enb_s1ap_id_key_t)(uintptr_t) id;
+    old_enb_key = (enb_s1ap_id_key_t) id64;
     if (old_enb_key != new_enb_key) {
       if (is_remove_old) {
         ue_mm_context_t                           *old = NULL;
-        h_rc = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id, (void **)&id);
-        h_rc = hashtable_ts_insert (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id, (void *)(uintptr_t)new_enb_key);
+        h_rc = hashtable_uint64_ts_remove (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id);
+        h_rc = hashtable_uint64_ts_insert (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id, (uint64_t)new_enb_key);
         h_rc = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_enb_key, (void **)&old);
         if (HASH_TABLE_OK == h_rc) {
           ue_mm_context_t                           *new = NULL;
@@ -248,8 +248,8 @@ mme_ue_context_duplicate_enb_ue_s1ap_id_detected (
         }
       } else { // remove new context
         ue_mm_context_t                           *new = NULL;
-        h_rc = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id, (void **)&id);
-        h_rc = hashtable_ts_insert (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id, (void *)(uintptr_t)new_enb_key);
+        h_rc = hashtable_uint64_ts_remove (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id);
+        h_rc = hashtable_uint64_ts_insert (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)old_mme_ue_s1ap_id, (uint64_t)new_enb_key);
         h_rc = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)new_enb_key, (void **)&new);
         if (HASH_TABLE_OK != h_rc) {
           OAILOG_ERROR (LOG_MME_APP,"Could not remove new UE context new enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " \n",new_enb_ue_s1ap_id);
@@ -311,7 +311,7 @@ mme_ue_context_notified_new_ue_s1ap_id_association (
     if (ue_context_p->enb_s1ap_id_key == enb_key) { // useless
       if (INVALID_MME_UE_S1AP_ID == ue_context_p->mme_ue_s1ap_id) {
         // new insertion of mme_ue_s1ap_id, not a change in the id
-        h_rc = hashtable_ts_insert (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)(uintptr_t)enb_key);
+        h_rc = hashtable_uint64_ts_insert (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (uint64_t)enb_key);
         if (HASH_TABLE_OK == h_rc) {
           ue_context_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
           OAILOG_DEBUG (LOG_MME_APP,
@@ -341,7 +341,6 @@ mme_ue_context_update_coll_keys (
   const guti_t     * const guti_p)  //  never NULL, if none put &ue_context_p->nas_emm_context._guti
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  void                                   *id = NULL;
 
   OAILOG_FUNC_IN(LOG_MME_APP);
 
@@ -363,8 +362,8 @@ mme_ue_context_update_coll_keys (
   if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
     if (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id) {
       // new insertion of mme_ue_s1ap_id, not a change in the id
-      h_rc = hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id,  (void **)&id);
-      h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void *)(uintptr_t)enb_s1ap_id_key);
+      h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id);
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (uint64_t)enb_s1ap_id_key);
 
       if (HASH_TABLE_OK != h_rc) {
         OAILOG_ERROR (LOG_MME_APP,
@@ -375,25 +374,25 @@ mme_ue_context_update_coll_keys (
     }
 
     if (INVALID_IMSI64 != ue_context_p->emm_context._imsi64) {
-      h_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->emm_context._imsi64, (void **)&id);
-      h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->emm_context._imsi64, (void *)(uintptr_t)mme_ue_s1ap_id);
+      h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->emm_context._imsi64);
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->emm_context._imsi64, (uint64_t)mme_ue_s1ap_id);
     }
-    h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_teid_s11, (void **)&id);
-    h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_teid_s11, (void *)(uintptr_t)mme_ue_s1ap_id);
+    h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_teid_s11);
+    h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_teid_s11, (uint64_t)mme_ue_s1ap_id);
 
-    h_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->emm_context._guti,
-        sizeof (ue_context_p->emm_context._guti), (void **)&id);
+    h_rc = obj_hashtable_uint64_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->emm_context._guti,
+        sizeof (ue_context_p->emm_context._guti));
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
-      h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->emm_context._guti,
-          sizeof (ue_context_p->emm_context._guti), (void *)(uintptr_t)mme_ue_s1ap_id);
+      h_rc = obj_hashtable_uint64_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->emm_context._guti,
+          sizeof (ue_context_p->emm_context._guti), (uint64_t)mme_ue_s1ap_id);
     }
   }
 
   if ((ue_context_p->emm_context._imsi64 != imsi)
       || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-    h_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->emm_context._imsi64, (void **)&id);
+    h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->emm_context._imsi64);
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
-      h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (void *)(uintptr_t)mme_ue_s1ap_id);
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)imsi, (uint64_t)mme_ue_s1ap_id);
     } else {
       h_rc = HASH_TABLE_KEY_NOT_EXISTS;
     }
@@ -407,9 +406,9 @@ mme_ue_context_update_coll_keys (
 
   if ((ue_context_p->mme_teid_s11 != mme_teid_s11)
       || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-    h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_teid_s11, (void **)&id);
+    h_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_teid_s11);
     if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
-      h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_teid_s11, (void *)(uintptr_t)mme_ue_s1ap_id);
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_teid_s11, (uint64_t)mme_ue_s1ap_id);
     } else {
       h_rc = HASH_TABLE_KEY_NOT_EXISTS;
     }
@@ -434,9 +433,9 @@ mme_ue_context_update_coll_keys (
       || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
 
       // may check guti_p with a kind of instanceof()?
-      h_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, &ue_context_p->emm_context._guti, sizeof (*guti_p), (void **)&id);
+      h_rc = obj_hashtable_uint64_ts_remove (mme_ue_context_p->guti_ue_context_htbl, &ue_context_p->emm_context._guti, sizeof (*guti_p));
       if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
-        h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)guti_p, sizeof (*guti_p), (void *)(uintptr_t)mme_ue_s1ap_id);
+        h_rc = obj_hashtable_uint64_ts_insert (mme_ue_context_p->guti_ue_context_htbl, (const void *const)guti_p, sizeof (*guti_p), (uint64_t)mme_ue_s1ap_id);
       } else {
         h_rc = HASH_TABLE_KEY_NOT_EXISTS;
       }
@@ -457,15 +456,15 @@ void mme_ue_context_dump_coll_keys(void)
   bstring tmp = bfromcstr(" ");
   btrunc(tmp, 0);
 
-  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl, tmp);
+  hashtable_uint64_ts_dump_content (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl, tmp);
   OAILOG_TRACE (LOG_MME_APP,"imsi_ue_context_htbl %s\n", bdata(tmp));
 
   btrunc(tmp, 0);
-  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl, tmp);
+  hashtable_uint64_ts_dump_content (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl, tmp);
   OAILOG_TRACE (LOG_MME_APP,"tun11_ue_context_htbl %s\n", bdata(tmp));
 
   btrunc(tmp, 0);
-  hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, tmp);
+  hashtable_uint64_ts_dump_content (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl, tmp);
   OAILOG_TRACE (LOG_MME_APP,"mme_ue_s1ap_id_ue_context_htbl %s\n", bdata(tmp));
 
   btrunc(tmp, 0);
@@ -473,7 +472,7 @@ void mme_ue_context_dump_coll_keys(void)
   OAILOG_TRACE (LOG_MME_APP,"enb_ue_s1ap_id_ue_context_htbl %s\n", bdata(tmp));
 
   btrunc(tmp, 0);
-  obj_hashtable_ts_dump_content (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl, tmp);
+  obj_hashtable_uint64_ts_dump_content (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl, tmp);
   OAILOG_TRACE (LOG_MME_APP,"guti_ue_context_htbl %s", bdata(tmp));
 }
 
@@ -512,7 +511,7 @@ mme_insert_ue_context (
       ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
 
   if ( INVALID_MME_UE_S1AP_ID != ue_context_p->mme_ue_s1ap_id) {
-    h_rc = hashtable_ts_is_key_exists (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id);
+    h_rc = hashtable_uint64_ts_is_key_exists (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id);
 
     if (HASH_TABLE_OK == h_rc) {
       OAILOG_DEBUG (LOG_MME_APP, "This ue context %p already exists mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
@@ -520,9 +519,9 @@ mme_insert_ue_context (
       OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
     }
     //OAI_GCC_DIAG_OFF(discarded-qualifiers);
-    h_rc = hashtable_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl,
+    h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl,
                                 (const hash_key_t)ue_context_p->mme_ue_s1ap_id,
-                                (void *)((uintptr_t)ue_context_p->enb_s1ap_id_key));
+                                (uint64_t)(ue_context_p->enb_s1ap_id_key));
     //OAI_GCC_DIAG_ON(discarded-qualifiers);
 
     if (HASH_TABLE_OK != h_rc) {
@@ -533,9 +532,9 @@ mme_insert_ue_context (
 
     // filled IMSI
     if (ue_context_p->emm_context._imsi64) {
-      h_rc = hashtable_ts_insert (mme_ue_context_p->imsi_ue_context_htbl,
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->imsi_ue_context_htbl,
                                   (const hash_key_t)ue_context_p->emm_context._imsi64,
-                                  (void *)((uintptr_t)ue_context_p->mme_ue_s1ap_id));
+                                  (uint64_t)(ue_context_p->mme_ue_s1ap_id));
 
       if (HASH_TABLE_OK != h_rc) {
         OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " imsi " IMSI_64_FMT "\n",
@@ -546,9 +545,9 @@ mme_insert_ue_context (
 
     // filled S11 tun id
     if (ue_context_p->mme_teid_s11) {
-      h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl,
+      h_rc = hashtable_uint64_ts_insert (mme_ue_context_p->tun11_ue_context_htbl,
                                  (const hash_key_t)ue_context_p->mme_teid_s11,
-                                 (void *)((uintptr_t)ue_context_p->mme_ue_s1ap_id));
+                                 (uint64_t)(ue_context_p->mme_ue_s1ap_id));
 
       if (HASH_TABLE_OK != h_rc) {
         OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_teid_s11 " TEID_FMT "\n",
@@ -565,10 +564,10 @@ mme_insert_ue_context (
         (0 != ue_context_p->emm_context._guti.gummei.plmn.mcc_digit2) ||
         (0 != ue_context_p->emm_context._guti.gummei.plmn.mcc_digit3)) {
 
-      h_rc = obj_hashtable_ts_insert (mme_ue_context_p->guti_ue_context_htbl,
+      h_rc = obj_hashtable_uint64_ts_insert (mme_ue_context_p->guti_ue_context_htbl,
                                      (const void *const)&ue_context_p->emm_context._guti,
                                      sizeof (ue_context_p->emm_context._guti),
-                                     (void *)((uintptr_t)ue_context_p->mme_ue_s1ap_id));
+                                     (uint64_t)(ue_context_p->mme_ue_s1ap_id));
 
       if (HASH_TABLE_OK != h_rc) {
         OAILOG_DEBUG (LOG_MME_APP, "Error could not register this ue context %p mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " guti "GUTI_FMT"\n",
@@ -614,7 +613,6 @@ void mme_remove_ue_context (
   struct ue_mm_context_s *ue_context_p)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  unsigned int                           *id = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
 
   DevAssert (mme_ue_context_p );
@@ -626,21 +624,21 @@ void mme_remove_ue_context (
   __sync_fetch_and_sub (&mme_ue_context_p->nb_ue_since_last_stat, 1);
 
   if (ue_context_p->emm_context._imsi64) {
-    hash_rc = hashtable_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->emm_context._imsi64, (void **)&id);
+    hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->imsi_ue_context_htbl, (const hash_key_t)ue_context_p->emm_context._imsi64);
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", IMSI " IMSI_64_FMT "  not in IMSI collection\n",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->emm_context._imsi64);
   }
   // filled NAS UE ID
   if (INVALID_MME_UE_S1AP_ID != ue_context_p->mme_ue_s1ap_id) {
-    hash_rc = hashtable_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id, (void **)&id);
+    hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->mme_ue_s1ap_id);
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " not in MME UE S1AP ID collection\n",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
   }
   // filled S11 tun id
   if (ue_context_p->mme_teid_s11) {
-    hash_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_teid_s11, (void **)&id);
+    hash_rc = hashtable_uint64_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_teid_s11);
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", MME S11 TEID  " TEID_FMT "  not in S11 collection\n",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->mme_teid_s11);
@@ -648,7 +646,7 @@ void mme_remove_ue_context (
   // filled guti
   if ((ue_context_p->emm_context._guti.gummei.mme_code) || (ue_context_p->emm_context._guti.gummei.mme_gid) || (ue_context_p->emm_context._guti.m_tmsi) ||
       (ue_context_p->emm_context._guti.gummei.plmn.mcc_digit1) || (ue_context_p->emm_context._guti.gummei.plmn.mcc_digit2) || (ue_context_p->emm_context._guti.gummei.plmn.mcc_digit3)) { // MCC 000 does not exist in ITU table
-    hash_rc = obj_hashtable_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->emm_context._guti, sizeof (ue_context_p->emm_context._guti), (void **)&id);
+    hash_rc = obj_hashtable_uint64_ts_remove (mme_ue_context_p->guti_ue_context_htbl, (const void *const)&ue_context_p->emm_context._guti, sizeof (ue_context_p->emm_context._guti));
     if (HASH_TABLE_OK != hash_rc)
       OAILOG_DEBUG(LOG_MME_APP, "UE context enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ", GUTI  not in GUTI collection\n",
           ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);

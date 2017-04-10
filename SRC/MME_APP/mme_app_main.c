@@ -251,20 +251,20 @@ int mme_app_init (const mme_config_t * mme_config_p)
   OAILOG_FUNC_IN (LOG_MME_APP);
   memset (&mme_app_desc, 0, sizeof (mme_app_desc));
   bstring b = bfromcstr("mme_app_imsi_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
   btrunc(b, 0);
   bassigncstr(b, "mme_app_tun11_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
   AssertFatal(sizeof(uintptr_t) >= sizeof(uint64_t), "Problem with mme_ue_s1ap_id_ue_context_htbl in MME_APP");
   btrunc(b, 0);
   bassigncstr(b, "mme_app_mme_ue_s1ap_id_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
+  mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl = hashtable_uint64_ts_create (mme_config.max_ues, NULL, b);
   btrunc(b, 0);
   bassigncstr(b, "mme_app_enb_ue_s1ap_id_ue_context_htbl");
   mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl = hashtable_ts_create (mme_config.max_ues, NULL, NULL, b);
   btrunc(b, 0);
   bassigncstr(b, "mme_app_guti_ue_context_htbl");
-  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_ts_create (mme_config.max_ues, NULL, hash_free_int_func, hash_free_int_func, b);
+  mme_app_desc.mme_ue_contexts.guti_ue_context_htbl = obj_hashtable_uint64_ts_create (mme_config.max_ues, NULL, hash_free_int_func, b);
   bdestroy_wrapper (&b);
 
   if (mme_app_edns_init(mme_config_p)) {
@@ -297,10 +297,10 @@ void mme_app_exit (void)
 {
   mme_app_edns_exit();
   XML_MSG_DUMP_EXIT();
-  hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
-  hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
-  hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
+  hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
+  hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
+  hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
   hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl);
-  obj_hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
+  obj_hashtable_uint64_ts_destroy (mme_app_desc.mme_ue_contexts.guti_ue_context_htbl);
   mme_config_exit();
 }
