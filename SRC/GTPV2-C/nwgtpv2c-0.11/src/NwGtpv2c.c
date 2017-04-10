@@ -976,7 +976,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
       RB_INIT (&(thiz->outstandingRxSeqNumMap));
       RB_INIT (&(thiz->activeTimerList));
       OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-      thiz->hTmrMinHeap = (NwHandleT) nwGtpv2cTmrMinHeapNew (10000);
+      thiz->hTmrMinHeap = (NwPtrT) nwGtpv2cTmrMinHeapNew (10000);
       OAI_GCC_DIAG_ON(pointer-to-int-cast);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_ECHO_RSP);
       /*
