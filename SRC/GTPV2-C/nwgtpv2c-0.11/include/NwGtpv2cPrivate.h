@@ -111,7 +111,7 @@ typedef struct nw_gtpv2c_stack_s {
   RB_HEAD( NwGtpv2cOutstandingTxSeqNumTrxnMap, nw_gtpv2c_trxn_s ) outstandingTxSeqNumMap;
   RB_HEAD( NwGtpv2cOutstandingRxSeqNumTrxnMap, nw_gtpv2c_trxn_s ) outstandingRxSeqNumMap;
   RB_HEAD( NwGtpv2cActiveTimerList, nw_gtpv2c_timeout_info_s     ) activeTimerList;
-  NwHandleT                     hTmrMinHeap;
+  NwPtrT                        hTmrMinHeap;
 } nw_gtpv2c_stack_t;
 
 

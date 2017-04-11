@@ -38,6 +38,7 @@
 #include <signal.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#include <malloc.h>
 
 #include <libxml/xpath.h>
 #include <libxml/xmlwriter.h>
@@ -150,7 +151,8 @@ typedef struct task_desc_s {
   /*
    * Queue of messages belonging to the task
    */
-  struct lfds710_queue_bmm_state         message_queue;
+  struct lfds710_queue_bmm_state         message_queue
+          __attribute__ ((aligned (LFDS710_PAL_ATOMIC_ISOLATION_IN_BYTES)));
   struct lfds710_queue_bmm_element      *qbmme;
 } task_desc_t;
 
@@ -798,7 +800,8 @@ itti_init (
   /*
    * Allocates memory for tasks info
    */
-  itti_desc.tasks = calloc (itti_desc.task_max, sizeof (task_desc_t));
+  itti_desc.tasks = memalign(LFDS710_PAL_ATOMIC_ISOLATION_IN_BYTES, itti_desc.task_max * sizeof (task_desc_t));
+  memset(itti_desc.tasks, 0, itti_desc.task_max * sizeof (task_desc_t));
   /*
    * Allocates memory for threads info
    */
