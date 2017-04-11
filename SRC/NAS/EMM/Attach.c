@@ -277,7 +277,6 @@ emm_proc_attach_request (
     if (!ue_mm_context) {
       ue_mm_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_ue_s1ap_id_key);
       if (ue_mm_context) {
-        OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Found old ue_mm_context matching enb_ue_s1ap_id in ATTACH_REQUEST...very suspicious\n");
         ue_id = emm_ctx_get_new_ue_id(&ue_mm_context->emm_context);
         mme_api_notified_new_ue_s1ap_id_association (ue_mm_context->enb_ue_s1ap_id, originating_ecgi->cell_identity.enb_id, ue_id);
       }
