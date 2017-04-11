@@ -61,9 +61,9 @@
     <file>../../../MSGR10/ITTI_NAS_DOWNLINK_DATA_REQ.IDENTITY_REQUEST.xml</file>
   </message_file>
   <set_var name="MME_UE_S1AP_ID"                              value="$ITTI_NAS_DOWNLINK_DATA_REQ.MME_UE_S1AP_ID"   />
-  <jcond var_name="MME_UE_S1AP_ID" cond="ne"  value="0xFFFFFFFF" label="checked_mme_ue_s1ap_id_invalid"/>
+  <jcond var_name="MME_UE_S1AP_ID" cond="ne"  value="0xFFFFFFFF" label="checked_mme_ue_s1ap_id_invalid2"/>
     <exit  status="failed" />
-  <label name="checked_mme_ue_s1ap_id_invalid" />
+  <label name="checked_mme_ue_s1ap_id_invalid2" />
 
   <!-- IDENTITY RESPONSE -->
   <message_file action="send" time="now"  time_ref="this">
@@ -130,19 +130,22 @@
   <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
   <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/>
 
-  <sleep    seconds="5"     useconds="1000"          />
-  
-  <!-- ITTI_S1AP_E_RAB_SETUP_REQ >
+  <!-- ITTI_S1AP_E_RAB_SETUP_REQ -->
   <message_file action="receive" time="2.0"  time_ref="-3">
     <file>../../../MSGR10/ITTI_S1AP_E_RAB_SETUP_REQ.xml</file>
-  </message_file-->
+  </message_file>
 
 
-  <!-- ITTI_S1AP_E_RAB_SETUP_RESPONSE >
+  <!-- ITTI_S1AP_E_RAB_SETUP_RESPONSE -->
   <incr_var name="ENB_S1U_TEID"/>  
   <message_file action="send" time="now"  time_ref="this">
     <file>../../../MSGR10/ITTI_S1AP_E_RAB_SETUP_RESPONSE.xml</file>
   </message_file>
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../../MSGR10/ITTI_NAS_UPLINK_DATA_IND.ACTIVATE_DEDICATED_BEARER_ACCEPT.xml</file>
+  </message_file>  
   <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
-  <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/-->
+  <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+  <sleep    seconds="1"     useconds="0"          />
 </scenario>
