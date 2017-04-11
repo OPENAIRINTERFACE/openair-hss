@@ -73,7 +73,7 @@
       </plain_nas_message>
     </security_protected_nas_message>
   </e_rab_setup_item>
-  <ue_security_capabilities_encryption_algorithms>c0</ue_security_capabilities_encryption_algorithms>
+  <ue_security_capabilities_encryption_algorithms>40</ue_security_capabilities_encryption_algorithms>
   <ue_security_capabilities_integrity_protection_algorithms>c0</ue_security_capabilities_integrity_protection_algorithms>
   <kenb>#ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.KENB</kenb>
 </ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF>

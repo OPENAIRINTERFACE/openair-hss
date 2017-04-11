@@ -216,18 +216,5 @@
   <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/>
   <exit/>
 
-
-
-
   <sleep    seconds="3"     useconds="0"          />
-
-  <!-- time allowed values = seconds.microseconds or "now" -->
-  <!-- time_ref allowed values = negative integers (-n= n'th item before this), or "this" -->
-  <!--
-  <exit/>
-  <label name="exit_error" />
-  <exit  status="failed" />
-  <decr_var name="NUM_LOOPS"             />
-  <jcond var_name="NUM_LOOPS" cond="gt"  value="0" label="loop0"/>
--->
 </scenario>

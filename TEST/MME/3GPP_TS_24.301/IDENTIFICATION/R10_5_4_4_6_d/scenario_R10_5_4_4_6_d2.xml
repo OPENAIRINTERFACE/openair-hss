@@ -126,17 +126,21 @@
   <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
   <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/>
 
-  <!-- ITTI_S1AP_E_RAB_SETUP_REQ >
+  <!-- ITTI_S1AP_E_RAB_SETUP_REQ -->
   <message_file action="receive" time="2.0"  time_ref="-3">
     <file>../../../MSGR10/ITTI_S1AP_E_RAB_SETUP_REQ.xml</file>
-  </message_file-->
+  </message_file>
 
-
-  <!-- ITTI_S1AP_E_RAB_SETUP_RESPONSE >
+  <!-- ITTI_S1AP_E_RAB_SETUP_RESPONSE -->
   <incr_var name="ENB_S1U_TEID"/>  
   <message_file action="send" time="now"  time_ref="this">
     <file>../../../MSGR10/ITTI_S1AP_E_RAB_SETUP_RESPONSE.xml</file>
   </message_file>
+  <message_file action="send" time="now"  time_ref="this">
+    <file>../../../MSGR10/ITTI_NAS_UPLINK_DATA_IND.ACTIVATE_DEDICATED_BEARER_ACCEPT.xml</file>
+  </message_file>  
   <incr_var name="NAS_UPLINK_SEQUENCE_NUMBER"/>
-  <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/-->
+  <update_emm_security_context  ul_count="$NAS_UPLINK_SEQUENCE_NUMBER"/>
+
+  <sleep    seconds="1"     useconds="0"          />
 </scenario>

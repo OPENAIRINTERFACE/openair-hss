@@ -115,7 +115,7 @@
   
   <!-- MME_APP_CONNECTION_ESTABLISHMENT_CNF -->
   <message_file action="receive" time="2.0" time_ref="this">
-    <file>../../../MSGR10/ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF.xml</file>
+    <file>../../../MSGR10/ITTI_MME_APP_CONNECTION_ESTABLISHMENT_CNF_changed_eea.xml</file>
   </message_file>
 
   <!-- MME_APP_INITIAL_CONTEXT_SETUP_RSP -->

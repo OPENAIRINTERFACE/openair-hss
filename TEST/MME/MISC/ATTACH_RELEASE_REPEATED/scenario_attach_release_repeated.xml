@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- Scenarios may contain also scenarios_file -->
+
+<scenario name="attach_release_iter">
+
+  <var name="S1AP_CAUSE_GROUP"                            ascii_stream_value="radio_network_layer"        />
+  <var name="S1AP_CAUSE_GROUP_CAUSE"                      value="0x15"        />
+
+  <scenario_file><file>../../3GPP_TS_24.301/set_next_ue_params.xml</file></scenario_file>
+  
+  <var name="LOOP_COUNTER"      value="0x0020"          />
+<!--  <scenario_file><file>../../3GPP_TS_24.301/ATTACH/R10_attach_imsi_complete/scenario_R10_attach_imsi_complete.xml</file></scenario_file>
+  <sleep    seconds="1"     useconds="0"          />
+  <message_file action="send" time="now"  time_ref="this"><file>../../MSGR10/ITTI_NAS_UPLINK_DATA_IND.DETACH_REQUEST.SWITCH_OFF.xml</file></message_file>
+  <scenario_file><file>../../3GPP_TS_36.413/UE_CONTEXT_RELEASE_MME_INITIATED/ue_context_release_mme_initiated.xml</file></scenario_file>-->
+  
+  <label name="attach_release_iter_loop" />
+    <incr_var name="ENB_UE_S1AP_ID"/>
+    <scenario_file><file>../../3GPP_TS_24.301/ATTACH/R10_attach_guti_complete/scenario_R10_attach_guti_complete.xml</file></scenario_file>
+    <sleep    seconds="1"     useconds="0"          />
+    <scenario_file><file>../../3GPP_TS_36.413/UE_CONTEXT_RELEASE_REQUEST_ENB_INITIATED/ue_context_release_request_enb_initiated.xml</file></scenario_file>
+    <decr_var name="LOOP_COUNTER"/>
+  <jcond var_name="LOOP_COUNTER" cond="gt"  value="0" label="attach_release_iter_loop"/>
+  <exit  status="success" />
+</scenario>
