@@ -414,7 +414,10 @@ inline void emm_ctx_set_ue_nw_cap(emm_context_t * const ctxt, const ue_network_c
 {
   ctxt->_ue_network_capability = *ue_nw_cap_ie;
   emm_ctx_set_attribute_present(ctxt, EMM_CTXT_MEMBER_UE_NETWORK_CAPABILITY_IE);
-  OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set UE network capability IE (present)\n", (PARENT_STRUCT(ctxt, struct ue_mm_context_s, emm_context))->mme_ue_s1ap_id);
+  OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set UE network capability IE (present) eea %x eia %x\n",
+      (PARENT_STRUCT(ctxt, struct ue_mm_context_s, emm_context))->mme_ue_s1ap_id,
+      ctxt->_ue_network_capability.eea,
+      ctxt->_ue_network_capability.eia);
 }
 
 /* Set UE network capability IE, mark it as valid */
@@ -422,7 +425,10 @@ inline void emm_ctx_set_valid_ue_nw_cap(emm_context_t * const ctxt, const ue_net
 {
   ctxt->_ue_network_capability = *ue_nw_cap_ie;
   emm_ctx_set_attribute_valid(ctxt, EMM_CTXT_MEMBER_UE_NETWORK_CAPABILITY_IE);
-  OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set UE network capability IE (valid)\n", (PARENT_STRUCT(ctxt, struct ue_mm_context_s, emm_context))->mme_ue_s1ap_id);
+  OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " set UE network capability IE (valid) eea %x eia %x\n",
+      (PARENT_STRUCT(ctxt, struct ue_mm_context_s, emm_context))->mme_ue_s1ap_id,
+      ctxt->_ue_network_capability.eea,
+      ctxt->_ue_network_capability.eia);
 }
 
 
@@ -430,7 +436,7 @@ inline void emm_ctx_set_valid_ue_nw_cap(emm_context_t * const ctxt, const ue_net
 /* Clear MS network capability IE   */
 inline void emm_ctx_clear_ms_nw_cap(emm_context_t * const ctxt)
 {
-  memset (&ctxt->_ms_network_capability, 0, sizeof (ctxt->_ue_network_capability));
+  memset (&ctxt->_ms_network_capability, 0, sizeof (ctxt->_ms_network_capability));
   emm_ctx_clear_attribute_present(ctxt, EMM_CTXT_MEMBER_MS_NETWORK_CAPABILITY_IE);
   OAILOG_DEBUG (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " cleared MS network capability IE\n", (PARENT_STRUCT(ctxt, struct ue_mm_context_s, emm_context))->mme_ue_s1ap_id);
 }
