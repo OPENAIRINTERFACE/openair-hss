@@ -19,31 +19,12 @@
  *      contact@openairinterface.org
  */
 
-/*****************************************************************************
-  Source      EpsBearerContextDeactivation.c
-
-  Version     0.1
-
-  Date        2013/05/22
-
-  Product     NAS stack
-
-  Subsystem   EPS Session Management
-
-  Author      Frederic Maurel
-
-  Description Defines the EPS bearer context deactivation ESM procedure
-        executed by the Non-Access Stratum.
-
-        The purpose of the EPS bearer context deactivation procedure
-        is to deactivate an EPS bearer context or disconnect from a
-        PDN by deactivating all EPS bearer contexts to the PDN.
-        The EPS bearer context deactivation procedure is initiated
-        by the network, and it may be triggered by the UE by means
-        of the UE requested bearer resource modification procedure
-        or UE requested PDN disconnect procedure.
-
-*****************************************************************************/
+/*! \file esm_information.c
+   \brief
+   \author  Lionel GAUTHIER
+   \date 2017
+   \email: lionel.gauthier@eurecom.fr
+*/
 #include <pthread.h>
 #include <inttypes.h>
 #include <stdint.h>
