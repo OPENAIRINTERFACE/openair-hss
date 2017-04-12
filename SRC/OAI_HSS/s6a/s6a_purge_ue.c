@@ -106,7 +106,7 @@ s6a_purge_ue_cb (
     }
   }
 
-  if ((ret = hss_mysql_purge_ue (&pu_req, &pu_ans)) != 0) {
+  if ((ret = hss_cassandra_purge_ue (&pu_req, &pu_ans)) != 0) {
     /*
      * We failed to find the IMSI in the database. Replying to the request
      * * * * with the user unknown cause.

@@ -96,6 +96,11 @@ IF( NOT NETTLE_FOUND )
   MESSAGE( SEND_ERROR "Nettle is required" )
 ENDIF( NOT NETTLE_FOUND )
 
+INCLUDE(FindCassandra)
+IF( NOT CASSANDRA_FOUND)
+  MESSAGE( SEND_ERROR "Cassandra is required" )
+ENDIF( NOT CASSANDRA_FOUND )
+
 
 
 INCLUDE(FindFreeDiameter)
@@ -220,6 +225,7 @@ set(s6a_SRC
     ${OAI_HSS_DIR}/s6a/s6a_subscription_data.c
     ${OAI_HSS_DIR}/s6a/s6a_supported_features.c
     ${OAI_HSS_DIR}/s6a/s6a_up_loc.c
+    ${OAI_HSS_DIR}/s6a/s6a_insert_subscriber_request.c
 )
 set(s6a_HDR
     ${OAI_HSS_DIR}/s6a/s6a_proto.h
@@ -274,7 +280,8 @@ target_link_libraries (oai_hss
                        hss_utils
                        -Wl,-no-whole-archive
                        gmp
-                       ${MySQL_LIBRARY} 
+                       ${MySQL_LIBRARY}
+                       ${CASSANDRA_LIBRARY}
                        ${NETTLE_LIBRARIES} 
                        ${FREEDIAMETER_LIBRARIES}
                        ${CONFIG_LIBRARIES}  

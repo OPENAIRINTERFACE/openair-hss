@@ -35,6 +35,110 @@
 #include "access_restriction.h"
 #include "log.h"
 
+
+int
+s6a_generate_cancel_location_req(char *previous_mme_host, char *previous_mme_realm, char *imsi)
+{
+  struct avp                             *avp_p = NULL;
+  struct msg                             *msg_p = NULL;
+  struct session                         *sess_p = NULL;
+  union avp_value                         value;
+
+  //DevAssert (clr_pP );
+  /*
+   * Create the new clear location request message
+   */
+  CHECK_FCT (fd_msg_new (s6a_cnf.dataobj_s6a_cancel_loc_req, 0, &msg_p));
+  /*
+   * Create a new session
+   */
+  CHECK_FCT (fd_sess_new (&sess_p, fd_g_config->cnf_diamid, fd_g_config->cnf_diamid_len, (os0_t) "apps6a", 6));
+  {
+    os0_t                                   sid;
+    size_t                                  sidlen;
+
+    CHECK_FCT (fd_sess_getsid (sess_p, &sid, &sidlen));
+    CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_session_id, 0, &avp_p));
+    value.os.data = sid;
+    value.os.len = sidlen;
+    CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
+    CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_FIRST_CHILD, avp_p));
+  }
+  CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_auth_session_state, 0, &avp_p));
+  /*
+   * No State maintained
+   */
+  value.i32 = 1;
+  CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
+  CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
+  /*
+   * Add Origin_Host & Origin_Realm
+   */
+  CHECK_FCT (fd_msg_add_origin (msg_p, 0));
+  //mme_config_read_lock (&mme_config);
+  /*
+   * Destination Host
+   */
+  {
+    //bstring host = bstrcpy(mme_config.s6a_config.hss_host_name);
+
+    //bconchar(host, '.');
+    //bconcat (host, mme_config.realm);
+
+    CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_destination_host, 0, &avp_p));
+    value.os.data = (unsigned char *)(previous_mme_host);
+    value.os.len = strlen(previous_mme_host);
+    CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
+    CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
+    //bdestroy_wrapper (&host);
+  }
+  /*
+   * Destination_Realm
+   */
+  {
+    CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_destination_realm, 0, &avp_p));
+    value.os.data = (unsigned char *)(previous_mme_realm);
+    value.os.len = strlen(previous_mme_realm);
+    CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
+    CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
+  }
+  //mme_config_unlock (&mme_config);
+  /*
+   * Adding the User-Name (IMSI)
+   */
+  CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_user_name, 0, &avp_p));
+  value.os.data = (unsigned char *)imsi;
+  value.os.len = strlen(imsi);
+  CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
+  CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
+
+
+  CHECK_FCT(fd_msg_avp_new(s6a_cnf.dataobj_s6a_cancellation_type, 0, &avp_p));
+  value.i32 = 4; // value for Cancellation-type INITIAL_ATTACH_PROCEDURE
+  CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
+  CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
+
+
+  CHECK_FCT (fd_msg_send (&msg_p, NULL, NULL));
+  FPRINTF_DEBUG ("Sending s6a clr for imsi=%s\n", imsi);
+  return 0;
+}
+
+
+int 
+s6a_clear_info_cb (
+  struct msg **msg,
+  struct avp *paramavp,
+  struct session *sess,
+  void *opaque,
+  enum disp_action *act)
+{
+       FPRINTF_DEBUG("Received the Clear Location Answer from MME\n");
+
+
+}
+
+
 int
 s6a_up_loc_cb (
   struct msg **msg,
@@ -57,15 +161,15 @@ s6a_up_loc_cb (
   int                                     result_code = ER_DIAMETER_SUCCESS;
   int                                     experimental = 0;
   uint32_t                                ulr_flags = 0;
-  mysql_ul_ans_t                          mysql_ans;
-  mysql_ul_push_t                         mysql_push;
+  cassandra_ul_ans_t                      cass_ans;
+  cassandra_ul_push_t                     cass_push;
 
   if (msg == NULL) {
     return EINVAL;
   }
 
-  memset (&mysql_push, 0, sizeof (mysql_ul_push_t));
-  memset (&mysql_ans, 0, sizeof (mysql_ul_ans_t));
+  memset (&cass_push, 0, sizeof (cassandra_ul_push_t));
+  memset (&cass_ans, 0, sizeof (cassandra_ul_ans_t));
   FPRINTF_NOTICE ( "Received new update location request\n");
   qry = *msg;
   /*
@@ -96,15 +200,15 @@ s6a_up_loc_cb (
     // The HSS shall check whether the RAT type the UE is using  is allowed. If it is not,
     //     a Result Code of DIAMETER_ERROR_RAT_NOT_ALLOWED shall be returned.
     // ...
-    sprintf (mysql_push.imsi, "%*s", (int)hdr->avp_value->os.len, (char *)hdr->avp_value->os.data);
+    sprintf (cass_push.imsi, "%*s", (int)hdr->avp_value->os.len, (char *)hdr->avp_value->os.data);
 
-    if ((ret = hss_mysql_update_loc (mysql_push.imsi, &mysql_ans)) != 0) {
+    if ((ret = hss_cassandra_update_loc (cass_push.imsi, &cass_ans)) != 0) {
       /*
        * We failed to find the IMSI in the database. Replying to the request
        * * * * with the user unknown cause.
        */
       experimental = 1;
-      FPRINTF_NOTICE ( "IMSI %s DIAMETER_ERROR_USER_UNKNOWN\n", mysql_push.imsi);
+      FPRINTF_NOTICE ( "IMSI %s DIAMETER_ERROR_USER_UNKNOWN\n", cass_push.imsi);
       result_code = DIAMETER_ERROR_USER_UNKNOWN;
       goto out;
     }
@@ -141,8 +245,8 @@ s6a_up_loc_cb (
    */
   CHECK_FCT (fd_msg_avp_hdr (origin_host, &origin_host_hdr));
   CHECK_FCT (fd_msg_avp_hdr (origin_realm, &origin_realm_hdr));
-  sprintf (mysql_push.mme_identity.mme_host, "%*s", (int)origin_host_hdr->avp_value->os.len, (char *)origin_host_hdr->avp_value->os.data);
-  sprintf (mysql_push.mme_identity.mme_realm, "%*s", (int)origin_realm_hdr->avp_value->os.len, (char *)origin_realm_hdr->avp_value->os.data);
+  sprintf (cass_push.mme_identity.mme_host, "%*s", (int)origin_host_hdr->avp_value->os.len, (char *)origin_host_hdr->avp_value->os.data);
+  sprintf (cass_push.mme_identity.mme_realm, "%*s", (int)origin_realm_hdr->avp_value->os.len, (char *)origin_realm_hdr->avp_value->os.data);
   /*
    * Retrieving RAT type AVP
    */
@@ -157,7 +261,7 @@ s6a_up_loc_cb (
      * * * * The user may be disallowed to use the specified RAT, check the access
      * * * * restriction bit mask received from DB.
      */
-    if ((hdr->avp_value->u32 != 1004) || (FLAG_IS_SET (mysql_ans.access_restriction, E_UTRAN_NOT_ALLOWED))) {
+    if ((hdr->avp_value->u32 != 1004) || (FLAG_IS_SET (cass_ans.access_restriction, E_UTRAN_NOT_ALLOWED))) {
       experimental = 1;
       FPRINTF_ERROR ( "access_restriction DIAMETER_ERROR_RAT_NOT_ALLOWED\n");
       result_code = DIAMETER_ERROR_RAT_NOT_ALLOWED;
@@ -216,29 +320,42 @@ s6a_up_loc_cb (
        */
       // TODO: check if an MME is already registered, serving the UE.
       // If so, it should be informed.
+ 
+     //send the CLR command to MME 
+    
+      if((cass_ans.mme_identity.mme_host != NULL) && (cass_ans.mme_identity.mme_realm != NULL)){
+
+          if((s6a_generate_cancel_location_req(cass_ans.mme_identity.mme_host,cass_ans.mme_identity.mme_realm,cass_ans.imsi) != 0))
+          {
+                FPRINTF_ERROR("ERROR in sending the CLR to previous MME");
+                goto out;
+          }
+
+      }
+
       /*
        * The identity of the MME will be added to db
        */
-      mysql_push.mme_identity_present = MME_IDENTITY_PRESENT;
+      cass_push.mme_identity_present = MME_IDENTITY_PRESENT;
     } else {
       /*
        * The bit is not set, we are expecting that the mme contained in db
        * * * * matches the original MME.
        */
-      if ((mysql_ans.mme_identity.mme_host != NULL) && (mysql_ans.mme_identity.mme_realm != NULL)) {
+      if ((cass_ans.mme_identity.mme_host != NULL) && (cass_ans.mme_identity.mme_realm != NULL)) {
         /*
          * Compare if values match expected
          */
-        if (memcmp (mysql_ans.mme_identity.mme_host, origin_host_hdr->avp_value->os.data,
-                    origin_host_hdr->avp_value->os.len > strlen (mysql_ans.mme_identity.mme_host) ? strlen (mysql_ans.mme_identity.mme_host) : origin_host_hdr->avp_value->os.len) != 0) {
+        if (memcmp (cass_ans.mme_identity.mme_host, origin_host_hdr->avp_value->os.data,
+                    origin_host_hdr->avp_value->os.len > strlen (cass_ans.mme_identity.mme_host) ? strlen (cass_ans.mme_identity.mme_host) : origin_host_hdr->avp_value->os.len) != 0) {
           experimental = 1;
           FPRINTF_ERROR ( "DIAMETER_ERROR_UNKOWN_SERVING_NODE (host)\n");
           result_code = DIAMETER_ERROR_UNKOWN_SERVING_NODE;
           goto out;
         }
 
-        if (memcmp (mysql_ans.mme_identity.mme_realm, origin_realm_hdr->avp_value->os.data,
-                    origin_realm_hdr->avp_value->os.len > strlen (mysql_ans.mme_identity.mme_realm) ? strlen (mysql_ans.mme_identity.mme_realm) : origin_realm_hdr->avp_value->os.len) != 0) {
+        if (memcmp (cass_ans.mme_identity.mme_realm, origin_realm_hdr->avp_value->os.data,
+                    origin_realm_hdr->avp_value->os.len > strlen (cass_ans.mme_identity.mme_realm) ? strlen (cass_ans.mme_identity.mme_realm) : origin_realm_hdr->avp_value->os.len) != 0) {
           experimental = 1;
           FPRINTF_ERROR ( "DIAMETER_ERROR_UNKOWN_SERVING_NODE (realm)\n");
           result_code = DIAMETER_ERROR_UNKOWN_SERVING_NODE;
@@ -337,8 +454,8 @@ s6a_up_loc_cb (
             goto out;
           }
 
-          sprintf (mysql_push.imei, "%*s", (int)hdr->avp_value->os.len, hdr->avp_value->os.data);
-          mysql_push.imei_present = IMEI_PRESENT;
+          sprintf (cass_push.imei, "%*s", (int)hdr->avp_value->os.len, hdr->avp_value->os.data);
+          cass_push.imei_present = IMEI_PRESENT;
         }
         break;
 
@@ -353,9 +470,9 @@ s6a_up_loc_cb (
             goto out;
           }
 
-          mysql_push.software_version[0] = hdr->avp_value->os.data[0];
-          mysql_push.software_version[1] = hdr->avp_value->os.data[1];
-          mysql_push.sv_present = SV_PRESENT;
+          cass_push.software_version[0] = hdr->avp_value->os.data[0];
+          cass_push.software_version[1] = hdr->avp_value->os.data[1];
+          cass_push.sv_present = SV_PRESENT;
         }
         break;
 
@@ -385,8 +502,8 @@ s6a_up_loc_cb (
 
   if (avp) {
     CHECK_FCT (fd_msg_avp_hdr (avp, &hdr));
-    mysql_push.ue_srvcc_present = UE_SRVCC_PRESENT;
-    mysql_push.ue_srvcc = hdr->avp_value->u32;
+    cass_push.ue_srvcc_present = UE_SRVCC_PRESENT;
+    cass_push.ue_srvcc = hdr->avp_value->u32;
   }
 
   /*
@@ -421,8 +538,8 @@ s6a_up_loc_cb (
         break;
 
       case AVP_CODE_FEATURE_LIST:{
-          mysql_push.mme_supported_features_present = MME_SUPPORTED_FEATURES_PRESENT;
-          mysql_push.mme_supported_features = hdr->avp_value->u32;
+          cass_push.mme_supported_features_present = MME_SUPPORTED_FEATURES_PRESENT;
+          cass_push.mme_supported_features = hdr->avp_value->u32;
         }
         break;
       }
@@ -434,7 +551,7 @@ s6a_up_loc_cb (
     }
   }
 
-  mysql_push_up_loc (&mysql_push);
+  cassandra_push_up_loc (&cass_push);
   /*
    * ULA flags
    */
@@ -447,7 +564,7 @@ s6a_up_loc_cb (
    * Only add the subscriber data if not marked as skipped by MME
    */
   if (!FLAG_IS_SET (ulr_flags, ULR_SKIP_SUBSCRIBER_DATA)) {
-    if (s6a_add_subscription_data_avp (ans, &mysql_ans) != 0) {
+    if (s6a_add_subscription_data_avp (ans, &cass_ans) != 0) {
       FPRINTF_ERROR ( "ULR_SKIP_SUBSCRIBER_DATA DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION\n");
       result_code = DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION;
       experimental = 1;
