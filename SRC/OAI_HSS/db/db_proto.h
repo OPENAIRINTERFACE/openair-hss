@@ -288,7 +288,7 @@ int hss_cassandra_push_rand_sqn(const char *imsi, uint8_t *rand_p, uint8_t *sqn)
 
 int hss_mysql_increment_sqn(const char *imsi);
 
-int hss_cassandra_increment_sqn(const char *imsi);
+int hss_cassandra_increment_sqn(const char *imsi, uint8_t *sqn);
 
 int hss_mysql_check_opc_keys(const uint8_t const opP[16]);
 

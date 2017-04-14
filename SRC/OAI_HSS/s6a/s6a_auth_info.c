@@ -43,14 +43,6 @@
 
 #define AUTH_MAX_EUTRAN_VECTORS 6
 
-void dump(struct msg * m)
-{
-        char * buf = NULL;
-        size_t len = 0;
-        printf("%s\n", fd_msg_dump_treeview(&buf, &len, NULL, m, fd_g_config->cnf_dict, 0, 1));
-        free(buf);
-}
-
 
 int
 s6a_auth_info_cb (
@@ -224,7 +216,7 @@ s6a_auth_info_cb (
      */
     CHECK_FCT (fd_msg_avp_hdr (avp, &hdr));
  
-    printf("Lenght of visited plmn id avp = %d",hdr->avp_value->os.len);
+    printf("Length of visited plmn id avp = %d \n",hdr->avp_value->os.len);
     if (hdr->avp_value->os.len == 3) {
       if (apply_access_restriction (auth_info_req.imsi, hdr->avp_value->os.data) != 0) {
         /*
@@ -275,7 +267,7 @@ s6a_auth_info_cb (
        */
       generate_random (vector[0].rand, RAND_LENGTH);
       hss_cassandra_push_rand_sqn (auth_info_req.imsi, vector[0].rand, sqn);
-      hss_cassandra_increment_sqn (auth_info_req.imsi);
+      hss_cassandra_increment_sqn (auth_info_req.imsi, sqn);
       free (sqn);
     }
 
@@ -312,7 +304,7 @@ s6a_auth_info_cb (
     hss_cassandra_push_rand_sqn (auth_info_req.imsi, vector[num_vectors-1].rand, sqn);
   }
 
-  hss_cassandra_increment_sqn (auth_info_req.imsi);
+  hss_cassandra_increment_sqn (auth_info_req.imsi, sqn);
   /*
    * We add the vector
    */
@@ -360,6 +352,7 @@ out:
    */
   CHECK_FCT (s6a_add_result_code (ans, failed_avp, result_code, experimental));
   CHECK_FCT (fd_msg_send (msg, NULL, NULL));
-  dump(*msg); 
+  printf("at the line %d\n", __LINE__);
+  dump(ans); 
   return ret;
 }

@@ -44,6 +44,9 @@ s6a_generate_cancel_location_req(char *previous_mme_host, char *previous_mme_rea
   struct session                         *sess_p = NULL;
   union avp_value                         value;
 
+
+  printf("Inside s6a_generate_cancel_location_req \n"); 
+  printf("previous_mme_host = %s previous_mme_realm = %s \n",previous_mme_host, previous_mme_realm);
   //DevAssert (clr_pP );
   /*
    * Create the new clear location request message
@@ -59,9 +62,13 @@ s6a_generate_cancel_location_req(char *previous_mme_host, char *previous_mme_rea
 
     CHECK_FCT (fd_sess_getsid (sess_p, &sid, &sidlen));
     CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_session_id, 0, &avp_p));
+     //printf("sid = %" PRId8 "\n", *sid);
+     //printf("sidlen = %zu \n",sidlen);
     value.os.data = sid;
     value.os.len = sidlen;
+  printf("At the line %d \n",__LINE__);
     CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
+  printf("At the line %d \n",__LINE__);
     CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_FIRST_CHILD, avp_p));
   }
   CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_auth_session_state, 0, &avp_p));
@@ -117,7 +124,7 @@ s6a_generate_cancel_location_req(char *previous_mme_host, char *previous_mme_rea
   value.i32 = 4; // value for Cancellation-type INITIAL_ATTACH_PROCEDURE
   CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
   CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
-
+  
 
   CHECK_FCT (fd_msg_send (&msg_p, NULL, NULL));
   FPRINTF_DEBUG ("Sending s6a clr for imsi=%s\n", imsi);
@@ -168,6 +175,8 @@ s6a_up_loc_cb (
     return EINVAL;
   }
 
+
+  dump(*msg);
   memset (&cass_push, 0, sizeof (cassandra_ul_push_t));
   memset (&cass_ans, 0, sizeof (cassandra_ul_ans_t));
   FPRINTF_NOTICE ( "Received new update location request\n");
@@ -261,6 +270,8 @@ s6a_up_loc_cb (
      * * * * The user may be disallowed to use the specified RAT, check the access
      * * * * restriction bit mask received from DB.
      */
+     printf("rat type avp value = %d\n",hdr->avp_value->u32);
+     printf("cass_ans.access_restriction = %d \n",cass_ans.access_restriction);
     if ((hdr->avp_value->u32 != 1004) || (FLAG_IS_SET (cass_ans.access_restriction, E_UTRAN_NOT_ALLOWED))) {
       experimental = 1;
       FPRINTF_ERROR ( "access_restriction DIAMETER_ERROR_RAT_NOT_ALLOWED\n");
@@ -294,7 +305,7 @@ s6a_up_loc_cb (
       goto out;
     }
 
-    if (!FLAG_IS_SET (ulr_flags, ULR_S6A_S6D_INDICATOR)) {
+    if (FLAG_IS_SET (ulr_flags, ULR_S6A_S6D_INDICATOR)) {
       /*
        * The request is coming from s6d interface (SGSN).
        */
@@ -322,14 +333,16 @@ s6a_up_loc_cb (
       // If so, it should be informed.
  
      //send the CLR command to MME 
+     FPRINTF_ERROR ("ULR flag is ULR_INITIAL_ATTACH_IND\n");
     
       if((cass_ans.mme_identity.mme_host != NULL) && (cass_ans.mme_identity.mme_realm != NULL)){
 
-          if((s6a_generate_cancel_location_req(cass_ans.mme_identity.mme_host,cass_ans.mme_identity.mme_realm,cass_ans.imsi) != 0))
+	 printf("cass_ans.mme_identity.mme_host = %s  cass_ans.mme_identity.mme_real = %s \n",cass_ans.mme_identity.mme_host, cass_ans.mme_identity.mme_realm);
+          /*if((s6a_generate_cancel_location_req(cass_ans.mme_identity.mme_host,cass_ans.mme_identity.mme_realm,cass_ans.imsi) != 0))
           {
                 FPRINTF_ERROR("ERROR in sending the CLR to previous MME");
                 goto out;
-          }
+          }*/
 
       }
 
@@ -564,12 +577,12 @@ s6a_up_loc_cb (
    * Only add the subscriber data if not marked as skipped by MME
    */
   if (!FLAG_IS_SET (ulr_flags, ULR_SKIP_SUBSCRIBER_DATA)) {
-    if (s6a_add_subscription_data_avp (ans, &cass_ans) != 0) {
+    /*if (s6a_add_subscription_data_avp (ans, &cass_ans) != 0) {
       FPRINTF_ERROR ( "ULR_SKIP_SUBSCRIBER_DATA DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION\n");
       result_code = DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION;
       experimental = 1;
       goto out;
-    }
+    }*/
   }
 
 out:

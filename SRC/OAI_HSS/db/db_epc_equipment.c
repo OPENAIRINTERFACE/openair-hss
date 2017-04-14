@@ -105,7 +105,7 @@ hss_cassandra_query_mmeidentity (
   }
  
   memset (mme_identity_p, 0, sizeof (mysql_mme_identity_t)); 
-  sprintf (query, "SELECT mmehost,mmerealm FROM vhss.mmeidentity WHERE idmmeidentity='%d' ", id_mme_identity);
+  sprintf (query, "SELECT mmehost,mmerealm FROM vhss.mmeidentity WHERE idmmeidentity=%d ", id_mme_identity);
   FPRINTF_DEBUG ("Query: %s\n", query);
   statement = cass_statement_new(query,0);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
