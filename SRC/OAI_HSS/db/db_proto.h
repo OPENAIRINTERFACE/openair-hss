@@ -292,5 +292,8 @@ int hss_cassandra_increment_sqn(const char *imsi, uint8_t *sqn);
 
 int hss_mysql_check_opc_keys(const uint8_t const opP[16]);
 
+uint64_t get_latest_identity(const char *table_name);
+
+int update_identity_table(const char* table_name);
 
 #endif /* DB_PROTO_H_ */

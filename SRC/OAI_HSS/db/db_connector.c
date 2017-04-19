@@ -61,6 +61,93 @@ print_buffer (
   fprintf (stdout, "\n");
 }
 
+uint64_t get_latest_identity(const char *table_name){
+
+  char                                    query[1000];
+  const CassRow                           *row;
+  CassStatement                           *statement;
+  CassFuture                              *query_future;
+  CassError                               rc;
+  const CassResult                        *result = NULL;
+  CassValue                               *id_value;
+  cass_int64_t                            id;
+
+  if (db_desc->db_conn == NULL) {
+    return EINVAL;
+  }
+
+  sprintf (query, "select id from vhss.global_ids where table_name='%s' ", table_name);
+  FPRINTF_DEBUG ("Query: %s\n", query);
+  statement = cass_statement_new(query,0);
+  pthread_mutex_lock (&db_desc->db_cs_mutex);
+  query_future = cass_session_execute(db_desc->db_conn,statement);
+  cass_statement_free(statement);
+  rc = cass_future_error_code(query_future);
+  if ( rc != CASS_OK) {
+        pthread_mutex_unlock(&db_desc->db_cs_mutex);
+        const char* message;
+        size_t message_length;
+        cass_future_error_message(query_future,&message,&message_length);
+        FPRINTF_ERROR( "Query execution failed: '%.*s'\n", (int)message_length, message);
+        return EINVAL;
+  }
+  result = cass_future_get_result(query_future);
+  /* If there was an error then the result won't be available */
+  if (result == NULL) {
+     /* Handle error */
+     FPRINTF_DEBUG("Select query to get latest identity is NULL\n");
+     pthread_mutex_unlock(&db_desc->db_cs_mutex);
+     cass_future_free(query_future);
+     return EINVAL;
+  }
+  pthread_mutex_unlock(&db_desc->db_cs_mutex);
+  cass_future_free(query_future);
+  row = cass_result_first_row(result);
+  if( row != NULL){
+	id_value = cass_row_get_column_by_name(row,"id");
+	if( id_value != NULL){
+		cass_value_get_int64(id_value,&id);
+	}
+	cass_result_free(result);
+	return id;
+  }
+  else{
+	cass_result_free(result);
+        return EINVAL;
+  }
+
+}
+
+int update_identity_table(const char* table_name)
+{
+
+  char                                    query[1000];
+  CassStatement                           *statement;
+  CassFuture                              *query_future;
+  CassError                               rc;
+
+  if (db_desc->db_conn == NULL) {
+    return EINVAL;
+  }
+
+  sprintf (query, "update vhss.global_ids set id=id+1 where table_name='%s'; ", table_name);
+  FPRINTF_DEBUG ("Query: %s\n", query);
+  statement = cass_statement_new(query,0);
+  pthread_mutex_lock (&db_desc->db_cs_mutex);
+  query_future = cass_session_execute(db_desc->db_conn,statement);
+  cass_statement_free(statement);
+  rc = cass_future_error_code(query_future);
+  if ( rc != CASS_OK) {
+        pthread_mutex_unlock(&db_desc->db_cs_mutex);
+        const char* message;
+        size_t message_length;
+        cass_future_error_message(query_future,&message,&message_length);
+        FPRINTF_ERROR( "Query execution failed: '%.*s'\n", (int)message_length, message);
+        return EINVAL;
+  }
+  return 0;
+}
+
 #if 0
 int
 hss_mysql_connect (
@@ -362,11 +449,12 @@ hss_cassandra_update_loc (
 	printf("msisdn = %s \n",cass_ul_ans->msisdn);
 	printf("aggr_ul = %d\n",cass_ul_ans->aggr_ul);
 	printf("rau_tau = %d\n",cass_ul_ans->rau_tau);
+	cass_result_free(result);
+	return ret;
   }
-  FPRINTF_DEBUG("At the end of hss_cassandra_update_loc\n");
 
   cass_result_free(result);
-  return ret;
+  return EINVAL;
 }
 
 int
@@ -624,46 +712,104 @@ cassandra_push_up_loc (
   CassStatement                           *statement;
   CassFuture				  *query_future;
   CassError 			          rc;
-  char                                    query[1000];
-  int                                     query_length = 0;
-  int                                     status;
+  char                                    query_insert[1000],query_update[1000];
+  int                                     query_update_len = 0;
+  char					  *table_name;
+  uint64_t		                  current_id,new_id;
 
   if ((db_desc->db_conn == NULL) || (ul_push_p == NULL)) {
     return EINVAL;
   }
   // TODO: multi-statement check results
+  table_name="vhss.mmeidentity";
+ 
+  cassandra_mme_identity_t                    mme_identity;
 
   FPRINTF_DEBUG("Inside cassandra_push_up_loc function\n");
-  if (ul_push_p->mme_identity_present == MME_IDENTITY_PRESENT) {
-    query_length += sprintf (&query[query_length], "INSERT INTO vhss.mmeidentity"
-                             " (mmehost,mmerealm) SELECT mmehost,mmerealm FROM vhss.mmeidentity WHERE NOT"
-                             " EXISTS (SELECT * FROM vhss.mmeidentity WHERE mmehost='%s'"
-                             " AND mmerealm='%s') LIMIT 1;", ul_push_p->mme_identity.mme_host, ul_push_p->mme_identity.mme_realm, ul_push_p->mme_identity.mme_host, ul_push_p->mme_identity.mme_realm);
+  memset (&mme_identity, 0, sizeof (cassandra_mme_identity_t));
+  memcpy (mme_identity.mme_host, ul_push_p->mme_identity.mme_host, sizeof(mme_identity.mme_host));
+
+  if( (current_id = get_latest_identity(table_name)) == EINVAL )
+	current_id=0;
+
+  //Check if mme identity is already present in the DB
+  //If not exists, update the mmeidentity table with the value received
+  int idmmeidentity = hss_cassandra_check_epc_equipment(&mme_identity);
+  if ( idmmeidentity  == EINVAL) {
+	do{
+		current_id=current_id+1;
+		new_id=get_latest_identity(table_name);
+	}while(current_id - 1 != new_id);
+
+	//Update the identity table
+        if( update_identity_table(table_name) != 0 ){
+                FPRINTF_ERROR( "Cannot update the identity for the table %s", table_name );
+                return EINVAL;
+	}
+
+	idmmeidentity=current_id;
+
+	if (ul_push_p->mme_identity_present == MME_IDENTITY_PRESENT) {
+		sprintf (query_insert,"INSERT INTO vhss.mmeidentity"
+                             " (mmehost,mmerealm,idmmeidentity) values('%s','%s',%d); ", ul_push_p->mme_identity.mme_host, ul_push_p->mme_identity.mme_realm,idmmeidentity);
+	}
+	FPRINTF_DEBUG ("Query: %s\n", query_insert);
+
+	statement = cass_statement_new(query_insert,0);
+	pthread_mutex_lock (&db_desc->db_cs_mutex);
+	query_future = cass_session_execute(db_desc->db_conn,statement);
+	cass_statement_free(statement);
+	rc = cass_future_error_code(query_future);
+	if( rc != CASS_OK ){
+		pthread_mutex_unlock(&db_desc->db_cs_mutex);
+		const char* message;
+		size_t message_length;
+		cass_future_error_message(query_future,&message,&message_length);
+		FPRINTF_ERROR( "Query execution failed: '%.*s'\n", (int)message_length, message);
+		return EINVAL;
+	}
+	//Update the vhss.mmeidentity_host table as well
+
+	sprintf(query_insert,"INSERT INTO vhss.mmeidentity_host(mmehost, idmmeidentity, mmerealm)"
+			 "values('%s', %d, '%s'); ", ul_push_p->mme_identity.mme_host, idmmeidentity, ul_push_p->mme_identity.mme_realm);
+
+	FPRINTF_DEBUG ("Query: %s\n", query_insert);
+
+        statement = cass_statement_new(query_insert,0);
+        pthread_mutex_lock (&db_desc->db_cs_mutex);
+        query_future = cass_session_execute(db_desc->db_conn,statement);
+        cass_statement_free(statement);
+        rc = cass_future_error_code(query_future);
+        if( rc != CASS_OK ){
+                pthread_mutex_unlock(&db_desc->db_cs_mutex);
+                const char* message;
+                size_t message_length;
+                cass_future_error_message(query_future,&message,&message_length);
+                FPRINTF_ERROR( "Query execution failed: '%.*s'\n", (int)message_length, message);
+                return EINVAL;
+        }
+
   }
 
-  query_length += sprintf (&query[query_length], "UPDATE vhss.users_imsi %s SET ", ul_push_p->mme_identity_present == MME_IDENTITY_PRESENT ? ",`mmeidentity`" : "");
+  query_update_len += sprintf (&query_update[query_update_len], "UPDATE vhss.users_imsi SET ");
 
   if (ul_push_p->imei_present == IMEI_PRESENT) {
-    query_length += sprintf (&query[query_length], "imei='%s',", ul_push_p->imei);
+	query_update_len += sprintf (&query_update[query_update_len], "imei='%s',", ul_push_p->imei);
   }
 
   if (ul_push_p->sv_present == SV_PRESENT) {
-    query_length += sprintf (&query[query_length], "imeisv='%*s',", 2, ul_push_p->software_version);
+    query_update_len += sprintf (&query_update[query_update_len], "imeisv='%*s',", 2, ul_push_p->software_version);
   }
 
   if (ul_push_p->mme_identity_present == MME_IDENTITY_PRESENT) {
-    query_length += sprintf (&query[query_length], "users_imsi.mmeidentity_idmmeidentity=mmeidentity.idmmeidentity, " "users_imsi.ms_ps_status=\"NOT_PURGED\"");
+    query_update_len += sprintf (&query_update[query_update_len], "mmeidentity_idmmeidentity=%d , mmehost='%s' , mmerealm='%s' ", idmmeidentity, ul_push_p->mme_identity.mme_host, ul_push_p->mme_identity.mme_realm);
   }
 
-  query_length += sprintf (&query[query_length], " WHERE users_imsi.imsi='%s'", ul_push_p->imsi);
+  query_update_len += sprintf (&query_update[query_update_len], " WHERE imsi='%s' ;", ul_push_p->imsi);
 
-  if (ul_push_p->mme_identity_present == MME_IDENTITY_PRESENT) {
-    query_length += sprintf (&query[query_length], " AND mmeidentity.mmehost='%s'" " AND mmeidentity.mmerealm='%s'", ul_push_p->mme_identity.mme_host, ul_push_p->mme_identity.mme_realm);
-  }
+  FPRINTF_DEBUG ("Query: %s\n", query_update);
 
-  FPRINTF_DEBUG ("Query: %s\n", query);
-
-  statement = cass_statement_new(query,0);
+  statement = cass_statement_new(query_update,0);
   pthread_mutex_lock (&db_desc->db_cs_mutex);
   query_future = cass_session_execute(db_desc->db_conn,statement);
   cass_statement_free(statement);
@@ -676,6 +822,7 @@ cassandra_push_up_loc (
         FPRINTF_ERROR( "Query execution failed: '%.*s'\n", (int)message_length, message);
         return EINVAL;
   }
+
 
   #if 0
    
@@ -1139,7 +1286,7 @@ hss_cassandra_auth_info (
 	pthread_mutex_unlock(&db_desc->db_cs_mutex);
     	const char* message;
     	size_t message_length;
-    	cass_future_error_message(query_future,&message,&message_length);
+	cass_future_error_message(query_future,&message,&message_length);
     	FPRINTF_ERROR( "Query execution failed: '%.*s'\n", (int)message_length, message);
 	return EINVAL;
   }
@@ -1157,26 +1304,27 @@ hss_cassandra_auth_info (
   cass_future_free(query_future);
   
   row = cass_result_first_row(result);
-  cass_key_value = cass_row_get_column_by_name(row,"key");
-  cass_sqn_value = cass_row_get_column_by_name(row,"sqn");
-  cass_rand_value = cass_row_get_column_by_name(row,"rand");
-  cass_opc_value = cass_row_get_column_by_name(row,"opc");
+  if( row != NULL ){
+     cass_key_value = cass_row_get_column_by_name(row,"key");
+     cass_sqn_value = cass_row_get_column_by_name(row,"sqn");
+     cass_rand_value = cass_row_get_column_by_name(row,"rand");
+     cass_opc_value = cass_row_get_column_by_name(row,"opc");
   
-  cass_result_free(result);
+     cass_result_free(result);
 
 
-  if( cass_key_value == NULL || cass_sqn_value == NULL || cass_rand_value == NULL || cass_opc_value == NULL ){
+     if( cass_key_value == NULL || cass_sqn_value == NULL || cass_rand_value == NULL || cass_opc_value == NULL ){
 	ret = EINVAL;
-  }
+     }
 
-  if( cass_key_value != NULL ){
+     if( cass_key_value != NULL ){
 	cass_value_get_string(cass_key_value,&key,&key_length);
 	if(key != NULL){
 		FPRINTF_DEBUG("key value is '%s'\n",key);
 		memcpy (auth_info_resp->key, (uint8_t *)key, KEY_LENGTH);
 	}
-  }
-  if( cass_sqn_value != NULL ){
+     }
+     if( cass_sqn_value != NULL ){
 	cass_value_get_int64(cass_sqn_value,&sqn);
 	if(sqn != NULL ){
 		FPRINTF_DEBUG("retrieved sqn value is %" PRIu64 "\n",sqn);
@@ -1186,21 +1334,28 @@ hss_cassandra_auth_info (
 		auth_info_resp->sqn[3] = (sqn & (255UL << 16)) >> 16;
 		auth_info_resp->sqn[4] = (sqn & (255UL << 8)) >> 8;
 		auth_info_resp->sqn[5] = (sqn & 0xFF);
+
 	}
-  }
-  if(cass_rand_value != NULL ){
+     }
+     if(cass_rand_value != NULL ){
 	cass_value_get_string(cass_rand_value,&rand,&rand_length);
 	if(rand != NULL){
 		FPRINTF_DEBUG("Rand value is %s\n",rand);
 		memcpy(auth_info_resp->rand,(uint8_t *)rand, RAND_LENGTH);
 	}
-  }
- if(cass_opc_value != NULL ){
+     }
+     if(cass_opc_value != NULL ){
 	cass_value_get_string(cass_opc_value,&opc,&opc_length);
 	if(opc != NULL){
 		FPRINTF_DEBUG("opc value is %s\n",opc);
 		memcpy(auth_info_resp->opc,(uint8_t *)opc, KEY_LENGTH);
 	}
+     }
+ 
+  }
+  else{
+     FPRINTF_ERROR("We cannot find the info for imsi %s \n",auth_info_req->imsi);
+     ret = EINVAL;
   }
 
   FPRINTF_DEBUG("At the end of function hss_cassandra_auth_info\n");

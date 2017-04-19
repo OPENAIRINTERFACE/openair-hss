@@ -259,7 +259,7 @@ hss_cassandra_check_epc_equipment (
 	cass_value_get_int32(cass_idmmeidentity_value,&idmmeidentity);
 	if(idmmeidentity != NULL ){
   		pthread_mutex_unlock (&db_desc->db_cs_mutex);
-		return 0;
+		return idmmeidentity;
 	}
   }
   

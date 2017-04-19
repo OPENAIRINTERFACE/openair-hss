@@ -140,9 +140,8 @@ s6a_clear_info_cb (
   void *opaque,
   enum disp_action *act)
 {
-       FPRINTF_DEBUG("Received the Clear Location Answer from MME\n");
-
-
+	FPRINTF_DEBUG("Received the Clear Location Answer from MME\n");
+	dump(*msg);
 }
 
 
@@ -337,8 +336,8 @@ s6a_up_loc_cb (
     
       if((cass_ans.mme_identity.mme_host != NULL) && (cass_ans.mme_identity.mme_realm != NULL)){
 
-	 printf("cass_ans.mme_identity.mme_host = %s  cass_ans.mme_identity.mme_real = %s \n",cass_ans.mme_identity.mme_host, cass_ans.mme_identity.mme_realm);
-          /*if((s6a_generate_cancel_location_req(cass_ans.mme_identity.mme_host,cass_ans.mme_identity.mme_realm,cass_ans.imsi) != 0))
+	 printf("cass_ans.mme_identity.mme_host = %s  cass_ans.mme_identity.mme_realm = %s \n",cass_ans.mme_identity.mme_host, cass_ans.mme_identity.mme_realm);
+	 /*if((s6a_generate_cancel_location_req(cass_ans.mme_identity.mme_host,cass_ans.mme_identity.mme_realm,cass_ans.imsi) != 0))
           {
                 FPRINTF_ERROR("ERROR in sending the CLR to previous MME");
                 goto out;

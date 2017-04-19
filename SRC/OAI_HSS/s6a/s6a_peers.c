@@ -54,7 +54,7 @@ s6a_peer_validate (
    */
   memcpy (mme_identity.mme_host, info->pi_diamid, info->pi_diamidlen);
 
-  if (hss_cassandra_check_epc_equipment (&mme_identity) != 0) {
+  if (hss_cassandra_check_epc_equipment (&mme_identity) == EINVAL) {
     /*
      * The MME has not been found in list of known peers -> reject it
      */
