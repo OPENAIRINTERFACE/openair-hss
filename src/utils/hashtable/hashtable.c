@@ -354,7 +354,8 @@ hashtable_ts_destroy (
   }
 
   free_wrapper((void **) &hashtblP->nodes);
-  free_wrapper((void **) &hashtblP->name);
+  free_wrapper((void **) &hashtblP->lock_nodes);
+  bdestroy(hashtblP->name);
   if (hashtblP->is_allocated_by_malloc) {
     free_wrapper((void **) &hashtblP);
   }
@@ -696,6 +697,7 @@ hashtable_ts_insert (
   bstring b = bfromcstr(" ");
   hashtable_ts_dump_content(hashtblP, b);
   PRINT_HASHTABLE (hashtblP, "%s:%s\n", bdata(hashtblP->name), bdata(b));
+  bdestroy(b);
 #endif
   return HASH_TABLE_OK;
 }

@@ -39,6 +39,7 @@
 #include <pthread.h>
 
 #include "assertions.h"
+#include "dynamic_memory_check.h"
 #include "queue.h"
 #include "log.h"
 #include "msc.h"
@@ -61,6 +62,8 @@ struct udp_socket_desc_s {
                                           STAILQ_ENTRY (
   udp_socket_desc_s)                      entries;
 };
+
+static void udp_exit(void);
 
 static
 STAILQ_HEAD (
@@ -314,6 +317,7 @@ udp_intertask_interface (
         break;
 
       case TERMINATE_MESSAGE:{
+          udp_exit();
           itti_exit_task ();
         }
         break;
@@ -359,4 +363,13 @@ int udp_init (void)
 
   OAILOG_DEBUG (LOG_UDP, "Initializing UDP task interface: DONE\n");
   return 0;
+}
+
+void udp_exit(void) {
+  struct udp_socket_desc_s               *udp_sock_p = NULL;
+  while (!STAILQ_EMPTY(&udp_socket_list)) {
+    udp_sock_p = STAILQ_FIRST(&udp_socket_list);
+    STAILQ_REMOVE_HEAD(&udp_socket_list, entries);
+    free_wrapper((void**) &udp_sock_p);
+  }
 }

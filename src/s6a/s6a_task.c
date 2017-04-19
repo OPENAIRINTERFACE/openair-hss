@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include "dynamic_memory_check.h"
 
 #if HAVE_CONFIG_H
 #  include "config.h"
@@ -110,6 +111,7 @@ void *s6a_thread (void *args)
         /*
          * Trying to connect to peers
          */
+        timer_id = 0;
         if (s6a_fd_new_peer() != RETURNok) {
           /*
            * On failure, reschedule timer.
@@ -250,6 +252,12 @@ int s6a_init (
 //------------------------------------------------------------------------------
 static void s6a_exit(void)
 {
+  if (timer_id) {
+    timer_remove(timer_id);
+  }
+  // Release all resources
+  free_wrapper((void **) &fd_g_config->cnf_diamid);
+  fd_g_config->cnf_diamid_len = 0;
   int    rv = RETURNok;
   /* Initialize shutdown of the framework */
   rv = fd_core_shutdown();

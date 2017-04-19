@@ -57,6 +57,8 @@ hash_table_ts_t g_s1ap_mme_id2assoc_id_coll = {.mutex = PTHREAD_MUTEX_INITIALIZE
 static int                              indent = 0;
  void *s1ap_mme_thread (void *args);
 
+static void s1ap_mme_exit(void);
+
 //------------------------------------------------------------------------------
 static int s1ap_send_init_sctp (void)
 {
@@ -194,6 +196,7 @@ s1ap_mme_thread (
       break;
 
     case TERMINATE_MESSAGE:{
+        s1ap_mme_exit();
         itti_exit_task ();
       }
       break;
@@ -607,5 +610,15 @@ s1ap_remove_enb (
   hashtable_ts_destroy(&enb_ref->ue_coll);
   hashtable_ts_free (&g_s1ap_enb_coll, enb_ref->sctp_assoc_id);
   nb_enb_associated--;
+}
+
+void
+s1ap_mme_exit(void) {
+  if (hashtable_ts_destroy(&g_s1ap_enb_coll) != HASH_TABLE_OK) {
+    OAI_FPRINTF_ERR("An error occured while destroying s1 eNB hash table");
+  }
+  if (hashtable_ts_destroy(&g_s1ap_mme_id2assoc_id_coll) != HASH_TABLE_OK) {
+    OAI_FPRINTF_ERR("An error occured while destroying assoc_id hash table");
+  }
 }
 

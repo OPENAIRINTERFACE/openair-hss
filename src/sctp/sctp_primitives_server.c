@@ -373,16 +373,16 @@ static int sctp_create_new_listener (SctpInit * init_p)
 
   if (sctp_bindx (sd, addr, used_addresses, SCTP_BINDX_ADD_ADDR) != 0) {
     OAILOG_ERROR (LOG_SCTP, "sctp_bindx: %s:%d\n", strerror (errno), errno);
-    return -1;
+    goto err;
   }
 
   if (listen (sd, 5) < 0) {
     OAILOG_ERROR (LOG_SCTP, "listen: %s:%d\n", strerror (errno), errno);
-    return -1;
+    goto err;
   }
 
   if ((sctp_arg_p = malloc (sizeof (sctp_arg_t))) == NULL) {
-    return -1;
+    goto err;
   }
 
   sctp_arg_p->sd = sd;
@@ -393,8 +393,13 @@ static int sctp_create_new_listener (SctpInit * init_p)
     return -1;
   }
 
+  free_wrapper((void **) &addr);
   return sd;
 err:
+
+  if (addr) {
+    free_wrapper((void **) &addr);
+  }
 
   if (sd != -1) {
     close (sd);
@@ -508,7 +513,7 @@ static int sctp_handle_reset(const sctp_assoc_id_t assoc_id) {
 //------------------------------------------------------------------------------
 void *sctp_receiver_thread (void *args_p)
 {
-  sctp_arg_t                             *sctp_arg_p = NULL;
+  sctp_arg_t                             sctp_arg_p;
 
   /*
    * maximum file descriptor number
@@ -527,17 +532,21 @@ void *sctp_receiver_thread (void *args_p)
    */
   fd_set                                  read_fds;
 
-  if ((sctp_arg_p = (sctp_arg_t *)args_p) == NULL) {
+  if (args_p == NULL) {
     pthread_exit (NULL);
   }
+
+  memcpy(&sctp_arg_p, args_p, sizeof sctp_arg_p);
+  free_wrapper (&args_p);
+
 
   /*
    * clear the master and temp sets
    */
   FD_ZERO (&master);
   FD_ZERO (&read_fds);
-  FD_SET (sctp_arg_p->sd, &master);
-  fdmax = sctp_arg_p->sd;       /* so far, it's this one */
+  FD_SET (sctp_arg_p.sd, &master);
+  fdmax = sctp_arg_p.sd;       /* so far, it's this one */
   OAILOG_START_USE ();
   MSC_START_USE ();
 
@@ -545,7 +554,7 @@ void *sctp_receiver_thread (void *args_p)
     memcpy (&read_fds, &master, sizeof (master));
 
     if (select (fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
-      OAILOG_ERROR (LOG_SCTP, "[%d] Select() error: %s\n", sctp_arg_p->sd, strerror (errno));
+      OAILOG_ERROR (LOG_SCTP, "[%d] Select() error: %s\n", sctp_arg_p.sd, strerror (errno));
       free_wrapper ((void**) &args_p);
       args_p = NULL;
       pthread_exit (NULL);
@@ -553,13 +562,13 @@ void *sctp_receiver_thread (void *args_p)
 
     for (i = 0; i <= fdmax; i++) {
       if (FD_ISSET (i, &read_fds)) {
-        if (i == sctp_arg_p->sd) {
+        if (i == sctp_arg_p.sd) {
           /*
            * There is data to read on listener socket. This means we have to accept
            * * * * the connection.
            */
-          if ((clientsock = accept (sctp_arg_p->sd, NULL, NULL)) < 0) {
-            OAILOG_ERROR (LOG_SCTP, "[%d] accept: %s:%d\n", sctp_arg_p->sd, strerror (errno), errno);
+          if ((clientsock = accept (sctp_arg_p.sd, NULL, NULL)) < 0) {
+            OAILOG_ERROR (LOG_SCTP, "[%d] accept: %s:%d\n", sctp_arg_p.sd, strerror (errno), errno);
             free_wrapper ((void**) &args_p);
             args_p = NULL;
             pthread_exit (NULL);
@@ -579,7 +588,7 @@ void *sctp_receiver_thread (void *args_p)
           /*
            * Read from socket
            */
-          ret = sctp_read_from_socket (i, sctp_arg_p->ppid);
+          ret = sctp_read_from_socket (i, sctp_arg_p.ppid);
 
           /*
            * When the socket is disconnected we have to update
@@ -601,8 +610,7 @@ void *sctp_receiver_thread (void *args_p)
     }
   }
 
-  free_wrapper ((void**) &args_p);
-  args_p = NULL;
+
   return NULL;
 }
 
@@ -770,9 +778,10 @@ int sctp_init (const mme_config_t * mme_config_p)
 //------------------------------------------------------------------------------
 static void sctp_exit (void)
 {
-
   int rv = pthread_cancel(assoc_thread);
-  if (rv) OAILOG_DEBUG (LOG_SCTP, "pthread_cancel(%08lX) failed: %d:%s\n", assoc_thread, rv, strerror(rv));
+  pthread_join(assoc_thread, NULL);
+  if (rv) OAILOG_DEBUG (LOG_SCTP, "pthread_cancel(%08lX) failed: %d:%s\n", assoc_thread, rv, strerror(rv));;
+
 
   sctp_association_t              *sctp_assoc_p = sctp_desc.available_connections_head;
   sctp_association_t              *next_sctp_assoc_p = sctp_desc.available_connections_head;

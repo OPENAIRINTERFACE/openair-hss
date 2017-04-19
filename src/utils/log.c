@@ -578,16 +578,15 @@ log_exit (
   void)
 {
   int                                     rv = 0;
+  log_queue_item_t                       *item_p = NULL;
 
   OAI_FPRINTF_INFO("[TRACE] Entering %s\n", __FUNCTION__);
   if (g_oai_log.log_fd) {
     log_flush_messages ();
-    rv = fflush (g_oai_log.log_fd);
-
-    if (rv != 0) {
-      OAI_FPRINTF_ERR("Error while flushing stream of Log file: %s", strerror (errno));
+    while (lfds611_stack_pop(g_oai_log.log_free_message_queue_p, (void **) &item_p)) {
+      bdestroy(item_p->bstr);
+      free_wrapper((void**)&item_p);
     }
-
     rv = fclose (g_oai_log.log_fd);
 
     if (rv != 0) {
@@ -601,6 +600,11 @@ log_exit (
     closelog();
   }
 #endif
+  if (g_oai_log.thread_context_htbl) {
+    // TODO(fixme): Freeing this here might result in a seg fault when log_message is called with NULL thread_ctxt
+    // during shutdown.
+    // hashtable_ts_destroy(g_oai_log.thread_context_htbl);
+  }
   OAI_FPRINTF_INFO("[TRACE] Leaving %s\n", __FUNCTION__);
 }
 

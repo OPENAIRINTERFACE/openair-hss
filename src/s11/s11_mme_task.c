@@ -42,6 +42,7 @@
 static NwGtpv2cStackHandleT             s11_mme_stack_handle = 0;
 // Store the GTPv2-C teid handle
 hash_table_ts_t                        *s11_mme_teid_2_gtv2c_teid_handle = NULL;
+static void s11_exit(void);
 //------------------------------------------------------------------------------
 static NwRcT
 s11_mme_log_wrapper (
@@ -214,6 +215,11 @@ s11_mme_thread (
         DevAssert (nwGtpv2cProcessTimeout (received_message_p->ittiMsg.timer_has_expired.arg) == NW_OK);
       }
       break;
+    case TERMINATE_MESSAGE: {
+      s11_exit();
+      itti_exit_task ();
+      break;
+    }
 
     default:{
         OAILOG_ERROR (LOG_S11, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
@@ -309,4 +315,15 @@ s11_mme_init (
 fail:
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: FAILURE\n");
   return RETURNerror;
+}
+
+
+static void s11_exit(void)
+{
+  if (nwGtpv2cFinalize(s11_mme_stack_handle) != NW_OK) {
+    OAI_FPRINTF_ERR ("An error occurred during tear down of nwGtp s11 stack.\n");
+  }
+  if (hashtable_ts_destroy(s11_mme_teid_2_gtv2c_teid_handle) != HASH_TABLE_OK) {
+    OAI_FPRINTF_ERR("An error occured while destroying s11 teid hash table");
+  }
 }
