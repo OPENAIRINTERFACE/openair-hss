@@ -117,7 +117,7 @@ hss_cassandra_query_mmeidentity (
         pthread_mutex_unlock(&db_desc->db_cs_mutex);
         const char* message;
         size_t message_length;
-        cass_future_error_message(db_desc->db_connect_future,&message,&message_length);
+        cass_future_error_message(query_future,&message,&message_length);
         FPRINTF_ERROR( "Query execution failed: '%.*s'\n", (int)message_length, message);
         return EINVAL;
   }
@@ -236,7 +236,7 @@ hss_cassandra_check_epc_equipment (
         pthread_mutex_unlock(&db_desc->db_cs_mutex);
         const char* message;
         size_t message_length;
-        cass_future_error_message(db_desc->db_connect_future,&message,&message_length);
+        cass_future_error_message(query_future,&message,&message_length);
         FPRINTF_ERROR( "Query execution failed: '%.*s'\n", (int)message_length, message);
         return EINVAL;
   }
@@ -253,6 +253,12 @@ hss_cassandra_check_epc_equipment (
   }
   cass_future_free(query_future);
   row = cass_result_first_row(result);
+
+  if( row == NULL ){
+	cass_result_free(result);
+	pthread_mutex_unlock (&db_desc->db_cs_mutex);
+	return EINVAL;
+  }
   cass_idmmeidentity_value = cass_row_get_column_by_name(row,"idmmeidentity");
   cass_result_free(result);
   if( cass_idmmeidentity_value != NULL ){

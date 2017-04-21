@@ -106,7 +106,7 @@ s6a_generate_insert_subscriber_req(char *previous_mme_host, char *previous_mme_r
   /*
    * Adding the User-Name (IMSI)
    */
-  CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_user_name, 0, &avp_p));
+  CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_imsi, 0, &avp_p));
   value.os.data = (unsigned char *)imsi;
   value.os.len = strlen(imsi);
   CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
