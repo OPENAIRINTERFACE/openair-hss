@@ -296,4 +296,6 @@ uint64_t get_latest_identity(const char *table_name);
 
 int update_identity_table(const char* table_name);
 
+void convert_ascii_to_binary(unsigned char *dest, unsigned char *src, int length);
+
 #endif /* DB_PROTO_H_ */

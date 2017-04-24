@@ -44,6 +44,24 @@ extern void                             ComputeOPc (
 
 db_cassandra_t                             *db_desc;
 
+#define ASCII_TO_BINARY(c) \
+( \
+  c >= '0' && c <= '9' ? c - '0' : \
+  c >= 'a' && c <= 'f' ? c - 'a' + 10 : \
+  c >= 'A' && c <= 'F' ? c - 'A' + 10 : 0 \
+)
+
+void convert_ascii_to_binary(unsigned char *dest, unsigned char *src, int length)
+{
+//printf("convert_ascii_to_binary() src=[%s] length=%d\n", src, length);
+  int i;
+  for (i = 0; i < length; i++)
+    dest[i] = (ASCII_TO_BINARY(src[i << 1]) << 4) | ASCII_TO_BINARY(src[(i << 1) + 1]);
+//printf("src=[%s] dest=[", src);
+//for (i = 0; i < length; i++) printf("%02x", dest[i]);
+//printf("]\n");
+}
+
 static void
 print_buffer (
   const char *prefix,
@@ -1321,7 +1339,8 @@ hss_cassandra_auth_info (
 	cass_value_get_string(cass_key_value,&key,&key_length);
 	if(key != NULL){
 		FPRINTF_DEBUG("key value is '%s'\n",key);
-		memcpy (auth_info_resp->key, (uint8_t *)key, KEY_LENGTH);
+		convert_ascii_to_binary(auth_info_resp->key, (uint8_t *)key, KEY_LENGTH);
+		//memcpy (auth_info_resp->key, (uint8_t *)key, KEY_LENGTH);
 	}
      }
      if( cass_sqn_value != NULL ){
@@ -1341,14 +1360,16 @@ hss_cassandra_auth_info (
 	cass_value_get_string(cass_rand_value,&rand,&rand_length);
 	if(rand != NULL){
 		FPRINTF_DEBUG("Rand value is %s\n",rand);
-		memcpy(auth_info_resp->rand,(uint8_t *)rand, RAND_LENGTH);
+		convert_ascii_to_binary(auth_info_resp->rand,(uint8_t *)rand, RAND_LENGTH);
+		//memcpy(auth_info_resp->rand,(uint8_t *)rand, RAND_LENGTH);
 	}
      }
      if(cass_opc_value != NULL ){
 	cass_value_get_string(cass_opc_value,&opc,&opc_length);
 	if(opc != NULL){
 		FPRINTF_DEBUG("opc value is %s\n",opc);
-		memcpy(auth_info_resp->opc,(uint8_t *)opc, KEY_LENGTH);
+		convert_ascii_to_binary(auth_info_resp->opc,(uint8_t *)opc, KEY_LENGTH);
+		//memcpy(auth_info_resp->opc,(uint8_t *)opc, KEY_LENGTH);
 	}
      }
  
@@ -1551,7 +1572,8 @@ hss_cassandra_check_opc_keys (
         	cass_value_get_string(key_value,&key,&key_length);
 		if(key != NULL){
         		FPRINTF_DEBUG("key value is '%s'\n",key);
-			memcpy (k, (uint8_t *)key, KEY_LENGTH);
+			convert_ascii_to_binary (k, (uint8_t *)key, KEY_LENGTH);
+			//memcpy (k, (uint8_t *)key, KEY_LENGTH);
 		}
 		else{
 		FPRINTF_DEBUG("Key value is NULL\n");
