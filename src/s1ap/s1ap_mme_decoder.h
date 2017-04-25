@@ -27,6 +27,6 @@
 #include "s1ap_common.h"
 #include "s1ap_ies_defs.h"
 
-int s1ap_mme_decode_pdu(s1ap_message *message, const_bstring const raw) __attribute__ ((warn_unused_result));
-
+int s1ap_mme_decode_pdu(s1ap_message *message, const_bstring const raw, MessagesIds *messages_id) __attribute__ ((warn_unused_result));
+int s1ap_free_mme_decode_pdu(s1ap_message *message, MessagesIds messages_id);
 #endif /* FILE_S1AP_MME_DECODER_SEEN */

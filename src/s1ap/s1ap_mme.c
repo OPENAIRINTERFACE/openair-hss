@@ -92,6 +92,7 @@ s1ap_mme_thread (
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
+    MessagesIds                             messages_ids = MESSAGES_ID_MAX;
     /*
      * Trying to fetch a message from the message queue.
      * * * * If the queue is empty, this function will block till a
@@ -116,11 +117,16 @@ s1ap_mme_thread (
         /*
          * Invoke S1AP message decoder
          */
-        if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).payload) < 0) {
+        if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).payload, &message_id) < 0) {
           // TODO: Notify eNB of failure with right cause
           OAILOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
         } else {
-          s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &message);
+          s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id,
+                                   SCTP_DATA_IND (received_message_p).stream, &message);
+        }
+
+        if (message_id != MESSAGES_ID_MAX) {
+          s1ap_free_mme_decode_pdu(&message, message_id);
         }
 
         /*
