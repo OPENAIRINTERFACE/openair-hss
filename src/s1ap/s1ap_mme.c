@@ -92,7 +92,7 @@ s1ap_mme_thread (
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
-    MessagesIds                             messages_ids = MESSAGES_ID_MAX;
+    MessagesIds                             message_id = MESSAGES_ID_MAX;
     /*
      * Trying to fetch a message from the message queue.
      * * * * If the queue is empty, this function will block till a
