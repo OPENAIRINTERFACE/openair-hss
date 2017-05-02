@@ -449,6 +449,30 @@ for key in iesDefs:
     f.write("}\n\n")
 
 
+# Generate free functions for encapsulated IEs
+for key in iesDefs:
+    if key not in ieofielist.values():
+        continue
+    if len(iesDefs[key]["ies"]) == 0:
+        continue
+    # TODO: Check if the encapsulated IE also contains further encap.
+    ie = iesDefs[key]["ies"][0]
+    ietypeunderscore = prefix + re.sub('-', '_', ie[2])
+    keyname = re.sub('IEs', '', re.sub('Item', 'List', key))
+    iesStructName = lowerFirstCamelWord(re.sub('Item', 'List', re.sub('-', '_', key)))
+    f.write("int free_%s(\n" % (re.sub('-', '_', keyname).lower()))
+    f.write("    %sIEs_t *%s) {\n\n" % (re.sub('-', '_', keyname), iesStructName))
+    f.write("    assert(%s != NULL);\n\n" % (iesStructName))
+    f.write("    for (int i = 0; i < %s->%s.count; i++) {\n" %
+            (iesStructName, re.sub('IEs', '', lowerFirstCamelWord(re.sub('-', '_', key)))))
+    f.write("        ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_%s, %s->%s.array[i]);\n" %
+            (ietypeunderscore, iesStructName, re.sub('IEs', '',lowerFirstCamelWord(re.sub('-', '_', key)))))
+    f.write("    }\n")
+    f.write("    return 0;\n")
+    f.write("}\n\n")
+
+
+
 for key in iesDefs:
     if len(iesDefs[key]["ies"]) == 0:
         continue
@@ -466,16 +490,21 @@ for key in iesDefs:
         ieupperunderscore = re.sub('-', '_', re.sub('id-', '', ie[0])).upper()
         if ie[3] != "mandatory":
             if ie[3] == "optional":
-                f.write("    /* Optional field REMOVE ME*/\n")
+                f.write("    /* Optional field */\n")
             elif ie[3] == "conditional":
                 f.write("    /* Conditional field */\n")
             f.write("    if ((%s->presenceMask & %s_%s_PRESENT)\n" % (lowerFirstCamelWord(re.sub('-', '_', key)), keyupperunderscore, ieupperunderscore))
             f.write("        == %s_%s_PRESENT) \n    " % (keyupperunderscore, ieupperunderscore))
 
-        ieunderscore = prefix + re.sub('-', '_', ie[2])
         iename = re.sub('id-', '', ie[0])
         ienameunderscore = lowerFirstCamelWord(re.sub('-', '_', iename))
-        f.write("    ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_%s, &%s->%s);\n" % (ietypeunderscore, lowerFirstCamelWord(re.sub('-', '_', key)), ienameunderscore))
+        # Check if this is an encapsulated IE, if so call the free function.
+        if ie[2] in ieofielist.keys():
+            keyname = re.sub('IEs', '', re.sub('Item', 'List', ie[2]))
+            f.write("    free_%s(&%s->%s);\n" % (re.sub('-', '_', keyname).lower(),
+                                                 lowerFirstCamelWord(re.sub('-', '_', key)), ienameunderscore))
+        else:
+            f.write("    ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_%s, &%s->%s);\n" % (ietypeunderscore, lowerFirstCamelWord(re.sub('-', '_', key)), ienameunderscore))
     f.write("    return 0;\n")
     f.write("}\n\n")
 
@@ -491,8 +520,8 @@ for key in iesDefs:
     f.write("    int i, decoded = 0;\n")
     f.write("    int tempDecoded = 0;\n\n")
 
-    f.write("    assert(%s != NULL);\n" % (lowerFirstCamelWord(re.sub('-', '_', keyname))));
-    f.write("    assert(%sIEs != NULL);\n\n" % (lowerFirstCamelWord(re.sub('-', '_', keyname))));
+    f.write("    assert(%s != NULL);\n" % (lowerFirstCamelWord(re.sub('-', '_', keyname))))
+    f.write("    assert(%sIEs != NULL);\n\n" % (lowerFirstCamelWord(re.sub('-', '_', keyname))))
 
     f.write("    for (i = 0; i < %s->list.count; i++) {\n" % (lowerFirstCamelWord(re.sub('-', '_', keyname))))
     f.write("        %s_IE_t *ie_p = %s->list.array[i];\n" % (fileprefix[0].upper() + fileprefix[1:], lowerFirstCamelWord(re.sub('-', '_', keyname))))
