@@ -228,6 +228,18 @@ typedef struct mysql_pdn_s{
   pre_emp_vul_t pre_emp_vul;
 } mysql_pdn_t;
 
+typedef struct cassandra_pdn_s{
+  char          apn[61];
+  pdn_type_t    pdn_type;
+  pdn_address_t pdn_address;
+  ambr_t        aggr_ul;
+  ambr_t        aggr_dl;
+  qci_t         qci;
+  prio_level_t  priority_level;
+  pre_emp_cap_t pre_emp_cap;
+  pre_emp_vul_t pre_emp_vul;
+} cassandra_pdn_t;
+
 typedef struct mysql_pu_req_s{
   /* IMSI */
   char imsi[IMSI_LENGTH_MAX + 1];
@@ -275,6 +287,9 @@ int hss_cassandra_purge_ue(cassandra_pu_req_t *cass_pu_req,
 int hss_mysql_query_pdns(const char   *imsi,
                          mysql_pdn_t **pdns_p,
                          uint8_t      *nb_pdns);
+
+int hss_cassandra_query_pdns(const char   *imsi,
+                         cassandra_pdn_t *pdns_p);
 
 int hss_mysql_auth_info(mysql_auth_info_req_t  *auth_info_req,
                         mysql_auth_info_resp_t *auth_info_resp);

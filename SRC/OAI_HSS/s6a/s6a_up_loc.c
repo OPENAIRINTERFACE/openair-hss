@@ -144,7 +144,6 @@ s6a_clear_info_cb (
 	dump(*msg);
 }
 
-
 int
 s6a_up_loc_cb (
   struct msg **msg,
@@ -576,12 +575,12 @@ s6a_up_loc_cb (
    * Only add the subscriber data if not marked as skipped by MME
    */
   if (!FLAG_IS_SET (ulr_flags, ULR_SKIP_SUBSCRIBER_DATA)) {
-    /*if (s6a_add_subscription_data_avp (ans, &cass_ans) != 0) {
+    if (s6a_add_subscription_data_avp (ans, &cass_ans) != 0) {
       FPRINTF_ERROR ( "ULR_SKIP_SUBSCRIBER_DATA DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION\n");
       result_code = DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION;
       experimental = 1;
       goto out;
-    }*/
+    }
   }
 
 out:

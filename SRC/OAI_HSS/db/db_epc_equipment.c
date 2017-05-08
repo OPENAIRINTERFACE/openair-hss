@@ -104,7 +104,7 @@ hss_cassandra_query_mmeidentity (
     return EINVAL;
   }
  
-  memset (mme_identity_p, 0, sizeof (mysql_mme_identity_t)); 
+  memset (mme_identity_p, 0, sizeof (cassandra_mme_identity_t)); 
   sprintf (query, "SELECT mmehost,mmerealm FROM vhss.mmeidentity WHERE idmmeidentity=%d ", id_mme_identity);
   FPRINTF_DEBUG ("Query: %s\n", query);
   statement = cass_statement_new(query,0);
@@ -148,6 +148,7 @@ hss_cassandra_query_mmeidentity (
 	cass_value_get_string(cass_mmehost_value,&mmehost,&mmehost_length);
 	if( mmehost != NULL ){
 		memcpy(mme_identity_p->mme_host,mmehost,strlen(mmehost));
+		mme_identity_p->mme_host[strlen(mmehost)] = '\0';
 	}
 	else{
 		mme_identity_p->mme_host[0] = '\0';
@@ -157,6 +158,7 @@ hss_cassandra_query_mmeidentity (
 	cass_value_get_string(cass_mmerealm_value,&mmerealm,&mmerealm_length);
 	if( mmerealm != NULL ){
 		memcpy(mme_identity_p->mme_realm,mmerealm,strlen(mmerealm));
+		mme_identity_p->mme_realm[strlen(mmerealm)] = '\0';
 	}
 	else{
 		mme_identity_p->mme_realm[0] = '\0';

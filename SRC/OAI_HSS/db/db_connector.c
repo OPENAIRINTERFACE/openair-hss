@@ -389,8 +389,8 @@ hss_cassandra_update_loc (
   CassValue                               *cass_access_res_value,*cass_idmme_value,*cass_msisdn_value,*cass_aggr_ul_value,*cass_aggr_dl_value,*cass_rau_tau_value;
   const char				  *msisdn;
   size_t			 	  msisdn_length;
-  cass_int32_t                            access_res,idmme,rau_tau;
-  cass_int64_t			          aggr_ul,aggr_dl;
+  cass_int32_t                            access_res = 0, idmme = 0, rau_tau = 0;
+  cass_int64_t			          aggr_ul = 0,aggr_dl = 0;
   
   if ((db_desc->db_conn == NULL) || (cass_ul_ans == NULL)) {
     return EINVAL;
@@ -399,6 +399,8 @@ hss_cassandra_update_loc (
   if (strlen (imsi) > 15) {
     return EINVAL;
   }
+  
+  memset(msisdn, 0 , sizeof(char));
 
   sprintf (query, "SELECT access_restriction,mmeidentity_idmmeidentity, msisdn,ue_ambr_ul,ue_ambr_dl,rau_tau_timer FROM vhss.users_imsi WHERE imsi='%s' ", imsi);
   statement = cass_statement_new(query,0);
@@ -429,21 +431,28 @@ hss_cassandra_update_loc (
   pthread_mutex_unlock(&db_desc->db_cs_mutex);
   cass_future_free(query_future);
   row = cass_result_first_row(result);  
-  cass_access_res_value = cass_row_get_column_by_name(row,"access_restriction");
-  cass_idmme_value = cass_row_get_column_by_name(row,"mmeidentity_idmmeidentity");
-  cass_msisdn_value = cass_row_get_column_by_name(row,"msisdn");
-  cass_aggr_ul_value = cass_row_get_column_by_name(row,"ue_ambr_ul");
-  cass_aggr_dl_value = cass_row_get_column_by_name(row,"ue_ambr_dl");
-  cass_rau_tau_value = cass_row_get_column_by_name(row,"rau_tau_timer");
 
   if( row != NULL ){
+	cass_access_res_value = cass_row_get_column_by_name(row,"access_restriction");
+  	cass_idmme_value = cass_row_get_column_by_name(row,"mmeidentity_idmmeidentity");
+  	cass_msisdn_value = cass_row_get_column_by_name(row,"msisdn");
+  	cass_aggr_ul_value = cass_row_get_column_by_name(row,"ue_ambr_ul");
+  	cass_aggr_dl_value = cass_row_get_column_by_name(row,"ue_ambr_dl");
+  	cass_rau_tau_value = cass_row_get_column_by_name(row,"rau_tau_timer");
+
 	int 	mme_id;
-        cass_value_get_int32(cass_access_res_value,&access_res);
-        cass_value_get_int32(cass_idmme_value,&idmme);
-        cass_value_get_string(cass_msisdn_value,&msisdn,&msisdn_length);
-        cass_value_get_int64(cass_aggr_ul_value,&aggr_ul);
-        cass_value_get_int64(cass_aggr_dl_value,&aggr_dl);
-        cass_value_get_int32(cass_rau_tau_value,&rau_tau);
+	if( cass_access_res_value != NULL )
+        	cass_value_get_int32(cass_access_res_value,&access_res);
+        if( cass_idmme_value != NULL )
+		cass_value_get_int32(cass_idmme_value,&idmme);
+        if( cass_msisdn_value != NULL )
+		cass_value_get_string(cass_msisdn_value,&msisdn,&msisdn_length);
+        if( cass_aggr_ul_value != NULL )
+		cass_value_get_int64(cass_aggr_ul_value,&aggr_ul);
+        if( cass_aggr_dl_value != NULL )
+		cass_value_get_int64(cass_aggr_dl_value,&aggr_dl);
+        if( cass_rau_tau_value != NULL )
+		cass_value_get_int32(cass_rau_tau_value,&rau_tau);
         
         cass_ul_ans->access_restriction =  access_res ;
       
