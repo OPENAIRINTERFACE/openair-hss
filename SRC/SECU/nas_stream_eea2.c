@@ -53,7 +53,7 @@ nas_stream_encrypt_eea2 (
     byte_length += 1;
 
   ctx = malloc (nettle_aes128.context_size);
-  data = malloc (byte_length);
+  data = calloc (1, byte_length);
   local_count = hton_int32 (stream_cipher->count);
   memset (m, 0, sizeof (m));
   memcpy (&m[0], &local_count, 4);
@@ -61,7 +61,13 @@ nas_stream_encrypt_eea2 (
   /*
    * Other bits are 0
    */
-  nettle_aes128.set_encrypt_key (ctx, stream_cipher->key_length, stream_cipher->key);
+#if NETTLE_VERSION_MAJOR < 3
+  nettle_aes128.set_encrypt_key(ctx, stream_cipher->key_length,
+                                stream_cipher->key);
+#else
+  nettle_aes128.set_encrypt_key(ctx,
+                                stream_cipher->key);
+#endif
   nettle_ctr_crypt (ctx, nettle_aes128.encrypt, nettle_aes128.block_size, m, byte_length, data, stream_cipher->message);
 
   if (zero_bit > 0)
@@ -69,6 +75,6 @@ nas_stream_encrypt_eea2 (
 
   memcpy (out, data, byte_length);
   free_wrapper ((void**) &data);
-  free_wrapper (&ctx);
+  free_wrapper ((void**)&ctx);
   return 0;
 }

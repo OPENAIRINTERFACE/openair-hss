@@ -70,7 +70,7 @@ nas_stream_encrypt_eia2 (
     m_length += 1;
 
   local_count = hton_int32 (stream_cipher->count);
-  m = calloc (m_length + 8, sizeof (uint8_t));
+  m = calloc (1, m_length + 8);
   memcpy (&m[0], &local_count, 4);
   m[4] = ((stream_cipher->bearer & 0x1F) << 3) | ((stream_cipher->direction & 0x01) << 2);
   memcpy (&m[8], stream_cipher->message, m_length);

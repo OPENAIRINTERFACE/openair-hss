@@ -60,6 +60,34 @@ echo_success() { cecho "$*" $green        ;}
 echo_info()    { cecho "$*" $blue         ;}
 
 
+########################
+# distribution helpers #
+########################
+
+#-------------------------------------------------------------------------------
+# This function return a string to identify the distribution we are running
+# If we can't check the distribution, it returns "Unknown"
+# This function return always true as exit code by design
+# Examples:
+#   Ubuntu16.04
+#   Debian8.5
+get_distribution_release() {
+    local distributor
+    if distributor=$(lsb_release -si 2>/dev/null) ; then
+        echo $distributor$(lsb_release -sr)
+    else
+        echo Unknown
+    fi
+}
+
+check_supported_distribution() {
+    local distribution=$(get_distribution_release)
+    case "$distribution" in
+        "Ubuntu16.04") return 0 ;;
+        "Ubuntu14.04") return 0 ;;
+    esac
+    return 1
+}
 
 ###########################
 # Cleaners
@@ -93,24 +121,75 @@ clean_all_files() {
  rm -rf $dir/AUTOTESTS/BIN $dir/AUTOTESTS/LOG $dir/AUTOTESTS/*/BUILD 
 }
 
+#-------------------------------------------------------------------------------
+# Remove Nettle installation which was done from sources
+remove_nettle_from_source() {
+    nettle_uninstall_log=$OPENAIRCN_DIR/BUILD/LOG/nettle_uninstall_log.txt
+    echo_info "\nUn-Installing Nettle from sources. The log file for nettle un-installation is here: $nettle_uninstall_log "
+    (
+    $SUDO apt-get remove -y nettle-dev nettle-bin
+    cd /tmp
+    echo "Downloading nettle archive"
+    $SUDO rm -rf /tmp/nettle-2.5.tar.gz* /tmp/nettle-2.5
+    wget https://ftp.gnu.org/gnu/nettle/nettle-2.5.tar.gz
+    if [ $? -ne 0 ]; then
+      wget ftp://ftp.lysator.liu.se/pub/security/lsh/nettle-2.5.tar.gz
+    fi
+    if [ ! -f nettle-2.5.tar.gz ]; then
+      echo_error "Could not download nettle source files"
+      cd -
+      return
+    fi
+    tar -xzf nettle-2.5.tar.gz
+    cd nettle-2.5/
+    ./configure --disable-openssl --enable-shared --prefix=/usr
+    $SUDO make uninstall || true
+    ) >& $nettle_uninstall_log
+}
+
+#-------------------------------------------------------------------------------
+# Remove Gnutls from source
+remove_gnutls_from_source(){
+    gnutls_uninstall_log=$OPENAIRCN_DIR/BUILD/LOG/gnutls_uninstall_log.txt
+    echo_info "\nUn-Installing Gnutls. The log file for Gnutls un-installation is here: $gnutls_uninstall_log "
+    (
+    $SUDO apt-get remove -y libgnutls-dev
+    cd /tmp
+    echo "Downloading gnutls archive"
+    $SUDO rm -rf /tmp/gnutls-3.1.23.tar.xz* /tmp/gnutls-3.1.23
+    wget http://mirrors.dotsrc.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz || \
+      wget ftp://ftp.gnutls.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz
+    if [ ! -f gnutls-3.1.23.tar.xz ]; then
+      echo_error "Could not download gnutls source files"
+      cd -
+      return
+    fi
+    tar -xJf gnutls-3.1.23.tar.xz
+    cd gnutls-3.1.23/
+    ./configure --prefix=/usr
+    $SUDO make uninstall || true
+    )>& $gnutls_uninstall_log
+}
+
 ###################################
 # Compilers
 ###################################
-# arg 1 Build directory OPENAIR_DIR/BUILD/?
+# arg 1 Build directory OPENAIRCN_DIR/BUILD/?/BUILD
 # arg 2 Executable target name
 # arg 3 Executable name (no path)
 # arg 4 Verbose         (1 or 0)
 compilations() {
+  echo_info "Compilation log for $3 is here: $dlog/$2.txt"
   cd $OPENAIRCN_DIR/BUILD/$1/BUILD
   if [ "a$4" == "a1" ]; then 
     {
       rm -f $3
-      make $make_args
+      make $make_args $2
     } | tee $dlog/$2.txt 
   else
     {
       rm -f $3
-      make $make_args
+      make $make_args $2
     } > $dlog/$2.txt 2>&1
   fi
   if [ -s $3 ] ; then
@@ -124,7 +203,7 @@ compilations() {
 # make test
 ###################################
 
-# arg 1 Build directory OPENAIR_DIR/BUILD/?
+# arg 1 Build directory OPENAIRCN_DIR/BUILD/?/BUILD
 # arg 2 Executable target name
 # arg 3 Executable name (no path)
 # arg 4 Verbose         (1 or 0)
@@ -243,51 +322,6 @@ install_netmap() {
   fi
 }
 #-------------------------------------------------------------------------------
-# arg1 is force (no interactive script)
-install_nettle_from_source() {
-  if [ $1 -gt 0 ]; then 
-    OPTION="-y"
-  else
-    OPTION=""
-  fi
-  
-  # Compilers, generators, ...
-  $SUDO apt-get install $OPTION \
-    autoconf  \
-    automake  \
-    build-essential \
-    libgmp-dev
-
-  if [ $1 -eq 0 ]; then
-    read -p "Do you want to install nettle ? <y/N> " prompt
-  else
-    prompt='y'
-  fi
-  if [[ $prompt =~ [yY](es)* ]]
-  then    
-    cd /tmp
-    echo "Downloading nettle archive"
-    $SUDO rm -rf /tmp/nettle-2.5.tar.gz* /tmp/nettle-2.5
-    wget https://ftp.gnu.org/gnu/nettle/nettle-2.5.tar.gz
-    if [ $? -ne 0 ]; then
-      wget ftp://ftp.lysator.liu.se/pub/security/lsh/nettle-2.5.tar.gz
-    fi
-    if [ ! -f nettle-2.5.tar.gz ]; then
-      echo_error "Could not download nettle source files"
-      cd -
-      return
-    fi 
-    tar -xzf nettle-2.5.tar.gz
-    cd nettle-2.5/
-    ./configure --disable-openssl --enable-shared --prefix=/usr 
-    echo "Compiling nettle"
-    make -j`nproc`
-    make check 
-    $SUDO make install 
-    cd /tmp
-    rm -rf /tmp/nettle-2.5.tar.gz /tmp/nettle-2.5
-  fi
-}
 
 install_libgtpnl_from_source() {
   if [ $1 -gt 0 ]; then
@@ -317,73 +351,11 @@ install_libgtpnl_from_source() {
     cd libgtpnl
     autoreconf -fi
     ./configure
-    echo "Compiling nettle"
+    echo "Compiling libgtpnl"
     make -j`nproc`
     $SUDO make install
     $SUDO ldconfig
     $SUDO rm -rf /tmp/libgtpnl*
-  fi
-}
-#-------------------------------------------------------------------------------
-# arg1 is force (no interactive script)
-install_gnutls_from_source(){
-  if [ $1 -gt 0 ]; then 
-    OPTION="-y"
-  else
-    OPTION=""
-  fi
-  
-  # Compilers, generators, ...
-  $SUDO apt-get install $OPTION \
-    autoconf  \
-    automake  \
-    build-essential
-
-  if [ `lsb_release -rs` = '14.04' ]; then
-    # not sure about libidn2-0-dev vs libidn11-dev, check symbols
-    PACKAGE_LIST="\
-      libtasn1-6-dev \
-      libtasn1-6-dbg \
-      libp11-kit-dev \
-      libp11-kit0-dbg \
-      libtspi-dev \
-      libtspi1 \
-      libidn2-0-dev \
-      libidn11-dev"
-    $SUDO apt-get install $OPTION $PACKAGE_LIST
-    if [ $? -ne 0 ]; then 
-      echo_fatal "Failed to install package list $PACKAGE_LIST"
-    fi 
-  fi
-
-    
-  if [ $1 -eq 0 ]; then
-    read -p "Do you want to install GNU TLS ? <y/N> " prompt
-  else
-    prompt='y'
-  fi
-  if [[ $prompt =~ [yY](es)* ]]
-  then    
-    cd /tmp 
-    echo "Downloading gnutls archive"
-    $SUDO rm -rf /tmp/gnutls-3.1.23.tar.xz* /tmp/gnutls-3.1.23
-    wget http://mirrors.dotsrc.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz
-    if [ $? -ne 0 ]; then
-      wget ftp://ftp.gnutls.org/gcrypt/gnutls/v3.1/gnutls-3.1.23.tar.xz 
-    fi
-    if [ ! -f gnutls-3.1.23.tar.xz ]; then
-      echo_error "Could not download gnutls source files"
-      cd -
-      return
-    fi 
-    tar -xJf gnutls-3.1.23.tar.xz
-    cd gnutls-3.1.23/
-    ./configure --prefix=/usr
-    echo "Compiling gnutls"
-    make -j`nproc`
-    $SUDO make install
-    cd /tmp 
-    rm -rf /tmp/gnutls-3.1.23.tar.xz /tmp/gnutls-3.1.23
   fi
 }
 
@@ -467,6 +439,7 @@ install_freediameter_from_source() {
     gcc \
     gdb \
     libgcrypt-dev \
+    libgnutls-dev \
     libidn11-dev \
     libmysqlclient-dev \
     libpq-dev \
@@ -589,18 +562,16 @@ update_package_db() {
 #-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_hss_software() {
+  if ! check_supported_distribution; then
+    echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
+    exit 1
+  fi
   if [ $1 -gt 0 ]; then 
     OPTION="-y"
   else
     OPTION=""
   fi
-  
-  # remove incompatible softwares
-  $SUDO apt-get purge $OPTION \
-    libgnutls-dev  \
-    'libgnutlsxx2?'  \
-    nettle-dev  \
-    nettle-bin
+
     
   # Compilers, generators, ...
   $SUDO apt-get install $OPTION \
@@ -636,33 +607,26 @@ check_install_hss_software() {
     mysql-server \
     openssl 
     
-  install_nettle_from_source $1
-  install_gnutls_from_source $1
+  #Remove old gnutls/nettle installation that was done from sources
+  remove_nettle_from_source
+  $SUDO apt-get install -y nettle-dev nettle-bin
 
   install_freediameter_from_source $1
-    
-  $SUDO apt-get install $OPTION \
-    phpmyadmin \
-    python-pexpect \
-    php5 \
-    libapache2-mod-php5 
 }
 
 #-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_mme_software() {
+  if ! check_supported_distribution; then
+    echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
+    exit 1
+  fi
   if [ $1 -gt 0 ]; then 
     OPTION="-y"
   else
     OPTION=""
   fi
     
-  # remove incompatible softwares
-  $SUDO apt-get purge $OPTION \
-    libgnutls-dev  \
-    'libgnutlsxx2?'  \
-    nettle-dev  \
-    nettle-bin
 
   # Compilers, generators, ...
   PACKAGE_LIST="\
@@ -712,8 +676,11 @@ check_install_mme_software() {
   fi 
 
 
-  install_nettle_from_source $1
-  install_gnutls_from_source $1
+  #Remove old gnutls/nettle installation that was done from sources
+  remove_nettle_from_source
+  remove_gnutls_from_source
+  $SUDO apt-get install -y nettle-dev nettle-bin
+  $SUDO apt-get install -y libgnutls-dev
 
   install_freediameter_from_source $1
   install_asn1c_from_source $1
@@ -731,7 +698,6 @@ check_install_mme_software() {
     
   PACKAGE_LIST="\
     check \
-    phpmyadmin \
     python-dev \
     python-pexpect \
     unzip"
@@ -744,6 +710,10 @@ check_install_mme_software() {
 #-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_spgw_software() {
+  if ! check_supported_distribution; then
+    echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
+    exit 1
+  fi
   if [ $1 -gt 0 ]; then 
     OPTION="-y"
   else
