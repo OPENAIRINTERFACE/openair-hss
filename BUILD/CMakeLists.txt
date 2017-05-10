@@ -218,7 +218,6 @@ add_boolean_option( DAEMONIZE                       False    "Fork executable if
 add_boolean_option( DISABLE_ITTI_DETECT_SUB_TASK_ID False    " ")
 add_boolean_option( DISPLAY_LICENCE_INFO            False    "If a module has a licence banner to show")
 add_boolean_option( ENABLE_ITTI                     True     "ITTI is internal messaging, should remain enabled for most targets")
-add_boolean_option( ENABLE_ITTI_ANALYZER            False    "ITTI Analyzer is a GUI based on GTK that displays the ITTI messages exchanged between tasks")
 add_integer_option( ITTI_TASK_STACK_SIZE            0        "pthread allocated stack size in bytes of an ITTI task, if 0, use default stack size ") 
 add_integer_option( ITTI_LITE                       0        "Do not use ITTI systematically for each message exchanged between layer modules") 
 add_boolean_option( MESSAGE_CHART_GENERATOR         False    "For generating sequence diagrams")
@@ -257,14 +256,6 @@ if (${ENABLE_ITTI})
     ${ITTI_DIR}/signals.c
     ${ITTI_DIR}/timer.c
     )
-  if (${ENABLE_ITTI_ANALYZER})
-    set(ITTI_FILES
-    ${ITTI_FILES}
-    ${ITTI_DIR}/intertask_interface_dump.c 
-    ${OPENAIRCN_BIN_DIR}/messages_xml.h )
-    
-    include_directories ("${OPENAIRCN_BIN_DIR}")
-  endif (${ENABLE_ITTI_ANALYZER})
     
   add_library(ITTI ${ITTI_FILES})
     
@@ -955,40 +946,5 @@ add_test(NAME test_imsi_convert COMMAND test_mme_app_ue_context_imsi)
 #    -Wl,--start-group SECU_CN UTIL LFDS -Wl,--end-group m rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
 #    )
 #endforeach(myExe)
-
-
-##################################################
-# Generated specific cases is not regular code
-##################################################
-
-#######################################################################
-# itti symbolic debug print require to generate a specific include file
-#######################################################################
-
-  if( ENABLE_ITTI_ANALYZER )
-  # retrieve the compiler options to send it to gccxml
-    get_directory_property( DirDefs COMPILE_DEFINITIONS )
-    foreach( d ${DirDefs} )
-      list(APPEND itti_compiler_options "-D${d}")
-    endforeach()
-    get_directory_property( DirDefs INCLUDE_DIRECTORIES )
-    foreach( d ${DirDefs} )
-      list(APPEND itti_compiler_options "-I${d}")
-    endforeach()
-
-    set (ITTI_H ${ITTI_DIR}/intertask_interface_types.h)
-    add_custom_command (
-    OUTPUT ${OPENAIRCN_BIN_DIR}/messages.xml
-      COMMAND gccxml ${itti_compiler_options} -fxml=${OPENAIRCN_BIN_DIR}/messages.xml ${ITTI_H}
-      DEPENDS ${S1AP_OAI_generated} 
-    )
-
-    add_custom_command (
-      OUTPUT ${OPENAIRCN_BIN_DIR}/messages_xml.h
-      COMMAND sed -e 's/ *//'   -e 's/\"/\\\\\"/g' -e 's/^/\"/' -e 's/$$/\\\\n\"/' ${OPENAIRCN_BIN_DIR}/messages.xml  > ${OPENAIRCN_BIN_DIR}/messages_xml.h
-      DEPENDS ${OPENAIRCN_BIN_DIR}/messages.xml 
-    )
-  endif(ENABLE_ITTI_ANALYZER)
-
 
 

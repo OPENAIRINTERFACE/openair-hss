@@ -127,13 +127,7 @@ main (
    * Calling each layer init function
    */
   //CHECK_INIT_RETURN (log_init (&mme_config, oai_mme_log_specific));
-  CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info,
-#if ENABLE_ITTI_ANALYZER
-          messages_definition_xml,
-#else
-          NULL,
-#endif
-          NULL));
+  CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, NULL, NULL));
   MSC_INIT (MSC_MME, THREAD_MAX + TASK_MAX);
   CHECK_INIT_RETURN (nas_init (&mme_config));
   CHECK_INIT_RETURN (sctp_init (&mme_config));
