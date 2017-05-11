@@ -349,6 +349,7 @@ install_libgtpnl_from_source() {
     $SUDO rm -rf /tmp/libgtpnl*
     git clone git://git.osmocom.org/libgtpnl
     cd libgtpnl
+    git reset --hard 345d687
     autoreconf -fi
     ./configure
     echo "Compiling libgtpnl"
