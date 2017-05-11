@@ -313,7 +313,7 @@ s1ap_mme_handle_s1_setup_request (
     OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   }
 
-  log_queue_item_t *context = NULL;
+  shared_log_queue_item_t *  context = NULL;
   OAILOG_MESSAGE_START (OAILOG_LEVEL_DEBUG, LOG_S1AP, (&context), "New s1 setup request incoming from ");
 
   if (s1SetupRequest_p->presenceMask & S1AP_S1SETUPREQUESTIES_ENBNAME_PRESENT) {

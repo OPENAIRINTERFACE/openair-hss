@@ -20,12 +20,20 @@
  */
 
 
+/*! \file mme_app_main.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
+#include "mme_config.h"
 #include "timer.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
@@ -44,7 +52,6 @@ void *mme_app_thread (
 {
   struct ue_context_s                    *ue_context_p = NULL;
   itti_mark_task_ready (TASK_MME_APP);
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -195,6 +202,7 @@ void *mme_app_thread (
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }

@@ -38,6 +38,9 @@
 #include <fcntl.h>
 #include <pthread.h>
 
+#include "bstrlib.h"
+
+#include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "queue.h"
 #include "log.h"
@@ -45,6 +48,7 @@
 #include "conversions.h"
 #include "intertask_interface.h"
 #include "udp_primitives_server.h"
+#include "itti_free_defined_msg.h"
 
 
 struct udp_socket_desc_s {
@@ -250,17 +254,14 @@ udp_server_receive_and_process (
 }
 
 
-static void                            *
-udp_intertask_interface (
-  void *args_p)
+//------------------------------------------------------------------------------
+static void *udp_intertask_interface (void *args_p)
 {
   int                                     rc = 0;
   int                                     nb_events = 0;
   struct epoll_event                     *events = NULL;
 
   itti_mark_task_ready (TASK_UDP);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -314,7 +315,12 @@ udp_intertask_interface (
         break;
 
       case TERMINATE_MESSAGE:{
+          udp_exit();
+          itti_free_msg_content(received_message_p);
+          itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+          OAI_FPRINTF_INFO("TASK_UDP terminated\n");
           itti_exit_task ();
+
         }
         break;
 
@@ -329,6 +335,7 @@ udp_intertask_interface (
       }
 
     on_error:
+      itti_free_msg_content(received_message_p);
       rc = itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
       AssertFatal (rc == EXIT_SUCCESS, "Failed to free memory (%d)!\n", rc);
       received_message_p = NULL;
@@ -347,6 +354,7 @@ udp_intertask_interface (
   return NULL;
 }
 
+//------------------------------------------------------------------------------
 int udp_init (void)
 {
   OAILOG_DEBUG (LOG_UDP, "Initializing UDP task interface\n");
@@ -359,4 +367,17 @@ int udp_init (void)
 
   OAILOG_DEBUG (LOG_UDP, "Initializing UDP task interface: DONE\n");
   return 0;
+}
+
+//------------------------------------------------------------------------------
+void udp_exit (void)
+{
+  struct udp_socket_desc_s               *socket_desc_p = NULL;
+  while ((socket_desc_p = STAILQ_FIRST (&udp_socket_list))) {
+    itti_unsubscribe_event_fd(TASK_UDP, socket_desc_p->sd);
+    close(socket_desc_p->sd);
+    pthread_mutex_destroy(&udp_socket_list_mutex);
+    STAILQ_REMOVE_HEAD (&udp_socket_list, entries);
+    free_wrapper ((void**)&socket_desc_p);
+  }
 }

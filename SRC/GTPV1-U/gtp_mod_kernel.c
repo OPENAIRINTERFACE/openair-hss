@@ -19,6 +19,7 @@
 #include "spgw_config.h"
 #include "gtpv1u_sgw_defs.h"
 #include "gtp_mod_kernel.h"
+#include "dynamic_memory_check.h"
 
 
 static struct {
@@ -84,10 +85,10 @@ int gtp_mod_kernel_init(int *fd0, int *fd1u, struct in_addr *ue_net, int mask, i
   int ret = system ((const char *)system_cmd->data);
   if (ret) {
     OAILOG_ERROR (LOG_GTPV1U, "ERROR in system command %s: %d at %s:%u\n", bdata(system_cmd), ret, __FILE__, __LINE__);
-    bdestroy(system_cmd);
+    bdestroy_wrapper (&system_cmd);
     return RETURNerror;
   }
-  bdestroy(system_cmd);
+  bdestroy_wrapper (&system_cmd);
 
   struct in_addr ue_gw;
   ue_gw.s_addr = ue_net->s_addr | htonl(1);
@@ -95,10 +96,10 @@ int gtp_mod_kernel_init(int *fd0, int *fd1u, struct in_addr *ue_net, int mask, i
   ret = system ((const char *)system_cmd->data);
   if (ret) {
     OAILOG_ERROR (LOG_GTPV1U, "ERROR in system command %s: %d at %s:%u\n", bdata(system_cmd), ret, __FILE__, __LINE__);
-    bdestroy(system_cmd);
+    bdestroy_wrapper (&system_cmd);
     return RETURNerror;
   }
-  bdestroy(system_cmd);
+  bdestroy_wrapper (&system_cmd);
 
 
   OAILOG_DEBUG (LOG_GTPV1U, "Setting route to reach UE net %s via %s\n", inet_ntoa(*ue_net), GTP_DEVNAME);

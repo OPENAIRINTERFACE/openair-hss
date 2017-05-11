@@ -373,7 +373,6 @@ include_directories("${OPENAIRCN_DIR}/SRC/S1AP")
 include_directories("${OPENAIRCN_DIR}/SRC/UDP")
 include_directories("${OPENAIRCN_DIR}/SRC/GTPV1-U")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/HASHTABLE")
-include_directories("${OPENAIRCN_DIR}/SRC/UTILS/LFDS/liblfds6.1.1/liblfds611/inc")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/MSC")
 include_directories("${OPENAIRCN_DIR}/SRC/UTILS/BSTR")
 include_directories("${OPENAIRCN_DIR}/SRC/SGW")
@@ -431,10 +430,11 @@ add_library(SECU_CN ${SECU_CN_SRC})
 
 set(CN_UTILS_SRC
   ${OPENAIRCN_DIR}/SRC/UTILS/conversions.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
   ${OPENAIRCN_DIR}/SRC/UTILS/enum_string.c
   ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
   ${OPENAIRCN_DIR}/SRC/UTILS/pid_file.c
+  ${OPENAIRCN_DIR}/SRC/UTILS/shared_ts_log.c
   ${OPENAIRCN_DIR}/SRC/UTILS/TLVEncoder.c
   ${OPENAIRCN_DIR}/SRC/UTILS/TLVDecoder.c  
   )
@@ -509,15 +509,15 @@ add_library(S6A
 
 set(SGW_DIR ${OPENAIRCN_DIR}/SRC/SGW)
 add_library (SGW
-  ${SGW_DIR}/spgw_config.c
   ${SGW_DIR}/pgw_config.c
-  ${SGW_DIR}/sgw_config.c
-  ${SGW_DIR}/s11_causes.c
-  ${SGW_DIR}/sgw_task.c
-  ${SGW_DIR}/sgw_handlers.c
-  ${SGW_DIR}/sgw_context_manager.c
   ${SGW_DIR}/pgw_lite_paa.c
   ${SGW_DIR}/pgw_pco.c
+  ${SGW_DIR}/s11_causes.c
+  ${SGW_DIR}/sgw_config.c
+  ${SGW_DIR}/sgw_context_manager.c
+  ${SGW_DIR}/sgw_handlers.c
+  ${SGW_DIR}/sgw_task.c
+  ${SGW_DIR}/spgw_config.c
   )
 
 set(MME_DIR ${OPENAIRCN_DIR}/SRC/MME_APP)
@@ -746,8 +746,6 @@ set(libnas_mme_esm_sap_OBJS
   
 add_library(LIB_NAS_MME
   ${NAS_SRC}nas_itti_messaging.c
-  ${NAS_SRC}nas_if_s1.c
-  ${NAS_SRC}nas_if_s6a.c
   ${NAS_SRC}nas_network.c
   ${NAS_SRC}nas_proc.c
   ${libnas_api_OBJS}
@@ -768,27 +766,6 @@ include_directories(${NAS_SRC}/EMM)
 include_directories(${NAS_SRC}/EMM/SAP)
 include_directories(${NAS_SRC}/ESM)
 include_directories(${NAS_SRC}/ESM/SAP)
-
-
-# Make lfds as a own source code (even if it is a outside library)
-# For better intergration with compilation flags & structure of cmake
-###################################################################
-set(lfds ${OPENAIRCN_DIR}/SRC/UTILS/LFDS/liblfds6.1.1/liblfds611/src/)
-file(GLOB lfds_queue ${lfds}/lfds611_queue/*.c)
-file(GLOB lfds_ring ${lfds}/lfds611_ringbuffer/*.c)
-file(GLOB lfds_slist ${lfds}/lfds611_slist/*.c)
-file(GLOB lfds_stack ${lfds}/lfds611_stack/*.c)
-file(GLOB lfds_freelist ${lfds}/lfds611_freelist/*.c)
-
-include_directories(${lfds})
-add_library(LFDS
-  ${lfds_queue} ${lfds_ring} ${lfds_slist} ${lfds_stack} ${lfds_freelist}
-  ${lfds}/lfds611_liblfds/lfds611_liblfds_abstraction_test_helpers.c
-  ${lfds}/lfds611_liblfds/lfds611_liblfds_aligned_free.c
-  ${lfds}/lfds611_liblfds/lfds611_liblfds_aligned_malloc.c
-  ${lfds}/lfds611_abstraction/lfds611_abstraction_free.c
-  ${lfds}/lfds611_abstraction/lfds611_abstraction_malloc.c
-)
 
 
 # System packages that are required
@@ -834,6 +811,12 @@ endif()
 add_definitions("-DNETTLE_VERSION_MAJOR=${NETTLE_VERSION_MAJOR}")
 add_definitions("-DNETTLE_VERSION_MINOR=${NETTLE_VERSION_MINOR}")
 
+find_library(LFDS lfds710 PATHS /usr/local/lib /usr/lib )
+
+if ("${LFDS}" STREQUAL "LFDS-NOTFOUND")
+  message(FATAL_ERROR "LIB LFDS not found, please install it" )
+endif()
+
 pkg_search_module(XPM xpm)
 if(NOT ${XPM_FOUND})
   message("PACKAGE xpm not found: some targets will fail")
@@ -857,6 +840,7 @@ add_executable(mme
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme_log.c
   ${OPENAIRCN_DIR}/SRC/OAI_MME/oai_mme.c
   ${OPENAIRCN_DIR}/SRC/COMMON/common_types.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/itti_free_defined_msg.c
   ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
   ${OPENAIRCN_DIR}/SRC/NAS/nas_mme_task.c
   )
@@ -865,40 +849,27 @@ if( ITTI_ANALYZER )
 endif( ITTI_ANALYZER )
 target_link_libraries (mme
   -Wl,--start-group
-   LIB_NAS_MME S1AP_LIB S1AP_EPC S11_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
+   LIB_NAS_MME S1AP_LIB S1AP_EPC S11_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN  S6A MME_APP ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
-  pthread m sctp  rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
+  pthread m sctp  rt crypt ${LFDS} ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} gnutls fdproto fdcore
   )
 
 
-# spgw is S+P-GW  node implementation
+# spgw is S-GW +P-GW  nodes all in one implementation
 ################################
 add_executable(spgw
   ${OPENAIRCN_DIR}/SRC/OAI_SGW/oai_sgw.c
   ${OPENAIRCN_DIR}/SRC/COMMON/3gpp_24.008.c
+  ${OPENAIRCN_DIR}/SRC/COMMON/itti_free_defined_msg.c
   )
 if( ITTI_ANALYZER )
   add_executable(spgw ${OPENAIRCN_BIN_DIR}/messages_xml.h )
 endif( ITTI_ANALYZER )
 target_link_libraries (spgw
   -Wl,--start-group
-  GTPV1U SGW S11_SGW GTPV2C UDP_SERVER LFDS ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
+  GTPV1U SGW S11_SGW GTPV2C UDP_SERVER ${MSC_LIB} ${ITTI_LIB} CN_UTILS HASHTABLE BSTR
   -Wl,--end-group
-  pthread m rt gtpnl ${CONFIG_LIBRARIES}  
-  )
-
-# auth_request is a helper for scenario builder
-################################
-add_executable(auth_request
-  ${OPENAIRCN_DIR}/SRC/TEST/auth_request.c
-  ${OPENAIRCN_DIR}/SRC/COMMON/ITTI/backtrace.c
-  ${OPENAIRCN_DIR}/SRC/SECU/key_nas_deriver.c
-  ${OPENAIRCN_DIR}/SRC/SECU/kdf.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/mcc_mnc_itu.c
-  ${OPENAIRCN_DIR}/SRC/UTILS/dynamic_memory_check.c
-  )
-target_link_libraries (auth_request
-  pthread m rt crypt ${NETTLE_LIBRARIES} gnutls fdproto fdcore
+  pthread m rt gtpnl ${LFDS} ${CONFIG_LIBRARIES}  
   )
 
 
@@ -943,7 +914,7 @@ add_test(NAME test_imsi_convert COMMAND test_mme_app_ue_context_imsi)
 #    ${OPENAIRCN_DIR}/SRC/TEST/test_${myExe}.c
 #    )
 #  target_link_libraries (test_${myExe}
-#    -Wl,--start-group SECU_CN UTIL LFDS -Wl,--end-group m rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
+#    -Wl,--start-group SECU_CN UTIL -Wl,--end-group ${LFDS}  m rt crypt ${CRYPTO_LIBRARIES} ${OPENSSL_LIBRARIES} ${NETTLE_LIBRARIES} ${CONFIG_LIBRARIES} fdproto fdcore
 #    )
 #endforeach(myExe)
 

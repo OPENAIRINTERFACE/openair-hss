@@ -42,6 +42,7 @@
 #include "log.h"
 #include "msc.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "sgw_ie_defs.h"
 #include "3gpp_23.401.h"
 #include "mme_config.h"
@@ -63,8 +64,6 @@ static void sgw_exit(void);
 static void *sgw_intertask_interface (void *args_p)
 {
   itti_mark_task_ready (TASK_SPGW_APP);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -135,6 +134,7 @@ static void *sgw_intertask_interface (void *args_p)
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
@@ -160,7 +160,7 @@ int sgw_init (spgw_config_t *spgw_config_pP)
 
   if (sgw_app.s11teid2mme_hashtable == NULL) {
     perror ("hashtable_ts_create");
-    bdestroy(b);
+    bdestroy (b);
     OAILOG_ALERT (LOG_SPGW_APP, "Initializing SPGW-APP task interface: ERROR\n");
     return RETURNerror;
   }
@@ -176,7 +176,7 @@ int sgw_init (spgw_config_t *spgw_config_pP)
   bassigncstr(b, "sgw_s11_bearer_context_information_hashtable");
   sgw_app.s11_bearer_context_information_hashtable = hashtable_ts_create (512, NULL,
           (void (*)(void**))sgw_cm_free_s_plus_p_gw_eps_bearer_context_information,b);
-  bdestroy(b);
+  bdestroy (b);
 
   if (sgw_app.s11_bearer_context_information_hashtable == NULL) {
     perror ("hashtable_ts_create");
@@ -200,7 +200,7 @@ int sgw_init (spgw_config_t *spgw_config_pP)
   FILE *fp = NULL;
   bstring  filename = bformat("/tmp/spgw_%d.status", g_pid);
   fp = fopen(bdata(filename), "w+");
-  bdestroy(filename);
+  bdestroy (filename);
   fprintf(fp, "STARTED\n");
   fflush(fp);
   fclose(fp);
@@ -230,4 +230,5 @@ static void sgw_exit(void)
     STAILQ_REMOVE_HEAD (&spgw_config.pgw_config.ipv4_pool_list, ipv4_entries);
     free_wrapper ((void**) &conf_ipv4_p);
   }
+  OAI_FPRINTF_INFO("TASK_SPGW_APP terminated");
 }

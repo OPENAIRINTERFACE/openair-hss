@@ -104,6 +104,7 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->log_config.spgw_app_log_level = MAX_LOG_LEVEL;
   config_pP->log_config.s11_log_level      = MAX_LOG_LEVEL;
   config_pP->log_config.s6a_log_level      = MAX_LOG_LEVEL;
+  config_pP->log_config.secu_log_level     = MAX_LOG_LEVEL;
   config_pP->log_config.util_log_level     = MAX_LOG_LEVEL;
   config_pP->log_config.msc_log_level      = MAX_LOG_LEVEL;
   config_pP->log_config.itti_log_level     = MAX_LOG_LEVEL;
@@ -237,7 +238,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       }
 
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_COLOR, (const char **)&astring)) {
-        if (0 == strcasecmp("true", astring)) config_pP->log_config.color = true;
+        if (0 == strcasecmp("yes", astring)) config_pP->log_config.color = true;
         else config_pP->log_config.color = false;
       }
 
@@ -255,6 +256,8 @@ static int mme_config_parse_file (mme_config_t * config_pP)
 
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_S6A_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.s6a_log_level = OAILOG_LEVEL_STR2INT (astring);
+      if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_SECU_LOG_LEVEL, (const char **)&astring))
+        config_pP->log_config.secu_log_level = OAILOG_LEVEL_STR2INT (astring);
 
       if (config_setting_lookup_string (setting, LOG_CONFIG_STRING_GTPV2C_LOG_LEVEL, (const char **)&astring))
         config_pP->log_config.gtpv2c_log_level = OAILOG_LEVEL_STR2INT (astring);
@@ -580,6 +583,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         in_addr_var.s_addr = config_pP->ipv4.s1_mme;
         OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S1-MME: %s/%d on %s\n",
                        inet_ntoa (in_addr_var), config_pP->ipv4.netmask_s1_mme, bdata(config_pP->ipv4.if_name_s1_mme));
+        bdestroy(cidr);
 
         config_pP->ipv4.if_name_s11 = bfromcstr(if_name_s11);
         cidr = bfromcstr (s11);
@@ -699,6 +703,21 @@ static void mme_config_display (mme_config_t * config_pP)
   int                                     j;
 
   OAILOG_INFO (LOG_CONFIG, "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
+#if DEBUG_IS_ON
+  OAILOG_DEBUG (LOG_CONFIG, "Built with CMAKE_BUILD_TYPE ................: %s\n", CMAKE_BUILD_TYPE);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with DISABLE_ITTI_DETECT_SUB_TASK_ID .: %d\n", DISABLE_ITTI_DETECT_SUB_TASK_ID);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with ITTI_TASK_STACK_SIZE ............: %d\n", ITTI_TASK_STACK_SIZE);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with LOG_OAI .........................: %d\n", LOG_OAI);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with LOG_OAI_CLEAN_HARD ..............: %d\n", LOG_OAI_CLEAN_HARD);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with MESSAGE_CHART_GENERATOR .........: %d\n", MESSAGE_CHART_GENERATOR);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with PACKAGE_NAME ....................: %s\n", PACKAGE_NAME);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with S1AP_DEBUG_LIST .................: %d\n", S1AP_DEBUG_LIST);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with SECU_DEBUG ......................: %d\n", SECU_DEBUG);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with SCTP_DUMP_LIST ..................: %d\n", SCTP_DUMP_LIST);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_HASHTABLE .................: %d\n", TRACE_HASHTABLE);
+  OAILOG_DEBUG (LOG_CONFIG, "Built with TRACE_3GPP_SPEC .................: %d\n", TRACE_3GPP_SPEC);
+
+#endif
   OAILOG_INFO (LOG_CONFIG, "Configuration:\n");
   OAILOG_INFO (LOG_CONFIG, "- File .................................: %s\n", bdata(config_pP->config_file));
   OAILOG_INFO (LOG_CONFIG, "- Realm ................................: %s\n", bdata(config_pP->realm));

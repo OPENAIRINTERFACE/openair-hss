@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file nas_mme_task.c
+   \brief
+   \author  Sebastien ROUX, Lionel GAUTHIER
+   \date
+   \email: lionel.gauthier@eurecom.fr
+*/
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +34,7 @@
 #include "log.h"
 #include "msc.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "mme_config.h"
 #include "nas_defs.h"
 #include "nas_network.h"
@@ -41,8 +48,6 @@ static void nas_exit(void);
 static void *nas_intertask_interface (void *args_p)
 {
   itti_mark_task_ready (TASK_NAS_MME);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -119,6 +124,9 @@ static void *nas_intertask_interface (void *args_p)
 
     case TERMINATE_MESSAGE:{
         nas_exit();
+        OAI_FPRINTF_INFO("TASK_NAS_MME terminated\n");
+        itti_free_msg_content(received_message_p);
+        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
         itti_exit_task ();
       }
       break;
@@ -133,6 +141,7 @@ static void *nas_intertask_interface (void *args_p)
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
 

@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file oai_mme.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -66,6 +72,7 @@ main (
   char *pid_dir;
   char *pid_file_name;
 
+  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
   CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_DEBUG, MAX_LOG_PROTOS));
   /*
    * Parse the command line for options and set the mme_config accordingly.
@@ -109,7 +116,6 @@ main (
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
 
-  openlog(NULL, 0, LOG_DAEMON);
 
   if (! is_pid_file_lock_success(pid_file_name)) {
     closelog();

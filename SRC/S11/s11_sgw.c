@@ -19,17 +19,25 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s11_sgw.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 
+#include "dynamic_memory_check.h"
 #include "log.h"
 #include "assertions.h"
 #include "queue.h"
 #include "sgw_config.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "timer.h"
 #include "NwLog.h"
 #include "NwGtpv2c.h"
@@ -43,6 +51,8 @@
 
 
 static NwGtpv2cStackHandleT             s11_sgw_stack_handle = 0;
+
+static void s11_sgw_exit (void);
 
 /* ULP callback for the GTPv2-C stack */
 //------------------------------------------------------------------------------
@@ -161,7 +171,6 @@ static NwRcT s11_sgw_stop_timer_wrapper (
 static void *s11_sgw_thread (void *args)
 {
   itti_mark_task_ready (TASK_S11);
-  OAILOG_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -214,12 +223,20 @@ static void *s11_sgw_thread (void *args)
       }
       break;
 
+    case TERMINATE_MESSAGE:{
+        s11_sgw_exit();
+        OAI_FPRINTF_INFO("TASK_S11 terminated\n");
+        itti_exit_task ();
+      }
+      break;
+
     default:{
         OAILOG_ERROR (LOG_S11, "Unkwnon message ID %d:%s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
@@ -239,9 +256,10 @@ static int s11_send_init_udp (char *address, uint16_t port_number)
   }
 
   message_p->ittiMsg.udp_init.port = port_number;
-  //LG message_p->ittiMsg.udpInit.address = "0.0.0.0"; //ANY address
   message_p->ittiMsg.udp_init.address = address;
-  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s\n", message_p->ittiMsg.udp_init.address);
+  char ipv4[INET_ADDRSTRLEN];
+  inet_ntop (AF_INET, (void*)&message_p->ittiMsg.udp_init.address, ipv4, INET_ADDRSTRLEN);
+  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s:%" PRIu16"\n", ipv4, message_p->ittiMsg.udp_init.port);
   return itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
 }
 
@@ -303,4 +321,9 @@ int s11_sgw_init (sgw_config_t * config_p)
 fail:
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: FAILURE\n");
   return RETURNerror;
+}
+//------------------------------------------------------------------------------
+static void s11_sgw_exit (void)
+{
+  nwGtpv2cFinalize (s11_sgw_stack_handle);
 }

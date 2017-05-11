@@ -53,8 +53,6 @@ static void *gtpv1u_thread (void *args);
 static void  *gtpv1u_thread (void *args)
 {
   itti_mark_task_ready (TASK_GTPV1_U);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   gtpv1u_data_t * gtpv1u_data = (gtpv1u_data_t*)args;
 

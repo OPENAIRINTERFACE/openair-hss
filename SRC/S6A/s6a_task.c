@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s6a_task.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
 #include <pthread.h>
 #include <stdio.h>
@@ -32,6 +38,7 @@
 #include <freeDiameter/freeDiameter-host.h>
 #include <freeDiameter/libfdcore.h>
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
 #include "common_types.h"
@@ -76,15 +83,13 @@ static void oai_fd_logger(int loglevel, const char * format, va_list args)
   if ((0 > rv) || ((FD_LOG_MAX_MESSAGE_LENGTH) < rv)) {
     return;
   }
-  OAILOG_EXTERNAL (loglevel, LOG_S6A, "%s\n", buffer);
+  OAILOG_EXTERNAL (OAILOG_LEVEL_TRACE - loglevel, LOG_S6A, "%s\n", buffer);
 }
 
 //------------------------------------------------------------------------------
 void *s6a_thread (void *args)
 {
   itti_mark_task_ready (TASK_S6A);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -127,6 +132,9 @@ void *s6a_thread (void *args)
       break;
     case TERMINATE_MESSAGE:{
         s6a_exit();
+        itti_free_msg_content(received_message_p);
+        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+        OAI_FPRINTF_INFO("TASK_S6A terminated\n");
         itti_exit_task ();
       }
       break;
@@ -135,6 +143,7 @@ void *s6a_thread (void *args)
       }
       break;
     }
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }

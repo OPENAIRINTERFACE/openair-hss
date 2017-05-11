@@ -19,6 +19,12 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s1ap_mme.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 #if HAVE_CONFIG_H
 #  include "config.h"
 #endif
@@ -30,14 +36,14 @@
 
 #include "dynamic_memory_check.h"
 #include "intertask_interface.h"
-#include "assertions.h"
-#include "mme_app_statistics.h"
+#include "itti_free_defined_msg.h"
 #include "s1ap_mme.h"
 #include "s1ap_mme_decoder.h"
 #include "s1ap_mme_handlers.h"
 #include "s1ap_mme_nas_procedures.h"
 #include "s1ap_mme_itti_messaging.h"
 #include "timer.h"
+#include "mme_app_statistics.h"
 
 #if S1AP_DEBUG_LIST
 #  define eNB_LIST_OUT(x, args...) OAILOG_DEBUG (LOG_S1AP, "[eNB]%*s"x"\n", 4*indent, "", ##args)
@@ -85,8 +91,6 @@ s1ap_mme_thread (
   __attribute__((unused)) void *args)
 {
   itti_mark_task_ready (TASK_S1AP);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -194,6 +198,9 @@ s1ap_mme_thread (
       break;
 
     case TERMINATE_MESSAGE:{
+        itti_free_msg_content(received_message_p);
+        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
+        OAI_FPRINTF_INFO("TASK_S1AP terminated\n");
         itti_exit_task ();
       }
       break;
@@ -208,6 +215,7 @@ s1ap_mme_thread (
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }

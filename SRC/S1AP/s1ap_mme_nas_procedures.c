@@ -561,7 +561,7 @@ s1ap_handle_conn_est_cnf (
   }
 
   if (conn_est_cnf_pP->nas_conn_est_cnf.nas_msg != NULL) {
-    bdestroy (conn_est_cnf_pP->nas_conn_est_cnf.nas_msg);
+    // LG EUR double free, will look soon//bdestroy_wrapper (&conn_est_cnf_pP->nas_conn_est_cnf.nas_msg);
   }
   OAILOG_NOTICE (LOG_S1AP, "Send S1AP_INITIAL_CONTEXT_SETUP_REQUEST message MME_UE_S1AP_ID = " MME_UE_S1AP_ID_FMT " eNB_UE_S1AP_ID = " ENB_UE_S1AP_ID_FMT "\n",
               (mme_ue_s1ap_id_t)initialContextSetupRequest_p->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)initialContextSetupRequest_p->eNB_UE_S1AP_ID);

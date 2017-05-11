@@ -19,18 +19,28 @@
  *      contact@openairinterface.org
  */
 
+/*! \file s11_mme_task.c
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
 
+#include "bstrlib.h"
+
+#include "dynamic_memory_check.h"
 #include "assertions.h"
 #include "hashtable.h"
 #include "log.h"
 #include "msc.h"
 #include "mme_config.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "timer.h"
 #include "NwLog.h"
 #include "NwGtpv2c.h"
@@ -42,6 +52,7 @@
 static NwGtpv2cStackHandleT             s11_mme_stack_handle = 0;
 // Store the GTPv2-C teid handle
 hash_table_ts_t                        *s11_mme_teid_2_gtv2c_teid_handle = NULL;
+static void s11_mme_exit (void);
 //------------------------------------------------------------------------------
 static NwRcT
 s11_mme_log_wrapper (
@@ -165,8 +176,6 @@ s11_mme_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_S11);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -196,6 +205,13 @@ s11_mme_thread (
       }
       break;
 
+    case TERMINATE_MESSAGE:{
+        s11_mme_exit();
+        OAI_FPRINTF_INFO("TASK_S11 terminated\n");
+        itti_exit_task ();
+      }
+      break;
+
     case UDP_DATA_IND:{
         /*
          * We received new data to handle from the UDP layer
@@ -221,6 +237,7 @@ s11_mme_thread (
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
@@ -302,11 +319,17 @@ s11_mme_init (
 
   bstring b = bfromcstr("s11_mme_teid_2_gtv2c_teid_handle");
   s11_mme_teid_2_gtv2c_teid_handle = hashtable_ts_create(mme_config_p->max_ues, HASH_TABLE_DEFAULT_HASH_FUNC, hash_free_int_func, b);
-  bdestroy(b);
+  bdestroy (b);
 
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: DONE\n");
   return ret;
 fail:
   OAILOG_DEBUG (LOG_S11, "Initializing S11 interface: FAILURE\n");
   return RETURNerror;
+}
+//------------------------------------------------------------------------------
+static void s11_mme_exit (void)
+{
+  nwGtpv2cFinalize (s11_mme_stack_handle);
+  hashtable_ts_destroy(s11_mme_teid_2_gtv2c_teid_handle);
 }

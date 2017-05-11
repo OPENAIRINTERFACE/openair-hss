@@ -98,10 +98,7 @@ main (
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
 
-  openlog(NULL, 0, LOG_DAEMON);
-
   if (! is_pid_file_lock_success(pid_file_name)) {
-    closelog();
     free_wrapper((void **) &pid_file_name);
     exit (-EDEADLK);
   }
@@ -113,15 +110,16 @@ main (
 #endif
 
 
+  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
   CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
-  /*
+  CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, NULL, NULL));  /*
    * Parse the command line for options and set the mme_config accordingly.
    */
   CHECK_INIT_RETURN (spgw_config_parse_opt_line (argc, argv, &spgw_config));
   /*
    * Calling each layer init function
    */
-  CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, NULL, NULL));
+
   MSC_INIT (MSC_SP_GW, THREAD_MAX + TASK_MAX);
   CHECK_INIT_RETURN (udp_init ());
   CHECK_INIT_RETURN (s11_sgw_init (&spgw_config.sgw_config));

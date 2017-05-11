@@ -26,32 +26,18 @@
  * of the authors and should not be interpreted as representing official policies,
  * either expressed or implied, of the FreeBSD Project.
  */
-// This task is mandatory and must always be placed in first position
-TASK_DEF(TASK_TIMER,    TASK_PRIORITY_MED, 128)
 
-// Other possible tasks in the process
+/*! \file itti_free_defined_msg.h
+  \brief
+  \author Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
 
-/// GTPV1-U task
-TASK_DEF(TASK_GTPV1_U,  TASK_PRIORITY_MED, 256)
-/// FW_IP task
-TASK_DEF(TASK_FW_IP,    TASK_PRIORITY_MED, 256)
-/// MME Applicative task
-TASK_DEF(TASK_MME_APP,  TASK_PRIORITY_MED, 256)
-/// NAS task
-TASK_DEF(TASK_NAS_MME,  TASK_PRIORITY_MED, 256)
-/// S11 task
-TASK_DEF(TASK_S11,      TASK_PRIORITY_MED, 256)
-/// S1AP task
-TASK_DEF(TASK_S1AP,     TASK_PRIORITY_MED, 256)
-/// S6a task
-TASK_DEF(TASK_S6A,      TASK_PRIORITY_MED, 256)
-/// SCTP task
-TASK_DEF(TASK_SCTP,     TASK_PRIORITY_MED, 256)
-/// Serving and Proxy Gateway Application task
-TASK_DEF(TASK_SPGW_APP, TASK_PRIORITY_MED, 256)
-/// UDP task
-TASK_DEF(TASK_UDP,      TASK_PRIORITY_MED, 256)
-//LOGGING TXT TASK
-TASK_DEF(TASK_LOG,      TASK_PRIORITY_MED, 1024)
-//GENERAL PURPOSE SHARED LOGGING TASK
-TASK_DEF(TASK_SHARED_TS_LOG, TASK_PRIORITY_MED, 1024)
+#ifndef FILE_ITTI_FREE_DEFINED_MSG_SEEN
+#define FILE_ITTI_FREE_DEFINED_MSG_SEEN
+
+
+void itti_free_msg_content (MessageDef * const message_p);
+
+#endif /* FILE_ITTI_FREE_DEFINED_MSG_SEEN */

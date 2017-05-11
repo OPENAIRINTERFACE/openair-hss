@@ -22,7 +22,7 @@
 
 /*! \file sctp_primitives_server.c
     \brief Main server primitives
-    \author Sebastien ROUX
+    \author Sebastien ROUX, Lionel GAUTHIER
     \date 2013
     \version 1.0
     @ingroup _sctp
@@ -45,6 +45,7 @@
 #include "log.h"
 #include "msc.h"
 #include "intertask_interface.h"
+#include "itti_free_defined_msg.h"
 #include "sctp_primitives_server.h"
 #include "conversions.h"
 #include "sctp_common.h"
@@ -538,8 +539,6 @@ void *sctp_receiver_thread (void *args_p)
   FD_ZERO (&read_fds);
   FD_SET (sctp_arg_p->sd, &master);
   fdmax = sctp_arg_p->sd;       /* so far, it's this one */
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     memcpy (&read_fds, &master, sizeof (master));
@@ -611,8 +610,6 @@ static void * sctp_intertask_interface (
     __attribute__ ((unused)) void *args_p)
 {
   itti_mark_task_ready (TASK_SCTP);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -663,13 +660,14 @@ static void * sctp_intertask_interface (
       break;
 
     case MESSAGE_TEST:{
-        //                 int i = 10000;
-        //                 while(i--);
+        OAI_FPRINTF_INFO("TASK_SCTP received MESSAGE_TEST\n");
       }
       break;
 
     case TERMINATE_MESSAGE:{
         sctp_exit();
+        itti_free_msg_content(received_message_p);
+        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
         itti_exit_task ();
       }
       break;
@@ -680,6 +678,7 @@ static void * sctp_intertask_interface (
       break;
     }
 
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
@@ -786,4 +785,5 @@ static void sctp_exit (void)
     free_wrapper ((void**) &sctp_assoc_p);
     sctp_desc.number_of_connections--;
   }
+  OAI_FPRINTF_INFO("TASK_SCTP terminated\n");
 }
