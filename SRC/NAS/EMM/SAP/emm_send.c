@@ -194,30 +194,16 @@ emm_send_attach_accept (
   switch (ue_ctx->attach_type) {
   case EMM_ATTACH_TYPE_COMBINED_EPS_IMSI:
     OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - Combined EPS/IMSI attach\n");
-    OAILOG_DEBUG (LOG_NAS_EMM,
-                  "EMMAS-SAP - Combined EPS/IMSI attach unsupported, "
-                  "defaulting to EPS attach\n");
-    emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS;
-    if (MAX > ue_ctx->additional_update_type) {
-      OAILOG_DEBUG (LOG_NAS_EMM,
-                    "EMMAS-SAP - Discovered additional update type\n");
-      size += EMM_CAUSE_MAXIMUM_LENGTH;
-      OAILOG_INFO (LOG_NAS_EMM,
-                   "EMMAS-SAP - size += EMM_CAUSE_MAXIMUM_LENGTH(%d)  (%d)\n",
-                   EMM_CAUSE_MAXIMUM_LENGTH, size);
-      if (SMS_ONLY == ue_ctx->additional_update_type) {
-        emm_msg->emmcause = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE;
-        emm_msg->presencemask |= ATTACH_ACCEPT_EMM_CAUSE_PRESENT;
-        OAILOG_INFO (LOG_NAS_EMM,
-                     "EMMAS-SAP - EMM CAUSE: CS DOMAIN NOT AVAILABLE\n");
-      } else {  // No additional information
-        // TODO: eventually handle this case differently?
-        emm_msg->emmcause = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE;
-        emm_msg->presencemask |= ATTACH_ACCEPT_EMM_CAUSE_PRESENT;
-        OAILOG_INFO (LOG_NAS_EMM,
-                     "EMMAS-SAP - EMM CAUSE: CS DOMAIN NOT AVAILABLE\n");
-      }
-    }
+    /* It is observed that UE/Handest (with usage setting = voice centric and voice domain preference = CS voice only) sends detach after
+     * successful attach .UEs with such settings sends attach type = combined EPS and IMSI attach as attach_type in
+     * attach request message. At present, EPC does not support interface with MSC /CS domain and it supports only LTE data service, hence it
+     * is supposed to send attach_result as EPS-only and add emm_cause = "CS domain not available" for such cases.
+     * Ideally in data service only n/w ,UE's usage setting should be set to data centric mode and should send attach type as EPS attach only. 
+     * However UE settings may not be in our control. To take care of this as a workaround in this patch we modified MME
+     * implementation to set EPS result to Combined attach if attach type is combined attach to prevent such UEs from
+     * sending detach so that such UEs can remain attached in the n/w and should be able to get data service from the n/w.
+     */
+    emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS_IMSI;
     break;
   case EMM_ATTACH_TYPE_RESERVED:
   default:
@@ -362,30 +348,16 @@ emm_send_attach_accept_dl_nas (
   switch (ue_ctx->attach_type) {
   case EMM_ATTACH_TYPE_COMBINED_EPS_IMSI:
     OAILOG_DEBUG (LOG_NAS_EMM, "EMMAS-SAP - Combined EPS/IMSI attach\n");
-    OAILOG_DEBUG (LOG_NAS_EMM,
-                  "EMMAS-SAP - Combined EPS/IMSI attach unsupported, "
-                  "defaulting to EPS attach\n");
-    emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS;
-    if (MAX > ue_ctx->additional_update_type) {
-      OAILOG_DEBUG (LOG_NAS_EMM,
-                    "EMMAS-SAP - Discovered additional update type\n");
-      size += EMM_CAUSE_MAXIMUM_LENGTH;
-      OAILOG_INFO (LOG_NAS_EMM,
-                   "EMMAS-SAP - size += EMM_CAUSE_MAXIMUM_LENGTH(%d)  (%d)\n",
-                   EMM_CAUSE_MAXIMUM_LENGTH, size);
-      if (SMS_ONLY == ue_ctx->additional_update_type) {
-        emm_msg->emmcause = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE;
-        emm_msg->presencemask |= ATTACH_ACCEPT_EMM_CAUSE_PRESENT;
-        OAILOG_INFO (LOG_NAS_EMM,
-                     "EMMAS-SAP - EMM CAUSE: CS DOMAIN NOT AVAILABLE\n");
-      } else {  // No additional information
-        // TODO: eventually handle this case differently?
-        emm_msg->emmcause = EMM_CAUSE_CS_DOMAIN_NOT_AVAILABLE;
-        emm_msg->presencemask |= ATTACH_ACCEPT_EMM_CAUSE_PRESENT;
-        OAILOG_INFO (LOG_NAS_EMM,
-                     "EMMAS-SAP - EMM CAUSE: CS DOMAIN NOT AVAILABLE\n");
-      }
-    }
+    /* It is observed that UE/Handest (with usage setting = voice centric and voice domain preference = CS voice only) sends detach after
+     * successful attach. UEs with such settings sends attach type = combined EPS and IMSI attach as attach_type in
+     * attach request message. At present, EPC does not support interface with MSC /CS domain and it supports only LTE data service, hence it
+     * is supposed to send attach_result as EPS-only and add emm_cause = "CS domain not available" for such cases. 
+     * Ideally in data service only n/w ,UE's usage setting should be set to data centric mode and should send attach type as EPS attach only. 
+     * However UE settings may not be in our control. To take care of this as a workaround in this patch we modified MME
+     * implementation to set EPS result to Combined attach if attach type is combined attach to prevent such UEs from
+     * sending detach so that such UEs can remain attached in the n/w and should be able to get data service from the n/w.
+     */
+    emm_msg->epsattachresult = EPS_ATTACH_RESULT_EPS_IMSI;
     break;
   case EMM_ATTACH_TYPE_RESERVED:
   default:
