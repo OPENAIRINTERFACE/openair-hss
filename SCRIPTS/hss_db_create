@@ -29,7 +29,7 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-. $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+. $THIS_SCRIPT_PATH/../build/tools/build_helper
 
 
 # arg 1 is mysql hostname  (ex: 127.0.0.1)
@@ -76,7 +76,7 @@ function main(){
   # test if tables have been created
   mysql -h $mysql_hostname -u $hss_username --password=$hss_password  -e "desc $database_name.users" > /dev/null 2>&1
   if [ $? -eq 1 ]; then 
-    mysql -h $mysql_hostname -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/SRC/OAI_HSS/db/$database_name.sql
+    mysql -h $mysql_hostname -u $hss_username --password=$hss_password $database_name < $OPENAIRCN_DIR/src/OAI_hss/db/$database_name.sql
     if [ $? -ne 0 ]; then
       echo_error "HSS: $database_name tables creation failed"
       return 1

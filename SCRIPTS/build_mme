@@ -29,7 +29,7 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+source $THIS_SCRIPT_PATH/../build/tools/build_helper
 
 function help()
 {
@@ -124,15 +124,15 @@ function main()
   fi
   
   set_openair_env 
-  $SUDO cp -uv  $OPENAIRCN_DIR/SCRIPTS/mme_test_s1_pcap2pdml /usr/local/bin
+  $SUDO cp -uv  $OPENAIRCN_DIR/scripts/mme_test_s1_pcap2pdml /usr/local/bin
   $SUDO chmod 755 /usr/local/bin/mme_test_s1_pcap2pdml
    
-  $SUDO cp -uv  $OPENAIRCN_DIR/SCRIPTS/test_epc              /usr/local/bin
+  $SUDO cp -uv  $OPENAIRCN_DIR/scripts/test_epc              /usr/local/bin
   $SUDO chmod 755 /usr/local/bin/test_epc 
   
   $SUDO mkdir -p -m 755 /usr/share/oai/xsl
-  $SUDO cp -upv  $OPENAIRCN_DIR/SRC/TEST/SCENARIOS/play_scenario.xsl    /usr/share/oai/xsl
-  $SUDO cp -upv  $OPENAIRCN_DIR/SRC/TEST/SCENARIOS/generic_scenario.xsl /usr/share/oai/xsl
+  $SUDO cp -upv  $OPENAIRCN_DIR/src/test/scenarios/play_scenario.xsl    /usr/share/oai/xsl
+  $SUDO cp -upv  $OPENAIRCN_DIR/src/test/scenarios/generic_scenario.xsl /usr/share/oai/xsl
   
 
 
@@ -141,7 +141,7 @@ function main()
   fi
   
 
-  local dlog=$OPENAIRCN_DIR/BUILD/LOG
+  local dlog=$OPENAIRCN_DIR/build/log
   
   mkdir -m 777 -p $dlog
   
@@ -152,28 +152,28 @@ function main()
   ##############################################################################
   # Clean
   ##############################################################################
-  cd $OPENAIRCN_DIR/BUILD/MME
+  cd $OPENAIRCN_DIR/build/mme
   if [ $clean -ne 0 ]; then
     if [[ $verbose -eq 1 ]]; then
       echo "Cleaning MME: generated configuration files, obj files, mme executable"
     fi
-    rm -Rf $OPENAIRCN_DIR/BUILD/MME/BUILD  2>&1
-    mkdir -m 777 -p -v BUILD
+    rm -Rf $OPENAIRCN_DIR/build/mme/build  2>&1
+    mkdir -m 777 -p -v build
   fi
 
   
   ##############################################################################
   # Compile MME
   ##############################################################################
-  cd $OPENAIRCN_DIR/BUILD/MME
-  if [ ! -d ./BUILD ]; then
-    mkdir -m 777 -p -v BUILD
+  cd $OPENAIRCN_DIR/build/mme
+  if [ ! -d ./build ]; then
+    mkdir -m 777 -p -v build
   fi
   cmake_file=./CMakeLists.txt
-  cp $OPENAIRCN_DIR/BUILD/MME/CMakeLists.template $cmake_file
+  cp $OPENAIRCN_DIR/build/mme/CMakeLists.template $cmake_file
   echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
   
-  cd ./BUILD
+  cd ./build
   cmake  $cmake_args .. > /dev/null 
   
   compilations MME mme mme
@@ -185,14 +185,14 @@ function main()
   if [ $daemon -ne 0 ]; then
     # TODO /usr/sbin ?
     do_stop_daemon
-    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/mme /usr/sbin/mmed && echo_success "mmed installed"
+    $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/sbin/mmed && echo_success "mmed installed"
   else
     $SUDO killall -q mme
-    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/mme /usr/local/bin && echo_success "mme installed" 
+    $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin && echo_success "mme installed" 
   fi 
   
   compilations MME auth_request auth_request 
-  $SUDO cp -upv $OPENAIRCN_DIR/BUILD/MME/BUILD/auth_request /usr/local/bin/ && echo_success "auth_request installed"
+  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/auth_request /usr/local/bin/ && echo_success "auth_request installed"
   
 }
 

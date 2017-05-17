@@ -37,12 +37,12 @@ endif( NOT DEFINED OPENAIRCN_DIR)
 
 
 
-set(OPENAIR_CMAKE_SCRIPTS ${OPENAIRCN_DIR}/BUILD/TOOLS)
-set(OAI_HSS_DIR           ${OPENAIRCN_DIR}/SRC/OAI_HSS)
-set(OPENAIR_BIN_DIR       ${OPENAIRCN_DIR}/SRC/OAI_HSS)
+set(OPENAIR_CMAKE_SCRIPTS ${OPENAIRCN_DIR}/build/tools)
+set(OAI_HSS_DIR           ${OPENAIRCN_DIR}/src/oai_hss)
+set(OPENAIR_BIN_DIR       ${OPENAIRCN_DIR}/src/oai_hss)
 
 
-set(CMAKE_MODULE_PATH "${OPENAIRCN_DIR}/BUILD/MODULES" "${CMAKE_MODULE_PATH}")
+set(CMAKE_MODULE_PATH "${OPENAIRCN_DIR}/build/modules" "${CMAKE_MODULE_PATH}")
 
 macro(add_boolean_option name val helpstr)
   if(DEFINED ${name})

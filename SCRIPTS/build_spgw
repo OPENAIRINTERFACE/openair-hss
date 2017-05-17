@@ -29,7 +29,7 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+source $THIS_SCRIPT_PATH/../build/tools/build_helper
 
 function help()
 {
@@ -119,7 +119,7 @@ function main()
   
   set_openair_env 
   
-  local dlog=$OPENAIRCN_DIR/BUILD/LOG
+  local dlog=$OPENAIRCN_DIR/build/log
   
   mkdir -m 777 -p $dlog
   
@@ -127,36 +127,36 @@ function main()
   ##############################################################################
   # Clean
   ##############################################################################
-  cd $OPENAIRCN_DIR/BUILD/SPGW
+  cd $OPENAIRCN_DIR/build/spgw
   if [ $clean -ne 0 ]; then
     if [[ $verbose -eq 1 ]]; then
       echo "Cleaning S/P-GW: generated configuration files, obj files, spgw executable"
     fi
-    rm -f $OPENAIRCN_DIR/OAI_SGW/spgw
-    rm -Rf $OPENAIRCN_DIR/BUILD/SPGW/BUILD  2>&1
-    mkdir -m 777 -p -v BUILD
+    rm -f $OPENAIRCN_DIR/oai_sgw/spgw
+    rm -Rf $OPENAIRCN_DIR/build/spgw/build  2>&1
+    mkdir -m 777 -p -v build
   fi
   
   ##############################################################################
   # Compile S/P-GW
   ##############################################################################
-  cd $OPENAIRCN_DIR/BUILD/SPGW
-  if [ ! -d ./BUILD ]; then
-    mkdir -m 777 -p -v BUILD
+  cd $OPENAIRCN_DIR/build/spgw
+  if [ ! -d ./build ]; then
+    mkdir -m 777 -p -v build
   fi
   cmake_file=./CMakeLists.txt
-  cp $OPENAIRCN_DIR/BUILD/SPGW/CMakeLists.template $cmake_file
+  cp $OPENAIRCN_DIR/build/spgw/CMakeLists.template $cmake_file
   echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
   
-  cd ./BUILD
+  cd ./build
   cmake  $cmake_args .. > /dev/null 
   
   compilations SPGW spgw spgw
   if [ $daemon -ne 0 ]; then
     # TODO /usr/sbin ?
-    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/SPGW/BUILD/spgw /usr/sbin/spgwd && echo_success "spgwd installed"
+    $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/sbin/spgwd && echo_success "spgwd installed"
   else
-    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/SPGW/BUILD/spgw /usr/local/bin && echo_success "spgw installed"
+    $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/local/bin && echo_success "spgw installed"
   fi
 }
 

@@ -29,7 +29,7 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/TOOLS/build_helper
+source $THIS_SCRIPT_PATH/tools/build_helper
 
 function help()
 {

@@ -31,7 +31,7 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+source $THIS_SCRIPT_PATH/../build/tools/build_helper
 declare -i g_run_msc_gen=0
 declare    g_msc_dir="/tmp"
 declare    g_mme_default_config_file="/usr/local/etc/oai/mme.conf"
@@ -54,7 +54,7 @@ function help()
   echo_error "  -G, --gdb-cmd         cmd cmd_arg   Append this GDB cmd to GDB command file (ex1: break Attach.c:272, ex2: watch 0xffee0002)."
   echo_error "                                      All repetitions of this argument are valid."
   echo_error "  -h, --help                          Print this help."
-  echo_error "  -I, --install-mme-files             Install MME config files. (NOT RECOMMENDED. See tutorials on https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or DOCS/EPC_User_Guide.pdf"
+  echo_error "  -I, --install-mme-files             Install MME config files. (NOT RECOMMENDED. See tutorials on https://gitlab.eurecom.fr/oai/openairinterface5g/wikis/OpenAirUsage or docs/EPC_User_Guide.pdf"
   echo_error "  -k, --kill                          Kill all running MME instances, exit script then."
   echo_error "  -m, --mscgen          directory     Generate mscgen output files in a directory"
   echo_error "  -v, --verbosity-level               Verbosity level (0,1,2)."
@@ -181,19 +181,19 @@ function main()
     $SUDO mkdir -p /usr/local/etc/oai/freeDiameter > /dev/null
   
     if [ ! -f /usr/local/etc/oai/mme.conf ]; then
-      $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/mme.conf    /usr/local/etc/oai
+      $SUDO cp -upv $THIS_SCRIPT_PATH/../etc/mme.conf    /usr/local/etc/oai
       echo_fatal "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
     else
-      if [  $THIS_SCRIPT_PATH/../ETC/mme.conf -nt  /usr/local/etc/oai/mme.conf ]; then
-        read -p "Do you want to update /usr/local/etc/oai/mme.conf with $OPENAIRCN_DIR/ETC/mme.conf ? <y/N> " prompt
+      if [  $THIS_SCRIPT_PATH/../etc/mme.conf -nt  /usr/local/etc/oai/mme.conf ]; then
+        read -p "Do you want to update /usr/local/etc/oai/mme.conf with $OPENAIRCN_DIR/etc/mme.conf ? <y/N> " prompt
         if [[ $prompt =~ [yY](es)* ]]; then
-          $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/mme.conf    /usr/local/etc/oai
+          $SUDO cp -upv $THIS_SCRIPT_PATH/../etc/mme.conf    /usr/local/etc/oai
           echo_fatal "Please customize /usr/local/etc/oai/mme.conf (interfaces, TAIs, GUMMEI, HSS hostname, SGW IP address, logging, etc), after, please re-run run_mme -I"
         fi
       fi
     fi 
   
-    $SUDO cp -upv $THIS_SCRIPT_PATH/../ETC/mme_fd.conf /usr/local/etc/oai/freeDiameter
+    $SUDO cp -upv $THIS_SCRIPT_PATH/../etc/mme_fd.conf /usr/local/etc/oai/freeDiameter
     echo_warning "Be carefull /usr/local/etc/oai/freeDiameter/mme_fd.conf has realm, freeDiameter identity, HSS "
     echo_warning "IPv4 address, HSS realm, HSS FQDN, all hardcoded, please check them and change them upon your needs."
   
@@ -207,8 +207,8 @@ function main()
     # generate certificates if necessary
     echo_warning "Generating MME certificates using MME FQDN $fqdn, if you want to use an other"
     echo_warning "FQDN, please modify mme_fd.conf, /etc/hosts consistently and then "
-    echo_warning "re-run $OPENAIRCN_DIR/SCRIPTS/check_mme_s6a_certificate /usr/local/etc/oai/freeDiameter $fqdn consistently"
-    $SUDO $OPENAIRCN_DIR/SCRIPTS/check_mme_s6a_certificate /usr/local/etc/oai/freeDiameter $fqdn
+    echo_warning "re-run $OPENAIRCN_DIR/scripts/check_mme_s6a_certificate /usr/local/etc/oai/freeDiameter $fqdn consistently"
+    $SUDO $OPENAIRCN_DIR/scripts/check_mme_s6a_certificate /usr/local/etc/oai/freeDiameter $fqdn
   fi
 
   #####################################

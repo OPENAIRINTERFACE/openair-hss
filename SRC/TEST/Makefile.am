@@ -20,23 +20,23 @@
 ################################################################################
 AM_CFLAGS = @ADD_CFLAGS@ \
 	@CHECK_CFLAGS@	\
-	-I$(top_srcdir)/COMMON	\
-	-I$(top_srcdir)/GTPV1-U			\
-	-I$(top_srcdir)/GTPV1-U/nw-gtpv1u/include	\
-	-I$(top_srcdir)/GTPV1-U/nw-gtpv1u/shared	\
-	-I$(top_srcdir)/SCTP			\
+	-I$(top_srcdir)/common	\
+	-I$(top_srcdir)/gtpv1-u			\
+	-I$(top_srcdir)/gtpv1-u/nw-gtpv1u/include	\
+	-I$(top_srcdir)/gtpv1-u/nw-gtpv1u/shared	\
+	-I$(top_srcdir)/sctp			\
 	-I$(top_srcdir)/INTERTASK_INTERFACE	\
 	-I$(top_srcdir)/IPV4			\
-	-I$(top_builddir)/S1AP/MESSAGES	\
-	-I$(top_builddir)/S1AP			\
-	-I$(top_srcdir)/S1AP			\
-	-I$(top_srcdir)/SECU			\
-	-I$(top_srcdir)/S6A			\
-	-I$(top_srcdir)/SGW-LITE		\
-	-I$(top_srcdir)/UDP			\
-	-I$(top_srcdir)/UTILS			\
-	-I$(top_srcdir)/UTILS/TIMER		\
-	-I$(top_srcdir)/UTILS/HASTABLE
+	-I$(top_builddir)/s1ap/messages 	\
+	-I$(top_builddir)/s1ap			\
+	-I$(top_srcdir)/s1ap			\
+	-I$(top_srcdir)/secu			\
+	-I$(top_srcdir)/s6a			\
+	-I$(top_srcdir)/sgw-LITE		\
+	-I$(top_srcdir)/udp			\
+	-I$(top_srcdir)/utils			\
+	-I$(top_srcdir)/utils/TIMER		\
+	-I$(top_srcdir)/utils/HASTABLE
 
 if HAVE_CHECK
 TESTS =	\
@@ -59,9 +59,9 @@ libtest_util_la_SOURCES = \
 
 noinst_LTLIBRARIES = libtest_util.la 
 
-common_ldadd = 	$(top_builddir)/SECU/libsecu.la	\
+common_ldadd = 	$(top_builddir)/secu/libsecu.la	\
 	libtest_util.la	\
-	$(top_builddir)/UTILS/libutils.la	\
+	$(top_builddir)/utils/libutils.la	\
 	@CHECK_LIBS@
 
 check_PROGRAMS =	\
@@ -107,13 +107,13 @@ test_aes128_cmac_encrypt_LDADD =	\
 	$(common_ldadd)
 
 test_s1ap_LDADD = libtest_util.la	\
- 	$(top_builddir)/S1AP/libs1ap.la
+ 	$(top_builddir)/s1ap/libs1ap.la
 # 
  test_s1ap_SOURCES = test_s1ap.c	\
- 	$(top_srcdir)/S1AP/s1ap_eNB_decoder.c \
- 	$(top_srcdir)/S1AP/s1ap_eNB_decoder.h \
- 	$(top_srcdir)/S1AP/s1ap_eNB_encoder.c \
- 	$(top_srcdir)/S1AP/s1ap_eNB_encoder.h
+ 	$(top_srcdir)/s1ap/s1ap_eNB_decoder.c \
+ 	$(top_srcdir)/s1ap/s1ap_eNB_decoder.h \
+ 	$(top_srcdir)/s1ap/s1ap_eNB_encoder.c \
+ 	$(top_srcdir)/s1ap/s1ap_eNB_encoder.h
  
  test_secu_kenb_SOURCES = test_secu_kenb.c
  test_secu_knas_SOURCES = test_secu_knas.c

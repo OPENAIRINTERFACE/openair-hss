@@ -1,5 +1,5 @@
-$OPENAIRCN_DIR/SCRIPTS/run_mme  >& $OPENAIRCN_TESTDIR/MME_out.log &
-$OPENAIRCN_DIR/SCRIPTS/run_spgw -r >& $OPENAIRCN_TESTDIR/SPGW_out.log &
+$OPENAIRCN_DIR/scripts/run_mme  >& $OPENAIRCN_TESTDIR/mme_out.log &
+$OPENAIRCN_DIR/scripts/run_spgw -r >& $OPENAIRCN_TESTDIR/spgw_out.log &
 
 while true; do 
  sleep 1

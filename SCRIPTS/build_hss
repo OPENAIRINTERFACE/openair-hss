@@ -29,7 +29,7 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+source $THIS_SCRIPT_PATH/../build/tools/build_helper
 
 
 
@@ -137,35 +137,35 @@ function main()
   fi
 
 
-  local dlog=$OPENAIRCN_DIR/BUILD/LOG
-  local dconf=OPENAIRCN_DIR/OAI_HSS
+  local dlog=$OPENAIRCN_DIR/build/log
+  local dconf=OPENAIRCN_DIR/oai_hss
   
   mkdir -m 777 -p $dlog $dlog
 
 
   cmake_args="$cmake_args -DOPENAIRCN_DIR=$OPENAIRCN_DIR"
 
-  cd $OPENAIRCN_DIR/BUILD/HSS
+  cd $OPENAIRCN_DIR/build/hss
   if [ $clean -ne 0 ]; then
     if [[ $verbose -eq 1 ]]; then
       echo "Cleaning HSS"
     fi
-    rm -Rf BUILD 2>&1
-    mkdir -m 777 -p -v BUILD
+    rm -Rf build 2>&1
+    mkdir -m 777 -p -v build
   fi
-  if [ ! -d ./BUILD ]; then
-    mkdir -m 777 -p -v BUILD
+  if [ ! -d ./build ]; then
+    mkdir -m 777 -p -v build
   fi
-  cd ./BUILD
+  cd ./build
   cmake  $cmake_args .. > /dev/null 
   make $make_args
   chmod -f 777 *
   if [ $daemon -ne 0 ]; then
     do_stop_daemon
-    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/HSS/BUILD/oai_hss /usr/sbin/oai_hssd && echo_success "oai_hssd installed"
+    $SUDO cp -upv $OPENAIRCN_DIR/build/hss/build/oai_hss /usr/sbin/oai_hssd && echo_success "oai_hssd installed"
   else
     $SUDO killall -q oai_hss
-    $SUDO cp -upv $OPENAIRCN_DIR/BUILD/HSS/BUILD/oai_hss /usr/local/bin/ && echo_success "oai_hss installed"
+    $SUDO cp -upv $OPENAIRCN_DIR/build/hss/build/oai_hss /usr/local/bin/ && echo_success "oai_hss installed"
   fi
 }
 

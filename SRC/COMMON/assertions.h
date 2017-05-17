@@ -30,6 +30,6 @@
 #ifndef FILE_COMMON_ASSERTIONS_SEEN
 #define FILE_COMMON_ASSERTIONS_SEEN
 
-#include "./ITTI/assertions.h"
+#include "./itti/assertions.h"
 
 #endif /* FILE_COMMON_ASSERTIONS_SEEN */

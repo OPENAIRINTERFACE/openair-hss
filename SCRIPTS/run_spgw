@@ -31,7 +31,7 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../BUILD/TOOLS/build_helper
+source $THIS_SCRIPT_PATH/../build/tools/build_helper
 declare -i g_run_msc_gen=0
 declare    g_msc_dir="/tmp"
 declare    g_spgw_default_config_file="/usr/local/etc/oai/spgw.conf"
