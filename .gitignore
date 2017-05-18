@@ -1,6 +1,7 @@
-build/epc/build/
-build/epc/CMakeLists.txt
-build/epc/epc.conf.in.orig
+build/mme/build/
+build/mme/CMakeLists.txt
+build/spgw/build/
+build/spgw/CMakeLists.txt
 build/hss/build/
 build/log/
 scripts/abort

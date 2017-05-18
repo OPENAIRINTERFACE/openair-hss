@@ -294,7 +294,7 @@ set(asn1_generated_dir ${OPENAIRCN_BIN_DIR})
 add_list1_option(S1AP_VERSION R10 "S1AP Asn.1 grammar version" R8 R9 R10)
 
 set(S1AP_DIR ${OPENAIRCN_DIR}/src/s1ap)
-set(ASN1RELDIR R10.5)
+set(ASN1RELDIR r10.5)
 
 set(S1AP_ASN_DIR ${S1AP_DIR}/messages/asn1/${ASN1RELDIR})
 set(S1AP_ASN_FILES
@@ -320,7 +320,7 @@ set(s1ap_h ${s1ap_h} )
 add_custom_command (
   OUTPUT ${S1AP_OAI_generated}
   COMMAND ${asn1c_call} ${S1AP_C_DIR} ${S1AP_ASN_FILES}
-  COMMAND python ${S1AP_DIR}/messages/asn1/asn1tostruct.py -f${S1AP_ASN_DIR}/s1ap-PDU-Contents.asn -o${S1AP_C_DIR}
+  COMMAND python ${S1AP_DIR}/messages/asn1/asn1tostruct.py -f${S1AP_ASN_DIR}/S1AP-PDU-Contents.asn -o${S1AP_C_DIR}
   DEPENDS ${S1AP_ASN_FILES}
   )
 add_library(S1AP_LIB
@@ -366,7 +366,7 @@ include_directories("${OPENAIRCN_BIN_DIR}")
 ###############################################################################
 
 include_directories("${OPENAIRCN_DIR}/src/common")
-include_directories("${OPENAIRCN_DIR}/src/utilS")
+include_directories("${OPENAIRCN_DIR}/src/utils")
 
 include_directories("${OPENAIRCN_DIR}/src/common/itti")
 include_directories("${OPENAIRCN_DIR}/src/nas/")
@@ -386,7 +386,7 @@ include_directories("${OPENAIRCN_DIR}/src/utils/lfds/liblfds6.1.1/liblfds611/inc
 include_directories("${OPENAIRCN_DIR}/src/utils/msc")
 include_directories("${OPENAIRCN_DIR}/src/utils/bstr")
 include_directories("${OPENAIRCN_DIR}/src/sgw")
-include_directories("${OPENAIRCN_DIR}/src/mme_APP")
+include_directories("${OPENAIRCN_DIR}/src/mme_app")
 include_directories("${OPENAIRCN_DIR}/src/s6a")
 include_directories("${OPENAIRCN_DIR}/SRC")
 
@@ -529,7 +529,7 @@ add_library (SGW
   ${SGW_DIR}/pgw_pco.c
   )
 
-set(MME_DIR ${OPENAIRCN_DIR}/src/mme_APP)
+set(MME_DIR ${OPENAIRCN_DIR}/src/mme_app)
 add_library(MME_APP
   ${MME_DIR}/mme_app_capabilities.c
   ${MME_DIR}/mme_app_context.c
@@ -920,7 +920,7 @@ ENDIF( EPC_BUILD OR MME_BUILD )
 
 enable_testing()
 
-add_subdirectory(${OPENAIRCN_DIR}/src/test/ ${CMAKE_CURRENT_BINARY_DIR}/testS/)
+add_subdirectory(${OPENAIRCN_DIR}/src/test/ ${CMAKE_CURRENT_BINARY_DIR}/tests/)
 
 add_test(NAME test_imsi_convert COMMAND test_mme_app_ue_context_imsi)
 

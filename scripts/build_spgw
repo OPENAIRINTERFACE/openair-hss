@@ -19,7 +19,7 @@
 # For more information about the OpenAirInterface (OAI) Software Alliance:
 #      contact@openairinterface.org
 ################################################################################
-# file build_mme
+# file build_spgw
 # brief
 # author Lionel Gauthier
 # company Eurecom
@@ -34,37 +34,31 @@ source $THIS_SCRIPT_PATH/../build/tools/build_helper
 function help()
 {
   echo_error " "
-  echo_error "Usage: build_mme [OPTION]..."
-  echo_error "Build the MME executable."
+  echo_error "Usage: build_spgw [OPTION]..."
+  echo_error "Build the SPGW executable."
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
-  echo_error "  -D, --daemon                              Build MME as a daemon."
+  echo_error "  -D, --daemon                              Build S/P-GW as a daemon."
   echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
-  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run MME (support Ubuntu 14.04, 15.10)."
-  echo_error "  -u, --unit-tests                          Trigger unit tests."
+  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run S/P-GW (support Ubuntu 14.04)."
   echo_error "  -v, --verbose                             Build process verbose."
   echo_error " "
 }
 
 
-NAME=mmed
-DAEMON=/usr/sbin/$NAME
-DAEMON_ARGS=""
-PIDFILE=/var/run/$NAME.pid
 
 function main()
 {
   local -i clean=0
   local -i daemon=0
   local -i force=0
-  local -i unit_tests=0
   local -i verbose=0
   local -i var_check_install_oai_software=0
   local    cmake_args=" "
-  local    make_args="-j`nproc`"
+  export make_args="-j`nproc`"
 
 
   until [ -z "$1" ]
@@ -78,7 +72,7 @@ function main()
       -D | --daemon)
         daemon=1
         cmake_args="$cmake_args -DDAEMONIZE=1"
-        echo "Build MME as a daemon"
+        echo "Build S/P-GW as a daemon"
         shift;
         ;;
       -f | --force)
@@ -92,14 +86,9 @@ function main()
         exit 0
         ;;
       -i | --check-installed-software)
-        echo "Check installed software packages necessary to build and run EPC (support Ubuntu 14.04, 15.10):"
+        echo "Check installed software packages necessary to build and run S/P-GW (support Ubuntu 14.04):"
         set_openair_env
         var_check_install_oai_software=1
-        shift;
-        ;;
-      -u | --unit-tests)
-        echo "Unit tests triggered"
-        unit_tests=1
         shift;
         ;;
       -v | --verbose)
@@ -116,87 +105,60 @@ function main()
         ;;
     esac
   done
+
+  
+  if [ ! -d /usr/local/etc/oai/freeDiameter ]; then
+    $SUDO mkdir -p /usr/local/etc/oai/freeDiameter
+  fi
   
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
-    check_install_mme_software  $force
+    check_install_spgw_software  $force
     exit 0
   fi
   
   set_openair_env 
-  $SUDO cp -uv  $OPENAIRCN_DIR/scripts/mme_test_s1_pcap2pdml /usr/local/bin
-  $SUDO chmod 755 /usr/local/bin/mme_test_s1_pcap2pdml
-   
-  $SUDO cp -uv  $OPENAIRCN_DIR/scripts/test_epc              /usr/local/bin
-  $SUDO chmod 755 /usr/local/bin/test_epc 
   
-  $SUDO mkdir -p -m 755 /usr/share/oai/xsl
-  $SUDO cp -upv  $OPENAIRCN_DIR/src/test/scenarios/play_scenario.xsl    /usr/share/oai/xsl
-  $SUDO cp -upv  $OPENAIRCN_DIR/src/test/scenarios/generic_scenario.xsl /usr/share/oai/xsl
-  
-
-
-  if [[ $verbose -eq 1 ]]; then
-    cecho "OPENAIRCN_DIR    = $OPENAIRCN_DIR" $green
-  fi
-  
-
   local dlog=$OPENAIRCN_DIR/build/log
   
   mkdir -m 777 -p $dlog
   
-  if [ ! -d /usr/local/etc/oai ]; then
-    $SUDO mkdir -p /usr/local/etc/oai/freeDiameter
-  fi
   
   ##############################################################################
   # Clean
   ##############################################################################
-  cd $OPENAIRCN_DIR/build/mme
+  cd $OPENAIRCN_DIR/build/spgw
   if [ $clean -ne 0 ]; then
     if [[ $verbose -eq 1 ]]; then
-      echo "Cleaning MME: generated configuration files, obj files, mme executable"
+      echo "Cleaning S/P-GW: generated configuration files, obj files, spgw executable"
     fi
-    rm -Rf $OPENAIRCN_DIR/build/mme/build  2>&1
+    rm -f $OPENAIRCN_DIR/oai_sgw/spgw
+    rm -Rf $OPENAIRCN_DIR/build/spgw/build  2>&1
     mkdir -m 777 -p -v build
   fi
-
   
   ##############################################################################
-  # Compile MME
+  # Compile S/P-GW
   ##############################################################################
-  cd $OPENAIRCN_DIR/build/mme
+  cd $OPENAIRCN_DIR/build/spgw
   if [ ! -d ./build ]; then
     mkdir -m 777 -p -v build
   fi
   cmake_file=./CMakeLists.txt
-  cp $OPENAIRCN_DIR/build/mme/CMakeLists.template $cmake_file
+  cp $OPENAIRCN_DIR/build/spgw/CMakeLists.template $cmake_file
   echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
   
   cd ./build
   cmake  $cmake_args .. > /dev/null 
   
-  compilations MME mme mme
-
-  if [ $unit_tests -ne 0 ]; then
-    make_test MME mme mme $verbose
-  fi 
-
+  compilations spgw spgw spgw
   if [ $daemon -ne 0 ]; then
     # TODO /usr/sbin ?
-    do_stop_daemon
-    $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/sbin/mmed && echo_success "mmed installed"
+    $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/sbin/spgwd && echo_success "spgwd installed"
   else
-    $SUDO killall -q mme
-    $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin && echo_success "mme installed" 
-  fi 
-  
-  compilations MME auth_request auth_request 
-  $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/auth_request /usr/local/bin/ && echo_success "auth_request installed"
-  
+    $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/local/bin && echo_success "spgw installed"
+  fi
 }
 
 
 main "$@"
-
-
