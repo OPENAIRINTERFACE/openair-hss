@@ -365,6 +365,8 @@ mme_app_handle_conn_est_cnf (
                ue_context_p->ue_radio_cap_length ? "yes" : "no");
   establishment_cnf_p->ue_radio_cap_length = ue_context_p->ue_radio_cap_length;
   if (establishment_cnf_p->ue_radio_cap_length) {
+    establishment_cnf_p->ue_radio_capabilities = 
+                (uint8_t*) calloc (establishment_cnf_p->ue_radio_cap_length, sizeof *establishment_cnf_p->ue_radio_capabilities);
     memcpy (establishment_cnf_p->ue_radio_capabilities,
             ue_context_p->ue_radio_capabilities,
             establishment_cnf_p->ue_radio_cap_length);

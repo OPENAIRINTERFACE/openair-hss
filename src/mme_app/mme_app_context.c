@@ -59,6 +59,7 @@ ue_context_t *mme_create_new_ue_context (void)
   // Initialize timers to INVALID IDs
   new_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
   new_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  new_p->ue_radio_cap_length = 0;
   return new_p;
 }
 
@@ -116,6 +117,7 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context_p)
   if (ue_context_p->ue_radio_capabilities) {
     free_wrapper((void**) &(ue_context_p->ue_radio_capabilities));
   }
+  ue_context_p->ue_radio_cap_length = 0;
   // int                    pending_pdn_connectivity_req_pti;
   // unsigned               pending_pdn_connectivity_req_ue_id;
   // network_qos_t          pending_pdn_connectivity_req_qos;

@@ -32,6 +32,7 @@
 #include "intertask_interface.h"
 #include "mme_app_defs.h"
 #include "assertions.h"
+#include "dynamic_memory_check.h"
 
 int
 mme_app_handle_s1ap_ue_capabilities_ind (
@@ -56,20 +57,28 @@ mme_app_handle_s1ap_ue_capabilities_ind (
   ue_context_p->ue_radio_cap_length =
     s1ap_ue_cap_ind_pP->radio_capabilities_length;
 
-  // Allocate the radio capabilities memory. Note that this takes care of the
-  // length = 0 case for us quite nicely.
+  if (ue_context_p->ue_radio_cap_length == 0) {
+    OAILOG_ERROR (
+      LOG_MME_APP,
+      "Received UE Radio Capability len = 0 for enb_ue_s1ap_ue_id " ENB_UE_S1AP_ID_FMT
+      " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+      s1ap_ue_cap_ind_pP->enb_ue_s1ap_id, s1ap_ue_cap_ind_pP->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  DevAssert (s1ap_ue_cap_ind_pP->radio_capabilities);
   ue_context_p->ue_radio_capabilities =
-    (char*)calloc(ue_context_p->ue_radio_cap_length,
+    (uint8_t*)calloc(ue_context_p->ue_radio_cap_length,
                   sizeof *ue_context_p->ue_radio_capabilities);
 
-  if (ue_context_p->ue_radio_cap_length) {
+  if (ue_context_p->ue_radio_capabilities) {
     memcpy(ue_context_p->ue_radio_capabilities,
            s1ap_ue_cap_ind_pP->radio_capabilities,
            ue_context_p->ue_radio_cap_length);
-  }
-  OAILOG_DEBUG (LOG_MME_APP,
-               "UE radio capabilities of length %d found and cached\n",
+    OAILOG_DEBUG (LOG_MME_APP,
+               "UE radio capabilities of length %d received and cached in ue context\n",
                ue_context_p->ue_radio_cap_length);
+  }
+  free_wrapper((void**) &(s1ap_ue_cap_ind_pP->radio_capabilities));
 
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
 }
