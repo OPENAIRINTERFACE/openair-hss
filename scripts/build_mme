@@ -120,6 +120,7 @@ function main()
   if [ $var_check_install_oai_software -gt 0 ];then
     update_package_db
     check_install_mme_software  $force
+    echo "MME not compiled, to compile it, re-run build_mme without -i option"
     exit 0
   fi
   
