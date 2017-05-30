@@ -57,6 +57,8 @@ hash_table_ts_t g_s1ap_mme_id2assoc_id_coll = {.mutex = PTHREAD_MUTEX_INITIALIZE
 static int                              indent = 0;
  void *s1ap_mme_thread (void *args);
 
+static void s1ap_mme_exit(void);
+
 //------------------------------------------------------------------------------
 static int s1ap_send_init_sctp (void)
 {
@@ -90,6 +92,7 @@ s1ap_mme_thread (
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
+    MessagesIds                             message_id = MESSAGES_ID_MAX;
     /*
      * Trying to fetch a message from the message queue.
      * * * * If the queue is empty, this function will block till a
@@ -114,11 +117,16 @@ s1ap_mme_thread (
         /*
          * Invoke S1AP message decoder
          */
-        if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).payload) < 0) {
+        if (s1ap_mme_decode_pdu (&message, SCTP_DATA_IND (received_message_p).payload, &message_id) < 0) {
           // TODO: Notify eNB of failure with right cause
           OAILOG_ERROR (LOG_S1AP, "Failed to decode new buffer\n");
         } else {
-          s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id, SCTP_DATA_IND (received_message_p).stream, &message);
+          s1ap_mme_handle_message (SCTP_DATA_IND (received_message_p).assoc_id,
+                                   SCTP_DATA_IND (received_message_p).stream, &message);
+        }
+
+        if (message_id != MESSAGES_ID_MAX) {
+          s1ap_free_mme_decode_pdu(&message, message_id);
         }
 
         /*
@@ -194,6 +202,7 @@ s1ap_mme_thread (
       break;
 
     case TERMINATE_MESSAGE:{
+        s1ap_mme_exit();
         itti_exit_task ();
       }
       break;
@@ -607,5 +616,15 @@ s1ap_remove_enb (
   hashtable_ts_destroy(&enb_ref->ue_coll);
   hashtable_ts_free (&g_s1ap_enb_coll, enb_ref->sctp_assoc_id);
   nb_enb_associated--;
+}
+
+void
+s1ap_mme_exit(void) {
+  if (hashtable_ts_destroy(&g_s1ap_enb_coll) != HASH_TABLE_OK) {
+    OAI_FPRINTF_ERR("An error occured while destroying s1 eNB hash table");
+  }
+  if (hashtable_ts_destroy(&g_s1ap_mme_id2assoc_id_coll) != HASH_TABLE_OK) {
+    OAI_FPRINTF_ERR("An error occured while destroying assoc_id hash table");
+  }
 }
 

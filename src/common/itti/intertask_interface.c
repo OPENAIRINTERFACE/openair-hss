@@ -83,7 +83,7 @@ const int                               itti_debug = ITTI_DEBUG_ISSUES | ITTI_DE
 #define VCD_SIGNAL_DUMPER_DUMP_FUNCTION_BY_NAME(...)
 #define VCD_SIGNAL_DUMPER_FUNCTIONS_ITTI_ENQUEUE_MESSAGE(...)
 
-typedef enum task_state_s {
+typedef volatile enum task_state_s {
   TASK_STATE_NOT_CONFIGURED, TASK_STATE_STARTING, TASK_STATE_READY, TASK_STATE_ENDED, TASK_STATE_MAX,
 } task_state_t;
 
@@ -951,7 +951,7 @@ itti_wait_tasks_end (
     if (ready_tasks > 0) {
       usleep (100 * 1000);
     }
-  } while ((ready_tasks > 0) && (retries--) && (!end));
+  } while ((ready_tasks > 0) && (retries--));
 
   OAILOG_INFO (LOG_ITTI,  "ready_tasks %d", ready_tasks);
   itti_desc.running = 0;
@@ -962,9 +962,14 @@ itti_wait_tasks_end (
     free_wrapper ((void**) &statistics);
   }
 
+  for (thread_id = THREAD_FIRST; thread_id < itti_desc.thread_max; thread_id++) {
+    free_wrapper((void **) &itti_desc.threads[thread_id].events);
+  }
+  free_wrapper((void **) &itti_desc.tasks);
+  free_wrapper((void **) &itti_desc.threads);
   if (ready_tasks > 0) {
     ITTI_DEBUG (ITTI_DEBUG_ISSUES, " Some threads are still running, force exit\n");
-    exit (0);
+    return;
   }
 
 #if ENABLE_ITTI_ANALYZER

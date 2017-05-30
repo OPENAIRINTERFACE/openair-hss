@@ -154,6 +154,7 @@ void *mme_app_thread (
         /*
          * Termination message received TODO -> release any data allocated
          */
+        timer_remove(mme_app_desc.statistic_timer_id);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.mme_ue_s1ap_id_ue_context_htbl);
