@@ -544,9 +544,10 @@ s1ap_mme_handle_ue_cap_indication (
     ue_cap_ind_p = &message_p->ittiMsg.s1ap_ue_cap_ind;
     ue_cap_ind_p->enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
     ue_cap_ind_p->mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
-    DevCheck (ue_cap_p->ueRadioCapability.size < S1AP_UE_RADIOCAPABILITY_MAX_SIZE, S1AP_UE_RADIOCAPABILITY_MAX_SIZE, ue_cap_p->ueRadioCapability.size, 0);
-    memcpy (ue_cap_ind_p->radio_capabilities, ue_cap_p->ueRadioCapability.buf, ue_cap_p->ueRadioCapability.size);
     ue_cap_ind_p->radio_capabilities_length = ue_cap_p->ueRadioCapability.size;
+    ue_cap_ind_p->radio_capabilities = 
+          (uint8_t*) calloc (ue_cap_ind_p->radio_capabilities_length, sizeof *ue_cap_ind_p->radio_capabilities);
+    memcpy (ue_cap_ind_p->radio_capabilities, ue_cap_p->ueRadioCapability.buf, ue_cap_ind_p->radio_capabilities_length);
     MSC_LOG_TX_MESSAGE (MSC_S1AP_MME,
                         MSC_MMEAPP_MME,
                         NULL, 0, "0 S1AP_UE_CAPABILITIES_IND enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " len %u",

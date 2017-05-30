@@ -36,6 +36,7 @@
 #include "s1ap_mme_encoder.h"
 #include "s1ap_mme_itti_messaging.h"
 #include "s1ap_mme.h"
+#include "dynamic_memory_check.h"
 
 /* Every time a new UE is associated, increment this variable.
    But care if it wraps to increment also the mme_ue_s1ap_id_has_wrapped
@@ -463,8 +464,9 @@ s1ap_handle_conn_est_cnf (
     initialContextSetupRequest_p->presenceMask |=
       S1AP_INITIALCONTEXTSETUPREQUESTIES_UERADIOCAPABILITY_PRESENT;
     OCTET_STRING_fromBuf(&initialContextSetupRequest_p->ueRadioCapability,
-                         conn_est_cnf_pP->ue_radio_capabilities,
+                        (const char*) conn_est_cnf_pP->ue_radio_capabilities,
                          conn_est_cnf_pP->ue_radio_cap_length);
+    free_wrapper((void**) &(conn_est_cnf_pP->ue_radio_capabilities));
   }
 
   /*
