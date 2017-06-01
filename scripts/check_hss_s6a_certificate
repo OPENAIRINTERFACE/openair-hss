@@ -34,7 +34,7 @@ source $THIS_SCRIPT_PATH/../build/tools/build_helper
 
 function _create_hss_certs()
 {
-  local    output_path=$1
+  local    output_path=$(readlink -e $1)
   local    fqdn=$2
 
   cd /tmp
