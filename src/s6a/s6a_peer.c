@@ -117,6 +117,10 @@ s6a_fd_new_peer (
   bconchar(hss_name, '.');
   bconcat (hss_name, mme_config.realm);
 
+  if (mme_config_unlock (&mme_config) ) {
+    OAILOG_ERROR (LOG_S6A, "Failed to unlock configuration\n");
+    return RETURNerror;
+  }
 #if FD_CONF_FILE_NO_CONNECT_PEERS_CONFIGURED
   info.pi_diamid    = bdata(hss_name);
   info.pi_diamidlen = blength (hss_name);
@@ -133,10 +137,6 @@ s6a_fd_new_peer (
   info.config.pic_twtimer       = 60; // watchdog
   CHECK_FCT (fd_peer_add (&info, "", s6a_peer_connected_cb, NULL));
 
-  if (mme_config_unlock (&mme_config) ) {
-    OAILOG_ERROR (LOG_S6A, "Failed to unlock configuration\n");
-    return RETURNerror;
-  }
   return ret;
 #else
   DiamId_t          diamid    = bdata(hss_name);
