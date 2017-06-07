@@ -43,12 +43,10 @@ function help()
   echo_error "  -D, --daemon                              Build S/P-GW as a daemon."
   echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
-  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run S/P-GW (support Ubuntu 14.04)."
+  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run S/P-GW (support $SUPPORTED_DISTRO)."
   echo_error "  -v, --verbose                             Build process verbose."
   echo_error " "
 }
-
-
 
 function main()
 {
@@ -86,7 +84,7 @@ function main()
         exit 0
         ;;
       -i | --check-installed-software)
-        echo "Check installed software packages necessary to build and run S/P-GW (support Ubuntu 14.04):"
+        echo "Check installed software packages necessary to build and run S/P-GW (support $SUPPORTED_DISTRO):"
         set_openair_env
         var_check_install_oai_software=1
         shift;
@@ -150,7 +148,7 @@ function main()
   echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
   
   cd ./build
-  cmake  $cmake_args .. > /dev/null 
+  $CMAKE $cmake_args .. > /dev/null
   
   compilations spgw spgw spgw
   if [ $daemon -ne 0 ]; then

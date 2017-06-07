@@ -58,7 +58,7 @@ START_TEST(imsi_convert_to_uint_test)
         mme_app_string_to_imsi(&imsi_mme_test, imsi_compare[i]);
         imsi_uint64 = mme_app_imsi_to_u64(imsi_mme_test);
         printf("Convert %"PRIu64" and assert %"PRIu64"\n", imsi_uint64, imsi_cmp[i]);
-        ck_assert_uint_eq(imsi_uint64, imsi_cmp[i]);
+        ck_assert_msg(imsi_uint64 == imsi_cmp[i], "Assertion 'imsi_uint64 == imsi_cmp[%i]' failed: imsi_uint64 == %ju, imsi_cmp[%i] == %ju", i, (uintmax_t) imsi_uint64, i, (uintmax_t) imsi_cmp[i]);
     }
 
 }
