@@ -143,10 +143,17 @@ s6a_fd_new_peer (
   size_t            diamidlen = blength (hss_name);
   struct peer_hdr  *peer      = NULL;
   int               nb_tries  = 0;
+  int               timeout   = fd_g_config->cnf_timer_tc;
+
   for (nb_tries = 0; nb_tries < NB_MAX_TRIES; nb_tries++) {
     OAILOG_DEBUG (LOG_S6A, "S6a peer connection attempt %d / %d\n",
                   1 + nb_tries, NB_MAX_TRIES);
     ret = fd_peer_getbyid( diamid, diamidlen, 0, &peer );
+
+    if (peer && peer->info.config.pic_tctimer != 0) {
+        timeout = peer->info.config.pic_tctimer;
+    }
+
     if (!ret) {
       if (peer) {
         ret = fd_peer_get_state(peer);
@@ -177,7 +184,7 @@ s6a_fd_new_peer (
     } else {
       OAILOG_DEBUG (LOG_S6A, "Could not get S6a peer\n");
     }
-    sleep(1);
+    sleep(timeout);
   }
   bdestroy(hss_name);
   free_wrapper((void **) &fd_g_config->cnf_diamid);
