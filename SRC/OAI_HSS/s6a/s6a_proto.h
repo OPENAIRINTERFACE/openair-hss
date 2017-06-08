@@ -238,6 +238,7 @@ int s6a_clear_info_cb(struct msg **msg, struct avp *paramavp,
                      enum disp_action *act);
 
 int s6a_add_subscription_data_avp(struct msg *message, cassandra_ul_ans_t *cass_ans);
+int s6a_add_subscription_json_data_avp(struct msg *message, char *json_string);
 
 int s6a_add_result_code(struct msg *ans, struct avp *failed_avp,
                         int result_code, int experimental);

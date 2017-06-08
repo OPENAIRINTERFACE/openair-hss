@@ -150,6 +150,7 @@ typedef struct cassandra_ul_ans_s{
 
   access_restriction_t access_restriction;
   cassandra_mme_identity_t mme_identity;
+  char *subscription_data;
 } cassandra_ul_ans_t;
 
 typedef struct cassandra_ul_push_s{

@@ -101,6 +101,7 @@ s6a_init_objs (
   /*
    * Pre-loading AVPs objects
    */
+  
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME, "Session-Id", &s6a_cnf.dataobj_s6a_session_id, ENOENT));
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME, "Origin-Host", &s6a_cnf.dataobj_s6a_origin_host, ENOENT));
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME, "Origin-Realm", &s6a_cnf.dataobj_s6a_origin_realm, ENOENT));

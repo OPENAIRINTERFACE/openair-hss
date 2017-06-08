@@ -264,7 +264,6 @@ hss_cassandra_connect (
 
   FPRINTF_DEBUG ("Initializing db layer\n");
   db_desc = malloc (sizeof (db_cassandra_t));
-
   if (db_desc == NULL) {
     FPRINTF_DEBUG ("An error occured on MALLOC\n");
     return errno;
@@ -386,9 +385,9 @@ hss_cassandra_update_loc (
   CassFuture                              *query_future;
   CassError                               rc;
   const CassResult                        *result = NULL;
-  CassValue                               *cass_access_res_value,*cass_idmme_value,*cass_msisdn_value,*cass_aggr_ul_value,*cass_aggr_dl_value,*cass_rau_tau_value;
-  const char				  *msisdn;
-  size_t			 	  msisdn_length;
+  CassValue                               *cass_access_res_value,*cass_idmme_value,*cass_msisdn_value,*cass_aggr_ul_value,*cass_aggr_dl_value,*cass_rau_tau_value, *cass_subscription_value;
+  const char				  *msisdn = NULL, *subscription_data =NULL;
+  size_t			 	  msisdn_length,subscription_data_length;
   cass_int32_t                            access_res = 0, idmme = 0, rau_tau = 0;
   cass_int64_t			          aggr_ul = 0,aggr_dl = 0;
   
@@ -399,10 +398,8 @@ hss_cassandra_update_loc (
   if (strlen (imsi) > 15) {
     return EINVAL;
   }
-  
-  memset(msisdn, 0 , sizeof(char));
 
-  sprintf (query, "SELECT access_restriction,mmeidentity_idmmeidentity, msisdn,ue_ambr_ul,ue_ambr_dl,rau_tau_timer FROM vhss.users_imsi WHERE imsi='%s' ", imsi);
+  sprintf (query, "SELECT access_restriction,mmeidentity_idmmeidentity, msisdn,ue_ambr_ul,ue_ambr_dl,rau_tau_timer, subscription_data FROM vhss.users_imsi WHERE imsi='%s' ", imsi);
   statement = cass_statement_new(query,0);
   memcpy (cass_ul_ans->imsi, imsi, strlen (imsi) + 1);
   FPRINTF_DEBUG ("Query: %s\n", query);
@@ -439,6 +436,7 @@ hss_cassandra_update_loc (
   	cass_aggr_ul_value = cass_row_get_column_by_name(row,"ue_ambr_ul");
   	cass_aggr_dl_value = cass_row_get_column_by_name(row,"ue_ambr_dl");
   	cass_rau_tau_value = cass_row_get_column_by_name(row,"rau_tau_timer");
+  	cass_subscription_value = cass_row_get_column_by_name(row,"subscription_data");
 
 	int 	mme_id;
 	if( cass_access_res_value != NULL )
@@ -453,6 +451,9 @@ hss_cassandra_update_loc (
 		cass_value_get_int64(cass_aggr_dl_value,&aggr_dl);
         if( cass_rau_tau_value != NULL )
 		cass_value_get_int32(cass_rau_tau_value,&rau_tau);
+	if( cass_subscription_value != NULL )
+		cass_value_get_string(cass_subscription_value, &subscription_data, &subscription_data_length);
+
         
         cass_ul_ans->access_restriction =  access_res ;
       
@@ -462,20 +463,27 @@ hss_cassandra_update_loc (
             cass_ul_ans->mme_identity.mme_host[0] = '\0';
             cass_ul_ans->mme_identity.mme_realm[0] = '\0';
         }
-
         if (msisdn != NULL) {
-	    memcpy(cass_ul_ans->msisdn, msisdn, strlen(msisdn));
+	    memcpy(cass_ul_ans->msisdn, msisdn, msisdn_length);
+	    cass_ul_ans->msisdn[msisdn_length] = '\0';
         }
 
         cass_ul_ans->aggr_ul = aggr_ul;
         cass_ul_ans->aggr_dl = aggr_dl;
         cass_ul_ans->rau_tau = rau_tau;
+	if( subscription_data != NULL ){
+		cass_ul_ans->subscription_data = (char *)calloc(subscription_data_length + 1, sizeof(char));
+		memcpy(cass_ul_ans->subscription_data, subscription_data, subscription_data_length);
+                cass_ul_ans->subscription_data[subscription_data_length] = '\0';
+	}
 	
 	printf("access_restriction = %d \n",cass_ul_ans->access_restriction);
 	printf("mmeidentity_idmmeidentity = %d \n",idmme);
 	printf("msisdn = %s \n",cass_ul_ans->msisdn);
 	printf("aggr_ul = %d\n",cass_ul_ans->aggr_ul);
 	printf("rau_tau = %d\n",cass_ul_ans->rau_tau);
+	printf("subscription data = %s \n", cass_ul_ans->subscription_data);
+	printf("string length of subscription_data = %d\n",strlen(cass_ul_ans->subscription_data));
 	cass_result_free(result);
 	return ret;
   }
@@ -548,7 +556,7 @@ hss_cassandra_purge_ue (
   const CassResult                        *result = NULL;
   CassValue				  *cass_idmme_value;
   const CassRow                           *row;
-  const char				  *idmme;
+  const char				  *idmme = NULL;
   size_t				  idmme_length;
   char                                    query[1000];
   int                                     ret = 0,mme_id;
@@ -1289,7 +1297,7 @@ hss_cassandra_auth_info (
   const CassResult                        *result = NULL;
   CassValue				  *cass_sqn_value,*cass_key_value,*cass_rand_value,*cass_opc_value;
   cass_int64_t				  sqn;
-  const char 				  *key,*rand,*opc;
+  const char 				  *key = NULL, *rand = NULL, *opc = NULL;
   size_t 				  key_length,rand_length,opc_length;
   
 
@@ -1529,7 +1537,7 @@ hss_cassandra_check_opc_keys (
   int                                     i;
   const CassRow 			  *row;
   const CassValue			  *imsi_value,*key_value,*OPc_value;
-  const char				  *imsi, *opc_char,*key;
+  const char				  *imsi = NULL, *opc_char = NULL, *key = NULL;
   size_t 				  imsi_length,key_length,opc_length;
 
   if (db_desc->db_conn == NULL) {

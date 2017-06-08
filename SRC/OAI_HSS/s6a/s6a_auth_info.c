@@ -216,7 +216,7 @@ s6a_auth_info_cb (
      */
     CHECK_FCT (fd_msg_avp_hdr (avp, &hdr));
  
-    printf("Length of visited plmn id avp = %d \n",hdr->avp_value->os.len);
+    printf("Lenght of visited plmn id avp = %d \n",hdr->avp_value->os.len);
     if (hdr->avp_value->os.len == 3) {
       if (apply_access_restriction (auth_info_req.imsi, hdr->avp_value->os.data) != 0) {
         /*
@@ -335,7 +335,7 @@ s6a_auth_info_cb (
       CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
       CHECK_FCT (fd_msg_avp_add (e_utran_vector, MSG_BRW_LAST_CHILD, child_avp));
       CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, e_utran_vector));
-      CHECK_FCT (fd_msg_avp_add (ans, MSG_BRW_LAST_CHILD, avp));
+      CHECK_FCT (fd_msg_avp_add (ans, MSG_BRW_LAST_CHILD, avp)); 
     }
   }
 out:

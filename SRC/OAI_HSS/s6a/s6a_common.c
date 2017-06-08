@@ -74,9 +74,9 @@ s6a_add_result_code (
 void dump(struct msg * m)
 {
 	printf("inside dump method\n");
-	char * buf = NULL;
-	size_t len = 0;
-	printf("%s\n", fd_msg_dump_treeview(&buf, &len, NULL, m, fd_g_config->cnf_dict, 0, 1));
-	free(buf);
+        char * buf = NULL;
+        size_t len = 0;
+        printf("%s\n", fd_msg_dump_treeview(&buf, &len, NULL, m, fd_g_config->cnf_dict, 0, 1));
+        free(buf);
 	printf("end of dump method \n");
 }

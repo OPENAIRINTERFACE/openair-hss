@@ -192,7 +192,7 @@ hss_cassandra_query_pdns (
 					  *cass_pdn_ipv4_value, *cass_aggr_ambr_ul_value, *cass_aggr_ambr_dl_value,
 					  *cass_qci_value, *cass_priority_level_value, *cass_pre_emp_cap_value,
 					  *cass_pre_emp_vul_value; 
-  const char 				  *apn, *pdn_type, *pre_emp_cap, *pre_emp_vul;
+  const char 				  *apn= NULL, *pdn_type=NULL, *pre_emp_cap=NULL, *pre_emp_vul=NULL;
   CassInet		                  pdn_ipv6_addr, pdn_ipv4_addr;
   size_t			 	  apn_length, pdn_type_length, pre_emp_cap_length, pre_emp_vul_length, pdn_ipv6_len, pdn_ipv4_len;
   cass_int32_t				  aggr_ambr_ul = 0, aggr_ambr_dl = 0, qci = 0, priority_level = 0;
@@ -294,19 +294,21 @@ hss_cassandra_query_pdns (
   		cass_value_get_string(cass_pre_emp_vul_value, &pre_emp_vul, &pre_emp_vul_length);
 	}
  
-    	memcpy (pdns_p->apn, apn, strlen(apn));
+	if( apn != NULL ){
+    		memcpy (pdns_p->apn, apn, strlen(apn));
+	}
   	/*
          * We did not find any APN for the requested IMSI
          */  
 
-   	if( pdns_p->apn == NULL ){
+   	if( pdns_p->apn[0] == '\0' ){
 		return EINVAL;
     	}
     
     	/*
      	 * PDN Type + PDN address
          */
-   	printf("pdn_type --> %s\n",pdn_type); 
+	if( pdn_type != NULL ){	
 	if( strcmp (pdn_type, "IPv6") == 0 ) {
       		pdns_p->pdn_type = IPV6;
 		sprintf(pdns_p->pdn_address.ipv6_address, "%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X:%02X%02X", pdn_ipv6_addr.address[0], pdn_ipv6_addr.address[1], pdn_ipv6_addr.address[2], pdn_ipv6_addr.address[3], pdn_ipv6_addr.address[4], pdn_ipv6_addr.address[5], pdn_ipv6_addr.address[6], pdn_ipv6_addr.address[7], pdn_ipv6_addr.address[8], pdn_ipv6_addr.address[9], pdn_ipv6_addr.address[10], pdn_ipv6_addr.address[11], pdn_ipv6_addr.address[12], pdn_ipv6_addr.address[13], pdn_ipv6_addr.address[14], pdn_ipv6_addr.address[15]);
@@ -323,6 +325,7 @@ hss_cassandra_query_pdns (
 		printf("pdn_ipv4_addr length = %d \n", pdn_ipv4_addr.address_length);
 		sprintf(pdns_p->pdn_address.ipv4_address, "%u.%u.%u.%u", pdn_ipv4_addr.address[0],pdn_ipv4_addr.address[1],pdn_ipv4_addr.address[2],pdn_ipv4_addr.address[3]);
     	}
+	}
 
     	if( aggr_ambr_ul != NULL )
 		pdns_p->aggr_ul = aggr_ambr_ul;

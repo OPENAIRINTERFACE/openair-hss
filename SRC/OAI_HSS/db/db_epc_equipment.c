@@ -97,13 +97,12 @@ hss_cassandra_query_mmeidentity (
   CassFuture				 *query_future;
   CassError                              rc;
   CassValue				 *cass_mmehost_value,*cass_mmerealm_value;
-  const char 				 *mmehost,*mmerealm;
+  const char 				 *mmehost = NULL, *mmerealm = NULL;
   size_t 				 mmehost_length,mmerealm_length;
 
   if ((db_desc->db_conn == NULL) || (mme_identity_p == NULL)) {
     return EINVAL;
   }
- 
   memset (mme_identity_p, 0, sizeof (cassandra_mme_identity_t)); 
   sprintf (query, "SELECT mmehost,mmerealm FROM vhss.mmeidentity WHERE idmmeidentity=%d ", id_mme_identity);
   FPRINTF_DEBUG ("Query: %s\n", query);

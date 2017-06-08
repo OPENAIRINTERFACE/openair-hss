@@ -177,6 +177,7 @@ s6a_up_loc_cb (
   dump(*msg);
   memset (&cass_push, 0, sizeof (cassandra_ul_push_t));
   memset (&cass_ans, 0, sizeof (cassandra_ul_ans_t));
+  
   FPRINTF_NOTICE ( "Received new update location request\n");
   qry = *msg;
   /*
@@ -208,7 +209,6 @@ s6a_up_loc_cb (
     //     a Result Code of DIAMETER_ERROR_RAT_NOT_ALLOWED shall be returned.
     // ...
     sprintf (cass_push.imsi, "%*s", (int)hdr->avp_value->os.len, (char *)hdr->avp_value->os.data);
-
     if ((ret = hss_cassandra_update_loc (cass_push.imsi, &cass_ans)) != 0) {
       /*
        * We failed to find the IMSI in the database. Replying to the request
@@ -303,7 +303,7 @@ s6a_up_loc_cb (
       goto out;
     }
 
-    if (FLAG_IS_SET (ulr_flags, ULR_S6A_S6D_INDICATOR)) {
+    if (!FLAG_IS_SET (ulr_flags, ULR_S6A_S6D_INDICATOR)) {
       /*
        * The request is coming from s6d interface (SGSN).
        */
@@ -575,7 +575,7 @@ s6a_up_loc_cb (
    * Only add the subscriber data if not marked as skipped by MME
    */
   if (!FLAG_IS_SET (ulr_flags, ULR_SKIP_SUBSCRIBER_DATA)) {
-    if (s6a_add_subscription_data_avp (ans, &cass_ans) != 0) {
+    if (s6a_add_subscription_json_data_avp (ans, cass_ans.subscription_data) != 0) {
       FPRINTF_ERROR ( "ULR_SKIP_SUBSCRIBER_DATA DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION\n");
       result_code = DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION;
       experimental = 1;

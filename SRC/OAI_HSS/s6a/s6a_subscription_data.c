@@ -23,6 +23,7 @@
 #include "hss_config.h"
 #include "db_proto.h"
 #include "s6a_proto.h"
+#include "fdjson.h"
 
 /*! \file s6a_subscription_data.c
    \brief Add the subscription data to a message. Data are retrieved from database
@@ -304,3 +305,26 @@ out:
   return ret;
 }
 
+
+void display_error_message(const char *err_msg)
+{
+	printf("inside display_error_message\n");
+	printf("%s\n",err_msg);
+}
+
+int s6a_add_subscription_json_data_avp(
+	struct msg *message,
+	char *json_string){
+
+	printf("******* subscription data in json string format ****\n\n");
+	printf("%s\n",json_string);
+	printf(" ************************\n\n");
+	printf("%s:%d\n", __FILE__, __LINE__ );
+	fdJsonAddAvps(json_string, message, &display_error_message );
+
+
+
+
+	return 0;
+
+}
