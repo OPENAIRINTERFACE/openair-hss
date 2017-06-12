@@ -34,7 +34,7 @@ THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
 
 function _create_mme_certs()
 {
-  local    output_path=$1
+  local    output_path=$(readlink -e $1)
   local    fqdn=$2
 
   cd /tmp
