@@ -1,9 +1,0 @@
-$OPENAIRCN_DIR/SCRIPTS/run_mme  >& $OPENAIRCN_TESTDIR/MME_out.log &
-$OPENAIRCN_DIR/SCRIPTS/run_spgw -r >& $OPENAIRCN_TESTDIR/SPGW_out.log &
-
-while true; do 
- sleep 1
-  #To flush the logfiles to disk
- sync
-done
-
