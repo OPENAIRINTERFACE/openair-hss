@@ -160,7 +160,7 @@ int sctp_get_peeraddresses (
 
   for (j = 0; j < nb; j++) {
     if (temp_addr_p[j].sa_family == AF_INET) {
-      char                                    address[16] = {0};
+      char                                    address[INET_ADDRSTRLEN] = {0};
       struct sockaddr_in                     *addr = NULL;
 
       addr = (struct sockaddr_in *)&temp_addr_p[j];
@@ -170,7 +170,7 @@ int sctp_get_peeraddresses (
       }
     } else {
       struct sockaddr_in6                    *addr = NULL;
-      char                                    address[40] = {0};
+      char                                    address[INET6_ADDRSTRLEN] = {0};
 
       addr = (struct sockaddr_in6 *)&temp_addr_p[j];
 
@@ -216,7 +216,7 @@ int sctp_get_localaddresses (
 
     for (j = 0; j < nb; j++) {
       if (temp_addr_p[j].sa_family == AF_INET) {
-        char                                    address[16] = {0};
+        char                                    address[INET_ADDRSTRLEN] = {0};
         struct sockaddr_in                     *addr = NULL;
 
         addr = (struct sockaddr_in *)&temp_addr_p[j];
@@ -226,7 +226,7 @@ int sctp_get_localaddresses (
         }
       } else if (temp_addr_p[j].sa_family == AF_INET6) {
         struct sockaddr_in6                    *addr = NULL;
-        char                                    address[40] = {0};
+        char                                    address[INET6_ADDRSTRLEN] = {0};
 
         addr = (struct sockaddr_in6 *)&temp_addr_p[j];
 
