@@ -146,8 +146,8 @@ hss_cassandra_query_mmeidentity (
   if( cass_mmehost_value != NULL ){
 	cass_value_get_string(cass_mmehost_value,&mmehost,&mmehost_length);
 	if( mmehost != NULL ){
-		memcpy(mme_identity_p->mme_host,mmehost,strlen(mmehost));
-		mme_identity_p->mme_host[strlen(mmehost)] = '\0';
+		memcpy(mme_identity_p->mme_host,mmehost,mmehost_length);
+		mme_identity_p->mme_host[mmehost_length] = '\0';
 	}
 	else{
 		mme_identity_p->mme_host[0] = '\0';
@@ -156,8 +156,8 @@ hss_cassandra_query_mmeidentity (
   if( cass_mmerealm_value != NULL){
 	cass_value_get_string(cass_mmerealm_value,&mmerealm,&mmerealm_length);
 	if( mmerealm != NULL ){
-		memcpy(mme_identity_p->mme_realm,mmerealm,strlen(mmerealm));
-		mme_identity_p->mme_realm[strlen(mmerealm)] = '\0';
+		memcpy(mme_identity_p->mme_realm,mmerealm,mmerealm_length);
+		mme_identity_p->mme_realm[mmerealm_length] = '\0';
 	}
 	else{
 		mme_identity_p->mme_realm[0] = '\0';
