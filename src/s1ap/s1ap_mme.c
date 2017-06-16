@@ -150,7 +150,7 @@ s1ap_mme_thread (
         /*
          * Free received PDU array
          */
-        bdestroy (SCTP_DATA_IND (received_message_p).payload);
+        bdestroy_wrapper (&SCTP_DATA_IND (received_message_p).payload);
       }
       break;
 
