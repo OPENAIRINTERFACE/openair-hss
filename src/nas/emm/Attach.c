@@ -887,8 +887,12 @@ static int _emm_attach_run_procedure(emm_context_t *emm_context)
     emm_ctx_clear_security(emm_context);
 
     if (attach_proc->ies->imsi) {
-      if (attach_proc->ies->decode_status.mac_matched) {
+      if ((attach_proc->ies->decode_status.mac_matched) || !(attach_proc->ies->decode_status.integrity_protected_message)) {
         // force authentication, even if not necessary
+        imsi64_t imsi64 = imsi_to_imsi64(attach_proc->ies->imsi);
+        emm_ctx_set_valid_imsi(emm_context, attach_proc->ies->imsi, imsi64);
+        emm_context_upsert_imsi(&_emm_data, emm_context);
+
         rc = _emm_start_attach_proc_authentication (emm_context, attach_proc);
       } else {
         // force identification, even if not necessary
