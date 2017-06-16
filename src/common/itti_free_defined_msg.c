@@ -220,12 +220,10 @@ void itti_free_msg_content (MessageDef * const message_p)
 
   case SCTP_DATA_REQ:
     bdestroy_wrapper (&message_p->ittiMsg.sctp_data_req.payload);
-    AssertFatal(NULL == message_p->ittiMsg.sctp_data_req.payload, "TODO clean pointer");
     break;
 
   case SCTP_DATA_IND:
     bdestroy_wrapper (&message_p->ittiMsg.sctp_data_ind.payload);
-    AssertFatal(NULL == message_p->ittiMsg.sctp_data_ind.payload, "TODO clean pointer");
     break;
 
   case SCTP_DATA_CNF:
