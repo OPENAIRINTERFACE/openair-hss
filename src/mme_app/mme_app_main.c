@@ -145,6 +145,11 @@ void *mme_app_thread (
           } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->implicit_detach_timer.id) {
             // Implicit Detach Timer expiry handler 
             mme_app_handle_implicit_detach_timer_expiry (ue_context_p);
+          } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->initial_context_setup_rsp_timer.id) {
+            // Initial Context Setup Rsp Timer expiry handler
+            mme_app_handle_initial_context_setup_rsp_timer_expiry (ue_context_p);
+          } else {
+            OAILOG_WARNING (LOG_MME_APP, "Timer expired but no assoicated timer_id for UE id %d\n",mme_ue_s1ap_id);
           }
         }
       }

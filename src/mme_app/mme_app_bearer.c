@@ -422,6 +422,18 @@ mme_app_handle_conn_est_cnf (
   {
     mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts,ue_context_p,ECM_CONNECTED);
   }
+
+  /* Start timer to wait for Initial UE Context Response from eNB
+   * If timer expires treat this as failure of ongoing procedure and abort corresponding NAS procedure such as ATTACH
+   * or SERVICE REQUEST. Send UE context release command to eNB
+   */
+  if (timer_setup (ue_context_p->initial_context_setup_rsp_timer.sec, 0, 
+                TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context_p->mme_ue_s1ap_id), &(ue_context_p->initial_context_setup_rsp_timer.id)) < 0) { 
+    OAILOG_ERROR (LOG_MME_APP, "Failed to start initial context setup response timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  } else {
+    OAILOG_DEBUG (LOG_MME_APP, "MME APP : Sent Initial context Setup Request and Started guard timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -525,6 +537,8 @@ mme_app_handle_initial_ue_message (
   // Initialize timers to INVALID IDs
   ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
   ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context_p->initial_context_setup_rsp_timer.sec = MME_APP_INITIAL_CONTEXT_SETUP_RSP_TIMER_VALUE;
 
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_INITIAL_UE_MESSAGE);
   // do this because of same message types name but not same struct in different .h
@@ -592,9 +606,12 @@ mme_app_handle_delete_session_rsp (
     mme_notify_ue_context_released (&mme_app_desc.mme_ue_contexts, ue_context_p);
     mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p);
   } else {
-    ue_context_p->ue_context_rel_cause = S1AP_NAS_DETACH;
+    if (ue_context_p->ue_context_rel_cause == S1AP_INVALID_CAUSE) {
+      ue_context_p->ue_context_rel_cause = S1AP_NAS_DETACH;
+    }
     // Notify S1AP to send UE Context Release Command to eNB or free s1 context locally.
     mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
+    ue_context_p->ue_context_rel_cause = S1AP_INVALID_CAUSE;
   }
 
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -861,7 +878,13 @@ mme_app_handle_initial_context_setup_rsp (
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "MME_APP_INITIAL_CONTEXT_SETUP_RSP Unknown ue %u", initial_ctxt_setup_rsp_pP->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-
+  // Stop Initial context setup process guard timer,if running 
+  if (ue_context_p->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
+    if (timer_remove(ue_context_p->initial_context_setup_rsp_timer.id)) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop Initial Context Setup Rsp timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    } 
+    ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  }
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_MODIFY_BEARER_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_modify_bearer_request_t *s11_modify_bearer_request = &message_p->ittiMsg.s11_modify_bearer_request;
@@ -935,7 +958,7 @@ mme_app_handle_mobile_reachability_timer_expiry (struct ue_context_s *ue_context
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (ue_context_p != NULL);
   ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
-  OAILOG_DEBUG (LOG_MME_APP, "Expired- Mobile Reachability Timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  OAILOG_INFO (LOG_MME_APP, "Expired- Mobile Reachability Timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
   // Start Implicit Detach timer 
   if (timer_setup (ue_context_p->implicit_detach_timer.sec, 0, 
                 TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)&(ue_context_p->mme_ue_s1ap_id), &(ue_context_p->implicit_detach_timer.id)) < 0) { 
@@ -953,7 +976,7 @@ mme_app_handle_implicit_detach_timer_expiry (struct ue_context_s *ue_context_p)
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (ue_context_p != NULL);
   MessageDef                             *message_p = NULL;
-  OAILOG_DEBUG (LOG_MME_APP, "Expired- Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  OAILOG_INFO (LOG_MME_APP, "Expired- Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
   ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
   
   // Initiate Implicit Detach for the UE
@@ -965,7 +988,33 @@ mme_app_handle_implicit_detach_timer_expiry (struct ue_context_s *ue_context_p)
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
-
+//------------------------------------------------------------------------------
+void
+mme_app_handle_initial_context_setup_rsp_timer_expiry (struct ue_context_s *ue_context_p)
+{
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (ue_context_p != NULL);
+  MessageDef                             *message_p = NULL;
+  OAILOG_INFO (LOG_MME_APP, "Expired- Initial context setup rsp timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  /* *********Abort the ongoing procedure*********
+   * Check if UE is registered already that implies service request procedure is active. If so then release the S1AP
+   * context and move the UE back to idle mode. Otherwise if UE is not yet registered that implies attach procedure is
+   * active. If so,then abort the attach procedure and release the UE context. 
+   */
+  ue_context_p->ue_context_rel_cause = S1AP_INITIAL_CONTEXT_SETUP_FAILED;
+  if (ue_context_p->mm_state == UE_UNREGISTERED) {
+    // Initiate Implicit Detach for the UE
+    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+    DevAssert (message_p != NULL);
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context_p->mme_ue_s1ap_id;
+    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  } else {
+    // Release S1-U bearer and move the UE to idle mode 
+    mme_app_send_s11_release_access_bearers_req(ue_context_p);
+  }
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
 //------------------------------------------------------------------------------
 static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t * const s_tmsi_p,  guti_t * const guti_p)
 {

@@ -119,6 +119,8 @@ void mme_app_handle_mobile_reachability_timer_expiry (struct ue_context_s *ue_co
 
 void mme_app_handle_implicit_detach_timer_expiry (struct ue_context_s *ue_context_p); 
 
+void mme_app_handle_initial_context_setup_rsp_timer_expiry (struct ue_context_s *ue_context_p);
+
 #define mme_stats_read_lock(mMEsTATS)  pthread_rwlock_rdlock(&(mMEsTATS)->rw_lock)
 #define mme_stats_write_lock(mMEsTATS) pthread_rwlock_wrlock(&(mMEsTATS)->rw_lock)
 #define mme_stats_unlock(mMEsTATS)     pthread_rwlock_unlock(&(mMEsTATS)->rw_lock)

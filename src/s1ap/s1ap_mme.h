@@ -34,7 +34,7 @@
 struct enb_description_s;
 
 #define S1AP_TIMER_INACTIVE_ID   (-1)
-#define S1AP_UE_CONTEXT_REL_COMP_TIMER 2 // in seconds 
+#define S1AP_UE_CONTEXT_REL_COMP_TIMER 1 // in seconds 
 
 /* Timer structure */
 struct s1ap_timer_t {
@@ -51,6 +51,7 @@ enum mme_s1_enb_state_s {
 };
 
 enum s1_ue_state_s {
+  S1AP_UE_INVALID_STATE,
   S1AP_UE_WAITING_CSR,    ///< Waiting for Initial Context Setup Response
   S1AP_UE_HANDOVER,       ///< Handover procedure triggered
   S1AP_UE_CONNECTED,      ///< UE context ready
