@@ -32,6 +32,7 @@
 #define MME_APP_INITIAL_UE_MESSAGE(mSGpTR)               (mSGpTR)->ittiMsg.mme_app_initial_ue_message
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
+#define MME_APP_INITIAL_CONTEXT_SETUP_FAILURE(mSGpTR)    (mSGpTR)->ittiMsg.mme_app_initial_context_setup_failure
 #define MME_APP_S1AP_MME_UE_ID_NOTIFICATION(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_s1ap_mme_ue_id_notification
 
 typedef struct itti_mme_app_initial_ue_message_s {
@@ -84,6 +85,10 @@ typedef struct itti_mme_app_initial_context_setup_rsp_s {
   ebi_t                   eps_bearer_id;
   FTeid_t                 bearer_s1u_enb_fteid;
 } itti_mme_app_initial_context_setup_rsp_t;
+
+typedef struct itti_mme_app_initial_context_setup_failure_s {
+  uint32_t                mme_ue_s1ap_id;
+} itti_mme_app_initial_context_setup_failure_t;
 
 typedef struct itti_mme_app_delete_session_rsp_s {
   /* UE identifier */

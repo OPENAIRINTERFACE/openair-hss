@@ -1016,6 +1016,47 @@ mme_app_handle_initial_context_setup_rsp_timer_expiry (struct ue_context_s *ue_c
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 //------------------------------------------------------------------------------
+void
+mme_app_handle_initial_context_setup_failure (
+  const itti_mme_app_initial_context_setup_failure_t * const initial_ctxt_setup_failure_pP)
+{
+  struct ue_context_s                    *ue_context_p = NULL;
+  MessageDef                             *message_p = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_CONTEXT_SETUP_FAILURE from S1AP\n");
+  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_ctxt_setup_failure_pP->mme_ue_s1ap_id);
+
+  if (ue_context_p == NULL) {
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %d \n", initial_ctxt_setup_failure_pP->mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  // Stop Initial context setup process guard timer,if running 
+  if (ue_context_p->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
+    if (timer_remove(ue_context_p->initial_context_setup_rsp_timer.id)) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop Initial Context Setup Rsp timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    } 
+    ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  }
+  /* *********Abort the ongoing procedure*********
+   * Check if UE is registered already that implies service request procedure is active. If so then release the S1AP
+   * context and move the UE back to idle mode. Otherwise if UE is not yet registered that implies attach procedure is
+   * active. If so,then abort the attach procedure and release the UE context. 
+   */
+  ue_context_p->ue_context_rel_cause = S1AP_INITIAL_CONTEXT_SETUP_FAILED;
+  if (ue_context_p->mm_state == UE_UNREGISTERED) {
+    // Initiate Implicit Detach for the UE
+    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+    DevAssert (message_p != NULL);
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context_p->mme_ue_s1ap_id;
+    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  } else {
+    // Release S1-U bearer and move the UE to idle mode 
+    mme_app_send_s11_release_access_bearers_req(ue_context_p);
+  }
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+//------------------------------------------------------------------------------
 static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t * const s_tmsi_p,  guti_t * const guti_p)
 {
   /*

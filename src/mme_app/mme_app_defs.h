@@ -108,6 +108,8 @@ void mme_app_handle_nas_auth_param_req       (const itti_nas_auth_param_req_t * 
 
 void mme_app_handle_initial_context_setup_rsp(const itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
 
+void mme_app_handle_initial_context_setup_failure(const itti_mme_app_initial_context_setup_failure_t * const initial_ctxt_setup_failure_pP);
+
 bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, void *unused_param_pP, void **unused_result_pP);
 
 int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);

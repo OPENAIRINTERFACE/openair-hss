@@ -125,6 +125,11 @@ void *mme_app_thread (
         mme_app_handle_initial_context_setup_rsp (&MME_APP_INITIAL_CONTEXT_SETUP_RSP (received_message_p));
       }
       break;
+    
+    case MME_APP_INITIAL_CONTEXT_SETUP_FAILURE:{
+        mme_app_handle_initial_context_setup_failure (&MME_APP_INITIAL_CONTEXT_SETUP_FAILURE (received_message_p));
+      }
+      break;
 
     case TIMER_HAS_EXPIRED:{
         /*
