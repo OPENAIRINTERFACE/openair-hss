@@ -767,6 +767,7 @@ s1ap_mme_generate_ue_context_release_command (
     break;
   case S1AP_INITIAL_CONTEXT_SETUP_FAILED:cause_type = S1ap_Cause_PR_radioNetwork;
     cause_value = S1ap_CauseRadioNetwork_unspecified;
+    break;
   default:
     AssertFatal(false, "Unknown cause for context release");
     break;
