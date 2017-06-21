@@ -70,13 +70,24 @@ static void _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_
 int lock_ue_contexts(ue_mm_context_t * const ue_mm_context) {
   int rc = RETURNerror;
   if (ue_mm_context) {
+    struct timeval start_time;
+    gettimeofday(&start_time, NULL);
     struct timespec wait = {0}; // timed is useful for debug
-    wait.tv_sec=0;
-    wait.tv_nsec=500000000;
+    wait.tv_sec=start_time.tv_sec + 5;
+    wait.tv_nsec=start_time.tv_usec*1000;
     rc = pthread_mutex_timedlock(&ue_mm_context->recmutex, &wait);
     if (rc) {
       OAILOG_ERROR (LOG_MME_APP, "Cannot lock UE context mutex, err=%s\n", strerror(rc));
+#if ASSERT_MUTEX
+      struct timeval end_time;
+      gettimeofday(&end_time, NULL);
+      AssertFatal(!rc, "Cannot lock UE context mutex, err=%s took %ld seconds \n", strerror(rc), end_time.tv_sec - start_time.tv_sec);
+#endif
     }
+#if DEBUG_MUTEX
+    OAILOG_TRACE (LOG_MME_APP, "UE context mutex locked, count %d lock %d\n",
+        ue_mm_context->recmutex.__data.__count, ue_mm_context->recmutex.__data.__lock);
+#endif
   }
   return rc;
 }
@@ -88,6 +99,10 @@ int unlock_ue_contexts(ue_mm_context_t * const ue_mm_context) {
     if (rc) {
       OAILOG_ERROR (LOG_MME_APP, "Cannot unlock UE context mutex, err=%s\n", strerror(rc));
     }
+#if DEBUG_MUTEX
+    OAILOG_TRACE (LOG_MME_APP, "UE context mutex unlocked, count %d lock %d\n",
+        ue_mm_context->recmutex.__data.__count, ue_mm_context->recmutex.__data.__lock);
+#endif
   }
   return rc;
 }
@@ -177,9 +192,6 @@ void mme_app_ue_context_free_content (ue_mm_context_t * const ue_context_p)
   if (ue_context_p->s11_procedures) {
     mme_app_delete_s11_procedures(ue_context_p);
   }
-
-  memset(ue_context_p, 0, sizeof(*ue_context_p));
-
 }
 
 //------------------------------------------------------------------------------
@@ -915,7 +927,7 @@ void mme_ue_context_update_ue_sig_connection_state (
   {
     ue_context_p->ecm_state = ECM_CONNECTED;
 
-    OAILOG_DEBUG (LOG_MME_APP, "MME_APP: UE Connection State changed to CONNECTED.enb_ue_s1ap_id =" MME_UE_S1AP_ID_FMT ", mme_ue_s1ap_id = " MME_UE_S1AP_ID_FMT "\n", ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_MME_APP, "MME_APP: UE Connection State changed to CONNECTED.enb_ue_s1ap_id =" ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id = " MME_UE_S1AP_ID_FMT "\n", ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
     
     // Stop Mobile reachability timer,if running 
     if (ue_context_p->mobile_reachability_timer.id != MME_APP_TIMER_INACTIVE_ID)

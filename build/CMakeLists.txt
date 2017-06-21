@@ -214,6 +214,8 @@ include(CheckTypeSize)
 # Debug and build related options
 ###############################################################################
 add_boolean_option( DAEMONIZE                       False    "Fork executable if true")
+add_boolean_option( DEBUG_MUTEX                     False    "Trace mutex lock/unlock")
+add_boolean_option( ASSERT_MUTEX                    False    "Raise segfault if can't lock mutex")
 
 add_boolean_option( DISABLE_ITTI_DETECT_SUB_TASK_ID False    " ")
 add_boolean_option( DISPLAY_LICENCE_INFO            False    "If a module has a licence banner to show")
