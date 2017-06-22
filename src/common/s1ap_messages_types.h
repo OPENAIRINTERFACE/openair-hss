@@ -104,15 +104,18 @@ typedef struct itti_s1ap_deregister_ue_req_s {
 typedef struct itti_s1ap_ue_context_release_req_s {
   mme_ue_s1ap_id_t  mme_ue_s1ap_id;
   enb_ue_s1ap_id_t  enb_ue_s1ap_id:24;
-  uint32_t         enb_id;
+  uint32_t          enb_id;
+  S1ap_Cause_t      cause;
 } itti_s1ap_ue_context_release_req_t;
 
 // List of possible causes for MME generated UE context release command towards eNB
 enum s1cause {
+  S1AP_INVALID_CAUSE = 0,
   S1AP_NAS_NORMAL_RELEASE,
   S1AP_NAS_DETACH,
   S1AP_RADIO_EUTRAN_GENERATED_REASON,
   S1AP_IMPLICIT_CONTEXT_RELEASE,
+  S1AP_INITIAL_CONTEXT_SETUP_FAILED,
   S1AP_SCTP_SHUTDOWN_OR_RESET
 };
 typedef struct itti_s1ap_ue_context_release_command_s {

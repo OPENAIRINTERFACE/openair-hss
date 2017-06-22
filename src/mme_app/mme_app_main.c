@@ -218,6 +218,11 @@ void *mme_app_thread (void *args)
         itti_exit_task ();
       }
       break;
+    
+    case MME_APP_INITIAL_CONTEXT_SETUP_FAILURE:{
+        mme_app_handle_initial_context_setup_failure (&MME_APP_INITIAL_CONTEXT_SETUP_FAILURE (received_message_p));
+      }
+      break;
 
     case TIMER_HAS_EXPIRED:{
         /*
@@ -229,7 +234,7 @@ void *mme_app_thread (void *args)
           mme_ue_s1ap_id_t mme_ue_s1ap_id = *((mme_ue_s1ap_id_t *)(received_message_p->ittiMsg.timer_has_expired.arg));
           ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
           if (ue_context_p == NULL) {
-            OAILOG_WARNING (LOG_MME_APP, "Timer expired but no assoicated UE context for UE id %d\n",mme_ue_s1ap_id);
+            OAILOG_WARNING (LOG_MME_APP, "Timer expired but no assoicated UE context for UE id " MME_UE_S1AP_ID_FMT "\n",mme_ue_s1ap_id);
             break;
           }
           if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->mobile_reachability_timer.id) {
@@ -238,6 +243,11 @@ void *mme_app_thread (void *args)
           } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->implicit_detach_timer.id) {
             // Implicit Detach Timer expiry handler 
             mme_app_handle_implicit_detach_timer_expiry (ue_context_p);
+          } else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->initial_context_setup_rsp_timer.id) {
+            // Initial Context Setup Rsp Timer expiry handler
+            mme_app_handle_initial_context_setup_rsp_timer_expiry (ue_context_p);
+          } else {
+            OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated timer_id for UE id " MME_UE_S1AP_ID_FMT "\n",mme_ue_s1ap_id);
           }
         }
       }

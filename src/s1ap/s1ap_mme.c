@@ -607,6 +607,7 @@ s1ap_remove_ue (
   if (ue_ref == NULL)
     return;
   
+  mme_ue_s1ap_id_t mme_ue_s1ap_id = ue_ref->mme_ue_s1ap_id;
   enb_ref = ue_ref->enb;
   /*
    * Updating number of UE
@@ -627,8 +628,10 @@ s1ap_remove_ue (
   //     s1ap_timer_remove_ue(ue_ref->mme_ue_s1ap_id);
   OAILOG_TRACE(LOG_S1AP, "Removing UE enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id:" MME_UE_S1AP_ID_FMT " in eNB id : %d\n",
       ue_ref->enb_ue_s1ap_id, ue_ref->mme_ue_s1ap_id, enb_ref->enb_id);
-  hashtable_ts_free (&enb_ref->ue_coll, ue_ref->enb_ue_s1ap_id);
 
+  ue_ref->s1_ue_state = S1AP_UE_INVALID_STATE;
+  hashtable_ts_free (&enb_ref->ue_coll, ue_ref->enb_ue_s1ap_id);
+  hashtable_ts_free (&g_s1ap_mme_id2assoc_id_coll, mme_ue_s1ap_id);
   if (!enb_ref->nb_ue_associated) {
     if (enb_ref->s1_state == S1AP_RESETING) {
       OAILOG_INFO(LOG_S1AP, "Moving eNB state to S1AP_INIT");

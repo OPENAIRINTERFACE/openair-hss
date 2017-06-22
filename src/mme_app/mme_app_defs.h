@@ -111,6 +111,8 @@ void mme_app_handle_nas_auth_param_req       (const itti_nas_auth_param_req_t * 
 
 void mme_app_handle_initial_context_setup_rsp(itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
 
+void mme_app_handle_initial_context_setup_failure(const itti_mme_app_initial_context_setup_failure_t * const initial_ctxt_setup_failure_pP);
+
 bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, void *unused_param_pP, void **unused_result_pP);
 
 int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);
@@ -122,11 +124,13 @@ void mme_app_handle_create_dedicated_bearer_rsp (itti_mme_app_create_dedicated_b
 void mme_app_handle_create_dedicated_bearer_rej (itti_mme_app_create_dedicated_bearer_rej_t   * const create_dedicated_bearer_rej);
 
 void mme_ue_context_update_ue_sig_connection_state (mme_ue_context_t * const mme_ue_context_p,
-                                                                            struct ue_mm_context_s *ue_context_p,ecm_state_t new_ecm_state);
+                                                                            struct ue_mm_context_s *ue_context_p, ecm_state_t new_ecm_state);
 
 void mme_app_handle_mobile_reachability_timer_expiry (struct ue_mm_context_s *ue_context_p);
 
 void mme_app_handle_implicit_detach_timer_expiry (struct ue_mm_context_s *ue_context_p); 
+
+void mme_app_handle_initial_context_setup_rsp_timer_expiry (struct ue_mm_context_s *ue_context_p);
 
 #define mme_stats_read_lock(mMEsTATS)  pthread_rwlock_rdlock(&(mMEsTATS)->rw_lock)
 #define mme_stats_write_lock(mMEsTATS) pthread_rwlock_wrlock(&(mMEsTATS)->rw_lock)

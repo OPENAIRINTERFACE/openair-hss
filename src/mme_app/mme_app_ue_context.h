@@ -101,6 +101,8 @@ mme_ue_s1ap_id_t mme_app_ctx_get_new_ue_id(void);
 // EURECOM LG TODO REMOVE OR CLEAN
 typedef uint8_t mme_app_bearer_state_t;
 
+#define MME_APP_INITIAL_CONTEXT_SETUP_RSP_TIMER_VALUE 2 // In seconds
+
 /* Timer structure */
 struct mme_app_timer_t {
   long id;         /* The timer identifier                 */
@@ -417,6 +419,8 @@ typedef struct ue_mm_context_s {
   struct mme_app_timer_t       mobile_reachability_timer; 
   // Implicit Detach Timer-Start at the expiry of Mobile Reachability timer. Stop when UE moves to connected state
   struct mme_app_timer_t       implicit_detach_timer; 
+  // Initial Context Setup Procedure Guard timer 
+  struct mme_app_timer_t       initial_context_setup_rsp_timer; 
 
 #define SUBSCRIPTION_UNKNOWN    false
 #define SUBSCRIPTION_KNOWN      true

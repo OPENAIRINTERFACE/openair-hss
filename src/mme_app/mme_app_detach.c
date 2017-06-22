@@ -111,9 +111,20 @@ mme_app_handle_detach_req (
       mme_notify_ue_context_released (&mme_app_desc.mme_ue_contexts, ue_context);
       mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context);
     } else {
-       ue_context->ue_context_rel_cause = S1AP_NAS_DETACH;
+      if (ue_context->ue_context_rel_cause == S1AP_INVALID_CAUSE) {
+          ue_context->ue_context_rel_cause = S1AP_NAS_DETACH;
+      }
       // Notify S1AP to send UE Context Release Command to eNB.
       mme_app_itti_ue_context_release (ue_context, ue_context->ue_context_rel_cause);
+      if (ue_context->ue_context_rel_cause == S1AP_SCTP_SHUTDOWN_OR_RESET) {
+        // Just cleanup the MME APP state associated with s1.
+        mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
+        // Free MME UE Context   
+        mme_notify_ue_context_released (&mme_app_desc.mme_ue_contexts, ue_context);
+        mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context);
+      } else {
+        ue_context->ue_context_rel_cause = S1AP_INVALID_CAUSE;
+      }
     }
   } else {
     for (pdn_cid_t i = 0; i < MAX_APN_PER_UE; i++) {

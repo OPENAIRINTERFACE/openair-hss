@@ -721,10 +721,11 @@ s1ap_mme_handle_ue_context_release_request (
        */
       message_p = itti_alloc_new_message (TASK_S1AP, S1AP_UE_CONTEXT_RELEASE_REQ);
       AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
-      memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_req, 0, sizeof (itti_s1ap_ue_context_release_req_t));
+
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).enb_ue_s1ap_id = ue_ref_p->enb_ue_s1ap_id;
       S1AP_UE_CONTEXT_RELEASE_REQ (message_p).enb_id         = ue_ref_p->enb->enb_id;
+      S1AP_UE_CONTEXT_RELEASE_REQ (message_p).cause          = ueContextReleaseRequest_p->cause;
       MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_MMEAPP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_REQ mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ",
               S1AP_UE_CONTEXT_RELEASE_REQ (message_p).mme_ue_s1ap_id);
       rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
@@ -780,6 +781,9 @@ s1ap_mme_generate_ue_context_release_command (
   case S1AP_RADIO_EUTRAN_GENERATED_REASON:cause_type = S1ap_Cause_PR_radioNetwork;
     cause_value = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
     break;
+  case S1AP_INITIAL_CONTEXT_SETUP_FAILED:cause_type = S1ap_Cause_PR_radioNetwork;
+    cause_value = S1ap_CauseRadioNetwork_unspecified;
+    break;
   default:
     AssertFatal(false, "Unknown cause for context release");
     break;
@@ -818,7 +822,7 @@ s1ap_handle_ue_context_release_command (
   const itti_s1ap_ue_context_release_command_t * const ue_context_release_command_pP)
 {
   ue_description_t                       *ue_ref_p = NULL;
-  int                                     rc = RETURNok;
+  int                                    rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_S1AP);
   if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (ue_context_release_command_pP->mme_ue_s1ap_id)) == NULL) {
@@ -898,6 +902,10 @@ s1ap_mme_handle_initial_context_setup_failure (
 {
   S1ap_InitialContextSetupFailureIEs_t   *initialContextSetupFailureIEs_p = NULL;
   ue_description_t                       *ue_ref_p = NULL;
+  MessageDef                             *message_p = NULL;
+  S1ap_Cause_PR                          cause_type;
+  long                                   cause_value;
+  int                                    rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_S1AP);
   initialContextSetupFailureIEs_p = &message->msg.s1ap_InitialContextSetupFailureIEs;
@@ -912,17 +920,59 @@ s1ap_mme_handle_initial_context_setup_failure (
      * MME doesn't know the MME UE S1AP ID provided.
      */
     MSC_LOG_EVENT (MSC_S1AP_MME, "0 InitialContextSetupFailure ignored, no context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", initialContextSetupFailureIEs_p->mme_ue_s1ap_id);
+    OAILOG_INFO (LOG_S1AP, "INITIAL_CONTEXT_SETUP_FAILURE ignored. No context with mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ",
+           (uint32_t)initialContextSetupFailureIEs_p->mme_ue_s1ap_id, (uint32_t)initialContextSetupFailureIEs_p->eNB_UE_S1AP_ID);
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
 
   if (ue_ref_p->enb_ue_s1ap_id != (initialContextSetupFailureIEs_p->eNB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK)) {
+    MSC_LOG_EVENT (MSC_S1AP_MME, "0 InitialContextSetupFailure ignored, mismatch enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ", initialContextSetupFailureIEs_p->eNB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
+    // abnormal case. No need to do anything. Ignore the message   
+    OAILOG_DEBUG (LOG_S1AP, "INITIAL_CONTEXT_SETUP_FAILURE ignored, mismatch enb_ue_s1ap_id: ctxt " ENB_UE_S1AP_ID_FMT " != received " ENB_UE_S1AP_ID_FMT " ",
+    		  (uint32_t)ue_ref_p->enb_ue_s1ap_id, (uint32_t)(initialContextSetupFailureIEs_p->eNB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK));
     OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
   }
+  // Pass this message to MME APP for necessary handling 
+  // Log the Cause Type and Cause value
+  cause_type = initialContextSetupFailureIEs_p->cause.present;
 
-  s1ap_remove_ue (ue_ref_p);
-  MSC_LOG_EVENT (MSC_S1AP_MME, "0 Removed UE mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " ", initialContextSetupFailureIEs_p->mme_ue_s1ap_id);
-  OAILOG_DEBUG (LOG_S1AP, "Removed UE " MME_UE_S1AP_ID_FMT "\n", (uint32_t) initialContextSetupFailureIEs_p->mme_ue_s1ap_id);
-  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+  switch (cause_type) 
+  {
+    case S1ap_Cause_PR_radioNetwork:
+      cause_value = initialContextSetupFailureIEs_p->cause.choice.radioNetwork;
+      OAILOG_DEBUG (LOG_S1AP, "INITIAL_CONTEXT_SETUP_FAILURE with Cause_Type = Radio Network and Cause_Value = %ld\n", cause_value);
+      break;
+
+    case S1ap_Cause_PR_transport:
+      cause_value = initialContextSetupFailureIEs_p->cause.choice.transport;
+      OAILOG_DEBUG (LOG_S1AP, "INITIAL_CONTEXT_SETUP_FAILURE with Cause_Type = Transport and Cause_Value = %ld\n", cause_value);
+      break;
+
+    case S1ap_Cause_PR_nas:
+      cause_value = initialContextSetupFailureIEs_p->cause.choice.nas;
+      OAILOG_DEBUG (LOG_S1AP, "INITIAL_CONTEXT_SETUP_FAILURE with Cause_Type = NAS and Cause_Value = %ld\n", cause_value);
+      break;
+
+    case S1ap_Cause_PR_protocol:
+      cause_value = initialContextSetupFailureIEs_p->cause.choice.protocol;
+      OAILOG_DEBUG (LOG_S1AP, "INITIAL_CONTEXT_SETUP_FAILURE with Cause_Type = Protocol and Cause_Value = %ld\n", cause_value);
+      break;
+
+    case S1ap_Cause_PR_misc:
+      cause_value = initialContextSetupFailureIEs_p->cause.choice.misc;
+      OAILOG_DEBUG (LOG_S1AP, "INITIAL_CONTEXT_SETUP_FAILURE with Cause_Type = MISC and Cause_Value = %ld\n", cause_value);
+      break;
+
+    default:
+      OAILOG_ERROR (LOG_S1AP, "INITIAL_CONTEXT_SETUP_FAILURE with Invalid Cause_Type = %d\n", cause_type);
+      OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+  }
+  message_p = itti_alloc_new_message (TASK_S1AP, MME_APP_INITIAL_CONTEXT_SETUP_FAILURE);
+  AssertFatal (message_p != NULL, "itti_alloc_new_message Failed");
+  memset ((void *)&message_p->ittiMsg.mme_app_initial_context_setup_failure, 0, sizeof (itti_mme_app_initial_context_setup_failure_t));
+  MME_APP_INITIAL_CONTEXT_SETUP_FAILURE (message_p).mme_ue_s1ap_id = ue_ref_p->mme_ue_s1ap_id;
+  rc =  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

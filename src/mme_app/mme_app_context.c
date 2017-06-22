@@ -133,12 +133,18 @@ ue_mm_context_t *mme_create_new_ue_context (void)
     return NULL;
   }
 
+
   new_p->mme_ue_s1ap_id = INVALID_MME_UE_S1AP_ID;
   new_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+  emm_init_context(&new_p->emm_context, true);
+
   // Initialize timers to INVALID IDs
   new_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
   new_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
-  emm_init_context(&new_p->emm_context, true);
+
+  new_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  new_p->ue_context_rel_cause = S1AP_INVALID_CAUSE;
+
   return new_p;
 }
 
@@ -173,6 +179,16 @@ void mme_app_ue_context_free_content (ue_mm_context_t * const ue_context_p)
     } 
     ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
   }
+
+  // Stop Initial context setup process guard timer,if running 
+  if (ue_context_p->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
+    if (timer_remove(ue_context_p->initial_context_setup_rsp_timer.id, NULL)) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop Initial Context Setup Rsp timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    } 
+    ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  }
+
+  ue_context_p->ue_context_rel_cause = S1AP_INVALID_CAUSE;
 
   for (int i = 0; i < MAX_APN_PER_UE; i++) {
     if (ue_context_p->pdn_contexts[i]) {
@@ -1204,6 +1220,7 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
 {
   struct ue_mm_context_s                 *ue_mm_context = NULL;
   enb_s1ap_id_key_t                       enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+  MessageDef                             *message_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
@@ -1240,14 +1257,24 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     unlock_ue_contexts(ue_mm_context);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  if ((!ue_mm_context->mme_teid_s11) && (!ue_mm_context->nb_active_pdn_contexts)) {
-    // No session was created, no need for releasing bearers in SGW
-    mme_app_itti_ue_context_release(ue_mm_context, ue_mm_context->ue_context_rel_cause);
-    if (ue_mm_context->ue_context_rel_cause == S1AP_SCTP_SHUTDOWN_OR_RESET) {
-      // Just cleanup the MME APP state associated with s1.
-      mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_mm_context, ECM_IDLE);
-    }
+
+  // Stop Initial context setup process guard timer,if running 
+  if (ue_mm_context->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
+    if (timer_remove(ue_mm_context->initial_context_setup_rsp_timer.id, NULL)) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop Initial Context Setup Rsp timer for UE id  %d \n", ue_mm_context->mme_ue_s1ap_id);
+    } 
+    ue_mm_context->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+    // Setting UE context release cause as Initial context setup failure
+    ue_mm_context->ue_context_rel_cause = S1AP_INITIAL_CONTEXT_SETUP_FAILED;
+  }
+  if (ue_mm_context->mm_state == UE_UNREGISTERED) {
+    // Initiate Implicit Detach for the UE
+    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+    DevAssert (message_p != NULL);
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_mm_context->mme_ue_s1ap_id;
+    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   } else {
+    // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
     // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
     for (pdn_cid_t i = 0; i < MAX_APN_PER_UE; i++) {
       if (ue_mm_context->pdn_contexts[i]) {
