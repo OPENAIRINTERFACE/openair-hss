@@ -94,10 +94,12 @@ typedef struct itti_s1ap_ue_context_release_req_s {
 
 // List of possible causes for MME generated UE context release command towards eNB
 enum s1cause {
+  S1AP_INVALID_CAUSE = 0,
   S1AP_NAS_NORMAL_RELEASE,
   S1AP_NAS_DETACH,
   S1AP_RADIO_EUTRAN_GENERATED_REASON,
   S1AP_IMPLICIT_CONTEXT_RELEASE,
+  S1AP_INITIAL_CONTEXT_SETUP_FAILED,
   S1AP_SCTP_SHUTDOWN_OR_RESET
 };
 typedef struct itti_s1ap_ue_context_release_command_s {
