@@ -37,6 +37,8 @@
 #ifndef FILE_LOG_SEEN
 #define FILE_LOG_SEEN
 
+#include <syslog.h>
+
 /* asn1c debug */
 extern int asn_debug;
 extern int asn1_xer_print;
