@@ -191,7 +191,7 @@ emm_fsm_set_state (
       OAILOG_INFO (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT" EMM-FSM   - Status changed: %s ===> %s\n", ue_id, _emm_fsm_status_str[emm_context->_emm_fsm_state], _emm_fsm_status_str[state]);
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, "EMM state %s UE " MME_UE_S1AP_ID_FMT" ", _emm_fsm_status_str[state], ue_id);
       emm_context->_emm_fsm_state = state;
-      emm_fsm_state_t new_emm_state;
+      emm_fsm_state_t new_emm_state = UE_UNREGISTERED;
       if (state == EMM_REGISTERED) {
         new_emm_state = UE_REGISTERED;
       } else if (state == EMM_DEREGISTERED) {
