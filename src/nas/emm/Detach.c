@@ -239,14 +239,14 @@ emm_proc_detach_request (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc;
 
-  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Detach type = %s (%d) requested (ue_id=" MME_UE_S1AP_ID_FMT ")", _emm_detach_type_str[params->type], params->type, ue_id);
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Detach type = %s (%d) requested (ue_id=" MME_UE_S1AP_ID_FMT ")\n", _emm_detach_type_str[params->type], params->type, ue_id);
   /*
    * Get the UE context
    */
   ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
 
   if (ue_mm_context == NULL) {
-    OAILOG_WARNING (LOG_NAS_EMM, "No EMM context exists for the UE (ue_id=" MME_UE_S1AP_ID_FMT ")", ue_id);
+    OAILOG_WARNING (LOG_NAS_EMM, "No EMM context exists for the UE (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
     // There may be MME APP Context. Trigger clean up in MME APP 
     nas_itti_detach_req(ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
