@@ -441,7 +441,11 @@ mme_app_handle_delete_session_rsp (
     mme_app_itti_ue_context_release (ue_context_p, ue_context_p->ue_context_rel_cause);
     // Free MME UE Context   
     mme_notify_ue_context_released (&mme_app_desc.mme_ue_contexts, ue_context_p);
+    OAILOG_DEBUG (LOG_MME_APP, "Deleting UE context associated in MME for mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n ",
+        ue_context_p->mme_ue_s1ap_id);
     mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p);
+    // return now, otherwize will unlock ue context already free
+    OAILOG_FUNC_OUT (LOG_MME_APP);
   } else {
     if (ue_context_p->ue_context_rel_cause == S1AP_INVALID_CAUSE) {
       ue_context_p->ue_context_rel_cause = S1AP_NAS_DETACH;
