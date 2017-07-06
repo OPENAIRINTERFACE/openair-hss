@@ -235,10 +235,14 @@ s6a_auth_info_cb (
   /*
    * Fetch User data
    */
-  if (hss_mysql_auth_info (&auth_info_req, &auth_info_resp) != 0) {
+  if ((result_code = hss_mysql_auth_info (&auth_info_req, &auth_info_resp)) != 0) {
     /*
      * Database query failed...
      */
+    if (DIAMETER_ERROR_USER_UNKNOWN == result_code) {
+      experimental = 1;
+      goto out;
+    }
     result_code = DIAMETER_AUTHENTICATION_DATA_UNAVAILABLE;
     experimental = 1;
     goto out;

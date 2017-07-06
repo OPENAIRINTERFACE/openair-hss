@@ -34,6 +34,7 @@
 
 #include "hss_config.h"
 #include "db_proto.h"
+#include "s6a_proto.h"
 #include "log.h"
 
 extern void                             ComputeOPc (
@@ -522,8 +523,12 @@ hss_mysql_auth_info (
     return EINVAL;
   }
 
+
   res = mysql_store_result (db_desc->db_conn);
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
+
+  if (mysql_num_rows(res)==0)
+    return DIAMETER_ERROR_USER_UNKNOWN;
 
   if ( res == NULL )
     return EINVAL;
