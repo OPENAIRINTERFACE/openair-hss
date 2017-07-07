@@ -527,11 +527,12 @@ hss_mysql_auth_info (
   res = mysql_store_result (db_desc->db_conn);
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
 
-  if (mysql_num_rows(res)==0)
-    return DIAMETER_ERROR_USER_UNKNOWN;
-
-  if ( res == NULL )
+  if ( res == NULL ) {
+    FPRINTF_ERROR ("Query execution failed res = NULL\n");
     return EINVAL;
+  }
+
+
 
   ret = 0;
 
@@ -569,6 +570,9 @@ hss_mysql_auth_info (
       memcpy (auth_info_resp->opc, row[3], KEY_LENGTH);
     }
 
+  } else {
+    FPRINTF_ERROR ("imsi=%s UNKNOWN USER\n", auth_info_req->imsi);
+    ret =  DIAMETER_ERROR_USER_UNKNOWN;
   }
 
   mysql_free_result (res);
