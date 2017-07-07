@@ -39,6 +39,7 @@
 #include "s6a_proto.h"
 #include "auc.h"
 #include "access_restriction.h"
+#include "log.h"
 
 
 #define AUTH_MAX_EUTRAN_VECTORS 6
@@ -77,6 +78,7 @@ s6a_auth_info_cb (
     *auts = NULL;
 
   if (msg == NULL) {
+    FPRINTF_ERROR ( "s6a_auth_info_cb() msg = NULL\n");
     return EINVAL;
   }
 
@@ -96,12 +98,14 @@ s6a_auth_info_cb (
 
     if (hdr->avp_value->os.len > IMSI_LENGTH_MAX) {
       result_code = ER_DIAMETER_INVALID_AVP_VALUE;
+      FPRINTF_ERROR ( "s6a_auth_info_cb() IMSI too long\n");
       goto out;
     }
 
     sprintf (auth_info_req.imsi, "%*s", (int)hdr->avp_value->os.len, hdr->avp_value->os.data);
     sscanf (auth_info_req.imsi, "%" SCNu64, &imsi);
   } else {
+    FPRINTF_ERROR ( "s6a_auth_info_cb() Missing IMSI AVP\n");
     result_code = ER_DIAMETER_MISSING_AVP;
     goto out;
   }
@@ -144,6 +148,7 @@ s6a_auth_info_cb (
            * We allow only one vector request
            */
           if (hdr->avp_value->u32 > AUTH_MAX_EUTRAN_VECTORS) {
+            FPRINTF_ERROR ( "s6a_auth_info_cb() TOO MANY VECTORS REQUESTED (req %d, max %d)\n", hdr->avp_value->u32, AUTH_MAX_EUTRAN_VECTORS);
             result_code = ER_DIAMETER_INVALID_AVP_VALUE;
             failed_avp = child_avp;
             goto out;
@@ -174,6 +179,7 @@ s6a_auth_info_cb (
           /*
            * This AVP is not expected on s6a interface
            */
+          FPRINTF_ERROR ( "s6a_auth_info_cb() Unsupported AVP %d\n", hdr->avp_code);
           result_code = ER_DIAMETER_AVP_UNSUPPORTED;
           failed_avp = child_avp;
           goto out;
@@ -189,10 +195,12 @@ s6a_auth_info_cb (
     CHECK_FCT (fd_msg_search_avp (qry, s6a_cnf.dataobj_s6a_req_geran_auth_info, &avp));
 
     if (avp) {
+      FPRINTF_ERROR ( "s6a_auth_info_cb() RAT not allowed\n");
       result_code = DIAMETER_ERROR_RAT_NOT_ALLOWED;
       experimental = 1;
       goto out;
     } else {
+      FPRINTF_ERROR ( "s6a_auth_info_cb() Invalid AVP value\n");
       result_code = ER_DIAMETER_INVALID_AVP_VALUE;
       failed_avp = avp;
       goto out;
@@ -216,11 +224,13 @@ s6a_auth_info_cb (
          * We found that user is roaming and has no right to do it ->
          * * * * reject the connection
          */
+        FPRINTF_ERROR ( "s6a_auth_info_cb() Visited PLMN:Roaming not allowed\n");
         result_code = DIAMETER_ERROR_ROAMING_NOT_ALLOWED;
         experimental = 1;
         goto out;
       }
     } else {
+      FPRINTF_ERROR ( "s6a_auth_info_cb() Visited PLMN: Invalid AVP value\n");
       result_code = ER_DIAMETER_INVALID_AVP_VALUE;
       goto out;
     }
@@ -228,6 +238,7 @@ s6a_auth_info_cb (
     /*
      * Mandatory AVP, raise an error if not present
      */
+    FPRINTF_ERROR ( "s6a_auth_info_cb() Visited PLMN: Missing AVP\n");
     result_code = ER_DIAMETER_MISSING_AVP;
     goto out;
   }
