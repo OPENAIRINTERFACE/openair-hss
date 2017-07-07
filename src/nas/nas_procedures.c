@@ -595,6 +595,7 @@ nas_emm_attach_proc_t* nas_new_attach_procedure(struct emm_context_s * const emm
 
   nas_emm_attach_proc_t * proc = (nas_emm_attach_proc_t*)emm_context->emm_procedures->emm_specific_proc;
 
+  proc->ue_id           = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
   proc->T3450.sec       = mme_config.nas_config.t3450_sec;
   proc->T3450.id        = NAS_TIMER_INACTIVE_ID;
 
@@ -620,6 +621,7 @@ nas_emm_tau_proc_t *nas_new_tau_procedure(struct emm_context_s * const emm_conte
 
   nas_emm_tau_proc_t * proc = (nas_emm_tau_proc_t*)emm_context->emm_procedures->emm_specific_proc;
 
+  proc->ue_id           = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
   proc->T3450.sec       = mme_config.nas_config.t3450_sec;
   proc->T3450.id        = NAS_TIMER_INACTIVE_ID;
 

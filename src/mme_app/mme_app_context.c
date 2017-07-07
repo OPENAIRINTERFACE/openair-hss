@@ -1160,6 +1160,8 @@ mme_app_handle_s1ap_ue_context_release_complete (
                   s1ap_ue_context_release_complete->mme_ue_s1ap_id);
       mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
       update_mme_app_stats_connected_ue_sub();
+      // return here avoid unlock_ue_contexts()
+      OAILOG_FUNC_OUT (LOG_MME_APP);
     } else { 
       // Send a DELETE_SESSION_REQUEST message to the SGW
       for (pdn_cid_t i = 0; i < MAX_APN_PER_UE; i++) {

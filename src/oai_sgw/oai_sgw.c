@@ -82,6 +82,9 @@ main (
 {
   char   *pid_file_name = NULL;
 
+  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
+  CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
+
   // Currently hard-coded value. TODO: add as config option.
   pid_file_name = get_exe_absolute_path("/var/run");
 
@@ -129,8 +132,6 @@ main (
 #endif
 
 
-  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
-  CHECK_INIT_RETURN (OAILOG_INIT (LOG_SPGW_ENV, OAILOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
   CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, NULL, NULL));
   CHECK_INIT_RETURN (async_system_init());
   /*

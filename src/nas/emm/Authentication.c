@@ -490,15 +490,27 @@ static int _auth_info_proc_failure_cb (struct emm_context_s *emm_ctx)
     if (auth_proc) {
       auth_proc->emm_cause = emm_cause;
 
-      emm_sap_t                               emm_sap = {0};
-      emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
-      emm_sap.u.emm_reg.ue_id     = ue_id;
-      emm_sap.u.emm_reg.ctx       = emm_ctx;
-      emm_sap.u.emm_reg.notify    = true;
-      emm_sap.u.emm_reg.free_proc = true;
-      emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
-      emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
-      rc = emm_sap_send (&emm_sap);
+      if (EMM_COMMON_PROCEDURE_INITIATED == emm_fsm_get_state(emm_ctx)) {
+        emm_sap_t                               emm_sap = {0};
+        emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
+        emm_sap.u.emm_reg.ue_id     = ue_id;
+        emm_sap.u.emm_reg.ctx       = emm_ctx;
+        emm_sap.u.emm_reg.notify    = true;
+        emm_sap.u.emm_reg.free_proc = true;
+        emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
+        emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
+        rc = emm_sap_send (&emm_sap);
+      } else {
+        // cannot send sap event because in most cases EMM state is not EMM_COMMON_PROCEDURE_INITIATED
+        // so use the callback of nas_emm_auth_proc_t
+        // TODO seems bad design here, tricky.
+        if (auth_proc->emm_com_proc.emm_proc.base_proc.failure_notif) {
+          emm_ctx->emm_cause = emm_cause;
+          rc = (*auth_proc->emm_com_proc.emm_proc.base_proc.failure_notif)(emm_ctx);
+        } else {
+          nas_delete_common_procedure(emm_ctx, (nas_emm_common_proc_t**)&auth_proc);
+        }
+      }
     }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

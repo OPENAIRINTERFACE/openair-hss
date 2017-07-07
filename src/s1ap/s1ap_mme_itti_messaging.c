@@ -77,7 +77,8 @@ s1ap_mme_itti_nas_uplink_ind (
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_UPLINK_DATA_IND ue_id " MME_UE_S1AP_ID_FMT " len %u",
       NAS_UL_DATA_IND (message_p).ue_id, blength(NAS_UL_DATA_IND (message_p).nas_msg));
-  return itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  // yes, to TASK_MME_APP instead of NAS (threading issue with S1AP UE CTXT RELEASE)
+  return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
 
 //------------------------------------------------------------------------------
