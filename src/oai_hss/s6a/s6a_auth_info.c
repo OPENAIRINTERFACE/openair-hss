@@ -235,7 +235,9 @@ s6a_auth_info_cb (
   /*
    * Fetch User data
    */
-  if ((result_code = hss_mysql_auth_info (&auth_info_req, &auth_info_resp)) != 0) {
+  int rc = hss_mysql_auth_info (&auth_info_req, &auth_info_resp);
+  if (rc != 0) {
+    result_code = rc;
     /*
      * Database query failed...
      */

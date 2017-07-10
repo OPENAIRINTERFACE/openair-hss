@@ -34,8 +34,8 @@
 
 #include "hss_config.h"
 #include "db_proto.h"
-#include "s6a_proto.h"
 #include "log.h"
+#include "s6a_proto.h"
 
 extern void                             ComputeOPc (
   const uint8_t const kP[16],
@@ -523,16 +523,11 @@ hss_mysql_auth_info (
     return EINVAL;
   }
 
-
   res = mysql_store_result (db_desc->db_conn);
   pthread_mutex_unlock (&db_desc->db_cs_mutex);
 
-  if ( res == NULL ) {
-    FPRINTF_ERROR ("Query execution failed res = NULL\n");
+  if ( res == NULL )
     return EINVAL;
-  }
-
-
 
   ret = 0;
 
@@ -571,7 +566,6 @@ hss_mysql_auth_info (
     }
 
   } else {
-    FPRINTF_ERROR ("imsi=%s UNKNOWN USER\n", auth_info_req->imsi);
     ret =  DIAMETER_ERROR_USER_UNKNOWN;
   }
 
