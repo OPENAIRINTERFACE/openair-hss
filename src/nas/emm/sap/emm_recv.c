@@ -537,7 +537,7 @@ emm_recv_tracking_area_update_request (
    * TAU due to change in TAs, optional IEs 
    */
 
-  emm_tau_request_ies_t *ies = calloc(1, sizeof(ies));
+  emm_tau_request_ies_t *ies = calloc(1, sizeof(*ies));
   ies->is_initial = is_initial;
   // Mandatory fields
   ies->eps_update_type = msg->epsupdatetype;

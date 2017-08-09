@@ -130,6 +130,18 @@ void *mme_app_thread (void *args)
       }
       break;
 
+    case NAS_UPLINK_DATA_IND:{
+        ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, NAS_UL_DATA_IND (received_message_p).ue_id);
+        nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id,
+            NAS_UL_DATA_IND (received_message_p).tai,
+            NAS_UL_DATA_IND (received_message_p).cgi,
+            &NAS_UL_DATA_IND (received_message_p).nas_msg);
+        if (ue_context_p) {
+         unlock_ue_contexts(ue_context_p);
+        }
+      }
+      break;
+
     case S11_CREATE_BEARER_REQUEST:
       mme_app_handle_s11_create_bearer_req (&received_message_p->ittiMsg.s11_create_bearer_request);
       break;

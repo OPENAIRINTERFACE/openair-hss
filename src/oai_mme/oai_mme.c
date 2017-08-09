@@ -147,13 +147,8 @@ main (
   }
 #endif
 
-  CHECK_INIT_RETURN (shared_log_init (MAX_LOG_PROTOS));
-  CHECK_INIT_RETURN (OAILOG_INIT (LOG_MME_ENV, OAILOG_LEVEL_NOTICE, MAX_LOG_PROTOS));
+
   CHECK_INIT_RETURN (itti_init (TASK_MAX, THREAD_MAX, MESSAGES_ID_MAX, tasks_info, messages_info, NULL, NULL));
-  /*
-   * Parse the command line for options and set the mme_config accordingly.
-   */
-  CHECK_INIT_RETURN (mme_config_parse_opt_line (argc, argv, &mme_config));
   MSC_INIT (MSC_MME, THREAD_MAX + TASK_MAX);
   /*
    * Calling each layer init function

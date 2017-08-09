@@ -329,20 +329,36 @@ static int _start_authentication_information_procedure(struct emm_context_s *emm
   auth_info_proc->success_notif = _auth_info_proc_success_cb;
   auth_info_proc->failure_notif = _auth_info_proc_failure_cb;
 
-  if (!auth_info_proc->request_sent) {
-    plmn_t visited_plmn = {0};
-    visited_plmn.mcc_digit1 = emm_context->originating_tai.mcc_digit1;
-    visited_plmn.mcc_digit2 = emm_context->originating_tai.mcc_digit2;
-    visited_plmn.mcc_digit3 = emm_context->originating_tai.mcc_digit3;
-    visited_plmn.mnc_digit1 = emm_context->originating_tai.mnc_digit1;
-    visited_plmn.mnc_digit2 = emm_context->originating_tai.mnc_digit2;
-    visited_plmn.mnc_digit3 = emm_context->originating_tai.mnc_digit3;
+  plmn_t visited_plmn = {0};
+  visited_plmn.mcc_digit1 = emm_context->originating_tai.mcc_digit1;
+  visited_plmn.mcc_digit2 = emm_context->originating_tai.mcc_digit2;
+  visited_plmn.mcc_digit3 = emm_context->originating_tai.mcc_digit3;
+  visited_plmn.mnc_digit1 = emm_context->originating_tai.mnc_digit1;
+  visited_plmn.mnc_digit2 = emm_context->originating_tai.mnc_digit2;
+  visited_plmn.mnc_digit3 = emm_context->originating_tai.mnc_digit3;
 
-    bool is_initial_req = !(auth_info_proc->request_sent);
-    auth_info_proc->request_sent = true;
-    nas_itti_auth_info_req (ue_id, &emm_context->_imsi, is_initial_req, &visited_plmn, MAX_EPS_AUTH_VECTORS, auts);
-  }
+  bool is_initial_req = !(auth_info_proc->request_sent);
+  auth_info_proc->request_sent = true;
+  nas_itti_auth_info_req (ue_id, &emm_context->_imsi, is_initial_req, &visited_plmn, MAX_EPS_AUTH_VECTORS, auts);
+
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+static int _start_authentication_information_procedure_synch(struct emm_context_s *emm_context, nas_emm_auth_proc_t * const auth_proc, const_bstring auts)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  // Ask upper layer to fetch new security context
+  nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_context);
+
+  AssertFatal( auth_info_proc == NULL, "auth_info_proc %p should have been cleared", auth_info_proc);
+  if (!auth_info_proc) {
+    auth_info_proc = nas_new_cn_auth_info_procedure(emm_context);
+    auth_info_proc->request_sent = true;
+    _start_authentication_information_procedure(emm_context, auth_proc, auts);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
 }
 
 
@@ -404,6 +420,19 @@ static int _auth_info_proc_success_cb (struct emm_context_s *emm_ctx)
 
 
         auth_proc->ksi = eksi;
+
+        // re-enter previous EMM state, before re-initiating the procedure
+        emm_sap_t                               emm_sap = {0};
+        emm_sap.primitive = EMMREG_COMMON_PROC_ABORT;
+        emm_sap.u.emm_reg.ue_id     = ue_id;
+        emm_sap.u.emm_reg.ctx       = emm_ctx;
+        emm_sap.u.emm_reg.notify    = false;
+        emm_sap.u.emm_reg.free_proc = false;
+        emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
+        emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
+        rc = emm_sap_send (&emm_sap);
+
+
         rc = emm_proc_authentication_ksi (emm_ctx, (nas_emm_specific_proc_t*)auth_info_proc->cn_proc.base_proc.parent, eksi,
             emm_ctx->_vector[eksi % MAX_EPS_AUTH_VECTORS].rand,
             emm_ctx->_vector[eksi % MAX_EPS_AUTH_VECTORS].autn,
@@ -461,15 +490,27 @@ static int _auth_info_proc_failure_cb (struct emm_context_s *emm_ctx)
     if (auth_proc) {
       auth_proc->emm_cause = emm_cause;
 
-      emm_sap_t                               emm_sap = {0};
-      emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
-      emm_sap.u.emm_reg.ue_id     = ue_id;
-      emm_sap.u.emm_reg.ctx       = emm_ctx;
-      emm_sap.u.emm_reg.notify    = true;
-      emm_sap.u.emm_reg.free_proc = true;
-      emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
-      emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
-      rc = emm_sap_send (&emm_sap);
+      if (EMM_COMMON_PROCEDURE_INITIATED == emm_fsm_get_state(emm_ctx)) {
+        emm_sap_t                               emm_sap = {0};
+        emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
+        emm_sap.u.emm_reg.ue_id     = ue_id;
+        emm_sap.u.emm_reg.ctx       = emm_ctx;
+        emm_sap.u.emm_reg.notify    = true;
+        emm_sap.u.emm_reg.free_proc = true;
+        emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
+        emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
+        rc = emm_sap_send (&emm_sap);
+      } else {
+        // cannot send sap event because in most cases EMM state is not EMM_COMMON_PROCEDURE_INITIATED
+        // so use the callback of nas_emm_auth_proc_t
+        // TODO seems bad design here, tricky.
+        if (auth_proc->emm_com_proc.emm_proc.base_proc.failure_notif) {
+          emm_ctx->emm_cause = emm_cause;
+          rc = (*auth_proc->emm_com_proc.emm_proc.base_proc.failure_notif)(emm_ctx);
+        } else {
+          nas_delete_common_procedure(emm_ctx, (nas_emm_common_proc_t**)&auth_proc);
+        }
+      }
     }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -533,15 +574,8 @@ int emm_proc_authentication_failure (
         memcpy (resync_param.data, (emm_ctx->_vector[emm_ctx->_security.vector_index].rand), RAND_LENGTH_OCTETS);
         memcpy ((resync_param.data + RAND_LENGTH_OCTETS), auts->data, AUTS_LENGTH);
         // TODO: Double check this case as there is no identity request being sent.
-        plmn_t visited_plmn = {0};
-        visited_plmn.mcc_digit1 = emm_ctx->originating_tai.mcc_digit1;
-        visited_plmn.mcc_digit2 = emm_ctx->originating_tai.mcc_digit2;
-        visited_plmn.mcc_digit3 = emm_ctx->originating_tai.mcc_digit3;
-        visited_plmn.mnc_digit1 = emm_ctx->originating_tai.mnc_digit1;
-        visited_plmn.mnc_digit2 = emm_ctx->originating_tai.mnc_digit2;
-        visited_plmn.mnc_digit3 = emm_ctx->originating_tai.mnc_digit3;
-
-        nas_itti_auth_info_req(ue_id, &emm_ctx->_imsi, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, &resync_param);
+        _start_authentication_information_procedure_synch(emm_ctx, auth_proc, &resync_param);
+        free_wrapper((void**)&resync_param.data);
         emm_ctx_clear_auth_vectors(emm_ctx);
         rc = RETURNok;
         unlock_ue_contexts(ue_mm_context);

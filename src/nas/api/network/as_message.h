@@ -332,12 +332,12 @@ typedef struct nas_establish_ind_s {
  */
 typedef struct nas_establish_rsp_s {
   mme_ue_s1ap_id_t ue_id;         /* UE lower layer identifier   */
-  s_tmsi_t         s_tmsi;        /* UE identity                 */
   nas_error_code_t err_code;      /* Transaction status          */
   bstring          nas_msg;       /* NAS message to transfer     */
   uint32_t         nas_ul_count;  /* UL NAS COUNT                */
   uint16_t         selected_encryption_algorithm;
   uint16_t         selected_integrity_algorithm;
+  s_tmsi_t         s_tmsi;        /* UE identity                 */
 } nas_establish_rsp_t;
 
 /*

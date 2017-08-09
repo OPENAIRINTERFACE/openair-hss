@@ -967,6 +967,11 @@ static int _emm_attach_failure_authentication_cb (emm_context_t *emm_context)
   nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
 
   if (attach_proc) {
+    attach_proc->emm_cause = emm_context->emm_cause;
+
+    // TODO could be in callback of attach procedure triggered by EMMREG_ATTACH_REJ
+    rc = _emm_attach_reject (emm_context, &attach_proc->emm_spec_proc.emm_proc.base_proc);
+
     emm_sap_t emm_sap                      = {0};
     emm_sap.primitive                      = EMMREG_ATTACH_REJ;
     emm_sap.u.emm_reg.ue_id                = attach_proc->ue_id;
@@ -974,7 +979,7 @@ static int _emm_attach_failure_authentication_cb (emm_context_t *emm_context)
     emm_sap.u.emm_reg.notify               = true;
     emm_sap.u.emm_reg.free_proc            = true;
     emm_sap.u.emm_reg.u.attach.proc = attach_proc;
-    // dont care emm_sap.u.emm_reg.u.attach.is_emergency = false;
+    // don't care emm_sap.u.emm_reg.u.attach.is_emergency = false;
     rc = emm_sap_send (&emm_sap);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

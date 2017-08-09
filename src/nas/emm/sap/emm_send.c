@@ -544,7 +544,7 @@ emm_send_tracking_area_update_accept (
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_UPDATE_RESULT_MAXIMUM_LENGTH, size);
 
   // Optional - GPRS Timer T3412
-  if (*msg->t3412) {
+  if ((msg->t3412) && (*msg->t3412)) {
     size += GPRS_TIMER_IE_MAX_LENGTH;
     emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_T3412_VALUE_PRESENT;
     if (*msg->t3412 <= 31) {

@@ -99,15 +99,6 @@ static void *nas_intertask_interface (void *args_p)
       }
       break;
 
-    case NAS_UPLINK_DATA_IND:{
-        nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id,
-            NAS_UL_DATA_IND (received_message_p).tai,
-            NAS_UL_DATA_IND (received_message_p).cgi,
-            &NAS_UL_DATA_IND (received_message_p).nas_msg);
-      }
-      break;
-
-
     case S1AP_DEREGISTER_UE_REQ:{
         nas_proc_deregister_ue (S1AP_DEREGISTER_UE_REQ (received_message_p).mme_ue_s1ap_id);
       }

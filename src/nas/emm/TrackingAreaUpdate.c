@@ -444,12 +444,12 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
        * Setup EPS NAS security data
        */
       emm_as_set_security_data (&emm_sap.u.emm_as.u.establish.sctx, &emm_context->_security, false, true);
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X ", emm_sap.u.emm_as.u.establish.encryption);
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X ", emm_sap.u.emm_as.u.establish.integrity);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X\n", emm_sap.u.emm_as.u.establish.encryption);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X\n", emm_sap.u.emm_as.u.establish.integrity);
       emm_sap.u.emm_as.u.establish.encryption = emm_context->_security.selected_algorithms.encryption;
       emm_sap.u.emm_as.u.establish.integrity = emm_context->_security.selected_algorithms.integrity;
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X (0x%X)", emm_sap.u.emm_as.u.establish.encryption, emm_context->_security.selected_algorithms.encryption);
-      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X (0x%X)", emm_sap.u.emm_as.u.establish.integrity, emm_context->_security.selected_algorithms.integrity);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - encryption = 0x%X (0x%X)\n", emm_sap.u.emm_as.u.establish.encryption, emm_context->_security.selected_algorithms.encryption);
+      OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - integrity  = 0x%X (0x%X)\n", emm_sap.u.emm_as.u.establish.integrity, emm_context->_security.selected_algorithms.integrity);
     
       rc = emm_sap_send (&emm_sap);
 
@@ -461,8 +461,11 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
           void * timer_callback_arg = NULL;
           nas_stop_T3450(tau_proc->ue_id, &tau_proc->T3450, timer_callback_arg);
           nas_start_T3450 (tau_proc->ue_id, &tau_proc->T3450, tau_proc->emm_spec_proc.emm_proc.base_proc.time_out, emm_context);
+          unlock_ue_contexts(ue_mm_context);
+          OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
         }
       }
+      nas_delete_tau_procedure(emm_context);
     } // Active Flag
     else {
 
@@ -491,6 +494,8 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
        */
       emm_sap.primitive = EMMAS_DATA_REQ;
       rc = emm_sap_send (&emm_sap);
+
+      nas_delete_tau_procedure(emm_context);
     }
   } else {
     OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - TAU procedure NULL");
@@ -537,43 +542,43 @@ static int _emm_tracking_area_update_abort (struct emm_context_s *emm_context, s
 void free_emm_tau_request_ies(emm_tau_request_ies_t ** const ies)
 {
   if ((*ies)->additional_guti) {
-    free_wrapper((void**)&(*ies)->additional_guti);
+    free_wrapper((void**)&((*ies)->additional_guti));
   }
   if ((*ies)->ue_network_capability) {
-    free_wrapper((void**)&(*ies)->ue_network_capability);
+    free_wrapper((void**)&((*ies)->ue_network_capability));
   }
   if ((*ies)->last_visited_registered_tai) {
-    free_wrapper((void**)&(*ies)->last_visited_registered_tai);
+    free_wrapper((void**)&((*ies)->last_visited_registered_tai));
   }
   if ((*ies)->last_visited_registered_tai) {
-    free_wrapper((void**)&(*ies)->last_visited_registered_tai);
+    free_wrapper((void**)&((*ies)->last_visited_registered_tai));
   }
   if ((*ies)->drx_parameter) {
-    free_wrapper((void**)&(*ies)->drx_parameter);
+    free_wrapper((void**)&((*ies)->drx_parameter));
   }
   if ((*ies)->eps_bearer_context_status) {
-    free_wrapper((void**)&(*ies)->eps_bearer_context_status);
+    free_wrapper((void**)&((*ies)->eps_bearer_context_status));
   }
   if ((*ies)->ms_network_capability) {
-    free_wrapper((void**)&(*ies)->ms_network_capability);
+    free_wrapper((void**)&((*ies)->ms_network_capability));
   }
   if ((*ies)->tmsi_status) {
-    free_wrapper((void**)&(*ies)->tmsi_status);
+    free_wrapper((void**)&((*ies)->tmsi_status));
   }
   if ((*ies)->mobile_station_classmark2) {
-    free_wrapper((void**)&(*ies)->mobile_station_classmark2);
+    free_wrapper((void**)&((*ies)->mobile_station_classmark2));
   }
   if ((*ies)->mobile_station_classmark3) {
-    free_wrapper((void**)&(*ies)->mobile_station_classmark3);
+    free_wrapper((void**)&((*ies)->mobile_station_classmark3));
   }
   if ((*ies)->supported_codecs) {
-    free_wrapper((void**)&(*ies)->supported_codecs);
+    free_wrapper((void**)&((*ies)->supported_codecs));
   }
   if ((*ies)->additional_updatetype) {
-    free_wrapper((void**)&(*ies)->additional_updatetype);
+    free_wrapper((void**)&((*ies)->additional_updatetype));
   }
   if ((*ies)->old_guti_type) {
-    free_wrapper((void**)&(*ies)->old_guti_type);
+    free_wrapper((void**)&((*ies)->old_guti_type));
   }
   free_wrapper((void**)ies);
 }
