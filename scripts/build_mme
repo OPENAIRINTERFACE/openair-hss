@@ -178,7 +178,7 @@ function main()
   cmake  $cmake_args .. > /dev/null 
   
 
-  compilations mme mme mme
+  compilations mme mme mme $verbose
 
   if [ $unit_tests -ne 0 ]; then
     make_test mme mme mme $verbose

@@ -24,6 +24,9 @@
 # author Laurent Thomas, Lionel GAUTHIER
 #
 #######################################
+
+SUPPORTED_KERNEL_VERSION="4.9.0"
+
 SUDO='sudo -S -E'
 
 ###############################
@@ -58,7 +61,6 @@ echo_fatal()   { cecho "$*" $red; exit -1 ;}
 echo_warning() { cecho "$*" $yellow       ;}
 echo_success() { cecho "$*" $green        ;}
 echo_info()    { cecho "$*" $blue         ;}
-
 
 ########################
 # distribution helpers #
@@ -169,6 +171,16 @@ remove_gnutls_from_source(){
     ./configure --prefix=/usr
     $SUDO make uninstall || true
     )>& $gnutls_uninstall_log
+}
+
+#-------------------------------------------------------------------------------
+# Compare two versions of software. Returns true if $version is greater than $req_version
+# arg1 = version
+# arg2 = req_version
+#
+
+function version_gt() { 
+	test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; 
 }
 
 
@@ -565,6 +577,59 @@ install_latest_freediameter_from_source() {
     rm -rf /tmp/freediameter
   fi
 }
+#-------------------------------------------------------------------------------
+install_ovs_from_source(){
+  if [ $1 -eq 0 ]; then
+    OPTION=""
+    read -p "Do you want to install Open vSwitch patched? <y/N> " prompt
+  else
+    prompt='y'
+    OPTION="-y"
+  fi
+  
+  if [[ $prompt =~ [yY](es)* ]]
+  then
+    cd /usr/local
+    git clone https://gitlab.eurecom.fr/oai/openair-cn-extras.git
+
+    cd openair-cn-extras/linux-4.9.0-gtp-module/
+    make
+    make install
+    modprobe udp_tunnel
+    modprobe ip6_udp_tunnel
+    modprobe gtp
+
+    git_username=`git config --get user.name`
+    if [ "$git_username" == "" ]; then
+      echo "You haven't configured your Git yet. Please, provide a name and e-mail address."
+      echo -n 'Name:' 
+      read git_username
+      echo -n 'E-mail:' 
+      read git_email
+      git config --global user.name "$git_username"
+      git config --global user.email "$git_email"
+    fi
+
+    cd /usr/local
+    git clone https://github.com/openvswitch/ovs.git
+    cd ovs
+    git checkout 31b88c97512b5dca9f1f6f73bb33292618eee88a
+    git am /usr/local/openair-cn-extras/ovs/0001-datapath-GPRS-Tunneling-Protocol-GTP-support.patch
+    git am /usr/local/openair-cn-extras/ovs/0002-userspace-GPRS-Tunneling-Protocol-GTP-support.patch
+
+    ./boot.sh
+    ./configure --with-linux=/lib/modules/`uname -r`/build
+    make -j`nproc`
+    cat /usr/local/openair-cn-extras/linux-4.9.0-gtp-module/Module.symvers >> datapath/linux/Module.symvers
+    make
+    make modules_install  # this overwrites openvswitch.ko, vport.ko, vport-gtp.ko, etc.
+    make install
+    mkdir -p /usr/local/etc/openvswitch
+    mkdir -p /usr/local/var/run/openvswitch
+    ovsdb-tool create /usr/local/etc/openvswitch/conf.db vswitchd/vswitch.ovsschema
+  fi
+}
+
 
 #-------------------------------------------------------------------------------
 # arg1 is package name
@@ -763,10 +828,32 @@ check_install_mme_software() {
 #-------------------------------------------------------------------------------
 #arg1 is force (no interactive script)
 check_install_spgw_software() {
+
+  required_gcc_version=4.9.0
+
   if ! check_supported_distribution; then
     echo_error "Your distribution $(get_distribution_release) is not supported by openair-cn"
     exit 1
   fi
+  
+  current_kernel_release=`uname -r | cut -d '-' -f1`
+  if [ "$current_kernel_release" != "$SUPPORTED_KERNEL_VERSION" ]; then
+    echo_error "Kernel $SUPPORTED_KERNEL_VERSION is required. Aborting installation"
+    #exit 1
+  fi
+  
+  gcc_version=`gcc --version | head -n1 | cut -d" " -f4`
+  if ! version_gt $gcc_version $required_gcc_version; then
+    read -p "gcc-$required_gcc_version is required. Do you want to upgrade gcc? <y/N> " prompt
+    if [[ $prompt =~ [yY](es)* ]]; then
+      add-apt-repository -y ppa:ubuntu-toolchain-r/test
+      apt-get update
+    else
+      exit 1
+    fi
+  fi
+    
+  
   if [ $1 -gt 0 ]; then 
     OPTION="-y"
   else
@@ -782,17 +869,22 @@ check_install_spgw_software() {
     cmake \
     cmake-curses-gui  \
     doxygen \
-    doxygen-gui\
+    doxygen-gui \
     flex  \
     gccxml \
     gdb  \
     git \
     pkg-config \
-    subversion"
+    subversion \
+    gcc-4.9 \
+    g++-4.9"
   $SUDO apt-get install $OPTION $PACKAGE_LIST
   if [ $? -ne 0 ]; then
     echo_fatal "Failed to install package list $PACKAGE_LIST"
   fi
+  
+  update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-4.9
+  update-alternatives --config gcc
 
   # Libraries
   PACKAGE_LIST="\
@@ -840,6 +932,7 @@ check_install_spgw_software() {
 
   install_libgtpnl_from_source $1
   install_liblfds7.1.0_from_source $1
+  install_ovs_from_source $1
 }
 
 

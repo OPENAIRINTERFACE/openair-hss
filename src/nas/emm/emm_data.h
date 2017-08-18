@@ -60,6 +60,7 @@ Description Defines internal private data handled by EPS Mobility
 /*********************  G L O B A L    C O N S T A N T S  *******************/
 /****************************************************************************/
 
+#define TIMER_S6A_AUTH_INFO_RSP_DEFAULT_VALUE 2 // two second timeout value to wait for auth_info_rsp message from HSS
 
 /****************************************************************************/
 /************************  G L O B A L    T Y P E S  ************************/
@@ -269,6 +270,13 @@ typedef struct emm_data_s {
   // TODO LG REMOVE obj_hash_table_uint64_t     *ctx_coll_guti;  // key is guti, data is emm ue id (unsigned int)
 } emm_data_t;
 
+
+typedef struct s6a_auth_info_rsp_timer_arg_s {
+  mme_ue_s1ap_id_t                        ue_id;  // UE identifier
+  bool                                    resync; // Indicates whether the authentication information is requested due to sync failure
+} s6a_auth_info_rsp_timer_arg_t;
+
+
 mme_ue_s1ap_id_t emm_ctx_get_new_ue_id(const emm_context_t * const ctxt) __attribute__((nonnull));
 
 void emm_ctx_set_attribute_present(emm_context_t * const ctxt, const int attribute_bit_pos) __attribute__ ((nonnull)) __attribute__ ((flatten));
@@ -339,6 +347,8 @@ void nas_start_T3470(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3
 void nas_stop_T3450(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3450, void *timer_callback_args);
 void nas_stop_T3460(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3460, void *timer_callback_args);
 void nas_stop_T3470(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3470, void *timer_callback_args);
+void nas_start_Ts6a_auth_info(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts6a_auth_info,  time_out_t time_out_cb, void *timer_callback_args);
+void nas_stop_Ts6a_auth_info(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts6a_auth_info, void *timer_callback_args);
 void emm_init_context(struct emm_context_s * const emm_ctx, const bool init_esm_ctxt)  __attribute__ ((nonnull)) ;
 void emm_context_free(struct emm_context_s * const emm_ctx) __attribute__ ((nonnull)) ;
 void emm_context_free_content(struct emm_context_s * const emm_ctx) __attribute__ ((nonnull)) ;

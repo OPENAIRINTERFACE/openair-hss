@@ -42,6 +42,8 @@
 #include "TrackingAreaIdentity.h"
 
 #define S1AP_ENB_DEREGISTERED_IND(mSGpTR)        (mSGpTR)->ittiMsg.s1ap_eNB_deregistered_ind
+#define S1AP_ENB_INITIATED_RESET_REQ(mSGpTR)     (mSGpTR)->ittiMsg.s1ap_enb_initiated_reset_req
+#define S1AP_ENB_INITIATED_RESET_ACK(mSGpTR)     (mSGpTR)->ittiMsg.s1ap_enb_initiated_reset_ack
 #define S1AP_DEREGISTER_UE_REQ(mSGpTR)           (mSGpTR)->ittiMsg.s1ap_deregister_ue_req
 #define S1AP_UE_CONTEXT_RELEASE_REQ(mSGpTR)      (mSGpTR)->ittiMsg.s1ap_ue_context_release_req
 #define S1AP_UE_CONTEXT_RELEASE_COMMAND(mSGpTR)  (mSGpTR)->ittiMsg.s1ap_ue_context_release_command
@@ -107,6 +109,33 @@ typedef struct itti_s1ap_ue_context_release_req_s {
   uint32_t          enb_id;
   S1ap_Cause_t      cause;
 } itti_s1ap_ue_context_release_req_t;
+
+typedef enum s1ap_reset_type_e {
+  RESET_ALL = 0,
+  RESET_PARTIAL
+} s1ap_reset_type_t;
+
+typedef struct s1_sig_conn_id_s {
+  mme_ue_s1ap_id_t*  mme_ue_s1ap_id;
+  enb_ue_s1ap_id_t*  enb_ue_s1ap_id;
+} s1_sig_conn_id_t;
+
+typedef struct itti_s1ap_enb_initiated_reset_req_s {
+  uint32_t          sctp_assoc_id;
+  uint16_t          sctp_stream_id;
+  uint32_t          enb_id;
+  s1ap_reset_type_t  s1ap_reset_type;
+  uint32_t          num_ue;
+  s1_sig_conn_id_t  *ue_to_reset_list;
+} itti_s1ap_enb_initiated_reset_req_t;
+
+typedef struct itti_s1ap_enb_initiated_reset_ack_s {
+  uint32_t          sctp_assoc_id;
+  uint16_t          sctp_stream_id;
+  s1ap_reset_type_t  s1ap_reset_type;
+  uint32_t          num_ue;
+  s1_sig_conn_id_t  *ue_to_reset_list;
+} itti_s1ap_enb_initiated_reset_ack_t;
 
 // List of possible causes for MME generated UE context release command towards eNB
 enum s1cause {

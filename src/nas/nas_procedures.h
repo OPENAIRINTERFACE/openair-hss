@@ -310,6 +310,9 @@ typedef struct nas_auth_info_proc_s {
   uint8_t                     nb_vectors;
   eutran_vector_t            *vector[MAX_EPS_AUTH_VECTORS];
   int                         nas_cause;
+  struct nas_timer_s          timer_s6a;
+  mme_ue_s1ap_id_t            ue_id;
+  bool                        resync; // Indicates whether the authentication information is requested due to sync failure
 } nas_auth_info_proc_t;
 
 ////////////////////////////////////////////////////////////////////////////////

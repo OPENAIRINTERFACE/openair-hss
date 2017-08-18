@@ -94,4 +94,7 @@ void nas_itti_dedicated_eps_bearer_reject(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t ebiP);
 
+void  s6a_auth_info_rsp_timer_expiry_handler (void *args);
+
+
 #endif /* FILE_NAS_ITTI_MESSAGING_SEEN */

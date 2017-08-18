@@ -171,19 +171,24 @@ s1ap_mme_thread (
       }
       break;
 
+    case S1AP_E_RAB_SETUP_REQ:{
+        s1ap_generate_s1ap_e_rab_setup_req (&S1AP_E_RAB_SETUP_REQ (received_message_p));
+      }
+      break;
+
+    case S1AP_ENB_INITIATED_RESET_ACK:{
+        s1ap_handle_enb_initiated_reset_ack (&S1AP_ENB_INITIATED_RESET_ACK (received_message_p));
+      }
+      break;
+
     case S1AP_NAS_DL_DATA_REQ:{
         /*
          * New message received from NAS task.
-         * * * * This corresponds to a S1AP downlink nas transport message.
+         * This corresponds to a S1AP downlink nas transport message.
          */
         s1ap_generate_downlink_nas_transport (S1AP_NAS_DL_DATA_REQ (received_message_p).enb_ue_s1ap_id,
             S1AP_NAS_DL_DATA_REQ (received_message_p).mme_ue_s1ap_id,
             &S1AP_NAS_DL_DATA_REQ (received_message_p).nas_msg);
-      }
-      break;
-
-    case S1AP_E_RAB_SETUP_REQ:{
-        s1ap_generate_s1ap_e_rab_setup_req (&S1AP_E_RAB_SETUP_REQ (received_message_p));
       }
       break;
 
@@ -202,7 +207,7 @@ s1ap_mme_thread (
         s1ap_handle_mme_ue_id_notification (&MME_APP_S1AP_MME_UE_ID_NOTIFICATION (received_message_p));
       }
       break;
-
+    
     case TIMER_HAS_EXPIRED:{
         ue_description_t                       *ue_ref_p = NULL;
         if (received_message_p->ittiMsg.timer_has_expired.arg != NULL) { 

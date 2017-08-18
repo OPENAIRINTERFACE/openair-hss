@@ -489,6 +489,8 @@ static void nas_delete_auth_info_procedure(struct emm_context_s *emm_context, na
    if ((*auth_info_proc)->cn_proc.base_proc.parent) {
       (*auth_info_proc)->cn_proc.base_proc.parent->child = NULL;
     }
+    void *unused = NULL;
+    nas_stop_Ts6a_auth_info(PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id, &(*auth_info_proc)->timer_s6a, unused);
     free_wrapper((void**)auth_info_proc);
   }
 }
@@ -747,7 +749,8 @@ nas_auth_info_proc_t *nas_new_cn_auth_info_procedure(struct emm_context_s * cons
   auth_info_proc->cn_proc.base_proc.nas_puid = __sync_fetch_and_add (&nas_puid, 1);
   auth_info_proc->cn_proc.base_proc.type = NAS_PROC_TYPE_CN;
   auth_info_proc->cn_proc.type           = CN_PROC_AUTH_INFO;
-
+  auth_info_proc->timer_s6a.sec          = TIMER_S6A_AUTH_INFO_RSP_DEFAULT_VALUE;
+  auth_info_proc->timer_s6a.id           = NAS_TIMER_INACTIVE_ID;
 
   nas_cn_procedure_t * wrapper = calloc(1, sizeof(*wrapper));
   if (wrapper) {

@@ -328,6 +328,9 @@ static int _start_authentication_information_procedure(struct emm_context_s *emm
   auth_proc->emm_com_proc.emm_proc.base_proc.child = &auth_info_proc->cn_proc.base_proc;
   auth_info_proc->success_notif = _auth_info_proc_success_cb;
   auth_info_proc->failure_notif = _auth_info_proc_failure_cb;
+  auth_info_proc->cn_proc.base_proc.time_out = s6a_auth_info_rsp_timer_expiry_handler;
+  auth_info_proc->ue_id = ue_id;
+  auth_info_proc->resync = auth_info_proc->request_sent;
 
   plmn_t visited_plmn = {0};
   visited_plmn.mcc_digit1 = emm_context->originating_tai.mcc_digit1;
@@ -339,6 +342,9 @@ static int _start_authentication_information_procedure(struct emm_context_s *emm
 
   bool is_initial_req = !(auth_info_proc->request_sent);
   auth_info_proc->request_sent = true;
+
+  nas_start_Ts6a_auth_info (auth_info_proc->ue_id, &auth_info_proc->timer_s6a, auth_info_proc->cn_proc.base_proc.time_out, emm_context);
+
   nas_itti_auth_info_req (ue_id, &emm_context->_imsi, is_initial_req, &visited_plmn, MAX_EPS_AUTH_VECTORS, auts);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);

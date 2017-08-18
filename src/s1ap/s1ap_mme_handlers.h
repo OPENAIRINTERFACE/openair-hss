@@ -30,6 +30,7 @@
 #ifndef FILE_S1AP_MME_HANDLERS_SEEN
 #define FILE_S1AP_MME_HANDLERS_SEEN
 
+#define MAX_NUM_PARTIAL_S1_CONN_RESET 256
 
 /** \brief Handle decoded incoming messages from SCTP
  * \param assoc_id SCTP association ID
@@ -95,4 +96,9 @@ void s1ap_mme_handle_ue_context_rel_comp_timer_expiry (ue_description_t *ue_ref_
 
 int s1ap_mme_handle_error_ind_message (const sctp_assoc_id_t assoc_id, 
                                        const sctp_stream_id_t stream, struct s1ap_message_s *message);
+
+int s1ap_mme_handle_enb_reset (const sctp_assoc_id_t assoc_id,
+                               const sctp_stream_id_t stream, struct s1ap_message_s *message);
+
+int s1ap_handle_enb_initiated_reset_ack (const itti_s1ap_enb_initiated_reset_ack_t * const enb_reset_ack_p);
 #endif /* FILE_S1AP_MME_HANDLERS_SEEN */

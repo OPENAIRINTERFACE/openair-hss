@@ -38,6 +38,9 @@
 #define FILE_LOG_SEEN
 
 #include <syslog.h>
+#include <pthread.h>
+
+#include "bstrlib.h"
 
 /* asn1c debug */
 extern int asn_debug;

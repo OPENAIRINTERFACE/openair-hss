@@ -411,20 +411,19 @@ sgw_eps_bearer_ctxt_t* sgw_cm_get_eps_bearer_entry (
 //-----------------------------------------------------------------------------
 int
 sgw_cm_remove_eps_bearer_entry (
-  hash_table_ts_t * eps_bearersP,
-  ebi_t eps_bearer_idP)
+  sgw_pdn_connection_t * const sgw_pdn_connection,
+  ebi_t ebi)
 //-----------------------------------------------------------------------------
 {
-  hashtable_rc_t                            hrc = HASH_TABLE_OK;
-
-  if (eps_bearersP == NULL) {
+  if ((ebi < EPS_BEARER_IDENTITY_FIRST) || (ebi > EPS_BEARER_IDENTITY_LAST)) {
     return RETURNerror;
   }
-  hrc = hashtable_ts_free (eps_bearersP, eps_bearer_idP);
-  if (HASH_TABLE_OK == hrc) {
+  sgw_eps_bearer_ctxt_t * sgw_eps_bearer_ctxt = sgw_pdn_connection->sgw_eps_bearers_array[EBI_TO_INDEX(ebi)];
+  if (sgw_eps_bearer_ctxt) {
+    sgw_free_sgw_eps_bearer_context(&sgw_eps_bearer_ctxt);
     return RETURNok;
-  } else {
-    return RETURNerror;
   }
+  return RETURNerror;
+
 }
 

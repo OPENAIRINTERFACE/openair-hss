@@ -50,6 +50,7 @@
 #include "mme_app_statistics.h"
 #include "common_defs.h"
 #include "mme_app_edns_emulation.h"
+#include "nas_proc.h"
 
 mme_app_desc_t                          mme_app_desc = {.rw_lock = PTHREAD_RWLOCK_INITIALIZER, 0} ;
 
@@ -190,6 +191,11 @@ void *mme_app_thread (void *args)
     }
     break;
 
+    case S1AP_ENB_INITIATED_RESET_REQ:{
+        mme_app_handle_enb_reset_req (&S1AP_ENB_INITIATED_RESET_REQ (received_message_p));
+      }
+      break;
+
     case S1AP_INITIAL_UE_MESSAGE:{
         mme_app_handle_initial_ue_message (&S1AP_INITIAL_UE_MESSAGE (received_message_p));
       }
@@ -235,7 +241,7 @@ void *mme_app_thread (void *args)
         mme_app_handle_initial_context_setup_failure (&MME_APP_INITIAL_CONTEXT_SETUP_FAILURE (received_message_p));
       }
       break;
-
+    
     case TIMER_HAS_EXPIRED:{
         /*
          * Check statistic timer

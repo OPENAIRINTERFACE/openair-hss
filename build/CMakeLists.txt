@@ -228,6 +228,7 @@ add_boolean_option( DISABLE_EXECUTE_SHELL_COMMAND   False    "disable execution 
 ##########################
 add_boolean_option( EPC_BUILD                       False    "BUILD MME-xGW executable")
 add_boolean_option( GTPV1U_LINEAR_TEID_ALLOCATION   False    "Teid allocation id mode versus pseudo random")
+add_boolean_option( ENABLE_SDF_MARKING              False    "Should be set to true if you want to use patched GTP kernel module (old iptables/netfilter based design with marking)")
 # S1AP LAYER OPTIONS
 ##########################
 add_boolean_option(S1AP_DEBUG_LIST                  False    "Traces, option to be removed soon")
@@ -468,7 +469,7 @@ set(GTPV1U_DIR ${OPENAIRCN_DIR}/src/gtpv1-u)
 set (GTPV1U_SRC
   ${GTPV1U_DIR}/gtpv1u_task.c
   ${GTPV1U_DIR}/gtpv1u_teid_pool.c
-  ${GTPV1U_DIR}/gtp_mod_kernel.c
+  ${GTPV1U_DIR}/gtp_tunnel_libgtpnl.c
 )
 add_library(GTPV1U ${GTPV1U_SRC})
 
@@ -530,6 +531,7 @@ add_library (SGW
   ${SGW_DIR}/pgw_pcef_emulation.c
   ${SGW_DIR}/pgw_pco.c
   ${SGW_DIR}/pgw_procedures.c
+  ${SGW_DIR}/pgw_ue_ip_address_alloc.c
   ${SGW_DIR}/s11_causes.c
   ${SGW_DIR}/sgw_config.c
   ${SGW_DIR}/sgw_context_manager.c

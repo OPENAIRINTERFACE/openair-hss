@@ -55,7 +55,7 @@
 #include "sgw_handlers.h"
 #include "sgw.h"
 #include "spgw_config.h"
-#include "pgw_lite_paa.h"
+#include "pgw_ue_ip_address_alloc.h"
 #include "pgw_pcef_emulation.h"
 
 spgw_config_t                           spgw_config;
@@ -163,7 +163,7 @@ int sgw_init (spgw_config_t *spgw_config_pP)
     return RETURNerror;
   }
 
-  pgw_load_pool_ip_addresses ();
+  pgw_ip_address_pool_init (); 
 
   bstring b = bfromcstr("sgw_s11teid2mme_hashtable");
   sgw_app.s11teid2mme_hashtable = hashtable_ts_create (512, NULL, NULL, b);
@@ -202,9 +202,13 @@ int sgw_init (spgw_config_t *spgw_config_pP)
 
   sgw_app.sgw_ip_address_S5_S8_up.s_addr      = spgw_config_pP->sgw_config.ipv4.S5_S8_up.s_addr;
 
-  if (RETURNerror == pgw_pcef_emulation_init (&spgw_config_pP->pgw_config)) {
-    return RETURNerror;
+#if ENABLE_SDF_MARKING
+  if (spgw_config_pP->pgw_config.pcef.enabled) {
+    if (RETURNerror == pgw_pcef_emulation_init (&spgw_config_pP->pgw_config)) {
+      return RETURNerror;
+    }
   }
+#endif
 
   if (itti_create_task (TASK_SPGW_APP, &sgw_intertask_interface, NULL) < 0) {
     perror ("pthread_create");

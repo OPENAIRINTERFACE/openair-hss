@@ -64,6 +64,8 @@ Description Defines internal private data handled by EPS Mobility
 /************************  G L O B A L    T Y P E S  ************************/
 /****************************************************************************/
 
+#define TIMER_S6A_AUTH_INFO_RSP_DEFAULT_VALUE 2 // two second timeout value to wait for auth_info_rsp message from HSS
+
 /*
  * --------------------------------------------------------------------------
  * EPS NAS security context handled by EPS Mobility Management sublayer in

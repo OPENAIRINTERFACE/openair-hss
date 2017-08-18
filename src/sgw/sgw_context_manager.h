@@ -74,6 +74,6 @@ int                                    sgw_cm_remove_bearer_context_information(
 sgw_eps_bearer_ctxt_t *                sgw_cm_create_eps_bearer_ctxt_in_collection (sgw_pdn_connection_t * const sgw_pdn_connection, const ebi_t eps_bearer_idP);
 sgw_eps_bearer_ctxt_t *                sgw_cm_insert_eps_bearer_ctxt_in_collection (sgw_pdn_connection_t * const sgw_pdn_connection, sgw_eps_bearer_ctxt_t * const sgw_eps_bearer_ctxt);
 sgw_eps_bearer_ctxt_t*                 sgw_cm_get_eps_bearer_entry (sgw_pdn_connection_t * const sgw_pdn_connection, ebi_t ebi);
-int                                    sgw_cm_remove_eps_bearer_entry(hash_table_ts_t *eps_bearersP, ebi_t eps_bearer_idP);
+int                                    sgw_cm_remove_eps_bearer_entry(  sgw_pdn_connection_t * const sgw_pdn_connection, ebi_t eps_bearer_idP);
 
 #endif /* FILE_SGW_CONTEXT_MANAGER_SEEN */

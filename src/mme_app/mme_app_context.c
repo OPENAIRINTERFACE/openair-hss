@@ -1109,6 +1109,7 @@ mme_app_handle_s1ap_ue_context_release_req (
                                           S1AP_RADIO_EUTRAN_GENERATED_REASON);
 }
 
+//------------------------------------------------------------------------------
 void
 mme_app_handle_enb_deregister_ind(const itti_s1ap_eNB_deregistered_ind_t const * eNB_deregistered_ind) {
   for (int i = 0; i < eNB_deregistered_ind->nb_ue_to_deregister; i++) {
@@ -1117,8 +1118,59 @@ mme_app_handle_enb_deregister_ind(const itti_s1ap_eNB_deregistered_ind_t const *
                                             eNB_deregistered_ind->enb_id,
                                             S1AP_SCTP_SHUTDOWN_OR_RESET);
   }
-}
+} 
 
+//------------------------------------------------------------------------------
+void 
+mme_app_handle_enb_reset_req (const itti_s1ap_enb_initiated_reset_req_t const * enb_reset_req) 
+{ 
+  
+  MessageDef *message_p;
+  OAILOG_DEBUG (LOG_MME_APP, " eNB Reset request received. eNB id = %d, reset_type  %d \n ", enb_reset_req->enb_id, enb_reset_req->s1ap_reset_type); 
+  DevAssert (enb_reset_req->ue_to_reset_list != NULL);
+  if (enb_reset_req->s1ap_reset_type == RESET_ALL) {
+  // Full Reset. Trigger UE Context release release for all the connected UEs.
+    for (int i = 0; i < enb_reset_req->num_ue; i++) {
+      _mme_app_handle_s1ap_ue_context_release(*(enb_reset_req->ue_to_reset_list[i].mme_ue_s1ap_id),
+                                            *(enb_reset_req->ue_to_reset_list[i].enb_ue_s1ap_id),
+                                            enb_reset_req->enb_id, 
+                                            S1AP_SCTP_SHUTDOWN_OR_RESET);
+    }  
+      
+  } else { // Partial Reset
+    for (int i = 0; i < enb_reset_req->num_ue; i++) {
+      if (enb_reset_req->ue_to_reset_list[i].mme_ue_s1ap_id == NULL && 
+                          enb_reset_req->ue_to_reset_list[i].enb_ue_s1ap_id == NULL) 
+        continue;
+      else 
+        _mme_app_handle_s1ap_ue_context_release(*(enb_reset_req->ue_to_reset_list[i].mme_ue_s1ap_id),
+                                            *(enb_reset_req->ue_to_reset_list[i].enb_ue_s1ap_id),
+                                            enb_reset_req->enb_id, 
+                                            S1AP_SCTP_SHUTDOWN_OR_RESET);
+    } 
+      
+  }
+  // Send Reset Ack to S1AP module
+
+  message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_ENB_INITIATED_RESET_ACK);
+  DevAssert (message_p != NULL);
+  memset ((void *)&message_p->ittiMsg.s1ap_enb_initiated_reset_ack, 0, sizeof (itti_s1ap_enb_initiated_reset_ack_t));
+  S1AP_ENB_INITIATED_RESET_ACK (message_p).s1ap_reset_type = enb_reset_req->s1ap_reset_type;
+  S1AP_ENB_INITIATED_RESET_ACK (message_p).sctp_assoc_id = enb_reset_req->sctp_assoc_id;
+  S1AP_ENB_INITIATED_RESET_ACK (message_p).sctp_stream_id = enb_reset_req->sctp_stream_id;
+  S1AP_ENB_INITIATED_RESET_ACK (message_p).num_ue = enb_reset_req->num_ue;
+  /* 
+   * Send the same ue_reset_list to S1AP module to be used to construct S1AP Reset Ack message. This would be freed by
+   * S1AP module.
+   */
+  
+  S1AP_ENB_INITIATED_RESET_ACK (message_p).ue_to_reset_list = enb_reset_req->ue_to_reset_list; 
+  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  OAILOG_DEBUG (LOG_MME_APP, " Reset Ack sent to S1AP. eNB id = %d, reset_type  %d \n ", enb_reset_req->enb_id, enb_reset_req->s1ap_reset_type); 
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+} 
+
+//------------------------------------------------------------------------------
 /*
    From GPP TS 23.401 version 11.11.0 Release 11, section 5.3.5 S1 release procedure, point 6:
    The MME deletes any eNodeB related information ("eNodeB Address in Use for S1-MME" and "eNB UE S1AP

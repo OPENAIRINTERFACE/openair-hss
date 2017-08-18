@@ -52,6 +52,7 @@
 #include "esm_sap.h"
 #include "msc.h"
 #include "s6a_defs.h"
+#include "dynamic_memory_check.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 
@@ -371,45 +372,45 @@ nas_proc_authentication_info_answer (
   emm_context_t                          *ctxt    = NULL;
   ue_mm_context_t                        *ue_mm_context = NULL;
 
-   DevAssert (aia);
-   IMSI_STRING_TO_IMSI64 ((char *)aia->imsi, &imsi64);
+  DevAssert (aia);
+  IMSI_STRING_TO_IMSI64 ((char *)aia->imsi, &imsi64);
 
-   OAILOG_DEBUG (LOG_NAS_EMM, "Handling imsi " IMSI_64_FMT "\n", imsi64);
+  OAILOG_DEBUG (LOG_NAS_EMM, "Handling imsi " IMSI_64_FMT "\n", imsi64);
 
-   ue_mm_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
-   if (ue_mm_context) {
-     ctxt = &ue_mm_context->emm_context;
-   }
+  ue_mm_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
+  if (ue_mm_context) {
+    ctxt = &ue_mm_context->emm_context;
+  }
 
-   if (!(ctxt)) {
-     OAILOG_ERROR (LOG_NAS_EMM, "That's embarrassing as we don't know this IMSI\n");
-     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS Unknown imsi " IMSI_64_FMT, imsi64);
-     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-   }
+  if (!(ctxt)) {
+    OAILOG_ERROR (LOG_NAS_EMM, "That's embarrassing as we don't know this IMSI\n");
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS Unknown imsi " IMSI_64_FMT, imsi64);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
 
-   if ((aia->result.present == S6A_RESULT_BASE)
-       && (aia->result.choice.base == DIAMETER_SUCCESS)) {
-     /*
-      * Check that list is not empty and contain at most MAX_EPS_AUTH_VECTORS elements
-      */
-     DevCheck(aia->auth_info.nb_of_vectors <= MAX_EPS_AUTH_VECTORS, aia->auth_info.nb_of_vectors, MAX_EPS_AUTH_VECTORS, 0);
-     DevCheck(aia->auth_info.nb_of_vectors > 0, aia->auth_info.nb_of_vectors, 1, 0);
+  if ((aia->result.present == S6A_RESULT_BASE)
+      && (aia->result.choice.base == DIAMETER_SUCCESS)) {
+    /*
+     * Check that list is not empty and contain at most MAX_EPS_AUTH_VECTORS elements
+     */
+    DevCheck(aia->auth_info.nb_of_vectors <= MAX_EPS_AUTH_VECTORS, aia->auth_info.nb_of_vectors, MAX_EPS_AUTH_VECTORS, 0);
+    DevCheck(aia->auth_info.nb_of_vectors > 0, aia->auth_info.nb_of_vectors, 1, 0);
 
-     OAILOG_DEBUG (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP SUCCESS got %u vector(s)\n", aia->auth_info.nb_of_vectors);
-     rc = nas_proc_auth_param_res (ue_mm_context->mme_ue_s1ap_id, aia->auth_info.nb_of_vectors, aia->auth_info.eutran_vector);
-   } else {
-     OAILOG_ERROR (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
-     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi " IMSI_64_FMT, imsi64);
+    OAILOG_DEBUG (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP SUCCESS got %u vector(s)\n", aia->auth_info.nb_of_vectors);
+    rc = nas_proc_auth_param_res (ue_mm_context->mme_ue_s1ap_id, aia->auth_info.nb_of_vectors, aia->auth_info.eutran_vector);
+  } else {
+    OAILOG_ERROR (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi " IMSI_64_FMT, imsi64);
 
-     /*
-      * Inform NAS layer with the right failure
-      */
-     if (aia->result.present == S6A_RESULT_BASE) {
-       rc = nas_proc_auth_param_fail (ue_mm_context->mme_ue_s1ap_id, s6a_error_2_nas_cause (aia->result.choice.base, 0));
-     } else {
-       rc = nas_proc_auth_param_fail (ue_mm_context->mme_ue_s1ap_id, s6a_error_2_nas_cause (aia->result.choice.experimental, 1));
-     }
-   }
+    /*
+     * Inform NAS layer with the right failure
+     */
+    if (aia->result.present == S6A_RESULT_BASE) {
+      rc = nas_proc_auth_param_fail (ue_mm_context->mme_ue_s1ap_id, s6a_error_2_nas_cause (aia->result.choice.base, 0));
+    } else {
+      rc = nas_proc_auth_param_fail (ue_mm_context->mme_ue_s1ap_id, s6a_error_2_nas_cause (aia->result.choice.experimental, 1));
+    }
+  }
 
   unlock_ue_contexts(ue_mm_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

@@ -41,12 +41,14 @@
 #include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
+#include "dynamic_memory_check.h"
 #include "intertask_interface.h"
 #include "common_defs.h"
 #include "secu_defs.h"
 #include "mme_app_ue_context.h"
 #include "esm_proc.h"
 #include "nas_itti_messaging.h"
+#include "nas_proc.h"
 #include "mme_app_defs.h"
 
 
@@ -269,7 +271,6 @@ void nas_itti_auth_info_req(
   MessageDef                             *message_p = NULL;
   s6a_auth_info_req_t                    *auth_info_req = NULL;
 
-
   message_p = itti_alloc_new_message (TASK_NAS_MME, S6A_AUTH_INFO_REQ);
   auth_info_req = &message_p->ittiMsg.s6a_auth_info_req;
 
@@ -415,3 +416,41 @@ void nas_itti_detach_req(const mme_ue_s1ap_id_t ue_idP)
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT(LOG_NAS);
 }
+
+//***************************************************************************
+void  s6a_auth_info_rsp_timer_expiry_handler (void *args)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_context_t  *emm_ctx = (emm_context_t *) (args);
+
+  if (emm_ctx) {
+
+    nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_ctx);
+    if (!auth_info_proc) {
+      OAILOG_FUNC_OUT (LOG_NAS_EMM);
+    }
+
+    void * timer_callback_args = NULL;
+    nas_stop_Ts6a_auth_info(auth_info_proc->ue_id, &auth_info_proc->timer_s6a, timer_callback_args);
+
+    auth_info_proc->timer_s6a.id = NAS_TIMER_INACTIVE_ID;
+    if (auth_info_proc->resync) {
+      OAILOG_ERROR (LOG_NAS_EMM,
+          "EMM-PROC  - Timer timer_s6_auth_info_rsp expired. Resync auth procedure was in progress. Aborting attach procedure. UE id " MME_UE_S1AP_ID_FMT "\n",
+          auth_info_proc->ue_id);
+    } else {
+
+      OAILOG_ERROR (LOG_NAS_EMM,
+          "EMM-PROC  - Timer timer_s6_auth_info_rsp expired. Initial auth procedure was in progress. Aborting attach procedure. UE id " MME_UE_S1AP_ID_FMT "\n",
+          auth_info_proc->ue_id);
+    }
+      
+    // Send Attach Reject with cause NETWORK FAILURE and delete UE context
+    nas_proc_auth_param_fail (auth_info_proc->ue_id, NAS_CAUSE_NETWORK_FAILURE);
+  } else { 
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s6_auth_info_rsp expired. Null EMM Context for UE \n");
+  }
+
+  OAILOG_FUNC_OUT (LOG_NAS_EMM);
+}
+//***************************************************************************

@@ -89,12 +89,20 @@ s1ap_mme_itti_nas_downlink_cnf (
 {
   MessageDef                             *message_p = NULL;
 
+  if (ue_id == INVALID_MME_UE_S1AP_ID) {
+    if (!is_success) {
+      OAILOG_ERROR (LOG_S1AP, "ERROR: Failed to send connection less S1AP message to eNB. mme_ue_s1ap_id =  %d \n", ue_id);
+    }
+    // Drop this cnf message here since this is related to connection less S1AP message hence no need to send it to NAS module
+    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
+  } 
   message_p = itti_alloc_new_message (TASK_S1AP, NAS_DOWNLINK_DATA_CNF);
   NAS_DL_DATA_CNF (message_p).ue_id = ue_id;
   if (is_success) {
     NAS_DL_DATA_CNF (message_p).err_code = AS_SUCCESS;
   } else {
     NAS_DL_DATA_CNF (message_p).err_code = AS_FAILURE;
+    OAILOG_ERROR (LOG_S1AP, "ERROR: Failed to send S1AP message to eNB. mme_ue_s1ap_id =  %d \n", ue_id);
   }
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_CNF ue_id " MME_UE_S1AP_ID_FMT " err_code %u",
       NAS_DL_DATA_CNF (message_p).ue_id, NAS_DL_DATA_CNF (message_p).err_code);

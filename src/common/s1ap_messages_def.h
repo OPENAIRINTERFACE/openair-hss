@@ -46,6 +46,7 @@ MESSAGE_DEF(S1AP_INITIAL_UE_MESSAGE_LOG    , MESSAGE_PRIORITY_MED, IttiMsgText  
 MESSAGE_DEF(S1AP_UE_CONTEXT_RELEASE_REQ_LOG, MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_ue_context_release_req_log)
 MESSAGE_DEF(S1AP_UE_CONTEXT_RELEASE_COMMAND_LOG, MESSAGE_PRIORITY_MED, IttiMsgText                  , s1ap_ue_context_release_command_log)
 MESSAGE_DEF(S1AP_UE_CONTEXT_RELEASE_LOG    , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_ue_context_release_log)
+MESSAGE_DEF(S1AP_ENB_RESET_LOG             , MESSAGE_PRIORITY_MED, IttiMsgText                      , s1ap_enb_reset_log)
 
 MESSAGE_DEF(S1AP_UE_CAPABILITIES_IND       ,  MESSAGE_PRIORITY_MED, itti_s1ap_ue_cap_ind_t                ,  s1ap_ue_cap_ind)
 MESSAGE_DEF(S1AP_ENB_DEREGISTERED_IND      ,  MESSAGE_PRIORITY_MED, itti_s1ap_eNB_deregistered_ind_t      ,  s1ap_eNB_deregistered_ind)
@@ -57,3 +58,5 @@ MESSAGE_DEF(S1AP_NAS_DL_DATA_REQ           ,  MESSAGE_PRIORITY_MED, itti_s1ap_na
 MESSAGE_DEF(S1AP_INITIAL_UE_MESSAGE         , MESSAGE_PRIORITY_MED, itti_s1ap_initial_ue_message_t  ,        s1ap_initial_ue_message)
 MESSAGE_DEF(S1AP_E_RAB_SETUP_REQ            , MESSAGE_PRIORITY_MED, itti_s1ap_e_rab_setup_req_t  ,           s1ap_e_rab_setup_req)
 MESSAGE_DEF(S1AP_E_RAB_SETUP_RSP            , MESSAGE_PRIORITY_MED, itti_s1ap_e_rab_setup_rsp_t  ,           s1ap_e_rab_setup_rsp)
+MESSAGE_DEF(S1AP_ENB_INITIATED_RESET_REQ   ,  MESSAGE_PRIORITY_MED, itti_s1ap_enb_initiated_reset_req_t   ,  s1ap_enb_initiated_reset_req)
+MESSAGE_DEF(S1AP_ENB_INITIATED_RESET_ACK   ,  MESSAGE_PRIORITY_MED, itti_s1ap_enb_initiated_reset_ack_t   ,  s1ap_enb_initiated_reset_ack)

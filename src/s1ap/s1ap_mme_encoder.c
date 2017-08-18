@@ -81,6 +81,11 @@ static inline int                       s1ap_mme_encode_unsuccessfull_outcome (
   uint8_t ** buffer,
   uint32_t * len);
 
+static inline int s1ap_mme_encode_resetack (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length);
+
 //------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_initial_context_setup_request (
@@ -167,6 +172,8 @@ s1ap_mme_encode_successfull_outcome (
   switch (message_p->procedureCode) {
   case S1ap_ProcedureCode_id_S1Setup:
     return s1ap_mme_encode_s1setupresponse (message_p, buffer, length);
+  case S1ap_ProcedureCode_id_Reset:
+    return s1ap_mme_encode_resetack (message_p, buffer, length);
 
   default:
     OAILOG_DEBUG (LOG_S1AP, "Unknown procedure ID (%d) for successfull outcome message\n", (int)message_p->procedureCode);
@@ -215,6 +222,25 @@ s1ap_mme_encode_s1setupresponse (
 }
 
 //------------------------------------------------------------------------------
+static inline int
+s1ap_mme_encode_resetack (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length)
+{
+  
+  S1ap_ResetAcknowledge_t                 s1ResetAck;
+  S1ap_ResetAcknowledge_t                 *s1ResetAck_p = &s1ResetAck;
+
+  memset (s1ResetAck_p, 0, sizeof (S1ap_ResetAcknowledge_t));
+  
+  if (s1ap_encode_s1ap_resetacknowledgeies (s1ResetAck_p, &message_p->msg.s1ap_ResetAcknowledgeIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_successfull_outcome (buffer, length, S1ap_ProcedureCode_id_Reset, message_p->criticality, &asn_DEF_S1ap_ResetAcknowledge, s1ResetAck_p);
+}
+
 static inline int
 s1ap_mme_encode_s1setupfailure (
   s1ap_message * message_p,

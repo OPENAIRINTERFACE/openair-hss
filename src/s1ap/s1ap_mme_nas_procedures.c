@@ -413,6 +413,7 @@ s1ap_generate_downlink_nas_transport (
                         "0 downlinkNASTransport/initiatingMessage ue_id " MME_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id" ENB_UE_S1AP_ID_FMT " nas length %u",
                         ue_id, (mme_ue_s1ap_id_t)downlinkNasTransport->mme_ue_s1ap_id, (enb_ue_s1ap_id_t)downlinkNasTransport->eNB_UE_S1AP_ID, length);
     bstring b = blk2bstr(buffer_p, length);
+    free(buffer_p);
     s1ap_mme_itti_send_sctp_request (&b , ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
   }
 
@@ -685,6 +686,7 @@ s1ap_handle_conn_est_cnf (
                       (mme_ue_s1ap_id_t)initialContextSetupRequest_p->mme_ue_s1ap_id,
                       (enb_ue_s1ap_id_t)initialContextSetupRequest_p->eNB_UE_S1AP_ID, nas_pdu.size);
   bstring b = blk2bstr(buffer_p, length);
+  free(buffer_p);
   s1ap_mme_itti_send_sctp_request (&b, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }

@@ -104,12 +104,9 @@ s1ap_mme_decode_initiating (
       break;
     
     case S1ap_ProcedureCode_id_Reset: {
-        OAILOG_ERROR (LOG_S1AP, "RESET is received. Ignoring it. Procedure code = %d\n", (int)initiating_p->procedureCode);
-        OAILOG_FUNC_RETURN (LOG_S1AP, ret);
-        /*
-         * TODO- Add handling for eNB initiated RESET message.
-         */
-        // ret = s1ap_decode_s1ap_reset_ies (&message->msg.s1ap_Reset_IEs, &initiating_p->value);
+        OAILOG_INFO (LOG_S1AP, "S1AP eNB RESET is received. Procedure code = %d\n", (int)initiating_p->procedureCode);
+        ret = s1ap_decode_s1ap_reseties (&message->msg.s1ap_ResetIEs, &initiating_p->value);
+        *message_id = S1AP_ENB_RESET_LOG;
       }
       break;
     
@@ -257,6 +254,8 @@ int s1ap_free_mme_decode_pdu(
     } else {
       return free_s1ap_initialcontextsetupfailure(&message->msg.s1ap_InitialContextSetupFailureIEs);
     }
+  case S1AP_ENB_RESET_LOG:
+    return free_s1ap_reset(&message->msg.s1ap_ResetIEs);
   default:
     DevAssert(false);
 

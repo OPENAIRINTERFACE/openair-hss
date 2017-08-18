@@ -31,6 +31,8 @@
 
 #include "queue.h"
 #include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+#include "3gpp_29.274.h"
 
 typedef enum {
   PF_ID_MIN = 0,

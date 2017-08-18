@@ -62,6 +62,14 @@
 
 #define IN_ADDR_TO_BUFFER(X,bUFF) INT32_TO_BUFFER((X).s_addr,(char*)bUFF)
 
+#define BUFFER_TO_IN_ADDR(bUFF, X)                          \
+do {                                                        \
+    (X).s_addr = (((uint8_t*)(bUFF))[0])              |     \
+                 (((uint8_t*)(bUFF))[1] <<  8)        |     \
+                 (((uint8_t*)(bUFF))[2] << 16)        |     \
+                 (((uint8_t*)(bUFF))[3] << 24);             \
+} while(0)
+
 #define IN6_ADDR_TO_BUFFER(X,bUFF)                     \
     do {                                               \
         ((uint8_t*)(bUFF))[0]  = (X).s6_addr[0];  \
