@@ -538,6 +538,21 @@ static int _emm_tracking_area_update_abort (struct emm_context_s *emm_context, s
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
+#if ! MOBILITY_REPO
+//------------------------------------------------------------------------------
+int
+emm_recv_tracking_area_update_req_type_normal (
+  mme_ue_s1ap_id_t ue_id,
+  const tracking_area_update_request_msg * msg,
+  int *emm_cause )
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc;
+  //Send Reject
+  rc = emm_proc_tracking_area_update_reject (ue_id, EMM_CAUSE_IMPLICITLY_DETACHED);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+#endif
 //------------------------------------------------------------------------------
 void free_emm_tau_request_ies(emm_tau_request_ies_t ** const ies)
 {

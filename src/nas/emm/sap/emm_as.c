@@ -68,6 +68,7 @@
 #include "mme_app_defs.h"
 #include "nas_proc.h"
 #include "emm_proc.h"
+#include "TrackingAreaUpdateMobility.h"
 
 
 /****************************************************************************/
@@ -432,6 +433,18 @@ static int _emm_as_recv (
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
+  case TRACKING_AREA_UPDATE_REQUEST:
+    if ((0 == decode_status->security_context_available) ||
+        (0 == decode_status->integrity_protected_message) ||
+       ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
+      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      unlock_ue_contexts(ue_mm_context);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
+    }
+    
+    rc = emm_recv_tracking_area_update_req_type_normal (ue_id, &emm_msg->tracking_area_update_request, emm_cause);
+    break;
+    
     /*
      * TODO
      */
