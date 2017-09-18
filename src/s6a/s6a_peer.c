@@ -27,16 +27,24 @@
    \version 0.1
 */
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include <stdint.h>
-#include <unistd.h>
+#include <pthread.h>
 
+#include "bstrlib.h"
+
+#include "log.h"
 #include "common_types.h"
 #include "intertask_interface.h"
+#include "common_defs.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
 #include "assertions.h"
 #include "dynamic_memory_check.h"
-#include "log.h"
+#include "mme_config.h"
 
 #define NB_MAX_TRIES  (8)
 
@@ -144,16 +152,13 @@ s6a_fd_new_peer (
   struct peer_hdr  *peer      = NULL;
   int               nb_tries  = 0;
   int               timeout   = fd_g_config->cnf_timer_tc;
-
   for (nb_tries = 0; nb_tries < NB_MAX_TRIES; nb_tries++) {
     OAILOG_DEBUG (LOG_S6A, "S6a peer connection attempt %d / %d\n",
                   1 + nb_tries, NB_MAX_TRIES);
     ret = fd_peer_getbyid( diamid, diamidlen, 0, &peer );
-
     if (peer && peer->info.config.pic_tctimer != 0) {
         timeout = peer->info.config.pic_tctimer;
     }
-
     if (!ret) {
       if (peer) {
         ret = fd_peer_get_state(peer);
@@ -175,7 +180,7 @@ s6a_fd_new_peer (
             fflush(fp);
             fclose(fp);
           }
-          bdestroy(hss_name);
+          bdestroy_wrapper (&hss_name);
           return RETURNok;
         } else {
           OAILOG_DEBUG (LOG_S6A, "S6a peer state is %d\n", ret);

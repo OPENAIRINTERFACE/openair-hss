@@ -150,7 +150,7 @@ function main()
   cd ./build
   $CMAKE $cmake_args .. > /dev/null
   
-  compilations spgw spgw spgw
+  compilations spgw spgw spgw $verbose
   if [ $daemon -ne 0 ]; then
     # TODO /usr/sbin ?
     $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/sbin/spgwd && echo_success "spgwd installed"

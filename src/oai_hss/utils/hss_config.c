@@ -160,6 +160,7 @@ hss_display_banner (
   void)
 {
   FPRINTF_NOTICE ( "==== EURECOM %s v%s ====\n", PACKAGE_NAME, PACKAGE_VERSION);
+  FPRINTF_NOTICE ( "Initial built: %s %s\n", __DATE__, __TIME__);
   FPRINTF_NOTICE ( "Please report any bug to: %s\n\n", PACKAGE_BUGREPORT);
 }
 
