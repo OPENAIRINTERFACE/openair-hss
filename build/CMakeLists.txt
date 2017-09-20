@@ -730,6 +730,11 @@ if(${MOBILITY_REPO})
     ${libnas_mme_emm_OBJS}
     ${MOBILITY_REPO_SRC}/src/nas/emm/TrackingAreaUpdateMobility.c
   ) 
+else (${MOBILITY_REPO})
+  set(libnas_mme_emm_OBJS
+    ${libnas_mme_emm_OBJS}
+    ${NAS_SRC}/emm/TrackingAreaUpdateMobility.c
+  ) 
 endif ()
 
   

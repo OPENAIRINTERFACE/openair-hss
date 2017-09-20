@@ -48,8 +48,22 @@
 #include "s1ap_handover_signaling_handler.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-//************************ Handover signalling *******************************//
+//************************ Handover signaling *******************************//
 ////////////////////////////////////////////////////////////////////////////////
+
+/*
+ *    R  E  A  D      M  E      B  E  F  O  R  E         D  O  I  N  G
+ *
+ *    A  N  Y  T  H  I  N  G      E  L  S  E
+ *
+ *
+ *
+ *  Due to legal concerns no mobility code concerning handover signaling can be
+ *  commit here in this source file nor in this git project actually called
+ *  openair-cn.
+ *  The contributions to handover signaling can only be accepted inside the git
+ *  project openair-cn-mobility.
+ */
 
 //------------------------------------------------------------------------------
 int
