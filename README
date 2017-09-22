@@ -16,16 +16,19 @@ Licence info
   The source code is mainly written under the Apache License, Version 2.0. 
   For more details, please read the NOTICE file in the same directory.
    
-  Due to legal concerns no mobility code concerning Normal TAU can be commit
-  here in this git project actually called openair-cn.
-  The contributions to Normal TAU can only be accepted inside the git project
-  openair-cn-mobility.
+  Due to legal concerns no mobility code concerning Normal TAU, X2 HO signaling
+  (S1AP Path Switch Request message, S1AP Path Switch Request Ack/Failure and 
+  GTP-U End marker (optional per spec)),
+  can be commit here in this git project actually called openair-cn.
+  The contributions to the described mobility procedures can only be accepted 
+  inside the git project openair-cn-mobility.
   
 #---------------------
 Linux
 #---------------------
   The Openair-cn code actually is written, executed, and tested on UBUNTU 
-  desktop 16.04 64 bits.
+  desktop 16.04 64 bits, Some efforts are made to make it also available on 
+  rhel, fedora, centos, debian.
   Actually the S-GW network element requires a linux kernel version 4.9 or above.
   
 #---------------------
