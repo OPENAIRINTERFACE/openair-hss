@@ -53,10 +53,10 @@
  *
  *
  *
- *  Due to legal concerns no mobility code concerning Normal TAU can be commit
- *  here in this source file nor in this git project actually called openair-cn.
- *  The contributions to Normal TAU can only be accepted inside the git project
- *  openair-cn-mobility.
+ *  Due to legal concerns no mobility code concerning Normal TAU can be committed
+ *  in this source file nor in this git project called openair-cn.
+ *  Contributions to Normal TAU can only be accepted inside the git project
+ *  called openair-cn-mobility.
  */
 
 //------------------------------------------------------------------------------

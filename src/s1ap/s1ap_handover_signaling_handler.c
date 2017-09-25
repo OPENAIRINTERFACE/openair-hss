@@ -59,10 +59,9 @@
  *
  *
  *  Due to legal concerns no mobility code concerning handover signaling can be
- *  commit here in this source file nor in this git project actually called
- *  openair-cn.
- *  The contributions to handover signaling can only be accepted inside the git
- *  project openair-cn-mobility.
+ *  committed in this source file nor in this git project called openair-cn.
+ *  Contributions to handover signaling can only be accepted inside the git
+ *  project called openair-cn-mobility.
  */
 
 //------------------------------------------------------------------------------

@@ -19,9 +19,9 @@ Licence info
   Due to legal concerns no mobility code concerning Normal TAU, X2 HO signaling
   (S1AP Path Switch Request message, S1AP Path Switch Request Ack/Failure and 
   GTP-U End marker (optional per spec)),
-  can be commit here in this git project actually called openair-cn.
-  The contributions to the described mobility procedures can only be accepted 
-  inside the git project openair-cn-mobility.
+  can be committed here in this git project called openair-cn.
+  Contributions to the described mobility procedures can only be accepted 
+  inside the git project called openair-cn-mobility.
   
 #---------------------
 Linux
