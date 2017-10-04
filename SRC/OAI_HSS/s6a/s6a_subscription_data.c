@@ -23,6 +23,7 @@
 #include "hss_config.h"
 #include "db_proto.h"
 #include "s6a_proto.h"
+#include "fdjson.h"
 
 /*! \file s6a_subscription_data.c
    \brief Add the subscription data to a message. Data are retrieved from database
@@ -34,21 +35,24 @@
 int
 s6a_add_subscription_data_avp (
   struct msg *message,
-  mysql_ul_ans_t * mysql_ans)
+  cassandra_ul_ans_t * cass_ans)
 {
   int                                     ret = -1,
     i = 0;
-  mysql_pdn_t                            *pdns = NULL;
-  uint8_t                                 nb_pdns = 0;
-  struct avp                             *avp = NULL,
+  cassandra_pdn_t                         pdns;
+  struct avp                              *avp = NULL,
     *child_avp = NULL;
   union avp_value                         value;
 
-  if (mysql_ans == NULL) {
+  
+  printf("Inside s6a_add_subscription_data_avp \n");
+  if (cass_ans == NULL) {
     return -1;
   }
 
-  ret = hss_mysql_query_pdns (mysql_ans->imsi, &pdns, &nb_pdns);
+  memset(&pdns, 0, sizeof(cassandra_pdn_t)); 
+
+  ret = hss_cassandra_query_pdns (cass_ans->imsi, &pdns);
 
   if (ret != 0) {
     /*
@@ -56,15 +60,9 @@ s6a_add_subscription_data_avp (
      * * * * - maybe no more memory
      * * * * - maybe user is not known (should have failed before)
      * * * * - maybe imsi has no EPS subscribed
-     */
-    goto out;
-  }
-
-  if (nb_pdns == 0) {
-    /*
      * No PDN for this user -> DIAMETER_ERROR_UNKNOWN_EPS_SUBSCRIPTION
      */
-    return -1;
+    goto out;
   }
 
   /*
@@ -72,7 +70,7 @@ s6a_add_subscription_data_avp (
    */
   CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_subscription_data, 0, &avp));
   {
-    uint8_t                                 msisdn_len = strlen (mysql_ans->msisdn);
+    uint8_t                                 msisdn_len = strlen (cass_ans->msisdn);
 
     /*
      * The MSISDN is known in the HSS, add it to the subscription data
@@ -82,9 +80,9 @@ s6a_add_subscription_data_avp (
       uint8_t msisdn_tbcd[16] = {0};
       for (int i = 0; i < msisdn_len; i++) {
         if (i & 0x01) {
-          msisdn_tbcd[i>>1] = msisdn_tbcd[i>>1] & ((mysql_ans->msisdn[i] - 0x30) | 0xF0);
+          msisdn_tbcd[i>>1] = msisdn_tbcd[i>>1] & ((cass_ans->msisdn[i] - 0x30) | 0xF0);
         } else {
-          msisdn_tbcd[i>>1] = ((mysql_ans->msisdn[i] - 0x30) << 4) | 0x0F;
+          msisdn_tbcd[i>>1] = ((cass_ans->msisdn[i] - 0x30) << 4) | 0x0F;
         }
       }
       value.os.data = (uint8_t *) msisdn_tbcd;
@@ -98,9 +96,9 @@ s6a_add_subscription_data_avp (
    * We have to include the acess-restriction-data if the value stored in DB
    * * * * indicates that at least one restriction is applied to the USER.
    */
-  if (mysql_ans->access_restriction != 0) {
+  if (cass_ans->access_restriction != 0) {
     CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_access_restriction_data, 0, &child_avp));
-    value.u32 = (uint32_t) mysql_ans->access_restriction;
+    value.u32 = (uint32_t) cass_ans->access_restriction;
     CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
     CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, child_avp));
   }
@@ -139,23 +137,22 @@ s6a_add_subscription_data_avp (
      * Uplink bandwidth
      */
     CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_max_bandwidth_ul, 0, &bandwidth));
-    value.u32 = mysql_ans->aggr_ul;
+    value.u32 = cass_ans->aggr_ul;
     CHECK_FCT (fd_msg_avp_setvalue (bandwidth, &value));
     CHECK_FCT (fd_msg_avp_add (child_avp, MSG_BRW_LAST_CHILD, bandwidth));
     /*
      * Downlink bandwidth
      */
     CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_max_bandwidth_dl, 0, &bandwidth));
-    value.u32 = mysql_ans->aggr_dl;
+    value.u32 = cass_ans->aggr_dl;
     CHECK_FCT (fd_msg_avp_setvalue (bandwidth, &value));
     CHECK_FCT (fd_msg_avp_add (child_avp, MSG_BRW_LAST_CHILD, bandwidth));
     CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, child_avp));
   }
 
   /*
-   * Add the APN-Configuration-Profile only if at least one APN is subscribed
+   * Add the APN-Configuration-Profile 
    */
-  if (nb_pdns > 0) {
     struct avp                             *apn_profile;
 
     CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_apn_configuration_profile, 0, &apn_profile));
@@ -177,11 +174,8 @@ s6a_add_subscription_data_avp (
     CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
     CHECK_FCT (fd_msg_avp_add (apn_profile, MSG_BRW_LAST_CHILD, child_avp));
 
-    for (i = 0; i < nb_pdns; i++) {
       struct avp                             *apn_configuration;
-      mysql_pdn_t                            *pdn_elm;
 
-      pdn_elm = &pdns[i];
       /*
        * APN-Configuration
        */
@@ -190,31 +184,33 @@ s6a_add_subscription_data_avp (
        * Context-Identifier
        */
       CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_context_identifier, 0, &child_avp));
-      value.u32 = i;
+      value.u32 = 0;
       CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
       CHECK_FCT (fd_msg_avp_add (apn_configuration, MSG_BRW_LAST_CHILD, child_avp));
       /*
        * PDN-Type
        */
       CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_pdn_type, 0, &child_avp));
-      value.u32 = pdn_elm->pdn_type;
+      value.u32 = pdns.pdn_type;
       CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
       CHECK_FCT (fd_msg_avp_add (apn_configuration, MSG_BRW_LAST_CHILD, child_avp));
 
-      if ((pdn_elm->pdn_type == IPV4) || (pdn_elm->pdn_type == IPV4_OR_IPV6) || (pdn_elm->pdn_type == IPV4V6)) {
-        s6a_add_ipv4_address (apn_configuration, pdn_elm->pdn_address.ipv4_address);
+      if ((pdns.pdn_type == IPV4) || (pdns.pdn_type == IPV4_OR_IPV6) || (pdns.pdn_type == IPV4V6)) {
+        s6a_add_ipv4_address (apn_configuration, pdns.pdn_address.ipv4_address);
       }
 
-      if ((pdn_elm->pdn_type == IPV6) || (pdn_elm->pdn_type == IPV4_OR_IPV6) || (pdn_elm->pdn_type == IPV4V6)) {
-        s6a_add_ipv6_address (apn_configuration, pdn_elm->pdn_address.ipv6_address);
+      if ((pdns.pdn_type == IPV6) || (pdns.pdn_type == IPV4_OR_IPV6) || (pdns.pdn_type == IPV4V6)) {
+        s6a_add_ipv6_address (apn_configuration, pdns.pdn_address.ipv6_address);
       }
 
       /*
        * Service-Selection
        */
       CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_service_selection, 0, &child_avp));
-      value.os.data = (uint8_t *) pdn_elm->apn;
-      value.os.len = strlen (pdn_elm->apn);
+      printf("loading pdns.apn into Service_Selection AVP \n");
+      printf(" pdns.apn --> %s \n",pdns.apn);
+      value.os.data = (uint8_t *) pdns.apn;
+      value.os.len = strlen (pdns.apn);
       CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
       CHECK_FCT (fd_msg_avp_add (apn_configuration, MSG_BRW_LAST_CHILD, child_avp));
       /*
@@ -229,7 +225,7 @@ s6a_add_subscription_data_avp (
         /*
          * For a QCI_1
          */
-        value.u32 = (uint32_t) pdn_elm->qci;
+        value.u32 = (uint32_t) pdns.qci;
         CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
         CHECK_FCT (fd_msg_avp_add (qos_profile, MSG_BRW_LAST_CHILD, child_avp));
         /*
@@ -241,21 +237,21 @@ s6a_add_subscription_data_avp (
            * Priority level
            */
           CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_priority_level, 0, &child_avp));
-          value.u32 = (uint32_t) pdn_elm->priority_level;
+          value.u32 = (uint32_t) pdns.priority_level;
           CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
           CHECK_FCT (fd_msg_avp_add (allocation_priority, MSG_BRW_LAST_CHILD, child_avp));
           /*
            * Pre-emption-capability
            */
           CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_pre_emption_capability, 0, &child_avp));
-          value.u32 = (uint32_t) pdn_elm->pre_emp_cap;
+          value.u32 = (uint32_t) pdns.pre_emp_cap;
           CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
           CHECK_FCT (fd_msg_avp_add (allocation_priority, MSG_BRW_LAST_CHILD, child_avp));
           /*
            * Pre-emption-vulnerability
            */
           CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_pre_emption_vulnerability, 0, &child_avp));
-          value.u32 = (uint32_t) pdn_elm->pre_emp_vul;
+          value.u32 = (uint32_t) pdns.pre_emp_vul;
           CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
           CHECK_FCT (fd_msg_avp_add (allocation_priority, MSG_BRW_LAST_CHILD, child_avp));
           CHECK_FCT (fd_msg_avp_add (qos_profile, MSG_BRW_LAST_CHILD, allocation_priority));
@@ -273,23 +269,21 @@ s6a_add_subscription_data_avp (
          * Uplink bandwidth
          */
         CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_max_bandwidth_ul, 0, &child_avp));
-        value.u32 = (uint32_t) pdn_elm->aggr_ul;
+        value.u32 = (uint32_t) pdns.aggr_ul;
         CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
         CHECK_FCT (fd_msg_avp_add (bandwidth, MSG_BRW_LAST_CHILD, child_avp));
         /*
          * Downlink bandwidth
          */
         CHECK_FCT (fd_msg_avp_new (s6a_cnf.dataobj_s6a_max_bandwidth_dl, 0, &child_avp));
-        value.u32 = (uint32_t) pdn_elm->aggr_dl;
+        value.u32 = (uint32_t) pdns.aggr_dl;
         CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
         CHECK_FCT (fd_msg_avp_add (bandwidth, MSG_BRW_LAST_CHILD, child_avp));
         CHECK_FCT (fd_msg_avp_add (apn_configuration, MSG_BRW_LAST_CHILD, bandwidth));
       }
       CHECK_FCT (fd_msg_avp_add (apn_profile, MSG_BRW_LAST_CHILD, apn_configuration));
-    }
 
     CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, apn_profile));
-  }
 
   /*
    * Subscribed-Periodic-RAU-TAU-Timer
@@ -298,18 +292,39 @@ s6a_add_subscription_data_avp (
   /*
    * Request an RAU/TAU update every x seconds
    */
-  value.u32 = (uint32_t) mysql_ans->rau_tau;
+  value.u32 = (uint32_t) cass_ans->rau_tau;
   CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
   CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, child_avp));
   /*
    * Add the AVP to the message
    */
   CHECK_FCT (fd_msg_avp_add (message, MSG_BRW_LAST_CHILD, avp));
+
 out:
 
-  if (pdns) {
-    free (pdns);
-  }
-
   return ret;
+}
+
+
+void display_error_message(const char *err_msg)
+{
+	printf("inside display_error_message\n");
+	printf("%s\n",err_msg);
+}
+
+int s6a_add_subscription_json_data_avp(
+	struct msg *message,
+	char *json_string){
+
+	printf("******* subscription data in json string format ****\n\n");
+	printf("%s\n",json_string);
+	printf(" ************************\n\n");
+	printf("%s:%d\n", __FILE__, __LINE__ );
+	fdJsonAddAvps(json_string, message, &display_error_message );
+
+
+
+
+	return 0;
+
 }

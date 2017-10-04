@@ -101,8 +101,12 @@ s6a_init_objs (
   /*
    * Pre-loading AVPs objects
    */
+  
+  CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME, "Session-Id", &s6a_cnf.dataobj_s6a_session_id, ENOENT));
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME, "Origin-Host", &s6a_cnf.dataobj_s6a_origin_host, ENOENT));
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME, "Origin-Realm", &s6a_cnf.dataobj_s6a_origin_realm, ENOENT));
+  CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME, "Destination-Host", &s6a_cnf.dataobj_s6a_destination_host, ENOENT));
+  CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME, "Destination-Realm", &s6a_cnf.dataobj_s6a_destination_realm, ENOENT));
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "User-Name", &s6a_cnf.dataobj_s6a_imsi, ENOENT));
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "IMEI", &s6a_cnf.dataobj_s6a_imei, ENOENT));
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Software-Version", &s6a_cnf.dataobj_s6a_software_version, ENOENT));
@@ -154,6 +158,7 @@ s6a_init_objs (
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Pre-emption-Capability", &s6a_cnf.dataobj_s6a_pre_emption_capability, ENOENT));
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Pre-emption-Vulnerability", &s6a_cnf.dataobj_s6a_pre_emption_vulnerability, ENOENT));
   CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Served-Party-IP-Address", &s6a_cnf.dataobj_s6a_served_party_ip_addr, ENOENT));
+  CHECK_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Cancellation-Type", &s6a_cnf.dataobj_s6a_cancellation_type, ENOENT));
   /*
    * Advertise the support for the test application in the peer
    */
@@ -238,6 +243,11 @@ s6a_init (
     goto err;
   }
 
+  /*Register the callback for cancel location answer*/
+  when.command = s6a_cnf.dataobj_s6a_cancel_loc_ans;
+  when.app = s6a_cnf.dataobj_s6a_app;
+  CHECK_FCT(fd_disp_register(s6a_clear_info_cb, DISP_HOW_CC, &when, NULL, &handle));
+
   when.command = s6a_cnf.dataobj_s6a_loc_up;
   when.app = s6a_cnf.dataobj_s6a_app;
   /*
@@ -261,6 +271,9 @@ s6a_init (
     strcpy (why, "cannot register purge ue req cb");
     goto err;
   }
+
+  when.command = s6a_cnf.dataobj_s6a_cancel_loc_req;
+  when.app = s6a_cnf.dataobj_s6a_app;
 
   FPRINTF_NOTICE ( "Initializing s6a layer: DONE\n");
   return 0;

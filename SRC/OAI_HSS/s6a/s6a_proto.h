@@ -82,9 +82,14 @@ typedef struct {
   struct dict_object *dataobj_s6a_purge_ue;     /* s6a purge ue req */
   struct dict_object *dataobj_s6a_cancel_loc_req; /* s6a Cancel Location req */
   struct dict_object *dataobj_s6a_cancel_loc_ans; /* s6a Cancel Location ans */
+  struct dict_object *dataobj_s6a_ins_subsc_data_req; /*s6a Insert subscriber data Req command*/
   /* AVPs */
+  struct dict_object *dataobj_s6a_user_name;
   struct dict_object *dataobj_s6a_origin_host;
   struct dict_object *dataobj_s6a_origin_realm;
+  struct dict_object *dataobj_s6a_session_id;
+  struct dict_object *dataobj_s6a_destination_host;
+  struct dict_object *dataobj_s6a_destination_realm;
   struct dict_object *dataobj_s6a_imsi;            /* s6a imsi avp */
   struct dict_object *dataobj_s6a_imei;
   struct dict_object *dataobj_s6a_software_version;
@@ -123,6 +128,9 @@ typedef struct {
   struct dict_object *dataobj_s6a_apn_configuration_profile;
   struct dict_object *dataobj_s6a_subscribed_rau_tau_timer;
   struct dict_object *dataobj_s6a_context_identifier;
+  struct dict_object *dataobj_s6a_cancellation_type;
+  struct dict_object *dataobj_s6a_idr_flags;
+  struct dict_object *dataobj_s6a_apn_oi_replacement;
   /* All-APN-Configurations-Included-Indicator */
   struct dict_object *dataobj_s6a_all_apn_conf_inc_ind;
   struct dict_object *dataobj_s6a_apn_configuration;
@@ -171,6 +179,13 @@ extern s6a_cnf_t s6a_cnf;
 #define PUA_FREEZE_M_TMSI   (1U)
 #define PUA_FREEZE_P_TMSI   (1U << 1)
 
+/* IDR-FLAGS */
+#define UE_REACHABILITY_REQUEST          (1U)
+#define T-ADS_DATA_REQUEST               (1U << 1)
+#define EPS_USER_STATE_REQUEST           (1U << 2)
+#define EPS_LOCATION_INFORMATION_REQUEST (1U << 3)
+#define CURRENT_LOCATION_REQUEST         (1U << 4)
+
 /* Access-restriction-data bits */
 #define UTRAN_NOT_ALLOWED            (1U)
 #define GERAN_NOT_ALLOWED            (1U << 1)
@@ -218,7 +233,12 @@ int s6a_purge_ue_cb(struct msg **msg, struct avp *paramavp,
                     struct session *sess, void *opaque,
                     enum disp_action *act);
 
-int s6a_add_subscription_data_avp(struct msg *message, mysql_ul_ans_t *msql_ans);
+int s6a_clear_info_cb(struct msg **msg, struct avp *paramavp,
+                     struct session *sess, void *opaque,
+                     enum disp_action *act);
+
+int s6a_add_subscription_data_avp(struct msg *message, cassandra_ul_ans_t *cass_ans);
+int s6a_add_subscription_json_data_avp(struct msg *message, char *json_string);
 
 int s6a_add_result_code(struct msg *ans, struct avp *failed_avp,
                         int result_code, int experimental);

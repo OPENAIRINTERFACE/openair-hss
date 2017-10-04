@@ -36,6 +36,7 @@
 #include "s6a_proto.h"
 #include "auc.h"
 #include "pid_file.h"
+#include "utils/log.h"
 
 hss_config_t                            hss_config;
 
@@ -102,14 +103,14 @@ main (
     return -1;
   }
 
-  if (hss_mysql_connect (&hss_config) != 0) {
+  if (hss_cassandra_connect (&hss_config) != 0) {
     return -1;
   }
 
   random_init ();
 
   if (hss_config.valid_op) {
-    hss_mysql_check_opc_keys ((uint8_t *) hss_config.operator_key_bin);
+    hss_cassandra_check_opc_keys ((uint8_t *) hss_config.operator_key_bin);
   }
 
   s6a_init (&hss_config);

@@ -12,15 +12,18 @@
 #---------------------
 Licence info  
 #---------------------
-  The source code is mainly written under the FreeBSD License. For more details,
-  please read the NOTICE file in the same directory.
+  The source code is mainly written under the Apache V2.0 License (http://www.apache.org/licenses/LICENSE-2.0). 
+  The text for Apache V2.0 License is also available under LICENSE file in the same directory.
+  For more details on third party software, please read the NOTICE file in the same directory.
    
 #---------------------
 Linux
 #---------------------
   The Openair-cn code actually is written, executed, and tested on UBUNTU 
   desktop 14.04 64 bits.
-  Actually the S-GW network element requires a linux kernel version 3.19.
+  Actually the S-GW network element requires a linux kernel version 3.19 (for tag <= v0.3.2).
+  Actually the S-GW network element requires a linux kernel version >= 4.7.x (for tag >= v0.4.0).
+
   
 #---------------------
 Collaborative work

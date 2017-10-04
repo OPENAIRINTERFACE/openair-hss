@@ -79,7 +79,7 @@ endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release RelWithDebInfo MinSizeRel)
 
 #
-set(CMAKE_C_FLAGS                  "${CMAKE_C_FLAGS} -msse4.2 -std=gnu99 -Wall -Wstrict-prototypes -fno-strict-aliasing -rdynamic -funroll-loops -Wno-packed-bitfield-compat -DCMAKER")
+set(CMAKE_C_FLAGS                  "${CMAKE_C_FLAGS} -msse4.2 -std=gnu99 -Wall -Wstrict-prototypes -fno-strict-aliasing -rdynamic -funroll-loops -Wno-packed-bitfield-compat -DCMAKER -Wno-write-strings")
 set(CMAKE_C_FLAGS_DEBUG            "${CMAKE_C_FLAGS_DEBUG} -ggdb -DMALLOC_CHECK_=3")
 set(CMAKE_C_FLAGS_RELWITHDEBINFO   "${CMAKE_C_FLAGS_RELWITHDEBINFO} -ggdb -DMALLOC_CHECK_=3 -O2")
 
@@ -95,6 +95,11 @@ INCLUDE(FindNettle)
 IF( NOT NETTLE_FOUND )
   MESSAGE( SEND_ERROR "Nettle is required" )
 ENDIF( NOT NETTLE_FOUND )
+
+INCLUDE(FindCassandra)
+IF( NOT CASSANDRA_FOUND)
+  MESSAGE( SEND_ERROR "Cassandra is required" )
+ENDIF( NOT CASSANDRA_FOUND )
 
 
 
@@ -220,6 +225,8 @@ set(s6a_SRC
     ${OAI_HSS_DIR}/s6a/s6a_subscription_data.c
     ${OAI_HSS_DIR}/s6a/s6a_supported_features.c
     ${OAI_HSS_DIR}/s6a/s6a_up_loc.c
+    ${OAI_HSS_DIR}/s6a/s6a_insert_subscriber_request.c
+    ${OAI_HSS_DIR}/s6a/fdjson.cpp
 )
 set(s6a_HDR
     ${OAI_HSS_DIR}/s6a/s6a_proto.h
@@ -228,6 +235,7 @@ set(s6a_HDR
     ${OAI_HSS_DIR}/auc/auc.h
     ${OAI_HSS_DIR}/access_restriction/access_restriction.h
     ${OAI_HSS_DIR}/utils/log.h
+    ${OAI_HSS_DIR}/s6a/fdjson.h
 )
 
 add_library(hss_s6a ${s6a_SRC} ${s6a_HDR})
@@ -263,7 +271,7 @@ add_library(hss_utils ${utils_SRC} ${utils_HDR})
 ################################################################################
 # EXECUTABLE oai_hss
 ################################################################################
-include_directories( ${UTILS_GENERATED_DIR} ${OAI_HSS_DIR}/utils ${OAI_HSS_DIR}/s6a ${OAI_HSS_DIR}/db ${OAI_HSS_DIR}/auc ${OAI_HSS_DIR}/access_restriction)
+include_directories( ${UTILS_GENERATED_DIR} ${OAI_HSS_DIR}/utils ${OAI_HSS_DIR}/db ${OAI_HSS_DIR}/s6a ${OAI_HSS_DIR}/auc ${OAI_HSS_DIR}/access_restriction)
 ADD_EXECUTABLE(oai_hss  ${OAI_HSS_DIR}/hss_main.c)
 target_link_libraries (oai_hss 
                        -Wl,-whole-archive 
@@ -274,7 +282,8 @@ target_link_libraries (oai_hss
                        hss_utils
                        -Wl,-no-whole-archive
                        gmp
-                       ${MySQL_LIBRARY} 
+                       ${MySQL_LIBRARY}
+                       ${CASSANDRA_LIBRARY}
                        ${NETTLE_LIBRARIES} 
                        ${FREEDIAMETER_LIBRARIES}
                        ${CONFIG_LIBRARIES}  

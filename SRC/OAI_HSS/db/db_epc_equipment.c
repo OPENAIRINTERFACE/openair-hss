@@ -86,6 +86,92 @@ hss_mysql_query_mmeidentity (
 }
 
 int
+hss_cassandra_query_mmeidentity (
+  const int id_mme_identity,
+  cassandra_mme_identity_t * mme_identity_p)
+{
+  const CassResult			 *result=NULL;
+  const CassRow	                         *row;
+  char                                   query[1000];
+  CassStatement 			 *statement;
+  CassFuture				 *query_future;
+  CassError                              rc;
+  CassValue				 *cass_mmehost_value,*cass_mmerealm_value;
+  const char 				 *mmehost = NULL, *mmerealm = NULL;
+  size_t 				 mmehost_length,mmerealm_length;
+
+  if ((db_desc->db_conn == NULL) || (mme_identity_p == NULL)) {
+    return EINVAL;
+  }
+  memset (mme_identity_p, 0, sizeof (cassandra_mme_identity_t)); 
+  sprintf (query, "SELECT mmehost,mmerealm FROM vhss.mmeidentity WHERE idmmeidentity=%d ", id_mme_identity);
+  FPRINTF_DEBUG ("Query: %s\n", query);
+  statement = cass_statement_new(query,0);
+  pthread_mutex_lock (&db_desc->db_cs_mutex);
+  query_future = cass_session_execute(db_desc->db_conn,statement);
+  cass_statement_free(statement);
+  rc = cass_future_error_code(query_future);
+
+  if ( rc != CASS_OK) {
+        pthread_mutex_unlock(&db_desc->db_cs_mutex);
+        const char* message;
+        size_t message_length;
+        cass_future_error_message(query_future,&message,&message_length);
+        FPRINTF_ERROR( "Query execution failed: '%.*s'\n", (int)message_length, message);
+        return EINVAL;
+  }
+
+  result = cass_future_get_result(query_future);
+  pthread_mutex_unlock (&db_desc->db_cs_mutex);
+  
+/* If there was an error then the result won't be available */
+  if (result == NULL) {
+     /* Handle error */
+     FPRINTF_DEBUG("Select query result is NULL\n");
+     cass_future_free(query_future);
+     return EINVAL;
+  }
+  cass_future_free(query_future);
+
+  
+  row = cass_result_first_row(result);
+  cass_result_free(result);
+ 
+  if( row == NULL ){
+	return EINVAL;
+  }
+  cass_mmehost_value = cass_row_get_column_by_name(row,"mmehost");
+  cass_mmerealm_value = cass_row_get_column_by_name(row,"mmerealm");
+  
+  if( cass_mmehost_value != NULL ){
+	cass_value_get_string(cass_mmehost_value,&mmehost,&mmehost_length);
+	if( mmehost != NULL ){
+		memcpy(mme_identity_p->mme_host,mmehost,mmehost_length);
+		mme_identity_p->mme_host[mmehost_length] = '\0';
+	}
+	else{
+		mme_identity_p->mme_host[0] = '\0';
+	}
+  }
+  if( cass_mmerealm_value != NULL){
+	cass_value_get_string(cass_mmerealm_value,&mmerealm,&mmerealm_length);
+	if( mmerealm != NULL ){
+		memcpy(mme_identity_p->mme_realm,mmerealm,mmerealm_length);
+		mme_identity_p->mme_realm[mmerealm_length] = '\0';
+	}
+	else{
+		mme_identity_p->mme_realm[0] = '\0';
+	}
+  }
+  
+  return 0;
+
+}
+
+
+
+
+int
 hss_mysql_check_epc_equipment (
   mysql_mme_identity_t * mme_identity_p)
 {
@@ -119,5 +205,71 @@ hss_mysql_check_epc_equipment (
   }
 
   mysql_free_result (res);
+  return EINVAL;
+}
+
+int
+hss_cassandra_check_epc_equipment (
+  cassandra_mme_identity_t * mme_identity_p)
+{
+  const CassResult			 *result=NULL;
+  const CassRow	                         *row;
+  char                                    query[1000];
+  CassStatement 			 *statement;
+  CassFuture				 *query_future;
+  CassError                               rc;
+  CassValue				 *cass_idmmeidentity_value;
+  int 					 *idmmeidentity;
+
+  if ((db_desc->db_conn == NULL) || (mme_identity_p == NULL)) {
+    return EINVAL;
+  }
+
+  sprintf (query, "SELECT idmmeidentity FROM vhss.mmeidentity_host WHERE mmehost='%s' ", mme_identity_p->mme_host);
+  FPRINTF_DEBUG ("Query: %s\n", query);
+  statement = cass_statement_new(query,0);
+  pthread_mutex_lock (&db_desc->db_cs_mutex);
+  query_future = cass_session_execute(db_desc->db_conn,statement);
+  cass_statement_free(statement);
+  rc = cass_future_error_code(query_future);
+
+  if ( rc != CASS_OK) {
+        pthread_mutex_unlock(&db_desc->db_cs_mutex);
+        const char* message;
+        size_t message_length;
+        cass_future_error_message(query_future,&message,&message_length);
+        FPRINTF_ERROR( "Query execution failed: '%.*s'\n", (int)message_length, message);
+        return EINVAL;
+  }
+
+  result = cass_future_get_result(query_future);
+  
+  /* If there was an error then the result won't be available */
+  if (result == NULL) {
+     /* Handle error */
+     pthread_mutex_unlock(&db_desc->db_cs_mutex);
+     FPRINTF_DEBUG("Select query result is NULL\n");
+     cass_future_free(query_future);
+     return EINVAL;
+  }
+  cass_future_free(query_future);
+  row = cass_result_first_row(result);
+
+  if( row == NULL ){
+	cass_result_free(result);
+	pthread_mutex_unlock (&db_desc->db_cs_mutex);
+	return EINVAL;
+  }
+  cass_idmmeidentity_value = cass_row_get_column_by_name(row,"idmmeidentity");
+  cass_result_free(result);
+  if( cass_idmmeidentity_value != NULL ){
+	cass_value_get_int32(cass_idmmeidentity_value,&idmmeidentity);
+	if(idmmeidentity != NULL ){
+  		pthread_mutex_unlock (&db_desc->db_cs_mutex);
+		return idmmeidentity;
+	}
+  }
+  
+  pthread_mutex_unlock (&db_desc->db_cs_mutex);
   return EINVAL;
 }

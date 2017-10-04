@@ -27,7 +27,17 @@
  * either expressed or implied, of the FreeBSD Project.
  */
 //WARNING: Do not include this header directly. Use intertask_interface.h instead.
+
+/*! \file s6a_messages_def.h
+  \brief
+  \author Sebastien ROUX, Lionel Gauthier
+  \company Eurecom
+  \email: lionel.gauthier@eurecom.fr
+*/
+
 MESSAGE_DEF(S6A_UPDATE_LOCATION_REQ, MESSAGE_PRIORITY_MED,      s6a_update_location_req_t, s6a_update_location_req)
 MESSAGE_DEF(S6A_UPDATE_LOCATION_ANS, MESSAGE_PRIORITY_MED,      s6a_update_location_ans_t, s6a_update_location_ans)
 MESSAGE_DEF(S6A_AUTH_INFO_REQ, MESSAGE_PRIORITY_MED,            s6a_auth_info_req_t, s6a_auth_info_req)
 MESSAGE_DEF(S6A_AUTH_INFO_ANS, MESSAGE_PRIORITY_MED,            s6a_auth_info_ans_t, s6a_auth_info_ans)
+MESSAGE_DEF(S6A_CANCEL_LOCATION_REQ, MESSAGE_PRIORITY_MED,      s6a_cancel_location_req_t, s6a_cancel_location_req)
+MESSAGE_DEF(S6A_CANCEL_LOCATION_ANS, MESSAGE_PRIORITY_MED,      s6a_cancel_location_ans_t, s6a_cancel_location_ans)

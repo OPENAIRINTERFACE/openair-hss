@@ -41,20 +41,20 @@ s6a_peer_validate (
   int *auth,
   int                                     (**cb2) (struct peer_info *))
 {
-  mysql_mme_identity_t                    mme_identity;
+  cassandra_mme_identity_t                    mme_identity;
 
   if (info == NULL) {
     return EINVAL;
   }
 
-  memset (&mme_identity, 0, sizeof (mysql_mme_identity_t));
+  memset (&mme_identity, 0, sizeof (cassandra_mme_identity_t));
   /*
    * We received a new connection. Check the database for allowed equipments
    * * * * on EPC
    */
   memcpy (mme_identity.mme_host, info->pi_diamid, info->pi_diamidlen);
 
-  if (hss_mysql_check_epc_equipment (&mme_identity) != 0) {
+  if (hss_cassandra_check_epc_equipment (&mme_identity) == EINVAL) {
     /*
      * The MME has not been found in list of known peers -> reject it
      */

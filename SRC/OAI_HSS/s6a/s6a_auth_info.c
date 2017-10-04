@@ -43,6 +43,7 @@
 
 #define AUTH_MAX_EUTRAN_VECTORS 6
 
+
 int
 s6a_auth_info_cb (
   struct msg **msg,
@@ -61,8 +62,8 @@ s6a_auth_info_cb (
   /*
    * Database queries
    */
-  mysql_auth_info_req_t                   auth_info_req;
-  mysql_auth_info_resp_t                  auth_info_resp;
+  cassandra_auth_info_req_t                   auth_info_req;
+  cassandra_auth_info_resp_t                  auth_info_resp;
 
   /*
    * Authentication vector
@@ -79,6 +80,9 @@ s6a_auth_info_cb (
   if (msg == NULL) {
     return EINVAL;
   }
+
+  printf("Received the AIR message\n");
+  dump(*msg);
 
   /*
    * Create answer header
@@ -101,6 +105,7 @@ s6a_auth_info_cb (
 
     sprintf (auth_info_req.imsi, "%*s", (int)hdr->avp_value->os.len, hdr->avp_value->os.data);
     sscanf (auth_info_req.imsi, "%" SCNu64, &imsi);
+    printf("imsi value is retrieved\n");
   } else {
     result_code = ER_DIAMETER_MISSING_AVP;
     goto out;
@@ -130,6 +135,7 @@ s6a_auth_info_cb (
     /*
      * Walk through childs avp
      */
+   printf("Inside EUTRAN auth info avp check\n");
     CHECK_FCT (fd_msg_browse (avp, MSG_BRW_FIRST_CHILD, &child_avp, NULL));
 
     while (child_avp) {
@@ -209,7 +215,8 @@ s6a_auth_info_cb (
      * TODO: check PLMN and allow/reject connectivity depending on roaming
      */
     CHECK_FCT (fd_msg_avp_hdr (avp, &hdr));
-
+ 
+    printf("Lenght of visited plmn id avp = %d \n",hdr->avp_value->os.len);
     if (hdr->avp_value->os.len == 3) {
       if (apply_access_restriction (auth_info_req.imsi, hdr->avp_value->os.data) != 0) {
         /*
@@ -221,6 +228,7 @@ s6a_auth_info_cb (
         goto out;
       }
     } else {
+	
       result_code = ER_DIAMETER_INVALID_AVP_VALUE;
       goto out;
     }
@@ -235,7 +243,7 @@ s6a_auth_info_cb (
   /*
    * Fetch User data
    */
-  if (hss_mysql_auth_info (&auth_info_req, &auth_info_resp) != 0) {
+  if (hss_cassandra_auth_info (&auth_info_req, &auth_info_resp) != 0) {
     /*
      * Database query failed...
      */
@@ -258,15 +266,15 @@ s6a_auth_info_cb (
        * Pick a new RAND and store SQN_MS + RAND in the HSS
        */
       generate_random (vector[0].rand, RAND_LENGTH);
-      hss_mysql_push_rand_sqn (auth_info_req.imsi, vector[0].rand, sqn);
-      hss_mysql_increment_sqn (auth_info_req.imsi);
+      hss_cassandra_push_rand_sqn (auth_info_req.imsi, vector[0].rand, sqn);
+      hss_cassandra_increment_sqn (auth_info_req.imsi, sqn);
       free (sqn);
     }
 
     /*
      * Fetch new user data
      */
-    if (hss_mysql_auth_info (&auth_info_req, &auth_info_resp) != 0) {
+    if (hss_cassandra_auth_info (&auth_info_req, &auth_info_resp) != 0) {
       /*
        * Database query failed...
        */
@@ -280,7 +288,7 @@ s6a_auth_info_cb (
       generate_random (vector[i].rand, RAND_LENGTH);
       generate_vector (auth_info_resp.opc, imsi, auth_info_resp.key, hdr->avp_value->os.data, sqn, &vector[i]);
     }
-    hss_mysql_push_rand_sqn (auth_info_req.imsi, vector[num_vectors-1].rand, sqn);
+    hss_cassandra_push_rand_sqn (auth_info_req.imsi, vector[num_vectors-1].rand, sqn);
   } else {
     /*
      * Pick a new RAND and store SQN_MS + RAND in the HSS
@@ -293,10 +301,10 @@ s6a_auth_info_cb (
        */
       generate_vector (auth_info_resp.opc, imsi, auth_info_resp.key, hdr->avp_value->os.data, sqn, &vector[i]);
     }
-    hss_mysql_push_rand_sqn (auth_info_req.imsi, vector[num_vectors-1].rand, sqn);
+    hss_cassandra_push_rand_sqn (auth_info_req.imsi, vector[num_vectors-1].rand, sqn);
   }
 
-  hss_mysql_increment_sqn (auth_info_req.imsi);
+  hss_cassandra_increment_sqn (auth_info_req.imsi, sqn);
   /*
    * We add the vector
    */
@@ -327,7 +335,7 @@ s6a_auth_info_cb (
       CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
       CHECK_FCT (fd_msg_avp_add (e_utran_vector, MSG_BRW_LAST_CHILD, child_avp));
       CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, e_utran_vector));
-      CHECK_FCT (fd_msg_avp_add (ans, MSG_BRW_LAST_CHILD, avp));
+      CHECK_FCT (fd_msg_avp_add (ans, MSG_BRW_LAST_CHILD, avp)); 
     }
   }
 out:
@@ -344,5 +352,7 @@ out:
    */
   CHECK_FCT (s6a_add_result_code (ans, failed_avp, result_code, experimental));
   CHECK_FCT (fd_msg_send (msg, NULL, NULL));
+  printf("at the line %d\n", __LINE__);
+  dump(ans); 
   return ret;
 }
