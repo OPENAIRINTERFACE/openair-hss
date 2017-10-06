@@ -639,15 +639,17 @@ install_ovs_from_source(){
   
   if [[ $prompt =~ [yY](es)* ]]
   then
-    cd /usr/local
+    $SUDO rm -rf /tmp/gtp
+    mkdir /tmp/gtp
+    cd /tmp/gtp
     git clone https://gitlab.eurecom.fr/oai/openair-cn-extras.git
 
     cd openair-cn-extras/linux-4.9.0-gtp-module/
     make
-    make install
-    modprobe udp_tunnel
-    modprobe ip6_udp_tunnel
-    modprobe gtp
+    $SUDO make install
+    $SUDO modprobe udp_tunnel
+    $SUDO modprobe ip6_udp_tunnel
+    $SUDO modprobe gtp
 
     git_username=`git config --get user.name`
     if [ "$git_username" == "" ]; then
@@ -660,23 +662,25 @@ install_ovs_from_source(){
       git config --global user.email "$git_email"
     fi
 
-    cd /usr/local
+    $SUDO rm -rf /tmp/ovs
+    mkdir -p /tmp/ovs
+    cd /tmp/ovs
     git clone https://github.com/openvswitch/ovs.git
     cd ovs
     git checkout 31b88c97512b5dca9f1f6f73bb33292618eee88a
-    git am /usr/local/openair-cn-extras/ovs/0001-datapath-GPRS-Tunneling-Protocol-GTP-support.patch
-    git am /usr/local/openair-cn-extras/ovs/0002-userspace-GPRS-Tunneling-Protocol-GTP-support.patch
+    git am /tmp/ovs/openair-cn-extras/ovs/0001-datapath-GPRS-Tunneling-Protocol-GTP-support.patch
+    git am /tmp/ovs/local/openair-cn-extras/ovs/0002-userspace-GPRS-Tunneling-Protocol-GTP-support.patch
 
     ./boot.sh
     ./configure --with-linux=/lib/modules/`uname -r`/build
     make -j`nproc`
     cat /usr/local/openair-cn-extras/linux-4.9.0-gtp-module/Module.symvers >> datapath/linux/Module.symvers
     make
-    make modules_install  # this overwrites openvswitch.ko, vport.ko, vport-gtp.ko, etc.
-    make install
-    mkdir -p /usr/local/etc/openvswitch
-    mkdir -p /usr/local/var/run/openvswitch
-    ovsdb-tool create /usr/local/etc/openvswitch/conf.db vswitchd/vswitch.ovsschema
+    $SUDO make modules_install  # this overwrites openvswitch.ko, vport.ko, vport-gtp.ko, etc.
+    $SUDO make install
+    $SUDO mkdir -p /usr/local/etc/openvswitch
+    $SUDO mkdir -p /usr/local/var/run/openvswitch
+    $SUDO ovsdb-tool create /usr/local/etc/openvswitch/conf.db vswitchd/vswitch.ovsschema
   fi
 }
 
