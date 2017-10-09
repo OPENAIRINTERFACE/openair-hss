@@ -978,49 +978,6 @@ s1ap_mme_handle_initial_context_setup_failure (
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//************************ Handover signalling *******************************//
-////////////////////////////////////////////////////////////////////////////////
-
-//------------------------------------------------------------------------------
-int
-s1ap_mme_handle_path_switch_request (
-    __attribute__((unused)) const sctp_assoc_id_t assoc_id,
-    __attribute__((unused)) const sctp_stream_id_t stream,
-    struct s1ap_message_s *message)
-{
-  S1ap_PathSwitchRequestIEs_t            *pathSwitchRequest_p = NULL;
-  ue_description_t                       *ue_ref_p = NULL;
-  enb_ue_s1ap_id_t                        enb_ue_s1ap_id = 0;
-
-  OAILOG_FUNC_IN (LOG_S1AP);
-  pathSwitchRequest_p = &message->msg.s1ap_PathSwitchRequestIEs;
-  // eNB UE S1AP ID is limited to 24 bits
-  enb_ue_s1ap_id = (enb_ue_s1ap_id_t) (pathSwitchRequest_p->eNB_UE_S1AP_ID & ENB_UE_S1AP_ID_MASK);
-  OAILOG_DEBUG (LOG_S1AP, "Path Switch Request message received from eNB UE S1AP ID: " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
-
-  if ((ue_ref_p = s1ap_is_ue_mme_id_in_list (pathSwitchRequest_p->sourceMME_UE_S1AP_ID)) == NULL) {
-    /*
-     * The MME UE S1AP ID provided by eNB doesn't point to any valid UE.
-     * * * * MME replies with a PATH SWITCH REQUEST FAILURE message and start operation
-     * * * * as described in TS 36.413 [11].
-     * * * * TODO
-     */
-  } else {
-    if (ue_ref_p->enb_ue_s1ap_id != enb_ue_s1ap_id) {
-      /*
-       * Received unique UE eNB ID mismatch with the one known in MME.
-       * * * * Handle this case as defined upper.
-       * * * * TODO
-       */
-      return -1;
-    }
-    //TODO: Switch the eRABs provided
-  }
-
-  OAILOG_FUNC_RETURN (LOG_S1AP, RETURNok);
-}
-
 //------------------------------------------------------------------------------
 typedef struct arg_s1ap_send_enb_dereg_ind_s {
   uint8_t      current_ue_index;

@@ -209,6 +209,11 @@ include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(CheckTypeSize)
 
+###############################################################################
+# Split repository for licensing reasons
+###############################################################################
+add_boolean_option( MOBILITY_REPO                   False    "Split repository for licensing reasons, values: False or path to local mounted folder ex /tmp/openair-cn-mobility")
+
 
 ###############################################################################
 # Debug and build related options
@@ -244,6 +249,14 @@ add_boolean_option( SECU_DEBUG                      False    "Traces, option to 
 
 add_boolean_option( TRACE_3GPP_SPEC                 True     "Log hits of 3GPP specifications requirements")
 
+###############################################################################
+# Split repository for licensing reasons
+###############################################################################
+if(${MOBILITY_REPO})
+  message ("Extra mobility repo configured")
+else (${MOBILITY_REPO})
+  message ("No mobility extra repo configured")
+endif (${MOBILITY_REPO})
 
 set (ITTI_DIR ${OPENAIRCN_DIR}/src/common/itti)
 if (${ENABLE_ITTI})
@@ -332,18 +345,34 @@ add_library(S1AP_LIB
 include_directories ("${S1AP_C_DIR}")
 include_directories ("${S1AP_DIR}")
 
-
-add_library(S1AP_EPC
-  ${S1AP_C_DIR}/s1ap_ies_defs.h
-  ${S1AP_DIR}/s1ap_mme_encoder.c
-  ${S1AP_DIR}/s1ap_mme_decoder.c
-  ${S1AP_DIR}/s1ap_mme_handlers.c
-  ${S1AP_DIR}/s1ap_mme_nas_procedures.c
-  ${S1AP_DIR}/s1ap_mme.c
-  ${S1AP_DIR}/s1ap_mme_itti_messaging.c
-  ${S1AP_DIR}/s1ap_mme_retransmission.c
-  ${S1AP_DIR}/s1ap_mme_ta.c
+if(${MOBILITY_REPO})
+  include_directories ("${MOBILITY_REPO_SRC}/src/s1ap/")
+  add_library(S1AP_EPC
+    ${S1AP_C_DIR}/s1ap_ies_defs.h
+    ${MOBILITY_REPO_SRC}/src/s1ap/s1ap_mobility_handover_signaling_handler.c
+    ${S1AP_DIR}/s1ap_mme_encoder.c
+    ${S1AP_DIR}/s1ap_mme_decoder.c
+    ${S1AP_DIR}/s1ap_mme_handlers.c
+    ${S1AP_DIR}/s1ap_mme_nas_procedures.c
+    ${S1AP_DIR}/s1ap_mme.c
+    ${S1AP_DIR}/s1ap_mme_itti_messaging.c
+    ${S1AP_DIR}/s1ap_mme_retransmission.c
+    ${S1AP_DIR}/s1ap_mme_ta.c
+  ) 
+else (${MOBILITY_REPO})
+  add_library(S1AP_EPC
+    ${S1AP_C_DIR}/s1ap_ies_defs.h
+    ${S1AP_DIR}/s1ap_handover_signaling_handler.c
+    ${S1AP_DIR}/s1ap_mme_encoder.c
+    ${S1AP_DIR}/s1ap_mme_decoder.c
+    ${S1AP_DIR}/s1ap_mme_handlers.c
+    ${S1AP_DIR}/s1ap_mme_nas_procedures.c
+    ${S1AP_DIR}/s1ap_mme.c
+    ${S1AP_DIR}/s1ap_mme_itti_messaging.c
+    ${S1AP_DIR}/s1ap_mme_retransmission.c
+    ${S1AP_DIR}/s1ap_mme_ta.c
   )
+endif ()
 
 
 
@@ -694,6 +723,20 @@ set(libnas_mme_emm_OBJS
   ${NAS_SRC}emm/ServiceRequestHdl.c
   ${NAS_SRC}emm/TrackingAreaUpdate.c
 )
+  
+if(${MOBILITY_REPO})
+  include_directories ("${MOBILITY_REPO_SRC}/src/nas/emm")
+  set(libnas_mme_emm_OBJS
+    ${libnas_mme_emm_OBJS}
+    ${MOBILITY_REPO_SRC}/src/nas/emm/TrackingAreaUpdateMobility.c
+  ) 
+else (${MOBILITY_REPO})
+  set(libnas_mme_emm_OBJS
+    ${libnas_mme_emm_OBJS}
+    ${NAS_SRC}/emm/TrackingAreaUpdateMobility.c
+  ) 
+endif ()
+
   
 set(libnas_mme_emm_sap_OBJS
   ${NAS_SRC}emm/sap/emm_as.c

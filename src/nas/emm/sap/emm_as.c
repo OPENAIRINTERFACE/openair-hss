@@ -68,6 +68,7 @@
 #include "mme_app_defs.h"
 #include "nas_proc.h"
 #include "emm_proc.h"
+#include "TrackingAreaUpdateMobility.h"
 
 
 /****************************************************************************/
@@ -432,6 +433,29 @@ static int _emm_as_recv (
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
+  case TRACKING_AREA_UPDATE_REQUEST:
+    if ((0 == decode_status->security_context_available) ||
+        (0 == decode_status->integrity_protected_message) ||
+       ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
+      *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
+      unlock_ue_contexts(ue_mm_context);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
+    }
+    /*
+     *    R  E  A  D      M  E      B  E  F  O  R  E    D  O  I  N  G
+     *
+     *     A  N  Y  T  H  I  N  G      E  L  S  E
+     *
+     *
+     *
+     *  Due to legal concerns no mobility code concerning Normal TAU can be commit
+     *  here in this source file nor in this git project actually called openair-cn.
+     *  The contributions to Normal TAU can only be accepted inside the git project
+     *  openair-cn-mobility.
+     */
+    rc = emm_recv_tracking_area_update_req_type_normal (ue_id, &emm_msg->tracking_area_update_request, emm_cause);
+    break;
+    
     /*
      * TODO
      */
