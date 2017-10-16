@@ -929,11 +929,9 @@ static int encode_traffic_flow_template_packet_filter (
       for (j = 0; j < TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE; j++) {
         *(buffer + encoded) = packetfilter->packetfiltercontents.ipv4remoteaddr[j].addr;
         *(buffer + encoded + TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE) = packetfilter->packetfiltercontents.ipv4remoteaddr[j].mask;
-        encoded++;
       }
 
-      encoded += TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE;
-      encoded += TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE;
+      encoded += TRAFFIC_FLOW_TEMPLATE_IPV4_ADDR_SIZE * 2;
       break;
 
     case TRAFFIC_FLOW_TEMPLATE_IPV6_REMOTE_ADDR_FLAG:
@@ -945,11 +943,9 @@ static int encode_traffic_flow_template_packet_filter (
       for (j = 0; j < TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE; j++) {
         *(buffer + encoded) = packetfilter->packetfiltercontents.ipv6remoteaddr[j].addr;
         *(buffer + encoded + TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE) = packetfilter->packetfiltercontents.ipv6remoteaddr[j].mask;
-        encoded++;
       }
 
-      encoded += TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE;
-      encoded += TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE;
+      encoded += TRAFFIC_FLOW_TEMPLATE_IPV6_ADDR_SIZE * 2;
       break;
 
     case TRAFFIC_FLOW_TEMPLATE_PROTOCOL_NEXT_HEADER_FLAG:
