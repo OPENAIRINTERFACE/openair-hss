@@ -639,6 +639,12 @@ install_ovs_from_source(){
   
   if [[ $prompt =~ [yY](es)* ]]
   then
+    # optional but recommended for secure connection towards controller
+    $SUDO apt-get install $OPTION libssl-dev libcap-ng-dev python-pip
+
+    # required by ovs
+    pip install six
+
     $SUDO rm -rf /tmp/gtp
     mkdir /tmp/gtp
     cd /tmp/gtp
@@ -663,18 +669,17 @@ install_ovs_from_source(){
     fi
 
     $SUDO rm -rf /tmp/ovs
-    mkdir -p /tmp/ovs
-    cd /tmp/ovs
+    cd /tmp
     git clone https://github.com/openvswitch/ovs.git
     cd ovs
     git checkout 31b88c97512b5dca9f1f6f73bb33292618eee88a
-    git am /tmp/ovs/openair-cn-extras/ovs/0001-datapath-GPRS-Tunneling-Protocol-GTP-support.patch
-    git am /tmp/ovs/local/openair-cn-extras/ovs/0002-userspace-GPRS-Tunneling-Protocol-GTP-support.patch
+    git am /tmp/gtp/openair-cn-extras/ovs/0001-datapath-GPRS-Tunneling-Protocol-GTP-support.patch
+    git am /tmp/gtp/openair-cn-extras/ovs/0002-userspace-GPRS-Tunneling-Protocol-GTP-support.patch
 
     ./boot.sh
     ./configure --with-linux=/lib/modules/`uname -r`/build
     make -j`nproc`
-    cat /usr/local/openair-cn-extras/linux-4.9.0-gtp-module/Module.symvers >> datapath/linux/Module.symvers
+    cat /tmp/gtp/openair-cn-extras/linux-4.9.0-gtp-module/Module.symvers >> datapath/linux/Module.symvers
     make
     $SUDO make modules_install  # this overwrites openvswitch.ko, vport.ko, vport-gtp.ko, etc.
     $SUDO make install
