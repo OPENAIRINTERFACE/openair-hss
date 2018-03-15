@@ -19,6 +19,20 @@
  *      contact@openairinterface.org
  */
 
+/* 
+ * A Topology Manager is an extension of the current OAI code that it has been 
+ * implemented ot gather topological information in a LTE network.
+
+ * Acknowledge to H2020-ICT-2014-2/671672, SELFNET (Framework for Self-Organized 
+ * Network Management in Virtualized and Software Defined Networks)
+
+ * Authors
+ * -------
+ * Ricardo Marco Alaez, University of the West of Scotland              Ricardo.MarcoAlaez@uws.ac.uk
+ * Jose Maria Alcaraz-Calero, University of the West of Scotland        Jose.Alcaraz-Calero@uws.ac.uk
+ * Qi Wang, University of the West of Scotland                          Qi.Wang@uws.ac.uk 
+*/
+
 /*! \file sgw_config.h
 * \brief
 * \author Lionel Gauthier
@@ -45,6 +59,12 @@
 #define SGW_CONFIG_STRING_SGW_INTERFACE_NAME_FOR_S11            "SGW_INTERFACE_NAME_FOR_S11"
 #define SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11              "SGW_IPV4_ADDRESS_FOR_S11"
 
+/**********************UWS**********************/
+#define SGW_CONFIG_STRING_SGW_TOPOLOGY_CONFIG                   "TOPOLOGY"
+#define SGW_CONFIG_STRING_SGW_TOPOLOGY_FILEPATH                 "SGW_TOPOLOGY_FILEPATH"
+#define SGW_CONFIG_STRING_SGW_TOPOLOGY_ENABLE                   "SGW_ENABLE_TOPOLOGY"
+/**********************UWS**********************/
+
 #define SPGW_ABORT_ON_ERROR true
 #define SPGW_WARN_ON_ERROR false
 
@@ -70,6 +90,12 @@ typedef struct sgw_config_s {
     struct in_addr S11;
     int            netmask_S11;
   } ipv4;
+
+/**********************UWS**********************/
+  bstring      topologyfilepath;
+  bool         topologyenable;
+/**********************UWS**********************/
+
   uint16_t     udp_port_S1u_S12_S4_up;
 
   bool         local_to_eNB;

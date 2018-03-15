@@ -19,6 +19,20 @@
  *      contact@openairinterface.org
  */
 
+/* 
+ * A Topology Manager is an extension of the current OAI code that it has been 
+ * implemented ot gather topological information in a LTE network.
+
+ * Acknowledge to H2020-ICT-2014-2/671672, SELFNET (Framework for Self-Organized 
+ * Network Management in Virtualized and Software Defined Networks)
+
+ * Authors
+ * -------
+ * Ricardo Marco Alaez, University of the West of Scotland              Ricardo.MarcoAlaez@uws.ac.uk
+ * Jose Maria Alcaraz-Calero, University of the West of Scotland        Jose.Alcaraz-Calero@uws.ac.uk
+ * Qi Wang, University of the West of Scotland                          Qi.Wang@uws.ac.uk 
+*/
+
 /*! \file spgw_config.c
   \brief
   \author Lionel Gauthier
@@ -196,6 +210,23 @@ int sgw_config_parse_file (sgw_config_t * config_pP)
       }
     }
     OAILOG_SET_CONFIG(&config_pP->log_config);
+
+/**********************UWS**********************/
+    subsetting = config_setting_get_member (setting_sgw, SGW_CONFIG_STRING_SGW_TOPOLOGY_CONFIG);
+
+    if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_TOPOLOGY_FILEPATH, (const char **)&astring)) {
+        config_pP->topologyfilepath = bfromcstr (astring);
+    }
+
+    if (config_setting_lookup_string (subsetting, SGW_CONFIG_STRING_SGW_TOPOLOGY_ENABLE, (const char **)&astring)) {
+        if (!strcmp(astring, "yes")) {
+          config_pP->topologyenable = true;
+        }
+        else{
+          config_pP->topologyenable = false;
+        }
+    }
+/**********************UWS**********************/
 
     subsetting = config_setting_get_member (setting_sgw, SGW_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 

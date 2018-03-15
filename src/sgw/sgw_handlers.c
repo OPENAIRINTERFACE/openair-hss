@@ -19,6 +19,20 @@
  *      contact@openairinterface.org
  */
 
+/* 
+ * A Topology Manager is an extension of the current OAI code that it has been 
+ * implemented ot gather topological information in a LTE network.
+
+ * Acknowledge to H2020-ICT-2014-2/671672, SELFNET (Framework for Self-Organized 
+ * Network Management in Virtualized and Software Defined Networks)
+
+ * Authors
+ * -------
+ * Ricardo Marco Alaez, University of the West of Scotland              Ricardo.MarcoAlaez@uws.ac.uk
+ * Jose Maria Alcaraz-Calero, University of the West of Scotland        Jose.Alcaraz-Calero@uws.ac.uk
+ * Qi Wang, University of the West of Scotland                          Qi.Wang@uws.ac.uk 
+*/
+
 /*! \file sgw_handlers.c
   \brief
   \author Lionel Gauthier
@@ -230,6 +244,7 @@ sgw_handle_create_session_request (
     new_endpoint_p = NULL;
     OAILOG_FUNC_RETURN(LOG_SPGW_APP, RETURNerror);
   }
+
   OAILOG_FUNC_RETURN(LOG_SPGW_APP, RETURNok);
 }
 
@@ -327,6 +342,80 @@ sgw_handle_sgi_endpoint_created (
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].eps_bearer_id,
                       create_session_response_p->bearer_contexts_created.bearer_contexts[0].cause.cause_value);
   rv = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+
+/**********************UWS**********************/
+      if (spgw_config.sgw_config.topologyenable){
+
+      FILE *fp;
+      fp = fopen (bdata(spgw_config.sgw_config.topologyfilepath), "a+" );
+
+      fprintf(fp, "ue_event,create,");
+
+//    fprintf(fp, "enb teid S1u->");
+//      fprintf(fp, "%04x,", eps_bearer_ctxt_p->enb_teid_S1u); ---> TO DO
+//    fprintf(fp, "mme teid S11->");
+      fprintf(fp, "%04x,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_S11);
+//    fprintf(fp, "sgw teid S11->");
+      fprintf(fp, "%04x,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.s_gw_teid_S11_S4);
+//    fprintf(fp, "sgw teid S1u->");
+//      fprintf(fp, "%04x,", eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up);
+
+      fprintf(fp, "%u,", resp_pP->eps_bearer_id);
+
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit1);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit2);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit3);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit4);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit5);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit6);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit7);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit8);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit9);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit10);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit11);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit12);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit13);
+      fprintf(fp, "%u,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit14);
+
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit1);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit2);
+      fprintf(fp, "%u,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit3);
+
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit4);
+      fprintf(fp, "%u,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit5);
+
+      fprintf(fp,"%u", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0x000000FF));
+      fprintf(fp,".%u", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp,"%u", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0x000000FF));
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp,"%u", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0x000000FF));
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0xFF000000) >> 24);
+
+/*
+      fprintf(fp,"%u", (resp_pP->enb_ip_address_S1u.address.ipv4_address.s_addr & 0x000000FF));
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,",(eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp,"%u",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0x000000FF));
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0x000FF000) >> 16);
+      fprintf(fp,".%u,",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0xFF000000) >> 24);
+*/
+      fprintf(fp, "%u\n", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.value);
+
+      fclose(fp);
+      }
+/**********************UWS**********************/
+
   OAILOG_FUNC_RETURN(LOG_SPGW_APP, rv);
 }
 
@@ -589,7 +678,6 @@ sgw_handle_sgi_endpoint_updated (
   int                                     rv = RETURNok;
   mme_sgw_tunnel_t                       *tun_pair_p = NULL;
 
-
   OAILOG_DEBUG (LOG_SPGW_APP, "Rx SGI_UPDATE_ENDPOINT_RESPONSE, Context teid " TEID_FMT " Tunnel " TEID_FMT " (eNB) <-> (SGW) " TEID_FMT " EPS bearer id %u, status %d\n",
                   resp_pP->context_teid, resp_pP->enb_S1u_teid, resp_pP->sgw_S1u_teid, resp_pP->eps_bearer_id, resp_pP->status);
   message_p = itti_alloc_new_message (TASK_SPGW_APP, S11_MODIFY_BEARER_RESPONSE);
@@ -643,7 +731,8 @@ sgw_handle_sgi_endpoint_updated (
 
       if (spgw_config.pgw_config.use_gtp_kernel_module) {
         rv = gtp_tunnel_ops->add_tunnel(ue, enb, eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_ctxt_p->enb_teid_S1u);
-        if (rv < 0) {
+ 
+       if (rv < 0) {
           OAILOG_ERROR (LOG_SPGW_APP, "ERROR in setting up TUNNEL err=%d\n", rv);
         }
       }
@@ -742,6 +831,80 @@ sgw_handle_sgi_endpoint_deleted (
       // if default bearer
       //#pragma message  "TODO define constant for default eps_bearer id"
       rv = gtp_tunnel_ops->del_tunnel(eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up, eps_bearer_ctxt_p->enb_teid_S1u);
+
+/**********************UWS**********************/
+      if (spgw_config.sgw_config.topologyenable){
+
+      FILE *fp;
+      fp = fopen (bdata(spgw_config.sgw_config.topologyfilepath), "a+" );
+
+      fprintf(fp, "ue_event,delete,");
+
+//    fprintf(fp, "mme teid S11->");
+      fprintf(fp, "%04x,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_S11);
+//    fprintf(fp, "sgw teid S11->");
+      fprintf(fp, "%04x,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.s_gw_teid_S11_S4);
+//    fprintf(fp, "sgw teid S1u->");
+//      fprintf(fp, "%04x,", eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up);
+
+      fprintf(fp, "%u,", eps_bearer_ctxt_p->eps_bearer_id);
+
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit1);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit2);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit3);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit4);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit5);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit6);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit7);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit8);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit9);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit10);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit11);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit12);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit13);
+      fprintf(fp, "%u,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit14);
+
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit1);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit2);
+      fprintf(fp, "%u,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit3);
+
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit4);
+      fprintf(fp, "%u,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit5);
+
+      fprintf(fp,"%u", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0x000000FF));
+      fprintf(fp,".%u", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp,"%u", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0x000000FF));
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp,"%u", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0x000000FF));
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0xFF000000) >> 24);
+
+//    fprintf(fp, "enb teid S1u->");
+      fprintf(fp, "%04x,", eps_bearer_ctxt_p->enb_teid_S1u);
+
+      fprintf(fp,"%u", (eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0x000000FF));
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,",(eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp,"%u",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0x000000FF));
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0x000FF000) >> 16);
+      fprintf(fp,".%u,",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp, "%u\n", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.value);
+
+      fclose(fp);
+      }
+/**********************UWS**********************/
+
       if (rv < 0) {
         OAILOG_ERROR (LOG_SPGW_APP, "ERROR in deleting TUNNEL\n");
       }
@@ -765,7 +928,6 @@ sgw_handle_modify_bearer_request (
   sgw_eps_bearer_ctxt_t                 *eps_bearer_ctxt_p = NULL;
   hashtable_rc_t                          hash_rc = HASH_TABLE_OK;
   int                                     rv = RETURNok;
-
 
   OAILOG_DEBUG (LOG_SPGW_APP, "Rx MODIFY_BEARER_REQUEST, teid "TEID_FMT"\n", modify_bearer_pP->teid);
   sgw_display_s11teid2mme_mappings ();
@@ -805,6 +967,80 @@ sgw_handle_modify_bearer_request (
       // TO DO
       FTEID_T_2_IP_ADDRESS_T ((&modify_bearer_pP->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid), (&eps_bearer_ctxt_p->enb_ip_address_S1u));
       eps_bearer_ctxt_p->enb_teid_S1u = modify_bearer_pP->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid.teid;
+
+/**********************UWS**********************/
+      if (spgw_config.sgw_config.topologyenable){
+ 
+      FILE *fp;
+      fp = fopen (bdata(spgw_config.sgw_config.topologyfilepath), "a+" );
+
+      fprintf(fp, "ue_event,update,");    
+
+//    fprintf(fp, "mme teid S11->");
+      fprintf(fp, "%04x,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_teid_S11);
+//    fprintf(fp, "sgw teid S11->");
+      fprintf(fp, "%04x,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.s_gw_teid_S11_S4);
+//    fprintf(fp, "sgw teid S1u->");
+//      fprintf(fp, "%04x,", eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up);
+
+      fprintf(fp, "%u,", eps_bearer_ctxt_p->eps_bearer_id);
+
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit1);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit2);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit3);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit4);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit5);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit6);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit7);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit8);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit9);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit10);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit11);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit12);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit13);
+      fprintf(fp, "%u,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit14);
+
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit1);
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit2);
+      fprintf(fp, "%u,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit3);
+
+      fprintf(fp, "%u", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit4);
+      fprintf(fp, "%u,", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.num.digit5);
+
+      fprintf(fp,"%u", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0x000000FF));
+      fprintf(fp,".%u", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,", (new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.mme_ip_address_S11.address.ipv4_address.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp,"%u", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0x000000FF));
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,", (sgw_app.sgw_ip_address_S1u_S12_S4_up.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp,"%u", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0x000000FF));
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,", (sgw_app.sgw_ip_address_S11_S4.s_addr & 0xFF000000) >> 24);
+
+//    fprintf(fp, "enb teid S1u->");
+      fprintf(fp, "%04x,", eps_bearer_ctxt_p->enb_teid_S1u);
+
+      fprintf(fp,"%u", (eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0x000000FF));
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0x00FF0000) >> 16);
+      fprintf(fp,".%u,",(eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp,"%u",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0x000000FF));
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0x0000FF00) >> 8);
+      fprintf(fp,".%u",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0x000FF000) >> 16);
+      fprintf(fp,".%u,",(eps_bearer_ctxt_p->paa.ipv4_address.s_addr & 0xFF000000) >> 24);
+
+      fprintf(fp, "%u\n", new_bearer_ctxt_info_p->sgw_eps_bearer_context_information.imsi.u.value);        
+
+
+      fclose(fp);
+      }
+/**********************UWS**********************/
       {
         itti_sgi_update_end_point_response_t                   sgi_update_end_point_resp = {0};
 
@@ -999,6 +1235,7 @@ static void sgw_release_all_enb_related_information (sgw_eps_bearer_ctxt_t * con
 
   OAILOG_FUNC_IN(LOG_SPGW_APP);
   if ( eps_bearer_ctxt) {
+
     memset (&eps_bearer_ctxt->enb_ip_address_S1u, 0, sizeof (eps_bearer_ctxt->enb_ip_address_S1u));
     eps_bearer_ctxt->enb_teid_S1u = INVALID_TEID;
   }
@@ -1068,6 +1305,7 @@ sgw_handle_release_access_bearers_request (
 // hardcoded parameters as a starting point
 int sgw_no_pcef_create_dedicated_bearer(s11_teid_t teid)
 {
+  
   OAILOG_FUNC_IN(LOG_SPGW_APP);
   int                                    rc = RETURNerror;
 
@@ -1184,6 +1422,7 @@ sgw_handle_create_bearer_response (
               eps_bearer_ctxt_p = sgw_eps_bearer_entry_wrapper->sgw_eps_bearer_entry;
               // This comparison may be enough, else compare IP address also
               if (create_bearer_response_pP->bearer_contexts.bearer_contexts[i].s1u_sgw_fteid.teid == eps_bearer_ctxt_p->s_gw_teid_S1u_S12_S4_up) {
+
                 // List management
                 LIST_REMOVE(sgw_eps_bearer_entry_wrapper, entries);
                 free_wrapper((void**)&sgw_eps_bearer_entry_wrapper);
@@ -1200,6 +1439,7 @@ sgw_handle_create_bearer_response (
 
                 if (HASH_TABLE_OK == hash_rc) {
                   struct in_addr enb = {.s_addr = 0};
+
                   enb.s_addr = eps_bearer_ctxt_p->enb_ip_address_S1u.address.ipv4_address.s_addr;
 
                   struct in_addr ue = {.s_addr = 0};
