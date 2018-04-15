@@ -543,6 +543,8 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
   NW_IN nw_gtpv2c_ulp_api_t * pUlpReq) {
     nw_rc_t                                   rc = NW_FAILURE;
     nw_gtpv2c_trxn_t                          *pTrxn = NULL;
+    nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
+                                            keyTunnel = {0};
 
     OAILOG_FUNC_IN (LOG_GTPV2C);
     /*
@@ -550,18 +552,27 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
      */
     pTrxn = nwGtpv2cTrxnNew (thiz);
 
+    // For MME this is the only place to create S11 tunnel!
     if (pTrxn) {
       if (!pUlpReq->u_api_info.initialReqInfo.hTunnel) {
-        rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal, &pUlpReq->u_api_info.initialReqInfo.peerIp,
-            pUlpReq->u_api_info.initialReqInfo.hUlpTunnel,
-            &pUlpReq->u_api_info.initialReqInfo.hTunnel);
-        NW_ASSERT (NW_OK == rc);
+        /** Check if a tunnel already exists depending on the flag. */
+        keyTunnel.teid = pUlpReq->u_api_info.initialReqInfo.teidLocal;
+        keyTunnel.ipv4AddrRemote = pUlpReq->u_api_info.initialReqInfo.peerIp;
+        pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
+
+        if (!pLocalTunnel) {
+          OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer 0x%x received! Discarding.\n", ntohl (pUlpReq->u_api_info.initialReqInfo.teidLocal), htonl (pUlpReq->u_api_info.initialReqInfo.peerIp.s_addr));
+          rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal, &pUlpReq->u_api_info.initialReqInfo.peerIp, pUlpReq->u_api_info.initialReqInfo.hUlpTunnel, &pUlpReq->u_api_info.initialReqInfo.hTunnel);
+          NW_ASSERT (NW_OK == rc);
+        }else{
+          pUlpReq->u_api_info.initialReqInfo.hTunnel = (nw_gtpv2c_tunnel_handle_t) pLocalTunnel;
+        }
       }
 
       pTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpReq->hMsg;
       pTrxn->hTunnel = pUlpReq->u_api_info.initialReqInfo.hTunnel;
       pTrxn->hUlpTrxn = pUlpReq->u_api_info.initialReqInfo.hUlpTrxn;
-      pTrxn->peerIp = ((nw_gtpv2c_tunnel_t *) (pTrxn->hTunnel))->ipv4AddrRemote;
+      pTrxn->peerIp = pUlpReq->u_api_info.initialReqInfo.peerIp; // todo: ((NwGtpv2cTunnelT *) (pTrxn->hTunnel))->ipv4AddrRemote;
       pTrxn->peerPort = NW_GTPV2C_UDP_PORT;
 
       if (pUlpReq->apiType & NW_GTPV2C_ULP_API_FLAG_IS_COMMAND_MESSAGE) {
@@ -656,7 +667,7 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
   @return NW_OK on success.
 */
 
-  static nw_rc_t                            nwGtpv2cHandleUlpTriggeredRsp (
+  static nw_rc_t                     nwGtpv2cHandleUlpTriggeredRsp          (
   NW_IN nw_gtpv2c_stack_t * thiz,
   NW_IN nw_gtpv2c_ulp_api_t * pUlpRsp) {
     nw_rc_t                                   rc = NW_FAILURE;
@@ -672,14 +683,48 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     OAILOG_DEBUG (LOG_GTPV2C, "Sending response message over seq '0x%x'\n", pReqTrxn->seqNum);
     rc = nwGtpv2cCreateAndSendMsg (thiz, pReqTrxn->seqNum, &pReqTrxn->peerIp, pReqTrxn->peerPort, (nw_gtpv2c_msg_t *) pUlpRsp->hMsg);
     pReqTrxn->pMsg = (nw_gtpv2c_msg_t *) pUlpRsp->hMsg;
+    rc = nwGtpv2cTrxnStartDulpicateRequestWaitTimer (pReqTrxn);
 
-    // suspicious  rc = nwGtpv2cTrxnStartDulpicateRequestWaitTimer (pReqTrxn);
-
+    /** Creating a local tunnel if flag is set. */
     if ((pUlpRsp->apiType & 0xFF000000) == NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL) {
-      rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, &pReqTrxn->peerIp,
-          pUlpRsp->u_api_info.triggeredRspInfo.hUlpTunnel,
-          &pUlpRsp->u_api_info.triggeredRspInfo.hTunnel);
+      /** Check if there is a local tunnel already existing, if not create a local S10 tunnel. */
+      nw_gtpv2c_tunnel_t                        *pLocalTunnel = NULL,
+                                                 keyTunnel = {0};
+      keyTunnel.teid = pUlpRsp->u_api_info.triggeredRspInfo.teidLocal;
+      keyTunnel.ipv4AddrRemote = pReqTrxn->peerIp;
+      pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
+      if (!pLocalTunnel) {
+        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response not containing a tunnel. Creating one for local_teid 0x%x and peer 0x%x!\n", ntohl (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
+        rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpRsp->u_api_info.triggeredRspInfo.teidLocal, &pReqTrxn->peerIp, pUlpRsp->u_api_info.triggeredRspInfo.hUlpTunnel, &pUlpRsp->u_api_info.triggeredRspInfo.hTunnel);
+        NW_ASSERT (NW_OK == rc);
+      }else{
+        OAILOG_WARNING (LOG_GTPV2C,  "Triggered response already containing a tunnel. Not creating a new one for local_teid 0x%x and peer 0x%x.\n", ntohl (pUlpRsp->u_api_info.triggeredRspInfo.teidLocal), htonl (pReqTrxn->peerIp.s_addr));
+      }
     }
+    OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
+  }
+
+  /**
+    Process NW_GTPV2C_ULP_API_TRIGGERED_ACK from ULP entity.
+
+    @param[in] hGtpcStackHandle : Stack handle
+    @param[in] pUlpReq : Pointer to Ulp Req.
+    @return NW_OK on success.
+   */
+  static
+  nw_rc_t                            nwGtpv2cHandleUlpTriggeredAck (NW_IN nw_gtpv2c_stack_t * thiz, NW_IN nw_gtpv2c_ulp_api_t * pUlpAck) {
+    nw_rc_t                                   rc = NW_FAILURE;
+
+    OAILOG_FUNC_IN (LOG_GTPV2C);
+
+    if (((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum == 0){
+      OAILOG_ERROR(LOG_GTPV2C, "The sequence number of a triggered ACK has to be set (!0) \n");
+      OAILOG_FUNC_RETURN( LOG_GTPV2C, NW_FAILURE);
+    }
+
+    OAILOG_DEBUG (LOG_GTPV2C, "Sending a triggered ACK message over seq '0x%x'\n", ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum );
+    rc = nwGtpv2cCreateAndSendMsg (thiz, ((nw_gtpv2c_msg_t *) pUlpAck->hMsg)->seqNum , &pUlpAck->u_api_info.triggeredAckInfo.peerIp, pUlpAck->u_api_info.triggeredAckInfo.peerPort, (nw_gtpv2c_msg_t *) pUlpAck->hMsg);
+    /** Don't start a timer. */
 
     OAILOG_FUNC_RETURN( LOG_GTPV2C, rc);
   }
@@ -992,16 +1037,24 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_CREATE_BEARER_RSP);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_RELEASE_ACCESS_BEARERS_REQ);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_RELEASE_ACCESS_BEARERS_RSP);
+      /** Paging related GTPv2c signaling. */
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_DOWNLINK_DATA_NOTIFICATION);
+
       /*
        * For S10 interface
        */
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_FORWARD_RELOCATION_REQ);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_FORWARD_RELOCATION_RSP);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_FORWARD_ACCESS_CONTEXT_ACK);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_FORWARD_RELOCATION_COMPLETE_ACK);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_CONTEXT_REQ);
-      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_CONTEXT_REQ);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_CONTEXT_RSP);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_CONTEXT_ACK);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_RELOCATION_CANCEL_REQ);
+      NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_RELOCATION_CANCEL_RSP);
+
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_IDENTIFICATION_REQ);
       NW_GTPV2C_INIT_MSG_IE_PARSE_INFO (thiz, NW_GTP_IDENTIFICATION_RSP);
       nwGtpv2cDisplayBanner (thiz);
@@ -1214,9 +1267,16 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     case NW_GTP_DELETE_BEARER_REQ:
     case NW_GTP_RELEASE_ACCESS_BEARERS_REQ:
     case NW_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:
-    case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:{
-        rc = nwGtpv2cHandleInitialReq (thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
-      }
+    case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_REQ:
+    /** Handover Related Messages. */
+    case NW_GTP_FORWARD_RELOCATION_REQ:
+    case NW_GTP_FORWARD_ACCESS_CONTEXT_NTF:
+    case NW_GTP_FORWARD_RELOCATION_COMPLETE_NTF:
+    case NW_GTP_RELOCATION_CANCEL_REQ:
+    case NW_GTP_CONTEXT_REQ:
+    /** S11: Paging. */
+    case NW_GTP_DOWNLINK_DATA_NOTIFICATION:
+      rc = nwGtpv2cHandleInitialReq(thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       break;
 
     case NW_GTP_ECHO_RSP:
@@ -1228,9 +1288,15 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     case NW_GTP_DELETE_BEARER_RSP:
     case NW_GTP_RELEASE_ACCESS_BEARERS_RSP:
     case NW_GTP_CREATE_INDIRECT_DATA_FORWARDING_TUNNEL_RSP:
-    case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_RSP: {
-        rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
-      }
+    /** Handover Related Messages. */
+    case NW_GTP_FORWARD_RELOCATION_RSP:
+    case NW_GTP_FORWARD_ACCESS_CONTEXT_ACK:
+    case NW_GTP_DELETE_INDIRECT_DATA_FORWARDING_TUNNEL_RSP:
+    case NW_GTP_CONTEXT_RSP:
+    case NW_GTP_CONTEXT_ACK:
+    case NW_GTP_FORWARD_RELOCATION_COMPLETE_ACK:
+    case NW_GTP_RELOCATION_CANCEL_RSP:
+      rc = nwGtpv2cHandleTriggeredRsp (thiz, msgType, udpData, udpDataLen, peerPort, peerIp);
       break;
 
     default:{
@@ -1278,6 +1344,12 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
     case NW_GTPV2C_ULP_API_TRIGGERED_RSP:{
         OAILOG_DEBUG (LOG_GTPV2C, "Received triggered response from ulp\n");
         rc = nwGtpv2cHandleUlpTriggeredRsp (thiz, pUlpReq);
+      }
+      break;
+
+    case NW_GTPV2C_ULP_API_TRIGGERED_ACK:{
+        OAILOG_DEBUG (LOG_GTPV2C, "Received triggered acknowledgement from ulp\n");
+        rc = nwGtpv2cHandleUlpTriggeredAck (thiz, pUlpReq);
       }
       break;
 
@@ -1430,9 +1502,6 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 /**
    Start Timer with ULP Timer Manager
 */
-
-
-
 
 
   nw_rc_t                                   nwGtpv2cStartTimer (

@@ -22,25 +22,13 @@
 #ifndef TRACKING_AREA_IDENTITY_SEEN
 #define TRACKING_AREA_IDENTITY_SEEN
 
+#include "3gpp_23.003.h"
+
 #define TRACKING_AREA_IDENTITY_MINIMUM_LENGTH 6
 #define TRACKING_AREA_IDENTITY_MAXIMUM_LENGTH 6
 
 #define INVALID_TAC_0000                  (uint16_t)0x0000 /*!< \brief  The following are reserved hexadecimal values of the TAC: 0000, and FFFE.   */
 #define INVALID_TAC_FFFE                  (uint16_t)0xFFFE /*!< \brief  The following are reserved hexadecimal values of the TAC: 0000, and FFFE.   */
-
-typedef uint16_t    tac_t;                                 /*!< \brief  Tracking Area Code (TAC) is a fixed length code (of 2 octets) identifying
-                                                                        a Tracking Area within a PLMN. This part of the tracking area identification
-                                                                        shall be coded using a full hexadecimal representation. The following are
-                                                                        reserved hexadecimal values of the TAC: 0000, and FFFE.   */
-typedef struct tai_s {
-  uint8_t  mcc_digit2:4;
-  uint8_t  mcc_digit1:4;
-  uint8_t  mnc_digit3:4;
-  uint8_t  mcc_digit3:4;
-  uint8_t  mnc_digit2:4;
-  uint8_t  mnc_digit1:4;
-  tac_t    tac;
-} tai_t;
 
 
 /* Checks Mobile Country Code equality */

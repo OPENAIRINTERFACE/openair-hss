@@ -149,6 +149,7 @@ typedef enum nw_gtpv2c_ulp_api_type_e {
   NW_GTPV2C_ULP_API_INITIAL_REQ  = 0x00000000,          /**< Send a initial message                     */
   NW_GTPV2C_ULP_API_TRIGGERED_REQ,                      /**< Send a triggered req message               */
   NW_GTPV2C_ULP_API_TRIGGERED_RSP,                      /**< Send a triggered rsp message               */
+  NW_GTPV2C_ULP_API_TRIGGERED_ACK,                      /**< Send a triggered ack message               */
 
   /* APIs from stack to ULP */
 
@@ -229,6 +230,22 @@ typedef struct nw_gtpv2c_triggered_rsp_info_s {
 
 /**
  * API information elements between ULP and Stack for
+ * sending a Gtpv2c triggered acknowledgement message.
+ */
+
+typedef struct nw_gtpv2c_triggered_ack_info_s {
+  NW_IN    nw_gtpv2c_trxn_handle_t          hTrxn;          /**< Request Trxn handle which to which triggered rsp is being sent */
+  NW_IN    uint32_t                         teidLocal;      /**< Required only if NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL is set to flags. */
+  NW_IN    nw_gtpv2c_ulp_tunnel_handle_t    hUlpTunnel;     /**< Required only if NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL is set to flags. */
+
+  NW_OUT   nw_gtpv2c_tunnel_handle_t        hTunnel;        /**< Returned only in case flags is set to
+                                                             NW_GTPV2C_ULP_API_FLAG_CREATE_LOCAL_TUNNEL */
+  NW_IN    struct in_addr                   peerIp;
+  NW_IN    uint32_t                         peerPort;
+} nw_gtpv2c_triggered_ack_info_t;
+
+/**
+ * API information elements between ULP and Stack for
  * sending a Gtpv2c initial message.
  */
 
@@ -279,6 +296,8 @@ typedef struct nw_gtpv2c_triggered_rsp_ind_info_s {
 typedef struct nw_gtpv2c_rsp_failure_ind_info_s {
   NW_IN    nw_gtpv2c_ulp_trxn_handle_t       hUlpTrxn;
   NW_IN    nw_gtpv2c_ulp_tunnel_handle_t     hUlpTunnel;
+  NW_IN    nw_gtpv2c_msg_type_t              msgType;
+  NW_IN    uint32_t                          teidLocal;
 } nw_gtpv2c_rsp_failure_ind_info_t;
 
 /**
@@ -315,6 +334,7 @@ typedef struct nw_gtpv2c_ulp_api_s {
     nw_gtpv2c_initial_req_info_t           initialReqInfo;
     nw_gtpv2c_triggered_rsp_info_t         triggeredRspInfo;
     nw_gtpv2c_triggered_req_info_t         triggeredReqInfo;
+    nw_gtpv2c_triggered_ack_info_t         triggeredAckInfo;
     nw_gtpv2c_initial_req_ind_info_t       initialReqIndInfo;
     nw_gtpv2c_triggered_rsp_ind_info_t     triggeredRspIndInfo;
     nw_gtpv2c_triggered_req_ind_info_t     triggeredReqIndInfo;

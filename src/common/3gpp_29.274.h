@@ -38,6 +38,12 @@
 #define FILE_3GPP_29_274_SEEN
 #include <arpa/inet.h>
 
+#include "common_types.h"
+#include "3gpp_24.301.h"
+#include "3gpp_24.007.h"
+#include "3gpp_24.008.h"
+
+
 //-------------------------------------
 // 8.4 Cause
 
@@ -222,6 +228,114 @@ typedef struct fteid_s {
   struct in_addr  ipv4_address;
   struct in6_addr ipv6_address;
 } fteid_t;
+
+//-------------------------------------
+// 8.38 MM EPS Context
+
+typedef struct mm_context_eps_s {
+  // todo: better structure for flags
+//  uint32_t                  mm_context_flags:24;
+  uint8_t                   sec_mode:3;
+  // todo: uint8_t                   drxi:1;
+  uint8_t                   ksi:3;
+  uint8_t                   num_quit:3;
+  uint8_t                   num_quad:3;
+  // todo: osci 0 --> old stuff (everything from s to s+64 in 29.274 --> 8-38.5 not present
+  uint8_t                   nas_int_alg:3;
+  uint8_t                   nas_cipher_alg:4;
+//  uint32_t                   nas_dl_count[3]; // todo: or directly uint32_t?
+//  uint8_t                   nas_ul_count[3]; // todo: or directly uint32_t?
+  count_t                   nas_dl_count;
+  count_t                   nas_ul_count;
+  uint8_t                   k_asme[32];
+  mm_ue_eps_authentication_quadruplet_t* auth_quadruplet[5];
+  mm_ue_eps_authentication_quintuplet_t* auth_quintuplet[5];
+  // todo : drx_t*                    drx;
+  uint8_t                   nh[32];
+  uint8_t                   ncc:3;
+  uint32_t                  ul_subscribed_ue_ambr;
+  uint32_t                  dl_subscribed_ue_ambr;
+  uint32_t                  ul_used_ue_ambr;
+  uint32_t                  dl_used_ue_ambr;
+  uint8_t                   ue_nc_length;
+  ue_network_capability_t   ue_nc;
+  uint8_t                   ms_nc_length;
+  ms_network_capability_t   ms_nc;
+  uint8_t                   mei_length;
+  Mei_t*                    mei;
+  uint8_t                   vdp_lenth;
+  uint8_t                   vdp; // todo: ??
+  uint8_t                   access_restriction_flags;
+} mm_context_eps_t;
+//----------------------------
+
+
+//-----------------
+typedef struct bearer_context_to_be_created_s {
+  uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
+  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  fteid_t                  s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
+  fteid_t                  s1u_sgw_fteid;       ///< S1-U SGW F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
+  fteid_t                  s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
+  fteid_t                  s5_s8_u_sgw_fteid;   ///< S5/S8-U SGW F-TEID, Conditional CSR, This IE shall be included on the S5/S8 interface for an "eUTRAN Initial Attach",
+                                                ///  a "PDP Context Activation" or a "UE Requested PDN Connectivity".
+  fteid_t                  s5_s8_u_pgw_fteid;   ///< S5/S8-U PGW F-TEID, Conditional CSR, This IE shall be included on the S4 and S11 interfaces for the TAU/RAU/Handover
+                                                /// cases when the GTP-based S5/S8 is used.
+  fteid_t                  s12_rnc_fteid;       ///< S12 RNC F-TEID, Conditional Optional CSR, This IE shall be included on the S4 interface if the S12
+                                                /// interface is used in the Enhanced serving RNS relocation with SGW relocation procedure.
+  fteid_t                  s2b_u_epdg_fteid;    ///< S2b-U ePDG F-TEID, Conditional CSR, This IE shall be included on the S2b interface for an Attach
+                                                /// with GTP on S2b, a UE initiated Connectivity to Additional PDN with GTP on S2b and a Handover to Untrusted Non-
+                                                /// 3GPP IP Access with GTP on S2b.
+  /* This parameter is received only if the QoS parameters have been modified */
+  bearer_qos_t  bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
+} bearer_context_to_be_created_t;
+
+//-------------------------------------------------
+// 8.39: PDN Connection
+
+typedef struct pdn_connection_s {
+  char                      apn[APN_MAX_LENGTH + 1]; ///< Access Point Name
+  //  protocol_configuration_options_t pco;
+  bstring                   apn_str;
+  int                       pdn_type;
+
+  APNRestriction_t          apn_restriction;     ///< This IE shall be included on the S5/S8 and S4/S11
+  ///< interfaces in the E-UTRAN initial attach, PDP Context
+  ///< Activation and UE Requested PDN connectivity
+  ///< procedures.
+  ///< This IE shall also be included on S4/S11 during the Gn/Gp
+  ///< SGSN to S4 SGSN/MME RAU/TAU procedures.
+  ///< This IE denotes the restriction on the combination of types
+  ///< of APN for the APN associated with this EPS bearer
+  ///< Context.
+
+  SelectionMode_t           selection_mode;      ///< Selection Mode
+  ///< This IE shall be included on the S4/S11 and S5/S8
+  ///< interfaces for an E-UTRAN initial attach, a PDP Context
+  ///< Activation and a UE requested PDN connectivity.
+  ///< This IE shall be included on the S2b interface for an Initial
+  ///< Attach with GTP on S2b and a UE initiated Connectivity to
+  ///< Additional PDN with GTP on S2b.
+  ///< It shall indicate whether a subscribed APN or a non
+  ///< subscribed APN chosen by the MME/SGSN/ePDG was
+  ///< selected.
+  ///< CO: When available, this IE shall be sent by the MME/SGSN on
+  ///< the S11/S4 interface during TAU/RAU/HO with SGW
+  ///< relocation.
+
+//  uint8_t                   ipv4_address[4];
+//  uint8_t                   ipv6_address[16];
+  gtp_ip_address_t          ip_address;
+
+  ebi_t                     linked_eps_bearer_id;
+
+  fteid_t                   pgw_address_for_cp;  ///< PGW S5/S8 address for control plane or PMIP
+
+  bearer_context_to_be_created_t  bearer_context;
+
+  ambr_t                    apn_ambr; //todo: ul/dl?
+
+} pdn_connection_t;
 
 
 //-------------------------------------

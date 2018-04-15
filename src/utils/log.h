@@ -96,6 +96,8 @@ extern int fd_g_debug_lvl;
 #define LOG_CONFIG_STRING_MSC_LOG_LEVEL                  "MSC_LOG_LEVEL"
 #define LOG_CONFIG_STRING_NAS_LOG_LEVEL                  "NAS_LOG_LEVEL"
 #define LOG_CONFIG_STRING_OUTPUT                         "OUTPUT"
+#define LOG_CONFIG_STRING_S10_LOG_LEVEL                  "S10_LOG_LEVEL"
+#define LOG_CONFIG_STRING_S10_LOG_LEVEL                  "S10_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S1AP_LOG_LEVEL                 "S1AP_LOG_LEVEL"
@@ -144,6 +146,7 @@ typedef enum {
   LOG_NAS_EMM,
   LOG_NAS_ESM,
   LOG_SPGW_APP,
+  LOG_S10,
   LOG_S11,
   LOG_S6A,
   LOG_SECU,

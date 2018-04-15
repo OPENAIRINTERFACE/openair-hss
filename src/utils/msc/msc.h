@@ -55,6 +55,7 @@ typedef enum {
   MSC_NAS_EMM_MME,
   MSC_NAS_ESM_MME,
   MSC_SP_GWAPP_MME,
+  MSC_S10_MME,
   MSC_S11_MME,
   MSC_S6A_MME,
   MSC_SGW,

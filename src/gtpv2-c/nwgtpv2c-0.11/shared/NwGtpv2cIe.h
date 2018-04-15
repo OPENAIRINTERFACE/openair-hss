@@ -80,6 +80,7 @@
 #define NW_GTPV2C_IE_DRX_PARAMETER                                      (101)
 #define NW_GTPV2C_IE_UE_NETWORK_CAPABILITY                              (102)
 #define NW_GTPV2C_IE_MM_CONTEXT                                         (103)
+#define NW_GTPV2C_IE_MM_EPS_CONTEXT                                     (107)
 #define NW_GTPV2C_IE_PDN_CONNECTION                                     (109)
 #define NW_GTPV2C_IE_PDU_NUMBERS                                        (110)
 #define NW_GTPV2C_IE_PTMSI                                              (111)

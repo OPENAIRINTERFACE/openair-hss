@@ -71,6 +71,7 @@
 #include "timer.h"
 #include "mme_app_extern.h"
 #include "nas_defs.h"
+#include "s10_mme.h"
 #include "s11_mme.h"
 #include "mme_scenario_player_task.h"
 

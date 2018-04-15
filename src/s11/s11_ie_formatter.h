@@ -29,16 +29,6 @@
 #ifndef FILE_S11_IE_FORMATTER_SEEN
 #define FILE_S11_IE_FORMATTER_SEEN
 
-/* Imsi Information Element
- * 3GPP TS.29.274 #8.3
- * NOTE: Imsi is TBCD coded
- * octet 5   | Number digit 2 | Number digit 1   |
- * octet n+4 | Number digit m | Number digit m-1 |
- */
-nw_rc_t gtpv2c_imsi_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
-
-int gtpv2c_imsi_ie_set(nw_gtpv2c_msg_handle_t *msg, const imsi_t *imsi);
-
 nw_rc_t gtpv2c_msisdn_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
 /* Node Type Information Element
@@ -101,11 +91,6 @@ nw_rc_t gtpv2c_ebi_ie_get (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance,
 
 nw_rc_t gtpv2c_ebi_ie_get_list (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 
-/* Cause Information Element */
-nw_rc_t gtpv2c_cause_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
-
-int gtpv2c_cause_ie_set(nw_gtpv2c_msg_handle_t *msg, const gtpv2c_cause_t  *cause);
-
 /* Bearer Context Created grouped Information Element */
 nw_rc_t gtpv2c_bearer_context_created_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
@@ -117,11 +102,6 @@ int gtpv2c_bearer_context_created_ie_set(nw_gtpv2c_msg_handle_t *msg, const bear
 nw_rc_t gtpv2c_serving_network_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 int gtpv2c_serving_network_ie_set(nw_gtpv2c_msg_handle_t     *msg, const ServingNetwork_t *serving_network);
 
-
-/* Fully Qualified TEID (F-TEID) Information Element */
-int gtpv2c_fteid_ie_set (nw_gtpv2c_msg_handle_t * msg, const fteid_t * fteid, const uint8_t   instance);
-nw_rc_t gtpv2c_fteid_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
-
 /* Protocol Configuration Options Information Element */
 nw_rc_t gtpv2c_pco_ie_get (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 int gtpv2c_pco_ie_set (nw_gtpv2c_msg_handle_t * msg, const protocol_configuration_options_t * pco);
@@ -129,10 +109,6 @@ int gtpv2c_pco_ie_set (nw_gtpv2c_msg_handle_t * msg, const protocol_configuratio
 /* traffic flow template */
 nw_rc_t gtpv2c_tft_ie_get (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 int gtpv2c_tft_ie_set (nw_gtpv2c_msg_handle_t * msg, const traffic_flow_template_t * tft);
-
-/* PDN Address Allocation Information Element */
-nw_rc_t gtpv2c_paa_ie_get(uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
-int gtpv2c_paa_ie_set(nw_gtpv2c_msg_handle_t *msg, const paa_t *paa);
 
 /* Access Point Name Information Element
  * 3GPP TS 29.274 #8.6

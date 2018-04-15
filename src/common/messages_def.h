@@ -34,6 +34,7 @@
 #include "gtpv1_u_messages_def.h"
 #include "ip_forward_messages_def.h"
 #include "nas_messages_def.h"
+#include "s10_messages_def.h"
 #include "s11_messages_def.h"
 #include "s1ap_messages_def.h"
 #include "s6a_messages_def.h"

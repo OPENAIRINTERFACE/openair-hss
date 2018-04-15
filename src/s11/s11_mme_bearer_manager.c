@@ -49,6 +49,7 @@
 
 #include "s11_common.h"
 #include "s11_mme_bearer_manager.h"
+#include "gtpv2c_ie_formatter.h"
 #include "s11_ie_formatter.h"
 
 extern hash_table_ts_t                        *s11_mme_teid_2_gtv2c_teid_handle;

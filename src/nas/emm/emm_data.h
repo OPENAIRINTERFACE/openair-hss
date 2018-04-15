@@ -81,11 +81,7 @@ typedef struct emm_security_context_s {
   uint8_t knas_enc[AUTH_KNAS_ENC_SIZE];/* NAS cyphering key               */
   uint8_t knas_int[AUTH_KNAS_INT_SIZE];/* NAS integrity key               */
 
-  struct count_s{
-    uint32_t spare:8;
-    uint32_t overflow:16;
-    uint32_t seq_num:8;
-  } dl_count, ul_count;   /* Downlink and uplink count parameters    */
+  count_t dl_count, ul_count;   /* Downlink and uplink count parameters    */
   struct {
     uint8_t eps_encryption;   /* algorithm used for ciphering            */
     uint8_t eps_integrity;    /* algorithm used for integrity protection */

@@ -37,6 +37,21 @@
 #ifndef FILE_3GPP_23_003_SEEN
 #define FILE_3GPP_23_003_SEEN
 
+// 19.4.2.3  Tracking Area Identity (TAI)
+typedef uint16_t    tac_t;                                 /*!< \brief  Tracking Area Code (TAC) is a fixed length code (of 2 octets) identifying
+                                                                        a Tracking Area within a PLMN. This part of the tracking area identification
+                                                                        shall be coded using a full hexadecimal representation. The following are
+                                                                        reserved hexadecimal values of the TAC: 0000, and FFFE.   */
+typedef struct tai_s {
+  uint8_t  mcc_digit2:4;
+  uint8_t  mcc_digit1:4;
+  uint8_t  mnc_digit3:4;
+  uint8_t  mcc_digit3:4;
+  uint8_t  mnc_digit2:4;
+  uint8_t  mnc_digit1:4;
+  tac_t    tac;
+} tai_t;
+
 //==============================================================================
 // 12  Identification of PLMN, RNC, Service Area, CN domain and Shared Network Area
 //==============================================================================
@@ -161,6 +176,16 @@ typedef struct guti_s {
   gummei_t gummei;                                         /*!< \brief  Globally Unique MME Identity             */
   tmsi_t   m_tmsi;                                         /*!< \brief  M-Temporary Mobile Subscriber Identity   */
 } guti_t;
+
+/*! \struct  nghMme_t
+ * \brief Structure containing the Neighboring MMEs.
+ */
+typedef struct nghMme_s {
+  tai_t         ngh_mme_tai;
+  uint32_t      ipAddr;                                      /*!< \brief  IP Address           */
+} nghMme_t;
+
+
 
 // 2.9 Structure of the S-Temporary Mobile Subscriber Identity (S-TMSI)
 
@@ -381,7 +406,11 @@ typedef struct imeisv_s {
 // 19.4.2  Fully Qualified Domain Names (FQDNs)
 //..............................................................................
 // 19.4.2.2 Access Point Name FQDN (APN-FQDN)
-// 19.4.2.3  Tracking Area Identity (TAI)
+
+
+
+
+
 // 19.4.2.4  Mobility Management Entity (MME)
 // 19.4.2.5  Routing Area Identity (RAI) - EPC
 

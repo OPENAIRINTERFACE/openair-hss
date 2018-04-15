@@ -392,6 +392,7 @@ include_directories("${OPENAIRCN_DIR}/src/gtpv1-u")
 include_directories("${OPENAIRCN_DIR}/src/utils/hashtable")
 include_directories("${OPENAIRCN_DIR}/src/utils/msc")
 include_directories("${OPENAIRCN_DIR}/src/utils/bstr")
+include_directories("${OPENAIRCN_DIR}/src/mme")
 include_directories("${OPENAIRCN_DIR}/src/sgw")
 include_directories("${OPENAIRCN_DIR}/src/mme_app")
 include_directories("${OPENAIRCN_DIR}/src/s6a")
@@ -537,6 +538,7 @@ set (GTPV1U_SRC
 add_library(GTPV1U ${GTPV1U_SRC})
 
 set(GTPV2C_DIR  ${OPENAIRCN_DIR}/src/gtpv2-c/nwgtpv2c-0.11/src)
+set(GTPV2C_FORMATTER_DIR  ${OPENAIRCN_DIR}/src/gtpv2-c/gtpv2c_ie_formatter/src)
 add_library(GTPV2C
   ${GTPV2C_DIR}/NwGtpv2cTrxn.c
   ${GTPV2C_DIR}/NwGtpv2cTunnel.c
@@ -544,10 +546,12 @@ add_library(GTPV2C
   ${GTPV2C_DIR}/NwGtpv2cMsgIeParseInfo.c
   ${GTPV2C_DIR}/NwGtpv2cMsgParser.c
   ${GTPV2C_DIR}/NwGtpv2c.c
+  ${GTPV2C_FORMATTER_DIR}/gtpv2c_ie_formatter.c
   )
+  
 include_directories(${OPENAIRCN_DIR}/src/gtpv2-c/nwgtpv2c-0.11/include/)
 include_directories(${OPENAIRCN_DIR}/src/gtpv2-c/nwgtpv2c-0.11/shared/)
-
+include_directories(${OPENAIRCN_DIR}/src/gtpv2-c/gtpv2c_ie_formatter/shared/)
 
 add_library(SCTP_SERVER
   ${OPENAIRCN_DIR}/src/sctp/sctp_common.c
@@ -575,6 +579,15 @@ add_library(S11_SGW
   ${S11_DIR}/s11_sgw_bearer_manager.c
 )
 include_directories(${S11_DIR})
+
+set(S10_DIR ${OPENAIRCN_DIR}/src/s10)
+add_library(S10_MME
+  ${S10_DIR}/s10_common.c
+  ${S10_DIR}/s10_ie_formatter.c
+  ${S10_DIR}/s10_mme_task.c
+  ${S10_DIR}/s10_mme_session_manager.c
+)
+include_directories(${S10_DIR})
 
 set(S6A_DIR ${OPENAIRCN_DIR}/src/s6a)
 add_library(S6A
@@ -909,7 +922,7 @@ if( ITTI_ANALYZER )
 endif( ITTI_ANALYZER )
 target_link_libraries (mme
   -Wl,--start-group
-    S1AP_LIB S1AP_EPC S11_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN 
+    S1AP_LIB S1AP_EPC S11_MME S10_MME GTPV2C SCTP_SERVER UDP_SERVER SECU_CN 
    S6A MME_APP LIB_NAS_MME ${MSC_LIB} ${ITTI_LIB} ${XML_MSG_DUMP_LIB} ${3GPP_TYPES_LIB} 
    ${3GPP_TYPES_XML_LIB} CN_UTILS ${SCENARIO_PLAYER_LIB} HASHTABLE BSTR 
   -Wl,--end-group
