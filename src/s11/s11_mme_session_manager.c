@@ -374,3 +374,76 @@ s11_mme_handle_delete_session_response (
 
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
 }
+
+//------------------------------------------------------------------------------
+int
+s11_mme_handle_ulp_error_indicatior(
+  nw_gtpv2c_stack_handle_t * stack_p,
+  nw_gtpv2c_ulp_api_t * pUlpApi)
+{
+  /** Get the failed transaction. */
+  /** Check the message type. */
+  OAILOG_FUNC_IN (LOG_S11);
+
+  nw_gtpv2c_msg_type_t msgType = pUlpApi->u_api_info.rspFailureInfo.msgType;
+  MessageDef * message_p = NULL;
+  switch(msgType){
+  case NW_GTP_CREATE_SESSION_REQ: /**< Message which was sent!. */
+  {
+    itti_s11_create_session_response_t            *rsp_p;
+    /** Respond with an S10 Context Reponse Failure. */
+    message_p = itti_alloc_new_message (TASK_S11, S11_CREATE_SESSION_RESPONSE);
+    rsp_p = &message_p->ittiMsg.s11_create_session_response;
+    memset(rsp_p, 0, sizeof(*rsp_p));
+    /** Set the destination TEID (our TEID). */
+    rsp_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
+    /** Set the transaction for the triggered acknowledgement. */
+    rsp_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
+    /** Set the cause. */
+    rsp_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
+  }
+    break;
+  case NW_GTP_MODIFY_BEARER_REQ:
+  {
+    itti_s11_modify_bearer_response_t            *rsp_p;
+    message_p = itti_alloc_new_message (TASK_S10, S11_MODIFY_BEARER_RESPONSE);
+    rsp_p = &message_p->ittiMsg.s11_modify_bearer_response;
+    memset(rsp_p, 0, sizeof(*rsp_p));
+    /** Set the destination TEID (our TEID). */
+    rsp_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
+    /** Set the transaction for the triggered acknowledgement. */
+    rsp_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
+    /** Set the cause. */
+    rsp_p->cause.cause_value = SYSTEM_FAILURE; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
+  }
+    break;
+  case NW_GTP_DELETE_SESSION_REQ:
+  {
+    /**
+     * We will omit the error and send success back.
+     * UE context should always be removed.
+     */
+    itti_s11_delete_session_response_t            *rsp_p;
+    message_p = itti_alloc_new_message (TASK_S10, S11_DELETE_SESSION_RESPONSE);
+    rsp_p = &message_p->ittiMsg.s11_delete_session_response;
+    memset(rsp_p, 0, sizeof(*rsp_p));
+    /** Set the destination TEID (our TEID). */
+    rsp_p->teid = pUlpApi->u_api_info.rspFailureInfo.teidLocal;
+    /** Set the transaction for the triggered acknowledgement. */
+    rsp_p->trxn = (void *)pUlpApi->u_api_info.rspFailureInfo.hUlpTrxn;
+    /** Set the cause. */
+    rsp_p->cause.cause_value = REQUEST_ACCEPTED; /**< Would mean that this message either did not come at all or could not be dealt with properly. */
+    OAILOG_ERROR (LOG_S11, "DELETE_SESSION_RESPONE could not be received for for local teid " TEID_FMT". Sending ACCEPTED back (ignoring the network failure). \n", rsp_p->teid);
+  }
+    break;
+  default:
+    OAILOG_ERROR (LOG_S10, "Received an unhandled error indicator for the local S10-TEID " TEID_FMT " and message type %d. \n",
+        pUlpApi->u_api_info.rspFailureInfo.teidLocal, pUlpApi->u_api_info.rspFailureInfo.msgType);
+    OAILOG_FUNC_RETURN (LOG_S11, RETURNerror);
+  }
+  OAILOG_WARNING (LOG_S10, "Received an error indicator for the local S10-TEID " TEID_FMT " and message type %d. \n",
+      pUlpApi->u_api_info.rspFailureInfo.teidLocal, pUlpApi->u_api_info.rspFailureInfo.msgType);
+  int rc = itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_S11, rc);
+}
+
