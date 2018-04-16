@@ -68,9 +68,9 @@ void mme_app_select_sgw(const tai_t * const tai, struct in_addr * const sgw_in_a
     goto lookup_error;
   }
   bcatcstr(application_unique_string, ".tac.epc.mnc");
-  uint16_t mnc = (tai->mnc_digit1 *10) + tai->mnc_digit2;
-  if (10 > tai->mnc_digit3) {
-    mnc = (mnc *10) + tai->mnc_digit3;
+  uint16_t mnc = (tai->plmn.mnc_digit1 *10) + tai->plmn.mnc_digit2;
+  if (10 > tai->plmn.mnc_digit3) {
+    mnc = (mnc *10) + tai->plmn.mnc_digit3;
   }
   if (0 < snprintf(tmp, 8, "%03u",mnc)) {
     bcatcstr(application_unique_string, tmp);
@@ -79,9 +79,9 @@ void mme_app_select_sgw(const tai_t * const tai, struct in_addr * const sgw_in_a
   }
   bcatcstr(application_unique_string, ".mcc");
   if (0 < snprintf(tmp, 8, "%u%u%u",
-          tai->mcc_digit1,
-          tai->mcc_digit2,
-          tai->mcc_digit3)) {
+      tai->plmn.mcc_digit1,
+      tai->plmn.mcc_digit2,
+      tai->plmn.mcc_digit3)) {
     bcatcstr(application_unique_string, tmp);
   } else {
     goto lookup_error;

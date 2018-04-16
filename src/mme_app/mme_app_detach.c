@@ -118,7 +118,7 @@ mme_app_handle_detach_req (
         }
       }
       if (!sent_sgw) {
-        mme_app_send_s1ap_ue_context_release_command(ue_context, ue_context->s1_ue_context_release_cause);
+//        mme_app_itti_ue_context_release(ue_context, ue_context->s1_ue_context_release_cause);
       }
     }
   }

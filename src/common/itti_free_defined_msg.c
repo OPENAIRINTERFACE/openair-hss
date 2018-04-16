@@ -220,6 +220,8 @@ void itti_free_msg_content (MessageDef * const message_p)
   case S1AP_UE_CONTEXT_RELEASE_REQ_LOG:
   case S1AP_UE_CONTEXT_RELEASE_COMMAND_LOG:
   case S1AP_UE_CONTEXT_RELEASE_LOG:
+  case S1AP_E_RABSETUP_RESPONSE_LOG:
+
     // DO nothing
     break;
 

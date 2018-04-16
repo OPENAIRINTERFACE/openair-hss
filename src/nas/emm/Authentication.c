@@ -277,12 +277,12 @@ int emm_proc_authentication_failure (
 
       REQUIREMENT_3GPP_24_301(R10_5_4_2_7_e__2);
       plmn_t visited_plmn = {0};
-      visited_plmn.mcc_digit1 = emm_ctx->originating_tai.mcc_digit1;
-      visited_plmn.mcc_digit2 = emm_ctx->originating_tai.mcc_digit2;
-      visited_plmn.mcc_digit3 = emm_ctx->originating_tai.mcc_digit3;
-      visited_plmn.mnc_digit1 = emm_ctx->originating_tai.mnc_digit1;
-      visited_plmn.mnc_digit2 = emm_ctx->originating_tai.mnc_digit2;
-      visited_plmn.mnc_digit3 = emm_ctx->originating_tai.mnc_digit3;
+      visited_plmn.mcc_digit1 = emm_ctx->originating_tai.plmn.mcc_digit1;
+      visited_plmn.mcc_digit2 = emm_ctx->originating_tai.plmn.mcc_digit2;
+      visited_plmn.mcc_digit3 = emm_ctx->originating_tai.plmn.mcc_digit3;
+      visited_plmn.mnc_digit1 = emm_ctx->originating_tai.plmn.mnc_digit1;
+      visited_plmn.mnc_digit2 = emm_ctx->originating_tai.plmn.mnc_digit2;
+      visited_plmn.mnc_digit3 = emm_ctx->originating_tai.plmn.mnc_digit3;
 
       nas_itti_auth_info_req (ue_id, &emm_ctx->_imsi, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, auts);
       rc = RETURNok;
@@ -449,12 +449,12 @@ emm_proc_authentication_complete (
         //emm_sap.u.emm_reg.ctx = emm_ctx;
       } else {
         plmn_t visited_plmn = {0};
-        visited_plmn.mcc_digit1 = emm_ctx->originating_tai.mcc_digit1;
-        visited_plmn.mcc_digit2 = emm_ctx->originating_tai.mcc_digit2;
-        visited_plmn.mcc_digit3 = emm_ctx->originating_tai.mcc_digit3;
-        visited_plmn.mnc_digit1 = emm_ctx->originating_tai.mnc_digit1;
-        visited_plmn.mnc_digit2 = emm_ctx->originating_tai.mnc_digit2;
-        visited_plmn.mnc_digit3 = emm_ctx->originating_tai.mnc_digit3;
+        visited_plmn.mcc_digit1 = emm_ctx->originating_tai.plmn.mcc_digit1;
+        visited_plmn.mcc_digit2 = emm_ctx->originating_tai.plmn.mcc_digit2;
+        visited_plmn.mcc_digit3 = emm_ctx->originating_tai.plmn.mcc_digit3;
+        visited_plmn.mnc_digit1 = emm_ctx->originating_tai.plmn.mnc_digit1;
+        visited_plmn.mnc_digit2 = emm_ctx->originating_tai.plmn.mnc_digit2;
+        visited_plmn.mnc_digit3 = emm_ctx->originating_tai.plmn.mnc_digit3;
         nas_itti_auth_info_req (ue_id, &emm_ctx->_imsi, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, res);
 
         // Release retransmission timer parameters
@@ -489,12 +489,12 @@ emm_proc_authentication_complete (
       MSC_LOG_EVENT (MSC_NAS_EMM_MME, " SQN SYNCH_FAILURE ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - USIM has detected a mismatch in SQN Ask for new vector(s)\n");
       plmn_t visited_plmn = {0};
-      visited_plmn.mcc_digit1 = emm_ctx->originating_tai.mcc_digit1;
-      visited_plmn.mcc_digit2 = emm_ctx->originating_tai.mcc_digit2;
-      visited_plmn.mcc_digit3 = emm_ctx->originating_tai.mcc_digit3;
-      visited_plmn.mnc_digit1 = emm_ctx->originating_tai.mnc_digit1;
-      visited_plmn.mnc_digit2 = emm_ctx->originating_tai.mnc_digit2;
-      visited_plmn.mnc_digit3 = emm_ctx->originating_tai.mnc_digit3;
+      visited_plmn.mcc_digit1 = emm_ctx->originating_tai.plmn.mcc_digit1;
+      visited_plmn.mcc_digit2 = emm_ctx->originating_tai.plmn.mcc_digit2;
+      visited_plmn.mcc_digit3 = emm_ctx->originating_tai.plmn.mcc_digit3;
+      visited_plmn.mnc_digit1 = emm_ctx->originating_tai.plmn.mnc_digit1;
+      visited_plmn.mnc_digit2 = emm_ctx->originating_tai.plmn.mnc_digit2;
+      visited_plmn.mnc_digit3 = emm_ctx->originating_tai.plmn.mnc_digit3;
       nas_itti_auth_info_req (ue_id, &emm_ctx->_imsi, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, res);
 
       // Release retransmission timer parameters
@@ -633,12 +633,12 @@ int _authentication_check_imsi_5_4_2_5__1 (struct emm_context_s *emm_context) {
       if (emm_context->_imsi64 != emm_context->saved_imsi64) {
     	  mme_ue_s1ap_id_t                        ue_id = PARENT_STRUCT(emm_context, struct ue_mm_context_s, emm_context)->mme_ue_s1ap_id;
         plmn_t visited_plmn = {0};
-        visited_plmn.mcc_digit1 = emm_context->originating_tai.mcc_digit1;
-        visited_plmn.mcc_digit2 = emm_context->originating_tai.mcc_digit2;
-        visited_plmn.mcc_digit3 = emm_context->originating_tai.mcc_digit3;
-        visited_plmn.mnc_digit1 = emm_context->originating_tai.mnc_digit1;
-        visited_plmn.mnc_digit2 = emm_context->originating_tai.mnc_digit2;
-        visited_plmn.mnc_digit3 = emm_context->originating_tai.mnc_digit3;
+        visited_plmn.mcc_digit1 = emm_context->originating_tai.plmn.mcc_digit1;
+        visited_plmn.mcc_digit2 = emm_context->originating_tai.plmn.mcc_digit2;
+        visited_plmn.mcc_digit3 = emm_context->originating_tai.plmn.mcc_digit3;
+        visited_plmn.mnc_digit1 = emm_context->originating_tai.plmn.mnc_digit1;
+        visited_plmn.mnc_digit2 = emm_context->originating_tai.plmn.mnc_digit2;
+        visited_plmn.mnc_digit3 = emm_context->originating_tai.plmn.mnc_digit3;
         nas_itti_auth_info_req (ue_id, &emm_context->_imsi, false, &visited_plmn, MAX_EPS_AUTH_VECTORS, NULL);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
       }

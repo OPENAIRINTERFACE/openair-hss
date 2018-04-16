@@ -1087,12 +1087,12 @@ static int _emm_attach_identify (emm_context_t *emm_context)
     if (!IS_EMM_CTXT_PRESENT_AUTH_VECTORS(emm_context)) {
       // Ask upper layer to fetch new security context
       plmn_t visited_plmn = {0};
-      visited_plmn.mcc_digit1 = emm_context->originating_tai.mcc_digit1;
-      visited_plmn.mcc_digit2 = emm_context->originating_tai.mcc_digit2;
-      visited_plmn.mcc_digit3 = emm_context->originating_tai.mcc_digit3;
-      visited_plmn.mnc_digit1 = emm_context->originating_tai.mnc_digit1;
-      visited_plmn.mnc_digit2 = emm_context->originating_tai.mnc_digit2;
-      visited_plmn.mnc_digit3 = emm_context->originating_tai.mnc_digit3;
+      visited_plmn.mcc_digit1 = emm_context->originating_tai.plmn.mcc_digit1;
+      visited_plmn.mcc_digit2 = emm_context->originating_tai.plmn.mcc_digit2;
+      visited_plmn.mcc_digit3 = emm_context->originating_tai.plmn.mcc_digit3;
+      visited_plmn.mnc_digit1 = emm_context->originating_tai.plmn.mnc_digit1;
+      visited_plmn.mnc_digit2 = emm_context->originating_tai.plmn.mnc_digit2;
+      visited_plmn.mnc_digit3 = emm_context->originating_tai.plmn.mnc_digit3;
 
       nas_itti_auth_info_req (ue_id, &emm_context->_imsi, true, &visited_plmn, MAX_EPS_AUTH_VECTORS, NULL);
       rc = RETURNok;

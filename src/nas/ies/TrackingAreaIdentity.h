@@ -69,7 +69,7 @@
 #define TAC_FMT "0x%"PRIx16
 #define TAI_FMT PLMN_FMT"-"TAC_FMT
 #define TAI_ARG(tAi_PtR) \
-  PLMN_ARG((tAi_PtR)),\
+  PLMN_ARG(&(tAi_PtR->plmn)),\
   (tAi_PtR)->tac
 
 /* Checks TAC validity */

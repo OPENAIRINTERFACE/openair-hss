@@ -104,6 +104,8 @@ void msc_flush_message (struct shared_log_queue_item_s *item_p);
 #else
 #define MSC_INIT(arg1,arg2)
 #define MSC_END(mScPaRaMs)
+#define MSC_START_USE(mScPaRaMs)
+
 #define MSC_LOG_EVENT(mScPaRaMs, fORMAT, aRGS...)
 #define MSC_LOG_RX_MESSAGE(mScPaRaMs, fORMAT, aRGS...)
 #define MSC_LOG_RX_DISCARDED_MESSAGE(mScPaRaMs, fORMAT, aRGS...)

@@ -349,7 +349,7 @@ mme_app_handle_delete_session_rsp (
   s1_ue_context_release_cause.present = S1ap_Cause_PR_nas;
   s1_ue_context_release_cause.choice.nas = S1ap_CauseNas_detach;
 
-  mme_app_send_s1ap_ue_context_release_command(ue_context_p, s1_ue_context_release_cause /* cause */);
+//  mme_app_itti_ue_context_release(ue_context_p, s1_ue_context_release_cause /* cause */);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -581,7 +581,7 @@ mme_app_handle_release_access_bearers_resp (
   s1_ue_context_release_cause.present = S1ap_Cause_PR_radioNetwork;
   s1_ue_context_release_cause.choice.radioNetwork = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
 
-  mme_app_send_s1ap_ue_context_release_command(ue_context_p, s1_ue_context_release_cause);
+//  mme_app_itti_ue_context_release(ue_context_p, s1_ue_context_release_cause);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

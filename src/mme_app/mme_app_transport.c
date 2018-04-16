@@ -71,9 +71,10 @@ int mme_app_handle_nas_dl_req (
     enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
 
     if (!ue_context->is_s1_ue_context_release) {
-      NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
-      NAS_DL_DATA_REQ (message_p).ue_id                  = nas_dl_req_pP->ue_id;
-      NAS_DL_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
+      NAS_DOWNLINK_DATA_REQ (message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
+      NAS_DOWNLINK_DATA_REQ (message_p).ue_id                  = nas_dl_req_pP->ue_id;
+      NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = nas_dl_req_pP->enb_id;
+      NAS_DOWNLINK_DATA_REQ (message_p).nas_msg                = nas_dl_req_pP->nas_msg;
       nas_dl_req_pP->nas_msg                             = NULL;
 
       MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0,

@@ -59,9 +59,9 @@ nas_itti_dl_data_req (
   bstring                nas_msg)
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_DOWNLINK_DATA_REQ);
-  NAS_DL_DATA_REQ (message_p).enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
-  NAS_DL_DATA_REQ (message_p).ue_id   = ue_id;
-  NAS_DL_DATA_REQ (message_p).nas_msg = nas_msg;
+  NAS_DOWNLINK_DATA_REQ (message_p).enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
+  NAS_DOWNLINK_DATA_REQ (message_p).ue_id   = ue_id;
+  NAS_DOWNLINK_DATA_REQ (message_p).nas_msg = nas_msg;
   nas_msg = NULL;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_REQ ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.

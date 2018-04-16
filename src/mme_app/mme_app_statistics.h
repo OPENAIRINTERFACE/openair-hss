@@ -30,4 +30,8 @@
 
 int mme_app_statistics_display(void);
 
+void update_mme_app_stats_connected_enb_add(void);
+
+void update_mme_app_stats_connected_enb_sub(void);
+
 #endif /* FILE_MME_APP_STATISTICS_SEEN */

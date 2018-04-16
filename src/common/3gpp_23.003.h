@@ -37,20 +37,6 @@
 #ifndef FILE_3GPP_23_003_SEEN
 #define FILE_3GPP_23_003_SEEN
 
-// 19.4.2.3  Tracking Area Identity (TAI)
-typedef uint16_t    tac_t;                                 /*!< \brief  Tracking Area Code (TAC) is a fixed length code (of 2 octets) identifying
-                                                                        a Tracking Area within a PLMN. This part of the tracking area identification
-                                                                        shall be coded using a full hexadecimal representation. The following are
-                                                                        reserved hexadecimal values of the TAC: 0000, and FFFE.   */
-typedef struct tai_s {
-  uint8_t  mcc_digit2:4;
-  uint8_t  mcc_digit1:4;
-  uint8_t  mnc_digit3:4;
-  uint8_t  mcc_digit3:4;
-  uint8_t  mnc_digit2:4;
-  uint8_t  mnc_digit1:4;
-  tac_t    tac;
-} tai_t;
 
 //==============================================================================
 // 12  Identification of PLMN, RNC, Service Area, CN domain and Shared Network Area
@@ -77,6 +63,19 @@ typedef struct plmn_s {
   uint8_t mnc_digit2:4;
   uint8_t mnc_digit1:4;
 } plmn_t;
+
+
+// 19.4.2.3  Tracking Area Identity (TAI)
+typedef uint16_t    tac_t;                                 /*!< \brief  Tracking Area Code (TAC) is a fixed length code (of 2 octets) identifying
+                                                                        a Tracking Area within a PLMN. This part of the tracking area identification
+                                                                        shall be coded using a full hexadecimal representation. The following are
+                                                                        reserved hexadecimal values of the TAC: 0000, and FFFE.   */
+
+typedef struct tai_s {
+  plmn_t plmn;                                             /*!< \brief  <MCC> + <MNC>        */
+  tac_t  tac;
+} tai_t;
+
 
 //------------------------------------------------------------------------------
 // 12.2  CN Domain Identifier

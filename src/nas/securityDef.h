@@ -69,7 +69,7 @@ Description Contains global security definitions
 #define AUTH_KNAS_INT_SIZE  16 /* NAS integrity key     */
 #define AUTH_KNAS_ENC_SIZE  16 /* NAS cyphering key     */
 #define AUTH_KENB_SIZE      AUTH_KASME_SIZE /* eNodeB security key   */
-
+#define AUTH_NH_SIZE        AUTH_KASME_SIZE /* eNodeB security key   */
 /* "Separation bit" of AMF field */
 #define AUTH_AMF_SEPARATION_BIT(a)  ((a) & 0x80)
 

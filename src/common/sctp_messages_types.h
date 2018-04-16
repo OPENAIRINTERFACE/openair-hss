@@ -88,6 +88,7 @@ typedef struct sctp_init_s {
 
 typedef struct sctp_close_association_s {
   sctp_assoc_id_t  assoc_id;
+  bool             reset;
 } sctp_close_association_t;
 
 typedef struct sctp_new_peer_s {

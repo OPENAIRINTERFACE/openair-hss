@@ -79,6 +79,48 @@ static inline int                       s1ap_mme_encode_unsuccessfull_outcome (
   uint8_t ** buffer,
   uint32_t * len);
 
+/** Additions for ENB triggered RESET procedure. */
+static inline int s1ap_mme_encode_resetack (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length);
+
+/** Handover additions. */
+static inline int s1ap_mme_encode_pathSwitchRequestAcknowledge (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length);
+
+static inline int s1ap_mme_encode_pathSwitchRequestFailure (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length);
+
+static inline int s1ap_mme_encode_handoverPreparationFailure (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length);
+
+static inline int s1ap_mme_encode_handoverCommand (
+    s1ap_message * message_p,
+    uint8_t ** buffer,
+    uint32_t * length);
+
+static inline int s1ap_mme_encode_handoverCancelAck(
+    s1ap_message * message_p,
+    uint8_t ** buffer,
+    uint32_t * length);
+
+static inline int s1ap_mme_encode_handover_resource_allocation (
+    s1ap_message * message_p,
+    uint8_t ** buffer,
+    uint32_t * length);
+
+static inline int s1ap_mme_encode_mme_status_transfer (
+    s1ap_message * message_p,
+    uint8_t ** buffer,
+    uint32_t * length);
+
 //------------------------------------------------------------------------------
 static inline int
 s1ap_mme_encode_initial_context_setup_request (
@@ -147,6 +189,12 @@ s1ap_mme_encode_initiating (
   case S1ap_ProcedureCode_id_E_RABSetup:
     return s1ap_mme_encode_e_rab_setup (message_p, buffer, length);
 
+  case S1ap_ProcedureCode_id_HandoverResourceAllocation:
+    return s1ap_mme_encode_handover_resource_allocation (message_p, buffer, length);
+
+  case S1ap_ProcedureCode_id_MMEStatusTransfer:
+    return s1ap_mme_encode_mme_status_transfer (message_p, buffer, length);
+
   default:
     OAILOG_NOTICE (LOG_S1AP, "Unknown procedure ID (%d) for initiating message_p\n", (int)message_p->procedureCode);
     break;
@@ -166,6 +214,16 @@ s1ap_mme_encode_successfull_outcome (
   case S1ap_ProcedureCode_id_S1Setup:
     return s1ap_mme_encode_s1setupresponse (message_p, buffer, length);
 
+  // Add handover related messages
+  case S1ap_ProcedureCode_id_PathSwitchRequest:
+    return s1ap_mme_encode_pathSwitchRequestAcknowledge(message_p, buffer, length);
+
+  case S1ap_ProcedureCode_id_HandoverPreparation:
+    return s1ap_mme_encode_handoverCommand(message_p, buffer, length);
+
+  case S1ap_ProcedureCode_id_HandoverCancel:
+    return s1ap_mme_encode_handoverCancelAck(message_p, buffer, length);
+
   default:
     OAILOG_DEBUG (LOG_S1AP, "Unknown procedure ID (%d) for successfull outcome message\n", (int)message_p->procedureCode);
     break;
@@ -184,6 +242,10 @@ s1ap_mme_encode_unsuccessfull_outcome (
   switch (message_p->procedureCode) {
   case S1ap_ProcedureCode_id_S1Setup:
     return s1ap_mme_encode_s1setupfailure (message_p, buffer, length);
+  case S1ap_ProcedureCode_id_PathSwitchRequest:
+    return s1ap_mme_encode_pathSwitchRequestFailure (message_p, buffer, length);
+  case S1ap_ProcedureCode_id_HandoverPreparation:
+    return s1ap_mme_encode_handoverPreparationFailure(message_p, buffer, length);
 
   default:
     OAILOG_DEBUG (LOG_S1AP, "Unknown procedure ID (%d) for unsuccessfull outcome message\n", (int)message_p->procedureCode);
@@ -229,6 +291,162 @@ s1ap_mme_encode_s1setupfailure (
   }
 
   return s1ap_generate_unsuccessfull_outcome (buffer, length, S1ap_ProcedureCode_id_S1Setup, message_p->criticality, &asn_DEF_S1ap_S1SetupFailure, s1SetupFailure_p);
+}
+
+static inline int
+s1ap_mme_encode_resetack (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length)
+{
+
+  S1ap_ResetAcknowledge_t                 s1ResetAck;
+  S1ap_ResetAcknowledge_t                 *s1ResetAck_p = &s1ResetAck;
+
+  memset (s1ResetAck_p, 0, sizeof (S1ap_ResetAcknowledge_t));
+
+  if (s1ap_encode_s1ap_resetacknowledgeies (s1ResetAck_p, &message_p->msg.s1ap_ResetAcknowledgeIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_successfull_outcome (buffer, length, S1ap_ProcedureCode_id_Reset, message_p->criticality, &asn_DEF_S1ap_ResetAcknowledge, s1ResetAck_p);
+}
+
+
+
+static inline int
+s1ap_mme_encode_pathSwitchRequestAcknowledge(
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length)
+{
+
+  S1ap_PathSwitchRequestAcknowledge_t            pathSwitchReqAcknowledge;
+  S1ap_PathSwitchRequestAcknowledge_t           *pathSwitchReqAcknowledge_p = &pathSwitchReqAcknowledge;
+
+  memset (pathSwitchReqAcknowledge_p, 0, sizeof (S1ap_PathSwitchRequestAcknowledge_t));
+
+  if (s1ap_encode_s1ap_pathswitchrequestacknowledgeies (pathSwitchReqAcknowledge_p, &message_p->msg.s1ap_PathSwitchRequestAcknowledgeIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_successfull_outcome (buffer, length, S1ap_ProcedureCode_id_PathSwitchRequest, message_p->criticality,
+      &asn_DEF_S1ap_PathSwitchRequestAcknowledge, pathSwitchReqAcknowledge_p);
+}
+
+static inline int
+s1ap_mme_encode_pathSwitchRequestFailure (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length)
+{
+
+  S1ap_PathSwitchRequestFailure_t                pathSwitchReqFailure;
+  S1ap_PathSwitchRequestFailure_t               *pathSwitchReqFailure_p = &pathSwitchReqFailure;
+
+  memset (pathSwitchReqFailure_p, 0, sizeof (S1ap_PathSwitchRequestFailure_t));
+
+  if (s1ap_encode_s1ap_pathswitchrequestfailureies (pathSwitchReqFailure_p, &message_p->msg.s1ap_PathSwitchRequestFailureIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_unsuccessfull_outcome (buffer, length, S1ap_ProcedureCode_id_PathSwitchRequest, message_p->criticality, &asn_DEF_S1ap_PathSwitchRequestFailure, pathSwitchReqFailure_p);
+}
+
+static inline int
+s1ap_mme_encode_handoverPreparationFailure (
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length)
+{
+
+  S1ap_HandoverPreparationFailure_t              handoverPreparationFailure;
+  S1ap_HandoverPreparationFailureIEs_t          *handoverPreparationFailure_p = &handoverPreparationFailure;
+
+  memset (handoverPreparationFailure_p, 0, sizeof (S1ap_HandoverPreparationFailure_t));
+
+  if (s1ap_encode_s1ap_handoverpreparationfailureies(handoverPreparationFailure_p, &message_p->msg.s1ap_HandoverPreparationFailureIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_unsuccessfull_outcome (buffer, length, S1ap_ProcedureCode_id_HandoverPreparation, message_p->criticality, &asn_DEF_S1ap_HandoverPreparationFailure, handoverPreparationFailure_p);
+}
+
+static inline int
+s1ap_mme_encode_handoverCommand(
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length)
+{
+
+  S1ap_HandoverCommand_t            handoverCommand;
+  S1ap_HandoverCommand_t           *handoverCommand_p = &handoverCommand;
+
+  memset (handoverCommand_p, 0, sizeof (S1ap_HandoverCommand_t));
+
+  if (s1ap_encode_s1ap_handovercommandies(handoverCommand_p, &message_p->msg.s1ap_HandoverCommandIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_successfull_outcome (buffer, length, S1ap_ProcedureCode_id_HandoverPreparation, message_p->criticality,
+      &asn_DEF_S1ap_HandoverCommand, handoverCommand_p);
+}
+
+static inline int
+s1ap_mme_encode_handoverCancelAck(
+  s1ap_message * message_p,
+  uint8_t ** buffer,
+  uint32_t * length)
+{
+
+  S1ap_HandoverCancelAcknowledge_t  handoverCancelAcknowledge;
+  S1ap_HandoverCancelAcknowledge_t *handoverCancelAcknowledge_p = &handoverCancelAcknowledge;
+
+  memset (handoverCancelAcknowledge_p, 0, sizeof (S1ap_HandoverCancel_t));
+
+  if (s1ap_encode_s1ap_handovercancelacknowledgeies(handoverCancelAcknowledge_p, &message_p->msg.s1ap_HandoverCancelAcknowledgeIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_successfull_outcome (buffer, length, S1ap_ProcedureCode_id_HandoverCancel, message_p->criticality,
+      &asn_DEF_S1ap_HandoverCancelAcknowledge, handoverCancelAcknowledge_p);
+}
+
+
+static inline int s1ap_mme_encode_handover_resource_allocation (
+    s1ap_message * message_p,
+    uint8_t ** buffer,
+    uint32_t * length)
+{
+  S1ap_HandoverRequest_t                  s1HandoverRequest;
+  S1ap_HandoverRequest_t                 *s1HandoverRequest_p = &s1HandoverRequest;
+
+  memset (s1HandoverRequest_p, 0, sizeof (S1ap_HandoverRequest_t));
+
+  if (s1ap_encode_s1ap_handoverrequesties(s1HandoverRequest_p, &message_p->msg.s1ap_HandoverRequestIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_initiating_message(buffer, length, S1ap_ProcedureCode_id_HandoverResourceAllocation, S1ap_Criticality_reject,
+      &asn_DEF_S1ap_HandoverRequest, s1HandoverRequest_p);
+}
+
+static inline int s1ap_mme_encode_mme_status_transfer (
+    s1ap_message * message_p,
+    uint8_t ** buffer,
+    uint32_t * length)
+{
+  S1ap_MMEStatusTransfer_t                s1MmeStatusTransfer;
+  S1ap_MMEStatusTransfer_t               *s1MmeStatusTransfer_p = &s1MmeStatusTransfer;
+
+  memset (s1MmeStatusTransfer_p, 0, sizeof (S1ap_MMEStatusTransfer_t));
+
+  if (s1ap_encode_s1ap_mmestatustransferies(s1MmeStatusTransfer_p, &message_p->msg.s1ap_MMEStatusTransferIEs) < 0) {
+    return -1;
+  }
+
+  return s1ap_generate_initiating_message(buffer, length, S1ap_ProcedureCode_id_MMEStatusTransfer, S1ap_Criticality_ignore,
+      &asn_DEF_S1ap_MMEStatusTransfer, s1MmeStatusTransfer_p);
 }
 
 //------------------------------------------------------------------------------

@@ -335,6 +335,13 @@ void msc_flush_messages (void)
   fflush (g_msc_fd);
 }
 
+//------------------------------------------------------------------------------
+void msc_start_use (void)
+{
+  lfds611_queue_use (g_msc_message_queue_p);
+  lfds611_stack_use (g_msc_memory_stack_p);
+}
+
 
 //------------------------------------------------------------------------------
 void msc_end (void)

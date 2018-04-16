@@ -42,6 +42,12 @@
 #define MME_APP_CREATE_DEDICATED_BEARER_REQ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_req
 #define MME_APP_CREATE_DEDICATED_BEARER_RSP(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_rsp
 #define MME_APP_CREATE_DEDICATED_BEARER_REJ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_rej
+#define MME_APP_INITIAL_CONTEXT_SETUP_FAILURE(mSGpTR)    (mSGpTR)->ittiMsg.mme_app_initial_context_setup_failure
+/** Necessary for TAU. */
+#define MME_APP_NAS_UPDATE_LOCATION_CNF(mSGpTR)          (mSGpTR)->ittiMsg.mme_app_nas_update_location_cnf
+
+#define MME_APP_PATH_SWITCH_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.mme_app_path_switch_req
+#define MME_APP_S1AP_MME_UE_ID_NOTIFICATION(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_s1ap_mme_ue_id_notification
 
 typedef struct itti_mme_app_connection_establishment_cnf_s {
   mme_ue_s1ap_id_t        ue_id;
@@ -78,7 +84,11 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
 
   // Trace Activation (optional)
   // Handover Restriction List (optional)
+
   // UE Radio Capability (optional)
+  uint8_t                 *ue_radio_capabilities;
+  int                     ue_radio_cap_length;
+
   // Subscriber Profile ID for RAT/Frequency priority (optional)
   // CS Fallback Indicator (optional)
   // SRVCC Operation Possible (optional)
@@ -88,7 +98,7 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
   // MME UE S1AP ID 2  (optional)
   // Management Based MDT Allowed (optional)
 
-  //itti_nas_conn_est_cnf_t nas_conn_est_cnf;
+//  itti_nas_conn_est_cnf_t nas_conn_est_cnf;
 } itti_mme_app_connection_establishment_cnf_t;
 
 typedef struct itti_mme_app_initial_context_setup_rsp_s {
@@ -127,5 +137,36 @@ typedef struct itti_mme_app_create_dedicated_bearer_rej_s {
   ebi_t                             ebi;
 } itti_mme_app_create_dedicated_bearer_rej_t;
 
+typedef struct itti_mme_app_s1ap_mme_ue_id_notification_s {
+  enb_ue_s1ap_id_t      enb_ue_s1ap_id;
+  mme_ue_s1ap_id_t      mme_ue_s1ap_id;
+  sctp_assoc_id_t       sctp_assoc_id;
+} itti_mme_app_s1ap_mme_ue_id_notification_t;
+
+typedef struct itti_mme_app_initial_context_setup_failure_s {
+  mme_ue_s1ap_id_t      mme_ue_s1ap_id;
+} itti_mme_app_initial_context_setup_failure_t;
+
+
+/** ITTI Handover Messages. */
+typedef struct itti_mme_app_path_switch_req_s {
+  uint32_t                mme_ue_s1ap_id;
+  uint32_t                enb_ue_s1ap_id;
+  sctp_assoc_id_t         sctp_assoc_id;
+  sctp_stream_id_t        sctp_stream;
+  uint32_t                enb_id;
+  ebi_t                   eps_bearer_id;
+  fteid_t                 bearer_s1u_enb_fteid;
+} itti_mme_app_path_switch_req_t;
+
+typedef struct itti_mme_app_nas_update_location_cnf_s {
+  mme_ue_s1ap_id_t    ue_id;
+
+  char       imsi[IMSI_BCD_DIGITS_MAX + 1]; // username
+  uint8_t    imsi_length;               // username
+
+  s6a_result_t result;
+
+}itti_mme_app_nas_update_location_cnf_t;
 
 #endif /* FILE_MME_APP_MESSAGES_TYPES_SEEN */

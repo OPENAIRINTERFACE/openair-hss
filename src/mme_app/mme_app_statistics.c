@@ -50,3 +50,23 @@ mme_app_statistics_display (
   mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat = 0;
   return 0;
 }
+/*********************************** Utility Functions to update Statistics**************************************/
+
+// Number of Connected eNBs
+void update_mme_app_stats_connected_enb_add(void)
+{
+  mme_stats_write_lock (&mme_app_desc);
+  (mme_app_desc.nb_enb_connected)++;
+  (mme_app_desc.nb_enb_connected_since_last_stat)++;
+  mme_stats_unlock(&mme_app_desc);
+  return;
+}
+void update_mme_app_stats_connected_enb_sub(void)
+{
+  mme_stats_write_lock (&mme_app_desc);
+  if (mme_app_desc.nb_enb_connected !=0)
+    (mme_app_desc.nb_enb_connected)--;
+  (mme_app_desc.nb_enb_released_since_last_stat)--;
+  mme_stats_unlock(&mme_app_desc);
+  return;
+}

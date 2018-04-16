@@ -328,6 +328,7 @@ int log_get_start_time_sec (void);
 #    define OAILOG_LEVEL_STR2INT(a)                                     OAILOG_LEVEL_EMERGENCY
 #    define OAILOG_LEVEL_INT2STR(a)                                     "EMERGENCY"
 #    define OAILOG_INIT(a,b,c)                                          0
+#    define OAILOG_START_USE()
 #    define OAILOG_ITTI_CONNECT()
 #    define OAILOG_EXIT()
 #    define OAILOG_EMERGENCY(...)

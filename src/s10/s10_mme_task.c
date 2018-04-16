@@ -238,8 +238,8 @@ s10_mme_thread (
   void *args)
 {
   itti_mark_task_ready (TASK_S10);
-  OAILOG_START_USE ();
-  MSC_START_USE ();
+//  OAILOG_START_USE ();
+//  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;

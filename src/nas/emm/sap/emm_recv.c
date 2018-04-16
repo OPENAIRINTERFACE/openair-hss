@@ -298,12 +298,12 @@ emm_recv_attach_request (
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
     OAILOG_TRACE (LOG_NAS_EMM, "EMMAS-SAP - get LAST VISITED REGISTERED TAI\n");
     p_last_visited_registered_tai = &last_visited_registered_tai;
-    last_visited_registered_tai.mcc_digit1 = msg->lastvisitedregisteredtai.mcc_digit1;
-    last_visited_registered_tai.mcc_digit2 = msg->lastvisitedregisteredtai.mcc_digit2;
-    last_visited_registered_tai.mcc_digit3 = msg->lastvisitedregisteredtai.mcc_digit3;
-    last_visited_registered_tai.mnc_digit1 = msg->lastvisitedregisteredtai.mnc_digit1;
-    last_visited_registered_tai.mnc_digit2 = msg->lastvisitedregisteredtai.mnc_digit2;
-    last_visited_registered_tai.mnc_digit3 = msg->lastvisitedregisteredtai.mnc_digit3;
+    last_visited_registered_tai.plmn.mcc_digit1 = msg->lastvisitedregisteredtai.plmn.mcc_digit1;
+    last_visited_registered_tai.plmn.mcc_digit2 = msg->lastvisitedregisteredtai.plmn.mcc_digit2;
+    last_visited_registered_tai.plmn.mcc_digit3 = msg->lastvisitedregisteredtai.plmn.mcc_digit3;
+    last_visited_registered_tai.plmn.mnc_digit1 = msg->lastvisitedregisteredtai.plmn.mnc_digit1;
+    last_visited_registered_tai.plmn.mnc_digit2 = msg->lastvisitedregisteredtai.plmn.mnc_digit2;
+    last_visited_registered_tai.plmn.mnc_digit3 = msg->lastvisitedregisteredtai.plmn.mnc_digit3;
     last_visited_registered_tai.tac = msg->lastvisitedregisteredtai.tac;
   }
 

@@ -41,8 +41,18 @@ typedef struct mme_app_desc_s {
   /* UE contexts + some statistics variables */
   mme_ue_context_t mme_ue_contexts;
 
+  uint32_t               nb_enb_connected;
+
+  uint32_t               nb_enb_connected_since_last_stat;
+  uint32_t               nb_enb_released_since_last_stat;
+
   long statistic_timer_id;
   uint32_t statistic_timer_period;
+
+  long s1ap_handover_statistic_timer_id;
+
+  /* Reader/writer lock */
+  pthread_rwlock_t rw_lock;
 
 } mme_app_desc_t;
 
@@ -54,7 +64,7 @@ int mme_app_handle_s1ap_ue_capabilities_ind  (const itti_s1ap_ue_cap_ind_t const
 
 void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context_release_complete_t const *s1ap_ue_context_release_complete);
 
-void mme_app_send_s1ap_ue_context_release_command (ue_mm_context_t *ue_context, S1ap_Cause_t cause);
+void mme_app_itti_ue_context_release (    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, uint32_t enb_id);
 
 int mme_app_send_s11_create_session_req (struct ue_mm_context_s *const ue_mm_context, const pdn_cid_t pdn_cid);
 
@@ -104,5 +114,9 @@ void mme_app_handle_create_dedicated_bearer_rej (itti_mme_app_create_dedicated_b
 
 void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_mm_context_t * const ue_context, const pdn_cid_t cid);
 
+
+#define mme_stats_read_lock(mMEsTATS)  pthread_rwlock_rdlock(&(mMEsTATS)->rw_lock)
+#define mme_stats_write_lock(mMEsTATS) pthread_rwlock_wrlock(&(mMEsTATS)->rw_lock)
+#define mme_stats_unlock(mMEsTATS)     pthread_rwlock_unlock(&(mMEsTATS)->rw_lock)
 
 #endif /* MME_APP_DEFS_H_ */

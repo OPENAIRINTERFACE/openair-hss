@@ -1073,7 +1073,7 @@ mme_app_handle_s1ap_ue_context_release_req (
     S1ap_Cause_t            s1_ue_context_release_cause = {0};
     s1_ue_context_release_cause.present = S1ap_Cause_PR_radioNetwork;
     s1_ue_context_release_cause.choice.radioNetwork = S1ap_CauseRadioNetwork_release_due_to_eutran_generated_reason;
-    mme_app_send_s1ap_ue_context_release_command(ue_context_p, s1_ue_context_release_cause);
+//    mme_app_itti_ue_context_release(ue_context_p, s1_ue_context_release_cause);
     mme_app_send_nas_signalling_connection_rel_ind(ue_context_p->mme_ue_s1ap_id);
   } else {
     for (pdn_cid_t i = 0; i < MAX_APN_PER_UE; i++) {
@@ -1151,17 +1151,21 @@ mme_app_handle_s1ap_ue_context_release_complete (
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
-
 //------------------------------------------------------------------------------
-void mme_app_send_s1ap_ue_context_release_command (ue_mm_context_t *ue_context, S1ap_Cause_t cause)
+void mme_app_itti_ue_context_release (
+    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, uint32_t enb_id)
 {
-  MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
-  AssertFatal (message_p , "itti_alloc_new_message Failed");
-  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id;
-  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
+  MessageDef *message_p;
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  message_p = itti_alloc_new_message(TASK_MME_APP, S1AP_UE_CONTEXT_RELEASE_COMMAND);
+  memset ((void *)&message_p->ittiMsg.s1ap_ue_context_release_command, 0, sizeof (itti_s1ap_ue_context_release_command_t));
+  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id = mme_ue_s1ap_id;
+  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id = enb_ue_s1ap_id;
+  S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_id = enb_id;
   S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).cause = cause;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND mme_ue_s1ap_id %06" PRIX32 " ",
-      S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).mme_ue_s1ap_id);
-  int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
-  itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_UE_CONTEXT_RELEASE_COMMAND enb_ue_s1ap_id %06" PRIX32 " ",
+                      S1AP_UE_CONTEXT_RELEASE_COMMAND (message_p).enb_ue_s1ap_id);
+  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }

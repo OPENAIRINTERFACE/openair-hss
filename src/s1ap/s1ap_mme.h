@@ -29,6 +29,7 @@
 #ifndef FILE_S1AP_MME_SEEN
 #define FILE_S1AP_MME_SEEN
 
+
 #if MME_CLIENT_TEST == 0
 # include "intertask_interface.h"
 #endif
@@ -38,14 +39,27 @@
 // Forward declarations
 struct enb_description_s;
 
-enum s1_enb_state_s {
-  S1AP_RESETING,      ///< After a reset request (eNB or MME initiated)
-  S1AP_READY          ///< MME and eNB are S1 associated, UE contexts can be added
+#define S1AP_TIMER_INACTIVE_ID   (-1)
+#define S1AP_UE_CONTEXT_REL_COMP_TIMER 1 // in seconds
+#define S1AP_HANDOVER_COMPLETION_TIMER 2 // in seconds
+
+/* Timer structure */
+struct s1ap_timer_t {
+  long id;           /* The timer identifier                 */
+  long sec;          /* The timer interval value in seconds  */
+};
+
+// The current s1 state of the MME relating to the specific eNB.
+enum mme_s1_enb_state_s {
+  S1AP_INIT,          /// The sctp association has been established but s1 hasn't been setup.
+  S1AP_RESETING,      /// The s1state is resetting due to an SCTP reset on the bound association.
+  S1AP_READY,         ///< MME and eNB are S1 associated, UE contexts can be added
+  S1AP_SHUTDOWN       /// The S1 state is being torn down due to sctp shutdown.
 };
 
 enum s1_ue_state_s {
+  S1AP_UE_INVALID_STATE,
   S1AP_UE_WAITING_CSR,    ///< Waiting for Initial Context Setup Response
-  S1AP_UE_HANDOVER,       ///< Handover procedure triggered
   S1AP_UE_CONNECTED,      ///< UE context ready
   S1AP_UE_WAITING_CRR,   /// UE Context release Procedure initiated , waiting for UE context Release Complete
 };
@@ -57,6 +71,8 @@ typedef struct ue_description_s {
   struct enb_description_s *enb;           ///< Which eNB this UE is attached to
 
   enum s1_ue_state_s        s1_ue_state;       ///< S1AP UE state
+  /** Set the release cause, since we must now differentiate between them. */
+  enum s1cause              s1_release_cause;  ///< S1AP Release Cause
 
   enb_ue_s1ap_id_t enb_ue_s1ap_id:24;    ///< Unique UE id over eNB (24 bits wide)
   mme_ue_s1ap_id_t mme_ue_s1ap_id;       ///< Unique UE id over MME (32 bits wide)
@@ -76,6 +92,11 @@ typedef struct ue_description_s {
 
   /* Timer for procedure outcome issued by MME that should be answered */
   long outcome_response_timer_id;
+
+  // UE Context Release procedure guard timer
+  struct s1ap_timer_t       s1ap_ue_context_rel_timer;
+  // Handover/TAU completion timer (TS 23.401)
+  struct s1ap_timer_t       s1ap_handover_completion_timer; // todo: not TXXXX value found for this.
 } ue_description_t;
 
 /* Main structure representing eNB association over s1ap
@@ -83,7 +104,7 @@ typedef struct ue_description_s {
  */
 typedef struct enb_description_s {
 
-  enum s1_enb_state_s s1_state;         ///< State of the eNB S1AP association over MME
+  enum mme_s1_enb_state_s s1_state;         ///< State of the eNB specific S1AP association
 
   /** eNB related parameters **/
   /*@{*/
@@ -145,6 +166,12 @@ ue_description_t* s1ap_is_ue_enb_id_in_list(enb_description_t *enb_ref,
  **/
 ue_description_t* s1ap_is_ue_mme_id_in_list(const mme_ue_s1ap_id_t ue_mme_id);
 ue_description_t* s1ap_is_s11_sgw_teid_in_list(const s11_teid_t teid);
+
+/** \brief Look for given ue enb s1ap id in the list of UEs for a particular enb.
+ * \param enb_id The unique ue_enb_id to search in list
+ * @returns NULL if no UE matchs the ue_enb_id, or reference to the ue element in list if matches
+ **/
+ue_description_t* s1ap_is_enb_ue_s1ap_id_in_list_per_enb ( const enb_ue_s1ap_id_t enb_ue_s1ap_id, const uint32_t  enb_id);
 
 /** \brief associate mainly 2(3) identifiers in S1AP layer: {mme_ue_s1ap_id_t, sctp_assoc_id (,enb_ue_s1ap_id)}
  **/
@@ -213,5 +240,14 @@ void s1ap_remove_ue(ue_description_t *ue_ref);
  * \param enb_ref eNB structure reference to remove
  **/
 void s1ap_remove_enb(enb_description_t *enb_ref);
+
+///**
+// * Add a bearer context to the list.
+// */
+//bool
+//s1ap_add_bearer_context_to_list (__attribute__((unused))const hash_key_t keyP,
+//               void * const bearer_ctx_void,
+//               void *parameterP_bearer_list,
+//               void __attribute__((unused)) **unused_resultP);
 
 #endif /* FILE_S1AP_MME_SEEN */
