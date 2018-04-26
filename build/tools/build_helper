@@ -1218,3 +1218,175 @@ function do_stop_daemon()
   $SUDO rm -f $PIDFILE
   return "$RETVAL"
 }
+
+###########################################################
+#TTN Add new function to support HSS_REL14 and CASSANDRA
+############################################################
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+install_cassandra() {
+
+  $SUDO add-apt-repository -y ppa:webupd8team/java
+  $SUDO apt-get update
+  # install Java 8
+  $SUDO apt-get install -y \
+    curl  \
+    oracle-java8-installer
+
+  echo "deb http://www.apache.org/dist/cassandra/debian 21x main" | sudo tee -a /etc/apt/sources.list.d/cassandra.sources.list
+  curl https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -
+  $SUDO apt-get update
+  $SUDO apt-get install cassandra
+
+}
+
+
+#-------------------------------------------------------------------------------
+clean_log_cassandra() {
+
+  $SUDO service cassandra stop
+  $SUDO rm -rf /var/lib/cassandra/data/system/*
+  $SUDO rm -rf /var/lib/cassandra/commitlog/*
+  $SUDO rm -rf /var/lib/cassandra/data/system_traces/*
+  $SUDO rm -rf /var/lib/cassandra/saved_caches/*
+
+}
+
+################################################################################
+
+install_cmake()
+{
+  sudo apt-get purge cmake cmake-curses-gui
+  sudo apt-get install g++ make autotools-dev m4 libncurses-dev
+  pushd modules
+  rm -rf cmake-3.5.1
+  rm -rf cmake-3.5.1.tar.gz
+  wget https://cmake.org/files/v3.5/cmake-3.5.1.tar.gz
+  tar -xvf cmake-3.5.1.tar.gz
+  cd cmake-3.5.1
+  ./bootstrap && make -j4 && sudo make install
+  popd
+
+}
+
+install_libtool()
+{
+  pushd modules
+  rm -rf libtool-2.4.6
+  rm -rf libtool-2.4.6.tar.gz
+  wget http://ftp.gnu.org/gnu/libtool/libtool-2.4.6.tar.gz
+  tar -xvf libtool-2.4.6.tar.gz
+  cd libtool-2.4.6
+  ./configure && make && sudo make install
+  popd
+
+}
+
+install_libs()
+{
+  echo "Install packages needed to build and run the HSS..."
+  sudo apt-get update
+  sudo apt-get install -y g++ make cmake libuv-dev libssl-dev autotools-dev libtool-bin m4 automake libmemcached-dev memcached cmake-curses-gui gcc bison flex libsctp-dev libgnutls-dev libgcrypt-dev libidn11-dev nettle-dev
+}
+
+################################################################################
+
+init_submodules()
+{
+  git submodule init
+  git submodule update
+  git submodule foreach git pull origin master
+
+ set_openair_env
+ dir=$OPENAIRCN_DIR/build/hss_rel14
+ 
+  build_freeDiameter
+  build_c_ares
+  build_cpp_driver
+  build_pistache
+  
+  sudo ldconfig
+    
+}
+
+build_freeDiameter()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/freeDiameter
+  rm -rf build
+  mkdir -p build
+  cd build
+  cmake ..
+  awk '{if (/^DISABLE_SCTP/) gsub(/OFF/, "ON"); print}' CMakeCache.txt > tmp && mv tmp CMakeCache.txt
+  make
+  sudo make install
+  popd
+  
+}
+
+build_c_ares()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/c-ares
+  ./buildconf
+  ./configure
+  make
+  sudo make install
+  popd
+  
+}
+
+build_cpp_driver()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/cpp-driver
+  rm -rf build
+  mkdir -p build
+  cd build
+  cmake ..
+  make
+  sudo make install
+  popd
+  
+}
+
+build_pistache()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/modules/pistache
+  rm -rf build
+  mkdir -p build
+  cd build
+  cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+  make
+  sudo make install
+  popd
+}
+
+################################################################################
+
+build_util()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/util
+  rm -rf build
+  mkdir -p build
+  make
+  popd
+}
+
+
+build_hsssec()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14/hsssec
+  rm -rf build
+  mkdir -p build
+  make
+  popd
+}
+
+
+build_hss()
+{
+  pushd $OPENAIRCN_DIR/build/hss_rel14
+  make clean
+  make
+  popd
+ 
+}
