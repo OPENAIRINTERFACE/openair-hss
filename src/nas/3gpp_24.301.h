@@ -33,7 +33,6 @@
    \date
    \email: lionel.gauthier@eurecom.fr
 */
-
 #ifndef FILE_3GPP_24_301_SEEN
 #define FILE_3GPP_24_301_SEEN
 

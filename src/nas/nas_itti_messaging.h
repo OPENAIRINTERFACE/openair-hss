@@ -33,10 +33,10 @@
 #include "as_message.h"
 #include "esm_proc.h"
 
-
 int nas_itti_dl_data_req(
   const mme_ue_s1ap_id_t ue_idP,
-  bstring                nas_msgP);
+  bstring                nas_msgP,
+  nas_error_code_t transaction_status);
 
 int
 nas_itti_erab_setup_req (
@@ -49,7 +49,6 @@ nas_itti_erab_setup_req (
     bstring                nas_msg);
 
 void nas_itti_pdn_config_req(
-  int                     ptiP,
   unsigned int            ue_idP,
   const imsi_t           *const imsi_pP,
   esm_proc_data_t        *proc_data_pP,
@@ -63,6 +62,15 @@ void nas_itti_pdn_connectivity_req(
   esm_proc_data_t        *proc_data_pP,
   esm_proc_pdn_request_t  request_typeP);
 
+void nas_itti_ctx_req(
+  const uint32_t        ue_idP,
+  const guti_t        * const guti_p,
+  tai_t         * const new_taiP,
+  tai_t         * const last_visited_taiP,
+  plmn_t         * const visited_plmnP,
+  Complete_Request_Message_Type_t request_type,
+  bstring               request_msg);
+
 void nas_itti_auth_info_req(
   const mme_ue_s1ap_id_t ue_idP,
   const imsi_t   * const imsiP,
@@ -73,8 +81,8 @@ void nas_itti_auth_info_req(
 
 void nas_itti_establish_rej(
   const mme_ue_s1ap_id_t ue_idP,
-  const imsi_t  * const imsi_pP
-  , uint8_t             initial_reqP);
+  const imsi_t  * const imsi_pP,
+  uint8_t             initial_reqP);
 
 void nas_itti_establish_cnf(
   const mme_ue_s1ap_id_t ue_idP,
@@ -84,7 +92,7 @@ void nas_itti_establish_cnf(
   const uint16_t         selected_integrity_algorithmP);
 
 void nas_itti_detach_req(
-  const mme_ue_s1ap_id_t      ue_idP, long cause);
+  const mme_ue_s1ap_id_t      ue_idP);
 
 void nas_itti_dedicated_eps_bearer_complete(
     const mme_ue_s1ap_id_t ue_idP,
@@ -93,5 +101,9 @@ void nas_itti_dedicated_eps_bearer_complete(
 void nas_itti_dedicated_eps_bearer_reject(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t ebiP);
+
+void  s6a_auth_info_rsp_timer_expiry_handler (void *args);
+
+void  s10_context_req_timer_expiry_handler (void *args);
 
 #endif /* FILE_NAS_ITTI_MESSAGING_SEEN */

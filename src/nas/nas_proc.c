@@ -35,7 +35,6 @@
   Description NAS procedure call manager
 
 *****************************************************************************/
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <pthread.h>
@@ -46,7 +45,6 @@
 #include "msc.h"
 #include "assertions.h"
 #include "conversions.h"
-
 #include "nas_proc.h"
 #include "emm_main.h"
 #include "emm_sap.h"
@@ -54,6 +52,7 @@
 #include "esm_sap.h"
 #include "msc.h"
 #include "s6a_defs.h"
+#include "dynamic_memory_check.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 
@@ -161,8 +160,8 @@ nas_proc_cleanup (
  ***************************************************************************/
 int
 nas_proc_establish_ind (
-  const enb_s1ap_id_key_t enb_ue_s1ap_id_key,
   const mme_ue_s1ap_id_t ue_id,
+  const bool is_mm_ctx_new,
   const tai_t originating_tai,
   const ecgi_t ecgi,
   const as_cause_t as_cause,
@@ -182,9 +181,9 @@ nas_proc_establish_ind (
      */
 
     emm_sap.primitive = EMMAS_ESTABLISH_REQ;
-    emm_sap.u.emm_as.u.establish.enb_ue_s1ap_id_key = enb_ue_s1ap_id_key;
     emm_sap.u.emm_as.u.establish.ue_id              = ue_id;
     emm_sap.u.emm_as.u.establish.is_initial         = true;
+    emm_sap.u.emm_as.u.establish.is_mm_ctx_new      = is_mm_ctx_new;
 
     emm_sap.u.emm_as.u.establish.nas_msg            = *msg;
     *msg = NULL;
@@ -199,7 +198,6 @@ nas_proc_establish_ind (
         (char)(originating_tai.mnc_digit1 + 0x30), (char)(originating_tai.mnc_digit2 + 0x30),
         (9 < originating_tai.mnc_digit3) ? ' ': (char)(originating_tai.mnc_digit3 + 0x30),
             originating_tai.tac);
-
     rc = emm_sap_send (&emm_sap);
   }
 
@@ -225,7 +223,8 @@ nas_proc_establish_ind (
 int
 nas_proc_dl_transfer_cnf (
   const uint32_t ue_id,
-  const nas_error_code_t status)
+  const nas_error_code_t status,
+  bstring * STOLEN_REF nas_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
@@ -245,7 +244,10 @@ nas_proc_dl_transfer_cnf (
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND (LL_FAIL) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
   }
   emm_sap.u.emm_as.u.data.ue_id = ue_id;
-  emm_sap.u.emm_as.u.data.nas_msg = NULL;
+  if (*nas_msg) {
+    emm_sap.u.emm_as.u.data.nas_msg   = *nas_msg;
+    *nas_msg = NULL;
+  }
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -269,7 +271,8 @@ nas_proc_dl_transfer_cnf (
 int
 nas_proc_dl_transfer_rej (
   const uint32_t ue_id,
-  const nas_error_code_t status)
+  const nas_error_code_t status,
+  bstring * STOLEN_REF nas_msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap_t                               emm_sap = {0};
@@ -294,6 +297,10 @@ nas_proc_dl_transfer_rej (
   }
   emm_sap.u.emm_as.u.data.delivered = status;
   emm_sap.u.emm_as.u.data.nas_msg   = NULL;
+  if (*nas_msg) {
+    emm_sap.u.emm_as.u.data.nas_msg   = *nas_msg;
+    *nas_msg = NULL;
+  }
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -325,6 +332,7 @@ nas_proc_ul_transfer_ind (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
 
+
   if (msg) {
     emm_sap_t                               emm_sap = {0};
 
@@ -341,14 +349,12 @@ nas_proc_ul_transfer_ind (
     //emm_sap.u.emm_as.u.data.plmn_id   = &originating_tai.plmn;
     //emm_sap.u.emm_as.u.data.tac       = originating_tai.tac;
     emm_sap.u.emm_as.u.data.ecgi      = cgi;
-
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND (UL_TRANSFER) ue id " MME_UE_S1AP_ID_FMT " len %u tai:  plmn %c%c%c.%c%c%c tac %u",
         ue_id, blength(*msg),
         (char)(originating_tai.mcc_digit1 + 0x30), (char)(originating_tai.mcc_digit2 + 0x30), (char)(originating_tai.mcc_digit3 + 0x30),
         (char)(originating_tai.mnc_digit1 + 0x30), (char)(originating_tai.mnc_digit2 + 0x30),
         (9 < originating_tai.mnc_digit3) ? ' ': (char)(originating_tai.mnc_digit3 + 0x30),
             originating_tai.tac);
-
     rc = emm_sap_send (&emm_sap);
   }
 
@@ -363,48 +369,43 @@ nas_proc_authentication_info_answer (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   imsi64_t                                imsi64  = INVALID_IMSI64;
   int                                     rc      = RETURNerror;
-  emm_context_t                          *ctxt    = NULL;
-  ue_mm_context_t                        *ue_mm_context = NULL;
+  emm_data_context_t                     *ctxt    = NULL;
 
-   DevAssert (aia);
-   IMSI_STRING_TO_IMSI64 ((char *)aia->imsi, &imsi64);
+  DevAssert (aia);
+  IMSI_STRING_TO_IMSI64 ((char *)aia->imsi, &imsi64);
 
-   OAILOG_DEBUG (LOG_NAS_EMM, "Handling imsi " IMSI_64_FMT "\n", imsi64);
+  OAILOG_DEBUG (LOG_NAS_EMM, "Handling imsi " IMSI_64_FMT "\n", imsi64);
 
-   ue_mm_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
-   if (ue_mm_context) {
-     ctxt = &ue_mm_context->emm_context;
-   }
+  ctxt = emm_data_context_get_by_imsi(&_emm_data, imsi64);
+  if (!(ctxt)) {
+    OAILOG_ERROR (LOG_NAS_EMM, "That's embarrassing as we don't know this IMSI\n");
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS Unknown imsi " IMSI_64_FMT, imsi64);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
 
-   if (!(ctxt)) {
-     OAILOG_ERROR (LOG_NAS_EMM, "That's embarrassing as we don't know this IMSI\n");
-     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS Unknown imsi " IMSI_64_FMT, imsi64);
-     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-   }
+  if ((aia->result.present == S6A_RESULT_BASE)
+      && (aia->result.choice.base == DIAMETER_SUCCESS)) {
+    /*
+     * Check that list is not empty and contain at most MAX_EPS_AUTH_VECTORS elements
+     */
+    DevCheck(aia->auth_info.nb_of_vectors <= MAX_EPS_AUTH_VECTORS, aia->auth_info.nb_of_vectors, MAX_EPS_AUTH_VECTORS, 0);
+    DevCheck(aia->auth_info.nb_of_vectors > 0, aia->auth_info.nb_of_vectors, 1, 0);
 
-   if ((aia->result.present == S6A_RESULT_BASE)
-       && (aia->result.choice.base == DIAMETER_SUCCESS)) {
-     /*
-      * Check that list is not empty and contain at most MAX_EPS_AUTH_VECTORS elements
-      */
-     DevCheck(aia->auth_info.nb_of_vectors <= MAX_EPS_AUTH_VECTORS, aia->auth_info.nb_of_vectors, MAX_EPS_AUTH_VECTORS, 0);
-     DevCheck(aia->auth_info.nb_of_vectors > 0, aia->auth_info.nb_of_vectors, 1, 0);
+    OAILOG_DEBUG (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP SUCCESS got %u vector(s)\n", aia->auth_info.nb_of_vectors);
+    rc = nas_proc_auth_param_res (ctxt->ue_id, aia->auth_info.nb_of_vectors, aia->auth_info.eutran_vector);
+  } else {
+    OAILOG_ERROR (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi " IMSI_64_FMT, imsi64);
 
-     OAILOG_DEBUG (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP SUCCESS got %u vector(s)\n", aia->auth_info.nb_of_vectors);
-     rc = nas_proc_auth_param_res (ue_mm_context->mme_ue_s1ap_id, aia->auth_info.nb_of_vectors, aia->auth_info.eutran_vector);
-   } else {
-     OAILOG_ERROR (LOG_NAS_EMM, "INFORMING NAS ABOUT AUTH RESP ERROR CODE\n");
-     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_AUTH_INFO_ANS S6A Failure imsi " IMSI_64_FMT, imsi64);
-
-     /*
-      * Inform NAS layer with the right failure
-      */
-     if (aia->result.present == S6A_RESULT_BASE) {
-       rc = nas_proc_auth_param_fail (ue_mm_context->mme_ue_s1ap_id, s6a_error_2_nas_cause (aia->result.choice.base, 0));
-     } else {
-       rc = nas_proc_auth_param_fail (ue_mm_context->mme_ue_s1ap_id, s6a_error_2_nas_cause (aia->result.choice.experimental, 1));
-     }
-   }
+    /*
+     * Inform NAS layer with the right failure
+     */
+    if (aia->result.present == S6A_RESULT_BASE) {
+      rc = nas_proc_auth_param_fail (ctxt->ue_id, s6a_error_2_nas_cause (aia->result.choice.base, 0));
+    } else {
+      rc = nas_proc_auth_param_fail (ctxt->ue_id, s6a_error_2_nas_cause (aia->result.choice.experimental, 1));
+    }
+  }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -461,13 +462,13 @@ int
 nas_proc_deregister_ue (
     mme_ue_s1ap_id_t ue_id)
 {
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
 
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_DEREGISTER_UE ue_id " MME_UE_S1AP_ID_FMT " ", ue_id);
   emm_sap.primitive = EMMCN_DEREGISTER_UE;
   emm_sap.u.emm_cn.u.deregister.ue_id = ue_id;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_DEREGISTER_UE ue_id " MME_UE_S1AP_ID_FMT " ", ue_id);
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -534,14 +535,63 @@ int nas_proc_create_dedicated_bearer(emm_cn_activate_dedicated_bearer_req_t * em
 }
 
 //------------------------------------------------------------------------------
-int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id)
+int
+nas_proc_implicit_detach_ue_ind (
+  mme_ue_s1ap_id_t ue_id)
+{
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
+  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ue_id;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_IMPLICIT_DETACH_UE " MME_UE_S1AP_ID_FMT " ", ue_id);
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+int
+nas_proc_nas_context_res (itti_nas_context_res_t *nas_ctx_res_p)
+{
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
+  /** Stacked value valid till the end. */
+  emm_cn_ctx_res_t                        emm_cn_ctx_res = {0};
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+
+  emm_cn_ctx_res.ue_id      = nas_ctx_res_p->ue_id;
+  memcpy(&emm_cn_ctx_res._imei, nas_ctx_res_p->_imei, sizeof(nas_ctx_res_p->_imei));
+  memcpy(&emm_cn_ctx_res._imsi, nas_ctx_res_p->_imsi, sizeof(nas_ctx_res_p->_imsi));
+  emm_cn_ctx_res.imsi = nas_ctx_res_p->imsi;
+  memcpy(&emm_cn_ctx_res.mm_eps_context, &nas_ctx_res_p->mm_eps_context, sizeof(mm_context_eps_t));
+
+  emm_sap.primitive = EMMCN_CONTEXT_RES;
+  emm_sap.u.emm_cn.u.context_res = &emm_cn_ctx_res;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_CONTEXT_RES ue_id " MME_UE_S1AP_ID_FMT " ", ue_id);
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+int
+nas_proc_nas_context_fail (
+    mme_ue_s1ap_id_t    ue_id,
+    nas_cause_t         cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
-  emm_sap.primitive = _EMMAS_RELEASE_IND;
-  emm_sap.u.emm_as.u.release.ue_id = ue_id;
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_RELEASE_IND " MME_UE_S1AP_ID_FMT " ", ue_id);
+  emm_cn_context_fail_t                   emm_cn_ctx_fail = {0};
+
+  emm_cn_ctx_fail.cause = cause;
+  emm_cn_ctx_fail.ue_id = ue_id;
+
+  emm_sap.primitive = EMMCN_CONTEXT_FAIL;
+  emm_sap.u.emm_cn.u.context_fail.ue_id = ue_id;
+  emm_sap.u.emm_cn.u.context_fail.cause = cause;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_CONTEXT_FAIL ue_id " MME_UE_S1AP_ID_FMT " ", ue_id);
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -573,7 +623,7 @@ s6a_error_2_nas_cause (
        * 5003
        */
     case ER_DIAMETER_AUTHORIZATION_REJECTED:
-      return NAS_CAUSE_NO_SUITABLE_CELLS_IN_TRACKING_AREA;
+      return NAS_CAUSE_IMSI_UNKNOWN_IN_HSS;
 
       /*
        * 5012
@@ -647,3 +697,4 @@ s6a_error_2_nas_cause (
 
   return NAS_CAUSE_NETWORK_FAILURE;
 }
+

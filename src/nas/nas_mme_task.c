@@ -25,8 +25,6 @@
    \date
    \email: lionel.gauthier@eurecom.fr
 */
-
-
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,8 +33,6 @@
 #include <string.h>
 
 #include "bstrlib.h"
-#include <libxml/xmlwriter.h>
-#include <libxml/xpath.h>
 
 #include "log.h"
 #include "msc.h"
@@ -50,7 +46,6 @@
 #include "nas_proc.h"
 #include "emm_main.h"
 #include "nas_timer.h"
-#include "xml_msg_dump_itti.h"
 
 static void nas_exit(void);
 
@@ -75,30 +70,12 @@ static void *nas_intertask_interface (void *args_p)
       break;
 
     case NAS_DOWNLINK_DATA_CNF:{
-        nas_proc_dl_transfer_cnf (NAS_DL_DATA_CNF (received_message_p).ue_id, NAS_DL_DATA_CNF (received_message_p).err_code);
+        nas_proc_dl_transfer_cnf (NAS_DL_DATA_CNF (received_message_p).ue_id, NAS_DL_DATA_CNF (received_message_p).err_code, &NAS_DL_DATA_REJ (received_message_p).nas_msg);
       }
       break;
 
     case NAS_DOWNLINK_DATA_REJ:{
-        nas_proc_dl_transfer_rej (NAS_DL_DATA_REJ (received_message_p).ue_id, NAS_DL_DATA_REJ (received_message_p).err_code);
-      }
-      break;
-
-    case NAS_INITIAL_UE_MESSAGE:{
-        nas_establish_ind_t                    *nas_est_ind_p = NULL;
-
-        nas_est_ind_p = &received_message_p->ittiMsg.nas_initial_ue_message.nas;
-        enb_s1ap_id_key_t enb_s1ap_id_key = 0;
-        MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key,
-            received_message_p->ittiMsg.nas_initial_ue_message.transparent.e_utran_cgi.cell_identity.enb_id,
-            received_message_p->ittiMsg.nas_initial_ue_message.transparent.enb_ue_s1ap_id);
-        nas_proc_establish_ind (enb_s1ap_id_key,
-            nas_est_ind_p->ue_id,
-            nas_est_ind_p->tai,
-            nas_est_ind_p->ecgi,
-            nas_est_ind_p->as_cause,
-            nas_est_ind_p->s_tmsi,
-            &nas_est_ind_p->initial_nas_msg);
+        nas_proc_dl_transfer_rej (NAS_DL_DATA_REJ (received_message_p).ue_id, NAS_DL_DATA_REJ (received_message_p).err_code, &NAS_DL_DATA_REJ (received_message_p).nas_msg);
       }
       break;
 
@@ -117,17 +94,8 @@ static void *nas_intertask_interface (void *args_p)
       }
       break;
 
-    case NAS_SIGNALLING_CONNECTION_REL_IND:{
-      nas_proc_signalling_connection_rel_ind (NAS_SIGNALLING_CONNECTION_REL_IND (received_message_p).ue_id);
-      }
-      break;
-
-    case NAS_UPLINK_DATA_IND:{
-      XML_MSG_DUMP_ITTI_NAS_UPLINK_DATA_IND(&NAS_UL_DATA_IND (received_message_p), TASK_S1AP, TASK_NAS_MME, NULL);
-      nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id,
-            NAS_UL_DATA_IND (received_message_p).tai,
-            NAS_UL_DATA_IND (received_message_p).cgi,
-            &NAS_UL_DATA_IND (received_message_p).nas_msg);
+    case NAS_IMPLICIT_DETACH_UE_IND:{
+        nas_proc_implicit_detach_ue_ind (NAS_IMPLICIT_DETACH_UE_IND (received_message_p).ue_id);
       }
       break;
 
@@ -144,6 +112,11 @@ static void *nas_intertask_interface (void *args_p)
         nas_proc_authentication_info_answer (&S6A_AUTH_INFO_ANS(received_message_p));
       }
       break;
+
+    case NAS_UE_CONTEXT_RSP: {
+      nas_proc_ue_context_rsp(&NAS_UE_CONTEXT_RSP(received_message_p));
+    }
+    break;
 
     case TERMINATE_MESSAGE:{
         nas_exit();
@@ -171,7 +144,9 @@ static void *nas_intertask_interface (void *args_p)
     itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
+
   }
+
   return NULL;
 }
 
