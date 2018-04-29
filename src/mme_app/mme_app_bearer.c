@@ -201,6 +201,68 @@ mme_app_handle_initial_ue_message (
   MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
   ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_s1ap_id_key);
 
+
+
+
+
+  /*
+   * Get the UE's EMM context if it exists
+   */
+  // if ue_id is valid (sent by eNB), we should always find the context
+  if (INVALID_MME_UE_S1AP_ID != ue_id) {
+    ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+  } else {
+    if (guti) { // no need for  && (is_native_guti)
+      ue_mm_context = mme_ue_context_exists_guti (&mme_app_desc.mme_ue_contexts, guti);
+      if (ue_mm_context) {
+        ue_id = ue_mm_context->mme_ue_s1ap_id;
+        if (ue_mm_context->enb_s1ap_id_key != enb_ue_s1ap_id_key) {
+          duplicate_enb_context_detected = true;
+          OAILOG_TRACE (LOG_NAS_EMM,
+              "EMM-PROC  - Found old ue_mm_context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " matching GUTI in ATTACH_REQUEST\n",
+              ue_mm_context->enb_ue_s1ap_id, ue_mm_context->mme_ue_s1ap_id);
+        }
+      }
+    }
+    if ((!ue_mm_context) && (imsi)) {
+      ue_mm_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
+      if (ue_mm_context) {
+        ue_id = ue_mm_context->mme_ue_s1ap_id;
+        if (ue_mm_context->enb_s1ap_id_key != enb_ue_s1ap_id_key) {
+          OAILOG_TRACE (LOG_NAS_EMM, "EMM-PROC  - Found old ue_mm_context matching IMSI in ATTACH_REQUEST\n");
+          duplicate_enb_context_detected = true;
+          OAILOG_TRACE (LOG_NAS_EMM,
+              "EMM-PROC  - Found old ue_mm_context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " matching IMSI in ATTACH_REQUEST\n",
+              ue_mm_context->enb_ue_s1ap_id, ue_mm_context->mme_ue_s1ap_id);
+        }
+      }
+    }
+    if (!ue_mm_context) {
+      ue_mm_context = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_ue_s1ap_id_key);
+      if (ue_mm_context) {
+        ue_id = emm_ctx_get_new_ue_id(&ue_mm_context->emm_context);
+        mme_api_notified_new_ue_s1ap_id_association (ue_mm_context->enb_ue_s1ap_id, originating_ecgi->cell_identity.enb_id, ue_id);
+      }
+    }
+  }
+
+  if (duplicate_enb_context_detected) {
+    if (is_initial) {
+      // remove new context
+      ue_mm_context = mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_mm_context->mme_ue_s1ap_id, REMOVE_NEW_CONTEXT);
+      duplicate_enb_context_detected = false; // Problem solved
+      OAILOG_TRACE (LOG_NAS_EMM,
+          "EMM-PROC  - ue_mm_context now enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
+          ue_mm_context->enb_ue_s1ap_id, ue_mm_context->mme_ue_s1ap_id);
+    }
+  }
+
+
+
+
+
+
+
   if (!(ue_context_p)) {
     OAILOG_DEBUG (LOG_MME_APP, "Unknown enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
   }
