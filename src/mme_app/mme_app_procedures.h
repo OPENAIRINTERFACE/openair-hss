@@ -65,6 +65,20 @@ typedef struct mme_app_s11_proc_s {
   LIST_ENTRY(mme_app_s11_proc_s) entries;      /* List. */
 } mme_app_s11_proc_t;
 
+
+typedef enum {
+  MME_APP_HANDOVER_PROC_TYPE_NONE = 0,
+  MME_APP_HANDOVER_PROC_TYPE_INTRA_MME,
+  MME_APP_HANDOVER_PROC_TYPE_INTER_MME
+} mme_app_handover_proc_type_t;
+
+typedef struct mme_app_handover_proc_s {
+  mme_app_base_proc_t           proc;
+  mme_app_handover_proc_type_t  type;
+  uintptr_t                     handover_trxn;
+  LIST_ENTRY(mme_app_handover_proc_s) entries;      /* List. */
+} mme_app_handover_proc_t;
+
 typedef enum {
   S11_PROC_BEARER_UNKNOWN  = 0,
   S11_PROC_BEARER_PENDING  = 1,

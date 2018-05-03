@@ -49,11 +49,37 @@ typedef struct mme_app_desc_s {
   long statistic_timer_id;
   uint32_t statistic_timer_period;
 
-  long s1ap_handover_statistic_timer_id;
+
+  uint32_t mme_mobility_management_timer_period;
 
   /* Reader/writer lock */
   pthread_rwlock_t rw_lock;
 
+
+  /* ***************Statistics*************
+   * number of attached UE,number of connected UE,
+   * number of idle UE,number of default bearers,
+   * number of S1_U bearers,number of PDN sessions
+   */
+
+  uint32_t               nb_enb_connected;
+  uint32_t               nb_ue_attached;
+  uint32_t               nb_ue_connected;
+  uint32_t               nb_default_eps_bearers;
+  uint32_t               nb_s1u_bearers;
+
+  /* ***************Changes in Statistics**************/
+
+  uint32_t               nb_ue_attached_since_last_stat;
+  uint32_t               nb_ue_detached_since_last_stat;
+  uint32_t               nb_ue_connected_since_last_stat;
+  uint32_t               nb_ue_disconnected_since_last_stat;
+  uint32_t               nb_eps_bearers_established_since_last_stat;
+  uint32_t               nb_eps_bearers_released_since_last_stat;
+  uint32_t               nb_enb_connected_since_last_stat;
+  uint32_t               nb_enb_released_since_last_stat;
+  uint32_t               nb_s1u_bearers_released_since_last_stat;
+  uint32_t               nb_s1u_bearers_established_since_last_stat;
 } mme_app_desc_t;
 
 extern mme_app_desc_t mme_app_desc;
@@ -66,9 +92,9 @@ void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context
 
 void mme_app_itti_ue_context_release (    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, uint32_t enb_id);
 
-int mme_app_send_s11_create_session_req (struct ue_mm_context_s *const ue_mm_context, const pdn_cid_t pdn_cid);
+int mme_app_send_s11_create_session_req (struct ue_context_s *const ue_mm_context, const pdn_cid_t pdn_cid);
 
-int mme_app_send_s6a_update_location_req     (struct ue_mm_context_s * const ue_context_pP);
+int mme_app_send_s6a_update_location_req     (struct ue_context_s * const ue_context_pP);
 
 int mme_app_handle_s6a_update_location_ans   (const s6a_update_location_ans_t * const ula_pP);
 
@@ -94,7 +120,7 @@ void  mme_app_handle_release_access_bearers_resp (const itti_s11_release_access_
 
 void mme_app_handle_s11_create_bearer_req        (const itti_s11_create_bearer_request_t * const create_bearer_request_pP);
 
-void mme_app_bearer_create_workflow (ue_mm_context_t * const ue_context, const pdn_cid_t cid);
+void mme_app_bearer_create_workflow (ue_context_t * const ue_context, const pdn_cid_t cid);
 
 //nas_cause_t s6a_error_2_nas_cause            (const uint32_t s6a_errorP, const int experimentalP);
 
@@ -112,7 +138,7 @@ void mme_app_handle_create_dedicated_bearer_rsp (itti_mme_app_create_dedicated_b
 
 void mme_app_handle_create_dedicated_bearer_rej (itti_mme_app_create_dedicated_bearer_rej_t   * const create_dedicated_bearer_rej);
 
-void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_mm_context_t * const ue_context, const pdn_cid_t cid);
+void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_context_t * const ue_context, const pdn_cid_t cid);
 
 
 #define mme_stats_read_lock(mMEsTATS)  pthread_rwlock_rdlock(&(mMEsTATS)->rw_lock)

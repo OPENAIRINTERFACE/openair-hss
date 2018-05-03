@@ -88,6 +88,8 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
   // UE Radio Capability (optional)
   uint8_t                 *ue_radio_capabilities;
   int                     ue_radio_cap_length;
+  // todo:   bstring                 ue_radio_capability;
+
 
   // Subscriber Profile ID for RAT/Frequency priority (optional)
   // CS Fallback Indicator (optional)

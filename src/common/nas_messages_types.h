@@ -61,8 +61,21 @@
 #define NAS_ERAB_SETUP_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.itti_erab_setup_req
 #define NAS_SIGNALLING_CONNECTION_REL_IND(mSGpTR)  (mSGpTR)->ittiMsg.nas_signalling_connection_rel_ind
 
+// todo: context req_res..
+// todo:
+#define NAS_IMPLICIT_DETACH_UE_IND(mSGpTR)          (mSGpTR)->ittiMsg.nas_implicit_detach_ue_ind
 
 
+
+typedef enum pdn_conn_rsp_cause_e {
+  CAUSE_OK = 16,
+  CAUSE_CONTEXT_NOT_FOUND = 64,
+  CAUSE_INVALID_MESSAGE_FORMAT = 65,
+  CAUSE_SERVICE_NOT_SUPPORTED = 68,
+  CAUSE_SYSTEM_FAILURE = 72,
+  CAUSE_NO_RESOURCES_AVAILABLE = 73,
+  CAUSE_ALL_DYNAMIC_ADDRESSES_OCCUPIED = 84
+} pdn_conn_rsp_cause_t;
 
 typedef struct itti_nas_pdn_connectivity_req_s {
   proc_tid_t             pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
@@ -111,9 +124,10 @@ typedef struct itti_nas_pdn_connectivity_rsp_s {
 } itti_nas_pdn_connectivity_rsp_t;
 
 typedef struct itti_nas_pdn_connectivity_fail_s {
-  mme_ue_s1ap_id_t        ue_id; // nas ref
+  mme_ue_s1ap_id_t        ue_id;
+  int                     pti;
+  pdn_conn_rsp_cause_t    cause;
 } itti_nas_pdn_connectivity_fail_t;
-
 
 typedef struct itti_nas_pdn_config_req_s {
   proc_tid_t             pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
@@ -124,6 +138,10 @@ typedef struct itti_nas_pdn_config_req_s {
   bstring                pdn_addr;
   pdn_type_t             pdn_type;
   int                    request_type;
+
+  tai_t                  originating_tai;            /* Indicating the Tracking Area from which the UE has sent the NAS message.  */
+
+
 } itti_nas_pdn_config_req_t;
 
 typedef struct itti_nas_pdn_config_rsp_s {
@@ -193,6 +211,7 @@ typedef struct itti_nas_dl_data_req_s {
   enb_ue_s1ap_id_t  enb_ue_s1ap_id; /* UE lower layer identifier        */
   mme_ue_s1ap_id_t  ue_id;          /* UE lower layer identifier        */
   //nas_error_code_t err_code;      /* Transaction status               */
+  nas_error_code_t  transaction_status;  /* Transaction status               */
   uint32_t          enb_id;
 
   bstring           nas_msg;        /* Uplink NAS message           */
@@ -271,6 +290,42 @@ typedef struct itti_nas_signalling_connection_rel_ind_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
 } itti_nas_signalling_connection_rel_ind_t;
+e_ind_t;
 
 
+
+typedef struct itti_nas_implicit_detach_ue_ind_s {
+  /* UE identifier */
+  mme_ue_s1ap_id_t ue_id;
+} itti_nas_implicit_detach_ue_ind_t;
+
+
+/** NAS Context request and response. */
+typedef struct itti_nas_context_req_s {
+  mme_ue_s1ap_id_t        ue_id;
+  guti_t                  old_guti;
+  rat_type_t              rat_type;
+  tai_t                   originating_tai;
+  bstring                 nas_msg;
+  plmn_t                  visited_plmn;
+  Complete_Request_Message_Type_t request_type;
+
+} itti_nas_context_req_t;
+
+typedef struct itti_nas_context_res_s {
+  mme_ue_s1ap_id_t        ue_id;
+//  MMECause_t              cause;
+
+  teid_t                  peer_teid;
+  uint32_t                peer_ip;        ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  uint16_t                peer_port;      ///< MME port for S-GW or S-GW port for MME
+  void                   *context_rsp_trx;
+
+  uint64_t                imsi;
+  imsi_t                  _imsi;
+
+  imei_t                  _imei;
+
+  mm_context_eps_t        mm_eps_context;
+} itti_nas_context_res_t;
 #endif /* FILE_NAS_MESSAGES_TYPES_SEEN */

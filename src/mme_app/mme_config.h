@@ -50,6 +50,11 @@
 
 #define MME_CONFIG_STRING_MME_CONFIG                     "MME"
 #define MME_CONFIG_STRING_PID_DIRECTORY                  "PID_DIRECTORY"
+
+// todo: what is run mode?
+#define MME_CONFIG_STRING_RUN_MODE                       "RUN_MODE"
+#define MME_CONFIG_STRING_RUN_MODE_TEST                  "TEST"
+
 #define MME_CONFIG_STRING_REALM                          "REALM"
 #define MME_CONFIG_STRING_MAXENB                         "MAXENB"
 #define MME_CONFIG_STRING_MAXUE                          "MAXUE"
@@ -60,6 +65,7 @@
 
 #define MME_CONFIG_STRING_EMERGENCY_ATTACH_SUPPORTED     "EMERGENCY_ATTACH_SUPPORTED"
 #define MME_CONFIG_STRING_UNAUTHENTICATED_IMSI_SUPPORTED "UNAUTHENTICATED_IMSI_SUPPORTED"
+#define MME_CONFIG_STRING_DUMMY_HANDOVER_FORWARDING_ENABLED "DUMMY_HANDOVER_FORWARDING_ENABLED"
 
 #define EPS_NETWORK_FEATURE_SUPPORT_IMS_VOICE_OVER_PS_SESSION_IN_S1       "EPS_NETWORK_FEATURE_SUPPORT_IMS_VOICE_OVER_PS_SESSION_IN_S1"
 #define EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE  "EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE"
@@ -73,6 +79,7 @@
 #define MME_CONFIG_STRING_S6A_CONFIG                     "S6A"
 #define MME_CONFIG_STRING_S6A_CONF_FILE_PATH             "S6A_CONF"
 #define MME_CONFIG_STRING_S6A_HSS_HOSTNAME               "HSS_HOSTNAME"
+#define MME_CONFIG_STRING_S6A_MME_HOSTNAME               "MME_HOSTNAME"
 
 #define MME_CONFIG_STRING_SCTP_CONFIG                    "SCTP"
 #define MME_CONFIG_STRING_SCTP_INSTREAMS                 "SCTP_INSTREAMS"
@@ -108,6 +115,7 @@
 #define MME_CONFIG_STRING_NAS_SUPPORTED_INTEGRITY_ALGORITHM_LIST  "ORDERED_SUPPORTED_INTEGRITY_ALGORITHM_LIST"
 #define MME_CONFIG_STRING_NAS_SUPPORTED_CIPHERING_ALGORITHM_LIST  "ORDERED_SUPPORTED_CIPHERING_ALGORITHM_LIST"
 
+#define MME_CONFIG_STRING_NAS_T3346_TIMER                "T3346"
 #define MME_CONFIG_STRING_NAS_T3402_TIMER                "T3402"
 #define MME_CONFIG_STRING_NAS_T3412_TIMER                "T3412"
 #define MME_CONFIG_STRING_NAS_T3422_TIMER                "T3422"
@@ -119,8 +127,7 @@
 #define MME_CONFIG_STRING_NAS_T3489_TIMER                "T3489"
 #define MME_CONFIG_STRING_NAS_T3346_TIMER                "T3346"
 #define MME_CONFIG_STRING_NAS_T3495_TIMER                "T3495"
-#define MME_CONFIG_STRING_NAS_FORCE_REJECT_TAU           "FORCE_REJECT_TAU"
-#define MME_CONFIG_STRING_NAS_FORCE_REJECT_SR            "FORCE_REJECT_SR"
+
 #define MME_CONFIG_STRING_NAS_DISABLE_ESM_INFORMATION_PROCEDURE    "DISABLE_ESM_INFORMATION_PROCEDURE"
 #define MME_CONFIG_STRING_NAS_FORCE_PUSH_DEDICATED_BEARER "FORCE_PUSH_DEDICATED_BEARER"
 
@@ -137,6 +144,12 @@ typedef enum {
    RUN_MODE_BASIC,
    RUN_MODE_SCENARIO_PLAYER
 } run_mode_t;
+
+// todo: run mode?
+//typedef enum {
+//  RUN_MODE_TEST = 0,
+//  RUN_MODE_OTHER
+//} run_mode_t;
 
 typedef struct mme_config_s {
   /* Reader/writer lock for this configuration */
@@ -159,6 +172,7 @@ typedef struct mme_config_s {
   uint32_t mme_s10_handover_completion_timer;
 
   uint8_t unauthenticated_imsi_supported;
+  uint8_t dummy_handover_forwarding_enabled;
 
   struct {
     uint8_t ims_voice_over_ps_session_in_s1;
@@ -215,12 +229,17 @@ typedef struct mme_config_s {
     int        netmask_s10;
     uint16_t   port_s10;
 
+    // todo: sgw_s11 removed, finding it dynamically?
+//    ipv4_nbo_t sgw_s11;
+
   } ipv4;
 
   struct {
     bstring conf_file;
     bstring hss_host_name;
+    bstring mme_host_name;
   } s6a_config;
+
   struct {
     uint32_t  queue_size;
     bstring   log_file;
@@ -229,6 +248,7 @@ typedef struct mme_config_s {
   struct {
     uint8_t  prefered_integrity_algorithm[8];
     uint8_t  prefered_ciphering_algorithm[8];
+    uint32_t t3346_sec;
     uint32_t t3402_min;
     uint32_t t3412_min;
     uint32_t t3422_sec;
@@ -239,7 +259,6 @@ typedef struct mme_config_s {
     uint32_t t3486_sec;
     uint32_t t3489_sec;
     uint32_t t3495_sec;
-    uint32_t t3346_sec;
 
     // non standart features
     bool     force_reject_tau;

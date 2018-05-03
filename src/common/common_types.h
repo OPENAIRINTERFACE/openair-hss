@@ -81,6 +81,7 @@ typedef uint32_t                 teid_t;
 #define TEID_FMT                "0x%"PRIx32
 #define TEID_SCAN_FMT            SCNx32
 typedef teid_t                   s11_teid_t;
+typedef teid_t                   s10_teid_t;
 typedef teid_t                   s1u_teid_t;
 #define INVALID_TEID             0x00000000
 

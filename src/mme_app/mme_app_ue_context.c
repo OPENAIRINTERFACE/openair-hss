@@ -161,5 +161,11 @@ void mme_app_ue_context_s1_release_enb_informations(ue_mm_context_t *ue_context)
   }
 }
 
+mme_ue_s1ap_id_t mme_app_ctx_get_new_ue_id(void)
+{
+  mme_ue_s1ap_id_t tmp = 0;
+  tmp = __sync_fetch_and_add (&mme_app_ue_s1ap_id_generator, 1);
+  return tmp;
+}
 
 
