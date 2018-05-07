@@ -46,7 +46,7 @@
 #include "mme_app_defs.h"
 
 //------------------------------------------------------------------------------
-static void mme_app_send_delete_session_request (struct ue_mm_context_s * const ue_context_p, const ebi_t ebi, const pdn_cid_t cid)
+static void mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const pdn_cid_t cid)
 {
   MessageDef                             *message_p = NULL;
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -91,7 +91,7 @@ static void mme_app_send_delete_session_request (struct ue_mm_context_s * const 
 //mme_app_handle_detach_req (
 //  const itti_nas_detach_req_t * const detach_req_p)
 //{
-//  struct ue_mm_context_s *ue_context    = NULL;
+//  struct ue_context_s *ue_context    = NULL;
 //  bool   sent_sgw = false;
 //
 //  DevAssert(detach_req_p != NULL);

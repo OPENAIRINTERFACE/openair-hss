@@ -47,6 +47,8 @@
 #include "s1ap_messages_types.h"
 #include "nas_messages_types.h"
 #include "s6a_messages_types.h"
+#include "s10_messages_types.h"
+#include "s11_messages_types.h"
 #include "security_types.h"
 #include "sgw_ie_defs.h"
 #include "emm_data.h"
@@ -159,7 +161,7 @@ typedef struct bearer_context_s {
 
   // extra 23.401 spec members
   pdn_cid_t                         pdn_cx_id;
-  mme_app_bearer_state_t            bearer_state;
+//  mme_app_bearer_state_t            bearer_state;
   esm_ebr_context_t                 esm_ebr_context;
   fteid_t                           enb_fteid_s1u;
 
@@ -168,11 +170,11 @@ typedef struct bearer_context_s {
   pre_emption_vulnerability_t preemption_vulnerability;
   pre_emption_capability_t    preemption_capability;
 
+  /** Add an entry field to make it part of a list. */
+  LIST_ENTRY(bearer_context_s) entries;      /* List. */
+  struct bearer_context_s*     next_bc;
+
 } bearer_context_t;
-
-
-
-
 
 /** @struct subscribed_apn_t
  *  @brief Parameters that should be kept for a subscribed apn by the UE.
@@ -194,14 +196,14 @@ typedef struct pdn_context_s {
   bstring                     apn_subscribed;
 
   // PDN Type: IPv4, IPv6 or IPv4v6
-  pdn_type_t                  pdn_type;
+  pdn_type_t                  pdn_type; /**< Set by UE/ULR. */
 
   // IP Address(es): IPv4 address and/or IPv6 prefix
   //                 NOTE:
   //                 The MME might not have information on the allocated IPv4 address.
   //                 Alternatively, following mobility involving a pre-release 8 SGSN, this
   //                 IPv4 address might not be the one allocated to the UE.
-  paa_t              paa;                         // set by S11 CREATE_SESSION_RESPONSE
+  paa_t              *paa;                         // set by S11 CREATE_SESSION_RESPONSE
 
 
 
@@ -255,7 +257,10 @@ typedef struct pdn_context_s {
   // Default bearer: Identifies the EPS Bearer Id of the default bearer within the given PDN connection.
   ebi_t                       default_ebi;
 
-  int                         bearer_contexts[BEARERS_PER_UE]; // contains bearer indexes in ue_context_t.bearer_contexts[], or -1
+  /*
+   * List of bearer contexts of the PDN session.
+   */
+  RB_HEAD(BearerPool, bearer_context_s) session_bearers;
 
   //apn_configuration_t         apn_configuration; // set by S6A UPDATE LOCATION ANSWER
   //bstring                     pgw_id;            // an ID for P-GW through which a user can access the Subscribed APN
@@ -269,8 +274,6 @@ typedef struct pdn_context_s {
   protocol_configuration_options_t *pco; // temp storage of information waiting for activation of required procedure
 
 } pdn_context_t;
-
-
 
 
 
@@ -373,11 +376,6 @@ typedef struct ue_context_s {
   // MME TEID for S11             // MME Tunnel Endpoint Identifier for S11 interface.
   // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].mme_teid_s11
 
-  //
-  teid_t                      local_mme_teid_s10;      // 0 at first. Later set by FORWARD_RELOCATION_REQUEST / FORWARD_RELOCATION_RESPONSE
-  teid_t                 remote_mme_s10_teid;      // 0 at first. Later set by FORWARD_RELOCATION_REQUEST / FORWARD_RELOCATION_RESPONSE
-  uint32_t               remote_mme_s10_peer_ip;
-
   // S-GW IP address for S11/S4   // S-GW IP address for the S11 and S4 interfaces
   // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].s_gw_address_s11_s4
 
@@ -399,6 +397,10 @@ typedef struct ue_context_s {
   // MME UE S1AP ID, Unique identity of the UE within MME.
   mme_ue_s1ap_id_t       mme_ue_s1ap_id;
 
+
+  // MME TEID for S11             // MME Tunnel Endpoint Identifier for S11 interface.
+  // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].mme_teid_s11
+  teid_t                      mme_teid_s11;                // set by mme_app_send_s11_create_session_req
 
   // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user.
   ambr_t                 suscribed_ue_ambr;
@@ -425,35 +427,35 @@ typedef struct ue_context_s {
 
   // MPS EPS priority: Indicates that the UE is subscribed to MPS in the EPS domain.
 
-  // For each active PDN connection:
-  pdn_context_t         *pdn_contexts[MAX_APN_PER_UE]; // index is of type pdn_cid_t
-  int                    nb_active_pdn_contexts;
-
-
-
   network_access_mode_t  access_mode;                  // set by S6A UPDATE LOCATION ANSWER
 
-  // Not in spec members
-//  emm_context_t          emm_context;
   /*
    * List of empty bearer context.
    * Take the bearer contexts from here and put them into the PDN context.
    */
-  bearer_context_t      *bearer_contexts[BEARERS_PER_UE];
+  // todo: check if they are necessary!
+  #define MAX_NUM_BEARERS_UE    11 /**< Maximum number of bearers. */
+  RB_HEAD(BearerPool, bearer_context_s) bearer_pool;
+
+  /*
+   * List of empty bearer context.
+   * Take the bearer contexts from here and put them into the PDN context.
+   */
+  // todo: check if they are necessary!
+  #define MAX_APN_PER_UE    5 /**< Maximum number of PDN sesssions per UE. */
+  RB_HEAD(PdnContexts, pdn_context_s) pdn_contexts;
+  int num_pdns;
 
   apn_config_profile_t   apn_config_profile;                  // set by S6A UPDATE LOCATION ANSWER
-
 
 #define SUBSCRIPTION_UNKNOWN    false
 #define SUBSCRIPTION_KNOWN      true
 
 
-  // todo: subscribed amb
   // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user.
 
   apn_config_profile_t   apn_profile;                  // set by S6A UPDATE LOCATION ANSWER
   subscriber_status_t    sub_status;                   // set by S6A UPDATE LOCATION ANSWER
-  ambr_t                 suscribed_ambr;
 
 
   bool                   subscription_known;        // set by S6A UPDATE LOCATION ANSWER
@@ -498,16 +500,9 @@ typedef struct ue_context_s {
 
 
   /** Additional stuff for handover (pending flags etc..). */
+//  bool                   pending_bearer_deactivation; todo: when removing the tau procedure, evaluate and check (need to store old ECM state)?
   bool                   pending_clear_location_request;
   bool                   pending_x2_handover; /**< Temporary flag, clear with Lionel how to integrate the X2 of B-COM. */
-
-
-  // todo: check if they are necessary!
-  #define MAX_NUM_BEARERS_UE    11 /**< Maximum number of bearers. */
-
-  uint32_t nb_ue_bearer_ctxs; ///< Number of bearer context of the UE (over all sessions)
-  hash_table_ts_t  bearer_ctxs; // contains bearer_contexts, key is ebi;
-
 
   // Mobile Reachability Timer-Start when UE moves to idle state. Stop when UE moves to connected state
   struct mme_app_timer_t       mobile_reachability_timer;
@@ -531,47 +526,18 @@ typedef struct ue_context_s {
 
 
 
-
-
-
   // todo: further pending data which is to be moved as IEs into mme_app_handover_procedure!!!
-//  // temp
-//   FTeid_t                pending_s1u_downlink_bearer;
-//   uint8_t                pending_s1u_downlink_bearer_ebi;
-//   char                   pending_pdn_connectivity_req_imsi[16];
-//   uint8_t                pending_pdn_connectivity_req_imsi_length;
-//   bstring                pending_pdn_connectivity_req_apn;
-//   bstring                pending_pdn_connectivity_req_pdn_addr;
-//   pdn_type_t             pending_pdn_connectivity_req_pdn_type;
-//   uint8_t                pending_pdn_connectivity_req_apn_restriction;
-//   uint8_t                pending_pdn_connectivity_req_ebi;
-//
-//   int                    pending_pdn_connectivity_req_pti;
-//   unsigned               pending_pdn_connectivity_req_ue_id;
-//   network_qos_t          pending_pdn_connectivity_req_qos;
-//   protocol_configuration_options_t   pending_pdn_connectivity_req_pco;
+  //  // temp
+  //   uint8_t                pending_pdn_connectivity_req_ebi;
+  //   int                    pending_pdn_connectivity_req_pti;
+  //   protocol_configuration_options_t   pending_pdn_connectivity_req_pco;
 //   void                  *pending_pdn_connectivity_req_proc_data;
 //   int                    pending_pdn_connectivity_req_request_type;
-//
-//   bool                   pending_clear_location_request;
-//   bool                   pending_bearer_deactivation;
 //   /** Pending TAU information. */
-//   EpsUpdateType          pending_tau_epsUpdateType;
-//
-//   /** Pending Transparent Container: will be automatically freed, when the S1AP Handover Request message is sent. */
-//   bstring                pending_s1ap_source_to_target_handover_container;
-//
-//   /** Handover Target Information. */
-//   tai_t                  pending_handover_target_tai;     /**< Todo: can they be directly set? with the first handover required message? */
 //   uint32_t               pending_handover_source_enb_id:20;
 //   uint32_t               pending_handover_target_enb_id:20;
 //
-//   void                  *pending_s10_response_trxn;       ///< Transaction identifier;
 //   enb_ue_s1ap_id_t       pending_handover_enb_ue_s1ap_id; /**< eNB-UE-S1AP-Id of the target-ENB if it is a single MME s1AP handover. */
-//
-//   /** The pending MM_CONTEXT information. */
-//   mm_context_eps_t      *pending_mm_ue_eps_context;
-
 
 
 } ue_context_t;
@@ -591,7 +557,6 @@ typedef struct mme_ue_context_s {
 
   hash_table_uint64_ts_t  *imsi_ue_context_htbl; // data is mme_ue_s1ap_id_t
   hash_table_uint64_ts_t  *tun11_ue_context_htbl;// data is mme_ue_s1ap_id_t
-  hash_table_uint64_ts_t  *tun10_ue_context_htbl;// data is mme_ue_s1ap_id_t
   hash_table_uint64_ts_t  *mme_ue_s1ap_id_ue_context_htbl; // data is enb_s1ap_id_key_t
   hash_table_ts_t         *enb_ue_s1ap_id_ue_context_htbl;
   obj_hash_table_uint64_t *guti_ue_context_htbl;// data is mme_ue_s1ap_id_t
@@ -611,13 +576,6 @@ ue_context_t *mme_ue_context_exists_imsi(mme_ue_context_t * const mme_ue_context
  **/
 ue_context_t *mme_ue_context_exists_s11_teid(mme_ue_context_t * const mme_ue_context,
     const s11_teid_t teid);
-
-/** \brief Retrieve an UE context by selecting the provided S10 teid
- * \param teid The tunnel endpoint identifier used between MME and S-GW
- * @returns an UE context matching the teid or NULL if the context doesn't exists
- **/
-ue_context_t *mme_ue_context_exists_s10_teid(mme_ue_context_t * const mme_ue_context,
-    const s10_teid_t teid);
 
 /** \brief Retrieve an UE context by selecting the provided mme_ue_s1ap_id
  * \param mme_ue_s1ap_id The UE id identifier used in S1AP MME (and NAS)
@@ -686,7 +644,6 @@ void mme_ue_context_update_coll_keys(
     const mme_ue_s1ap_id_t   mme_ue_s1ap_id,
     const imsi64_t     imsi,
     const s11_teid_t         mme_teid_s11,
-    const s10_teid_t         local_mme_teid_s10,
     const guti_t     * const guti_p);
 
 /** \brief dump MME associative collections
@@ -737,6 +694,8 @@ void mme_app_free_bearer_context(bearer_context_t ** bc);
 
 void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context);
 
+/* Declaration (prototype) of the function to store bearer contexts. */
+RB_PROTOTYPE(BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 

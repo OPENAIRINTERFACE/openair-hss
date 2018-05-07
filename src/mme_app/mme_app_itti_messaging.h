@@ -32,7 +32,9 @@
 
 int mme_app_notify_s1ap_ue_context_released(const mme_ue_s1ap_id_t   ue_idP);
 int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id);
-int mme_app_send_s11_release_access_bearers_req (struct ue_mm_context_s *const ue_mm_context, const pdn_cid_t pdn_index);
-int mme_app_send_s11_create_session_req (struct ue_mm_context_s *const ue_mm_context, const pdn_cid_t pdn_cid);
+int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context, const pdn_cid_t pdn_index);
+int mme_app_send_s11_create_session_req (  struct ue_context_s *const ue_context,
+    pdn_context_t * pdn_context,
+    tai_t * serving_tai);
 
 #endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */

@@ -35,7 +35,7 @@
 #ifndef FILE_MME_APP_PDN_CONTEXT_SEEN
 #define FILE_MME_APP_PDN_CONTEXT_SEEN
 
-pdn_context_t *  mme_app_create_pdn_context(ue_mm_context_t * const ue_mm_context, const pdn_cid_t pdn_cid, const context_identifier_t context_identifier);
+pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, const pdn_cid_t pdn_cid, const context_identifier_t context_identifier);
 void mme_app_free_pdn_context (pdn_context_t ** const pdn_context);
 
 

@@ -94,7 +94,7 @@ mme_app_handle_s1ap_ue_capabilities_ind (
 //mme_app_handle_s1ap_ue_capabilities_ind (
 //  const itti_s1ap_ue_cap_ind_t const *s1ap_ue_cap_ind_pP)
 //{
-//  ue_mm_context_t *ue_context_p = NULL;
+//  ue_context_t *ue_context_p = NULL;
 //
 //  OAILOG_FUNC_IN (LOG_MME_APP);
 //  DevAssert (s1ap_ue_cap_ind_pP );

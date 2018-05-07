@@ -100,11 +100,21 @@ typedef enum {
   MME_APP_S1AP_PROC_TYPE_INITIAL
 } mme_app_s1ap_proc_type_t;
 
-void mme_app_delete_s11_procedures(ue_mm_context_t * const ue_context_p);
-mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p);
-mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p);
-void mme_app_delete_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p);
-void mme_app_s11_procedure_create_bearer_send_response(ue_mm_context_t * const ue_context_p, mme_app_s11_proc_create_bearer_t* s11_proc_create);
+void mme_app_delete_s11_procedures(ue_context_t * const ue_context_p);
+mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
+mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
+void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context_p);
+void mme_app_s11_procedure_create_bearer_send_response(ue_context_t * const ue_context_p, mme_app_s11_proc_create_bearer_t* s11_proc_create);
 
+/*
+ * - Creating handover procedure in intra-MME and inter-MME handover
+ * - Creating handover procedure in source & target MME todo: create same timer but different callback methods. */
+void mme_app_create_handover_procedure(fteid_t *source_mme_fteid, target_identification_t * target_id,
+      F_Container_t * source_to_target_eutran_container,
+      F_Cause_t *f_cause,
+      struct in_addr * peer_ip, // todo: if they differ etc..
+      uint16_t peer_port,
+      imsi_t *imsi,
+      void * trxn);
 
 #endif

@@ -38,12 +38,17 @@
 #define FILE_MME_APP_BEARER_CONTEXT_SEEN
 
 bstring bearer_state2string(const mme_app_bearer_state_t bearer_state);
-bearer_context_t *  mme_app_create_bearer_context(ue_mm_context_t * const ue_mm_context, const pdn_cid_t pdn_cid, const ebi_t ebi, const bool is_default);
+/** Create & deallocate a bearer context. */
+bearer_context_t *mme_app_new_bearer();
+int mme_app_bearer_context_delete (bearer_context_t *bearer_context);
+/** New method to get a bearer contxt from the bearer pool of the UE context and add it into the pdn session. */
+bearer_context_t* mme_app_get_bearer_context(ue_context_t * const ue_context, const ebi_t ebi);
+int mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
+int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
+
 void mme_app_free_bearer_context (bearer_context_t ** const bearer_context);
-bearer_context_t* mme_app_get_bearer_context(ue_mm_context_t * const ue_context, const ebi_t ebi);
-bearer_context_t* mme_app_get_bearer_context_by_state(ue_mm_context_t * const ue_context, const pdn_cid_t cid, const mme_app_bearer_state_t state);
-void mme_app_add_bearer_context(ue_mm_context_t * const ue_context, bearer_context_t  * const bc, const pdn_cid_t pdn_cid, const bool is_default);
-ebi_t mme_app_get_free_bearer_id(ue_mm_context_t * const ue_context);
 void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const bc);
+
+void mme_app_bearer_context_update_handover(bearer_context_t * bc_registered, bearer_context_t * const bc_s10);
 
 #endif

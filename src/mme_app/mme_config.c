@@ -177,6 +177,7 @@ static void mme_config_init (mme_config_t * config_pP)
   config_pP->gummei.gummei[0].plmn.mcc_digit3 = 0x0F;
 
 
+  config_pP->nas_config.t3346_sec = T3346_DEFAULT_VALUE;
   config_pP->nas_config.t3402_min = T3402_DEFAULT_VALUE;
   config_pP->nas_config.t3412_min = T3412_DEFAULT_VALUE;
   config_pP->nas_config.t3422_sec = T3422_DEFAULT_VALUE;
@@ -677,7 +678,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         }
       }
     }
-
 
     // NEIGHBORING MME's SETTING
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_NEIGHBORING_MME_LIST);

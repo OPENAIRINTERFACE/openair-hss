@@ -49,7 +49,7 @@
 #include "mme_app_apn_selection.h"
 
 //------------------------------------------------------------------------------
-struct apn_configuration_s   * mme_app_select_apn(ue_mm_context_t * const ue_context, const_bstring const ue_selected_apn)
+struct apn_configuration_s   * mme_app_select_apn(ue_context_t * const ue_context, const_bstring const ue_selected_apn)
 {
 
   context_identifier_t          default_context_identifier = ue_context->apn_config_profile.context_identifier;
@@ -87,7 +87,7 @@ struct apn_configuration_s   * mme_app_select_apn(ue_mm_context_t * const ue_con
 
 
 //------------------------------------------------------------------------------
-struct apn_configuration_s *mme_app_get_apn_config(ue_mm_context_t * const ue_context, const context_identifier_t context_identifier)
+struct apn_configuration_s *mme_app_get_apn_config(ue_context_t * const ue_context, const context_identifier_t context_identifier)
 {
   int                           index;
 

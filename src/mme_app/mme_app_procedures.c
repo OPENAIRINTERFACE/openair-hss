@@ -52,7 +52,7 @@
 static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_proc);
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedures(ue_mm_context_t * const ue_context_p)
+void mme_app_delete_s11_procedures(ue_context_t * const ue_context_p)
 {
   if (ue_context_p->s11_procedures) {
     mme_app_s11_proc_t *s11_proc1 = NULL;
@@ -71,7 +71,7 @@ void mme_app_delete_s11_procedures(ue_mm_context_t * const ue_context_p)
   }
 }
 //------------------------------------------------------------------------------
-mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p)
+mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context_p)
 {
   mme_app_s11_proc_create_bearer_t *s11_proc_create_bearer = calloc(1, sizeof(mme_app_s11_proc_create_bearer_t));
   s11_proc_create_bearer->proc.proc.type = MME_APP_BASE_PROC_TYPE_S11;
@@ -87,7 +87,7 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p)
+mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_context_t * const ue_context_p)
 {
   if (ue_context_p->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL;
@@ -101,7 +101,7 @@ mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_mm_
   return NULL;
 }
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_create_bearer(ue_mm_context_t * const ue_context_p)
+void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context_p)
 {
   if (ue_context_p->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL;
@@ -124,7 +124,7 @@ static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_pr
 }
 
 //------------------------------------------------------------------------------
-void mme_app_s11_procedure_create_bearer_send_response(ue_mm_context_t * const ue_context_p, mme_app_s11_proc_create_bearer_t* s11_proc_create)
+void mme_app_s11_procedure_create_bearer_send_response(ue_context_t * const ue_context_p, mme_app_s11_proc_create_bearer_t* s11_proc_create)
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, S11_CREATE_BEARER_RESPONSE);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
@@ -179,4 +179,35 @@ void mme_app_s11_procedure_create_bearer_send_response(ue_mm_context_t * const u
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
 }
 
+//------------------------------------------------------------------------------
+void mme_app_create_handover_procedure(fteid_t *source_mme_fteid, target_identification_t * target_id,
+      F_Container_t * source_to_target_eutran_container,
+      F_Cause_t *f_cause,
+      struct in_addr * peer_ip, // todo: if they differ etc..
+      uint16_t peer_port,
+      imsi_t *imsi,
+      void * trxn){
+  /*
+   * Restart the S10 MME Handover Completion timer for the MME_APP UE Context (properiarty target-MME side timer).
+   */
+  if (ue_context_p->mme_s10_handover_completion_timer.id != MME_APP_TIMER_INACTIVE_ID) {
+    if (timer_remove(ue_context_p->mme_s10_handover_completion_timer.id)) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop MME S10 Handover Completion timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    }
+    ue_context_p->mme_s10_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  }
+  if (timer_setup (mme_config.mme_s10_handover_completion_timer, 0,
+      TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context_p->mme_ue_s1ap_id), &(ue_context_p->mme_s10_handover_completion_timer.id)) < 0) {
+    OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME S10 Handover Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context_p->mme_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
+    ue_context_p->mme_s10_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+    /**
+     * UE will be implicitly detached, if this timer runs out. It should be manually removed.
+     * S10 FW Relocation Complete removes this timer.
+     */
+  } else {
+    OAILOG_DEBUG (LOG_MME_APP, "MME APP : Activated the MME S10 Handover Completion timer UE id  " MME_UE_S1AP_ID_FMT ". Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %u. "
+        "Timer duration %d \n", ue_context_p->mme_ue_s1ap_id, ue_context_p->mme_s10_handover_completion_timer.id, mme_config.mme_s10_handover_completion_timer);
+    /** Upon expiration, invalidate the timer.. no flag needed. */
+  }
+}
 

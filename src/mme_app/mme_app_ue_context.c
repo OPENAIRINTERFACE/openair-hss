@@ -47,6 +47,60 @@
 #include "mme_app_bearer_context.h"
 
 
+/*---------------------------------------------------------------------------
+   Bearer Context RBTree Search Data Structure
+  --------------------------------------------------------------------------*/
+
+/**
+  Comparator funtion for comparing two ebis.
+
+  @param[in] a: Pointer to bearer context a.
+  @param[in] b: Pointer to bearer context b.
+  @return  An integer greater than, equal to or less than zero according to whether the
+  object pointed to by a is greater than, equal to or less than the object pointed to by b.
+*/
+
+static
+inline int32_t                    mme_app_compare_bearer_context(
+    struct bearer_context_s *a,
+    struct bearer_context_s *b) {
+    if (a->ebi > b->ebi )
+      return 1;
+
+    if (a->ebi < b->ebi)
+      return -1;
+
+    /* Not more field to compare. */
+    return 0;
+}
+
+RB_GENERATE (BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
+
+
+/*---------------------------------------------------------------------------
+   PDN Context RBTree Search Data Structure
+  --------------------------------------------------------------------------*/
+
+/**
+  Comparator funtion for comparing two apns.
+
+  @param[in] a: Pointer to pdn context a.
+  @param[in] b: Pointer to pdn context b (received .
+  @return  An integer greater than, equal to or less than zero according to whether the
+  object pointed to by a is greater than, equal to or less than the object pointed to by b.
+*/
+
+static
+inline int32_t                    mme_app_compare_pdn_context(
+    struct pdn_context_s *a,
+    struct pdn_context_s *b) {
+
+  /* Compare the bstrings. */
+  return bstrcmp(apn_network_identifier(a->apn_in_use),
+      apn_network_identifier(b->apn_in_use));
+}
+
+RB_GENERATE (PdnContexts, pdn_context_s, pdn_ctx_rbt_Node, mme_app_compare_pdn_context)
 
 /**
  * @brief mme_app_convert_imsi_to_imsi_mme: converts the imsi_t struct to the imsi mme struct
@@ -151,7 +205,7 @@ mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src)
 }
 
 //------------------------------------------------------------------------------
-void mme_app_ue_context_s1_release_enb_informations(ue_mm_context_t *ue_context)
+void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context)
 {
   for (int i = 0; i < BEARERS_PER_UE; i++) {
     bearer_context_t *bc = ue_context->bearer_contexts[i];
@@ -168,4 +222,9 @@ mme_ue_s1ap_id_t mme_app_ctx_get_new_ue_id(void)
   return tmp;
 }
 
+/*
+ * Generate the functions to operate inside the bearer pool.
+ */
+RB_GENERATE (BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
 
+RB_GENERATE (BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)

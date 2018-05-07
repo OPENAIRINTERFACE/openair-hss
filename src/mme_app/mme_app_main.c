@@ -143,7 +143,7 @@ void *mme_app_thread (void *args)
     break;
 
     case NAS_PDN_CONFIG_REQ: {
-        struct ue_mm_context_s                    *ue_context_p = NULL;
+        struct ue_context_s                    *ue_context_p = NULL;
         ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.nas_pdn_config_req.ue_id);
         if (ue_context_p) {
           if (!ue_context_p->is_s1_ue_context_release) {
@@ -174,7 +174,7 @@ void *mme_app_thread (void *args)
       break;
 
     case S11_MODIFY_BEARER_RESPONSE:{
-        struct ue_mm_context_s                    *ue_context_p = NULL;
+        struct ue_context_s                    *ue_context_p = NULL;
         ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, received_message_p->ittiMsg.s11_modify_bearer_response.teid);
 
         if (ue_context_p == NULL) {

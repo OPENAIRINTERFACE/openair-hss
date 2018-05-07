@@ -92,8 +92,6 @@ void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context
 
 void mme_app_itti_ue_context_release (    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, uint32_t enb_id);
 
-int mme_app_send_s11_create_session_req (struct ue_context_s *const ue_mm_context, const pdn_cid_t pdn_cid);
-
 int mme_app_send_s6a_update_location_req     (struct ue_context_s * const ue_context_pP);
 
 int mme_app_handle_s6a_update_location_ans   (const s6a_update_location_ans_t * const ula_pP);
