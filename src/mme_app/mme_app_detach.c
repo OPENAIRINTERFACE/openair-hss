@@ -167,11 +167,6 @@ mme_app_handle_detach_req (
    * Assuming that new S10 messages (if any, will be sent with new TEIDs).
    * todo: this as the only point to remove the S10 tunnel.
 //   */
-//  MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S10_REMOVE_UE_TUNNEL);
-//  DevAssert (message_p != NULL);
-//  message_p->ittiMsg.s10_remove_ue_tunnel.remote_teid  = ue_context->remote_mme_s10_teid;
-//  message_p->ittiMsg.s10_remove_ue_tunnel.local_teid   = ue_context->local_mme_s10_teid;
-//  message_p->ittiMsg.s10_remove_ue_tunnel.peer_ip      = ue_context->remote_mme_s10_peer_ip;
 
 //  /*
 //   * todo: do this in the DEREGISTER state enter callback.

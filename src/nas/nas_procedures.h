@@ -325,16 +325,25 @@ typedef struct nas_auth_info_proc_s {
   bool                        resync; // Indicates whether the authentication information is requested due to sync failure
 } nas_auth_info_proc_t;
 
+typedef struct nas_s10_context_s{
+  uint64_t                    imsi;
+  imsi_t                      _imsi;
+  imei_t                      _imei;
+  mm_context_eps_t              *mm_eps_ctx;
+  /** Information to update in the ESM layer. */
+  int                         n_active_ebrs;     /* Total number of active EPS bearer contexts   */
+  int                         n_active_pdns;     /* Number of active PDN connections     */
+  int                         n_pdns;
+}nas_s10_context_t;
+
 typedef struct nas_ctx_req_proc_s {
   nas_cn_proc_t               cn_proc;
   success_cb_t                success_notif;
   failure_cb_t                failure_notif;
 //  bool                        request_sent;
+
   /** From the ITTI message, we copy the stuff into here. */
-  uint64_t                    imsi;
-  imsi_t                      _imsi;
-  imei_t                      _imei;
-  mm_context_eps_t              *mm_eps_ctx;
+  nas_s10_context_t           nas_s10_context;
 //  mme_ue_eps_pdn_connections_t  *pdn_connections; // todo: make this as an erray
   int                         nas_cause;
   struct nas_timer_s          timer_s10; // todo: necessary?

@@ -1932,151 +1932,68 @@ mme_app_handle_enb_reset_req (const itti_s1ap_enb_initiated_reset_req_t const * 
 /** Handle S10/Handover Related Information. */
 //------------------------------------------------------------------------------
 void
-mme_app_handle_nas_ue_context_req(const itti_nas_ue_context_req_t * const nas_ue_context_request_pP){
+mme_app_handle_nas_context_req(const itti_nas_context_req_t * const nas_context_req_pP){
   /**
    * Send a context request for the given UE to the specified MME with the given last visited TAI.
    */
   MessageDef            *message_p;
-  struct ue_context_s   *ue_context_p = NULL;
-  struct ue_context_s   *ue_context_p1 = NULL;
-
+  struct ue_context_s   *ue_context = NULL;
   /**
    * Check that the UE does exist.
    * This should come through an initial request for attach/TAU.
    * MME_APP UE context is created and is in UE_UNREGISTERED mode.
    */
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, nas_ue_context_request_pP->ue_id);
-  if (ue_context_p == NULL) { /**< Always think separate of EMM_DATA context and the rest. Could mean or not mean, that no EMM_DATA exists. */
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, nas_context_req_pP->ue_id);
+  if (ue_context == NULL) { /**< Always think separate of EMM_DATA context and the rest. Could mean or not mean, that no EMM_DATA exists. */
     OAILOG_ERROR(LOG_MME_APP, "An UE MME context does not exist for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT " and guti: " GUTI_FMT ". \n",
-        nas_ue_context_request_pP->ue_id, GUTI_ARG(&nas_ue_context_request_pP->old_guti));
+        nas_context_req_pP->ue_id, GUTI_ARG(&nas_context_req_pP->old_guti));
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "An UE MME context does not exist for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT " and guti: " GUTI_FMT ". \n",
-        nas_ue_context_request_pP->ue_id, GUTI_ARG(&nas_ue_context_request_pP->old_guti));
+        nas_context_req_pP->ue_id, GUTI_ARG(&nas_context_req_pP->old_guti));
     /** This should always clear the allocated UE context resources, if there are any. We do not clear them directly, but only inform NAS/EMM layer of what happened. */
-    _mme_app_send_nas_ue_context_response_err(nas_ue_context_request_pP->ue_id, SYSTEM_FAILURE);
+    _mme_app_send_nas_ue_context_response_err(nas_context_req_pP->ue_id, SYSTEM_FAILURE);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
   /**
    * Check that the UE is in EMM_UNREGISTERED state.
    */
-  if(ue_context_p->mm_state != UE_UNREGISTERED){
+  if(ue_context->mm_state != UE_UNREGISTERED){
     OAILOG_ERROR(LOG_MME_APP, "UE MME context is not in UE_UNREGISTERED state but instead in %d for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT " and guti: " GUTI_FMT ". \n",
-        ue_context_p->mm_state, nas_ue_context_request_pP->ue_id, GUTI_ARG(&nas_ue_context_request_pP->old_guti));
+        ue_context_p->mm_state, nas_context_req_pP->ue_id, GUTI_ARG(&nas_context_req_pP->old_guti));
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "UE MME context is not in UE_UNREGISTERED state but instead in %d for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT " and guti: " GUTI_FMT ". \n",
-        ue_context_p->mm_state, nas_ue_context_request_pP->ue_id, GUTI_ARG(&nas_ue_context_request_pP->old_guti));
+        ue_context_p->mm_state, nas_context_req_pP->ue_id, GUTI_ARG(&nas_context_req_pP->old_guti));
     /** This should always clear the allocated UE context resources. */
-    _mme_app_send_nas_ue_context_response_err(nas_ue_context_request_pP->ue_id, SYSTEM_FAILURE);
+    _mme_app_send_nas_ue_context_response_err(nas_context_req_pP->ue_id, SYSTEM_FAILURE);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  /** Assert that there is no s10 handover procedure running. */
+  mme_app_s10_proc_inter_mme_handover_t * s10_proc_inter_mme_handover = mme_app_get_s10_procedure_inter_mme_handover(ue_context);
+  if(s10_proc_inter_mme_handover){
+    /** Report back a context failure, which should remove the UE context together with any processes. */
+    OAILOG_ERROR(LOG_MME_APP, "UE MME context has already a handover procedure for ueId " MME_UE_S1AP_ID_FMT". NAS layer should not have asked this. \n", ue_context->mme_ue_s1ap_id);
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, "UE MME context has already a handover procedure for ueId " MME_UE_S1AP_ID_FMT". NAS layer should not have asked this. \n", ue_context->mme_ue_s1ap_id);
+    // todo: currently, not sendign the pendign EPS MM context information back!
+    /** This should always clear the allocated UE context resources. */
+    _mme_app_send_nas_ue_context_response_err(ue_context->mme_ue_s1ap_id, SYSTEM_FAILURE);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
   /**
-   * Check if there is any pending information,
-   * if not send S10 request, if so send directly a response.
-   */
-  if(ue_context_p->pending_mm_ue_eps_context){
-
-    if ((ue_context_p1 = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, ue_context_p->imsi)) == NULL) {
-      OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
-      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-    }
-
-
-    OAILOG_INFO(LOG_MME_APP, "The MME_APP UE context has pending MM EPS context. Responding directly back to NAS layer for mme_ue_s1ap_id of UE: "MME_UE_S1AP_ID_FMT ". \n", nas_ue_context_request_pP->ue_id);
-    /**
-     * Build a NAS_CONTEXT_INFO message and fill it.
-     * Depending on the cause, NAS layer can perform an TAU_REJECT or move on with the TAU validation.
-     * NAS layer.
-     */
-    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_UE_CONTEXT_RSP);
-    itti_nas_context_res_t *nas_context_info = &message_p->ittiMsg.nas_context_res; // todo: mme app handover reject
-    memset ((void *)nas_context_info, 0, sizeof (itti_nas_ue_context_rsp_t)); // todo: currently not checking with HSS.. just sending an TAU_REJECT --> UE should perform an initial attach.
-
-    /** Set the cause. */
-    nas_context_info->cause = REQUEST_ACCEPTED;
-    /** Set the UE identifiers. */
-    nas_context_info->ue_id = ue_context_p->mme_ue_s1ap_id;
-    /** Fill the elements of the NAS message from S10 CONTEXT_RESPONSE. */
-    /** Parse IMSI first, then get the MME_APP UE context. */
-    nas_context_info->imsi = ue_context_p->imsi;
-    /** Convert the GTPv2c IMSI struct to the NAS IMSI struct. */
-    // todo: evtl. refactor this in idle mode TAU!
-    nas_context_info->_imsi.u.num.digit1 = ue_context_p->pending_pdn_connectivity_req_imsi[0];
-    nas_context_info->_imsi.u.num.digit2 = ue_context_p->pending_pdn_connectivity_req_imsi[1];
-    nas_context_info->_imsi.u.num.digit3 = ue_context_p->pending_pdn_connectivity_req_imsi[2];
-    nas_context_info->_imsi.u.num.digit4 = ue_context_p->pending_pdn_connectivity_req_imsi[3];
-    nas_context_info->_imsi.u.num.digit5 = ue_context_p->pending_pdn_connectivity_req_imsi[4];
-    nas_context_info->_imsi.u.num.digit6 = ue_context_p->pending_pdn_connectivity_req_imsi[5];
-    nas_context_info->_imsi.u.num.digit7 = ue_context_p->pending_pdn_connectivity_req_imsi[6];
-    nas_context_info->_imsi.u.num.digit8 = ue_context_p->pending_pdn_connectivity_req_imsi[7];
-    nas_context_info->_imsi.u.num.digit9 = ue_context_p->pending_pdn_connectivity_req_imsi[8];
-    nas_context_info->_imsi.u.num.digit10 = ue_context_p->pending_pdn_connectivity_req_imsi[9];
-    nas_context_info->_imsi.u.num.digit11 = ue_context_p->pending_pdn_connectivity_req_imsi[10];
-    nas_context_info->_imsi.u.num.digit12 = ue_context_p->pending_pdn_connectivity_req_imsi[11];
-    nas_context_info->_imsi.u.num.digit13 = ue_context_p->pending_pdn_connectivity_req_imsi[12];
-    nas_context_info->_imsi.u.num.digit14 = ue_context_p->pending_pdn_connectivity_req_imsi[13];
-    nas_context_info->_imsi.u.num.digit15 = ue_context_p->pending_pdn_connectivity_req_imsi[14];
-    nas_context_info->_imsi.u.num.parity = ODD_PARITY; /**< todo: hardcoded ODD!. */
-//    nas_context_info->_imsi.length       = 15; /**< todo: hardcoded ODD!. */
-
-    /** When sending NAS context response, inform it also about the number established PDN sessions and bearers in the ESM layer. */
-  //    ue_context->emm_context.esm_ctx.n_pdns += 1;
-  //    pdn_context->esm_data.is_emergency = is_emergency;
-
-    /** Set the MM EPS Context. */
-    // todo: validate the MM context..
-    memset((void*)&nas_context_info->mm_eps_context, 0, sizeof(mm_context_eps_t));
-    memcpy((void*)&nas_context_info->mm_eps_context, (void*)ue_context_p->pending_mm_ue_eps_context, sizeof(mm_context_eps_t));
-
-    /** Free the pending MM_EPS_UE_CONTEXT. */
-    if (ue_context_p->pending_mm_ue_eps_context) {
-      free_wrapper((void**) &(ue_context_p->pending_mm_ue_eps_context));
-    }
-
-    /**
-     * Add the pending PDN
-     */
-//    /** Get the PDN Connections IE and set the IP addresses. */
-//    pdn_connection_t * pdn_conn_pP = s10_context_response_pP->pdn_connections.pdn_connection;
-//    if(pdn_conn_pP->ip_address.present != 0x0){
-//      OAILOG_ERROR(LOG_MME_APP, "Received IP PDN type for IMSI  " IMSI_64_FMT " is not IPv4. Only IPv4 is accepted. \n", imsi);
-//      /**
-//       * Abort the Context Response procedure since the given IP is not supported.
-//       * No changes in the source MME side should occur.
-//       */
-//      _mme_app_send_nas_ue_context_response_err(ue_context_p->mme_ue_s1ap_id, REQUEST_REJECTED);
-//      OAILOG_FUNC_OUT (LOG_MME_APP);
-//    }
-    /**
      * Store the received PDN connectivity information as pending information in the MME_APP UE context.
      * todo: if normal attach --> Create Session Request will be sent from the subscription information ULA.
      * We could send the PDN Connection IE together to the NAS, but since we have subscription information yet, we still need the
      * method mme_app_send_s11_create_session_req_from_handover_tau which sends the CREATE_SESSION_REQUEST from the pending information.
      */
-//    mme_app_handle_pending_pdn_connectivity_information(ue_context_p, pdn_conn_pP);
-
-    // todo: inform NAS layer of pending pdn connectivity elements..
-
-    OAILOG_INFO(LOG_MME_APP, "MME_APP dealt with S10 Context Response. Updating the NAS layer for continuing with the attach/TAU procedure for IMSI " IMSI_64_FMT ". \n", ue_context_p->imsi);
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S10 NAS UE Context response. \n.");
-    /**
-     * Not performing state change. The MME_APP UE context will stay in the same state.
-     * State change will be handled by EMM layer.
-     */
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-
-  int ngh_index = mme_app_check_target_tai_neighboring_mme(&nas_ue_context_request_pP->originating_tai);
+  int ngh_index = mme_app_check_target_tai_neighboring_mme(&nas_context_req_pP->originating_tai);
   if(ngh_index == -1){
     OAILOG_ERROR(LOG_MME_APP, "Could not find a neighboring MME for handling missing NAS context. \n");
     OAILOG_DEBUG (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
         "Not proceeding with the NAS UE context request for mme_ue_s1ap_id of UE: "MME_UE_S1AP_ID_FMT ". \n",
-        nas_ue_context_request_pP->originating_tai, nas_ue_context_request_pP->ue_id);
+        nas_context_req_pP->originating_tai, nas_context_req_pP->ue_id);
     /** Send a nas_context_reject back. */
-      _mme_app_send_nas_ue_context_response_err(nas_ue_context_request_pP->ue_id, RELOCATION_FAILURE);
+      _mme_app_send_nas_ue_context_response_err(nas_context_req_pP->ue_id, RELOCATION_FAILURE);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-
 
   /**
    * No temporary handover target information needed to be allocated.
@@ -2094,7 +2011,7 @@ mme_app_handle_nas_ue_context_req(const itti_nas_ue_context_req_t * const nas_ue
   s10_context_request_p->peer_ip = mme_config.nghMme.nghMme[ngh_index].ipAddr;
   /** Set the Target MME_S10_FTEID (this MME's S10 Tunnel endpoint). */
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  s10_context_request_p->s10_target_mme_teid.teid = (teid_t) ue_context_p;
+  s10_context_request_p->s10_target_mme_teid.teid = (teid_t) ue_context;
   OAI_GCC_DIAG_ON(pointer-to-int-cast);
   s10_context_request_p->s10_target_mme_teid.interface_type = S10_MME_GTP_C;
   mme_config_read_lock (&mme_config);
@@ -2103,37 +2020,37 @@ mme_app_handle_nas_ue_context_req(const itti_nas_ue_context_req_t * const nas_ue
   s10_context_request_p->s10_target_mme_teid.ipv4 = 1;
 
   /** Update the MME_APP UE context with the new S10 local TEID to find it from the S10 answer. */
-  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context_p,
-      ue_context_p->enb_s1ap_id_key,
-      ue_context_p->mme_ue_s1ap_id,
-      ue_context_p->imsi,
-      ue_context_p->mme_s11_teid,       /**< Won't be changed. */
-      &ue_context_p->guti); /**< Don't register with the old GUTI. */
+  mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts, ue_context,
+      ue_context->enb_s1ap_id_key,
+      ue_context->mme_ue_s1ap_id,
+      ue_context->imsi,
+      ue_context->mme_teid_s11,       /**< Won't be changed. */
+      &ue_context->guti); /**< Don't register with the old GUTI. */
 
   /** Set the Complete Request Message. */
-  s10_context_request_p->complete_request_message.request_type     = nas_ue_context_request_pP->request_type;
-  if (!nas_ue_context_request_pP->nas_msg) {
+  s10_context_request_p->complete_request_message.request_type     = nas_context_req_pP->request_type;
+  if (!nas_context_req_pP->nas_msg) {
     OAILOG_ERROR(LOG_MME_APP, "No complete request exists for TAU of UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT " and guti: " GUTI_FMT ". \n",
-        nas_ue_context_request_pP->ue_id, GUTI_ARG(&nas_ue_context_request_pP->old_guti));
+        nas_context_req_pP->ue_id, GUTI_ARG(&nas_context_req_pP->old_guti));
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "No complete request exists for TAU of UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT " and guti: " GUTI_FMT ". \n",
-        nas_ue_context_request_pP->ue_id, GUTI_ARG(&nas_ue_context_request_pP->old_guti));
-    _mme_app_send_nas_ue_context_response_err(nas_ue_context_request_pP->ue_id, REQUEST_REJECTED);
+        nas_context_req_pP->ue_id, GUTI_ARG(&nas_context_req_pP->old_guti));
+    _mme_app_send_nas_ue_context_response_err(nas_context_req_pP->ue_id, REQUEST_REJECTED);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  s10_context_request_p->complete_request_message.request_value = nas_ue_context_request_pP->nas_msg;
+  s10_context_request_p->complete_request_message.request_value = nas_context_req_pP->nas_msg;
 
   /** Set the RAT_TYPE. */
-  s10_context_request_p->rat_type = nas_ue_context_request_pP->rat_type;
+  s10_context_request_p->rat_type = nas_context_req_pP->rat_type;
   /** Set the GUTI. */
   memset((void*)&s10_context_request_p->old_guti, 0, sizeof(guti_t));
-  memcpy((void*)&s10_context_request_p->old_guti, (void*)&nas_ue_context_request_pP->old_guti, sizeof(guti_t));
+  memcpy((void*)&s10_context_request_p->old_guti, (void*)&nas_context_req_pP->old_guti, sizeof(guti_t));
   /** Serving Network. */
-  s10_context_request_p->serving_network.mcc[0] = ue_context_p->e_utran_cgi.plmn.mcc_digit1;
-  s10_context_request_p->serving_network.mcc[1] = ue_context_p->e_utran_cgi.plmn.mcc_digit2;
-  s10_context_request_p->serving_network.mcc[2] = ue_context_p->e_utran_cgi.plmn.mcc_digit3;
-  s10_context_request_p->serving_network.mnc[0] = ue_context_p->e_utran_cgi.plmn.mnc_digit1;
-  s10_context_request_p->serving_network.mnc[1] = ue_context_p->e_utran_cgi.plmn.mnc_digit2;
-  s10_context_request_p->serving_network.mnc[2] = ue_context_p->e_utran_cgi.plmn.mnc_digit3;
+  s10_context_request_p->serving_network.mcc[0] = ue_context->e_utran_cgi.plmn.mcc_digit1;
+  s10_context_request_p->serving_network.mcc[1] = ue_context->e_utran_cgi.plmn.mcc_digit2;
+  s10_context_request_p->serving_network.mcc[2] = ue_context->e_utran_cgi.plmn.mcc_digit3;
+  s10_context_request_p->serving_network.mnc[0] = ue_context->e_utran_cgi.plmn.mnc_digit1;
+  s10_context_request_p->serving_network.mnc[1] = ue_context->e_utran_cgi.plmn.mnc_digit2;
+  s10_context_request_p->serving_network.mnc[2] = ue_context->e_utran_cgi.plmn.mnc_digit3;
 
   /** Send the Forward Relocation Message to S11. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S10_MME ,
@@ -2450,8 +2367,8 @@ mme_app_handle_s10_context_response(
       ue_context->enb_s1ap_id_key,
       ue_context->mme_ue_s1ap_id,
       imsi,      /**< New IMSI. */
-      ue_context->mme_s11_teid,
-      &ue_context_p->guti);
+      ue_context->mme_teid_s11,
+      &ue_context->guti);
 
   /** Get the NAS layer MME relocation procedure. */
   emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->mme_ue_s1ap_id);

@@ -85,11 +85,11 @@ typedef struct itti_s10_forward_relocation_request_s {
 
   fteid_t                         s10_source_mme_teid;                ///< S10-Source MME Tunnel Endpoint Identifier
 
-  F_Cause_t                       f_cause;
+  F_Cause_t                      *f_cause;
 
-  target_identification_t         target_identification;
+  target_identification_t         target_identification; /**< Making them pointer to decouple them. */
 
-  mme_ue_eps_pdn_connections_t    pdn_connections;
+  mme_ue_eps_pdn_connections_t   *pdn_connections;
   ///< MME/SGSN UE EPS PDN Connections
   ///< Several IEs with this type and instance values shall be PDN Connection included as necessary to represent a list of PDN Connections
 
@@ -103,17 +103,17 @@ typedef struct itti_s10_forward_relocation_request_s {
   char*                           source_sgw_fqdn;
   ///< Source SGW FQDN
 
-  mm_context_eps_t                ue_eps_mm_context;   ///< EPS MM Context
+  mm_context_eps_t               *ue_eps_mm_context;   ///< EPS MM Context
 
   //todo: indication flags --> start with 0 to indicate no indirect data tunneling
-  F_Container_t                   eutran_container;   //E-UTRAN transparent container
+  F_Container_t                  *eutran_container;   //E-UTRAN transparent container
 
   /** Source-To-Target Transparent Container. */
   // todo: if this is an buffer, how is it freed? does everything needs to be stacked
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
-  void                           *trxn;                ///< Transaction identifier
-  struct in_addr                  peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  uintptr_t                       trxn;                ///< Transaction identifier
+  struct in_addr                 *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                        peer_port;           ///< MME port for S-GW or S-GW port for MME
 } itti_s10_forward_relocation_request_t;
 

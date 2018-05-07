@@ -462,17 +462,15 @@ typedef struct ue_context_s {
   ambr_t                 used_ambr;
   subscriber_status_t    subscriber_status;        // set by S6A UPDATE LOCATION ANSWER
   network_access_mode_t  network_access_mode;       // set by S6A UPDATE LOCATION ANSWER
+
+  /* S10 and S11 procedures. */
+  LIST_HEAD(s10_procedures_s, mme_app_s10_proc_s) *s10_procedures;
   LIST_HEAD(s11_procedures_s, mme_app_s11_proc_s) *s11_procedures;
-
-
 
   /* Time when the cell identity was acquired */
   time_t                 cell_age;                    // set by nas_auth_param_req_t
 
-
-
   bstring                 ue_radio_capability;
-
 
   // Mobile Reachability Timer-Start when UE moves to idle state. Stop when UE moves to connected state
   struct mme_app_timer_t       mobile_reachability_timer;
@@ -482,9 +480,8 @@ typedef struct ue_context_s {
   struct mme_app_timer_t       initial_context_setup_rsp_timer;
 
   /** Custom timer to remove UE at the source-MME side after a timeout. */
-  struct mme_app_timer_t       mme_s10_handover_completion_timer; // todo: not TXXXX value found for this.
+//  struct mme_app_timer_t       mme_s10_handover_completion_timer; // todo: not TXXXX value found for this.
   struct mme_app_timer_t       mme_mobility_completion_timer; // todo: not TXXXX value found for this.
-
 
 
   /* Globally Unique Temporary Identity */
@@ -511,7 +508,6 @@ typedef struct ue_context_s {
   // Initial Context Setup Procedure Guard timer
   struct mme_app_timer_t       initial_context_setup_rsp_timer;
   /** Custom timer to remove UE at the source-MME side after a timeout. */
-  struct mme_app_timer_t       mme_s10_handover_completion_timer; // todo: not TXXXX value found for this.
   struct mme_app_timer_t       mme_mobility_completion_timer; // todo: not TXXXX value found for this.
 
   // Handover related stuff (for which messages to use the following

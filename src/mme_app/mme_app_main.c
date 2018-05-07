@@ -330,8 +330,8 @@ void *mme_app_thread (void *args)
           break;
 
       /** S10 Context Request Messages. */
-      case NAS_UE_CONTEXT_REQ:{
-        mme_app_handle_nas_ue_context_req ( &NAS_UE_CONTEXT_REQ(received_message_p));
+      case NAS_CONTEXT_REQ:{
+        mme_app_handle_nas_context_req ( &NAS_CONTEXT_REQ(received_message_p));
       }
       break;
       /** Context Acknowledgment will be handled via State Change Callback Handler. */

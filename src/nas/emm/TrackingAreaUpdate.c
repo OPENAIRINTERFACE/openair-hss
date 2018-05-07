@@ -1560,6 +1560,21 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_ctx_p
          * Will create the UE context and send an S10 UE Context Request. */
         OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - Originating TAI " TAI_FMT " is configured as a MME S10 neighbor. Will request UE context from source MME for ue_id = " MME_UE_S1AP_ID_FMT ". "
             "Creating a new EMM context. \n", TAI_ARG(ies->last_visited_registered_tai), ue_id);
+        /*
+         * Check if there is a S10 handover procedure running.
+         * (We may have received the signal as NAS uplink data request, without any intermission from MME_APP layer).
+         */
+        mme_app_s10_proc_inter_mme_handover_t * s10_proc_inter_mme_handover = mme_app_get_s10_procedure_inter_mme_handover(ue_context_p);
+        if(s10_proc_inter_mme_handover){
+          DevAssert(s10_proc_inter_mme_handover->mm_eps_context);
+          OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - We have receive the TAU as part of an S10 procedure for ue_id = " MME_UE_S1AP_ID_FMT ". "
+              "Continuing with the pending MM EPS Context. \n", ue_id);
+          /*
+           * No need to start a new EMM_CN_CONTEXT_REQ procedure.
+           * Will update the current EMM and ESM context with the pending values and continue with the registration in the HSS (ULR).
+           */
+        }
+
         /**
          * Send an S10 context request. Send the PLMN together (will be serving network IE). New TAI not need to be sent.
          * Set the new TAI and the new PLMN to the UE context. In case of a TAC-Accept, will be sent and registered.
@@ -1592,37 +1607,51 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
 
   /** Get the specific and the CN procedure. */
   nas_emm_tau_proc_t                    *tau_proc = get_nas_specific_procedure_tau(emm_context);
-  nas_ctx_req_proc_t                    *ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_context);
+  // todo: unify later the two procedures (all CN procedures (MME_APP, NAS,... into one).
 
-  DevAssert(tau_proc && ctx_req_proc);
+  nas_s10_context_t                     *nas_s10_ctx = NULL;
+
+  DevAssert(tau_proc);
+
+  nas_ctx_req_proc_t *nas_ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_context);
+  if(!nas_ctx_req_proc){
+    ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+    DevAssert(ue_context);
+    mme_app_s10_proc_inter_mme_handover_t *s10_inter_mme_handover_proc = mme_app_get_s10_procedure_inter_mme_handover(ue_context);
+    DevAssert(s10_inter_mme_handover_proc); // todo: optimize this as well, either s10 handover procedure or nas context request procedure should exist
+    nas_s10_ctx = &s10_inter_mme_handover_proc->nas_s10_context;
+  }else{
+    nas_s10_ctx = &nas_ctx_req_proc->nas_s10_context;
+  }
 
   /*
    * Set the identity values (IMSI) valid and present.
    * Assuming IMSI is always returned with S10 Context Response and the IMSI hastable registration method validates the received IMSI.
    */
   clear_imsi(&emm_context->_imsi);
-  emm_ctx_set_valid_imsi(emm_context, &ctx_req_proc->_imsi, ctx_req_proc->imsi);
+  emm_ctx_set_valid_imsi(emm_context, &nas_s10_ctx->_imsi, nas_s10_ctx->imsi);
   emm_data_context_upsert_imsi(&_emm_data, emm_context); /**< Register the IMSI in the hash table. */
 
   /*
    * Update the security context & security vectors of the UE independent of TAU/Attach here (set fields valid/present).
    * Then inform the MME_APP that the context was successfully authenticated. Trigger a CSR.
    */
-  emm_ctx_update_from_mm_eps_context(emm_context, ctx_req_proc->mm_eps_ctx);
+  emm_ctx_update_from_mm_eps_context(emm_context, nas_s10_ctx->mm_eps_ctx);
   OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - " "Successfully updated the EMM context with ueId " MME_UE_S1AP_ID_FMT " from the received MM_EPS_Context from the MME for UE with imsi: " IMSI_64_FMT ". \n",
       emm_ctx_p->ue_id, emm_ctx_p->_imsi64);
 
   /*
    * Update the ESM context (what was in esm_proc_default_eps_bearer_context).
    */
-  emm_context->esm_ctx.n_active_ebrs += ctx_req_proc->n_active_ebrs;
-  emm_context->esm_ctx.n_pdns        += ctx_req_proc->n_pdns;
+  emm_context->esm_ctx.n_active_ebrs += nas_s10_ctx->n_active_ebrs;
+  emm_context->esm_ctx.n_pdns        += nas_s10_ctx->n_pdns;
   // todo: num_active_pdns not used.
   // todo: is_emergency not set
   // todo; rest of ESM context will be set by MME_APP
 
-  /** Delete the CN procedure. */
-  nas_delete_cn_procedure(emm_context, &ctx_req_proc->cn_proc);
+  /** Delete the CN procedure, if exists. */
+  if(nas_ctx_req_proc)
+    nas_delete_cn_procedure(emm_context, nas_ctx_req_proc);
 
   if (rc != RETURNok) { /**< This would delete the common procedure, but since none exist, we just make an TAU-Reject. */
     emm_sap_t                               emm_sap = {0};

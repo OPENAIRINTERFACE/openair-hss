@@ -60,7 +60,7 @@
 
 //------------------------------------------------------------------------------
 void mme_app_itti_ue_context_release (
-    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, uint32_t enb_id)
+    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, target_identification_t *target_id)
 {
   MessageDef *message_p;
   OAILOG_FUNC_IN (LOG_MME_APP);

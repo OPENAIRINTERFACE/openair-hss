@@ -773,7 +773,7 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
   // Ask upper layer to fetch new security context
   nas_ctx_req_proc_t * ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_context);
   if (!ctx_req_proc) {
-    ctx_req_proc = nas_new_cn_conauth_info_procedure(emm_context);
+    ctx_req_proc = nas_new_cn_ctx_req_procedure(emm_context);
   }
   /*
    * Context request.
@@ -1013,6 +1013,7 @@ void nas_start_T3470(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3
     }
   }
 }
+
 //------------------------------------------------------------------------------
 void nas_start_Ts6a_auth_info(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts6a_auth_info,  time_out_t time_out_cb, void *timer_callback_args)
 {
@@ -1026,6 +1027,7 @@ void nas_start_Ts6a_auth_info(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s *
     }
   }
 }
+
 //------------------------------------------------------------------------------
 void nas_start_Ts10_ctx_req(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts10_ctx_res,  time_out_t time_out_cb, void *timer_callback_args)
 {
@@ -1039,6 +1041,7 @@ void nas_start_Ts10_ctx_req(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * c
     }
   }
 }
+
 //------------------------------------------------------------------------------
 void nas_stop_T3450(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const T3450, void *timer_callback_args)
 {
