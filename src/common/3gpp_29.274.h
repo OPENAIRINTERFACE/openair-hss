@@ -333,8 +333,9 @@ typedef struct pdn_connection_s {
 //  uint8_t                   ipv4_address[4];
 //  uint8_t                   ipv6_address[16];
 //  pdn_type_value_t pdn_type;
-  struct in_addr             *ipv4_address;
-  struct in6_addr            *ipv6_address;
+  struct in_addr            ipv4_address;
+  struct in6_addr           ipv6_address;
+  uint8_t                   ipv6_prefix_length;
 
   ebi_t                     linked_eps_bearer_id;
 

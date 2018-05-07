@@ -83,7 +83,7 @@ static void mme_app_pdn_context_init(ue_context_t * const ue_context, pdn_contex
   }
 }
 //------------------------------------------------------------------------------
-pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, const pdn_cid_t pdn_cid, const context_identifier_t context_identifier)
+pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, const pdn_cid_t pdn_cid, const bstring apn, const context_identifier_t context_identifier)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   if (!ue_context->pdn_contexts[pdn_cid]) {
@@ -104,6 +104,7 @@ pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, con
             pdn_context->paa.ipv6_prefix_length = 64;
           }
         }
+        // todo: add the apn as bstring into the pdn_context and store it in the map
         //pdn_context->apn_oi_replacement
         memcpy (&pdn_context->default_bearer_eps_subscribed_qos_profile, &apn_configuration->subscribed_qos, sizeof(eps_subscribed_qos_profile_t));
         pdn_context->is_active = true;

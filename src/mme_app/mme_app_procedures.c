@@ -71,6 +71,7 @@ void mme_app_delete_s11_procedures(ue_context_t * const ue_context_p)
     free_wrapper((void**)&ue_context_p->s11_procedures);
   }
 }
+
 //------------------------------------------------------------------------------
 mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context_p)
 {
@@ -139,6 +140,15 @@ void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p)
     while (s10_proc1) {
       s10_proc2 = LIST_NEXT(s10_proc1, entries);
       if (MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER == s10_proc1->type) {
+        /** Stop the timer. */
+        if(s10_proc1->timer.id != MME_APP_TIMER_INACTIVE_ID){
+          if (timer_remove(s10_proc1->timer.id, NULL)) {
+            OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for inter-MMME handover for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+            s10_proc1->timer.id = MME_APP_TIMER_INACTIVE_ID;
+          }
+        }
+        s10_proc1->timer.id = MME_APP_TIMER_INACTIVE_ID;
+
         mme_app_free_s10_procedure_inter_mme_handover(&s10_proc1);
       } // else ...
       s10_proc1 = s10_proc2;
@@ -153,7 +163,6 @@ static void
 mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_inter_mme_handover_t *s10_proc_inter_mme_handover)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (ue_context_p != NULL);
   MessageDef                             *message_p = NULL;
   /** Get the IMSI. */
   imsi64_t imsi64 = imsi_to_imsi64(&s10_proc_inter_mme_handover->imsi);
@@ -162,6 +171,9 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_inter_
   OAILOG_INFO (LOG_MME_APP, "Expired- MME S10 Handover Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. "
       "Performing S1AP UE Context Release Command and successive NAS implicit detach. \n", ue_context_p->mme_ue_s1ap_id);
   s10_proc_inter_mme_handover->ho_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  /** Delete the procedure. */
+  mme_app_delete_s10_procedure_inter_mme_handover(ue_context)
+
   ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
   /*
    * Send a UE Context Release Command which would trigger a context release.
@@ -233,41 +245,30 @@ mme_app_s10_proc_inter_mme_handover_t* mme_app_get_s10_procedure_inter_mme_hando
 }
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s10_procedure_inter_mme_handover(ue_context_t * const ue_context_p)
+void mme_app_delete_s10_procedure_inter_mme_handover(ue_context_t * const ue_context)
 {
-  if (ue_context_p->s10_procedures) {
+  if (ue_context->s10_procedures) {
     mme_app_s10_proc_t *s10_proc = NULL;
 
-    LIST_FOREACH(s10_proc, ue_context_p->s10_procedures, entries) {
+    LIST_FOREACH(s10_proc, ue_context->s10_procedures, entries) {
       if (MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER == s10_proc->type) {
         LIST_REMOVE(s10_proc, entries);
-        /** Remove the pending IEs. */
-        mme_app_s10_proc_inter_mme_handover_t * s10_proc_inter_mme_handover = (mme_app_s10_proc_inter_mme_handover_t*) s10_proc;
-        if(s10_proc_inter_mme_handover->nas_s10_context.mm_eps_ctx){
-          free_wrapper(&s10_proc_inter_mme_handover->nas_s10_context.mm_eps_ctx); /**< Setting the reference inside the procedure also to null. */
-        }
-        if(s10_proc_inter_mme_handover->source_to_target_eutran_container){
-          bdestroy(s10_proc_inter_mme_handover->source_to_target_eutran_container->container_value);
-          free_wrapper(&s10_proc_inter_mme_handover->source_to_target_eutran_container); /**< Setting the reference inside the procedure also to null. */
-        }
-        /*
-         * Todo: Make a generic function for this (proc_element with free_wrapper_ie() method).
-         */
-        if(s10_proc_inter_mme_handover->f_cause){
-          free_wrapper(&s10_proc_inter_mme_handover->f_cause); /**< Setting the reference inside the procedure also to null. */
-        }
-        if(s10_proc_inter_mme_handover->peer_ip){
-          free_wrapper(&s10_proc_inter_mme_handover->peer_ip); /**< Setting the reference inside the procedure also to null. */
-        }
         /*
          * Cannot remove the S10 tunnel endpoint with transaction.
          * The S10 tunnel endpoint will remain throughout the UE contexts lifetime.
          * It will be removed when the UE context is removed.
          * The UE context will also be registered by the S10 teid also.
          * We cannot get the process without getting the UE context, first.
-         *
-         * Send the message to remove the S10 tunnel endpoint (todo: find an even better way.
          */
+        /** Check if a timer is running, if so remove the timer. */
+        if(s10_proc->timer.id != MME_APP_TIMER_INACTIVE_ID){
+          if (timer_remove(s10_proc->timer.id, NULL)) {
+            OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for inter-MMME handover for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+            s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
+          }
+        }
+        s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
+
         mme_app_free_s10_procedure_inter_mme_handover(&s10_proc);
         return;
       }
@@ -278,6 +279,24 @@ void mme_app_delete_s10_procedure_inter_mme_handover(ue_context_t * const ue_con
 //------------------------------------------------------------------------------
 static void mme_app_free_s10_procedure_inter_mme_handover(mme_app_s10_proc_t **s10_proc)
 {
+  /** Remove the pending IEs. */
+  mme_app_s10_proc_inter_mme_handover_t * s10_proc_inter_mme_handover = (mme_app_s10_proc_inter_mme_handover_t*) s10_proc;
+  if(s10_proc_inter_mme_handover->nas_s10_context.mm_eps_ctx){
+    free_wrapper(&s10_proc_inter_mme_handover->nas_s10_context.mm_eps_ctx); /**< Setting the reference inside the procedure also to null. */
+  }
+  if(s10_proc_inter_mme_handover->source_to_target_eutran_container){
+    bdestroy(s10_proc_inter_mme_handover->source_to_target_eutran_container->container_value);
+    free_wrapper(&s10_proc_inter_mme_handover->source_to_target_eutran_container); /**< Setting the reference inside the procedure also to null. */
+  }
+  /*
+   * Todo: Make a generic function for this (proc_element with free_wrapper_ie() method).
+   */
+  if(s10_proc_inter_mme_handover->f_cause){
+    free_wrapper(&s10_proc_inter_mme_handover->f_cause); /**< Setting the reference inside the procedure also to null. */
+  }
+  if(s10_proc_inter_mme_handover->peer_ip){
+    free_wrapper(&s10_proc_inter_mme_handover->peer_ip); /**< Setting the reference inside the procedure also to null. */
+  }
   // DO here specific releases (memory,etc)
   // nothing to do actually
   free_wrapper((void**)s10_proc);

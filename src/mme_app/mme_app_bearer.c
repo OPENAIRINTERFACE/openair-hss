@@ -362,60 +362,20 @@ mme_app_handle_nas_pdn_connectivity_req (
 }
 
 // todo: nas pdn connectivity request handling (the old one, we may also do this inside MME_APP without asking ESM layer.
-////------------------------------------------------------------------------------
-//int
-//mme_app_handle_nas_pdn_connectivity_req (
-//  itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)
-//{
-//  struct ue_context_s                    *ue_context_p = NULL;
-//  imsi64_t                                imsi64 = INVALID_IMSI64;
-//  int                                     rc = RETURNok;
-//
-//  OAILOG_FUNC_IN (LOG_MME_APP);
-//  DevAssert (nas_pdn_connectivity_req_pP );
-//  IMSI_STRING_TO_IMSI64 ((char *)nas_pdn_connectivity_req_pP->imsi, &imsi64);
-//  OAILOG_DEBUG (LOG_MME_APP, "Received NAS_PDN_CONNECTIVITY_REQ from NAS Handling imsi " IMSI_64_FMT "\n", imsi64);
-//
-//  if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64)) == NULL) {
-//    MSC_LOG_EVENT (MSC_MMEAPP_MME, "NAS_PDN_CONNECTIVITY_REQ Unknown imsi " IMSI_64_FMT, imsi64);
-//    OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
-//    mme_ue_context_dump_coll_keys();
-//    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-//  }
-//
-//  /**
-//   * Consider the UE authenticated
-//   * todo: done here?!
-//   */
-//  ue_context_p->imsi_auth = IMSI_AUTHENTICATED;
-//
-//  /** Not entering this state in case its not handover (assumed). */
-//  // Temp: save request, in near future merge wisely params in context
-//  memset (ue_context_p->pending_pdn_connectivity_req_imsi, 0, 16);
-//  AssertFatal ((nas_pdn_connectivity_req_pP->imsi_length > 0)
-//      && (nas_pdn_connectivity_req_pP->imsi_length < 16), "BAD IMSI LENGTH %d", nas_pdn_connectivity_req_pP->imsi_length);
-//  AssertFatal ((nas_pdn_connectivity_req_pP->imsi_length > 0)
-//      && (nas_pdn_connectivity_req_pP->imsi_length < 16), "STOP ON IMSI LENGTH %d", nas_pdn_connectivity_req_pP->imsi_length);
-//  memcpy (ue_context_p->pending_pdn_connectivity_req_imsi, nas_pdn_connectivity_req_pP->imsi, nas_pdn_connectivity_req_pP->imsi_length);
-//  ue_context_p->pending_pdn_connectivity_req_imsi_length = nas_pdn_connectivity_req_pP->imsi_length;
-//
-//  // copy
-//  if (ue_context_p->pending_pdn_connectivity_req_apn) {
-//    bdestroy (ue_context_p->pending_pdn_connectivity_req_apn);
-//    ue_context_p->pending_pdn_connectivity_req_apn = NULL;
-//  }
-//  ue_context_p->pending_pdn_connectivity_req_apn =  nas_pdn_connectivity_req_pP->apn;
-//  nas_pdn_connectivity_req_pP->apn = NULL;
-//
-//  // copy
-//  if (ue_context_p->pending_pdn_connectivity_req_pdn_addr) {
-//    bdestroy (ue_context_p->pending_pdn_connectivity_req_pdn_addr);
-//  }
-//  ue_context_p->pending_pdn_connectivity_req_pdn_addr =  nas_pdn_connectivity_req_pP->pdn_addr;
-//  nas_pdn_connectivity_req_pP->pdn_addr = NULL;
-//
-//  ue_context_p->pending_pdn_connectivity_req_pti = nas_pdn_connectivity_req_pP->pti;
-//  ue_context_p->pending_pdn_connectivity_req_ue_id = nas_pdn_connectivity_req_pP->ue_id;
+//------------------------------------------------------------------------------
+int
+mme_app_handle_nas_pdn_connectivity_req (
+  itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)
+{
+  /**
+   * Consider the UE authenticated
+   * todo: done here?!
+   */
+
+  /** Not entering this state in case its not handover (assumed). */
+  // Temp: save request, in near future merge wisely params in context
+  memset (ue_context_p->pending_pdn_connectivity_req_imsi, 0, 16);
+
 //  copy_protocol_configuration_options (&ue_context_p->pending_pdn_connectivity_req_pco, &nas_pdn_connectivity_req_pP->pco);
 //  clear_protocol_configuration_options(&nas_pdn_connectivity_req_pP->pco);
 //#define TEMPORARY_DEBUG 1
@@ -424,21 +384,10 @@ mme_app_handle_nas_pdn_connectivity_req (
 //  OAILOG_DEBUG (LOG_MME_APP, "PCO %s\n", bdata(b));
 //  bdestroy(b);
 //#endif
-//
-//  memcpy (&ue_context_p->pending_pdn_connectivity_req_qos, &nas_pdn_connectivity_req_pP->qos, sizeof (network_qos_t));
+
 //  ue_context_p->pending_pdn_connectivity_req_proc_data = nas_pdn_connectivity_req_pP->proc_data;
 //  nas_pdn_connectivity_req_pP->proc_data = NULL;
-//  ue_context_p->pending_pdn_connectivity_req_request_type = nas_pdn_connectivity_req_pP->request_type;
-//  //if ((nas_pdn_connectivity_req_pP->apn.value == NULL) || (nas_pdn_connectivity_req_pP->apn.length == 0)) {
-//  /*
-//   * TODO: Get keys...
-//   */
-//  /*
-//   * Now generate S6A ULR
-//   */
-//  rc =  mme_app_send_s6a_update_location_req (ue_context_p);
-//  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
-//}
+}
 
 
 // sent by NAS
@@ -2416,6 +2365,11 @@ mme_app_handle_forward_relocation_request(
 
  OAILOG_FUNC_IN (LOG_MME_APP);
 
+ AssertFatal ((forward_relocation_request_pP->imsi.length > 0)
+     && (forward_relocation_request_pP->imsi.length < 16), "BAD IMSI LENGTH %d", forward_relocation_request_pP->imsi.length);
+ AssertFatal ((forward_relocation_request_pP->imsi.length > 0)
+     && (forward_relocation_request_pP->imsi.length < 16), "STOP ON IMSI LENGTH %d", forward_relocation_request_pP->imsi.length);
+
  IMSI_STRING_TO_IMSI64 (&forward_relocation_request_pP->imsi, &imsi);
  OAILOG_DEBUG (LOG_MME_APP, "Handling FORWARD_RELOCATION REQUEST for imsi " IMSI_64_FMT ". \n", imsi);
 
@@ -2632,6 +2586,8 @@ mme_app_handle_forward_relocation_request(
        forward_relocation_request_pP->ue_eps_mm_context.nh,
        forward_relocation_request_pP->ue_eps_mm_context.ncc);
  }
+ ue_context_p->imsi_auth = IMSI_AUTHENTICATED;
+
  /** If we make the procedure a specific procedure for forward relocation request, then it would be removed with forward relocation response,
   * todo: where to save the mm_eps_context and s10 tunnel information,
   * Else, if it is a generic s10 handover procedure, we need to update the transaction with every time.

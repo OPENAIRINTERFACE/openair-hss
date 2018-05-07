@@ -61,6 +61,7 @@ typedef enum {
 typedef struct mme_app_s10_proc_s {
   mme_app_base_proc_t         proc;
   mme_app_s10_proc_type_t     type;
+  struct mme_app_timer_t      timer;
   uintptr_t                   s10_trxn;
   LIST_ENTRY(mme_app_s10_proc_s) entries;      /* List. */
 } mme_app_s10_proc_t;
@@ -72,7 +73,6 @@ typedef struct mme_app_s10_proc_s {
 typedef struct mme_app_s10_proc_inter_mme_handover_s {
   mme_app_s10_proc_t            proc;
 
-  struct mme_app_timer_t        ho_completion_timer;
   time_out_t                   *s10_inter_mme_handover_timeout;
 
   uintptr_t                     forward_relocation_trxn;
@@ -132,6 +132,7 @@ void mme_app_s11_procedure_create_bearer_send_response(ue_context_t * const ue_c
  * - Creating handover procedure in source & target MME todo: create same timer but different callback methods.
  * - Since we don't have a valid EMM UE context, we need to create an MME_APP context.
  */
+void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
 //------------------------------------------------------------------------------
 void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
 mme_app_s10_proc_inter_mme_handover_t* mme_app_create_s10_procedure_inter_mme_handover(ue_context_t * const ue_context_p);

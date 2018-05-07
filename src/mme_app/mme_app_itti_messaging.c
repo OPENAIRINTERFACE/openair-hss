@@ -211,6 +211,8 @@ mme_app_send_s11_create_session_req (
   bearer_context_t    bearer_context_to_setup = NULL;
   RB_FOREACH (bearer_context_to_setup, BearerPool, &pdn_context->session_bearers) {
     DevAssert(bearer_context_to_setup);
+
+    // todo: make it selective for multi PDN!
     /*
      * Set the bearer of the pdn context to establish.
      * Set regardless of GBR/NON-GBR QCI the MBR/GBR values.

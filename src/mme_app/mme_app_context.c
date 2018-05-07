@@ -258,6 +258,10 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context_p)
     }
   }
 
+  if (ue_context_p->s10_procedures) {
+    mme_app_delete_s10_procedures(ue_context_p);
+  }
+
   if (ue_context_p->s11_procedures) {
     mme_app_delete_s11_procedures(ue_context_p);
   }
@@ -2292,6 +2296,11 @@ mme_app_handle_s10_context_response(
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (s10_context_response_pP );
 
+  AssertFatal ((s10_context_response_pP->imsi.length > 0)
+       && (s10_context_response_pP->imsi.length < 16), "BAD IMSI LENGTH %d", s10_context_response_pP->imsi.length);
+   AssertFatal ((s10_context_response_pP->imsi.length > 0)
+       && (s10_context_response_pP->imsi.length < 16), "STOP ON IMSI LENGTH %d", s10_context_response_pP->imsi.length);
+
   /** Parse IMSI first, then get the MME_APP UE context. */
   IMSI_STRING_TO_IMSI64 (&s10_context_response_pP->imsi, &imsi);
   OAILOG_DEBUG (LOG_MME_APP, "Handling S10 CONTEXT RESPONSE for received imsi " IMSI_64_FMT " and local S10 TEID " TEID_FMT ". \n",
@@ -2369,6 +2378,8 @@ mme_app_handle_s10_context_response(
       imsi,      /**< New IMSI. */
       ue_context->mme_teid_s11,
       &ue_context->guti);
+
+  ue_context->imsi_auth = IMSI_AUTHENTICATED;
 
   /** Get the NAS layer MME relocation procedure. */
   emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->mme_ue_s1ap_id);
@@ -2591,7 +2602,7 @@ mme_app_handle_relocation_cancel_request(
   * Will also cancel all MME_APP timers and send a S1AP Release Command with HO-Cancellation cause.
   * First the default bearers should be removed. Then the UE context in the eNodeB.
   */
- ue_context_p->ue_context_rel_cause = S1AP_HANDOVER_CANCELLED;
+ ue_context_p->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
 
  /**
   * Send a S1AP Context Release Request.
@@ -2661,49 +2672,84 @@ int mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_connec
   DevAssert(ue_context_p);
   DevAssert(pdn_connections);
 
-  /** Set the PDN connections. */
-  pdn_connections->num_pdn_connections = 1;
-  memcpy (pdn_connections->pdn_connection[0].apn, ue_context_p->apn_profile.apn_configuration[0].service_selection, ue_context_p->apn_profile.apn_configuration[0].service_selection_length);
-  pdn_connections->pdn_connection[0].ip_address.present = 0x0;
-  memset (pdn_connections->pdn_connection[0].ip_address.address.v4, 0, 4);
-  //    memset (pdn_connections->pdn_connection[0].ipv6_address, 0, 16);
-  memcpy (pdn_connections->pdn_connection[0].ip_address.address.v4, ue_context_p->paa.ipv4_address, 4);
-  pdn_connections->pdn_connection[0].linked_eps_bearer_id = 5; //todo: multiple bearers/pdns
+  /** Set the PDN connections for all available PDN contexts. */
+  pdn_context_t *pdn_context_to_forward = NULL;
+  RB_FOREACH (pdn_context_to_forward, PdnContexts, &ue_context_p->pdn_contexts) {
+    DevAssert(pdn_context_to_forward);
+    int num_pdn = pdn_connections->num_pdn_connections;
+   /** Fill the PDN context for each PDN session into the forward relocation request message (multi APN handover). */
+//    memcpy (pdn_connections->pdn_connection[num_pdn].apn, pdn_context_to_forwardue_context_p->apn_profile.apn_configuration[0].service_selection, ue_context_p->apn_profile.apn_configuration[0].service_selection_length);
+    DevAssert(pdn_context_to_forward->paa);
+    pdn_connections->pdn_connection[num_pdn].ipv4_address.s_addr = pdn_context_to_forward->paa->ipv4_address.s_addr;
+    //    memset (pdn_connections->pdn_connection[num_pdn].ipv6_address, 0, 16);
+    memcpy (pdn_connections->pdn_connection[num_pdn].ipv6_address.s6_addr, pdn_context_to_forward->paa->ipv6_address.s6_addr, 16);
+    pdn_connections->pdn_connection[num_pdn].ipv6_prefix_length= pdn_context_to_forward->paa->ipv6_prefix_length;
+    /** Set linked EBI. */
+    pdn_connections->pdn_connection[num_pdn].linked_eps_bearer_id = pdn_context_to_forward->default_ebi;
+    /** Set a blank PGW-S5/S8-FTEID. */
+    OAI_GCC_DIAG_OFF(pointer-to-int-cast);
+    pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.teid = (teid_t) 0x000000; /**< Which does not matter. */
+    OAI_GCC_DIAG_ON(pointer-to-int-cast);
+    pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.interface_type = S5_S8_PGW_GTP_C;
+    mme_config_read_lock (&mme_config);
+    pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.ipv4_address = mme_config.ipv4.s11;
+    mme_config_unlock (&mme_config);
+    pdn_connections->pdn_connection[num_pdn].pgw_address_for_cp.ipv4 = 1;
+    /** APN Restriction. */
+    pdn_connections->pdn_connection[num_pdn].apn_restriction = 0; // pdn_context_to_forward->apn_restriction
+    /** APN-AMBR */
+    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_ul = pdn_context_to_forward->subscribed_apn_ambr.br_ul;
+    pdn_connections->pdn_connection[num_pdn].apn_ambr.br_dl = pdn_context_to_forward->subscribed_apn_ambr.br_ul;
+    /** Set the bearer contexts for all existing bearers of the PDN. */
+    bearer_context_t * bearer_context_to_forward = NULL;
 
-  /** Set a blank PGW-S5/S8-FTEID. */
-  OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  pdn_connections->pdn_connection[0].pgw_address_for_cp.teid = (teid_t) 0x000000; /**< Which does not matter. */
-  OAI_GCC_DIAG_ON(pointer-to-int-cast);
-  pdn_connections->pdn_connection[0].pgw_address_for_cp.interface_type = S5_S8_PGW_GTP_C;
-  mme_config_read_lock (&mme_config);
-  pdn_connections->pdn_connection[0].pgw_address_for_cp.ipv4_address = mme_config.ipv4.s11;
-  mme_config_unlock (&mme_config);
-  pdn_connections->pdn_connection[0].pgw_address_for_cp.ipv4 = 1;
-  /** APN Restriction. */
-  pdn_connections->pdn_connection[0].apn_restriction = 0;
-  /** AMBR */
-  pdn_connections->pdn_connection[0].apn_ambr.br_ul = 5000000;
-  pdn_connections->pdn_connection[0].apn_ambr.br_dl = 10000000;
-  /** Bearer Context. */
-  pdn_connections->pdn_connection[0].bearer_context.eps_bearer_id = 5;
-  OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  pdn_connections->pdn_connection[0].bearer_context.s1u_sgw_fteid.teid = (teid_t) 0x000000; /**< Which does not matter. */
-  OAI_GCC_DIAG_ON(pointer-to-int-cast);
-  pdn_connections->pdn_connection[0].bearer_context.s1u_sgw_fteid.interface_type = S1_U_SGW_GTP_U;
-  mme_config_read_lock (&mme_config);
-  pdn_connections->pdn_connection[0].bearer_context.s1u_sgw_fteid.ipv4_address = mme_config.ipv4.s11;
-  mme_config_unlock (&mme_config);
-  pdn_connections->pdn_connection[0].bearer_context.s1u_sgw_fteid.ipv4 = 1;
-  /** Set the bearer context. */
-  pdn_connections->pdn_connection[0].bearer_context.bearer_level_qos.gbr.br_ul = 0;
-  pdn_connections->pdn_connection[0].bearer_context.bearer_level_qos.gbr.br_dl = 0;
-  pdn_connections->pdn_connection[0].bearer_context.bearer_level_qos.mbr.br_ul = 0;
-  pdn_connections->pdn_connection[0].bearer_context.bearer_level_qos.mbr.br_dl = 0;
-  pdn_connections->pdn_connection[0].bearer_context.bearer_level_qos.qci = 9; ue_context_p->apn_profile.apn_configuration[0].subscribed_qos.qci;
-  pdn_connections->pdn_connection[0].bearer_context.bearer_level_qos.pvi = 0; ue_context_p->apn_profile.apn_configuration[0].subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
-  pdn_connections->pdn_connection[0].bearer_context.bearer_level_qos.pci = 0; ue_context_p->apn_profile.apn_configuration[0].subscribed_qos.allocation_retention_priority.pre_emp_capability;
-  pdn_connections->pdn_connection[0].bearer_context.bearer_level_qos.pl  = ue_context_p->apn_profile.apn_configuration[0].subscribed_qos.allocation_retention_priority.priority_level;
-
+    for (int num_bearer = 0; num_bearer < pdn_conn_pP->bearer_context_list.num_bearers; num_bearer++){
+      bearer_context_t * bearer_context_s10 = &pdn_conn_pP->bearer_context_list.bearer_contexts[num_bearer];
+      /* Create bearer contexts in the PDN context. */
+      bearer_context_t * bearer_context_registered = mme_app_register_bearer_context(ue_context, bearer_context_s10->ebi, pdn_context);
+      /* Received an initialized bearer context, set the qos values from the pdn_connections IE. */
+      // todo: optimize this!
+      DevAssert(bearer_context_registered);
+      /*
+       * Set the bearer level QoS parameters and update the statistics.
+       */
+      mme_app_desc.mme_ue_contexts.nb_bearers_managed++;
+      mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat++;
+      mme_app_bearer_context_update_handover(bearer_context_registered, bearer_context_s10);
+    }
+    RB_FOREACH (bearer_context_to_forward, BearerPool, &pdn_context_to_forward->session_bearers) {
+      int num_bearer = pdn_connections->pdn_connection[num_pdn].bearer_context_list.num_bearers;
+      ho_bearer_context_list_t * bearer_list  = & pdn_connections->pdn_connection[num_pdn].bearer_context_list;
+      bearer_list->bearer_contexts[num_bearer].eps_bearer_id = 5;
+      OAI_GCC_DIAG_OFF(pointer-to-int-cast);
+      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.teid = (teid_t) 0x000000; /**< Which does not matter. */
+      OAI_GCC_DIAG_ON(pointer-to-int-cast);
+      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.interface_type = S1_U_SGW_GTP_U;
+      mme_config_read_lock (&mme_config);
+      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.ipv4_address.s_addr = mme_config.ipv4.s11.s_addr;
+      mme_config_unlock (&mme_config);
+      bearer_list->bearer_contexts[num_bearer].s1u_sgw_fteid.ipv4 = 1;
+      /*
+       * Set the bearer level level qos values.
+       * Also set the MBR/GBR values for each bearer, the target side, then should send MBR/GBR as 0 for non-GBR bearers.
+       */
+      // todo: divide by 1000?
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_ul = bearer_context_to_forward->esm_ebr_context.gbr_ul;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.gbr.br_dl = bearer_context_to_forward->esm_ebr_context.gbr_dl;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_ul = bearer_context_to_forward->esm_ebr_context.mbr_ul;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.mbr.br_dl = bearer_context_to_forward->esm_ebr_context.mbr_dl;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.qci =
+          bearer_context_to_forward->qci;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pvi =
+                bearer_context_to_forward->preemption_vulnerability;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pci =
+                      bearer_context_to_forward->preemption_capability;
+      bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pl =
+                            bearer_context_to_forward->priority_level;
+      bearer_list->num_bearers++;
+    }
+    num_pdn++;
+  }
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 

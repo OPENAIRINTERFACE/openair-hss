@@ -273,7 +273,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
       emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_dl = 0;
       emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_ul = 0;
       emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_dl = 0;
-  // TODO  "Better to throw emm_ctx->esm_ctx.esm_proc_data as a parameter or as a hidden parameter ?"
+      // TODO  "Better to throw emm_ctx->esm_ctx.esm_proc_data as a parameter or as a hidden parameter ?"
       rc = esm_proc_pdn_connectivity_request (emm_ctx,
           emm_ctx->esm_ctx.esm_proc_data->pti,
           emm_ctx->esm_ctx.esm_proc_data->pdn_cid,
