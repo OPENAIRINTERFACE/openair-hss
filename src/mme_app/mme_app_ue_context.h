@@ -44,6 +44,7 @@
 #include "obj_hashtable.h"
 #include "bstrlib.h"
 #include "common_types.h"
+#include "mme_app_messages_types.h"
 #include "s1ap_messages_types.h"
 #include "nas_messages_types.h"
 #include "s6a_messages_types.h"

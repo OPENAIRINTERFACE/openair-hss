@@ -313,6 +313,87 @@ mme_app_send_s11_create_session_req (
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
+//------------------------------------------------------------------------------
+int
+mme_app_send_s11_modify_bearer_req(
+  struct ue_context_s *const ue_context, pdn_context_t * pdn_context)
+{
+  uint8_t                                 i = 0;
+  /*
+   * Keep the identifier to the default APN
+   */
+  context_identifier_t                    context_identifier = 0;
+  MessageDef                             *message_p = NULL;
+  itti_s11_modify_bearer_request_t       *s11_modify_bearer_request = NULL;
+  int                                     rc = RETURNok;
+  // todo: handover flag in operation-identifier?!
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (ue_context);
+  DevAssert (pdn_context);
+  OAILOG_DEBUG (LOG_MME_APP, "Sending MBR for imsi " IMSI_64_FMT "\n", ue_context->imsi);
+
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_MODIFY_BEARER_REQUEST);
+  AssertFatal (message_p , "itti_alloc_new_message Failed");
+  /*
+   * WARNING:
+   * Some parameters should be provided by NAS Layer:
+   * - ue_time_zone
+   * - mei
+   * - uli
+   * - uci
+   * Some parameters should be provided by HSS:
+   * - PGW address for CP
+   * - paa
+   * - ambr
+   * and by MME Application layer:
+   * - selection_mode
+   * Set these parameters with random values for now.
+   */
+  s11_modify_bearer_request = &message_p->ittiMsg.s11_modify_bearer_request;
+  memset (s11_modify_bearer_request, 0, sizeof (itti_s11_modify_bearer_request_t));
+  /*
+   * As the create session request is the first exchanged message and as
+   * no tunnel had been previously setup, the distant teid is set to 0.
+   * The remote teid will be provided in the response message.
+   */
+
+  s11_modify_bearer_request->local_teid = ue_context->mme_teid_s11;
+  /*
+   * Delay Value in integer multiples of 50 millisecs, or zero
+   */
+  s11_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TO DO
+  s11_modify_bearer_request->peer_ip.s_addr = pdn_context->s_gw_address_s11_s4.address.ipv4_address.s_addr;
+  // todo: IPv6
+  s11_modify_bearer_request->teid           = pdn_context->s_gw_teid_s11_s4;
+
+  /** Add the bearers to establish. */
+  bearer_context_t * bearer_context_to_establish = NULL;
+  RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
+    DevAssert(registered_pdn_ctx);
+    /** Add them to the bearears list of the MBR. */
+    s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
+        bearer_context_to_establish->ebi;
+    memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].s1_eNB_fteid,
+        &bearer_context_to_establish->enb_fteid_s1u, sizeof(bearer_context_to_establish->enb_fteid_s1u));
+    s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context++;
+  }
+  s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context = 0; // todo: also at REGISTRATION no congestion related removals expected
+  s11_modify_bearer_request->mme_fq_csid.node_id_type = GLOBAL_UNICAST_IPv4; // TO DO
+  s11_modify_bearer_request->mme_fq_csid.csid = 0;   // TO DO ...
+  memset(&s11_modify_bearer_request->indication_flags, 0, sizeof(s11_modify_bearer_request->indication_flags));   // TO DO
+  s11_modify_bearer_request->rat_type = RAT_EUTRAN;
+
+  /*
+   * S11 stack specific parameter. Not used in standalone epc mode
+   */
+  s11_modify_bearer_request->trxn = NULL;
+  /** Update the bearer state with Modify Bearer Response, not here. */
+  // todo: apn restrictions!
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0,
+      "0 S11_MODIFY_BEARER_REQUEST imsi " IMSI_64_FMT, ue_context_pP->imsi);
+  rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
 
 //------------------------------------------------------------------------------
 /**

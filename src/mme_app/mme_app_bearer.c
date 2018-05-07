@@ -214,8 +214,9 @@ void mme_app_handle_s1ap_enb_deregistered_ind (const itti_s1ap_eNB_deregistered_
   }
 }
 
+//------------------------------------------------------------------------------
 /**
- * Callback method called if UE is registered.
+ * Callback method called if UE is deregistered.
  * This method could be also put somewhere else.
  */
 int EmmCbS1apDeregistered(mme_ue_s1ap_id_t ueId){
@@ -240,6 +241,7 @@ int EmmCbS1apDeregistered(mme_ue_s1ap_id_t ueId){
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
+//------------------------------------------------------------------------------
 /**
  * Callback method called if UE is registered.
  * This method could be also put somewhere else.
@@ -274,17 +276,6 @@ int EmmCbS1apRegistered(mme_ue_s1ap_id_t ueId){
      * No pending bearer deactivation.
      * Check if there is are any pending unestablished downlink bearers (DL-GTP Tunnel Information to the SAE-GW).
      */
-    message_p = itti_alloc_new_message (TASK_MME_APP, S11_MODIFY_BEARER_REQUEST);
-    AssertFatal (message_p , "itti_alloc_new_message Failed");
-    itti_s11_modify_bearer_request_t *s11_modify_bearer_request = &message_p->ittiMsg.s11_modify_bearer_request;
-
-    s11_modify_bearer_request->peer_ip = mme_config.ipv4.sgw_s11;
-    s11_modify_bearer_request->teid = ue_context->sgw_s11_teid;
-    s11_modify_bearer_request->local_teid = ue_context->mme_teid_s11;
-    /*
-     * Delay Value in integer multiples of 50 millisecs, or zero
-     */
-    s11_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TO DO
 
     // todo: how to do this in multi apn?
     pdn_context_t * registered_pdn_ctx = NULL;
@@ -296,53 +287,22 @@ int EmmCbS1apRegistered(mme_ue_s1ap_id_t ueId){
        * Get the first PDN whose bearers are not established yet.
        * Do the MBR just one PDN at a time.
        */
-      bearer_context_t * bearer_contexts = NULL;
       RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
-        DevAssert(registered_pdn_ctx);
+        DevAssert(bearer_context_to_establish);
         /** Add them to the bearears list of the MBR. */
         if (bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
           OAILOG_INFO(LOG_MME_APP, "Found a PDN with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Sending MBR. \n", ueId);
-          /** Set the SAE-GW peer IP address and the TEID. */
-          s11_modify_bearer_request->peer_ip.s_addr = registered_pdn_ctx->s_gw_address_s11_s4.address.ipv4_address.s_addr;
-          // todo: IPv6
-          s11_modify_bearer_request->teid           = registered_pdn_ctx->s_gw_teid_s11_s4;
-          goto found_pdn;
+          /** Send the S11 MBR and return. */
+          // todo: error handling! this might occur if some error with OVS happens.
+          DevAssert(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx));
+          OAILOG_INFO(LOG_MME_APP, "Successfully sent MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Returning from REGISTRERED callback. \n", ueId);
+          OAILOG_FUNC_OUT (LOG_MME_APP);
         }
       }
       registered_pdn_ctx = NULL;
     }
-    OAILOG_INFO(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". "
-        "Sending MBR. Completing EmmRegistered callback. \n", ueId);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-
-found_pdn:
-  OAILOG_INFO(LOG_MME_APP, "Found a PDN context for APN %s with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". "
-      "Sending MBR. Completing EmmRegistered callback. \n", ueId, registered_pdn_ctx->apn_in_use->data);
-
-  /** Add the bearers to establish. */
-  RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
-    DevAssert(registered_pdn_ctx);
-    /** Add them to the bearears list of the MBR. */
-    s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
-        bearer_context_to_establish->ebi;
-    memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].s1_eNB_fteid,
-        &bearer_context_to_establish->enb_fteid_s1u, sizeof(bearer_context_to_establish->enb_fteid_s1u));
+    OAILOG_ERROR(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", ueId);
   }
-  s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context++;
-  s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context = 0; // todo: also at REGISTRATION no congestion related removals expected
-  s11_modify_bearer_request->mme_fq_csid.node_id_type = GLOBAL_UNICAST_IPv4; // TO DO
-  s11_modify_bearer_request->mme_fq_csid.csid = 0;   // TO DO ...
-  memset(&s11_modify_bearer_request->indication_flags, 0, sizeof(s11_modify_bearer_request->indication_flags));   // TO DO
-  s11_modify_bearer_request->rat_type = RAT_EUTRAN;
-  /*
-   * S11 stack specific parameter. Not used in standalone epc mode
-   */
-  s11_modify_bearer_request->trxn = NULL;
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
-      NULL, 0, "0 S11_MODIFY_BEARER_REQUEST teid %u ebi %u", s11_modify_bearer_request->teid,
-      s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id);
-  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-  /** Reset any pending downlink bearers. */
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -1290,9 +1250,6 @@ mme_app_handle_initial_context_setup_rsp (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-
-//  if (!ue_context_p->is_s1_ue_context_release) {
-
   // todo: where are these timers?
   // Stop Initial context setup process guard timer,if running
   if (ue_context_p->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
@@ -1302,68 +1259,69 @@ mme_app_handle_initial_context_setup_rsp (
     ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
   }
 
+  pdn_context_t * registered_pdn_ctx = NULL;
+  /** Update all bearers and get the pdn context id. */
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context_p->pdn_contexts) {
+    DevAssert(registered_pdn_ctx);
 
-  /** Save the bearer information as pending or send it directly if UE is registered. */
-  if(ue_context_p->mm_state == UE_REGISTERED){
-    /** Send the DL-GTP Tunnel Information to the SAE-GW. */
-    message_p = itti_alloc_new_message (TASK_MME_APP, S11_MODIFY_BEARER_REQUEST);
-    AssertFatal (message_p , "itti_alloc_new_message Failed");
-    itti_s11_modify_bearer_request_t *s11_modify_bearer_request = &message_p->ittiMsg.s11_modify_bearer_request;
-    s11_modify_bearer_request->local_teid = ue_context_p->mme_teid_s11;
-    /*
-     * Delay Value in integer multiples of 50 millisecs, or zero
+    /**
+     * Get the first PDN whose bearers are not established yet.
+     * Do the MBR just one PDN at a time.
      */
-    s11_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TODO
-
-    for (int item = 0; item < initial_ctxt_setup_rsp_pP->no_of_e_rabs; item++) {
-      s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].eps_bearer_id     = initial_ctxt_setup_rsp_pP->e_rab_id[item];
-      s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.teid = initial_ctxt_setup_rsp_pP->gtp_teid[item];
-      s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.interface_type    = S1_U_ENODEB_GTP_U;
-
-      if (!item) {
-        ebi_t             ebi = initial_ctxt_setup_rsp_pP->e_rab_id[item];
-        pdn_cid_t         cid = ue_context_p->bearer_contexts[EBI_TO_INDEX(ebi)]->pdn_cx_id;
-        pdn_context_t    *pdn_context = ue_context_p->pdn_contexts[cid];
-
-        s11_modify_bearer_request->peer_ip = pdn_context->s_gw_address_s11_s4.address.ipv4_address;
-        s11_modify_bearer_request->teid    = pdn_context->s_gw_teid_s11_s4;
+    bearer_context_t * bearer_context_to_establish = NULL;
+    RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
+      DevAssert(bearer_context_to_establish);
+      /** Add them to the bearears list of the MBR. */
+      if (bearer_context_to_establish->ebi == initial_ctxt_setup_rsp_pP->e_rab_id[0]){
+        goto found_pdn;
       }
+    }
+    registered_pdn_ctx = NULL;
+  }
+  OAILOG_INFO(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". "
+      "Dropping Initial Context Setup Response. \n", ueId);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+
+found_pdn;
+//  /** Save the bearer information as pending or send it directly if UE is registered. */
+//  RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
+//    DevAssert(bearer_context_to_establish);
+//    /** Add them to the bearears list of the MBR. */
+//    if (bearer_context_to_establish->ebi == initial_ctxt_setup_rsp_pP->e_rab_id[0]){
+//      goto found_pdn;
+//    }
+//  }
+
+  for (int item = 0; item < initial_ctxt_setup_rsp_pP->no_of_e_rabs; item++) {
+    ebi_t ebi_to_establish = initial_ctxt_setup_rsp_pP->e_rab_id[item];
+    /** Update the bearer context. */
+    bearer_context_t* bearer_context_to_setup = mme_app_get_bearer_context(registered_pdn_ctx, ebi_to_establish);
+    if(bearer_context_to_setup){
+      bearer_context_to_setup->enb_fteid_s1u.interface_type = S1_U_ENODEB_GTP_U;
+      bearer_context_to_setup->enb_fteid_s1u.teid           = initial_ctxt_setup_rsp_pP->gtp_teid[item];
+      bearer_context_to_setup->enb_fteid_s1u.teid           = initial_ctxt_setup_rsp_pP->gtp_teid[item];
+      /** Set the IP address. */
       if (4 == blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item])) {
-        s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4         = 1;
-        memcpy(&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4_address,
-            initial_ctxt_setup_rsp_pP->transport_layer_address[item]->data, blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
+        bearer_context_to_setup->enb_fteid_s1u.ipv4         = 1;
+        memcpy(&bearer_context_to_setup->enb_fteid_s1u.ipv4_address,
+               initial_ctxt_setup_rsp_pP->transport_layer_address[item]->data, blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
       } else if (16 == blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item])) {
-        s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6         = 1;
-        memcpy(&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6_address,
+        bearer_context_to_setup->enb_fteid_s1u.ipv6         = 1;
+        memcpy(&bearer_context_to_setup->enb_fteid_s1u.ipv6_address,
             initial_ctxt_setup_rsp_pP->transport_layer_address[item]->data,
             blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
       } else {
         AssertFatal(0, "TODO IP address %d bytes", blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
       }
-      bdestroy_wrapper (&initial_ctxt_setup_rsp_pP->transport_layer_address[item]);
     }
-    s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context = initial_ctxt_setup_rsp_pP->no_of_e_rabs;
-
-    // todo: implement this if after service request, etc.. bearers are to be removed (in addition to delete bearer command and bearer resource command).
-    s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context = 0;
-
-    s11_modify_bearer_request->mme_fq_csid.node_id_type = GLOBAL_UNICAST_IPv4; // TODO
-    s11_modify_bearer_request->mme_fq_csid.csid = 0;   // TODO ...
-    memset(&s11_modify_bearer_request->indication_flags, 0, sizeof(s11_modify_bearer_request->indication_flags));   // TODO
-    s11_modify_bearer_request->rat_type = RAT_EUTRAN;
-    /*
-     * S11 stack specific parameter. Not used in standalone epc mode
-     */
-    s11_modify_bearer_request->trxn = NULL;
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
-                        NULL, 0, "0 S11_MODIFY_BEARER_REQUEST teid %u ebi %u", s11_modify_bearer_request->teid,
-                        s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id);
-    itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+  }
+  /** Setting as ACTIVE when MBResp received from SAE-GW. */
+  if(ue_context_p->mm_state == UE_REGISTERED){
+    /** Send Modify Bearer Request for the APN. */
+    DevAssert(mme_app_send_s11_modify_bearer_req(ue_context_p, registered_pdn_ctx));
   }else{
     /** Will send MBR with MM state change callbacks (with ATTACH_COMPLETE). */
     OAILOG_INFO(LOG_MME_APP, "IMSI " IMSI_64_FMT " is not registered yet. Waiting the UE to register to send the MBR.\n", ue_context_p->imsi);
-    memcpy(&ue_context_p->pending_s1u_downlink_bearer, &initial_ctxt_setup_rsp_pP->bearer_s1u_enb_fteid, sizeof(FTeid_t));
-    ue_context_p->pending_s1u_downlink_bearer_ebi = initial_ctxt_setup_rsp_pP->eps_bearer_id;
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -2962,6 +2920,68 @@ mme_app_handle_handover_request_acknowledge(
 //        ue_context_p->mme_s11_teid,
 //        ue_context_p->local_mme_s10_teid,
 //        &ue_context_p->guti);
+
+
+
+
+
+
+//
+// for (int item = 0; item < initial_ctxt_setup_rsp_pP->no_of_e_rabs; item++) {
+//   s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].eps_bearer_id                  = initial_ctxt_setup_rsp_pP->e_rab_id[item];
+//   s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.teid              = initial_ctxt_setup_rsp_pP->gtp_teid[item];
+//   s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.interface_type    = S1_U_ENODEB_GTP_U;
+//
+//   if (!item) {
+//     ebi_t             ebi = initial_ctxt_setup_rsp_pP->e_rab_id[item];
+//     pdn_cid_t         cid = ue_context_p->bearer_contexts[EBI_TO_INDEX(ebi)]->pdn_cx_id;
+//     pdn_context_t    *pdn_context = ue_context_p->pdn_contexts[cid];
+//
+//     s11_modify_bearer_request->peer_ip = pdn_context->s_gw_address_s11_s4.address.ipv4_address;
+//     s11_modify_bearer_request->teid    = pdn_context->s_gw_teid_s11_s4;
+//   }
+//   if (4 == blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item])) {
+//     s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4         = 1;
+//     memcpy(&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv4_address,
+//         initial_ctxt_setup_rsp_pP->transport_layer_address[item]->data, blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
+//   } else if (16 == blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item])) {
+//     s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6         = 1;
+//     memcpy(&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[item].s1_eNB_fteid.ipv6_address,
+//         initial_ctxt_setup_rsp_pP->transport_layer_address[item]->data,
+//         blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
+//   } else {
+//     AssertFatal(0, "TODO IP address %d bytes", blength(initial_ctxt_setup_rsp_pP->transport_layer_address[item]));
+//   }
+//   bdestroy_wrapper (&initial_ctxt_setup_rsp_pP->transport_layer_address[item]);
+// }
+// s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context = initial_ctxt_setup_rsp_pP->no_of_e_rabs;
+//
+// // todo: implement this if after service request, etc.. bearers are to be removed (in addition to delete bearer command and bearer resource command).
+// s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context = 0;
+//
+// s11_modify_bearer_request->mme_fq_csid.node_id_type = GLOBAL_UNICAST_IPv4; // TODO
+// s11_modify_bearer_request->mme_fq_csid.csid = 0;   // TODO ...
+// memset(&s11_modify_bearer_request->indication_flags, 0, sizeof(s11_modify_bearer_request->indication_flags));   // TODO
+// s11_modify_bearer_request->rat_type = RAT_EUTRAN;
+// /*
+//  * S11 stack specific parameter. Not used in standalone epc mode
+//  */
+// s11_modify_bearer_request->trxn = NULL;
+// MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
+//                     NULL, 0, "0 S11_MODIFY_BEARER_REQUEST teid %u ebi %u", s11_modify_bearer_request->teid,
+//                     s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id);
+// itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+//
+//
+//
+//
+//
+//
+//
+
+
+
+
 
  /**
   * Set the downlink bearers as pending.
