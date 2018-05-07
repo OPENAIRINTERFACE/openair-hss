@@ -164,13 +164,13 @@ int esm_ebr_assign (emm_data_context_t * emm_context, ebi_t ebi)
   bearer_context_t                       *bearer_context = NULL;
   int                                     i;
 
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   if (ebi != ESM_EBI_UNASSIGNED) {
     if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
     } else {
-      bearer_context = ue_mm_context->bearer_contexts[EBI_TO_INDEX(ebi)];
+      bearer_context = ue_context->bearer_contexts[EBI_TO_INDEX(ebi)];
       if (bearer_context ) {
         OAILOG_WARNING (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context already " "assigned (ebi=%d)\n", ebi);
         OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
@@ -244,12 +244,12 @@ int esm_ebr_release (emm_data_context_t * emm_context, ebi_t ebi)
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   /*
    * Get EPS bearer context data
    */
-  bearer_context = ue_mm_context->bearer_contexts[EBI_TO_INDEX(ebi)];
+  bearer_context = ue_context->bearer_contexts[EBI_TO_INDEX(ebi)];
 
   if ((bearer_context == NULL) || (bearer_context->ebi != ebi)) {
     /*
@@ -331,12 +331,12 @@ int esm_ebr_start_timer (emm_data_context_t * emm_context, ebi_t ebi,
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
 
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   /*
    * Get EPS bearer context data
    */
-  bearer_context = ue_mm_context->bearer_contexts[EBI_TO_INDEX(ebi)];
+  bearer_context = ue_context->bearer_contexts[EBI_TO_INDEX(ebi)];
 
   if ((bearer_context == NULL) || (bearer_context->ebi != ebi)) {
     /*
@@ -365,7 +365,7 @@ int esm_ebr_start_timer (emm_data_context_t * emm_context, ebi_t ebi,
       /*
        * Set the UE identifier
        */
-      esm_ebr_timer_data->ue_id = ue_mm_context->mme_ue_s1ap_id;
+      esm_ebr_timer_data->ue_id = ue_context->mme_ue_s1ap_id;
       esm_ebr_timer_data->ctx = emm_context;
       /*
        * Set the EPS bearer identity
@@ -428,12 +428,12 @@ int esm_ebr_stop_timer (emm_data_context_t * emm_context, ebi_t ebi)
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
 
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   /*
    * Get EPS bearer context data
    */
-  bearer_context = ue_mm_context->bearer_contexts[EBI_TO_INDEX(ebi)];
+  bearer_context = ue_context->bearer_contexts[EBI_TO_INDEX(ebi)];
 
   if ((bearer_context == NULL) || (bearer_context->ebi != ebi)) {
     /*
@@ -489,14 +489,14 @@ ebi_t esm_ebr_get_pending_ebi (emm_data_context_t * emm_context, esm_ebr_state s
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
 
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   for (i = 0; i < BEARERS_PER_UE; i++) {
-    if (ue_mm_context->bearer_contexts[i] == NULL) {
+    if (ue_context->bearer_contexts[i] == NULL) {
       continue;
     }
 
-    if (ue_mm_context->bearer_contexts[i]->esm_ebr_context.status != status) {
+    if (ue_context->bearer_contexts[i]->esm_ebr_context.status != status) {
       continue;
     }
 
@@ -507,7 +507,7 @@ ebi_t esm_ebr_get_pending_ebi (emm_data_context_t * emm_context, esm_ebr_state s
   }
 
   if (i < BEARERS_PER_UE) {
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ue_mm_context->bearer_contexts[i]->ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ue_context->bearer_contexts[i]->ebi);
   }
 
   /*
@@ -557,12 +557,12 @@ esm_ebr_set_status (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
   }
 
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   /*
    * Get EPS bearer context data
    */
-  bearer_context = ue_mm_context->bearer_contexts[EBI_TO_INDEX(ebi)];
+  bearer_context = ue_context->bearer_contexts[EBI_TO_INDEX(ebi)];
 
   if ((bearer_context == NULL) || (bearer_context->ebi != ebi)) {
     /*
@@ -580,7 +580,7 @@ esm_ebr_set_status (
       OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - Status of EPS bearer context %d changed:" " %s ===> %s\n",
           ebi, _esm_ebr_state_str[old_status], _esm_ebr_state_str[status]);
       MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 ESM state %s => %s " MME_UE_S1AP_ID_FMT " ",
-          _esm_ebr_state_str[old_status], _esm_ebr_state_str[status], ue_mm_context->mme_ue_s1ap_id);
+          _esm_ebr_state_str[old_status], _esm_ebr_state_str[status], ue_context->mme_ue_s1ap_id);
       ebr_ctx->status = status;
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
     } else {
@@ -617,11 +617,11 @@ esm_ebr_get_status (
   if ((ebi < ESM_EBI_MIN) || (ebi > ESM_EBI_MAX)) {
     return (ESM_EBR_INACTIVE);
   }
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   bearer_context_t                       *bearer_context = NULL;
 
-  bearer_context = ue_mm_context->bearer_contexts[EBI_TO_INDEX(ebi)];
+  bearer_context = ue_context->bearer_contexts[EBI_TO_INDEX(ebi)];
 
   if (bearer_context == NULL) {
     /*
@@ -682,9 +682,9 @@ esm_ebr_is_not_in_use (
   emm_data_context_t * emm_context,
   ebi_t ebi)
 {
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
-  return ((ebi == ESM_EBI_UNASSIGNED) || (ue_mm_context->bearer_contexts[EBI_TO_INDEX(ebi)] == NULL) || (ue_mm_context->bearer_contexts[EBI_TO_INDEX(ebi)]->ebi) != ebi);
+  return ((ebi == ESM_EBI_UNASSIGNED) || (ue_context->bearer_contexts[EBI_TO_INDEX(ebi)] == NULL) || (ue_context->bearer_contexts[EBI_TO_INDEX(ebi)]->ebi) != ebi);
 }
 
 /****************************************************************************/
@@ -712,10 +712,10 @@ static int _esm_ebr_get_available_entry (emm_data_context_t * emm_context)
 {
   int                                     i;
 
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   for (i = 0; i < BEARERS_PER_UE; i++) {
-    if (!ue_mm_context->bearer_contexts[i]) {
+    if (!ue_context->bearer_contexts[i]) {
       return i;
     }
   }

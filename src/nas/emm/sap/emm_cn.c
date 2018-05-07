@@ -113,10 +113,10 @@ static int _emm_cn_authentication_res (emm_cn_auth_res_t * const msg)
   /*
    * We received security vector from HSS. Try to setup security with UE
    */
-  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
+  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-  if (ue_mm_context) {
-    emm_ctx = &ue_mm_context->emm_context;
+  if (ue_context) {
+    emm_ctx = &ue_context->emm_context;
     nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_ctx);
 
     if (auth_info_proc) {
@@ -129,7 +129,7 @@ static int _emm_cn_authentication_res (emm_cn_auth_res_t * const msg)
     } else {
       OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find Auth_info procedure associated to UE id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
     }
-    unlock_ue_contexts(ue_mm_context);
+    unlock_ue_contexts(ue_context);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -144,10 +144,10 @@ static int _emm_cn_authentication_fail (const emm_cn_auth_fail_t * msg)
   /*
    * We received security vector from HSS. Try to setup security with UE
    */
-  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
+  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-  if (ue_mm_context) {
-    emm_ctx = &ue_mm_context->emm_context;
+  if (ue_context) {
+    emm_ctx = &ue_context->emm_context;
     nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_ctx);
 
     if (auth_info_proc) {
@@ -156,7 +156,7 @@ static int _emm_cn_authentication_fail (const emm_cn_auth_fail_t * msg)
     } else {
       OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find Auth_info procedure associated to UE id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
     }
-    unlock_ue_contexts(ue_mm_context);
+    unlock_ue_contexts(ue_context);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -214,16 +214,16 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   struct emm_data_context_s              *emm_ctx = NULL;
-  ue_mm_context_t                        *ue_mm_context;
+  ue_context_t                        *ue_context;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   pdn_cid_t                               pdn_cid = 0;
   ebi_t                                   new_ebi = 0;
   bool                                    is_pdn_connectivity = false;
 
-  ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
   emm_ctx = emm_data_context_get(&_emm_data, msg_pP->ue_id);
 
-  if (emm_ctx == NULL || ue_mm_context == NULL) {
+  if (emm_ctx == NULL || ue_context == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
@@ -232,19 +232,19 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   // PDN selection here
   // Because NAS knows APN selected by UE if any
   // default APN selection
-  struct apn_configuration_s* apn_config = mme_app_select_apn(ue_mm_context, emm_ctx->esm_ctx.esm_proc_data->apn);
+  struct apn_configuration_s* apn_config = mme_app_select_apn(ue_context, emm_ctx->esm_ctx.esm_proc_data->apn);
 
   if (!apn_config) {
     /*
      * Unfortunately we didn't find our default APN...
      */
-    OAILOG_INFO (LOG_NAS_ESM, "No suitable APN found ue_id=" MME_UE_S1AP_ID_FMT ")\n",ue_mm_context->mme_ue_s1ap_id);
+    OAILOG_INFO (LOG_NAS_ESM, "No suitable APN found ue_id=" MME_UE_S1AP_ID_FMT ")\n",ue_context->mme_ue_s1ap_id);
     return RETURNerror;
   }
 
   // search for an already set PDN context
   for (pdn_cid = 0; pdn_cid < MAX_APN_PER_UE; pdn_cid++) {
-    if ((ue_mm_context->pdn_contexts[pdn_cid]) && (ue_mm_context->pdn_contexts[pdn_cid]->context_identifier == apn_config->context_identifier)) {
+    if ((ue_context->pdn_contexts[pdn_cid]) && (ue_context->pdn_contexts[pdn_cid]->context_identifier == apn_config->context_identifier)) {
       is_pdn_connectivity = true;
       break;
     }
@@ -255,7 +255,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
      * Search for an available PDN connection entry
      */
     for (pdn_cid = 0; pdn_cid < MAX_APN_PER_UE; pdn_cid++) {
-      if (!ue_mm_context->pdn_contexts[pdn_cid]) break;
+      if (!ue_context->pdn_contexts[pdn_cid]) break;
     }
   }
   if (pdn_cid < MAX_APN_PER_UE) {
@@ -290,7 +290,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
         /*
          * Create local default EPS bearer context
          */
-        if ((!is_pdn_connectivity) || ((is_pdn_connectivity) && (EPS_BEARER_IDENTITY_UNASSIGNED == ue_mm_context->pdn_contexts[pdn_cid]->default_ebi))) {
+        if ((!is_pdn_connectivity) || ((is_pdn_connectivity) && (EPS_BEARER_IDENTITY_UNASSIGNED == ue_context->pdn_contexts[pdn_cid]->default_ebi))) {
           rc = esm_proc_default_eps_bearer_context (emm_ctx, emm_ctx->esm_ctx.esm_proc_data->pti, pdn_cid, &new_ebi, emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci, &esm_cause);
         }
 
@@ -298,7 +298,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
           esm_cause = ESM_CAUSE_SUCCESS;
         }
       } else {
-  //      unlock_ue_contexts(ue_mm_context);
+  //      unlock_ue_contexts(ue_context);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       }
 
@@ -327,10 +327,10 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
       }
     }
-//    unlock_ue_contexts(ue_mm_context);
+//    unlock_ue_contexts(ue_context);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
   }
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
 }
 
@@ -347,10 +347,10 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   bool                                    is_standalone = false;    // warning hardcoded
   bool                                    triggered_by_ue = true;  // warning hardcoded
 
-  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
+  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
 
-  if (ue_mm_context) {
-    emm_ctx = &ue_mm_context->emm_context;
+  if (ue_context) {
+    emm_ctx = &ue_context->emm_context;
   }
 
   if (emm_ctx == NULL) {
@@ -401,14 +401,14 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   qos.bitRatesExt.guarBitRateForDL = 0;
 
   int def_bearer_index = EBI_TO_INDEX(msg_pP->ebi);
-  pdn_cid_t pdn_cid = ue_mm_context->bearer_contexts[def_bearer_index]->pdn_cx_id;
+  pdn_cid_t pdn_cid = ue_context->bearer_contexts[def_bearer_index]->pdn_cx_id;
 
   /*
    * Return default EPS bearer context request message
    */
   rc = esm_send_activate_default_eps_bearer_context_request (msg_pP->pti, msg_pP->ebi,      //msg_pP->ebi,
                                                              &esm_msg.activate_default_eps_bearer_context_request,
-                                                             ue_mm_context->pdn_contexts[pdn_cid]->apn_subscribed,
+                                                             ue_context->pdn_contexts[pdn_cid]->apn_subscribed,
                                                              &msg_pP->pco,
                                                              esm_pdn_type, msg_pP->pdn_addr,
                                                              &qos, ESM_CAUSE_SUCCESS);
@@ -437,7 +437,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
       /*
        * Return indication that ESM procedure failed
        */
-      unlock_ue_contexts(ue_mm_context);
+      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     }
   } else {
@@ -485,7 +485,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
     OAILOG_ERROR(LOG_NAS_EMM, "This is an error, for no other procedure NAS layer should be informed about the PDN Connectivity. It happens before NAS for UE Id " MME_UE_S1AP_ID_FMT". \n", msg_pP->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
-  unlock_ue_contexts(ue_mm_context);
+  unlock_ue_contexts(ue_context);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -558,10 +558,10 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
   // forward to ESM
   esm_sap_t                               esm_sap = {0};
 
-  ue_mm_context_t *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
+  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
   esm_sap.primitive = ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ;
-  esm_sap.ctx           = &ue_mm_context->emm_context;
+  esm_sap.ctx           = &ue_context->emm_context;
   esm_sap.is_standalone = true;
   esm_sap.ue_id         = msg->ue_id;
   esm_sap.data.eps_dedicated_bearer_context_activate.cid         = msg->cid;
@@ -584,7 +584,7 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
 
   rc = esm_sap_send (&esm_sap);
 
-  unlock_ue_contexts(ue_mm_context);
+  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

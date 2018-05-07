@@ -688,7 +688,7 @@ emm_data_context_get_by_guti (
 int emm_context_unlock (struct emm_data_context_s *emm_context_p)
 {
   if (emm_context_p) {
-//    return unlock_ue_contexts(PARENT_STRUCT(emm_context_p, struct ue_mm_context_s, emm_context));
+//    return unlock_ue_contexts(PARENT_STRUCT(emm_context_p, struct ue_context_s, emm_context));
   }
   return RETURNerror;
 }
@@ -873,6 +873,7 @@ static int _ctx_req_proc_success_cb (struct emm_data_context_s *emm_ctx_p)
       nas_delete_cn_procedure(emm_ctx_p, &ctx_req_proc->cn_proc);
     }
   }
+  // todo: pdn config req!//ULR!//tau_accept!!
 //    /*
 //     * Currently, the PDN_CONNECTIVITY_REQUEST ESM IE is not processed by the ESM layer.
 //     * Later, with multi APN, process it and also the PDN_CONNECTION IE.

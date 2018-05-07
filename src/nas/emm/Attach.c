@@ -142,7 +142,7 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context);
 
 static bool _emm_attach_ies_have_changed (mme_ue_s1ap_id_t ue_id, emm_attach_request_ies_t * const ies1, emm_attach_request_ies_t * const ies2);
 
-static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const ue_mm_context, emm_attach_request_ies_t * const ies);
+static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const ue_context, emm_attach_request_ies_t * const ies);
 
 
 
@@ -192,7 +192,7 @@ int emm_proc_attach_request (
   int                                     rc = RETURNerror;
   emm_data_context_t                      temp_emm_ue_ctx;
   emm_fsm_state_t                         fsm_state = EMM_DEREGISTERED;
-  ue_mm_context_t                        *ue_mm_context_p = NULL;
+  ue_context_t                        *ue_context_p = NULL;
 
   emm_data_context_t                     *new_emm_ue_ctx = NULL;
 
@@ -223,8 +223,8 @@ int emm_proc_attach_request (
      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
    }
    /** Retrieve the MME_APP UE context. */
-   ue_mm_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
-   DevAssert(ue_mm_context_p);
+   ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+   DevAssert(ue_context_p);
 
 
   // Check whether request if for emergency bearer service.
@@ -477,7 +477,7 @@ int emm_proc_attach_request (
          _emm_attach_accept_retx(new_emm_ue_ctx);
          // Clean up new UE context that was created to handle new attach request
          nas_itti_detach_req(ue_id);
-//            unlock_ue_contexts(ue_mm_context);
+//            unlock_ue_contexts(ue_context);
 //            unlock_ue_contexts(imsi_ue_mm_ctx);
          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
        }
@@ -517,7 +517,7 @@ int emm_proc_attach_request (
          // Clean up new UE context that was created to handle new attach request
          nas_itti_detach_req(ue_id);
          OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC  - Received duplicated Attach Request\n");
-//              unlock_ue_contexts(ue_mm_context);
+//              unlock_ue_contexts(ue_context);
 //             unlock_ue_contexts(imsi_ue_mm_ctx);
          OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
        }
@@ -563,8 +563,8 @@ int emm_proc_attach_request (
         * Assuming nothing to reset when continuing with DEREGISTERED EMM context. Continue using its EPS security context.
         * Will ask for new subscription data in the HSS with ULR (also to register the MME again).
         */
-       ue_mm_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, new_emm_ue_ctx->ue_id);
-       if(ue_mm_context_p != NULL){
+       ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, new_emm_ue_ctx->ue_id);
+       if(ue_context_p != NULL){
          OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - BUG The old DEREGISTERED UE context with ueId " MME_UE_S1AP_ID_FMT " still has an MME_APP context. "
              "Rejecting new Attach Request and removing contexts for new ueId " MME_UE_S1AP_ID_FMT ". \n", new_emm_ue_ctx->ue_id, ue_id);
          /*
@@ -585,7 +585,7 @@ int emm_proc_attach_request (
         * todo: checking for UE/MS network capabilities and replaying them if changed? assuming not changed.
         */
        // todo: 5G has something like REGISTRATION UPDATE!
-     } else { //else  ((ue_mm_context) && ((EMM_DEREGISTERED < fsm_state ) && (EMM_REGISTERED != fsm_state)))
+     } else { //else  ((ue_context) && ((EMM_DEREGISTERED < fsm_state ) && (EMM_REGISTERED != fsm_state)))
        /*
         * This should also consider a Service Request Procedure.
         */
@@ -671,7 +671,7 @@ int emm_proc_attach_request (
       * todo: why do we clean up current EMM context? Why can we validate it and continue to use it with.
       * its subscription and security information.
       */
-     //    new_emm_ctx = &ue_mm_context->emm_context;
+     //    new_emm_ctx = &ue_context->emm_context;
      //    struct nas_emm_attach_proc_s   no_attach_proc = {0};
      //    no_attach_proc.ue_id       = ue_id;
      //    no_attach_proc.emm_cause   = ue_ctx.emm_context.emm_cause;
@@ -689,7 +689,7 @@ int emm_proc_attach_request (
      //
      //    esm_sap.primitive = ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ;
      //    esm_sap.ue_id = ue_id;
-     //    esm_sap.ctx = &new_ue_mm_context->emm_context;
+     //    esm_sap.ctx = &new_ue_context->emm_context;
      //    esm_sap.data.eps_bearer_context_deactivate.ebi = ESM_SAP_ALL_EBI;
      //    rc = esm_sap_send (&esm_sap);
      //
@@ -700,10 +700,10 @@ int emm_proc_attach_request (
      //     */
      //    emm_sap.primitive = EMMREG_DETACH_REQ;
      //    emm_sap.u.emm_reg.ue_id = ue_id;
-     //    emm_sap.u.emm_reg.ctx = &new_ue_mm_context->emm_context;
+     //    emm_sap.u.emm_reg.ctx = &new_ue_context->emm_context;
      //    rc = emm_sap_send (&emm_sap);
      //
-     //    _clear_emm_ctxt(&new_ue_mm_context->emm_context);
+     //    _clear_emm_ctxt(&new_ue_context->emm_context);
      //    create_new_emm_ctxt = true;
      //    #endif
      //  }
@@ -761,7 +761,7 @@ int emm_proc_attach_reject (mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause)
       emm_sap.u.emm_reg.u.attach.proc = attach_proc;
       rc = emm_sap_send (&emm_sap);
     }
-//    unlock_ue_contexts(ue_mm_context);
+//    unlock_ue_contexts(ue_context);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -819,7 +819,7 @@ int emm_proc_attach_complete (
        */
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__20);
       emm_ctx_set_attribute_valid(emm_data_context, EMM_CTXT_MEMBER_GUTI);
-      // TODO LG REMOVE emm_context_add_guti(&_emm_data, &ue_mm_context->emm_context);
+      // TODO LG REMOVE emm_context_add_guti(&_emm_data, &ue_context->emm_context);
       emm_ctx_clear_old_guti(emm_data_context);
 
       /*
@@ -875,7 +875,7 @@ int emm_proc_attach_complete (
     rc = RETURNok;
   }
 
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -1536,7 +1536,7 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
   if (emm_context) {
     emm_sap_t                               emm_sap = {0};
     nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
-    ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+    ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
     mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
 
     if (attach_proc) {
@@ -1552,8 +1552,8 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
       emm_sap.u.emm_as.u.establish.nas_info = EMM_AS_NAS_INFO_ATTACH;
 
       NO_REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__3);
-      if (ue_mm_context->ue_radio_capability) {
-        bdestroy_wrapper(&ue_mm_context->ue_radio_capability);
+      if (ue_context->ue_radio_capability) {
+        bdestroy_wrapper(&ue_context->ue_radio_capability);
       }
       //----------------------------------------
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__9);
@@ -1604,7 +1604,7 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
        */
       OAILOG_INFO (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - Include the new assigned GUTI in the Attach Accept message\n", ue_id);
       emm_sap.u.emm_as.u.establish.new_guti    = &emm_context->_guti;
-    } else { // IS_EMM_CTXT_VALID_GUTI(ue_mm_context) is true
+    } else { // IS_EMM_CTXT_VALID_GUTI(ue_context) is true
       emm_sap.u.emm_as.u.establish.new_guti  = NULL;
     }
     //----------------------------------------
@@ -1617,7 +1617,7 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
      */
     // Note: this is safe from double-free errors because it sets to NULL
     // after freeing, which free treats as a no-op.
-    bdestroy_wrapper(&ue_mm_context->ue_radio_capability);
+    bdestroy_wrapper(&ue_context->ue_radio_capability);
 
     /*
      * Setup EPS NAS security data
@@ -1656,7 +1656,7 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
       nas_start_T3450(attach_proc->ue_id, &attach_proc->T3450, attach_proc->emm_spec_proc.emm_proc.base_proc.time_out, (void*)emm_context);
     }
   } else {
-    OAILOG_WARNING (LOG_NAS_EMM, "ue_mm_context NULL\n");
+    OAILOG_WARNING (LOG_NAS_EMM, "ue_context NULL\n");
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -2012,7 +2012,7 @@ static int _emm_attach_update (emm_data_context_t * const emm_context, emm_attac
    * Security key set identifier
    */
   if (emm_context->ksi != ies->ksi) {
-    OAILOG_TRACE (LOG_NAS_EMM, "UE id " MME_UE_S1AP_ID_FMT " Update ue ksi %d -> %d\n", ue_mm_context->mme_ue_s1ap_id, emm_context->ksi, ies->ksi);
+    OAILOG_TRACE (LOG_NAS_EMM, "UE id " MME_UE_S1AP_ID_FMT " Update ue ksi %d -> %d\n", ue_context->mme_ue_s1ap_id, emm_context->ksi, ies->ksi);
     emm_context->ksi = ies->ksi;
   }
   /*

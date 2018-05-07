@@ -160,7 +160,7 @@ emm_proc_status (
   emm_as_set_security_data (&emm_sap.u.emm_as.u.status.sctx, sctx, false, true);
   MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMAS_STATUS_IND  ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
   rc = emm_sap_send (&emm_sap);
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

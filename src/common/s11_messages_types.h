@@ -240,6 +240,8 @@ typedef struct itti_s11_create_session_request_s {
   ///< already active bearer contexts, this value is set to the least
   ///< restrictive type.
 
+  ebi_t              default_ebi;
+
   ambr_t             ambr;                ///< Aggregate Maximum Bit Rate (APN-AMBR)
   ///< This IE represents the APN-AMBR. It shall be included on
   ///< the S4/S11, S5/S8 and S2b interfaces for an E-UTRAN

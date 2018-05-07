@@ -151,7 +151,7 @@ esm_proc_eps_bearer_context_deactivate (
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNerror;
-  ue_mm_context_t                        *ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_context->ue_id);
+  ue_context_t                        *ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_context->ue_id);
 
   if (is_local) {
     if (ebi != ESM_SAP_ALL_EBI) {
@@ -164,10 +164,10 @@ esm_proc_eps_bearer_context_deactivate (
        * Locally release all the EPS bearer contexts
        */
       for (int bix = 0; bix < BEARERS_PER_UE; bix++) {
-        if (ue_mm_context->bearer_contexts[bix] ) {
-          *pid = ue_mm_context->bearer_contexts[bix]->pdn_cx_id;
+        if (ue_context->bearer_contexts[bix] ) {
+          *pid = ue_context->bearer_contexts[bix]->pdn_cx_id;
           rc = _eps_bearer_release (ue_context,
-              ue_mm_context->bearer_contexts[bix]->ebi, pid, bidx);
+              ue_context->bearer_contexts[bix]->ebi, pid, bidx);
 
           if (rc != RETURNok) {
             break;
@@ -179,10 +179,10 @@ esm_proc_eps_bearer_context_deactivate (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
   }
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_mm_context->mme_ue_s1ap_id, ebi);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", ebi=%d)\n", ue_context->mme_ue_s1ap_id, ebi);
 
-  if ((ue_mm_context ) && (*pid < MAX_APN_PER_UE)) {
-    if (ue_mm_context->pdn_contexts[*pid] == NULL) {
+  if ((ue_context ) && (*pid < MAX_APN_PER_UE)) {
+    if (ue_context->pdn_contexts[*pid] == NULL) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d has not been " "allocated\n", *pid);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
     } else {
@@ -191,13 +191,13 @@ esm_proc_eps_bearer_context_deactivate (
       *esm_cause = ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY;
 
       for (i = 0; i < BEARERS_PER_UE; i++) {
-        if ((ue_mm_context->pdn_contexts[*pid]->bearer_contexts[i] <= 0) ||
-            (ue_mm_context->bearer_contexts[i]->pdn_cx_id != *pid)) {
+        if ((ue_context->pdn_contexts[*pid]->bearer_contexts[i] <= 0) ||
+            (ue_context->bearer_contexts[i]->pdn_cx_id != *pid)) {
           continue;
         }
 
         if (ebi != ESM_SAP_ALL_EBI) {
-          if (ue_mm_context->bearer_contexts[i]->ebi != ebi) {
+          if (ue_context->bearer_contexts[i]->ebi != ebi) {
             continue;
           }
         }

@@ -349,25 +349,25 @@ _pdn_connectivity_create (
   const bool is_emergency)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new PDN connection (pti=%d) APN = %s, IP address = %s PDN id %d (ue_id=" MME_UE_S1AP_ID_FMT ")\n",
       pti, bdata(apn),
       (pdn_type == ESM_PDN_TYPE_IPV4) ? esm_data_get_ipv4_addr (pdn_addr) : (pdn_type == ESM_PDN_TYPE_IPV6) ? esm_data_get_ipv6_addr (pdn_addr) : esm_data_get_ipv4v6_addr (pdn_addr),
-      pdn_cid, ue_mm_context->mme_ue_s1ap_id);
+      pdn_cid, ue_context->mme_ue_s1ap_id);
 
-  if (!ue_mm_context->pdn_contexts[pdn_cid]) {
+  if (!ue_context->pdn_contexts[pdn_cid]) {
 
     /*
      * Create new PDN connection
      */
-    pdn_context_t *pdn_context = mme_app_create_pdn_context(ue_mm_context, pdn_cid, context_identifier);
+    pdn_context_t *pdn_context = mme_app_create_pdn_context(ue_context, pdn_cid, context_identifier);
 
     if (pdn_context ) {
       /*
        * Increment the number of PDN connections
        */
-      ue_mm_context->emm_context.esm_ctx.n_pdns += 1;
+      ue_context->emm_context.esm_ctx.n_pdns += 1;
       /*
        * Set the procedure transaction identity
        */
@@ -415,7 +415,7 @@ _pdn_connectivity_create (
   } else {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection already exist (pdn_cid=%d)\n", pdn_cid);
     // already created
-    pdn_context_t *pdn_context = ue_mm_context->pdn_contexts[pdn_cid];
+    pdn_context_t *pdn_context = ue_context->pdn_contexts[pdn_cid];
 
     if (pdn_context) {
       // QUICK WORKAROUND, TODO seriously
@@ -487,19 +487,19 @@ proc_tid_t _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t
   if (!emm_context) {
     return pti;
   }
-  ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   if (pdn_cid < MAX_APN_PER_UE) {
-    if (!ue_mm_context->pdn_contexts[pdn_cid]) {
+    if (!ue_context->pdn_contexts[pdn_cid]) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has not been allocated\n");
-    } else if (ue_mm_context->pdn_contexts[pdn_cid]->is_active) {
+    } else if (ue_context->pdn_contexts[pdn_cid]->is_active) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection is active\n");
     } else {
       /*
        * Get the identity of the procedure transaction that created
        * * * * the PDN connection
        */
-      pti = ue_mm_context->pdn_contexts[pdn_cid]->esm_data.pti;
+      pti = ue_context->pdn_contexts[pdn_cid]->esm_data.pti;
     }
   } else {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection identifier is not valid\n");
@@ -513,11 +513,11 @@ proc_tid_t _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t
     /*
      * Release allocated PDN connection data
      */
-    bdestroy_wrapper(&ue_mm_context->pdn_contexts[pdn_cid]->apn_in_use);
-    bdestroy_wrapper(&ue_mm_context->pdn_contexts[pdn_cid]->apn_oi_replacement);
-    bdestroy_wrapper(&ue_mm_context->pdn_contexts[pdn_cid]->apn_subscribed);
-    memset(&ue_mm_context->pdn_contexts[pdn_cid]->esm_data, 0, sizeof(ue_mm_context->pdn_contexts[pdn_cid]->esm_data));
-// TODO Think about free ue_mm_context->pdn_contexts[pdn_cid]
+    bdestroy_wrapper(&ue_context->pdn_contexts[pdn_cid]->apn_in_use);
+    bdestroy_wrapper(&ue_context->pdn_contexts[pdn_cid]->apn_oi_replacement);
+    bdestroy_wrapper(&ue_context->pdn_contexts[pdn_cid]->apn_subscribed);
+    memset(&ue_context->pdn_contexts[pdn_cid]->esm_data, 0, sizeof(ue_context->pdn_contexts[pdn_cid]->esm_data));
+// TODO Think about free ue_context->pdn_contexts[pdn_cid]
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d released\n", pdn_cid);
   }
 

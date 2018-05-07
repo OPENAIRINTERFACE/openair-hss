@@ -310,11 +310,11 @@ _pdn_disconnect_get_pid (
   pdn_cid_t                           i = MAX_APN_PER_UE;
 
   if (emm_context) {
-    ue_mm_context_t                        *ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+    ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
     for (i = 0; i < MAX_APN_PER_UE; i++) {
-      if (ue_mm_context->pdn_contexts[i]) {
-        if (ue_mm_context->pdn_contexts[i]->esm_data.pti == pti ) {
+      if (ue_context->pdn_contexts[i]) {
+        if (ue_context->pdn_contexts[i]->esm_data.pti == pti ) {
           return (i);
         }
       }

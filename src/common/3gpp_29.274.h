@@ -290,6 +290,13 @@ typedef struct bearer_context_to_be_created_s {
   bearer_qos_t  bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
 } bearer_context_to_be_created_t;
 
+
+typedef struct ho_bearer_context_s {
+  uint32_t   num_bearers;
+  bearer_context_to_be_created_t bearer_contexts[MAX_RELEASE_ACCESS_BEARER_MAX_BEARERS]  ;
+} ho_bearer_context_list_t;
+
+
 //-------------------------------------------------
 // 8.39: PDN Connection
 
@@ -297,7 +304,7 @@ typedef struct pdn_connection_s {
   char                      apn[APN_MAX_LENGTH + 1]; ///< Access Point Name
   //  protocol_configuration_options_t pco;
   bstring                   apn_str;
-  int                       pdn_type;
+//  int                       pdn_type;
 
   APNRestriction_t          apn_restriction;     ///< This IE shall be included on the S5/S8 and S4/S11
   ///< interfaces in the E-UTRAN initial attach, PDP Context
@@ -325,15 +332,20 @@ typedef struct pdn_connection_s {
 
 //  uint8_t                   ipv4_address[4];
 //  uint8_t                   ipv6_address[16];
-  gtp_ip_address_t          ip_address;
+//  pdn_type_value_t pdn_type;
+  struct in_addr             *ipv4_address;
+  struct in6_addr            *ipv6_address;
 
   ebi_t                     linked_eps_bearer_id;
 
   fteid_t                   pgw_address_for_cp;  ///< PGW S5/S8 address for control plane or PMIP
 
-  bearer_context_to_be_created_t  bearer_context;
 
-  ambr_t                    apn_ambr; //todo: ul/dl?
+//  bearer_context_to_be_created_t  bearer_context;
+
+  ho_bearer_context_list_t  bearer_context_list;
+
+  ambr_t                    apn_ambr;
 
 } pdn_connection_t;
 

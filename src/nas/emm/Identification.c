@@ -279,7 +279,7 @@ emm_proc_identification_complete (
       rc = emm_sap_send (&emm_sap);
 
     }// else ignore the response if procedure not found
-//    unlock_ue_contexts(ue_mm_context);
+//    unlock_ue_contexts(ue_context);
   } // else ignore the response if ue context not found
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -424,7 +424,7 @@ static int _identification_request (nas_emm_ident_proc_t * const proc)
     nas_start_T3470(proc->ue_id, &proc->T3470, proc->emm_com_proc.emm_proc.base_proc.time_out, (void*)emm_ctx);
   }
 
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

@@ -555,7 +555,7 @@ int emm_proc_authentication_failure (
        *  Ask for a new vector.
        */
       REQUIREMENT_3GPP_24_301(R10_5_4_2_4__3);
-      MSC_LOG_EVENT (MSC_NAS_EMM_MME, " SQN SYNCH_FAILURE ue id " MME_UE_S1AP_ID_FMT " ", ue_mm_context->mme_ue_s1ap_id);
+      MSC_LOG_EVENT (MSC_NAS_EMM_MME, " SQN SYNCH_FAILURE ue id " MME_UE_S1AP_ID_FMT " ", ue_context->mme_ue_s1ap_id);
 
       auth_proc->sync_fail_count += 1;
       if (EMM_AUTHENTICATION_SYNC_FAILURE_MAX > auth_proc->sync_fail_count) {
@@ -568,7 +568,7 @@ int emm_proc_authentication_failure (
         resync_param.data = (unsigned char *) calloc(1, RESYNC_PARAM_LENGTH);
         DevAssert(resync_param.data != NULL);
         if (resync_param.data == NULL) {
-//          unlock_ue_contexts(ue_mm_context);
+//          unlock_ue_contexts(ue_context);
           OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
         }
 
@@ -579,7 +579,7 @@ int emm_proc_authentication_failure (
         free_wrapper((void**)&resync_param.data);
         emm_ctx_clear_auth_vectors(emm_ctx);
         rc = RETURNok;
-//        unlock_ue_contexts(ue_mm_context);
+//        unlock_ue_contexts(ue_context);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       } else {
         REQUIREMENT_3GPP_24_301(R10_5_4_2_7_e__NOTE3);
@@ -682,7 +682,7 @@ int emm_proc_authentication_failure (
       if (rc != RETURNok) {
         REQUIREMENT_3GPP_24_301(R10_5_4_2_7_d__NOTE2); // more or less this case...
         // Failed to initiate the identification procedure
-        OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT "EMM-PROC  - Failed to initiate identification procedure\n", ue_mm_context->mme_ue_s1ap_id);
+        OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT "EMM-PROC  - Failed to initiate identification procedure\n", ue_context->mme_ue_s1ap_id);
         auth_proc->emm_cause = EMM_CAUSE_ILLEGAL_UE;
         // Do not accept the UE to attach to the network
         emm_sap_t                               emm_sap = {0};
@@ -700,11 +700,11 @@ int emm_proc_authentication_failure (
     default:
       auth_proc->sync_fail_count = 0;
       OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - The MME received an unknown EMM CAUSE %d\n", emm_cause);
-//      unlock_ue_contexts(ue_mm_context);
+//      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     }
   }
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -778,7 +778,7 @@ emm_proc_authentication_complete (
     emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
     rc = emm_sap_send (&emm_sap);
   }
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -1012,7 +1012,7 @@ static int _authentication_request (nas_emm_auth_proc_t * auth_proc)
         nas_start_T3460(auth_proc->ue_id, &auth_proc->T3460, auth_proc->emm_com_proc.emm_proc.base_proc.time_out, (void*)emm_ctx_p);
       }
     }
-//    unlock_ue_contexts(ue_mm_context);
+//    unlock_ue_contexts(ue_context);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

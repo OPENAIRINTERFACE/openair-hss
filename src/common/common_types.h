@@ -51,7 +51,6 @@
 #define APN_MAX_LENGTH     (100)
 #define IMEI_DIGITS_MAX    (15)
 #define IMEISV_DIGITS_MAX  (16)
-#define MAX_APN_PER_UE     (5)
 
 typedef uint16_t                 sctp_stream_id_t;
 typedef uint32_t                 sctp_assoc_id_t;

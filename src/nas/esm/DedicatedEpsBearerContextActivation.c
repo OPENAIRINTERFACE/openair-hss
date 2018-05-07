@@ -485,7 +485,7 @@ static int _dedicated_eps_bearer_activate (
   emm_sap_t                               emm_sap = {0};
   int                                     rc;
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
-  ue_mm_context_t                        *ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+  ue_context_t                        *ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
   bearer_context_t* bearer_context = mme_app_get_bearer_context(ue_context_p, ebi);
 
   /*

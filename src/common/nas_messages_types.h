@@ -314,18 +314,11 @@ typedef struct itti_nas_context_req_s {
 
 typedef struct itti_nas_context_res_s {
   mme_ue_s1ap_id_t        ue_id;
-//  MMECause_t              cause;
-
-  teid_t                  peer_teid;
-  uint32_t                peer_ip;        ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
-  uint16_t                peer_port;      ///< MME port for S-GW or S-GW port for MME
-  void                   *context_rsp_trx;
-
   uint64_t                imsi;
   imsi_t                  _imsi;
+  uint8_t                 n_pdns;
+  uint8_t                 n_bearers;
+  bool                    is_emergency;
 
-  imei_t                  _imei;
-
-  mm_context_eps_t        mm_eps_context;
 } itti_nas_context_res_t;
 #endif /* FILE_NAS_MESSAGES_TYPES_SEEN */

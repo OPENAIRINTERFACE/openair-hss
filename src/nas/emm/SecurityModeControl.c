@@ -366,7 +366,7 @@ int
 emm_proc_security_mode_complete (mme_ue_s1ap_id_t ue_id, const imeisv_mobile_identity_t * const imeisvmob)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-//  ue_mm_context_t                        *ue_mm_context = NULL;
+//  ue_context_t                        *ue_context = NULL;
   emm_data_context_t                     *emm_ctx = NULL;
   int                                     rc = RETURNerror;
 
@@ -433,7 +433,7 @@ emm_proc_security_mode_complete (mme_ue_s1ap_id_t ue_id, const imeisv_mobile_ide
       emm_ctx_set_attribute_valid(emm_ctx, EMM_CTXT_MEMBER_SECURITY);
       rc = emm_sap_send (&emm_sap);
     }
-//    unlock_ue_contexts(ue_mm_context);
+//    unlock_ue_contexts(ue_context);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   } else {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EPS security context exists\n");
@@ -452,7 +452,7 @@ emm_proc_security_mode_complete (mme_ue_s1ap_id_t ue_id, const imeisv_mobile_ide
     rc = emm_sap_send (&emm_sap);
   }
 
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -533,7 +533,7 @@ int emm_proc_security_mode_reject (mme_ue_s1ap_id_t ue_id)
   }
 
   nas_itti_detach_req(ue_id);
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -689,7 +689,7 @@ static int _security_request (nas_emm_smc_proc_t * const smc_proc)
       nas_start_T3460 (smc_proc->ue_id, &smc_proc->T3460, smc_proc->emm_com_proc.emm_proc.base_proc.time_out, emm_ctx);
     }
   }
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

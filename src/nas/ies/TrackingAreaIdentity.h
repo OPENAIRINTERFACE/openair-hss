@@ -32,17 +32,6 @@ typedef uint16_t    tac_t;                                 /*!< \brief  Tracking
                                                                         a Tracking Area within a PLMN. This part of the tracking area identification
                                                                         shall be coded using a full hexadecimal representation. The following are
                                                                         reserved hexadecimal values of the TAC: 0000, and FFFE.   */
-typedef struct tai_s {
-  uint8_t  mcc_digit2:4;
-  uint8_t  mcc_digit1:4;
-  uint8_t  mnc_digit3:4;
-  uint8_t  mcc_digit3:4;
-  uint8_t  mnc_digit2:4;
-  uint8_t  mnc_digit1:4;
-  tac_t    tac;
-} tai_t;
-
-
 /* Checks Mobile Country Code equality */
 #define MCCS_ARE_EQUAL(n1, n2)  (((n1).mcc_digit1 == (n2).mcc_digit1) && \
                                  ((n1).mcc_digit2 == (n2).mcc_digit2) && \

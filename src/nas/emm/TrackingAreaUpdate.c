@@ -102,7 +102,7 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context);
 static int _emm_tracking_area_update_failure_context_res_cb (emm_data_context_t *emm_context);
 
 static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_context);
-static void _emm_proc_create_procedure_tracking_area_update_request(emm_data_context_t * const ue_mm_context, emm_tau_request_ies_t * const ies);
+static void _emm_proc_create_procedure_tracking_area_update_request(emm_data_context_t * const ue_context, emm_tau_request_ies_t * const ies);
 static bool _emm_tracking_area_update_ies_have_changed (mme_ue_s1ap_id_t ue_id, emm_tau_request_ies_t * const tau_ies1, emm_tau_request_ies_t * const tau_ies2);
 
 static int _emm_tracking_area_update_success_identification_cb (emm_data_context_t *emm_context);
@@ -123,7 +123,7 @@ int emm_proc_tracking_area_update_request (
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  ue_mm_context_t                        *ue_mm_context_p = NULL;
+  ue_context_t                        *ue_context_p = NULL;
   emm_data_context_t                     *emm_ctx_p = NULL;
   emm_fsm_state_t                         fsm_state = EMM_DEREGISTERED;
   nas_emm_attach_proc_t                  *attach_procedure = NULL;
@@ -140,8 +140,8 @@ int emm_proc_tracking_area_update_request (
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
   /** Retrieve the MME_APP UE context. */
-  ue_mm_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
-  DevAssert(ue_mm_context_p);
+  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
+  DevAssert(ue_context_p);
 
   OAILOG_DEBUG(LOG_NAS_EMM, "EMM-PROC-  Tracking Area Update request for new UeId " MME_UE_S1AP_ID_FMT ". TAU_Type=%d, active_flag=%d)\n", ue_id,
       ies->eps_update_type.eps_update_type_value, ies->eps_update_type.active_flag);
@@ -610,7 +610,7 @@ emm_proc_tracking_area_update_complete (
        */
       REQUIREMENT_3GPP_24_301(R10_5_5_3_2_4__23);
       emm_ctx_set_attribute_valid(emm_context, EMM_CTXT_MEMBER_GUTI);
-      // TODO LG REMOVE emm_context_add_guti(&_emm_data, &ue_mm_context->emm_context);
+      // TODO LG REMOVE emm_context_add_guti(&_emm_data, &ue_context->emm_context);
       emm_ctx_clear_old_guti(emm_context);
       // todo emm_data_context_add_guti(&_emm_data, emm_ctx);
 
@@ -652,7 +652,7 @@ emm_proc_tracking_area_update_complete (
   emm_sap.u.emm_reg.u.tau.proc = tau_proc;
   rc = emm_sap_send (&emm_sap);
 
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
  }
 
@@ -803,7 +803,7 @@ static int _emm_tracking_area_update_reject( const mme_ue_s1ap_id_t ue_id, const
     }
   }
 
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -1017,7 +1017,7 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
       void * timer_callback_arg = NULL;
       nas_stop_T3450(tau_proc->ue_id, &tau_proc->T3450, timer_callback_arg);
       nas_start_T3450 (tau_proc->ue_id, &tau_proc->T3450, tau_proc->emm_spec_proc.emm_proc.base_proc.time_out, emm_context);
-//      unlock_ue_contexts(ue_mm_context);
+//      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 
 //        OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Timer T3450 (%d) expires in %ld seconds (TAU)", emm_ctx->T3450.id, emm_ctx->T3450.sec);
@@ -1408,11 +1408,11 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_ctx_p
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   nas_emm_tau_proc_t                     *tau_proc = get_nas_specific_procedure_tau(emm_context);
-  ue_mm_context_t                        *ue_mm_context_p = NULL;
+  ue_context_t                        *ue_context_p = NULL;
 
   /** Retrieve the MME_APP UE context. */
-  ue_mm_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_ctx_p->ue_id);
-  DevAssert(ue_mm_context_p);
+  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_ctx_p->ue_id);
+  DevAssert(ue_context_p);
 
   if (tau_proc) {
     REQUIREMENT_3GPP_24_301(R10_5_5_3_2_3__2);
@@ -1511,7 +1511,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_ctx_p
       // Note: this is safe from double-free errors because it sets to NULL
       // after freeing, which free treats as a no-op.
       // todo: ue_radio_capability from MME_APP to NAS.
-      bdestroy_wrapper(&ue_mm_context_p->ue_radio_capability);
+      bdestroy_wrapper(&ue_context_p->ue_radio_capability);
     }
 
     /** A security context exist, checking if UE was correctly authenticated. */
@@ -1527,11 +1527,11 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_ctx_p
        */
       /** Check if any S6a Subscription information exist, if not pull them from the HSS. */
       OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC- THE UE with ue_id=" MME_UE_S1AP_ID_FMT ", has already a security context. Checking for a subscription profile. \n", emm_ctx_p->ue_id);
-      if(ue_mm_context_p->subscription_known == SUBSCRIPTION_UNKNOWN) { /**< Means, that the MM UE context is received from the sourc MME already due HO (and only due HO). */
+      if(ue_context_p->subscription_known == SUBSCRIPTION_UNKNOWN) { /**< Means, that the MM UE context is received from the sourc MME already due HO (and only due HO). */
         OAILOG_WARNING (LOG_NAS_EMM, "EMM-PROC- THE UE with ue_id=" MME_UE_S1AP_ID_FMT ", does not have a subscription profile set. Requesting a new subscription profile. \n",
             emm_ctx_p->ue_id, EMM_CAUSE_IE_NOT_IMPLEMENTED);
         /** The EPS update type will be stored as pending IEs. */
-//       todo: inform the ESM to send ULR!  rc = mme_app_send_s6a_update_location_req(ue_mm_context_p);
+//       todo: inform the ESM to send ULR!  rc = mme_app_send_s6a_update_location_req(ue_context_p);
       } else{
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Sending Tracking Area Update Accept for UE with valid subscription ue_id=" MME_UE_S1AP_ID_FMT ", active flag=%d)\n", ue_id, active_flag);
         /* Check the state of the EMM context. If it is REGISTERED, send an TAU_ACCEPT back and remove the tau procedure. */

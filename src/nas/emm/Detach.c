@@ -546,7 +546,7 @@ emm_proc_detach_request (
   // Release emm and esm context  
   _clear_emm_ctxt(emm_ctx);
 
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }
 

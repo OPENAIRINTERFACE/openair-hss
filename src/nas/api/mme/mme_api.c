@@ -291,21 +291,21 @@ mme_api_notify_imsi (
   const mme_ue_s1ap_id_t id,
   const imsi64_t imsi64)
 {
-  ue_mm_context_t                           *ue_mm_context = NULL;
+  ue_context_t                           *ue_context = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS);
-  ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
 
 
-  if ( ue_mm_context) {
+  if ( ue_context) {
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts,
-        ue_mm_context,
-        ue_mm_context->enb_s1ap_id_key,
+        ue_context,
+        ue_context->enb_s1ap_id_key,
         id,
         imsi64,
-        ue_mm_context->mme_teid_s11,
-        &ue_mm_context->_guti);
-    unlock_ue_contexts(ue_mm_context);
+        ue_context->mme_teid_s11,
+        &ue_context->_guti);
+    unlock_ue_contexts(ue_context);
     OAILOG_DEBUG (LOG_MME_APP, "MME_APP context for ue_id=" MME_UE_S1AP_ID_FMT " has a registered valid IMSI " IMSI_64_FMT" (valid)\n", id, imsi64);
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
@@ -330,21 +330,21 @@ mme_api_notify_new_guti (
   const mme_ue_s1ap_id_t id,
   guti_t * const guti)
 {
-  ue_mm_context_t                           *ue_mm_context = NULL;
+  ue_context_t                           *ue_context = NULL;
 
   OAILOG_FUNC_IN (LOG_NAS);
-  ue_mm_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, id);
 
 
-  if (ue_mm_context) {
+  if (ue_context) {
     mme_ue_context_update_coll_keys (&mme_app_desc.mme_ue_contexts,
-        ue_mm_context,
-        ue_mm_context->enb_s1ap_id_key,
+        ue_context,
+        ue_context->enb_s1ap_id_key,
         id,
-        ue_mm_context->emm_context._imsi64,
-        ue_mm_context->mme_teid_s11,
+        ue_context->emm_context._imsi64,
+        ue_context->mme_teid_s11,
         guti);
-    unlock_ue_contexts(ue_mm_context);
+    unlock_ue_contexts(ue_context);
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
@@ -406,7 +406,7 @@ mme_api_new_guti (
   tai_list_t * const tai_list)
 {
   OAILOG_FUNC_IN (LOG_NAS);
-  ue_mm_context_t                       *ue_context = NULL;
+  ue_context_t                       *ue_context = NULL;
   imsi64_t                               imsi64 = imsi_to_imsi64 (imsi);
 
   ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);

@@ -895,7 +895,7 @@ void nas_emm_procedure_register_emm_message(mme_ue_s1ap_id_t ue_id, const uint64
       // forward to ESM, TODO later...
     }
   }
-//  unlock_ue_contexts(ue_mm_context);
+//  unlock_ue_contexts(ue_context);
 }
 
 //-----------------------------------------------------------------------------
