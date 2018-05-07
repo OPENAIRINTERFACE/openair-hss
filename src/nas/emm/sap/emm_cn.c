@@ -82,6 +82,7 @@ static int _emm_cn_authentication_res (emm_cn_auth_res_t * const msg);
 static int _emm_cn_authentication_fail (const emm_cn_auth_fail_t * msg);
 static int _emm_cn_deregister_ue (const mme_ue_s1ap_id_t ue_id);
 static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP);
+static int _emm_cn_pdn_config_fail (emm_cn_pdn_config_fail_t * msg_pP);
 static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP);
 static int _emm_cn_context_res (emm_cn_context_res_t * const msg);
 static int _emm_cn_context_fail (const emm_cn_context_fail_t * msg);
@@ -335,6 +336,70 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
 }
 
 //------------------------------------------------------------------------------
+static int _emm_cn_pdn_config_fail (const emm_cn_pdn_config_fail_t * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
+  struct emm_data_context_s                   *emm_ctx_p = NULL;
+  ESM_msg                                 esm_msg = {.header = {0}};
+  int                                     esm_cause;
+  emm_ctx_p = emm_context_get (&_emm_data, msg->ue_id);
+  if (emm_ctx_p == NULL) {
+    OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
+  memset (&esm_msg, 0, sizeof (ESM_msg));
+
+  // Map S11 cause to ESM cause
+  esm_cause = ESM_CAUSE_NETWORK_FAILURE; // todo: error for SAEGW error and HSS ULA error?
+
+  if(is_nas_specific_procedure_attach_running(emm_ctx_p)){
+    if(emm_ctx_p->esm_ctx.esm_proc_data){
+      esm_proc_data_t * esm_proc;
+      rc = esm_send_pdn_connectivity_reject (esm_proc->pti, &esm_msg.pdn_connectivity_reject, esm_cause);
+      /*
+       * Encode the returned ESM response message
+       */
+      uint8_t                             emm_cn_sap_buffer[EMM_CN_SAP_BUFFER_SIZE];
+      int size = esm_msg_encode (&esm_msg, emm_cn_sap_buffer, EMM_CN_SAP_BUFFER_SIZE);
+      OAILOG_INFO (LOG_NAS_EMM, "ESM encoded MSG size %d\n", size);
+
+      if (size > 0) {
+        nas_emm_attach_proc_t  *attach_proc = get_nas_specific_procedure_attach(emm_ctx_p);
+        /*
+         * Setup the ESM message container
+         */
+        attach_proc->esm_msg_out = blk2bstr(emm_cn_sap_buffer, size);
+        rc = emm_proc_attach_reject (msg->ue_id, EMM_CAUSE_ESM_FAILURE);
+       }else{
+         // todo: wtf
+         DevAssert(0);
+       }
+       emm_context_unlock(emm_ctx_p);
+       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+
+    }
+  }else if (is_nas_specific_procedure_tau_running(emm_ctx_p)){
+      /** Trigger a TAU Reject. */
+    emm_sap_t                               emm_sap = {0};
+
+    emm_sap.primitive = EMMREG_TAU_REJ;
+    emm_sap.u.emm_reg.ue_id = emm_ctx_p->ue_id;
+    emm_sap.u.emm_reg.ctx  = emm_ctx_p;
+
+    MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", emm_ctx_p->ue_id);
+
+    rc = emm_sap_send (&emm_sap);
+  }else{
+    // tood: checking for ESM procedure or some other better way?
+    DevAssert(0);
+  }
+  //  emm_context_unlock(emm_ctx_p);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+
+//------------------------------------------------------------------------------
 static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -546,7 +611,7 @@ static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
     attach_proc->esm_msg_out = blk2bstr(emm_cn_sap_buffer, size);
     rc = emm_proc_attach_reject (msg->ue_id, EMM_CAUSE_ESM_FAILURE);
   }
-  emm_context_unlock(emm_ctx_p);
+//  emm_context_unlock(emm_ctx_p);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -679,6 +744,10 @@ int emm_cn_send (const emm_cn_t * msg)
 
   case EMMCN_PDN_CONFIG_RES:
     rc = _emm_cn_pdn_config_res (msg->u.emm_cn_pdn_config_res);
+    break;
+
+  case EMMCN_PDN_CONFIG_FAIL:
+    rc = _emm_cn_pdn_config_fail (msg->u.emm_cn_pdn_config_fail);
     break;
 
   case EMMCN_PDN_CONNECTIVITY_RES:

@@ -161,7 +161,7 @@ typedef struct bearer_context_s {
 
   // extra 23.401 spec members
   pdn_cid_t                         pdn_cx_id;
-//  mme_app_bearer_state_t            bearer_state;
+  mme_app_bearer_state_t            bearer_state;   /**< Need bearer state to establish them. */
   esm_ebr_context_t                 esm_ebr_context;
   fteid_t                           enb_fteid_s1u;
 
@@ -403,7 +403,7 @@ typedef struct ue_context_s {
   teid_t                      mme_teid_s11;                // set by mme_app_send_s11_create_session_req
 
   // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user.
-  ambr_t                 suscribed_ue_ambr;
+  ambr_t                 subscribed_ue_ambr;
   // UE-AMBR: The currently used Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers.
   ambr_t                 used_ue_ambr;
   // EPS Subscribed Charging Characteristics: The charging characteristics for the MS e.g. normal, prepaid, flat rate and/or hot billing.
@@ -500,6 +500,8 @@ typedef struct ue_context_s {
 //  bool                   pending_bearer_deactivation; todo: when removing the tau procedure, evaluate and check (need to store old ECM state)?
   bool                   pending_clear_location_request;
   bool                   pending_x2_handover; /**< Temporary flag, clear with Lionel how to integrate the X2 of B-COM. */
+  bool                   pending_bearer_deactivation; //todo: could not find a way to remove this yet.
+
 
   // Mobile Reachability Timer-Start when UE moves to idle state. Stop when UE moves to connected state
   struct mme_app_timer_t       mobile_reachability_timer;

@@ -84,6 +84,11 @@ static void *nas_intertask_interface (void *args_p)
     }
     break;
 
+    case NAS_PDN_CONFIG_FAIL:{
+      nas_proc_pdn_config_fail (&NAS_PDN_CONFIG_FAIL(received_message_p));
+    }
+    break;
+
     case NAS_PDN_CONNECTIVITY_FAIL:{
         nas_proc_pdn_connectivity_fail (&NAS_PDN_CONNECTIVITY_FAIL (received_message_p));
       }

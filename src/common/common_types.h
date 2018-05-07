@@ -137,6 +137,14 @@ typedef enum {
   RAT_EHRPD          = 2003,
 } rat_type_t;
 
+typedef enum {
+ MME_UPDATE_PROCEDURE       = 0,
+ SGSN_UPDATE_PROCEDURE      = 1,
+ SUBSCRIPTION_WITHDRAWAL    = 2,
+ UPDATE_PROCEDURE_IWF       = 3,
+ INITIAL_ATTACH_PROCEDURE   = 4,
+}cancellation_type_t;
+
 #define NUMBER_OF_RAT_TYPE 11
 
 #define MEI_IMEI    0x0

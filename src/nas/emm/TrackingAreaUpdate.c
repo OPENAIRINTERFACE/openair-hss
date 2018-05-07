@@ -517,7 +517,7 @@ int emm_proc_tracking_area_update_request (
    * Continue with the new or existing EMM context.
    * No running specific TAU procedure is expected.
    */
-  _emm_proc_create_procedure_attach_request(emm_ctx_p, ies);
+  _emm_proc_create_procedure_tracking_area_update_request(emm_ctx_p, ies);
   rc = _emm_tracking_area_update_run_procedure(emm_ctx_p);
   if (rc != RETURNok) {
     OAILOG_WARNING (LOG_NAS_EMM, "Failed to initialize EMM callback functions");

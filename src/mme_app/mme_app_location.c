@@ -77,7 +77,9 @@ int mme_app_send_s6a_update_location_req (
   s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
 
   s6a_ulr_p->imsi_length = strlen (s6a_ulr_p->imsi);
-  s6a_ulr_p->initial_attach = INITIAL_ATTACH; // todo: could be handover!
+  if(!is_nas_specific_procedure_tau_running(emm_context)){
+    s6a_ulr_p->initial_attach = INITIAL_ATTACH;
+  }
 
   plmn_t visited_plmn = {0};
   visited_plmn.mcc_digit1 = emm_context->originating_tai.plmn.mcc_digit1;
@@ -103,29 +105,13 @@ int mme_app_handle_s6a_update_location_ans (
   const s6a_update_location_ans_t * const ula_pP)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
+  MessageDef                             *message_p = NULL;
+  itti_nas_pdn_config_rsp_t              *nas_pdn_config_rsp = NULL;
   uint64_t                                imsi64 = 0;
   struct ue_context_s                    *ue_context = NULL;
   int                                     rc = RETURNok;
 
   DevAssert (ula_pP );
-
-  if (ula_pP->result.present == S6A_RESULT_BASE) {
-    if (ula_pP->result.choice.base != DIAMETER_SUCCESS) {
-      /*
-       * The update location procedure has failed. Notify the NAS layer
-       * and don't initiate the bearer creation on S-GW side.
-       */
-      OAILOG_DEBUG (LOG_MME_APP, "ULR/ULA procedure returned non success (ULA.result.choice.base=%d)\n", ula_pP->result.choice.base);
-      DevMessage ("ULR/ULA procedure returned non success\n");
-    }
-  } else {
-    /*
-     * The update location procedure has failed. Notify the NAS layer
-     * and don't initiate the bearer creation on S-GW side.
-     */
-    OAILOG_DEBUG (LOG_MME_APP, "ULR/ULA procedure returned non success (ULA.result.present=%d)\n", ula_pP->result.present);
-    DevMessage ("ULR/ULA procedure returned non success\n");
-  }
 
   IMSI_STRING_TO_IMSI64 ((char *)ula_pP->imsi, &imsi64);
   OAILOG_DEBUG (LOG_MME_APP, "%s Handling imsi " IMSI_64_FMT "\n", __FUNCTION__, imsi64);
@@ -136,57 +122,82 @@ int mme_app_handle_s6a_update_location_ans (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-//  if (!ue_context->is_s1_ue_context_release) {
-    ue_context->subscription_known = SUBSCRIPTION_KNOWN;
-    ue_context->subscriber_status = ula_pP->subscription_data.subscriber_status;
-    ue_context->access_restriction_data = ula_pP->subscription_data.access_restriction;
-    /*
-     * Copy the subscribed ambr to the sgw create session request message
-     */
-    memcpy (&ue_context->suscribed_ue_ambr, &ula_pP->subscription_data.subscribed_ambr, sizeof (ambr_t));
-
-    ue_context->msisdn = blk2bstr(ula_pP->subscription_data.msisdn, ula_pP->subscription_data.msisdn_length);
-    AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0");
-    AssertFatal (ula_pP->subscription_data.msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
-
-    ue_context->rau_tau_timer = ula_pP->subscription_data.rau_tau_timer;
-    ue_context->network_access_mode = ula_pP->subscription_data.access_mode;
-    memcpy (&ue_context->apn_config_profile, &ula_pP->subscription_data.apn_config_profile, sizeof (apn_config_profile_t));
-
-    /*
-     * Set the value of  Mobile Reachability timer based on value of T3412 (Periodic TAU timer) sent in Attach accept /TAU accept.
-     * Set it to MME_APP_DELTA_T3412_REACHABILITY_TIMER minutes greater than T3412.
-     * Set the value of Implicit timer. Set it to MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER minutes greater than  Mobile Reachability timer
-     */
-    ue_context->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
-    ue_context->mobile_reachability_timer.sec = ((mme_config.nas_config.t3412_min) + MME_APP_DELTA_T3412_REACHABILITY_TIMER) * 60;
-    ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
-    ue_context->implicit_detach_timer.sec = (ue_context_p->mobile_reachability_timer.sec) + MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER * 60;
-
-    MessageDef                             *message_p = NULL;
-    itti_nas_pdn_config_rsp_t              *nas_pdn_config_rsp = NULL;
-
-    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
-
-    if (message_p == NULL) {
-      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  if (ula_pP->result.present == S6A_RESULT_BASE) {
+    if (ula_pP->result.choice.base != DIAMETER_SUCCESS) {
+      /*
+       * The update location procedure has failed. Notify the NAS layer
+       * and don't initiate the bearer creation on S-GW side.
+       */
+      OAILOG_DEBUG (LOG_MME_APP, "ULR/ULA procedure returned non success (ULA.result.choice.base=%d)\n", ula_pP->result.choice.base);
+      goto err;
     }
+  } else {
+    /*
+     * The update location procedure has failed. Notify the NAS layer
+     * and don't initiate the bearer creation on S-GW side.
+     */
+    OAILOG_DEBUG (LOG_MME_APP, "ULR/ULA procedure returned non success (ULA.result.present=%d)\n", ula_pP->result.present);
+    goto err;
+  }
 
-    nas_pdn_config_rsp = &message_p->ittiMsg.nas_pdn_config_rsp;
-    nas_pdn_config_rsp->ue_id = ue_context->mme_ue_s1ap_id;
-//    IMSI64_TO_STRING (imsi, mme_app_nas_ula_cnf_p->imsi);
-//    nas_pdn_config_rsp->imsi_length = strlen (mme_app_nas_ula_cnf_p->imsi);
+  ue_context->subscription_known = SUBSCRIPTION_KNOWN;
+  ue_context->subscriber_status = ula_pP->subscription_data.subscriber_status;
+  ue_context->access_restriction_data = ula_pP->subscription_data.access_restriction;
+  /*
+   * Copy the subscribed ambr to the sgw create session request message
+   */
+  memcpy (&ue_context->subscribed_ue_ambr, &ula_pP->subscription_data.subscribed_ambr, sizeof (ambr_t));
 
-    // todo: use the nas_pdn_config_fail ?!?
-    nas_pdn_config_rsp->result.present = ula_pP->result.present;
-    nas_pdn_config_rsp->result.choice.base = ula_pP->result.choice.base;
+  ue_context->msisdn = blk2bstr(ula_pP->subscription_data.msisdn, ula_pP->subscription_data.msisdn_length);
+  AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0");
+  AssertFatal (ula_pP->subscription_data.msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
 
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP imsi " IMSI_64_FMT, imsi64);
-    rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-//  }
+  ue_context->rau_tau_timer = ula_pP->subscription_data.rau_tau_timer;
+  ue_context->network_access_mode = ula_pP->subscription_data.access_mode;
+  memcpy (&ue_context->apn_config_profile, &ula_pP->subscription_data.apn_config_profile, sizeof (apn_config_profile_t));
 
+  /*
+   * Set the value of  Mobile Reachability timer based on value of T3412 (Periodic TAU timer) sent in Attach accept /TAU accept.
+   * Set it to MME_APP_DELTA_T3412_REACHABILITY_TIMER minutes greater than T3412.
+   * Set the value of Implicit timer. Set it to MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER minutes greater than  Mobile Reachability timer
+   */
+  ue_context->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context->mobile_reachability_timer.sec = ((mme_config.nas_config.t3412_min) + MME_APP_DELTA_T3412_REACHABILITY_TIMER) * 60;
+  ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context->implicit_detach_timer.sec = (ue_context_p->mobile_reachability_timer.sec) + MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER * 60;
+
+  /** Send the S6a message. */
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
+
+  if (message_p == NULL) {
+    goto err;
+  }
+
+  nas_pdn_config_rsp = &message_p->ittiMsg.nas_pdn_config_rsp;
+  nas_pdn_config_rsp->ue_id  = ue_context->mme_ue_s1ap_id;
+  nas_pdn_config_rsp->imsi64 = imsi64;
+
+  /** For error codes, use nas_pdn_cfg_fail. */
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP IMSI " IMSI_64_FMT, imsi64);
+  rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 // todo:    unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+
+err:
+  /** Send the S6a message. */
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_FAIL);
+
+  if (message_p == NULL) {
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  nas_pdn_confi_fail_t *nas_pdn_config_fail = &message_p->ittiMsg.nas_pdn_config_fail;
+  nas_pdn_config_rsp->ue_id  = ue_context->mme_ue_s1ap_id;
+  nas_pdn_config_rsp->imsi64 = imsi64;
+
+  /** For error codes, use nas_pdn_cfg_fail. */
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP IMSI " IMSI_64_FMT, imsi64);
+  rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 }
 
 int

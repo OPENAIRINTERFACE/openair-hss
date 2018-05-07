@@ -491,6 +491,22 @@ nas_proc_pdn_config_res (
 
 //------------------------------------------------------------------------------
 int
+nas_proc_pdn_config_fail (
+  emm_cn_pdn_config_fail_t * emm_cn_pdn_config_fail)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNerror;
+  emm_sap_t                               emm_sap = {0};
+
+  emm_sap.primitive = EMMCN_PDN_CONFIG_FAIL;
+  emm_sap.u.emm_cn.u.emm_cn_pdn_config_fail = emm_cn_pdn_config_fail;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_PDN_CONFIG_FAIL ue_id " MME_UE_S1AP_ID_FMT " ", emm_cn_pdn_config_fail->ue_id);
+  rc = emm_sap_send (&emm_sap);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
+int
 nas_proc_pdn_connectivity_res (
   emm_cn_pdn_res_t * emm_cn_pdn_res)
 {
