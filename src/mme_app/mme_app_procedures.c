@@ -128,7 +128,22 @@ static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_pr
 /**
  * S10 Procedures.
  */
-
+static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, mme_app_s10_proc_t *s10_proc){
+  OAILOG_FUNC_IN(LOG_MME_APP);
+  int             rc = RETURNerror;
+  /** Removed S10 tunnel endpoint. */
+  mme_app_free_s10_procedure_inter_mme_handover(&s10_proc);
+  /** Deregister the key. */
+  mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
+      ue_context,
+      ue_context->enb_s1ap_id_key,
+      ue_context->mme_ue_s1ap_id,
+      ue_context->imsi,
+      ue_context->mme_teid_s11,
+      INVALID_TEID,
+      &ue_context->guti);
+  OAILOG_FUNC_RETURN(LOG_MME_APP, rc);
+}
 //------------------------------------------------------------------------------
 void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p)
 {
@@ -148,8 +163,7 @@ void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p)
           }
         }
         s10_proc1->timer.id = MME_APP_TIMER_INACTIVE_ID;
-
-        mme_app_free_s10_procedure_inter_mme_handover(&s10_proc1);
+        remove_s10_tunnel_endpoint(ue_context_p, s10_proc1);
       } // else ...
       s10_proc1 = s10_proc2;
     }
@@ -201,7 +215,7 @@ mme_app_s10_proc_inter_mme_handover_t* mme_app_create_s10_procedure_inter_mme_ha
   s10_proc_inter_mme_handover->proc.proc.time_out = mme_app_handle_mme_s10_handover_completion_timer_expiry;
   /*
    * Start a fresh S10 MME Handover Completion timer for the forward relocation request procedure.
-   * Give the procedur as the argument.
+   * Give the procedure as the argument.
    */
   if (timer_setup (mme_config.mme_s10_handover_completion_timer, 0,
       TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) s10_proc_inter_mme_handover, &(s10_proc_inter_mme_handover->ho_completion_timer.id)) < 0) {
@@ -268,7 +282,8 @@ void mme_app_delete_s10_procedure_inter_mme_handover(ue_context_t * const ue_con
           }
         }
         s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
-
+        /** Remove the S10 Tunnel endpoint and set the UE context S10 as invalid. */
+        remove_s10_tunnel_endpoint(ue_context, s10_proc);
         mme_app_free_s10_procedure_inter_mme_handover(&s10_proc);
         return;
       }

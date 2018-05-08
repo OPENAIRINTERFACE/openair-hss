@@ -276,7 +276,7 @@ int emm_proc_tracking_area_update_request (
         emm_sap.primitive = EMMREG_ATTACH_ABORT;
         emm_sap.u.emm_reg.ue_id = attach_procedure->ue_id;
         emm_sap.u.emm_reg.ctx   = emm_ctx_p;
-        emm_sap.u.emm_reg.notify= true;
+//        emm_sap.u.emm_reg.notify= true;
         emm_sap.u.emm_reg.free_proc = true; /**< Will remove the T3450 timer. */
         emm_sap.u.emm_reg.u.attach.proc   = attach_procedure;
         rc = emm_sap_send (&emm_sap);

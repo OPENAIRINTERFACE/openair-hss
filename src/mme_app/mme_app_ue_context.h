@@ -401,6 +401,7 @@ typedef struct ue_context_s {
 
   // MME TEID for S11             // MME Tunnel Endpoint Identifier for S11 interface.
   // LOCATED IN THIS.subscribed_apns[MAX_APN_PER_UE].mme_teid_s11
+  teid_t                      local_mme_teid_s10;                // needed to get the UE context from S10 messages
   teid_t                      mme_teid_s11;                // set by mme_app_send_s11_create_session_req
 
   // Subscribed UE-AMBR: The Maximum Aggregated uplink and downlink MBR values to be shared across all Non-GBR bearers according to the subscription of the user.
@@ -517,28 +518,6 @@ typedef struct ue_context_s {
   struct mme_app_timer_t       path_switch_req_timer;
   // todo: (2) timers necessary for handover?
   struct mme_app_timer_t       s1ap_handover_req_timer;
-
-  /**
-   * No UE specific callback handler.
-   * Callback is same for all UEs and state dependent.
-   * todo: remove pending_handover flag and do it with states. */
-
-
-
-  // todo: further pending data which is to be moved as IEs into mme_app_handover_procedure!!!
-  //  // temp
-  //   uint8_t                pending_pdn_connectivity_req_ebi;
-  //   int                    pending_pdn_connectivity_req_pti;
-  //   protocol_configuration_options_t   pending_pdn_connectivity_req_pco;
-//   void                  *pending_pdn_connectivity_req_proc_data;
-//   int                    pending_pdn_connectivity_req_request_type;
-//   /** Pending TAU information. */
-//   uint32_t               pending_handover_source_enb_id:20;
-//   uint32_t               pending_handover_target_enb_id:20;
-//
-//   enb_ue_s1ap_id_t       pending_handover_enb_ue_s1ap_id; /**< eNB-UE-S1AP-Id of the target-ENB if it is a single MME s1AP handover. */
-
-
 } ue_context_t;
 
 
@@ -555,6 +534,7 @@ typedef struct mme_ue_context_s {
   uint32_t               nb_bearers_since_last_stat;
 
   hash_table_uint64_ts_t  *imsi_ue_context_htbl; // data is mme_ue_s1ap_id_t
+  hash_table_uint64_ts_t  *tun10_ue_context_htbl;// data is mme_ue_s1ap_id_t
   hash_table_uint64_ts_t  *tun11_ue_context_htbl;// data is mme_ue_s1ap_id_t
   hash_table_uint64_ts_t  *mme_ue_s1ap_id_ue_context_htbl; // data is enb_s1ap_id_key_t
   hash_table_ts_t         *enb_ue_s1ap_id_ue_context_htbl;
@@ -643,6 +623,7 @@ void mme_ue_context_update_coll_keys(
     const mme_ue_s1ap_id_t   mme_ue_s1ap_id,
     const imsi64_t     imsi,
     const s11_teid_t         mme_teid_s11,
+    const s10_teid_t         local_mme_s10_teid,
     const guti_t     * const guti_p);
 
 /** \brief dump MME associative collections

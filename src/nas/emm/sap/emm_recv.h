@@ -92,8 +92,6 @@ emm_recv_attach_request (
     const tai_t              * const originating_tai,
     const ecgi_t             * const originating_ecgi,
     attach_request_msg       * const msg,
-    const bool                       is_initial,
-    const bool                       ctx_is_new,
     int * const emm_cause,
     const nas_message_decode_status_t  * decode_status);
 

@@ -641,12 +641,11 @@ static int _emm_as_data_ind (emm_as_data_t * msg, int *emm_cause)
 static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  struct emm_data_context_s                   *emm_ctx = NULL;
+  struct emm_data_context_s              *emm_ctx = NULL;
   emm_security_context_t                 *emm_security_context = NULL;
   nas_message_decode_status_t             decode_status = {0};
   int                                     decoder_rc = 0;
   int                                     rc = RETURNerror;
-  tai_t                                   originating_tai = {0};
 
   OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Received AS connection establish request\n");
   nas_message_t                           nas_msg = {.security_protected.header = {0},
@@ -693,8 +692,25 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
 
   switch (emm_msg->header.message_type) {
   case ATTACH_REQUEST:
-    memcpy(&originating_tai, msg->tai, sizeof(originating_tai));
-    rc = emm_recv_attach_request (msg->ue_id, &originating_tai, &msg->ecgi, &emm_msg->attach_request, msg->is_initial, msg->is_mm_ctx_new, emm_cause, &decode_status);
+    rc = emm_recv_attach_request (msg->ue_id, msg->tai, &msg->ecgi, &emm_msg->attach_request, emm_cause, &decode_status);
+    break;
+
+  case TRACKING_AREA_UPDATE_REQUEST:
+    // Check for emm_ctx and integrity verification
+    if ((emm_ctx == NULL) ||
+            ((0 == decode_status.security_context_available) ||
+                (0 == decode_status.integrity_protected_message) ||
+                    ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched)))) {
+
+      *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
+      // Send Reject with cause "UE identity cannot be derived by the network" to trigger fresh attach
+      rc = emm_proc_tracking_area_update_reject (msg->ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
+//      unlock_ue_contexts(ue_context);
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM,rc);
+    }
+
+    // Process periodic TAU
+    rc = emm_recv_tracking_area_update_request (msg->ue_id, &emm_msg->tracking_area_update_request,  msg->is_initial, emm_cause, &decode_status);
     break;
 
   case DETACH_REQUEST:
@@ -726,24 +742,6 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
     // Process Detach Request
     rc = emm_recv_detach_request (
       msg->ue_id, &emm_msg->detach_request, msg->is_initial, emm_cause, &decode_status);
-    break;
-
-  case TRACKING_AREA_UPDATE_REQUEST:
-    // Check for emm_ctx and integrity verification 
-    if ((emm_ctx == NULL) || 
-            ((0 == decode_status.security_context_available) ||
-                (0 == decode_status.integrity_protected_message) ||
-                    ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched)))) {
-      
-      *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
-      // Send Reject with cause "UE identity cannot be derived by the network" to trigger fresh attach 
-      rc = emm_proc_tracking_area_update_reject (msg->ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
-//      unlock_ue_contexts(ue_context);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM,rc);
-    }
-    
-    // Process periodic TAU   
-    rc = emm_recv_tracking_area_update_request (msg->ue_id, &emm_msg->tracking_area_update_request,  msg->is_initial, emm_cause, &decode_status);
     break;
 
   case SERVICE_REQUEST:

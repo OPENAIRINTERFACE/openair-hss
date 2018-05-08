@@ -62,6 +62,12 @@ typedef struct mme_app_s10_proc_s {
   mme_app_base_proc_t         proc;
   mme_app_s10_proc_type_t     type;
   struct mme_app_timer_t      timer;
+
+  /** S10 Tunnel Endpoint information. */
+  teid_t                      local_teid;
+  teid_t                      remote_teid;
+  struct in_addr              peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME.
+
   uintptr_t                   s10_trxn;
   LIST_ENTRY(mme_app_s10_proc_s) entries;      /* List. */
 } mme_app_s10_proc_t;

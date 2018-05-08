@@ -172,8 +172,6 @@ typedef struct emm_as_establish_s {
   int                    emm_cause;                   /* EMM failure cause code        */
 
   uint64_t               puid;                        /* linked to procedure UID */
-  bool                   is_initial;                  /* true if contained in initial message    */
-  bool                   is_mm_ctx_new;
   uint8_t                rrc_cause;                   /* Connection establishment cause    */
   uint8_t                rrc_type;                    /* Associated call type          */
   ksi_t                  ksi;                         /* NAS key set identifier        */

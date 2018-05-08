@@ -82,11 +82,9 @@ void nas_proc_cleanup(void);
 
 
 int nas_proc_establish_ind(const mme_ue_s1ap_id_t ue_id,
-                            const bool is_mm_ctx_new,
                             const tai_t originating_tai,
                             const ecgi_t ecgi,
                             const as_cause_t as_cause,
-                            const s_tmsi_t s_tmsi,
                             STOLEN_REF bstring *msg);
 
 int nas_proc_dl_transfer_cnf(const mme_ue_s1ap_id_t ueid, const nas_error_code_t status, STOLEN_REF bstring *  nas_msg);

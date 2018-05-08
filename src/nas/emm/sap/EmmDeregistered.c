@@ -179,12 +179,12 @@ int EmmDeregistered (emm_reg_t * const evt)
       }
     }
 
-    if ((emm_ctx) && (evt->notify) && (evt->u.attach.proc) && (failure_notif)) {
-      rc = (*failure_notif)(emm_ctx);
-    }
-    if (evt->free_proc) {
+//    if ((emm_ctx) && (evt->notify) && (evt->u.attach.proc) && (failure_notif)) {
+//      rc = (*failure_notif)(emm_ctx);
+//    }
+//    if (evt->free_proc) {
       nas_delete_attach_procedure(emm_ctx);
-    }
+//    }
     break;
 
   case _EMMREG_DETACH_INIT:

@@ -147,7 +147,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
         rc = (*evt->u.common.common_proc->emm_proc.base_proc.fail_out)(emm_ctx, &evt->u.common.common_proc->emm_proc.base_proc);
       }
 
-      if ((rc != RETURNerror) && (emm_ctx) && (evt->notify) && (evt->u.common.common_proc->emm_proc.base_proc.failure_notif)) {
+      if ((rc != RETURNerror) && (emm_ctx) && (evt->u.common.common_proc->emm_proc.base_proc.failure_notif)) {
         rc = (*evt->u.common.common_proc->emm_proc.base_proc.failure_notif)(emm_ctx);
       }
 
@@ -173,6 +173,7 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
 
       rc = emm_fsm_set_state (evt->ue_id, emm_ctx, ((nas_emm_proc_t*)evt->u.common.common_proc)->previous_emm_fsm_state);
 
+      /** We will always check the notification flag, depending on the severity of the error. */
       if ((rc != RETURNerror) && (emm_ctx) && (evt->notify) && (evt->u.common.common_proc->emm_proc.base_proc.failure_notif)) {
         (*evt->u.common.common_proc->emm_proc.base_proc.failure_notif)(emm_ctx);
       }
@@ -219,12 +220,12 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
         (*evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.abort)((nas_base_proc_t*) emm_ctx, evt->u.attach.proc); // &evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc);
       }
 
-      if ((rc != RETURNerror) && (emm_ctx) && (evt->notify) && (evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.failure_notif)) {
-        (*evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.failure_notif)(emm_ctx);
-      }
-      if (evt->free_proc) {
+//      if ((rc != RETURNerror) && (emm_ctx) && (evt->notify) && (evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.failure_notif)) {
+//        (*evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.failure_notif)(emm_ctx);
+//      }
+//      if (evt->free_proc) {
         nas_delete_attach_procedure(emm_ctx);
-      }
+//      }
     } else {
       MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_ATTACH_ABORT ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
     }

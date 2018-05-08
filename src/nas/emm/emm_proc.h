@@ -82,7 +82,6 @@ typedef enum {
 /****************************************************************************/
 
 typedef struct emm_attach_request_ies_s {
-  bool                           is_initial;
   emm_proc_attach_type_t         type;
   additional_update_type_t       additional_update_type;
   bool                           is_native_sc;

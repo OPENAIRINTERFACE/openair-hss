@@ -86,43 +86,6 @@ static void mme_app_send_delete_session_request (struct ue_context_s * const ue_
 }
 
 // todo: complete rework! @ MME_APP EMM layer should be completely unaware of ESM sessions, etc.. that should all handled in the NAS layer
-////------------------------------------------------------------------------------
-//void
-//mme_app_handle_detach_req (
-//  const itti_nas_detach_req_t * const detach_req_p)
-//{
-//  struct ue_context_s *ue_context    = NULL;
-//  bool   sent_sgw = false;
-//
-//  DevAssert(detach_req_p != NULL);
-//  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, detach_req_p->ue_id);
-//  if (ue_context == NULL) {
-//    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist -> Nothing to do :-) \n");
-//    OAILOG_FUNC_OUT (LOG_MME_APP);
-//  }
-//  else {
-//    ue_context->s1_ue_context_release_cause.present = S1ap_Cause_PR_nas;
-//    ue_context->s1_ue_context_release_cause.choice.nas = detach_req_p->cause;
-////    if (!ue_context->is_s1_ue_context_release) {
-//      for (pdn_cid_t cid = 0; cid < MAX_APN_PER_UE; cid++) {
-//        // No session with S-GW
-//        if (INVALID_TEID != ue_context->mme_teid_s11) {
-//          if (ue_context->pdn_contexts[cid]) {
-//            if (INVALID_TEID != ue_context->pdn_contexts[cid]->s_gw_teid_s11_s4) {
-//              // Send a DELETE_SESSION_REQUEST message to the SGW
-//              mme_app_send_delete_session_request  (ue_context, ue_context->pdn_contexts[cid]->default_ebi, cid);
-//              sent_sgw = true;
-//            }
-//          }
-//        }
-//      }
-//      if (!sent_sgw) {
-////        mme_app_itti_ue_context_release(ue_context, ue_context->s1_ue_context_release_cause);
-//      }
-////    }
-//  }
-//  OAILOG_FUNC_OUT (LOG_MME_APP);
-//}
 //------------------------------------------------------------------------------
 void
 mme_app_handle_detach_req (
@@ -139,13 +102,16 @@ mme_app_handle_detach_req (
   }
   /**
    * A Detach Request is sent by the EMM layer after all PDN sessions are removed.
+   * So, we will not check the number of PDN sessions remaining. The rest would be to remove the S1AP signaling connnection and the UE Context (toget with the procedures).
+   * The S11 bearers should be 0.
+   *
+   * The S10 tunnel endpoint will be removed together with the S10 related procedure (inter-mme handover or emm_cn_context_request) (together with the MME_APP context deregistration).
+   *
    * We don't need to check for invalidated TEID fields!
    * Delete Session Response should invalidate the S11-TEID registration in the hashtable for MME_APP UE Context.
    * If the MME_APP UE context removal happens before the arrival of the delete session response, the existing TEIDs (not 0)
    * should be used to deregister the MME_APP UE context from the hashtables.
    * That is the reason why we send and wait for PDN_DISCONNECT_RSP --> To make it clear that !
-   *
-   * We check if the S1AP connection is standing or idle and remove the MME_APP UE context
    *
    * Check if If UE is already in idle state, skip asking eNB to release UE context and just clean up locally.
    */
@@ -154,42 +120,16 @@ mme_app_handle_detach_req (
    * UE was already in idle mode.
    * For UE triggered detach in idle mode, it had to be active again.
    * This is network triggered detach.
-   */
-  /**
+   *
    * The UE context must be in UNREGISTERED mode, since everything is controller via EMM,
    * and we enter this stage only if EMM has triggered detach (which sets EMM state to EMM_DEREGSITERED) --> todo: set to EMM_DEREGISTER initiated, if it is an implicit MME detach!
    *
-   */
-  /*
-   * todo: remove this
-   * Remove the local S10 Tunnel if one exist.
-   * Remove the S10 Tunnel Endpoint. No more messages to send.
-   * Assuming that new S10 messages (if any, will be sent with new TEIDs).
-   * todo: this as the only point to remove the S10 tunnel.
-//   */
-
-//  /*
-//   * todo: do this in the DEREGISTER state enter callback.
-//   * Clear the CLR flag & the subscription flag.
-//   */
-//  ue_context->subscription_known = SUBSCRIPTION_UNKNOWN;
-//  if(ue_context->pending_clear_location_request){
-//    OAILOG_INFO(LOG_MME_APP, "Clearing the pending CLR for UE id " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-//    ue_context->pending_clear_location_request = false;
-//  }
-
-
-//  message_p->ittiMsg.s10_remove_ue_tunnel.cause = LOCAL_DETACH;
-//  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-//  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
-
-  /**
    * todo: if it is an MME triggered implicit detach, the UE should be in EMM_DEREGISTER_INITIATED state --> from there determine if it is an implicit detach or not..
    * If it is concluded that it is an implicit detach --> perform paging, leave the state as it is in EMM_DEREGISTER_INITIATED
    */
   if (ECM_IDLE == ue_context->ecm_state) {
     // todo: perform paging, if the UE is in EMM_DEREGISTER_INITIATED! state (MME triggered detach).
-    // Notify S1AP to release S1AP UE context locally. No
+    // Notify S1AP to release S1AP UE context locally.
     OAILOG_DEBUG (LOG_MME_APP, "ECM context for UE with IMSI: " IMSI_64_FMT " and MME_UE_S1AP_ID : " MME_UE_S1AP_ID_FMT " (already idle). \n",
          ue_context->imsi, ue_context->mme_ue_s1ap_id);
     // Free MME UE Context

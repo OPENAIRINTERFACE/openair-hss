@@ -178,24 +178,11 @@ void mme_app_free_pdn_connection (pdn_context_t ** const pdn_connection)
 //------------------------------------------------------------------------------
 void mme_app_ue_context_free_content (ue_context_t * const ue_context_p)
 {
-  bdestroy_wrapper (&mme_ue_context_p->msisdn);
-  bdestroy_wrapper (&mme_ue_context_p->ue_radio_capabilities);
-  bdestroy_wrapper (&mme_ue_context_p->apn_oi_replacement);
+  bdestroy_wrapper (&ue_context_p->msisdn);
+  bdestroy_wrapper (&ue_context_p->ue_radio_capabilities);
+  bdestroy_wrapper (&ue_context_p->apn_oi_replacement);
 
   DevAssert(ue_context_p != NULL);
-
-  // todo: take them from here and put them as IEs into the handover procedure!
-//  if(ue_context_p->pending_pdn_connectivity_req_apn)
-//    bdestroy(ue_context_p->pending_pdn_connectivity_req_apn);
-//  if(ue_context_p->pending_pdn_connectivity_req_pdn_addr)
-//    bdestroy(ue_context_p->pending_pdn_connectivity_req_pdn_addr);
-//  if(ue_context_p->pending_s1ap_source_to_target_handover_container)
-//    bdestroy(ue_context_p->pending_s1ap_source_to_target_handover_container);
-//  /** Free the pending MM_EPS_UE_CONTEXT. */
-//  if (ue_context_p->pending_mm_ue_eps_context) {
-//    free_wrapper((void**) &(ue_context_p->pending_mm_ue_eps_context));
-//  }
-
 
   // Stop Mobile reachability timer,if running
   if (ue_context_p->mobile_reachability_timer.id != MME_APP_TIMER_INACTIVE_ID) {
@@ -242,7 +229,7 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context_p)
   }
   ue_context_p->ue_radio_cap_length = 0;
 
-  ue_context_p->ue_context_rel_cause = S1AP_INVALID_CAUSE;
+  ue_context_p->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
 
   // todo: when is this method called? it should put the bearer contexts of the pdn context back to the UE contexts bearer list!
   for (int i = 0; i < MAX_APN_PER_UE; i++) {
@@ -257,7 +244,7 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context_p)
       mme_app_bearer_context_delete(&ue_context_p->bearer_contexts[i]);
     }
   }
-
+  /** Will remove the S10 tunnel endpoints. */
   if (ue_context_p->s10_procedures) {
     mme_app_delete_s10_procedures(ue_context_p);
   }
@@ -694,6 +681,7 @@ mme_ue_context_update_coll_keys (
   const mme_ue_s1ap_id_t   mme_ue_s1ap_id,
   const imsi64_t     imsi,
   const s11_teid_t         mme_s11_teid,
+  const s10_teid_t         local_mme_s10_teid,
   const guti_t     * const guti_p)  //  never NULL, if none put &ue_context_p->guti
 {
   hashtable_rc_t                          h_rc = HASH_TABLE_OK;
@@ -795,21 +783,39 @@ mme_ue_context_update_coll_keys (
   }
 
   /** S11. */
-  if ((ue_context_p->mme_s11_teid != mme_s11_teid)
+  if ((ue_context_p->mme_teid_s11 != mme_s11_teid)
       || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
-    h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_s11_teid, (void **)&id);
-    if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id) {
+    h_rc = hashtable_ts_remove (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)ue_context_p->mme_teid_s11, (void **)&id);
+    if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id && INVALID_TEID != mme_s11_teid) {
       h_rc = hashtable_ts_insert (mme_ue_context_p->tun11_ue_context_htbl, (const hash_key_t)mme_s11_teid, (void *)(uintptr_t)mme_ue_s1ap_id);
     } else {
       h_rc = HASH_TABLE_KEY_NOT_EXISTS;
     }
 
-    if (HASH_TABLE_OK != h_rc) {
+    if (HASH_TABLE_OK != h_rc && INVALID_TEID != mme_s11_teid) {
       OAILOG_TRACE (LOG_MME_APP,
           "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_s11_teid " TEID_FMT " : %s\n",
           ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, mme_s11_teid, hashtable_rc_code2string(h_rc));
         }
-    ue_context_p->mme_s11_teid = mme_s11_teid;
+    ue_context_p->mme_teid_s11 = mme_s11_teid;
+  }
+
+  /** S10. */
+  if ((ue_context_p->local_mme_teid_s10 != local_mme_s10_teid)
+      || (ue_context_p->mme_ue_s1ap_id != mme_ue_s1ap_id)) {
+    h_rc = hashtable_ts_remove (mme_ue_context_p->tun10_ue_context_htbl, (const hash_key_t)ue_context_p->local_mme_teid_s10, (void **)&id);
+    if (INVALID_MME_UE_S1AP_ID != mme_ue_s1ap_id && INVALID_TEID != local_mme_s10_teid) {
+      h_rc = hashtable_ts_insert (mme_ue_context_p->tun10_ue_context_htbl, (const hash_key_t)local_mme_s10_teid, (void *)(uintptr_t)mme_ue_s1ap_id);
+    } else {
+      h_rc = HASH_TABLE_KEY_NOT_EXISTS;
+    }
+
+    if (HASH_TABLE_OK != h_rc && INVALID_TEID != local_mme_s10_teid) {
+      OAILOG_TRACE (LOG_MME_APP,
+          "Error could not update this ue context %p enb_ue_s1ap_ue_id "ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " mme_s11_teid " TEID_FMT " : %s\n",
+          ue_context_p, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id, local_mme_s10_teid, hashtable_rc_code2string(h_rc));
+        }
+    ue_context_p->local_mme_teid_s10 = local_mme_s10_teid;
   }
 
   // todo: check if GUTI is necesary in MME_APP context

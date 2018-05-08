@@ -161,11 +161,9 @@ nas_proc_cleanup (
 int
 nas_proc_establish_ind (
   const mme_ue_s1ap_id_t ue_id,
-  const bool is_mm_ctx_new,
   const tai_t originating_tai,
   const ecgi_t ecgi,
   const as_cause_t as_cause,
-  const s_tmsi_t s_tmsi,
   STOLEN_REF bstring *msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -173,23 +171,18 @@ nas_proc_establish_ind (
 
   if (msg) {
     emm_sap_t                               emm_sap = {0};
-
     /*
-     * Notify the EMM procedure call manager that NAS signalling
+     * Notify the EMM procedure call manager that NAS signaling
      * connection establishment indication message has been received
      * from the Access-Stratum sublayer
      */
-
     emm_sap.primitive = EMMAS_ESTABLISH_REQ;
     emm_sap.u.emm_as.u.establish.ue_id              = ue_id;
-    emm_sap.u.emm_as.u.establish.is_initial         = true;
-    emm_sap.u.emm_as.u.establish.is_mm_ctx_new      = is_mm_ctx_new;
 
     emm_sap.u.emm_as.u.establish.nas_msg            = *msg;
+    emm_sap.u.emm_as.u.establish.rrc_cause          = as_cause;
     *msg = NULL;
     emm_sap.u.emm_as.u.establish.tai                = &originating_tai;
-    //emm_sap.u.emm_as.u.establish.plmn_id            = &originating_tai.plmn;
-    //emm_sap.u.emm_as.u.establish.tac                = originating_tai.tac;
     emm_sap.u.emm_as.u.establish.ecgi               = ecgi;
 
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_ESTABLISH_REQ ue id " MME_UE_S1AP_ID_FMT " tai:  plmn %c%c%c.%c%c%c tac %u",

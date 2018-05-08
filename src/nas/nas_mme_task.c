@@ -65,6 +65,21 @@ static void *nas_intertask_interface (void *args_p)
       }
       break;
 
+      /*
+       * We don't need the S-TMSI: if with the given UE_ID we can find an EMM context, that means,
+       * that a valid UE context could be matched for the UE context, and we can continue with it.
+       */
+    case NAS_INITIAL_UE_MESSAGE:{
+          nas_establish_ind_t                    *nas_est_ind_p = NULL;
+          nas_est_ind_p = &received_message_p->ittiMsg.nas_initial_ue_message.nas;
+          nas_proc_establish_ind (nas_est_ind_p->ue_id,
+              nas_est_ind_p->tai,
+              nas_est_ind_p->ecgi,
+              nas_est_ind_p->as_cause,
+              &nas_est_ind_p->initial_nas_msg);
+        }
+        break;
+
     case MME_APP_CREATE_DEDICATED_BEARER_REQ:
       nas_proc_create_dedicated_bearer(&MME_APP_CREATE_DEDICATED_BEARER_REQ (received_message_p));
       break;

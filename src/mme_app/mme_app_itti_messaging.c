@@ -395,6 +395,20 @@ mme_app_send_s11_modify_bearer_req(
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
+int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, teid_t remote_teid, struct in_addr peer_ip){
+  OAILOG_FUNC_IN(LOG_MME_APP);
+
+  MessageDef *message_p = itti_alloc_new_message (TASK_MME_APP, S10_REMOVE_UE_TUNNEL);
+  DevAssert (message_p != NULL);
+  message_p->ittiMsg.s10_remove_ue_tunnel.remote_teid  = remote_teid;
+  message_p->ittiMsg.s10_remove_ue_tunnel.local_teid   = local_teid;
+  message_p->ittiMsg.s10_remove_ue_tunnel.peer_ip      = peer_ip;
+  message_p->ittiMsg.s10_remove_ue_tunnel.cause = LOCAL_DETACH;
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+
+  OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
+}
 //------------------------------------------------------------------------------
 /**
  * Send an S1AP Handover Cancel Acknowledge to the S1AP layer.

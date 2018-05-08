@@ -739,30 +739,33 @@ emm_context_upsert_imsi (
   return RETURNok;
 }
 
-////------------------------------------------------------------------------------
-//void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init_esm_ctxt)
-//{
-//  emm_ctx->_emm_fsm_state  = EMM_DEREGISTERED;
-//
-//  OAILOG_DEBUG (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " Init EMM-CTX\n", emm_ctx->ue_id);
-//
-//  emm_ctx_clear_guti(emm_ctx);
-//  emm_ctx_clear_old_guti(emm_ctx);
-//  emm_ctx_clear_imsi(emm_ctx);
-//  emm_ctx_clear_imei(emm_ctx);
-//  emm_ctx_clear_imeisv(emm_ctx);
-//  emm_ctx_clear_lvr_tai(emm_ctx);
-//  emm_ctx_clear_security(emm_ctx);
-//  emm_ctx_clear_non_current_security(emm_ctx);
-//  emm_ctx_clear_auth_vectors(emm_ctx);
-//  emm_ctx_clear_ms_nw_cap(emm_ctx);
-//  emm_ctx_clear_ue_nw_cap(emm_ctx);
-//  emm_ctx_clear_drx_parameter(emm_ctx);
-//
-//  if (init_esm_ctxt) {
-//    esm_init_context(&emm_ctx->esm_ctx);
-//  }
-//}
+//------------------------------------------------------------------------------
+void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init_esm_ctxt)
+{
+  emm_ctx->_emm_fsm_state  = EMM_DEREGISTERED;
+
+  OAILOG_DEBUG (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " Init EMM-CTX\n", emm_ctx->ue_id);
+
+  bdestroy(emm_ctx->esm_msg);
+  emm_ctx_clear_guti(emm_ctx);
+  emm_ctx_clear_old_guti(emm_ctx);
+  emm_ctx_clear_imsi(emm_ctx);
+  emm_ctx_clear_imei(emm_ctx);
+  emm_ctx_clear_imeisv(emm_ctx);
+  emm_ctx_clear_lvr_tai(emm_ctx);
+  emm_ctx_clear_security(emm_ctx);
+  emm_ctx_clear_non_current_security(emm_ctx);
+  emm_ctx_clear_auth_vectors(emm_ctx);
+  emm_ctx_clear_ms_nw_cap(emm_ctx);
+  emm_ctx_clear_ue_nw_cap(emm_ctx);
+  emm_ctx_clear_drx_parameter(emm_ctx);
+  emm_ctx_clear_pending_current_drx_parameter(&emm_ctx);
+  emm_ctx_clear_eps_bearer_context_status(&emm_ctx);
+
+  if (init_esm_ctxt) {
+    esm_init_context(&emm_ctx->esm_ctx);
+  }
+}
 
 //------------------------------------------------------------------------------
 int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas_emm_specific_proc_t * const spec_proc,

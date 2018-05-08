@@ -276,7 +276,6 @@ int EmmCbS1apRegistered(mme_ue_s1ap_id_t ueId){
      * No pending bearer deactivation.
      * Check if there is are any pending unestablished downlink bearers (DL-GTP Tunnel Information to the SAE-GW).
      */
-
     // todo: how to do this in multi apn?
     pdn_context_t * registered_pdn_ctx = NULL;
     bearer_context_t * bearer_context_to_establish = NULL;
@@ -491,29 +490,18 @@ mme_app_handle_initial_ue_message (
   itti_s1ap_initial_ue_message_t * const initial_pP)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                 *ue_context_p = NULL;
+  struct ue_context_s                    *ue_context = NULL;
   MessageDef                             *message_p = NULL;
   bool                                    is_guti_valid = false;
   emm_data_context_t                     *ue_nas_ctx = NULL;
-    enb_s1ap_id_key_t                     enb_s1ap_id_key = 0;
+  enb_s1ap_id_key_t                       enb_s1ap_id_key = 0;
 
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP\n");
   XML_MSG_DUMP_ITTI_S1AP_INITIAL_UE_MESSAGE(initial_pP, TASK_S1AP, TASK_MME_APP, NULL);
-
-
-
-  // todo: this is an error case, we don't expect to find an MME_APP context via enb_ue_s1ap_id. If we find an S1AP UE reference, we will remove it.
-//  MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
-//  ue_context_p = mme_ue_context_exists_enb_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_s1ap_id_key);
-//  if (!(ue_context_p)) {
-//    OAILOG_DEBUG (LOG_MME_APP, "Unknown enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
-//  }
-//
-//  if ((ue_context_p) && (ue_context_p->is_s1_ue_context_release)) {
-//    OAILOG_FUNC_OUT (LOG_MME_APP);
-//  }
-
-  // Check if there is any existing UE context using S-TMSI/GUTI. If so continue with its MME_APP context.
+  /*
+   * Check if there is any existing UE context using S-TMSI/GUTI. If so continue with its MME_APP context.
+   * MME_UE_S1AP_ID is the main key.
+   */
   if (initial_pP->is_s_tmsi_valid)
   {
     OAILOG_DEBUG (LOG_MME_APP, "INITIAL UE Message: Valid mme_code %u and S-TMSI %u received from eNB.\n",
@@ -526,31 +514,35 @@ mme_app_handle_initial_ue_message (
       if (ue_nas_ctx)
       {
         // Get the UE context using mme_ue_s1ap_id
-        ue_context_p =  mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts,ue_nas_ctx->ue_id);
-        DevAssert(ue_context_p != NULL);
-        if ((ue_context_p != NULL) && (ue_context_p->mme_ue_s1ap_id == ue_nas_ctx->ue_id)) {
+        ue_context =  mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, ue_nas_ctx->ue_id);
+        DevAssert(ue_context != NULL);
+        if ((ue_context != NULL) && (ue_context->mme_ue_s1ap_id == ue_nas_ctx->ue_id)) {
           initial_pP->mme_ue_s1ap_id = ue_nas_ctx->ue_id;
-          if (ue_context_p->enb_s1ap_id_key != INVALID_ENB_UE_S1AP_ID_KEY)
+          if (ue_context->enb_s1ap_id_key != INVALID_ENB_UE_S1AP_ID_KEY)
           {
-            /** Check if there is a pending removal of the object. */
-            /** If a CLR flag is existing, reset it. */
-            // todo: check for a process on the source side
-            if(ue_context_p->pending_clear_location_request){
-              OAILOG_INFO(LOG_MME_APP, "UE_CONTEXT already had a CLR flag set for UE with IMSI " IMSI_64_FMT " and " MME_UE_S1AP_ID_FMT " already. Resetting. \n", ue_context_p->imsi, ue_context_p->mme_ue_s1ap_id);
-              ue_context_p->pending_clear_location_request = false;
+            /*
+             * Check if there is a pending removal of the object.
+             * If a CLR flag is existing, reset it.
+             * This might happen if the handover to the target side failed and UE is doing an idle-TAU
+             * back to the source MME. In that case, the NAS validation will reject the establishment of the NAS request (send just a TAU-Reject back).
+             * It should then remove the MME_APP context.
+             */
+            if(ue_context->pending_clear_location_request){
+              OAILOG_INFO(LOG_MME_APP, "UE_CONTEXT already had a CLR flag set for UE with IMSI " IMSI_64_FMT " and " MME_UE_S1AP_ID_FMT " already. Resetting. \n",
+                  ue_context_p->imsi, ue_context_p->mme_ue_s1ap_id);
+              ue_context->pending_clear_location_request = false;
             }
-
             /*
              * This only removed the MME_UE_S1AP_ID from enb_s1ap_id_key, it won't remove the UE_REFERENCE itself.
              * todo: @ lionel:           duplicate_enb_context_detected  flag is not checked anymore (NAS).
              */
-            ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(ue_context_p->enb_ue_s1ap_id, ue_context_p->e_utran_cgi.cell_identity.enb_id);
+            ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
             if(old_ue_reference){
               OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** Found an old UE_REFERENCE with enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d.\n" , old_ue_reference->enb_ue_s1ap_id,
-                  ue_context_p->e_utran_cgi.cell_identity.enb_id);
+                  ue_context->e_utran_cgi.cell_identity.enb_id);
               s1ap_remove_ue(old_ue_reference);
               OAILOG_WARNING (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** Removed old UE_REFERENCE with enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d.\n" , old_ue_reference->enb_ue_s1ap_id,
-                  ue_context_p->e_utran_cgi.cell_identity.enb_id);
+                  ue_context->e_utran_cgi.cell_identity.enb_id);
             }
             /*
              * Ideally this should never happen. When UE move to IDLE this key is set to INVALID.
@@ -558,99 +550,91 @@ mme_app_handle_initial_ue_message (
              * connection.
              * However if this key is valid, remove the key from the hashtable.
              */
-            hashtable_rc_t result_deletion = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)ue_context_p->enb_s1ap_id_key, (void **)&id);
+            hashtable_rc_t result_deletion = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
+                (const hash_key_t)ue_context->enb_s1ap_id_key, (void **)&id);
             OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** enb_s1ap_id_key %ld has valid value %ld. Result of deletion %d.\n" ,
-                ue_context_p->enb_s1ap_id_key,
-                ue_context_p->enb_ue_s1ap_id,
+                ue_context->enb_s1ap_id_key,
+                ue_context->enb_ue_s1ap_id,
                 result_deletion);
-            ue_context_p->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
+            ue_context->enb_s1ap_id_key = INVALID_ENB_UE_S1AP_ID_KEY;
           }
           // Update MME UE context with new enb_ue_s1ap_id
-          ue_context_p->enb_ue_s1ap_id = initial_pP->enb_ue_s1ap_id;
+          ue_context->enb_ue_s1ap_id = initial_pP->enb_ue_s1ap_id;
           // regenerate the enb_s1ap_id_key as enb_ue_s1ap_id is changed.
           // todo: also here home_enb_id
           MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
           // Update enb_s1ap_id_key in hashtable
           mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
-                ue_context_p,
-                enb_s1ap_id_key,
-                ue_nas_ctx->ue_id,
-                ue_nas_ctx->_imsi64,
-                ue_context_p->mme_teid_s11,
-                ue_context_p->local_mme_teid_s10,
-                &guti);
+              ue_context,
+              enb_s1ap_id_key,
+              ue_nas_ctx->ue_id,
+              ue_nas_ctx->_imsi64,
+              ue_context->mme_teid_s11,
+              ue_context->local_mme_teid_s10,
+              &guti);
         }
       } else {
-          OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE with mme code %u and S-TMSI %u:"
-            "no UE context found \n", initial_pP->opt_s_tmsi.mme_code, initial_pP->opt_s_tmsi.m_tmsi);
-          /** Check that also no MME_APP UE context exists for the given GUTI. */
-          DevAssert(mme_ue_context_exists_guti(&mme_app_desc.mme_ue_contexts, &guti) == NULL);
+        OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE with mme code %u and S-TMSI %u:"
+            "no EMM UE context found \n", initial_pP->opt_s_tmsi.mme_code, initial_pP->opt_s_tmsi.m_tmsi);
+        /** Check that also no MME_APP UE context exists for the given GUTI. */
+        DevAssert(mme_ue_context_exists_guti(&mme_app_desc.mme_ue_contexts, &guti) == NULL);
       }
     } else {
       OAILOG_DEBUG (LOG_MME_APP, "No MME is configured with MME code %u received in S-TMSI %u from UE.\n",
-                    initial_pP->opt_s_tmsi.mme_code, initial_pP->opt_s_tmsi.m_tmsi);
+          initial_pP->opt_s_tmsi.mme_code, initial_pP->opt_s_tmsi.m_tmsi);
       DevAssert(mme_ue_context_exists_guti(&mme_app_desc.mme_ue_contexts, &guti) == NULL);
     }
   } else {
     OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE from S1AP,without S-TMSI. \n"); /**< Continue with new UE context establishment. */
   }
 
-//  if (duplicate_enb_context_detected) {
-//    if (is_initial) {
-//      // remove new context
-//      ue_context = mme_api_duplicate_enb_ue_s1ap_id_detected (enb_ue_s1ap_id_key,ue_context->mme_ue_s1ap_id, REMOVE_NEW_CONTEXT);
-//      duplicate_enb_context_detected = false; // Problem solved
-//      OAILOG_TRACE (LOG_NAS_EMM,
-//          "EMM-PROC  - ue_context now enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
-//          ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
-//    }
-//  }
-  // finally create a new ue context if anything found
-  if (!(ue_context_p)) {
+  /*
+   * Either we take the existing UE context or create a new one.
+   * If a new one is created, it might be a duplicate one, which will be found out in the EMM validations.
+   * There we remove the duplicate context synchronously. // todo: not synchrounsly yet
+   */
+  if (!(ue_context)) {
     OAILOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one \n");
-    if (!(ue_context_p = mme_create_new_ue_context ())) {
+    if (!(ue_context = mme_create_new_ue_context ())) {
       /*
        * Error during ue context malloc
        */
       OAILOG_ERROR (LOG_MME_APP, "Failed to create new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
+
+    /** Initialize the fields of the MME_APP context. */
+    ue_context->ecm_state         = ECM_CONNECTED;
+    ue_context->mme_ue_s1ap_id    = INVALID_MME_UE_S1AP_ID;
+    ue_context->enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
+    // todo: check if this works for home and macro enb id
+    MME_APP_ENB_S1AP_ID_KEY(ue_context->enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
+    ue_context->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
     OAILOG_DEBUG (LOG_MME_APP, "Created new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
     /** Since the NAS and MME_APP contexts are split again, we assign a new mme_ue_s1ap_id here. */
-    ue_context_p->mme_ue_s1ap_id    = mme_app_ctx_get_new_ue_id ();
-    if (ue_context_p->mme_ue_s1ap_id  == INVALID_MME_UE_S1AP_ID) {
+    ue_context->mme_ue_s1ap_id    = mme_app_ctx_get_new_ue_id ();
+    if (ue_context->mme_ue_s1ap_id  == INVALID_MME_UE_S1AP_ID) {
       OAILOG_CRITICAL (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE. MME_UE_S1AP_ID allocation Failed.\n");
-      mme_remove_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p);
+      mme_app_ue_context_free_content(ue_context);
+      free_wrapper ((void**)&ue_context);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
-    OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE.Allocated new MME UE context and new mme_ue_s1ap_id. %d\n",ue_context_p->mme_ue_s1ap_id);
-    ue_context_p->enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
-    MME_APP_ENB_S1AP_ID_KEY(ue_context_p->enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
-    DevAssert (mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p) == 0);
-
-    ue_context_p->ecm_state         = ECM_CONNECTED;
-    ue_context_p->mme_ue_s1ap_id    = INVALID_MME_UE_S1AP_ID;
-    ue_context_p->enb_ue_s1ap_id    = initial_pP->enb_ue_s1ap_id;
-    MME_APP_ENB_S1AP_ID_KEY(ue_context_p->enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
-    ue_context_p->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
-
-    if (RETURNerror == mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context_p)) {
-      mme_app_ue_context_free_content(ue_context_p);
-      free_wrapper ((void**)&ue_context_p);
+    OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE. Allocated new MME UE context and new mme_ue_s1ap_id. %d\n", ue_context->mme_ue_s1ap_id);
+    if (RETURNerror == mme_insert_ue_context (&mme_app_desc.mme_ue_contexts, ue_context)) {
+      mme_app_ue_context_free_content(ue_context);
+      free_wrapper ((void**)&ue_context);
       OAILOG_ERROR (LOG_MME_APP, "Failed to insert new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
   }
-  ue_context_p->e_utran_cgi = initial_pP->ecgi;
-// todo: where to set the timers and notify the s1ap association?
+  ue_context->e_utran_cgi = initial_pP->ecgi;
   // Notify S1AP about the mapping between mme_ue_s1ap_id and sctp assoc id + enb_ue_s1ap_id
-  notify_s1ap_new_ue_mme_s1ap_id_association (ue_context_p->sctp_assoc_id_key, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
+  notify_s1ap_new_ue_mme_s1ap_id_association (ue_context->sctp_assoc_id_key, ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
   // Initialize timers to INVALID IDs
-  ue_context_p->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
-  ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
-  ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
-  ue_context_p->initial_context_setup_rsp_timer.sec = MME_APP_INITIAL_CONTEXT_SETUP_RSP_TIMER_VALUE;
-
+  ue_context->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  ue_context->initial_context_setup_rsp_timer.sec = MME_APP_INITIAL_CONTEXT_SETUP_RSP_TIMER_VALUE;
   /** Inform the NAS layer about the new initial UE context. */
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_INITIAL_UE_MESSAGE);
   // do this because of same message types name but not same struct in different .h
@@ -670,7 +654,7 @@ mme_app_handle_initial_ue_message (
 
   memcpy (&message_p->ittiMsg.nas_initial_ue_message.transparent, (const void*)&initial_pP->transparent, sizeof (message_p->ittiMsg.nas_initial_ue_message.transparent));
 
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_INITIAL_UE_MESSAGE ue id " MME_UE_S1AP_ID_FMT " ", ue_context_p->mme_ue_s1ap_id);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_INITIAL_UE_MESSAGE UE id " MME_UE_S1AP_ID_FMT " ", ue_context->mme_ue_s1ap_id);
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -768,19 +752,18 @@ mme_app_handle_delete_session_rsp (
   s1_ue_context_release_cause.present = S1ap_Cause_PR_nas;
   s1_ue_context_release_cause.choice.nas = S1ap_CauseNas_detach;
 
-
-
   /**
-    * Object is later removed, not here. For unused keys, this is no problem, just deregistrate the tunnel ids for the MME_APP
-    * UE context from the hashtable.
-    * If this is not done, later at removal of the MME_APP UE context, the S11 keys will be checked and removed again if still existing.
-    *
-    * todo: For multi-apn, checking if more APNs exist or removing later?
-    */
-   hashtable_ts_remove(mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl,
-                       (const hash_key_t) ue_context_p->mme_s11_teid, &id);
-   ue_context_p->mme_s11_teid = 0;
-   ue_context_p->sgw_s11_teid = 0;
+   * Object is later removed, not here. For unused keys, this is no problem, just deregistrate the tunnel ids for the MME_APP
+   * UE context from the hashtable.
+   * If this is not done, later at removal of the MME_APP UE context, the S11 keys will be checked and removed again if still existing.
+   *
+   * todo: For multi-apn, checking if more APNs exist or removing later?
+   */
+  // todo: update coll keys with invalid keys
+//  hashtable_ts_remove(mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl,
+//      (const hash_key_t) ue_context_p->mme_teid_s11, &id);
+//  ue_context_p->mme_s11_teid = 0;
+//  ue_context_p->sgw_s11_teid = 0;
 
  //  if (delete_sess_resp_pP->cause != REQUEST_ACCEPTED) {
  //    OAILOG_WARNING (LOG_MME_APP, "***WARNING****S11 Delete Session Rsp: NACK received from SPGW : %08x\n", delete_sess_resp_pP->teid);

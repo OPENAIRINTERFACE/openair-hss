@@ -153,8 +153,6 @@ emm_recv_attach_request (
   const tai_t              * const originating_tai,
   const ecgi_t             * const originating_ecgi,
   attach_request_msg       * const msg,
-  const bool                       is_initial,
-  const bool                       is_mm_ctx_new,
   int * const emm_cause,
   const nas_message_decode_status_t  * decode_status)
 {
@@ -285,23 +283,15 @@ emm_recv_attach_request (
    * Get the Last visited registered TAI
    */
 
-
   if (msg->presencemask & ATTACH_REQUEST_LAST_VISITED_REGISTERED_TAI_PRESENT) {
     params->last_visited_registered_tai = calloc(1, sizeof(tai_t));
-    params->last_visited_registered_tai->mcc_digit1 = msg->lastvisitedregisteredtai.mcc_digit1;
-    params->last_visited_registered_tai->mcc_digit2 = msg->lastvisitedregisteredtai.mcc_digit2;
-    params->last_visited_registered_tai->mcc_digit3 = msg->lastvisitedregisteredtai.mcc_digit3;
-    params->last_visited_registered_tai->mnc_digit1 = msg->lastvisitedregisteredtai.mnc_digit1;
-    params->last_visited_registered_tai->mnc_digit2 = msg->lastvisitedregisteredtai.mnc_digit2;
-    params->last_visited_registered_tai->mnc_digit3 = msg->lastvisitedregisteredtai.mnc_digit3;
-    params->last_visited_registered_tai->tac = msg->lastvisitedregisteredtai.tac;
+    memcpy(params->last_visited_registered_tai, &msg->lastvisitedregisteredtai, sizeof(tai_t));
   }
   if (msg->presencemask & ATTACH_REQUEST_DRX_PARAMETER_PRESENT) {
     params->drx_parameter = calloc(1, sizeof(drx_parameter_t));
     memcpy(params->drx_parameter, &msg->drxparameter, sizeof(drx_parameter_t));
   }
 
-  params->is_initial     = is_initial;
   params->is_native_sc   = (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
   params->ksi            = msg->naskeysetidentifier.naskeysetidentifier;
   params->is_native_guti = (msg->oldgutitype != GUTI_MAPPED);
@@ -331,7 +321,7 @@ emm_recv_attach_request (
   /*
    * Execute the requested UE attach procedure
    */
-  rc = emm_proc_attach_request (ue_id, is_mm_ctx_new, params);
+  rc = emm_proc_attach_request (ue_id, params);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
