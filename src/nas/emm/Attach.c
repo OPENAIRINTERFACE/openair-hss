@@ -1592,7 +1592,6 @@ static int _emm_send_attach_accept (emm_data_context_t * emm_context)
     OAILOG_TRACE (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT " EMM-PROC  - nas_msg  src size = %d nas_msg  dst size = %d \n",
         ue_id, blength(attach_proc->esm_msg_out), blength(emm_sap.u.emm_as.u.establish.nas_msg));
 
-
     // Send T3402
     emm_sap.u.emm_as.u.establish.t3402 = &mme_config.nas_config.t3402_min;
 

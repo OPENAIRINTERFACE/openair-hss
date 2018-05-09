@@ -430,7 +430,6 @@ void nas_itti_establish_cnf(
       ue_idP, blength(msgP), selected_encryption_algorithmP, selected_integrity_algorithmP);
 
   itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
-//    unlock_ue_contexts(ue_context);
 
   OAILOG_FUNC_OUT(LOG_NAS);
 }

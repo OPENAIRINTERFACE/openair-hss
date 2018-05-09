@@ -329,35 +329,20 @@ mme_app_handle_nas_pdn_connectivity_req (
   // ...
   ue_context_p->imsi_auth = IMSI_AUTHENTICATED;
 
+  // todo: sending requested PCOs
+  //  copy_protocol_configuration_options (&ue_context_p->pending_pdn_connectivity_req_pco, &nas_pdn_connectivity_req_pP->pco);
+  //  clear_protocol_configuration_options(&nas_pdn_connectivity_req_pP->pco);
+  //#define TEMPORARY_DEBUG 1
+  //#if TEMPORARY_DEBUG
+  //  bstring b = protocol_configuration_options_to_xml(&ue_context_p->pending_pdn_connectivity_req_pco);
+  //  OAILOG_DEBUG (LOG_MME_APP, "PCO %s\n", bdata(b));
+  //  bdestroy(b);
+  //#endif
+
   rc =  mme_app_send_s11_create_session_req (ue_context_p, nas_pdn_connectivity_req_pP->pdn_cid);
 
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
-
-//------------------------------------------------------------------------------
-//int
-//mme_app_handle_nas_pdn_connectivity_req (
-//  itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)
-//{
-  /**
-   * Consider the UE authenticated
-   * todo: done here?!
-   */
-
-  /** Not entering this state in case its not handover (assumed). */
-  // Temp: save request, in near future merge wisely params in context
-//  memset (ue_context_p->pending_pdn_connectivity_req_imsi, 0, 16);
-
-//  copy_protocol_configuration_options (&ue_context_p->pending_pdn_connectivity_req_pco, &nas_pdn_connectivity_req_pP->pco);
-//  clear_protocol_configuration_options(&nas_pdn_connectivity_req_pP->pco);
-//#define TEMPORARY_DEBUG 1
-//#if TEMPORARY_DEBUG
-//  bstring b = protocol_configuration_options_to_xml(&ue_context_p->pending_pdn_connectivity_req_pco);
-//  OAILOG_DEBUG (LOG_MME_APP, "PCO %s\n", bdata(b));
-//  bdestroy(b);
-//#endif
-//}
-
 
 // sent by NAS
 //------------------------------------------------------------------------------
@@ -381,100 +366,109 @@ mme_app_handle_conn_est_cnf (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-//  if (!ue_context_p->is_s1_ue_context_release) {
-    message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_CONNECTION_ESTABLISHMENT_CNF);
-    establishment_cnf_p = &message_p->ittiMsg.mme_app_connection_establishment_cnf;
+  message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_CONNECTION_ESTABLISHMENT_CNF);
+  establishment_cnf_p = &message_p->ittiMsg.mme_app_connection_establishment_cnf;
 
-    establishment_cnf_p->ue_id = nas_conn_est_cnf_pP->ue_id;
-    // todo: check all memcpy (&establishment_cnf_p->nas_conn_est_cnf, nas_conn_est_cnf_pP, sizeof (itti_nas_conn_est_cnf_t));
+  establishment_cnf_p->ue_id = nas_conn_est_cnf_pP->ue_id;  /**< Just set the MME_UE_S1AP_ID as identifier, the S1AP layer will set the enb_ue_s1ap_id from the ue_reference. */
 
-
-    // Copy UE radio capabilities into message if it exists
-//      OAILOG_DEBUG (LOG_MME_APP, "UE radio context already cached: %s\n",
-//                   ue_context_p->ue_radio_cap_length ? "yes" : "no");
-//      establishment_cnf_p->ue_radio_cap_length = ue_context_p->ue_radio_cap_length;
-//      if (establishment_cnf_p->ue_radio_cap_length) {
-//        establishment_cnf_p->ue_radio_capabilities =
-//                    (uint8_t*) calloc (establishment_cnf_p->ue_radio_cap_length, sizeof *establishment_cnf_p->ue_radio_capabilities);
-//        memcpy (establishment_cnf_p->ue_radio_capabilities,
-//                ue_context_p->ue_radio_capabilities,
-//                establishment_cnf_p->ue_radio_cap_length);
-//      }
-
-    int j = 0;
-    for (int i = 0; i < BEARERS_PER_UE; i++) {
-      bearer_context_t *bc = ue_context_p->bearer_contexts[i];
-      if (bc) {
-        if (BEARER_STATE_SGW_CREATED & bc->bearer_state) {
-          establishment_cnf_p->e_rab_id[j]                                 = bc->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
-          establishment_cnf_p->e_rab_level_qos_qci[j]                      = bc->qci;
-          establishment_cnf_p->e_rab_level_qos_priority_level[j]           = bc->priority_level;
-          establishment_cnf_p->e_rab_level_qos_preemption_capability[j]    = bc->preemption_capability;
-          establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[j] = bc->preemption_vulnerability;
-          establishment_cnf_p->transport_layer_address[j]                  = fteid_ip_address_to_bstring(&bc->s_gw_fteid_s1u);
-          establishment_cnf_p->gtp_teid[j]                                 = bc->s_gw_fteid_s1u.teid;
-          if (!j) {
-            establishment_cnf_p->nas_pdu[j]                                = nas_conn_est_cnf_pP->nas_msg;
-            nas_conn_est_cnf_pP->nas_msg = NULL;
-          }
-          j=j+1;
-        }
-      }
-    }
-    establishment_cnf_p->no_of_e_rabs = j;
-
+  /*
+   * Add the subscribed UE-AMBR values.
+   */
   //#pragma message  "Check ue_context_p ambr"
-    establishment_cnf_p->ue_ambr.br_ul = ue_context_p->subscribed_ue_ambr.br_ul;
-    establishment_cnf_p->ue_ambr.br_dl = ue_context_p->subscribed_ue_ambr.br_dl;
-    establishment_cnf_p->ue_security_capabilities_encryption_algorithms = nas_conn_est_cnf_pP->encryption_algorithm_capabilities;
-    establishment_cnf_p->ue_security_capabilities_integrity_algorithms = nas_conn_est_cnf_pP->integrity_algorithm_capabilities;
-    memcpy(establishment_cnf_p->kenb, nas_conn_est_cnf_pP->kenb, AUTH_KENB_SIZE);
+  establishment_cnf_p->ue_ambr.br_ul = ue_context_p->subscribed_ue_ambr.br_ul;
+  establishment_cnf_p->ue_ambr.br_dl = ue_context_p->subscribed_ue_ambr.br_dl;
+  /*
+   * Add the Security capabilities.
+   */
+  establishment_cnf_p->ue_security_capabilities_encryption_algorithms = nas_conn_est_cnf_pP->encryption_algorithm_capabilities;
+  establishment_cnf_p->ue_security_capabilities_integrity_algorithms = nas_conn_est_cnf_pP->integrity_algorithm_capabilities;
+  memcpy(establishment_cnf_p->kenb, nas_conn_est_cnf_pP->kenb, AUTH_KENB_SIZE);
+  OAILOG_DEBUG (LOG_MME_APP, "security_capabilities_encryption_algorithms 0x%04X\n", establishment_cnf_p->ue_security_capabilities_encryption_algorithms);
+  OAILOG_DEBUG (LOG_MME_APP, "security_capabilities_integrity_algorithms  0x%04X\n", establishment_cnf_p->ue_security_capabilities_integrity_algorithms);
 
+  /*
+   * The default bearer contains the EMM message with the Attach/TAU-Accept method.
+   * The rest contain ESM messages with activate dedicated EPS Bearer Context Request messages!
+   * (Implemented correctly below but ESM information fail).
+   *
+   * The correct mapping must be made from each NAS message to each bearer context.
+   * Currently, just set the default bearer.
+   *
+   * No inner NAS message exists.
+   * todo: later also add an array or a list of NAS messages in the nas_itti_establish_cnf
+   */
+  pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context_p->pdn_contexts);
+  DevAssert(first_pdn);
 
-    OAILOG_DEBUG (LOG_MME_APP, "security_capabilities_encryption_algorithms 0x%04X\n", establishment_cnf_p->ue_security_capabilities_encryption_algorithms);
-    OAILOG_DEBUG (LOG_MME_APP, "security_capabilities_integrity_algorithms  0x%04X\n", establishment_cnf_p->ue_security_capabilities_integrity_algorithms);
+  bearer_context_t * first_bearer = RB_MIN(PdnContexts, &first_pdn->session_bearers)); // todo: @ handover (idle mode tau) this should give us the default ebi!
+  if(first_bearer){ // todo: optimize this!
+    if (BEARER_STATE_SGW_CREATED & first_bearer->bearer_state) {
+      establishment_cnf_p->e_rab_id[0]                                 = first_bearer->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
+      establishment_cnf_p->e_rab_level_qos_qci[0]                      = first_bearer->qci;
+      establishment_cnf_p->e_rab_level_qos_priority_level[0]           = first_bearer->priority_level;
+      establishment_cnf_p->e_rab_level_qos_preemption_capability[0]    = first_bearer->preemption_capability;
+      establishment_cnf_p->e_rab_level_qos_preemption_vulnerability[0] = first_bearer->preemption_vulnerability;
+      establishment_cnf_p->transport_layer_address[0]                  = fteid_ip_address_to_bstring(&first_bearer->s_gw_fteid_s1u);
+      establishment_cnf_p->gtp_teid[0]                                 = first_bearer->s_gw_fteid_s1u.teid;
+//      if (!j) { // todo: ESM message may exist --> should match each to the EBI!
+      establishment_cnf_p->nas_pdu[0]                                  = nas_conn_est_cnf_pP->nas_msg;
+      nas_conn_est_cnf_pP->nas_msg = NULL; /**< Unlink. */
+    }
+  }
+  establishment_cnf_p->no_of_e_rabs = 1;
 
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0,
-                        "0 MME_APP_CONNECTION_ESTABLISHMENT_CNF ebi %u s1u_sgw teid " TEID_FMT " qci %u prio level %u sea 0x%x sia 0x%x",
-                        establishment_cnf_p->e_rab_id[0],
-                        establishment_cnf_p->gtp_teid[0],
-                        establishment_cnf_p->e_rab_level_qos_qci[0],
-                        establishment_cnf_p->e_rab_level_qos_priority_level[0],
-                        establishment_cnf_p->ue_security_capabilities_encryption_algorithms,
-                        establishment_cnf_p->ue_security_capabilities_integrity_algorithms);
-    int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
-    itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
-
-    // todo: we don't move the UE in connected state, it is moved into connected state once at the beginning @ initial context setup request..
-
-// todo: timer setup for initial context setup rsp && setting ECM state? (can use same timer for handover)? timer inside another process?
-//    /*
-//      * Move the UE to ECM Connected State.However if S1-U bearer establishment fails then we need to move the UE to idle.
-//      * S1 Signaling connection gets established via first DL NAS Trasnport message in some scenarios so check the state
-//      * first
-//      */
-//     if (ue_context_p->ecm_state != ECM_CONNECTED)  /**< It may be that ATTACH_ACCEPT is set directly or when the UE goes back from IDLE mode to active mode.
-//     Else, the first downlink message sets the UE state to connected, which don't does registration, just stops any inactivity timer.
-//     Deactivation always should remove the ENB_ID key. */
-//     {
-//       mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts,ue_context_p,ECM_CONNECTED);
-//     }
-//
-//     /* Start timer to wait for Initial UE Context Response from eNB
-//      * If timer expires treat this as failure of ongoing procedure and abort corresponding NAS procedure such as ATTACH
-//      * or SERVICE REQUEST. Send UE context release command to eNB
-//      */
-//     if (timer_setup (ue_context_p->initial_context_setup_rsp_timer.sec, 0,
-//                   TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context_p->mme_ue_s1ap_id), &(ue_context_p->initial_context_setup_rsp_timer.id)) < 0) {
-//       OAILOG_ERROR (LOG_MME_APP, "Failed to start initial context setup response timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
-//       ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
-//     } else {
-//       OAILOG_DEBUG (LOG_MME_APP, "MME APP : Sent Initial context Setup Request and Started guard timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
-//     }
-
-
-
+  // Copy UE radio capabilities into message if it exists (todo).
+//  OAILOG_DEBUG (LOG_MME_APP, "UE radio context already cached: %s\n",
+//      ue_context_p->ue_radio_capabilit_length ? "yes" : "no");
+//  establishment_cnf_p->ue_radio_cap_length = ue_context_p->ue_radio_cap_length;
+//  if (establishment_cnf_p->ue_radio_cap_length) {
+//    establishment_cnf_p->ue_radio_capabilities =
+//        (uint8_t*) calloc (establishment_cnf_p->ue_radio_cap_length, sizeof *establishment_cnf_p->ue_radio_capabilities);
+//    memcpy (establishment_cnf_p->ue_radio_capabilities,
+//        ue_context_p->ue_radio_capabilities,
+//        establishment_cnf_p->ue_radio_cap_length);
 //  }
+
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0,
+      "0 MME_APP_CONNECTION_ESTABLISHMENT_CNF ebi %u s1u_sgw teid " TEID_FMT " qci %u prio level %u sea 0x%x sia 0x%x",
+      establishment_cnf_p->e_rab_id[0],
+      establishment_cnf_p->gtp_teid[0],
+      establishment_cnf_p->e_rab_level_qos_qci[0],
+      establishment_cnf_p->e_rab_level_qos_priority_level[0],
+      establishment_cnf_p->ue_security_capabilities_encryption_algorithms,
+      establishment_cnf_p->ue_security_capabilities_integrity_algorithms);
+  int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
+  itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
+
+  /*
+   * UE is already in ECM_Connected state.
+   * */
+  if(ue_context_p->ecm_state == ECM_CONNECTED){
+    /** UE is in connected state. Send S1AP message. */
+
+
+  }else{
+    OAILOG_ERROR (LOG_MME_APP, "EMM UE context should be in connected state for UE id %d, insted idle (initial_ctx_setup_cnf). \n", ue_context_p->mme_ue_s1ap_id);
+
+  }
+
+  /*
+   * Move the UE to ECM Connected State.However if S1-U bearer establishment fails then we need to move the UE to idle.
+   * S1 Signaling connection gets established via first uplink context establishment (attach, servReq, tau) message, or via inter-MME handover.
+   * @Intra-MME handover, the ECM state should stay as ECM_CONNECTED.
+   */
+
+  /* Start timer to wait for Initial UE Context Response from eNB
+   * If timer expires treat this as failure of ongoing procedure and abort corresponding NAS procedure such as ATTACH
+   * or SERVICE REQUEST. Send UE context release command to eNB
+   */
+  if (timer_setup (ue_context_p->initial_context_setup_rsp_timer.sec, 0,
+      TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context_p->mme_ue_s1ap_id), &(ue_context_p->initial_context_setup_rsp_timer.id)) < 0) {
+    OAILOG_ERROR (LOG_MME_APP, "Failed to start initial context setup response timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  } else {
+    OAILOG_DEBUG (LOG_MME_APP, "MME APP : Sent Initial context Setup Request and Started guard timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

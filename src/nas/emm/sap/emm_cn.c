@@ -258,6 +258,9 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
           "(Assuming PDN connectivity is already established before ULA). Will update PDN/UE context information and continue with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
       /** Not creating updated bearers. */
       is_pdn_connectivity = true;
+      /** Set the state of the ESM bearer context as ACTIVE (not setting as active if no TAU has followed). */
+      rc = esm_ebr_set_status (emm_ctx, pdn_context->default_ebi, ESM_EBR_ACTIVE, false);
+
     }
 
   }
@@ -625,8 +628,14 @@ static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
     /*
      * Setup the ESM message container
      */
-    attach_proc->esm_msg_out = blk2bstr(emm_cn_sap_buffer, size);
-    rc = emm_proc_attach_reject (msg->ue_id, EMM_CAUSE_ESM_FAILURE);
+    if(attach_proc){
+      /** Sending the PDN connection reject inside a Attach Reject to the UE. */
+      attach_proc->esm_msg_out = blk2bstr(emm_cn_sap_buffer, size);
+      rc = emm_proc_attach_reject (msg->ue_id, EMM_CAUSE_ESM_FAILURE);
+    }else{
+      // todo: send the pdn disconnect reject as a standalone message to the UE.
+      // todo: must clean the created pdn_context elements (no bearers should exist).
+    }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
