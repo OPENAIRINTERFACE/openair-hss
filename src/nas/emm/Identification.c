@@ -133,7 +133,7 @@ static int _identification_request (nas_emm_ident_proc_t * const proc);
 int
 emm_proc_identification (
   struct emm_data_context_s     * const emm_context,
-  nas_emm_proc_t           * const emm_proc,
+  nas_emm_proc_t                * const emm_proc,
   const identity_type2_t           type,
   success_cb_t success,
   failure_cb_t failure)
@@ -149,12 +149,15 @@ emm_proc_identification (
 
     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Initiate identification type = %s (%d), ctx = %p\n", _emm_identity_type_str[type], type, emm_context);
 
-    nas_emm_ident_proc_t * ident_proc = nas_new_identification_procedure(emm_context);
+    /** We may have an identification procedure which was aborted but not freed. */
+
+    nas_emm_ident_proc_t * ident_proc = get_nas_common_procedure_identification(mm_context);
+    if (!ident_proc) {
+      ident_proc = nas_new_identification_procedure(emm_context);
+    }
     if (ident_proc) {
       if (emm_proc) {
-        if ((NAS_EMM_PROC_TYPE_SPECIFIC == emm_proc->type) && (EMM_SPEC_PROC_TYPE_ATTACH == ((nas_emm_specific_proc_t*)emm_proc)->type)) {
-          ident_proc->is_cause_is_attach = true;
-        }
+        /** Maybe triggered due attach, tau request or just implicitly. */
       }
       ident_proc->identity_type                                 = type;
       ident_proc->retransmission_count                          = 0;
@@ -279,7 +282,6 @@ emm_proc_identification_complete (
       rc = emm_sap_send (&emm_sap);
 
     }// else ignore the response if procedure not found
-//    unlock_ue_contexts(ue_context);
   } // else ignore the response if ue context not found
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

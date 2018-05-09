@@ -303,6 +303,15 @@ esm_recv_pdn_connectivity_request (
     }
   }
 #else
+
+  // todo: here check if there is a valid subscription of the UE, i
+  // todo: use mme_app_select_apn to get the apn configuration profile for the desired apn
+  // todo: check if pdn_context exists already, if not, using the ESM message and the apn_configuration profile for the pdn (must exist), create a pdn_context and send pdn connectivity request
+//  if ((ue_context->pdn_contexts[pdn_cid]) && (ue_context->pdn_contexts[pdn_cid]->context_identifier == apn_config->context_identifier)) {
+//    is_pdn_connectivity = true;
+//    break;
+//  }
+
   nas_itti_pdn_config_req(emm_context->ue_id, &emm_context->_imsi, esm_data, esm_data->request_type);
   esm_cause = ESM_CAUSE_SUCCESS;
 #endif

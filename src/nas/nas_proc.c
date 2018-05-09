@@ -339,8 +339,6 @@ nas_proc_ul_transfer_ind (
     emm_sap.u.emm_as.u.data.nas_msg   = *msg;
     *msg = NULL;
     emm_sap.u.emm_as.u.data.tai       = &originating_tai;
-    //emm_sap.u.emm_as.u.data.plmn_id   = &originating_tai.plmn;
-    //emm_sap.u.emm_as.u.data.tac       = originating_tai.tac;
     emm_sap.u.emm_as.u.data.ecgi      = cgi;
     MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMAS_DATA_IND (UL_TRANSFER) ue id " MME_UE_S1AP_ID_FMT " len %u tai:  plmn %c%c%c.%c%c%c tac %u",
         ue_id, blength(*msg),

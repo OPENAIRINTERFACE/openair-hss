@@ -147,7 +147,6 @@ void nas_itti_pdn_config_req(
 
   NAS_PDN_CONFIG_REQ(message_p).ue_id           = ue_idP;
 
-
   if(proc_data_pP){
     bassign(NAS_PDN_CONFIG_REQ(message_p).apn, proc_data_pP->apn);
     bassign(NAS_PDN_CONFIG_REQ(message_p).pdn_addr, proc_data_pP->pdn_addr);
@@ -173,6 +172,7 @@ void nas_itti_pdn_config_req(
 
   NAS_PDN_CONFIG_REQ(message_p).request_type  = request_typeP;
 
+  /** Not setting PTI and originating TAI. */
 
   MSC_LOG_TX_MESSAGE(
         MSC_NAS_MME,

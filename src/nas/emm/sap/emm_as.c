@@ -1434,19 +1434,14 @@ static int _emm_as_security_req (const emm_as_security_t * msg, dl_info_transfer
     }
 
   if (size > 0) {
-    struct emm_data_context_s                   *emm_ctx = NULL;
+    struct emm_data_context_s           *emm_ctx = emm_data_context_get(&_emm_data, msg->ue_id);
     emm_security_context_t                 *emm_security_context = NULL;
-    ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-    if (ue_context) {
-      emm_ctx = &ue_context->emm_context;
-
-      if (emm_ctx) {
-        if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-          emm_security_context = &emm_ctx->_security;
-          nas_msg.header.sequence_number = emm_ctx->_security.dl_count.seq_num;
-          OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
-        }
+    if (emm_ctx) {
+      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+        emm_security_context = &emm_ctx->_security;
+        nas_msg.header.sequence_number = emm_ctx->_security.dl_count.seq_num;
+        OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
       }
     }
 
@@ -1461,10 +1456,8 @@ static int _emm_as_security_req (const emm_as_security_t * msg, dl_info_transfer
     if (bytes > 0) {
       as_msg->err_code = AS_SUCCESS;
       nas_emm_procedure_register_emm_message(msg->ue_id, msg->puid, as_msg->nas_msg);
-      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
     }
-    unlock_ue_contexts(ue_context);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, 0);
@@ -1838,18 +1831,14 @@ static int _emm_as_establish_rej (const emm_as_establish_t * msg, nas_establish_
   }
 
   if (size > 0) {
-    struct emm_data_context_s                   *emm_ctx = NULL;
+    struct emm_data_context_s                   *emm_ctx = emm_data_context_get(&_emm_data, msg->ue_id);
     emm_security_context_t                 *emm_security_context = NULL;
-    ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-    if (ue_context) {
-      emm_ctx = &ue_context->emm_context;
-      if (emm_ctx) {
-        if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-          emm_security_context = &emm_ctx->_security;
-          nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
-          OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
-        }
+    if (emm_ctx) {
+      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
+        emm_security_context = &emm_ctx->_security;
+        nas_msg.header.sequence_number = emm_security_context->dl_count.seq_num;
+        OAILOG_DEBUG (LOG_NAS_EMM, "Set nas_msg.header.sequence_number -> %u\n", nas_msg.header.sequence_number);
       }
     }
 
@@ -1860,7 +1849,6 @@ static int _emm_as_establish_rej (const emm_as_establish_t * msg, nas_establish_
                                                                     &nas_msg,
                                                                     size,
                                                                     emm_security_context);
-    unlock_ue_contexts(ue_context);
     if (bytes > 0) {
       // This is to indicate MME-APP to release the S1AP UE context after sending the message.
       as_msg->err_code = AS_TERMINATED_NAS; 

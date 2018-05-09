@@ -208,7 +208,7 @@ mme_app_send_s11_create_session_req (
    */
   session_request_p->default_ebi = pdn_context->default_ebi;
 
-  bearer_context_t    bearer_context_to_setup = NULL;
+  bearer_context_t    *bearer_context_to_setup = NULL;
   RB_FOREACH (bearer_context_to_setup, BearerPool, &pdn_context->session_bearers) {
     DevAssert(bearer_context_to_setup);
 
@@ -218,21 +218,20 @@ mme_app_send_s11_create_session_req (
      * Set regardless of GBR/NON-GBR QCI the MBR/GBR values.
      * They are already set to zero if non-gbr in the registration of the bearer contexts.
      */
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.gbr.br_ul = bearer_context_to_setup.esm_ebr_context.gbr_ul;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.gbr.br_dl = bearer_context_to_setup.esm_ebr_context.gbr_dl;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.mbr.br_ul = bearer_context_to_setup.esm_ebr_context.mbr_ul;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.mbr.br_dl = bearer_context_to_setup.esm_ebr_context.gbr_dl;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.qci = bearer_context_to_setup.qci;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pvi = bearer_context_to_setup.preemption_vulnerability;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pci = bearer_context_to_setup.preemption_capability;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pl  = bearer_context_to_setup.priority_level;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].eps_bearer_id = bearer_context_to_setup.ebi;
+    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->esm_ebr_context.gbr_ul;
+    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->esm_ebr_context.gbr_dl;
+    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->esm_ebr_context.mbr_ul;
+    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->esm_ebr_context.gbr_dl;
+    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.qci = bearer_context_to_setup->qci;
+    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pvi = bearer_context_to_setup->preemption_vulnerability;
+    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pci = bearer_context_to_setup->preemption_capability;
+    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pl  = bearer_context_to_setup->priority_level;
+    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].eps_bearer_id = bearer_context_to_setup->ebi;
     session_request_p->bearer_contexts_to_be_created.num_bearer_context++;
     /** Update the bearer state. */
+    // todo: setting the bearer state as MME_CREATED when successfull CSResp is received and as ACTIVE after successfull MBResp is received!!
     bearer_context_to_setup->bearer_state   |= BEARER_STATE_MME_CREATED;
-
-    // todo: set TFTs for dedicated bearers
-
+    // todo: set TFTs for dedicated bearers (currently PCRF triggered).
   }
   // todo: apn restrictions!
   /*
@@ -281,14 +280,10 @@ mme_app_send_s11_create_session_req (
     session_request_p->paa.ipv6_prefix_length = pdn_context->paa->ipv6_prefix_length;
   }
 
-  // todo: where to set this from? config?
-  //  session_request_p->apn_restriction = 0x00;
-//  copy_protocol_configuration_options (&session_request_p->pco, &ue_context->pending_pdn_connectivity_req_pco);
-//  clear_protocol_configuration_options(&ue_context->pending_pdn_connectivity_req_pco);
-//  if (ue_context->pdn_contexts[pdn_cid]->pco) {
-//    copy_protocol_configuration_options (&session_request_p->pco, ue_context->pdn_contexts[pdn_cid]->pco);
-//  }
-
+//  session_request_p->apn_restriction = 0x00; todo: set them where?
+  if(pdn_context->pco){ /**< todo: Should not exist in handover, where to get them?. */
+    copy_protocol_configuration_options (&session_request_p->pco, pdn_context->pco);
+  }
 
 //  mme_config_read_lock (&mme_config);
 //  session_request_p->peer_ip = mme_config.ipv4.sgw_s11;

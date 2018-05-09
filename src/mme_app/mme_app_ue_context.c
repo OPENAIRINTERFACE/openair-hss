@@ -95,6 +95,13 @@ inline int32_t                    mme_app_compare_pdn_context(
     struct pdn_context_s *a,
     struct pdn_context_s *b) {
 
+  /** Compare context identifier. */
+  if (a->context_identifier > b->context_identifier)
+    return 1;
+
+  if (a->context_identifier < b->context_identifier)
+    return -1;
+
   /* Compare the bstrings. */
   return bstrcmp(apn_network_identifier(a->apn_in_use),
       apn_network_identifier(b->apn_in_use));

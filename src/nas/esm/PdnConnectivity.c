@@ -102,7 +102,8 @@ static pdn_cid_t _pdn_connectivity_create (
   pdn_type_t pdn_type,
   const_bstring const pdn_addr,
   protocol_configuration_options_t * const pco,
-  const bool is_emergency);
+  const bool is_emergency,
+  pdn_context_t              **pdn_context_pP);
 
 proc_tid_t _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t pdn_cid);
 
@@ -166,7 +167,8 @@ esm_proc_pdn_connectivity_request (
   const_bstring          const pdn_addr,
   bearer_qos_t             * default_qos,
   protocol_configuration_options_t * const pco,
-  esm_cause_t                 *esm_cause)
+  esm_cause_t                 *esm_cause,
+  pdn_context_t              **pdn_context_pP)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   int                                     rc = RETURNok;
@@ -189,7 +191,7 @@ esm_proc_pdn_connectivity_request (
   /*
    * Create new PDN connection
    */
-  rc = _pdn_connectivity_create (emm_context, pti, pdn_cid, context_identifier, apn, pdn_type, pdn_addr, pco, is_emergency);
+  rc = _pdn_connectivity_create (emm_context, pti, pdn_cid, context_identifier, apn, pdn_type, pdn_addr, pco, is_emergency, pdn_context_pP);
 
   if (rc < 0) {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create PDN connection\n");
@@ -346,7 +348,8 @@ _pdn_connectivity_create (
   pdn_type_t pdn_type,
   const_bstring const pdn_addr,
   protocol_configuration_options_t * const pco,
-  const bool is_emergency)
+  const bool is_emergency,
+  pdn_context_t              **pdn_context_pP)
 {
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
@@ -356,48 +359,51 @@ _pdn_connectivity_create (
       (pdn_type == ESM_PDN_TYPE_IPV4) ? esm_data_get_ipv4_addr (pdn_addr) : (pdn_type == ESM_PDN_TYPE_IPV6) ? esm_data_get_ipv6_addr (pdn_addr) : esm_data_get_ipv4v6_addr (pdn_addr),
       pdn_cid, ue_context->mme_ue_s1ap_id);
 
-  if (!ue_context->pdn_contexts[pdn_cid]) {
+  pdn_context_t pdn_context_key = {.apn_in_use = apn, .context_identifier = context_identifier}; // todo: check setting apn
+  *pdn_context_pP = RB_FIND (PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
+
+  if (!*pdn_context_pP) {
 
     /*
      * Create new PDN connection
      */
-    pdn_context_t *pdn_context = mme_app_create_pdn_context(ue_context, pdn_cid, context_identifier);
+    *pdn_context_pP = mme_app_create_pdn_context(ue_context, pdn_cid, context_identifier);
 
-    if (pdn_context ) {
+    if (*pdn_context_pP) {
       /*
        * Increment the number of PDN connections
        */
-      ue_context->emm_context.esm_ctx.n_pdns += 1;
+      emm_context->esm_ctx.n_pdns += 1;
       /*
        * Set the procedure transaction identity
        */
-      pdn_context->esm_data.pti = pti;
+      (*pdn_context_pP)->esm_data.pti = pti;
       /*
        * Set the emergency bearer services indicator
        */
-      pdn_context->esm_data.is_emergency = is_emergency;
+      (*pdn_context_pP)->esm_data.is_emergency = is_emergency;
 
       if (pco) {
-        if (!pdn_context->pco) {
-          pdn_context->pco = calloc(1, sizeof(protocol_configuration_options_t));
+        if (!(*pdn_context_pP)->pco) {
+          (*pdn_context_pP)->pco = calloc(1, sizeof(protocol_configuration_options_t));
         } else {
-          clear_protocol_configuration_options(pdn_context->pco);
+          clear_protocol_configuration_options((*pdn_context_pP)->pco);
         }
-        copy_protocol_configuration_options(pdn_context->pco, pco);
+        copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
       }
 
       /*
        * Setup the IP address allocated by the network
        */
-      pdn_context->pdn_type = pdn_type;
+      (*pdn_context_pP)->pdn_type = pdn_type;
       if (pdn_addr) {
-        pdn_context->paa.pdn_type = pdn_type;
+        (*pdn_context_pP)->paa.pdn_type = pdn_type;
         switch (pdn_type) {
         case IPv4:
-          IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_addr->data, pdn_context->paa.ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
+          IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_addr->data, (*pdn_context_pP)->paa.ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
           break;
         case IPv6:
-          AssertFatal (1 == inet_pton(AF_INET6, (const char *)pdn_addr->data, &pdn_context->paa.ipv6_address), "BAD IPv6 ADDRESS FORMAT FOR PAA!\n");
+          AssertFatal (1 == inet_pton(AF_INET6, (const char *)pdn_addr->data, &(*pdn_context_pP)->paa.ipv6_address), "BAD IPv6 ADDRESS FORMAT FOR PAA!\n");
           break;
         case IPv4_AND_v6:
           AssertFatal (0, "TODO\n");
@@ -415,48 +421,42 @@ _pdn_connectivity_create (
   } else {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection already exist (pdn_cid=%d)\n", pdn_cid);
     // already created
-    pdn_context_t *pdn_context = ue_context->pdn_contexts[pdn_cid];
-
-    if (pdn_context) {
-      // QUICK WORKAROUND, TODO seriously
-
-      /*
-       * Set the procedure transaction identity
-       */
-      pdn_context->esm_data.pti = pti;
-      pdn_context->esm_data.is_emergency = is_emergency;
-      if (pco) {
-        if (!pdn_context->pco) {
-          pdn_context->pco = calloc(1, sizeof(protocol_configuration_options_t));
-        } else {
-          clear_protocol_configuration_options(pdn_context->pco);
-        }
-        copy_protocol_configuration_options(pdn_context->pco, pco);
+    /*
+     * Set the procedure transaction identity and update the pdn context information of the existing pdn context.
+     * Will not update the bearers again.
+     *
+     */
+    (*pdn_context_pP)->esm_data.pti = pti;
+    (*pdn_context_pP)->esm_data.is_emergency = is_emergency;
+    if (pco) {
+      if (!(*pdn_context_pP)->pco) {
+        (*pdn_context_pP)->pco = calloc(1, sizeof(protocol_configuration_options_t));
+      } else {
+        clear_protocol_configuration_options((*pdn_context_pP)->pco);
       }
-      pdn_context->pdn_type = pdn_type;
-      if (pdn_addr) {
-        pdn_context->paa.pdn_type = pdn_type;
-        switch (pdn_type) {
-        case IPv4:
-          IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_addr->data, pdn_context->paa.ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
-          break;
-        case IPv6:
-          AssertFatal (1 == inet_pton(AF_INET6, (const char *)pdn_addr->data, &pdn_context->paa.ipv6_address), "BAD IPv6 ADDRESS FORMAT FOR PAA!\n");
-          break;
-        case IPv4_AND_v6:
-          AssertFatal (0, "TODO\n");
-          break;
-        case IPv4_OR_v6:
-          AssertFatal (0, "TODO\n");
-          break;
-        default:;
-        }
-      }
-      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
+      copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
     }
-
+    (*pdn_context_pP)->pdn_type = pdn_type;
+    if (pdn_addr) {
+      (*pdn_context_pP)->paa.pdn_type = pdn_type;
+      switch (pdn_type) {
+      case IPv4:
+        IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_addr->data, (*pdn_context_pP)->paa.ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
+        break;
+      case IPv6:
+        AssertFatal (1 == inet_pton(AF_INET6, (const char *)pdn_addr->data, &(*pdn_context_pP)->paa.ipv6_address), "BAD IPv6 ADDRESS FORMAT FOR PAA!\n");
+        break;
+      case IPv4_AND_v6:
+        AssertFatal (0, "TODO\n");
+        break;
+      case IPv4_OR_v6:
+        AssertFatal (0, "TODO\n");
+        break;
+      default:;
+      }
+    }
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
   }
-
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
 }
 

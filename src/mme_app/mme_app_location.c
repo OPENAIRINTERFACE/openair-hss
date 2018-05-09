@@ -93,6 +93,7 @@ int mme_app_send_s6a_update_location_req (
   s6a_ulr_p->rat_type = RAT_EUTRAN;
   /*
    * Check if we already have UE data
+   * todo: remove this?
    */
   s6a_ulr_p->skip_subscriber_data = 0;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S6A_MME, NULL, 0, "0 S6A_UPDATE_LOCATION_REQ imsi %s", s6a_ulr_p->imsi);
@@ -184,6 +185,8 @@ int mme_app_handle_s6a_update_location_ans (
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 
 err:
+  OAILOG_ERROR(LOG_MME_APP, "Error processing ULA for ueId " MME_UE_S1AP_ID_FMT ". Sending NAS_PDN_CONFIG_FAIL to NAS. (ULA.result.choice.base=%d)\n",
+      ue_context->mme_ue_s1ap_id, ula_pP->result.choice.base);
   /** Send the S6a message. */
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_FAIL);
 
@@ -191,13 +194,14 @@ err:
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-  nas_pdn_confi_fail_t *nas_pdn_config_fail = &message_p->ittiMsg.nas_pdn_config_fail;
+  itti_nas_pdn_config_fail_t *nas_pdn_config_fail = &message_p->ittiMsg.nas_pdn_config_fail;
   nas_pdn_config_rsp->ue_id  = ue_context->mme_ue_s1ap_id;
   nas_pdn_config_rsp->imsi64 = imsi64;
 
   /** For error codes, use nas_pdn_cfg_fail. */
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_RESP IMSI " IMSI_64_FMT, imsi64);
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONFIG_FAIL IMSI " IMSI_64_FMT, imsi64);
   rc =  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
 int

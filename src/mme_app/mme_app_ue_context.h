@@ -162,6 +162,11 @@ typedef struct bearer_context_s {
 
   // extra 23.401 spec members
   pdn_cid_t                         pdn_cx_id;
+
+  /*
+   * Two bearer states, one mme_app_bearer_state (towards SAE-GW) and one towards eNodeB (if activated in RAN).
+   * todo: setting one, based on the other is possible?
+   */
   mme_app_bearer_state_t            bearer_state;   /**< Need bearer state to establish them. */
   esm_ebr_context_t                 esm_ebr_context;
   fteid_t                           enb_fteid_s1u;
@@ -182,7 +187,7 @@ typedef struct bearer_context_s {
  */
 // For each active PDN connection:
 typedef struct pdn_context_s {
-  context_identifier_t context_identifier; // key
+  context_identifier_t      context_identifier; // key
 
   //APN in Use: The APN currently used. This APN shall be composed of the APN Network
   //            Identifier and the default APN Operator Identifier, as specified in TS 23.003 [9],
@@ -205,6 +210,7 @@ typedef struct pdn_context_s {
   //                 Alternatively, following mobility involving a pre-release 8 SGSN, this
   //                 IPv4 address might not be the one allocated to the UE.
   paa_t              *paa;                         // set by S11 CREATE_SESSION_RESPONSE
+
 
 
 

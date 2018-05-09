@@ -207,29 +207,28 @@ emm_proc_authentication_ksi (
       auth_proc->emm_com_proc.emm_proc.base_proc.fail_in       = NULL; // only response
       auth_proc->emm_com_proc.emm_proc.base_proc.fail_out      = _authentication_reject;
       auth_proc->emm_com_proc.emm_proc.base_proc.time_out      = _authentication_t3460_handler;
-    }
 
-    /*
-     * Send authentication request message to the UE
-     */
-    rc = _authentication_request (auth_proc);
-
-    if (rc != RETURNerror) {
       /*
-       * Notify EMM that common procedure has been initiated
+       * Send authentication request message to the UE
        */
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ (AUTH) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-      emm_sap_t                               emm_sap = {0};
+      rc = _authentication_request (auth_proc);
 
-      emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
-      emm_sap.u.emm_reg.ue_id = ue_id;
-      emm_sap.u.emm_reg.ctx   = emm_context;
-      rc = emm_sap_send (&emm_sap);
+      if (rc != RETURNerror) {
+        /*
+         * Notify EMM that common procedure has been initiated
+         */
+        MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ (AUTH) ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+        emm_sap_t                               emm_sap = {0};
+
+        emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
+        emm_sap.u.emm_reg.ue_id = ue_id;
+        emm_sap.u.emm_reg.ctx   = emm_context;
+        rc = emm_sap_send (&emm_sap);
+      }
     }
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
-
 
 //------------------------------------------------------------------------------
 int
@@ -331,12 +330,12 @@ static int _start_authentication_information_procedure(struct emm_data_context_s
   auth_info_proc->resync = auth_info_proc->request_sent;
 
   plmn_t visited_plmn = {0};
-  visited_plmn.mcc_digit1 = emm_context->originating_tai.mcc_digit1;
-  visited_plmn.mcc_digit2 = emm_context->originating_tai.mcc_digit2;
-  visited_plmn.mcc_digit3 = emm_context->originating_tai.mcc_digit3;
-  visited_plmn.mnc_digit1 = emm_context->originating_tai.mnc_digit1;
-  visited_plmn.mnc_digit2 = emm_context->originating_tai.mnc_digit2;
-  visited_plmn.mnc_digit3 = emm_context->originating_tai.mnc_digit3;
+  visited_plmn.mcc_digit1 = emm_context->originating_tai.plmn.mcc_digit1;
+  visited_plmn.mcc_digit2 = emm_context->originating_tai.plmn.mcc_digit2;
+  visited_plmn.mcc_digit3 = emm_context->originating_tai.plmn.mcc_digit3;
+  visited_plmn.mnc_digit1 = emm_context->originating_tai.plmn.mnc_digit1;
+  visited_plmn.mnc_digit2 = emm_context->originating_tai.plmn.mnc_digit2;
+  visited_plmn.mnc_digit3 = emm_context->originating_tai.plmn.mnc_digit3;
 
   bool is_initial_req = !(auth_info_proc->request_sent);
   auth_info_proc->request_sent = true;
@@ -588,8 +587,8 @@ int emm_proc_authentication_failure (
         emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
         emm_sap.u.emm_reg.ue_id     = ue_id;
         emm_sap.u.emm_reg.ctx       = emm_ctx;
-        emm_sap.u.emm_reg.notify    = true;
-        emm_sap.u.emm_reg.free_proc = true;
+//        emm_sap.u.emm_reg.notify    = true;
+//        emm_sap.u.emm_reg.free_proc = true;
         emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
         emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
         rc = emm_sap_send (&emm_sap);
@@ -630,8 +629,8 @@ int emm_proc_authentication_failure (
           emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
           emm_sap.u.emm_reg.ue_id     = ue_id;
           emm_sap.u.emm_reg.ctx       = emm_ctx;
-          emm_sap.u.emm_reg.notify    = true;
-          emm_sap.u.emm_reg.free_proc = true;
+//          emm_sap.u.emm_reg.notify    = true;
+//          emm_sap.u.emm_reg.free_proc = true;
           emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
           emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
           rc = emm_sap_send (&emm_sap);
@@ -644,8 +643,8 @@ int emm_proc_authentication_failure (
         emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
         emm_sap.u.emm_reg.ue_id     = ue_id;
         emm_sap.u.emm_reg.ctx       = emm_ctx;
-        emm_sap.u.emm_reg.notify    = true;
-        emm_sap.u.emm_reg.free_proc = true;
+//        emm_sap.u.emm_reg.notify    = true;
+//        emm_sap.u.emm_reg.free_proc = true;
         emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
         emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
         rc = emm_sap_send (&emm_sap);
@@ -689,8 +688,8 @@ int emm_proc_authentication_failure (
         emm_sap.primitive = EMMREG_COMMON_PROC_REJ;
         emm_sap.u.emm_reg.ue_id     = ue_id;
         emm_sap.u.emm_reg.ctx       = emm_ctx;
-        emm_sap.u.emm_reg.notify    = true;
-        emm_sap.u.emm_reg.free_proc = true;
+//        emm_sap.u.emm_reg.notify    = true;
+//        emm_sap.u.emm_reg.free_proc = true;
         emm_sap.u.emm_reg.u.common.common_proc = &auth_proc->emm_com_proc;
         emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = auth_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;
         rc = emm_sap_send (&emm_sap);

@@ -177,7 +177,7 @@ typedef struct nas_emm_ident_proc_s {
 #define IDENTIFICATION_COUNTER_MAX  5
   unsigned int                retransmission_count;
   mme_ue_s1ap_id_t            ue_id;
-  bool                        is_cause_is_attach; //  could also be done by seeking parent procedure
+//  bool                        is_cause_is_attach; //  could also be done by seeking parent procedure
   identity_type2_t            identity_type;
 } nas_emm_ident_proc_t;
 

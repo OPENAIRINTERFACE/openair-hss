@@ -128,23 +128,7 @@ s1ap_mme_handle_initial_ue_message (
       ue_ref->enb->next_sctp_stream = 1;
     }
 
-    /*
-     * Increment the unique UE mme s1ap id and
-     * * * * take care about overflow case.
-     */
-//    if (mme_ue_s1ap_id_has_wrapped == false) {
-//      mme_ue_s1ap_id++;
-//
-//      if (mme_ue_s1ap_id == 0) {
-//        mme_ue_s1ap_id_has_wrapped = true;
-//      }
-//    } else {
-//      /*
-//       * TODO: should take the first available mme_ue_s1ap_id instead of
-//       * * * * the mme_ue_s1ap_id variable.
-//       */
-//      DevMessage ("mme ue s1ap id has wrapped -> case not handled\n");
-//    }
+    /** MME_UE_S1AP_ID will be set in MME_APP layer. */
 
     s1ap_dump_enb (ue_ref->enb);
     // TAI mandatory IE

@@ -42,7 +42,7 @@
 #include "networkDef.h"
 
 
-#define NAS_UL_DATA_IND(mSGpTR)                     (mSGpTR)->ittiMsg.nas_ul_data_ind
+#define NAS_UPLINK_DATA_IND(mSGpTR)                 (mSGpTR)->ittiMsg.nas_ul_data_ind
 #define NAS_DOWNLINK_DATA_REQ(mSGpTR)               (mSGpTR)->ittiMsg.nas_dl_data_req
 #define NAS_DL_DATA_CNF(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_cnf
 #define NAS_DL_DATA_REJ(mSGpTR)                     (mSGpTR)->ittiMsg.nas_dl_data_rej
@@ -130,7 +130,6 @@ typedef struct itti_nas_pdn_connectivity_fail_s {
 } itti_nas_pdn_connectivity_fail_t;
 
 typedef struct itti_nas_pdn_config_req_s {
-  proc_tid_t             pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
   mme_ue_s1ap_id_t       ue_id; // nas ref
   char                   imsi[16];
   uint8_t                imsi_length;
@@ -138,10 +137,6 @@ typedef struct itti_nas_pdn_config_req_s {
   bstring                pdn_addr;
   pdn_type_t             pdn_type;
   int                    request_type;
-
-  tai_t                  originating_tai;            /* Indicating the Tracking Area from which the UE has sent the NAS message.  */
-
-
 } itti_nas_pdn_config_req_t;
 
 typedef struct itti_nas_pdn_config_rsp_s {

@@ -215,8 +215,9 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   struct emm_data_context_s              *emm_ctx = NULL;
-  ue_context_t                        *ue_context;
+  ue_context_t                           *ue_context;
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  pdn_context_t                          *pdn_context = NULL;
   pdn_cid_t                               pdn_cid = 0;
   ebi_t                                   new_ebi = 0;
   bool                                    is_pdn_connectivity = false;
@@ -238,6 +239,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   if (!apn_config) {
     /*
      * Unfortunately we didn't find our default APN...
+     * todo: check if any specific procedures exist and abort them!
      */
     OAILOG_INFO (LOG_NAS_ESM, "No suitable APN found ue_id=" MME_UE_S1AP_ID_FMT ")\n",ue_context->mme_ue_s1ap_id);
     return RETURNerror;
@@ -245,55 +247,63 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
 
   // search for an already set PDN context
   for (pdn_cid = 0; pdn_cid < MAX_APN_PER_UE; pdn_cid++) {
-    if ((ue_context->pdn_contexts[pdn_cid]) && (ue_context->pdn_contexts[pdn_cid]->context_identifier == apn_config->context_identifier)) {
+
+    /** Check if a tunnel already exists depending on the flag. */
+    pdn_context_t pdn_context_key = {.apn_in_use = apn_config->service_selection, .context_identifier = apn_config->context_identifier}; // todo: check setting apn
+//    keyTunnel.ipv4AddrRemote = pUlpReq->u_api_info.initialReqInfo.peerIp;
+    pdn_context = RB_FIND (PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
+    //      if ((ue_context->pdn_contexts[pdn_cid]) && (ue_context->pdn_contexts[pdn_cid]->context_identifier == apn_config->context_identifier)) {
+    if(pdn_context){
+      OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "PDN context was found for UE " MME_UE_S1AP_ID_FMT" already. "
+          "(Assuming PDN connectivity is already established before ULA). Will update PDN/UE context information and continue with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
+      /** Not creating updated bearers. */
       is_pdn_connectivity = true;
-      break;
     }
-  }
 
-  if (pdn_cid >= MAX_APN_PER_UE) {
+  }
+  /*
+   * Set the ESM Proc Data values.
+   * Update the UE context and PDN context information with it.
+   * todo: how to check that this is still our last ESM proc data?
+   */
+  if(emm_ctx->esm_ctx.esm_proc_data){
     /*
-     * Search for an available PDN connection entry
+     * Execute the PDN connectivity procedure requested by the UE
      */
-    for (pdn_cid = 0; pdn_cid < MAX_APN_PER_UE; pdn_cid++) {
-      if (!ue_context->pdn_contexts[pdn_cid]) break;
-    }
-  }
-  if (pdn_cid < MAX_APN_PER_UE) {
-
-    if(emm_ctx->esm_ctx.esm_proc_data){
-      /*
-       * Execute the PDN connectivity procedure requested by the UE
-       */
-      emm_ctx->esm_ctx.esm_proc_data->pdn_cid = pdn_cid;
-      emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci       = apn_config->subscribed_qos.qci;
-      emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pci       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
-      emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pl        = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
-      emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pvi       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
-      emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_ul = 0;
-      emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_dl = 0;
-      emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_ul = 0;
-      emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_dl = 0;
+    emm_ctx->esm_ctx.esm_proc_data->pdn_cid = pdn_cid;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci       = apn_config->subscribed_qos.qci;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pci       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pl        = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pvi       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_ul = 0;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_dl = 0;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_ul = 0;
+    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_dl = 0;
       // TODO  "Better to throw emm_ctx->esm_ctx.esm_proc_data as a parameter or as a hidden parameter ?"
-      rc = esm_proc_pdn_connectivity_request (emm_ctx,
-          emm_ctx->esm_ctx.esm_proc_data->pti,
-          emm_ctx->esm_ctx.esm_proc_data->pdn_cid,
-          apn_config->context_identifier,
-          emm_ctx->esm_ctx.esm_proc_data->request_type,
-          emm_ctx->esm_ctx.esm_proc_data->apn,
-          emm_ctx->esm_ctx.esm_proc_data->pdn_type,
-          emm_ctx->esm_ctx.esm_proc_data->pdn_addr,
-          &emm_ctx->esm_ctx.esm_proc_data->bearer_qos,
-          (emm_ctx->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_ctx->esm_ctx.esm_proc_data->pco:NULL,
-          &esm_cause);
+    // todo: if PDN_CONTEXT exist --> we might need to send an ESM update message like MODIFY EPS BEARER CONTEXT REQUEST to the UE
+    rc = esm_proc_pdn_connectivity_request (emm_ctx,
+        emm_ctx->esm_ctx.esm_proc_data->pti,
+        emm_ctx->esm_ctx.esm_proc_data->pdn_cid,
+        apn_config->context_identifier,
+        emm_ctx->esm_ctx.esm_proc_data->request_type,
+        emm_ctx->esm_ctx.esm_proc_data->apn,
+        emm_ctx->esm_ctx.esm_proc_data->pdn_type,
+        emm_ctx->esm_ctx.esm_proc_data->pdn_addr,
+        &emm_ctx->esm_ctx.esm_proc_data->bearer_qos,
+        (emm_ctx->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_ctx->esm_ctx.esm_proc_data->pco:NULL,
+            &esm_cause,
+            &pdn_context);
 
-      if (rc != RETURNerror) {
+    // todo: optimize this
+    DevAssert(pdn_context);
+    if (rc != RETURNerror) {
         /*
          * Create local default EPS bearer context
          */
-        if ((!is_pdn_connectivity) || ((is_pdn_connectivity) && (EPS_BEARER_IDENTITY_UNASSIGNED == ue_context->pdn_contexts[pdn_cid]->default_ebi))) {
+        if ((!is_pdn_connectivity) || ((is_pdn_connectivity) && (EPS_BEARER_IDENTITY_UNASSIGNED == pdn_context->default_ebi))) {
           rc = esm_proc_default_eps_bearer_context (emm_ctx, emm_ctx->esm_ctx.esm_proc_data->pti, pdn_cid, &new_ebi, emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci, &esm_cause);
         }
+        // todo: if the bearer already exist, we may modify the qos parameters with Modify_Bearer_Request!
 
         if (rc != RETURNerror) {
           esm_cause = ESM_CAUSE_SUCCESS;
@@ -304,9 +314,9 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
       }
 
     }
-    if (!is_pdn_connectivity) {
+    if (!is_pdn_connectivity) { /**< We may have just created  a PDN context, but no connectivity yet. Assume pdn_connectivity is established when a PDN_Context already existed. */
       nas_itti_pdn_connectivity_req (emm_ctx->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, &emm_ctx->_imsi,
-        emm_ctx->esm_ctx.esm_proc_data, emm_ctx->esm_ctx.esm_proc_data->request_type);
+          emm_ctx->esm_ctx.esm_proc_data, emm_ctx->esm_ctx.esm_proc_data->request_type);
     } else {
       /*
        * We already have an ESM PDN connectivity (due handover).
@@ -340,7 +350,7 @@ static int _emm_cn_pdn_config_fail (const emm_cn_pdn_config_fail_t * msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
-  struct emm_data_context_s                   *emm_ctx_p = NULL;
+  struct emm_data_context_s              *emm_ctx_p = NULL;
   ESM_msg                                 esm_msg = {.header = {0}};
   int                                     esm_cause;
   emm_ctx_p = emm_context_get (&_emm_data, msg->ue_id);
@@ -404,7 +414,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  struct emm_data_context_s                   *emm_ctx = NULL;
+  struct emm_data_context_s              *emm_context = NULL;
   esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
   ESM_msg                                 esm_msg = {.header = {0}};
   EpsQualityOfService                     qos = {0};
@@ -413,15 +423,25 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   bool                                    triggered_by_ue = true;  // warning hardcoded
 
   ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
+  emm_context = emm_data_context_get(&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
 
-  if (ue_context) {
-    emm_ctx = &ue_context->emm_context;
-  }
-
-  if (emm_ctx == NULL) {
+  if (ue_context == null || emm_context == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
+
+  /** Get the PDN context (should exist right now). */
+  /** Check if a tunnel already exists depending on the flag. */
+  pdn_context_t pdn_context_key = {.context_identifier = msg_pP->pdn_cid}; // todo: should be also retrievable from pdn_cid alone (or else get esm_proc_data --> apn stands there, too).
+//    keyTunnel.ipv4AddrRemote = pUlpReq->u_api_info.initialReqInfo.peerIp;
+  pdn_context_t * pdn_context = RB_FIND (PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
+  nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
+
+  if(!attach_proc){
+    is_standalone = true;
+  }
+
+  DevAssert(pdn_context); // todo: here, we should trigger an attach_reject with PDN_Connectivity reject!
 
   memset (&esm_msg, 0, sizeof (ESM_msg));
 
@@ -465,19 +485,16 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   qos.bitRatesExt.guarBitRateForUL = 0;
   qos.bitRatesExt.guarBitRateForDL = 0;
 
-  int def_bearer_index = EBI_TO_INDEX(msg_pP->ebi);
-  pdn_cid_t pdn_cid = ue_context->bearer_contexts[def_bearer_index]->pdn_cx_id;
-
   /*
    * Return default EPS bearer context request message
    */
   rc = esm_send_activate_default_eps_bearer_context_request (msg_pP->pti, msg_pP->ebi,      //msg_pP->ebi,
                                                              &esm_msg.activate_default_eps_bearer_context_request,
-                                                             ue_context->pdn_contexts[pdn_cid]->apn_subscribed,
+                                                             pdn_context->apn_subscribed,
                                                              &msg_pP->pco,
                                                              esm_pdn_type, msg_pP->pdn_addr,
                                                              &qos, ESM_CAUSE_SUCCESS);
-  clear_protocol_configuration_options(&msg_pP->pco);
+  clear_protocol_configuration_options(&msg_pP->pco); // todo: here or in the ITTI_FREE function
   if (rc != RETURNerror) {
     /*
      * Encode the returned ESM response message
@@ -495,7 +512,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
     /*
      * Complete the relevant ESM procedure
      */
-    rc = esm_proc_default_eps_bearer_context_request (is_standalone, emm_ctx, msg_pP->ebi,        //0, //ESM_EBI_UNASSIGNED, //msg->ebi,
+    rc = esm_proc_default_eps_bearer_context_request (is_standalone, emm_context, msg_pP->ebi,        //0, //ESM_EBI_UNASSIGNED, //msg->ebi,
                                                       &rsp, triggered_by_ue);
 
     if (rc != RETURNok) {
@@ -514,7 +531,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
    * END OF CODE THAT WAS IN esm_sap.c/_esm_sap_recv()
    */
   /*************************************************************************/
-  nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_ctx);
+  nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
 
   if (attach_proc) {
     /*
@@ -525,11 +542,11 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
     /*
      * Send attach accept message to the UE
      */
-    rc = emm_cn_wrapper_attach_accept (emm_ctx);
+    rc = emm_cn_wrapper_attach_accept (emm_context);
 
     if (rc != RETURNerror) {
-      if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_ctx) &&
-          (memcmp(&emm_ctx->_old_guti, &emm_ctx->_guti, sizeof(emm_ctx->_guti)))) {
+      if (IS_EMM_CTXT_PRESENT_OLD_GUTI(emm_context) &&
+          (memcmp(&emm_context->_old_guti, &emm_context->_guti, sizeof(emm_context->_guti)))) {
         /*
          * Implicit GUTI reallocation;
          * Notify EMM that common procedure has been initiated
@@ -539,7 +556,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 
         emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
         emm_sap.u.emm_reg.ue_id = msg_pP->ue_id;
-        emm_sap.u.emm_reg.ctx  = emm_ctx;
+        emm_sap.u.emm_reg.ctx  = emm_context;
 
         MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_COMMON_PROC_REQ ue id " MME_UE_S1AP_ID_FMT " ", msg_pP->ue_id);
 
@@ -560,7 +577,7 @@ static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
-  struct emm_data_context_s                   *emm_ctx_p = NULL;
+  struct emm_data_context_s              *emm_ctx_p = NULL;
   ESM_msg                                 esm_msg = {.header = {0}};
   int                                     esm_cause; 
   emm_ctx_p = emm_context_get (&_emm_data, msg->ue_id);
@@ -611,7 +628,6 @@ static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
     attach_proc->esm_msg_out = blk2bstr(emm_cn_sap_buffer, size);
     rc = emm_proc_attach_reject (msg->ue_id, EMM_CAUSE_ESM_FAILURE);
   }
-//  emm_context_unlock(emm_ctx_p);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 

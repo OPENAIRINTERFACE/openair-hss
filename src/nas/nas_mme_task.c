@@ -89,6 +89,14 @@ static void *nas_intertask_interface (void *args_p)
       }
       break;
 
+    case NAS_UPLINK_DATA_IND:{
+      nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id,
+          NAS_UL_DATA_IND (received_message_p).tai,
+          NAS_UL_DATA_IND (received_message_p).cgi,
+          &NAS_UL_DATA_IND (received_message_p).nas_msg);
+      }
+      break;
+
     case NAS_DOWNLINK_DATA_REJ:{
         nas_proc_dl_transfer_rej (NAS_DL_DATA_REJ (received_message_p).ue_id, NAS_DL_DATA_REJ (received_message_p).err_code, &NAS_DL_DATA_REJ (received_message_p).nas_msg);
       }

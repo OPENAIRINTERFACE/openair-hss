@@ -326,21 +326,19 @@ mme_app_handle_nas_pdn_connectivity_req (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-//  if (!ue_context_p->is_s1_ue_context_release) {
-    // ...
-    ue_context_p->imsi_auth = IMSI_AUTHENTICATED;
+  // ...
+  ue_context_p->imsi_auth = IMSI_AUTHENTICATED;
 
-    rc =  mme_app_send_s11_create_session_req (ue_context_p, nas_pdn_connectivity_req_pP->pdn_cid);
-//  }
+  rc =  mme_app_send_s11_create_session_req (ue_context_p, nas_pdn_connectivity_req_pP->pdn_cid);
+
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
-// todo: nas pdn connectivity request handling (the old one, we may also do this inside MME_APP without asking ESM layer.
 //------------------------------------------------------------------------------
-int
-mme_app_handle_nas_pdn_connectivity_req (
-  itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)
-{
+//int
+//mme_app_handle_nas_pdn_connectivity_req (
+//  itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)
+//{
   /**
    * Consider the UE authenticated
    * todo: done here?!
@@ -348,7 +346,7 @@ mme_app_handle_nas_pdn_connectivity_req (
 
   /** Not entering this state in case its not handover (assumed). */
   // Temp: save request, in near future merge wisely params in context
-  memset (ue_context_p->pending_pdn_connectivity_req_imsi, 0, 16);
+//  memset (ue_context_p->pending_pdn_connectivity_req_imsi, 0, 16);
 
 //  copy_protocol_configuration_options (&ue_context_p->pending_pdn_connectivity_req_pco, &nas_pdn_connectivity_req_pP->pco);
 //  clear_protocol_configuration_options(&nas_pdn_connectivity_req_pP->pco);
@@ -358,10 +356,7 @@ mme_app_handle_nas_pdn_connectivity_req (
 //  OAILOG_DEBUG (LOG_MME_APP, "PCO %s\n", bdata(b));
 //  bdestroy(b);
 //#endif
-
-//  ue_context_p->pending_pdn_connectivity_req_proc_data = nas_pdn_connectivity_req_pP->proc_data;
-//  nas_pdn_connectivity_req_pP->proc_data = NULL;
-}
+//}
 
 
 // sent by NAS
