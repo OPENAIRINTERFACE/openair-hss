@@ -186,7 +186,7 @@ int esm_proc_dedicated_eps_bearer_context_reject(emm_data_context_t * emm_contex
  *      EPS bearer context deactivation procedure
  * --------------------------------------------------------------------------
  */
-int esm_proc_eps_bearer_context_deactivate(emm_data_context_t * const ue_context,const bool is_local,const ebi_t ebi,pdn_cid_t *pid,int * const bidx, esm_cause_t * const esm_cause);
+int esm_proc_eps_bearer_context_deactivate(emm_data_context_t * const emm_context,const bool is_local, const ebi_t ebi,pdn_cid_t pid, esm_cause_t * const esm_cause);
 int esm_proc_eps_bearer_context_deactivate_request(const bool is_standalone, emm_data_context_t * const emm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
 pdn_cid_t esm_proc_eps_bearer_context_deactivate_accept(emm_data_context_t * emm_context, ebi_t ebi, esm_cause_t *esm_cause);
 

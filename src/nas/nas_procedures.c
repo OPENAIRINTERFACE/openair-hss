@@ -628,6 +628,8 @@ nas_emm_attach_proc_t* nas_new_attach_procedure(struct emm_data_context_s * cons
   emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.type = NAS_PROC_TYPE_EMM;
   emm_context->emm_procedures->emm_specific_proc->emm_proc.type  = NAS_EMM_PROC_TYPE_SPECIFIC;
   emm_context->emm_procedures->emm_specific_proc->type  = EMM_SPEC_PROC_TYPE_ATTACH;
+  /** Set the success notifications, entered when the UE goes from EMM_DEREGISTERED to EMM_REGISTERED (former MME_APP callbacks). */
+  emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.success_notif = _emm_registration_complete;
 
   nas_emm_attach_proc_t * proc = (nas_emm_attach_proc_t*)emm_context->emm_procedures->emm_specific_proc;
 
@@ -660,6 +662,29 @@ nas_emm_tau_proc_t *nas_new_tau_procedure(struct emm_data_context_s * const emm_
   proc->ue_id           = emm_context->ue_id;
   proc->T3450.sec       = mme_config.nas_config.t3450_sec;
   proc->T3450.id        = NAS_TIMER_INACTIVE_ID;
+
+  return proc;
+}
+
+//-----------------------------------------------------------------------------
+nas_emm_detach_proc_t *nas_new_detach_procedure(struct emm_data_context_s * const emm_context)
+{
+  if (!(emm_context->emm_procedures)) {
+    emm_context->emm_procedures = _nas_new_emm_procedures(emm_context);
+  } else if (emm_context->emm_procedures->emm_specific_proc) {
+    OAILOG_ERROR (LOG_NAS_EMM,
+        "UE " MME_UE_S1AP_ID_FMT " Detach procedure creation requested but another specific procedure found\n", emm_context->ue_id);
+    return NULL;
+  }
+  emm_context->emm_procedures->emm_specific_proc = calloc(1, sizeof(nas_emm_detach_proc_t));
+  emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.nas_puid = __sync_fetch_and_add (&nas_puid, 1);
+  emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.type = NAS_PROC_TYPE_EMM;
+  emm_context->emm_procedures->emm_specific_proc->emm_proc.type  = NAS_EMM_PROC_TYPE_SPECIFIC;
+  emm_context->emm_procedures->emm_specific_proc->type  = EMM_SPEC_PROC_TYPE_DETACH;
+
+  nas_emm_detach_proc_t * proc = (nas_emm_detach_proc_t*)emm_context->emm_procedures->emm_specific_proc;
+
+  proc->ue_id           = emm_context->ue_id;
 
   return proc;
 }

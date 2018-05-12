@@ -164,8 +164,17 @@ EmmDeregisteredInitiated (
     if (evt->free_proc) {
       nas_delete_detach_procedure(emm_ctx);
     }
+    /*
+     * Clear the EMM context for MME-triggered implicit detaches.
+     * todo: make it optional!
+     * Clear the ESM message, if exists.
+     */
+    if (emm_ctx->esm_msg) {
+      bdestroy(emm_ctx->esm_msg);
+    }
+    // Release emm and esm context
+    _clear_emm_ctxt(emm_ctx);
     break;
-
   case _EMMREG_TAU_REQ:
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state EMM_DEREGISTERED_INITIATED - Primitive _EMMREG_TAU_REQ is not valid\n");
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_TAU_REQ ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);

@@ -160,9 +160,9 @@ EmmRegistered (
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_DETACH_INIT ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
     break;
 
-  case _EMMREG_DETACH_REQ:
-    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_DETACH_REQ ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
-    rc = emm_fsm_set_state (evt->ue_id, emm_ctx, EMM_DEREGISTERED_INITIATED);
+  case _EMMREG_DETACH_REQ:  /**< We have to be in EmmDeregisterInitiated. */
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state EMM_REGISTERED - Primitive _EMMREG_DETACH_REQ is not valid\n");
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_DETACH_REQ ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
     break;
 
   case _EMMREG_DETACH_FAILED:
@@ -171,8 +171,23 @@ EmmRegistered (
     break;
 
   case _EMMREG_DETACH_CNF:
-    OAILOG_ERROR (LOG_NAS_EMM, "EMM-FSM state EMM_REGISTERED - Primitive _EMMREG_DETACH_CNF is not valid\n");
-    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
+    MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
+    rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_DEREGISTERED);
+
+    //if ((emm_ctx) && (evt->notify) && (evt->u.detach.proc) && (evt->u.detach.proc->emm_spec_proc.emm_proc.base_proc.success_notif)) {
+    //  rc = (*evt->u.detach.proc->emm_spec_proc.emm_proc.base_proc.success_notif)(emm_ctx);
+    //}
+    if (evt->free_proc) {
+      nas_delete_detach_procedure(emm_ctx);
+    }
+    /*
+     * Don't clear the EMM context here.
+     * todo: make it optional!
+     * Clear the ESM message, if exists.
+     */
+    if (emm_ctx->esm_msg) {
+      bdestroy(emm_ctx->esm_msg);
+    }
     break;
 
   case _EMMREG_TAU_REQ:

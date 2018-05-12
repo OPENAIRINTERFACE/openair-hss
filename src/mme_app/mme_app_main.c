@@ -160,6 +160,11 @@ void *mme_app_thread (void *args)
       }
       break;
 
+    case NAS_PDN_DISCONNECT_REQ:{
+        mme_app_handle_nas_pdn_disconnect_req (&received_message_p->ittiMsg.nas_pdn_disconnect_req);
+      }
+      break;
+
     case S11_CREATE_BEARER_REQUEST:
       mme_app_handle_s11_create_bearer_req (&received_message_p->ittiMsg.s11_create_bearer_request);
       break;

@@ -65,6 +65,9 @@
 // todo:
 #define NAS_IMPLICIT_DETACH_UE_IND(mSGpTR)          (mSGpTR)->ittiMsg.nas_implicit_detach_ue_ind
 
+/** Add PDN Disconnect request. */
+#define NAS_PDN_DISCONNECT_REQ(mSGpTR)              (mSGpTR)->ittiMsg.nas_pdn_disconnect_req
+#define NAS_PDN_DISCONNECT_RSP(mSGpTR)              (mSGpTR)->ittiMsg.nas_pdn_disconnect_rsp
 
 
 typedef enum pdn_conn_rsp_cause_e {
@@ -288,13 +291,10 @@ typedef struct itti_nas_signalling_connection_rel_ind_s {
 } itti_nas_signalling_connection_rel_ind_t;
 e_ind_t;
 
-
-
 typedef struct itti_nas_implicit_detach_ue_ind_s {
   /* UE identifier */
   mme_ue_s1ap_id_t ue_id;
 } itti_nas_implicit_detach_ue_ind_t;
-
 
 /** NAS Context request and response. */
 typedef struct itti_nas_context_req_s {
@@ -304,8 +304,6 @@ typedef struct itti_nas_context_req_s {
   tai_t                   originating_tai;
   bstring                 nas_msg;
   plmn_t                  visited_plmn;
-  Complete_Request_Message_Type_t request_type;
-
 } itti_nas_context_req_t;
 
 typedef struct itti_nas_context_res_s {
@@ -315,6 +313,20 @@ typedef struct itti_nas_context_res_s {
   uint8_t                 n_pdns;
   uint8_t                 n_bearers;
   bool                    is_emergency;
-
 } itti_nas_context_res_t;
+
+typedef struct itti_nas_pdn_disconnect_req_s {
+  mme_ue_s1ap_id_t        ue_id;
+  pti_t                   pti;
+  pdn_cid_t               pdn_cid;
+  ebi_t                   default_ebi;
+  bstring                 apn;
+} itti_nas_pdn_disconnect_req_t;
+
+typedef struct itti_nas_pdn_disconnect_rsp_s {
+  mme_ue_s1ap_id_t        ue_id;
+  int                     cause;
+//  unsigned int            pdn_ctx_id;
+} itti_nas_pdn_disconnect_rsp_t;
+
 #endif /* FILE_NAS_MESSAGES_TYPES_SEEN */

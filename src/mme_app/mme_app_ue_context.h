@@ -75,15 +75,6 @@ typedef struct {
 
 typedef int ( *mme_app_ue_callback_t) (void*);
 
-/**
- * Callback methods to set for MME_APP.
- */
-int                                     EmmCbS1apDeregistered(
-  const mme_ue_s1ap_id_t ueId);
-
-int                                     EmmCbS1apRegistered(
-  const mme_ue_s1ap_id_t ueId);
-
 // TODO: (amar) only used in testing
 #define IMSI_FORMAT "s"
 #define IMSI_DATA(MME_APP_IMSI) (MME_APP_IMSI.data)

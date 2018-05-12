@@ -37,6 +37,7 @@
 
 pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, const pdn_cid_t pdn_cid, const context_identifier_t context_identifier);
 void mme_app_free_pdn_context (pdn_context_t ** const pdn_context);
+pdn_context_t mme_app_get_pdn_context (ue_context_t * const ue_context, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn);
 
 
 #endif

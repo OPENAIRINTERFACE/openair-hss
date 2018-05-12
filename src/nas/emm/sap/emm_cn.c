@@ -98,6 +98,7 @@ static const char                      *_emm_cn_primitive_str[] = {
   "EMM_CN_PDN_CONFIG_RES",
   "EMM_CN_PDN_CONNECTIVITY_RES",
   "EMM_CN_PDN_CONNECTIVITY_FAIL",
+  "EMM_CN_PDN_DISCONNECT_RES",
   "EMM_CN_ACTIVATE_DEDICATED_BEARER_REQ",
   "EMMCN_IMPLICIT_DETACH_UE",
   "EMMCN_SMC_PROC_FAIL",
@@ -411,7 +412,6 @@ static int _emm_cn_pdn_config_fail (const emm_cn_pdn_config_fail_t * msg)
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
-
 //------------------------------------------------------------------------------
 static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 {
@@ -641,6 +641,120 @@ static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
 }
 
 //------------------------------------------------------------------------------
+static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     rc = RETURNok;
+  struct emm_data_context_s              *emm_context = NULL;
+  ESM_msg                                 esm_msg = {.header = {0}};
+  int                                     esm_cause;
+  esm_sap_t                               esm_sap = {0};
+
+  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
+  DevAssert(ue_context); // todo:
+
+  emm_context = emm_context_get (&_emm_data, msg->ue_id);
+  if (emm_context == NULL) {
+    OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+  }
+  memset (&esm_msg, 0, sizeof (ESM_msg));
+
+//  /** Inform the ESM layer about the PDN session removal. */
+//  esm_sap.primitive = ESM_DEFAULT_EPS_BEARER_CONTEXT_ACTIVATE_CNF;
+//  esm_sap.is_standalone = false;
+//  esm_sap.ue_id = ue_id;
+//  esm_sap.recv = esm_msg_pP;
+//  esm_sap.ctx = emm_data_context;
+
+  // todo: check if detach_proc is active or UE is in DEREGISTRATION_INITIATED state, dn's
+
+  /*
+   * Check if there is a specific detach procedure running.
+   * In that case, check if other PDN contexts exist. Delete those sessions, too.
+   * Finally send Detach Accept back to the UE.
+   */
+  nas_emm_detach_proc_t  *detach_proc = get_nas_specific_procedure_attach(emm_context);
+  // todo: implicit detach ? specific procedure?
+  if(!(detach_proc || EMM_DEREGISTERED_INITIATED == emm_fsm_get_state(emm_context))){
+    OAILOG_INFO (LOG_NAS_EMM, "No detach procedure ongoing for UE " MME_UE_S1AP_ID_FMT". Skipping the PDN Disconnect message. \n", emm_context->ue_id);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+  }
+  /** Check for the number of pdn connections left. */
+  if(!emm_context->esm_ctx.n_pdns){
+    OAILOG_INFO (LOG_NAS_EMM, "No more PDN contexts exist for UE " MME_UE_S1AP_ID_FMT". Continuing with detach procedure. \n", emm_context->ue_id);
+    /** If a specific detach procedure is running, check if it is switch, off, if so, send detach accept back. */
+    if(detach_proc){
+      if (!detach_proc->ies->switch_off) {
+        /*
+         * Normal detach without UE switch-off
+         */
+        emm_sap_t                               emm_sap = {0};
+        emm_as_data_t                          *emm_as = &emm_sap.u.emm_as.u.data;
+
+        MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMM_AS_NAS_INFO_DETACH ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+        /*
+         * Setup NAS information message to transfer
+         */
+        emm_as->nas_info = EMM_AS_NAS_INFO_DETACH;
+        emm_as->nas_msg = NULL;
+        /*
+         * Set the UE identifier
+         */
+        emm_as->ue_id = emm_context->ue_id;
+        /*
+         * Setup EPS NAS security data
+         */
+        emm_as_set_security_data (&emm_as->sctx, &emm_context->_security, false, true);
+        /*
+         * Notify EMM-AS SAP that Detach Accept message has to
+         * be sent to the network
+         */
+        emm_sap.primitive = EMMAS_DATA_REQ;
+        rc = emm_sap_send (&emm_sap);
+      }
+    }
+    /** Detach the UE. */
+    if (rc != RETURNerror) {
+
+      emm_sap_t                               emm_sap = {0};
+
+      /*
+       * Notify EMM FSM that the UE has been implicitly detached
+       */
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+      emm_sap.primitive = EMMREG_DETACH_CNF;
+      emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
+      emm_sap.u.emm_reg.ctx = emm_context;
+      rc = emm_sap_send (&emm_sap);
+      // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
+      nas_itti_detach_req(emm_context->ue_id);
+      // todo: review unlock
+      unlock_ue_contexts(ue_context);
+      OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+
+    } else{
+      // todo:
+      DevAssert(0);
+    }
+  }else{
+    OAILOG_INFO (LOG_NAS_EMM, "%d more PDN contexts exist for UE " MME_UE_S1AP_ID_FMT". Continuing with PDN Disconnect procedure. \n", emm_context->esm_ctx.n_pdns, emm_context->ue_id);
+    /** Send Disconnect Request for all remaining PDNs. */
+    pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+    esm_sap.primitive = ESM_PDN_DISCONNECT_REQ;
+    esm_sap.is_standalone = false;
+    esm_sap.ue_id = emm_context->ue_id;
+    esm_sap.ctx = emm_context;
+    esm_sap.recv = NULL;
+    esm_sap.data.pdn_disconnect.default_ebi = pdn_context->default_ebi; /**< Default Bearer Id of default APN. */
+    esm_sap.data.pdn_disconnect.cid         = pdn_context->context_identifier; /**< Context Identifier of default APN. */
+    esm_sap_send(&esm_sap);
+    OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+  }
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+//------------------------------------------------------------------------------
 static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bearer_req_t * msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
@@ -648,10 +762,10 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
   // forward to ESM
   esm_sap_t                               esm_sap = {0};
 
-  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
+  emm_data_context_t *emm_context = emm_data_context_get( &_emm_data, msg->ue_id);
 
   esm_sap.primitive = ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ;
-  esm_sap.ctx           = &ue_context->emm_context;
+  esm_sap.ctx           = emm_context;
   esm_sap.is_standalone = true;
   esm_sap.ue_id         = msg->ue_id;
   esm_sap.data.eps_dedicated_bearer_context_activate.cid         = msg->cid;
@@ -674,7 +788,6 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
 
   rc = esm_sap_send (&esm_sap);
 
-  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -781,6 +894,10 @@ int emm_cn_send (const emm_cn_t * msg)
 
   case EMMCN_PDN_CONNECTIVITY_FAIL:
     rc = _emm_cn_pdn_connectivity_fail (msg->u.emm_cn_pdn_fail);
+    break;
+
+  case EMMCN_PDN_DISCONNECT_RES:
+    rc = _emm_cn_pdn_disconnect_res (msg->u.emm_cn_pdn_disconnect_res);
     break;
   
   case EMMCN_ACTIVATE_DEDICATED_BEARER_REQ:

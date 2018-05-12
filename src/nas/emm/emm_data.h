@@ -353,7 +353,9 @@ void emm_ctx_set_valid_drx_parameter(emm_data_context_t * const ctxt, drx_parame
 /** Update the EMM context from the received MM Context during Handover/TAU procedure. */
 void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const ctxt, void * const _mm_eps_ctxt);
 
-struct emm_data_context_s * emm_data_context_get (emm_data_t * emm_data, const mme_ue_s1ap_id_t ue_id);
+struct emm_data_context_s * emm_data_context_create(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
+
+struct emm_data_context_s *emm_data_context_get (emm_data_t * emm_data, const mme_ue_s1ap_id_t ue_id);
 struct emm_data_context_s *emm_data_context_get_by_imsi (emm_data_t * emm_data, imsi64_t imsi64);
 struct emm_data_context_s *emm_data_context_get_by_guti (emm_data_t * emm_data, guti_t * guti);
 int                   emm_context_unlock (struct emm_data_context_s *emm_context_p);

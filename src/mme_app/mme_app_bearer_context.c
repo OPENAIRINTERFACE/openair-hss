@@ -114,10 +114,26 @@ void mme_app_free_bearer_context (bearer_context_t ** const bearer_context)
 }
 
 //------------------------------------------------------------------------------
-bearer_context_t* mme_app_get_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi)
+bearer_context_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi)
 {
   bearer_context_t    bc_key = {.ebi = ebi};
   return RB_FIND(BearPool, &pdn_context->session_bearers, &bc_key);
+}
+
+//------------------------------------------------------------------------------
+bearer_context_t* mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context, const ebi_t ebi)
+{
+  bearer_context_t  * bearer_context = NULL;
+  pdn_context_t     * pdn_context = NULL;
+  RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+    RB_FOREACH (bearer_context, BearerPool, &pdn_context->session_bearers) {
+      // todo: better error handling
+      if(bearer_context->ebi == ebi){
+        return bearer_context;
+      }
+    }
+  }
+  return NULL;
 }
 
 //------------------------------------------------------------------------------

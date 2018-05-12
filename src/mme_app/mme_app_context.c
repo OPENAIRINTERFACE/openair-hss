@@ -59,13 +59,6 @@
 #include "common_defs.h"
 #include "esm_ebr.h"
 
-/* EMM state machine handlers */
-static const mme_app_ue_callback_t          _mme_ue_callbacks[UE_CONTEXT_STATE_MAX] = {
-  EmmCbS1apDeregistered,
-  EmmCbS1apRegistered,
-  NULL,
-};
-
 // todo: think about locking the MME_APP context or EMM context, which one to lock, why to lock at all? lock seperately?
 ////------------------------------------------------------------------------------
 //int lock_ue_contexts(ue_context_t * const ue_context) {
@@ -1655,8 +1648,6 @@ mme_app_handle_s1ap_ue_context_release_complete (
     }
 
     /** The S10 tunnel will be removed together with the S10 related process. */
-      /* No delete session request will be sent, just continue to remove the MME_APP UE context. */
-  //      mme_app_send_delete_session_request (ue_context_p);
 
     mme_remove_ue_context(&mme_app_desc.mme_ue_contexts, ue_context_p);
     // todo
@@ -1810,29 +1801,12 @@ void mme_ue_context_update_ue_emm_state (
   {
     ue_context_p->mm_state = new_mm_state;
 
-    /** Call the new callback function for new registration. */
-    // todo: use the old_state
-    if(_mme_ue_callbacks[ue_context_p->mm_state]){
-      OAILOG_DEBUG(LOG_MME_APP, "Calling the UE callback function in MME_APP mme_ue_s1ap_ue_id "MME_UE_S1AP_ID_FMT " for state %d \n", mme_ue_s1ap_id, ue_context_p->mm_state);
-      _mme_ue_callbacks[ue_context_p->mm_state](mme_ue_s1ap_id);
-      OAILOG_DEBUG(LOG_MME_APP, "Successfully executed UE callback function in MME_APP mme_ue_s1ap_ue_id "MME_UE_S1AP_ID_FMT " for state %d \n", mme_ue_s1ap_id, ue_context_p->mm_state);
-    }
-
     // Update Stats
     update_mme_app_stats_attached_ue_add();
 
   } else if ((ue_context_p->mm_state == UE_REGISTERED) && (new_mm_state == UE_UNREGISTERED))
   {
     ue_context_p->mm_state = new_mm_state;
-
-    /** Call the new callback function for deregistration. */
-    // todo: use the old_state
-    if(_mme_ue_callbacks[ue_context_p->mm_state]){
-      OAILOG_DEBUG(LOG_MME_APP, "Calling the UE callback function in MME_APP mme_ue_s1ap_ue_id "MME_UE_S1AP_ID_FMT " for state %d \n", mme_ue_s1ap_id, ue_context_p->mm_state);
-      _mme_ue_callbacks[ue_context_p->mm_state](mme_ue_s1ap_id);
-      OAILOG_DEBUG(LOG_MME_APP, "Successfully executed UE callback function in MME_APP mme_ue_s1ap_ue_id "MME_UE_S1AP_ID_FMT " for state %d \n", mme_ue_s1ap_id, ue_context_p->mm_state);
-    }
-
 
     // Update Stats
     update_mme_app_stats_attached_ue_sub();
@@ -2890,4 +2864,72 @@ bearer_context_t* mme_app_create_new_bearer_context(ue_context_t *ue_context_p, 
   ue_context_p->nb_ue_bearer_ctxs++;
   OAILOG_INFO (LOG_MME_APP, "Number bearers is after addition of bearer context with EBI %d to UE " MME_UE_S1AP_ID_FMT " is %d. \n", bearer_id, ue_context_p->mme_ue_s1ap_id, ue_context_p->nb_ue_bearer_ctxs);
   return bearer_ctx_p;
+}
+
+//------------------------------------------------------------------------------
+/*
+ * Callback method called if UE is registered.
+ */
+void mme_app_registration_complete(emm_data_context_t *emm_context){
+
+  MessageDef                    *message_p = NULL;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  /** Find the UE context. */
+  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  DevAssert(ue_context); /**< Should always exist. Any mobility issue in which this could occur? */
+
+  OAILOG_INFO(LOG_MME_APP, "Entered callback handler for UE-REGISTERED state of UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", ueId);
+  /** Trigger a Create Session Request. */
+  imsi64_t                                imsi64 = INVALID_IMSI64;
+  int                                     rc = RETURNok;
+
+  /**
+   * Delete the S10 procedure.
+   * We don't create the EMM context from NAS and the EMM CN context request procedure ends before the UE is registered.
+   * No other place to remove the procedure.
+   */
+  mme_app_delete_s10_procedure_inter_mme_handover(ue_context);
+
+    /** Check if there is a pending deactivation flag is set. */
+    if(ue_context->pending_bearer_deactivation){
+      OAILOG_INFO(LOG_MME_APP, "After UE entered UE_REGISTERED state, initiating bearer deactivation for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", ueId);
+      ue_context->pending_bearer_deactivation = false;
+      ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE;
+      // Notify S1AP to send UE Context Release Command to eNB.
+      mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
+    }else{
+      /*
+       * No pending bearer deactivation.
+       * Check if there is are any pending unestablished downlink bearers (DL-GTP Tunnel Information to the SAE-GW).
+       */
+      // todo: how to do this in multi apn?
+      pdn_context_t * registered_pdn_ctx = NULL;
+      bearer_context_t * bearer_context_to_establish = NULL;
+      RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context_p->pdn_contexts) {
+        DevAssert(registered_pdn_ctx);
+
+        /**
+         * Get the first PDN whose bearers are not established yet.
+         * Do the MBR just one PDN at a time.
+         */
+        RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
+          DevAssert(bearer_context_to_establish);
+          /** Add them to the bearears list of the MBR. */
+          if (bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
+            OAILOG_INFO(LOG_MME_APP, "Found a PDN with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Sending MBR. \n", ueId);
+            /** Send the S11 MBR and return. */
+            // todo: error handling! this might occur if some error with OVS happens.
+            DevAssert(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx));
+            OAILOG_INFO(LOG_MME_APP, "Successfully sent MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Returning from REGISTRERED callback. \n", ueId);
+            OAILOG_FUNC_OUT (LOG_MME_APP);
+          }
+        }
+        registered_pdn_ctx = NULL;
+      }
+      OAILOG_ERROR(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", ueId);
+    }
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
 }

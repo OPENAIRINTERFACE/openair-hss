@@ -86,7 +86,7 @@ extern int _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t
 /*
    PDN disconnection handlers
 */
-static int _pdn_disconnect_get_pid (emm_data_context_t * emm_context, proc_tid_t pti);
+static int _pdn_disconnect_get_pid (emm_data_context_t * emm_context, ebi_t default_ebi, proc_tid_t pti);
 
 
 /****************************************************************************/
@@ -128,6 +128,7 @@ int
 esm_proc_pdn_disconnect_request (
   emm_data_context_t * emm_context,
   proc_tid_t pti,
+  ebi_t default_ebi,
   esm_cause_t *esm_cause)
 {
 
@@ -135,7 +136,7 @@ esm_proc_pdn_disconnect_request (
   pdn_cid_t                               pid = RETURNerror;
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", pti=%d)\n", ue_id, pti);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - PDN disconnect requested by the UE " "(ue_id=" MME_UE_S1AP_ID_FMT ", default_ebi %d, pti=%d)\n", ue_id, default_ebi, pti);
 
   /*
    * Get UE's ESM context
@@ -145,13 +146,30 @@ esm_proc_pdn_disconnect_request (
      * Get the identifier of the PDN connection entry assigned to the
      * * * * procedure transaction identity
      */
-    pid = _pdn_disconnect_get_pid (emm_context, pti);
+    pid = _pdn_disconnect_get_pid (emm_context, default_ebi, pti);
 
     if (pid >= MAX_APN_PER_UE) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - No PDN connection found (pti=%d)\n", pti);
       *esm_cause = ESM_CAUSE_PROTOCOL_ERROR;
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
     }
+    /*
+     * Create a ESM proc data.
+     * todo: validate that no ESM Proc is running before starting a new ESM message!
+     * Currently, just overwriting the old one.
+     */
+    struct esm_proc_data_s * esm_data = emm_context->esm_ctx.esm_proc_data;
+    if (!emm_context->esm_ctx.esm_proc_data) {
+      emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));
+    }else{
+      // todo: don't start a new esm_proc without completing the first one
+    }
+    esm_data->pti = pti;
+    esm_data->pdn_cid = pid;
+    esm_data->apn = NULL;
+
+    /** Found the PDN context. Informing the MME_APP layer to release the bearers. */
+    nas_itti_pdn_disconnect_req(emm_context->ue_id, default_ebi, esm_data);
   } else {
     /*
      * Attempt to disconnect from the last PDN disconnection
@@ -305,21 +323,18 @@ esm_proc_pdn_disconnect_reject (
 static pdn_cid_t
 _pdn_disconnect_get_pid (
   emm_data_context_t * emm_context,
+  ebi_t default_ebi,
   proc_tid_t pti)
 {
-  pdn_cid_t                           i = MAX_APN_PER_UE;
-
   if (emm_context) {
     ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
-    for (i = 0; i < MAX_APN_PER_UE; i++) {
-      if (ue_context->pdn_contexts[i]) {
-        if (ue_context->pdn_contexts[i]->esm_data.pti == pti ) {
-          return (i);
-        }
-      }
-    }
-  }
+    pdn_context_t pdn_context_key = {.default_ebi = default_ebi};
 
+    pdn_context_t * pdn_context = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
+    if(pdn_context)
+      return pdn_context->context_identifier;
+    return MAX_APN_PER_UE;
+  }
   return RETURNerror;
 }

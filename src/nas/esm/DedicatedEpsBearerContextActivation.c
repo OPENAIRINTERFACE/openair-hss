@@ -352,7 +352,7 @@ esm_proc_dedicated_eps_bearer_context_reject (
     /*
      * Release the dedicated EPS bearer context and enter state INACTIVE
      */
-    rc = esm_proc_eps_bearer_context_deactivate (emm_context, true, ebi, &pid, &bid, NULL);
+    rc = esm_proc_default_eps_bearer_context_deactivate (emm_context, true, ebi, &pid, &bid, NULL);
 
     if (rc != RETURNok) {
       /*

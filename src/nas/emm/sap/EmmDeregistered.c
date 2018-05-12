@@ -139,12 +139,12 @@ int EmmDeregistered (emm_reg_t * const evt)
      * enter state EMM-REGISTERED.
      */
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_ATTACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
-    if ((emm_ctx) && (evt->notify) && (evt->u.attach.proc) && (evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.success_notif)) {
+    if ((emm_ctx) /*&& (evt->notify) */&& (evt->u.attach.proc) && (evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.success_notif)) {
       rc = (*evt->u.attach.proc->emm_spec_proc.emm_proc.base_proc.success_notif)(emm_ctx);
     }
-    if (evt->free_proc) {
+//    if (evt->free_proc) {
       nas_delete_attach_procedure(emm_ctx);
-    }
+//    }
     rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);
     break;
 

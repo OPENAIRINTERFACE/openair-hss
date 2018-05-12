@@ -137,6 +137,8 @@ typedef struct emm_tau_request_ies_s {
   additional_update_type_t      *additional_updatetype;
   guti_type_t                   *old_guti_type;
 
+  bstring                        complete_tau_request;
+
   nas_message_decode_status_t    decode_status;
 } emm_tau_request_ies_t;
 /****************************************************************************/
@@ -197,7 +199,6 @@ int emm_proc_tracking_area_update_request (
   emm_tau_request_ies_t *ies,
   const int gea,
   const bool gprs_present,
-  const bstring nas_msg,
   int *emm_cause);
 
 int emm_proc_tracking_area_update_reject (

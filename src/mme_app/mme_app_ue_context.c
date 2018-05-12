@@ -102,6 +102,13 @@ inline int32_t                    mme_app_compare_pdn_context(
   if (a->context_identifier < b->context_identifier)
     return -1;
 
+  /** Compare Default EBI. */
+  if (a->default_ebi > b->default_ebi)
+    return 1;
+
+  if (a->default_ebi < b->default_ebi)
+    return -1;
+
   /* Compare the bstrings. */
   return bstrcmp(apn_network_identifier(a->apn_in_use),
       apn_network_identifier(b->apn_in_use));

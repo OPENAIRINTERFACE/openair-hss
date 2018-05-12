@@ -104,8 +104,6 @@ static const char                      *_esm_sap_primitive_str[] = {
   "ESM_EPS_BEARER_CONTEXT_MODIFY_REQ",
   "ESM_EPS_BEARER_CONTEXT_MODIFY_CNF",
   "ESM_EPS_BEARER_CONTEXT_MODIFY_REJ",
-  "ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ",
-  "ESM_EPS_BEARER_CONTEXT_DEACTIVATE_CNF",
   "ESM_PDN_CONNECTIVITY_REQ",
   "ESM_PDN_CONNECTIVITY_REJ",
   "ESM_PDN_DISCONNECT_REQ",
@@ -198,6 +196,22 @@ esm_sap_send (esm_sap_t * msg)
     break;
 
   case ESM_PDN_DISCONNECT_REQ:
+    /*
+     * MME initiated PDN disconnection procedure.
+     *
+     * Without waiting for UE confirmation, directly update the ESM context.
+     * Send S11 Delete Session Request to the SAE-GW.
+     *
+     * Execute the PDN disconnect procedure requested by the UE.
+     * Validating the message in the context of the UE and finding the PDN context to remove.
+     */
+    esm_cause_t esm_cause;
+    esm_proc_eps_bearer_context_deactivate(msg->ctx, true, msg->data.pdn_disconnect.default_ebi, msg->data.pdn_disconnect.cid, &esm_cause);
+    if (rc != RETURNerror) {
+      rc = esm_proc_pdn_disconnect_request( msg->ctx, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, msg->data.pdn_disconnect.default_ebi, &esm_cause);
+    }else{
+      DevAssert(0);
+    }
     break;
 
   case ESM_PDN_DISCONNECT_REJ:
@@ -275,24 +289,21 @@ esm_sap_send (esm_sap_t * msg)
 
   case ESM_EPS_BEARER_CONTEXT_MODIFY_REJ:
     break;
-
-  case ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
-      int                                     bid = BEARERS_PER_UE;
-
-      /*
-       * Locally deactivate EPS bearer context
-       */
-      rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.eps_bearer_context_deactivate.ebi, &pid, &bid, NULL);
-
-      // TODO Assertion bellow is not true now:
-      // If only default bearer is supported then release PDN connection as well - Implicit Detach
-      _pdn_connectivity_delete (msg->ctx, pid);
-      
-    }
-    break;
-
-  case ESM_EPS_BEARER_CONTEXT_DEACTIVATE_CNF:
-    break;
+//
+//  case ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
+//      int                                     bid = BEARERS_PER_UE;
+//
+//      /*
+//       * Locally deactivate EPS bearer context
+//       */
+//      rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.eps_bearer_context_deactivate.ebi, &pid, &bid, NULL);
+//
+//      // TODO Assertion bellow is not true now:
+//      // If only default bearer is supported then release PDN connection as well - Implicit Detach
+//      _pdn_connectivity_delete (msg->ctx, pid);
+//
+//    }
+//    break;
 
   case ESM_UNITDATA_IND:
     rc = _esm_sap_recv (-1, msg->is_standalone, msg->ctx, msg->recv, msg->send, &msg->err);
@@ -653,7 +664,8 @@ _esm_sap_recv (
 
     case PDN_DISCONNECT_REQUEST:
       /*
-       * Process PDN disconnect request message received from the UE
+       * Process PDN disconnect request message received from the UE.
+       * Get the Linked Default EBI.
        */
       esm_cause = esm_recv_pdn_disconnect_request (emm_context, pti, ebi, &esm_msg.pdn_disconnect_request, &ebi);
 

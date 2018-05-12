@@ -45,46 +45,6 @@
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 
-//------------------------------------------------------------------------------
-static void mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const pdn_cid_t cid)
-{
-  MessageDef                             *message_p = NULL;
-  OAILOG_FUNC_IN (LOG_MME_APP);
-
-  message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_SESSION_REQUEST);
-  AssertFatal (message_p , "itti_alloc_new_message Failed");
-  S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_teid_s11;
-  S11_DELETE_SESSION_REQUEST (message_p).teid       = ue_context_p->pdn_contexts[cid]->s_gw_teid_s11_s4;
-  S11_DELETE_SESSION_REQUEST (message_p).lbi        = ebi; //default bearer
-
-  OAI_GCC_DIAG_OFF(pointer-to-int-cast);
-  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
-  OAI_GCC_DIAG_ON(pointer-to-int-cast);
-  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
-  mme_config_read_lock (&mme_config);
-  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
-  mme_config_unlock (&mme_config);
-  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4 = 1;
-
-  S11_DELETE_SESSION_REQUEST (message_p).indication_flags.oi = 1;
-
-  /*
-   * S11 stack specific parameter. Not used in standalone epc mode
-   */
-  S11_DELETE_SESSION_REQUEST  (message_p).trxn = NULL;
-  mme_config_read_lock (&mme_config);
-  S11_DELETE_SESSION_REQUEST (message_p).peer_ip = ue_context_p->pdn_contexts[cid]->s_gw_address_s11_s4.address.ipv4_address;
-  mme_config_unlock (&mme_config);
-
-  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME,
-                      NULL, 0, "0  S11_DELETE_SESSION_REQUEST teid %u lbi %u",
-                      S11_DELETE_SESSION_REQUEST  (message_p).teid,
-                      S11_DELETE_SESSION_REQUEST  (message_p).lbi);
-
-  itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-  OAILOG_FUNC_OUT (LOG_MME_APP);
-}
-
 // todo: complete rework! @ MME_APP EMM layer should be completely unaware of ESM sessions, etc.. that should all handled in the NAS layer
 //------------------------------------------------------------------------------
 void
@@ -100,6 +60,18 @@ mme_app_handle_detach_req (
     OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist -> Nothing to do :-) \n");
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+
+  // todo: review detach again! When the state transits from EMM_REG to EMM_DEREG, which method is called
+  /*
+    * Reset the flags of the UE.
+    */
+   ue_context->subscription_known = SUBSCRIPTION_UNKNOWN;
+   // todo: this might be unnecessary
+   if(ue_context->pending_clear_location_request){
+     OAILOG_INFO(LOG_MME_APP, "Clearing the pending CLR for UE id " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+     ue_context->pending_clear_location_request = false;
+   }
+
   /**
    * A Detach Request is sent by the EMM layer after all PDN sessions are removed.
    * So, we will not check the number of PDN sessions remaining. The rest would be to remove the S1AP signaling connnection and the UE Context (toget with the procedures).

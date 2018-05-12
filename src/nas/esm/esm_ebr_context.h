@@ -63,7 +63,7 @@ ebi_t esm_ebr_context_create(emm_data_context_t * emm_context, const proc_tid_t 
 
 void esm_ebr_context_init (esm_ebr_context_t *esm_ebr_context);
 
-ebi_t esm_ebr_context_release(emm_data_context_t * emm_context, ebi_t ebi, pdn_cid_t *pid, int *bid);
+ebi_t esm_ebr_context_release(emm_data_context_t * emm_context, ebi_t ebi, pdn_cid_t *pid,bool ue_requested);
 
 void free_esm_ebr_context(esm_ebr_context_t * ctx);
 

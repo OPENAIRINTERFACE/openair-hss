@@ -791,17 +791,7 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
   ctx_req_proc->cn_proc.base_proc.time_out = s10_context_req_timer_expiry_handler;
   ctx_req_proc->ue_id = ue_id;
 
-  plmn_t visited_plmn = {0};
-  visited_plmn.mcc_digit1 = emm_context->originating_tai.mcc_digit1;
-  visited_plmn.mcc_digit2 = emm_context->originating_tai.mcc_digit2;
-  visited_plmn.mcc_digit3 = emm_context->originating_tai.mcc_digit3;
-  visited_plmn.mnc_digit1 = emm_context->originating_tai.mnc_digit1;
-  visited_plmn.mnc_digit2 = emm_context->originating_tai.mnc_digit2;
-  visited_plmn.mnc_digit3 = emm_context->originating_tai.mnc_digit3;
-
   nas_start_Ts10_ctx_req( ctx_req_proc->ue_id, &ctx_req_proc->timer_s10, ctx_req_proc->cn_proc.base_proc.time_out, emm_context);
-
-  nas_itti_ctx_req(ue_id, &emm_context->_imsi, &visited_plmn, auts);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
 }

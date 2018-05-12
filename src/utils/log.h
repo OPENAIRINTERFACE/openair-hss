@@ -194,6 +194,7 @@ typedef struct log_config_s {
   log_level_t   mme_app_log_level;  /*!< \brief MME-APP ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   spgw_app_log_level; /*!< \brief SP-GW ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   s11_log_level;      /*!< \brief S11 ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   s10_log_level;      /*!< \brief S10 ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   s6a_log_level;      /*!< \brief S6a layer log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   secu_log_level;      /*!< \brief LTE security log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   util_log_level;     /*!< \brief Misc utilities log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */

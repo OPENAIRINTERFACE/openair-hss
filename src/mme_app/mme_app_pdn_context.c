@@ -68,9 +68,20 @@ void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)
   if ((*pdn_context)->pco) {
     free_protocol_configuration_options(&(*pdn_context)->pco);
   }
+  memset((*pdn_context)->esm_data, 0, sizeof((*pdn_context)->esm_data));
 
   free_wrapper((void**)pdn_context);
 }
+
+//------------------------------------------------------------------------------
+pdn_context_t mme_app_get_pdn_context (ue_context_t * const ue_context, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn)
+{
+  // todo: check for valid fields!
+  pdn_context_t pdn_context_key = {.apn = apn, .default_ebi = default_ebi, .context_identifier = context_id};
+  pdn_context_t *pdn_context = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
+  return pdn_context;
+}
+
 //------------------------------------------------------------------------------
 static void mme_app_pdn_context_init(ue_context_t * const ue_context, pdn_context_t *const  pdn_context)
 {
@@ -82,6 +93,7 @@ static void mme_app_pdn_context_init(ue_context_t * const ue_context, pdn_contex
     }
   }
 }
+
 //------------------------------------------------------------------------------
 pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, const pdn_cid_t pdn_cid, const bstring apn, const context_identifier_t context_identifier)
 {

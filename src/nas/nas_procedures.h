@@ -129,7 +129,10 @@ typedef struct nas_emm_attach_proc_s {
 struct emm_detach_request_ies_s;
 
 typedef struct nas_emm_detach_proc_s {
-  nas_emm_specific_proc_t             emm_spec_proc;
+  nas_emm_specific_proc_t          emm_spec_proc;
+  mme_ue_s1ap_id_t                 ue_id;
+  int                              detch_accept_sent;
+
   struct emm_detach_request_ies_s *ies;
 } nas_emm_detach_proc_t;
 

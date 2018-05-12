@@ -462,8 +462,6 @@ int emm_proc_attach_complete (
   emm_sap_t                               emm_sap = {0};
   esm_sap_t                               esm_sap = {0};
 
-
-
   /*
    * Get the UE context
    */
@@ -505,15 +503,16 @@ int emm_proc_attach_complete (
     /*
      * Set the network attachment indicator
      */
-//    emm_data_context->is_attached = true;
+    emm_data_context->is_has_been_attached = true;
     /*
      * Notify EMM that attach procedure has successfully completed
      */
-    emm_sap.primitive = EMMREG_ATTACH_CNF;
+    emm_sap.primitive = EMMREG_ATTACH_CNF; /**< No Common_REG_CNF since GUTI might not have been sent (EMM_DEREG-> EMM_REG) // todo: attach_complete arrives always? */
+    // todo: for EMM_REG_COMMON_PROC_CNF, do we need common_proc (explicit) like SMC, AUTH, INFO? and not implicit guti reallocation where none exists?
     emm_sap.u.emm_reg.ue_id = ue_id;
     emm_sap.u.emm_reg.ctx = emm_data_context;
-    emm_sap.u.emm_reg.notify = true;
-    emm_sap.u.emm_reg.free_proc = true;
+//    emm_sap.u.emm_reg.notify = true;
+//    emm_sap.u.emm_reg.free_proc = true;
     emm_sap.u.emm_reg.u.attach.proc = attach_proc;
     rc = emm_sap_send (&emm_sap);
   } else if (esm_sap.err != ESM_SAP_DISCARDED) {
@@ -838,13 +837,15 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
 
 static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const emm_context, emm_attach_request_ies_t * const ies)
 {
-  nas_emm_attach_proc_t *attach_proc = nas_new_attach_procedure(&emm_context);
+  nas_emm_attach_proc_t *attach_proc = nas_new_attach_procedure(&emm_context, emm_registration_complete);
   AssertFatal(attach_proc, "TODO Handle this");
   if ((attach_proc)) {
     attach_proc->ies = ies;
     ((nas_base_proc_t*)attach_proc)->abort = _emm_attach_abort;
     ((nas_base_proc_t*)attach_proc)->fail_in = NULL; // No parent procedure
     ((nas_base_proc_t*)attach_proc)->time_out = _emm_attach_t3450_handler;
+    /** Set the MME_APP registration complete procedure for callback. */
+    ((nas_base_proc_t*)attach_proc)->success_notif = mme_app_registration_complete;
   }
 }
 /*

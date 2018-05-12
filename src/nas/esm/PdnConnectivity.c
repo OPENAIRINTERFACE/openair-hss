@@ -487,42 +487,54 @@ proc_tid_t _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t
   if (!emm_context) {
     return pti;
   }
-  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
-
+  ue_context_t                        *ue_context   = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  pdn_context_t                       *pdn_context  = NULL;
   if (pdn_cid < MAX_APN_PER_UE) {
-    if (!ue_context->pdn_contexts[pdn_cid]) {
+    /** Get PDN Context. */
+    pdn_context = mme_app_get_pdn_context(ue_context, pdn_cid, ESM_EBI_UNDEFINED, NULL);
+    if (!pdn_context) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has not been allocated\n");
-    } else if (ue_context->pdn_contexts[pdn_cid]->is_active) {
+    } else if (pdn_context->is_active) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection is active\n");
+    } else if (pdn_context->esm_data.n_bearers) {
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has beaerer\n");
+    } else if (!RB_EMPTY(pdn_context->session_bearers)) {
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection bearer list is not empty \n");
     } else {
       /*
-       * Get the identity of the procedure transaction that created
-       * * * * the PDN connection
+       * We don't check the PTI. It may be an implicit or a normal detach.
        */
-      pti = ue_context->pdn_contexts[pdn_cid]->esm_data.pti;
+      pti = pdn_context->esm_data.pti;
     }
   } else {
     OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection identifier is not valid\n");
   }
-  if (pti != ESM_PT_UNASSIGNED) {
-    /*
-     * Decrement the number of PDN connections
-     */
-    emm_context->esm_ctx.n_pdns -= 1;
+  /*
+   * Decrement the number of PDN connections
+   */
+  emm_context->esm_ctx.n_pdns -= 1;
 
-    /*
-     * Release allocated PDN connection data
-     */
-    bdestroy_wrapper(&ue_context->pdn_contexts[pdn_cid]->apn_in_use);
-    bdestroy_wrapper(&ue_context->pdn_contexts[pdn_cid]->apn_oi_replacement);
-    bdestroy_wrapper(&ue_context->pdn_contexts[pdn_cid]->apn_subscribed);
-    memset(&ue_context->pdn_contexts[pdn_cid]->esm_data, 0, sizeof(ue_context->pdn_contexts[pdn_cid]->esm_data));
-// TODO Think about free ue_context->pdn_contexts[pdn_cid]
-    OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d released\n", pdn_cid);
+  /*
+   * Remove from the PDN sessions of the UE context.
+   */
+  // todo: add a lot of locks..
+  /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
+  pdn_context_t *pdn_context_removed = RB_REMOVE(BearerPool, &ue_context->pdn_contexts, pdn_context);
+  if(!pdn_context_removed){
+    OAILOG_ERROR(LOG_MME_APP,  "Could not find pdn context with pid %d for ue_id " MME_UE_S1AP_FMT "! \n",
+        pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
+
+  /*
+   * Release allocated PDN connection data
+   */
+  mme_app_free_pdn_context(&pdn_context); /**< Frees it by putting it back to the pool. */
+
+  OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - PDN connection %d released\n", pdn_cid);
 
   /*
    * Return the procedure transaction identity
    */
-  return (pti);
+  return pti;
 }

@@ -390,6 +390,7 @@ mme_app_send_s11_modify_bearer_req(
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
+//------------------------------------------------------------------------------
 int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, teid_t remote_teid, struct in_addr peer_ip){
   OAILOG_FUNC_IN(LOG_MME_APP);
 
@@ -404,6 +405,50 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, teid_t remote_teid, st
 
   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
 }
+
+//------------------------------------------------------------------------------
+int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const pdn_context_t* pdn_context)
+{
+  MessageDef                             *message_p = NULL;
+  int                                     rc = RETURNok;
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_SESSION_REQUEST);
+  AssertFatal (message_p , "itti_alloc_new_message Failed");
+  S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_teid_s11;
+  S11_DELETE_SESSION_REQUEST (message_p).teid       = pdn_context->s_gw_teid_s11_s4;
+  S11_DELETE_SESSION_REQUEST (message_p).lbi        = ebi; //default bearer
+
+  OAI_GCC_DIAG_OFF(pointer-to-int-cast);
+  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
+  OAI_GCC_DIAG_ON(pointer-to-int-cast);
+  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.interface_type = S11_MME_GTP_C;
+  mme_config_read_lock (&mme_config);
+  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4_address = mme_config.ipv4.s11;
+  mme_config_unlock (&mme_config);
+  S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.ipv4 = 1;
+
+  S11_DELETE_SESSION_REQUEST (message_p).indication_flags.oi = 1;
+
+  /*
+   * S11 stack specific parameter. Not used in standalone epc mode
+   */
+  S11_DELETE_SESSION_REQUEST  (message_p).trxn = NULL;
+  mme_config_read_lock (&mme_config);
+  S11_DELETE_SESSION_REQUEST (message_p).peer_ip = pdn_context->s_gw_address_s11_s4.address.ipv4_address;
+  mme_config_unlock (&mme_config);
+
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME,
+                      NULL, 0, "0  S11_DELETE_SESSION_REQUEST teid %u lbi %u",
+                      S11_DELETE_SESSION_REQUEST  (message_p).teid,
+                      S11_DELETE_SESSION_REQUEST  (message_p).lbi);
+
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0,
+      "0 S11_DELETE_SESSION_REQUEST imsi " IMSI_64_FMT, ue_context_pP->imsi);
+  rc = itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
+
 //------------------------------------------------------------------------------
 /**
  * Send an S1AP Handover Cancel Acknowledge to the S1AP layer.

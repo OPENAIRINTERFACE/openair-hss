@@ -62,13 +62,16 @@ void nas_itti_pdn_connectivity_req(
   esm_proc_data_t        *proc_data_pP,
   esm_proc_pdn_request_t  request_typeP);
 
+void nas_itti_pdn_disconnect_req(
+  mme_ue_s1ap_id_t        ue_idP,
+  ebi_t                   default_ebi,
+  esm_proc_data_t        *proc_data_pP);
+
 void nas_itti_ctx_req(
   const uint32_t        ue_idP,
   const guti_t        * const guti_p,
   tai_t         * const new_taiP,
   tai_t         * const last_visited_taiP,
-  plmn_t         * const visited_plmnP,
-  Complete_Request_Message_Type_t request_type,
   bstring               request_msg);
 
 void nas_itti_auth_info_req(
@@ -101,6 +104,12 @@ void nas_itti_dedicated_eps_bearer_complete(
 void nas_itti_dedicated_eps_bearer_reject(
     const mme_ue_s1ap_id_t ue_idP,
     const ebi_t ebiP);
+
+void nas_itti_dedicated_eps_bearer_deactivation_complete(
+    const mme_ue_s1ap_id_t ue_idP,
+    const ebi_t default_ebi,
+    const pdn_cid_t pid,
+    const ebi_t ded_ebi);
 
 void  s6a_auth_info_rsp_timer_expiry_handler (void *args);
 

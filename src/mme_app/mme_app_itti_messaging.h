@@ -36,5 +36,6 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
 int mme_app_send_s11_create_session_req (  struct ue_context_s *const ue_context, pdn_context_t * pdn_context, tai_t * serving_tai);
 int mme_app_send_s11_modify_bearer_req(struct ue_context_s *const ue_context, pdn_context_t * pdn_context);
 int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, teid_t remote_teid, struct in_addr peer_ip);
+int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const pdn_context_t* pdn_context); /**< Moved Delete Session Request from mme_app_detach. */
 
 #endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */

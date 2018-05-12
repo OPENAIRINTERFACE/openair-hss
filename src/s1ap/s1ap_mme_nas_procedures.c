@@ -644,16 +644,16 @@ s1ap_handle_conn_est_cnf (
   asn_uint642INTEGER (&initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateDL, conn_est_cnf_pP->ue_ambr.br_dl);
   asn_uint642INTEGER (&initialContextSetupRequest_p->uEaggregateMaximumBitrate.uEaggregateMaximumBitRateUL, conn_est_cnf_pP->ue_ambr.br_ul);
 
-
   for (int item = 0; item < conn_est_cnf_pP->no_of_e_rabs; item++) {
     memset((void*)&e_RABToBeSetup[item], 0, sizeof(e_RABToBeSetup[item]));
     e_RABToBeSetup[item].e_RAB_ID = conn_est_cnf_pP->e_rab_id[item];     //5;
     e_RABToBeSetup[item].e_RABlevelQoSParameters.qCI = conn_est_cnf_pP->e_rab_level_qos_qci[item];
+    if(conn_est_cnf_pP->nas_pdu[item]){
+      nas_pdu.size = blength(conn_est_cnf_pP->nas_pdu[item]); // todo: slen?
+      nas_pdu.buf  = conn_est_cnf_pP->nas_pdu[item]->data; /**< No need to unlink, will directly encode and send. */
+      e_RABToBeSetup[item].nAS_PDU = &nas_pdu;
 
-    nas_pdu.size = blength(conn_est_cnf_pP->nas_pdu[item]); // todo: slen?
-//    nas_pdu.buf  = malloc(blength(conn_est_cnf_pP->nas_pdu[item]));
-    nas_pdu.buf  = conn_est_cnf_pP->nas_pdu[item]->data;
-    e_RABToBeSetup[item].nAS_PDU = &nas_pdu;
+    }
 
 //    memcpy(nas_pdu.buf, (void*)conn_est_cnf_pP->nas_pdu[item]->data, blength(conn_est_cnf_pP->nas_pdu[item]));
 
@@ -671,6 +671,33 @@ s1ap_handle_conn_est_cnf (
     e_RABToBeSetup[item].transportLayerAddress.size = blength(conn_est_cnf_pP->transport_layer_address[item]);
     e_RABToBeSetup[item].transportLayerAddress.bits_unused = 0;
     ASN_SEQUENCE_ADD (&initialContextSetupRequest_p->e_RABToBeSetupListCtxtSUReq, &e_RABToBeSetup[item]);
+    // todo: IPv6 address of SAE-GW
+//    /*
+//     * S-GW IP address(es) for user-plane
+//     */
+//    if (conn_est_cnf_pP->bearer_s1u_sgw_fteid.ipv6) {
+//      if (offset == 0) {
+//        /*
+//         * Both IPv4 and IPv6 provided
+//         */
+//        /*
+//         * TODO: check memory allocation
+//         */
+//        e_RABToBeSetup.transportLayerAddress.buf = calloc (16, sizeof (uint8_t));
+//      } else {
+//        /*
+//         * Only IPv6 supported
+//         */
+//        /*
+//         * TODO: check memory allocation
+//         */
+//        e_RABToBeSetup.transportLayerAddress.buf = realloc (e_RABToBeSetup.transportLayerAddress.buf, (16 + offset) * sizeof (uint8_t));
+//      }
+//
+//      memcpy (&e_RABToBeSetup.transportLayerAddress.buf[offset], conn_est_cnf_pP->bearer_s1u_sgw_fteid.ipv6_address, 16);
+//      e_RABToBeSetup.transportLayerAddress.size = 16 + offset;
+//      e_RABToBeSetup.transportLayerAddress.bits_unused = 0;
+//    }
   }
   initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.buf = (uint8_t *) & conn_est_cnf_pP->ue_security_capabilities_encryption_algorithms;
   initialContextSetupRequest_p->ueSecurityCapabilities.encryptionAlgorithms.size = 2;
@@ -717,7 +744,6 @@ s1ap_handle_conn_est_cnf (
   s1ap_mme_itti_send_sctp_request (&b, ue_ref->enb->sctp_assoc_id, ue_ref->sctp_stream_send, ue_ref->mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_S1AP);
 }
-
 
 //------------------------------------------------------------------------------
 void

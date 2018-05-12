@@ -65,9 +65,9 @@ typedef enum esm_primitive_s {
   ESM_EPS_BEARER_CONTEXT_MODIFY_CNF,
   ESM_EPS_BEARER_CONTEXT_MODIFY_REJ,
   ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ,
-  ESM_EPS_BEARER_CONTEXT_DEACTIVATE_CNF,
   /* Transaction related procedures (initiated by the UE) */
   ESM_PDN_CONNECTIVITY_REQ,
+  ESM_PDN_CONNECTIVITY_CNF,
   ESM_PDN_CONNECTIVITY_REJ,
   ESM_PDN_DISCONNECT_REQ,
   ESM_PDN_DISCONNECT_REJ,
@@ -123,6 +123,7 @@ typedef struct esm_pdn_connectivity_s {
  * ------------------------------------------
  */
 typedef struct esm_pdn_disconnect_s {
+  ebi_t     default_ebi;        /* Default EBI of PDN context */
   pdn_cid_t cid;        /* PDN connection local identifier      */
 } esm_pdn_disconnect_t;
 

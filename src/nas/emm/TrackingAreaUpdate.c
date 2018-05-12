@@ -118,12 +118,11 @@ int emm_proc_tracking_area_update_request (
   emm_tau_request_ies_t *ies,
   const int gea,
   const bool gprs_present,
-  const bstring nas_msg,
   int *emm_cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  ue_context_t                        *ue_context_p = NULL;
+  ue_context_t                           *ue_context_p = NULL;
   emm_data_context_t                     *emm_ctx_p = NULL;
   emm_fsm_state_t                         fsm_state = EMM_DEREGISTERED;
   nas_emm_attach_proc_t                  *attach_procedure = NULL;
@@ -1403,7 +1402,7 @@ static bool _emm_tracking_area_update_ies_have_changed (mme_ue_s1ap_id_t ue_id, 
  */
 
 //------------------------------------------------------------------------------
-static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_ctx_p)
+static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_ctx_p, )
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
@@ -1584,9 +1583,17 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_ctx_p
          * Directly inform the MME_APP of the new context.
          * Depending on if there is a pending MM_EPS_CONTEXT or not, it should send S10 message..
          * MME_APP needs to register the MME_APP context with the IMSI before sending S6a ULR.
+         *
+         * A S10 Context Request process may already have been started.
          */
         rc = _start_context_request_procedure(emm_ctx_p, tau_proc,
             _context_req_proc_success_cb, emm_proc_identification);
+
+        nas_itti_ctx_req(emm_context->ue_id, &emm_context->_guti,
+            tau_proc->ies->originating_tai,
+            tau_proc->ies->last_visited_registered_tai,
+            tau_proc->ies->complete_tau_request);
+
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       }
     }

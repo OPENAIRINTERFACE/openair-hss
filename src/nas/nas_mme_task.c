@@ -122,6 +122,11 @@ static void *nas_intertask_interface (void *args_p)
       }
       break;
 
+    case NAS_PDN_DISCONNECT_RSP:{
+        nas_proc_pdn_disconnect_res (&NAS_PDN_DISCONNECT_RSP (received_message_p));
+      }
+      break;
+
     case NAS_IMPLICIT_DETACH_UE_IND:{
         nas_proc_implicit_detach_ue_ind (NAS_IMPLICIT_DETACH_UE_IND (received_message_p).ue_id);
       }

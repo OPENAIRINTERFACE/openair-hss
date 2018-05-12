@@ -125,6 +125,38 @@ void nas_itti_dedicated_eps_bearer_reject(
 }
 
 //------------------------------------------------------------------------------
+void nas_itti_dedicated_eps_bearer_deactivation_complete(
+    const mme_ue_s1ap_id_t ue_idP,
+    const ebi_t default_ebi,
+    const pdn_cid_t pid,
+    const ebi_t ded_ebi)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_DELETE_DEDICATED_BEARER_RSP);
+  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).ue_id     = ue_idP;
+  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).def_ebi   = ebiP;
+  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).ded_ebi   = ebiP;
+  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).pid       = pid;
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_DELETE_DEDICATED_BEARER_RSP ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
+  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
+//
+////------------------------------------------------------------------------------
+//void nas_itti_dedicated_eps_bearer_reject(
+//    const mme_ue_s1ap_id_t ue_idP,
+//    const ebi_t ebiP)
+//{
+//  OAILOG_FUNC_IN(LOG_NAS);
+//  MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_CREATE_DEDICATED_BEARER_REJ);
+//  MME_APP_CREATE_DEDICATED_BEARER_REJ (message_p).ue_id   = ue_idP;
+//  MME_APP_CREATE_DEDICATED_BEARER_REJ (message_p).ebi     = ebiP;
+//  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_CREATE_DEDICATED_BEARER_REJ ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ebiP);
+//  itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+//  OAILOG_FUNC_OUT(LOG_NAS);
+//}
+
+//------------------------------------------------------------------------------
 void nas_itti_pdn_config_req(
   unsigned int            ue_idP,
   const imsi_t           *const imsi_pP,
@@ -260,13 +292,44 @@ void nas_itti_pdn_connectivity_req(
 }
 
 //------------------------------------------------------------------------------
+void nas_itti_pdn_disconnect_req(
+  mme_ue_s1ap_id_t        ue_idP,
+  ebi_t                   default_ebi,
+  esm_proc_data_t        *proc_data_pP)
+{
+  OAILOG_FUNC_IN(LOG_NAS);
+  MessageDef *message_p = NULL;
+
+  AssertFatal(proc_data_pP  != NULL, "proc_data_pP param is NULL");
+
+
+  message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_PDN_DISCONNECT_REQ);
+
+  NAS_PDN_DISCONNECT_REQ(message_p).pdn_cid         = proc_data_pP->pdn_cid;
+  NAS_PDN_DISCONNECT_REQ(message_p).pti             = proc_data_pP->pti;
+  NAS_PDN_DISCONNECT_REQ(message_p).default_ebi     = default_ebi;
+  NAS_PDN_DISCONNECT_REQ(message_p).ue_id           = ue_idP;
+  bassign(NAS_PDN_DISCONNECT_REQ(message_p).apn, proc_data_pP->apn);
+
+  MSC_LOG_TX_MESSAGE(
+        MSC_NAS_MME,
+        MSC_MMEAPP_MME,
+        NULL,0,
+        "NAS_PDN_DISCONNECT_REQ ue id " MME_UE_S1AP_ID_FMT,
+        ue_idP);
+
+  itti_send_msg_to_task(TASK_MME_APP, INSTANCE_DEFAULT, message_p);
+
+  OAILOG_FUNC_OUT(LOG_NAS);
+}
+
+//------------------------------------------------------------------------------
 void nas_itti_ctx_req(
   const uint32_t        ue_idP,
   const guti_t        * const guti_p,
   tai_t         * const new_taiP,
   tai_t         * const last_visited_taiP,
   plmn_t         * const visited_plmnP,
-  Complete_Request_Message_Type_t request_type,
   bstring               request_msg)
 {
   OAILOG_FUNC_IN(LOG_NAS);
@@ -285,12 +348,9 @@ void nas_itti_ctx_req(
   /** UE_ID. */
   nas_context_req_p->ue_id = ue_idP;
   /** Complete Request Message. */
-  nas_context_req_p->request_type = request_type;
   nas_context_req_p->nas_msg = bstrcpy(request_msg);
   /** Originating TAI. */
   nas_context_req_p->originating_tai = *last_visited_taiP;
-  /** Visited PLMN. */
-  nas_context_req_p->visited_plmn  = *visited_plmnP;
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S10_MME, NULL, 0, "0 S10_CTX_REQ GUTI "GUTI_FMT" originating TAI " TAI_FMT " target_plmn "PLMN_FMT,
       GUTI_ARG(&nas_context_req_p->old_guti), TAI_FMT(last_visited_taiP), PLMN_ARG(visited_plmnP));

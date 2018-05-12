@@ -215,97 +215,6 @@ void mme_app_handle_s1ap_enb_deregistered_ind (const itti_s1ap_eNB_deregistered_
 }
 
 //------------------------------------------------------------------------------
-/**
- * Callback method called if UE is deregistered.
- * This method could be also put somewhere else.
- */
-int EmmCbS1apDeregistered(mme_ue_s1ap_id_t ueId){
-
-  MessageDef                    *message_p = NULL;
-  OAILOG_FUNC_IN (LOG_MME_APP);
-
-  /** Find the UE context. */
-  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ueId);
-  DevAssert(ue_context); /**< Should always exist. Any mobility issue in which this could occur? */
-  OAILOG_INFO(LOG_MME_APP, "Entered callback handler for UE-DEREGISTERED state of UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Not implicitly removing resources with state change "
-      "(must send an EMM_AS signal with ESTABLISH_REJ.. etc.). \n", ueId);
-  /*
-   * Reset the flags of the UE.
-   */
-  ue_context->subscription_known = SUBSCRIPTION_UNKNOWN;
-  // todo: this might be unnecessary
-  if(ue_context->pending_clear_location_request){
-    OAILOG_INFO(LOG_MME_APP, "Clearing the pending CLR for UE id " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-    ue_context->pending_clear_location_request = false;
-  }
-  OAILOG_FUNC_OUT (LOG_MME_APP);
-}
-
-//------------------------------------------------------------------------------
-/**
- * Callback method called if UE is registered.
- * This method could be also put somewhere else.
- */
-int EmmCbS1apRegistered(mme_ue_s1ap_id_t ueId){
-
-  MessageDef                    *message_p = NULL;
-
-  OAILOG_FUNC_IN (LOG_MME_APP);
-
-  /** Find the UE context. */
-  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ueId);
-  DevAssert(ue_context); /**< Should always exist. Any mobility issue in which this could occur? */
-
-  OAILOG_INFO(LOG_MME_APP, "Entered callback handler for UE-REGISTERED state of UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", ueId);
-  /** Trigger a Create Session Request. */
-  imsi64_t                                imsi64 = INVALID_IMSI64;
-  int                                     rc = RETURNok;
-
-  // todo: delete the s10 inter mme handover process
-  mme_app_delete_s10_procedure_inter_mme_handover(ue_context);
-
-  /** Check if there is a pending deactivation flag is set. */
-  if(ue_context->pending_bearer_deactivation){
-    OAILOG_INFO(LOG_MME_APP, "After UE entered UE_REGISTERED state, initiating bearer deactivation for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", ueId);
-    ue_context->pending_bearer_deactivation = false;
-    ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE;
-    // Notify S1AP to send UE Context Release Command to eNB.
-    mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
-  }else{
-    /*
-     * No pending bearer deactivation.
-     * Check if there is are any pending unestablished downlink bearers (DL-GTP Tunnel Information to the SAE-GW).
-     */
-    // todo: how to do this in multi apn?
-    pdn_context_t * registered_pdn_ctx = NULL;
-    bearer_context_t * bearer_context_to_establish = NULL;
-    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context_p->pdn_contexts) {
-      DevAssert(registered_pdn_ctx);
-
-      /**
-       * Get the first PDN whose bearers are not established yet.
-       * Do the MBR just one PDN at a time.
-       */
-      RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
-        DevAssert(bearer_context_to_establish);
-        /** Add them to the bearears list of the MBR. */
-        if (bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
-          OAILOG_INFO(LOG_MME_APP, "Found a PDN with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Sending MBR. \n", ueId);
-          /** Send the S11 MBR and return. */
-          // todo: error handling! this might occur if some error with OVS happens.
-          DevAssert(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx));
-          OAILOG_INFO(LOG_MME_APP, "Successfully sent MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Returning from REGISTRERED callback. \n", ueId);
-          OAILOG_FUNC_OUT (LOG_MME_APP);
-        }
-      }
-      registered_pdn_ctx = NULL;
-    }
-    OAILOG_ERROR(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", ueId);
-  }
-  OAILOG_FUNC_OUT (LOG_MME_APP);
-}
-
-//------------------------------------------------------------------------------
 int
 mme_app_handle_nas_pdn_connectivity_req (
   itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)
@@ -341,6 +250,41 @@ mme_app_handle_nas_pdn_connectivity_req (
 
   rc =  mme_app_send_s11_create_session_req (ue_context_p, nas_pdn_connectivity_req_pP->pdn_cid);
 
+  OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
+
+//------------------------------------------------------------------------------
+int
+mme_app_handle_nas_pdn_disconnect_req (
+  itti_nas_pdn_disconnect_req_t * const nas_pdn_disconnect_req_pP)
+{
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  struct ue_context_s                    *ue_context = NULL;
+  int                                     rc = RETURNok;
+
+  DevAssert (nas_pdn_disconnect_req_pP );
+
+  if ((ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, nas_pdn_disconnect_req_pP->ue_id)) == NULL) {
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, " NAS_PDN_DISCONNECT_REQ Unknown ueId" MME_UE_S1AP_ID_FMT, nas_pdn_disconnect_req_pP->ue_id);
+    OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this UeId " MME_UE_S1AP_ID_FMT". \n", nas_pdn_disconnect_req_pP->ue_id);
+    mme_ue_context_dump_coll_keys();
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  /** Check that the PDN session exist. */
+//  pdn_context_t *pdn_context = mme_app_get_pdn_context(ue_context, nas_pdn_disconnect_req_pP->pdn_cid, nas_pdn_disconnect_req_pP->default_ebi, NULL);
+//  if(!pdn_context){
+//    OAILOG_ERROR (LOG_MME_APP, "We could not find the PDN context with pci %d for ueId " MME_UE_S1AP_ID_FMT". \n", nas_pdn_disconnect_req_pP->pdn_cid, nas_pdn_disconnect_req_pP->ue_id);
+//    mme_ue_context_dump_coll_keys();
+//    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+//  }
+//
+//  bearer_context_t * bearer_context_to_deactivate = NULL;
+//  RB_FOREACH (bearer_context_to_deactivate, BearerPool, &ue_context->bearer_pool) {
+//    DevAssert(bearer_context_to_deactivate->bearer_state == BEARER_STATE_ACTIVE); // Cannot be in IDLE mode?
+//  }
+  /** Don't change the bearer state. Send Delete Session Request to SAE-GW. No transaction needed. */
+  rc =  mme_app_send_delete_session_request(ue_context, pdn_context->default_ebi,nas_pdn_disconnect_req_pP->pti pdn_context->context_identifier);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
@@ -714,6 +658,7 @@ mme_app_handle_delete_session_rsp (
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   struct ue_context_s                    *ue_context_p = NULL;
+  MessageDef                             *message_p = NULL;
 
   DevAssert (delete_sess_resp_pP );
   OAILOG_DEBUG (LOG_MME_APP, "Received S11_DELETE_SESSION_RESPONSE from S+P-GW with the ID " MME_UE_S1AP_ID_FMT "\n ",delete_sess_resp_pP->teid);
@@ -734,53 +679,47 @@ mme_app_handle_delete_session_rsp (
    */
   mme_app_desc.mme_ue_contexts.nb_bearers_managed--;
   mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat--;
-  // todo: we should handle the delete session response // pdn disconnectivity stricktly in NAS (also not suitable for multi APN)
-//  ue_context_p->mm_state = UE_UNREGISTERED;
-
-  S1ap_Cause_t            s1_ue_context_release_cause = {0};
-  s1_ue_context_release_cause.present = S1ap_Cause_PR_nas;
-  s1_ue_context_release_cause.choice.nas = S1ap_CauseNas_detach;
 
   /**
    * Object is later removed, not here. For unused keys, this is no problem, just deregistrate the tunnel ids for the MME_APP
    * UE context from the hashtable.
    * If this is not done, later at removal of the MME_APP UE context, the S11 keys will be checked and removed again if still existing.
-   *
-   * todo: For multi-apn, checking if more APNs exist or removing later?
    */
-  // todo: update coll keys with invalid keys
-//  hashtable_ts_remove(mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl,
-//      (const hash_key_t) ue_context_p->mme_teid_s11, &id);
-//  ue_context_p->mme_s11_teid = 0;
-//  ue_context_p->sgw_s11_teid = 0;
+  if(ue_context_p->num_pdns == 1){
+    /** This was the last PDN, removing the S11 TEID. */
+    hashtable_ts_remove(mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl,
+        (const hash_key_t) ue_context_p->mme_teid_s11, &id);
+    ue_context_p->mme_teid_s11 = INVALID_TEID;
+    /** SAE-GW TEID will be initialized when PDN context is purged. */
+  }
 
- //  if (delete_sess_resp_pP->cause != REQUEST_ACCEPTED) {
- //    OAILOG_WARNING (LOG_MME_APP, "***WARNING****S11 Delete Session Rsp: NACK received from SPGW : %08x\n", delete_sess_resp_pP->teid);
- //  }
- //  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_SESSION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
- //    delete_sess_resp_pP->teid, ue_context_p->imsi);
- //  /*
- //   * Updating statistics
- //   */
- //  update_mme_app_stats_s1u_bearer_sub();
- //  update_mme_app_stats_default_bearer_sub();
- //
+   if (delete_sess_resp_pP->cause != REQUEST_ACCEPTED) {
+     OAILOG_WARNING (LOG_MME_APP, "***WARNING****S11 Delete Session Rsp: NACK received from SPGW : %08x\n", delete_sess_resp_pP->teid);
+   }
+   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_SESSION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
+     delete_sess_resp_pP->teid, ue_context_p->imsi);
+   /*
+    * Updating statistics
+    */
+   update_mme_app_stats_s1u_bearer_sub();
+   update_mme_app_stats_default_bearer_sub();
+
    /**
     * No recursion needed any more. This will just inform the EMM/ESM that a PDN session has been deactivated.
-    * It will determine if its a PDN Disconnectivity or detach.
+    * It will determine what to do based on if its a PDN Disconnect Process or an (implicit) detach.
     */
    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_DISCONNECT_RSP);
    // do this because of same message types name but not same struct in different .h
    message_p->ittiMsg.nas_pdn_disconnect_rsp.ue_id           = ue_context_p->mme_ue_s1ap_id;
    message_p->ittiMsg.nas_pdn_disconnect_rsp.cause           = REQUEST_ACCEPTED;
-   message_p->ittiMsg.nas_pdn_disconnect_rsp.pdn_default_ebi = 5; /**< An indicator!. */
- //  message_p->ittiMsg.nas_pdn_disconnect_rsp.pti             = PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED; /**< todo: set the PTI received by UE (store in transaction). */
-   // todo: later add default ebi id or pdn name to check which PDN that was!
+   /*
+    * We don't have an indicator, the message may come out of order. The only true indicator would be the GTPv2c transaction, which we don't have.
+    * We use the esm_proc_data to find the correct PDN in ESM.
+    */
+   /** The only matching is made in the esm data context (pti specific). */
    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 
-
-
-//  mme_app_itti_ue_context_release(ue_context_p, s1_ue_context_release_cause /* cause */);
+   /** No S1AP release yet. */
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -1222,7 +1161,6 @@ mme_app_handle_initial_context_setup_rsp (
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-  // todo: where are these timers?
   // Stop Initial context setup process guard timer,if running
   if (ue_context_p->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
     if (timer_remove(ue_context_p->initial_context_setup_rsp_timer.id)) {
@@ -1254,7 +1192,7 @@ mme_app_handle_initial_context_setup_rsp (
       "Dropping Initial Context Setup Response. \n", ueId);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 
-found_pdn;
+found_pdn:
 //  /** Save the bearer information as pending or send it directly if UE is registered. */
 //  RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
 //    DevAssert(bearer_context_to_establish);

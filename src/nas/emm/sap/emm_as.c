@@ -334,7 +334,6 @@ static int _emm_as_recv (
   if (decoder_rc < 0) {
     OAILOG_WARNING (LOG_NAS_EMM, "EMMAS-SAP - Failed to decode NAS message " "(err=%d)\n", decoder_rc);
     *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-//    unlock_ue_contexts(ue_context);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
   }
 
@@ -351,7 +350,6 @@ static int _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-//      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
     rc = emm_recv_status (ue_id, &emm_msg->emm_status, emm_cause, decode_status);
@@ -388,7 +386,6 @@ static int _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-//      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
@@ -408,7 +405,6 @@ static int _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-//      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
@@ -487,7 +483,6 @@ static int _emm_as_recv (
        // Requirement MME24.301R10_4.4.4.3_2
        ((1 == decode_status->security_context_available) && (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-//      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
     break;
@@ -499,7 +494,6 @@ static int _emm_as_recv (
         ((0 == decode_status->integrity_protected_message) ||
        (0 == decode_status->mac_matched))) {
       *emm_cause = EMM_CAUSE_PROTOCOL_ERROR;
-//      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, decoder_rc);
     }
 
@@ -511,8 +505,6 @@ static int _emm_as_recv (
     *emm_cause = EMM_CAUSE_MESSAGE_TYPE_NOT_COMPATIBLE;
     break;
   }
-
-//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -1217,10 +1209,8 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
       } else {
         as_msg->err_code = AS_SUCCESS;
       }
-//      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
     }
-//    unlock_ue_contexts(ue_context);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, 0);

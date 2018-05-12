@@ -372,7 +372,7 @@ esm_recv_pdn_disconnect_request (
   else if (ebi != ESM_EBI_UNASSIGNED) {
     /*
      * 3GPP TS 24.301, section 7.3.2, case b
-     * * * * Reserved or assigned EPS bearer identity value
+     * * * * Reserved or assigned EPS bearer identity value (Transaction Related messages).
      */
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - Invalid EPS bearer identity (ebi=%d)\n", ebi);
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
@@ -381,33 +381,42 @@ esm_recv_pdn_disconnect_request (
   /*
    * Message processing
    */
+
+  /** Get the linked EBI. */
+  *linked_ebi = msg->linkedepsbeareridentity;
+
   /*
-   * Execute the PDN disconnect procedure requested by the UE
+   * Execute the PDN disconnect procedure requested by the UE.
+   * Validating the message in the context of the UE and finding the PDN context to remove (validating not last PDN).
+   * Triggering a Delete Session Request for the PDN.
+   *
    */
-  int pid = esm_proc_pdn_disconnect_request (emm_context, pti, &esm_cause);
+  int pid = esm_proc_pdn_disconnect_request (emm_context, pti, *linked_ebi, &esm_cause);
 
   if (pid != RETURNerror) {
     /*
      * Get the identity of the default EPS bearer context assigned to
      * * * * the PDN connection to disconnect from
      */
-    *linked_ebi = msg->linkedepsbeareridentity;
     /*
-     * Release the associated default EPS bearer context
+     * Check if it is a local release, if so directly release all bearers of the PDN connection and the PDN connection itself.
+     * If not, do a validation, only.
+     * Default bearer request will be sent in the esm_sap layer after this.
      */
-    int bid = 0;
-    int rc = esm_proc_eps_bearer_context_deactivate (emm_context, false, *linked_ebi, &pid, &bid, &esm_cause);
+    int rc = esm_proc_eps_bearer_context_deactivate (emm_context, false, ESM_SAP_ALL_EBI, pid, &esm_cause);
 
     if (rc != RETURNerror) {
       esm_cause = ESM_CAUSE_SUCCESS;
     }
   }
-
   /*
-   * Return the ESM cause value
+   * Return the ESM cause value.
+   * We sent the S11 Delete Session Request message and request default bearer removal from the UE.
    */
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, esm_cause);
 }
+
+
 
 //------------------------------------------------------------------------------
 esm_cause_t esm_recv_information_response (
@@ -838,10 +847,23 @@ esm_recv_deactivate_eps_bearer_context_accept (
 
   if (pid != RETURNerror) {
     /*
-     * Release all the resources reserved for the PDN
+     * Check if it was the default ebi. If so, release the pdn context.
+     * If not, respond with a delete bearer response back. Keep the UE context and PDN context as valid.
      */
-    int rc = esm_proc_pdn_disconnect_accept (emm_context, pid, &esm_cause);
-
+    pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context_t, pid, ESM_EBI_UNASSIGNED, NULL);
+    if(!pdn_context){
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No PDN context could be found. (pid=%d)\n", pid);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);
+    }
+    int rc = RETURNerror;
+    if(!pdn_context->is_active){
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the default EBI. Deregistering the PDN context. (ebi=%d,pid=%d)\n", ebi,pid);
+      rc = esm_proc_pdn_disconnect_accept (emm_context, pid, &esm_cause); /**< Delete Session Request is already sent at the beginning. We don't care for the response. */
+    }else{
+      OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - We released  the dedicated EBI. Responding with delete bearer response back. (ebi=%d,pid=%d)\n", ebi,pid);
+      nas_itti_dedicated_eps_bearer_deactivation_complete(emm_context->ue_id, pdn_context->default_ebi, pdn_context->context_identifier, ebi);
+      /** Successfully informed the MME_APP layer about the bearer deactivation. We are complete. */
+    }
     if (rc != RETURNerror) {
       esm_cause = ESM_CAUSE_SUCCESS;
     }
