@@ -107,12 +107,9 @@ esm_ebr_context_create (
   const proc_tid_t pti,
   pdn_cid_t pid,
   ebi_t ebi,
+  struct fteid_set_s * fteid_set,
   bool is_default,
-  const qci_t qci,
-  const bitrate_t gbr_dl,
-  const bitrate_t gbr_ul,
-  const bitrate_t mbr_dl,
-  const bitrate_t mbr_ul,
+  const bearer_qos_t *bearer_level_qos,
   traffic_flow_template_t * tft,
   protocol_configuration_options_t * pco)
 {
@@ -123,7 +120,10 @@ esm_ebr_context_create (
 
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_ctx = &emm_context->esm_ctx;
-  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                        *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+
+  pdn_context_t                       *pdn_context = mme_app_get_pdn_context(ue_context, pid); // todo: invalid/default values for other IDs..
+  DevAssert(pdn_context);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new %s EPS bearer context (ebi=%d) " "for PDN connection (pid=%d)\n",
       (is_default) ? "default" : "dedicated", ebi, pid);
@@ -156,15 +156,16 @@ esm_ebr_context_create (
    */
   pdn = &pdn_context->esm_data;
 
-  /*
-   * Until here only validation.
-   * Create new EPS bearer context.
-   */
-  if(mme_app_register_bearer_context(ue_context, ebi, pdn_context) == RETURNerror){
-    /** Error registering a new bearer context into the pdn session. */
-    OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - A EPS bearer context could not be allocated from the bearer pool into the session pool of the pdn context. \n");
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
-  }
+  // todo: moved to esm_ebr_assign
+//  /*
+//   * Until here only validation.
+//   * Create new EPS bearer context.
+//   */
+//  if(mme_app_register_bearer_context(ue_context, ebi, pdn_context) == RETURNerror){
+//    /** Error registering a new bearer context into the pdn session. */
+//    OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - A EPS bearer context could not be allocated from the bearer pool into the session pool of the pdn context. \n");
+//    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
+//  }
   bearer_context_t * bearer_context = mme_app_get_bearer_context(pdn_context, ebi);
   if(bearer_context){
     MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Registered Bearer ebi %u cid %u pti %u", ebi, pid, pti);
@@ -181,14 +182,14 @@ esm_ebr_context_create (
      * Setup the EPS bearer data
      */
 
-    bearer_context->qci = qci;
-    bearer_context->esm_ebr_context.gbr_dl = gbr_dl;
-    bearer_context->esm_ebr_context.gbr_ul = gbr_ul;
-    bearer_context->esm_ebr_context.mbr_dl = mbr_dl;
-    bearer_context->esm_ebr_context.mbr_ul = mbr_ul;
+    bearer_context->qci = bearer_level_qos->qci;
+    bearer_context->esm_ebr_context.gbr_dl = bearer_level_qos->gbr.br_dl;
+    bearer_context->esm_ebr_context.gbr_ul = bearer_level_qos->gbr.br_ul;
+    bearer_context->esm_ebr_context.mbr_dl = bearer_level_qos->mbr.br_dl;
+    bearer_context->esm_ebr_context.mbr_ul = bearer_level_qos->mbr.br_ul;
 
     if (bearer_context->esm_ebr_context.tft) {
-        free_traffic_flow_template(&bearer_context->esm_ebr_context.tft);
+      free_traffic_flow_template(&bearer_context->esm_ebr_context.tft);
     }
     bearer_context->esm_ebr_context.tft = tft;
 
@@ -197,13 +198,27 @@ esm_ebr_context_create (
     }
     bearer_context->esm_ebr_context.pco = pco;
 
+    /*
+     * Set the FTEIDs.
+     * It looks ugly here, but we don't have the EBI in the MME_APP when S11 CBR is received, and need also don't have the ebi's there yet.
+     */
+
+    //    Assert(!RB_INSERT (BearerFteids, &s11_proc_create_bearer->fteid_set, fteid_set)); /**< Find the correct FTEID later by using the S1U FTEID as key.. */
+    memcpy((void*)&bearer_context->s_gw_fteid_s1u , fteid_set->s1u_fteid, sizeof(fteid_t));
+    memcpy((void*)&bearer_context->p_gw_fteid_s5_s8_up , fteid_set->s5_fteid, sizeof(fteid_t));
+    // Todo: we cannot store them in a map, because when we evaluate the response, EBI is our key, which is not set here. That's why, we need to forward it to ESM.
+
+    /** Set the MME_APP states (todo: may be with Activate Dedicated Bearer Response). */
+    bearer_context->bearer_state   |= BEARER_STATE_SGW_CREATED;
+    bearer_context->bearer_state   |= BEARER_STATE_MME_CREATED;
+
     if (is_default) {
       /*
        * Set the PDN connection activation indicator
        */
-      ue_context->pdn_contexts[pid]->is_active = true;
+      pdn_context->is_active = true;
 
-      ue_context->pdn_contexts[pid]->default_ebi = ebi;
+      pdn_context->default_ebi = ebi;
       /*
        * Update the emergency bearer services indicator
        */

@@ -306,6 +306,121 @@ int esm_proc_pdn_connectivity_failure (emm_data_context_t * emm_context, pdn_cid
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
 }
 
+/****************************************************************************
+ **                                                                        **
+ ** Name:        esm_proc_pdn_config_res()                                 **
+ **                                                                        **
+ ** Description: Performs PDN config response processing. Decides on if a
+ **              PDN Connectivity has to be established or not.            **
+ **                                                                        **
+ **         Inputs:  ue_id:      UE local identifier                       **
+ **                  imsi:       IMSI of the UE                            **
+ **                  is_pdn_connectivity:  Set to true if a PDN            **
+ **                  connectivity has to be established.                   **
+ **                                                                        **
+ ** Outputs:     None                                                      **
+ **                  Return:    RETURNok, RETURNerror                      **
+ **                  Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi){
+  OAILOG_FUNC_IN (LOG_NAS_ESM);
+  ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  int                                     rc = RETURNok;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
+  ebi_t                                   new_ebi = 0;
+  pdn_context_t                          *pdn_context = NULL;
+  DevAssert(ue_context);
+
+  // todo: lock UE context
+
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Processing new subscription data handling from HSS (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_context->mme_ue_s1ap_id);
+
+  //----------------------------------------------------------------------------
+  // PDN selection here
+  // Because NAS knows APN selected by UE if any
+  // default APN selection
+  // todo: what if no pdn config for the UE requested APN
+  struct apn_configuration_s* apn_config = mme_app_select_apn(ue_context, emm_context->esm_ctx.esm_proc_data->apn);
+
+  if (!apn_config) {
+    /*
+     * Unfortunately we didn't find our default APN...
+     * todo: check if any specific procedures exist and abort them!
+     */
+    OAILOG_INFO (LOG_NAS_ESM, "No suitable APN found ue_id=" MME_UE_S1AP_ID_FMT ")\n",ue_context->mme_ue_s1ap_id);
+    return RETURNerror;
+  }
+
+  // search for an already set PDN context
+  for ((**pdn_cid) = 0; (**pdn_cid) < MAX_APN_PER_UE; (**pdn_cid)++) {
+
+    /** Check if a tunnel already exists depending on the flag. */
+    pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context, apn_config->context_identifier);
+    if(pdn_context){
+      OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "PDN context was found for UE " MME_UE_S1AP_ID_FMT" already. "
+          "(Assuming PDN connectivity is already established before ULA). Will update PDN/UE context information and continue with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
+      /** Not creating updated bearers. */
+      **is_pdn_connectivity = true;
+      /** Set the state of the ESM bearer context as ACTIVE (not setting as active if no TAU has followed). */
+      rc = esm_ebr_set_status (emm_context, pdn_context->default_ebi, ESM_EBR_ACTIVE, false);
+    }
+  }
+  /*
+   * Set the ESM Proc Data values.
+   * Update the UE context and PDN context information with it.
+   * todo: how to check that this is still our last ESM proc data?
+   */
+  if(emm_context->esm_ctx.esm_proc_data){
+    /*
+     * Execute the PDN connectivity procedure requested by the UE
+     */
+    emm_context->esm_ctx.esm_proc_data->pdn_cid = (**pdn_cid);
+    emm_context->esm_ctx.esm_proc_data->bearer_qos.qci       = apn_config->subscribed_qos.qci;
+    emm_context->esm_ctx.esm_proc_data->bearer_qos.pci       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
+    emm_context->esm_ctx.esm_proc_data->bearer_qos.pl        = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
+    emm_context->esm_ctx.esm_proc_data->bearer_qos.pvi       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
+    emm_context->esm_ctx.esm_proc_data->bearer_qos.gbr.br_ul = 0;
+    emm_context->esm_ctx.esm_proc_data->bearer_qos.gbr.br_dl = 0;
+    emm_context->esm_ctx.esm_proc_data->bearer_qos.mbr.br_ul = 0;
+    emm_context->esm_ctx.esm_proc_data->bearer_qos.mbr.br_dl = 0;
+      // TODO  "Better to throw emm_ctx->esm_ctx.esm_proc_data as a parameter or as a hidden parameter ?"
+    // todo: if PDN_CONTEXT exist --> we might need to send an ESM update message like MODIFY EPS BEARER CONTEXT REQUEST to the UE
+    rc = esm_proc_pdn_connectivity_request (emm_context,
+        emm_context->esm_ctx.esm_proc_data->pti,
+        emm_context->esm_ctx.esm_proc_data->pdn_cid,
+        apn_config->context_identifier,
+        emm_context->esm_ctx.esm_proc_data->request_type,
+        emm_context->esm_ctx.esm_proc_data->apn,
+        emm_context->esm_ctx.esm_proc_data->pdn_type,
+        emm_context->esm_ctx.esm_proc_data->pdn_addr,
+        &emm_context->esm_ctx.esm_proc_data->bearer_qos,
+        (emm_context->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_context->esm_ctx.esm_proc_data->pco:NULL,
+            &esm_cause,
+            &pdn_context);
+
+    // todo: optimize this
+    DevAssert(pdn_context);
+    if (rc != RETURNerror) {
+        /*
+         * Create local default EPS bearer context
+         */
+        if ((!is_pdn_connectivity) || ((is_pdn_connectivity) && (EPS_BEARER_IDENTITY_UNASSIGNED == pdn_context->default_ebi))) {
+          rc = esm_proc_default_eps_bearer_context (emm_context, emm_context->esm_ctx.esm_proc_data->pti, (**pdn_cid), &new_ebi, emm_context->esm_ctx.esm_proc_data->bearer_qos.qci, &esm_cause);
+        }
+        // todo: if the bearer already exist, we may modify the qos parameters with Modify_Bearer_Request!
+
+        if (rc != RETURNerror) {
+          esm_cause = ESM_CAUSE_SUCCESS;
+        }
+      } else {
+      }
+    }
+  //      unlock_ue_contexts(ue_context);
+        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
+}
+
+
 /****************************************************************************/
 /*********************  L O C A L    F U N C T I O N S  *********************/
 /****************************************************************************/
@@ -325,7 +440,7 @@ int esm_proc_pdn_connectivity_failure (emm_data_context_t * emm_context, pdn_cid
  ** Inputs:          ue_id:      UE local identifier                        **
  **                  ctx:       UE context                                 **
  **                  pti:       Procedure transaction identity             **
- **                  apn:       Access Point Name of the PDN connection    **
+ **                  Pan:       Access Point Name of the PDN connection    **
  **                  pdn_type:  PDN type (IPv4, IPv6, IPv4v6)              **
  **                  pdn_addr:  Network allocated PDN IPv4 or IPv6 address **
  **              is_emergency:  true if the PDN connection has to be esta- **

@@ -121,6 +121,11 @@ struct mme_app_timer_t {
   long sec;       /* The timer interval value in seconds  */
 };
 
+typedef struct fteid_set_s {
+  fteid_t s1u_fteid;
+  fteid_t s5_fteid;
+};
+
 /** @struct bearer_context_t
  *  @brief Parameters that should be kept for an eps bearer.
  */

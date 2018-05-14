@@ -123,6 +123,8 @@ int esm_proc_pdn_connectivity_reject(bool is_standalone, emm_data_context_t * em
                                      ebi_t ebi, bstring *msg, bool ue_triggered);
 int esm_proc_pdn_connectivity_failure(emm_data_context_t * emm_context, pdn_cid_t pid);
 
+int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi);
+
 /*
  * --------------------------------------------------------------------------
  *              PDN disconnect procedure
@@ -165,15 +167,26 @@ int esm_proc_default_eps_bearer_context_reject(emm_data_context_t * emm_context,
  *      Dedicated EPS bearer context activation procedure
  * --------------------------------------------------------------------------
  */
-int esm_proc_dedicated_eps_bearer_context(emm_data_context_t * emm_context, const proc_tid_t pti, pdn_cid_t pid,
-    ebi_t *ebi, ebi_t *default_ebi, const qci_t qci,
-    const bitrate_t gbr_dl,
-    const bitrate_t gbr_ul,
-    const bitrate_t mbr_dl,
-    const bitrate_t mbr_ul,
-    traffic_flow_template_t *tft,
-    protocol_configuration_options_t * pco,
+int esm_proc_dedicated_eps_bearer_context( emm_data_context_t * emm_context,
+    ebi_t  default_ebi,
+    const proc_tid_t   pti,
+    uint8_t num_bearers,
+    ebi_t *ebi,                              /**< Array of EBIs. */
+    traffic_flow_template_t **tft_array,
+    protocol_configuration_options_t ** pco,
+    ebi_t *default_ebi,
+    bearer_qos_t *qos_t,
     esm_cause_t *esm_cause);
+
+//    emm_data_context_t * emm_context, const proc_tid_t pti, pdn_cid_t pid,
+//    ebi_t *ebi, ebi_t *default_ebi, const qci_t qci,
+//    const bitrate_t gbr_dl,
+//    const bitrate_t gbr_ul,
+//    const bitrate_t mbr_dl,
+//    const bitrate_t mbr_ul,
+//    traffic_flow_template_t *tft,
+//    protocol_configuration_options_t * pco,
+//    esm_cause_t *esm_cause);
 
 int esm_proc_dedicated_eps_bearer_context_request(const bool is_standalone, emm_data_context_t * const emm_context, const ebi_t ebi, STOLEN_REF bstring *msg, const bool ue_triggered);
 

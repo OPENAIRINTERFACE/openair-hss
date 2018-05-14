@@ -147,9 +147,12 @@ esm_proc_default_eps_bearer_context (
 
   if (*ebi != ESM_EBI_UNASSIGNED) {
     /*
-     * Create default EPS bearer context
+     * Create default EPS bearer context.
+     * Null as Bearer Level QoS
      */
-    *ebi = esm_ebr_context_create (emm_context, pti, pid, *ebi, IS_DEFAULT_BEARER_YES, qci, 0, 0 , 0, 0, (traffic_flow_template_t *)NULL, (protocol_configuration_options_t*)NULL);
+    // todo: S1U SGW set before?
+    bearer_qos_t bearer_qos = {.qci = qci};
+    *ebi = esm_ebr_context_create (emm_context, pti, pid, *ebi, NULL, IS_DEFAULT_BEARER_YES, qci, &bearer_qos, (traffic_flow_template_t *)NULL, (protocol_configuration_options_t*)NULL);
 
     if (*ebi == ESM_EBI_UNASSIGNED) {
       /*

@@ -120,12 +120,16 @@ typedef struct mme_app_s11_proc_create_bearer_s {
   int                          num_status_received;
   // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
   s11_proc_bearer_status_t     bearer_status[BEARERS_PER_UE];
+//  RB_HEAD(BearerFteids, fteid_set_s) fteid_set;
 } mme_app_s11_proc_create_bearer_t;
 
 typedef enum {
   MME_APP_S1AP_PROC_TYPE_NONE = 0,
   MME_APP_S1AP_PROC_TYPE_INITIAL
 } mme_app_s1ap_proc_type_t;
+
+///* Declaration (prototype) of the function to store bearer contexts. */
+//RB_PROTOTYPE(BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
 
 void mme_app_delete_s11_procedures(ue_context_t * const ue_context_p);
 mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context_p);

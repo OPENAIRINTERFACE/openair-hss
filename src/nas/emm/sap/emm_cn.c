@@ -215,138 +215,59 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
-  struct emm_data_context_s              *emm_ctx = NULL;
+  struct emm_data_context_s              *emm_context = NULL;
   ue_context_t                           *ue_context;
-  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   pdn_context_t                          *pdn_context = NULL;
-  pdn_cid_t                               pdn_cid = 0;
-  ebi_t                                   new_ebi = 0;
   bool                                    is_pdn_connectivity = false;
+  esm_sap_t                               esm_sap = {0};
+  pdn_cid_t                               pdn_cid = 0;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
-  emm_ctx = emm_data_context_get(&_emm_data, msg_pP->ue_id);
+  emm_context = emm_data_context_get(&_emm_data, msg_pP->ue_id);
 
-  if (emm_ctx == NULL || ue_context == NULL) {
+  if (emm_context == NULL || ue_context == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
-  //----------------------------------------------------------------------------
-  // PDN selection here
-  // Because NAS knows APN selected by UE if any
-  // default APN selection
-  struct apn_configuration_s* apn_config = mme_app_select_apn(ue_context, emm_ctx->esm_ctx.esm_proc_data->apn);
+  /** Inform the ESM about the PDN Config Response. */
+  esm_sap.primitive = ESM_PDN_CONFIG_RES;
+  esm_sap.is_standalone = false;
+  esm_sap.ue_id = emm_context->ue_id;
+  esm_sap.ctx = emm_context;
+  esm_sap.recv = NULL;
+  esm_sap.data.pdn_pdn_config_res.pdn_cid             = &pdn_cid;
+  esm_sap.data.pdn_pdn_config_res.is_pdn_connectivity = &is_pdn_connectivity; /**< Default Bearer Id of default APN. */
+  esm_sap.data.pdn_pdn_config_res.imsi                = msg_pP->imsi64; /**< Context Identifier of default APN. */
+  esm_sap_send(&esm_sap);
 
-  if (!apn_config) {
+  if (!is_pdn_connectivity) { /**< We may have just created  a PDN context, but no connectivity yet. Assume pdn_connectivity is established when a PDN_Context already existed. */
+    nas_itti_pdn_connectivity_req (emm_context->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, &emm_context->_imsi,
+        emm_context->esm_ctx.esm_proc_data, emm_context->esm_ctx.esm_proc_data->request_type);
+  } else {
     /*
-     * Unfortunately we didn't find our default APN...
-     * todo: check if any specific procedures exist and abort them!
+     * We already have an ESM PDN connectivity (due handover).
+     * Like it is the case in PDN_CONNECTIVITY_RES, check the status and respond.
      */
-    OAILOG_INFO (LOG_NAS_ESM, "No suitable APN found ue_id=" MME_UE_S1AP_ID_FMT ")\n",ue_context->mme_ue_s1ap_id);
-    return RETURNerror;
-  }
-
-  // search for an already set PDN context
-  for (pdn_cid = 0; pdn_cid < MAX_APN_PER_UE; pdn_cid++) {
-
-    /** Check if a tunnel already exists depending on the flag. */
-    pdn_context_t pdn_context_key = {.apn_in_use = apn_config->service_selection, .context_identifier = apn_config->context_identifier}; // todo: check setting apn
-//    keyTunnel.ipv4AddrRemote = pUlpReq->u_api_info.initialReqInfo.peerIp;
-    pdn_context = RB_FIND (PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
-    //      if ((ue_context->pdn_contexts[pdn_cid]) && (ue_context->pdn_contexts[pdn_cid]->context_identifier == apn_config->context_identifier)) {
-    if(pdn_context){
-      OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "PDN context was found for UE " MME_UE_S1AP_ID_FMT" already. "
-          "(Assuming PDN connectivity is already established before ULA). Will update PDN/UE context information and continue with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
-      /** Not creating updated bearers. */
-      is_pdn_connectivity = true;
-      /** Set the state of the ESM bearer context as ACTIVE (not setting as active if no TAU has followed). */
-      rc = esm_ebr_set_status (emm_ctx, pdn_context->default_ebi, ESM_EBR_ACTIVE, false);
-
-    }
-
-  }
-  /*
-   * Set the ESM Proc Data values.
-   * Update the UE context and PDN context information with it.
-   * todo: how to check that this is still our last ESM proc data?
-   */
-  if(emm_ctx->esm_ctx.esm_proc_data){
-    /*
-     * Execute the PDN connectivity procedure requested by the UE
-     */
-    emm_ctx->esm_ctx.esm_proc_data->pdn_cid = pdn_cid;
-    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci       = apn_config->subscribed_qos.qci;
-    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pci       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_capability;
-    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pl        = apn_config->subscribed_qos.allocation_retention_priority.priority_level;
-    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.pvi       = apn_config->subscribed_qos.allocation_retention_priority.pre_emp_vulnerability;
-    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_ul = 0;
-    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.gbr.br_dl = 0;
-    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_ul = 0;
-    emm_ctx->esm_ctx.esm_proc_data->bearer_qos.mbr.br_dl = 0;
-      // TODO  "Better to throw emm_ctx->esm_ctx.esm_proc_data as a parameter or as a hidden parameter ?"
-    // todo: if PDN_CONTEXT exist --> we might need to send an ESM update message like MODIFY EPS BEARER CONTEXT REQUEST to the UE
-    rc = esm_proc_pdn_connectivity_request (emm_ctx,
-        emm_ctx->esm_ctx.esm_proc_data->pti,
-        emm_ctx->esm_ctx.esm_proc_data->pdn_cid,
-        apn_config->context_identifier,
-        emm_ctx->esm_ctx.esm_proc_data->request_type,
-        emm_ctx->esm_ctx.esm_proc_data->apn,
-        emm_ctx->esm_ctx.esm_proc_data->pdn_type,
-        emm_ctx->esm_ctx.esm_proc_data->pdn_addr,
-        &emm_ctx->esm_ctx.esm_proc_data->bearer_qos,
-        (emm_ctx->esm_ctx.esm_proc_data->pco.num_protocol_or_container_id ) ? &emm_ctx->esm_ctx.esm_proc_data->pco:NULL,
-            &esm_cause,
-            &pdn_context);
-
-    // todo: optimize this
-    DevAssert(pdn_context);
-    if (rc != RETURNerror) {
-        /*
-         * Create local default EPS bearer context
-         */
-        if ((!is_pdn_connectivity) || ((is_pdn_connectivity) && (EPS_BEARER_IDENTITY_UNASSIGNED == pdn_context->default_ebi))) {
-          rc = esm_proc_default_eps_bearer_context (emm_ctx, emm_ctx->esm_ctx.esm_proc_data->pti, pdn_cid, &new_ebi, emm_ctx->esm_ctx.esm_proc_data->bearer_qos.qci, &esm_cause);
-        }
-        // todo: if the bearer already exist, we may modify the qos parameters with Modify_Bearer_Request!
-
-        if (rc != RETURNerror) {
-          esm_cause = ESM_CAUSE_SUCCESS;
-        }
-      } else {
-  //      unlock_ue_contexts(ue_context);
-        OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
-      }
-
-    }
-    if (!is_pdn_connectivity) { /**< We may have just created  a PDN context, but no connectivity yet. Assume pdn_connectivity is established when a PDN_Context already existed. */
-      nas_itti_pdn_connectivity_req (emm_ctx->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, &emm_ctx->_imsi,
-          emm_ctx->esm_ctx.esm_proc_data, emm_ctx->esm_ctx.esm_proc_data->request_type);
-    } else {
+    if (is_nas_specific_procedure_tau_running(emm_context)){
+      OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Tracking Area Update Procedure is running. PDN Connectivity is already established with ULA. Continuing with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
+      // todo: checking if TAU_ACCEPT/TAU_REJECT is already sent or not..
       /*
-       * We already have an ESM PDN connectivity (due handover).
-       * Like it is the case in PDN_CONNECTIVITY_RES, check the status and respond.
+       * Send tracking area update accept message to the UE
        */
-      if (is_nas_specific_procedure_tau_running(emm_ctx)){
-        OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Tracking Area Update Procedure is running. PDN Connectivity is already established with ULA. Continuing with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
-        // todo: checking if TAU_ACCEPT/TAU_REJECT is already sent or not..
-        /*
-         * Send tracking area update accept message to the UE
-         */
-        rc = emm_cn_wrapper_tracking_area_update_accept(emm_ctx);
-        /** We will set the UE into COMMON-PROCEDURE-INITIATED state inside this method. */
-        OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
-      }else{
-        OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "TAU procedure is not running for UE associated to id " MME_UE_S1AP_ID_FMT ". ULA reiceved and PDN Connectivity is there. Performing an implicit detach..\n", msg_pP->ue_id);
-        _emm_cn_implicit_detach_ue(msg_pP->ue_id);
-        // todo: rejecting any specific procedures?
-        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
-      }
+      rc = emm_cn_wrapper_tracking_area_update_accept(emm_context);
+      /** We will set the UE into COMMON-PROCEDURE-INITIATED state inside this method. */
+      OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+    }else{
+      OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "TAU procedure is not running for UE associated to id " MME_UE_S1AP_ID_FMT ". ULA received and PDN Connectivity is there. Performing an implicit detach..\n", msg_pP->ue_id);
+      _emm_cn_implicit_detach_ue(msg_pP->ue_id);
+      // todo: rejecting any specific procedures?
+      OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
+  }
+  // todo: unlock UE contexts
 //    unlock_ue_contexts(ue_context);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
-  }
-//  unlock_ue_contexts(ue_context);
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
 }
 
 //------------------------------------------------------------------------------
@@ -759,6 +680,7 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNok;
+  /** Like PDN Config Response, directly forwarded to ESM. */
   // forward to ESM
   esm_sap_t                               esm_sap = {0};
 
@@ -768,23 +690,28 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
   esm_sap.ctx           = emm_context;
   esm_sap.is_standalone = true;
   esm_sap.ue_id         = msg->ue_id;
-  esm_sap.data.eps_dedicated_bearer_context_activate.cid         = msg->cid;
-  esm_sap.data.eps_dedicated_bearer_context_activate.ebi         = msg->ebi;
-  esm_sap.data.eps_dedicated_bearer_context_activate.linked_ebi  = msg->linked_ebi;
-  esm_sap.data.eps_dedicated_bearer_context_activate.tft         = msg->tft;
-  esm_sap.data.eps_dedicated_bearer_context_activate.qci         = msg->bearer_qos.qci;
-  esm_sap.data.eps_dedicated_bearer_context_activate.gbr_ul      = msg->bearer_qos.gbr.br_ul;
-  esm_sap.data.eps_dedicated_bearer_context_activate.gbr_dl      = msg->bearer_qos.gbr.br_dl;
-  esm_sap.data.eps_dedicated_bearer_context_activate.mbr_ul      = msg->bearer_qos.mbr.br_ul;
-  esm_sap.data.eps_dedicated_bearer_context_activate.mbr_dl      = msg->bearer_qos.mbr.br_dl;
-  // stole ref if any
-  msg->tft = NULL;
-  esm_sap.data.eps_dedicated_bearer_context_activate.pco         = msg->pco;
-  // stole ref if any
-  msg->pco = NULL;
+  memcpy((void*)&esm_sap.data.eps_dedicated_bearer_context_activate, msg, sizeof(emm_cn_activate_dedicated_bearer_req_t)); // todo: pointer directly?
+//      cid         = msg->cid;
+//  esm_sap.data.eps_dedicated_bearer_context_activate.linked_ebi  = msg->linked_ebi;
+//
+//  /** Fill the bearer context values. */
+//  for(int i = 0; i < msg->)
+//  esm_sap.data.eps_dedicated_bearer_context_activate.ebi         = msg->ebi;
+//
+//  esm_sap.data.eps_dedicated_bearer_context_activate.tft         = msg->tft;
+//  esm_sap.data.eps_dedicated_bearer_context_activate.qci         = msg->bearer_qos.qci;
+//  esm_sap.data.eps_dedicated_bearer_context_activate.gbr_ul      = msg->bearer_qos.gbr.br_ul;
+//  esm_sap.data.eps_dedicated_bearer_context_activate.gbr_dl      = msg->bearer_qos.gbr.br_dl;
+//  esm_sap.data.eps_dedicated_bearer_context_activate.mbr_ul      = msg->bearer_qos.mbr.br_ul;
+//  esm_sap.data.eps_dedicated_bearer_context_activate.mbr_dl      = msg->bearer_qos.mbr.br_dl;
+//  // stole ref if any
+//  msg->tft = NULL;
+//  esm_sap.data.eps_dedicated_bearer_context_activate.pco         = msg->pco;
+//  // stole ref if any
+//  msg->pco = NULL;
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u",
-      esm_sap.ue_id,esm_sap.data.eps_dedicated_bearer_context_activate.ebi);
+  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_ESM_MME, NULL, 0, "0 ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ ue id " MME_UE_S1AP_ID_FMT /*" ebi %u"*/,
+      esm_sap.ue_id,/*esm_sap.data.eps_dedicated_bearer_context_activate.ebi*/);
 
   rc = esm_sap_send (&esm_sap);
 

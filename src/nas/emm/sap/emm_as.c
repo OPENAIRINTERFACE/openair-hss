@@ -1010,6 +1010,7 @@ static int _emm_as_send (const emm_as_t * msg)
     break;
 
   case _EMMAS_ERAB_SETUP_REQ:
+    // todo: make array of NAS messages in 1 S1AP E-RABSetupRequest message!
     as_msg.msg_id = _emm_as_erab_setup_req (&msg->u.activate_bearer_context_req, &as_msg.msg.activate_bearer_context_req);
     break;
 
@@ -1590,15 +1591,12 @@ static int _emm_as_erab_setup_req (const emm_as_activate_bearer_context_req_t * 
   if (size > 0) {
     int                                     bytes = 0;
     emm_security_context_t                 *emm_security_context = NULL;
-    struct emm_data_context_s                   *emm_ctx = NULL;
-    ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
+    emm_data_context_t                     *emm_context = emm_data_context_get(&_emm_data, msg->ue_id);
 
-    if (ue_context) {
-      emm_ctx = &ue_context->emm_context;
-      if (emm_ctx) {
-        if (IS_EMM_CTXT_PRESENT_SECURITY(emm_ctx)) {
-          emm_security_context = &emm_ctx->_security;
-        }
+    emm_context = emm_context_get (&_emm_data, msg->ue_id);
+    if (emm_context) {
+      if (IS_EMM_CTXT_PRESENT_SECURITY(emm_context)) {
+        emm_security_context = &emm_context->_security;
       }
     }
 
@@ -1619,7 +1617,6 @@ static int _emm_as_erab_setup_req (const emm_as_activate_bearer_context_req_t * 
       bytes = _emm_as_encrypt (&as_msg->nas_msg, &nas_msg.header, msg->nas_msg->data, size, emm_security_context);
     }
 
-    unlock_ue_contexts(ue_context);
     if (bytes > 0) {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_ACTIVATE_BEARER_CONTEXT_REQ);
     }
@@ -1627,6 +1624,7 @@ static int _emm_as_erab_setup_req (const emm_as_activate_bearer_context_req_t * 
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, 0);
 }
+
 /****************************************************************************
  **                                                                        **
  ** Name:    _emm_as_establish_cnf()                                   **

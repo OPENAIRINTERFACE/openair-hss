@@ -124,11 +124,16 @@ typedef struct itti_mme_app_create_dedicated_bearer_req_s {
   /* UE identifier */
   mme_ue_s1ap_id_t                  ue_id;
   pdn_cid_t                         cid;
-  ebi_t                             ebi;
   ebi_t                             linked_ebi;
-  bearer_qos_t                      bearer_qos;
-  traffic_flow_template_t           *tft;
-  protocol_configuration_options_t  *pco;
+  uint8_t                           num_bearers;
+  /** No EBI will set yet. */
+  struct fteid_set_s               *fteid_set[BEARERS_PER_UE];
+  ebi_t                             ebis[BEARERS_PER_UE];
+  s1u_teid_t                        saegw_s1u_teid[BEARERS_PER_UE];
+  traffic_flow_template_t          *tfts[BEARERS_PER_UE];
+  bearer_qos_t                      bearer_qos_vals[BEARERS_PER_UE];
+
+  protocol_configuration_options_t *pcos[BEARERS_PER_UE];
 } itti_mme_app_create_dedicated_bearer_req_t;
 
 typedef struct itti_mme_app_create_dedicated_bearer_rsp_s {

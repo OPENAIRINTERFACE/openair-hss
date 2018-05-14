@@ -214,6 +214,10 @@ esm_sap_send (esm_sap_t * msg)
     }
     break;
 
+  case ESM_PDN_CONFIG_RES:
+    rc = esm_proc_pdn_config_res(msg->ctx, &msg->data.pdn_pdn_config_res.is_pdn_connectivity, &msg->data.pdn_pdn_config_res.is_pdn_connectivity, msg->data.pdn_pdn_config_res.imsi);
+    break;
+
   case ESM_PDN_DISCONNECT_REJ:
     break;
 
@@ -247,32 +251,28 @@ esm_sap_send (esm_sap_t * msg)
     break;
 
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_REQ: {
-      esm_eps_dedicated_bearer_context_activate_t* bearer_activate = &msg->data.eps_dedicated_bearer_context_activate;
-      if (msg->is_standalone) {
-        esm_cause_t esm_cause;
-        rc = esm_proc_dedicated_eps_bearer_context (msg->ctx,
-            0,
-            bearer_activate->cid,
-            &bearer_activate->ebi,
-            &bearer_activate->linked_ebi,
-            bearer_activate->qci,
-            bearer_activate->gbr_dl,
-            bearer_activate->gbr_ul,
-            bearer_activate->mbr_dl,
-            bearer_activate->mbr_ul,
-            bearer_activate->tft,
-            bearer_activate->pco,
-            &esm_cause);
-        if (rc != RETURNok) {
-          break;
-        }
-        /* Send PDN connectivity request */
-
-        rc = _esm_sap_send(ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST,
-            msg->is_standalone, msg->ctx, (proc_tid_t)0 , bearer_activate->ebi,
-            &msg->data, msg->send);
+    esm_eps_create_dedicated_bearer_req_t* bearer_activate = &msg->data.eps_dedicated_bearer_context_activate;
+    if (msg->is_standalone) {
+      esm_cause_t esm_cause;
+      rc = esm_proc_dedicated_eps_bearer_context (msg->ctx,
+          bearer_activate->linked_ebi,
+          0,
+          bearer_activate->cid,
+          &bearer_activate->num_bearers,
+          bearer_activate->ebis,
+          bearer_activate->tfts,
+          bearer_activate->pcos,
+          bearer_activate->bearer_qos_vals,
+          &esm_cause);
+      if (rc != RETURNok) {
+        break;
       }
+      /* Send Activate Dedicated Bearer Context Request */
+      rc = _esm_sap_send(ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST,
+          msg->is_standalone, msg->ctx, (proc_tid_t)0 , bearer_activate->ebi,
+          &msg->data, msg->send);
     }
+  }
     break;
 
   case ESM_DEDICATED_EPS_BEARER_CONTEXT_ACTIVATE_CNF:
@@ -289,21 +289,6 @@ esm_sap_send (esm_sap_t * msg)
 
   case ESM_EPS_BEARER_CONTEXT_MODIFY_REJ:
     break;
-//
-//  case ESM_EPS_BEARER_CONTEXT_DEACTIVATE_REQ:{
-//      int                                     bid = BEARERS_PER_UE;
-//
-//      /*
-//       * Locally deactivate EPS bearer context
-//       */
-//      rc = esm_proc_eps_bearer_context_deactivate (msg->ctx, true, msg->data.eps_bearer_context_deactivate.ebi, &pid, &bid, NULL);
-//
-//      // TODO Assertion bellow is not true now:
-//      // If only default bearer is supported then release PDN connection as well - Implicit Detach
-//      _pdn_connectivity_delete (msg->ctx, pid);
-//
-//    }
-//    break;
 
   case ESM_UNITDATA_IND:
     rc = _esm_sap_recv (-1, msg->is_standalone, msg->ctx, msg->recv, msg->send, &msg->err);
@@ -844,20 +829,25 @@ _esm_sap_send (
     break;
 
   case ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST: {
-      const   esm_eps_dedicated_bearer_context_activate_t *msg = &data->eps_dedicated_bearer_context_activate;
+      const   esm_eps_create_dedicated_bearer_req_t *msg = &data->eps_dedicated_bearer_context_activate;
 
       EpsQualityOfService eps_qos = {0};
 
-      rc = qos_params_to_eps_qos(msg->qci, msg->mbr_dl, msg->mbr_ul, msg->gbr_dl, msg->gbr_ul,
-          &eps_qos, false);
+      /** todo: put them all into a single bearer context. */
+      // todo: conversion of bitrates
+      for(int num_bc = 0; num_bc < msg->num_bearers; num_bc++){
+        rc = qos_params_to_eps_qos(msg->bearer_qos_vals[num_bc].qci, msg->bearer_qos_vals[num_bc].mbr.br_dl, msg->bearer_qos_vals[num_bc].mbr.br_ul, msg->bearer_qos_vals[num_bc].gbr.br_dl, msg->bearer_qos_vals[num_bc].gbr.br_ul,
+            &eps_qos, false);
 
-      if (RETURNok == rc) {
-        rc = esm_send_activate_dedicated_eps_bearer_context_request (
-            pti, msg->ebi,
-            &esm_msg.activate_dedicated_eps_bearer_context_request,
-            msg->linked_ebi, &eps_qos, msg->tft, msg->pco);
+        if (RETURNok == rc) {
+          rc = esm_send_activate_dedicated_eps_bearer_context_request (
+              pti, msg->ebis[num_bc],
+              &esm_msg.activate_dedicated_eps_bearer_context_request,
+              msg->linked_ebi, &eps_qos, msg->tfts[num_bc], msg->pcos[num_bc]);
 
-        esm_procedure = esm_proc_dedicated_eps_bearer_context_request;
+          esm_procedure = esm_proc_dedicated_eps_bearer_context_request;
+
+      }
       }
     }
     break;

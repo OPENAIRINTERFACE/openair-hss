@@ -47,35 +47,35 @@
 #include "mme_app_bearer_context.h"
 
 
-/*---------------------------------------------------------------------------
-   Bearer Context RBTree Search Data Structure
-  --------------------------------------------------------------------------*/
-
-/**
-  Comparator funtion for comparing two ebis.
-
-  @param[in] a: Pointer to bearer context a.
-  @param[in] b: Pointer to bearer context b.
-  @return  An integer greater than, equal to or less than zero according to whether the
-  object pointed to by a is greater than, equal to or less than the object pointed to by b.
-*/
-
-static
-inline int32_t                    mme_app_compare_bearer_context(
-    struct bearer_context_s *a,
-    struct bearer_context_s *b) {
-    if (a->ebi > b->ebi )
-      return 1;
-
-    if (a->ebi < b->ebi)
-      return -1;
-
-    /* Not more field to compare. */
-    return 0;
-}
-
-RB_GENERATE (BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
-
+///*---------------------------------------------------------------------------
+//   Bearer Context RBTree Search Data Structure
+//  --------------------------------------------------------------------------*/
+//
+///**
+//  Comparator funtion for comparing two ebis.
+//
+//  @param[in] a: Pointer to bearer context a.
+//  @param[in] b: Pointer to bearer context b.
+//  @return  An integer greater than, equal to or less than zero according to whether the
+//  object pointed to by a is greater than, equal to or less than the object pointed to by b.
+//*/
+//
+//static
+//inline int32_t                    mme_app_compare_bearer_context(
+//    struct bearer_context_s *a,
+//    struct bearer_context_s *b) {
+//    if (a->ebi > b->ebi )
+//      return 1;
+//
+//    if (a->ebi < b->ebi)
+//      return -1;
+//
+//    /* Not more field to compare. */
+//    return 0;
+//}
+//
+//RB_GENERATE (BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
+//
 
 /*---------------------------------------------------------------------------
    PDN Context RBTree Search Data Structure

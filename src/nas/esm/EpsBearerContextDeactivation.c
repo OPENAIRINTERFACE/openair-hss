@@ -165,16 +165,18 @@ esm_proc_eps_bearer_context_deactivate (
        * Locally release the specified EPS bearer context
        */
       rc = _eps_bearer_release (ue_context, ebi, pid);
-    } else {
-      /*
-       * Locally release all the PDN context.
-       * No NAS ITTI S11 Delete Session Request message will be sent (we must have removed them already, with PDN Disconnect Request processing).
-       */
-      rc = _pdn_context_release (ue_context, pdn_context, pid);
-      if (rc != RETURNok) {
-        break;
-      }
     }
+    // todo: rework
+//    else {
+//      /*
+//       * Locally release all the PDN context.
+//       * No NAS ITTI S11 Delete Session Request message will be sent (we must have removed them already, with PDN Disconnect Request processing).
+//       */
+//      rc = _pdn_context_release (ue_context, pdn_context, pid);
+//      if (rc != RETURNok) {
+//        break;
+//      }
+//    }
     /** Return after releasing. */
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
   }
