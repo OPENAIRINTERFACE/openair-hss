@@ -120,7 +120,10 @@ typedef struct mme_app_s11_proc_create_bearer_s {
   int                          num_status_received;
   // TODO here give a NAS/S1AP/.. reason -> GTPv2-C reason
   s11_proc_bearer_status_t     bearer_status[BEARERS_PER_UE];
-//  RB_HEAD(BearerFteids, fteid_set_s) fteid_set;
+
+  LIST_HEAD(bearer_contexts_sucess_s, bearer_context_s) *bearer_contexts_success;
+  LIST_HEAD(bearer_contexts_failed_s, bearer_context_s) *bearer_contexts_failed;
+
 } mme_app_s11_proc_create_bearer_t;
 
 typedef enum {

@@ -1373,22 +1373,41 @@ mme_app_handle_s11_create_bearer_req (
 void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_setup_rsp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                 *ue_context_p = NULL;
-  bool                                    send_s11_response = false;
+  struct ue_context_s                 *ue_context = NULL;
+  bool                                 send_s11_response = false;
+  /** Add the bearers into the procedure. */
+  mme_app_s11_proc_create_bearer_t *s11_proc_create_bearer = mme_app_get_s11_procedure_create_bearer(ue_context);
+  /** Put it into the procedure. */
+  if(s11_proc_create_bearer){
+    // todo: memleaks..
+    OAILOG_DEBUG (LOG_MME_APP, "No S11 Create Bearer Procedure existing. Dropping the message for UE: " MME_UE_S1AP_ID_FMT "\n", e_rab_setup_rsp->mme_ue_s1ap_id);
+    MSC_LOG_EVENT (MSC_MMEAPP_MME, " S1AP_E_RAB_SETUP_RSP Missing procedure for ue " MME_UE_S1AP_ID_FMT "\n", e_rab_setup_rsp->mme_ue_s1ap_id);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
 
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, e_rab_setup_rsp->mme_ue_s1ap_id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, e_rab_setup_rsp->mme_ue_s1ap_id);
 
-  if (ue_context_p == NULL) {
+  if (ue_context == NULL) {
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", e_rab_setup_rsp->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_MMEAPP_MME, " S1AP_E_RAB_SETUP_RSP Unknown ue " MME_UE_S1AP_ID_FMT "\n", e_rab_setup_rsp->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
+  /** Get the first PDN Context. */
+  pdn_context_t * pdn_context = RB_MIN(PdnContexts, ue_context->pdn_contexts);
+  DevAssert(pdn_context);
   // todo: s1u_saegw_fteid should be set!
 
   for (int i = 0; i < e_rab_setup_rsp->e_rab_setup_list.no_of_items; i++) {
     e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_setup_list.item[i].e_rab_id;
-    bearer_context_t * bc = mme_app_get_session_bearer_context_from_all(ue_context_p, (ebi_t) e_rab_id);
+    bearer_context_t * bc = mme_app_get_session_bearer_context_from_all(ue_context, (ebi_t) e_rab_id);
     if (bc->bearer_state & BEARER_STATE_SGW_CREATED) {
+
+
+      // todo: need to check the bearer status! if NAS reject is received, put this into failed bearer list.
+      // todo: s11_proc_create->bearer_status[EBI_TO_INDEX(ebi)]
+
+
+
       bc->enb_fteid_s1u.teid = e_rab_setup_rsp->e_rab_setup_list.item[i].gtp_teid;
       // Do not process transport_layer_address now
       //bstring e_rab_setup_rsp->e_rab_setup_list.item[i].transport_layer_address;
@@ -1417,70 +1436,41 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
 
       if (ESM_EBR_ACTIVE == bc->esm_ebr_context.status) {
         send_s11_response = true;
+        /** Add the bearer context to the list of established bearers. */
+        LIST_INSERT_HEAD(s11_proc_create_bearer->bearer_contexts_success, bc, bc->temp_entries);
+      }else if (s11_proc_create_bearer->bearer_status[EBI_TO_INDEX(bc->ebi)] == S11_PROC_BEARER_FAILED){
+        /** A NAS reject has been received for this bearer. */
+        LIST_INSERT_HEAD(s11_proc_create_bearer->bearer_contexts_failed, bc, bc->temp_entries);
       }
     }
   }
+
   for (int i = 0; i < e_rab_setup_rsp->e_rab_failed_to_setup_list.no_of_items; i++) {
     e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_failed_to_setup_list.item[i].e_rab_id;
-    bearer_context_t * bc = mme_app_get_session_bearer_context_from_all(ue_context_p, (ebi_t) e_rab_id);
+    bearer_context_t * bc = mme_app_get_session_bearer_context_from_all(ue_context, (ebi_t) e_rab_id);
+    /** Deregister the MME_APP bearer context. */
     if (bc->bearer_state & BEARER_STATE_SGW_CREATED) {
-      send_s11_response = true;
+      if(!bearer_contexts_success || send_s11_response) /**< If there were no successfull bearers or NAS response has been received, continue with Create Bearer Response. */
+        send_s11_response = true; /**< Send directly a failure response.  todo: not waiting for NAS in this case? */
       //S1ap_Cause_t cause = e_rab_setup_rsp->e_rab_failed_to_setup_list.item[i].cause;
       AssertFatal(bc->bearer_state & BEARER_STATE_MME_CREATED, "TO DO check bearer state");
       bc->bearer_state &= (~BEARER_STATE_ENB_CREATED);
       bc->bearer_state &= (~BEARER_STATE_MME_CREATED);
+      /** Add the bearer context to the list of rejected bearers. */
+      LIST_INSERT_HEAD(s11_proc_create_bearer->bearer_contexts_failed, bc, bc->temp_entries);
     }
   }
 
   // check if UE already responded with NAS (may depend on eNB implementation?) -> send response to SGW
   if (send_s11_response) {
-    MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, S11_CREATE_BEARER_RESPONSE);
-    AssertFatal (message_p , "itti_alloc_new_message Failed");
-    itti_s11_create_bearer_response_t *s11_create_bearer_response = &message_p->ittiMsg.s11_create_bearer_response;
-    s11_create_bearer_response->local_teid = ue_context_p->mme_teid_s11;
-    s11_create_bearer_response->trxn = NULL;
-    s11_create_bearer_response->cause.cause_value = 0;
-    int msg_bearer_index = 0;
-
-    for (int i = 0; i < e_rab_setup_rsp->e_rab_setup_list.no_of_items; i++) {
-      e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_setup_list.item[i].e_rab_id;
-      bearer_context_t * bc = mme_app_get_session_bearer_context_from_all(ue_context_p, (ebi_t) e_rab_id);
-      if (bc->bearer_state & BEARER_STATE_ENB_CREATED) {
-        s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
-        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].eps_bearer_id = e_rab_id;
-        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause.cause_value = REQUEST_ACCEPTED;
-        //  FTEID eNB
-        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_enb_fteid = bc->enb_fteid_s1u;
-
-        // FTEID SGW S1U
-        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].s1u_sgw_fteid = bc->s_gw_fteid_s1u;       ///< This IE shall be sent on the S11 interface. It shall be used
-        s11_create_bearer_response->bearer_contexts.num_bearer_context++;
-      }
-    }
-
-    for (int i = 0; i < e_rab_setup_rsp->e_rab_setup_list.no_of_items; i++) {
-      e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_setup_list.item[i].e_rab_id;
-      bearer_context_t * bc = mme_app_get_bearer_context(ue_context_p, (ebi_t) e_rab_id);
-      if (bc->bearer_state & BEARER_STATE_MME_CREATED) {
-        if (REQUEST_ACCEPTED == s11_create_bearer_response->cause.cause_value) {
-          s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED_PARTIALLY;
-        } else {
-          s11_create_bearer_response->cause.cause_value = REQUEST_REJECTED;
-        }
-        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].eps_bearer_id = e_rab_id;
-        s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].cause.cause_value = REQUEST_REJECTED; // TODO translation of S1AP cause to SGW cause
-        s11_create_bearer_response->bearer_contexts.num_bearer_context++;
-        bc->bearer_state = BEARER_STATE_NULL;
-      }
-    }
-
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
-        NULL, 0, "0 S11_CREATE_BEARER_RESPONSE teid %u", s11_create_bearer_response->teid);
-    itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-  } else {
-    // not send S11 response
-    // TODO create a procedure with bearers to receive a response from NAS
+    mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context->s_gw_teid_s11_s4, s11_proc_create_bearer->bearer_contexts_success, s11_proc_create_bearer->bearer_contexts_failed);
+    /** Delete the procedure if it exists. */
+    mme_app_delete_s11_procedure_create_bearer(ue_context);
+  }else{
+    OAILOG_WARNING(LOG_MME_APP, "Not sending S11 Create Bearer Response to UE: " MME_UE_S1AP_ID_FMT "\n", ue_context->ue_id);
+    /** With ESM response, we will send the bearers. */
   }
+
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -1488,30 +1478,43 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
 void mme_app_handle_create_dedicated_bearer_rsp (itti_mme_app_create_dedicated_bearer_rsp_t   * const create_dedicated_bearer_rsp)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                 *ue_context_p = NULL;
+  struct ue_context_s                 *ue_context = NULL;
+  /** Get the first PDN Context. */
+  pdn_context_t * pdn_context = RB_MIN(PdnContexts, ue_context->pdn_contexts);
+  DevAssert(pdn_context);
 
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, create_dedicated_bearer_rsp->ue_id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, create_dedicated_bearer_rsp->ue_id);
 
-  if (ue_context_p == NULL) {
+  if (ue_context == NULL) {
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rsp->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-  // TODO:
-  // Actually do it simple, because it appear we have to wait for NAS procedure reworking (work in progress on another branch)
-  // for responding to S11 without mistakes (may be the create bearer procedure can be impacted by a S1 ue context release or
-  // a UE originating  NAS procedure)
-  mme_app_s11_proc_create_bearer_t *s11_proc_create = mme_app_get_s11_procedure_create_bearer(ue_context_p);
-  if (s11_proc_create) {
+  /*
+   * TS 23.401: 5.4.1: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
+   *
+   * The itti message will be sent directly by MME APP or by ESM layer, depending on the order of the messages.
+   *
+   * So we check the state of the bearers.
+   * The indication that S11 Create Bearer Response should be sent to the SAE-GW, should be sent by ESM/NAS layer.
+   */
+  mme_app_s11_proc_create_bearer_t *s11_proc_create_bearer = mme_app_get_s11_procedure_create_bearer(ue_context);
+  if (s11_proc_create_bearer) {
     ebi_t ebi = create_dedicated_bearer_rsp->ebi;
-
-    s11_proc_create->num_status_received++;
-    s11_proc_create->bearer_status[EBI_TO_INDEX(ebi)] = S11_PROC_BEARER_SUCCESS;
+    s11_proc_create_bearer->num_status_received++;
+    s11_proc_create_bearer->bearer_status[EBI_TO_INDEX(ebi)] = S11_PROC_BEARER_SUCCESS;
     // if received all bearers creation results
-    if (s11_proc_create->num_status_received == s11_proc_create->num_bearers) {
-      mme_app_s11_procedure_create_bearer_send_response(ue_context_p, s11_proc_create);
-      mme_app_delete_s11_procedure_create_bearer(ue_context_p);
+    if (s11_proc_create_bearer->num_status_received == s11_proc_create_bearer->num_bearers) { /**< If all NAS responses have arrived. Additionally check if the lists are filled. */
+      if(s11_proc_create_bearer->bearer_contexts_failed || s11_proc_create_bearer->bearer_contexts_success){
+//        mme_app_s11_procedure_create_bearer_send_response(ue_context_p, s11_proc_create);
+        mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context->s_gw_teid_s11_s4, s11_proc_create_bearer->bearer_contexts_success, s11_proc_create_bearer->bearer_contexts_failed);
+        mme_app_delete_s11_procedure_create_bearer(ue_context);
+      }else{
+        OAILOG_WARNING(LOG_MME_APP, "No response from S1AP received yet for UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rsp->ue_id);
+      }
     }
+  }else{
+    /** No S11 CBReq procedure exists. We already might have dealt with it. */
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -1520,35 +1523,46 @@ void mme_app_handle_create_dedicated_bearer_rsp (itti_mme_app_create_dedicated_b
 void mme_app_handle_create_dedicated_bearer_rej (itti_mme_app_create_dedicated_bearer_rej_t   * const create_dedicated_bearer_rej)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                 *ue_context_p = NULL;
+  struct ue_context_s                 *ue_context = NULL;
+  /** Get the first PDN Context. */
+  pdn_context_t * pdn_context = RB_MIN(PdnContexts, ue_context->pdn_contexts);
+  DevAssert(pdn_context);
 
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, create_dedicated_bearer_rej->ue_id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, create_dedicated_bearer_rej->ue_id);
 
-  if (ue_context_p == NULL) {
+  if (ue_context == NULL) {
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rej->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-//  if (!ue_context_p->is_s1_ue_context_release) {
+  /*
+   * TS 23.401: 5.4.1: The MME shall be prepared to receive this message either before or after the Session Management Response message (sent in step 9).
+   *
+   * The itti message will be sent directly by MME APP or by ESM layer, depending on the order of the messages.
+   *
+   * So we check the state of the bearers.
+   * The indication that S11 Create Bearer Response should be sent to the SAE-GW, should be sent by ESM/NAS layer.
+   */
+  mme_app_s11_proc_create_bearer_t *s11_proc_create_bearer = mme_app_get_s11_procedure_create_bearer(ue_context);
 
-    // TODO:
-    // Actually do it simple, because it appear we have to wait for NAS procedure reworking (work in progress on another branch)
-    // for responding to S11 without mistakes (may be the create bearer procedure can be impacted by a S1 ue context release or
-    // a UE originating  NAS procedure)
-    mme_app_s11_proc_create_bearer_t *s11_proc_create = mme_app_get_s11_procedure_create_bearer(ue_context_p);
-    if (s11_proc_create) {
-      ebi_t ebi = create_dedicated_bearer_rej->ebi;
-
-      s11_proc_create->num_status_received++;
-      s11_proc_create->bearer_status[EBI_TO_INDEX(ebi)] = S11_PROC_BEARER_FAILED;
-      // if received all bearers creation results
-      if (s11_proc_create->num_status_received == s11_proc_create->num_bearers) {
-//        todo: check this! mme_app_s11_procedure_create_bearer_send_response(ue_context_p, s11_proc_create);
-//        todo: or else, use the same method as in E-RAB Setup Response!
-        mme_app_delete_s11_procedure_create_bearer(ue_context_p);
+  if (s11_proc_create_bearer) {
+    ebi_t ebi = create_dedicated_bearer_rej->ebi;
+    s11_proc_create_bearer->num_status_received++;
+    s11_proc_create_bearer->bearer_status[EBI_TO_INDEX(ebi)] = S11_PROC_BEARER_FAILED;
+    // if received all bearers creation results
+    if (s11_proc_create_bearer->num_status_received == s11_proc_create_bearer->num_bearers) { /**< If all NAS responses have arrived. Additionally check if the lists are filled. */
+      if(s11_proc_create_bearer->bearer_contexts_failed || s11_proc_create_bearer->bearer_contexts_success){
+        //        mme_app_s11_procedure_create_bearer_send_response(ue_context_p, s11_proc_create);
+        mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context->s_gw_teid_s11_s4, s11_proc_create_bearer->bearer_contexts_success, s11_proc_create_bearer->bearer_contexts_failed);
+        mme_app_delete_s11_procedure_create_bearer(ue_context);
+      }else{
+        OAILOG_WARNING(LOG_MME_APP, "No response from S1AP received yet for UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rsp->ue_id);
       }
     }
-//  }
+  }else{
+    /** No S11 CBReq procedure exists. We already might have dealt with it. */
+  }
+
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 

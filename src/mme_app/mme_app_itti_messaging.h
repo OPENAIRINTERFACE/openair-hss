@@ -38,4 +38,12 @@ int mme_app_send_s11_modify_bearer_req(struct ue_context_s *const ue_context, pd
 int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, teid_t remote_teid, struct in_addr peer_ip);
 int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const pdn_context_t* pdn_context); /**< Moved Delete Session Request from mme_app_detach. */
 
+int
+mme_app_send_s11_create_bearer_rsp (
+  struct ue_context_s *const ue_context,
+//  struct in_addr  peer_ip,
+  teid_t          saegw_s11_teid,
+  LIST_HEAD(bearer_contexts_sucess_s, bearer_context_s) *bearer_contexts_success,
+  LIST_HEAD(bearer_contexts_failed_s, bearer_context_s) *bearer_contexts_failed);
+
 #endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */

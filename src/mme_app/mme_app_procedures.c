@@ -110,11 +110,17 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
   s11_proc_create_bearer->proc.type      = MME_APP_S11_PROC_TYPE_CREATE_BEARER;
   mme_app_s11_proc_t *s11_proc = (mme_app_s11_proc_t *)s11_proc_create_bearer;
 
+  /** Initialize the of the procedure. */
+  LIST_INIT(s11_proc_create_bearer->bearer_contexts_success);
+  LIST_INIT(s11_proc_create_bearer->bearer_contexts_failed);
+
+
   if (!ue_context_p->s11_procedures) {
     ue_context_p->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
     LIST_INIT(ue_context_p->s11_procedures);
   }
   LIST_INSERT_HEAD((ue_context_p->s11_procedures), s11_proc, entries);
+
   return s11_proc_create_bearer;
 }
 

@@ -174,6 +174,9 @@ typedef struct bearer_context_s {
 
   /** Add an entry field to make it part of a list. */
   LIST_ENTRY(bearer_context_s) entries;      /* List. */
+
+  LIST_ENTRY(bearer_context_s) temp_entries; /* List to establish or reject the bearer contexts. */
+
   struct bearer_context_s*     next_bc;
 
 } bearer_context_t;
