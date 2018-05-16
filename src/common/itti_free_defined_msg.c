@@ -324,6 +324,18 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
   case S10_FORWARD_ACCESS_CONTEXT_ACKNOWLEDGE:
     break;
+  case NAS_UE_CONTEXT_REQ:
+    bdestroy(&message_p->ittiMsg.nas_ue_context_req.nas_msg);
+    break;
+  case S10_CONTEXT_REQUEST:
+    bdestroy(&message_p->ittiMsg.s10_context_request.complete_request_message);
+    break;
+  case S10_CONTEXT_RESPONSE:
+    /* PDN Connections. */
+    if(message_p->ittiMsg.s10_context_response.pdn_connections){
+        // todo: remove pdn_connections
+    }
+    break;
   default:
     ;
   }

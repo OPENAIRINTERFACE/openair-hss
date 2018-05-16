@@ -733,6 +733,7 @@ mme_app_handle_create_sess_resp (
   MessageDef                             *message_p = NULL;
   ebi_t                                   bearer_id = 0;
   mme_app_s10_proc_mme_handover_t        *s10_handover_procedure = NULL;
+  nas_ctx_req_proc_t                     *emm_cn_proc_ctx_req = NULL;
   pdn_context_t                          *pdn_context = NULL;
 
   int                                     rc = RETURNok;
@@ -753,7 +754,12 @@ mme_app_handle_create_sess_resp (
   proc_tid_t  transaction_identifier = 0;
   pdn_cid_t   pdn_cx_id = 0;
 
+  /** Check if there is a S10 handover procedure or CN context request procedure. */
   s10_handover_procedure = mme_app_get_s10_procedure_mme_handover(ue_context);
+  /** Check if there is an EMM context. */
+  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context.mme_ue_s1ap_id);
+  if(emm_context)
+    emm_cn_proc_ctx_req = get_nas_cn_procedure_ctx_req(emm_context);
   /* Whether SGW has created the session (IP address allocation, local GTP-U end point creation etc.)
    * successfully or not , it is indicated by cause value in create session response message.
    * If cause value is not equal to "REQUEST_ACCEPTED" then this implies that SGW could not allocate the resources for
@@ -776,6 +782,9 @@ mme_app_handle_create_sess_resp (
           s10_handover_procedure->remote_mme_teid.ipv4_address.s_addr,
           s10_handover_procedure->forward_relocation_trxn, RELOCATION_FAILURE);
 //      todo: s10_handover_procedure->failure(ue_context); --> Remove the UE context/EMM context and also the S10 Tunnel endpoint
+    }else if (emm_cn_proc_ctx_req){
+      /** A CN Context Request procedure exists. Also check the remaining PDN contexts to create in the SAE-GW. */
+      _mme_app_send_nas_ue_context_response_err(ue_context->mme_ue_s1ap_id, RELOCATION_FAILURE);
     }else{
       /** Inform the NAS layer about the failure. */
       message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONNECTIVITY_FAIL);
@@ -921,34 +930,30 @@ mme_app_handle_create_sess_resp (
           s10_handover_procedure->source_to_target_eutran_container->container_value);
     }
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
-  }
-
-  emm_data_context_t *emm_context = emm_data_context_get_by_imsi (&_emm_data, ue_context->imsi);
-  if (emm_context) {
-    nas_ctx_req_proc_t * emm_cn_proc_ctx_req = get_nas_cn_procedure_ctx_req(emm_context);
-    if(emm_cn_proc_ctx_req){
-      OAILOG_INFO(LOG_MME_APP, "NAS Context Request process exists for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-      if(emm_cn_proc_ctx_req->pdn_connections->num_pdn_connections > emm_cn_proc_ctx_req->next_processed_pdn_connection){
-        OAILOG_INFO(LOG_MME_APP, "We have further PDN connections that need to be established via handover for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-        pdn_connection_t * pdn_connection = emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->next_processed_pdn_connection];
-        DevAssert(pdn_connection);
-        mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
-        emm_cn_proc_ctx_req->next_processed_pdn_connection++;
-        /*
-         * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
-         * When all pdn_connections are completed, continue with handover request.
-         */
-        // todo: check target_tai at idle mode
-        mme_app_send_s11_create_session_req (ue_context, pdn_context, &ue_context->tai_last_tau);
-        OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process handover on source MME side. \n", ue_context->mme_ue_s1ap_id);
-      }else{
-        OAILOG_INFO(LOG_MME_APP, "No further PDN connections that need to be established via idle mode TAU for UE " MME_UE_S1AP_ID_FMT ". "
-            "Continuing with NAS context response. \n", ue_context->mme_ue_s1ap_id);
-        mme_app_itti_nas_context_response(ue_context);
-      }
-      OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  }else if (emm_cn_proc_ctx_req){
+    OAILOG_INFO(LOG_MME_APP, "NAS Context Request process exists for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    if(emm_cn_proc_ctx_req->pdn_connections->num_pdn_connections > emm_cn_proc_ctx_req->next_processed_pdn_connection){
+      OAILOG_INFO(LOG_MME_APP, "We have further PDN connections that need to be established via handover for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+      pdn_connection_t * pdn_connection = emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->next_processed_pdn_connection];
+      DevAssert(pdn_connection);
+      mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
+      emm_cn_proc_ctx_req->next_processed_pdn_connection++;
+      /*
+       * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
+       * When all pdn_connections are completed, continue with handover request.
+       */
+      // todo: check target_tai at idle mode
+      mme_app_send_s11_create_session_req (ue_context, pdn_context, &ue_context->tai_last_tau);
+      OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process handover on source MME side. \n", ue_context->mme_ue_s1ap_id);
+    }else{
+      OAILOG_INFO(LOG_MME_APP, "No further PDN connections that need to be established via idle mode TAU for UE " MME_UE_S1AP_ID_FMT ". "
+          "Continuing with NAS context response. \n", ue_context->mme_ue_s1ap_id);
+      mme_app_itti_nas_context_response(ue_context);
     }
-    OAILOG_INFO(LOG_MME_APP, "No NAS Context Request process exists for UE " MME_UE_S1AP_ID_FMT " Continuing with PDN connectivity response. \n", ue_context->mme_ue_s1ap_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  }
+  if(emm_context){
+    OAILOG_INFO(LOG_MME_APP, "No NAS Context Request process or handover process exists for UE " MME_UE_S1AP_ID_FMT " Continuing with PDN connectivity response. \n", ue_context->mme_ue_s1ap_id);
     // todo: no multi bearer here!
     bearer_context_t * first_bearer_context = RB_MIN(BearerPool, &pdn_context->session_bearers);
     DevAssert(first_bearer_context);
@@ -2483,7 +2488,7 @@ mme_app_handle_forward_relocation_request(
  memcpy((void*)&s10_proc_mme_handover->target_id, (void*)&forward_relocation_request_pP->target_identification, sizeof(target_identification_t));
  memcpy((void*)&s10_proc_mme_handover->nas_s10_context._imsi, (void*)&forward_relocation_request_pP->imsi, sizeof(imsi_t));
  /** Set the target tai also in the target-MME side. */
- memcpy((void*)&s10_handover_procedure->target_tai, &target_tai, sizeof(tai_t));
+ memcpy((void*)&s10_proc_mme_handover->target_tai, &target_tai, sizeof(tai_t));
 
  s10_proc_mme_handover->nas_s10_context.mm_eps_ctx = forward_relocation_request_pP->ue_eps_mm_context;
  forward_relocation_request_pP->ue_eps_mm_context = NULL;
@@ -2491,7 +2496,7 @@ mme_app_handle_forward_relocation_request(
  forward_relocation_request_pP->eutran_container = NULL;
  s10_proc_mme_handover->f_cause = forward_relocation_request_pP->f_cause;
  forward_relocation_request_pP->f_cause = NULL;
- s10_proc_mme_handover->peer_ip = forward_relocation_request_pP->peer_ip;
+ s10_proc_mme_handover->remote_mme_teid.ipv4_address.s_addr = forward_relocation_request_pP->peer_ip.s_addr;
  forward_relocation_request_pP->peer_ip = NULL; // todo: if they differ etc..
  s10_proc_mme_handover->peer_port = forward_relocation_request_pP->peer_port;
  s10_proc_mme_handover->forward_relocation_trxn = forward_relocation_request_pP->trxn;

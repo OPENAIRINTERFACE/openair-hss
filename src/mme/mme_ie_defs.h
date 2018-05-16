@@ -58,21 +58,21 @@ typedef struct {
   F_Cause_S1AP_Type_t fcause_s1ap_type;
   uint8_t             fcause_value;
 }F_Cause_t;
-//
-//typedef enum {
-//  COMPLETE_ATTACH_REQUEST_TYPE      = 0,
-//  COMPLETE_TAU_REQUEST_TYPE         = 1,
-//}Complete_Request_Message_Type_t;
+
+typedef enum {
+  COMPLETE_ATTACH_REQUEST_TYPE      = 0,
+  COMPLETE_TAU_REQUEST_TYPE         = 1,
+}Complete_Request_Message_Type_t;
 
 typedef struct F_Container{
   bstring     container_value;
   uint8_t     container_type;
 }F_Container_t;
 
-typedef struct Complete_Request_Message{
-  bstring                             request_value;
-  Complete_Request_Message_Type_t     request_type;
-}Complete_Request_Message_t;
+//typedef struct Complete_Request_Message{
+//  bstring                             request_value;
+////  Complete_Request_Message_Type_t     request_type;
+//}Complete_Request_Message_t;
 
 ////-----------------
 //typedef struct bearer_context_setup {

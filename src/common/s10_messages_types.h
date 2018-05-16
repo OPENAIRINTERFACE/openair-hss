@@ -290,7 +290,7 @@ typedef struct itti_s10_context_request_s{
   // Private Extension Private Extension        ///< optional
 
   /** Original Tracking area update message. */
-  Complete_Request_Message_t      complete_request_message; /**< Could be a TAU or an attach request message. */
+  bstring      complete_request_message; /**< Could be a TAU or an attach request message. */
   /* S11 stack specific parameter. Not used in standalone epc mode */
 
   void                           *trxn;                ///< Transaction identifier
@@ -326,7 +326,7 @@ typedef struct itti_s10_context_response_s{
   ///<     - if UE is emergency attached but IMSI is not authenticated.
   ///< The IMSI shall be included in the message on the S2b interface.
 
-  mme_ue_eps_pdn_connections_t    pdn_connections;
+  mme_ue_eps_pdn_connections_t   *pdn_connections;
   ///< MME/SGSN UE EPS PDN Connections
   ///< Several IEs with this type and instance values shall be PDN Connection included as necessary to represent a list of PDN Connections
 

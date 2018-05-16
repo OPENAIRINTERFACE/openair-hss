@@ -970,11 +970,11 @@ s10_mme_context_request (
    * Complete Request Message (TAU or attach).
    */
   rc = nwGtpv2cMsgAddIeCompleteRequestMessage((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
-      (uint8_t*)req_p->complete_request_message.request_value->data,
-      blength(req_p->complete_request_message.request_value),
-      req_p->complete_request_message.request_type);
+      (uint8_t*)req_p->complete_request_message->data,
+      blength(req_p->complete_request_message),
+      COMPLETE_TAU_REQUEST_TYPE);
   /** Destroy the container. */
-  bdestroy(req_p->complete_request_message.request_value);
+  bdestroy(req_p->complete_request_message);
   DevAssert( NW_OK == rc );
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req); /**< Creates an ULP tunnel if none existing. */
