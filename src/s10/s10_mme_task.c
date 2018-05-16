@@ -344,7 +344,7 @@ s10_mme_thread (
       }
       break;
     }
-
+    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }

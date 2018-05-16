@@ -408,13 +408,13 @@ s10_mme_forward_relocation_response (
      }
 
      /** Setting the Bearer Context to Setup. Just EBI needed. */
-     for (int i = 0; i < forward_relocation_response_p->list_of_bearers.num_bearer_context; i++) {
-       s10_bearer_context_created_ie_set( &(ulp_req.hMsg), &forward_relocation_response_p->list_of_bearers.bearer_contexts[i]);
+     for (int i = 0; i < forward_relocation_response_p->handovered_bearers.num_bearer_context; i++) {
+       s10_bearer_context_created_ie_set( &(ulp_req.hMsg), &forward_relocation_response_p->handovered_bearers.bearer_contexts[i]);
      }
    }
    /** No allocated context remains. */
-//   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
-//   DevAssert (NW_OK == rc);
+   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+   DevAssert (NW_OK == rc);
    return RETURNok;
 }
 
@@ -472,7 +472,7 @@ s10_mme_handle_forward_relocation_response(
    * Bearer Contexts Created IE
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s10_bearer_context_created_ie_get, &resp_p->list_of_bearers);
+      s10_bearer_context_created_ie_get, &resp_p->handovered_bearers);
   DevAssert (NW_OK == rc);
   /*
    * Run the parser
@@ -1609,6 +1609,10 @@ s10_mme_handle_relocation_cancel_request(
    */
   rc = nwGtpv2cMsgParserRun (pMsgParser, (pUlpApi->hMsg), &offendingIeType, &offendingIeInstance, &offendingIeLength);
 
+  /*
+   * Add the peer-IP just in case.
+   */
+  req_p->peer_ip.s_addr = pUlpApi->u_api_info.initialReqIndInfo.peerIp.s_addr;
   if (rc != NW_OK) {
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S10_MME, MSC_SGW, NULL, 0, "0 RELOCATION_CANCEL_REQUEST local S10 teid " TEID_FMT " ", req_p->teid);
     /*

@@ -152,7 +152,7 @@ s10_bearer_context_to_be_created_ie_get ( uint8_t ieType, uint16_t ieLength, uin
 /* Bearer Context Created grouped Information Element */
 nw_rc_t s10_bearer_context_created_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
-int s10_bearer_context_created_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_context_setup_t *bearer_context);
+int s10_bearer_context_created_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_context_to_be_created_t *bc_tbc);
 
 /* Serving Network Information Element
  * 3GPP TS 29.274 #8.18
@@ -186,7 +186,7 @@ int s10_pco_ie_set (nw_gtpv2c_msg_handle_t * msg,
 nw_rc_t s10_apn_ie_get(
   uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
-int s10_apn_ie_set(nw_gtpv2c_msg_handle_t *msg, const char *apn);
+int s10_apn_ie_set(nw_gtpv2c_msg_handle_t *msg, const bstring apn);
 
 int s10_apn_plmn_ie_set(nw_gtpv2c_msg_handle_t *msg, const char *apn, const ServingNetwork_t * serving_network);
 
@@ -216,11 +216,21 @@ int s10_bearer_qos_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_qos_t *beare
 /* IP address Information Element
  * 3GPP TS 29.274 #8.9
  */
-nw_rc_t s10_ip_address_ie_get(
-  uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
+//nw_rc_t s10_ip_address_ie_get(
+//  uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
+//
+//int s10_ip_address_ie_set(nw_gtpv2c_msg_handle_t     *msg,
+//                          const gtp_ip_address_t *ip_address);
 
-int s10_ip_address_ie_set(nw_gtpv2c_msg_handle_t     *msg,
-                          const gtp_ip_address_t *ip_address);
+int
+s10_ipv4_address_ie_set (
+    nw_gtpv2c_msg_handle_t * msg,
+  NW_IN const struct in_addr  const * ipv4Addr);
+
+int
+s10_ipv6_address_ie_set (
+    nw_gtpv2c_msg_handle_t * msg,
+  NW_IN const struct in6_addr  const * ipv6Addr);
 
 int s10_apn_restriction_ie_get (
   uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);

@@ -197,7 +197,7 @@ typedef struct pdn_context_s {
   // APN Restriction: Denotes the restriction on the combination of types of APN for the APN associated
   //                  with this EPS bearer Context.
 
-  // APN Subscribed: The subscribed APN received from the HSS.
+  // APN Subscribed: The subscribed APN received from the HSS (APN-NI // ULA:APN Service Selection).
   bstring                     apn_subscribed;
 
   // PDN Type: IPv4, IPv6 or IPv4v6
@@ -208,7 +208,7 @@ typedef struct pdn_context_s {
   //                 The MME might not have information on the allocated IPv4 address.
   //                 Alternatively, following mobility involving a pre-release 8 SGSN, this
   //                 IPv4 address might not be the one allocated to the UE.
-  paa_t              *paa;                         // set by S11 CREATE_SESSION_RESPONSE
+  paa_t             *paa ;                         // set by S11 CREATE_SESSION_RESPONSE
 
 
 
@@ -505,7 +505,6 @@ typedef struct ue_context_s {
 
   /** Additional stuff for handover (pending flags etc..). */
 //  bool                   pending_bearer_deactivation; todo: when removing the tau procedure, evaluate and check (need to store old ECM state)?
-  bool                   pending_clear_location_request;
   bool                   pending_x2_handover; /**< Temporary flag, clear with Lionel how to integrate the X2 of B-COM. */
   bool                   pending_bearer_deactivation; //todo: could not find a way to remove this yet.
 
@@ -669,7 +668,7 @@ void mme_app_dump_ue_contexts(const mme_ue_context_t * const mme_ue_context);
 
 void mme_app_handle_s1ap_ue_context_release_req(const itti_s1ap_ue_context_release_req_t const *s1ap_ue_context_release_req);
 
-bearer_context_t* mme_app_get_bearer_context(ue_context_t  * const ue_context, const ebi_t ebi);
+//bearer_context_t* mme_app_get_bearer_context(ue_context_t  * const ue_context, const ebi_t ebi);
 
 bearer_context_t* mme_app_get_bearer_context_by_state(ue_context_t * const ue_context, const pdn_cid_t cid, const mme_app_bearer_state_t state);
 

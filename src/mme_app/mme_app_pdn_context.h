@@ -35,9 +35,14 @@
 #ifndef FILE_MME_APP_PDN_CONTEXT_SEEN
 #define FILE_MME_APP_PDN_CONTEXT_SEEN
 
-pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, const pdn_cid_t pdn_cid, const context_identifier_t context_identifier);
+pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, const bstring apn, const context_identifier_t context_identifier);
 void mme_app_free_pdn_context (pdn_context_t ** const pdn_context);
 pdn_context_t mme_app_get_pdn_context (ue_context_t * const ue_context, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn);
 
+/*
+ * Receive Bearer Context VOs to send in CSR/Handover Request, etc..
+ * Will set bearer state, unless it is null.
+ */
+void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bearer_contexts_to_be_created_t *bc_tbc, mme_app_bearer_state_t bc_state);
 
 #endif

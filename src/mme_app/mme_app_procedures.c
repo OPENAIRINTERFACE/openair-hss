@@ -235,41 +235,42 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_inter_
 }
 
 //------------------------------------------------------------------------------
-mme_app_s10_proc_inter_mme_handover_t* mme_app_create_s10_procedure_inter_mme_handover(ue_context_t * ue_context){
-  mme_app_s10_proc_inter_mme_handover_t *s10_proc_inter_mme_handover = calloc(1, sizeof(mme_app_s10_proc_inter_mme_handover_t));
+mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * ue_context, bool target_mme){
+  mme_app_s10_proc_mme_handover_t *s10_proc_mme_handover = calloc(1, sizeof(mme_app_s10_proc_mme_handover_t));
   // todo: checking hear for correct allocation
-  if(!s10_proc_inter_mme_handover){
+  if(!s10_proc_mme_handover){
     return NULL;
   }
-  s10_proc_inter_mme_handover->proc.type      = MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER;
+  s10_proc_mme_handover->proc.type      = MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER;
 
   /*
    * Add the timeout method and start the timer.
    * We need a separate function and a timeout, since we saw in the tests with real equipment,
    * that sometimes after no tracking area update request follows the inter-MME handover.
    */
-  s10_proc_inter_mme_handover->proc.proc.time_out = mme_app_handle_mme_s10_handover_completion_timer_expiry;
+  s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mme_s10_handover_completion_timer_expiry;
   /*
    * Start a fresh S10 MME Handover Completion timer for the forward relocation request procedure.
    * Give the procedure as the argument.
    */
-  if (timer_setup (mme_config.mme_s10_handover_completion_timer, 0,
-      TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) s10_proc_inter_mme_handover, &(s10_proc_inter_mme_handover->ho_completion_timer.id)) < 0) {
-    OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME S10 Handover Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context->mme_ue_s1ap_id,
-        mme_config.mme_mobility_completion_timer);
-    s10_proc_inter_mme_handover->ho_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
-    /**
-     * UE will be implicitly detached, if this timer runs out. It should be manually removed.
-     * S10 FW Relocation Complete removes this timer.
-     */
-  } else {
-    OAILOG_DEBUG (LOG_MME_APP, "MME APP : Activated the MME S10 Handover Completion timer UE id  " MME_UE_S1AP_ID_FMT ". Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %u. "
-        "Timer duration %d \n", ue_context->mme_ue_s1ap_id, s10_proc_inter_mme_handover->ho_completion_timer.id, mme_config.mme_s10_handover_completion_timer);
-    /** Upon expiration, invalidate the timer.. no flag needed. */
+  if(target_mme){
+    if (timer_setup (mme_config.mme_s10_handover_completion_timer, 0,
+        TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) s10_proc_mme_handover, &(s10_proc_mme_handover->ho_completion_timer.id)) < 0) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME Handover Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context->mme_ue_s1ap_id,
+          mme_config.mme_mobility_completion_timer);
+      s10_proc_mme_handover->ho_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+      /**
+       * UE will be implicitly detached, if this timer runs out. It should be manually removed.
+       * S10 FW Relocation Complete removes this timer.
+       */
+    } else {
+      OAILOG_DEBUG (LOG_MME_APP, "MME APP : Activated the MME Handover Completion timer UE id  " MME_UE_S1AP_ID_FMT ". Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %u. "
+          "Timer duration %d \n", ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->ho_completion_timer.id, mme_config.mme_handover_completion_timer);
+      /** Upon expiration, invalidate the timer.. no flag needed. */
+    }
   }
-
-  /** Add the S10 procedure. */
-  mme_app_s10_proc_t *s10_proc = (mme_app_s10_proc_t *)s10_proc_inter_mme_handover;
+    /** Add the S10 procedure. */
+  mme_app_s10_proc_t *s10_proc = (mme_app_s10_proc_t *)s10_proc_mme_handover;
 
   if (!ue_context->s10_procedures) {
     ue_context->s10_procedures = calloc(1, sizeof(struct s10_procedures_s));
@@ -280,22 +281,25 @@ mme_app_s10_proc_inter_mme_handover_t* mme_app_create_s10_procedure_inter_mme_ha
 }
 
 //------------------------------------------------------------------------------
-mme_app_s10_proc_inter_mme_handover_t* mme_app_get_s10_procedure_inter_mme_handover(ue_context_t * const ue_context_p)
+mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context_p)
 {
   if (ue_context_p->s10_procedures) {
     mme_app_s10_proc_t *s10_proc = NULL;
 
     LIST_FOREACH(s10_proc, ue_context_p->s10_procedures, entries) {
       if (MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER == s10_proc->type) {
-        return (mme_app_s10_proc_create_bearer_t*)s10_proc;
+        return (mme_app_s10_proc_mme_handover_t*)s10_proc;
       }
     }
   }
   return NULL;
 }
 
+/*
+ * Handover procedure used for inter and intra MME S1 handover.
+ */
 //------------------------------------------------------------------------------
-void mme_app_delete_s10_procedure_inter_mme_handover(ue_context_t * const ue_context)
+void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
 {
   if (ue_context->s10_procedures) {
     mme_app_s10_proc_t *s10_proc = NULL;
@@ -313,14 +317,14 @@ void mme_app_delete_s10_procedure_inter_mme_handover(ue_context_t * const ue_con
         /** Check if a timer is running, if so remove the timer. */
         if(s10_proc->timer.id != MME_APP_TIMER_INACTIVE_ID){
           if (timer_remove(s10_proc->timer.id, NULL)) {
-            OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for inter-MMME handover for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+            OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for -MMME handover for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
             s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
           }
         }
         s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
         /** Remove the S10 Tunnel endpoint and set the UE context S10 as invalid. */
         remove_s10_tunnel_endpoint(ue_context, s10_proc);
-        mme_app_free_s10_procedure_inter_mme_handover(&s10_proc);
+        mme_app_free_s10_procedure_mme_handover(&s10_proc);
         return;
       }
     }
@@ -328,7 +332,7 @@ void mme_app_delete_s10_procedure_inter_mme_handover(ue_context_t * const ue_con
 }
 
 //------------------------------------------------------------------------------
-static void mme_app_free_s10_procedure_inter_mme_handover(mme_app_s10_proc_t **s10_proc)
+static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc)
 {
   /** Remove the pending IEs. */
   mme_app_s10_proc_inter_mme_handover_t * s10_proc_inter_mme_handover = (mme_app_s10_proc_inter_mme_handover_t*) s10_proc;

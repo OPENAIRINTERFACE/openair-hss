@@ -347,7 +347,9 @@ typedef struct nas_ctx_req_proc_s {
 
   /** From the ITTI message, we copy the stuff into here. */
   nas_s10_context_t           nas_s10_context;
-//  mme_ue_eps_pdn_connections_t  *pdn_connections; // todo: make this as an erray
+  /** Need to set it for multi-APN cases of Idle Mode TAU. */
+  mme_ue_eps_pdn_connections_t  *pdn_connections;
+  uint8_t                     next_processed_pdn_connection;
   int                         nas_cause;
   struct nas_timer_s          timer_s10; // todo: necessary?
   mme_ue_s1ap_id_t            ue_id;

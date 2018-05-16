@@ -1212,3 +1212,44 @@ mme_config_parse_opt_line (
   mme_config_display (config_pP);
   return 0;
 }
+
+int
+mme_app_check_target_tai_neighboring_mme (
+const tai_t * const target_tai)
+{
+
+OAILOG_FUNC_IN (LOG_MME_APP);
+
+int                                     i = -1;
+uint16_t                                target_mcc = 0;
+uint16_t                                target_mnc = 0;
+uint16_t                                target_mnc_len = 0;
+
+/** Neighboring MNC/MCC values. */
+uint16_t                                ngh_mcc = 0;
+uint16_t                                ngh_mnc = 0;
+uint16_t                                ngh_mnc_len = 0;
+
+DevAssert (target_tai != NULL);
+/** Get the integer values from the PLMN. */
+PLMN_T_TO_MCC_MNC ((target_tai->plmn), target_mcc, target_mnc, target_mnc_len);
+
+mme_config_read_lock (&mme_config);
+
+for (i = 0; i < mme_config.nghMme.nb; i++) {
+  PLMN_T_TO_MCC_MNC ((mme_config.nghMme.nghMme[i].ngh_mme_tai.plmn), ngh_mcc, ngh_mnc, ngh_mnc_len);
+
+  OAILOG_DEBUG (LOG_MME_APP, "For ngh_mme index %d: comparing plmn_mcc %d/%d, plmn_mnc %d/%d plmn_mnc_len %d/%d and tac %d/%d \n",
+      i, ngh_mcc, target_mcc, ngh_mnc, target_mnc, ngh_mnc_len, target_mnc_len, mme_config.nghMme.nghMme[i].ngh_mme_tai.tac, target_tai->tac );
+
+  if(TAIS_ARE_EQUAL(*target_tai, mme_config.nghMme.nghMme[i].ngh_mme_tai)){
+    /*
+     * There is a matching plmn
+     */
+    OAILOG_FUNC_RETURN (LOG_MME_APP, i);
+  }
+}
+mme_config_unlock (&mme_config);
+OAILOG_FUNC_RETURN (LOG_MME_APP, i);
+}
+

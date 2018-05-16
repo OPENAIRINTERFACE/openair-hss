@@ -293,6 +293,10 @@ int mme_config_find_mnc_length(const char mcc_digit1P,
                                const char mnc_digit3P);
 int mme_config_parse_opt_line(int argc, char *argv[], mme_config_t *mme_config);
 
+int
+mme_app_check_target_tai_neighboring_mme (
+const tai_t * const target_tai);
+
 void mme_config_exit (void);
 
 #define mme_config_read_lock(mMEcONFIG)  pthread_rwlock_rdlock(&(mMEcONFIG)->rw_lock)

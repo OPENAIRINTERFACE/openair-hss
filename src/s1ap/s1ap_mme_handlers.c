@@ -1310,7 +1310,7 @@ s1ap_mme_handle_handover_preparation(const sctp_assoc_id_t assoc_id, const sctp_
     rc = s1ap_handover_preparation_failure(assoc_id, mme_ue_s1ap_id, enb_ue_s1ap_id, S1ap_Cause_PR_misc);
     OAILOG_FUNC_RETURN (LOG_S1AP, rc);
   }
-  /**
+  /*
    * No timers to be started. Also, the state does not need to be changed from UE_CONNECTED, since TS 36.413 8.4.1.2 specifies that MME may/can initiate some E-RAB Modification signaling towards the source
    * eNB before the Handover Procedure is completed. Handover restart won't be triggered by eNB.
    * Source eNB may restart the Handover. If the UE is still connected (Handover dismissed or still going on, it will send a HO-Preparation-Failure.
@@ -1734,9 +1734,9 @@ s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t asso
     handoverRequestAcknowledgeIEs_p->e_RABAdmittedList.s1ap_E_RABAdmittedItem.array[item];
     S1AP_HANDOVER_REQUEST_ACKNOWLEDGE (message_p).e_rab_id[item] = eRABAdmittedItemIEs_p->e_RABAdmittedItem.e_RAB_ID;
     S1AP_HANDOVER_REQUEST_ACKNOWLEDGE (message_p).gtp_teid[item] = htonl (*((uint32_t *) eRABAdmittedItemIEs_p->e_RABAdmittedItem.gTP_TEID.buf));
-     S1AP_HANDOVER_REQUEST_ACKNOWLEDGE (message_p).transport_layer_address[item] =
-         blk2bstr(eRABAdmittedItemIEs_p->e_RABAdmittedItem.transportLayerAddress.buf, eRABAdmittedItemIEs_p->e_RABAdmittedItem.transportLayerAddress.size);
-   }
+    S1AP_HANDOVER_REQUEST_ACKNOWLEDGE (message_p).transport_layer_address[item] =
+        blk2bstr(eRABAdmittedItemIEs_p->e_RABAdmittedItem.transportLayerAddress.buf, eRABAdmittedItemIEs_p->e_RABAdmittedItem.transportLayerAddress.size);
+  }
 
   /**
    * Set the transparent container as a bstring.

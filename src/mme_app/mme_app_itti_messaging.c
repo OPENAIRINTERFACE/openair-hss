@@ -60,7 +60,7 @@
 
 //------------------------------------------------------------------------------
 void mme_app_itti_ue_context_release (
-    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, target_identification_t *target_id)
+    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, uint32_t enb_id)
 {
   MessageDef *message_p;
   OAILOG_FUNC_IN (LOG_MME_APP);
@@ -207,32 +207,9 @@ mme_app_send_s11_create_session_req (
    * Default EBI
    */
   session_request_p->default_ebi = pdn_context->default_ebi;
+  /** Set the bearer contexts to be created. */
+  mme_app_get_bearer_contexts_to_be_created(pdn_context, &session_request_p->bearer_contexts_to_be_created, BEARER_STATE_MME_CREATED);
 
-  bearer_context_t    *bearer_context_to_setup = NULL;
-  RB_FOREACH (bearer_context_to_setup, BearerPool, &pdn_context->session_bearers) {
-    DevAssert(bearer_context_to_setup);
-
-    // todo: make it selective for multi PDN!
-    /*
-     * Set the bearer of the pdn context to establish.
-     * Set regardless of GBR/NON-GBR QCI the MBR/GBR values.
-     * They are already set to zero if non-gbr in the registration of the bearer contexts.
-     */
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.gbr.br_ul = bearer_context_to_setup->esm_ebr_context.gbr_ul;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.gbr.br_dl = bearer_context_to_setup->esm_ebr_context.gbr_dl;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.mbr.br_ul = bearer_context_to_setup->esm_ebr_context.mbr_ul;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.mbr.br_dl = bearer_context_to_setup->esm_ebr_context.gbr_dl;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.qci = bearer_context_to_setup->qci;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pvi = bearer_context_to_setup->preemption_vulnerability;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pci = bearer_context_to_setup->preemption_capability;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].bearer_level_qos.pl  = bearer_context_to_setup->priority_level;
-    session_request_p->bearer_contexts_to_be_created.bearer_contexts[0].eps_bearer_id = bearer_context_to_setup->ebi;
-    session_request_p->bearer_contexts_to_be_created.num_bearer_context++;
-    /** Update the bearer state. */
-    // todo: setting the bearer state as MME_CREATED when successfull CSResp is received and as ACTIVE after successfull MBResp is received!!
-    bearer_context_to_setup->bearer_state   |= BEARER_STATE_MME_CREATED;
-    // todo: set TFTs for dedicated bearers (currently PCRF triggered).
-  }
   // todo: apn restrictions!
   /*
    * Asking for default bearer in initial UE message.
@@ -256,10 +233,12 @@ mme_app_send_s11_create_session_req (
                                    ue_context->mme_ue_s1ap_id,
                                    ue_context->imsi,
                                    session_request_p->sender_fteid_for_cp.teid,       // mme_s11_teid is new
+                                   ue_context->local_mme_teid_s10,
                                    &ue_context->guti);
 
   memcpy (session_request_p->apn, pdn_context->apn_in_use->data, pdn_context->apn_in_use->slen);
-//  memcpy (session_request_p->apn, ue_context_p->pending_pdn_connectivity_req_apn->data, ue_context_p->pending_pdn_connectivity_req_apn->slen);
+  // todo: set the full apn name
+  // memcpy (session_request_p->apn, ue_context_p->pending_pdn_connectivity_req_apn->data, ue_context_p->pending_pdn_connectivity_req_apn->slen);
 
   /*
    * Set PDN type for pdn_type and PAA even if this IE is redundant
@@ -275,12 +254,11 @@ mme_app_send_s11_create_session_req (
     session_request_p->paa.ipv6_address = in6addr_any;
   } else {
     //       memcpy (session_request_p->paa.ipv4_address, ue_context_p->pending_pdn_connectivity_req_pdn_addr->data, 4); /**< String to array. */
-    session_request_p->paa.ipv4_address.s_addr = ip_address->address.ipv4_address.s_addr;
-    memcpy (&session_request_p->paa.ipv6_address, &ip_address->address.ipv6_address, sizeof(session_request_p->paa.ipv6_address));
+    session_request_p->paa.ipv4_address.s_addr = pdn_context->paa->ipv4_address.s_addr;
+    memcpy (&session_request_p->paa.ipv6_address, &pdn_context->paa->ipv6_address, sizeof(session_request_p->paa.ipv6_address));
     session_request_p->paa.ipv6_prefix_length = pdn_context->paa->ipv6_prefix_length;
   }
-
-//  session_request_p->apn_restriction = 0x00; todo: set them where?
+  //  session_request_p->apn_restriction = 0x00; todo: set them where?
   if(pdn_context->pco){ /**< todo: Should not exist in handover, where to get them?. */
     copy_protocol_configuration_options (&session_request_p->pco, pdn_context->pco);
   }
@@ -585,4 +563,172 @@ mme_app_send_s11_create_bearer_rsp (
       NULL, 0, "0 S11_CREATE_BEARER_RESPONSE teid %u", s11_create_bearer_response->teid);
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+}
+
+//------------------------------------------------------------------------------
+void mme_app_itti_nas_context_response(ue_context_t * ue_context){
+
+  MessageDef                             *message_p = NULL;
+  int                                     rc = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (ue_context);
+  /*
+   * Send NAS context response procedure.
+   * Build a NAS_CONTEXT_INFO message and fill it.
+   * Depending on the cause, NAS layer can perform an TAU_REJECT or move on with the TAU validation.
+   * NAS layer.
+   *
+   * todo: nas_ctx_fail!
+   */
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_CONTEXT_RES);
+  itti_nas_context_res_t *nas_context_res = &message_p->ittiMsg.nas_context_res;
+  /** Set the cause. */
+  /** Set the UE identifiers. */
+  nas_context_res->ue_id = ue_context->mme_ue_s1ap_id;
+  /** Fill the elements of the NAS message from S10 CONTEXT_RESPONSE. */
+
+  /** todo: Convert the GTPv2c IMSI struct to the NAS IMSI struct. */
+  nas_context_res->imsi= ue_context->imsi;
+  //  memset (&(ue_context_p->pending_pdn_connectivity_req_imsi), 0, 16); /**< IMSI in create session request. */
+  //  memcpy (&(ue_context_p->pending_pdn_connectivity_req_imsi), &(s10_context_response_pP->imsi.digit), s10_context_response_pP->imsi.length);
+  //  ue_context_p->pending_pdn_connectivity_req_imsi_length = s10_context_response_pP->imsi.length;
+
+  /** When sending NAS context response, inform it also about the number established PDN sessions and bearers in the ESM layer. */
+  pdn_context_t * registered_pdn_ctx = NULL;
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+    DevAssert(registered_pdn_ctx);
+    nas_context_res->n_pdns++;
+    bearer_context_t * bearer_contexts = NULL;
+    RB_FOREACH (bearer_contexts, BearerPool, &registered_pdn_ctx->session_bearers) {
+      DevAssert(registered_pdn_ctx);
+      nas_context_res->n_bearers++;
+    }
+  }
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_CONTEXT_RES sgw_s1u_teid %u ebi %u qci %u prio %u",
+      current_bearer_p->s_gw_fteid_s1u.teid,
+      bearer_id,
+      current_bearer_p->qci,
+      current_bearer_p->priority_level);
+  rc = itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+}
+
+// todo: supporting currently a single bearer
+//------------------------------------------------------------------------------
+void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context,
+    paa_t *paa, protocol_configuration_options_t * pco,
+    bearer_context_t * bc){
+
+  MessageDef                             *message_p = NULL;
+  int                                     rc = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (ue_context);
+  OAILOG_INFO (LOG_MME_APP, "Informing the NAS layer about the received CREATE_SESSION_REQUEST for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+  //uint8_t *keNB = NULL;
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONNECTIVITY_RSP);
+  itti_nas_pdn_connectivity_rsp_t *nas_pdn_connectivity_rsp = &message_p->ittiMsg.nas_pdn_connectivity_rsp;
+  nas_pdn_connectivity_rsp->pdn_cid = bc->pdn_cx_id;
+  nas_pdn_connectivity_rsp->pti = bc->transaction_identifier;  // NAS internal ref
+  nas_pdn_connectivity_rsp->ue_id = ue_context->mme_ue_s1ap_id;      // NAS internal ref
+  nas_pdn_connectivity_rsp->pdn_addr = paa_to_bstring(paa);
+  // todo: mme_app ue_context does not has a PAA?
+  //      memcpy(ue_context_p->paa.ipv4_address, create_sess_resp_pP->paa.ipv4_address, 4);
+  nas_pdn_connectivity_rsp->pdn_type = paa->pdn_type;
+  // ASSUME NO HO now, so assume 1 bearer only and is default bearer
+//      nas_pdn_connectivity_rsp->request_type = ue_context_p->pending_pdn_connectivity_req_request_type;        // NAS internal ref
+//      ue_context_p->pending_pdn_connectivity_req_request_type = 0;
+  // here at this point OctetString are saved in resp, no loss of memory (apn, pdn_addr)
+  nas_pdn_connectivity_rsp->ue_id                 = ue_context->mme_ue_s1ap_id;
+  nas_pdn_connectivity_rsp->ebi                   = bc->ebi;
+  nas_pdn_connectivity_rsp->qci                   = bc->qci;
+  nas_pdn_connectivity_rsp->prio_level            = bc->priority_level;
+  nas_pdn_connectivity_rsp->pre_emp_vulnerability = bc->preemption_vulnerability;
+  nas_pdn_connectivity_rsp->pre_emp_capability    = bc->preemption_capability;
+  nas_pdn_connectivity_rsp->sgw_s1u_fteid         = bc->s_gw_fteid_s1u;
+  // optional IE
+  nas_pdn_connectivity_rsp->ambr.br_ul            = ue_context->subscribed_ue_ambr.br_ul;
+  nas_pdn_connectivity_rsp->ambr.br_dl            = ue_context->subscribed_ue_ambr.br_dl;
+  // This IE is not applicable for TAU/RAU/Handover. If PGW decides to return PCO to the UE, PGW shall send PCO to
+  // SGW. If SGW receives the PCO IE, SGW shall forward it to MME/SGSN.
+  if (pco->num_protocol_or_container_id) {
+    copy_protocol_configuration_options (&nas_pdn_connectivity_rsp->pco, pco);
+    clear_protocol_configuration_options(pco);
+  }
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_PDN_CONNECTIVITY_RSP sgw_s1u_teid %u ebi %u qci %u prio %u",
+      bc->s_gw_fteid_s1u.teid,
+      bc->ebi,
+      bc->qci,
+      bc->priority_level);
+
+  rc = itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+}
+
+//------------------------------------------------------------------------------
+void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_s10_proc_mme_handover_t *s10_handover_proc, bstring target_to_source_container){
+
+  MessageDef                             *message_p = NULL;
+  int                                     rc = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (ue_context);
+  OAILOG_INFO (LOG_MME_APP, "Sending Forward Relocation Response to source MME for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+
+  message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_RESPONSE);
+  DevAssert (message_p != NULL);
+
+  itti_s10_forward_relocation_response_t *forward_relocation_response_p = &message_p->ittiMsg.s10_forward_relocation_response;
+  memset ((void*)forward_relocation_response_p, 0, sizeof (itti_s10_forward_relocation_response_t));
+
+  /** Get the Handov
+  /** Set the target S10 TEID. */
+  forward_relocation_response_p->teid    = s10_handover_proc->remote_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
+
+  /**
+   * todo: Get the MME from the origin TAI.
+   * Currently only one MME is supported.
+   */
+  forward_relocation_response_p->peer_ip.s_addr = s10_handover_proc->remote_mme_teid.ipv4_address.s_addr; /**< todo: Check this is correct. */
+  forward_relocation_response_p->trxn    = s10_handover_proc->forward_relocation_trxn;
+  /** Set the cause. */
+  forward_relocation_response_p->cause = REQUEST_ACCEPTED;
+  /** Set all bearers. */
+  pdn_context_t * registered_pdn_ctx = NULL;
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+    DevAssert(registered_pdn_ctx);
+    mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &forward_relocation_response_p->handovered_bearers, BEARER_STATE_NULL);
+    /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+  }
+
+  /** Set the Source MME_S10_FTEID the same as in S11. */
+  OAI_GCC_DIAG_OFF(pointer-to-int-cast);
+  forward_relocation_response_p->s10_target_mme_teid.teid = ue_context->local_mme_teid_s10; /**< This one also sets the context pointer. */
+  OAI_GCC_DIAG_ON(pointer-to-int-cast);
+  forward_relocation_response_p->s10_target_mme_teid.interface_type = S10_MME_GTP_C;
+  mme_config_read_lock (&mme_config);
+  forward_relocation_response_p->s10_target_mme_teid.ipv4_address = mme_config.ipv4.s10;
+  mme_config_unlock (&mme_config);
+  forward_relocation_response_p->s10_target_mme_teid.ipv4 = 1;
+
+  /** Set S10 F-Cause. */
+  forward_relocation_response_p->f_cause.fcause_type      = FCAUSE_S1AP;
+  forward_relocation_response_p->f_cause.fcause_s1ap_type = FCAUSE_S1AP_RNL;
+  forward_relocation_response_p->f_cause.fcause_value     = 0; // todo: set these values later.. currently just RNL
+
+  /** Set the E-UTRAN container. */
+  forward_relocation_response_p->eutran_container.container_type = 3;
+  /** Just link the bstring. Will be purged in the S10 message. */
+  forward_relocation_response_p->eutran_container.container_value = target_to_source_container;
+
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S10 FORWARD_RELOCATION_RESPONSE");
+  OAILOG_INFO (LOG_MME_APP, "Successfully prepared Forward Relocation Response to source MME for UE " MME_UE_S1AP_ID_FMT " Sending to S10. \n", ue_context->mme_ue_s1ap_id);
+
+  /**
+   * Sending a message to S10.
+   * No changes in the contexts, flags, timers, etc.. needed.
+   */
+  itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
 }

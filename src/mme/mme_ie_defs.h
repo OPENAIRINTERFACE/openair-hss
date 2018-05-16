@@ -74,18 +74,18 @@ typedef struct Complete_Request_Message{
   Complete_Request_Message_Type_t     request_type;
 }Complete_Request_Message_t;
 
-//-----------------
-typedef struct bearer_context_setup {
-  uint8_t      eps_bearer_id;       ///< EPS Bearer ID
-  // todo: rest is for indirect data forwarding!
-} bearer_context_setup_t;
+////-----------------
+//typedef struct bearer_context_setup {
+//  uint8_t      eps_bearer_id;       ///< EPS Bearer ID
+//  // todo: rest is for indirect data forwarding!
+//} bearer_context_setup_t;
 
 #define MAX_SETUP_BEARERS 11
 
-typedef struct list_of_setup_bearers_s {
-  uint8_t num_bearer_context;
-  bearer_context_setup_t bearer_contexts[MAX_SETUP_BEARERS];
-} list_of_setup_bearers_t;
+//typedef struct list_of_setup_bearers_s {
+//  uint8_t num_bearer_context;
+//  bearer_context_setup_t bearer_contexts[MAX_SETUP_BEARERS];
+//} list_of_setup_bearers_t;
 
 //------------------------
 #define MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS   3

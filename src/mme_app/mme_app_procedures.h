@@ -55,7 +55,8 @@ typedef struct mme_app_base_proc_s {
 /* S10 */
 typedef enum {
   MME_APP_S10_PROC_TYPE_NONE = 0,
-  MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER
+  MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER,
+  MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER
 } mme_app_s10_proc_type_t;
 
 typedef struct mme_app_s10_proc_s {
@@ -76,23 +77,32 @@ typedef struct mme_app_s10_proc_s {
  * S10 Procedure for Handover only on the target-MME side.
  * On the source MME we don't need a procedure, a timer is enough.
  */
-typedef struct mme_app_s10_proc_inter_mme_handover_s {
+typedef struct mme_app_s10_proc_mme_handover_s {
   mme_app_s10_proc_t            proc;
 
-  time_out_t                   *s10_inter_mme_handover_timeout;
+  enb_ue_s1ap_id_t              target_enb_ue_s1ap_id;
+  time_out_t                   *s10_mme_handover_timeout;
 
   uintptr_t                     forward_relocation_trxn;
   /** Peer Information. */
+  fteid_t                       remote_mme_teid;
   uint16_t                      peer_port;
-  struct in_addr               *peer_ip; // todo: if they differ etc..
   target_identification_t       target_id;
   F_Container_t                *source_to_target_eutran_container;
   F_Cause_t                    *f_cause;
   /** NAS context information. */
   nas_s10_context_t             nas_s10_context;
+  /** PDN Connections. */
+  mme_ue_eps_pdn_connections_t *pdn_connections;
+  uint8_t                       next_processed_pdn_connection;
+
+  /** Target Information to store on the source side. */
+  tai_t                         target_tai;
+  ecgi_t                        target_ecgi;  /**< Target home/macro enb id. */
+  bool                          pending_clear_location_request;
 
   LIST_ENTRY(mme_app_handover_proc_s) entries;      /* List. */
-} mme_app_s10_proc_inter_mme_handover_t;
+} mme_app_s10_proc_mme_handover_t;
 
 /* S11 */
 typedef enum {
@@ -148,8 +158,8 @@ void mme_app_s11_procedure_create_bearer_send_response(ue_context_t * const ue_c
 void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
 //------------------------------------------------------------------------------
 void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
-mme_app_s10_proc_inter_mme_handover_t* mme_app_create_s10_procedure_inter_mme_handover(ue_context_t * const ue_context_p);
-mme_app_s10_proc_inter_mme_handover_t* mme_app_get_s10_procedure_inter_mme_handover(ue_context_t * const ue_context_p);
-void mme_app_delete_s10_procedure_inter_mme_handover(ue_context_t * const ue_context_p);
+mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context_p, bool target_mme);
+mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context_p);
+void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context_p);
 
 #endif

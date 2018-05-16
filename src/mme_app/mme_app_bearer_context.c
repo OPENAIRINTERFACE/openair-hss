@@ -151,7 +151,7 @@ bearer_context_t * mme_app_register_bearer_context(ue_context_t * const ue_conte
   pBearerCtx = RB_REMOVE(BearerPool, &ue_context->bearer_pool, &bc_key);
   if(!pBearerCtx){
     OAILOG_ERROR(LOG_MME_APP,  "Could not find a free bearer context with ebi %d for ue_id " MME_UE_S1AP_FMT "! \n", ebi, ue_context->mme_ue_s1ap_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
   }
 
   /** Received a free bearer context from the free bearer pool of the UE context. It should already be initialized. */
@@ -161,14 +161,14 @@ bearer_context_t * mme_app_register_bearer_context(ue_context_t * const ue_conte
   /** This should not happen with locks. */
   Assert(!RB_INSERT (BearerPool, &pdn_context->session_bearers, pBearerCtx));
 
-  /** Register the values of the newly registered beasrer context. */
+  /** Register the values of the newly registered bearer context. Values might be empty. */
   pBearerCtx->preemption_capability    = pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_capability;
   pBearerCtx->preemption_vulnerability = pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_vulnerability;
   pBearerCtx->priority_level           = pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.priority_level;
 
   OAILOG_INFO (LOG_MME_APP, "Successfully set bearer context with ebi %d for PDN id %u and for ue id " MME_UE_S1AP_ID_FMT "\n",
       pBearerCtx->ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
-  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
+  OAILOG_FUNC_RETURN (LOG_MME_APP, pBearerCtx);
 }
 
 //------------------------------------------------------------------------------
@@ -213,36 +213,39 @@ void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const
 }
 
 //------------------------------------------------------------------------------
-void mme_app_bearer_context_update_handover(bearer_context_t * bc_registered, bearer_context_t * const bc_s10)
+void mme_app_bearer_context_update_handover(bearer_context_t * bc_registered, bearer_context_to_be_created_t * const bc_tbc_s10)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   /* Received an initialized bearer context, set the qos values from the pdn_connections IE. */
   // todo: optimize this!
   DevAssert(bc_registered);
-  DevAssert(bc_s10);
+  DevAssert(bc_tbc_s10);
 
   /*
    * Initialize the ESM EBR context and set the received QoS values.
+   * The ESM EBR state will be set to active with TAU request.
    */
   esm_ebr_context_init(&bc_registered->esm_ebr_context);
   /*
    * Set the bearer level QoS values in the bearer context and the ESM EBR context (updating ESM layer information from MME_APP, unfortunately).
    * No memcpy because of non-GBR MBR/GBR values.
    */
-  bc_registered->qci                      = bc_s10->qci;
-  bc_registered->priority_level           = bc_s10->priority_level;
-  bc_registered->preemption_capability    = bc_s10->preemption_capability;
-  bc_registered->preemption_vulnerability = bc_s10->preemption_vulnerability;
+  bc_registered->qci                      = bc_tbc_s10->bearer_level_qos.qci;
+  bc_registered->priority_level           = bc_tbc_s10->bearer_level_qos.pl;
+  bc_registered->preemption_capability    = bc_tbc_s10->bearer_level_qos.pci;
+  bc_registered->preemption_vulnerability = bc_tbc_s10->bearer_level_qos.pvi;
 
   /*
    * We may have received a set of GBR bearers, for which we need to set the QCI values.
    */
-  if(bc_s10->qci <= 4){
+  if(bc_tbc_s10->bearer_level_qos.qci <= 4){
     /** Set the MBR/GBR values for the GBR bearers. */
-    bc_registered->esm_ebr_context.gbr_dl   = bc_s10->esm_ebr_context.gbr_dl;
-    bc_registered->esm_ebr_context.gbr_ul   = bc_s10->esm_ebr_context.gbr_ul;
-    bc_registered->esm_ebr_context.mbr_dl   = bc_s10->esm_ebr_context.mbr_dl;
-    bc_registered->esm_ebr_context.mbr_ul   = bc_s10->esm_ebr_context.mbr_ul;
+    bc_registered->esm_ebr_context.gbr_dl   = bc_tbc_s10->bearer_level_qos.gbr.br_dl;
+    bc_registered->esm_ebr_context.gbr_ul   = bc_tbc_s10->bearer_level_qos.gbr.br_ul;
+    bc_registered->esm_ebr_context.mbr_dl   = bc_tbc_s10->bearer_level_qos.gbr.br_dl;
+    bc_registered->esm_ebr_context.mbr_ul   = bc_tbc_s10->bearer_level_qos.gbr.br_ul;
+  }else{
+    /** Not setting GBR/MBR values for non-GBR bearers to send to the SAE-GW. */
   }
   OAILOG_DEBUG (LOG_MME_APP, "Set qci and bearer level qos values from handover information %u in bearer %u\n", bc_registered->qci, bc_registered->ebi);
   OAILOG_FUNC_OUT(LOG_MME_APP);

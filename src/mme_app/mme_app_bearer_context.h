@@ -45,12 +45,14 @@ int mme_app_bearer_context_delete (bearer_context_t *bearer_context);
 bearer_context_t* mme_app_get_session_bearer_context(ue_context_t * const ue_context, const ebi_t ebi);
 bearer_context_t* mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context, const ebi_t ebi);
 
-int mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
+//int mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
+bearer_context_t * mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
+
 int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
 
 void mme_app_free_bearer_context (bearer_context_t ** const bearer_context);
 void mme_app_bearer_context_s1_release_enb_informations(bearer_context_t * const bc);
 
-void mme_app_bearer_context_update_handover(bearer_context_t * bc_registered, bearer_context_t * const bc_s10);
+void mme_app_bearer_context_update_handover(bearer_context_t * bc_registered, bearer_context_to_be_created_t * const bc_tbc_s10);
 
 #endif

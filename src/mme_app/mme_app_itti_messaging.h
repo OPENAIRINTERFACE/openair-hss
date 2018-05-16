@@ -46,4 +46,8 @@ mme_app_send_s11_create_bearer_rsp (
   LIST_HEAD(bearer_contexts_sucess_s, bearer_context_s) *bearer_contexts_success,
   LIST_HEAD(bearer_contexts_failed_s, bearer_context_s) *bearer_contexts_failed);
 
+void mme_app_itti_nas_context_response(ue_context_t * ue_context);
+void mme_app_itti_nas_pdn_connectivity_response(ue_context_t * ue_context, paa_t *paa, protocol_configuration_options_t * pco, bearer_context_t * bc);
+void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_s10_proc_mme_handover_t *s10_handover_proc, bstring target_to_source_container);
+
 #endif /* FILE_MME_APP_ITTI_MESSAGING_SEEN */
