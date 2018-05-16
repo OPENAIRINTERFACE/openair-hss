@@ -456,6 +456,7 @@ static int _emm_as_recv (
         &emm_msg->tracking_area_update_request,
         emm_cause,
         originating_tai,
+        originating_ecgi,
         decode_status,
         msg);       /**< Send the encoded  NAS_EMM message together with it. */
     /** If ask_ue_context is set.. Ask the MME_APP to send S10_UE_CONTEXT. */
@@ -702,7 +703,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
     }
 
     // Process periodic TAU
-    rc = emm_recv_tracking_area_update_request (msg->ue_id, &emm_msg->tracking_area_update_request,  msg->is_initial, emm_cause, &decode_status);
+    rc = emm_recv_tracking_area_update_request (msg->ue_id, &emm_msg->tracking_area_update_request, &msg->tai, &msg->ecgi, emm_cause, &decode_status);
     break;
 
   case DETACH_REQUEST:

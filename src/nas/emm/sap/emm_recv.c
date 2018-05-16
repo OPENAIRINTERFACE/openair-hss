@@ -548,7 +548,8 @@ emm_recv_tracking_area_update_request (
   const mme_ue_s1ap_id_t ue_id,
   tracking_area_update_request_msg * const msg,
   int * const emm_cause,
-  const tai_t *originating_tai,
+  const tai_t              * const originating_tai,
+  const ecgi_t             * const originating_ecgi,
   const nas_message_decode_status_t  * const decode_status,
   bstring nas_msg)
 {
@@ -562,10 +563,6 @@ emm_recv_tracking_area_update_request (
       (decode_status->mac_matched)?"yes":"no",
       (decode_status->ciphered_message)?"yes":"no",
       (nas_msg)?"yes":"no");
-  /* Basic Periodic TAU Request handling is supported. Only mandatory IEs are supported
-   * TODO - Add support for re-auth during TAU , Implicit GUTI Re-allocation & TAU Complete,
-   * TAU due to change in TAs, optional IEs 
-   */
   /*
    * Message checking
    */
@@ -615,12 +612,11 @@ emm_recv_tracking_area_update_request (
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
-
-//  ies->is_initial = is_initial;
+  /** Not checking if it is initial or not. For NAS layer, it is the same. */
   // Mandatory fields
   ies->eps_update_type = msg->epsupdatetype;
-  ies->is_native_sc   = (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
-  ies->ksi            = msg->naskeysetidentifier.naskeysetidentifier;
+  ies->is_native_sc    = (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
+  ies->ksi             = msg->naskeysetidentifier.naskeysetidentifier;
 
   // Optional fields
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_NONCURRENT_NATIVE_NAS_KEY_SET_IDENTIFIER_PRESENT) {
@@ -692,16 +688,19 @@ emm_recv_tracking_area_update_request (
      ies->originating_tai = calloc(1, sizeof(tai_t));
      memcpy(ies->originating_tai, originating_tai, sizeof(tai_t));
    }
-//   if (originating_ecgi) {
-//     params->originating_ecgi = calloc(1, sizeof(ecgi_t));
-//     memcpy(params->originating_ecgi, originating_ecgi, sizeof(ecgi_t));
-//   }
+
+  if (originating_ecgi) {
+    ies->originating_ecgi = calloc(1, sizeof(ecgi_t));
+    memcpy(ies->originating_ecgi, originating_ecgi, sizeof(ecgi_t));
+  }
+
+  /** Set the complete TAU Request. */
+  ies->complete_tau_request = nas_msg;
 
   ies->decode_status = *decode_status;
-//  ies->originating_tai = originating_tai;
   rc = emm_proc_tracking_area_update_request(ue_id, ies,
       gea, (gea >= (MS_NETWORK_CAPABILITY_GEA1 >> 1)), /**< GPRS & GPRS present. */
-      nas_msg, emm_cause);
+      emm_cause);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }

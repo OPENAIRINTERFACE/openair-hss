@@ -112,7 +112,8 @@ int emm_recv_tracking_area_update_request(
     const mme_ue_s1ap_id_t ue_id,
     tracking_area_update_request_msg * const msg,
     int * const emm_cause,
-    const tai_t *originating_tai,
+    const tai_t              * const originating_tai,
+    const ecgi_t             * const originating_ecgi,
     const nas_message_decode_status_t  * const decode_status,
     bstring nas_msg);
 

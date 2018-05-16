@@ -126,6 +126,8 @@ typedef struct emm_tau_request_ies_s {
   ue_network_capability_t       *ue_network_capability;
   tai_t                         *last_visited_registered_tai;
   tai_t                         *originating_tai;
+  ecgi_t                        *originating_ecgi;
+
   drx_parameter_t               *drx_parameter;
   bool                           is_ue_radio_capability_information_update_needed;
   eps_bearer_context_status_t   *eps_bearer_context_status;
@@ -182,7 +184,7 @@ void free_emm_attach_request_ies(emm_attach_request_ies_t ** const params);
 int emm_proc_attach_request(mme_ue_s1ap_id_t ue_id,
                             emm_attach_request_ies_t * const params);
 
-int _emm_attach_reject (emm_data_context_t *emm_ue_context, struct nas_base_proc_s * nas_base_proc);
+int _emm_attach_reject (emm_data_context_t *emm_context, struct nas_base_proc_s * nas_base_proc);
 
 int emm_proc_attach_reject(mme_ue_s1ap_id_t ue_id, emm_cause_t emm_cause);
 

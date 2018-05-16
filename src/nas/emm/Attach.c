@@ -349,7 +349,7 @@ int emm_proc_attach_request (
      new_emm_ue_ctx->emm_cause       = EMM_CAUSE_SUCCESS;
      emm_init_context(new_emm_ue_ctx);  /**< Initialize the context, we might do it again if the security was not verified. */
      if (RETURNok != emm_data_context_add (&_emm_data, new_emm_ue_ctx)) {
-       OAILOG_CRITICAL(LOG_NAS_EMM, "EMM-PROC  - Attach EMM Context could not be inserted in hastables for ueId " MME_UE_S1AP_ID_FMT ". \n", new_emm_ue_ctx->ue_id);
+       OAILOG_CRITICAL(LOG_NAS_EMM, "EMM-PROC  - Attach EMM Context could not be inserted in hashtables for ueId " MME_UE_S1AP_ID_FMT ". \n", new_emm_ue_ctx->ue_id);
        rc = _emm_attach_reject (new_emm_ue_ctx);
        OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
      }
@@ -837,7 +837,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
 
 static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const emm_context, emm_attach_request_ies_t * const ies)
 {
-  nas_emm_attach_proc_t *attach_proc = nas_new_attach_procedure(&emm_context, emm_registration_complete);
+  nas_emm_attach_proc_t *attach_proc = nas_new_attach_procedure(&emm_context);
   AssertFatal(attach_proc, "TODO Handle this");
   if ((attach_proc)) {
     attach_proc->ies = ies;
