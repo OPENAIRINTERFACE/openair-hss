@@ -80,6 +80,7 @@ typedef struct mme_app_s10_proc_s {
 typedef struct mme_app_s10_proc_mme_handover_s {
   mme_app_s10_proc_t            proc;
 
+  enb_ue_s1ap_id_t              source_enb_ue_s1ap_id;
   enb_ue_s1ap_id_t              target_enb_ue_s1ap_id;
   time_out_t                   *s10_mme_handover_timeout;
 
@@ -98,6 +99,8 @@ typedef struct mme_app_s10_proc_mme_handover_s {
 
   /** Target Information to store on the source side. */
   tai_t                         target_tai;
+
+  ecgi_t                        source_ecgi;  /**< Source home/macro enb id. */
   ecgi_t                        target_ecgi;  /**< Target home/macro enb id. */
   bool                          pending_clear_location_request;
 

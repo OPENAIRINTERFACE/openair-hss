@@ -418,6 +418,47 @@ extern                                  "C" {
     return (nwGtpv2cMsgAddIe (hMsg, NW_GTPV2C_IE_FTEID, (pFteidBuf - fteidBuf), instance, fteidBuf));
   }
 
+  nw_rc_t                                   nwGtpv2cMsgAddIeFCause (
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
+  NW_IN uint8_t instance,
+  NW_IN uint8_t fcauseType,
+  NW_IN uint8_t fcauseValue){
+    uint8_t fcauseBuf[8];
+
+    fcauseBuf[0] = fcauseType;
+    fcauseBuf[1] = fcauseValue;
+    // todo: extended f-cause?!
+    return (nwGtpv2cMsgAddIe(hMsg, NW_GTPV2C_IE_F_CAUSE, 2, instance, fcauseBuf));
+  }
+
+  nw_rc_t                                   nwGtpv2cMsgAddIeFContainer (
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
+  NW_IN uint8_t   instance,
+  NW_IN uint8_t*  container_value,
+  NW_IN uint32_t  container_data_size,
+  NW_IN uint8_t   container_type){
+    uint8_t fContainerBuf[container_data_size + 1];
+
+    fContainerBuf[0] = container_type;
+    memcpy(&fContainerBuf[1], container_value, container_data_size);
+    // todo: extended f-cause?!
+    return (nwGtpv2cMsgAddIe(hMsg, NW_GTPV2C_IE_F_CONTAINER, container_data_size + 1, instance, fContainerBuf));
+  }
+
+
+  nw_rc_t                                   nwGtpv2cMsgAddIeCompleteRequestMessage (
+  NW_IN nw_gtpv2c_msg_handle_t hMsg,
+  NW_IN uint8_t   instance,
+  NW_IN uint8_t*  request_value,
+  NW_IN uint32_t  request_size,
+  NW_IN uint8_t   request_type){
+    uint8_t requestBuf[request_size];
+
+    requestBuf[0] = request_type;
+    memcpy(&requestBuf[1], request_value, request_size -1 );
+    // todo: extended f-cause?!
+    return (nwGtpv2cMsgAddIe(hMsg, NW_GTPV2C_IE_COMPLETE_REQUEST_MESSAGE, request_size, instance, requestBuf));
+  }
 
   bool                                 nwGtpv2cMsgIsIePresent (
   NW_IN nw_gtpv2c_msg_handle_t hMsg,
@@ -642,6 +683,22 @@ extern                                  "C" {
         ipv4Addr->s_addr =  (*((uint32_t *) (pIeValue)));
         pIeValue += 4;
       }
+
+
+
+      if (ipv4Addr) {
+        fteidBuf[0] |= (0x01 << 7);
+        *((uint32_t *) (pFteidBuf)) = ipv4Addr->s_addr;
+        pFteidBuf += 4;
+      }
+
+
+      if (pIpv6Addr) {
+        fteidBuf[0] |= (0x01 << 6);
+        memcpy ((pFteidBuf), pIpv6Addr->__in6_u.__u6_addr8, 16);
+        pFteidBuf += 16;
+      }
+
 
       return NW_OK;
     }

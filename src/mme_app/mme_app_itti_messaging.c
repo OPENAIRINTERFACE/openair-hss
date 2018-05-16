@@ -99,7 +99,7 @@ int mme_app_send_nas_signalling_connection_rel_ind(const mme_ue_s1ap_id_t ue_id)
 }
 
 //------------------------------------------------------------------------------
-int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context, const pdn_cid_t pdn_index)
+int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_context)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   /*
@@ -110,15 +110,21 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
   int                                     rc = RETURNok;
 
   DevAssert (ue_context );
+
+  Assert(ue_context->num_pdns); // todo: check num active pdns via EMM/ESM context
+  pdn_context_t * pdn_context = RB_MIN(PdnContexts, ue_context->pdn_contexts);
+  DevAssert(pdn_context);
+
+
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_RELEASE_ACCESS_BEARERS_REQUEST);
   release_access_bearers_request_p = &message_p->ittiMsg.s11_release_access_bearers_request;
   memset ((void*)release_access_bearers_request_p, 0, sizeof (itti_s11_release_access_bearers_request_t));
 
+
   // todo: multi apn, send m
   release_access_bearers_request_p->local_teid = ue_context->mme_teid_s11;
-  pdn_context_t * pdn_connection = ue_context->pdn_contexts[pdn_index];
-  release_access_bearers_request_p->teid = pdn_connection->s_gw_teid_s11_s4;
-  release_access_bearers_request_p->peer_ip = pdn_connection->s_gw_address_s11_s4.address.ipv4_address; /**< Not reading from the MME config. */
+  release_access_bearers_request_p->teid = pdn_context->s_gw_teid_s11_s4;
+  release_access_bearers_request_p->peer_ip = pdn_context->s_gw_address_s11_s4.address.ipv4_address; /**< Not reading from the MME config. */
 
   release_access_bearers_request_p->originating_node = NODE_TYPE_MME;
 

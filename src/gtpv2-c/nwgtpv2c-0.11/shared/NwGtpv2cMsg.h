@@ -445,6 +445,29 @@ nwGtpv2cMsgGroupedIeStart(NW_IN nw_gtpv2c_msg_handle_t hMsg,
 nw_rc_t
 nwGtpv2cMsgGroupedIeEnd(NW_IN nw_gtpv2c_msg_handle_t hMsg);
 
+/*
+ * New FTEIDs for Inter-MME S10 handover.
+ */
+
+nw_rc_t                                   nwGtpv2cMsgAddIeFCause (
+NW_IN nw_gtpv2c_msg_handle_t hMsg,
+NW_IN uint8_t instance,
+NW_IN uint8_t fcauseType,
+NW_IN uint8_t fcauseValue);
+
+nw_rc_t                                   nwGtpv2cMsgAddIeFContainer (
+NW_IN nw_gtpv2c_msg_handle_t hMsg,
+NW_IN uint8_t   instance,
+NW_IN uint8_t*  container_value,
+NW_IN uint32_t  container_data_size,
+NW_IN uint8_t   container_type);
+
+nw_rc_t                                   nwGtpv2cMsgAddIeCompleteRequestMessage (
+NW_IN nw_gtpv2c_msg_handle_t hMsg,
+NW_IN uint8_t   instance,
+NW_IN uint8_t*  request_value,
+NW_IN uint32_t  request_size,
+NW_IN uint8_t   request_type);
 
 /**
  * Check if information element of type and instance is present

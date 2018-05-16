@@ -301,7 +301,7 @@ typedef struct ho_bearer_context_s {
 // 8.39: PDN Connection
 
 typedef struct pdn_connection_s {
-  char                      apn[APN_MAX_LENGTH + 1]; ///< Access Point Name
+//  char                      apn[APN_MAX_LENGTH + 1]; ///< Access Point Name
   //  protocol_configuration_options_t pco;
   bstring                   apn_str;
 //  int                       pdn_type;

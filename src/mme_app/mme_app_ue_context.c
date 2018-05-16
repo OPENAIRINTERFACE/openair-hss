@@ -221,12 +221,24 @@ mme_app_imsi_to_u64 (mme_app_imsi_t imsi_src)
 //------------------------------------------------------------------------------
 void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context)
 {
-  for (int i = 0; i < BEARERS_PER_UE; i++) {
-    bearer_context_t *bc = ue_context->bearer_contexts[i];
-    if (bc) {
-      mme_app_bearer_context_s1_release_enb_informations(bc);
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  pdn_context_t * registered_pdn_ctx = NULL;
+  /** Update all bearers and get the pdn context id. */
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+    DevAssert(registered_pdn_ctx);
+
+    /**
+     * Get the first PDN whose bearers are not established yet.
+     * Do the MBR just one PDN at a time.
+     */
+    bearer_context_t * bearer_context_to_set_idle = NULL;
+    RB_FOREACH (bearer_context_to_set_idle, BearerPool, &registered_pdn_ctx->session_bearers) {
+      DevAssert(bearer_context_to_set_idle);
+      /** Add them to the bearears list of the MBR. */
+      mme_app_bearer_context_s1_release_enb_informations(bearer_context_to_set_idle);
     }
   }
+  OAILOG_FUNC_OUT(LOG_MME_APP);
 }
 
 mme_ue_s1ap_id_t mme_app_ctx_get_new_ue_id(void)

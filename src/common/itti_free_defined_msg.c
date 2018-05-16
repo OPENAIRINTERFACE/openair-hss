@@ -279,6 +279,51 @@ void itti_free_msg_content (MessageDef * const message_p)
   case UDP_DATA_IND:
     // TODO
    break;
+
+   /*
+    * Free Handover Messaging!
+    * MME_APP:
+    */
+  case HANDOVER_REQUIRED:
+    bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_required.eutran_source_to_target_container);
+    break;
+
+  case S10_FORWARD_RELOCATION_REQUEST:
+    /* Transparent Container. */
+     bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_request.eutran_container->container_value);
+    /* PDN Connections. */
+    if(message_p->ittiMsg.s10_forward_relocation_request.pdn_connections){
+
+    }
+    break;
+
+  case S10_FORWARD_RELOCATION_RESPONSE:
+      /* Transparent Container. */
+    bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_response.eutran_container->container_value);
+    break;
+
+  case HANDOVER_REQUEST:
+    bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request.source_to_target_eutran_container);
+    break;
+
+  case HANDOVER_REQUEST_ACKNOWLEDGE:
+    bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request_acknowledge.target_to_source_eutran_container);
+    for (int i = 0; i < message_p->ittiMsg.s1ap_handover_request_acknowledge.no_of_e_rabs; i++) {
+      bdestroy_wrapper (&message_p->ittiMsg.s1ap_handover_request_acknowledge.transport_layer_address[i]);
+//          bdestroy_wrapper (&message_p->ittiMsg.s1ap_e_rab_setup_req.e_rab_to_be_setup_list.item[i].transport_layer_address);
+    }
+    break;
+  case S1AP_ENB_STATUS_TRANSFER:
+    bdestroy_wrapper(&message_p->ittiMsg.s1ap_enb_status_transfer.bearerStatusTransferList_buffer);
+    break;
+  case S1AP_MME_STATUS_TRANSFER:
+    bdestroy_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.bearerStatusTransferList_buffer);
+    break;
+  case S10_FORWARD_ACCESS_CONTEXT_NOTIFICATION:
+    bdestroy(&message_p->ittiMsg.s10_forward_access_context_notification.eutran_container.container_value);
+    break;
+  case S10_FORWARD_ACCESS_CONTEXT_ACKNOWLEDGE:
+    break;
   default:
     ;
   }

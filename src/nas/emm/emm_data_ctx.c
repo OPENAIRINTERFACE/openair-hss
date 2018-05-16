@@ -768,6 +768,76 @@ void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init
 }
 
 //------------------------------------------------------------------------------
+int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
+    uint16_t *encryption_algorithm_capabilities,
+    uint16_t *integrity_algorithm_capabilities){
+  uint8_t                 kenb[32];
+  uint32_t                ul_nas_count;
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+
+  emm_data_context_t                     *emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+
+  if (!emm_ctx) {
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no EMM context existing for UE id " MME_UE_S1AP_ID_FMT ". Cannot update the AS security. \n", ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
+  if (!IS_EMM_CTXT_VALID_SECURITY(emm_ctx)) {
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no valid security context exist EMM context for UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Cannot update the AS security. \n",
+        ue_id, emm_ctx->_imsi64);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  }
+
+  AssertFatal((0 <= emm_ctx->_security.vector_index) && (MAX_EPS_AUTH_VECTORS > emm_ctx->_security.vector_index),
+      "Invalid vector index %d", emm_ctx->_security.vector_index);
+
+  *encryption_algorithm_capabilities = ((uint16_t)emm_ctx->eea & ~(1 << 7)) << 1;
+  *integrity_algorithm_capabilities = ((uint16_t)emm_ctx->eia & ~(1 << 7)) << 1;
+
+  /** Derive the next hop. */
+  derive_nh(emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj);
+
+  /** Increase the next hop counter. */
+  emm_ctx->_security.ncc++;
+  /* The NCC is a 3-bit key index (values from 0 to 7) for the NH and is sent to the UE in the handover command signaling. */
+  emm_ctx->_security.ncc = emm_ctx->_security.ncc % 8;
+
+  OAILOG_INFO(LOG_NAS_EMM, "EMM-CTX - Updated AS security parameters for EMM context with UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". \n",
+          ue_id, emm_ctx->_imsi64);
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+void emm_data_context_get_security_parameters(const mme_ue_s1ap_id_t ue_id,
+    uint16_t *encryption_algorithm_capabilities,
+    uint16_t *integrity_algorithm_capabilities){
+  uint8_t                 kenb[32];
+  uint32_t                ul_nas_count;
+
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+
+  emm_data_context_t                     *emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+
+  if (!emm_ctx) {
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no EMM context existing for UE id " MME_UE_S1AP_ID_FMT ". Cannot update the AS security. \n", ue_id);
+    OAILOG_FUNC_OUT(LOG_NAS_EMM);
+  }
+  if (!IS_EMM_CTXT_VALID_SECURITY(emm_ctx)) {
+    OAILOG_ERROR(LOG_NAS_EMM, "EMM-CTX - no valid security context exist EMM context for UE id " MME_UE_S1AP_ID_FMT " and IMSI " IMSI_64_FMT ". Cannot update the AS security. \n",
+        ue_id, emm_ctx->_imsi64);
+    OAILOG_FUNC_OUT(LOG_NAS_EMM);
+  }
+
+  AssertFatal((0 <= emm_ctx->_security.vector_index) && (MAX_EPS_AUTH_VECTORS > emm_ctx->_security.vector_index),
+      "Invalid vector index %d", emm_ctx->_security.vector_index);
+
+  *encryption_algorithm_capabilities = ((uint16_t)emm_ctx->eea & ~(1 << 7)) << 1;
+  *integrity_algorithm_capabilities = ((uint16_t)emm_ctx->eia & ~(1 << 7)) << 1;
+
+  OAILOG_FUNC_OUT(LOG_NAS_EMM);
+}
+
+//------------------------------------------------------------------------------
 int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas_emm_specific_proc_t * const spec_proc,
     success_cb_t * _context_res_proc_success, failure_cb_t* _context_res_proc_fail)
 {
@@ -1329,5 +1399,3 @@ void emm_context_dump (
     //esm_context_dump(&emm_context->esm_ctx, indent_spaces, bstr_dump);
   }
 }
-
-

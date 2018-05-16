@@ -780,9 +780,30 @@ s10_f_container_ie_get (
   f_container->container_type = *p_ieValue & 0x0F;
   p_ieValue++;
   /** Allocating a new bstring. It will stay until it is manually deallocated. */
+  f_container->container_value = blk2bstr((void*)p_ieValue, ieLength -1); /**< Will it stay after ITTI message is sent, also in the destination ?*/
+  return NW_OK;
+}
+
+nw_rc_t
+s10_f_container_ie_get_2 (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  F_Container_t                       *f_container= (F_Container_t*) arg;
+  DevAssert (f_container );
+  // todo: check the minimum length!
+  uint8_t * p_ieValue = ieValue;
+
+  f_container->container_type = *p_ieValue & 0x0F;
+  p_ieValue++;
+  /** Allocating a new bstring. It will stay until it is manually deallocated. */
   f_container->container_value = blk2bstr((void*)p_ieValue, ieLength -2); /**< Will it stay after ITTI message is sent, also in the destination ?*/
   return NW_OK;
 }
+
 
 nw_rc_t
 s10_pdn_type_ie_get (

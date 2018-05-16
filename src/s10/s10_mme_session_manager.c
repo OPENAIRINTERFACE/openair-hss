@@ -586,7 +586,7 @@ s10_mme_handle_forward_access_context_notification( nw_gtpv2c_stack_handle_t * s
    * Instance Zero is E-UTRAN. Only E-UTRAN will be supported.
    */
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_F_CONTAINER, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s10_f_container_ie_get, &notif_p->eutran_container);
+      s10_f_container_ie_get_2, &notif_p->eutran_container);
   DevAssert (NW_OK == rc);
 
   /**
@@ -675,12 +675,12 @@ s10_mme_forward_access_context_acknowledge(nw_gtpv2c_stack_handle_t *stack_p,
 int
 s10_mme_handle_forward_access_context_acknowledge( nw_gtpv2c_stack_handle_t * stack_p, nw_gtpv2c_ulp_api_t * pUlpApi){
   nw_rc_t                                   rc = NW_OK;
-  uint8_t                                 offendingIeType,
+  uint8_t                                   offendingIeType,
                                             offendingIeInstance;
-  uint16_t                                offendingIeLength;
+  uint16_t                                  offendingIeLength;
   itti_s10_forward_access_context_acknowledge_t  *ack_p;
-  MessageDef                             *message_p;
-  nw_gtpv2c_msg_parser_t                     *pMsgParser;
+  MessageDef                               *message_p;
+  nw_gtpv2c_msg_parser_t                   *pMsgParser;
 
   DevAssert (stack_p );
   /** Allocating the Signal once at the sender (MME_APP --> S10) and once at the receiver (S10-->MME_APP). */
@@ -774,6 +774,7 @@ s10_mme_forward_relocation_complete_notification(
 }
 
 /* @brief Handle a Forward Relocation Complete Notification received from source MME. */
+//------------------------------------------------------------------------------
 int
 s10_mme_handle_forward_relocation_complete_notification(
     nw_gtpv2c_stack_handle_t * stack_p,

@@ -259,12 +259,7 @@ typedef struct itti_s1ap_path_switch_req_s {
 //  ip_address_t            s_gw_address;
 } itti_s1ap_path_switch_req_t;
 
-typedef struct bearer_ctx_to_be_xx_list_s {
-  uint8_t n_bearers;
-  void* bearer_ctxs;
-}bearer_ctx_to_be_xx_list_t;
-
-/** Path Switch Request Acknowledgement sent from MME_APP to S1AP layer. */
+/** Path Switch Request Acknowledgment sent from MME_APP to S1AP layer. */
 typedef struct itti_s1ap_path_switch_request_ack_s {
   ebi_t                   eps_bearer_id;
   mme_ue_s1ap_id_t        ue_id;            /* UE lower layer identifier   */
@@ -313,8 +308,6 @@ typedef struct itti_s1ap_handover_command_s {
 } itti_s1ap_handover_command_t;
 
 typedef struct itti_s1ap_handover_request_s {
-//  ebi_t                   eps_bearer_id;
-//  FTeid_t                 bearer_s1u_sgw_fteid;
   mme_ue_s1ap_id_t        ue_id;            /* UE lower layer identifier   */
 
   /* Key eNB */
@@ -327,13 +320,7 @@ typedef struct itti_s1ap_handover_request_s {
   /** UE AMBR. */
   ambr_t                          ambr;
   /** Bearer Contexts to be Setup List. */
-  bearer_ctx_to_be_xx_list_t   bearer_ctx_to_be_setup_list;
-
-//  /** Bearer Level QoS. */
-//  qci_t                           bearer_qos_qci;
-//  priority_level_t                bearer_qos_prio_level;
-//  pre_emp_vulnerability_t         bearer_qos_pre_emp_vulnerability;
-//  pre_emp_capability_t            bearer_qos_pre_emp_capability;
+  bearer_contexts_to_be_created_t bearer_ctx_to_be_setup_list;
 
   /** F-Container. */
   bstring                   source_to_target_eutran_container;
@@ -417,8 +404,6 @@ typedef struct itti_s1ap_handover_notify_s {
   tai_t                   tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
   ecgi_t                  cgi;
 
-//  sctp_assoc_id_t         sctp_assoc_id;
-//  sctp_stream_id_t        sctp_stream;
 } itti_s1ap_handover_notify_t;
 
 typedef struct itti_s1ap_paging_s {

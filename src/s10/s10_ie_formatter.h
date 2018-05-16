@@ -86,6 +86,14 @@ s10_f_container_ie_get (
   uint8_t * ieValue,
   void *arg);
 
+nw_rc_t
+s10_f_container_ie_get_2 (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg);
+
 /**
  * Target Identification Information Element
  * 3GPP TS 29.274 #8.51
