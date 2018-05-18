@@ -157,7 +157,7 @@ void* log_task (__attribute__ ((unused)) void *args_p)
         break;
 
       case TERMINATE_MESSAGE:{
-          timer_remove (timer_id);
+          timer_remove (timer_id, NULL);
           log_exit ();
 
           MessageDef   *terminate_message_p = itti_alloc_new_message (TASK_LOG, TERMINATE_MESSAGE);

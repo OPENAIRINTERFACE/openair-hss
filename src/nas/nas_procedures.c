@@ -64,7 +64,7 @@
 #include "mme_config.h"
 #include "nas_itti_messaging.h"
 #include "mme_app_defs.h"
-#include "digest.h"
+//#include "digest.h"
 #include "nas_procedures.h"
 
 static  nas_emm_common_proc_t *get_nas_common_procedure(const struct emm_data_context_s * const ctxt, emm_common_proc_type_t proc_type);
@@ -163,7 +163,7 @@ nas_auth_info_proc_t *get_nas_cn_procedure_auth_info(const struct emm_data_conte
 }
 
 //------------------------------------------------------------------------------
-nas_auth_info_proc_t *get_nas_cn_procedure_ctx_req(const struct emm_data_context_s * const ctxt)
+nas_ctx_req_proc_t *get_nas_cn_procedure_ctx_req(const struct emm_data_context_s * const ctxt)
 {
   return (nas_ctx_req_proc_t*)get_nas_cn_procedure(ctxt, CN_PROC_CTX_REQ);
 }
@@ -275,7 +275,7 @@ inline bool is_nas_tau_accept_sent(const nas_emm_tau_proc_t * const tau_proc)
   }
 }
 //-----------------------------------------------------------------------------
-inline bool is_nas_tau_reject_sent(const nas_emm_tau_proc_t * const tau_uproc)
+inline bool is_nas_tau_reject_sent(const nas_emm_tau_proc_t * const tau_proc)
 {
   return tau_proc->tau_reject_sent;
 }
@@ -629,7 +629,7 @@ nas_emm_attach_proc_t* nas_new_attach_procedure(struct emm_data_context_s * cons
   emm_context->emm_procedures->emm_specific_proc->emm_proc.type  = NAS_EMM_PROC_TYPE_SPECIFIC;
   emm_context->emm_procedures->emm_specific_proc->type  = EMM_SPEC_PROC_TYPE_ATTACH;
   /** Set the success notifications, entered when the UE goes from EMM_DEREGISTERED to EMM_REGISTERED (former MME_APP callbacks). */
-  emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.success_notif = _emm_registration_complete;
+//  emm_context->emm_procedures->emm_specific_proc->emm_proc.base_proc.success_notif = _emm_registration_complete;
 
   nas_emm_attach_proc_t * proc = (nas_emm_attach_proc_t*)emm_context->emm_procedures->emm_specific_proc;
 
@@ -855,14 +855,14 @@ void nas_digest_msg(const unsigned char * const msg, const size_t msg_len, char 
 {
   unsigned int   result_len = 0;
   unsigned char *result = NULL;
-  if (RETURNok == digest_buffer(EVP_md4, msg, msg_len, &result, &result_len)) {
-    //OAILOG_STREAM_HEX (OAILOG_LEVEL_TRACE, LOG_NAS_EMM, "NAS Msg :", msg, msg_len);
-    int min_length = min(result_len, (*digest_length));
-    memcpy(digest, result, min_length);
-    *digest_length = min_length;
-    //OAILOG_STREAM_HEX (OAILOG_LEVEL_TRACE, LOG_NAS_EMM, "Digest:", digest, (*digest_length));
-    OPENSSL_free(result);
-  }
+//  if (RETURNok == digest_buffer(EVP_md4, msg, msg_len, &result, &result_len)) {
+//    //OAILOG_STREAM_HEX (OAILOG_LEVEL_TRACE, LOG_NAS_EMM, "NAS Msg :", msg, msg_len);
+//    int min_length = min(result_len, (*digest_length));
+//    memcpy(digest, result, min_length);
+//    *digest_length = min_length;
+//    //OAILOG_STREAM_HEX (OAILOG_LEVEL_TRACE, LOG_NAS_EMM, "Digest:", digest, (*digest_length));
+//    OPENSSL_free(result);
+//  }
 }
 
 

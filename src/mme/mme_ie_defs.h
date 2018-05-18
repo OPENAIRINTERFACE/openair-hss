@@ -69,10 +69,10 @@ typedef struct F_Container{
   uint8_t     container_type;
 }F_Container_t;
 
-//typedef struct Complete_Request_Message{
-//  bstring                             request_value;
-////  Complete_Request_Message_Type_t     request_type;
-//}Complete_Request_Message_t;
+typedef struct Complete_Request_Message{
+  bstring                             request_value;
+  Complete_Request_Message_Type_t     request_type;
+}Complete_Request_Message_t;
 
 ////-----------------
 //typedef struct bearer_context_setup {
@@ -81,21 +81,6 @@ typedef struct F_Container{
 //} bearer_context_setup_t;
 
 #define MAX_SETUP_BEARERS 11
-
-//typedef struct list_of_setup_bearers_s {
-//  uint8_t num_bearer_context;
-//  bearer_context_setup_t bearer_contexts[MAX_SETUP_BEARERS];
-//} list_of_setup_bearers_t;
-
-//------------------------
-#define MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS   3
-#define MSG_FORWARD_RELOCATION_REQUEST_MAX_BEARER_CONTEXTS   11
-
-typedef struct mme_ue_eps_pdn_connections_s {
-  uint8_t num_pdn_connections;
-  pdn_connection_t pdn_connection[MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS];
-} mme_ue_eps_pdn_connections_t;
-//----------------------------
 
 ///*
 // * Minimal and maximal value of an EPS bearer identity:

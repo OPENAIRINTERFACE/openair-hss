@@ -370,7 +370,7 @@ s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
 
   for (i = 0; i < pdn_connections->num_pdn_connections; i++) {
     /** APN IE Set. */
-    s10_apn_ie_set (msg, pdn_connections->pdn_connection[i].apn_str->data);
+    s10_apn_ie_set (msg, pdn_connections->pdn_connection[i].apn_str);
 
     /** Set the IPv4 Address. */
     s10_ipv4_address_ie_set(msg, &(pdn_connections->pdn_connection[i].ipv4_address));
@@ -397,7 +397,7 @@ s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
     s10_ambr_ie_set(msg, &(pdn_connections->pdn_connection[i].apn_ambr));
 
     /** Set the PDN connection (another concatenated grouped IE). */
-    s10_bearer_context_to_create_ie_set(msg, &(pdn_connections->pdn_connection[i].bearer_context));
+    s10_bearer_context_to_create_ie_set(msg, &(pdn_connections->pdn_connection[i].bearer_context_list));
   }
 
   /*
@@ -446,10 +446,7 @@ s10_pdn_connection_ie_get (
         break;
 
       case NW_GTPV2C_IE_APN:
-        char                      apn[APN_MAX_LENGTH + 1]; ///< Access Point Name
-        rc = s10_apn_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], apn);
-        /** Convert char* to bstring. */
-        pdn_connection->apn_str= blk2bstr(apn, ntohs (ie_p->l));
+        rc = s10_apn_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &pdn_connection->apn_str);
         DevAssert (NW_OK == rc);
         break;
 
@@ -462,16 +459,8 @@ s10_pdn_connection_ie_get (
        * IP Address
        */
       case NW_GTPV2C_IE_IP_ADDRESS:
-        gtp_ip_address_t ip_address;
-        memset((void*)& ip_address, 0, sizeof(gtp_ip_address_t));
-        rc = s10_ip_address_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], ip_address);
-        /** Only one type can exist. */
-        if(ip_address.present == GTP_IP_ADDR_v4){
-//          pdn_connection->ipv4_address = ip_address.present
-          pdn_connection->ipv4_address.s_addr =  (*((uint32_t *) (ip_address.address.v4)));
-        }else if (ip_address.present == GTP_IP_ADDR_v6){
-          memcpy (&pdn_connection->ipv6_address->__in6_u.__u6_addr8, ip_address.address.v6, 16);
-        }
+        rc = s10_pdn_address_ie_get(ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], (void*)pdn_connection);
+
         DevAssert (NW_OK == rc);
         break;
 
@@ -751,7 +740,7 @@ s10_complete_request_message_ie_get (
   // todo: check the minimum length!
   uint8_t * p_ieValue = ieValue;
 
-  request->request_type = *p_ieValue;
+  request->request_type = *p_ieValue; // Skip this (only tau considered)
   p_ieValue++;
 
   // todo: checking the length and copying it from there?
@@ -1022,27 +1011,30 @@ s10_ebi_ie_get_list (
 int
 s10_bearer_context_to_create_ie_set (
   nw_gtpv2c_msg_handle_t * msg,
-  const bearer_context_to_be_created_t * bearer_context)
+  const bearer_contexts_to_be_created_t * bearer_contexts)
 {
   nw_rc_t                                   rc;
 
   DevAssert (msg );
-  DevAssert (bearer_context);
+  DevAssert (bearer_contexts);
   /*
    * Start section for grouped IE: bearer context to create
    */
   rc = nwGtpv2cMsgGroupedIeStart (*msg, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO);
   DevAssert (NW_OK == rc);
+  bearer_context_to_be_created_t  *bc_tbc = &bearer_contexts->bearer_contexts[0];
+
   /** Set the EBI. */
-  s10_ebi_ie_set (msg, bearer_context->eps_bearer_id);
+  s10_ebi_ie_set (msg, bc_tbc->eps_bearer_id);
   /** Set the Bearer Level QoS. */
-  s10_bearer_qos_ie_set(msg, &bearer_context->bearer_level_qos);
+  s10_bearer_qos_ie_set(msg, &bc_tbc->bearer_level_qos);
   /** Set the S1U-SGW FTEID. */
+  // todo: get the first bearer
   rc = nwGtpv2cMsgAddIeFteid (*msg, NW_GTPV2C_IE_INSTANCE_ZERO,
-      bearer_context->s1u_sgw_fteid.interface_type,
-      bearer_context->s1u_sgw_fteid.teid,
-      bearer_context->s1u_sgw_fteid.ipv4 ? &bearer_context->s1u_sgw_fteid.ipv4_address : 0,
-          bearer_context->s1u_sgw_fteid.ipv6 ? &bearer_context->s1u_sgw_fteid.ipv6_address : NULL);
+      bc_tbc->s1u_sgw_fteid.interface_type,
+      bc_tbc->s1u_sgw_fteid.teid,
+      bc_tbc->s1u_sgw_fteid.ipv4 ? &bc_tbc->s1u_sgw_fteid.ipv4_address : 0,
+          bc_tbc->s1u_sgw_fteid.ipv6 ? &bc_tbc->s1u_sgw_fteid.ipv6_address : NULL);
   DevAssert (NW_OK == rc);
 
   /*
@@ -1126,30 +1118,6 @@ s10_bearer_context_to_be_created_ie_get (
   }
   bearer_contexts->num_bearer_context += 1;
   return NW_OK;
-}
-
-int
-s10_list_of_setup_bearers_ie_set (
-  nw_gtpv2c_msg_handle_t * msg,
-  const bearer_context_setup_t * bearer_context)
-{
-  nw_rc_t                                   rc;
-
-  DevAssert (msg );
-  DevAssert (bearer_context );
-  /*
-   * Start section for grouped IE: bearer context to create
-   */
-  rc = nwGtpv2cMsgGroupedIeStart (*msg, NW_GTPV2C_IE_BEARER_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO);
-  DevAssert (NW_OK == rc);
-  s10_ebi_ie_set (msg, bearer_context->eps_bearer_id);
-//  s10_bearer_qos_ie_set(msg, &bearer_context->bearer_level_qos);
-  /*
-   * End section for grouped IE: bearer context to create
-   */
-  rc = nwGtpv2cMsgGroupedIeEnd (*msg);
-  DevAssert (NW_OK == rc);
-  return RETURNok;
 }
 
 int
@@ -1488,13 +1456,15 @@ s10_apn_ie_get (
   uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
-  void *arg)
+  bstring *apn_str)
 {
   uint8_t                                 read = 1;
   uint8_t                                 word_length;
-  char                                   *apn = (char *)arg;
+//  char                                   *apn = (char *)arg;
+  /** Convert char* to bstring. */
+  char                      apn[APN_MAX_LENGTH + 1]; ///< Access Point Name
 
-  DevAssert (apn );
+  DevAssert (apn_str );
   DevCheck (ieLength <= APN_MAX_LENGTH, ieLength, APN_MAX_LENGTH, 0);
   word_length = ieValue[0];
 
@@ -1518,13 +1488,16 @@ s10_apn_ie_get (
 
   apn[read - 1] = '\0';
   OAILOG_DEBUG (LOG_S10, "\t- APN %s\n", apn);
+  *apn_str= blk2bstr(apn, ntohs (ieLength));
+
+
   return NW_OK;
 }
 
 int
 s10_apn_ie_set (
   nw_gtpv2c_msg_handle_t * msg,
-  const char *apn)
+  const bstring apn_str)
 {
   nw_rc_t                                   rc;
   uint8_t                                *value;
@@ -1532,12 +1505,14 @@ s10_apn_ie_set (
   uint8_t                                 offset = 0;
   uint8_t                                *last_size;
   uint8_t                                 word_length = 0;
+  char                                   *apn;
 
-  DevAssert (apn );
+  DevAssert (apn_str);
   DevAssert (msg );
-  apn_length = strlen (apn);
+  apn_length = blength (apn_str);
   value = calloc (apn_length + 1, sizeof (uint8_t));
   last_size = &value[0];
+  apn = apn_str->data;
 
   while (apn[offset]) {
     /*
@@ -1709,34 +1684,43 @@ s10_bearer_qos_ie_set (
 }
 
 nw_rc_t
-s10_ip_address_ie_get (
+s10_pdn_address_ie_get (
   uint8_t ieType,
   uint16_t ieLength,
   uint8_t ieInstance,
   uint8_t * ieValue,
   void *arg)
 {
-  gtp_ip_address_t                       *ip_address = (gtp_ip_address_t *) arg;
+  pdn_connection_t *pdn_connection = (pdn_connection_t *) arg;
+  gtp_ip_address_t ip_address;
+  memset((void*)& ip_address, 0, sizeof(gtp_ip_address_t));
 
-  DevAssert (ip_address );
+  DevAssert (pdn_connection );
 
   if (ieLength == 4) {
     /*
      * This is an IPv4 Address
      */
-    ip_address->present = GTP_IP_ADDR_v4;
-    memcpy (ip_address->address.v4, ieValue, 4);
+    ip_address.present = GTP_IP_ADDR_v4;
+    memcpy (ip_address.address.v4, ieValue, 4);
   } else if (ieLength == 16) {
     /*
      * This is an IPv6 Address
      */
-    ip_address->present = GTP_IP_ADDR_v6;
-    memcpy (ip_address->address.v6, ieValue, 16);
+    ip_address.present = GTP_IP_ADDR_v6;
+    memcpy (ip_address.address.v6, ieValue, 16);
   } else {
     /*
      * Length doesn't lie in possible values
      */
     return NW_GTPV2C_IE_INCORRECT;
+  }
+  /** Only one type can exist. */
+  if(ip_address.present == GTP_IP_ADDR_v4){
+    //          pdn_connection->ipv4_address = ip_address.present
+    pdn_connection->ipv4_address.s_addr =  (*((uint32_t *) (ip_address.address.v4)));
+  }else if (ip_address.present == GTP_IP_ADDR_v6){
+    memcpy (&pdn_connection->ipv6_address.__in6_u.__u6_addr8, ip_address.address.v6, 16);
   }
 
   return NW_OK;
@@ -1772,20 +1756,20 @@ s10_ip_address_ie_get (
 //  return RETURNok;
 //}
 
-int
-s10_ipv4_address_ie_get(uint8_t ieType,
-  uint16_t ieLength,
-  uint8_t ieInstance,
-  uint8_t * ieValue,
-  void *arg)
-{
-  nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
-  nw_gtpv2c_ie_tlv_t                        *pIe;
-
-  struct in_addr * ipv4Addr =  (struct in_addr *) arg;
-  DevAssert(ipv4Addr);
-
-  ipv4Addr->s_addr =  (*((uint32_t *) (pIeValue)));
+//int
+//s10_ipv4_address_ie_get(uint8_t ieType,
+//  uint16_t ieLength,
+//  uint8_t ieInstance,
+//  uint8_t * ieValue,
+//  void *arg)
+//{
+//  nw_gtpv2c_msg_t                           *thiz = (nw_gtpv2c_msg_t *) hMsg;
+//  nw_gtpv2c_ie_tlv_t                        *pIe;
+//
+//  struct in_addr * ipv4Addr =  (struct in_addr *) arg;
+//  DevAssert(ipv4Addr);
+//
+//  ipv4Addr->s_addr =  (*((uint32_t *) (pIeValue)));
 
 //  NW_ASSERT (instance <= NW_GTPV2C_IE_INSTANCE_MAXIMUM);
 //
@@ -1810,33 +1794,33 @@ s10_ipv4_address_ie_get(uint8_t ieType,
 //
 //  return NW_GTPV2C_IE_MISSING;
 //}
-
-  gtp_ip_address_t                       *ip_address = (gtp_ip_address_t *) arg;
-
-   DevAssert (ip_address );
-
-   if (ieLength == 4) {
-     /*
-      * This is an IPv4 Address
-      */
-     ip_address->present = GTP_IP_ADDR_v4;
-     memcpy (ip_address->address.v4, ieValue, 4);
-   } else if (ieLength == 16) {
-     /*
-      * This is an IPv6 Address
-      */
-     ip_address->present = GTP_IP_ADDR_v6;
-     memcpy (ip_address->address.v6, ieValue, 16);
-   } else {
-     /*
-      * Length doesn't lie in possible values
-      */
-     return NW_GTPV2C_IE_INCORRECT;
-   }
-
-   return NW_OK;
-
-}
+//
+//  gtp_ip_address_t                       *ip_address = (gtp_ip_address_t *) arg;
+//
+//   DevAssert (ip_address );
+//
+//   if (ieLength == 4) {
+//     /*
+//      * This is an IPv4 Address
+//      */
+//     ip_address->present = GTP_IP_ADDR_v4;
+//     memcpy (ip_address->address.v4, ieValue, 4);
+//   } else if (ieLength == 16) {
+//     /*
+//      * This is an IPv6 Address
+//      */
+//     ip_address->present = GTP_IP_ADDR_v6;
+//     memcpy (ip_address->address.v6, ieValue, 16);
+//   } else {
+//     /*
+//      * Length doesn't lie in possible values
+//      */
+//     return NW_GTPV2C_IE_INCORRECT;
+//   }
+//
+//   return NW_OK;
+//
+//}
 
 
 int
@@ -1846,7 +1830,7 @@ s10_ipv4_address_ie_set (
 {
   uint8_t                                 temp[16];
   uint8_t                                 offset = 0;
-  NwRcT                                   rc;
+  nw_rc_t                                 rc;
 
   DevAssert (ipv4Addr );
 
@@ -1867,7 +1851,7 @@ s10_ipv6_address_ie_set (
 {
   uint8_t                                 temp[16];
   uint8_t                                 offset = 0;
-  NwRcT                                   rc;
+  nw_rc_t                                 rc;
 
   // todo: prefix length?
   DevAssert (ipv6Addr );

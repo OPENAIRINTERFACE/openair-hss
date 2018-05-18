@@ -54,6 +54,7 @@
 #include "assertions.h"
 #include "dynamic_memory_check.h"
 #include "log.h"
+#include "conversions.h"
 #include "intertask_interface.h"
 #include "common_defs.h"
 #include "mme_config.h"
@@ -720,10 +721,10 @@ static int mme_config_parse_file (mme_config_t * config_pP)
           }
 
           /** IP address of neighboring MME. */
-          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_NGHB_MME_IPV4_ADDR, (const char **)&nghS10))) {
+          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_NGHB_MME_IPV4_ADDR, (const char **)&ngh_s10))) {
 //            config_pP->nghMme.nghMme[i].ipAddr = (uint16_t) atoi (tac);
             /** NEIGHBORING MME S10. */
-            address= bfromcstr (nghS10);
+            address= bfromcstr (ngh_s10);
             IPV4_STR_ADDR_TO_INT_NWBO (bdata(address), config_pP->nghMme.nghMme[i].ipAddr, "BAD IP ADDRESS FORMAT FOR NEIGHBORING S10 !\n");
             in_addr_var.s_addr = config_pP->nghMme.nghMme[i].ipAddr;
             OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found NEIGHBORING S10: %s \n", inet_ntoa (in_addr_var));
@@ -886,18 +887,18 @@ static int mme_config_parse_file (mme_config_t * config_pP)
         config_pP->nas_config.t3495_sec = (uint32_t) aint;
       }
 
-      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_FORCE_REJECT_TAU, (const char **)&astring))) {
-        if (strcasecmp (astring, "yes") == 0)
-          config_pP->nas_config.force_reject_tau = true;
-        else
-          config_pP->nas_config.force_reject_tau = false;
-      }
-      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_FORCE_REJECT_SR, (const char **)&astring))) {
-        if (strcasecmp (astring, "yes") == 0)
-          config_pP->nas_config.force_reject_sr = true;
-        else
-          config_pP->nas_config.force_reject_sr = false;
-      }
+//      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_FORCE_REJECT_TAU, (const char **)&astring))) {
+//        if (strcasecmp (astring, "yes") == 0)
+//          config_pP->nas_config.force_reject_tau = true;
+//        else
+//          config_pP->nas_config.force_reject_tau = false;
+//      }
+//      if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_FORCE_REJECT_SR, (const char **)&astring))) {
+//        if (strcasecmp (astring, "yes") == 0)
+//          config_pP->nas_config.force_reject_sr = true;
+//        else
+//          config_pP->nas_config.force_reject_sr = false;
+//      }
       if ((config_setting_lookup_string (setting, MME_CONFIG_STRING_NAS_DISABLE_ESM_INFORMATION_PROCEDURE, (const char **)&astring))) {
         if (strcasecmp (astring, "yes") == 0)
           config_pP->nas_config.disable_esm_information = true;
@@ -1066,7 +1067,7 @@ static void mme_config_display (mme_config_t * config_pP)
       config_pP->nas_config.prefered_ciphering_algorithm[1],
       config_pP->nas_config.prefered_ciphering_algorithm[2],
       config_pP->nas_config.prefered_ciphering_algorithm[3]);
-  OAILOG_INFO (LOG_CONFIG, "    T3346 ....: %d min\n", config_pP->nas_config.t3346_min);
+  OAILOG_INFO (LOG_CONFIG, "    T3346 ....: %d min\n", config_pP->nas_config.t3346_sec);
   OAILOG_INFO (LOG_CONFIG, "    T3402 ....: %d min\n", config_pP->nas_config.t3402_min);
   OAILOG_INFO (LOG_CONFIG, "    T3412 ....: %d min\n", config_pP->nas_config.t3412_min);
   OAILOG_INFO (LOG_CONFIG, "    T3422 ....: %d sec\n", config_pP->nas_config.t3422_sec);

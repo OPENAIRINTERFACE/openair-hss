@@ -80,6 +80,8 @@ typedef struct mme_app_s10_proc_s {
 typedef struct mme_app_s10_proc_mme_handover_s {
   mme_app_s10_proc_t            proc;
 
+  mme_ue_s1ap_id_t              mme_ue_s1ap_id;
+
   enb_ue_s1ap_id_t              source_enb_ue_s1ap_id;
   enb_ue_s1ap_id_t              target_enb_ue_s1ap_id;
   time_out_t                   *s10_mme_handover_timeout;
@@ -161,7 +163,8 @@ void mme_app_s11_procedure_create_bearer_send_response(ue_context_t * const ue_c
 void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
 //------------------------------------------------------------------------------
 void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p);
-mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context_p, bool target_mme);
+mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context, bool target_mme, mme_app_s10_proc_type_t  s1ap_ho_type);
+
 mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context_p);
 void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context_p);
 

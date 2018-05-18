@@ -50,6 +50,10 @@ Description Implements the API used by the NAS layer running in the MME
 /* Maximum number of UEs the MME may simultaneously support */
 #define MME_API_NB_UE_MAX       256
 
+typedef enum {
+  UE_REGISTERED,
+  UE_UNREGISTERED,
+} mm_state_t;
 
 /* Features supported by the MME */
 typedef enum mme_api_feature_s {
@@ -67,11 +71,6 @@ typedef enum mme_api_ip_version_e {
   MME_API_IPV4V6_ADDR,
   MME_API_ADDR_MAX
 } mme_api_ip_version_t;
-
-typedef enum {
-  UE_UNREGISTERED = 0,
-  UE_REGISTERED,
-} mm_state_t;
 
 /*
  * EPS Mobility Management configuration data
@@ -144,6 +143,8 @@ int mme_api_notified_new_ue_s1ap_id_association (
     const enb_s1ap_id_key_t  enb_ue_s1ap_id_key,
     const uint32_t         enb_id,
     const mme_ue_s1ap_id_t mme_ue_s1ap_id);
+
+int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id);
 
 int mme_api_new_guti(const imsi_t * const imsi,
                      const guti_t * const old_guti,

@@ -107,8 +107,9 @@ void itti_free_msg_content (MessageDef * const message_p)
   break;
 
   case MME_APP_CREATE_DEDICATED_BEARER_REQ: {
-    if (message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tft) {
-      free_traffic_flow_template(&message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tft);
+    // todo: free array of tfts and other elements
+    if (message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tfts) {
+      free_traffic_flow_template(&message_p->ittiMsg.mme_app_create_dedicated_bearer_req.tfts);
     }
   }
   break;
@@ -238,7 +239,7 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
 
-  case S1AP_UE_CAPABILITIES_IND:
+  case S1AP_UE_CAPABILITIES_IND: // todo: removing capabilities?
   case S1AP_ENB_DEREGISTERED_IND:
   case S1AP_DEREGISTER_UE_REQ:
   case S1AP_UE_CONTEXT_RELEASE_REQ:
@@ -284,7 +285,7 @@ void itti_free_msg_content (MessageDef * const message_p)
     * Free Handover Messaging!
     * MME_APP:
     */
-  case HANDOVER_REQUIRED:
+  case S1AP_HANDOVER_REQUIRED:
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_required.eutran_source_to_target_container);
     break;
 
@@ -299,14 +300,14 @@ void itti_free_msg_content (MessageDef * const message_p)
 
   case S10_FORWARD_RELOCATION_RESPONSE:
       /* Transparent Container. */
-    bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_response.eutran_container->container_value);
+    bdestroy_wrapper(&message_p->ittiMsg.s10_forward_relocation_response.eutran_container.container_value);
     break;
 
-  case HANDOVER_REQUEST:
+  case S1AP_HANDOVER_REQUEST:
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request.source_to_target_eutran_container);
     break;
 
-  case HANDOVER_REQUEST_ACKNOWLEDGE:
+  case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE:
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request_acknowledge.target_to_source_eutran_container);
     for (int i = 0; i < message_p->ittiMsg.s1ap_handover_request_acknowledge.no_of_e_rabs; i++) {
       bdestroy_wrapper (&message_p->ittiMsg.s1ap_handover_request_acknowledge.transport_layer_address[i]);
@@ -324,11 +325,11 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
   case S10_FORWARD_ACCESS_CONTEXT_ACKNOWLEDGE:
     break;
-  case NAS_UE_CONTEXT_REQ:
-    bdestroy(&message_p->ittiMsg.nas_ue_context_req.nas_msg);
+  case NAS_CONTEXT_REQ:
+    bdestroy(&message_p->ittiMsg.nas_context_req.nas_msg);
     break;
   case S10_CONTEXT_REQUEST:
-    bdestroy(&message_p->ittiMsg.s10_context_request.complete_request_message);
+    bdestroy(&message_p->ittiMsg.s10_context_request.complete_request_message.request_value);
     break;
   case S10_CONTEXT_RESPONSE:
     /* PDN Connections. */

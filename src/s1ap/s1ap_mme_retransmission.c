@@ -151,7 +151,7 @@ s1ap_timer_remove_ue (
   DevAssert (mme_ue_s1ap_id != 0);
   RB_FOREACH (find, s1ap_timer_map, &s1ap_timer_tree) {
     if (find->mme_ue_s1ap_id == mme_ue_s1ap_id) {
-      timer_remove (find->timer_id);
+      timer_remove (find->timer_id, NULL);
       /*
        * Remove the timer from the map
        */

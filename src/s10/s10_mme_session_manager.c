@@ -79,7 +79,7 @@ s10_mme_forward_relocation_request (
    * Prepare a new Forward Relocation Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_FORWARD_RELOCATION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp     = req_p->peer_ip;
+  ulp_req.u_api_info.initialReqInfo.peerIp.s_addr  = req_p->peer_ip->s_addr;
   ulp_req.u_api_info.initialReqInfo.teidLocal  = req_p->s10_source_mme_teid.teid;
   ulp_req.u_api_info.initialReqInfo.hUlpTunnel = 0; /** Will create a local tunnel with type INIT_REQ. */
   ulp_req.u_api_info.initialReqInfo.hTunnel    = 0;
@@ -138,9 +138,9 @@ s10_mme_forward_relocation_request (
     * Set the Transparent F-Container.
     */
    rc = nwGtpv2cMsgAddIeFContainer((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
-       (uint8_t*)req_p->eutran_container.container_value->data,
-       blength(req_p->eutran_container.container_value),
-       req_p->eutran_container.container_type);
+       (uint8_t*)req_p->eutran_container->container_value->data,
+       blength(req_p->eutran_container->container_value),
+       req_p->eutran_container->container_type);
    /** Destroy the container. */
 //   const uint8_t container_map[] = {
 //       0x40, 0x80, 0xc0, 0x0f, 0x10, 0x3f, 0xc5, 0x9a, 0xd4, 0x80, 0x01, 0x06, 0x0e, 0x4d, 0x2a, 0x64,
@@ -166,7 +166,7 @@ s10_mme_forward_relocation_request (
 //       (uint8_t*)new_long_container->data,
 //       blength(new_long_container),
 //       req_p->eutran_container.container_type);
-   bdestroy(req_p->eutran_container.container_value);
+   bdestroy(req_p->eutran_container->container_value);
 //   bdestroy(new_long_container);
 
 
@@ -970,11 +970,11 @@ s10_mme_context_request (
    * Complete Request Message (TAU or attach).
    */
   rc = nwGtpv2cMsgAddIeCompleteRequestMessage((ulp_req.hMsg), NW_GTPV2C_IE_INSTANCE_ZERO,
-      (uint8_t*)req_p->complete_request_message->data,
-      blength(req_p->complete_request_message),
+      (uint8_t*)req_p->complete_request_message.request_value->data,
+      blength(req_p->complete_request_message.request_value),
       COMPLETE_TAU_REQUEST_TYPE);
   /** Destroy the container. */
-  bdestroy(req_p->complete_request_message);
+  bdestroy(req_p->complete_request_message.request_value);
   DevAssert( NW_OK == rc );
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req); /**< Creates an ULP tunnel if none existing. */

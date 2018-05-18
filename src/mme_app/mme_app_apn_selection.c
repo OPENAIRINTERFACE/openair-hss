@@ -64,7 +64,7 @@ struct apn_configuration_s   * mme_app_select_apn(ue_context_t * const ue_contex
       if (ue_context->apn_config_profile.apn_configuration[index].context_identifier == default_context_identifier) {
         OAILOG_DEBUG (LOG_MME_APP, "Selected APN %s for UE " IMSI_64_FMT "\n",
             ue_context->apn_config_profile.apn_configuration[index].service_selection,
-            ue_context->emm_context._imsi64);
+            ue_context->imsi);
         return &ue_context->apn_config_profile.apn_configuration[index];
       }
     } else {
@@ -76,7 +76,7 @@ struct apn_configuration_s   * mme_app_select_apn(ue_context_t * const ue_contex
           strlen(ue_context->apn_config_profile.apn_configuration[index].service_selection)) == 1) {
           OAILOG_DEBUG (LOG_MME_APP, "Selected APN %s for UE " IMSI_64_FMT "\n",
               ue_context->apn_config_profile.apn_configuration[index].service_selection,
-              ue_context->emm_context._imsi64);
+              ue_context->imsi);
         return &ue_context->apn_config_profile.apn_configuration[index];
       }
     }

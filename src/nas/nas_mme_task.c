@@ -90,10 +90,10 @@ static void *nas_intertask_interface (void *args_p)
       break;
 
     case NAS_UPLINK_DATA_IND:{
-      nas_proc_ul_transfer_ind (NAS_UL_DATA_IND (received_message_p).ue_id,
-          NAS_UL_DATA_IND (received_message_p).tai,
-          NAS_UL_DATA_IND (received_message_p).cgi,
-          &NAS_UL_DATA_IND (received_message_p).nas_msg);
+      nas_proc_ul_transfer_ind (NAS_UPLINK_DATA_IND (received_message_p).ue_id,
+          NAS_UPLINK_DATA_IND (received_message_p).tai,
+          NAS_UPLINK_DATA_IND (received_message_p).cgi,
+          &NAS_UPLINK_DATA_IND (received_message_p).nas_msg);
       }
       break;
 
@@ -146,8 +146,13 @@ static void *nas_intertask_interface (void *args_p)
       }
       break;
 
-    case NAS_UE_CONTEXT_RSP: {
-      nas_proc_ue_context_rsp(&NAS_UE_CONTEXT_RSP(received_message_p));
+    case NAS_CONTEXT_RES: {
+      nas_proc_context_res(&NAS_CONTEXT_RES(received_message_p));
+    }
+    break;
+
+    case NAS_CONTEXT_FAIL: {
+      nas_proc_context_fail(NAS_CONTEXT_FAIL(received_message_p).ue_id, NAS_CONTEXT_FAIL(received_message_p).cause);
     }
     break;
 

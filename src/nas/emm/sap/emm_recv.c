@@ -740,7 +740,7 @@ emm_recv_service_request (
       (decode_status->ciphered_message)?"yes":"no");
   
   // Get emm_ctx 
-  emm_ctx = emm_context_get (&_emm_data,ue_id);
+  emm_ctx = emm_data_context_get (&_emm_data,ue_id);
   /*
    * Do following: 
    * 1. Re-establish UE specfic S1 signaling connection and S1-U tunnel for default bearer.

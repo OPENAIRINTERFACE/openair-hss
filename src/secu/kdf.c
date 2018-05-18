@@ -69,3 +69,24 @@ derive_keNB (
   kdf (kasme_32, 32, s, 7, keNB, 32);
   return 0;
 }
+
+int
+derive_nh (
+  const uint8_t *kasme_32,
+  uint8_t * nh)
+{
+
+  uint8_t                                 s[35];
+  memset(s, 0, 35);
+
+  s[0] = (FC_NH);
+   // P0
+  memcpy(s+1, nh, 32);
+    // L0 = len(SN input)
+   s[33] = 0x00;
+   s[34] = 0x20;
+
+   kdf (kasme_32, 32, s, 35, nh, 32);
+   return 0;
+}
+

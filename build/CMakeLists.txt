@@ -761,16 +761,15 @@ set(libnas_mme_emm_OBJS
   ${NAS_SRC}emm/Attach.c
   ${NAS_SRC}emm/Authentication.c
   ${NAS_SRC}emm/Detach.c
-  ${NAS_SRC}emm/EmmCommon.c
   ${NAS_SRC}emm/emm_data_ctx.c
   ${NAS_SRC}emm/emm_main.c
-  ${NAS_SRC}emm/emm_specific.c
   ${NAS_SRC}emm/EmmStatusHdl.c
   ${NAS_SRC}emm/Identification.c
   ${NAS_SRC}emm/LowerLayer.c
   ${NAS_SRC}emm/SecurityModeControl.c
   ${NAS_SRC}emm/ServiceRequestHdl.c
   ${NAS_SRC}emm/TrackingAreaUpdate.c
+  ${NAS_SRC}emm/TrackingAreaUpdateMobility.c
 )
   
 set(libnas_mme_emm_sap_OBJS
@@ -814,6 +813,7 @@ add_library(LIB_NAS_MME
   ${NAS_SRC}nas_itti_messaging.c
   ${NAS_SRC}nas_network.c
   ${NAS_SRC}nas_proc.c
+  ${NAS_SRC}nas_procedures.c
   ${libnas_api_OBJS}
   ${libnas_mme_api_OBJS}
   ${libnas_emm_msg_OBJS}

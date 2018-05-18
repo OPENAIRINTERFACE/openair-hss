@@ -1067,6 +1067,7 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
     bearer context if there is a radio bearer associated with that context. In a UE with LCS capability, location services \
     indicators (EPC-LCS, CS-LCS) shall be provided to the upper layers. When MO-LR procedure is triggered by the UE's \
     application, those indicators are taken into account as specified in 3GPP TS 24.171 [13C]."
+#define R10_5_5_3_2_4__20_BRIEF ""
 
 //#define R10_5_5_3_2_4__21 "Normal and periodic tracking area updating procedure accepted by the network
 //    If the UE has initiated the tracking area updating procedure due to manual CSG selection and receives a TRACKING
@@ -1084,6 +1085,7 @@ If the GUTI/IMSI mapping in the network was incorrect, the network should respon
 #define R10_5_5_3_2_4__23 "Normal and periodic tracking area updating procedure accepted by the network   \
     Upon receiving a TRACKING AREA UPDATE COMPLETE message, the MME shall stop timer T3450, and shall     \
     consider the GUTI sent in the TRACKING AREA UPDATE ACCEPT message as valid."
+#define R10_5_5_3_2_4__20_BRIEF ""
 
 //...
 

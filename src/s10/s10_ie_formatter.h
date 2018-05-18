@@ -134,9 +134,6 @@ int s10_ebi_ie_set(nw_gtpv2c_msg_handle_t *msg, const unsigned ebi);
  */
 //nw_rc_t s10_bearer_context_to_be_created_ie_get (uint8_t ieType, uint8_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 
-int s10_list_of_setup_bearers_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_context_setup_t * bearer_context);
-
-
 int s10_bearer_context_to_be_modified_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_context_to_be_modified_t * bearer_context);
 
 nw_rc_t s10_bearer_context_to_be_modified_ie_get(uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
@@ -152,7 +149,7 @@ nw_rc_t s10_ebi_ie_get (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, u
 nw_rc_t s10_ebi_ie_get_list (uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
 
 /** Set the Bearer Context IE. */
-int s10_bearer_context_to_create_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_context_to_be_created_t * bearer_context);
+int s10_bearer_context_to_create_ie_set (nw_gtpv2c_msg_handle_t * msg, const bearer_contexts_to_be_created_t * bearer_contexts);
 
 nw_rc_t
 s10_bearer_context_to_be_created_ie_get ( uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t * ieValue, void *arg);
@@ -192,7 +189,7 @@ int s10_pco_ie_set (nw_gtpv2c_msg_handle_t * msg,
  * The encoding of the APN field follows 3GPP TS 23.003 subclause 9.1
  */
 nw_rc_t s10_apn_ie_get(
-  uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
+  uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, bstring *arg);
 
 int s10_apn_ie_set(nw_gtpv2c_msg_handle_t *msg, const bstring apn);
 
@@ -230,8 +227,16 @@ int s10_bearer_qos_ie_set(nw_gtpv2c_msg_handle_t *msg, const bearer_qos_t *beare
 //int s10_ip_address_ie_set(nw_gtpv2c_msg_handle_t     *msg,
 //                          const gtp_ip_address_t *ip_address);
 
+nw_rc_t
+s10_pdn_address_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg);
+
 int
-s10_ipv4_address_ie_set (
+s10_pdn_address_ie_set (
     nw_gtpv2c_msg_handle_t * msg,
   NW_IN const struct in_addr  const * ipv4Addr);
 

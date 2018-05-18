@@ -56,11 +56,6 @@
 #include "esm_data.h"
 
 typedef enum {
-  UE_REGISTERED,
-  UE_UNREGISTERED,
-} mm_state_t;
-
-typedef enum {
   ECM_IDLE = 0,
   ECM_CONNECTED,
 } ecm_state_t;
@@ -94,14 +89,13 @@ void mme_app_convert_imsi_to_imsi_mme (mme_app_imsi_t * imsi_dst, const imsi_t *
 // todo: mme_ue_s1ap_id_t mme_app_ctx_get_new_ue_id(void);
 
 
-// todo: mme_app timers
-///*
-// * Timer identifier returned when in inactive state (timer is stopped or has
-// * failed to be started)
-// */
-//#define MME_APP_TIMER_INACTIVE_ID   (-1)
-//#define MME_APP_DELTA_T3412_REACHABILITY_TIMER 4 // in minutes
-//#define MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER 0 // in minutes
+/*
+ * Timer identifier returned when in inactive state (timer is stopped or has
+ * failed to be started)
+ */
+#define MME_APP_TIMER_INACTIVE_ID   (-1)
+#define MME_APP_DELTA_T3412_REACHABILITY_TIMER 4 // in minutes
+#define MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER 0 // in minutes
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP_TIMER_VALUE 2 // In seconds
 
 #define BEARER_STATE_NULL        0
@@ -178,6 +172,7 @@ typedef struct bearer_context_s {
   LIST_ENTRY(bearer_context_s) temp_entries; /* List to establish or reject the bearer contexts. */
 
   struct bearer_context_s*     next_bc;
+  RB_ENTRY (bearer_context_s)    bearerContextRbtNode;            /**< RB Tree Data Structure Node        */
 
 } bearer_context_t;
 
@@ -266,7 +261,7 @@ typedef struct pdn_context_s {
   /*
    * List of bearer contexts of the PDN session.
    */
-  RB_HEAD(BearerPool, bearer_context_s) session_bearers;
+  RB_HEAD(SessionBearers, bearer_context_s) session_bearers;
 
   //apn_configuration_t         apn_configuration; // set by S6A UPDATE LOCATION ANSWER
   //bstring                     pgw_id;            // an ID for P-GW through which a user can access the Subscribed APN
@@ -279,6 +274,8 @@ typedef struct pdn_context_s {
   bool                        is_active;
   protocol_configuration_options_t *pco; // temp storage of information waiting for activation of required procedure
 
+  RB_ENTRY (pdn_context_s)    pdnCtxRbtNode;            /**< RB Tree Data Structure Node        */
+
 } pdn_context_t;
 
 
@@ -290,7 +287,7 @@ typedef struct pdn_context_s {
 typedef struct ue_context_s {
 
   // todo: ue context mutex
-//  pthread_mutex_t recmutex;  // mutex on the ue_context_t + emm_context_s + esm_context_t
+  pthread_mutex_t recmutex;  // mutex on the ue_context_t + emm_context_s + esm_context_t
 
   /* Basic identifier for ue. IMSI is encoded on maximum of 15 digits of 4 bits,
    * so usage of an unsigned integer on 64 bits is necessary.
@@ -344,7 +341,7 @@ typedef struct ue_context_s {
 
   /* Store the radio capabilities as received in S1AP UE capability indication message. */
   // UE Radio Access Capability UE radio access capabilities.
-  bstring                 ue_radio_capabilities;       // not set/read
+//  bstring                 ue_radio_capabilities;       // not set/read
 
 
   // UE Network Capability  // UE network capabilities including security algorithms and key derivation functions supported by the UE
@@ -475,21 +472,8 @@ typedef struct ue_context_s {
   LIST_HEAD(s11_procedures_s, mme_app_s11_proc_s) *s11_procedures;
 
   /* Time when the cell identity was acquired */
-  time_t                 cell_age;                    // set by nas_auth_param_req_t
 
   bstring                 ue_radio_capability;
-
-  // Mobile Reachability Timer-Start when UE moves to idle state. Stop when UE moves to connected state
-  struct mme_app_timer_t       mobile_reachability_timer;
-  // Implicit Detach Timer-Start at the expiry of Mobile Reachability timer. Stop when UE moves to connected state
-  struct mme_app_timer_t       implicit_detach_timer;
-  // Initial Context Setup Procedure Guard timer
-  struct mme_app_timer_t       initial_context_setup_rsp_timer;
-
-  /** Custom timer to remove UE at the source-MME side after a timeout. */
-//  struct mme_app_timer_t       mme_s10_handover_completion_timer; // todo: not TXXXX value found for this.
-  struct mme_app_timer_t       mme_mobility_completion_timer; // todo: not TXXXX value found for this.
-
 
   /* Globally Unique Temporary Identity */
   bool                   is_guti_set;                 // is guti has been set
@@ -498,10 +482,6 @@ typedef struct ue_context_s {
   me_identity_t          me_identity;                 // not set/read except read by display utility
 
   /* TODO: Add TAI list */
-
-  /* Last known cell identity */
-  ecgi_t                  e_utran_cgi;                 // set by nas_attach_req_t
-
 
   /** Additional stuff for handover (pending flags etc..). */
 //  bool                   pending_bearer_deactivation; todo: when removing the tau procedure, evaluate and check (need to store old ECM state)?
@@ -516,7 +496,7 @@ typedef struct ue_context_s {
   // Initial Context Setup Procedure Guard timer
   struct mme_app_timer_t       initial_context_setup_rsp_timer;
   /** Custom timer to remove UE at the source-MME side after a timeout. */
-  struct mme_app_timer_t       mme_mobility_completion_timer; // todo: not TXXXX value found for this.
+//  struct mme_app_timer_t       mme_mobility_completion_timer; // todo: not TXXXX value found for this.
 
   // Handover related stuff (for which messages to use the following
   struct mme_app_timer_t       path_switch_req_timer;
@@ -559,6 +539,14 @@ ue_context_t *mme_ue_context_exists_imsi(mme_ue_context_t * const mme_ue_context
  **/
 ue_context_t *mme_ue_context_exists_s11_teid(mme_ue_context_t * const mme_ue_context,
     const s11_teid_t teid);
+
+/** \brief Retrieve an UE context by selecting the provided S10 teid
+ * \param teid The tunnel endpoint identifier used between MME and S-GW
+ * @returns an UE context matching the teid or NULL if the context doesn't exists
+ **/
+ue_context_t *mme_ue_context_exists_s10_teid(mme_ue_context_t * const mme_ue_context,
+    const s11_teid_t teid);
+
 
 /** \brief Retrieve an UE context by selecting the provided mme_ue_s1ap_id
  * \param mme_ue_s1ap_id The UE id identifier used in S1AP MME (and NAS)
@@ -627,7 +615,7 @@ void mme_ue_context_update_coll_keys(
     const mme_ue_s1ap_id_t   mme_ue_s1ap_id,
     const imsi64_t     imsi,
     const s11_teid_t         mme_teid_s11,
-    const s10_teid_t         local_mme_s10_teid,
+    const s10_teid_t         local_mme_teid_s10,
     const guti_t     * const guti_p);
 
 /** \brief dump MME associative collections
@@ -680,6 +668,8 @@ void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context);
 
 /* Declaration (prototype) of the function to store bearer contexts. */
 RB_PROTOTYPE(BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
+
+RB_PROTOTYPE(SessionBearers, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
 
 #endif /* FILE_MME_APP_UE_CONTEXT_SEEN */
 

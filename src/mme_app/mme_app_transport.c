@@ -58,8 +58,6 @@ int mme_app_handle_nas_dl_req (
   OAILOG_FUNC_IN (LOG_MME_APP);
   MessageDef                             *message_p    = NULL;
   int                                     rc = RETURNok;
-  enb_ue_s1ap_id_t                        enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
-
 
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_DOWNLINK_DATA_REQ);
 
@@ -68,11 +66,9 @@ int mme_app_handle_nas_dl_req (
     OAILOG_DEBUG (LOG_MME_APP, "DOWNLINK NAS TRANSPORT Found enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT "\n",
         ue_context->enb_ue_s1ap_id, nas_dl_req_pP->ue_id);
 
-    enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
-
     // todo: we don't change the ECM signaling state here!
 
-    NAS_DOWNLINK_DATA_REQ (message_p).enb_ue_s1ap_id         = enb_ue_s1ap_id;
+    NAS_DOWNLINK_DATA_REQ (message_p).enb_ue_s1ap_id         = ue_context->enb_ue_s1ap_id;
     NAS_DOWNLINK_DATA_REQ (message_p).ue_id                  = nas_dl_req_pP->ue_id;
 //    NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = nas_dl_req_pP->enb_id;
     NAS_DOWNLINK_DATA_REQ (message_p).enb_id                 = ue_context->e_utran_cgi.cell_identity.enb_id;
@@ -81,14 +77,14 @@ int mme_app_handle_nas_dl_req (
 
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0,
         "0 DOWNLINK NAS TRANSPORT enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " ue id " MME_UE_S1AP_ID_FMT " ",
-        enb_ue_s1ap_id, nas_dl_req_pP->ue_id);
+        ue_context->enb_ue_s1ap_id, nas_dl_req_pP->ue_id);
 
     int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
     rc = itti_send_msg_to_task (to_task, INSTANCE_DEFAULT, message_p);
 
     /* We don't set the ECM state to connected, this is not the place, it should be connected when initial UE context release request is received. */
     OAILOG_INFO(LOG_MME_APP, " MME_APP:DOWNLINK NAS TRANSPORT. MME_UE_S1AP_ID " MME_UE_S1AP_ID_FMT " and ENB_UE_S1AP_ID " ENB_UE_S1AP_ID_FMT". \n",
-        nas_dl_req_pP->ue_id, enb_ue_s1ap_id);
+        nas_dl_req_pP->ue_id, ue_context->enb_ue_s1ap_id);
 
     // Check the transaction status. And trigger the UE context release command accrordingly.
     if (nas_dl_req_pP->transaction_status != AS_SUCCESS) {

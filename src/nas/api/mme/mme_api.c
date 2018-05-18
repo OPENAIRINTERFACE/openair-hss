@@ -68,9 +68,6 @@
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
 #include "mme_config.h"
-#include "emm_data.h"
-
-
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -140,17 +137,17 @@ mme_api_get_emm_config (
       config->tai_list.partial_tai_list[0].typeoflist = mme_config_p->served_tai.list_type;
       // LW: number of elements is coded as N-1 (0 -> 1 element, 1 -> 2 elements...), see 3GPP TS 24.301, section 9.9.3.33.1
       config->tai_list.partial_tai_list[0].numberofelements = 0;
-      config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.mcc_digit1 = (mme_config_p->served_tai.plmn_mcc[0] / 100) % 10;
-      config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.mcc_digit2 = (mme_config_p->served_tai.plmn_mcc[0] / 10) % 10;
-      config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.mcc_digit3 = mme_config_p->served_tai.plmn_mcc[0] % 10;
+      config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit1 = (mme_config_p->served_tai.plmn_mcc[0] / 100) % 10;
+      config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit2 = (mme_config_p->served_tai.plmn_mcc[0] / 10) % 10;
+      config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit3 = mme_config_p->served_tai.plmn_mcc[0] % 10;
       if (mme_config_p->served_tai.plmn_mnc_len[0] == 2) {
-        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
-        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.mnc_digit2 = mme_config_p->served_tai.plmn_mnc[0] % 10;
-        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.mnc_digit3 = 0xf;
+        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
+        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit2 = mme_config_p->served_tai.plmn_mnc[0] % 10;
+        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit3 = 0xf;
       } else if (mme_config_p->served_tai.plmn_mnc_len[0] == 3) {
-        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[0] / 100) % 10;
-        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.mnc_digit2 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
-        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.mnc_digit3 = mme_config_p->served_tai.plmn_mnc[0] % 10;
+        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[0] / 100) % 10;
+        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit2 = (mme_config_p->served_tai.plmn_mnc[0] / 10) % 10;
+        config->tai_list.partial_tai_list[0].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit3 = mme_config_p->served_tai.plmn_mnc[0] % 10;
       } else {
         AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[0] >= 2) && (mme_config_p->served_tai.plmn_mnc_len[0] <= 3), "BAD MNC length for GUMMEI");
       }
@@ -162,17 +159,17 @@ mme_api_get_emm_config (
       config->tai_list.partial_tai_list[0].typeoflist = mme_config_p->served_tai.list_type;
       config->tai_list.partial_tai_list[0].numberofelements = mme_config_p->served_tai.nb_tai - 1;
       for (int i = 0; i < mme_config_p->served_tai.nb_tai; i++) {
-        config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].mcc_digit1 = (mme_config_p->served_tai.plmn_mcc[i] / 100) % 10;
-        config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].mcc_digit2 = (mme_config_p->served_tai.plmn_mcc[i] / 10) % 10;
-        config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].mcc_digit3 = mme_config_p->served_tai.plmn_mcc[i] % 10;
+        config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].plmn.mcc_digit1 = (mme_config_p->served_tai.plmn_mcc[i] / 100) % 10;
+        config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].plmn.mcc_digit2 = (mme_config_p->served_tai.plmn_mcc[i] / 10) % 10;
+        config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].plmn.mcc_digit3 = mme_config_p->served_tai.plmn_mcc[i] % 10;
         if (mme_config_p->served_tai.plmn_mnc_len[0] == 2) {
-          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[i] / 10) % 10;
-          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].mnc_digit2 = mme_config_p->served_tai.plmn_mnc[i] % 10;
-          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].mnc_digit3 = 0xf;
+          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].plmn.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[i] / 10) % 10;
+          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].plmn.mnc_digit2 = mme_config_p->served_tai.plmn_mnc[i] % 10;
+          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].plmn.mnc_digit3 = 0xf;
         } else if (mme_config_p->served_tai.plmn_mnc_len[0] == 3) {
-          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[i] / 100) % 10;
-          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].mnc_digit2 = (mme_config_p->served_tai.plmn_mnc[i] / 10) % 10;
-          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].mnc_digit3 = mme_config_p->served_tai.plmn_mnc[i] % 10;
+          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].plmn.mnc_digit1 = (mme_config_p->served_tai.plmn_mnc[i] / 100) % 10;
+          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].plmn.mnc_digit2 = (mme_config_p->served_tai.plmn_mnc[i] / 10) % 10;
+          config->tai_list.partial_tai_list[0].u.tai_many_plmn[i].plmn.mnc_digit3 = mme_config_p->served_tai.plmn_mnc[i] % 10;
         } else {
           AssertFatal ((mme_config_p->served_tai.plmn_mnc_len[0] >= 2) && (mme_config_p->served_tai.plmn_mnc_len[i] <= 3), "BAD MNC length for GUMMEI");
         }
@@ -304,8 +301,9 @@ mme_api_notify_imsi (
         id,
         imsi64,
         ue_context->mme_teid_s11,
-        &ue_context->_guti);
-    unlock_ue_contexts(ue_context);
+        ue_context->local_mme_teid_s10,
+        &ue_context->guti);
+//    unlock_ue_contexts(ue_context);
     OAILOG_DEBUG (LOG_MME_APP, "MME_APP context for ue_id=" MME_UE_S1AP_ID_FMT " has a registered valid IMSI " IMSI_64_FMT" (valid)\n", id, imsi64);
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
@@ -341,10 +339,11 @@ mme_api_notify_new_guti (
         ue_context,
         ue_context->enb_s1ap_id_key,
         id,
-        ue_context->emm_context._imsi64,
+        ue_context->imsi,
         ue_context->mme_teid_s11,
+        ue_context->local_mme_teid_s10,
         guti);
-    unlock_ue_contexts(ue_context);
+//    unlock_ue_contexts(ue_context);
     OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
   }
 
@@ -376,6 +375,73 @@ mme_api_notified_new_ue_s1ap_id_association (
   OAILOG_FUNC_RETURN (LOG_NAS, ret);
 }
 
+//------------------------------------------------------------------------------
+/*
+ *
+ *  Name:    mme_api_registration_complete()
+ *
+ *  Description: Notify the MME that a UE has successfully registered via Attach or Tracking Area Update specific procedure.
+ *
+ *  Inputs:
+ *         ueid:      emm_context id
+ *  Return:    void
+ *
+ */
+int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
+
+  ue_context_t                           *ue_context = NULL;
+  int                                     rc = RETURNok;
+
+  OAILOG_FUNC_IN (LOG_NAS);
+
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
+
+  /**
+   * Delete the S10 procedure.
+   * We don't create the EMM context from NAS and the EMM CN context request procedure ends before the UE is registered.
+   * No other place to remove the procedure.
+   */
+  mme_app_delete_s10_procedure_mme_handover(ue_context);
+
+  /** Check if there is a pending deactivation flag is set. */
+  if(ue_context->pending_bearer_deactivation){
+    OAILOG_INFO(LOG_MME_APP, "After UE entered UE_REGISTERED state, initiating bearer deactivation for UE with mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+    ue_context->pending_bearer_deactivation = false;
+    ue_context->s1_ue_context_release_cause = S1AP_NAS_NORMAL_RELEASE;
+    // Notify S1AP to send UE Context Release Command to eNB.
+    mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
+  }else{
+    /*
+     * No pending bearer deactivation.
+     * Check if there is are any pending unestablished downlink bearers (DL-GTP Tunnel Information to the SAE-GW).
+     */
+    // todo: how to do this in multi apn?
+    pdn_context_t * registered_pdn_ctx = NULL;
+    bearer_context_t * bearer_context_to_establish = NULL;
+    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+      DevAssert(registered_pdn_ctx);
+
+      /**
+       * Get the first PDN whose bearers are not established yet.
+       * Do the MBR just one PDN at a time.
+       */
+      RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
+        DevAssert(bearer_context_to_establish);
+        /** Add them to the bearears list of the MBR. */
+        if (bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
+          OAILOG_INFO(LOG_MME_APP, "Found a PDN with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Sending MBR. \n", mme_ue_s1ap_id);
+          /** Send the S11 MBR and return. */
+          // todo: error handling! this might occur if some error with OVS happens.
+          DevAssert(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx));
+          OAILOG_INFO(LOG_MME_APP, "Successfully sent MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Returning from REGISTRERED callback. \n", mme_ue_s1ap_id);
+          OAILOG_FUNC_OUT (LOG_MME_APP);
+        }
+      }
+      registered_pdn_ctx = NULL;
+    }
+    OAILOG_ERROR(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
+  }
+}
 
 /****************************************************************************
  **                                                                        **
@@ -426,11 +492,11 @@ mme_api_new_guti (
 //      unlock_ue_contexts(ue_context);
 //      OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
 //    }
-    if (RUN_MODE_TEST == mme_config.run_mode) {
-      guti->m_tmsi = __sync_fetch_and_add (&mme_m_tmsi_generator, 0x00000001);
-    } else {
+//    if (RUN_MODE_TEST == mme_config.run_mode) {
+//      guti->m_tmsi = __sync_fetch_and_add (&mme_m_tmsi_generator, 0x00000001);
+//    } else {
       guti->m_tmsi                 = (tmsi_t)(uintptr_t)ue_context;
-    }
+//    }
     if (guti->m_tmsi == INVALID_M_TMSI) {
       OAILOG_FUNC_RETURN (LOG_NAS, RETURNerror);
     }
@@ -467,22 +533,22 @@ mme_api_new_guti (
       }
       break;
     case TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS:
-      if ((_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.mcc_digit1 == guti->gummei.plmn.mcc_digit1) &&
-          (_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.mcc_digit2 == guti->gummei.plmn.mcc_digit2) &&
-          (_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.mcc_digit3 == guti->gummei.plmn.mcc_digit3) &&
-          (_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.mnc_digit1 == guti->gummei.plmn.mnc_digit1) &&
-          (_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.mnc_digit2 == guti->gummei.plmn.mnc_digit2) &&
-          (_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.mnc_digit3 == guti->gummei.plmn.mnc_digit3) ) {
+      if ((_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit1 == guti->gummei.plmn.mcc_digit1) &&
+          (_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit2 == guti->gummei.plmn.mcc_digit2) &&
+          (_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit3 == guti->gummei.plmn.mcc_digit3) &&
+          (_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit1 == guti->gummei.plmn.mnc_digit1) &&
+          (_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit2 == guti->gummei.plmn.mnc_digit2) &&
+          (_emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit3 == guti->gummei.plmn.mnc_digit3) ) {
 
         tai_list->partial_tai_list[j].numberofelements = _emm_data.conf.tai_list.partial_tai_list[i].numberofelements;
         tai_list->partial_tai_list[j].typeoflist       = _emm_data.conf.tai_list.partial_tai_list[i].typeoflist;
 
-        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.mcc_digit1 = guti->gummei.plmn.mcc_digit1;
-        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.mcc_digit2 = guti->gummei.plmn.mcc_digit2;
-        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.mcc_digit3 = guti->gummei.plmn.mcc_digit3;
-        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.mnc_digit1 = guti->gummei.plmn.mnc_digit1;
-        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.mnc_digit2 = guti->gummei.plmn.mnc_digit2;
-        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.mnc_digit3 = guti->gummei.plmn.mnc_digit3;
+        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit1 = guti->gummei.plmn.mcc_digit1;
+        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit2 = guti->gummei.plmn.mcc_digit2;
+        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.plmn.mcc_digit3 = guti->gummei.plmn.mcc_digit3;
+        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit1 = guti->gummei.plmn.mnc_digit1;
+        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit2 = guti->gummei.plmn.mnc_digit2;
+        tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.plmn.mnc_digit3 = guti->gummei.plmn.mnc_digit3;
         // _emm_data.conf.tai_list is sorted
         tai_list->partial_tai_list[j].u.tai_one_plmn_consecutive_tacs.tac        = _emm_data.conf.tai_list.partial_tai_list[i].u.tai_one_plmn_consecutive_tacs.tac;
         j += 1;
@@ -501,12 +567,12 @@ mme_api_new_guti (
 
         for (int t = 0; t < (tai_list->partial_tai_list[j].numberofelements + 1); t++) {
 
-          tai_list->partial_tai_list[j].u.tai_many_plmn[t].mcc_digit1 = guti->gummei.plmn.mcc_digit1;
-          tai_list->partial_tai_list[j].u.tai_many_plmn[t].mcc_digit2 = guti->gummei.plmn.mcc_digit2;
-          tai_list->partial_tai_list[j].u.tai_many_plmn[t].mcc_digit3 = guti->gummei.plmn.mcc_digit3;
-          tai_list->partial_tai_list[j].u.tai_many_plmn[t].mnc_digit1 = guti->gummei.plmn.mnc_digit1;
-          tai_list->partial_tai_list[j].u.tai_many_plmn[t].mnc_digit2 = guti->gummei.plmn.mnc_digit2;
-          tai_list->partial_tai_list[j].u.tai_many_plmn[t].mnc_digit3 = guti->gummei.plmn.mnc_digit3;
+          tai_list->partial_tai_list[j].u.tai_many_plmn[t].plmn.mcc_digit1 = guti->gummei.plmn.mcc_digit1;
+          tai_list->partial_tai_list[j].u.tai_many_plmn[t].plmn.mcc_digit2 = guti->gummei.plmn.mcc_digit2;
+          tai_list->partial_tai_list[j].u.tai_many_plmn[t].plmn.mcc_digit3 = guti->gummei.plmn.mcc_digit3;
+          tai_list->partial_tai_list[j].u.tai_many_plmn[t].plmn.mnc_digit1 = guti->gummei.plmn.mnc_digit1;
+          tai_list->partial_tai_list[j].u.tai_many_plmn[t].plmn.mnc_digit2 = guti->gummei.plmn.mnc_digit2;
+          tai_list->partial_tai_list[j].u.tai_many_plmn[t].plmn.mnc_digit3 = guti->gummei.plmn.mnc_digit3;
           // _emm_data.conf.tai_list is sorted
           tai_list->partial_tai_list[j].u.tai_many_plmn[t].tac        = _emm_data.conf.tai_list.partial_tai_list[i].u.tai_many_plmn[t].tac;
         }
@@ -519,7 +585,7 @@ mme_api_new_guti (
   }
   tai_list->numberoflists = j;
   OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT "  Got GUTI " GUTI_FMT "\n", ue_context->mme_ue_s1ap_id, GUTI_ARG(guti));
-  unlock_ue_contexts(ue_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
 }
 

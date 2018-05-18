@@ -46,6 +46,8 @@
 #include "common_defs.h"
 #include "mme_app_ue_context.h"
 #include "mme_app_defs.h"
+#include "mme_config.h"
+#include "mme_app_procedures.h"
 
 //------------------------------------------------------------------------------
 int mme_app_send_s6a_update_location_req (
@@ -58,8 +60,6 @@ int mme_app_send_s6a_update_location_req (
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-  IMSI_STRING_TO_IMSI64 ((char *)
-                          ue_context_pP->pending_pdn_connectivity_req_imsi, &imsi64);
   OAILOG_DEBUG (LOG_MME_APP, "Handling ULR request for imsi " IMSI_64_FMT "\n", imsi64);
 
   /** Recheck that the UE context is found by the IMSI. */
@@ -165,7 +165,7 @@ int mme_app_handle_s6a_update_location_ans (
   ue_context->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
   ue_context->mobile_reachability_timer.sec = ((mme_config.nas_config.t3412_min) + MME_APP_DELTA_T3412_REACHABILITY_TIMER) * 60;
   ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
-  ue_context->implicit_detach_timer.sec = (ue_context_p->mobile_reachability_timer.sec) + MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER * 60;
+  ue_context->implicit_detach_timer.sec = (ue_context->mobile_reachability_timer.sec) + MME_APP_DELTA_REACHABILITY_IMPLICIT_DETACH_TIMER * 60;
 
   /** Send the S6a message. */
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONFIG_RSP);
@@ -209,9 +209,10 @@ mme_app_handle_s6a_cancel_location_req(
   const s6a_cancel_location_req_t * const clr_pP)
 {
   uint64_t                                imsi = 0;
-  struct ue_context_s                    *ue_context_p = NULL;
+  struct ue_context_s                    *ue_context = NULL;
   int                                     rc = RETURNok;
   MessageDef                             *message_p = NULL;
+  mme_app_s10_proc_mme_handover_t        *s10_handover_proc = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (clr_pP );
@@ -219,7 +220,7 @@ mme_app_handle_s6a_cancel_location_req(
   IMSI_STRING_TO_IMSI64 ((char *)clr_pP->imsi, &imsi);
   OAILOG_DEBUG (LOG_MME_APP, "%s Handling CANCEL_LOCATION_REQUEST for imsi " IMSI_64_FMT "\n", __FUNCTION__, imsi);
 
-  if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
+  if ((ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi)) == NULL) {
     OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "0 S6A_CANCEL_LOCATION unknown imsi " IMSI_64_FMT" ", imsi);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
@@ -234,14 +235,20 @@ mme_app_handle_s6a_cancel_location_req(
      */
     OAILOG_INFO(LOG_MME_APP, "Handling CLR for MME_UPDATE_PROCEDURE for UE with imsi " IMSI_64_FMT " "
         "Checking the MME_MOBILITY_COMPLETION timer %d. \n", imsi);
-    if(ue_context_p->mme_mobility_completion_timer.id != MME_APP_TIMER_INACTIVE_ID){
-      OAILOG_INFO(LOG_MME_APP, "MME_MOBILTY_COMPLETION timer %u, is still running. Marking CLR but not removing the UE yet with imsi " IMSI_64_FMT ". \n",
-          ue_context_p->mme_mobility_completion_timer.id, imsi);
-      ue_context_p->pending_clear_location_request = true; // todo: not checking the pending flag..
-      OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+    /** Checking CLR in the handover procedure. */
+    s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
+    if(s10_handover_proc){
+      if(s10_handover_proc->proc.timer.id != MME_APP_TIMER_INACTIVE_ID){
+        OAILOG_INFO(LOG_MME_APP, "S10 Handover Proc timer %u, is still running. Marking CLR but not removing the UE yet with imsi " IMSI_64_FMT ". \n",
+            s10_handover_proc->proc.timer.id, imsi);
+        s10_handover_proc->pending_clear_location_request = true; // todo: not checking the pending flag..
+        OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
+      }else{
+        OAILOG_INFO(LOG_MME_APP, "S10 Handover Proc timer is not running for UE. Implicit removal for UE with imsi " IMSI_64_FMT " due handover/tau. \n", imsi);
+        /** We also will remove the UE context, if the UE handovered back and CLR received afterwards. */
+      }
     }else{
-      OAILOG_INFO(LOG_MME_APP, "MME_MOBILTY_COMPLETION timer is not running. Implicit removal for UE with imsi " IMSI_64_FMT " due handover. \n", imsi);
-      /** We also will remove the UE context, if the UE handovered back and CLR received afterwards. */
+      OAILOG_INFO(LOG_MME_APP, "No S10 Handover Proc found for UE. Implicit removal for UE with imsi " IMSI_64_FMT " due handover/tau. \n", imsi);
     }
   }else{
     /** todo: handle rest of cancellation procedures.. */
@@ -251,15 +258,15 @@ mme_app_handle_s6a_cancel_location_req(
   }
 
   /** Perform an implicit detach via NAS layer.. We purge context ourself or purge the MME_APP context. NAS has to purge the EMM context and the MME_APP context. */
-  OAILOG_INFO (LOG_MME_APP, "Expired- Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
-  ue_context_p->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  OAILOG_INFO (LOG_MME_APP, "Expired- Implicit Detach timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
+  ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
   // Initiate Implicit Detach for the UE
   message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
   DevAssert (message_p != NULL);
-  message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context_p->mme_ue_s1ap_id;
+  message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
   itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
-  OAILOG_INFO (LOG_MME_APP, "Expired- Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  OAILOG_INFO (LOG_MME_APP, "Expired- Implicit Detach timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
@@ -269,7 +276,7 @@ mme_app_handle_s6a_reset_req(
   const s6a_reset_req_t * const rr_pP)
 {
   uint64_t                                imsi = 0;
-  struct ue_context_s                    *ue_context_p = NULL;
+  struct ue_context_s                    *ue_context = NULL;
   int                                     rc = RETURNok;
   MessageDef                             *message_p = NULL;
 

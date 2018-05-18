@@ -108,7 +108,7 @@ int lowerlayer_success (mme_ue_s1ap_id_t ue_id, bstring *nas_msg)
   emm_sap.primitive = EMMREG_LOWERLAYER_SUCCESS;
   emm_sap.u.emm_reg.ue_id = ue_id;
   emm_sap.u.emm_reg.ctx = NULL;
-  emm_data_context_t                     *emm_data_context = emm_data_context(&_emm_data, ue_id);
+  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
   if (emm_data_context) {
     emm_sap.u.emm_reg.ctx = emm_data_context;
@@ -154,7 +154,7 @@ int lowerlayer_failure (mme_ue_s1ap_id_t ue_id, STOLEN_REF bstring *nas_msg)
 
   emm_sap.primitive = EMMREG_LOWERLAYER_FAILURE;
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_data_context_t                     *emm_data_context = emm_data_context(&_emm_data, ue_id);
+  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
   if (emm_data_context) {
     emm_sap.u.emm_reg.ctx = emm_data_context;
@@ -200,7 +200,7 @@ int lowerlayer_non_delivery_indication (mme_ue_s1ap_id_t ue_id, STOLEN_REF bstri
 
   emm_sap.primitive = EMMREG_LOWERLAYER_NON_DELIVERY;
   emm_sap.u.emm_reg.ue_id = ue_id;
-  emm_data_context_t                     *emm_data_context = emm_data_context(&_emm_data, ue_id);
+  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
   if (emm_data_context) {
     emm_sap.u.emm_reg.ctx = emm_data_context;
@@ -265,7 +265,7 @@ int lowerlayer_release (mme_ue_s1ap_id_t ue_id, int cause)
 
   emm_sap.primitive = EMMREG_LOWERLAYER_RELEASE;
   emm_sap.u.emm_reg.ue_id = 0;
-  emm_data_context_t                     *emm_data_context = emm_data_context(&_emm_data, ue_id);
+  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
   if (emm_data_context) {
     emm_sap.u.emm_reg.ctx = emm_data_context;
   } else {
@@ -301,7 +301,7 @@ int lowerlayer_data_ind (mme_ue_s1ap_id_t ue_id, const_bstring    data)
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
-  emm_data_context_t                     *emm_data_context = emm_data_context(&_emm_data, ue_id);
+  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
   esm_sap.primitive = ESM_UNITDATA_IND;
   esm_sap.is_standalone = true;
   esm_sap.ue_id = ue_id;
@@ -335,7 +335,7 @@ int lowerlayer_data_req (mme_ue_s1ap_id_t ue_id, bstring data)
   int                                     rc = RETURNok;
   emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
-  emm_data_context_t                     *emm_data_context = emm_data_context(&_emm_data, ue_id);
+  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
   emm_sap.primitive = EMMAS_DATA_REQ;
   emm_sap.u.emm_as.u.data.guti = NULL;
@@ -372,7 +372,7 @@ int lowerlayer_activate_bearer_req (
   int                                     rc = RETURNok;
   emm_sap_t                               emm_sap = {0};
   emm_security_context_t                 *sctx = NULL;
-  emm_data_context_t                     *emm_data_context = emm_data_context(&_emm_data, ue_id);
+  emm_data_context_t                     *emm_data_context = emm_data_context_get(&_emm_data, ue_id);
 
   emm_sap.primitive = EMMAS_ERAB_SETUP_REQ;
   emm_sap.u.emm_as.u.activate_bearer_context_req.ebi    = ebi;

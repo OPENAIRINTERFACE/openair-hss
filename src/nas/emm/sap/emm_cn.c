@@ -82,9 +82,9 @@ static int _emm_cn_authentication_res (emm_cn_auth_res_t * const msg);
 static int _emm_cn_authentication_fail (const emm_cn_auth_fail_t * msg);
 static int _emm_cn_deregister_ue (const mme_ue_s1ap_id_t ue_id);
 static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP);
-static int _emm_cn_pdn_config_fail (emm_cn_pdn_config_fail_t * msg_pP);
+static int _emm_cn_pdn_config_fail (const emm_cn_pdn_config_fail_t * msg_pP);
 static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP);
-static int _emm_cn_context_res (emm_cn_context_res_t * const msg);
+static int _emm_cn_context_res (const emm_cn_context_res_t * const msg);
 static int _emm_cn_context_fail (const emm_cn_context_fail_t * msg);
 /*
    String representation of EMMCN-SAP primitives
@@ -109,17 +109,16 @@ static const char                      *_emm_cn_primitive_str[] = {
 static int _emm_cn_authentication_res (emm_cn_auth_res_t * const msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t                          *emm_ctx = NULL;
+  emm_data_context_t                          *emm_context = NULL;
   int                                     rc = RETURNerror;
 
   /*
    * We received security vector from HSS. Try to setup security with UE
    */
-  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
+  emm_context = emm_data_context_get(&_emm_data, msg->ue_id);
 
-  if (ue_context) {
-    emm_ctx = &ue_context->emm_context;
-    nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_ctx);
+  if (emm_context) {
+    nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_context);
 
     if (auth_info_proc) {
       for (int i = 0; i < msg->nb_vectors; i++) {
@@ -127,11 +126,10 @@ static int _emm_cn_authentication_res (emm_cn_auth_res_t * const msg)
         msg->vector[i] = NULL;
       }
       auth_info_proc->nb_vectors = msg->nb_vectors;
-      rc = (*auth_info_proc->success_notif)(emm_ctx);
+      rc = (*auth_info_proc->success_notif)(emm_context);
     } else {
       OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find Auth_info procedure associated to UE id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
     }
-    unlock_ue_contexts(ue_context);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -140,25 +138,21 @@ static int _emm_cn_authentication_res (emm_cn_auth_res_t * const msg)
 static int _emm_cn_authentication_fail (const emm_cn_auth_fail_t * msg)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t                          *emm_ctx = NULL;
+  emm_data_context_t                     *emm_context = NULL;
   int                                     rc = RETURNerror;
 
   /*
    * We received security vector from HSS. Try to setup security with UE
    */
-  ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
+  emm_context = emm_data_context_get(&mme_app_desc.mme_ue_contexts, msg->ue_id);
 
-  if (ue_context) {
-    emm_ctx = &ue_context->emm_context;
-    nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_ctx);
+  nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_context);
 
-    if (auth_info_proc) {
-      auth_info_proc->nas_cause = msg->cause;
-      rc = (*auth_info_proc->failure_notif)(emm_ctx);
-    } else {
-      OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find Auth_info procedure associated to UE id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
-    }
-    unlock_ue_contexts(ue_context);
+  if (auth_info_proc) {
+    auth_info_proc->nas_cause = msg->cause;
+    rc = (*auth_info_proc->failure_notif)(emm_context);
+  } else {
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find Auth_info procedure associated to UE id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -221,6 +215,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   bool                                    is_pdn_connectivity = false;
   esm_sap_t                               esm_sap = {0};
   pdn_cid_t                               pdn_cid = 0;
+  ebi_t                                   default_ebi = 0;
 
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
   emm_context = emm_data_context_get(&_emm_data, msg_pP->ue_id);
@@ -237,12 +232,15 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   esm_sap.ctx = emm_context;
   esm_sap.recv = NULL;
   esm_sap.data.pdn_pdn_config_res.pdn_cid             = &pdn_cid;
+  esm_sap.data.pdn_pdn_config_res.default_ebi         = &default_ebi;
   esm_sap.data.pdn_pdn_config_res.is_pdn_connectivity = &is_pdn_connectivity; /**< Default Bearer Id of default APN. */
   esm_sap.data.pdn_pdn_config_res.imsi                = msg_pP->imsi64; /**< Context Identifier of default APN. */
   esm_sap_send(&esm_sap);
 
+  /** PDN Context and Bearer Contexts (default) are created with this. */
+
   if (!is_pdn_connectivity) { /**< We may have just created  a PDN context, but no connectivity yet. Assume pdn_connectivity is established when a PDN_Context already existed. */
-    nas_itti_pdn_connectivity_req (emm_context->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, &emm_context->_imsi,
+    nas_itti_pdn_connectivity_req (emm_context->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, default_ebi, &emm_context->_imsi,
         emm_context->esm_ctx.esm_proc_data, emm_context->esm_ctx.esm_proc_data->request_type);
   } else {
     /*
@@ -278,7 +276,7 @@ static int _emm_cn_pdn_config_fail (const emm_cn_pdn_config_fail_t * msg)
   struct emm_data_context_s              *emm_ctx_p = NULL;
   ESM_msg                                 esm_msg = {.header = {0}};
   int                                     esm_cause;
-  emm_ctx_p = emm_context_get (&_emm_data, msg->ue_id);
+  emm_ctx_p = emm_data_context_get (&_emm_data, msg->ue_id);
   if (emm_ctx_p == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -349,7 +347,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
   emm_context = emm_data_context_get(&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
 
-  if (ue_context == null || emm_context == NULL) {
+  if (ue_context == NULL || emm_context == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
@@ -443,7 +441,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
       /*
        * Return indication that ESM procedure failed
        */
-      unlock_ue_contexts(ue_context);
+//      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     }
   } else {
@@ -455,8 +453,6 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
    * END OF CODE THAT WAS IN esm_sap.c/_esm_sap_recv()
    */
   /*************************************************************************/
-  nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
-
   if (attach_proc) {
     /*
      * Setup the ESM message container
@@ -491,7 +487,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
     OAILOG_ERROR(LOG_NAS_EMM, "This is an error, for no other procedure NAS layer should be informed about the PDN Connectivity. It happens before NAS for UE Id " MME_UE_S1AP_ID_FMT". \n", msg_pP->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
-  unlock_ue_contexts(ue_context);
+//  unlock_ue_contexts(ue_context);
 
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -504,7 +500,7 @@ static int _emm_cn_pdn_connectivity_fail (const emm_cn_pdn_fail_t * msg)
   struct emm_data_context_s              *emm_ctx_p = NULL;
   ESM_msg                                 esm_msg = {.header = {0}};
   int                                     esm_cause; 
-  emm_ctx_p = emm_context_get (&_emm_data, msg->ue_id);
+  emm_ctx_p = emm_data_context_get (&_emm_data, msg->ue_id);
   if (emm_ctx_p == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -574,7 +570,7 @@ static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
   ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg->ue_id);
   DevAssert(ue_context); // todo:
 
-  emm_context = emm_context_get (&_emm_data, msg->ue_id);
+  emm_context = emm_data_context_get (&_emm_data, msg->ue_id);
   if (emm_context == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
@@ -651,7 +647,7 @@ static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
       // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
       nas_itti_detach_req(emm_context->ue_id);
       // todo: review unlock
-      unlock_ue_contexts(ue_context);
+//      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
 
     } else{
@@ -721,7 +717,7 @@ static int _emm_cn_activate_dedicated_bearer_req (emm_cn_activate_dedicated_bear
 //------------------------------------------------------------------------------
 static int _emm_cn_context_res (const emm_cn_context_res_t * msg)
 {
-  emm_data_context_t                     *emm_ctx_p = NULL;
+  emm_data_context_t                     *emm_context = NULL;
   int                                     rc = RETURNerror;
   /**
    * We received security vector from source MME.
@@ -729,23 +725,21 @@ static int _emm_cn_context_res (const emm_cn_context_res_t * msg)
    * If we received already security parameters like UE network capability, ignoring the parameters received from the source MME and using the UE parameters.
    */
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_ctx_p = emm_data_context_get (&_emm_data, msg->ue_id);
-  if (emm_ctx_p == NULL) { /**< We assume that an MME_APP UE context also should not exist here. */
+  emm_context = emm_data_context_get (&_emm_data, msg->ue_id);
+  if (emm_context == NULL) { /**< We assume that an MME_APP UE context also should not exist here. */
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
-  nas_ctx_req_proc_t * ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_ctx_p);
+  nas_ctx_req_proc_t * ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_context);
 
   /** Update the context request procedure. */
-  if (ctx_req_proc) {
-    ctx_req_proc->mm_eps_ctx = msg->mm_eps_context;
-    msg->mm_eps_context = NULL;
-
-    // todo: PDN Connections IE from here or else?
-    rc = (*ctx_req_proc->success_notif)(emm_ctx_p);
-  } else {
+  if (!ctx_req_proc) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find context request procedure associated to UE id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
+    OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
+  } else {
+    // todo: PDN Connections IE from here or else?
+    rc = (*ctx_req_proc->success_notif)(emm_context);
   }
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
@@ -758,12 +752,12 @@ static int _emm_cn_context_fail (const emm_cn_context_fail_t * msg)
   int                                     rc = RETURNerror;
 
   /**
-    * An UE could or could not exist. We need to check. If it exists, it needs to be purged.
-    * Since no UE context is established yet, we don't have security/no bearers.0
-    * If the message is received after the timeout, the MME_APP context also should not exist.
-    * If the MME_APP context existed at that point in time, it will later be removed.
-    * Just discard the message then.
-    */
+   * An UE could or could not exist. We need to check. If it exists, it needs to be purged.
+   * Since no UE context is established yet, we don't have security/no bearers.0
+   * If the message is received after the timeout, the MME_APP context also should not exist.
+   * If the MME_APP context existed at that point in time, it will later be removed.
+   * Just discard the message then.
+   */
   emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
   if (emm_ctx == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);
@@ -777,7 +771,7 @@ static int _emm_cn_context_fail (const emm_cn_context_fail_t * msg)
   nas_ctx_req_proc_t * ctx_req_proc = get_nas_cn_procedure_ctx_req(emm_ctx);
 
   if (ctx_req_proc) {
-    ctx_req_proc->nas_cause = msg->cause;
+    ctx_req_proc->nas_cause = msg->cause; // todo: better handling
     rc = (*ctx_req_proc->failure_notif)(emm_ctx);
   } else {
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find context request procedure associated to UE id " MME_UE_S1AP_ID_FMT "...\n", msg->ue_id);

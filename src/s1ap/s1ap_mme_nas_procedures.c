@@ -61,9 +61,9 @@ static bool
 s1ap_add_bearer_context_to_setup_list (S1ap_E_RABToBeSetupListHOReqIEs_t * const e_RABToBeSetupListHOReq_p,
     S1ap_E_RABToBeSetupItemHOReq_t        * e_RABToBeSetupHO_p, bearer_contexts_to_be_created_t * bc_tbc);
 
-static bool
-s1ap_add_bearer_context_to_switch_list (S1ap_E_RABToBeSwitchedULListIEs_t * const e_RABToBeSwitchedListHOReq_p,
-    S1ap_E_RABToBeSwitchedULItem_t        * e_RABToBeSwitchedHO_p, bearer_context_t * bearer_ctxt_p);
+//static bool
+//s1ap_add_bearer_context_to_switch_list (S1ap_E_RABToBeSwitchedULListIEs_t * const e_RABToBeSwitchedListHOReq_p,
+//    S1ap_E_RABToBeSwitchedULItem_t        * e_RABToBeSwitchedHO_p, bearer_context_t * bearer_ctxt_p);
 
 //------------------------------------------------------------------------------
 int
@@ -1132,7 +1132,7 @@ s1ap_handle_handover_request (
 
   S1ap_E_RABToBeSetupItemHOReq_t          e_RABToBeSetupHO = {0}; // yes, alloc on stack
   // todo: only a single bearer assumed right now.
-  s1ap_add_bearer_context_to_setup_list(&handoverRequest_p->e_RABToBeSetupListHOReq, &e_RABToBeSetupHO, handover_request_pP->bearer_ctx_to_be_setup_list);
+  s1ap_add_bearer_context_to_setup_list(&handoverRequest_p->e_RABToBeSetupListHOReq, &e_RABToBeSetupHO, &handover_request_pP->bearer_ctx_to_be_setup_list);
   // e_RABToBeSetupHO --> todo: disappears inside
 
   /** Set the security context. */
@@ -1495,7 +1495,7 @@ int s1ap_generate_bearer_context_to_setup(bearer_context_to_be_created_t * bc_tb
    */
   bstring transportLayerAddress = fteid_ip_address_to_bstring(&bc_tbc->s1u_sgw_fteid);
 
-  e_RABToBeSetupHO_p.transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
+  e_RABToBeSetupHO_p->transportLayerAddress.buf = calloc (blength(transportLayerAddress), sizeof (uint8_t));
   memcpy (e_RABToBeSetupHO_p->transportLayerAddress.buf,
       transportLayerAddress->data,
       blength(transportLayerAddress));
@@ -1564,8 +1564,9 @@ s1ap_add_bearer_context_to_setup_list (S1ap_E_RABToBeSetupListHOReqIEs_t * const
   int num_bc = 0;
   for(int num_bc = 0; num_bc < bcs_tbc->num_bearer_context; num_bc++){
     if(s1ap_generate_bearer_context_to_setup(&bcs_tbc->bearer_contexts[num_bc], e_RABToBeSetupHO_p) != RETURNok){
-    OAILOG_ERROR(LOG_S1AP, "Error adding bearer context with ebi %d to list of bearers to setup.\n", bearer_ctxt_p->ebi);
-    return false;
+      OAILOG_ERROR(LOG_S1AP, "Error adding bearer context with ebi %d to list of bearers to setup.\n", bcs_tbc->bearer_contexts[num_bc].eps_bearer_id);
+      return false;
+    }
   }
   /** Add the E-RAB bearer to the message. */
   ASN_SEQUENCE_ADD (e_RABToBeSetupListHOReq_p, e_RABToBeSetupHO_p);

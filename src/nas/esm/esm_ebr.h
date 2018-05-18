@@ -76,6 +76,6 @@ int esm_ebr_set_status(emm_data_context_t * emm_context, ebi_t ebi, esm_ebr_stat
                        bool ue_requested);
 esm_ebr_state esm_ebr_get_status(emm_data_context_t * emm_context, ebi_t ebi);
 
-bool esm_ebr_is_not_in_use(emm_data_context_t * emm_context, ebi_t ebi);
+//bool esm_ebr_is_not_in_use(emm_data_context_t * emm_context, ebi_t ebi);
 
 #endif /* ESM_EBR_SEEN*/

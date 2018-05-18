@@ -64,8 +64,9 @@ MESSAGE_DEF(NAS_PDN_DISCONNECT_RSP,             MESSAGE_PRIORITY_MED,   itti_nas
 
 
 /** S10 Context Transfer (TAU). */
-MESSAGE_DEF(NAS_UE_CONTEXT_REQ,                 MESSAGE_PRIORITY_MED,   itti_nas_ue_context_req_t,         nas_ue_context_req)
-MESSAGE_DEF(NAS_UE_CONTEXT_RSP,                 MESSAGE_PRIORITY_MED,   itti_nas_ue_context_rsp_t,         nas_ue_context_rsp)
+MESSAGE_DEF(NAS_CONTEXT_REQ,                    MESSAGE_PRIORITY_MED,   itti_nas_context_req_t,         nas_context_req)
+MESSAGE_DEF(NAS_CONTEXT_RES,                    MESSAGE_PRIORITY_MED,   itti_nas_context_res_t,         nas_context_res)
+MESSAGE_DEF(NAS_CONTEXT_FAIL,                   MESSAGE_PRIORITY_MED,   itti_nas_context_fail_t,        nas_context_fail)
 
 MESSAGE_DEF(NAS_IMPLICIT_DETACH_UE_IND,         MESSAGE_PRIORITY_MED,   itti_nas_implicit_detach_ue_ind_t, nas_implicit_detach_ue_ind)
 

@@ -165,7 +165,7 @@ bstring mme_scenario_player_dump_s11_create_bearer_request (const MessageDef * c
 // Return xml filename
 bstring mme_scenario_player_dump_nas_downlink_data_req (const MessageDef * const received_message)
 {
-  const itti_nas_dl_data_req_t * const nas_dl_data_req = &NAS_DL_DATA_REQ (received_message);
+  const itti_nas_dl_data_req_t * const nas_dl_data_req = &NAS_DOWNLINK_DATA_REQ (received_message);
 
   //-------------------------------
   // Dump received message in XML

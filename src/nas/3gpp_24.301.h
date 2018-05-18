@@ -264,6 +264,7 @@ typedef struct ue_security_capability_s {
 // Table 10.2.1: EPS mobility management timers – UE side
 //..............................................................................
 
+#define T3346_DEFAULT_VALUE            5
 #define T3402_DEFAULT_VALUE          720
 #define T3410_DEFAULT_VALUE           15
 #define T3411_DEFAULT_VALUE           10

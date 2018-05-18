@@ -208,7 +208,7 @@ void* shared_log_task (__attribute__ ((unused)) void *args_p)
           if (!exit_count) {
             g_shared_log.running = false;
             if (-1 != timer_id) {
-              timer_remove (timer_id);
+              timer_remove (timer_id, NULL);
               timer_id = -1;
             }
             shared_log_exit ();

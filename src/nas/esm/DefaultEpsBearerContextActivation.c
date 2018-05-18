@@ -152,7 +152,7 @@ esm_proc_default_eps_bearer_context (
      */
     // todo: S1U SGW set before?
     bearer_qos_t bearer_qos = {.qci = qci};
-    *ebi = esm_ebr_context_create (emm_context, pti, pid, *ebi, NULL, IS_DEFAULT_BEARER_YES, qci, &bearer_qos, (traffic_flow_template_t *)NULL, (protocol_configuration_options_t*)NULL);
+    *ebi = esm_ebr_context_create (emm_context, pti, pid, *ebi, NULL, IS_DEFAULT_BEARER_YES, &bearer_qos, (traffic_flow_template_t *)NULL, (protocol_configuration_options_t*)NULL);
 
     if (*ebi == ESM_EBI_UNASSIGNED) {
       /*
@@ -346,7 +346,7 @@ esm_proc_default_eps_bearer_context_reject (
     /*
      * Release the default EPS bearer context and enter state INACTIVE
      */
-    rc = esm_proc_eps_bearer_context_deactivate (emm_context, true, ebi, &pid, &bid, NULL);
+    rc = esm_proc_eps_bearer_context_deactivate (emm_context, true, ebi, pid, NULL);
 
     if (rc != RETURNok) {
       /*
@@ -409,7 +409,7 @@ int esm_proc_default_eps_bearer_context_failure (emm_data_context_t * emm_contex
     /*
      * Release the default EPS bearer context and enter state INACTIVE
      */
-    rc = esm_proc_eps_bearer_context_deactivate (emm_context, true, ebi, pid, &bid, NULL);
+    rc = esm_proc_eps_bearer_context_deactivate (emm_context, true, ebi, *pid, NULL);
   }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
@@ -484,7 +484,7 @@ static void _default_eps_bearer_activate_t3485_handler (void *args)
       /*
        * Release the default EPS bearer context and enter state INACTIVE
        */
-      rc = esm_proc_eps_bearer_context_deactivate (esm_ebr_timer_data->ctx, true, esm_ebr_timer_data->ebi, &pid, &bidx, NULL);
+      rc = esm_proc_eps_bearer_context_deactivate (esm_ebr_timer_data->ctx, true, esm_ebr_timer_data->ebi, pid, NULL);
 
       if (rc != RETURNerror) {
         /*

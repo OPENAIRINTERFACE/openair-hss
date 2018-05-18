@@ -117,7 +117,7 @@ void mme_app_free_bearer_context (bearer_context_t ** const bearer_context)
 bearer_context_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi)
 {
   bearer_context_t    bc_key = {.ebi = ebi};
-  return RB_FIND(BearPool, &pdn_context->session_bearers, &bc_key);
+  return RB_FIND(SessionBearers, &pdn_context->session_bearers, &bc_key);
 }
 
 //------------------------------------------------------------------------------
@@ -126,7 +126,7 @@ bearer_context_t* mme_app_get_session_bearer_context_from_all(ue_context_t * con
   bearer_context_t  * bearer_context = NULL;
   pdn_context_t     * pdn_context = NULL;
   RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
-    RB_FOREACH (bearer_context, BearerPool, &pdn_context->session_bearers) {
+    RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
       // todo: better error handling
       if(bearer_context->ebi == ebi){
         return bearer_context;
@@ -150,7 +150,7 @@ bearer_context_t * mme_app_register_bearer_context(ue_context_t * const ue_conte
   /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
   pBearerCtx = RB_REMOVE(BearerPool, &ue_context->bearer_pool, &bc_key);
   if(!pBearerCtx){
-    OAILOG_ERROR(LOG_MME_APP,  "Could not find a free bearer context with ebi %d for ue_id " MME_UE_S1AP_FMT "! \n", ebi, ue_context->mme_ue_s1ap_id);
+    OAILOG_ERROR(LOG_MME_APP,  "Could not find a free bearer context with ebi %d for ue_id " MME_UE_S1AP_ID_FMT"! \n", ebi, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, NULL);
   }
 
@@ -159,7 +159,7 @@ bearer_context_t * mme_app_register_bearer_context(ue_context_t * const ue_conte
   pBearerCtx->pdn_cx_id       = pdn_context->context_identifier;
   /** Insert the bearer context. */
   /** This should not happen with locks. */
-  Assert(!RB_INSERT (BearerPool, &pdn_context->session_bearers, pBearerCtx));
+//  Assert(!RB_INSERT (SessionBearers, &pdn_context->session_bearers, pBearerCtx));
 
   /** Register the values of the newly registered bearer context. Values might be empty. */
   pBearerCtx->preemption_capability    = pdn_context->default_bearer_eps_subscribed_qos_profile.allocation_retention_priority.pre_emp_capability;
@@ -181,9 +181,9 @@ int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi
   // todo: add a lot of locks..
   bearer_context_t bc_key = { .ebi = ebi}; /**< Define a bearer context key. */ // todo: just setting one element, and maybe without the key?
   /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
-  pBearerCtx = RB_REMOVE(BearerPool, &pdn_context->session_bearers, &bc_key);
+  pBearerCtx = RB_REMOVE(SessionBearers, &pdn_context->session_bearers, &bc_key);
   if(!pBearerCtx){
-    OAILOG_ERROR(LOG_MME_APP,  "Could not find an session bearer context with ebi %d for ue_id " MME_UE_S1AP_FMT " inside pdn context with context id %d! \n",
+    OAILOG_ERROR(LOG_MME_APP,  "Could not find an session bearer context with ebi %d for ue_id " MME_UE_S1AP_ID_FMT " inside pdn context with context id %d! \n",
         ebi, ue_context->mme_ue_s1ap_id, pdn_context->context_identifier);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
@@ -196,7 +196,7 @@ int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi
   /** Initialize the new bearer context. */
   mme_app_bearer_context_init(pBearerCtx);
   /** Insert the bearer context into the free bearer of the ue context. */
-  Assert(!RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx));
+//  Assert(!RB_INSERT (BearerPool, &ue_context->bearer_pool, pBearerCtx));
   OAILOG_INFO(LOG_MME_APP, "Successfully deregistered the bearer context with ebi %d from PDN id %u and for ue_id " MME_UE_S1AP_ID_FMT "\n",
       pBearerCtx->ebi, pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
   OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
@@ -218,8 +218,8 @@ void mme_app_bearer_context_update_handover(bearer_context_t * bc_registered, be
   OAILOG_FUNC_IN (LOG_MME_APP);
   /* Received an initialized bearer context, set the qos values from the pdn_connections IE. */
   // todo: optimize this!
-  DevAssert(bc_registered);
-  DevAssert(bc_tbc_s10);
+//  DevAssert(bc_registered);
+//  DevAssert(bc_tbc_s10);
 
   /*
    * Initialize the ESM EBR context and set the received QoS values.

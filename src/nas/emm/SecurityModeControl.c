@@ -325,11 +325,11 @@ emm_proc_security_mode_control (
       /*
        * Notify EMM that common procedure has been initiated
        */
-      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ (SMC) ue id " MME_UE_S1AP_ID_FMT " ",ue_id);
+      MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "EMMREG_COMMON_PROC_REQ (SMC) ue id " MME_UE_S1AP_ID_FMT " ",emm_ctx->ue_id);
       emm_sap_t                               emm_sap = {0};
 
       emm_sap.primitive = EMMREG_COMMON_PROC_REQ;
-      emm_sap.u.emm_reg.ue_id = ue_id;
+      emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
       emm_sap.u.emm_reg.ctx = emm_ctx;
       emm_sap.u.emm_reg.u.common.common_proc = &smc_proc->emm_com_proc;
       emm_sap.u.emm_reg.u.common.previous_emm_fsm_state = smc_proc->emm_com_proc.emm_proc.previous_emm_fsm_state;

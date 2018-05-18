@@ -115,7 +115,7 @@ timer_handle_signal (
     //         pthread_mutex_unlock(&timer_desc.timer_list_mutex);
     //         free_wrapper(timer_p);
     //         timer_p = NULL;
-    if (timer_remove ((long)timer_p->timer) != 0) {
+    if (timer_remove ((long)timer_p->timer, NULL) != 0) {
       OAILOG_DEBUG (LOG_ITTI, "Failed to delete timer 0x%lx\n", (long)timer_p->timer);
     }
   }
@@ -225,9 +225,7 @@ timer_setup (
   return 0;
 }
 
-int
-timer_remove (
-  long timer_id)
+int timer_remove (long timer_id, void ** arg)
 {
   int                                     rc = 0;
   struct timer_elm_s                     *timer_p;
@@ -241,6 +239,7 @@ timer_remove (
    */
   if (timer_p == NULL) {
     pthread_mutex_unlock (&timer_desc.timer_list_mutex);
+    if (arg) *arg = NULL;
     OAILOG_ERROR (LOG_ITTI, "Didn't find timer 0x%lx in list\n", timer_id);
     return -1;
   }
@@ -248,6 +247,9 @@ timer_remove (
   STAILQ_REMOVE (&timer_desc.timer_queue, timer_p, timer_elm_s, entries);
   pthread_mutex_unlock (&timer_desc.timer_list_mutex);
 
+  // let user of API get back arg that can be an allocated memory (memory leak).
+
+  if (arg) *arg = timer_p->timer_arg;
   if (timer_delete (timer_p->timer) < 0) {
     OAILOG_ERROR (LOG_ITTI, "Failed to delete timer 0x%lx\n", (long)timer_p->timer);
     rc = -1;
@@ -256,6 +258,7 @@ timer_remove (
   free_wrapper ((void**)&timer_p);
   return rc;
 }
+
 
 int
 timer_init (

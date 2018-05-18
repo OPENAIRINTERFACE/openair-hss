@@ -41,10 +41,12 @@ bstring bearer_state2string(const mme_app_bearer_state_t bearer_state);
 /** Create & deallocate a bearer context. */
 bearer_context_t *mme_app_new_bearer();
 int mme_app_bearer_context_delete (bearer_context_t *bearer_context);
-/** New method to get a bearer contxt from the bearer pool of the UE context and add it into the pdn session. */
-bearer_context_t* mme_app_get_session_bearer_context(ue_context_t * const ue_context, const ebi_t ebi);
+/** Find an allocated PDN session bearer context. */
+bearer_context_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi);
+// todo_: combine these two methods
 bearer_context_t* mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context, const ebi_t ebi);
 
+/** New method to get a bearer contxt from the bearer pool of the UE context and add it into the pdn session. */
 //int mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
 bearer_context_t * mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
 

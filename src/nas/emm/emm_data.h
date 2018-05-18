@@ -86,11 +86,7 @@ typedef struct emm_security_context_s {
   uint8_t ncc:3; /* next hop chaining counter for handover. */
   uint8_t nh_conj[AUTH_NH_SIZE];      /* nh */
 
-  struct count_s{
-    uint32_t spare:8;
-    uint32_t overflow:16;
-    uint32_t seq_num:8;
-  } dl_count, ul_count;   /* Downlink and uplink count parameters    */
+  count_t dl_count, ul_count;   /* Downlink and uplink count parameters    */
   struct {
     uint8_t eps_encryption;   /* algorithm used for ciphering            */
     uint8_t eps_integrity;    /* algorithm used for integrity protection */
@@ -253,6 +249,7 @@ typedef struct emm_data_context_s {
 #define           IS_EMM_CTXT_VALID_NON_CURRENT_SECURITY( eMmCtXtPtR )    (!!((eMmCtXtPtR)->member_valid_mask & EMM_CTXT_MEMBER_NON_CURRENT_SECURITY))
 #define           IS_EMM_CTXT_VALID_UE_NETWORK_CAPABILITY( eMmCtXtPtR )   (!!((eMmCtXtPtR)->member_valid_mask & EMM_CTXT_MEMBER_UE_NETWORK_CAPABILITY_IE))
 #define           IS_EMM_CTXT_VALID_MS_NETWORK_CAPABILITY( eMmCtXtPtR )   (!!((eMmCtXtPtR)->member_valid_mask & EMM_CTXT_MEMBER_MS_NETWORK_CAPABILITY_IE))
+#define           IS_EMM_CTXT_VALID_CURRENT_DRX_PARAMETER( eMmCtXtPtR )   (!!((eMmCtXtPtR)->member_valid_mask & EMM_CTXT_MEMBER_CURRENT_DRX_PARAMETER))
 
 #define           IS_EMM_CTXT_VALID_AUTH_VECTOR( eMmCtXtPtR, KsI )        (!!((eMmCtXtPtR)->member_valid_mask & ((EMM_CTXT_MEMBER_AUTH_VECTOR0) << KsI)))
 } emm_data_context_t;
@@ -385,7 +382,15 @@ void nas_start_Ts6a_auth_info(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s *
 void nas_stop_Ts6a_auth_info(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts6a_auth_info, void *timer_callback_args);
 /** S10 Timer: todo: here or in MME_APP (compare with ULR). */
 void nas_start_Ts10_ctx_req(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts10_auth_info,  time_out_t time_out_cb, void *timer_callback_args);
-void nas_stop_Ts10_ctx_res(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts10_ctx_res, void *timer_callback_args)
+void nas_stop_Ts10_ctx_res(const mme_ue_s1ap_id_t ue_id, struct nas_timer_s * const Ts10_ctx_res, void *timer_callback_args);
+
+
+int  emm_data_context_add(emm_data_t *emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
+int  emm_data_context_add_guti (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
+int  emm_data_context_add_old_guti (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__ ((nonnull)) ;
+int  emm_data_context_add_imsi (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__ (
+(nonnull)) ;
+int emm_data_context_upsert_imsi (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__((nonnull));
 
 void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init_esm_ctxt)  __attribute__ ((nonnull)) ;
 void emm_context_free(struct emm_data_context_s * const emm_ctx) __attribute__ ((nonnull)) ;

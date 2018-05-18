@@ -119,8 +119,8 @@ _emm_service_reject (mme_ue_s1ap_id_t ue_id, int emm_cause)
   int rc = RETURNerror;
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
-  emm_data_context_t                          *emm_ctx = emm_context_get (&_emm_data, ue_id);
-  emm_sap_t                               emm_sap = {0};
+  emm_data_context_t                          *emm_ctx = emm_data_context_get (&_emm_data, ue_id);
+  emm_sap_t                                    emm_sap = {0};
 
   OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Sending Service Reject. ue_id=" MME_UE_S1AP_ID_FMT ", cause=%d)\n",
         ue_id, emm_cause);

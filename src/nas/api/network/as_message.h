@@ -321,7 +321,7 @@ typedef struct nas_establish_ind_s {
   tai_t            tai;               /* Indicating the Tracking Area from which the UE has sent the NAS message.                         */
   ecgi_t           ecgi;               /* Indicating the cell from which the UE has sent the NAS message.                         */
   as_cause_t       as_cause;          /* Establishment cause                     */
-//  s_tmsi_t         s_tmsi;            /* UE identity optional field, if not present, value is NOT_A_S_TMSI */
+  s_tmsi_t         s_tmsi;            /* UE identity optional field, if not present, value is NOT_A_S_TMSI */
   bstring          initial_nas_msg;   /* Initial NAS message to transfer         */
 } nas_establish_ind_t;
 

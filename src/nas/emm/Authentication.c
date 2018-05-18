@@ -681,7 +681,7 @@ int emm_proc_authentication_failure (
       if (rc != RETURNok) {
         REQUIREMENT_3GPP_24_301(R10_5_4_2_7_d__NOTE2); // more or less this case...
         // Failed to initiate the identification procedure
-        OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT "EMM-PROC  - Failed to initiate identification procedure\n", ue_context->mme_ue_s1ap_id);
+        OAILOG_WARNING (LOG_NAS_EMM, "ue_id=" MME_UE_S1AP_ID_FMT "EMM-PROC  - Failed to initiate identification procedure\n", emm_ctx->ue_id);
         auth_proc->emm_cause = EMM_CAUSE_ILLEGAL_UE;
         // Do not accept the UE to attach to the network
         emm_sap_t                               emm_sap = {0};
@@ -862,8 +862,6 @@ static void  _authentication_t3460_handler (void *args)
       emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = auth_proc->ue_id;
       emm_sap_send (&emm_sap);
     }
-  }else if (tau_proc){
-    // todo: fill for tau!
   }else{
     /*
      * Abort the authentication procedure.

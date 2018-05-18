@@ -232,7 +232,7 @@ emm_proc_detach (
      /*
       * Setup NAS information message to transfer
       */
-     emm_as->nas_info = EMM_AS_NAS_INFO_DETACH_REQ;
+     emm_as->nas_info = EMM_AS_NAS_INFO_DETACH;
      emm_as->nas_msg = NULL;
      /*
       * Set the UE identifier
@@ -315,7 +315,7 @@ emm_proc_detach (
      // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
      nas_itti_detach_req(emm_context->ue_id);
      // todo: review unlock
-     unlock_ue_contexts(ue_context);
+//     unlock_ue_contexts(ue_context);
      OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
      // todo: review this
    }
@@ -385,7 +385,8 @@ emm_proc_detach_request (
 
 
   /** Create a specific procedure for detach request. */
-  nas_emm_detach_proc_t * detach_proc =  _emm_proc_create_procedure_detach_request(emm_context, params);
+  _emm_proc_create_procedure_detach_request(emm_context, params);
+  // todo: detach
 
   /* Check if any PDN Connections exist. */
   // todo: check that any session exists.
@@ -471,7 +472,7 @@ emm_proc_detach_request (
   // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
   nas_itti_detach_req(emm_context->ue_id);
   // todo: review unlock
-  unlock_ue_contexts(ue_context);
+//  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
   // todo: review this
 //  unlock_ue_contexts(ue_context);
@@ -500,7 +501,7 @@ void free_emm_detach_request_ies(emm_detach_request_ies_t ** const ies)
 static void _emm_proc_create_procedure_detach_request(emm_data_context_t * const emm_context, emm_detach_request_ies_t * const ies)
 {
   nas_emm_detach_proc_t *detach_proc = nas_new_detach_procedure(&emm_context);
-  AssertFatal(attach_proc, "TODO Handle this");
+  AssertFatal(detach_proc, "TODO Handle this");
   if ((detach_proc)) {
     detach_proc->ies = ies;
     /** No success notification needed. Everything will be handled in the states with EMMREG messages. */

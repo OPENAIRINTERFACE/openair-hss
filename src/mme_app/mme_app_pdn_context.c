@@ -68,16 +68,16 @@ void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)
   if ((*pdn_context)->pco) {
     free_protocol_configuration_options(&(*pdn_context)->pco);
   }
-  memset((*pdn_context)->esm_data, 0, sizeof((*pdn_context)->esm_data));
+  memset(&(*pdn_context)->esm_data, 0, sizeof((*pdn_context)->esm_data));
 
   free_wrapper((void**)pdn_context);
 }
 
 //------------------------------------------------------------------------------
-pdn_context_t mme_app_get_pdn_context (ue_context_t * const ue_context, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn)
+pdn_context_t * mme_app_get_pdn_context (ue_context_t * const ue_context, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn)
 {
   // todo: check for valid fields!
-  pdn_context_t pdn_context_key = {.apn = apn, .default_ebi = default_ebi, .context_identifier = context_id};
+  pdn_context_t pdn_context_key = {.apn_in_use = apn, .default_ebi = default_ebi, .context_identifier = context_id};
   pdn_context_t *pdn_context = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
   return pdn_context;
 }
@@ -104,7 +104,7 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
   bearer_context_t * bearer_context_to_setup  = NULL;
 
   int num_bc = bc_tbc->num_bearer_context;
-  RB_FOREACH (bearer_context_to_setup, BearerPool, &pdn_context->session_bearers) {
+  RB_FOREACH (bearer_context_to_setup, SessionBearers, &pdn_context->session_bearers) {
     DevAssert(bearer_context_to_setup);
     // todo: make it selective for multi PDN!
     /*
@@ -159,11 +159,11 @@ pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, con
     pdn_context->context_identifier     = apn_configuration->context_identifier;
     pdn_context->pdn_type               = apn_configuration->pdn_type;
     if (apn_configuration->nb_ip_address) {
-      pdn_context->paa.pdn_type           = apn_configuration->ip_address[0].pdn_type;// TODO check this later...
-      pdn_context->paa.ipv4_address       = apn_configuration->ip_address[0].address.ipv4_address;
+      pdn_context->paa->pdn_type           = apn_configuration->ip_address[0].pdn_type;// TODO check this later...
+      pdn_context->paa->ipv4_address       = apn_configuration->ip_address[0].address.ipv4_address;
       if (2 == apn_configuration->nb_ip_address) {
-        pdn_context->paa.ipv6_address       = apn_configuration->ip_address[1].address.ipv6_address;
-        pdn_context->paa.ipv6_prefix_length = 64;
+        pdn_context->paa->ipv6_address       = apn_configuration->ip_address[1].address.ipv6_address;
+        pdn_context->paa->ipv6_prefix_length = 64;
       }
     }
     // todo: add the apn as bstring into the pdn_context and store it in the map
@@ -178,7 +178,7 @@ pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, con
   pdn_context->default_ebi = EPS_BEARER_IDENTITY_UNASSIGNED;
   // TODO pdn_context->apn_in_use     =
   /** Insert the PDN context into the map of PDN contexts. */
-  Assert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, pdn_context));
+  DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, pdn_context));
   //  MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", pdn_context->context_identifier, apn_configuration->service_selection);
   MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", pdn_context->context_identifier, pdn_context->apn_in_use);
   OAILOG_FUNC_RETURN (LOG_MME_APP, pdn_context);

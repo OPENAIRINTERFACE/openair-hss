@@ -51,6 +51,10 @@
 #define S11_RELEASE_ACCESS_BEARERS_REQUEST(mSGpTR) (mSGpTR)->ittiMsg.s11_release_access_bearers_request
 #define S11_RELEASE_ACCESS_BEARERS_RESPONSE(mSGpTR) (mSGpTR)->ittiMsg.s11_release_access_bearers_response
 
+/** Paging related signaling.  */
+#define S11_DOWNLINK_DATAN_NOTIFICATION(mSGpTR) (mSGpTR)->ittiMsg.s11_downlink_data_notification
+#define S11_DOWNLINK_DATAN_NOTIFICATION_ACKNOWLEDGE(mSGpTR) (mSGpTR)->ittiMsg.s11_downlink_data_notification_acknowledge
+
 //-----------------------------------------------------------------------------
 /** @struct itti_s11_create_session_request_t
  *  @brief Create Session Request
@@ -1094,5 +1098,35 @@ typedef struct itti_s11_delete_bearer_command_s {
   struct in_addr  peer_ip;
 } itti_s11_delete_bearer_command_s;
 
-#endif
-/* FILE_S11_MESSAGES_TYPES_SEEN */
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_downlink_data_notification_t
+ *  @brief Downlink Data Notification
+ *
+ * The Downlink Data Notification message is sent on the S11 interface by the SGW to the MME as part of the S1 paging procedure.
+ */
+typedef struct itti_s11_downlink_data_notification_s {
+  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  gtpv2c_cause_t  cause;
+  // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
+  // Private Extension  ///< optional
+  /* GTPv2-C specific parameters */
+  void       *trxn;
+  uint32_t    peer_ip;
+}itti_s11_downlink_data_notification_t;
+
+//-----------------------------------------------------------------------------
+/** @struct itti_s11_downlink_data_notification_acknowledge_t
+ *  @brief Downlink Data Notification Acknowledge
+ *
+ * The Downlink Data Notification Acknowledge message is sent on the S11 interface by the MME to the SGW as part of the S1 paging procedure.
+ */
+typedef struct itti_s11_downlink_data_notification_acknowledge_s {
+  teid_t          teid;                   ///< Tunnel Endpoint Identifier
+  gtpv2c_cause_t  cause;
+  // Recovery           ///< optional This IE shall be included if contacting the peer for the first time
+  // Private Extension  ///< optional
+  /* GTPv2-C specific parameters */
+  void       *trxn;
+  uint32_t    peer_ip;
+}itti_s11_downlink_data_notification_acknowledge_t;
+#endif /* FILE_S11_MESSAGES_TYPES_SEEN */

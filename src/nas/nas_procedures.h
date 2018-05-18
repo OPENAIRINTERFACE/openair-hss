@@ -29,6 +29,8 @@
 #ifndef FILE_NAS_PROCEDURES_SEEN
 #define FILE_NAS_PROCEDURES_SEEN
 
+#include "3gpp_29.274.h"
+
 struct emm_data_context_s;
 struct nas_base_proc_s;
 struct nas_emm_proc_s;
@@ -376,7 +378,7 @@ typedef union {
   nas_esm_proc_t            esm_proc;
   nas_cn_proc_t             cn_proc;
   nas_auth_info_proc_t        auth_info;
-  nas_context_req_proc_t      ctx_req;
+  nas_ctx_req_proc_t       ctx_req;
 } nas_proc_t;
 
 typedef struct nas_emm_common_procedure_s {

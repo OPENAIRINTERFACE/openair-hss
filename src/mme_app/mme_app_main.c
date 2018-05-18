@@ -399,7 +399,7 @@ void *mme_app_thread (void *args)
         itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
 
         // todo: how to terminate them?
-        timer_remove(mme_app_desc.statistic_timer_id);
+        timer_remove(mme_app_desc.statistic_timer_id, NULL);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.imsi_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl);
         hashtable_ts_destroy (mme_app_desc.mme_ue_contexts.tun10_ue_context_htbl);
@@ -440,15 +440,16 @@ void *mme_app_thread (void *args)
             mme_app_handle_initial_context_setup_rsp_timer_expiry (ue_context_p);
           }
 
-          /** Handover Related Timers. */
-          else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->mme_mobility_completion_timer.id) {
-            // MME Mobility Completion Timer expiry handler (we need this in addition to the one in the S1AP for CLR handling after TAU at source MME. */
-            mme_app_handle_mobility_completion_timer_expiry (ue_context_p);
-          }
-          else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->mme_s10_handover_completion_timer.id) {
-            // MME S10 Handover Completion Timer expiry handler
-            mme_app_handle_mme_s10_handover_completion_timer_expiry (ue_context_p);
-          }
+          // todo: take care of these in procedures!
+//          /** Handover Related Timers. */
+//          else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->mme_mobility_completion_timer.id) {
+//            // MME Mobility Completion Timer expiry handler (we need this in addition to the one in the S1AP for CLR handling after TAU at source MME. */
+//            mme_app_handle_mobility_completion_timer_expiry (ue_context_p);
+//          }
+//          else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->mme_s10_handover_completion_timer.id) {
+//            // MME S10 Handover Completion Timer expiry handler
+//            mme_app_handle_mme_s10_handover_completion_timer_expiry (ue_context_p);
+//          }
 
           else {
             OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated timer_id for UE id " MME_UE_S1AP_ID_FMT "\n",mme_ue_s1ap_id);
@@ -470,6 +471,7 @@ void *mme_app_thread (void *args)
     itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
+    }
   }
 
   return NULL;

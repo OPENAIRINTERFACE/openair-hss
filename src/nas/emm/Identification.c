@@ -151,7 +151,7 @@ emm_proc_identification (
 
     /** We may have an identification procedure which was aborted but not freed. */
 
-    nas_emm_ident_proc_t * ident_proc = get_nas_common_procedure_identification(mm_context);
+    nas_emm_ident_proc_t * ident_proc = get_nas_common_procedure_identification(emm_context);
     if (!ident_proc) {
       ident_proc = nas_new_identification_procedure(emm_context);
     }

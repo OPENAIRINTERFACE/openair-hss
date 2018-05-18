@@ -129,6 +129,16 @@ typedef enum {
 
 
 
+
+#define IPV4_STR_ADDR_TO_INT_NWBO(AdDr_StR,NwBo,MeSsAgE ) do {\
+            struct in_addr inp;\
+            if ( inet_aton(AdDr_StR, &inp ) < 0 ) {\
+                AssertFatal (0, MeSsAgE);\
+            } else {\
+                NwBo = inp.s_addr;\
+            }\
+        } while (0)
+
 #define IPV4_STR_ADDR_TO_INADDR(AdDr_StR,InAdDr,MeSsAgE ) do {\
             if ( inet_aton(AdDr_StR, &InAdDr ) <= 0 ) {\
                 AssertFatal (0, MeSsAgE);\
@@ -163,7 +173,7 @@ typedef enum {
    && ((((__const uint32_t *) (a))[2] & (((__const uint32_t *) (m))[2])) == (((__const uint32_t *) (b))[2] & (((__const uint32_t *) (m))[2])))  \
    && ((((__const uint32_t *) (a))[3] & (((__const uint32_t *) (m))[3])) == (((__const uint32_t *) (b))[3] & (((__const uint32_t *) (m))[3]))))
 
-//#define EBI_TO_INDEX(eBi) (eBi-5)
-//#define INDEX_TO_EBI(iNdEx) (iNdEx+5)
+#define EBI_TO_INDEX(eBi) (eBi-5)
+#define INDEX_TO_EBI(iNdEx) (iNdEx+5)
 
 #endif /* FILE_COMMON_DEFS_SEEN */

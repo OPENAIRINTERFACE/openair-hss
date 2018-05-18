@@ -40,6 +40,8 @@ int derive_keNB(const uint8_t *kasme_32, const uint32_t nas_count, uint8_t *keNB
 int derive_key_nas(algorithm_type_dist_t nas_alg_type, uint8_t nas_enc_alg_id,
                    const uint8_t *kasme_32, uint8_t *knas);
 
+int derive_nh ( const uint8_t *kasme_32,  uint8_t * nh);
+
 #define derive_key_nas_enc(aLGiD, kASME, kNAS)  \
     derive_key_nas(NAS_ENC_ALG, aLGiD, kASME, kNAS)
 

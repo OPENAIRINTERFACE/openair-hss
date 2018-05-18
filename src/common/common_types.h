@@ -51,6 +51,7 @@
 #define APN_MAX_LENGTH     (100)
 #define IMEI_DIGITS_MAX    (15)
 #define IMEISV_DIGITS_MAX  (16)
+#define MAX_APN_PER_UE     (5)
 
 typedef uint16_t                 sctp_stream_id_t;
 typedef uint32_t                 sctp_assoc_id_t;
@@ -65,12 +66,12 @@ typedef uint64_t                 enb_s1ap_id_key_t ;
 //------------------------------------------------------------------------------
 // UE S1AP IDs
 
-#define INVALID_ENB_UE_S1AP_ID   UINT32_MAX
-#define ENB_UE_S1AP_ID_MASK      0x00FFFFFF
-#define ENB_UE_S1AP_ID_FMT       "%06"PRIx32
+#define INVALID_ENB_UE_S1AP_ID_KEY   UINT32_MAX
+#define ENB_UE_S1AP_ID_MASK          0x00FFFFFF
+#define ENB_UE_S1AP_ID_FMT           "%06"PRIx32
 
-#define MME_UE_S1AP_ID_FMT       "%"PRIx32
-#define INVALID_MME_UE_S1AP_ID   0xFFFFFFFF          // You can pick any value between 0..2^32-1,
+#define MME_UE_S1AP_ID_FMT           "%"PRIx32
+#define INVALID_MME_UE_S1AP_ID       0xFFFFFFFF          // You can pick any value between 0..2^32-1,
                                                      // all values are allowed. try to find another way (boolean is_valid for example)
 
 //------------------------------------------------------------------------------

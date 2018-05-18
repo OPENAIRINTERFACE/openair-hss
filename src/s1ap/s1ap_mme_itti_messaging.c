@@ -75,15 +75,15 @@ s1ap_mme_itti_nas_uplink_ind (
 
   message_p = itti_alloc_new_message (TASK_S1AP, NAS_UPLINK_DATA_IND);
 
-  NAS_UL_DATA_IND (message_p).ue_id          = ue_id;
-  NAS_UL_DATA_IND (message_p).nas_msg        = *payload;
+  NAS_UPLINK_DATA_IND (message_p).ue_id          = ue_id;
+  NAS_UPLINK_DATA_IND (message_p).nas_msg        = *payload;
   *payload = NULL;
-  NAS_UL_DATA_IND (message_p).tai            = *tai;
-  NAS_UL_DATA_IND (message_p).cgi            = *cgi;
+  NAS_UPLINK_DATA_IND (message_p).tai            = *tai;
+  NAS_UPLINK_DATA_IND (message_p).cgi            = *cgi;
 
   MSC_LOG_TX_MESSAGE (MSC_S1AP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_UPLINK_DATA_IND ue_id " MME_UE_S1AP_ID_FMT " len %u",
-      NAS_UL_DATA_IND (message_p).ue_id, blength(NAS_UL_DATA_IND (message_p).nas_msg));
-  XML_MSG_DUMP_ITTI_NAS_UPLINK_DATA_IND(&NAS_UL_DATA_IND (message_p), TASK_S1AP, TASK_NAS_MME, NULL);
+      NAS_UPLINK_DATA_IND (message_p).ue_id, blength(NAS_UPLINK_DATA_IND (message_p).nas_msg));
+  XML_MSG_DUMP_ITTI_NAS_UPLINK_DATA_IND(&NAS_UPLINK_DATA_IND (message_p), TASK_S1AP, TASK_NAS_MME, NULL);
   return itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 }
 

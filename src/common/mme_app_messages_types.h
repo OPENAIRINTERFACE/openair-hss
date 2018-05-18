@@ -37,6 +37,10 @@
 #ifndef FILE_MME_APP_MESSAGES_TYPES_SEEN
 #define FILE_MME_APP_MESSAGES_TYPES_SEEN
 
+#include "nas_messages_types.h"
+#include "s1ap_common.h"
+#include "s10_messages_types.h"
+
 #define MME_APP_CONNECTION_ESTABLISHMENT_CNF(mSGpTR)     (mSGpTR)->ittiMsg.mme_app_connection_establishment_cnf
 #define MME_APP_INITIAL_CONTEXT_SETUP_RSP(mSGpTR)        (mSGpTR)->ittiMsg.mme_app_initial_context_setup_rsp
 #define MME_APP_CREATE_DEDICATED_BEARER_REQ(mSGpTR)      (mSGpTR)->ittiMsg.mme_app_create_dedicated_bearer_req
@@ -83,7 +87,7 @@ typedef struct itti_mme_app_connection_establishment_cnf_s {
   uint16_t                ue_security_capabilities_integrity_algorithms;
 
   // Security key
-  uint8_t                 kenb[AUTH_KENB_SIZE];
+  uint8_t                 kenb[AUTH_KASME_SIZE];
 
   // Trace Activation (optional)
   // Handover Restriction List (optional)

@@ -179,9 +179,10 @@ s11_mme_stop_timer_wrapper (
   nw_gtpv2c_timer_handle_t tmrHandle)
 {
   long                                    timer_id;
+  void                                   *timeoutArg = NULL;
 
   timer_id = (long)tmrHandle;
-  return ((timer_remove (timer_id) == 0) ? NW_OK : NW_FAILURE);
+  return ((timer_remove (timer_id, &timeoutArg) == 0) ? NW_OK : NW_FAILURE);
 }
 
 static void                            *

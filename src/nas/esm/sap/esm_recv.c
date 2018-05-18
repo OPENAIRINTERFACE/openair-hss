@@ -55,6 +55,7 @@
 #include "3gpp_29.274.h"
 #include "commonDef.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_defs.h"
 #include "nas_itti_messaging.h"
 #include "esm_recv.h"
 #include "esm_pt.h"
@@ -62,6 +63,7 @@
 #include "esm_proc.h"
 #include "esm_cause.h"
 #include "mme_config.h"
+#include "esm_sap.h"
 
 
 /****************************************************************************/
@@ -465,7 +467,7 @@ esm_cause_t esm_recv_information_response (
   if (pid != RETURNerror) {
 
     // Continue with pdn connectivity request
-    nas_itti_pdn_config_req(pti, ue_id, &emm_context->_imsi, emm_context->esm_ctx.esm_proc_data, emm_context->esm_ctx.esm_proc_data->request_type);
+    nas_itti_pdn_config_req(ue_id, &emm_context->_imsi, emm_context->esm_ctx.esm_proc_data, emm_context->esm_ctx.esm_proc_data->request_type);
 
     esm_cause = ESM_CAUSE_SUCCESS;
   }
@@ -523,7 +525,7 @@ esm_recv_activate_default_eps_bearer_context_accept (
   /*
    * EPS bearer identity checking
    */
-  else if (esm_ebr_is_reserved (ebi) || esm_ebr_is_not_in_use (emm_context, ebi)) {
+  else if (esm_ebr_is_reserved (ebi)){ // || esm_ebr_is_not_in_use (emm_context, ebi)) {
     /*
      * 3GPP TS 24.301, section 7.3.2, case f
      * * * * Reserved or assigned value that does not match an existing EPS
@@ -599,7 +601,7 @@ esm_recv_activate_default_eps_bearer_context_reject (
   /*
    * EPS bearer identity checking
    */
-  else if (esm_ebr_is_reserved (ebi) || esm_ebr_is_not_in_use (emm_context, ebi)) {
+  else if (esm_ebr_is_reserved (ebi)){ // || esm_ebr_is_not_in_use (emm_context, ebi)) {
     /*
      * 3GPP TS 24.301, section 7.3.2, case f
      * * * * Reserved or assigned value that does not match an existing EPS
@@ -754,7 +756,7 @@ esm_recv_activate_dedicated_eps_bearer_context_reject (
   /*
    * EPS bearer identity checking
    */
-  else if (esm_ebr_is_reserved (ebi) || esm_ebr_is_not_in_use (emm_context, ebi)) {
+  else if (esm_ebr_is_reserved (ebi)){ // || esm_ebr_is_not_in_use (emm_context, ebi)) {
     /*
      * 3GPP TS 24.301, section 7.3.2, case f
      * * * * Reserved or assigned value that does not match an existing EPS
@@ -811,6 +813,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
+  ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Deactivate EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n",
           ue_id, pti, ebi);
@@ -829,7 +832,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
   /*
    * EPS bearer identity checking
    */
-  else if (esm_ebr_is_reserved (ebi) || esm_ebr_is_not_in_use (emm_context, ebi)) {
+  else if (esm_ebr_is_reserved (ebi)){ // || esm_ebr_is_not_in_use (emm_context, ebi)) {
     /*
      * 3GPP TS 24.301, section 7.3.2, case f
      * * * * Reserved or assigned value that does not match an existing EPS
@@ -853,7 +856,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
      * Check if it was the default ebi. If so, release the pdn context.
      * If not, respond with a delete bearer response back. Keep the UE context and PDN context as valid.
      */
-    pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context_t, pid, ESM_EBI_UNASSIGNED, NULL);
+    pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context, pid, ESM_EBI_UNASSIGNED, NULL);
     if(!pdn_context){
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No PDN context could be found. (pid=%d)\n", pid);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);

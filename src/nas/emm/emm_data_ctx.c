@@ -53,12 +53,31 @@
 #include "emm_cause.h"
 #include "mme_app_defs.h"
 
-#include "EmmCommon.h"
+//#include "EmmCommon.h"
 #include "../../mme/mme_ie_defs.h"
 
 
 static int _ctx_req_proc_success_cb (struct emm_data_context_s *emm_ctx);
 static int _ctx_req_proc_failure_cb (struct emm_data_context_s *emm_ctx);
+
+
+//------------------------------------------------------------------------------
+
+static hashtable_rc_t
+_emm_data_context_hashtable_insert(
+    emm_data_t *emm_data,
+    struct emm_data_context_s *elm)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+
+  if ( IS_EMM_CTXT_PRESENT_IMSI(elm)) {
+    h_rc = hashtable_ts_insert (emm_data->ctx_coll_imsi, elm->_imsi64, (void*)(&elm->ue_id));
+  } else {
+    // This should not happen. Possible UE bug?
+    OAILOG_WARNING(LOG_NAS_EMM, "EMM-CTX doesn't contain valid imsi UE id " MME_UE_S1AP_ID_FMT "\n", elm->ue_id);
+  }
+  return h_rc;
+}
 
 
 //------------------------------------------------------------------------------
@@ -559,15 +578,16 @@ inline void emm_ctx_update_from_mm_eps_context(emm_data_context_t * const emm_ct
   if (IS_EMM_CTXT_PRESENT_UE_NETWORK_CAPABILITY(emm_ctx_p)) {
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - UE network capabilities already present for IMSI " IMSI_64_FMT ". Not setting from S10 Context Response. \n", emm_ctx_p->_imsi64);
   }else{
-    emm_ctx_set_ue_nw_cap_ie(emm_ctx_p, &mm_eps_ctxt->ue_nc);
+    emm_ctx_set_ue_nw_cap(emm_ctx_p, &mm_eps_ctxt->ue_nc);
   }
   if (IS_EMM_CTXT_PRESENT_MS_NETWORK_CAPABILITY(emm_ctx_p)) {
     OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - MS network capabilities already present for IMSI " IMSI_64_FMT ". Not setting from S10 Context Response. \n", emm_ctx_p->_imsi64);
   }else{
     emm_ctx_set_attribute_present(emm_ctx_p, EMM_CTXT_MEMBER_MS_NETWORK_CAPABILITY_IE);
-    memcpy((void*)&emm_ctx_p->_ms_network_capability_ie, (MsNetworkCapability*)&mm_eps_ctxt->ms_nc, sizeof(MsNetworkCapability));
-    emm_ctx_p->gea = (mm_eps_ctxt->ms_nc.gea1 << 6)| mm_eps_ctxt->ms_nc.egea;
-    emm_ctx_p->gprs_present = true; /**< Todo: how to find this out? */
+    memcpy((void*)&emm_ctx_p->_ms_network_capability, (ms_network_capability_t*)&mm_eps_ctxt->ms_nc, sizeof(ms_network_capability_t)); // todo: review this
+    // todo: review all of this
+//    emm_ctx_p->gea = (mm_eps_ctxt->ms_nc.gea1 << 6)| mm_eps_ctxt->ms_nc.egea;
+//    emm_ctx_p->gprs_present = true; /**< Todo: how to find this out? */
   }
   // todo: these parameters are not present?
 //  emm_ctx->_security.capability.eps_encryption = mm_eps_ctxt->ue_nc.eea;
@@ -642,7 +662,7 @@ emm_data_context_get_by_imsi (
 
   DevAssert (emm_data );
 
-  h_rc = obj_hashtable_uint64_ts_get (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64, (void **)&emm_ue_id_p);
+  h_rc = obj_hashtable_uint64_ts_get (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64, sizeof(imsi64_t), (void **)&emm_ue_id_p);
 
   if (HASH_TABLE_OK == h_rc) {
     struct emm_data_context_s * tmp = emm_data_context_get (emm_data, (const hash_key_t)*emm_ue_id_p);
@@ -759,8 +779,8 @@ void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init
   emm_ctx_clear_ms_nw_cap(emm_ctx);
   emm_ctx_clear_ue_nw_cap(emm_ctx);
   emm_ctx_clear_drx_parameter(emm_ctx);
-  emm_ctx_clear_pending_current_drx_parameter(&emm_ctx);
-  emm_ctx_clear_eps_bearer_context_status(&emm_ctx);
+//  emm_ctx_clear_pending_current_drx_parameter(&emm_ctx);
+//  emm_ctx_clear_eps_bearer_context_status(emm_ctx); todo
 
   if (init_esm_ctxt) {
     esm_init_context(&emm_ctx->esm_ctx);
@@ -791,8 +811,8 @@ int emm_data_context_update_security_parameters(const mme_ue_s1ap_id_t ue_id,
   AssertFatal((0 <= emm_ctx->_security.vector_index) && (MAX_EPS_AUTH_VECTORS > emm_ctx->_security.vector_index),
       "Invalid vector index %d", emm_ctx->_security.vector_index);
 
-  *encryption_algorithm_capabilities = ((uint16_t)emm_ctx->eea & ~(1 << 7)) << 1;
-  *integrity_algorithm_capabilities = ((uint16_t)emm_ctx->eia & ~(1 << 7)) << 1;
+  *encryption_algorithm_capabilities = ((uint16_t)emm_ctx->_ue_network_capability.eea & ~(1 << 7)) << 1;
+  *integrity_algorithm_capabilities = ((uint16_t)emm_ctx->_ue_network_capability.eia & ~(1 << 7)) << 1;
 
   /** Derive the next hop. */
   derive_nh(emm_ctx->_vector[emm_ctx->_security.vector_index].kasme, emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj);
@@ -831,8 +851,8 @@ void emm_data_context_get_security_parameters(const mme_ue_s1ap_id_t ue_id,
   AssertFatal((0 <= emm_ctx->_security.vector_index) && (MAX_EPS_AUTH_VECTORS > emm_ctx->_security.vector_index),
       "Invalid vector index %d", emm_ctx->_security.vector_index);
 
-  *encryption_algorithm_capabilities = ((uint16_t)emm_ctx->eea & ~(1 << 7)) << 1;
-  *integrity_algorithm_capabilities = ((uint16_t)emm_ctx->eia & ~(1 << 7)) << 1;
+  *encryption_algorithm_capabilities = ((uint16_t)emm_ctx->_ue_network_capability.eea & ~(1 << 7)) << 1;
+  *integrity_algorithm_capabilities = ((uint16_t)emm_ctx->_ue_network_capability.eia & ~(1 << 7)) << 1;
 
   OAILOG_FUNC_OUT(LOG_NAS_EMM);
 }
@@ -858,7 +878,7 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
 //  ctx_req_proc->emm_com_proc.emm_proc.base_proc.child = &auth_info_proc->cn_proc.base_proc;
   ctx_req_proc->success_notif = *_context_res_proc_success; /**< Continue with a PDN Configuration (ULR, CSR). */
   ctx_req_proc->failure_notif = *_context_res_proc_fail; /**< Continue with the identification procedure (IdReq, AuthReq, SMC). */
-  ctx_req_proc->cn_proc.base_proc.time_out = s10_context_req_timer_expiry_handler;
+//  ctx_req_proc->cn_proc.base_proc.time_out = s10_context_req_timer_expiry_handler;
   ctx_req_proc->ue_id = ue_id;
 
   nas_start_Ts10_ctx_req( ctx_req_proc->ue_id, &ctx_req_proc->timer_s10, ctx_req_proc->cn_proc.base_proc.time_out, emm_context);
@@ -889,8 +909,10 @@ static int _ctx_req_proc_success_cb (struct emm_data_context_s *emm_ctx_p)
        * Assuming IMSI is always returned with S10 Context Response and the IMSI hastable registration method validates the received IMSI.
        */
       clear_imsi(&emm_ctx_p->_imsi);
-      emm_ctx_set_valid_imsi(emm_ctx_p, &ctx_req_proc->_imsi, ctx_req_proc->imsi);
-      emm_data_context_upsert_imsi(&_emm_data, emm_ctx_p); /**< Register the IMSI in the hash table. */
+      emm_ctx_set_valid_imsi(emm_ctx_p, &ctx_req_proc->nas_s10_context._imsi, ctx_req_proc->nas_s10_context.imsi);
+
+      //  todo:    emm_data_context_upsert_imsi(&_emm_data, emm_ctx_p); /**< Register the IMSI in the hash table. */
+
       // todo: identification
   //    if (rc != RETURNok) {
   //      OAILOG_ERROR(LOG_NAS_EMM, "EMM-PROC  - " "Error inserting EMM_DATA_CONTEXT for mmeUeS1apId " MME_UE_S1AP_ID_FMT " "
@@ -912,7 +934,7 @@ static int _ctx_req_proc_success_cb (struct emm_data_context_s *emm_ctx_p)
        * Update the security context & security vectors of the UE independent of TAU/Attach here (set fields valid/present).
        * Then inform the MME_APP that the context was successfully authenticated. Trigger a CSR.
        */
-      emm_ctx_update_from_mm_eps_context(emm_ctx_p, ctx_req_proc->mm_eps_ctx);
+      emm_ctx_update_from_mm_eps_context(emm_ctx_p, ctx_req_proc->nas_s10_context.mm_eps_ctx);
       OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - " "Successfully updated the EMM context with ueId " MME_UE_S1AP_ID_FMT " from the received MM_EPS_Context from the MME for UE with imsi: " IMSI_64_FMT ". \n",
           emm_ctx_p->ue_id, emm_ctx_p->_imsi64);
 
@@ -992,33 +1014,34 @@ static int _ctx_req_proc_failure_cb (struct emm_data_context_s *emm_ctx)
       // todo: currently execute the failure method!
       OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - " "Rejecting the running specific procedure for UE associated to id " MME_UE_S1AP_ID_FMT " of type %d (todo: identification procedure)...\n", emm_ctx->ue_id, emm_specific_proc->type);
       // todo: enter the correct method..
-      if(is_nas_specific_procedure_tau_running(emm_ctx)){
-        nas_emm_tau_proc_t * tau_proc = (nas_emm_tau_proc_t*)emm_specific_proc;
-        tau_proc->emm_cause = emm_cause;
-        emm_sap_t                               emm_sap = {0};
-        emm_sap.primitive = EMMREG_TAU_REJ;
-        emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
-        emm_sap.u.emm_reg.ctx = emm_ctx;
-        emm_sap.u.emm_reg.notify = false;
-        emm_sap.u.emm_reg.free_proc = true;
-        emm_sap.u.emm_reg.u.tau.proc = tau_proc;
-        rc = emm_sap_send (&emm_sap);
-      }else if (is_nas_specific_procedure_attach_running(emm_ctx)) {
-        nas_emm_attach_proc_t * attach_proc = (nas_emm_attach_proc_t*)emm_specific_proc;
-        attach_proc->emm_cause = emm_cause;
-        emm_sap_t                               emm_sap = {0};
-        emm_sap.primitive = EMMREG_ATTACH_REJ;
-        emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
-        emm_sap.u.emm_reg.ctx = emm_ctx;
-        emm_sap.u.emm_reg.notify = false;
-        emm_sap.u.emm_reg.free_proc = true;
-        emm_sap.u.emm_reg.u.attach.proc = attach_proc;
-        rc = emm_sap_send (&emm_sap);
-      }else{
-        OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - " "Performing an implicit detach due %d for id " MME_UE_S1AP_ID_FMT " (todo: identification procedure)...\n", emm_specific_proc->type, emm_ctx->ue_id);
-        // todo: implicit detach
-
-      }
+      // todo: add this into the correct method
+//      if(is_nas_specific_procedure_tau_running(emm_ctx)){
+//        nas_emm_tau_proc_t * tau_proc = (nas_emm_tau_proc_t*)emm_specific_proc;
+//        tau_proc->emm_cause = emm_cause;
+//        emm_sap_t                               emm_sap = {0};
+//        emm_sap.primitive = EMMREG_TAU_REJ;
+//        emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
+//        emm_sap.u.emm_reg.ctx = emm_ctx;
+//        emm_sap.u.emm_reg.notify = false;
+//        emm_sap.u.emm_reg.free_proc = true;
+//        emm_sap.u.emm_reg.u.tau.proc = tau_proc;
+//        rc = emm_sap_send (&emm_sap);
+//      }else if (is_nas_specific_procedure_attach_running(emm_ctx)) {
+//        nas_emm_attach_proc_t * attach_proc = (nas_emm_attach_proc_t*)emm_specific_proc;
+//        attach_proc->emm_cause = emm_cause;
+//        emm_sap_t                               emm_sap = {0};
+//        emm_sap.primitive = EMMREG_ATTACH_REJ;
+//        emm_sap.u.emm_reg.ue_id = emm_ctx->ue_id;
+//        emm_sap.u.emm_reg.ctx = emm_ctx;
+//        emm_sap.u.emm_reg.notify = false;
+//        emm_sap.u.emm_reg.free_proc = true;
+//        emm_sap.u.emm_reg.u.attach.proc = attach_proc;
+//        rc = emm_sap_send (&emm_sap);
+//      }else{
+//        OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - " "Performing an implicit detach due %d for id " MME_UE_S1AP_ID_FMT " (todo: identification procedure)...\n", emm_specific_proc->type, emm_ctx->ue_id);
+//        // todo: implicit detach
+//
+//      }
     }else{
       OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - " "Failed to find specific procedure for UE associated to id " MME_UE_S1AP_ID_FMT "...\n", emm_ctx->ue_id);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
@@ -1224,12 +1247,12 @@ void emm_context_dump (
       switch (emm_context->_tai_list.partial_tai_list[k].typeoflist) {
       case TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS: {
           tai_t tai = {0};
-          tai.mcc_digit1 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit1;
-          tai.mcc_digit2 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit2;
-          tai.mcc_digit3 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit3;
-          tai.mnc_digit1 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit1;
-          tai.mnc_digit2 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit2;
-          tai.mnc_digit3 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit3;
+          tai.plmn.mcc_digit1 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit1;
+          tai.plmn.mcc_digit2 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit2;
+          tai.plmn.mcc_digit3 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mcc_digit3;
+          tai.plmn.mnc_digit1 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit1;
+          tai.plmn.mnc_digit2 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit2;
+          tai.plmn.mnc_digit3 = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.mnc_digit3;
           for (int p = 0; p < (emm_context->_tai_list.partial_tai_list[k].numberofelements+1); p++) {
             tai.tac        = emm_context->_tai_list.partial_tai_list[k].u.tai_one_plmn_non_consecutive_tacs.tac[p];
 
@@ -1397,5 +1420,135 @@ void emm_context_dump (
     }
     bformata (bstr_dump, "%*s     - TODO  esm_data_ctx\n", indent_spaces, " ");
     //esm_context_dump(&emm_context->esm_ctx, indent_spaces, bstr_dump);
+  }
+}
+
+
+
+//------------------------------------------------------------------------------
+int
+emm_data_context_add (
+  emm_data_t * emm_data,
+  struct emm_data_context_s *elm)
+{
+  hashtable_rc_t                          h_rc;
+
+  h_rc = hashtable_ts_insert (emm_data->ctx_coll_ue_id, (const hash_key_t)(elm->ue_id), elm);
+
+  if (HASH_TABLE_OK == h_rc) {
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context %p UE id " MME_UE_S1AP_ID_FMT "\n", elm, elm->ue_id);
+
+    if ( IS_EMM_CTXT_PRESENT_GUTI(elm)) {
+      h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(&elm->_guti), sizeof (elm->_guti),
+                                      &elm->ue_id);
+
+      if (HASH_TABLE_OK == h_rc) {
+        OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with GUTI "GUTI_FMT"\n", elm->ue_id, GUTI_ARG(&elm->_guti));
+      } else {
+        OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with GUTI "GUTI_FMT" Failed %s\n", elm->ue_id, GUTI_ARG(&elm->_guti), hashtable_rc_code2string (h_rc));
+        return RETURNerror;
+      }
+    }
+    if ( IS_EMM_CTXT_PRESENT_IMSI(elm)) {
+      imsi64_t imsi64 = imsi_to_imsi64(&elm->_imsi);
+      h_rc = hashtable_ts_insert (emm_data->ctx_coll_imsi, imsi64, (void*)&elm->ue_id);
+
+      if (HASH_TABLE_OK == h_rc) {
+        OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT"\n", elm->ue_id, imsi64);
+      } else {
+        OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT" Failed %s\n", elm->ue_id, imsi64, hashtable_rc_code2string (h_rc));
+        return RETURNerror;
+      }
+    }
+    return RETURNok;
+  } else {
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Add in context %p UE id " MME_UE_S1AP_ID_FMT " Failed %s\n", elm, elm->ue_id, hashtable_rc_code2string (h_rc));
+    return RETURNerror;
+  }
+}
+
+//------------------------------------------------------------------------------
+int
+emm_data_context_add_guti (
+  emm_data_t * emm_data,
+  struct emm_data_context_s *elm)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+
+  if ( IS_EMM_CTXT_PRESENT_GUTI(elm)) {
+    h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(&elm->_guti), sizeof (elm->_guti),
+                                    &elm->ue_id);
+
+    if (HASH_TABLE_OK == h_rc) {
+      OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with GUTI "GUTI_FMT"\n", elm->ue_id, GUTI_ARG(&elm->_guti));
+    } else {
+      OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with GUTI "GUTI_FMT" Failed %s\n", elm->ue_id, GUTI_ARG(&elm->_guti), hashtable_rc_code2string (h_rc));
+      return RETURNerror;
+    }
+  }
+  return RETURNok;
+}
+//------------------------------------------------------------------------------
+int
+emm_data_context_add_old_guti (
+  emm_data_t * emm_data,
+  struct emm_data_context_s *elm)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+
+  if ( IS_EMM_CTXT_PRESENT_OLD_GUTI(elm)) {
+    h_rc = obj_hashtable_ts_insert (emm_data->ctx_coll_guti, (const void *const)(&elm->_old_guti),
+                                    sizeof(elm->_old_guti), &elm->ue_id);
+
+    if (HASH_TABLE_OK == h_rc) {
+      OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with old GUTI "GUTI_FMT"\n", elm->ue_id, GUTI_ARG(&elm->_old_guti));
+    } else {
+      OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with old GUTI "GUTI_FMT" Failed %s\n", elm->ue_id, GUTI_ARG(&elm->_old_guti), hashtable_rc_code2string (h_rc));
+      return RETURNerror;
+    }
+  }
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+
+int
+emm_data_context_add_imsi (
+  emm_data_t * emm_data,
+  struct emm_data_context_s *elm) {
+  hashtable_rc_t h_rc = HASH_TABLE_OK;
+
+  h_rc = _emm_data_context_hashtable_insert(emm_data, elm);
+
+  if (HASH_TABLE_OK == h_rc) {
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with IMSI " IMSI_64_FMT "\n",
+                  elm->ue_id, elm->_imsi64);
+    return RETURNok;
+  } else {
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Add in context UE id " MME_UE_S1AP_ID_FMT " with IMSI " IMSI_64_FMT
+        " Failed %s\n", elm->ue_id, elm->_imsi64, hashtable_rc_code2string(h_rc));
+    return RETURNerror;
+  }
+}
+
+//------------------------------------------------------------------------------
+
+int
+emm_data_context_upsert_imsi (
+    emm_data_t * emm_data,
+    struct emm_data_context_s *elm)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+
+  h_rc = _emm_data_context_hashtable_insert(emm_data, elm);
+
+  if (HASH_TABLE_OK == h_rc || HASH_TABLE_INSERT_OVERWRITTEN_DATA == h_rc) {
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Upsert in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT"\n",
+                  elm->ue_id, elm->_imsi64);
+    return RETURNok;
+  } else {
+    OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Upsert in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT" "
+        "Failed %s\n", elm->ue_id, elm->_imsi64, hashtable_rc_code2string (h_rc));
+    return RETURNerror;
   }
 }

@@ -46,6 +46,7 @@
 #include <assert.h>
 
 #include "bstrlib.h"
+#include "assertions.h"
 
 #include "log.h"
 #include "common_types.h"
@@ -171,6 +172,7 @@ esm_sap_send (esm_sap_t * msg)
    * Check the ESM-SAP primitive
    */
   esm_primitive_t                         primitive = msg->primitive;
+  esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
 
   assert ((primitive > ESM_START) && (primitive < ESM_END));
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received primitive %s (%d)\n", _esm_sap_primitive_str[primitive - ESM_START - 1], primitive);
@@ -205,7 +207,6 @@ esm_sap_send (esm_sap_t * msg)
      * Execute the PDN disconnect procedure requested by the UE.
      * Validating the message in the context of the UE and finding the PDN context to remove.
      */
-    esm_cause_t esm_cause;
     esm_proc_eps_bearer_context_deactivate(msg->ctx, true, msg->data.pdn_disconnect.default_ebi, msg->data.pdn_disconnect.cid, &esm_cause);
     if (rc != RETURNerror) {
       rc = esm_proc_pdn_disconnect_request( msg->ctx, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, msg->data.pdn_disconnect.default_ebi, &esm_cause);
@@ -215,7 +216,7 @@ esm_sap_send (esm_sap_t * msg)
     break;
 
   case ESM_PDN_CONFIG_RES:
-    rc = esm_proc_pdn_config_res(msg->ctx, &msg->data.pdn_pdn_config_res.is_pdn_connectivity, &msg->data.pdn_pdn_config_res.is_pdn_connectivity, msg->data.pdn_pdn_config_res.imsi);
+    rc = esm_proc_pdn_config_res(msg->ctx, &msg->data.pdn_pdn_config_res.is_pdn_connectivity, &msg->data.pdn_pdn_config_res.is_pdn_connectivity, msg->data.pdn_pdn_config_res.imsi, &msg->data.pdn_pdn_config_res.default_ebi);
     break;
 
   case ESM_PDN_DISCONNECT_REJ:
@@ -269,7 +270,7 @@ esm_sap_send (esm_sap_t * msg)
       }
       /* Send Activate Dedicated Bearer Context Request */
       rc = _esm_sap_send(ACTIVATE_DEDICATED_EPS_BEARER_CONTEXT_REQUEST,
-          msg->is_standalone, msg->ctx, (proc_tid_t)0 , bearer_activate->ebi,
+          msg->is_standalone, msg->ctx, (proc_tid_t)0 , bearer_activate->linked_ebi,
           &msg->data, msg->send);
     }
   }

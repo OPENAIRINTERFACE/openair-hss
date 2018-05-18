@@ -40,7 +40,7 @@
 #include "nas_message.h"
 #include "as_message.h"
 #include "networkDef.h"
-
+#include "s1ap_messages_types.h"
 
 #define NAS_UPLINK_DATA_IND(mSGpTR)                 (mSGpTR)->ittiMsg.nas_ul_data_ind
 #define NAS_DOWNLINK_DATA_REQ(mSGpTR)               (mSGpTR)->ittiMsg.nas_dl_data_req
@@ -69,6 +69,9 @@
 #define NAS_PDN_DISCONNECT_REQ(mSGpTR)              (mSGpTR)->ittiMsg.nas_pdn_disconnect_req
 #define NAS_PDN_DISCONNECT_RSP(mSGpTR)              (mSGpTR)->ittiMsg.nas_pdn_disconnect_rsp
 
+#define NAS_CONTEXT_REQ(mSGpTR)                  (mSGpTR)->ittiMsg.nas_context_req
+#define NAS_CONTEXT_RES(mSGpTR)                  (mSGpTR)->ittiMsg.nas_context_res
+#define NAS_CONTEXT_FAIL(mSGpTR)                 (mSGpTR)->ittiMsg.nas_context_fail
 
 typedef enum pdn_conn_rsp_cause_e {
   CAUSE_OK = 16,
@@ -88,6 +91,7 @@ typedef struct itti_nas_pdn_connectivity_req_s {
   bearer_qos_t           bearer_qos;
   protocol_configuration_options_t pco;
   bstring                apn;
+  ebi_t                  default_ebi;
   pdn_cid_t              pdn_cid;
   bstring                pdn_addr;
   int                    pdn_type;
@@ -294,6 +298,8 @@ e_ind_t;
 typedef struct itti_nas_implicit_detach_ue_ind_s {
   /* UE identifier */
   mme_ue_s1ap_id_t ue_id;
+  uint8_t emm_cause;
+  uint8_t detach_type;
 } itti_nas_implicit_detach_ue_ind_t;
 
 /** NAS Context request and response. */
@@ -310,10 +316,17 @@ typedef struct itti_nas_context_res_s {
   mme_ue_s1ap_id_t        ue_id;
   uint64_t                imsi;
   imsi_t                  _imsi;
+  imei_t                  _imei;
   uint8_t                 n_pdns;
   uint8_t                 n_bearers;
   bool                    is_emergency;
 } itti_nas_context_res_t;
+
+typedef struct itti_nas_context_fail_s {
+  mme_ue_s1ap_id_t        ue_id;
+  gtpv2c_cause_value_t    cause;
+//  uint64_t                imsi;
+} itti_nas_context_fail_t;
 
 typedef struct itti_nas_pdn_disconnect_req_s {
   mme_ue_s1ap_id_t        ue_id;

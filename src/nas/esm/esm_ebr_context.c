@@ -62,6 +62,7 @@
 #include "esm_ebr.h"
 #include "esm_ebr_context.h"
 #include "emm_sap.h"
+#include "mme_app_defs.h"
 
 
 /****************************************************************************/
@@ -122,7 +123,7 @@ esm_ebr_context_create (
   esm_ctx = &emm_context->esm_ctx;
   ue_context_t                        *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
 
-  pdn_context_t                       *pdn_context = mme_app_get_pdn_context(ue_context, pid); // todo: invalid/default values for other IDs..
+  pdn_context = mme_app_get_pdn_context(ue_context, pid); // todo: invalid/default values for other IDs..
   DevAssert(pdn_context);
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Create new %s EPS bearer context (ebi=%d) " "for PDN connection (pid=%d)\n",
@@ -166,7 +167,7 @@ esm_ebr_context_create (
 //    OAILOG_ERROR(LOG_NAS_ESM , "ESM-PROC  - A EPS bearer context could not be allocated from the bearer pool into the session pool of the pdn context. \n");
 //    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_EBI_UNASSIGNED);
 //  }
-  bearer_context_t * bearer_context = mme_app_get_bearer_context(pdn_context, ebi);
+  bearer_context_t * bearer_context = mme_app_get_session_bearer_context(pdn_context, ebi);
   if(bearer_context){
     MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Registered Bearer ebi %u cid %u pti %u", ebi, pid, pti);
     bearer_context->transaction_identifier = pti;
@@ -204,8 +205,8 @@ esm_ebr_context_create (
      */
 
     //    Assert(!RB_INSERT (BearerFteids, &s11_proc_create_bearer->fteid_set, fteid_set)); /**< Find the correct FTEID later by using the S1U FTEID as key.. */
-    memcpy((void*)&bearer_context->s_gw_fteid_s1u , fteid_set->s1u_fteid, sizeof(fteid_t));
-    memcpy((void*)&bearer_context->p_gw_fteid_s5_s8_up , fteid_set->s5_fteid, sizeof(fteid_t));
+    memcpy((void*)&bearer_context->s_gw_fteid_s1u , &fteid_set->s1u_fteid, sizeof(fteid_t));
+    memcpy((void*)&bearer_context->p_gw_fteid_s5_s8_up , &fteid_set->s5_fteid, sizeof(fteid_t));
     // Todo: we cannot store them in a map, because when we evaluate the response, EBI is our key, which is not set here. That's why, we need to forward it to ESM.
 
     /** Set the MME_APP states (todo: may be with Activate Dedicated Bearer Response). */
@@ -231,7 +232,7 @@ esm_ebr_context_create (
      * Return the EPS bearer identity of the default EPS bearer
      * * * * associated to the new EPS bearer context
      */
-    OAILOG_FUNC_RETURN (LOG_NAS_ESM, ue_context->pdn_contexts[pid]->default_ebi);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, bearer_context->ebi);
   }
 }
 
@@ -328,7 +329,7 @@ esm_ebr_context_release (
      * * * * PDN, the UE shall delete all EPS bearer contexts associated to
      * * * * that PDN connection.
      */
-    RB_FOREACH(bearer_context, BearerPool, &pdn_context->session_bearers){
+    RB_FOREACH(bearer_context, SessionBearers, &pdn_context->session_bearers){
       OAILOG_WARNING (LOG_NAS_ESM , "ESM-PROC  - Release EPS bearer context " "(ebi=%d, pid=%d)\n", bearer_context->ebi, *pid);
       /*
        * Delete the TFT

@@ -59,6 +59,7 @@
 #include "esm_ebr.h"
 #include "esm_ebr_context.h"
 #include "mme_api.h"
+#include "mme_app_defs.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -252,7 +253,7 @@ int esm_ebr_release (emm_data_context_t * emm_context, bearer_context_t * bearer
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
   }
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context %d released for ueId " MME_UE_S1AP_ID_FMT ". \n", ebi, emm_context->ue_id);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-FSM   - EPS bearer context %d released for ueId " MME_UE_S1AP_ID_FMT ". \n", bearer_context->ebi, emm_context->ue_id);
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNok);
 }
 
@@ -297,7 +298,7 @@ int esm_ebr_start_timer (emm_data_context_t * emm_context, ebi_t ebi,
   /*
    * Get EPS bearer context data
    */
-  bearer_context                      *beare_context = mme_app_get_session_bearer_context_from_all(ue_context, ebi);
+  bearer_context = mme_app_get_session_bearer_context_from_all(ue_context, ebi);
 
   if ((bearer_context == NULL) || (bearer_context->ebi != ebi)) {
     /*
@@ -394,7 +395,7 @@ int esm_ebr_stop_timer (emm_data_context_t * emm_context, ebi_t ebi)
   /*
    * Get EPS bearer context data
    */
-  bearer_context                      *beare_context = mme_app_get_session_bearer_context_from_all(ue_context, ebi);
+  bearer_context = mme_app_get_session_bearer_context_from_all(ue_context, ebi);
 
   if ((bearer_context == NULL) || (bearer_context->ebi != ebi)) {
     /*
@@ -454,10 +455,11 @@ ebi_t esm_ebr_get_pending_ebi (emm_data_context_t * emm_context, esm_ebr_state s
   bearer_context_t  * bearer_context = NULL;
   pdn_context_t     * pdn_context = NULL;
   RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
-    RB_FOREACH (bearer_context, BearerPool, &pdn_context->session_bearers) {
+    RB_FOREACH (bearer_context, SessionBearers, &pdn_context->session_bearers) {
       // todo: better error handling
       if(bearer_context->esm_ebr_context.status == status) {
-        OAILOG_FUNC_RETURN (LOG_NAS_ESM, ue_context->bearer_contexts[i]->ebi);
+        // todo: check what this is
+//        OAILOG_FUNC_RETURN (LOG_NAS_ESM, ue_context->bearer_contexts[i]->ebi);
       }
     }
   }
@@ -572,7 +574,7 @@ esm_ebr_get_status (
 
   bearer_context_t                       *bearer_context = NULL;
 
-  bearer_context = mme_app_get_bearer_context(ue_context, ebi);
+  bearer_context = mme_app_get_session_bearer_context(ue_context, ebi);
 
   if (bearer_context == NULL) {
     // todo: check if it is in the unallocated ones

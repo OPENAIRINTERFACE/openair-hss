@@ -62,6 +62,7 @@ ebi_t esm_ebr_context_create (
   const proc_tid_t pti,
   pdn_cid_t pid,
   ebi_t ebi,
+  struct fteid_set_s * fteid_set,
   bool is_default,
   const bearer_qos_t *bearer_level_qos,
   traffic_flow_template_t * tft,

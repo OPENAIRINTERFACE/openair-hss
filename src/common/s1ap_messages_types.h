@@ -155,6 +155,7 @@ typedef struct itti_s1ap_eNB_deregistered_ind_s {
   uint16_t         nb_ue_to_deregister;
   enb_ue_s1ap_id_t enb_ue_s1ap_id[S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE];
   mme_ue_s1ap_id_t mme_ue_s1ap_id[S1AP_ITTI_UE_PER_DEREGISTER_MESSAGE];
+  uint32_t         enb_id;
 } itti_s1ap_eNB_deregistered_ind_t;
 
 typedef struct itti_s1ap_deregister_ue_req_s {
@@ -265,7 +266,7 @@ typedef struct itti_s1ap_path_switch_request_ack_s {
   mme_ue_s1ap_id_t        ue_id;            /* UE lower layer identifier   */
 
   /** Bearer Contexts to be switched List. */
-  bearer_ctx_to_be_xx_list_t   bearer_ctx_to_be_switched_list;
+  bearer_contexts_to_be_created_t   bearer_ctx_to_be_switched_list;
 
   /* Key eNB */
   uint8_t                 nh[AUTH_NH_SIZE];
@@ -349,7 +350,7 @@ typedef struct itti_s1ap_handover_request_acknowledge_s {
 /** Handover Failure. */
 typedef struct itti_s1ap_handover_failure_s {
   mme_ue_s1ap_id_t        mme_ue_s1ap_id;
-  enb_ue_s1ap_id_t        enb_ue_s1ap_id:24;
+//  enb_ue_s1ap_id_t        enb_ue_s1ap_id:24;
   uint32_t                enb_id;
   sctp_assoc_id_t         assoc_id;
   enum s1cause            cause;

@@ -51,34 +51,41 @@
 #include "mme_app_pdn_context.h"
 #include "mme_app_sgw_selection.h"
 #include "mme_app_bearer_context.h"
+#include "timer.h"
 #include "common_defs.h"
 #include "gcc_diag.h"
 #include "mme_app_itti_messaging.h"
 #include "mme_app_procedures.h"
 #include "xml_msg_dump_itti.h"
-
+#include "s1ap_mme.h"
+#include "s1ap_mme_ta.h"
 
 //----------------------------------------------------------------------------
 // todo: check which one needed
-//static void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id);
-//
-//static void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, MMECause_t mmeCause);
-//
-//static void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id, uint32_t                enb_id,
-//    uint16_t                encryption_algorithm_capabilities,
-//    uint16_t                integrity_algorithm_capabilities,
-//    uint8_t                 nh[AUTH_NH_SIZE],
-//    uint8_t                 ncc);
-//
+static void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id);
+
+static void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, enum s1cause cause);
+static
+void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid, struct in_addr mme_source_ipv4_address, void *trxn,  gtpv2c_cause_value_t gtpv2cCause);
+
+static
+void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
+    bearer_contexts_to_be_created_t *bcs_tbc,
+    uint32_t                enb_id,
+    uint16_t                encryption_algorithm_capabilities,
+    uint16_t                integrity_algorithm_capabilities,
+    uint8_t                 nh[AUTH_NH_SIZE],
+    uint8_t                 ncc,
+    bstring                 eutran_source_to_target_container);
+
 /** External definitions in MME_APP UE Data Context. */
-extern void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, struct ue_context_s *ue_context_p, emm_data_context_t *ue_nas_ctx);
-extern void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_connections, struct ue_context_s * ue_context_p);
-//extern void mme_app_handle_pending_pdn_connectivity_information(ue_context_t *ue_context_p, pdn_connection_t * pdn_conn_pP);
+extern void mme_app_set_ue_eps_mm_context(mm_context_eps_t * ue_eps_mme_context_p, struct ue_context_s *ue_context, emm_data_context_t *ue_nas_ctx);
+extern void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_connections, struct ue_context_s * ue_context);
+//extern void mme_app_handle_pending_pdn_connectivity_information(ue_context_t *ue_context, pdn_connection_t * pdn_conn_pP);
 extern pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_context, pdn_connection_t * pdn_connection);
-extern bearer_context_t* mme_app_create_new_bearer_context(ue_context_t *ue_context_p, ebi_t bearer_id);
 
 //------------------------------------------------------------------------------
-static bool mme_app_construct_guti(const plmn_t * const plmn_p, const as_stmsi_t * const s_tmsi_p,  guti_t * const guti_p)
+static bool mme_app_construct_guti(const plmn_t * const plmn_p, const s_tmsi_t * const s_tmsi_p,  guti_t * const guti_p)
 {
   /*
    * This is a helper function to construct GUTI from S-TMSI. It uses PLMN id and MME Group Id of the serving MME for
@@ -205,11 +212,10 @@ static
 void mme_app_handle_s1ap_enb_deregistered_ind (const itti_s1ap_eNB_deregistered_ind_t * const enb_dereg_ind)
 {
   for (int ue_idx = 0; ue_idx < enb_dereg_ind->nb_ue_to_deregister; ue_idx++) {
-    struct ue_context_s *ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_dereg_ind->mme_ue_s1ap_id[ue_idx]);
+    struct ue_context_s *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, enb_dereg_ind->mme_ue_s1ap_id[ue_idx]);
 
-    if (ue_context_p) {
-      ue_context_p->ecm_state = ECM_IDLE;
-      ue_context_p->is_s1_ue_context_release = false;
+    if (ue_context) {
+      ue_context->ecm_state = ECM_IDLE;
       mme_app_send_nas_signalling_connection_rel_ind(enb_dereg_ind->mme_ue_s1ap_id[ue_idx]);
     }
   }
@@ -221,35 +227,45 @@ mme_app_handle_nas_pdn_connectivity_req (
   itti_nas_pdn_connectivity_req_t * const nas_pdn_connectivity_req_pP)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                 *ue_context_p = NULL;
+  struct ue_context_s                    *ue_context   = NULL;
   imsi64_t                                imsi64 = INVALID_IMSI64;
   int                                     rc = RETURNok;
+  emm_data_context_t                     *emm_context = NULL;
 
   DevAssert (nas_pdn_connectivity_req_pP );
   IMSI_STRING_TO_IMSI64 ((char *)nas_pdn_connectivity_req_pP->imsi, &imsi64);
   OAILOG_DEBUG (LOG_MME_APP, "Received NAS_PDN_CONNECTIVITY_REQ from NAS Handling imsi " IMSI_64_FMT "\n", imsi64);
 
-  if ((ue_context_p = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64)) == NULL) {
+  if ((ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64)) == NULL) {
     MSC_LOG_EVENT (MSC_MMEAPP_MME, " NAS_PDN_CONNECTIVITY_REQ Unknown imsi " IMSI_64_FMT, imsi64);
     OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI\n");
     mme_ue_context_dump_coll_keys();
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
+  DevAssert((emm_context = emm_data_context_get(&_emm_data, ue_context->mme_ue_s1ap_id)));
+
   // ...
-  ue_context_p->imsi_auth = IMSI_AUTHENTICATED;
+  ue_context->imsi_auth = IMSI_AUTHENTICATED;
 
   // todo: sending requested PCOs
-  //  copy_protocol_configuration_options (&ue_context_p->pending_pdn_connectivity_req_pco, &nas_pdn_connectivity_req_pP->pco);
+  //  copy_protocol_configuration_options (&ue_context->pending_pdn_connectivity_req_pco, &nas_pdn_connectivity_req_pP->pco);
   //  clear_protocol_configuration_options(&nas_pdn_connectivity_req_pP->pco);
   //#define TEMPORARY_DEBUG 1
   //#if TEMPORARY_DEBUG
-  //  bstring b = protocol_configuration_options_to_xml(&ue_context_p->pending_pdn_connectivity_req_pco);
+  //  bstring b = protocol_configuration_options_to_xml(&ue_context->pending_pdn_connectivity_req_pco);
   //  OAILOG_DEBUG (LOG_MME_APP, "PCO %s\n", bdata(b));
   //  bdestroy(b);
   //#endif
 
-  rc =  mme_app_send_s11_create_session_req (ue_context_p, nas_pdn_connectivity_req_pP->pdn_cid);
+  pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context, nas_pdn_connectivity_req_pP->pdn_cid, nas_pdn_connectivity_req_pP->default_ebi, nas_pdn_connectivity_req_pP->apn);
+  if(!pdn_context){
+    OAILOG_ERROR (LOG_MME_APP, "No PDN context found for pdn_cid %d for UE " MME_UE_S1AP_ID_FMT ". \n", nas_pdn_connectivity_req_pP->pdn_cid, nas_pdn_connectivity_req_pP->ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  // todo: get target_tai or so from ue_context!!
+  rc = mme_app_send_s11_create_session_req (ue_context, pdn_context, &emm_context->originating_tai);
 
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
@@ -284,8 +300,15 @@ mme_app_handle_nas_pdn_disconnect_req (
 //  RB_FOREACH (bearer_context_to_deactivate, BearerPool, &ue_context->bearer_pool) {
 //    DevAssert(bearer_context_to_deactivate->bearer_state == BEARER_STATE_ACTIVE); // Cannot be in IDLE mode?
 //  }
+
+  pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context, nas_pdn_disconnect_req_pP->pdn_cid, nas_pdn_disconnect_req_pP->default_ebi, nas_pdn_disconnect_req_pP->apn);
+  if(!pdn_context){
+    OAILOG_ERROR (LOG_MME_APP, "No PDN context found for pdn_cid %d for UE " MME_UE_S1AP_ID_FMT ". \n", nas_pdn_disconnect_req_pP->pdn_cid, nas_pdn_disconnect_req_pP->ue_id);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
   /** Don't change the bearer state. Send Delete Session Request to SAE-GW. No transaction needed. */
-  rc =  mme_app_send_delete_session_request(ue_context, pdn_context->default_ebi,nas_pdn_disconnect_req_pP->pti pdn_context->context_identifier);
+  rc =  mme_app_send_delete_session_request(ue_context, pdn_context);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
@@ -296,14 +319,14 @@ mme_app_handle_conn_est_cnf (
   itti_nas_conn_est_cnf_t * const nas_conn_est_cnf_pP)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                    *ue_context_p = NULL;
+  struct ue_context_s                    *ue_context = NULL;
   MessageDef                             *message_p = NULL;
   itti_mme_app_connection_establishment_cnf_t *establishment_cnf_p = NULL;
 
   OAILOG_DEBUG (LOG_MME_APP, "Received NAS_CONNECTION_ESTABLISHMENT_CNF from NAS\n");
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, nas_conn_est_cnf_pP->ue_id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, nas_conn_est_cnf_pP->ue_id);
 
-  if (ue_context_p == NULL) {
+  if (ue_context == NULL) {
     MSC_LOG_EVENT (MSC_MMEAPP_MME, " NAS_CONNECTION_ESTABLISHMENT_CNF Unknown ue " MME_UE_S1AP_ID_FMT " ", nas_conn_est_cnf_pP->ue_id);
     OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for UE " MME_UE_S1AP_ID_FMT "\n", nas_conn_est_cnf_pP->ue_id);
     // memory leak
@@ -319,15 +342,15 @@ mme_app_handle_conn_est_cnf (
   /*
    * Add the subscribed UE-AMBR values.
    */
-  //#pragma message  "Check ue_context_p ambr"
-  establishment_cnf_p->ue_ambr.br_ul = ue_context_p->subscribed_ue_ambr.br_ul;
-  establishment_cnf_p->ue_ambr.br_dl = ue_context_p->subscribed_ue_ambr.br_dl;
+  //#pragma message  "Check ue_context ambr"
+  establishment_cnf_p->ue_ambr.br_ul = ue_context->subscribed_ue_ambr.br_ul;
+  establishment_cnf_p->ue_ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl;
   /*
    * Add the Security capabilities.
    */
   establishment_cnf_p->ue_security_capabilities_encryption_algorithms = nas_conn_est_cnf_pP->encryption_algorithm_capabilities;
   establishment_cnf_p->ue_security_capabilities_integrity_algorithms = nas_conn_est_cnf_pP->integrity_algorithm_capabilities;
-  memcpy(establishment_cnf_p->kenb, nas_conn_est_cnf_pP->kenb, AUTH_KENB_SIZE);
+  memcpy(establishment_cnf_p->kenb, nas_conn_est_cnf_pP->kenb, AUTH_KASME_SIZE);
   OAILOG_DEBUG (LOG_MME_APP, "security_capabilities_encryption_algorithms 0x%04X\n", establishment_cnf_p->ue_security_capabilities_encryption_algorithms);
   OAILOG_DEBUG (LOG_MME_APP, "security_capabilities_integrity_algorithms  0x%04X\n", establishment_cnf_p->ue_security_capabilities_integrity_algorithms);
 
@@ -342,10 +365,10 @@ mme_app_handle_conn_est_cnf (
    * No inner NAS message exists.
    * todo: later also add an array or a list of NAS messages in the nas_itti_establish_cnf
    */
-  pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context_p->pdn_contexts);
+  pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   DevAssert(first_pdn);
 
-  bearer_context_t * first_bearer = RB_MIN(BearerPool, &first_pdn->session_bearers)); // todo: @ handover (idle mode tau) this should give us the default ebi!
+  bearer_context_t * first_bearer = RB_MIN(SessionBearers, &first_pdn->session_bearers); // todo: @ handover (idle mode tau) this should give us the default ebi!
   if(first_bearer){ // todo: optimize this!
     if (BEARER_STATE_SGW_CREATED & first_bearer->bearer_state) {
       establishment_cnf_p->e_rab_id[0]                                 = first_bearer->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
@@ -364,13 +387,13 @@ mme_app_handle_conn_est_cnf (
 
   // Copy UE radio capabilities into message if it exists (todo).
 //  OAILOG_DEBUG (LOG_MME_APP, "UE radio context already cached: %s\n",
-//      ue_context_p->ue_radio_capabilit_length ? "yes" : "no");
-//  establishment_cnf_p->ue_radio_cap_length = ue_context_p->ue_radio_cap_length;
+//      ue_context->ue_radio_capabilit_length ? "yes" : "no");
+//  establishment_cnf_p->ue_radio_cap_length = ue_context->ue_radio_cap_length;
 //  if (establishment_cnf_p->ue_radio_cap_length) {
 //    establishment_cnf_p->ue_radio_capabilities =
 //        (uint8_t*) calloc (establishment_cnf_p->ue_radio_cap_length, sizeof *establishment_cnf_p->ue_radio_capabilities);
 //    memcpy (establishment_cnf_p->ue_radio_capabilities,
-//        ue_context_p->ue_radio_capabilities,
+//        ue_context->ue_radio_capabilities,
 //        establishment_cnf_p->ue_radio_cap_length);
 //  }
 
@@ -388,12 +411,12 @@ mme_app_handle_conn_est_cnf (
   /*
    * UE is already in ECM_Connected state.
    * */
-  if(ue_context_p->ecm_state == ECM_CONNECTED){
+  if(ue_context->ecm_state == ECM_CONNECTED){
     /** UE is in connected state. Send S1AP message. */
 
 
   }else{
-    OAILOG_ERROR (LOG_MME_APP, "EMM UE context should be in connected state for UE id %d, insted idle (initial_ctx_setup_cnf). \n", ue_context_p->mme_ue_s1ap_id);
+    OAILOG_ERROR (LOG_MME_APP, "EMM UE context should be in connected state for UE id %d, insted idle (initial_ctx_setup_cnf). \n", ue_context->mme_ue_s1ap_id);
 
   }
 
@@ -407,12 +430,12 @@ mme_app_handle_conn_est_cnf (
    * If timer expires treat this as failure of ongoing procedure and abort corresponding NAS procedure such as ATTACH
    * or SERVICE REQUEST. Send UE context release command to eNB
    */
-  if (timer_setup (ue_context_p->initial_context_setup_rsp_timer.sec, 0,
-      TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context_p->mme_ue_s1ap_id), &(ue_context_p->initial_context_setup_rsp_timer.id)) < 0) {
-    OAILOG_ERROR (LOG_MME_APP, "Failed to start initial context setup response timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
-    ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+  if (timer_setup (ue_context->initial_context_setup_rsp_timer.sec, 0,
+      TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context->mme_ue_s1ap_id), &(ue_context->initial_context_setup_rsp_timer.id)) < 0) {
+    OAILOG_ERROR (LOG_MME_APP, "Failed to start initial context setup response timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
+    ue_context->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
   } else {
-    OAILOG_DEBUG (LOG_MME_APP, "MME APP : Sent Initial context Setup Request and Started guard timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_MME_APP, "MME APP : Sent Initial context Setup Request and Started guard timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -429,9 +452,13 @@ mme_app_handle_initial_ue_message (
   bool                                    is_guti_valid = false;
   emm_data_context_t                     *ue_nas_ctx = NULL;
   enb_s1ap_id_key_t                       enb_s1ap_id_key = 0;
+  void                                   *id = NULL;
 
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_UE_MESSAGE from S1AP\n");
   XML_MSG_DUMP_ITTI_S1AP_INITIAL_UE_MESSAGE(initial_pP, TASK_S1AP, TASK_MME_APP, NULL);
+
+  MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
+
   /*
    * Check if there is any existing UE context using S-TMSI/GUTI. If so continue with its MME_APP context.
    * MME_UE_S1AP_ID is the main key.
@@ -455,16 +482,48 @@ mme_app_handle_initial_ue_message (
           if (ue_context->enb_s1ap_id_key != INVALID_ENB_UE_S1AP_ID_KEY)
           {
             /*
-             * Check if there is a pending removal of the object.
-             * If a CLR flag is existing, reset it.
-             * This might happen if the handover to the target side failed and UE is doing an idle-TAU
-             * back to the source MME. In that case, the NAS validation will reject the establishment of the NAS request (send just a TAU-Reject back).
+             * Check if there is a handover process (& pending removal) of the object.
+             * UE has to be in REGISTERED state. Then we can abort the handover procedure (clean the CLR flag) and continue with the initial request.
+             *
+             * This might happen if the handover to the target side failed and UE is doing an idle-TAU back to the source MME.
+             * In that case, the NAS validation will reject the establishment of the NAS request (send just a TAU-Reject back).
              * It should then remove the MME_APP context.
              */
-            if(ue_context->pending_clear_location_request){
-              OAILOG_INFO(LOG_MME_APP, "UE_CONTEXT already had a CLR flag set for UE with IMSI " IMSI_64_FMT " and " MME_UE_S1AP_ID_FMT " already. Resetting. \n",
-                  ue_context_p->imsi, ue_context_p->mme_ue_s1ap_id);
-              ue_context->pending_clear_location_request = false;
+            mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
+            if(s10_handover_proc){
+              if(ue_context->mm_state == UE_REGISTERED){
+                if(s10_handover_proc->pending_clear_location_request){
+                  OAILOG_INFO(LOG_MME_APP, "UE_CONTEXT has a handover procedure active with CLR flag set for UE with IMSI " IMSI_64_FMT " and " MME_UE_S1AP_ID_FMT ". "
+                      "Aborting the handover procedure and thereby resetting the CLR flag. \n",
+                      ue_context->imsi, ue_context->mme_ue_s1ap_id);
+                }
+                /*
+                 * Abort the handover procedure by just deleting it. It should remove the timers, if they exist.
+                 * The S1AP UE Reference timer should be independent, run and remove the old ue_referece (cannot use it anymore).
+                 */
+                mme_app_delete_s10_procedure_mme_handover(ue_context);
+              }else{
+                OAILOG_INFO(LOG_MME_APP, "UE_CONTEXT has a handover procedure active but is not REGISTERED (flag set for UE with IMSI " IMSI_64_FMT " and " MME_UE_S1AP_ID_FMT ". "
+                    "Dropping the received initial context request message (attach should be possible after timeout of procedure has occurred). \n",
+                    ue_context->imsi, ue_context->mme_ue_s1ap_id);
+                DevAssert(s10_handover_proc->proc.timer.id != MME_APP_TIMER_INACTIVE_ID);
+                /*
+                 * Error during ue context malloc.
+                 * todo: removing the UE reference?!
+                 */
+                hashtable_rc_t result_deletion = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
+                    (const hash_key_t)enb_s1ap_id_key, (void **)&id);
+                OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** enb_s1ap_id_key %ld has valid value %ld. Result of deletion %d.\n" ,
+                    enb_s1ap_id_key,
+                    initial_pP->enb_ue_s1ap_id,
+                    result_deletion);
+                OAILOG_ERROR (LOG_MME_APP, "Failed to create new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
+                OAILOG_FUNC_OUT (LOG_MME_APP);
+              }
+            }else{
+              /** Just continue (might be a battery reject). */
+              OAILOG_INFO(LOG_MME_APP, "No handover procedure for valid/registered UE_CONTEXT with IMSI " IMSI_64_FMT " and " MME_UE_S1AP_ID_FMT ". "
+                  "Continuing to handle it (might be a battery reject). \n", ue_context->imsi, ue_context->mme_ue_s1ap_id);
             }
             /*
              * This only removed the MME_UE_S1AP_ID from enb_s1ap_id_key, it won't remove the UE_REFERENCE itself.
@@ -472,11 +531,11 @@ mme_app_handle_initial_ue_message (
              */
             ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
             if(old_ue_reference){
-              OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** Found an old UE_REFERENCE with enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d.\n" , old_ue_reference->enb_ue_s1ap_id,
-                  ue_context->e_utran_cgi.cell_identity.enb_id);
+              OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** Found an old UE_REFERENCE with enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d.\n" ,
+                  old_ue_reference->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
               s1ap_remove_ue(old_ue_reference);
-              OAILOG_WARNING (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** Removed old UE_REFERENCE with enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d.\n" , old_ue_reference->enb_ue_s1ap_id,
-                  ue_context->e_utran_cgi.cell_identity.enb_id);
+              OAILOG_WARNING (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** Removed old UE_REFERENCE with enbUeS1apId " ENB_UE_S1AP_ID_FMT " and enbId %d.\n" ,
+                  old_ue_reference->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
             }
             /*
              * Ideally this should never happen. When UE move to IDLE this key is set to INVALID.
@@ -496,7 +555,6 @@ mme_app_handle_initial_ue_message (
           ue_context->enb_ue_s1ap_id = initial_pP->enb_ue_s1ap_id;
           // regenerate the enb_s1ap_id_key as enb_ue_s1ap_id is changed.
           // todo: also here home_enb_id
-          MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, initial_pP->ecgi.cell_identity.enb_id, initial_pP->enb_ue_s1ap_id);
           // Update enb_s1ap_id_key in hashtable
           mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
               ue_context,
@@ -525,14 +583,21 @@ mme_app_handle_initial_ue_message (
   /*
    * Either we take the existing UE context or create a new one.
    * If a new one is created, it might be a duplicate one, which will be found out in the EMM validations.
-   * There we remove the duplicate context synchronously. // todo: not synchrounsly yet
+   * There we remove the duplicate context synchronously. // todo: not synchronously yet
    */
   if (!(ue_context)) {
     OAILOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one \n");
     if (!(ue_context = mme_create_new_ue_context ())) {
       /*
-       * Error during ue context malloc
+       * Error during ue context malloc.
+       * todo: removing the UE reference?!
        */
+      hashtable_rc_t result_deletion = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
+          (const hash_key_t)ue_context->enb_s1ap_id_key, (void **)&id);
+      OAILOG_ERROR (LOG_MME_APP, "MME_APP_INITAIL_UE_MESSAGE. ERROR***** enb_s1ap_id_key %ld has valid value %ld. Result of deletion %d.\n" ,
+          ue_context->enb_s1ap_id_key,
+          ue_context->enb_ue_s1ap_id,
+          result_deletion);
       OAILOG_ERROR (LOG_MME_APP, "Failed to create new MME UE context enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", initial_pP->enb_ue_s1ap_id);
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
@@ -598,9 +663,9 @@ void
 mme_app_handle_erab_setup_req (itti_erab_setup_req_t * const itti_erab_setup_req)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                    *ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, itti_erab_setup_req->ue_id);
+  struct ue_context_s                    *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, itti_erab_setup_req->ue_id);
 
-  if (!ue_context_p) {
+  if (!ue_context) {
     MSC_LOG_EVENT (MSC_MMEAPP_MME, " NAS_ERAB_SETUP_REQ Unknown ue " MME_UE_S1AP_ID_FMT " ", itti_erab_setup_req->ue_id);
     OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for UE " MME_UE_S1AP_ID_FMT "\n", itti_erab_setup_req->ue_id);
     // memory leak
@@ -608,14 +673,14 @@ mme_app_handle_erab_setup_req (itti_erab_setup_req_t * const itti_erab_setup_req
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
-  bearer_context_t* bearer_context = mme_app_get_session_bearer_context(ue_context_p, itti_erab_setup_req->ebi);
+  bearer_context_t* bearer_context = mme_app_get_session_bearer_context_from_all(ue_context, itti_erab_setup_req->ebi);
 
   if (bearer_context) {
     MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_E_RAB_SETUP_REQ);
     itti_s1ap_e_rab_setup_req_t *s1ap_e_rab_setup_req = &message_p->ittiMsg.s1ap_e_rab_setup_req;
 
-    s1ap_e_rab_setup_req->mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id;
-    s1ap_e_rab_setup_req->enb_ue_s1ap_id = ue_context_p->enb_ue_s1ap_id;
+    s1ap_e_rab_setup_req->mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id;
+    s1ap_e_rab_setup_req->enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
 
     // E-RAB to Be Setup List
     s1ap_e_rab_setup_req->e_rab_to_be_setup_list.no_of_items = 1;
@@ -639,7 +704,7 @@ mme_app_handle_erab_setup_req (itti_erab_setup_req_t * const itti_erab_setup_req
     itti_erab_setup_req->nas_msg = NULL;
 
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "0 S1AP_E_RAB_SETUP_REQ ue id " MME_UE_S1AP_ID_FMT " ebi %u teid " TEID_FMT " ",
-        ue_context_p->mme_ue_s1ap_id,
+        ue_context->mme_ue_s1ap_id,
         s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].e_rab_id,
         s1ap_e_rab_setup_req->e_rab_to_be_setup_list.item[0].gtp_teid);
     int to_task = (RUN_MODE_SCENARIO_PLAYER == mme_config.run_mode) ? TASK_MME_SCENARIO_PLAYER:TASK_S1AP;
@@ -656,14 +721,15 @@ mme_app_handle_delete_session_rsp (
   const itti_s11_delete_session_response_t * const delete_sess_resp_pP)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                    *ue_context_p = NULL;
+  struct ue_context_s                    *ue_context = NULL;
   MessageDef                             *message_p = NULL;
+  void                                   *id = NULL;
 
   DevAssert (delete_sess_resp_pP );
   OAILOG_DEBUG (LOG_MME_APP, "Received S11_DELETE_SESSION_RESPONSE from S+P-GW with the ID " MME_UE_S1AP_ID_FMT "\n ",delete_sess_resp_pP->teid);
-  ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, delete_sess_resp_pP->teid);
+  ue_context = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, delete_sess_resp_pP->teid);
 
-  if (!ue_context_p) {
+  if (!ue_context) {
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_SESSION_RESPONSE local S11 teid " TEID_FMT " ", delete_sess_resp_pP->teid);
     OAILOG_WARNING (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", delete_sess_resp_pP->teid);
     OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -672,7 +738,7 @@ mme_app_handle_delete_session_rsp (
     DevMessage ("Cases where bearer cause != REQUEST_ACCEPTED are not handled\n");
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_SESSION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
-    delete_sess_resp_pP->teid, ue_context_p->emm_context._imsi64);
+    delete_sess_resp_pP->teid, ue_context->emm_context._imsi64);
   /*
    * Updating statistics
    */
@@ -684,19 +750,19 @@ mme_app_handle_delete_session_rsp (
    * UE context from the hashtable.
    * If this is not done, later at removal of the MME_APP UE context, the S11 keys will be checked and removed again if still existing.
    */
-  if(ue_context_p->num_pdns == 1){
+  if(ue_context->num_pdns == 1){
     /** This was the last PDN, removing the S11 TEID. */
     hashtable_ts_remove(mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl,
-        (const hash_key_t) ue_context_p->mme_teid_s11, &id);
-    ue_context_p->mme_teid_s11 = INVALID_TEID;
+        (const hash_key_t) ue_context->mme_teid_s11, &id);
+    ue_context->mme_teid_s11 = INVALID_TEID;
     /** SAE-GW TEID will be initialized when PDN context is purged. */
   }
 
-   if (delete_sess_resp_pP->cause != REQUEST_ACCEPTED) {
+   if (delete_sess_resp_pP->cause.cause_value != REQUEST_ACCEPTED) {
      OAILOG_WARNING (LOG_MME_APP, "***WARNING****S11 Delete Session Rsp: NACK received from SPGW : %08x\n", delete_sess_resp_pP->teid);
    }
    MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_SESSION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
-     delete_sess_resp_pP->teid, ue_context_p->imsi);
+     delete_sess_resp_pP->teid, ue_context->imsi);
    /*
     * Updating statistics
     */
@@ -709,7 +775,7 @@ mme_app_handle_delete_session_rsp (
     */
    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_DISCONNECT_RSP);
    // do this because of same message types name but not same struct in different .h
-   message_p->ittiMsg.nas_pdn_disconnect_rsp.ue_id           = ue_context_p->mme_ue_s1ap_id;
+   message_p->ittiMsg.nas_pdn_disconnect_rsp.ue_id           = ue_context->mme_ue_s1ap_id;
    message_p->ittiMsg.nas_pdn_disconnect_rsp.cause           = REQUEST_ACCEPTED;
    /*
     * We don't have an indicator, the message may come out of order. The only true indicator would be the GTPv2c transaction, which we don't have.
@@ -749,7 +815,7 @@ mme_app_handle_create_sess_resp (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_SESSION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
-      create_sess_resp_pP->teid, ue_context_p->emm_context._imsi64);
+      create_sess_resp_pP->teid, ue_context->emm_context._imsi64);
 
   proc_tid_t  transaction_identifier = 0;
   pdn_cid_t   pdn_cx_id = 0;
@@ -757,7 +823,7 @@ mme_app_handle_create_sess_resp (
   /** Check if there is a S10 handover procedure or CN context request procedure. */
   s10_handover_procedure = mme_app_get_s10_procedure_mme_handover(ue_context);
   /** Check if there is an EMM context. */
-  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context.mme_ue_s1ap_id);
+  emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->mme_ue_s1ap_id);
   if(emm_context)
     emm_cn_proc_ctx_req = get_nas_cn_procedure_ctx_req(emm_context);
   /* Whether SGW has created the session (IP address allocation, local GTP-U end point creation etc.)
@@ -767,7 +833,7 @@ mme_app_handle_create_sess_resp (
    * in S11 Session Create Response message.
    * NAS-ESM maps this "S11 cause" to "ESM cause" and sends it in PDN Connectivity Reject message to the UE.
    */
-  if (create_sess_resp_pP->cause != REQUEST_ACCEPTED) {
+  if (create_sess_resp_pP->cause.cause_value != REQUEST_ACCEPTED) {
     // todo: if handover flag was active.. terminate the forward relocation procedure with a reject + remove the contexts & tunnel endpoints.
     // todo: check that EMM context did not had a TAU_PROCEDURE running, if so send a CN Context Fail
     /*
@@ -779,20 +845,20 @@ mme_app_handle_create_sess_resp (
       // todo: the handover procedure should be failed --> causing any MME_APP/NAS/Tunnels to be removed..
       /** Assuming that no NAS layer exists. Reject the handover procedure. */
       mme_app_send_s10_forward_relocation_response_err(s10_handover_procedure->remote_mme_teid.teid,
-          s10_handover_procedure->remote_mme_teid.ipv4_address.s_addr,
+          s10_handover_procedure->remote_mme_teid.ipv4_address,
           s10_handover_procedure->forward_relocation_trxn, RELOCATION_FAILURE);
 //      todo: s10_handover_procedure->failure(ue_context); --> Remove the UE context/EMM context and also the S10 Tunnel endpoint
     }else if (emm_cn_proc_ctx_req){
       /** A CN Context Request procedure exists. Also check the remaining PDN contexts to create in the SAE-GW. */
-      _mme_app_send_nas_ue_context_response_err(ue_context->mme_ue_s1ap_id, RELOCATION_FAILURE);
+      _mme_app_send_nas_context_response_err(ue_context->mme_ue_s1ap_id, RELOCATION_FAILURE);
     }else{
       /** Inform the NAS layer about the failure. */
       message_p = itti_alloc_new_message (TASK_MME_APP, NAS_PDN_CONNECTIVITY_FAIL);
       itti_nas_pdn_connectivity_fail_t *nas_pdn_connectivity_fail = &message_p->ittiMsg.nas_pdn_connectivity_fail;
       memset ((void *)nas_pdn_connectivity_fail, 0, sizeof (itti_nas_pdn_connectivity_fail_t));
-      // todo: nas_pdn_connectivity_fail->pti = ue_context_p->pending_pdn_connectivity_req_pti;
+      // todo: nas_pdn_connectivity_fail->pti = ue_context->pending_pdn_connectivity_req_pti;
       nas_pdn_connectivity_fail->ue_id = ue_context->mme_ue_s1ap_id;
-      nas_pdn_connectivity_fail->cause = (pdn_conn_rsp_cause_t)(create_sess_resp_pP->cause);
+      nas_pdn_connectivity_fail->cause = CAUSE_SYSTEM_FAILURE; // (pdn_conn_rsp_cause_t)(create_sess_resp_pP->cause);
       rc = itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
     }
     OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
@@ -819,15 +885,15 @@ mme_app_handle_create_sess_resp (
     }
     // todo: setting the default bearer id in the pdn context?
     DevAssert (create_sess_resp_pP->bearer_contexts_created.bearer_contexts[i].s1u_sgw_fteid.interface_type == S1_U_SGW_GTP_U);
-//      current_bearer_p = mme_app_get_bearer_context(ue_context_p, bearer_id);
+//      current_bearer_p = mme_app_get_bearer_context(ue_context, bearer_id);
 //      AssertFatal(current_bearer_p, "Could not get bearer context");
     /*
      * The bearer context needs to be put into the UE pool by
      * Try to get a new bearer context in the UE_Context instead of getting one from an array
      * todo: if cause above was reject for this bearer context, just skip it. */
-    if ((current_bearer_p = mme_app_get_session_bearer_context(ue_context, bearer_id)) == NULL) {
+    if ((current_bearer_p = mme_app_get_session_bearer_context_from_all(ue_context, bearer_id)) == NULL) {
       // If we failed to allocate a new bearer context
-      OAILOG_ERROR (LOG_MME_APP, "Failed to allocate a new bearer context with EBI %d for mmeUeS1apId:" MME_UE_S1AP_ID_FMT "\n", bearer_id, ue_context_p->mme_ue_s1ap_id);
+      OAILOG_ERROR (LOG_MME_APP, "Failed to allocate a new bearer context with EBI %d for mmeUeS1apId:" MME_UE_S1AP_ID_FMT "\n", bearer_id, ue_context->mme_ue_s1ap_id);
       OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
     }
     current_bearer_p->bearer_state |= BEARER_STATE_SGW_CREATED;
@@ -837,7 +903,7 @@ mme_app_handle_create_sess_resp (
 //      AssertFatal((pdn_cx_id >= 0) && (pdn_cx_id < MAX_APN_PER_UE), "Bad pdn id for bearer");
       /** IP address not set here. Will be forwarded and set by ESM layer @ NAS_PDN_CONNECTIVITY_RES. */
       pdn_context = mme_app_get_pdn_context(ue_context, 0, current_bearer_p->ebi, NULL);
-//      ue_context_p->pdn_contexts[pdn_cx_id]->s_gw_teid_s11_s4 = create_sess_resp_pP->s11_sgw_fteid.teid;
+//      ue_context->pdn_contexts[pdn_cx_id]->s_gw_teid_s11_s4 = create_sess_resp_pP->s11_sgw_fteid.teid;
       pdn_context->s_gw_teid_s11_s4 = create_sess_resp_pP->s11_sgw_fteid.teid;
       transaction_identifier = current_bearer_p->transaction_identifier;
     }
@@ -877,11 +943,11 @@ mme_app_handle_create_sess_resp (
   } else {
     clear_protocol_configuration_options(pdn_context->pco);
   }
-  copy_protocol_configuration_options(pdn_context->pco, create_sess_resp_pP->pco);
+  copy_protocol_configuration_options(pdn_context->pco, &create_sess_resp_pP->pco);
   // todo: review the old code!
   //#define TEMPORARY_DEBUG 1
   //#if TEMPORARY_DEBUG
-  // bstring b = protocol_configuration_options_to_xml(&ue_context_p->pending_pdn_connectivity_req_pco);
+  // bstring b = protocol_configuration_options_to_xml(&ue_context->pending_pdn_connectivity_req_pco);
   // OAILOG_DEBUG (LOG_MME_APP, "PCO %s\n", bdata(b));
   // bdestroy(b);
   //#endif
@@ -907,7 +973,7 @@ mme_app_handle_create_sess_resp (
     OAILOG_INFO(LOG_MME_APP, "Inter MME S10 Handover process exists for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
     if(s10_handover_procedure->pdn_connections->num_pdn_connections > s10_handover_procedure->next_processed_pdn_connection){
       OAILOG_INFO(LOG_MME_APP, "We have further PDN connections that need to be established via handover for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-      pdn_connection_t * pdn_connection = s10_handover_procedure->pdn_connections->pdn_connection[s10_handover_procedure->next_processed_pdn_connection];
+      pdn_connection_t * pdn_connection = &s10_handover_procedure->pdn_connections->pdn_connection[s10_handover_procedure->next_processed_pdn_connection];
       DevAssert(pdn_connection);
       mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
       s10_handover_procedure->next_processed_pdn_connection++;
@@ -919,8 +985,17 @@ mme_app_handle_create_sess_resp (
       OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process handover on source MME side. \n", ue_context->mme_ue_s1ap_id);
     }else{
       OAILOG_INFO(LOG_MME_APP, "No further PDN connections that need to be established via handover for UE " MME_UE_S1AP_ID_FMT ". Continuing with handover request. \n", ue_context->mme_ue_s1ap_id);
+      /** Get all VOs of all session bearers and send handover request with it. */
+      bearer_contexts_to_be_created_t bcs_tbc;
+      memset((void*)&bcs_tbc, 0, sizeof(bcs_tbc));
+      pdn_context_t * registered_pdn_ctx = NULL;
+      RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+        DevAssert(registered_pdn_ctx);
+        mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbc, BEARER_STATE_NULL);
+        /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+      }
       mme_app_send_s1ap_handover_request(ue_context->mme_ue_s1ap_id,
-          pdn_context,
+          &bcs_tbc,
           // todo: check for macro/home enb_id
           s10_handover_procedure->target_id.target_id.macro_enb_id.enb_id,
           s10_handover_procedure->nas_s10_context.mm_eps_ctx->ue_nc.eea,
@@ -934,7 +1009,7 @@ mme_app_handle_create_sess_resp (
     OAILOG_INFO(LOG_MME_APP, "NAS Context Request process exists for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
     if(emm_cn_proc_ctx_req->pdn_connections->num_pdn_connections > emm_cn_proc_ctx_req->next_processed_pdn_connection){
       OAILOG_INFO(LOG_MME_APP, "We have further PDN connections that need to be established via handover for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-      pdn_connection_t * pdn_connection = emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->next_processed_pdn_connection];
+      pdn_connection_t * pdn_connection = &emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->next_processed_pdn_connection];
       DevAssert(pdn_connection);
       mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
       emm_cn_proc_ctx_req->next_processed_pdn_connection++;
@@ -948,14 +1023,14 @@ mme_app_handle_create_sess_resp (
     }else{
       OAILOG_INFO(LOG_MME_APP, "No further PDN connections that need to be established via idle mode TAU for UE " MME_UE_S1AP_ID_FMT ". "
           "Continuing with NAS context response. \n", ue_context->mme_ue_s1ap_id);
-      mme_app_itti_nas_context_response(ue_context);
+      mme_app_itti_nas_context_response(ue_context, &emm_cn_proc_ctx_req->nas_s10_context);
     }
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
   if(emm_context){
     OAILOG_INFO(LOG_MME_APP, "No NAS Context Request process or handover process exists for UE " MME_UE_S1AP_ID_FMT " Continuing with PDN connectivity response. \n", ue_context->mme_ue_s1ap_id);
     // todo: no multi bearer here!
-    bearer_context_t * first_bearer_context = RB_MIN(BearerPool, &pdn_context->session_bearers);
+    bearer_context_t * first_bearer_context = RB_MIN(SessionBearers, &pdn_context->session_bearers);
     DevAssert(first_bearer_context);
     mme_app_itti_nas_pdn_connectivity_response(ue_context,
         pdn_context->paa, &create_sess_resp_pP->pco,
@@ -994,18 +1069,18 @@ mme_app_handle_modify_bearer_resp (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
-      modify_bearer_resp_pP->teid, ue_context_p->imsi);
+      modify_bearer_resp_pP->teid, ue_context->imsi);
   /*
    * Updating statistics
    */
-  if (modify_bearer_resp_pP->cause != REQUEST_ACCEPTED) {
+  if (modify_bearer_resp_pP->cause.cause_value != REQUEST_ACCEPTED) {
     /**
      * Check if it is an X2 Handover procedure, in that case send an X2 Path Switch Request Failure to the target MME.
      * In addition, perform an implicit detach in any case.
      */
     if(ue_context->pending_x2_handover){
-      OAILOG_ERROR(LOG_MME_APP, "Error modifying SAE-GW bearers for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context_p->mme_ue_s1ap_id);
-      mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, SYSTEM_FAILURE);
+      OAILOG_ERROR(LOG_MME_APP, "Error modifying SAE-GW bearers for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+      mme_app_send_s1ap_path_switch_request_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_SYSTEM_FAILURE);
       /** We continue with the implicit detach, since handover already happened. */
     }
     /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
@@ -1018,11 +1093,25 @@ mme_app_handle_modify_bearer_resp (
     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
-  current_bearer_p =  mme_app_is_bearer_context_in_list(ue_context_p->mme_ue_s1ap_id, ue_context_p->default_bearer_id);
+  current_bearer_p =  mme_app_get_session_bearer_context_from_all(ue_context->mme_ue_s1ap_id, modify_bearer_resp_pP->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id);
+  /** Get the first bearers PDN. */
+  // todo: optimize the validation!
+  DevAssert(current_bearer_p);
+  pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context, current_bearer_p->pdn_cx_id, current_bearer_p->ebi, NULL);
+  DevAssert(current_bearer_p);
+
+  /** Set all bearers of the EBI to valid. */
+  bearer_context_t * bc_to_act = NULL;
+  RB_FOREACH (bc_to_act, SessionBearers, &pdn_context->session_bearers) {
+    DevAssert(bc_to_act);
+    /** Add them to the bearers list of the MBR. */
+    bc_to_act->bearer_state |= BEARER_STATE_ACTIVE;
+  }
+
   // todo: set the downlink teid?
   /** If it is an X2 Handover, send a path switch response back. */
   if(ue_context->pending_x2_handover){
-    OAILOG_INFO(LOG_MME_APP, "Sending an S1AP Path Switch Request Acknowledge for for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context_p->mme_ue_s1ap_id);
+    OAILOG_INFO(LOG_MME_APP, "Sending an S1AP Path Switch Request Acknowledge for for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
     mme_app_send_s1ap_path_switch_request_acknowledge(ue_context->mme_ue_s1ap_id);
     /** Reset the flag. */
     ue_context->pending_x2_handover = false;
@@ -1035,19 +1124,19 @@ mme_app_handle_modify_bearer_resp (
     pdn_context_t * pdn_context = NULL;
     RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
       DevAssert(pdn_context);
-      bearer_context_t * first_bearer = RB_MIN(BearerPool, &pdn_context->session_bearers);
+      bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
       DevAssert(first_bearer);
       if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
         /** Continue to next pdn. */
         continue;
       }else{
         /** Found a PDN. Establish the bearer contexts. */
-        OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. \n", ue_context_p->mme_ue_s1ap_id);
+        OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. \n", ue_context->mme_ue_s1ap_id);
         mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
         OAILOG_FUNC_OUT (LOG_MME_APP);
       }
     }
-    OAILOG_INFO(LOG_MME_APP, "No PDN found to establish the bearers for UE " MME_UE_S1AP_ID_FMT ". Checking for INTER-MME handover. \n", ue_context_p->mme_ue_s1ap_id);
+    OAILOG_INFO(LOG_MME_APP, "No PDN found to establish the bearers for UE " MME_UE_S1AP_ID_FMT ". Checking for INTER-MME handover. \n", ue_context->mme_ue_s1ap_id);
     if(s10_handover_proc->proc.type == MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER){
       /**
        * UE came from S10 inter-MME handover. Not clear the pending_handover state yet.
@@ -1071,7 +1160,7 @@ mme_app_handle_modify_bearer_resp (
        /** Nothing else left to do on the target side. We don't delete the handover process. It will run and timeout until TAU is complete. */
     }else{
       /** For INTRA-MME handover trigger the timer mentioned in TS 23.401 to remove the UE Context and the old S1AP UE reference to the source eNB. */
-      ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->source_enb_ue_s1ap_id, s10_handover_proc.source_ecgi.cell_identity.enb_id);
+      ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(s10_handover_proc->source_enb_ue_s1ap_id, s10_handover_proc->source_ecgi.cell_identity.enb_id);
       if(old_ue_reference){
         /** For INTRA-MME handover, start the timer to remove the old UE reference here. No timer should be started for the S10 Handover Process. */
         if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
@@ -1098,71 +1187,8 @@ mme_app_handle_modify_bearer_resp (
 }
 
 //------------------------------------------------------------------------------
-void
-mme_app_handle_downlink_data_notification(const itti_s11_downlink_data_notification_t * const saegw_dl_data_ntf_pP){
-  struct ue_context_s                    *ue_context_p = NULL;
-  MessageDef                             *message_p = NULL;
-  int16_t                                 bearer_id =5;
-  int                                     rc = RETURNok;
-
-  SGWCause_t                              cause;
-
-  OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (saegw_dl_data_ntf_pP );
-  DevAssert (saegw_dl_data_ntf_pP->trxn);
-
-  OAILOG_DEBUG (LOG_MME_APP, "Received S11_DOWNLINK_DATA_NOTIFICATION from S+P-GW\n");
-  ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, saegw_dl_data_ntf_pP->teid);
-
-  if (ue_context_p == NULL) {
-    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "DOWNLINK_DATA_NOTIFICATION FROM local S11 teid " TEID_FMT " ", saegw_dl_data_ntf_pP->teid);
-    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", saegw_dl_data_ntf_pP->teid);
-    /** Send a DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE. */
-    mme_app_send_downlink_data_notification_acknowledge(CONTEXT_NOT_FOUND, saegw_dl_data_ntf_pP->teid, saegw_dl_data_ntf_pP->trxn);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
-  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "DOWNLINK_DATA_NOTIFICATION for local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
-      saegw_dl_data_ntf_pP->teid, ue_context_p->imsi);
-
-  /** Check that the UE is in idle mode!. */
-  if (ECM_IDLE != ue_context_p->ecm_state) {
-    OAILOG_ERROR (LOG_MME_APP, "UE_Context with IMSI " IMSI_64_FMT " and mmeUeS1apId: %d. \n is not in ECM_IDLE mode, insted %d. \n",
-        ue_context_p->imsi, ue_context_p->mme_ue_s1ap_id, ue_context_p->ecm_state);
-    // todo: later.. check this more granularly
-    mme_app_send_downlink_data_notification_acknowledge(UE_ALREADY_REATTACHED, saegw_dl_data_ntf_pP->teid, saegw_dl_data_ntf_pP->trxn);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
-
-  OAILOG_INFO(LOG_MME_APP, "MME_MOBILTY_COMPLETION timer is not running. Starting paging procedure for UE with imsi " IMSI_64_FMT ". \n", ue_context_p->imsi);
-
-  // todo: timeout to wait to ignore further DL_DATA_NOTIF messages->
-  mme_app_send_downlink_data_notification_acknowledge(REQUEST_ACCEPTED, saegw_dl_data_ntf_pP->teid, saegw_dl_data_ntf_pP->trxn);
-
-  /** No need to start paging timeout timer. It will be handled by the Periodic TAU update timer. */
-  // todo: no downlink data notification failure and just removing the UE?
-
-  /** Do paging on S1AP interface. */
-  message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_PAGING);
-  DevAssert (message_p != NULL);
-  itti_s1ap_paging_t *s1ap_paging_p = &message_p->ittiMsg.s1ap_paging;
-
-  memset (s1ap_paging_p, 0, sizeof (itti_s1ap_paging_t));
-  s1ap_paging_p->mme_ue_s1ap_id = ue_context_p->mme_ue_s1ap_id; /**< Just MME_UE_S1AP_ID. */
-  s1ap_paging_p->ue_identity_index = (ue_context_p->imsi %1024) & 0xFFFF; /**< Just MME_UE_S1AP_ID. */
-  s1ap_paging_p->tmsi = ue_context_p->guti.m_tmsi;
-  // todo: these ones may differ from GUTI?
-  s1ap_paging_p->tai.plmn = ue_context_p->guti.gummei.plmn;
-  s1ap_paging_p->tai.tac  = *mme_config.served_tai.tac;
-
-  /** S1AP Paging. */
-  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
-
-  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-}
-
-//------------------------------------------------------------------------------
-void
-mme_app_send_downlink_data_notification_acknowledge(SGWCause_t cause, teid_t saegw_s11_teid, void *trxn){
+static
+void mme_app_send_downlink_data_notification_acknowledge(gtpv2c_cause_value_t cause, teid_t saegw_s11_teid, uint32_t peer_ip, void *trxn){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   /** Send a Downlink Data Notification Acknowledge with cause. */
@@ -1172,15 +1198,16 @@ mme_app_send_downlink_data_notification_acknowledge(SGWCause_t cause, teid_t sae
   itti_s11_downlink_data_notification_acknowledge_t *downlink_data_notification_ack_p = &message_p->ittiMsg.s11_downlink_data_notification_acknowledge;
   memset ((void*)downlink_data_notification_ack_p, 0, sizeof (itti_s11_downlink_data_notification_acknowledge_t));
   // todo: s10 TEID set every time?
-  downlink_data_notification_ack_p->teid = saegw_s11_teid; // todo: ue_context_pP->mme_s10_teid;
+  downlink_data_notification_ack_p->teid = saegw_s11_teid; // todo: ue_context->mme_s10_teid;
   /** No Local TEID exists yet.. no local S10 tunnel is allocated. */
   // todo: currently only just a single MME is allowed.
-  downlink_data_notification_ack_p->peer_ip = mme_config.ipv4.sgw_s11;
+  /** Get the first PDN context. */
 
-  downlink_data_notification_ack_p->cause = cause;
+  downlink_data_notification_ack_p->peer_ip = peer_ip;
+  downlink_data_notification_ack_p->cause.cause_value = cause;
   downlink_data_notification_ack_p->trxn  = trxn;
 
-  /** Deallocate the contaier in the FORWARD_RELOCATION_REQUEST.  */
+  /** Deallocate the container in the FORWARD_RELOCATION_REQUEST.  */
   // todo: how is this deallocated
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S11 DOWNLINK_DATA_NOTIFICATION_ACK");
@@ -1193,33 +1220,95 @@ mme_app_send_downlink_data_notification_acknowledge(SGWCause_t cause, teid_t sae
 
 //------------------------------------------------------------------------------
 void
+mme_app_handle_downlink_data_notification(const itti_s11_downlink_data_notification_t * const saegw_dl_data_ntf_pP){
+  struct ue_context_s                    *ue_context = NULL;
+  MessageDef                             *message_p = NULL;
+  int16_t                                 bearer_id =5;
+  int                                     rc = RETURNok;
+
+
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  DevAssert (saegw_dl_data_ntf_pP );
+  DevAssert (saegw_dl_data_ntf_pP->trxn);
+
+  OAILOG_DEBUG (LOG_MME_APP, "Received S11_DOWNLINK_DATA_NOTIFICATION from S+P-GW\n");
+  ue_context = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, saegw_dl_data_ntf_pP->teid);
+
+  if (ue_context == NULL) {
+    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "DOWNLINK_DATA_NOTIFICATION FROM local S11 teid " TEID_FMT " ", saegw_dl_data_ntf_pP->teid);
+    OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", saegw_dl_data_ntf_pP->teid);
+    /** Send a DOWNLINK_DATA_NOTIFICATION_ACKNOWLEDGE. */
+    mme_app_send_downlink_data_notification_acknowledge(CONTEXT_NOT_FOUND, saegw_dl_data_ntf_pP->teid, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "DOWNLINK_DATA_NOTIFICATION for local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
+      saegw_dl_data_ntf_pP->teid, ue_context->imsi);
+
+  /** Check that the UE is in idle mode!. */
+  if (ECM_IDLE != ue_context->ecm_state) {
+    OAILOG_ERROR (LOG_MME_APP, "UE_Context with IMSI " IMSI_64_FMT " and mmeUeS1apId: %d. \n is not in ECM_IDLE mode, insted %d. \n",
+        ue_context->imsi, ue_context->mme_ue_s1ap_id, ue_context->ecm_state);
+    // todo: later.. check this more granularly
+    mme_app_send_downlink_data_notification_acknowledge(UE_ALREADY_RE_ATTACHED, saegw_dl_data_ntf_pP->teid, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+  }
+
+  OAILOG_INFO(LOG_MME_APP, "MME_MOBILTY_COMPLETION timer is not running. Starting paging procedure for UE with imsi " IMSI_64_FMT ". \n", ue_context->imsi);
+
+  // todo: timeout to wait to ignore further DL_DATA_NOTIF messages->
+  mme_app_send_downlink_data_notification_acknowledge(REQUEST_ACCEPTED, saegw_dl_data_ntf_pP->teid, saegw_dl_data_ntf_pP->peer_ip, saegw_dl_data_ntf_pP->trxn);
+
+  /** No need to start paging timeout timer. It will be handled by the Periodic TAU update timer. */
+  // todo: no downlink data notification failure and just removing the UE?
+
+  /** Do paging on S1AP interface. */
+  message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_PAGING);
+  DevAssert (message_p != NULL);
+  itti_s1ap_paging_t *s1ap_paging_p = &message_p->ittiMsg.s1ap_paging;
+
+  memset (s1ap_paging_p, 0, sizeof (itti_s1ap_paging_t));
+  s1ap_paging_p->mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id; /**< Just MME_UE_S1AP_ID. */
+  s1ap_paging_p->ue_identity_index = (ue_context->imsi %1024) & 0xFFFF; /**< Just MME_UE_S1AP_ID. */
+  s1ap_paging_p->tmsi = ue_context->guti.m_tmsi;
+  // todo: these ones may differ from GUTI?
+  s1ap_paging_p->tai.plmn = ue_context->guti.gummei.plmn;
+  s1ap_paging_p->tai.tac  = *mme_config.served_tai.tac;
+
+  /** S1AP Paging. */
+  itti_send_msg_to_task (TASK_S1AP, INSTANCE_DEFAULT, message_p);
+
+  OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+}
+
+//------------------------------------------------------------------------------
+void
 mme_app_handle_initial_context_setup_rsp (
   itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  struct ue_context_s                 *ue_context_p = NULL;
-  MessageDef                             *message_p = NULL;
+  struct ue_context_s                 *ue_context = NULL;
+  MessageDef                          *message_p = NULL;
 
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_INITIAL_CONTEXT_SETUP_RSP from S1AP\n");
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_ctxt_setup_rsp_pP->ue_id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, initial_ctxt_setup_rsp_pP->ue_id);
 
-  if (ue_context_p == NULL) {
+  if (ue_context == NULL) {
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: " MME_UE_S1AP_ID_FMT "\n", initial_ctxt_setup_rsp_pP->ue_id);
     MSC_LOG_EVENT (MSC_MMEAPP_MME, " MME_APP_INITIAL_CONTEXT_SETUP_RSP Unknown ue %u", initial_ctxt_setup_rsp_pP->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 
   // Stop Initial context setup process guard timer,if running
-  if (ue_context_p->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
-    if (timer_remove(ue_context_p->initial_context_setup_rsp_timer.id)) {
-      OAILOG_ERROR (LOG_MME_APP, "Failed to stop Initial Context Setup Rsp timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  if (ue_context->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
+    if (timer_remove(ue_context->initial_context_setup_rsp_timer.id, NULL)) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop Initial Context Setup Rsp timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
     }
-    ue_context_p->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
+    ue_context->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
   }
 
   pdn_context_t * registered_pdn_ctx = NULL;
   /** Update all bearers and get the pdn context id. */
-  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context_p->pdn_contexts) {
+  RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
     DevAssert(registered_pdn_ctx);
 
     /**
@@ -1227,7 +1316,7 @@ mme_app_handle_initial_context_setup_rsp (
      * Do the MBR just one PDN at a time.
      */
     bearer_context_t * bearer_context_to_establish = NULL;
-    RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
+    RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
       DevAssert(bearer_context_to_establish);
       /** Add them to the bearears list of the MBR. */
       if (bearer_context_to_establish->ebi == initial_ctxt_setup_rsp_pP->e_rab_id[0]){
@@ -1236,13 +1325,12 @@ mme_app_handle_initial_context_setup_rsp (
     }
     registered_pdn_ctx = NULL;
   }
-  OAILOG_INFO(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". "
-      "Dropping Initial Context Setup Response. \n", ueId);
+  OAILOG_INFO(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Dropping Initial Context Setup Response. \n", ue_context->mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 
 found_pdn:
 //  /** Save the bearer information as pending or send it directly if UE is registered. */
-//  RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
+//  RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
 //    DevAssert(bearer_context_to_establish);
 //    /** Add them to the bearears list of the MBR. */
 //    if (bearer_context_to_establish->ebi == initial_ctxt_setup_rsp_pP->e_rab_id[0]){
@@ -1253,7 +1341,7 @@ found_pdn:
   for (int item = 0; item < initial_ctxt_setup_rsp_pP->no_of_e_rabs; item++) {
     ebi_t ebi_to_establish = initial_ctxt_setup_rsp_pP->e_rab_id[item];
     /** Update the bearer context. */
-    bearer_context_t* bearer_context_to_setup = mme_app_get_bearer_context(registered_pdn_ctx, ebi_to_establish);
+    bearer_context_t* bearer_context_to_setup = mme_app_get_session_bearer_context(registered_pdn_ctx, ebi_to_establish);
     if(bearer_context_to_setup){
       bearer_context_to_setup->enb_fteid_s1u.interface_type = S1_U_ENODEB_GTP_U;
       bearer_context_to_setup->enb_fteid_s1u.teid           = initial_ctxt_setup_rsp_pP->gtp_teid[item];
@@ -1274,12 +1362,12 @@ found_pdn:
     }
   }
   /** Setting as ACTIVE when MBResp received from SAE-GW. */
-  if(ue_context_p->mm_state == UE_REGISTERED){
+  if(ue_context->mm_state == UE_REGISTERED){
     /** Send Modify Bearer Request for the APN. */
-    DevAssert(mme_app_send_s11_modify_bearer_req(ue_context_p, registered_pdn_ctx));
+    DevAssert(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx));
   }else{
     /** Will send MBR with MM state change callbacks (with ATTACH_COMPLETE). */
-    OAILOG_INFO(LOG_MME_APP, "IMSI " IMSI_64_FMT " is not registered yet. Waiting the UE to register to send the MBR.\n", ue_context_p->imsi);
+    OAILOG_INFO(LOG_MME_APP, "IMSI " IMSI_64_FMT " is not registered yet. Waiting the UE to register to send the MBR.\n", ue_context->imsi);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -1322,11 +1410,11 @@ mme_app_handle_s11_create_bearer_req (
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   //MessageDef                             *message_p = NULL;
-  struct ue_context_s                    *ue_context_p = NULL;
+  struct ue_context_s                    *ue_context = NULL;
 
-  ue_context_p = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, create_bearer_request_pP->teid);
+  ue_context = mme_ue_context_exists_s11_teid (&mme_app_desc.mme_ue_contexts, create_bearer_request_pP->teid);
 
-  if (ue_context_p == NULL) {
+  if (ue_context == NULL) {
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST local S11 teid " TEID_FMT " ",
         create_bearer_request_pP->teid);
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %" PRIX32 "\n", create_bearer_request_pP->teid);
@@ -1335,25 +1423,25 @@ mme_app_handle_s11_create_bearer_req (
   // check if default bearer already created
   ebi_t linked_eps_bearer_id = create_bearer_request_pP->linked_eps_bearer_id;
   /** Check that the default bearer context is a session bearer context. */
-  bearer_context_t * linked_bc = bearer_context_t* mme_app_get_session_bearer_context_from_all(ue_context, linked_eps_bearer_id);
+  bearer_context_t * linked_bc = mme_app_get_session_bearer_context_from_all(ue_context, linked_eps_bearer_id);
   if (!linked_bc) {
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST ue id " MME_UE_S1AP_ID_FMT " local S11 teid " TEID_FMT " ",
-        ue_context_p->mme_ue_s1ap_id, create_bearer_request_pP->teid);
+        ue_context->mme_ue_s1ap_id, create_bearer_request_pP->teid);
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find the linked bearer id %" PRIu8 " for UE: " MME_UE_S1AP_ID_FMT "\n",
-        linked_eps_bearer_id, ue_context_p->mme_ue_s1ap_id);
+        linked_eps_bearer_id, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   /** Get the PDN context. */
-  pdn_context_t pdn_context = mme_app_get_pdn_context(ue_context_p, linked_bc->pdn_cx_id, linked_bc->ebi, NULL);
+  pdn_context_t *pdn_context = mme_app_get_pdn_context(ue_context, linked_bc->pdn_cx_id, linked_bc->ebi, NULL);
   DevAssert(pdn_context);
 
   pdn_cid_t cid = linked_bc->pdn_cx_id;
 
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 CREATE_BEARERS_REQUEST ue id " MME_UE_S1AP_ID_FMT " PDN id %u IMSI " IMSI_64_FMT " n ebi %u",
-      ue_context_p->mme_ue_s1ap_id, cid, ue_context_p->imsi, create_bearer_request_pP->bearer_contexts.num_bearer_context);
+      ue_context->mme_ue_s1ap_id, cid, ue_context->imsi, create_bearer_request_pP->bearer_contexts.num_bearer_context);
 
   /** Create an S11 procedure. */
-  mme_app_s11_proc_create_bearer_t* s11_proc_create_bearer = mme_app_create_s11_procedure_create_bearer(ue_context_p);
+  mme_app_s11_proc_create_bearer_t* s11_proc_create_bearer = mme_app_create_s11_procedure_create_bearer(ue_context);
   s11_proc_create_bearer->proc.s11_trxn  = (uintptr_t)create_bearer_request_pP->trxn;
 
   /*
@@ -1364,7 +1452,7 @@ mme_app_handle_s11_create_bearer_req (
   // forward request to NAS
   MessageDef  *message_p = itti_alloc_new_message (TASK_MME_APP, MME_APP_CREATE_DEDICATED_BEARER_REQ);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
-  MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).ue_id          = ue_context_p->mme_ue_s1ap_id;
+  MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).ue_id          = ue_context->mme_ue_s1ap_id;
   MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).cid            = cid;
   MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).linked_ebi     = pdn_context->default_ebi;
   /** Bearer will be allocated in the ESM layer. */
@@ -1373,7 +1461,7 @@ mme_app_handle_s11_create_bearer_req (
     // TODO THINK OF BEARER AGGREGATING SEVERAL SDFs, 1 bearer <-> (QCI, ARP)
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     const bearer_context_within_create_bearer_request_t *msg_bc = &create_bearer_request_pP->bearer_contexts.bearer_contexts[i];
-//    bearer_context_t *  dedicated_bc = mme_app_create_bearer_context(ue_context_p, cid, msg_bc->eps_bearer_id, false);
+//    bearer_context_t *  dedicated_bc = mme_app_create_bearer_context(ue_context, cid, msg_bc->eps_bearer_id, false);
 
     /*
      * Set the FTEIDs into the process as pending IEs.
@@ -1401,12 +1489,12 @@ mme_app_handle_s11_create_bearer_req (
 //    dedicated_bc->bearer_state   |= BEARER_STATE_MME_CREATED;
 
     if (msg_bc->tft.numberofpacketfilters) {
-      MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).tft[i] = calloc(1, sizeof(traffic_flow_template_t));
-      copy_traffic_flow_template(MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).tft[i], &msg_bc->tft);
+      MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).tfts[i] = calloc(1, sizeof(traffic_flow_template_t));
+      copy_traffic_flow_template(MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).tfts[i], &msg_bc->tft);
     }
     if (msg_bc->pco.num_protocol_or_container_id) {
-      MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).pco[i] = calloc(1, sizeof(protocol_configuration_options_t));
-      copy_protocol_configuration_options(MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).pco[i], &msg_bc->pco);
+      MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).pcos[i] = calloc(1, sizeof(protocol_configuration_options_t));
+      copy_protocol_configuration_options(MME_APP_CREATE_DEDICATED_BEARER_REQ (message_p).pcos[i], &msg_bc->pco);
     }
 
     /** Update the number of bearers. */
@@ -1443,10 +1531,12 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   /** Get the first PDN Context. */
-  pdn_context_t * pdn_context = RB_MIN(PdnContexts, ue_context->pdn_contexts);
+  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   DevAssert(pdn_context);
   // todo: s1u_saegw_fteid should be set!
 
+
+  bool  bearer_contexts_success = false;
   for (int i = 0; i < e_rab_setup_rsp->e_rab_setup_list.no_of_items; i++) {
     e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_setup_list.item[i].e_rab_id;
     bearer_context_t * bc = mme_app_get_session_bearer_context_from_all(ue_context, (ebi_t) e_rab_id);
@@ -1483,14 +1573,14 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
 
       AssertFatal(bc->bearer_state & BEARER_STATE_MME_CREATED, "TO DO check bearer state");
       bc->bearer_state |= BEARER_STATE_ENB_CREATED;
-
+      bearer_contexts_success = true;
       if (ESM_EBR_ACTIVE == bc->esm_ebr_context.status) {
         send_s11_response = true;
         /** Add the bearer context to the list of established bearers. */
-        LIST_INSERT_HEAD(s11_proc_create_bearer->bearer_contexts_success, bc, bc->temp_entries);
+        LIST_INSERT_HEAD(s11_proc_create_bearer->bearer_contexts_success, bc, temp_entries);
       }else if (s11_proc_create_bearer->bearer_status[EBI_TO_INDEX(bc->ebi)] == S11_PROC_BEARER_FAILED){
         /** A NAS reject has been received for this bearer. */
-        LIST_INSERT_HEAD(s11_proc_create_bearer->bearer_contexts_failed, bc, bc->temp_entries);
+        LIST_INSERT_HEAD(s11_proc_create_bearer->bearer_contexts_failed, bc, temp_entries);
       }
     }
   }
@@ -1507,7 +1597,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
       bc->bearer_state &= (~BEARER_STATE_ENB_CREATED);
       bc->bearer_state &= (~BEARER_STATE_MME_CREATED);
       /** Add the bearer context to the list of rejected bearers. */
-      LIST_INSERT_HEAD(s11_proc_create_bearer->bearer_contexts_failed, bc, bc->temp_entries);
+      LIST_INSERT_HEAD(s11_proc_create_bearer->bearer_contexts_failed, bc, temp_entries);
     }
   }
 
@@ -1517,7 +1607,7 @@ void mme_app_handle_e_rab_setup_rsp (itti_s1ap_e_rab_setup_rsp_t  * const e_rab_
     /** Delete the procedure if it exists. */
     mme_app_delete_s11_procedure_create_bearer(ue_context);
   }else{
-    OAILOG_WARNING(LOG_MME_APP, "Not sending S11 Create Bearer Response to UE: " MME_UE_S1AP_ID_FMT "\n", ue_context->ue_id);
+    OAILOG_WARNING(LOG_MME_APP, "Not sending S11 Create Bearer Response to UE: " MME_UE_S1AP_ID_FMT "\n", ue_context->mme_ue_s1ap_id);
     /** With ESM response, we will send the bearers. */
   }
 
@@ -1556,7 +1646,7 @@ void mme_app_handle_create_dedicated_bearer_rsp (itti_mme_app_create_dedicated_b
     // if received all bearers creation results
     if (s11_proc_create_bearer->num_status_received == s11_proc_create_bearer->num_bearers) { /**< If all NAS responses have arrived. Additionally check if the lists are filled. */
       if(s11_proc_create_bearer->bearer_contexts_failed || s11_proc_create_bearer->bearer_contexts_success){
-//        mme_app_s11_procedure_create_bearer_send_response(ue_context_p, s11_proc_create);
+//        mme_app_s11_procedure_create_bearer_send_response(ue_context, s11_proc_create);
         mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context->s_gw_teid_s11_s4, s11_proc_create_bearer->bearer_contexts_success, s11_proc_create_bearer->bearer_contexts_failed);
         mme_app_delete_s11_procedure_create_bearer(ue_context);
       }else{
@@ -1602,11 +1692,11 @@ void mme_app_handle_create_dedicated_bearer_rej (itti_mme_app_create_dedicated_b
     // if received all bearers creation results
     if (s11_proc_create_bearer->num_status_received == s11_proc_create_bearer->num_bearers) { /**< If all NAS responses have arrived. Additionally check if the lists are filled. */
       if(s11_proc_create_bearer->bearer_contexts_failed || s11_proc_create_bearer->bearer_contexts_success){
-        //        mme_app_s11_procedure_create_bearer_send_response(ue_context_p, s11_proc_create);
+        //        mme_app_s11_procedure_create_bearer_send_response(ue_context, s11_proc_create);
         mme_app_send_s11_create_bearer_rsp(ue_context, pdn_context->s_gw_teid_s11_s4, s11_proc_create_bearer->bearer_contexts_success, s11_proc_create_bearer->bearer_contexts_failed);
         mme_app_delete_s11_procedure_create_bearer(ue_context);
       }else{
-        OAILOG_WARNING(LOG_MME_APP, "No response from S1AP received yet for UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rsp->ue_id);
+        OAILOG_WARNING(LOG_MME_APP, "No response from S1AP received yet for UE: " MME_UE_S1AP_ID_FMT "\n", create_dedicated_bearer_rej->ue_id);
       }
     }
   }else{
@@ -1633,12 +1723,12 @@ void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_c
  * The MME_APP ITTI message elements though need to be deallocated.
  */
 static
-void mme_app_send_s1ap_handover_preparation_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, MMECause_t mmeCause){
+void mme_app_send_s1ap_handover_preparation_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, enum s1cause cause){
   OAILOG_FUNC_IN (LOG_MME_APP);
   /** Send a S1AP HANDOVER PREPARATION FAILURE TO THE SOURCE ENB. */
   MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_HANDOVER_PREPARATION_FAILURE);
   DevAssert (message_p != NULL);
-  DevAssert(mmeCause != REQUEST_ACCEPTED);
+  DevAssert(cause != S1AP_SUCCESSFUL_HANDOVER);
 
   itti_s1ap_handover_preparation_failure_t *s1ap_handover_preparation_failure_p = &message_p->ittiMsg.s1ap_handover_preparation_failure;
   memset ((void*)s1ap_handover_preparation_failure_p, 0, sizeof (itti_s1ap_handover_preparation_failure_t));
@@ -1648,7 +1738,7 @@ void mme_app_send_s1ap_handover_preparation_failure(mme_ue_s1ap_id_t mme_ue_s1ap
   s1ap_handover_preparation_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id;
   s1ap_handover_preparation_failure_p->assoc_id = assoc_id;
   /** Set the negative cause. */
-  s1ap_handover_preparation_failure_p->cause = mmeCause;
+  s1ap_handover_preparation_failure_p->cause = cause;
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S1AP HANDOVER_PREPARATION_FAILURE");
   /** Sending a message to S1AP. */
@@ -1667,19 +1757,19 @@ void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s
   MessageDef * message_p = NULL;
   bearer_context_t                       *current_bearer_p = NULL;
   ebi_t                                   bearer_id = 0;
-  ue_context_t                           *ue_context_p = NULL;
+  ue_context_t                           *ue_context = NULL;
   emm_data_context_t                     *ue_nas_ctx = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
 
-  if (ue_context_p == NULL) {
+  if (ue_context == NULL) {
     OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for UE %06" PRIX32 "/dec%u\n", mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   /** Get the EMM Context too for the AS security parameters. */
   ue_nas_ctx = emm_data_context_get(&_emm_data, mme_ue_s1ap_id);
-  if(!ue_nas_ctx || ue_nas_ctx->_tai_list.n_tais == 0){
+  if(!ue_nas_ctx || ue_nas_ctx->_tai_list.numberoflists == 0){
     DevMessage(" No EMM Data Context exists for UE with mmeUeS1apId " + mme_ue_s1ap_id + ".\n");
   }
 
@@ -1695,15 +1785,16 @@ void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s
   /** The ENB_ID/Stream information in the UE_Context are still the ones for the source-ENB and the SCTP-UE_ID association is not set yet for the new eNB. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S1AP_MME, NULL, 0, "MME_APP Sending S1AP PATH_SWITCH_REQUEST_ACKNOWLEDGE.");
 
-  bearer_id = ue_context_p->default_bearer_id;
-  current_bearer_p =  mme_app_is_bearer_context_in_list(ue_context_p->mme_ue_s1ap_id, bearer_id);
-  path_switch_req_ack_p->eps_bearer_id = bearer_id;
+//  todo: multiApn X2 handover
+//  bearer_id = ue_context->default_bearer_id;
+//  current_bearer_p =  mme_app_is_bearer_context_in_list(ue_context->mme_ue_s1ap_id, bearer_id);
+//  path_switch_req_ack_p->eps_bearer_id = bearer_id;
 
   /** Set all active bearers to be switched. */
-  path_switch_req_ack_p->bearer_ctx_to_be_switched_list.n_bearers   = ue_context_p->nb_ue_bearer_ctxs;
-  path_switch_req_ack_p->bearer_ctx_to_be_switched_list.bearer_ctxs = (void*)&ue_context_p->bearer_ctxs;
-
-  hash_table_ts_t * bearer_contexts1 = (hash_table_ts_t*)path_switch_req_ack_p->bearer_ctx_to_be_switched_list.bearer_ctxs;
+//  path_switch_req_ack_p->bearer_ctx_to_be_switched_list.num_bearer_context = ue_context->nb_ue_bearer_ctxs;
+//  path_switch_req_ack_p->bearer_ctx_to_be_switched_list.bearer_contexts[0]= (void*)&ue_context->bearer_ctxs;
+//
+//  hash_table_ts_t * bearer_contexts1 = (hash_table_ts_t*)path_switch_req_ack_p->bearer_ctx_to_be_switched_list.bearer_ctxs;
 
   uint16_t encryption_algorithm_capabilities = 0;
   uint16_t integrity_algorithm_capabilities = 0;
@@ -1728,7 +1819,7 @@ void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s
    * Change the ECM state to connected.
    * AN UE_Reference should already be created with Path_Switch_Request.
    */
-  mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context_p, ECM_CONNECTED);
+  mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
 
   // todo: timer for path switch request
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -1741,12 +1832,12 @@ void mme_app_send_s1ap_path_switch_request_acknowledge(mme_ue_s1ap_id_t mme_ue_s
  * The MME_APP ITTI message elements though need to be deallocated.
  */
 static
-void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, MMECause_t mmeCause){
+void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id, enum s1cause cause){
   OAILOG_FUNC_IN (LOG_MME_APP);
   /** Send a S1AP Path Switch Request Failure TO THE TARGET ENB. */
   MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_PATH_SWITCH_REQUEST_FAILURE);
   DevAssert (message_p != NULL);
-  DevAssert(mmeCause != REQUEST_ACCEPTED);
+  DevAssert(cause != S1AP_SUCCESSFUL_HANDOVER);
 
   itti_s1ap_path_switch_request_failure_t *s1ap_path_switch_request_failure_p = &message_p->ittiMsg.s1ap_path_switch_request_failure;
   memset ((void*)s1ap_path_switch_request_failure_p, 0, sizeof (itti_s1ap_path_switch_request_failure_t));
@@ -1756,7 +1847,7 @@ void mme_app_send_s1ap_path_switch_request_failure(mme_ue_s1ap_id_t mme_ue_s1ap_
   s1ap_path_switch_request_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id;
   s1ap_path_switch_request_failure_p->assoc_id = assoc_id; /**< To whatever the new SCTP association is. */
   /** Set the negative cause. */
-  s1ap_path_switch_request_failure_p->cause = mmeCause;
+  s1ap_path_switch_request_failure_p->cause = cause;
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending S1AP PATH_SWITCH_REQUEST_FAILURE");
   /** Sending a message to S1AP. */
@@ -1770,14 +1861,14 @@ mme_app_handle_path_switch_req(
   const itti_mme_app_path_switch_req_t * const path_switch_req_pP
   )
 {
-  struct ue_context_s                    *ue_context_p = NULL;
+  struct ue_context_s                    *ue_context = NULL;
   MessageDef                             *message_p = NULL;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
   OAILOG_DEBUG (LOG_MME_APP, "Received MME_APP_PATH_SWITCH_REQ from S1AP\n");
-  ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, path_switch_req_pP->mme_ue_s1ap_id);
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, path_switch_req_pP->mme_ue_s1ap_id);
 
-  if (ue_context_p == NULL) {
+  if (ue_context == NULL) {
     OAILOG_ERROR (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %08x %d(dec)\n", path_switch_req_pP->mme_ue_s1ap_id, path_switch_req_pP->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "MME_APP_PATH_SWITCH_REQ Unknown ue %u", path_switch_req_pP->mme_ue_s1ap_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -1788,17 +1879,17 @@ mme_app_handle_path_switch_req(
   MME_APP_ENB_S1AP_ID_KEY(enb_s1ap_id_key, path_switch_req_pP->enb_id, path_switch_req_pP->enb_ue_s1ap_id);
   // Update enb_s1ap_id_key in hashtable
   mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
-      ue_context_p,
+      ue_context,
       enb_s1ap_id_key,
-      ue_context_p->mme_ue_s1ap_id,
-      ue_context_p->imsi,
-      ue_context_p->mme_teid_s11,
-      ue_context_p->local_mme_teid_s10,
-      &ue_context_p->guti);
+      ue_context->mme_ue_s1ap_id,
+      ue_context->imsi,
+      ue_context->mme_teid_s11,
+      ue_context->local_mme_teid_s10,
+      &ue_context->guti);
 
   // Set the handover flag, check that no handover exists.
-  ue_context_p->enb_ue_s1ap_id    = path_switch_req_pP->enb_ue_s1ap_id;
-  ue_context_p->sctp_assoc_id_key = path_switch_req_pP->sctp_assoc_id;
+  ue_context->enb_ue_s1ap_id    = path_switch_req_pP->enb_ue_s1ap_id;
+  ue_context->sctp_assoc_id_key = path_switch_req_pP->sctp_assoc_id;
   //  sctp_stream_id_t        sctp_stream;
   uint16_t encryption_algorithm_capabilities;
   uint16_t integrity_algorithm_capabilities;
@@ -1809,7 +1900,7 @@ mme_app_handle_path_switch_req(
     /** Implicitly detach the UE --> If EMM context is missing, still continue with the resource removal. */
     message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
     DevAssert (message_p != NULL);
-    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context_p->mme_ue_s1ap_id;
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -1817,19 +1908,24 @@ mme_app_handle_path_switch_req(
  OAILOG_INFO(LOG_MME_APP, "Successfully updated AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT " for X2 handover. \n", path_switch_req_pP->mme_ue_s1ap_id);
 
  // Stop Initial context setup process guard timer,if running todo: path switch request?
-  if (ue_context_p->path_switch_req_timer.id != MME_APP_TIMER_INACTIVE_ID) {
-    if (timer_remove(ue_context_p->path_switch_req_timer.id)) {
-      OAILOG_ERROR (LOG_MME_APP, "Failed to stop Path Switch Request timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  if (ue_context->path_switch_req_timer.id != MME_APP_TIMER_INACTIVE_ID) {
+    if (timer_remove(ue_context->path_switch_req_timer.id, NULL)) {
+      OAILOG_ERROR (LOG_MME_APP, "Failed to stop Path Switch Request timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
     }
-    ue_context_p->path_switch_req_timer.id = MME_APP_TIMER_INACTIVE_ID;
+    ue_context->path_switch_req_timer.id = MME_APP_TIMER_INACTIVE_ID;
   }
+
+  // todo: multiApn X2 handover!
+  pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  DevAssert(first_pdn);
+
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_MODIFY_BEARER_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   itti_s11_modify_bearer_request_t *s11_modify_bearer_request = &message_p->ittiMsg.s11_modify_bearer_request;
   memset ((void *)s11_modify_bearer_request, 0, sizeof (*s11_modify_bearer_request));
-  s11_modify_bearer_request->peer_ip = mme_config.ipv4.sgw_s11;
-  s11_modify_bearer_request->teid = ue_context_p->sgw_s11_teid;
-  s11_modify_bearer_request->local_teid = ue_context_p->mme_teid_s11;
+  s11_modify_bearer_request->peer_ip.s_addr = first_pdn->s_gw_address_s11_s4.address.ipv4_address.s_addr;
+  s11_modify_bearer_request->teid = first_pdn->s_gw_teid_s11_s4;
+  s11_modify_bearer_request->local_teid = ue_context->mme_teid_s11;
   /*
    * Delay Value in integer multiples of 50 millisecs, or zero
    */
@@ -1856,7 +1952,7 @@ mme_app_handle_path_switch_req(
   itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
 
   // todo: since PSReq is already received from B-COM just set a flag (ask Lionel how to do it better).
-  ue_context_p->pending_x2_handover = true;
+  ue_context->pending_x2_handover = true;
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -1867,7 +1963,7 @@ mme_app_handle_path_switch_req(
  * Parameter is the TEID & IP of the SOURCE-MME.
  */
 static
-void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid, uint32_t mme_source_ipv4_address, void *trxn,  MMECause_t mmeCause){
+void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid, struct in_addr mme_source_ipv4_address, void *trxn,  gtpv2c_cause_value_t gtpv2cCause){
   OAILOG_FUNC_IN (LOG_MME_APP);
 
   /** Send a Forward Relocation RESPONSE with error cause: RELOCATION_FAILURE. */
@@ -1884,7 +1980,7 @@ void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid
   forward_relocation_response_p->teid = mme_source_s10_teid;
   /** Set the IPv4 address of the source MME. */
   forward_relocation_response_p->peer_ip = mme_source_ipv4_address;
-  forward_relocation_response_p->cause = mmeCause;
+  forward_relocation_response_p->cause.cause_value = gtpv2cCause;
   forward_relocation_response_p->trxn  = trxn;
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "MME_APP Sending S10 FORWARD_RELOCATION_RESPONSE_ERR to source TEID " TEID_FMT ". \n", mme_source_s10_teid);
@@ -1898,7 +1994,7 @@ void mme_app_send_s10_forward_relocation_response_err(teid_t mme_source_s10_teid
 //------------------------------------------------------------------------------
 void
 mme_app_handle_handover_required(
-     const itti_s1ap_handover_required_t * const handover_required_pP
+     itti_s1ap_handover_required_t * const handover_required_pP
     )   {
   OAILOG_FUNC_IN (LOG_MME_APP);
 
@@ -1912,14 +2008,14 @@ mme_app_handle_handover_required(
   if (ue_context == NULL) {
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this mme_ue_s1ap_id in list of UE: %08x %d(dec)\n", handover_required_pP->mme_ue_s1ap_id, handover_required_pP->mme_ue_s1ap_id);
     MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_HANDOVER_REQUIRED Unknown ue %u", handover_required_pP->mme_ue_s1ap_id);
-    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, CONTEXT_NOT_FOUND);
+    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
     /* Resources will be removed by itti removal function. */
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   if (ue_context->mm_state != UE_REGISTERED) {
     OAILOG_ERROR (LOG_MME_APP, "UE with ue_id " MME_UE_S1AP_ID_FMT " is not in UE_REGISTERED state. "
         "Rejecting the Handover Preparation. \n", ue_context->mme_ue_s1ap_id);
-    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, REQUEST_REJECTED);
+    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
     /** No change in the UE context needed. */
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
@@ -1932,7 +2028,7 @@ mme_app_handle_handover_required(
   if (!ue_nas_ctx || emm_fsm_get_state (ue_nas_ctx) != EMM_REGISTERED) {
     OAILOG_ERROR (LOG_MME_APP, "EMM context for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " is not in EMM_REGISTERED state or not existing. "
         "Rejecting the Handover Preparation. \n", handover_required_pP->mme_ue_s1ap_id, ue_context->imsi);
-    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, SYSTEM_FAILURE);
+    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   /*
@@ -1944,33 +2040,9 @@ mme_app_handle_handover_required(
   if(s10_handover_procedure){
     OAILOG_ERROR (LOG_MME_APP, "EMM context for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " in EMM_REGISTERED state has a running handover procedure. "
         "Rejecting further procedures. \n", handover_required_pP->mme_ue_s1ap_id, ue_context->imsi);
-    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, TEMP_REJECT_HO_IN_PROGRESS);
+    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  /*
-   * Create a new handover procedure and begin processing.
-   */
-  s10_handover_procedure = mme_app_create_s10_procedure_mme_handover(ue_context, false);
-  if(!s10_handover_procedure){
-    OAILOG_ERROR (LOG_MME_APP, "Could not create new handover procedure for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " in EMM_REGISTERED state. Rejecting further procedures. \n",
-        handover_required_pP->mme_ue_s1ap_id, ue_context->imsi);
-    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, SYSTEM_FAILURE);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
-  /*
-   * Fill the target information, and use it if handover cancellation is received.
-   * No transaction needed on source side.
-   * Keep the source side as it is.
-   */
-  memcpy((void*)&s10_handover_procedure->target_tai, (void*)&handover_required_pP->selected_tai, sizof(tai_t));
-  memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->selected_tai, sizof(tai_t)); /**< Home or macro enb id. */
-
-  /*
-   * Set the source values, too. We might need it if the MME_STATUS_TRANSFER has to be sent after Handover Notify (emulator errors).
-   * Also, this may be used when removing the old ue_reference later.
-   */
-  s10_handover_procedure->source_enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
-  s10_handover_procedure->source_ecgi = ue_context->e_utran_cgi;
 
   /*
    * Update Security Parameters and send them to the target MME or target eNB.
@@ -1981,7 +2053,7 @@ mme_app_handle_handover_required(
   uint16_t integrity_algorithm_capabilities;
   if(emm_data_context_update_security_parameters(handover_required_pP->mme_ue_s1ap_id, &encryption_algorithm_capabilities, &integrity_algorithm_capabilities) != RETURNok){
     OAILOG_ERROR(LOG_MME_APP, "Error updating AS security parameters for UE with ueId: " MME_UE_S1AP_ID_FMT ". \n", handover_required_pP->mme_ue_s1ap_id);
-    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, SYSTEM_FAILURE);
+    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
     /** If UE state is REGISTERED, then we also expect security context to be valid. */
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
@@ -1993,15 +2065,45 @@ mme_app_handle_handover_required(
       OAILOG_DEBUG (LOG_MME_APP, "Target ENB_ID %d of target TAI " TAI_FMT " is served by current MME. \n",
           handover_required_pP->global_enb_id.cell_identity.enb_id, TAI_ARG(&handover_required_pP->selected_tai));
       /*
+       * Create a new handover procedure and begin processing.
+       */
+      s10_handover_procedure = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER);
+      if(!s10_handover_procedure){
+        OAILOG_ERROR (LOG_MME_APP, "Could not create new handover procedure for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " in EMM_REGISTERED state. Rejecting further procedures. \n",
+            handover_required_pP->mme_ue_s1ap_id, ue_context->imsi);
+        mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
+        OAILOG_FUNC_OUT (LOG_MME_APP);
+      }
+      /*
+       * Fill the target information, and use it if handover cancellation is received.
+       * No transaction needed on source side.
+       * Keep the source side as it is.
+       */
+      memcpy((void*)&s10_handover_procedure->target_tai, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
+      memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai)); /**< Home or macro enb id. */
+
+      /*
+       * Set the source values, too. We might need it if the MME_STATUS_TRANSFER has to be sent after Handover Notify (emulator errors).
+       * Also, this may be used when removing the old ue_reference later.
+       */
+      s10_handover_procedure->source_enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
+      s10_handover_procedure->source_ecgi = ue_context->e_utran_cgi;
+      /*
        * No need to store the transparent container. Directly send it to the target eNB.
        * Prepare a Handover Request, keep the transparent container for now, it will be purged together with the free method of the S1AP message.
        */
-      // todo: multip apn single mme handover (just reusing the list)
-      pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
-      DevAssert(first_pdn);
+      /** Get all VOs of all session bearers and send handover request with it. */
+      bearer_contexts_to_be_created_t bcs_tbc;
+      memset((void*)&bcs_tbc, 0, sizeof(bcs_tbc));
+      pdn_context_t * registered_pdn_ctx = NULL;
+      RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+        DevAssert(registered_pdn_ctx);
+        mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbc, BEARER_STATE_NULL);
+        /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+      }
 
       mme_app_send_s1ap_handover_request(handover_required_pP->mme_ue_s1ap_id,
-          first_pdn,
+          &bcs_tbc,
           handover_required_pP->global_enb_id.cell_identity.enb_id,
           encryption_algorithm_capabilities,
           integrity_algorithm_capabilities,
@@ -2016,7 +2118,7 @@ mme_app_handle_handover_required(
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }else{
       /** Send a Handover Preparation Failure back. */
-      mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, SYSTEM_FAILURE);
+      mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
       /** The target eNB-ID is not served by this MME. */
       OAILOG_DEBUG (LOG_MME_APP, "Target ENB_ID %d of target TAI " TAI_FMT " is NOT served by current MME. \n",
           handover_required_pP->global_enb_id.cell_identity.enb_id, TAI_ARG(&handover_required_pP->selected_tai));
@@ -2027,7 +2129,7 @@ mme_app_handle_handover_required(
   int ngh_index = mme_app_check_target_tai_neighboring_mme(&handover_required_pP->selected_tai);
   if(ngh_index == -1){
     /** Send a Handover Preparation Failure back. */
-    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, SYSTEM_FAILURE);
+    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
     OAILOG_DEBUG (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
         "Not proceeding with the handover formme_ue_s1ap_id in list of UE: %08x %d(dec)\n",
         TAI_ARG(&handover_required_pP->selected_tai), handover_required_pP->mme_ue_s1ap_id, handover_required_pP->mme_ue_s1ap_id);
@@ -2046,17 +2148,43 @@ mme_app_handle_handover_required(
   s10_handover_procedure->remote_mme_teid.ipv4_address.s_addr = forward_relocation_request_p->peer_ip->s_addr;
   s10_handover_procedure->remote_mme_teid.interface_type = S10_MME_GTP_C;
   /** IMSI. */
-  IMSI64_TO_STRING (ue_context_p->imsi, (char *)forward_relocation_request_p->imsi.u.value);
+  IMSI64_TO_STRING (ue_context->imsi, (char *)forward_relocation_request_p->imsi.u.value);
   // message content was set to 0
   forward_relocation_request_p->imsi.length = strlen ((const char *)forward_relocation_request_p->imsi.u.value);
   // message content was set to 0
-  /** Set the Source MME_S10_FTEID the same as in S11. */
-  teid_t local_teid = 0x0;
-  do{
-    local_teid = (teid_t) (rand() % 0xFFFFFFFF);
-  }while(mme_ue_context_exists_s10_teid(&mme_app_desc.mme_ue_contexts, local_teid) != NULL);
+
+  /*
+   * Create a new handover procedure and begin processing.
+   */
+  s10_handover_procedure = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER);
+  if(!s10_handover_procedure){
+    OAILOG_ERROR (LOG_MME_APP, "Could not create new handover procedure for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " in EMM_REGISTERED state. Rejecting further procedures. \n",
+        handover_required_pP->mme_ue_s1ap_id, ue_context->imsi);
+    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+  /*
+   * Fill the target information, and use it if handover cancellation is received.
+   * No transaction needed on source side.
+   * Keep the source side as it is.
+   */
+  memcpy((void*)&s10_handover_procedure->target_tai, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
+  memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai)); /**< Home or macro enb id. */
+
+  /*
+   * Set the source values, too. We might need it if the MME_STATUS_TRANSFER has to be sent after Handover Notify (emulator errors).
+   * Also, this may be used when removing the old ue_reference later.
+   */
+  s10_handover_procedure->source_enb_ue_s1ap_id = ue_context->enb_ue_s1ap_id;
+  s10_handover_procedure->source_ecgi = ue_context->e_utran_cgi;
 
   if(!ue_context->local_mme_teid_s10){
+    /** Set the Source MME_S10_FTEID the same as in S11. */
+    teid_t local_teid = 0x0;
+    do{
+      local_teid = (teid_t) (rand() % 0xFFFFFFFF);
+    }while(mme_ue_context_exists_s10_teid(&mme_app_desc.mme_ue_contexts, local_teid) != NULL);
+
     OAI_GCC_DIAG_OFF(pointer-to-int-cast);
     forward_relocation_request_p->s10_source_mme_teid.teid = local_teid;
     OAI_GCC_DIAG_ON(pointer-to-int-cast);
@@ -2078,7 +2206,7 @@ mme_app_handle_handover_required(
         &ue_context->guti);
   }else{
     OAILOG_INFO (LOG_MME_APP, "A S10 Local TEID " TEID_FMT " already exists. Not reallocating for UE: %08x %d(dec)\n",
-        ue_context_p->local_mme_s10_teid, handover_required_pP->mme_ue_s1ap_id, handover_required_pP->mme_ue_s1ap_id);
+        ue_context->local_mme_teid_s10, handover_required_pP->mme_ue_s1ap_id, handover_required_pP->mme_ue_s1ap_id);
     OAI_GCC_DIAG_OFF(pointer-to-int-cast);
     forward_relocation_request_p->s10_source_mme_teid.teid = ue_context->local_mme_teid_s10;
     OAI_GCC_DIAG_ON(pointer-to-int-cast);
@@ -2101,9 +2229,11 @@ mme_app_handle_handover_required(
   forward_relocation_request_p->s11_sgw_teid.ipv4 = 1;
 
   /** Set the F-Cause. */
-  forward_relocation_request_p->f_cause.fcause_type      = FCAUSE_S1AP;
-  forward_relocation_request_p->f_cause.fcause_s1ap_type = FCAUSE_S1AP_RNL;
-  forward_relocation_request_p->f_cause.fcause_value     = (uint8_t)handover_required_pP->f_cause_value;
+  if(!forward_relocation_request_p->f_cause)
+    forward_relocation_request_p->f_cause = calloc(1, sizeof(F_Cause_t));
+  forward_relocation_request_p->f_cause->fcause_type      = FCAUSE_S1AP;
+  forward_relocation_request_p->f_cause->fcause_s1ap_type = FCAUSE_S1AP_RNL;
+  forward_relocation_request_p->f_cause->fcause_value     = (uint8_t)handover_required_pP->f_cause_value;
 
   /** Set the target identification. */
   forward_relocation_request_p->target_identification.target_type = 1; /**< Macro eNodeB. */
@@ -2131,8 +2261,10 @@ mme_app_handle_handover_required(
   mme_app_set_ue_eps_mm_context(&forward_relocation_request_p->ue_eps_mm_context, ue_context, ue_nas_ctx);
 
   /** Put the E-UTRAN transparent container. */
-  forward_relocation_request_p->eutran_container.container_type = 3;
-  forward_relocation_request_p->eutran_container.container_value = handover_required_pP->eutran_source_to_target_container;
+  if(!forward_relocation_request_p->eutran_container)
+     forward_relocation_request_p->eutran_container = calloc(1, sizeof(F_Container_t));
+  forward_relocation_request_p->eutran_container->container_type = 3;
+  forward_relocation_request_p->eutran_container->container_value = handover_required_pP->eutran_source_to_target_container;
   handover_required_pP->eutran_source_to_target_container = NULL;
   /** Send the Forward Relocation Message to S11. */
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S10_MME ,
@@ -2210,7 +2342,7 @@ mme_app_handle_handover_cancel(
          */
       }else{
         OAILOG_INFO(LOG_MME_APP, "No target UE reference is established yet. No S1AP UE context removal needed for UE-ID " MME_UE_S1AP_ID_FMT ". Responding with HO_CANCEL_ACK back to enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n.",
-            ue_context_p->mme_ue_s1ap_id, ue_context_p->enb_ue_s1ap_id);
+            ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id);
       }
     }
     /** Send a HO-CANCEL-ACK to the source-MME. */
@@ -2234,14 +2366,14 @@ mme_app_handle_handover_cancel(
     DevAssert (message_p != NULL);
     itti_s10_relocation_cancel_request_t *relocation_cancel_request_p = &message_p->ittiMsg.s10_relocation_cancel_request;
     memset ((void*)relocation_cancel_request_p, 0, sizeof (itti_s10_relocation_cancel_request_t));
-    relocation_cancel_request_p->teid = s10_handover_proc->remote_mme_teid; /**< May or may not be 0. */
+    relocation_cancel_request_p->teid = s10_handover_proc->remote_mme_teid.teid; /**< May or may not be 0. */
     relocation_cancel_request_p->local_teid = ue_context->local_mme_teid_s10; /**< May or may not be 0. */
     // todo: check the table!
-    relocation_cancel_request_p->peer_ip.s_addr = s10_handover_proc->remote_mme_ipv4_addr.s_addr;
+    relocation_cancel_request_p->peer_ip.s_addr = s10_handover_proc->remote_mme_teid.ipv4_address.s_addr;
     /** IMSI. */
     IMSI64_TO_STRING (ue_context->imsi, (char *)relocation_cancel_request_p->imsi.u.value);
     // message content was set to 0
-    relocation_cancel_request_p->imsi.length = strlen ((const char *)relocation_cancel_request_p->imsi.digit);
+    relocation_cancel_request_p->imsi.length = strlen ((const char *)relocation_cancel_request_p->imsi.u.value);
     MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 RELOCATION_CANCEL_REQUEST_MESSAGE");
     itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
     OAILOG_DEBUG(LOG_MME_APP, "Successfully sent S10 RELOCATION_CANCEL_REQUEST to the target MME for the UE with IMSI " IMSI_64_FMT " and id " MME_UE_S1AP_ID_FMT ". "
@@ -2304,7 +2436,7 @@ void mme_app_send_s1ap_mme_status_transfer(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_
 //------------------------------------------------------------------------------
 void
 mme_app_handle_forward_relocation_request(
-     const itti_s10_forward_relocation_request_t * const forward_relocation_request_pP
+     itti_s10_forward_relocation_request_t * const forward_relocation_request_pP
     )
 {
  MessageDef                             *message_p  = NULL;
@@ -2377,15 +2509,15 @@ mme_app_handle_forward_relocation_request(
      // todo: additionally invalidate NAS below (if one exists)
      OAILOG_FUNC_OUT (LOG_MME_APP);
    }
-   /*
-    * Not stopping the MME_MOBILITY COMPLETION timer, if running, it would stop the S1AP release timer for the source MME side.
-    * We will just clear the pending CLR flag with the NAS invalidation. Old UE reference should still be removed but the CLR should be disregarded.
-    * If the CLR flag still arrives after that, we had bad luck, it will remove the context.
-    */
-   if (ue_context->mme_mobility_completion_timer.id != MME_APP_TIMER_INACTIVE_ID) {
-     OAILOG_INFO(LOG_MME_APP, "The MME mobility completion timer was set for UE with IMSI " IMSI_64_FMT " and " MME_UE_S1AP_ID_FMT ". Keeping it. \n", imsi, ue_context->mme_ue_s1ap_id);
-     /** Inform the S1AP layer that the UE context could be timeoutet. */
-   }
+//   /*
+//    * Not stopping the MME_MOBILITY COMPLETION timer, if running, it would stop the S1AP release timer for the source MME side.
+//    * We will just clear the pending CLR flag with the NAS invalidation. Old UE reference should still be removed but the CLR should be disregarded.
+//    * If the CLR flag still arrives after that, we had bad luck, it will remove the context.
+//    */
+//   if (ue_context->mme_mobility_completion_timer.id != MME_APP_TIMER_INACTIVE_ID) {
+//     OAILOG_INFO(LOG_MME_APP, "The MME mobility completion timer was set for UE with IMSI " IMSI_64_FMT " and " MME_UE_S1AP_ID_FMT ". Keeping it. \n", imsi, ue_context->mme_ue_s1ap_id);
+//     /** Inform the S1AP layer that the UE context could be timeoutet. */
+//   }
    /** Invalidate the enb_ue_s1ap_id and the key. */
    ue_context->enb_ue_s1ap_id = 0;
    /*
@@ -2396,6 +2528,7 @@ mme_app_handle_forward_relocation_request(
        ue_context->mme_ue_s1ap_id,
        ue_context->imsi,      /**< New IMSI. */
        ue_context->mme_teid_s11,
+       ue_context->local_mme_teid_s10,
        &ue_context->guti);
 
    /** Synchronously send a UE context Release Request (implicit - no response expected). */
@@ -2414,9 +2547,9 @@ mme_app_handle_forward_relocation_request(
     */
    nas_ctx_req_proc_t * emm_cn_proc_ctx_req = get_nas_cn_procedure_ctx_req(ue_nas_ctx);
    if(emm_cn_proc_ctx_req){
-     OAILOG_WARNING(LOG_MME_APP, "A context request procedure already exists for UE " MME_UE_S1AP_ID_FMT " with IMSI " IMSIin state %d. "
+     OAILOG_WARNING(LOG_MME_APP, "A context request procedure already exists for UE " MME_UE_S1AP_ID_FMT " with IMSI " IMSI_64_FMT "in state %d. "
          "Aborting old context request procedure and continuing with new handover request with the implicit detach. \n.",
-         ue_context_p->mme_ue_s1ap_id, ue_context_p->mm_state);
+         ue_context->mme_ue_s1ap_id, ue_context->imsi, ue_context->mm_state);
      /** Cannot send EMMREG abort procedure signal to EMM, thatswhy implicitly detaching the old UE context. */
    }
    ue_context->s1_ue_context_release_cause = S1AP_INVALIDATE_NAS;  /**< This should remove the NAS context and invalidate the timers. */
@@ -2432,7 +2565,7 @@ mme_app_handle_forward_relocation_request(
    OAILOG_WARNING(LOG_MME_APP, "No  valid UE context and NAS context exist for UE with IMSI " IMSI_64_FMT ". Continuing with the handover. \n", imsi);
  }
  OAILOG_INFO(LOG_MME_APP, "Received a FORWARD_RELOCATION_REQUEST for new UE with IMSI " IMSI_64_FMT ". \n", imsi);
- boolean new_ue_context = false;
+ bool new_ue_context = false;
  if(!ue_context){
    /** Establish the UE context. */
    OAILOG_DEBUG (LOG_MME_APP, "Creating a new UE context for the UE with incoming S1AP Handover via S10 for IMSI " IMSI_64_FMT ". \n", imsi);
@@ -2476,7 +2609,7 @@ mme_app_handle_forward_relocation_request(
   * Store all pending PDN connections in it.
   * Each time a CSResp for a specific APN arrives, send another CSReq if needed.
   */
- s10_proc_mme_handover = mme_app_create_s10_procedure_mme_handover(ue_context, true);
+ s10_proc_mme_handover = mme_app_create_s10_procedure_mme_handover(ue_context, true, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER);
  DevAssert(s10_proc_mme_handover);
 
  /*
@@ -2496,7 +2629,7 @@ mme_app_handle_forward_relocation_request(
  forward_relocation_request_pP->eutran_container = NULL;
  s10_proc_mme_handover->f_cause = forward_relocation_request_pP->f_cause;
  forward_relocation_request_pP->f_cause = NULL;
- s10_proc_mme_handover->remote_mme_teid.ipv4_address.s_addr = forward_relocation_request_pP->peer_ip.s_addr;
+ s10_proc_mme_handover->remote_mme_teid.ipv4_address.s_addr = forward_relocation_request_pP->peer_ip->s_addr;
  forward_relocation_request_pP->peer_ip = NULL; // todo: if they differ etc..
  s10_proc_mme_handover->peer_port = forward_relocation_request_pP->peer_port;
  s10_proc_mme_handover->forward_relocation_trxn = forward_relocation_request_pP->trxn;
@@ -2525,12 +2658,22 @@ mme_app_handle_forward_relocation_request(
     * Not updating the PDN connections IE for the UE.
     * Assuming that it is a too fast re-handover where it is not needed.
     */
-   // todo: enb_id type
-   mme_app_send_s1ap_handover_request(ue_context->mme_ue_s1ap_id, forward_relocation_request_pP->target_identification.target_id.macro_enb_id,
-       forward_relocation_request_pP->ue_eps_mm_context.ue_nc.eea,
-       forward_relocation_request_pP->ue_eps_mm_context.ue_nc.eia,
-       forward_relocation_request_pP->ue_eps_mm_context.nh,
-       forward_relocation_request_pP->ue_eps_mm_context.ncc,
+   /** Get all VOs of all session bearers and send handover request with it. */
+   bearer_contexts_to_be_created_t bcs_tbc;
+   memset((void*)&bcs_tbc, 0, sizeof(bcs_tbc));
+   pdn_context_t * registered_pdn_ctx = NULL;
+   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+     DevAssert(registered_pdn_ctx);
+     mme_app_get_bearer_contexts_to_be_created(registered_pdn_ctx, &bcs_tbc, BEARER_STATE_NULL);
+     /** The number of bearers will be incremented in the method. S10 should just pick the ebi. */
+   }
+   mme_app_send_s1ap_handover_request(ue_context->mme_ue_s1ap_id,
+       &bcs_tbc,
+       forward_relocation_request_pP->target_identification.target_id.macro_enb_id.enb_id,
+       forward_relocation_request_pP->ue_eps_mm_context->ue_nc.eea,
+       forward_relocation_request_pP->ue_eps_mm_context->ue_nc.eia,
+       forward_relocation_request_pP->ue_eps_mm_context->nh,
+       forward_relocation_request_pP->ue_eps_mm_context->ncc,
        forward_relocation_request_pP->eutran_container);
    /** Unlink the e-utran transparent container. */
    forward_relocation_request_pP->eutran_container = NULL;
@@ -2546,7 +2689,7 @@ mme_app_handle_forward_relocation_request(
  */
 static
 void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
-    pdn_context_t          *pdn_context,
+    bearer_contexts_to_be_created_t *bcs_tbc,
     uint32_t                enb_id,
     uint16_t                encryption_algorithm_capabilities,
     uint16_t                integrity_algorithm_capabilities,
@@ -2575,7 +2718,7 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
   handover_request_p->ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl;
 
   /** Set the bearer contexts to be created. Not changing any bearer state. */
-  mme_app_get_bearer_contexts_to_be_created(pdn_context, &handover_request_p->bearer_ctx_to_be_setup_list, BEARER_STATE_NULL);
+  memset((void*)&handover_request_p->bearer_ctx_to_be_setup_list, bcs_tbc, sizeof(bearer_contexts_to_be_created_t));
 
   /** Set the Security Capabilities. */
   handover_request_p->security_capabilities_encryption_algorithms = encryption_algorithm_capabilities;
@@ -2626,7 +2769,7 @@ void mme_app_send_s1ap_handover_command(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_
 //------------------------------------------------------------------------------
 void
 mme_app_handle_forward_relocation_response(
-    const itti_s10_forward_relocation_response_t* const forward_relocation_response_pP
+    itti_s10_forward_relocation_response_t* const forward_relocation_response_pP
     )
 {
   struct ue_context_s                    *ue_context = NULL;
@@ -2638,7 +2781,7 @@ mme_app_handle_forward_relocation_response(
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (forward_relocation_response_pP );
 
-  ue_context = mme_ue_context_exists_s10_teid (&mme_app_desc.mme_ue_contexts, forward_relocation_response_pP->teid);
+  ue_context = mme_ue_context_exists_s11_teid(&mme_app_desc.mme_ue_contexts, forward_relocation_response_pP->teid);
 
   if (ue_context == NULL) {
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 S10_FORWARD_RELOCATION_RESPONSE local S11 teid " TEID_FMT " ", forward_relocation_response_pP->teid);
@@ -2651,7 +2794,7 @@ mme_app_handle_forward_relocation_response(
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 S10_FORWARD_RELOCATION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
-      forward_relocation_response_pP->teid, ue_context_p->imsi);
+      forward_relocation_response_pP->teid, ue_context->imsi);
   /*
    * Check that there is a s10 handover procedure.
    * If not, drop the message, don't care about target-MME.
@@ -2660,12 +2803,12 @@ mme_app_handle_forward_relocation_response(
   if(!s10_handover_procedure){
     /** Deal with the error case. */
     OAILOG_ERROR(LOG_MME_APP, "No S10 Handover procedure for UE IMSI " IMSI_64_FMT " and mmeS1apUeId " MME_UE_S1AP_ID_FMT " in state %d. Dropping the ForwardRelResp. \n",
-        ue_context_p->imsi, ue_context_p->mme_ue_s1ap_id, ue_context->mm_state);
+        ue_context->imsi, ue_context->mme_ue_s1ap_id, ue_context->mm_state);
     /** No implicit detach. */
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
-  if (forward_relocation_response_pP->cause != REQUEST_ACCEPTED) {
+  if (forward_relocation_response_pP->cause.cause_value != REQUEST_ACCEPTED) {
     /**
      * We are in EMM-REGISTERED state, so we don't need to perform an implicit detach.
      * In the target side, we won't do anything. We assumed everything is taken care of (No Relocation Cancel Request to be sent).
@@ -2716,7 +2859,7 @@ mme_app_handle_forward_relocation_response(
 //------------------------------------------------------------------------------
 void
 mme_app_handle_forward_access_context_notification(
-    const itti_s10_forward_access_context_notification_t* const forward_access_context_notification_pP
+    itti_s10_forward_access_context_notification_t* const forward_access_context_notification_pP
     )
 {
   struct ue_context_s                    *ue_context = NULL;
@@ -2760,12 +2903,12 @@ mme_app_handle_forward_access_context_notification(
       &message_p->ittiMsg.s10_forward_access_context_acknowledge;
   s10_mme_forward_access_context_acknowledge_p->teid        = s10_handover_process->remote_mme_teid.teid;  /**< Set the target TEID. */
   s10_mme_forward_access_context_acknowledge_p->local_teid  = ue_context->local_mme_teid_s10;   /**< Set the local TEID. */
-  s10_mme_forward_access_context_acknowledge_p->peer_ip     = s10_handover_process->remote_mme_teid.ipv4_address.s_addr; /**< Set the target TEID. */
+  s10_mme_forward_access_context_acknowledge_p->peer_ip     = s10_handover_process->remote_mme_teid.ipv4_address; /**< Set the target TEID. */
   s10_mme_forward_access_context_acknowledge_p->trxn        = forward_access_context_notification_pP->trxn; /**< Set the target TEID. */
   /** Check that there is a pending handover process. */
   DevAssert(ue_context->mm_state == UE_REGISTERED);
   /** Deal with the error case. */
-  s10_mme_forward_access_context_acknowledge_p->cause = REQUEST_ACCEPTED;
+  s10_mme_forward_access_context_acknowledge_p->cause.cause_value = REQUEST_ACCEPTED;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "MME_APP Sending S10 FORWARD_ACCESS_CONTEXT_ACKNOWLEDGE.");
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
 
@@ -2826,7 +2969,7 @@ mme_app_handle_forward_access_context_acknowledge(
 //------------------------------------------------------------------------------
 void
 mme_app_handle_handover_request_acknowledge(
-     const itti_s1ap_handover_request_acknowledge_t * const handover_request_acknowledge_pP
+     itti_s1ap_handover_request_acknowledge_t * const handover_request_acknowledge_pP
     )
 {
  struct ue_context_s                    *ue_context = NULL;
@@ -2861,7 +3004,7 @@ mme_app_handle_handover_request_acknowledge(
  if(!s10_handover_proc){
    // todo: how could this happen?
    OAILOG_INFO(LOG_MME_APP, "No S10 handover procedure for mmeUeS1APId : " MME_UE_S1AP_ID_FMT " and enbUeS1apId " ENB_UE_S1AP_ID_FMT ". \n",
-      ue_context->mme_ue_s1ap_id, ue_context_p->enb_ue_s1ap_id);
+      ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id);
    /** Remove the created UE reference. */
    ue_context->s1_ue_context_release_cause = S1AP_SYSTEM_FAILURE;
    mme_app_itti_ue_context_release(handover_request_acknowledge_pP->mme_ue_s1ap_id, handover_request_acknowledge_pP->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, ue_context->e_utran_cgi.cell_identity.enb_id);
@@ -2982,38 +3125,49 @@ mme_app_handle_handover_failure (
      const itti_s1ap_handover_failure_t * const handover_failure_pP
     )
 {
- struct ue_context_s                    *ue_context_p = NULL;
+ struct ue_context_s                    *ue_context = NULL;
  MessageDef                             *message_p = NULL;
  uint64_t                                imsi = 0;
+ mme_app_s10_proc_mme_handover_t        *s10_handover_proc = NULL;
 
  OAILOG_FUNC_IN (LOG_MME_APP);
 
  OAILOG_DEBUG (LOG_MME_APP, "Received S1AP_HANDOVER_FAILURE from target eNB for UE_ID " MME_UE_S1AP_ID_FMT ". \n", handover_failure_pP->mme_ue_s1ap_id);
 
  /** Check that the UE does exist (in both S1AP cases). */
- ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, handover_failure_pP->mme_ue_s1ap_id);
- if (ue_context_p == NULL) {
-   OAILOG_ERROR(LOG_MME_APP, "An UE MME context does not exist for UE with mmeS1apUeId %d. \n", handover_failure_pP->mme_ue_s1ap_id);
-   MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_HANDOVER_FAILURE. No UE existing mmeS1apUeId %d. \n", handover_failure_pP->mme_ue_s1ap_id);
+ ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, handover_failure_pP->mme_ue_s1ap_id);
+ if (ue_context == NULL) {
+   OAILOG_ERROR(LOG_MME_APP, "An UE MME context does not exist for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT". Ignoring received handover_failure. \n", handover_failure_pP->mme_ue_s1ap_id);
+   MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_HANDOVER_FAILURE. No UE existing mmeS1apUeId" MME_UE_S1AP_ID_FMT". Ignoring received handover_failure. \n", handover_failure_pP->mme_ue_s1ap_id);
+   /** Ignore the message. */
+   OAILOG_FUNC_OUT (LOG_MME_APP);
+ }
+ /** Check if an handover procedure exists, if not drop the message. */
+ s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
+ if(!s10_handover_proc){
+   OAILOG_ERROR(LOG_MME_APP, "No S10 Handover procedure exists for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT". Ignoring received handover_failure. \n", handover_failure_pP->mme_ue_s1ap_id);
+   MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_HANDOVER_FAILURE. No S10 Handover procedure exists for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT". Ignoring received handover_failure. \n", handover_failure_pP->mme_ue_s1ap_id);
    /** Ignore the message. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Check if the UE is EMM-REGISTERED or not. */
- if(ue_context_p->mm_state == UE_REGISTERED){
+ if(ue_context->mm_state == UE_REGISTERED){
    /**
     * UE is registered, we assume in this case that the source-MME is also attached to the current.
     * In this case, we need to re-notify the MME_UE_S1AP_ID<->SCTP association, because it might be removed with the error handling.
     */
-   notify_s1ap_new_ue_mme_s1ap_id_association (ue_context_p->sctp_assoc_id_key, ue_context_p->enb_ue_s1ap_id, ue_context_p->mme_ue_s1ap_id);
+   notify_s1ap_new_ue_mme_s1ap_id_association (ue_context->sctp_assoc_id_key, ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
    /** We assume a valid enb & sctp id in the UE_Context. */
-   mme_app_send_s1ap_handover_preparation_failure(ue_context_p->mme_ue_s1ap_id, ue_context_p->enb_ue_s1ap_id, ue_context_p->sctp_assoc_id_key, S1AP_HANDOVER_FAILED);
+   mme_app_send_s1ap_handover_preparation_failure(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->sctp_assoc_id_key, S1AP_HANDOVER_FAILED);
    /**
     * As the specification said, we will leave the UE_CONTEXT as it is. Not checking further parameters.
     * No timers are started. Only timers are in the source-ENB.
     */
-   /** In case a system error has occurred, purge the E-UTRAN container. */
-   bdestroy(ue_context_p->pending_s1ap_source_to_target_handover_container);
-
+   /*
+    * Delete the s10 handover procedure.
+    */
+   mme_app_delete_s10_procedure_mme_handover(ue_context);
+   /** Leave the context as it is. */
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /**
@@ -3027,24 +3181,24 @@ mme_app_handle_handover_failure (
  itti_s10_forward_relocation_response_t *forward_relocation_response_p = &message_p->ittiMsg.s10_forward_relocation_response;
  memset ((void*)forward_relocation_response_p, 0, sizeof (itti_s10_forward_relocation_response_t));
  /** Set the target S10 TEID. */
- forward_relocation_response_p->teid    = ue_context_p->remote_mme_s10_teid; /**< Only a single target-MME TEID can exist at a time. */
+ forward_relocation_response_p->teid    = s10_handover_proc->remote_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
  /** Get the MME from the origin TAI. */
- forward_relocation_response_p->peer_ip = ue_context_p->remote_mme_s10_peer_ip; /**< todo: Check this is correct. */
+ forward_relocation_response_p->peer_ip = s10_handover_proc->remote_mme_teid.ipv4_address; /**< todo: Check this is correct. */
  /**
   * Trxn is the only object that has the last seqNum, but we can only search the TRXN in the RB-Tree with the seqNum.
   * We need to store the last seqNum locally.
   */
- forward_relocation_response_p->trxn    = ue_context_p->pending_s10_response_trxn;
+ forward_relocation_response_p->trxn    = s10_handover_proc->forward_relocation_trxn;
  /** Set the cause. */
- forward_relocation_response_p->cause = RELOCATION_FAILURE;
+ forward_relocation_response_p->cause.cause_value = RELOCATION_FAILURE;
 
- /** Perform an implicit detach. */
- ue_context_p->ue_context_rel_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
+ /** Perform an implicit detach. Will remove all S10 procedures. */
+ ue_context->s1_ue_context_release_cause = S1AP_IMPLICIT_CONTEXT_RELEASE;
  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
  DevAssert (message_p != NULL);
  itti_nas_implicit_detach_ue_ind_t *nas_implicit_detach_ue_ind_p = &message_p->ittiMsg.nas_implicit_detach_ue_ind;
  memset ((void*)nas_implicit_detach_ue_ind_p, 0, sizeof (itti_nas_implicit_detach_ue_ind_t));
- message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context_p->mme_ue_s1ap_id;
+ message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id;
  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
 
  /** No timers, etc. is needed. */
@@ -3054,7 +3208,7 @@ mme_app_handle_handover_failure (
 //------------------------------------------------------------------------------
 void
 mme_app_handle_enb_status_transfer(
-     const itti_s1ap_status_transfer_t * const s1ap_status_transfer_pP
+     itti_s1ap_status_transfer_t * const s1ap_status_transfer_pP
     )
 {
  struct ue_context_s                    *ue_context = NULL;
@@ -3213,19 +3367,19 @@ mme_app_handle_s1ap_handover_notify(
  pdn_context_t * pdn_context = NULL;
  RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
    DevAssert(pdn_context);
-   bearer_context_t * first_bearer = RB_MIN(BearerPool, &pdn_context->session_bearers);
+   bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
    DevAssert(first_bearer);
    if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
      /** Continue to next pdn. */
      continue;
    }else{
      /** Found a PDN. Establish the bearer contexts. */
-     OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. Successfully handled handover notify. \n", ue_context_p->mme_ue_s1ap_id);
+     OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. Successfully handled handover notify. \n", ue_context->mme_ue_s1ap_id);
      mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
      OAILOG_FUNC_OUT (LOG_MME_APP);
    }
  }
- OAILOG_ERROR(LOG_MME_APP, "No PDN found to establish the bearers for UE " MME_UE_S1AP_ID_FMT " due handover notify. \n", ue_context_p->mme_ue_s1ap_id);
+ OAILOG_ERROR(LOG_MME_APP, "No PDN found to establish the bearers for UE " MME_UE_S1AP_ID_FMT " due handover notify. \n", ue_context->mme_ue_s1ap_id);
  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -3250,14 +3404,14 @@ mme_app_handle_forward_relocation_complete_notification(
    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
  }
  MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "0 FORWARD_RELOCATION_COMPLETE_NOTIFICATION local S10 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
-     forward_relocation_complete_notification_pP->teid, ue_context_p->imsi);
+     forward_relocation_complete_notification_pP->teid, ue_context->imsi);
 
  /** Check that there is a pending handover process. */
  mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
  if(!s10_handover_proc || s10_handover_proc->proc.type == MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER){
    /** Deal with the error case. */
    OAILOG_ERROR(LOG_MME_APP, "UE MME context with IMSI " IMSI_64_FMT " and mmeS1apUeId: " MME_UE_S1AP_ID_FMT " in state %d has not a valid INTER-MME S10 procedure running. "
-       "Ignoring received S10_FORWARD_RELOCATION_COMPLETE_NOTIFICATION. \n", ue_context_p->imsi, ue_context_p->mme_ue_s1ap_id, ue_context_p->mm_state);
+       "Ignoring received S10_FORWARD_RELOCATION_COMPLETE_NOTIFICATION. \n", ue_context->imsi, ue_context->mme_ue_s1ap_id, ue_context->mm_state);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Send S10 Forward Relocation Complete Notification. */
@@ -3271,7 +3425,7 @@ mme_app_handle_forward_relocation_complete_notification(
  /** Set the local TEID. */
  forward_relocation_complete_acknowledge_p->local_teid = ue_context->local_mme_teid_s10;      /**< Local S10-MME TEID. */
  /** Set the cause. */
- forward_relocation_complete_acknowledge_p->cause      = REQUEST_ACCEPTED;                       /**< Check the cause.. */
+ forward_relocation_complete_acknowledge_p->cause.cause_value      = REQUEST_ACCEPTED;                       /**< Check the cause.. */
  /** Set the peer IP. */
  forward_relocation_complete_acknowledge_p->peer_ip.s_addr = s10_handover_proc->remote_mme_teid.ipv4_address.s_addr; /**< Set the target TEID. */
  /** Set the transaction. */
@@ -3289,18 +3443,19 @@ mme_app_handle_forward_relocation_complete_notification(
   */
  ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
  if(old_ue_reference){
-   if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
-       TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
-     OAILOG_ERROR (LOG_MME_APP, "Failed to start >s1ap_handover_completion for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d \n", old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
-     old_ue_reference->s1ap_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
-     ue_context->mme_mobility_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
-   } else {
-     OAILOG_DEBUG (LOG_MME_APP, "MME APP : Completed Handover Procedure at (source) MME side after handling S1AP_HANDOVER_NOTIFY. "
-         "Activated the S1AP Handover completion timer enbUeS1apId " ENB_UE_S1AP_ID_FMT ". Removing source eNB resources after timer.. Timer Id %u. Timer duration %d \n",
-         old_ue_reference->enb_ue_s1ap_id, old_ue_reference->s1ap_handover_completion_timer.id, mme_config.mme_mobility_completion_timer);
-     /** For the case of the S10 handover, add the timer ID to the MME_APP UE context to remove the UE context. */
-     ue_context->mme_mobility_completion_timer.id = old_ue_reference->s1ap_handover_completion_timer.id;
-   }
+   // todo: instead start timer of the procedure (only if target-mme for inter-MME S1ap handover).
+//   if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
+//       TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
+//     OAILOG_ERROR (LOG_MME_APP, "Failed to start >s1ap_handover_completion for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d \n", old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
+//     old_ue_reference->s1ap_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+//     ue_context->mme_mobility_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+//   } else {
+//     OAILOG_DEBUG (LOG_MME_APP, "MME APP : Completed Handover Procedure at (source) MME side after handling S1AP_HANDOVER_NOTIFY. "
+//         "Activated the S1AP Handover completion timer enbUeS1apId " ENB_UE_S1AP_ID_FMT ". Removing source eNB resources after timer.. Timer Id %u. Timer duration %d \n",
+//         old_ue_reference->enb_ue_s1ap_id, old_ue_reference->s1ap_handover_completion_timer.id, mme_config.mme_mobility_completion_timer);
+//     /** For the case of the S10 handover, add the timer ID to the MME_APP UE context to remove the UE context. */
+//     ue_context->mme_mobility_completion_timer.id = old_ue_reference->s1ap_handover_completion_timer.id;
+//   }
  }else{
    OAILOG_DEBUG(LOG_MME_APP, "No old UE_REFERENCE was found for mmeS1apUeId " MME_UE_S1AP_ID_FMT " and enbUeS1apId "ENB_UE_S1AP_ID_FMT ". Not starting a new timer. \n",
        ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
@@ -3314,68 +3469,43 @@ mme_app_handle_forward_relocation_complete_acknowledge(
      const itti_s10_forward_relocation_complete_acknowledge_t * const forward_relocation_complete_acknowledgement_pP
     )
 {
- struct ue_context_s                    *ue_context_p = NULL;
+ struct ue_context_s                    *ue_context = NULL;
  MessageDef                             *message_p = NULL;
 
  OAILOG_FUNC_IN (LOG_MME_APP);
  OAILOG_DEBUG (LOG_MME_APP, "Received S10_FORWARD_RELOCATION_COMPLETE_ACKNOWLEDGEMENT from S10. \n");
 
  /** Check that the UE does exist. */
- ue_context_p = mme_ue_context_exists_s10_teid(&mme_app_desc.mme_ue_contexts, forward_relocation_complete_acknowledgement_pP->teid);
- if (ue_context_p == NULL) {
+ ue_context = mme_ue_context_exists_s10_teid(&mme_app_desc.mme_ue_contexts, forward_relocation_complete_acknowledgement_pP->teid);
+ if (ue_context == NULL) {
    OAILOG_ERROR(LOG_MME_APP, "An UE MME context does not exist for UE with s10 teid %d. \n", forward_relocation_complete_acknowledgement_pP->teid);
    MSC_LOG_EVENT (MSC_MMEAPP_MME, "S10_FORWARD_RELOCATION_COMPLETE_ACKNOWLEDGEMENT. No UE existing teid %d. \n", forward_relocation_complete_acknowledgement_pP->teid);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
 
- /** Stop the MME S10 Handover Completion timer. */
- if (ue_context_p->mme_s10_handover_completion_timer.id != MME_APP_TIMER_INACTIVE_ID) {
-   if (timer_remove(ue_context_p->mme_s10_handover_completion_timer.id)) {
-     OAILOG_ERROR (LOG_MME_APP, "Failed to stop MME S10 Handover Completion timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
-   }
-   ue_context_p->mme_s10_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
- }
-
- /**
-  * S1AP inter-MME handover is complete now. Modify the bearers with the new downlink tunnel IDs of the MME.
+ /*
+  * Not stopping MME Handover Completion timer. It will be stopped with the removed handover procedure on the target MME side for inter-mme s1ap handover.
+  * (When TAU-Complete is received // UE is registered).
   */
- message_p = itti_alloc_new_message (TASK_MME_APP, S11_MODIFY_BEARER_REQUEST);
- AssertFatal (message_p , "itti_alloc_new_message Failed");
- itti_s11_modify_bearer_request_t *s11_modify_bearer_request = &message_p->ittiMsg.s11_modify_bearer_request;
- memset ((void *)s11_modify_bearer_request, 0, sizeof (*s11_modify_bearer_request));
- s11_modify_bearer_request->peer_ip    = mme_config.ipv4.sgw_s11;
- s11_modify_bearer_request->teid       = ue_context_p->sgw_s11_teid;
- s11_modify_bearer_request->local_teid = ue_context_p->mme_teid_s11;
- s11_modify_bearer_request->trxn       = NULL;
-
- /** Delay Value in integer multiples of 50 millisecs, or zero. */
- s11_modify_bearer_request->delay_dl_packet_notif_req = 0;  // TO DO
- s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id = ue_context_p->pending_s1u_downlink_bearer_ebi;
- memcpy (&s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].s1_eNB_fteid,
-     &ue_context_p->pending_s1u_downlink_bearer, sizeof (ue_context_p->pending_s1u_downlink_bearer));
- s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context = 1;
-
- s11_modify_bearer_request->bearer_contexts_to_be_removed.num_bearer_context = 0;
-
-
- s11_modify_bearer_request->mme_fq_csid.node_id_type = GLOBAL_UNICAST_IPv4; // TO DO
- s11_modify_bearer_request->mme_fq_csid.csid = 0;   // TO DO ...
- memset(&s11_modify_bearer_request->indication_flags, 0, sizeof(s11_modify_bearer_request->indication_flags));   // TO DO
- s11_modify_bearer_request->rat_type = RAT_EUTRAN;
-
- /**
-  * S11 stack specific parameter. Not used in standalone epc mode
-  * todo: what is this? MBR trxn not set? should also be set to NULL for S10 messages?! */
- s11_modify_bearer_request->trxn = NULL;
- MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME,  MSC_S11_MME ,
-     NULL, 0, "0 S11_MODIFY_BEARER_REQUEST after FORWARD_RELOCATION_COMPLETE_ACKNOWLEDGE teid %u ebi %u", s11_modify_bearer_request->teid,
-     s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[0].eps_bearer_id);
- itti_send_msg_to_task (TASK_S11, INSTANCE_DEFAULT, message_p);
-//  DevAssert(mme_app_complete_inter_mme_handover(ue_context_p, REQUEST_ACCEPTED) == RETURNok); /**< todo: later make this un-crash.*/
+ pdn_context_t * pdn_context = NULL;
+ RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+   DevAssert(pdn_context);
+   bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
+   DevAssert(first_bearer);
+   if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
+     /** Continue to next pdn. */
+     continue;
+   }else{
+     /** Found a PDN. Establish the bearer contexts. */
+     OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. \n", ue_context->mme_ue_s1ap_id);
+     mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
+     OAILOG_FUNC_OUT (LOG_MME_APP);
+   }
+ }
 
  /** S1AP inter-MME handover is complete. */
  OAILOG_INFO(LOG_MME_APP, "UE_Context with IMSI " IMSI_64_FMT " and mmeUeS1apId: " MME_UE_S1AP_ID_FMT " successfully completed handover procedure! \n",
-     ue_context_p->imsi, ue_context_p->mme_ue_s1ap_id);
+     ue_context->imsi, ue_context->mme_ue_s1ap_id);
  OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
@@ -3387,14 +3517,14 @@ mme_app_handle_mobile_reachability_timer_expiry (struct ue_context_s *ue_context
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (ue_context != NULL);
   ue_context->mobile_reachability_timer.id = MME_APP_TIMER_INACTIVE_ID;
-  OAILOG_INFO (LOG_MME_APP, "Expired- Mobile Reachability Timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+  OAILOG_INFO (LOG_MME_APP, "Expired- Mobile Reachability Timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
   // Start Implicit Detach timer
   if (timer_setup (ue_context->implicit_detach_timer.sec, 0,
                 TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)&(ue_context->mme_ue_s1ap_id), &(ue_context->implicit_detach_timer.id)) < 0) {
-    OAILOG_ERROR (LOG_MME_APP, "Failed to start Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    OAILOG_ERROR (LOG_MME_APP, "Failed to start Implicit Detach timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
     ue_context->implicit_detach_timer.id = MME_APP_TIMER_INACTIVE_ID;
   } else {
-    OAILOG_DEBUG (LOG_MME_APP, "Started Implicit Detach timer for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+    OAILOG_DEBUG (LOG_MME_APP, "Started Implicit Detach timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
@@ -3418,12 +3548,13 @@ mme_app_handle_implicit_detach_timer_expiry (struct ue_context_s *ue_context)
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
+// todo: handle this inside normal mme_app_procs timeout handler
 //------------------------------------------------------------------------------
 void
 mme_app_handle_mobility_completion_timer_expiry (struct ue_context_s *ue_context)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (ue_context_p != NULL);
+  DevAssert (ue_context != NULL);
   MessageDef                             *message_p = NULL;
   OAILOG_INFO (LOG_MME_APP, "Expired- MME Mobility Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. \n", ue_context->mme_ue_s1ap_id);
   /** Get the S10 Handover Procedure. */
@@ -3433,15 +3564,15 @@ mme_app_handle_mobility_completion_timer_expiry (struct ue_context_s *ue_context
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
   if(s10_handover_proc->pending_clear_location_request){
-    OAILOG_INFO (LOG_MME_APP, "CLR flag is set for UE " MME_UE_S1AP_ID_FMT ". Performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
-    ue_context->mme_mobility_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
-    ue_context->s1_ue_context_release_cause = S1AP_NAS_DETACH;
-    /** Check if the CLR flag has been set. */
-    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
-    DevAssert (message_p != NULL);
-    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
-    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
-    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+//    OAILOG_INFO (LOG_MME_APP, "CLR flag is set for UE " MME_UE_S1AP_ID_FMT ". Performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
+//    ue_context->mme_mobility_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+//    ue_context->s1_ue_context_release_cause = S1AP_NAS_DETACH;
+//    /** Check if the CLR flag has been set. */
+//    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+//    DevAssert (message_p != NULL);
+//    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
+//    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+//    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   }else{
     OAILOG_WARNING(LOG_MME_APP, "CLR flag is NOT set for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
   }
@@ -3453,7 +3584,7 @@ void
 mme_app_handle_initial_context_setup_rsp_timer_expiry (struct ue_context_s *ue_context)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-  DevAssert (ue_context_p != NULL);
+  DevAssert (ue_context != NULL);
   MessageDef                             *message_p = NULL;
   OAILOG_INFO (LOG_MME_APP, "Expired- Initial context setup rsp timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
   ue_context->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;
@@ -3494,7 +3625,7 @@ mme_app_handle_initial_context_setup_failure (
   }
   // Stop Initial context setup process guard timer,if running
   if (ue_context->initial_context_setup_rsp_timer.id != MME_APP_TIMER_INACTIVE_ID) {
-    if (timer_remove(ue_context->initial_context_setup_rsp_timer.id)) {
+    if (timer_remove(ue_context->initial_context_setup_rsp_timer.id, NULL)) {
       OAILOG_ERROR (LOG_MME_APP, "Failed to stop Initial Context Setup Rsp timer for UE id  %d \n", ue_context->mme_ue_s1ap_id);
     }
     ue_context->initial_context_setup_rsp_timer.id = MME_APP_TIMER_INACTIVE_ID;

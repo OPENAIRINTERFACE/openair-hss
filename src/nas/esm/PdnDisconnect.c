@@ -58,6 +58,7 @@
 #include "3gpp_36.401.h"
 #include "common_defs.h"
 #include "mme_app_ue_context.h"
+#include "mme_app_defs.h"
 #include "esm_proc.h"
 #include "commonDef.h"
 #include "log.h"

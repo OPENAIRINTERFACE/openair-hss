@@ -37,7 +37,7 @@ int itf_mme_app_nas_initial_ue_message(
     const tai_t      const*  tai,
     const ecgi_t     const*  cgi,
     const long               rrc_cause,
-    const as_stmsi_t const * opt_s_tmsi,
+    const s_stmsi_t  const * opt_s_tmsi,
     const void       const * opt_csg_id,
     const gummei_t   const * opt_gummei,
     const void       const * opt_cell_access_mode,

@@ -98,7 +98,7 @@ typedef struct emm_cn_context_fail_s {
   mme_ue_s1ap_id_t    ue_id;
 
   /* S10 mapped to NAS cause */
-  nas_cause_t cause;
+  gtpv2c_cause_value_t cause;
 } emm_cn_context_fail_t;
 
 struct itti_nas_pdn_config_rsp_s;

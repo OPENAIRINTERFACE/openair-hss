@@ -187,7 +187,7 @@ static nw_rc_t s11_sgw_stop_timer_wrapper (
   long                                    timer_id;
 
   timer_id = (long)tmrHandle;
-  ret = timer_remove (timer_id);        //TODO
+  ret = timer_remove (timer_id, NULL);        //TODO
   return ret == 0 ? NW_OK : NW_FAILURE;
 }
 

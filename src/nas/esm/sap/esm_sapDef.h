@@ -114,6 +114,7 @@ typedef struct esm_pdn_config_res_s {
   imsi64_t imsi;   /* IMSI */
   pdn_cid_t *pdn_cid;
   bool *is_pdn_connectivity;
+  ebi_t * default_ebi;
 } esm_pdn_config_res_t;
 
 /*

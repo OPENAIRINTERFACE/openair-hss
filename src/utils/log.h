@@ -38,6 +38,14 @@
 #ifndef FILE_LOG_SEEN
 #define FILE_LOG_SEEN
 
+#include <syslog.h>
+#include <pthread.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "bstrlib.h"
+
 /* asn1c debug */
 extern int asn_debug;
 extern int asn1_xer_print;

@@ -41,11 +41,6 @@ typedef struct mme_app_desc_s {
   /* UE contexts + some statistics variables */
   mme_ue_context_t mme_ue_contexts;
 
-  uint32_t               nb_enb_connected;
-
-  uint32_t               nb_enb_connected_since_last_stat;
-  uint32_t               nb_enb_released_since_last_stat;
-
   long statistic_timer_id;
   uint32_t statistic_timer_period;
 
@@ -90,9 +85,9 @@ int mme_app_handle_s1ap_ue_capabilities_ind  (const itti_s1ap_ue_cap_ind_t const
 
 void mme_app_handle_s1ap_ue_context_release_complete (const itti_s1ap_ue_context_release_complete_t const *s1ap_ue_context_release_complete);
 
-void mme_app_itti_ue_context_release (    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, target_identification_t *target_id);
+void mme_app_itti_ue_context_release (    mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, uint32_t target_enb_id);
 
-int mme_app_send_s6a_update_location_req     (struct ue_context_s * const ue_context_pP);
+int mme_app_send_s6a_update_location_req     (struct ue_context_s * const ue_context);
 
 int mme_app_handle_s6a_update_location_ans   (const s6a_update_location_ans_t * const ula_pP);
 
@@ -128,7 +123,7 @@ void mme_app_handle_nas_auth_param_req       (const itti_nas_auth_param_req_t * 
 
 void mme_app_handle_initial_context_setup_rsp(itti_mme_app_initial_context_setup_rsp_t * const initial_ctxt_setup_rsp_pP);
 
-bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context_pP, void *unused_param_pP, void **unused_result_pP);
+bool mme_app_dump_ue_context (const hash_key_t keyP, void *const ue_context, void *unused_param_pP, void **unused_result_pP);
 
 int mme_app_handle_nas_dl_req ( itti_nas_dl_data_req_t *const nas_dl_req_pP);
 
@@ -140,6 +135,62 @@ void mme_app_handle_create_dedicated_bearer_rej (itti_mme_app_create_dedicated_b
 
 void mme_app_trigger_mme_initiated_dedicated_bearer_deactivation_procedure (ue_context_t * const ue_context, const pdn_cid_t cid);
 
+
+
+
+
+
+
+
+
+/** S1AP Handover messaging. */
+void mme_app_handle_handover_required( itti_s1ap_handover_required_t * handover_required_pP );
+
+void mme_app_handle_handover_cancel( const itti_s1ap_handover_cancel_t * const handover_cancel_pP );
+
+/** Handling S10 Messages. */
+void mme_app_handle_forward_relocation_request( itti_s10_forward_relocation_request_t * const forward_relocation_request_pP );
+
+void mme_app_handle_forward_relocation_response(  itti_s10_forward_relocation_response_t* const forward_relocation_response_pP );
+
+void mme_app_handle_forward_access_context_notification( itti_s10_forward_access_context_notification_t * const forward_access_context_notification_pP );
+
+void mme_app_handle_forward_access_context_acknowledge( const itti_s10_forward_access_context_acknowledge_t* const forward_access_context_acknowledge_pP );
+
+void mme_app_handle_handover_request_acknowledge(itti_s1ap_handover_request_acknowledge_t * const handover_request_acknowledge_pP    );
+
+void mme_app_handle_handover_failure(const itti_s1ap_handover_failure_t * const handover_failure_pP    );
+
+void mme_app_handle_enb_status_transfer(itti_s1ap_status_transfer_t* const s1ap_status_transfer_pP    );
+
+void mme_app_handle_forward_relocation_complete_notification(const itti_s10_forward_relocation_complete_notification_t* const forward_relocation_complete_notification_pP    );
+
+void mme_app_handle_forward_relocation_complete_acknowledge(const itti_s10_forward_relocation_complete_acknowledge_t* const forward_relocation_complete_acknowledge_pP    );
+
+/** Relocation Cancel Request & Response. */
+void
+mme_app_handle_relocation_cancel_request(
+     const itti_s10_relocation_cancel_request_t * const relocation_cancel_request_pP
+    );
+
+void
+mme_app_handle_relocation_cancel_response(
+     const itti_s10_relocation_cancel_response_t * const relocation_cancel_response_pP
+    );
+
+/** TAU Related Messaging. */
+void mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP);
+
+void mme_app_handle_s10_context_request( const itti_s10_context_request_t * const context_request_pP );
+
+void mme_app_handle_s10_context_response( itti_s10_context_response_t * const context_response_pP );
+
+void mme_app_handle_s10_context_acknowledge( const itti_s10_context_acknowledge_t * const context_acknowledge_pP );
+
+
+/** Paging Functions. */
+
+void mme_app_handle_downlink_data_notification (const itti_s11_downlink_data_notification_t * const saegw_dl_data_ntf_pP);
 
 #define mme_stats_read_lock(mMEsTATS)  pthread_rwlock_rdlock(&(mMEsTATS)->rw_lock)
 #define mme_stats_write_lock(mMEsTATS) pthread_rwlock_wrlock(&(mMEsTATS)->rw_lock)

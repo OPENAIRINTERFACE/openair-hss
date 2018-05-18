@@ -73,6 +73,7 @@
 #include "emm_sap.h"
 #include "mme_config.h"
 #include "nas_itti_messaging.h"
+#include "mme_app_defs.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -148,7 +149,7 @@ esm_proc_dedicated_eps_bearer_context (
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
   ebi_t                                   ebi = 0;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n",
-      ue_id, pid);
+      ue_id, pdn_cid);
   /*
    * No bearer context is assigned yet. Assign new EPS bearer contexts
    */
@@ -162,13 +163,13 @@ esm_proc_dedicated_eps_bearer_context (
       /*
        * Create dedicated EPS bearer context
        */
-      *default_ebi = esm_ebr_context_create (emm_context, pti, pdn_cid, ebis[num_bc], IS_DEFAULT_BEARER_NO, &bearer_qos[num_bc], tft_array[num_bc], pcos[num_bc]);
+      ebi = esm_ebr_context_create (emm_context, pti, pdn_cid, ebis[num_bc], NULL, IS_DEFAULT_BEARER_NO, &bearer_qos[num_bc], tft_array[num_bc], pcos[num_bc]);
 
-      if (*default_ebi == ESM_EBI_UNASSIGNED) {
+      if (ebi == ESM_EBI_UNASSIGNED) {
         /*
          * Update the bearer context tft, qos, etc.. information.
          */
-        OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create dedicated EPS " "bearer context (ebi=%d)\n", *ebi);
+        OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to create dedicated EPS " "bearer context (ebi=%d)\n", ebis[num_bc]);
         *esm_cause = ESM_CAUSE_INSUFFICIENT_RESOURCES;
         OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
       }
@@ -356,7 +357,8 @@ esm_proc_dedicated_eps_bearer_context_reject (
     /*
      * Release the dedicated EPS bearer context and enter state INACTIVE
      */
-    rc = esm_proc_default_eps_bearer_context_deactivate (emm_context, true, ebi, &pid, &bid, NULL);
+    // todo: check this
+//    rc = esm_proc_default_eps_bearer_context_deactivate (emm_context, true, ebi, &pid, &bid, NULL);
 
     if (rc != RETURNok) {
       /*
@@ -434,12 +436,11 @@ static void _dedicated_eps_bearer_activate_t3485_handler (void *args)
        * message retransmission has exceed
        */
       pdn_cid_t                               pid = MAX_APN_PER_UE;
-      int                                     bid = BEARERS_PER_UE;
 
       /*
        * Release the dedicated EPS bearer context and enter state INACTIVE
        */
-      rc = esm_proc_eps_bearer_context_deactivate (esm_ebr_timer_data->ctx, true, esm_ebr_timer_data->ebi, &pid, &bid, NULL);
+      rc = esm_proc_eps_bearer_context_deactivate (esm_ebr_timer_data->ctx, true, esm_ebr_timer_data->ebi, pid, NULL);
 
       if (rc != RETURNerror) {
         /*
@@ -489,8 +490,8 @@ static int _dedicated_eps_bearer_activate (
   emm_sap_t                               emm_sap = {0};
   int                                     rc;
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
-  ue_context_t                           *ue_context_p = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, ue_id);
-  bearer_context_t                       *bearer_context = mme_app_get_session_bearer_context(ue_context_p, ebi);
+  ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  bearer_context_t                       *bearer_context = mme_app_get_session_bearer_context_from_all(ue_context, ebi);
 
   /*
    * Notify EMM that an activate dedicated EPS bearer context request

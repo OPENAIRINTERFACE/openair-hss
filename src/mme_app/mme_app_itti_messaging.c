@@ -57,7 +57,7 @@
 #include "mme_app_itti_messaging.h"
 #include "mme_app_sgw_selection.h"
 
-
+// todo: also check this for home/macro
 //------------------------------------------------------------------------------
 void mme_app_itti_ue_context_release (
     mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, enum s1cause cause, uint32_t enb_id)
@@ -111,7 +111,7 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
 
   DevAssert (ue_context );
 
-  Assert(ue_context->num_pdns); // todo: check num active pdns via EMM/ESM context
+  DevAssert(ue_context->num_pdns); // todo: check num active pdns via EMM/ESM context
   pdn_context_t * pdn_context = RB_MIN(PdnContexts, ue_context->pdn_contexts);
   DevAssert(pdn_context);
 
@@ -188,10 +188,17 @@ mme_app_send_s11_create_session_req (
    * The remote teid will be provided in the response message.
    */
   session_request_p->teid = 0;
-  IMSI64_TO_STRING (ue_context->imsi, (char *)session_request_p->imsi.digit);
-//  memcpy(&session_request_p->imsi, &ue_context->emm_context._imsi, sizeof(session_request_p->imsi));
- // message content was set to 0
-  session_request_p->imsi.length = 15; // todo: optimize!
+  /** IMSI. */
+  IMSI64_TO_STRING (ue_context->imsi, (char *)session_request_p->imsi.u.value);
+  // message content was set to 0
+  session_request_p->imsi.length = strlen ((const char *)session_request_p->imsi.u.value);
+  // message content was set to 0
+
+//
+//  IMSI64_TO_STRING (ue_context->imsi, (char *)session_request_p->imsi.digit);
+////  memcpy(&session_request_p->imsi, &ue_context->emm_context._imsi, sizeof(session_request_p->imsi));
+// // message content was set to 0
+//  session_request_p->imsi.length = 15; // todo: optimize!
   /*
    * Copy the MSISDN
    */
@@ -347,8 +354,8 @@ mme_app_send_s11_modify_bearer_req(
 
   /** Add the bearers to establish. */
   bearer_context_t * bearer_context_to_establish = NULL;
-  RB_FOREACH (bearer_context_to_establish, BearerPool, &registered_pdn_ctx->session_bearers) {
-    DevAssert(registered_pdn_ctx);
+  RB_FOREACH (bearer_context_to_establish, SessionBearers, &pdn_context->session_bearers) {
+    DevAssert(bearer_context_to_establish);
     /** Add them to the bearears list of the MBR. */
     s11_modify_bearer_request->bearer_contexts_to_be_modified.bearer_contexts[s11_modify_bearer_request->bearer_contexts_to_be_modified.num_bearer_context].eps_bearer_id =
         bearer_context_to_establish->ebi;
@@ -383,7 +390,7 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, teid_t remote_teid, st
   message_p->ittiMsg.s10_remove_ue_tunnel.remote_teid  = remote_teid;
   message_p->ittiMsg.s10_remove_ue_tunnel.local_teid   = local_teid;
   message_p->ittiMsg.s10_remove_ue_tunnel.peer_ip      = peer_ip;
-  message_p->ittiMsg.s10_remove_ue_tunnel.cause = LOCAL_DETACH;
+//  message_p->ittiMsg.s10_remove_ue_tunnel.cause = LOCAL_DETACH;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
 
@@ -391,7 +398,7 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, teid_t remote_teid, st
 }
 
 //------------------------------------------------------------------------------
-int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const pdn_context_t* pdn_context)
+int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const pdn_context_t* pdn_context)
 {
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -401,7 +408,7 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_teid_s11;
   S11_DELETE_SESSION_REQUEST (message_p).teid       = pdn_context->s_gw_teid_s11_s4;
-  S11_DELETE_SESSION_REQUEST (message_p).lbi        = ebi; //default bearer
+  S11_DELETE_SESSION_REQUEST (message_p).lbi        = pdn_context->default_ebi; //default bearer
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
@@ -437,7 +444,7 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
 /**
  * Send an S1AP Handover Cancel Acknowledge to the S1AP layer.
  */
-static inline void mme_app_send_s1ap_handover_cancel_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id){
+void mme_app_send_s1ap_handover_cancel_acknowledge(mme_ue_s1ap_id_t mme_ue_s1ap_id, enb_ue_s1ap_id_t enb_ue_s1ap_id, sctp_assoc_id_t assoc_id){
   OAILOG_FUNC_IN (LOG_MME_APP);
   MessageDef * message_p = itti_alloc_new_message (TASK_MME_APP, S1AP_HANDOVER_CANCEL_ACKNOWLEDGE);
   DevAssert (message_p != NULL);
@@ -457,7 +464,7 @@ static inline void mme_app_send_s1ap_handover_cancel_acknowledge(mme_ue_s1ap_id_
 }
 
 //------------------------------------------------------------------------------
-static void notify_s1ap_new_ue_mme_s1ap_id_association (const sctp_assoc_id_t   assoc_id,
+void notify_s1ap_new_ue_mme_s1ap_id_association (const sctp_assoc_id_t   assoc_id,
     const enb_ue_s1ap_id_t  enb_ue_s1ap_id,
     const mme_ue_s1ap_id_t  mme_ue_s1ap_id)
 {
@@ -484,8 +491,8 @@ mme_app_send_s11_create_bearer_rsp (
   struct ue_context_s *const ue_context,
 //  struct in_addr  peer_ip,
   teid_t          saegw_s11_teid,
-  LIST_HEAD(bearer_contexts_sucess_s, bearer_context_s) *bearer_contexts_success,
-  LIST_HEAD(bearer_contexts_failed_s, bearer_context_s) *bearer_contexts_failed)
+  struct bearer_contexts_sucess_s *bearer_contexts_success,
+  struct bearer_contexts_sucess_s *bearer_contexts_failed)
 {
   /*
    * Keep the identifier to the default APN
@@ -572,7 +579,7 @@ mme_app_send_s11_create_bearer_rsp (
 }
 
 //------------------------------------------------------------------------------
-void mme_app_itti_nas_context_response(ue_context_t * ue_context){
+void mme_app_itti_nas_context_response(ue_context_t * ue_context, nas_s10_context_t * s10_context_val){
 
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -606,7 +613,7 @@ void mme_app_itti_nas_context_response(ue_context_t * ue_context){
     DevAssert(registered_pdn_ctx);
     nas_context_res->n_pdns++;
     bearer_context_t * bearer_contexts = NULL;
-    RB_FOREACH (bearer_contexts, BearerPool, &registered_pdn_ctx->session_bearers) {
+    RB_FOREACH (bearer_contexts, SessionBearers, &registered_pdn_ctx->session_bearers) {
       DevAssert(registered_pdn_ctx);
       nas_context_res->n_bearers++;
     }
@@ -699,7 +706,7 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
   forward_relocation_response_p->peer_ip.s_addr = s10_handover_proc->remote_mme_teid.ipv4_address.s_addr; /**< todo: Check this is correct. */
   forward_relocation_response_p->trxn    = s10_handover_proc->forward_relocation_trxn;
   /** Set the cause. */
-  forward_relocation_response_p->cause = REQUEST_ACCEPTED;
+  forward_relocation_response_p->cause.cause_value = REQUEST_ACCEPTED;
   /** Set all bearers. */
   pdn_context_t * registered_pdn_ctx = NULL;
   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
@@ -736,5 +743,30 @@ void mme_app_itti_forward_relocation_response(ue_context_t *ue_context, mme_app_
    * No changes in the contexts, flags, timers, etc.. needed.
    */
   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+
+/**
+ * Send a NAS Context Response with error code.
+ * It shall not trigger a TAU/Attach reject at the local (TARGET) MME, since no UE context information could be retrieved.
+ */
+void _mme_app_send_nas_context_response_err(mme_ue_s1ap_id_t ueId, gtpv2c_cause_value_t cause_val){
+  MessageDef * message_p = NULL;
+  OAILOG_FUNC_IN (LOG_MME_APP);
+
+  /** Send a Context RESPONSE with error cause. */
+  message_p = itti_alloc_new_message (TASK_MME_APP, NAS_CONTEXT_FAIL);
+  DevAssert (message_p != NULL);
+  itti_nas_context_fail_t *nas_context_fail = &message_p->ittiMsg.nas_context_fail;
+  memset ((void *)nas_context_fail, 0, sizeof (itti_nas_context_fail_t));
+
+  /** Set the cause. */
+  nas_context_fail->cause = cause_val;
+  /** Set the UE identifiers. */
+  nas_context_fail->ue_id = ueId;
+  MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "MME_APP Sending NAS NAS_CONTEXT_FAIL to NAS");
+  /** Sending a message to NAS. */
+  itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }

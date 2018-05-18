@@ -63,14 +63,11 @@ mme_app_handle_detach_req (
 
   // todo: review detach again! When the state transits from EMM_REG to EMM_DEREG, which method is called
   /*
-    * Reset the flags of the UE.
-    */
+   * Reset the flags of the UE.
+   */
    ue_context->subscription_known = SUBSCRIPTION_UNKNOWN;
-   // todo: this might be unnecessary
-   if(ue_context->pending_clear_location_request){
-     OAILOG_INFO(LOG_MME_APP, "Clearing the pending CLR for UE id " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
-     ue_context->pending_clear_location_request = false;
-   }
+
+   /** We will remove the mme_app handover procedures. */
 
   /**
    * A Detach Request is sent by the EMM layer after all PDN sessions are removed.
@@ -122,6 +119,9 @@ mme_app_handle_detach_req (
            ue_context->imsi, ue_context->mme_ue_s1ap_id);
       mme_app_itti_ue_context_release (ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, S1AP_IMPLICIT_CONTEXT_RELEASE, ue_context->e_utran_cgi.cell_identity.enb_id); /**< Set the signaling connection to ECM_IDLE when the Context-Removal-Completion has arrived. */
       ue_context->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
+      // todo: not released --> remove the handover procedure
+      mme_app_delete_s10_procedure_mme_handover(ue_context);
+
     }
   } else {  /**< UE has an active context. Setting NAS_DETACH as S1AP cause and sending the context removal command! */
     if (ue_context->s1_ue_context_release_cause == S1AP_INVALID_CAUSE) {
@@ -173,6 +173,9 @@ mme_app_handle_detach_req (
           ue_context->imsi, ue_context->mme_ue_s1ap_id);
       mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_IDLE);
       ue_context->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
+      // todo: manually release the mme_app_handover procedure // emm_cn_procedure?!
+      // todo: not released --> remove the handover procedure
+      mme_app_delete_s10_procedure_mme_handover(ue_context);
     }
   }
   OAILOG_FUNC_OUT (LOG_MME_APP);

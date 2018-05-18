@@ -117,13 +117,13 @@ int esm_proc_pdn_connectivity_request(emm_data_context_t * emm_context, const pr
                                      const_bstring const apn, esm_proc_pdn_type_t pdn_type,
                                      const_bstring const pdn_addr, bearer_qos_t *default_qos,
                                      protocol_configuration_options_t * const pco,
-                                     esm_cause_t *esm_cause);
+                                     esm_cause_t *esm_cause, pdn_context_t              **pdn_context_pP);
 
 int esm_proc_pdn_connectivity_reject(bool is_standalone, emm_data_context_t * emm_context,
                                      ebi_t ebi, bstring *msg, bool ue_triggered);
 int esm_proc_pdn_connectivity_failure(emm_data_context_t * emm_context, pdn_cid_t pid);
 
-int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi);
+int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi, ebi_t ** default_ebi_pp);
 
 /*
  * --------------------------------------------------------------------------
@@ -131,7 +131,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
  * --------------------------------------------------------------------------
  */
 
-int esm_proc_pdn_disconnect_request(emm_data_context_t * emm_context, const proc_tid_t pti, esm_cause_t *esm_cause);
+int esm_proc_pdn_disconnect_request(emm_data_context_t * emm_context, const proc_tid_t pti,   ebi_t default_ebi, esm_cause_t *esm_cause);
 
 int esm_proc_pdn_disconnect_accept(emm_data_context_t * emm_context, pdn_cid_t pid, esm_cause_t *esm_cause);
 int esm_proc_pdn_disconnect_reject(const bool is_standalone, emm_data_context_t * emm_context,
@@ -167,15 +167,16 @@ int esm_proc_default_eps_bearer_context_reject(emm_data_context_t * emm_context,
  *      Dedicated EPS bearer context activation procedure
  * --------------------------------------------------------------------------
  */
+
 int esm_proc_dedicated_eps_bearer_context( emm_data_context_t * emm_context,
     ebi_t  default_ebi,
-    const proc_tid_t   pti,
+    const proc_tid_t   pti,                  // todo: will always be 0 for network initiated bearer establishment.
+    const pdn_cid_t    pdn_cid,              /**< todo: Per APN for now. */
     uint8_t num_bearers,
-    ebi_t *ebi,                              /**< Array of EBIs. */
-    traffic_flow_template_t **tft_array,
-    protocol_configuration_options_t ** pco,
-    ebi_t *default_ebi,
-    bearer_qos_t *qos_t,
+    ebi_t *ebis,                             /**< Array of EBIs. */
+    traffic_flow_template_t **tft_array,     /**< Array of pointers to TFTs. */
+    protocol_configuration_options_t ** pcos,/**< Array of pointers to PCOs. */
+    bearer_qos_t *bearer_qos,                /**< Array of bearer_qos values.*/
     esm_cause_t *esm_cause);
 
 //    emm_data_context_t * emm_context, const proc_tid_t pti, pdn_cid_t pid,

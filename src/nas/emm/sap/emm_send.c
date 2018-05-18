@@ -186,7 +186,7 @@ emm_send_attach_accept (
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
   // Get the UE context
-  emm_data_context_t *emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
+  emm_data_context_t *emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
   DevAssert(emm_ctx);
   mme_ue_s1ap_id_t ue_id = emm_ctx->ue_id;
   DevAssert(msg->ue_id == ue_id);
@@ -340,7 +340,7 @@ emm_send_attach_accept_dl_nas (
   int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
 
   // Get the UE context
-  emm_data_context_t *emm_ctx = emm_context_get (&_emm_data, msg->ue_id);
+  emm_data_context_t *emm_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
   DevAssert(emm_ctx);
   mme_ue_s1ap_id_t ue_id = emm_ctx->ue_id;
   DevAssert(msg->ue_id == ue_id);

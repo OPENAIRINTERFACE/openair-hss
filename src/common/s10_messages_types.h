@@ -290,7 +290,7 @@ typedef struct itti_s10_context_request_s{
   // Private Extension Private Extension        ///< optional
 
   /** Original Tracking area update message. */
-  bstring      complete_request_message; /**< Could be a TAU or an attach request message. */
+  Complete_Request_Message_t      complete_request_message; /**< Could be a TAU or an attach request message. */
   /* S11 stack specific parameter. Not used in standalone epc mode */
 
   void                           *trxn;                ///< Transaction identifier

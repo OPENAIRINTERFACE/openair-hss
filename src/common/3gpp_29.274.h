@@ -229,6 +229,51 @@ typedef struct fteid_s {
   struct in6_addr ipv6_address;
 } fteid_t;
 
+
+typedef struct {
+  uint8_t                  eps_bearer_id;    ///< EBI,  Mandatory CSR
+  bearer_qos_t             bearer_level_qos;
+  traffic_flow_template_t  tft;              ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+} bearer_to_create_t;
+
+//-----------------
+typedef struct bearer_context_to_be_created_s {
+  uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
+  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
+  fteid_t                  s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
+  fteid_t                  s1u_sgw_fteid;       ///< S1-U SGW F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
+  fteid_t                  s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
+  fteid_t                  s5_s8_u_sgw_fteid;   ///< S5/S8-U SGW F-TEID, Conditional CSR, This IE shall be included on the S5/S8 interface for an "eUTRAN Initial Attach",
+                                                ///  a "PDP Context Activation" or a "UE Requested PDN Connectivity".
+  fteid_t                  s5_s8_u_pgw_fteid;   ///< S5/S8-U PGW F-TEID, Conditional CSR, This IE shall be included on the S4 and S11 interfaces for the TAU/RAU/Handover
+                                                /// cases when the GTP-based S5/S8 is used.
+  fteid_t                  s12_rnc_fteid;       ///< S12 RNC F-TEID, Conditional Optional CSR, This IE shall be included on the S4 interface if the S12
+                                                /// interface is used in the Enhanced serving RNS relocation with SGW relocation procedure.
+  fteid_t                  s2b_u_epdg_fteid;    ///< S2b-U ePDG F-TEID, Conditional CSR, This IE shall be included on the S2b interface for an Attach
+                                                /// with GTP on S2b, a UE initiated Connectivity to Additional PDN with GTP on S2b and a Handover to Untrusted Non-
+                                                /// 3GPP IP Access with GTP on S2b.
+  /* This parameter is received only if the QoS parameters have been modified */
+  bearer_qos_t  bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
+} bearer_context_to_be_created_t;
+
+typedef struct bearer_contexts_to_be_created_s {
+#define MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS   11
+uint8_t num_bearer_context;
+bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];    ///< Bearer Contexts to be created
+///< Several IEs with the same type and instance value shall be
+///< included on the S4/S11 and S5/S8 interfaces as necessary
+///< to represent a list of Bearers. One single IE shall be
+///< included on the S2b interface.
+///< One bearer shall be included for an E-UTRAN Initial
+///< Attach, a PDP Context Activation, a UE requested PDN
+///< Connectivity, an Attach with GTP on S2b, a UE initiated
+///< Connectivity to Additional PDN with GTP on S2b and a
+///< Handover to Untrusted Non-3GPP IP Access with GTP on
+///< S2b.
+///< One or more bearers shall be included for a
+///< Handover/TAU/RAU with an SGW change.
+} bearer_contexts_to_be_created_t;
+
 //-------------------------------------
 // 8.38 MM EPS Context
 
@@ -268,33 +313,6 @@ typedef struct mm_context_eps_s {
   uint8_t                   access_restriction_flags;
 } mm_context_eps_t;
 //----------------------------
-
-
-//-----------------
-typedef struct bearer_context_to_be_created_s {
-  uint8_t                  eps_bearer_id;       ///< EBI,  Mandatory CSR
-  traffic_flow_template_t  tft;                 ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
-  fteid_t                  s1u_enb_fteid;       ///< S1-U eNodeB F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
-  fteid_t                  s1u_sgw_fteid;       ///< S1-U SGW F-TEID, Conditional CSR, This IE shall be included on the S11 interface for X2-based handover with SGW relocation.
-  fteid_t                  s4u_sgsn_fteid;      ///< S4-U SGSN F-TEID, Conditional CSR, This IE shall be included on the S4 interface if the S4-U interface is used.
-  fteid_t                  s5_s8_u_sgw_fteid;   ///< S5/S8-U SGW F-TEID, Conditional CSR, This IE shall be included on the S5/S8 interface for an "eUTRAN Initial Attach",
-                                                ///  a "PDP Context Activation" or a "UE Requested PDN Connectivity".
-  fteid_t                  s5_s8_u_pgw_fteid;   ///< S5/S8-U PGW F-TEID, Conditional CSR, This IE shall be included on the S4 and S11 interfaces for the TAU/RAU/Handover
-                                                /// cases when the GTP-based S5/S8 is used.
-  fteid_t                  s12_rnc_fteid;       ///< S12 RNC F-TEID, Conditional Optional CSR, This IE shall be included on the S4 interface if the S12
-                                                /// interface is used in the Enhanced serving RNS relocation with SGW relocation procedure.
-  fteid_t                  s2b_u_epdg_fteid;    ///< S2b-U ePDG F-TEID, Conditional CSR, This IE shall be included on the S2b interface for an Attach
-                                                /// with GTP on S2b, a UE initiated Connectivity to Additional PDN with GTP on S2b and a Handover to Untrusted Non-
-                                                /// 3GPP IP Access with GTP on S2b.
-  /* This parameter is received only if the QoS parameters have been modified */
-  bearer_qos_t  bearer_level_qos;    ///< Bearer QoS, Mandatory CSR
-} bearer_context_to_be_created_t;
-
-
-typedef struct ho_bearer_context_s {
-  uint32_t   num_bearers;
-  bearer_context_to_be_created_t bearer_contexts[MAX_RELEASE_ACCESS_BEARER_MAX_BEARERS]  ;
-} ho_bearer_context_list_t;
 
 
 //-------------------------------------------------
@@ -342,13 +360,21 @@ typedef struct pdn_connection_s {
   fteid_t                   pgw_address_for_cp;  ///< PGW S5/S8 address for control plane or PMIP
 
 
-//  bearer_context_to_be_created_t  bearer_context;
-
-  ho_bearer_context_list_t  bearer_context_list;
+  bearer_contexts_to_be_created_t  bearer_context_list;
 
   ambr_t                    apn_ambr;
 
 } pdn_connection_t;
+
+//------------------------
+#define MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS   3
+#define MSG_FORWARD_RELOCATION_REQUEST_MAX_BEARER_CONTEXTS   11
+
+typedef struct mme_ue_eps_pdn_connections_s {
+  uint8_t num_pdn_connections;
+  pdn_connection_t pdn_connection[MSG_FORWARD_RELOCATION_REQUEST_MAX_PDN_CONNECTIONS];
+} mme_ue_eps_pdn_connections_t;
+//----------------------------
 
 
 //-------------------------------------

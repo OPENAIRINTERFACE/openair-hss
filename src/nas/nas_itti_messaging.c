@@ -63,10 +63,10 @@ nas_itti_dl_data_req (
   )
 {
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, NAS_DOWNLINK_DATA_REQ);
-  NAS_DL_DATA_REQ (message_p).ue_id   = ue_id;
-  NAS_DL_DATA_REQ (message_p).nas_msg = nas_msg;
+  NAS_DOWNLINK_DATA_REQ (message_p).ue_id   = ue_id;
+  NAS_DOWNLINK_DATA_REQ (message_p).nas_msg = nas_msg;
   nas_msg = NULL;
-  NAS_DL_DATA_REQ (message_p).transaction_status = transaction_status;
+  NAS_DOWNLINK_DATA_REQ (message_p).transaction_status = transaction_status;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S1AP_MME, NULL, 0, "0 NAS_DOWNLINK_DATA_REQ ue id " MME_UE_S1AP_ID_FMT " len %u", ue_id, blength(nas_msg));
   // make a long way by MME_APP instead of S1AP to retrieve the sctp_association_id key.
   return itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
@@ -134,8 +134,8 @@ void nas_itti_dedicated_eps_bearer_deactivation_complete(
   OAILOG_FUNC_IN(LOG_NAS);
   MessageDef  *message_p = itti_alloc_new_message (TASK_NAS_MME, MME_APP_DELETE_DEDICATED_BEARER_RSP);
   MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).ue_id     = ue_idP;
-  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).def_ebi   = ebiP;
-  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).ded_ebi   = ebiP;
+  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).def_ebi   = default_ebi;
+  MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).ded_ebi   = ded_ebi;
   MME_APP_DELETE_DEDICATED_BEARER_RSP (message_p).pid       = pid;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_MMEAPP_MME, NULL, 0, "0 MME_APP_DELETE_DEDICATED_BEARER_RSP ue id " MME_UE_S1AP_ID_FMT " ebi %u", ue_idP, ded_ebi);
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p);
@@ -222,6 +222,7 @@ void nas_itti_pdn_connectivity_req(
   int                     ptiP,
   mme_ue_s1ap_id_t        ue_idP,
   pdn_cid_t               pdn_cidP,
+  const ebi_t             default_ebi,
   const imsi_t           *const imsi_pP,
   esm_proc_data_t        *proc_data_pP,
   esm_proc_pdn_request_t  request_typeP)
@@ -240,6 +241,7 @@ void nas_itti_pdn_connectivity_req(
                 8);
 
   NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_cid         = pdn_cidP;
+  NAS_PDN_CONNECTIVITY_REQ(message_p).default_ebi     = default_ebi;
   NAS_PDN_CONNECTIVITY_REQ(message_p).pti             = ptiP;
   NAS_PDN_CONNECTIVITY_REQ(message_p).ue_id           = ue_idP;
   NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[15]        = '\0';
@@ -329,7 +331,6 @@ void nas_itti_ctx_req(
   const guti_t        * const guti_p,
   tai_t         * const new_taiP,
   tai_t         * const last_visited_taiP,
-  plmn_t         * const visited_plmnP,
   bstring               request_msg)
 {
   OAILOG_FUNC_IN(LOG_NAS);
@@ -352,8 +353,8 @@ void nas_itti_ctx_req(
   /** Originating TAI. */
   nas_context_req_p->originating_tai = *last_visited_taiP;
 
-  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S10_MME, NULL, 0, "0 S10_CTX_REQ GUTI "GUTI_FMT" originating TAI " TAI_FMT " target_plmn "PLMN_FMT,
-      GUTI_ARG(&nas_context_req_p->old_guti), TAI_FMT(last_visited_taiP), PLMN_ARG(visited_plmnP));
+  MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S10_MME, NULL, 0, "0 S10_CTX_REQ GUTI "GUTI_FMT" originating TAI " TAI_FMT,
+      GUTI_ARG(&nas_context_req_p->old_guti), TAI_FMT(last_visited_taiP));
   itti_send_msg_to_task (TASK_MME_APP, INSTANCE_DEFAULT, message_p); /**< Send it to MME_APP since we already may have one. */
 
   /** No NAS S10 context response timer needs to be started. It will be started in the GTPv2c stack. */
@@ -387,11 +388,11 @@ void nas_itti_auth_info_req(
 
   if (is_initial_reqP ) {
     auth_info_req->re_synchronization = 0;
-    memset (auth_info_req->resync_param, 0, sizeof auth_info_req->resync_param);
+    memset (auth_info_req->auts, 0, sizeof auth_info_req->auts);
   } else {
     AssertFatal(auts_pP != NULL, "Autn Null during resynchronization");
     auth_info_req->re_synchronization = 1;
-    memcpy (auth_info_req->resync_param, auts_pP->data, sizeof auth_info_req->resync_param);
+    memcpy (auth_info_req->auts, auts_pP->data, sizeof auth_info_req->auts);
   }
 
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_S6A_MME, NULL, 0, "0 S6A_AUTH_INFO_REQ IMSI "IMSI_64_FMT" visited_plmn "PLMN_FMT" re_sync %u",
@@ -565,7 +566,7 @@ void  s10_context_req_timer_expiry_handler (void *args)
     }
 
     void * timer_callback_args = NULL;
-    nas_stop_Ts10_context_req(ctx_req_proc->ue_id, &ctx_req_proc->timer_s10, timer_callback_args);
+    nas_stop_Ts10_ctx_res(ctx_req_proc->ue_id, &ctx_req_proc->timer_s10, timer_callback_args);
 
     ctx_req_proc->timer_s10.id = NAS_TIMER_INACTIVE_ID;
       
@@ -573,7 +574,7 @@ void  s10_context_req_timer_expiry_handler (void *args)
      * Notify the failed context request procedure.
      * The respective specific procedure then will take action.
      */
-    nas_proc_context_requests_fail (emm_ctx->ue_id, NAS_CAUSE_NETWORK_FAILURE);
+    nas_proc_context_fail(emm_ctx->ue_id, NAS_CAUSE_NETWORK_FAILURE);
   } else { 
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - Timer timer_s10_context_req expired. Null EMM Context for UE \n");
   }

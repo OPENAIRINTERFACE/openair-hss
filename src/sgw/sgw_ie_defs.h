@@ -288,30 +288,6 @@ typedef enum node_type_e {
   NODE_TYPE_SGSN = 1
 } node_type_t;
 
-typedef struct {
-  uint8_t                  eps_bearer_id;    ///< EBI,  Mandatory CSR
-  bearer_qos_t             bearer_level_qos;
-  traffic_flow_template_t  tft;              ///< Bearer TFT, Optional CSR, This IE may be included on the S4/S11 and S5/S8 interfaces.
-} bearer_to_create_t;
-
-typedef struct bearer_contexts_to_be_created_s {
-#define MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS   11
-uint8_t num_bearer_context;
-bearer_context_to_be_created_t bearer_contexts[MSG_CREATE_SESSION_REQUEST_MAX_BEARER_CONTEXTS];    ///< Bearer Contexts to be created
-///< Several IEs with the same type and instance value shall be
-///< included on the S4/S11 and S5/S8 interfaces as necessary
-///< to represent a list of Bearers. One single IE shall be
-///< included on the S2b interface.
-///< One bearer shall be included for an E-UTRAN Initial
-///< Attach, a PDP Context Activation, a UE requested PDN
-///< Connectivity, an Attach with GTP on S2b, a UE initiated
-///< Connectivity to Additional PDN with GTP on S2b and a
-///< Handover to Untrusted Non-3GPP IP Access with GTP on
-///< S2b.
-///< One or more bearers shall be included for a
-///< Handover/TAU/RAU with an SGW change.
-} bearer_contexts_to_be_created_t;
-
 //-----------------
 typedef struct bearer_context_created_s {
   uint8_t       eps_bearer_id;       ///< EPS Bearer ID

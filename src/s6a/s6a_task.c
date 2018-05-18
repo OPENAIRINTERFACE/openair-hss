@@ -272,6 +272,13 @@ int s6a_init (
 //------------------------------------------------------------------------------
 static void s6a_exit(void)
 {
+  if (timer_id) {
+    timer_remove(timer_id, NULL);
+  }
+  // Release all resources
+  free_wrapper((void **) &fd_g_config->cnf_diamid);
+  fd_g_config->cnf_diamid_len = 0;
+
   int    rv = RETURNok;
   /* Initialize shutdown of the framework */
   rv = fd_core_shutdown();

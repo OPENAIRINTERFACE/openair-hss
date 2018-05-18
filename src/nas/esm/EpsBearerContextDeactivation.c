@@ -52,6 +52,7 @@
 #include <stdlib.h>
 
 #include "bstrlib.h"
+#include "assertions.h"
 
 #include "log.h"
 #include "dynamic_memory_check.h"
@@ -181,7 +182,7 @@ esm_proc_eps_bearer_context_deactivate (
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);
   }
 
-  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d, ebi=%d)\n", ue_mm_context->mme_ue_s1ap_id, pid, ebi);
+  OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - EPS bearer context deactivation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d, ebi=%d)\n", ue_context->mme_ue_s1ap_id, pid, ebi);
 
   if ((ue_context ) && (pid < MAX_APN_PER_UE)) {
     if (!pdn_context) {
@@ -194,7 +195,7 @@ esm_proc_eps_bearer_context_deactivate (
 
       /** todo: validate the session bearers of the PDN context. */
       bearer_context_t *session_bearer = NULL;
-      RB_FOREACH(session_bearer, BearerPool, &pdn_context->session_bearers){
+      RB_FOREACH(session_bearer, SessionBearers, &pdn_context->session_bearers){
         DevAssert(session_bearer->pdn_cx_id == pid && session_bearer->esm_ebr_context.status == ESM_EBR_ACTIVE);
         /*
          * todo: validate a single bearer!
@@ -312,12 +313,10 @@ esm_proc_eps_bearer_context_deactivate_accept (
       ue_id, ebi);
 
   if (rc != RETURNerror) {
-    int                                   bid = BEARERS_PER_UE;
-
     /*
      * Release the EPS bearer context.
      */
-    rc = _eps_bearer_release (ue_context, ebi, &pid, &bid);
+    rc = _eps_bearer_release (ue_context, ebi, &pid);
 
     if (rc != RETURNok) {
       /*
@@ -394,13 +393,12 @@ static void _eps_bearer_deactivate_t3495_handler (void *args)
        * message retransmission has exceed
        */
       pdn_cid_t                               pid = MAX_APN_PER_UE;
-      int                                     bid = BEARERS_PER_UE;
 
       /*
        * Deactivate the EPS bearer context locally without peer-to-peer
        * * * * signalling between the UE and the MME
        */
-      rc = _eps_bearer_release (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi, &pid, &bid);
+      rc = _eps_bearer_release (esm_ebr_timer_data->ctx, esm_ebr_timer_data->ebi, &pid);
 
       if (rc != RETURNerror) {
         /*
@@ -516,7 +514,7 @@ _eps_bearer_release (
   /*
    * Release and the contexts and update the counters.
    */
-  ebi = esm_ebr_context_release (emm_context, ebi, pid);
+  ebi = esm_ebr_context_release (emm_context, ebi, pid, false);
   if (ebi == ESM_EBI_UNASSIGNED) {
     OAILOG_WARNING (LOG_NAS_ESM, "ESM-PROC  - Failed to release EPS bearer context\n");
     OAILOG_FUNC_RETURN (LOG_NAS_ESM, rc);

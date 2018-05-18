@@ -67,6 +67,7 @@
 #include "commonDef.h"
 #include "esm_proc.h"
 #include "esm_data.h"
+#include "esm_ebr.h"
 #include "esm_cause.h"
 #include "esm_pt.h"
 #include "mme_api.h"
@@ -74,6 +75,7 @@
 #include "mme_app_apn_selection.h"
 #include "mme_app_pdn_context.h"
 #include "mme_app_bearer_context.h"
+#include "mme_app_defs.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -323,7 +325,7 @@ int esm_proc_pdn_connectivity_failure (emm_data_context_t * emm_context, pdn_cid
  **                  Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi){
+int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi, ebi_t ** default_ebi_pp){
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
   int                                     rc = RETURNok;
@@ -356,10 +358,11 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
   for ((**pdn_cid) = 0; (**pdn_cid) < MAX_APN_PER_UE; (**pdn_cid)++) {
 
     /** Check if a tunnel already exists depending on the flag. */
-    pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context, apn_config->context_identifier);
+    pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context, apn_config->context_identifier, 0, NULL);
     if(pdn_context){
       OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "PDN context was found for UE " MME_UE_S1AP_ID_FMT" already. "
-          "(Assuming PDN connectivity is already established before ULA). Will update PDN/UE context information and continue with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
+          "(Assuming PDN connectivity is already established before ULA). "
+          "Will update PDN/UE context information and continue with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", ue_context->mme_ue_s1ap_id);
       /** Not creating updated bearers. */
       **is_pdn_connectivity = true;
       /** Set the state of the ESM bearer context as ACTIVE (not setting as active if no TAU has followed). */
@@ -412,6 +415,8 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
 
         if (rc != RETURNerror) {
           esm_cause = ESM_CAUSE_SUCCESS;
+          /** Set the default ebi of the itti message. */
+          *default_ebi_pp = &pdn_context->default_ebi;
         }
       } else {
       }
@@ -507,18 +512,19 @@ _pdn_connectivity_create (
         copy_protocol_configuration_options((*pdn_context_pP)->pco, pco);
       }
 
+      // todo: paa null checks here
       /*
        * Setup the IP address allocated by the network
        */
       (*pdn_context_pP)->pdn_type = pdn_type;
       if (pdn_addr) {
-        (*pdn_context_pP)->paa.pdn_type = pdn_type;
+        (*pdn_context_pP)->paa->pdn_type = pdn_type;
         switch (pdn_type) {
         case IPv4:
-          IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_addr->data, (*pdn_context_pP)->paa.ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
+          IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_addr->data, (*pdn_context_pP)->paa->ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
           break;
         case IPv6:
-          AssertFatal (1 == inet_pton(AF_INET6, (const char *)pdn_addr->data, &(*pdn_context_pP)->paa.ipv6_address), "BAD IPv6 ADDRESS FORMAT FOR PAA!\n");
+          AssertFatal (1 == inet_pton(AF_INET6, (const char *)pdn_addr->data, &(*pdn_context_pP)->paa->ipv6_address), "BAD IPv6 ADDRESS FORMAT FOR PAA!\n");
           break;
         case IPv4_AND_v6:
           AssertFatal (0, "TODO\n");
@@ -553,13 +559,13 @@ _pdn_connectivity_create (
     }
     (*pdn_context_pP)->pdn_type = pdn_type;
     if (pdn_addr) {
-      (*pdn_context_pP)->paa.pdn_type = pdn_type;
+      (*pdn_context_pP)->paa->pdn_type = pdn_type;
       switch (pdn_type) {
       case IPv4:
-        IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_addr->data, (*pdn_context_pP)->paa.ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
+        IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_addr->data, (*pdn_context_pP)->paa->ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
         break;
       case IPv6:
-        AssertFatal (1 == inet_pton(AF_INET6, (const char *)pdn_addr->data, &(*pdn_context_pP)->paa.ipv6_address), "BAD IPv6 ADDRESS FORMAT FOR PAA!\n");
+        AssertFatal (1 == inet_pton(AF_INET6, (const char *)pdn_addr->data, &(*pdn_context_pP)->paa->ipv6_address), "BAD IPv6 ADDRESS FORMAT FOR PAA!\n");
         break;
       case IPv4_AND_v6:
         AssertFatal (0, "TODO\n");
@@ -606,14 +612,14 @@ proc_tid_t _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t
   pdn_context_t                       *pdn_context  = NULL;
   if (pdn_cid < MAX_APN_PER_UE) {
     /** Get PDN Context. */
-    pdn_context = mme_app_get_pdn_context(ue_context, pdn_cid, ESM_EBI_UNDEFINED, NULL);
+    pdn_context = mme_app_get_pdn_context(ue_context, pdn_cid, ESM_EBI_UNASSIGNED, NULL);
     if (!pdn_context) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has not been allocated\n");
     } else if (pdn_context->is_active) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection is active\n");
     } else if (pdn_context->esm_data.n_bearers) {
-      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has beaerer\n");
-    } else if (!RB_EMPTY(pdn_context->session_bearers)) {
+      OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection has bearer\n");
+    } else if (!RB_EMPTY(&pdn_context->session_bearers)) {
       OAILOG_ERROR (LOG_NAS_ESM, "ESM-PROC  - PDN connection bearer list is not empty \n");
     } else {
       /*
@@ -634,9 +640,9 @@ proc_tid_t _pdn_connectivity_delete (emm_data_context_t * emm_context, pdn_cid_t
    */
   // todo: add a lot of locks..
   /** Removed a bearer context from the UE contexts bearer pool and adds it into the PDN sessions bearer pool. */
-  pdn_context_t *pdn_context_removed = RB_REMOVE(BearerPool, &ue_context->pdn_contexts, pdn_context);
+  pdn_context_t *pdn_context_removed = RB_REMOVE(SessionBearers, &ue_context->pdn_contexts, pdn_context);
   if(!pdn_context_removed){
-    OAILOG_ERROR(LOG_MME_APP,  "Could not find pdn context with pid %d for ue_id " MME_UE_S1AP_FMT "! \n",
+    OAILOG_ERROR(LOG_MME_APP,  "Could not find pdn context with pid %d for ue_id " MME_UE_S1AP_ID_FMT "! \n",
         pdn_context->context_identifier, ue_context->mme_ue_s1ap_id);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }

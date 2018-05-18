@@ -1593,7 +1593,7 @@ s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t asso
      memset ((void *)&message_p->ittiMsg.s1ap_handover_failure, 0, sizeof (itti_s1ap_handover_failure_t));
      /** Fill the S1AP Handover Failure elements per hand. */
      handover_failure_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
-     handover_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id; /**< Set it from the invalid context. */
+//     handover_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id; /**< Set it from the invalid context. */
      handover_failure_p->assoc_id       = assoc_id; /**< Set it from the invalid context. */
      /**
       * Set it to S1AP_SYSTEM_FAILURE for the invalid context. Not waiting for RELEASE-COMPLETE from target-eNB.
@@ -1615,7 +1615,7 @@ s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t asso
     memset ((void *)&message_p->ittiMsg.s1ap_handover_failure, 0, sizeof (itti_s1ap_handover_failure_t));
     /** Fill the S1AP Handover Failure elements per hand. */
     handover_failure_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
-    handover_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id; /**< Set it from the invalid context. */
+//    handover_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id; /**< Set it from the invalid context. */
     handover_failure_p->assoc_id       = assoc_id; /**< Set it from the invalid context. */
     /**
      * Set it to S1AP_SYSTEM_FAILURE for the invalid context. Not waiting for RELEASE-COMPLETE from target-eNB.
@@ -1646,7 +1646,7 @@ s1ap_mme_handle_handover_resource_allocation_response(const sctp_assoc_id_t asso
     memset ((void *)&message_p->ittiMsg.s1ap_handover_failure, 0, sizeof (itti_s1ap_handover_failure_t));
     /** Fill the S1AP Handover Failure elements per hand. */
     handover_failure_p->mme_ue_s1ap_id = mme_ue_s1ap_id;
-    handover_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id; /**< Set it from the invalid context. */
+//    handover_failure_p->enb_ue_s1ap_id = enb_ue_s1ap_id; /**< Set it from the invalid context. */
     handover_failure_p->assoc_id       = assoc_id; /**< Set it from the invalid context. */
     /**
      * Set it to S1AP_SYSTEM_FAILURE for the invalid context. Not waiting for RELEASE-COMPLETE from target-eNB.
@@ -1790,7 +1790,7 @@ s1ap_mme_handle_handover_resource_allocation_failure(const sctp_assoc_id_t assoc
   memset ((void *)&message_p->ittiMsg.s1ap_handover_failure, 0, sizeof (itti_s1ap_handover_failure_t));
   /** Fill the S1AP Handover Failure elements per hand. */
   handover_failure_p->mme_ue_s1ap_id = handoverFailure_p->mme_ue_s1ap_id;
-  handover_failure_p->enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
+//  handover_failure_p->enb_ue_s1ap_id = INVALID_ENB_UE_S1AP_ID;
   /** Choice. */
   S1ap_Cause_PR cause_type = handoverFailure_p->cause.present;
 

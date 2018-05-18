@@ -41,6 +41,7 @@
 #include "conversions.h"
 #include "common_types.h"
 #include "intertask_interface.h"
+#include "timer.h"
 #include "mme_config.h"
 #include "mme_app_extern.h"
 #include "mme_app_ue_context.h"
@@ -50,46 +51,46 @@
 #include "mme_app_procedures.h"
 
 static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_proc);
-static void mme_app_free_s10_procedure_inter_mme_handover(mme_app_s11_proc_t **s11_proc);
+static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc);
 
 /*---------------------------------------------------------------------------
    FTEID Set RBTree Search Data Structure
   --------------------------------------------------------------------------*/
-
-/**
-  Comparator function for comparing two fteids.
-
-  @param[in] a: Pointer to bearer context a.
-  @param[in] b: Pointer to bearer context b.
-  @return  An integer greater than, equal to or less than zero according to whether the
-  object pointed to by a is greater than, equal to or less than the object pointed to by b.
-*/
-
-static
-inline int32_t                    mme_app_compare_bearer_context(
-    struct fteid_set_s *a,
-    struct fteid_set_s *b) {
-    if (a->s1u_fteid.teid > b->s1u_fteid.teid)
-      return 1;
-
-    if (a->s1u_fteid.teid < b->s1u_fteid.teid )
-      return -1;
-
-    /* Not more field to compare. */
-    return 0;
-}
-
-RB_GENERATE (BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
+//
+///**
+//  Comparator function for comparing two fteids.
+//
+//  @param[in] a: Pointer to bearer context a.
+//  @param[in] b: Pointer to bearer context b.
+//  @return  An integer greater than, equal to or less than zero according to whether the
+//  object pointed to by a is greater than, equal to or less than the object pointed to by b.
+//*/
+//
+//static
+//inline int32_t                    mme_app_compare_bearer_context(
+//    struct fteid_set_s *a,
+//    struct fteid_set_s *b) {
+//    if (a->s1u_fteid.teid > b->s1u_fteid.teid)
+//      return 1;
+//
+//    if (a->s1u_fteid.teid < b->s1u_fteid.teid )
+//      return -1;
+//
+//    /* Not more field to compare. */
+//    return 0;
+//}
+//
+//RB_GENERATE (BearerFteids, fteid_set_s, fteid_set_rbt_Node, fteid_set_compare_s1u_saegw)
 
 
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedures(ue_context_t * const ue_context_p)
+void mme_app_delete_s11_procedures(ue_context_t * const ue_context)
 {
-  if (ue_context_p->s11_procedures) {
+  if (ue_context->s11_procedures) {
     mme_app_s11_proc_t *s11_proc1 = NULL;
     mme_app_s11_proc_t *s11_proc2 = NULL;
 
-    s11_proc1 = LIST_FIRST(ue_context_p->s11_procedures);                 /* Faster List Deletion. */
+    s11_proc1 = LIST_FIRST(ue_context->s11_procedures);                 /* Faster List Deletion. */
     while (s11_proc1) {
       s11_proc2 = LIST_NEXT(s11_proc1, entries);
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc1->type) {
@@ -97,13 +98,13 @@ void mme_app_delete_s11_procedures(ue_context_t * const ue_context_p)
       } // else ...
       s11_proc1 = s11_proc2;
     }
-    LIST_INIT(ue_context_p->s11_procedures);
-    free_wrapper((void**)&ue_context_p->s11_procedures);
+    LIST_INIT(ue_context->s11_procedures);
+    free_wrapper((void**)&ue_context->s11_procedures);
   }
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context_p)
+mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_context_t * const ue_context)
 {
   mme_app_s11_proc_create_bearer_t *s11_proc_create_bearer = calloc(1, sizeof(mme_app_s11_proc_create_bearer_t));
   s11_proc_create_bearer->proc.proc.type = MME_APP_BASE_PROC_TYPE_S11;
@@ -115,22 +116,22 @@ mme_app_s11_proc_create_bearer_t* mme_app_create_s11_procedure_create_bearer(ue_
   LIST_INIT(s11_proc_create_bearer->bearer_contexts_failed);
 
 
-  if (!ue_context_p->s11_procedures) {
-    ue_context_p->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
-    LIST_INIT(ue_context_p->s11_procedures);
+  if (!ue_context->s11_procedures) {
+    ue_context->s11_procedures = calloc(1, sizeof(struct s11_procedures_s));
+    LIST_INIT(ue_context->s11_procedures);
   }
-  LIST_INSERT_HEAD((ue_context_p->s11_procedures), s11_proc, entries);
+  LIST_INSERT_HEAD((ue_context->s11_procedures), s11_proc, entries);
 
   return s11_proc_create_bearer;
 }
 
 //------------------------------------------------------------------------------
-mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_context_t * const ue_context_p)
+mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_context_t * const ue_context)
 {
-  if (ue_context_p->s11_procedures) {
+  if (ue_context->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context_p->s11_procedures, entries) {
+    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
         return (mme_app_s11_proc_create_bearer_t*)s11_proc;
       }
@@ -139,12 +140,12 @@ mme_app_s11_proc_create_bearer_t* mme_app_get_s11_procedure_create_bearer(ue_con
   return NULL;
 }
 //------------------------------------------------------------------------------
-void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context_p)
+void mme_app_delete_s11_procedure_create_bearer(ue_context_t * const ue_context)
 {
-  if (ue_context_p->s11_procedures) {
+  if (ue_context->s11_procedures) {
     mme_app_s11_proc_t *s11_proc = NULL;
 
-    LIST_FOREACH(s11_proc, ue_context_p->s11_procedures, entries) {
+    LIST_FOREACH(s11_proc, ue_context->s11_procedures, entries) {
       if (MME_APP_S11_PROC_TYPE_CREATE_BEARER == s11_proc->type) {
         LIST_REMOVE(s11_proc, entries);
         mme_app_free_s11_procedure_create_bearer(&s11_proc);
@@ -168,7 +169,7 @@ static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, mme_app_s10_pro
   OAILOG_FUNC_IN(LOG_MME_APP);
   int             rc = RETURNerror;
   /** Removed S10 tunnel endpoint. */
-  mme_app_free_s10_procedure_inter_mme_handover(&s10_proc);
+  mme_app_free_s10_procedure_mme_handover(&s10_proc);
   /** Deregister the key. */
   mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
       ue_context,
@@ -181,48 +182,49 @@ static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, mme_app_s10_pro
   OAILOG_FUNC_RETURN(LOG_MME_APP, rc);
 }
 //------------------------------------------------------------------------------
-void mme_app_delete_s10_procedures(ue_context_t * const ue_context_p)
+void mme_app_delete_s10_procedures(ue_context_t * const ue_context)
 {
-  if (ue_context_p->s10_procedures) {
+  if (ue_context->s10_procedures) {
     mme_app_s10_proc_t *s10_proc1 = NULL;
     mme_app_s10_proc_t *s10_proc2 = NULL;
 
-    s10_proc1 = LIST_FIRST(ue_context_p->s10_procedures);                 /* Faster List Deletion. */
+    // todo: intra
+    s10_proc1 = LIST_FIRST(ue_context->s10_procedures);                 /* Faster List Deletion. */
     while (s10_proc1) {
       s10_proc2 = LIST_NEXT(s10_proc1, entries);
       if (MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER == s10_proc1->type) {
         /** Stop the timer. */
         if(s10_proc1->timer.id != MME_APP_TIMER_INACTIVE_ID){
           if (timer_remove(s10_proc1->timer.id, NULL)) {
-            OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for inter-MMME handover for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+            OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for inter-MMME handover for UE id  %d \n", ue_context->mme_ue_s1ap_id);
             s10_proc1->timer.id = MME_APP_TIMER_INACTIVE_ID;
           }
         }
         s10_proc1->timer.id = MME_APP_TIMER_INACTIVE_ID;
-        remove_s10_tunnel_endpoint(ue_context_p, s10_proc1);
+        remove_s10_tunnel_endpoint(ue_context, s10_proc1);
       } // else ...
       s10_proc1 = s10_proc2;
     }
-    LIST_INIT(ue_context_p->s10_procedures);
-    free_wrapper((void**)&ue_context_p->s10_procedures);
+    LIST_INIT(ue_context->s10_procedures);
+    free_wrapper((void**)&ue_context->s10_procedures);
   }
 }
 
 //------------------------------------------------------------------------------
 static void
-mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_inter_mme_handover_t *s10_proc_inter_mme_handover)
+mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_handover_t *s10_proc_mme_handover)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
   MessageDef                             *message_p = NULL;
   /** Get the IMSI. */
-  imsi64_t imsi64 = imsi_to_imsi64(&s10_proc_inter_mme_handover->imsi);
-  ue_context_t * ue_context = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
+//  imsi64_t imsi64 = imsi_to_imsi64(&s10_proc_mme_handover->imsi);
+  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
   DevAssert(ue_context);
   OAILOG_INFO (LOG_MME_APP, "Expired- MME S10 Handover Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. "
-      "Performing S1AP UE Context Release Command and successive NAS implicit detach. \n", ue_context_p->mme_ue_s1ap_id);
-  s10_proc_inter_mme_handover->ho_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+      "Performing S1AP UE Context Release Command and successive NAS implicit detach. \n", ue_context->mme_ue_s1ap_id);
+  s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
   /** Delete the procedure. */
-  mme_app_delete_s10_procedure_inter_mme_handover(ue_context)
+  mme_app_delete_s10_procedure_mme_handover(ue_context);
 
   ue_context->s1_ue_context_release_cause = S1AP_HANDOVER_CANCELLED;
   /*
@@ -230,18 +232,20 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_inter_
    * The e_cgi IE will be set with Handover Notify.
    */
 
-  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, &s10_proc_inter_mme_handover->target_id.target_id);
+  mme_app_itti_ue_context_release(ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context->s1_ue_context_release_cause, &s10_proc_mme_handover->target_id.target_id);
   OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------
-mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * ue_context, bool target_mme){
+mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context, bool target_mme, mme_app_s10_proc_type_t  s1ap_ho_type){
   mme_app_s10_proc_mme_handover_t *s10_proc_mme_handover = calloc(1, sizeof(mme_app_s10_proc_mme_handover_t));
   // todo: checking hear for correct allocation
   if(!s10_proc_mme_handover){
     return NULL;
   }
-  s10_proc_mme_handover->proc.type      = MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER;
+  s10_proc_mme_handover->proc.type      = s1ap_ho_type;
+  s10_proc_mme_handover->proc.type      = s1ap_ho_type;
+  s10_proc_mme_handover->mme_ue_s1ap_id = ue_context->mme_ue_s1ap_id;
 
   /*
    * Add the timeout method and start the timer.
@@ -253,21 +257,28 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
    * Start a fresh S10 MME Handover Completion timer for the forward relocation request procedure.
    * Give the procedure as the argument.
    */
-  if(target_mme){
+  if(target_mme && s1ap_ho_type == MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER){
     if (timer_setup (mme_config.mme_s10_handover_completion_timer, 0,
-        TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) s10_proc_mme_handover, &(s10_proc_mme_handover->ho_completion_timer.id)) < 0) {
+        TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) s10_proc_mme_handover, &(s10_proc_mme_handover->proc.timer.id)) < 0) {
       OAILOG_ERROR (LOG_MME_APP, "Failed to start the MME Handover Completion timer for UE id " MME_UE_S1AP_ID_FMT " for duration %d \n", ue_context->mme_ue_s1ap_id,
           mme_config.mme_mobility_completion_timer);
-      s10_proc_mme_handover->ho_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+      s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
       /**
        * UE will be implicitly detached, if this timer runs out. It should be manually removed.
        * S10 FW Relocation Complete removes this timer.
        */
     } else {
-      OAILOG_DEBUG (LOG_MME_APP, "MME APP : Activated the MME Handover Completion timer UE id  " MME_UE_S1AP_ID_FMT ". Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %u. "
-          "Timer duration %d \n", ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->ho_completion_timer.id, mme_config.mme_handover_completion_timer);
+      OAILOG_DEBUG (LOG_MME_APP, "MME APP : Activated the MME Handover Completion timer UE id  " MME_UE_S1AP_ID_FMT ". "
+          "Waiting for UE to go back from IDLE mode to ACTIVE mode.. Timer Id %u. Timer duration %d \n",
+          ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->proc.timer.id, mme_config.mme_s10_handover_completion_timer);
       /** Upon expiration, invalidate the timer.. no flag needed. */
     }
+  }else{
+    /*
+     * The case that it is INTRA-MME-HANDOVER or source side, we don't start a mme_app_s10_proc timer.
+     * We only leave the UE reference timer to remove the UE_Reference towards the source enb.
+     * That's not part of the procedure and also should run if the process is removed.
+     */
   }
     /** Add the S10 procedure. */
   mme_app_s10_proc_t *s10_proc = (mme_app_s10_proc_t *)s10_proc_mme_handover;
@@ -277,22 +288,47 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
     LIST_INIT(ue_context->s10_procedures);
   }
   LIST_INSERT_HEAD((ue_context->s10_procedures), s10_proc, entries);
-  return s10_proc_inter_mme_handover;
+  return s10_proc_mme_handover;
 }
 
 //------------------------------------------------------------------------------
-mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context_p)
+mme_app_s10_proc_mme_handover_t* mme_app_get_s10_procedure_mme_handover(ue_context_t * const ue_context)
 {
-  if (ue_context_p->s10_procedures) {
+  if (ue_context->s10_procedures) {
     mme_app_s10_proc_t *s10_proc = NULL;
 
-    LIST_FOREACH(s10_proc, ue_context_p->s10_procedures, entries) {
+    LIST_FOREACH(s10_proc, ue_context->s10_procedures, entries) {
       if (MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER == s10_proc->type) {
+        return (mme_app_s10_proc_mme_handover_t*)s10_proc;
+      }else if (MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER == s10_proc->type) {
         return (mme_app_s10_proc_mme_handover_t*)s10_proc;
       }
     }
   }
   return NULL;
+}
+
+//------------------------------------------------------------------------------
+static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc)
+{
+  /** Remove the pending IEs. */
+  mme_app_s10_proc_mme_handover_t ** s10_proc_mme_handover_pp = (mme_app_s10_proc_mme_handover_t**) s10_proc;
+  if((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx){
+    free_wrapper(&(*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx); /**< Setting the reference inside the procedure also to null. */
+  }
+  if((*s10_proc_mme_handover_pp)->source_to_target_eutran_container){
+    bdestroy((*s10_proc_mme_handover_pp)->source_to_target_eutran_container->container_value);
+    free_wrapper(&(*s10_proc_mme_handover_pp)->source_to_target_eutran_container); /**< Setting the reference inside the procedure also to null. */
+  }
+  /*
+   * Todo: Make a generic function for this (proc_element with free_wrapper_ie() method).
+   */
+  if((*s10_proc_mme_handover_pp)->f_cause){
+    free_wrapper(&(*s10_proc_mme_handover_pp)->f_cause); /**< Setting the reference inside the procedure also to null. */
+  }
+  // DO here specific releases (memory,etc)
+  // nothing to do actually
+  free_wrapper((void**)s10_proc);
 }
 
 /*
@@ -317,7 +353,7 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
         /** Check if a timer is running, if so remove the timer. */
         if(s10_proc->timer.id != MME_APP_TIMER_INACTIVE_ID){
           if (timer_remove(s10_proc->timer.id, NULL)) {
-            OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for -MMME handover for UE id  %d \n", ue_context_p->mme_ue_s1ap_id);
+            OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for -MMME handover for UE id  %d \n", ue_context->mme_ue_s1ap_id);
             s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
           }
         }
@@ -326,35 +362,30 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
         remove_s10_tunnel_endpoint(ue_context, s10_proc);
         mme_app_free_s10_procedure_mme_handover(&s10_proc);
         return;
+      }else if (MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER == s10_proc->type){
+        LIST_REMOVE(s10_proc, entries);
+        /*
+         * Cannot remove the S10 tunnel endpoint with transaction.
+         * The S10 tunnel endpoint will remain throughout the UE contexts lifetime.
+         * It will be removed when the UE context is removed.
+         * The UE context will also be registered by the S10 teid also.
+         * We cannot get the process without getting the UE context, first.
+         */
+        /** Check if a timer is running, if so remove the timer. */
+        if(s10_proc->timer.id != MME_APP_TIMER_INACTIVE_ID){
+          if (timer_remove(s10_proc->timer.id, NULL)) {
+            OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for -MMME handover for UE id  %d \n", ue_context->mme_ue_s1ap_id);
+            s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
+          }
+        }
+        s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
+        /** Remove the S10 Tunnel endpoint and set the UE context S10 as invalid. */
+//        remove_s10_tunnel_endpoint(ue_context, s10_proc);
+        mme_app_free_s10_procedure_mme_handover(&s10_proc);
+        return;
       }
     }
   }
-}
-
-//------------------------------------------------------------------------------
-static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_proc)
-{
-  /** Remove the pending IEs. */
-  mme_app_s10_proc_inter_mme_handover_t * s10_proc_inter_mme_handover = (mme_app_s10_proc_inter_mme_handover_t*) s10_proc;
-  if(s10_proc_inter_mme_handover->nas_s10_context.mm_eps_ctx){
-    free_wrapper(&s10_proc_inter_mme_handover->nas_s10_context.mm_eps_ctx); /**< Setting the reference inside the procedure also to null. */
-  }
-  if(s10_proc_inter_mme_handover->source_to_target_eutran_container){
-    bdestroy(s10_proc_inter_mme_handover->source_to_target_eutran_container->container_value);
-    free_wrapper(&s10_proc_inter_mme_handover->source_to_target_eutran_container); /**< Setting the reference inside the procedure also to null. */
-  }
-  /*
-   * Todo: Make a generic function for this (proc_element with free_wrapper_ie() method).
-   */
-  if(s10_proc_inter_mme_handover->f_cause){
-    free_wrapper(&s10_proc_inter_mme_handover->f_cause); /**< Setting the reference inside the procedure also to null. */
-  }
-  if(s10_proc_inter_mme_handover->peer_ip){
-    free_wrapper(&s10_proc_inter_mme_handover->peer_ip); /**< Setting the reference inside the procedure also to null. */
-  }
-  // DO here specific releases (memory,etc)
-  // nothing to do actually
-  free_wrapper((void**)s10_proc);
 }
 
 /*

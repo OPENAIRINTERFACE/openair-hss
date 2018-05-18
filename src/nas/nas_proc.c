@@ -575,7 +575,7 @@ nas_proc_implicit_detach_ue_ind (
 
 //------------------------------------------------------------------------------
 int
-nas_proc_nas_context_res (itti_nas_context_res_t *nas_ctx_res_p)
+nas_proc_context_res (itti_nas_context_res_t *nas_ctx_res_p)
 {
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
@@ -585,10 +585,10 @@ nas_proc_nas_context_res (itti_nas_context_res_t *nas_ctx_res_p)
   OAILOG_FUNC_IN (LOG_NAS_EMM);
 
   emm_cn_ctx_res.ue_id      = nas_ctx_res_p->ue_id;
-  memcpy(&emm_cn_ctx_res._imei, nas_ctx_res_p->_imei, sizeof(nas_ctx_res_p->_imei));
-  memcpy(&emm_cn_ctx_res._imsi, nas_ctx_res_p->_imsi, sizeof(nas_ctx_res_p->_imsi));
+  memcpy(&emm_cn_ctx_res._imei, &nas_ctx_res_p->_imei, sizeof(nas_ctx_res_p->_imei));
+  memcpy(&emm_cn_ctx_res._imsi, &nas_ctx_res_p->_imsi, sizeof(nas_ctx_res_p->_imsi));
   emm_cn_ctx_res.imsi = nas_ctx_res_p->imsi;
-  memcpy(&emm_cn_ctx_res.mm_eps_context, &nas_ctx_res_p->mm_eps_context, sizeof(mm_context_eps_t));
+  /** Get the context from the pending emm_cn_procedure. */
 
   emm_sap.primitive = EMMCN_CONTEXT_RES;
   emm_sap.u.emm_cn.u.context_res = &emm_cn_ctx_res;
@@ -599,9 +599,9 @@ nas_proc_nas_context_res (itti_nas_context_res_t *nas_ctx_res_p)
 
 //------------------------------------------------------------------------------
 int
-nas_proc_nas_context_fail (
-    mme_ue_s1ap_id_t    ue_id,
-    nas_cause_t         cause)
+nas_proc_context_fail (
+    mme_ue_s1ap_id_t      ue_id,
+    gtpv2c_cause_value_t  cause)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
