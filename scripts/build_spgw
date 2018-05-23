@@ -29,7 +29,14 @@
 # include helper functions
 ################################
 THIS_SCRIPT_PATH=$(dirname $(readlink -f $0))
-source $THIS_SCRIPT_PATH/../build/tools/build_helper
+source $THIS_SCRIPT_PATH/../build/tools/build_helper.spgw
+
+LIBGTPNL="LIBGTPNL"
+LIBGTPNL_OVS="LIBGTPNL_OVS"
+OPENFLOW_MOSAIC="OPENFLOW_MOSAIC"
+OPENFLOW="OPENFLOW"
+REST="REST"
+GTPU_API=$OPENFLOW
 
 function help()
 {
@@ -39,21 +46,19 @@ function help()
   echo_error " "
   echo_error "Options:"
   echo_error "Mandatory arguments to long options are mandatory for short options too."
+  echo_error "  -b, --build-type                          Build type as defined in cmake, allowed values are: Debug Release RelWithDebInfo MinSizeRel"
   echo_error "  -c, --clean                               Clean the build generated files: config, object, executable files (build from scratch)"
-  echo_error "  -D, --daemon                              Build S/P-GW as a daemon."
   echo_error "  -f, --force                               No interactive script for installation of software packages."
   echo_error "  -h, --help                                Print this help."
-  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run S/P-GW (support Ubuntu 14.04)."
+  echo_error "  -i, --check-installed-software            Check installed software packages necessary to build and run S/P-GW (support $SUPPORTED_DISTRO)."
   echo_error "  -v, --verbose                             Build process verbose."
+  echo_error "  -V, --Verbose                             CMake only build process verbose, display compilation warnings and errors."
   echo_error " "
 }
-
-
 
 function main()
 {
   local -i clean=0
-  local -i daemon=0
   local -i force=0
   local -i verbose=0
   local -i var_check_install_oai_software=0
@@ -64,15 +69,15 @@ function main()
   until [ -z "$1" ]
     do
     case "$1" in
+      -b | --build-type)
+        list_include_item "Debug Release RelWithDebInfo MinSizeRel" $2
+        [[ $? -ne 0 ]] && echo_error "Build type $2 not recognized" && return $?
+        cmake_args="$cmake_args -DCMAKE_BUILD_TYPE=$2"
+        shift 2;
+        ;;
       -c | --clean)
         clean=1
         echo "Clean the build generated files (build from scratch)"
-        shift;
-        ;;
-      -D | --daemon)
-        daemon=1
-        cmake_args="$cmake_args -DDAEMONIZE=1"
-        echo "Build S/P-GW as a daemon"
         shift;
         ;;
       -f | --force)
@@ -83,10 +88,10 @@ function main()
       -h | --help)
         help
         shift;
-        exit 0
+        return 0
         ;;
       -i | --check-installed-software)
-        echo "Check installed software packages necessary to build and run S/P-GW (support Ubuntu 14.04):"
+        echo "Check installed software packages necessary to build and run S/P-GW (support $SUPPORTED_DISTRO):"
         set_openair_env
         var_check_install_oai_software=1
         shift;
@@ -98,10 +103,15 @@ function main()
         verbose=1
         shift;
         ;;
+      -V | --Verbose)
+        echo "CMake build process verbose"
+        verbose=1
+        shift;
+        ;;
       *)   
         echo "Unknown option $1"
         help
-        exit 1
+        return 1
         ;;
     esac
   done
@@ -112,10 +122,15 @@ function main()
   fi
   
   if [ $var_check_install_oai_software -gt 0 ];then
-    update_package_db
     check_install_spgw_software  $force
-    echo "SPGW not compiled, to compile it, re-run build_spgw without -i option"
-    exit 0
+    if [[ $? -ne 0 ]]; then
+        echo_error "Error: SPGW software installation failed"
+        return 1
+    else
+        echo_success "SPGW software installation successful"
+        echo_warning "SPGW not compiled, to compile it, re-run build_spgw without -i option"
+        return 0
+    fi
   fi
   
   set_openair_env 
@@ -123,8 +138,14 @@ function main()
   local dlog=$OPENAIRCN_DIR/build/log
   
   mkdir -m 777 -p $dlog
-  
-  
+
+  ############################################################################
+  # Create spgw
+  ##############################################################################
+  cd $OPENAIRCN_DIR/build
+  if [ ! -d ./spgw ]; then
+    mkdir -m 777 -p -v spgw
+  fi
   ##############################################################################
   # Clean
   ##############################################################################
@@ -133,11 +154,10 @@ function main()
     if [[ $verbose -eq 1 ]]; then
       echo "Cleaning S/P-GW: generated configuration files, obj files, spgw executable"
     fi
-    rm -f $OPENAIRCN_DIR/oai_sgw/spgw
     rm -Rf $OPENAIRCN_DIR/build/spgw/build  2>&1
     mkdir -m 777 -p -v build
   fi
-  
+
   ##############################################################################
   # Compile S/P-GW
   ##############################################################################
@@ -150,15 +170,14 @@ function main()
   echo 'include(${CMAKE_CURRENT_SOURCE_DIR}/../CMakeLists.txt)' >> $cmake_file
   
   cd ./build
-  cmake  $cmake_args .. > /dev/null 
-  
-  compilations spgw spgw spgw
-  if [ $daemon -ne 0 ]; then
-    # TODO /usr/sbin ?
-    $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/sbin/spgwd && echo_success "spgwd installed"
-  else
-    $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/local/bin && echo_success "spgw installed"
-  fi
+  $CMAKE $cmake_args .. > /dev/null
+  [[ $? -ne 0 ]] && return $?
+
+  compilations spgw spgw $OPENAIRCN_DIR/build/spgw/build/spgw $verbose
+  [[ $? -ne 0 ]] && return $?
+
+  $SUDO cp -upv $OPENAIRCN_DIR/build/spgw/build/spgw /usr/local/bin && echo_success "spgw installed"
+  return 0
 }
 
 
