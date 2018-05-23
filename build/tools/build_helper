@@ -346,8 +346,9 @@ install_libgtpnl_from_source() {
     cd /tmp
     echo "Downloading libgtpnl archive"
     $SUDO rm -rf /tmp/libgtpnl*
-    git clone git://git.osmocom.org/libgtpnl
+    git clone https://git.osmocom.org/libgtpnl
     cd libgtpnl
+    git reset --hard 345d687
     autoreconf -fi
     ./configure
     echo "Compiling nettle"
@@ -621,9 +622,7 @@ check_install_hss_software() {
   esac
 
   $SUDO apt-get install $OPTION \
-    phpmyadmin \
     python-pexpect \
-    libapache2-mod-php* 
 }
 
 #-------------------------------------------------------------------------------
@@ -687,8 +686,8 @@ check_install_mme_software() {
   fi
 
   #Remove old gnutls/nettle installation that was done from sources
-  remove_nettle_from_source
-  remove_gnutls_from_source
+  #remove_nettle_from_source
+  #remove_gnutls_from_source
   $SUDO apt-get install -y nettle-dev nettle-bin
   $SUDO apt-get install -y libgnutls-dev
   
@@ -710,7 +709,6 @@ check_install_mme_software() {
 
   PACKAGE_LIST="\
     check \
-    phpmyadmin \
     python-dev \
     python-pexpect \
     unzip"
