@@ -182,7 +182,6 @@ pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, con
   // TODO pdn_context->apn_in_use     =
   /** Insert the PDN context into the map of PDN contexts. */
   DevAssert(!RB_INSERT (PdnContexts, &ue_context->pdn_contexts, pdn_context));
-  //  MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", pdn_context->context_identifier, apn_configuration->service_selection);
   MSC_LOG_EVENT (MSC_NAS_ESM_MME, "0 Create PDN cid %u APN %s", pdn_context->context_identifier, pdn_context->apn_in_use);
   OAILOG_FUNC_RETURN (LOG_MME_APP, pdn_context);
 }

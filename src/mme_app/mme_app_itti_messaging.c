@@ -105,14 +105,14 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
   /*
    * Keep the identifier to the default APN
    */
-  MessageDef                             *message_p = NULL;
+  MessageDef                                        *message_p = NULL;
   itti_s11_release_access_bearers_request_t         *release_access_bearers_request_p = NULL;
-  int                                     rc = RETURNok;
+  pdn_context_t                                     *pdn_context = NULL;
+  int                                                rc = RETURNok;
 
   DevAssert (ue_context );
 
-  DevAssert(ue_context->num_pdns); // todo: check num active pdns via EMM/ESM context
-  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   DevAssert(pdn_context);
 
 
@@ -120,8 +120,7 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
   release_access_bearers_request_p = &message_p->ittiMsg.s11_release_access_bearers_request;
   memset ((void*)release_access_bearers_request_p, 0, sizeof (itti_s11_release_access_bearers_request_t));
 
-
-  // todo: multi apn, send m
+  /** Sending one RAB for all PDNs also in the specification. */
   release_access_bearers_request_p->local_teid = ue_context->mme_teid_s11;
   release_access_bearers_request_p->teid = pdn_context->s_gw_teid_s11_s4;
   release_access_bearers_request_p->peer_ip = pdn_context->s_gw_address_s11_s4.address.ipv4_address; /**< Not reading from the MME config. */
@@ -390,8 +389,11 @@ int mme_app_remove_s10_tunnel_endpoint(teid_t local_teid, teid_t remote_teid, st
   OAILOG_FUNC_RETURN(LOG_MME_APP, RETURNok);
 }
 
+/*
+ * Cu
+ */
 //------------------------------------------------------------------------------
-int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const pdn_context_t* pdn_context)
+int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_p, const ebi_t ebi, const struct in_addr saegw_s11_in_addr, const teid_t saegw_s11_teid)
 {
   MessageDef                             *message_p = NULL;
   int                                     rc = RETURNok;
@@ -400,8 +402,8 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
   message_p = itti_alloc_new_message (TASK_MME_APP, S11_DELETE_SESSION_REQUEST);
   AssertFatal (message_p , "itti_alloc_new_message Failed");
   S11_DELETE_SESSION_REQUEST (message_p).local_teid = ue_context_p->mme_teid_s11;
-  S11_DELETE_SESSION_REQUEST (message_p).teid       = pdn_context->s_gw_teid_s11_s4;
-  S11_DELETE_SESSION_REQUEST (message_p).lbi        = pdn_context->default_ebi; //default bearer
+  S11_DELETE_SESSION_REQUEST (message_p).teid       = saegw_s11_teid;
+  S11_DELETE_SESSION_REQUEST (message_p).lbi        = ebi; //default bearer
 
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
   S11_DELETE_SESSION_REQUEST (message_p).sender_fteid_for_cp.teid = (teid_t) ue_context_p;
@@ -419,7 +421,7 @@ int mme_app_send_delete_session_request (struct ue_context_s * const ue_context_
    */
   S11_DELETE_SESSION_REQUEST  (message_p).trxn = NULL;
   mme_config_read_lock (&mme_config);
-  S11_DELETE_SESSION_REQUEST (message_p).peer_ip = pdn_context->s_gw_address_s11_s4.address.ipv4_address;
+  S11_DELETE_SESSION_REQUEST (message_p).peer_ip = saegw_s11_in_addr;
   mme_config_unlock (&mme_config);
 
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME,

@@ -448,7 +448,6 @@ typedef struct ue_context_s {
   // todo: check if they are necessary!
   #define MAX_APN_PER_UE    5 /**< Maximum number of PDN sesssions per UE. */
   RB_HEAD(PdnContexts, pdn_context_s) pdn_contexts;
-  int num_pdns;
 
   apn_config_profile_t   apn_config_profile;                  // set by S6A UPDATE LOCATION ANSWER
 

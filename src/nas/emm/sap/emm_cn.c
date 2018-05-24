@@ -635,6 +635,8 @@ static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
     /** Detach the UE. */
     if (rc != RETURNerror) {
 
+      mme_ue_s1ap_id_t old_ue_id = emm_context->ue_id;
+
       emm_sap_t                               emm_sap = {0};
 
       /*
@@ -644,9 +646,10 @@ static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
       emm_sap.primitive = EMMREG_DETACH_CNF;
       emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
       emm_sap.u.emm_reg.ctx = emm_context;
+      emm_sap.u.emm_reg.free_proc = true;
       rc = emm_sap_send (&emm_sap);
       // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
-      nas_itti_detach_req(emm_context->ue_id);
+      nas_itti_detach_req(old_ue_id);
       // todo: review unlock
 //      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);

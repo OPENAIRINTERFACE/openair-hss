@@ -247,7 +247,7 @@ void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context)
   RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
     DevAssert(registered_pdn_ctx);
 
-    /**
+    /*
      * Get the first PDN whose bearers are not established yet.
      * Do the MBR just one PDN at a time.
      */

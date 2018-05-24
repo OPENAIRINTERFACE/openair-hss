@@ -57,7 +57,7 @@ mme_app_handle_detach_req (
   DevAssert(detach_req_p != NULL);
   ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, detach_req_p->ue_id);
   if (ue_context == NULL) {
-    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist -> Nothing to do :-) \n");
+    OAILOG_ERROR (LOG_MME_APP, "UE context doesn't exist for ueId "MME_UE_S1AP_ID_FMT "-> Nothing to do :-) \n", detach_req_p->ue_id);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
 

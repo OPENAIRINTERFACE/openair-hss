@@ -1591,7 +1591,7 @@ _mme_app_handle_s1ap_ue_context_release (const mme_ue_s1ap_id_t mme_ue_s1ap_id,
     // release S1-U tunnel mapping in S_GW for all the active bearers for the UE
     // /** Check if this is the main S1AP UE reference, if o
     // todo:   Assert(at_least_1_BEARER_IS_ESTABLISHED_TO_SAEGW)!?!?
-     OAILOG_ERROR (LOG_MME_APP, "UE is REGISTERED. Sending Release Access Bearer Request for ueId "MME_UE_S1AP_ID_FMT". \n.", ue_context->mme_ue_s1ap_id);
+     OAILOG_INFO(LOG_MME_APP, "UE is REGISTERED. Sending Release Access Bearer Request for ueId "MME_UE_S1AP_ID_FMT". \n.", ue_context->mme_ue_s1ap_id);
     mme_app_send_s11_release_access_bearers_req (ue_context); /**< Release Access bearers and then send context release request.  */
     // todo: not sending all together, send one by one when release access bearer response is received.
   }

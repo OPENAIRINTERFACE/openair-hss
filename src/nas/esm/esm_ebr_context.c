@@ -293,7 +293,7 @@ esm_ebr_context_release (
   }
 
   if(*pid != NULL){
-    mme_app_get_pdn_context(ue_context, *pid, ebi, &pdn_context);
+    mme_app_get_pdn_context(ue_context, *pid, ebi, NULL, &pdn_context);
   }else{
     /** Get the bearer context from all session bearers. */
     mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);

@@ -105,7 +105,11 @@ static const char                      *_esm_sap_primitive_str[] = {
   "ESM_EPS_BEARER_CONTEXT_MODIFY_REQ",
   "ESM_EPS_BEARER_CONTEXT_MODIFY_CNF",
   "ESM_EPS_BEARER_CONTEXT_MODIFY_REJ",
+
+  "ESM_PDN_CONFIG_RES",
+
   "ESM_PDN_CONNECTIVITY_REQ",
+  "ESM_PDN_CONNECTIVITY_CNF",
   "ESM_PDN_CONNECTIVITY_REJ",
   "ESM_PDN_DISCONNECT_REQ",
   "ESM_PDN_DISCONNECT_REJ",
@@ -217,7 +221,8 @@ esm_sap_send (esm_sap_t * msg)
         proc_tid_t pti = _pdn_connectivity_delete (msg->ctx, pid);
       }
     }else{
-      DevAssert(0);
+      OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+//      DevAssert(0);
     }
     break;
 

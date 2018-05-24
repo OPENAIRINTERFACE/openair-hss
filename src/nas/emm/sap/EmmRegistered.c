@@ -188,6 +188,9 @@ EmmRegistered (
     if (emm_ctx->esm_msg) {
       bdestroy(emm_ctx->esm_msg);
     }
+    // todo: temporarily also remove the EMM context
+    // Release emm and esm context
+    _clear_emm_ctxt(emm_ctx);
     break;
 
   case _EMMREG_TAU_REQ:

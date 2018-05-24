@@ -475,29 +475,34 @@ int emm_proc_attach_complete (
   const nas_message_decode_status_t status)
 {
   OAILOG_FUNC_IN (LOG_NAS_EMM);
-  emm_data_context_t                     *emm_data_context = NULL;
+  emm_data_context_t                     *emm_context = NULL;
   nas_emm_attach_proc_t                  *attach_proc = NULL;
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
   esm_sap_t                               esm_sap = {0};
 
+  OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - EPS attach complete (ue_id=" MME_UE_S1AP_ID_FMT ")\n", ue_id);
+
   /*
    * Get the UE context
    */
-  emm_data_context = emm_data_context_get(&_emm_data, ue_id);
+  emm_context = emm_data_context_get(&_emm_data, ue_id);
 
-  if (emm_data_context) {
-    if (is_nas_specific_procedure_attach_running (emm_data_context)) {
-      attach_proc = (nas_emm_attach_proc_t*)emm_data_context->emm_procedures->emm_specific_proc;
+  if (emm_context) {
+    if (is_nas_specific_procedure_attach_running (emm_context)) {
+      attach_proc = (nas_emm_attach_proc_t*)emm_context->emm_procedures->emm_specific_proc;
 
       /*
        * Upon receiving an ATTACH COMPLETE message, the MME shall enter state EMM-REGISTERED
        * and consider the GUTI sent in the ATTACH ACCEPT message as valid.
        */
       REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__20);
-      emm_ctx_set_attribute_valid(emm_data_context, EMM_CTXT_MEMBER_GUTI);
+      emm_ctx_set_attribute_valid(emm_context, EMM_CTXT_MEMBER_GUTI);
+      /** Add the EMM context by GUTI. */
+      emm_data_context_add_guti(&_emm_data, emm_context);
+
       // TODO LG REMOVE emm_context_add_guti(&_emm_data, &ue_context->emm_context);
-      emm_ctx_clear_old_guti(emm_data_context);
+      emm_ctx_clear_old_guti(emm_context);
 
       /*
        * Forward the Activate Default EPS Bearer Context Accept message
@@ -507,7 +512,7 @@ int emm_proc_attach_complete (
       esm_sap.is_standalone = false;
       esm_sap.ue_id = ue_id;
       esm_sap.recv = esm_msg_pP;
-      esm_sap.ctx = emm_data_context;
+      esm_sap.ctx = emm_context;
       rc = esm_sap_send (&esm_sap);
     } else {
       NOT_REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__20);
@@ -522,14 +527,14 @@ int emm_proc_attach_complete (
     /*
      * Set the network attachment indicator
      */
-    emm_data_context->is_has_been_attached = true;
+    emm_context->is_has_been_attached = true;
     /*
      * Notify EMM that attach procedure has successfully completed
      */
     emm_sap.primitive = EMMREG_ATTACH_CNF; /**< No Common_REG_CNF since GUTI might not have been sent (EMM_DEREG-> EMM_REG) // todo: attach_complete arrives always? */
     // todo: for EMM_REG_COMMON_PROC_CNF, do we need common_proc (explicit) like SMC, AUTH, INFO? and not implicit guti reallocation where none exists?
     emm_sap.u.emm_reg.ue_id = ue_id;
-    emm_sap.u.emm_reg.ctx = emm_data_context;
+    emm_sap.u.emm_reg.ctx = emm_context;
 //    emm_sap.u.emm_reg.notify = true;
 //    emm_sap.u.emm_reg.free_proc = true;
     emm_sap.u.emm_reg.u.attach.proc = attach_proc;
@@ -540,7 +545,7 @@ int emm_proc_attach_complete (
      */
     emm_sap.primitive = EMMREG_ATTACH_REJ;
     emm_sap.u.emm_reg.ue_id = ue_id;
-    emm_sap.u.emm_reg.ctx = emm_data_context;
+    emm_sap.u.emm_reg.ctx = emm_context;
     emm_sap.u.emm_reg.notify = true;
     emm_sap.u.emm_reg.free_proc = true;
     emm_sap.u.emm_reg.u.attach.proc = attach_proc;
@@ -570,7 +575,7 @@ int emm_proc_attach_complete (
 static
 int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1ap_id_t new_ue_id, emm_attach_request_ies_t * const ies ){
 
-  OAILOG_FUNC_OUT(LOG_NAS_EMM);
+  OAILOG_FUNC_IN(LOG_NAS_EMM);
   int                      rc = RETURNerror;
 //  emm_data_context_t      *emm_context = *emm_context_pP;
 

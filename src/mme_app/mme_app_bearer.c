@@ -303,14 +303,14 @@ mme_app_handle_nas_pdn_disconnect_req (
 //    DevAssert(bearer_context_to_deactivate->bearer_state == BEARER_STATE_ACTIVE); // Cannot be in IDLE mode?
 //  }
 
-  mme_app_get_pdn_context(ue_context, nas_pdn_disconnect_req_pP->pdn_cid, nas_pdn_disconnect_req_pP->default_ebi, nas_pdn_disconnect_req_pP->apn, &pdn_context);
-  if(!pdn_context){
-    OAILOG_ERROR (LOG_MME_APP, "No PDN context found for pdn_cid %d for UE " MME_UE_S1AP_ID_FMT ". \n", nas_pdn_disconnect_req_pP->pdn_cid, nas_pdn_disconnect_req_pP->ue_id);
-    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
-  }
+//  mme_app_get_pdn_context(ue_context, nas_pdn_disconnect_req_pP->pdn_cid, nas_pdn_disconnect_req_pP->default_ebi, nas_pdn_disconnect_req_pP->apn,  &pdn_context);
+//  if(!pdn_context){
+//    OAILOG_ERROR (LOG_MME_APP, "No PDN context found for pdn_cid %d for UE " MME_UE_S1AP_ID_FMT ". \n", nas_pdn_disconnect_req_pP->pdn_cid, nas_pdn_disconnect_req_pP->ue_id);
+//    OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
+//  }
 
   /** Don't change the bearer state. Send Delete Session Request to SAE-GW. No transaction needed. */
-  rc =  mme_app_send_delete_session_request(ue_context, pdn_context);
+  rc =  mme_app_send_delete_session_request(ue_context, nas_pdn_disconnect_req_pP->default_ebi, nas_pdn_disconnect_req_pP->saegw_s11_ip_addr, nas_pdn_disconnect_req_pP->saegw_s11_teid);
   OAILOG_FUNC_RETURN (LOG_MME_APP, rc);
 }
 
@@ -372,7 +372,7 @@ mme_app_handle_conn_est_cnf (
 
   bearer_context_t * first_bearer = RB_MIN(SessionBearers, &first_pdn->session_bearers); // todo: @ handover (idle mode tau) this should give us the default ebi!
   if(first_bearer){ // todo: optimize this!
-    if (BEARER_STATE_SGW_CREATED & first_bearer->bearer_state) {
+//    if ((BEARER_STATE_SGW_CREATED  || BEARER_STATE_S1_RELEASED) & first_bearer->bearer_state) {    /**< It could be in IDLE mode. */
       establishment_cnf_p->e_rab_id[0]                                 = first_bearer->ebi ;//+ EPS_BEARER_IDENTITY_FIRST;
       establishment_cnf_p->e_rab_level_qos_qci[0]                      = first_bearer->qci;
       establishment_cnf_p->e_rab_level_qos_priority_level[0]           = first_bearer->priority_level;
@@ -383,7 +383,7 @@ mme_app_handle_conn_est_cnf (
 //      if (!j) { // todo: ESM message may exist --> should match each to the EBI!
       establishment_cnf_p->nas_pdu[0]                                  = nas_conn_est_cnf_pP->nas_msg;
       nas_conn_est_cnf_pP->nas_msg = NULL; /**< Unlink. */
-    }
+//    }
   }
   establishment_cnf_p->no_of_e_rabs = 1;
 
@@ -560,12 +560,16 @@ mme_app_handle_initial_ue_message (
           // Update enb_s1ap_id_key in hashtable
           mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
               ue_context,
-              enb_s1ap_id_key,
+              enb_s1ap_id_key,  /**< Generated first. */
               ue_nas_ctx->ue_id,
               ue_nas_ctx->_imsi64,
               ue_context->mme_teid_s11,
               ue_context->local_mme_teid_s10,
               &guti);
+          /** Set the UE in ECM-Connected state. */
+          // todo: checking before
+          ue_context->ecm_state         = ECM_CONNECTED;
+
         }
       } else {
         OAILOG_DEBUG (LOG_MME_APP, "MME_APP_INITIAL_UE_MESSAGE with mme code %u and S-TMSI %u:"
@@ -595,7 +599,7 @@ mme_app_handle_initial_ue_message (
     OAILOG_DEBUG (LOG_MME_APP, "UE context doesn't exist -> create one \n");
     if (!(ue_context = mme_create_new_ue_context ())) {
       /*
-       * Error during ue context malloc.
+       * Error during UE context malloc.
        * todo: removing the UE reference?!
        */
       hashtable_rc_t result_deletion = hashtable_ts_remove (mme_app_desc.mme_ue_contexts.enb_ue_s1ap_id_ue_context_htbl,
@@ -763,13 +767,14 @@ mme_app_handle_delete_session_rsp (
    * UE context from the hashtable.
    * If this is not done, later at removal of the MME_APP UE context, the S11 keys will be checked and removed again if still existing.
    */
-  if(ue_context->num_pdns == 1){
-    /** This was the last PDN, removing the S11 TEID. */
-    hashtable_ts_remove(mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl,
-        (const hash_key_t) ue_context->mme_teid_s11, &id);
-    ue_context->mme_teid_s11 = INVALID_TEID;
-    /** SAE-GW TEID will be initialized when PDN context is purged. */
-  }
+  // todo: handle this! where to remove the S11 Tunnel?
+//  if(ue_context->num_pdns == 1){
+//    /** This was the last PDN, removing the S11 TEID. */
+//    hashtable_ts_remove(mme_app_desc.mme_ue_contexts.tun11_ue_context_htbl,
+//        (const hash_key_t) ue_context->mme_teid_s11, &id);
+//    ue_context->mme_teid_s11 = INVALID_TEID;
+//    /** SAE-GW TEID will be initialized when PDN context is purged. */
+//  }
 
    if (delete_sess_resp_pP->cause.cause_value != REQUEST_ACCEPTED) {
      OAILOG_WARNING (LOG_MME_APP, "***WARNING****S11 Delete Session Rsp: NACK received from SPGW : %08x\n", delete_sess_resp_pP->teid);
@@ -1380,7 +1385,8 @@ found_pdn:
   /** Setting as ACTIVE when MBResp received from SAE-GW. */
   if(ue_context->mm_state == UE_REGISTERED){
     /** Send Modify Bearer Request for the APN. */
-    DevAssert(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx));
+    mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx);
+    // todo: check Modify bearer request
   }else{
     /** Will send MBR with MM state change callbacks (with ATTACH_COMPLETE). */
     OAILOG_INFO(LOG_MME_APP, "IMSI " IMSI_64_FMT " is not registered yet. Waiting the UE to register to send the MBR.\n", ue_context->imsi);

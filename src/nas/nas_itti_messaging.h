@@ -67,6 +67,8 @@ void nas_itti_pdn_connectivity_req(
 void nas_itti_pdn_disconnect_req(
   mme_ue_s1ap_id_t        ue_idP,
   ebi_t                   default_ebi,
+  struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
+  teid_t                  saegw_s11_teid,
   esm_proc_data_t        *proc_data_pP);
 
 void nas_itti_ctx_req(

@@ -102,6 +102,7 @@ _clear_emm_ctxt(emm_data_context_t *emm_context) {
   if (emm_context->esm_msg) {
     bdestroy(emm_context->esm_msg);
   }
+  emm_data_context_remove(&_emm_data, emm_context);
 
   emm_ctx_clear_old_guti(emm_context);
   emm_ctx_clear_guti(emm_context);
@@ -110,6 +111,11 @@ _clear_emm_ctxt(emm_data_context_t *emm_context) {
   emm_ctx_clear_auth_vectors(emm_context);
   emm_ctx_clear_security(emm_context);
   emm_ctx_clear_non_current_security(emm_context);
+
+  /*
+   * Release the EMM context
+   */
+  free_wrapper((void **) &emm_context);
 }
 
 

@@ -297,6 +297,8 @@ void nas_itti_pdn_connectivity_req(
 void nas_itti_pdn_disconnect_req(
   mme_ue_s1ap_id_t        ue_idP,
   ebi_t                   default_ebi,
+  struct in_addr          saegw_s11_addr, /**< Put them into the UE context ? */
+  teid_t                  saegw_teid,
   esm_proc_data_t        *proc_data_pP)
 {
   OAILOG_FUNC_IN(LOG_NAS);
@@ -311,6 +313,10 @@ void nas_itti_pdn_disconnect_req(
   NAS_PDN_DISCONNECT_REQ(message_p).pti             = proc_data_pP->pti;
   NAS_PDN_DISCONNECT_REQ(message_p).default_ebi     = default_ebi;
   NAS_PDN_DISCONNECT_REQ(message_p).ue_id           = ue_idP;
+
+  NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_ip_addr    = saegw_s11_addr;
+  NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_teid       = saegw_teid;
+
   bassign(NAS_PDN_DISCONNECT_REQ(message_p).apn, proc_data_pP->apn);
 
   MSC_LOG_TX_MESSAGE(
