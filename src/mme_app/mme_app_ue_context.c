@@ -97,23 +97,41 @@ inline int32_t                    mme_app_compare_pdn_context(
     struct pdn_context_s *a,
     struct pdn_context_s *b) {
 
-  /** Compare context identifier. */
+  /** Compare APN selection. */
+  if(a->apn_subscribed && b->apn_subscribed){
+    int res = bstricmp (a->apn_subscribed, b->apn_subscribed);
+    if(res != 0){
+      return res;
+    }
+  }
+
+  /** Check that default ebis not 0. */
+  if(a->default_ebi && b->default_ebi){
+    /** Compare Default EBI. */
+    if (a->default_ebi > b->default_ebi)
+      return 1;
+
+    if (a->default_ebi < b->default_ebi)
+      return -1;
+  }
+
+  /** The context identifier may or may not be set. It may also be null. So check it latest. */
   if (a->context_identifier > b->context_identifier)
     return 1;
 
   if (a->context_identifier < b->context_identifier)
     return -1;
 
-  /** Compare Default EBI. */
-  if (a->default_ebi > b->default_ebi)
-    return 1;
-
-  if (a->default_ebi < b->default_ebi)
-    return -1;
-
-  /* Compare the bstrings. */
-  return 1; // todo bstrcmp(apn_network_identifier(a->apn_in_use),
+  /* Compare the APN names. */
+//  return bstricmp (a->apn_in_use, b->apn_in_use);
+//    OAILOG_DEBUG (LOG_MME_APP, "Selected APN %s for UE " IMSI_64_FMT "\n",
+//        ue_context->apn_config_profile.apn_configuration[index].service_selection,
+//        ue_context->imsi);
+//         return &ue_context->apn_config_profile.apn_configuration[index];
+//       }
+//  return 1; // todo bstrcmp(apn_network_identifier(a->apn_in_use),
       //apn_network_identifier(b->apn_in_use));
+  return 0;
 }
 
 RB_GENERATE (PdnContexts, pdn_context_s, pdnCtxRbtNode, mme_app_compare_pdn_context)

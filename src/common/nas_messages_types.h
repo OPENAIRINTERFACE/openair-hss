@@ -86,8 +86,10 @@ typedef enum pdn_conn_rsp_cause_e {
 typedef struct itti_nas_pdn_connectivity_req_s {
   proc_tid_t             pti;   // nas ref  Identity of the procedure transaction executed to activate the PDN connection entry
   mme_ue_s1ap_id_t       ue_id; // nas ref
-  char                   imsi[16];
-  uint8_t                imsi_length;
+//  char                   imsi[16];
+//  uint8_t                imsi_length;
+  imsi64_t               imsi;
+  imsi_t                 _imsi;
   bearer_qos_t           bearer_qos;
   protocol_configuration_options_t pco;
   bstring                apn;

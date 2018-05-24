@@ -55,16 +55,15 @@ int mme_app_send_s6a_update_location_req (
 {
   MessageDef                             *message_p = NULL;
   s6a_update_location_req_t              *s6a_ulr_p = NULL;
-  uint64_t                                imsi64 = 0;
   emm_data_context_t                     *emm_context = NULL;
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_MME_APP);
-  OAILOG_DEBUG (LOG_MME_APP, "Handling ULR request for imsi " IMSI_64_FMT "\n", imsi64);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling ULR request for imsi " IMSI_64_FMT "\n", ue_context->imsi);
 
   /** Recheck that the UE context is found by the IMSI. */
-  if ((emm_context = emm_data_context_get_by_imsi(&_emm_data, imsi64)) == NULL) {
-    OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI " IMSI_64_FMT ". \n", imsi64);
+  if ((emm_context = emm_data_context_get_by_imsi(&_emm_data, ue_context->imsi)) == NULL) {
+    OAILOG_ERROR (LOG_MME_APP, "That's embarrassing as we don't know this IMSI " IMSI_64_FMT ". \n", ue_context->imsi);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
 
@@ -76,6 +75,8 @@ int mme_app_send_s6a_update_location_req (
 
   s6a_ulr_p = &message_p->ittiMsg.s6a_update_location_req;
 
+//  IMSI64_TO_STRING (ue_context->imsi, s6a_ulr_p->imsi);
+  IMSI_TO_STRING(&emm_context->_imsi, s6a_ulr_p->imsi, IMSI_BCD_DIGITS_MAX+1);
   s6a_ulr_p->imsi_length = strlen (s6a_ulr_p->imsi);
   if(!is_nas_specific_procedure_tau_running(emm_context)){
     s6a_ulr_p->initial_attach = INITIAL_ATTACH;
@@ -150,7 +151,7 @@ int mme_app_handle_s6a_update_location_ans (
   memcpy (&ue_context->subscribed_ue_ambr, &ula_pP->subscription_data.subscribed_ambr, sizeof (ambr_t));
 
   ue_context->msisdn = blk2bstr(ula_pP->subscription_data.msisdn, ula_pP->subscription_data.msisdn_length);
-  AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0");
+//  AssertFatal (ula_pP->subscription_data.msisdn_length != 0, "MSISDN LENGTH IS 0"); todo: msisdn
   AssertFatal (ula_pP->subscription_data.msisdn_length <= MSISDN_LENGTH, "MSISDN LENGTH is too high %u", MSISDN_LENGTH);
 
   ue_context->rau_tau_timer = ula_pP->subscription_data.rau_tau_timer;

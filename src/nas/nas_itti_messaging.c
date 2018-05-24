@@ -36,6 +36,7 @@
 
 #include "bstrlib.h"
 #include "tree.h"
+#include "gcc_diag.h"
 
 #include "log.h"
 #include "msc.h"
@@ -172,9 +173,10 @@ void nas_itti_pdn_config_req(
 
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_PDN_CONFIG_REQ);
 
-  hexa_to_ascii((uint8_t *)imsi_pP->u.value,
-      NAS_PDN_CONFIG_REQ(message_p).imsi,
-      imsi_pP->length);
+//  hexa_to_ascii((uint8_t *)imsi_pP->u.value,
+//      NAS_PDN_CONFIG_REQ(message_p).imsi,
+//      imsi_pP->length);
+  IMSI_TO_STRING(imsi_pP, NAS_PDN_CONFIG_REQ(message_p).imsi, IMSI_BCD_DIGITS_MAX+1);
   NAS_PDN_CONFIG_REQ(message_p).imsi_length = imsi_pP->length;
 
   NAS_PDN_CONFIG_REQ(message_p).ue_id           = ue_idP;
@@ -223,6 +225,7 @@ void nas_itti_pdn_connectivity_req(
   mme_ue_s1ap_id_t        ue_idP,
   pdn_cid_t               pdn_cidP,
   const ebi_t             default_ebi,
+  const imsi64_t          imsi,
   const imsi_t           *const imsi_pP,
   esm_proc_data_t        *proc_data_pP,
   esm_proc_pdn_request_t  request_typeP)
@@ -236,22 +239,19 @@ void nas_itti_pdn_connectivity_req(
 
   message_p = itti_alloc_new_message(TASK_NAS_MME, NAS_PDN_CONNECTIVITY_REQ);
 
-  hexa_to_ascii((uint8_t *)imsi_pP->u.value,
-                NAS_PDN_CONNECTIVITY_REQ(message_p).imsi,
-                8);
-
   NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_cid         = pdn_cidP;
   NAS_PDN_CONNECTIVITY_REQ(message_p).default_ebi     = default_ebi;
   NAS_PDN_CONNECTIVITY_REQ(message_p).pti             = ptiP;
   NAS_PDN_CONNECTIVITY_REQ(message_p).ue_id           = ue_idP;
-  NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[15]        = '\0';
-
-  if (isdigit(NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14])) {
-    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 15;
-  } else {
-    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 14;
-    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14] = '\0';
-  }
+  NAS_PDN_CONNECTIVITY_REQ(message_p).imsi            = imsi;
+  memcpy((void*)&NAS_PDN_CONNECTIVITY_REQ(message_p)._imsi, imsi_pP, sizeof (imsi_t));
+//
+//  if (isdigit(NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14])) {
+//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 15;
+//  } else {
+//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 14;
+//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14] = '\0';
+//  }
 
   bassign(NAS_PDN_CONNECTIVITY_REQ(message_p).apn, proc_data_pP->apn);
   bassign(NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_addr, proc_data_pP->pdn_addr);
@@ -482,6 +482,23 @@ void nas_itti_establish_cnf(
   derive_keNB (emm_ctx->_vector[emm_ctx->_security.vector_index].kasme,
       emm_ctx->_security.ul_count.seq_num | (emm_ctx->_security.ul_count.overflow << 8),
       NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).kenb);
+
+  uint8_t                                 zero[32];
+  memset(zero, 0, 32);
+  memset(emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, 0, 32);
+
+  OAILOG_STREAM_HEX(OAILOG_LEVEL_DEBUG, LOG_NAS, "KENB: ", NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).kenb, 32)
+
+  /** Derive the next hop. */
+  /** Calculate and set the next hop value into the context. Use the above derived kenb as first nh value. */
+  if(memcmp(emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, zero, 32) == 0){
+    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC  - NH value is 0 as expected. Setting kEnb as NH0  \n");
+    memcpy(emm_ctx->_vector[emm_ctx->_security.vector_index].nh_conj, NAS_CONNECTION_ESTABLISHMENT_CNF(message_p).kenb, 32);
+  }else{
+    OAILOG_WARNING( LOG_NAS_EMM, "EMM-PROC  - NH value is NOT 0 @ initial S1AP context establishment  \n");
+  }
+
+  emm_ctx->_security.ncc = 0;
 
   MSC_LOG_TX_MESSAGE(
       MSC_NAS_MME,

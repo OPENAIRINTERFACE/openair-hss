@@ -100,11 +100,45 @@ gtpv2c_imsi_ie_set (
 
   DevAssert (msg );
   DevAssert (imsi );
-  memcpy(&imsi_nbo, imsi, sizeof (imsi_nbo));
+
+//  memcpy(&imsi_nbo, imsi, sizeof (imsi_nbo));
+
+//  hexa_to_ascii((uint8_t *)imsi_pP->u.value,
+//                NAS_PDN_CONNECTIVITY_REQ(message_p).imsi,
+//                8);
+
+//  NAS_PDN_CONNECTIVITY_REQ(message_p).pti             = ptiP;
+//  NAS_PDN_CONNECTIVITY_REQ(message_p).ue_id           = ue_idP;
+//
+//
+//  NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[15]        = '\0';
+//
+//  if (isdigit(NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14])) {
+//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 15;
+//  } else {
+//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi_length = 14;
+//    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14] = '\0';
+//  }
+
   for (int i = 0; i < IMSI_BCD8_SIZE; i++) {
-    uint8_t tmp = imsi_nbo.u.value[i];
+    uint8_t tmp = imsi->u.value[i];
     imsi_nbo.u.value[i] = (tmp >> 4) | (tmp << 4);
   }
+  imsi_nbo.length = imsi->length;
+
+//  uint8_t digits[IMSI_BCD_DIGITS_MAX+1];
+//  int j = 0;
+//  for (int i = 0; i < imsi->length; i++) {
+//    if ((9 >= (imsi->u.value[i] & 0x0F)) && (j < IMSI_BCD_DIGITS_MAX)){
+//      imsi_nbo.u.value[j++]=imsi_nbo.u.value[i] & 0x0F;
+//    }
+//    if ((0x90 >= (imsi_nbo.u.value[i] & 0xF0)) && (j < IMSI_BCD_DIGITS_MAX)){
+//      imsi_nbo.u.value[j++]=(imsi_nbo.u.value[i] & 0xF0) >> 4;
+//    }
+//  }
+//    hexa_to_ascii((uint8_t *)imsi->u.value,
+//        imsi_nbo.u.value,
+//        8);
 
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_IMSI, imsi_nbo.length, 0, (uint8_t*)imsi_nbo.u.value);
   DevAssert (NW_OK == rc);

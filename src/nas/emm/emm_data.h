@@ -358,7 +358,7 @@ struct emm_data_context_s *emm_data_context_get_by_guti (emm_data_t * emm_data, 
 int                   emm_context_unlock (struct emm_data_context_s *emm_context_p);
 
 
-int emm_context_upsert_imsi (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__((nonnull));
+//int emm_context_upsert_imsi (emm_data_t * emm_data, struct emm_data_context_s *elm) __attribute__((nonnull));
 
 /**
  * This method updates the AS security parameters.

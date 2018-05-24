@@ -19,26 +19,12 @@
  *      contact@openairinterface.org
  */
 
-/*! \file s6a_subscription_data.c
-  \brief
-  \author Sebastien ROUX, Lionel Gauthier
-  \company Eurecom
-  \email: lionel.gauthier@eurecom.fr
-*/
 
 #include <stdint.h>
-#include <stdbool.h>
-
-#include "bstrlib.h"
 
 #include "assertions.h"
-#include "3gpp_23.003.h"
-#include "3gpp_24.008.h"
-#include "3gpp_33.401.h"
-#include "security_types.h"
 #include "common_defs.h"
 #include "common_types.h"
-#include "PdnType.h"
 #include "s6a_defs.h"
 
 static inline int
@@ -166,7 +152,7 @@ s6a_parse_service_selection (
   char *service_selection,
   int *length)
 {
-  DevCheck (hdr_service_selection->avp_value->os.len <= SERVICE_SELECTION_MAX_LENGTH, hdr_service_selection->avp_value->os.len, ACCESS_POINT_NAME_MAX_LENGTH, 0);
+  DevCheck (hdr_service_selection->avp_value->os.len <= APN_MAX_LENGTH, hdr_service_selection->avp_value->os.len, APN_MAX_LENGTH, 0);
   *length = sprintf (service_selection, "%*s", (int)hdr_service_selection->avp_value->os.len, hdr_service_selection->avp_value->os.data);
   return RETURNok;
 }
@@ -308,30 +294,30 @@ s6a_parse_ip_address (
   ip_type = (hdr->avp_value->os.data[0] << 8) | (hdr->avp_value->os.data[1]);
 
   if (ip_type == IANA_IPV4) {
-    /*
-     * This is an IPv4 address
-     */
-    ip_address->pdn_type = IPv4;
-    DevCheck (hdr->avp_value->os.len == 6, hdr->avp_value->os.len, 6, ip_type);
-    uint32_t ip = (((uint32_t)hdr->avp_value->os.data[2]) << 24) |
-                  (((uint32_t)hdr->avp_value->os.data[3]) << 16) |
-                  (((uint32_t)hdr->avp_value->os.data[4]) << 8) |
-                   ((uint32_t)hdr->avp_value->os.data[5]);
+      /*
+       * This is an IPv4 address
+       */
+      ip_address->pdn_type = IPv4;
+      DevCheck (hdr->avp_value->os.len == 6, hdr->avp_value->os.len, 6, ip_type);
+      uint32_t ip = (((uint32_t)hdr->avp_value->os.data[2]) << 24) |
+                    (((uint32_t)hdr->avp_value->os.data[3]) << 16) |
+                    (((uint32_t)hdr->avp_value->os.data[4]) << 8) |
+                     ((uint32_t)hdr->avp_value->os.data[5]);
 
-    ip_address->address.ipv4_address.s_addr = htonl(ip);
-  } else if (ip_type == IANA_IPV6) {
-    /*
-     * This is an IPv6 address
-     */
-    ip_address->pdn_type = IPv6;
-    DevCheck (hdr->avp_value->os.len == 18, hdr->avp_value->os.len, 18, ip_type);
-    memcpy (ip_address->address.ipv6_address.__in6_u.__u6_addr8, &hdr->avp_value->os.data[2], 16);
-  } else {
-    /*
-     * unhandled case...
-     */
-    return RETURNerror;
-  }
+      ip_address->address.ipv4_address.s_addr = htonl(ip);
+    } else if (ip_type == IANA_IPV6) {
+      /*
+       * This is an IPv6 address
+       */
+      ip_address->pdn_type = IPv6;
+      DevCheck (hdr->avp_value->os.len == 18, hdr->avp_value->os.len, 18, ip_type);
+      memcpy (ip_address->address.ipv6_address.__in6_u.__u6_addr8, &hdr->avp_value->os.data[2], 16);
+    } else {
+      /*
+       * unhandled case...
+       */
+      return RETURNerror;
+    }
 
   return RETURNok;
 }
@@ -345,6 +331,8 @@ s6a_parse_apn_configuration (
   struct avp_hdr                         *hdr;
 
   CHECK_FCT (fd_msg_browse (avp_apn_conf_prof, MSG_BRW_FIRST_CHILD, &avp, NULL));
+  memset(apn_config, 0, sizeof *apn_config);
+  DevAssert(apn_config->nb_ip_address == 0);
 
   while (avp) {
     CHECK_FCT (fd_msg_avp_hdr (avp, &hdr));
@@ -470,6 +458,9 @@ s6a_parse_subscription_data (
 
     case AVP_CODE_SUBSCRIBED_PERIODIC_RAU_TAU_TIMER:
       subscription_data->rau_tau_timer = hdr->avp_value->u32;
+      break;
+
+    case AVP_CODE_APN_OI_REPLACEMENT:
       break;
 
     default:

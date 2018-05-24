@@ -454,6 +454,8 @@ void nas_delete_cn_procedure(struct emm_data_context_s *emm_context, nas_cn_proc
 
 nas_emm_attach_proc_t *nas_new_attach_procedure(struct emm_data_context_s * const emm_context);
 nas_emm_tau_proc_t *nas_new_tau_procedure(struct emm_data_context_s * const emm_context);
+nas_emm_detach_proc_t *nas_new_detach_procedure(struct emm_data_context_s * const emm_context);
+
 nas_sr_proc_t* nas_new_service_request_procedure(struct emm_data_context_s * const emm_context);
 nas_emm_ident_proc_t *nas_new_identification_procedure(struct emm_data_context_s * const emm_context);
 nas_emm_auth_proc_t *nas_new_authentication_procedure(struct emm_data_context_s * const emm_context);

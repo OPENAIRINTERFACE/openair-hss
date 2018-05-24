@@ -19,38 +19,29 @@
  *      contact@openairinterface.org
  */
 
-/*! \file s6a_task.c
-  \brief
-  \author Sebastien ROUX, Lionel Gauthier
-  \company Eurecom
-  \email: lionel.gauthier@eurecom.fr
-*/
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <pthread.h>
+#include "dynamic_memory_check.h"
 
-#include "bstrlib.h"
 #if HAVE_CONFIG_H
 #  include "config.h"
 #endif
 #include <freeDiameter/freeDiameter-host.h>
 #include <freeDiameter/libfdcore.h>
-
-#include "log.h"
-#include "assertions.h"
 #include "intertask_interface.h"
-#include "itti_free_defined_msg.h"
-#include "common_defs.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
-#include "mme_config.h"
-#include "timer.h"
+#include "common_defs.h"
 
+#include "common_types.h"
+#include "assertions.h"
+#include "msc.h"
+#include "log.h"
+#include "timer.h"
 
 #define S6A_PEER_CONNECT_TIMEOUT_MICRO_SEC  (0)
 #define S6A_PEER_CONNECT_TIMEOUT_SEC        (1)
@@ -66,6 +57,7 @@ static void                             fd_gnutls_debug (
   int level,
   const char *str);
 static void s6a_exit(void);
+
 
 //------------------------------------------------------------------------------
 static void fd_gnutls_debug (
@@ -87,13 +79,15 @@ static void oai_fd_logger(int loglevel, const char * format, va_list args)
   if ((0 > rv) || ((FD_LOG_MAX_MESSAGE_LENGTH) < rv)) {
     return;
   }
-  OAILOG_EXTERNAL (OAILOG_LEVEL_TRACE - loglevel, LOG_S6A, "%s\n", buffer);
+  OAILOG_EXTERNAL (loglevel, LOG_S6A, "%s\n", buffer);
 }
 
 //------------------------------------------------------------------------------
 void *s6a_thread (void *args)
 {
   itti_mark_task_ready (TASK_S6A);
+//  OAILOG_START_USE ();
+  MSC_START_USE ();
 
   while (1) {
     MessageDef                             *received_message_p = NULL;
@@ -107,25 +101,19 @@ void *s6a_thread (void *args)
     DevAssert (received_message_p );
 
     switch (ITTI_MSG_ID (received_message_p)) {
-    case MESSAGE_TEST:{
-        OAI_FPRINTF_INFO("TASK_S6A received MESSAGE_TEST\n");
-      }
-      break;
-
-    case S6A_AUTH_INFO_REQ:{
-        s6a_generate_authentication_info_req (&received_message_p->ittiMsg.s6a_auth_info_req);
-      }
-      break;
-
     case S6A_UPDATE_LOCATION_REQ:{
         s6a_generate_update_location (&received_message_p->ittiMsg.s6a_update_location_req);
       }
       break;
-
+    case S6A_AUTH_INFO_REQ:{
+        s6a_generate_authentication_info_req (&received_message_p->ittiMsg.s6a_auth_info_req);
+      }
+      break;
     case TIMER_HAS_EXPIRED:{
         /*
          * Trying to connect to peers
          */
+        timer_id = 0;
         if (s6a_fd_new_peer() != RETURNok) {
           /*
            * On failure, reschedule timer.
@@ -141,22 +129,16 @@ void *s6a_thread (void *args)
         }
       }
       break;
-
     case TERMINATE_MESSAGE:{
         s6a_exit();
-        itti_free_msg_content(received_message_p);
-        itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
-        OAI_FPRINTF_INFO("TASK_S6A terminated\n");
         itti_exit_task ();
       }
       break;
-
     default:{
         OAILOG_DEBUG (LOG_S6A, "Unkwnon message ID %d: %s\n", ITTI_MSG_ID (received_message_p), ITTI_MSG_NAME (received_message_p));
       }
       break;
     }
-    itti_free_msg_content(received_message_p);
     itti_free (ITTI_MSG_ORIGIN_ID (received_message_p), received_message_p);
     received_message_p = NULL;
   }
@@ -278,7 +260,6 @@ static void s6a_exit(void)
   // Release all resources
   free_wrapper((void **) &fd_g_config->cnf_diamid);
   fd_g_config->cnf_diamid_len = 0;
-
   int    rv = RETURNok;
   /* Initialize shutdown of the framework */
   rv = fd_core_shutdown();

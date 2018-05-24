@@ -19,16 +19,10 @@
  *      contact@openairinterface.org
  */
 
-/*! \file s6a_auth_info.c
-  \brief
-  \author Sebastien ROUX
-  \company Eurecom
-*/
 
 #include <stdio.h>
 #include <stdint.h>
-#include <stdbool.h>
-#include <pthread.h>
+
 
 #include "bstrlib.h"
 
@@ -36,13 +30,18 @@
 #include "log.h"
 #include "msc.h"
 #include "mme_config.h"
+
 #include "assertions.h"
 #include "conversions.h"
+
 #include "common_types.h"
 #include "common_defs.h"
+
+
 #include "intertask_interface.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"
+#include "msc.h"
 
 static
   int
@@ -135,6 +134,9 @@ s6a_parse_e_utran_vector (
     case AVP_CODE_KASME:
       CHECK_FCT (s6a_parse_kasme (hdr, vector->kasme));
       ret &= ~0x08;
+      break;
+
+    case AVP_CODE_ITEM_NUMBER:
       break;
 
     default:
@@ -249,7 +251,7 @@ s6a_aia_cb (
 
     if (hdr->avp_value->u32 != ER_DIAMETER_SUCCESS) {
       OAILOG_ERROR (LOG_S6A, "Got error %u:%s\n", hdr->avp_value->u32, retcode_2_string (hdr->avp_value->u32));
-      goto err;
+      skip_auth_res = 1;
     } else {
       OAILOG_DEBUG (LOG_S6A, "Received S6A Result code %u:%s\n", s6a_auth_info_ans_p->result.choice.base, retcode_2_string (s6a_auth_info_ans_p->result.choice.base));
     }
@@ -288,6 +290,7 @@ s6a_aia_cb (
       CHECK_FCT (s6a_parse_authentication_info_avp (avp, &s6a_auth_info_ans_p->auth_info));
     } else {
       DevMessage ("We requested E-UTRAN vectors with an immediate response...\n");
+      return RETURNerror;
     }
   }
 
@@ -350,7 +353,7 @@ s6a_generate_authentication_info_req (
     value.os.len = blength(host);
     CHECK_FCT (fd_msg_avp_setvalue (avp, &value));
     CHECK_FCT (fd_msg_avp_add (msg, MSG_BRW_LAST_CHILD, avp));
-    bdestroy_wrapper (&host);
+    bdestroy(host);
   }
   /*
    * Destination_Realm

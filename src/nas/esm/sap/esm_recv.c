@@ -813,7 +813,8 @@ esm_recv_deactivate_eps_bearer_context_accept (
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   esm_cause_t                             esm_cause = ESM_CAUSE_SUCCESS;
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
-  ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  pdn_context_t                          *pdn_context = NULL;
 
   OAILOG_INFO (LOG_NAS_ESM, "ESM-SAP   - Received Deactivate EPS Bearer Context " "Accept message (ue_id=%d, pti=%d, ebi=%d)\n",
           ue_id, pti, ebi);
@@ -856,7 +857,7 @@ esm_recv_deactivate_eps_bearer_context_accept (
      * Check if it was the default ebi. If so, release the pdn context.
      * If not, respond with a delete bearer response back. Keep the UE context and PDN context as valid.
      */
-    pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context, pid, ESM_EBI_UNASSIGNED, NULL);
+    mme_app_get_pdn_context(ue_context, pid, ESM_EBI_UNASSIGNED, NULL, &pdn_context);
     if(!pdn_context){
       OAILOG_WARNING (LOG_NAS_ESM, "ESM-SAP   - No PDN context could be found. (pid=%d)\n", pid);
       OAILOG_FUNC_RETURN (LOG_NAS_ESM, ESM_CAUSE_INVALID_EPS_BEARER_IDENTITY);

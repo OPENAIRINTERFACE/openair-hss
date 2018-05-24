@@ -148,22 +148,31 @@ esm_proc_dedicated_eps_bearer_context (
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
   ebi_t                                   ebi = 0;
+  pdn_context_t                          *pdn_context = NULL;
   OAILOG_INFO (LOG_NAS_ESM, "ESM-PROC  - Dedicated EPS bearer context activation " "(ue_id=" MME_UE_S1AP_ID_FMT ", pid=%d)\n",
       ue_id, pdn_cid);
+
+  ue_context_t                        *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
+  mme_app_get_pdn_context(ue_context, pdn_cid, 0, NULL, &pdn_context);
+  if(!pdn_context){
+    OAILOG_ERROR(LOG_NAS_EMM, "EMMCN-SAP  - " "No PDN context was found for UE " MME_UE_S1AP_ID_FMT" for cid %d to assign dedicated bearers.\n", ue_context->mme_ue_s1ap_id, pdn_cid);
+    OAILOG_FUNC_RETURN (LOG_NAS_ESM, RETURNerror);
+  }
+
   /*
    * No bearer context is assigned yet. Assign new EPS bearer contexts
    */
   for(int num_bc = 0; num_bc < num_bearers; num_bc++){
     /* Try to allocate a new bearer context and set it into pending state. */
     if (ebis[num_bc] == ESM_EBI_UNASSIGNED) {
-      ebis[num_bc] = esm_ebr_assign (emm_context, ESM_EBI_UNASSIGNED);  /**< Will also register a new bearer context into the session pool. */
+      ebis[num_bc] = esm_ebr_assign (emm_context, ESM_EBI_UNASSIGNED, pdn_context);  /**< Will also register a new bearer context into the session pool. */
     }
 
     if (ebis[num_bc] != ESM_EBI_UNASSIGNED) {
       /*
        * Create dedicated EPS bearer context
        */
-      ebi = esm_ebr_context_create (emm_context, pti, pdn_cid, ebis[num_bc], NULL, IS_DEFAULT_BEARER_NO, &bearer_qos[num_bc], tft_array[num_bc], pcos[num_bc]);
+      ebi = esm_ebr_context_create (emm_context, pti, pdn_context, ebis[num_bc], NULL, IS_DEFAULT_BEARER_NO, &bearer_qos[num_bc], tft_array[num_bc], pcos[num_bc]);
 
       if (ebi == ESM_EBI_UNASSIGNED) {
         /*
@@ -491,7 +500,9 @@ static int _dedicated_eps_bearer_activate (
   int                                     rc;
   mme_ue_s1ap_id_t                        ue_id = emm_context->ue_id;
   ue_context_t                           *ue_context  = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
-  bearer_context_t                       *bearer_context = mme_app_get_session_bearer_context_from_all(ue_context, ebi);
+  bearer_context_t                       *bearer_context = NULL;
+
+  mme_app_get_session_bearer_context_from_all(ue_context, ebi, &bearer_context);
 
   /*
    * Notify EMM that an activate dedicated EPS bearer context request

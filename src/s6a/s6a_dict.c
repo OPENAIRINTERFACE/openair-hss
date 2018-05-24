@@ -19,31 +19,17 @@
  *      contact@openairinterface.org
  */
 
-/*! \file s6a_dict.c
-  \brief
-  \author Sebastien ROUX
-  \company Eurecom
-*/
 
 #if HAVE_CONFIG_H
 #  include "config.h"
 #endif
-#include <string.h>
-#include <stdbool.h>
-#include <stdint.h>
 
-#include "bstrlib.h"
-
-#include "3gpp_23.003.h"
-#include "3gpp_24.008.h"
-#include "3gpp_33.401.h"
-#include "security_types.h"
-#include "common_types.h"
 #include "common_defs.h"
+#include "intertask_interface.h"
 #include "s6a_defs.h"
-#include "s6a_messages_types.h"
 #include "s6a_messages.h"
 #include "assertions.h"
+#include "log.h"
 
 #define CHECK_FD_FCT(fCT)  DevAssert(fCT == 0);
 
@@ -81,6 +67,8 @@ s6a_fd_init_dict_objs (
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_COMMAND, CMD_BY_NAME, "Purge-UE-Answer", &s6a_fd_cnf.dataobj_s6a_pua, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_COMMAND, CMD_BY_NAME, "Cancel-Location-Request", &s6a_fd_cnf.dataobj_s6a_clr, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_COMMAND, CMD_BY_NAME, "Cancel-Location-Answer", &s6a_fd_cnf.dataobj_s6a_cla, ENOENT));
+  CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_COMMAND, CMD_BY_NAME, "Reset-Request", &s6a_fd_cnf.dataobj_s6a_rr, ENOENT));
+//  CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_COMMAND, CMD_BY_NAME, "Reset-Answer", &s6a_fd_cnf.dataobj_s6a_ra, ENOENT));
   /*
    * Pre-loading base avps
    */
@@ -96,6 +84,8 @@ s6a_fd_init_dict_objs (
    */
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Visited-PLMN-Id", &s6a_fd_cnf.dataobj_s6a_visited_plmn_id, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "RAT-Type", &s6a_fd_cnf.dataobj_s6a_rat_type, ENOENT));
+  CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Cancellation-Type", &s6a_fd_cnf.dataobj_s6a_cancellation_type, ENOENT));
+  CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "CLR-Flags", &s6a_fd_cnf.dataobj_s6a_clr_flags, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "ULR-Flags", &s6a_fd_cnf.dataobj_s6a_ulr_flags, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "ULA-Flags", &s6a_fd_cnf.dataobj_s6a_ula_flags, ENOENT));
   CHECK_FD_FCT (fd_dict_search (fd_g_config->cnf_dict, DICT_AVP, AVP_BY_NAME_ALL_VENDORS, "Subscription-Data", &s6a_fd_cnf.dataobj_s6a_subscription_data, ENOENT));
@@ -124,6 +114,23 @@ s6a_fd_init_dict_objs (
    */
   CHECK_FD_FCT (fd_disp_register (s6a_aia_cb, DISP_HOW_CC, &when, NULL, &s6a_fd_cnf.aia_hdl));
   DevAssert (s6a_fd_cnf.aia_hdl );
+  /**
+   * Register the callback for the Cancel Location Request S6A Application
+   */
+  when.command = s6a_fd_cnf.dataobj_s6a_clr;
+  when.app = s6a_fd_cnf.dataobj_s6a_app;
+  CHECK_FD_FCT (fd_disp_register (s6a_clr_cb, DISP_HOW_CC, &when, NULL, &s6a_fd_cnf.clr_hdl));
+  DevAssert (s6a_fd_cnf.clr_hdl);
+
+  /** Reset Request. */
+  when.command = s6a_fd_cnf.dataobj_s6a_rr;
+  when.app = s6a_fd_cnf.dataobj_s6a_app;
+  /*
+   * Register the callback for Reset Request S6A Application
+   */
+  CHECK_FD_FCT (fd_disp_register (s6a_rr_cb, DISP_HOW_CC, &when, NULL, &s6a_fd_cnf.rr_hdl));
+  DevAssert (s6a_fd_cnf.rr_hdl );
+
   /*
    * Advertise the support for the test application in the peer
    */

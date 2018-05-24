@@ -142,7 +142,7 @@ esm_proc_pdn_disconnect_request (
   /*
    * Get UE's ESM context
    */
-  if (emm_context->esm_ctx.n_active_pdns > 1) {
+//  if (emm_context->esm_ctx.n_active_pdns > 1) {
     /*
      * Get the identifier of the PDN connection entry assigned to the
      * * * * procedure transaction identity
@@ -171,13 +171,13 @@ esm_proc_pdn_disconnect_request (
 
     /** Found the PDN context. Informing the MME_APP layer to release the bearers. */
     nas_itti_pdn_disconnect_req(emm_context->ue_id, default_ebi, esm_data);
-  } else {
-    /*
-     * Attempt to disconnect from the last PDN disconnection
-     * * * * is not allowed
-     */
-    *esm_cause = ESM_CAUSE_LAST_PDN_DISCONNECTION_NOT_ALLOWED;
-  }
+//  } else {
+//    /*
+//     * Attempt to disconnect from the last PDN disconnection
+//     * * * * is not allowed
+//     */
+//    *esm_cause = ESM_CAUSE_LAST_PDN_DISCONNECTION_NOT_ALLOWED;
+//  }
 
   OAILOG_FUNC_RETURN (LOG_NAS_ESM, pid);
 }

@@ -325,7 +325,7 @@ int emm_proc_attach_request (
    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - Continuing for Attach Request for UE_ID " MME_UE_S1AP_ID_FMT " after validation of the attach request. \n", ue_id);
    bool is_new = false;
    if(!new_emm_ue_ctx) {
-     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No valid EMM context was found for UE_ID " MME_UE_S1AP_ID_FMT ". \n", new_emm_ue_ctx->ue_id);
+     OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No valid EMM context was found for UE_ID " MME_UE_S1AP_ID_FMT ". \n", ue_id);
      /*
       * Create UE's EMM context
       */
@@ -856,7 +856,7 @@ int emm_proc_attach_request_validity(emm_data_context_t * emm_context, mme_ue_s1
 
 static void _emm_proc_create_procedure_attach_request(emm_data_context_t * const emm_context, emm_attach_request_ies_t * const ies)
 {
-  nas_emm_attach_proc_t *attach_proc = nas_new_attach_procedure(&emm_context);
+  nas_emm_attach_proc_t *attach_proc = nas_new_attach_procedure(emm_context);
   AssertFatal(attach_proc, "TODO Handle this");
   if ((attach_proc)) {
     attach_proc->ies = ies;
@@ -1105,7 +1105,7 @@ static int _emm_attach_run_procedure(emm_data_context_t *emm_context, bool is_ne
     emm_context->originating_tai = *attach_proc->ies->originating_tai;
 
     /** Setting the UE & MS network capabilities as present and validating them after replaying / successfully SMC. */
-    emm_ctx_set_ue_nw_cap(emm_context, &attach_proc->ies->ue_network_capability);
+    emm_ctx_set_ue_nw_cap(emm_context, attach_proc->ies->ue_network_capability);
     if (attach_proc->ies->ms_network_capability) {
       emm_ctx_set_ms_nw_cap(emm_context, attach_proc->ies->ms_network_capability);
     }
@@ -1115,7 +1115,7 @@ static int _emm_attach_run_procedure(emm_data_context_t *emm_context, bool is_ne
       /** Register the received IMSI and continue with the security context. */
       imsi64_t imsi64 = imsi_to_imsi64(attach_proc->ies->imsi);
       emm_ctx_set_valid_imsi(emm_context, attach_proc->ies->imsi, imsi64);
-      emm_context_upsert_imsi(&_emm_data, emm_context);
+      emm_data_context_upsert_imsi(&_emm_data, emm_context);
       OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - EMM context for the ue_id=" MME_UE_S1AP_ID_FMT " missing valid and active EPS security context. \n", emm_context->ue_id);
       rc = _emm_start_attach_proc_authentication (emm_context, attach_proc);
     } else if (attach_proc->ies->guti) {
@@ -1995,7 +1995,7 @@ static int _emm_attach_update (emm_data_context_t * const emm_context, emm_attac
 
   //----------------------------------------
   REQUIREMENT_3GPP_24_301(R10_5_5_1_2_4__4);
-  emm_ctx_set_valid_ue_nw_cap(emm_context, &ies->ue_network_capability);
+  emm_ctx_set_valid_ue_nw_cap(emm_context, ies->ue_network_capability);
 
   if (ies->ms_network_capability) {
     emm_ctx_set_valid_ms_nw_cap(emm_context, ies->ms_network_capability);

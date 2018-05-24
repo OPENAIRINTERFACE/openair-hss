@@ -60,7 +60,7 @@ Description Defines functions used to handle EPS bearer contexts.
 ebi_t esm_ebr_context_create (
   emm_data_context_t * emm_context,
   const proc_tid_t pti,
-  pdn_cid_t pid,
+  void *pdn_context,
   ebi_t ebi,
   struct fteid_set_s * fteid_set,
   bool is_default,

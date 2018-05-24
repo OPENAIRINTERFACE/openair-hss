@@ -144,7 +144,7 @@ static int _emm_cn_authentication_fail (const emm_cn_auth_fail_t * msg)
   /*
    * We received security vector from HSS. Try to setup security with UE
    */
-  emm_context = emm_data_context_get(&mme_app_desc.mme_ue_contexts, msg->ue_id);
+  emm_context = emm_data_context_get(&_emm_data, msg->ue_id);
 
   nas_auth_info_proc_t * auth_info_proc = get_nas_cn_procedure_auth_info(emm_context);
 
@@ -240,7 +240,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
   /** PDN Context and Bearer Contexts (default) are created with this. */
 
   if (!is_pdn_connectivity) { /**< We may have just created  a PDN context, but no connectivity yet. Assume pdn_connectivity is established when a PDN_Context already existed. */
-    nas_itti_pdn_connectivity_req (emm_context->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, default_ebi, &emm_context->_imsi,
+    nas_itti_pdn_connectivity_req (emm_context->esm_ctx.esm_proc_data->pti, msg_pP->ue_id, pdn_cid, default_ebi, emm_context->_imsi64, &emm_context->_imsi,
         emm_context->esm_ctx.esm_proc_data, emm_context->esm_ctx.esm_proc_data->request_type);
   } else {
     /*
@@ -337,6 +337,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   int                                     rc = RETURNerror;
   struct emm_data_context_s              *emm_context = NULL;
+  struct pdn_context_s                   *pdn_context = NULL;
   esm_proc_pdn_type_t                     esm_pdn_type = ESM_PDN_TYPE_IPV4;
   ESM_msg                                 esm_msg = {.header = {0}};
   EpsQualityOfService                     qos = {0};
@@ -345,7 +346,7 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
   bool                                    triggered_by_ue = true;  // warning hardcoded
 
   ue_context_t *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
-  emm_context = emm_data_context_get(&mme_app_desc.mme_ue_contexts, msg_pP->ue_id);
+  emm_context = emm_data_context_get(&_emm_data, msg_pP->ue_id);
 
   if (ue_context == NULL || emm_context == NULL) {
     OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "Failed to find UE associated to id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
@@ -354,9 +355,9 @@ static int _emm_cn_pdn_connectivity_res (emm_cn_pdn_res_t * msg_pP)
 
   /** Get the PDN context (should exist right now). */
   /** Check if a tunnel already exists depending on the flag. */
-  pdn_context_t pdn_context_key = {.context_identifier = msg_pP->pdn_cid}; // todo: should be also retrievable from pdn_cid alone (or else get esm_proc_data --> apn stands there, too).
+//  pdn_context_t pdn_context_key = {.context_identifier = msg_pP->pdn_cid}; // todo: should be also retrievable from pdn_cid alone (or else get esm_proc_data --> apn stands there, too).
 //    keyTunnel.ipv4AddrRemote = pUlpReq->u_api_info.initialReqInfo.peerIp;
-  pdn_context_t * pdn_context = RB_FIND (PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
+  mme_app_get_pdn_context(ue_context, msg_pP->pdn_cid, 0, NULL, &pdn_context);
   nas_emm_attach_proc_t                  *attach_proc = get_nas_specific_procedure_attach(emm_context);
 
   if(!attach_proc){
@@ -591,7 +592,7 @@ static int _emm_cn_pdn_disconnect_res(const emm_cn_pdn_disconnect_res_t * msg)
    * In that case, check if other PDN contexts exist. Delete those sessions, too.
    * Finally send Detach Accept back to the UE.
    */
-  nas_emm_detach_proc_t  *detach_proc = get_nas_specific_procedure_attach(emm_context);
+  nas_emm_detach_proc_t  *detach_proc = get_nas_specific_procedure_detach(emm_context);
   // todo: implicit detach ? specific procedure?
   if(!(detach_proc || EMM_DEREGISTERED_INITIATED == emm_fsm_get_state(emm_context))){
     OAILOG_INFO (LOG_NAS_EMM, "No detach procedure ongoing for UE " MME_UE_S1AP_ID_FMT". Skipping the PDN Disconnect message. \n", emm_context->ue_id);

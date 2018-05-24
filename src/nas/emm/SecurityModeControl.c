@@ -380,6 +380,7 @@ emm_proc_security_mode_complete (mme_ue_s1ap_id_t ue_id, const imeisv_mobile_ide
     OAILOG_ERROR (LOG_NAS_EMM, "EMM-PROC  - No EMM context exists for \n");
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
+  ue_context_t * test_ue_ctx = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, emm_ctx->_imsi64);
 
   nas_emm_smc_proc_t * smc_proc = get_nas_common_procedure_smc(emm_ctx);
 

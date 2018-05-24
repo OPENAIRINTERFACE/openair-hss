@@ -692,7 +692,7 @@ int emm_proc_tracking_area_update_request_validity(emm_data_context_t * emm_cont
 
 static void _emm_proc_create_procedure_tracking_area_update_request(emm_data_context_t * const emm_context, emm_tau_request_ies_t * const ies)
 {
-  nas_emm_tau_proc_t *tau_proc = nas_new_tau_procedure(&emm_context);
+  nas_emm_tau_proc_t *tau_proc = nas_new_tau_procedure(emm_context);
   AssertFatal(tau_proc, "TODO Handle this");
   if (tau_proc) {
     tau_proc->ies = ies;

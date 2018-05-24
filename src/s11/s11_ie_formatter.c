@@ -877,8 +877,29 @@ gtpv2c_bearer_context_created_ie_get (
       DevAssert (NW_OK == rc);
       break;
 
+//    case NW_GTPV2C_IE_FTEID:
+//      rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s1u_sgw_fteid);
+//      break;
     case NW_GTPV2C_IE_FTEID:
-      rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s1u_sgw_fteid);
+      switch (ie_p->i) {
+      case 0:
+        rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s1u_sgw_fteid);
+        break;
+      case 1:
+        rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s4u_sgw_fteid);
+        break;
+      case 2:
+        rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s5_s8_u_pgw_fteid);
+        break;
+      case 3:
+        rc = gtpv2c_fteid_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->s12_sgw_fteid);
+        break;
+      default:
+        OAILOG_ERROR (LOG_S11, "Received unexpected IE %u instance %u\n", ie_p->t, ie_p->i);
+        return NW_GTPV2C_IE_INCORRECT;
+
+      }
+      DevAssert (NW_OK == rc);
       break;
 
     case NW_GTPV2C_IE_CAUSE:
@@ -1151,48 +1172,93 @@ gtpv2c_apn_ie_get (
   return NW_OK;
 }
 
-//------------------------------------------------------------------------------
+////------------------------------------------------------------------------------
+//int
+//gtpv2c_apn_ie_set (
+//  nw_gtpv2c_msg_handle_t * msg,
+//  const char *apn)
+//{
+//  nw_rc_t                                   rc;
+//  uint8_t                                *value;
+//  uint8_t                                 apn_length;
+//  uint8_t                                 offset = 0;
+//  uint8_t                                *last_size;
+//  uint8_t                                 word_length = 0;
+//
+//  DevAssert (apn );
+//  DevAssert (msg );
+//  apn_length = strlen (apn);
+//  value = calloc (apn_length + 1, sizeof (uint8_t));
+//  last_size = &value[0];
+//
+//  while (apn[offset]) {
+//    /*
+//     * We replace the . by the length of the word
+//     */
+//    if (apn[offset] == '.') {
+//      *last_size = word_length;
+//      word_length = 0;
+//      last_size = &value[offset + 1];
+//    } else {
+//      word_length++;
+//      value[offset + 1] = apn[offset];
+//    }
+//
+//    offset++;
+//  }
+//
+//  *last_size = word_length;
+//  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN, apn_length + 1, 0, value);
+//  DevAssert (NW_OK == rc);
+//  free_wrapper ((void**)&value);
+//  return RETURNok;
+//}
+
 int
-gtpv2c_apn_ie_set (
-  nw_gtpv2c_msg_handle_t * msg,
-  const char *apn)
+gtpv2c_apn_plmn_ie_set (
+    nw_gtpv2c_msg_handle_t * msg,
+  const char *apn,
+  const ServingNetwork_t * serving_network)
 {
   nw_rc_t                                   rc;
   uint8_t                                *value;
   uint8_t                                 apn_length;
-  uint8_t                                 offset = 0;
   uint8_t                                *last_size;
-  uint8_t                                 word_length = 0;
+
+  DevAssert (serving_network );
 
   DevAssert (apn );
   DevAssert (msg );
   apn_length = strlen (apn);
-  value = calloc (apn_length + 1, sizeof (uint8_t));
+  value = calloc (apn_length + 20, sizeof (uint8_t)); //"default" + neu: ".mncXXX.mccXXX.gprs"
   last_size = &value[0];
 
-  while (apn[offset]) {
+  memcpy(&value[1], apn, apn_length);
+  memcpy(&value[apn_length + 1], ".mnc", 4);
+  memcpy(&value[apn_length + 8], ".mcc", 4);
+  memcpy(&value[apn_length + 15], ".gprs", 5);
+  if (serving_network->mnc[2] == 0x0F) {
     /*
-     * We replace the . by the length of the word
+     * Two digits MNC
      */
-    if (apn[offset] == '.') {
-      *last_size = word_length;
-      word_length = 0;
-      last_size = &value[offset + 1];
-    } else {
-      word_length++;
-      value[offset + 1] = apn[offset];
-    }
-
-    offset++;
+    value[apn_length + 5] = '0';
+    value[apn_length + 6] = serving_network->mnc[0] + '0';
+    value[apn_length + 7] = serving_network->mnc[1] + '0';
+  } else {
+    value[apn_length + 5] = serving_network->mnc[0] + '0';
+    value[apn_length + 6] = serving_network->mnc[1] + '0';
+    value[apn_length + 7] = serving_network->mnc[2] + '0';
   }
+  value[apn_length + 12] = serving_network->mcc[0] + '0';
+  value[apn_length + 13] = serving_network->mcc[1] + '0';
+  value[apn_length + 14] = serving_network->mcc[2] + '0';
 
-  *last_size = word_length;
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN, apn_length + 1, 0, value);
+  *last_size = apn_length + 19;
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN, apn_length + 20, 0, value);
   DevAssert (NW_OK == rc);
-  free_wrapper ((void**)&value);
+  free_wrapper ((void**) &value);
   return RETURNok;
 }
-
 //------------------------------------------------------------------------------
 nw_rc_t
 gtpv2c_ambr_ie_get (

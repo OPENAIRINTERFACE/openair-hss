@@ -432,7 +432,11 @@ int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
           OAILOG_INFO(LOG_MME_APP, "Found a PDN with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Sending MBR. \n", mme_ue_s1ap_id);
           /** Send the S11 MBR and return. */
           // todo: error handling! this might occur if some error with OVS happens.
-          DevAssert(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx));
+          if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
+            OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
+            // todo!
+            DevAssert(0);
+          }
           OAILOG_INFO(LOG_MME_APP, "Successfully sent MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Returning from REGISTRERED callback. \n", mme_ue_s1ap_id);
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }

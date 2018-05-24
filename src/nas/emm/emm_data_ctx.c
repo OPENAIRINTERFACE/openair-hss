@@ -196,6 +196,7 @@ inline void emm_ctx_set_valid_imsi(emm_data_context_t * const ctxt, imsi_t *imsi
 #endif
   /** Notifying the MME_APP without an ITTI request of the validated IMSI, to update the registration tables. */
   mme_api_notify_imsi(ctxt->ue_id, imsi64);
+  ue_context_t * test_ue_ctx = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, imsi64);
 }
 
 //------------------------------------------------------------------------------
@@ -662,7 +663,7 @@ emm_data_context_get_by_imsi (
 
   DevAssert (emm_data );
 
-  h_rc = obj_hashtable_uint64_ts_get (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64, sizeof(imsi64_t), (void **)&emm_ue_id_p);
+  h_rc = hashtable_ts_get (emm_data->ctx_coll_imsi, (const hash_key_t)imsi64,  /* sizeof(imsi64_t), */(void **)&emm_ue_id_p);
 
   if (HASH_TABLE_OK == h_rc) {
     struct emm_data_context_s * tmp = emm_data_context_get (emm_data, (const hash_key_t)*emm_ue_id_p);
@@ -734,30 +735,55 @@ emm_data_context_remove_mobile_ids (
 //  emm_ctx_clear_imsi(elm);
 //  return;
 }
+//
+////------------------------------------------------------------------------------
+//int
+//emm_context_upsert_imsi (
+//    emm_data_t * emm_data,
+//    struct emm_data_context_s *elm)
+//{
+//  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+//  mme_ue_s1ap_id_t                        ue_id = elm->ue_id;
+//
+//  h_rc = hashtable_uint64_ts_remove (emm_data->ctx_coll_imsi, (const hash_key_t)elm->_imsi64);
+//  if (INVALID_MME_UE_S1AP_ID != ue_id) {
+//    h_rc = hashtable_uint64_ts_insert (emm_data->ctx_coll_imsi, (const hash_key_t)(const hash_key_t)elm->_imsi64, ue_id);
+//  } else {
+//    h_rc = HASH_TABLE_KEY_NOT_EXISTS;
+//  }
+//  if (HASH_TABLE_OK != h_rc) {
+//    OAILOG_TRACE (LOG_MME_APP,
+//        "Error could not update this ue context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " imsi " IMSI_64_FMT ": %s\n",
+//        ue_id, elm->_imsi64, hashtable_rc_code2string(h_rc));
+//    return RETURNerror;
+//  }
+//  return RETURNok;
+//}
 
-//------------------------------------------------------------------------------
-int
-emm_context_upsert_imsi (
-    emm_data_t * emm_data,
-    struct emm_data_context_s *elm)
-{
-  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  mme_ue_s1ap_id_t                        ue_id = elm->ue_id;
 
-  h_rc = hashtable_uint64_ts_remove (emm_data->ctx_coll_imsi, (const hash_key_t)elm->_imsi64);
-  if (INVALID_MME_UE_S1AP_ID != ue_id) {
-    h_rc = hashtable_uint64_ts_insert (emm_data->ctx_coll_imsi, (const hash_key_t)(const hash_key_t)elm->_imsi64, ue_id);
-  } else {
-    h_rc = HASH_TABLE_KEY_NOT_EXISTS;
-  }
-  if (HASH_TABLE_OK != h_rc) {
-    OAILOG_TRACE (LOG_MME_APP,
-        "Error could not update this ue context mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " imsi " IMSI_64_FMT ": %s\n",
-        ue_id, elm->_imsi64, hashtable_rc_code2string(h_rc));
-    return RETURNerror;
-  }
-  return RETURNok;
-}
+
+////------------------------------------------------------------------------------
+//
+//int
+//emm_data_context_upsert_imsi (
+//    emm_data_t * emm_data,
+//    struct emm_data_context_s *elm)
+//{
+//  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+//
+//  h_rc = _emm_data_context_hashtable_insert(emm_data, elm);
+//
+//  if (HASH_TABLE_OK == h_rc || HASH_TABLE_INSERT_OVERWRITTEN_DATA == h_rc) {
+//    OAILOG_DEBUG (LOG_NAS_EMM, "EMM-CTX - Upsert in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT"\n",
+//                  elm->ue_id, elm->_imsi64);
+//    return RETURNok;
+//  } else {
+//    OAILOG_ERROR (LOG_NAS_EMM, "EMM-CTX - Upsert in context UE id " MME_UE_S1AP_ID_FMT " with IMSI "IMSI_64_FMT" "
+//        "Failed %s\n", elm->ue_id, elm->_imsi64, hashtable_rc_code2string (h_rc));
+//    return RETURNerror;
+//  }
+//}
+//
 
 //------------------------------------------------------------------------------
 void emm_init_context(struct emm_data_context_s * const emm_ctx, const bool init_esm_ctxt)

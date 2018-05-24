@@ -74,12 +74,12 @@ void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)
 }
 
 //------------------------------------------------------------------------------
-pdn_context_t * mme_app_get_pdn_context (ue_context_t * const ue_context, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn)
+void mme_app_get_pdn_context (ue_context_t * const ue_context, pdn_cid_t const context_id, ebi_t const default_ebi, bstring const apn_subscribed, pdn_context_t **pdn_ctx)
 {
-  // todo: check for valid fields!
-  pdn_context_t pdn_context_key = {.apn_in_use = apn, .default_ebi = default_ebi, .context_identifier = context_id};
-  pdn_context_t *pdn_context = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
-  return pdn_context;
+  /** Checking for valid fields inside the search comparision function. */
+  pdn_context_t pdn_context_key = {.apn_subscribed = apn_subscribed, .default_ebi = default_ebi, .context_identifier = context_id};
+  pdn_context_t * pdn_ctx_p = RB_FIND(PdnContexts, &ue_context->pdn_contexts, &pdn_context_key);
+  *pdn_ctx = pdn_ctx_p;
 }
 
 //------------------------------------------------------------------------------
@@ -141,7 +141,6 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
 pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, const bstring apn, const context_identifier_t context_identifier)
 {
   OAILOG_FUNC_IN (LOG_MME_APP);
-//  if (!ue_context->pdn_contexts[pdn_cid]) {
   pdn_context_t * pdn_context = calloc(1, sizeof(*pdn_context));
 
   if (!pdn_context) {
@@ -169,10 +168,14 @@ pdn_context_t *  mme_app_create_pdn_context(ue_context_t * const ue_context, con
     // todo: add the apn as bstring into the pdn_context and store it in the map
     //pdn_context->apn_oi_replacement
     memcpy (&pdn_context->default_bearer_eps_subscribed_qos_profile, &apn_configuration->subscribed_qos, sizeof(eps_subscribed_qos_profile_t));
-    pdn_context->apn_subscribed = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);
+    pdn_context->apn_subscribed = blk2bstr(apn_configuration->service_selection, apn_configuration->service_selection_length);  /**< Set the APN-NI from the service selection. */
   } else {
-    OAILOG_WARNING(LOG_MME_APP, "No APN configuration exists for UE " MME_UE_S1AP_ID_FMT ". Assuming Handover/TAU UE: " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    pdn_context->apn_subscribed = apn;
+    OAILOG_WARNING(LOG_MME_APP, "No APN configuration exists for UE " MME_UE_S1AP_ID_FMT ". Assuming Handover/TAU UE: " MME_UE_S1AP_ID_FMT ". Subscribed apn %s. \n",
+        ue_context->mme_ue_s1ap_id, bdata(pdn_context->apn_subscribed));
     // todo: check that a procedure exists?
+    /** The subscribed APN should already exist from handover (forward relocation request). */
+
   }
   pdn_context->is_active = true;
   pdn_context->default_ebi = EPS_BEARER_IDENTITY_UNASSIGNED;

@@ -26,6 +26,7 @@
 #include "mme_config.h"
 #include "assertions.h"
 #include "conversions.h"
+#include "common_defs.h"
 #include "intertask_interface.h"
 #include "s6a_defs.h"
 #include "s6a_messages.h"

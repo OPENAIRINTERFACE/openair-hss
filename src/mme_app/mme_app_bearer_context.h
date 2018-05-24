@@ -43,12 +43,15 @@ bearer_context_t *mme_app_new_bearer();
 int mme_app_bearer_context_delete (bearer_context_t *bearer_context);
 /** Find an allocated PDN session bearer context. */
 bearer_context_t* mme_app_get_session_bearer_context(pdn_context_t * const pdn_context, const ebi_t ebi);
-// todo_: combine these two methods
-bearer_context_t* mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context, const ebi_t ebi);
 
-/** New method to get a bearer contxt from the bearer pool of the UE context and add it into the pdn session. */
-//int mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
-bearer_context_t * mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
+// todo_: combine these two methods
+void mme_app_get_session_bearer_context_from_all(ue_context_t * const ue_context, const ebi_t ebi, bearer_context_t ** bc_pp);
+
+/*
+ * New method to get a bearer context from the bearer pool of the UE context and add it into the pdn session.
+ * If the file using this method does not include the header file, the returned pointer is garbage. We overcome this with giving the PP.
+ */
+void mme_app_register_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context, bearer_context_t ** bc_pp);
 
 int mme_app_deregister_bearer_context(ue_context_t * const ue_context, ebi_t ebi, const pdn_context_t *pdn_context);
 

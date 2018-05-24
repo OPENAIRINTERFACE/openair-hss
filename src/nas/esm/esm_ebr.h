@@ -63,7 +63,7 @@ const char * esm_ebr_state2string(esm_ebr_state esm_ebr_state);
 bool esm_ebr_is_reserved(ebi_t ebi);
 
 void esm_ebr_initialize(void);
-int esm_ebr_assign(emm_data_context_t * emm_context, ebi_t ebi);
+int esm_ebr_assign(emm_data_context_t * emm_context, ebi_t ebi, pdn_context_t *pdn_context);
 int esm_ebr_release (emm_data_context_t * emm_context, bearer_context_t * bearer_context, pdn_context_t * pdn_context, bool ue_requested);
 
 int esm_ebr_start_timer(emm_data_context_t * emm_context, ebi_t ebi, CLONE_REF const_bstring msg,

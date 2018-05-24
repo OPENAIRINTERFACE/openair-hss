@@ -666,7 +666,9 @@ void mme_app_free_bearer_context(bearer_context_t ** bc);
 
 void mme_app_ue_context_s1_release_enb_informations(ue_context_t *ue_context);
 
-/* Declaration (prototype) of the function to store bearer contexts. */
+/* Declaration (prototype) of the function to store pdn and bearer contexts. */
+RB_PROTOTYPE(PdnContexts, pdn_context_s, pdn_ctx_rbt_Node, mme_app_compare_pdn_context)
+
 RB_PROTOTYPE(BearerPool, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)
 
 RB_PROTOTYPE(SessionBearers, bearer_context_s, bearer_ctx_rbt_Node, mme_app_compare_bearer_context)

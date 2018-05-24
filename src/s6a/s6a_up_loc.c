@@ -19,32 +19,19 @@
  *      contact@openairinterface.org
  */
 
-/*! \file s6a_update_loc.c
-  \brief
-  \author Sebastien ROUX, Lionel Gauthier
-  \company Eurecom
-  \email: lionel.gauthier@eurecom.fr
-*/
 
 #include <stdio.h>
-#include <stdbool.h>
 #include <stdint.h>
-#include <pthread.h>
 
-#include "bstrlib.h"
-
-#include "dynamic_memory_check.h"
-#include "hashtable.h"
-#include "obj_hashtable.h"
-#include "log.h"
-#include "msc.h"
+#include "mme_config.h"
 #include "assertions.h"
 #include "conversions.h"
 #include "intertask_interface.h"
 #include "common_defs.h"
 #include "s6a_defs.h"
-#include "s6a_messages_types.h"
-#include "mme_config.h"
+#include "s6a_messages.h"
+#include "msc.h"
+#include "log.h"
 
 
 int
@@ -145,10 +132,8 @@ s6a_ula_cb (
     /*
      * ULA-Flags is absent while the error code indicates DIAMETER_SUCCESS:
      * * * * this is not a compliant behaviour...
-     * * * * TODO: handle this case.
      */
-    OAILOG_ERROR (LOG_S6A, "ULA-Flags AVP is absent while result code indicates " "DIAMETER_SUCCESS\n");
-    goto err;
+    OAILOG_WARNING (LOG_S6A, "ULA-Flags AVP is absent while result code indicates " "DIAMETER_SUCCESS" " Ignoring\n");
   }
 
   CHECK_FCT (fd_msg_search_avp (ans_p, s6a_fd_cnf.dataobj_s6a_subscription_data, &avp_p));
@@ -222,7 +207,7 @@ s6a_generate_update_location (
     value.os.len = blength(host);
     CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
     CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));
-    bdestroy_wrapper (&host);
+    bdestroy(host);
   }
   /*
    * Destination_Realm
@@ -248,11 +233,13 @@ s6a_generate_update_location (
    */
   {
     uint8_t                                 plmn[3];
+    plmn_t                                  plmn_mme;
 
+    plmn_mme = mme_config.gummei.gummei[0].plmn;
     CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_visited_plmn_id, 0, &avp_p));
-    PLMN_T_TO_TBCD (ulr_pP->visited_plmn,
+    PLMN_T_TO_TBCD (plmn_mme,
                     plmn,
-                    mme_config_find_mnc_length (ulr_pP->visited_plmn.mcc_digit1, ulr_pP->visited_plmn.mcc_digit2, ulr_pP->visited_plmn.mcc_digit3, ulr_pP->visited_plmn.mnc_digit1, ulr_pP->visited_plmn.mnc_digit2, ulr_pP->visited_plmn.mnc_digit3)
+                    mme_config_find_mnc_length (plmn_mme.mcc_digit1, plmn_mme.mcc_digit2, plmn_mme.mcc_digit3, plmn_mme.mnc_digit1, plmn_mme.mnc_digit2, plmn_mme.mnc_digit3)
       );
     value.os.data = plmn;
     value.os.len = 3;

@@ -304,10 +304,8 @@ emm_recv_attach_request (
     memcpy(params->originating_ecgi, originating_ecgi, sizeof(ecgi_t));
   }
 
-  if (msg->presencemask & ATTACH_REQUEST_UE_NETWORK_CAPABILITY_PRESENT) {
-    params->ue_network_capability = calloc(1, sizeof(ue_network_capability_t));
-    memcpy(params->ue_network_capability, &msg->uenetworkcapability, sizeof(ue_network_capability_t));
-  }
+  params->ue_network_capability = calloc(1, sizeof(ue_network_capability_t));
+  memcpy(params->ue_network_capability, &msg->uenetworkcapability, sizeof(ue_network_capability_t));
 
   if (msg->presencemask & ATTACH_REQUEST_MS_NETWORK_CAPABILITY_PRESENT) {
     params->ms_network_capability = calloc(1, sizeof(ms_network_capability_t));

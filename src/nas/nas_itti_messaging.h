@@ -59,6 +59,7 @@ void nas_itti_pdn_connectivity_req(
   const mme_ue_s1ap_id_t  ue_idP,
   const pdn_cid_t         pdn_cidP,
   const ebi_t             default_ebi,
+  const imsi64_t          imsi,
   const imsi_t           *const imsi_pP,
   esm_proc_data_t        *proc_data_pP,
   esm_proc_pdn_request_t  request_typeP);

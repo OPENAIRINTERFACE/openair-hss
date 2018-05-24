@@ -148,7 +148,7 @@ void *mme_app_thread (void *args)
       if (ue_context_p) {
         if(!ue_context_p->imsi_auth){
           OAILOG_WARNING (LOG_MME_APP, "IMSI for UE context ueId " MME_UE_S1AP_ID_FMT " is not authenticated yet. Authenticating. \n", ue_context_p->mme_ue_s1ap_id);
-          ue_context_p->imsi = IMSI_AUTHENTICATED;
+          ue_context_p->imsi_auth = IMSI_AUTHENTICATED;
         }
         mme_app_send_s6a_update_location_req(ue_context_p);
         // todo    unlock_ue_contexts(ue_context_p);

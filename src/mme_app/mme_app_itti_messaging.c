@@ -112,7 +112,7 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
   DevAssert (ue_context );
 
   DevAssert(ue_context->num_pdns); // todo: check num active pdns via EMM/ESM context
-  pdn_context_t * pdn_context = RB_MIN(PdnContexts, ue_context->pdn_contexts);
+  pdn_context_t * pdn_context = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
   DevAssert(pdn_context);
 
 
@@ -137,7 +137,7 @@ int mme_app_send_s11_release_access_bearers_req (struct ue_context_s *const ue_c
 //------------------------------------------------------------------------------
 int
 mme_app_send_s11_create_session_req (
-  struct ue_context_s *const ue_context, pdn_context_t * pdn_context, tai_t * serving_tai)
+  struct ue_context_s *const ue_context, const imsi_t const * imsi_p, pdn_context_t * pdn_context, tai_t * serving_tai)
 {
   uint8_t                                 i = 0;
 
@@ -181,7 +181,7 @@ mme_app_send_s11_create_session_req (
    * Set these parameters with random values for now.
    */
   session_request_p = &message_p->ittiMsg.s11_create_session_request;
-  memset (session_request_p, 0, sizeof (itti_s11_create_session_request_t));
+//  memset (session_request_p, 0, sizeof (itti_s11_create_session_request_t));
   /*
    * As the create session request is the first exchanged message and as
    * no tunnel had been previously setup, the distant teid is set to 0.
@@ -189,16 +189,8 @@ mme_app_send_s11_create_session_req (
    */
   session_request_p->teid = 0;
   /** IMSI. */
-  IMSI64_TO_STRING (ue_context->imsi, (char *)session_request_p->imsi.u.value);
+  memcpy((void*)&session_request_p->imsi, imsi_p, sizeof(imsi_t));
   // message content was set to 0
-  session_request_p->imsi.length = strlen ((const char *)session_request_p->imsi.u.value);
-  // message content was set to 0
-
-//
-//  IMSI64_TO_STRING (ue_context->imsi, (char *)session_request_p->imsi.digit);
-////  memcpy(&session_request_p->imsi, &ue_context->emm_context._imsi, sizeof(session_request_p->imsi));
-// // message content was set to 0
-//  session_request_p->imsi.length = 15; // todo: optimize!
   /*
    * Copy the MSISDN
    */
@@ -249,15 +241,15 @@ mme_app_send_s11_create_session_req (
                                    ue_context->local_mme_teid_s10,
                                    &ue_context->guti);
 
-  memcpy (session_request_p->apn, pdn_context->apn_in_use->data, pdn_context->apn_in_use->slen);
+  memcpy (session_request_p->apn, pdn_context->apn_subscribed->data, blength(pdn_context->apn_subscribed));
   // todo: set the full apn name
   // memcpy (session_request_p->apn, ue_context_p->pending_pdn_connectivity_req_apn->data, ue_context_p->pending_pdn_connectivity_req_apn->slen);
 
   /*
    * Set PDN type for pdn_type and PAA even if this IE is redundant
    */
-  session_request_p->pdn_type = pdn_context->pdn_type;
-  session_request_p->paa.pdn_type = pdn_context->pdn_type;
+  session_request_p->pdn_type = 0; // pdn_context->pdn_type;
+  session_request_p->paa.pdn_type = 0; //pdn_context->pdn_type;
 
   if (!pdn_context->paa) {
     /*
@@ -284,6 +276,7 @@ mme_app_send_s11_create_session_req (
   if (1) {
     // TODO prototype may change
     mme_app_select_sgw(serving_tai, &session_request_p->peer_ip);
+//    session_request_p->peer_ip.in_addr = mme_config.ipv4.
   }
 
   session_request_p->serving_network.mcc[0] = serving_tai->plmn.mcc_digit1;
@@ -522,7 +515,8 @@ mme_app_send_s11_create_bearer_rsp (
 //
 ////  RB_FOREAC(for (int i = 0; i < e_rab_setup_rsp->e_rab_setup_list.no_of_items; i++) {
 ////    e_rab_id_t e_rab_id = e_rab_setup_rsp->e_rab_setup_list.item[i].e_rab_id;
-////    bearer_context_t * bc = mme_app_get_session_bearer_context_from_all(ue_context_p, (ebi_t) e_rab_id);
+////    bearer_context_t * bc = NULL;
+//      mme_app_get_session_bearer_context_from_all(ue_context_p, (ebi_t) e_rab_id, &bc);
 //    if (bearer_context_to_establish->bearer_state & BEARER_STATE_ENB_CREATED) {
       s11_create_bearer_response->cause.cause_value = REQUEST_ACCEPTED;
       s11_create_bearer_response->bearer_contexts.bearer_contexts[msg_bearer_index].eps_bearer_id = bearer_context->ebi;

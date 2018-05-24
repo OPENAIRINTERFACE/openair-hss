@@ -207,9 +207,15 @@ esm_sap_send (esm_sap_t * msg)
      * Execute the PDN disconnect procedure requested by the UE.
      * Validating the message in the context of the UE and finding the PDN context to remove.
      */
-    esm_proc_eps_bearer_context_deactivate(msg->ctx, true, msg->data.pdn_disconnect.default_ebi, msg->data.pdn_disconnect.cid, &esm_cause);
+    rc = esm_proc_eps_bearer_context_deactivate(msg->ctx, true, msg->data.pdn_disconnect.default_ebi, msg->data.pdn_disconnect.cid, &esm_cause);
     if (rc != RETURNerror) {
-      rc = esm_proc_pdn_disconnect_request( msg->ctx, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, msg->data.pdn_disconnect.default_ebi, &esm_cause);
+      int pid = esm_proc_pdn_disconnect_request( msg->ctx, PROCEDURE_TRANSACTION_IDENTITY_UNASSIGNED, msg->data.pdn_disconnect.default_ebi, &esm_cause);
+      if (pid == RETURNerror) {
+        rc = RETURNerror;
+      }else{
+        /** Delete the PDN connection locally (todo: also might do this together with removing all bearers/default bearer). */
+        proc_tid_t pti = _pdn_connectivity_delete (msg->ctx, pid);
+      }
     }else{
       DevAssert(0);
     }

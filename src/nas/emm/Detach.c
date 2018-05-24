@@ -500,7 +500,7 @@ void free_emm_detach_request_ies(emm_detach_request_ies_t ** const ies)
 
 static void _emm_proc_create_procedure_detach_request(emm_data_context_t * const emm_context, emm_detach_request_ies_t * const ies)
 {
-  nas_emm_detach_proc_t *detach_proc = nas_new_detach_procedure(&emm_context);
+  nas_emm_detach_proc_t *detach_proc = nas_new_detach_procedure(emm_context);
   AssertFatal(detach_proc, "TODO Handle this");
   if ((detach_proc)) {
     detach_proc->ies = ies;

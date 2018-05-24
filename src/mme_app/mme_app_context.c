@@ -145,6 +145,7 @@ ue_context_t *mme_create_new_ue_context (void)
 
 //  new_p->ue_radio_cap_length = 0;
   new_p->s1_ue_context_release_cause = S1AP_INVALID_CAUSE;
+  RB_INIT(&new_p->pdn_contexts);
 
   /*
    * Get 11 new bearers from the bearer pool.
@@ -262,58 +263,20 @@ void mme_app_ue_context_free_content (ue_context_t * const ue_context)
   memset(ue_context, 0, sizeof(*ue_context));
 }
 
-// todo: review the new ue_context storing structure! --> ue_context should be stored just once with mme_ue_s1ap_id as key.
-// IMSI uses mme_app still?!
-//------------------------------------------------------------------------------
-ue_context_t                           *
-mme_ue_context_exists_enb_ue_s1ap_id (
-  mme_ue_context_t * const mme_ue_context_p,
-  const enb_s1ap_id_key_t enb_key)
-{
-  struct ue_context_s                    *ue_context = NULL;
-
-  hashtable_ts_get (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_key, (void **)&ue_context);
-  if (ue_context) {
-    OAILOG_TRACE (LOG_MME_APP, "Fetched ue_context (key " MME_APP_ENB_S1AP_ID_KEY_FORMAT ") MME_UE_S1AP_ID=" MME_UE_S1AP_ID_FMT " ENB_UE_S1AP_ID=" ENB_UE_S1AP_ID_FMT " @%p\n",
-        enb_key, ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context);
-  }
-  return ue_context;
-}
-
-//------------------------------------------------------------------------------
-ue_context_t                           *
-mme_ue_context_exists_mme_ue_s1ap_id (
-  mme_ue_context_t * const mme_ue_context_p,
-  const mme_ue_s1ap_id_t mme_ue_s1ap_id)
-{
-  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-  uint64_t                                enb_s1ap_id_key64 = 0;
-
-  h_rc = hashtable_uint64_ts_get (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, &enb_s1ap_id_key64);
-
-  if (HASH_TABLE_OK == h_rc) {
-    return mme_ue_context_exists_enb_ue_s1ap_id (mme_ue_context_p, (enb_s1ap_id_key_t) enb_s1ap_id_key64);
-  }
-
-  return NULL;
-}
-
-
 ////------------------------------------------------------------------------------
 //ue_context_t                           *
 //mme_ue_context_exists_enb_ue_s1ap_id (
 //  mme_ue_context_t * const mme_ue_context_p,
 //  const enb_s1ap_id_key_t enb_key)
 //{
-//  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
-//  uint64_t                                mme_ue_s1ap_id64 = 0;
+//  struct ue_context_s                    *ue_context = NULL;
 //
-//  hashtable_uint64_ts_get (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_key, &mme_ue_s1ap_id64);
-//
-//  if (HASH_TABLE_OK == h_rc) {
-//    return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (mme_ue_s1ap_id_t) mme_ue_s1ap_id64);
+//  hashtable_ts_get (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_key, (void **)&ue_context);
+//  if (ue_context) {
+//    OAILOG_TRACE (LOG_MME_APP, "Fetched ue_context (key " MME_APP_ENB_S1AP_ID_KEY_FORMAT ") MME_UE_S1AP_ID=" MME_UE_S1AP_ID_FMT " ENB_UE_S1AP_ID=" ENB_UE_S1AP_ID_FMT " @%p\n",
+//        enb_key, ue_context->mme_ue_s1ap_id, ue_context->enb_ue_s1ap_id, ue_context);
 //  }
-//  return NULL;
+//  return ue_context;
 //}
 
 ////------------------------------------------------------------------------------
@@ -322,18 +285,54 @@ mme_ue_context_exists_mme_ue_s1ap_id (
 //  mme_ue_context_t * const mme_ue_context_p,
 //  const mme_ue_s1ap_id_t mme_ue_s1ap_id)
 //{
-//  struct ue_context_s                    *ue_context = NULL;
+//  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+//  uint64_t                                enb_s1ap_id_key64 = 0;
 //
-//  hashtable_ts_get (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void **)&ue_context);
-//  if (ue_context) {
-//    lock_ue_contexts(ue_context);
-//    OAILOG_TRACE (LOG_MME_APP, "UE  " MME_UE_S1AP_ID_FMT " fetched MM state %s, ECM state %s\n ",mme_ue_s1ap_id,
-//        (ue_context->mm_state == UE_UNREGISTERED) ? "UE_UNREGISTERED":(ue_context->mm_state == UE_REGISTERED) ? "UE_REGISTERED":"UNKNOWN",
-//        (ue_context->ecm_state == ECM_IDLE) ? "ECM_IDLE":(ue_context->ecm_state == ECM_CONNECTED) ? "ECM_CONNECTED":"UNKNOWN");
+//  h_rc = hashtable_uint64_ts_get (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, &enb_s1ap_id_key64);
+//
+//  if (HASH_TABLE_OK == h_rc) {
+//    return mme_ue_context_exists_enb_ue_s1ap_id (mme_ue_context_p, (enb_s1ap_id_key_t) enb_s1ap_id_key64);
 //  }
-//  return ue_context;
 //
+//  return NULL;
 //}
+
+
+//------------------------------------------------------------------------------
+ue_context_t                           *
+mme_ue_context_exists_enb_ue_s1ap_id (
+  mme_ue_context_t * const mme_ue_context_p,
+  const enb_s1ap_id_key_t enb_key)
+{
+  hashtable_rc_t                          h_rc = HASH_TABLE_OK;
+  uint64_t                                mme_ue_s1ap_id64 = 0;
+
+  hashtable_uint64_ts_get (mme_ue_context_p->enb_ue_s1ap_id_ue_context_htbl, (const hash_key_t)enb_key, &mme_ue_s1ap_id64);
+
+  if (HASH_TABLE_OK == h_rc) {
+    return mme_ue_context_exists_mme_ue_s1ap_id (mme_ue_context_p, (mme_ue_s1ap_id_t) mme_ue_s1ap_id64);
+  }
+  return NULL;
+}
+
+//------------------------------------------------------------------------------
+ue_context_t                           *
+mme_ue_context_exists_mme_ue_s1ap_id (
+  mme_ue_context_t * const mme_ue_context_p,
+  const mme_ue_s1ap_id_t mme_ue_s1ap_id)
+{
+  struct ue_context_s                    *ue_context = NULL;
+
+  hashtable_ts_get (mme_ue_context_p->mme_ue_s1ap_id_ue_context_htbl, (const hash_key_t)mme_ue_s1ap_id, (void **)&ue_context);
+  if (ue_context) {
+//    lock_ue_contexts(ue_context);
+    OAILOG_TRACE (LOG_MME_APP, "UE  " MME_UE_S1AP_ID_FMT " fetched MM state %s, ECM state %s\n ",mme_ue_s1ap_id,
+        (ue_context->mm_state == UE_UNREGISTERED) ? "UE_UNREGISTERED":(ue_context->mm_state == UE_REGISTERED) ? "UE_REGISTERED":"UNKNOWN",
+        (ue_context->ecm_state == ECM_IDLE) ? "ECM_IDLE":(ue_context->ecm_state == ECM_CONNECTED) ? "ECM_CONNECTED":"UNKNOWN");
+  }
+  return ue_context;
+
+}
 
 //------------------------------------------------------------------------------
 struct ue_context_s                    *
@@ -2364,12 +2363,13 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
 
   OAILOG_FUNC_IN (LOG_MME_APP);
 
-  int                     rc = RETURNok;
   context_identifier_t    context_identifier = 0; // todo: how is this set via S10?
   pdn_cid_t               pdn_cid = 0;
+  pdn_context_t          *pdn_context = NULL;
+  int                     rc = RETURNok;
 
   /** Get and handle the PDN Connection element as pending PDN connection element (using the default_ebi and the apn). */
-  pdn_context_t * pdn_context = mme_app_get_pdn_context(ue_context, 0, pdn_connection->linked_eps_bearer_id, pdn_connection->apn_str);
+  mme_app_get_pdn_context(ue_context, 0, pdn_connection->linked_eps_bearer_id, pdn_connection->apn_str, &pdn_context);
   if(pdn_context){
     /* Found the PDN context. */
     OAILOG_ERROR(LOG_MME_APP, "PDN context for apn %s and default ebi %d already exists for UE_ID: " MME_UE_S1AP_ID_FMT". Skipping the establishment (or update). \n",
@@ -2381,7 +2381,7 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
    * No context identifier will be set.
    * Later set context identifier by ULA?
    */
-  pdn_context = mme_app_create_pdn_context(ue_context, pdn_connection->apn_str, 0); /**< Create the pdn context using the APN network identifier. */
+  pdn_context = mme_app_create_pdn_context(ue_context, 0); /**< Create the pdn context using the APN network identifier. */
   if(!pdn_context) {
     OAILOG_ERROR(LOG_MME_APP, "Could not create a new pdn context for apn \" %s \" for UE_ID " MME_UE_S1AP_ID_FMT " from S10 PDN_CONNECTIONS IE. "
         "Skipping the establishment of pdn context. \n", pdn_connection->apn_str, ue_context->mme_ue_s1ap_id);
@@ -2423,7 +2423,8 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
   for (int num_bearer = 0; num_bearer < pdn_connection->bearer_context_list.num_bearer_context; num_bearer++){
     bearer_context_to_be_created_t * bearer_context_to_be_created_s10 = &pdn_connection->bearer_context_list.bearer_contexts[num_bearer];
     /* Create bearer contexts in the PDN context. */
-    bearer_context_t * bearer_context_registered = mme_app_register_bearer_context(ue_context, bearer_context_to_be_created_s10->eps_bearer_id, pdn_context);
+    bearer_context_t * bearer_context_registered = NULL;
+    mme_app_register_bearer_context(ue_context, bearer_context_to_be_created_s10->eps_bearer_id, pdn_context, &bearer_context_registered);
     // todo: optimize this!
     DevAssert(bearer_context_registered);
     /*
@@ -2561,7 +2562,7 @@ mme_app_handle_s10_context_response(
    * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
    * When all pdn_connections are completed, continue with handover request.
    */
-  if(mme_app_send_s11_create_session_req (ue_context, pdn_context, &emm_context->originating_tai) != RETURNok){
+  if(mme_app_send_s11_create_session_req (ue_context, NULL, pdn_context, &emm_context->originating_tai) != RETURNok){
     /**
      * Error sending CSReq. Send S10 Context Response error to NAS.
      */
