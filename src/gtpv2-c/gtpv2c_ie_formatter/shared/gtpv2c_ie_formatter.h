@@ -62,5 +62,16 @@ nw_rc_t gtpv2c_paa_ie_get(
 
 int gtpv2c_paa_ie_set(nw_gtpv2c_msg_handle_t *msg, const paa_t *paa);
 
+nw_rc_t
+gtpv2c_ambr_ie_set (
+    nw_gtpv2c_msg_handle_t * msg, ambr_t * ambr);
+
+nw_rc_t
+gtpv2c_ambr_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg);
 
 #endif /* FILE_GTPV2C_IE_FORMATTER_SEEN */

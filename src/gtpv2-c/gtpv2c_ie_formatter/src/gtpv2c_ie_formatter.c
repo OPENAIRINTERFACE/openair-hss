@@ -389,3 +389,54 @@ gtpv2c_paa_ie_set (
   DevAssert (NW_OK == rc);
   return RETURNok;
 }
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_ambr_ie_set (
+    nw_gtpv2c_msg_handle_t * msg, ambr_t * ambr)
+{
+  nw_rc_t                                   rc;
+  uint8_t                                 value[3];
+
+  DevAssert (msg );
+  DevAssert (ambr );
+  /*
+   * MCC Decimal | MCC Hundreds
+   */
+
+  uint8_t                                 ambr_br[16];
+  uint8_t                                 *p_ambr;
+  p_ambr = ambr_br;
+
+  memset(ambr_br, 0, 16);
+
+  INT64_TO_BUFFER(ambr->br_ul, p_ambr);
+  p_ambr+=8;
+
+  INT64_TO_BUFFER(ambr->br_dl, p_ambr);
+  // todo: byte order?
+
+  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_AMBR, 16, 0, p_ambr);
+  DevAssert (NW_OK == rc);
+  return RETURNok;
+}
+
+//------------------------------------------------------------------------------
+nw_rc_t
+gtpv2c_ambr_ie_get (
+  uint8_t ieType,
+  uint16_t ieLength,
+  uint8_t ieInstance,
+  uint8_t * ieValue,
+  void *arg)
+{
+  ambr_t                                 *ambr = (ambr_t *) arg;
+
+  DevAssert (ambr );
+  ambr->br_ul = ntoh_int32_buf (&ieValue[0]);
+  ambr->br_dl = ntoh_int32_buf (&ieValue[4]);
+  OAILOG_DEBUG (LOG_S11, "\t- AMBR UL %" PRIu64 "\n", ambr->br_ul);
+  OAILOG_DEBUG (LOG_S11, "\t- AMBR DL %" PRIu64 "\n", ambr->br_dl);
+  return NW_OK;
+}
+

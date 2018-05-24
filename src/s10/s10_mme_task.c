@@ -66,7 +66,7 @@ s10_mme_log_wrapper (
   uint32_t line,
   char * logStr)
 {
-  OAILOG_DEBUG (LOG_S11, "%s\n", logStr);
+  OAILOG_DEBUG (LOG_S10, "%s\n", logStr);
   return NW_OK;
 }
 
@@ -188,7 +188,7 @@ s10_mme_send_udp_msg (
   udp_data_req_t                         *udp_data_req_p;
   int                                     ret = 0;
 
-  message_p = itti_alloc_new_message (TASK_S11, UDP_DATA_REQ);
+  message_p = itti_alloc_new_message (TASK_S10, UDP_DATA_REQ);
   udp_data_req_p = &message_p->ittiMsg.udp_data_req;
   udp_data_req_p->peer_address.s_addr = peerIpAddr->s_addr;
   udp_data_req_p->peer_port = peerPort;
@@ -212,9 +212,9 @@ s10_mme_start_timer_wrapper (
   int                                     ret = 0;
 
   if (tmrType == NW_GTPV2C_TMR_TYPE_REPETITIVE) {
-    ret = timer_setup (timeoutSec, timeoutUsec, TASK_S11, INSTANCE_DEFAULT, TIMER_PERIODIC, timeoutArg, &timer_id);
+    ret = timer_setup (timeoutSec, timeoutUsec, TASK_S10, INSTANCE_DEFAULT, TIMER_PERIODIC, timeoutArg, &timer_id);
   } else {
-    ret = timer_setup (timeoutSec, timeoutUsec, TASK_S11, INSTANCE_DEFAULT, TIMER_ONE_SHOT, timeoutArg, &timer_id);
+    ret = timer_setup (timeoutSec, timeoutUsec, TASK_S10, INSTANCE_DEFAULT, TIMER_ONE_SHOT, timeoutArg, &timer_id);
   }
 
   *hTmr = (nw_gtpv2c_timer_handle_t) timer_id;
@@ -367,7 +367,7 @@ s10_send_init_udp (
   message_p->ittiMsg.udp_init.address.s_addr = address->s_addr;
   char ipv4[INET_ADDRSTRLEN];
   inet_ntop (AF_INET, (void*)&message_p->ittiMsg.udp_init.address, ipv4, INET_ADDRSTRLEN);
-  OAILOG_DEBUG (LOG_S11, "Tx UDP_INIT IP addr %s:%" PRIu16 "\n", ipv4, message_p->ittiMsg.udp_init.port);
+  OAILOG_DEBUG (LOG_S10, "Tx UDP_INIT IP addr %s:%" PRIu16 "\n", ipv4, message_p->ittiMsg.udp_init.port);
   return itti_send_msg_to_task (TASK_UDP, INSTANCE_DEFAULT, message_p);
 }
 

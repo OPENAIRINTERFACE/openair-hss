@@ -1259,24 +1259,6 @@ gtpv2c_apn_plmn_ie_set (
   free_wrapper ((void**) &value);
   return RETURNok;
 }
-//------------------------------------------------------------------------------
-nw_rc_t
-gtpv2c_ambr_ie_get (
-  uint8_t ieType,
-  uint8_t ieLength,
-  uint8_t ieInstance,
-  uint8_t * ieValue,
-  void *arg)
-{
-  ambr_t                                 *ambr = (ambr_t *) arg;
-
-  DevAssert (ambr );
-  ambr->br_ul = ntoh_int32_buf (&ieValue[0]);
-  ambr->br_dl = ntoh_int32_buf (&ieValue[4]);
-  OAILOG_DEBUG (LOG_S11, "\t- AMBR UL %" PRIu64 "\n", ambr->br_ul);
-  OAILOG_DEBUG (LOG_S11, "\t- AMBR DL %" PRIu64 "\n", ambr->br_dl);
-  return NW_OK;
-}
 
 //------------------------------------------------------------------------------
 nw_rc_t

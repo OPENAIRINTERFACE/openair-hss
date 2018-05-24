@@ -394,7 +394,7 @@ s10_pdn_connection_ie_set ( nw_gtpv2c_msg_handle_t * msg, void * arg){
     /** Set APN Restriction IE. */
     s10_apn_restriction_ie_set(msg, 0x00);
     /** Set AMBR IE. */
-    s10_ambr_ie_set(msg, &(pdn_connections->pdn_connection[i].apn_ambr));
+    gtpv2c_ambr_ie_set(msg, &(pdn_connections->pdn_connection[i].apn_ambr));
 
     /** Set the PDN connection (another concatenated grouped IE). */
     s10_bearer_context_to_create_ie_set(msg, &(pdn_connections->pdn_connection[i].bearer_context_list));
@@ -468,7 +468,7 @@ s10_pdn_connection_ie_get (
        * AMBR IE.
        */
       case NW_GTPV2C_IE_AMBR:
-        rc = s10_ambr_ie_get(ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &pdn_connection->apn_ambr);
+        rc = gtpv2c_ambr_ie_get(ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &pdn_connection->apn_ambr);
         DevAssert (NW_OK == rc);
         break;
 
@@ -1254,7 +1254,7 @@ s10_bearer_context_created_ie_get (
       break;
 
     case NW_GTPV2C_IE_CAUSE:
-      rc = s10_cause_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->cause);
+      rc = gtpv2c_cause_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &bearer_context->cause);
       break;
 
     default:
@@ -1312,34 +1312,6 @@ s10_apn_restriction_ie_set (
 
   DevAssert (msg );
   rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_APN_RESTRICTION, 1, 0, (uint8_t *) & apn_restriction);
-  DevAssert (NW_OK == rc);
-  return RETURNok;
-}
-
-int s10_ambr_ie_set(nw_gtpv2c_msg_handle_t * msg, ambr_t * ambr){
-
-  nw_rc_t                                   rc;
-  uint8_t                                 value[3];
-
-  DevAssert (msg );
-  DevAssert (ambr );
-  /*
-   * MCC Decimal | MCC Hundreds
-   */
-
-  uint8_t                                 ambr_br[16];
-  uint8_t                                 *p_ambr;
-  p_ambr = ambr_br;
-
-  memset(ambr_br, 0, 16);
-
-  INT64_TO_BUFFER(ambr->br_ul, p_ambr);
-  p_ambr+=8;
-
-  INT64_TO_BUFFER(ambr->br_dl, p_ambr);
-  // todo: byte order?
-
-  rc = nwGtpv2cMsgAddIe (*msg, NW_GTPV2C_IE_AMBR, 16, 0, p_ambr);
   DevAssert (NW_OK == rc);
   return RETURNok;
 }
@@ -1581,24 +1553,6 @@ s10_apn_plmn_ie_set (
   DevAssert (NW_OK == rc);
   free_wrapper ((void**) &value);
   return RETURNok;
-}
-
-nw_rc_t
-s10_ambr_ie_get (
-  uint8_t ieType,
-  uint16_t ieLength,
-  uint8_t ieInstance,
-  uint8_t * ieValue,
-  void *arg)
-{
-  ambr_t                                 *ambr = (ambr_t *) arg;
-
-  DevAssert (ambr );
-  ambr->br_ul = ntoh_int32_buf (&ieValue[0]);
-  ambr->br_dl = ntoh_int32_buf (&ieValue[4]);
-  OAILOG_DEBUG (LOG_S10, "\t- AMBR UL %" PRIu64 "\n", ambr->br_ul);
-  OAILOG_DEBUG (LOG_S10, "\t- AMBR DL %" PRIu64 "\n", ambr->br_dl);
-  return NW_OK;
 }
 
 nw_rc_t

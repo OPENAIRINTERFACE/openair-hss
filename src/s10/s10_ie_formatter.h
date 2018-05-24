@@ -195,12 +195,6 @@ int s10_apn_ie_set(nw_gtpv2c_msg_handle_t *msg, const bstring apn);
 
 int s10_apn_plmn_ie_set(nw_gtpv2c_msg_handle_t *msg, const char *apn, const ServingNetwork_t * serving_network);
 
-nw_rc_t s10_ambr_ie_get(
-  uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
-
-int s10_ambr_ie_set(nw_gtpv2c_msg_handle_t * msg, ambr_t * ambr);
-
-
 nw_rc_t s10_mei_ie_get(
   uint8_t ieType, uint16_t ieLength, uint8_t ieInstance, uint8_t *ieValue, void *arg);
 
