@@ -70,6 +70,7 @@
 #include "mme_app_defs.h"
 #include "mme_config.h"
 #include "mme_app_procedures.h"
+#include "mme_app_wrr_selection.h"
 
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
@@ -1662,7 +1663,11 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
       /** Not finishing the TAU procedure. */
     }else{
       /** Check if the origin TAI is a neighboring MME where we can request the UE MM context. */
-      if(mme_app_check_target_tai_neighboring_mme(tau_proc->ies->last_visited_registered_tai) == -1){
+      struct in_addr neigh_mme_ipv4_addr;
+      neigh_mme_ipv4_addr.s_addr = 0;
+
+      mme_app_select_service(tau_proc->ies->last_visited_registered_tai, &neigh_mme_ipv4_addr);
+      if(neigh_mme_ipv4_addr.s_addr ==0){
         OAILOG_WARNING(LOG_NAS_EMM, "EMM-PROC  - For UE " MME_UE_S1AP_ID_FMT " the last visited TAI " TAI_FMT " is not configured as a MME S10 neighbor. "
             "Proceeding with identification procedure. \n", TAI_ARG(tau_proc->ies->last_visited_registered_tai), emm_context->ue_id);
         /** Invalidate the EMM context. */

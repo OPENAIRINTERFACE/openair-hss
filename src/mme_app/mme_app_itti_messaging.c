@@ -55,7 +55,7 @@
 #include "sgw_ie_defs.h"
 #include "common_defs.h"
 #include "mme_app_itti_messaging.h"
-#include "mme_app_sgw_selection.h"
+#include "mme_app_wrr_selection.h"
 
 // todo: also check this for home/macro
 //------------------------------------------------------------------------------
@@ -274,7 +274,7 @@ mme_app_send_s11_create_session_req (
   // Actually, since S and P GW are bundled together, there is no PGW selection (based on PGW id in ULA, or DNS query based on FQDN)
   if (1) {
     // TODO prototype may change
-    mme_app_select_sgw(serving_tai, &session_request_p->peer_ip);
+    mme_app_select_service(serving_tai, &session_request_p->peer_ip);
 //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
   }
 

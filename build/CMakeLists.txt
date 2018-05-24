@@ -594,10 +594,13 @@ add_library(S6A
   ${S6A_DIR}/s6a_auth_info.c
   ${S6A_DIR}/s6a_dict.c
   ${S6A_DIR}/s6a_error.c
+  ${S6A_DIR}/s6a_common.c
   ${S6A_DIR}/s6a_peer.c
   ${S6A_DIR}/s6a_subscription_data.c
   ${S6A_DIR}/s6a_task.c
   ${S6A_DIR}/s6a_up_loc.c
+  ${S6A_DIR}/s6a_reset.c
+  ${S6A_DIR}/s6a_clear_loc.c
   )
 
 set(SGW_DIR ${OPENAIRCN_DIR}/src/sgw)
@@ -630,7 +633,7 @@ add_library(MME_APP
   ${MME_DIR}/mme_app_main.c
   ${MME_DIR}/mme_app_pdn_context.c
   ${MME_DIR}/mme_app_procedures.c
-  ${MME_DIR}/mme_app_sgw_selection.c
+  ${MME_DIR}/mme_app_wrr_selection.c
   ${MME_DIR}/mme_app_statistics.c
   ${MME_DIR}/mme_app_transport.c
   ${MME_DIR}/mme_app_ue_context.c

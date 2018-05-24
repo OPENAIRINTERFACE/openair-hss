@@ -46,7 +46,6 @@
 #include "log.h"
 
 #define MAX_GUMMEI                2
-#define MAX_NGH_MMES              2
 
 #define MME_CONFIG_STRING_MME_CONFIG                     "MME"
 #define MME_CONFIG_STRING_PID_DIRECTORY                  "PID_DIRECTORY"
@@ -94,7 +93,6 @@
 #define MME_CONFIG_STRING_MME_CODE                       "MME_CODE"
 #define MME_CONFIG_STRING_MME_GID                        "MME_GID"
 #define MME_CONFIG_STRING_TAI_LIST                       "TAI_LIST"
-#define MME_CONFIG_STRING_NEIGHBORING_MME_LIST           "NEIGHBORING_MME_LIST"
 #define MME_CONFIG_STRING_MCC                            "MCC"
 #define MME_CONFIG_STRING_MNC                            "MNC"
 #define MME_CONFIG_STRING_TAC                            "TAC"
@@ -132,12 +130,18 @@
 #define MME_CONFIG_STRING_NAS_FORCE_PUSH_DEDICATED_BEARER "FORCE_PUSH_DEDICATED_BEARER"
 
 
+//#define MME_CONFIG_STRING_NAS_FORCE_PUSH_DEDICATED_BEARER "FORCE_PUSH_DEDICATED_BEARER"
+#define MME_CONFIG_STRING_MME_IPV4_ADDRESS_FOR_S10        "MME_IPV4_ADDRESS_FOR_S10"
+
 #define MME_CONFIG_STRING_ASN1_VERBOSITY                 "ASN1_VERBOSITY"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_NONE            "none"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_ANNOYING        "annoying"
 #define MME_CONFIG_STRING_ASN1_VERBOSITY_INFO            "info"
 
-#define MME_CONFIG_STRING_SGW_LIST_SELECTION             "S-GW_LIST_SELECTION"
+#define MME_CONFIG_STRING_WRR_LIST_SELECTION             "WRR_LIST_SELECTION"
+///** MME S10 List --> todo: later FULL WRR : Finding MME via eNB. */
+//#define MME_CONFIG_STRING_MME_LIST_SELECTION             "MME_LIST_SELECTION"
+
 #define MME_CONFIG_STRING_ID                             "ID"
 
 typedef enum {
@@ -185,11 +189,6 @@ typedef struct mme_config_s {
     int      nb;
     gummei_t gummei[MAX_GUMMEI];
   } gummei;
-
-  struct {
-    int      nb;
-    nghMme_t nghMme[MAX_NGH_MMES];
-  } nghMme;
 
 
 #define TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_NON_CONSECUTIVE_TACS 0x00
@@ -267,10 +266,14 @@ typedef struct mme_config_s {
   } nas_config;
 
   struct {
-    int            nb_sgw_entries;
-#define MME_CONFIG_MAX_SGW 16
-    bstring        sgw_id[MME_CONFIG_MAX_SGW];
-    struct in_addr sgw_ip_addr[MME_CONFIG_MAX_SGW];
+    int nb_service_entries;
+//#define MME_CONFIG_MAX_SGW 16
+#define MME_CONFIG_MAX_SERVICE 64
+
+    bstring        service_id[MME_CONFIG_MAX_SERVICE];
+    struct in_addr service_ip_addr[MME_CONFIG_MAX_SERVICE];
+    /** MME entries. */
+
   } e_dns_emulation;
 
 #if TRACE_XML
@@ -292,10 +295,6 @@ int mme_config_find_mnc_length(const char mcc_digit1P,
                                const char mnc_digit2P,
                                const char mnc_digit3P);
 int mme_config_parse_opt_line(int argc, char *argv[], mme_config_t *mme_config);
-
-int
-mme_app_check_target_tai_neighboring_mme (
-const tai_t * const target_tai);
 
 void mme_config_exit (void);
 

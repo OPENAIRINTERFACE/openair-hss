@@ -176,16 +176,6 @@ typedef struct guti_s {
   tmsi_t   m_tmsi;                                         /*!< \brief  M-Temporary Mobile Subscriber Identity   */
 } guti_t;
 
-/*! \struct  nghMme_t
- * \brief Structure containing the Neighboring MMEs.
- */
-typedef struct nghMme_s {
-  tai_t         ngh_mme_tai;
-  uint32_t      ipAddr;                                      /*!< \brief  IP Address           */
-} nghMme_t;
-
-
-
 // 2.9 Structure of the S-Temporary Mobile Subscriber Identity (S-TMSI)
 
 /*! \struct  s_tmsi_t

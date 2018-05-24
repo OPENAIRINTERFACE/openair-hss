@@ -79,7 +79,7 @@ s10_mme_forward_relocation_request (
    * Prepare a new Forward Relocation Request msg
    */
   rc = nwGtpv2cMsgNew (*stack_p, true, NW_GTP_FORWARD_RELOCATION_REQ, req_p->teid, 0, &(ulp_req.hMsg));
-  ulp_req.u_api_info.initialReqInfo.peerIp.s_addr  = req_p->peer_ip->s_addr;
+  ulp_req.u_api_info.initialReqInfo.peerIp.s_addr  = req_p->peer_ip.s_addr;
   ulp_req.u_api_info.initialReqInfo.teidLocal  = req_p->s10_source_mme_teid.teid;
   ulp_req.u_api_info.initialReqInfo.hUlpTunnel = 0; /** Will create a local tunnel with type INIT_REQ. */
   ulp_req.u_api_info.initialReqInfo.hTunnel    = 0;

@@ -2015,15 +2015,23 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
    * We could send the PDN Connection IE together to the NAS, but since we have subscription information yet, we still need the
    * method mme_app_send_s11_create_session_req_from_handover_tau which sends the CREATE_SESSION_REQUEST from the pending information.
    */
-  int ngh_index = mme_app_check_target_tai_neighboring_mme(&nas_context_req_pP->originating_tai);
-  if(ngh_index == -1){
-    OAILOG_ERROR(LOG_MME_APP, "Could not find a neighboring MME for handling missing NAS context. \n");
-    OAILOG_DEBUG (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
-        "Not proceeding with the NAS UE context request for mme_ue_s1ap_id of UE: "MME_UE_S1AP_ID_FMT ". \n",
-        TAI_ARG(&nas_context_req_pP->originating_tai), nas_context_req_pP->ue_id);
-    /** Send a nas_context_reject back. */
+
+  struct in_addr neigh_mme_ipv4_addr;
+  neigh_mme_ipv4_addr.s_addr = 0;
+
+  if (1) {
+    // TODO prototype may change
+    mme_app_select_service(&nas_context_req_pP->originating_tai, &neigh_mme_ipv4_addr);
+    //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
+    if(neigh_mme_ipv4_addr.s_addr == 0){
+      OAILOG_ERROR(LOG_MME_APP, "Could not find a neighboring MME for handling missing NAS context. \n");
+      OAILOG_DEBUG (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
+          "Not proceeding with the NAS UE context request for mme_ue_s1ap_id of UE: "MME_UE_S1AP_ID_FMT ". \n",
+          TAI_ARG(&nas_context_req_pP->originating_tai), nas_context_req_pP->ue_id);
+      /** Send a nas_context_reject back. */
       _mme_app_send_nas_context_response_err(nas_context_req_pP->ue_id, RELOCATION_FAILURE);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
+    }
   }
 
   /**
@@ -2046,7 +2054,7 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
   s10_context_request_p->teid = 0;
   /** Prepare the S10 message and initialize the S10 GTPv2c tunnel endpoints. */
   // todo: search the list of neighboring MMEs for the correct origin TAI
-  s10_context_request_p->peer_ip.s_addr = mme_config.nghMme.nghMme[ngh_index].ipAddr;
+  s10_context_request_p->peer_ip.s_addr = neigh_mme_ipv4_addr.s_addr;
   /** Set the Target MME_S10_FTEID (this MME's S10 Tunnel endpoint). */
   OAI_GCC_DIAG_OFF(pointer-to-int-cast);
   s10_context_request_p->s10_target_mme_teid.teid = local_teid;

@@ -49,7 +49,7 @@
 #include "mme_app_defs.h"
 #include "mme_app_apn_selection.h"
 #include "mme_app_pdn_context.h"
-#include "mme_app_sgw_selection.h"
+#include "mme_app_wrr_selection.h"
 #include "mme_app_bearer_context.h"
 #include "timer.h"
 #include "common_defs.h"
@@ -2152,26 +2152,31 @@ mme_app_handle_handover_required(
     }
   }
   OAILOG_DEBUG (LOG_MME_APP, "Target TA  "TAI_FMT " is NOT served by current MME. Searching for a neighboring MME. \n", TAI_ARG(&handover_required_pP->selected_tai));
-  int ngh_index = mme_app_check_target_tai_neighboring_mme(&handover_required_pP->selected_tai);
-  if(ngh_index == -1){
-    /** Send a Handover Preparation Failure back. */
-    mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
-    OAILOG_DEBUG (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
-        "Not proceeding with the handover formme_ue_s1ap_id in list of UE: %08x %d(dec)\n",
-        TAI_ARG(&handover_required_pP->selected_tai), handover_required_pP->mme_ue_s1ap_id, handover_required_pP->mme_ue_s1ap_id);
-    MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_HANDOVER_REQUIRED Unknown ue %u", handover_required_pP->mme_ue_s1ap_id);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
+
+  if (1) {
+    // TODO prototype may change
+    mme_app_select_service(&handover_required_pP->selected_tai, &s10_handover_procedure->remote_mme_teid.ipv4_address);
+    //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
+    if(s10_handover_procedure->remote_mme_teid.ipv4_address.s_addr == 0){
+      /** Send a Handover Preparation Failure back. */
+      mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
+      OAILOG_DEBUG (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
+          "Not proceeding with the handover formme_ue_s1ap_id in list of UE: %08x %d(dec)\n",
+          TAI_ARG(&handover_required_pP->selected_tai), handover_required_pP->mme_ue_s1ap_id, handover_required_pP->mme_ue_s1ap_id);
+      MSC_LOG_EVENT (MSC_MMEAPP_MME, "S1AP_HANDOVER_REQUIRED Unknown ue %u", handover_required_pP->mme_ue_s1ap_id);
+      OAILOG_FUNC_OUT (LOG_MME_APP);
+    }
   }
+
   /** Prepare a forward relocation message to the TARGET-MME. */
   message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_REQUEST);
   DevAssert (message_p != NULL);
   itti_s10_forward_relocation_request_t *forward_relocation_request_p = &message_p->ittiMsg.s10_forward_relocation_request;
   memset ((void*)forward_relocation_request_p, 0, sizeof (itti_s10_forward_relocation_request_t));
   forward_relocation_request_p->teid = 0;
-  forward_relocation_request_p->peer_ip = mme_config.nghMme.nghMme[ngh_index].ipAddr;
+  forward_relocation_request_p->peer_ip = s10_handover_procedure->remote_mme_teid.ipv4_address;
   /** Add it into the procedure (todo: hardcoded to ipv4). */
   s10_handover_procedure->remote_mme_teid.ipv4 = 1;
-  s10_handover_procedure->remote_mme_teid.ipv4_address.s_addr = forward_relocation_request_p->peer_ip->s_addr;
   s10_handover_procedure->remote_mme_teid.interface_type = S10_MME_GTP_C;
   /** IMSI. */
   IMSI64_TO_STRING (ue_context->imsi, (char *)forward_relocation_request_p->imsi.u.value);
@@ -2655,8 +2660,7 @@ mme_app_handle_forward_relocation_request(
  forward_relocation_request_pP->eutran_container = NULL;
  s10_proc_mme_handover->f_cause = forward_relocation_request_pP->f_cause;
  forward_relocation_request_pP->f_cause = NULL;
- s10_proc_mme_handover->remote_mme_teid.ipv4_address.s_addr = forward_relocation_request_pP->peer_ip->s_addr;
- forward_relocation_request_pP->peer_ip = NULL; // todo: if they differ etc..
+ s10_proc_mme_handover->remote_mme_teid.ipv4_address.s_addr = forward_relocation_request_pP->peer_ip.s_addr;
  s10_proc_mme_handover->peer_port = forward_relocation_request_pP->peer_port;
  s10_proc_mme_handover->forward_relocation_trxn = forward_relocation_request_pP->trxn;
  /** If it is a new_ue_context, additionally set the pdn_connections IE. */

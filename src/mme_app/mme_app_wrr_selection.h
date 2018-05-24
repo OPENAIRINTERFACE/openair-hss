@@ -20,26 +20,16 @@
  */
 
 
-#ifndef FILE_MME_APP_EDNS_EMULATION_SEEN
-#define FILE_MME_APP_EDNS_EMULATION_SEEN
+#ifndef FILE_MME_APP_WRR_SELECTION_SEEN
+#define FILE_MME_APP_WRR_SELECTION_SEEN
 
-/*! \file mme_app_edns_emulation.h
+/*! \file mme_app_mme_wrr.h
   \brief
   \author Lionel Gauthier
   \company Eurecom
   \email: lionel.gauthier@eurecom.fr
 */
 
-//struct in_addr* mme_app_edns_get_sgw_entry(bstring id);
-//struct in_addr* mme_app_edns_get_mme_entry(bstring id);
-//int mme_app_edns_add_sgw_entry(bstring id, struct in_addr in_addr);
-//int mme_app_edns_add_mme_entry(bstring id, struct in_addr in_addr);
-
-struct in_addr* mme_app_edns_get_wrr_entry(bstring id);
-int mme_app_edns_add_wrr_entry(bstring id, struct in_addr in_addr);
-
-int  mme_app_edns_init (const mme_config_t * mme_config_p);
-void  mme_app_edns_exit (void);
-
+void mme_app_select_service(const tai_t * const tai, struct in_addr * const mme_in_addr);
 
 #endif

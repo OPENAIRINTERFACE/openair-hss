@@ -230,8 +230,8 @@ void mme_config_exit (void)
   free_wrapper((void**)&mme_config.served_tai.plmn_mnc_len);
   free_wrapper((void**)&mme_config.served_tai.tac);
 
-  for (int i = 0; i < mme_config.e_dns_emulation.nb_sgw_entries; i++) {
-    bdestroy_wrapper(&mme_config.e_dns_emulation.sgw_id[i]);
+  for (int i = 0; i < mme_config.e_dns_emulation.nb_service_entries; i++) {
+    bdestroy_wrapper(&mme_config.e_dns_emulation.service_id[i]);
   }
 
 #if TRACE_XML
@@ -262,6 +262,7 @@ static int mme_config_parse_file (mme_config_t * config_pP)
   char                                   *if_name_s11 = NULL;
   char                                   *s11 = NULL;
   char                                   *sgw_ip_address_for_s11 = NULL;
+  char                                   *mme_ip_address_for_s10 = NULL;
 
 
   char                                   *if_name_s10 = NULL;
@@ -680,63 +681,6 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       }
     }
 
-    // NEIGHBORING MME's SETTING
-    setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_NEIGHBORING_MME_LIST);
-    config_pP->nghMme.nb = 0;
-    if (setting != NULL) {
-      num = config_setting_length (setting);
-      AssertFatal(num <= MAX_NGH_MMES, "MAX_NGH_MMES");
-      for (i = 0; i < num; i++) {
-        sub2setting = config_setting_get_elem (setting, i);
-
-        if (sub2setting != NULL) {
-          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MCC, &mcc))) {
-            AssertFatal( 3 == strlen(mcc), "Bad MCC length, it must be 3 digit ex: 001");
-            char c[2] = { mcc[0], 0};
-            config_pP->nghMme.nghMme[i].ngh_mme_tai.plmn.mcc_digit1 = (uint8_t) atoi (c);
-            c[0] = mcc[1];
-            config_pP->nghMme.nghMme[i].ngh_mme_tai.plmn.mcc_digit2 = (uint8_t) atoi (c);
-            c[0] = mcc[2];
-            config_pP->nghMme.nghMme[i].ngh_mme_tai.plmn.mcc_digit3 = (uint8_t) atoi (c);
-          }
-
-          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MNC, &mnc))) {
-            AssertFatal( (3 == strlen(mnc)) || (2 == strlen(mnc)) , "Bad MNC length, it must be 2 or 3 digits ex: 001");
-            char c[2] = { mnc[0], 0};
-            config_pP->nghMme.nghMme[i].ngh_mme_tai.plmn.mnc_digit1 = (uint8_t) atoi (c);
-            c[0] = mnc[1];
-            config_pP->nghMme.nghMme[i].ngh_mme_tai.plmn.mnc_digit2 = (uint8_t) atoi (c);
-            if (3 == strlen(mnc)) {
-              c[0] = mnc[2];
-              config_pP->nghMme.nghMme[i].ngh_mme_tai.plmn.mnc_digit3 = (uint8_t) atoi (c);
-            } else {
-              config_pP->nghMme.nghMme[i].ngh_mme_tai.plmn.mnc_digit3 = 0x0F;
-            }
-          }
-
-          /** TAC of neighboring MME. */
-          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_TAC, &tac))) {
-            config_pP->nghMme.nghMme[i].ngh_mme_tai.tac = (uint16_t) atoi (tac);
-            AssertFatal(TAC_IS_VALID(config_pP->nghMme.nghMme[i].ngh_mme_tai.tac), "Invalid TAC value "TAC_FMT, config_pP->nghMme.nghMme[i].ngh_mme_tai.tac);
-          }
-
-          /** IP address of neighboring MME. */
-          if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_NGHB_MME_IPV4_ADDR, (const char **)&ngh_s10))) {
-//            config_pP->nghMme.nghMme[i].ipAddr = (uint16_t) atoi (tac);
-            /** NEIGHBORING MME S10. */
-            address= bfromcstr (ngh_s10);
-            IPV4_STR_ADDR_TO_INT_NWBO (bdata(address), config_pP->nghMme.nghMme[i].ipAddr, "BAD IP ADDRESS FORMAT FOR NEIGHBORING S10 !\n");
-            in_addr_var.s_addr = config_pP->nghMme.nghMme[i].ipAddr;
-            OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found NEIGHBORING S10: %s \n", inet_ntoa (in_addr_var));
-          }
-
-          config_pP->nghMme.nb += 1;
-        }
-      }
-    }
-
-
-
     // NETWORK INTERFACE SETTING
     setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_NETWORK_INTERFACES_CONFIG);
 
@@ -909,39 +853,57 @@ static int mme_config_parse_file (mme_config_t * config_pP)
   }
 
   // todo: selection instead of config!
-  setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_SGW_LIST_SELECTION);
+  setting = config_setting_get_member (setting_mme, MME_CONFIG_STRING_WRR_LIST_SELECTION);
   if (setting != NULL) {
     num = config_setting_length (setting);
 
-    AssertFatal(num <= MME_CONFIG_MAX_SGW, "Too many SGW entries defined (%d>%d)", num, MME_CONFIG_MAX_SGW);
+    AssertFatal(num <= MME_CONFIG_MAX_SERVICE, "Too many service entries defined (%d>%d)", num, MME_CONFIG_MAX_SERVICE);
 
-    config_pP->e_dns_emulation.nb_sgw_entries = 0;
+    config_pP->e_dns_emulation.nb_service_entries = 0;
     for (i = 0; i < num; i++) {
       sub2setting = config_setting_get_elem (setting, i);
 
       if (sub2setting != NULL) {
         const char                             *id = NULL;
         if (!(config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_ID, &id))) {
-          OAILOG_ERROR (LOG_SPGW_APP, "Could not get SGW ID item %d in %s\n", i, MME_CONFIG_STRING_SGW_LIST_SELECTION);
+          OAILOG_ERROR (LOG_SPGW_APP, "Could not get service ID item %d in %s\n", i, MME_CONFIG_STRING_WRR_LIST_SELECTION);
           break;
         }
-        config_pP->e_dns_emulation.sgw_id[i] = bfromcstr(id);
+        config_pP->e_dns_emulation.service_id[i] = bfromcstr(id);
 
+        /** Check S11 Endpoint (service="x-3gpp-sgw:x-s11"). */
         if ((config_setting_lookup_string (sub2setting, SGW_CONFIG_STRING_SGW_IPV4_ADDRESS_FOR_S11, (const char **)&sgw_ip_address_for_s11)
             )
-          ) {
+          )
+        {
 
           cidr = bfromcstr (sgw_ip_address_for_s11);
           struct bstrList *list = bsplit (cidr, '/');
           AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
           address = list->entry[0];
-          IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->e_dns_emulation.sgw_ip_addr[i], "BAD IP ADDRESS FORMAT FOR SGW S11 !\n");
+          IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->e_dns_emulation.service_ip_addr[i], "BAD IP ADDRESS FORMAT FOR SGW S11 !\n");
           bstrListDestroy(list);
           bdestroy_wrapper(&cidr);
-          OAILOG_INFO (LOG_SPGW_APP, "Parsing configuration file found S-GW S11: %s\n", inet_ntoa (config_pP->e_dns_emulation.sgw_ip_addr[i]));
+          OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found S-GW S11: %s\n", inet_ntoa (config_pP->e_dns_emulation.service_ip_addr[i]));
         }
+        /** Check S11 Endpoint (service="x-3gpp-mme:x-s10"). */
+        if ((config_setting_lookup_string (sub2setting, MME_CONFIG_STRING_MME_IPV4_ADDRESS_FOR_S10, (const char **)&mme_ip_address_for_s10)
+          )
+        )
+        {
+
+          cidr = bfromcstr (mme_ip_address_for_s10);
+          struct bstrList *list = bsplit (cidr, '/');
+          AssertFatal(2 == list->qty, "Bad CIDR address %s", bdata(cidr));
+          address = list->entry[0];
+          IPV4_STR_ADDR_TO_INADDR (bdata(address), config_pP->e_dns_emulation.service_ip_addr[i], "BAD IP ADDRESS FORMAT FOR MME S10 !\n");
+          bstrListDestroy(list);
+          bdestroy_wrapper(&cidr);
+          OAILOG_INFO (LOG_MME_APP, "Parsing configuration file found MME S10: %s\n", inet_ntoa (config_pP->e_dns_emulation.service_ip_addr[i]));
+        }
+
       }
-      config_pP->e_dns_emulation.nb_sgw_entries++;
+      config_pP->e_dns_emulation.nb_service_entries++;
     }
   }
 
@@ -1031,10 +993,7 @@ static void mme_config_display (mme_config_t * config_pP)
     OAILOG_INFO (LOG_CONFIG, "            " PLMN_FMT "|%u|%u \n",
         PLMN_ARG(&config_pP->gummei.gummei[j].plmn), config_pP->gummei.gummei[j].mme_gid, config_pP->gummei.gummei[j].mme_code);
   }
-  for (j = 0; j < config_pP->nghMme.nb; j++) {
-    OAILOG_INFO (LOG_CONFIG, "    Neighboring PLMNs:        " PLMN_FMT " \n",
-        PLMN_ARG(&config_pP->nghMme.nghMme[j].ngh_mme_tai.plmn));
-  }
+
   OAILOG_INFO (LOG_CONFIG, "- TAIs : (mcc.mnc:tac)\n");
   switch (config_pP->served_tai.list_type) {
   case TRACKING_AREA_IDENTITY_LIST_TYPE_ONE_PLMN_CONSECUTIVE_TACS:
@@ -1213,44 +1172,3 @@ mme_config_parse_opt_line (
   mme_config_display (config_pP);
   return 0;
 }
-
-int
-mme_app_check_target_tai_neighboring_mme (
-const tai_t * const target_tai)
-{
-
-OAILOG_FUNC_IN (LOG_MME_APP);
-
-int                                     i = -1;
-uint16_t                                target_mcc = 0;
-uint16_t                                target_mnc = 0;
-uint16_t                                target_mnc_len = 0;
-
-/** Neighboring MNC/MCC values. */
-uint16_t                                ngh_mcc = 0;
-uint16_t                                ngh_mnc = 0;
-uint16_t                                ngh_mnc_len = 0;
-
-DevAssert (target_tai != NULL);
-/** Get the integer values from the PLMN. */
-PLMN_T_TO_MCC_MNC ((target_tai->plmn), target_mcc, target_mnc, target_mnc_len);
-
-mme_config_read_lock (&mme_config);
-
-for (i = 0; i < mme_config.nghMme.nb; i++) {
-  PLMN_T_TO_MCC_MNC ((mme_config.nghMme.nghMme[i].ngh_mme_tai.plmn), ngh_mcc, ngh_mnc, ngh_mnc_len);
-
-  OAILOG_DEBUG (LOG_MME_APP, "For ngh_mme index %d: comparing plmn_mcc %d/%d, plmn_mnc %d/%d plmn_mnc_len %d/%d and tac %d/%d \n",
-      i, ngh_mcc, target_mcc, ngh_mnc, target_mnc, ngh_mnc_len, target_mnc_len, mme_config.nghMme.nghMme[i].ngh_mme_tai.tac, target_tai->tac );
-
-  if(TAIS_ARE_EQUAL(*target_tai, mme_config.nghMme.nghMme[i].ngh_mme_tai)){
-    /*
-     * There is a matching plmn
-     */
-    OAILOG_FUNC_RETURN (LOG_MME_APP, i);
-  }
-}
-mme_config_unlock (&mme_config);
-OAILOG_FUNC_RETURN (LOG_MME_APP, i);
-}
-

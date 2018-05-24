@@ -113,7 +113,7 @@ typedef struct itti_s10_forward_relocation_request_s {
 
   /* S11 stack specific parameter. Not used in standalone epc mode */
   uintptr_t                       trxn;                ///< Transaction identifier
-  struct in_addr                 *peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
+  struct in_addr                  peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME
   uint16_t                        peer_port;           ///< MME port for S-GW or S-GW port for MME
 } itti_s10_forward_relocation_request_t;
 
