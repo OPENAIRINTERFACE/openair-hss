@@ -55,6 +55,8 @@
 #include "msc.h"
 #include "nas_timer.h"
 #include "3gpp_requirements_24.301.h"
+#include "conversions.h"
+
 #include "common_types.h"
 #include "common_defs.h"
 #include "3gpp_24.007.h"
@@ -152,6 +154,7 @@ int emm_proc_tracking_area_update_request (
 //  temp_emm_ue_ctx.ue_id = ue_id; /**< Set the new ue_id to send attach_reject over it. */
 
 
+
   *emm_cause = EMM_CAUSE_SUCCESS;
   /*
    * Get the UE's EMM context if it exists
@@ -216,7 +219,7 @@ int emm_proc_tracking_area_update_request (
   /** After validation. Continuing with an existing or new to be created EMM context. */
   OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - Continuing to handle the new Tracking-Area-Update-Request. \n");
   if(!emm_context) {
-    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No valid EMM context was found for UE_ID " MME_UE_S1AP_ID_FMT ". \n", emm_context->ue_id);
+    OAILOG_INFO (LOG_NAS_EMM, "EMM-PROC  - No valid EMM context was found for UE_ID " MME_UE_S1AP_ID_FMT ". \n", ue_id);
     /*
      * Create UE's EMM context
      */
@@ -240,7 +243,7 @@ int emm_proc_tracking_area_update_request (
     emm_context->emm_cause       = EMM_CAUSE_SUCCESS;
     emm_init_context(emm_context, true);  /**< Initialize the context, we might do it again if the security was not verified. */
     if (RETURNok != emm_data_context_add (&_emm_data, emm_context)) {
-      OAILOG_CRITICAL(LOG_NAS_EMM, "EMM-PROC  - TAU EMM Context could not be inserted in hashtables for ueId " MME_UE_S1AP_ID_FMT ". \n", emm_context->ue_id);
+      OAILOG_CRITICAL(LOG_NAS_EMM, "EMM-PROC  - TAU EMM Context could not be inserted in hashtables for ueId " MME_UE_S1AP_ID_FMT ". \n", ue_id);
       emm_context->emm_cause = EMM_CAUSE_ILLEGAL_UE;
       rc = _emm_tracking_area_update_reject(emm_context->ue_id, emm_context->emm_cause);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
@@ -1072,7 +1075,7 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
   if ((tau_proc) && (tau_proc->ies)) {
 
     emm_context = emm_data_context_get(&_emm_data, tau_proc->ue_id);
-    if (emm_context) {
+    if (!emm_context) {
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
     }
 
@@ -1645,7 +1648,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
             emm_context->ue_id, EMM_CAUSE_IE_NOT_IMPLEMENTED);
         /** The EPS update type will be stored as pending IEs. */
         /** ESM context will not change, no ESM_PROC data will be created. */
-        rc = nas_itti_pdn_config_req (emm_context->ue_id, emm_context->_imsi, NULL, 0);
+        rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi, NULL, 0);
         OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
       } else{
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Sending Tracking Area Update Accept for UE with valid subscription ue_id=" MME_UE_S1AP_ID_FMT ", active flag=%d)\n", emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
@@ -1757,8 +1760,12 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
    * Assuming IMSI is always returned with S10 Context Response and the IMSI hastable registration method validates the received IMSI.
    */
   clear_imsi(&emm_context->_imsi);
+  nas_s10_ctx->imsi = imsi_to_imsi64(&nas_s10_ctx->_imsi);
   emm_ctx_set_valid_imsi(emm_context, &nas_s10_ctx->_imsi, nas_s10_ctx->imsi);
   emm_data_context_upsert_imsi(&_emm_data, emm_context); /**< Register the IMSI in the hash table. */
+
+  ue_context_t * test_ue_ctx = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, 1011234562000);
+  DevAssert(test_ue_ctx);
 
   /*
    * Update the security context & security vectors of the UE independent of TAU/Attach here (set fields valid/present).
@@ -1781,19 +1788,8 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
   if(nas_ctx_req_proc)
     nas_delete_cn_procedure(emm_context, nas_ctx_req_proc);
 
-  if (rc != RETURNok) { /**< This would delete the common procedure, but since none exist, we just make an TAU-Reject. */
-    emm_sap_t                               emm_sap = {0};
-    emm_sap.primitive = EMMREG_TAU_REJ;
-    emm_sap.u.emm_reg.ue_id     = emm_context->ue_id;
-    emm_sap.u.emm_reg.ctx       = emm_context;
-    emm_sap.u.emm_reg.notify    = true;
-    emm_sap.u.emm_reg.free_proc = true;
-    emm_sap.u.emm_reg.u.tau.proc = tau_proc;
-    rc = emm_sap_send (&emm_sap);
-  }
-
   /** ESM context will not change, no ESM_PROC data will be created. */
-  rc = nas_itti_pdn_config_req (emm_context->ue_id, emm_context->_imsi, NULL, 0);
+  rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi, NULL, 0);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -1941,7 +1937,7 @@ static int _emm_tracking_area_update_success_security_cb (emm_data_context_t *em
   nas_emm_tau_proc_t                  *tau_proc = get_nas_specific_procedure_tau(emm_context);
 
   if (tau_proc) {
-    rc = nas_itti_pdn_config_req (emm_context->ue_id, emm_context->_imsi, NULL, 0);
+    rc = nas_itti_pdn_config_req (emm_context->ue_id, &emm_context->_imsi, NULL, 0);
             OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 //    rc = _emm_tracking_area_update(emm_context);
   }

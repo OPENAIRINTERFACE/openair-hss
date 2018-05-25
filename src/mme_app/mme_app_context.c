@@ -56,6 +56,7 @@
 #include "mme_app_defs.h"
 #include "mme_app_itti_messaging.h"
 #include "mme_app_procedures.h"
+#include "mme_app_pdn_context.h"
 #include "s1ap_mme.h"
 #include "common_defs.h"
 #include "esm_ebr.h"
@@ -2389,7 +2390,8 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
    * No context identifier will be set.
    * Later set context identifier by ULA?
    */
-  pdn_context = mme_app_create_pdn_context(ue_context, 0); /**< Create the pdn context using the APN network identifier. */
+  /** Craete a PDN connection and later set the ESM values when NAS layer is established. */
+  pdn_context = mme_app_create_pdn_context(ue_context, pdn_connection->apn_str, 0); /**< Create the pdn context using the APN network identifier. */
   if(!pdn_context) {
     OAILOG_ERROR(LOG_MME_APP, "Could not create a new pdn context for apn \" %s \" for UE_ID " MME_UE_S1AP_ID_FMT " from S10 PDN_CONNECTIONS IE. "
         "Skipping the establishment of pdn context. \n", pdn_connection->apn_str, ue_context->mme_ue_s1ap_id);
@@ -2781,7 +2783,7 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
      * Fill the PDN context for each PDN session into the forward relocation request message (multi APN handover).
      * Use bassign to copy the value of the bstring.
      */
-    bassign(pdn_connections->pdn_connection[num_pdn].apn_str, pdn_context_to_forward->apn_subscribed);
+    pdn_connections->pdn_connection[num_pdn].apn_str = bstrcpy(pdn_context_to_forward->apn_subscribed);
     DevAssert(pdn_context_to_forward->paa);
     pdn_connections->pdn_connection[num_pdn].ipv4_address.s_addr = pdn_context_to_forward->paa->ipv4_address.s_addr;
     //    memset (pdn_connections->pdn_connection[num_pdn].ipv6_address, 0, 16);
@@ -2803,20 +2805,6 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
     /** APN-AMBR */
     pdn_connections->pdn_connection[num_pdn].apn_ambr.br_ul = pdn_context_to_forward->subscribed_apn_ambr.br_ul;
     pdn_connections->pdn_connection[num_pdn].apn_ambr.br_dl = pdn_context_to_forward->subscribed_apn_ambr.br_ul;
-//    for (int num_bearer = 0; num_bearer < pdn_conn_pP->bearer_context_list.num_bearers; num_bearer++){
-//      bearer_context_t * bearer_context_s10 = &pdn_conn_pP->bearer_context_list.bearer_contexts[num_bearer];
-//      /* Create bearer contexts in the PDN context. */
-//      bearer_context_t * bearer_context_registered = mme_app_register_bearer_context(ue_context, bearer_context_s10->ebi, pdn_context);
-//      /* Received an initialized bearer context, set the qos values from the pdn_connections IE. */
-//      // todo: optimize this!
-//      DevAssert(bearer_context_registered);
-//      /*
-//       * Set the bearer level QoS parameters and update the statistics.
-//       */
-//      mme_app_desc.mme_ue_contexts.nb_bearers_managed++;
-//      mme_app_desc.mme_ue_contexts.nb_bearers_since_last_stat++;
-//      mme_app_bearer_context_update_handover(bearer_context_registered, bearer_context_s10);
-//    }
     /** Set the bearer contexts for all existing bearers of the PDN. */
     bearer_context_t * bearer_context_to_forward = NULL;
     RB_FOREACH (bearer_context_to_forward, SessionBearers, &pdn_context_to_forward->session_bearers) {
@@ -2842,7 +2830,7 @@ void mme_app_set_pdn_connections(struct mme_ue_eps_pdn_connections_s * pdn_conne
       bearer_list->bearer_contexts[num_bearer].bearer_level_qos.pl        = bearer_context_to_forward->priority_level;
       bearer_list->num_bearer_context++;
     }
-    num_pdn++;
+    pdn_connections->num_pdn_connections++;
   }
   OAILOG_FUNC_OUT(LOG_MME_APP);
 }

@@ -114,7 +114,9 @@ s11_mme_create_session_request (
   gtpv2c_apn_plmn_ie_set (&(ulp_req.hMsg), req_p->apn, &req_p->serving_network);
 
   gtpv2c_serving_network_ie_set (&(ulp_req.hMsg), &req_p->serving_network);
-  gtpv2c_pco_ie_set (&(ulp_req.hMsg), &req_p->pco);
+  if(req_p->pco.num_protocol_or_container_id){
+    gtpv2c_pco_ie_set (&(ulp_req.hMsg), &req_p->pco);
+  }
   for (int i = 0; i < req_p->bearer_contexts_to_be_created.num_bearer_context; i++) {
     gtpv2c_bearer_context_to_be_created_within_create_session_request_ie_set (&(ulp_req.hMsg), &req_p->bearer_contexts_to_be_created.bearer_contexts[i]);
   }
@@ -179,8 +181,10 @@ s11_mme_handle_create_session_response (
   /*
    * PAA IE
    */
+  /** Allocate the PAA IE. */
+  resp_p->paa = calloc (1, sizeof(paa_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PAA, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      gtpv2c_paa_ie_get, &resp_p->paa);
+      gtpv2c_paa_ie_get, resp_p->paa);
   DevAssert (NW_OK == rc);
   /*
    * APN RESTRICTION

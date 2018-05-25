@@ -123,7 +123,7 @@ int esm_proc_pdn_connectivity_reject(bool is_standalone, emm_data_context_t * em
                                      ebi_t ebi, bstring *msg, bool ue_triggered);
 int esm_proc_pdn_connectivity_failure(emm_data_context_t * emm_context, pdn_cid_t pid);
 
-int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi, ebi_t ** default_ebi_pp);
+int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi, bstring apn, ebi_t ** default_ebi_pp);
 
 /*
  * --------------------------------------------------------------------------

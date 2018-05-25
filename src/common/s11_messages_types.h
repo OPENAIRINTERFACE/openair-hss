@@ -394,7 +394,7 @@ typedef struct itti_s11_create_session_response_s {
   ///< procedures.
 
 
-  paa_t                    paa;                 ///< PDN Address Allocation
+  paa_t                   *paa;                 ///< PDN Address Allocation
   ///< This IE shall be included on the S5/S8, S4/S11 and S2b
   ///< interfaces for the E-UTRAN initial attach, PDP Context
   ///< Activation, UE requested PDN connectivity, Attach with

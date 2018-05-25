@@ -441,8 +441,8 @@ s10_pdn_connection_ie_get (
 
       case NW_GTPV2C_IE_BEARER_CONTEXT:
         // todo: handle grouped IE
-//        rc = s10_bearer_context_to_be_created_ie_get (ie_p->t, ie_p->l, ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &pdn_connection->bearer_context);
-//        DevAssert (NW_OK == rc);
+        rc = s10_bearer_context_to_be_created_ie_get (ie_p->t, ntohs (ie_p->l), ie_p->i, &ieValue[read + sizeof (nw_gtpv2c_ie_tlv_t)], &pdn_connection->bearer_context_list);
+        DevAssert (NW_OK == rc);
         break;
 
       case NW_GTPV2C_IE_APN:
@@ -1460,7 +1460,7 @@ s10_apn_ie_get (
 
   apn[read - 1] = '\0';
   OAILOG_DEBUG (LOG_S10, "\t- APN %s\n", apn);
-  *apn_str= blk2bstr(apn, ntohs (ieLength));
+  *apn_str= blk2bstr(apn, ieLength);
 
 
   return NW_OK;

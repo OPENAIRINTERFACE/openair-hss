@@ -68,6 +68,9 @@ void mme_app_free_pdn_context (pdn_context_t ** const pdn_context)
   if ((*pdn_context)->pco) {
     free_protocol_configuration_options(&(*pdn_context)->pco);
   }
+  // todo: free PAA
+  free_wrapper((void**)&((*pdn_context)->paa));
+
   memset(&(*pdn_context)->esm_data, 0, sizeof((*pdn_context)->esm_data));
 
   free_wrapper((void**)pdn_context);
@@ -124,6 +127,14 @@ void mme_app_get_bearer_contexts_to_be_created(pdn_context_t * pdn_context, bear
     bc_tbc->bearer_contexts[num_bc].bearer_level_qos.pvi       = bearer_context_to_setup->preemption_vulnerability;
     bc_tbc->bearer_contexts[num_bc].bearer_level_qos.pci       = bearer_context_to_setup->preemption_capability;
     bc_tbc->bearer_contexts[num_bc].bearer_level_qos.pl        = bearer_context_to_setup->priority_level;
+    /** Set the S1U SAE-GW FTEID. */
+    bc_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4                = bearer_context_to_setup->s_gw_fteid_s1u.ipv4;
+    bc_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.interface_type      = bearer_context_to_setup->s_gw_fteid_s1u.interface_type;
+    bc_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.ipv4_address.s_addr = bearer_context_to_setup->s_gw_fteid_s1u.ipv4_address.s_addr;
+    bc_tbc->bearer_contexts[num_bc].s1u_sgw_fteid.teid                = bearer_context_to_setup->s_gw_fteid_s1u.teid;
+    // todo: ipv6, other interfaces!
+
+
     bc_tbc->num_bearer_context++;
     /*
      * Update the bearer state.

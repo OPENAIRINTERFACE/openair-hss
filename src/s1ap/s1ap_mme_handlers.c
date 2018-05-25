@@ -921,7 +921,7 @@ s1ap_handle_ue_context_release_command (
     s1ap_remove_ue (ue_ref_p);
   } else {
     /** We send the mme_ue_s1ap_id explicitly, since it may be 0 in some handover complete procedures. */
-    rc = s1ap_mme_generate_ue_context_release_command (ue_ref_p, ue_context_release_command_pP->mme_ue_s1ap_id, ue_context_release_command_pP->cause, enb_ref_p);
+//    rc = s1ap_mme_generate_ue_context_release_command (ue_ref_p, ue_context_release_command_pP->mme_ue_s1ap_id, ue_context_release_command_pP->cause, enb_ref_p);
   }
 
   OAILOG_FUNC_RETURN (LOG_S1AP, rc);

@@ -51,8 +51,8 @@ Description Implements the API used by the NAS layer running in the MME
 #define MME_API_NB_UE_MAX       256
 
 typedef enum {
-  UE_REGISTERED,
   UE_UNREGISTERED,
+  UE_REGISTERED
 } mm_state_t;
 
 /* Features supported by the MME */

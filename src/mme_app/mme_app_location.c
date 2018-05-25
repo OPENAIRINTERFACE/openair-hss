@@ -158,6 +158,12 @@ int mme_app_handle_s6a_update_location_ans (
   ue_context->network_access_mode = ula_pP->subscription_data.access_mode;
   memcpy (&ue_context->apn_config_profile, &ula_pP->subscription_data.apn_config_profile, sizeof (apn_config_profile_t));
 
+  pdn_context_t * first_pdn = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+  if(first_pdn){
+    struct apn_configuration_s* apn_config = mme_app_select_apn(ue_context, first_pdn->apn_subscribed);
+    DevAssert(apn_config);
+  }
+
   /*
    * Set the value of  Mobile Reachability timer based on value of T3412 (Periodic TAU timer) sent in Attach accept /TAU accept.
    * Set it to MME_APP_DELTA_T3412_REACHABILITY_TIMER minutes greater than T3412.

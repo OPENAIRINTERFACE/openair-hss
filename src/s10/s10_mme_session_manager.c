@@ -174,12 +174,12 @@ s10_mme_forward_relocation_request (
 
 
 //  s10_serving_network_ie_set (&(ulp_req.hMsg), &req_p->serving_network);
-   s10_pdn_connection_ie_set (&(ulp_req.hMsg), &req_p->pdn_connections);
+   s10_pdn_connection_ie_set (&(ulp_req.hMsg), req_p->pdn_connections);
 
   /**
    * Set the MM EPS UE Context.
    */
-  s10_ue_mm_eps_context_ie_set(&(ulp_req.hMsg), &req_p->ue_eps_mm_context);
+  s10_ue_mm_eps_context_ie_set(&(ulp_req.hMsg),req_p->ue_eps_mm_context);
 
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
@@ -257,23 +257,26 @@ s10_mme_handle_forward_relocation_request(
    * PDN Connection IE : Several can exist
    * todo: multiple pdn connection IEs can exist with instance 0.
    */
+  req_p->pdn_connections = calloc(1, sizeof(mme_ue_eps_pdn_connections_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PDN_CONNECTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-       s10_pdn_connection_ie_get, &req_p->pdn_connections);
+       s10_pdn_connection_ie_get, req_p->pdn_connections);
   DevAssert (NW_OK == rc);
 
   /*
    * MME UE MM Context.
    */
+  req_p->ue_eps_mm_context = calloc(1, sizeof(mm_context_eps_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_MM_EPS_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_MANDATORY,
-       s10_mm_ue_context_ie_get, &req_p->ue_eps_mm_context);
+       s10_mm_ue_context_ie_get, req_p->ue_eps_mm_context);
   DevAssert (NW_OK == rc);
 
   /**
    * E-UTRAN container (F-Container) Information Element.
    * Instance Zero is E-UTRAN. Only E-UTRAN will be supported.
    */
+  req_p->eutran_container = calloc(1, sizeof(F_Container_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_F_CONTAINER, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-       s10_f_container_ie_get, &req_p->eutran_container);
+       s10_f_container_ie_get, req_p->eutran_container);
   DevAssert (NW_OK == rc);
 
   /**

@@ -225,16 +225,28 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
   }
 
+  /** Get the APN. */
+  bstring apn = NULL;
+  if(emm_context->esm_ctx.esm_proc_data)
+    apn = emm_context->esm_ctx.esm_proc_data->apn;
+  else{
+    // todo: optimize
+    pdn_context_t * pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+    apn = pdn_ctx->apn_subscribed;
+  }
+
   /** Inform the ESM about the PDN Config Response. */
   esm_sap.primitive = ESM_PDN_CONFIG_RES;
   esm_sap.is_standalone = false;
   esm_sap.ue_id = emm_context->ue_id;
   esm_sap.ctx = emm_context;
   esm_sap.recv = NULL;
-  esm_sap.data.pdn_pdn_config_res.pdn_cid             = &pdn_cid;
-  esm_sap.data.pdn_pdn_config_res.default_ebi         = &default_ebi;
-  esm_sap.data.pdn_pdn_config_res.is_pdn_connectivity = &is_pdn_connectivity; /**< Default Bearer Id of default APN. */
-  esm_sap.data.pdn_pdn_config_res.imsi                = msg_pP->imsi64; /**< Context Identifier of default APN. */
+  esm_sap.data.pdn_config_res.pdn_cid             = &pdn_cid;
+  esm_sap.data.pdn_config_res.default_ebi         = &default_ebi;
+  esm_sap.data.pdn_config_res.is_pdn_connectivity = &is_pdn_connectivity; /**< Default Bearer Id of default APN. */
+  esm_sap.data.pdn_config_res.imsi                = msg_pP->imsi64; /**< Context Identifier of default APN. */
+  esm_sap.data.pdn_config_res.apn                 = apn; /**< Context Identifier of default APN. */
+
   esm_sap_send(&esm_sap);
 
   /** PDN Context and Bearer Contexts (default) are created with this. */

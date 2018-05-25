@@ -323,7 +323,7 @@ int esm_proc_pdn_connectivity_failure (emm_data_context_t * emm_context, pdn_cid
  **                  Others:    None                                       **
  **                                                                        **
  ***************************************************************************/
-int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi, ebi_t ** default_ebi_pp){
+int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_cid, bool ** is_pdn_connectivity, imsi64_t imsi, bstring apn, ebi_t ** default_ebi_pp){
   OAILOG_FUNC_IN (LOG_NAS_ESM);
   ue_context_t                           *ue_context = mme_ue_context_exists_mme_ue_s1ap_id (&mme_app_desc.mme_ue_contexts, emm_context->ue_id);
   int                                     rc = RETURNok;
@@ -341,7 +341,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
   // Because NAS knows APN selected by UE if any
   // default APN selection
   // todo: what if no pdn config for the UE requested APN
-  struct apn_configuration_s* apn_config = mme_app_select_apn(ue_context, emm_context->esm_ctx.esm_proc_data->apn);
+  struct apn_configuration_s* apn_config = mme_app_select_apn(ue_context, apn);
 
   if (!apn_config) {
     /*
@@ -365,7 +365,7 @@ int esm_proc_pdn_config_res(emm_data_context_t * emm_context, pdn_cid_t **pdn_ci
    * No context identifier will be set in the PDN context. Even if has came from handover. We should not go deep that much.
    * No default bearer set, if the given is 0, skip it.
    */
-  mme_app_get_pdn_context(ue_context, apn_config->context_identifier, 0, emm_context->esm_ctx.esm_proc_data->apn, &pdn_context);
+  mme_app_get_pdn_context(ue_context, apn_config->context_identifier, 0, apn, &pdn_context);
   if(pdn_context){
     OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "PDN context was found for UE " MME_UE_S1AP_ID_FMT" already. "
         "(Assuming PDN connectivity is already established before ULA). "

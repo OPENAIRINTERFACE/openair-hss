@@ -980,6 +980,15 @@ mme_app_handle_create_sess_resp (
   //      nas_pdn_connectivity_rsp->qos.mbrUL = 72;        /* 72=128kb/s   Maximum Bit Rate for uplink      */
   //      nas_pdn_connectivity_rsp->qos.mbrDL = 135;       /*135=1024kb/s Maximum Bit Rate for downlink    */
 
+  /** Set the PAA into the PDN Context.  (todo: copy function). */
+  /** Decouple the PAA and set it into the PDN context. */
+  /** Check if a PAA already exists. If so remove it and set the new one. */
+  if(pdn_context->paa){
+    free_wrapper((void**)&pdn_context->paa);
+  }
+  pdn_context->paa = create_sess_resp_pP->paa;
+  create_sess_resp_pP->paa = NULL;
+
   /*
    * Check if there is a handover process ongoing.
    * It can only be at the target-MME at this point.
@@ -1053,10 +1062,11 @@ mme_app_handle_create_sess_resp (
     bearer_context_t * first_bearer_context = RB_MIN(SessionBearers, &pdn_context->session_bearers);
     DevAssert(first_bearer_context);
     mme_app_itti_nas_pdn_connectivity_response(ue_context,
-        &create_sess_resp_pP->paa, &create_sess_resp_pP->pco,
+        pdn_context->paa, &create_sess_resp_pP->pco,
         first_bearer_context);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
+
   /*
    * No Handover Procedure running and no EMM context existing.
    * Performing an implicit detach. Not processing message further.
@@ -2153,11 +2163,14 @@ mme_app_handle_handover_required(
   }
   OAILOG_DEBUG (LOG_MME_APP, "Target TA  "TAI_FMT " is NOT served by current MME. Searching for a neighboring MME. \n", TAI_ARG(&handover_required_pP->selected_tai));
 
+  struct in_addr neigh_mme_ipv4_addr;
+  neigh_mme_ipv4_addr.s_addr = 0;
+
   if (1) {
     // TODO prototype may change
-    mme_app_select_service(&handover_required_pP->selected_tai, &s10_handover_procedure->remote_mme_teid.ipv4_address);
+    mme_app_select_service(&handover_required_pP->selected_tai, &neigh_mme_ipv4_addr);
     //    session_request_p->peer_ip.in_addr = mme_config.ipv4.
-    if(s10_handover_procedure->remote_mme_teid.ipv4_address.s_addr == 0){
+    if(neigh_mme_ipv4_addr.s_addr == 0){
       /** Send a Handover Preparation Failure back. */
       mme_app_send_s1ap_handover_preparation_failure(handover_required_pP->mme_ue_s1ap_id, handover_required_pP->enb_ue_s1ap_id, handover_required_pP->sctp_assoc_id, S1AP_SYSTEM_FAILURE);
       OAILOG_DEBUG (LOG_MME_APP, "The selected TAI " TAI_FMT " is not configured as an S10 MME neighbor. "
@@ -2174,14 +2187,14 @@ mme_app_handle_handover_required(
   itti_s10_forward_relocation_request_t *forward_relocation_request_p = &message_p->ittiMsg.s10_forward_relocation_request;
   memset ((void*)forward_relocation_request_p, 0, sizeof (itti_s10_forward_relocation_request_t));
   forward_relocation_request_p->teid = 0;
-  forward_relocation_request_p->peer_ip = s10_handover_procedure->remote_mme_teid.ipv4_address;
+  forward_relocation_request_p->peer_ip.s_addr = neigh_mme_ipv4_addr.s_addr;
   /** Add it into the procedure (todo: hardcoded to ipv4). */
-  s10_handover_procedure->remote_mme_teid.ipv4 = 1;
-  s10_handover_procedure->remote_mme_teid.interface_type = S10_MME_GTP_C;
+//  s10_handover_procedure->remote_mme_teid.ipv4 = 1;
+//  s10_handover_procedure->remote_mme_teid.interface_type = S10_MME_GTP_C;
   /** IMSI. */
-  IMSI64_TO_STRING (ue_context->imsi, (char *)forward_relocation_request_p->imsi.u.value);
+  memcpy((void*)&forward_relocation_request_p->imsi, &ue_nas_ctx->_imsi, sizeof(imsi_t));
   // message content was set to 0
-  forward_relocation_request_p->imsi.length = strlen ((const char *)forward_relocation_request_p->imsi.u.value);
+//  forward_relocation_request_p->imsi.length = strlen ((const char *)forward_relocation_request_p->imsi.u.value);
   // message content was set to 0
 
   /*
@@ -2285,11 +2298,13 @@ mme_app_handle_handover_required(
   // memcpy(&forward_relocation_request_p->selected_tai, &handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
   // memcpy(&forward_relocation_request_p->global_enb_id, &handover_required_pP->global_enb_id, sizeof(handover_required_pP->global_enb_id));
 
-  /** Set the PDN_CONNECTIONS IE. */
-  mme_app_set_pdn_connections(&forward_relocation_request_p->pdn_connections, ue_context);
+  /** Allocate and set the PDN_CONNECTIONS IE. */
+  forward_relocation_request_p->pdn_connections = calloc(1, sizeof(struct mme_ue_eps_pdn_connections_s));
+  mme_app_set_pdn_connections(forward_relocation_request_p->pdn_connections, ue_context);
 
   /** Set the MM_UE_EPS_CONTEXT. */
-  mme_app_set_ue_eps_mm_context(&forward_relocation_request_p->ue_eps_mm_context, ue_context, ue_nas_ctx);
+  forward_relocation_request_p->ue_eps_mm_context = calloc(1, sizeof(mm_context_eps_t));
+  mme_app_set_ue_eps_mm_context(forward_relocation_request_p->ue_eps_mm_context, ue_context, ue_nas_ctx);
 
   /** Put the E-UTRAN transparent container. */
   if(!forward_relocation_request_p->eutran_container)
@@ -2483,7 +2498,7 @@ mme_app_handle_forward_relocation_request(
  AssertFatal ((forward_relocation_request_pP->imsi.length > 0)
      && (forward_relocation_request_pP->imsi.length < 16), "STOP ON IMSI LENGTH %d", forward_relocation_request_pP->imsi.length);
 
- IMSI_STRING_TO_IMSI64 (&forward_relocation_request_pP->imsi, &imsi);
+ imsi = imsi_to_imsi64(&forward_relocation_request_pP->imsi);
  OAILOG_DEBUG (LOG_MME_APP, "Handling FORWARD_RELOCATION REQUEST for imsi " IMSI_64_FMT ". \n", imsi);
 
  /** Everything stack to this point. */
@@ -2653,6 +2668,7 @@ mme_app_handle_forward_relocation_request(
  memcpy((void*)&s10_proc_mme_handover->nas_s10_context._imsi, (void*)&forward_relocation_request_pP->imsi, sizeof(imsi_t));
  /** Set the target tai also in the target-MME side. */
  memcpy((void*)&s10_proc_mme_handover->target_tai, &target_tai, sizeof(tai_t));
+ /** Set the IMSI. */
 
  s10_proc_mme_handover->nas_s10_context.mm_eps_ctx = forward_relocation_request_pP->ue_eps_mm_context;
  forward_relocation_request_pP->ue_eps_mm_context = NULL;
@@ -2660,7 +2676,10 @@ mme_app_handle_forward_relocation_request(
  forward_relocation_request_pP->eutran_container = NULL;
  s10_proc_mme_handover->f_cause = forward_relocation_request_pP->f_cause;
  forward_relocation_request_pP->f_cause = NULL;
- s10_proc_mme_handover->remote_mme_teid.ipv4_address.s_addr = forward_relocation_request_pP->peer_ip.s_addr;
+
+ /** Set the Source FTEID. */
+ memcpy((void*)&s10_proc_mme_handover->remote_mme_teid, (void*)&forward_relocation_request_pP->s10_source_mme_teid, sizeof(fteid_t));
+
  s10_proc_mme_handover->peer_port = forward_relocation_request_pP->peer_port;
  s10_proc_mme_handover->forward_relocation_trxn = forward_relocation_request_pP->trxn;
  /** If it is a new_ue_context, additionally set the pdn_connections IE. */
@@ -2676,7 +2695,7 @@ mme_app_handle_forward_relocation_request(
     * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
     * When all pdn_connections are completed, continue with handover request.
     */
-   mme_app_send_s11_create_session_req (ue_context, NULL, pdn_context, &target_tai);
+   mme_app_send_s11_create_session_req (ue_context, &s10_proc_mme_handover->nas_s10_context._imsi, pdn_context, &target_tai);
    OAILOG_INFO(LOG_MME_APP, "Successfully sent CSR for UE " MME_UE_S1AP_ID_FMT ". Waiting for CSResp to continue to process handover on source MME side. \n", ue_context->mme_ue_s1ap_id);
  }else{
    /** Ignore the received pdn_connections IE and continue straight with handover request. */
@@ -2748,7 +2767,7 @@ void mme_app_send_s1ap_handover_request(mme_ue_s1ap_id_t mme_ue_s1ap_id,
   handover_request_p->ambr.br_dl = ue_context->subscribed_ue_ambr.br_dl;
 
   /** Set the bearer contexts to be created. Not changing any bearer state. */
-  memset((void*)&handover_request_p->bearer_ctx_to_be_setup_list, bcs_tbc, sizeof(bearer_contexts_to_be_created_t));
+  memcpy((void*)&handover_request_p->bearer_ctx_to_be_setup_list, bcs_tbc, sizeof(*bcs_tbc));
 
   /** Set the Security Capabilities. */
   handover_request_p->security_capabilities_encryption_algorithms = encryption_algorithm_capabilities;
@@ -2811,7 +2830,7 @@ mme_app_handle_forward_relocation_response(
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (forward_relocation_response_pP );
 
-  ue_context = mme_ue_context_exists_s11_teid(&mme_app_desc.mme_ue_contexts, forward_relocation_response_pP->teid);
+  ue_context = mme_ue_context_exists_s10_teid(&mme_app_desc.mme_ue_contexts, forward_relocation_response_pP->teid);
 
   if (ue_context == NULL) {
     MSC_LOG_RX_DISCARDED_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 S10_FORWARD_RELOCATION_RESPONSE local S11 teid " TEID_FMT " ", forward_relocation_response_pP->teid);
@@ -2936,7 +2955,7 @@ mme_app_handle_forward_access_context_notification(
   s10_mme_forward_access_context_acknowledge_p->peer_ip     = s10_handover_process->remote_mme_teid.ipv4_address; /**< Set the target TEID. */
   s10_mme_forward_access_context_acknowledge_p->trxn        = forward_access_context_notification_pP->trxn; /**< Set the target TEID. */
   /** Check that there is a pending handover process. */
-  DevAssert(ue_context->mm_state == UE_REGISTERED);
+  DevAssert(ue_context->mm_state == UE_UNREGISTERED);
   /** Deal with the error case. */
   s10_mme_forward_access_context_acknowledge_p->cause.cause_value = REQUEST_ACCEPTED;
   MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_S10_MME, NULL, 0, "MME_APP Sending S10 FORWARD_ACCESS_CONTEXT_ACKNOWLEDGE.");
@@ -2952,7 +2971,7 @@ mme_app_handle_forward_access_context_notification(
   /*
    * Setting the ECM state to ECM_CONNECTED with Handover Request Acknowledge.
    */
-  DevAssert(ue_context->ecm_state == ECM_CONNECTED); /**< Any timeouts here should erase the context, not change the signaling state back to IDLE but leave the context. */
+// todo: DevAssert(ue_context->ecm_state == ECM_CONNECTED); /**< Any timeouts here should erase the context, not change the signaling state back to IDLE but leave the context. */
   OAILOG_INFO(LOG_MME_APP, "Sending S1AP MME Status transfer to the target eNodeB %d for UE with enb_ue_s1ap_id: " ENB_UE_S1AP_ID_FMT", mme_ue_s1ap_id. "MME_UE_S1AP_ID_FMT ". \n",
       s10_handover_process->target_id.target_id.macro_enb_id.enb_id, s10_handover_process->target_enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
   OAILOG_FUNC_OUT (LOG_MME_APP);
@@ -3046,7 +3065,7 @@ mme_app_handle_handover_request_acknowledge(
   */
  s10_handover_proc->target_enb_ue_s1ap_id = handover_request_acknowledge_pP->enb_ue_s1ap_id;
 
- for(int nb_bearer = 0; nb_bearer<handover_request_acknowledge_pP->no_of_e_rabs; nb_bearer++) {
+ for(int nb_bearer = 0; nb_bearer < handover_request_acknowledge_pP->no_of_e_rabs; nb_bearer++) {
    ebi_t ebi = handover_request_acknowledge_pP->e_rab_id[nb_bearer];
    /** Get the bearer context. */
    bearer_context_t * bearer_context = NULL;
@@ -3392,26 +3411,54 @@ mme_app_handle_s1ap_handover_notify(
   * Update the bearers in the SAE-GW for INTRA and INTER MME handover.
   */
 
- OAILOG_DEBUG(LOG_MME_APP, "UE MME context with imsi " IMSI_64_FMT " and mmeS1apUeId " MME_UE_S1AP_ID_FMT " has successfully completed intra-MME handover process after HANDOVER_NOTIFY. \n",
-     ue_context->imsi, handover_notify_pP->mme_ue_s1ap_id);
- /** Update the PDN session information directly in the new UE_Context. */
- pdn_context_t * pdn_context = NULL;
- RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
-   DevAssert(pdn_context);
-   bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
-   DevAssert(first_bearer);
-   if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
-     /** Continue to next pdn. */
-     continue;
-   }else{
-     /** Found a PDN. Establish the bearer contexts. */
-     OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. Successfully handled handover notify. \n", ue_context->mme_ue_s1ap_id);
-     mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
-     OAILOG_FUNC_OUT (LOG_MME_APP);
+ if(s10_handover_proc->proc.type == MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER){
+   OAILOG_DEBUG(LOG_MME_APP, "UE MME context with imsi " IMSI_64_FMT " and mmeS1apUeId " MME_UE_S1AP_ID_FMT " has successfully completed intra-MME handover process after HANDOVER_NOTIFY. \n",
+       ue_context->imsi, handover_notify_pP->mme_ue_s1ap_id);
+   /** Update the PDN session information directly in the new UE_Context. */
+   pdn_context_t * pdn_context = NULL;
+   RB_FOREACH (pdn_context, PdnContexts, &ue_context->pdn_contexts) {
+     DevAssert(pdn_context);
+     bearer_context_t * first_bearer = RB_MIN(SessionBearers, &pdn_context->session_bearers);
+     DevAssert(first_bearer);
+     if(first_bearer->bearer_state == BEARER_STATE_ACTIVE){
+       /** Continue to next pdn. */
+       continue;
+     }else{
+       /** Found a PDN. Establish the bearer contexts. */
+       OAILOG_INFO(LOG_MME_APP, "Establishing the bearers for UE_CONTEXT for UE " MME_UE_S1AP_ID_FMT " triggered by handover notify. Successfully handled handover notify. \n", ue_context->mme_ue_s1ap_id);
+       mme_app_send_s11_modify_bearer_req(ue_context, pdn_context);
+       OAILOG_FUNC_OUT (LOG_MME_APP);
+     }
    }
+   OAILOG_ERROR(LOG_MME_APP, "No PDN found to establish the bearers for UE " MME_UE_S1AP_ID_FMT " due handover notify. \n", ue_context->mme_ue_s1ap_id);
+   OAILOG_FUNC_OUT (LOG_MME_APP);
+ }else{
+   OAILOG_DEBUG(LOG_MME_APP, "UE MME context with imsi " IMSI_64_FMT " and mmeS1apUeId " MME_UE_S1AP_ID_FMT " has successfully completed inter-MME handover process after HANDOVER_NOTIFY. \n",
+       ue_context->imsi, handover_notify_pP->mme_ue_s1ap_id);
+   /**
+    * UE came from S10 inter-MME handover. Not clear the pending_handover state yet.
+    * Sending Forward Relocation Complete Notification and waiting for acknowledgment.
+    */
+   message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_COMPLETE_NOTIFICATION);
+   DevAssert (message_p != NULL);
+   itti_s10_forward_relocation_complete_notification_t *forward_relocation_complete_notification_p = &message_p->ittiMsg.s10_forward_relocation_complete_notification;
+   /** Set the destination TEID. */
+   forward_relocation_complete_notification_p->teid = s10_handover_proc->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
+   /** Set the local TEID. */
+   forward_relocation_complete_notification_p->local_teid = ue_context->local_mme_teid_s10;        /**< Local S10-MME TEID. */
+   forward_relocation_complete_notification_p->peer_ip = s10_handover_proc->remote_mme_teid.ipv4_address; /**< Set the target TEID. */
+   OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.",
+       forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
+
+   // todo: remove this and set at correct position!
+   mme_ue_context_update_ue_sig_connection_state (&mme_app_desc.mme_ue_contexts, ue_context, ECM_CONNECTED);
+
+   /**
+    * Sending a message to S10. Not changing any context information!
+    * This message actually implies that the handover is finished. Resetting the flags and statuses here of after Forward Relocation Complete AcknowledgE?! (MBR)
+    */
+   itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
  }
- OAILOG_ERROR(LOG_MME_APP, "No PDN found to establish the bearers for UE " MME_UE_S1AP_ID_FMT " due handover notify. \n", ue_context->mme_ue_s1ap_id);
- OAILOG_FUNC_OUT (LOG_MME_APP);
 }
 
 //------------------------------------------------------------------------------

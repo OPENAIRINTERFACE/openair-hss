@@ -196,7 +196,7 @@ void* shared_log_task (__attribute__ ((unused)) void *args_p)
 
       switch (ITTI_MSG_ID (received_message_p)) {
       case TIMER_HAS_EXPIRED:{
-        shared_log_flush_messages ();
+//    todo:    shared_log_flush_messages ();
         timer_setup (LOG_FLUSH_PERIOD_SEC,
             LOG_FLUSH_PERIOD_MICRO_SEC,
             TASK_SHARED_TS_LOG, INSTANCE_DEFAULT, TIMER_ONE_SHOT, NULL, &timer_id);

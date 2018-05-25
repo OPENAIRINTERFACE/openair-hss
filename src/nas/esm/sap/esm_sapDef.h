@@ -114,6 +114,7 @@ typedef struct esm_pdn_config_res_s {
   pdn_cid_t *pdn_cid;
   bool *is_pdn_connectivity;
   ebi_t * default_ebi;
+  bstring apn;
 } esm_pdn_config_res_t;
 
 /*
@@ -181,7 +182,7 @@ typedef struct esm_eps_bearer_context_deactivate_s {
  * ------------------------------
  */
 typedef union {
-  esm_pdn_config_res_t pdn_pdn_config_res;
+  esm_pdn_config_res_t pdn_config_res;
   esm_pdn_connectivity_t pdn_connect;
   esm_pdn_disconnect_t pdn_disconnect;
   esm_eps_bearer_context_deactivate_t eps_bearer_context_deactivate;

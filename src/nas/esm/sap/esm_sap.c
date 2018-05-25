@@ -227,7 +227,12 @@ esm_sap_send (esm_sap_t * msg)
     break;
 
   case ESM_PDN_CONFIG_RES:
-    rc = esm_proc_pdn_config_res(msg->ctx, &msg->data.pdn_pdn_config_res.is_pdn_connectivity, &msg->data.pdn_pdn_config_res.is_pdn_connectivity, msg->data.pdn_pdn_config_res.imsi, &msg->data.pdn_pdn_config_res.default_ebi);
+    rc = esm_proc_pdn_config_res(msg->ctx,
+        &msg->data.pdn_config_res.is_pdn_connectivity,
+        &msg->data.pdn_config_res.is_pdn_connectivity,
+        msg->data.pdn_config_res.imsi,
+        msg->data.pdn_config_res.apn,
+        &msg->data.pdn_config_res.default_ebi);
     break;
 
   case ESM_PDN_DISCONNECT_REJ:

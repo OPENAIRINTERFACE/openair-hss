@@ -321,7 +321,7 @@ void itti_free_msg_content (MessageDef * const message_p)
     bdestroy_wrapper(&message_p->ittiMsg.s1ap_mme_status_transfer.bearerStatusTransferList_buffer);
     break;
   case S10_FORWARD_ACCESS_CONTEXT_NOTIFICATION:
-    bdestroy(&message_p->ittiMsg.s10_forward_access_context_notification.eutran_container.container_value);
+//    todo: bdestroy(&message_p->ittiMsg.s10_forward_access_context_notification.eutran_container.container_value);
     break;
   case S10_FORWARD_ACCESS_CONTEXT_ACKNOWLEDGE:
     break;

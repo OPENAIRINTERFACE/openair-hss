@@ -1499,20 +1499,12 @@ int s1ap_generate_bearer_context_to_setup(bearer_context_to_be_created_t * bc_tb
   memcpy (e_RABToBeSetupHO_p->transportLayerAddress.buf,
       transportLayerAddress->data,
       blength(transportLayerAddress));
+  e_RABToBeSetupHO_p->transportLayerAddress.size = blength(transportLayerAddress);
+
   // todo: optimize this
   /** Destroy the temporarily allocated bstring. */
   bdestroy(transportLayerAddress);
-
-//  if(bc_tbc->s1u_sgw_fteid.ipv4_address) {
-//    e_RABToBeSetupHO_p->transportLayerAddress.buf = calloc(4, sizeof(uint8_t));
-//    /*
-//     * ONLY IPV4 SUPPORTED
-//     */
-//    memcpy(e_RABToBeSetupHO_p->transportLayerAddress.buf, &bearer_ctx_p->s_gw_address.address.ipv4_address, 4);
-//    offset += 4; /**< Later for IPV4V6 addresses. */
-//    e_RABToBeSetupHO_p->transportLayerAddress.size = 4;
-//    e_RABToBeSetupHO_p->transportLayerAddress.bits_unused = 0;
-//  }
+  // todo: ipv6
 
   // TODO: S1AP PDU..
   /** Set the bearer as an ASN list element. */

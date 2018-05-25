@@ -273,9 +273,9 @@ void *mme_app_thread (void *args)
       break;
 
       case S1AP_HANDOVER_CANCEL:{
-        mme_app_handle_handover_cancel(
-            &S1AP_HANDOVER_CANCEL(received_message_p)
-        );
+//        mme_app_handle_handover_cancel(
+//            &S1AP_HANDOVER_CANCEL(received_message_p)
+//        );
       }
       break;
 

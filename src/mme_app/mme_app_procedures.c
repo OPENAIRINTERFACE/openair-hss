@@ -314,7 +314,7 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
   /** Remove the pending IEs. */
   mme_app_s10_proc_mme_handover_t ** s10_proc_mme_handover_pp = (mme_app_s10_proc_mme_handover_t**) s10_proc;
   if((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx){
-    free_wrapper(&(*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx); /**< Setting the reference inside the procedure also to null. */
+    free_wrapper(&((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx)); /**< Setting the reference inside the procedure also to null. */
   }
   if((*s10_proc_mme_handover_pp)->source_to_target_eutran_container){
     bdestroy((*s10_proc_mme_handover_pp)->source_to_target_eutran_container->container_value);

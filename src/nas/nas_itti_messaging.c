@@ -182,8 +182,8 @@ void nas_itti_pdn_config_req(
   NAS_PDN_CONFIG_REQ(message_p).ue_id           = ue_idP;
 
   if(proc_data_pP){
-    bassign(NAS_PDN_CONFIG_REQ(message_p).apn, proc_data_pP->apn);
-    bassign(NAS_PDN_CONFIG_REQ(message_p).pdn_addr, proc_data_pP->pdn_addr);
+    NAS_PDN_CONFIG_REQ(message_p).apn = bstrcpy(proc_data_pP->apn);
+    NAS_PDN_CONFIG_REQ(message_p).pdn_addr = bstrcpy(proc_data_pP->pdn_addr);
 
     switch (proc_data_pP->pdn_type) {
     case ESM_PDN_TYPE_IPV4:
@@ -253,8 +253,8 @@ void nas_itti_pdn_connectivity_req(
 //    NAS_PDN_CONNECTIVITY_REQ(message_p).imsi[14] = '\0';
 //  }
 
-  bassign(NAS_PDN_CONNECTIVITY_REQ(message_p).apn, proc_data_pP->apn);
-  bassign(NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_addr, proc_data_pP->pdn_addr);
+  NAS_PDN_CONNECTIVITY_REQ(message_p).apn       = bstrcpy(proc_data_pP->apn);
+  NAS_PDN_CONNECTIVITY_REQ(message_p).pdn_addr  = bstrcpy(proc_data_pP->pdn_addr);
 
   switch (proc_data_pP->pdn_type) {
   case ESM_PDN_TYPE_IPV4:
@@ -317,7 +317,7 @@ void nas_itti_pdn_disconnect_req(
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_ip_addr    = saegw_s11_addr;
   NAS_PDN_DISCONNECT_REQ(message_p).saegw_s11_teid       = saegw_teid;
 
-  bassign(NAS_PDN_DISCONNECT_REQ(message_p).apn, proc_data_pP->apn);
+  NAS_PDN_DISCONNECT_REQ(message_p).apn = bstrcpy(proc_data_pP->apn);
 
   MSC_LOG_TX_MESSAGE(
         MSC_NAS_MME,
