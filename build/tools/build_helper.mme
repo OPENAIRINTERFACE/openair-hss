@@ -148,8 +148,6 @@ check_install_mme_software() {
   [[ $? -ne 0 ]] && return $?
   install_asn1c_from_source $1
   [[ $? -ne 0 ]] && return $?
-  install_liblfds6.1.1_from_source $1
-  [[ $? -ne 0 ]] && return $?
 
   # Networking
   if [[ $OS_DISTRO == "ubuntu" ]]; then

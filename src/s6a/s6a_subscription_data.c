@@ -333,6 +333,9 @@ s6a_parse_apn_configuration (
     CHECK_FCT (fd_msg_avp_hdr (avp, &hdr));
 
     switch (hdr->avp_code) {
+    case AVP_CODE_3GPP_CHARGING_CHARACTERISTICS:
+      break;
+
     case AVP_CODE_CONTEXT_IDENTIFIER:
       apn_config->context_identifier = hdr->avp_value->u32;
       break;
@@ -356,6 +359,9 @@ s6a_parse_apn_configuration (
 
     case AVP_CODE_EPS_SUBSCRIBED_QOS_PROFILE:
       CHECK_FCT (s6a_parse_eps_subscribed_qos_profile (avp, &apn_config->subscribed_qos));
+      break;
+
+    case AVP_CODE_VPLMN_DYNAMIC_ADDRESS_ALLOWED:
       break;
 
     case AVP_CODE_AMBR:
@@ -453,6 +459,9 @@ s6a_parse_subscription_data (
 
     case AVP_CODE_SUBSCRIBED_PERIODIC_RAU_TAU_TIMER:
       subscription_data->rau_tau_timer = hdr->avp_value->u32;
+      break;
+
+    case AVP_CODE_APN_OI_REPLACEMENT:
       break;
 
     default:

@@ -126,6 +126,9 @@ s6a_parse_e_utran_vector (
       ret &= ~0x08;
       break;
 
+    case AVP_CODE_ITEM_NUMBER:
+      break;
+
     default:
       /*
        * Unexpected AVP
@@ -333,8 +336,8 @@ s6a_generate_authentication_info_req (
   {
     bstring                                 host = bstrcpy(mme_config.s6a_config.hss_host_name);
 
-    bconchar(host, '.');
-    bconcat (host, mme_config.realm);
+    //bconchar(host, '.');
+    //bconcat (host, mme_config.realm);
     CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_destination_host, 0, &avp));
     value.os.data = (unsigned char *)bdata(host);
     value.os.len = blength(host);
@@ -406,9 +409,8 @@ s6a_generate_authentication_info_req (
      */
     if (air_p->re_synchronization) {
       CHECK_FCT (fd_msg_avp_new (s6a_fd_cnf.dataobj_s6a_re_synchronization_info, 0, &child_avp));
-      // TODO Fix after updating HSS
-      value.os.len = AUTS_LENGTH;
-      value.os.data = (air_p->resync_param + RAND_LENGTH_OCTETS);
+      value.os.len = RESYNC_PARAM_LENGTH;
+      value.os.data = (air_p->resync_param);
       CHECK_FCT (fd_msg_avp_setvalue (child_avp, &value));
       CHECK_FCT (fd_msg_avp_add (avp, MSG_BRW_LAST_CHILD, child_avp));
     }

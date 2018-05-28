@@ -94,6 +94,7 @@ typedef struct {
   struct dict_object *dataobj_s6a_experimental_result;
 
   /* S6A specific AVPs */
+  struct dict_object *dataobj_s6a_3gpp_charging_characteristics;
   struct dict_object *dataobj_s6a_visited_plmn_id;
   struct dict_object *dataobj_s6a_rat_type;
   struct dict_object *dataobj_s6a_ulr_flags;
@@ -139,6 +140,7 @@ extern s6a_fd_cnf_t s6a_fd_cnf;
 #define IANA_IPV4   (0x1)
 #define IANA_IPV6   (0x2)
 
+#define AVP_CODE_3GPP_CHARGING_CHARACTERISTICS     (13)
 #define AVP_CODE_VENDOR_ID                         (266)
 #define AVP_CODE_EXPERIMENTAL_RESULT               (297)
 #define AVP_CODE_EXPERIMENTAL_RESULT_CODE          (298)
@@ -156,13 +158,16 @@ extern s6a_fd_cnf_t s6a_fd_cnf;
 #define AVP_CODE_AUTHENTICATION_INFO               (1413)
 #define AVP_CODE_E_UTRAN_VECTOR                    (1414)
 #define AVP_CODE_NETWORK_ACCESS_MODE               (1417)
+#define AVP_CODE_ITEM_NUMBER                       (1419)
 #define AVP_CODE_CONTEXT_IDENTIFIER                (1423)
 #define AVP_CODE_SUBSCRIBER_STATUS                 (1424)
 #define AVP_CODE_ACCESS_RESTRICTION_DATA           (1426)
+#define AVP_CODE_APN_OI_REPLACEMENT                (1427)
 #define AVP_CODE_ALL_APN_CONFIG_INC_IND            (1428)
 #define AVP_CODE_APN_CONFIGURATION_PROFILE         (1429)
 #define AVP_CODE_APN_CONFIGURATION                 (1430)
 #define AVP_CODE_EPS_SUBSCRIBED_QOS_PROFILE        (1431)
+#define AVP_CODE_VPLMN_DYNAMIC_ADDRESS_ALLOWED     (1432)
 #define AVP_CODE_AMBR                              (1435)
 #define AVP_CODE_RAND                              (1447)
 #define AVP_CODE_XRES                              (1448)
