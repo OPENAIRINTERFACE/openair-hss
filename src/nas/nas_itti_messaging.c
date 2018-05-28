@@ -313,8 +313,10 @@ void nas_itti_auth_info_req(
   auth_info_req = &message_p->ittiMsg.s6a_auth_info_req;
   memset(auth_info_req, 0, sizeof(s6a_auth_info_req_t));
 
+  // TODO case MCC/MNC 00101
+  #define IMSI15_64_FMT              "%015"SCNu64
   auth_info_req->imsi_length =
-      snprintf (auth_info_req->imsi, IMSI_BCD_DIGITS_MAX+1, IMSI_64_FMT, imsi64_P);
+      snprintf (auth_info_req->imsi, IMSI_BCD_DIGITS_MAX+1, IMSI15_64_FMT, imsi64_P);
 
   AssertFatal((15 == auth_info_req->imsi_length)|| (14 == auth_info_req->imsi_length),
       "Bad IMSI length %d", auth_info_req->imsi_length);
