@@ -110,7 +110,7 @@ int nas_proc_pdn_connectivity_fail(emm_cn_pdn_fail_t *nas_pdn_connectivity_fail)
 int nas_proc_pdn_disconnect_res (emm_cn_pdn_disconnect_res_t * emm_cn_pdn_disconnect_res);
 int nas_proc_create_dedicated_bearer(emm_cn_activate_dedicated_bearer_req_t * emm_cn_activate);
 int nas_proc_signalling_connection_rel_ind (mme_ue_s1ap_id_t ue_id);
-int nas_proc_implicit_detach_ue_ind (mme_ue_s1ap_id_t ue_id);
+int nas_proc_implicit_detach_ue_ind (mme_ue_s1ap_id_t ue_id, uint8_t emm_cause, uint8_t detach_type);
 /** NAS context response. */
 int nas_proc_context_res (itti_nas_context_res_t *nas_context_res);
 int nas_proc_context_fail (mme_ue_s1ap_id_t ue_id, gtpv2c_cause_value_t cause);

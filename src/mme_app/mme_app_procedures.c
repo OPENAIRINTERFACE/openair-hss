@@ -168,8 +168,8 @@ static void mme_app_free_s11_procedure_create_bearer(mme_app_s11_proc_t **s11_pr
 static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, mme_app_s10_proc_t *s10_proc){
   OAILOG_FUNC_IN(LOG_MME_APP);
   int             rc = RETURNerror;
-  /** Removed S10 tunnel endpoint. */
-  mme_app_free_s10_procedure_mme_handover(&s10_proc);
+//  /** Removed S10 tunnel endpoint. */
+//  mme_app_free_s10_procedure_mme_handover(&s10_proc);
   /** Deregister the key. */
   mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
       ue_context,
@@ -202,6 +202,17 @@ void mme_app_delete_s10_procedures(ue_context_t * const ue_context)
         }
         s10_proc1->timer.id = MME_APP_TIMER_INACTIVE_ID;
         remove_s10_tunnel_endpoint(ue_context, s10_proc1);
+      } // else ...
+      else if (MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER == s10_proc1->type) {
+        /** Stop the timer. */
+        if(s10_proc1->timer.id != MME_APP_TIMER_INACTIVE_ID){
+          if (timer_remove(s10_proc1->timer.id, NULL)) {
+            OAILOG_ERROR (LOG_MME_APP, "Failed to stop the procedure timer for inter-MMME handover for UE id  %d \n", ue_context->mme_ue_s1ap_id);
+            s10_proc1->timer.id = MME_APP_TIMER_INACTIVE_ID;
+          }
+        }
+        s10_proc1->timer.id = MME_APP_TIMER_INACTIVE_ID;
+//        remove_s10_tunnel_endpoint(ue_context, s10_proc1);
       } // else ...
       s10_proc1 = s10_proc2;
     }
@@ -318,17 +329,30 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
   }
   if((*s10_proc_mme_handover_pp)->source_to_target_eutran_container){
     bdestroy((*s10_proc_mme_handover_pp)->source_to_target_eutran_container->container_value);
-    free_wrapper(&(*s10_proc_mme_handover_pp)->source_to_target_eutran_container); /**< Setting the reference inside the procedure also to null. */
+    free_wrapper(&((*s10_proc_mme_handover_pp)->source_to_target_eutran_container)); /**< Setting the reference inside the procedure also to null. */
   }
   /*
    * Todo: Make a generic function for this (proc_element with free_wrapper_ie() method).
    */
   if((*s10_proc_mme_handover_pp)->f_cause){
-    free_wrapper(&(*s10_proc_mme_handover_pp)->f_cause); /**< Setting the reference inside the procedure also to null. */
+    free_wrapper(&((*s10_proc_mme_handover_pp)->f_cause)); /**< Setting the reference inside the procedure also to null. */
   }
+  /** PDN Connections. */
+  if((*s10_proc_mme_handover_pp)->pdn_connections){
+    free_wrapper(&((*s10_proc_mme_handover_pp)->pdn_connections)); /**< Setting the reference inside the procedure also to null. */
+  }
+  /** MM EPS Context. */
+  if((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx){
+    free_wrapper(&((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx)); /**< Setting the reference inside the procedure also to null. */
+  }
+  (*s10_proc_mme_handover_pp)->s10_mme_handover_timeout = NULL; // todo: deallocate too
+
+  (*s10_proc_mme_handover_pp)->entries.le_next = NULL;
+  (*s10_proc_mme_handover_pp)->entries.le_prev = NULL;
+
   // DO here specific releases (memory,etc)
   // nothing to do actually
-  free_wrapper((void**)s10_proc);
+  free_wrapper((void**)s10_proc_mme_handover_pp);
 }
 
 /*

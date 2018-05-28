@@ -1460,7 +1460,7 @@ s10_apn_ie_get (
 
   apn[read - 1] = '\0';
   OAILOG_DEBUG (LOG_S10, "\t- APN %s\n", apn);
-  *apn_str= blk2bstr(apn, ieLength);
+  *apn_str= blk2bstr(apn, ieLength -1 ); /**< Remove the length indicator. */
 
 
   return NW_OK;

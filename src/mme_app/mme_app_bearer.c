@@ -3521,19 +3521,19 @@ mme_app_handle_forward_relocation_complete_notification(
   */
  ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
  if(old_ue_reference){
-   // todo: instead start timer of the procedure (only if target-mme for inter-MME S1ap handover).
-//   if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
-//       TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
-//     OAILOG_ERROR (LOG_MME_APP, "Failed to start >s1ap_handover_completion for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d \n", old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
-//     old_ue_reference->s1ap_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
-//     ue_context->mme_mobility_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
-//   } else {
-//     OAILOG_DEBUG (LOG_MME_APP, "MME APP : Completed Handover Procedure at (source) MME side after handling S1AP_HANDOVER_NOTIFY. "
-//         "Activated the S1AP Handover completion timer enbUeS1apId " ENB_UE_S1AP_ID_FMT ". Removing source eNB resources after timer.. Timer Id %u. Timer duration %d \n",
-//         old_ue_reference->enb_ue_s1ap_id, old_ue_reference->s1ap_handover_completion_timer.id, mme_config.mme_mobility_completion_timer);
-//     /** For the case of the S10 handover, add the timer ID to the MME_APP UE context to remove the UE context. */
-//     ue_context->mme_mobility_completion_timer.id = old_ue_reference->s1ap_handover_completion_timer.id;
-//   }
+   /** Start the timer of the procedure (only if target-mme for inter-MME S1ap handover). */
+   if (timer_setup (1 /*mme_config.mme_mobility_completion_timer*/, 0,
+       TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
+     OAILOG_ERROR (LOG_MME_APP, "Failed to start >s1ap_handover_completion for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d \n", old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
+     old_ue_reference->s1ap_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
+     s10_handover_proc->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
+   } else {
+     OAILOG_DEBUG (LOG_MME_APP, "MME APP : Completed Handover Procedure at (source) MME side after handling S1AP_HANDOVER_NOTIFY. "
+         "Activated the S1AP Handover completion timer enbUeS1apId " ENB_UE_S1AP_ID_FMT ". Removing source eNB resources after timer.. Timer Id %u. Timer duration %d \n",
+         old_ue_reference->enb_ue_s1ap_id, old_ue_reference->s1ap_handover_completion_timer.id, mme_config.mme_mobility_completion_timer);
+     /** For the case of the S10 handover, add the timer ID to the MME_APP UE context to remove the UE context. */
+     s10_handover_proc->proc.timer.id = old_ue_reference->s1ap_handover_completion_timer.id;
+   }
  }else{
    OAILOG_DEBUG(LOG_MME_APP, "No old UE_REFERENCE was found for mmeS1apUeId " MME_UE_S1AP_ID_FMT " and enbUeS1apId "ENB_UE_S1AP_ID_FMT ". Not starting a new timer. \n",
        ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);

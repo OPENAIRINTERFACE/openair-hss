@@ -184,23 +184,24 @@ static int _emm_cn_deregister_ue (const mme_ue_s1ap_id_t ue_id)
 }
 
 //------------------------------------------------------------------------------
-static int _emm_cn_implicit_detach_ue (const uint32_t ue_id)
+static int _emm_cn_implicit_detach_ue (const uint32_t ue_id, const emm_proc_detach_type_t detach_type, const int emm_cause)
 {
   int                                     rc = RETURNok;
 
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC Implicit Detach UE" MME_UE_S1AP_ID_FMT "\n", ue_id);
   emm_detach_request_ies_t  params = {0};
-  //params.decode_status
-  //params.guti = NULL;
-  //params.imei = NULL;
-  //params.imsi = NULL;
-  params.is_native_sc = true;
-  params.ksi = 0;
-  params.switch_off = true;
-  params.type = EMM_DETACH_TYPE_EPS;
+//  //params.decode_status
+//  //params.guti = NULL;
+//  //params.imei = NULL;
+//  //params.imsi = NULL;
+//  params.is_native_sc = true;
+//  params.ksi = 0;
+//  params.switch_off = true;
+//  params.type = EMM_DETACH_TYPE_EPS;
 
-  emm_proc_detach_request (ue_id, &params);
+  /** No detach procedure for implicit detach. Set the UE state into EMM-DEREGISTER-INITIATED state. */
+  emm_proc_detach(ue_id, detach_type, emm_cause);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);
 }
 
@@ -270,7 +271,7 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
       OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
     }else{
       OAILOG_ERROR (LOG_NAS_EMM, "EMMCN-SAP  - " "TAU procedure is not running for UE associated to id " MME_UE_S1AP_ID_FMT ". ULA received and PDN Connectivity is there. Performing an implicit detach..\n", msg_pP->ue_id);
-      _emm_cn_implicit_detach_ue(msg_pP->ue_id);
+//     todo: better way to handle this? _emm_cn_implicit_detach_ue(msg_pP->ue_id);
       // todo: rejecting any specific procedures?
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
     }
@@ -842,7 +843,7 @@ int emm_cn_send (const emm_cn_t * msg)
     break;
 
   case EMMCN_IMPLICIT_DETACH_UE:
-    rc = _emm_cn_implicit_detach_ue (msg->u.emm_cn_implicit_detach.ue_id);
+    rc = _emm_cn_implicit_detach_ue (msg->u.emm_cn_implicit_detach.ue_id, msg->u.emm_cn_implicit_detach.detach_type, msg->u.emm_cn_implicit_detach.emm_cause);
     break;
 
   case EMMCN_SMC_PROC_FAIL:

@@ -82,7 +82,7 @@ struct apn_configuration_s   * mme_app_select_apn(ue_context_t * const ue_contex
     }
   }
 
-  return &ue_context->apn_config_profile.apn_configuration[0]; // NULL;
+  return NULL;
 }
 
 

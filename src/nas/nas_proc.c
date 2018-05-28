@@ -560,7 +560,9 @@ int nas_proc_create_dedicated_bearer(emm_cn_activate_dedicated_bearer_req_t * em
 //------------------------------------------------------------------------------
 int
 nas_proc_implicit_detach_ue_ind (
-  mme_ue_s1ap_id_t ue_id)
+  mme_ue_s1ap_id_t ue_id,
+  uint8_t emm_cause,
+  uint8_t detach_type)
 {
   int                                     rc = RETURNerror;
   emm_sap_t                               emm_sap = {0};
@@ -568,6 +570,8 @@ nas_proc_implicit_detach_ue_ind (
   OAILOG_FUNC_IN (LOG_NAS_EMM);
   emm_sap.primitive = EMMCN_IMPLICIT_DETACH_UE;
   emm_sap.u.emm_cn.u.emm_cn_implicit_detach.ue_id = ue_id;
+  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.emm_cause = emm_cause;
+  emm_sap.u.emm_cn.u.emm_cn_implicit_detach.detach_type = detach_type;
   MSC_LOG_TX_MESSAGE (MSC_NAS_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMCN_IMPLICIT_DETACH_UE " MME_UE_S1AP_ID_FMT " ", ue_id);
   rc = emm_sap_send (&emm_sap);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, rc);

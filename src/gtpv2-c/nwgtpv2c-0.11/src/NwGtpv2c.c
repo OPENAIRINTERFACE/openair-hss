@@ -1559,7 +1559,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
 
       if (thiz->activeTimerInfo) {
         if (NW_GTPV2C_TIMER_CMP_P (&(thiz->activeTimerInfo->tvTimeout), &(timeoutInfo->tvTimeout), >)) {
-          OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p!\n", thiz->activeTimerInfo->hTimer, thiz->activeTimerInfo);
+//          OAILOG_DEBUG (LOG_GTPV2C, "Stopping active timer 0x%" PRIxPTR " for info 0x%p!\n", thiz->activeTimerInfo->hTimer, thiz->activeTimerInfo);
           rc = thiz->tmrMgr.tmrStopCallback (thiz->tmrMgr.tmrMgrHandle, thiz->activeTimerInfo->hTimer);
           NW_ASSERT (NW_OK == rc);
         } else {

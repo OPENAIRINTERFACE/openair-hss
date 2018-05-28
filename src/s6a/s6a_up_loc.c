@@ -271,9 +271,9 @@ s6a_generate_update_location (
     FLAGS_SET (value.u32, ULR_SKIP_SUBSCRIBER_DATA);
   }
 
-  if (ulr_pP->initial_attach) {
+//  if (ulr_pP->initial_attach) { // todo: set them again and check in new HSS
     FLAGS_SET (value.u32, ULR_INITIAL_ATTACH_IND);
-  }
+//  }
 
   CHECK_FCT (fd_msg_avp_setvalue (avp_p, &value));
   CHECK_FCT (fd_msg_avp_add (msg_p, MSG_BRW_LAST_CHILD, avp_p));

@@ -727,9 +727,9 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
                       ((0 == decode_status.integrity_protected_message) ||
                                                 (0 == decode_status.mac_matched))) {
       *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
-      // Delete EMM,ESM conext, MMEAPP UE context and S1AP context
-      nas_proc_implicit_detach_ue_ind(emm_ctx->ue_id);
-//      unlock_ue_contexts(ue_context);
+      // Delete EMM,ESM context, MMEAPP UE context and S1AP context
+      nas_proc_implicit_detach_ue_ind(emm_ctx->ue_id, 0x00, 0x02);
+      //      unlock_ue_contexts(ue_context);
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);
     }
     // Process Detach Request
@@ -1164,7 +1164,7 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
       break;
 
     case EMM_AS_NAS_DATA_TAU: 
-      size = emm_send_tracking_area_update_accept_dl_nas (msg, &emm_msg->tracking_area_update_accept);
+      size = emm_send_tracking_area_update_accept(msg, &emm_msg->tracking_area_update_accept);
       break;
     
     default:

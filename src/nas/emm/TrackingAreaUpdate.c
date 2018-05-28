@@ -356,7 +356,10 @@ emm_proc_tracking_area_update_complete (
       emm_ctx_set_attribute_valid(emm_context, EMM_CTXT_MEMBER_GUTI);
       // TODO LG REMOVE emm_context_add_guti(&_emm_data, &ue_context->emm_context);
       emm_ctx_clear_old_guti(emm_context);
-      // todo emm_data_context_add_guti(&_emm_data, emm_ctx);
+      emm_data_context_add_guti(&_emm_data, emm_context);
+      // TODO LG REMOVE emm_context_add_guti(&_emm_data, &ue_context->emm_context);
+      emm_ctx_clear_old_guti(emm_context);
+
 
       /*
        * Upon receiving an ATTACH COMPLETE message, the MME shall stop timer T3450
@@ -922,7 +925,7 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
   //----------------------------------------
   REQUIREMENT_3GPP_24_301(R10_5_5_3_2_4__4);
   //----------------------------------------
-  emm_ctx_set_valid_ue_nw_cap(emm_context, &tau_proc->ies->ue_network_capability);
+  emm_ctx_set_valid_ue_nw_cap(emm_context, tau_proc->ies->ue_network_capability);
 
   if (tau_proc->ies->ms_network_capability) {
     emm_ctx_set_valid_ms_nw_cap(emm_context, tau_proc->ies->ms_network_capability);

@@ -559,18 +559,18 @@ emm_send_tracking_area_update_accept (
   // Optional - GUTI
   if (msg->new_guti) {
     size += EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH;
-    emm_msg->presencemask |= ATTACH_ACCEPT_GUTI_PRESENT;
+    emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_GUTI_PRESENT;
     emm_msg->guti.guti.typeofidentity = EPS_MOBILE_IDENTITY_GUTI;
     emm_msg->guti.guti.oddeven = EPS_MOBILE_IDENTITY_EVEN;
-    emm_msg->guti.guti.mme_group_id = msg->guti->gummei.mme_gid;
-    emm_msg->guti.guti.mme_code = msg->guti->gummei.mme_code;
-    emm_msg->guti.guti.m_tmsi = msg->guti->m_tmsi;
-    emm_msg->guti.guti.mcc_digit1 = msg->guti->gummei.plmn.mcc_digit1;
-    emm_msg->guti.guti.mcc_digit2 = msg->guti->gummei.plmn.mcc_digit2;
-    emm_msg->guti.guti.mcc_digit3 = msg->guti->gummei.plmn.mcc_digit3;
-    emm_msg->guti.guti.mnc_digit1 = msg->guti->gummei.plmn.mnc_digit1;
-    emm_msg->guti.guti.mnc_digit2 = msg->guti->gummei.plmn.mnc_digit2;
-    emm_msg->guti.guti.mnc_digit3 = msg->guti->gummei.plmn.mnc_digit3;
+    emm_msg->guti.guti.mme_group_id = msg->new_guti->gummei.mme_gid;
+    emm_msg->guti.guti.mme_code = msg->new_guti->gummei.mme_code;
+    emm_msg->guti.guti.m_tmsi = msg->new_guti->m_tmsi;
+    emm_msg->guti.guti.mcc_digit1 = msg->new_guti->gummei.plmn.mcc_digit1;
+    emm_msg->guti.guti.mcc_digit2 = msg->new_guti->gummei.plmn.mcc_digit2;
+    emm_msg->guti.guti.mcc_digit3 = msg->new_guti->gummei.plmn.mcc_digit3;
+    emm_msg->guti.guti.mnc_digit1 = msg->new_guti->gummei.plmn.mnc_digit1;
+    emm_msg->guti.guti.mnc_digit2 = msg->new_guti->gummei.plmn.mnc_digit2;
+    emm_msg->guti.guti.mnc_digit3 = msg->new_guti->gummei.plmn.mnc_digit3;
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH(%d)  (%d)\n", EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH, size);
   }
   /* Optional - TAI list
@@ -578,7 +578,6 @@ emm_send_tracking_area_update_accept (
    */
   if (msg->tai_list.numberoflists > 0) {
     emm_msg->presencemask |= TRACKING_AREA_UPDATE_ACCEPT_TAI_LIST_PRESENT;
-
     size += TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH * msg->tai_list.numberoflists;
     memcpy(&emm_msg->tailist, &msg->tai_list, sizeof(msg->tai_list));
     OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING_AREA_IDENTITY_LIST_LENGTH(%d*%d)  (%d)\n",
@@ -588,6 +587,9 @@ emm_send_tracking_area_update_accept (
       if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_NON_CONSECUTIVE_TACS == emm_msg->tailist.partial_tai_list[p].typeoflist) {
         size = size + (2*emm_msg->tailist.partial_tai_list[p].numberofelements);
         OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING AREA CODE LENGTH(%d*%d)  (%d)\n", 2, emm_msg->tailist.partial_tai_list[p].numberofelements, size);
+      } else if (TRACKING_AREA_IDENTITY_LIST_ONE_PLMN_CONSECUTIVE_TACS == emm_msg->tailist.partial_tai_list[p].typeoflist) {
+        size = size + TRACKING_AREA_IDENTITY_LIST_MINIMUM_LENGTH;
+        OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING AREA CODE LENGTH(%d*%d)  (%d)\n", 5, emm_msg->tailist.partial_tai_list[p].numberofelements, size);
       } else if (TRACKING_AREA_IDENTITY_LIST_MANY_PLMNS == emm_msg->tailist.partial_tai_list[p].typeoflist) {
         size = size + (5*emm_msg->tailist.partial_tai_list[p].numberofelements);
         OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size += " "TRACKING AREA CODE LENGTH(%d*%d)  (%d)\n", 5, emm_msg->tailist.partial_tai_list[p].numberofelements, size);
@@ -678,47 +680,47 @@ emm_send_tracking_area_update_accept (
   }*/
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
 }
-/****************************************************************************
- **                                                                        **
- ** Name:        emm_send_tracking_area_update_accept_dl_nas()             **
- **                                                                        **
- ** Description: Builds Tracking Area Update Accept message                **
- **                                                                        **
- **              The Tracking Area Update Accept message is sent by the    **
- **              network to the UE to indicate that the corresponding      **
- **              tracking area update has been accepted.                   **
- **              This function is used to send TAU Accept message via      **
- **              S1AP DL NAS Transport message.                            **
- **                                                                        **
- ** Inputs:      msg:           The EMMAS-SAP primitive to process         **
- **              Others:        None                                       **
- **                                                                        **
- ** Outputs:     emm_msg:       The EMM message to be sent                 **
- **              Return:        The size of the EMM message                **
- **              Others:        None                                       **
- **                                                                        **
- ***************************************************************************/
-
-int
-emm_send_tracking_area_update_accept_dl_nas (
-  const emm_as_data_t * msg,
-  tracking_area_update_accept_msg * emm_msg)
-{
-  OAILOG_FUNC_IN (LOG_NAS_EMM);
-  int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
-  /*
-   * Mandatory - Message type
-   */
-  emm_msg->messagetype = TRACKING_AREA_UPDATE_ACCEPT;
-  /*
-   * Mandatory - EMM cause
-   */
-  size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH;
-  emm_msg->epsupdateresult = EPS_UPDATE_RESULT_TA_UPDATED;
-  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Sending DL NAS - TAU Accept\n");
-  OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
-
-}
+///****************************************************************************
+// **                                                                        **
+// ** Name:        emm_send_tracking_area_update_accept_dl_nas()             **
+// **                                                                        **
+// ** Description: Builds Tracking Area Update Accept message                **
+// **                                                                        **
+// **              The Tracking Area Update Accept message is sent by the    **
+// **              network to the UE to indicate that the corresponding      **
+// **              tracking area update has been accepted.                   **
+// **              This function is used to send TAU Accept message via      **
+// **              S1AP DL NAS Transport message.                            **
+// **                                                                        **
+// ** Inputs:      msg:           The EMMAS-SAP primitive to process         **
+// **              Others:        None                                       **
+// **                                                                        **
+// ** Outputs:     emm_msg:       The EMM message to be sent                 **
+// **              Return:        The size of the EMM message                **
+// **              Others:        None                                       **
+// **                                                                        **
+// ***************************************************************************/
+//
+//int
+//emm_send_tracking_area_update_accept_dl_nas (
+//  const emm_as_data_t * msg,
+//  tracking_area_update_accept_msg * emm_msg)
+//{
+//  OAILOG_FUNC_IN (LOG_NAS_EMM);
+//  int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
+//  /*
+//   * Mandatory - Message type
+//   */
+//  emm_msg->messagetype = TRACKING_AREA_UPDATE_ACCEPT;
+//  /*
+//   * Mandatory - EMM cause
+//   */
+//  size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH;
+//  emm_msg->epsupdateresult = EPS_UPDATE_RESULT_TA_UPDATED;
+//  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Sending DL NAS - TAU Accept\n");
+//  OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
+//
+//}
 
 /****************************************************************************
  **                                                                        **

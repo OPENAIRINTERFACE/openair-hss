@@ -41,6 +41,7 @@ Description
 #ifndef FILE_EMM_CNDEF_SEEN
 #define FILE_EMM_CNDEF_SEEN
 #include "intertask_interface.h"
+#include "emm_proc.h"
 
 typedef enum emmcn_primitive_s {
   _EMMCN_START = 400,
@@ -121,6 +122,8 @@ typedef struct emm_cn_deregister_ue_s {
 
 typedef struct emm_cn_implicit_detach_ue_s {
   uint32_t ue_id;
+  nas_cause_t emm_cause;
+  emm_proc_detach_type_t detach_type;
 } emm_cn_implicit_detach_ue_t;
 
 typedef struct emm_cn_smc_fail_s {
