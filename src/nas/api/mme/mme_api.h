@@ -152,6 +152,12 @@ int mme_api_new_guti(const imsi_t * const imsi,
                      const tai_t  * const originating_tai,
                      tai_list_t   * const tai_list);
 
+bool
+mme_api_get_pending_bearer_deactivation (mme_ue_s1ap_id_t mme_ue_s1ap_id);
+
+void
+mme_api_set_pending_bearer_deactivation (mme_ue_s1ap_id_t mme_ue_s1ap_id, bool pending_bearer_deactivation);
+
 int mme_api_subscribe(bstring *apn, mme_api_ip_version_t mme_pdn_index, bstring *pdn_addr,
                       int is_emergency, mme_api_qos_t *qos);
 int mme_api_unsubscribe(bstring apn);

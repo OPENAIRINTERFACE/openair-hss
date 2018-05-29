@@ -171,18 +171,17 @@ esm_proc_pdn_disconnect_request (
    * todo: validate that no ESM Proc is running before starting a new ESM message!
    * Currently, just overwriting the old one.
    */
-  struct esm_proc_data_s * esm_data = emm_context->esm_ctx.esm_proc_data;
   if (!emm_context->esm_ctx.esm_proc_data) {
     emm_context->esm_ctx.esm_proc_data  = (esm_proc_data_t *) calloc(1, sizeof(*emm_context->esm_ctx.esm_proc_data));
   }else{
     // todo: don't start a new esm_proc without completing the first one
   }
-  esm_data->pti = pti;
-  esm_data->pdn_cid = pdn_context->context_identifier;
-  esm_data->apn = NULL;
+  emm_context->esm_ctx.esm_proc_data->pti = pti;
+  emm_context->esm_ctx.esm_proc_data->pdn_cid = pdn_context->context_identifier;
+  emm_context->esm_ctx.esm_proc_data->apn = NULL;
 
   /** Found the PDN context. Informing the MME_APP layer to release the bearers. */
-  nas_itti_pdn_disconnect_req(emm_context->ue_id, default_ebi, pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, esm_data);
+  nas_itti_pdn_disconnect_req(emm_context->ue_id, default_ebi, pdn_context->s_gw_address_s11_s4.address.ipv4_address, pdn_context->s_gw_teid_s11_s4, emm_context->esm_ctx.esm_proc_data);
 //  } else {
 //    /*
 //     * Attempt to disconnect from the last PDN disconnection

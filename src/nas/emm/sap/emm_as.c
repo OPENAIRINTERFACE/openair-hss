@@ -358,7 +358,7 @@ static int _emm_as_recv (
   case ATTACH_REQUEST:
     REQUIREMENT_3GPP_24_301(R10_4_4_4_3__1); // Integrity checking of NAS signalling messages in the MME
     REQUIREMENT_3GPP_24_301(R10_4_4_4_3__2); // Integrity checking of NAS signalling messages in the MME
-    rc = emm_recv_attach_request (ue_id, originating_tai, originating_ecgi, &emm_msg->attach_request, emm_cause, decode_status);
+    rc = emm_recv_attach_request (ue_id, originating_tai, originating_ecgi, &emm_msg->attach_request, false, emm_cause, decode_status);
     break;
 
   case IDENTITY_RESPONSE:
@@ -455,6 +455,7 @@ static int _emm_as_recv (
     rc = emm_recv_tracking_area_update_request (ue_id,
         &emm_msg->tracking_area_update_request,
         emm_cause,
+        false,
         originating_tai,
         originating_ecgi,
         decode_status,
@@ -658,7 +659,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
    * Decode initial NAS message
    */
   decoder_rc = nas_message_decode (msg->nas_msg->data, &nas_msg, blength(msg->nas_msg), emm_security_context, &decode_status);
-  bdestroy_wrapper(&msg->nas_msg);
+  /** Not destroying the message here. */
 
   // TODO conditional IE error
   if (decoder_rc < 0) {
@@ -683,27 +684,51 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
    */
   EMM_msg                                *emm_msg = &nas_msg.plain.emm;
 
+  /*
+   * Check the status..
+   * if no security context is existing
+   * mac_matched == 0
+   * ATTACH_REQ or TAU
+   * don't purge the message! */
+  if(emm_ctx == NULL /**< Will reject the message if an EMM context exists. */
+      && decode_status.security_context_available == 0
+      && decode_status.integrity_protected_message == 1
+      && decode_status.mac_matched == 0
+      && (emm_msg->header.message_type == ATTACH_REQUEST || emm_msg->header.message_type == TRACKING_AREA_UPDATE_REQUEST)){
+    /**
+     * Not purging the encoded nas_msg.. will send it to the source MME for security validation.
+     * It may be the ciphered message.
+     */
+    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Not purging the nas_msg for later context request for integrity check! \n");
+  }else{
+    OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - purging the nas_msg %p\n", emm_ctx);
+    bdestroy(msg->nas_msg); /**< We don't need the encoded message anymore. */
+  }
+
   switch (emm_msg->header.message_type) {
   case ATTACH_REQUEST:
-    rc = emm_recv_attach_request (msg->ue_id, msg->tai, &msg->ecgi, &emm_msg->attach_request, emm_cause, &decode_status);
+    rc = emm_recv_attach_request (msg->ue_id, msg->tai, &msg->ecgi, &emm_msg->attach_request, msg->is_initial, emm_cause, &decode_status);
     break;
 
   case TRACKING_AREA_UPDATE_REQUEST:
-    // Check for emm_ctx and integrity verification
-    if ((emm_ctx == NULL) ||
-            ((0 == decode_status.security_context_available) ||
-                (0 == decode_status.integrity_protected_message) ||
-                    ((1 == decode_status.security_context_available) && (0 == decode_status.mac_matched)))) {
-
-      *emm_cause = EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW;
-      // Send Reject with cause "UE identity cannot be derived by the network" to trigger fresh attach
-      rc = emm_proc_tracking_area_update_reject (msg->ue_id, EMM_CAUSE_UE_IDENTITY_CANT_BE_DERIVED_BY_NW);
-//      unlock_ue_contexts(ue_context);
-      OAILOG_FUNC_RETURN (LOG_NAS_EMM,rc);
-    }
-
+    /** Not checking for integrity or if the EMM context exists or not. */
     // Process periodic TAU
-    rc = emm_recv_tracking_area_update_request (msg->ue_id, &emm_msg->tracking_area_update_request, emm_cause,&msg->tai, &msg->ecgi, &decode_status, msg->nas_msg);
+    /**
+     * Not rejecting the the TAU, if no integrity header.
+     * NAS messages could also be sent without integrity header.
+     */
+    /** Process the TAU request. It may ask the S10 for UE Context creation. */
+    rc = emm_recv_tracking_area_update_request (msg->ue_id,
+        &emm_msg->tracking_area_update_request,
+        emm_cause,
+        msg->is_initial,
+        msg->tai,
+        &msg->ecgi,
+        &decode_status,
+        msg->nas_msg);       /**< Send the encoded  NAS_EMM message together with it. */
+    /** If ask_ue_context is set.. Ask the MME_APP to send S10_UE_CONTEXT. */
+    if(msg->nas_msg && msg->nas_msg->slen > 0 && msg->nas_msg->slen <=0x3fff)
+      bdestroy(msg->nas_msg);
     break;
 
   case DETACH_REQUEST:
@@ -734,7 +759,7 @@ static int _emm_as_establish_req (emm_as_establish_t * msg, int *emm_cause)
     }
     // Process Detach Request
     rc = emm_recv_detach_request (
-      msg->ue_id, &emm_msg->detach_request, false, /*msg->is_initial (idle tau), */emm_cause, &decode_status);
+      msg->ue_id, &emm_msg->detach_request, msg->is_initial, emm_cause, &decode_status);
     break;
 
   case SERVICE_REQUEST:
@@ -1159,8 +1184,12 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
       size = emm_send_attach_accept_dl_nas (msg, &emm_msg->attach_accept);
       break;
     
-    case EMM_AS_NAS_DATA_DETACH:
+    case EMM_AS_NAS_DATA_DETACH_ACCEPT:
       size = emm_send_detach_accept (msg, &emm_msg->detach_accept);
+      break;
+
+    case EMM_AS_NAS_DATA_DETACH_REQUEST:
+      size = emm_send_detach_request(msg, &emm_msg->detach_request);
       break;
 
     case EMM_AS_NAS_DATA_TAU: 
@@ -1205,12 +1234,36 @@ static int _emm_as_data_req (const emm_as_data_t * msg, dl_info_transfer_req_t *
     }
 
     if (bytes > 0) {
+//      if (msg->nas_info == EMM_AS_NAS_DATA_TAU) {
+//        as_msg->err_code = AS_TERMINATED_NAS;
+//      } else {
+//        as_msg->err_code = AS_SUCCESS;
+//      }
+//      OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
+
+      /** Immediately go into idle mode. */
       if (msg->nas_info == EMM_AS_NAS_DATA_TAU) {
-        as_msg->err_code = AS_TERMINATED_NAS;
+        /** Check the EMM state. */
+        if(emm_ctx->_emm_fsm_state == EMM_REGISTERED && mme_api_get_pending_bearer_deactivation(emm_ctx->ue_id)){
+          OAILOG_DEBUG (LOG_NAS_EMM, "UE with IMSI " IMSI_64_FMT " and valid GUTI " GUTI_FMT " will enter ECM_IDLE mode after TAU_ACCEPT. \n",
+              emm_ctx->_imsi64, GUTI_ARG(&emm_ctx->_guti));
+          as_msg->err_code = AS_TERMINATED_NAS; /**< Immediately terminate the session. This will not happen for a TAU with S10 since UE will be in EMM_COMMON state. */
+          mme_api_set_pending_bearer_deactivation(emm_ctx->ue_id, false);
+        }else{
+          OAILOG_DEBUG (LOG_NAS_EMM, "UE with IMSI " IMSI_64_FMT " and valid GUTI " GUTI_FMT " will stay in ECM_CONNECTED mode after TAU_ACCEPT. \n",
+              emm_ctx->_imsi64, GUTI_ARG(&emm_ctx->_guti));
+          if(mme_api_get_pending_bearer_deactivation(emm_ctx->ue_id)){
+            OAILOG_DEBUG (LOG_NAS_EMM, "UE with IMSI " IMSI_64_FMT " and valid GUTI " GUTI_FMT " will enter ECM_IDLE mode after TAU_COMPLETE (not EMM_REGISTERED yet). \n",
+                emm_ctx->_imsi64, GUTI_ARG(&emm_ctx->_guti));
+          }
+          as_msg->err_code = AS_SUCCESS;
+
+        }
       } else {
         as_msg->err_code = AS_SUCCESS;
       }
       OAILOG_FUNC_RETURN (LOG_NAS_EMM, AS_DL_INFO_TRANSFER_REQ);
+
     }
   }
 

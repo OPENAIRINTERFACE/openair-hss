@@ -340,7 +340,7 @@ typedef struct itti_s10_context_response_s{
   char*                    source_sgw_fqdn;
   ///< Old Source SGW FQDN
 
-  mm_context_eps_t         ue_eps_mm_context;
+  mm_context_eps_t        *ue_eps_mm_context;
   // todo: indication
 
   // recovery_t(restart counter) recovery;      ///< This IE shall be included if contacting the peer for the first

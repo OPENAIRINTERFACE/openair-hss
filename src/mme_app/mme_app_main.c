@@ -51,7 +51,7 @@
 #include "xml_msg_dump.h"
 #include "common_defs.h"
 #include "mme_app_edns_emulation.h"
-
+#include "mme_app_procedures.h"
 
 //mme_app_desc_t                          mme_app_desc;
 mme_app_desc_t                          mme_app_desc = {.rw_lock = PTHREAD_RWLOCK_INITIALIZER, 0} ;
@@ -65,6 +65,8 @@ void     *mme_app_thread (void *args);
 void *mme_app_thread (void *args)
 {
   struct ue_context_s                    *ue_context_p = NULL;
+  mme_app_s10_proc_mme_handover_t        *s10_handover_proc  = NULL;
+
   itti_mark_task_ready (TASK_MME_APP);
   MSC_START_USE ();
 
@@ -426,6 +428,7 @@ void *mme_app_thread (void *args)
             OAILOG_WARNING (LOG_MME_APP, "Timer expired but no assoicated UE context for UE id " MME_UE_S1AP_ID_FMT "\n",mme_ue_s1ap_id);
             break;
           }
+          s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context_p);
 
           OAILOG_WARNING (LOG_MME_APP, "TIMER_HAS_EXPIRED with ID %u and FOR UE id %d \n", received_message_p->ittiMsg.timer_has_expired.timer_id, mme_ue_s1ap_id);
 
@@ -439,18 +442,11 @@ void *mme_app_thread (void *args)
             // Initial Context Setup Rsp Timer expiry handler
             mme_app_handle_initial_context_setup_rsp_timer_expiry (ue_context_p);
           }
-
-          // todo: take care of these in procedures!
-//          /** Handover Related Timers. */
-//          else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->mme_mobility_completion_timer.id) {
-//            // MME Mobility Completion Timer expiry handler (we need this in addition to the one in the S1AP for CLR handling after TAU at source MME. */
-//            mme_app_handle_mobility_completion_timer_expiry (ue_context_p);
-//          }
-//          else if (received_message_p->ittiMsg.timer_has_expired.timer_id == ue_context_p->mme_s10_handover_completion_timer.id) {
-//            // MME S10 Handover Completion Timer expiry handler
-//            mme_app_handle_mme_s10_handover_completion_timer_expiry (ue_context_p);
-//          }
-
+          /** Check for S10 procedures. */
+          else if(s10_handover_proc && received_message_p->ittiMsg.timer_has_expired.timer_id == s10_handover_proc->proc.timer.id){
+            // MME Mobility Completion Timer expiry handler (we need this in addition to the one in the S1AP for CLR handling after TAU at source MME. */
+            s10_handover_proc->proc.proc.time_out(s10_handover_proc);
+          }
           else {
             OAILOG_WARNING (LOG_MME_APP, "Timer expired but no associated timer_id for UE id " MME_UE_S1AP_ID_FMT "\n",mme_ue_s1ap_id);
           }

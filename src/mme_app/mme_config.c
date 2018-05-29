@@ -162,10 +162,9 @@ static void mme_config_init (mme_config_t * config_pP)
   // todo: sgw address?
 //  config_pP->ipv4.sgw_s11 = 0;
 
-
-  // todo: need to put them here or not?
-//  config_pP->mme_mobility_completion_timer = MME_MOBILITY_COMPLETION_TIMER_S;
-//  config_pP->mme_s10_handover_completion_timer = MME_S10_HANDOVER_COMPLETION_TIMER_S;
+  /** Add the timers for handover/idle-TAU completion on both sides. */
+  config_pP->mme_mobility_completion_timer = MME_MOBILITY_COMPLETION_TIMER_S;
+  config_pP->mme_s10_handover_completion_timer = MME_S10_HANDOVER_COMPLETION_TIMER_S;
 
   config_pP->gummei.nb = 1;
   config_pP->gummei.gummei[0].mme_code = MMEC;
@@ -416,15 +415,13 @@ static int mme_config_parse_file (mme_config_t * config_pP)
       config_pP->mme_statistic_timer = (uint32_t) aint;
     }
 
-    // todo: if not needed remove them
-    //    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MME_MOBILITY_COMPLETION_TIMER, &aint))) {
-    //      config_pP->mme_mobility_completion_timer = (uint32_t) aint;
-    //    }
-    //
-    //    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MME_S10_HANDOVER_COMPLETION_TIMER, &aint))) {
-    //      config_pP->mme_s10_handover_completion_timer = (uint32_t) aint;
-    //    }
-    //
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MME_MOBILITY_COMPLETION_TIMER, &aint))) {
+      config_pP->mme_mobility_completion_timer = (uint32_t) aint;
+    }
+
+    if ((config_setting_lookup_int (setting_mme, MME_CONFIG_STRING_MME_S10_HANDOVER_COMPLETION_TIMER, &aint))) {
+      config_pP->mme_s10_handover_completion_timer = (uint32_t) aint;
+    }
 
     if ((config_setting_lookup_string (setting_mme, EPS_NETWORK_FEATURE_SUPPORT_EMERGENCY_BEARER_SERVICES_IN_S1_MODE, (const char **)&astring))) {
       if (strcasecmp (astring, "yes") == 0)

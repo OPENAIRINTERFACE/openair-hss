@@ -255,19 +255,19 @@ s1ap_mme_handle_uplink_nas_transport (
 
 
 
-  if (S1AP_UE_CONNECTED != ue_ref->s1_ue_state) {
-    OAILOG_WARNING (LOG_S1AP, "Received S1AP UPLINK_NAS_TRANSPORT while UE in state != S1AP_UE_CONNECTED\n");
-    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S1AP_MME,
-                        MSC_S1AP_ENB,
-                        NULL, 0,
-                        "0 uplinkNASTransport/%s mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " nas len %u",
-                        s1ap_direction2String[message->direction],
-                        (mme_ue_s1ap_id_t)uplinkNASTransport_p->mme_ue_s1ap_id,
-                        (enb_ue_s1ap_id_t)uplinkNASTransport_p->eNB_UE_S1AP_ID,
-                        uplinkNASTransport_p->nas_pdu.size);
-
-    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
-  }
+//  if (S1AP_UE_CONNECTED != ue_ref->s1_ue_state) {
+//    OAILOG_WARNING (LOG_S1AP, "Received S1AP UPLINK_NAS_TRANSPORT while UE in state != S1AP_UE_CONNECTED\n");
+//    MSC_LOG_RX_DISCARDED_MESSAGE (MSC_S1AP_MME,
+//                        MSC_S1AP_ENB,
+//                        NULL, 0,
+//                        "0 uplinkNASTransport/%s mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT " enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT " nas len %u",
+//                        s1ap_direction2String[message->direction],
+//                        (mme_ue_s1ap_id_t)uplinkNASTransport_p->mme_ue_s1ap_id,
+//                        (enb_ue_s1ap_id_t)uplinkNASTransport_p->eNB_UE_S1AP_ID,
+//                        uplinkNASTransport_p->nas_pdu.size);
+//
+//    OAILOG_FUNC_RETURN (LOG_S1AP, RETURNerror);
+//  }
 
   // TAI mandatory IE
   OCTET_STRING_TO_TAC (&uplinkNASTransport_p->tai.tAC, tai.tac);

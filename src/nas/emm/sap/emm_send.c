@@ -153,6 +153,62 @@ emm_send_detach_accept (
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
 }
 
+/****************************************************************************
+ **                                                                        **
+ ** Name:    emm_send_detach_request()                                  **
+ **                                                                        **
+ ** Description: Builds Detach Request message                              **
+ **                                                                        **
+ **      The Detach Request message is sent by the network to the   **
+ **      UE to indicate that the UE has been detached by the network.
+ **      No detach accept is expected.corresponding attach request has  **
+ **                                                                        **
+ ** Inputs:  msg:       The EMMAS-SAP primitive to process         **
+ **      Others:    None                                       **
+ **                                                                        **
+ ** Outputs:     emm_msg:   The EMM message to be sent                 **
+ **      Return:    The size of the EMM message                **
+ **      Others:    None                                       **
+ **                                                                        **
+ ***************************************************************************/
+int
+emm_send_detach_request (
+  const emm_as_data_t * msg,
+  detach_request_msg * emm_msg)
+{
+  OAILOG_FUNC_IN (LOG_NAS_EMM);
+  int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
+  int                                     i = 0;
+
+  // Get the UE context
+  emm_data_context_t *ue_ctx = emm_data_context_get (&_emm_data, msg->ue_id);
+  DevAssert(ue_ctx);
+  DevAssert(msg->ue_id == ue_ctx->ue_id);
+
+  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Send Detach Request message\n");
+  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - size = EMM_HEADER_MAXIMUM_LENGTH(%d)\n", size);
+  /*
+   * Mandatory - Message type
+   */
+  emm_msg->messagetype = DETACH_REQUEST;
+  /*
+   * Mandatory - Detach type
+   */
+  emm_msg->detachtype.switchoff = 0;
+  emm_msg->detachtype.typeofdetach = msg->detach_type;
+  size += DETACH_TYPE_MAXIMUM_LENGTH;
+
+  /**
+   * Optional  - EMM Cause
+   */
+  if(msg->emm_cause){
+    emm_msg->presencemask |= DETACH_REQUEST_EMM_CAUSE_PRESENT;
+    size += EMM_CAUSE_MAXIMUM_LENGTH;
+    emm_msg->emmCause = msg->emm_cause;
+  }
+
+  OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
+}
 
 /*
    --------------------------------------------------------------------------
@@ -680,47 +736,6 @@ emm_send_tracking_area_update_accept (
   }*/
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
 }
-///****************************************************************************
-// **                                                                        **
-// ** Name:        emm_send_tracking_area_update_accept_dl_nas()             **
-// **                                                                        **
-// ** Description: Builds Tracking Area Update Accept message                **
-// **                                                                        **
-// **              The Tracking Area Update Accept message is sent by the    **
-// **              network to the UE to indicate that the corresponding      **
-// **              tracking area update has been accepted.                   **
-// **              This function is used to send TAU Accept message via      **
-// **              S1AP DL NAS Transport message.                            **
-// **                                                                        **
-// ** Inputs:      msg:           The EMMAS-SAP primitive to process         **
-// **              Others:        None                                       **
-// **                                                                        **
-// ** Outputs:     emm_msg:       The EMM message to be sent                 **
-// **              Return:        The size of the EMM message                **
-// **              Others:        None                                       **
-// **                                                                        **
-// ***************************************************************************/
-//
-//int
-//emm_send_tracking_area_update_accept_dl_nas (
-//  const emm_as_data_t * msg,
-//  tracking_area_update_accept_msg * emm_msg)
-//{
-//  OAILOG_FUNC_IN (LOG_NAS_EMM);
-//  int                                     size = EMM_HEADER_MAXIMUM_LENGTH;
-//  /*
-//   * Mandatory - Message type
-//   */
-//  emm_msg->messagetype = TRACKING_AREA_UPDATE_ACCEPT;
-//  /*
-//   * Mandatory - EMM cause
-//   */
-//  size += EPS_UPDATE_RESULT_MAXIMUM_LENGTH;
-//  emm_msg->epsupdateresult = EPS_UPDATE_RESULT_TA_UPDATED;
-//  OAILOG_INFO (LOG_NAS_EMM, "EMMAS-SAP - Sending DL NAS - TAU Accept\n");
-//  OAILOG_FUNC_RETURN (LOG_NAS_EMM, size);
-//
-//}
 
 /****************************************************************************
  **                                                                        **

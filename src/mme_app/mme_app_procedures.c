@@ -248,6 +248,32 @@ mme_app_handle_mme_s10_handover_completion_timer_expiry (mme_app_s10_proc_mme_ha
 }
 
 //------------------------------------------------------------------------------
+static void
+mme_app_handle_mobility_completion_timer_expiry (mme_app_s10_proc_mme_handover_t *s10_proc_mme_handover)
+{
+  OAILOG_FUNC_IN (LOG_MME_APP);
+  ue_context_t * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, s10_proc_mme_handover->mme_ue_s1ap_id);
+  DevAssert (ue_context != NULL);
+  MessageDef                             *message_p = NULL;
+  OAILOG_INFO (LOG_MME_APP, "Expired- MME Handover Completion timer for UE " MME_UE_S1AP_ID_FMT " run out. \n", ue_context->mme_ue_s1ap_id);
+  if(s10_proc_mme_handover->pending_clear_location_request){
+    OAILOG_INFO (LOG_MME_APP, "CLR flag is set for UE " MME_UE_S1AP_ID_FMT ". Performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
+    s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
+    ue_context->s1_ue_context_release_cause = S1AP_NAS_DETACH;
+    /** Check if the CLR flag has been set. */
+    message_p = itti_alloc_new_message (TASK_MME_APP, NAS_IMPLICIT_DETACH_UE_IND);
+    DevAssert (message_p != NULL);
+    message_p->ittiMsg.nas_implicit_detach_ue_ind.ue_id = ue_context->mme_ue_s1ap_id; /**< We don't send a Detach Type such that no Detach Request is sent to the UE if handover is performed. */
+
+    MSC_LOG_TX_MESSAGE (MSC_MMEAPP_MME, MSC_NAS_MME, NULL, 0, "0 NAS_IMPLICIT_DETACH_UE_IND_MESSAGE");
+    itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
+  }else{
+    OAILOG_WARNING(LOG_MME_APP, "CLR flag is NOT set for UE " MME_UE_S1AP_ID_FMT ". Not performing implicit detach. \n", ue_context->mme_ue_s1ap_id);
+  }
+  OAILOG_FUNC_OUT (LOG_MME_APP);
+}
+
+//------------------------------------------------------------------------------
 mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_context_t * const ue_context, bool target_mme, mme_app_s10_proc_type_t  s1ap_ho_type){
   mme_app_s10_proc_mme_handover_t *s10_proc_mme_handover = calloc(1, sizeof(mme_app_s10_proc_mme_handover_t));
   // todo: checking hear for correct allocation
@@ -263,7 +289,11 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
    * We need a separate function and a timeout, since we saw in the tests with real equipment,
    * that sometimes after no tracking area update request follows the inter-MME handover.
    */
-  s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mme_s10_handover_completion_timer_expiry;
+  if(target_mme){
+    s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mme_s10_handover_completion_timer_expiry;
+  }else{
+    s10_proc_mme_handover->proc.proc.time_out = mme_app_handle_mobility_completion_timer_expiry;
+  }
   /*
    * Start a fresh S10 MME Handover Completion timer for the forward relocation request procedure.
    * Give the procedure as the argument.

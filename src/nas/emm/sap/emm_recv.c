@@ -153,6 +153,7 @@ emm_recv_attach_request (
   const tai_t              * const originating_tai,
   const ecgi_t             * const originating_ecgi,
   attach_request_msg       * const msg,
+  const bool                       is_initial,
   int * const emm_cause,
   const nas_message_decode_status_t  * decode_status)
 {
@@ -424,6 +425,7 @@ emm_recv_detach_request (
    * Get the detach type
    */
   params->type = EMM_DETACH_TYPE_RESERVED;
+  params->is_initial = is_initial;
 
   if (msg->detachtype.typeofdetach == DETACH_TYPE_EPS) {
     params->type = EMM_DETACH_TYPE_EPS;
@@ -546,6 +548,7 @@ emm_recv_tracking_area_update_request (
   const mme_ue_s1ap_id_t ue_id,
   tracking_area_update_request_msg * const msg,
   int * const emm_cause,
+  const bool is_initial,
   const tai_t              * const originating_tai,
   const ecgi_t             * const originating_ecgi,
   const nas_message_decode_status_t  * const decode_status,
@@ -615,6 +618,7 @@ emm_recv_tracking_area_update_request (
   ies->eps_update_type = msg->epsupdatetype;
   ies->is_native_sc    = (msg->naskeysetidentifier.tsc != NAS_KEY_SET_IDENTIFIER_MAPPED);
   ies->ksi             = msg->naskeysetidentifier.naskeysetidentifier;
+  ies->is_initial      = is_initial;
 
   // Optional fields
   if (msg->presencemask & TRACKING_AREA_UPDATE_REQUEST_NONCURRENT_NATIVE_NAS_KEY_SET_IDENTIFIER_PRESENT) {

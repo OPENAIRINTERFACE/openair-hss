@@ -2042,7 +2042,6 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
   message_p = itti_alloc_new_message (TASK_MME_APP, S10_CONTEXT_REQUEST);
   DevAssert (message_p != NULL);
   itti_s10_context_request_t *s10_context_request_p = &message_p->ittiMsg.s10_context_request;
-  memset ((void*)s10_context_request_p, 0, sizeof (itti_s10_context_request_t));
 
   /** Set the Source MME_S10_FTEID the same as in S11. */
   teid_t local_teid = 0x0;
@@ -2091,7 +2090,6 @@ mme_app_handle_nas_context_req(itti_nas_context_req_t * const nas_context_req_pP
   /** Set the RAT_TYPE. */
   s10_context_request_p->rat_type = nas_context_req_pP->rat_type;
   /** Set the GUTI. */
-  memset((void*)&s10_context_request_p->old_guti, 0, sizeof(guti_t));
   memcpy((void*)&s10_context_request_p->old_guti, (void*)&nas_context_req_pP->old_guti, sizeof(guti_t));
   /** Serving Network. */
   s10_context_request_p->serving_network.mcc[0] = ue_context->e_utran_cgi.plmn.mcc_digit1;
@@ -2204,6 +2202,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
 {
  struct ue_context_s                    *ue_context = NULL;
  MessageDef                             *message_p = NULL;
+ mme_app_s10_proc_mme_handover_t        *s10_proc_mme_handover = NULL;
  int                                     rc = RETURNok;
 
  DevAssert(s10_context_request_pP);
@@ -2222,7 +2221,6 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
    MSC_LOG_EVENT (MSC_MMEAPP_MME, "S10_CONTEXT_REQUEST. No UE existing for guti: " GUTI_FMT, GUTI_ARG(&s10_context_request_pP->old_guti));
    // todo: error check
    _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
-   bdestroy(s10_context_request_pP->complete_request_message.request_value);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  OAILOG_INFO(LOG_MME_APP, "Received a CONTEXT_REQUEST for new UE with GUTI" GUTI_FMT ". \n", GUTI_ARG(&s10_context_request_pP->old_guti));
@@ -2232,14 +2230,12 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  if (!ue_nas_ctx) {
    OAILOG_ERROR(LOG_MME_APP, "A NAS EMM context is not existing for this GUTI "GUTI_FMT " already exists. \n", GUTI_ARG(&s10_context_request_pP->old_guti));
    _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
-   bdestroy(s10_context_request_pP->complete_request_message.request_value);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Check that a valid security context exists for the MME_UE_CONTEXT. */
  if (!IS_EMM_CTXT_PRESENT_SECURITY(ue_nas_ctx)) {
    OAILOG_ERROR(LOG_MME_APP, "A NAS EMM context is present but no security context is existing for this GUTI "GUTI_FMT ". \n", GUTI_ARG(&s10_context_request_pP->old_guti));
    _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, CONTEXT_NOT_FOUND);
-   bdestroy(s10_context_request_pP->complete_request_message.request_value);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
  /** Check that the UE is registered. Due to some errors in the RRC, it may be idle or connected. Don't know. */
@@ -2247,13 +2243,36 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
    /** UE may be in idle mode or it may be detached. */
    OAILOG_ERROR(LOG_MME_APP, "UE NAS EMM context is not in UE_REGISTERED state for GUTI "GUTI_FMT ". \n", GUTI_ARG(&s10_context_request_pP->old_guti));
    _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, REQUEST_REJECTED);
-   bdestroy(s10_context_request_pP->complete_request_message.request_value);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
+
  if(ue_context->ecm_state != ECM_IDLE){
    OAILOG_WARNING(LOG_MME_APP, "UE NAS EMM context is NOT in ECM_IDLE state for GUTI "GUTI_FMT ". Continuing with processing of S10 Context Request. \n", GUTI_ARG(&s10_context_request_pP->old_guti));
  }
+ /** Check if there is any S10 procedure existing. */
+ s10_proc_mme_handover = mme_app_get_s10_procedure_mme_handover(ue_context);
+ if(s10_proc_mme_handover){
+   OAILOG_WARNING (LOG_MME_APP, "EMM context for UE with ue_id " MME_UE_S1AP_ID_FMT " IMSI " IMSI_64_FMT " in EMM_REGISTERED state has a running S10 procedure. "
+         "Rejecting further procedures. \n", ue_context->mme_ue_s1ap_id, ue_context->imsi);
+   _mme_app_send_s10_context_response_err(s10_context_request_pP->s10_target_mme_teid.teid, s10_context_request_pP->s10_target_mme_teid.ipv4_address, s10_context_request_pP->trxn, REQUEST_REJECTED);
+   // todo: here abort the procedure! and continue with the handover
+   // todo: mme_app_delete_s10_procedure_mme_handover(ue_context); /**< Should remove all pending data. */
+   // todo: aborting should just clear all pending information
+   // todo: additionally invalidate NAS below (if one exists)
+   OAILOG_FUNC_OUT (LOG_MME_APP);
+ }
+ /*
+  * Create a new handover procedure, no matter a UE context exists or not.
+  * Store the transaction in it.
+  * Store all pending PDN connections in it.
+  * Each time a CSResp for a specific APN arrives, send another CSReq if needed.
+  *
+  * Remove the UE context when the timer runs out for any case (also if context request is rejected).
+  */
+ s10_proc_mme_handover = mme_app_create_s10_procedure_mme_handover(ue_context, false, MME_APP_S10_PROC_TYPE_INTER_MME_HANDOVER);
+ DevAssert(s10_proc_mme_handover);
 
+ /** No S10 Procedure running. */
  // todo: validate NAS message!
 // rc = emm_data_context_validate_complete_nas_request(ue_nas_ctx, &s10_context_request_pP->complete_request_message);
 // if(rc != RETURNok){
@@ -2262,6 +2281,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
 //   bdestroy(s10_context_request_pP->complete_request_message.request_value);
 //   OAILOG_FUNC_OUT (LOG_MME_APP);
 // }
+
  /**
   * Destroy the message finally
   * todo: check what if already destroyed.
@@ -2271,7 +2291,7 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
  message_p = itti_alloc_new_message (TASK_MME_APP, S10_CONTEXT_RESPONSE);
  DevAssert (message_p != NULL);
  itti_s10_context_response_t *context_response_p = &message_p->ittiMsg.s10_context_response;
- memset ((void*)context_response_p, 0, sizeof (itti_s10_context_response_t));
+
  /** Set the target S10 TEID. */
  context_response_p->teid    = s10_context_request_pP->s10_target_mme_teid.teid; /**< Only a single target-MME TEID can exist at a time. */
  context_response_p->peer_ip = s10_context_request_pP->s10_target_mme_teid.ipv4_address; /**< todo: Check this is correct. */
@@ -2315,41 +2335,34 @@ mme_app_handle_s10_context_request(const itti_s10_context_request_t * const s10_
    mme_config_unlock (&mme_config);
    context_response_p->s11_sgw_teid.ipv4 = 1;
 
-   /** Set the IMSI. */
-//   memset (&context_response_p->imsi.digit, 0, 16); /**< IMSI in create session request. */
-//   IMSI64_TO_STRING (ue_context->imsi, (char *)context_response_p->imsi.digit);
-   // message content was set to 0
-//   context_response_p->imsi.length = strlen ((const char *)context_response_p->imsi.digit);
-
    /** IMSI. */
-   IMSI64_TO_STRING (ue_context->imsi, (char *)context_response_p->imsi.u.value);
-   // message content was set to 0
-   context_response_p->imsi.length = strlen ((const char *)context_response_p->imsi.u.value);
+   memcpy((void*)&context_response_p->imsi, &ue_nas_ctx->_imsi, sizeof(imsi_t));
 
+   /** Set the PDN_CONNECTION IE. */
+   context_response_p->pdn_connections = calloc(1, sizeof(mme_ue_eps_pdn_connections_t));
+   mme_app_set_pdn_connections(context_response_p->pdn_connections, ue_context);
 
    /** Set the MM_UE_EPS_CONTEXT. */
-   mme_app_set_pdn_connections(&context_response_p->pdn_connections, ue_context);
-   /** Set the PDN_CONNECTION IE. */
-   mme_app_set_ue_eps_mm_context(&context_response_p->ue_eps_mm_context, ue_context, ue_nas_ctx);
+   context_response_p->ue_eps_mm_context = calloc(1, sizeof(mm_context_eps_t));
+   mme_app_set_ue_eps_mm_context(context_response_p->ue_eps_mm_context, ue_context, ue_nas_ctx);
 
    /*
     * Start timer to wait the handover/TAU procedure to complete.
     * A Clear_Location_Request message received from the HSS will cause the resources to be removed.
     * Resources will not be removed if that is not received. --> TS.23.401 defines for SGSN "remove after CLReq" explicitly).
     */
-   // todo: source side procedure or timer?
-//   mme_config_read_lock (&mme_config);
-//   if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
-//       TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context->mme_ue_s1ap_id), &(ue_context->mme_mobility_completion_timer.id)) < 0) {
-//     OAILOG_ERROR (LOG_MME_APP, "Failed to start MME mobility completion timer for UE id  %d for duration %d \n", ue_context->mme_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
-//     ue_context->mme_mobility_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;
-//   } else {
-//     OAILOG_DEBUG (LOG_MME_APP, "MME APP : Handled S10_CONTEXT_REQUEST at source MME side and started timer for UE context removal. "
-//         "Activated the MME mobilty timer UE id  %d. Waiting for CANCEL_LOCATION_REQUEST from HSS.. Timer Id %u. Timer duration %d. \n",
-//         ue_context->mme_ue_s1ap_id, ue_context->mme_mobility_completion_timer.id, mme_config.mme_mobility_completion_timer);
-//     /** Upon expiration, invalidate the timer.. no flag needed. */
-//   }
-//   mme_config_unlock (&mme_config);
+   mme_config_read_lock (&mme_config);
+   if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
+       TASK_MME_APP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *) &(ue_context->mme_ue_s1ap_id), &(s10_proc_mme_handover->proc.timer.id)) < 0) {
+     OAILOG_ERROR (LOG_MME_APP, "Failed to start MME mobility completion timer for UE id  %d for duration %d \n", ue_context->mme_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
+     s10_proc_mme_handover->proc.timer.id = MME_APP_TIMER_INACTIVE_ID;
+   } else {
+     OAILOG_DEBUG (LOG_MME_APP, "MME APP : Handled S10_CONTEXT_REQUEST at source MME side and started timer for UE context removal. "
+         "Activated the MME mobilty timer UE id  %d. Waiting for CANCEL_LOCATION_REQUEST from HSS.. Timer Id %u. Timer duration %d. \n",
+         ue_context->mme_ue_s1ap_id, s10_proc_mme_handover->proc.timer.id, mme_config.mme_mobility_completion_timer);
+     /** Upon expiration, invalidate the timer.. no flag needed. */
+   }
+   mme_config_unlock (&mme_config);
  }else{
    /**
     * No source-MME (local) FTEID needs to be set. No tunnel needs to be established.
@@ -2408,6 +2421,9 @@ pdn_context_t * mme_app_handle_pdn_connectivity_from_s10(ue_context_t *ue_contex
   /* Create a PAA object. Usually not created, such that no empty IP addresses are sent with CSR of initial request. */
   pdn_context->paa = calloc(1, sizeof(paa_t));
 
+  /* Set the default EBI. */
+  pdn_context->default_ebi = pdn_connection->linked_eps_bearer_id;
+
   if(pdn_connection->ipv4_address.s_addr) {
 //    IPV4_STR_ADDR_TO_INADDR ((const char *)pdn_connection->ipv4_address, pdn_context->paa->ipv4_address, "BAD IPv4 ADDRESS FORMAT FOR PAA!\n");
     pdn_context->paa->ipv4_address.s_addr = pdn_connection->ipv4_address.s_addr;
@@ -2464,16 +2480,6 @@ mme_app_handle_s10_context_response(
   OAILOG_FUNC_IN (LOG_MME_APP);
   DevAssert (s10_context_response_pP );
 
-  AssertFatal ((s10_context_response_pP->imsi.length > 0)
-       && (s10_context_response_pP->imsi.length < 16), "BAD IMSI LENGTH %d", s10_context_response_pP->imsi.length);
-  AssertFatal ((s10_context_response_pP->imsi.length > 0)
-      && (s10_context_response_pP->imsi.length < 16), "STOP ON IMSI LENGTH %d", s10_context_response_pP->imsi.length);
-
-  /** Parse IMSI first, then get the MME_APP UE context. */
-  IMSI_STRING_TO_IMSI64 (&s10_context_response_pP->imsi, &imsi);
-  OAILOG_DEBUG (LOG_MME_APP, "Handling S10 CONTEXT RESPONSE for received imsi " IMSI_64_FMT " and local S10 TEID " TEID_FMT ". \n",
-      imsi, s10_context_response_pP->teid);
-
   ue_context = mme_ue_context_exists_s10_teid (&mme_app_desc.mme_ue_contexts, s10_context_response_pP->teid);
   /** Check that the UE_CONTEXT exists for the S10_FTEID. */
   if (ue_context == NULL) { /**< If no UE_CONTEXT found, all tunnels are assumed to be cleared and not tunnels established when S10_CONTEXT_RESPONSE is received. */
@@ -2481,6 +2487,7 @@ mme_app_handle_s10_context_response(
     OAILOG_DEBUG (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", s10_context_response_pP->teid);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNerror);
   }
+
   /** Get the NAS layer MME relocation procedure. */
   emm_data_context_t * emm_context = emm_data_context_get(&_emm_data, ue_context->mme_ue_s1ap_id);
   /* Check if there is an MME relocation procedure running. */
@@ -2497,7 +2504,25 @@ mme_app_handle_s10_context_response(
     OAILOG_FUNC_OUT(LOG_MME_APP);
   }
   OAILOG_INFO(LOG_MME_APP, "NAS CN context request procedure is active. "
-      "Processing the newly received context request for ueId " MME_UE_S1AP_ID_FMT". \n", ue_context->mme_ue_s1ap_id);
+      "Processing the newly received context response for ueId " MME_UE_S1AP_ID_FMT". \n", ue_context->mme_ue_s1ap_id);
+
+  /** Check the cause first, before parsing the IMSI. */
+  if(s10_context_response_pP->cause.cause_value != REQUEST_ACCEPTED){
+    OAILOG_ERROR(LOG_MME_APP, "Received an erroneous cause  value %d for S10 Context Request for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT ". "
+        "Rejecting attach/tau & implicit detach. \n", s10_context_response_pP->cause.cause_value, ue_context->mme_ue_s1ap_id, ue_context->mm_state);
+    _mme_app_send_nas_context_response_err(ue_context->mme_ue_s1ap_id, s10_context_response_pP->cause.cause_value);
+    OAILOG_FUNC_OUT (LOG_MME_APP);
+  }
+
+  AssertFatal ((s10_context_response_pP->imsi.length > 0)
+      && (s10_context_response_pP->imsi.length < 16), "BAD IMSI LENGTH %d", s10_context_response_pP->imsi.length);
+  AssertFatal ((s10_context_response_pP->imsi.length > 0)
+      && (s10_context_response_pP->imsi.length < 16), "STOP ON IMSI LENGTH %d", s10_context_response_pP->imsi.length);
+
+  /** Parse IMSI first, then get the MME_APP UE context. */
+  imsi = imsi_to_imsi64(&s10_context_response_pP->imsi);
+  OAILOG_DEBUG (LOG_MME_APP, "Handling S10 Context Response for imsi " IMSI_64_FMT ". \n", imsi);
+
 
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 S10_CONTEXT_RESPONSe local S10 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
       s10_context_response_pP->teid, ue_context->imsi);
@@ -2513,20 +2538,12 @@ mme_app_handle_s10_context_response(
 //    OAILOG_FUNC_OUT (LOG_MME_APP);
 //  }
 
-  /** Check the cause. */
-  if(s10_context_response_pP->cause.cause_value != REQUEST_ACCEPTED){
-    OAILOG_ERROR(LOG_MME_APP, "Received an erroneous cause  value %d for S10 Context Request for UE with mmeS1apUeId " MME_UE_S1AP_ID_FMT ". "
-        "Rejecting attach/tau & implicit detach. \n", s10_context_response_pP->cause.cause_value, ue_context->mme_ue_s1ap_id, ue_context->mm_state);
-    _mme_app_send_nas_context_response_err(ue_context->mme_ue_s1ap_id, s10_context_response_pP->cause.cause_value);
-    OAILOG_FUNC_OUT (LOG_MME_APP);
-  }
   /**
    * The UE was successfully authenticated at the source MME. We can sent a S10 Context acknowledge back.
    */
   message_p = itti_alloc_new_message (TASK_MME_APP, S10_CONTEXT_ACKNOWLEDGE);
   DevAssert (message_p != NULL);
   itti_s10_context_acknowledge_t * s10_context_ack_p = &message_p->ittiMsg.s10_context_acknowledge;
-  memset(s10_context_ack_p, 0, sizeof(itti_s10_context_acknowledge_t));
 
   /** Fill up . */
   s10_context_ack_p->cause.cause_value = REQUEST_ACCEPTED; /**< Since we entered UE_REGISTERED state. */
@@ -2554,7 +2571,9 @@ mme_app_handle_s10_context_response(
 
   ue_context->imsi_auth = IMSI_AUTHENTICATED;
   memcpy((void*)&emm_cn_proc_ctx_req->nas_s10_context._imsi, &s10_context_response_pP->imsi, sizeof(imsi_t));
-  memcpy((void*)emm_cn_proc_ctx_req->nas_s10_context.mm_eps_ctx, &s10_context_response_pP->ue_eps_mm_context, sizeof(mm_context_eps_t));
+
+  emm_cn_proc_ctx_req->nas_s10_context.mm_eps_ctx = s10_context_response_pP->ue_eps_mm_context;
+  s10_context_response_pP->ue_eps_mm_context = NULL;
 
   /** Copy the pdn connections also into the emm_cn procedure. */
   emm_cn_proc_ctx_req->pdn_connections = s10_context_response_pP->pdn_connections;
@@ -2564,7 +2583,7 @@ mme_app_handle_s10_context_response(
   /** Handle PDN Connections. */
   OAILOG_INFO(LOG_MME_APP, "For ueId " MME_UE_S1AP_ID_FMT " processing the pdn_connections (continuing with CSR). \n", ue_context->mme_ue_s1ap_id);
   /** Process PDN Connections IE. Will initiate a Create Session Request message for the pending pdn_connections. */
-  pdn_connection_t * pdn_connection = &s10_context_response_pP->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->next_processed_pdn_connection];
+  pdn_connection_t * pdn_connection = &emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->next_processed_pdn_connection];
   pdn_context_t * pdn_context = mme_app_handle_pdn_connectivity_from_s10(ue_context, pdn_connection);
   DevAssert(pdn_context);
   emm_cn_proc_ctx_req->next_processed_pdn_connection++;
@@ -2572,7 +2591,7 @@ mme_app_handle_s10_context_response(
    * When Create Session Response is received, continue to process the next PDN connection, until all are processed.
    * When all pdn_connections are completed, continue with handover request.
    */
-  if(mme_app_send_s11_create_session_req (ue_context, NULL, pdn_context, &emm_context->originating_tai) != RETURNok){
+  if(mme_app_send_s11_create_session_req (ue_context, &s10_context_response_pP->imsi, pdn_context, &emm_context->originating_tai) != RETURNok){
     /**
      * Error sending CSReq. Send S10 Context Response error to NAS.
      */

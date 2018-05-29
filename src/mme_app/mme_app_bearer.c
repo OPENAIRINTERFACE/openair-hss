@@ -751,9 +751,6 @@ mme_app_handle_delete_session_rsp (
     OAILOG_WARNING (LOG_MME_APP, "We didn't find this teid in list of UE: %08x\n", delete_sess_resp_pP->teid);
     OAILOG_FUNC_OUT (LOG_MME_APP);
   }
-  if (delete_sess_resp_pP->cause.cause_value != REQUEST_ACCEPTED) {
-    DevMessage ("Cases where bearer cause != REQUEST_ACCEPTED are not handled\n");
-  }
   MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_SESSION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
     delete_sess_resp_pP->teid, ue_context->emm_context._imsi64);
   /*
@@ -776,7 +773,7 @@ mme_app_handle_delete_session_rsp (
 //    /** SAE-GW TEID will be initialized when PDN context is purged. */
 //  }
 
-   if (delete_sess_resp_pP->cause.cause_value != REQUEST_ACCEPTED) {
+   if (delete_sess_resp_pP->cause.cause_value != REQUEST_ACCEPTED) { /**< Ignoring currently, SAE-GW needs to check flag. */
      OAILOG_WARNING (LOG_MME_APP, "***WARNING****S11 Delete Session Rsp: NACK received from SPGW : %08x\n", delete_sess_resp_pP->teid);
    }
    MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 DELETE_SESSION_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
@@ -1000,6 +997,7 @@ mme_app_handle_create_sess_resp (
      * If none existing, continue with handover request.
      */
     OAILOG_INFO(LOG_MME_APP, "Inter MME S10 Handover process exists for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    s10_handover_procedure->nas_s10_context.n_pdns++;
     if(s10_handover_procedure->pdn_connections->num_pdn_connections > s10_handover_procedure->next_processed_pdn_connection){
       OAILOG_INFO(LOG_MME_APP, "We have further PDN connections that need to be established via handover for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
       pdn_connection_t * pdn_connection = &s10_handover_procedure->pdn_connections->pdn_connection[s10_handover_procedure->next_processed_pdn_connection];
@@ -1036,6 +1034,8 @@ mme_app_handle_create_sess_resp (
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }else if (emm_cn_proc_ctx_req){
     OAILOG_INFO(LOG_MME_APP, "NAS Context Request process exists for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
+    /** Increase the num of established PDNs. */
+    emm_cn_proc_ctx_req->nas_s10_context.n_pdns++;
     if(emm_cn_proc_ctx_req->pdn_connections->num_pdn_connections > emm_cn_proc_ctx_req->next_processed_pdn_connection){
       OAILOG_INFO(LOG_MME_APP, "We have further PDN connections that need to be established via handover for UE " MME_UE_S1AP_ID_FMT ". \n", ue_context->mme_ue_s1ap_id);
       pdn_connection_t * pdn_connection = &emm_cn_proc_ctx_req->pdn_connections->pdn_connection[emm_cn_proc_ctx_req->next_processed_pdn_connection];
@@ -2488,8 +2488,8 @@ mme_app_handle_forward_relocation_request(
  MessageDef                             *message_p  = NULL;
  struct ue_context_s                    *ue_context = NULL;
  uint64_t                                imsi = 0;
- int                                     rc = RETURNok;
  mme_app_s10_proc_mme_handover_t        *s10_proc_mme_handover = NULL;
+ int                                     rc = RETURNok;
 
  OAILOG_FUNC_IN (LOG_MME_APP);
 
@@ -3522,7 +3522,7 @@ mme_app_handle_forward_relocation_complete_notification(
  ue_description_t * old_ue_reference = s1ap_is_enb_ue_s1ap_id_in_list_per_enb(ue_context->enb_ue_s1ap_id, ue_context->e_utran_cgi.cell_identity.enb_id);
  if(old_ue_reference){
    /** Start the timer of the procedure (only if target-mme for inter-MME S1ap handover). */
-   if (timer_setup (1 /*mme_config.mme_mobility_completion_timer*/, 0,
+   if (timer_setup (mme_config.mme_mobility_completion_timer, 0,
        TASK_S1AP, INSTANCE_DEFAULT, TIMER_ONE_SHOT, (void *)old_ue_reference, &(old_ue_reference->s1ap_handover_completion_timer.id)) < 0) {
      OAILOG_ERROR (LOG_MME_APP, "Failed to start >s1ap_handover_completion for enbUeS1apId " ENB_UE_S1AP_ID_FMT " for duration %d \n", old_ue_reference->enb_ue_s1ap_id, mme_config.mme_mobility_completion_timer);
      old_ue_reference->s1ap_handover_completion_timer.id = MME_APP_TIMER_INACTIVE_ID;

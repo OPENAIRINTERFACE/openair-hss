@@ -52,6 +52,7 @@
 #include "secu_defs.h"
 #include "emm_cause.h"
 #include "mme_app_defs.h"
+#include "nas_itti_messaging.h"
 
 //#include "EmmCommon.h"
 #include "../../mme/mme_ie_defs.h"
@@ -938,9 +939,9 @@ int _start_context_request_procedure(struct emm_data_context_s *emm_context, nas
    * Not configuring an AS common procedure as parent procedure of the S10 procedure.
    */
 //  ctx_req_proc->emm_com_proc.emm_proc.base_proc.child = &auth_info_proc->cn_proc.base_proc;
-  ctx_req_proc->success_notif = *_context_res_proc_success; /**< Continue with a PDN Configuration (ULR, CSR). */
-  ctx_req_proc->failure_notif = *_context_res_proc_fail; /**< Continue with the identification procedure (IdReq, AuthReq, SMC). */
-//  ctx_req_proc->cn_proc.base_proc.time_out = s10_context_req_timer_expiry_handler;
+  ctx_req_proc->success_notif = _context_res_proc_success; /**< Continue with a PDN Configuration (ULR, CSR). */
+  ctx_req_proc->failure_notif = _context_res_proc_fail; /**< Continue with the identification procedure (IdReq, AuthReq, SMC). */
+  ctx_req_proc->cn_proc.base_proc.time_out = s10_context_req_timer_expiry_handler;
   ctx_req_proc->ue_id = ue_id;
 
   nas_start_Ts10_ctx_req( ctx_req_proc->ue_id, &ctx_req_proc->timer_s10, ctx_req_proc->cn_proc.base_proc.time_out, emm_context);
@@ -1484,8 +1485,6 @@ void emm_context_dump (
     //esm_context_dump(&emm_context->esm_ctx, indent_spaces, bstr_dump);
   }
 }
-
-
 
 //------------------------------------------------------------------------------
 int

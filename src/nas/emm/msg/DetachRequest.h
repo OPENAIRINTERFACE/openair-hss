@@ -27,6 +27,7 @@
 #include "DetachType.h"
 #include "NasKeySetIdentifier.h"
 #include "EpsMobileIdentity.h"
+#include "EmmCause.h"
 #include "3gpp_23.003.h"
 #include "3gpp_24.007.h"
 #include "3gpp_24.008.h"
@@ -43,6 +44,7 @@
     NAS_KEY_SET_IDENTIFIER_MAXIMUM_LENGTH + \
     EPS_MOBILE_IDENTITY_MAXIMUM_LENGTH )
 
+# define DETACH_REQUEST_EMM_CAUSE_PRESENT                    (1<<3)
 
 /*
  * Message name: Detach request
@@ -57,8 +59,10 @@ typedef struct detach_request_msg_tag {
   security_header_type_t       securityheadertype:4;
   message_type_t               messagetype;
   detach_type_t                   detachtype;
+  emm_cause_t                    emmCause;
   NasKeySetIdentifier          naskeysetidentifier;
   eps_mobile_identity_t        gutiorimsi;
+  uint32_t                     presencemask;
 } detach_request_msg;
 
 int decode_detach_request(detach_request_msg *detachrequest, uint8_t *buffer, uint32_t len);

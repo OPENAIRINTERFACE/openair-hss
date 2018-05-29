@@ -986,7 +986,7 @@ static nw_rc_t nwGtpv2cHandleUlpCreateLocalTunnel (NW_IN nw_gtpv2c_stack_t * thi
         OAILOG_WARNING (LOG_GTPV2C,  "Malformed message received on TEID %u from peer %s. Notifying ULP.\n", ntohl ((*((uint32_t *) (msgBuf + 4)))), ipv4);
       }
 
-      rc = nwGtpv2cSendTriggeredRspIndToUlp (thiz, &error, hUlpTrxn, hUlpTunnel, msgType, hMsg);
+      rc = nwGtpv2cSendTriggeredRspIndToUlp (thiz, &error, keyTrxn.seqNum, hUlpTunnel, msgType, hMsg);
     } else {
       OAILOG_WARNING (LOG_GTPV2C,  "Response message without a matching outstanding request received! Discarding.\n");
       rc = NW_OK;

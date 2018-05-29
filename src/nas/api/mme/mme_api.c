@@ -420,8 +420,7 @@ int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
     bearer_context_t * bearer_context_to_establish = NULL;
     RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
       DevAssert(registered_pdn_ctx);
-
-      /**
+      /*
        * Get the first PDN whose bearers are not established yet.
        * Do the MBR just one PDN at a time.
        */
@@ -591,6 +590,30 @@ mme_api_new_guti (
   OAILOG_INFO (LOG_NAS, "UE " MME_UE_S1AP_ID_FMT "  Got GUTI " GUTI_FMT "\n", ue_context->mme_ue_s1ap_id, GUTI_ARG(guti));
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS, RETURNok);
+}
+
+//------------------------------------------------------------------------------
+bool
+mme_api_get_pending_bearer_deactivation (mme_ue_s1ap_id_t mme_ue_s1ap_id) {
+  OAILOG_FUNC_IN (LOG_NAS);
+  int                                     rc = RETURNok;
+  ue_context_t                           *ue_context = NULL;
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
+  if(ue_context){
+    return ue_context->pending_bearer_deactivation;
+  }
+}
+
+//------------------------------------------------------------------------------
+void
+mme_api_set_pending_bearer_deactivation (mme_ue_s1ap_id_t mme_ue_s1ap_id, bool pending_bearer_deactivation) {
+  OAILOG_FUNC_IN (LOG_NAS);
+  int                                     rc = RETURNok;
+  ue_context_t                           *ue_context = NULL;
+  ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, mme_ue_s1ap_id);
+  if(ue_context){
+    ue_context->pending_bearer_deactivation = pending_bearer_deactivation;
+  }
 }
 
 /****************************************************************************

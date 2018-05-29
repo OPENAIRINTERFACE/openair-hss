@@ -1020,7 +1020,6 @@ s10_mme_handle_context_request(
   /** Allocating the Signal once at the sender (MME_APP --> S10) and once at the receiver (S10-->MME_APP). */
   message_p = itti_alloc_new_message (TASK_S10, S10_CONTEXT_REQUEST);
   req_p = &message_p->ittiMsg.s10_context_request;
-  memset(req_p, 0, sizeof(*req_p));
 
   req_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
   req_p->trxn = (void *)pUlpApi->u_api_info.initialReqIndInfo.hTrxn;
@@ -1174,10 +1173,10 @@ s10_mme_context_response (
     gtpv2c_imsi_ie_set (&(ulp_req.hMsg), &rsp_p->imsi);
 
     /** PDN Connection IE. */
-    s10_pdn_connection_ie_set (&(ulp_req.hMsg), &rsp_p->pdn_connections);
+    s10_pdn_connection_ie_set (&(ulp_req.hMsg), rsp_p->pdn_connections);
 
     /** Set the MM EPS UE Context. */
-    s10_ue_mm_eps_context_ie_set(&(ulp_req.hMsg), &rsp_p->ue_eps_mm_context);
+    s10_ue_mm_eps_context_ie_set(&(ulp_req.hMsg), rsp_p->ue_eps_mm_context);
   }
   rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
   DevAssert (NW_OK == rc);
@@ -1218,7 +1217,6 @@ s10_mme_handle_context_response(
   DevAssert (stack_p );
   message_p = itti_alloc_new_message (TASK_S10, S10_CONTEXT_RESPONSE);
   resp_p = &message_p->ittiMsg.s10_context_response;
-  memset(resp_p, 0, sizeof(*resp_p));
 
   /** Set the destination TEID. */
   resp_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
@@ -1261,15 +1259,17 @@ s10_mme_handle_context_response(
    * PDN Connection IE : Several can exist
    * todo: multiple pdn connection IEs can exist with instance 0.
    */
+  resp_p->pdn_connections = calloc(1, sizeof(mme_ue_eps_pdn_connections_t));
   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_PDN_CONNECTION, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-      s10_pdn_connection_ie_get, &resp_p->pdn_connections);
+      s10_pdn_connection_ie_get, resp_p->pdn_connections);
   DevAssert (NW_OK == rc);
 
    /*
     * MME UE MM Context.
     */
-   rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_MM_EPS_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
-        s10_mm_ue_context_ie_get, &resp_p->ue_eps_mm_context);
+  resp_p->ue_eps_mm_context = calloc(1, sizeof(mm_context_eps_t));
+  rc = nwGtpv2cMsgParserAddIe (pMsgParser, NW_GTPV2C_IE_MM_EPS_CONTEXT, NW_GTPV2C_IE_INSTANCE_ZERO, NW_GTPV2C_IE_PRESENCE_CONDITIONAL,
+        s10_mm_ue_context_ie_get, resp_p->ue_eps_mm_context);
    DevAssert (NW_OK == rc);
 
   /*

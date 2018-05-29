@@ -470,16 +470,16 @@ emm_proc_detach_request (
   /*
    * Notify EMM FSM that the UE has been implicitly detached
    */
-  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
-  emm_sap.primitive = EMMREG_DETACH_CNF;
-  emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
-  emm_sap.u.emm_reg.ctx = emm_context;
-  rc = emm_sap_send (&emm_sap);
+//  MSC_LOG_TX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "0 EMMREG_DETACH_CNF ue id " MME_UE_S1AP_ID_FMT " ", ue_id);
+//  emm_sap.primitive = EMMREG_DETACH_CNF;
+//  emm_sap.u.emm_reg.ue_id = emm_context->ue_id;
+//  emm_sap.u.emm_reg.ctx = emm_context;
+//  rc = emm_sap_send (&emm_sap);
   // Notify MME APP to remove the remaining MME_APP and S1AP contexts..
-  nas_itti_detach_req(emm_context->ue_id);
+//  nas_itti_detach_req(emm_context->ue_id);
   // todo: review unlock
 //  unlock_ue_contexts(ue_context);
-  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
+//  OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
   // todo: review this
 //  unlock_ue_contexts(ue_context);
   OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNok);

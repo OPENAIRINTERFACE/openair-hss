@@ -106,6 +106,7 @@ typedef struct emm_detach_request_ies_s {
   emm_proc_detach_type_t         type;
   bool                           switch_off;
   bool                           is_native_sc;
+  bool                           is_initial;
   ksi_t                          ksi;
   guti_t                       * guti;
   imsi_t                       * imsi;
@@ -116,6 +117,7 @@ typedef struct emm_detach_request_ies_s {
 typedef struct emm_tau_request_ies_s {
   EpsUpdateType                  eps_update_type;
   bool                           is_native_sc;
+  bool                           is_initial;
   ksi_t                          ksi;
   guti_t                         old_guti;
 

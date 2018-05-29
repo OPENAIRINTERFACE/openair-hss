@@ -249,10 +249,15 @@ emm_proc_identification_complete (
          * Update the IMSI
          */
         imsi64_t imsi64 = imsi_to_imsi64(imsi);
+
+        emm_data_context_t * imsi_emm_ctx_test = emm_data_context_get_by_imsi (&_emm_data, imsi64);
+        DevAssert(!imsi_emm_ctx_test);
+
         emm_ctx_set_valid_imsi(emm_ctx, imsi, imsi64);
         emm_data_context_upsert_imsi(&_emm_data, emm_ctx);
 
-        emm_data_context_t * imsi_emm_ctx_test = emm_data_context_get_by_imsi (&_emm_data, imsi64);
+        imsi_emm_ctx_test = emm_data_context_get_by_imsi (&_emm_data, imsi64);
+        DevAssert(imsi_emm_ctx_test);
 
       } else if (imei) {
         /*

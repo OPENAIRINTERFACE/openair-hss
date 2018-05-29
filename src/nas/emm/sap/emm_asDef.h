@@ -46,6 +46,7 @@ Description Defines the EMM primitives available at the EMMAS Service
 #include "TrackingAreaIdentityList.h"
 #include "3gpp_36.401.h"
 #include "3gpp_23.003.h"
+#include "emm_proc.h"
 
 /****************************************************************************/
 /*********************  G L O B A L    C O N S T A N T S  *******************/
@@ -172,6 +173,7 @@ typedef struct emm_as_establish_s {
   int                    emm_cause;                   /* EMM failure cause code        */
 
   uint64_t               puid;                        /* linked to procedure UID */
+  bool                   is_initial;                  /* true if contained in initial message    */
   uint8_t                rrc_cause;                   /* Connection establishment cause    */
   uint8_t                rrc_type;                    /* Associated call type          */
   ksi_t                  ksi;                         /* NAS key set identifier        */
@@ -233,13 +235,15 @@ typedef struct emm_as_data_s {
   uint8_t                nas_info;    /* Type of NAS information to transfer  */
   bstring                nas_msg;     /* NAS message to be transfered     */
   uint8_t                eps_update_result;           /* TAU EPS update result   */
-  int                    emm_cause;                   /* EMM failure cause code        */
+
 #define EMM_AS_DATA_DELIVERED_LOWER_LAYER_FAILURE                  0
 #define EMM_AS_DATA_DELIVERED_TRUE                                 1
 #define EMM_AS_DATA_DELIVERED_LOWER_LAYER_NON_DELIVERY_INDICATION_DUE_TO_HO  2
   uint8_t                delivered;   /* Data message delivery indicator  */
+  emm_proc_detach_type_t detach_type; /**< Set to true if reattach is required. */
+  int                    emm_cause;                   /* EMM failure cause code        */
 #define EMM_AS_NAS_DATA_ATTACH          0x01  /* Attach complete      */
-#define EMM_AS_NAS_DATA_DETACH          0x02  /* Detach request       */
+#define EMM_AS_NAS_DATA_DETACH_ACCEPT   0x02  /* Detach request       */
 #define EMM_AS_NAS_DATA_TAU             0x03  /* TAU    Accept        */
 #define EMM_AS_NAS_DATA_ATTACH_ACCEPT   0x04  /* Attach Accept        */
   /** MME initiated (implicit) Detach Request. */

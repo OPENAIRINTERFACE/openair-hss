@@ -895,7 +895,7 @@ static int _emm_send_tracking_area_update_accept(emm_data_context_t * const emm_
    * S1 context release procedure for the UE if new GUTI is not sent in TAU accept message. Note - At present implicit GUTI
    * reallocation is not supported and hence GUTI is not sent in TAU accept message.
    */
-  if(ue_context->ecm_state != ECM_CONNECTED){
+  if(tau_proc->ies->is_initial){
     /**
      * Check the active flag. If false, set a notification to release the bearers after TAU_ACCEPT/COMPLETE (depending on the EMM state).
      */
@@ -1716,7 +1716,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
           rc = _start_context_request_procedure(emm_context, tau_proc,
               _context_req_proc_success_cb, emm_proc_identification);
           /** Do S10 Context Request. */
-          nas_itti_ctx_req(emm_context->ue_id, &emm_context->_guti,
+          nas_itti_ctx_req(emm_context->ue_id, &emm_context->_old_guti,
               tau_proc->ies->originating_tai,
               tau_proc->ies->last_visited_registered_tai,
               tau_proc->ies->complete_tau_request);
@@ -1767,7 +1767,7 @@ static int _context_req_proc_success_cb (emm_data_context_t *emm_context)
   emm_ctx_set_valid_imsi(emm_context, &nas_s10_ctx->_imsi, nas_s10_ctx->imsi);
   emm_data_context_upsert_imsi(&_emm_data, emm_context); /**< Register the IMSI in the hash table. */
 
-  ue_context_t * test_ue_ctx = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, 1011234562000);
+  ue_context_t * test_ue_ctx = mme_ue_context_exists_imsi (&mme_app_desc.mme_ue_contexts, nas_s10_ctx->imsi);
   DevAssert(test_ue_ctx);
 
   /*

@@ -73,6 +73,7 @@ static  nas_cn_proc_t *get_nas_cn_procedure(const struct emm_data_context_s * co
 static void nas_emm_procedure_gc(struct emm_data_context_s * const emm_context);
 static void nas_delete_con_mngt_procedure(nas_emm_con_mngt_proc_t **  proc);
 static void nas_delete_auth_info_procedure(struct emm_data_context_s *emm_context, nas_auth_info_proc_t ** auth_info_proc);
+static void nas_delete_context_req_procedure(struct emm_data_context_s *emm_context, nas_ctx_req_proc_t ** ctx_req_proc);
 static void nas_delete_child_procedures(struct emm_data_context_s * const emm_context, nas_base_proc_t * const parent_proc);
 static void nas_delete_cn_procedures(struct emm_data_context_s *emm_context);
 static void nas_delete_common_procedures(struct emm_data_context_s *emm_context);
@@ -530,6 +531,20 @@ static void nas_delete_auth_info_procedure(struct emm_data_context_s *emm_contex
 }
 
 //-----------------------------------------------------------------------------
+static void nas_delete_context_req_procedure(struct emm_data_context_s *emm_context, nas_ctx_req_proc_t ** ctx_req_proc)
+{
+  if (*ctx_req_proc) {
+   OAILOG_TRACE (LOG_NAS_EMM, "UE " MME_UE_S1AP_ID_FMT " Delete Context Request procedure\n", emm_context->ue_id);
+   if ((*ctx_req_proc)->cn_proc.base_proc.parent) {
+      (*ctx_req_proc)->cn_proc.base_proc.parent->child = NULL;
+    }
+    void *unused = NULL;
+    nas_stop_Ts10_ctx_res(emm_context->ue_id, &(*ctx_req_proc)->timer_s10, unused);
+    free_wrapper((void**)ctx_req_proc);
+  }
+}
+
+//-----------------------------------------------------------------------------
 void nas_delete_cn_procedure(struct emm_data_context_s *emm_context, nas_cn_proc_t * cn_proc)
 {
   if (emm_context->emm_procedures) {
@@ -542,6 +557,9 @@ void nas_delete_cn_procedure(struct emm_data_context_s *emm_context, nas_cn_proc
         switch (cn_proc->type) {
           case CN_PROC_AUTH_INFO:
             nas_delete_auth_info_procedure(emm_context, (nas_auth_info_proc_t**)&cn_proc);
+            break;
+          case CN_PROC_CTX_REQ:
+            nas_delete_context_req_procedure(emm_context, (nas_ctx_req_proc_t**)&cn_proc);
             break;
           case CN_PROC_NONE:
             free_wrapper((void**)&cn_proc);
@@ -571,7 +589,9 @@ static void nas_delete_cn_procedures(struct emm_data_context_s *emm_context)
         case CN_PROC_AUTH_INFO:
           nas_delete_auth_info_procedure(emm_context, (nas_auth_info_proc_t**)&p1->proc);
           break;
-
+        case CN_PROC_CTX_REQ:
+          nas_delete_context_req_procedure(emm_context, (nas_ctx_req_proc_t**)&p1->proc);
+          break;
         default:
           free_wrapper((void**)&p1->proc);
       }
