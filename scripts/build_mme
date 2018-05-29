@@ -186,6 +186,8 @@ function main()
   fi 
 
     $SUDO killall -q mme
+    # if you want to use daemon, no write on group 
+    $SUDO chmod 755 $OPENAIRCN_DIR/build/mme/build/mme
     $SUDO cp -upv $OPENAIRCN_DIR/build/mme/build/mme /usr/local/bin && echo_success "mme installed" 
 }
 
