@@ -94,7 +94,6 @@ typedef struct {
   struct dict_object *dataobj_s6a_experimental_result;
 
   /* S6A specific AVPs */
-  struct dict_object *dataobj_s6a_3gpp_charging_characteristics;
   struct dict_object *dataobj_s6a_visited_plmn_id;
   struct dict_object *dataobj_s6a_rat_type;
   struct dict_object *dataobj_s6a_ulr_flags;

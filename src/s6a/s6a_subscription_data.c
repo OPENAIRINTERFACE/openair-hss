@@ -333,9 +333,6 @@ s6a_parse_apn_configuration (
     CHECK_FCT (fd_msg_avp_hdr (avp, &hdr));
 
     switch (hdr->avp_code) {
-    case AVP_CODE_3GPP_CHARGING_CHARACTERISTICS:
-      break;
-
     case AVP_CODE_CONTEXT_IDENTIFIER:
       apn_config->context_identifier = hdr->avp_value->u32;
       break;
@@ -362,6 +359,11 @@ s6a_parse_apn_configuration (
       break;
 
     case AVP_CODE_VPLMN_DYNAMIC_ADDRESS_ALLOWED:
+      OAILOG_DEBUG (LOG_S6A, "Not parsing apn_configuration/vplmn_dynamic_address_allowed\n");
+      break;
+
+    case AVP_CODE_3GPP_CHARGING_CHARACTERISTICS:
+      OAILOG_DEBUG (LOG_S6A, "Not parsing apn_configuration/3gpp_charging_characteristics\n");
       break;
 
     case AVP_CODE_AMBR:
@@ -449,6 +451,10 @@ s6a_parse_subscription_data (
       CHECK_FCT (s6a_parse_access_restriction_data (hdr, &subscription_data->access_restriction));
       break;
 
+    case AVP_CODE_3GPP_CHARGING_CHARACTERISTICS:
+      OAILOG_DEBUG (LOG_S6A, "Not parsing subscription_data/3gpp_charging_characteristics\n");
+      break;
+
     case AVP_CODE_AMBR:
       CHECK_FCT (s6a_parse_ambr (avp, &subscription_data->subscribed_ambr));
       break;
@@ -462,6 +468,7 @@ s6a_parse_subscription_data (
       break;
 
     case AVP_CODE_APN_OI_REPLACEMENT:
+      OAILOG_DEBUG (LOG_S6A, "Not parsing subscription_data/apn_oi_replacement\n");
       break;
 
     default:
