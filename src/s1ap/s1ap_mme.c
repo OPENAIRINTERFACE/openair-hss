@@ -103,6 +103,9 @@ s1ap_mme_thread (
 
     switch (ITTI_MSG_ID (received_message_p)) {
     case ACTIVATE_MESSAGE:{
+  if (s1ap_send_init_sctp () < 0) {
+    OAILOG_ERROR (LOG_S1AP, "Error while sendind SCTP_INIT_MSG to SCTP \n");
+  }
         hss_associated = true;
       }
       break;
@@ -254,10 +257,10 @@ s1ap_mme_init(void)
     return RETURNerror;
   }
 
-  if (s1ap_send_init_sctp () < 0) {
-    OAILOG_ERROR (LOG_S1AP, "Error while sendind SCTP_INIT_MSG to SCTP \n");
-    return RETURNerror;
-  }
+  //if (s1ap_send_init_sctp () < 0) {
+  //  OAILOG_ERROR (LOG_S1AP, "Error while sendind SCTP_INIT_MSG to SCTP \n");
+  //  return RETURNerror;
+  //}
 
   OAILOG_DEBUG (LOG_S1AP, "Initializing S1AP interface: DONE\n");
   return RETURNok;
