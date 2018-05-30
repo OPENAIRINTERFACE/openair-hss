@@ -1413,6 +1413,8 @@ s10_mme_remove_ue_tunnel (
     DevAssert (NW_OK == rc);
     OAILOG_INFO(LOG_S10, "DELETED local S10 teid (TEID FOUND IN HASH_MAP)" TEID_FMT " \n", remove_ue_tunnel_p->local_teid);
 
+    memset(&ulp_req, 0, sizeof(ulp_req));
+
     ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
     ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_ue_tunnel_p->local_teid;
     ulp_req.u_api_info.findLocalTunnelInfo.peerIp = remove_ue_tunnel_p->peer_ip;
@@ -1432,9 +1434,8 @@ s10_mme_remove_ue_tunnel (
     hash_rc = hashtable_ts_free(s10_mme_teid_2_gtv2c_teid_handle, (hash_key_t) remove_ue_tunnel_p->local_teid);
     DevAssert (HASH_TABLE_OK == hash_rc);
 
-
+    OAILOG_DEBUG(LOG_S10, "Successfully removed S10 Tunnel local teid %X\n", remove_ue_tunnel_p->local_teid);
   }
-  OAILOG_DEBUG(LOG_S10, "Successfully removed S10 Tunnel local teid %X\n", remove_ue_tunnel_p->local_teid);
   return RETURNok;
 }
 
