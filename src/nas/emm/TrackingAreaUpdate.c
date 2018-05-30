@@ -1102,7 +1102,7 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
         /** Send a periodic TAU_ACCEPT back without GUTI, COMMON_PROCEDURE initiation or expecting a TAU_COMPLETE. */
         // todo: GUTI for periodic TAU?!
         rc = _emm_send_tracking_area_update_accept(emm_context, tau_proc);
-        nas_delete_tau_procedure(tau_proc);
+        nas_delete_tau_procedure(emm_context);
         /**
          * All parameters must be validated at this point since valid GUTI.
          * Since we area in EMM_REGISTERED state, check the pending session releasion flag and release the state.
@@ -1146,9 +1146,7 @@ static int _emm_tracking_area_update_accept (nas_emm_tau_proc_t * const tau_proc
       /** Send the TAU accept. */
       // todo: GUTI for periodic TAU?!
       rc = _emm_send_tracking_area_update_accept (emm_context, tau_proc);
-//      emm_ctx_unmark_specific_procedure(emm_context, EMM_CTXT_SPEC_PROC_TAU); /**< Just marking and not setting timer (will be set later with TAU_ACCEPT). */
-      nas_delete_tau_procedure(tau_proc);
-
+      nas_delete_tau_procedure(emm_context);
       /** No GUTI will be set. State should not be changed. */
       /**
        * All parameters must be validated at this point since valid GUTI.
@@ -1657,7 +1655,7 @@ static int _emm_tracking_area_update_run_procedure(emm_data_context_t *emm_conte
         OAILOG_DEBUG (LOG_NAS_EMM, "EMM-PROC- Sending Tracking Area Update Accept for UE with valid subscription ue_id=" MME_UE_S1AP_ID_FMT ", active flag=%d)\n", emm_context->ue_id, tau_proc->ies->eps_update_type.active_flag);
         /* Check the state of the EMM context. If it is REGISTERED, send an TAU_ACCEPT back and remove the tau procedure. */
         if(emm_context->_emm_fsm_state == EMM_REGISTERED){
-          rc = _emm_tracking_area_update_accept (tau_proc);
+          rc = _emm_tracking_area_update_accept (tau_proc); /**< Will remove the TAU procedure. */
           nas_delete_tau_procedure(emm_context);
         }else{
           OAILOG_INFO(LOG_NAS_EMM, "EMM-PROC  - EMM context for the ue_id=" MME_UE_S1AP_ID_FMT " has a valid and active EPS security context and subscription but is not in EMM_REGISTERED state. Instead %d. "

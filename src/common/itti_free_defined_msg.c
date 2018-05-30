@@ -50,6 +50,8 @@
 //------------------------------------------------------------------------------
 void itti_free_msg_content (MessageDef * const message_p)
 {
+  itti_s1ap_handover_request_t *handover_request_p = NULL;
+
   switch (ITTI_MSG_ID (message_p)) {
   case ASYNC_SYSTEM_COMMAND:{
       if (ASYNC_SYSTEM_COMMAND (message_p).system_command) {
@@ -304,7 +306,8 @@ void itti_free_msg_content (MessageDef * const message_p)
     break;
 
   case S1AP_HANDOVER_REQUEST:
-    bdestroy_wrapper(&message_p->ittiMsg.s1ap_handover_request.source_to_target_eutran_container);
+    handover_request_p = &message_p->ittiMsg.s1ap_handover_request;
+    bdestroy_wrapper(&handover_request_p->source_to_target_eutran_container);
     break;
 
   case S1AP_HANDOVER_REQUEST_ACKNOWLEDGE:

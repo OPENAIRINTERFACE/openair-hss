@@ -68,7 +68,7 @@ typedef struct mme_app_s10_proc_s {
   teid_t                      local_teid;
   teid_t                      remote_teid;
   struct in_addr              peer_ip;             ///< MME ipv4 address for S-GW or S-GW ipv4 address for MME.
-
+  bool                        target_mme;
   uintptr_t                   s10_trxn;
   LIST_ENTRY(mme_app_s10_proc_s) entries;      /* List. */
 } mme_app_s10_proc_t;

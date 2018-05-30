@@ -169,7 +169,7 @@ static int remove_s10_tunnel_endpoint(ue_context_t * ue_context, mme_app_s10_pro
   OAILOG_FUNC_IN(LOG_MME_APP);
   int             rc = RETURNerror;
 //  /** Removed S10 tunnel endpoint. */
-//  mme_app_free_s10_procedure_mme_handover(&s10_proc);
+  mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_proc->remote_teid, s10_proc->peer_ip);
   /** Deregister the key. */
   mme_ue_context_update_coll_keys( &mme_app_desc.mme_ue_contexts,
       ue_context,
@@ -201,7 +201,9 @@ void mme_app_delete_s10_procedures(ue_context_t * const ue_context)
           }
         }
         s10_proc1->timer.id = MME_APP_TIMER_INACTIVE_ID;
-        remove_s10_tunnel_endpoint(ue_context, s10_proc1);
+//        remove_s10_tunnel_endpoint(ue_context, s10_proc1);
+        if(!s10_proc1->target_mme)
+                remove_s10_tunnel_endpoint(ue_context, s10_proc1);
       } // else ...
       else if (MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER == s10_proc1->type) {
         /** Stop the timer. */
@@ -212,7 +214,6 @@ void mme_app_delete_s10_procedures(ue_context_t * const ue_context)
           }
         }
         s10_proc1->timer.id = MME_APP_TIMER_INACTIVE_ID;
-//        remove_s10_tunnel_endpoint(ue_context, s10_proc1);
       } // else ...
       s10_proc1 = s10_proc2;
     }
@@ -324,6 +325,7 @@ mme_app_s10_proc_mme_handover_t* mme_app_create_s10_procedure_mme_handover(ue_co
     /** Add the S10 procedure. */
   mme_app_s10_proc_t *s10_proc = (mme_app_s10_proc_t *)s10_proc_mme_handover;
 
+  s10_proc->target_mme = target_mme;
   if (!ue_context->s10_procedures) {
     ue_context->s10_procedures = calloc(1, sizeof(struct s10_procedures_s));
     LIST_INIT(ue_context->s10_procedures);
@@ -413,7 +415,8 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
         }
         s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
         /** Remove the S10 Tunnel endpoint and set the UE context S10 as invalid. */
-        remove_s10_tunnel_endpoint(ue_context, s10_proc);
+        if(!s10_proc->target_mme)
+          remove_s10_tunnel_endpoint(ue_context, s10_proc);
         mme_app_free_s10_procedure_mme_handover(&s10_proc);
         return;
       }else if (MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER == s10_proc->type){

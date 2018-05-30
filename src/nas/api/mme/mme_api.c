@@ -418,30 +418,40 @@ int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
     // todo: how to do this in multi apn?
     pdn_context_t * registered_pdn_ctx = NULL;
     bearer_context_t * bearer_context_to_establish = NULL;
-    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
-      DevAssert(registered_pdn_ctx);
-      /*
-       * Get the first PDN whose bearers are not established yet.
-       * Do the MBR just one PDN at a time.
-       */
-      RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
-        DevAssert(bearer_context_to_establish);
-        /** Add them to the bearears list of the MBR. */
-        if (bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
-          OAILOG_INFO(LOG_MME_APP, "Found a PDN with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Sending MBR. \n", mme_ue_s1ap_id);
-          /** Send the S11 MBR and return. */
-          // todo: error handling! this might occur if some error with OVS happens.
-          if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
-            OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
-            // todo!
-            DevAssert(0);
-          }
-          OAILOG_INFO(LOG_MME_APP, "Successfully sent MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Returning from REGISTRERED callback. \n", mme_ue_s1ap_id);
-          OAILOG_FUNC_OUT (LOG_MME_APP);
-        }
+
+    registered_pdn_ctx = RB_MIN(PdnContexts, &ue_context->pdn_contexts);
+    bearer_context_to_establish = RB_MIN(SessionBearers, &registered_pdn_ctx->session_bearers);
+    if(bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
+      if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
+        OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
+        // todo!
+        DevAssert(0);
       }
-      registered_pdn_ctx = NULL;
     }
+//    RB_FOREACH (registered_pdn_ctx, PdnContexts, &ue_context->pdn_contexts) {
+//      DevAssert(registered_pdn_ctx);
+//      /*
+//       * Get the first PDN whose bearers are not established yet.
+//       * Do the MBR just one PDN at a time.
+//       */
+//      RB_FOREACH (bearer_context_to_establish, SessionBearers, &registered_pdn_ctx->session_bearers) {
+//        DevAssert(bearer_context_to_establish);
+//        /** Add them to the bearears list of the MBR. */
+//        if (bearer_context_to_establish->bearer_state != BEARER_STATE_ACTIVE){
+//          OAILOG_INFO(LOG_MME_APP, "Found a PDN with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Sending MBR. \n", mme_ue_s1ap_id);
+//          /** Send the S11 MBR and return. */
+//          // todo: error handling! this might occur if some error with OVS happens.
+//          if(mme_app_send_s11_modify_bearer_req(ue_context, registered_pdn_ctx) != RETURNok){
+//            OAILOG_ERROR(LOG_MME_APP, "Error sending MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Implicitly detaching the UE. \n", mme_ue_s1ap_id);
+//            // todo!
+//            DevAssert(0);
+//          }
+//          OAILOG_INFO(LOG_MME_APP, "Successfully sent MBR for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". Returning from REGISTRERED callback. \n", mme_ue_s1ap_id);
+//          OAILOG_FUNC_OUT (LOG_MME_APP);
+//        }
+//      }
+//      registered_pdn_ctx = NULL;
+//    }
     OAILOG_ERROR(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
   }
 }

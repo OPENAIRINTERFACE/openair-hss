@@ -491,8 +491,8 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
         NW_ASSERT (NW_OK == rc);
         *phTunnel = (nw_gtpv2c_tunnel_handle_t) 0;
         OAILOG_WARNING (LOG_GTPV2C,  "Local tunnel creation failed for teid '0x%x' and peer IP %s. Tunnel already exists!\n", teid, ipv4);
-        NW_ASSERT (0);
-        OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
+//        NW_ASSERT (0);
+        OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_FAILURE);
       }
     } else {
       rc = NW_FAILURE;
@@ -523,6 +523,10 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
     OAILOG_DEBUG (LOG_GTPV2C, "Deleting local tunnel with teid '0x%x' and peer IP %s\n", pTunnel->teid, ipv4);
     rc = nwGtpv2cTunnelDelete (thiz, pTunnel);
     NW_ASSERT (NW_OK == rc);
+
+    nw_gtpv2c_tunnel_t *pLocalTunnel_test = RB_MIN (NwGtpv2cTunnelMap, &(thiz->tunnelMap));
+//    DevAssert(!pLocalTunnel_test);
+
     OAILOG_FUNC_RETURN (LOG_GTPV2C, NW_OK);
   }
 
@@ -560,7 +564,12 @@ static nw_rc_t nwGtpv2cCreateLocalTunnel (
         keyTunnel.ipv4AddrRemote = pUlpReq->u_api_info.initialReqInfo.peerIp;
         pLocalTunnel = RB_FIND (NwGtpv2cTunnelMap, &(thiz->tunnelMap), &keyTunnel);
 
+
         if (!pLocalTunnel) {
+
+          pLocalTunnel = RB_MIN (NwGtpv2cTunnelMap, &(thiz->tunnelMap));
+//          DevAssert(!pLocalTunnel);
+
           OAILOG_WARNING (LOG_GTPV2C,  "Request message received on non-existent teid 0x%x from peer 0x%x received! Discarding.\n", ntohl (pUlpReq->u_api_info.initialReqInfo.teidLocal), htonl (pUlpReq->u_api_info.initialReqInfo.peerIp.s_addr));
           rc = nwGtpv2cCreateLocalTunnel (thiz, pUlpReq->u_api_info.initialReqInfo.teidLocal, &pUlpReq->u_api_info.initialReqInfo.peerIp, pUlpReq->u_api_info.initialReqInfo.hUlpTunnel, &pUlpReq->u_api_info.initialReqInfo.hTunnel);
           NW_ASSERT (NW_OK == rc);

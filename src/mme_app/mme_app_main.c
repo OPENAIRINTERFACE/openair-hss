@@ -192,6 +192,7 @@ void *mme_app_thread (void *args)
         } else {
           MSC_LOG_RX_MESSAGE (MSC_MMEAPP_MME, MSC_S11_MME, NULL, 0, "0 MODIFY_BEARER_RESPONSE local S11 teid " TEID_FMT " IMSI " IMSI_64_FMT " ",
             received_message_p->ittiMsg.s11_modify_bearer_response.teid, ue_context_p->emm_context._imsi64);
+          mme_app_handle_modify_bearer_resp(&received_message_p->ittiMsg.s11_modify_bearer_response);
 
           // todo unlock_ue_contexts(ue_context_p);
 
@@ -275,9 +276,9 @@ void *mme_app_thread (void *args)
       break;
 
       case S1AP_HANDOVER_CANCEL:{
-//        mme_app_handle_handover_cancel(
-//            &S1AP_HANDOVER_CANCEL(received_message_p)
-//        );
+        mme_app_handle_handover_cancel(
+            &S1AP_HANDOVER_CANCEL(received_message_p)
+        );
       }
       break;
 

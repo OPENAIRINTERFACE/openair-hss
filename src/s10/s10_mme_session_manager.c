@@ -1400,6 +1400,11 @@ s10_mme_remove_ue_tunnel (
 
   } else{
 
+
+//    hash_rc = hashtable_ts_free(s10_mme_teid_2_gtv2c_teid_handle, (hash_key_t) remove_ue_tunnel_p->local_teid);
+//    DevAssert (HASH_TABLE_OK == hash_rc);
+
+
     ulp_req.apiType = NW_GTPV2C_ULP_DELETE_LOCAL_TUNNEL;
 
     rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
@@ -1424,6 +1429,7 @@ s10_mme_remove_ue_tunnel (
      */
     hash_rc = hashtable_ts_free(s10_mme_teid_2_gtv2c_teid_handle, (hash_key_t) remove_ue_tunnel_p->local_teid);
     DevAssert (HASH_TABLE_OK == hash_rc);
+
 
   }
   OAILOG_DEBUG(LOG_S10, "Successfully removed S10 Tunnel local teid %X\n", remove_ue_tunnel_p->local_teid);

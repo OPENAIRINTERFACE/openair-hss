@@ -640,6 +640,7 @@ mme_app_handle_initial_ue_message (
       OAILOG_FUNC_OUT (LOG_MME_APP);
     }
   }
+  ue_context->sctp_assoc_id_key = initial_pP->sctp_assoc_id;
   ue_context->e_utran_cgi = initial_pP->ecgi;
   // Notify S1AP about the mapping between mme_ue_s1ap_id and sctp assoc id + enb_ue_s1ap_id
   notify_s1ap_new_ue_mme_s1ap_id_association (ue_context->sctp_assoc_id_key, ue_context->enb_ue_s1ap_id, ue_context->mme_ue_s1ap_id);
@@ -1124,19 +1125,20 @@ mme_app_handle_modify_bearer_resp (
     itti_send_msg_to_task (TASK_NAS_MME, INSTANCE_DEFAULT, message_p);
     OAILOG_FUNC_RETURN (LOG_MME_APP, RETURNok);
   }
-  mme_app_get_session_bearer_context_from_all(ue_context->mme_ue_s1ap_id, modify_bearer_resp_pP->bearer_contexts_marked_for_removal.bearer_contexts[0].eps_bearer_id, &current_bearer_p);
+  // todo: check baerer contexts marked for removal
+  mme_app_get_session_bearer_context_from_all(ue_context, modify_bearer_resp_pP->bearer_contexts_modified.bearer_contexts[0].eps_bearer_id, &current_bearer_p);
   /** Get the first bearers PDN. */
   // todo: optimize the validation!
   DevAssert(current_bearer_p);
   mme_app_get_pdn_context(ue_context, current_bearer_p->pdn_cx_id, current_bearer_p->ebi, NULL, &pdn_context);
-  DevAssert(current_bearer_p);
+  DevAssert(pdn_context);
 
   /** Set all bearers of the EBI to valid. */
   bearer_context_t * bc_to_act = NULL;
   RB_FOREACH (bc_to_act, SessionBearers, &pdn_context->session_bearers) {
     DevAssert(bc_to_act);
     /** Add them to the bearers list of the MBR. */
-    bc_to_act->bearer_state |= BEARER_STATE_ACTIVE;
+    bc_to_act->bearer_state = BEARER_STATE_ACTIVE;
   }
 
   // todo: set the downlink teid?
@@ -1173,21 +1175,6 @@ mme_app_handle_modify_bearer_resp (
        * UE came from S10 inter-MME handover. Not clear the pending_handover state yet.
        * Sending Forward Relocation Complete Notification and waiting for acknowledgment.
        */
-       message_p = itti_alloc_new_message (TASK_MME_APP, S10_FORWARD_RELOCATION_COMPLETE_NOTIFICATION);
-       DevAssert (message_p != NULL);
-       itti_s10_forward_relocation_complete_notification_t *forward_relocation_complete_notification_p = &message_p->ittiMsg.s10_forward_relocation_complete_notification;
-       memset ((void*)forward_relocation_complete_notification_p, 0, sizeof (itti_s10_forward_relocation_complete_notification_t));
-       /** Set the destination TEID. */
-       forward_relocation_complete_notification_p->teid = s10_handover_proc->remote_mme_teid.teid;       /**< Target S10-MME TEID. todo: what if multiple? */
-       /** Set the local TEID. */
-       forward_relocation_complete_notification_p->local_teid = ue_context->local_mme_teid_s10;        /**< Local S10-MME TEID. */
-       forward_relocation_complete_notification_p->peer_ip.s_addr = s10_handover_proc->remote_mme_teid.ipv4_address.s_addr; /**< Set the target TEID. */
-       OAILOG_INFO(LOG_MME_APP, "Sending FW_RELOC_COMPLETE_NOTIF TO %X with remote S10-TEID " TEID_FMT ". \n.", forward_relocation_complete_notification_p->peer_ip, forward_relocation_complete_notification_p->teid);
-       /*
-        * Sending a message to S10. Not changing any context information!
-        * This message actually implies that the handover is finished. Resetting the flags and statuses here of after Forward Relocation Complete AcknowledgE?! (MBR)
-        */
-       itti_send_msg_to_task (TASK_S10, INSTANCE_DEFAULT, message_p);
        /** Nothing else left to do on the target side. We don't delete the handover process. It will run and timeout until TAU is complete. */
     }else{
       /** For INTRA-MME handover trigger the timer mentioned in TS 23.401 to remove the UE Context and the old S1AP UE reference to the source eNB. */
@@ -1205,6 +1192,8 @@ mme_app_handle_modify_bearer_resp (
           OAILOG_DEBUG (LOG_MME_APP, "MME APP : Completed Handover Procedure at (source) MME side after handling S1AP_HANDOVER_NOTIFY. "
               "Activated the S1AP Handover completion timer enbUeS1apId " ENB_UE_S1AP_ID_FMT ". Removing source eNB resources after timer.. Timer Id %u. Timer duration %d \n",
               old_ue_reference->enb_ue_s1ap_id, old_ue_reference->s1ap_handover_completion_timer.id, mme_config.mme_mobility_completion_timer);
+          /** Remove the handover procedure. */
+          mme_app_delete_s10_procedure_mme_handover(ue_context);
           /** Not setting the timer for MME_APP UE context. */
           OAILOG_FUNC_OUT (LOG_MME_APP);
         }
@@ -2116,7 +2105,7 @@ mme_app_handle_handover_required(
        * Keep the source side as it is.
        */
       memcpy((void*)&s10_handover_procedure->target_tai, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
-      memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai)); /**< Home or macro enb id. */
+      memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->global_enb_id, sizeof(handover_required_pP->selected_tai)); /**< Home or macro enb id. */
 
       /*
        * Set the source values, too. We might need it if the MME_STATUS_TRANSFER has to be sent after Handover Notify (emulator errors).
@@ -2213,7 +2202,7 @@ mme_app_handle_handover_required(
    * Keep the source side as it is.
    */
   memcpy((void*)&s10_handover_procedure->target_tai, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai));
-  memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->selected_tai, sizeof(handover_required_pP->selected_tai)); /**< Home or macro enb id. */
+  memcpy((void*)&s10_handover_procedure->target_ecgi, (void*)&handover_required_pP->global_enb_id, sizeof(handover_required_pP->selected_tai)); /**< Home or macro enb id. */
 
   /*
    * Set the source values, too. We might need it if the MME_STATUS_TRANSFER has to be sent after Handover Notify (emulator errors).
@@ -3298,7 +3287,7 @@ mme_app_handle_enb_status_transfer(
    bconcat(enbStatusPrefixBstr, s1ap_status_transfer_pP->bearerStatusTransferList_buffer);
    /** No need to unlink here. */
    // todo: macro/home
-   mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_id.target_id.macro_enb_id.enb_id, enbStatusPrefixBstr);
+   mme_app_send_s1ap_mme_status_transfer(ue_context->mme_ue_s1ap_id, s10_handover_proc->target_enb_ue_s1ap_id, s10_handover_proc->target_ecgi.cell_identity.enb_id, enbStatusPrefixBstr);
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }else{
    /* UE is DEREGISTERED. Assuming that it came from S10 inter-MME handover. Forwarding the eNB status information to the target-MME via Forward Access Context Notification. */

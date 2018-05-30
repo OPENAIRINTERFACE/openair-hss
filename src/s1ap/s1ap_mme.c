@@ -616,6 +616,9 @@ void s1ap_notified_new_ue_mme_s1ap_id_association (
     const mme_ue_s1ap_id_t mme_ue_s1ap_id)
 {
   enb_description_t   *enb_ref =  s1ap_is_enb_assoc_id_in_list (sctp_assoc_id);
+
+  ue_description_t * ue_ref_test = NULL;
+
   if (enb_ref) {
     ue_description_t   *ue_ref = s1ap_is_ue_enb_id_in_list (enb_ref,enb_ue_s1ap_id);
     if (ue_ref) {
@@ -623,9 +626,12 @@ void s1ap_notified_new_ue_mme_s1ap_id_association (
       hashtable_rc_t  h_rc = hashtable_ts_insert (&g_s1ap_mme_id2assoc_id_coll, (const hash_key_t) mme_ue_s1ap_id, (void *)(uintptr_t)sctp_assoc_id);
       OAILOG_DEBUG(LOG_S1AP, "Associated  sctp_assoc_id %d, enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT ", mme_ue_s1ap_id " MME_UE_S1AP_ID_FMT ":%s \n",
           sctp_assoc_id, enb_ue_s1ap_id, mme_ue_s1ap_id, hashtable_rc_code2string(h_rc));
+
+      ue_ref_test = s1ap_is_ue_mme_id_in_list (mme_ue_s1ap_id);
       return;
     }
     OAILOG_DEBUG(LOG_S1AP, "Could not find  ue  with enb_ue_s1ap_id " ENB_UE_S1AP_ID_FMT "\n", enb_ue_s1ap_id);
+    ue_ref_test = s1ap_is_ue_mme_id_in_list (mme_ue_s1ap_id);
     return;
   }
   OAILOG_DEBUG(LOG_S1AP, "Could not find  eNB with sctp_assoc_id %d \n", sctp_assoc_id);
