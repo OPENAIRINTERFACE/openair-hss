@@ -386,6 +386,7 @@ emm_proc_tracking_area_update_complete (
     OAILOG_FUNC_RETURN (LOG_NAS_EMM, RETURNerror);
   }
 
+
   /*
    * Set the network attachment indicator
    */

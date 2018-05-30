@@ -358,10 +358,10 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
   if((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx){
     free_wrapper(&((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx)); /**< Setting the reference inside the procedure also to null. */
   }
-  if((*s10_proc_mme_handover_pp)->source_to_target_eutran_container){
-    bdestroy((*s10_proc_mme_handover_pp)->source_to_target_eutran_container->container_value);
-    free_wrapper(&((*s10_proc_mme_handover_pp)->source_to_target_eutran_container)); /**< Setting the reference inside the procedure also to null. */
-  }
+//  if((*s10_proc_mme_handover_pp)->source_to_target_eutran_container){
+//    bdestroy((*s10_proc_mme_handover_pp)->source_to_target_eutran_container->container_value);
+//    free_wrapper(&((*s10_proc_mme_handover_pp)->source_to_target_eutran_container)); /**< Setting the reference inside the procedure also to null. */
+//  }
   /*
    * Todo: Make a generic function for this (proc_element with free_wrapper_ie() method).
    */
@@ -372,14 +372,10 @@ static void mme_app_free_s10_procedure_mme_handover(mme_app_s10_proc_t **s10_pro
   if((*s10_proc_mme_handover_pp)->pdn_connections){
     free_wrapper(&((*s10_proc_mme_handover_pp)->pdn_connections)); /**< Setting the reference inside the procedure also to null. */
   }
-  /** MM EPS Context. */
-  if((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx){
-    free_wrapper(&((*s10_proc_mme_handover_pp)->nas_s10_context.mm_eps_ctx)); /**< Setting the reference inside the procedure also to null. */
-  }
   (*s10_proc_mme_handover_pp)->s10_mme_handover_timeout = NULL; // todo: deallocate too
 
-  (*s10_proc_mme_handover_pp)->entries.le_next = NULL;
-  (*s10_proc_mme_handover_pp)->entries.le_prev = NULL;
+//  (*s10_proc_mme_handover_pp)->entries.le_next = NULL;
+//  (*s10_proc_mme_handover_pp)->entries.le_prev = NULL;
 
   // DO here specific releases (memory,etc)
   // nothing to do actually
@@ -415,7 +411,7 @@ void mme_app_delete_s10_procedure_mme_handover(ue_context_t * const ue_context)
         s10_proc->timer.id = MME_APP_TIMER_INACTIVE_ID;
         /** Remove the S10 Tunnel endpoint and set the UE context S10 as invalid. */
 //        if(s10_proc->target_mme)
-//          remove_s10_tunnel_endpoint(ue_context, s10_proc);
+          remove_s10_tunnel_endpoint(ue_context, s10_proc);
         mme_app_free_s10_procedure_mme_handover(&s10_proc);
         return;
       }else if (MME_APP_S10_PROC_TYPE_INTRA_MME_HANDOVER == s10_proc->type){

@@ -3550,11 +3550,6 @@ mme_app_handle_forward_relocation_complete_acknowledge(
    OAILOG_FUNC_OUT (LOG_MME_APP);
  }
 
- /** Delete the local Tunnel. */
- mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
- mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_handover_proc->remote_mme_teid.teid, s10_handover_proc->remote_mme_teid.ipv4_address);
-
-
  /*
   * Not stopping MME Handover Completion timer. It will be stopped with the removed handover procedure on the target MME side for inter-mme s1ap handover.
   * (When TAU-Complete is received // UE is registered).

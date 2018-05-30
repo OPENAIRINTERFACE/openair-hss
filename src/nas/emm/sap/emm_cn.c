@@ -261,12 +261,15 @@ static int _emm_cn_pdn_config_res (emm_cn_pdn_config_res_t * msg_pP)
      * Like it is the case in PDN_CONNECTIVITY_RES, check the status and respond.
      */
     if (is_nas_specific_procedure_tau_running(emm_context)){
+
+
       OAILOG_INFO(LOG_NAS_EMM, "EMMCN-SAP  - " "Tracking Area Update Procedure is running. PDN Connectivity is already established with ULA. Continuing with the accept procedure for id " MME_UE_S1AP_ID_FMT "...\n", msg_pP->ue_id);
       // todo: checking if TAU_ACCEPT/TAU_REJECT is already sent or not..
       /*
        * Send tracking area update accept message to the UE
        */
       rc = emm_cn_wrapper_tracking_area_update_accept(emm_context);
+
       /** We will set the UE into COMMON-PROCEDURE-INITIATED state inside this method. */
       OAILOG_FUNC_RETURN(LOG_NAS_EMM, rc);
     }else{

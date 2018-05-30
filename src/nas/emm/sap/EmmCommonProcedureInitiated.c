@@ -63,7 +63,7 @@
 #include "emm_proc.h"
 #include "mme_app_defs.h"
 
-
+#include "mme_app_procedures.h"
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
@@ -261,6 +261,11 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
 
   case _EMMREG_TAU_CNF:
     MSC_LOG_RX_MESSAGE (MSC_NAS_EMM_MME, MSC_NAS_EMM_MME, NULL, 0, "_EMMREG_TAU_CNF ue id " MME_UE_S1AP_ID_FMT " ", evt->ue_id);
+
+
+
+
+
     /*
      * TAU procedure successful
      * enter state EMM-REGISTERED.
@@ -268,9 +273,23 @@ int EmmCommonProcedureInitiated (emm_reg_t * const evt)
     if ((emm_ctx) && (evt->notify) && (evt->u.tau.proc) && (evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.success_notif)) {
       rc = (*evt->u.tau.proc->emm_spec_proc.emm_proc.base_proc.success_notif)(emm_ctx);
     }
+
+
+
+
+
     if (evt->free_proc) {
       nas_delete_tau_procedure(emm_ctx);
     }
+
+//    struct ue_context_s * ue_context = mme_ue_context_exists_mme_ue_s1ap_id(&mme_app_desc.mme_ue_contexts, evt->ue_id);
+//
+//       /** Delete the local Tunnel. */
+//          mme_app_s10_proc_mme_handover_t * s10_handover_proc = mme_app_get_s10_procedure_mme_handover(ue_context);
+//          if(s10_handover_proc){
+//            mme_app_remove_s10_tunnel_endpoint(ue_context->local_mme_teid_s10, s10_handover_proc->remote_mme_teid.teid, s10_handover_proc->remote_mme_teid.ipv4_address);
+//          }
+
     rc = emm_fsm_set_state (evt->ue_id, evt->ctx, EMM_REGISTERED);
     break;
 

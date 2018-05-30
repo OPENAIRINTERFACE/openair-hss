@@ -69,6 +69,7 @@
 #include "mme_app_defs.h"
 #include "mme_config.h"
 
+#include "mme_app_procedures.h"
 /****************************************************************************/
 /****************  E X T E R N A L    D E F I N I T I O N S  ****************/
 /****************************************************************************/
@@ -454,6 +455,7 @@ int mme_api_registration_complete(const mme_ue_s1ap_id_t mme_ue_s1ap_id){
 //    }
     OAILOG_ERROR(LOG_MME_APP, "No PDN context found with unestablished bearers for mmeUeS1apId " MME_UE_S1AP_ID_FMT ". \n", mme_ue_s1ap_id);
   }
+
 }
 
 /****************************************************************************
