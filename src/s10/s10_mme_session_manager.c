@@ -878,6 +878,13 @@ s10_mme_handle_forward_relocation_complete_acknowledge(
 
   ack_p->teid = nwGtpv2cMsgGetTeid(pUlpApi->hMsg);
 
+  nw_gtpv2c_tunnel_handle_t    hTunnel_test = (nw_gtpv2c_tunnel_handle_t)0;
+  hashtable_rc_t hash_rc = hashtable_ts_get(s10_mme_teid_2_gtv2c_teid_handle,
+       (hash_key_t) ack_p->teid,
+       (void **)(uintptr_t)&hTunnel_test);
+  DevAssert(HASH_TABLE_OK == hash_rc);
+
+
   /*
    * Create a new message parser
    */
@@ -1386,24 +1393,19 @@ s10_mme_remove_ue_tunnel (
     // todo: error in error handling.. asserting?! extreme error handling?
     // Currently ignoring and continue to remove the remains of the tunnel.
 
-//    ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
-//    ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_ue_tunnel_p->local_teid;
-//    ulp_req.u_api_info.findLocalTunnelInfo.peerIp = remove_ue_tunnel_p->peer_ip;
-//    rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
-//    DevAssert (NW_OK == rc);
-//    if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
-//      OAILOG_ERROR (LOG_S10, "Could FIND A GTPv2-C hTunnel for local teid %X @ DELETION \n", remove_ue_tunnel_p->local_teid);
-//    }else{
-//      OAILOG_ERROR (LOG_S10, "Could NOT FIND A GTPv2-C hTunnel for local teid %X @ DELETION \n", remove_ue_tunnel_p->local_teid);
-//    }
+    ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
+    ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_ue_tunnel_p->local_teid;
+    ulp_req.u_api_info.findLocalTunnelInfo.peerIp = remove_ue_tunnel_p->peer_ip;
+    rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+    DevAssert (NW_OK == rc);
+    if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
+      OAILOG_ERROR (LOG_S10, "Could FIND A GTPv2-C hTunnel for local teid %X @ DELETION \n", remove_ue_tunnel_p->local_teid);
+    }else{
+      OAILOG_ERROR (LOG_S10, "Could NOT FIND A GTPv2-C hTunnel for local teid %X @ DELETION \n", remove_ue_tunnel_p->local_teid);
+    }
     return RETURNerror;
 
   } else{
-
-
-//    hash_rc = hashtable_ts_free(s10_mme_teid_2_gtv2c_teid_handle, (hash_key_t) remove_ue_tunnel_p->local_teid);
-//    DevAssert (HASH_TABLE_OK == hash_rc);
-
 
     ulp_req.apiType = NW_GTPV2C_ULP_DELETE_LOCAL_TUNNEL;
 
@@ -1411,16 +1413,16 @@ s10_mme_remove_ue_tunnel (
     DevAssert (NW_OK == rc);
     OAILOG_INFO(LOG_S10, "DELETED local S10 teid (TEID FOUND IN HASH_MAP)" TEID_FMT " \n", remove_ue_tunnel_p->local_teid);
 
-//    ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
-//    ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_ue_tunnel_p->local_teid;
-//    ulp_req.u_api_info.findLocalTunnelInfo.peerIp = remove_ue_tunnel_p->peer_ip;
-//    rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
-//    DevAssert (NW_OK == rc);
-//    if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
-//      OAILOG_WARNING (LOG_S10, "Could FIND A GTPv2-C hTunnel for local teid %X @ DELETION (2) \n", remove_ue_tunnel_p->local_teid);
-//    }else{
-//      OAILOG_WARNING(LOG_S10, "Could NOT FIND A GTPv2-C hTunnel for local teid %X @ DELETION  (2) \n", remove_ue_tunnel_p->local_teid);
-//    }
+    ulp_req.apiType = NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL;
+    ulp_req.u_api_info.findLocalTunnelInfo.teidLocal = remove_ue_tunnel_p->local_teid;
+    ulp_req.u_api_info.findLocalTunnelInfo.peerIp = remove_ue_tunnel_p->peer_ip;
+    rc = nwGtpv2cProcessUlpReq (*stack_p, &ulp_req);
+    DevAssert (NW_OK == rc);
+    if(ulp_req.u_api_info.findLocalTunnelInfo.hTunnel){
+      OAILOG_WARNING (LOG_S10, "Could FIND A GTPv2-C hTunnel for local teid %X @ DELETION (2) \n", remove_ue_tunnel_p->local_teid);
+    }else{
+      OAILOG_WARNING(LOG_S10, "Could NOT FIND A GTPv2-C hTunnel for local teid %X @ DELETION  (2) \n", remove_ue_tunnel_p->local_teid);
+    }
 
     /**
      * hash_free_int_func is set as the freeing function.

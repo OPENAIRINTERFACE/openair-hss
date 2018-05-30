@@ -38,11 +38,8 @@
 #ifndef FILE_LOG_SEEN
 #define FILE_LOG_SEEN
 
-#include <syslog.h>
-#include <pthread.h>
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <pthread.h>
 
 #include "bstrlib.h"
 
@@ -105,8 +102,6 @@ extern int fd_g_debug_lvl;
 #define LOG_CONFIG_STRING_NAS_LOG_LEVEL                  "NAS_LOG_LEVEL"
 #define LOG_CONFIG_STRING_OUTPUT                         "OUTPUT"
 #define LOG_CONFIG_STRING_S10_LOG_LEVEL                  "S10_LOG_LEVEL"
-#define LOG_CONFIG_STRING_S10_LOG_LEVEL                  "S10_LOG_LEVEL"
-#define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S11_LOG_LEVEL                  "S11_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S1AP_LOG_LEVEL                 "S1AP_LOG_LEVEL"
 #define LOG_CONFIG_STRING_S6A_LOG_LEVEL                  "S6A_LOG_LEVEL"
@@ -201,8 +196,8 @@ typedef struct log_config_s {
   log_level_t   nas_log_level;      /*!< \brief NAS ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   mme_app_log_level;  /*!< \brief MME-APP ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   spgw_app_log_level; /*!< \brief SP-GW ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
-  log_level_t   s11_log_level;      /*!< \brief S11 ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   s10_log_level;      /*!< \brief S10 ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
+  log_level_t   s11_log_level;      /*!< \brief S11 ITTI task log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   s6a_log_level;      /*!< \brief S6a layer log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   secu_log_level;      /*!< \brief LTE security log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
   log_level_t   util_log_level;     /*!< \brief Misc utilities log level starting from OAILOG_LEVEL_EMERGENCY up to MAX_LOG_LEVEL (no log) */
@@ -337,7 +332,6 @@ int log_get_start_time_sec (void);
 #    define OAILOG_LEVEL_STR2INT(a)                                     OAILOG_LEVEL_EMERGENCY
 #    define OAILOG_LEVEL_INT2STR(a)                                     "EMERGENCY"
 #    define OAILOG_INIT(a,b,c)                                          0
-#    define OAILOG_START_USE()
 #    define OAILOG_ITTI_CONNECT()
 #    define OAILOG_EXIT()
 #    define OAILOG_EMERGENCY(...)

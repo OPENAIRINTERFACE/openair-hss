@@ -163,6 +163,8 @@ typedef enum nw_gtpv2c_ulp_api_type_e {
   NW_GTPV2C_ULP_CREATE_LOCAL_TUNNEL,                    /**< Create a local tunnel                      */
   NW_GTPV2C_ULP_DELETE_LOCAL_TUNNEL,                    /**< Delete a local tunnel                      */
 
+  NW_GTPV2C_ULP_FIND_LOCAL_TUNNEL,                    /**< FIND a local tunnel                      */
+
   /* Do not add below this */
   NW_GTPV2C_ULP_API_END = 0xFFFFFFFF,
 
@@ -260,6 +262,8 @@ typedef struct nw_gtpv2c_initial_req_ind_info_s {
   NW_INOUT nw_gtpv2c_tunnel_handle_t      hTunnel;
 } nw_gtpv2c_initial_req_ind_info_t;
 
+typedef nw_gtpv2c_initial_req_info_t NwGtpv2cFindInfoT;
+
 /**
  * API information elements between ULP and Stack for
  * sending a Gtpv2c triggered request message.
@@ -341,6 +345,9 @@ typedef struct nw_gtpv2c_ulp_api_s {
     nw_gtpv2c_rsp_failure_ind_info_t       rspFailureInfo;
     nw_gtpv2c_create_local_tunnel_info_t   createLocalTunnelInfo;
     nw_gtpv2c_delete_local_tunnel_info_t   deleteLocalTunnelInfo;
+
+    // todo: remove this one
+    NwGtpv2cFindInfoT                   findLocalTunnelInfo;
   } u_api_info;
 } nw_gtpv2c_ulp_api_t;
 
